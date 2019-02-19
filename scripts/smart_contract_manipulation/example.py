@@ -42,7 +42,7 @@ endpoint  = {"HTTPPort": 8000, "TCPPort": 9080, "IP": "localhost"}
 
 #arg = { "smart_contract" : "function main() Print('Hello, world');  endfunction" }
 
-arg = { "smart_contract" : "function main() \nPrint('Hello, world'); \nvar s = State<Int32>('hello');\n Print(toString(s.get()));\n s.set(15);\n Print('now: ' + toString(s.get())); endfunction " }
+arg = { "smart_contract" : "function main() \nPrint('Hello, world'); \nvar s = State<Int32>('hello');\n Print(toString(s.get()));\n s.set(155);\n Print('now: ' + toString(s.get())); endfunction " }
 
 #arg = { "smart_contract" : "function main() var a = 2; var b : Int32 = 1; b = a + b; Print('The result is: ' + toString(b)); endfunction" }
 

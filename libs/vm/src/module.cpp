@@ -72,8 +72,6 @@ Module::Module()
   istate.CreateTypeConstuctor<Ptr<String>, TemplateParameter>();
   istate.CreateInstanceFunction("get", &IState::Get);
   istate.CreateInstanceFunction("set", &IState::Set);
-
-  std::cerr << "mod constr." << std::endl;
 }
 
 }  // namespace vm

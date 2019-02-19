@@ -28,7 +28,7 @@ namespace vm {
 // VM free functions. These will be available for all smart contracts and MUST NOT RETAIN STATE (be
 // thread safe)
 
-static fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t const &a)
+fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t const &a)
 {
   fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
   return ret;
@@ -36,16 +36,8 @@ static fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t con
 
 static void Print(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
-  std::cout << ">>>>>>>> FETCHLANG: " << s->str << std::endl;
+  std::cout << s->str << std::endl;
 }
-
-/*
-fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t const &a)
-{
-  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
-  return ret;
-}
-*/
 
 }  // namespace vm
 }  // namespace fetch

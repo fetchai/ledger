@@ -153,7 +153,6 @@ Contract::TransactionHandlerMap const &Contract::transaction_handlers() const
 storage::ResourceAddress Contract::CreateStateIndex(byte_array::ByteArray const &suffix) const
 {
   byte_array::ByteArray index;
-  std::cerr << "XXYY: " << contract_identifier_[0] << " " <<  contract_identifier_[1] << std::endl;
   index.Append(contract_identifier_[0], contract_identifier_[1], ".state.", suffix);
   return storage::ResourceAddress{index};
 }

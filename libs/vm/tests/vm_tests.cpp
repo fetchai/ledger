@@ -22,10 +22,10 @@
 using namespace fetch;
 using namespace fetch::vm;
 
+// Wrapper class for strings/memory to avoid needing byte array from core code
 class ByteWrapper
 {
 public:
-
   explicit ByteWrapper() {}
 
   // copy data into bytewrapper
@@ -167,8 +167,6 @@ protected:
 
   void SetUp() override
   {
-    // storage_.reset(new underlying_storage_type);
-    // executor_ = std::make_unique<underlying_executor_type>(storage_);
   }
 
   template <typename T>
@@ -220,71 +218,71 @@ protected:
   DummyReadWriteInterface interface_;
 };
 
-//// Test we can compile and run a fairly inoffensive smart contract
-//TEST_F(VMTests, CheckCompileAndExecute)
-//{
-//  const std::string source =
-//      " function main() "
-//      "   Print(\"Hello, world\");"
-//      " endfunction ";
-//
-//  bool res = Compile(source);
-//
-//  EXPECT_EQ(res, true);
-//
-//  res = Execute();
-//
-//  EXPECT_EQ(res, true);
-//}
-//
-//TEST_F(VMTests, CheckCompileAndExecuteAltStrings)
-//{
-//  const std::string source =
-//      " function main() "
-//      "   Print('Hello, world');"
-//      " endfunction ";
-//
-//  bool res = Compile(source);
-//
-//  EXPECT_EQ(res, true);
-//
-//  res = Execute();
-//
-//  EXPECT_EQ(res, true);
-//}
-//
-//// Test to add a custom binding that will increment this counter when
-//// the smart contract is executed
-//static int32_t binding_called_count = 0;
-//
-//static void CustomBinding(fetch::vm::VM * /*vm*/)
-//{
-//  binding_called_count++;
-//}
-//
-//TEST_F(VMTests, CheckCustomBinding)
-//{
-//  const std::string source =
-//      " function main() "
-//      "   CustomBinding();"
-//      " endfunction ";
-//
-//  EXPECT_EQ(binding_called_count, 0);
-//
-//  AddBinding("CustomBinding", &CustomBinding);
-//
-//  bool res = Compile(source);
-//
-//  EXPECT_EQ(res, true);
-//
-//  for (uint64_t i = 0; i < 3; ++i)
-//  {
-//    res = Execute();
-//    EXPECT_EQ(res, true);
-//  }
-//
-//  EXPECT_EQ(binding_called_count, 3);
-//}
+// Test we can compile and run a fairly inoffensive smart contract
+TEST_F(VMTests, CheckCompileAndExecute)
+{
+  const std::string source =
+      " function main() "
+      "   Print(\"Hello, world\");"
+      " endfunction ";
+
+  bool res = Compile(source);
+
+  EXPECT_EQ(res, true);
+
+  res = Execute();
+
+  EXPECT_EQ(res, true);
+}
+
+TEST_F(VMTests, CheckCompileAndExecuteAltStrings)
+{
+  const std::string source =
+      " function main() "
+      "   Print('Hello, world');"
+      " endfunction ";
+
+  bool res = Compile(source);
+
+  EXPECT_EQ(res, true);
+
+  res = Execute();
+
+  EXPECT_EQ(res, true);
+}
+
+// Test to add a custom binding that will increment this counter when
+// the smart contract is executed
+static int32_t binding_called_count = 0;
+
+static void CustomBinding(fetch::vm::VM * /*vm*/)
+{
+  binding_called_count++;
+}
+
+TEST_F(VMTests, CheckCustomBinding)
+{
+  const std::string source =
+      " function main() "
+      "   CustomBinding();"
+      " endfunction ";
+
+  EXPECT_EQ(binding_called_count, 0);
+
+  AddBinding("CustomBinding", &CustomBinding);
+
+  bool res = Compile(source);
+
+  EXPECT_EQ(res, true);
+
+  for (uint64_t i = 0; i < 3; ++i)
+  {
+    res = Execute();
+    EXPECT_EQ(res, true);
+  }
+
+  EXPECT_EQ(binding_called_count, 3);
+}
 
 TEST_F(VMTests, CheckCustomBindingWithState)
 {

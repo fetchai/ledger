@@ -58,8 +58,6 @@ private:
   http::HTTPResponse OnBalance(http::HTTPRequest const &request);
   http::HTTPResponse OnTransfer(http::HTTPRequest const &request);
   http::HTTPResponse OnTransactions(http::HTTPRequest const &request);
-  http::HTTPResponse OnCreateSC(http::HTTPRequest const &request);
-  http::HTTPResponse OnInvokeSC(http::HTTPRequest const &request);
 
   static http::HTTPResponse BadJsonResponse(ErrorCode error_code);
   static const char *       ToString(ErrorCode error_code);

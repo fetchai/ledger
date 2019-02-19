@@ -69,7 +69,6 @@ public:
     std::vector<std::string> errors;
     auto                     compiler = std::make_shared<fetch::vm::Compiler>(module.get());
 
-    std::cerr << "COMPILE: " << source << std::endl;
     bool compiled = compiler->Compile(source, "myscript", script, errors);
 
     if (!script.FindFunction("main"))

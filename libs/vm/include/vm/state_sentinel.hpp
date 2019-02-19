@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstdint>
+#include <string>
+
 namespace fetch {
 namespace vm {
 
@@ -43,12 +46,7 @@ public:
 
     T ret{};
 
-    std::cerr << "STATE before: " << (int)ret << std::endl;
-
     bool success = read_write_interface_->read(reinterpret_cast<uint8_t *>(&ret), sizeof(T), reinterpret_cast<uint8_t const * const>(str.c_str()), str.size());
-
-    std::cerr << "STATE got: " << (int)ret << std::endl;
-    std::cerr << "typeof: " << typeid(ret).name() << std::endl;
 
     if(!success)
     {
@@ -66,7 +64,6 @@ public:
       throw std::runtime_error("Failed to access state pointer in VM! Not set.");
     }
 
-    std::cerr << "STATE SET: " << item << std::endl;
     bool success = read_write_interface_->write(reinterpret_cast<uint8_t const * const>(&item), sizeof(int), reinterpret_cast<uint8_t const * const>(str.c_str()), str.size());
 
     if(!success)

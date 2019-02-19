@@ -50,7 +50,6 @@ public:
   State(VM *vm, TypeId type_id, TypeId value_type_id, Ptr<String> const &name)
     : IState(vm, type_id)
   {
-    std::cerr << "CONS1 " << name->str << std::endl;
     value_         = Value(0);
     value_type_id_ = value_type_id;
     name_          = name->str;
@@ -63,7 +62,6 @@ public:
         TemplateParameter const &value)
     : IState(vm, type_id)
   {
-    std::cerr << "CONS2" << std::endl;
     value_         = value.Get<Value>();
     value_type_id_ = value_type_id;
     name_          = name->str;
@@ -75,25 +73,11 @@ public:
 
   virtual TemplateParameter Get() const override
   {
-    std::cerr << "CONS3" << std::endl;
-
-    /*
-    auto ptr = this->vm_->template GetGlobalPointer<StateSentinel>();
-    value_ = ptr->template get<T>(name_);
-    */
-
     return TemplateParameter(value_, value_type_id_);
   }
 
   virtual void Set(TemplateParameter const &value) override
   {
-    std::cerr << "CONS4" << std::endl;
-
-    /*
-    auto ptr = this->vm_->template GetGlobalPointer<StateSentinel>();
-    ptr->template set<T>(name_, value_);
-    */
-
     value_ = value.Get<Value>();
 
     auto ptr = this->vm_->template GetGlobalPointer<StateSentinel>();
@@ -110,7 +94,6 @@ private:
 template <typename... Args>
 inline Ptr<IState> IState::Construct(VM *vm, TypeId type_id, Args &&... args)
 {
-  std::cerr << "CONS" << std::endl;
   TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
   TypeId const    value_type_id = type_info.parameter_type_ids[0];
   switch (value_type_id)

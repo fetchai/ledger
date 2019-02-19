@@ -44,17 +44,11 @@ byte_array::ConstByteArray const CONTRACT_HASH{"contract_hash"};
 SmartContract::SmartContract(byte_array::ConstByteArray const &identifier)
   : Contract(identifier)
 {
-  std::cerr << "const: " << identifier << std::endl;
-  std::cerr << "const: " << identifier << std::endl;
-  std::cerr << "const: " << identifier << std::endl;
-  std::cerr << "const: " << identifier << std::endl;
   OnTransaction("main", this, &SmartContract::InvokeContract);
 }
 
 Contract::Status SmartContract::InvokeContract(Transaction const &tx)
 {
-  std::cerr << "in main here" << std::endl;
-
   variant::Variant data;
   if (!ParseAsJson(tx, data))
   {
@@ -101,8 +95,6 @@ Contract::Status SmartContract::InvokeContract(Transaction const &tx)
       /* Advance index forward so the next iteration doesn't pick it up as well. */
       index += 3;
     }
-
-    std::cerr << "Recovered: " << source_ << std::endl;
   }
   else
   {

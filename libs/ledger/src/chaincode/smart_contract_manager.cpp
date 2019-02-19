@@ -64,17 +64,8 @@ Contract::Status SmartContractManager::CreateInitialContract(Transaction const &
   {
     contract_build_up.Append(contract_with_quotes, contract_source, contract_with_quotes);
     contract_build_up_final = contract_build_up.Copy();
-    //contract_build_up.Append(contract_source);
-    //contract_build_up.Append(contract_with_quotes);
 
-    //std::cerr << "Hashing --" <<  contract_source.As<std::string> << "--" << std::endl;
-    //
-    std::cerr << "Hashing1Y XX" <<  contract_build_up_final << "++" << std::endl;
     auto smart_contract_hash = crypto::Hash<crypto::SHA256>(contract_build_up_final);
-
-    std::cerr << "asdfasdf zzxx:"<< contract_with_quotes.size() << std::endl;
-    //exit(1);
-
 
     FETCH_LOG_WARN(LOGGING_NAME, "Adding smart contract, PK: ", ToHex(smart_contract_hash));
 

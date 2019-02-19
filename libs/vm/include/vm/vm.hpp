@@ -27,8 +27,6 @@
 namespace fetch {
 namespace vm {
 
-//class StateSentinel;
-
 template <typename T, typename = void>
 struct Getter;
 template <typename T>

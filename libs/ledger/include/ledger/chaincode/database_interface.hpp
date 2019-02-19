@@ -20,6 +20,7 @@
 #include "vm/state_sentinel.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "ledger/chaincode/contract.hpp"
+#include "ledger/chaincode/smart_contract.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -33,130 +34,21 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
   using ByteArray = byte_array::ByteArray;
 
-  DatabaseInterface(SmartContract *context) : context_{context} {}
+  DatabaseInterface(SmartContract *context);
 
-  ~DatabaseInterface() = default;
+  ~DatabaseInterface();
 
-  void Allow(ByteArray const &resource)
-  {
-    allowed_resources_.insert(resource);
-  }
+  void Allow(ByteArray const &resource);
 
-  bool write(uint8_t const * const source, uint64_t dest_size, uint8_t const * const keyy, uint64_t key_size) override
-  {
-    ByteArray key{keyy, key_size};
-    ByteArray value{source, dest_size};
+  bool write(uint8_t const * const source, uint64_t dest_size, uint8_t const * const keyy, uint64_t key_size) override;
 
-    if(!AccessResource(key))
-    {
-      return false;
-    }
+  bool read(uint8_t *dest, uint64_t dest_size, uint8_t const * const keyy, uint64_t key_size) override;
 
-    cached_resources_[key] = value;
+  bool AccessResource(ByteArray const &key);
 
-    return true;
-  }
+  void WriteBackToState();
 
-  bool read(uint8_t *dest, uint64_t dest_size, uint8_t const * const keyy, uint64_t key_size) override
-  {
-    ByteArray key{keyy, key_size};
-
-    if(!AccessResource(key))
-    {
-      return false;
-    }
-
-    // Attempt to read from cache
-    if(cached_resources_.find(key) != cached_resources_.end())
-    {
-      ByteArray value = cached_resources_[key];
-      assert(value.size() == dest_size);
-
-      memcpy(dest, value.pointer(), dest_size);
-
-      for (std::size_t i = 0; i < dest_size; ++i)
-      {
-        std::cerr << "COPIED: " << dest[i] << " " << value.pointer()[i] << std::endl;
-      }
-      std::cerr << "finished copy." << std::endl;
-
-      return true;
-    }
-
-    // Read from state db, otherwise return zeroed memory
-    ByteArray data;
-    if(!context_->Get(data, key))
-    {
-      data.Resize(dest_size);
-
-      for (std::size_t i = 0; i < dest_size; ++i)
-      {
-        data[i] = 0;
-      }
-    }
-    else
-    {
-      std::cerr <<  "Got from state! " << std::endl;
-    }
-
-    std::cerr << "CREATING **** " << ToHex(data) <<  std::endl;
-    memcpy(dest, data.pointer(), dest_size);
-
-    //for (std::size_t i = 0; i < dest_size; ++i)
-    //{
-    //  dest[i] = data.pointer()[i];
-    //}
-
-    std::cerr << "CREATING +++ " << ToHex(data) <<  std::endl;
-
-    for (std::size_t i = 0; i < dest_size; ++i)
-    {
-      std::cerr << "CREATED: " << uint64_t(0xFF &dest[i]) << " " << uint64_t(0xFF &data.pointer()[i]) << std::endl;
-    }
-    std::cerr << "finished copy." << std::endl;
-
-    FETCH_LOG_WARN(LOGGING_NAME, "Reading from state: ", ToHex(key), " ", ToHex(data), " size: ", dest_size);
-
-    cached_resources_[key] = data;
-
-    return true;
-  }
-
-  bool AccessResource(ByteArray const &key)
-  {
-    if(allowed_resources_.find(key) == allowed_resources_.end())
-    {
-      std::ostringstream oss;
-
-      oss <<"Transaction failed to access resource: " << ToHex(key) << " AKA "  << std::string{key}<< std::endl;
-      oss <<"Allowed resources: " << std::endl;
-
-      for(auto const &resource : allowed_resources_)
-      {
-        oss << ToHex(resource) << std::endl;
-      }
-
-      FETCH_LOG_WARN(LOGGING_NAME, oss.str());
-
-      return false;
-    }
-
-    return true;
-  }
-
-  void WriteBackToState()
-  {
-    for(auto const &cached_item : cached_resources_)
-    {
-      auto address = cached_item.first;
-      auto data = cached_item.second;
-
-      FETCH_LOG_WARN(LOGGING_NAME, "Writing back to state: ", ToHex(address), " ", ToHex(data));
-
-      context_->Set(data, address);
-    }
-  }
-
+private:
   SmartContract                       *context_;
   std::set<ConstByteArray>            allowed_resources_;
   std::map<ByteArray, ByteArray>      cached_resources_;
