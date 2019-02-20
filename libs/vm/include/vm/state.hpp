@@ -45,7 +45,7 @@ template <typename T>
 class State : public IState
 {
 public:
-  State()          = delete;
+  State() = delete;
 
   State(VM *vm, TypeId type_id, TypeId value_type_id, Ptr<String> const &name)
     : IState(vm, type_id)
@@ -67,8 +67,7 @@ public:
   }
 
   virtual ~State()
-  {
-  }
+  {}
 
   virtual TemplateParameter Get() const override
   {

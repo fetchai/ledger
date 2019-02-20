@@ -37,7 +37,8 @@ private:
   // transaction handlers
   Status InvokeContract(Transaction const &tx);
 
-  bool RunSmartContract(std::string &source, std::string const &target_fn, byte_array::ConstByteArray const &hash, Transaction const &tx);
+  bool RunSmartContract(std::string &source, std::string const &target_fn,
+                        byte_array::ConstByteArray const &hash, Transaction const &tx);
 
   std::string source_;
 };

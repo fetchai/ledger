@@ -221,7 +221,6 @@ template <typename T>
 class Ptr
 {
 public:
-
   Ptr()
   {
     ptr_ = nullptr;

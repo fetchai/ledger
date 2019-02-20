@@ -84,10 +84,14 @@ Contract::Status SmartContract::InvokeContract(Transaction const &tx)
     source_ = std::string{contract_source};
 
     size_t index = 0;
-    while (true) {
+    while (true)
+    {
       /* Locate the substring to replace. */
       index = source_.find("\\\\n", index);
-      if (index == std::string::npos) break;
+      if (index == std::string::npos)
+      {
+        break;
+      }
 
       /* Make the replacement. */
       source_.replace(index, 3, "\n");
@@ -111,9 +115,8 @@ Contract::Status SmartContract::InvokeContract(Transaction const &tx)
   return Status::OK;
 }
 
-
 bool SmartContract::RunSmartContract(std::string &source, std::string const &target_fn,
-                      byte_array::ConstByteArray const &hash, Transaction const &tx)
+                                     byte_array::ConstByteArray const &hash, Transaction const &tx)
 {
   FETCH_UNUSED(hash);
   char const *LOGGING_NAME = "RunSmartContract";
@@ -143,7 +146,7 @@ bool SmartContract::RunSmartContract(std::string &source, std::string const &tar
 
   DatabaseInterface interface{this};
 
-  for(auto const &resource : tx.resources())
+  for (auto const &resource : tx.resources())
   {
     interface.Allow(resource);
   }

@@ -26,45 +26,46 @@ using namespace fetch::vm;
 class ByteWrapper
 {
 public:
-  explicit ByteWrapper() {}
+  explicit ByteWrapper()
+  {}
 
   // copy data into bytewrapper
-  ByteWrapper(uint8_t const * const data, uint64_t data_size)
+  ByteWrapper(uint8_t const *const data, uint64_t data_size)
   {
     auto bytes = (uint8_t *)malloc(data_size);
     memset(bytes, 0, data_size);
     memcpy(bytes, data, data_size);
-    length_    = data_size;
-    data_ = bytes;
+    length_ = data_size;
+    data_   = bytes;
   }
 
   // create new bytewrapper
   explicit ByteWrapper(uint64_t data_size)
   {
-    uint8_t * bytes = (uint8_t *)malloc(data_size);
+    uint8_t *bytes = (uint8_t *)malloc(data_size);
     memset(bytes, 0, data_size);
-    length_    = data_size;
-    data_ = bytes;
+    length_ = data_size;
+    data_   = bytes;
   }
 
   explicit ByteWrapper(ByteWrapper &&rhs)
   {
-    data_ = rhs.data_;
-    length_ = rhs.length_;
+    data_       = rhs.data_;
+    length_     = rhs.length_;
     rhs.length_ = 0;
   }
 
-  ByteWrapper &operator=(ByteWrapper&& rhs)
+  ByteWrapper &operator=(ByteWrapper &&rhs)
   {
-    data_ = rhs.data_;
-    length_ = rhs.length_;
+    data_       = rhs.data_;
+    length_     = rhs.length_;
     rhs.length_ = 0;
     return *this;
   }
 
   ~ByteWrapper()
   {
-    if(length_ > 0)
+    if (length_ > 0)
     {
       free(data_);
     }
@@ -72,7 +73,7 @@ public:
 
   bool operator<(ByteWrapper const &rhs) const
   {
-    if(length_ != rhs.length_)
+    if (length_ != rhs.length_)
     {
       return length_ < rhs.length_;
     }
@@ -80,34 +81,32 @@ public:
     return memcmp(data_, rhs.data_, length_) > 0;
   }
 
-  uint8_t * data()
+  uint8_t *data()
   {
     return data_;
   }
 
-  void set_data(uint8_t * data)
+  void set_data(uint8_t *data)
   {
     data_ = data;
   }
 
 private:
-  uint8_t * data_ = nullptr;
-  uint64_t                length_ = 0;
+  uint8_t *data_   = nullptr;
+  uint64_t length_ = 0;
 };
-
 
 class DummyReadWriteInterface : public ReadWriteInterface
 {
 public:
-
   ~DummyReadWriteInterface() = default;
 
-  bool read(uint8_t *dest, uint64_t dest_size, uint8_t const * const key, uint64_t key_size) override
+  bool read(uint8_t *dest, uint64_t dest_size, uint8_t const *const key, uint64_t key_size) override
   {
 
     ByteWrapper key_wrapper{key, key_size};
 
-    if(dummy_db_.find(key_wrapper) == dummy_db_.end())
+    if (dummy_db_.find(key_wrapper) == dummy_db_.end())
     {
       // Create memory
       ByteWrapper mem{dest_size};
@@ -120,14 +119,15 @@ public:
     }
     else
     {
-      uint8_t * data_ptr = dummy_db_[std::move(key_wrapper)].data();
+      uint8_t *data_ptr = dummy_db_[std::move(key_wrapper)].data();
       memcpy(dest, data_ptr, dest_size);
     }
 
     return true;
   }
 
-  bool write(uint8_t const * const source, uint64_t dest_size, uint8_t const * const key, uint64_t key_size) override
+  bool write(uint8_t const *const source, uint64_t dest_size, uint8_t const *const key,
+             uint64_t key_size) override
   {
     // We should never have a write before a read. So this will throw if that is the case
     ByteWrapper key_wrapper{key, key_size};
@@ -145,7 +145,8 @@ public:
   T Lookup(std::string const &str)
   {
     T ret;
-    if(!read(reinterpret_cast<uint8_t *>(&ret), sizeof(T), reinterpret_cast<uint8_t const * const>(str.c_str()), str.size()))
+    if (!read(reinterpret_cast<uint8_t *>(&ret), sizeof(T),
+              reinterpret_cast<uint8_t const *const>(str.c_str()), str.size()))
     {
       throw std::runtime_error("Failed to lookup data value!");
     }
@@ -166,8 +167,7 @@ protected:
   {}
 
   void SetUp() override
-  {
-  }
+  {}
 
   template <typename T>
   void AddBinding(std::string const &name, T function)
@@ -206,7 +206,7 @@ protected:
     return true;
   }
 
-  DummyReadWriteInterface & GetState()
+  DummyReadWriteInterface &GetState()
   {
     return interface_;
   }
@@ -286,16 +286,16 @@ TEST_F(VMTests, CheckCustomBinding)
 TEST_F(VMTests, CheckCustomBindingWithState)
 {
   const std::string source =
-    "function main()                                      \n "
-    " var a : Int32 = 2;                                  \n "
-    " var b : Int32 = 1;                                  \n "
-    " b = a + b;                                          \n "
-    " Print('The result is: ' + toString(b));             \n "
-    " var s = State<Int32>('hello');                      \n "
-    " Print('The STATE result is: ' + toString(s.get())); \n "
-    " s.set(8);                                           \n "
-    "                                                     \n "
-    " endfunction                                         \n ";
+      "function main()                                      \n "
+      " var a : Int32 = 2;                                  \n "
+      " var b : Int32 = 1;                                  \n "
+      " b = a + b;                                          \n "
+      " Print('The result is: ' + toString(b));             \n "
+      " var s = State<Int32>('hello');                      \n "
+      " Print('The STATE result is: ' + toString(s.get())); \n "
+      " s.set(8);                                           \n "
+      "                                                     \n "
+      " endfunction                                         \n ";
 
   bool res = Compile(source);
 

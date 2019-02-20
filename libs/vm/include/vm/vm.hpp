@@ -20,8 +20,8 @@
 #include "math/arithmetic/comparison.hpp"
 #include "math/free_functions/free_functions.hpp"
 #include "vm/defs.hpp"
-#include "vm/string.hpp"
 #include "vm/state_sentinel.hpp"
+#include "vm/string.hpp"
 
 namespace fetch {
 namespace vm {
@@ -143,12 +143,12 @@ public:
     return new T(this, GetTypeId<T>(), std::forward<Args>(args)...);
   }
 
-  void SetIOInterface(ReadWriteInterface * ptr)
+  void SetIOInterface(ReadWriteInterface *ptr)
   {
     state_sentinel_.SetReadWriteInterface(ptr);
   }
 
-  ReadWriteInterface * GetIOInterface()
+  ReadWriteInterface *GetIOInterface()
   {
     return state_sentinel_.GetReadWriteInterface();
   }
@@ -156,7 +156,7 @@ public:
 protected:
   template <typename T>
   friend class State;
-  StateSentinel              state_sentinel_;
+  StateSentinel state_sentinel_;
 
 private:
   static const int FRAME_STACK_SIZE = 50;

@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/state_sentinel.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
+#include "vm/state_sentinel.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -28,11 +28,10 @@ namespace ledger {
 class DatabaseInterface : public vm::ReadWriteInterface
 {
 public:
-
   static constexpr char const *LOGGING_NAME = "DatabaseInterface";
 
   using ConstByteArray = byte_array::ConstByteArray;
-  using ByteArray = byte_array::ByteArray;
+  using ByteArray      = byte_array::ByteArray;
 
   DatabaseInterface(SmartContract *context);
 
@@ -40,20 +39,21 @@ public:
 
   void Allow(ByteArray const &resource);
 
-  bool write(uint8_t const * const source, uint64_t dest_size, uint8_t const * const keyy, uint64_t key_size) override;
+  bool write(uint8_t const *const source, uint64_t dest_size, uint8_t const *const keyy,
+             uint64_t key_size) override;
 
-  bool read(uint8_t *dest, uint64_t dest_size, uint8_t const * const keyy, uint64_t key_size) override;
+  bool read(uint8_t *dest, uint64_t dest_size, uint8_t const *const keyy,
+            uint64_t key_size) override;
 
   bool AccessResource(ByteArray const &key);
 
   void WriteBackToState();
 
 private:
-  SmartContract                       *context_;
-  std::set<ConstByteArray>            allowed_resources_;
-  std::map<ByteArray, ByteArray>      cached_resources_;
+  SmartContract *                context_;
+  std::set<ConstByteArray>       allowed_resources_;
+  std::map<ByteArray, ByteArray> cached_resources_;
 };
 
 }  // namespace ledger
 }  // namespace fetch
-

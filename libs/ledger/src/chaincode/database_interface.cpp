@@ -21,7 +21,9 @@
 namespace fetch {
 namespace ledger {
 
-DatabaseInterface::DatabaseInterface(SmartContract *context) : context_{context} {}
+DatabaseInterface::DatabaseInterface(SmartContract *context)
+  : context_{context}
+{}
 
 DatabaseInterface::~DatabaseInterface() = default;
 
@@ -30,12 +32,13 @@ void DatabaseInterface::Allow(ByteArray const &resource)
   allowed_resources_.insert(resource);
 }
 
-bool DatabaseInterface::write(uint8_t const * const source, uint64_t dest_size, uint8_t const * const keyy, uint64_t key_size)
+bool DatabaseInterface::write(uint8_t const *const source, uint64_t dest_size,
+                              uint8_t const *const keyy, uint64_t key_size)
 {
   ByteArray key{keyy, key_size};
   ByteArray value{source, dest_size};
 
-  if(!AccessResource(key))
+  if (!AccessResource(key))
   {
     return false;
   }
@@ -45,17 +48,18 @@ bool DatabaseInterface::write(uint8_t const * const source, uint64_t dest_size, 
   return true;
 }
 
-bool DatabaseInterface::read(uint8_t *dest, uint64_t dest_size, uint8_t const * const keyy, uint64_t key_size)
+bool DatabaseInterface::read(uint8_t *dest, uint64_t dest_size, uint8_t const *const keyy,
+                             uint64_t key_size)
 {
   ByteArray key{keyy, key_size};
 
-  if(!AccessResource(key))
+  if (!AccessResource(key))
   {
     return false;
   }
 
   // Attempt to read from cache
-  if(cached_resources_.find(key) != cached_resources_.end())
+  if (cached_resources_.find(key) != cached_resources_.end())
   {
     ByteArray value = cached_resources_[key];
     assert(value.size() == dest_size);
@@ -67,14 +71,15 @@ bool DatabaseInterface::read(uint8_t *dest, uint64_t dest_size, uint8_t const * 
 
   // Read from state db, otherwise return zeroed memory
   ByteArray data;
-  if(!context_->Get(data, key))
+  if (!context_->Get(data, key))
   {
     data.Resize(dest_size);
   }
 
   memcpy(dest, data.pointer(), dest_size);
 
-  FETCH_LOG_WARN(LOGGING_NAME, "Reading from state: ", ToHex(key), " ", ToHex(data), " size: ", dest_size);
+  FETCH_LOG_WARN(LOGGING_NAME, "Reading from state: ", ToHex(key), " ", ToHex(data),
+                 " size: ", dest_size);
 
   cached_resources_[key] = data;
 
@@ -83,14 +88,15 @@ bool DatabaseInterface::read(uint8_t *dest, uint64_t dest_size, uint8_t const * 
 
 bool DatabaseInterface::AccessResource(ByteArray const &key)
 {
-  if(allowed_resources_.find(key) == allowed_resources_.end())
+  if (allowed_resources_.find(key) == allowed_resources_.end())
   {
     std::ostringstream oss;
 
-    oss <<"Transaction failed to access resource: " << ToHex(key) << " AKA "  << std::string{key}<< std::endl;
-    oss <<"Allowed resources: " << std::endl;
+    oss << "Transaction failed to access resource: " << ToHex(key) << " AKA " << std::string{key}
+        << std::endl;
+    oss << "Allowed resources: " << std::endl;
 
-    for(auto const &resource : allowed_resources_)
+    for (auto const &resource : allowed_resources_)
     {
       oss << ToHex(resource) << std::endl;
     }
@@ -105,10 +111,10 @@ bool DatabaseInterface::AccessResource(ByteArray const &key)
 
 void DatabaseInterface::WriteBackToState()
 {
-  for(auto const &cached_item : cached_resources_)
+  for (auto const &cached_item : cached_resources_)
   {
     auto address = cached_item.first;
-    auto data = cached_item.second;
+    auto data    = cached_item.second;
 
     FETCH_LOG_WARN(LOGGING_NAME, "Writing back to state: ", ToHex(address), " ", ToHex(data));
 
@@ -118,4 +124,3 @@ void DatabaseInterface::WriteBackToState()
 
 }  // namespace ledger
 }  // namespace fetch
-

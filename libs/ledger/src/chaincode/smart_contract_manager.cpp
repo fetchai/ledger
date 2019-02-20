@@ -55,9 +55,9 @@ Contract::Status SmartContractManager::CreateInitialContract(Transaction const &
   }
 
   byte_array::ConstByteArray contract_source;
-  byte_array::ByteArray contract_build_up;
-  byte_array::ByteArray contract_build_up_final;
-  byte_array::ByteArray contract_with_quotes{'"', 1};
+  byte_array::ByteArray      contract_build_up;
+  byte_array::ByteArray      contract_build_up_final;
+  byte_array::ByteArray      contract_with_quotes{'"', 1};
   contract_with_quotes.Resize(1);
 
   if (Extract(data, CONTRACT_SOURCE, contract_source))

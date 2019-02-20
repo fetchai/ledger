@@ -177,7 +177,8 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
         // TX verification guarantees this is a valid hash
         storage::ResourceID const resource_id{smart_contract_hash};
         item->AddLane(resource_id.lane(block.log2_num_lanes));
-        FETCH_LOG_INFO(LOGGING_NAME, "LOCKING: ", ToHex(smart_contract_hash), " AKA ", resource_id.ToString());
+        FETCH_LOG_INFO(LOGGING_NAME, "LOCKING: ", ToHex(smart_contract_hash), " AKA ",
+                       resource_id.ToString());
       }
 
       // insert the item into the execution plan
