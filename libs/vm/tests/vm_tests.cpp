@@ -194,8 +194,7 @@ protected:
     fetch::vm::Variant output;
 
     // Attach our state
-    ReadWriteInterface *parent_ptr = &interface_;
-    vm_->GetGlobalPointer<StateSentinel>()->SetReadWriteInterface(parent_ptr);
+    vm_->SetIOInterface(&interface_);
 
     // Execute our fn
     if (!vm_->Execute(script_, function, error, output))

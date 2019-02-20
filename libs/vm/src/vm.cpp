@@ -25,8 +25,6 @@ namespace vm {
 
 VM::VM(Module *module)
 {
-  RegisterGlobalPointer(&state_sentinel_);
-
   std::vector<OpcodeHandlerInfo> array = {
       {Opcodes::VarDeclare, [](VM *vm) { vm->VarDeclare(); }},
       {Opcodes::VarDeclareAssign, [](VM *vm) { vm->VarDeclareAssign(); }},

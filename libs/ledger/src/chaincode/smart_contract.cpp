@@ -149,7 +149,7 @@ bool SmartContract::RunSmartContract(std::string &source, std::string const &tar
   }
 
   // Attach our state
-  vm->GetGlobalPointer<vm::StateSentinel>()->SetReadWriteInterface(&interface);
+  vm->SetIOInterface(&interface);
 
   // Execute our fn
   if (!vm->Execute(script, target_fn, error, output))

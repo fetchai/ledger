@@ -54,8 +54,7 @@ public:
     value_type_id_ = value_type_id;
     name_          = name->str;
 
-    auto ptr = this->vm_->template GetGlobalPointer<StateSentinel>();
-    value_ = ptr->template get<T>(name_);
+    value_ = this->vm_->state_sentinel_.template get<T>(name_);
   }
 
   State(VM *vm, TypeId type_id, TypeId value_type_id, Ptr<String> const &name,
@@ -80,8 +79,7 @@ public:
   {
     value_ = value.Get<Value>();
 
-    auto ptr = this->vm_->template GetGlobalPointer<StateSentinel>();
-    ptr->template set<T>(name_, value_);
+    this->vm_->state_sentinel_.template set<T>(name_, value_);
   }
 
 private:

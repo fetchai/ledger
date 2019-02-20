@@ -26,9 +26,9 @@ namespace vm {
 class ReadWriteInterface
 {
 public:
-  virtual ~ReadWriteInterface() {};
-  virtual bool read(uint8_t *dest, uint64_t dest_size, uint8_t const * const key, uint64_t key_size) {return false;};
-  virtual bool write(uint8_t const * const source, uint64_t dest_size, uint8_t const * const key, uint64_t key_size) {return false;};
+  virtual ~ReadWriteInterface() = default;
+  virtual bool read(uint8_t *dest, uint64_t dest_size, uint8_t const * const key, uint64_t key_size) = 0;
+  virtual bool write(uint8_t const * const source, uint64_t dest_size, uint8_t const * const key, uint64_t key_size) = 0;
 };
 
 class StateSentinel
@@ -75,6 +75,11 @@ public:
   void SetReadWriteInterface(ReadWriteInterface *ptr)
   {
     read_write_interface_ = ptr;
+  }
+
+  ReadWriteInterface * GetReadWriteInterface()
+  {
+    return read_write_interface_;
   }
 
 private:
