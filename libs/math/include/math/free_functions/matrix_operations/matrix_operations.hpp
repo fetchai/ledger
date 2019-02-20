@@ -264,7 +264,7 @@ T Max(ShapelessArray<T, C> const &array)
 template <typename ArrayType, typename T>
 meta::IfIsMathArray<ArrayType, void> Max(ArrayType const &array, T &ret)
 {
-  ret = -std::numeric_limits<T>::max();
+  ret = -std::numeric_limits<T>::lowest();
   for (std::size_t j = 0; j < array.size(); ++j)
   {
     if (array.At(j) > ret)
@@ -295,7 +295,7 @@ inline void Max(ShapelessArray<T, C> const &array, memory::Range r, T &ret)
   else
   {  // non-trivial range is not vectorised
     typename ShapelessArray<T, C>::Type ret =
-        -std::numeric_limits<typename ShapelessArray<T, C>::Type>::max();
+        std::numeric_limits<typename ShapelessArray<T, C>::Type>::lowest();
     for (auto i : array)
     {
       ret = std::max(ret, i);
@@ -348,7 +348,7 @@ void Max(NDArray<T, C> &array, std::size_t const &axis, NDArray<T, C> &ret)
 
     // loops through the 1d array calculating the max val
     typename NDArray<T, C>::Type cur_max =
-        -std::numeric_limits<typename NDArray<T, C>::Type>::max();
+        std::numeric_limits<typename NDArray<T, C>::Type>::lowest();
     typename NDArray<T, C>::Type cur_val;
     while (array_iterator)
     {
