@@ -27,11 +27,11 @@ namespace vm {
 class ReadWriteInterface
 {
 public:
-  virtual ~ReadWriteInterface()         = default;
+  virtual ~ReadWriteInterface()                                                  = default;
   virtual bool read(uint8_t *dest, uint64_t dest_size, uint8_t const *const key,
-                    uint64_t key_size)  = 0;
+                    uint64_t key_size)                                           = 0;
   virtual bool write(uint8_t const *const source, uint64_t dest_size, uint8_t const *const key,
-                     uint64_t key_size) = 0;
+                     uint64_t key_size)                                          = 0;
   virtual bool exists(uint8_t const *const key, uint64_t key_size, bool &exists) = 0;
 };
 
@@ -49,7 +49,8 @@ public:
 
     bool ret = false;
 
-    bool success = read_write_interface_->exists(reinterpret_cast<uint8_t const *const>(str.c_str()), str.size(), ret);
+    bool success = read_write_interface_->exists(
+        reinterpret_cast<uint8_t const *const>(str.c_str()), str.size(), ret);
 
     if (!success)
     {

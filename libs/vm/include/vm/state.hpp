@@ -32,7 +32,7 @@ public:
                                         TemplateParameter const &value);
   virtual TemplateParameter Get() const                         = 0;
   virtual void              Set(TemplateParameter const &value) = 0;
-  virtual bool              Existed() const = 0;
+  virtual bool              Existed() const                     = 0;
 
 protected:
   IState(VM *vm, TypeId type_id)
@@ -56,11 +56,12 @@ public:
     value_type_id_ = value_type_id;
     name_          = name->str;
 
-    value_ = this->vm_->state_sentinel_.template get<T>(name_);
+    value_   = this->vm_->state_sentinel_.template get<T>(name_);
     existed_ = true;
   }
 
-  // Construct state object, default argument = get from state DB, initializing to value if not found
+  // Construct state object, default argument = get from state DB, initializing to value if not
+  // found
   State(VM *vm, TypeId type_id, TypeId value_type_id, Ptr<String> const &name,
         TemplateParameter const &value)
     : IState(vm, type_id)
@@ -71,7 +72,7 @@ public:
 
     if (this->vm_->state_sentinel_.exists(name_))
     {
-      value_ = this->vm_->state_sentinel_.template get<T>(name_);
+      value_   = this->vm_->state_sentinel_.template get<T>(name_);
       existed_ = true;
     }
     else
@@ -105,7 +106,7 @@ private:
   std::string name_;
   Value       value_;
   TypeId      value_type_id_;
-  bool existed_{false};
+  bool        existed_{false};
 };
 
 template <typename... Args>

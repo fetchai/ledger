@@ -32,7 +32,6 @@ void DatabaseInterface::Allow(ByteArray const &resource)
   allowed_resources_.insert(resource);
 }
 
-
 bool DatabaseInterface::exists(uint8_t const *const keyy, uint64_t key_size, bool &exists)
 {
   ByteArray key{keyy, key_size};
