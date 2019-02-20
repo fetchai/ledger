@@ -71,19 +71,6 @@ public:
     return *this;
   }
 
-  std::string VTS(std::vector<uint64_t> const &v) const
-  {
-    std::string s("[");
-    for (auto e : v)
-    {
-      s += std::to_string(e);
-      s += ", ";
-    }
-    s.pop_back();
-    s.back() = ']';
-    return s;
-  }
-
   T &operator*() const
   {
     return *pointer_;
