@@ -125,7 +125,7 @@ TYPED_TEST(TensorOperationsTest, transpose_test)
   {
     for (std::uint64_t j(0); j < 5; ++j)
     {
-      EXPECT_EQ(t1.Get({i, j}), t2.Get({j, i}));
+      EXPECT_EQ(t1.At({i, j}), t2.At({j, i}));
     }
   }
 }
@@ -146,7 +146,7 @@ TYPED_TEST(TensorOperationsTest, transpose_with_stride_test)
   {
     for (std::uint64_t j(0); j < 5; ++j)
     {
-      EXPECT_EQ(t1.Get({i, j}), t2.Get({j, i}));
+      EXPECT_EQ(t1.At({i, j}), t2.At({j, i}));
     }
   }
 }

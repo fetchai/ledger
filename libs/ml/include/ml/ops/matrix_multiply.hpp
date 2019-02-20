@@ -52,14 +52,14 @@ public:
     {
       for (std::uint64_t j(0); j < inputs[1]->shape()[1]; ++j)
       {
-        this->output_->Get(std::vector<std::uint64_t>({i, j})) =
-            inputs[0]->Get(std::vector<std::uint64_t>({i, 0})) *
-            inputs[1]->Get(std::vector<std::uint64_t>({0, j}));
+        this->output_->At(std::vector<std::uint64_t>({i, j})) =
+            inputs[0]->At(std::vector<std::uint64_t>({i, 0})) *
+            inputs[1]->At(std::vector<std::uint64_t>({0, j}));
         for (std::uint64_t k(1); k < inputs[0]->shape()[1]; ++k)
         {
-          this->output_->Get(std::vector<std::uint64_t>({i, j})) +=
-              inputs[0]->Get(std::vector<std::uint64_t>({i, k})) *
-              inputs[1]->Get(std::vector<std::uint64_t>({k, j}));
+          this->output_->At(std::vector<std::uint64_t>({i, j})) +=
+              inputs[0]->At(std::vector<std::uint64_t>({i, k})) *
+              inputs[1]->At(std::vector<std::uint64_t>({k, j}));
         }
       }
     }

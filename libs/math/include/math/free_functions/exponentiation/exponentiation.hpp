@@ -40,13 +40,11 @@ namespace details {
 template <typename ArrayType>
 void SquareImpl(ArrayType const &x, ArrayType &ret)
 {
+  assert(x.size() == ret.size());
+  for (std::size_t i = 0; i < x.size(); ++i)
   {
-    assert(x.size() == ret.size());
-    for (typename ArrayType::SizeType i = 0; i < x.size(); ++i)
-    {
-      ret.Set(i, x.At(i) * x.At(i));
-    }
-  }  // namespace details
+    ret[i] = x[i] * x[i];
+  }
 }
 }  // namespace details
 /**
@@ -123,7 +121,7 @@ fetch::math::meta::IfIsNonBlasArray<ArrayType, void> Sqrt(ArrayType &x)
   }
 }
 template <typename ArrayType>
-fetch::math::meta::IfIsMathFixedPointArray <ArrayType, void> Sqrt(ArrayType &x)
+fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> Sqrt(ArrayType &x)
 {
   for (std::size_t j = 0; j < x.size(); ++j)
   {

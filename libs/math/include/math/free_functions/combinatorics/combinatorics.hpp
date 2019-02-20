@@ -19,6 +19,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <math/tensor.hpp>
 
 namespace fetch {
 namespace math {
@@ -29,8 +30,7 @@ namespace combinatorics {
  * @param n - Integer for which this function calculates the factorial
  * @return - Integer solution to n!
  */
-template <typename SizeType>
-SizeType factorial(SizeType n)
+std::size_t factorial(std::size_t n)
 {
   // Trivial case
   if (n == 0)
@@ -39,7 +39,7 @@ SizeType factorial(SizeType n)
   }
 
   // General solution
-  for (SizeType i = n - 1; i > 1; i--)
+  for (std::size_t i = n - 1; i > 1; i--)
   {
     n *= i;
   }
@@ -54,8 +54,7 @@ SizeType factorial(SizeType n)
  * @param r - The size of each combination
  * @return - Number of combinations as float
  */
-template <typename SizeType>
-SizeType calculateNumCombinations(SizeType n, SizeType r)
+std::size_t calculateNumCombinations(std::size_t n, std::size_t r)
 {
   assert(r <= n);
 
@@ -82,7 +81,7 @@ SizeType calculateNumCombinations(SizeType n, SizeType r)
   {
     fraction *= static_cast<double>(--n) / static_cast<double>(r);
   }
-  return static_cast<SizeType>(fraction * static_cast<double>(--n));
+  return static_cast<std::size_t>(fraction * static_cast<double>(--n));
 }
 
 /**
@@ -92,8 +91,8 @@ SizeType calculateNumCombinations(SizeType n, SizeType r)
  * @return - Matrix of size (num possible combinations, r), where each row contains a unique
  * combination of r items
  */
-template <typename ArrayType, typename SizeType>
-ArrayType combinations(SizeType n, SizeType r)
+template <typename ArrayType>
+ArrayType combinations(std::size_t n, std::size_t r)
 {
   assert(r <= n);
   if (r == 0)
@@ -102,9 +101,9 @@ ArrayType combinations(SizeType n, SizeType r)
     return output_array;
   }
 
-  SizeType n_combinations = calculateNumCombinations(n, r);
-  SizeType current_dim    = 0;
-  SizeType current_row    = 0;
+  std::size_t n_combinations = calculateNumCombinations(n, r);
+  std::size_t current_dim    = 0;
+  std::size_t current_row    = 0;
 
   std::vector<bool> v(n);
   std::fill(v.end() - static_cast<int>(r), v.end(), true);
@@ -112,11 +111,11 @@ ArrayType combinations(SizeType n, SizeType r)
   ArrayType output_array({r, n_combinations});
   do
   {
-    for (SizeType i = 0; i < n; ++i)
+    for (std::size_t i = 0; i < n; ++i)
     {
       if (v[i])
       {
-        SizeType dim = (i + 1);
+        std::size_t dim = (i + 1);
         output_array.Set({current_dim, current_row}, static_cast<float>(dim));
         if (current_dim == r - 1)
         {

@@ -661,14 +661,14 @@ ArrayType ReduceSum(ArrayType const &obj1, typename ArrayType::SizeType axis)
   if (axis == 0)
   {
     std::vector<typename ArrayType::SizeType> new_shape{1, obj1.shape()[1]};
-    ArrayType                ret{new_shape};
+    ArrayType                                 ret{new_shape};
     ReduceSum(obj1, axis, ret);
     return ret;
   }
   else
   {
     std::vector<typename ArrayType::SizeType> new_shape{obj1.shape()[0], 1};
-    ArrayType                ret{new_shape};
+    ArrayType                                 ret{new_shape};
     ReduceSum(obj1, axis, ret);
     return ret;
   }
@@ -772,12 +772,14 @@ void Dot(ArrayType const &A, ArrayType const &B, ArrayType &ret)
   {
     for (typename ArrayType::SizeType j(0); j < B.shape()[1]; ++j)
     {
-      ret.Get(std::vector<typename ArrayType::SizeType>({i, j})) =
-          A.Get(std::vector<typename ArrayType::SizeType>({i, 0})) * B.Get(std::vector<typename ArrayType::SizeType>({0, j}));
+      ret.At(std::vector<typename ArrayType::SizeType>({i, j})) =
+          A.At(std::vector<typename ArrayType::SizeType>({i, 0})) *
+          B.At(std::vector<typename ArrayType::SizeType>({0, j}));
       for (typename ArrayType::SizeType k(1); k < A.shape()[1]; ++k)
       {
-        ret.Get(std::vector<typename ArrayType::SizeType>({i, j})) +=
-            A.Get(std::vector<typename ArrayType::SizeType>({i, k})) * B.Get(std::vector<typename ArrayType::SizeType>({k, j}));
+        ret.At(std::vector<typename ArrayType::SizeType>({i, j})) +=
+            A.At(std::vector<typename ArrayType::SizeType>({i, k})) *
+            B.At(std::vector<typename ArrayType::SizeType>({k, j}));
       }
     }
   }
@@ -787,7 +789,7 @@ template <typename ArrayType>
 ArrayType Dot(ArrayType const &A, ArrayType const &B)
 {
   std::vector<typename ArrayType::SizeType> return_shape{A.shape()[0], B.shape()[1]};
-  ArrayType                ret(return_shape);
+  ArrayType                                 ret(return_shape);
   Dot(A, B, ret);
   return ret;
 }
@@ -812,9 +814,9 @@ void DotTranspose(ArrayType const &A, ArrayType const &B, ArrayType &ret)
     {
       for (size_t k(0); k < A.shape()[1]; ++k)
       {
-        ret.Get(std::vector<typename ArrayType::SizeType>({i, j})) +=
-            A.Get(std::vector<typename ArrayType::SizeType>({i, k})) *
-            B.Get(std::vector<typename ArrayType::SizeType>({j, k}));
+        ret.At(std::vector<typename ArrayType::SizeType>({i, j})) +=
+            A.At(std::vector<typename ArrayType::SizeType>({i, k})) *
+            B.At(std::vector<typename ArrayType::SizeType>({j, k}));
       }
     }
   }
@@ -825,7 +827,7 @@ fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> DotTranspose(ArrayTy
                                                                          ArrayType const &B)
 {
   std::vector<typename ArrayType::SizeType> return_shape{A.shape()[0], B.shape()[0]};
-  ArrayType                ret(return_shape);
+  ArrayType                                 ret(return_shape);
   DotTranspose(A, B, ret);
   return ret;
 }
@@ -850,9 +852,9 @@ void TransposeDot(ArrayType const &A, ArrayType const &B, ArrayType &ret)
     {
       for (size_t k(0); k < A.shape()[0]; ++k)
       {
-        ret.Get(std::vector<typename ArrayType::SizeType>({i, j})) +=
-            A.Get(std::vector<typename ArrayType::SizeType>({k, i})) *
-            B.Get(std::vector<typename ArrayType::SizeType>({k, j}));
+        ret.At(std::vector<typename ArrayType::SizeType>({i, j})) +=
+            A.At(std::vector<typename ArrayType::SizeType>({k, i})) *
+            B.At(std::vector<typename ArrayType::SizeType>({k, j}));
       }
     }
   }
@@ -1046,7 +1048,8 @@ void DynamicStitchImplementation(ArrayType &input_array, ArrayType const &indice
   input_array.LazyResize(indices.size());
 
   // loop through all output data locations identifying the next data point to copy into it
-  for (typename ArrayType::SizeType i = 0; i < indices.size(); ++i)  // iterate through lists of indices
+  for (typename ArrayType::SizeType i = 0; i < indices.size();
+       ++i)  // iterate through lists of indices
   {
     input_array.Set(typename ArrayType::SizeType(indices[i]), data[i]);
   }

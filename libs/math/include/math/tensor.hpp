@@ -24,9 +24,9 @@
 
 #include <iostream>
 #include <memory>
-#include <vector>
-#include <random>
 #include <numeric>
+#include <random>
+#include <vector>
 
 namespace fetch {
 namespace math {
@@ -61,42 +61,10 @@ public:
     Init(strides_, padding_);
   }
 
-  /**
-  * constructor that provides a deep copy of a tensor
-  * @param t
-  */
-  Tensor(Tensor const &t)
-  {
-    shape_ = t.shape();
-    Init(t.strides_, t.padding_);
-
-    // deep copy
-    for (std::size_t j = 0; j < t.size(); ++j)
-    {
-      this->Set(j, t.At(j));
-    }
-  }
-
-  /**
-   * move semantic constructor
-   * @param t
-   */
-  Tensor(Tensor &&t) noexcept  = default;
-
-#if 0
-  strides_(std::move(t.strides_)),
-  padding_(std::move(t.padding_)),
-  storage_(std::move(t.storage_)),
-  offset_(std::move(t.offset_)),
-  shape_(std::move(t.shape))
-  {
-  }
-#endif
-
-  Tensor &operator=(Tensor const &) = default;
+  Tensor(Tensor const &t)     = default;
+  Tensor(Tensor &&t) noexcept = default;
+  Tensor &operator=(Tensor const &other) = default;
   Tensor &operator=(Tensor &&) = default;
-
-
 
   /**
    * Initialises default values for stride padding etc.
@@ -239,15 +207,15 @@ public:
 
   T const &operator()(std::vector<SizeType> const &indices) const
   {
-    return Get(indices);
+    return At(indices);
   }
 
-  T const &Get(std::vector<SizeType> const &indices) const
+  T const &At(std::vector<SizeType> const &indices) const
   {
     return (*storage_)[OffsetOfElement(indices)];
   }
 
-  T &Get(std::vector<SizeType> const &indices)
+  T &At(std::vector<SizeType> const &indices)
   {
     return (*storage_)[OffsetOfElement(indices)];
   }
@@ -267,6 +235,11 @@ public:
   }
 
   T &operator[](SizeType i)
+  {
+    return At(i);
+  }
+
+  T const &operator[](SizeType i) const
   {
     return At(i);
   }
@@ -299,8 +272,8 @@ public:
     ASSERT(o.size() == size());
     for (SizeType i(0); i < size(); ++i)
     {
-      T e1 = Get(IndicesOfElement(i));
-      T e2 = o.Get(o.IndicesOfElement(i));
+      T e1 = At(IndicesOfElement(i));
+      T e2 = o.At(o.IndicesOfElement(i));
 
       T abs_e1 = e1;
       fetch::math::Abs(abs_e1);
@@ -432,7 +405,7 @@ public:
   void Shuffle()
   {
     std::default_random_engine rng{};
-    std::vector<SizeType> idxs{size()};
+    std::vector<SizeType>      idxs{size()};
     std::iota(std::begin(idxs), std::end(idxs), 0);
     std::shuffle(idxs.begin(), idxs.end(), rng);
 
@@ -446,27 +419,57 @@ public:
     }
   }
 
-  void Reshape(std::vector<SizeType> new_shape)
-  {
-    Tensor()
-  }
-
   std::string ToString() const
   {
     std::stringstream ss;
     ss << std::setprecision(5) << std::fixed << std::showpos;
+    if (shape_.size() == 1)
+    {
+      for (SizeType i(0); i < shape_[0]; ++i)
+      {
+        ss << At(i) << "\t";
+      }
+      ss << "\n";
+    }
     if (shape_.size() == 2)
     {
       for (SizeType i(0); i < shape_[0]; ++i)
       {
         for (SizeType j(0); j < shape_[1]; ++j)
         {
-          ss << Get({i, j}) << "\t";
+          ss << At({i, j}) << "\t";
         }
         ss << "\n";
       }
     }
     return ss.str();
+  }
+
+  //////////////////////
+  /// equality check ///
+  //////////////////////
+
+  /**
+   * equality operator for tensors. checks size, shape, and data.
+   * Fast when tensors not equal, slow otherwise
+   * @param other
+   * @return
+   */
+  bool operator==(Tensor &other)
+  {
+    bool ret = false;
+    if ((this->size() == other.size()) && (this->shape_ == other.shape()))
+    {
+      for (std::size_t j = 0; j < this->size(); ++j)
+      {
+        if (this->At(j) != other.At(j))
+        {
+          return ret;
+        }
+      }
+      ret = true;
+    }
+    return ret;
   }
 
 private:
