@@ -101,6 +101,19 @@ class DummyReadWriteInterface : public ReadWriteInterface
 public:
   ~DummyReadWriteInterface() = default;
 
+  bool exists(uint8_t const *const key, uint64_t key_size, bool &exists) override
+  {
+    ByteWrapper key_wrapper{key, key_size};
+    exists = false;
+
+    if (dummy_db_.find(key_wrapper) != dummy_db_.end())
+    {
+      exists = true;
+    }
+
+    return true;
+  }
+
   bool read(uint8_t *dest, uint64_t dest_size, uint8_t const *const key, uint64_t key_size) override
   {
 
@@ -129,14 +142,28 @@ public:
   bool write(uint8_t const *const source, uint64_t dest_size, uint8_t const *const key,
              uint64_t key_size) override
   {
-    // We should never have a write before a read. So this will throw if that is the case
     ByteWrapper key_wrapper{key, key_size};
 
-    auto &byte_wrapper = dummy_db_.at(key_wrapper);
+    // Create new memory if neccessary
+    if (dummy_db_.find(key_wrapper) == dummy_db_.end())
+    {
+      // Create memory
+      ByteWrapper mem{dest_size};
 
-    uint8_t *data_ptr = byte_wrapper.data();
+      // Copy to caller
+      memcpy(mem.data(), source, dest_size);
 
-    memcpy(data_ptr, source, dest_size);
+      // Save for later
+      dummy_db_[std::move(key_wrapper)] = std::move(mem);
+    }
+    else
+    {
+      auto &byte_wrapper = dummy_db_.at(key_wrapper);
+
+      uint8_t *data_ptr = byte_wrapper.data();
+
+      memcpy(data_ptr, source, dest_size);
+    }
 
     return true;
   }
@@ -287,11 +314,35 @@ TEST_F(VMTests, CheckCustomBindingWithState)
 {
   const std::string source =
       "function main()                                      \n "
-      " var a : Int32 = 2;                                  \n "
-      " var b : Int32 = 1;                                  \n "
-      " b = a + b;                                          \n "
-      " Print('The result is: ' + toString(b));             \n "
       " var s = State<Int32>('hello');                      \n "
+      " Print('The STATE result is: ' + toString(s.get())); \n "
+      " s.set(8);                                           \n "
+      "                                                     \n "
+      " endfunction                                         \n ";
+
+  bool res = Compile(source);
+
+  for (uint64_t i = 0; i < 3; ++i)
+  {
+    res = Execute();
+    EXPECT_EQ(res, true);
+  }
+
+  uint32_t out = GetState().Lookup<uint32_t>("hello");
+
+  EXPECT_EQ(out, 8);
+}
+
+TEST_F(VMTests, CheckCustomBindingWithStateDefault)
+{
+  const std::string source =
+      "function main()                                      \n "
+      " var s = State<Int32>('hello', 9);                   \n "
+      " if(s.existed())                                     \n "
+      "   Print('Recovered from file');                     \n "
+      " else                                                \n "
+      "   Print('Not recovered from file');                 \n "
+      " endif                                               \n "
       " Print('The STATE result is: ' + toString(s.get())); \n "
       " s.set(8);                                           \n "
       "                                                     \n "

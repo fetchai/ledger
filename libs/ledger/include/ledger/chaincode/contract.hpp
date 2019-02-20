@@ -95,6 +95,8 @@ protected:
 
   template <typename T>
   bool GetOrCreateStateRecord(T &record, byte_array::ByteArray const &address);
+
+  bool StateRecordExists(byte_array::ByteArray const &address);
   template <typename T>
   bool GetStateRecord(T &record, byte_array::ByteArray const &address);
   template <typename T>

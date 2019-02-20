@@ -39,6 +39,8 @@ public:
 
   void Allow(ByteArray const &resource);
 
+  bool exists(uint8_t const *const key, uint64_t key_size, bool &exists) override;
+
   bool write(uint8_t const *const source, uint64_t dest_size, uint8_t const *const keyy,
              uint64_t key_size) override;
 

@@ -240,5 +240,20 @@ bool Contract::GetRawState(byte_array::ByteArray &payload, byte_array::ByteArray
   return true;
 }
 
+bool Contract::StateRecordExists(byte_array::ByteArray const &address)
+{
+  // create the index that is required
+  auto index = CreateStateIndex(address);
+
+  // retrieve the state data
+  auto document = state().Get(index);
+  if (document.failed)
+  {
+    return false;
+  }
+
+  return true;
+}
+
 }  // namespace ledger
 }  // namespace fetch

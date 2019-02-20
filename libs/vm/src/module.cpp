@@ -72,6 +72,7 @@ Module::Module()
   istate.CreateTypeConstuctor<Ptr<String>, TemplateParameter>();
   istate.CreateInstanceFunction("get", &IState::Get);
   istate.CreateInstanceFunction("set", &IState::Set);
+  istate.CreateInstanceFunction("existed", &IState::Existed);
 }
 
 }  // namespace vm

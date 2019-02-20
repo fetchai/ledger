@@ -32,12 +32,32 @@ public:
                     uint64_t key_size)  = 0;
   virtual bool write(uint8_t const *const source, uint64_t dest_size, uint8_t const *const key,
                      uint64_t key_size) = 0;
+  virtual bool exists(uint8_t const *const key, uint64_t key_size, bool &exists) = 0;
 };
 
 class StateSentinel
 {
 public:
   StateSentinel() = default;
+
+  bool exists(std::string const &str)
+  {
+    if (!read_write_interface_)
+    {
+      throw std::runtime_error("Failed to access state pointer in VM! Not set.");
+    }
+
+    bool ret = false;
+
+    bool success = read_write_interface_->exists(reinterpret_cast<uint8_t const *const>(str.c_str()), str.size(), ret);
+
+    if (!success)
+    {
+      throw std::runtime_error("Failed to access state in VM! Bad access.");
+    }
+
+    return ret;
+  }
 
   template <typename T>
   T get(std::string const &str)

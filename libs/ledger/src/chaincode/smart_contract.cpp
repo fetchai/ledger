@@ -166,6 +166,11 @@ bool SmartContract::RunSmartContract(std::string &source, std::string const &tar
   return true;
 }
 
+bool SmartContract::Exists(byte_array::ByteArray const &address)
+{
+  return StateRecordExists(address);
+}
+
 bool SmartContract::Get(byte_array::ByteArray &record, byte_array::ByteArray const &address)
 {
   return GetStateRecord(record, address);

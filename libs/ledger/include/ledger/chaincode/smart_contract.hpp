@@ -30,6 +30,7 @@ public:
 
   static constexpr char const *LOGGING_NAME = "SmartContract";
 
+  bool Exists(byte_array::ByteArray const &address);
   bool Get(byte_array::ByteArray &record, byte_array::ByteArray const &address);
   void Set(byte_array::ByteArray const &record, byte_array::ByteArray const &address);
 
