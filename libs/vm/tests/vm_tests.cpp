@@ -328,7 +328,7 @@ TEST_F(VMTests, CheckCustomBindingWithState)
     EXPECT_EQ(res, true);
   }
 
-  uint32_t out = GetState().Lookup<uint32_t>("hello");
+  int32_t out = GetState().Lookup<int32_t>("hello");
 
   EXPECT_EQ(out, 8);
 }
@@ -356,7 +356,7 @@ TEST_F(VMTests, CheckCustomBindingWithStateDefault)
     EXPECT_EQ(res, true);
   }
 
-  uint32_t out = GetState().Lookup<uint32_t>("hello");
+  int32_t out = GetState().Lookup<int32_t>("hello");
 
   EXPECT_EQ(out, 8);
 }
