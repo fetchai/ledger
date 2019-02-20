@@ -28,20 +28,28 @@ namespace vm {
 template <typename T, typename = void>
 struct Getter;
 template <typename T>
-struct Getter<T, typename std::enable_if_t<IsPrimitive<std::decay_t<T>>::value>>
+struct Getter<T, typename std::enable_if_t<IsPrimitive<T>::value>>
 {
-  static TypeIndex GetTypeIndex()
+  static TypeId GetTypeId(RegisteredTypes const &types, T const & /* parameter */)
   {
-    return TypeIndex(typeid(std::decay_t<T>));
+    return types.GetTypeId(TypeIndex(typeid(T)));
   }
 };
 template <typename T>
-struct Getter<T, typename std::enable_if_t<IsPtr<std::decay_t<T>>::value>>
+struct Getter<T, typename std::enable_if_t<IsPtr<T>::value>>
 {
-  static TypeIndex GetTypeIndex()
+  static TypeId GetTypeId(RegisteredTypes const &types, T const & /* parameter */)
   {
-    using ManagedType = typename GetManagedType<std::decay_t<T>>::type;
-    return TypeIndex(typeid(ManagedType));
+    using ManagedType = typename GetManagedType<T>::type;
+    return types.GetTypeId(TypeIndex(typeid(ManagedType)));
+  }
+};
+template <typename T>
+struct Getter<T, typename std::enable_if_t<IsVariant<T>::value>>
+{
+  static TypeId GetTypeId(RegisteredTypes const & /* types */, T const &parameter)
+  {
+    return parameter.type_id;
   }
 };
 
@@ -51,11 +59,10 @@ template <int POSITION, typename T, typename... Ts>
 struct AssignParameters<POSITION, T, Ts...>
 {
   // Invoked on non-final parameter
-  static void Assign(Variant *stack, RegisteredTypes &types, T const &parameter,
+  static void Assign(Variant *stack, RegisteredTypes const &types, T const &parameter,
                      Ts const &... parameters)
   {
-    TypeIndex type_index = Getter<T>::GetTypeIndex();
-    TypeId    type_id    = types.GetTypeId(type_index);
+    TypeId type_id = Getter<T>::GetTypeId(types, parameter);
     if (type_id != TypeIds::Unknown)
     {
       Variant &v = stack[POSITION];
@@ -68,10 +75,9 @@ template <int POSITION, typename T>
 struct AssignParameters<POSITION, T>
 {
   // Invoked on final parameter
-  static void Assign(Variant *stack, RegisteredTypes &types, T const &parameter)
+  static void Assign(Variant *stack, RegisteredTypes const &types, T const &parameter)
   {
-    TypeIndex type_index = Getter<T>::GetTypeIndex();
-    TypeId    type_id    = types.GetTypeId(type_index);
+    TypeId type_id = Getter<T>::GetTypeId(types, parameter);
     if (type_id != TypeIds::Unknown)
     {
       Variant &v = stack[POSITION];
@@ -83,7 +89,7 @@ template <int POSITION>
 struct AssignParameters<POSITION>
 {
   // Invoked on zero parameters
-  static void Assign(Variant * /* stack */, RegisteredTypes & /* types */)
+  static void Assign(Variant * /* stack */, RegisteredTypes const & /* types */)
   {}
 };
 
