@@ -217,17 +217,23 @@ protected:
   bool Execute(std::string const &function = "main")
   {
     vm_ = VMFactory::GetVM(module_);
-    std::string        error;
-    fetch::vm::Variant output;
+    std::string              error;
+    std::vector<std::string> print_strings;
+    fetch::vm::Variant       output;
 
     // Attach our state
     vm_->SetIOInterface(&interface_);
 
     // Execute our fn
-    if (!vm_->Execute(script_, function, error, output))
+    if (!vm_->Execute(script_, function, error, print_strings, output))
     {
       std::cerr << "Runtime error: " << error << std::endl;
       return false;
+    }
+
+    for(auto const &i : print_strings)
+    {
+      std::cerr << "GOT " << i << std::endl;
     }
 
     return true;

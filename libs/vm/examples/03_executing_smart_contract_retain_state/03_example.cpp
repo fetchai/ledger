@@ -62,14 +62,15 @@ int main(int argc, char **argv)
   }
 
   // Execute smart contract
-  std::string        error;
-  fetch::vm::Variant output;
+  std::string              error;
+  std::vector<std::string> print_strings;
+  fetch::vm::Variant       output;
 
   // Get clean VM instance
   auto vm = VMFactory::GetVM(module);
 
   // Execute our fn
-  if (!vm->Execute(script, "main", error, output))
+  if (!vm->Execute(script, "main", error, print_strings, output))
   {
     std::cerr << "Runtime error: " << error << std::endl;
   }

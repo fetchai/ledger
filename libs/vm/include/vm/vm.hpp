@@ -98,9 +98,12 @@ public:
   ~VM() = default;
 
   template <typename... Ts>
-  bool Execute(Script const &script, std::string const &name, std::string &error, Variant &output,
+  bool Execute(Script const &script, std::string const &name, std::string &error, std::vector<std::string> &print_strings, Variant &output,
                Ts const &... parameters)
   {
+    print_strings_ = &print_strings;
+    print_strings_->clear();
+
     Script::Function const *f = script.FindFunction(name);
     if (f == nullptr)
     {
@@ -151,6 +154,14 @@ public:
   ReadWriteInterface *GetIOInterface()
   {
     return state_sentinel_.GetReadWriteInterface();
+  }
+
+  void AddPrintString(std::string const &print_string)
+  {
+    if(print_strings_)
+    {
+      print_strings_->push_back(print_string);
+    }
   }
 
 protected:
@@ -224,6 +235,7 @@ private:
   Script::Instruction const *instruction_;
   bool                       stop_;
   std::string                error_;
+  std::vector<std::string>   *print_strings_ = nullptr;
 
   bool Execute(std::string &error, Variant &output);
   void Destruct(int scope_number);

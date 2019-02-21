@@ -117,11 +117,12 @@ int main(int argc, char **argv)
     return -2;
   }
 
-  std::string        error;
-  fetch::vm::Variant output;
+  std::string              error;
+  std::vector<std::string> print_strings;
+  fetch::vm::Variant       output;
 
   // Setting VM up and running
-  if (!vm->Execute(script, "main", error, output))
+  if (!vm->Execute(script, "main", error, print_strings, output))
   {
     std::cout << "Runtime error: " << error << std::endl;
   }

@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/vm.hpp"
 #include "vm/node.hpp"
 #include "vm/string.hpp"
 
@@ -34,8 +35,9 @@ static fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t con
   return ret;
 }
 
-static void Print(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
+static void Print(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
+  vm->AddPrintString(s->str);
   std::cout << s->str << std::endl;
 }
 
