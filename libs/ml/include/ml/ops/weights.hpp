@@ -70,7 +70,7 @@ public:
     gradientAccumulation_->Fill(typename T::Type(0));
   }
 
-private:
+protected:
   ArrayPtrType gradientAccumulation_;
 };
 

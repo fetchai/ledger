@@ -18,47 +18,67 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "ml/ops/ops.hpp"
+#include "ml/ops/weights.hpp"
 
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class Add : public fetch::ml::Ops<T>
+class Embedings : public fetch::ml::ops::Weights<T>
 {
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  Add()          = default;
-  virtual ~Add() = default;
+  Embedings(unsigned int dataPoints, unsigned int dimensions)
+  {
+    this->SetData(std::make_shared<ArrayType>(
+        std::vector<typename ArrayType::SizeType>({dataPoints, dimensions})));
+  }
+
+  virtual ~Embedings() = default;
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
-    ASSERT(inputs.size() == 2);
-    ASSERT(inputs[0]->size() == inputs[1]->size());
-    if (!this->output_ || this->output_->shape() != inputs[0]->shape())
-    {
-      this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
-    }
+    ASSERT(inputs.size() == 1);
+    ASSERT(inputs[0]->size() == 1);
 
-    for (std::uint64_t i = 0; i < inputs[0]->size(); ++i)
+    if (!this->embedings_output_ || this->embedings_output_->shape()[0] != inputs.size() ||
+        this->embedings_output_->shape()[1] != this->output_->shape()[1])
     {
-      this->output_->Set(i, inputs[0]->At(i) + inputs[1]->At(i));
+      this->embedings_output_ =
+          std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>(
+              {inputs[0]->size(), this->output_->shape()[1]}));
     }
-    return this->output_;
+    // uint64_t j(0);
+    // for (DataType const &i : *(inputs[0]))
+    //   {
+    // 	this->output_->Slice(j).Copy(weights_.Forward()->Slice(i));
+    // 	j++;
+    //   }
+    return this->embedings_output_;
   }
 
   virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
                                              ArrayPtrType                     errorSignal)
   {
-    ASSERT(inputs.size() == 2);
-    ASSERT(inputs[0]->size() == inputs[1]->size());
-    ASSERT(errorSignal->size() == inputs[1]->size());
-    return {errorSignal, errorSignal};
+    ASSERT(inputs.size() == 1);
+    ASSERT(inputs[0]->shape().size() == 1);
+
+    // uint64_t j(0);
+    // for (DataType const &i : *(inputs[0]))
+    //   {
+    // 	this->gradientAccumulation_->Slice(i).Copy(errorSignal->Slice(j));
+    // 	j++;
+    //   }
+
+    return {};
   }
+
+private:
+  ArrayPtrType embedings_output_;
 };
 
 }  // namespace ops
