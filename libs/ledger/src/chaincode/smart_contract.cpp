@@ -154,8 +154,10 @@ bool SmartContract::RunSmartContract(std::string &source, std::string const &tar
   // Attach our state
   vm->SetIOInterface(&interface);
 
+  std::vector<std::string> print_strings;
+
   // Execute our fn
-  if (!vm->Execute(script, target_fn, error, output))
+  if (!vm->Execute(script, target_fn, error, print_strings, output))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
   }
