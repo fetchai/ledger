@@ -26,7 +26,7 @@
 #include "math/free_functions/numerical_decomposition/numerical_decomposition.hpp"
 #include "math/free_functions/precision/precision.hpp"
 #include "math/free_functions/sign_functionality/sign_functionality.hpp"
-#include "math/free_functions/statistics/distributions.hpp"
 #include "math/free_functions/standard_functions/standard_functions.hpp"
+#include "math/free_functions/statistics/distributions.hpp"
 #include "math/free_functions/trigonometry/trigonometry.hpp"
 #include "math/free_functions/type/type_identification.hpp"
