@@ -18,9 +18,6 @@ add_fetch_test(ndarray_broadcast_gtest fetch-math math/ndarray_broadcast)
 add_fetch_test(ndarray_squeeze_gtest fetch-math math/ndarray_squeeze)
 add_fetch_test(combinatorics_gtest fetch-math math/combinatorics)
 
-add_fetch_test(free_functions_gtest fetch-math math/free_functions)
-
-add_fetch_test(relu_gtest fetch-math math/kernels/relu)
 add_fetch_test(sign_gtest fetch-math math/kernels/sign)
 
 add_fetch_test(l2loss_gtest fetch-math math/shapeless_array/l2loss)

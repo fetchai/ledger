@@ -29,6 +29,8 @@
 #include "vectorise/memory/range.hpp"
 #include "vectorise/memory/shared_array.hpp"
 
+#include "math/free_functions/standard_functions/fmod.hpp"
+#include "math/free_functions/standard_functions/remainder.hpp"
 #include "math/free_functions/free_functions.hpp"
 #include "math/free_functions/statistics/mean.hpp"
 #include "math/meta/math_type_traits.hpp"
@@ -389,21 +391,6 @@ public:
 
     kernels::stdlib::Nanl<Type> kernel;
     data_.in_parallel().Apply(kernel, x.data_);
-  }
-
-  /**
-   * Apply softmax to this array
-   * @param x
-   * @return
-   */
-  self_type Softmax(self_type const &x)
-  {
-    LazyResize(x.size());
-
-    assert(x.size() == this->size());
-    fetch::math::Softmax(x, *this);
-
-    return *this;
   }
 
   /* One-dimensional constant reference access function.

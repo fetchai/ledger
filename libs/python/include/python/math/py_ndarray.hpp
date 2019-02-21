@@ -22,6 +22,7 @@
 #include "math/log.hpp"
 #include "math/ndarray.hpp"
 #include "math/ndarray_squeeze.hpp"
+#include "math/ndarray_broadcast.hpp"
 #include "python/fetch_pybind.hpp"
 #include <pybind11/stl.h>
 
@@ -33,7 +34,6 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
 {
 
   namespace py = pybind11;
-  //             .def("Relu",
   py::class_<NDArray<T>, fetch::math::ShapelessArray<T>>(module, custom_name.c_str())
       .def(py::init<>())
       .def(py::init<std::size_t const &>())
@@ -482,12 +482,6 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              Min(a, axis, ret);
              return ret;
            })
-      .def("relu",
-           [](NDArray<T> &a, NDArray<T> const &b) {
-             a = b;
-             Relu(a);
-             return a;
-           })
       .def("l2loss", [](NDArray<T> const &a) { return a.L2Loss(); })
       .def("sign",
            [](NDArray<T> &a, NDArray<T> const &b) {
@@ -571,9 +565,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
       .def("isnan", [](NDArray<T> &a) { fetch::math::Isnan(a); })
       .def("approx_exp", [](NDArray<T> &a) { fetch::math::ApproxExp(a); })
       .def("approx_log", [](NDArray<T> &a) { fetch::math::ApproxLog(a); })
-      .def("approx_logistic", [](NDArray<T> &a) { fetch::math::ApproxLogistic(a); })
 
-      .def("relu", [](NDArray<T> &a) { fetch::math::Relu(a); })
       .def("sign", [](NDArray<T> &a) { fetch::math::Sign(a); })
 
       .def("scatter",
