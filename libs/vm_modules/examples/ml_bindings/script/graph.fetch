@@ -44,7 +44,7 @@ for(i in 0:trainingIterations)
     endif
     var dt = c.Backward(pred, gt);
     g.Backpropagate("Softmax", dt);
-    g.Step(0.01f);
+    g.Step(0.1f);
     gt.SetAt(p.Label(), 0.0f); // Unset, gt is full of 0.0f
 endfor
 
