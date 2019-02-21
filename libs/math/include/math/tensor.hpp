@@ -182,17 +182,18 @@ public:
   /// Iterators ///
   /////////////////
 
-  TensorIterator<T> begin()  // Need to stay lowercase for range basedloops
+  TensorIterator<T, SizeType> begin()  // Need to stay lowercase for range basedloops
   {
-    return TensorIterator<T>(shape_, strides_, padding_, std::vector<SizeType>(shape_.size()),
-                             storage_, offset_);
+    return TensorIterator<T, SizeType>(shape_, strides_, padding_,
+                                       std::vector<SizeType>(shape_.size()), storage_, offset_);
   }
 
-  TensorIterator<T> end()  // Need to stay lowercase for range basedloops
+  TensorIterator<T, SizeType> end()  // Need to stay lowercase for range basedloops
   {
     std::vector<SizeType> endCoordinate(shape_.size());
     endCoordinate[0] = shape_[0];
-    return TensorIterator<T>(shape_, strides_, padding_, endCoordinate, storage_, offset_);
+    return TensorIterator<T, SizeType>(shape_, strides_, padding_, endCoordinate, storage_,
+                                       offset_);
   }
 
   /////////////////

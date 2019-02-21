@@ -19,13 +19,14 @@
 
 namespace fetch {
 namespace math {
-template <typename T>
+template <typename T, typename SizeType>
 class TensorIterator
 {
-  using Type     = T;
-  using SizeType = std::uint64_t;
+  using Type = T;
 
-public:
+  friend class Tensor<T>;
+
+private:
   TensorIterator(std::vector<SizeType> const &shape, std::vector<SizeType> const &strides,
                  std::vector<SizeType> const &padding, std::vector<SizeType> const &coordinate,
                  std::shared_ptr<std::vector<T>> const &storage, SizeType const &offset)
@@ -38,14 +39,15 @@ public:
     original_pointer_ = storage->data() + offset;
   }
 
-  bool operator!=(const TensorIterator<T> &other) const
+public:
+  bool operator!=(const TensorIterator<T, SizeType> &other) const
   {
     return !(*this == other);
   }
 
-  bool operator==(const TensorIterator<T> &other) const
+  bool operator==(const TensorIterator<T, SizeType> &other) const
   {
-    return pointer_ == pointer_ && coordinate_ == other.coordinate_;
+    return (original_pointer_ == other.original_pointer_) && (coordinate_ == other.coordinate_);
   }
 
   TensorIterator &operator++()
@@ -56,8 +58,8 @@ public:
     {
       return *this;
     }
-    std::uint64_t i(shape_.size() - 1);
-    while (i && coordinate_[i] >= shape_[i])
+    std::uint64_t i{shape_.size() - 1};
+    while (i && (coordinate_[i] >= shape_[i]))
     {
       coordinate_[i] = 0;
       coordinate_[(i ? i - 1 : i)] += 1;
