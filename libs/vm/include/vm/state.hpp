@@ -56,7 +56,7 @@ public:
     value_type_id_ = value_type_id;
     name_          = name->str;
 
-    value_   = this->vm_->state_sentinel_.template get<T>(name_);
+    this->vm_->state_sentinel_.get(name_, value_);
     existed_ = true;
   }
 
@@ -72,7 +72,7 @@ public:
 
     if (this->vm_->state_sentinel_.exists(name_))
     {
-      value_   = this->vm_->state_sentinel_.template get<T>(name_);
+      this->vm_->state_sentinel_.get(name_, value_);
       existed_ = true;
     }
     else
@@ -93,7 +93,7 @@ public:
   {
     value_ = value.Get<Value>();
 
-    this->vm_->state_sentinel_.template set<T>(name_, value_);
+    this->vm_->state_sentinel_.set(name_, value_);
   }
 
   virtual bool Existed() const override

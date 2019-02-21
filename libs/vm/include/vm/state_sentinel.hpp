@@ -24,6 +24,11 @@
 namespace fetch {
 namespace vm {
 
+// Forward declarations
+class Object;
+template <typename T>
+class Ptr;
+
 class ReadWriteInterface
 {
 public:
@@ -60,9 +65,21 @@ public:
     return ret;
   }
 
-  template <typename T>
-  T get(std::string const &str)
+  bool get(std::string const &str, vm::Ptr<vm::Object> &value)
   {
+    throw std::runtime_error("Attempt to serialize non primitive");
+  }
+
+  void set(std::string const &str, vm::Ptr<vm::Object> &value)
+  {
+    throw std::runtime_error("Attempt to serialize non primitive");
+  }
+
+  template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+  void get(std::string const &str, T &value)
+  {
+    value = 0;
+
     if (!read_write_interface_)
     {
       throw std::runtime_error("Failed to access state pointer in VM! Not set.");
@@ -79,10 +96,10 @@ public:
       throw std::runtime_error("Failed to access state in VM! Bad access.");
     }
 
-    return ret;
+    value = ret;
   }
 
-  template <typename T>
+  template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
   void set(std::string const &str, T item)
   {
     if (!read_write_interface_)
