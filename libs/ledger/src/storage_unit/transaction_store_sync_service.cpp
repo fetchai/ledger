@@ -140,7 +140,6 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
                        "Still pending object count promises, but limit approached!");
       }
     }
-    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, ": ", "Expected tx size: ", max_object_count_);
 
     // If there are objects to sync from the network, fetch N roots from each of the peers in
     // parallel. So if we decided to split the sync into 4 roots, the mask would be 2 (bits) and
@@ -148,6 +147,8 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
     // where roots to sync are all objects with the key starting with those bits
     if (max_object_count_ != 0)
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, ": ", "Expected tx size: ", max_object_count_);
+
       root_size_ = platform::Log2Ceil(((max_object_count_ / (PULL_LIMIT_ / 2)) + 1)) + 1;
 
       for (uint64_t i = 0, end = (1 << (root_size_)); i < end; ++i)
@@ -200,8 +201,8 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
     auto counts = pending_subtree_.Resolve();
     for (auto &result : pending_subtree_.Get(MAX_SUBTREE_RESOLUTION_PER_CYCLE))
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, ": ", "Got ", result.promised.size(),
-                     " subtree objects!");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", id_, ": ", "Got ", result.promised.size(),
+                      " subtree objects!");
 
       for (auto &tx : result.promised)
       {
@@ -275,12 +276,18 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
     auto counts = pending_objects_.Resolve();
     for (auto &result : pending_objects_.Get(MAX_OBJECT_RESOLUTION_PER_CYCLE))
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, ": ", "Got ", result.promised.size(), " objects!");
+      if (!result.promised.empty())
+      {
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", id_, ": ", "Got ", result.promised.size(),
+                        " objects!");
+      }
+
       for (auto &tx : result.promised)
       {
         verifier_.AddTransaction(tx.AsMutable());
       }
     }
+
     FETCH_LOCK(mutex_);
     if (counts.pending > 0)
     {
@@ -292,7 +299,12 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
       FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id_, ": ",
                      "Still pending object promises but limit approached!");
     }
-    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, ": ", "Failed promises: ", counts.failed);
+
+    if (counts.failed)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id_, ": ", "Failed promises: ", counts.failed);
+    }
+
     current_state = State::TRIM_CACHE;
     result        = true;
     break;

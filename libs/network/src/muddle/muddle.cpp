@@ -27,6 +27,8 @@
 #include "network/tcp/tcp_server.hpp"
 
 #include <chrono>
+#include <sstream>
+#include <iomanip>
 #include <thread>
 
 using fetch::byte_array::ByteArray;
@@ -43,6 +45,14 @@ static ConstByteArray ConvertAddress(Packet::RawAddress const &address)
   return ConstByteArray{output};
 }
 
+static std::string GenerateThreadPoolName(uint32_t identity)
+{
+  std::ostringstream oss;
+  oss << "Muddle " << std::hex << std::setw(8) << std::setfill('0') << identity;
+
+  return oss.str();
+}
+
 static const auto        CLEANUP_INTERVAL        = std::chrono::seconds{10};
 static std::size_t const MAINTENANCE_INTERVAL_MS = 2500;
 static std::size_t const NUM_THREADS             = 1;
@@ -52,17 +62,16 @@ static std::size_t const NUM_THREADS             = 1;
  *
  * @param certificate The certificate/identity of this node
  */
-Muddle::Muddle(NetworkId network_id, Muddle::CertificatePtr &&certificate, NetworkManager const &nm)
-  : certificate_(std::move(certificate))
+Muddle::Muddle(uint32_t network_id, CertificatePtr const &certificate, NetworkManager const &nm)
+  : certificate_(certificate)
   , identity_(certificate_->identity())
   , network_manager_(nm)
   , dispatcher_()
   , register_(std::make_shared<MuddleRegister>(dispatcher_))
   , router_(network_id, identity_.identifier(), *register_, dispatcher_)
   , thread_pool_(
-        network::MakeThreadPool(NUM_THREADS, "Muddle " + static_cast<std::string>(network_id)))
+        network::MakeThreadPool(NUM_THREADS, GenerateThreadPoolName(network_id)))
   , clients_(router_)
-  , network_id_{network_id}
 {}
 
 /**
@@ -75,8 +84,6 @@ void Muddle::Start(PortList const &ports, UriList const &initial_peer_list)
   // start the thread pool
   thread_pool_->Start();
   router_.Start();
-
-  FETCH_LOG_WARN(LOGGING_NAME, "MUDDLE START ");
 
   // create all the muddle servers
   for (uint16_t port : ports)
@@ -149,18 +156,26 @@ Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
 
   for (auto const &entry : routing_table)
   {
-    if (!entry.second.direct)
+    if (direct_only && !entry.second.direct)
     {
+      continue;
+    }
+
+    auto connection = register_->LookupConnection(entry.second.handle).lock();
+    if (!connection)
+    {
+      // do not care about connections that we are not connected too
+      continue;
+    }
+
+    if (!connection->is_alive())
+    {
+      // do not care about connections to whom we have yet fully connect
       continue;
     }
 
     // convert the address to a byte array
     ConstByteArray address = ConvertAddress(entry.first);
-
-    if (direct_only && !entry.second.direct)
-    {
-      continue;
-    }
 
     // based on the handle lookup the uri
     auto it = uri_map.find(entry.second.handle);

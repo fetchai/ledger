@@ -60,6 +60,7 @@ public:
   /// @{
   virtual void AddTransaction(Transaction const &tx)                         = 0;
   virtual bool GetTransaction(ConstByteArray const &digest, Transaction &tx) = 0;
+  virtual bool HasTransaction(ConstByteArray const &digest)                  = 0;
 
   virtual void AddTransactions(TransactionList const &txs)
   {

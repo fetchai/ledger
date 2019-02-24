@@ -125,6 +125,7 @@ public:
     SYNCHRONIZING,                 ///< Catch up with the outstanding blocks
     SYNCHRONIZED,                  ///< Caught up waiting to generate a new block
     PRE_EXEC_BLOCK_VALIDATION,     ///< Validation stage before block execution
+    WAIT_FOR_TRANSACTIONS,         ///< Halts the state machine until all the block transactions are present
     SCHEDULE_BLOCK_EXECUTION,      ///< Schedule the block to be executed
     WAIT_FOR_EXECUTION,            ///< Wait for the execution to be completed
     POST_EXEC_BLOCK_VALIDATION,    ///< Perform final block validation
@@ -185,17 +186,20 @@ private:
   using PendingBlocks   = std::deque<BlockPtr>;
   using PendingStack    = std::vector<BlockPtr>;
   using Flag            = std::atomic<bool>;
-  using BlockPeriod     = std::chrono::seconds;
+  using BlockPeriod     = std::chrono::milliseconds;
   using Clock           = std::chrono::system_clock;
   using Timepoint       = Clock::time_point;
   using StateMachinePtr = std::shared_ptr<StateMachine>;
   using MinerPtr        = std::shared_ptr<consensus::ConsensusMinerInterface>;
+  using TxSet           = std::unordered_set<TransactionSummary::TxDigest>;
+  using TxSetPtr        = std::unique_ptr<TxSet>;
 
   /// @name Monitor State
   /// @{
   State OnSynchronizing();
   State OnSynchronized(State current, State previous);
   State OnPreExecBlockValidation();
+  State OnWaitForTransactions();
   State OnScheduleBlockExecution();
   State OnWaitForExecution();
   State OnPostExecBlockValidation();
@@ -239,6 +243,7 @@ private:
   Timepoint       next_block_time_;   ///< THe next point that a block should be generated
   BlockPtr        current_block_{};   ///< The pointer to the current block (read only)
   NextBlockPtr    next_block_{};      ///< The next block being created (read / write)
+  TxSetPtr        pending_txs_{};     ///< The list of pending transactions that are being waited on
   /// @}
 };
 

@@ -37,7 +37,7 @@ public:
   using WeakRunnable = std::weak_ptr<Runnable>;
 
   // Construction / Destruction
-  Reactor()                = default;
+  Reactor(std::string const &name);
   Reactor(Reactor const &) = delete;
   Reactor(Reactor &&)      = delete;
   ~Reactor()               = default;
@@ -62,6 +62,7 @@ private:
   void StopWorker();
   void Monitor();
 
+  std::string const name_;
   Flag running_{false};
 
   Mutex       work_map_mutex_{__LINE__, __FILE__};

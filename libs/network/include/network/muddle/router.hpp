@@ -33,9 +33,7 @@ namespace fetch {
 namespace muddle {
 
 class Packet;
-
 class Dispatcher;
-
 class MuddleRegister;
 
 /**
@@ -53,8 +51,6 @@ public:
   using ThreadPool          = network::ThreadPool;
   using HandleDirectAddrMap = std::unordered_map<Handle, Address>;
 
-  static Packet::RawAddress ConvertAddress(Packet::Address const &address);
-
   struct RoutingData
   {
     bool   direct = false;
@@ -63,15 +59,18 @@ public:
 
   using RoutingTable = std::unordered_map<Packet::RawAddress, RoutingData>;
 
-  static constexpr char const *LOGGING_NAME = "MuddleRoute";
+  static constexpr char const *LOGGING_NAME = "Router";
+
+  // Helper functions
+  static Packet::RawAddress ConvertAddress(Packet::Address const &address);
 
   // Construction / Destruction
-  Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher);
+  Router(uint32_t network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher);
   Router(Router const &) = delete;
   Router(Router &&)      = delete;
   ~Router() override     = default;
 
-  NetworkId network_id() override
+  uint32_t network_id() const override
   {
     return network_id_;
   }
@@ -79,10 +78,6 @@ public:
   // Start / Stop
   void Start();
   void Stop();
-
-  // Operators
-  Router &operator=(Router const &) = delete;
-  Router &operator=(Router &&) = delete;
 
   void Route(Handle handle, PacketPtr packet);
 
@@ -156,6 +151,11 @@ public:
 
   Handle LookupHandle(Packet::RawAddress const &address) const;
 
+  // Operators
+  Router &operator=(Router const &) = delete;
+  Router &operator=(Router &&) = delete;
+
+
 private:
   using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
   using Mutex      = mutex::Mutex;
@@ -188,7 +188,7 @@ private:
   BlackList             blacklist_;
   Dispatcher &          dispatcher_;
   SubscriptionRegistrar registrar_;
-  NetworkId             network_id_;
+  uint32_t              network_id_;
 
   mutable Mutex routing_table_lock_{__LINE__, __FILE__};
   RoutingTable  routing_table_;  ///< The map routing table from address to handle (Protected by

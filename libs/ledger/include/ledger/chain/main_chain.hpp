@@ -125,7 +125,7 @@ public:
   /// @}
 
   template <typename T>
-  bool StripAlreadySeenTx(BlockHash starting_hash, T &container);
+  bool StripAlreadySeenTx(BlockHash starting_hash, T &container) const;
 
   // Operators
   MainChain &operator=(MainChain const &rhs) = delete;
@@ -205,12 +205,15 @@ private:
  * @return: bool whether the starting hash referred to a valid block on a valid chain
  */
 template <typename T>
-bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container)
+bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container) const
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Starting TX uniqueness verify");
+  using namespace std::chrono;
+  using Clock = high_resolution_clock;
+
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TX uniqueness verify");
 
   std::size_t blocks_checked = 0;
-  auto        t1             = std::chrono::high_resolution_clock::now();
+  auto const  start_time     = Clock::now();
 
   auto block = GetBlock(starting_hash);
   if (!block || block->is_loose)
@@ -290,12 +293,21 @@ bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container)
                    transactions_duplicated.size(), " Removed: ", duplicated_counter);
   }
 
-  auto   t2         = std::chrono::high_resolution_clock::now();
-  double time_taken = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
+  // determine the time this function has taken to execute
+  auto const delta_time_ms = duration_cast<milliseconds>(Clock::now() - start_time).count();
 
-  FETCH_UNUSED(time_taken);  // when logging is disabled
-  FETCH_LOG_INFO(LOGGING_NAME, "Finished TX uniqueness verify - time (s): ", time_taken,
-                 " checked blocks: ", blocks_checked);
+  if (delta_time_ms >= 100)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Finished TX uniqueness verify in: ", delta_time_ms, "ms",
+                   " checked blocks: ", blocks_checked);
+
+  }
+  else
+  {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Finished TX uniqueness verify in: ", delta_time_ms, "ms",
+                   " checked blocks: ", blocks_checked);
+  }
+
   return true;
 }
 

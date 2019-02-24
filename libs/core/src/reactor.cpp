@@ -19,6 +19,7 @@
 #include "core/reactor.hpp"
 #include "core/logger.hpp"
 #include "core/runnable.hpp"
+#include "core/threading.hpp"
 
 #include <chrono>
 #include <deque>
@@ -29,6 +30,11 @@ using WorkQueue = std::deque<fetch::core::Reactor::WeakRunnable>;
 
 namespace fetch {
 namespace core {
+
+Reactor::Reactor(std::string const &name)
+  : name_{name}
+{
+}
 
 bool Reactor::Attach(WeakRunnable runnable)
 {
@@ -101,6 +107,9 @@ void Reactor::StopWorker()
 
 void Reactor::Monitor()
 {
+  // set the thread name
+  SetThreadName(name_);
+
   WorkQueue work_queue;
 
   while (running_)

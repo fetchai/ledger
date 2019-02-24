@@ -35,7 +35,6 @@ public:
   using Payload         = Packet::Payload;
   using Response        = network::PromiseOf<Payload>;
   using SubscriptionPtr = std::shared_ptr<Subscription>;
-  using NetworkId       = byte_array::ConstByteArray;
 
   // Construction / Destruction
   MuddleEndpoint()          = default;
@@ -103,7 +102,12 @@ public:
    */
   virtual SubscriptionPtr Subscribe(Address const &address, uint16_t service, uint16_t channel) = 0;
 
-  virtual NetworkId network_id() = 0;
+  /**
+   * Query the network id for this muddle instance
+   *
+   * @return The network identifier
+   */
+  virtual uint32_t network_id() const = 0;
 };
 
 }  // namespace muddle

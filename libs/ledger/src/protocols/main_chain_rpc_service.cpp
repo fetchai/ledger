@@ -172,8 +172,21 @@ void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block
 
 void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address const &transmitter)
 {
+  // count how many transactions are present in the block
+  std::size_t tx_count{0};
+  for (auto const &slice : block.body.slices)
+  {
+    for (auto const &tx : slice)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Recv Ref TX: ", ToBase64(tx.transaction_hash)," (", tx.contract_name, ')');
+
+      ++tx_count;
+    }
+  }
+
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.body.hash),
-                 " (from peer: ", ToBase64(from), ')');
+                 " (from peer: ", ToBase64(from), " num txs: ", tx_count, ")");
+
 
   FETCH_METRIC_BLOCK_RECEIVED(block.body.hash);
 

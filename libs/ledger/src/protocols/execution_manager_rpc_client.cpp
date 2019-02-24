@@ -112,7 +112,7 @@ void ExecutionManagerRpcClient::WorkCycle(void)
 ExecutionManagerRpcClient::ExecutionManagerRpcClient(NetworkManager const &network_manager)
   : network_manager_(network_manager)
 {
-  muddle_ = Muddle::CreateMuddle(Muddle::NetworkId("EXEM"), network_manager_);
+  muddle_ = Muddle::CreateMuddle(Muddle::CreateNetworkId("EXEM"), network_manager_);
   client_ = std::make_shared<Client>("R:ExecMgr", muddle_->AsEndpoint(), Muddle::Address(),
                                      SERVICE_LANE, CHANNEL_RPC);
   muddle_->Start({});

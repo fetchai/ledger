@@ -101,7 +101,7 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
   }
 
   // cache the current state
-  if (State::ACTIVE == state_)
+  if (State::IDLE != GetState())
   {
     return ScheduleStatus::ALREADY_RUNNING;
   }
@@ -117,6 +117,9 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
   // update the last block hash
   last_block_hash_ = block.hash;
   num_slices_      = block.slices.size();
+
+  // update the state otherwise there is a race between when the executor thread wakes up
+  SetState(State::ACTIVE);
 
   // trigger the monitor / dispatch thread
   {
@@ -299,6 +302,7 @@ ExecutionManagerInterface::BlockHash ExecutionManager::LastProcessedBlock()
 
 ExecutionManager::State ExecutionManager::GetState()
 {
+  std::lock_guard<Mutex> lock(state_lock_);
   return state_;
 }
 
@@ -336,23 +340,31 @@ void ExecutionManager::MonitorThreadEntrypoint()
     switch (monitor_state)
     {
     case MonitorState::FAILED:
-      state_        = State::EXECUTION_FAILED;
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Now Failed");
+
+      SetState(State::EXECUTION_FAILED);
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::STALLED:
-      state_        = State::TRANSACTIONS_UNAVAILABLE;
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Now Stalled");
+
+      SetState(State::TRANSACTIONS_UNAVAILABLE);
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::COMPLETED:
-      state_        = State::IDLE;
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Now Complete");
+
+      SetState(State::IDLE);
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::IDLE:
     {
-      state_ = State::IDLE;
+      SetState(State::IDLE);
+
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Now Idle");
 
       // enter the idle state where we wait for the next block to be posted
       {
@@ -360,8 +372,10 @@ void ExecutionManager::MonitorThreadEntrypoint()
         monitor_wake_.wait(lock);
       }
 
-      state_        = State::ACTIVE;
+      SetState(State::ACTIVE);
       current_block = last_block_hash_;
+
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Now Active");
 
       // schedule the next slice if we have been triggered
       if (running_)
@@ -445,9 +459,19 @@ void ExecutionManager::MonitorThreadEntrypoint()
         // only provide debug if required
         if (num_complete + num_stalls + num_errors)
         {
-          FETCH_LOG_WARN(LOGGING_NAME, "Slice ", current_slice,
-                         " Execution Status - Complete: ", num_complete, " Stalls: ", num_stalls,
-                         " Errors: ", num_errors);
+          if (num_stalls + num_errors)
+          {
+            FETCH_LOG_WARN(LOGGING_NAME, "Slice ", current_slice,
+                           " Execution Status - Complete: ", num_complete, " Stalls: ", num_stalls,
+                           " Errors: ", num_errors);
+          }
+          else
+          {
+            FETCH_LOG_DEBUG(LOGGING_NAME, "Slice ", current_slice,
+                           " Execution Status - Complete: ", num_complete, " Stalls: ", num_stalls,
+                           " Errors: ", num_errors);
+
+          }
         }
 
         // increment the slice counter

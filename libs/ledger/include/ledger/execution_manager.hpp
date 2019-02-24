@@ -77,6 +77,13 @@ public:
   }
 
 private:
+
+  void SetState(State state)
+  {
+    std::lock_guard<Mutex> lock(state_lock_);
+    state_ = state;
+  }
+
   using ExecutionItemPtr  = std::unique_ptr<ExecutionItem>;
   using ExecutionItemList = std::vector<ExecutionItemPtr>;
   using ExecutionPlan     = std::vector<ExecutionItemList>;
@@ -95,7 +102,9 @@ private:
 
   Flag        running_{false};
   Flag        monitor_ready_{false};
-  AtomicState state_{State::IDLE};
+
+  Mutex state_lock_;
+  State state_{State::IDLE};
 
   ChainCodeCache contracts_;
   StorageUnitPtr storage_;

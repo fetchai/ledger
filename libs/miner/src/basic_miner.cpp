@@ -137,10 +137,10 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   std::size_t const main_transactions = main_queue_.size();
 
   // Before packing transactions, we must be sure they're unique
-  const_cast<MainChain &>(chain).StripAlreadySeenTx(block.body.previous_hash, main_queue_);
+  chain.StripAlreadySeenTx(block.body.previous_hash, main_queue_);
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Starting block packing. Backlog: ", num_transactions,
-                 ", main queue: ", main_queue_.size(), " pending: ", pending_.size());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Starting block packing. Backlog: ", num_transactions,
+                  ", main queue: ", main_queue_.size(), " pending: ", pending_.size());
 
   // determine how many of the threads should be used in this block generation
   std::size_t const num_threads =
@@ -190,8 +190,10 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   std::size_t const packed_transactions    = main_transactions - main_queue_.size();
   std::size_t const remaining_transactions = num_transactions - packed_transactions;
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Finished block packing (packed: ", packed_transactions,
-                 " remaining: ", remaining_transactions, ")");
+  FETCH_UNUSED(packed_transactions);
+  FETCH_UNUSED(remaining_transactions);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Finished block packing (packed: ", packed_transactions,
+                  " remaining: ", remaining_transactions, ")");
 
   main_queue_size_ = main_queue_.size();
 }

@@ -34,43 +34,35 @@ namespace muddle {
  * It comprises of the fixed size header that is prefixed on top of the variable sized payload.
  * The basic elements of the packet are shown in the diagram below:
  *
- * ┌────────────┬────────┬───────────────┬───────────────────────────────────────┐
- * │            │        │               │                                       │
- * │  Version   │ Flags  │      TTL      │                Service                │
- * │            │        │               │                                       │
- * ├────────────┴────────┴───────────────┼───────────────────────────────────────┤
- * │                                     │                                       │
- * │               Channel               │                Counter                │
- * │                                     │                                       │
- * ├─────────────────────────────────────┴───────────────────────────────────────┤
- * │                                                                             │
- * │                              From (Public Key)                              │
- * │                                                                             │
- * ├─────────────────────────────────────────────────────────────────────────────┤
- * │                                                                             │
- * │                             Target (Public Key)                             │
- * │                                                                             │
- * ├─────────────────────────────────────────────────────────────────────────────┤
+ * ┌──────────┬──────────┬──────────┬────────────────────────────────┐
+ * │ Version  │  Flags   │   TTL    │            Service             │
+ * ├──────────┴──────────┴──────────┼────────────────────────────────┤
+ * │            Channel             │            Counter             │
+ * ├────────────────────────────────┴────────────────────────────────┤
+ * │                           Network Id                            │
+ * ├─────────────────────────────────────────────────────────────────┤
+ * │                                                                 │
+ * │                        From (Public Key)                        │
+ * │                                                                 │
+ * ├─────────────────────────────────────────────────────────────────┤
+ * │                                                                 │
+ * │                       Target (Public Key)                       │
+ * │                                                                 │
+ * ├─────────────────────────────────────────────────────────────────┤
  *
- * │                                                                             │
+ * │                                                                 │
  *
- * │                                                                             │
+ * │                         Packet Payload                          │
  *
- * │                                                                             │
- *                                     Payload
- * │                                                                             │
+ * │                                                                 │
  *
- * │                                                                             │
- *
- * │                                                                             │
- *
- * └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
+ * └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
  */
 class Packet
 {
 public:
   static constexpr std::size_t ADDRESS_SIZE = 64;
-  static constexpr std::size_t HEADER_SIZE  = 8 + (2 * ADDRESS_SIZE);
+  static constexpr std::size_t HEADER_SIZE  = 12 + (2 * ADDRESS_SIZE);
 
   using RawAddress   = std::array<uint8_t, ADDRESS_SIZE>;
   using Address      = byte_array::ConstByteArray;
@@ -79,30 +71,31 @@ public:
 
   struct RoutingHeader
   {
-    uint64_t version : 4;    ///< Flag to signal the current version of the muddle protocol
-    uint64_t direct : 1;     ///< Flag to signal that a direct message is being sent (no routing)
-    uint64_t broadcast : 1;  ///< Flag to signal that the packet is a broadcast packet
-    uint64_t exchange : 1;   ///< Flag to signal that this is an exchange packet i.e. we are
-                             ///< expecting a response
-    uint64_t reserved : 1;
-    uint64_t ttl : 8;  ///< The time to live counter which ensures messages do not propagate further
-                       ///< than desired
-    uint64_t service : 16;  ///< The service number (helpful for RPC compatibility)
-    uint64_t proto : 16;    ///< The protocol number (helpful for RPC compatibility)
-    uint64_t msg_num : 16;  ///< Incremented message counter for detecting duplicate packets
+    // clang-format off
+    uint32_t version   : 4;   ///< Flag to signal the current version of the muddle protocol
+    uint32_t direct    : 1;   ///< Flag to signal that a direct message is being sent (no routing)
+    uint32_t broadcast : 1;   ///< Flag to signal that the packet is a broadcast packet
+    uint32_t exchange  : 1;   ///< Flag to signal that this is an exchange packet
+    uint32_t reserved  : 1;   ///< Reserved for padding
+    uint32_t ttl       : 8;   ///< The time to live counter
+    uint32_t service   : 16;  ///< The service number (helpful for RPC compatibility)
+    uint32_t proto     : 16;  ///< The protocol number (helpful for RPC compatibility)
+    uint32_t msg_num   : 16;  ///< Incremented message counter for detecting duplicate packets
+    uint32_t network   : 32;  ///< The originating network id
+    // clang-format on
 
     RawAddress target;  ///< The address of the packet target
     RawAddress sender;  ///< The address of the packet sender
   };
 
   static_assert(std::is_pod<RoutingHeader>::value, "Routing header must be POD");
-  static_assert(sizeof(RoutingHeader) == 8 + (2 * ADDRESS_SIZE), "The header must be packed");
+  static_assert(sizeof(RoutingHeader) == 12 + (2 * ADDRESS_SIZE), "The header must be packed");
   static_assert(sizeof(RoutingHeader) == sizeof(BinaryHeader),
                 "The header and binary header must be equivalent");
 
   // Construction / Destruction
   Packet() = default;
-  explicit Packet(Address const &source_address);
+  explicit Packet(Address const &source_address, uint32_t network_id);
   Packet(Packet const &) = delete;
   Packet(Packet &&)      = delete;
   ~Packet()              = default;
@@ -120,6 +113,7 @@ public:
   uint16_t          GetService() const;
   uint16_t          GetProtocol() const;
   uint16_t          GetMessageNum() const;
+  uint32_t          GetNetworkId() const;
   RawAddress const &GetTargetRaw() const;
   RawAddress const &GetSenderRaw() const;
   Address const &   GetTarget() const;
@@ -134,13 +128,12 @@ public:
   void SetService(uint16_t service_num);
   void SetProtocol(uint16_t protocol_num);
   void SetMessageNum(uint16_t message_num);
+  void SetNetworkId(uint32_t network_id);
   void SetTarget(RawAddress const &address);
   void SetTarget(Address const &address);
   void SetPayload(Payload const &payload);
 
 private:
-#if 1
-#endif
 
   RoutingHeader header_;   ///< The header containing primarily routing information
   Payload       payload_;  ///< The payload of the message
@@ -156,14 +149,15 @@ private:
   friend void Deserialize(T &serializer, Packet &b);
 };
 
-inline Packet::Packet(Address const &source_address)
+inline Packet::Packet(Address const &source_address, uint32_t network_id)
   : header_()
   , payload_()
 {
   std::memset(&header_, 0, sizeof(header_));
 
   // mark the packet with the version
-  header_.version = 1;
+  header_.version = 2;
+  header_.network = network_id;
 
   // add the sender
   assert(source_address.size() == ADDRESS_SIZE);
@@ -208,6 +202,11 @@ inline uint16_t Packet::GetProtocol() const
 inline uint16_t Packet::GetMessageNum() const
 {
   return static_cast<uint16_t>(header_.msg_num);
+}
+
+inline uint32_t Packet::GetNetworkId() const
+{
+  return header_.network;
 }
 
 inline Packet::RawAddress const &Packet::GetTargetRaw() const
@@ -286,6 +285,11 @@ inline void Packet::SetProtocol(uint16_t protocol_num)
 inline void Packet::SetMessageNum(uint16_t message_num)
 {
   header_.msg_num = message_num;
+}
+
+inline void Packet::SetNetworkId(uint32_t network_id)
+{
+  header_.network = network_id;
 }
 
 inline void Packet::SetTarget(RawAddress const &address)

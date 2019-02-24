@@ -87,6 +87,10 @@ public:
     auto iter = members_.find(n);
     if (iter == members_.end())
     {
+      DumpMemberTable();
+
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to lookup function handler: ", n);
+
       throw serializers::SerializableException(
           error::MEMBER_NOT_FOUND, byte_array_type("Could not find protocol member function"));
     }
@@ -256,6 +260,15 @@ public:
     for (auto &m : middleware_)
     {
       m(id, msg);
+    }
+  }
+
+  void DumpMemberTable()
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Contents of function table");
+    for (auto const &entry : members_)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Entry: ", entry.first, " valid: ", static_cast<bool>(entry.second));
     }
   }
 

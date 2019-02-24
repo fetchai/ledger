@@ -44,7 +44,6 @@ class ServiceClientInterface
   using subscription_mutex_type      = fetch::mutex::Mutex;
   using subscription_mutex_lock_type = std::lock_guard<subscription_mutex_type>;
   using subscriptions_type           = std::unordered_map<subscription_handler_type, Subscription>;
-  using NetworkId                    = fetch::muddle::MuddleEndpoint::NetworkId;
 
 public:
   static constexpr char const *LOGGING_NAME = "ServiceClientInterface";
@@ -55,7 +54,7 @@ public:
 
   template <typename... arguments>
 
-  Promise Call(NetworkId /*network_id*/, protocol_handler_type const &protocol,
+  Promise Call(uint32_t /*network_id*/, protocol_handler_type const &protocol,
 
                function_handler_type const &function, arguments &&... args)
   {

@@ -70,6 +70,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   state_machine_->RegisterHandler(State::SYNCHRONIZING,                this, &BlockCoordinator::OnSynchronizing);
   state_machine_->RegisterHandler(State::SYNCHRONIZED,                 this, &BlockCoordinator::OnSynchronized);
   state_machine_->RegisterHandler(State::PRE_EXEC_BLOCK_VALIDATION,    this, &BlockCoordinator::OnPreExecBlockValidation);
+  state_machine_->RegisterHandler(State::WAIT_FOR_TRANSACTIONS,        this, &BlockCoordinator::OnWaitForTransactions);
   state_machine_->RegisterHandler(State::SCHEDULE_BLOCK_EXECUTION,     this, &BlockCoordinator::OnScheduleBlockExecution);
   state_machine_->RegisterHandler(State::WAIT_FOR_EXECUTION,           this, &BlockCoordinator::OnWaitForExecution);
   state_machine_->RegisterHandler(State::POST_EXEC_BLOCK_VALIDATION,   this, &BlockCoordinator::OnPostExecBlockValidation);
@@ -122,14 +123,16 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
   auto const current_hash         = current_block_->body.hash;
   auto const previous_hash        = current_block_->body.previous_hash;
   auto const desired_state        = current_block_->body.merkle_hash;
+  auto const last_committed_state = storage_unit_.LastCommitHash();
   auto const current_state        = storage_unit_.CurrentHash();
   auto const last_processed_block = execution_manager_.LastProcessedBlock();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Sync: Current......: ", ToBase64(current_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "Sync: Previous.....: ", ToBase64(previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "Sync: Desired State: ", ToBase64(desired_state));
-  FETCH_LOG_INFO(LOGGING_NAME, "Sync: Current State: ", ToBase64(current_state));
-  FETCH_LOG_INFO(LOGGING_NAME, "Sync: last Block...: ", ToBase64(last_processed_block));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Current......: ", ToBase64(current_hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Previous.....: ", ToBase64(previous_hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Desired State: ", ToBase64(desired_state));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Current State: ", ToBase64(current_state));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: LCommit State: ", ToBase64(last_committed_state));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Last Block...: ", ToBase64(last_processed_block));
 
   // initial condition, the last processed block is empty
   if (GENESIS_DIGEST == last_processed_block)
@@ -147,7 +150,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
       auto previous_block = chain_.GetBlock(previous_hash);
       if (!previous_block)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Unable to lookup previous block: ", ToBase64(current_hash));
+        FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup previous block: ", ToBase64(current_hash));
         return State::RESET;
       }
 
@@ -171,7 +174,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
 
     if (!lookup_success)
     {
-      FETCH_LOG_INFO(LOGGING_NAME,
+      FETCH_LOG_WARN(LOGGING_NAME,
                      "Unable to lookup common ancestor for block:", ToBase64(current_hash));
       return State::RESET;
     }
@@ -179,30 +182,40 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
     assert(blocks.size() >= 2);
     assert(!blocks.empty());
 
+#if 0
     for (auto const &block : blocks)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Sync: Common Path..: ", ToBase64(block->body.hash));
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Common Path..: ", ToBase64(block->body.hash));
     }
+#endif
 
     auto     block_path_it = blocks.crbegin();
     BlockPtr common_parent = *block_path_it++;
     BlockPtr next_block    = *block_path_it++;
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Common Parent: ", ToBase64(common_parent->body.hash));
-    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Next Block...: ", ToBase64(next_block->body.hash));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Common Parent: ", ToBase64(common_parent->body.hash));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Next Block...: ", ToBase64(next_block->body.hash));
 
     // we expect that the common parent in this case will always have been processed, but this
     // should be checked
     if (!storage_unit_.HashExists(common_parent->body.merkle_hash))
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Ancestor block not executed:", ToBase64(current_hash));
+      FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's state hash cannot be retrieved for block: ", ToBase64(current_hash));
+
+      // this is a bad situation so the easiest solution is to revert back to genesis
+      execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
+      if (!storage_unit_.RevertToHash(GENESIS_MERKLE_ROOT))
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "Unable to revert back to genesis");
+      }
+
       return State::RESET;
     }
 
     // revert the storage back to the known state
     if (!storage_unit_.RevertToHash(common_parent->body.merkle_hash))
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Unable to restore state for block", ToBase64(current_hash));
+      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to restore state for block", ToBase64(current_hash));
       return State::RESET;
     }
 
@@ -316,7 +329,64 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
   }
 
   // All the checks pass
-  return State::SCHEDULE_BLOCK_EXECUTION;
+  return State::WAIT_FOR_TRANSACTIONS;
+}
+
+BlockCoordinator::State BlockCoordinator::OnWaitForTransactions()
+{
+  State next_state{State::WAIT_FOR_TRANSACTIONS};
+
+  // if the transaction digests have not been cached then do this now
+  if (!pending_txs_)
+  {
+    pending_txs_ = std::make_unique<TxSet>();
+
+    for (auto const &slice : current_block_->body.slices)
+    {
+      for (auto const &tx : slice)
+      {
+        pending_txs_->insert(tx.transaction_hash);
+      }
+    }
+  }
+
+  // evaluate if the transactions have arrived
+  auto it = pending_txs_->begin();
+  while (it != pending_txs_->end())
+  {
+    if (storage_unit_.HasTransaction(*it))
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "TX has been synced: ", ToBase64(*it));
+
+      // success - remove this element from the set
+      it = pending_txs_->erase(it);
+    }
+    else
+    {
+      // otherwise advance on to the next one
+      ++it;
+    }
+  }
+
+  // once all the transactions are present we can then move to scheduling the block. This makes life
+  // much easier all around
+  if (pending_txs_->empty())
+  {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "All transactions have been synchronised!");
+
+    // clear the pending transaction set
+    pending_txs_.reset();
+
+    next_state = State::SCHEDULE_BLOCK_EXECUTION;
+  }
+  else
+  {
+    // we really want to stall the whole state machine here because the TX sync process can take
+    // a little while and we would just needlessly poll the transaction shards
+    sleep_for(std::chrono::milliseconds{500});
+  }
+
+  return next_state;
 }
 
 BlockCoordinator::State BlockCoordinator::OnScheduleBlockExecution()
@@ -384,10 +454,17 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
       FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Merkle hash mismatch (block: ",
                      ToBase64(current_block_->body.hash),
                      " expected: ", ToBase64(current_block_->body.merkle_hash),
-                     " actual: ", state_hash, ")");
+                     " actual: ", ToBase64(state_hash), ")");
 
       // signal the block is invalid
       invalid_block = true;
+    }
+    else
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Block validation great success: (block: ",
+                     ToBase64(current_block_->body.hash),
+                     " expected: ", ToBase64(current_block_->body.merkle_hash),
+                     " actual: ", ToBase64(state_hash), ")");
     }
   }
 
@@ -431,34 +508,29 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
     // call the block packer
     block_packer_.GenerateBlock(*next_block_, num_lanes_, num_slices_, chain_);
 
-#if 1
-    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Hash.........: ", ToBase64(next_block_->body.hash));
-    FETCH_LOG_INFO(LOGGING_NAME,
-                   "New Block: Previous.....: ", ToBase64(next_block_->body.previous_hash));
-    FETCH_LOG_INFO(LOGGING_NAME,
-                   "New Block: Merkle.......: ", ToBase64(next_block_->body.merkle_hash));
-    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Block Number.: ", next_block_->body.block_number);
-    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Miner........: ", ToBase64(next_block_->body.miner));
-    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Log2 Lanes...: ", next_block_->body.log2_num_lanes);
+    // print some block level debug
+#if 0
+    FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: Previous.....: ", ToBase64(next_block_->body.previous_hash));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: Block Number.: ", next_block_->body.block_number);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: Miner........: ", ToBase64(next_block_->body.miner));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: Log2 Lanes...: ", next_block_->body.log2_num_lanes);
 
     std::size_t slice_index{1};
     for (auto const &slice : next_block_->body.slices)
     {
       if (!slice.empty())
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "New Block: Slice........: ", slice_index);
+        FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: Slice........: ", slice_index);
 
         for (auto const &tx : slice)
         {
-          FETCH_LOG_INFO(LOGGING_NAME, "New Block: TX...........: ", ToBase64(tx.transaction_hash),
+          FETCH_LOG_DEBUG(LOGGING_NAME, "           - TX.........: ", ToBase64(tx.transaction_hash),
                          " (", tx.contract_name, ")");
         }
       }
 
       ++slice_index;
     }
-
-    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Slice........: ", ToBase64(next_block_->body.hash));
 #endif
 
     // update our desired next block time
@@ -500,7 +572,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
     // update the current block with the desired hash
     next_block_->body.merkle_hash = storage_unit_.CurrentHash();
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Merkle Hash: ", ToBase64(next_block_->body.merkle_hash));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Merkle Hash: ", ToBase64(next_block_->body.merkle_hash));
 
     next_state = State::PROOF_SEARCH;
     break;
@@ -543,7 +615,7 @@ BlockCoordinator::State BlockCoordinator::OnProofSearch()
     // update the digest
     next_block_->UpdateDigest();
 
-    FETCH_LOG_INFO(LOGGING_NAME, "New Block Hash: ", ToBase64(next_block_->body.hash));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "New Block Hash: ", ToBase64(next_block_->body.hash));
 
     // this step is needed because the execution manager is actually unaware of the actual last
     // block that is executed because the merkle hash was not known at this point.
@@ -565,6 +637,8 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
     // ensure that the main chain is aware of the block
     if (BlockStatus::ADDED == chain_.AddBlock(*next_block_))
     {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Generating new block: ", ToBase64(next_block_->body.hash));
+
       // dispatch the block that has been generated
       block_sink_.OnBlock(*next_block_);
     }
@@ -581,6 +655,7 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 {
   current_block_.reset();
   next_block_.reset();
+  pending_txs_.reset();
   stall_count_ = 0;
 
   // we should update the next block time
@@ -626,7 +701,7 @@ bool BlockCoordinator::ScheduleBlock(Block const &block)
 {
   bool success{false};
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Attempting exec on block: ", ToBase64(block.body.hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Attempting exec on block: ", ToBase64(block.body.hash));
 
   // instruct the execution manager to execute the current block
   auto const execution_status = execution_manager_.Execute(block.body);
@@ -700,6 +775,9 @@ char const *BlockCoordinator::ToString(State state)
     break;
   case State::PRE_EXEC_BLOCK_VALIDATION:
     text = "Pre Block Execution Validation";
+    break;
+  case State::WAIT_FOR_TRANSACTIONS:
+    text = "Waiting for Transactions";
     break;
   case State::SCHEDULE_BLOCK_EXECUTION:
     text = "Schedule Block Execution";
