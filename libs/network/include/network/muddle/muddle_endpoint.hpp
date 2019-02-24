@@ -22,6 +22,8 @@
 #include "network/muddle/subscription.hpp"
 #include "network/muddle/network_id.hpp"
 
+#include <vector>
+
 namespace fetch {
 namespace muddle {
 
@@ -36,6 +38,7 @@ public:
   using Payload         = Packet::Payload;
   using Response        = network::PromiseOf<Payload>;
   using SubscriptionPtr = std::shared_ptr<Subscription>;
+  using AddressList     = std::vector<Packet::Address>;
 
   // Construction / Destruction
   MuddleEndpoint()          = default;
@@ -109,6 +112,13 @@ public:
    * @return The network identifier
    */
   virtual NetworkId const &network_id() const = 0;
+
+  /**
+   * Request the list of peers that this muddle is directly connected to at the moment
+   *
+   * @return The list of addresses
+   */
+  virtual AddressList GetDirectlyConnectedPeers() const = 0;
 };
 
 }  // namespace muddle

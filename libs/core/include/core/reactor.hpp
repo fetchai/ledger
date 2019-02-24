@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "core/runnable.hpp"
 
 #include <atomic>
 #include <map>
@@ -27,14 +28,10 @@
 namespace fetch {
 namespace core {
 
-class Runnable;
-
 class Reactor
 {
 public:
   static constexpr char const *LOGGING_NAME = "Reactor";
-
-  using WeakRunnable = std::weak_ptr<Runnable>;
 
   // Construction / Destruction
   Reactor(std::string const &name);

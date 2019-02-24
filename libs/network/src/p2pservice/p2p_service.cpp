@@ -65,8 +65,7 @@ void P2PService::Start(UriList const &initial_peer_list)
     muddle_.AddPeer(uri);
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Establishing CORE Service on tcp://127.0.0.1:", "??",
-                 " ID: ", byte_array::ToBase64(muddle_.identity().identifier()));
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting P2PService...");
 
   thread_pool_->SetIdleInterval(1000);
   thread_pool_->Start();

@@ -64,6 +64,7 @@ public:
 
   // Helper functions
   static Packet::RawAddress ConvertAddress(Packet::Address const &address);
+  static Packet::Address ConvertAddress(Packet::RawAddress const &address);
 
   // Construction / Destruction
   Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher);
@@ -100,6 +101,8 @@ public:
 
   SubscriptionPtr Subscribe(uint16_t service, uint16_t channel) override;
   SubscriptionPtr Subscribe(Address const &address, uint16_t service, uint16_t channel) override;
+
+  AddressList GetDirectlyConnectedPeers() const override;
 
   RoutingTable GetRoutingTable() const;
   /// @}

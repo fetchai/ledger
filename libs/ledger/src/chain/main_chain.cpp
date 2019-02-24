@@ -95,6 +95,8 @@ BlockStatus MainChain::AddBlock(Block const &blk)
   auto block = std::make_shared<Block>(blk);
 
   // update the weight based on the proof and the number of transactions
+  block->weight = 1;
+  block->total_weight = 1;
   for (auto const &slice : block->body.slices)
   {
     block->weight += slice.size();
@@ -575,7 +577,7 @@ void MainChain::CompleteLooseBlocks(IntBlockPtr const &block)
       IntBlockPtr add_block = block_chain_.at(hash);  // TODO(EJF): What happens when this fails
 
       // This won't re-call this function due to the flag
-      InsertBlock(add_block, true);
+      InsertBlock(add_block, false);
 
       // The added block was not loose. Continue to clear
       auto it = loose_blocks_.find(add_block->body.hash);

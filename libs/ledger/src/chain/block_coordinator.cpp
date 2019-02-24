@@ -83,9 +83,11 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   // clang-format on
 
   // for debug purposes
+#ifdef FETCH_LOG_DEBUG_ENABLED
   state_machine_->OnStateChange([](State current, State previous) {
-    FETCH_LOG_INFO(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
   });
+#endif // FETCH_LOG_DEBUG_ENABLED
 }
 
 /**
@@ -181,13 +183,6 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
 
     assert(blocks.size() >= 2);
     assert(!blocks.empty());
-
-#if 0
-    for (auto const &block : blocks)
-    {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Common Path..: ", ToBase64(block->body.hash));
-    }
-#endif
 
     auto     block_path_it = blocks.crbegin();
     BlockPtr common_parent = *block_path_it++;
@@ -507,31 +502,6 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
   {
     // call the block packer
     block_packer_.GenerateBlock(*next_block_, num_lanes_, num_slices_, chain_);
-
-    // print some block level debug
-#if 0
-    FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: Previous.....: ", ToBase64(next_block_->body.previous_hash));
-    FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: Block Number.: ", next_block_->body.block_number);
-    FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: Miner........: ", ToBase64(next_block_->body.miner));
-    FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: Log2 Lanes...: ", next_block_->body.log2_num_lanes);
-
-    std::size_t slice_index{1};
-    for (auto const &slice : next_block_->body.slices)
-    {
-      if (!slice.empty())
-      {
-        FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: Slice........: ", slice_index);
-
-        for (auto const &tx : slice)
-        {
-          FETCH_LOG_DEBUG(LOGGING_NAME, "           - TX.........: ", ToBase64(tx.transaction_hash),
-                         " (", tx.contract_name, ")");
-        }
-      }
-
-      ++slice_index;
-    }
-#endif
 
     // update our desired next block time
     UpdateNextBlockTime();

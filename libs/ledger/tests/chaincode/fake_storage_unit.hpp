@@ -136,6 +136,12 @@ public:
     return success;
   }
 
+  bool HetTransaction(ConstByteArray const &digest)
+  {
+    lock_guard_type lock(mutex_);
+    return transactions_.find(digest) != transactions_.end();
+  }
+
   Hash CurrentHash() override
   {
     return "";

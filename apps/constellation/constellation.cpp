@@ -179,6 +179,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
 
   // attach the services to the reactor
   reactor_.Attach(block_coordinator_.GetWeakRunnable());
+  reactor_.Attach(main_chain_service_->GetWeakRunnable());
 
   // configure all the lane services
   lane_services_.Setup(network_manager_, shard_cfgs_);

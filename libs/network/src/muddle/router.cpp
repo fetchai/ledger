@@ -198,6 +198,11 @@ Packet::RawAddress Router::ConvertAddress(Packet::Address const &address)
   return raw_address;
 }
 
+Packet::Address Router::ConvertAddress(Packet::RawAddress const &address)
+{
+  return {address.data(), address.size()};
+}
+
 /**
  * Constructs a muddle router instance
  *
@@ -490,6 +495,28 @@ MuddleEndpoint::SubscriptionPtr Router::Subscribe(Address const &address, uint16
                                                   uint16_t channel)
 {
   return registrar_.Register(address, service, channel);
+}
+
+MuddleEndpoint::AddressList Router::GetDirectlyConnectedPeers() const
+{
+  AddressList addresses{};
+
+  FETCH_LOCK(routing_table_lock_);
+  for (auto const &entry : routing_table_)
+  {
+    if (entry.second.direct)
+    {
+      // lookup the connection
+      auto connection = register_.LookupConnection(entry.second.handle).lock();
+
+      if (connection && connection->is_alive())
+      {
+        addresses.emplace_back(ConvertAddress(entry.first));
+      }
+    }
+  }
+
+  return addresses;
 }
 
 /**

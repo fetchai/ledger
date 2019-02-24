@@ -82,10 +82,10 @@ private:
   using Timepoint   = Clock::time_point;
   using Duration    = Clock::duration;
   using CallbackMap = std::unordered_map<State, Callback>;
-  using Mutex       = mutex::Mutex;
+  using Mutex       = std::mutex;
 
   std::string const   logging_name_;
-  Mutex               callbacks_mutex_{__LINE__, __FILE__};
+  Mutex               callbacks_mutex_;
   CallbackMap         callbacks_{};
   Duration            stall_duration_{};
   std::atomic<State>  current_state_;

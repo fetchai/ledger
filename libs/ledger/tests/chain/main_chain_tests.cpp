@@ -605,6 +605,81 @@ TEST_P(MainChainTests, CheckLongChainWrite)
   }
 }
 
+TEST_P(MainChainTests, CheckInOrderWeights)
+{
+  auto genesis = generator_->Generate();
+  auto main1   = generator_->Generate(genesis);
+  auto main2   = generator_->Generate(main1);
+  auto main3   = generator_->Generate(main2);
+  auto main4   = generator_->Generate(main3);
+  auto main5   = generator_->Generate(main4);
+
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main1));
+  ASSERT_FALSE(chain_->HasMissingBlocks());
+
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main2));
+  ASSERT_FALSE(chain_->HasMissingBlocks());
+
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main3));
+  ASSERT_FALSE(chain_->HasMissingBlocks());
+
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main4));
+  ASSERT_FALSE(chain_->HasMissingBlocks());
+
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main5));
+  ASSERT_FALSE(chain_->HasMissingBlocks());
+
+  // check the weights
+  ASSERT_EQ(chain_->GetBlock(main1->body.hash)->total_weight, main1->total_weight);
+  ASSERT_EQ(chain_->GetBlock(main2->body.hash)->total_weight, main2->total_weight);
+  ASSERT_EQ(chain_->GetBlock(main3->body.hash)->total_weight, main3->total_weight);
+  ASSERT_EQ(chain_->GetBlock(main4->body.hash)->total_weight, main4->total_weight);
+  ASSERT_EQ(chain_->GetBlock(main5->body.hash)->total_weight, main5->total_weight);
+}
+
+TEST_P(MainChainTests, CheckResolvedLooseWeight)
+{
+  auto genesis = generator_->Generate();
+  auto other   = generator_->Generate(genesis);
+  auto main1   = generator_->Generate(other);
+  auto main2   = generator_->Generate(main1);
+  auto main3   = generator_->Generate(main2);
+  auto main4   = generator_->Generate(main3);
+  auto main5   = generator_->Generate(main4);
+
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Ref Weight: ", other->weight, " Total: ", other->total_weight, " Block: ", ToBase64(other->body.hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Ref Weight: ", main1->weight, " Total: ", main1->total_weight, " Block: ", ToBase64(main1->body.hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Ref Weight: ", main2->weight, " Total: ", main2->total_weight, " Block: ", ToBase64(main2->body.hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Ref Weight: ", main3->weight, " Total: ", main3->total_weight, " Block: ", ToBase64(main3->body.hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Ref Weight: ", main4->weight, " Total: ", main4->total_weight, " Block: ", ToBase64(main4->body.hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Ref Weight: ", main5->weight, " Total: ", main5->total_weight, " Block: ", ToBase64(main5->body.hash));
+
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*other));
+  ASSERT_FALSE(chain_->HasMissingBlocks());
+
+  ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*main5));
+  ASSERT_TRUE(chain_->HasMissingBlocks());
+
+  ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*main4));
+  ASSERT_TRUE(chain_->HasMissingBlocks());
+
+  ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*main3));
+  ASSERT_TRUE(chain_->HasMissingBlocks());
+
+  ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*main2));
+  ASSERT_TRUE(chain_->HasMissingBlocks());
+
+  // this block resolves all the loose blocks
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main1));
+  ASSERT_FALSE(chain_->HasMissingBlocks());
+
+  ASSERT_EQ(chain_->GetBlock(main1->body.hash)->total_weight, main1->total_weight);
+  ASSERT_EQ(chain_->GetBlock(main2->body.hash)->total_weight, main2->total_weight);
+  ASSERT_EQ(chain_->GetBlock(main3->body.hash)->total_weight, main3->total_weight);
+  ASSERT_EQ(chain_->GetBlock(main4->body.hash)->total_weight, main4->total_weight);
+  ASSERT_EQ(chain_->GetBlock(main5->body.hash)->total_weight, main5->total_weight);
+}
+
 INSTANTIATE_TEST_CASE_P(ParamBased, MainChainTests,
                         ::testing::Values(MainChain::Mode::CREATE_PERSISTENT_DB,
                                           MainChain::Mode::IN_MEMORY_DB), );
