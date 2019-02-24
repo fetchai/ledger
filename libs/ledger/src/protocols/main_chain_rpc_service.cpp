@@ -31,30 +31,32 @@ using fetch::byte_array::ToBase64;
 
 using BlockSerializer        = fetch::serializers::ByteArrayBuffer;
 using BlockSerializerCounter = fetch::serializers::SizeCounter<BlockSerializer>;
+using PromiseState           = fetch::service::PromiseState;
 
 namespace fetch {
 namespace ledger {
 
 MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain,
-                                         TrustSystem &trust, BlockCoordinator &block_coordinator)
+                                         TrustSystem &trust)
   : muddle::rpc::Server(endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
   , endpoint_(endpoint)
   , chain_(chain)
   , trust_(trust)
-  , block_coordinator_(block_coordinator)
   , block_subscription_(endpoint.Subscribe(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS))
   , main_chain_protocol_(chain_)
   , rpc_client_("R:MChain", endpoint, Address{}, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
-  , state_machine_{std::make_shared<StateMachine>("MainChain", State::SYNCHRONISING)}
+  , state_machine_{std::make_shared<StateMachine>("MainChain", State::REQUEST_HEAVIEST_CHAIN)}
 {
   // register the main chain protocol
   Add(RPC_MAIN_CHAIN, &main_chain_protocol_);
 
   // configure the state machine
   // clang-format off
-  state_machine_->RegisterHandler(State::SYNCHRONISING,        this, &MainChainRpcService::OnSynchronising);
-  state_machine_->RegisterHandler(State::WAITING_FOR_RESPONSE, this, &MainChainRpcService::OnWaitingForResponse);
-  state_machine_->RegisterHandler(State::SYNCHRONISED,         this, &MainChainRpcService::OnSynchronised);
+  state_machine_->RegisterHandler(State::REQUEST_HEAVIEST_CHAIN,  this, &MainChainRpcService::OnRequestHeaviestChain);
+  state_machine_->RegisterHandler(State::WAIT_FOR_HEAVIEST_CHAIN, this, &MainChainRpcService::OnWaitForHeaviestChain);
+  state_machine_->RegisterHandler(State::SYNCHRONISING,           this, &MainChainRpcService::OnSynchronising);
+  state_machine_->RegisterHandler(State::WAITING_FOR_RESPONSE,    this, &MainChainRpcService::OnWaitingForResponse);
+  state_machine_->RegisterHandler(State::SYNCHRONISED,            this, &MainChainRpcService::OnSynchronised);
   // clang-format on
 
   state_machine_->OnStateChange([](State current, State previous) {
@@ -160,11 +162,17 @@ char const *MainChainRpcService::ToString(State state)
 
   switch (state)
   {
+  case State::REQUEST_HEAVIEST_CHAIN:
+    text = "Requesting Heaviest Chain";
+    break;
+  case State::WAIT_FOR_HEAVIEST_CHAIN:
+    text = "Waiting for Heaviest Chain";
+    break;
   case State::SYNCHRONISING:
     text = "Synchronising";
     break;
   case State::WAITING_FOR_RESPONSE:
-    text = "Waiting for Resposne";
+    text = "Waiting for Sync Response";
     break;
   case State::SYNCHRONISED:
     text = "Synchronised";
@@ -235,6 +243,67 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
   }
 }
 
+MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
+{
+  State next_state{State::REQUEST_HEAVIEST_CHAIN};
+
+  auto const peer = GetRandomTrustedPeer();
+
+  if (!peer.empty())
+  {
+    current_peer_address_ = peer;
+    current_request_      = rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
+                                                            MainChainProtocol::HEAVIEST_CHAIN,
+                                                            uint32_t{1000});
+
+    next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
+  }
+
+  return next_state;
+}
+
+MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
+{
+  State next_state{State::WAIT_FOR_HEAVIEST_CHAIN};
+
+  if (!current_request_)
+  {
+    // something went wrong we should attempt to request the chain
+    next_state = State::REQUEST_HEAVIEST_CHAIN;
+  }
+  else
+  {
+    // determine the status of the request that is in flight
+    auto const status = current_request_->GetState();
+
+    if (PromiseState::WAITING != status)
+    {
+      if (PromiseState::SUCCESS == status)
+      {
+        // the request was successful, simply hand off the blocks to be added to the chain
+        HandleChainResponse(current_peer_address_, current_request_->As<BlockList>());
+
+        // now we have completed a request we can start normal synchronisation
+        next_state = State::SYNCHRONISING;
+      }
+      else
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Heaviest chain request to: ", ToBase64(current_peer_address_), " failed. Reason: ", service::ToString(status));
+
+        // since we want to sync at least with one chain before proceeding we restart the state
+        // machine back to the requesting
+        next_state = State::REQUEST_HEAVIEST_CHAIN;
+      }
+
+      // clear the state
+      current_peer_address_  = Address{};
+      current_missing_block_ = BlockHash{};
+    }
+  }
+
+  return next_state;
+}
+
 MainChainRpcService::State MainChainRpcService::OnSynchronising()
 {
   State next_state{State::SYNCHRONISED};
@@ -244,8 +313,14 @@ MainChainRpcService::State MainChainRpcService::OnSynchronising()
 
   if (!missing_blocks.empty())
   {
-    current_peer_address_  = GetRandomTrustedPeer();
     current_missing_block_ = missing_blocks[0];
+    current_peer_address_  = GetRandomTrustedPeer();
+
+    // in the case that we don't trust any one we need to simply wait until we do
+    if (current_peer_address_.empty())
+    {
+      return State::SYNCHRONISING;
+    }
 
     FETCH_LOG_INFO(LOGGING_NAME, "Requesting chain from muddle://", ToBase64(current_peer_address_), " for block ", ToBase64(current_missing_block_));
 
@@ -265,8 +340,6 @@ MainChainRpcService::State MainChainRpcService::OnSynchronising()
 
 MainChainRpcService::State MainChainRpcService::OnWaitingForResponse()
 {
-  using service::PromiseState;
-
   State next_state{State::WAITING_FOR_RESPONSE};
 
   if (!current_request_)

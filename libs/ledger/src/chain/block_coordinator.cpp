@@ -232,7 +232,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
   {
     next_state = State::RESET;
   }
-  else if (mining_ && (Clock::now() >= next_block_time_))
+  else if (mining_ && mining_enabled_ && (Clock::now() >= next_block_time_))
   {
     // create a new block
     next_block_                     = std::make_unique<Block>();

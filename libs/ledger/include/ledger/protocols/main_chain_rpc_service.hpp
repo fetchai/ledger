@@ -44,7 +44,15 @@ class MainChainRpcService : public muddle::rpc::Server,
                             public std::enable_shared_from_this<MainChainRpcService>
 {
 public:
-  friend class MainChainSyncWorker;
+  enum class State
+  {
+    REQUEST_HEAVIEST_CHAIN,
+    WAIT_FOR_HEAVIEST_CHAIN,
+    SYNCHRONISING,
+    WAITING_FOR_RESPONSE,
+    SYNCHRONISED,
+  };
+
   using MuddleEndpoint  = muddle::MuddleEndpoint;
   using MainChain       = ledger::MainChain;
   using Subscription    = muddle::Subscription;
@@ -66,8 +74,7 @@ public:
   static constexpr char const *LOGGING_NAME = "MainChainRpc";
 
   // Construction / Destruction
-  MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust,
-                      BlockCoordinator &block_coordinator);
+  MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust);
   MainChainRpcService(MainChainRpcService const &) = delete;
   MainChainRpcService(MainChainRpcService &&) = delete;
   ~MainChainRpcService() override;
@@ -79,18 +86,16 @@ public:
 
   void BroadcastBlock(Block const &block);
 
+  State state() const
+  {
+    return state_machine_->state();
+  }
+
   // Operators
   MainChainRpcService &operator=(MainChainRpcService const &) = delete;
   MainChainRpcService &operator=(MainChainRpcService &&) = delete;
 
 private:
-
-  enum class State
-  {
-    SYNCHRONISING,
-    WAITING_FOR_RESPONSE,
-    SYNCHRONISED,
-  };
 
   static constexpr std::size_t BLOCK_CATCHUP_STEP_SIZE = 30;
 
@@ -112,6 +117,8 @@ private:
 
   /// @name State Machine Handlers
   /// @{
+  State OnRequestHeaviestChain();
+  State OnWaitForHeaviestChain();
   State OnSynchronising();
   State OnWaitingForResponse();
   State OnSynchronised(State current, State previous);
@@ -122,7 +129,6 @@ private:
   MuddleEndpoint &  endpoint_;
   MainChain &       chain_;
   TrustSystem &     trust_;
-  BlockCoordinator &block_coordinator_;
   /// @}
 
   /// @name RPC Server

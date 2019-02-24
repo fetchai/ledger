@@ -161,8 +161,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
                        cfg_.num_lanes(),
                        cfg_.num_slices,
                        cfg_.block_difficulty}
-  , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
-                                                              block_coordinator_)}
+  , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_)}
   , tx_processor_{*storage_, block_packer_, cfg_.processor_threads}
   , http_{http_network_manager_}
   , http_modules_{
@@ -344,6 +343,10 @@ void Constellation::Run(UriList const &initial_peers)
   // monitor loop
   while (active_)
   {
+    // control from the top level block production based on the chain sync state
+    block_coordinator_.EnableMining(
+      ledger::MainChainRpcService::State::SYNCHRONISED == main_chain_service_->state());
+
     FETCH_LOG_DEBUG(LOGGING_NAME, "Still alive...");
     std::this_thread::sleep_for(std::chrono::milliseconds{500});
   }
