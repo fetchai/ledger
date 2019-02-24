@@ -86,52 +86,6 @@ uint16_t LookupLocalPort(Manifest const &manifest, ServiceType service, uint16_t
   return manifest.GetLocalPort(identifier);
 }
 
-#if 0
-std::map<LaneIndex, Uri> BuildLaneConnectionMap(Manifest const &manifest, LaneIndex num_lanes,
-                                                bool force_loopback = false)
-{
-  std::map<LaneIndex, Uri> connection_map;
-
-  for (LaneIndex i = 0; i < num_lanes; ++i)
-  {
-    ServiceIdentifier identifier{ServiceType::LANE, static_cast<uint16_t>(i)};
-
-    if (!manifest.HasService(identifier))
-    {
-      throw std::runtime_error("Unable to lookup service information from the manifest");
-    }
-
-    // lookup the service information
-    auto const &service = manifest.GetService(identifier);
-
-    // ensure the service is actually TCP based
-    if (service.remote_uri.scheme() != Uri::Scheme::Tcp)
-    {
-      throw std::runtime_error("Non TCP connections not currently supported");
-    }
-
-    // update the connection map
-    if (force_loopback)
-    {
-      connection_map[i] = Uri{"tcp://127.0.0.1:" + std::to_string(service.local_port)};
-    }
-    else
-    {
-      connection_map[i] = service.remote_uri;
-    }
-  }
-
-  return connection_map;
-}
-#endif
-
-std::string NetHexId(uint32_t id)
-{
-  std::ostringstream oss;
-  oss << std::hex << std::setw(8) << std::setfill('0') << id;
-  return oss.str();
-}
-
 ledger::ShardConfigs GenerateShardsConfig(uint32_t num_lanes, uint16_t start_port, std::string const &storage_path)
 {
   ledger::ShardConfigs configs(num_lanes);
@@ -145,17 +99,17 @@ ledger::ShardConfigs GenerateShardsConfig(uint32_t num_lanes, uint16_t start_por
     cfg.storage_path        = storage_path;
     cfg.external_identity   = std::make_shared<crypto::ECDSASigner>();
     cfg.external_port       = start_port++;
-    cfg.external_network_id = (static_cast<uint32_t>(i) & 0xFFFFFFu) | (uint32_t{'L'} << 24u);
+    cfg.external_network_id = muddle::NetworkId{(static_cast<uint32_t>(i) & 0xFFFFFFu) | (uint32_t{'L'} << 24u)};
     cfg.internal_identity   = std::make_shared<crypto::ECDSASigner>();
     cfg.internal_port       = start_port++;
-    cfg.internal_network_id = muddle::Muddle::CreateNetworkId("ISRD");
+    cfg.internal_network_id = muddle::NetworkId{"ISRD"};
 
     auto const &ext_identity = cfg.external_identity->identity().identifier();
     auto const &int_identity = cfg.internal_identity->identity().identifier();
 
     FETCH_LOG_INFO(Constellation::LOGGING_NAME, "Shard ", i + 1);
-    FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - Internal ", ToBase64(int_identity), " - ", NetHexId(cfg.internal_network_id), " - tcp://0.0.0.0:", cfg.internal_port);
-    FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - External ", ToBase64(ext_identity), " - ", NetHexId(cfg.external_network_id), " - tcp://0.0.0.0:", cfg.external_port);
+    FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - Internal ", ToBase64(int_identity), " - ", cfg.internal_network_id.ToString(), " - tcp://0.0.0.0:", cfg.internal_port);
+    FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - External ", ToBase64(ext_identity), " - ", cfg.external_network_id.ToString(), " - tcp://0.0.0.0:", cfg.external_port);
   }
 
   return configs;
@@ -185,9 +139,9 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   , reactor_{"Reactor"}
   , network_manager_{"NetMgr", CalcNetworkManagerThreads(cfg_.num_lanes())}
   , http_network_manager_{"Http", HTTP_THREADS}
-  , muddle_{Muddle::CreateNetworkId("core"), certificate, network_manager_}
+  , muddle_{muddle::NetworkId{"IHUB"}, certificate, network_manager_}
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
-  , internal_muddle_{Muddle::CreateNetworkId("ISRD"), internal_identity_, network_manager_}
+  , internal_muddle_{muddle::NetworkId{"ISRD"}, internal_identity_, network_manager_}
   , trust_{}
   , p2p_{muddle_,        lane_control_,        trust_,
          cfg_.max_peers, cfg_.transient_peers, cfg_.peers_update_cycle_ms}

@@ -20,6 +20,7 @@
 #include "network/generics/promise_of.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/muddle/subscription.hpp"
+#include "network/muddle/network_id.hpp"
 
 namespace fetch {
 namespace muddle {
@@ -107,7 +108,7 @@ public:
    *
    * @return The network identifier
    */
-  virtual uint32_t network_id() const = 0;
+  virtual NetworkId const &network_id() const = 0;
 };
 
 }  // namespace muddle

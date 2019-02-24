@@ -124,9 +124,9 @@ ConstByteArray ToConstByteArray(Packet::RawAddress const &addr)
  * @param channel The channel identifier
  * @return The packet
  */
-Router::PacketPtr FormatDirect(Packet::Address const &from, uint32_t network, uint16_t service, uint16_t channel)
+Router::PacketPtr FormatDirect(Packet::Address const &from, NetworkId const &network, uint16_t service, uint16_t channel)
 {
-  auto packet = std::make_shared<Packet>(from, network);
+  auto packet = std::make_shared<Packet>(from, network.value());
   packet->SetService(service);
   packet->SetProtocol(channel);
   packet->SetDirect(true);
@@ -145,10 +145,10 @@ Router::PacketPtr FormatDirect(Packet::Address const &from, uint32_t network, ui
  * @param payload The reference to the payload to be send
  * @return A new packet with common field populated
  */
-Router::PacketPtr FormatPacket(Packet::Address const &from, uint32_t network, uint16_t service, uint16_t channel,
+Router::PacketPtr FormatPacket(Packet::Address const &from, NetworkId const &network, uint16_t service, uint16_t channel,
                                uint16_t counter, uint8_t ttl, Packet::Payload const &payload)
 {
-  auto packet = std::make_shared<Packet>(from, network);
+  auto packet = std::make_shared<Packet>(from, network.value());
   packet->SetService(service);
   packet->SetProtocol(channel);
   packet->SetMessageNum(counter);
@@ -158,19 +158,12 @@ Router::PacketPtr FormatPacket(Packet::Address const &from, uint32_t network, ui
   return packet;
 }
 
-std::string AsHex(uint32_t id)
-{
-  std::ostringstream net_id;
-  net_id << std::hex << std::setw(8) << std::setfill('0') << id;
-  return net_id.str();
-}
-
 std::string DescribePacket(Packet const &packet)
 {
   std::ostringstream oss;
 
   oss << "To: " << ToBase64(packet.GetTarget()) << " From: " << ToBase64(packet.GetSender())
-      << " Route: " << AsHex(packet.GetNetworkId()) << ':' << packet.GetService() << ':' << packet.GetProtocol() << ':'
+      << " Route: " << NetworkId{packet.GetNetworkId()}.ToString() << ':' << packet.GetService() << ':' << packet.GetProtocol() << ':'
       << packet.GetMessageNum() << " Type: " << (packet.IsDirect() ? 'D' : 'R')
       << (packet.IsBroadcast() ? 'B' : 'T') << (packet.IsExchange() ? 'X' : 'F')
       << " TTL: " << static_cast<std::size_t>(packet.GetTTL());
@@ -211,13 +204,13 @@ Packet::RawAddress Router::ConvertAddress(Packet::Address const &address)
  * @param address The address of the current node
  * @param reg The connection register
  */
-Router::Router(uint32_t network_id, Router::Address address, MuddleRegister const &reg,
+Router::Router(NetworkId network_id, Router::Address address, MuddleRegister const &reg,
                Dispatcher &dispatcher)
   : address_(std::move(address))
   , address_raw_(ConvertAddress(address_))
   , register_(reg)
   , dispatcher_(dispatcher)
-  , network_id_(std::move(network_id))
+  , network_id_(network_id)
   , dispatch_thread_pool_(network::MakeThreadPool(NUMBER_OF_ROUTER_THREADS, "Router"))
 {}
 
@@ -248,14 +241,16 @@ void Router::Route(Handle handle, PacketPtr packet)
   FETCH_LOG_DEBUG(LOGGING_NAME, "Routing packet: ", DescribePacket(*packet));
 
   // discard all foreign packets
-  if (packet->GetNetworkId() != network_id_)
+  if (packet->GetNetworkId() != network_id_.value())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Discarding foreign packet: ", DescribePacket(*packet), " at ", ToBase64(address_), ":", AsHex(network_id_));
+    FETCH_LOG_WARN(LOGGING_NAME, "Discarding foreign packet: ", DescribePacket(*packet), " at ", ToBase64(address_), ":", network_id_.ToString());
     return;
   }
 
   if (packet->IsDirect())
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Routing direct packet: ", DescribePacket(*packet));
+
     // when it is a direct message we must handle this
     DispatchDirect(handle, packet);
   }
@@ -309,7 +304,7 @@ void Router::AddConnection(Handle handle)
 void Router::RemoveConnection(Handle /*handle*/)
 {
   // TODO(EJF): Need to tear down handle routes etc. Also in more complicated scenario implement
-  // alternative routing
+  //            alternative routing
 }
 
 /**

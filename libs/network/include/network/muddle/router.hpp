@@ -24,6 +24,7 @@
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/muddle/subscription_registrar.hpp"
+#include "network/muddle/network_id.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
 
 #include <chrono>
@@ -65,12 +66,12 @@ public:
   static Packet::RawAddress ConvertAddress(Packet::Address const &address);
 
   // Construction / Destruction
-  Router(uint32_t network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher);
+  Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher);
   Router(Router const &) = delete;
   Router(Router &&)      = delete;
   ~Router() override     = default;
 
-  uint32_t network_id() const override
+  NetworkId const &network_id() const override
   {
     return network_id_;
   }
@@ -188,7 +189,7 @@ private:
   BlackList             blacklist_;
   Dispatcher &          dispatcher_;
   SubscriptionRegistrar registrar_;
-  uint32_t              network_id_;
+  NetworkId             network_id_;
 
   mutable Mutex routing_table_lock_{__LINE__, __FILE__};
   RoutingTable  routing_table_;  ///< The map routing table from address to handle (Protected by

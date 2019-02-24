@@ -64,7 +64,7 @@ public:
     address_ = address;
 
     // execute the call
-    return Call(network_id_, protocol, function, std::forward<Args>(args)...);
+    return Call(network_id_.value(), protocol, function, std::forward<Args>(args)...);
   }
 
   // Operators
@@ -84,7 +84,7 @@ private:
   std::string const name_;
   MuddleEndpoint &  endpoint_;
   Address           address_;
-  uint32_t const    network_id_;
+  NetworkId const   network_id_;
   uint16_t const    service_;
   uint16_t const    channel_;
 

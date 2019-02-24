@@ -45,10 +45,10 @@ static ConstByteArray ConvertAddress(Packet::RawAddress const &address)
   return ConstByteArray{output};
 }
 
-static std::string GenerateThreadPoolName(uint32_t identity)
+static std::string GenerateThreadPoolName(NetworkId const &identity)
 {
   std::ostringstream oss;
-  oss << "Muddle " << std::hex << std::setw(8) << std::setfill('0') << identity;
+  oss << "Mdl-" << identity.ToString();
 
   return oss.str();
 }
@@ -62,7 +62,7 @@ static std::size_t const NUM_THREADS             = 1;
  *
  * @param certificate The certificate/identity of this node
  */
-Muddle::Muddle(uint32_t network_id, CertificatePtr const &certificate, NetworkManager const &nm)
+Muddle::Muddle(NetworkId network_id, CertificatePtr const &certificate, NetworkManager const &nm)
   : certificate_(certificate)
   , identity_(certificate_->identity())
   , network_manager_(nm)
@@ -289,6 +289,8 @@ void Muddle::CreateTcpClient(Uri const &peer)
   using ClientImpl       = network::TCPClient;
   using ConnectionRegPtr = std::shared_ptr<network::AbstractConnectionRegister>;
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Creating TCP Client connection to ", peer.ToString());
+
   ClientImpl client(network_manager_);
   auto       conn = client.connection_pointer();
 
@@ -311,16 +313,16 @@ void Muddle::CreateTcpClient(Uri const &peer)
   strong_conn->OnConnectionSuccess([this, peer]() { clients_.OnConnectionEstablished(peer); });
 
   strong_conn->OnConnectionFailed([this, peer]() {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection failed...");
+    FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.ToString(), " failed");
     clients_.RemoveConnection(peer);
   });
 
   strong_conn->OnLeave([this, peer]() {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection left...to go where?");
+    FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.ToString(), " left");
     clients_.Disconnect(peer);
   });
 
-  strong_conn->OnMessage([this, conn_handle](network::message_type const &msg) {
+  strong_conn->OnMessage([this, peer, conn_handle](network::message_type const &msg) {
     try
     {
       // un-marshall the data
@@ -334,7 +336,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
     }
     catch (std::exception &ex)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Error processing packet from ", conn_handle,
+      FETCH_LOG_ERROR(LOGGING_NAME, "Error processing packet from ", peer.ToString(),
                       " error: ", ex.what());
     }
   });

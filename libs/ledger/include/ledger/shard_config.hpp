@@ -19,6 +19,7 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/prover.hpp"
+#include "network/muddle/network_id.hpp"
 
 #include <chrono>
 #include <vector>
@@ -30,6 +31,7 @@ struct ShardConfig
 {
   using Timeperiod = std::chrono::milliseconds;
   using CertificatePtr = std::shared_ptr<crypto::Prover>;
+  using NetworkId = muddle::NetworkId;
 
   /// @name Basic Information
   /// @{
@@ -42,14 +44,14 @@ struct ShardConfig
   /// @{
   CertificatePtr external_identity;  ///< The identity for the external network
   uint16_t external_port;                       ///< The server port for the external network
-  uint32_t external_network_id;                 ///< The ID of the external network
+  NetworkId external_network_id;                 ///< The ID of the external network
   /// @}
 
   /// @name Internal Network
   /// @{
   CertificatePtr internal_identity;  ///< The identity for the internal network
   uint16_t internal_port;                       ///< The server port for the internal network
-  uint32_t internal_network_id;                 ///< The ID of the internal network
+  NetworkId internal_network_id;                 ///< The ID of the internal network
   /// @}
 
   /// @name Tx Sync Configuration

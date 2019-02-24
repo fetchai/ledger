@@ -26,6 +26,7 @@
 #include "network/muddle/dispatcher.hpp"
 #include "network/muddle/peer_list.hpp"
 #include "network/muddle/router.hpp"
+#include "network/muddle/network_id.hpp"
 #include "network/service/promise.hpp"
 #include "network/tcp/abstract_server.hpp"
 #include "network/uri.hpp"
@@ -134,18 +135,7 @@ public:
      the muddle using loaded certificates and keys. In tests, call
      this to just get one now.*/
 
-  static uint32_t CreateNetworkId(char const id[4])
-  {
-    uint32_t network_id{0};
-    network_id |= static_cast<uint32_t>(id[0]) << 24u;
-    network_id |= static_cast<uint32_t>(id[1]) << 16u;
-    network_id |= static_cast<uint32_t>(id[2]) <<  8u;
-    network_id |= static_cast<uint32_t>(id[3]);
-
-    return network_id;
-  }
-
-  static std::shared_ptr<Muddle> CreateMuddle(uint32_t                       network_id,
+  static std::shared_ptr<Muddle> CreateMuddle(NetworkId const &              network_id,
                                               fetch::network::NetworkManager tm)
   {
     crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
@@ -157,7 +147,7 @@ public:
     return std::make_shared<Muddle>(network_id, std::move(certificate_), tm);
   }
 
-  static std::shared_ptr<Muddle> CreateMuddle(uint32_t                       network_id,
+  static std::shared_ptr<Muddle> CreateMuddle(NetworkId const &               network_id,
                                               std::unique_ptr<crypto::Prover> prover,
                                               fetch::network::NetworkManager  tm)
   {
@@ -165,7 +155,7 @@ public:
   }
 
   // Construction / Destruction
-  Muddle(uint32_t network_id, CertificatePtr const &certificate, NetworkManager const &nm);
+  Muddle(NetworkId network_id, CertificatePtr const &certificate, NetworkManager const &nm);
   Muddle(Muddle const &) = delete;
   Muddle(Muddle &&)      = delete;
   ~Muddle()              = default;
@@ -259,9 +249,7 @@ inline void Muddle::AddPeer(Uri const &peer)
 {
   if (clients_.AddPersistentPeer(peer))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "AddPeer: ", peer.ToString(), "to  muddle ",
-                   ToBase64(identity_.identifier()));
-
+    FETCH_LOG_INFO(LOGGING_NAME, "Added new Peer: ", peer.ToString());
   }
 }
 
