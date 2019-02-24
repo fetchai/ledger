@@ -120,8 +120,27 @@ public:
 
   bool ToStream(asio::streambuf &buffer, std::string const &host, uint16_t port) const;
 
+  void SetOriginatingAddress(std::string address, uint16_t port)
+  {
+    originating_address_ = std::move(address);
+    originating_port_    = port;
+  }
+
+  std::string const &originating_address() const
+  {
+    return originating_address_;
+  }
+
+  uint16_t originating_port() const
+  {
+    return originating_port_;
+  }
+
 private:
   void ParseStartLine(byte_array::ByteArray &line);
+
+  std::string originating_address_{};
+  uint16_t originating_port_{0};
 
   byte_array::ByteArray header_data_;
   byte_array::ByteArray body_data_;
