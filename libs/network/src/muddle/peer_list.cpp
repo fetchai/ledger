@@ -246,8 +246,6 @@ void PeerConnectionList::Disconnect(Uri const &peer)
     peer_connections_.erase(peer);
   }
 
-  persistent_peers_.erase(peer);
-
   FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.uri(), " shut down");
 }
 
