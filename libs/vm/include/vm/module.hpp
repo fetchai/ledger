@@ -240,7 +240,8 @@ private:
     {
       return type_id;
     }
-    throw std::runtime_error("type index has not been registered");
+    throw std::runtime_error("type index has not been registered of the following type:\n " +
+                             std::string(type_index.name()));
   }
 
   TypeIdArray GetTypeIds(TypeIndexArray const &type_index_array) const
