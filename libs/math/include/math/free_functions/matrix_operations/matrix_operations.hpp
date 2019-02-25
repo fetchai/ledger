@@ -264,12 +264,12 @@ T Max(ShapelessArray<T, C> const &array)
 template <typename ArrayType, typename T>
 meta::IfIsMathArray<ArrayType, void> Max(ArrayType const &array, T &ret)
 {
-  ret = -std::numeric_limits<T>::max();
-  for (std::size_t j = 0; j < array.size(); ++j)
+  ret = std::numeric_limits<T>::lowest();
+  for (T &e : array)
   {
-    if (array.At(j) > ret)
+    if (e > ret)
     {
-      ret = array.At(j);
+      ret = e;
     }
   }
 }
@@ -382,11 +382,11 @@ template <typename ArrayType, typename T>
 meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, T &ret)
 {
   ret = std::numeric_limits<T>::max();
-  for (std::size_t j = 0; j < array.size(); ++j)
+  for (T &e : array)
   {
-    if (ret < array.At(j))
+    if (ret < e)
     {
-      ret = array.At(j);
+      ret = e;
     }
   }
 }
