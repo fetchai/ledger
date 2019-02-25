@@ -340,21 +340,21 @@ void ExecutionManager::MonitorThreadEntrypoint()
     switch (monitor_state)
     {
     case MonitorState::FAILED:
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Now Failed");
+      FETCH_LOG_INFO(LOGGING_NAME, "Now Failed");
 
       SetState(State::EXECUTION_FAILED);
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::STALLED:
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Now Stalled");
+      FETCH_LOG_INFO(LOGGING_NAME, "Now Stalled");
 
       SetState(State::TRANSACTIONS_UNAVAILABLE);
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::COMPLETED:
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Now Complete");
+      FETCH_LOG_INFO(LOGGING_NAME, "Now Complete");
 
       SetState(State::IDLE);
       monitor_state = MonitorState::IDLE;
@@ -364,7 +364,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
     {
       SetState(State::IDLE);
 
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Now Idle");
+      FETCH_LOG_INFO(LOGGING_NAME, "Now Idle");
 
       // enter the idle state where we wait for the next block to be posted
       {
@@ -375,7 +375,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
       SetState(State::ACTIVE);
       current_block = last_block_hash_;
 
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Now Active");
+      FETCH_LOG_INFO(LOGGING_NAME, "Now Active");
 
       // schedule the next slice if we have been triggered
       if (running_)
@@ -467,9 +467,9 @@ void ExecutionManager::MonitorThreadEntrypoint()
           }
           else
           {
-            FETCH_LOG_DEBUG(LOGGING_NAME, "Slice ", current_slice,
-                           " Execution Status - Complete: ", num_complete, " Stalls: ", num_stalls,
-                           " Errors: ", num_errors);
+            FETCH_LOG_INFO(LOGGING_NAME, "Slice ", current_slice,
+                          " Execution Status - Complete: ", num_complete, " Stalls: ", num_stalls,
+                          " Errors: ", num_errors);
 
           }
         }
