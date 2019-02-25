@@ -95,8 +95,14 @@ void BasicMiner::EnqueueTransaction(ledger::TransactionSummary const &tx)
   {
     if (txs_seen_.find(tx) == txs_seen_.end())
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Enqueued Transaction (added) ", tx.transaction_hash.ToBase64());
+
       pending_.emplace_back(tx, log2_num_lanes_);
       txs_seen_.insert(tx);
+    }
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Enqueued Transaction (duplicate) ", tx.transaction_hash.ToBase64());
     }
   }
   else
