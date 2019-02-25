@@ -58,9 +58,9 @@ template <typename ArrayType>
 class KMeansImplementation
 {
 
-  using DataType         = typename ArrayType::Type;
-  using SizeType         = typename ArrayType::SizeType;
-  using ArrayOfSizeType  = typename fetch::math::Tensor<SizeType>;
+  using DataType        = typename ArrayType::Type;
+  using SizeType        = typename ArrayType::SizeType;
+  using ArrayOfSizeType = typename fetch::math::Tensor<SizeType>;
 
 public:
   KMeansImplementation(ArrayType const &data, SizeType const &n_clusters, ClusteringType &ret,
@@ -181,7 +181,7 @@ public:
     }
 
     // initialise size of euclidean distance container
-    k_euclids_ = fetch::core::Vector<ArrayType>(n_clusters_);
+    k_euclids_      = fetch::core::Vector<ArrayType>(n_clusters_);
     empty_clusters_ = fetch::core::Vector<SizeType>(n_clusters_);
   };
 
@@ -448,7 +448,7 @@ private:
     fetch::core::Vector<SizeType> assigned_data_points{data_idxs_[0]};
 
     fetch::core::Vector<ArrayType> cluster_distances(n_clusters_);
-    SizeType assigned_cluster = 0;
+    SizeType                       assigned_cluster = 0;
 
     fetch::core::Vector<typename ArrayType::Type> weights(
         n_points_);  // weight for choosing each data point
@@ -834,7 +834,7 @@ ClusteringType KMeans(ArrayType const &data, typename ArrayType::SizeType const 
 {
   using SizeType = typename ArrayType::SizeType;
 
-  SizeType n_points = data.shape()[0];
+  SizeType       n_points = data.shape()[0];
   ClusteringType ret{n_points};
   details::KMeansImplementation<ArrayType>(data, ret, r_seed, max_loops, prev_assignment,
                                            max_no_change_convergence, k_inference_mode);
@@ -863,7 +863,7 @@ ClusteringType KMeans(ArrayType const &data, typename ArrayType::SizeType const 
   using SizeType = typename ArrayType::SizeType;
   using DataType = typename ArrayType::Type;
 
-  SizeType n_points = data.shape()[0];
+  SizeType       n_points = data.shape()[0];
   ClusteringType ret{n_points};
 
   assert(K <= n_points);  // you can't have more clusters than data points

@@ -40,8 +40,6 @@ fetch::math::meta::IfIsArithmetic<T, void> Exp(T &x)
   Exp(x, x);
 }
 
-
-
 template <std::size_t I, std::size_t F>
 void Exp(fixed_point::FixedPoint<I, F> &x)
 {

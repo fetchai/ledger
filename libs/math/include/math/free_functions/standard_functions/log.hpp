@@ -43,19 +43,17 @@ fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> Log(ArrayType const 
   Log(ret);
   return ret;
 }
-// template <typename ArrayType>
-// fetch::math::meta::IfIsMathShapelessArray<ArrayType, ArrayType> Log(ArrayType const &x)
-//{
-//  ArrayType ret{x.size()};
-//  ret.Copy(x);
-//  Log(ret);
-//  return ret;
-//}
+
+template <typename Type>
+meta::IfIsNonFixedPointArithmetic<Type, void> Log(Type &x, Type &ret)
+{
+  ret = std::log(x);
+}
 
 template <typename Type>
 meta::IfIsNonFixedPointArithmetic<Type, void> Log(Type &x)
 {
-  x = std::log(x);
+  Log(x, x);
 }
 
 //
@@ -68,26 +66,27 @@ meta::IfIsFixedPoint<T, void> Log(T &n)
 template <typename ArrayType>
 meta::IfIsNonBlasArray<ArrayType, void> Log(ArrayType &x)
 {
-  for (std::size_t i = 0; i < x.size(); ++i)
+  for (typename ArrayType::Type &e : x)
   {
-    fetch::math::Log(x[i]);
+    fetch::math::Log(e);
   }
 }
 template <typename ArrayType>
 meta::IfIsMathFixedPointArray<ArrayType, void> Log(ArrayType &x)
 {
-  for (std::size_t i = 0; i < x.size(); ++i)
+  for (typename ArrayType::Type &e : x)
   {
-    fetch::math::Log(x[i]);
+    fetch::math::Log(e);
   }
 }
 
 template <typename T>
 meta::IfIsMathArray<T, void> Log(T const &array, T &ret)
 {
-  for (std::size_t i = 0; i < array.size(); ++i)
+  ret = array;
+  for (typename T::Type &e : ret)
   {
-    ret.Set(i, std::log(array.At(i)));
+    Log(e);
   }
 }
 
