@@ -34,6 +34,8 @@ public:
   bool Get(byte_array::ByteArray &record, byte_array::ByteArray const &address);
   void Set(byte_array::ByteArray const &record, byte_array::ByteArray const &address);
 
+  bool SetupHandlers() override;
+
 private:
   // transaction handlers
   Status InvokeContract(Transaction const &tx);

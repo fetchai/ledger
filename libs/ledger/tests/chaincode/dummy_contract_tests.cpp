@@ -89,6 +89,6 @@ TEST_F(DummyContractTests, CheckDispatch)
   Identifier identifier;
   identifier.Parse(tx.contract_name());
 
-  contract_->DispatchTransaction(identifier.name(), VerifiedTransaction::Create(tx));
+  contract_->DispatchTransaction(identifier.name(), VerifiedTransaction::Create(tx), nullptr);
   EXPECT_EQ(contract_->GetTransactionCounter("wait"), 1u);
 }

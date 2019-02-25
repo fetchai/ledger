@@ -95,6 +95,7 @@ public:
   {
     return std::make_unique<fetch::vm::VM>(module.get());
   }
+
 };
 
 }  // namespace vm

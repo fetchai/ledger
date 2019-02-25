@@ -28,7 +28,7 @@
 namespace fetch {
 namespace ledger {
 
-ChainCodeCache::ContractPtr ChainCodeCache::Lookup(byte_array::ConstByteArray const &contract_name)
+ChainCodeCache::ContractPtr ChainCodeCache::Lookup(byte_array::ConstByteArray const &contract_name, StoragePtr *state)
 {
   // attempt to locate the contract in the cache
   ContractPtr contract = FindInCache(contract_name);
@@ -36,7 +36,7 @@ ChainCodeCache::ContractPtr ChainCodeCache::Lookup(byte_array::ConstByteArray co
   // if this fails create the contract
   if (!contract)
   {
-    contract = CreateContract(contract_name);
+    contract = CreateContract(contract_name, state);
   }
 
   // periodically run cache maintenance
@@ -65,9 +65,19 @@ ChainCodeCache::ContractPtr ChainCodeCache::FindInCache(byte_array::ConstByteArr
   return contract;
 }
 
-ChainCodeCache::ContractPtr ChainCodeCache::CreateContract(byte_array::ConstByteArray const &name)
+ChainCodeCache::ContractPtr ChainCodeCache::CreateContract(byte_array::ConstByteArray const &name, StoragePtr *state)
 {
   ContractPtr contract = factory_.Create(name);
+
+  contract->Attach(*state);
+
+  if(!contract->SetupHandlers())
+  {
+    FETCH_LOG_WARN("standin", "Failed to setup handlers for contract: ", name);
+    return {};
+  }
+
+  contract->Detach();
 
   // update the cache
   cache_.emplace(name, contract);

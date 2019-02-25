@@ -32,8 +32,9 @@ class ChainCodeCache
 {
 public:
   using ContractPtr = ChainCodeFactory::ContractPtr;
+  using StoragePtr = ledger::StorageInterface;
 
-  ContractPtr Lookup(byte_array::ConstByteArray const &contract_name);
+  ContractPtr Lookup(byte_array::ConstByteArray const &contract_name, StoragePtr *state);
 
   ChainCodeFactory const &factory() const
   {
@@ -60,7 +61,7 @@ private:
   static constexpr uint64_t CLEANUP_MASK   = CLEANUP_PERIOD - 1u;
 
   ContractPtr FindInCache(byte_array::ConstByteArray const &name);
-  ContractPtr CreateContract(byte_array::ConstByteArray const &name);
+  ContractPtr CreateContract(byte_array::ConstByteArray const &name, StoragePtr *state);
 
   void RunMaintenance();
 

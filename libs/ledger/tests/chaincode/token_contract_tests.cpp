@@ -134,7 +134,7 @@ protected:
 
     // dispatch the transaction
     auto status =
-        contract_->DispatchTransaction(identifier.name(), VerifiedTransaction::Create(tx));
+        contract_->DispatchTransaction(identifier.name(), VerifiedTransaction::Create(tx), nullptr);
 
     return (Contract::Status::OK == status);
   }
@@ -166,7 +166,7 @@ protected:
 
     // dispatch the transaction
     auto status =
-        contract_->DispatchTransaction(identifier.name(), VerifiedTransaction::Create(tx));
+        contract_->DispatchTransaction(identifier.name(), VerifiedTransaction::Create(tx), nullptr);
 
     return (Contract::Status::OK == status);
   }
@@ -201,7 +201,7 @@ protected:
     identifier.Parse(tx.contract_name());
 
     auto status =
-        contract_->DispatchTransaction(identifier.name(), VerifiedTransaction::Create(tx));
+        contract_->DispatchTransaction(identifier.name(), VerifiedTransaction::Create(tx), nullptr);
     return (Contract::Status::OK == status);
   }
 

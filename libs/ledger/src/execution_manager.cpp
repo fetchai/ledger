@@ -24,6 +24,7 @@
 #include "storage/resource_mapper.hpp"
 
 #include "core/byte_array/encoders.hpp"
+#include "core/byte_array/decoders.hpp"
 
 #include <chrono>
 #include <memory>
@@ -155,30 +156,24 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
 
       auto item = std::make_unique<ExecutionItem>(tx.transaction_hash, slice_index);
 
-      auto contract = contracts_.Lookup(id.name_space());
+      /* auto contract = contracts_.Lookup(id.name_space()); */ // no longer done like this
 
-      if (contract)
+      // transform the resources into lane allocation
+      for (auto const &resource : tx.resources)
       {
-        // transform the resources into lane allocation
-        for (auto const &resource : tx.resources)
-        {
-          storage::ResourceID const resource_id{contract->CreateStateIndex(resource)};
-          item->AddLane(resource_id.lane(block.log2_num_lanes));
-        }
-      }
-      else
-      {
-        FETCH_LOG_ERROR(LOGGING_NAME, "Contract not found or created in cache!");
+        storage::ResourceAddress const resource_address{CreateStateIndexWrapped(id[0], id[1], resource)};
+        item->AddLane(resource_address.lane(block.log2_num_lanes));
       }
 
       // If the tx uses smart contract(s), need to lock those lanes without a namespace
       for (auto const &smart_contract_hash : tx.contract_hashes)
       {
         // TX verification guarantees this is a valid hash
-        storage::ResourceID const resource_id{smart_contract_hash};
-        item->AddLane(resource_id.lane(block.log2_num_lanes));
-        FETCH_LOG_INFO(LOGGING_NAME, "LOCKING: ", ToHex(smart_contract_hash), " AKA ",
-                       resource_id.ToString());
+        storage::ResourceAddress const resource_address{smart_contract_hash};
+
+        item->AddLane(resource_address.lane(block.log2_num_lanes));
+        FETCH_LOG_INFO(LOGGING_NAME, "LOCKING: ", (smart_contract_hash), " AKA ",
+                       resource_address.ToString());
       }
 
       // insert the item into the execution plan

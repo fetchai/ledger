@@ -56,6 +56,8 @@ http::HTTPResponse JsonBadRequest()
 
 constexpr char const *ContractHttpInterface::LOGGING_NAME;
 
+std::string BASE64_REGEX = "[0-9a-zA-Z/]+={1,1}";
+
 ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
                                              TransactionProcessor &processor)
   : storage_{storage}
@@ -112,16 +114,28 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
     }
   }
 
-  Post("/api/contract/submit",
+  // ^@[a-zA-Z0-9+/]+={0,2}$ - regex for base64 strings : 8106038
+  Post("/api/contract/B64(SC_HASH_B64=" + BASE64_REGEX + ")/B64(PUBKEY_B64=\\w+)/(FN_NAME=\\w+)",
        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
-         return OnTransaction(params, request);
+         return OnTransaction(params, request, nullptr);
        });
+
+  Post("/api/contract/B64(SC_HASH_B64=" + BASE64_REGEX + ")/B64(PUBKEY_B64=\\w+)/(FN_NAME=\\w+)/speculative",
+       [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+         return OnTransactionSpeculation(params, request, nullptr);
+       });
+
 }
 
 http::HTTPResponse ContractHttpInterface::OnQuery(byte_array::ConstByteArray const &contract_name,
                                                   byte_array::ConstByteArray const &query,
                                                   http::HTTPRequest const &         request)
 {
+  std::cerr << "hit here1" << std::endl;
+  std::cerr << "hit here1" << std::endl;
+  std::cerr << "hit here1" << std::endl;
+  std::cerr << "hit here1" << std::endl;
+
   try
   {
     FETCH_LOG_INFO(LOGGING_NAME, "OnQuery");
@@ -133,7 +147,7 @@ http::HTTPResponse ContractHttpInterface::OnQuery(byte_array::ConstByteArray con
 
     // dispatch the contract type
     variant::Variant response;
-    auto             contract = contract_cache_.Lookup(contract_name);
+    auto             contract = contract_cache_.Lookup(contract_name, &storage_);
 
     // attach, dispatch and detach
     contract->Attach(storage_);
@@ -163,9 +177,38 @@ http::HTTPResponse ContractHttpInterface::OnQuery(byte_array::ConstByteArray con
 }
 
 http::HTTPResponse ContractHttpInterface::OnTransaction(
-    http::ViewParameters const &, http::HTTPRequest const &request,
+    http::ViewParameters const &params, http::HTTPRequest const &request,
     byte_array::ConstByteArray const *const expected_contract_name)
 {
+  /* ERROR_BACKTRACE; */
+
+  byte_array::ByteArray contract_name;
+
+  if(!expected_contract_name)
+  {
+    auto bytearray1 =   params["SC_HASH_B64"];
+    auto bytearray2 =   params["PUBKEY_B64"];
+    auto bytearray3 =   params["FN_NAME"];
+
+    if(bytearray1.size() == 0 || bytearray2.size() == 0 || bytearray3.size() == 0)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse SC: ", bytearray1, " ", bytearray2, " ", bytearray3);
+
+      return http::CreateJsonResponse("failed", http::Status::CLIENT_ERROR_BAD_REQUEST);
+    }
+    else
+    {
+      contract_name = std::string{bytearray1 + CONTRACT_NAME_SEPARATOR + bytearray2 + CONTRACT_NAME_SEPARATOR + bytearray3};
+    }
+  }
+  else
+  {
+    std::cerr << "ONTX " << *expected_contract_name << std::endl;
+    contract_name = *expected_contract_name;
+  }
+
+  std::cerr << "Parsing new contract: " << contract_name << std::endl;
+
   std::ostringstream oss;
   bool               error_response{true};
   try
@@ -183,12 +226,14 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(
     bool unknown_format = false;
     if (content_type == "application/vnd+fetch.transaction+native")
     {
-      submitted = SubmitNativeTx(request, expected_contract_name);
+      std::cerr << "BBB" << std::endl;
+      submitted = SubmitNativeTx(request, &contract_name);
     }
     else if (content_type == "application/vnd+fetch.transaction+json" ||
              content_type == "application/json")
     {
-      submitted = SubmitJsonTx(request, expected_contract_name);
+      std::cerr << "CCC" << std::endl;
+      submitted = SubmitJsonTx(request, &contract_name);
     }
     else
     {
@@ -224,7 +269,7 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(
   catch (std::exception const &ex)
   {
     oss.clear();
-    oss << R"({ "submitted": false, "error": ")" << std::quoted(ex.what()) << " }";
+    oss << R"({ "submitted": false, "error": )" << std::quoted(ex.what()) << " }";
   }
 
   return http::CreateJsonResponse(oss.str(), (error_response)
@@ -236,6 +281,8 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
     http::HTTPRequest const &               request,
     byte_array::ConstByteArray const *const expected_contract_name)
 {
+  std::cerr << "argh." << std::endl;
+
   std::size_t submitted{0};
   std::size_t expected_count{0};
 
@@ -247,6 +294,8 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
 
   if (doc.root().IsArray())
   {
+    std::cerr << "HERE1" << std::endl;
+
     expected_count = doc.root().size();
     for (std::size_t i = 0, end = doc.root().size(); i < end; ++i)
     {
@@ -256,7 +305,13 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
 
       if (expected_contract_name && tx.contract_name() != *expected_contract_name)
       {
+        std::cerr << "continued" << std::endl;
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to match expected_contract_name: ", *expected_contract_name, " with ", tx.contract_name());
         continue;
+      }
+      else
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Adding to TX processor: ", tx.contract_name());
       }
 
       // add the transaction to the processor
@@ -266,16 +321,37 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
   }
   else
   {
+    std::cerr << "HERE2" << std::endl;
+
     expected_count = 1;
     MutableTransaction tx{FromWireTransaction(doc.root())};
 
     if (!expected_contract_name || tx.contract_name() == *expected_contract_name)
     {
+
+      std::cerr << "Seen new mutable tx" << std::endl;
+
+      for(auto const &res : tx.resources())
+      {
+        std::cerr << "RES: " << ToHex(res) << std::endl;
+      }
+
+      for(auto const &res : tx.contract_hashes())
+      {
+        std::cerr << "CHASH: " << ToHex(res) << std::endl;
+      }
+
       // add the transaction to the processor
       processor_.AddTransaction(std::move(tx));
       ++submitted;
     }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to match expected_contract_name: ", *expected_contract_name, " with ", tx.contract_name());
+    }
   }
+
+  std::cerr << "HERE3" << std::endl;
 
   return SubmitTxStatus{submitted, expected_count};
 }
@@ -284,6 +360,8 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitNativeTx(
     http::HTTPRequest const &               request,
     byte_array::ConstByteArray const *const expected_contract_name)
 {
+  std::cerr << "argh..." << std::endl;
+
   std::vector<AdaptedTx> transactions;
 
   serializers::ByteArrayBuffer buffer(request.body());
@@ -302,6 +380,87 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitNativeTx(
   }
 
   return SubmitTxStatus{submitted, transactions.size()};
+}
+
+http::HTTPResponse ContractHttpInterface::OnTransactionSpeculation(
+    http::ViewParameters const &params, http::HTTPRequest const &request,
+    byte_array::ConstByteArray const *const expected_contract_name)
+{
+  /* ERROR_BACKTRACE; */
+
+  byte_array::ByteArray contract_name;
+
+  auto bytearray1 =   params["SC_HASH_B64"];
+  auto bytearray2 =   params["PUBKEY_B64"];
+  auto bytearray3 =   params["FN_NAME"];
+
+  contract_name = std::string{bytearray1 + CONTRACT_NAME_SEPARATOR + bytearray2 + CONTRACT_NAME_SEPARATOR + bytearray3};
+
+  if(contract_name.size() < 2)
+  {
+    return http::CreateJsonResponse("failed - name too short", http::Status::CLIENT_ERROR_BAD_REQUEST);
+  }
+
+  // parse the JSON request
+  json::JSONDocument doc{request.body()};
+
+  FETCH_LOG_INFO(LOGGING_NAME, "NEW SPEC TRANSACTION RECEIVED");
+  FETCH_LOG_DEBUG(LOGGING_NAME, request.body());
+
+  MutableTransaction tx{FromWireTransaction(doc.root())};
+
+  if (!expected_contract_name || tx.contract_name() == *expected_contract_name)
+  {
+    bool success = false;
+    auto const vtx = VerifiedTransaction::Create(tx, &success);
+
+    if(!success)
+    {
+      return http::CreateJsonResponse("failed to verify.", http::Status::CLIENT_ERROR_BAD_REQUEST);
+    }
+
+    Identifier id;
+    id.Parse(vtx.contract_name());
+
+    // Front facing cache here - no need for locking
+    auto chain_code = contract_cache_.Lookup(contract_name, &storage_);
+
+    if(!chain_code)
+    {
+      std::cerr << "returning." << std::endl;
+      return http::CreateJsonResponse("failed to get chain code.", http::Status::CLIENT_ERROR_BAD_REQUEST);
+    }
+
+    // attach, dispatch and detach
+    chain_code->Attach(storage_);
+    chain_code->SetNoWriteBack();
+    chain_code->DispatchTransaction(id.name(), vtx, nullptr);
+    chain_code->Detach();
+
+    // Respond with result
+    auto data            = variant::Variant::Object();
+    data["success"] = true;
+    auto &all_strings = chain_code->PrintStrings();
+    data["payload"] = variant::Variant::Array(all_strings.size());
+    std::size_t index = 0;
+
+    for(auto const &stringthing : all_strings)
+    {
+      std::cerr << "THIS: " << stringthing << std::endl;
+      data["payload"][index++] = stringthing;
+    }
+
+    std::ostringstream oss;
+    oss << data;
+    return http::CreateJsonResponse(oss.str(), http::Status::SUCCESS_OK);
+
+  }
+  else
+  {
+    return http::CreateJsonResponse("failed - name doesn't match", http::Status::CLIENT_ERROR_BAD_REQUEST);
+  }
+
+  return http::CreateJsonResponse("success", http::Status::SUCCESS_OK);
 }
 
 }  // namespace ledger

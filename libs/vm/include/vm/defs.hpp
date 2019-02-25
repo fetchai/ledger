@@ -1032,6 +1032,18 @@ struct Script
     }
     return nullptr;
   }
+
+  std::vector<std::string> GetFunctions() const
+  {
+    std::vector<std::string> ret;
+
+    for(auto const &function : functions)
+    {
+      ret.push_back(function.name);
+    }
+
+    return ret;
+  }
 };
 
 }  // namespace vm

@@ -91,14 +91,50 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
     return Status::TX_LOOKUP_FAILURE;
   }
 
-  Identifier identifier;
-  identifier.Parse(tx.contract_name());
+  Identifier id;
+  id.Parse(tx.contract_name());
+
+  std::vector<storage::ResourceAddress> successfully_locked_resources;
+
+  auto deleter=[&](uint16_t *dummy)
+  {
+    for(auto const &resource : successfully_locked_resources)
+    {
+      resources_->Unlock(resource);
+    }
+  };
+
+  uint16_t  dummyy = 9;
+  std::unique_ptr<uint16_t, decltype(deleter)> on_function_exit(&dummyy, deleter);
+
+  // Lock raw resources for SC access 
+  for (auto const &hash : tx.contract_hashes())
+  {
+    storage::ResourceAddress address(hash);
+
+    if(!resources_->Lock(address))
+    {
+      return Status::RESOURCE_FAILURE;
+    }
+
+    successfully_locked_resources.push_back(std::move(address));
+  }
+
+  // Lock wrapped resources for contract data
+  for (auto const &resource : tx.resources())
+  {
+    storage::ResourceAddress address(CreateStateIndexWrapped(id[0], id[1], resource));
+
+    if(!resources_->Lock(address))
+    {
+      return Status::RESOURCE_FAILURE;
+    }
+
+    successfully_locked_resources.push_back(std::move(address));
+  }
 
   // Lookup the chain code associated with the transaction
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Loookup: ", identifier.name_space());
-
-  auto chain_code = chain_code_cache_.Lookup(identifier.name_space());
+  auto chain_code = chain_code_cache_.Lookup(id.name_space(), resources_.get());
 
   if (!chain_code)
   {
@@ -110,9 +146,9 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
   chain_code->Attach(*resources_);
 
   // Dispatch the transaction to the contract
-  FETCH_LOG_INFO(LOGGING_NAME, "Dispatch: ", identifier.name());
+  FETCH_LOG_INFO(LOGGING_NAME, "Dispatch: ", id.name());
 
-  auto result = chain_code->DispatchTransaction(identifier.name(), tx);
+  auto result = chain_code->DispatchTransaction(id.name(), tx, nullptr);
 
   if (Contract::Status::OK != result)
   {

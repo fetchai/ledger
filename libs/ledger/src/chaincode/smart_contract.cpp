@@ -38,15 +38,16 @@
 namespace fetch {
 namespace ledger {
 
-byte_array::ConstByteArray const CONTRACT_SOURCE{"contract_source"};
-byte_array::ConstByteArray const CONTRACT_HASH{"contract_hash"};
+byte_array::ConstByteArray const CONTRACT_SOURCE{"contract_source_b64"};
+byte_array::ConstByteArray const CONTRACT_HASH{"contract_hash_b64"};
 
 SmartContract::SmartContract(byte_array::ConstByteArray const &identifier)
   : Contract(identifier)
 {
-  OnTransaction("main", this, &SmartContract::InvokeContract);
+  /* OnTransaction("main", this, &SmartContract::InvokeContract); */
 }
 
+//Contract::Status SmartContract::InvokeContract(Transaction const &tx, byte_array::ConstByteArray const &function_name)
 Contract::Status SmartContract::InvokeContract(Transaction const &tx)
 {
   variant::Variant data;
@@ -65,51 +66,23 @@ Contract::Status SmartContract::InvokeContract(Transaction const &tx)
     return Status::FAILED;
   }
 
-  if (!CheckRawState(byte_array::FromHex(contract_hash)))
+  if (!CheckRawState(contract_hash))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to find SC in main DB");
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to find SC ", contract_hash," in main DB");
     return Status::FAILED;
   }
 
   if (source_.size() == 0)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Source for SC not found. Populating.");
-
-    if (!GetRawState(contract_source, byte_array::FromHex(contract_hash)))
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to lookup hash!", contract_hash);
-      return Status::FAILED;
-    }
-
-    source_ = std::string{contract_source};
-
-    size_t index = 0;
-    while (true)
-    {
-      /* Locate the substring to replace. */
-      index = source_.find("\\\\n", index);
-      if (index == std::string::npos)
-      {
-        break;
-      }
-
-      /* Make the replacement. */
-      source_.replace(index, 3, "\n");
-
-      /* Advance index forward so the next iteration doesn't pick it up as well. */
-      index += 3;
-    }
-  }
-  else
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Using already existing SC cached.");
+    FETCH_LOG_INFO(LOGGING_NAME, "Empty SC found! Shouldn't happen.");
   }
 
   FETCH_LOG_WARN(LOGGING_NAME, "Running smart contract");
 
   if (!RunSmartContract(source_, "main", contract_hash, tx))
   {
-    return Status::FAILED;
+    // We're actually fine with this.
+    return Status::OK;
   }
 
   return Status::OK;
@@ -154,16 +127,17 @@ bool SmartContract::RunSmartContract(std::string &source, std::string const &tar
   // Attach our state
   vm->SetIOInterface(&interface);
 
-  std::vector<std::string> print_strings;
-
   // Execute our fn
-  if (!vm->Execute(script, target_fn, error, print_strings, output))
+  if (!vm->Execute(script, target_fn, error, print_strings_, output))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
   }
 
   // Successfully ran the VM. Write back the state
-  interface.WriteBackToState();
+  if(allow_write_back_)
+  {
+    interface.WriteBackToState();
+  }
 
   return true;
 }
@@ -182,6 +156,43 @@ void SmartContract::Set(byte_array::ByteArray const &record, byte_array::ByteArr
 {
   return SetStateRecord(record, address);
 }
+
+bool SmartContract::SetupHandlers()
+{
+  FETCH_LOG_INFO(LOGGING_NAME, "Updating handlers for: ", identifier()[0]);
+
+  byte_array::ByteArray      contract_source;
+
+  if (source_.size() == 0)
+  {
+    if (!GetRawState(contract_source, identifier()[0]))
+    {
+      return false;
+    }
+
+    source_ = std::string{FromBase64(contract_source)};
+  }
+
+  auto        module       = vm::VMFactory::GetModule();
+  fetch::vm::Script        script;
+  std::vector<std::string> errors = vm::VMFactory::Compile(module, source_, script);
+
+  if(errors.size() == 0)
+  {
+    for(auto const &fn : script.GetFunctions())
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Attaching Fn: ", fn);
+      OnTransaction(fn, this, &SmartContract::InvokeContract);
+    }
+  }
+  else
+  {
+    return false;
+  }
+
+  return true;
+}
+
 
 }  // namespace ledger
 }  // namespace fetch

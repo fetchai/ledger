@@ -37,8 +37,8 @@
 namespace fetch {
 namespace ledger {
 
-byte_array::ConstByteArray const CONTRACT_SOURCE{"contract_source"};
-byte_array::ConstByteArray const CONTRACT_HASH{"contract_hash"};
+byte_array::ConstByteArray const CONTRACT_SOURCE{"contract_source_b64"};
+byte_array::ConstByteArray const CONTRACT_HASH{"contract_hash_b64"};
 
 SmartContractManager::SmartContractManager()
   : Contract("fetch.smart_contract_manager")
@@ -48,35 +48,53 @@ SmartContractManager::SmartContractManager()
 
 Contract::Status SmartContractManager::CreateInitialContract(Transaction const &tx)
 {
+
+  std::cerr << "inside SC 1" << std::endl;
+
   variant::Variant data;
   if (!ParseAsJson(tx, data))
   {
-    return Status::FAILED;
+    FETCH_LOG_WARN(LOGGING_NAME, "FAILED TO PARSE TRANSACTION");
+    return Status::FAILED; // TODO(HUT):  // discuss with ed
   }
 
   byte_array::ConstByteArray contract_source;
-  byte_array::ByteArray      contract_build_up;
-  byte_array::ByteArray      contract_build_up_final;
-  byte_array::ByteArray      contract_with_quotes{'"', 1};
-  contract_with_quotes.Resize(1);
+  byte_array::ConstByteArray contract_hash;
 
   if (Extract(data, CONTRACT_SOURCE, contract_source))
   {
-    contract_build_up.Append(contract_with_quotes, contract_source, contract_with_quotes);
-    contract_build_up_final = contract_build_up.Copy();
-
-    auto smart_contract_hash = crypto::Hash<crypto::SHA256>(contract_build_up_final);
-
-    FETCH_LOG_WARN(LOGGING_NAME, "Adding smart contract, PK: ", ToHex(smart_contract_hash));
-
-    SetRawState(contract_source, smart_contract_hash);
-
-    FETCH_LOG_WARN(LOGGING_NAME, "Added smart contract, PK: ", ToHex(smart_contract_hash));
+    std::cerr << "source found: " << contract_source << std::endl;
+    std::cerr << "AKA" << FromBase64(contract_source) << std::endl;
   }
   else
   {
+    return Status::OK;
+  }
+
+  if (Extract(data, CONTRACT_HASH, contract_hash))
+  {
+    std::cerr << "hash found: " << contract_hash << std::endl;
+  }
+
+  auto source_hashed = ToBase64(crypto::Hash<crypto::SHA256>(contract_source));
+
+  if(source_hashed != contract_hash)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to match calculated hash with provided hash: ", ToBase64(source_hashed), " to ", contract_hash);
+  }
+
+  FETCH_LOG_WARN(LOGGING_NAME, "Adding smart contract, ID: ", source_hashed);
+
+  // Source stored as base64, against its hash base64
+  SetRawState(contract_source, source_hashed);
+
+  if (!CheckRawState(source_hashed))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to find SC after trying to set it! : ", source_hashed," in main DB");
     return Status::FAILED;
   }
+
+  FETCH_LOG_WARN(LOGGING_NAME, "Added smart contract, ID: ", source_hashed);
 
   return Status::OK;
 }

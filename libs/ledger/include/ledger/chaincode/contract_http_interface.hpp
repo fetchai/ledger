@@ -47,6 +47,10 @@ private:
       http::ViewParameters const &, http::HTTPRequest const &request,
       byte_array::ConstByteArray const *const expected_contract_name = nullptr);
 
+  http::HTTPResponse OnTransactionSpeculation(
+      http::ViewParameters const &, http::HTTPRequest const &request,
+      byte_array::ConstByteArray const *const expected_contract_name = nullptr);
+
   /** @brief Structure containing status of of multi-transaction submission.
    *
    *  The structure is supposed to carry information about how many transactions
