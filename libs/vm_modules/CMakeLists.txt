@@ -17,6 +17,8 @@ setup_compiler()
 setup_library(fetch-vm_modules)
 target_link_libraries(fetch-vm_modules INTERFACE fetch-vm fetch-core fetch-math fetch-ml )
 
+add_test_target()
+
 # add_test_target()
 add_subdirectory(examples)
 

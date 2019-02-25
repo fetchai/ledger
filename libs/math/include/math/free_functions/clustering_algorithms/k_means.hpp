@@ -61,7 +61,6 @@ class KMeansImplementation
   using DataType         = typename ArrayType::Type;
   using SizeType         = typename ArrayType::SizeType;
   using ArrayOfSizeType  = typename fetch::math::Tensor<SizeType>;
-  using ArrayOfArrayType = typename fetch::math::Tensor<fetch::math::Tensor<DataType>>;
 
 public:
   KMeansImplementation(ArrayType const &data, SizeType const &n_clusters, ClusteringType &ret,
@@ -104,9 +103,6 @@ public:
     , k_assignment_(std::move(k_assignment))
   {
 
-    //    // seed random number generator
-    //    rng_.seed(uint32_t(r_seed));
-
     n_points_     = data.shape()[0];
     n_dimensions_ = data.shape()[1];
 
@@ -135,9 +131,6 @@ public:
     , k_assignment_(std::move(k_assignment))
     , k_inference_mode_(k_inference_mode)
   {
-
-    //    // seed random number generator
-    //    rng_.seed(uint32_t(r_seed));
 
     n_points_     = data.shape()[0];
     n_dimensions_ = data.shape()[1];
@@ -189,9 +182,7 @@ public:
 
     // initialise size of euclidean distance container
     k_euclids_ = fetch::core::Vector<ArrayType>(n_clusters_);
-    //    k_euclids_      = ArrayOfArrayType(n_clusters_);
     empty_clusters_ = fetch::core::Vector<SizeType>(n_clusters_);
-    //    empty_clusters_ = ArrayOfSizeType(n_clusters_);
   };
 
 private:
@@ -249,7 +240,6 @@ private:
       {
 
         // if user has set a specific value for K then we must have non-zero count for every cluster
-        //        k_count_.Fill(0);
         std::fill(k_count_.begin(), k_count_.end(), 0);
         for (SizeType j = 0; j < n_points_; ++j)
         {
@@ -272,7 +262,6 @@ private:
       }
 
       // initialise k means
-      //      fetch::core::Vector<SizeType> k_means_shape{n_clusters_, n_dimensions_};
       k_means_      = ArrayType({n_clusters_, n_dimensions_});
       prev_k_means_ = ArrayType({n_clusters_, n_dimensions_});
 
@@ -302,8 +291,6 @@ private:
     }
 
     // reset the kcount
-
-    //    k_count_.Fill(0);
     std::fill(k_count_.begin(), k_count_.end(), 0);
   }
 
@@ -459,15 +446,12 @@ private:
     SizeType n_remaining_clusters    = n_clusters_ - 1;
 
     fetch::core::Vector<SizeType> assigned_data_points{data_idxs_[0]};
-    //    ArrayOfSizeType assigned_data_points{data_idxs_[0]};
 
     fetch::core::Vector<ArrayType> cluster_distances(n_clusters_);
-    //    ArrayOfArrayType cluster_distances(n_clusters_);
     SizeType assigned_cluster = 0;
 
     fetch::core::Vector<typename ArrayType::Type> weights(
         n_points_);  // weight for choosing each data point
-                     //    ArrayType weights(n_points_);  // weight for choosing each data point
     fetch::core::Vector<typename ArrayType::Type> interval(
         n_points_);  // interval for defining random distribution
     std::iota(std::begin(interval), std::end(interval), 0);  // fill interval with range
@@ -640,7 +624,6 @@ private:
   void Update(ArrayType const &data)
   {
     k_means_.Fill(0);
-    //    std::fill(k_means_.begin(), k_means_.end(), 0);
 
     // get KSums
     SizeType cur_k;
@@ -761,9 +744,7 @@ private:
   std::default_random_engine rng_;
 
   fetch::core::Vector<SizeType> data_idxs_;  // a vector of indices to the data used for shuffling
-  //  ArrayOfSizeType data_idxs_;  // a vector of indices to the data used for shuffling
   fetch::core::Vector<SizeType> empty_clusters_;  // a vector tracking whenever a cluster goes empty
-  //  ArrayOfSizeType empty_clusters_;  // a vector tracking whenever a cluster goes empty
 
   ArrayType k_means_;       // current cluster centres
   ArrayType prev_k_means_;  // previous cluster centres (for checking convergence)
@@ -776,7 +757,6 @@ private:
 
   fetch::core::Vector<SizeType>  k_count_;    // count of how many data points assigned per cluster
   fetch::core::Vector<ArrayType> k_euclids_;  // container for current euclid distances
-  //  ArrayOfArrayType k_euclids_;  // container for current euclid distances
 
   // map previously assigned clusters to current clusters
   std::unordered_map<SizeType, SizeType>
@@ -855,7 +835,6 @@ ClusteringType KMeans(ArrayType const &data, typename ArrayType::SizeType const 
   using SizeType = typename ArrayType::SizeType;
 
   SizeType n_points = data.shape()[0];
-  //  fetch::core::Vector<SizeType> ret_array_shape{n_points, 1};
   ClusteringType ret{n_points};
   details::KMeansImplementation<ArrayType>(data, ret, r_seed, max_loops, prev_assignment,
                                            max_no_change_convergence, k_inference_mode);
@@ -885,7 +864,6 @@ ClusteringType KMeans(ArrayType const &data, typename ArrayType::SizeType const 
   using DataType = typename ArrayType::Type;
 
   SizeType n_points = data.shape()[0];
-  //  fetch::core::Vector<SizeType> ret_array_shape{n_points, 1};
   ClusteringType ret{n_points};
 
   assert(K <= n_points);  // you can't have more clusters than data points

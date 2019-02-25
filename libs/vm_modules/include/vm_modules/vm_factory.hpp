@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/free_functions.hpp"
-
 #include "vm/analyser.hpp"
 #include "vm/typeids.hpp"
 
@@ -26,8 +24,18 @@
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
 
+#include "vm_modules/core/print.hpp"
+#include "vm_modules/core/type_convert.hpp"
+
+#include "vm_modules/math/abs.hpp"
+
+#include "vm_modules/ml/cross_entropy.hpp"
+#include "vm_modules/ml/graph.hpp"
+#include "vm_modules/ml/mean_square_error.hpp"
+#include "vm_modules/ml/tensor.hpp"
+
 namespace fetch {
-namespace vm {
+namespace vm_modules {
 
 /**
  * VMFactory provides the user with convenient management of the VM
@@ -47,9 +55,18 @@ public:
   {
     auto module = std::make_shared<fetch::vm::Module>();
 
-    // Bind our vm free functions to the module
-    module->CreateFreeFunction("Print", &Print);
-    module->CreateFreeFunction("toString", &toString);
+    // core modules
+    CreatePrint(module);
+    CreateToString(module);
+
+    // math modules
+    CreateAbs(module);
+
+    // ml modules - order is important!!
+    ml::CreateTensor(module);
+    ml::CreateGraph(module);
+    ml::CreateCrossEntropy(module);
+    ml::CreateMeanSquareError(module);
 
     return module;
   }
@@ -97,5 +114,5 @@ public:
   }
 };
 
-}  // namespace vm
+}  // namespace vm_modules
 }  // namespace fetch
