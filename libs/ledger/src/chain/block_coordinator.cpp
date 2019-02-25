@@ -607,7 +607,7 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
     // ensure that the main chain is aware of the block
     if (BlockStatus::ADDED == chain_.AddBlock(*next_block_))
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Generating new block: ", ToBase64(next_block_->body.hash));
+      FETCH_LOG_INFO(LOGGING_NAME, "Generating new block: ", ToBase64(next_block_->body.hash), " txs: ", next_block_->GetTransactionCount());
 
       // dispatch the block that has been generated
       block_sink_.OnBlock(*next_block_);
