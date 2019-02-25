@@ -52,12 +52,12 @@ public:
           std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>(
               {inputs[0]->size(), this->output_->shape()[1]}));
     }
-    // uint64_t j(0);
-    // for (DataType const &i : *(inputs[0]))
-    //   {
-    // 	this->output_->Slice(j).Copy(weights_.Forward()->Slice(i));
-    // 	j++;
-    //   }
+    uint64_t j(0);
+    for (DataType const &i : *(inputs[0]))
+      {
+    	this->embedings_output_->Slice(j).Copy(this->output_->Slice(typename ArrayType::SizeType(double(i))));
+    	j++;
+      }
     return this->embedings_output_;
   }
 
@@ -67,13 +67,12 @@ public:
     ASSERT(inputs.size() == 1);
     ASSERT(inputs[0]->shape().size() == 1);
 
-    // uint64_t j(0);
-    // for (DataType const &i : *(inputs[0]))
-    //   {
-    // 	this->gradientAccumulation_->Slice(i).Copy(errorSignal->Slice(j));
-    // 	j++;
-    //   }
-
+    uint64_t j(0);
+    for (DataType const &i : *(inputs[0]))
+      {
+    	this->gradientAccumulation_->Slice(typename ArrayType::SizeType(double(i))).Copy(errorSignal->Slice(j));
+    	j++;
+      }
     return {};
   }
 
