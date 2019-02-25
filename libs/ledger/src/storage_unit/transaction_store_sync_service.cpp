@@ -325,6 +325,8 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
 
 void TransactionStoreSyncService::OnTransaction(VerifiedTransaction const &tx)
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "Verified Sync TX: ", tx.digest().ToBase64(), " (", tx.contract_name(), ')');
+
   ResourceID const rid(tx.digest());
 
   if (!store_->Has(rid))

@@ -331,8 +331,8 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
     }
   }
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Submitted ", submitted, " transactions from ", request.originating_address(), ':',
-                  request.originating_port());
+  FETCH_LOG_INFO(LOGGING_NAME, "Submitted ", submitted, " transactions from ", request.originating_address(), ':',
+                 request.originating_port());
 
   return SubmitTxStatus{submitted, expected_count};
 }
@@ -377,8 +377,8 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitNativeTx(
     ++submitted;
   }
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Submitted ", submitted, " transactions from ", request.originating_address(), ':',
-                  request.originating_port());
+  FETCH_LOG_INFO(LOGGING_NAME, "Submitted ", submitted, " transactions from ", request.originating_address(), ':',
+                 request.originating_port());
 
   return SubmitTxStatus{submitted, transactions.size()};
 }

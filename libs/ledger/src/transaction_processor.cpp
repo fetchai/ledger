@@ -55,6 +55,8 @@ void TransactionProcessor::OnTransaction(VerifiedTransaction const &tx)
 {
   FETCH_METRIC_TX_SUBMITTED(tx.digest());
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Verified Input Transaction: ", byte_array::ToBase64(tx.digest()), " (", tx.contract_name(), ')');
+
   // dispatch the transaction to the storage engine
   try
   {
@@ -125,6 +127,11 @@ void TransactionProcessor::ThreadEntryPoint()
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     new_txs.clear();
     new_txs = storage_.PollRecentTx(10000);
+
+    if (!new_txs.empty())
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Pulled ", new_txs.size(), " transactions from shards");
+    }
 
     for (auto const &summary : new_txs)
     {

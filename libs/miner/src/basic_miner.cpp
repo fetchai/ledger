@@ -89,6 +89,8 @@ void BasicMiner::EnqueueTransaction(ledger::TransactionSummary const &tx)
 {
   FETCH_LOCK(pending_lock_);
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Enqueued Transaction: ", tx.transaction_hash.ToBase64());
+
   if (filtering_input_duplicates_)
   {
     if (txs_seen_.find(tx) == txs_seen_.end())
