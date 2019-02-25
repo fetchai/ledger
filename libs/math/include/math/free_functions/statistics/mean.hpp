@@ -32,9 +32,9 @@ inline typename ArrayType::Type Mean(ArrayType const &a)
 {
 
   typename ArrayType::Type ret = 0;
-  for (std::size_t j = 0; j < a.size(); ++j)
+  for( typename ArrayType::Type &e : a)
   {
-    ret += a.At(j);
+    ret += e;
   }
   ret /= static_cast<typename ArrayType::Type>(a.size());
   return ret;

@@ -137,17 +137,17 @@ fetch::math::meta::IfIsBlasArray<ArrayType, void> Tanh(ArrayType &x)
 template <typename ArrayType>
 fetch::math::meta::IfIsNonBlasArray<ArrayType, void> Tanh(ArrayType &x)
 {
-  for (std::size_t j = 0; j < x.size(); ++j)
+  for (typename ArrayType::Type &e : x)
   {
-    x.Set(j, std::tanh(x.At(j)));
+    e = std::tanh(e);
   }
 }
 template <typename ArrayType>
 fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> Tanh(ArrayType &x)
 {
-  for (std::size_t j = 0; j < x.size(); ++j)
+  for (typename ArrayType::Type &e : x)
   {
-    x.Set(j, static_cast<typename ArrayType::Type>(std::tanh(double(x.At(j)))));
+    e = static_cast<typename ArrayType::Type>(std::tanh(double(e)));
   }
 }
 

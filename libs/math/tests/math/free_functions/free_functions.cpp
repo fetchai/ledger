@@ -31,9 +31,9 @@ class FreeFunctionsTest : public ::testing::Test
 {
 };
 
-// using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-//                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>>;
+ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+//using MyTypes = ::testing::Types<fetch::math::Tensor<float>>;
 TYPED_TEST_CASE(FreeFunctionsTest, MyTypes);
 
 ///////////////////
