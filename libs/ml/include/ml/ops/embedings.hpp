@@ -54,10 +54,11 @@ public:
     }
     uint64_t j(0);
     for (DataType const &i : *(inputs[0]))
-      {
-    	this->embedings_output_->Slice(j).Copy(this->output_->Slice(typename ArrayType::SizeType(double(i))));
-    	j++;
-      }
+    {
+      this->embedings_output_->Slice(j).Copy(
+          this->output_->Slice(typename ArrayType::SizeType(double(i))));
+      j++;
+    }
     return this->embedings_output_;
   }
 
@@ -69,10 +70,11 @@ public:
 
     uint64_t j(0);
     for (DataType const &i : *(inputs[0]))
-      {
-    	this->gradientAccumulation_->Slice(typename ArrayType::SizeType(double(i))).Copy(errorSignal->Slice(j));
-    	j++;
-      }
+    {
+      this->gradientAccumulation_->Slice(typename ArrayType::SizeType(double(i)))
+          .Copy(errorSignal->Slice(j));
+      j++;
+    }
     return {};
   }
 
