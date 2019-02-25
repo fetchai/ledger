@@ -222,7 +222,7 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
     item.Execute(*executor);
 
     --active_count_;
-    --remaining_executions_;
+    DecrementRemaining();
     ++completed_executions_;
 
     {
@@ -404,7 +404,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
         // determine the target number of executions being expected (must be
         // done before the thread pool dispatch)
-        remaining_executions_ = slice_plan.size();
+        SetRemaining(slice_plan.size());
 
         for (auto &item : slice_plan)
         {
@@ -421,24 +421,19 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
     case MonitorState::RUNNING:
     {
-      if (remaining_executions_ > 0xFFFFFF)
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Potential wrap around of counter");
-      }
-
       // wait for the execution to complete
-      if (remaining_executions_ > 0)
+      if (!IsFinishedExecuting())
       {
         std::unique_lock<std::mutex> lock(monitor_lock_);
 
         if (std::cv_status::timeout == monitor_notify_.wait_for(lock, std::chrono::milliseconds{2000}))
         {
-          FETCH_LOG_WARN(LOGGING_NAME, "### Extra long execution: remaining: ", remaining_executions_.load());
+          FETCH_LOG_WARN(LOGGING_NAME, "### Extra long execution: remaining: ", GetRemaining());
         }
       }
 
       // determine the next state (provided we have complete
-      if (remaining_executions_ == 0)
+      if (IsFinishedExecuting())
       {
         // evaluate the status of the executions
         std::size_t num_complete{0};
@@ -520,6 +515,43 @@ void ExecutionManager::MonitorThreadEntrypoint()
       monitor_state = MonitorState::IDLE;
       break;
     }
+  }
+}
+
+bool ExecutionManager::IsFinishedExecuting() const
+{
+  return GetRemaining() == 0;
+}
+
+std::size_t ExecutionManager::GetRemaining() const
+{
+  FETCH_LOCK(remaining_lock_);
+  return remaining_;
+}
+
+void ExecutionManager::SetRemaining(std::size_t count)
+{
+  FETCH_LOCK(remaining_lock_);
+
+  if (remaining_ != 0)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Overwriting non-zero remaining count");
+  }
+
+  remaining_ = count;
+}
+
+void ExecutionManager::DecrementRemaining()
+{
+  FETCH_LOCK(remaining_lock_);
+
+  if (remaining_ > 0)
+  {
+    --remaining_;
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Overwriting non-zero remaining count");
   }
 }
 

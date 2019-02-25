@@ -123,7 +123,7 @@ private:
 
   Counter active_count_{0};
   Counter completed_executions_{0};
-  Counter remaining_executions_{0};
+//  Counter remaining_executions_{0};
   Counter num_slices_{0};
 
   ThreadPool thread_pool_;
@@ -133,6 +133,14 @@ private:
 
   bool PlanExecution(Block::Body const &block);
   void DispatchExecution(ExecutionItem &item);
+
+  bool IsFinishedExecuting() const;
+  std::size_t GetRemaining() const;
+  void SetRemaining(std::size_t count);
+  void DecrementRemaining();
+
+  mutable Mutex remaining_lock_;
+  std::size_t remaining_{0};
 };
 
 }  // namespace ledger
