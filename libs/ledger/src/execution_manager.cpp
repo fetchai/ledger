@@ -231,7 +231,10 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
     }
 
     // trigger the monitor thread to process the next slice if needed
-    monitor_notify_.notify_one();
+    {
+      std::lock_guard<Mutex> lock(monitor_lock_);
+      monitor_notify_.notify_all();
+    }
   }
 }
 
@@ -418,12 +421,20 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
     case MonitorState::RUNNING:
     {
+      if (remaining_executions_ > 0xFFFFFF)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Potential wrap around of counter");
+      }
 
       // wait for the execution to complete
       if (remaining_executions_ > 0)
       {
         std::unique_lock<std::mutex> lock(monitor_lock_);
-        monitor_notify_.wait_for(lock, std::chrono::milliseconds{100});
+
+        if (std::cv_status::timeout == monitor_notify_.wait_for(lock, std::chrono::milliseconds{2000}))
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "### Extra long execution: remaining: ", remaining_executions_.load());
+        }
       }
 
       // determine the next state (provided we have complete
@@ -449,6 +460,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
             break;
           case ExecutionItem::Status::NOT_RUN:
           case ExecutionItem::Status::RESOURCE_FAILURE:
+          case ExecutionItem::Status::INEXPLICABLE_FAILURE:
           case ExecutionItem::Status::CHAIN_CODE_LOOKUP_FAILURE:
           case ExecutionItem::Status::CHAIN_CODE_EXEC_FAILURE:
             ++num_errors;
