@@ -50,9 +50,9 @@ public:
      */
     typename ArrayType::Type maxValue = std::numeric_limits<typename ArrayType::Type>::min();
     typename ArrayType::Type sum(0);
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
+    for (DataType const &e : *inputs[0])
     {
-      maxValue = std::max(maxValue, inputs[0]->At(i));
+      maxValue = std::max(maxValue, e);
     }
     for (std::size_t i(0); i < inputs[0]->size(); ++i)
     {
@@ -61,9 +61,9 @@ public:
       this->output_->At(i) = v;
       sum += v;
     }
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
+    for (DataType &e : *(this->output_))
     {
-      this->output_->At(i) /= sum;
+      e /= sum;
     }
     return this->output_;
   }
