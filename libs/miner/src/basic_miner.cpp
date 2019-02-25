@@ -147,7 +147,7 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   // Before packing transactions, we must be sure they're unique
   chain.StripAlreadySeenTx(block.body.previous_hash, main_queue_);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Starting block packing. Backlog: ", num_transactions,
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting block packing. Backlog: ", num_transactions,
                   ", main queue: ", main_queue_.size(), " pending: ", pending_.size());
 
   // determine how many of the threads should be used in this block generation
@@ -200,8 +200,8 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
 
   FETCH_UNUSED(packed_transactions);
   FETCH_UNUSED(remaining_transactions);
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Finished block packing (packed: ", packed_transactions,
-                  " remaining: ", remaining_transactions, ")");
+  FETCH_LOG_INFO(LOGGING_NAME, "Finished block packing (packed: ", packed_transactions,
+                 " remaining: ", remaining_transactions, ")");
 
   main_queue_size_ = main_queue_.size();
 }
