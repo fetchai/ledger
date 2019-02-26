@@ -221,6 +221,13 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
     // execute the item
     item.Execute(*executor);
 
+    // determine what the status is
+    if (ExecutorInterface::Status::SUCCESS != item.status())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Error executing tx: ", item.hash().ToBase64(), " slice: ",
+                     item.slice(), " status: ", ledger::ToString(item.status()));
+    }
+
     --active_count_;
     DecrementRemaining();
     ++completed_executions_;
