@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -114,9 +114,6 @@ public:
 
     memcpy(reinterpret_cast<uint8_t *>(&last_position_), first.data, sizeof(uint64_t));
     memcpy(reinterpret_cast<uint8_t *>(&length_), first.data + sizeof(uint64_t), sizeof(uint64_t));
-
-    // Previously written blocks should at least have header size - if not something has gone wrong
-    assert(length_ >= HEADER_SIZE);
 
     block_count_ = length_ / block_type::BYTES;
     if (block_count_ * block_type::BYTES < length_)
