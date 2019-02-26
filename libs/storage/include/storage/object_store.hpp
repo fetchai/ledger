@@ -52,6 +52,12 @@ public:
   using serializer_type = serializers::TypedByteArrayBuffer;
   class Iterator;
 
+  ObjectStore(){};
+  ObjectStore(ObjectStore const &rhs) = delete;
+  ObjectStore(ObjectStore &&rhs)      = delete;
+  ObjectStore &operator=(ObjectStore const &rhs) = delete;
+  ObjectStore &operator=(ObjectStore &&rhs) = delete;
+
   /**
    * Create a new file for the object store with the filename parameters for the
    * document,
@@ -86,6 +92,12 @@ public:
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
     return LocklessGet(rid, object);
+  }
+
+  void Erase(ResourceID const &rid)
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    LocklessErase(rid);
   }
 
   /**
@@ -150,6 +162,11 @@ public:
     return true;
   }
 
+  void LocklessErase(ResourceID const &rid)
+  {
+    store_.Erase(rid);
+  }
+
   /**
    * Do a has without locking the structure, do this when it is guaranteed you
    * have locked (using
@@ -182,7 +199,7 @@ public:
     store_.Set(rid, ser.data());
   }
 
-  std::size_t size() const
+  std::size_t size()
   {
     return store_.size();
   }
