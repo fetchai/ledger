@@ -535,9 +535,8 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
 
     bool const is_empty = (routing_data.handle == 0);
 
-    // an update is only valid when the connection is direct.
     bool const is_different = (routing_data.handle != handle) || (routing_data.direct != direct);
-    bool const is_update    = (routing_data.handle && direct && is_different);
+    bool const is_update    = (routing_data.handle && is_different);
 
     // update the routing table if required
     if (is_empty || is_update)
