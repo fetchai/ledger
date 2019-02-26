@@ -45,7 +45,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   , block_subscription_(endpoint.Subscribe(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS))
   , main_chain_protocol_(chain_)
   , rpc_client_("R:MChain", endpoint, Address{}, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
-  , state_machine_{std::make_shared<StateMachine>("MainChain", State::REQUEST_HEAVIEST_CHAIN)}
+  , state_machine_{std::make_shared<StateMachine>("MainChain", State::SYNCHRONISING)}
 {
   // register the main chain protocol
   Add(RPC_MAIN_CHAIN, &main_chain_protocol_);
