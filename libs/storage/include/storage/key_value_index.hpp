@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@
 #include "crypto/sha256.hpp"
 #include "storage/cached_random_access_stack.hpp"
 #include "storage/key.hpp"
+#include "storage/new_versioned_random_access_stack.hpp"
 #include "storage/random_access_stack.hpp"
 #include "storage/storage_exception.hpp"
 #include "storage/versioned_random_access_stack.hpp"
@@ -81,9 +82,12 @@ namespace storage {
  * include their children's hashes, ie. merkle tree which can be used to detect file corruption.
  *
  */
-template <std::size_t S = 256, std::size_t N = 64>
+template <std::size_t S = 256, std::size_t N = 32>
 struct KeyValuePair
 {
+  using HashFunction = crypto::SHA256;
+  static_assert(N == HashFunction::size_in_bytes(), "Hash size must match the hash function");
+
   KeyValuePair()
   {
     memset(this, 0, sizeof(decltype(*this)));
@@ -92,28 +96,28 @@ struct KeyValuePair
 
   using key_type = Key<S>;
 
-  key_type key;
-  uint8_t  hash[N];
+  key_type key{};
+  uint8_t  hash[N]{};
 
   // The location in bits of the distance down the key this node splits on
-  uint16_t split;
+  uint16_t split = 0;
 
   // Ref to parent, left and right branches
-  uint64_t parent;
+  uint64_t parent = uint64_t(-1);
 
   union
   {
-    uint64_t value;
+    uint64_t value = 0;
     uint64_t left;
   };
-  uint64_t right;
+  uint64_t right = 0;
 
-  bool operator==(KeyValuePair const &kv)
+  bool operator==(KeyValuePair const &kv) const
   {
     return Hash() == kv.Hash();
   }
 
-  bool operator!=(KeyValuePair const &kv)
+  bool operator!=(KeyValuePair const &kv) const
   {
     return Hash() != kv.Hash();
   }
@@ -125,7 +129,7 @@ struct KeyValuePair
 
   bool UpdateLeaf(uint64_t const &val, byte_array::ConstByteArray const &data)
   {
-    crypto::SHA256 hasher;
+    HashFunction hasher;
     hasher.Reset();
     hasher.Update(data);
     hasher.Final(hash, N);
@@ -136,7 +140,7 @@ struct KeyValuePair
 
   bool UpdateNode(KeyValuePair const &left, KeyValuePair const &right)
   {
-    crypto::SHA256 hasher;
+    HashFunction hasher;
     hasher.Reset();
 
     hasher.Update(left.hash, N);
@@ -166,7 +170,7 @@ struct KeyValuePair
  *
  * The kvi is versioned, so it includes the functionality to revert to a previous state
  */
-template <typename KV = KeyValuePair<>, typename D = VersionedRandomAccessStack<KV, uint64_t>>
+template <typename KV = KeyValuePair<>, typename D = VersionedRandomAccessStack<KV>>
 class KeyValueIndex
 {
   /**
@@ -298,7 +302,7 @@ public:
     schedule_update_.clear();
   }
 
-  void Delete(byte_array::ConstByteArray const &key)
+  void Delete(byte_array::ConstByteArray const & /*key*/)
   {
     throw StorageException("Not implemented");
   }
@@ -368,7 +372,7 @@ public:
     {
       kv.key        = key;
       kv.parent     = uint64_t(-1);
-      kv.split      = uint16_t(key.size());
+      kv.split      = uint16_t(key.size_in_bits());
       update_parent = kv.UpdateLeaf(args...);
 
       index = stack_.Push(kv);
@@ -390,7 +394,7 @@ public:
         pid = right.parent;
 
         left.key   = key;
-        left.split = uint16_t(key.size());
+        left.split = uint16_t(key.size_in_bits());
 
         left.parent  = stack_.size() + 1;
         right.parent = stack_.size() + 1;
@@ -407,7 +411,7 @@ public:
         pid = left.parent;
 
         right.key   = key;
-        right.split = uint16_t(key.size());
+        right.split = uint16_t(key.size_in_bits());
 
         right.parent = stack_.size() + 1;
         left.parent  = stack_.size() + 1;
@@ -489,14 +493,19 @@ public:
     return kv.Hash();
   }
 
+  stack_type &underlying_stack()
+  {
+    return stack_;
+  }
+
   std::size_t size() const
   {
     return stack_.size();
   }
 
-  void Flush()
+  void Flush(bool lazy = true)
   {
-    stack_.Flush();
+    stack_.Flush(lazy);
   }
 
   bool is_open() const
@@ -514,6 +523,7 @@ public:
     stack_.Close();
   }
 
+  // TODO(HUT): this will be removed when updating the versioned stack
   using bookmark_type = uint64_t;
   bookmark_type Commit()
   {
@@ -531,6 +541,8 @@ public:
 
     root_ = stack_.header_extra();
   }
+
+  //*/
 
   uint64_t const &root_element() const
   {
@@ -633,7 +645,7 @@ public:
     return Iterator(this, kv);
   }
 
-  self_type::Iterator GetSubtree(byte_array::ConstByteArray const &key_str, uint64_t bits)
+  self_type::Iterator GetSubtree(byte_array::ConstByteArray const &key_str, uint64_t max_bits)
   {
     if (this->empty())
     {
@@ -647,12 +659,12 @@ public:
     index_type     depth      = 0;
     key_value_pair kv;
 
-    FindNearest(key, kv, split, pos, left_right, depth, bits);
+    FindNearest(key, kv, split, pos, left_right, depth, max_bits);
 
     pos = 0;
     kv.key.Compare(key_str, pos, 0, 64);
 
-    if (uint64_t(pos) < bits)
+    if (uint64_t(pos) < max_bits)
     {
       return end();
     }
@@ -731,7 +743,7 @@ private:
       ++depth;
       index = next;
 
-      pos = int(key.size());
+      pos = int(key.size_in_bits());
 
       stack_.Get(next, kv);
 

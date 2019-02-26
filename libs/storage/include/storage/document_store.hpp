@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -295,6 +295,13 @@ public:
     return file_store_.size();
   }
 
+  void Flush(bool lazy = true)
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    file_store_.Flush(lazy);
+    key_index_.Flush(lazy);
+  }
+
   /**
    * STL-like functionality achieved with an iterator class. This has to wrap an
    * iterator to the
@@ -362,14 +369,14 @@ public:
    * matches the first bits of rid)
    *
    * @param: rid The key
-   * @param: bits The number of bits of rid we want to match against
+   * @param: bit_count The number of bits of rid we want to match against
    *
    * @return: an iterator to the first element of that tree
    */
-  self_type::Iterator GetSubtree(ResourceID const &rid, uint64_t bits)
+  self_type::Iterator GetSubtree(ResourceID const &rid, uint64_t bit_count)
   {
     byte_array::ConstByteArray const &address = rid.id();
-    auto                              it      = key_index_.GetSubtree(address, bits);
+    auto                              it      = key_index_.GetSubtree(address, bit_count);
 
     return Iterator(this, it);
   }
@@ -382,6 +389,49 @@ public:
   self_type::Iterator end()
   {
     return Iterator(this, key_index_.end());
+  }
+
+  // Hash based functionality - note this will only work if both underlying files
+  // have commit functionality
+  byte_array_type Commit()
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    byte_array_type               hash = key_index_.Hash();
+
+    key_index_.underlying_stack().Commit(hash);
+    file_store_.Commit(hash);
+
+    return hash;
+  }
+
+  bool RevertToHash(byte_array_type const &hash)
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+
+    // TODO(private issue 615): HashExists implement
+    /*
+    if (!(key_index_.underlying_stack().HashExists(hash) && file_store_.HashExists(hash)))
+    {
+      return false;
+    }
+    */
+
+    key_index_.underlying_stack().RevertToHash(hash);
+    file_store_.RevertToHash(hash);
+
+    return true;
+  }
+
+  bool HashExists(byte_array_type const &hash)
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    return key_index_.underlying_stack().HashExists(hash);
+  }
+
+  hash_type CurrentHash()
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    return key_index_.Hash();
   }
 
 protected:
