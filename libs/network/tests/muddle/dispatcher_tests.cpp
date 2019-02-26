@@ -52,11 +52,11 @@ protected:
 
 TEST_F(DispatcherTests, CheckExchange)
 {
-  // register the exchange
-  Promise prom = dispatcher_->RegisterExchange(1, 2, 3);
-
   Payload   response("hello");
   PacketPtr packet = CreatePacket(1, 2, 3, response);
+
+  // register the exchange
+  Promise prom = dispatcher_->RegisterExchange(1, 2, 3, packet->GetSender());
 
   dispatcher_->Dispatch(packet);
 
@@ -66,10 +66,31 @@ TEST_F(DispatcherTests, CheckExchange)
   EXPECT_TRUE(prom->Wait(0, false));
 }
 
+TEST_F(DispatcherTests, CheckWrongResponder)
+{
+  Payload   response("hello");
+  PacketPtr packet = CreatePacket(1, 2, 3, response);
+
+  // generate dummy address
+  Packet::Address address;
+
+  // register the exchange
+  Promise prom = dispatcher_->RegisterExchange(1, 2, 3, address);
+
+  dispatcher_->Dispatch(packet);
+
+  EXPECT_TRUE(prom->IsWaiting());
+  EXPECT_FALSE(prom->IsFailed());
+  EXPECT_FALSE(prom->IsSuccessful());
+}
+
 TEST_F(DispatcherTests, CheckNeverResolved)
 {
+  // generate dummy address
+  Packet::Address address;
+
   // register the exchange
-  Promise prom = dispatcher_->RegisterExchange(1, 2, 3);
+  Promise prom = dispatcher_->RegisterExchange(1, 2, 3, address);
 
   // emulate the clearnup happening in the future
   auto now = Dispatcher::Clock::now() + std::chrono::hours{2};
@@ -83,8 +104,11 @@ TEST_F(DispatcherTests, CheckNeverResolved)
 
 TEST_F(DispatcherTests, CheckConnectionFailure)
 {
+  // generate dummy address
+  Packet::Address address;
+
   // register the exchange
-  Promise prom = dispatcher_->RegisterExchange(1, 2, 3);
+  Promise prom = dispatcher_->RegisterExchange(1, 2, 3, address);
 
   // informathe dispatch about the connection information
   dispatcher_->NotifyMessage(4, 1, 2, 3);
