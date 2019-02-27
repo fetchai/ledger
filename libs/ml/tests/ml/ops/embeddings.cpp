@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/embedings.hpp"
+#include "ml/ops/embeddings.hpp"
 #include "core/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 
 template <typename T>
-class EmbedingsTest : public ::testing::Test
+class EmbeddingsTest : public ::testing::Test
 {
 };
 
@@ -30,11 +30,11 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<f
                                  fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(EmbedingsTest, MyTypes);
+TYPED_TEST_CASE(EmbeddingsTest, MyTypes);
 
-TYPED_TEST(EmbedingsTest, forward_shape)
+TYPED_TEST(EmbeddingsTest, forward_shape)
 {
-  fetch::ml::ops::Embedings<TypeParam> e(100, 60);
+  fetch::ml::ops::Embeddings<TypeParam> e(100, 60);
   std::shared_ptr<TypeParam> input = std::make_shared<TypeParam>(std::vector<uint64_t>({10}));
   for (unsigned int i(0); i < 10; ++i)
   {
@@ -47,9 +47,9 @@ TYPED_TEST(EmbedingsTest, forward_shape)
   EXPECT_EQ(output->shape()[1], 60);
 }
 
-TYPED_TEST(EmbedingsTest, forward)
+TYPED_TEST(EmbeddingsTest, forward)
 {
-  fetch::ml::ops::Embedings<TypeParam> e(10, 6);
+  fetch::ml::ops::Embeddings<TypeParam> e(10, 6);
   std::shared_ptr<TypeParam> weights = std::make_shared<TypeParam>(std::vector<uint64_t>({10, 6}));
   for (unsigned int i(0); i < 10; ++i)
   {
@@ -75,9 +75,9 @@ TYPED_TEST(EmbedingsTest, forward)
   }
 }
 
-TYPED_TEST(EmbedingsTest, backward)
+TYPED_TEST(EmbeddingsTest, backward)
 {
-  fetch::ml::ops::Embedings<TypeParam> e(10, 6);
+  fetch::ml::ops::Embeddings<TypeParam> e(10, 6);
   std::shared_ptr<TypeParam> weights = std::make_shared<TypeParam>(std::vector<uint64_t>({10, 6}));
   for (unsigned int i(0); i < 10; ++i)
   {

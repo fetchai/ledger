@@ -25,41 +25,41 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Embedings : public fetch::ml::ops::Weights<T>
+class Embeddings : public fetch::ml::ops::Weights<T>
 {
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  Embedings(unsigned int dataPoints, unsigned int dimensions)
+  Embeddings(unsigned int dataPoints, unsigned int dimensions)
   {
     this->SetData(std::make_shared<ArrayType>(
         std::vector<typename ArrayType::SizeType>({dataPoints, dimensions})));
   }
 
-  virtual ~Embedings() = default;
+  virtual ~Embeddings() = default;
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
     ASSERT(inputs.size() == 1);
     ASSERT(inputs[0]->size() == 1);
 
-    if (!this->embedings_output_ || this->embedings_output_->shape()[0] != inputs.size() ||
-        this->embedings_output_->shape()[1] != this->output_->shape()[1])
+    if (!this->embeddings_output_ || this->embeddings_output_->shape()[0] != inputs.size() ||
+        this->embeddings_output_->shape()[1] != this->output_->shape()[1])
     {
-      this->embedings_output_ =
+      this->embeddings_output_ =
           std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>(
               {inputs[0]->size(), this->output_->shape()[1]}));
     }
     uint64_t j(0);
     for (DataType const &i : *(inputs[0]))
     {
-      this->embedings_output_->Slice(j).Copy(
+      this->embeddings_output_->Slice(j).Copy(
           this->output_->Slice(typename ArrayType::SizeType(double(i))));
       j++;
     }
-    return this->embedings_output_;
+    return this->embeddings_output_;
   }
 
   virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
@@ -79,7 +79,7 @@ public:
   }
 
 private:
-  ArrayPtrType embedings_output_;
+  ArrayPtrType embeddings_output_;
 };
 
 }  // namespace ops
