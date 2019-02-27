@@ -24,14 +24,28 @@ namespace ml {
 namespace ops {
 
 template <class T>
+struct StateDict
+{
+  using ArrayType    = T;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  ArrayPtrType                        weights_;
+  std::map<std::string, StateDict<T>> dict_;
+};
+  
+template <class T>
 class Trainable
 {
 public:
-  virtual void Step(T learningRate) = 0;
+  using ArrayType    = T;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  
+  virtual void Step(typename T::Type learningRate) = 0;
+  virtual StateDict<T> GetStateDict() const = 0;
+  virtual void LoadStateDict(StateDict<T> const &dict) = 0;
 };
 
 template <class T>
-class Weights : public fetch::ml::ops::PlaceHolder<T>, public Trainable<typename T::Type>
+class Weights : public fetch::ml::ops::PlaceHolder<T>, public Trainable<T>
 {
 public:
   using ArrayType    = T;
@@ -68,6 +82,19 @@ public:
     // Major DL framework do not do that, but as I can't think of any reason why, I'll leave it here
     // for convenience. Remove if needed -- Pierre
     gradientAccumulation_->Fill(typename T::Type(0));
+  }
+
+  virtual StateDict<T> GetStateDict() const
+  {
+    StateDict<T> d;
+    d.weights_ = this->output_;
+    return d;
+  }
+
+  virtual void LoadStateDict(StateDict<T> const &dict)
+  {
+    assert(dict.dict_.empty());
+    SetData(dict.weights_);
   }
 
 private:

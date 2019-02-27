@@ -17,29 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
+#include <ml/ops/weights.hpp>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-
-#include "python/ml/ops/py_fully_connected.hpp"
-#include "python/ml/ops/py_mean_square_error.hpp"
-#include "python/ml/ops/py_relu.hpp"
-#include "python/ml/ops/py_state_dict.hpp"
-#include "python/ml/py_graph.hpp"
 
 namespace py = pybind11;
 
 namespace fetch {
 namespace ml {
+namespace ops {
 
 template <typename T>
-void BuildMLLibrary(pybind11::module &module)
+void BuildStateDict(std::string const &custom_name, pybind11::module &module)
 {
-  fetch::ml::ops::BuildStateDict<T>("StateDict", module);
-  fetch::ml::BuildGraph<T>("Graph", module);
-  fetch::ml::ops::BuildRelu<T>("Relu", module);
-  fetch::ml::ops::BuildFullyConnected<T>("FullyConnected", module);
-  fetch::ml::ops::BuildMeanSquareError<T>("MeanSquareError", module);
+  py::class_<fetch::ml::ops::StateDict<fetch::math::Tensor<T>>>(module, custom_name.c_str())
+      .def(py::init<>())
+        .def_readwrite("weights", &fetch::ml::ops::StateDict<fetch::math::Tensor<T>>::weights_)
+        .def_readwrite("dict", &fetch::ml::ops::StateDict<fetch::math::Tensor<T>>::dict_);
 }
 
+}  // namespace ops
 }  // namespace ml
 }  // namespace fetch
