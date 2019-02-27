@@ -233,11 +233,7 @@ TYPED_TEST(TensorOperationsTest, shuffle_test)
   t1.Shuffle();
 
   // some double type casting in this test until FixedPoint is updated with more operators later
-  std::vector<bool> all_present(static_cast<std::size_t>(int(t1.size())));
-  for (std::size_t j = 0; j < all_present.size(); ++j)
-  {
-    all_present[j] = false;
-  }
+  std::vector<bool> all_present(static_cast<std::size_t>(int(t1.size())), false);
 
   bool double_access = false;
   for (std::size_t j = 0; j < t1.size(); ++j)
