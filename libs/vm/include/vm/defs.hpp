@@ -160,29 +160,34 @@ public:
     ref_count_ = 1;
   }
 
-  virtual bool   Equals(Ptr<Object> const &lhso, Ptr<Object> const &rhso) const;
-  virtual size_t GetHashCode() const;
-  virtual void   UnaryMinusOp(Ptr<Object> &object);
-  virtual void   AddOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   LeftAddOp(Variant &lhsv, Variant &rhsv);
-  virtual void   RightAddOp(Variant &lhsv, Variant &rhsv);
-  virtual void   AddAssignOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   RightAddAssignOp(Ptr<Object> &lhso, Variant &rhsv);
-  virtual void   SubtractOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   LeftSubtractOp(Variant &lhsv, Variant &rhsv);
-  virtual void   RightSubtractOp(Variant &lhsv, Variant &rhsv);
-  virtual void   SubtractAssignOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   RightSubtractAssignOp(Ptr<Object> &lhso, Variant &rhsv);
-  virtual void   MultiplyOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   LeftMultiplyOp(Variant &lhsv, Variant &rhsv);
-  virtual void   RightMultiplyOp(Variant &lhsv, Variant &rhsv);
-  virtual void   MultiplyAssignOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   RightMultiplyAssignOp(Ptr<Object> &lhso, Variant &rhsv);
-  virtual void   DivideOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   LeftDivideOp(Variant &lhsv, Variant &rhsv);
-  virtual void   RightDivideOp(Variant &lhsv, Variant &rhsv);
-  virtual void   DivideAssignOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   RightDivideAssignOp(Ptr<Object> &lhso, Variant &rhsv);
+  virtual size_t GetHashCode();
+  virtual bool   IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual bool   IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual bool   IsLessThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual bool   IsLessThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual bool   IsGreaterThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual bool   IsGreaterThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual void   UnaryMinus(Ptr<Object> &object);
+  virtual void   Add(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   LeftAdd(Variant &lhsv, Variant &rhsv);
+  virtual void   RightAdd(Variant &lhsv, Variant &rhsv);
+  virtual void   AddAssign(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   RightAddAssign(Ptr<Object> &lhso, Variant &rhsv);
+  virtual void   Subtract(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   LeftSubtract(Variant &lhsv, Variant &rhsv);
+  virtual void   RightSubtract(Variant &lhsv, Variant &rhsv);
+  virtual void   SubtractAssign(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   RightSubtractAssign(Ptr<Object> &lhso, Variant &rhsv);
+  virtual void   Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   LeftMultiply(Variant &lhsv, Variant &rhsv);
+  virtual void   RightMultiply(Variant &lhsv, Variant &rhsv);
+  virtual void   MultiplyAssign(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   RightMultiplyAssign(Ptr<Object> &lhso, Variant &rhsv);
+  virtual void   Divide(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   LeftDivide(Variant &lhsv, Variant &rhsv);
+  virtual void   RightDivide(Variant &lhsv, Variant &rhsv);
+  virtual void   DivideAssign(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   RightDivideAssign(Ptr<Object> &lhso, Variant &rhsv);
   virtual void * FindElement();
   virtual void   PushElement(TypeId element_type_id);
   virtual void   PopToElement();
@@ -193,7 +198,7 @@ protected:
   Variant &       Top();
   void            RuntimeError(std::string const &message);
   TypeInfo const &GetTypeInfo(TypeId type_id);
-  bool            GetInteger(Variant const &v, size_t &index);
+  bool            GetNonNegativeInteger(Variant const &v, size_t &index);
 
   VM *   vm_;
   TypeId type_id_;
@@ -237,7 +242,7 @@ public:
     return Ptr(this__);
   }
 
-  Ptr &operator=(std::nullptr_t)
+  Ptr &operator=(std::nullptr_t /* other */)
   {
     Reset();
     return *this;
@@ -371,20 +376,56 @@ private:
   template <typename L, typename R>
   friend bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs);
 
+  template <typename L>
+  friend bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */);
+
+  template <typename R>
+  friend bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs);
+
   template <typename L, typename R>
   friend bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs);
+
+  template <typename L>
+  friend bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */);
+
+  template <typename R>
+  friend bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs);
 };
 
 template <typename L, typename R>
 inline bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs)
 {
-  return lhs.ptr_ == static_cast<L *>(rhs.ptr_);
+  return (lhs.ptr_ == static_cast<L *>(rhs.ptr_));
+}
+
+template <typename L>
+inline bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */)
+{
+  return (lhs.ptr_ == nullptr);
+}
+
+template <typename R>
+inline bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
+{
+  return (nullptr == rhs.ptr_);
 }
 
 template <typename L, typename R>
 inline bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs)
 {
-  return lhs.ptr_ != static_cast<L *>(rhs.ptr_);
+  return (lhs.ptr_ != static_cast<L *>(rhs.ptr_));
+}
+
+template <typename L>
+inline bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */)
+{
+  return (lhs.ptr_ != nullptr);
+}
+
+template <typename R>
+inline bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
+{
+  return (nullptr != rhs.ptr_);
 }
 
 union Primitive

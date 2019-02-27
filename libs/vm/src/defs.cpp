@@ -47,7 +47,7 @@ TypeInfo const &Object::GetTypeInfo(TypeId type_id)
   return vm_->GetTypeInfo(type_id);
 }
 
-bool Object::GetInteger(Variant const &v, size_t &index)
+bool Object::GetNonNegativeInteger(Variant const &v, size_t &index)
 {
   bool ok = true;
   switch (v.type_id)
@@ -105,117 +105,148 @@ bool Object::GetInteger(Variant const &v, size_t &index)
   return ok;
 }
 
-bool Object::Equals(Ptr<Object> const &lhso, Ptr<Object> const &rhso) const
-{
-  return lhso == rhso;
-}
-
-size_t Object::GetHashCode() const
+size_t Object::GetHashCode()
 {
   return std::hash<const void *>()(this);
 }
 
-void Object::UnaryMinusOp(Ptr<Object> & /* object */)
+bool Object::IsEqual(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
+{
+  RuntimeError("operator not implemented");
+  return false;
+}
+
+bool Object::IsNotEqual(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
+{
+  RuntimeError("operator not implemented");
+  return false;
+}
+
+bool Object::IsLessThan(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
+{
+  RuntimeError("operator not implemented");
+  return false;
+}
+
+bool Object::IsLessThanOrEqual(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
+{
+  RuntimeError("operator not implemented");
+  return false;
+}
+
+bool Object::IsGreaterThan(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
+{
+  RuntimeError("operator not implemented");
+  return false;
+}
+
+bool Object::IsGreaterThanOrEqual(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
+{
+  RuntimeError("operator not implemented");
+  return false;
+}
+
+void Object::UnaryMinus(Ptr<Object> & /* object */)
 {
   RuntimeError("operator not implemented");
 }
 
-void Object::AddOp(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
+void Object::Add(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
   RuntimeError("operator not implemented");
 }
 
-void Object::LeftAddOp(Variant & /* lhsv */, Variant & /* rhsv */)
+void Object::LeftAdd(Variant & /* lhsv */, Variant & /* rhsv */)
 {
   RuntimeError("operator not implemented");
 }
 
-void Object::RightAddOp(Variant & /* lhsv */, Variant & /* rhsv */)
+void Object::RightAdd(Variant & /* lhsv */, Variant & /* rhsv */)
 {
   RuntimeError("operator not implemented");
 }
 
-void Object::AddAssignOp(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
+void Object::AddAssign(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
   RuntimeError("operator not implemented");
 }
 
-void Object::RightAddAssignOp(Ptr<Object> & /* lhso */, Variant & /* rhsv */)
+void Object::RightAddAssign(Ptr<Object> & /* lhso */, Variant & /* rhsv */)
 {
   RuntimeError("operator not implemented");
 }
 
-void Object::SubtractOp(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
+void Object::Subtract(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
   RuntimeError("operator not implemented");
 }
 
-void Object::LeftSubtractOp(Variant & /* lhsv */, Variant & /* rhsv */)
+void Object::LeftSubtract(Variant & /* lhsv */, Variant & /* rhsv */)
 {
   RuntimeError("operator not implemented");
 }
 
-void Object::RightSubtractOp(Variant & /* lhsv */, Variant & /* rhsv */)
+void Object::RightSubtract(Variant & /* lhsv */, Variant & /* rhsv */)
 {
   RuntimeError("operator not implemented");
 }
 
-void Object::SubtractAssignOp(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
+void Object::SubtractAssign(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
   RuntimeError("operator not implemented");
 }
 
-void Object::RightSubtractAssignOp(Ptr<Object> & /* lhso */, Variant & /* rhsv */)
+void Object::RightSubtractAssign(Ptr<Object> & /* lhso */, Variant & /* rhsv */)
 {
   RuntimeError("operator not implemented");
 }
 
-void Object::MultiplyOp(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
+void Object::Multiply(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
   RuntimeError("operator not implemented");
 }
 
-void Object::LeftMultiplyOp(Variant & /* lhsv */, Variant & /* rhsv */)
+void Object::LeftMultiply(Variant & /* lhsv */, Variant & /* rhsv */)
 {
   RuntimeError("operator not implemented");
 }
 
-void Object::RightMultiplyOp(Variant & /* lhsv */, Variant & /* rhsv */)
+void Object::RightMultiply(Variant & /* lhsv */, Variant & /* rhsv */)
 {
   RuntimeError("operator not implemented");
 }
 
-void Object::MultiplyAssignOp(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
+void Object::MultiplyAssign(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
   RuntimeError("operator not implemented");
 }
 
-void Object::RightMultiplyAssignOp(Ptr<Object> & /* lhso */, Variant & /* rhsv */)
+void Object::RightMultiplyAssign(Ptr<Object> & /* lhso */, Variant & /* rhsv */)
 {
   RuntimeError("operator not implemented");
 }
 
-void Object::DivideOp(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
+void Object::Divide(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
   RuntimeError("operator not implemented");
 }
 
-void Object::LeftDivideOp(Variant & /* lhsv */, Variant & /* rhsv */)
+void Object::LeftDivide(Variant & /* lhsv */, Variant & /* rhsv */)
 {
   RuntimeError("operator not implemented");
 }
 
-void Object::RightDivideOp(Variant & /* lhsv */, Variant & /* rhsv */)
+void Object::RightDivide(Variant & /* lhsv */, Variant & /* rhsv */)
 {
   RuntimeError("operator not implemented");
 }
 
-void Object::DivideAssignOp(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
+void Object::DivideAssign(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
   RuntimeError("operator not implemented");
 }
 
-void Object::RightDivideAssignOp(Ptr<Object> & /* lhso*/, Variant & /* rhsv */)
+void Object::RightDivideAssign(Ptr<Object> & /* lhso*/, Variant & /* rhsv */)
 {
   RuntimeError("operator not implemented");
 }

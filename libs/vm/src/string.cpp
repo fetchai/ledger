@@ -21,19 +21,54 @@
 namespace fetch {
 namespace vm {
 
-bool String::Equals(Ptr<Object> const &lhso, Ptr<Object> const &rhso) const
+size_t String::GetHashCode()
+{
+  return std::hash<std::string>()(str);
+}
+
+bool String::IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
 {
   Ptr<String> lhs = lhso;
   Ptr<String> rhs = rhso;
   return lhs->str == rhs->str;
 }
 
-size_t String::GetHashCode() const
+bool String::IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
 {
-  return std::hash<std::string>()(str);
+  Ptr<String> lhs = lhso;
+  Ptr<String> rhs = rhso;
+  return lhs->str != rhs->str;
 }
 
-void String::AddOp(Ptr<Object> &lhso, Ptr<Object> &rhso)
+bool String::IsLessThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+{
+  Ptr<String> lhs = lhso;
+  Ptr<String> rhs = rhso;
+  return lhs->str < rhs->str;
+}
+
+bool String::IsLessThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+{
+  Ptr<String> lhs = lhso;
+  Ptr<String> rhs = rhso;
+  return lhs->str <= rhs->str;
+}
+
+bool String::IsGreaterThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+{
+  Ptr<String> lhs = lhso;
+  Ptr<String> rhs = rhso;
+  return lhs->str > rhs->str;
+}
+
+bool String::IsGreaterThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso)
+{
+  Ptr<String> lhs = lhso;
+  Ptr<String> rhs = rhso;
+  return lhs->str >= rhs->str;
+}
+
+void String::Add(Ptr<Object> &lhso, Ptr<Object> &rhso)
 {
   bool const  lhs_is_modifiable = lhso.RefCount() == 1;
   Ptr<String> lhs               = lhso;

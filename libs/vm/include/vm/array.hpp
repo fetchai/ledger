@@ -61,7 +61,7 @@ struct Array : public IArray
   {
     Variant &positionv = Pop();
     size_t   position;
-    if (GetInteger(positionv, position) == false)
+    if (GetNonNegativeInteger(positionv, position) == false)
     {
       RuntimeError("negative index");
       return nullptr;

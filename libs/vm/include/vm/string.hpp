@@ -33,9 +33,14 @@ struct String : public Object
     , is_literal(is_literal__)
   {}
 
-  virtual bool   Equals(Ptr<Object> const &lhso, Ptr<Object> const &rhso) const override;
-  virtual size_t GetHashCode() const override;
-  virtual void   AddOp(Ptr<Object> &lhso, Ptr<Object> &rhso) override;
+  virtual size_t GetHashCode() override;
+  virtual bool   IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  virtual bool   IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  virtual bool   IsLessThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  virtual bool   IsLessThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  virtual bool   IsGreaterThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  virtual bool   IsGreaterThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
+  virtual void   Add(Ptr<Object> &lhso, Ptr<Object> &rhso) override;
   std::string    str;
   bool           is_literal;
 };

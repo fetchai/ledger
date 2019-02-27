@@ -24,6 +24,26 @@
 namespace fetch {
 namespace vm {
 
+enum class Operator : uint16_t
+{
+  Unknown = 0,
+  Equal,
+  NotEqual,
+  LessThan,
+  LessThanOrEqual,
+  GreaterThan,
+  GreaterThanOrEqual,
+  UnaryMinus,
+  Add,
+  Subtract,
+  Multiply,
+  Divide,
+  AddAssign,
+  SubtractAssign,
+  MultiplyAssign,
+  DivideAssign
+};
+
 struct Symbol
 {
   enum class Kind : uint16_t

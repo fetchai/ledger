@@ -456,52 +456,70 @@ void VM::InvokeUserFunction()
   sp_ += num_locals;
 }
 
-void VM::PrimitiveEqual()
+void VM::Equal()
 {
-  DoPrimitiveLogicalOp<PrimitiveEqualOp>();
+  DoRelationalOp<EqualOp>();
 }
 
 void VM::ObjectEqual()
 {
-  Variant &rhsv  = Pop();
-  Variant &lhsv  = Top();
-  bool     equal = IsEqual(lhsv.object, rhsv.object);
-  lhsv.Assign(equal, TypeIds::Bool);
+  Variant &rhsv = Pop();
+  Variant &lhsv = Top();
+  lhsv.Assign(IsEqual(lhsv.object, rhsv.object), TypeIds::Bool);
   rhsv.Reset();
 }
 
-void VM::PrimitiveNotEqual()
+void VM::NotEqual()
 {
-  DoPrimitiveLogicalOp<PrimitiveNotEqualOp>();
+  DoRelationalOp<NotEqualOp>();
 }
 
 void VM::ObjectNotEqual()
 {
-  Variant &rhsv  = Pop();
-  Variant &lhsv  = Top();
-  bool     equal = IsEqual(lhsv.object, rhsv.object);
-  lhsv.Assign(!equal, TypeIds::Bool);
+  Variant &rhsv = Pop();
+  Variant &lhsv = Top();
+  lhsv.Assign(IsNotEqual(lhsv.object, rhsv.object), TypeIds::Bool);
   rhsv.Reset();
 }
 
-void VM::PrimitiveLessThan()
+void VM::LessThan()
 {
-  DoPrimitiveLogicalOp<PrimitiveLessThanOp>();
+  DoRelationalOp<LessThanOp>();
 }
 
-void VM::PrimitiveLessThanOrEqual()
+void VM::ObjectLessThan()
 {
-  DoPrimitiveLogicalOp<PrimitiveLessThanOrEqualOp>();
+  DoObjectRelationalOp<ObjectLessThanOp>();
 }
 
-void VM::PrimitiveGreaterThan()
+void VM::LessThanOrEqual()
 {
-  DoPrimitiveLogicalOp<PrimitiveGreaterThanOp>();
+  DoRelationalOp<LessThanOrEqualOp>();
 }
 
-void VM::PrimitiveGreaterThanOrEqual()
+void VM::ObjectLessThanOrEqual()
 {
-  DoPrimitiveLogicalOp<PrimitiveGreaterThanOrEqualOp>();
+  DoObjectRelationalOp<ObjectLessThanOrEqualOp>();
+}
+
+void VM::GreaterThan()
+{
+  DoRelationalOp<GreaterThanOp>();
+}
+
+void VM::ObjectGreaterThan()
+{
+  DoObjectRelationalOp<ObjectGreaterThanOp>();
+}
+
+void VM::GreaterThanOrEqual()
+{
+  DoRelationalOp<GreaterThanOrEqualOp>();
+}
+
+void VM::ObjectGreaterThanOrEqual()
+{
+  DoObjectRelationalOp<ObjectGreaterThanOrEqualOp>();
 }
 
 void VM::And()
@@ -566,10 +584,25 @@ void VM::ElementPostfixDec()
   DoElementIncDecOp<PostfixDecOp>();
 }
 
-void VM::PrimitiveUnaryMinus()
+void VM::Modulo()
+{
+  DoIntegerOp<ModuloOp>();
+}
+
+void VM::VariableModuloAssign()
+{
+  DoVariableIntegerAssignOp<ModuloOp>();
+}
+
+void VM::ElementModuloAssign()
+{
+  DoElementIntegerAssignOp<ModuloOp>();
+}
+
+void VM::UnaryMinus()
 {
   Variant &top = Top();
-  ExecutePrimitiveOp<PrimitiveUnaryMinusOp>(instruction_->type_id, top, top);
+  ExecuteNumberOp<UnaryMinusOp>(instruction_->type_id, top, top);
 }
 
 void VM::ObjectUnaryMinus()
@@ -577,15 +610,15 @@ void VM::ObjectUnaryMinus()
   Variant &top = Top();
   if (top.object)
   {
-    top.object->UnaryMinusOp(top.object);
+    top.object->UnaryMinus(top.object);
     return;
   }
   RuntimeError("null reference");
 }
 
-void VM::PrimitiveAdd()
+void VM::Add()
 {
-  DoPrimitiveOp<PrimitiveAddOp>();
+  DoNumberOp<AddOp>();
 }
 
 void VM::LeftAdd()
@@ -603,9 +636,9 @@ void VM::ObjectAdd()
   DoObjectOp<ObjectAddOp>();
 }
 
-void VM::VariablePrimitiveAddAssign()
+void VM::VariableAddAssign()
 {
-  DoVariablePrimitiveAssignOp<PrimitiveAddOp>();
+  DoVariableNumberAssignOp<AddOp>();
 }
 
 void VM::VariableRightAddAssign()
@@ -618,9 +651,9 @@ void VM::VariableObjectAddAssign()
   DoVariableObjectAssignOp<ObjectAddAssignOp>();
 }
 
-void VM::ElementPrimitiveAddAssign()
+void VM::ElementAddAssign()
 {
-  DoElementPrimitiveAssignOp<PrimitiveAddOp>();
+  DoElementNumberAssignOp<AddOp>();
 }
 
 void VM::ElementRightAddAssign()
@@ -633,9 +666,9 @@ void VM::ElementObjectAddAssign()
   DoElementObjectAssignOp<ObjectAddAssignOp>();
 }
 
-void VM::PrimitiveSubtract()
+void VM::Subtract()
 {
-  DoPrimitiveOp<PrimitiveSubtractOp>();
+  DoNumberOp<SubtractOp>();
 }
 
 void VM::LeftSubtract()
@@ -653,9 +686,9 @@ void VM::ObjectSubtract()
   DoObjectOp<ObjectSubtractOp>();
 }
 
-void VM::VariablePrimitiveSubtractAssign()
+void VM::VariableSubtractAssign()
 {
-  DoVariablePrimitiveAssignOp<PrimitiveSubtractOp>();
+  DoVariableNumberAssignOp<SubtractOp>();
 }
 
 void VM::VariableRightSubtractAssign()
@@ -668,9 +701,9 @@ void VM::VariableObjectSubtractAssign()
   DoVariableObjectAssignOp<ObjectSubtractAssignOp>();
 }
 
-void VM::ElementPrimitiveSubtractAssign()
+void VM::ElementSubtractAssign()
 {
-  DoElementPrimitiveAssignOp<PrimitiveSubtractOp>();
+  DoElementNumberAssignOp<SubtractOp>();
 }
 
 void VM::ElementRightSubtractAssign()
@@ -683,9 +716,9 @@ void VM::ElementObjectSubtractAssign()
   DoElementObjectAssignOp<ObjectSubtractAssignOp>();
 }
 
-void VM::PrimitiveMultiply()
+void VM::Multiply()
 {
-  DoPrimitiveOp<PrimitiveMultiplyOp>();
+  DoNumberOp<MultiplyOp>();
 }
 
 void VM::LeftMultiply()
@@ -703,9 +736,9 @@ void VM::ObjectMultiply()
   DoObjectOp<ObjectMultiplyOp>();
 }
 
-void VM::VariablePrimitiveMultiplyAssign()
+void VM::VariableMultiplyAssign()
 {
-  DoVariablePrimitiveAssignOp<PrimitiveMultiplyOp>();
+  DoVariableNumberAssignOp<MultiplyOp>();
 }
 
 void VM::VariableRightMultiplyAssign()
@@ -718,9 +751,9 @@ void VM::VariableObjectMultiplyAssign()
   DoVariableObjectAssignOp<ObjectMultiplyAssignOp>();
 }
 
-void VM::ElementPrimitiveMultiplyAssign()
+void VM::ElementMultiplyAssign()
 {
-  DoElementPrimitiveAssignOp<PrimitiveMultiplyOp>();
+  DoElementNumberAssignOp<MultiplyOp>();
 }
 
 void VM::ElementRightMultiplyAssign()
@@ -733,9 +766,9 @@ void VM::ElementObjectMultiplyAssign()
   DoElementObjectAssignOp<ObjectMultiplyAssignOp>();
 }
 
-void VM::PrimitiveDivide()
+void VM::Divide()
 {
-  DoPrimitiveOp<PrimitiveDivideOp>();
+  DoNumberOp<DivideOp>();
 }
 
 void VM::LeftDivide()
@@ -753,9 +786,9 @@ void VM::ObjectDivide()
   DoObjectOp<ObjectDivideOp>();
 }
 
-void VM::VariablePrimitiveDivideAssign()
+void VM::VariableDivideAssign()
 {
-  DoVariablePrimitiveAssignOp<PrimitiveDivideOp>();
+  DoVariableNumberAssignOp<DivideOp>();
 }
 
 void VM::VariableRightDivideAssign()
@@ -768,9 +801,9 @@ void VM::VariableObjectDivideAssign()
   DoVariableObjectAssignOp<ObjectDivideAssignOp>();
 }
 
-void VM::ElementPrimitiveDivideAssign()
+void VM::ElementDivideAssign()
 {
-  DoElementPrimitiveAssignOp<PrimitiveDivideOp>();
+  DoElementNumberAssignOp<DivideOp>();
 }
 
 void VM::ElementRightDivideAssign()
