@@ -284,7 +284,7 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_test)
       for (std::uint64_t k(0); k < 5; k++)
       {
         t.Set({i, j, k}, s);
-        ASSERT_EQ(t.Get({i, j, k}), s);
+        ASSERT_EQ(t.At({i, j, k}), s);
         s++;
       }
     }
@@ -324,7 +324,7 @@ TYPED_TEST(TensorIndexingTest, zero_stride_tensor_test)
       for (std::uint64_t k(0); k < 5; k++)
       {
         // All element are now that value since they all point at the same memory offset
-        ASSERT_EQ(t.Get({i, j, k}), TypeParam(42));
+        ASSERT_EQ(t.At({i, j, k}), TypeParam(42));
       }
     }
   }
@@ -451,8 +451,8 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_slicing_test)
   {
     for (std::uint64_t k(0); k < 5; ++k)
     {
-      EXPECT_EQ(t0.Get(std::vector<std::uint64_t>({j, k})), TypeParam(j * 5 + k));
-      EXPECT_EQ(t1.Get(std::vector<std::uint64_t>({j, k})), TypeParam(j * 5 + k + 15));
+      EXPECT_EQ(t0.At(std::vector<std::uint64_t>({j, k})), TypeParam(j * 5 + k));
+      EXPECT_EQ(t1.At(std::vector<std::uint64_t>({j, k})), TypeParam(j * 5 + k + 15));
     }
   }
 }

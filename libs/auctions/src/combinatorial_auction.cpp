@@ -172,7 +172,7 @@ Value CombinatorialAuction::TotalBenefit()
     for (std::size_t j = 0; j < bids_.size(); ++j)
     {
       a2 = active_[j];
-      reward += a1 * a2 * couplings_.Get({j, i});
+      reward += a1 * a2 * couplings_.At({j, i});
     }
   }
 
@@ -188,7 +188,7 @@ void CombinatorialAuction::SelectBid(std::size_t const &bid)
 
   for (std::size_t j = 0; j < bids_.size(); ++j)
   {
-    if (couplings_.Get({j, bid}) != 0)
+    if (couplings_.At({j, bid}) != 0)
     {
       active_[j] = 0;
     }
@@ -283,7 +283,7 @@ void CombinatorialAuction::BuildGraph()
         }
       }
 
-      couplings_.Get({j, i}) = couplings_.Get({i, j}) = -coupling;
+      couplings_.At({j, i}) = couplings_.At({i, j}) = -coupling;
     }
   }
 
