@@ -19,6 +19,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+#include "crypto/prover.hpp"
 
 #include <array>
 #include <cstdint>
@@ -65,17 +66,20 @@ namespace muddle {
  * │                                                                             │
  *
  * └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
+ * │                                 Stamp (if any)                              │
+ *
+ * └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
+ *
  */
 class Packet
 {
 public:
   static constexpr std::size_t ADDRESS_SIZE = 64;
-  static constexpr std::size_t HEADER_SIZE  = 8 + (2 * ADDRESS_SIZE);
 
   using RawAddress   = std::array<uint8_t, ADDRESS_SIZE>;
   using Address      = byte_array::ConstByteArray;
   using Payload      = byte_array::ConstByteArray;
-  using BinaryHeader = std::array<uint8_t, HEADER_SIZE>;
+  using Stamp        = byte_array::ConstByteArray;
 
   struct RoutingHeader
   {
@@ -84,7 +88,7 @@ public:
     uint64_t broadcast : 1;  ///< Flag to signal that the packet is a broadcast packet
     uint64_t exchange : 1;   ///< Flag to signal that this is an exchange packet i.e. we are
                              ///< expecting a response
-    uint64_t reserved : 1;
+    uint64_t stamped : 1 = 0;    ///< Flag to signal that the packet is signed by sender
     uint64_t ttl : 8;  ///< The time to live counter which ensures messages do not propagate further
                        ///< than desired
     uint64_t service : 16;  ///< The service number (helpful for RPC compatibility)
@@ -94,6 +98,9 @@ public:
     RawAddress target;  ///< The address of the packet target
     RawAddress sender;  ///< The address of the packet sender
   };
+
+  static constexpr std::size_t HEADER_SIZE  = sizeof(RoutingHeader);
+  using BinaryHeader = std::array<uint8_t, HEADER_SIZE>;
 
   static_assert(std::is_pod<RoutingHeader>::value, "Routing header must be POD");
   static_assert(sizeof(RoutingHeader) == 8 + (2 * ADDRESS_SIZE), "The header must be packed");
@@ -116,6 +123,7 @@ public:
   bool              IsDirect() const;
   bool              IsBroadcast() const;
   bool              IsExchange() const;
+  bool              IsStamped() const;
   uint8_t           GetTTL() const;
   uint16_t          GetService() const;
   uint16_t          GetProtocol() const;
@@ -125,6 +133,7 @@ public:
   Address const &   GetTarget() const;
   Address const &   GetSender() const;
   Payload const &   GetPayload() const;
+  Stamp const &     GetStamp() const;
 
   // Setters
   void SetDirect(bool set = true);
@@ -137,11 +146,10 @@ public:
   void SetTarget(RawAddress const &address);
   void SetTarget(Address const &address);
   void SetPayload(Payload const &payload);
+  void StampWith(crypto::Prover &prover);
+  void SetPayload(Payload const &payload, crypto::Prover *prover);
 
 private:
-#if 1
-#endif
-
   RoutingHeader header_;   ///< The header containing primarily routing information
   Payload       payload_;  ///< The payload of the message
 
@@ -188,6 +196,11 @@ inline bool Packet::IsBroadcast() const
 inline bool Packet::IsExchange() const
 {
   return header_.exchange > 0;
+}
+
+inline bool Packet::IsStamped() const
+{
+  return header_.stamped;
 }
 
 inline uint8_t Packet::GetTTL() const
@@ -253,6 +266,11 @@ inline Packet::Payload const &Packet::GetPayload() const
   return payload_;
 }
 
+inline Packet::Stamp const &Packet::GetStamp() const
+{
+  return stamp_;
+}
+
 inline void Packet::SetDirect(bool set)
 {
   header_.direct = (set) ? 1 : 0;
@@ -302,18 +320,36 @@ inline void Packet::SetTarget(Address const &address)
 inline void Packet::SetPayload(Payload const &payload)
 {
   payload_ = payload;
+  header_.stamped = 0;
+}
+
+inline void Packet::SetPayload(Payload const &payload, crypto::Prover *prover)
+{
+  payload_ = payload;
+  if(prover && (header_.stamped = prover->Sign(payload)))
+  {
+    stamp_ = prover->Signature();
+  }
 }
 
 template <typename T>
 void Serialize(T &serializer, Packet const &packet)
 {
   serializer << *reinterpret_cast<Packet::BinaryHeader const *>(&packet.header_) << packet.payload_;
+  if(packet.header_.stamped)
+  {
+    serializer << packet.stamp_;
+  }
 }
 
 template <typename T>
 void Deserialize(T &serializer, Packet &packet)
 {
   serializer >> *reinterpret_cast<Packet::BinaryHeader *>(&packet.header_) >> packet.payload_;
+  if(packet.header_.stamped)
+  {
+    serializer >> packet.stamp_;
+  }
 }
 
 }  // namespace muddle
