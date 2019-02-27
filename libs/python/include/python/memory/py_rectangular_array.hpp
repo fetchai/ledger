@@ -65,11 +65,11 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
              ret.Reshape(h, w);
            })
       .def("Resize",
-           (void (RectangularArray<T>::*)(const typename RectangularArray<T>::size_type &)) &
+           (void (RectangularArray<T>::*)(const typename RectangularArray<T>::SizeType &)) &
                RectangularArray<T>::Resize)
       .def("Resize",
-           (void (RectangularArray<T>::*)(const typename RectangularArray<T>::size_type &,
-                                          const typename RectangularArray<T>::size_type &)) &
+           (void (RectangularArray<T>::*)(const typename RectangularArray<T>::SizeType &,
+                                          const typename RectangularArray<T>::SizeType &)) &
                RectangularArray<T>::Resize)
       .def("Rotate", (void (RectangularArray<T>::*)(const double &,
                                                     const typename RectangularArray<T>::Type)) &
@@ -85,15 +85,13 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
            (const typename RectangularArray<T>::container_type &(RectangularArray<T>::*)() const) &
                RectangularArray<T>::data)
       .def("Load", &RectangularArray<T>::Load)
-      .def("Set",
-           (const T &(RectangularArray<T>::*)(const typename RectangularArray<T>::size_type &,
-                                              const T &)) &
-               RectangularArray<T>::Set)
-      .def("Set",
-           (const T &(RectangularArray<T>::*)(const typename RectangularArray<T>::size_type &,
-                                              const typename RectangularArray<T>::size_type &,
-                                              const T &)) &
-               RectangularArray<T>::Set)
+      .def("Set", (const T &(RectangularArray<T>::*)(const typename RectangularArray<T>::SizeType &,
+                                                     const T &)) &
+                      RectangularArray<T>::Set)
+      .def("Set", (const T &(RectangularArray<T>::*)(const typename RectangularArray<T>::SizeType &,
+                                                     const typename RectangularArray<T>::SizeType &,
+                                                     const T &)) &
+                      RectangularArray<T>::Set)
       .def("Crop",
            [](RectangularArray<T> &ret, RectangularArray<T> const &A, std::size_t const &i,
               std::size_t const &h, std::size_t const &j, std::size_t const &w) {
@@ -159,19 +157,17 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
              ret.Row(A, range.ToTrivialRange(A.height()));
            })
 
-      .def("At",
-           (const typename RectangularArray<T>::Type &(
-               RectangularArray<T>::*)(const typename RectangularArray<T>::size_type &)const) &
-               RectangularArray<T>::At)
-      .def("At",
-           (const typename RectangularArray<T>::Type &(
-               RectangularArray<T>::*)(const typename RectangularArray<T>::size_type &,
-                                       const typename RectangularArray<T>::size_type &)const) &
-               RectangularArray<T>::At)
-      .def("At", (T & (RectangularArray<T>::*)(const typename RectangularArray<T>::size_type &,
-                                               const typename RectangularArray<T>::size_type &)) &
+      .def("At", (const typename RectangularArray<T>::Type &(
+                     RectangularArray<T>::*)(const typename RectangularArray<T>::SizeType &)const) &
                      RectangularArray<T>::At)
-      .def("At", (T & (RectangularArray<T>::*)(const typename RectangularArray<T>::size_type &)) &
+      .def("At", (const typename RectangularArray<T>::Type &(
+                     RectangularArray<T>::*)(const typename RectangularArray<T>::SizeType &,
+                                             const typename RectangularArray<T>::SizeType &)const) &
+                     RectangularArray<T>::At)
+      .def("At", (T & (RectangularArray<T>::*)(const typename RectangularArray<T>::SizeType &,
+                                               const typename RectangularArray<T>::SizeType &)) &
+                     RectangularArray<T>::At)
+      .def("At", (T & (RectangularArray<T>::*)(const typename RectangularArray<T>::SizeType &)) &
                      RectangularArray<T>::At)
 
       .def("__getitem__",
@@ -296,8 +292,8 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
       //                        std::endl; })
       .def("FromNumpy",
            [](RectangularArray<T> &s, py::array_t<T> arr) {
-             auto buf        = arr.request();
-             using size_type = typename RectangularArray<T>::size_type;
+             auto buf       = arr.request();
+             using SizeType = typename RectangularArray<T>::SizeType;
              if (buf.ndim != 2)
              {
                throw std::runtime_error("Dimension must be exactly two.");
@@ -305,7 +301,7 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
 
              T *         ptr = (T *)buf.ptr;
              std::size_t idx = 0;
-             s.Resize(size_type(buf.shape[0]), size_type(buf.shape[1]));
+             s.Resize(SizeType(buf.shape[0]), SizeType(buf.shape[1]));
              for (std::size_t i = 0; i < std::size_t(buf.shape[0]); ++i)
              {
                for (std::size_t j = 0; j < std::size_t(buf.shape[1]); ++j)

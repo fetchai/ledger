@@ -57,7 +57,7 @@ class ShapelessArray
 public:
   using Type                          = T;
   using container_type                = C;
-  using size_type                     = std::size_t;
+  using SizeType                      = std::size_t;
   using vector_slice_type             = typename container_type::vector_slice_type;
   using vector_register_type          = typename container_type::vector_register_type;
   using vector_register_iterator_type = typename container_type::vector_register_iterator_type;
@@ -753,11 +753,11 @@ public:
   }
 
   /* Returns the capacity of the array. */
-  size_type capacity() const
+  SizeType capacity() const
   {
     return data_.padded_size();
   }
-  size_type padded_size() const
+  SizeType padded_size() const
   {
     return data_.padded_size();
   }
@@ -1031,7 +1031,7 @@ public:
     }
     bool ret = true;
 
-    for (size_type i = 0; ret && i < data().size(); ++i)
+    for (SizeType i = 0; ret && i < data().size(); ++i)
     {
       ret &= (data()[i] == other.data()[i]);
     }

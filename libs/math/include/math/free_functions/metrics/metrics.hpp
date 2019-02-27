@@ -35,14 +35,15 @@ namespace metrics {
  * @return
  */
 template <typename ArrayType>
-ArrayType EuclideanDistance(ArrayType const &A, ArrayType const &B, std::size_t const &axis = 1)
+ArrayType EuclideanDistance(ArrayType const &A, ArrayType const &B,
+                            typename ArrayType::SizeType const &axis = 1)
 {
   assert(A.shape() == B.shape());
   assert(A.shape().size() == 2);
   assert(axis == 0 || axis == 1);
 
-  ArrayType                temp(A.shape());
-  std::vector<std::size_t> retSize;
+  ArrayType                                 temp(A.shape());
+  std::vector<typename ArrayType::SizeType> retSize;
   if ((A.shape()[0] == 1) || (A.shape()[1] == 1))  // case where one dimension = size 1
   {
     retSize = A.shape();
@@ -51,11 +52,11 @@ ArrayType EuclideanDistance(ArrayType const &A, ArrayType const &B, std::size_t 
   {
     if (axis == 0)
     {
-      retSize = std::vector<std::size_t>({1, A.shape()[1]});
+      retSize = std::vector<typename ArrayType::SizeType>({1, A.shape()[1]});
     }
     else
     {
-      retSize = std::vector<std::size_t>({A.shape()[0], 1});
+      retSize = std::vector<typename ArrayType::SizeType>({A.shape()[0], 1});
     }
   }
   ArrayType ret(retSize);
