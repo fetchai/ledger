@@ -270,7 +270,6 @@ meta::IfIsBlasArray<ArrayType, void> Add(ArrayType const &array1, ArrayType cons
   details::Add(array1, array2, range, ret);
 }
 
-
 //////////////////////////
 /// ADDITION OPERATORS ///
 //////////////////////////
@@ -962,7 +961,6 @@ meta::IfIsMathFixedPointArray<ArrayType, ArrayType> Divide(ArrayType const &obj1
   }
   return ret;
 }
-
 
 /**
  * Implementation for scalar division. Implementing this helps keeps a uniform interface
