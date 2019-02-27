@@ -38,6 +38,7 @@ class Tensor
 public:
   using Type                             = T;
   using SizeType                         = std::uint64_t;
+  using SelfType                         = Tensor<T>;
   static const SizeType DefaultAlignment = 8;  // Arbitrary picked
 
 public:
@@ -104,6 +105,30 @@ public:
         }
       }
     }
+  }
+
+  /**
+   * returns a deep copy of this tensor
+   * @return
+   */
+  SelfType Copy() const
+  {
+    SelfType copy;
+
+    copy.shape_   = this->shape_;
+    copy.padding_ = this->padding_;
+    copy.strides_ = this->strides_;
+    copy.offset_  = this->offset_;
+
+    copy.storage_ = std::make_shared<std::vector<T>>(
+        std::max(SizeType(1), DimensionSize(0) * copy.shape_[0] + copy.padding_[0]));
+
+    for (std::size_t j = 0; j < copy.size(); ++j)
+    {
+      copy.Set(j, this->At(j));
+    }
+
+    return copy;
   }
 
   std::vector<SizeType> const &shape()
@@ -180,15 +205,6 @@ public:
     for (SizeType i(0); i < size(); ++i)
     {
       At(i) = value;
-    }
-  }
-
-  void Copy(Tensor<T> const &o)
-  {
-    assert(size() == o.size());
-    for (SizeType i(0); i < size(); ++i)
-    {
-      At(i) = o.At(i);
     }
   }
 
@@ -424,12 +440,12 @@ public:
   void Shuffle()
   {
     std::default_random_engine rng{};
-    std::vector<SizeType>      idxs{size()};
+    std::vector<SizeType>      idxs(size());
     std::iota(std::begin(idxs), std::end(idxs), 0);
     std::shuffle(idxs.begin(), idxs.end(), rng);
 
     // instantiate new tensor with copy of data
-    Tensor<Type> tmp{*this};
+    Tensor<Type> tmp = this->Copy();
 
     // copy data back according to shuffle
     for (std::size_t j = 0; j < tmp.size(); ++j)

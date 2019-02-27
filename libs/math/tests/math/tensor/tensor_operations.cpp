@@ -220,3 +220,25 @@ TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
   EXPECT_EQ(t3.At(13), TypeParam(24));
   EXPECT_EQ(t3.At(14), TypeParam(29));
 }
+
+TYPED_TEST(TensorOperationsTest, shuffle_test)
+{
+  // instantiate tensor with 0-5 in order
+  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({1, 5}));
+  for (std::uint64_t i(0); i < t1.size(); ++i)
+  {
+    t1.At(i) = TypeParam(i);
+  }
+
+  t1.Shuffle();
+
+  bool same = true;
+  for (std::size_t j = 0; j < t1.size(); ++j)
+  {
+    if (TypeParam(j) != t1.At(j))
+    {
+      same = false;
+    }
+  }
+  EXPECT_FALSE(same);
+}
