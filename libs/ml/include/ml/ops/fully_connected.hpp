@@ -24,6 +24,9 @@
 #include "ml/ops/weights.hpp"
 #include "ml/subgraph.hpp"
 
+#include <cmath>
+#include <random>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -50,21 +53,17 @@ public:
     this->AddInputNodes(name + "_Input");
     this->SetOutputNode(name + "_Add");
 
-    ArrayPtrType weights = std::make_shared<ArrayType>(std::vector<std::uint64_t>({in, out}));
-    // Naive random init, range [-.5, .5]
+    ArrayPtrType       weights = std::make_shared<ArrayType>(std::vector<std::uint64_t>({in, out}));
+    std::random_device rd{};
+    std::mt19937       gen{rd()};
+    // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
+    std::normal_distribution<> rng(0, std::sqrt(2.0 / double(in)));
     for (std::uint64_t i(0); i < weights->size(); ++i)
     {
-      weights->At(i) =
-          typename ArrayType::Type(static_cast<float>(rand()) / static_cast<float>(RAND_MAX) - .5);
+      weights->At(i) = typename ArrayType::Type(rng(gen));
     }
     this->SetInput(name + "_Weights", weights);
     ArrayPtrType bias = std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, out}));
-    // Naive random init, range [-.5, .5]
-    for (std::uint64_t i(0); i < bias->size(); ++i)
-    {
-      bias->At(i) =
-          typename ArrayType::Type(static_cast<float>(rand()) / static_cast<float>(RAND_MAX) - .5);
-    }
     this->SetInput(name + "_Bias", bias);
   }
 };

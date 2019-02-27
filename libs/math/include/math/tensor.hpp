@@ -19,6 +19,7 @@
 
 #include "core/assert.hpp"
 #include "math/free_functions/standard_functions/abs.hpp"
+#include "tensor_iterator.hpp"
 
 #include <iostream>
 #include <memory>
@@ -175,6 +176,24 @@ public:
     {
       At(i) = o.At(i);
     }
+  }
+
+  /////////////////
+  /// Iterators ///
+  /////////////////
+
+  TensorIterator<T, SizeType> begin()  // Need to stay lowercase for range basedloops
+  {
+    return TensorIterator<T, SizeType>(shape_, strides_, padding_,
+                                       std::vector<SizeType>(shape_.size()), storage_, offset_);
+  }
+
+  TensorIterator<T, SizeType> end()  // Need to stay lowercase for range basedloops
+  {
+    std::vector<SizeType> endCoordinate(shape_.size());
+    endCoordinate[0] = shape_[0];
+    return TensorIterator<T, SizeType>(shape_, strides_, padding_, endCoordinate, storage_,
+                                       offset_);
   }
 
   /////////////////
@@ -384,7 +403,14 @@ public:
   {
     std::stringstream ss;
     ss << std::setprecision(5) << std::fixed << std::showpos;
-    if (shape_.size() == 2)
+    if (shape_.size() == 1)
+    {
+      for (SizeType i(0); i < shape_[0]; ++i)
+      {
+        ss << Get({i}) << "\t";
+      }
+    }
+    else if (shape_.size() == 2)
     {
       for (SizeType i(0); i < shape_[0]; ++i)
       {
