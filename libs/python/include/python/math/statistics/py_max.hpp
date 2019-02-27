@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/free_functions.hpp"
-#include "math/ndarray.hpp"
+#include "math/free_functions/matrix_operations/matrix_operations.hpp"
+#include "math/tensor.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -27,7 +27,7 @@ namespace math {
 template <typename A>
 inline void WrapperMax(A const &a, typename A::Type &ret)
 {
-  Max<typename A::Type, typename A::container_type>(a, ret);
+  Max(a, ret);
 }
 
 inline void BuildMaxStatistics(std::string const &custom_name, pybind11::module &module)
@@ -36,12 +36,14 @@ inline void BuildMaxStatistics(std::string const &custom_name, pybind11::module 
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperMax<ShapelessArray<double>>)
-      .def(custom_name.c_str(), &WrapperMax<ShapelessArray<float>>)
-      .def(custom_name.c_str(), &WrapperMax<RectangularArray<double>>)
-      .def(custom_name.c_str(), &WrapperMax<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperMax<NDArray<double>>)
-      .def(custom_name.c_str(), &WrapperMax<NDArray<float>>);
+  //  module.def(custom_name.c_str(), &WrapperMax<ShapelessArray<double>>)
+  //      .def(custom_name.c_str(), &WrapperMax<ShapelessArray<float>>)
+  //      .def(custom_name.c_str(), &WrapperMax<RectangularArray<double>>)
+  //      .def(custom_name.c_str(), &WrapperMax<RectangularArray<float>>)
+  //      .def(custom_name.c_str(), &WrapperMax<Tensor<double>>)
+  //      .def(custom_name.c_str(), &WrapperMax<Tensor<float>>);
+  module.def(custom_name.c_str(), &WrapperMax<Tensor<double>>)
+      .def(custom_name.c_str(), &WrapperMax<Tensor<float>>);
 }
 
 }  // namespace math

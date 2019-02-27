@@ -105,6 +105,28 @@ public:
       return InternalCreateInstanceFunction<ReturnType, InstanceFunction, Ts...>(name, f);
     }
 
+    ClassInterface &EnableOperator(Operator op)
+    {
+      TypeId type_id__               = type_id_;
+      auto   compiler_setup_function = [type_id__, op](Compiler *compiler) {
+        compiler->EnableOperator(type_id__, op);
+      };
+      module_->AddCompilerSetupFunction(compiler_setup_function);
+      return *this;
+    }
+
+    ClassInterface &EnableIndexOperator(TypeIdArray const &input_type_ids,
+                                        TypeId const &     output_type_id)
+    {
+      TypeId type_id__               = type_id_;
+      auto   compiler_setup_function = [type_id__, input_type_ids,
+                                      output_type_id](Compiler *compiler) {
+        compiler->EnableIndexOperator(type_id__, input_type_ids, output_type_id);
+      };
+      module_->AddCompilerSetupFunction(compiler_setup_function);
+      return *this;
+    }
+
   private:
     template <typename ReturnType, typename InstanceFunction, typename... Ts>
     ClassInterface &InternalCreateInstanceFunction(std::string const &name, InstanceFunction f)
