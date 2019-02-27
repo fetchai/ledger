@@ -29,6 +29,22 @@ void Analyser::Initialise()
   global_symbol_table_        = CreateSymbolTable();
   next_instantiation_type_id_ = 2000;
 
+  operator_table_ = {{Operator::Equal, Node::Kind::EqualOp},
+                     {Operator::NotEqual, Node::Kind::NotEqualOp},
+                     {Operator::LessThan, Node::Kind::LessThanOp},
+                     {Operator::LessThanOrEqual, Node::Kind::LessThanOrEqualOp},
+                     {Operator::GreaterThan, Node::Kind::GreaterThanOp},
+                     {Operator::GreaterThanOrEqual, Node::Kind::GreaterThanOrEqualOp},
+                     {Operator::UnaryMinus, Node::Kind::UnaryMinusOp},
+                     {Operator::Add, Node::Kind::AddOp},
+                     {Operator::Subtract, Node::Kind::SubtractOp},
+                     {Operator::Multiply, Node::Kind::MultiplyOp},
+                     {Operator::Divide, Node::Kind::DivideOp},
+                     {Operator::AddAssign, Node::Kind::AddAssignOp},
+                     {Operator::SubtractAssign, Node::Kind::SubtractAssignOp},
+                     {Operator::MultiplyAssign, Node::Kind::MultiplyAssignOp},
+                     {Operator::DivideAssign, Node::Kind::DivideAssignOp}};
+
   CreateMetaType("Any", TypeIds::Any, any_type_);
   CreateMetaType("TemplateParameter1", TypeIds::TemplateParameter1, template_parameter1_type_);
   CreateMetaType("TemplateParameter2", TypeIds::TemplateParameter2, template_parameter2_type_);
@@ -74,32 +90,33 @@ void Analyser::Initialise()
   CreateOpcodeFreeFunction("toFloat64", Opcodes::ToFloat64, {cast_variant_type_}, float64_type_);
 
   CreateClassType("String", TypeIds::String, string_type_);
-  EnableOp(string_type_, Node::Kind::AddOp);
+  EnableOperator(string_type_, Operator::Equal);
+  EnableOperator(string_type_, Operator::NotEqual);
+  EnableOperator(string_type_, Operator::LessThan);
+  EnableOperator(string_type_, Operator::LessThanOrEqual);
+  EnableOperator(string_type_, Operator::GreaterThan);
+  EnableOperator(string_type_, Operator::GreaterThanOrEqual);
+  EnableOperator(string_type_, Operator::Add);
 
   CreateTemplateType("Matrix", TypeIds::IMatrix, {real_variant_type_}, matrix_type_);
   EnableIndexOperator(matrix_type_, {integer_variant_type_, integer_variant_type_},
                       template_parameter1_type_);
-  EnableOp(matrix_type_, Node::Kind::UnaryMinusOp);
-  EnableOp(matrix_type_, Node::Kind::AddOp);
-  EnableOp(matrix_type_, Node::Kind::SubtractOp);
-  EnableOp(matrix_type_, Node::Kind::MultiplyOp);
-  // EnableOp(matrix_type_, Node::Kind::DivideOp);
-  EnableOp(matrix_type_, Node::Kind::AddAssignOp);
-  EnableOp(matrix_type_, Node::Kind::SubtractAssignOp);
-  EnableOp(matrix_type_, Node::Kind::MultiplyAssignOp);
-  // EnableOp(matrix_type_, Node::Kind::DivideAssignOp);
-  // EnableLeftOp(matrix_type_, Node::Kind::AddOp);
-  // EnableLeftOp(matrix_type_, Node::Kind::SubtractOp);
-  EnableLeftOp(matrix_type_, Node::Kind::MultiplyOp);
-  // EnableLeftOp(matrix_type_, Node::Kind::DivideOp);
-  EnableRightOp(matrix_type_, Node::Kind::AddOp);
-  EnableRightOp(matrix_type_, Node::Kind::SubtractOp);
-  EnableRightOp(matrix_type_, Node::Kind::MultiplyOp);
-  EnableRightOp(matrix_type_, Node::Kind::DivideOp);
-  EnableRightOp(matrix_type_, Node::Kind::AddAssignOp);
-  EnableRightOp(matrix_type_, Node::Kind::SubtractAssignOp);
-  EnableRightOp(matrix_type_, Node::Kind::MultiplyAssignOp);
-  EnableRightOp(matrix_type_, Node::Kind::DivideAssignOp);
+  EnableOperator(matrix_type_, Operator::UnaryMinus);
+  EnableOperator(matrix_type_, Operator::Add);
+  EnableOperator(matrix_type_, Operator::Subtract);
+  EnableOperator(matrix_type_, Operator::Multiply);
+  EnableOperator(matrix_type_, Operator::AddAssign);
+  EnableOperator(matrix_type_, Operator::SubtractAssign);
+  EnableOperator(matrix_type_, Operator::MultiplyAssign);
+  EnableLeftOperator(matrix_type_, Operator::Multiply);
+  EnableRightOperator(matrix_type_, Operator::Add);
+  EnableRightOperator(matrix_type_, Operator::Subtract);
+  EnableRightOperator(matrix_type_, Operator::Multiply);
+  EnableRightOperator(matrix_type_, Operator::Divide);
+  EnableRightOperator(matrix_type_, Operator::AddAssign);
+  EnableRightOperator(matrix_type_, Operator::SubtractAssign);
+  EnableRightOperator(matrix_type_, Operator::MultiplyAssign);
+  EnableRightOperator(matrix_type_, Operator::DivideAssign);
 
   CreateTemplateType("Array", TypeIds::IArray, {any_type_}, array_type_);
   EnableIndexOperator(array_type_, {integer_variant_type_}, template_parameter1_type_);
@@ -196,6 +213,17 @@ void Analyser::CreateOpcodeInstanceFunction(TypeId type_id, std::string const &n
 {
   CreateOpcodeInstanceFunction(GetTypePtr(type_id), name, opcode, GetTypePtrs(parameter_type_ids),
                                GetTypePtr(return_type_id));
+}
+
+void Analyser::EnableOperator(TypeId type_id, Operator op)
+{
+  EnableOperator(GetTypePtr(type_id), op);
+}
+
+void Analyser::EnableIndexOperator(TypeId type_id, TypeIdArray const &input_type_ids,
+                                   TypeId const &output_type_id)
+{
+  EnableIndexOperator(GetTypePtr(type_id), GetTypePtrs(input_type_ids), GetTypePtr(output_type_id));
 }
 
 bool Analyser::Analyse(BlockNodePtr const &root, TypeInfoTable &type_info_table, Strings &errors)
@@ -783,12 +811,10 @@ bool Analyser::AnnotateModuloAssignOp(ExpressionNodePtr const &node)
   }
   if ((lhs->type == rhs->type) && IsIntegerType(lhs->type))
   {
-    AddError(node->token, "modulo not implemented yet");
-    return false;
-    // SetRV(node, lhs->type);
-    // return true;
+    SetRV(node, lhs->type);
+    return true;
   }
-  AddError(node->token, "integer type expected");
+  AddError(node->token, "integral type expected");
   return false;
 }
 
@@ -1016,6 +1042,8 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
   }
   bool const lhs_is_concrete_type = lhs->type->id != TypeIds::Null;
   bool const rhs_is_concrete_type = rhs->type->id != TypeIds::Null;
+  bool const lhs_is_primitive     = lhs->type->category == TypeCategory::Primitive;
+  bool const rhs_is_primitive     = rhs->type->category == TypeCategory::Primitive;
   if (lhs_is_concrete_type)
   {
     if (rhs_is_concrete_type)
@@ -1025,10 +1053,17 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
         AddError(node->token, "incompatible types");
         return false;
       }
+      Node::Kind const op      = node->kind;
+      bool const       enabled = lhs_is_primitive || IsOpEnabled(lhs->type, op);
+      if (enabled == false)
+      {
+        AddError(node->token, "operator not supported");
+        return false;
+      }
     }
     else
     {
-      if (lhs->type->category == TypeCategory::Primitive)
+      if (lhs_is_primitive)
       {
         // unable to compare LHS primitive type to RHS null
         AddError(node->token, "incompatible types");
@@ -1042,7 +1077,7 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
   {
     if (rhs_is_concrete_type)
     {
-      if (rhs->type->category == TypeCategory::Primitive)
+      if (rhs_is_primitive)
       {
         // unable to compare LHS null to RHS primitive type
         AddError(node->token, "incompatible types");
@@ -1071,14 +1106,16 @@ bool Analyser::AnnotateRelationalOp(ExpressionNodePtr const &node)
   }
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  if ((IsRelationalType(lhs->type) == false) || (IsRelationalType(rhs->type) == false))
+  if (lhs->type != rhs->type)
   {
     AddError(node->token, "incompatible types");
     return false;
   }
-  if (lhs->type != rhs->type)
+  Node::Kind const op      = node->kind;
+  bool const       enabled = IsNumberType(lhs->type) || IsOpEnabled(lhs->type, op);
+  if (enabled == false)
   {
-    AddError(node->token, "incompatible types");
+    AddError(node->token, "operator not supported");
     return false;
   }
   SetRV(node, bool_type_);
@@ -1134,7 +1171,7 @@ bool Analyser::AnnotateIncDecOp(ExpressionNodePtr const &node)
   }
   if (IsIntegerType(operand->type) == false)
   {
-    AddError(node->token, "integer type expected");
+    AddError(node->token, "integral type expected");
     return false;
   }
   SetRV(node, operand->type);
@@ -1171,12 +1208,10 @@ bool Analyser::AnnotateModuloOp(ExpressionNodePtr const &node)
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
   if ((lhs->type == rhs->type) && IsIntegerType(lhs->type))
   {
-    AddError(node->token, "modulo not implemented yet");
-    return false;
-    // SetRV(node, lhs->type);
-    // return true;
+    SetRV(node, lhs->type);
+    return true;
   }
-  AddError(node->token, "integer type expected");
+  AddError(node->token, "integral type expected");
   return false;
 }
 
@@ -1844,6 +1879,8 @@ SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const &node)
           return nullptr;
         }
       }
+      // Need to check here that parameter_type does in fact support any operator(s)
+      // required by the template_type's i'th type parameter...
       parameter_types.push_back(parameter_type);
     }
     TypePtr type;

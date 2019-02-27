@@ -70,7 +70,7 @@ struct E<T, typename std::enable_if_t<IsPtr<T>::value>>
 {
   bool operator()(Variant const &lhsv, Variant const &rhsv) const
   {
-    return lhsv.object->Equals(lhsv.object, rhsv.object);
+    return lhsv.object->IsEqual(lhsv.object, rhsv.object);
   }
 };
 
