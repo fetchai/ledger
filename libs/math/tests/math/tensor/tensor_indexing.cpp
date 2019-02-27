@@ -284,7 +284,7 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_test)
       for (std::uint64_t k(0); k < 5; k++)
       {
         t.Set({i, j, k}, s);
-        ASSERT_EQ(t.Get({i, j, k}), s);
+        ASSERT_EQ(t.At({i, j, k}), s);
         s++;
       }
     }
@@ -324,7 +324,7 @@ TYPED_TEST(TensorIndexingTest, zero_stride_tensor_test)
       for (std::uint64_t k(0); k < 5; k++)
       {
         // All element are now that value since they all point at the same memory offset
-        ASSERT_EQ(t.Get({i, j, k}), TypeParam(42));
+        ASSERT_EQ(t.At({i, j, k}), TypeParam(42));
       }
     }
   }
@@ -451,8 +451,8 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_slicing_test)
   {
     for (std::uint64_t k(0); k < 5; ++k)
     {
-      EXPECT_EQ(t0.Get(std::vector<std::uint64_t>({j, k})), TypeParam(j * 5 + k));
-      EXPECT_EQ(t1.Get(std::vector<std::uint64_t>({j, k})), TypeParam(j * 5 + k + 15));
+      EXPECT_EQ(t0.At(std::vector<std::uint64_t>({j, k})), TypeParam(j * 5 + k));
+      EXPECT_EQ(t1.At(std::vector<std::uint64_t>({j, k})), TypeParam(j * 5 + k + 15));
     }
   }
 }
@@ -484,4 +484,124 @@ TYPED_TEST(TensorIndexingTest, double_slicing_test)
   EXPECT_EQ(t1_1.At(2), TypeParam(22));
   EXPECT_EQ(t1_1.At(3), TypeParam(23));
   EXPECT_EQ(t1_1.At(4), TypeParam(24));
+}
+
+TYPED_TEST(TensorIndexingTest, range_based_iteration_1d)
+{
+  fetch::math::Tensor<TypeParam> t({5});
+  TypeParam                      i(0);
+  for (TypeParam &e : t)
+  {
+    e = i;
+    i += TypeParam(1);
+  }
+  for (std::uint64_t i(0); i < t.size(); ++i)
+  {
+    EXPECT_EQ(t.At(i), TypeParam(i));
+  }
+}
+
+TYPED_TEST(TensorIndexingTest, range_based_iteration_1d_with_stride)
+{
+  fetch::math::Tensor<TypeParam> t({5}, {3});
+  TypeParam                      i(0);
+  for (TypeParam &e : t)
+  {
+    e = i;
+    i += TypeParam(1);
+  }
+  for (std::uint64_t i(0); i < 5; ++i)
+  {
+    EXPECT_EQ(t.At(i), TypeParam(i));
+  }
+}
+
+TYPED_TEST(TensorIndexingTest, range_based_iteration_2d)
+{
+  fetch::math::Tensor<TypeParam> t({5, 2});
+  TypeParam                      i(0);
+  for (TypeParam &e : t)
+  {
+    e = i;
+    i += TypeParam(1);
+  }
+  for (std::uint64_t i(0); i < t.size(); ++i)
+  {
+    EXPECT_EQ(t.At(i), TypeParam(i));
+  }
+}
+
+TYPED_TEST(TensorIndexingTest, range_based_iteration_2d_with_stride)
+{
+  fetch::math::Tensor<TypeParam> t({6, 3}, {3, 2});
+  TypeParam                      i(0);
+  for (TypeParam &e : t)
+  {
+    e = i;
+    i += TypeParam(1);
+  }
+  for (std::uint64_t i(0); i < 5; ++i)
+  {
+    EXPECT_EQ(t.At(i), TypeParam(i));
+  }
+}
+
+TYPED_TEST(TensorIndexingTest, range_based_iteration_3d)
+{
+  fetch::math::Tensor<TypeParam> t({5, 2, 4});
+  TypeParam                      i(0);
+  for (TypeParam &e : t)
+  {
+    e = i;
+    i += TypeParam(1);
+  }
+  for (std::uint64_t i(0); i < t.size(); ++i)
+  {
+    EXPECT_EQ(t.At(i), TypeParam(i));
+  }
+}
+
+TYPED_TEST(TensorIndexingTest, range_based_iteration_3d_with_stride)
+{
+  fetch::math::Tensor<TypeParam> t({5, 2, 4}, {3, 2, 1});
+  TypeParam                      i(0);
+  for (TypeParam &e : t)
+  {
+    e = i;
+    i += TypeParam(1);
+  }
+  for (std::uint64_t i(0); i < 5; ++i)
+  {
+    EXPECT_EQ(t.At(i), TypeParam(i));
+  }
+}
+
+TYPED_TEST(TensorIndexingTest, range_based_iteration_4d)
+{
+  fetch::math::Tensor<TypeParam> t({5, 2, 4, 6});
+  TypeParam                      i(0);
+  for (TypeParam &e : t)
+  {
+    e = i;
+    i += TypeParam(1);
+  }
+  for (std::uint64_t i(0); i < t.size(); ++i)
+  {
+    EXPECT_EQ(t.At(i), TypeParam(i));
+  }
+}
+
+TYPED_TEST(TensorIndexingTest, range_based_iteration_4d_with_stride)
+{
+  fetch::math::Tensor<TypeParam> t({6, 3, 4, 6}, {3, 2, 2, 3});
+  TypeParam                      i(0);
+  for (TypeParam &e : t)
+  {
+    e = i;
+    i += TypeParam(1);
+  }
+  for (std::uint64_t i(0); i < 5; ++i)
+  {
+    EXPECT_EQ(t.At(i), TypeParam(i));
+  }
 }

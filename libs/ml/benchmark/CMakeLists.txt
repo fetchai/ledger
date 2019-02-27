@@ -11,4 +11,4 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 #target_link_libraries(benchmark_layers fetch-ml)
-add_fetch_gbench(benchmark_tensor fetch-ml tensor)
+

@@ -30,9 +30,14 @@ namespace fetch {
 namespace math {
 
 template <typename T>
+fetch::math::meta::IfIsArithmetic<T, void> Exp(T &x, T &ret)
+{
+  ret = std::exp(x);
+}
+template <typename T>
 fetch::math::meta::IfIsArithmetic<T, void> Exp(T &x)
 {
-  x = std::exp(x);
+  Exp(x, x);
 }
 
 template <std::size_t I, std::size_t F>
@@ -51,26 +56,27 @@ fetch::math::meta::IfIsBlasArray<ArrayType, void> Exp(ArrayType &x)
 template <typename ArrayType>
 fetch::math::meta::IfIsNonBlasArray<ArrayType, void> Exp(ArrayType &x)
 {
-  for (std::size_t j = 0; j < x.size(); ++j)
+  for (typename ArrayType::Type &e : x)
   {
-    Exp(x.At(j));
+    Exp(e);
   }
 }
 template <typename ArrayType>
 fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> Exp(ArrayType &x)
 {
-  for (std::size_t j = 0; j < x.size(); ++j)
+  for (typename ArrayType::Type &e : x)
   {
-    Exp(x.At(j));
+    Exp(e);
   }
 }
 
 template <typename T>
 fetch::math::meta::IfIsMathArray<T, void> Exp(T const &array, T &ret)
 {
-  for (std::size_t i = 0; i < array.size(); ++i)
+  ret = array;
+  for (typename T::Type &e : ret)
   {
-    ret.Set(i, std::exp(array.At(i)));
+    Exp(e);
   }
 }
 
