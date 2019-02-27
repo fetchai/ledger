@@ -27,17 +27,16 @@ namespace fetch {
 namespace math {
 namespace statistics {
 
-template <typename A>
-inline typename A::Type Mean(A const &a)
+template <typename ArrayType>
+inline typename ArrayType::Type Mean(ArrayType const &a)
 {
-  using vector_register_type = typename A::vector_register_type;
-  using type                 = typename A::Type;
 
-  type ret = a.data().in_parallel().Reduce(
-      memory::TrivialRange(0, a.size()),
-      [](vector_register_type const &a, vector_register_type const &b) { return a + b; });
-  ret /= static_cast<type>(a.size());
-
+  typename ArrayType::Type ret = 0;
+  for (std::size_t j = 0; j < a.size(); ++j)
+  {
+    ret += a.At(j);
+  }
+  ret /= static_cast<typename ArrayType::Type>(a.size());
   return ret;
 }
 

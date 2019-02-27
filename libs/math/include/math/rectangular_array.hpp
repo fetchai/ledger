@@ -51,7 +51,7 @@ public:
   using super_type     = math::ShapelessArray<T, C>;
   using Type           = typename super_type::Type;
   using container_type = typename super_type::container_type;
-  using size_type      = typename super_type::size_type;
+  using SizeType       = typename super_type::SizeType;
 
   using self_type                     = RectangularArray<T, C>;
   using vector_register_type          = typename super_type::vector_register_type;
@@ -137,17 +137,17 @@ public:
    * This method allocates new array to make the crop. (TODO: Reuse
    * memory for effiency, if array and not sharedarray is used)
    */
-  void Crop(self_type const &A, size_type const &i, size_type const &h, size_type const &j,
-            size_type const &w)
+  void Crop(self_type const &A, SizeType const &i, SizeType const &h, SizeType const &j,
+            SizeType const &w)
   {
     assert(this->height() == h);
     assert(this->width() == w);
 
     std::size_t s = 0;
-    for (size_type k = i; k < i + h; ++k)
+    for (SizeType k = i; k < i + h; ++k)
     {
       std::size_t t = 0;
-      for (size_type l = j; l < j + w; ++l)
+      for (SizeType l = j; l < j + w; ++l)
       {
         this->At(s, t) = A.At(k, l);
         ++t;
@@ -225,8 +225,8 @@ public:
     {
       for (int j = 0; j < int(height()); ++j)
       {
-        size_type v = size_type(ca * (i - ci) - sa * (j - cj) + ci);
-        size_type u = size_type(sa * (i - ci) + ca * (j - cj) + cj);
+        SizeType v = SizeType(ca * (i - ci) - sa * (j - cj) + ci);
+        SizeType u = SizeType(sa * (i - ci) + ca * (j - cj) + cj);
         if ((v < height()) && (u < width()))
         {
           n[std::size_t(i) * padded_height_ + std::size_t(j)] = At(v, u);
@@ -254,7 +254,7 @@ public:
     bool ret = true;
 
     // FIXME: Implementation wrong due to padding
-    for (size_type i = 0; i < super_type::data().size(); ++i)
+    for (SizeType i = 0; i < super_type::data().size(); ++i)
     {
       ret &= (super_type::data()[i] == other.data()[i]);
     }
@@ -335,7 +335,7 @@ public:
    * Note this accessor is "slow" as it takes care that the developer
    * does not accidently enter the padded area of the memory.
    */
-  virtual Type const &At(size_type const &i) const
+  virtual Type const &At(SizeType const &i) const
   {
     std::size_t p = i / width_;
     std::size_t q = i % width_;
@@ -346,7 +346,7 @@ public:
   /* One-dimensional reference access function.
    * @param i is the index which is being accessed.
    */
-  virtual Type &At(size_type const &i)
+  virtual Type &At(SizeType const &i)
   {
     std::size_t p = i / width_;
     std::size_t q = i % width_;
@@ -358,7 +358,7 @@ public:
    * @param i is the index along the height direction.
    * @param j is the index along the width direction.
    */
-  Type const &At(size_type const &i, size_type const &j) const
+  Type const &At(SizeType const &i, SizeType const &j) const
   {
     assert(j < padded_width_);
     assert(i < padded_height_);
@@ -370,7 +370,7 @@ public:
    * @param i is the index along the height direction.
    * @param j is the index along the width direction.
    */
-  Type &At(size_type const &i, size_type const &j)
+  Type &At(SizeType const &i, SizeType const &j)
   {
     assert(j < padded_width_);
     assert(i < padded_height_);
@@ -396,7 +396,7 @@ public:
    * @param j is the position along the width.
    * @param v is the new value.
    */
-  Type const &Set(size_type const &n, Type const &v)
+  Type const &Set(SizeType const &n, Type const &v)
   {
     return super_type::Set(n, v);
   }
@@ -406,7 +406,7 @@ public:
    * @param j is the position along the width.
    * @param v is the new value.
    */
-  Type const &Set(size_type const &i, size_type const &j, Type const &v)
+  Type const &Set(SizeType const &i, SizeType const &j, Type const &v)
   {
     assert((j * padded_height_ + i) < super_type::data().size());
     super_type::data()[(j * padded_height_ + i)] = v;
@@ -454,7 +454,7 @@ public:
    * This function is here to satisfy the requirement for an
    * optimisation problem container.
    */
-  Type const &Insert(size_type const &i, size_type const &j, Type const &v)
+  Type const &Insert(SizeType const &i, SizeType const &j, Type const &v)
   {
     return Set(i, j, v);
   }
@@ -462,7 +462,7 @@ public:
   /* Resizes the array into a square array.
    * @param hw is the new height and the width of the array.
    */
-  void Resize(size_type const &hw)
+  void Resize(SizeType const &hw)
   {
     Resize(hw, hw);
   }
@@ -471,7 +471,7 @@ public:
    * @param h is new the height of the array.
    * @param w is new the width of the array.
    */
-  void Resize(size_type const &h, size_type const &w)
+  void Resize(SizeType const &h, SizeType const &w)
   {
     if ((h == height_) && (w == width_))
     {
@@ -515,7 +515,7 @@ public:
    * If the new height or the width is smaller than the old, the array
    * is resized accordingly.
    */
-  void Reserve(size_type const &h, size_type const &w)
+  void Reserve(SizeType const &h, SizeType const &w)
   {
 
     // TODO(unknown): Rewrite
@@ -566,7 +566,7 @@ public:
    * @param h array height
    * @param w array width
    */
-  void Reshape(size_type const &h, size_type const &w)
+  void Reshape(SizeType const &h, SizeType const &w)
   {
     assert((height_ * width_) == (h * w));
     Reserve(h, w);
@@ -620,7 +620,7 @@ public:
    * This function expects that the user will take care of memory
    * initialization.
    */
-  void LazyResize(size_type const &hw)
+  void LazyResize(SizeType const &hw)
   {
     LazyResize(hw, hw);
   }
@@ -632,7 +632,7 @@ public:
    * This function expects that the user will take care of memory
    * initialization.
    */
-  void LazyResize(size_type const &h, size_type const &w)
+  void LazyResize(SizeType const &h, SizeType const &w)
   {
     if ((h == height_) && (w == width_))
     {
@@ -712,8 +712,8 @@ public:
       TODO_FAIL("Endianess failure");
     }
 
-    size_type              height = 0, width = 0;
-    std::vector<size_type> shape{0, 0};
+    SizeType              height = 0, width = 0;
+    std::vector<SizeType> shape{0, 0};
     if (fread(&height, sizeof(height), 1, fp) != 1)
     {
       TODO_FAIL(
@@ -740,44 +740,44 @@ public:
   }
 
   /* Returns the height of the array. */
-  size_type height() const
+  SizeType height() const
   {
     return height_;
   }
 
   /* Returns the width of the array. */
-  size_type width() const
+  SizeType width() const
   {
     return width_;
   }
 
   /* Returns height, width of array */
-  std::vector<size_type> shape() const
+  std::vector<SizeType> shape() const
   {
     return shape_;
   }
 
   /* Returns the padded height of the array. */
-  size_type padded_height() const
+  SizeType padded_height() const
   {
     return padded_height_;
   }
 
   /* Returns the padded width of the array. */
-  size_type padded_width() const
+  SizeType padded_width() const
   {
     return padded_width_;
   }
 
   /* Returns the size of the array. */
-  size_type size() const
+  SizeType size() const
   {
     assert(this->size_ == (height_ * width_));
     return height_ * width_;
   }
 
   /* Returns the size of the array. */
-  size_type padded_size() const
+  SizeType padded_size() const
   {
     return padded_width_ * padded_height_;
   }
@@ -865,11 +865,11 @@ public:
   }
 
 private:
-  size_type              height_ = 0, width_ = 0;
-  std::vector<size_type> shape_{0, 0};
-  size_type              padded_width_ = 0, padded_height_ = 0;
+  SizeType              height_ = 0, width_ = 0;
+  std::vector<SizeType> shape_{0, 0};
+  SizeType              padded_width_ = 0, padded_height_ = 0;
 
-  void SetPaddedSizes(size_type const &h, size_type const &w)
+  void SetPaddedSizes(SizeType const &h, SizeType const &w)
   {
     padded_width_  = w;
     padded_height_ = h;
@@ -877,7 +877,7 @@ private:
     if (PAD_WIDTH)
     {
       padded_width_ =
-          size_type(w / vector_register_type::E_BLOCK_COUNT) * vector_register_type::E_BLOCK_COUNT;
+          SizeType(w / vector_register_type::E_BLOCK_COUNT) * vector_register_type::E_BLOCK_COUNT;
       if (padded_width_ < w)
       {
         padded_width_ += vector_register_type::E_BLOCK_COUNT;
@@ -887,7 +887,7 @@ private:
     if (PAD_HEIGHT)
     {
       padded_height_ =
-          size_type(h / vector_register_type::E_BLOCK_COUNT) * vector_register_type::E_BLOCK_COUNT;
+          SizeType(h / vector_register_type::E_BLOCK_COUNT) * vector_register_type::E_BLOCK_COUNT;
       if (padded_height_ < h)
       {
         padded_height_ += vector_register_type::E_BLOCK_COUNT;
