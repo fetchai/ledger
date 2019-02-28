@@ -126,8 +126,8 @@ void LaneController::UseThesePeers(UriSet uris)
         auto ident = lane_identity_.lock();
         if (ident)
         {
-          FETCH_LOG_INFO(LOGGING_NAME, "ADD PEER to lane ", ident->GetLaneNumber(), " : ",
-                         uri.ToString());
+          FETCH_LOG_DEBUG(LOGGING_NAME, "ADD PEER to lane ", ident->GetLaneNumber(), " : ",
+                          uri.ToString());
         }
         else
         {

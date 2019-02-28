@@ -490,7 +490,7 @@ void MainChain::WriteToFile()
   // skip if the block store is not persistent
   if (block_store_)
   {
-    fetch::generics::MilliTimer myTimer("MainChain::WriteToFile");
+    fetch::generics::MilliTimer myTimer("MainChain::WriteToFile", 500);
 
     // Add confirmed blocks to file
     IntBlockPtr block  = block_chain_.at(heaviest_.hash);
@@ -644,7 +644,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
 {
   assert(block->body.previous_hash.size() > 0);
 
-  fetch::generics::MilliTimer myTimer("MainChain::AddBlock");
+  fetch::generics::MilliTimer myTimer("MainChain::InsertBlock", 500);
   RLock                       lock(main_mutex_);
 
   if (block->body.hash.empty())

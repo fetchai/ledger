@@ -267,11 +267,6 @@ void ThreadPoolImplementation::ProcessLoop(std::size_t index)
         auto const next_idle_cycle  = idle_work_.DueIn();
         auto const wait_time        = std::min(next_future_item, next_idle_cycle);
 
-        if ("Executor" == name_)
-        {
-          FETCH_LOG_INFO(LOGGING_NAME, "Times: Next: ", next_future_item.count(), " Idle: ", next_idle_cycle.count(), " Wait: ", wait_time.count());
-        }
-
         // update the threading counters
         ++inactive_threads_;
 

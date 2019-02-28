@@ -254,8 +254,6 @@ void Router::Route(Handle handle, PacketPtr packet)
 
   if (packet->IsDirect())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Routing direct packet: ", DescribePacket(*packet));
-
     // when it is a direct message we must handle this
     DispatchDirect(handle, packet);
   }
@@ -613,7 +611,7 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
   {
     char const *route_type = (direct) ? "direct" : "normal";
 
-    FETCH_LOG_INFO(LOGGING_NAME, "==> Adding ", route_type,
+    FETCH_LOG_INFO(LOGGING_NAME, "Adding ", route_type,
                    " route for: ", ToBase64(ToConstByteArray(address)));
   }
 
