@@ -54,7 +54,7 @@ uint64_t Combine(uint16_t service, uint16_t channel, uint16_t counter)
  * @return The created promise for this exchange
  */
 Dispatcher::Promise Dispatcher::RegisterExchange(uint16_t service, uint16_t channel,
-                                                 uint16_t counter)
+                                                 uint16_t counter, Packet::Address const &address)
 {
   FETCH_LOCK(promises_lock_);
 
@@ -68,7 +68,9 @@ Dispatcher::Promise Dispatcher::RegisterExchange(uint16_t service, uint16_t chan
     promises_.erase(it);
   }
 
-  return promises_[id].promise;
+  PromiseEntry &entry = promises_[id];
+  entry.address       = address;
+  return entry.promise;
 }
 
 /**
@@ -88,11 +90,19 @@ bool Dispatcher::Dispatch(PacketPtr packet)
   if (it != promises_.end())
   {
     assert(it->second.promise);
-    it->second.promise->Fulfill(packet->GetPayload());
-    // finally remove the promise from the map (since it has been completed)
-    promises_.erase(it);
-
-    success = true;
+    if (packet->GetSender() == it->second.address)
+    {
+      it->second.promise->Fulfill(packet->GetPayload());
+      // finally remove the promise from the map (since it has been completed)
+      promises_.erase(it);
+      success = true;
+    }
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Recieved response from wrong address");
+      FETCH_LOG_INFO(LOGGING_NAME, "Expected : " + ToBase64(it->second.address));
+      FETCH_LOG_INFO(LOGGING_NAME, "Recieved : " + ToBase64(packet->GetSender()));
+    }
   }
 
   return success;

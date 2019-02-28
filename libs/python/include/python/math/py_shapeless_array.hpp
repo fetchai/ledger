@@ -349,7 +349,7 @@ void BuildShapelessArray(std::string const &custom_name, pybind11::module &modul
       .def("Fill", (void (ShapelessArray<T>::*)(T const &)) & ShapelessArray<T>::Fill)
       .def("Fill", (void (ShapelessArray<T>::*)(T const &, memory::Range const &)) &
                        ShapelessArray<T>::Fill)
-      .def("At", (T & (ShapelessArray<T>::*)(const typename ShapelessArray<T>::size_type &)) &
+      .def("At", (T & (ShapelessArray<T>::*)(const typename ShapelessArray<T>::SizeType &)) &
                      ShapelessArray<T>::At)
       .def("Reserve", &ShapelessArray<T>::Reserve)
       .def("Resize", &ShapelessArray<T>::Resize)
@@ -410,8 +410,8 @@ void BuildShapelessArray(std::string const &custom_name, pybind11::module &modul
 
       .def("FromNumpy",
            [](ShapelessArray<T> &s, py::array_t<T> arr) {
-             auto buf        = arr.request();
-             using size_type = typename ShapelessArray<T>::size_type;
+             auto buf       = arr.request();
+             using SizeType = typename ShapelessArray<T>::SizeType;
              if (buf.ndim != 1)
              {
                throw std::runtime_error("Dimension must be exactly one.");
@@ -419,7 +419,7 @@ void BuildShapelessArray(std::string const &custom_name, pybind11::module &modul
 
              T *         ptr = (T *)buf.ptr;
              std::size_t idx = 0;
-             s.Resize(size_type(buf.shape[0]));
+             s.Resize(SizeType(buf.shape[0]));
              for (std::size_t i = 0; i < std::size_t(buf.shape[0]); ++i)
              {
                s[idx] = ptr[idx];

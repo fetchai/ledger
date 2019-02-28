@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/vm_factory.hpp"
+#include "vm_modules/vm_factory.hpp"
 #include <gtest/gtest.h>
 
 using namespace fetch;
-using namespace fetch::vm;
+using namespace fetch::vm_modules;
 
 class VMTests : public ::testing::Test
 {

@@ -134,33 +134,33 @@ int main(int argc, char **argv)
   const std::string source = ss.str();
   file.close();
 
-  fetch::vm::Module module;
+  auto module = std::make_shared<fetch::vm::Module>();
 
-  module.CreateFreeFunction("Print", &PrintNumber<int>);
-  module.CreateFreeFunction("Print", &PrintNumber<uint64_t>);
-  module.CreateFreeFunction("Print", &PrintNumber<float>);
-  module.CreateFreeFunction("Print", &PrintNumber<double>);
-  module.CreateFreeFunction("Print", &Print);
-  module.CreateFreeFunction("toString", &toString);
+  module->CreateFreeFunction("Print", &PrintNumber<int>);
+  module->CreateFreeFunction("Print", &PrintNumber<uint64_t>);
+  module->CreateFreeFunction("Print", &PrintNumber<float>);
+  module->CreateFreeFunction("Print", &PrintNumber<double>);
+  module->CreateFreeFunction("Print", &Print);
+  module->CreateFreeFunction("toString", &toString);
 
-  module.CreateTemplateInstantiationType<fetch::vm::Array, uint64_t>(fetch::vm::TypeIds::IArray);
+  module->CreateTemplateInstantiationType<fetch::vm::Array, uint64_t>(fetch::vm::TypeIds::IArray);
 
   fetch::vm_modules::ml::CreateTensor(module);
   fetch::vm_modules::ml::CreateGraph(module);
   fetch::vm_modules::ml::CreateCrossEntropy(module);
 
-  module.CreateClassType<TrainingPairWrapper>("TrainingPair")
+  module->CreateClassType<TrainingPairWrapper>("TrainingPair")
       .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>()
       .CreateInstanceFunction("Data", &TrainingPairWrapper::data)
       .CreateInstanceFunction("Label", &TrainingPairWrapper::label);
 
-  module.CreateClassType<DataLoaderWrapper>("MNISTLoader")
+  module->CreateClassType<DataLoaderWrapper>("MNISTLoader")
       .CreateTypeConstuctor<>()
       .CreateInstanceFunction("GetData", &DataLoaderWrapper::GetData)
       .CreateInstanceFunction("Display", &DataLoaderWrapper::Display);
 
   // Setting compiler up
-  fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(&module);
+  fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(module.get());
   fetch::vm::Script        script;
   std::vector<std::string> errors;
 
@@ -187,7 +187,7 @@ int main(int argc, char **argv)
   std::string        error;
   fetch::vm::Variant output;
 
-  fetch::vm::VM vm(&module);
+  fetch::vm::VM vm(module.get());
   if (!vm.Execute(script, "main", error, output))
   {
     std::cout << "Runtime error on line " << error << std::endl;

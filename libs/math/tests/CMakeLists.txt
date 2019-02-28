@@ -11,11 +11,6 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 
-add_fetch_test(ndarray_gtest fetch-math math/ndarray)
-add_fetch_test(ndarray_view_gtest fetch-math math/ndarray_view)
-add_fetch_test(ndarray_iterator_gtest fetch-math math/ndarray_iterator)
-add_fetch_test(ndarray_broadcast_gtest fetch-math math/ndarray_broadcast)
-add_fetch_test(ndarray_squeeze_gtest fetch-math math/ndarray_squeeze)
 add_fetch_test(combinatorics_gtest fetch-math math/combinatorics)
 
 add_fetch_test(sign_gtest fetch-math math/kernels/sign)
