@@ -44,51 +44,54 @@ byte_array::ConstByteArray const CONTRACT_HASH{"contract_hash_b64"};
 SmartContract::SmartContract(byte_array::ConstByteArray const &identifier)
   : Contract(identifier)
 {
-  /* OnTransaction("main", this, &SmartContract::InvokeContract); */
 }
 
-//Contract::Status SmartContract::InvokeContract(Transaction const &tx, byte_array::ConstByteArray const &function_name)
 Contract::Status SmartContract::InvokeContract(Transaction const &tx)
 {
   variant::Variant data;
   if (!ParseAsJson(tx, data))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse data from SC. TX data: ", tx.data());
+    /* malformatted TXs should cause block execution failure (although there is no guard for this) */
     return Status::FAILED;
   }
 
   byte_array::ConstByteArray contract_hash;    // Lookup
   byte_array::ByteArray      contract_source;  // Fill this
+  byte_array::ConstByteArray fn_name = Identifier{tx.contract_name()}.name();
 
   if (!Extract(data, CONTRACT_HASH, contract_hash))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse contract hash from SC");
-    return Status::FAILED;
+    /* this is an acceptable use case - user loses fees, tx does nothing. */
+    return Status::OK;
   }
 
   if (!CheckRawState(contract_hash))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to find SC ", contract_hash," in main DB");
+    /* User refers to non existing smart contract hash - loses fees*/
+    return Status::OK;
+  }
+
+  /* The contract should always exist and be nonzero (how else did this handler get attached?) */
+  if (source_.size() == 0)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Empty SC found! This shouldn't happen.");
     return Status::FAILED;
   }
 
-  if (source_.size() == 0)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Empty SC found! Shouldn't happen.");
-  }
+  FETCH_LOG_WARN(LOGGING_NAME, "Running smart contract target: ", fn_name);
 
-  FETCH_LOG_WARN(LOGGING_NAME, "Running smart contract");
-
-  if (!RunSmartContract(source_, "main", contract_hash, tx))
+  if (!RunSmartContract(source_, fn_name, contract_hash, tx))
   {
-    // We're actually fine with this.
-    return Status::OK;
+    FETCH_LOG_DEBUG(LOGGING_NAME, "SC failed during execution.");
   }
 
   return Status::OK;
 }
 
-bool SmartContract::RunSmartContract(std::string &source, std::string const &target_fn,
+bool SmartContract::RunSmartContract(std::string &source, byte_array::ConstByteArray const &fn_name,
                                      byte_array::ConstByteArray const &hash, Transaction const &tx)
 {
   FETCH_UNUSED(hash);
@@ -128,12 +131,13 @@ bool SmartContract::RunSmartContract(std::string &source, std::string const &tar
   vm->SetIOInterface(&interface);
 
   // Execute our fn
-  if (!vm->Execute(script, target_fn, error, print_strings_, output))
+  if (!vm->Execute(script, std::string{fn_name}, error, print_strings_, output))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
   }
 
-  // Successfully ran the VM. Write back the state
+  // Successfully ran the VM. Write back the state - this might not be allowed
+  // for cases for example where you are speculatively executing it
   if(allow_write_back_)
   {
     interface.WriteBackToState();

@@ -63,11 +63,12 @@ Contract::Status SmartContractManager::CreateInitialContract(Transaction const &
 
   if (Extract(data, CONTRACT_SOURCE, contract_source))
   {
-    std::cerr << "source found: " << contract_source << std::endl;
-    std::cerr << "AKA" << FromBase64(contract_source) << std::endl;
+    /* std::cerr << "source found: " << contract_source << std::endl; */
+    /* std::cerr << "AKA" << FromBase64(contract_source) << std::endl; */
   }
   else
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse contract source from transaction body");
     return Status::OK;
   }
 
@@ -80,7 +81,7 @@ Contract::Status SmartContractManager::CreateInitialContract(Transaction const &
 
   if(source_hashed != contract_hash)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to match calculated hash with provided hash: ", ToBase64(source_hashed), " to ", contract_hash);
+    FETCH_LOG_WARN(LOGGING_NAME, "Warning! Failed to match calculated hash with provided hash: ", ToBase64(source_hashed), " to ", contract_hash);
   }
 
   FETCH_LOG_WARN(LOGGING_NAME, "Adding smart contract, ID: ", source_hashed);
@@ -90,11 +91,16 @@ Contract::Status SmartContractManager::CreateInitialContract(Transaction const &
 
   if (!CheckRawState(source_hashed))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to find SC after trying to set it! : ", source_hashed," in main DB");
+    FETCH_LOG_ERROR(LOGGING_NAME, "Failed to find SC after trying to set it! : ", source_hashed," in main DB");
+    std::cerr << "bad stuff." << std::endl;
+    std::cerr << "bad stuff." << std::endl;
+    std::cerr << "bad stuff." << std::endl;
+    std::cerr << "bad stuff." << std::endl;
+    std::cerr << "bad stuff." << std::endl;
     return Status::FAILED;
   }
 
-  FETCH_LOG_WARN(LOGGING_NAME, "Added smart contract, ID: ", source_hashed);
+  FETCH_LOG_WARN(LOGGING_NAME, "<---------------- Added smart contract, ID: ", source_hashed);
 
   return Status::OK;
 }

@@ -97,17 +97,16 @@ struct TransactionSummary
   {
     if (resources.size() > 0 && transaction_hash.size() > 0 && contract_name.size() > 0)
     {
-      /*
       for (auto const &hash : contract_hashes)
       {
-        if (hash.size() != 256 / 8)
+        // TODO(HUT): this should possibly check for base64 length if that's what we're going with here
+        if (hash.size() == 0)
         {
           FETCH_LOG_INFO("TransactionSummary",
                          "Found invalid TX: smart contact hash ref size: ", hash.size());
           return false;
         }
       }
-      */
 
       return true;
     }
@@ -538,21 +537,33 @@ void Deserialize(T &stream, TxSigningAdapter<MUTABLE_TX> &tx)
 {
   const char * log_name = "DESER_MUTABLE_TX";
 
-  FETCH_LOG_INFO(log_name, "Deserializing mutable transaction");
+  FETCH_LOG_DEBUG(log_name, "Deserializing mutable transaction");
 
-  uint16_t success_counter = 0;
+  uint16_t success_counter = 1;
 
-  auto deleter=[&](uint16_t *dummy){ if(success_counter != 0) { FETCH_LOG_INFO(log_name, "Failed to deser. Counter: ", success_counter); } ;};
+  auto deleter=[&](uint16_t *dummy){ if(success_counter != 0) { FETCH_LOG_INFO(log_name, "Failed to deser. tx! Counter: ", success_counter); } ;};
   std::unique_ptr<uint16_t, decltype(deleter)> on_exit(&success_counter, deleter);
 
-  MutableTransaction &tx_ = tx;
-  stream >> tx_.summary_.contract_name; success_counter = 1;
-  stream >> tx_.summary_.fee; success_counter = 2;
-  stream >> tx_.summary_.resources;  success_counter = 3;
-  stream >> tx_.summary_.contract_hashes;  success_counter = 4;
-  stream >> tx_.data_; success_counter = 5;
-  stream >> tx_.signatures_;
+  FETCH_UNUSED(success_counter);
+  FETCH_UNUSED(log_name);
 
+  MutableTransaction &tx_ = tx;
+  stream >> tx_.summary_.contract_name;
+  success_counter++;
+
+  stream >> tx_.summary_.fee;
+  success_counter++;
+
+  stream >> tx_.summary_.resources;
+  success_counter++;
+
+  stream >> tx_.summary_.contract_hashes;
+  success_counter++;
+
+  stream >> tx_.data_;
+  success_counter++;
+
+  stream >> tx_.signatures_;
   success_counter = 0;
 
   tx.Reset();

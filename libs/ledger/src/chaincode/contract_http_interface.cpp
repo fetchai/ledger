@@ -21,6 +21,7 @@
 #include "core/logger.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/string/replace.hpp"
+#include "core/byte_array/decoders.hpp"
 #include "http/json_response.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -56,7 +57,7 @@ http::HTTPResponse JsonBadRequest()
 
 constexpr char const *ContractHttpInterface::LOGGING_NAME;
 
-std::string BASE64_REGEX = "[0-9a-zA-Z/]+={1,1}";
+//std::string BASE64_REGEX = "[0-9a-zA-Z/]+={1,1}";
 
 ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
                                              TransactionProcessor &processor)
@@ -114,13 +115,13 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
     }
   }
 
-  // ^@[a-zA-Z0-9+/]+={0,2}$ - regex for base64 strings : 8106038
-  Post("/api/contract/B64(SC_HASH_B64=" + BASE64_REGEX + ")/B64(PUBKEY_B64=\\w+)/(FN_NAME=\\w+)",
+  // Hex is transmitted in urls to avoid ugly regex parse scenarios
+  Post("/api/contract/0x(SC_HASH_HEX=[0-9a-zA-Z]+)/0x(PUBKEY_HEX=\\w+)/(FN_NAME=\\w+)",
        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
          return OnTransaction(params, request, nullptr);
        });
 
-  Post("/api/contract/B64(SC_HASH_B64=" + BASE64_REGEX + ")/B64(PUBKEY_B64=\\w+)/(FN_NAME=\\w+)/speculative",
+  Post("/api/contract/speculative/0x(SC_HASH_HEX=[0-9a-zA-Z]+)/0x(PUBKEY_HEX=\\w+)/(FN_NAME=\\w+)",
        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
          return OnTransactionSpeculation(params, request, nullptr);
        });
@@ -186,8 +187,9 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(
 
   if(!expected_contract_name)
   {
-    auto bytearray1 =   params["SC_HASH_B64"];
-    auto bytearray2 =   params["PUBKEY_B64"];
+    // TODO(HUT): clean this up - hexify everything
+    auto bytearray1 =   FromHex(params["SC_HASH_HEX"]);
+    auto bytearray2 =   params["PUBKEY_HEX"];
     auto bytearray3 =   params["FN_NAME"];
 
     if(bytearray1.size() == 0 || bytearray2.size() == 0 || bytearray3.size() == 0)
@@ -390,8 +392,8 @@ http::HTTPResponse ContractHttpInterface::OnTransactionSpeculation(
 
   byte_array::ByteArray contract_name;
 
-  auto bytearray1 =   params["SC_HASH_B64"];
-  auto bytearray2 =   params["PUBKEY_B64"];
+  auto bytearray1 =   FromHex(params["SC_HASH_HEX"]);
+  auto bytearray2 =   params["PUBKEY_HEX"];
   auto bytearray3 =   params["FN_NAME"];
 
   contract_name = std::string{bytearray1 + CONTRACT_NAME_SEPARATOR + bytearray2 + CONTRACT_NAME_SEPARATOR + bytearray3};
@@ -407,10 +409,13 @@ http::HTTPResponse ContractHttpInterface::OnTransactionSpeculation(
   FETCH_LOG_INFO(LOGGING_NAME, "NEW SPEC TRANSACTION RECEIVED");
   FETCH_LOG_DEBUG(LOGGING_NAME, request.body());
 
+  std::cerr << "here1" << std::endl;
   MutableTransaction tx{FromWireTransaction(doc.root())};
+  std::cerr << "here2" << std::endl;
 
   if (!expected_contract_name || tx.contract_name() == *expected_contract_name)
   {
+    std::cerr << "here3a" << std::endl;
     bool success = false;
     auto const vtx = VerifiedTransaction::Create(tx, &success);
 
@@ -418,12 +423,14 @@ http::HTTPResponse ContractHttpInterface::OnTransactionSpeculation(
     {
       return http::CreateJsonResponse("failed to verify.", http::Status::CLIENT_ERROR_BAD_REQUEST);
     }
+    std::cerr << "here3b" << std::endl;
 
     Identifier id;
     id.Parse(vtx.contract_name());
 
     // Front facing cache here - no need for locking
     auto chain_code = contract_cache_.Lookup(contract_name, &storage_);
+    std::cerr << "here3c" << std::endl;
 
     if(!chain_code)
     {
