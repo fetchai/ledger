@@ -32,8 +32,8 @@ void BuildStateDict(std::string const &custom_name, pybind11::module &module)
 {
   py::class_<fetch::ml::ops::StateDict<fetch::math::Tensor<T>>>(module, custom_name.c_str())
       .def(py::init<>())
-        .def_readwrite("weights", &fetch::ml::ops::StateDict<fetch::math::Tensor<T>>::weights_)
-        .def_readwrite("dict", &fetch::ml::ops::StateDict<fetch::math::Tensor<T>>::dict_);
+      .def_readwrite("weights", &fetch::ml::ops::StateDict<fetch::math::Tensor<T>>::weights_)
+      .def_readwrite("dict", &fetch::ml::ops::StateDict<fetch::math::Tensor<T>>::dict_);
 }
 
 }  // namespace ops

@@ -138,14 +138,16 @@ TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
 TYPED_TEST(FullyConnectedTest, getStateDict)
 {
   fetch::ml::ops::FullyConnected<TypeParam> fc(50, 10, "FCTest");
-  fetch::ml::ops::StateDict<TypeParam> sd = fc.GetStateDict();
+  fetch::ml::ops::StateDict<TypeParam>      sd = fc.GetStateDict();
 
   EXPECT_EQ(sd.weights_, nullptr);
   EXPECT_EQ(sd.dict_.size(), 2);
-  
+
   ASSERT_TRUE(sd.dict_["FCTest_Weights"].weights_ != nullptr);
-  EXPECT_EQ(sd.dict_["FCTest_Weights"].weights_->shape(), std::vector<typename TypeParam::SizeType>({50, 10}));
+  EXPECT_EQ(sd.dict_["FCTest_Weights"].weights_->shape(),
+            std::vector<typename TypeParam::SizeType>({50, 10}));
 
   ASSERT_TRUE(sd.dict_["FCTest_Bias"].weights_ != nullptr);
-  EXPECT_EQ(sd.dict_["FCTest_Bias"].weights_->shape(), std::vector<typename TypeParam::SizeType>({1, 10}));
+  EXPECT_EQ(sd.dict_["FCTest_Bias"].weights_->shape(),
+            std::vector<typename TypeParam::SizeType>({1, 10}));
 }

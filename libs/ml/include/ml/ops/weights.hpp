@@ -31,17 +31,17 @@ struct StateDict
   ArrayPtrType                        weights_;
   std::map<std::string, StateDict<T>> dict_;
 };
-  
+
 template <class T>
 class Trainable
 {
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
-  
-  virtual void Step(typename T::Type learningRate) = 0;
-  virtual StateDict<T> GetStateDict() const = 0;
-  virtual void LoadStateDict(StateDict<T> const &dict) = 0;
+
+  virtual void         Step(typename T::Type learningRate)     = 0;
+  virtual StateDict<T> GetStateDict() const                    = 0;
+  virtual void         LoadStateDict(StateDict<T> const &dict) = 0;
 };
 
 template <class T>

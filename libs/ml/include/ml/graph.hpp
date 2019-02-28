@@ -27,7 +27,6 @@
 namespace fetch {
 namespace ml {
 
-  
 template <class T>
 class Graph : public ops::Trainable<T>
 {
@@ -53,8 +52,8 @@ public:
    * Called for node without trainable parameters
    */
   template <class OperationType, typename... Params>
-  typename std::enable_if<!std::is_base_of<ops::Trainable<T>, OperationType>::value>::type
-  AddNode(std::string const &nodeName, std::vector<std::string> const &inputs, Params... params)
+  typename std::enable_if<!std::is_base_of<ops::Trainable<T>, OperationType>::value>::type AddNode(
+      std::string const &nodeName, std::vector<std::string> const &inputs, Params... params)
   {
     nodes_[nodeName] = std::make_shared<Node<ArrayType, OperationType>>(nodeName, params...);
     FETCH_LOG_INFO("ML_LIB", "Creating node [", nodeName, "]");
@@ -69,12 +68,12 @@ public:
    * Will keep the node in the trainable_ list to step through them
    */
   template <class OperationType, typename... Params>
-  typename std::enable_if<std::is_base_of<ops::Trainable<T>, OperationType>::value>::type
-  AddNode(std::string const &nodeName, std::vector<std::string> const &inputs, Params... params)
+  typename std::enable_if<std::is_base_of<ops::Trainable<T>, OperationType>::value>::type AddNode(
+      std::string const &nodeName, std::vector<std::string> const &inputs, Params... params)
   {
     std::shared_ptr<Node<ArrayType, OperationType>> op =
         std::make_shared<Node<ArrayType, OperationType>>(nodeName, params...);
-    nodes_[nodeName] = op;
+    nodes_[nodeName]     = op;
     trainable_[nodeName] = op;
     FETCH_LOG_INFO("ML_LIB", "Creating node [", nodeName, "] -- Register as Trainable");
     for (auto const &i : inputs)
@@ -121,9 +120,9 @@ public:
   {
     ops::StateDict<ArrayType> d;
     for (auto const &t : trainable_)
-      {
-	d.dict_.emplace(t.first, t.second->GetStateDict());
-      }
+    {
+      d.dict_.emplace(t.first, t.second->GetStateDict());
+    }
     return d;
   }
 
@@ -131,9 +130,9 @@ public:
   {
     assert(!dict.weights_);
     for (auto const &t : trainable_)
-      {
-	t.second->LoadStateDict(dict.dict_.at(t.first));
-      }    
+    {
+      t.second->LoadStateDict(dict.dict_.at(t.first));
+    }
   }
 
 protected:
