@@ -176,8 +176,6 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(
     http::ViewParameters const &params, http::HTTPRequest const &request,
     byte_array::ConstByteArray const *const expected_contract_name)
 {
-  /* ERROR_BACKTRACE; */
-
   byte_array::ByteArray contract_name;
 
   if(!expected_contract_name)
@@ -317,16 +315,6 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
 
     if (!expected_contract_name || tx.contract_name() == *expected_contract_name)
     {
-
-
-      for(auto const &res : tx.resources())
-      {
-      }
-
-      for(auto const &res : tx.contract_hashes())
-      {
-      }
-
       // add the transaction to the processor
       processor_.AddTransaction(std::move(tx));
       ++submitted;
@@ -370,8 +358,6 @@ http::HTTPResponse ContractHttpInterface::OnTransactionSpeculation(
     http::ViewParameters const &params, http::HTTPRequest const &request,
     byte_array::ConstByteArray const *const expected_contract_name)
 {
-  /* ERROR_BACKTRACE; */
-
   byte_array::ByteArray contract_name;
 
   auto bytearray1 =   FromHex(params["SC_HASH_HEX"]);

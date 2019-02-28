@@ -97,12 +97,10 @@ void TransactionVerifier::Verifier()
         // check the status
         if (success)
         {
-          std::cerr << "pushed on verified TX!" << std::endl;
           verified_queue_.Push(tx);
         }
         else
         {
-          std::cerr << "failed to verify TX!" << std::endl;
           FETCH_LOG_WARN(LOGGING_NAME, name_ + " Unable to verify transaction: ",
                          byte_array::ToBase64(tx.digest()));
         }

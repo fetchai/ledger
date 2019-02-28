@@ -48,9 +48,6 @@ SmartContractManager::SmartContractManager()
 
 Contract::Status SmartContractManager::CreateInitialContract(Transaction const &tx)
 {
-
-  std::cerr << "inside SC 1" << std::endl;
-
   variant::Variant data;
   if (!ParseAsJson(tx, data))
   {
@@ -63,8 +60,7 @@ Contract::Status SmartContractManager::CreateInitialContract(Transaction const &
 
   if (Extract(data, CONTRACT_SOURCE, contract_source))
   {
-    /* std::cerr << "source found: " << contract_source << std::endl; */
-    /* std::cerr << "AKA" << FromBase64(contract_source) << std::endl; */
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Extracted source from TX");
   }
   else
   {
@@ -72,10 +68,8 @@ Contract::Status SmartContractManager::CreateInitialContract(Transaction const &
     return Status::OK;
   }
 
-  if (Extract(data, CONTRACT_HASH, contract_hash))
-  {
-    std::cerr << "hash found: " << contract_hash << std::endl;
-  }
+  // Not strictly needed
+  Extract(data, CONTRACT_HASH, contract_hash);
 
   auto source_hashed = ToBase64(crypto::Hash<crypto::SHA256>(contract_source));
 
@@ -92,11 +86,6 @@ Contract::Status SmartContractManager::CreateInitialContract(Transaction const &
   if (!CheckRawState(source_hashed))
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Failed to find SC after trying to set it! : ", source_hashed," in main DB");
-    std::cerr << "bad stuff." << std::endl;
-    std::cerr << "bad stuff." << std::endl;
-    std::cerr << "bad stuff." << std::endl;
-    std::cerr << "bad stuff." << std::endl;
-    std::cerr << "bad stuff." << std::endl;
     return Status::FAILED;
   }
 

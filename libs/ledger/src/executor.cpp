@@ -96,7 +96,7 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
 
   std::vector<storage::ResourceAddress> successfully_locked_resources;
 
-  auto deleter=[&](uint16_t *dummy)
+  auto deleter=[&](uint16_t *)
   {
     for(auto const &resource : successfully_locked_resources)
     {
@@ -104,8 +104,7 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
     }
   };
 
-  uint16_t  dummyy = 9;
-  std::unique_ptr<uint16_t, decltype(deleter)> on_function_exit(&dummyy, deleter);
+  std::unique_ptr<uint16_t, decltype(deleter)> on_function_exit((uint16_t *)nullptr, deleter);
 
   // Lock raw resources for SC access 
   for (auto const &hash : tx.contract_hashes())
