@@ -150,7 +150,7 @@ public:
   void SetPayload(Payload const &payload);
 
   void Sign(crypto::Prover &prover);
-  bool Verify(crypto::Verifier &verifier) const;
+  bool Verify() const;
 
 private:
   RoutingHeader header_;   ///< The header containing primarily routing information
@@ -163,6 +163,7 @@ private:
 
   void SetStamped() noexcept;
   void DropStamped() noexcept;
+  BinaryHeader StaticHeader() const noexcept;
 
   template <typename T>
   friend void Serialize(T &serializer, Packet const &b);
@@ -349,13 +350,17 @@ inline void Packet::DropStamped() noexcept
   header_.stamped = 0;
 }
 
+inline Packet::BinaryHeader Packet::StaticHeader() const noexcept {
+	BinaryHeader retVal;
+	auto &rv{*reinterpret_cast<RoutingHeader *>(&retVal)};
+	rv.ttl = 0;
+	return retVal;
+}
+
 inline void Packet::Sign(crypto::Prover &prover)
 {
   SetStamped();
-  if(prover.Sign((serializers::ByteArrayBuffer()
-		  << *reinterpret_cast<Packet::BinaryHeader const *>(&header_)
-		  << payload_)
-		 .data()))
+  if(prover.Sign((serializers::ByteArrayBuffer() << StaticHeader() << payload_) .data()))
   {
     stamp_ = prover.signature();
   }
@@ -365,14 +370,17 @@ inline void Packet::Sign(crypto::Prover &prover)
   }
 }
 
-inline bool Packet::Verify(crypto::Verifier &verifier) const
+inline bool Packet::Verify() const
 {
-  return header_.stamped && verifier.Verify(
-	  (serializers::ByteArrayBuffer()
-	   << *reinterpret_cast<Packet::BinaryHeader const *>(&header_)
-	   << payload_)
-	  .data(),
-	  stamp_);
+  if(!IsStamped())
+  {
+    return false;	// null signature is not genuine in non-trusted networks
+  }
+  auto retVal = crypto::Verify(
+	  GetSender()
+	  , (serializers::ByteArrayBuffer() << StaticHeader() << payload_).data()
+	  , stamp_);
+  return retVal;
 }
 
 template <typename T>
@@ -394,6 +402,13 @@ void Deserialize(T &serializer, Packet &packet)
     serializer >> packet.stamp_;
   }
 }
+
+/*
+inline Packet::BinaryHeader const &BinaryHeader(Packet::RoutingHeader const &hdr)
+{
+  return *reinterpret_cast<BinaryHeader const *>(&hdr);
+}
+*/
 
 }  // namespace muddle
 }  // namespace fetch

@@ -201,23 +201,33 @@ void Router::Route(Handle handle, PacketPtr packet)
   if (packet->IsDirect())
   {
     // when it is a direct message we must handle this
-    DispatchDirect(handle, packet);
+    if(Genuine(packet)) {
+	    DispatchDirect(handle, packet);
+    }
+    else {
+	    FETCH_LOG_WARN(LOGGING_NAME, "Packet's authenticity not verified:", DescribePacket(*packet));
+    }
   }
   else if (packet->GetTargetRaw() == address_)
   {
     // when the message is targetted at us we must handle it
-    Address transmitter;
+	  if (Genuine(packet)) {
+		  Address transmitter;
 
-    if (HandleToDirectAddress(handle, transmitter))
-    {
-      DispatchPacket(packet, transmitter);
-    }
-    else
-    {
-      // The connection has gone away while we were processing things so far.
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Cannot get transmitter address for packet: ", DescribePacket(*packet));
-    }
+		  if (HandleToDirectAddress(handle, transmitter))
+		  {
+			  DispatchPacket(packet, transmitter);
+		  }
+		  else
+		  {
+			  // The connection has gone away while we were processing things so far.
+			  FETCH_LOG_WARN(LOGGING_NAME,
+					 "Cannot get transmitter address for packet: ", DescribePacket(*packet));
+		  }
+	  }
+	  else {
+	    FETCH_LOG_WARN(LOGGING_NAME, "Packet's authenticity not verified:", DescribePacket(*packet));
+	  }
   }
   else
   {
