@@ -19,6 +19,7 @@
 #include "ledger/execution_manager.hpp"
 #include "core/assert.hpp"
 #include "core/logger.hpp"
+#include "core/mutex.hpp"
 #include "core/threading.hpp"
 #include "ledger/executor.hpp"
 #include "storage/resource_mapper.hpp"
@@ -72,7 +73,7 @@ ExecutionManager::ExecutionManager(std::size_t num_executors, StorageUnitPtr sto
 {
   // setup the executor pool
   {
-    std::lock_guard<Mutex> lock(idle_executors_lock_);
+    FETCH_LOCK(idle_executors_lock_);
 
     // ensure lists are reserved
     idle_executors_.reserve(num_executors);
@@ -120,7 +121,7 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
 
   // trigger the monitor / dispatch thread
   {
-    std::lock_guard<std::mutex> lock(monitor_lock_);
+    FETCH_LOCK(monitor_lock_);
     monitor_wake_.notify_one();
   }
 
@@ -136,7 +137,7 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
  */
 bool ExecutionManager::PlanExecution(Block::Body const &block)
 {
-  std::lock_guard<Mutex> lock(execution_plan_lock_);
+  FETCH_LOCK(execution_plan_lock_);
 
   // clear and resize the execution plan
   execution_plan_.clear();
@@ -199,7 +200,7 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
 
   // lookup a free executor
   {
-    std::lock_guard<Mutex> lock(idle_executors_lock_);
+    FETCH_LOCK(idle_executors_lock_);
     if (!idle_executors_.empty())
     {
       executor = idle_executors_.back();
@@ -223,12 +224,16 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
     ++completed_executions_;
 
     {
-      std::lock_guard<Mutex> lock(idle_executors_lock_);
-      idle_executors_.push_back(executor);
+      FETCH_LOCK(idle_executors_lock_);
+      idle_executors_.push_back(std::move(executor));
     }
 
     // trigger the monitor thread to process the next slice if needed
     monitor_notify_.notify_one();
+  }
+  else
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Failed to secure an idle executor");
   }
 }
 
@@ -272,7 +277,7 @@ void ExecutionManager::Stop()
   // trigger the monitor thread to wake up (so that it sees the change in
   // running_)
   {
-    std::lock_guard<std::mutex> lock(monitor_lock_);
+    FETCH_LOCK(monitor_lock_);
     monitor_wake_.notify_all();
     monitor_notify_.notify_all();
   }
@@ -375,7 +380,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
     case MonitorState::SCHEDULE_NEXT_SLICE:
     {
-      std::lock_guard<Mutex> lock(execution_plan_lock_);
+      FETCH_LOCK(execution_plan_lock_);
 
       if (execution_plan_.empty())
       {
@@ -389,10 +394,10 @@ void ExecutionManager::MonitorThreadEntrypoint()
         // done before the thread pool dispatch)
         remaining_executions_ = slice_plan.size();
 
+	auto self = shared_from_this();
         for (auto &item : slice_plan)
         {
           // create the closure and dispatch to the thread pool
-          auto self = shared_from_this();
           thread_pool_->Post([self, &item]() { self->DispatchExecution(*item); });
         }
 

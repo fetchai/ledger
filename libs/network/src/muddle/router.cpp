@@ -115,48 +115,6 @@ ConstByteArray ToConstByteArray(Packet::RawAddress const &addr)
   return buffer;
 }
 
-/**
- * Generate a direct packet
- *
- * @param from The address of the sender
- * @param service The service identifier
- * @param channel The channel identifier
- * @return The packet
- */
-Router::PacketPtr FormatDirect(Packet::Address const &from, uint16_t service, uint16_t channel)
-{
-  auto packet = std::make_shared<Packet>(from);
-  packet->SetService(service);
-  packet->SetProtocol(channel);
-  packet->SetDirect(true);
-
-  return packet;
-}
-
-/**
- * Generate a create a initial packet format
- *
- * @param from The address of the sender
- * @param service The service identifier
- * @param channel The channel / protocol identifier
- * @param counter The message number / counter
- * @param ttl  The value of the TTL
- * @param payload The reference to the payload to be send
- * @return A new packet with common field populated
- */
-Router::PacketPtr FormatPacket(Packet::Address const &from, uint16_t service, uint16_t channel,
-                               uint16_t counter, uint8_t ttl, Packet::Payload const &payload)
-{
-  auto packet = std::make_shared<Packet>(from);
-  packet->SetService(service);
-  packet->SetProtocol(channel);
-  packet->SetMessageNum(counter);
-  packet->SetTTL(ttl);
-  packet->SetPayload(payload);
-
-  return packet;
-}
-
 std::string DescribePacket(Packet const &packet)
 {
   std::ostringstream oss;
@@ -203,13 +161,14 @@ Packet::RawAddress Router::ConvertAddress(Packet::Address const &address)
  * @param address The address of the current node
  * @param reg The connection register
  */
-Router::Router(NetworkId network_id, Router::Address address, MuddleRegister const &reg,
-               Dispatcher &dispatcher)
+Router::Router(NetworkId network_id, Address address, MuddleRegister const &reg,
+               Dispatcher &dispatcher, Prover *prover)
   : address_(std::move(address))
   , address_raw_(ConvertAddress(address_))
   , register_(reg)
   , dispatcher_(dispatcher)
   , network_id_(std::move(network_id))
+  , prover_(prover)
   , dispatch_thread_pool_(network::MakeThreadPool(NUMBER_OF_ROUTER_THREADS, "Router"))
 {}
 
@@ -284,7 +243,7 @@ void Router::Route(Handle handle, PacketPtr packet)
 void Router::AddConnection(Handle handle)
 {
   // create and format the packet
-  auto packet = FormatDirect(address_, SERVICE_MUDDLE, CHANNEL_ROUTING);
+  auto packet = FormatDirect(SERVICE_MUDDLE, CHANNEL_ROUTING);
   packet->SetExchange(true);  // signal that this is the request half of a direct message
 
   // send the
@@ -312,7 +271,7 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel,
   uint16_t const counter = dispatcher_.GetNextCounter();
 
   // format the packet
-  auto packet = FormatPacket(address_, service, channel, counter, DEFAULT_TTL, message);
+  auto packet = FormatPacket(service, channel, counter, DEFAULT_TTL, message);
   packet->SetTarget(address);
 
   RoutePacket(packet, false);
@@ -331,7 +290,7 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel, ui
                   Payload const &payload)
 {
   // format the packet
-  auto packet = FormatPacket(address_, service, channel, message_num, DEFAULT_TTL, payload);
+  auto packet = FormatPacket(service, channel, message_num, DEFAULT_TTL, payload);
   packet->SetTarget(address);
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange Response: ", ToBase64(address), " (", service, '-',
@@ -352,7 +311,7 @@ void Router::Broadcast(uint16_t service, uint16_t channel, Payload const &payloa
   // get the next counter for this message
   uint16_t const counter = dispatcher_.GetNextCounter();
 
-  auto packet = FormatPacket(address_, service, channel, counter, DEFAULT_TTL, payload);
+  auto packet = FormatPacket(service, channel, counter, DEFAULT_TTL, payload);
   packet->SetBroadcast(true);
 
   RoutePacket(packet, false);
@@ -447,7 +406,7 @@ Router::Response Router::Exchange(Address const &address, uint16_t service, uint
                   channel, '-', counter, ") prom: ", promise->id());
 
   // format the packet and route the packet
-  auto packet = FormatPacket(address_, service, channel, counter, DEFAULT_TTL, request);
+  auto packet = FormatPacket(service, channel, counter, DEFAULT_TTL, request);
   packet->SetTarget(address);
   packet->SetExchange();
   RoutePacket(packet, false);
@@ -837,7 +796,7 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
       // send back a direct response if that is required
       if (packet->IsExchange())
       {
-        SendToConnection(handle, FormatDirect(address_, SERVICE_MUDDLE, CHANNEL_ROUTING));
+        SendToConnection(handle, FormatDirect(SERVICE_MUDDLE, CHANNEL_ROUTING));
       }
     }
   }
@@ -973,6 +932,56 @@ void Router::DropHandle(Router::Handle handle, Address const &peer)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "DropHandle got invalid handle: ", handle);
   }
+}
+
+/**
+ * Generate a direct packet
+ *
+ * @param from The address of the sender
+ * @param service The service identifier
+ * @param channel The channel identifier
+ * @return The packet
+ */
+Router::PacketPtr Router::FormatDirect(uint16_t service, uint16_t channel) const
+{
+  auto packet = std::make_shared<Packet>(address_);
+  packet->SetService(service);
+  packet->SetProtocol(channel);
+  packet->SetDirect(true);
+  if(prover_)
+  {
+	  packet->Sign(*prover_);
+  }
+
+  return packet;
+}
+
+/**
+ * Generate a create a initial packet format
+ *
+ * @param from The address of the sender
+ * @param service The service identifier
+ * @param channel The channel / protocol identifier
+ * @param counter The message number / counter
+ * @param ttl  The value of the TTL
+ * @param payload The reference to the payload to be send
+ * @return A new packet with common field populated
+ */
+Router::PacketPtr Router::FormatPacket(uint16_t service, uint16_t channel,
+                               uint16_t counter, uint8_t ttl, Packet::Payload const &payload) const
+{
+  auto packet = std::make_shared<Packet>(address_);
+  packet->SetService(service);
+  packet->SetProtocol(channel);
+  packet->SetMessageNum(counter);
+  packet->SetTTL(ttl);
+  packet->SetPayload(payload);
+  if(prover_)
+  {
+	  packet->Sign(*prover_);
+  }
+
+  return packet;
 }
 
 }  // namespace muddle

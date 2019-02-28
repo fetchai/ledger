@@ -135,32 +135,28 @@ public:
      the muddle using loaded certificates and keys. In tests, call
      this to just get one now.*/
 
-  static std::shared_ptr<Muddle> CreateMuddle(NetworkId                      network_id,
-                                              fetch::network::NetworkManager tm)
+  static std::shared_ptr<Muddle> CreateMuddle(NetworkId                             network_id,
+                                              fetch::network::NetworkManager const &tm,
+					      bool                                  sign_packets = false)
   {
-    crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
+    auto certificate{std::make_unique<crypto::ECDSASigner>()};
     certificate->GenerateKeys();
 
-    std::unique_ptr<crypto::Prover> certificate_;
-    certificate_.reset(certificate);
-
-    return std::make_shared<Muddle>(network_id, std::move(certificate_), tm);
+    return CreateMuddle(network_id, std::move(certificate), tm, sign_packets);
   }
 
-  static std::shared_ptr<Muddle> CreateMuddle(NetworkId                       network_id,
-                                              std::unique_ptr<crypto::Prover> prover,
-                                              fetch::network::NetworkManager  tm)
+  static std::shared_ptr<Muddle> CreateMuddle(NetworkId                             network_id,
+                                              std::unique_ptr<crypto::Prover>       prover,
+                                              fetch::network::NetworkManager const &tm,
+					      bool                                  sign_packets = false)
   {
-    return std::make_shared<Muddle>(network_id, std::move(prover), tm);
+    return std::make_shared<Muddle>(network_id, std::move(prover), tm, sign_packets);
   }
 
   // Construction / Destruction
-  Muddle(NetworkId network_id, CertificatePtr &&certificate, NetworkManager const &nm);
+  Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager const &nm, bool sign_packets = false);
   Muddle(Muddle const &) = delete;
   Muddle(Muddle &&)      = delete;
-  ~Muddle()              = default;
-
-  /// @name Top Level Node Control
   /// @{
   void Start(PortList const &ports, UriList const &initial_peer_list = UriList{});
   void Stop();
