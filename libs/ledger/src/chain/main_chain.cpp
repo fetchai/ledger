@@ -306,7 +306,6 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
       if (!Get(left_hash, left))
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup block (left): ", ToBase64(left_hash));
-        exit(1);
         break;
       }
 

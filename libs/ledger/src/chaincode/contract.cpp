@@ -121,7 +121,6 @@ bool Contract::ParseAsJson(Transaction const &tx, variant::Variant &output)
   {
     // TODO(HUT): this can't be good for performance
     // expected
-    std::cerr << "Threw when parsing" << std::endl;
   }
 
   if (success)
@@ -147,71 +146,11 @@ Contract::TransactionHandlerMap const &Contract::transaction_handlers() const
   return transaction_handlers_;
 }
 
-/*
-storage::ResourceAddress Contract::CreateStateIndex(byte_array::ByteArray const &suffix) const
-{
-  byte_array::ByteArray index;
-  index.Append(contract_identifier_[0], contract_identifier_[1], ".state.", suffix);
-  return storage::ResourceAddress{index};
-}
-*/
-
 StorageInterface &Contract::state()
 {
   detailed_assert(state_ != nullptr);
   return *state_;
 }
-
-/*
-bool Contract::LockResources(ResourceSet const &resources, ContractHashes const &hashes)
-{
-  bool success = true;
-
-  for (auto const &group : resources)
-  {
-    if (!state().Lock(CreateStateIndex(group)))
-    {
-      success = false;
-    }
-  }
-
-  // Lock raw locations for SC
-  for (auto const &hash : hashes)
-  {
-    // TODO(HUT): there is some discontinuity here around this
-    if (!state().Lock(storage::ResourceAddress{hash}))
-    {
-      success = false;
-    }
-  }
-
-  return success;
-}
-
-bool Contract::UnlockResources(ResourceSet const &resources, ContractHashes const &hashes)
-{
-  bool success = true;
-
-  for (auto const &group : resources)
-  {
-    if (!state().Unlock(CreateStateIndex(group)))
-    {
-      success = false;
-    }
-  }
-
-  // Unlock raw locations for SC
-  for (auto const &hash : hashes)
-  {
-    if (!state().Unlock(storage::ResourceAddress{hash}))
-    {
-      success = false;
-    }
-  }
-
-  return success;
-}
-*/
 
 bool Contract::CheckRawState(byte_array::ByteArray const &address)
 {

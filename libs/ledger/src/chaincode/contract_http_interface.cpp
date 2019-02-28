@@ -57,8 +57,6 @@ http::HTTPResponse JsonBadRequest()
 
 constexpr char const *ContractHttpInterface::LOGGING_NAME;
 
-//std::string BASE64_REGEX = "[0-9a-zA-Z/]+={1,1}";
-
 ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
                                              TransactionProcessor &processor)
   : storage_{storage}
@@ -116,6 +114,7 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
   }
 
   // Hex is transmitted in urls to avoid ugly regex parse scenarios
+  // TODO(HUT): pubkey hex should be parsed as hex (and sent as hex from ledger api)
   Post("/api/contract/0x(SC_HASH_HEX=[0-9a-zA-Z]+)/0x(PUBKEY_HEX=\\w+)/(FN_NAME=\\w+)",
        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
          return OnTransaction(params, request, nullptr);
@@ -132,10 +131,6 @@ http::HTTPResponse ContractHttpInterface::OnQuery(byte_array::ConstByteArray con
                                                   byte_array::ConstByteArray const &query,
                                                   http::HTTPRequest const &         request)
 {
-  std::cerr << "hit here1" << std::endl;
-  std::cerr << "hit here1" << std::endl;
-  std::cerr << "hit here1" << std::endl;
-  std::cerr << "hit here1" << std::endl;
 
   try
   {
@@ -205,11 +200,9 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(
   }
   else
   {
-    std::cerr << "ONTX " << *expected_contract_name << std::endl;
     contract_name = *expected_contract_name;
   }
 
-  std::cerr << "Parsing new contract: " << contract_name << std::endl;
 
   std::ostringstream oss;
   bool               error_response{true};
@@ -228,13 +221,11 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(
     bool unknown_format = false;
     if (content_type == "application/vnd+fetch.transaction+native")
     {
-      std::cerr << "BBB" << std::endl;
       submitted = SubmitNativeTx(request, &contract_name);
     }
     else if (content_type == "application/vnd+fetch.transaction+json" ||
              content_type == "application/json")
     {
-      std::cerr << "CCC" << std::endl;
       submitted = SubmitJsonTx(request, &contract_name);
     }
     else
@@ -283,7 +274,6 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
     http::HTTPRequest const &               request,
     byte_array::ConstByteArray const *const expected_contract_name)
 {
-  std::cerr << "argh." << std::endl;
 
   std::size_t submitted{0};
   std::size_t expected_count{0};
@@ -296,7 +286,6 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
 
   if (doc.root().IsArray())
   {
-    std::cerr << "HERE1" << std::endl;
 
     expected_count = doc.root().size();
     for (std::size_t i = 0, end = doc.root().size(); i < end; ++i)
@@ -307,7 +296,6 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
 
       if (expected_contract_name && tx.contract_name() != *expected_contract_name)
       {
-        std::cerr << "continued" << std::endl;
         FETCH_LOG_WARN(LOGGING_NAME, "Failed to match expected_contract_name: ", *expected_contract_name, " with ", tx.contract_name());
         continue;
       }
@@ -323,7 +311,6 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
   }
   else
   {
-    std::cerr << "HERE2" << std::endl;
 
     expected_count = 1;
     MutableTransaction tx{FromWireTransaction(doc.root())};
@@ -331,16 +318,13 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
     if (!expected_contract_name || tx.contract_name() == *expected_contract_name)
     {
 
-      std::cerr << "Seen new mutable tx" << std::endl;
 
       for(auto const &res : tx.resources())
       {
-        std::cerr << "RES: " << ToHex(res) << std::endl;
       }
 
       for(auto const &res : tx.contract_hashes())
       {
-        std::cerr << "CHASH: " << ToHex(res) << std::endl;
       }
 
       // add the transaction to the processor
@@ -353,7 +337,6 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
     }
   }
 
-  std::cerr << "HERE3" << std::endl;
 
   return SubmitTxStatus{submitted, expected_count};
 }
@@ -362,7 +345,6 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitNativeTx(
     http::HTTPRequest const &               request,
     byte_array::ConstByteArray const *const expected_contract_name)
 {
-  std::cerr << "argh..." << std::endl;
 
   std::vector<AdaptedTx> transactions;
 
@@ -409,13 +391,10 @@ http::HTTPResponse ContractHttpInterface::OnTransactionSpeculation(
   FETCH_LOG_INFO(LOGGING_NAME, "NEW SPEC TRANSACTION RECEIVED");
   FETCH_LOG_DEBUG(LOGGING_NAME, request.body());
 
-  std::cerr << "here1" << std::endl;
   MutableTransaction tx{FromWireTransaction(doc.root())};
-  std::cerr << "here2" << std::endl;
 
   if (!expected_contract_name || tx.contract_name() == *expected_contract_name)
   {
-    std::cerr << "here3a" << std::endl;
     bool success = false;
     auto const vtx = VerifiedTransaction::Create(tx, &success);
 
@@ -423,18 +402,15 @@ http::HTTPResponse ContractHttpInterface::OnTransactionSpeculation(
     {
       return http::CreateJsonResponse("failed to verify.", http::Status::CLIENT_ERROR_BAD_REQUEST);
     }
-    std::cerr << "here3b" << std::endl;
 
     Identifier id;
     id.Parse(vtx.contract_name());
 
     // Front facing cache here - no need for locking
     auto chain_code = contract_cache_.Lookup(contract_name, &storage_);
-    std::cerr << "here3c" << std::endl;
 
     if(!chain_code)
     {
-      std::cerr << "returning." << std::endl;
       return http::CreateJsonResponse("failed to get chain code.", http::Status::CLIENT_ERROR_BAD_REQUEST);
     }
 
@@ -453,7 +429,6 @@ http::HTTPResponse ContractHttpInterface::OnTransactionSpeculation(
 
     for(auto const &stringthing : all_strings)
     {
-      std::cerr << "THIS: " << stringthing << std::endl;
       data["payload"][index++] = stringthing;
     }
 

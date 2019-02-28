@@ -88,8 +88,6 @@ public:
   QueryHandlerMap const &      query_handlers() const;
   TransactionHandlerMap const &transaction_handlers() const;
 
-  /* storage::ResourceAddress CreateStateIndex(byte_array::ByteArray const &suffix) const; */
-
   virtual bool SetupHandlers();
   void SetNoWriteBack();
   std::vector<std::string> const &PrintStrings();
@@ -121,9 +119,6 @@ protected:
   bool allow_write_back_ = true;
 
 private:
-  //bool LockResources(ResourceSet const &resources, ContractHashes const &hashes);
-  //bool UnlockResources(ResourceSet const &resources, ContractHashes const &hashes);
-
   Identifier            contract_identifier_;
   QueryHandlerMap       query_handlers_{};
   TransactionHandlerMap transaction_handlers_{};

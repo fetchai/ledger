@@ -119,8 +119,6 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    std::cerr << "REQ PUSHED" << std::endl;
-
     // TODO(issue 35): Need to actually add better support for the options here
     if (req.method() == Method::OPTIONS)
     {
@@ -135,7 +133,6 @@ public:
       manager_->Send(client, res);
       return;
     }
-    std::cerr << "here 99" << std::endl;
 
     // TODO(issue 28): improve such that it works for multiple threads.
     eval_mutex_.lock();
@@ -143,8 +140,6 @@ public:
     {
       m(req);
     }
-
-    std::cerr << "here 989" << std::endl;
 
     HTTPResponse   res("page not found", mime_types::GetMimeTypeFromExtension(".html"),
                      Status::CLIENT_ERROR_NOT_FOUND);
@@ -158,17 +153,14 @@ public:
         break;
       }
     }
-    std::cerr << "here iiii989" << std::endl;
 
     for (auto &m : post_view_middleware_)
     {
       m(res, req);
     }
 
-    std::cerr << "here isdfiii989" << std::endl;
     eval_mutex_.unlock();
 
-    std::cerr << "here arg hkisdfiii989" << std::endl;
     manager_->Send(client, res);
   }
 
@@ -227,6 +219,7 @@ public:
   }
 
 private:
+  // TODO(unknown): (HUT) : investigate why this times out in debug mode
   std::mutex eval_mutex_;
 
   std::vector<request_middleware_type>  pre_view_middleware_;

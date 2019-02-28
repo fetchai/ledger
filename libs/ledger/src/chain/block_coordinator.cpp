@@ -233,7 +233,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
     next_block->body.miner         = identity_;
 
     // ensure the difficulty is correctly set
-    next_block->proof.SetTarget(block_difficulty_/2);
+    next_block->proof.SetTarget(block_difficulty_);
 
     // replace the current block
     current_block_ = std::move(next_block);

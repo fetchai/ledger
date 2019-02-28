@@ -69,14 +69,11 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    std::cerr << "fuu " << std::endl;
-
     bool ret = true;
     clients_mutex_.lock();
 
     if (clients_.find(client) != clients_.end())
     {
-      std::cerr << "A" << std::endl;
       auto c = clients_[client];
       clients_mutex_.unlock();
       c->Send(res);
@@ -85,7 +82,6 @@ public:
     }
     else
     {
-      std::cerr << "B" << std::endl;
       FETCH_LOG_DEBUG(LOGGING_NAME, "Client not found.");
       ret = false;
     }

@@ -139,8 +139,6 @@ private:
 
     std::string reg = "^" + std::string(value.SubArray(i, value.size() - i));
 
-    std::cerr << "reg: " << reg << std::endl;
-
     std::regex rgx(reg);
     match_.push_back(
         [rgx, var](std::size_t &i, byte_array::ByteArray const &path, ViewParameters &params) {
