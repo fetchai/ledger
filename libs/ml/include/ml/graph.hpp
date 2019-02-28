@@ -116,16 +116,18 @@ public:
     }
   }
 
-  virtual ops::StateDict<ArrayType> GetStateDict() const
+  // Returns the graph trainable parameters as a nested structure for serializing
+  virtual ops::StateDict<ArrayType> StateDict() const
   {
     ops::StateDict<ArrayType> d;
     for (auto const &t : trainable_)
     {
-      d.dict_.emplace(t.first, t.second->GetStateDict());
+      d.dict_.emplace(t.first, t.second->StateDict());
     }
     return d;
   }
 
+  // Import trainable parameters from an exported model
   virtual void LoadStateDict(ops::StateDict<T> const &dict)
   {
     assert(!dict.weights_);

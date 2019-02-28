@@ -79,7 +79,7 @@ TEST(graph_test, node_relu)
 TEST(graph_test, getStateDict)
 {
   fetch::ml::Graph<fetch::math::Tensor<float>>          g;
-  fetch::ml::ops::StateDict<fetch::math::Tensor<float>> sd = g.GetStateDict();
+  fetch::ml::ops::StateDict<fetch::math::Tensor<float>> sd = g.StateDict();
 
   EXPECT_TRUE(sd.weights_ == nullptr);
   EXPECT_TRUE(sd.dict_.empty());
