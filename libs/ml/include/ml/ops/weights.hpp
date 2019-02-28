@@ -33,9 +33,8 @@ struct StateDict
 
   bool operator==(StateDict<T> const &o) const
   {
-    return !((bool(weights_) ^ bool(o.weights_))
-	     || (weights_ && (*weights_ != *(o.weights_)))
-	     || (dict_ != o.dict_));
+    return !((bool(weights_) ^ bool(o.weights_)) || (weights_ && (*weights_ != *(o.weights_))) ||
+             (dict_ != o.dict_));
   }
 };
 
