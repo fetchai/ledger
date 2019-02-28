@@ -219,7 +219,9 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
     ++active_count_;
 
     // execute the item
+    FETCH_LOG_INFO(LOGGING_NAME, "Starting exec...");
     item.Execute(*executor);
+    FETCH_LOG_INFO(LOGGING_NAME, "Starting exec...complete");
 
     // determine what the status is
     if (ExecutorInterface::Status::SUCCESS != item.status())
