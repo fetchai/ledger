@@ -30,6 +30,13 @@ struct StateDict
   using ArrayPtrType = std::shared_ptr<ArrayType>;
   ArrayPtrType                        weights_;
   std::map<std::string, StateDict<T>> dict_;
+
+  bool operator==(StateDict<T> const &o) const
+  {
+    return !((bool(weights_) ^ bool(o.weights_))
+	     || (weights_ && (*weights_ != *(o.weights_)))
+	     || (dict_ != o.dict_));
+  }
 };
 
 template <class T>

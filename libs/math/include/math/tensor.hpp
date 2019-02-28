@@ -540,6 +540,11 @@ public:
     return ret;
   }
 
+  bool operator!=(Tensor const &other) const
+  {
+    return !(*this == other);
+  }
+
 private:
   std::vector<SizeType>           shape_;
   std::vector<SizeType>           padding_;
