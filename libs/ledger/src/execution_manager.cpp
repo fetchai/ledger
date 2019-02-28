@@ -216,7 +216,10 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
 
   if (executor)
   {
-    ++active_count_;
+    // increment the active counters
+    counters_.Apply([](Counters &counters) {
+      counters.active++;
+    });
 
     // execute the item
     FETCH_LOG_INFO(LOGGING_NAME, "Starting exec...");
@@ -230,19 +233,16 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
                      item.slice(), " status: ", ledger::ToString(item.status()));
     }
 
-    --active_count_;
-    DecrementRemaining();
+    counters_.Apply([](Counters &counters) {
+      counters.active--;
+      counters.remaining--;
+    });
+
     ++completed_executions_;
 
     {
       std::lock_guard<Mutex> lock(idle_executors_lock_);
       idle_executors_.push_back(executor);
-    }
-
-    // trigger the monitor thread to process the next slice if needed
-    {
-      std::lock_guard<Mutex> lock(monitor_lock_);
-      monitor_notify_.notify_all();
     }
   }
 }
@@ -413,7 +413,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
         // determine the target number of executions being expected (must be
         // done before the thread pool dispatch)
-        SetRemaining(slice_plan.size());
+        counters_.Set(Counters{0, slice_plan.size()});
 
         for (auto &item : slice_plan)
         {
@@ -431,18 +431,15 @@ void ExecutionManager::MonitorThreadEntrypoint()
     case MonitorState::RUNNING:
     {
       // wait for the execution to complete
-      if (!IsFinishedExecuting())
+      bool const finished = counters_.WaitFor(std::chrono::seconds{2}, [](Counters const &counters) {
+        return counters.remaining == 0;
+      });
+
+      if (!finished)
       {
-        std::unique_lock<std::mutex> lock(monitor_lock_);
-
-        if (std::cv_status::timeout == monitor_notify_.wait_for(lock, std::chrono::milliseconds{2000}))
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "### Extra long execution: remaining: ", GetRemaining());
-        }
+        FETCH_LOG_WARN(LOGGING_NAME, "### Extra long execution: remaining: ", counters_.Get().remaining);
       }
-
-      // determine the next state (provided we have complete
-      if (IsFinishedExecuting())
+      else
       {
         // evaluate the status of the executions
         std::size_t num_complete{0};
@@ -524,43 +521,6 @@ void ExecutionManager::MonitorThreadEntrypoint()
       monitor_state = MonitorState::IDLE;
       break;
     }
-  }
-}
-
-bool ExecutionManager::IsFinishedExecuting() const
-{
-  return GetRemaining() == 0;
-}
-
-std::size_t ExecutionManager::GetRemaining() const
-{
-  FETCH_LOCK(remaining_lock_);
-  return remaining_;
-}
-
-void ExecutionManager::SetRemaining(std::size_t count)
-{
-  FETCH_LOCK(remaining_lock_);
-
-  if (remaining_ != 0)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Overwriting non-zero remaining count");
-  }
-
-  remaining_ = count;
-}
-
-void ExecutionManager::DecrementRemaining()
-{
-  FETCH_LOCK(remaining_lock_);
-
-  if (remaining_ > 0)
-  {
-    --remaining_;
-  }
-  else
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Overwriting non-zero remaining count");
   }
 }
 
