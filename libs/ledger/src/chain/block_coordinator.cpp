@@ -115,7 +115,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
   // ensure that we have a current block that we are executing
   if (!current_block_)
   {
-    current_block_ = std::make_shared<Block>(chain_.HeaviestBlock());
+    current_block_ = chain_.GetHeaviestBlock();
   }
 
   // cache some useful variables
@@ -144,8 +144,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
     else
     {
       // look up the previous block
-      auto previous_block = std::make_shared<Block>();
-      if (!chain_.Get(previous_hash, *previous_block))
+      auto previous_block = chain_.GetBlock(previous_hash);
+      if (!previous_block)
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Unable to lookup previous block: ", ToBase64(current_hash));
         return State::RESET;
@@ -181,33 +181,33 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
 
     for (auto const &block : blocks)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Sync: Common Path..: ", ToBase64(block.body.hash));
+      FETCH_LOG_INFO(LOGGING_NAME, "Sync: Common Path..: ", ToBase64(block->body.hash));
     }
 
-    auto         block_path_it = blocks.crbegin();
-    Block const &common_parent = *block_path_it++;
-    Block const &next_block    = *block_path_it++;
+    auto     block_path_it = blocks.crbegin();
+    BlockPtr common_parent = *block_path_it++;
+    BlockPtr next_block    = *block_path_it++;
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Common Parent: ", ToBase64(common_parent.body.hash));
-    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Next Block...: ", ToBase64(next_block.body.hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Common Parent: ", ToBase64(common_parent->body.hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Next Block...: ", ToBase64(next_block->body.hash));
 
     // we expect that the common parent in this case will always have been processed, but this
     // should be checked
-    if (!storage_unit_.HashExists(common_parent.body.merkle_hash))
+    if (!storage_unit_.HashExists(common_parent->body.merkle_hash))
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Ancestor block not executed:", ToBase64(current_hash));
       return State::RESET;
     }
 
     // revert the storage back to the known state
-    if (!storage_unit_.RevertToHash(common_parent.body.merkle_hash))
+    if (!storage_unit_.RevertToHash(common_parent->body.merkle_hash))
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Unable to restore state for block", ToBase64(current_hash));
       return State::RESET;
     }
 
     // update the current block and begin scheduling
-    current_block_ = std::make_shared<Block>(next_block);
+    current_block_ = next_block;
     next_state     = State::PRE_EXEC_BLOCK_VALIDATION;
   }
 
@@ -220,23 +220,23 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
   State next_state{State::SYNCHRONIZED};
 
   // if we have detected a change in the chain then we need to re-evaluate the chain
-  if (chain_.HeaviestBlock().body.hash != current_block_->body.hash)
+  if (chain_.GetHeaviestBlockHash() != current_block_->body.hash)
   {
     next_state = State::RESET;
   }
   else if (mining_ && (Clock::now() >= next_block_time_))
   {
     // create a new block
-    auto next_block                = std::make_shared<Block>();
-    next_block->body.previous_hash = current_block_->body.hash;
-    next_block->body.block_number  = current_block_->body.block_number + 1;
-    next_block->body.miner         = identity_;
+    next_block_                     = std::make_unique<Block>();
+    next_block_->body.previous_hash = current_block_->body.hash;
+    next_block_->body.block_number  = current_block_->body.block_number + 1;
+    next_block_->body.miner         = identity_;
 
     // ensure the difficulty is correctly set
-    next_block->proof.SetTarget(block_difficulty_);
+    next_block_->proof.SetTarget(block_difficulty_);
 
-    // replace the current block
-    current_block_ = std::move(next_block);
+    // discard the current block (we are making a new one)
+    current_block_.reset();
 
     // trigger packing state
     next_state = State::PACK_NEW_BLOCK;
@@ -256,24 +256,25 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
   bool const is_genesis = current_block_->body.previous_hash == GENESIS_DIGEST;
 
   // Check: Ensure that we have a previous block
-  Block previous{};
+
   if (!is_genesis)
   {
-    if (!chain_.Get(current_block_->body.previous_hash, previous))
+    BlockPtr previous = chain_.GetBlock(current_block_->body.previous_hash);
+    if (!previous)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: No previous block in chain (",
                      ToBase64(current_block_->body.hash), ")");
-      chain_.InvalidateBlock(current_block_->body.hash);
+      chain_.RemoveBlock(current_block_->body.hash);
       return State::RESET;
     }
 
     // Check: Ensure the block number is continuous
-    uint64_t const expected_block_number = previous.body.block_number + 1u;
+    uint64_t const expected_block_number = previous->body.block_number + 1u;
     if (expected_block_number != current_block_->body.block_number)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Block number mismatch (",
                      ToBase64(current_block_->body.hash), ")");
-      chain_.InvalidateBlock(current_block_->body.hash);
+      chain_.RemoveBlock(current_block_->body.hash);
       return State::RESET;
     }
 
@@ -282,7 +283,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Miner identity size mismatch (",
                      ToBase64(current_block_->body.hash), ")");
-      chain_.InvalidateBlock(current_block_->body.hash);
+      chain_.RemoveBlock(current_block_->body.hash);
       return State::RESET;
     }
 
@@ -291,7 +292,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Lane count mismatch (",
                      ToBase64(current_block_->body.hash), ")");
-      chain_.InvalidateBlock(current_block_->body.hash);
+      chain_.RemoveBlock(current_block_->body.hash);
       return State::RESET;
     }
 
@@ -300,7 +301,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Slice count mismatch (",
                      ToBase64(current_block_->body.hash), ")");
-      chain_.InvalidateBlock(current_block_->body.hash);
+      chain_.RemoveBlock(current_block_->body.hash);
       return State::RESET;
     }
   }
@@ -310,7 +311,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Previous block hash size mismatch (",
                    ToBase64(current_block_->body.hash), ")");
-    chain_.InvalidateBlock(current_block_->body.hash);
+    chain_.RemoveBlock(current_block_->body.hash);
     return State::RESET;
   }
 
@@ -393,21 +394,21 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
   // After the checks have been completed, if the validation has failed, the system needs to recover
   if (invalid_block)
   {
-    bool  revert_successful{false};
-    Block previous_block;
+    bool revert_successful{false};
 
     // we need to restore back to the previous block
-    if (chain_.Get(current_block_->body.previous_hash, previous_block))
+    BlockPtr previous_block = chain_.GetBlock(current_block_->body.previous_hash);
+    if (previous_block)
     {
       // signal the storage engine to make these changes
-      if (storage_unit_.RevertToHash(previous_block.body.merkle_hash))
+      if (storage_unit_.RevertToHash(previous_block->body.merkle_hash))
       {
-        execution_manager_.SetLastProcessedBlock(previous_block.body.hash);
+        execution_manager_.SetLastProcessedBlock(previous_block->body.hash);
         revert_successful = true;
       }
     }
 
-    // if the revert has gone wrong, we need to initiate a complete resync
+    // if the revert has gone wrong, we need to initiate a complete re-sync
     if (!revert_successful)
     {
       storage_unit_.RevertToHash(GENESIS_MERKLE_ROOT);
@@ -415,7 +416,7 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     }
 
     // finally mark the block as invalid and purge it from the chain
-    chain_.InvalidateBlock(current_block_->body.hash);
+    chain_.RemoveBlock(current_block_->body.hash);
   }
 
   return next_state;
@@ -428,21 +429,20 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
   try
   {
     // call the block packer
-    block_packer_.GenerateBlock(*current_block_, num_lanes_, num_slices_, chain_);
+    block_packer_.GenerateBlock(*next_block_, num_lanes_, num_slices_, chain_);
 
 #if 1
-    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Hash.........: ", ToBase64(current_block_->body.hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Hash.........: ", ToBase64(next_block_->body.hash));
     FETCH_LOG_INFO(LOGGING_NAME,
-                   "New Block: Previous.....: ", ToBase64(current_block_->body.previous_hash));
+                   "New Block: Previous.....: ", ToBase64(next_block_->body.previous_hash));
     FETCH_LOG_INFO(LOGGING_NAME,
-                   "New Block: Merkle.......: ", ToBase64(current_block_->body.merkle_hash));
-    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Block Number.: ", current_block_->body.block_number);
-    FETCH_LOG_INFO(LOGGING_NAME,
-                   "New Block: Miner........: ", ToBase64(current_block_->body.miner));
-    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Log2 Lanes...: ", current_block_->body.log2_num_lanes);
+                   "New Block: Merkle.......: ", ToBase64(next_block_->body.merkle_hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Block Number.: ", next_block_->body.block_number);
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Miner........: ", ToBase64(next_block_->body.miner));
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Log2 Lanes...: ", next_block_->body.log2_num_lanes);
 
     std::size_t slice_index{1};
-    for (auto const &slice : current_block_->body.slices)
+    for (auto const &slice : next_block_->body.slices)
     {
       if (!slice.empty())
       {
@@ -458,7 +458,7 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
       ++slice_index;
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Slice........: ", ToBase64(current_block_->body.hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Slice........: ", ToBase64(next_block_->body.hash));
 #endif
 
     // update our desired next block time
@@ -480,7 +480,7 @@ BlockCoordinator::State BlockCoordinator::OnExecuteNewBlock()
   State next_state{State::RESET};
 
   // schedule the current block for execution
-  if (ScheduleCurrentBlock())
+  if (ScheduleNextBlock())
   {
     next_state = State::WAIT_FOR_NEW_BLOCK_EXECUTION;
   }
@@ -498,9 +498,9 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
   case ExecutionStatus::IDLE:
   {
     // update the current block with the desired hash
-    current_block_->body.merkle_hash = storage_unit_.CurrentHash();
+    next_block_->body.merkle_hash = storage_unit_.CurrentHash();
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Merkle Hash: ", ToBase64(current_block_->body.merkle_hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "Merkle Hash: ", ToBase64(next_block_->body.merkle_hash));
 
     next_state = State::PROOF_SEARCH;
     break;
@@ -538,16 +538,16 @@ BlockCoordinator::State BlockCoordinator::OnProofSearch()
 {
   State next_state{State::PROOF_SEARCH};
 
-  if (miner_->Mine(*current_block_, 100))
+  if (miner_->Mine(*next_block_, 100))
   {
     // update the digest
-    current_block_->UpdateDigest();
+    next_block_->UpdateDigest();
 
-    FETCH_LOG_INFO(LOGGING_NAME, "New Block Hash: ", ToBase64(current_block_->body.hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block Hash: ", ToBase64(next_block_->body.hash));
 
     // this step is needed because the execution manager is actually unaware of the actual last
     // block that is executed because the merkle hash was not known at this point.
-    execution_manager_.SetLastProcessedBlock(current_block_->body.hash);
+    execution_manager_.SetLastProcessedBlock(next_block_->body.hash);
 
     // the block is now fully formed it can be sent across the network
     next_state = State::TRANSMIT_BLOCK;
@@ -563,10 +563,11 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
   try
   {
     // ensure that the main chain is aware of the block
-    chain_.AddBlock(*current_block_);
-
-    // dispatch the block that has been generated
-    block_sink_.OnBlock(*current_block_);
+    if (BlockStatus::ADDED == chain_.AddBlock(*next_block_))
+    {
+      // dispatch the block that has been generated
+      block_sink_.OnBlock(*next_block_);
+    }
   }
   catch (std::exception const &ex)
   {
@@ -578,14 +579,12 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 
 BlockCoordinator::State BlockCoordinator::OnReset()
 {
-  // mostly for debug
   current_block_.reset();
+  next_block_.reset();
   stall_count_ = 0;
 
   // we should update the next block time
   UpdateNextBlockTime();
-
-  // TODO(EJF): error handling
 
   return State::SYNCHRONIZING;
 }
@@ -597,25 +596,50 @@ bool BlockCoordinator::ScheduleCurrentBlock()
   // sanity check - ensure there is a block to execute
   if (current_block_)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Attempting exec on block: ", ToBase64(current_block_->body.hash));
-
-    // instruct the execution manager to execute the current block
-    auto const execution_status = execution_manager_.Execute(current_block_->body);
-
-    if (execution_status == ScheduleStatus::SCHEDULED)
-    {
-      // signal success
-      success = true;
-    }
-    else
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME,
-                      "Execution engine stalled. State: ", ledger::ToString(execution_status));
-    }
+    success = ScheduleBlock(*current_block_);
   }
   else
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to execute empty block");
+    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to execute empty current block");
+  }
+
+  return success;
+}
+
+bool BlockCoordinator::ScheduleNextBlock()
+{
+  bool success{false};
+
+  if (next_block_)
+  {
+    success = ScheduleBlock(*next_block_);
+  }
+  else
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to execute empty next block");
+  }
+
+  return success;
+}
+
+bool BlockCoordinator::ScheduleBlock(Block const &block)
+{
+  bool success{false};
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Attempting exec on block: ", ToBase64(block.body.hash));
+
+  // instruct the execution manager to execute the current block
+  auto const execution_status = execution_manager_.Execute(block.body);
+
+  if (execution_status == ScheduleStatus::SCHEDULED)
+  {
+    // signal success
+    success = true;
+  }
+  else
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME,
+                    "Execution engine stalled. State: ", ledger::ToString(execution_status));
   }
 
   return success;
