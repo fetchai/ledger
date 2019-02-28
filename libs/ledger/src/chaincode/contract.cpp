@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/contract.hpp"
-#include "core/json/document.hpp"
 #include "core/byte_array/decoders.hpp"
+#include "core/json/document.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -49,7 +49,8 @@ bool Contract::SetupHandlers()
 }
 
 Contract::Status Contract::DispatchTransaction(byte_array::ConstByteArray const &name,
-                                               Transaction const &               tx, std::vector<std::string> *output_strings = nullptr)
+                                               Transaction const &               tx,
+                                               std::vector<std::string> *output_strings = nullptr)
 {
   Status status{Status::NOT_FOUND};
 
@@ -61,7 +62,7 @@ Contract::Status Contract::DispatchTransaction(byte_array::ConstByteArray const 
     ++transaction_counters_[name];
   }
 
-  if(output_strings)
+  if (output_strings)
   {
     (*output_strings) = print_strings_;
   }
@@ -201,7 +202,7 @@ void Contract::SetNoWriteBack()
   allow_write_back_ = false;
 }
 
-std::vector<std::string> const & Contract::PrintStrings()
+std::vector<std::string> const &Contract::PrintStrings()
 {
   return print_strings_;
 }

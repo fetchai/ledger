@@ -17,11 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/contract_http_interface.hpp"
+#include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/string/replace.hpp"
-#include "core/byte_array/decoders.hpp"
 #include "http/json_response.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -124,7 +124,6 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
          return OnTransactionSpeculation(params, request, nullptr);
        });
-
 }
 
 http::HTTPResponse ContractHttpInterface::OnQuery(byte_array::ConstByteArray const &contract_name,
@@ -178,29 +177,30 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(
 {
   byte_array::ByteArray contract_name;
 
-  if(!expected_contract_name)
+  if (!expected_contract_name)
   {
     // TODO(HUT): clean this up - hexify everything
-    auto bytearray1 =   FromHex(params["SC_HASH_HEX"]);
-    auto bytearray2 =   params["PUBKEY_HEX"];
-    auto bytearray3 =   params["FN_NAME"];
+    auto bytearray1 = FromHex(params["SC_HASH_HEX"]);
+    auto bytearray2 = params["PUBKEY_HEX"];
+    auto bytearray3 = params["FN_NAME"];
 
-    if(bytearray1.size() == 0 || bytearray2.size() == 0 || bytearray3.size() == 0)
+    if (bytearray1.size() == 0 || bytearray2.size() == 0 || bytearray3.size() == 0)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse SC: ", bytearray1, " ", bytearray2, " ", bytearray3);
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse SC: ", bytearray1, " ", bytearray2, " ",
+                     bytearray3);
 
       return http::CreateJsonResponse("failed", http::Status::CLIENT_ERROR_BAD_REQUEST);
     }
     else
     {
-      contract_name = std::string{bytearray1 + CONTRACT_NAME_SEPARATOR + bytearray2 + CONTRACT_NAME_SEPARATOR + bytearray3};
+      contract_name = std::string{bytearray1 + CONTRACT_NAME_SEPARATOR + bytearray2 +
+                                  CONTRACT_NAME_SEPARATOR + bytearray3};
     }
   }
   else
   {
     contract_name = *expected_contract_name;
   }
-
 
   std::ostringstream oss;
   bool               error_response{true};
@@ -294,7 +294,9 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
 
       if (expected_contract_name && tx.contract_name() != *expected_contract_name)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Failed to match expected_contract_name: ", *expected_contract_name, " with ", tx.contract_name());
+        FETCH_LOG_WARN(LOGGING_NAME,
+                       "Failed to match expected_contract_name: ", *expected_contract_name,
+                       " with ", tx.contract_name());
         continue;
       }
       else
@@ -321,10 +323,11 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to match expected_contract_name: ", *expected_contract_name, " with ", tx.contract_name());
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Failed to match expected_contract_name: ", *expected_contract_name, " with ",
+                     tx.contract_name());
     }
   }
-
 
   return SubmitTxStatus{submitted, expected_count};
 }
@@ -360,15 +363,17 @@ http::HTTPResponse ContractHttpInterface::OnTransactionSpeculation(
 {
   byte_array::ByteArray contract_name;
 
-  auto bytearray1 =   FromHex(params["SC_HASH_HEX"]);
-  auto bytearray2 =   params["PUBKEY_HEX"];
-  auto bytearray3 =   params["FN_NAME"];
+  auto bytearray1 = FromHex(params["SC_HASH_HEX"]);
+  auto bytearray2 = params["PUBKEY_HEX"];
+  auto bytearray3 = params["FN_NAME"];
 
-  contract_name = std::string{bytearray1 + CONTRACT_NAME_SEPARATOR + bytearray2 + CONTRACT_NAME_SEPARATOR + bytearray3};
+  contract_name = std::string{bytearray1 + CONTRACT_NAME_SEPARATOR + bytearray2 +
+                              CONTRACT_NAME_SEPARATOR + bytearray3};
 
-  if(contract_name.size() < 2)
+  if (contract_name.size() < 2)
   {
-    return http::CreateJsonResponse("failed - name too short", http::Status::CLIENT_ERROR_BAD_REQUEST);
+    return http::CreateJsonResponse("failed - name too short",
+                                    http::Status::CLIENT_ERROR_BAD_REQUEST);
   }
 
   // parse the JSON request
@@ -381,10 +386,10 @@ http::HTTPResponse ContractHttpInterface::OnTransactionSpeculation(
 
   if (!expected_contract_name || tx.contract_name() == *expected_contract_name)
   {
-    bool success = false;
-    auto const vtx = VerifiedTransaction::Create(tx, &success);
+    bool       success = false;
+    auto const vtx     = VerifiedTransaction::Create(tx, &success);
 
-    if(!success)
+    if (!success)
     {
       return http::CreateJsonResponse("failed to verify.", http::Status::CLIENT_ERROR_BAD_REQUEST);
     }
@@ -395,9 +400,10 @@ http::HTTPResponse ContractHttpInterface::OnTransactionSpeculation(
     // Front facing cache here - no need for locking
     auto chain_code = contract_cache_.Lookup(contract_name, &storage_);
 
-    if(!chain_code)
+    if (!chain_code)
     {
-      return http::CreateJsonResponse("failed to get chain code.", http::Status::CLIENT_ERROR_BAD_REQUEST);
+      return http::CreateJsonResponse("failed to get chain code.",
+                                      http::Status::CLIENT_ERROR_BAD_REQUEST);
     }
 
     // attach, dispatch and detach
@@ -407,13 +413,13 @@ http::HTTPResponse ContractHttpInterface::OnTransactionSpeculation(
     chain_code->Detach();
 
     // Respond with result
-    auto data            = variant::Variant::Object();
-    data["success"] = true;
+    auto data         = variant::Variant::Object();
+    data["success"]   = true;
     auto &all_strings = chain_code->PrintStrings();
-    data["payload"] = variant::Variant::Array(all_strings.size());
+    data["payload"]   = variant::Variant::Array(all_strings.size());
     std::size_t index = 0;
 
-    for(auto const &stringthing : all_strings)
+    for (auto const &stringthing : all_strings)
     {
       data["payload"][index++] = stringthing;
     }
@@ -421,11 +427,11 @@ http::HTTPResponse ContractHttpInterface::OnTransactionSpeculation(
     std::ostringstream oss;
     oss << data;
     return http::CreateJsonResponse(oss.str(), http::Status::SUCCESS_OK);
-
   }
   else
   {
-    return http::CreateJsonResponse("failed - name doesn't match", http::Status::CLIENT_ERROR_BAD_REQUEST);
+    return http::CreateJsonResponse("failed - name doesn't match",
+                                    http::Status::CLIENT_ERROR_BAD_REQUEST);
   }
 
   return http::CreateJsonResponse("success", http::Status::SUCCESS_OK);

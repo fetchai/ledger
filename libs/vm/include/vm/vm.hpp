@@ -98,8 +98,8 @@ public:
   ~VM() = default;
 
   template <typename... Ts>
-  bool Execute(Script const &script, std::string const &name, std::string &error, std::vector<std::string> &print_strings, Variant &output,
-               Ts const &... parameters)
+  bool Execute(Script const &script, std::string const &name, std::string &error,
+               std::vector<std::string> &print_strings, Variant &output, Ts const &... parameters)
   {
     print_strings_ = &print_strings;
     print_strings_->clear();
@@ -158,7 +158,7 @@ public:
 
   void AddPrintString(std::string const &print_string)
   {
-    if(print_strings_)
+    if (print_strings_)
     {
       print_strings_->push_back(print_string);
     }
@@ -235,7 +235,7 @@ private:
   Script::Instruction const *instruction_;
   bool                       stop_;
   std::string                error_;
-  std::vector<std::string>   *print_strings_ = nullptr;
+  std::vector<std::string> * print_strings_ = nullptr;
 
   bool Execute(std::string &error, Variant &output);
   void Destruct(int scope_number);

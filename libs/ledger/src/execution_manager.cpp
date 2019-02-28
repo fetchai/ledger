@@ -23,8 +23,8 @@
 #include "ledger/executor.hpp"
 #include "storage/resource_mapper.hpp"
 
-#include "core/byte_array/encoders.hpp"
 #include "core/byte_array/decoders.hpp"
+#include "core/byte_array/encoders.hpp"
 
 #include <chrono>
 #include <memory>
@@ -156,12 +156,13 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
 
       auto item = std::make_unique<ExecutionItem>(tx.transaction_hash, slice_index);
 
-      /* auto contract = contracts_.Lookup(id.name_space()); */ // no longer done like this
+      /* auto contract = contracts_.Lookup(id.name_space()); */  // no longer done like this
 
       // transform the resources into lane allocation
       for (auto const &resource : tx.resources)
       {
-        storage::ResourceAddress const resource_address{CreateStateIndexWrapped(id[0], id[1], resource)};
+        storage::ResourceAddress const resource_address{
+            CreateStateIndexWrapped(id[0], id[1], resource)};
         item->AddLane(resource_address.lane(block.log2_num_lanes));
       }
 

@@ -96,9 +96,8 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
 
   std::vector<storage::ResourceAddress> successfully_locked_resources;
 
-  auto deleter=[&](uint16_t *)
-  {
-    for(auto const &resource : successfully_locked_resources)
+  auto deleter = [&](uint16_t *) {
+    for (auto const &resource : successfully_locked_resources)
     {
       resources_->Unlock(resource);
     }
@@ -106,12 +105,12 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
 
   std::unique_ptr<uint16_t, decltype(deleter)> on_function_exit((uint16_t *)nullptr, deleter);
 
-  // Lock raw resources for SC access 
+  // Lock raw resources for SC access
   for (auto const &hash : tx.contract_hashes())
   {
     storage::ResourceAddress address(hash);
 
-    if(!resources_->Lock(address))
+    if (!resources_->Lock(address))
     {
       return Status::RESOURCE_FAILURE;
     }
@@ -124,7 +123,7 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
   {
     storage::ResourceAddress address(CreateStateIndexWrapped(id[0], id[1], resource));
 
-    if(!resources_->Lock(address))
+    if (!resources_->Lock(address))
     {
       return Status::RESOURCE_FAILURE;
     }

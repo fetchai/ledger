@@ -43,8 +43,7 @@ byte_array::ConstByteArray const CONTRACT_HASH{"contract_hash_b64"};
 
 SmartContract::SmartContract(byte_array::ConstByteArray const &identifier)
   : Contract(identifier)
-{
-}
+{}
 
 Contract::Status SmartContract::InvokeContract(Transaction const &tx)
 {
@@ -52,7 +51,8 @@ Contract::Status SmartContract::InvokeContract(Transaction const &tx)
   if (!ParseAsJson(tx, data))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse data from SC. TX data: ", tx.data());
-    /* malformatted TXs should cause block execution failure (although there is no guard for this) */
+    /* malformatted TXs should cause block execution failure (although there is no guard for this)
+     */
     return Status::FAILED;
   }
 
@@ -69,7 +69,7 @@ Contract::Status SmartContract::InvokeContract(Transaction const &tx)
 
   if (!CheckRawState(contract_hash))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to find SC ", contract_hash," in main DB");
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to find SC ", contract_hash, " in main DB");
     /* User refers to non existing smart contract hash - loses fees*/
     return Status::OK;
   }
@@ -138,7 +138,7 @@ bool SmartContract::RunSmartContract(std::string &source, byte_array::ConstByteA
 
   // Successfully ran the VM. Write back the state - this might not be allowed
   // for cases for example where you are speculatively executing it
-  if(allow_write_back_)
+  if (allow_write_back_)
   {
     interface.WriteBackToState();
   }
@@ -165,7 +165,7 @@ bool SmartContract::SetupHandlers()
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Updating handlers for: ", identifier()[0]);
 
-  byte_array::ByteArray      contract_source;
+  byte_array::ByteArray contract_source;
 
   if (source_.size() == 0)
   {
@@ -177,13 +177,13 @@ bool SmartContract::SetupHandlers()
     source_ = std::string{FromBase64(contract_source)};
   }
 
-  auto        module       = vm::VMFactory::GetModule();
+  auto                     module = vm::VMFactory::GetModule();
   fetch::vm::Script        script;
   std::vector<std::string> errors = vm::VMFactory::Compile(module, source_, script);
 
-  if(errors.size() == 0)
+  if (errors.size() == 0)
   {
-    for(auto const &fn : script.GetFunctions())
+    for (auto const &fn : script.GetFunctions())
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Attaching Fn: ", fn);
       OnTransaction(fn, this, &SmartContract::InvokeContract);
@@ -196,7 +196,6 @@ bool SmartContract::SetupHandlers()
 
   return true;
 }
-
 
 }  // namespace ledger
 }  // namespace fetch

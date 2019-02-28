@@ -35,7 +35,9 @@ class Variant;
 }
 namespace ledger {
 
-inline storage::ResourceAddress CreateStateIndexWrapped(byte_array::ByteArray const &global_id, byte_array::ByteArray const &local_id, byte_array::ByteArray const &suffix)
+inline storage::ResourceAddress CreateStateIndexWrapped(byte_array::ByteArray const &global_id,
+                                                        byte_array::ByteArray const &local_id,
+                                                        byte_array::ByteArray const &suffix)
 {
   byte_array::ByteArray index;
   index.Append(global_id, local_id, ".state.", suffix);
@@ -74,7 +76,8 @@ public:
   static constexpr char const *LOGGING_NAME = "Contract";
 
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
-  Status DispatchTransaction(byte_array::ConstByteArray const &name, Transaction const &tx, std::vector<std::string> *output_strings);
+  Status DispatchTransaction(byte_array::ConstByteArray const &name, Transaction const &tx,
+                             std::vector<std::string> *output_strings);
 
   void Attach(StorageInterface &state);
   void Detach();
@@ -88,8 +91,8 @@ public:
   QueryHandlerMap const &      query_handlers() const;
   TransactionHandlerMap const &transaction_handlers() const;
 
-  virtual bool SetupHandlers();
-  void SetNoWriteBack();
+  virtual bool                    SetupHandlers();
+  void                            SetNoWriteBack();
   std::vector<std::string> const &PrintStrings();
 
 protected:
@@ -116,7 +119,7 @@ protected:
   bool GetRawState(byte_array::ByteArray &payload, byte_array::ByteArray const &address);
 
   std::vector<std::string> print_strings_;
-  bool allow_write_back_ = true;
+  bool                     allow_write_back_ = true;
 
 private:
   Identifier            contract_identifier_;

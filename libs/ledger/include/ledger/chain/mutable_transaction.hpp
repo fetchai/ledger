@@ -72,8 +72,8 @@ struct TransactionSummary
   // Hashes of the body of the smart contract(s) accessed - note these are base64
   ContractHashes contract_hashes;
 
-  TxDigest    transaction_hash;
-  Fee         fee{0};
+  TxDigest transaction_hash;
+  Fee      fee{0};
 
   // TODO(issue 33): Needs to be replaced with some kind of ID
   ContractName contract_name;
@@ -99,7 +99,8 @@ struct TransactionSummary
     {
       for (auto const &hash : contract_hashes)
       {
-        // TODO(HUT): this should possibly check for base64 length if that's what we're going with here
+        // TODO(HUT): this should possibly check for base64 length if that's what we're going with
+        // here
         if (hash.size() == 0)
         {
           FETCH_LOG_INFO("TransactionSummary",
@@ -519,7 +520,8 @@ void TxSigningAdapter<MUTABLE_TX>::Update() const
   if (stream_->size() == 0)
   {
     serializers::ByteArrayBuffer &stream = *stream_.get();
-    stream.Append(tx_->contract_name(), tx_->fee(), tx_->resources(), tx_->contract_hashes(), tx_->data());
+    stream.Append(tx_->contract_name(), tx_->fee(), tx_->resources(), tx_->contract_hashes(),
+                  tx_->data());
     // tx_data_hash_.Reset();
     tx_data_hash_->Update(stream.data());
   }
@@ -535,13 +537,18 @@ void Serialize(T &stream, TxSigningAdapter<MUTABLE_TX> const &tx)
 template <typename T, typename MUTABLE_TX>
 void Deserialize(T &stream, TxSigningAdapter<MUTABLE_TX> &tx)
 {
-  const char * log_name = "DESER_MUTABLE_TX";
+  const char *log_name = "DESER_MUTABLE_TX";
 
   FETCH_LOG_DEBUG(log_name, "Deserializing mutable transaction");
 
   uint16_t success_counter = 1;
 
-  auto deleter=[&](uint16_t *dummy){ if(success_counter != 0) { FETCH_LOG_INFO(log_name, "Failed to deser. tx! Counter: ", success_counter); } ;};
+  auto deleter = [&](uint16_t *dummy) {
+    if (success_counter != 0)
+    {
+      FETCH_LOG_INFO(log_name, "Failed to deser. tx! Counter: ", success_counter);
+    };
+  };
   std::unique_ptr<uint16_t, decltype(deleter)> on_exit(&success_counter, deleter);
 
   FETCH_UNUSED(success_counter);
@@ -574,7 +581,8 @@ bool TxSigningAdapter<MUTABLE_TX>::operator==(TxSigningAdapter<MUTABLE_TX> const
 {
   MutableTransaction const &left = left_tx;
   return tx_->contract_name() == left.contract_name() && tx_->fee() == left.fee() &&
-         tx_->resources() == left.resources() && tx_->contract_hashes() == left.contract_hashes() && tx_->data() == left.data();
+         tx_->resources() == left.resources() && tx_->contract_hashes() == left.contract_hashes() &&
+         tx_->data() == left.data();
 }
 
 template <typename MUTABLE_TX>

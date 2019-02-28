@@ -52,7 +52,7 @@ Contract::Status SmartContractManager::CreateInitialContract(Transaction const &
   if (!ParseAsJson(tx, data))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "FAILED TO PARSE TRANSACTION");
-    return Status::FAILED; // TODO(HUT):  // discuss with ed
+    return Status::FAILED;  // TODO(HUT):  // discuss with ed
   }
 
   byte_array::ConstByteArray contract_source;
@@ -73,9 +73,10 @@ Contract::Status SmartContractManager::CreateInitialContract(Transaction const &
 
   auto source_hashed = ToBase64(crypto::Hash<crypto::SHA256>(contract_source));
 
-  if(source_hashed != contract_hash)
+  if (source_hashed != contract_hash)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Warning! Failed to match calculated hash with provided hash: ", ToBase64(source_hashed), " to ", contract_hash);
+    FETCH_LOG_WARN(LOGGING_NAME, "Warning! Failed to match calculated hash with provided hash: ",
+                   ToBase64(source_hashed), " to ", contract_hash);
   }
 
   FETCH_LOG_WARN(LOGGING_NAME, "Adding smart contract, ID: ", source_hashed);
@@ -85,7 +86,8 @@ Contract::Status SmartContractManager::CreateInitialContract(Transaction const &
 
   if (!CheckRawState(source_hashed))
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Failed to find SC after trying to set it! : ", source_hashed," in main DB");
+    FETCH_LOG_ERROR(LOGGING_NAME, "Failed to find SC after trying to set it! : ", source_hashed,
+                    " in main DB");
     return Status::FAILED;
   }
 

@@ -94,7 +94,7 @@ public:
 
     auto element = this->find(name);
 
-    if(element == this->end())
+    if (element == this->end())
     {
       return {};
     }

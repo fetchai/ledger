@@ -184,8 +184,8 @@ int main(int argc, char **argv)
   }
 
   // Setting VM up and running
-  std::string        error;
-  fetch::vm::Variant output;
+  std::string              error;
+  fetch::vm::Variant       output;
   std::vector<std::string> print_strings;
 
   fetch::vm::VM vm(&module);

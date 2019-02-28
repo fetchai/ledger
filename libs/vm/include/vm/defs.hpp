@@ -1037,7 +1037,7 @@ struct Script
   {
     std::vector<std::string> ret;
 
-    for(auto const &function : functions)
+    for (auto const &function : functions)
     {
       ret.push_back(function.name);
     }

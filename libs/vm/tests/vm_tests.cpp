@@ -231,9 +231,9 @@ protected:
       return false;
     }
 
-    for(auto const &i : print_strings)
+    for (auto const &i : print_strings)
     {
-      std::cerr << "GOT " << i << std::endl;
+      std::cerr << "output: " << i << std::endl;
     }
 
     return true;

@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/vm.hpp"
 #include "vm/node.hpp"
 #include "vm/string.hpp"
+#include "vm/vm.hpp"
 
 #include <iostream>
 

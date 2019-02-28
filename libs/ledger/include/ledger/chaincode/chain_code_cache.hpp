@@ -32,7 +32,7 @@ class ChainCodeCache
 {
 public:
   using ContractPtr = ChainCodeFactory::ContractPtr;
-  using StoragePtr = ledger::StorageInterface;
+  using StoragePtr  = ledger::StorageInterface;
 
   ContractPtr Lookup(byte_array::ConstByteArray const &contract_name, StoragePtr *state);
 
