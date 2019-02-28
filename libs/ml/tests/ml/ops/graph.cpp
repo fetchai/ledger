@@ -75,3 +75,12 @@ TEST(graph_test, node_relu)
   // test correct values
   ASSERT_TRUE(prediction->AllClose(*gt));
 }
+
+TEST(graph_test, getStateDict)
+{
+  fetch::ml::Graph<fetch::math::Tensor<float>>          g;
+  fetch::ml::ops::StateDict<fetch::math::Tensor<float>> sd = g.GetStateDict();
+
+  EXPECT_TRUE(sd.weights_ == nullptr);
+  EXPECT_TRUE(sd.dict_.empty());
+}

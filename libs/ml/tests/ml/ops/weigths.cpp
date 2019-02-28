@@ -61,3 +61,30 @@ TYPED_TEST(WeightsTest, gradient_step_test)
   ASSERT_TRUE(w.Forward({}) == data);         // Test pointed address, should still be the same
   ASSERT_TRUE(w.Forward({})->AllClose(*gt));  // whit new values
 }
+
+TYPED_TEST(WeightsTest, getStateDict)
+{
+  fetch::ml::ops::Weights<TypeParam>   w;
+  fetch::ml::ops::StateDict<TypeParam> sd = w.GetStateDict();
+
+  EXPECT_TRUE(sd.weights_ == nullptr);
+  EXPECT_TRUE(sd.dict_.empty());
+
+  std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(8);
+  w.SetData(data);
+  sd = w.GetStateDict();
+  EXPECT_TRUE(sd.weights_ == data);
+  EXPECT_TRUE(sd.dict_.empty());
+}
+
+TYPED_TEST(WeightsTest, loadStateDict)
+{
+  fetch::ml::ops::Weights<TypeParam> w;
+  EXPECT_TRUE(w.Forward({}) == nullptr);
+
+  std::shared_ptr<TypeParam>           data = std::make_shared<TypeParam>(8);
+  fetch::ml::ops::StateDict<TypeParam> sd;
+  sd.weights_ = data;
+  w.LoadStateDict(sd);
+  EXPECT_TRUE(w.Forward({}) == data);
+}
