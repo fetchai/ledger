@@ -108,13 +108,13 @@ void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block
 
 void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address const &transmitter)
 {
-#ifdef FETCH_LOG_INFO_ENABLED
+#ifdef FETCH_LOG_DEBUG_ENABLED
   // count how many transactions are present in the block
   for (auto const &slice : block.body.slices)
   {
     for (auto const &tx : slice)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Recv Ref TX: ", ToBase64(tx.transaction_hash)," (", tx.contract_name, ')');
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Recv Ref TX: ", ToBase64(tx.transaction_hash)," (", tx.contract_name, ')');
     }
   }
 #endif // FETCH_LOG_INFO_ENABLED

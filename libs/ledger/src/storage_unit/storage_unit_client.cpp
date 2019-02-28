@@ -745,11 +745,6 @@ StorageUnitClient::TxSummaries StorageUnitClient::PollRecentTx(uint32_t max_to_p
                    std::make_move_iterator(txs.end()));
   }
 
-  if (!new_txs.empty())
-  {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Found: ", new_txs.size(), " newly seen TXs from lanes");
-  }
-
   return new_txs;
 }
 

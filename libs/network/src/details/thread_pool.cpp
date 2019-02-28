@@ -257,10 +257,7 @@ void ThreadPoolImplementation::ProcessLoop(std::size_t index)
           continue;
         }
 
-        if ("Executor" == name_)
-        {
-          FETCH_LOG_INFO(LOGGING_NAME, "Entering idle state (thread: ", index, ')');
-        }
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Entering idle state (thread: ", index, ')');
 
         // snooze for a while or until more work arrives
         LOG_STACK_TRACE_POINT;
@@ -293,10 +290,7 @@ void ThreadPoolImplementation::ProcessLoop(std::size_t index)
 
         --inactive_threads_;
 
-        if ("Executor" == name_)
-        {
-          FETCH_LOG_INFO(LOGGING_NAME, "Exiting idle state (thread ", index, ')');
-        }
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Exiting idle state (thread ", index, ')');
       }
     }
   }

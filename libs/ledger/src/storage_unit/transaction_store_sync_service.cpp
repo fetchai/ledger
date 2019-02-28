@@ -329,7 +329,7 @@ void TransactionStoreSyncService::OnTransaction(VerifiedTransaction const &tx)
 
   if (!store_->Has(rid))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Verified Sync TX: ", tx.digest().ToBase64(), " (", tx.contract_name(), ')');
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Verified Sync TX: ", tx.digest().ToBase64(), " (", tx.contract_name(), ')');
 
     store_->Set(rid, tx, true);
   }
