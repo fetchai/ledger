@@ -17,18 +17,20 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 
 namespace fetch {
 namespace ledger {
+
 class Block;
-}  // namespace ledger
-}  // namespace fetch
+
+namespace testing {
 
 class BlockGenerator
 {
 public:
-  using Block    = fetch::ledger::Block;
   using BlockPtr = std::shared_ptr<Block>;
 
   BlockGenerator(std::size_t num_lanes, std::size_t num_slices);
@@ -44,3 +46,7 @@ private:
   std::size_t num_slices_{0};
   uint32_t    log2_num_lanes_{0};
 };
+
+}  // namespace testing
+}  // namespace ledger
+}  // namespace fetch
