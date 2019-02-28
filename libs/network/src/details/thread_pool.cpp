@@ -250,7 +250,10 @@ void ThreadPoolImplementation::ProcessLoop(std::size_t index)
       {
         std::unique_lock<std::mutex> lock(idle_mutex_);
 
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Entering idle state (thread: ", index, ')');
+        if ("Executor" == name_)
+        {
+          FETCH_LOG_INFO(LOGGING_NAME, "Entering idle state (thread: ", index, ')');
+        }
 
         // snooze for a while or until more work arrives
         LOG_STACK_TRACE_POINT;
@@ -259,6 +262,11 @@ void ThreadPoolImplementation::ProcessLoop(std::size_t index)
         auto const next_future_item = future_work_.TimeUntilNextItem();
         auto const next_idle_cycle  = idle_work_.DueIn();
         auto const wait_time        = std::min(next_future_item, next_idle_cycle);
+
+        if ("Executor" == name_)
+        {
+          FETCH_LOG_INFO(LOGGING_NAME, "Times: Next: ", next_future_item.count(), " Idle: ", next_idle_cycle.count(), " Wait: ", wait_time.count());
+        }
 
         // update the threading counters
         ++inactive_threads_;
@@ -278,7 +286,10 @@ void ThreadPoolImplementation::ProcessLoop(std::size_t index)
 
         --inactive_threads_;
 
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Exiting idle state (thread ", index, ')');
+        if ("Executor" == name_)
+        {
+          FETCH_LOG_INFO(LOGGING_NAME, "Exiting idle state (thread ", index, ')');
+        }
       }
     }
   }
