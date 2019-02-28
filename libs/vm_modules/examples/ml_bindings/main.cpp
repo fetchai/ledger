@@ -188,7 +188,7 @@ int main(int argc, char **argv)
   fetch::vm::Variant       output;
   std::vector<std::string> print_strings;
 
-  fetch::vm::VM vm(&module);
+  fetch::vm::VM vm(module.get());
   if (!vm.Execute(script, "main", error, print_strings, output))
   {
     std::cout << "Runtime error on line " << error << std::endl;

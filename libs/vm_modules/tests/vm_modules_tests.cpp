@@ -17,6 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "vm_modules/vm_factory.hpp"
+#include "vm/state_sentinel.hpp"
+
 #include <gtest/gtest.h>
 
 using namespace fetch;
@@ -96,7 +98,7 @@ private:
   uint64_t length_ = 0;
 };
 
-class DummyReadWriteInterface : public ReadWriteInterface
+class DummyReadWriteInterface : public vm::ReadWriteInterface
 {
 public:
   ~DummyReadWriteInterface() = default;

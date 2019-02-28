@@ -28,8 +28,6 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 
-#include "vm/vm_factory.hpp"
-
 #include <algorithm>
 #include <stdexcept>
 #include <string>

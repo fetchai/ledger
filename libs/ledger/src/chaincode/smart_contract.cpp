@@ -25,11 +25,11 @@
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 
+#include "vm_modules/vm_factory.hpp"
+
 #include "core/byte_array/encoders.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-
-#include "vm/vm_factory.hpp"
 
 #include <algorithm>
 #include <stdexcept>
@@ -96,11 +96,11 @@ bool SmartContract::RunSmartContract(std::string &source, byte_array::ConstByteA
 {
   FETCH_UNUSED(hash);
   char const *LOGGING_NAME = "RunSmartContract";
-  auto        module       = vm::VMFactory::GetModule();
+  auto        module       = vm_modules::VMFactory::GetModule();
 
   // Compile source, get runnable script
   fetch::vm::Script        script;
-  std::vector<std::string> errors = vm::VMFactory::Compile(module, source, script);
+  std::vector<std::string> errors = vm_modules::VMFactory::Compile(module, source, script);
 
   for (auto const &error : errors)
   {
@@ -118,7 +118,7 @@ bool SmartContract::RunSmartContract(std::string &source, byte_array::ConstByteA
   fetch::vm::Variant output;
 
   // Get clean VM instance
-  auto vm = vm::VMFactory::GetVM(module);
+  auto vm = vm_modules::VMFactory::GetVM(module);
 
   DatabaseInterface interface{this};
 
@@ -177,9 +177,9 @@ bool SmartContract::SetupHandlers()
     source_ = std::string{FromBase64(contract_source)};
   }
 
-  auto                     module = vm::VMFactory::GetModule();
+  auto                     module = vm_modules::VMFactory::GetModule();
   fetch::vm::Script        script;
-  std::vector<std::string> errors = vm::VMFactory::Compile(module, source_, script);
+  std::vector<std::string> errors = vm_modules::VMFactory::Compile(module, source_, script);
 
   if (errors.size() == 0)
   {

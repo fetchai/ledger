@@ -26,6 +26,8 @@
 #include <fstream>
 #include <sstream>
 
+#include "vm/vm.hpp"
+
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/type_convert.hpp"
 #include "vm_modules/math/abs.hpp"
@@ -80,13 +82,9 @@ int main(int argc, char **argv)
   fetch::vm::Variant       output;
   std::vector<std::string> print_strings;
 
-<<<<<<< HEAD
-  fetch::vm::VM vm(&module);
-  if (!vm.Execute(script, "main", error, print_strings, output))
-=======
   fetch::vm::VM vm(module.get());
-  if (!vm.Execute(script, "main", error, output))
->>>>>>> develop
+
+  if (!vm.Execute(script, "main", error, print_strings, output))
   {
     std::cout << "Runtime error on line " << error << std::endl;
   }
