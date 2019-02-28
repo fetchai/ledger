@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/vm_factory.hpp"
 #include "vm/state_sentinel.hpp"
+#include "vm_modules/vm_factory.hpp"
 
 #include <gtest/gtest.h>
 
