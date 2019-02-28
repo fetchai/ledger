@@ -43,9 +43,9 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual void         Step(typename T::Type learningRate)                     = 0;
-  virtual StateDict<T> StateDict() const                                       = 0;
-  virtual void         LoadStateDict(fetch::ml::ops::StateDict<T> const &dict) = 0;
+  virtual void                Step(typename T::Type learningRate)                     = 0;
+  virtual struct StateDict<T> StateDict() const                                       = 0;
+  virtual void                LoadStateDict(fetch::ml::ops::StateDict<T> const &dict) = 0;
 };
 
 template <class T>
@@ -88,14 +88,15 @@ public:
     gradientAccumulation_->Fill(typename T::Type(0));
   }
 
-  virtual StateDict<T> StateDict() const
+  virtual struct StateDict<T> StateDict() const
   {
-    fetch::ml::ops::StateDict<T> d;
+    struct fetch::ml::ops::StateDict<T> d;
     d.weights_ = this->output_;
     return d;
   }
 
-  virtual void LoadStateDict(fetch::ml::ops::StateDict<T> const &dict)
+  virtual void
+  LoadStateDict(struct fetch::ml::ops::StateDict<T> const &dict)
   {
     assert(dict.dict_.empty());
     SetData(dict.weights_);
