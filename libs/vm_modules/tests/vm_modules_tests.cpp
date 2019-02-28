@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/vm_factory.hpp"
+#include "vm_modules/vm_factory.hpp"
 #include <gtest/gtest.h>
 
 using namespace fetch;
-using namespace fetch::vm;
+using namespace fetch::vm_modules;
 
 // Wrapper class for strings/memory to avoid needing byte array from core code
 class ByteWrapper

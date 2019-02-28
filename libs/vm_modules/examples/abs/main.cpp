@@ -45,14 +45,14 @@ int main(int argc, char **argv)
   const std::string source = ss.str();
   file.close();
 
-  fetch::vm::Module module{};
+  auto module = std::make_shared<fetch::vm::Module>();
 
   fetch::vm_modules::CreatePrint(module);
   fetch::vm_modules::CreateToString(module);
   fetch::vm_modules::CreateAbs(module);
 
   // Setting compiler up
-  fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(&module);
+  fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(module.get());
   fetch::vm::Script        script;
   std::vector<std::string> errors;
 
@@ -80,8 +80,13 @@ int main(int argc, char **argv)
   fetch::vm::Variant       output;
   std::vector<std::string> print_strings;
 
+<<<<<<< HEAD
   fetch::vm::VM vm(&module);
   if (!vm.Execute(script, "main", error, print_strings, output))
+=======
+  fetch::vm::VM vm(module.get());
+  if (!vm.Execute(script, "main", error, output))
+>>>>>>> develop
   {
     std::cout << "Runtime error on line " << error << std::endl;
   }

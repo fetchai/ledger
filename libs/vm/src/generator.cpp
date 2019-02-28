@@ -200,6 +200,7 @@ void Generator::HandleBlock(BlockNodePtr const &block)
       break;
     }
     case Node::Kind::AssignOp:
+    case Node::Kind::ModuloAssignOp:
     case Node::Kind::AddAssignOp:
     case Node::Kind::SubtractAssignOp:
     case Node::Kind::MultiplyAssignOp:
@@ -575,40 +576,51 @@ void Generator::HandleAssignmentStatement(ExpressionNodePtr const &node)
     }
     break;
   }
+  case Node::Kind::ModuloAssignOp:
+  {
+    if (assigning_to_variable)
+    {
+      opcode = Opcodes::VariableModuloAssign;
+    }
+    else  // assigning to element
+    {
+      opcode = Opcodes::ElementModuloAssign;
+    }
+    break;
+  }
   case Node::Kind::AddAssignOp:
   {
     opcode = GetArithmeticAssignmentOpcode(
-        assigning_to_variable, lhs_is_primitive, rhs_is_primitive,
-        Opcodes::VariablePrimitiveAddAssign, Opcodes::VariableRightAddAssign,
-        Opcodes::VariableObjectAddAssign, Opcodes::ElementPrimitiveAddAssign,
-        Opcodes::ElementRightAddAssign, Opcodes::ElementObjectAddAssign);
+        assigning_to_variable, lhs_is_primitive, rhs_is_primitive, Opcodes::VariableAddAssign,
+        Opcodes::VariableRightAddAssign, Opcodes::VariableObjectAddAssign,
+        Opcodes::ElementAddAssign, Opcodes::ElementRightAddAssign, Opcodes::ElementObjectAddAssign);
     break;
   }
   case Node::Kind::SubtractAssignOp:
   {
     opcode = GetArithmeticAssignmentOpcode(
-        assigning_to_variable, lhs_is_primitive, rhs_is_primitive,
-        Opcodes::VariablePrimitiveSubtractAssign, Opcodes::VariableRightSubtractAssign,
-        Opcodes::VariableObjectSubtractAssign, Opcodes::ElementPrimitiveSubtractAssign,
-        Opcodes::ElementRightSubtractAssign, Opcodes::ElementObjectSubtractAssign);
+        assigning_to_variable, lhs_is_primitive, rhs_is_primitive, Opcodes::VariableSubtractAssign,
+        Opcodes::VariableRightSubtractAssign, Opcodes::VariableObjectSubtractAssign,
+        Opcodes::ElementSubtractAssign, Opcodes::ElementRightSubtractAssign,
+        Opcodes::ElementObjectSubtractAssign);
     break;
   }
   case Node::Kind::MultiplyAssignOp:
   {
     opcode = GetArithmeticAssignmentOpcode(
-        assigning_to_variable, lhs_is_primitive, rhs_is_primitive,
-        Opcodes::VariablePrimitiveMultiplyAssign, Opcodes::VariableRightMultiplyAssign,
-        Opcodes::VariableObjectMultiplyAssign, Opcodes::ElementPrimitiveMultiplyAssign,
-        Opcodes::ElementRightMultiplyAssign, Opcodes::ElementObjectMultiplyAssign);
+        assigning_to_variable, lhs_is_primitive, rhs_is_primitive, Opcodes::VariableMultiplyAssign,
+        Opcodes::VariableRightMultiplyAssign, Opcodes::VariableObjectMultiplyAssign,
+        Opcodes::ElementMultiplyAssign, Opcodes::ElementRightMultiplyAssign,
+        Opcodes::ElementObjectMultiplyAssign);
     break;
   }
   case Node::Kind::DivideAssignOp:
   {
     opcode = GetArithmeticAssignmentOpcode(
-        assigning_to_variable, lhs_is_primitive, rhs_is_primitive,
-        Opcodes::VariablePrimitiveDivideAssign, Opcodes::VariableRightDivideAssign,
-        Opcodes::VariableObjectDivideAssign, Opcodes::ElementPrimitiveDivideAssign,
-        Opcodes::ElementRightDivideAssign, Opcodes::ElementObjectDivideAssign);
+        assigning_to_variable, lhs_is_primitive, rhs_is_primitive, Opcodes::VariableDivideAssign,
+        Opcodes::VariableRightDivideAssign, Opcodes::VariableObjectDivideAssign,
+        Opcodes::ElementDivideAssign, Opcodes::ElementRightDivideAssign,
+        Opcodes::ElementObjectDivideAssign);
     break;
   }
   default:
@@ -736,6 +748,7 @@ void Generator::HandleExpression(ExpressionNodePtr const &node)
     HandleIncDecOp(node);
     break;
   }
+  case Node::Kind::ModuloOp:
   case Node::Kind::AddOp:
   case Node::Kind::SubtractOp:
   case Node::Kind::MultiplyOp:
@@ -962,17 +975,23 @@ void Generator::HandleBinaryOp(ExpressionNodePtr const &node)
 
   switch (node->kind)
   {
+  case Node::Kind::ModuloOp:
+  {
+    opcode  = Opcodes::Modulo;
+    type_id = node->type->id;
+    break;
+  }
   case Node::Kind::AddOp:
   {
-    opcode  = GetArithmeticOpcode(lhs_is_primitive, rhs_is_primitive, Opcodes::PrimitiveAdd,
-                                 Opcodes::LeftAdd, Opcodes::RightAdd, Opcodes::ObjectAdd);
+    opcode = GetArithmeticOpcode(lhs_is_primitive, rhs_is_primitive, Opcodes::Add, Opcodes::LeftAdd,
+                                 Opcodes::RightAdd, Opcodes::ObjectAdd);
     type_id = node->type->id;
     break;
   }
   case Node::Kind::SubtractOp:
   {
     opcode =
-        GetArithmeticOpcode(lhs_is_primitive, rhs_is_primitive, Opcodes::PrimitiveSubtract,
+        GetArithmeticOpcode(lhs_is_primitive, rhs_is_primitive, Opcodes::Subtract,
                             Opcodes::LeftSubtract, Opcodes::RightSubtract, Opcodes::ObjectSubtract);
     type_id = node->type->id;
     break;
@@ -980,28 +999,21 @@ void Generator::HandleBinaryOp(ExpressionNodePtr const &node)
   case Node::Kind::MultiplyOp:
   {
     opcode =
-        GetArithmeticOpcode(lhs_is_primitive, rhs_is_primitive, Opcodes::PrimitiveMultiply,
+        GetArithmeticOpcode(lhs_is_primitive, rhs_is_primitive, Opcodes::Multiply,
                             Opcodes::LeftMultiply, Opcodes::RightMultiply, Opcodes::ObjectMultiply);
     type_id = node->type->id;
     break;
   }
   case Node::Kind::DivideOp:
   {
-    opcode  = GetArithmeticOpcode(lhs_is_primitive, rhs_is_primitive, Opcodes::PrimitiveDivide,
+    opcode  = GetArithmeticOpcode(lhs_is_primitive, rhs_is_primitive, Opcodes::Divide,
                                  Opcodes::LeftDivide, Opcodes::RightDivide, Opcodes::ObjectDivide);
     type_id = node->type->id;
     break;
   }
   case Node::Kind::EqualOp:
   {
-    if (lhs_is_primitive)
-    {
-      opcode = Opcodes::PrimitiveEqual;
-    }
-    else
-    {
-      opcode = Opcodes::ObjectEqual;
-    }
+    opcode = lhs_is_primitive ? Opcodes::Equal : Opcodes::ObjectEqual;
     if ((lhs->type->id == TypeIds::Null) && (rhs->type->id == TypeIds::Null))
     {
       // Type-uninferable nulls (e.g. in "null == null") are transformed to integral zero
@@ -1015,14 +1027,7 @@ void Generator::HandleBinaryOp(ExpressionNodePtr const &node)
   }
   case Node::Kind::NotEqualOp:
   {
-    if (lhs_is_primitive)
-    {
-      opcode = Opcodes::PrimitiveNotEqual;
-    }
-    else
-    {
-      opcode = Opcodes::ObjectNotEqual;
-    }
+    opcode = lhs_is_primitive ? Opcodes::NotEqual : Opcodes::ObjectNotEqual;
     if ((lhs->type->id == TypeIds::Null) && (rhs->type->id == TypeIds::Null))
     {
       // Type-uninferable nulls (e.g. in "null == null") are transformed to integral zero
@@ -1036,25 +1041,25 @@ void Generator::HandleBinaryOp(ExpressionNodePtr const &node)
   }
   case Node::Kind::LessThanOp:
   {
-    opcode  = Opcodes::PrimitiveLessThan;
+    opcode  = lhs_is_primitive ? Opcodes::LessThan : Opcodes::ObjectLessThan;
     type_id = lhs->type->id;
     break;
   }
   case Node::Kind::LessThanOrEqualOp:
   {
-    opcode  = Opcodes::PrimitiveLessThanOrEqual;
+    opcode  = lhs_is_primitive ? Opcodes::LessThanOrEqual : Opcodes::ObjectLessThanOrEqual;
     type_id = lhs->type->id;
     break;
   }
   case Node::Kind::GreaterThanOp:
   {
-    opcode  = Opcodes::PrimitiveGreaterThan;
+    opcode  = lhs_is_primitive ? Opcodes::GreaterThan : Opcodes::ObjectGreaterThan;
     type_id = lhs->type->id;
     break;
   }
   case Node::Kind::GreaterThanOrEqualOp:
   {
-    opcode  = Opcodes::PrimitiveGreaterThanOrEqual;
+    opcode  = lhs_is_primitive ? Opcodes::GreaterThanOrEqual : Opcodes::ObjectGreaterThanOrEqual;
     type_id = lhs->type->id;
     break;
   }
@@ -1098,7 +1103,7 @@ void Generator::HandleUnaryOp(ExpressionNodePtr const &node)
   {
   case Node::Kind::UnaryMinusOp:
   {
-    opcode  = is_primitive ? Opcodes::PrimitiveUnaryMinus : Opcodes::ObjectUnaryMinus;
+    opcode  = is_primitive ? Opcodes::UnaryMinus : Opcodes::ObjectUnaryMinus;
     type_id = node->type->id;
     break;
   }

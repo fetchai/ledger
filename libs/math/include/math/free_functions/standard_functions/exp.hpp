@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/fixed_point/fixed_point.hpp"
 #include "math/kernels/standard_functions/exp.hpp"
 #include "math/meta/math_type_traits.hpp"
 
@@ -28,23 +29,55 @@
 namespace fetch {
 namespace math {
 
+template <typename T>
+fetch::math::meta::IfIsArithmetic<T, void> Exp(T &x, T &ret)
+{
+  ret = std::exp(x);
+}
+template <typename T>
+fetch::math::meta::IfIsArithmetic<T, void> Exp(T &x)
+{
+  Exp(x, x);
+}
+
+template <std::size_t I, std::size_t F>
+void Exp(fixed_point::FixedPoint<I, F> &x)
+{
+  x = fixed_point::FixedPoint<I, F>(std::exp(double(x)));
+}
+
 template <typename ArrayType>
-fetch::math::meta::IfIsMathArray<ArrayType, void> Exp(ArrayType &x)
+fetch::math::meta::IfIsBlasArray<ArrayType, void> Exp(ArrayType &x)
 {
   free_functions::kernels::Exp<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-template <typename Type>
-fetch::math::meta::IfIsArithmetic<Type, void> Exp(Type &x)
+template <typename ArrayType>
+fetch::math::meta::IfIsNonBlasArray<ArrayType, void> Exp(ArrayType &x)
 {
-  x = std::exp(x);
+  for (typename ArrayType::Type &e : x)
+  {
+    Exp(e);
+  }
+}
+template <typename ArrayType>
+fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> Exp(ArrayType &x)
+{
+  for (typename ArrayType::Type &e : x)
+  {
+    Exp(e);
+  }
 }
 
-template <std::size_t I, std::size_t F>
-void Exp(fetch::fixed_point::FixedPoint<I, F> &x)
+template <typename T>
+fetch::math::meta::IfIsMathArray<T, void> Exp(T const &array, T &ret)
 {
-  x = fetch::fixed_point::FixedPoint<I, F>(std::exp(double(x)));
+  ret = array;
+  for (typename T::Type &e : ret)
+  {
+    Exp(e);
+  }
 }
 
 }  // namespace math

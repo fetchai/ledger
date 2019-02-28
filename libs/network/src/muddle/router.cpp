@@ -441,7 +441,7 @@ Router::Response Router::Exchange(Address const &address, uint16_t service, uint
   uint16_t const counter = dispatcher_.GetNextCounter();
 
   // register with the dispatcher that we are expecting a response
-  auto promise = dispatcher_.RegisterExchange(service, channel, counter);
+  auto promise = dispatcher_.RegisterExchange(service, channel, counter, address);
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange Request: ", ToBase64(address), " (", service, '-',
                   channel, '-', counter, ") prom: ", promise->id());

@@ -125,7 +125,7 @@ TYPED_TEST(TensorOperationsTest, transpose_test)
   {
     for (std::uint64_t j(0); j < 5; ++j)
     {
-      EXPECT_EQ(t1.Get({i, j}), t2.Get({j, i}));
+      EXPECT_EQ(t1.At({i, j}), t2.At({j, i}));
     }
   }
 }
@@ -146,7 +146,7 @@ TYPED_TEST(TensorOperationsTest, transpose_with_stride_test)
   {
     for (std::uint64_t j(0); j < 5; ++j)
     {
-      EXPECT_EQ(t1.Get({i, j}), t2.Get({j, i}));
+      EXPECT_EQ(t1.At({i, j}), t2.At({j, i}));
     }
   }
 }
@@ -219,4 +219,37 @@ TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
   EXPECT_EQ(t3.At(12), TypeParam(19));
   EXPECT_EQ(t3.At(13), TypeParam(24));
   EXPECT_EQ(t3.At(14), TypeParam(29));
+}
+
+TYPED_TEST(TensorOperationsTest, shuffle_test)
+{
+  // instantiate tensor with 0-5 in order
+  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({1, 5}));
+  for (std::uint64_t i(0); i < t1.size(); ++i)
+  {
+    t1.At(i) = TypeParam(i);
+  }
+
+  t1.Shuffle();
+
+  // some double type casting in this test until FixedPoint is updated with more operators later
+  std::vector<bool> all_present(static_cast<std::size_t>(int(t1.size())), false);
+
+  bool double_access = false;
+  for (std::size_t j = 0; j < t1.size(); ++j)
+  {
+    if (!all_present[static_cast<std::size_t>(int(t1.At(j)))])
+    {
+      all_present[static_cast<std::size_t>(int(t1.At(j)))] = true;
+    }
+    else
+    {
+      double_access = true;
+    }
+  }
+  EXPECT_FALSE(double_access);
+  for (std::size_t j = 0; j < t1.size(); ++j)
+  {
+    EXPECT_TRUE(all_present[j]);
+  }
 }
