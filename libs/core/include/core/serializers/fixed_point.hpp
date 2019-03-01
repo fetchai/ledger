@@ -17,30 +17,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
+#include "core/fixed_point/fixed_point.hpp"
 
 namespace fetch {
-namespace ledger {
-class Block;
-}  // namespace ledger
-}  // namespace fetch
+namespace serializers {
 
-class BlockGenerator
+template <typename T, std::size_t I, std::size_t F>
+inline void Serialize(T &serializer, fixed_point::FixedPoint<I, F> const &n)
 {
-public:
-  using Block    = fetch::ledger::Block;
-  using BlockPtr = std::shared_ptr<Block>;
+  serializer << n.Data();
+}
 
-  BlockGenerator(std::size_t num_lanes, std::size_t num_slices);
+template <typename T, std::size_t I, std::size_t F>
+inline void Deserialize(T &serializer, fixed_point::FixedPoint<I, F> &n)
+{
+  typename fixed_point::FixedPoint<I, F>::Type data;
+  serializer >> data;
+  n = fixed_point::FixedPoint<I, F>::FromBase(data);
+}
 
-  void Reset();
-
-  BlockPtr Generate(BlockPtr const &from = BlockPtr{}, uint64_t weight = 1u);
-
-  BlockPtr operator()(BlockPtr const &from = BlockPtr{}, uint64_t weight = 1u);
-
-private:
-  uint64_t    block_count_{0};
-  std::size_t num_slices_{0};
-  uint32_t    log2_num_lanes_{0};
-};
+}  // namespace serializers
+}  // namespace fetch

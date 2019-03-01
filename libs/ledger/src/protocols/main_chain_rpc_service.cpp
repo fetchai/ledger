@@ -269,7 +269,6 @@ void MainChainRpcService::ServiceLooseBlocks()
 
 void MainChainRpcService::RequestedChainArrived(Address const &address, BlockList block_list)
 {
-  bool new_data = false;
   for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
   {
     // recompute the digest
@@ -278,29 +277,25 @@ void MainChainRpcService::RequestedChainArrived(Address const &address, BlockLis
     // add the block
     if (it->proof())
     {
-      new_data |= chain_.AddBlock(*it);
-    }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Invalid Block Recv: ", ToBase64(it->body.hash));
-    }
-  }
+      auto const status = chain_.AddBlock(*it);
 
-  if (new_data && !block_list.empty())
-  {
-    Block blk;
-    if (chain_.Get(block_list.back().body.hash, blk))
-    {
-      blk.UpdateDigest();
-      if (blk.is_loose)
+      if (BlockStatus::ADDED == status)
       {
-        AddLooseBlock(block_list.back().body.hash, address);
+        FETCH_LOG_INFO(LOGGING_NAME, "Received Block: ", ToBase64(it->body.hash),
+                       " from: ", ToBase64(address));
+      }
+      else if (BlockStatus::LOOSE == status)
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Received Loose Block: ", ToBase64(it->body.hash),
+                       " from: ", ToBase64(address));
+
+        // request the loose block to the remote?
+        AddLooseBlock(it->body.hash, address);
       }
     }
     else
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Could not Get() recently added block ",
-                      ToBase64(block_list.back().body.hash), " from the block store!");
+      FETCH_LOG_WARN(LOGGING_NAME, "Invalid Block Recv: ", ToBase64(it->body.hash));
     }
   }
 }

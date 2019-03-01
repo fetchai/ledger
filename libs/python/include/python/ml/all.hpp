@@ -23,6 +23,7 @@
 #include "python/ml/ops/py_fully_connected.hpp"
 #include "python/ml/ops/py_mean_square_error.hpp"
 #include "python/ml/ops/py_relu.hpp"
+#include "python/ml/ops/py_state_dict.hpp"
 #include "python/ml/py_graph.hpp"
 
 namespace py = pybind11;
@@ -33,6 +34,7 @@ namespace ml {
 template <typename T>
 void BuildMLLibrary(pybind11::module &module)
 {
+  fetch::ml::ops::BuildStateDict<T>("StateDict", module);
   fetch::ml::BuildGraph<T>("Graph", module);
   fetch::ml::ops::BuildRelu<T>("Relu", module);
   fetch::ml::ops::BuildFullyConnected<T>("FullyConnected", module);

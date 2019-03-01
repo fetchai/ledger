@@ -19,8 +19,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
-
-#include "block_generator.hpp"
+#include "ledger/testing/block_generator.hpp"
 
 #include <gtest/gtest.h>
 
@@ -30,12 +29,15 @@
 
 namespace {
 
-using fetch::ledger::Block;
 using fetch::ledger::MainChain;
+using fetch::ledger::BlockStatus;
+using fetch::byte_array::ToBase64;  // NOLINT - needed for debug messages
+using fetch::ledger::testing::BlockGenerator;
 
-using MainChainPtr = std::unique_ptr<MainChain>;
-using BlockPtr     = std::shared_ptr<Block>;
-using Blocks       = std::vector<BlockPtr>;
+using MainChainPtr    = std::unique_ptr<MainChain>;
+using BlockPtr        = MainChain::BlockPtr;
+using MutableBlockPtr = BlockGenerator::BlockPtr;
+using Blocks          = std::vector<MutableBlockPtr>;
 
 class MainChainSubTreeTests : public ::testing::Test
 {
@@ -47,7 +49,7 @@ protected:
   {
     block_generator_.Reset();
 
-    chain_ = std::make_unique<MainChain>(true);
+    chain_ = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
   }
 
   void TearDown() override
@@ -79,7 +81,7 @@ static bool AreEqual(MainChain::Blocks const &actual, Blocks const &expected)
   if (actual.size() == expected.size())
   {
     equal = std::equal(actual.begin(), actual.end(), expected.begin(), expected.end(),
-                       [](auto const &a, auto const &b) { return a.body.hash == b->body.hash; });
+                       [](auto const &a, auto const &b) { return a->body.hash == b->body.hash; });
   }
 
   return equal;
@@ -101,25 +103,27 @@ TEST_F(MainChainSubTreeTests, CheckSimpleTree)
   auto b2      = block_generator_(genesis);
 
   // add the blocks to the main chain
-  ASSERT_FALSE(chain_->AddBlock(*genesis));  // genesis is always present
-  ASSERT_TRUE(chain_->AddBlock(*b1));
-  ASSERT_TRUE(chain_->AddBlock(*b2));
+  ASSERT_EQ(BlockStatus::DUPLICATE, chain_->AddBlock(*genesis));  // genesis is always present
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*b1));
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*b2));
 
-  Block blk;
-  ASSERT_TRUE(chain_->Get(b2->body.hash, blk));
-  EXPECT_FALSE(blk.is_loose);
-  EXPECT_EQ(blk.body.hash, b2->body.hash);
-  EXPECT_EQ(blk.body.previous_hash, b2->body.previous_hash);
+  BlockPtr blk = chain_->GetBlock(b2->body.hash);
+  ASSERT_TRUE(blk);
+  EXPECT_FALSE(blk->is_loose);
+  EXPECT_EQ(blk->body.hash, b2->body.hash);
+  EXPECT_EQ(blk->body.previous_hash, b2->body.previous_hash);
 
-  ASSERT_TRUE(chain_->Get(b1->body.hash, blk));
-  EXPECT_FALSE(blk.is_loose);
-  EXPECT_EQ(blk.body.hash, b1->body.hash);
-  EXPECT_EQ(blk.body.previous_hash, b1->body.previous_hash);
+  blk = chain_->GetBlock(b1->body.hash);
+  ASSERT_TRUE(blk);
+  EXPECT_FALSE(blk->is_loose);
+  EXPECT_EQ(blk->body.hash, b1->body.hash);
+  EXPECT_EQ(blk->body.previous_hash, b1->body.previous_hash);
 
-  ASSERT_TRUE(chain_->Get(genesis->body.hash, blk));
-  EXPECT_FALSE(blk.is_loose);
-  EXPECT_EQ(blk.body.hash, genesis->body.hash);
-  EXPECT_EQ(blk.body.previous_hash, genesis->body.previous_hash);
+  blk = chain_->GetBlock(genesis->body.hash);
+  ASSERT_TRUE(blk);
+  EXPECT_FALSE(blk->is_loose);
+  EXPECT_EQ(blk->body.hash, genesis->body.hash);
+  EXPECT_EQ(blk->body.previous_hash, genesis->body.previous_hash);
 }
 
 TEST_F(MainChainSubTreeTests, CheckCommonSubTree)
@@ -142,15 +146,15 @@ TEST_F(MainChainSubTreeTests, CheckCommonSubTree)
   // add the blocks to the main chain
   for (auto const &block : Blocks{b1, b2, b3})
   {
-    chain_->AddBlock(*block);
+    ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*block));
   }
 
   MainChain::Blocks blocks;
   EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, b3->body.hash, b1->body.hash));
   ASSERT_EQ(3, blocks.size());
-  EXPECT_EQ(b3->body.hash, blocks[0].body.hash);
-  EXPECT_EQ(b2->body.hash, blocks[1].body.hash);
-  EXPECT_EQ(genesis->body.hash, blocks[2].body.hash);
+  EXPECT_EQ(b3->body.hash, blocks[0]->body.hash);
+  EXPECT_EQ(b2->body.hash, blocks[1]->body.hash);
+  EXPECT_EQ(genesis->body.hash, blocks[2]->body.hash);
 }
 
 TEST_F(MainChainSubTreeTests, CheckCommonSubTree2)
@@ -173,15 +177,15 @@ TEST_F(MainChainSubTreeTests, CheckCommonSubTree2)
   // add the blocks to the main chain
   for (auto const &block : Blocks{b1, b2, b3})
   {
-    chain_->AddBlock(*block);
+    ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*block));
   }
 
   MainChain::Blocks blocks;
   EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, b1->body.hash, b3->body.hash));
 
   ASSERT_EQ(2, blocks.size());
-  EXPECT_EQ(b1->body.hash, blocks[0].body.hash);
-  EXPECT_EQ(genesis->body.hash, blocks[1].body.hash);
+  EXPECT_EQ(b1->body.hash, blocks[0]->body.hash);
+  EXPECT_EQ(genesis->body.hash, blocks[1]->body.hash);
 }
 
 TEST_F(MainChainSubTreeTests, CheckLooseBlocks)
@@ -202,21 +206,21 @@ TEST_F(MainChainSubTreeTests, CheckLooseBlocks)
   auto b3      = block_generator_(b2);
 
   // add the blocks to the main chain
-  ASSERT_TRUE(chain_->AddBlock(*b1));
-  ASSERT_TRUE(chain_->AddBlock(*b3));
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*b1));
+  ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*b3));
 
   MainChain::Blocks blocks;
   EXPECT_FALSE(chain_->GetPathToCommonAncestor(blocks, b3->body.hash, b1->body.hash));
 
   // missing block turns up
-  ASSERT_TRUE(chain_->AddBlock(*b2));
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*b2));
 
   // ensure that the sub tree can now be located
   EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, b3->body.hash, b1->body.hash));
   ASSERT_EQ(3, blocks.size());
-  EXPECT_EQ(b3->body.hash, blocks[0].body.hash);
-  EXPECT_EQ(b2->body.hash, blocks[1].body.hash);
-  EXPECT_EQ(genesis->body.hash, blocks[2].body.hash);
+  EXPECT_EQ(b3->body.hash, blocks[0]->body.hash);
+  EXPECT_EQ(b2->body.hash, blocks[1]->body.hash);
+  EXPECT_EQ(genesis->body.hash, blocks[2]->body.hash);
 }
 
 TEST_F(MainChainSubTreeTests, ComplicatedSubTrees)
@@ -276,7 +280,7 @@ TEST_F(MainChainSubTreeTests, ComplicatedSubTrees)
   // add all the blocks to the chain
   for (std::size_t i = 1; i < chain.size(); ++i)
   {
-    ASSERT_TRUE(chain_->AddBlock(*chain[i]));
+    ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*chain[i]));
   }
 
   // B13 vs. B12

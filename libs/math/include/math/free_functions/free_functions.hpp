@@ -23,6 +23,7 @@
 #include "math/free_functions/deep_learning/activation_functions.hpp"
 #include "math/free_functions/deep_learning/loss_functions.hpp"
 #include "math/free_functions/exponentiation/exponentiation.hpp"
+#include "math/free_functions/fundamental_operators.hpp"
 #include "math/free_functions/iteration/iteration.hpp"
 #include "math/free_functions/matrix_operations/matrix_operations.hpp"
 #include "math/free_functions/numerical_decomposition/numerical_decomposition.hpp"

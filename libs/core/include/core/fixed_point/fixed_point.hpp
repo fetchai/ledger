@@ -275,6 +275,11 @@ public:
     return data_ == o.data_;
   }
 
+  bool operator!=(const FixedPoint &o) const
+  {
+    return data_ != o.data_;
+  }
+
   bool operator<(const FixedPoint &o) const
   {
     return data_ < o.data_;
@@ -475,6 +480,11 @@ public:
   void Swap(FixedPoint &rhs)
   {
     std::swap(data_, rhs.data_);
+  }
+
+  Type Data() const
+  {
+    return data_;
   }
 
 private:

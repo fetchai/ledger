@@ -42,7 +42,6 @@
 #include "python/math/py_bignumber.hpp"
 #include "python/math/py_exp.hpp"
 #include "python/math/py_log.hpp"
-#include "python/math/py_ndarray.hpp"
 #include "python/math/py_tensor.hpp"
 #include "python/math/spline/py_linear.hpp"
 
@@ -184,8 +183,8 @@ PYBIND11_MODULE(fetch, module)
   //  fetch::math::BuildExp< 0, 60801, false>("Exp0", ns_fetch_math);
   //  fetch::math::BuildLog(ns_fetch_math);
 
-  fetch::math::BuildNDArray<float>("NDArrayFloat", ns_fetch_math);
-  fetch::math::BuildNDArray<double>("NDArrayDouble", ns_fetch_math);
+  //  fetch::math::BuildNDArray<float>("NDArrayFloat", ns_fetch_math);
+  //  fetch::math::BuildNDArray<double>("NDArrayDouble", ns_fetch_math);
   //  fetch::math::BuildNDArray<std::size_t>("NDArrayUInt", ns_fetch_math);
 
   //  fetch::math::BuildSpline(ns_fetch_math_spline);

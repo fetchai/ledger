@@ -22,13 +22,15 @@
 #include "ledger/chain/main_chain.hpp"
 #include "network/service/protocol.hpp"
 
+#include <algorithm>
+
 namespace fetch {
 namespace ledger {
 
 class MainChainProtocol : public service::Protocol
 {
 public:
-  using Blocks    = MainChain::Blocks;
+  using Blocks    = std::vector<Block>;
   using BlockHash = Block::Digest;
 
   enum
@@ -48,13 +50,26 @@ private:
   Blocks GetHeaviestChain(uint32_t maxsize)
   {
     LOG_STACK_TRACE_POINT;
-    return chain_.HeaviestChain(maxsize);
+    return Copy(chain_.GetHeaviestChain(maxsize));
   }
 
   Blocks GetChainPreceding(BlockHash const &at, uint32_t maxsize)
   {
     LOG_STACK_TRACE_POINT;
-    return chain_.ChainPreceding(at, maxsize);
+    return Copy(chain_.GetChainPreceding(at, maxsize));
+  }
+
+  static Blocks Copy(MainChain::Blocks const &blocks)
+  {
+    Blocks output{};
+    output.reserve(blocks.size());
+
+    for (auto const &block : blocks)
+    {
+      output.emplace_back(*block);
+    }
+
+    return output;
   }
 
   MainChain &chain_;

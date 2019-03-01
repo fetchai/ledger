@@ -38,6 +38,7 @@ public:
   using Clock     = std::chrono::steady_clock;
   using Timepoint = Clock::time_point;
   using Handle    = uint64_t;
+  using Address   = Packet::Address;
 
   static constexpr char const *LOGGING_NAME = "MuddleDispatch";
 
@@ -53,7 +54,8 @@ public:
 
   uint16_t GetNextCounter();
 
-  Promise RegisterExchange(uint16_t service, uint16_t channel, uint16_t counter);
+  Promise RegisterExchange(uint16_t service, uint16_t channel, uint16_t counter,
+                           Packet::Address const &address);
   bool    Dispatch(PacketPtr packet);
 
   void NotifyMessage(Handle handle, uint16_t service, uint16_t channel, uint16_t counter);
@@ -71,6 +73,7 @@ private:
   {
     Promise   promise   = service::MakePromise();
     Timepoint timestamp = Clock::now();
+    Address   address;
   };
 
   using PromiseMap = std::unordered_map<uint64_t, PromiseEntry>;

@@ -23,15 +23,39 @@ namespace fetch {
 namespace ml {
 namespace ops {
 
+// StateDict is an utility class to extract the network trainable parameter and serialize them for
+// saving / sharing
+template <class T>
+struct StateDict
+{
+  using ArrayType    = T;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  ArrayPtrType                        weights_;
+  std::map<std::string, StateDict<T>> dict_;
+
+  bool operator==(StateDict<T> const &o) const
+  {
+    return !((bool(weights_) ^ bool(o.weights_)) || (weights_ && (*weights_ != *(o.weights_))) ||
+             (dict_ != o.dict_));
+  }
+};
+
+// Trainaible provide an interface that needs to be matched by any ops that has trainable
+// parameters, that's how the Graph class know with tensors to update during a gradient step
 template <class T>
 class Trainable
 {
 public:
-  virtual void Step(T learningRate) = 0;
+  using ArrayType    = T;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
+
+  virtual void                Step(typename T::Type learningRate)                            = 0;
+  virtual struct StateDict<T> StateDict() const                                              = 0;
+  virtual void                LoadStateDict(struct fetch::ml::ops::StateDict<T> const &dict) = 0;
 };
 
 template <class T>
-class Weights : public fetch::ml::ops::PlaceHolder<T>, public Trainable<typename T::Type>
+class Weights : public fetch::ml::ops::PlaceHolder<T>, public Trainable<T>
 {
 public:
   using ArrayType    = T;
@@ -68,6 +92,20 @@ public:
     // Major DL framework do not do that, but as I can't think of any reason why, I'll leave it here
     // for convenience. Remove if needed -- Pierre
     gradientAccumulation_->Fill(typename T::Type(0));
+  }
+
+  virtual struct StateDict<T> StateDict() const
+  {
+    struct fetch::ml::ops::StateDict<T> d;
+    d.weights_ = this->output_;
+    return d;
+  }
+
+  virtual void
+  LoadStateDict(struct fetch::ml::ops::StateDict<T> const &dict)
+  {
+    assert(dict.dict_.empty());
+    SetData(dict.weights_);
   }
 
 protected:

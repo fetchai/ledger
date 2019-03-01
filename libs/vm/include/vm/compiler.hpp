@@ -71,6 +71,17 @@ private:
                                            return_type_id);
   }
 
+  void EnableOperator(TypeId type_id, Operator op)
+  {
+    analyser_.EnableOperator(type_id, op);
+  }
+
+  void EnableIndexOperator(TypeId type_id, TypeIdArray const &input_type_ids,
+                           TypeId const &output_type_id)
+  {
+    analyser_.EnableIndexOperator(type_id, input_type_ids, output_type_id);
+  }
+
   Parser    parser_;
   Analyser  analyser_;
   Generator generator_;

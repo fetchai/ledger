@@ -91,12 +91,13 @@ std::size_t calculateNumCombinations(std::size_t n, std::size_t r)
  * @return - Matrix of size (num possible combinations, r), where each row contains a unique
  * combination of r items
  */
-fetch::math::Tensor<double> combinations(std::size_t n, std::size_t r)
+template <typename ArrayType>
+ArrayType combinations(std::size_t n, std::size_t r)
 {
   assert(r <= n);
   if (r == 0)
   {
-    fetch::math::Tensor<double> output_array({});
+    ArrayType output_array({});
     return output_array;
   }
 
@@ -107,7 +108,7 @@ fetch::math::Tensor<double> combinations(std::size_t n, std::size_t r)
   std::vector<bool> v(n);
   std::fill(v.end() - static_cast<int>(r), v.end(), true);
 
-  fetch::math::Tensor<double> output_array({r, n_combinations});
+  ArrayType output_array({r, n_combinations});
   do
   {
     for (std::size_t i = 0; i < n; ++i)

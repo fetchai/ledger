@@ -20,6 +20,7 @@
 #include "core/mutex.hpp"
 #include "core/state_machine.hpp"
 #include "ledger/chain/block.hpp"
+#include "ledger/chain/main_chain.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -179,7 +180,8 @@ private:
 
   //  using Super         = core::StateMachine<BlockCoordinatorState>;
   using Mutex           = fetch::mutex::Mutex;
-  using BlockPtr        = std::shared_ptr<Block>;
+  using BlockPtr        = MainChain::BlockPtr;
+  using NextBlockPtr    = std::unique_ptr<Block>;
   using PendingBlocks   = std::deque<BlockPtr>;
   using PendingStack    = std::vector<BlockPtr>;
   using Flag            = std::atomic<bool>;
@@ -206,6 +208,8 @@ private:
   /// @}
 
   bool            ScheduleCurrentBlock();
+  bool            ScheduleNextBlock();
+  bool            ScheduleBlock(Block const &block);
   ExecutionStatus QueryExecutorStatus();
   void            UpdateNextBlockTime();
 
@@ -233,7 +237,8 @@ private:
   Flag            mining_{false};     ///< Flag to signal if this node generating blocks
   BlockPeriod     block_period_;      ///< The desired period before a block is generated
   Timepoint       next_block_time_;   ///< THe next point that a block should be generated
-  BlockPtr        current_block_{};   ///< The pointer to the current block
+  BlockPtr        current_block_{};   ///< The pointer to the current block (read only)
+  NextBlockPtr    next_block_{};      ///< The next block being created (read / write)
   /// @}
 };
 
