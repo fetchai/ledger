@@ -959,15 +959,15 @@ template <typename ArrayType>
 meta::IfIsMathFixedPointArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
                                                       ArrayType &ret)
 {
-  assert(obj1.shape() == obj2.shape());
-  assert(ret.shape() == obj2.shape());
+  assert(obj1.size() == obj2.size());
+  assert(ret.size() == obj2.size());
   details::NaiveDivideArray(obj1, obj2, ret);
 }
 
 template <typename ArrayType>
 meta::IfIsMathFixedPointArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2)
 {
-  assert(obj1.shape() == obj2.shape());
+  assert(obj1.size() == obj2.size());
   ArrayType ret{obj1.shape()};
   Divide(obj1, obj2, ret);
   return ret;
