@@ -253,7 +253,7 @@ void ThreadPoolImplementation::ProcessLoop(std::size_t index)
         // double check the emptiness of the queue because there is a race here
         if (!work_.IsEmpty())
         {
-          FETCH_LOG_WARN(LOGGING_NAME, "Restarting the inactive thread (thread: ", index, " queue: ", name_, ')');
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Restarting the inactive thread (thread: ", index, " queue: ", name_, ')');
           continue;
         }
 

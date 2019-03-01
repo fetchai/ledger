@@ -205,8 +205,6 @@ protected:
       lane_data[i] = fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(lane_port));
     }
 
-//    storage_->Start();
-
     // --- Schedule executor for connection ---------------------
 
     executor_ = std::make_shared<ExecutorRpcClient>(*network_manager_, *muddle_);
@@ -296,7 +294,7 @@ protected:
   MuddlePtr muddle_;
 };
 
-TEST_F(ExecutorIntegrationTests, CheckDummyContract)
+TEST_F(ExecutorIntegrationTests, DISABLED_CheckDummyContract)
 {
   // create the dummy contract
   auto tx = CreateDummyTransaction();
@@ -308,7 +306,7 @@ TEST_F(ExecutorIntegrationTests, CheckDummyContract)
   EXPECT_EQ(status, fetch::ledger::ExecutorInterface::Status::SUCCESS);
 }
 
-TEST_F(ExecutorIntegrationTests, CheckTokenContract)
+TEST_F(ExecutorIntegrationTests, DISABLED_CheckTokenContract)
 {
   // create the dummy contract
   auto tx = CreateWalletTransaction();

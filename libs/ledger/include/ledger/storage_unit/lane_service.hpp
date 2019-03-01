@@ -86,6 +86,8 @@ public:
 
   bool SyncIsReady();
 
+  ShardConfig const &config() const { return cfg_; }
+
   LaneService &operator=(LaneService const &) = delete;
   LaneService &operator=(LaneService &&) = delete;
 

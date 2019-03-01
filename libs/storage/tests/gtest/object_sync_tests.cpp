@@ -174,23 +174,8 @@ LaneServicePtr CreateLaneService(uint16_t start_port, NetworkManager const &nm, 
   return std::make_shared<LaneService>(nm, cfg, LaneService::Mode::CREATE_DATABASE);
 }
 
-#if 0
-class TestService : public LaneService
-{
-public:
-  using Super = LaneService;
-
-  TestService(uint16_t port, NetworkManager const &tm, uint32_t lane = 0, uint32_t total_lanes = 1,
-              std::chrono::milliseconds timeout              = std::chrono::milliseconds(2000),
-              std::size_t               verification_threads = 1)
-    : Super("test_", lane, total_lanes, port, NetworkId{"Lane"}, tm,
-            verification_threads, true, timeout, std::chrono::milliseconds(1000),
-            std::chrono::milliseconds(1000))
-  {}
-};
-#endif
-
-TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_1)
+// TODO(private issue 686): Reinstate object store tests
+TEST(storage_object_store_sync_gtest, DISABLED_transaction_store_protocol_local_threads_1)
 {
   NetworkManager nm{"NetMgr", 1};
   nm.Start();
@@ -233,7 +218,7 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_1
   nm.Stop();
 }
 
-TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_50)
+TEST(storage_object_store_sync_gtest, DISABLED_transaction_store_protocol_local_threads_50)
 {
   NetworkManager nm{"NetMgr", 50};
   nm.Start();
@@ -273,7 +258,7 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_5
   nm.Stop();
 }
 
-TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_caching)
+TEST(storage_object_store_sync_gtest, DISABLED_transaction_store_protocol_local_threads_caching)
 {
   // TODO(unknown): (HUT) : make this work with 1 - find the post blocking the NM.
   NetworkManager nm{"NetMgr", 50};

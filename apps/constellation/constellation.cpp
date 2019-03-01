@@ -258,7 +258,6 @@ void Constellation::Run(UriList const &initial_peers)
 
   /// LANE / SHARD CLIENTS
 
-#if 1
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Inter-shard Identity: ", ToBase64(internal_muddle_.identity().identifier()));
 
@@ -298,23 +297,6 @@ void Constellation::Run(UriList const &initial_peers)
       std::this_thread::sleep_for(std::chrono::milliseconds{500});
     }
   }
-#else
-  // add the lane connections
-  storage_->SetNumberOfLanes(cfg_.num_lanes());
-
-  auto lane_connections_map = BuildLaneConnectionMap(cfg_.manifest, cfg_.num_lanes(), true);
-
-  std::size_t const count = storage_->AddLaneConnectionsWaiting(
-      BuildLaneConnectionMap(cfg_.manifest, cfg_.num_lanes(), true), LANE_CONNECTION_TIME);
-
-  // check to see if the connections where successful
-  if (count != cfg_.num_lanes())
-  {
-    FETCH_LOG_ERROR(LOGGING_NAME, "ERROR: Unable to establish connections to lane service (", count,
-                    " of ", cfg_.num_lanes(), ")");
-    return;
-  }
-#endif
 
   // reactor important to run the block/chain state machine
   reactor_.Start();
