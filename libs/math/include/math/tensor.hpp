@@ -334,6 +334,24 @@ public:
     return ret;
   }
 
+  /*
+   * Expensive Slice that is guaranteed to be const
+   */
+  Tensor<T> Slice(SizeType i) const
+  {
+    assert(shape_.size() > 1 && i < shape_[0]);
+
+    Tensor<T> tmp = this->Copy();
+    Tensor<T> ret(
+        std::vector<SizeType>(std::next(tmp.shape_.begin()), tmp.shape_.end()),     /* shape */
+        std::vector<SizeType>(std::next(tmp.strides_.begin()), tmp.strides_.end()), /* stride */
+        std::vector<SizeType>(std::next(tmp.padding_.begin()), tmp.padding_.end()), /* padding */
+        tmp.storage_, tmp.offset_ + i * DimensionSize(0));
+    ret.strides_ = std::vector<SizeType>(std::next(tmp.strides_.begin()), tmp.strides_.end());
+    ret.padding_ = std::vector<SizeType>(std::next(tmp.padding_.begin()), tmp.padding_.end());
+    return ret;
+  }
+
   std::shared_ptr<const std::vector<T>> Storage() const
   {
     return storage_;

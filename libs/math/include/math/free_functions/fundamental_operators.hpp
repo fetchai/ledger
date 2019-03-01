@@ -463,6 +463,7 @@ template <typename ArrayType>
 meta::IfIsNonBlasArray<ArrayType, void> Subtract(ArrayType const &array, ArrayType const &array2,
                                                  ArrayType &ret)
 {
+  assert(array.size() == array2.size());
   assert(array.size() == ret.size());
   for (std::size_t i = 0; i < ret.size(); ++i)
   {
@@ -474,6 +475,7 @@ template <typename ArrayType>
 meta::IfIsMathFixedPointArray<ArrayType, void> Subtract(ArrayType const &array,
                                                         ArrayType const &array2, ArrayType &ret)
 {
+  assert(array.size() == array2.size());
   assert(array.size() == ret.size());
   for (std::size_t i = 0; i < ret.size(); ++i)
   {
@@ -781,13 +783,6 @@ meta::IfIsMathShapelessArray<ArrayType, ArrayType> Divide(T const &scalar, Array
  * @param ret
  */
 template <typename ArrayType>
-meta::IfIsBlasArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
-                                            ArrayType &ret)
-{
-  memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
-  Divide(obj1, obj2, range, ret);
-}
-template <typename ArrayType>
 meta::IfIsMathShapelessArray<ArrayType, ArrayType> Divide(ArrayType const &obj1,
                                                           ArrayType const &obj2)
 {
@@ -838,7 +833,8 @@ meta::IfIsBlasArray<ArrayType, void> Divide(T const &scalar, ArrayType const &ar
       array.data());
 }
 
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsNonBlasArray<ArrayType, void> Divide(ArrayType const &array, T const &scalar,
                                                ArrayType &ret)
 {
@@ -848,7 +844,8 @@ meta::IfIsNonBlasArray<ArrayType, void> Divide(ArrayType const &array, T const &
     ret.At(i) = array.At(i) / scalar;
   }
 }
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathFixedPointArray<ArrayType, void> Divide(ArrayType const &array, T const &scalar,
                                                       ArrayType &ret)
 {
@@ -858,7 +855,8 @@ meta::IfIsMathFixedPointArray<ArrayType, void> Divide(ArrayType const &array, T 
     ret.At(i) = array.At(i) / scalar;
   }
 }
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsNonBlasArray<ArrayType, void> Divide(T const &scalar, ArrayType const &array,
                                                ArrayType &ret)
 {
@@ -868,7 +866,8 @@ meta::IfIsNonBlasArray<ArrayType, void> Divide(T const &scalar, ArrayType const 
     ret.At(i) = scalar / array.At(i);
   }
 }
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathFixedPointArray<ArrayType, void> Divide(T const &scalar, ArrayType const &array,
                                                       ArrayType &ret)
 {
@@ -907,13 +906,15 @@ meta::IfIsBlasArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType con
     }
   }
 }
+
 template <typename ArrayType>
-meta::IfIsMathShapeArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
-                                                 ArrayType &ret)
+meta::IfIsBlasArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
+                                            ArrayType &ret)
 {
   memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
   Divide(obj1, obj2, range, ret);
 }
+
 template <typename ArrayType>
 meta::IfIsMathShapeArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2)
 {
@@ -939,9 +940,11 @@ meta::IfIsMathShapeArray<ArrayType, ArrayType> Divide(T const &scalar, ArrayType
  * @param scalar
  * @param ret
  */
+
+namespace details {
+
 template <typename ArrayType>
-meta::IfIsMathFixedPointArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
-                                                      ArrayType &ret)
+void NaiveDivideArray(ArrayType const &obj1, ArrayType const &obj2, ArrayType &ret)
 {
   assert(obj1.size() == obj2.size());
   for (std::size_t i = 0; i < ret.size(); ++i)
@@ -949,16 +952,42 @@ meta::IfIsMathFixedPointArray<ArrayType, void> Divide(ArrayType const &obj1, Arr
     ret[i] = obj1[i] / obj2[i];
   }
 }
+
+}  // namespace details
+
 template <typename ArrayType>
-meta::IfIsMathFixedPointArray<ArrayType, ArrayType> Divide(ArrayType const &obj1,
-                                                           ArrayType const &obj2)
+meta::IfIsMathFixedPointArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
+                                                      ArrayType &ret)
 {
-  assert(obj1.size() == obj2.size());
-  ArrayType ret{obj1.size()};
-  for (std::size_t i = 0; i < ret.size(); ++i)
-  {
-    ret[i] = obj1[i] / obj2[i];
-  }
+  assert(obj1.shape() == obj2.shape());
+  assert(ret.shape() == obj2.shape());
+  details::NaiveDivideArray(obj1, obj2, ret);
+}
+
+template <typename ArrayType>
+meta::IfIsMathFixedPointArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2)
+{
+  assert(obj1.shape() == obj2.shape());
+  ArrayType ret{obj1.shape()};
+  Divide(obj1, obj2, ret);
+  return ret;
+}
+
+template <typename ArrayType>
+meta::IfIsNonBlasArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
+                                               ArrayType &ret)
+{
+  assert(obj1.shape() == obj2.shape());
+  assert(ret.shape() == obj2.shape());
+  details::NaiveDivideArray(obj1, obj2, ret);
+}
+
+template <typename ArrayType>
+meta::IfIsNonBlasArray<ArrayType, ArrayType> Divide(ArrayType const &obj1, ArrayType const &obj2)
+{
+  assert(obj1.shape() == obj2.shape());
+  ArrayType ret{obj1.shape()};
+  Divide(obj1, obj2, ret);
   return ret;
 }
 

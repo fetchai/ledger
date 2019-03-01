@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/free_functions/deep_learning/activation_functions.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -42,27 +43,7 @@ public:
       this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
     }
 
-    /*
-     * Really naive implementation that relies only on ArrayType providing a At(std::size_t) method
-     * TODO(private, 520) -- Clean up once we get unified ArrayType + operations
-     */
-    typename ArrayType::Type maxValue = std::numeric_limits<typename ArrayType::Type>::lowest();
-    typename ArrayType::Type sum(0);
-    for (DataType const &e : *inputs[0])
-    {
-      maxValue = std::max(maxValue, e);
-    }
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
-    {
-      typename ArrayType::Type v = inputs[0]->At(i) - maxValue;
-      fetch::math::Exp(v);
-      this->output_->At(i) = v;
-      sum += v;
-    }
-    for (DataType &e : *(this->output_))
-    {
-      e /= sum;
-    }
+    fetch::math::Softmax(*inputs[0].get(), *this->output_.get());
     return this->output_;
   }
 
