@@ -17,8 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/meta/ml_type_traits.hpp"
+
 #include "ml/node.hpp"
 #include "ml/ops/weights.hpp"
+
 #include <iostream>
 #include <list>
 #include <memory>
@@ -55,15 +58,11 @@ public:
    * Called for node without trainable parameters
    */
   template <class OperationType, typename... Params>
-  typename std::enable_if<!std::is_base_of<ops::Trainable<T>, OperationType>::value>::type AddNode(
-      std::string const &nodeName, std::vector<std::string> const &inputs, Params... params)
+  meta::IfIsNotTrainable<OperationType, void> AddNode(std::string const &             node_name,
+                                                      std::vector<std::string> const &inputs,
+                                                      Params... params)
   {
-    nodes_[nodeName] = std::make_shared<Node<ArrayType, OperationType>>(nodeName, params...);
-    FETCH_LOG_INFO("ML_LIB", "Creating node [", nodeName, "]");
-    for (auto const &i : inputs)
-    {
-      nodes_[nodeName]->AddInput(nodes_[i]);
-    }
+    AddNodeImpl<OperationType>(node_name, inputs, params...);
   }
 
   /*
@@ -71,18 +70,13 @@ public:
    * Will keep the node in the trainable_ list to step through them
    */
   template <class OperationType, typename... Params>
-  typename std::enable_if<std::is_base_of<ops::Trainable<T>, OperationType>::value>::type AddNode(
-      std::string const &nodeName, std::vector<std::string> const &inputs, Params... params)
+  meta::IfIsTrainable<OperationType, void> AddNode(std::string const &             node_name,
+                                                   std::vector<std::string> const &inputs,
+                                                   Params... params)
   {
-    std::shared_ptr<Node<ArrayType, OperationType>> op =
-        std::make_shared<Node<ArrayType, OperationType>>(nodeName, params...);
-    nodes_[nodeName]     = op;
-    trainable_[nodeName] = op;
-    FETCH_LOG_INFO("ML_LIB", "Creating node [", nodeName, "] -- Register as Trainable");
-    for (auto const &i : inputs)
-    {
-      nodes_[nodeName]->AddInput(nodes_[i]);
-    }
+    AddNodeImpl<OperationType>(node_name, inputs, params...);
+    trainable_[node_name] = nodes_[node_name];
+    FETCH_LOG_INFO("ML_LIB", node_name, " - registered as trainable");
   }
 
   void SetInput(std::string const &nodeName, ArrayPtrType data)
@@ -139,6 +133,46 @@ public:
     {
       t.second->LoadStateDict(dict.dict_.at(t.first));
     }
+  }
+
+private:
+  template <typename OperationType, typename... Params>
+  void AddNodeImpl(std::string const &node_name, std::vector<std::string> const &inputs,
+                   Params... params)
+  {
+    std::string name = node_name;
+
+    if (name == "")
+    {
+      name = this->GenerateNewName(OperationType::Descriptor());
+    }
+
+    if (!(nodes_.find(name) == nodes_.end()))
+    {
+      throw;
+    }
+
+    std::shared_ptr<Node<ArrayType, OperationType>> op =
+        std::make_shared<Node<ArrayType, OperationType>>(name, params...);
+    nodes_[name] = op;
+    FETCH_LOG_INFO("ML_LIB", "Creating node [", name, "]");
+    for (auto const &i : inputs)
+    {
+      nodes_[name]->AddInput(nodes_[i]);
+    }
+  }
+
+  std::string GenerateNewName(std::string pre_string)
+  {
+    std::uint64_t name_idx = 0;
+    std::string   ret      = pre_string + "_" + std::to_string(name_idx);
+
+    while (!(nodes_.find(ret) == nodes_.end()))
+    {
+      ++name_idx;
+      ret = pre_string + "_" + std::to_string(name_idx);
+    }
+    return ret;
   }
 
 protected:

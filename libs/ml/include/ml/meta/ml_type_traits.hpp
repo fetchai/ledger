@@ -17,47 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "ml/ops/ops.hpp"
+#include "meta/type_traits.hpp"
+#include <type_traits>
 
 namespace fetch {
 namespace ml {
+
 namespace ops {
-
-template <class T>
-class PlaceHolder : public fetch::ml::Ops<T>
-{
-public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-
-  PlaceHolder() = default;
-
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
-  {
-    ASSERT(inputs.empty());
-    ASSERT(this->output_);
-    return this->output_;
-  }
-
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
-  {
-    ASSERT(inputs.empty());
-    return {errorSignal};
-  }
-
-  virtual void SetData(ArrayPtrType const &data)
-  {
-    this->output_ = data;
-  }
-
-  static std::string Descriptor()
-  {
-    return "PlaceHolder";
-  }
-};
-
+template <typename T>
+class Trainable;
 }  // namespace ops
+
+namespace meta {
+
+template <typename T, typename OperationType>
+constexpr bool IsTrainable = std::is_base_of<fetch::ml::ops::Trainable<T>, OperationType>::value;
+
+template <typename T, typename OperationType, typename R = void>
+using IfIsTrainable = ::fetch::meta::EnableIf<IsTrainable<T, OperationType>, R>;
+
+template <typename T, typename OperationType, typename R = void>
+using IfIsNotTrainable = ::fetch::meta::EnableIf<!IsTrainable<T, OperationType>, R>;
+
+}  // namespace meta
 }  // namespace ml
 }  // namespace fetch

@@ -69,6 +69,11 @@ public:
     }
     return {errorSignal};
   }
+
+  static std::string Descriptor()
+  {
+    return "Add";
+  }
 };
 
 }  // namespace ops

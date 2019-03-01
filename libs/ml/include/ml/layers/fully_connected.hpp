@@ -42,6 +42,7 @@ public:
   FullyConnected(std::uint64_t in, std::uint64_t out, std::string const &name = "FC")
     : Layer<T>(in, out)
   {
+
     this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
     this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_Flatten",
                                                                {name + "_Input"});
@@ -61,6 +62,11 @@ public:
 
     ArrayPtrType bias = std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, out}));
     this->SetInput(name + "_Bias", bias);
+  }
+
+  static std::string Descriptor()
+  {
+    return "FullyConnected";
   }
 };
 

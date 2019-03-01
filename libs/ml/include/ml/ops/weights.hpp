@@ -108,6 +108,11 @@ public:
     SetData(dict.weights_);
   }
 
+  static std::string Descriptor()
+  {
+    return "Weights";
+  }
+
 private:
   ArrayPtrType gradientAccumulation_;
 };

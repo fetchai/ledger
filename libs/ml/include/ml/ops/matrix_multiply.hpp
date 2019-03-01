@@ -78,6 +78,11 @@ public:
 
     return {errorSignal1, errorSignal2};
   }
+
+  static std::string Descriptor()
+  {
+    return "MatrixMultiply";
+  }
 };
 
 }  // namespace ops

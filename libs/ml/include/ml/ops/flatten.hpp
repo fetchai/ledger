@@ -58,6 +58,11 @@ public:
     return {ret};
   }
 
+  static std::string Descriptor()
+  {
+    return "Flatten";
+  }
+
 private:
   std::vector<std::uint64_t> input_shape_;
 };
