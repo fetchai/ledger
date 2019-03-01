@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/fully_connected.hpp"
+#include "ml/layers/fully_connected.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 
@@ -32,8 +32,8 @@ TYPED_TEST_CASE(FullyConnectedTest, MyTypes);
 
 TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
-  fetch::ml::ops::FullyConnected<TypeParam> fc(100u, 10u);
-  std::shared_ptr<TypeParam>                inputData =
+  fetch::ml::layers::FullyConnected<TypeParam> fc(100u, 10u);
+  std::shared_ptr<TypeParam>                   inputData =
       std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({10, 10}));
   fc.SetInput("FC_Input", inputData);
   std::shared_ptr<TypeParam> output = fc.Evaluate("FC_MatrixMultiply");
@@ -46,8 +46,8 @@ TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as
 
 TYPED_TEST(FullyConnectedTest, ops_forward_test)  // Use the class as an Ops
 {
-  fetch::ml::ops::FullyConnected<TypeParam> fc(50, 10);
-  std::shared_ptr<TypeParam>                inputData =
+  fetch::ml::layers::FullyConnected<TypeParam> fc(50, 10);
+  std::shared_ptr<TypeParam>                   inputData =
       std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 10}));
   std::shared_ptr<TypeParam> output = fc.Forward({inputData});
 
@@ -59,8 +59,8 @@ TYPED_TEST(FullyConnectedTest, ops_forward_test)  // Use the class as an Ops
 
 TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
 {
-  fetch::ml::ops::FullyConnected<TypeParam> fc(50, 10);
-  std::shared_ptr<TypeParam>                inputData =
+  fetch::ml::layers::FullyConnected<TypeParam> fc(50, 10);
+  std::shared_ptr<TypeParam>                   inputData =
       std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 10}));
   std::shared_ptr<TypeParam> output = fc.Forward({inputData});
   std::shared_ptr<TypeParam> errorSignal =
@@ -83,8 +83,8 @@ TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
       std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
   placeholder->SetData(data);
 
-  fetch::ml::Node<TypeParam, fetch::ml::ops::FullyConnected<TypeParam>> fc("FullyConnected", 50u,
-                                                                           42u, "FullyConnected");
+  fetch::ml::Node<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>> fc(
+      "FullyConnected", 50u, 42u, "FullyConnected");
   fc.AddInput(placeholder);
 
   std::shared_ptr<TypeParam> prediction = fc.Evaluate();
@@ -102,8 +102,8 @@ TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
       std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
   placeholder->SetData(data);
 
-  fetch::ml::Node<TypeParam, fetch::ml::ops::FullyConnected<TypeParam>> fc("FullyConnected", 50u,
-                                                                           42u, "FullyConnected");
+  fetch::ml::Node<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>> fc(
+      "FullyConnected", 50u, 42u, "FullyConnected");
   fc.AddInput(placeholder);
   std::shared_ptr<TypeParam> prediction = fc.Evaluate();
 
@@ -122,8 +122,8 @@ TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
   fetch::ml::Graph<TypeParam> g;
 
   g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Input", {});
-  g.template AddNode<fetch::ml::ops::FullyConnected<TypeParam>>("FullyConnected", {"Input"}, 50u,
-                                                                42u);
+  g.template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>("FullyConnected", {"Input"}, 50u,
+                                                                   42u);
 
   std::shared_ptr<TypeParam> data =
       std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 10}));

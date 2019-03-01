@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/layers/layer.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/matrix_multiply.hpp"
@@ -29,16 +30,17 @@
 
 namespace fetch {
 namespace ml {
-namespace ops {
+namespace layers {
 
 template <class T>
-class FullyConnected : public SubGraph<T>
+class FullyConnected : public Layer<T>
 {
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   FullyConnected(std::uint64_t in, std::uint64_t out, std::string const &name = "FC")
+    : Layer<T>(in, out)
   {
     this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
     this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_Flatten",
@@ -53,21 +55,15 @@ public:
     this->AddInputNodes(name + "_Input");
     this->SetOutputNode(name + "_Add");
 
-    ArrayPtrType       weights = std::make_shared<ArrayType>(std::vector<std::uint64_t>({in, out}));
-    std::random_device rd{};
-    std::mt19937       gen{rd()};
-    // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
-    std::normal_distribution<> rng(0, std::sqrt(2.0 / double(in)));
-    for (std::uint64_t i(0); i < weights->size(); ++i)
-    {
-      weights->At(i) = typename ArrayType::Type(rng(gen));
-    }
+    ArrayPtrType weights = std::make_shared<ArrayType>(std::vector<std::uint64_t>({in, out}));
+    this->InitialiseWeights(weights);
     this->SetInput(name + "_Weights", weights);
+
     ArrayPtrType bias = std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, out}));
     this->SetInput(name + "_Bias", bias);
   }
 };
 
-}  // namespace ops
+}  // namespace layers
 }  // namespace ml
 }  // namespace fetch

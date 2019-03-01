@@ -27,6 +27,9 @@
 namespace fetch {
 namespace ml {
 
+/**
+ * The full graph on which to run the computation
+ */
 template <class T>
 class Graph : public ops::Trainable<typename T::Type>
 {

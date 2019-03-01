@@ -17,24 +17,5 @@
 //
 //------------------------------------------------------------------------------
 
-#include <ml/ops/activations/relu.hpp>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-
-namespace py = pybind11;
-
-namespace fetch {
-namespace ml {
-namespace ops {
-
-template <typename T>
-void BuildRelu(std::string const &custom_name, pybind11::module &module)
-{
-  py::class_<fetch::ml::ops::Relu<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<>())
-      .def("Forward", &fetch::ml::ops::Relu<fetch::math::Tensor<T>>::Forward);
-}
-
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+#include "ml/ops/activations/relu.hpp"
+#include "ml/ops/activations/softmax.hpp"

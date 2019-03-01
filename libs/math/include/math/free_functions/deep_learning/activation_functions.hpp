@@ -138,17 +138,16 @@ ShapelessArray<T, C> Softmax(ShapelessArray<T, C> &array)
   Softmax(array, ret);
   return ret;
 }
-template <typename T, typename C>
-void Softmax(NDArray<T, C> const &array, NDArray<T, C> &ret)
+template <typename T>
+void Softmax(Tensor<T> &array, Tensor<T> &ret)
 {
   assert(ret.size() == array.size());
-  ret.LazyReshape(array.shape());
   details::SoftmaxImplementation(array, ret);
 }
 template <typename T, typename C>
-NDArray<T, C> Softmax(NDArray<T, C> const &array)
+Tensor<T> Softmax(Tensor<T> &array)
 {
-  NDArray<T, C> ret{array.shape()};
+  Tensor<T> ret{array.size()};
   Softmax(array, ret);
   return ret;
 }

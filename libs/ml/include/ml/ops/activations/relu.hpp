@@ -24,15 +24,15 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class ReluLayer : public fetch::ml::Ops<T>
+class Relu : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  ReluLayer()          = default;
-  virtual ~ReluLayer() = default;
+  Relu()          = default;
+  virtual ~Relu() = default;
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {

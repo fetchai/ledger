@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/deep_learning/activation_functions.hpp"
-#include "math/free_functions/standard_functions/exp.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -26,15 +24,15 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class SoftmaxLayer : public fetch::ml::Ops<T>
+class Softmax : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  SoftmaxLayer()          = default;
-  virtual ~SoftmaxLayer() = default;
+  Softmax()          = default;
+  virtual ~Softmax() = default;
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
@@ -48,7 +46,7 @@ public:
      * Really naive implementation that relies only on ArrayType providing a At(std::size_t) method
      * TODO(private, 520) -- Clean up once we get unified ArrayType + operations
      */
-    typename ArrayType::Type maxValue = std::numeric_limits<typename ArrayType::Type>::min();
+    typename ArrayType::Type maxValue = std::numeric_limits<typename ArrayType::Type>::lowest();
     typename ArrayType::Type sum(0);
     for (DataType const &e : *inputs[0])
     {
