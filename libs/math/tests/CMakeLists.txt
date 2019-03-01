@@ -28,3 +28,4 @@ add_fetch_test(clustering_gtest fetch-math math/clustering)
 add_fetch_test(math_gtest fetch-math math/gtest SLOW)
 
 add_fetch_test(tensor_gtest fetch-math math/tensor)
+add_fetch_test(math_serializers_gtest fetch-math math/serializers)

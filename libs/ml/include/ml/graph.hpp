@@ -31,7 +31,7 @@ namespace ml {
  * The full graph on which to run the computation
  */
 template <class T>
-class Graph : public ops::Trainable<typename T::Type>
+class Graph : public ops::Trainable<T>
 {
 public:
   using ArrayType    = T;
@@ -55,9 +55,8 @@ public:
    * Called for node without trainable parameters
    */
   template <class OperationType, typename... Params>
-  typename std::enable_if<
-      !std::is_base_of<ops::Trainable<typename T::Type>, OperationType>::value>::type
-  AddNode(std::string const &nodeName, std::vector<std::string> const &inputs, Params... params)
+  typename std::enable_if<!std::is_base_of<ops::Trainable<T>, OperationType>::value>::type AddNode(
+      std::string const &nodeName, std::vector<std::string> const &inputs, Params... params)
   {
     nodes_[nodeName] = std::make_shared<Node<ArrayType, OperationType>>(nodeName, params...);
     FETCH_LOG_INFO("ML_LIB", "Creating node [", nodeName, "]");
@@ -72,14 +71,13 @@ public:
    * Will keep the node in the trainable_ list to step through them
    */
   template <class OperationType, typename... Params>
-  typename std::enable_if<
-      std::is_base_of<ops::Trainable<typename T::Type>, OperationType>::value>::type
-  AddNode(std::string const &nodeName, std::vector<std::string> const &inputs, Params... params)
+  typename std::enable_if<std::is_base_of<ops::Trainable<T>, OperationType>::value>::type AddNode(
+      std::string const &nodeName, std::vector<std::string> const &inputs, Params... params)
   {
     std::shared_ptr<Node<ArrayType, OperationType>> op =
         std::make_shared<Node<ArrayType, OperationType>>(nodeName, params...);
-    nodes_[nodeName] = op;
-    trainable_.push_back(op);
+    nodes_[nodeName]     = op;
+    trainable_[nodeName] = op;
     FETCH_LOG_INFO("ML_LIB", "Creating node [", nodeName, "] -- Register as Trainable");
     for (auto const &i : inputs)
     {
@@ -109,7 +107,7 @@ public:
   {
     for (auto &t : trainable_)
     {
-      t->Step(learningRate);
+      t.second->Step(learningRate);
     }
   }
 
@@ -121,9 +119,31 @@ public:
     }
   }
 
+  // Returns the graph trainable parameters as a nested structure for serializing
+  virtual struct ops::StateDict<ArrayType> StateDict() const
+  {
+    struct ops::StateDict<ArrayType> d;
+    for (auto const &t : trainable_)
+    {
+      d.dict_.emplace(t.first, t.second->StateDict());
+    }
+    return d;
+  }
+
+  // Import trainable parameters from an exported model
+  virtual void
+  LoadStateDict(struct ops::StateDict<T> const &dict)
+  {
+    assert(!dict.weights_);
+    for (auto const &t : trainable_)
+    {
+      t.second->LoadStateDict(dict.dict_.at(t.first));
+    }
+  }
+
 protected:
-  std::unordered_map<std::string, std::shared_ptr<fetch::ml::NodeInterface<ArrayType>>> nodes_;
-  std::list<std::shared_ptr<fetch::ml::ops::Trainable<Datatype>>>                       trainable_;
+  std::unordered_map<std::string, std::shared_ptr<fetch::ml::NodeInterface<ArrayType>>>  nodes_;
+  std::unordered_map<std::string, std::shared_ptr<fetch::ml::ops::Trainable<ArrayType>>> trainable_;
 };
 
 }  // namespace ml

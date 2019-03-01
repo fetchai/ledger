@@ -17,29 +17,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-
-#include "python/ml/ops/py_fully_connected.hpp"
-#include "python/ml/ops/py_mean_square_error.hpp"
-#include "python/ml/ops/py_relu.hpp"
-#include "python/ml/ops/py_state_dict.hpp"
-#include "python/ml/py_graph.hpp"
-
-namespace py = pybind11;
+#include "core/fixed_point/fixed_point.hpp"
 
 namespace fetch {
-namespace ml {
+namespace serializers {
 
-template <typename T>
-void BuildMLLibrary(pybind11::module &module)
+template <typename T, std::size_t I, std::size_t F>
+inline void Serialize(T &serializer, fixed_point::FixedPoint<I, F> const &n)
 {
-  fetch::ml::ops::BuildStateDict<T>("StateDict", module);
-  fetch::ml::BuildGraph<T>("Graph", module);
-  fetch::ml::ops::BuildRelu<T>("Relu", module);
-  fetch::ml::ops::BuildFullyConnected<T>("FullyConnected", module);
-  fetch::ml::ops::BuildMeanSquareError<T>("MeanSquareError", module);
+  serializer << n.Data();
 }
 
-}  // namespace ml
+template <typename T, std::size_t I, std::size_t F>
+inline void Deserialize(T &serializer, fixed_point::FixedPoint<I, F> &n)
+{
+  typename fixed_point::FixedPoint<I, F>::Type data;
+  serializer >> data;
+  n = fixed_point::FixedPoint<I, F>::FromBase(data);
+}
+
+}  // namespace serializers
 }  // namespace fetch
