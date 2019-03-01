@@ -17,9 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "serializers/byte_array_buffer.hpp"
-
-#include "fetch_pybind.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
+#include "pybind11/pybind11.h"
 
 namespace fetch {
 namespace serializers {
