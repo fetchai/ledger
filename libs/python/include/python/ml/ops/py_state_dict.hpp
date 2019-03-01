@@ -17,7 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/byte_array_buffer.hpp"
 #include <ml/ops/weights.hpp>
+#include <ml/serializers/ml_types.hpp>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -33,7 +35,15 @@ void BuildStateDict(std::string const &custom_name, pybind11::module &module)
   py::class_<fetch::ml::ops::StateDict<fetch::math::Tensor<T>>>(module, custom_name.c_str())
       .def(py::init<>())
       .def_readwrite("weights", &fetch::ml::ops::StateDict<fetch::math::Tensor<T>>::weights_)
-      .def_readwrite("dict", &fetch::ml::ops::StateDict<fetch::math::Tensor<T>>::dict_);
+      .def_readwrite("dict", &fetch::ml::ops::StateDict<fetch::math::Tensor<T>>::dict_)
+      .def("Serialize",
+           [](fetch::ml::ops::StateDict<T> &sd) {
+             fetch::serializers::ByteArrayBuffer b;
+             b << sd;
+             return b;
+           })
+      .def("Deserialize", [](fetch::ml::ops::StateDict<T> &      sd,
+                             fetch::serializers::ByteArrayBuffer b) { b >> sd; });
 }
 
 }  // namespace ops
