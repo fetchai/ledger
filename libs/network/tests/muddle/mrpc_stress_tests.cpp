@@ -35,6 +35,7 @@ using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
 using fetch::byte_array::ToBase64;
+using fetch::muddle::NetworkId;
 
 class TestProtocol : public fetch::service::Protocol
 {
@@ -103,11 +104,11 @@ protected:
   void SetUp() override
   {
     managerA_ = std::make_unique<NetworkManager>("NetMgrA", 1);
-    networkA_ = std::make_unique<Muddle>(Muddle::NetworkId("Test"),
+    networkA_ = std::make_unique<Muddle>(NetworkId{"Test"},
                                          LoadIdentity(NETWORK_A_PRIVATE_KEY), *managerA_);
 
     managerB_ = std::make_unique<NetworkManager>("NetMgrB", 1);
-    networkB_ = std::make_unique<Muddle>(Muddle::NetworkId("Test"),
+    networkB_ = std::make_unique<Muddle>(NetworkId{"Test"},
                                          LoadIdentity(NETWORK_B_PRIVATE_KEY), *managerB_);
 
     managerA_->Start();
@@ -171,7 +172,7 @@ protected:
       uint8_t const        fill = static_cast<uint8_t>(loop);
       ConstByteArray const data = GenerateData(PAYLOAD_LENGTH, fill);
 
-      auto promise = client->Call(endpoint.network_id(), PROTOCOL, TestProtocol::EXCHANGE, data);
+      auto promise = client->Call(endpoint.network_id().value(), PROTOCOL, TestProtocol::EXCHANGE, data);
       promise->WithHandlers()
           .Then([promise, fill]() {
             auto const result = promise->As<ConstByteArray>();

@@ -49,54 +49,11 @@
 namespace fetch {
 namespace ledger {
 
-class MuddleLaneConnectorWorker;
-
 class StorageUnitClient final : public StorageUnitInterface
 {
 public:
-  enum class State
-  {
-    INITIAL = 0,
-    CONNECTING,
-    QUERYING,
-    SNOOZING,
-    SUCCESS,
-    TIMEDOUT,
-    FAILED,
-  };
-
-  struct ClientDetails
-  {
-    crypto::Identity      identity;
-    std::atomic<uint32_t> lane{0};
-  };
-
-  using Client    = muddle::rpc::Client;
-  using CertificatePtr = std::shared_ptr<crypto::Prover>;
-  using ClientPtr = std::shared_ptr<Client>;
-  using MuddleEp  = muddle::MuddleEndpoint;
-  using Muddle    = muddle::Muddle;
-  using MuddlePtr = std::shared_ptr<Muddle>;
-  using Address   = Muddle::Address;
-  using Uri       = Muddle::Uri;
-  using Peer      = fetch::network::Peer;
-
   using MuddleEndpoint = muddle::MuddleEndpoint;
-
-  using LaneIndex            = LaneIdentity::lane_type;
-  using ServiceClient        = service::ServiceClient;
-  using SharedServiceClient  = std::shared_ptr<ServiceClient>;
-  using WeakServiceClient    = std::weak_ptr<ServiceClient>;
-  using SharedServiceClients = std::map<LaneIndex, SharedServiceClient>;
-  using LaneToIdentity       = std::map<LaneIndex, Address>;
-  using ClientRegister       = fetch::network::ConnectionRegister<ClientDetails>;
-  using Handle               = ClientRegister::connection_handle_type;
-  using NetworkManager       = fetch::network::NetworkManager;
-  using PromiseState         = fetch::service::PromiseState;
-  using Promise              = service::Promise;
-  using FutureTimepoint      = network::FutureTimepoint;
-  using Mutex                = fetch::mutex::Mutex;
-  using LockT                = std::lock_guard<Mutex>;
+  using Address        = MuddleEndpoint::Address;
 
   static constexpr char const *LOGGING_NAME = "StorageUnitClient";
 
@@ -106,29 +63,8 @@ public:
   StorageUnitClient(StorageUnitClient &&)      = delete;
   ~StorageUnitClient() override = default;
 
-//  void SetNumberOfLanes(LaneIndex count);
-
-  void Start(uint32_t timeout_ms);
-
-//  size_t AddShardConnectionsWaiting(ShardConfigs const &configs,
-//      std::chrono::milliseconds const &timeout = std::chrono::milliseconds(1000));
-//
-//  void AddShardConnections(
-//      ShardConfigs const &configs,
-//      std::chrono::milliseconds const &timeout = std::chrono::milliseconds(10000));
-
-
-//  ClientPtr GetClientForLane(LaneIndex lane);
-
+  // Helpers
   uint32_t num_lanes() const;
-
-//  bool IsAlive() const;
-
-  StorageUnitClient &operator=(StorageUnitClient const &) = delete;
-  StorageUnitClient &operator=(StorageUnitClient &&) = delete;
-
-protected:
-
 
   /// @name Storage Unit Interface
   /// @{
@@ -154,74 +90,36 @@ protected:
   bool                       Unlock(ResourceAddress const &key) override;
   /// @}
 
+  StorageUnitClient &operator=(StorageUnitClient const &) = delete;
+  StorageUnitClient &operator=(StorageUnitClient &&) = delete;
 
 private:
-
-
-  // these will do work for us, it's
-  // easier if it has access to our
-  // types.
-  friend class LaneConnectorWorkerInterface;
-  friend class MuddleLaneConnectorWorker;
-  friend class LaneConnectorWorker;
-
-  using AddressList               = std::vector<MuddleEndpoint::Address>;
-  using Worker                    = MuddleLaneConnectorWorker;
-  using WorkerPtr                 = std::shared_ptr<Worker>;
-  using BackgroundedWork          = network::BackgroundedWork<Worker>;
-  using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
-  using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
-  using Muddles                   = std::vector<MuddlePtr>;
-  using Clients                   = std::vector<ClientPtr>;
-  using TxSummaries               = std::vector<TransactionSummary>;
-  using MerkleCache               = storage::ObjectStore<crypto::MerkleTree>;
-  using MerkleTree                = crypto::MerkleTree;
-  using MerkleTreePtr             = std::shared_ptr<MerkleTree>;
-  using MerkleStack               = std::vector<MerkleTreePtr>;
-
-//  void WorkCycle();
+  using Client        = muddle::rpc::Client;
+  using ClientPtr     = std::shared_ptr<Client>;
+  using LaneIndex     = LaneIdentity::lane_type;
+  using AddressList   = std::vector<MuddleEndpoint::Address>;
+  using MerkleTree    = crypto::MerkleTree;
+  using MerkleTreePtr = std::shared_ptr<MerkleTree>;
+  using MerkleStack   = std::vector<MerkleTreePtr>;
+  using Mutex         = fetch::mutex::Mutex;
 
   Address const &LookupAddress(LaneIndex lane) const;
   Address const &LookupAddress(storage::ResourceID const &resource) const;
 
-
-//  uint32_t CreateLaneId(LaneIndex lane);
-
-//  std::shared_ptr<Muddle> GetMuddleForLane(LaneIndex lane);
-
-//  void SetLaneLog2(LaneIndex count);
-
   bool HashInStack(Hash const &hash);
 
-  /// @name Configuration
+  /// @name Client Information
   /// @{
   AddressList const addresses_;
-//  ShardConfigs const shards_;
-  uint32_t const                 log2_num_lanes_ = 0;
+  uint32_t const    log2_num_lanes_ = 0;
+  Client            rpc_client_;
   /// @}
 
-  /// @name Networking
-  /// @{
-//  NetworkManager  network_manager_;
-//  CertificatePtr  network_identity_;
-//  Muddle          muddle_;
-  Client          rpc_client_;
-  /// @}
-
-
-//  mutable Mutex             mutex_{__LINE__, __FILE__};
-//  LaneToIdentity            lane_to_identity_map_;
-//  BackgroundedWork          bg_work_;
-//  BackgroundedWorkThreadPtr workthread_;
-
-
-  // Mutex only needs to protect current merkle and merkle stack, the cache is thread safe
   /// @name State Hash Support
   /// @{
   mutable Mutex merkle_mutex_{__LINE__, __FILE__};
   MerkleTreePtr current_merkle_{};
   MerkleStack   state_merkle_stack_{};
-  //  MerkleCache               state_merkle_cache_;
   /// @}
 };
 

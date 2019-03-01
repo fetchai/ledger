@@ -30,9 +30,10 @@ using namespace fetch::byte_array;
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 
-using Muddle = fetch::muddle::Muddle;
-using Server = fetch::muddle::rpc::Server;
-using Client = fetch::muddle::rpc::Client;
+using fetch::muddle::Muddle;
+using fetch::muddle::NetworkId;
+using fetch::muddle::rpc::Server;
+using fetch::muddle::rpc::Client;
 
 const int SERVICE_TEST = 1;
 const int CHANNEL_RPC  = 1;
@@ -44,7 +45,7 @@ int main()
   fetch::network::NetworkManager tm{"NetMgr", 2};
 
   tm.Start();
-  auto client_muddle = Muddle::CreateMuddle(Muddle::NetworkId("TEST"), tm);
+  auto client_muddle = Muddle::CreateMuddle(NetworkId{"TEST"}, tm);
 
   client_muddle->Start({});
   auto peer = fetch::network::Uri("tcp://127.0.0.1:8080");

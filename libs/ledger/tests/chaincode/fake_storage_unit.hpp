@@ -136,7 +136,7 @@ public:
     return success;
   }
 
-  bool HetTransaction(ConstByteArray const &digest)
+  bool HasTransaction(ConstByteArray const &digest) override
   {
     lock_guard_type lock(mutex_);
     return transactions_.find(digest) != transactions_.end();

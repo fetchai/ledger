@@ -36,6 +36,7 @@ using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
 using fetch::byte_array::ToBase64;
+using fetch::muddle::NetworkId;
 
 class MuddleStressTests : public ::testing::Test
 {
@@ -86,11 +87,11 @@ protected:
   void SetUp() override
   {
     managerA_ = std::make_unique<NetworkManager>("NetMgrA", 4);
-    networkA_ = std::make_unique<Muddle>(Muddle::NetworkId("Test"),
+    networkA_ = std::make_unique<Muddle>(NetworkId{"Test"},
                                          LoadIdentity(NETWORK_A_PRIVATE_KEY), *managerA_);
 
     managerB_ = std::make_unique<NetworkManager>("NetMgrB", 4);
-    networkB_ = std::make_unique<Muddle>(Muddle::NetworkId("Test"),
+    networkB_ = std::make_unique<Muddle>(NetworkId{"Test"},
                                          LoadIdentity(NETWORK_B_PRIVATE_KEY), *managerB_);
 
     managerA_->Start();

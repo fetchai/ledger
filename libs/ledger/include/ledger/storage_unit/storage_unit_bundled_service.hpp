@@ -50,10 +50,6 @@ public:
   using NetworkManager = network::NetworkManager;
   using Mode = LaneService::Mode;
 
-//  void Setup(std::string const &storage_path, std::size_t const &lanes, uint16_t const &port,
-//             fetch::network::NetworkManager const &tm, std::size_t verification_threads,
-//             bool refresh_storage = false)
-
   void Setup(NetworkManager const &mgr, ShardConfigs const &configs, Mode mode = Mode::LOAD_DATABASE)
   {
     // create all the lane pointers
