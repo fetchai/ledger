@@ -41,5 +41,5 @@ void BuildByteArrayBuffer(pybind11::module &module)
       .def("tell", &ByteArrayBuffer::tell)
       .def("Reserve", &ByteArrayBuffer::Reserve);
 }
-};  // namespace serializers
-};  // namespace fetch
+}  // namespace serializers
+}  // namespace fetch
