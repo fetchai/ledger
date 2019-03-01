@@ -482,6 +482,11 @@ public:
     std::swap(data_, rhs.data_);
   }
 
+  Type Data() const
+  {
+    return data_;
+  }
+
 private:
   // this makes it simpler to create a fixed point object from
   // a native type without scaling
