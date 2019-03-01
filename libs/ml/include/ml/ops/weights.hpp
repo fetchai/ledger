@@ -32,17 +32,6 @@ struct StateDict
   using ArrayPtrType = std::shared_ptr<ArrayType>;
   ArrayPtrType                        weights_;
   std::map<std::string, StateDict<T>> dict_;
-};
-
-// Trainaible provide an interface that needs to be matched by any ops that has trainable
-// parameters, that's how the Graph class know with tensors to update during a gradient step
-template <class T>
-struct StateDict
-{
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  ArrayPtrType                        weights_;
-  std::map<std::string, StateDict<T>> dict_;
 
   bool operator==(StateDict<T> const &o) const
   {
@@ -51,6 +40,8 @@ struct StateDict
   }
 };
 
+// Trainaible provide an interface that needs to be matched by any ops that has trainable
+// parameters, that's how the Graph class know with tensors to update during a gradient step
 template <class T>
 class Trainable
 {
@@ -58,9 +49,9 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual void                Step(typename T::Type learningRate)                     = 0;
-  virtual struct StateDict<T> StateDict() const                                       = 0;
-  virtual void                LoadStateDict(fetch::ml::ops::StateDict<T> const &dict) = 0;
+  virtual void                Step(typename T::Type learningRate)                            = 0;
+  virtual struct StateDict<T> StateDict() const                                              = 0;
+  virtual void                LoadStateDict(struct fetch::ml::ops::StateDict<T> const &dict) = 0;
 };
 
 template <class T>
@@ -110,7 +101,8 @@ public:
     return d;
   }
 
-  virtual void LoadStateDict(struct fetch::ml::ops::StateDict<T> const &dict)
+  virtual void
+  LoadStateDict(struct fetch::ml::ops::StateDict<T> const &dict)
   {
     assert(dict.dict_.empty());
     SetData(dict.weights_);

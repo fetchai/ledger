@@ -128,7 +128,8 @@ public:
   }
 
   // Import trainable parameters from an exported model
-  virtual void LoadStateDict(struct ops::StateDict<T> const &dict)
+  virtual void
+  LoadStateDict(struct ops::StateDict<T> const &dict)
   {
     assert(!dict.weights_);
     for (auto const &t : trainable_)

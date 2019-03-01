@@ -18,6 +18,7 @@
 
 #include "ml/serializers/ml_types.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/fixed_point.hpp"
 #include "math/serializers/math_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/fully_connected.hpp"
@@ -29,10 +30,9 @@ class SerializersTest : public ::testing::Test
 };
 
 using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-                                 fetch::math::Tensor<double>  //,
-                                 // fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 // fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>
-                                 >;
+                                 fetch::math::Tensor<double>,
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(SerializersTest, MyTypes);
 
 TYPED_TEST(SerializersTest, serialize_empty_state_dict)
@@ -49,9 +49,9 @@ TYPED_TEST(SerializersTest, serialize_empty_state_dict)
 TYPED_TEST(SerializersTest, serialize_state_dict)
 {
   // Generate a plausible state dict out of a fully connected layer
-  fetch::ml::ops::FullyConnected<TypeParam> fc(10, 10);
-  fetch::ml::ops::StateDict<TypeParam>      sd1 = fc.GetStateDict();
-  fetch::serializers::ByteArrayBuffer       b;
+  fetch::ml::ops::FullyConnected<TypeParam>   fc(10, 10);
+  struct fetch::ml::ops::StateDict<TypeParam> sd1 = fc.StateDict();
+  fetch::serializers::ByteArrayBuffer         b;
   b << sd1;
   b.seek(0);
   fetch::ml::ops::StateDict<TypeParam> sd2;
