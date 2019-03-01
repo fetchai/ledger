@@ -32,6 +32,12 @@ struct StateDict
   using ArrayPtrType = std::shared_ptr<ArrayType>;
   ArrayPtrType                        weights_;
   std::map<std::string, StateDict<T>> dict_;
+
+  bool operator==(StateDict<T> const &o) const
+  {
+    return !((bool(weights_) ^ bool(o.weights_)) || (weights_ && (*weights_ != *(o.weights_))) ||
+             (dict_ != o.dict_));
+  }
 };
 
 // Trainaible provide an interface that needs to be matched by any ops that has trainable
@@ -43,9 +49,9 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual void                Step(typename T::Type learningRate)                     = 0;
-  virtual struct StateDict<T> StateDict() const                                       = 0;
-  virtual void                LoadStateDict(fetch::ml::ops::StateDict<T> const &dict) = 0;
+  virtual void                Step(typename T::Type learningRate)                            = 0;
+  virtual struct StateDict<T> StateDict() const                                              = 0;
+  virtual void                LoadStateDict(struct fetch::ml::ops::StateDict<T> const &dict) = 0;
 };
 
 template <class T>
