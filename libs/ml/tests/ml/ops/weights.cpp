@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/ops/weights.hpp"
 #include "core/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
-#include "ml/ops/weights.hpp"
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -62,17 +62,17 @@ TYPED_TEST(WeightsTest, gradient_step_test)
   ASSERT_TRUE(w.Forward({})->AllClose(*gt));  // whit new values
 }
 
-TYPED_TEST(WeightsTest, getStateDict)
+TYPED_TEST(WeightsTest, stateDict)
 {
   fetch::ml::ops::Weights<TypeParam>   w;
-  fetch::ml::ops::StateDict<TypeParam> sd = w.GetStateDict();
+  fetch::ml::ops::StateDict<TypeParam> sd = w.StateDict();
 
   EXPECT_TRUE(sd.weights_ == nullptr);
   EXPECT_TRUE(sd.dict_.empty());
 
   std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(8);
   w.SetData(data);
-  sd = w.GetStateDict();
+  sd = w.StateDict();
   EXPECT_TRUE(sd.weights_ == data);
   EXPECT_TRUE(sd.dict_.empty());
 }

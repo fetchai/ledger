@@ -52,7 +52,6 @@ void DummyMiner::Mine(Block &block)
 bool DummyMiner::Mine(Block &block, uint64_t iterations)
 {
   block.nonce = GetRandom();
-  ;
 
   block.UpdateDigest();
 
