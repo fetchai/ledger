@@ -136,24 +136,12 @@ public:
    * @param other
    * @return
    */
-  SelfType Copy(SelfType const &other)
+  void Copy(SelfType const &other)
   {
-    SelfType copy;
-
-    this->shape_   = other.shape_;
-    this->padding_ = other.padding_;
-    this->strides_ = other.strides_;
-    this->offset_  = other.offset_;
-
-    this->storage_ = std::make_shared<std::vector<T>>(
-        std::max(SizeType(1), DimensionSize(0) * this->shape_[0] + this->padding_[0]));
-
     for (std::size_t j = 0; j < this->size(); ++j)
     {
-      this->Set(j, other.At(j));
+      this->At(j) = other.At(j);
     }
-
-    return copy;
   }
 
   // TODO(private, 520) fix capitalisation (kepping it consistent with NDArray for now)

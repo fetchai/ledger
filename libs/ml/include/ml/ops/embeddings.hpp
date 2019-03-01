@@ -31,26 +31,26 @@ public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using SizeType     = typename ArrayType::SizeType;
 
   Embeddings(unsigned int dataPoints, unsigned int dimensions)
   {
-    this->SetData(std::make_shared<ArrayType>(
-        std::vector<typename ArrayType::SizeType>({dataPoints, dimensions})));
+    this->SetData(std::make_shared<ArrayType>(std::vector<SizeType>({dataPoints, dimensions})));
   }
 
   virtual ~Embeddings() = default;
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
+    ASSERT(this->output_);
     ASSERT(inputs.size() == 1);
     ASSERT(inputs[0]->size() == 1);
 
-    if (!this->embeddings_output_ || this->embeddings_output_->shape()[0] != inputs.size() ||
+    if (!this->embeddings_output_ || this->embeddings_output_->shape()[0] != inputs[0]->size() ||
         this->embeddings_output_->shape()[1] != this->output_->shape()[1])
     {
-      this->embeddings_output_ =
-          std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>(
-              {inputs[0]->size(), this->output_->shape()[1]}));
+      this->embeddings_output_ = std::make_shared<ArrayType>(
+          std::vector<SizeType>({inputs[0]->size(), this->output_->shape()[1]}));
     }
     uint64_t j(0);
     for (DataType const &i : *(inputs[0]))
