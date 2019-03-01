@@ -48,13 +48,13 @@ public:
          std::shared_ptr<std::vector<T>> storage = nullptr, SizeType offset = 0)
     : shape_(std::move(shape))
     , padding_(std::move(padding))
-    , strides_(std::move(strides))
+    , input_strides_(std::move(strides))
     , storage_(std::move(storage))
     , offset_(offset)
   {
     ASSERT(padding.empty() || padding.size() == shape.size());
     ASSERT(strides.empty() || strides.size() == shape.size());
-    Init(strides_, padding_);
+    Init(input_strides_, padding_);
   }
 
   Tensor(SizeType size)
@@ -81,6 +81,10 @@ public:
       if (strides.empty())
       {
         strides_ = std::vector<SizeType>(shape_.size(), 1);
+      }
+      else
+      {
+        strides_ = strides;
       }
       if (padding.empty())
       {
@@ -120,14 +124,10 @@ public:
     copy.strides_ = this->strides_;
     copy.offset_  = this->offset_;
 
-    copy.storage_ = std::make_shared<std::vector<T>>(
-        std::max(SizeType(1), DimensionSize(0) * copy.shape_[0] + copy.padding_[0]));
-
-    for (std::size_t j = 0; j < copy.size(); ++j)
+    if (storage_)
     {
-      copy.Set(j, this->At(j));
+      copy.storage_ = std::make_shared<std::vector<T>>(*storage_);
     }
-
     return copy;
   }
 
@@ -156,10 +156,25 @@ public:
     return copy;
   }
 
-  std::vector<SizeType> const &shape()
-      const  // TODO(private, 520) fix capitalisation (kepping it consistent with NDArray for now)
+  // TODO(private, 520) fix capitalisation (kepping it consistent with NDArray for now)
+  std::vector<SizeType> const &shape() const
   {
     return shape_;
+  }
+
+  std::vector<SizeType> const &Strides() const
+  {
+    return input_strides_;
+  }
+
+  std::vector<SizeType> const &Padding() const
+  {
+    return padding_;
+  }
+
+  SizeType Offset() const
+  {
+    return offset_;
   }
 
   SizeType DimensionSize(SizeType dim) const
@@ -325,7 +340,7 @@ public:
   }
 
   bool AllClose(Tensor<T> const &o, T const &relative_tolerance = T(1e-5),
-                T const &absolute_tolerance = T(1e-8))
+                T const &absolute_tolerance = T(1e-8)) const
   {
     // Only enforcing number of elements
     // we allow for different shapes as long as element are in same order
@@ -515,7 +530,7 @@ public:
    * @param other
    * @return
    */
-  bool operator==(Tensor &other)
+  bool operator==(Tensor const &other) const
   {
     bool ret = false;
     if ((this->size() == other.size()) && (this->shape_ == other.shape()))
@@ -525,10 +540,16 @@ public:
     return ret;
   }
 
+  bool operator!=(Tensor const &other) const
+  {
+    return !(*this == other);
+  }
+
 private:
   std::vector<SizeType>           shape_;
   std::vector<SizeType>           padding_;
   std::vector<SizeType>           strides_;
+  std::vector<SizeType>           input_strides_;
   std::shared_ptr<std::vector<T>> storage_;
   SizeType                        offset_;
 };
