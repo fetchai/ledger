@@ -382,6 +382,8 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
 {
   State next_state{State::SYNCHRONISED};
 
+  FETCH_UNUSED(current);
+
   if (chain_.HasMissingBlocks())
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation Lost");

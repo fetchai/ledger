@@ -420,7 +420,7 @@ void ContractHttpInterface::RecordQuery(ConstByteArray const &   contract_name,
   oss << '{' << R"("timestamp": )" << '"' << GenerateTimestamp() << "\","
       << R"("type": "query", )"
       << R"("contract": ")" << contract_name << "\","
-      << R"("query": ")" << contract_name << "\","
+      << R"("query": ")" << query << "\","
       << R"("ip": )" << '"' << request.originating_address() << "\","
       << R"("port": )" << request.originating_port() << '}';
 

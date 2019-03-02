@@ -31,8 +31,8 @@ using WorkQueue = std::deque<fetch::core::WeakRunnable>;
 namespace fetch {
 namespace core {
 
-Reactor::Reactor(std::string const &name)
-  : name_{name}
+Reactor::Reactor(std::string name)
+  : name_{std::move(name)}
 {}
 
 bool Reactor::Attach(WeakRunnable runnable)

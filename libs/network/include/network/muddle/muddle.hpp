@@ -155,7 +155,7 @@ public:
   }
 
   // Construction / Destruction
-  Muddle(NetworkId network_id, CertificatePtr const &certificate, NetworkManager const &nm);
+  Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager const &nm);
   Muddle(Muddle const &) = delete;
   Muddle(Muddle &&)      = delete;
   ~Muddle()              = default;

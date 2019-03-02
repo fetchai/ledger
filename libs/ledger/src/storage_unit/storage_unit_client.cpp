@@ -20,11 +20,8 @@
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
 
-using fetch::network::Uri;
-using fetch::network::Peer;
 using fetch::storage::ResourceID;
 using fetch::storage::RevertibleDocumentStoreProtocol;
-using fetch::muddle::Muddle;
 using fetch::muddle::MuddleEndpoint;
 using fetch::service::Promise;
 using fetch::byte_array::ToBase64;

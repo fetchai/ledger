@@ -135,7 +135,7 @@ int LaneRemoteControl::OutgoingPeers(LaneIndex lane)
   return peers;
 }
 
-bool LaneRemoteControl::IsAlive(LaneIndex lane)
+bool LaneRemoteControl::IsAlive(LaneIndex)
 {
   return true;
 }

@@ -34,7 +34,7 @@ public:
   static constexpr char const *LOGGING_NAME = "Reactor";
 
   // Construction / Destruction
-  Reactor(std::string const &name);
+  explicit Reactor(std::string name);
   Reactor(Reactor const &) = delete;
   Reactor(Reactor &&)      = delete;
   ~Reactor()               = default;

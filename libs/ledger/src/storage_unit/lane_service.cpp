@@ -45,8 +45,8 @@ std::string GeneratePrefix(std::string const &storage_path, uint32_t lane)
 
 }  // namespace
 
-LaneService::LaneService(NetworkManager nm, ShardConfig const &config, Mode mode)
-  : cfg_{config}
+LaneService::LaneService(NetworkManager nm, ShardConfig config, Mode mode)
+  : cfg_{std::move(config)}
 {
   // External Muddle network and RPC server
   external_muddle_ = std::make_shared<Muddle>(cfg_.external_network_id, cfg_.external_identity, nm);

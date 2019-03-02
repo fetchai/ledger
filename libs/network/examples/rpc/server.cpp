@@ -30,7 +30,6 @@ using namespace fetch::byte_array;
 using fetch::muddle::Muddle;
 using fetch::muddle::NetworkId;
 using fetch::muddle::rpc::Server;
-using fetch::muddle::rpc::Client;
 
 const int SERVICE_TEST = 1;
 const int CHANNEL_RPC  = 1;
