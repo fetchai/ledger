@@ -79,12 +79,6 @@ public:
 
 private:
 
-  void SetState(State state)
-  {
-    std::lock_guard<Mutex> lock(state_lock_);
-    state_ = state;
-  }
-
   struct Counters
   {
     std::size_t active{0};
@@ -107,12 +101,12 @@ private:
   using ResourceID        = storage::ResourceID;
   using AtomicState       = std::atomic<State>;
   using SyncCounters      = SynchronisedState<Counters>;
+  using SyncedState       = SynchronisedState<State>;
 
   Flag        running_{false};
   Flag        monitor_ready_{false};
 
-  Mutex state_lock_;
-  State state_{State::IDLE};
+  SyncedState state_{State::IDLE};
 
   ChainCodeCache contracts_;
   StorageUnitPtr storage_;

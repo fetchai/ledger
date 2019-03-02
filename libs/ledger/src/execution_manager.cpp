@@ -119,7 +119,7 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
   num_slices_      = block.slices.size();
 
   // update the state otherwise there is a race between when the executor thread wakes up
-  SetState(State::ACTIVE);
+  state_.Set(State::ACTIVE);
 
   // trigger the monitor / dispatch thread
   {
@@ -312,8 +312,7 @@ ExecutionManagerInterface::BlockHash ExecutionManager::LastProcessedBlock()
 
 ExecutionManager::State ExecutionManager::GetState()
 {
-  std::lock_guard<Mutex> lock(state_lock_);
-  return state_;
+  return state_.Get();
 }
 
 bool ExecutionManager::Abort()
@@ -352,27 +351,27 @@ void ExecutionManager::MonitorThreadEntrypoint()
     case MonitorState::FAILED:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Failed");
 
-      SetState(State::EXECUTION_FAILED);
+      state_.Set(State::EXECUTION_FAILED);
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::STALLED:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Stalled");
 
-      SetState(State::TRANSACTIONS_UNAVAILABLE);
+      state_.Set(State::TRANSACTIONS_UNAVAILABLE);
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::COMPLETED:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Complete");
 
-      SetState(State::IDLE);
+      state_.Set(State::IDLE);
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::IDLE:
     {
-      SetState(State::IDLE);
+      state_.Set(State::IDLE);
 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Idle");
 
@@ -382,7 +381,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
         monitor_wake_.wait(lock);
       }
 
-      SetState(State::ACTIVE);
+      state_.Set(State::ACTIVE);
       current_block = last_block_hash_;
 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Now Active");
