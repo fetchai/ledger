@@ -55,7 +55,8 @@ void TransactionProcessor::OnTransaction(VerifiedTransaction const &tx)
 {
   FETCH_METRIC_TX_SUBMITTED(tx.digest());
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Verified Input Transaction: ", byte_array::ToBase64(tx.digest()), " (", tx.contract_name(), ')');
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Verified Input Transaction: ", byte_array::ToBase64(tx.digest()),
+                  " (", tx.contract_name(), ')');
 
   // dispatch the transaction to the storage engine
   try

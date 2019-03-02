@@ -17,14 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "http/module.hpp"
 #include "ledger/chaincode/cache.hpp"
-#include "core/mutex.hpp"
 
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <sstream>
-#include <fstream>
 
 namespace fetch {
 namespace ledger {
@@ -41,16 +41,15 @@ public:
   // Construction / Destruction
   ContractHttpInterface(StorageInterface &storage, TransactionProcessor &processor);
   ContractHttpInterface(ContractHttpInterface const &) = delete;
-  ContractHttpInterface(ContractHttpInterface &&) = delete;
-  ~ContractHttpInterface() = default;
+  ContractHttpInterface(ContractHttpInterface &&)      = delete;
+  ~ContractHttpInterface()                             = default;
 
   // Operators
   ContractHttpInterface &operator=(ContractHttpInterface const &) = delete;
   ContractHttpInterface &operator=(ContractHttpInterface &&) = delete;
 
 private:
-
-  using Mutex = mutex::Mutex;
+  using Mutex          = mutex::Mutex;
   using ConstByteArray = byte_array::ConstByteArray;
 
   /**
@@ -90,7 +89,8 @@ private:
       byte_array::ConstByteArray const *const expected_contract_name = nullptr);
 
   void RecordTransaction(SubmitTxStatus const &status, http::HTTPRequest const &request);
-  void RecordQuery(ConstByteArray const &contract_name, ConstByteArray const &query, http::HTTPRequest const &request);
+  void RecordQuery(ConstByteArray const &contract_name, ConstByteArray const &query,
+                   http::HTTPRequest const &request);
   void WriteToAccessLog(std::string const &entry);
 
   StorageInterface &    storage_;

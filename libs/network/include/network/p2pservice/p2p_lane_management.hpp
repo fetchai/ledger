@@ -28,9 +28,9 @@ namespace p2p {
 class LaneManagement
 {
 public:
-  using LaneIndex      = uint32_t;
-  using Uri            = network::Uri;
-  using UriSet         = std::unordered_set<Uri>;
+  using LaneIndex = uint32_t;
+  using Uri       = network::Uri;
+  using UriSet    = std::unordered_set<Uri>;
 
   // Construction / Destruction
   LaneManagement()          = default;

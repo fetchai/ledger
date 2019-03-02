@@ -95,7 +95,7 @@ BlockStatus MainChain::AddBlock(Block const &blk)
   auto block = std::make_shared<Block>(blk);
 
   // update the weight based on the proof and the number of transactions
-  block->weight = 1;
+  block->weight       = 1;
   block->total_weight = 1;
   for (auto const &slice : block->body.slices)
   {

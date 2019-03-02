@@ -95,14 +95,16 @@ void BasicMiner::EnqueueTransaction(ledger::TransactionSummary const &tx)
   {
     if (txs_seen_.find(tx) == txs_seen_.end())
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (added) ", tx.transaction_hash.ToBase64());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (added) ",
+                      tx.transaction_hash.ToBase64());
 
       pending_.emplace_back(tx, log2_num_lanes_);
       txs_seen_.insert(tx);
     }
     else
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (duplicate) ", tx.transaction_hash.ToBase64());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (duplicate) ",
+                      tx.transaction_hash.ToBase64());
     }
   }
   else
@@ -148,7 +150,7 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   chain.StripAlreadySeenTx(block.body.previous_hash, main_queue_);
 
   FETCH_LOG_INFO(LOGGING_NAME, "Starting block packing. Backlog: ", num_transactions,
-                  ", main queue: ", main_queue_.size(), " pending: ", pending_.size());
+                 ", main queue: ", main_queue_.size(), " pending: ", pending_.size());
 
   // determine how many of the threads should be used in this block generation
   std::size_t const num_threads =

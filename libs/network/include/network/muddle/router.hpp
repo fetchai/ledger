@@ -22,9 +22,9 @@
 #include "network/management/abstract_connection.hpp"
 #include "network/muddle/blacklist.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
+#include "network/muddle/network_id.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/muddle/subscription_registrar.hpp"
-#include "network/muddle/network_id.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
 
 #include <chrono>
@@ -64,7 +64,7 @@ public:
 
   // Helper functions
   static Packet::RawAddress ConvertAddress(Packet::Address const &address);
-  static Packet::Address ConvertAddress(Packet::RawAddress const &address);
+  static Packet::Address    ConvertAddress(Packet::RawAddress const &address);
 
   // Construction / Destruction
   Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher);
@@ -158,7 +158,6 @@ public:
   // Operators
   Router &operator=(Router const &) = delete;
   Router &operator=(Router &&) = delete;
-
 
 private:
   using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;

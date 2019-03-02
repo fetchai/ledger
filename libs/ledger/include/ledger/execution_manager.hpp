@@ -78,7 +78,6 @@ public:
   }
 
 private:
-
   struct Counters
   {
     std::size_t active{0};
@@ -103,8 +102,8 @@ private:
   using SyncCounters      = SynchronisedState<Counters>;
   using SyncedState       = SynchronisedState<State>;
 
-  Flag        running_{false};
-  Flag        monitor_ready_{false};
+  Flag running_{false};
+  Flag monitor_ready_{false};
 
   SyncedState state_{State::IDLE};
 

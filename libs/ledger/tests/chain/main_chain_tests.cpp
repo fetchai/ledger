@@ -647,12 +647,18 @@ TEST_P(MainChainTests, CheckResolvedLooseWeight)
   auto main4   = generator_->Generate(main3);
   auto main5   = generator_->Generate(main4);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Ref Weight: ", other->weight, " Total: ", other->total_weight, " Block: ", ToBase64(other->body.hash));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Ref Weight: ", main1->weight, " Total: ", main1->total_weight, " Block: ", ToBase64(main1->body.hash));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Ref Weight: ", main2->weight, " Total: ", main2->total_weight, " Block: ", ToBase64(main2->body.hash));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Ref Weight: ", main3->weight, " Total: ", main3->total_weight, " Block: ", ToBase64(main3->body.hash));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Ref Weight: ", main4->weight, " Total: ", main4->total_weight, " Block: ", ToBase64(main4->body.hash));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Ref Weight: ", main5->weight, " Total: ", main5->total_weight, " Block: ", ToBase64(main5->body.hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Ref Weight: ", other->weight, " Total: ", other->total_weight,
+                  " Block: ", ToBase64(other->body.hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Ref Weight: ", main1->weight, " Total: ", main1->total_weight,
+                  " Block: ", ToBase64(main1->body.hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Ref Weight: ", main2->weight, " Total: ", main2->total_weight,
+                  " Block: ", ToBase64(main2->body.hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Ref Weight: ", main3->weight, " Total: ", main3->total_weight,
+                  " Block: ", ToBase64(main3->body.hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Ref Weight: ", main4->weight, " Total: ", main4->total_weight,
+                  " Block: ", ToBase64(main4->body.hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Ref Weight: ", main5->weight, " Total: ", main5->total_weight,
+                  " Block: ", ToBase64(main5->body.hash));
 
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*other));
   ASSERT_FALSE(chain_->HasMissingBlocks());

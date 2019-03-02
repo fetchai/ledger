@@ -268,7 +268,8 @@ public:
     FETCH_LOG_INFO(LOGGING_NAME, "Contents of function table");
     for (auto const &entry : members_)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Entry: ", entry.first, " valid: ", static_cast<bool>(entry.second));
+      FETCH_LOG_INFO(LOGGING_NAME, "Entry: ", entry.first,
+                     " valid: ", static_cast<bool>(entry.second));
     }
   }
 

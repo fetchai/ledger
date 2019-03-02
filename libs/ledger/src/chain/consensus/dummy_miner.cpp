@@ -32,7 +32,7 @@ static uint32_t GetRandom()
 
 static constexpr char const *LOGGING_NAME = "DummyMiner";
 
-using fetch::byte_array::ToHex; // NOLINT - Used for debugging
+using fetch::byte_array::ToHex;  // NOLINT - Used for debugging
 
 namespace fetch {
 namespace ledger {

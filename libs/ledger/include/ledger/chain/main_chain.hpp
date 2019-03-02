@@ -300,12 +300,11 @@ bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container) const
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Finished TX uniqueness verify in: ", delta_time_ms, "ms",
                    " checked blocks: ", blocks_checked);
-
   }
   else
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Finished TX uniqueness verify in: ", delta_time_ms, "ms",
-                   " checked blocks: ", blocks_checked);
+                    " checked blocks: ", blocks_checked);
   }
 
   return true;

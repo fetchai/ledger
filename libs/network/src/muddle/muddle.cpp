@@ -27,8 +27,8 @@
 #include "network/tcp/tcp_server.hpp"
 
 #include <chrono>
-#include <sstream>
 #include <iomanip>
+#include <sstream>
 #include <thread>
 
 using fetch::byte_array::ByteArray;
@@ -69,8 +69,7 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr const &certificate, NetworkM
   , dispatcher_()
   , register_(std::make_shared<MuddleRegister>(dispatcher_))
   , router_(network_id, identity_.identifier(), *register_, dispatcher_)
-  , thread_pool_(
-        network::MakeThreadPool(NUM_THREADS, GenerateThreadPoolName(network_id)))
+  , thread_pool_(network::MakeThreadPool(NUM_THREADS, GenerateThreadPoolName(network_id)))
   , clients_(router_)
 {}
 

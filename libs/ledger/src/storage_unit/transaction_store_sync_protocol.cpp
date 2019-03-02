@@ -87,7 +87,7 @@ void TransactionStoreSyncProtocol::TrimCache()
 
   if (curr_cache_size && (next_cache_size != curr_cache_size))
   {
-    FETCH_UNUSED(id_); // logging only
+    FETCH_UNUSED(id_);  // logging only
     FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", id_, ": New cache size: ", next_cache_size,
                     " Old cache size: ", curr_cache_size);
   }

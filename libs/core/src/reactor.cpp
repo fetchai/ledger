@@ -33,8 +33,7 @@ namespace core {
 
 Reactor::Reactor(std::string const &name)
   : name_{name}
-{
-}
+{}
 
 bool Reactor::Attach(WeakRunnable runnable)
 {

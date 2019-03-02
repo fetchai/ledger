@@ -104,12 +104,12 @@ protected:
   void SetUp() override
   {
     managerA_ = std::make_unique<NetworkManager>("NetMgrA", 1);
-    networkA_ = std::make_unique<Muddle>(NetworkId{"Test"},
-                                         LoadIdentity(NETWORK_A_PRIVATE_KEY), *managerA_);
+    networkA_ = std::make_unique<Muddle>(NetworkId{"Test"}, LoadIdentity(NETWORK_A_PRIVATE_KEY),
+                                         *managerA_);
 
     managerB_ = std::make_unique<NetworkManager>("NetMgrB", 1);
-    networkB_ = std::make_unique<Muddle>(NetworkId{"Test"},
-                                         LoadIdentity(NETWORK_B_PRIVATE_KEY), *managerB_);
+    networkB_ = std::make_unique<Muddle>(NetworkId{"Test"}, LoadIdentity(NETWORK_B_PRIVATE_KEY),
+                                         *managerB_);
 
     managerA_->Start();
     managerB_->Start();
@@ -172,7 +172,8 @@ protected:
       uint8_t const        fill = static_cast<uint8_t>(loop);
       ConstByteArray const data = GenerateData(PAYLOAD_LENGTH, fill);
 
-      auto promise = client->Call(endpoint.network_id().value(), PROTOCOL, TestProtocol::EXCHANGE, data);
+      auto promise =
+          client->Call(endpoint.network_id().value(), PROTOCOL, TestProtocol::EXCHANGE, data);
       promise->WithHandlers()
           .Then([promise, fill]() {
             auto const result = promise->As<ConstByteArray>();

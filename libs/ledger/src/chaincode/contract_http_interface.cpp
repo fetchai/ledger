@@ -149,8 +149,8 @@ http::HTTPResponse ContractHttpInterface::OnQuery(byte_array::ConstByteArray con
 {
   try
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Query: ", contract_name, '.', query, " from: ",
-                   request.originating_address(), ':', request.originating_port());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Query: ", contract_name, '.', query,
+                    " from: ", request.originating_address(), ':', request.originating_port());
     FETCH_LOG_DEBUG(LOGGING_NAME, request.body());
 
     // record an entry in the access log
@@ -331,8 +331,8 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
     }
   }
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Submitted ", submitted, " transactions from ", request.originating_address(), ':',
-                  request.originating_port());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Submitted ", submitted, " transactions from ",
+                  request.originating_address(), ':', request.originating_port());
 
   return SubmitTxStatus{submitted, expected_count};
 }
@@ -377,8 +377,8 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitNativeTx(
     ++submitted;
   }
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Submitted ", submitted, " transactions from ", request.originating_address(), ':',
-                  request.originating_port());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Submitted ", submitted, " transactions from ",
+                  request.originating_address(), ':', request.originating_port());
 
   return SubmitTxStatus{submitted, transactions.size()};
 }
@@ -389,18 +389,16 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitNativeTx(
  * @param status The transaction submission status (counts)
  * @param request The originating HTTPRequest object
  */
-void ContractHttpInterface::RecordTransaction(SubmitTxStatus const &status, http::HTTPRequest const &request)
+void ContractHttpInterface::RecordTransaction(SubmitTxStatus const &   status,
+                                              http::HTTPRequest const &request)
 {
   // format the message
   std::ostringstream oss;
-  oss << '{'
-      << R"("timestamp": )" << '"' << GenerateTimestamp() << "\","
+  oss << '{' << R"("timestamp": )" << '"' << GenerateTimestamp() << "\","
       << R"("type": "transaction", )"
-      << R"("received": )" << status.received << ','
-      << R"("processed": )" << status.processed << ','
-      << R"("ip": )" << '"' << request.originating_address() << "\","
-      << R"("port": )" << request.originating_port()
-      << '}';
+      << R"("received": )" << status.received << ',' << R"("processed": )" << status.processed
+      << ',' << R"("ip": )" << '"' << request.originating_address() << "\","
+      << R"("port": )" << request.originating_port() << '}';
 
   // write it out to the access log
   WriteToAccessLog(oss.str());
@@ -413,18 +411,18 @@ void ContractHttpInterface::RecordTransaction(SubmitTxStatus const &status, http
  * @param query The requested query name
  * @param request The original HTTPRequest object
  */
-void ContractHttpInterface::RecordQuery(ConstByteArray const &contract_name, ConstByteArray const &query, http::HTTPRequest const &request)
+void ContractHttpInterface::RecordQuery(ConstByteArray const &   contract_name,
+                                        ConstByteArray const &   query,
+                                        http::HTTPRequest const &request)
 {
   // format the message
   std::ostringstream oss;
-  oss << '{'
-      << R"("timestamp": )" << '"' << GenerateTimestamp() << "\","
+  oss << '{' << R"("timestamp": )" << '"' << GenerateTimestamp() << "\","
       << R"("type": "query", )"
       << R"("contract": ")" << contract_name << "\","
       << R"("query": ")" << contract_name << "\","
       << R"("ip": )" << '"' << request.originating_address() << "\","
-      << R"("port": )" << request.originating_port()
-      << '}';
+      << R"("port": )" << request.originating_port() << '}';
 
   // write it out to the access log
   WriteToAccessLog(oss.str());

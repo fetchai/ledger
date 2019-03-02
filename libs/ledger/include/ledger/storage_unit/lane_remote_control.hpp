@@ -21,9 +21,9 @@
 //#include "ledger/storage_unit/lane_controller_protocol.hpp"
 //#include "ledger/storage_unit/lane_service.hpp"
 //#include "ledger/storage_unit/storage_unit_client.hpp"
-#include "network/p2pservice/p2p_lane_management.hpp"
-#include "network/muddle/rpc/client.hpp"
 #include "ledger/shard_config.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/p2pservice/p2p_lane_management.hpp"
 //#include "network/service/service_client.hpp"
 
 //#include <unordered_map>
@@ -41,39 +41,37 @@ public:
   // Construction / Destruction
   LaneRemoteControl(MuddleEndpoint &endpoint, ShardConfigs const &shards, uint32_t log2_num_lanes);
   LaneRemoteControl(LaneRemoteControl const &other) = delete;
-  LaneRemoteControl(LaneRemoteControl &&other) = delete;
-  ~LaneRemoteControl() override = default;
+  LaneRemoteControl(LaneRemoteControl &&other)      = delete;
+  ~LaneRemoteControl() override                     = default;
 
   // Operators
   LaneRemoteControl &operator=(LaneRemoteControl const &other) = delete;
   LaneRemoteControl &operator=(LaneRemoteControl &&other) = delete;
 
 protected:
-
   /// @name Lane Management
   /// @{
-  void UseThesePeers(LaneIndex lane,  std::unordered_set<Uri> const &uris) override;
-  void Shutdown(LaneIndex lane) override;
+  void     UseThesePeers(LaneIndex lane, std::unordered_set<Uri> const &uris) override;
+  void     Shutdown(LaneIndex lane) override;
   uint32_t GetLaneNumber(LaneIndex lane) override;
-  int IncomingPeers(LaneIndex lane) override;
-  int OutgoingPeers(LaneIndex lane) override;
-  bool IsAlive(LaneIndex lane) override;
+  int      IncomingPeers(LaneIndex lane) override;
+  int      OutgoingPeers(LaneIndex lane) override;
+  bool     IsAlive(LaneIndex lane) override;
   /// @}
 
 private:
-
-  using RpcClient = muddle::rpc::Client;
-  using Address = muddle::MuddleEndpoint::Address;
+  using RpcClient   = muddle::rpc::Client;
+  using Address     = muddle::MuddleEndpoint::Address;
   using AddressList = std::vector<Address>;
 
   Address const &LookupAddress(LaneIndex lane) const;
 
   AddressList const addresses_;
-//  ShardConfigs const  shards_;      ///< The shard configurations
-  RpcClient           rpc_client_;  ///< The RPC client
+  //  ShardConfigs const  shards_;      ///< The shard configurations
+  RpcClient rpc_client_;  ///< The RPC client
 
-//  StorageUnitClientPtr storage_unit_;
-//  mutable Mutex        mutex_{__LINE__, __FILE__};
+  //  StorageUnitClientPtr storage_unit_;
+  //  mutable Mutex        mutex_{__LINE__, __FILE__};
 };
 
 }  // namespace ledger

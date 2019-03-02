@@ -42,7 +42,7 @@ public:
     ON_CALL(*this, GetTransaction(_, _))
         .WillByDefault(Invoke(&fake, &FakeStorageUnit::GetTransaction));
     ON_CALL(*this, HasTransaction(_))
-      .WillByDefault(Invoke(&fake, &FakeStorageUnit::HasTransaction));
+        .WillByDefault(Invoke(&fake, &FakeStorageUnit::HasTransaction));
 
     ON_CALL(*this, PollRecentTx(_)).WillByDefault(Invoke(&fake, &FakeStorageUnit::PollRecentTx));
 

@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "network/generics/promise_of.hpp"
+#include "network/muddle/network_id.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/muddle/subscription.hpp"
-#include "network/muddle/network_id.hpp"
 
 #include <vector>
 

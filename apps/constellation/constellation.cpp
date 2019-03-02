@@ -54,8 +54,8 @@ namespace {
 
 using LaneIndex = fetch::ledger::LaneIdentity::lane_type;
 
-//static const std::chrono::milliseconds LANE_CONNECTION_TIME{10000};
-static const std::size_t               HTTP_THREADS{4};
+// static const std::chrono::milliseconds LANE_CONNECTION_TIME{10000};
+static const std::size_t HTTP_THREADS{4};
 
 bool WaitForLaneServersToStart()
 {
@@ -86,7 +86,8 @@ uint16_t LookupLocalPort(Manifest const &manifest, ServiceType service, uint16_t
   return manifest.GetLocalPort(identifier);
 }
 
-ledger::ShardConfigs GenerateShardsConfig(uint32_t num_lanes, uint16_t start_port, std::string const &storage_path)
+ledger::ShardConfigs GenerateShardsConfig(uint32_t num_lanes, uint16_t start_port,
+                                          std::string const &storage_path)
 {
   ledger::ShardConfigs configs(num_lanes);
 
@@ -94,12 +95,13 @@ ledger::ShardConfigs GenerateShardsConfig(uint32_t num_lanes, uint16_t start_por
   {
     auto &cfg = configs[i];
 
-    cfg.lane_id             = i;
-    cfg.num_lanes           = num_lanes;
-    cfg.storage_path        = storage_path;
-    cfg.external_identity   = std::make_shared<crypto::ECDSASigner>();
-    cfg.external_port       = start_port++;
-    cfg.external_network_id = muddle::NetworkId{(static_cast<uint32_t>(i) & 0xFFFFFFu) | (uint32_t{'L'} << 24u)};
+    cfg.lane_id           = i;
+    cfg.num_lanes         = num_lanes;
+    cfg.storage_path      = storage_path;
+    cfg.external_identity = std::make_shared<crypto::ECDSASigner>();
+    cfg.external_port     = start_port++;
+    cfg.external_network_id =
+        muddle::NetworkId{(static_cast<uint32_t>(i) & 0xFFFFFFu) | (uint32_t{'L'} << 24u)};
     cfg.internal_identity   = std::make_shared<crypto::ECDSASigner>();
     cfg.internal_port       = start_port++;
     cfg.internal_network_id = muddle::NetworkId{"ISRD"};
@@ -108,8 +110,10 @@ ledger::ShardConfigs GenerateShardsConfig(uint32_t num_lanes, uint16_t start_por
     auto const &int_identity = cfg.internal_identity->identity().identifier();
 
     FETCH_LOG_INFO(Constellation::LOGGING_NAME, "Shard ", i + 1);
-    FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - Internal ", ToBase64(int_identity), " - ", cfg.internal_network_id.ToString(), " - tcp://0.0.0.0:", cfg.internal_port);
-    FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - External ", ToBase64(ext_identity), " - ", cfg.external_network_id.ToString(), " - tcp://0.0.0.0:", cfg.external_port);
+    FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - Internal ", ToBase64(int_identity), " - ",
+                   cfg.internal_network_id.ToString(), " - tcp://0.0.0.0:", cfg.internal_port);
+    FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - External ", ToBase64(ext_identity), " - ",
+                   cfg.external_network_id.ToString(), " - tcp://0.0.0.0:", cfg.external_port);
   }
 
   return configs;
@@ -146,7 +150,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   , p2p_{muddle_,        lane_control_,        trust_,
          cfg_.max_peers, cfg_.transient_peers, cfg_.peers_update_cycle_ms}
   , lane_services_()
-  , storage_(std::make_shared<StorageUnitClient>(internal_muddle_.AsEndpoint(), shard_cfgs_, cfg_.log2_num_lanes))
+  , storage_(std::make_shared<StorageUnitClient>(internal_muddle_.AsEndpoint(), shard_cfgs_,
+                                                 cfg_.log2_num_lanes))
   , lane_control_(internal_muddle_.AsEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, storage_, [this] { return std::make_shared<Executor>(storage_); })}
@@ -259,7 +264,8 @@ void Constellation::Run(UriList const &initial_peers)
   /// LANE / SHARD CLIENTS
 
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Inter-shard Identity: ", ToBase64(internal_muddle_.identity().identifier()));
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "Inter-shard Identity: ", ToBase64(internal_muddle_.identity().identifier()));
 
     // build the complete list of Uris to all the lane services across the internal network
     Muddle::UriList uris;
@@ -284,14 +290,16 @@ void Constellation::Run(UriList const &initial_peers)
 
         for (auto const &client : clients)
         {
-          FETCH_LOG_INFO(LOGGING_NAME, " - Connected to: ", ToBase64(client.first), " (", client.second.ToString(), ")");
+          FETCH_LOG_INFO(LOGGING_NAME, " - Connected to: ", ToBase64(client.first), " (",
+                         client.second.ToString(), ")");
         }
 
         break;
       }
       else
       {
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Waiting for internal muddle connection to be established...");
+        FETCH_LOG_DEBUG(LOGGING_NAME,
+                        "Waiting for internal muddle connection to be established...");
       }
 
       std::this_thread::sleep_for(std::chrono::milliseconds{500});
@@ -317,7 +325,6 @@ void Constellation::Run(UriList const &initial_peers)
   // Finally start the HTTP server
   http_.Start(http_port_);
 
-
   //---------------------------------------------------------------
   // Step 2. Main monitor loop
   //---------------------------------------------------------------
@@ -326,8 +333,8 @@ void Constellation::Run(UriList const &initial_peers)
   while (active_)
   {
     // control from the top level block production based on the chain sync state
-    block_coordinator_.EnableMining(
-      ledger::MainChainRpcService::State::SYNCHRONISED == main_chain_service_->state());
+    block_coordinator_.EnableMining(ledger::MainChainRpcService::State::SYNCHRONISED ==
+                                    main_chain_service_->state());
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Still alive...");
     std::this_thread::sleep_for(std::chrono::milliseconds{500});

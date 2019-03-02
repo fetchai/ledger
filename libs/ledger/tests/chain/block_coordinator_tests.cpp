@@ -632,7 +632,6 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 }
 
-
 TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
 {
   auto genesis = block_generator_();

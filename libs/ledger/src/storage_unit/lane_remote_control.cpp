@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/service_ids.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
+#include "core/service_ids.hpp"
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
 
@@ -44,7 +44,7 @@ AddressList GenerateAddressList(ShardConfigs const &shards)
   return addresses;
 }
 
-} // namespace
+}  // namespace
 
 LaneRemoteControl::LaneRemoteControl(MuddleEndpoint &endpoint, ShardConfigs const &shards,
                                      uint32_t log2_num_lanes)
@@ -85,7 +85,6 @@ void LaneRemoteControl::Shutdown(LaneIndex lane)
 
     FETCH_LOG_PROMISE();
     p->Wait();
-
   }
   catch (std::exception const &ex)
   {
@@ -108,7 +107,7 @@ int LaneRemoteControl::IncomingPeers(LaneIndex lane)
   {
     auto p = rpc_client_.CallSpecificAddress(LookupAddress(lane), RPC_CONTROLLER,
                                              LaneControllerProtocol::INCOMING_PEERS);
-    peers = p->As<int>();
+    peers  = p->As<int>();
   }
   catch (std::exception const &ex)
   {
@@ -126,7 +125,7 @@ int LaneRemoteControl::OutgoingPeers(LaneIndex lane)
   {
     auto p = rpc_client_.CallSpecificAddress(LookupAddress(lane), RPC_CONTROLLER,
                                              LaneControllerProtocol::OUTGOING_PEERS);
-    peers = p->As<int>();
+    peers  = p->As<int>();
   }
   catch (std::exception const &ex)
   {
@@ -146,5 +145,5 @@ LaneRemoteControl::Address const &LaneRemoteControl::LookupAddress(LaneIndex lan
   return addresses_.at(lane);
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

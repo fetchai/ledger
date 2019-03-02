@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
-#include "core/state_machine.hpp"
 #include "core/random/lcg.hpp"
+#include "core/state_machine.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/protocols/main_chain_rpc_protocol.hpp"
 #include "network/generics/backgrounded_work.hpp"
@@ -76,7 +76,7 @@ public:
   // Construction / Destruction
   MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust);
   MainChainRpcService(MainChainRpcService const &) = delete;
-  MainChainRpcService(MainChainRpcService &&) = delete;
+  MainChainRpcService(MainChainRpcService &&)      = delete;
   ~MainChainRpcService() override;
 
   core::WeakRunnable GetWeakRunnable()
@@ -96,7 +96,6 @@ public:
   MainChainRpcService &operator=(MainChainRpcService &&) = delete;
 
 private:
-
   static constexpr std::size_t BLOCK_CATCHUP_STEP_SIZE = 30;
 
   using BlockList       = fetch::ledger::MainChainProtocol::Blocks;
@@ -111,8 +110,8 @@ private:
   /// @name Utilities
   /// @{
   static char const *ToString(State state);
-  Address GetRandomTrustedPeer() const;
-  void HandleChainResponse(Address const &peer, BlockList block_list);
+  Address            GetRandomTrustedPeer() const;
+  void               HandleChainResponse(Address const &peer, BlockList block_list);
   /// @}
 
   /// @name State Machine Handlers
@@ -126,9 +125,9 @@ private:
 
   /// @name System Components
   /// @{
-  MuddleEndpoint &  endpoint_;
-  MainChain &       chain_;
-  TrustSystem &     trust_;
+  MuddleEndpoint &endpoint_;
+  MainChain &     chain_;
+  TrustSystem &   trust_;
   /// @}
 
   /// @name RPC Server

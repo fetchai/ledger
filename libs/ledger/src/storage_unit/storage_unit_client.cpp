@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
-#include "ledger/storage_unit/storage_unit_client.hpp"
 
 using fetch::network::Uri;
 using fetch::network::Peer;
@@ -48,11 +48,12 @@ AddressList GenerateAddressList(ShardConfigs const &shards)
   return addresses;
 }
 
-} // namespace
+}  // namespace
 
 using TxStoreProtocol = fetch::storage::ObjectStoreProtocol<Transaction>;
 
-StorageUnitClient::StorageUnitClient(MuddleEndpoint &muddle, ShardConfigs const &shards, uint32_t log2_num_lanes)
+StorageUnitClient::StorageUnitClient(MuddleEndpoint &muddle, ShardConfigs const &shards,
+                                     uint32_t log2_num_lanes)
   : addresses_(GenerateAddressList(shards))
   , log2_num_lanes_(log2_num_lanes)
   , rpc_client_("STUC", muddle, MuddleEndpoint::Address{}, SERVICE_LANE_CTRL, CHANNEL_RPC)
@@ -71,8 +72,7 @@ byte_array::ConstByteArray StorageUnitClient::CurrentHash()
 
   for (uint32_t i = 0; i < num_lanes(); ++i)
   {
-    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(i),
-                                                   RPC_STATE,
+    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(i), RPC_STATE,
                                                    RevertibleDocumentStoreProtocol::CURRENT_HASH);
 
     promises.push_back(promise);
@@ -185,10 +185,9 @@ bool StorageUnitClient::RevertToHash(Hash const &hash)
       assert(hash.size() > 0);
 
       // make the request to the RPC server
-      auto promise = rpc_client_.CallSpecificAddress(LookupAddress(lane_index++),
-                                                     RPC_STATE,
-                                                     RevertibleDocumentStoreProtocol::HASH_EXISTS,
-                                                     hash);
+      auto promise =
+          rpc_client_.CallSpecificAddress(LookupAddress(lane_index++), RPC_STATE,
+                                          RevertibleDocumentStoreProtocol::HASH_EXISTS, hash);
 
       promises.push_back(promise);
     }
@@ -224,10 +223,9 @@ bool StorageUnitClient::RevertToHash(Hash const &hash)
     assert(hash.size() > 0);
 
     // make the call to the RPC server
-    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(lane_index++),
-                                                   RPC_STATE,
-                                                   RevertibleDocumentStoreProtocol::REVERT_TO_HASH,
-                                                   hash);
+    auto promise =
+        rpc_client_.CallSpecificAddress(LookupAddress(lane_index++), RPC_STATE,
+                                        RevertibleDocumentStoreProtocol::REVERT_TO_HASH, hash);
 
     // add the promise to the queue
     promises.push_back(promise);
@@ -266,8 +264,7 @@ byte_array::ConstByteArray StorageUnitClient::Commit()
   for (uint32_t lane_idx = 0; lane_idx < num_lanes(); ++lane_idx)
   {
     // make the request to the RPC server
-    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(lane_idx),
-                                                   RPC_STATE,
+    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(lane_idx), RPC_STATE,
                                                    RevertibleDocumentStoreProtocol::COMMIT);
 
     // add the promise to the waiting queue
@@ -320,7 +317,8 @@ StorageUnitClient::Address const &StorageUnitClient::LookupAddress(LaneIndex lan
   return addresses_.at(lane);
 }
 
-StorageUnitClient::Address const &StorageUnitClient::LookupAddress(storage::ResourceID const &resource) const
+StorageUnitClient::Address const &StorageUnitClient::LookupAddress(
+    storage::ResourceID const &resource) const
 {
   return LookupAddress(resource.lane(log2_num_lanes_));
 }
@@ -332,13 +330,12 @@ void StorageUnitClient::AddTransaction(VerifiedTransaction const &tx)
     ResourceID resource{tx.digest()};
 
     // make the RPC request
-    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(resource),
-                                                   RPC_TX_STORE, TxStoreProtocol::SET, resource, tx);
+    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(resource), RPC_TX_STORE,
+                                                   TxStoreProtocol::SET, resource, tx);
 
     // wait the for the response
     FETCH_LOG_PROMISE();
     promise->Wait();
-
   }
   catch (std::exception const &ex)
   {
@@ -353,7 +350,7 @@ void StorageUnitClient::AddTransactions(TransactionList const &txs)
   for (auto const &tx : txs)
   {
     // determine the lane for this given transaction
-    ResourceID resource{tx.digest()};
+    ResourceID      resource{tx.digest()};
     LaneIndex const lane = resource.lane(log2_num_lanes_);
 
     // add it to the correct list
@@ -370,8 +367,8 @@ void StorageUnitClient::AddTransactions(TransactionList const &txs)
     {
       if (!list.empty())
       {
-        promises.emplace_back(
-          rpc_client_.CallSpecificAddress(LookupAddress(lane), RPC_TX_STORE, TxStoreProtocol::SET_BULK, list));
+        promises.emplace_back(rpc_client_.CallSpecificAddress(LookupAddress(lane), RPC_TX_STORE,
+                                                              TxStoreProtocol::SET_BULK, list));
       }
 
       ++lane;
@@ -396,8 +393,8 @@ StorageUnitClient::TxSummaries StorageUnitClient::PollRecentTx(uint32_t max_to_p
   for (auto const &lane_address : addresses_)
   {
     auto promise =
-           rpc_client_.CallSpecificAddress(lane_address, RPC_TX_STORE, TxStoreProtocol::GET_RECENT,
-                                    uint32_t(max_to_poll / addresses_.size()));
+        rpc_client_.CallSpecificAddress(lane_address, RPC_TX_STORE, TxStoreProtocol::GET_RECENT,
+                                        uint32_t(max_to_poll / addresses_.size()));
     FETCH_LOG_PROMISE();
     promises.push_back(promise);
   }
@@ -422,8 +419,8 @@ bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest,
     ResourceID resource{digest};
 
     // make the request to the RPC server
-    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(resource),
-                                                   RPC_TX_STORE, TxStoreProtocol::GET, resource);
+    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(resource), RPC_TX_STORE,
+                                                   TxStoreProtocol::GET, resource);
 
     // wait for the response to be delivered
     tx = promise->As<VerifiedTransaction>();
@@ -447,8 +444,8 @@ bool StorageUnitClient::HasTransaction(ConstByteArray const &digest)
     ResourceID resource{digest};
 
     // make the request to the RPC server
-    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(resource),
-                                                   RPC_TX_STORE, TxStoreProtocol::HAS, resource);
+    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(resource), RPC_TX_STORE,
+                                                   TxStoreProtocol::HAS, resource);
 
     // wait for the response to be delivered
     present = promise->As<bool>();
@@ -457,7 +454,8 @@ bool StorageUnitClient::HasTransaction(ConstByteArray const &digest)
   }
   catch (std::exception const &e)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to check transaction existence, because: ", e.what(), " tx: ", ToBase64(digest));
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to check transaction existence, because: ", e.what(),
+                   " tx: ", ToBase64(digest));
   }
 
   return present;
@@ -471,8 +469,7 @@ StorageUnitClient::Document StorageUnitClient::GetOrCreate(ResourceAddress const
   try
   {
     // make the request to the RPC client
-    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(key),
-                                                   RPC_STATE,
+    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(key), RPC_STATE,
                                                    RevertibleDocumentStoreProtocol::GET_OR_CREATE,
                                                    key.as_resource_id());
 
@@ -495,9 +492,9 @@ StorageUnitClient::Document StorageUnitClient::Get(ResourceAddress const &key)
   try
   {
     // make the request to the RPC server
-    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(key), RPC_STATE,
-                                               fetch::storage::RevertibleDocumentStoreProtocol::GET,
-                                               key.as_resource_id());
+    auto promise = rpc_client_.CallSpecificAddress(
+        LookupAddress(key), RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET,
+        key.as_resource_id());
 
     // wait for the document response
     doc = promise->As<Document>();
@@ -518,9 +515,9 @@ void StorageUnitClient::Set(ResourceAddress const &key, StateValue const &value)
   try
   {
     // make the request to the RPC server
-    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(key), RPC_STATE,
-                                               fetch::storage::RevertibleDocumentStoreProtocol::SET,
-                                               key.as_resource_id(), value);
+    auto promise = rpc_client_.CallSpecificAddress(
+        LookupAddress(key), RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::SET,
+        key.as_resource_id(), value);
 
     FETCH_LOG_PROMISE();
 
@@ -540,10 +537,8 @@ bool StorageUnitClient::Lock(ResourceAddress const &key)
   try
   {
     // make the request to the RPC server
-    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(key),
-                                                   RPC_STATE,
-                                                   RevertibleDocumentStoreProtocol::LOCK,
-                                                   key.as_resource_id());
+    auto promise = rpc_client_.CallSpecificAddress(
+        LookupAddress(key), RPC_STATE, RevertibleDocumentStoreProtocol::LOCK, key.as_resource_id());
 
     // wait for the promise
     success = promise->As<bool>();
@@ -563,9 +558,9 @@ bool StorageUnitClient::Unlock(ResourceAddress const &key)
   try
   {
     // make the request to the RPC server
-    auto promise = rpc_client_.CallSpecificAddress(
-      LookupAddress(key), RPC_STATE, RevertibleDocumentStoreProtocol::UNLOCK,
-      key.as_resource_id());
+    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(key), RPC_STATE,
+                                                   RevertibleDocumentStoreProtocol::UNLOCK,
+                                                   key.as_resource_id());
 
     // wait for the result
     success = promise->As<bool>();
@@ -578,5 +573,5 @@ bool StorageUnitClient::Unlock(ResourceAddress const &key)
   return success;
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

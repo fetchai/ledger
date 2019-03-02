@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
-#include "crypto/prover.hpp"
 #include "crypto/ecdsa.hpp"
+#include "crypto/prover.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/protocols/executor_rpc_client.hpp"
@@ -144,8 +144,7 @@ protected:
     // --- Start the MUDDLE on top of the NETWORK MANAGER -----------
 
     ProverPtr p2p_key = GenerateP2PKey();
-    muddle_ =
-        Muddle::CreateMuddle(NetworkId{"Test"}, std::move(p2p_key), *network_manager_);
+    muddle_ = Muddle::CreateMuddle(NetworkId{"Test"}, std::move(p2p_key), *network_manager_);
     muddle_->Start({P2P_RPC_PORT});
 
     // --- Start the STORAGE SERVICE --------------------------------
@@ -158,24 +157,26 @@ protected:
       using fetch::crypto::ECDSASigner;
 
       ShardConfig cfg;
-      cfg.lane_id = 0;
-      cfg.num_lanes = 1;
-      cfg.storage_path = "exec_int_tests";
-      cfg.external_identity = std::make_shared<ECDSASigner>();
-      cfg.external_port = static_cast<uint16_t>(LANE_RPC_PORT_START + (i * 2));
+      cfg.lane_id             = 0;
+      cfg.num_lanes           = 1;
+      cfg.storage_path        = "exec_int_tests";
+      cfg.external_identity   = std::make_shared<ECDSASigner>();
+      cfg.external_port       = static_cast<uint16_t>(LANE_RPC_PORT_START + (i * 2));
       cfg.external_network_id = NetworkId{"EXT-"};
-      cfg.internal_identity = std::make_shared<ECDSASigner>();
-      cfg.internal_port = static_cast<uint16_t>(LANE_RPC_PORT_START + (i * 2) + 1u);
+      cfg.internal_identity   = std::make_shared<ECDSASigner>();
+      cfg.internal_port       = static_cast<uint16_t>(LANE_RPC_PORT_START + (i * 2) + 1u);
       cfg.internal_network_id = NetworkId{"INT-"};
 
       shards.push_back(cfg);
     }
 
     storage_service_ = std::make_shared<StorageUnitBundledService>();
-    storage_service_->Setup(*network_manager_, shards, StorageUnitBundledService::Mode::CREATE_DATABASE);
+    storage_service_->Setup(*network_manager_, shards,
+                            StorageUnitBundledService::Mode::CREATE_DATABASE);
     storage_service_->Start();
 
-    storage_.reset(new StorageUnitClient{muddle_->AsEndpoint(), shards, static_cast<uint32_t>(LOG2_NUM_LANES)});
+    storage_.reset(new StorageUnitClient{muddle_->AsEndpoint(), shards,
+                                         static_cast<uint32_t>(LOG2_NUM_LANES)});
 
     // --- Start the EXECUTOR SERVICE -------------------------------
 

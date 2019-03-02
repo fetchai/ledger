@@ -87,7 +87,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   state_machine_->OnStateChange([](State current, State previous) {
     FETCH_LOG_INFO(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
   });
-#endif // FETCH_LOG_DEBUG_ENABLED
+#endif  // FETCH_LOG_DEBUG_ENABLED
 }
 
 /**
@@ -195,7 +195,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
     // should be checked
     if (!storage_unit_.HashExists(common_parent->body.merkle_hash))
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's state hash cannot be retrieved for block: ", ToBase64(current_hash));
+      FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's state hash cannot be retrieved for block: ",
+                      ToBase64(current_hash));
 
       // this is a bad situation so the easiest solution is to revert back to genesis
       execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
@@ -457,9 +458,9 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     else
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Block validation great success: (block: ",
-                     ToBase64(current_block_->body.hash),
-                     " expected: ", ToBase64(current_block_->body.merkle_hash),
-                     " actual: ", ToBase64(state_hash), ")");
+                      ToBase64(current_block_->body.hash),
+                      " expected: ", ToBase64(current_block_->body.merkle_hash),
+                      " actual: ", ToBase64(state_hash), ")");
     }
   }
 
@@ -607,7 +608,8 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
     // ensure that the main chain is aware of the block
     if (BlockStatus::ADDED == chain_.AddBlock(*next_block_))
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Generating new block: ", ToBase64(next_block_->body.hash), " txs: ", next_block_->GetTransactionCount());
+      FETCH_LOG_INFO(LOGGING_NAME, "Generating new block: ", ToBase64(next_block_->body.hash),
+                     " txs: ", next_block_->GetTransactionCount());
 
       // dispatch the block that has been generated
       block_sink_.OnBlock(*next_block_);

@@ -26,8 +26,8 @@
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
-#include "network/peer.hpp"
 #include "network/muddle/rpc/client.hpp"
+#include "network/peer.hpp"
 #include "storage/object_store_protocol.hpp"
 #include "storage/transient_object_store.hpp"
 #include <algorithm>
@@ -155,20 +155,21 @@ VerifiedTransaction GetRandomTx(crypto::ECDSASigner &certificate, uint64_t seed)
   return VerifiedTransaction::Create(tx);
 }
 
-LaneServicePtr CreateLaneService(uint16_t start_port, NetworkManager const &nm, uint32_t lane = 0, uint32_t total_lanes = 1)
+LaneServicePtr CreateLaneService(uint16_t start_port, NetworkManager const &nm, uint32_t lane = 0,
+                                 uint32_t total_lanes = 1)
 {
   using fetch::ledger::ShardConfig;
   using fetch::muddle::NetworkId;
 
   ShardConfig cfg;
-  cfg.lane_id = lane;
-  cfg.num_lanes = total_lanes;
-  cfg.storage_path = "object_sync_tests";
-  cfg.external_identity = std::make_shared<crypto::ECDSASigner>();
-  cfg.external_port = start_port;
+  cfg.lane_id             = lane;
+  cfg.num_lanes           = total_lanes;
+  cfg.storage_path        = "object_sync_tests";
+  cfg.external_identity   = std::make_shared<crypto::ECDSASigner>();
+  cfg.external_port       = start_port;
   cfg.external_network_id = NetworkId{"EXT-"};
-  cfg.internal_identity = std::make_shared<crypto::ECDSASigner>();
-  cfg.internal_port = static_cast<uint16_t>(start_port + 1u);
+  cfg.internal_identity   = std::make_shared<crypto::ECDSASigner>();
+  cfg.internal_port       = static_cast<uint16_t>(start_port + 1u);
   cfg.internal_network_id = NetworkId{"INT-"};
 
   return std::make_shared<LaneService>(nm, cfg, LaneService::Mode::CREATE_DATABASE);
@@ -264,10 +265,10 @@ TEST(storage_object_store_sync_gtest, DISABLED_transaction_store_protocol_local_
   NetworkManager nm{"NetMgr", 50};
   nm.Start();
 
-  uint16_t                     initial_port       = 10000;
-  uint16_t                     number_of_services = 3;
-  std::vector<LaneServicePtr > services;
-  crypto::ECDSASigner          certificate;
+  uint16_t                    initial_port       = 10000;
+  uint16_t                    number_of_services = 3;
+  std::vector<LaneServicePtr> services;
+  crypto::ECDSASigner         certificate;
 
   // Start up our services
   for (uint16_t i = 0; i < number_of_services; ++i)
@@ -358,8 +359,8 @@ TEST(storage_object_store_sync_gtest, DISABLED_transaction_store_protocol_local_
   FETCH_LOG_INFO(LOGGING_NAME, "Test new joiner case");
 
   // Now test new joiner case, add new joiner
-  services.push_back(CreateLaneService(
-      static_cast<uint16_t>(initial_port + number_of_services), nm, number_of_services, 1));
+  services.push_back(CreateLaneService(static_cast<uint16_t>(initial_port + number_of_services), nm,
+                                       number_of_services, 1));
   services.back()->Start();
 
   client = MuddleTestClient::CreateTestClient(

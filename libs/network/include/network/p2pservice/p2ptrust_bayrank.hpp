@@ -104,7 +104,7 @@ public:
     }
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Feedback: ", byte_array::ToBase64(peer_ident),
-                   " subj=", ToString(subject), " qual=", ToString(quality));
+                    " subj=", ToString(subject), " qual=", ToString(quality));
     if (quality == TrustQuality::NEW_PEER)
     {
       trust_store_[pos].update_score();

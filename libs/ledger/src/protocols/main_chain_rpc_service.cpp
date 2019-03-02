@@ -114,10 +114,11 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   {
     for (auto const &tx : slice)
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Recv Ref TX: ", ToBase64(tx.transaction_hash)," (", tx.contract_name, ')');
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Recv Ref TX: ", ToBase64(tx.transaction_hash), " (",
+                      tx.contract_name, ')');
     }
   }
-#endif // FETCH_LOG_INFO_ENABLED
+#endif  // FETCH_LOG_INFO_ENABLED
 
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.body.hash),
                  " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(), ")");
@@ -223,22 +224,27 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
       switch (status)
       {
       case BlockStatus::ADDED:
-        FETCH_LOG_INFO(LOGGING_NAME, "Synced new block: ", ToBase64(it->body.hash), " from: muddle://", ToBase64(address));
+        FETCH_LOG_INFO(LOGGING_NAME, "Synced new block: ", ToBase64(it->body.hash),
+                       " from: muddle://", ToBase64(address));
         break;
       case BlockStatus::LOOSE:
-        FETCH_LOG_INFO(LOGGING_NAME, "Synced loose block: ", ToBase64(it->body.hash), " from: muddle://", ToBase64(address));
+        FETCH_LOG_INFO(LOGGING_NAME, "Synced loose block: ", ToBase64(it->body.hash),
+                       " from: muddle://", ToBase64(address));
         break;
       case BlockStatus::DUPLICATE:
-        FETCH_LOG_INFO(LOGGING_NAME, "Synced duplicate block: ", ToBase64(it->body.hash), " from: muddle://", ToBase64(address));
+        FETCH_LOG_INFO(LOGGING_NAME, "Synced duplicate block: ", ToBase64(it->body.hash),
+                       " from: muddle://", ToBase64(address));
         break;
       case BlockStatus::INVALID:
-        FETCH_LOG_WARN(LOGGING_NAME, "Synced invalid block: ", ToBase64(it->body.hash), " from: muddle://", ToBase64(address));
+        FETCH_LOG_WARN(LOGGING_NAME, "Synced invalid block: ", ToBase64(it->body.hash),
+                       " from: muddle://", ToBase64(address));
         break;
       }
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Synced bad proof block: ", ToBase64(it->body.hash), " from: muddle://", ToBase64(address));
+      FETCH_LOG_WARN(LOGGING_NAME, "Synced bad proof block: ", ToBase64(it->body.hash),
+                     " from: muddle://", ToBase64(address));
     }
   }
 }
@@ -252,9 +258,8 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
   if (!peer.empty())
   {
     current_peer_address_ = peer;
-    current_request_      = rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
-                                                            MainChainProtocol::HEAVIEST_CHAIN,
-                                                            uint32_t{1000});
+    current_request_      = rpc_client_.CallSpecificAddress(
+        current_peer_address_, RPC_MAIN_CHAIN, MainChainProtocol::HEAVIEST_CHAIN, uint32_t{1000});
 
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
   }
@@ -288,7 +293,8 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
       }
       else
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Heaviest chain request to: ", ToBase64(current_peer_address_), " failed. Reason: ", service::ToString(status));
+        FETCH_LOG_INFO(LOGGING_NAME, "Heaviest chain request to: ", ToBase64(current_peer_address_),
+                       " failed. Reason: ", service::ToString(status));
 
         // since we want to sync at least with one chain before proceeding we restart the state
         // machine back to the requesting
@@ -322,15 +328,13 @@ MainChainRpcService::State MainChainRpcService::OnSynchronising()
       return State::SYNCHRONISING;
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Requesting chain from muddle://", ToBase64(current_peer_address_), " for block ", ToBase64(current_missing_block_));
+    FETCH_LOG_INFO(LOGGING_NAME, "Requesting chain from muddle://", ToBase64(current_peer_address_),
+                   " for block ", ToBase64(current_missing_block_));
 
     // make the RPC call to the block source with a request for the chain
-    current_request_ = rpc_client_.CallSpecificAddress(current_peer_address_,
-                                                       RPC_MAIN_CHAIN,
-                                                       MainChainProtocol::COMMON_SUB_CHAIN,
-                                                       current_missing_block_,
-                                                       chain_.GetHeaviestBlockHash(),
-                                                       uint64_t{1000});
+    current_request_ = rpc_client_.CallSpecificAddress(
+        current_peer_address_, RPC_MAIN_CHAIN, MainChainProtocol::COMMON_SUB_CHAIN,
+        current_missing_block_, chain_.GetHeaviestBlockHash(), uint64_t{1000});
 
     next_state = State::WAITING_FOR_RESPONSE;
   }
@@ -360,7 +364,8 @@ MainChainRpcService::State MainChainRpcService::OnWaitingForResponse()
       }
       else
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Chain request to: ", ToBase64(current_peer_address_), " failed. Reason: ", service::ToString(status));
+        FETCH_LOG_INFO(LOGGING_NAME, "Chain request to: ", ToBase64(current_peer_address_),
+                       " failed. Reason: ", service::ToString(status));
       }
 
       // clear the state

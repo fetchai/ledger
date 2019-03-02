@@ -27,11 +27,11 @@
 #include "network/muddle/muddle_register.hpp"
 #include "network/muddle/packet.hpp"
 
+#include <iomanip>
 #include <memory>
 #include <random>
 #include <sstream>
 #include <utility>
-#include <iomanip>
 
 static constexpr uint8_t DEFAULT_TTL = 40;
 
@@ -124,7 +124,8 @@ ConstByteArray ToConstByteArray(Packet::RawAddress const &addr)
  * @param channel The channel identifier
  * @return The packet
  */
-Router::PacketPtr FormatDirect(Packet::Address const &from, NetworkId const &network, uint16_t service, uint16_t channel)
+Router::PacketPtr FormatDirect(Packet::Address const &from, NetworkId const &network,
+                               uint16_t service, uint16_t channel)
 {
   auto packet = std::make_shared<Packet>(from, network.value());
   packet->SetService(service);
@@ -145,8 +146,9 @@ Router::PacketPtr FormatDirect(Packet::Address const &from, NetworkId const &net
  * @param payload The reference to the payload to be send
  * @return A new packet with common field populated
  */
-Router::PacketPtr FormatPacket(Packet::Address const &from, NetworkId const &network, uint16_t service, uint16_t channel,
-                               uint16_t counter, uint8_t ttl, Packet::Payload const &payload)
+Router::PacketPtr FormatPacket(Packet::Address const &from, NetworkId const &network,
+                               uint16_t service, uint16_t channel, uint16_t counter, uint8_t ttl,
+                               Packet::Payload const &payload)
 {
   auto packet = std::make_shared<Packet>(from, network.value());
   packet->SetService(service);
@@ -163,10 +165,10 @@ std::string DescribePacket(Packet const &packet)
   std::ostringstream oss;
 
   oss << "To: " << ToBase64(packet.GetTarget()) << " From: " << ToBase64(packet.GetSender())
-      << " Route: " << NetworkId{packet.GetNetworkId()}.ToString() << ':' << packet.GetService() << ':' << packet.GetProtocol() << ':'
-      << packet.GetMessageNum() << " Type: " << (packet.IsDirect() ? 'D' : 'R')
-      << (packet.IsBroadcast() ? 'B' : 'T') << (packet.IsExchange() ? 'X' : 'F')
-      << " TTL: " << static_cast<std::size_t>(packet.GetTTL());
+      << " Route: " << NetworkId{packet.GetNetworkId()}.ToString() << ':' << packet.GetService()
+      << ':' << packet.GetProtocol() << ':' << packet.GetMessageNum()
+      << " Type: " << (packet.IsDirect() ? 'D' : 'R') << (packet.IsBroadcast() ? 'B' : 'T')
+      << (packet.IsExchange() ? 'X' : 'F') << " TTL: " << static_cast<std::size_t>(packet.GetTTL());
 
   return oss.str();
 }
@@ -248,7 +250,8 @@ void Router::Route(Handle handle, PacketPtr packet)
   // discard all foreign packets
   if (packet->GetNetworkId() != network_id_.value())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Discarding foreign packet: ", DescribePacket(*packet), " at ", ToBase64(address_), ":", network_id_.ToString());
+    FETCH_LOG_WARN(LOGGING_NAME, "Discarding foreign packet: ", DescribePacket(*packet), " at ",
+                   ToBase64(address_), ":", network_id_.ToString());
     return;
   }
 
@@ -325,7 +328,8 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel,
   uint16_t const counter = dispatcher_.GetNextCounter();
 
   // format the packet
-  auto packet = FormatPacket(address_, network_id_, service, channel, counter, DEFAULT_TTL, message);
+  auto packet =
+      FormatPacket(address_, network_id_, service, channel, counter, DEFAULT_TTL, message);
   packet->SetTarget(address);
 
   RoutePacket(packet, false);
@@ -344,7 +348,8 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel, ui
                   Payload const &payload)
 {
   // format the packet
-  auto packet = FormatPacket(address_, network_id_, service, channel, message_num, DEFAULT_TTL, payload);
+  auto packet =
+      FormatPacket(address_, network_id_, service, channel, message_num, DEFAULT_TTL, payload);
   packet->SetTarget(address);
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange Response: ", ToBase64(address), " (", service, '-',
@@ -365,7 +370,8 @@ void Router::Broadcast(uint16_t service, uint16_t channel, Payload const &payloa
   // get the next counter for this message
   uint16_t const counter = dispatcher_.GetNextCounter();
 
-  auto packet = FormatPacket(address_, network_id_, service, channel, counter, DEFAULT_TTL, payload);
+  auto packet =
+      FormatPacket(address_, network_id_, service, channel, counter, DEFAULT_TTL, payload);
   packet->SetBroadcast(true);
 
   RoutePacket(packet, false);
@@ -460,7 +466,8 @@ Router::Response Router::Exchange(Address const &address, uint16_t service, uint
                   channel, '-', counter, ") prom: ", promise->id());
 
   // format the packet and route the packet
-  auto packet = FormatPacket(address_, network_id_, service, channel, counter, DEFAULT_TTL, request);
+  auto packet =
+      FormatPacket(address_, network_id_, service, channel, counter, DEFAULT_TTL, request);
   packet->SetTarget(address);
   packet->SetExchange();
   RoutePacket(packet, false);
@@ -872,7 +879,8 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
       // send back a direct response if that is required
       if (packet->IsExchange())
       {
-        SendToConnection(handle, FormatDirect(address_, network_id_, SERVICE_MUDDLE, CHANNEL_ROUTING));
+        SendToConnection(handle,
+                         FormatDirect(address_, network_id_, SERVICE_MUDDLE, CHANNEL_ROUTING));
       }
     }
   }
@@ -902,7 +910,9 @@ void Router::DispatchPacket(PacketPtr packet, Address transmitter)
       return;
     }
 
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to locate handler for routed message. Net: ", packet->GetNetworkId(), " Service: ", packet->GetService(), " Channel: ",  packet->GetProtocol());
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Unable to locate handler for routed message. Net: ", packet->GetNetworkId(),
+                   " Service: ", packet->GetService(), " Channel: ", packet->GetProtocol());
   });
 }
 

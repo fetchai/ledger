@@ -90,8 +90,8 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
     // This is a failure case that appears too often
     if (tx.contract_name().size() == 0)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to do full retrieve of TX: ",
-                      byte_array::ToBase64(hash));
+      FETCH_LOG_ERROR(LOGGING_NAME,
+                      "Unable to do full retrieve of TX: ", byte_array::ToBase64(hash));
       return Status::TX_LOOKUP_FAILURE;
     }
 

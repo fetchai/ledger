@@ -136,11 +136,11 @@ private:
 
   /// @name Configuration
   /// @{
-  Flag     active_;           ///< Flag to control running of main thread
-  Config   cfg_;              ///< The configuration
-  uint16_t p2p_port_;         ///< The port that the P2P interface is running from
-  uint16_t http_port_;        ///< The port of the HTTP server
-  uint16_t lane_port_start_;  ///< The starting port of all the lane services
+  Flag         active_;           ///< Flag to control running of main thread
+  Config       cfg_;              ///< The configuration
+  uint16_t     p2p_port_;         ///< The port that the P2P interface is running from
+  uint16_t     http_port_;        ///< The port of the HTTP server
+  uint16_t     lane_port_start_;  ///< The starting port of all the lane services
   ShardConfigs shard_cfgs_;
   /// @}
 
@@ -151,9 +151,9 @@ private:
   NetworkManager   http_network_manager_;  ///< A separate net. coordinator for the http service(s)
   Muddle           muddle_;                ///< The muddle networking service
   CertificatePtr   internal_identity_;
-  Muddle           internal_muddle_;       ///< The muddle networking service
-  TrustSystem      trust_;                 ///< The trust subsystem
-  Peer2PeerService p2p_;                   ///< The main p2p networking stack
+  Muddle           internal_muddle_;  ///< The muddle networking service
+  TrustSystem      trust_;            ///< The trust subsystem
+  Peer2PeerService p2p_;              ///< The main p2p networking stack
   /// @}
 
   /// @name Transaction and State Database shards

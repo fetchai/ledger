@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/shard_config.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/shard_config.hpp"
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/has_worker_thread.hpp"
 #include "network/muddle/muddle.hpp"
@@ -31,22 +31,22 @@
 namespace fetch {
 
 namespace muddle {
-  namespace rpc {
-    class Server;
-  }
+namespace rpc {
+class Server;
 }
+}  // namespace muddle
 
 namespace storage {
-  class NewRevertibleDocumentStore;
+class NewRevertibleDocumentStore;
 
-  template <typename T>
-  class TransientObjectStore;
+template <typename T>
+class TransientObjectStore;
 
-  template <typename T>
-  class ObjectStoreProtocol;
+template <typename T>
+class ObjectStoreProtocol;
 
-  class RevertibleDocumentStoreProtocol;
-}
+class RevertibleDocumentStoreProtocol;
+}  // namespace storage
 
 namespace ledger {
 
@@ -63,9 +63,9 @@ class LaneService
 public:
   static constexpr char const *LOGGING_NAME = "LaneService";
 
-  using Muddle                    = muddle::Muddle;
-  using CertificatePtr            = Muddle::CertificatePtr;
-  using NetworkManager            = network::NetworkManager;
+  using Muddle         = muddle::Muddle;
+  using CertificatePtr = Muddle::CertificatePtr;
+  using NetworkManager = network::NetworkManager;
 
   enum class Mode
   {
@@ -77,7 +77,7 @@ public:
   // Construction / Destruction
   explicit LaneService(NetworkManager nm, ShardConfig const &config, Mode mode);
   LaneService(LaneService const &) = delete;
-  LaneService(LaneService &&) = delete;
+  LaneService(LaneService &&)      = delete;
   ~LaneService();
 
   // Lane Control
@@ -86,13 +86,15 @@ public:
 
   bool SyncIsReady();
 
-  ShardConfig const &config() const { return cfg_; }
+  ShardConfig const &config() const
+  {
+    return cfg_;
+  }
 
   LaneService &operator=(LaneService const &) = delete;
   LaneService &operator=(LaneService &&) = delete;
 
 private:
-
   using MuddlePtr                 = std::shared_ptr<Muddle>;
   using Server                    = fetch::muddle::rpc::Server;
   using ServerPtr                 = std::shared_ptr<Server>;
@@ -134,7 +136,7 @@ private:
 
   /// @name Lane Identity Service
   /// @{
-  LaneIdentityPtr lane_identity_;
+  LaneIdentityPtr         lane_identity_;
   LaneIdentityProtocolPtr lane_identity_protocol_;
   /// @}
 

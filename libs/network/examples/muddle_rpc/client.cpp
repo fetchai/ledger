@@ -31,9 +31,8 @@ using fetch::muddle::rpc::Client;
 using fetch::service::Promise;
 using fetch::muddle::NetworkId;
 
-using Clock = std::chrono::high_resolution_clock;
+using Clock       = std::chrono::high_resolution_clock;
 using PromiseList = std::vector<Promise>;
-
 
 int main()
 {

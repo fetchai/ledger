@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/storage_unit/lane_service.hpp"
 #include "core/service_ids.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
 #include "ledger/storage_unit/lane_controller.hpp"
@@ -24,11 +25,10 @@
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
 #include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
+#include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/server.hpp"
 #include "storage/document_store_protocol.hpp"
 #include "storage/new_revertible_document_store.hpp"
-#include "network/muddle/muddle.hpp"
-#include "ledger/storage_unit/lane_service.hpp"
 
 using fetch::byte_array::ToBase64;
 
@@ -43,18 +43,20 @@ std::string GeneratePrefix(std::string const &storage_path, uint32_t lane)
   return oss.str();
 }
 
-} // namespace
+}  // namespace
 
 LaneService::LaneService(NetworkManager nm, ShardConfig const &config, Mode mode)
   : cfg_{config}
 {
   // External Muddle network and RPC server
-  external_muddle_     = std::make_shared<Muddle>(cfg_.external_network_id, cfg_.external_identity, nm);
-  external_rpc_server_ = std::make_shared<Server>(external_muddle_->AsEndpoint(), SERVICE_LANE, CHANNEL_RPC);
+  external_muddle_ = std::make_shared<Muddle>(cfg_.external_network_id, cfg_.external_identity, nm);
+  external_rpc_server_ =
+      std::make_shared<Server>(external_muddle_->AsEndpoint(), SERVICE_LANE, CHANNEL_RPC);
 
   // Internal muddle network
   internal_muddle_ = std::make_shared<Muddle>(cfg_.internal_network_id, cfg_.internal_identity, nm);
-  internal_rpc_server_ = std::make_shared<Server>(internal_muddle_->AsEndpoint(), SERVICE_LANE_CTRL, CHANNEL_RPC);
+  internal_rpc_server_ =
+      std::make_shared<Server>(internal_muddle_->AsEndpoint(), SERVICE_LANE_CTRL, CHANNEL_RPC);
 
   // Lane Identity + Protocol
   lane_identity_ = std::make_shared<LaneIdentity>(nm, external_muddle_->identity());
@@ -69,12 +71,12 @@ LaneService::LaneService(NetworkManager nm, ShardConfig const &config, Mode mode
   std::string const prefix = GeneratePrefix(cfg_.storage_path, cfg_.lane_id);
   switch (mode)
   {
-    case Mode::CREATE_DATABASE:
-      tx_store_->New(prefix + "transaction.db", prefix + "transaction_index.db", true);
-      break;
-    case Mode::LOAD_DATABASE:
-      tx_store_->Load(prefix + "transaction.db", prefix + "transaction_index.db", true);
-      break;
+  case Mode::CREATE_DATABASE:
+    tx_store_->New(prefix + "transaction.db", prefix + "transaction_index.db", true);
+    break;
+  case Mode::LOAD_DATABASE:
+    tx_store_->Load(prefix + "transaction.db", prefix + "transaction_index.db", true);
+    break;
   }
 
   tx_store_protocol_ = std::make_shared<TxStoreProto>(tx_store_.get());
@@ -87,11 +89,10 @@ LaneService::LaneService(NetworkManager nm, ShardConfig const &config, Mode mode
 
   tx_sync_protocol_ = std::make_shared<TransactionStoreSyncProtocol>(tx_store_.get(), cfg_.lane_id);
   tx_sync_service_  = std::make_shared<TransactionStoreSyncService>(
-    cfg_.lane_id, external_muddle_, tx_store_, controller_, cfg_.verification_threads, cfg_.sync_service_timeout,
-    cfg_.sync_service_promise_timeout, cfg_.sync_service_fetch_period);
+      cfg_.lane_id, external_muddle_, tx_store_, controller_, cfg_.verification_threads,
+      cfg_.sync_service_timeout, cfg_.sync_service_promise_timeout, cfg_.sync_service_fetch_period);
 
-  tx_store_->SetCallback(
-    [this](VerifiedTransaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
+  tx_store_->SetCallback([this](VerifiedTransaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
 
   tx_sync_service_->SetTrimCacheCallback([this]() { tx_sync_protocol_->TrimCache(); });
 
@@ -102,17 +103,18 @@ LaneService::LaneService(NetworkManager nm, ShardConfig const &config, Mode mode
   state_db_ = std::make_shared<StateDb>();
   switch (mode)
   {
-    case Mode::CREATE_DATABASE:
-      state_db_->New(prefix + "state.db", prefix + "state_deltas.db", prefix + "state_index.db",
-                     prefix + "state_index_deltas.db", false);
-      break;
-    case Mode::LOAD_DATABASE:
-      state_db_->Load(prefix + "state.db", prefix + "state_deltas.db", prefix + "state_index.db",
-                      prefix + "state_index_deltas.db", true);
-      break;
+  case Mode::CREATE_DATABASE:
+    state_db_->New(prefix + "state.db", prefix + "state_deltas.db", prefix + "state_index.db",
+                   prefix + "state_index_deltas.db", false);
+    break;
+  case Mode::LOAD_DATABASE:
+    state_db_->Load(prefix + "state.db", prefix + "state_deltas.db", prefix + "state_index.db",
+                    prefix + "state_index_deltas.db", true);
+    break;
   }
 
-  state_db_protocol_ = std::make_shared<StateDbProto>(state_db_.get(), cfg_.lane_id, cfg_.num_lanes);
+  state_db_protocol_ =
+      std::make_shared<StateDbProto>(state_db_.get(), cfg_.lane_id, cfg_.num_lanes);
   internal_rpc_server_->Add(RPC_STATE, state_db_protocol_.get());
 
   FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, " Initialised.");
@@ -148,8 +150,12 @@ LaneService::~LaneService()
 
 void LaneService::Start()
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Establishing Lane ", cfg_.lane_id, " Service on tcp://0.0.0.0:", cfg_.external_port," ID: ", ToBase64(cfg_.external_identity->identity().identifier()));
-  FETCH_LOG_INFO(LOGGING_NAME, "Establishing Lane ", cfg_.lane_id, " Service on tcp://127.0.0.1:", cfg_.internal_port," ID: ", ToBase64(cfg_.internal_identity->identity().identifier()));
+  FETCH_LOG_INFO(LOGGING_NAME, "Establishing Lane ", cfg_.lane_id,
+                 " Service on tcp://0.0.0.0:", cfg_.external_port,
+                 " ID: ", ToBase64(cfg_.external_identity->identity().identifier()));
+  FETCH_LOG_INFO(LOGGING_NAME, "Establishing Lane ", cfg_.lane_id,
+                 " Service on tcp://127.0.0.1:", cfg_.internal_port,
+                 " ID: ", ToBase64(cfg_.internal_identity->identity().identifier()));
 
   external_muddle_->Start({cfg_.external_port});
   internal_muddle_->Start({cfg_.internal_port});
@@ -158,7 +164,7 @@ void LaneService::Start()
 
   // TX Sync service
   workthread_ = std::make_shared<BackgroundedWorkThread>(
-    &bg_work_, "BW:LS-" + std::to_string(cfg_.lane_id), [this]() { tx_sync_service_->Work(); });
+      &bg_work_, "BW:LS-" + std::to_string(cfg_.lane_id), [this]() { tx_sync_service_->Work(); });
   workthread_->ChangeWaitTime(std::chrono::milliseconds{unsigned{SYNC_PERIOD_MS}});
 }
 
@@ -177,5 +183,5 @@ bool LaneService::SyncIsReady()
   return tx_sync_service_->IsReady();
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

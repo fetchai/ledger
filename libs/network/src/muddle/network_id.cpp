@@ -18,8 +18,8 @@
 
 #include "network/muddle/network_id.hpp"
 
-#include <sstream>
 #include <iomanip>
+#include <sstream>
 
 namespace fetch {
 namespace muddle {
@@ -30,7 +30,7 @@ NetworkId::NetworkId(char const id[4])
 
   value_ |= static_cast<uint32_t>(id[0]) << 24u;
   value_ |= static_cast<uint32_t>(id[1]) << 16u;
-  value_ |= static_cast<uint32_t>(id[2]) <<  8u;
+  value_ |= static_cast<uint32_t>(id[2]) << 8u;
   value_ |= static_cast<uint32_t>(id[3]);
 }
 
@@ -90,5 +90,5 @@ std::string NetworkId::ToString() const
   return oss.str();
 }
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

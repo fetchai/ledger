@@ -134,7 +134,6 @@ public:
   void SetPayload(Payload const &payload);
 
 private:
-
   RoutingHeader header_;   ///< The header containing primarily routing information
   Payload       payload_;  ///< The payload of the message
 

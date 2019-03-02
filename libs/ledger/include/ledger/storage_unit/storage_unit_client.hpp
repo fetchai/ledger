@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/service_ids.hpp"
 #include "core/logger.hpp"
+#include "core/service_ids.hpp"
 #include "ledger/shard_config.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"
@@ -61,7 +61,7 @@ public:
   StorageUnitClient(MuddleEndpoint &muddle, ShardConfigs const &shards, uint32_t log2_num_lanes);
   StorageUnitClient(StorageUnitClient const &) = delete;
   StorageUnitClient(StorageUnitClient &&)      = delete;
-  ~StorageUnitClient() override = default;
+  ~StorageUnitClient() override                = default;
 
   // Helpers
   uint32_t num_lanes() const;
@@ -78,7 +78,7 @@ public:
 
   Document GetOrCreate(ResourceAddress const &key) override;
   Document Get(ResourceAddress const &key) override;
-  void Set(ResourceAddress const &key, StateValue const &value) override;
+  void     Set(ResourceAddress const &key, StateValue const &value) override;
 
   // state hash functions
   byte_array::ConstByteArray CurrentHash() override;

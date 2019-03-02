@@ -60,7 +60,7 @@ private:
   void Monitor();
 
   std::string const name_;
-  Flag running_{false};
+  Flag              running_{false};
 
   Mutex       work_map_mutex_{__LINE__, __FILE__};
   RunnableMap work_map_{};

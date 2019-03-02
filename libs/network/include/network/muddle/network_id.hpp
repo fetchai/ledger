@@ -33,29 +33,26 @@ public:
   explicit NetworkId(char const id[4]);
   explicit NetworkId(UnderlyingType value);
   NetworkId(NetworkId const &) = default;
-  ~NetworkId() = default;
+  ~NetworkId()                 = default;
 
   UnderlyingType const &value() const;
-  std::string ToString() const;
+  std::string           ToString() const;
 
   // Operators
   NetworkId &operator=(NetworkId const &) = default;
 
 private:
-
   UnderlyingType value_{0};
 };
 
 inline NetworkId::NetworkId(UnderlyingType value)
   : value_{value}
-{
-}
+{}
 
 inline NetworkId::UnderlyingType const &NetworkId::value() const
 {
   return value_;
 }
 
-
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

@@ -217,9 +217,7 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
   if (executor)
   {
     // increment the active counters
-    counters_.Apply([](Counters &counters) {
-      counters.active++;
-    });
+    counters_.Apply([](Counters &counters) { counters.active++; });
 
     // execute the item
     item.Execute(*executor);
@@ -227,8 +225,8 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
     // determine what the status is
     if (ExecutorInterface::Status::SUCCESS != item.status())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Error executing tx: ", item.hash().ToBase64(), " slice: ",
-                     item.slice(), " status: ", ledger::ToString(item.status()));
+      FETCH_LOG_WARN(LOGGING_NAME, "Error executing tx: ", item.hash().ToBase64(),
+                     " slice: ", item.slice(), " status: ", ledger::ToString(item.status()));
     }
 
     counters_.Apply([](Counters &counters) {
@@ -428,13 +426,14 @@ void ExecutionManager::MonitorThreadEntrypoint()
     case MonitorState::RUNNING:
     {
       // wait for the execution to complete
-      bool const finished = counters_.WaitFor(std::chrono::seconds{2}, [](Counters const &counters) {
-        return counters.remaining == 0;
-      });
+      bool const finished =
+          counters_.WaitFor(std::chrono::seconds{2},
+                            [](Counters const &counters) { return counters.remaining == 0; });
 
       if (!finished)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "### Extra long execution: remaining: ", counters_.Get().remaining);
+        FETCH_LOG_WARN(LOGGING_NAME,
+                       "### Extra long execution: remaining: ", counters_.Get().remaining);
       }
       else
       {
@@ -480,7 +479,6 @@ void ExecutionManager::MonitorThreadEntrypoint()
             FETCH_LOG_DEBUG(LOGGING_NAME, "Slice ", current_slice,
                             " Execution Status - Complete: ", num_complete, " Stalls: ", num_stalls,
                             " Errors: ", num_errors);
-
           }
         }
 

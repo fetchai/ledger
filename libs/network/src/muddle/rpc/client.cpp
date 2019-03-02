@@ -25,7 +25,6 @@ namespace fetch {
 namespace muddle {
 namespace rpc {
 
-
 Client::Client(std::string name, MuddleEndpoint &endpoint, Address address, uint16_t service,
                uint16_t channel)
   : name_(std::move(name))
@@ -56,8 +55,7 @@ Client::Client(std::string name, MuddleEndpoint &endpoint, Address address, uint
 
 Client::Client(std::string name, MuddleEndpoint &endpoint, uint16_t service, uint16_t channel)
   : Client(std::move(name), endpoint, Address{}, service, channel)
-{
-}
+{}
 
 Client::~Client()
 {

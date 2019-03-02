@@ -92,14 +92,13 @@ private:
                                       http::HTTPRequest const &request)
   {
     // create the system response
-    Variant response = Variant::Object();
+    Variant response    = Variant::Object();
     response["version"] = fetch::version::FULL;
-    response["valid"] = fetch::version::VALID;
-    response["lanes"] = 1u << log2_num_lanes_;
+    response["valid"]   = fetch::version::VALID;
+    response["lanes"]   = 1u << log2_num_lanes_;
 
     return http::CreateJsonResponse(response);
   }
-
 
   http::HTTPResponse GetChainStatus(http::ViewParameters const & /*params*/,
                                     http::HTTPRequest const &request)

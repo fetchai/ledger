@@ -35,8 +35,8 @@ public:
 
   enum
   {
-    HEAVIEST_CHAIN  = 1,
-    CHAIN_PRECEDING = 2,
+    HEAVIEST_CHAIN   = 1,
+    CHAIN_PRECEDING  = 2,
     COMMON_SUB_CHAIN = 3
   };
 
@@ -49,7 +49,6 @@ public:
   }
 
 private:
-
   Blocks GetHeaviestChain(uint32_t maxsize)
   {
     LOG_STACK_TRACE_POINT;
