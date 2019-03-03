@@ -17,10 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/transaction_processor.hpp"
-#include "ledger/transaction_status_cache.hpp"
 #include "core/threading.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "ledger/transaction_status_cache.hpp"
 #include "metrics/metrics.hpp"
 
 namespace fetch {
@@ -32,10 +32,10 @@ namespace ledger {
  * @param storage The reference to the storage unit
  * @param miner The reference to the system miner
  */
-TransactionProcessor::TransactionProcessor(StorageUnitInterface &storage,
-                                           BlockPackerInterface &packer,
+TransactionProcessor::TransactionProcessor(StorageUnitInterface &  storage,
+                                           BlockPackerInterface &  packer,
                                            TransactionStatusCache &tx_status_cache,
-                                           std::size_t num_threads)
+                                           std::size_t             num_threads)
   : storage_{storage}
   , packer_{packer}
   , status_cache_{tx_status_cache}

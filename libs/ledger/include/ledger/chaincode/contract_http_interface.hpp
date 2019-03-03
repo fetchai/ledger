@@ -30,8 +30,8 @@
 namespace fetch {
 
 namespace variant {
-  class Variant;
-} // namespace variant
+class Variant;
+}  // namespace variant
 
 namespace ledger {
 
@@ -81,21 +81,23 @@ private:
 
   /// @name Query Handler
   /// @{
-  http::HTTPResponse OnQuery(ConstByteArray const &contract_name,
-                             ConstByteArray const &query,
+  http::HTTPResponse OnQuery(ConstByteArray const &contract_name, ConstByteArray const &query,
                              http::HTTPRequest const &request);
   /// @}
 
   /// @name Transaction Handlers
   /// @{
   http::HTTPResponse OnTransaction(http::HTTPRequest const &req, ConstByteArray expected_contract);
-  SubmitTxStatus SubmitJsonTx(http::HTTPRequest const &req, ConstByteArray expected_contract, TxHashes &txs);
-  SubmitTxStatus SubmitNativeTx(http::HTTPRequest const &req, ConstByteArray expected_contract, TxHashes &txs);
+  SubmitTxStatus     SubmitJsonTx(http::HTTPRequest const &req, ConstByteArray expected_contract,
+                                  TxHashes &txs);
+  SubmitTxStatus     SubmitNativeTx(http::HTTPRequest const &req, ConstByteArray expected_contract,
+                                    TxHashes &txs);
   /// @}
 
   /// @name Access Log
   /// @{
-  void RecordTransaction(SubmitTxStatus const &status, http::HTTPRequest const &request, ConstByteArray expected_contract);
+  void RecordTransaction(SubmitTxStatus const &status, http::HTTPRequest const &request,
+                         ConstByteArray expected_contract);
   void RecordQuery(ConstByteArray const &contract_name, ConstByteArray const &query,
                    http::HTTPRequest const &request);
   void WriteToAccessLog(variant::Variant const &entry);

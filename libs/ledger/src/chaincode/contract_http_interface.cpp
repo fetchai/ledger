@@ -21,12 +21,12 @@
 #include "core/logger.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/string/replace.hpp"
-#include "variant/variant.hpp"
 #include "http/json_response.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/wire_transaction.hpp"
 #include "ledger/transaction_processor.hpp"
+#include "variant/variant.hpp"
 
 #include <string>
 
@@ -168,8 +168,8 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
  * @param request The originating HTTPRequest object
  * @return The appropriate HTTPResponse to be returned to the client
  */
-http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &contract_name,
-                                                  ConstByteArray const &query,
+http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contract_name,
+                                                  ConstByteArray const &   query,
                                                   http::HTTPRequest const &request)
 {
   try
@@ -219,7 +219,7 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &contract
  * @return The appropriate HTTPResponse to be returned to the client
  */
 http::HTTPResponse ContractHttpInterface::OnTransaction(http::HTTPRequest const &request,
-                                                        ConstByteArray expected_contract)
+                                                        ConstByteArray           expected_contract)
 {
   Variant json = Variant::Object();
 
@@ -236,7 +236,7 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(http::HTTPRequest const 
 
     // handle the types of transaction
     TxHashes txs{};
-    bool unknown_format = true;
+    bool     unknown_format = true;
     if (content_type == "application/vnd+fetch.transaction+native")
     {
       submitted      = SubmitNativeTx(request, expected_contract, txs);
@@ -253,10 +253,10 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(http::HTTPRequest const 
     RecordTransaction(submitted, request, expected_contract);
 
     // update the response with the counts
-    json["counts"] = Variant::Object();
+    json["counts"]              = Variant::Object();
     json["counts"]["submitted"] = submitted.processed;
-    json["counts"]["received"] = submitted.received;
-    json["txs"] = Variant::Array(txs.size());
+    json["counts"]["received"]  = submitted.received;
+    json["txs"]                 = Variant::Array(txs.size());
     for (std::size_t i = 0; i < txs.size(); ++i)
     {
       json["txs"][i] = ToBase64(txs[i]);
@@ -268,7 +268,8 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(http::HTTPRequest const 
     }
     else if (submitted.processed != submitted.received)
     {
-      json["error"] = "Some transactions have NOT been submitted due to miss-matching contract name.";
+      json["error"] =
+          "Some transactions have NOT been submitted due to miss-matching contract name.";
     }
   }
   catch (std::exception const &ex)
@@ -277,8 +278,8 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(http::HTTPRequest const 
   }
 
   // based on the contents of the response determine the correct status code
-  http::Status const status_code = json.Has("json") ? http::Status::CLIENT_ERROR_BAD_REQUEST
-                                                    : http::Status::SUCCESS_OK;
+  http::Status const status_code =
+      json.Has("json") ? http::Status::CLIENT_ERROR_BAD_REQUEST : http::Status::SUCCESS_OK;
 
   return http::CreateJsonResponse(json, status_code);
 }
@@ -300,8 +301,7 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(http::HTTPRequest const 
  * @see SubmitNativeTx
  */
 ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
-  http::HTTPRequest const &request,
-  ConstByteArray expected_contract, TxHashes &txs)
+    http::HTTPRequest const &request, ConstByteArray expected_contract, TxHashes &txs)
 {
   std::size_t submitted{0};
   std::size_t expected_count{0};
@@ -376,8 +376,7 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
  * @see SubmitJsonTx
  */
 ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitNativeTx(
-    http::HTTPRequest const &         request,
-    ConstByteArray expected_contract, TxHashes &txs)
+    http::HTTPRequest const &request, ConstByteArray expected_contract, TxHashes &txs)
 {
   std::vector<AdaptedTx> transactions;
 
@@ -409,12 +408,12 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitNativeTx(
  * @param status The transaction submission status (counts)
  * @param request The originating HTTPRequest object
  */
-void ContractHttpInterface::RecordTransaction(SubmitTxStatus const &status,
+void ContractHttpInterface::RecordTransaction(SubmitTxStatus const &   status,
                                               http::HTTPRequest const &request,
-                                              ConstByteArray expected_contract)
+                                              ConstByteArray           expected_contract)
 {
   // form the variant
-  Variant entry = Variant::Object();
+  Variant entry      = Variant::Object();
   entry["timestamp"] = GenerateTimestamp();
   entry["type"]      = "transaction";
   entry["received"]  = status.received;
@@ -442,7 +441,7 @@ void ContractHttpInterface::RecordQuery(ConstByteArray const &   contract_name,
                                         ConstByteArray const &   query,
                                         http::HTTPRequest const &request)
 {
-  Variant entry = Variant::Object();
+  Variant entry      = Variant::Object();
   entry["timestamp"] = GenerateTimestamp();
   entry["type"]      = "query";
   entry["contract"]  = contract_name;

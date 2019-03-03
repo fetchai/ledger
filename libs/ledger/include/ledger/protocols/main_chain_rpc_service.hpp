@@ -74,7 +74,8 @@ public:
   static constexpr char const *LOGGING_NAME = "MainChainRpc";
 
   // Construction / Destruction
-  MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust, bool standalone);
+  MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust,
+                      bool standalone);
   MainChainRpcService(MainChainRpcService const &) = delete;
   MainChainRpcService(MainChainRpcService &&)      = delete;
   ~MainChainRpcService() override;

@@ -16,27 +16,27 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/byte_array.hpp"
 #include "core/macros.hpp"
 #include "core/random/lcg.hpp"
-#include "core/byte_array/byte_array.hpp"
 #include "ledger/transaction_status_cache.hpp"
 
 #include "gtest/gtest.h"
 
-#include <memory>
 #include <iostream>
+#include <memory>
 
 namespace fetch {
 namespace ledger {
 
-std::ostream & operator<<(std::ostream &s, TransactionStatus const &status)
+std::ostream &operator<<(std::ostream &s, TransactionStatus const &status)
 {
   s << ToString(status);
   return s;
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch
 
 namespace {
 
@@ -55,7 +55,6 @@ using RngWord        = LinearCongruentialGenerator::random_type;
 class TransactionStatusCacheTests : public ::testing::Test
 {
 protected:
-
   void SetUp() override
   {
     cache_ = std::make_unique<TransactionStatusCache>();
@@ -134,4 +133,4 @@ TEST_F(TransactionStatusCacheTests, CheckStatusStrings)
   EXPECT_STREQ("Executed", ToString(TransactionStatus::EXECUTED));
 }
 
-} // namespace
+}  // namespace

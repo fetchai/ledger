@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/generics/milli_timer.hpp"
 #include "ledger/transaction_status_cache.hpp"
+#include "network/generics/milli_timer.hpp"
 
 static const std::chrono::hours   LIFETIME{24};
 static const std::chrono::minutes INTERVAL{5};
@@ -33,17 +33,17 @@ char const *ToString(TransactionStatus status)
 
   switch (status)
   {
-    case TransactionStatus::UNKNOWN:
-      break;
-    case TransactionStatus::PENDING:
-      text = "Pending";
-      break;
-    case TransactionStatus::MINED:
-      text = "Mined";
-      break;
-    case TransactionStatus::EXECUTED:
-      text = "Executed";
-      break;
+  case TransactionStatus::UNKNOWN:
+    break;
+  case TransactionStatus::PENDING:
+    text = "Pending";
+    break;
+  case TransactionStatus::MINED:
+    text = "Mined";
+    break;
+  case TransactionStatus::EXECUTED:
+    text = "Executed";
+    break;
   }
 
   return text;
@@ -103,5 +103,5 @@ void TransactionStatusCache::PruneCache(Timepoint const &now)
   }
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

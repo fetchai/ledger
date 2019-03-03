@@ -25,12 +25,12 @@
 #include "ledger/chain/consensus/consensus_miner_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/execution_manager.hpp"
-#include "ledger/transaction_status_cache.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/transaction_processor.hpp"
+#include "ledger/transaction_status_cache.hpp"
 #include "miner/basic_miner.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/p2pservice/manifest.hpp"
@@ -161,10 +161,10 @@ private:
 
   /// @name Transaction and State Database shards
   /// @{
-  TxStatusCache        tx_status_cache_;///< Cache of transaction status
-  LaneServices         lane_services_;  ///< The lane services
-  StorageUnitClientPtr storage_;        ///< The storage client to the lane services
-  LaneRemoteControl    lane_control_;   ///< The lane control client for the lane services
+  TxStatusCache        tx_status_cache_;  ///< Cache of transaction status
+  LaneServices         lane_services_;    ///< The lane services
+  StorageUnitClientPtr storage_;          ///< The storage client to the lane services
+  LaneRemoteControl    lane_control_;     ///< The lane control client for the lane services
   /// @}
 
   /// @name Block Processing

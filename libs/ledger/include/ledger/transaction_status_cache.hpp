@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading/synchronised_state.hpp"
 #include "core/mutex.hpp"
+#include "core/threading/synchronised_state.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 
 #include <chrono>
@@ -29,10 +29,10 @@ namespace ledger {
 
 enum class TransactionStatus
 {
-  UNKNOWN,  ///< The status of the transaction is unknown
-  PENDING,  ///< The transaction is weighting to be mined
-  MINED,    ///< The transaction has been mined
-  EXECUTED, ///< The transaction has been executed
+  UNKNOWN,   ///< The status of the transaction is unknown
+  PENDING,   ///< The transaction is weighting to be mined
+  MINED,     ///< The transaction has been mined
+  EXECUTED,  ///< The transaction has been executed
 };
 
 char const *ToString(TransactionStatus status);
@@ -45,10 +45,10 @@ public:
   using Timepoint = Clock::time_point;
 
   // Construction / Destruction
-  TransactionStatusCache() = default;
+  TransactionStatusCache()                               = default;
   TransactionStatusCache(TransactionStatusCache const &) = delete;
-  TransactionStatusCache(TransactionStatusCache &&) = delete;
-  ~TransactionStatusCache() = default;
+  TransactionStatusCache(TransactionStatusCache &&)      = delete;
+  ~TransactionStatusCache()                              = default;
 
   TransactionStatus Query(TxDigest digest) const;
   void Update(TxDigest digest, TransactionStatus status, Timepoint const &now = Clock::now());
@@ -58,7 +58,7 @@ public:
   TransactionStatusCache &operator=(TransactionStatusCache &&) = delete;
 
 private:
-  using Mutex     = mutex::Mutex;
+  using Mutex = mutex::Mutex;
 
   struct Element
   {
@@ -75,5 +75,5 @@ private:
   Timepoint     last_clean_{Clock::now()};
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

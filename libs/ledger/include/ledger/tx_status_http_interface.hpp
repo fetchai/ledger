@@ -27,21 +27,19 @@ class TransactionStatusCache;
 class TxStatusHttpInterface : public http::HTTPModule
 {
 public:
-
   // Construction / Destruction
   explicit TxStatusHttpInterface(TransactionStatusCache &status_cache);
   TxStatusHttpInterface(TxStatusHttpInterface const &) = delete;
-  TxStatusHttpInterface(TxStatusHttpInterface &&) = delete;
-  ~TxStatusHttpInterface() = default;
+  TxStatusHttpInterface(TxStatusHttpInterface &&)      = delete;
+  ~TxStatusHttpInterface()                             = default;
 
   // Operators
   TxStatusHttpInterface &operator=(TxStatusHttpInterface const &) = delete;
   TxStatusHttpInterface &operator=(TxStatusHttpInterface &&) = delete;
 
 private:
-
   TransactionStatusCache &status_cache_;
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

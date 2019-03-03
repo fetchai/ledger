@@ -51,9 +51,8 @@ namespace ledger {
  */
 BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
-                                   BlockSinkInterface &block_sink,
-                                   TransactionStatusCache &status_cache,
-                                   Identity identity,
+                                   BlockSinkInterface &    block_sink,
+                                   TransactionStatusCache &status_cache, Identity identity,
                                    std::size_t num_lanes, std::size_t num_slices,
                                    std::size_t block_difficulty)
   : chain_{chain}

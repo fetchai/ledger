@@ -16,14 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
-#include "core/logger.hpp"
-#include "core/byte_array/encoders.hpp"
+#include "ledger/tx_status_http_interface.hpp"
 #include "core/byte_array/decoders.hpp"
-#include "variant/variant.hpp"
+#include "core/byte_array/encoders.hpp"
+#include "core/logger.hpp"
+#include "core/macros.hpp"
 #include "http/json_response.hpp"
 #include "ledger/transaction_status_cache.hpp"
-#include "ledger/tx_status_http_interface.hpp"
+#include "variant/variant.hpp"
 
 static constexpr char const *LOGGING_NAME = "TxStatusHttp";
 
@@ -38,29 +38,29 @@ TxStatusHttpInterface::TxStatusHttpInterface(TransactionStatusCache &status_cach
   : status_cache_{status_cache}
 {
   Get("/api/status/tx/(digest=[a-fA-F0-9]{64})",
-    [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
-      FETCH_UNUSED(request);
+      [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+        FETCH_UNUSED(request);
 
-      if (params.Has("digest"))
-      {
-        // convert the digest back to binary
-        auto const digest = FromHex(params["digest"]);
+        if (params.Has("digest"))
+        {
+          // convert the digest back to binary
+          auto const digest = FromHex(params["digest"]);
 
-        FETCH_LOG_INFO(LOGGING_NAME, "Querying status of: ", digest.ToBase64());
+          FETCH_LOG_INFO(LOGGING_NAME, "Querying status of: ", digest.ToBase64());
 
-        // prepare the response
-        Variant response = Variant::Object();
-        response["tx"] = ToBase64(digest);
-        response["status"] = ToString(status_cache_.Query(digest));
+          // prepare the response
+          Variant response   = Variant::Object();
+          response["tx"]     = ToBase64(digest);
+          response["status"] = ToString(status_cache_.Query(digest));
 
-        return http::CreateJsonResponse(response);
-      }
-      else
-      {
-        return http::CreateJsonResponse("{}", http::Status::CLIENT_ERROR_BAD_REQUEST);
-      }
-  });
+          return http::CreateJsonResponse(response);
+        }
+        else
+        {
+          return http::CreateJsonResponse("{}", http::Status::CLIENT_ERROR_BAD_REQUEST);
+        }
+      });
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

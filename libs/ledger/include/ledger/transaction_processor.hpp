@@ -40,8 +40,7 @@ public:
 
   // Construction / Destruction
   TransactionProcessor(StorageUnitInterface &storage, BlockPackerInterface &packer,
-                       TransactionStatusCache &tx_status_cache,
-                       std::size_t num_threads);
+                       TransactionStatusCache &tx_status_cache, std::size_t num_threads);
   TransactionProcessor(TransactionProcessor const &) = delete;
   TransactionProcessor(TransactionProcessor &&)      = delete;
   ~TransactionProcessor() override;
@@ -77,8 +76,8 @@ protected:
 private:
   using Flag = std::atomic<bool>;
 
-  StorageUnitInterface   &storage_;
-  BlockPackerInterface   &packer_;
+  StorageUnitInterface &  storage_;
+  BlockPackerInterface &  packer_;
   TransactionStatusCache &status_cache_;
   TransactionVerifier     verifier_;
   ThreadPtr               poll_new_tx_thread_;
