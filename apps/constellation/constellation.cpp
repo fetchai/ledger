@@ -24,6 +24,7 @@
 #include "ledger/chaincode/wallet_http_interface.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
+#include "ledger/tx_status_http_interface.hpp"
 #include "network/generics/atomic_inflight_counter.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
@@ -162,17 +163,20 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
                        *storage_,
                        block_packer_,
                        *this,
+                       tx_status_cache_,
                        muddle_.identity().identifier(),
                        cfg_.num_lanes(),
                        cfg_.num_slices,
                        cfg_.block_difficulty}
-  , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_)}
-  , tx_processor_{*storage_, block_packer_, cfg_.processor_threads}
+  , main_chain_service_{
+    std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_, cfg_.standalone)}
+  , tx_processor_{*storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
   , http_{http_network_manager_}
   , http_modules_{
         std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_, cfg_.num_lanes()),
         std::make_shared<p2p::P2PHttpInterface>(cfg_.log2_num_lanes, chain_, muddle_, p2p_, trust_,
                                                 block_packer_),
+        std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_)}
 {
   // print the start up log banner

@@ -21,15 +21,21 @@
 #include "core/logger.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/string/replace.hpp"
+#include "variant/variant.hpp"
 #include "http/json_response.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/wire_transaction.hpp"
 #include "ledger/transaction_processor.hpp"
 
+#include <string>
+
 namespace fetch {
 namespace ledger {
 namespace {
+
+using fetch::variant::Variant;
+using fetch::byte_array::ConstByteArray;
 
 struct AdaptedTx
 {
@@ -43,9 +49,26 @@ struct AdaptedTx
   }
 };
 
-byte_array::ConstByteArray const API_PATH_CONTRACT_PREFIX("/api/contract/");
-byte_array::ConstByteArray const CONTRACT_NAME_SEPARATOR(".");
-byte_array::ConstByteArray const PATH_SEPARATOR("/");
+ConstByteArray const API_PATH_CONTRACT_PREFIX("/api/contract/");
+ConstByteArray const CONTRACT_NAME_SEPARATOR(".");
+ConstByteArray const PATH_SEPARATOR("/");
+
+ConstByteArray Quoted(std::string const &value)
+{
+  std::ostringstream oss;
+  oss << std::quoted(value);
+  return oss.str();
+}
+
+ConstByteArray Quoted(ConstByteArray const &value)
+{
+  return Quoted(static_cast<std::string>(value));
+}
+
+ConstByteArray Quoted(char const *value)
+{
+  return Quoted(std::string{value});
+}
 
 http::HTTPResponse JsonBadRequest()
 {
@@ -124,14 +147,16 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
 
       Post(api_path, [this, canonical_contract_name](http::ViewParameters const &params,
                                                      http::HTTPRequest const &   request) {
-        return OnTransaction(params, request, &canonical_contract_name);
+        FETCH_UNUSED(params);
+        return OnTransaction(request, canonical_contract_name);
       });
     }
   }
 
   Post("/api/contract/submit",
        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
-         return OnTransaction(params, request);
+         FETCH_UNUSED(params);
+         return OnTransaction(request, ConstByteArray{});
        });
 }
 
@@ -143,9 +168,9 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
  * @param request The originating HTTPRequest object
  * @return The appropriate HTTPResponse to be returned to the client
  */
-http::HTTPResponse ContractHttpInterface::OnQuery(byte_array::ConstByteArray const &contract_name,
-                                                  byte_array::ConstByteArray const &query,
-                                                  http::HTTPRequest const &         request)
+http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &contract_name,
+                                                  ConstByteArray const &query,
+                                                  http::HTTPRequest const &request)
 {
   try
   {
@@ -171,12 +196,7 @@ http::HTTPResponse ContractHttpInterface::OnQuery(byte_array::ConstByteArray con
 
     if (status == Contract::Status::OK)
     {
-      // encode the response
-      std::ostringstream oss;
-      oss << response;
-
-      // generate the response object
-      return http::CreateJsonResponse(oss.str());
+      return http::CreateJsonResponse(response);
     }
     else
     {
@@ -198,15 +218,14 @@ http::HTTPResponse ContractHttpInterface::OnQuery(byte_array::ConstByteArray con
  * @param expected_contract_name The expected contract name (optional)
  * @return The appropriate HTTPResponse to be returned to the client
  */
-http::HTTPResponse ContractHttpInterface::OnTransaction(
-    http::ViewParameters const &, http::HTTPRequest const &request,
-    byte_array::ConstByteArray const *const expected_contract_name)
+http::HTTPResponse ContractHttpInterface::OnTransaction(http::HTTPRequest const &request,
+                                                        ConstByteArray expected_contract)
 {
-  std::ostringstream oss;
-  bool               error_response{true};
+  Variant json = Variant::Object();
+
   try
   {
-    SubmitTxStatus submitted;
+    SubmitTxStatus submitted{};
 
     // detect the content format, defaulting to json
     byte_array::ConstByteArray content_type = "application/json";
@@ -216,58 +235,52 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(
     }
 
     // handle the types of transaction
-    bool unknown_format = false;
+    TxHashes txs{};
+    bool unknown_format = true;
     if (content_type == "application/vnd+fetch.transaction+native")
     {
-      submitted = SubmitNativeTx(request, expected_contract_name);
+      submitted      = SubmitNativeTx(request, expected_contract, txs);
+      unknown_format = false;
     }
     else if (content_type == "application/vnd+fetch.transaction+json" ||
              content_type == "application/json")
     {
-      submitted = SubmitJsonTx(request, expected_contract_name);
-    }
-    else
-    {
-      unknown_format = true;
+      submitted      = SubmitJsonTx(request, expected_contract, txs);
+      unknown_format = false;
     }
 
-    RecordTransaction(submitted, request);
+    // record the transaction in the access log
+    RecordTransaction(submitted, request, expected_contract);
+
+    // update the response with the counts
+    json["counts"] = Variant::Object();
+    json["counts"]["submitted"] = submitted.processed;
+    json["counts"]["received"] = submitted.received;
+    json["txs"] = Variant::Array(txs.size());
+    for (std::size_t i = 0; i < txs.size(); ++i)
+    {
+      json["txs"][i] = ToBase64(txs[i]);
+    }
 
     if (unknown_format)
     {
-      // format the message
-      std::ostringstream error_msg;
-      error_msg << "Unknown content type: " << content_type;
-
-      oss << R"({ "submitted": false, "error": )" << std::quoted(error_msg.str()) << " }";
+      json["error"] = "Unknown content type: " + Quoted(content_type);
     }
     else if (submitted.processed != submitted.received)
     {
-      // format the message
-      std::ostringstream error_msg;
-      error_msg << "Some transactions has not submitted due to wrong contract type."
-                << content_type;
-
-      oss << R"({ "submitted": false, "count": )" << submitted.processed
-          << R"(, "expected_count": )" << submitted.received
-          << R"(, "error": "Some transactions have NOT been submitted due to miss-matching contract name."})";
-    }
-    else
-    {
-      // success report the statistics
-      oss << R"({ "submitted": true, "count": )" << submitted.processed << " }";
-      error_response = false;
+      json["error"] = "Some transactions have NOT been submitted due to miss-matching contract name.";
     }
   }
   catch (std::exception const &ex)
   {
-    oss.clear();
-    oss << R"({ "submitted": false, "error": ")" << std::quoted(ex.what()) << " }";
+    json["error"] = Quoted(ex.what());
   }
 
-  return http::CreateJsonResponse(oss.str(), (error_response)
-                                                 ? http::Status::CLIENT_ERROR_BAD_REQUEST
-                                                 : http::Status::SUCCESS_OK);
+  // based on the contents of the response determine the correct status code
+  http::Status const status_code = json.Has("json") ? http::Status::CLIENT_ERROR_BAD_REQUEST
+                                                    : http::Status::SUCCESS_OK;
+
+  return http::CreateJsonResponse(json, status_code);
 }
 
 /**
@@ -287,8 +300,8 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(
  * @see SubmitNativeTx
  */
 ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
-    http::HTTPRequest const &               request,
-    byte_array::ConstByteArray const *const expected_contract_name)
+  http::HTTPRequest const &request,
+  ConstByteArray expected_contract, TxHashes &txs)
 {
   std::size_t submitted{0};
   std::size_t expected_count{0};
@@ -308,12 +321,15 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
 
       MutableTransaction tx{FromWireTransaction(tx_obj)};
 
-      if (expected_contract_name && tx.contract_name() != *expected_contract_name)
+      if (!expected_contract.empty() && (tx.contract_name() != expected_contract))
       {
         continue;
       }
 
+      tx.UpdateDigest();
+
       // add the transaction to the processor
+      txs.emplace_back(tx.digest());
       processor_.AddTransaction(std::move(tx));
       ++submitted;
     }
@@ -323,9 +339,12 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
     expected_count = 1;
     MutableTransaction tx{FromWireTransaction(doc.root())};
 
-    if (!expected_contract_name || tx.contract_name() == *expected_contract_name)
+    if (expected_contract.empty() || (tx.contract_name() == expected_contract))
     {
+      tx.UpdateDigest();
+
       // add the transaction to the processor
+      txs.emplace_back(tx.digest());
       processor_.AddTransaction(std::move(tx));
       ++submitted;
     }
@@ -357,8 +376,8 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
  * @see SubmitJsonTx
  */
 ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitNativeTx(
-    http::HTTPRequest const &               request,
-    byte_array::ConstByteArray const *const expected_contract_name)
+    http::HTTPRequest const &         request,
+    ConstByteArray expected_contract, TxHashes &txs)
 {
   std::vector<AdaptedTx> transactions;
 
@@ -368,12 +387,13 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitNativeTx(
   std::size_t submitted{0};
   for (auto const &input_tx : transactions)
   {
-    if (expected_contract_name && input_tx.tx.contract_name() != *expected_contract_name)
+    if (!expected_contract.empty() && (input_tx.tx.contract_name() != expected_contract))
     {
       continue;
     }
 
     processor_.AddTransaction(input_tx.tx);
+    txs.emplace_back(input_tx.tx.digest());
     ++submitted;
   }
 
@@ -389,19 +409,26 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitNativeTx(
  * @param status The transaction submission status (counts)
  * @param request The originating HTTPRequest object
  */
-void ContractHttpInterface::RecordTransaction(SubmitTxStatus const &   status,
-                                              http::HTTPRequest const &request)
+void ContractHttpInterface::RecordTransaction(SubmitTxStatus const &status,
+                                              http::HTTPRequest const &request,
+                                              ConstByteArray expected_contract)
 {
-  // format the message
-  std::ostringstream oss;
-  oss << '{' << R"("timestamp": )" << '"' << GenerateTimestamp() << "\","
-      << R"("type": "transaction", )"
-      << R"("received": )" << status.received << ',' << R"("processed": )" << status.processed
-      << ',' << R"("ip": )" << '"' << request.originating_address() << "\","
-      << R"("port": )" << request.originating_port() << '}';
+  // form the variant
+  Variant entry = Variant::Object();
+  entry["timestamp"] = GenerateTimestamp();
+  entry["type"]      = "transaction";
+  entry["received"]  = status.received;
+  entry["processed"] = status.processed;
+  entry["ip"]        = request.originating_address();
+  entry["port"]      = request.originating_port();
+
+  if (!expected_contract.empty())
+  {
+    entry["contract"] = expected_contract;
+  }
 
   // write it out to the access log
-  WriteToAccessLog(oss.str());
+  WriteToAccessLog(entry);
 }
 
 /**
@@ -415,20 +442,19 @@ void ContractHttpInterface::RecordQuery(ConstByteArray const &   contract_name,
                                         ConstByteArray const &   query,
                                         http::HTTPRequest const &request)
 {
-  // format the message
-  std::ostringstream oss;
-  oss << '{' << R"("timestamp": )" << '"' << GenerateTimestamp() << "\","
-      << R"("type": "query", )"
-      << R"("contract": ")" << contract_name << "\","
-      << R"("query": ")" << query << "\","
-      << R"("ip": )" << '"' << request.originating_address() << "\","
-      << R"("port": )" << request.originating_port() << '}';
+  Variant entry = Variant::Object();
+  entry["timestamp"] = GenerateTimestamp();
+  entry["type"]      = "query";
+  entry["contract"]  = contract_name;
+  entry["query"]     = query;
+  entry["ip"]        = request.originating_address();
+  entry["port"]      = request.originating_port();
 
   // write it out to the access log
-  WriteToAccessLog(oss.str());
+  WriteToAccessLog(entry);
 }
 
-void ContractHttpInterface::WriteToAccessLog(std::string const &entry)
+void ContractHttpInterface::WriteToAccessLog(variant::Variant const &entry)
 {
   FETCH_LOCK(access_log_lock_);
   access_log_ << entry << '\n';

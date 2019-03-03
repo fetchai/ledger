@@ -25,6 +25,7 @@
 #include "ledger/chain/consensus/consensus_miner_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/execution_manager.hpp"
+#include "ledger/transaction_status_cache.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
@@ -91,6 +92,7 @@ public:
     uint32_t    block_interval_ms{0};
     uint32_t    block_difficulty{DEFAULT_BLOCK_DIFFICULTY};
     uint32_t    peers_update_cycle_ms{0};
+    bool        standalone{false};
 
     uint32_t num_lanes() const
     {
@@ -133,6 +135,7 @@ private:
   using TransactionProcessor   = ledger::TransactionProcessor;
   using TrustSystem            = p2p::P2PTrustBayRank<Muddle::Address>;
   using ShardConfigs           = ledger::ShardConfigs;
+  using TxStatusCache          = ledger::TransactionStatusCache;
 
   /// @name Configuration
   /// @{
@@ -158,6 +161,7 @@ private:
 
   /// @name Transaction and State Database shards
   /// @{
+  TxStatusCache        tx_status_cache_;///< Cache of transaction status
   LaneServices         lane_services_;  ///< The lane services
   StorageUnitClientPtr storage_;        ///< The storage client to the lane services
   LaneRemoteControl    lane_control_;   ///< The lane control client for the lane services

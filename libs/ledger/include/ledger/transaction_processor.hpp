@@ -28,6 +28,7 @@ namespace ledger {
 
 class StorageUnitInterface;
 class BlockPackerInterface;
+class TransactionStatusCache;
 
 class TransactionProcessor : public UnverifiedTransactionSink, public VerifiedTransactionSink
 {
@@ -39,6 +40,7 @@ public:
 
   // Construction / Destruction
   TransactionProcessor(StorageUnitInterface &storage, BlockPackerInterface &packer,
+                       TransactionStatusCache &tx_status_cache,
                        std::size_t num_threads);
   TransactionProcessor(TransactionProcessor const &) = delete;
   TransactionProcessor(TransactionProcessor &&)      = delete;
@@ -75,11 +77,12 @@ protected:
 private:
   using Flag = std::atomic<bool>;
 
-  StorageUnitInterface &storage_;
-  BlockPackerInterface &packer_;
-  TransactionVerifier   verifier_;
-  ThreadPtr             poll_new_tx_thread_;
-  Flag                  running_{false};
+  StorageUnitInterface   &storage_;
+  BlockPackerInterface   &packer_;
+  TransactionStatusCache &status_cache_;
+  TransactionVerifier     verifier_;
+  ThreadPtr               poll_new_tx_thread_;
+  Flag                    running_{false};
 
   void ThreadEntryPoint();
 };

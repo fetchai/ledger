@@ -25,8 +25,14 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 namespace fetch {
+
+namespace variant {
+  class Variant;
+} // namespace variant
+
 namespace ledger {
 
 class StorageInterface;
@@ -51,6 +57,7 @@ public:
 private:
   using Mutex          = mutex::Mutex;
   using ConstByteArray = byte_array::ConstByteArray;
+  using TxHashes       = std::vector<ConstByteArray>;
 
   /**
    * Structure containing status of of multi-transaction submission.
@@ -68,30 +75,31 @@ private:
    */
   struct SubmitTxStatus
   {
-    std::size_t processed;
-    std::size_t received;
+    std::size_t processed{0};
+    std::size_t received{0};
   };
 
-  http::HTTPResponse OnQuery(byte_array::ConstByteArray const &contract_name,
-                             byte_array::ConstByteArray const &query,
-                             http::HTTPRequest const &         request);
+  /// @name Query Handler
+  /// @{
+  http::HTTPResponse OnQuery(ConstByteArray const &contract_name,
+                             ConstByteArray const &query,
+                             http::HTTPRequest const &request);
+  /// @}
 
-  http::HTTPResponse OnTransaction(
-      http::ViewParameters const &, http::HTTPRequest const &request,
-      byte_array::ConstByteArray const *const expected_contract_name = nullptr);
+  /// @name Transaction Handlers
+  /// @{
+  http::HTTPResponse OnTransaction(http::HTTPRequest const &req, ConstByteArray expected_contract);
+  SubmitTxStatus SubmitJsonTx(http::HTTPRequest const &req, ConstByteArray expected_contract, TxHashes &txs);
+  SubmitTxStatus SubmitNativeTx(http::HTTPRequest const &req, ConstByteArray expected_contract, TxHashes &txs);
+  /// @}
 
-  SubmitTxStatus SubmitJsonTx(
-      http::HTTPRequest const &               request,
-      byte_array::ConstByteArray const *const expected_contract_name = nullptr);
-
-  SubmitTxStatus SubmitNativeTx(
-      http::HTTPRequest const &               request,
-      byte_array::ConstByteArray const *const expected_contract_name = nullptr);
-
-  void RecordTransaction(SubmitTxStatus const &status, http::HTTPRequest const &request);
+  /// @name Access Log
+  /// @{
+  void RecordTransaction(SubmitTxStatus const &status, http::HTTPRequest const &request, ConstByteArray expected_contract);
   void RecordQuery(ConstByteArray const &contract_name, ConstByteArray const &query,
                    http::HTTPRequest const &request);
-  void WriteToAccessLog(std::string const &entry);
+  void WriteToAccessLog(variant::Variant const &entry);
+  /// @}
 
   StorageInterface &    storage_;
   TransactionProcessor &processor_;

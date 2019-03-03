@@ -34,6 +34,7 @@ namespace consensus {
 class ConsensusMinerInterface;
 }
 
+class TransactionStatusCache;
 class BlockPackerInterface;
 class ExecutionManagerInterface;
 class MainChain;
@@ -142,7 +143,8 @@ public:
   // Construction / Destruction
   BlockCoordinator(MainChain &chain, ExecutionManagerInterface &execution_manager,
                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
-                   BlockSinkInterface &block_sink, Identity identity, std::size_t num_lanes,
+                   BlockSinkInterface &block_sink, TransactionStatusCache &status_cache,
+                   Identity identity, std::size_t num_lanes,
                    std::size_t num_slices, std::size_t block_difficulty);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
@@ -218,6 +220,7 @@ private:
   bool            ScheduleBlock(Block const &block);
   ExecutionStatus QueryExecutorStatus();
   void            UpdateNextBlockTime();
+  void            UpdateTxStatus(Block const &block);
 
   static char const *ToString(State state);
   static char const *ToString(ExecutionStatus state);
@@ -229,6 +232,7 @@ private:
   StorageUnitInterface &     storage_unit_;       ///< Ref to the storage unit
   BlockPackerInterface &     block_packer_;       ///< Ref to the block packer
   BlockSinkInterface &       block_sink_;         ///< Ref to the output sink interface
+  TransactionStatusCache &   status_cache_;       ///< Ref to the tx status cache
   MinerPtr                   miner_;
   /// @}
 
