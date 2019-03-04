@@ -25,6 +25,8 @@
 #include "ml/ops/weights.hpp"
 #include "ml/subgraph.hpp"
 
+#include "ml/meta/ml_type_traits.hpp"
+
 #include <cmath>
 #include <random>
 

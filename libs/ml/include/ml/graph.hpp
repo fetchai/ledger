@@ -58,11 +58,13 @@ public:
    * Called for node without trainable parameters
    */
   template <class OperationType, typename... Params>
-  meta::IfIsNotTrainable<OperationType, void> AddNode(std::string const &             node_name,
-                                                      std::vector<std::string> const &inputs,
-                                                      Params... params)
+  meta::IfIsNotTrainable<ArrayType, OperationType, void> AddNode(
+      std::string const &node_name, std::vector<std::string> const &inputs, Params... params)
   {
-    AddNodeImpl<OperationType>(node_name, inputs, params...);
+    std::string name = UpdateVariableName<OperationType>(node_name);
+    std::shared_ptr<Node<ArrayType, OperationType>> op =
+        std::make_shared<Node<ArrayType, OperationType>>(node_name, params...);
+    AddNodeImpl<OperationType>(name, inputs, op, true, params...);
   }
 
   /*
@@ -70,13 +72,14 @@ public:
    * Will keep the node in the trainable_ list to step through them
    */
   template <class OperationType, typename... Params>
-  meta::IfIsTrainable<OperationType, void> AddNode(std::string const &             node_name,
-                                                   std::vector<std::string> const &inputs,
-                                                   Params... params)
+  meta::IfIsTrainable<ArrayType, OperationType, void> AddNode(
+      std::string const &node_name, std::vector<std::string> const &inputs, Params... params)
   {
-    AddNodeImpl<OperationType>(node_name, inputs, params...);
-    trainable_[node_name] = nodes_[node_name];
-    FETCH_LOG_INFO("ML_LIB", node_name, " - registered as trainable");
+    std::string name = UpdateVariableName<OperationType>(node_name);
+    std::shared_ptr<Node<ArrayType, OperationType>> op =
+        std::make_shared<Node<ArrayType, OperationType>>(node_name, params...);
+    AddNodeImpl<OperationType>(name, inputs, op, true, params...);
+    trainable_[node_name] = op;
   }
 
   void SetInput(std::string const &nodeName, ArrayPtrType data)
@@ -138,40 +141,44 @@ public:
 private:
   template <typename OperationType, typename... Params>
   void AddNodeImpl(std::string const &node_name, std::vector<std::string> const &inputs,
+                   std::shared_ptr<Node<ArrayType, OperationType>> op, bool trainable,
                    Params... params)
   {
-    std::string name = node_name;
-
-    if (name == "")
-    {
-      name = this->GenerateNewName(OperationType::Descriptor());
-    }
-
-    if (!(nodes_.find(name) == nodes_.end()))
+    if (!(nodes_.find(node_name) == nodes_.end()))
     {
       throw;
     }
 
-    std::shared_ptr<Node<ArrayType, OperationType>> op =
-        std::make_shared<Node<ArrayType, OperationType>>(name, params...);
-    nodes_[name] = op;
-    FETCH_LOG_INFO("ML_LIB", "Creating node [", name, "]");
+    nodes_[node_name] = op;
+
+    FETCH_LOG_INFO("ML_LIB", "Creating node [", node_name, "], trainable: ", trainable);
     for (auto const &i : inputs)
     {
-      nodes_[name]->AddInput(nodes_[i]);
+      nodes_[node_name]->AddInput(nodes_[i]);
     }
   }
 
-  std::string GenerateNewName(std::string pre_string)
+  /**
+   * generates a new variable name if necessary to ensure uniqueness within graph
+   * @param pre_string
+   * @return
+   */
+  template <typename OperationType>
+  std::string UpdateVariableName(std::string const &name)
   {
-    std::uint64_t name_idx = 0;
-    std::string   ret      = pre_string + "_" + std::to_string(name_idx);
-
-    while (!(nodes_.find(ret) == nodes_.end()))
+    std::string ret = name;
+    // search graph for existing variable names
+    if (ret == "")
     {
-      ++name_idx;
-      ret = pre_string + "_" + std::to_string(name_idx);
+      std::uint64_t name_idx = 0;
+      ret                    = OperationType::Descriptor() + "_" + std::to_string(name_idx);
+      while (!(nodes_.find(ret) == nodes_.end()))
+      {
+        ++name_idx;
+        ret = OperationType::Descriptor() + "_" + std::to_string(name_idx);
+      }
     }
+
     return ret;
   }
 

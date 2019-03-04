@@ -33,11 +33,14 @@ namespace meta {
 template <typename T, typename OperationType>
 constexpr bool IsTrainable = std::is_base_of<fetch::ml::ops::Trainable<T>, OperationType>::value;
 
-template <typename T, typename OperationType, typename R = void>
-using IfIsTrainable = ::fetch::meta::EnableIf<IsTrainable<T, OperationType>, R>;
+template <typename T, typename OperationType>
+constexpr bool IsNotTrainable = !IsTrainable<T, OperationType>;
 
 template <typename T, typename OperationType, typename R = void>
-using IfIsNotTrainable = ::fetch::meta::EnableIf<!IsTrainable<T, OperationType>, R>;
+using IfIsTrainable = fetch::meta::EnableIf<IsTrainable<T, OperationType>, R>;
+
+template <typename T, typename OperationType, typename R = void>
+using IfIsNotTrainable = fetch::meta::EnableIf<IsNotTrainable<T, OperationType>, R>;
 
 }  // namespace meta
 }  // namespace ml
