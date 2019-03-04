@@ -22,29 +22,29 @@
 #include <vector>
 
 #include "math/free_functions/fundamental_operators.hpp"
-#include "math/free_functions/ml/loss_functions/cross_entropy.hpp"
+#include "math/free_functions/ml/loss_functions/softmax_cross_entropy.hpp"
 
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class CrossEntropy
+class SoftmaxCrossEntropy
 {
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  CrossEntropy()          = default;
-  virtual ~CrossEntropy() = default;
+  SoftmaxCrossEntropy()          = default;
+  virtual ~SoftmaxCrossEntropy() = default;
 
   virtual typename ArrayType::Type Forward(std::vector<ArrayPtrType> const &inputs)
   {
     assert(inputs.size() == 2);
     assert(inputs[0]->size() == inputs[1]->size());
 
-    ArrayType result = fetch::math::CrossEntropyLoss(*inputs[0], *inputs[1]);
+    ArrayType result = fetch::math::SoftmaxCrossEntropyLoss(*inputs[0], *inputs[1]);
     return result[0];
   }
 
@@ -54,14 +54,13 @@ public:
     assert(inputs[0]->size() == inputs[1]->size());
 
     typename ArrayType::Type n_classes = static_cast<typename ArrayType::Type>(inputs[1]->size());
-    ArrayPtrType             ret       = std::make_shared<ArrayType>(
-        fetch::math::Divide(fetch::math::Subtract(*inputs[0], *inputs[1]), n_classes));
+    ArrayPtrType ret = std::make_shared<ArrayType>(fetch::math::Subtract(*inputs[0], *inputs[1]));
     return ret;
   }
 
   static std::string Descriptor()
   {
-    return "CrossEntropy";
+    return "SoftmaxCrossEntropy";
   }
 };
 
