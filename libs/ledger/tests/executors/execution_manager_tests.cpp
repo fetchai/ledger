@@ -171,6 +171,8 @@ protected:
 
 TEST_P(ExecutionManagerTests, CheckIncrementalExecution)
 {
+  EXPECT_CALL(*mock_storage_, Commit());
+
   BlockConfig const &config = GetParam();
 
   // generate a block with the desired lane and slice configuration

@@ -69,61 +69,72 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash));
 
-  // TODO(issue 33): Add code to validate / check lane resources
-  FETCH_UNUSED(slice);
-  FETCH_UNUSED(lanes);
+  try
+  {
+
+    // TODO(issue 33): Add code to validate / check lane resources
+    FETCH_UNUSED(slice);
+    FETCH_UNUSED(lanes);
 
 #ifdef FETCH_ENABLE_METRICS
-  Metrics::Timestamp const started = Metrics::Clock::now();
+    Metrics::Timestamp const started = Metrics::Clock::now();
 #endif  // FETCH_ENABLE_METRICS
 
-  // Get the transaction from the store
-  Transaction tx;
-  if (!resources_->GetTransaction(hash, tx))
-  {
-    return Status::TX_LOOKUP_FAILURE;
-  }
+    // Get the transaction from the store
+    Transaction tx;
+    if (!resources_->GetTransaction(hash, tx))
+    {
+      return Status::TX_LOOKUP_FAILURE;
+    }
 
-  // This is a failure case that appears too often
-  if (tx.contract_name().size() == 0)
-  {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to do full retrieve of TX: ", byte_array::ToBase64(hash));
-    return Status::TX_LOOKUP_FAILURE;
-  }
+    // This is a failure case that appears too often
+    if (tx.contract_name().size() == 0)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME,
+                      "Unable to do full retrieve of TX: ", byte_array::ToBase64(hash));
+      return Status::TX_LOOKUP_FAILURE;
+    }
 
-  Identifier identifier;
-  identifier.Parse(tx.contract_name());
+    Identifier identifier;
+    identifier.Parse(tx.contract_name());
 
-  // Lookup the chain code associated with the transaction
-  auto chain_code = chain_code_cache_.Lookup(identifier.name_space());
-  if (!chain_code)
-  {
-    return Status::CHAIN_CODE_LOOKUP_FAILURE;
-  }
+    // Lookup the chain code associated with the transaction
+    auto chain_code = chain_code_cache_.Lookup(identifier.name_space());
+    if (!chain_code)
+    {
+      return Status::CHAIN_CODE_LOOKUP_FAILURE;
+    }
 
-  // attach the chain code to the current working context
-  chain_code->Attach(*resources_);
+    // attach the chain code to the current working context
+    chain_code->Attach(*resources_);
 
-  // Dispatch the transaction to the contract
-  auto result = chain_code->DispatchTransaction(identifier.name(), tx);
-  if (Contract::Status::OK != result)
-  {
-    return Status::CHAIN_CODE_EXEC_FAILURE;
-  }
+    // Dispatch the transaction to the contract
+    auto result = chain_code->DispatchTransaction(identifier.name(), tx);
+    if (Contract::Status::OK != result)
+    {
+      return Status::CHAIN_CODE_EXEC_FAILURE;
+    }
 
-  // detach the chain code from the current context
-  chain_code->Detach();
+    // detach the chain code from the current context
+    chain_code->Detach();
 
 #ifdef FETCH_ENABLE_METRICS
-  Metrics::Timestamp const completed = Metrics::Clock::now();
+    Metrics::Timestamp const completed = Metrics::Clock::now();
 #endif  // FETCH_ENABLE_METRICS
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash), " (success)");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash), " (success)");
 
-  FETCH_METRIC_TX_EXEC_STARTED_EX(hash, started);
-  FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, completed);
+    FETCH_METRIC_TX_EXEC_STARTED_EX(hash, started);
+    FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, completed);
 
-  return Status::SUCCESS;
+    return Status::SUCCESS;
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Execution Error: ", ex.what());
+  }
+
+  return Status::INEXPLICABLE_FAILURE;
 }
 
 }  // namespace ledger

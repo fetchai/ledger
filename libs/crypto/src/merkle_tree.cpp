@@ -44,6 +44,12 @@ void MerkleTree::CalculateRoot() const
     root_ = Hash<crypto::SHA256>(Digest{});
     return;
   }
+  else if (leaf_nodes_.size() == 1)
+  {
+    // special case if there is only one node in the tree it is its own merkle root
+    root_ = leaf_nodes_[0];
+    return;
+  }
 
   // make a copy of the leaf nodes which are then condensed
   std::vector<Digest> hashes = leaf_nodes_;

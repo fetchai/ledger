@@ -42,6 +42,7 @@ using CertificatePtr    = std::unique_ptr<Certificate>;
 
 using std::this_thread::sleep_for;
 using std::chrono::milliseconds;
+using fetch::muddle::NetworkId;
 
 struct Message
 {
@@ -121,8 +122,7 @@ protected:
     auto identity = std::make_unique<fetch::crypto::ECDSASigner>();
     identity->GenerateKeys();
 
-    return std::make_unique<Muddle>(Muddle::NetworkId("Test"), std::move(identity),
-                                    *network_manager_);
+    return std::make_unique<Muddle>(NetworkId{"Test"}, std::move(identity), *network_manager_);
   }
 
   NetworkManagerPtr network_manager_;

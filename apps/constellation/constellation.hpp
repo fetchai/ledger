@@ -74,6 +74,8 @@ public:
   using UriList          = std::vector<network::Uri>;
   using Manifest         = network::Manifest;
 
+  static constexpr uint32_t DEFAULT_BLOCK_DIFFICULTY = 6;
+
   struct Config
   {
     Manifest    manifest{};
@@ -87,7 +89,7 @@ public:
     uint32_t    max_peers{0};
     uint32_t    transient_peers{0};
     uint32_t    block_interval_ms{0};
-    uint32_t    block_difficulty{17};
+    uint32_t    block_difficulty{DEFAULT_BLOCK_DIFFICULTY};
     uint32_t    peers_update_cycle_ms{0};
 
     uint32_t num_lanes() const
@@ -118,7 +120,7 @@ private:
   using MainChainRpcServicePtr = std::shared_ptr<MainChainRpcService>;
   using LaneServices           = ledger::StorageUnitBundledService;
   using StorageUnitClient      = ledger::StorageUnitClient;
-  using LaneIndex              = StorageUnitClient::LaneIndex;
+  using LaneIndex              = ledger::LaneIdentity::lane_type;
   using StorageUnitClientPtr   = std::shared_ptr<StorageUnitClient>;
   using Flag                   = std::atomic<bool>;
   using ExecutionManager       = ledger::ExecutionManager;
@@ -130,14 +132,16 @@ private:
   using HttpModules            = std::vector<HttpModulePtr>;
   using TransactionProcessor   = ledger::TransactionProcessor;
   using TrustSystem            = p2p::P2PTrustBayRank<Muddle::Address>;
+  using ShardConfigs           = ledger::ShardConfigs;
 
   /// @name Configuration
   /// @{
-  Flag     active_;           ///< Flag to control running of main thread
-  Config   cfg_;              ///< The configuration
-  uint16_t p2p_port_;         ///< The port that the P2P interface is running from
-  uint16_t http_port_;        ///< The port of the HTTP server
-  uint16_t lane_port_start_;  ///< The starting port of all the lane services
+  Flag         active_;           ///< Flag to control running of main thread
+  Config       cfg_;              ///< The configuration
+  uint16_t     p2p_port_;         ///< The port that the P2P interface is running from
+  uint16_t     http_port_;        ///< The port of the HTTP server
+  uint16_t     lane_port_start_;  ///< The starting port of all the lane services
+  ShardConfigs shard_cfgs_;
   /// @}
 
   /// @name Network Orchestration
@@ -146,8 +150,10 @@ private:
   NetworkManager   network_manager_;       ///< Top level network coordinator
   NetworkManager   http_network_manager_;  ///< A separate net. coordinator for the http service(s)
   Muddle           muddle_;                ///< The muddle networking service
-  TrustSystem      trust_;                 ///< The trust subsystem
-  Peer2PeerService p2p_;                   ///< The main p2p networking stack
+  CertificatePtr   internal_identity_;
+  Muddle           internal_muddle_;  ///< The muddle networking service
+  TrustSystem      trust_;            ///< The trust subsystem
+  Peer2PeerService p2p_;              ///< The main p2p networking stack
   /// @}
 
   /// @name Transaction and State Database shards
