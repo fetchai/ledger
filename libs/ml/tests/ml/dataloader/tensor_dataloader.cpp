@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/dataloaders/tensor_dataloader.hpp"
 #include "core/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
-#include "ml/dataloaders/tensor_dataloader.hpp"
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -26,8 +26,7 @@ class TensorDataloaderTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>,
-				 fetch::math::Tensor<float>,
+using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
                                  fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
@@ -46,29 +45,30 @@ TYPED_TEST(TensorDataloaderTest, loader_test)
   fetch::ml::TensorDataLoader<TypeParam> loader;
 
   // Fill with data
-  for (int i(-10) ; i < 10 ; ++i)
-    {
-      std::shared_ptr<TypeParam> t = std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 5}));
-      t->Fill(typename TypeParam::Type(i));
-      loader.Add(t);
-    }
+  for (int i(-10); i < 10; ++i)
+  {
+    std::shared_ptr<TypeParam> t =
+        std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 5}));
+    t->Fill(typename TypeParam::Type(i));
+    loader.Add(t);
+  }
   // Consume all data
-  for (int i(-10) ; i < 10 ; ++i)
-    {
-      EXPECT_EQ(loader.Size(), 20);
-      EXPECT_FALSE(loader.IsDone());
-      EXPECT_EQ(loader.GetNext()->At(5), typename TypeParam::Type(i));
-    }
+  for (int i(-10); i < 10; ++i)
+  {
+    EXPECT_EQ(loader.Size(), 20);
+    EXPECT_FALSE(loader.IsDone());
+    EXPECT_EQ(loader.GetNext()->At(5), typename TypeParam::Type(i));
+  }
   EXPECT_TRUE(loader.IsDone());
   EXPECT_FALSE(loader.GetNext());
   // Reset
   loader.Reset();
   // Consume all data again
-  for (int i(-10) ; i < 10 ; ++i)
-    {
-      EXPECT_EQ(loader.Size(), 20);
-      EXPECT_FALSE(loader.IsDone());
-      EXPECT_EQ(loader.GetNext()->At(5), typename TypeParam::Type(i));
-    }
+  for (int i(-10); i < 10; ++i)
+  {
+    EXPECT_EQ(loader.Size(), 20);
+    EXPECT_FALSE(loader.IsDone());
+    EXPECT_EQ(loader.GetNext()->At(5), typename TypeParam::Type(i));
+  }
   EXPECT_TRUE(loader.IsDone());
 }

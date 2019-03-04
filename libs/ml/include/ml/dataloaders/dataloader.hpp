@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 namespace fetch {
 namespace ml {
 
@@ -28,10 +27,10 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual ArrayPtrType  GetNext() = 0;
-  virtual uint64_t      Size() const = 0;
-  virtual bool          IsDone() const = 0;
-  virtual void          Reset() = 0;
+  virtual ArrayPtrType GetNext()      = 0;
+  virtual uint64_t     Size() const   = 0;
+  virtual bool         IsDone() const = 0;
+  virtual void         Reset()        = 0;
 };
 
 }  // namespace ml

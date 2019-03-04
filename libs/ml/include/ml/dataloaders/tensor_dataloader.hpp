@@ -28,38 +28,38 @@ class TensorDataLoader : DataLoader<T>
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
-  
+
   virtual ArrayPtrType GetNext()
   {
     if (IsDone())
-      {
-	return nullptr;
-      }
+    {
+      return nullptr;
+    }
     return data_[cursor_++];
   }
-  
+
   virtual uint64_t Size() const
   {
     return data_.size();
   }
-  
-  virtual bool     IsDone() const
+
+  virtual bool IsDone() const
   {
     return (data_.empty() || cursor_ >= data_.size());
   }
 
-  virtual void     Reset()
+  virtual void Reset()
   {
     cursor_ = 0;
   }
 
-  void             Add(ArrayPtrType const &data)
+  void Add(ArrayPtrType const &data)
   {
     data_.push_back(data);
   }
 
 private:
-  uint64_t cursor_ = 0;
+  uint64_t                  cursor_ = 0;
   std::vector<ArrayPtrType> data_;
 };
 
