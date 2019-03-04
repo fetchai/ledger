@@ -17,29 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-
-#include "python/ml/layers/py_fully_connected.hpp"
-#include "python/ml/ops/activation_functions/py_relu.hpp"
-#include "python/ml/ops/loss_functions/py_mean_square_error.hpp"
-#include "python/ml/ops/py_state_dict.hpp"
-#include "python/ml/py_graph.hpp"
-
-namespace py = pybind11;
+//#include "math/free_functions/exponentiation/exponentiation.hpp"
+#include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
+#include "math/kernels/standard_functions.hpp"            // square
+#include <cassert>
 
 namespace fetch {
-namespace ml {
+namespace math {
 
-template <typename T>
-void BuildMLLibrary(pybind11::module &module)
+template <typename ArrayType>
+ArrayType MeanSquareError(ArrayType const &A, ArrayType const &B)
 {
-  fetch::ml::ops::BuildStateDict<T>("StateDict", module);
-  fetch::ml::BuildGraph<T>("Graph", module);
-  fetch::ml::ops::BuildRelu<T>("Relu", module);
-  fetch::ml::ops::BuildFullyConnected<T>("FullyConnected", module);
-  fetch::ml::ops::BuildMeanSquareError<T>("MeanSquareError", module);
+  assert(A.shape() == B.shape());
+  ArrayType ret(A.shape());
+  Subtract(A, B, ret);
+  Square(ret);
+  ret = ReduceSum(ret, 0);
+
+  ret = Divide(ret, typename ArrayType::Type(A.shape()[0]));
+  // TODO(private 343)
+  ret = Divide(ret, typename ArrayType::Type(
+                        2));  // division by 2 allows us to cancel out with a 2 in the derivative
+  return ret;
 }
 
-}  // namespace ml
+}  // namespace math
 }  // namespace fetch

@@ -17,7 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/ml/activation_functions/softmax.hpp"
+#include "math/free_functions/fundamental_operators.hpp"
+#include "math/free_functions/ml/activation_functions/sigmoid.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -25,15 +26,15 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Softmax : public fetch::ml::Ops<T>
+class Sigmoid : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  Softmax()          = default;
-  virtual ~Softmax() = default;
+  Sigmoid()          = default;
+  virtual ~Sigmoid() = default;
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
@@ -43,7 +44,7 @@ public:
       this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
     }
 
-    fetch::math::Softmax(*inputs[0], *this->output_);
+    fetch::math::Sigmoid(*inputs[0], *this->output_);
     return this->output_;
   }
 
@@ -54,25 +55,13 @@ public:
     assert(inputs[0]->shape() == errorSignal->shape());
 
     ArrayPtrType t = this->Forward(inputs);
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
-    {
-      errorSignal->At(i) *= t->At(i);
-    }
-    typename ArrayType::Type sum(0);
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
-    {
-      sum += errorSignal->At(i);
-    }
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
-    {
-      errorSignal->At(i) -= (t->At(i) * sum);
-    }
+    errorSignal *= fetch::math::Multiply(*t, fetch::math::Subtract(1, *t));
     return {errorSignal};
   }
 
   static std::string Descriptor()
   {
-    return "Softmax";
+    return "Sigmoid";
   }
 };
 

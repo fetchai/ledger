@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/free_functions/ml/activation_functions/relu.hpp"
+
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -42,14 +44,7 @@ public:
       this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
     }
 
-    this->output_->Fill(DataType(0));
-    for (std::size_t i = 0; i < inputs[0]->size(); ++i)
-    {
-      if ((*(inputs[0]))[i] > DataType(0))
-      {
-        this->output_->Set(i, DataType((*(inputs[0]))[i]));
-      }
-    }
+    fetch::math::Relu(*inputs[0], *this->output_);
     return this->output_;
   }
 
@@ -71,7 +66,7 @@ public:
 
   static std::string Descriptor()
   {
-    return "Add";
+    return "Relu";
   }
 };
 

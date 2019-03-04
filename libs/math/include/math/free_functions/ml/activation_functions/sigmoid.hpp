@@ -17,29 +17,37 @@
 //
 //------------------------------------------------------------------------------
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-
-#include "python/ml/layers/py_fully_connected.hpp"
-#include "python/ml/ops/activation_functions/py_relu.hpp"
-#include "python/ml/ops/loss_functions/py_mean_square_error.hpp"
-#include "python/ml/ops/py_state_dict.hpp"
-#include "python/ml/py_graph.hpp"
-
-namespace py = pybind11;
+#include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
+#include "math/free_functions/standard_functions/exp.hpp"
 
 namespace fetch {
-namespace ml {
+namespace math {
 
-template <typename T>
-void BuildMLLibrary(pybind11::module &module)
+/**
+ * The sigmoid function
+ * @tparam ArrayType
+ * @tparam T
+ * @param y
+ * @param y_hat
+ * @param ret
+ */
+template <typename ArrayType>
+void Sigmoid(ArrayType const &t, ArrayType &ret)
 {
-  fetch::ml::ops::BuildStateDict<T>("StateDict", module);
-  fetch::ml::BuildGraph<T>("Graph", module);
-  fetch::ml::ops::BuildRelu<T>("Relu", module);
-  fetch::ml::ops::BuildFullyConnected<T>("FullyConnected", module);
-  fetch::ml::ops::BuildMeanSquareError<T>("MeanSquareError", module);
+  Multiply(typename ArrayType::Type(-1.0), ret, ret);
+  Exp(ret);
+  Add(ret, typename ArrayType::Type(1.0), ret);
+  Divide(typename ArrayType::Type(1.0), ret, ret);
 }
 
-}  // namespace ml
+template <typename ArrayType>
+ArrayType Sigmoid(ArrayType const &t)
+{
+  ArrayType ret;
+  ret.Copy(t);
+  Sigmoid(t, ret);
+  return ret;
+}
+
+}  // namespace math
 }  // namespace fetch

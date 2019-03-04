@@ -30,15 +30,15 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class CrossEntropyLayer
+class CrossEntropy
 {
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  CrossEntropyLayer()          = default;
-  virtual ~CrossEntropyLayer() = default;
+  CrossEntropy()          = default;
+  virtual ~CrossEntropy() = default;
 
   virtual typename ArrayType::Type Forward(std::vector<ArrayPtrType> const &inputs)
   {
@@ -105,6 +105,11 @@ public:
       ret->At(i) = (inputs[0]->At(i) - inputs[1]->At(i)) / n_classes;
     }
     return ret;
+  }
+
+  static std::string Descriptor()
+  {
+    return "CrossEntropy";
   }
 };
 

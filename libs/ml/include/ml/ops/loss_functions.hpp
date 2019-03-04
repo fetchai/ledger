@@ -17,29 +17,5 @@
 //
 //------------------------------------------------------------------------------
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-
-#include "python/ml/layers/py_fully_connected.hpp"
-#include "python/ml/ops/activation_functions/py_relu.hpp"
-#include "python/ml/ops/loss_functions/py_mean_square_error.hpp"
-#include "python/ml/ops/py_state_dict.hpp"
-#include "python/ml/py_graph.hpp"
-
-namespace py = pybind11;
-
-namespace fetch {
-namespace ml {
-
-template <typename T>
-void BuildMLLibrary(pybind11::module &module)
-{
-  fetch::ml::ops::BuildStateDict<T>("StateDict", module);
-  fetch::ml::BuildGraph<T>("Graph", module);
-  fetch::ml::ops::BuildRelu<T>("Relu", module);
-  fetch::ml::ops::BuildFullyConnected<T>("FullyConnected", module);
-  fetch::ml::ops::BuildMeanSquareError<T>("MeanSquareError", module);
-}
-
-}  // namespace ml
-}  // namespace fetch
+#include "ml/ops/loss_functions/cross_entropy.hpp"
+#include "ml/ops/loss_functions/mean_square_error.hpp"

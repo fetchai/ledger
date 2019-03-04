@@ -21,20 +21,22 @@
 #include <memory>
 #include <vector>
 
+#include "math/free_functions/ml/loss_functions/mean_square_error.hpp"
+
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class MeanSquareErrorLayer
+class MeanSquareError
 {
 public:
   using ArrayType    = T;
   using Datatype     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  MeanSquareErrorLayer()          = default;
-  virtual ~MeanSquareErrorLayer() = default;
+  MeanSquareError()          = default;
+  virtual ~MeanSquareError() = default;
 
   virtual typename ArrayType::Type Forward(std::vector<ArrayPtrType> const &inputs)
   {
@@ -61,6 +63,11 @@ public:
       ret->At(i) = (inputs[0]->At(i) - inputs[1]->At(i));
     }
     return ret;
+  }
+
+  static std::string Descriptor()
+  {
+    return "MSE";
   }
 };
 

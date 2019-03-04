@@ -20,7 +20,7 @@
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 
-#include "ml/ops/cross_entropy.hpp"
+#include "ml/ops/loss_functions/cross_entropy.hpp"
 
 #include "ml/ops/activation.hpp"
 
@@ -49,8 +49,7 @@ int main()
   g.AddNode<Softmax<ArrayType>>("Softmax", {"FC3"});
   //  Input -> FC -> Relu -> FC -> Relu -> FC -> Softmax
 
-  CrossEntropyLayer<ArrayType> criterion;
-  //  MeanSquareErrorLayer<ArrayType> criterion;
+  CrossEntropy<ArrayType> criterion;
 
   std::pair<size_t, std::shared_ptr<ArrayType>> input;
   std::shared_ptr<ArrayType>                    gt =

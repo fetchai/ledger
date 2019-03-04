@@ -25,48 +25,6 @@
 namespace fetch {
 namespace math {
 
-template <typename T, typename C>
-class ShapelessArray;
-template <typename T, typename C>
-class NDArray;
-template <typename T, typename C>
-class NDArrayIterator;
-
-template <typename T, typename C>
-T Max(ShapelessArray<T, C> const &array);
-
-template <typename ArrayType>
-typename ArrayType::Type L2Norm(ArrayType const &A, ArrayType &ret)
-{
-  assert(A.size() == ret.size());
-  assert(A.shape() == ret.shape());
-
-  Square(A, ret);
-  return std::sqrt(Sum(ret));
-}
-template <typename ArrayType>
-typename ArrayType::Type L2Norm(ArrayType const &A)
-{
-  ArrayType ret{A.shape()};
-  return L2Norm(A, ret);
-}
-
-template <typename ArrayType>
-ArrayType MeanSquareError(ArrayType const &A, ArrayType const &B)
-{
-  assert(A.shape() == B.shape());
-  ArrayType ret(A.shape());
-  Subtract(A, B, ret);
-  Square(ret);
-  ret = ReduceSum(ret, 0);
-
-  ret = Divide(ret, typename ArrayType::Type(A.shape()[0]));
-  // TODO(private 343)
-  ret = Divide(ret, typename ArrayType::Type(
-                        2));  // division by 2 allows us to cancel out with a 2 in the derivative
-  return ret;
-}
-
 /**
  * Cross entropy loss with x as the prediction, and y as the ground truth
  * @tparam ArrayType
@@ -116,43 +74,6 @@ ArrayType CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
   auto                     mean_cel = ReduceSum(cel, 0);
 
   return Divide(mean_cel, n);
-}
-
-/**
- * Cross entropy loss with x as the prediction, and y as the ground truth
- * @tparam ArrayType
- * @param x a 2d array with axis 0 = examples, and axis 1 = dimension in prediction space
- * @param y same size as x with the correct predictions set to 1 in axis 1 and all other positions =
- * 0
- * @return Returns an Array of size 1 containing the loss value
- */
-template <typename ArrayType>
-ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
-{
-  assert(x.shape() == y.shape());
-  assert(x.shape().size() == 2);
-
-  auto n_examples = x.shape()[0];
-
-  ArrayType sce_x{x.shape()};
-  sce_x.Copy(x);
-
-  // we don't explicitly call softmax, because we assume softmax was already included in the graph
-  // (i.e. x is the output
-  //  of softmax layer)
-
-  auto      gt = ArgMax(y, 1);
-  ArrayType log_likelihood{1};
-  log_likelihood[0] = 0;
-
-  for (std::size_t idx = 0; idx < n_examples; ++idx)
-  {
-    sce_x.Set(idx, static_cast<std::size_t>(gt[idx]),
-              std::log(sce_x.At(idx, static_cast<std::size_t>(gt[idx]))));
-    log_likelihood[0] -= sce_x.At(idx, static_cast<std::size_t>(gt[idx]));
-  }
-
-  return Divide(log_likelihood, static_cast<typename ArrayType::Type>(n_examples));
 }
 
 }  // namespace math

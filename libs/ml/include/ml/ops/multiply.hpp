@@ -77,6 +77,12 @@ public:
       }
       return err_sig;
   }
+
+
+  static std::string Descriptor()
+  {
+      return "Multiply";
+  }
   };
 
 }  // namespace ops

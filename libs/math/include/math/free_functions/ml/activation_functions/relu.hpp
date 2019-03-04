@@ -17,29 +17,35 @@
 //
 //------------------------------------------------------------------------------
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-
-#include "python/ml/layers/py_fully_connected.hpp"
-#include "python/ml/ops/activation_functions/py_relu.hpp"
-#include "python/ml/ops/loss_functions/py_mean_square_error.hpp"
-#include "python/ml/ops/py_state_dict.hpp"
-#include "python/ml/py_graph.hpp"
-
-namespace py = pybind11;
+#include "math/free_functions/comparison/comparison.hpp"
 
 namespace fetch {
-namespace ml {
+namespace math {
 
-template <typename T>
-void BuildMLLibrary(pybind11::module &module)
+/**
+ * Rectified linear unit
+ * @tparam ArrayType
+ * @param t
+ * @param ret
+ */
+template <typename ArrayType>
+void Relu(ArrayType const &t, ArrayType &ret)
 {
-  fetch::ml::ops::BuildStateDict<T>("StateDict", module);
-  fetch::ml::BuildGraph<T>("Graph", module);
-  fetch::ml::ops::BuildRelu<T>("Relu", module);
-  fetch::ml::ops::BuildFullyConnected<T>("FullyConnected", module);
-  fetch::ml::ops::BuildMeanSquareError<T>("MeanSquareError", module);
+  assert(t.size() == ret.size());
+  for (typename ArrayType::SizeType j = 0; j < t.size(); ++j)
+  {
+    ret[j] = fetch::math::Max(t[j], typename ArrayType::Type(0));
+  }
 }
 
-}  // namespace ml
+template <typename ArrayType>
+ArrayType Relu(ArrayType &t)
+{
+  ArrayType ret;
+  ret.Copy(t);
+  Relu(ret, ret);
+  return ret;
+}
+
+}  // namespace math
 }  // namespace fetch
