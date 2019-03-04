@@ -38,6 +38,21 @@ struct StateDict
     return !((bool(weights_) ^ bool(o.weights_)) || (weights_ && (*weights_ != *(o.weights_))) ||
              (dict_ != o.dict_));
   }
+
+  StateDict &Merge(StateDict const &o, float a = .5f)
+  {
+    assert(a >= 0.0f && a <= 1.0f);
+    if (weights_)
+    {
+      weights_->InlineMultiply(typename ArrayType::Type(1.0f - a));
+      weights_->InlineAdd(o.weights_->Copy().InlineMultiply(typename ArrayType::Type(a)));
+    }
+    for (auto &e : dict_)
+    {
+      e.second.Merge(o.dict_.at(e.first));
+    }
+    return *this;
+  }
 };
 
 // Trainaible provide an interface that needs to be matched by any ops that has trainable
