@@ -35,46 +35,26 @@ namespace math {
  * @return
  */
 template <typename ArrayType>
-ArrayType CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
+typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
 {
   assert(x.shape() == y.shape());
 
-  // we can't handle taking log(0), and the user should ensure this is never asked for
-  // if in doubt the user can always call SoftmaxCrossEntropyLoss instead
-  for (std::size_t k = 0; k < x.size(); ++k)
+  typename ArrayType::Type plogx = typename ArrayType::Type(0);
+  for (std::size_t i = 0; i < x.shape()[0]; ++i)
   {
-    assert(x.At(k) != typename ArrayType::Type(0));
-  }
-
-  ArrayType logx{x.shape()};
-  logx.Copy(x);
-  Log(logx);
-
-  ArrayType plogx{logx.shape()};
-  for (std::size_t i = 0; i < logx.shape()[0]; ++i)
-  {
-    for (std::size_t j = 0; j < logx.shape()[1]; ++j)
+    for (std::size_t j = 0; j < x.shape()[1]; ++j)
     {
-      if (y.At({i, j}) == typename ArrayType::Type(0))
+      if (y.At({i, j}) == typename ArrayType::Type(1))
       {
-        plogx.Set({i, j}, typename ArrayType::Type(0));
-      }
-      else if (logx.At({i, j}) == typename ArrayType::Type(0))
-      {
-        plogx.Set({i, j}, typename ArrayType::Type(0));
-      }
-      else
-      {
-        plogx.Set({i, j}, logx.At({i, j}) * y.At({i, j}));
+        typename ArrayType::Type tmp2 = x.At({i, j});
+        typename ArrayType::Type tmp  = Log(tmp2);
+        fetch::math::Add(plogx, fetch::math::Multiply(typename ArrayType::Type(-1), tmp), plogx);
       }
     }
   }
 
-  auto                     cel      = Multiply(plogx, -1.0);
-  typename ArrayType::Type n        = typename ArrayType::Type(cel.shape()[0]);
-  auto                     mean_cel = ReduceSum(cel, 0);
-
-  return Divide(mean_cel, n);
+  typename ArrayType::Type n = typename ArrayType::Type(x.shape()[1]);
+  return Divide(plogx, n);
 }
 
 }  // namespace math

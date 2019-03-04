@@ -34,7 +34,8 @@ namespace math {
 template <typename ArrayType>
 void Sigmoid(ArrayType const &t, ArrayType &ret)
 {
-  Multiply(typename ArrayType::Type(-1.0), ret, ret);
+
+  Multiply(typename ArrayType::Type(-1.0), t, ret);
   Exp(ret);
   Add(ret, typename ArrayType::Type(1.0), ret);
   Divide(typename ArrayType::Type(1.0), ret, ret);

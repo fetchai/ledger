@@ -36,9 +36,9 @@ TYPED_TEST(CrossEntropyTest, perfect_match_forward_test)
   std::uint64_t n_data_points = 8;
 
   std::shared_ptr<TypeParam> data1 =
-      std::make_shared<TypeParam>(std::vector<std::uint64_t>{n_classes, n_data_points});
+      std::make_shared<TypeParam>(std::vector<std::uint64_t>{n_data_points, n_classes});
   std::shared_ptr<TypeParam> data2 =
-      std::make_shared<TypeParam>(std::vector<std::uint64_t>{n_classes, n_data_points});
+      std::make_shared<TypeParam>(std::vector<std::uint64_t>{n_data_points, n_classes});
 
   std::vector<std::uint64_t> data = {1, 2, 3, 0, 3, 1, 0, 2};
   for (std::uint64_t i = 0; i < n_data_points; ++i)
@@ -47,13 +47,13 @@ TYPED_TEST(CrossEntropyTest, perfect_match_forward_test)
     {
       if (data[i] == j)
       {
-        data1->Set({j, i}, typename TypeParam::Type(1));
-        data2->Set({j, i}, typename TypeParam::Type(1));
+        data1->Set({i, j}, typename TypeParam::Type(1));
+        data2->Set({i, j}, typename TypeParam::Type(1));
       }
       else
       {
-        data1->Set({j, i}, typename TypeParam::Type(0));
-        data2->Set({j, i}, typename TypeParam::Type(0));
+        data1->Set({i, j}, typename TypeParam::Type(0));
+        data2->Set({i, j}, typename TypeParam::Type(0));
       }
     }
   }
@@ -68,9 +68,9 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_forward_test)
   std::uint64_t n_data_points = 8;
 
   std::shared_ptr<TypeParam> data1 =
-      std::make_shared<TypeParam>(std::vector<std::uint64_t>{n_classes, n_data_points});
+      std::make_shared<TypeParam>(std::vector<std::uint64_t>{n_data_points, n_classes});
   std::shared_ptr<TypeParam> data2 =
-      std::make_shared<TypeParam>(std::vector<std::uint64_t>{n_classes, n_data_points});
+      std::make_shared<TypeParam>(std::vector<std::uint64_t>{n_data_points, n_classes});
 
   // set gt data
   std::vector<std::uint64_t> gt_data = {1, 2, 3, 0, 3, 1, 0, 2};
@@ -80,11 +80,11 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_forward_test)
     {
       if (gt_data[i] == j)
       {
-        data2->Set({j, i}, typename TypeParam::Type(1));
+        data2->Set({i, j}, typename TypeParam::Type(1));
       }
       else
       {
-        data2->Set({j, i}, typename TypeParam::Type(0));
+        data2->Set({i, j}, typename TypeParam::Type(0));
       }
     }
   }
@@ -100,7 +100,9 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_forward_test)
   }
 
   fetch::ml::ops::CrossEntropy<TypeParam> op;
-  ASSERT_FLOAT_EQ(float(op.Forward({data1, data2})), 2.3025851249694824);
+  std::cout << "float(op.Forward({data1, data2})): " << float(op.Forward({data1, data2}))
+            << std::endl;
+  ASSERT_FLOAT_EQ(float(op.Forward({data1, data2})), 1.78777539730072021484375);
 }
 
 TYPED_TEST(CrossEntropyTest, one_dimensional_backward_test)

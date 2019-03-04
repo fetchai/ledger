@@ -55,7 +55,9 @@ public:
     assert(inputs[0]->shape() == errorSignal->shape());
 
     ArrayPtrType t = this->Forward(inputs);
-    errorSignal *= fetch::math::Multiply(*t, fetch::math::Subtract(1, *t));
+    fetch::math::Add(*errorSignal,
+                     fetch::math::Multiply(*t, fetch::math::Subtract(DataType(1), *t)),
+                     *errorSignal);
     return {errorSignal};
   }
 

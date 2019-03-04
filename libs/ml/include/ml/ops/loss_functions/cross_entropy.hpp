@@ -44,8 +44,9 @@ public:
     assert(inputs.size() == 2);
     assert(inputs[0]->size() == inputs[1]->size());
 
-    ArrayType result = fetch::math::CrossEntropyLoss(*inputs[0], *inputs[1]);
-    return result[0];
+    typename ArrayType::Type result = fetch::math::CrossEntropyLoss(*inputs[0], *inputs[1]);
+
+    return result;
   }
 
   virtual ArrayPtrType Backward(std::vector<ArrayPtrType> const &inputs)

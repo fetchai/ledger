@@ -43,8 +43,8 @@ public:
     assert(inputs.size() == 2);
     assert(inputs[0]->shape() == inputs[1]->shape());
 
-    ArrayType ret = fetch::math::MeanSquareError(*inputs[0], *inputs[1]);
-    return ret[0];
+    typename ArrayType::Type ret = fetch::math::MeanSquareError(*inputs[0], *inputs[1]);
+    return ret;
   }
 
   virtual ArrayPtrType Backward(std::vector<ArrayPtrType> const &inputs)
