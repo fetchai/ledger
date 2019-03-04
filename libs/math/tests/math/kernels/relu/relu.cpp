@@ -64,12 +64,12 @@ TEST(ndarray, zeros_out)
   }
 
   //
-  fetch::math::Relu(test_array);
+  fetch::math::Relu(test_array, test_array);
 
   // sanity check that all values less than 0
   for (std::size_t i = 0; i < n; ++i)
   {
-    ASSERT_TRUE(test_array[i] == 0);
+    ASSERT_TRUE(test_array[i] == data_type(0));
   }
 }
 
