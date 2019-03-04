@@ -147,29 +147,29 @@ void SoftmaxImplementation(ArrayType const &array, ArrayType &ret)
   }
 }
 }  // namespace details
-template <typename T, typename C>
-void Softmax(ShapelessArray<T, C> &array, ShapelessArray<T, C> &ret)
+// template <typename T, typename C>
+// void Softmax(ShapelessArray<T, C> &array, ShapelessArray<T, C> &ret)
+//{
+//  assert(ret.size() == array.size());
+//  details::SoftmaxImplementation(array, ret);
+//}
+// template <typename T, typename C>
+// ShapelessArray<T, C> Softmax(ShapelessArray<T, C> &array)
+//{
+//  ShapelessArray<T, C> ret{array.size()};
+//  Softmax(array, ret);
+//  return ret;
+//}
+template <typename ArrayType>
+void Softmax(ArrayType const &array, ArrayType &ret)
 {
   assert(ret.size() == array.size());
   details::SoftmaxImplementation(array, ret);
 }
-template <typename T, typename C>
-ShapelessArray<T, C> Softmax(ShapelessArray<T, C> &array)
+template <typename ArrayType>
+ArrayType Softmax(ArrayType &array)
 {
-  ShapelessArray<T, C> ret{array.size()};
-  Softmax(array, ret);
-  return ret;
-}
-template <typename T>
-void Softmax(Tensor<T> &array, Tensor<T> &ret)
-{
-  assert(ret.size() == array.size());
-  details::SoftmaxImplementation(array, ret);
-}
-template <typename T, typename C>
-Tensor<T> Softmax(Tensor<T> &array)
-{
-  Tensor<T> ret{array.size()};
+  ArrayType ret{array.size()};
   Softmax(array, ret);
   return ret;
 }
