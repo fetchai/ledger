@@ -147,19 +147,7 @@ void SoftmaxImplementation(ArrayType const &array, ArrayType &ret)
   }
 }
 }  // namespace details
-// template <typename T, typename C>
-// void Softmax(ShapelessArray<T, C> &array, ShapelessArray<T, C> &ret)
-//{
-//  assert(ret.size() == array.size());
-//  details::SoftmaxImplementation(array, ret);
-//}
-// template <typename T, typename C>
-// ShapelessArray<T, C> Softmax(ShapelessArray<T, C> &array)
-//{
-//  ShapelessArray<T, C> ret{array.size()};
-//  Softmax(array, ret);
-//  return ret;
-//}
+
 template <typename ArrayType>
 void Softmax(ArrayType const &array, ArrayType &ret)
 {
@@ -167,7 +155,7 @@ void Softmax(ArrayType const &array, ArrayType &ret)
   details::SoftmaxImplementation(array, ret);
 }
 template <typename ArrayType>
-ArrayType Softmax(ArrayType &array)
+ArrayType Softmax(ArrayType const &array)
 {
   ArrayType ret{array.size()};
   Softmax(array, ret);
