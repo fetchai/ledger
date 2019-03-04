@@ -89,12 +89,22 @@ void BasicMiner::EnqueueTransaction(ledger::TransactionSummary const &tx)
 {
   FETCH_LOCK(pending_lock_);
 
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction: ", tx.transaction_hash.ToBase64());
+
   if (filtering_input_duplicates_)
   {
     if (txs_seen_.find(tx) == txs_seen_.end())
     {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (added) ",
+                      tx.transaction_hash.ToBase64());
+
       pending_.emplace_back(tx, log2_num_lanes_);
       txs_seen_.insert(tx);
+    }
+    else
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (duplicate) ",
+                      tx.transaction_hash.ToBase64());
     }
   }
   else
@@ -137,7 +147,7 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   std::size_t const main_transactions = main_queue_.size();
 
   // Before packing transactions, we must be sure they're unique
-  const_cast<MainChain &>(chain).StripAlreadySeenTx(block.body.previous_hash, main_queue_);
+  chain.StripAlreadySeenTx(block.body.previous_hash, main_queue_);
 
   FETCH_LOG_INFO(LOGGING_NAME, "Starting block packing. Backlog: ", num_transactions,
                  ", main queue: ", main_queue_.size(), " pending: ", pending_.size());
@@ -190,6 +200,8 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   std::size_t const packed_transactions    = main_transactions - main_queue_.size();
   std::size_t const remaining_transactions = num_transactions - packed_transactions;
 
+  FETCH_UNUSED(packed_transactions);
+  FETCH_UNUSED(remaining_transactions);
   FETCH_LOG_INFO(LOGGING_NAME, "Finished block packing (packed: ", packed_transactions,
                  " remaining: ", remaining_transactions, ")");
 

@@ -50,6 +50,21 @@ public:
     , slice_(slice)
   {}
 
+  TxDigest hash() const
+  {
+    return hash_;
+  }
+
+  LaneSet const &lanes() const
+  {
+    return lanes_;
+  }
+
+  std::size_t slice() const
+  {
+    return slice_;
+  }
+
   Status status() const
   {
     return status_;

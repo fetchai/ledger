@@ -17,35 +17,42 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/uri.hpp"
-
 #include <cstdint>
-#include <unordered_set>
+#include <string>
 
 namespace fetch {
-namespace p2p {
+namespace muddle {
 
-class LaneManagement
+class NetworkId
 {
 public:
-  using LaneIndex = uint32_t;
-  using Uri       = network::Uri;
-  using UriSet    = std::unordered_set<Uri>;
+  using UnderlyingType = uint32_t;
 
   // Construction / Destruction
-  LaneManagement()          = default;
-  virtual ~LaneManagement() = default;
+  NetworkId() = default;
+  explicit NetworkId(char const id[4]);
+  explicit NetworkId(UnderlyingType value);
+  NetworkId(NetworkId const &) = default;
+  ~NetworkId()                 = default;
 
-  /// @name Lane Management
-  /// @{
-  virtual void     UseThesePeers(LaneIndex lane, UriSet const &uris) = 0;
-  virtual void     Shutdown(LaneIndex lane)                          = 0;
-  virtual uint32_t GetLaneNumber(LaneIndex lane)                     = 0;
-  virtual int      IncomingPeers(LaneIndex lane)                     = 0;
-  virtual int      OutgoingPeers(LaneIndex lane)                     = 0;
-  virtual bool     IsAlive(LaneIndex lane)                           = 0;
-  /// @}
+  UnderlyingType const &value() const;
+  std::string           ToString() const;
+
+  // Operators
+  NetworkId &operator=(NetworkId const &) = default;
+
+private:
+  UnderlyingType value_{0};
 };
 
-}  // namespace p2p
+inline NetworkId::NetworkId(UnderlyingType value)
+  : value_{value}
+{}
+
+inline NetworkId::UnderlyingType const &NetworkId::value() const
+{
+  return value_;
+}
+
+}  // namespace muddle
 }  // namespace fetch
