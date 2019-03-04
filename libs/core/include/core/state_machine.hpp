@@ -85,7 +85,7 @@ private:
   using Mutex       = std::mutex;
 
   std::string const   logging_name_;
-  Mutex               callbacks_mutex_;
+  mutable Mutex       callbacks_mutex_;
   CallbackMap         callbacks_{};
   Duration            stall_duration_{};
   std::atomic<State>  current_state_;

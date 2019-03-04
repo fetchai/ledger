@@ -169,7 +169,7 @@ Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
 
     if (!connection->is_alive())
     {
-      // do not care about connections to whom we have yet fully connect
+      // do not care about connections to whom we have not yet fully connected
       continue;
     }
 
