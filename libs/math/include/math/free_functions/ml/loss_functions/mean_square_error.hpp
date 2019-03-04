@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "math/free_functions/exponentiation/exponentiation.hpp"
-#include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
-#include "math/kernels/standard_functions.hpp"            // square
+#include "math/free_functions/exponentiation/exponentiation.hpp"  // square
+#include "math/free_functions/fundamental_operators.hpp"          // add, subtract etc.
+#include "math/free_functions/matrix_operations/matrix_operations.hpp"
 #include <cassert>
 
 namespace fetch {

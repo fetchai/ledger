@@ -19,7 +19,8 @@
 
 #include "math/free_functions/exponentiation/exponentiation.hpp"
 #include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
-#include "math/kernels/standard_functions.hpp"
+#include "math/free_functions/matrix_operations/matrix_operations.hpp"
+//#include "math/kernels/standard_functions.hpp"
 #include <cassert>
 
 namespace fetch {
@@ -42,7 +43,7 @@ ArrayType CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
   // if in doubt the user can always call SoftmaxCrossEntropyLoss instead
   for (std::size_t k = 0; k < x.size(); ++k)
   {
-    assert(x.At(k) != 0);
+    assert(x.At(k) != typename ArrayType::Type(0));
   }
 
   ArrayType logx{x.shape()};
@@ -54,17 +55,17 @@ ArrayType CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
   {
     for (std::size_t j = 0; j < logx.shape()[1]; ++j)
     {
-      if (y.At(i, j) == 0)
+      if (y.At({i, j}) == typename ArrayType::Type(0))
       {
-        plogx.Set(i, j, 0);
+        plogx.Set({i, j}, typename ArrayType::Type(0));
       }
-      else if (logx.At(i, j) == 0)
+      else if (logx.At({i, j}) == typename ArrayType::Type(0))
       {
-        plogx.Set(i, j, 0);
+        plogx.Set({i, j}, typename ArrayType::Type(0));
       }
       else
       {
-        plogx.Set(i, j, logx.At(i, j) * y.At(i, j));
+        plogx.Set({i, j}, logx.At({i, j}) * y.At({i, j}));
       }
     }
   }

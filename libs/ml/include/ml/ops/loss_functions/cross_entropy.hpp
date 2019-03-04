@@ -22,8 +22,7 @@
 #include <vector>
 
 #include "math/free_functions/fundamental_operators.hpp"
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
-#include "math/free_functions/standard_functions/log.hpp"
+#include "math/free_functions/ml/loss_functions/cross_entropy.hpp"
 
 namespace fetch {
 namespace ml {
@@ -45,51 +44,8 @@ public:
     assert(inputs.size() == 2);
     assert(inputs[0]->size() == inputs[1]->size());
 
-    //    // we can't handle taking log(0), and the user should ensure this is never asked for
-    //    for (std::uint64_t k = 0; k < inputs[0]->size(); ++k)
-    //    {
-    //      assert(inputs[0]->At(k) != 0);
-    //    }
-
-    std::uint64_t n_data    = inputs[0]->shape()[0];
-    std::uint64_t n_classes = inputs[0]->shape()[1];
-
-    // deep copy and take log of input
-    ArrayType logx{inputs[0]->shape()};
-    logx.Copy(*inputs[0]);
-    fetch::math::Log(logx);
-
-    // assuming 2D input[0],
-    ArrayType plogx{logx.shape()};
-    for (std::uint64_t i = 0; i < n_data; ++i)
-    {
-      for (std::uint64_t j = 0; j < n_classes; ++j)
-      {
-        if (inputs[1]->At(j) == DataType(0))
-        {
-          plogx.Set({i, j}, DataType(0));
-        }
-        else if (inputs[1]->At(j) == DataType(1))
-        {
-          plogx.Set({i, j}, logx.At(j));
-        }
-        else
-        {
-          std::cout << "input to cross entropy loss was not a one hot" << std::endl;
-          assert(false);
-        }
-      }
-    }
-    ArrayType cel = fetch::math::Multiply(plogx, DataType(-1.0));
-
-    // every true class label now has a negative log loss
-
-    //    ArrayType                mean_cel = fetch::math::ReduceSum(cel, 1);
-    typename ArrayType::Type ret = fetch::math::Divide(
-        fetch::math::Sum(cel), static_cast<typename ArrayType::Type>(n_classes));
-    //    ArrayType ret = fetch::math::Divide(mean_cel, n_classes);
-    //    assert(ret.size() == inputs[0]->shape()[0]);
-    return ret;
+    ArrayType result = fetch::math::CrossEntropyLoss(*inputs[0], *inputs[1]);
+    return result[0];
   }
 
   virtual ArrayPtrType Backward(std::vector<ArrayPtrType> const &inputs)
@@ -98,12 +54,7 @@ public:
     assert(inputs[0]->size() == inputs[1]->size());
 
     typename ArrayType::Type n_classes = static_cast<typename ArrayType::Type>(inputs[1]->size());
-
-    ArrayPtrType ret = std::make_shared<ArrayType>(inputs[0]->shape());
-    for (std::uint64_t i(0); i < inputs[0]->size(); ++i)
-    {
-      ret->At(i) = (inputs[0]->At(i) - inputs[1]->At(i)) / n_classes;
-    }
+    ArrayPtrType ret = std::make_shared<ArrayType>(fetch::math::Divide(fetch::math::Subtract(*inputs[0], *inputs[1]), n_classes));
     return ret;
   }
 

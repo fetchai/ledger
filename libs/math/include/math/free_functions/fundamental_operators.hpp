@@ -641,7 +641,8 @@ meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
  * @param scalar
  * @param ret
  */
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsBlasArray<ArrayType, void> Multiply(ArrayType const &array, T const &scalar,
                                               ArrayType &ret)
 {
@@ -654,18 +655,20 @@ meta::IfIsBlasArray<ArrayType, void> Multiply(ArrayType const &array, T const &s
       array.data());
 }
 
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsNonBlasArray<ArrayType, void> Multiply(ArrayType const &array, T const &scalar,
                                                  ArrayType &ret)
 {
   assert(array.size() == ret.size());
   for (std::size_t i = 0; i < ret.size(); ++i)
   {
-    ret.Set(i, array.At(i) * scalar);
+    ret.Set(i, array.At(i) * typename ArrayType::Type(scalar));
   }
 }
 
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathFixedPointArray<ArrayType, void> Multiply(ArrayType const &array, T const &scalar,
                                                         ArrayType &ret)
 {
