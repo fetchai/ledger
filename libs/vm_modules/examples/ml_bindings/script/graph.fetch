@@ -13,7 +13,7 @@ s[1] = 10ul;
 var gt = Tensor(s);
 
 var g = Graph();
-var d = MNISTLoader();
+var d = MNISTLoader("PATH/TO/train-images-idx3-ubyte", "PATH/TO/train-labels-idx1-ubyte");
 var p = TrainingPair(t);
 var c = CrossEntropy();
 

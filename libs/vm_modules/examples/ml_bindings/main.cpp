@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
+#include "ml/dataloaders/mnist_loader.hpp"
 #include "ml/graph.hpp"
 #include "ml/ops/fully_connected.hpp"
 #include "ml/ops/mean_square_error.hpp"
@@ -32,8 +33,6 @@
 
 #include "vm_modules/ml/cross_entropy.hpp"
 #include "vm_modules/ml/graph.hpp"
-
-#include "mnist_loader.hpp"
 
 #include <fstream>
 #include <sstream>
@@ -72,13 +71,18 @@ public:
 class DataLoaderWrapper : public fetch::vm::Object
 {
 public:
-  DataLoaderWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
+  DataLoaderWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string const &images_file,
+                    std::string const &labels_file)
     : fetch::vm::Object(vm, type_id)
+    , loader_(images_file, labels_file)
   {}
 
-  static fetch::vm::Ptr<DataLoaderWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
+  static fetch::vm::Ptr<DataLoaderWrapper> Constructor(
+      fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+      fetch::vm::Ptr<fetch::vm::String> const &images_file,
+      fetch::vm::Ptr<fetch::vm::String> const &labels_file)
   {
-    return new DataLoaderWrapper(vm, type_id);
+    return new DataLoaderWrapper(vm, type_id, images_file->str, labels_file->str);
   }
 
   // Wont compile if parameter is not const &
@@ -99,7 +103,7 @@ public:
   }
 
 private:
-  MNISTLoader loader_;
+  fetch::ml::MNISTLoader loader_;
 };
 
 template <typename T>
@@ -155,7 +159,7 @@ int main(int argc, char **argv)
       .CreateInstanceFunction("Label", &TrainingPairWrapper::label);
 
   module->CreateClassType<DataLoaderWrapper>("MNISTLoader")
-      .CreateTypeConstuctor<>()
+      .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>>()
       .CreateInstanceFunction("GetData", &DataLoaderWrapper::GetData)
       .CreateInstanceFunction("Display", &DataLoaderWrapper::Display);
 
