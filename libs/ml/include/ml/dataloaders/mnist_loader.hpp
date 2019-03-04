@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
+#include "ml/dataloaders/dataloader.hpp"
 
 #include <exception>
 #include <fstream>
@@ -28,52 +29,44 @@
 namespace fetch {
 namespace ml {
 
-class MNISTLoader
+template <typename T>
+class MNISTLoader : public DataLoader<uint64_t, std::shared_ptr<fetch::math::Tensor<T>>>
 {
 public:
   MNISTLoader(std::string const &imagesFile, std::string const &labelsFile)
     : cursor_(0)
   {
     std::uint32_t recordLength(0);
-    data_ = read_mnist_images(imagesFile, size_, recordLength);
-    assert(size_ == 60000);
+    data_   = read_mnist_images(imagesFile, size_, recordLength);
     labels_ = read_mnist_labels(labelsFile, size_);
-    assert(size_ == 60000);
     assert(recordLength == 28 * 28);
   }
 
-  unsigned int size() const
+  virtual uint64_t Size() const
   {
-    return size_;
+    // MNIST files store the size as uint32_t but Dataloader interface require uint64_t
+    return static_cast<uint64_t>(size_);
   }
 
-  bool IsDone() const
+  virtual bool IsDone() const
   {
     return cursor_ >= size_;
   }
 
-  void Reset()
+  virtual void Reset()
   {
     cursor_ = 0;
   }
 
-  std::pair<unsigned int, std::shared_ptr<fetch::math::Tensor<float>>> GetNext(
-      std::shared_ptr<fetch::math::Tensor<float>> buffer)
+  virtual std::pair<uint64_t, std::shared_ptr<fetch::math::Tensor<T>>> GetNext()
   {
-    if (!buffer)
-    {
-      buffer = std::make_shared<fetch::math::Tensor<float>>(std::vector<std::uint64_t>({28u, 28u}));
-    }
+    std::shared_ptr<fetch::math::Tensor<T>> buffer =
+        std::make_shared<fetch::math::Tensor<float>>(std::vector<std::uint64_t>({28u, 28u}));
     for (std::uint64_t i(0); i < 28 * 28; ++i)
     {
-      buffer->At(i) = float(data_[cursor_][i]) / 256.0f;
+      buffer->At(i) = T(data_[cursor_][i]) / 256.0f;
     }
-    unsigned int label = (unsigned int)(labels_[cursor_]);
-    if (cursor_ % 1000 == 0)
-    {
-      std::cout << cursor_ << " / " << size_ << std::endl;
-      Display(buffer);
-    }
+    uint64_t label = (uint64_t)(labels_[cursor_]);
     cursor_++;
     return std::make_pair(label, buffer);
   }

@@ -34,41 +34,41 @@ TYPED_TEST_CASE(TensorDataloaderTest, MyTypes);
 
 TYPED_TEST(TensorDataloaderTest, empty_loader_test)
 {
-  fetch::ml::TensorDataLoader<TypeParam> loader;
+  fetch::ml::TensorDataLoader<std::shared_ptr<TypeParam>, uint64_t> loader;
   EXPECT_EQ(loader.Size(), 0);
   EXPECT_TRUE(loader.IsDone());
-  EXPECT_FALSE(loader.GetNext());
+  EXPECT_THROW(loader.GetNext(), std::out_of_range);
 }
 
 TYPED_TEST(TensorDataloaderTest, loader_test)
 {
-  fetch::ml::TensorDataLoader<TypeParam> loader;
+  fetch::ml::TensorDataLoader<std::shared_ptr<TypeParam>, int64_t> loader;
 
   // Fill with data
-  for (int i(-10); i < 10; ++i)
+  for (int64_t i(-10); i < 10; ++i)
   {
     std::shared_ptr<TypeParam> t =
         std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 5}));
     t->Fill(typename TypeParam::Type(i));
-    loader.Add(t);
+    loader.Add(std::pair<std::shared_ptr<TypeParam>, int64_t>(t, i));
   }
   // Consume all data
-  for (int i(-10); i < 10; ++i)
+  for (int64_t i(-10); i < 10; ++i)
   {
     EXPECT_EQ(loader.Size(), 20);
     EXPECT_FALSE(loader.IsDone());
-    EXPECT_EQ(loader.GetNext()->At(5), typename TypeParam::Type(i));
+    EXPECT_EQ(loader.GetNext().first->At(5), typename TypeParam::Type(i));
   }
   EXPECT_TRUE(loader.IsDone());
-  EXPECT_FALSE(loader.GetNext());
+  EXPECT_THROW(loader.GetNext(), std::out_of_range);
   // Reset
   loader.Reset();
   // Consume all data again
-  for (int i(-10); i < 10; ++i)
+  for (int64_t i(-10); i < 10; ++i)
   {
     EXPECT_EQ(loader.Size(), 20);
     EXPECT_FALSE(loader.IsDone());
-    EXPECT_EQ(loader.GetNext()->At(5), typename TypeParam::Type(i));
+    EXPECT_EQ(loader.GetNext().second, i);
   }
   EXPECT_TRUE(loader.IsDone());
 }

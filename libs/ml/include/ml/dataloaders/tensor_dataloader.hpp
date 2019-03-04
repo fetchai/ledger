@@ -24,20 +24,13 @@
 namespace fetch {
 namespace ml {
 
-template <class T>
-class TensorDataLoader : DataLoader<T>
+template <typename DataType, typename LabelType>
+class TensorDataLoader : DataLoader<DataType, LabelType>
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-
-  virtual ArrayPtrType GetNext()
+  virtual std::pair<DataType, LabelType> GetNext()
   {
-    if (IsDone())
-    {
-      return nullptr;
-    }
-    return data_[cursor_++];
+    return data_.at(cursor_++);
   }
 
   virtual uint64_t Size() const
@@ -55,14 +48,14 @@ public:
     cursor_ = 0;
   }
 
-  void Add(ArrayPtrType const &data)
+  void Add(std::pair<DataType, LabelType> const &data)
   {
     data_.push_back(data);
   }
 
 private:
-  uint64_t                  cursor_ = 0;
-  std::vector<ArrayPtrType> data_;
+  uint64_t                                    cursor_ = 0;
+  std::vector<std::pair<DataType, LabelType>> data_;
 };
 
 }  // namespace ml

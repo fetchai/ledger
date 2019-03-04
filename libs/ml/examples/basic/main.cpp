@@ -41,8 +41,8 @@ int main(int ac, char **av)
   }
 
   std::cout << "FETCH MNIST Demo" << std::endl;
-  fetch::ml::MNISTLoader      dataloader(av[1], av[2]);
-  fetch::ml::Graph<ArrayType> g;
+  fetch::ml::MNISTLoader<DataType> dataloader(av[1], av[2]);
+  fetch::ml::Graph<ArrayType>      g;
   g.AddNode<PlaceHolder<ArrayType>>("Input", {});
   g.AddNode<FullyConnected<ArrayType>>("FC1", {"Input"}, 28u * 28u, 10u);
   g.AddNode<ReluLayer<ArrayType>>("Relu1", {"FC1"});
@@ -68,7 +68,7 @@ int main(int ac, char **av)
     {
       dataloader.Reset();
     }
-    input = dataloader.GetNext(input.second);
+    input = dataloader.GetNext();
     g.SetInput("Input", input.second);
     gt->Fill(0);
     gt->At(input.first)                = DataType(1.0);

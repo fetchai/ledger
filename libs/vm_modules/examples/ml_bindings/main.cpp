@@ -89,9 +89,8 @@ public:
   // The actual fetch::vm::Ptr is const, but the pointed to memory is modified
   fetch::vm::Ptr<TrainingPairWrapper> GetData(fetch::vm::Ptr<TrainingPairWrapper> const &dataHolder)
   {
-    std::pair<unsigned int, std::shared_ptr<fetch::math::Tensor<float>>> d =
-        loader_.GetNext(nullptr);
-    std::shared_ptr<fetch::math::Tensor<float>> a = *(dataHolder->second);
+    std::pair<uint64_t, std::shared_ptr<fetch::math::Tensor<float>>> d = loader_.GetNext();
+    std::shared_ptr<fetch::math::Tensor<float>>                      a = *(dataHolder->second);
     a->Copy(*(d.second));
     dataHolder->first = d.first;
     return dataHolder;
@@ -103,7 +102,7 @@ public:
   }
 
 private:
-  fetch::ml::MNISTLoader loader_;
+  fetch::ml::MNISTLoader<float> loader_;
 };
 
 template <typename T>
