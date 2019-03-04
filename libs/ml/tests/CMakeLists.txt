@@ -11,5 +11,6 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 add_fetch_test(ops_gtest fetch-ml ml/ops)
 add_fetch_test(ml_serializers_gtest fetch-ml ml/serializers)
+add_fetch_test(dataloader_gtest fetch-ml ml/dataloader)
 
 
