@@ -288,21 +288,24 @@ meta::IfIsMath<OtherType, void> operator+=(OtherType &left, OtherType const &rig
 /// INTERFACE ///
 /////////////////
 
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapeArray<ArrayType, ArrayType> Subtract(T const &scalar, ArrayType const &array)
 {
   ArrayType ret{array.shape()};
   Subtract(scalar, array, ret);
   return ret;
 }
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapeArray<ArrayType, ArrayType> Subtract(ArrayType const &array, T const &scalar)
 {
   ArrayType ret{array.shape()};
   Subtract(array, scalar, ret);
   return ret;
 }
-template <typename T, typename ArrayType>
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapelessArray<ArrayType, ArrayType> Subtract(ArrayType const &array, T const &scalar)
 {
   ArrayType ret{array.size()};
@@ -343,12 +346,21 @@ meta::IfIsMathShapeArray<ArrayType, ArrayType> Subtract(ArrayType const &    obj
   Subtract(obj1, obj2, range, ret);
   return ret;
 }
-
+template <typename ArrayType>
+meta::IfIsMathShapeArray<ArrayType, ArrayType> Subtract(ArrayType const &obj1,
+                                                        ArrayType const &obj2)
+{
+  assert(obj1.size() == obj2.size());
+  ArrayType ret{obj1.shape()};
+  Subtract(obj1, obj2, ret);
+  return ret;
+}
 //////////////////////
 /// IMPLEMENTATION ///
 //////////////////////
 
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapeArray<ArrayType, void> Subtract(T const &scalar, ArrayType const &array,
                                                    ArrayType &ret)
 {
@@ -359,7 +371,8 @@ meta::IfIsMathShapeArray<ArrayType, void> Subtract(T const &scalar, ArrayType co
     ret.At(i) = scalar - array.At(i);
   }
 }
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapelessArray<ArrayType, void> Subtract(T const &scalar, ArrayType const &array,
                                                        ArrayType &ret)
 {
@@ -370,7 +383,8 @@ meta::IfIsMathShapelessArray<ArrayType, void> Subtract(T const &scalar, ArrayTyp
   }
 }
 
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathFixedPointArray<ArrayType, void> Subtract(ArrayType const &array, T const &scalar,
                                                         ArrayType &ret)
 {
@@ -380,7 +394,8 @@ meta::IfIsMathFixedPointArray<ArrayType, void> Subtract(ArrayType const &array, 
     ret.At(i) = array.At(i) - scalar;
   }
 }
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsNonBlasArray<ArrayType, void> Subtract(ArrayType const &array, T const &scalar,
                                                  ArrayType &ret)
 {
@@ -399,7 +414,8 @@ meta::IfIsNonBlasArray<ArrayType, void> Subtract(ArrayType const &array, T const
  * @param scalar
  * @param ret
  */
-template <typename T, typename ArrayType>
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsBlasArray<ArrayType, void> Subtract(ArrayType const &array, T const &scalar,
                                               ArrayType &ret)
 {
@@ -414,7 +430,7 @@ meta::IfIsBlasArray<ArrayType, void> Subtract(ArrayType const &array, T const &s
       array.data());
 }
 
-template <typename T, typename C>
+template <typename T, typename C, typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapelessArray<ShapelessArray<T, C>, void> Subtract(T const &scalar,
                                                                   ShapelessArray<T, C> const &array,
                                                                   ShapelessArray<T, C> &      ret)
