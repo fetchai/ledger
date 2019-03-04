@@ -19,6 +19,8 @@
 
 #include "ml/dataloaders/dataloader.hpp"
 
+#include <vector>
+
 namespace fetch {
 namespace ml {
 
