@@ -81,7 +81,7 @@ private:
 
     // lookup the blocks from the heaviest chain
     std::cout << "GETTING BLOCKS: " << length << std::endl;
-    auto blocks = chain_.HeaviestChain(length);
+    auto blocks = chain_.GetHeaviestChain(length);
 
     Variant block_list = Variant::Array(blocks.size());
 
@@ -92,19 +92,19 @@ private:
       // format the block number
       auto block = Variant::Object();
 
-      block["hash"]         = byte_array::ToBase64(b.body.hash);
-      block["previousHash"] = byte_array::ToBase64(b.body.previous_hash);
-      block["merkleHash"]   = byte_array::ToBase64(b.body.merkle_hash);
-      block["proof"]        = byte_array::ToBase64(b.proof.header());
-      block["miner"]        = byte_array::ToBase64(b.body.miner);
-      block["blockNumber"]  = b.body.block_number;
+      block["hash"]         = byte_array::ToBase64(b->body.hash);
+      block["previousHash"] = byte_array::ToBase64(b->body.previous_hash);
+      block["merkleHash"]   = byte_array::ToBase64(b->body.merkle_hash);
+      block["proof"]        = byte_array::ToBase64(b->proof.header());
+      block["miner"]        = byte_array::ToBase64(b->body.miner);
+      block["blockNumber"]  = b->body.block_number;
 
       // TODO(private issue 532): Remove legacy API
-      block["currentHash"] = byte_array::ToBase64(b.body.hash);
+      block["currentHash"] = byte_array::ToBase64(b->body.hash);
 
       if (include_transactions)
       {
-        auto const &slices = b.body.slices;
+        auto const &slices = b->body.slices;
 
         Variant slice_list = Variant::Array(slices.size());
 

@@ -75,7 +75,7 @@ public:
 
     for(; q < int(chain_.size()); ++q)
     {
-      blocks.push_back( chain_[q] );
+      blocks.push_back( chain_[static_cast<uint64_t>(q)] );
     }
     return blocks;
   }
@@ -177,7 +177,7 @@ private:
       int dag_idx = 0;
       for(auto const&n: b.body.dag_nodes)
       {
-        dag_nodes[dag_idx++] = byte_array::ToBase64(n);
+        dag_nodes[static_cast<uint64_t>(dag_idx++)] = byte_array::ToBase64(n);
       }
 
 

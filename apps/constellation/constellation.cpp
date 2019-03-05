@@ -27,6 +27,7 @@
 #include "ledger/chaincode/wallet_http_interface.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
+#include "ledger/tx_status_http_interface.hpp"
 #include "network/generics/atomic_inflight_counter.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
@@ -150,17 +151,24 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
   , internal_muddle_{muddle::NetworkId{"ISRD"}, internal_identity_, network_manager_}
   , trust_{}
-  , p2p_{muddle_,        lane_control_,        trust_,
-         cfg_.max_peers, cfg_.transient_peers, cfg_.peers_update_cycle_ms}
+  , p2p_{muddle_
+        , lane_control_
+        , trust_
+        , cfg_.max_peers
+        , cfg_.transient_peers
+        , cfg_.peers_update_cycle_ms}
   , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(internal_muddle_.AsEndpoint(), shard_cfgs_,
                                                  cfg_.log2_num_lanes))
   , lane_control_(internal_muddle_.AsEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
   , execution_manager_{std::make_shared<ExecutionManager>(
-        cfg_.num_executors, storage_, [this] { return std::make_shared<Executor>(storage_); })}
-    , dag_{}
-    , dag_rpc_service_{muddle_, muddle_.AsEndpoint(), dag_}
-    , mock_chain_{}
+      cfg_.num_executors
+    , storage_
+    , [this] { return std::make_shared<Executor>(storage_); })
+  }
+  , dag_{}
+  , dag_rpc_service_{muddle_, muddle_.AsEndpoint(), dag_}
+  , mock_chain_{}
   , chain_{ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes, cfg_.num_slices}
   , block_coordinator_{chain_,
@@ -168,22 +176,25 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
                        *storage_,
                        block_packer_,
                        *this,
+                       tx_status_cache_,
                        muddle_.identity().identifier(),
                        cfg_.num_lanes(),
                        cfg_.num_slices,
                        cfg_.block_difficulty}
-  , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_)}
-  , tx_processor_{*storage_, block_packer_, cfg_.processor_threads}
+  , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
+                                                              cfg_.standalone)}
+  , tx_processor_{*storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
   , http_{http_network_manager_}
   , http_modules_{
         std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_, cfg_.num_lanes()),
         std::make_shared<p2p::P2PHttpInterface>(cfg_.log2_num_lanes, chain_, muddle_, p2p_, trust_,
                                                 block_packer_),
+        std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
-        std::make_shared<ledger::MainChainHTTPInterface>(cfg_.log2_num_lanes, chain_), // TODO(tfr): possibly make these ones optional
-        std::make_shared<ledger::DAGHTTPInterface>(dag_, dag_rpc_service_),
-        std::make_shared<ledger::MockChainHTTPInterface>(cfg_.log2_num_lanes, mock_chain_)
-      }
+  
+      std::make_shared<ledger::DAGHTTPInterface>(dag_, dag_rpc_service_),
+      std::make_shared<ledger::MockChainHTTPInterface>(cfg_.log2_num_lanes, mock_chain_)
+  }
 {
 
 

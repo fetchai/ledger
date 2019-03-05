@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
+#include "math/free_functions/deep_learning/activation_functions.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -25,34 +25,52 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class PlaceHolder : public fetch::ml::Ops<T>
+class Softmax : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType    = T;
+  using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  PlaceHolder() = default;
+  Softmax()          = default;
+  virtual ~Softmax() = default;
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
-    ASSERT(inputs.empty());
-    ASSERT(this->output_);
+    assert(inputs.size() == 1);
+    if (!this->output_ || this->output_->shape() != inputs[0]->shape())
+    {
+      this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
+    }
+
+    fetch::math::Softmax(*inputs[0], *this->output_);
     return this->output_;
   }
 
   virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
                                              ArrayPtrType                     errorSignal)
   {
-    ASSERT(inputs.empty());
+    assert(inputs.size() == 1);
+    assert(inputs[0]->shape() == errorSignal->shape());
+
+    ArrayPtrType t = this->Forward(inputs);
+    for (std::size_t i(0); i < inputs[0]->size(); ++i)
+    {
+      errorSignal->At(i) *= t->At(i);
+    }
+    typename ArrayType::Type sum(0);
+    for (std::size_t i(0); i < inputs[0]->size(); ++i)
+    {
+      sum += errorSignal->At(i);
+    }
+    for (std::size_t i(0); i < inputs[0]->size(); ++i)
+    {
+      errorSignal->At(i) -= (t->At(i) * sum);
+    }
     return {errorSignal};
   }
 
-  virtual void SetData(ArrayPtrType const &data)
-  {
-    this->output_ = data;
-  }
-
-  static constexpr char const *DESCRIPTOR = "PlaceHolder";
+  static constexpr char const *DESCRIPTOR = "Softmax";
 };
 
 }  // namespace ops

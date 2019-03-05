@@ -60,10 +60,7 @@ public:
     return {errorSignal, errorSignal};
   }
 
-private:
-  // Relu is done in a strange way, comparing input against an array of zeroes
-  // using a parrallel Maximum function -- May need improvement (TODO private 469)
-  ArrayPtrType zeroes_;
+  static constexpr char const *DESCRIPTOR = "Add";
 };
 
 }  // namespace ops

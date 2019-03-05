@@ -260,7 +260,7 @@ public:
                                                           DAG_RPC_SERVICE, CHANNEL_DAG_RPC);
       clients.push_back(client);
 //      FETCH_LOG_INFO(LOGGING_NAME, "Making call");
-      promises.push_back(client->Call(muddle_.network_id(), DAG_SYNCRONISATION, DAGProtocol::NUMBER_OF_DAG_NODES));
+      promises.push_back(client->Call(muddle_.network_id().value(), DAG_SYNCRONISATION, DAGProtocol::NUMBER_OF_DAG_NODES));
 //      FETCH_LOG_INFO(LOGGING_NAME, "DONE!");      
     }
 
@@ -308,7 +308,7 @@ public:
     for (uint64_t i   = 0; i < dag_chunks; ++i)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Call: ", i);      
-      dag_chunk_requests[i] = clients[cid]->Call(muddle_.network_id(), DAG_SYNCRONISATION, DAGProtocol::DOWNLOAD_DAG, i, uint64_t(DAG_CHUNK_SIZE));
+      dag_chunk_requests[i] = clients[cid]->Call(muddle_.network_id().value(), DAG_SYNCRONISATION, DAGProtocol::DOWNLOAD_DAG, i, uint64_t(DAG_CHUNK_SIZE));
       cid = (cid + 1) % clients.size();
     }
 

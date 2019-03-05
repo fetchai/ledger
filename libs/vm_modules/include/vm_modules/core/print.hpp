@@ -4,7 +4,7 @@
 
 namespace fetch
 {
-namespace modules
+namespace vm_modules
 {
 
 void PrintByteArray(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::modules::ByteArrayWrapper> const &s)
@@ -86,7 +86,9 @@ void PrintArrayPrimitive(fetch::vm::VM * /*vm*/, vm::Ptr< vm::Array< T > > const
   std::cout << "]";
 }
 
-void BindPrint(vm::Module &module)
+
+
+void CreatePrint(vm::Module& module)
 {
   module.CreateFreeFunction("print", &PrintByteArray);
   module.CreateFreeFunction("printLn", &PrintLnByteArray);
@@ -107,7 +109,13 @@ void BindPrint(vm::Module &module)
   module.CreateFreeFunction("print", &PrintArrayPrimitive<uint64_t>);
   module.CreateFreeFunction("print", &PrintArrayPrimitive<float>);  
   module.CreateFreeFunction("print", &PrintArrayPrimitive<double>);  
-  }
+}
+
+void CreatePrint(std::shared_ptr<vm::Module> module)
+{
+  CreatePrint(*module.get());
+}
+
 
 
 }

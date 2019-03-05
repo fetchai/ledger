@@ -72,6 +72,7 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   , router_(network_id, identity_.identifier(), *register_, dispatcher_)
   , thread_pool_(network::MakeThreadPool(NUM_THREADS, GenerateThreadPoolName(network_id)))
   , clients_(router_)
+  , network_id_(network_id)
 {}
 
 /**

@@ -2,6 +2,7 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 
+#include "network/muddle/network_id.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
 //#include "ledger/dag/leader_board.future.hpp"
@@ -35,7 +36,7 @@
 using fetch::network::NetworkManager;
 using fetch::network::Peer;
 using fetch::muddle::Muddle;
-using NetworkId = fetch::muddle::MuddleEndpoint::NetworkId;
+using NetworkId = fetch::muddle::NetworkId;
 using fetch::muddle::rpc::Client;
 using fetch::service::Promise;
 using fetch::commandline::ParamsParser;

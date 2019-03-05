@@ -17,44 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "ml/ops/ops.hpp"
+#include "http/module.hpp"
 
 namespace fetch {
-namespace ml {
-namespace ops {
+namespace ledger {
 
-template <class T>
-class PlaceHolder : public fetch::ml::Ops<T>
+class TransactionStatusCache;
+
+class TxStatusHttpInterface : public http::HTTPModule
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  // Construction / Destruction
+  explicit TxStatusHttpInterface(TransactionStatusCache &status_cache);
+  TxStatusHttpInterface(TxStatusHttpInterface const &) = delete;
+  TxStatusHttpInterface(TxStatusHttpInterface &&)      = delete;
+  ~TxStatusHttpInterface()                             = default;
 
-  PlaceHolder() = default;
+  // Operators
+  TxStatusHttpInterface &operator=(TxStatusHttpInterface const &) = delete;
+  TxStatusHttpInterface &operator=(TxStatusHttpInterface &&) = delete;
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
-  {
-    ASSERT(inputs.empty());
-    ASSERT(this->output_);
-    return this->output_;
-  }
-
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
-  {
-    ASSERT(inputs.empty());
-    return {errorSignal};
-  }
-
-  virtual void SetData(ArrayPtrType const &data)
-  {
-    this->output_ = data;
-  }
-
-  static constexpr char const *DESCRIPTOR = "PlaceHolder";
+private:
+  TransactionStatusCache &status_cache_;
 };
 
-}  // namespace ops
-}  // namespace ml
+}  // namespace ledger
 }  // namespace fetch

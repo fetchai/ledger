@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/deep_learning/activation_functions.hpp"
-#include "math/free_functions/standard_functions/exp.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -26,15 +24,15 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class SoftmaxLayer : public fetch::ml::Ops<T>
+class Relu : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  SoftmaxLayer()          = default;
-  virtual ~SoftmaxLayer() = default;
+  Relu()          = default;
+  virtual ~Relu() = default;
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
@@ -44,26 +42,13 @@ public:
       this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
     }
 
-    /*
-     * Really naive implementation that relies only on ArrayType providing a At(std::size_t) method
-     * TODO(private, 520) -- Clean up once we get unified ArrayType + operations
-     */
-    typename ArrayType::Type maxValue = std::numeric_limits<typename ArrayType::Type>::min();
-    typename ArrayType::Type sum(0);
-    for (DataType const &e : *inputs[0])
+    this->output_->Fill(DataType(0));
+    for (std::size_t i = 0; i < inputs[0]->size(); ++i)
     {
-      maxValue = std::max(maxValue, e);
-    }
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
-    {
-      typename ArrayType::Type v = inputs[0]->At(i) - maxValue;
-      fetch::math::Exp(v);
-      this->output_->At(i) = v;
-      sum += v;
-    }
-    for (DataType &e : *(this->output_))
-    {
-      e /= sum;
+      if ((*(inputs[0]))[i] > DataType(0))
+      {
+        this->output_->Set(i, DataType((*(inputs[0]))[i]));
+      }
     }
     return this->output_;
   }
@@ -74,22 +59,17 @@ public:
     assert(inputs.size() == 1);
     assert(inputs[0]->shape() == errorSignal->shape());
 
-    ArrayPtrType t = this->Forward(inputs);
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
+    for (std::size_t i = 0; i < inputs[0]->size(); ++i)
     {
-      errorSignal->At(i) *= t->At(i);
-    }
-    typename ArrayType::Type sum(0);
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
-    {
-      sum += errorSignal->At(i);
-    }
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
-    {
-      errorSignal->At(i) -= (t->At(i) * sum);
+      if ((*(inputs[0]))[i] <= DataType(0))
+      {
+        errorSignal->Set(i, DataType(0));
+      }
     }
     return {errorSignal};
   }
+
+  static constexpr char const *DESCRIPTOR = "Relu";
 };
 
 }  // namespace ops

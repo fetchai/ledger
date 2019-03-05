@@ -48,21 +48,6 @@ public:
       type_id_ = type_id__;
     }
 
-    // TODO: Generalise to N indices - quite easy but I am too lazy
-    template<typename ReturnType, typename IndexType>
-    void EnableIndexOperator()
-    {
-      auto index_id = module->GetTypeId(TypeGetter<IndexType>::GetTypeIndex());
-      auto return_id = module->GetTypeId(TypeGetter<ReturnType>::GetTypeIndex());
-      auto tid = type_id;
-      auto        compiler_setup_function = [tid, index_id, return_id](Compiler *compiler) {
-        compiler->EnableIndexOperator(tid, {index_id}, return_id);      
-      };
-      module->AddCompilerSetupFunction(compiler_setup_function);
-    }
-
-    bool has_index_operator_ = false;
-
     template <typename... Ts>
     ClassInterface &CreateTypeConstuctor()
     {

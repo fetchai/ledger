@@ -17,44 +17,38 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "ml/ops/ops.hpp"
+#include "ml/ops/placeholder.hpp"
+#include "ml/ops/weights.hpp"
+#include "ml/subgraph.hpp"
+
+#include <cmath>
 
 namespace fetch {
 namespace ml {
-namespace ops {
+namespace layers {
 
 template <class T>
-class PlaceHolder : public fetch::ml::Ops<T>
+class Layer : public SubGraph<T>
 {
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
 
-  PlaceHolder() = default;
+  std::uint64_t in_size;
+  std::uint64_t out_size;
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  Layer(std::uint64_t in, std::uint64_t out)
+    : in_size(in)
+    , out_size(out)
+  {}
+
+  void Initialise(ArrayPtrType weights, WeightsInit init_mode)
   {
-    ASSERT(inputs.empty());
-    ASSERT(this->output_);
-    return this->output_;
+    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, in_size, out_size, init_mode);
   }
-
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
-  {
-    ASSERT(inputs.empty());
-    return {errorSignal};
-  }
-
-  virtual void SetData(ArrayPtrType const &data)
-  {
-    this->output_ = data;
-  }
-
-  static constexpr char const *DESCRIPTOR = "PlaceHolder";
 };
 
-}  // namespace ops
+}  // namespace layers
 }  // namespace ml
 }  // namespace fetch

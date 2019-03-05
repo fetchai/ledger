@@ -35,7 +35,7 @@ void CreateConensusVMModule(fetch::vm::Module &module)
 
   fetch::modules::BindExp(module);
   fetch::modules::BindSqrt(module);  
-  fetch::modules::BindPrint(module);
+  fetch::vm_modules::CreatePrint(module);
   fetch::modules::BindLen(module);
   fetch::modules::BindBitShift(module);
   fetch::modules::BindBitwiseOps(module);

@@ -47,10 +47,6 @@ namespace math {
 
 template <typename T, typename C>
 class ShapelessArray;
-template <typename T, typename C>
-class NDArray;
-template <typename T, typename C>
-class NDArrayIterator;
 
 template <typename T, typename C>
 T Max(ShapelessArray<T, C> const &array);
@@ -107,48 +103,61 @@ ArrayType Sigmoid(ArrayType const &A)
  * @param ret new data with softmax applied
  */
 namespace details {
+
+/*
+ * Really naive implementation that relies only on ArrayType providing a At(std::size_t) method
+ * TODO(private, 520) -- Clean up once we get unified ArrayType + operations
+ */
+
 template <typename ArrayType>
 void SoftmaxImplementation(ArrayType const &array, ArrayType &ret)
 {
   assert(ret.size() == array.size());
 
   // by subtracting the max we improve numerical stability, and the result will be identical
-  std::vector<std::size_t> arr_shape{array.shape()[0], 1};
-  ArrayType                array_max{arr_shape};
-  ArrayType                array_sum{arr_shape};
+  std::vector<typename ArrayType::SizeType> arr_shape{array.shape()[0], 1};
+  ArrayType                                 array_max{arr_shape};
+  ArrayType                                 array_sum{arr_shape};
 
-  Max(array, 1, array_max);
-  Subtract(array, array_max, ret);
+  if (array.shape().size() == 1)
+  {
+    Max(array, 0, array_max);
+  }
+  else
+  {
+    Max(array, 1, array_max);
+  }
+
+  Subtract(array, array_max[0], ret);
+
   Exp(ret);
 
-  ReduceSum(ret, 1, array_sum);
-  Divide(ret, array_sum, ret);
+  if (ret.shape().size() == 1)
+  {
+    Sum(ret, array_sum[0]);
+  }
+  else
+  {
+    ReduceSum(ret, 1, array_sum);
+  }
+
+  for (std::size_t j = 0; j < ret.size(); ++j)
+  {
+    Divide(ret[j], array_sum[0], ret[j]);
+  }
 }
 }  // namespace details
-template <typename T, typename C>
-void Softmax(ShapelessArray<T, C> &array, ShapelessArray<T, C> &ret)
+
+template <typename ArrayType>
+void Softmax(ArrayType const &array, ArrayType &ret)
 {
   assert(ret.size() == array.size());
   details::SoftmaxImplementation(array, ret);
 }
-template <typename T, typename C>
-ShapelessArray<T, C> Softmax(ShapelessArray<T, C> &array)
+template <typename ArrayType>
+ArrayType Softmax(ArrayType const &array)
 {
-  ShapelessArray<T, C> ret{array.size()};
-  Softmax(array, ret);
-  return ret;
-}
-template <typename T, typename C>
-void Softmax(NDArray<T, C> const &array, NDArray<T, C> &ret)
-{
-  assert(ret.size() == array.size());
-  ret.LazyReshape(array.shape());
-  details::SoftmaxImplementation(array, ret);
-}
-template <typename T, typename C>
-NDArray<T, C> Softmax(NDArray<T, C> const &array)
-{
-  NDArray<T, C> ret{array.shape()};
+  ArrayType ret{array.size()};
   Softmax(array, ret);
   return ret;
 }
