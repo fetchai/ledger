@@ -44,7 +44,7 @@ public:
       this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
     }
 
-    for (std::size_t i = 0; i < inputs[0]->size(); ++i)
+    for (std::uint64_t i = 0; i < inputs[0]->size(); ++i)
     {
       this->output_->Set(i, inputs[0]->At(i) + inputs[1]->At(i));
     }

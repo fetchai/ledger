@@ -53,8 +53,8 @@ void BooleanMaskImplementation(ArrayType &input_array, ArrayType const &mask, Ar
 {
   assert(input_array.size() == mask.size());
 
-  std::size_t counter = 0;
-  for (std::size_t i = 0; i < input_array.size(); ++i)
+  typename ArrayType::SizeType counter = 0;
+  for (typename ArrayType::SizeType i = 0; i < input_array.size(); ++i)
   {
     assert((mask[i] == 1) || (mask[i] == 0));
     // TODO(private issue 193): implement boolean only ndarray to avoid cast
@@ -130,11 +130,11 @@ template <typename ArrayType>
 void ScatterImplementation(ArrayType &input_array, ArrayType &updates, ArrayType &indices)
 {
   // sort indices and updates into ascending order
-  std::vector<std::pair<std::size_t, typename ArrayType::Type>> AB;
+  std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> AB;
 
   // copy into pairs
   // Note that A values are put in "first" this is very important
-  for (std::size_t i = 0; i < updates.size(); ++i)
+  for (typename ArrayType::SizeType i = 0; i < updates.size(); ++i)
   {
     AB.push_back(std::make_pair(indices[i], updates[i]));
   }
@@ -149,11 +149,11 @@ void ScatterImplementation(ArrayType &input_array, ArrayType &updates, ArrayType
   }
 
   // scatter
-  std::size_t arr_count = 0;
-  for (std::size_t count = 0; count < indices.size(); ++count)
+  typename ArrayType::SizeType arr_count = 0;
+  for (typename ArrayType::SizeType count = 0; count < indices.size(); ++count)
   {
     // TODO(private issue 282): Think about this code
-    while (arr_count < static_cast<std::size_t>(indices[count]))
+    while (arr_count < static_cast<typename ArrayType::SizeType>(indices[count]))
     {
       ++arr_count;
     }
@@ -261,6 +261,19 @@ T Max(ShapelessArray<T, C> const &array)
   return ret;
 }
 
+template <typename ArrayType, typename T>
+meta::IfIsMathArray<ArrayType, void> Max(ArrayType const &array, T &ret)
+{
+  ret = std::numeric_limits<T>::lowest();
+  for (T &e : array)
+  {
+    if (e > ret)
+    {
+      ret = e;
+    }
+  }
+}
+
 /**
  * Finds the maximum value in a range of the array
  * @tparam T
@@ -282,7 +295,7 @@ inline void Max(ShapelessArray<T, C> const &array, memory::Range r, T &ret)
   else
   {  // non-trivial range is not vectorised
     typename ShapelessArray<T, C>::Type ret =
-        -std::numeric_limits<typename ShapelessArray<T, C>::Type>::max();
+        std::numeric_limits<typename ShapelessArray<T, C>::Type>::lowest();
     for (auto i : array)
     {
       ret = std::max(ret, i);
@@ -335,7 +348,7 @@ void Max(NDArray<T, C> &array, std::size_t const &axis, NDArray<T, C> &ret)
 
     // loops through the 1d array calculating the max val
     typename NDArray<T, C>::Type cur_max =
-        -std::numeric_limits<typename NDArray<T, C>::Type>::max();
+        std::numeric_limits<typename NDArray<T, C>::Type>::lowest();
     typename NDArray<T, C>::Type cur_val;
     while (array_iterator)
     {
@@ -363,6 +376,19 @@ inline void Min(ShapelessArray<T, C> const &array, T &ret)
   ret = array.data().in_parallel().Reduce(
       memory::TrivialRange(0, array.size()),
       [](vector_register_type const &a, vector_register_type const &b) { return min(a, b); });
+}
+
+template <typename ArrayType, typename T>
+meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, T &ret)
+{
+  ret = std::numeric_limits<T>::max();
+  for (T &e : array)
+  {
+    if (ret < e)
+    {
+      ret = e;
+    }
+  }
 }
 
 /**
@@ -458,7 +484,7 @@ ArrayType &MaximumImplementation(ArrayType const &array1, ArrayType const &array
   assert(array1.size() == array2.size());
   assert(ret.size() == array2.size());
 
-  for (std::size_t i = 0; i < ret.size(); ++i)
+  for (typename ArrayType::SizeType i = 0; i < ret.size(); ++i)
   {
     ret[i] = std::max(array1[i], array2[i]);
   }
@@ -563,7 +589,7 @@ template <typename T>
 T Sum(Tensor<T> const &obj1)
 {
   T ret(0);
-  for (std::size_t j = 0; j < obj1.size(); ++j)
+  for (typename Tensor<T>::SizeType j = 0; j < obj1.size(); ++j)
   {
     ret += obj1.At(j);
   }
@@ -593,21 +619,21 @@ T Mean(ShapelessArray<T, C> const &obj1)
 }
 
 template <typename ArrayType>
-void ReduceSum(ArrayType const &obj1, std::size_t axis, ArrayType &ret)
+void ReduceSum(ArrayType const &obj1, typename ArrayType::SizeType axis, ArrayType &ret)
 {
   assert((axis == 0) || (axis == 1));
   assert(obj1.shape().size() == 2);
 
-  std::vector<std::size_t> access_idx{0, 0};
+  std::vector<typename ArrayType::SizeType> access_idx{0, 0};
   if (axis == 0)
   {
     assert(ret.shape()[0] == 1);
     assert(ret.shape()[1] == obj1.shape()[1]);
 
-    for (std::size_t i = 0; i < ret.size(); ++i)
+    for (typename ArrayType::SizeType i = 0; i < ret.size(); ++i)
     {
       ret[i] = typename ArrayType::Type(0);
-      for (std::size_t j = 0; j < obj1.shape()[0]; ++j)
+      for (typename ArrayType::SizeType j = 0; j < obj1.shape()[0]; ++j)
       {
         ret[i] += obj1({j, i});
       }
@@ -618,10 +644,10 @@ void ReduceSum(ArrayType const &obj1, std::size_t axis, ArrayType &ret)
     assert(ret.shape()[0] == obj1.shape()[0]);
     assert(ret.shape()[1] == 1);
 
-    for (std::size_t i = 0; i < ret.size(); ++i)
+    for (typename ArrayType::SizeType i = 0; i < ret.size(); ++i)
     {
       ret[i] = typename ArrayType::Type(0);
-      for (std::size_t j = 0; j < obj1.shape()[1]; ++j)
+      for (typename ArrayType::SizeType j = 0; j < obj1.shape()[1]; ++j)
       {
         ret[i] += obj1({i, j});
       }
@@ -629,27 +655,27 @@ void ReduceSum(ArrayType const &obj1, std::size_t axis, ArrayType &ret)
   }
 }
 template <typename ArrayType>
-ArrayType ReduceSum(ArrayType const &obj1, std::size_t axis)
+ArrayType ReduceSum(ArrayType const &obj1, typename ArrayType::SizeType axis)
 {
   assert((axis == 0) || (axis == 1));
   if (axis == 0)
   {
-    std::vector<std::size_t> new_shape{1, obj1.shape()[1]};
-    ArrayType                ret{new_shape};
+    std::vector<typename ArrayType::SizeType> new_shape{1, obj1.shape()[1]};
+    ArrayType                                 ret{new_shape};
     ReduceSum(obj1, axis, ret);
     return ret;
   }
   else
   {
-    std::vector<std::size_t> new_shape{obj1.shape()[0], 1};
-    ArrayType                ret{new_shape};
+    std::vector<typename ArrayType::SizeType> new_shape{obj1.shape()[0], 1};
+    ArrayType                                 ret{new_shape};
     ReduceSum(obj1, axis, ret);
     return ret;
   }
 }
 
 template <typename ArrayType>
-ArrayType ReduceMean(ArrayType const &obj1, std::size_t const &axis)
+ArrayType ReduceMean(ArrayType const &obj1, typename ArrayType::SizeType const &axis)
 {
   assert(axis == 0 || axis == 1);
   typename ArrayType::DataType n;
@@ -742,16 +768,18 @@ void Dot(ArrayType const &A, ArrayType const &B, ArrayType &ret)
   assert(B.shape().size() == 2);
   assert(A.shape()[1] == B.shape()[0]);
 
-  for (std::size_t i(0); i < A.shape()[0]; ++i)
+  for (typename ArrayType::SizeType i(0); i < A.shape()[0]; ++i)
   {
-    for (std::size_t j(0); j < B.shape()[1]; ++j)
+    for (typename ArrayType::SizeType j(0); j < B.shape()[1]; ++j)
     {
-      ret.Get(std::vector<std::size_t>({i, j})) =
-          A.Get(std::vector<std::size_t>({i, 0})) * B.Get(std::vector<std::size_t>({0, j}));
-      for (std::size_t k(1); k < A.shape()[1]; ++k)
+      ret.At(std::vector<typename ArrayType::SizeType>({i, j})) =
+          A.At(std::vector<typename ArrayType::SizeType>({i, 0})) *
+          B.At(std::vector<typename ArrayType::SizeType>({0, j}));
+      for (typename ArrayType::SizeType k(1); k < A.shape()[1]; ++k)
       {
-        ret.Get(std::vector<std::size_t>({i, j})) +=
-            A.Get(std::vector<std::size_t>({i, k})) * B.Get(std::vector<std::size_t>({k, j}));
+        ret.At(std::vector<typename ArrayType::SizeType>({i, j})) +=
+            A.At(std::vector<typename ArrayType::SizeType>({i, k})) *
+            B.At(std::vector<typename ArrayType::SizeType>({k, j}));
       }
     }
   }
@@ -760,8 +788,8 @@ void Dot(ArrayType const &A, ArrayType const &B, ArrayType &ret)
 template <typename ArrayType>
 ArrayType Dot(ArrayType const &A, ArrayType const &B)
 {
-  std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[1]};
-  ArrayType                ret(return_shape);
+  std::vector<typename ArrayType::SizeType> return_shape{A.shape()[0], B.shape()[1]};
+  ArrayType                                 ret(return_shape);
   Dot(A, B, ret);
   return ret;
 }
@@ -786,8 +814,9 @@ void DotTranspose(ArrayType const &A, ArrayType const &B, ArrayType &ret)
     {
       for (size_t k(0); k < A.shape()[1]; ++k)
       {
-        ret.Get(std::vector<size_t>({i, j})) +=
-            A.Get(std::vector<size_t>({i, k})) * B.Get(std::vector<size_t>({j, k}));
+        ret.At(std::vector<typename ArrayType::SizeType>({i, j})) +=
+            A.At(std::vector<typename ArrayType::SizeType>({i, k})) *
+            B.At(std::vector<typename ArrayType::SizeType>({j, k}));
       }
     }
   }
@@ -797,8 +826,8 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> DotTranspose(ArrayType const &A,
                                                                          ArrayType const &B)
 {
-  std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
-  ArrayType                ret(return_shape);
+  std::vector<typename ArrayType::SizeType> return_shape{A.shape()[0], B.shape()[0]};
+  ArrayType                                 ret(return_shape);
   DotTranspose(A, B, ret);
   return ret;
 }
@@ -823,8 +852,9 @@ void TransposeDot(ArrayType const &A, ArrayType const &B, ArrayType &ret)
     {
       for (size_t k(0); k < A.shape()[0]; ++k)
       {
-        ret.Get(std::vector<size_t>({i, j})) +=
-            A.Get(std::vector<size_t>({k, i})) * B.Get(std::vector<size_t>({k, j}));
+        ret.At(std::vector<typename ArrayType::SizeType>({i, j})) +=
+            A.At(std::vector<typename ArrayType::SizeType>({k, i})) *
+            B.At(std::vector<typename ArrayType::SizeType>({k, j}));
       }
     }
   }
@@ -833,8 +863,8 @@ void TransposeDot(ArrayType const &A, ArrayType const &B, ArrayType &ret)
 template <class ArrayType>
 ArrayType TransposeDot(ArrayType const &A, ArrayType const &B)
 {
-  std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
-  ArrayType                ret(return_shape);
+  std::vector<typename ArrayType::SizeType> return_shape{A.shape()[1], B.shape()[1]};
+  ArrayType                                 ret(return_shape);
   TransposeDot(A, B, ret);
   return ret;
 }
@@ -903,8 +933,8 @@ void ConcatImplementation(std::vector<ArrayType> const &input_arrays, ArrayType 
 {
   assert(input_arrays.size() > 0);
 
-  std::size_t new_size = 0;
-  for (std::size_t i = 0; i < input_arrays.size(); ++i)
+  typename ArrayType::SizeType new_size = 0;
+  for (typename ArrayType::SizeType i = 0; i < input_arrays.size(); ++i)
   {
     new_size += input_arrays[i].size();
   }
@@ -916,10 +946,10 @@ void ConcatImplementation(std::vector<ArrayType> const &input_arrays, ArrayType 
   }
   else
   {
-    std::size_t count = 0;
-    for (std::size_t j = 0; j < input_arrays.size(); ++j)
+    typename ArrayType::SizeType count = 0;
+    for (typename ArrayType::SizeType j = 0; j < input_arrays.size(); ++j)
     {
-      for (std::size_t i = 0; i < input_arrays[j].size(); ++i, ++count)
+      for (typename ArrayType::SizeType i = 0; i < input_arrays[j].size(); ++i, ++count)
       {
         ret[count] = input_arrays[j][i];
       }
@@ -1018,9 +1048,10 @@ void DynamicStitchImplementation(ArrayType &input_array, ArrayType const &indice
   input_array.LazyResize(indices.size());
 
   // loop through all output data locations identifying the next data point to copy into it
-  for (std::size_t i = 0; i < indices.size(); ++i)  // iterate through lists of indices
+  for (typename ArrayType::SizeType i = 0; i < indices.size();
+       ++i)  // iterate through lists of indices
   {
-    input_array.Set(std::size_t(indices[i]), data[i]);
+    input_array.Set(typename ArrayType::SizeType(indices[i]), data[i]);
   }
 }
 }  // namespace details

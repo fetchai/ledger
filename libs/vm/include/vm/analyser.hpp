@@ -53,25 +53,30 @@ public:
   void CreateOpcodeInstanceFunction(TypeId type_id, std::string const &name, Opcode opcode,
                                     TypeIdArray const &parameter_type_ids, TypeId return_type_id);
 
-  void EnableIndexOperator(TypeId type_id, TypeIdArray index_ids, TypeId return_type_id);
+  void EnableOperator(TypeId type_id, Operator op);
+
+  void EnableIndexOperator(TypeId type_id, TypeIdArray const &input_type_ids,
+                           TypeId const &output_type_id);
 
   bool Analyse(BlockNodePtr const &root, TypeInfoTable &type_info_table, Strings &errors);
 
 private:
   static std::string CONSTRUCTOR;
 
-  using TypeTable = std::unordered_map<TypeId, TypePtr>;
-  using OpArray   = std::vector<Node::Kind>;
-  using OpTable   = std::unordered_map<TypePtr, OpArray>;
+  using TypeTable     = std::unordered_map<TypeId, TypePtr>;
+  using OperatorTable = std::unordered_map<Operator, Node::Kind>;
+  using OpArray       = std::vector<Node::Kind>;
+  using OpTable       = std::unordered_map<TypePtr, OpArray>;
 
   TypePtrArray      types_;
   TypeTable         type_table_;
   TypeInfoTable     type_info_table_;
   SymbolTablePtr    global_symbol_table_;
   TypeId            next_instantiation_type_id_;
+  OperatorTable     operator_table_;
   TypePtr           any_type_;
-  TypePtr           parameter1_type_;
-  TypePtr           parameter2_type_;
+  TypePtr           template_parameter1_type_;
+  TypePtr           template_parameter2_type_;
   TypePtr           void_type_;
   TypePtr           null_type_;
   TypePtr           bool_type_;
@@ -92,6 +97,7 @@ private:
   TypePtr           matrix_type_;
   TypePtr           array_type_;
   TypePtr           map_type_;
+  TypePtr           state_type_;
   TypePtr           string_type_;
   OpTable           op_table_;
   OpTable           left_op_table_;
@@ -120,6 +126,7 @@ private:
   void        AnnotateConditionalBlock(BlockNodePtr const &conditional_node);
   bool        AnnotateTypeExpression(ExpressionNodePtr const &node);
   bool        AnnotateAssignOp(ExpressionNodePtr const &node);
+  bool        AnnotateModuloAssignOp(ExpressionNodePtr const &node);
   bool        AnnotateArithmeticAssignOp(ExpressionNodePtr const &node);
   bool        AnnotateExpression(ExpressionNodePtr const &node);
   bool        AnnotateEqualityOp(ExpressionNodePtr const &node);
@@ -128,6 +135,7 @@ private:
   bool        AnnotateUnaryLogicalOp(ExpressionNodePtr const &node);
   bool        AnnotateIncDecOp(ExpressionNodePtr const &node);
   bool        AnnotateUnaryMinusOp(ExpressionNodePtr const &node);
+  bool        AnnotateModuloOp(ExpressionNodePtr const &node);
   bool        AnnotateArithmeticOp(ExpressionNodePtr const &node);
   bool        AnnotateIndexOp(ExpressionNodePtr const &node);
   bool        AnnotateDotOp(ExpressionNodePtr const &node);
@@ -200,11 +208,6 @@ private:
     return IsIntegerType(type) || IsRealType(type);
   }
 
-  bool IsRelationalType(TypePtr const &type) const
-  {
-    return IsNumberType(type);
-  }
-
   void AddType(TypeId type_id, TypePtr const &type, TypeInfo const &type_info)
   {
     types_.push_back(type);
@@ -239,19 +242,19 @@ private:
     type->index_output_type = output_type;
   }
 
-  void EnableOp(TypePtr const &type, Node::Kind op)
+  void EnableOperator(TypePtr const &type, Operator op)
   {
-    InternalEnableOp(type, op, op_table_);
+    EnableOp(type, operator_table_[op], op_table_);
   }
 
-  void EnableLeftOp(TypePtr const &type, Node::Kind op)
+  void EnableLeftOperator(TypePtr const &type, Operator op)
   {
-    InternalEnableOp(type, op, left_op_table_);
+    EnableOp(type, operator_table_[op], left_op_table_);
   }
 
-  void EnableRightOp(TypePtr const &type, Node::Kind op)
+  void EnableRightOperator(TypePtr const &type, Operator op)
   {
-    InternalEnableOp(type, op, right_op_table_);
+    EnableOp(type, operator_table_[op], right_op_table_);
   }
 
   bool IsOpEnabled(TypePtr const &type, Node::Kind op) const
@@ -269,7 +272,7 @@ private:
     return IsOpEnabled(type, op, right_op_table_);
   }
 
-  void InternalEnableOp(TypePtr const &type, Node::Kind op, OpTable &table)
+  void EnableOp(TypePtr const &type, Node::Kind op, OpTable &table)
   {
     auto it = table.find(type);
     if (it == table.end())

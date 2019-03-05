@@ -31,19 +31,19 @@ TYPED_TEST_CASE(TensorOperationsTest, MyTypes);
 
 TYPED_TEST(TensorOperationsTest, inline_add_test)
 {
-  fetch::math::Tensor<TypeParam> t1(std::vector<size_t>({3, 5}));
-  fetch::math::Tensor<TypeParam> t2(std::vector<size_t>({3, 5}));
+  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({3, 5}));
+  fetch::math::Tensor<TypeParam> t2(std::vector<std::uint64_t>({3, 5}));
 
   std::vector<int> t1Input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<int> t2Input({-1, 2, 3, -5, -8, 13, -21, -34});
   std::vector<int> gtInput({0, 0, 6, -9, -3, 7, -14, -42});
-  for (size_t i(0); i < 8; ++i)
+  for (std::uint64_t i(0); i < 8; ++i)
   {
     t1.Set(i, TypeParam(t1Input[i]));
     t2.Set(i, TypeParam(t2Input[i]));
   }
   t1.InlineAdd(t2);
-  for (size_t i(0); i < 8; ++i)
+  for (std::uint64_t i(0); i < 8; ++i)
   {
     EXPECT_EQ(t1.At(i), TypeParam(gtInput[i]));
     EXPECT_EQ(t2.At(i), TypeParam(t2Input[i]));
@@ -58,13 +58,13 @@ TYPED_TEST(TensorOperationsTest, inline_add_with_stride_test)
   std::vector<int> t1Input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<int> t2Input({-1, 2, 3, -5, -8, 13, -21, -34});
   std::vector<int> gtInput({0, 0, 6, -9, -3, 7, -14, -42});
-  for (size_t i(0); i < 8; ++i)
+  for (std::uint64_t i(0); i < 8; ++i)
   {
     t1.Set(i, TypeParam(t1Input[i]));
     t2.Set(i, TypeParam(t2Input[i]));
   }
   t1.InlineAdd(t2);
-  for (size_t i(0); i < 8; ++i)
+  for (std::uint64_t i(0); i < 8; ++i)
   {
     EXPECT_EQ(t1.At(i), TypeParam(gtInput[i]));
     EXPECT_EQ(t2.At(i), TypeParam(t2Input[i]));
@@ -73,19 +73,19 @@ TYPED_TEST(TensorOperationsTest, inline_add_with_stride_test)
 
 TYPED_TEST(TensorOperationsTest, inline_mul_test)
 {
-  fetch::math::Tensor<TypeParam> t1(std::vector<size_t>({3, 5}));
-  fetch::math::Tensor<TypeParam> t2(std::vector<size_t>({3, 5}));
+  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({3, 5}));
+  fetch::math::Tensor<TypeParam> t2(std::vector<std::uint64_t>({3, 5}));
 
   std::vector<int> t1Input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<int> t2Input({-1, 2, 3, -5, -8, 13, -11, -14});
   std::vector<int> gtInput({-1, -4, 9, 20, -40, -78, -77, 112});
-  for (size_t i(0); i < 8; ++i)
+  for (std::uint64_t i(0); i < 8; ++i)
   {
     t1.Set(i, TypeParam(t1Input[i]));
     t2.Set(i, TypeParam(t2Input[i]));
   }
   t1.InlineMultiply(t2);
-  for (size_t i(0); i < 8; ++i)
+  for (std::uint64_t i(0); i < 8; ++i)
   {
     EXPECT_EQ(t1.At(i), TypeParam(gtInput[i]));
     EXPECT_EQ(t2.At(i), TypeParam(t2Input[i]));
@@ -94,12 +94,12 @@ TYPED_TEST(TensorOperationsTest, inline_mul_test)
 
 TYPED_TEST(TensorOperationsTest, sum_test)
 {
-  fetch::math::Tensor<TypeParam> t1(std::vector<size_t>({3, 5}));
-  fetch::math::Tensor<TypeParam> t2(std::vector<size_t>({3, 5}));
+  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({3, 5}));
+  fetch::math::Tensor<TypeParam> t2(std::vector<std::uint64_t>({3, 5}));
 
   std::vector<int> t1Input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<int> t2Input({-1, 2, 3, -5, -8, 13, -11, -14});
-  for (size_t i(0); i < 8; ++i)
+  for (std::uint64_t i(0); i < 8; ++i)
   {
     t1.Set(i, TypeParam(t1Input[i]));
     t2.Set(i, TypeParam(t2Input[i]));
@@ -111,21 +111,21 @@ TYPED_TEST(TensorOperationsTest, sum_test)
 
 TYPED_TEST(TensorOperationsTest, transpose_test)
 {
-  fetch::math::Tensor<TypeParam> t1(std::vector<size_t>({3, 5}));
-  for (size_t i(0); i < t1.size(); ++i)
+  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({3, 5}));
+  for (std::uint64_t i(0); i < t1.size(); ++i)
   {
     t1.At(i) = TypeParam(i);
   }
   fetch::math::Tensor<TypeParam> t2 = t1.Transpose();
 
-  EXPECT_EQ(t1.shape(), std::vector<size_t>({3, 5}));
-  EXPECT_EQ(t2.shape(), std::vector<size_t>({5, 3}));
+  EXPECT_EQ(t1.shape(), std::vector<std::uint64_t>({3, 5}));
+  EXPECT_EQ(t2.shape(), std::vector<std::uint64_t>({5, 3}));
 
-  for (size_t i(0); i < 3; ++i)
+  for (std::uint64_t i(0); i < 3; ++i)
   {
-    for (size_t j(0); j < 5; ++j)
+    for (std::uint64_t j(0); j < 5; ++j)
     {
-      EXPECT_EQ(t1.Get({i, j}), t2.Get({j, i}));
+      EXPECT_EQ(t1.At({i, j}), t2.At({j, i}));
     }
   }
 }
@@ -133,40 +133,40 @@ TYPED_TEST(TensorOperationsTest, transpose_test)
 TYPED_TEST(TensorOperationsTest, transpose_with_stride_test)
 {
   fetch::math::Tensor<TypeParam> t1({3, 5}, {2, 3});
-  for (size_t i(0); i < t1.size(); ++i)
+  for (std::uint64_t i(0); i < t1.size(); ++i)
   {
     t1.At(i) = TypeParam(i);
   }
   fetch::math::Tensor<TypeParam> t2 = t1.Transpose();
 
-  EXPECT_EQ(t1.shape(), std::vector<size_t>({3, 5}));
-  EXPECT_EQ(t2.shape(), std::vector<size_t>({5, 3}));
+  EXPECT_EQ(t1.shape(), std::vector<std::uint64_t>({3, 5}));
+  EXPECT_EQ(t2.shape(), std::vector<std::uint64_t>({5, 3}));
 
-  for (size_t i(0); i < 3; ++i)
+  for (std::uint64_t i(0); i < 3; ++i)
   {
-    for (size_t j(0); j < 5; ++j)
+    for (std::uint64_t j(0); j < 5; ++j)
     {
-      EXPECT_EQ(t1.Get({i, j}), t2.Get({j, i}));
+      EXPECT_EQ(t1.At({i, j}), t2.At({j, i}));
     }
   }
 }
 
 TYPED_TEST(TensorOperationsTest, transpose_untranspose_test)
 {
-  fetch::math::Tensor<TypeParam> t1(std::vector<size_t>({3, 5}));
-  for (size_t i(0); i < t1.size(); ++i)
+  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({3, 5}));
+  for (std::uint64_t i(0); i < t1.size(); ++i)
   {
     t1.At(i) = TypeParam(i);
   }
   fetch::math::Tensor<TypeParam> t2 = t1.Transpose();
-  EXPECT_EQ(t1.shape(), std::vector<size_t>({3, 5}));
-  EXPECT_EQ(t2.shape(), std::vector<size_t>({5, 3}));
+  EXPECT_EQ(t1.shape(), std::vector<std::uint64_t>({3, 5}));
+  EXPECT_EQ(t2.shape(), std::vector<std::uint64_t>({5, 3}));
   fetch::math::Tensor<TypeParam> t3 = t2.Transpose();
-  EXPECT_EQ(t1.shape(), std::vector<size_t>({3, 5}));
-  EXPECT_EQ(t2.shape(), std::vector<size_t>({5, 3}));
-  EXPECT_EQ(t3.shape(), std::vector<size_t>({3, 5}));
+  EXPECT_EQ(t1.shape(), std::vector<std::uint64_t>({3, 5}));
+  EXPECT_EQ(t2.shape(), std::vector<std::uint64_t>({5, 3}));
+  EXPECT_EQ(t3.shape(), std::vector<std::uint64_t>({3, 5}));
 
-  for (size_t i(0); i < t1.size(); ++i)
+  for (std::uint64_t i(0); i < t1.size(); ++i)
   {
     EXPECT_EQ(t1.At(i), TypeParam(i));
     EXPECT_EQ(t3.At(i), TypeParam(i));
@@ -175,15 +175,15 @@ TYPED_TEST(TensorOperationsTest, transpose_untranspose_test)
 
 TYPED_TEST(TensorOperationsTest, transpose_and_slice_test)
 {
-  fetch::math::Tensor<TypeParam> t1(std::vector<size_t>({3, 5}));
-  for (size_t i(0); i < t1.size(); ++i)
+  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({3, 5}));
+  for (std::uint64_t i(0); i < t1.size(); ++i)
   {
     t1.At(i) = TypeParam(i);
   }
   fetch::math::Tensor<TypeParam> t2 = t1.Transpose();
-  EXPECT_EQ(t2.shape(), std::vector<size_t>({5, 3}));
+  EXPECT_EQ(t2.shape(), std::vector<std::uint64_t>({5, 3}));
   fetch::math::Tensor<TypeParam> t3 = t2.Slice(2);
-  EXPECT_EQ(t3.shape(), std::vector<size_t>({3}));
+  EXPECT_EQ(t3.shape(), std::vector<std::uint64_t>({3}));
 
   EXPECT_EQ(t3.At(0), TypeParam(2));
   EXPECT_EQ(t3.At(1), TypeParam(7));
@@ -192,17 +192,17 @@ TYPED_TEST(TensorOperationsTest, transpose_and_slice_test)
 
 TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
 {
-  fetch::math::Tensor<TypeParam> t1(std::vector<size_t>({2, 3, 5}));
-  for (size_t i(0); i < t1.size(); ++i)
+  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({2, 3, 5}));
+  for (std::uint64_t i(0); i < t1.size(); ++i)
   {
     t1.At(i) = TypeParam(i);
   }
 
   fetch::math::Tensor<TypeParam> t2 = t1.Slice(1);
-  EXPECT_EQ(t2.shape(), std::vector<size_t>({3, 5}));
+  EXPECT_EQ(t2.shape(), std::vector<std::uint64_t>({3, 5}));
 
   fetch::math::Tensor<TypeParam> t3 = t2.Transpose();
-  EXPECT_EQ(t3.shape(), std::vector<size_t>({5, 3}));
+  EXPECT_EQ(t3.shape(), std::vector<std::uint64_t>({5, 3}));
 
   EXPECT_EQ(t3.At(0), TypeParam(15));
   EXPECT_EQ(t3.At(1), TypeParam(20));
@@ -219,4 +219,37 @@ TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
   EXPECT_EQ(t3.At(12), TypeParam(19));
   EXPECT_EQ(t3.At(13), TypeParam(24));
   EXPECT_EQ(t3.At(14), TypeParam(29));
+}
+
+TYPED_TEST(TensorOperationsTest, shuffle_test)
+{
+  // instantiate tensor with 0-5 in order
+  fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({1, 5}));
+  for (std::uint64_t i(0); i < t1.size(); ++i)
+  {
+    t1.At(i) = TypeParam(i);
+  }
+
+  t1.Shuffle();
+
+  // some double type casting in this test until FixedPoint is updated with more operators later
+  std::vector<bool> all_present(static_cast<std::size_t>(int(t1.size())), false);
+
+  bool double_access = false;
+  for (std::size_t j = 0; j < t1.size(); ++j)
+  {
+    if (!all_present[static_cast<std::size_t>(int(t1.At(j)))])
+    {
+      all_present[static_cast<std::size_t>(int(t1.At(j)))] = true;
+    }
+    else
+    {
+      double_access = true;
+    }
+  }
+  EXPECT_FALSE(double_access);
+  for (std::size_t j = 0; j < t1.size(); ++j)
+  {
+    EXPECT_TRUE(all_present[j]);
+  }
 }

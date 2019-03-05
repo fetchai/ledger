@@ -126,8 +126,8 @@ void LaneController::UseThesePeers(UriSet uris)
         auto ident = lane_identity_.lock();
         if (ident)
         {
-          FETCH_LOG_WARN(LOGGING_NAME, "ADD PEER to lane ", ident->GetLaneNumber(), " : ",
-                         uri.ToString());
+          FETCH_LOG_DEBUG(LOGGING_NAME, "ADD PEER to lane ", ident->GetLaneNumber(), " : ",
+                          uri.ToString());
         }
         else
         {
@@ -142,15 +142,15 @@ void LaneController::UseThesePeers(UriSet uris)
 LaneController::AddressSet LaneController::GetPeers()
 {
   FETCH_LOCK(desired_connections_mutex_);
+
+  auto const connections = muddle_->GetConnections(true);
+
   AddressSet addresses;
-  for (auto &uri : desired_connections_)
+  for (auto &connection : connections)
   {
-    Address address;
-    if (muddle_->UriToDirectAddress(uri, address))
-    {
-      addresses.insert(address);
-    }
+    addresses.insert(connection.first);
   }
+
   return addresses;
 }
 

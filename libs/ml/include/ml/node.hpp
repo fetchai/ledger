@@ -85,7 +85,7 @@ public:
     std::vector<ArrayPtrType> backpropagatedErrorSignals = this->Backward(inputs, errorSignal);
     std::vector<std::pair<NodeInterface<T> *, ArrayPtrType>> nonBackpropagatedErrorSignals;
     assert(backpropagatedErrorSignals.size() == inputs.size() || inputs.empty());
-    for (std::size_t i(0); i < inputs_.size(); ++i)
+    for (std::uint64_t i(0); i < inputs_.size(); ++i)
     {
       auto ret = inputs_[i]->BackPropagate(backpropagatedErrorSignals[i]);
       nonBackpropagatedErrorSignals.insert(nonBackpropagatedErrorSignals.end(), ret.begin(),
