@@ -322,7 +322,7 @@ public:
   /*
    * return a slice of the tensor along the first dimension
    */
-  Tensor<T> Slice(SizeType i)
+  Tensor<T> Slice(SizeType i) const
   {
     assert(shape_.size() > 1 && i < shape_[0]);
     Tensor<T> ret(std::vector<SizeType>(std::next(shape_.begin()), shape_.end()),     /* shape */

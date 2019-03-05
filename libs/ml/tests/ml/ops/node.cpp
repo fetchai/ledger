@@ -18,8 +18,8 @@
 
 #include "ml/node.hpp"
 #include "math/tensor.hpp"
+#include "ml/ops/activations/relu.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "ml/ops/relu.hpp"
 #include <gtest/gtest.h>
 
 TEST(node_test, node_placeholder)
@@ -43,11 +43,11 @@ TEST(node_test, node_relu)
                                            fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>>>>(
               "PlaceHolder");
 
-  std::shared_ptr<fetch::ml::Node<fetch::math::Tensor<int>,
-                                  fetch::ml::ops::ReluLayer<fetch::math::Tensor<int>>>>
-      relu = std::make_shared<fetch::ml::Node<fetch::math::Tensor<int>,
-                                              fetch::ml::ops::ReluLayer<fetch::math::Tensor<int>>>>(
-          "Relu");
+  std::shared_ptr<
+      fetch::ml::Node<fetch::math::Tensor<int>, fetch::ml::ops::Relu<fetch::math::Tensor<int>>>>
+      relu =
+          std::make_shared<fetch::ml::Node<fetch::math::Tensor<int>,
+                                           fetch::ml::ops::Relu<fetch::math::Tensor<int>>>>("Relu");
 
   relu->AddInput(placeholder);
 
