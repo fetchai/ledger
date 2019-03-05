@@ -17,14 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-
 #include "ml/graph.hpp"
 #include "ml/ops/fully_connected.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/relu.hpp"
 #include "ml/ops/softmax.hpp"
+#include "python/fetch_pybind.hpp"
 
 namespace py = pybind11;
 
