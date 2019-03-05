@@ -24,6 +24,7 @@
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "ledger/transaction_status_cache.hpp"
 
 #include <chrono>
 
@@ -50,7 +51,8 @@ namespace ledger {
  */
 BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
-                                   BlockSinkInterface &block_sink, Identity identity,
+                                   BlockSinkInterface &    block_sink,
+                                   TransactionStatusCache &status_cache, Identity identity,
                                    std::size_t num_lanes, std::size_t num_slices,
                                    std::size_t block_difficulty)
   : chain_{chain}
@@ -58,6 +60,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   , storage_unit_{storage_unit}
   , block_packer_{packer}
   , block_sink_{block_sink}
+  , status_cache_{status_cache}
   , miner_{std::make_shared<consensus::DummyMiner>()}
   , identity_{std::move(identity)}
   , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RESET)}
@@ -491,6 +494,11 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     // finally mark the block as invalid and purge it from the chain
     chain_.RemoveBlock(current_block_->body.hash);
   }
+  else
+  {
+    // mark all the transactions as been executed
+    UpdateTxStatus(*current_block_);
+  }
 
   return next_state;
 }
@@ -610,6 +618,9 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Generating new block: ", ToBase64(next_block_->body.hash),
                      " txs: ", next_block_->GetTransactionCount());
+
+      // mark this blocks transactions as being executed
+      UpdateTxStatus(*next_block_);
 
       // dispatch the block that has been generated
       block_sink_.OnBlock(*next_block_);
@@ -731,6 +742,17 @@ BlockCoordinator::ExecutionStatus BlockCoordinator::QueryExecutorStatus()
 void BlockCoordinator::UpdateNextBlockTime()
 {
   next_block_time_ = Clock::now() + block_period_;
+}
+
+void BlockCoordinator::UpdateTxStatus(Block const &block)
+{
+  for (auto const &slice : block.body.slices)
+  {
+    for (auto const &tx : slice)
+    {
+      status_cache_.Update(tx.transaction_hash, TransactionStatus::EXECUTED);
+    }
+  }
 }
 
 char const *BlockCoordinator::ToString(State state)

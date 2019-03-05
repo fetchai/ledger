@@ -58,6 +58,8 @@ public:
 
   template <typename Handler>
   void Apply(Handler &&handler);
+  template <typename Handler>
+  void Apply(Handler &&handler) const;
   /// @}
 
   // Operators
@@ -148,6 +150,17 @@ bool SynchronisedState<S>::WaitFor(std::chrono::duration<R, P> const &max_wait_t
 template <typename S>
 template <typename Handler>
 void SynchronisedState<S>::Apply(Handler &&handler)
+{
+  {
+    FETCH_LOCK(lock_);
+    handler(state_);
+  }
+  condition_.notify_all();
+}
+
+template <typename S>
+template <typename Handler>
+void SynchronisedState<S>::Apply(Handler &&handler) const
 {
   {
     FETCH_LOCK(lock_);

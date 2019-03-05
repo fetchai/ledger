@@ -23,6 +23,7 @@
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/testing/block_generator.hpp"
+#include "ledger/transaction_status_cache.hpp"
 
 #include "fake_block_sink.hpp"
 #include "mock_block_packer.hpp"
@@ -41,6 +42,7 @@ using fetch::byte_array::ToBase64;
 using fetch::ledger::GENESIS_DIGEST;
 using fetch::crypto::ECDSASigner;
 using fetch::ledger::testing::BlockGenerator;
+using fetch::ledger::TransactionStatusCache;
 
 using ::testing::_;
 using ::testing::InSequence;
@@ -53,8 +55,8 @@ using BlockPackerPtr      = std::unique_ptr<MockBlockPacker>;
 using BlockPtr            = std::shared_ptr<Block>;
 using ScheduleStatus      = fetch::ledger::ExecutionManagerInterface::ScheduleStatus;
 using BlockSinkPtr        = std::unique_ptr<FakeBlockSink>;
-// using ExecState           = fetch::ledger::ExecutionManagerInterface::State;
-using State = fetch::ledger::BlockCoordinator::State;
+using TxCachePtr          = std::unique_ptr<TransactionStatusCache>;
+using State               = fetch::ledger::BlockCoordinator::State;
 
 static constexpr char const *LOGGING_NAME = "BlockCoordinatorTests";
 static constexpr std::size_t NUM_LANES    = 1;
@@ -77,14 +79,16 @@ protected:
     execution_manager_ = std::make_unique<MockExecutionManager>(storage_unit_->fake);
     packer_            = std::make_unique<MockBlockPacker>();
     block_sink_        = std::make_unique<FakeBlockSink>();
+    tx_status_         = std::make_unique<TransactionStatusCache>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
-        *main_chain_, *execution_manager_, *storage_unit_, *packer_, *block_sink_,
+        *main_chain_, *execution_manager_, *storage_unit_, *packer_, *block_sink_, *tx_status_,
         signer.identity().identifier(), NUM_LANES, NUM_SLICES, 1u);
   }
 
   void TearDown() override
   {
     block_coordinator_.reset();
+    tx_status_.reset();
     block_sink_.reset();
     packer_.reset();
     execution_manager_.reset();
@@ -116,6 +120,7 @@ protected:
   StorageUnitPtr      storage_unit_;
   BlockPackerPtr      packer_;
   BlockSinkPtr        block_sink_;
+  TxCachePtr          tx_status_;
   BlockCoordinatorPtr block_coordinator_;
   BlockGenerator      block_generator_{NUM_LANES, NUM_SLICES};
 };
