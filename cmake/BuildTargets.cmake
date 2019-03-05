@@ -151,8 +151,15 @@ macro(setup_compiler)
 endmacro(setup_compiler)
 
 function(configure_vendor_targets)
+  #set(OPENSSL_USE_STATIC_LIBS TRUE)
+  if(OPENSSL_USE_STATIC_LIBS)
+    message(STATUS "OpenSSL linked STATICALLY")
+  else()
+    message(STATUS "OpenSSL linked DYNAMICALLY. Static linking can be achieved by setting `-DOPENSSL_USE_STATIC_LIBS=TRUE`.")
+  endif()
 
   find_package(OpenSSL REQUIRED)
+  find_package(Threads)
 
   if(FETCH_VERBOSE_CMAKE)
     message(STATUS "OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
@@ -161,7 +168,13 @@ function(configure_vendor_targets)
 
   # OpenSSL
   add_library(vendor-openssl INTERFACE)
-  target_link_libraries(vendor-openssl INTERFACE ${OPENSSL_LIBRARIES})
+
+  if(CMAKE_THREAD_LIBS_INIT)
+    target_link_libraries(vendor-openssl INTERFACE ${OPENSSL_LIBRARIES} ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+  else()
+    target_link_libraries(vendor-openssl INTERFACE ${OPENSSL_LIBRARIES} ${CMAKE_DL_LIBS})
+  endif()
+
   target_include_directories(vendor-openssl INTERFACE ${OPENSSL_INCLUDE_DIR})
 
   # setup the testing
