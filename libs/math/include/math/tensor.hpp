@@ -112,10 +112,10 @@ public:
   }
 
   /**
-   * returns a deep copy of this tensor
+   * Returns a deep copy of this tensor
    * @return
    */
-  SelfType Copy() const
+  SelfType Clone() const
   {
     SelfType copy;
 
@@ -132,7 +132,7 @@ public:
   }
 
   /**
-   * Deep copy from another tensor
+   * Copy from another tensor
    * @param other
    * @return
    */
@@ -473,7 +473,7 @@ public:
     std::shuffle(idxs.begin(), idxs.end(), rng);
 
     // instantiate new tensor with copy of data
-    Tensor<Type> tmp = this->Copy();
+    Tensor<Type> tmp = this->Clone();
 
     // copy data back according to shuffle
     for (std::size_t j = 0; j < tmp.size(); ++j)
