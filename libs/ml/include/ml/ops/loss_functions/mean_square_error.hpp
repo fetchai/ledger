@@ -56,10 +56,7 @@ public:
     return ret;
   }
 
-  static std::string Descriptor()
-  {
-    return "MSE";
-  }
+  static constexpr char const *DESCRIPTOR = "MeanSquareError";
 };
 
 }  // namespace ops

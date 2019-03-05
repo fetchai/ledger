@@ -19,16 +19,21 @@
 #include "core/reactor.hpp"
 #include "core/logger.hpp"
 #include "core/runnable.hpp"
+#include "core/threading.hpp"
 
 #include <chrono>
 #include <deque>
 
 static const std::chrono::milliseconds POLL_INTERVAL{15};
 
-using WorkQueue = std::deque<fetch::core::Reactor::WeakRunnable>;
+using WorkQueue = std::deque<fetch::core::WeakRunnable>;
 
 namespace fetch {
 namespace core {
+
+Reactor::Reactor(std::string name)
+  : name_{std::move(name)}
+{}
 
 bool Reactor::Attach(WeakRunnable runnable)
 {
@@ -101,6 +106,9 @@ void Reactor::StopWorker()
 
 void Reactor::Monitor()
 {
+  // set the thread name
+  SetThreadName(name_);
+
   WorkQueue work_queue;
 
   while (running_)

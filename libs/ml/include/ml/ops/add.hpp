@@ -60,10 +60,7 @@ public:
     return {errorSignal, errorSignal};
   }
 
-  static std::string Descriptor()
-  {
-    return "Add";
-  }
+  static constexpr char const *DESCRIPTOR = "Add";
 
 private:
   // Relu is done in a strange way, comparing input against an array of zeroes

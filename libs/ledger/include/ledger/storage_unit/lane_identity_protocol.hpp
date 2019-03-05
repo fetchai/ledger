@@ -31,11 +31,11 @@ public:
     GET_TOTAL_LANES,
   };
 
-  LaneIdentityProtocol(LaneIdentity *ctrl)
+  LaneIdentityProtocol(LaneIdentity &ctrl)
   {
-    this->Expose(GET_IDENTITY, ctrl, &LaneIdentity::Identity);
-    this->Expose(GET_LANE_NUMBER, ctrl, &LaneIdentity::GetLaneNumber);
-    this->Expose(GET_TOTAL_LANES, ctrl, &LaneIdentity::GetTotalLanes);
+    this->Expose(GET_IDENTITY, &ctrl, &LaneIdentity::Identity);
+    this->Expose(GET_LANE_NUMBER, &ctrl, &LaneIdentity::GetLaneNumber);
+    this->Expose(GET_TOTAL_LANES, &ctrl, &LaneIdentity::GetTotalLanes);
   }
 };
 

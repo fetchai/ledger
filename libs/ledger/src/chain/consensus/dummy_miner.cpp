@@ -32,7 +32,7 @@ static uint32_t GetRandom()
 
 static constexpr char const *LOGGING_NAME = "DummyMiner";
 
-using fetch::byte_array::ToHex;
+using fetch::byte_array::ToHex;  // NOLINT - Used for debugging
 
 namespace fetch {
 namespace ledger {
@@ -65,8 +65,8 @@ bool DummyMiner::Mine(Block &block, uint64_t iterations)
   bool const success = block.proof();
   if (success)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Proof: Digest: ", ToHex(block.proof.digest()));
-    FETCH_LOG_INFO(LOGGING_NAME, "Proof: Target: ", ToHex(block.proof.target()));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Proof: Digest: ", ToHex(block.proof.digest()));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Proof: Target: ", ToHex(block.proof.target()));
   }
 
   return success;

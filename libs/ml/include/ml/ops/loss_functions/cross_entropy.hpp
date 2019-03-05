@@ -60,10 +60,7 @@ public:
     return ret;
   }
 
-  static std::string Descriptor()
-  {
-    return "CrossEntropy";
-  }
+  static constexpr char const *DESCRIPTOR = "CrossEntropy";
 };
 
 }  // namespace ops

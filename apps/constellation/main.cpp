@@ -49,7 +49,7 @@ static constexpr char const *LOGGING_NAME = "main";
 
 using Prover         = fetch::crypto::Prover;
 using BootstrapPtr   = std::unique_ptr<fetch::BootstrapMonitor>;
-using ProverPtr      = std::unique_ptr<Prover>;
+using ProverPtr      = std::shared_ptr<Prover>;
 using ConstByteArray = fetch::byte_array::ConstByteArray;
 using ByteArray      = fetch::byte_array::ByteArray;
 
@@ -377,9 +377,9 @@ ProverPtr GenerateP2PKey()
   static constexpr char const *KEY_FILENAME = "p2p.key";
 
   using Signer    = fetch::crypto::ECDSASigner;
-  using SignerPtr = std::unique_ptr<Signer>;
+  using SignerPtr = std::shared_ptr<Signer>;
 
-  SignerPtr certificate        = std::make_unique<Signer>();
+  SignerPtr certificate        = std::make_shared<Signer>();
   bool      certificate_loaded = false;
 
   // Step 1. Attempt to load the existing key
