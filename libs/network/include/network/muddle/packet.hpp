@@ -328,6 +328,7 @@ inline void Packet::SetMessageNum(uint16_t message_num) noexcept
 inline void Packet::SetNetworkId(uint32_t network_id) noexcept
 {
   header_.network = network_id;
+  DropStamped();
 }
 
 inline void Packet::SetTarget(RawAddress const &address)
