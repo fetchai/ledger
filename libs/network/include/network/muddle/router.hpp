@@ -184,14 +184,8 @@ private:
   bool IsEcho(Packet const &packet, bool register_echo = true);
   void CleanEchoCache();
 
-  PacketPtr FormatDirect(uint16_t service, uint16_t channel) const;
-  PacketPtr FormatPacket(uint16_t service, uint16_t channel, uint16_t counter
-			 , uint8_t ttl, Packet::Payload const &payload) const;
-
-  inline bool Genuine(PacketPtr const &p) const
-  {
-    return !prover_ || p->Verify();
-  }
+  PacketPtr const &Sign(PacketPtr const &p) const;
+  bool Genuine(PacketPtr const &p) const;
 
   Address const         address_;
   RawAddress const      address_raw_;

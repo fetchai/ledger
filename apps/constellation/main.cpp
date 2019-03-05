@@ -164,17 +164,18 @@ struct CommandLineArguments
     p.add(args.cfg.db_prefix,             "db-prefix",             "The directory or prefix added to the node storage",                             std::string{"node_storage"});
     p.add(args.network_id,                "network-id",            "The network id",                                                                DEFAULT_NETWORK_ID);
     p.add(args.cfg.interface_address,     "interface",             "The address of the network inferface to be used",                               std::string{"127.0.0.1"});
-    p.add(args.cfg.block_interval_ms,     "block-interval",        "Block interval in milliseconds.",                                               uint32_t{DEFAULT_BLOCK_INTERVAL});
+    p.add(args.cfg.block_interval_ms,     "block-interval",        "Block interval in milliseconds",                                                uint32_t{DEFAULT_BLOCK_INTERVAL});
     p.add(args.token,                     "token",                 "The authentication token to be used with bootstrapping the client",             std::string{});
     p.add(args.external_address,          "external",              "This node's global IP address",                                                 std::string{});
-    p.add(bootstrap_address,              "bootstrap",             "Src address for network bootstrap.",                                            std::string{});
+    p.add(bootstrap_address,              "bootstrap",             "Src address for network bootstrap",                                             std::string{});
     p.add(args.host_name,                 "host-name",             "The hostname / identifier for this node",                                       std::string{});
     p.add(config_path,                    "config",                "The path to the manifest configuration",                                        std::string{});
     p.add(args.cfg.processor_threads,     "processor-threads",     "The number of processor threads",                                               uint32_t{std::thread::hardware_concurrency()});
     p.add(args.cfg.verification_threads,  "verifier-threads",      "The number of processor threads",                                               uint32_t{std::thread::hardware_concurrency()});
-    p.add(args.cfg.max_peers,             "max-peers",             "The number of maximal peers to send to peer requests.",                         DEFAULT_MAX_PEERS);
-    p.add(args.cfg.transient_peers,       "transient-peers",       "The number of the peers which will be random in answer sent to peer requests.", DEFAULT_TRANSIENT_PEERS);
-    p.add(args.cfg.peers_update_cycle_ms, "peers-update-cycle-ms", "How fast to do peering changes.",                                               uint32_t{0});
+    p.add(args.cfg.max_peers,             "max-peers",             "The number of maximal peers to send to peer requests",                          DEFAULT_MAX_PEERS);
+    p.add(args.cfg.transient_peers,       "transient-peers",       "The number of the peers which will be random in answer sent to peer requests",  DEFAULT_TRANSIENT_PEERS);
+    p.add(args.cfg.peers_update_cycle_ms, "peers-update-cycle-ms", "How fast to do peering changes",                                                uint32_t{0});
+    p.add(args.cfg.sign_packets,          "sign-packets",          "Sign outbound packets (and verify those inbound)", bool{});
     // clang-format on
 
     // parse the args

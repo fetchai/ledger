@@ -144,7 +144,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   , network_manager_{"NetMgr", CalcNetworkManagerThreads(cfg_.num_lanes())}
   , http_network_manager_{"Http", HTTP_THREADS}
   , muddle_{Muddle::NetworkId(ToString(ServiceType::CORE)), std::move(certificate),
-            network_manager_}
+            network_manager_, config.sign_packets}
   , trust_{}
   , p2p_{muddle_,        lane_control_,        trust_,
          cfg_.max_peers, cfg_.transient_peers, cfg_.peers_update_cycle_ms}

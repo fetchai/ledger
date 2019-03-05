@@ -300,7 +300,7 @@ inline void Packet::SetExchange(bool set) noexcept
 inline void Packet::SetTTL(uint8_t ttl) noexcept
 {
   header_.ttl = ttl;
-  DropStamped();
+  // stamps are not invalidated
 }
 
 inline void Packet::SetService(uint16_t service_num) noexcept
@@ -351,10 +351,9 @@ inline void Packet::DropStamped() noexcept
 }
 
 inline Packet::BinaryHeader Packet::StaticHeader() const noexcept {
-	BinaryHeader retVal;
-	auto &rv{*reinterpret_cast<RoutingHeader *>(&retVal)};
-	rv.ttl = 0;
-	return retVal;
+	RoutingHeader retVal{header_};
+	retVal.ttl = 0;
+	return *reinterpret_cast<BinaryHeader const *>(&retVal);
 }
 
 inline void Packet::Sign(crypto::Prover &prover)
@@ -402,13 +401,6 @@ void Deserialize(T &serializer, Packet &packet)
     serializer >> packet.stamp_;
   }
 }
-
-/*
-inline Packet::BinaryHeader const &BinaryHeader(Packet::RoutingHeader const &hdr)
-{
-  return *reinterpret_cast<BinaryHeader const *>(&hdr);
-}
-*/
 
 }  // namespace muddle
 }  // namespace fetch
