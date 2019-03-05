@@ -30,7 +30,9 @@ namespace ops {
 enum class WeightsInitialisation
 {
   ZEROS,
-  XAVIER_GLOROT
+  XAVIER_GLOROT,
+  XAVIER_FAN_IN,
+  XAVIER_FAN_OUT
 };
 
 /**
@@ -154,7 +156,17 @@ public:
     }
     case WeightsInitialisation::XAVIER_GLOROT:
     {
-      XavierInitialisation(array, in_size, out_size);
+      XavierInitialisation(array, std::sqrt(2.0 / double(in_size + out_size)));
+      break;
+    }
+    case WeightsInitialisation::XAVIER_FAN_IN:
+    {
+      XavierInitialisation(array, std::sqrt(1.0 / double(in_size)));
+      break;
+    }
+    case WeightsInitialisation::XAVIER_FAN_OUT:
+    {
+      XavierInitialisation(array, std::sqrt(1.0 / double(out_size)));
       break;
     }
     default:
@@ -171,14 +183,13 @@ private:
    * using a normal distribution with mean 0 and variance 2 / (input nodes + output nodes)
    * @param weights
    */
-  static void XavierInitialisation(ArrayPtrType array, std::uint64_t in_size,
-                                   std::uint64_t out_size)
+  static void XavierInitialisation(ArrayPtrType array, double normalising_factor)
   {
     std::random_device rd{};
     std::mt19937       gen{rd()};
 
     // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
-    std::normal_distribution<> rng(0, std::sqrt(2.0 / double(in_size + out_size)));
+    std::normal_distribution<> rng(0, normalising_factor);
     for (std::uint64_t i(0); i < array->size(); ++i)
     {
       array->At(i) = typename ArrayType::Type(rng(gen));
