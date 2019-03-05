@@ -20,9 +20,13 @@
 #include "ledger/chain/constants.hpp"
 #include "vectorise/platform.hpp"
 
-#include "block_generator.hpp"
+#include "ledger/testing/block_generator.hpp"
 
 #include <cstring>
+
+namespace fetch {
+namespace ledger {
+namespace testing {
 
 BlockGenerator::BlockGenerator(std::size_t num_lanes, std::size_t num_slices)
   : num_slices_{num_slices}
@@ -41,7 +45,7 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtr const &from, uint64_t
 {
   using fetch::byte_array::ByteArray;
 
-  BlockPtr block = std::make_shared<Block>();
+  auto block = std::make_shared<Block>();
 
   // set the weight for this block
   block->weight = weight;
@@ -98,3 +102,7 @@ BlockGenerator::BlockPtr BlockGenerator::operator()(BlockPtr const &from, uint64
 {
   return Generate(from, weight);
 }
+
+}  // namespace testing
+}  // namespace ledger
+}  // namespace fetch

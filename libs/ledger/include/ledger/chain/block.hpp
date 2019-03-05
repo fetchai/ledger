@@ -60,16 +60,15 @@ public:
 
   /// @name Proof of Work specifics
   /// @{
-  Proof    proof;     ///< The consensus proof
   uint64_t nonce{0};  ///< The nonce field associated with the proof
+  Proof    proof;     ///< The consensus proof
   /// @}
 
   /// @name Metadata for block management
   /// @{
   uint64_t weight       = 1;
   uint64_t total_weight = 1;
-  bool     is_loose     = true;
-  bool     is_valid     = true;
+  bool     is_loose     = false;
   /// @}
 
   // Helper functions
@@ -115,7 +114,7 @@ void Deserialize(T &serializer, Block::Body &body)
 template <typename T>
 inline void Serialize(T &serializer, Block const &block)
 {
-  serializer << block.body << block.nonce << block.proof;
+  serializer << block.body << block.nonce << block.proof << block.weight << block.total_weight;
 }
 
 /**
@@ -128,7 +127,7 @@ inline void Serialize(T &serializer, Block const &block)
 template <typename T>
 inline void Deserialize(T &serializer, Block &block)
 {
-  serializer >> block.body >> block.nonce >> block.proof;
+  serializer >> block.body >> block.nonce >> block.proof >> block.weight >> block.total_weight;
 }
 
 }  // namespace ledger

@@ -37,41 +37,36 @@ namespace muddle {
  * It comprises of the fixed size header that is prefixed on top of the variable sized payload.
  * The basic elements of the packet are shown in the diagram below:
  *
- * ┌────────────┬────────┬───────────────┬───────────────────────────────────────┐
- * │            │        │               │                                       │
- * │  Version   │ Flags  │      TTL      │                Service                │
- * │            │        │               │                                       │
- * ├────────────┴────────┴───────────────┼───────────────────────────────────────┤
- * │                                     │                                       │
- * │               Channel               │                Counter                │
- * │                                     │                                       │
- * ├─────────────────────────────────────┴───────────────────────────────────────┤
- * │                                                                             │
- * │                              From (Public Key)                              │
- * │                                                                             │
- * ├─────────────────────────────────────────────────────────────────────────────┤
- * │                                                                             │
- * │                             Target (Public Key)                             │
- * │                                                                             │
- * ├─────────────────────────────────────────────────────────────────────────────┤
+ * ┌──────────┬──────────┬──────────┬────────────────────────────────┐
+ * │ Version  │  Flags   │   TTL    │            Service             │
+ * ├──────────┴──────────┴──────────┼────────────────────────────────┤
+ * │            Channel             │            Counter             │
+ * ├────────────────────────────────┴────────────────────────────────┤
+ * │                           Network Id                            │
+ * ├─────────────────────────────────────────────────────────────────┤
+ * │                                                                 │
+ * │                        From (Public Key)                        │
+ * │                                                                 │
+ * ├─────────────────────────────────────────────────────────────────┤
+ * │                                                                 │
+ * │                       Target (Public Key)                       │
+ * │                                                                 │
+ * ├─────────────────────────────────────────────────────────────────┤
  *
- * │                                                                             │
+ * │                                                                 │
  *
- * │                                                                             │
+ * │                         Packet Payload                          │
  *
- * │                                                                             │
- *                                     Payload
- * │                                                                             │
+ * │                                                                 │
  *
- * │                                                                             │
+ * │                                                                 │
  *
- * │                                                                             │
+ * │                                                                 │
  *
- * └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
- * │                                 Stamp (if any)                              │
+ * └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
+ * │                          Stamp (if any)                         │
  *
- * └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
- *
+ * └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
  */
 class Packet
 {
@@ -85,17 +80,18 @@ public:
 
   struct RoutingHeader
   {
-    uint64_t version : 4;    ///< Flag to signal the current version of the muddle protocol
-    uint64_t direct : 1;     ///< Flag to signal that a direct message is being sent (no routing)
-    uint64_t broadcast : 1;  ///< Flag to signal that the packet is a broadcast packet
-    uint64_t exchange : 1;   ///< Flag to signal that this is an exchange packet i.e. we are
-                             ///< expecting a response
-    uint64_t stamped : 1;    ///< Flag to signal that the packet is signed by sender
-    uint64_t ttl : 8;  ///< The time to live counter which ensures messages do not propagate further
-                       ///< than desired
-    uint64_t service : 16;  ///< The service number (helpful for RPC compatibility)
-    uint64_t proto : 16;    ///< The protocol number (helpful for RPC compatibility)
-    uint64_t msg_num : 16;  ///< Incremented message counter for detecting duplicate packets
+    // clang-format off
+    uint32_t version   : 4;   ///< Flag to signal the current version of the muddle protocol
+    uint32_t direct    : 1;   ///< Flag to signal that a direct message is being sent (no routing)
+    uint32_t broadcast : 1;   ///< Flag to signal that the packet is a broadcast packet
+    uint32_t exchange  : 1;   ///< Flag to signal that this is an exchange packet
+    uint32_t stamped   : 1;   ///< Flag to signal that the packet is signed by sender
+    uint32_t ttl       : 8;   ///< The time to live counter
+    uint32_t service   : 16;  ///< The service number (helpful for RPC compatibility)
+    uint32_t proto     : 16;  ///< The protocol number (helpful for RPC compatibility)
+    uint32_t msg_num   : 16;  ///< Incremented message counter for detecting duplicate packets
+    uint32_t network   : 32;  ///< The originating network id
+    // clang-format on
 
     RawAddress target;  ///< The address of the packet target
     RawAddress sender;  ///< The address of the packet sender
@@ -105,13 +101,13 @@ public:
   using BinaryHeader = std::array<uint8_t, HEADER_SIZE>;
 
   static_assert(std::is_pod<RoutingHeader>::value, "Routing header must be POD");
-  static_assert(sizeof(RoutingHeader) == 8 + (2 * ADDRESS_SIZE), "The header must be packed");
+  static_assert(sizeof(RoutingHeader) == 12 + (2 * ADDRESS_SIZE), "The header must be packed");
   static_assert(sizeof(RoutingHeader) == sizeof(BinaryHeader),
                 "The header and binary header must be equivalent");
 
   // Construction / Destruction
   Packet() = default;
-  explicit Packet(Address const &source_address);
+  explicit Packet(Address const &source_address, uint32_t network_id);
   Packet(Packet const &) = delete;
   Packet(Packet &&)      = delete;
   ~Packet()              = default;
@@ -130,6 +126,7 @@ public:
   uint16_t          GetService() const noexcept;
   uint16_t          GetProtocol() const noexcept;
   uint16_t          GetMessageNum() const noexcept;
+  uint32_t          GetNetworkId() const noexcept;
   RawAddress const &GetTargetRaw() const noexcept;
   RawAddress const &GetSenderRaw() const noexcept;
   Address const &   GetTarget() const;
@@ -145,6 +142,7 @@ public:
   void SetService(uint16_t service_num) noexcept;
   void SetProtocol(uint16_t protocol_num) noexcept;
   void SetMessageNum(uint16_t message_num) noexcept;
+  void SetNetworkId(uint32_t network_id) noexcept;
   void SetTarget(RawAddress const &address);
   void SetTarget(Address const &address);
   void SetPayload(Payload const &payload);
@@ -172,14 +170,15 @@ private:
   friend void Deserialize(T &serializer, Packet &b);
 };
 
-inline Packet::Packet(Address const &source_address)
+inline Packet::Packet(Address const &source_address, uint32_t network_id)
   : header_()
   , payload_()
 {
   std::memset(&header_, 0, sizeof(header_));
 
   // mark the packet with the version
-  header_.version = 1;
+  header_.version = 2;
+  header_.network = network_id;
 
   // add the sender
   assert(source_address.size() == ADDRESS_SIZE);
@@ -229,6 +228,11 @@ inline uint16_t Packet::GetProtocol() const noexcept
 inline uint16_t Packet::GetMessageNum() const noexcept
 {
   return static_cast<uint16_t>(header_.msg_num);
+}
+
+inline uint32_t Packet::GetNetworkId() const noexcept
+{
+  return header_.network;
 }
 
 inline Packet::RawAddress const &Packet::GetTargetRaw() const noexcept
@@ -319,6 +323,11 @@ inline void Packet::SetMessageNum(uint16_t message_num) noexcept
 {
   header_.msg_num = message_num;
   DropStamped();
+}
+
+inline void Packet::SetNetworkId(uint32_t network_id) noexcept
+{
+  header_.network = network_id;
 }
 
 inline void Packet::SetTarget(RawAddress const &address)

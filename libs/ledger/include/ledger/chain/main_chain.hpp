@@ -60,82 +60,84 @@ struct Tip
   uint64_t total_weight{0};
 };
 
+enum class BlockStatus
+{
+  ADDED,      ///< The block has been added to the chain
+  LOOSE,      ///< The block has been added to the chain but is currently loose
+  DUPLICATE,  ///< The block has been detected as a duplicate
+  INVALID     ///< The block is invalid and has not been added to the chain
+};
+
+char const *ToString(BlockStatus status);
+
 class MainChain
 {
 public:
-  using Blocks       = std::vector<Block>;
+  using BlockPtr     = std::shared_ptr<Block const>;
+  using Blocks       = std::vector<BlockPtr>;
   using BlockHash    = Block::Digest;
   using BlockHashs   = std::vector<BlockHash>;
   using BlockHashSet = std::unordered_set<BlockHash>;
 
-  static constexpr uint64_t ALL = std::numeric_limits<uint64_t>::max();
+  static constexpr char const *LOGGING_NAME = "MainChain";
+  static constexpr uint64_t    ALL          = std::numeric_limits<uint64_t>::max();
 
-  // Hard code genesis on construction
+  enum class Mode
+  {
+    IN_MEMORY_DB = 0,
+    CREATE_PERSISTENT_DB,
+    LOAD_PERSISTENT_DB
+  };
 
   // Construction / Destruction
-  explicit MainChain(bool disable_persistence = false);
+  explicit MainChain(Mode mode = Mode::IN_MEMORY_DB);
   MainChain(MainChain const &rhs) = delete;
   MainChain(MainChain &&rhs)      = delete;
   ~MainChain()                    = default;
 
-  bool AddBlock(Block &block);
+  /// @name Block Management
+  /// @{
+  BlockStatus AddBlock(Block const &block);
+  BlockPtr    GetBlock(BlockHash hash) const;
+  bool        RemoveBlock(BlockHash hash);
+  /// @}
 
-  Block const &HeaviestBlock() const;
+  /// @name Chain Queries
+  /// @{
+  BlockPtr  GetHeaviestBlock() const;
+  BlockHash GetHeaviestBlockHash() const;
+  Blocks    GetHeaviestChain(uint64_t limit = ALL) const;
+  Blocks    GetChainPreceding(BlockHash at, uint64_t limit = ALL) const;
+  bool      GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
+                                    uint64_t limit = ALL) const;
+  /// @}
 
-  bool InvalidateTip(BlockHash hash);
-  bool InvalidateBlock(BlockHash hash);
-
-  BlockHash heaviest_block_hash() const
-  {
-    // TODO(EJF): Move and rename
-    RLock lock(main_mutex_);
-    return heaviest_.hash;
-  }
-
-  uint64_t weight() const
-  {
-    // TODO(EJF): Move and rename
-    RLock lock(main_mutex_);
-    return heaviest_.weight;
-  }
-
-  std::size_t totalBlocks() const
-  {
-    // TODO(EJF): Move and rename
-    RLock lock(main_mutex_);
-    return block_chain_.size();
-  }
-
-  Blocks HeaviestChain(uint64_t limit = ALL) const;
-
-  Blocks ChainPreceding(BlockHash at, uint64_t limit = ALL) const;
-
-  bool GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = ALL);
-
-  void Reset();
-
-  // TODO(private issue 512): storage code blocks this being const
-  bool Get(BlockHash hash, Block &block) const;
-
-  BlockHashs GetMissingBlockHashes(std::size_t maximum) const;
-
-  bool HasMissingBlocks() const;
-
+  /// @name Tips
+  /// @{
   BlockHashSet GetTips() const;
+  bool         ReindexTips();  // testing only
+  /// @}
+
+  /// @name Missing / Loose Management
+  /// @{
+  BlockHashs GetMissingBlockHashes(std::size_t limit = ALL) const;
+  bool       HasMissingBlocks() const;
+  /// @}
 
   template <typename T>
-  bool StripAlreadySeenTx(BlockHash starting_hash, T &container);
+  bool StripAlreadySeenTx(BlockHash starting_hash, T &container) const;
 
   // Operators
   MainChain &operator=(MainChain const &rhs) = delete;
   MainChain &operator=(MainChain &&rhs) = delete;
 
 private:
-  using BlockMap      = std::unordered_map<BlockHash, Block>;
+  using IntBlockPtr   = std::shared_ptr<Block>;
+  using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;
   using Proof         = Block::Proof;
-  using TipPtr        = std::shared_ptr<Tip>;
-  using TipsMap       = std::unordered_map<BlockHash, TipPtr>;
-  using LooseBlockMap = std::unordered_map<BlockHash, BlockHashs>;
+  using TipsMap       = std::unordered_map<BlockHash, Tip>;
+  using BlockHashList = std::list<BlockHash>;
+  using LooseBlockMap = std::unordered_map<BlockHash, BlockHashList>;
   using BlockStore    = fetch::storage::ObjectStore<Block>;
   using BlockStorePtr = std::unique_ptr<BlockStore>;
   using RMutex        = std::recursive_mutex;
@@ -146,56 +148,51 @@ private:
     uint64_t  weight{0};
     BlockHash hash{GENESIS_DIGEST};
 
-    void Update(uint64_t w, BlockHash digest)
-    {
-      weight = w;
-      hash   = std::move(digest);
-    }
+    bool Update(Block const &);
   };
 
-  static constexpr char const *LOGGING_NAME        = "MainChain";
-  static constexpr uint32_t    block_confirmation_ = 10;
+  static constexpr uint32_t block_confirmation_ = 10;
 
-  void RecoverFromFile();
-  void WriteToFile();
-  void FlushBlock(Block const &block);
-  bool GetPrev(Block &block);
-  bool GetPrevFromStore(Block &block);
-  void CompleteLooseBlocks(Block const &block);
-  void RecordLooseBlock(Block &block);
-  bool CheckDiskForBlock(Block &block);
-  bool UpdateTips(Block &block, Block const &prev_block);
-
-  /// @name Block Loopup
+  /// @name Persistence Management
   /// @{
-  bool AddBlockInternal(Block &block, bool recursive);
+  void RecoverFromFile(Mode mode);
+  void WriteToFile();
+  void FlushBlock(IntBlockPtr const &block);
+  /// @}
 
-  bool LookupBlock(BlockHash hash, Block &block) const;
-  bool LookupBlockFromCache(BlockHash hash, Block &block) const;
-  bool LookupBlockFromStorage(BlockHash hash, Block &block) const;
+  /// @name Loose Blocks
+  /// @{
+  void CompleteLooseBlocks(IntBlockPtr const &block);
+  void RecordLooseBlock(IntBlockPtr const &block);
+  /// @}
+
+  /// @name Block Lookup
+  /// @{
+  BlockStatus InsertBlock(IntBlockPtr const &block, bool evaluate_loose_blocks = true);
+  bool        LookupBlock(BlockHash hash, IntBlockPtr &block) const;
+  bool        LookupBlockFromCache(BlockHash hash, IntBlockPtr &block) const;
+  bool        LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block) const;
+  bool        IsBlockInCache(BlockHash hash) const;
+  void        AddBlockToCache(IntBlockPtr const &) const;
   /// @}
 
   /// @name Tip Management
   /// @{
-  bool AddTip(Block const &block);
+  bool AddTip(IntBlockPtr const &block);
+  bool UpdateTips(IntBlockPtr const &block);
   bool DetermineHeaviestTip();
-
-public:  // remove at somepoint
-  bool ReindexTips();
-
-private:
   /// @}
 
-  static Block CreateGenesisBlock();
+  static IntBlockPtr CreateGenesisBlock();
 
   BlockStorePtr block_store_;  /// < Long term storage and backup
 
-  mutable RMutex main_mutex_;
-  BlockMap       block_chain_;  ///< all recent blocks are here
-  TipsMap        tips_;         ///< Keep track of the tips
-  HeaviestTip    heaviest_;     ///< Heaviest block/tip
+  mutable RMutex   main_mutex_;   ///< Mutex protecting block_chain_, tips_ & heaviest_
+  mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
+  TipsMap          tips_;         ///< Keep track of the tips
+  HeaviestTip      heaviest_;     ///< Heaviest block/tip
 
-  mutable RMutex loose_mutex_;
+  mutable RMutex loose_mutex_;   ///< Mutex protecting the loose blocks
   LooseBlockMap  loose_blocks_;  ///< Waiting (loose) blocks
 };
 
@@ -208,15 +205,18 @@ private:
  * @return: bool whether the starting hash referred to a valid block on a valid chain
  */
 template <typename T>
-bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container)
+bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container) const
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Starting TX uniqueness verify");
+  using namespace std::chrono;
+  using Clock = high_resolution_clock;
 
-  Block       block;
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TX uniqueness verify");
+
   std::size_t blocks_checked = 0;
-  auto        t1             = std::chrono::high_resolution_clock::now();
+  auto const  start_time     = Clock::now();
 
-  if (!Get(starting_hash, block) || block.is_loose)
+  auto block = GetBlock(starting_hash);
+  if (!block || block->is_loose)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "TX uniqueness verify on bad block hash");
     return false;
@@ -231,11 +231,11 @@ bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container)
     transactions_to_check.insert(tx.transaction);
   }
 
-  do
+  for (;;)
   {
     ++blocks_checked;
 
-    for (auto const &slice : block.body.slices)
+    for (auto const &slice : block->body.slices)
     {
       for (auto const &tx : slice)
       {
@@ -248,8 +248,16 @@ bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container)
         }
       }
     }
-  } while (Get(block.body.previous_hash,
-               block));  // Note we don't need to hold the lock for the whole search
+
+    // Note we don't need to hold the lock for the whole search
+    block = GetBlock(block->body.previous_hash);
+
+    // exit the loop once we can no longer find the block
+    if (!block)
+    {
+      break;
+    }
+  }
 
   std::size_t duplicated_counter = 0;
 
@@ -285,10 +293,20 @@ bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container)
                    transactions_duplicated.size(), " Removed: ", duplicated_counter);
   }
 
-  auto   t2         = std::chrono::high_resolution_clock::now();
-  double time_taken = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
-  FETCH_LOG_INFO(LOGGING_NAME, "Finished TX uniqueness verify - time (s): ", time_taken,
-                 " checked blocks: ", blocks_checked);
+  // determine the time this function has taken to execute
+  auto const delta_time_ms = duration_cast<milliseconds>(Clock::now() - start_time).count();
+
+  if (delta_time_ms >= 100)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Finished TX uniqueness verify in: ", delta_time_ms, "ms",
+                   " checked blocks: ", blocks_checked);
+  }
+  else
+  {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Finished TX uniqueness verify in: ", delta_time_ms, "ms",
+                    " checked blocks: ", blocks_checked);
+  }
+
   return true;
 }
 

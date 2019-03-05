@@ -115,11 +115,15 @@ public:
       return *this;
     }
 
-    ClassInterface &EnableIndexOperator(TypeIdArray const &input_type_ids,
-                                        TypeId const &     output_type_id)
+    template <typename OutputType, typename InputType, typename... InputTypes>
+    ClassInterface &EnableIndexOperator()
     {
-      TypeId type_id__               = type_id_;
-      auto   compiler_setup_function = [type_id__, input_type_ids,
+      TypeId         type_id__ = type_id_;
+      TypeIndexArray type_index_array;
+      UnrollTypes<InputType, InputTypes...>::Unroll(type_index_array);
+      TypeIdArray input_type_ids = module_->GetTypeIds(type_index_array);
+      TypeId      output_type_id = module_->GetTypeId(TypeGetter<OutputType>::GetTypeIndex());
+      auto        compiler_setup_function = [type_id__, input_type_ids,
                                       output_type_id](Compiler *compiler) {
         compiler->EnableIndexOperator(type_id__, input_type_ids, output_type_id);
       };

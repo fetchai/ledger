@@ -17,14 +17,22 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "http/module.hpp"
 #include "ledger/chaincode/cache.hpp"
 
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 namespace fetch {
+
+namespace variant {
+class Variant;
+}  // namespace variant
+
 namespace ledger {
 
 class StorageInterface;
@@ -36,82 +44,70 @@ class ContractHttpInterface : public http::HTTPModule
 public:
   static constexpr char const *LOGGING_NAME = "ContractHttpInterface";
 
+  // Construction / Destruction
   ContractHttpInterface(StorageInterface &storage, TransactionProcessor &processor);
+  ContractHttpInterface(ContractHttpInterface const &) = delete;
+  ContractHttpInterface(ContractHttpInterface &&)      = delete;
+  ~ContractHttpInterface()                             = default;
+
+  // Operators
+  ContractHttpInterface &operator=(ContractHttpInterface const &) = delete;
+  ContractHttpInterface &operator=(ContractHttpInterface &&) = delete;
 
 private:
-  http::HTTPResponse OnQuery(byte_array::ConstByteArray const &contract_name,
-                             byte_array::ConstByteArray const &query,
-                             http::HTTPRequest const &         request);
+  using Mutex          = mutex::Mutex;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using TxHashes       = std::vector<ConstByteArray>;
 
-  http::HTTPResponse OnTransaction(
-      http::ViewParameters const &, http::HTTPRequest const &request,
-      byte_array::ConstByteArray const *const expected_contract_name = nullptr);
-
-  /** @brief Structure containing status of of multi-transaction submission.
+  /**
+   * Structure containing status of of multi-transaction submission.
    *
-   *  The structure is supposed to carry information about how many transactions
-   *  have been successfully processed and how many transactions have been
-   *  actually received for processing.
-   *  The structure is supposed to be used as return value for methods which
-   *  are dedicated to handle HTTP request for bulk transaction (multi-transaction)
-   *  reception, giving caller ability to check status of how request has been
-   *  handled (transaction reception/processing).
+   * The structure is supposed to carry information about how many transactions
+   * have been successfully processed and how many transactions have been
+   * actually received for processing.
+   * The structure is supposed to be used as return value for methods which
+   * are dedicated to handle HTTP request for bulk transaction (multi-transaction)
+   * reception, giving caller ability to check status of how request has been
+   * handled (transaction reception/processing).
    *
    * @see SubmitJsonTx
    * @see SubmitNativeTx
    */
   struct SubmitTxStatus
   {
-    std::size_t processed;
-    std::size_t received;
+    std::size_t processed{0};
+    std::size_t received{0};
   };
 
-  /**
-   * Method handles incoming http request containing single or bulk of JSON formatted
-   * Wire transactions.
-   *
-   * @param request https request containing single or bulk of JSON formatted Wire Transaction(s).
-   * @param expected_contract_name contract name each transaction in request must conform to.
-   *        Transactions which do NOT conform to this contract name will NOT be accepted further
-   *        processing. If the value is `nullptr` (default value) the contract name check is
-   *        DISABLED, and so transactions (each received transaction in bulk) can have any contract
-   *        name.
-   *
-   * @return submit status, please see the `SubmitTxStatus` structure
-   * @see SubmitTxStatus
+  /// @name Query Handler
+  /// @{
+  http::HTTPResponse OnQuery(ConstByteArray const &contract_name, ConstByteArray const &query,
+                             http::HTTPRequest const &request);
+  /// @}
 
-   * @see SubmitNativeTx
-   */
-  SubmitTxStatus SubmitJsonTx(
-      http::HTTPRequest const &               request,
-      byte_array::ConstByteArray const *const expected_contract_name = nullptr);
+  /// @name Transaction Handlers
+  /// @{
+  http::HTTPResponse OnTransaction(http::HTTPRequest const &req, ConstByteArray expected_contract);
+  SubmitTxStatus     SubmitJsonTx(http::HTTPRequest const &req, ConstByteArray expected_contract,
+                                  TxHashes &txs);
+  SubmitTxStatus     SubmitNativeTx(http::HTTPRequest const &req, ConstByteArray expected_contract,
+                                    TxHashes &txs);
+  /// @}
 
-  /**
-   * Method handles incoming http request containing single or bulk of Native formattd
-   * Wire transactions.
-   *
-   * This method was originally designed for benchmark/stress-test purposes, but can be used in
-   * production environment.
-   *
-   * @param request https request containing single or bulk of JSON formatted Wire Transaction(s).
-   * @param expected_contract_name contract name each transaction in request must conform to.
-   *        Transactions which do NOT conform to this contract name will NOT be accepted further
-   *        processing. If the value is `nullptr` (default value) the contract name check is
-   *        DISABLED, and so transactions (each received transaction in bulk) can have any contract
-   *        name.
-   *
-   * @return submit status, please see the `SubmitTxStatus` structure
-   * @see SubmitTxStatus
-
-   * @see SubmitJsonTx
-   */
-  SubmitTxStatus SubmitNativeTx(
-      http::HTTPRequest const &               request,
-      byte_array::ConstByteArray const *const expected_contract_name = nullptr);
+  /// @name Access Log
+  /// @{
+  void RecordTransaction(SubmitTxStatus const &status, http::HTTPRequest const &request,
+                         ConstByteArray expected_contract);
+  void RecordQuery(ConstByteArray const &contract_name, ConstByteArray const &query,
+                   http::HTTPRequest const &request);
+  void WriteToAccessLog(variant::Variant const &entry);
+  /// @}
 
   StorageInterface &    storage_;
   TransactionProcessor &processor_;
-  ChainCodeCache        contract_cache_;
+  ChainCodeCache        contract_cache_{};
+  Mutex                 access_log_lock_{__LINE__, __FILE__};
+  std::ofstream         access_log_;
 };
 
 }  // namespace ledger

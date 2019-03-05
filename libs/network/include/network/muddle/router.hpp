@@ -23,6 +23,7 @@
 #include "network/management/abstract_connection.hpp"
 #include "network/muddle/blacklist.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
+#include "network/muddle/network_id.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/muddle/subscription_registrar.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
@@ -34,9 +35,7 @@ namespace fetch {
 namespace muddle {
 
 class Packet;
-
 class Dispatcher;
-
 class MuddleRegister;
 
 /**
@@ -55,8 +54,6 @@ public:
   using HandleDirectAddrMap = std::unordered_map<Handle, Address>;
   using Prover              = crypto::Prover;
 
-  static Packet::RawAddress ConvertAddress(Packet::Address const &address);
-
   struct RoutingData
   {
     bool   direct = false;
@@ -65,7 +62,11 @@ public:
 
   using RoutingTable = std::unordered_map<Packet::RawAddress, RoutingData>;
 
-  static constexpr char const *LOGGING_NAME = "MuddleRoute";
+  static constexpr char const *LOGGING_NAME = "Router";
+
+  // Helper functions
+  static Packet::RawAddress ConvertAddress(Packet::Address const &address);
+  static Packet::Address    ConvertAddress(Packet::RawAddress const &address);
 
   // Construction / Destruction
   Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher, Prover *certificate = nullptr);
@@ -73,7 +74,7 @@ public:
   Router(Router &&)      = delete;
   ~Router() override     = default;
 
-  NetworkId network_id() override
+  NetworkId const &network_id() const override
   {
     return network_id_;
   }
@@ -81,10 +82,6 @@ public:
   // Start / Stop
   void Start();
   void Stop();
-
-  // Operators
-  Router &operator=(Router const &) = delete;
-  Router &operator=(Router &&) = delete;
 
   void Route(Handle handle, PacketPtr packet);
 
@@ -106,6 +103,8 @@ public:
 
   SubscriptionPtr Subscribe(uint16_t service, uint16_t channel) override;
   SubscriptionPtr Subscribe(Address const &address, uint16_t service, uint16_t channel) override;
+
+  AddressList GetDirectlyConnectedPeers() const override;
 
   RoutingTable GetRoutingTable() const;
   /// @}
@@ -157,6 +156,10 @@ public:
   Handle LookupHandleFromAddress(Packet::Address const &address) const;
 
   Handle LookupHandle(Packet::RawAddress const &address) const;
+
+  // Operators
+  Router &operator=(Router const &) = delete;
+  Router &operator=(Router &&) = delete;
 
 private:
   using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;

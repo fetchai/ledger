@@ -81,7 +81,7 @@ meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array1, ArrayType
 {
   for (std::size_t i = 0; i < ret.size(); ++i)
   {
-    ret.At(i) = array1 - array2.At(i);
+    ret.At(i) = array1.At(i) - array2.At(i);
   }
 }
 
@@ -269,32 +269,6 @@ meta::IfIsBlasArray<ArrayType, void> Add(ArrayType const &array1, ArrayType cons
   memory::Range range{0, std::min(array1.data().size(), array2.data().size()), 1};
   details::Add(array1, array2, range, ret);
 }
-
-//////////////////////////////////////
-///// ARRAY BROADCASTING ADDITION  ///
-//////////////////////////////////////
-//
-///**
-// * Adds two ndarrays together with broadcasting
-// * @tparam T
-// * @tparam C
-// * @param array1
-// * @param array2
-// * @param range
-// * @param ret
-// */
-// template <typename T, typename C>
-// void Add(NDArray<T, C> &array1, NDArray<T, C> &array2, NDArray<T, C> &ret)
-//{
-//  Broadcast([](T x, T y) { return x + y; }, array1, array2, ret);
-//}
-// template <typename T, typename C>
-// NDArray<T, C> Add(NDArray<T, C> &array1, NDArray<T, C> &array2)
-//{
-//  NDArray<T, C> ret{array1.shape()};
-//  Add(array1, array2, ret);
-//  return ret;
-//}
 
 //////////////////////////
 /// ADDITION OPERATORS ///
@@ -489,6 +463,7 @@ template <typename ArrayType>
 meta::IfIsNonBlasArray<ArrayType, void> Subtract(ArrayType const &array, ArrayType const &array2,
                                                  ArrayType &ret)
 {
+  assert(array.size() == array2.size());
   assert(array.size() == ret.size());
   for (std::size_t i = 0; i < ret.size(); ++i)
   {
@@ -500,37 +475,13 @@ template <typename ArrayType>
 meta::IfIsMathFixedPointArray<ArrayType, void> Subtract(ArrayType const &array,
                                                         ArrayType const &array2, ArrayType &ret)
 {
+  assert(array.size() == array2.size());
   assert(array.size() == ret.size());
   for (std::size_t i = 0; i < ret.size(); ++i)
   {
     ret[i] = array[i] - array2[i];
   }
 }
-/////////////////////////////////////////
-///// ARRAY BROADCASTING SUBTRACTION  ///
-/////////////////////////////////////////
-//
-///**
-// * subtract array from another array with broadcasting
-// * @tparam T
-// * @tparam C
-// * @param array1
-// * @param scalar
-// * @param ret
-// */
-// template <typename T, typename C>
-// void Subtract(NDArray<T, C> &obj1, NDArray<T, C> &obj2, NDArray<T, C> &ret)
-//{
-//  Broadcast([](T x, T y) { return x - y; }, obj1, obj2, ret);
-//}
-// template <typename T, typename C>
-// NDArray<T, C> Subtract(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
-//{
-//  assert(obj1.shape() == obj2.shape());
-//  NDArray<T, C> ret{obj1.shape()};
-//  Subtract(obj1, obj2, ret);
-//  return ret;
-//}
 
 ///////////////////////////////////////////////////////
 /// SUBTRACTIONS - SCALAR & SCALAR - NO FIXED POINT ///
@@ -832,13 +783,6 @@ meta::IfIsMathShapelessArray<ArrayType, ArrayType> Divide(T const &scalar, Array
  * @param ret
  */
 template <typename ArrayType>
-meta::IfIsBlasArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
-                                            ArrayType &ret)
-{
-  memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
-  Divide(obj1, obj2, range, ret);
-}
-template <typename ArrayType>
 meta::IfIsMathShapelessArray<ArrayType, ArrayType> Divide(ArrayType const &obj1,
                                                           ArrayType const &obj2)
 {
@@ -889,7 +833,8 @@ meta::IfIsBlasArray<ArrayType, void> Divide(T const &scalar, ArrayType const &ar
       array.data());
 }
 
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsNonBlasArray<ArrayType, void> Divide(ArrayType const &array, T const &scalar,
                                                ArrayType &ret)
 {
@@ -899,7 +844,8 @@ meta::IfIsNonBlasArray<ArrayType, void> Divide(ArrayType const &array, T const &
     ret.At(i) = array.At(i) / scalar;
   }
 }
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathFixedPointArray<ArrayType, void> Divide(ArrayType const &array, T const &scalar,
                                                       ArrayType &ret)
 {
@@ -909,7 +855,8 @@ meta::IfIsMathFixedPointArray<ArrayType, void> Divide(ArrayType const &array, T 
     ret.At(i) = array.At(i) / scalar;
   }
 }
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsNonBlasArray<ArrayType, void> Divide(T const &scalar, ArrayType const &array,
                                                ArrayType &ret)
 {
@@ -919,7 +866,8 @@ meta::IfIsNonBlasArray<ArrayType, void> Divide(T const &scalar, ArrayType const 
     ret.At(i) = scalar / array.At(i);
   }
 }
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathFixedPointArray<ArrayType, void> Divide(T const &scalar, ArrayType const &array,
                                                       ArrayType &ret)
 {
@@ -958,13 +906,15 @@ meta::IfIsBlasArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType con
     }
   }
 }
+
 template <typename ArrayType>
-meta::IfIsMathShapeArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
-                                                 ArrayType &ret)
+meta::IfIsBlasArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
+                                            ArrayType &ret)
 {
   memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
   Divide(obj1, obj2, range, ret);
 }
+
 template <typename ArrayType>
 meta::IfIsMathShapeArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2)
 {
@@ -990,50 +940,57 @@ meta::IfIsMathShapeArray<ArrayType, ArrayType> Divide(T const &scalar, ArrayType
  * @param scalar
  * @param ret
  */
+
+namespace details {
+
+template <typename ArrayType>
+void NaiveDivideArray(ArrayType const &obj1, ArrayType const &obj2, ArrayType &ret)
+{
+  assert(obj1.size() == obj2.size());
+  for (std::size_t i = 0; i < ret.size(); ++i)
+  {
+    ret[i] = obj1[i] / obj2[i];
+  }
+}
+
+}  // namespace details
+
 template <typename ArrayType>
 meta::IfIsMathFixedPointArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
                                                       ArrayType &ret)
 {
   assert(obj1.size() == obj2.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
-  {
-    ret[i] = obj1[i] / obj2[i];
-  }
+  assert(ret.size() == obj2.size());
+  details::NaiveDivideArray(obj1, obj2, ret);
 }
+
 template <typename ArrayType>
-meta::IfIsMathFixedPointArray<ArrayType, ArrayType> Divide(ArrayType const &obj1,
-                                                           ArrayType const &obj2)
+meta::IfIsMathFixedPointArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2)
 {
   assert(obj1.size() == obj2.size());
-  ArrayType ret{obj1.size()};
-  for (std::size_t i = 0; i < ret.size(); ++i)
-  {
-    ret[i] = obj1[i] / obj2[i];
-  }
+  ArrayType ret{obj1.shape()};
+  Divide(obj1, obj2, ret);
   return ret;
 }
-//
-///**
-// * subtract array from another array with broadcasting
-// * @tparam T
-// * @tparam C
-// * @param array1
-// * @param scalar
-// * @param ret
-// */
-// template <typename T, typename C>
-// void Divide(NDArray<T, C> &obj1, NDArray<T, C> &obj2, NDArray<T, C> &ret)
-//{
-//  Broadcast([](T x, T y) { return x / y; }, obj1, obj2, ret);
-//}
-// template <typename T, typename C>
-// NDArray<T, C> Divide(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
-//{
-//  assert(obj1.shape() == obj2.shape());
-//  NDArray<T, C> ret{obj1.shape()};
-//  Divide(obj1, obj2, ret);
-//  return ret;
-//}
+
+template <typename ArrayType>
+meta::IfIsNonBlasArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
+                                               ArrayType &ret)
+{
+  assert(obj1.shape() == obj2.shape());
+  assert(ret.shape() == obj2.shape());
+  details::NaiveDivideArray(obj1, obj2, ret);
+}
+
+template <typename ArrayType>
+meta::IfIsNonBlasArray<ArrayType, ArrayType> Divide(ArrayType const &obj1, ArrayType const &obj2)
+{
+  assert(obj1.shape() == obj2.shape());
+  ArrayType ret{obj1.shape()};
+  Divide(obj1, obj2, ret);
+  return ret;
+}
+
 /**
  * Implementation for scalar division. Implementing this helps keeps a uniform interface
  * @tparam T

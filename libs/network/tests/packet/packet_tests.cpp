@@ -41,7 +41,7 @@ protected:
   PacketPtr CreatePacket(fetch::byte_array::ConstByteArray const &address, uint16_t service
 			 , uint16_t channel, uint16_t counter, Payload const &payload)
   {
-    PacketPtr packet_ = std::make_shared<Packet>(address);
+    PacketPtr packet_ = std::make_shared<Packet>(address, 0);
     packet_->SetService(service);
     packet_->SetProtocol(channel);
     packet_->SetMessageNum(counter);

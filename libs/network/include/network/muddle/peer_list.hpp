@@ -79,7 +79,7 @@ public:
 
   /// @name Persistent connections
   /// @{
-  void AddPersistentPeer(Uri const &peer);
+  bool AddPersistentPeer(Uri const &peer);
   void RemovePersistentPeer(Uri const &peer);
   void RemovePersistentPeer(Handle handle);
 

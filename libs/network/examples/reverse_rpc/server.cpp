@@ -23,9 +23,10 @@
 #include "network/muddle/rpc/server.hpp"
 #include "service_ids.hpp"
 
-using Muddle = fetch::muddle::Muddle;
-using Server = fetch::muddle::rpc::Server;
-using Client = fetch::muddle::rpc::Client;
+using fetch::muddle::Muddle;
+using fetch::muddle::NetworkId;
+using fetch::muddle::rpc::Server;
+using fetch::muddle::rpc::Client;
 
 const int SERVICE_TEST = 1;
 const int CHANNEL_RPC  = 1;
@@ -126,7 +127,7 @@ int main()
 {
   fetch::network::NetworkManager tm{"NetMgr", 8};
 
-  auto server_muddle = Muddle::CreateMuddle(Muddle::NetworkId("TEST"), tm);
+  auto server_muddle = Muddle::CreateMuddle(NetworkId{"TEST"}, tm);
 
   tm.Start();
   server_muddle->Start({8080});
