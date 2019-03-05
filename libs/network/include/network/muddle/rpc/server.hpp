@@ -46,8 +46,6 @@ public:
 
   explicit Server(MuddleEndpoint &endpoint, uint16_t service, uint16_t channel)
     : endpoint_(endpoint)
-    //, service_(service)
-    //, channel_(channel)
     , subscription_(endpoint_.Subscribe(service, channel))
   {
     if (subscription_)

@@ -65,8 +65,7 @@ void P2PService::Start(UriList const &initial_peer_list)
     muddle_.AddPeer(uri);
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Establishing CORE Service on tcp://127.0.0.1:", "??",
-                 " ID: ", byte_array::ToBase64(muddle_.identity().identifier()));
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting P2PService...");
 
   thread_pool_->SetIdleInterval(1000);
   thread_pool_->Start();
@@ -129,7 +128,18 @@ void P2PService::WorkCycle()
     // ideally desired peer list because this means that we know we've
     // got one connection to the target and hence the subsystem
     // connections can be more expected to work.
-    UpdateManifests(active_addresses);
+
+    // Peter fix to ensure that the reverse connections
+    AddressSet non_muddle_addresses{};
+    for (auto const &active_connection : active_connections)
+    {
+      if (Uri::Scheme::Tcp == active_connection.second.scheme())
+      {
+        non_muddle_addresses.insert(active_connection.first);
+      }
+    }
+
+    UpdateManifests(non_muddle_addresses);
 
     // At this point, if we aren't doing the peer-churning section
     // above, we'll "fake" the trust system's contents by adding the

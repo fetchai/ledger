@@ -72,6 +72,7 @@ public:
     TIMEDOUT
   };
 
+#if 0
   static char const *ToString(State state)
   {
     switch (state)
@@ -88,6 +89,7 @@ public:
       return "Unknown";
     }
   }
+#endif
 
   ConstByteArray const &value() const
   {
