@@ -136,10 +136,8 @@ public:
    * @param other
    * @return
    */
-  SelfType Copy(SelfType const &other)
+  void Copy(SelfType const &other)
   {
-    SelfType copy;
-
     this->shape_   = other.shape_;
     this->padding_ = other.padding_;
     this->strides_ = other.strides_;
@@ -152,8 +150,6 @@ public:
     {
       this->Set(j, other.At(j));
     }
-
-    return copy;
   }
 
   // TODO(private, 520) fix capitalisation (kepping it consistent with NDArray for now)
