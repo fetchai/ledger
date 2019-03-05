@@ -47,38 +47,36 @@ public:
       assert(inputs[i]->shape() == inputs[i - 1]->shape());
     }
 
-    std::vector<std::uint64_t> outputShape({inputs[0]->shape());
-      if (!this->output_ || this->output_->shape() != outputShape)
-      {
-        this->output_ = std::make_shared<ArrayType>(outputShape);
-      }
+    std::vector<std::uint64_t> outputShape(inputs[0]->shape());
+    if (!this->output_ || this->output_->shape() != outputShape)
+    {
+      this->output_ = std::make_shared<ArrayType>(outputShape);
+    }
 
-      fetch::math::Multiply(inputs[0], inputs[1], this->output_);
-      if (inputs.size() > 2)
+    fetch::math::Multiply(inputs[0], inputs[1], this->output_);
+    if (inputs.size() > 2)
+    {
+      for (std::size_t i = 2; i < inputs.size(); ++i)
       {
-        for (std::size_t i = 2; i < inputs.size(); ++i)
-        {
-          fetch::math::Multiply(this->output_, inputs[i], this->output_);
-        }
+        fetch::math::Multiply(this->output_, inputs[i], this->output_);
       }
+    }
 
-      return this->output_;
+    return this->output_;
   }
 
   /**
    * elementwise multiplication is not trainable - just pass the error signal back
    */
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs, ArrayPtrType errorSignal)
+  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
+                                             ArrayPtrType                     errorSignal)
   {
-      std::vector<ArrayPtrType> err_sig{};
-      for (std::size_t i = 0; i < inputs.size(); ++i)
-      {
-        err_sig.emplace_back(errorSignal);
-      }
-      return err_sig;
+    return std::vector<ArrayPtrType>(inputs.size(), errorSignal);
   }
-  };
+
+  static constexpr char const *DESCRIPTOR = "Multiply";
+};
 
 }  // namespace ops
-}  // namespace ops
 }  // namespace ml
+}  // namespace fetch

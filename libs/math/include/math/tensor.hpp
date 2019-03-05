@@ -112,10 +112,10 @@ public:
   }
 
   /**
-   * returns a deep copy of this tensor
+   * Returns a deep copy of this tensor
    * @return
    */
-  SelfType Copy() const
+  SelfType Clone() const
   {
     SelfType copy;
 
@@ -132,28 +132,16 @@ public:
   }
 
   /**
-   * Deep copy from another tensor
+   * Copy from another tensor
    * @param other
    * @return
    */
-  SelfType Copy(SelfType const &other)
+  void Copy(SelfType const &other)
   {
-    SelfType copy;
-
-    this->shape_   = other.shape_;
-    this->padding_ = other.padding_;
-    this->strides_ = other.strides_;
-    this->offset_  = other.offset_;
-
-    this->storage_ = std::make_shared<std::vector<T>>(
-        std::max(SizeType(1), DimensionSize(0) * this->shape_[0] + this->padding_[0]));
-
     for (std::size_t j = 0; j < this->size(); ++j)
     {
-      this->Set(j, other.At(j));
+      this->At(j) = other.At(j);
     }
-
-    return copy;
   }
 
   // TODO(private, 520) fix capitalisation (kepping it consistent with NDArray for now)
@@ -322,7 +310,7 @@ public:
   /*
    * return a slice of the tensor along the first dimension
    */
-  Tensor<T> Slice(SizeType i)
+  Tensor<T> Slice(SizeType i) const
   {
     assert(shape_.size() > 1 && i < shape_[0]);
     Tensor<T> ret(std::vector<SizeType>(std::next(shape_.begin()), shape_.end()),     /* shape */
@@ -331,24 +319,6 @@ public:
                   storage_, offset_ + i * DimensionSize(0));
     ret.strides_ = std::vector<SizeType>(std::next(strides_.begin()), strides_.end());
     ret.padding_ = std::vector<SizeType>(std::next(padding_.begin()), padding_.end());
-    return ret;
-  }
-
-  /*
-   * Expensive Slice that is guaranteed to be const
-   */
-  Tensor<T> Slice(SizeType i) const
-  {
-    assert(shape_.size() > 1 && i < shape_[0]);
-
-    Tensor<T> tmp = this->Copy();
-    Tensor<T> ret(
-        std::vector<SizeType>(std::next(tmp.shape_.begin()), tmp.shape_.end()),     /* shape */
-        std::vector<SizeType>(std::next(tmp.strides_.begin()), tmp.strides_.end()), /* stride */
-        std::vector<SizeType>(std::next(tmp.padding_.begin()), tmp.padding_.end()), /* padding */
-        tmp.storage_, tmp.offset_ + i * DimensionSize(0));
-    ret.strides_ = std::vector<SizeType>(std::next(tmp.strides_.begin()), tmp.strides_.end());
-    ret.padding_ = std::vector<SizeType>(std::next(tmp.padding_.begin()), tmp.padding_.end());
     return ret;
   }
 
@@ -503,7 +473,7 @@ public:
     std::shuffle(idxs.begin(), idxs.end(), rng);
 
     // instantiate new tensor with copy of data
-    Tensor<Type> tmp = this->Copy();
+    Tensor<Type> tmp = this->Clone();
 
     // copy data back according to shuffle
     for (std::size_t j = 0; j < tmp.size(); ++j)

@@ -25,6 +25,7 @@
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
 
+#include "ledger/shard_config.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
@@ -34,7 +35,6 @@ namespace ledger {
 class StorageUnitBundledService
 {
 public:
-  using NetworkId   = muddle::MuddleEndpoint::NetworkId;
   using ServiceType = network::ServiceType;
 
   // Construction / Destruction
@@ -47,16 +47,18 @@ public:
   StorageUnitBundledService &operator=(StorageUnitBundledService const &) = delete;
   StorageUnitBundledService &operator=(StorageUnitBundledService &&) = delete;
 
-  void Setup(std::string const &storage_path, std::size_t const &lanes, uint16_t const &port,
-             fetch::network::NetworkManager const &tm, std::size_t verification_threads,
-             bool refresh_storage = false)
+  using NetworkManager = network::NetworkManager;
+  using Mode           = LaneService::Mode;
+
+  void Setup(NetworkManager const &mgr, ShardConfigs const &configs,
+             Mode mode = Mode::LOAD_DATABASE)
   {
-    for (std::size_t i = 0; i < lanes; ++i)
+    // create all the lane pointers
+    lanes_.resize(configs.size());
+
+    for (std::size_t i = 0; i < configs.size(); ++i)
     {
-      auto id = network::ServiceIdentifier{ServiceType::LANE, static_cast<uint16_t>(i)};
-      lanes_.push_back(std::make_shared<LaneService>(storage_path, uint32_t(i), lanes,
-                                                     uint16_t(port + i), NetworkId(id.ToString("")),
-                                                     tm, verification_threads, refresh_storage));
+      lanes_[i] = std::make_shared<LaneService>(mgr, configs[i], mode);
     }
   }
 

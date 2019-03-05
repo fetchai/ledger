@@ -69,10 +69,7 @@ public:
     return {errorSignal};
   }
 
-  static std::string Descriptor()
-  {
-    return "Add";
-  }
+  static constexpr char const *DESCRIPTOR = "Relu";
 };
 
 }  // namespace ops

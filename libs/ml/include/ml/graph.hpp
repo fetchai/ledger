@@ -58,13 +58,14 @@ public:
    * Called for node without trainable parameters
    */
   template <class OperationType, typename... Params>
-  meta::IfIsNotTrainable<ArrayType, OperationType, void> AddNode(
+  meta::IfIsNotTrainable<ArrayType, OperationType, std::string> AddNode(
       std::string const &node_name, std::vector<std::string> const &inputs, Params... params)
   {
     std::string name = UpdateVariableName<OperationType>(node_name);
     std::shared_ptr<Node<ArrayType, OperationType>> op =
         std::make_shared<Node<ArrayType, OperationType>>(node_name, params...);
-    AddNodeImpl<OperationType>(name, inputs, op, true, params...);
+    AddNodeImpl<OperationType>(name, inputs, op, true);
+    return name;
   }
 
   /*
@@ -72,20 +73,27 @@ public:
    * Will keep the node in the trainable_ list to step through them
    */
   template <class OperationType, typename... Params>
-  meta::IfIsTrainable<ArrayType, OperationType, void> AddNode(
+  meta::IfIsTrainable<ArrayType, OperationType, std::string> AddNode(
       std::string const &node_name, std::vector<std::string> const &inputs, Params... params)
   {
     std::string name = UpdateVariableName<OperationType>(node_name);
     std::shared_ptr<Node<ArrayType, OperationType>> op =
         std::make_shared<Node<ArrayType, OperationType>>(node_name, params...);
-    AddNodeImpl<OperationType>(name, inputs, op, true, params...);
+    AddNodeImpl<OperationType>(name, inputs, op, true);
     trainable_[node_name] = op;
+    return name;
   }
 
   void SetInput(std::string const &nodeName, ArrayPtrType data)
   {
     std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>> placeholder =
         std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<ArrayType>>(nodes_[nodeName]);
+    
+    for (auto &e: nodes_)
+    {
+      std::cout << "e.first: " << e.first << std::endl;
+    }
+    
     if (placeholder)
     {
       placeholder->SetData(data);
@@ -141,8 +149,7 @@ public:
 private:
   template <typename OperationType, typename... Params>
   void AddNodeImpl(std::string const &node_name, std::vector<std::string> const &inputs,
-                   std::shared_ptr<Node<ArrayType, OperationType>> op, bool trainable,
-                   Params... params)
+                   std::shared_ptr<Node<ArrayType, OperationType>> op, bool trainable)
   {
     if (!(nodes_.find(node_name) == nodes_.end()))
     {
@@ -166,16 +173,17 @@ private:
   template <typename OperationType>
   std::string UpdateVariableName(std::string const &name)
   {
-    std::string ret = name;
+    std::string ret           = name;
+    std::string op_descriptor = (OperationType::DESCRIPTOR);
     // search graph for existing variable names
-    if (ret == "")
+    if (ret.empty())
     {
       std::uint64_t name_idx = 0;
-      ret                    = OperationType::Descriptor() + "_" + std::to_string(name_idx);
+      ret                    = op_descriptor + "_" + std::to_string(name_idx);
       while (!(nodes_.find(ret) == nodes_.end()))
       {
         ++name_idx;
-        ret = OperationType::Descriptor() + "_" + std::to_string(name_idx);
+        ret = op_descriptor + "_" + std::to_string(name_idx);
       }
     }
 

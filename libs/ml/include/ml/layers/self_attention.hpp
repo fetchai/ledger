@@ -23,6 +23,7 @@
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/flatten.hpp"
+#include "ml/ops/transpose.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/weights.hpp"
@@ -30,54 +31,46 @@
 #include <cmath>
 #include <random>
 
- namespace fetch {
- namespace ml {
- namespace layers {
+namespace fetch {
+namespace ml {
+namespace layers {
 
- template <class T>
- class SelfAttention : public Layer<T>
+template <class T>
+class SelfAttention : public Layer<T>
 {
- public:
+public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   SelfAttention(std::uint64_t in, std::uint64_t out, std::uint64_t hidden,
-                std::string const &name = "Att")
+                std::string const &name = "SA")
     : Layer<T>(in, out)
   {
 
-    this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
+    std::string input_name = this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
 
-    this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(name + "_Query", {name + "_Input"}, in, hidden);
-    this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(name + "_Key", {name + "_Input"}, in, hidden);
-    this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(name + "_Value", {name + "_Input"}, in, out);
 
-    this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_FlattenQuery",
-                                                               {name + "_Query"});
-    this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_FlattenKey",
-                                                               {name + "_Key"});
+    std::string query_name = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(name + "_Query", {input_name}, in, hidden);
+    std::string key_name = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(name + "_Key", {input_name}, in, out);
+    std::string value_name = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(name + "_Value", {input_name}, in, out);
 
-    this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
-        name + "_QKMatrixMultiply", {name + "_FlattenQuery", name + "_FlattenKey"});
+    std::string flatten_query_name = this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_FlattenQuery", {query_name});
+    std::string flatten_key_name = this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_FlattenKey", {key_name});
+    std::string flatten_value_name = this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_FlattenValue", {value_name});
 
-    this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_FlattenValue",
-                                                               {name + "_Value"});
+    // calculate attention on input vector
+    std::string transpose_flatten_key_name = this->template AddNode<fetch::ml::ops::Transpose<ArrayType>>(name + "_TransposeFlattenKey", {flatten_key_name});
+    std::string qk_matmul_name = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(name + "_QKMatrixMultiply", {transpose_flatten_key_name, flatten_query_name});
+    std::string softmax_name = this->template AddNode<fetch::ml::ops::Softmax<ArrayType>>(name + "_Softmax", {qk_matmul_name});
 
-    this->template AddNode<fetch::ml::ops::Softmax<ArrayType>>(name + "_Softmax",
-                                                               {name + "_QKMatrixMultiply"});
+    // apply attention to input vector
+    std::string output_name = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(name + "_AVMatrixMultiply", {softmax_name, value_name});
 
-    this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
-        name + "_AVMatrixMultiply", {name + "_Softmax", name + "_Value"});
-
-    this->AddInputNodes({name + "_Query", name + "_Key", name + "_Value"});
-    this->SetOutputNode(name + "_AVMatrixMultiply");
+    this->AddInputNodes(input_name);
+    this->SetOutputNode(output_name);
   }
 
-  static std::string Descriptor()
-  {
-    return "SelfAttention";
-  }
-
+  static constexpr char const *DESCRIPTOR = "SelfAttention";
 };
 
 }  // namespace layers

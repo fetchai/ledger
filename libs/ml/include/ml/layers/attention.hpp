@@ -72,6 +72,8 @@ public:
     this->SetInput(name + "_Bias", bias);
   }
 
+  static constexpr char const *DESCRIPTOR = "Attention";
+
 private:
 };
 

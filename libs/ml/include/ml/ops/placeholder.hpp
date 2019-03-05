@@ -52,10 +52,7 @@ public:
     this->output_ = data;
   }
 
-  static std::string Descriptor()
-  {
-    return "PlaceHolder";
-  }
+  static constexpr char const *DESCRIPTOR = "PlaceHolder";
 };
 
 }  // namespace ops

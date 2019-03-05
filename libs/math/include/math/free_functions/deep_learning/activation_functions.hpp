@@ -119,6 +119,11 @@ void SoftmaxImplementation(ArrayType const &array, ArrayType &ret)
   ArrayType                                 array_max{arr_shape};
   ArrayType                                 array_sum{arr_shape};
 
+  std::cout << "array.shape()[0]: " << array.shape()[0] << std::endl;
+  std::cout << "array.shape()[1]: " << array.shape()[1] << std::endl;
+  std::cout << "array_max.shape()[0]: " << array_max.shape()[0] << std::endl;
+  std::cout << "array_max.shape()[1]: " << array_max.shape()[1] << std::endl;
+
   if (array.shape().size() == 1)
   {
     Max(array, 0, array_max);
@@ -128,9 +133,18 @@ void SoftmaxImplementation(ArrayType const &array, ArrayType &ret)
     Max(array, 1, array_max);
   }
 
-  Subtract(array, array_max[0], ret);
+  std::cout << "ret.shape()[0]: " << ret.shape()[0] << std::endl;
+  std::cout << "ret.shape()[1]: " << ret.shape()[1] << std::endl;
+
+  Subtract(array, array_max, ret);
 
   Exp(ret);
+
+  std::cout << "array_sum.shape().size(): " << array_sum.shape().size() << std::endl;
+  std::cout << "array_sum.shape()[0]: " << array_sum.shape()[0] << std::endl;
+  std::cout << "array_sum.shape()[1]: " << array_sum.shape()[1] << std::endl;
+  std::cout << "ret.shape()[0]: " << ret.shape()[0] << std::endl;
+  std::cout << "ret.shape()[1]: " << ret.shape()[1] << std::endl;
 
   if (ret.shape().size() == 1)
   {
@@ -138,7 +152,8 @@ void SoftmaxImplementation(ArrayType const &array, ArrayType &ret)
   }
   else
   {
-    ReduceSum(ret, 1, array_sum);
+    Sum(ret, array_sum[0]);
+//    ReduceSum(ret, 1, array_sum);
   }
 
   for (std::size_t j = 0; j < ret.size(); ++j)

@@ -85,13 +85,6 @@ public:
     }
   }
 
-#if 0
-  const std::map<ServiceIdentifier, Uri> &GetData()
-  {
-    return data_;
-  }
-#endif
-
   bool HasService(ServiceIdentifier service_id) const
   {
     auto res = service_map_.find(service_id);
