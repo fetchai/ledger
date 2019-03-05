@@ -78,7 +78,7 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-private:
+protected:
   ArrayPtrType gradientAccumulation_;
 
 public:

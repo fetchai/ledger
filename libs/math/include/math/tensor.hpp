@@ -112,10 +112,10 @@ public:
   }
 
   /**
-   * returns a deep copy of this tensor
+   * Returns a deep copy of this tensor
    * @return
    */
-  SelfType Copy() const
+  SelfType Clone() const
   {
     SelfType copy;
 
@@ -132,23 +132,18 @@ public:
   }
 
   /**
-   * Deep copy from another tensor
+   * Copy data from another tensor into this one
+   * assumes relevant stride/offset etc. are still applicable
    * @param other
    * @return
    */
   void Copy(SelfType const &other)
   {
-    this->shape_   = other.shape_;
-    this->padding_ = other.padding_;
-    this->strides_ = other.strides_;
-    this->offset_  = other.offset_;
-
-    this->storage_ = std::make_shared<std::vector<T>>(
-        std::max(SizeType(1), DimensionSize(0) * this->shape_[0] + this->padding_[0]));
+    assert(other.size() == this->size());
 
     for (std::size_t j = 0; j < this->size(); ++j)
     {
-      this->Set(j, other.At(j));
+      this->At(j) = other.At(j);
     }
   }
 
@@ -481,7 +476,7 @@ public:
     std::shuffle(idxs.begin(), idxs.end(), rng);
 
     // instantiate new tensor with copy of data
-    Tensor<Type> tmp = this->Copy();
+    Tensor<Type> tmp = this->Clone();
 
     // copy data back according to shuffle
     for (std::size_t j = 0; j < tmp.size(); ++j)
