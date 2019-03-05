@@ -53,6 +53,24 @@ struct StateDict
     return !((bool(weights_) ^ bool(o.weights_)) || (weights_ && (*weights_ != *(o.weights_))) ||
              (dict_ != o.dict_));
   }
+
+  StateDict &Merge(StateDict const &o, float ratio = .5f)
+  {
+    assert(ratio >= 0.0f && ratio <= 1.0f);
+    if (ratio > 0)
+    {
+      if (weights_)
+      {
+        weights_->InlineMultiply(typename ArrayType::Type(1.0f - ratio));
+        weights_->InlineAdd(o.weights_->Clone().InlineMultiply(typename ArrayType::Type(ratio)));
+      }
+      for (auto &e : dict_)
+      {
+        e.second.Merge(o.dict_.at(e.first));
+      }
+    }
+    return *this;
+  }
 };
 
 /**
@@ -78,7 +96,7 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-private:
+protected:
   ArrayPtrType gradientAccumulation_;
 
 public:
