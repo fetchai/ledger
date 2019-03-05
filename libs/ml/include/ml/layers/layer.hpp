@@ -23,7 +23,6 @@
 
 #include <cmath>
 
-
 namespace fetch {
 namespace ml {
 namespace layers {
