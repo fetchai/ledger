@@ -37,6 +37,28 @@
 #include <sstream>
 #include <vector>
 
+struct System : public fetch::vm::Object
+{
+  System()          = delete;
+  virtual ~System() = default;
+
+  static int32_t Argc(fetch::vm::VM * /*vm*/, fetch::vm::TypeId /*type_id*/)
+  {
+    return int32_t(System::args.size());
+  }
+
+  static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId /*type_id*/,
+                                                int32_t const &a)
+  {
+    return fetch::vm::Ptr<fetch::vm::String>(
+        new fetch::vm::String(vm, System::args[std::size_t(a)]));
+  }
+
+  static std::vector<std::string> args;
+};
+
+std::vector<std::string> System::args;
+
 class TrainingPairWrapper
   : public fetch::vm::Object,
     public std::pair<uint64_t, fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>
@@ -129,6 +151,11 @@ int main(int argc, char **argv)
     exit(-9);
   }
 
+  for (int i = 2; i < argc; ++i)
+  {
+    System::args.push_back(std::string(argv[i]));
+  }
+
   // Reading file
   std::ifstream      file(argv[1], std::ios::binary);
   std::ostringstream ss;
@@ -144,6 +171,10 @@ int main(int argc, char **argv)
   module->CreateFreeFunction("Print", &PrintNumber<double>);
   module->CreateFreeFunction("Print", &Print);
   module->CreateFreeFunction("toString", &toString);
+
+  module->CreateClassType<System>("System")
+      .CreateTypeFunction("Argc", &System::Argc)
+      .CreateTypeFunction("Argv", &System::Argv);
 
   module->CreateTemplateInstantiationType<fetch::vm::Array, uint64_t>(fetch::vm::TypeIds::IArray);
 

@@ -1,6 +1,11 @@
 
 function main()
 
+if (System.Argc() != 2)
+  Print("Usage: VM SCRIPT_FILE PATH/TO/train-images-idx3-ubyte PATH/TO/train-labels-idx1-ubyte");
+  return;
+endif
+  
 var trainingIterations = 1000000;
 
 var s = Array<UInt64>(2);
@@ -13,7 +18,7 @@ s[1] = 10ul;
 var gt = Tensor(s);
 
 var g = Graph();
-var d = MNISTLoader("PATH/TO/train-images-idx3-ubyte", "PATH/TO/train-labels-idx1-ubyte");
+var d = MNISTLoader(System.Argv(0), System.Argv(1));
 var p = TrainingPair(t);
 var c = CrossEntropy();
 
