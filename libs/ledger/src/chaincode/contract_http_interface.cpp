@@ -52,14 +52,31 @@ http::HTTPResponse JsonBadRequest()
   return http::CreateJsonResponse("", http::Status::CLIENT_ERROR_BAD_REQUEST);
 }
 
+std::string GenerateTimestamp()
+{
+  std::time_t now = std::time(nullptr);
+
+  char buffer[60] = {0};
+  std::strftime(buffer, sizeof(buffer), "%FT%TZ", gmtime(&now));
+
+  return {buffer};
+}
+
 }  // namespace
 
 constexpr char const *ContractHttpInterface::LOGGING_NAME;
 
+/**
+ * Construct an Contract HTTP Interface module
+ *
+ * @param storage The reference to the storage engine
+ * @param processor The reference to the (input) transaction processor
+ */
 ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
                                              TransactionProcessor &processor)
   : storage_{storage}
   , processor_{processor}
+  , access_log_{"access.log"}
 {
   // create all the contracts
   auto const &contracts = contract_cache_.factory().GetContracts();
@@ -82,7 +99,7 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
       byte_array::ByteArray api_path;
       api_path.Append(API_PATH_CONTRACT_PREFIX, contract_path, PATH_SEPARATOR, query_name);
 
-      FETCH_LOG_INFO(LOGGING_NAME, "QUERY API HANDLER: ", api_path);
+      FETCH_LOG_INFO(LOGGING_NAME, "Query API: ", api_path);
 
       Post(api_path, [this, contract_name, query_name](http::ViewParameters const &,
                                                        http::HTTPRequest const &request) {
@@ -103,7 +120,7 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
       byte_array::ByteArray canonical_contract_name;
       canonical_contract_name.Append(contract_name, CONTRACT_NAME_SEPARATOR, transaction_name);
 
-      FETCH_LOG_INFO(LOGGING_NAME, "TX API HANDLER: ", api_path, " : ", canonical_contract_name);
+      FETCH_LOG_INFO(LOGGING_NAME, "   Tx API: ", api_path, " : ", canonical_contract_name);
 
       Post(api_path, [this, canonical_contract_name](http::ViewParameters const &params,
                                                      http::HTTPRequest const &   request) {
@@ -118,14 +135,26 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
        });
 }
 
+/**
+ * Contract Query Handler
+ *
+ * @param contract_name The contract name
+ * @param query  The query name
+ * @param request The originating HTTPRequest object
+ * @return The appropriate HTTPResponse to be returned to the client
+ */
 http::HTTPResponse ContractHttpInterface::OnQuery(byte_array::ConstByteArray const &contract_name,
                                                   byte_array::ConstByteArray const &query,
                                                   http::HTTPRequest const &         request)
 {
   try
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "OnQuery");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Query: ", contract_name, '.', query,
+                    " from: ", request.originating_address(), ':', request.originating_port());
     FETCH_LOG_DEBUG(LOGGING_NAME, request.body());
+
+    // record an entry in the access log
+    RecordQuery(contract_name, query, request);
 
     // parse the incoming request
     json::JSONDocument doc;
@@ -162,6 +191,13 @@ http::HTTPResponse ContractHttpInterface::OnQuery(byte_array::ConstByteArray con
   return JsonBadRequest();
 }
 
+/**
+ * Transaction handler
+ *
+ * @param request The originating HTTPRequest object
+ * @param expected_contract_name The expected contract name (optional)
+ * @return The appropriate HTTPResponse to be returned to the client
+ */
 http::HTTPResponse ContractHttpInterface::OnTransaction(
     http::ViewParameters const &, http::HTTPRequest const &request,
     byte_array::ConstByteArray const *const expected_contract_name)
@@ -194,6 +230,8 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(
     {
       unknown_format = true;
     }
+
+    RecordTransaction(submitted, request);
 
     if (unknown_format)
     {
@@ -232,6 +270,22 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(
                                                  : http::Status::SUCCESS_OK);
 }
 
+/**
+ * Method handles incoming http request containing single or bulk of JSON formatted
+ * Wire transactions.
+ *
+ * @param request https request containing single or bulk of JSON formatted Wire Transaction(s).
+ * @param expected_contract_name contract name each transaction in request must conform to.
+ *        Transactions which do NOT conform to this contract name will NOT be accepted further
+ *        processing. If the value is `nullptr` (default value) the contract name check is
+ *        DISABLED, and so transactions (each received transaction in bulk) can have any contract
+ *        name.
+ *
+ * @return submit status, please see the `SubmitTxStatus` structure
+ * @see SubmitTxStatus
+
+ * @see SubmitNativeTx
+ */
 ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
     http::HTTPRequest const &               request,
     byte_array::ConstByteArray const *const expected_contract_name)
@@ -242,7 +296,7 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
   // parse the JSON request
   json::JSONDocument doc{request.body()};
 
-  FETCH_LOG_INFO(LOGGING_NAME, "NEW TRANSACTION RECEIVED");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "NEW TRANSACTION RECEIVED");
   FETCH_LOG_DEBUG(LOGGING_NAME, request.body());
 
   if (doc.root().IsArray())
@@ -277,9 +331,31 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
     }
   }
 
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Submitted ", submitted, " transactions from ",
+                  request.originating_address(), ':', request.originating_port());
+
   return SubmitTxStatus{submitted, expected_count};
 }
 
+/**
+ * Method handles incoming http request containing single or bulk of Native formattd
+ * Wire transactions.
+ *
+ * This method was originally designed for benchmark/stress-test purposes, but can be used in
+ * production environment.
+ *
+ * @param request https request containing single or bulk of JSON formatted Wire Transaction(s).
+ * @param expected_contract_name contract name each transaction in request must conform to.
+ *        Transactions which do NOT conform to this contract name will NOT be accepted further
+ *        processing. If the value is `nullptr` (default value) the contract name check is
+ *        DISABLED, and so transactions (each received transaction in bulk) can have any contract
+ *        name.
+ *
+ * @return submit status, please see the `SubmitTxStatus` structure
+ * @see SubmitTxStatus
+
+ * @see SubmitJsonTx
+ */
 ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitNativeTx(
     http::HTTPRequest const &               request,
     byte_array::ConstByteArray const *const expected_contract_name)
@@ -301,7 +377,61 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitNativeTx(
     ++submitted;
   }
 
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Submitted ", submitted, " transactions from ",
+                  request.originating_address(), ':', request.originating_port());
+
   return SubmitTxStatus{submitted, transactions.size()};
+}
+
+/**
+ * Record a transaction submission event in the HTTP access log
+ *
+ * @param status The transaction submission status (counts)
+ * @param request The originating HTTPRequest object
+ */
+void ContractHttpInterface::RecordTransaction(SubmitTxStatus const &   status,
+                                              http::HTTPRequest const &request)
+{
+  // format the message
+  std::ostringstream oss;
+  oss << '{' << R"("timestamp": )" << '"' << GenerateTimestamp() << "\","
+      << R"("type": "transaction", )"
+      << R"("received": )" << status.received << ',' << R"("processed": )" << status.processed
+      << ',' << R"("ip": )" << '"' << request.originating_address() << "\","
+      << R"("port": )" << request.originating_port() << '}';
+
+  // write it out to the access log
+  WriteToAccessLog(oss.str());
+}
+
+/**
+ * Record a query submission event in the HTTP access log
+ *
+ * @param contract_name The requested contract name
+ * @param query The requested query name
+ * @param request The original HTTPRequest object
+ */
+void ContractHttpInterface::RecordQuery(ConstByteArray const &   contract_name,
+                                        ConstByteArray const &   query,
+                                        http::HTTPRequest const &request)
+{
+  // format the message
+  std::ostringstream oss;
+  oss << '{' << R"("timestamp": )" << '"' << GenerateTimestamp() << "\","
+      << R"("type": "query", )"
+      << R"("contract": ")" << contract_name << "\","
+      << R"("query": ")" << query << "\","
+      << R"("ip": )" << '"' << request.originating_address() << "\","
+      << R"("port": )" << request.originating_port() << '}';
+
+  // write it out to the access log
+  WriteToAccessLog(oss.str());
+}
+
+void ContractHttpInterface::WriteToAccessLog(std::string const &entry)
+{
+  FETCH_LOCK(access_log_lock_);
+  access_log_ << entry << '\n';
 }
 
 }  // namespace ledger

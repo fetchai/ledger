@@ -58,6 +58,8 @@ public:
     return {ret};
   }
 
+  static constexpr char const *DESCRIPTOR = "Flatten";
+
 private:
   std::vector<std::uint64_t> input_shape_;
 };

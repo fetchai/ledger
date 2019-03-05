@@ -94,7 +94,7 @@ public:
     // If no input to backprop to, return gradient to caller
     // This is used to propagate outside of a SubGraph
     // The SubGraph has no knowledge of the rest of the network,
-    // so it sens its unpropagated gradient to its wrapper node that will forward them out
+    // so it sends its unpropagated gradient to its wrapper node that will forward them out
     if (inputs_.empty())
     {
       for (auto g : backpropagatedErrorSignals)

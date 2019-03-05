@@ -51,6 +51,8 @@ public:
   {
     this->output_ = data;
   }
+
+  static constexpr char const *DESCRIPTOR = "PlaceHolder";
 };
 
 }  // namespace ops

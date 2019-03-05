@@ -21,7 +21,7 @@
 #include "core/serializers/fixed_point.hpp"
 #include "math/serializers/math_types.hpp"
 #include "math/tensor.hpp"
-#include "ml/ops/fully_connected.hpp"
+#include "ml/layers/fully_connected.hpp"
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -49,9 +49,9 @@ TYPED_TEST(SerializersTest, serialize_empty_state_dict)
 TYPED_TEST(SerializersTest, serialize_state_dict)
 {
   // Generate a plausible state dict out of a fully connected layer
-  fetch::ml::ops::FullyConnected<TypeParam>   fc(10, 10);
-  struct fetch::ml::ops::StateDict<TypeParam> sd1 = fc.StateDict();
-  fetch::serializers::ByteArrayBuffer         b;
+  fetch::ml::layers::FullyConnected<TypeParam> fc(10, 10);
+  struct fetch::ml::ops::StateDict<TypeParam>  sd1 = fc.StateDict();
+  fetch::serializers::ByteArrayBuffer          b;
   b << sd1;
   b.seek(0);
   fetch::ml::ops::StateDict<TypeParam> sd2;

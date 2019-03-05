@@ -44,6 +44,7 @@ public:
   /// @{
   void AddTransaction(Transaction const &tx);
   bool GetTransaction(ConstByteArray const &digest, Transaction &tx);
+  bool HasTransaction(ConstByteArray const &digest);
   /// @}
 
   /// @name Transaction History Poll

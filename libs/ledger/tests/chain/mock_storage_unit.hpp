@@ -41,6 +41,8 @@ public:
         .WillByDefault(Invoke(&fake, &FakeStorageUnit::AddTransaction));
     ON_CALL(*this, GetTransaction(_, _))
         .WillByDefault(Invoke(&fake, &FakeStorageUnit::GetTransaction));
+    ON_CALL(*this, HasTransaction(_))
+        .WillByDefault(Invoke(&fake, &FakeStorageUnit::HasTransaction));
 
     ON_CALL(*this, PollRecentTx(_)).WillByDefault(Invoke(&fake, &FakeStorageUnit::PollRecentTx));
 
@@ -59,6 +61,7 @@ public:
 
   MOCK_METHOD1(AddTransaction, void(Transaction const &));
   MOCK_METHOD2(GetTransaction, bool(ConstByteArray const &, Transaction &));
+  MOCK_METHOD1(HasTransaction, bool(ConstByteArray const &));
 
   MOCK_METHOD1(PollRecentTx, TxSummaries(uint32_t));
 

@@ -59,6 +59,8 @@ public:
     ASSERT(errorSignal->size() == inputs[1]->size());
     return {errorSignal, errorSignal};
   }
+
+  static constexpr char const *DESCRIPTOR = "Add";
 };
 
 }  // namespace ops

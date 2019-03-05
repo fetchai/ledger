@@ -94,7 +94,7 @@ void TCPServer::Start()
       }
       catch (std::exception &e)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Failed to open socket: ", port_, " with error: ", e.what());
+        FETCH_LOG_ERROR(LOGGING_NAME, "Failed to open socket: ", port_, " with error: ", e.what());
       }
 
       counter_.Completed();
