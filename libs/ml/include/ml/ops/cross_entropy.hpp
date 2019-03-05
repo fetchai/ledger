@@ -106,6 +106,8 @@ public:
     }
     return ret;
   }
+
+  static constexpr char const *DESCRIPTOR = "CrossEntropy";
 };
 
 }  // namespace ops

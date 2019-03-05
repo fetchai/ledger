@@ -60,6 +60,8 @@ public:
     return {errorSignal, errorSignal};
   }
 
+  static constexpr char const *DESCRIPTOR = "Add";
+
 private:
   // Relu is done in a strange way, comparing input against an array of zeroes
   // using a parrallel Maximum function -- May need improvement (TODO private 469)

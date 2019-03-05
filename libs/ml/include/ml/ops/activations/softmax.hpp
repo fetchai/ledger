@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/free_functions/deep_learning/activation_functions.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -24,15 +25,15 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class ReluLayer : public fetch::ml::Ops<T>
+class Softmax : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  ReluLayer()          = default;
-  virtual ~ReluLayer() = default;
+  Softmax()          = default;
+  virtual ~Softmax() = default;
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
@@ -42,14 +43,7 @@ public:
       this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
     }
 
-    this->output_->Fill(DataType(0));
-    for (std::size_t i = 0; i < inputs[0]->size(); ++i)
-    {
-      if ((*(inputs[0]))[i] > DataType(0))
-      {
-        this->output_->Set(i, DataType((*(inputs[0]))[i]));
-      }
-    }
+    fetch::math::Softmax(*inputs[0], *this->output_);
     return this->output_;
   }
 
@@ -59,15 +53,24 @@ public:
     assert(inputs.size() == 1);
     assert(inputs[0]->shape() == errorSignal->shape());
 
-    for (std::size_t i = 0; i < inputs[0]->size(); ++i)
+    ArrayPtrType t = this->Forward(inputs);
+    for (std::size_t i(0); i < inputs[0]->size(); ++i)
     {
-      if ((*(inputs[0]))[i] <= DataType(0))
-      {
-        errorSignal->Set(i, DataType(0));
-      }
+      errorSignal->At(i) *= t->At(i);
+    }
+    typename ArrayType::Type sum(0);
+    for (std::size_t i(0); i < inputs[0]->size(); ++i)
+    {
+      sum += errorSignal->At(i);
+    }
+    for (std::size_t i(0); i < inputs[0]->size(); ++i)
+    {
+      errorSignal->At(i) -= (t->At(i) * sum);
     }
     return {errorSignal};
   }
+
+  static constexpr char const *DESCRIPTOR = "Softmax";
 };
 
 }  // namespace ops
