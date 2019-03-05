@@ -269,8 +269,6 @@ void Router::Route(Handle handle, PacketPtr packet)
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "I. Verify:", packet->Verify(),
-                     "; stamped: ", packet->IsStamped());
       FETCH_LOG_WARN(LOGGING_NAME, "Packet's authenticity not verified:", DescribePacket(*packet));
     }
   }
@@ -294,8 +292,6 @@ void Router::Route(Handle handle, PacketPtr packet)
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "II. Verify:", packet->Verify(),
-                     "; stamped: ", packet->IsStamped());
       FETCH_LOG_WARN(LOGGING_NAME, "Packet's authenticity not verified:", DescribePacket(*packet));
     }
   }
