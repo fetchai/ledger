@@ -44,6 +44,8 @@ public:
   using Archive     = ObjectStore<Object>;
   using TxSummaries = std::vector<ledger::TransactionSummary>;
 
+  static constexpr char const *LOGGING_NAME = "TransientObjectStore";
+
   // Construction / Destruction
   TransientObjectStore();
   TransientObjectStore(TransientObjectStore const &) = delete;
@@ -172,7 +174,14 @@ void TransientObjectStore<O>::Load(std::string const &doc_file, std::string cons
 template <typename O>
 bool TransientObjectStore<O>::Get(ResourceID const &rid, O &object)
 {
-  return GetFromCache(rid, object) || archive_.Get(rid, object);
+  bool const success = GetFromCache(rid, object) || archive_.Get(rid, object);
+
+  if (!success)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Unable to retrieve TX: ", byte_array::ToBase64(rid.id()));
+  }
+
+  return success;
 }
 
 /**
@@ -230,6 +239,8 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
 {
   static core::Tickets::Count prev_count{0};
 
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Adding TX: ", byte_array::ToBase64(rid.id()));
+
   // add the element into the cache
   SetInCache(rid, object);
 
@@ -242,7 +253,7 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
     {
       if (prev_count < recent_queue_alarm_threshold && count >= recent_queue_alarm_threshold)
       {
-        FETCH_LOG_WARN("TransientObjectStore", " the `most_recent_seen_` queue size ", count,
+        FETCH_LOG_WARN(LOGGING_NAME, " the `most_recent_seen_` queue size ", count,
                        " reached or is over threshold ", recent_queue_alarm_threshold, ").");
         // TODO(private issue #582): The queue became FULL - this information shall
         // be propagated out to caller, so it can make appropriate decision how to

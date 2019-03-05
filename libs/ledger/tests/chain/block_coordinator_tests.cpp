@@ -65,6 +65,8 @@ class BlockCoordinatorTests : public ::testing::Test
 protected:
   void SetUp() override
   {
+    FETCH_UNUSED(LOGGING_NAME);
+
     block_generator_.Reset();
 
     // generate a public/private key pair
@@ -165,6 +167,7 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
     InSequence s;
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
@@ -185,6 +188,7 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
     // none
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
@@ -201,6 +205,7 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
     EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(_));
 
     // syncing back up
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
   }
@@ -209,7 +214,8 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
 
   Tick(State::RESET, State::SYNCHRONIZING);
   Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
@@ -284,18 +290,22 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
     InSequence s;
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
@@ -316,6 +326,7 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
     // none
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
     EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash));
@@ -338,6 +349,7 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
     // none
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
     EXPECT_CALL(*storage_unit_, HashExists(b1->body.merkle_hash));
@@ -360,6 +372,7 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
     // none
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
     EXPECT_CALL(*storage_unit_, HashExists(b2->body.merkle_hash));
@@ -382,6 +395,7 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
     // none
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
   }
@@ -394,7 +408,8 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   Tick(State::SYNCHRONIZING, State::SYNCHRONIZING);
   Tick(State::SYNCHRONIZING, State::SYNCHRONIZING);
   Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
@@ -406,7 +421,8 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
 
   // processing of B1 block
   Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
@@ -418,7 +434,8 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
 
   // processing of B2 block
   Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
@@ -430,7 +447,8 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
 
   // processing of B3 block
   Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
@@ -463,6 +481,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
     InSequence s;
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
@@ -483,6 +502,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
     // none
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
   }
@@ -492,7 +512,8 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
 
   Tick(State::RESET, State::SYNCHRONIZING);
   Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
@@ -531,6 +552,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
     InSequence s;
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
@@ -551,18 +573,21 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
     // none
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
     // -- TEST CONFIG --
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
     EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash));
     EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash));
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
   }
@@ -572,7 +597,8 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
 
   Tick(State::RESET, State::SYNCHRONIZING);
   Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
@@ -615,6 +641,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
     InSequence s;
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
@@ -635,18 +662,21 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
     // none
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
     // -- TEST CONFIG --
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
     EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash));
     EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash));
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
   }
@@ -656,7 +686,8 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
 
   Tick(State::RESET, State::SYNCHRONIZING);
   Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
@@ -699,6 +730,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
     InSequence s;
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
@@ -719,18 +751,21 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
     // none
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
     // -- TEST CONFIG --
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
     EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash));
     EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash));
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
   }
@@ -740,7 +775,8 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
 
   Tick(State::RESET, State::SYNCHRONIZING);
   Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);

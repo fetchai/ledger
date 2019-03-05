@@ -18,13 +18,28 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/placeholder.hpp"
+#include <random>
 
 namespace fetch {
 namespace ml {
 namespace ops {
 
-// StateDict is an utility class to extract the network trainable parameter and serialize them for
-// saving / sharing
+/**
+ * enum for selecting which type of initialisation to use with weights
+ */
+enum class WeightsInitialisation
+{
+  ZEROS,
+  XAVIER_GLOROT,
+  XAVIER_FAN_IN,
+  XAVIER_FAN_OUT
+};
+
+/**
+ * A utility class to extract the network trainable parameter and serialize them for saving /
+ * sharing
+ * @tparam T
+ */
 template <class T>
 struct StateDict
 {
@@ -58,8 +73,10 @@ struct StateDict
   }
 };
 
-// Trainaible provide an interface that needs to be matched by any ops that has trainable
-// parameters, that's how the Graph class know with tensors to update during a gradient step
+/**
+ * Provide an interface for any trainable ops
+ * @tparam T passes tensors to graph during update step
+ */
 template <class T>
 class Trainable
 {
@@ -79,6 +96,10 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
+protected:
+  ArrayPtrType gradientAccumulation_;
+
+public:
   Weights()          = default;
   virtual ~Weights() = default;
 
@@ -112,6 +133,10 @@ public:
     gradientAccumulation_->Fill(typename T::Type(0));
   }
 
+  /**
+   * constructs a state dictionary used for exporting/saving weights
+   * @return
+   */
   virtual struct StateDict<T> StateDict() const
   {
     struct fetch::ml::ops::StateDict<T> d;
@@ -119,6 +144,10 @@ public:
     return d;
   }
 
+  /**
+   * load from a state dictionary to import weights
+   * @param dict
+   */
   virtual void
   LoadStateDict(struct fetch::ml::ops::StateDict<T> const &dict)
   {
@@ -126,8 +155,64 @@ public:
     SetData(dict.weights_);
   }
 
+  /**
+   * interface to call standard weights initialisation routines. defaults to xavier
+   * @param mode  An enum indicating which type of initialisation to perform
+   */
+  static void Initialise(ArrayPtrType array, std::uint64_t in_size, std::uint64_t out_size,
+                         WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT)
+  {
+    switch (mode)
+    {
+    case WeightsInitialisation::ZEROS:
+    {
+      for (std::uint64_t j = 0; j < array->size(); ++j)
+      {
+        array->At(j) = typename ArrayType::Type(0);
+      }
+      break;
+    }
+    case WeightsInitialisation::XAVIER_GLOROT:
+    {
+      XavierInitialisation(array, std::sqrt(2.0 / double(in_size + out_size)));
+      break;
+    }
+    case WeightsInitialisation::XAVIER_FAN_IN:
+    {
+      XavierInitialisation(array, std::sqrt(1.0 / double(in_size)));
+      break;
+    }
+    case WeightsInitialisation::XAVIER_FAN_OUT:
+    {
+      XavierInitialisation(array, std::sqrt(1.0 / double(out_size)));
+      break;
+    }
+    default:
+      std::cerr << "unrecognised weights initialisation" << std::endl;
+      throw;
+    }
+  }
+
+  static constexpr char const *DESCRIPTOR = "Weights";
+
 private:
-  ArrayPtrType gradientAccumulation_;
+  /**
+   * xavier weights initialisation
+   * using a normal distribution with mean 0 and variance 2 / (input nodes + output nodes)
+   * @param weights
+   */
+  static void XavierInitialisation(ArrayPtrType array, double normalising_factor)
+  {
+    std::random_device rd{};
+    std::mt19937       gen{rd()};
+
+    // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
+    std::normal_distribution<> rng(0, normalising_factor);
+    for (std::uint64_t i(0); i < array->size(); ++i)
+    {
+      array->At(i) = typename ArrayType::Type(rng(gen));
+    }
+  }
 };
 
 }  // namespace ops

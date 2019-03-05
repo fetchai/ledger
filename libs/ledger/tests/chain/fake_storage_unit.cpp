@@ -94,6 +94,11 @@ bool FakeStorageUnit::GetTransaction(ConstByteArray const &digest, Transaction &
   return success;
 }
 
+bool FakeStorageUnit::HasTransaction(ConstByteArray const &digest)
+{
+  return transaction_store_.find(digest) != transaction_store_.end();
+}
+
 FakeStorageUnit::TxSummaries FakeStorageUnit::PollRecentTx(uint32_t)
 {
   return {};
