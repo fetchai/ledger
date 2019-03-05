@@ -71,12 +71,7 @@ public:
   virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
                                              ArrayPtrType                     errorSignal)
   {
-    std::vector<ArrayPtrType> err_sig{};
-    for (std::size_t i = 0; i < inputs.size(); ++i)
-    {
-      err_sig.emplace_back(errorSignal);
-    }
-    return err_sig;
+    return std::vector<ArrayPtrType>(inputs.size(), errorSignal);
   }
 
   static constexpr char const *DESCRIPTOR = "Multiply";

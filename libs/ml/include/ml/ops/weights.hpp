@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/placeholder.hpp"
+#include <random>
 
 namespace fetch {
 namespace ml {
