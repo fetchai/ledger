@@ -39,7 +39,7 @@ class FullyConnected : public Layer<T>
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using WeightsInit  = typename fetch::ml::ops::WeightsInitialisation;
+  using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
 
   FullyConnected(std::uint64_t in, std::uint64_t out, std::string const &name = "FC",
                  WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
