@@ -45,7 +45,7 @@ template <typename ArrayType>
 ArrayType Sigmoid(ArrayType const &t)
 {
   ArrayType ret;
-  ret.Copy(t);
+  ret = t.Clone();
   Sigmoid(t, ret);
   return ret;
 }
