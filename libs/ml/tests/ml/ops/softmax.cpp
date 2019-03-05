@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/softmax.hpp"
 #include "core/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
+#include "ml/ops/activation.hpp"
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -43,8 +43,8 @@ TYPED_TEST(SoftmaxTest, forward_test)
     data->Set(i, typename TypeParam::Type(dataInput[i]));
     gt->Set(i, typename TypeParam::Type(gtInput[i]));
   }
-  fetch::ml::ops::SoftmaxLayer<TypeParam> op;
-  std::shared_ptr<TypeParam>              prediction = op.Forward({data});
+  fetch::ml::ops::Softmax<TypeParam> op;
+  std::shared_ptr<TypeParam>         prediction = op.Forward({data});
 
   // test correct values
   ASSERT_TRUE(
@@ -66,7 +66,7 @@ TYPED_TEST(SoftmaxTest, backward_test)
     error->Set(i, typename TypeParam::Type(errorInput[i]));
     gt->Set(i, typename TypeParam::Type(gtInput[i]));
   }
-  fetch::ml::ops::SoftmaxLayer<TypeParam> op;
+  fetch::ml::ops::Softmax<TypeParam>      op;
   std::vector<std::shared_ptr<TypeParam>> prediction = op.Backward({data}, error);
 
   // test correct values

@@ -95,6 +95,8 @@ BlockStatus MainChain::AddBlock(Block const &blk)
   auto block = std::make_shared<Block>(blk);
 
   // update the weight based on the proof and the number of transactions
+  block->weight       = 1;
+  block->total_weight = 1;
   for (auto const &slice : block->body.slices)
   {
     block->weight += slice.size();
@@ -488,7 +490,7 @@ void MainChain::WriteToFile()
   // skip if the block store is not persistent
   if (block_store_)
   {
-    fetch::generics::MilliTimer myTimer("MainChain::WriteToFile");
+    fetch::generics::MilliTimer myTimer("MainChain::WriteToFile", 500);
 
     // Add confirmed blocks to file
     IntBlockPtr block  = block_chain_.at(heaviest_.hash);
@@ -575,7 +577,7 @@ void MainChain::CompleteLooseBlocks(IntBlockPtr const &block)
       IntBlockPtr add_block = block_chain_.at(hash);  // TODO(EJF): What happens when this fails
 
       // This won't re-call this function due to the flag
-      InsertBlock(add_block, true);
+      InsertBlock(add_block, false);
 
       // The added block was not loose. Continue to clear
       auto it = loose_blocks_.find(add_block->body.hash);
@@ -642,7 +644,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
 {
   assert(block->body.previous_hash.size() > 0);
 
-  fetch::generics::MilliTimer myTimer("MainChain::AddBlock");
+  fetch::generics::MilliTimer myTimer("MainChain::InsertBlock", 500);
   RLock                       lock(main_mutex_);
 
   if (block->body.hash.empty())

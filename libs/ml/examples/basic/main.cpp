@@ -19,14 +19,15 @@
 #include "math/tensor.hpp"
 #include "ml/dataloaders/mnist_loader.hpp"
 #include "ml/graph.hpp"
+
+#include "ml/layers/fully_connected.hpp"
+#include "ml/ops/activation.hpp"
 #include "ml/ops/cross_entropy.hpp"
-#include "ml/ops/fully_connected.hpp"
-#include "ml/ops/relu.hpp"
-#include "ml/ops/softmax.hpp"
 
 #include <iostream>
 
 using namespace fetch::ml::ops;
+using namespace fetch::ml::layers;
 
 using DataType  = float;
 using ArrayType = fetch::math::Tensor<DataType>;
@@ -43,13 +44,14 @@ int main(int ac, char **av)
   std::cout << "FETCH MNIST Demo" << std::endl;
   fetch::ml::MNISTLoader<ArrayType> dataloader(av[1], av[2]);
   fetch::ml::Graph<ArrayType>       g;
+
   g.AddNode<PlaceHolder<ArrayType>>("Input", {});
   g.AddNode<FullyConnected<ArrayType>>("FC1", {"Input"}, 28u * 28u, 10u);
-  g.AddNode<ReluLayer<ArrayType>>("Relu1", {"FC1"});
+  g.AddNode<Relu<ArrayType>>("Relu1", {"FC1"});
   g.AddNode<FullyConnected<ArrayType>>("FC2", {"Relu1"}, 10u, 10u);
-  g.AddNode<ReluLayer<ArrayType>>("Relu2", {"FC1"});
+  g.AddNode<Relu<ArrayType>>("Relu2", {"FC1"});
   g.AddNode<FullyConnected<ArrayType>>("FC3", {"Relu2"}, 10u, 10u);
-  g.AddNode<SoftmaxLayer<ArrayType>>("Softmax", {"FC3"});
+  g.AddNode<Softmax<ArrayType>>("Softmax", {"FC3"});
   //  Input -> FC -> Relu -> FC -> Relu -> FC -> Softmax
 
   CrossEntropyLayer<ArrayType> criterion;

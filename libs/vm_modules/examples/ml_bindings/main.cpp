@@ -19,10 +19,9 @@
 #include "math/tensor.hpp"
 #include "ml/dataloaders/mnist_loader.hpp"
 #include "ml/graph.hpp"
-#include "ml/ops/fully_connected.hpp"
+#include "ml/layers/fully_connected.hpp"
+#include "ml/ops/activation.hpp"
 #include "ml/ops/mean_square_error.hpp"
-#include "ml/ops/relu.hpp"
-#include "ml/ops/softmax.hpp"
 
 #include "vm/analyser.hpp"
 #include "vm/typeids.hpp"

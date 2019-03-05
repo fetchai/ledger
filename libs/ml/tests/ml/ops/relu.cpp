@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/relu.hpp"
 #include "core/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
+#include "ml/ops/activation.hpp"
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -43,8 +43,8 @@ TYPED_TEST(ReluTest, forward_all_positive_test)
     gt->Set(i, typename TypeParam::Type(e));
     i++;
   }
-  fetch::ml::ops::ReluLayer<TypeParam> op;
-  std::shared_ptr<TypeParam>           prediction = op.Forward({data});
+  fetch::ml::ops::Relu<TypeParam> op;
+  std::shared_ptr<TypeParam>      prediction = op.Forward({data});
 
   // test correct values
   ASSERT_TRUE(prediction->AllClose(*gt));
@@ -61,8 +61,8 @@ TYPED_TEST(ReluTest, forward_all_negative_integer_test)
     gt->Set(i, typename TypeParam::Type(0));
     i++;
   }
-  fetch::ml::ops::ReluLayer<TypeParam> op;
-  std::shared_ptr<TypeParam>           prediction = op.Forward({data});
+  fetch::ml::ops::Relu<TypeParam> op;
+  std::shared_ptr<TypeParam>      prediction = op.Forward({data});
 
   // test correct values
   ASSERT_TRUE(prediction->AllClose(*gt));
@@ -79,8 +79,8 @@ TYPED_TEST(ReluTest, forward_mixed_test)
     data->Set(i, typename TypeParam::Type(dataInput[i]));
     gt->Set(i, typename TypeParam::Type(gtInput[i]));
   }
-  fetch::ml::ops::ReluLayer<TypeParam> op;
-  std::shared_ptr<TypeParam>           prediction = op.Forward({data});
+  fetch::ml::ops::Relu<TypeParam> op;
+  std::shared_ptr<TypeParam>      prediction = op.Forward({data});
 
   // test correct values
   ASSERT_TRUE(prediction->AllClose(*gt));
@@ -100,7 +100,7 @@ TYPED_TEST(ReluTest, backward_mixed_test)
     error->Set(i, typename TypeParam::Type(errorInput[i]));
     gt->Set(i, typename TypeParam::Type(gtInput[i]));
   }
-  fetch::ml::ops::ReluLayer<TypeParam>    op;
+  fetch::ml::ops::Relu<TypeParam>         op;
   std::vector<std::shared_ptr<TypeParam>> prediction = op.Backward({data}, error);
 
   // test correct values

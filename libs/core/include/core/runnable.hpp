@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <memory>
+
 namespace fetch {
 namespace core {
 
@@ -45,6 +47,8 @@ public:
     Execute();
   }
 };
+
+using WeakRunnable = std::weak_ptr<Runnable>;
 
 }  // namespace core
 }  // namespace fetch
