@@ -100,5 +100,5 @@ TEST(graph_test, no_such_node_test)  // Use the class as a Node
       std::make_shared<fetch::math::Tensor<float>>(std::vector<typename fetch::math::Tensor<float>::SizeType>({5, 10}));
   g.SetInput("Input", data);
 
-  std::shared_ptr<fetch::math::Tensor<float>> prediction = g.Evaluate("FullyConnected");
+  ASSERT_ANY_THROW(std::shared_ptr<fetch::math::Tensor<float>> prediction = g.Evaluate("FullyConnected"));
 }

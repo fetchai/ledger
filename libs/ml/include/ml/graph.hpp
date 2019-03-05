@@ -44,9 +44,16 @@ public:
   Graph()
   {}
 
-  ArrayPtrType Evaluate(std::string const &nodeName)
+  ArrayPtrType Evaluate(std::string const &node_name)
   {
-    return nodes_[nodeName]->Evaluate();
+    if (nodes_[node_name])
+    {
+      return nodes_[node_name]->Evaluate();
+    }
+    else
+    {
+      throw std::runtime_error(std::string("Cannot evaluate: node [" + node_name + "] not in graph"));
+    }
   }
 
   void BackPropagate(std::string const &nodeName, ArrayPtrType errorSignal)
@@ -88,11 +95,6 @@ public:
   {
     std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>> placeholder =
         std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<ArrayType>>(nodes_[nodeName]);
-    
-    for (auto &e: nodes_)
-    {
-      std::cout << "e.first: " << e.first << std::endl;
-    }
     
     if (placeholder)
     {
