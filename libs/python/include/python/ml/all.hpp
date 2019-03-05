@@ -20,12 +20,12 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include "python/ml/dataloaders/py_mnist_loader.hpp"
 #include "python/ml/ops/py_fully_connected.hpp"
 #include "python/ml/ops/py_mean_square_error.hpp"
 #include "python/ml/ops/py_relu.hpp"
 #include "python/ml/ops/py_state_dict.hpp"
 #include "python/ml/py_graph.hpp"
-#include "python/ml/dataloaders/py_mnist_loader.hpp"
 
 namespace py = pybind11;
 

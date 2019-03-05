@@ -42,7 +42,7 @@ int main(int ac, char **av)
 
   std::cout << "FETCH MNIST Demo" << std::endl;
   fetch::ml::MNISTLoader<ArrayType> dataloader(av[1], av[2]);
-  fetch::ml::Graph<ArrayType>      g;
+  fetch::ml::Graph<ArrayType>       g;
   g.AddNode<PlaceHolder<ArrayType>>("Input", {});
   g.AddNode<FullyConnected<ArrayType>>("FC1", {"Input"}, 28u * 28u, 10u);
   g.AddNode<ReluLayer<ArrayType>>("Relu1", {"FC1"});

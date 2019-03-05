@@ -73,7 +73,8 @@ public:
   {
     for (std::uint64_t j(0); j < 784; ++j)
     {
-      std::cout << (data->At(j) > typename T::Type(0.5) ? char(219) : ' ') << ((j % 28 == 0) ? "\n" : "");
+      std::cout << (data->At(j) > typename T::Type(0.5) ? char(219) : ' ')
+                << ((j % 28 == 0) ? "\n" : "");
     }
     std::cout << std::endl;
   }
