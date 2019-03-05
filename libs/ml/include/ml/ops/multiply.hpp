@@ -74,15 +74,9 @@ public:
     return std::vector<ArrayPtrType>(inputs.size(), errorSignal);
   }
 
-  static std::string Descriptor()
-  {
-    return "Multiply";
-  }
+  static constexpr char const *DESCRIPTOR = "Multiply";
 };
 
-static constexpr char const *DESCRIPTOR = "Multiply";
-};  // namespace ops
-
+}  // namespace ops
 }  // namespace ml
-}  // namespace fetch
 }  // namespace fetch

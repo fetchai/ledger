@@ -37,7 +37,6 @@
 #include "math/free_functions/standard_functions/remainder.hpp"
 
 #include "math/free_functions/comparison/comparison.hpp"
-//#include "math/free_functions/deep_learning/loss_functions.hpp"
 #include "math/free_functions/exponentiation/exponentiation.hpp"
 #include "math/free_functions/matrix_operations/matrix_operations.hpp"
 #include "math/meta/math_type_traits.hpp"
