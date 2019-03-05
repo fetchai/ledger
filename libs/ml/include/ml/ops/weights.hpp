@@ -62,7 +62,7 @@ struct StateDict
       if (weights_)
       {
         weights_->InlineMultiply(typename ArrayType::Type(1.0f - ratio));
-        weights_->InlineAdd(o.weights_->Copy().InlineMultiply(typename ArrayType::Type(ratio)));
+        weights_->InlineAdd(o.weights_->Clone().InlineMultiply(typename ArrayType::Type(ratio)));
       }
       for (auto &e : dict_)
       {
