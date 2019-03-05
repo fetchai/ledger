@@ -79,10 +79,7 @@ public:
     return {errorSignal1, errorSignal2};
   }
 
-  static std::string Descriptor()
-  {
-    return "MatrixMultiply";
-  }
+  static constexpr char const *DESCRIPTOR = "MatrixMultiply";
 };
 
 }  // namespace ops

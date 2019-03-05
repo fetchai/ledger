@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "tensor.hpp"
-
 namespace fetch {
 namespace math {
 template <typename T, typename SizeType>

@@ -34,6 +34,7 @@ class Layer : public SubGraph<T>
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using WeightsInit  = typename fetch::ml::ops::WeightsInitialisation;
 
   std::uint64_t in_size;
   std::uint64_t out_size;
@@ -43,21 +44,9 @@ public:
     , out_size(out)
   {}
 
-  /**
-   * xavier weights initialisation
-   * @param weights
-   */
-  void InitialiseWeights(ArrayPtrType weights)
+  void Initialise(ArrayPtrType weights, WeightsInit init_mode)
   {
-    std::random_device rd{};
-    std::mt19937       gen{rd()};
-
-    // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
-    std::normal_distribution<> rng(0, std::sqrt(2.0 / double(in_size + out_size)));
-    for (std::uint64_t i(0); i < weights->size(); ++i)
-    {
-      weights->At(i) = typename ArrayType::Type(rng(gen));
-    }
+    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, in_size, out_size, init_mode);
   }
 };
 

@@ -70,10 +70,7 @@ public:
     return {errorSignal};
   }
 
-  static std::string Descriptor()
-  {
-    return "Add";
-  }
+  static constexpr char const *DESCRIPTOR = "Softmax";
 };
 
 }  // namespace ops

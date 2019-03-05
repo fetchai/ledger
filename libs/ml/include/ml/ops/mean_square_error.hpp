@@ -62,6 +62,8 @@ public:
     }
     return ret;
   }
+
+  static constexpr char const *DESCRIPTOR = "MeanSquareError";
 };
 
 }  // namespace ops

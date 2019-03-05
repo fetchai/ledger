@@ -21,7 +21,6 @@
 #include "ml/ops/add.hpp"
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/matrix_multiply.hpp"
-#include "ml/ops/placeholder.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/subgraph.hpp"
 
@@ -40,8 +39,10 @@ class FullyConnected : public Layer<T>
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using WeightsInit  = typename fetch::ml::ops::WeightsInitialisation;
 
-  FullyConnected(std::uint64_t in, std::uint64_t out, std::string const &name = "FC")
+  FullyConnected(std::uint64_t in, std::uint64_t out, std::string const &name = "FC",
+                 WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
     : Layer<T>(in, out)
   {
 
@@ -59,17 +60,14 @@ public:
     this->SetOutputNode(name + "_Add");
 
     ArrayPtrType weights = std::make_shared<ArrayType>(std::vector<std::uint64_t>({in, out}));
-    this->InitialiseWeights(weights);
+    this->Initialise(weights, init_mode);
     this->SetInput(name + "_Weights", weights);
 
     ArrayPtrType bias = std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, out}));
     this->SetInput(name + "_Bias", bias);
   }
 
-  static std::string Descriptor()
-  {
-    return "FullyConnected";
-  }
+  static constexpr char const *DESCRIPTOR = "FullyConnected";
 };
 
 }  // namespace layers
