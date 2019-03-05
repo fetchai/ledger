@@ -74,7 +74,6 @@ public:
   }
 
   // Operators
-  // Operators
   StateMachine &operator=(StateMachine const &) = delete;
   StateMachine &operator=(StateMachine &&) = delete;
 
