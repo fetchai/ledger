@@ -118,6 +118,13 @@ TEST_F(PacketTests, CheckInvaldation)
   packet_->Sign(prover_);
   EXPECT_TRUE(packet_->IsStamped());
   EXPECT_TRUE(packet_->Verify());
+
+  packet_->SetNetworkId(42);
+  EXPECT_FALSE(packet_->IsStamped());
+  EXPECT_FALSE(packet_->Verify());
+  packet_->Sign(prover_);
+  EXPECT_TRUE(packet_->IsStamped());
+  EXPECT_TRUE(packet_->Verify());
 }
 
 TEST_F(PacketTests, CheckIndifference)
