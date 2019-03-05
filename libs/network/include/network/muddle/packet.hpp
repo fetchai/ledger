@@ -73,10 +73,10 @@ class Packet
 public:
   static constexpr std::size_t ADDRESS_SIZE = 64;
 
-  using RawAddress   = std::array<uint8_t, ADDRESS_SIZE>;
-  using Address      = byte_array::ConstByteArray;
-  using Payload      = byte_array::ConstByteArray;
-  using Stamp        = byte_array::ConstByteArray;
+  using RawAddress = std::array<uint8_t, ADDRESS_SIZE>;
+  using Address    = byte_array::ConstByteArray;
+  using Payload    = byte_array::ConstByteArray;
+  using Stamp      = byte_array::ConstByteArray;
 
   struct RoutingHeader
   {
@@ -97,8 +97,8 @@ public:
     RawAddress sender;  ///< The address of the packet sender
   };
 
-  static constexpr std::size_t HEADER_SIZE  = sizeof(RoutingHeader);
-  using BinaryHeader = std::array<uint8_t, HEADER_SIZE>;
+  static constexpr std::size_t HEADER_SIZE = sizeof(RoutingHeader);
+  using BinaryHeader                       = std::array<uint8_t, HEADER_SIZE>;
 
   static_assert(std::is_pod<RoutingHeader>::value, "Routing header must be POD");
   static_assert(sizeof(RoutingHeader) == 12 + (2 * ADDRESS_SIZE), "The header must be packed");
@@ -159,8 +159,8 @@ private:
   mutable Address target_;
   mutable Address sender_;
 
-  void SetStamped() noexcept;
-  void DropStamped() noexcept;
+  void         SetStamped() noexcept;
+  void         DropStamped() noexcept;
   BinaryHeader StaticHeader() const noexcept;
 
   template <typename T>
@@ -359,16 +359,17 @@ inline void Packet::DropStamped() noexcept
   header_.stamped = 0;
 }
 
-inline Packet::BinaryHeader Packet::StaticHeader() const noexcept {
-	RoutingHeader retVal{header_};
-	retVal.ttl = 0;
-	return *reinterpret_cast<BinaryHeader const *>(&retVal);
+inline Packet::BinaryHeader Packet::StaticHeader() const noexcept
+{
+  RoutingHeader retVal{header_};
+  retVal.ttl = 0;
+  return *reinterpret_cast<BinaryHeader const *>(&retVal);
 }
 
 inline void Packet::Sign(crypto::Prover &prover)
 {
   SetStamped();
-  if(prover.Sign((serializers::ByteArrayBuffer() << StaticHeader() << payload_) .data()))
+  if (prover.Sign((serializers::ByteArrayBuffer() << StaticHeader() << payload_).data()))
   {
     stamp_ = prover.signature();
   }
@@ -380,14 +381,12 @@ inline void Packet::Sign(crypto::Prover &prover)
 
 inline bool Packet::Verify() const
 {
-  if(!IsStamped())
+  if (!IsStamped())
   {
-    return false;	// null signature is not genuine in non-trusted networks
+    return false;  // null signature is not genuine in non-trusted networks
   }
   auto retVal = crypto::Verify(
-	  GetSender()
-	  , (serializers::ByteArrayBuffer() << StaticHeader() << payload_).data()
-	  , stamp_);
+      GetSender(), (serializers::ByteArrayBuffer() << StaticHeader() << payload_).data(), stamp_);
   return retVal;
 }
 
@@ -395,7 +394,7 @@ template <typename T>
 void Serialize(T &serializer, Packet const &packet)
 {
   serializer << *reinterpret_cast<Packet::BinaryHeader const *>(&packet.header_) << packet.payload_;
-  if(packet.header_.stamped)
+  if (packet.header_.stamped)
   {
     serializer << packet.stamp_;
   }
@@ -405,7 +404,7 @@ template <typename T>
 void Deserialize(T &serializer, Packet &packet)
 {
   serializer >> *reinterpret_cast<Packet::BinaryHeader *>(&packet.header_) >> packet.payload_;
-  if(packet.header_.stamped)
+  if (packet.header_.stamped)
   {
     serializer >> packet.stamp_;
   }

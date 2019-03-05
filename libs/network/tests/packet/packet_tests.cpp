@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/muddle/packet.hpp"
 #include "crypto/ecdsa.hpp"
+#include "network/muddle/packet.hpp"
 
 #include <gmock/gmock.h>
 #include <memory>
@@ -25,21 +25,21 @@
 class PacketTests : public ::testing::Test
 {
 protected:
-  using Packet        = fetch::muddle::Packet;
-  using PacketPtr     = std::shared_ptr<Packet>;
-  using Payload       = Packet::Payload;
-  using Prover        = fetch::crypto::ECDSASigner;
+  using Packet    = fetch::muddle::Packet;
+  using PacketPtr = std::shared_ptr<Packet>;
+  using Payload   = Packet::Payload;
+  using Prover    = fetch::crypto::ECDSASigner;
 
   void SetUp() override
   {
     prover_ = Prover();
     prover_.GenerateKeys();
     response_ = "hello";
-    packet_ = CreatePacket(prover_.identity().identifier(), 1, 2, 3, response_);
+    packet_   = CreatePacket(prover_.identity().identifier(), 1, 2, 3, response_);
   }
 
-  PacketPtr CreatePacket(fetch::byte_array::ConstByteArray const &address, uint16_t service
-			 , uint16_t channel, uint16_t counter, Payload const &payload)
+  PacketPtr CreatePacket(fetch::byte_array::ConstByteArray const &address, uint16_t service,
+                         uint16_t channel, uint16_t counter, Payload const &payload)
   {
     PacketPtr packet_ = std::make_shared<Packet>(address, 0);
     packet_->SetService(service);
@@ -50,8 +50,8 @@ protected:
     return packet_;
   }
 
-  Prover prover_;
-  Payload response_;
+  Prover    prover_;
+  Payload   response_;
   PacketPtr packet_;
 };
 
@@ -126,11 +126,11 @@ TEST_F(PacketTests, CheckIndifference)
   EXPECT_TRUE(packet_->IsStamped());
   EXPECT_TRUE(packet_->Verify());
 
-  for(uint8_t ttl{255}; ttl > 0; --ttl)
+  for (uint8_t ttl{255}; ttl > 0; --ttl)
   {
-	  packet_->SetTTL(ttl);
-	  EXPECT_TRUE(packet_->IsStamped());
-	  EXPECT_TRUE(packet_->Verify());
+    packet_->SetTTL(ttl);
+    EXPECT_TRUE(packet_->IsStamped());
+    EXPECT_TRUE(packet_->Verify());
   }
   packet_->SetTTL(0);
   EXPECT_TRUE(packet_->IsStamped());

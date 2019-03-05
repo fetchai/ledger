@@ -27,12 +27,12 @@
 #include "network/muddle/muddle_register.hpp"
 #include "network/muddle/packet.hpp"
 
+#include <cstring>
 #include <iomanip>
 #include <memory>
 #include <random>
 #include <sstream>
 #include <utility>
-#include <cstring>
 
 static constexpr uint8_t DEFAULT_TTL = 40;
 
@@ -235,7 +235,7 @@ inline bool Router::Genuine(PacketPtr const &p) const
 
 Router::PacketPtr const &Router::Sign(PacketPtr const &p) const
 {
-  if(prover_)
+  if (prover_)
   {
     p->Sign(*prover_);
   }
@@ -263,35 +263,41 @@ void Router::Route(Handle handle, PacketPtr packet)
   if (packet->IsDirect())
   {
     // when it is a direct message we must handle this
-    if(Genuine(packet)) {
-	    DispatchDirect(handle, packet);
+    if (Genuine(packet))
+    {
+      DispatchDirect(handle, packet);
     }
-    else {
-	    FETCH_LOG_WARN(LOGGING_NAME, "I. Verify:", packet->Verify(), "; stamped: ", packet->IsStamped());
-	    FETCH_LOG_WARN(LOGGING_NAME, "Packet's authenticity not verified:", DescribePacket(*packet));
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "I. Verify:", packet->Verify(),
+                     "; stamped: ", packet->IsStamped());
+      FETCH_LOG_WARN(LOGGING_NAME, "Packet's authenticity not verified:", DescribePacket(*packet));
     }
   }
   else if (packet->GetTargetRaw() == address_)
   {
     // when the message is targetted at us we must handle it
-	  if (Genuine(packet)) {
-		  Address transmitter;
+    if (Genuine(packet))
+    {
+      Address transmitter;
 
-		  if (HandleToDirectAddress(handle, transmitter))
-		  {
-			  DispatchPacket(packet, transmitter);
-		  }
-		  else
-		  {
-			  // The connection has gone away while we were processing things so far.
-			  FETCH_LOG_WARN(LOGGING_NAME,
-					 "Cannot get transmitter address for packet: ", DescribePacket(*packet));
-		  }
-	  }
-	  else {
-	    FETCH_LOG_WARN(LOGGING_NAME, "II. Verify:", packet->Verify(), "; stamped: ", packet->IsStamped());
-	    FETCH_LOG_WARN(LOGGING_NAME, "Packet's authenticity not verified:", DescribePacket(*packet));
-	  }
+      if (HandleToDirectAddress(handle, transmitter))
+      {
+        DispatchPacket(packet, transmitter);
+      }
+      else
+      {
+        // The connection has gone away while we were processing things so far.
+        FETCH_LOG_WARN(LOGGING_NAME,
+                       "Cannot get transmitter address for packet: ", DescribePacket(*packet));
+      }
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "II. Verify:", packet->Verify(),
+                     "; stamped: ", packet->IsStamped());
+      FETCH_LOG_WARN(LOGGING_NAME, "Packet's authenticity not verified:", DescribePacket(*packet));
+    }
   }
   else
   {
@@ -903,8 +909,8 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
       // send back a direct response if that is required
       if (packet->IsExchange())
       {
-        SendToConnection(handle,
-                         Sign(FormatDirect(address_, network_id_, SERVICE_MUDDLE, CHANNEL_ROUTING)));
+        SendToConnection(
+            handle, Sign(FormatDirect(address_, network_id_, SERVICE_MUDDLE, CHANNEL_ROUTING)));
       }
     }
   }

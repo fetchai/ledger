@@ -415,7 +415,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
         // done before the thread pool dispatch)
         counters_.Set(Counters{0, slice_plan.size()});
 
-	auto self = shared_from_this();
+        auto self = shared_from_this();
         for (auto &item : slice_plan)
         {
           // create the closure and dispatch to the thread pool

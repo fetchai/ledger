@@ -137,7 +137,7 @@ public:
 
   static std::shared_ptr<Muddle> CreateMuddle(NetworkId                      network_id,
                                               fetch::network::NetworkManager tm,
-					      bool                           sign_packets = false)
+                                              bool                           sign_packets = false)
   {
     auto certificate{std::make_unique<crypto::ECDSASigner>()};
     certificate->GenerateKeys();
@@ -148,13 +148,14 @@ public:
   static std::shared_ptr<Muddle> CreateMuddle(NetworkId                             network_id,
                                               std::unique_ptr<crypto::Prover>       prover,
                                               fetch::network::NetworkManager const &tm,
-					      bool                                  sign_packets = false)
+                                              bool sign_packets = false)
   {
     return std::make_shared<Muddle>(network_id, std::move(prover), tm, sign_packets);
   }
 
   // Construction / Destruction
-  Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager const &nm, bool sign_packets = false);
+  Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager const &nm,
+         bool sign_packets = false);
   Muddle(Muddle const &) = delete;
   Muddle(Muddle &&)      = delete;
   /// @{
