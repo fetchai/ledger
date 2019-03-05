@@ -102,7 +102,7 @@ public:
   }
 
 private:
-  fetch::ml::MNISTLoader<float> loader_;
+  fetch::ml::MNISTLoader<fetch::math::Tensor<float>> loader_;
 };
 
 template <typename T>

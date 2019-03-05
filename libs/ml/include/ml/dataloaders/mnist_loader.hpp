@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 
 #include <exception>
@@ -30,7 +29,7 @@ namespace fetch {
 namespace ml {
 
 template <typename T>
-class MNISTLoader : public DataLoader<uint64_t, std::shared_ptr<fetch::math::Tensor<T>>>
+class MNISTLoader : public DataLoader<uint64_t, std::shared_ptr<T>>
 {
 public:
   MNISTLoader(std::string const &imagesFile, std::string const &labelsFile)
@@ -58,24 +57,23 @@ public:
     cursor_ = 0;
   }
 
-  virtual std::pair<uint64_t, std::shared_ptr<fetch::math::Tensor<T>>> GetNext()
+  virtual std::pair<uint64_t, std::shared_ptr<T>> GetNext()
   {
-    std::shared_ptr<fetch::math::Tensor<T>> buffer =
-        std::make_shared<fetch::math::Tensor<float>>(std::vector<std::uint64_t>({28u, 28u}));
+    std::shared_ptr<T> buffer = std::make_shared<T>(std::vector<std::uint64_t>({28u, 28u}));
     for (std::uint64_t i(0); i < 28 * 28; ++i)
     {
-      buffer->At(i) = T(data_[cursor_][i]) / 256.0f;
+      buffer->At(i) = typename T::Type(data_[cursor_][i]) / typename T::Type(256);
     }
     uint64_t label = (uint64_t)(labels_[cursor_]);
     cursor_++;
     return std::make_pair(label, buffer);
   }
 
-  void Display(std::shared_ptr<fetch::math::Tensor<float>> const &data) const
+  void Display(std::shared_ptr<T> const &data) const
   {
     for (std::uint64_t j(0); j < 784; ++j)
     {
-      std::cout << (data->At(j) > 0.5 ? char(219) : ' ') << ((j % 28 == 0) ? "\n" : "");
+      std::cout << (data->At(j) > typename T::Type(0.5) ? char(219) : ' ') << ((j % 28 == 0) ? "\n" : "");
     }
     std::cout << std::endl;
   }
