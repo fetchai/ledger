@@ -33,7 +33,7 @@ class Layer : public SubGraph<T>
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using WeightsInit  = typename fetch::ml::ops::WeightsInitialisation;
+  using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
 
   std::uint64_t in_size;
   std::uint64_t out_size;

@@ -150,12 +150,15 @@ public:
       {
         array->At(j) = typename ArrayType::Type(0);
       }
+      break;
     }
     case WeightsInitialisation::XAVIER_GLOROT:
     {
       XavierInitialisation(array, in_size, out_size);
+      break;
     }
     default:
+      std::cerr << "unrecognised weights initialisation" << std::endl;
       throw;
     }
   }
