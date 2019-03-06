@@ -17,29 +17,46 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "ml/dataloaders/dataloader.hpp"
 
-#include <memory>
-#include <utility>
+#include <vector>
 
-class MNISTLoader
+namespace fetch {
+namespace ml {
+
+template <typename DataType, typename LabelType>
+class TensorDataLoader : DataLoader<DataType, LabelType>
 {
-
 public:
-  MNISTLoader();
+  virtual std::pair<DataType, LabelType> GetNext()
+  {
+    return data_.at(cursor_++);
+  }
 
-  unsigned int size() const;
-  bool         IsDone() const;
-  void         Reset();
-  void         Display(std::shared_ptr<fetch::math::Tensor<float>> const &data) const;
+  virtual uint64_t Size() const
+  {
+    return data_.size();
+  }
 
-  std::pair<unsigned int, std::shared_ptr<fetch::math::Tensor<float>>> GetNext(
-      std::shared_ptr<fetch::math::Tensor<float>> buffer);
+  virtual bool IsDone() const
+  {
+    return (data_.empty() || cursor_ >= data_.size());
+  }
+
+  virtual void Reset()
+  {
+    cursor_ = 0;
+  }
+
+  void Add(std::pair<DataType, LabelType> const &data)
+  {
+    data_.push_back(data);
+  }
 
 private:
-  std::uint32_t cursor_;
-  std::uint32_t size_;
-
-  unsigned char **data_;
-  unsigned char * labels_;
+  uint64_t                                    cursor_ = 0;
+  std::vector<std::pair<DataType, LabelType>> data_;
 };
+
+}  // namespace ml
+}  // namespace fetch

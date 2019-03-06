@@ -17,9 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-
+#include "python/ml/dataloaders/py_mnist_loader.hpp"
 #include "python/ml/ops/py_fully_connected.hpp"
 #include "python/ml/ops/py_mean_square_error.hpp"
 #include "python/ml/ops/py_relu.hpp"
@@ -39,6 +37,7 @@ void BuildMLLibrary(pybind11::module &module)
   fetch::ml::ops::BuildRelu<T>("Relu", module);
   fetch::ml::ops::BuildFullyConnected<T>("FullyConnected", module);
   fetch::ml::ops::BuildMeanSquareError<T>("MeanSquareError", module);
+  fetch::ml::dataloaders::BuildMNISTLoader<T>("MNISTLoader", module);
 }
 
 }  // namespace ml
