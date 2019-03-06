@@ -46,12 +46,7 @@ public:
                                              ArrayPtrType                     errorSignal)
   {
     ASSERT(inputs.size() == 1);
-    std::shared_ptr<ArrayType> ret = std::make_shared<ArrayType>(input_shape_);
-    for (std::uint64_t i(0); i < ret->size(); ++i)
-    {
-      ret->At(i) = errorSignal->At(i);
-    }
-    return {ret};
+    return {errorSignal->Clone()->Transpose()};
   }
 
   static constexpr char const *DESCRIPTOR = "Transpose";

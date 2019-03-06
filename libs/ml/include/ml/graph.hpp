@@ -52,8 +52,7 @@ public:
     }
     else
     {
-      throw std::runtime_error(
-          std::string("Cannot evaluate: node [" + node_name + "] not in graph"));
+      throw std::runtime_error("Cannot evaluate: node [" + node_name + "] not in graph");
     }
   }
 

@@ -521,7 +521,7 @@ meta::IfIsNonBlasArray<ArrayType, void> Subtract(ArrayType const &array, ArrayTy
   }
   else
   {
-    throw;
+    throw std::runtime_error("broadcast subtraction for tensors more than 2D not yet handled");
   }
 }
 
