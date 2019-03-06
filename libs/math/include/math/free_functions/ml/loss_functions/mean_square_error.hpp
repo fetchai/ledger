@@ -30,14 +30,40 @@ typename ArrayType::Type MeanSquareError(ArrayType const &A, ArrayType const &B)
 {
   assert(A.shape() == B.shape());
   ArrayType tmp_array(A.shape());
+
   Subtract(A, B, tmp_array);
+  for (std::size_t j = 0; j < tmp_array.size(); ++j)
+  {
+    std::cout << "tmp_array[j]: " << tmp_array[j] << std::endl;
+  }
+
   Square(tmp_array);
 
+  for (std::size_t j = 0; j < tmp_array.size(); ++j)
+  {
+    std::cout << "tmp_array[j]: " << tmp_array[j] << std::endl;
+  }
+
   typename ArrayType::Type ret = Sum(tmp_array);
-  ret                          = Divide(ret, typename ArrayType::Type(A.size()));
+
+  std::cout << "ret: " << ret << std::endl;
+  for (std::size_t j = 0; j < tmp_array.size(); ++j)
+  {
+    std::cout << "tmp_array[j]: " << tmp_array[j] << std::endl;
+  }
+
+  ret = Divide(ret, typename ArrayType::Type(A.size()));
+
+  std::cout << "A.size(): " << A.size() << std::endl;
+  std::cout << "A.shape()[0]: " << A.shape()[0] << std::endl;
+
+  std::cout << "ret: " << ret << std::endl;
+
   // TODO(private 343)
   // division by 2 allows us to cancel out with a 2 in the derivative
   ret = Divide(ret, typename ArrayType::Type(2));
+  std::cout << "ret: " << ret << std::endl;
+
   return ret;
 }
 
