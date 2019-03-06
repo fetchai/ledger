@@ -62,6 +62,7 @@ int main(int ac, char **av)
 
   gt->At(0)         = 1.0;
   DataType     loss = 0;
+  unsigned int errorCount(0);
   unsigned int i(0);
 
   while (true)
@@ -75,15 +76,20 @@ int main(int ac, char **av)
     gt->Fill(0);
     gt->At(input.first)                = DataType(1.0);
     std::shared_ptr<ArrayType> results = g.Evaluate("Softmax");
-
     loss += criterion.Forward({results, gt});
+    if (results->At(input.first) < .5)
+    {
+      errorCount++;
+    }
     g.BackPropagate("Softmax", criterion.Backward({results, gt}));
     i++;
     if (i % 60 == 0)
     {
-      std::cout << "MiniBatch: " << i / 60 << " -- Loss : " << loss << std::endl;
+      std::cout << "MiniBatch: " << i / 60 << " -- Loss : " << loss
+                << " -- Correct: " << 60 - errorCount << " / 60" << std::endl;
       g.Step(0.01f);
-      loss = 0;
+      loss       = 0;
+      errorCount = 0;
     }
   }
   return 0;
