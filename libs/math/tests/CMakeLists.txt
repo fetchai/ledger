@@ -14,6 +14,8 @@ setup_compiler()
 add_fetch_test(combinatorics_gtest fetch-math math/combinatorics)
 
 add_fetch_test(free_functions_gtest fetch-math math/free_functions)
+add_fetch_test(activation_functions fetch-math math/ml_activation_functions)
+#add_fetch_test(loss_functions fetch-math math/ml_loss_functions)
 
 add_fetch_test(relu_gtest fetch-math math/kernels/relu)
 add_fetch_test(sign_gtest fetch-math math/kernels/sign)
