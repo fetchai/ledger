@@ -17,12 +17,12 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
+#include "ml/dataloaders/mnist_loader.hpp"
 #include "ml/graph.hpp"
+
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
-
-#include "mnist_loader.hpp"
 
 #include <iostream>
 
@@ -32,11 +32,18 @@ using namespace fetch::ml::layers;
 using DataType  = float;
 using ArrayType = fetch::math::Tensor<DataType>;
 
-int main()
+int main(int ac, char **av)
 {
+  if (ac < 3)
+  {
+    std::cout << "Usage : " << av[0]
+              << " PATH/TO/train-images-idx3-ubyte PATH/TO/train-labels-idx1-ubyte" << std::endl;
+    return 1;
+  }
+
   std::cout << "FETCH MNIST Demo" << std::endl;
-  MNISTLoader                 dataloader;
-  fetch::ml::Graph<ArrayType> g;
+  fetch::ml::MNISTLoader<ArrayType> dataloader(av[1], av[2]);
+  fetch::ml::Graph<ArrayType>       g;
 
   g.AddNode<PlaceHolder<ArrayType>>("Input", {});
   g.AddNode<FullyConnected<ArrayType>>("FC1", {"Input"}, 28u * 28u, 10u);
@@ -63,7 +70,7 @@ int main()
     {
       dataloader.Reset();
     }
-    input = dataloader.GetNext(input.second);
+    input = dataloader.GetNext();
     g.SetInput("Input", input.second);
     gt->Fill(0);
     gt->At(input.first)                = DataType(1.0);

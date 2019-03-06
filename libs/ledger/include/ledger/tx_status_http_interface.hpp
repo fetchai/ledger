@@ -17,29 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include "http/module.hpp"
 
-#include <memory>
-#include <utility>
+namespace fetch {
+namespace ledger {
 
-class MNISTLoader
+class TransactionStatusCache;
+
+class TxStatusHttpInterface : public http::HTTPModule
 {
-
 public:
-  MNISTLoader();
+  // Construction / Destruction
+  explicit TxStatusHttpInterface(TransactionStatusCache &status_cache);
+  TxStatusHttpInterface(TxStatusHttpInterface const &) = delete;
+  TxStatusHttpInterface(TxStatusHttpInterface &&)      = delete;
+  ~TxStatusHttpInterface()                             = default;
 
-  unsigned int size() const;
-  bool         IsDone() const;
-  void         Reset();
-  void         Display(std::shared_ptr<fetch::math::Tensor<float>> const &data) const;
-
-  std::pair<unsigned int, std::shared_ptr<fetch::math::Tensor<float>>> GetNext(
-      std::shared_ptr<fetch::math::Tensor<float>> buffer);
+  // Operators
+  TxStatusHttpInterface &operator=(TxStatusHttpInterface const &) = delete;
+  TxStatusHttpInterface &operator=(TxStatusHttpInterface &&) = delete;
 
 private:
-  std::uint32_t cursor_;
-  std::uint32_t size_;
-
-  unsigned char **data_;
-  unsigned char * labels_;
+  TransactionStatusCache &status_cache_;
 };
+
+}  // namespace ledger
+}  // namespace fetch

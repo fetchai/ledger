@@ -17,24 +17,46 @@
 //
 //------------------------------------------------------------------------------
 
-#include "python/fetch_pybind.hpp"
-#include <ml/layers/fully_connected.hpp>
+#include "ml/dataloaders/dataloader.hpp"
 
-namespace py = pybind11;
+#include <vector>
 
 namespace fetch {
 namespace ml {
-namespace ops {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+template <typename DataType, typename LabelType>
+class TensorDataLoader : DataLoader<DataType, LabelType>
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
-}
+public:
+  virtual std::pair<DataType, LabelType> GetNext()
+  {
+    return data_.at(cursor_++);
+  }
 
-}  // namespace ops
+  virtual uint64_t Size() const
+  {
+    return data_.size();
+  }
+
+  virtual bool IsDone() const
+  {
+    return (data_.empty() || cursor_ >= data_.size());
+  }
+
+  virtual void Reset()
+  {
+    cursor_ = 0;
+  }
+
+  void Add(std::pair<DataType, LabelType> const &data)
+  {
+    data_.push_back(data);
+  }
+
+private:
+  uint64_t                                    cursor_ = 0;
+  std::vector<std::pair<DataType, LabelType>> data_;
+};
+
 }  // namespace ml
 }  // namespace fetch

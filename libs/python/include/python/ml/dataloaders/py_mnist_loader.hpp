@@ -17,24 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/dataloaders/mnist_loader.hpp"
 #include "python/fetch_pybind.hpp"
-#include <ml/layers/fully_connected.hpp>
 
 namespace py = pybind11;
 
 namespace fetch {
 namespace ml {
-namespace ops {
+namespace dataloaders {
 
 template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+void BuildMNISTLoader(std::string const &custom_name, pybind11::module &module)
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
+  py::class_<fetch::ml::MNISTLoader<fetch::math::Tensor<T>>>(module, custom_name.c_str())
+      .def(py::init<std::string, std::string>())
+      .def("Size", &fetch::ml::MNISTLoader<fetch::math::Tensor<T>>::Size)
+      .def("IsDone", &fetch::ml::MNISTLoader<fetch::math::Tensor<T>>::IsDone)
+      .def("Reset", &fetch::ml::MNISTLoader<fetch::math::Tensor<T>>::Reset)
+      .def("Display", &fetch::ml::MNISTLoader<fetch::math::Tensor<T>>::Display)
+      .def("GetNext", &fetch::ml::MNISTLoader<fetch::math::Tensor<T>>::GetNext);
 }
 
-}  // namespace ops
+}  // namespace dataloaders
 }  // namespace ml
 }  // namespace fetch
