@@ -36,7 +36,6 @@ public:
   virtual ArrayPtrType Forward(std::vector<const ArrayPtrType> const &inputs)
   {
     ASSERT(inputs.size() == 1);
-    input_shape_ = inputs[0]->shape();
 
     this->output_ = std::make_shared<ArrayType>(inputs[0]);
     return this->output_->Transpose();
@@ -46,13 +45,10 @@ public:
                                              ArrayPtrType                     errorSignal)
   {
     ASSERT(inputs.size() == 1);
-    return {errorSignal->Clone()->Transpose()};
+    return {errorSignal->Clone().Transpose()};
   }
 
   static constexpr char const *DESCRIPTOR = "Transpose";
-
-private:
-  std::vector<std::uint64_t> input_shape_;
 };
 
 }  // namespace ops

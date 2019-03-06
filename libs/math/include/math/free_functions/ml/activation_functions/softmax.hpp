@@ -93,7 +93,7 @@ void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
     ArrayType cur_slice = array.Slice(i);
     ArrayType ret_slice = ret.Slice(i);
     Softmax1DImplementation(cur_slice, ret_slice);
-    ret.SetSlice(i, ret_slice);
+    ret.Slice(i).Copy(ret_slice);
   }
 }
 }  // namespace details
