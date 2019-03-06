@@ -44,10 +44,10 @@ public:
     }
 
     fetch::math::Softmax(*inputs[0], *this->output_);
-    
+
     std::cout << "this->output_->shape()[0]: " << this->output_->shape()[0] << std::endl;
     std::cout << "this->output_->shape()[1]: " << this->output_->shape()[1] << std::endl;
-    
+
     return this->output_;
   }
 

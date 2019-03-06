@@ -464,8 +464,10 @@ meta::IfIsNonBlasArray<ArrayType, void> Subtract(ArrayType const &array, ArrayTy
                                                  ArrayType &ret)
 {
   assert((array.size() == array2.size()) ||
-         ((array.shape()[0] == array2.shape()[0]) && ((array.shape()[1] == 1 ) || (array2.shape()[1] == 1))) ||
-         ((array.shape()[1] == array2.shape()[1]) && ((array.shape()[0] == 1 ) || (array2.shape()[0] == 1))));
+         ((array.shape()[0] == array2.shape()[0]) &&
+          ((array.shape()[1] == 1) || (array2.shape()[1] == 1))) ||
+         ((array.shape()[1] == array2.shape()[1]) &&
+          ((array.shape()[0] == 1) || (array2.shape()[0] == 1))));
   assert((array.size() == ret.size()) || (array2.size() == ret.size()));
 
   if (array.size() == array2.size())
@@ -521,7 +523,6 @@ meta::IfIsNonBlasArray<ArrayType, void> Subtract(ArrayType const &array, ArrayTy
   {
     throw;
   }
-
 }
 
 template <typename ArrayType>

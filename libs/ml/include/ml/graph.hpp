@@ -52,7 +52,8 @@ public:
     }
     else
     {
-      throw std::runtime_error(std::string("Cannot evaluate: node [" + node_name + "] not in graph"));
+      throw std::runtime_error(
+          std::string("Cannot evaluate: node [" + node_name + "] not in graph"));
     }
   }
 
@@ -95,7 +96,7 @@ public:
   {
     std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>> placeholder =
         std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<ArrayType>>(nodes_[nodeName]);
-    
+
     if (placeholder)
     {
       placeholder->SetData(data);
@@ -155,7 +156,7 @@ private:
   {
     if (!(nodes_.find(node_name) == nodes_.end()))
     {
-      throw;
+      throw std::runtime_error("node named [" + node_name + "] already exists");
     }
 
     nodes_[node_name] = op;

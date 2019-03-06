@@ -17,16 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
 #include "ml/layers/layer.hpp"
 
+#include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/add.hpp"
-#include "ml/ops/flatten.hpp"
-#include "ml/ops/transpose.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "ml/ops/weights.hpp"
+#include "ml/ops/transpose.hpp"
 
 #include <cmath>
 #include <random>
@@ -47,27 +45,39 @@ public:
     : Layer<T>(in, out)
   {
 
-    std::string input_name = this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
+    std::string input =
+        this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
 
+    // key & value dense layer
+    std::string query_name = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+        name + "_KEY_VAL", {input}, in, hidden);
 
-    std::string query_name = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(name + "_Query", {input_name}, in, hidden);
-    std::string key_name = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(name + "_Key", {input_name}, in, out);
-    std::string value_name = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(name + "_Value", {input_name}, in, out);
+    //////////////////////
+    /// attention part ///
+    //////////////////////
 
-    std::string flatten_query_name = this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_FlattenQuery", {query_name});
-    std::string flatten_key_name = this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_FlattenKey", {key_name});
-    std::string flatten_value_name = this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_FlattenValue", {value_name});
+    // query key matmul
+    std::string transpose_key = this->template AddNode<fetch::ml::ops::Transpose<ArrayType>>(
+        name + "_TransposeKey", {input});
+    std::string qk_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
+        name + "_Query_Key_MatMul", {input, transpose_key});
 
-    // calculate attention on input vector
-    std::string transpose_flatten_key_name = this->template AddNode<fetch::ml::ops::Transpose<ArrayType>>(name + "_TransposeFlattenKey", {flatten_key_name});
-    std::string qk_matmul_name = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(name + "_QKMatrixMultiply", {transpose_flatten_key_name, flatten_query_name});
-    std::string softmax_name = this->template AddNode<fetch::ml::ops::Softmax<ArrayType>>(name + "_Softmax", {qk_matmul_name});
+    // TODO(707) normalise by square root of vector length
 
-    // apply attention to input vector
-    std::string output_name = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(name + "_AVMatrixMultiply", {softmax_name, value_name});
+    // softmax
+    std::string attention_weights =
+        this->template AddNode<fetch::ml::ops::Softmax<ArrayType>>(name + "_Softmax", {qk_matmul});
 
-    this->AddInputNodes(input_name);
-    this->SetOutputNode(output_name);
+    // attention & value matmul
+    std::string weighted_value = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
+        name + "_Att_Val_MatMul", {attention_weights, input});
+
+    // residual connection to input
+    std::string output = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
+        name + "_ResidualConnection", {input, weighted_value});
+
+    this->AddInputNodes(input);
+    this->SetOutputNode(output);
   }
 
   static constexpr char const *DESCRIPTOR = "SelfAttention";

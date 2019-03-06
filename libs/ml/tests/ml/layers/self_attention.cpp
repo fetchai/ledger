@@ -43,9 +43,9 @@ TYPED_TEST(SelfAttentionTest, graph_forward_test)  // Use the class as a Node
   g.SetInput("Input", data);
 
   std::shared_ptr<TypeParam> prediction = g.Evaluate("SelfAttention");
-//  ASSERT_EQ(prediction->shape().size(), 2);
-//  ASSERT_EQ(prediction->shape()[0], 1);
-//  ASSERT_EQ(prediction->shape()[1], 42);
+  //  ASSERT_EQ(prediction->shape().size(), 2);
+  //  ASSERT_EQ(prediction->shape()[0], 1);
+  //  ASSERT_EQ(prediction->shape()[1], 42);
 }
 
 //

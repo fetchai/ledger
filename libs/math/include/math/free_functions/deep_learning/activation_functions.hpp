@@ -110,70 +110,82 @@ namespace details {
  */
 
 template <typename ArrayType>
-void SoftmaxImplementation(ArrayType const &array, ArrayType &ret)
+void Softmax1DImplementation(ArrayType const &array, ArrayType &ret)
 {
   assert(ret.size() == array.size());
+  assert(array.shape().size() == 1);
+  assert(ret.shape().size() == 1);
 
-  // by subtracting the max we improve numerical stability, and the result will be identical
-  std::vector<typename ArrayType::SizeType> arr_shape{array.shape()[0], 1};
-  ArrayType                                 array_max{arr_shape};
-  ArrayType                                 array_sum{arr_shape};
-
-  std::cout << "array.shape()[0]: " << array.shape()[0] << std::endl;
-  std::cout << "array.shape()[1]: " << array.shape()[1] << std::endl;
-  std::cout << "array_max.shape()[0]: " << array_max.shape()[0] << std::endl;
-  std::cout << "array_max.shape()[1]: " << array_max.shape()[1] << std::endl;
-
-  if (array.shape().size() == 1)
-  {
-    Max(array, 0, array_max);
-  }
-  else
-  {
-    Max(array, 1, array_max);
-  }
-
-  std::cout << "ret.shape()[0]: " << ret.shape()[0] << std::endl;
-  std::cout << "ret.shape()[1]: " << ret.shape()[1] << std::endl;
-
+  // subtract max for numerical stability
+  typename ArrayType::Type array_max = std::numeric_limits<typename ArrayType::Type>::lowest();
+  Max(array, array_max);
   Subtract(array, array_max, ret);
 
+  // softmax (Exp(x) / Sum(Exp(x)))
   Exp(ret);
+  typename ArrayType::Type array_sum = typename ArrayType::Type(0);
+  Sum(ret, array_sum);
 
-  std::cout << "array_sum.shape().size(): " << array_sum.shape().size() << std::endl;
-  std::cout << "array_sum.shape()[0]: " << array_sum.shape()[0] << std::endl;
-  std::cout << "array_sum.shape()[1]: " << array_sum.shape()[1] << std::endl;
-  std::cout << "ret.shape()[0]: " << ret.shape()[0] << std::endl;
-  std::cout << "ret.shape()[1]: " << ret.shape()[1] << std::endl;
+  Divide(ret, array_sum, ret);
+}
 
-  if (ret.shape().size() == 1)
-  {
-    Sum(ret, array_sum[0]);
-  }
-  else
-  {
-    Sum(ret, array_sum[0]);
-//    ReduceSum(ret, 1, array_sum);
-  }
+template <typename ArrayType>
+void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
+                             typename ArrayType::SizeType axis)
+{
+  assert(ret.size() == array.size());
+  assert(array.shape().size() == 2);
+  assert(ret.shape().size() == 2);
+  assert((axis == 0) || (axis == 1));
+  assert(axis == 0);  // arbitrary dimension slicing not yet implemented
 
-  for (std::size_t j = 0; j < ret.size(); ++j)
+  for (std::size_t i = 0; i < array.shape()[axis]; ++i)
   {
-    Divide(ret[j], array_sum[0], ret[j]);
+    ArrayType cur_slice = array.Slice(i);
+    ArrayType ret_slice = ret.Slice(i);
+    Softmax1DImplementation(cur_slice, ret_slice);
+    ret.SetSlice(i, ret_slice);
   }
 }
 }  // namespace details
 
 template <typename ArrayType>
+void Softmax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeType axis)
+{
+  assert(ret.size() == array.size());
+
+  if ((array.shape().size() == 1) && (ret.shape().size() == 1))
+  {
+    assert(axis == 0);
+    details::Softmax1DImplementation(array, ret);
+  }
+  else if ((array.shape().size() == 2) && (ret.shape().size() == 2))
+  {
+    details::Softmax2DImplementation(array, ret, axis);
+  }
+  else
+  {
+    throw std::runtime_error("softmax for nDimensions not yet handled");
+  }
+}
+template <typename ArrayType>
 void Softmax(ArrayType const &array, ArrayType &ret)
 {
   assert(ret.size() == array.size());
-  details::SoftmaxImplementation(array, ret);
+  Softmax(array, ret, typename ArrayType::SizeType(0));
+}
+template <typename ArrayType>
+ArrayType Softmax(ArrayType const &array, typename ArrayType::SizeType axis)
+{
+  ArrayType ret{array.size()};
+  Softmax(array, ret, axis);
+  return ret;
 }
 template <typename ArrayType>
 ArrayType Softmax(ArrayType const &array)
 {
   ArrayType ret{array.size()};
-  Softmax(array, ret);
+  Softmax(array, ret, 0);
   return ret;
 }
 

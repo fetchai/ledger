@@ -47,7 +47,8 @@ TYPED_TEST(SoftmaxTest, forward_test)
   std::shared_ptr<TypeParam>         prediction = op.Forward({data});
 
   // test correct values
-  ASSERT_TRUE(prediction->AllClose(*gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
+  ASSERT_TRUE(
+      prediction->AllClose(*gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }
 
 TYPED_TEST(SoftmaxTest, backward_test)

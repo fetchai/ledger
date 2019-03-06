@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/free_functions/fundamental_operators.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -24,40 +25,56 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Transpose : public fetch::ml::Ops<T>
+class Divide : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  Transpose()          = default;
-  virtual ~Transpose() = default;
+  Divide()          = default;
+  virtual ~Divide() = default;
 
+  /**
+   * elementwise multiplication
+   * @param inputs  left & right inputs to Divide
+   * @return
+   */
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
-    ASSERT(inputs.size() == 1);
-    input_shape_ = inputs[0]->shape();
+    assert(inputs.size() > 1);
+    for (std::size_t i = 1; i < inputs.size(); ++i)
+    {
+      assert(inputs[i]->shape() == inputs[i - 1]->shape());
+    }
 
-    this->output_ = std::make_shared<ArrayType>(inputs[0]->Transpose());
+    std::vector<std::uint64_t> outputShape(inputs[0]->shape());
+    if (!this->output_ || this->output_->shape() != outputShape)
+    {
+      this->output_ = std::make_shared<ArrayType>(outputShape);
+    }
+
+    fetch::math::Divide(inputs[0], inputs[1], this->output_);
+    if (inputs.size() > 2)
+    {
+      for (std::size_t i = 2; i < inputs.size(); ++i)
+      {
+        fetch::math::Divide(this->output_, inputs[i], this->output_);
+      }
+    }
+
     return this->output_;
   }
 
+  /**
+   * elementwise multiplication is not trainable - just pass the error signal back
+   */
   virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
                                              ArrayPtrType                     errorSignal)
   {
-    ASSERT(inputs.size() == 1);
-    std::shared_ptr<ArrayType> ret = std::make_shared<ArrayType>(input_shape_);
-    for (std::uint64_t i(0); i < ret->size(); ++i)
-    {
-      ret->At(i) = errorSignal->At(i);
-    }
-    return {ret};
+    return std::vector<ArrayPtrType>(inputs.size(), errorSignal);
   }
 
-  static constexpr char const *DESCRIPTOR = "Transpose";
-
-private:
-  std::vector<std::uint64_t> input_shape_;
+  static constexpr char const *DESCRIPTOR = "Divide";
 };
 
 }  // namespace ops
