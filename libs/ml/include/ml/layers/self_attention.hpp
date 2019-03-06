@@ -49,8 +49,10 @@ public:
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
 
     // key & value dense layer
+    std::string flat_input = this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(
+        name + "_Flatten_Input", {input});
     std::string query_name = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-        name + "_KEY_VAL", {input}, in, hidden);
+        name + "_KEY_VAL", {flat_input}, in, hidden);
 
     //////////////////////
     /// attention part ///
@@ -58,9 +60,9 @@ public:
 
     // query key matmul
     std::string transpose_key = this->template AddNode<fetch::ml::ops::Transpose<ArrayType>>(
-        name + "_TransposeKey", {input});
+        name + "_TransposeKey", {flat_input});
     std::string qk_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
-        name + "_Query_Key_MatMul", {input, transpose_key});
+        name + "_Query_Key_MatMul", {flat_input, transpose_key});
 
     // TODO(707) normalise by square root of vector length
 
@@ -70,11 +72,15 @@ public:
 
     // attention & value matmul
     std::string weighted_value = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
-        name + "_Att_Val_MatMul", {attention_weights, input});
+        name + "_Att_Val_MatMul", {attention_weights, flat_input});
 
     // residual connection to input
-    std::string output = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
-        name + "_ResidualConnection", {input, weighted_value});
+    std::string decoding = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
+        name + "_ResidualConnection", {flat_input, weighted_value});
+
+    // final dense output
+    std::string output = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+        name + "_OutputFC", {decoding}, in, out);
 
     this->AddInputNodes(input);
     this->SetOutputNode(output);

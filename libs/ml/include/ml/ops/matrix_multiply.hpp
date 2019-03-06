@@ -39,10 +39,6 @@ public:
     assert(inputs.size() == 2);
     assert(inputs[0]->shape().size() == 2);
     assert(inputs[1]->shape().size() == 2);
-    std::cout << "inputs[0]->shape()[0]: " << inputs[0]->shape()[0] << std::endl;
-    std::cout << "inputs[0]->shape()[1]: " << inputs[0]->shape()[1] << std::endl;
-    std::cout << "inputs[1]->shape()[0]: " << inputs[1]->shape()[0] << std::endl;
-    std::cout << "inputs[1]->shape()[1]: " << inputs[1]->shape()[1] << std::endl;
     assert(inputs[0]->shape()[1] == inputs[1]->shape()[0]);
 
     std::vector<std::uint64_t> outputShape({inputs[0]->shape()[0], inputs[1]->shape()[1]});
