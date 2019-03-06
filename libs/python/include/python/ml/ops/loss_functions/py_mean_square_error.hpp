@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/mean_square_error.hpp"
+#include "ml/ops/loss_functions/mean_square_error.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace py = pybind11;
