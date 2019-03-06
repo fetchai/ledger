@@ -17,25 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/mean_square_error.hpp"
-#include "python/fetch_pybind.hpp"
-
-namespace py = pybind11;
-
-namespace fetch {
-namespace ml {
-namespace ops {
-
-template <typename T>
-void BuildMeanSquareError(std::string const &custom_name, pybind11::module &module)
-{
-  py::class_<fetch::ml::ops::MeanSquareErrorLayer<fetch::math::Tensor<T>>>(module,
-                                                                           custom_name.c_str())
-      .def(py::init<>())
-      .def("Forward", &fetch::ml::ops::MeanSquareErrorLayer<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::ops::MeanSquareErrorLayer<fetch::math::Tensor<T>>::Backward);
-}
-
-}  // namespace ops
-}  // namespace ml
-}  // namespace fetch
+#include "math/free_functions/ml/loss_functions/cross_entropy.hpp"
+#include "math/free_functions/ml/loss_functions/l2_norm.hpp"
+#include "math/free_functions/ml/loss_functions/mean_square_error.hpp"
+#include "math/free_functions/ml/loss_functions/softmax_cross_entropy.hpp"

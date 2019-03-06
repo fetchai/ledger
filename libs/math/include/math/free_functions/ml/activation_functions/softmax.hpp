@@ -37,63 +37,12 @@
 #include "math/free_functions/standard_functions/remainder.hpp"
 
 #include "math/free_functions/comparison/comparison.hpp"
-#include "math/free_functions/deep_learning/loss_functions.hpp"
 #include "math/free_functions/exponentiation/exponentiation.hpp"
 #include "math/free_functions/matrix_operations/matrix_operations.hpp"
 #include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
 namespace math {
-
-template <typename T, typename C>
-class ShapelessArray;
-
-template <typename T, typename C>
-T Max(ShapelessArray<T, C> const &array);
-
-/**
- *
- * @param x
- */
-template <typename ArrayType>
-void ApproxLogistic(ArrayType &x)
-{
-  kernels::ApproxLogistic<typename ArrayType::vector_register_type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * rectified linear activation function
- * @param x
- */
-template <typename ArrayType>
-void Relu(ArrayType &x)
-{
-  kernels::Relu<typename ArrayType::vector_register_type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * The sigmoid function
- * @tparam ArrayType
- * @tparam T
- * @param y
- * @param y_hat
- * @param ret
- */
-template <typename ArrayType>
-ArrayType Sigmoid(ArrayType const &A)
-{
-  ArrayType ret{A.shape()};
-  ret.Copy(A);
-
-  Multiply(typename ArrayType::Type(-1.0), ret, ret);
-  Exp(ret);
-  Add(ret, typename ArrayType::Type(1.0), ret);
-  Divide(typename ArrayType::Type(1.0), ret, ret);
-
-  return ret;
-}
 
 /**
  * softmax over all data in shapelessarray

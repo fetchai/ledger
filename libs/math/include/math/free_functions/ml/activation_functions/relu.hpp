@@ -17,18 +17,34 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-
 #include "math/free_functions/comparison/comparison.hpp"
-#include "math/free_functions/exponentiation/exponentiation.hpp"
-#include "math/free_functions/fundamental_operators.hpp"
-#include "math/free_functions/iteration/iteration.hpp"
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
-#include "math/free_functions/ml/activation_functions.hpp"
-#include "math/free_functions/ml/loss_functions.hpp"
-#include "math/free_functions/numerical_decomposition/numerical_decomposition.hpp"
-#include "math/free_functions/precision/precision.hpp"
-#include "math/free_functions/sign_functionality/sign_functionality.hpp"
-#include "math/free_functions/statistics/distributions.hpp"
-#include "math/free_functions/trigonometry/trigonometry.hpp"
-#include "math/free_functions/type/type_identification.hpp"
+
+namespace fetch {
+namespace math {
+
+/**
+ * Rectified linear unit
+ * @tparam ArrayType
+ * @param t
+ * @param ret
+ */
+template <typename ArrayType>
+void Relu(ArrayType const &t, ArrayType &ret)
+{
+  assert(t.size() == ret.size());
+  for (typename ArrayType::SizeType j = 0; j < t.size(); ++j)
+  {
+    ret[j] = fetch::math::Max(t[j], typename ArrayType::Type(0));
+  }
+}
+
+template <typename ArrayType>
+ArrayType Relu(ArrayType &t)
+{
+  ArrayType ret(t.shape());
+  Relu(t, ret);
+  return ret;
+}
+
+}  // namespace math
+}  // namespace fetch

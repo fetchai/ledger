@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/mean_square_error.hpp"
+#include "ml/ops/loss_functions/mean_square_error.hpp"
 #include "core/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
@@ -42,7 +42,7 @@ TYPED_TEST(MeanSquareErrorTest, perfect_match_forward_test)
     i++;
   }
 
-  fetch::ml::ops::MeanSquareErrorLayer<TypeParam> op;
+  fetch::ml::ops::MeanSquareError<TypeParam> op;
   EXPECT_EQ(op.Forward({data1, data2}), typename TypeParam::Type(0));
 }
 
@@ -63,7 +63,7 @@ TYPED_TEST(MeanSquareErrorTest, one_dimensional_forward_test)
     i++;
   }
 
-  fetch::ml::ops::MeanSquareErrorLayer<TypeParam> op;
+  fetch::ml::ops::MeanSquareError<TypeParam> op;
   ASSERT_FLOAT_EQ(float(op.Forward({data1, data2})), 191.18f / 8.0f / 2.0f);
   // fetch::math::MeanSquareError divided sum by number of element (ie 8 in this case)
   // and then further didivde by do (cf issue 343)
@@ -93,7 +93,7 @@ TYPED_TEST(MeanSquareErrorTest, one_dimensional_backward_test)
     i++;
   }
 
-  fetch::ml::ops::MeanSquareErrorLayer<TypeParam> op;
+  fetch::ml::ops::MeanSquareError<TypeParam> op;
   EXPECT_TRUE(op.Backward({data1, data2})
                   ->AllClose(*gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }
