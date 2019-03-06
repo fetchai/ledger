@@ -18,6 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/placeholder.hpp"
+#include "ml/state_dict.hpp"
+
 #include <random>
 
 namespace fetch {
@@ -36,44 +38,6 @@ enum class WeightsInitialisation
 };
 
 /**
- * A utility class to extract the network trainable parameter and serialize them for saving /
- * sharing
- * @tparam T
- */
-template <class T>
-struct StateDict
-{
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  ArrayPtrType                        weights_;
-  std::map<std::string, StateDict<T>> dict_;
-
-  bool operator==(StateDict<T> const &o) const
-  {
-    return !((bool(weights_) ^ bool(o.weights_)) || (weights_ && (*weights_ != *(o.weights_))) ||
-             (dict_ != o.dict_));
-  }
-
-  StateDict &Merge(StateDict const &o, float ratio = .5f)
-  {
-    assert(ratio >= 0.0f && ratio <= 1.0f);
-    if (ratio > 0)
-    {
-      if (weights_)
-      {
-        weights_->InlineMultiply(typename ArrayType::Type(1.0f - ratio));
-        weights_->InlineAdd(o.weights_->Clone().InlineMultiply(typename ArrayType::Type(ratio)));
-      }
-      for (auto &e : dict_)
-      {
-        e.second.Merge(o.dict_.at(e.first));
-      }
-    }
-    return *this;
-  }
-};
-
-/**
  * Provide an interface for any trainable ops
  * @tparam T passes tensors to graph during update step
  */
@@ -84,9 +48,9 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual void                Step(typename T::Type learningRate)                            = 0;
-  virtual struct StateDict<T> StateDict() const                                              = 0;
-  virtual void                LoadStateDict(struct fetch::ml::ops::StateDict<T> const &dict) = 0;
+  virtual void                           Step(typename T::Type learningRate) = 0;
+  virtual struct fetch::ml::StateDict<T> StateDict() const                   = 0;
+  virtual void LoadStateDict(struct fetch::ml::StateDict<T> const &dict)     = 0;
 };
 
 template <class T>
@@ -137,9 +101,9 @@ public:
    * constructs a state dictionary used for exporting/saving weights
    * @return
    */
-  virtual struct StateDict<T> StateDict() const
+  virtual struct fetch::ml::StateDict<T> StateDict() const
   {
-    struct fetch::ml::ops::StateDict<T> d;
+    struct fetch::ml::StateDict<T> d;
     d.weights_ = this->output_;
     return d;
   }
@@ -149,7 +113,7 @@ public:
    * @param dict
    */
   virtual void
-  LoadStateDict(struct fetch::ml::ops::StateDict<T> const &dict)
+  LoadStateDict(struct fetch::ml::StateDict<T> const &dict)
   {
     assert(dict.dict_.empty());
     SetData(dict.weights_);

@@ -117,9 +117,9 @@ public:
   }
 
   // Returns the graph trainable parameters as a nested structure for serializing
-  virtual struct ops::StateDict<ArrayType> StateDict() const
+  virtual struct fetch::ml::StateDict<ArrayType> StateDict() const
   {
-    struct ops::StateDict<ArrayType> d;
+    struct fetch::ml::StateDict<ArrayType> d;
     for (auto const &t : trainable_)
     {
       d.dict_.emplace(t.first, t.second->StateDict());
@@ -129,7 +129,7 @@ public:
 
   // Import trainable parameters from an exported model
   virtual void
-  LoadStateDict(struct ops::StateDict<T> const &dict)
+  LoadStateDict(struct fetch::ml::StateDict<T> const &dict)
   {
     assert(!dict.weights_);
     for (auto const &t : trainable_)

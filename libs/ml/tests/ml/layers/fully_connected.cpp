@@ -138,7 +138,7 @@ TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
 TYPED_TEST(FullyConnectedTest, getStateDict)
 {
   fetch::ml::layers::FullyConnected<TypeParam> fc(50, 10, "FCTest");
-  fetch::ml::ops::StateDict<TypeParam>         sd = fc.StateDict();
+  fetch::ml::StateDict<TypeParam>              sd = fc.StateDict();
 
   EXPECT_EQ(sd.weights_, nullptr);
   EXPECT_EQ(sd.dict_.size(), 2);

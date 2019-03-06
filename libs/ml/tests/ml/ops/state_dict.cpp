@@ -34,8 +34,8 @@ TYPED_TEST_CASE(StateDictTest, MyTypes);
 
 TYPED_TEST(StateDictTest, empty_merge_test)
 {
-  fetch::ml::ops::StateDict<TypeParam> a;
-  fetch::ml::ops::StateDict<TypeParam> b;
+  fetch::ml::StateDict<TypeParam> a;
+  fetch::ml::StateDict<TypeParam> b;
 
   EXPECT_FALSE(a.weights_);
   EXPECT_FALSE(b.weights_);
@@ -50,8 +50,8 @@ TYPED_TEST(StateDictTest, empty_merge_test)
 
 TYPED_TEST(StateDictTest, merge_test)
 {
-  fetch::ml::ops::StateDict<TypeParam> a;
-  fetch::ml::ops::StateDict<TypeParam> b;
+  fetch::ml::StateDict<TypeParam> a;
+  fetch::ml::StateDict<TypeParam> b;
   a.weights_ = std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 5}));
   b.weights_ = std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 5}));
   a.weights_->Fill(typename TypeParam::Type(5));
@@ -71,8 +71,8 @@ TYPED_TEST(StateDictTest, merge_test)
 
 TYPED_TEST(StateDictTest, nested_merge_test)
 {
-  fetch::ml::ops::StateDict<TypeParam> a;
-  fetch::ml::ops::StateDict<TypeParam> b;
+  fetch::ml::StateDict<TypeParam> a;
+  fetch::ml::StateDict<TypeParam> b;
   a.dict_["next1"].dict_["nest2"].weights_ =
       std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 5}));
   b.dict_["next1"].dict_["nest2"].weights_ =
