@@ -325,18 +325,6 @@ public:
     return ret;
   }
 
-  /*
-   * Assign a slice of the tensor along the first dimension
-   */
-  void SetSlice(SizeType i, SelfType const &other)
-  {
-    assert(shape_.size() > 1 && i < shape_[0]);
-    for (std::size_t j = 0; j < shape_[1]; ++j)
-    {
-      this->Set({i, j}, other[j]);
-    }
-  }
-
   std::shared_ptr<const std::vector<T>> Storage() const
   {
     return storage_;

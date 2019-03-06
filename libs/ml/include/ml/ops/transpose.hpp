@@ -33,13 +33,13 @@ public:
   Transpose()          = default;
   virtual ~Transpose() = default;
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayPtrType Forward(std::vector<const ArrayPtrType> const &inputs)
   {
     ASSERT(inputs.size() == 1);
     input_shape_ = inputs[0]->shape();
 
-    this->output_ = std::make_shared<ArrayType>(inputs[0]->Transpose());
-    return this->output_;
+    this->output_ = std::make_shared<ArrayType>(inputs[0]);
+    return this->output_->Transpose();
   }
 
   virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
