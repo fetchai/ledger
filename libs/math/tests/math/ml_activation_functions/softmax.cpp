@@ -105,6 +105,6 @@ TYPED_TEST(SoftmaxTest, exact_values_test)
   fetch::math::Softmax(test_array, test_array);
 
   // test correct values
-  ASSERT_TRUE(test_array.AllClose(gt_array, typename TypeParam::Type(1e-10),
-                                  typename TypeParam::Type(1e-10)));
+  ASSERT_TRUE(test_array.AllClose(gt_array, typename TypeParam::Type(1e-5),
+                                  typename TypeParam::Type(1e-5)));
 }
