@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/deep_learning/activation_functions.hpp"
+#include "math/free_functions/ml/activation_functions/softmax.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {

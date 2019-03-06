@@ -76,6 +76,8 @@
 #include "python/auctions/py_item.hpp"
 #include "python/auctions/py_mock_smart_ledger.hpp"
 
+#include "python/serializers/py_byte_array_buffer.hpp"
+
 // !!!!
 namespace py = pybind11;
 
@@ -103,6 +105,7 @@ PYBIND11_MODULE(fetch, module)
   py::module ns_fetch_byte_array       = module.def_submodule("byte_array");
   py::module ns_fetch_math_linalg      = ns_fetch_math.def_submodule("linalg");
   py::module ns_fetch_auctions         = module.def_submodule("auctions");
+  py::module ns_fetch_serializer       = module.def_submodule("serializers");
 
   fetch::math::BuildTensor<float>("TensorFloat", ns_fetch_math_tensor);
   fetch::math::BuildTensor<double>("TensorDouble", ns_fetch_math_tensor);
@@ -262,4 +265,6 @@ PYBIND11_MODULE(fetch, module)
   fetch::auctions::BuildBid("Bid", ns_fetch_auctions);
 
   fetch::auctions::BuildMockSmartLedger("MockSmartLedger", ns_fetch_auctions);
+
+  fetch::serializers::BuildByteArrayBuffer(ns_fetch_serializer);
 }

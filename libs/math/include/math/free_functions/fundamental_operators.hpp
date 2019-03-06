@@ -110,27 +110,31 @@ meta::IfIsFixedPoint<S, S> Add(S const &scalar1, S const &scalar2)
   return ret;
 }
 
-template <typename T, typename ArrayType>
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapeArray<ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
 {
   ArrayType ret{array.shape()};
   Add(array, scalar, ret);
   return ret;
 }
-template <typename T, typename ArrayType>
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapelessArray<ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
 {
   ArrayType ret{array.size()};
   Add(array, scalar, ret);
   return ret;
 }
-template <typename T, typename ArrayType>
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathArray<ArrayType, ArrayType> Add(T const &scalar, ArrayType const &array)
 {
   return Add(array, scalar);
 }
 
-template <typename T, typename ArrayType>
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathArray<ArrayType, void> Add(T const &scalar, ArrayType const &array, ArrayType &ret)
 {
   ret = Add(array, scalar, ret);
@@ -161,13 +165,8 @@ meta::IfIsArithmetic<S, void> Add(S const &scalar1, S const &scalar2, S &ret)
   ret = scalar1 + scalar2;
 }
 
-template <typename S>
-meta::IfIsFixedPoint<S, void> Add(S const &scalar1, S const &scalar2, S &ret)
-{
-  ret = scalar1 + scalar2;
-}
-
-template <typename T, typename ArrayType>
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsNonBlasArray<ArrayType, void> Add(ArrayType const &array, T const &scalar, ArrayType &ret)
 {
   assert(array.size() == ret.size());
@@ -177,7 +176,8 @@ meta::IfIsNonBlasArray<ArrayType, void> Add(ArrayType const &array, T const &sca
   }
 }
 
-template <typename T, typename ArrayType>
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathFixedPointArray<ArrayType, void> Add(ArrayType const &array, T const &scalar,
                                                    ArrayType &ret)
 {
@@ -188,7 +188,8 @@ meta::IfIsMathFixedPointArray<ArrayType, void> Add(ArrayType const &array, T con
   }
 }
 
-template <typename T, typename ArrayType>
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsBlasArray<ArrayType, void> Add(ArrayType const &array, T const &scalar, ArrayType &ret)
 {
   assert(array.size() == ret.size());
@@ -288,21 +289,24 @@ meta::IfIsMath<OtherType, void> operator+=(OtherType &left, OtherType const &rig
 /// INTERFACE ///
 /////////////////
 
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapeArray<ArrayType, ArrayType> Subtract(T const &scalar, ArrayType const &array)
 {
   ArrayType ret{array.shape()};
   Subtract(scalar, array, ret);
   return ret;
 }
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapeArray<ArrayType, ArrayType> Subtract(ArrayType const &array, T const &scalar)
 {
   ArrayType ret{array.shape()};
   Subtract(array, scalar, ret);
   return ret;
 }
-template <typename T, typename ArrayType>
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapelessArray<ArrayType, ArrayType> Subtract(ArrayType const &array, T const &scalar)
 {
   ArrayType ret{array.size()};
@@ -343,12 +347,21 @@ meta::IfIsMathShapeArray<ArrayType, ArrayType> Subtract(ArrayType const &    obj
   Subtract(obj1, obj2, range, ret);
   return ret;
 }
-
+template <typename ArrayType>
+meta::IfIsMathShapeArray<ArrayType, ArrayType> Subtract(ArrayType const &obj1,
+                                                        ArrayType const &obj2)
+{
+  assert(obj1.size() == obj2.size());
+  ArrayType ret{obj1.shape()};
+  Subtract(obj1, obj2, ret);
+  return ret;
+}
 //////////////////////
 /// IMPLEMENTATION ///
 //////////////////////
 
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapeArray<ArrayType, void> Subtract(T const &scalar, ArrayType const &array,
                                                    ArrayType &ret)
 {
@@ -359,7 +372,8 @@ meta::IfIsMathShapeArray<ArrayType, void> Subtract(T const &scalar, ArrayType co
     ret.At(i) = scalar - array.At(i);
   }
 }
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapelessArray<ArrayType, void> Subtract(T const &scalar, ArrayType const &array,
                                                        ArrayType &ret)
 {
@@ -370,7 +384,8 @@ meta::IfIsMathShapelessArray<ArrayType, void> Subtract(T const &scalar, ArrayTyp
   }
 }
 
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathFixedPointArray<ArrayType, void> Subtract(ArrayType const &array, T const &scalar,
                                                         ArrayType &ret)
 {
@@ -380,7 +395,8 @@ meta::IfIsMathFixedPointArray<ArrayType, void> Subtract(ArrayType const &array, 
     ret.At(i) = array.At(i) - scalar;
   }
 }
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsNonBlasArray<ArrayType, void> Subtract(ArrayType const &array, T const &scalar,
                                                  ArrayType &ret)
 {
@@ -399,7 +415,8 @@ meta::IfIsNonBlasArray<ArrayType, void> Subtract(ArrayType const &array, T const
  * @param scalar
  * @param ret
  */
-template <typename T, typename ArrayType>
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsBlasArray<ArrayType, void> Subtract(ArrayType const &array, T const &scalar,
                                               ArrayType &ret)
 {
@@ -414,7 +431,7 @@ meta::IfIsBlasArray<ArrayType, void> Subtract(ArrayType const &array, T const &s
       array.data());
 }
 
-template <typename T, typename C>
+template <typename T, typename C, typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapelessArray<ShapelessArray<T, C>, void> Subtract(T const &scalar,
                                                                   ShapelessArray<T, C> const &array,
                                                                   ShapelessArray<T, C> &      ret)
@@ -565,108 +582,6 @@ fetch::meta::IfIsArithmetic<S, S> Subtract(S const &scalar1, S const &scalar2)
 /// Multiply ///
 ////////////////
 
-//////////////////
-/// INTERFACES ///
-//////////////////
-
-template <typename ArrayType, typename T>
-meta::IfIsMathArray<ArrayType, void> Multiply(T const &scalar, ArrayType const &array,
-                                              ArrayType &ret)
-{
-  Multiply(array, scalar, ret);
-}
-template <typename ArrayType, typename T>
-meta::IfIsMathArray<ArrayType, ArrayType> Multiply(T const &scalar, ArrayType const &array)
-{
-  return Multiply(array, scalar);
-}
-template <typename ArrayType, typename T>
-meta::IfIsMathShapeArray<ArrayType, ArrayType> Multiply(ArrayType const &array, T const &scalar)
-{
-  ArrayType ret{array.shape()};
-  Multiply(array, scalar, ret);
-  return ret;
-}
-template <typename ArrayType, typename T>
-meta::IfIsMathShapelessArray<ArrayType, ArrayType> Multiply(ArrayType const &array, T const &scalar)
-{
-  ArrayType ret{array.size()};
-  Multiply(array, scalar, ret);
-  return ret;
-}
-
-template <typename ArrayType>
-meta::IfIsMathShapelessArray<ArrayType, ArrayType> Multiply(ArrayType const &    obj1,
-                                                            ArrayType const &    obj2,
-                                                            memory::Range const &range)
-{
-  ArrayType ret{obj1.size()};
-  Multiply(obj1, obj2, range, ret);
-  return ret;
-}
-template <typename ArrayType>
-meta::IfIsMathFixedPointArray<ArrayType, void> Multiply(ArrayType const &obj1,
-                                                        ArrayType const &obj2, ArrayType &ret)
-{
-  details::Multiply(obj1, obj2, ret);
-}
-template <typename ArrayType>
-meta::IfIsNonBlasArray<ArrayType, void> Multiply(ArrayType const &obj1, ArrayType const &obj2,
-                                                 ArrayType &ret)
-{
-  details::Multiply(obj1, obj2, ret);
-}
-
-template <typename ArrayType>
-meta::IfIsBlasArray<ArrayType, void> Multiply(ArrayType const &obj1, ArrayType const &obj2,
-                                              ArrayType &ret)
-{
-  memory::Range range{0, std::min(obj1.data().size(), obj2.data().size()), 1};
-  Multiply(obj1, obj2, range, ret);
-}
-
-template <typename ArrayType>
-meta::IfIsMathShapelessArray<ArrayType, ArrayType> Multiply(ArrayType const &obj1,
-                                                            ArrayType const &obj2)
-{
-  assert(obj1.size() == obj2.size());
-  ArrayType ret{obj1.size()};
-  Multiply(obj1, obj2, ret);
-  return ret;
-}
-template <typename ArrayType>
-meta::IfIsMathFixedPointArray<ArrayType, ArrayType> Multiply(ArrayType const &obj1,
-                                                             ArrayType const &obj2)
-{
-  assert(obj1.size() == obj2.size());
-  ArrayType ret{obj1.size()};
-  Multiply(obj1, obj2, ret);
-  return ret;
-}
-
-template <typename ArrayType>
-meta::IfIsMathShapeArray<ArrayType, void> Multiply(ArrayType const &array1, ArrayType const &array2,
-                                                   ArrayType &ret)
-{
-  memory::Range range{0, std::min(array1.data().size(), array2.data().size()), 1};
-  Multiply(array1, array2, range, ret);
-}
-template <typename ArrayType>
-meta::IfIsMathShapeArray<ArrayType, ArrayType> Multiply(ArrayType const &array1,
-                                                        ArrayType const &array2)
-{
-  ArrayType ret{array1.shape()};
-  Multiply(array1, array2, ret);
-  return ret;
-}
-template <typename S>
-meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
-{
-  S ret;
-  Multiply(scalar1, scalar2, ret);
-  return ret;
-}
-
 //////////////////////////////////
 /// MULTIPLY - IMPLEMENTATIONS ///
 //////////////////////////////////
@@ -679,7 +594,8 @@ meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
  * @param scalar
  * @param ret
  */
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsBlasArray<ArrayType, void> Multiply(ArrayType const &array, T const &scalar,
                                               ArrayType &ret)
 {
@@ -692,18 +608,20 @@ meta::IfIsBlasArray<ArrayType, void> Multiply(ArrayType const &array, T const &s
       array.data());
 }
 
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsNonBlasArray<ArrayType, void> Multiply(ArrayType const &array, T const &scalar,
                                                  ArrayType &ret)
 {
   assert(array.size() == ret.size());
   for (std::size_t i = 0; i < ret.size(); ++i)
   {
-    ret.Set(i, array.At(i) * scalar);
+    ret.Set(i, array.At(i) * typename ArrayType::Type(scalar));
   }
 }
 
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathFixedPointArray<ArrayType, void> Multiply(ArrayType const &array, T const &scalar,
                                                         ArrayType &ret)
 {
@@ -784,6 +702,104 @@ template <typename S>
 meta::IfIsArithmetic<S, void> Multiply(S const &scalar1, S const &scalar2, S &ret)
 {
   ret = scalar1 * scalar2;
+}
+
+//////////////////
+/// INTERFACES ///
+//////////////////
+
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
+meta::IfIsMathArray<ArrayType, void> Multiply(T const &scalar, ArrayType const &array,
+                                              ArrayType &ret)
+{
+  Multiply(array, scalar, ret);
+}
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
+meta::IfIsMathArray<ArrayType, ArrayType> Multiply(T const &scalar, ArrayType const &array)
+{
+  return Multiply(array, scalar);
+}
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
+meta::IfIsMathShapeArray<ArrayType, ArrayType> Multiply(ArrayType const &array, T const &scalar)
+{
+  ArrayType ret{array.shape()};
+  Multiply(array, scalar, ret);
+  return ret;
+}
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
+meta::IfIsMathShapelessArray<ArrayType, ArrayType> Multiply(ArrayType const &array, T const &scalar)
+{
+  ArrayType ret{array.size()};
+  Multiply(array, scalar, ret);
+  return ret;
+}
+
+template <typename ArrayType>
+meta::IfIsMathShapelessArray<ArrayType, ArrayType> Multiply(ArrayType const &    obj1,
+                                                            ArrayType const &    obj2,
+                                                            memory::Range const &range)
+{
+  ArrayType ret{obj1.size()};
+  Multiply(obj1, obj2, range, ret);
+  return ret;
+}
+template <typename ArrayType>
+meta::IfIsMathFixedPointArray<ArrayType, void> Multiply(ArrayType const &obj1,
+                                                        ArrayType const &obj2, ArrayType &ret)
+{
+  details::Multiply(obj1, obj2, ret);
+}
+template <typename ArrayType>
+meta::IfIsNonBlasArray<ArrayType, void> Multiply(ArrayType const &obj1, ArrayType const &obj2,
+                                                 ArrayType &ret)
+{
+  details::Multiply(obj1, obj2, ret);
+}
+
+template <typename ArrayType>
+meta::IfIsBlasArray<ArrayType, void> Multiply(ArrayType const &obj1, ArrayType const &obj2,
+                                              ArrayType &ret)
+{
+  memory::Range range{0, std::min(obj1.data().size(), obj2.data().size()), 1};
+  Multiply(obj1, obj2, range, ret);
+}
+
+template <typename ArrayType>
+meta::IfIsMathShapelessArray<ArrayType, ArrayType> Multiply(ArrayType const &obj1,
+                                                            ArrayType const &obj2)
+{
+  assert(obj1.size() == obj2.size());
+  ArrayType ret{obj1.size()};
+  Multiply(obj1, obj2, ret);
+  return ret;
+}
+template <typename ArrayType>
+meta::IfIsMathFixedPointArray<ArrayType, ArrayType> Multiply(ArrayType const &obj1,
+                                                             ArrayType const &obj2)
+{
+  assert(obj1.size() == obj2.size());
+  ArrayType ret{obj1.size()};
+  Multiply(obj1, obj2, ret);
+  return ret;
+}
+template <typename ArrayType>
+meta::IfIsMathNonFixedPointShapeArray<ArrayType, ArrayType> Multiply(ArrayType const &array1,
+                                                                     ArrayType const &array2)
+{
+  ArrayType ret{array1.shape()};
+  Multiply(array1, array2, ret);
+  return ret;
+}
+template <typename S>
+meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
+{
+  S ret;
+  Multiply(scalar1, scalar2, ret);
+  return ret;
 }
 
 //////////////

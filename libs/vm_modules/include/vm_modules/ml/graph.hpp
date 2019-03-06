@@ -22,7 +22,6 @@
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
-#include "ml/ops/mean_square_error.hpp"
 
 #include "vm/module.hpp"
 

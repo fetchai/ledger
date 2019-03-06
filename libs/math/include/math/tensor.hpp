@@ -132,12 +132,15 @@ public:
   }
 
   /**
-   * Copy from another tensor
+   * Copy data from another tensor into this one
+   * assumes relevant stride/offset etc. are still applicable
    * @param other
    * @return
    */
   void Copy(SelfType const &other)
   {
+    assert(other.size() == this->size());
+
     for (std::size_t j = 0; j < this->size(); ++j)
     {
       this->At(j) = other.At(j);

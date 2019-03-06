@@ -17,25 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include <ml/layers/fully_connected.hpp>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-
-namespace py = pybind11;
+#include <memory>
+#include <utility>
 
 namespace fetch {
 namespace ml {
-namespace ops {
 
-template <typename T>
-void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+template <typename DataType, typename LabelType>
+class DataLoader
 {
-  py::class_<fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>>(module, custom_name.c_str())
-      .def(py::init<size_t, size_t>())
-      .def("Forward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Forward)
-      .def("Backward", &fetch::ml::layers::FullyConnected<fetch::math::Tensor<T>>::Backward);
-}
+public:
+  virtual std::pair<DataType, LabelType> GetNext()      = 0;
+  virtual uint64_t                       Size() const   = 0;
+  virtual bool                           IsDone() const = 0;
+  virtual void                           Reset()        = 0;
+};
 
-}  // namespace ops
 }  // namespace ml
 }  // namespace fetch
