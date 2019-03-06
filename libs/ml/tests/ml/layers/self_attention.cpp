@@ -30,7 +30,7 @@ class SelfAttentionTest : public ::testing::Test
 using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
 TYPED_TEST_CASE(SelfAttentionTest, MyTypes);
 
-TYPED_TEST(SelfAttentionTest, graph_forward_test)  // Use the class as a Node
+TYPED_TEST(SelfAttentionTest, output_shape_test)  // Use the class as a Node
 {
   fetch::ml::Graph<TypeParam> g;
 
