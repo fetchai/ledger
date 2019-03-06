@@ -42,7 +42,7 @@ template <typename ArrayType>
 ArrayType Relu(ArrayType &t)
 {
   ArrayType ret(t.shape());
-  Relu(ret, ret);
+  Relu(t, ret);
   return ret;
 }
 
