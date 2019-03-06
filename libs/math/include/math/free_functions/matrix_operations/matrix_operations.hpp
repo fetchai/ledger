@@ -474,7 +474,6 @@ void ReduceSum(ArrayType const &obj1, typename ArrayType::SizeType axis, ArrayTy
       {
         ret[i] += obj1({j, i});
       }
-      std::cout << "ret[i]: " << ret[i] << std::endl;
     }
   }
   else

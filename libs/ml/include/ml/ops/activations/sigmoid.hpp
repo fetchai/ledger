@@ -61,10 +61,7 @@ public:
     return {errorSignal};
   }
 
-  static std::string Descriptor()
-  {
-    return "Sigmoid";
-  }
+  static constexpr char const *DESCRIPTOR = "Sigmoid";
 };
 
 }  // namespace ops

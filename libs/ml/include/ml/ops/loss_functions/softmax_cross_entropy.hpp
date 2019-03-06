@@ -58,10 +58,7 @@ public:
     return ret;
   }
 
-  static std::string Descriptor()
-  {
-    return "SoftmaxCrossEntropy";
-  }
+  static constexpr char const *DESCRIPTOR = "SoftmaxCrossEntropy";
 };
 
 }  // namespace ops

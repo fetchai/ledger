@@ -52,11 +52,11 @@ ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
   ArrayType log_likelihood{1};
   log_likelihood[0] = 0;
 
-  for (std::size_t idx = 0; idx < n_examples; ++idx)
+  for (typename ArrayType::SizeType idx = 0; idx < n_examples; ++idx)
   {
-    sce_x.Set(idx, static_cast<std::size_t>(gt[idx]),
-              std::log(sce_x.At(idx, static_cast<std::size_t>(gt[idx]))));
-    log_likelihood[0] -= sce_x.At(idx, static_cast<std::size_t>(gt[idx]));
+    sce_x.Set(idx, static_cast<typename ArrayType::SizeType>(gt[idx]),
+              std::log(sce_x.At(idx, static_cast<typename ArrayType::SizeType>(gt[idx]))));
+    log_likelihood[0] -= sce_x.At(idx, static_cast<typename ArrayType::SizeType>(gt[idx]));
   }
 
   return Divide(log_likelihood, static_cast<typename ArrayType::Type>(n_examples));

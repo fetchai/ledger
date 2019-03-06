@@ -41,8 +41,7 @@ void Relu(ArrayType const &t, ArrayType &ret)
 template <typename ArrayType>
 ArrayType Relu(ArrayType &t)
 {
-  ArrayType ret;
-  ret.Copy(t);
+  ArrayType ret(t.shape());
   Relu(ret, ret);
   return ret;
 }

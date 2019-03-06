@@ -100,8 +100,6 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_forward_test)
   }
 
   fetch::ml::ops::CrossEntropy<TypeParam> op;
-  std::cout << "float(op.Forward({data1, data2})): " << float(op.Forward({data1, data2}))
-            << std::endl;
   ASSERT_FLOAT_EQ(float(op.Forward({data1, data2})), 1.78777539730072021484375);
 }
 

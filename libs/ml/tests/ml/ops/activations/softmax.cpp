@@ -58,7 +58,7 @@ TYPED_TEST(SoftmaxTest, backward_test)
   std::shared_ptr<TypeParam> gt    = std::make_shared<TypeParam>(8);
   std::vector<double>        dataInput({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<double>        errorInput({0, 0, 0, 0, 1, 0, 0, 0});
-  std::vector<double>        gtInput({-0.0002509, -1.2492e-05, -0.0018540, -1.6906e-06, 1.0335e-01,
+  std::vector<double> gtInput({-2.5091e-04, -1.2492e-05, -1.8540e-03, -1.6906e-06, 1.0335e-01,
                                -2.2880e-07, -1.0123e-01, -3.0965e-08});
   for (std::uint64_t i(0); i < 8; ++i)
   {
@@ -68,11 +68,6 @@ TYPED_TEST(SoftmaxTest, backward_test)
   }
   fetch::ml::ops::Softmax<TypeParam>      op;
   std::vector<std::shared_ptr<TypeParam>> prediction = op.Backward({data}, error);
-
-  for (std::size_t j = 0; j < prediction[0]->size(); ++j)
-  {
-    std::cout << "prediction[0]->At(j): " << prediction[0]->At(j) << std::endl;
-  }
 
   // test correct values
   ASSERT_TRUE(

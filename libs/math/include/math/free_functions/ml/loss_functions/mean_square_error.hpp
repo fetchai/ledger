@@ -34,7 +34,7 @@ typename ArrayType::Type MeanSquareError(ArrayType const &A, ArrayType const &B)
   Square(tmp_array);
 
   typename ArrayType::Type ret = Sum(tmp_array);
-  ret                          = Divide(ret, typename ArrayType::Type(A.shape()[0]));
+  ret                          = Divide(ret, typename ArrayType::Type(A.size()));
   // TODO(private 343)
   // division by 2 allows us to cancel out with a 2 in the derivative
   ret = Divide(ret, typename ArrayType::Type(2));
