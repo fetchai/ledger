@@ -90,7 +90,6 @@ TYPED_TEST(MeanSquareErrorTest, value_test)
   typename TypeParam::Type score(0);
   score = fetch::math::MeanSquareError(test_array, gt_array);
 
-  std::cout << "score: " << score << std::endl;
   // test correct values
   ASSERT_NEAR(score, typename TypeParam::Type(191.18f / 8.0f / 2.0f),
               typename TypeParam::Type(1.0e-5f));
