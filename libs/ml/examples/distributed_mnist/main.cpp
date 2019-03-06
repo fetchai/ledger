@@ -22,13 +22,13 @@
 
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
-#include "ml/ops/cross_entropy.hpp"
+#include "ml/ops/loss_functions/cross_entropy.hpp"
 
 #include <iostream>
 #include <thread>
 
-#define NUMBER_OF_CLIENTS 100
-#define NUMBER_OF_ITERATIONS 1000
+#define NUMBER_OF_CLIENTS 50
+#define NUMBER_OF_ITERATIONS 50
 #define BATCHSIZE 32
 #define NUMBER_OF_BATCHES 10
 
@@ -56,7 +56,7 @@ public:
   float Train(unsigned int numberOfBatches)
   {
     float                                         loss = 0;
-    CrossEntropyLayer<ArrayType>                  criterion;
+    CrossEntropy<ArrayType>                       criterion;
     std::pair<size_t, std::shared_ptr<ArrayType>> input;
     std::shared_ptr<ArrayType>                    gt =
         std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1, 10}));
