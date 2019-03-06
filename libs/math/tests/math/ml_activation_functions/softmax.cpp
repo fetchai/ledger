@@ -93,18 +93,20 @@ TYPED_TEST(SoftmaxTest, exact_values_test)
   test_array[6] = typename TypeParam::Type(7);
   test_array[7] = typename TypeParam::Type(-8);
 
-  gt_array[0] = typename TypeParam::Type(2.1437e-03);
-  gt_array[1] = typename TypeParam::Type(1.0673e-04);
-  gt_array[2] = typename TypeParam::Type(1.5840e-02);
-  gt_array[3] = typename TypeParam::Type(1.4444e-05);
-  gt_array[4] = typename TypeParam::Type(1.1704e-01);
-  gt_array[5] = typename TypeParam::Type(1.9548e-06);
-  gt_array[6] = typename TypeParam::Type(8.6485e-01);
-  gt_array[7] = typename TypeParam::Type(2.6456e-07);
+  gt_array[0] = typename TypeParam::Type(0.002143744224529872770941886083651119);
+  gt_array[1] = typename TypeParam::Type(1.067307402698822468529838481590912E-4);
+  gt_array[2] = typename TypeParam::Type(0.01584024633680981363097494317036258);
+  gt_array[3] = typename TypeParam::Type(1.444443496447785801762056106536456E-5);
+  gt_array[4] = typename TypeParam::Type(0.1170444688035684441289369247679393);
+  gt_array[5] = typename TypeParam::Type(1.954841697110442501881410577271122E-6);
+  gt_array[6] = typename TypeParam::Type(0.8648481460591056377393993328732979);
+  gt_array[7] = typename TypeParam::Type(2.645590547611823744272849474530037E-7);
 
   fetch::math::Softmax(test_array, test_array);
 
   // test correct values
-  ASSERT_TRUE(test_array.AllClose(gt_array, typename TypeParam::Type(1e-5),
-                                  typename TypeParam::Type(1e-5)));
+  for (std::size_t j = 0; j < gt_array.size(); ++j)
+  {
+    ASSERT_NEAR(test_array[j], gt_array[j], typename TypeParam::Type(1e-7));
+  }
 }
