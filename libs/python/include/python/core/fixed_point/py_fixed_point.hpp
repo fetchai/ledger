@@ -17,10 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-
 #include "core/fixed_point/fixed_point.hpp"
+#include "python/fetch_pybind.hpp"
 
 namespace py = pybind11;
 
@@ -31,7 +29,9 @@ template <size_t I, size_t F>
 void BuildFixedPoint(std::string const &custom_name, pybind11::module &module)
 {
   py::class_<fetch::fixed_point::FixedPoint<I, F>>(module, custom_name.c_str())
-      .def(py::init<float>());
+      .def(py::init<float>())
+      .def("__str__",
+           [](fetch::fixed_point::FixedPoint<I, F> &n) { return std::to_string(float(n)); });
 }
 
 }  // namespace fixed_point
