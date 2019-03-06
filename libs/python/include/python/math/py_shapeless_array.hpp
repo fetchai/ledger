@@ -310,7 +310,6 @@ void BuildShapelessArray(std::string const &custom_name, pybind11::module &modul
       .def("Isnan", [](ShapelessArray<T> &a) { fetch::math::Isnan(a); })
       .def("ApproxExp", [](ShapelessArray<T> &a) { fetch::math::ApproxExp(a); })
       .def("ApproxLog", [](ShapelessArray<T> &a) { fetch::math::ApproxLog(a); })
-      .def("ApproxLogistic", [](ShapelessArray<T> &a) { fetch::math::ApproxLogistic(a); })
 
       .def("Sort", (void (ShapelessArray<T>::*)()) & ShapelessArray<T>::Sort)
       .def("Max",

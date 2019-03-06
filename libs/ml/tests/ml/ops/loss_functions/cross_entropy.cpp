@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/cross_entropy.hpp"
+#include "ml/ops/loss_functions/cross_entropy.hpp"
 #include "core/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
@@ -36,9 +36,9 @@ TYPED_TEST(CrossEntropyTest, perfect_match_forward_test)
   std::uint64_t n_data_points = 8;
 
   std::shared_ptr<TypeParam> data1 =
-      std::make_shared<TypeParam>(std::vector<std::uint64_t>{n_classes, n_data_points});
+      std::make_shared<TypeParam>(std::vector<std::uint64_t>{n_data_points, n_classes});
   std::shared_ptr<TypeParam> data2 =
-      std::make_shared<TypeParam>(std::vector<std::uint64_t>{n_classes, n_data_points});
+      std::make_shared<TypeParam>(std::vector<std::uint64_t>{n_data_points, n_classes});
 
   std::vector<std::uint64_t> data = {1, 2, 3, 0, 3, 1, 0, 2};
   for (std::uint64_t i = 0; i < n_data_points; ++i)
@@ -47,18 +47,18 @@ TYPED_TEST(CrossEntropyTest, perfect_match_forward_test)
     {
       if (data[i] == j)
       {
-        data1->Set({j, i}, typename TypeParam::Type(1));
-        data2->Set({j, i}, typename TypeParam::Type(1));
+        data1->Set({i, j}, typename TypeParam::Type(1));
+        data2->Set({i, j}, typename TypeParam::Type(1));
       }
       else
       {
-        data1->Set({j, i}, typename TypeParam::Type(0));
-        data2->Set({j, i}, typename TypeParam::Type(0));
+        data1->Set({i, j}, typename TypeParam::Type(0));
+        data2->Set({i, j}, typename TypeParam::Type(0));
       }
     }
   }
 
-  fetch::ml::ops::CrossEntropyLayer<TypeParam> op;
+  fetch::ml::ops::CrossEntropy<TypeParam> op;
   EXPECT_EQ(op.Forward({data1, data2}), typename TypeParam::Type(0));
 }
 
@@ -68,9 +68,9 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_forward_test)
   std::uint64_t n_data_points = 8;
 
   std::shared_ptr<TypeParam> data1 =
-      std::make_shared<TypeParam>(std::vector<std::uint64_t>{n_classes, n_data_points});
+      std::make_shared<TypeParam>(std::vector<std::uint64_t>{n_data_points, n_classes});
   std::shared_ptr<TypeParam> data2 =
-      std::make_shared<TypeParam>(std::vector<std::uint64_t>{n_classes, n_data_points});
+      std::make_shared<TypeParam>(std::vector<std::uint64_t>{n_data_points, n_classes});
 
   // set gt data
   std::vector<std::uint64_t> gt_data = {1, 2, 3, 0, 3, 1, 0, 2};
@@ -80,11 +80,11 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_forward_test)
     {
       if (gt_data[i] == j)
       {
-        data2->Set({j, i}, typename TypeParam::Type(1));
+        data2->Set({i, j}, typename TypeParam::Type(1));
       }
       else
       {
-        data2->Set({j, i}, typename TypeParam::Type(0));
+        data2->Set({i, j}, typename TypeParam::Type(0));
       }
     }
   }
@@ -99,8 +99,8 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_forward_test)
     data1->Set(i, typename TypeParam::Type(logits[i]));
   }
 
-  fetch::ml::ops::CrossEntropyLayer<TypeParam> op;
-  ASSERT_FLOAT_EQ(float(op.Forward({data1, data2})), 2.3025851249694824);
+  fetch::ml::ops::CrossEntropy<TypeParam> op;
+  ASSERT_FLOAT_EQ(float(op.Forward({data1, data2})), 1.78777539730072021484375);
 }
 
 TYPED_TEST(CrossEntropyTest, one_dimensional_backward_test)
@@ -139,7 +139,7 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_backward_test)
     data2->Set(i, typename TypeParam::Type(err[i]));
   }
 
-  fetch::ml::ops::CrossEntropyLayer<TypeParam> op;
+  fetch::ml::ops::CrossEntropy<TypeParam> op;
   EXPECT_TRUE(op.Backward({data1, data2})
                   ->AllClose(*gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }

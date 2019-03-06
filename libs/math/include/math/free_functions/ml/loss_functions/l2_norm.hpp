@@ -17,18 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-
-#include "math/free_functions/comparison/comparison.hpp"
 #include "math/free_functions/exponentiation/exponentiation.hpp"
-#include "math/free_functions/fundamental_operators.hpp"
-#include "math/free_functions/iteration/iteration.hpp"
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
-#include "math/free_functions/ml/activation_functions.hpp"
-#include "math/free_functions/ml/loss_functions.hpp"
-#include "math/free_functions/numerical_decomposition/numerical_decomposition.hpp"
-#include "math/free_functions/precision/precision.hpp"
-#include "math/free_functions/sign_functionality/sign_functionality.hpp"
-#include "math/free_functions/statistics/distributions.hpp"
-#include "math/free_functions/trigonometry/trigonometry.hpp"
-#include "math/free_functions/type/type_identification.hpp"
+#include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
+#include "math/kernels/standard_functions.hpp"
+#include <cassert>
+
+namespace fetch {
+namespace math {
+
+template <typename ArrayType>
+typename ArrayType::Type L2Norm(ArrayType const &A, ArrayType &ret)
+{
+  assert(A.size() == ret.size());
+  assert(A.shape() == ret.shape());
+
+  Square(A, ret);
+  return std::sqrt(Sum(ret));
+}
+
+template <typename ArrayType>
+typename ArrayType::Type L2Norm(ArrayType const &A)
+{
+  ArrayType ret{A.shape()};
+  return L2Norm(A, ret);
+}
+
+}  // namespace math
+}  // namespace fetch

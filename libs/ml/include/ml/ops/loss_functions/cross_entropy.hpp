@@ -21,49 +21,46 @@
 #include <memory>
 #include <vector>
 
+#include "math/free_functions/fundamental_operators.hpp"
+#include "math/free_functions/ml/loss_functions/cross_entropy.hpp"
+
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class MeanSquareErrorLayer
+class CrossEntropy
 {
 public:
   using ArrayType    = T;
-  using Datatype     = typename ArrayType::Type;
+  using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  MeanSquareErrorLayer()          = default;
-  virtual ~MeanSquareErrorLayer() = default;
+  CrossEntropy()          = default;
+  virtual ~CrossEntropy() = default;
 
   virtual typename ArrayType::Type Forward(std::vector<ArrayPtrType> const &inputs)
   {
     assert(inputs.size() == 2);
-    assert(inputs[0]->shape() == inputs[1]->shape());
+    assert(inputs[0]->size() == inputs[1]->size());
 
-    typename ArrayType::Type sum(0);
-    for (std::uint64_t i(0); i < inputs[0]->size(); ++i)
-    {
-      sum += (inputs[0]->At(i) - inputs[1]->At(i)) * (inputs[0]->At(i) - inputs[1]->At(i));
-    }
-    sum /= Datatype(inputs[0]->shape()[0]);
-    sum /= Datatype(2);  // TODO(private 343)
-    return sum;
+    typename ArrayType::Type result = fetch::math::CrossEntropyLoss(*inputs[0], *inputs[1]);
+
+    return result;
   }
 
   virtual ArrayPtrType Backward(std::vector<ArrayPtrType> const &inputs)
   {
     assert(inputs.size() == 2);
-    assert(inputs[0]->shape() == inputs[1]->shape());
-    ArrayPtrType ret = std::make_shared<ArrayType>(inputs[0]->shape());
-    for (std::uint64_t i(0); i < inputs[0]->size(); ++i)
-    {
-      ret->At(i) = (inputs[0]->At(i) - inputs[1]->At(i));
-    }
+    assert(inputs[0]->size() == inputs[1]->size());
+
+    typename ArrayType::Type n_classes = static_cast<typename ArrayType::Type>(inputs[1]->size());
+    ArrayPtrType             ret       = std::make_shared<ArrayType>(
+        fetch::math::Divide(fetch::math::Subtract(*inputs[0], *inputs[1]), n_classes));
     return ret;
   }
 
-  static constexpr char const *DESCRIPTOR = "MeanSquareError";
+  static constexpr char const *DESCRIPTOR = "CrossEntropy";
 };
 
 }  // namespace ops
