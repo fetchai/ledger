@@ -17,54 +17,48 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/ml/activation_functions/relu.hpp"
+#include <cassert>
+#include <memory>
+#include <vector>
 
-#include "ml/ops/ops.hpp"
+#include "math/free_functions/fundamental_operators.hpp"
+#include "math/free_functions/ml/loss_functions/softmax_cross_entropy.hpp"
 
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class Relu : public fetch::ml::Ops<T>
+class SoftmaxCrossEntropy
 {
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  Relu()          = default;
-  virtual ~Relu() = default;
+  SoftmaxCrossEntropy()          = default;
+  virtual ~SoftmaxCrossEntropy() = default;
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual typename ArrayType::Type Forward(std::vector<ArrayPtrType> const &inputs)
   {
-    assert(inputs.size() == 1);
-    if (!this->output_ || this->output_->shape() != inputs[0]->shape())
-    {
-      this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
-    }
+    assert(inputs.size() == 2);
+    assert(inputs[0]->size() == inputs[1]->size());
 
-    fetch::math::Relu(*inputs[0], *this->output_);
-    return this->output_;
+    ArrayType result = fetch::math::SoftmaxCrossEntropyLoss(*inputs[0], *inputs[1]);
+    return result[0];
   }
 
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  virtual ArrayPtrType Backward(std::vector<ArrayPtrType> const &inputs)
   {
-    assert(inputs.size() == 1);
-    assert(inputs[0]->shape() == errorSignal->shape());
+    assert(inputs.size() == 2);
+    assert(inputs[0]->size() == inputs[1]->size());
 
-    for (std::size_t i = 0; i < inputs[0]->size(); ++i)
-    {
-      if ((*(inputs[0]))[i] <= DataType(0))
-      {
-        errorSignal->Set(i, DataType(0));
-      }
-    }
-    return {errorSignal};
+    typename ArrayType::Type n_classes = static_cast<typename ArrayType::Type>(inputs[1]->size());
+    ArrayPtrType ret = std::make_shared<ArrayType>(fetch::math::Subtract(*inputs[0], *inputs[1]));
+    return ret;
   }
 
-  static constexpr char const *DESCRIPTOR = "Relu";
+  static constexpr char const *DESCRIPTOR = "SoftmaxCrossEntropy";
 };
 
 }  // namespace ops
