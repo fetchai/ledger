@@ -73,21 +73,143 @@ TYPED_TEST(StateDictTest, nested_merge_test)
 {
   fetch::ml::StateDict<TypeParam> a;
   fetch::ml::StateDict<TypeParam> b;
-  a.dict_["next1"].dict_["nest2"].weights_ =
+  a.dict_["nest1"].dict_["nest2"].weights_ =
       std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 5}));
-  b.dict_["next1"].dict_["nest2"].weights_ =
+  b.dict_["nest1"].dict_["nest2"].weights_ =
       std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 5}));
-  a.dict_["next1"].dict_["nest2"].weights_->Fill(typename TypeParam::Type(5));
-  b.dict_["next1"].dict_["nest2"].weights_->Fill(typename TypeParam::Type(3));
+  a.dict_["nest1"].dict_["nest2"].weights_->Fill(typename TypeParam::Type(5));
+  b.dict_["nest1"].dict_["nest2"].weights_->Fill(typename TypeParam::Type(3));
   for (unsigned int i(0); i < 25; ++i)
   {
-    EXPECT_EQ(a.dict_["next1"].dict_["nest2"].weights_->At(i), typename TypeParam::Type(5));
-    EXPECT_EQ(b.dict_["next1"].dict_["nest2"].weights_->At(i), typename TypeParam::Type(3));
+    EXPECT_EQ(a.dict_["nest1"].dict_["nest2"].weights_->At(i), typename TypeParam::Type(5));
+    EXPECT_EQ(b.dict_["nest1"].dict_["nest2"].weights_->At(i), typename TypeParam::Type(3));
   }
   a.Merge(b);
   for (unsigned int i(0); i < 25; ++i)
   {
-    EXPECT_EQ(a.dict_["next1"].dict_["nest2"].weights_->At(i), typename TypeParam::Type(4));
-    EXPECT_EQ(b.dict_["next1"].dict_["nest2"].weights_->At(i), typename TypeParam::Type(3));
+    EXPECT_EQ(a.dict_["nest1"].dict_["nest2"].weights_->At(i), typename TypeParam::Type(4));
+    EXPECT_EQ(b.dict_["nest1"].dict_["nest2"].weights_->At(i), typename TypeParam::Type(3));
+  }
+}
+
+TYPED_TEST(StateDictTest, inline_add_test)
+{
+  fetch::ml::StateDict<TypeParam> a;
+  fetch::ml::StateDict<TypeParam> b;
+  a.weights_ = std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 5}));
+  b.weights_ = std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 5}));
+  a.weights_->Fill(typename TypeParam::Type(5));
+  b.weights_->Fill(typename TypeParam::Type(3));
+  for (unsigned int i(0); i < 25; ++i)
+  {
+    EXPECT_EQ(a.weights_->At(i), typename TypeParam::Type(5));
+    EXPECT_EQ(b.weights_->At(i), typename TypeParam::Type(3));
+  }
+  a.InlineAdd(b);
+  for (unsigned int i(0); i < 25; ++i)
+  {
+    EXPECT_EQ(a.weights_->At(i), typename TypeParam::Type(8));
+    EXPECT_EQ(b.weights_->At(i), typename TypeParam::Type(3));
+  }
+}
+
+TYPED_TEST(StateDictTest, nested_inline_add_test)
+{
+  fetch::ml::StateDict<TypeParam> a;
+  fetch::ml::StateDict<TypeParam> b;
+  a.dict_["nest1"].dict_["nest2"].weights_ =
+      std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 5}));
+  b.dict_["nest1"].dict_["nest2"].weights_ =
+      std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 5}));
+  a.dict_["nest1"].dict_["nest2"].weights_->Fill(typename TypeParam::Type(5));
+  b.dict_["nest1"].dict_["nest2"].weights_->Fill(typename TypeParam::Type(3));
+  for (unsigned int i(0); i < 25; ++i)
+  {
+    EXPECT_EQ(a.dict_["nest1"].dict_["nest2"].weights_->At(i), typename TypeParam::Type(5));
+    EXPECT_EQ(b.dict_["nest1"].dict_["nest2"].weights_->At(i), typename TypeParam::Type(3));
+  }
+  a.InlineAdd(b);
+  for (unsigned int i(0); i < 25; ++i)
+  {
+    EXPECT_EQ(a.dict_["nest1"].dict_["nest2"].weights_->At(i), typename TypeParam::Type(8));
+    EXPECT_EQ(b.dict_["nest1"].dict_["nest2"].weights_->At(i), typename TypeParam::Type(3));
+  }
+}
+
+TYPED_TEST(StateDictTest, inline_add_non_strict_test)
+{
+  fetch::ml::StateDict<TypeParam> a;
+  fetch::ml::StateDict<TypeParam> b;
+  b.weights_ = std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 5}));
+  b.weights_->Fill(typename TypeParam::Type(3));
+  a.InlineAdd(b, false);
+  for (unsigned int i(0); i < 25; ++i)
+  {
+    EXPECT_EQ(a.weights_->At(i), typename TypeParam::Type(3));
+    EXPECT_EQ(b.weights_->At(i), typename TypeParam::Type(3));
+  }
+}
+
+TYPED_TEST(StateDictTest, merge_list_test)
+{
+  fetch::ml::StateDict<TypeParam> a;
+  fetch::ml::StateDict<TypeParam> b;
+  fetch::ml::StateDict<TypeParam> c;
+  fetch::ml::StateDict<TypeParam> d;
+
+  a.weights_ = std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 5}));
+  b.weights_ = std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 5}));
+  c.weights_ = std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 5}));
+  d.weights_ = std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 5}));
+
+  a.weights_->Fill(typename TypeParam::Type(2));
+  b.weights_->Fill(typename TypeParam::Type(4));
+  c.weights_->Fill(typename TypeParam::Type(6));
+  d.weights_->Fill(typename TypeParam::Type(8));
+
+  std::list<fetch::ml::StateDict<TypeParam> const> l{a, b, c, d};
+  fetch::ml::StateDict<TypeParam> res = fetch::ml::StateDict<TypeParam>::MergeList(l);
+
+  for (unsigned int i(0); i < 25; ++i)
+  {
+    EXPECT_EQ(a.weights_->At(i), typename TypeParam::Type(2));
+    EXPECT_EQ(b.weights_->At(i), typename TypeParam::Type(4));
+    EXPECT_EQ(c.weights_->At(i), typename TypeParam::Type(6));
+    EXPECT_EQ(d.weights_->At(i), typename TypeParam::Type(8));
+    EXPECT_EQ(res.weights_->At(i), typename TypeParam::Type(5));
+  }
+}
+
+TYPED_TEST(StateDictTest, nested_merge_list_test)
+{
+  fetch::ml::StateDict<TypeParam> a;
+  fetch::ml::StateDict<TypeParam> b;
+  fetch::ml::StateDict<TypeParam> c;
+  fetch::ml::StateDict<TypeParam> d;
+
+  a.dict_["nest1"].dict_["nest2"].weights_ =
+      std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 5}));
+  b.dict_["nest1"].dict_["nest2"].weights_ =
+      std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 5}));
+  c.dict_["nest1"].dict_["nest2"].weights_ =
+      std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 5}));
+  d.dict_["nest1"].dict_["nest2"].weights_ =
+      std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 5}));
+
+  a.dict_["nest1"].dict_["nest2"].weights_->Fill(typename TypeParam::Type(2));
+  b.dict_["nest1"].dict_["nest2"].weights_->Fill(typename TypeParam::Type(4));
+  c.dict_["nest1"].dict_["nest2"].weights_->Fill(typename TypeParam::Type(6));
+  d.dict_["nest1"].dict_["nest2"].weights_->Fill(typename TypeParam::Type(8));
+
+  std::list<fetch::ml::StateDict<TypeParam> const> l{a, b, c, d};
+  fetch::ml::StateDict<TypeParam> res = fetch::ml::StateDict<TypeParam>::MergeList(l);
+
+  for (unsigned int i(0); i < 25; ++i)
+  {
+    EXPECT_EQ(a.dict_["nest1"].dict_["nest2"].weights_->At(i), typename TypeParam::Type(2));
+    EXPECT_EQ(b.dict_["nest1"].dict_["nest2"].weights_->At(i), typename TypeParam::Type(4));
+    EXPECT_EQ(c.dict_["nest1"].dict_["nest2"].weights_->At(i), typename TypeParam::Type(6));
+    EXPECT_EQ(d.dict_["nest1"].dict_["nest2"].weights_->At(i), typename TypeParam::Type(8));
+    EXPECT_EQ(res.dict_["nest1"].dict_["nest2"].weights_->At(i), typename TypeParam::Type(5));
   }
 }
