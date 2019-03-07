@@ -58,23 +58,8 @@ ConstByteArray RawBytes(T value)
   return ConstByteArray{reinterpret_cast<uint8_t *>(&value), sizeof(value)};
 }
 
-struct ContractMetadata
-{
-  //  ECDSASigner    signer{};
-  //  Identity       owner{signer.identity()};
-  ContractDigest digest{};
-  //  Identifier     contract_identifier{};
-
-  explicit ContractMetadata(std::string const &source)
-    : digest{DigestOf(source)}
-  {
-    //    contract_identifier = Identifier{ToBase64(digest) + "." + ToBase64(owner.identifier())};
-  }
-};
-
 using SmartContractPtr   = std::unique_ptr<SmartContract>;
 using MockStorageUnitPtr = std::unique_ptr<MockStorageUnit>;
-using MetadataPtr        = std::unique_ptr<ContractMetadata>;
 using Resource           = TransactionSummary::Resource;
 using Resources          = std::vector<Resource>;
 using Query              = SmartContract::Query;
@@ -139,13 +124,15 @@ TEST_F(SmartContractTests, CheckSimpleContract)
   auto const expected_resource = ResourceAddress{expected_key};
   auto const expected_value    = RawBytes<int32_t>(11);
 
+  std::cout << fetch::byte_array::ToHex(expected_resource.id()) << std::endl;
+
   {
     InSequence seq;
 
     // from the action
     EXPECT_CALL(*storage_, Lock(expected_resource));
     EXPECT_CALL(*storage_, Get(expected_resource));
-    EXPECT_CALL(*storage_, Set(expected_resource, expected_value));
+    EXPECT_CALL(*storage_, Set(expected_resource, expected_value)).Times(2);
     EXPECT_CALL(*storage_, Unlock(expected_resource));
 
     // from the query

@@ -23,6 +23,7 @@
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/state_sentinel.hpp"
+#include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "mock_storage_unit.hpp"
 
 #include <gtest/gtest.h>
@@ -43,6 +44,7 @@ protected:
   using StateAdapter         = fetch::ledger::StateAdapter;
   using Query                = Contract::Query;
   using IdentifierPtr        = std::shared_ptr<Identifier>;
+  using CachedStorageAdapter = fetch::ledger::CachedStorageAdapter;
 
   void SetUp() override
   {

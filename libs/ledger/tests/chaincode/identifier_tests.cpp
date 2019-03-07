@@ -50,7 +50,7 @@ TEST(IdentifierTests, BasicChecks)
   EXPECT_EQ(id[1], "bar");
   EXPECT_EQ(id[2], "baz");
   EXPECT_EQ(Identifier::Type::NORMAL, id.type());
-  EXPECT_EQ(ConstByteArray{"foo.bar"}, id.qualifier());
+  EXPECT_EQ(ConstByteArray{"foo.bar.baz"}, id.qualifier());
 }
 
 TEST(IdentifierTests, DirectParent)

@@ -208,6 +208,10 @@ StateSentinelAdapter::Status StateSentinelAdapter::Write(std::string const &key,
     storage_.Set(CreateAddress(scope_, key),
                  ConstByteArray{reinterpret_cast<uint8_t const *>(data), size});
   }
+  else
+  {
+    FETCH_LOG_WARN("Sentinel", "Unable to write to resource: ", key);
+  }
 
   return status;
 }
