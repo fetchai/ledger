@@ -38,6 +38,7 @@
 #define BATCH_SIZE 32
 #define NUMBER_OF_BATCHES 10
 #define MERGE_RATIO .5f
+#define LEARNING_RATE .01f
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
@@ -72,8 +73,7 @@ public:
       loss = 0;
       for (unsigned int j(0); j < BATCH_SIZE; ++j)
       {
-        // Randomly sampling through the dataset, should ensure everyone is training on different
-        // data
+        // Randomly sampling the dataset, should ensure everyone is training on different data
         input = dataloader_.GetRandom();
         g_.SetInput("Input", input.second);
         gt->Fill(0);
@@ -84,7 +84,7 @@ public:
       }
       losses_values_.push_back(loss);
       // Updating the weights
-      g_.Step(0.01f);
+      g_.Step(LEARNING_RATE);
     }
   }
 
@@ -157,10 +157,11 @@ int main(int ac, char **av)
     std::list<std::thread> threads;
     for (auto &c : clients)
     {
+      // Re-arrange the graph every time
       for (unsigned int j(0); j < NUMBER_OF_PEERS;)
       {
         unsigned int r = (unsigned int)rand() % clients.size();
-        j += (clients[i]->AddPeer(clients[r]) ? 1 : 0);
+        j += (c->AddPeer(clients[r]) ? 1 : 0);
       }
       // Start each client to train on NUMBER_OF_BATCHES * BATCH_SIZE examples
       threads.emplace_back([&c] { c->Train(NUMBER_OF_BATCHES); });
