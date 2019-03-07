@@ -20,10 +20,8 @@
 #include "vm_modules/ml/tensor.hpp"
 
 #include "ml/graph.hpp"
-#include "ml/ops/fully_connected.hpp"
-#include "ml/ops/mean_square_error.hpp"
-#include "ml/ops/relu.hpp"
-#include "ml/ops/softmax.hpp"
+#include "ml/layers/fully_connected.hpp"
+#include "ml/ops/activation.hpp"
 
 #include "vm/module.hpp"
 
@@ -79,7 +77,7 @@ public:
                          fetch::vm::Ptr<fetch::vm::String> const &inputName, int in, int out)
   {
     fetch::ml::Graph<fetch::math::Tensor<float>>::AddNode<
-        fetch::ml::ops::FullyConnected<fetch::math::Tensor<float>>>(
+        fetch::ml::layers::FullyConnected<fetch::math::Tensor<float>>>(
         name->str, {inputName->str}, std::size_t(in), std::size_t(out));
   }
 
@@ -87,14 +85,14 @@ public:
                fetch::vm::Ptr<fetch::vm::String> const &inputName)
   {
     fetch::ml::Graph<fetch::math::Tensor<float>>::AddNode<
-        fetch::ml::ops::ReluLayer<fetch::math::Tensor<float>>>(name->str, {inputName->str});
+        fetch::ml::ops::Relu<fetch::math::Tensor<float>>>(name->str, {inputName->str});
   }
 
   void AddSoftmax(fetch::vm::Ptr<fetch::vm::String> const &name,
                   fetch::vm::Ptr<fetch::vm::String> const &inputName)
   {
     fetch::ml::Graph<fetch::math::Tensor<float>>::AddNode<
-        fetch::ml::ops::SoftmaxLayer<fetch::math::Tensor<float>>>(name->str, {inputName->str});
+        fetch::ml::ops::Softmax<fetch::math::Tensor<float>>>(name->str, {inputName->str});
   }
 };
 

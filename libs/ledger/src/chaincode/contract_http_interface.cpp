@@ -300,7 +300,7 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(http::HTTPRequest const 
 
   // based on the contents of the response determine the correct status code
   http::Status const status_code =
-      json.Has("json") ? http::Status::CLIENT_ERROR_BAD_REQUEST : http::Status::SUCCESS_OK;
+      json.Has("error") ? http::Status::CLIENT_ERROR_BAD_REQUEST : http::Status::SUCCESS_OK;
 
   return http::CreateJsonResponse(json, status_code);
 }

@@ -35,10 +35,12 @@ namespace math {
 
 template <typename T, typename C>
 class ShapelessArray;
-template <typename T, typename C>
-class NDArray;
-template <typename T, typename C>
-class NDArrayIterator;
+
+template <typename T>
+class Tensor;
+
+template <typename T, typename SizeType>
+class TensorIterator;
 
 template <typename T, typename C>
 T Max(ShapelessArray<T, C> const &array);
@@ -79,45 +81,6 @@ ShapelessArray<T, C> BooleanMask(ShapelessArray<T, C> &      input_array,
                                  ShapelessArray<T, C> const &mask)
 {
   ShapelessArray<T, C> ret;
-  BooleanMask(input_array, mask, ret);
-  return ret;
-}
-template <typename T, typename C>
-void BooleanMask(NDArray<T, C> &input_array, NDArray<T, C> &mask, NDArray<T, C> &ret)
-{
-  assert(input_array.shape().size() >= mask.shape().size());
-  assert(mask.shape().size() > 0);
-
-  // because tensorflow is row major by default - we have to flip the mask and array to get the same
-  // answer
-  // TODO(private issue 208)
-  input_array.MajorOrderFlip();
-  mask.MajorOrderFlip();
-
-  if (mask.shape() == input_array.shape())
-  {
-    details::BooleanMaskImplementation(input_array, mask, ret);
-  }
-  else
-  {
-    for (std::size_t j = 0; j < mask.shape().size(); ++j)
-    {
-      assert(mask.shape()[j] == input_array.shape()[j]);
-    }
-
-    // new shape should be n-k+1 dimensions
-    std::vector<std::size_t> new_shape;
-    NDArray<T, C>            ret{new_shape};
-
-    // TODO(private issue 207): perhaps a little bit hacky to implement boolean mask as a
-    // multiplication
-    Broadcast([](T x, T y) { return x * y; }, input_array, mask, ret);
-  }
-}
-template <typename T, typename C>
-NDArray<T, C> BooleanMask(NDArray<T, C> &input_array, NDArray<T, C> &mask)
-{
-  NDArray<T, C> ret;
   BooleanMask(input_array, mask, ret);
   return ret;
 }
@@ -172,68 +135,6 @@ void Scatter(ShapelessArray<T, C> &input_array, ShapelessArray<T, C> const &upda
              ShapelessArray<T, C> const &indices)
 {
   details::ScatterImplementation(input_array, updates, indices);
-}
-
-template <typename T, typename C>
-void Scatter(NDArray<T, C> &input_array, NDArray<T, C> &updates, NDArray<T, C> &indices)
-{
-
-  assert(input_array.size() >= updates.size());
-  assert(updates.shape().size() > 0);
-  assert(input_array.size() >= updates.size());
-
-  // because tensorflow is row major by default we have to flip to get the same answer
-  // TODO(private issue 208)
-  input_array.MajorOrderFlip();
-  updates.MajorOrderFlip();
-
-  details::ScatterImplementation(input_array, updates, indices);
-}
-
-/**
- * gathers data from first dimension of data, according to indices, and puts them into input array
- * self_type
- */
-template <typename T, typename C>
-void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, NDArray<T, C> &indices)
-{
-  assert(input_array.size() >= updates.size());
-  assert(updates.size() > 0);
-  input_array.LazyReshape(updates.shape());
-
-  if (input_array.shape().size() > 1)
-  {
-    input_array.MajorOrderFlip();
-  }
-  if (input_array.shape().size() > 1)
-  {
-    updates.MajorOrderFlip();
-  }
-
-  input_array.LazyResize(indices.size());
-  input_array.LazyReshape(indices.shape());
-
-  // sort indices
-  indices.Sort();
-
-  // set up an iterator
-  NDArrayIterator<T, C> arr_iterator{updates};
-  NDArrayIterator<T, C> ret_iterator{input_array};
-
-  std::size_t cur_idx, arr_count = 0;
-  for (std::size_t count = 0; count < indices.size(); ++count)
-  {
-    cur_idx = std::size_t(indices[count]);
-
-    while (arr_count < cur_idx)
-    {
-      ++arr_iterator;
-      ++arr_count;
-    }
-
-    *ret_iterator = *arr_iterator;
-    ++ret_iterator;
-  }
 }
 
 /**
@@ -312,53 +213,50 @@ inline void Max(ShapelessArray<T, C> const &array, memory::Range r, T &ret)
  * @param axis
  * @param ret
  */
-template <typename T, typename C>
-void Max(NDArray<T, C> &array, std::size_t const &axis, NDArray<T, C> &ret)
+template <typename T>
+void Max(Tensor<T> const &array, typename Tensor<T>::SizeType const &axis, Tensor<T> &ret)
 {
+  assert(array.shape().size() <= 2);
   assert(axis < array.shape().size());
 
-  NDArrayIterator<T, C> return_iterator{ret};
-
-  // iterate through the return array (i.e. the array of Max vals)
-  std::vector<std::size_t> cur_index;
-  while (return_iterator)
+  if (array.shape().size() == 1)
   {
-    std::vector<std::vector<std::size_t>> cur_step;
+    assert(axis == 0);
 
-    cur_index = return_iterator.GetNDimIndex();
-
-    // calculate which part of the array we should iterate over (i.e. identify the 1-d vectors
-    // within the array)
-    std::size_t index_counter = 0;
-    for (std::size_t i = 0; i < array.shape().size(); ++i)
+    T cur_max = std::numeric_limits<T>::lowest();
+    for (T &e : array)
     {
-      if (i == axis)
+      if (e > cur_max)
       {
-        cur_step.push_back({0, array.shape()[i]});
-      }
-      else
-      {
-        cur_step.push_back({cur_index[index_counter], cur_index[index_counter] + 1});
-        ++index_counter;
+        cur_max = e;
       }
     }
-
-    // get an iterator to iterate over the 1-d slice of the array to calculate max over
-    NDArrayIterator<T, C> array_iterator(array, cur_step);
-
-    // loops through the 1d array calculating the max val
-    typename NDArray<T, C>::Type cur_max =
-        std::numeric_limits<typename NDArray<T, C>::Type>::lowest();
-    typename NDArray<T, C>::Type cur_val;
-    while (array_iterator)
+    ret[0] = cur_max;
+  }
+  else
+  {
+    typename Tensor<T>::SizeType off_axis = 0;
+    if (axis == 0)
     {
-      cur_val = *array_iterator;
-      Max(cur_max, cur_val, cur_max);
-      ++array_iterator;
+      off_axis = 1;
+    }
+    else
+    {
+      off_axis = 0;
     }
 
-    *return_iterator = cur_max;
-    ++return_iterator;
+    for (std::size_t j = 0; j < array.shape()[off_axis]; ++j)
+    {
+      T cur_max = std::numeric_limits<T>::lowest();
+      for (T &e : array.Slice(j))
+      {
+        if (e > cur_max)
+        {
+          cur_max = e;
+        }
+      }
+      ret[j] = cur_max;
+    }
   }
 }
 
@@ -420,58 +318,6 @@ inline void Min(ShapelessArray<T, C> const &array, memory::Range r, T &ret)
 }
 
 /**
- * find the minimum of the 1-D projections through the array
- */
-template <typename T, typename C>
-void Min(NDArray<T, C> &array, std::size_t const &axis, NDArray<T, C> &ret)
-{
-  assert(axis < array.shape().size());
-
-  NDArrayIterator<T, C> return_iterator{ret};
-
-  // iterate through the return array (i.e. the array of Max vals)
-  //    type cur_val;
-  std::vector<std::size_t> cur_index;
-  while (return_iterator)
-  {
-    std::vector<std::vector<std::size_t>> cur_step;
-
-    cur_index = return_iterator.GetNDimIndex();
-
-    // calculate step from cur_index and axis
-    std::size_t index_counter = 0;
-    for (std::size_t i = 0; i < array.shape().size(); ++i)
-    {
-      if (i == axis)
-      {
-        cur_step.push_back({0, array.shape()[i]});
-      }
-      else
-      {
-        cur_step.push_back({cur_index[index_counter], cur_index[index_counter] + 1});
-        ++index_counter;
-      }
-    }
-
-    // get an iterator to iterate over the 1-d slice of the array to calculate max over
-    NDArrayIterator<T, C> array_iterator(array, cur_step);
-
-    // loops through the 1d array calculating the max val
-    T cur_max = std::numeric_limits<T>::max();
-    T cur_val;
-    while (array_iterator)
-    {
-      cur_val = *array_iterator;
-      Min(cur_max, cur_val, cur_max);
-      ++array_iterator;
-    }
-
-    *return_iterator = cur_max;
-    ++return_iterator;
-  }
-}
-
-/**
  * Returns an array containing the elementwise maximum of two other ndarrays
  * @param x array input 1
  * @param y array input 2
@@ -491,21 +337,7 @@ ArrayType &MaximumImplementation(ArrayType const &array1, ArrayType const &array
   return ret;
 }
 }  // namespace details
-template <typename T, typename C>
-void Maximum(NDArray<T, C> const &array1, NDArray<T, C> const &array2, NDArray<T, C> &ret)
-{
-  assert(ret.shape() == array1.shape());
-  assert(array1.shape() == array2.shape());
-  details::MaximumImplementation(array1, array2, ret);
-}
-template <typename T, typename C>
-NDArray<T, C> Maximum(NDArray<T, C> const &array1, NDArray<T, C> const &array2)
-{
-  std::vector<std::size_t> return_shape(array1.shape());
-  NDArray<T, C>            ret(return_shape);
-  Maximum(array1, array2, ret);
-  return ret;
-}
+
 template <typename T, typename C>
 void Maximum(ShapelessArray<T, C> const &array1, ShapelessArray<T, C> const &array2,
              ShapelessArray<T, C> &ret)
@@ -589,11 +421,16 @@ template <typename T>
 T Sum(Tensor<T> const &obj1)
 {
   T ret(0);
+  Sum(obj1, ret);
+  return ret;
+}
+template <typename T>
+void Sum(Tensor<T> const &obj1, T &ret)
+{
   for (typename Tensor<T>::SizeType j = 0; j < obj1.size(); ++j)
   {
     ret += obj1.At(j);
   }
-  return ret;
 }
 
 /**
@@ -728,39 +565,6 @@ T ArgMax(ShapelessArray<T, C> const &array)
   return ArgMax(array, ret);
 }
 
-template <typename T, typename C>
-void Transpose(NDArray<T, C> &input_array, std::vector<std::size_t> const &perm)
-{
-  assert(perm.size() == input_array.shape().size());
-
-  // set up an initial array
-  NDArray<T, C> ret = input_array.Copy();
-
-  NDArrayIterator<T, typename NDArray<T, C>::container_type> it_input(input_array);
-  NDArrayIterator<T, typename NDArray<T, C>::container_type> it_ret(ret);
-
-  it_ret.Transpose(perm);
-  while (it_ret)
-  {
-    *it_input = *it_ret;
-    ++it_input;
-    ++it_ret;
-  }
-
-  std::vector<std::size_t> new_shape;
-  for (std::size_t i = 0; i < perm.size(); ++i)
-  {
-    new_shape.push_back(input_array.shape()[perm[i]]);
-  }
-  input_array.Reshape(new_shape);
-}
-
-template <typename T, typename C>
-void Transpose(NDArray<T, C> & /*input_array*/, NDArray<T, C> const & /*perm*/)
-{
-  // assert(perm.size() == input_array.shape().size());
-}
-
 template <typename ArrayType>
 void Dot(ArrayType const &A, ArrayType const &B, ArrayType &ret)
 {
@@ -870,61 +674,6 @@ ArrayType TransposeDot(ArrayType const &A, ArrayType const &B)
 }
 
 /**
- * Adds a new dimension at a specified axis
- * @tparam T
- * @tparam C
- * @param input_array
- * @param axis
- */
-template <typename T, typename C>
-void ExpandDimensions(NDArray<T, C> &input_array, std::size_t const &axis)
-{
-  assert(axis <= input_array.shape().size());
-
-  std::vector<std::size_t> new_shape;
-  for (std::size_t i = 0; i <= input_array.shape().size(); ++i)
-  {
-    if (i < axis)
-    {
-      new_shape.push_back(input_array.shape()[i]);
-    }
-    else if (i == axis)
-    {
-      new_shape.push_back(1);
-    }
-    else
-    {
-      new_shape.push_back(input_array.shape()[i - 1]);
-    }
-  }
-
-  input_array.Reshape(new_shape);
-}
-/**
- * The special case of axis = -1 is permissible, so we declare this function signature to capture it
- * @tparam T
- * @tparam C
- * @param input_array
- * @param axis
- */
-template <typename T, typename C>
-void ExpandDimensions(NDArray<T, C> &input_array, int const &axis)
-{
-  assert(axis <= static_cast<int>(input_array.size()));
-  std::size_t new_axis;
-  if (axis < 0)
-  {
-    assert(axis == -1);
-    new_axis = input_array.shape().size();
-  }
-  else
-  {
-    new_axis = static_cast<std::size_t>(axis);
-  }
-  ExpandDimensions(input_array, new_axis);
-}
-
-/**
  * method for concatenating arrays
  */
 namespace details {
@@ -970,72 +719,6 @@ ShapelessArray<T, C> Concat(std::vector<ShapelessArray<T, C>> const &input_array
   return ret;
 }
 
-template <typename T, typename C>
-void Concat(NDArray<T, C> &ret, std::vector<NDArray<T, C>> input_arrays, std::size_t const &axis)
-{
-  assert(input_arrays.size() > 0);
-  assert(input_arrays[0].shape().size() > 0);
-
-  if (input_arrays.size() == 1)
-  {
-    ret.ResizeFromShape(input_arrays[0].shape());
-    ret.Copy(input_arrays[0]);
-  }
-  else
-  {
-    // figure out the size of the axis dim after concatenation
-    std::size_t new_axis_dim = input_arrays[0].shape()[axis];
-    assert(axis < input_arrays[0].shape().size());
-    for (std::size_t i = 0; i < (input_arrays.size() - 1); ++i)
-    {
-      assert(input_arrays[i].shape() == input_arrays[i + 1].shape());
-      new_axis_dim += input_arrays[i + 1].shape()[axis];
-    }
-
-    // figure out the size and shape of the output array
-    std::vector<std::size_t> new_shape = {input_arrays[0].shape()};
-    new_shape[axis]                    = new_axis_dim;
-    ret.ResizeFromShape(new_shape);
-
-    // identify the axis based stride
-    std::size_t stride = input_arrays[0].shape()[axis];
-
-    for (std::size_t j = 0; j < input_arrays.size(); ++j)
-    {
-      // figure out the part of the return array to fill with this input array
-      std::vector<std::vector<std::size_t>> step{};
-      for (std::size_t i = 0; i < ret.shape().size(); ++i)
-      {
-        if (i == axis)
-        {
-          step.push_back({j * stride, (j + 1) * stride, 1});
-        }
-        else
-        {
-          step.push_back({0, ret.shape()[i], 1});
-        }
-      }
-
-      // copy the data across
-      NDArrayIterator<T, C> ret_iterator{ret, step};
-      NDArrayIterator<T, C> arr_iterator{input_arrays[j]};
-      for (std::size_t k = 0; k < input_arrays[j].size(); ++k)
-      {
-        *ret_iterator = *arr_iterator;
-        ++ret_iterator;
-        ++arr_iterator;
-      }
-    }
-  }
-}
-template <typename T, typename C>
-NDArray<T, C> Concat(std::vector<NDArray<T, C>> input_arrays, std::size_t const & /*axis*/)
-{
-  NDArray<T, C> ret;
-  Concat(ret, input_arrays);
-  return ret;
-}
-
 /**
  * interleave data from multiple sources
  * @param x
@@ -1060,17 +743,6 @@ void DynamicStitch(ShapelessArray<T, C> &input_array, ShapelessArray<T, C> const
                    ShapelessArray<T, C> const &data)
 {
   details::DynamicStitchImplementation(input_array, indices, data);
-}
-template <typename T, typename C>
-void DynamicStitch(NDArray<T, C> &input_array, NDArray<T, C> &indices, NDArray<T, C> &data)
-{
-  //  input_array.MajorOrderFlip();
-  indices.MajorOrderFlip();
-  data.MajorOrderFlip();
-
-  details::DynamicStitchImplementation(input_array, indices, data);
-
-  input_array.MajorOrderFlip();
 }
 
 }  // namespace math
