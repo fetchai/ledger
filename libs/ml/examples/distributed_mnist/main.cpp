@@ -24,12 +24,15 @@
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
 
+#include <fstream>
 #include <iostream>
 #include <thread>
 
-#define NUMBER_OF_CLIENTS 50
-#define NUMBER_OF_ITERATIONS 50
-#define BATCHSIZE 32
+// Runs in about 40 sec on a 2018 MBP
+// Remember to disable debug using | grep -v INFO
+#define NUMBER_OF_CLIENTS 10
+#define NUMBER_OF_ITERATIONS 20
+#define BATCH_SIZE 32
 #define NUMBER_OF_BATCHES 10
 
 using namespace fetch::ml::ops;
@@ -53,7 +56,7 @@ public:
     g_.AddNode<Softmax<ArrayType>>("Softmax", {"FC3"});
   }
 
-  float Train(unsigned int numberOfBatches)
+  void Train(unsigned int numberOfBatches)
   {
     float                                         loss = 0;
     CrossEntropy<ArrayType>                       criterion;
@@ -62,7 +65,8 @@ public:
         std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1, 10}));
     for (unsigned int i(0); i < numberOfBatches; ++i)
     {
-      for (unsigned int j(0); j < BATCHSIZE; ++j)
+      loss = 0;
+      for (unsigned int j(0); j < BATCH_SIZE; ++j)
       {
         // Randomly sampling through the dataset, should ensure everyone is training on different
         // data
@@ -74,10 +78,10 @@ public:
         loss += criterion.Forward({results, gt});
         g_.BackPropagate("Softmax", criterion.Backward({results, gt}));
       }
+      losses_values_.push_back(loss);
       // Updating the weights
       g_.Step(0.01f);
     }
-    return loss;
   }
 
   fetch::ml::StateDict<fetch::math::Tensor<float>> GetStateDict() const
@@ -90,11 +94,18 @@ public:
     g_.LoadStateDict(sd);
   }
 
+  std::vector<float> const &GetLossesValues() const
+  {
+    return losses_values_;
+  }
+
 private:
   // Client own graph
   fetch::ml::Graph<ArrayType> g_;
   // Client own dataloader
   fetch::ml::MNISTLoader<ArrayType> dataloader_;
+  // Loss history
+  std::vector<float> losses_values_;
 };
 
 int main(int ac, char **av)
@@ -116,10 +127,11 @@ int main(int ac, char **av)
 
   for (unsigned int it(0); it < NUMBER_OF_ITERATIONS; ++it)
   {
+    std::cout << "================= ITERATION : " << it << " =================" << std::endl;
     std::list<std::thread> threads;
     for (auto &c : clients)
     {
-      // Start each client to train on 100 examples
+      // Start each client to train on NUMBER_OF_BATCHES * BATCH_SIZE examples
       threads.emplace_back([&c] { c.Train(NUMBER_OF_BATCHES); });
     }
     for (auto &t : threads)
@@ -144,6 +156,27 @@ int main(int ac, char **av)
 
     // Do some evaluation here
   }
+
+  // Save loss variation data
+  // Upload to https://plot.ly/create/#/ for visualisation
+  std::ofstream myfile("losses.csv", std::ofstream::out | std::ofstream::trunc);
+  if (myfile)
+  {
+    for (unsigned int i(0); i < clients.size(); ++i)
+    {
+      myfile << "Client " << i << ", ";
+    }
+    myfile << "\n";
+    for (unsigned int i(0); i < clients.front().GetLossesValues().size(); ++i)
+    {
+      for (auto &c : clients)
+      {
+        myfile << c.GetLossesValues()[i] << ", ";
+      }
+      myfile << "\n";
+    }
+  }
+  myfile.close();
 
   return 0;
 }
