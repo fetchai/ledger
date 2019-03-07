@@ -46,7 +46,6 @@ template <typename T>
 class State : public IState
 {
 public:
-
   // Important restriction for the moment is that the state value must be primitive
   static_assert(IsPrimitive<T>::value, "State value must be a primitive");
 
@@ -63,8 +62,8 @@ public:
     if (vm_->HasIoObserver())
     {
       // attempt to read the value from the storage engine
-      uint64_t buffer_size = sizeof(value_); // less important now with primitive types
-      auto const status = vm_->GetIOObserver().Read(name_->str, &value_, buffer_size);
+      uint64_t   buffer_size = sizeof(value_);  // less important now with primitive types
+      auto const status      = vm_->GetIOObserver().Read(name_->str, &value_, buffer_size);
 
       // mark the variable as existed if we get a positive result back
       existed_ = (Status::OK == status);
@@ -95,7 +94,7 @@ public:
   }
 
 private:
-  using Value = typename GetStorageType<T>::type;
+  using Value  = typename GetStorageType<T>::type;
   using Status = IoObserverInterface::Status;
 
   void FlushIO()

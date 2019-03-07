@@ -28,8 +28,7 @@ namespace ledger {
  */
 CachedStorageAdapter::CachedStorageAdapter(StorageInterface &storage)
   : storage_{storage}
-{
-}
+{}
 
 /**
  * Destruct the Cache Adapter, this might cause a flush to occur
@@ -191,7 +190,8 @@ void CachedStorageAdapter::AddCacheEntry(ResourceAddress const &address, StateVa
  * @param address The address of the resource being stored
  * @return The value being stored
  */
-CachedStorageAdapter::StateValue CachedStorageAdapter::GetCacheEntry(ResourceAddress const &address) const
+CachedStorageAdapter::StateValue CachedStorageAdapter::GetCacheEntry(
+    ResourceAddress const &address) const
 {
   FETCH_LOCK(lock_);
 
@@ -225,5 +225,5 @@ bool CachedStorageAdapter::HasCacheEntry(ResourceAddress const &address) const
   return cache_.find(address) != cache_.end();
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

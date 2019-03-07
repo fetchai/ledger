@@ -19,10 +19,10 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/state_sentinel.hpp"
-#include "ledger/identifier.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
+#include "ledger/identifier.hpp"
+#include "ledger/state_sentinel.hpp"
 #include "mock_storage_unit.hpp"
 
 #include <gtest/gtest.h>
@@ -47,7 +47,7 @@ protected:
   void SetUp() override
   {
     certificate_ = std::make_unique<fetch::crypto::ECDSASigner>();
-    storage_ = std::make_unique<MockStorageUnit>();
+    storage_     = std::make_unique<MockStorageUnit>();
   }
 
   void TearDown() override
@@ -58,7 +58,8 @@ protected:
     certificate_.reset();
   }
 
-  Contract::Status SendAction(ConstByteArray const &action, Resources const &resources, ConstByteArray const &data = ConstByteArray{})
+  Contract::Status SendAction(ConstByteArray const &action, Resources const &resources,
+                              ConstByteArray const &data = ConstByteArray{})
   {
     // create and sign the transaction
     MutableTransaction mtx{};
@@ -105,7 +106,6 @@ protected:
     return status;
   }
 
-
   Contract::Status SendQuery(ConstByteArray const &query, Query const &request, Query &response)
   {
     // adapt the storage engine for queries
@@ -121,10 +121,10 @@ protected:
 
   /// @name User populated
   /// @{
-  ContractPtr contract_;
+  ContractPtr   contract_;
   IdentifierPtr contract_name_;
   /// @}
 
-  CertificatePtr certificate_;
+  CertificatePtr     certificate_;
   MockStorageUnitPtr storage_;
 };

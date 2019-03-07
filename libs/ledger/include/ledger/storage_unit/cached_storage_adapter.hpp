@@ -20,8 +20,8 @@
 #include "core/mutex.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
-#include <unordered_map>
 #include <atomic>
+#include <unordered_map>
 
 namespace fetch {
 namespace ledger {
@@ -34,7 +34,6 @@ namespace ledger {
 class CachedStorageAdapter : public StorageInterface
 {
 public:
-
   // Construction / Destruction
   explicit CachedStorageAdapter(StorageInterface &storage);
   ~CachedStorageAdapter();
@@ -67,20 +66,20 @@ private:
 
   /// @name Cache Helpers
   /// @{
-  void AddCacheEntry(ResourceAddress const &address, StateValue const &value);
+  void       AddCacheEntry(ResourceAddress const &address, StateValue const &value);
   StateValue GetCacheEntry(ResourceAddress const &address) const;
-  bool HasCacheEntry(ResourceAddress const &address) const;
+  bool       HasCacheEntry(ResourceAddress const &address) const;
   /// @}
 
-  StorageInterface &storage_; ///< The reference to the underlying storage engine
+  StorageInterface &storage_;  ///< The reference to the underlying storage engine
 
   /// @name Cache Data
   /// @{
   mutable Mutex lock_{__LINE__, __FILE__};
-  Cache         cache_{};                   ///< The local cache
-  bool          flush_required_{false};     ///< Top level cache flush flag
+  Cache         cache_{};                ///< The local cache
+  bool          flush_required_{false};  ///< Top level cache flush flag
   /// @}
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

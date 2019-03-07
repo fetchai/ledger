@@ -16,18 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/sha256.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/chaincode/smart_contract.hpp"
+#include "crypto/sha256.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/state_sentinel.hpp"
 
 #include "contract_test.hpp"
 #include "mock_storage_unit.hpp"
 
-#include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include <memory>
 
@@ -52,7 +52,7 @@ using fetch::serializers::ByteArrayBuffer;
 using fetch::ledger::StateAdapter;
 using fetch::ledger::StateSentinelAdapter;
 
-using ContractDigest     = ConstByteArray;
+using ContractDigest = ConstByteArray;
 
 ConstByteArray DigestOf(ConstByteArray const &value)
 {
@@ -69,15 +69,15 @@ ConstByteArray RawBytes(T value)
 
 struct ContractMetadata
 {
-//  ECDSASigner    signer{};
-//  Identity       owner{signer.identity()};
+  //  ECDSASigner    signer{};
+  //  Identity       owner{signer.identity()};
   ContractDigest digest{};
-//  Identifier     contract_identifier{};
+  //  Identifier     contract_identifier{};
 
   explicit ContractMetadata(std::string const &source)
     : digest{DigestOf(source)}
   {
-//    contract_identifier = Identifier{ToBase64(digest) + "." + ToBase64(owner.identifier())};
+    //    contract_identifier = Identifier{ToBase64(digest) + "." + ToBase64(owner.identifier())};
   }
 };
 
@@ -91,7 +91,6 @@ using Query              = SmartContract::Query;
 class SmartContractTests : public ContractTest
 {
 protected:
-
   void CreateContract(std::string const &source)
   {
     // calculate the digest of the contract
@@ -101,16 +100,15 @@ protected:
     contract_ = std::make_unique<SmartContract>(source);
 
     // populate the contract name too
-    contract_name_ = std::make_shared<Identifier>(
-      contract_digest + "." + ToBase64(certificate_->identity().identifier())
-    );
+    contract_name_ = std::make_shared<Identifier>(contract_digest + "." +
+                                                  ToBase64(certificate_->identity().identifier()));
 
     ASSERT_TRUE(static_cast<bool>(contract_));
     ASSERT_TRUE(static_cast<bool>(contract_name_));
   }
 };
 
-template<typename Container, typename Key>
+template <typename Container, typename Key>
 bool IsIn(Container const &container, Key const &key)
 {
   return container.find(key) != container.end();
@@ -342,4 +340,4 @@ TEST_F(SmartContractTests, CheckQueryReturnTypes)
   }
 }
 
-}
+}  // namespace

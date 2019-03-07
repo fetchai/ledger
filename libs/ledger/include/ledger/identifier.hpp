@@ -34,7 +34,6 @@ namespace ledger {
 class Identifier
 {
 public:
-
   enum class Type
   {
     INVALID,
@@ -44,7 +43,6 @@ public:
 
   using ConstByteArray = byte_array::ConstByteArray;
   using Tokens         = std::vector<ConstByteArray>;
-
 
   // Construction / Destruction
   Identifier() = default;
@@ -82,7 +80,6 @@ public:
   bool                  operator!=(Identifier const &other) const;
 
 private:
-
   Identifier(Tokens const &tokens, std::size_t count);
 
   static const char SEPARATOR;
@@ -93,7 +90,6 @@ private:
   Type           type_{Type::INVALID};
   ConstByteArray full_{};    ///< The fully qualified name
   Tokens         tokens_{};  ///< The individual elements of the name
-
 };
 
 /**
@@ -163,14 +159,14 @@ inline Identifier::ConstByteArray Identifier::qualifier() const
 
   switch (type_)
   {
-    case Type::INVALID:
-      break;
-    case Type::NORMAL:
-      identifier = full_name();
-      break;
-    case Type::SMART_CONTRACT:
-      identifier = tokens_[0];
-      break;
+  case Type::INVALID:
+    break;
+  case Type::NORMAL:
+    identifier = full_name();
+    break;
+  case Type::SMART_CONTRACT:
+    identifier = tokens_[0];
+    break;
   }
 
   return identifier;
@@ -244,7 +240,6 @@ inline bool Identifier::operator!=(Identifier const &other) const
 {
   return (full_ != other.full_);
 }
-
 
 }  // namespace ledger
 }  // namespace fetch

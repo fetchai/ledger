@@ -17,11 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/execution_manager.hpp"
-#include "ledger/state_sentinel.hpp"
 #include "core/assert.hpp"
 #include "core/logger.hpp"
 #include "core/threading.hpp"
 #include "ledger/executor.hpp"
+#include "ledger/state_sentinel.hpp"
 #include "storage/resource_mapper.hpp"
 
 #include "core/byte_array/decoders.hpp"
@@ -166,7 +166,8 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
       // transform the resources into lane allocation
       for (auto const &resource : tx.resources)
       {
-        item->AddLane(StateAdapter::CreateAddress(contract_id, resource).lane(block.log2_num_lanes));
+        item->AddLane(
+            StateAdapter::CreateAddress(contract_id, resource).lane(block.log2_num_lanes));
       }
 
       // insert the item into the execution plan

@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/fnv.hpp" // needed for std::hash<ConstByteArray>
+#include "crypto/fnv.hpp"  // needed for std::hash<ConstByteArray>
 #include "ledger/chaincode/factory.hpp"
 #include "ledger/identifier.hpp"
 #include "meta/is_log2.hpp"
@@ -64,7 +64,7 @@ private:
 
   // Utils
   ContractPtr FindInCache(Identifier const &name);
-  void RunMaintenance();
+  void        RunMaintenance();
 
   std::size_t      counter_;
   UnderlyingCache  cache_;

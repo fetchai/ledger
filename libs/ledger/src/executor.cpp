@@ -17,15 +17,15 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/executor.hpp"
-#include "ledger/chaincode/contract.hpp"
 #include "core/assert.hpp"
-#include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
-#include "metrics/metrics.hpp"
+#include "ledger/chaincode/contract.hpp"
 #include "ledger/state_sentinel.hpp"
+#include "ledger/storage_unit/cached_storage_adapter.hpp"
+#include "metrics/metrics.hpp"
 
 #include <algorithm>
 #include <chrono>

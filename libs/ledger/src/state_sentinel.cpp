@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/string.hpp"
 #include "ledger/state_sentinel.hpp"
+#include "vm/string.hpp"
 
 using fetch::storage::ResourceAddress;
 
@@ -33,15 +33,15 @@ namespace ledger {
 StateAdapter::StateAdapter(StorageInterface &storage, Identifier const &scope)
   : storage_{storage}
   , scope_{scope}
-{
-}
+{}
 
 /**
  * Read a value from the state store
  *
  * @param key The key to be accessed
  * @param data The pointer to the output buffer to be populated
- * @param size The size of the output buffer, if successful the size of the data will be written back
+ * @param size The size of the output buffer, if successful the size of the data will be written
+ * back
  * @return OK if the read was successful, PERMISSION_DENIED if the key is incorrect, otherwise ERROR
  */
 StateAdapter::Status StateAdapter::Read(std::string const &key, void *data, uint64_t &size)
@@ -60,10 +60,10 @@ StateAdapter::Status StateAdapter::Read(std::string const &key, void *data, uint
       size   = result.document.size();
       status = Status::BUFFER_TOO_SMALL;
     }
-    else // normal case the buffer is fine
+    else  // normal case the buffer is fine
     {
       // copy the contents of the buffer into the output buffer
-      result.document.ReadBytes(reinterpret_cast<uint8_t*>(data), result.document.size());
+      result.document.ReadBytes(reinterpret_cast<uint8_t *>(data), result.document.size());
 
       // update the output size
       size = result.document.size();
@@ -81,7 +81,8 @@ StateAdapter::Status StateAdapter::Read(std::string const &key, void *data, uint
  * @param key The key to be accessed
  * @param data The pointer to the input buffer for the data
  * @param size The size in bytes of the input buffer
- * @return OK if the write was successful, PERMISSION_DENIED if the key is incorrect, otherwise ERROR
+ * @return OK if the write was successful, PERMISSION_DENIED if the key is incorrect, otherwise
+ * ERROR
  */
 StateAdapter::Status StateAdapter::Write(std::string const &key, void const *data, uint64_t size)
 {
@@ -93,7 +94,8 @@ StateAdapter::Status StateAdapter::Write(std::string const &key, void const *dat
  * Checks to see if the specified key exists in the database
  *
  * @param key The key to be checked
- * @return OK if the key exists, PERMISSION_DENIED if the key is incorrect, ERROR is the key does not exist
+ * @return OK if the key exists, PERMISSION_DENIED if the key is incorrect, ERROR is the key does
+ * not exist
  */
 StateAdapter::Status StateAdapter::Exists(std::string const &key)
 {
@@ -119,7 +121,8 @@ StateAdapter::Status StateAdapter::Exists(std::string const &key)
  */
 ResourceAddress StateAdapter::CreateAddress(Identifier const &scope, ConstByteArray const &key)
 {
-  FETCH_LOG_DEBUG("StateAdapter", "Creating address for key: ", key.ToBase64(), " scope: ", scope.full_name());
+  FETCH_LOG_DEBUG("StateAdapter", "Creating address for key: ", key.ToBase64(),
+                  " scope: ", scope.full_name());
   return ResourceAddress{scope.full_name() + ".state." + key};
 }
 
@@ -129,7 +132,8 @@ ResourceAddress StateAdapter::CreateAddress(Identifier const &scope, ConstByteAr
  * @param storage The underlying storage engine
  * @param scope The scope for all state
  */
-StateSentinelAdapter::StateSentinelAdapter(StorageInterface &storage, Identifier const &scope, ResourceSet const &resources)
+StateSentinelAdapter::StateSentinelAdapter(StorageInterface &storage, Identifier const &scope,
+                                           ResourceSet const &resources)
   : StateAdapter{storage, scope}
   , resources_{resources}
 {
@@ -154,10 +158,12 @@ StateSentinelAdapter::~StateSentinelAdapter()
  *
  * @param key The key to be accessed
  * @param data The pointer to the output buffer to be populated
- * @param size The size of the output buffer, if successful the size of the data will be written back
+ * @param size The size of the output buffer, if successful the size of the data will be written
+ * back
  * @return OK if the read was successful, PERMISSION_DENIED if the key is incorrect, otherwise ERROR
  */
-StateSentinelAdapter::Status StateSentinelAdapter::Read(std::string const &key, void *data, uint64_t &size)
+StateSentinelAdapter::Status StateSentinelAdapter::Read(std::string const &key, void *data,
+                                                        uint64_t &size)
 {
   Status status{Status::PERMISSION_DENIED};
 
@@ -183,9 +189,11 @@ StateSentinelAdapter::Status StateSentinelAdapter::Read(std::string const &key, 
  * @param key The key to be accessed
  * @param data The pointer to the input buffer for the data
  * @param size The size in bytes of the input buffer
- * @return OK if the write was successful, PERMISSION_DENIED if the key is incorrect, otherwise ERROR
+ * @return OK if the write was successful, PERMISSION_DENIED if the key is incorrect, otherwise
+ * ERROR
  */
-StateSentinelAdapter::Status StateSentinelAdapter::Write(std::string const &key, void const *data, uint64_t size)
+StateSentinelAdapter::Status StateSentinelAdapter::Write(std::string const &key, void const *data,
+                                                         uint64_t size)
 {
   Status status{Status::PERMISSION_DENIED};
 
@@ -204,7 +212,8 @@ StateSentinelAdapter::Status StateSentinelAdapter::Write(std::string const &key,
  * Checks to see if the specified key exists in the database
  *
  * @param key The key to be checked
- * @return OK if the key exists, PERMISSION_DENIED if the key is incorrect, ERROR is the key does not exist
+ * @return OK if the key exists, PERMISSION_DENIED if the key is incorrect, ERROR is the key does
+ * not exist
  */
 StateSentinelAdapter::Status StateSentinelAdapter::Exists(std::string const &key)
 {
@@ -231,5 +240,5 @@ bool StateSentinelAdapter::IsAllowedResource(std::string const &key) const
   return resources_.find(key) != resources_.end();
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

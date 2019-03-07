@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/io_observer_interface.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "variant/variant.hpp"
+#include "vm/io_observer_interface.hpp"
 
 #include <atomic>
 #include <functional>
@@ -33,7 +33,7 @@
 namespace fetch {
 
 namespace vm {
-  class IoObserverInterface;
+class IoObserverInterface;
 }
 
 namespace variant {
@@ -94,7 +94,6 @@ public:
   Contract &operator=(Contract &&) = delete;
 
 protected:
-
   /// @name Transaction Handlers
   /// @{
   void OnTransaction(std::string const &name, TransactionHandler &&handler);
@@ -131,8 +130,8 @@ private:
   /// @}
 
   /// @name Statistics
-  CounterMap            transaction_counters_{};
-  CounterMap            query_counters_{};
+  CounterMap transaction_counters_{};
+  CounterMap query_counters_{};
   /// @}
 
   /// @name State
@@ -192,9 +191,7 @@ void Contract::OnTransaction(std::string const &name, C *instance,
                              Status (C::*func)(Transaction const &))
 {
   // create the function handler and pass it to the normal function
-  OnTransaction(name, [instance, func](Transaction const &tx) {
-    return (instance->*func)(tx);
-  });
+  OnTransaction(name, [instance, func](Transaction const &tx) { return (instance->*func)(tx); });
 }
 
 /**
@@ -230,10 +227,10 @@ bool Contract::GetStateRecord(T &record, ConstByteArray const &key)
   bool success{false};
 
   ByteArray buffer;
-  buffer.Resize(std::size_t{DEFAULT_BUFFER_SIZE}); // initial guess, can be tuned over time
+  buffer.Resize(std::size_t{DEFAULT_BUFFER_SIZE});  // initial guess, can be tuned over time
 
   uint64_t buffer_length = buffer.size();
-  auto status = state().Read(std::string{key}, buffer.pointer(), buffer_length);
+  auto     status        = state().Read(std::string{key}, buffer.pointer(), buffer_length);
 
   // in rare cases the initial buffer might be too small in this case we need to reallocate and then
   // re-query

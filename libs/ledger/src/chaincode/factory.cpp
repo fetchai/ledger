@@ -24,8 +24,8 @@
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 
-#include <unordered_map>
 #include <stdexcept>
+#include <unordered_map>
 
 static constexpr char const *LOGGING_NAME = "ChainCodeFactory";
 
@@ -68,7 +68,8 @@ ContractNameSet const global_contract_set = CreateContractSet(global_registry);
 
 }  // namespace
 
-ChainCodeFactory::ContractPtr ChainCodeFactory::Create(Identifier const &contract_id, StorageInterface &storage) const
+ChainCodeFactory::ContractPtr ChainCodeFactory::Create(Identifier const &contract_id,
+                                                       StorageInterface &storage) const
 {
   ContractPtr contract{};
 
@@ -94,7 +95,7 @@ ChainCodeFactory::ContractPtr ChainCodeFactory::Create(Identifier const &contrac
       contract = std::make_shared<SmartContract>(std::string{contract_source});
     }
   }
-  else // invalid or chain code
+  else  // invalid or chain code
   {
     // attempt to lookup the chain code instance
     auto it = global_registry.find(contract_id.full_name());
@@ -108,7 +109,8 @@ ChainCodeFactory::ContractPtr ChainCodeFactory::Create(Identifier const &contrac
   // finally throw an exception if the contract in question can not be found
   if (!contract)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to construct requested chain code: ", contract_id.full_name());
+    FETCH_LOG_ERROR(LOGGING_NAME,
+                    "Unable to construct requested chain code: ", contract_id.full_name());
     throw std::runtime_error("Unable to create required chain code");
   }
 

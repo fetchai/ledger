@@ -26,12 +26,11 @@ class TokenContract : public Contract
 {
 public:
   static constexpr char const *LOGGING_NAME = "TokenContract";
-  static constexpr char const *NAME = "fetch.token";
+  static constexpr char const *NAME         = "fetch.token";
 
   // Construction / Destruction
   TokenContract();
   ~TokenContract() override = default;
-
 
 private:
   // transaction handlers

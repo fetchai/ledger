@@ -80,8 +80,9 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
 
   if (calculated_hash != contract_hash)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Warning! Failed to match calculated hash with provided hash: ",
-                   calculated_hash, " to ", contract_hash);
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Warning! Failed to match calculated hash with provided hash: ", calculated_hash,
+                   " to ", contract_hash);
 
     return Status::FAILED;
   }
@@ -100,7 +101,8 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
  * @param contract_id The identifier for the smart contract being stored
  * @return The generated address
  */
-storage::ResourceAddress SmartContractManager::CreateAddressForContract(Identifier const &contract_id)
+storage::ResourceAddress SmartContractManager::CreateAddressForContract(
+    Identifier const &contract_id)
 {
   // this function is only really applicable to the storage of smart contracts
   assert(contract_id.type() == Identifier::Type::SMART_CONTRACT);

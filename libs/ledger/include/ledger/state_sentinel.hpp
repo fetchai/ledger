@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/mutable_transaction.hpp"
-#include "vm/io_observer_interface.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "vm/io_observer_interface.hpp"
 
 #include <unordered_set>
 
@@ -51,7 +51,6 @@ public:
   /// @}
 
 protected:
-
   StorageInterface &storage_;
   Identifier        scope_;
 };
@@ -63,10 +62,11 @@ protected:
 class StateSentinelAdapter : public StateAdapter
 {
 public:
-  using ResourceSet    = TransactionSummary::ResourceSet;
+  using ResourceSet = TransactionSummary::ResourceSet;
 
   // Construction / Destruction
-  StateSentinelAdapter(StorageInterface &storage, Identifier const &scope, ResourceSet const &resources);
+  StateSentinelAdapter(StorageInterface &storage, Identifier const &scope,
+                       ResourceSet const &resources);
   ~StateSentinelAdapter() override;
 
   /// @name IO Observer Interface
@@ -82,5 +82,5 @@ private:
   ResourceSet const resources_;
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

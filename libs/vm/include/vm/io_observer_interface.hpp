@@ -29,9 +29,8 @@ namespace vm {
 class IoObserverInterface
 {
 public:
-
   // Construction / Destruction
-  IoObserverInterface() = default;
+  IoObserverInterface()          = default;
   virtual ~IoObserverInterface() = default;
 
   enum class Status
@@ -50,8 +49,10 @@ public:
    *
    * @param key The key to be accessed
    * @param data The pointer to the output buffer to be populated
-   * @param size The size of the output buffer, if successful the size of the data will be written back
-   * @return OK if the read was successful, PERMISSION_DENIED if the key is incorrect, otherwise ERROR
+   * @param size The size of the output buffer, if successful the size of the data will be written
+   * back
+   * @return OK if the read was successful, PERMISSION_DENIED if the key is incorrect, otherwise
+   * ERROR
    */
   virtual Status Read(std::string const &key, void *data, uint64_t &size) = 0;
 
@@ -61,7 +62,8 @@ public:
    * @param key The key to be accessed
    * @param data The pointer to the input buffer for the data
    * @param size The size in bytes of the input buffer
-   * @return OK if the write was successful, PERMISSION_DENIED if the key is incorrect, otherwise ERROR
+   * @return OK if the write was successful, PERMISSION_DENIED if the key is incorrect, otherwise
+   * ERROR
    */
   virtual Status Write(std::string const &key, void const *data, uint64_t size) = 0;
 
@@ -69,7 +71,8 @@ public:
    * Checks to see if the specified key exists in the database
    *
    * @param key The key to be checked
-   * @return OK if the key exists, PERMISSION_DENIED if the key is incorrect, ERROR is the key does not exist
+   * @return OK if the key exists, PERMISSION_DENIED if the key is incorrect, ERROR is the key does
+   * not exist
    */
   virtual Status Exists(std::string const &key) = 0;
 

@@ -30,7 +30,6 @@ namespace ledger {
 class SmartContractException : public std::exception
 {
 public:
-
   enum class Category
   {
     UNKNOWN,
@@ -42,13 +41,18 @@ public:
   SmartContractException(Category category, Errors errors)
     : category_{category}
     , errors_{std::move(errors)}
+  {}
+
+  Errors const &errors() const
   {
+    return errors_;
+  }
+  Category category() const
+  {
+    return category_;
   }
 
-  Errors const &errors() const { return errors_; }
-  Category category() const { return category_; }
-
-  const char* what() const noexcept override
+  const char *what() const noexcept override
   {
     if (errors_.empty())
     {
@@ -61,10 +65,9 @@ public:
   }
 
 private:
-
   Category category_{Category::UNKNOWN};
   Errors   errors_{};
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

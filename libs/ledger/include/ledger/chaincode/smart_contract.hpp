@@ -17,18 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/fnv.hpp" // needed for std::hash<ConstByteArray> !!!
+#include "crypto/fnv.hpp"  // needed for std::hash<ConstByteArray> !!!
 #include "ledger/chaincode/contract.hpp"
 
-#include <string>
 #include <memory>
+#include <string>
 
 namespace fetch {
 
 namespace vm {
-  struct Script;
-  class Module;
-}
+struct Script;
+class Module;
+}  // namespace vm
 
 namespace ledger {
 
@@ -48,7 +48,10 @@ public:
   explicit SmartContract(std::string const &source);
   ~SmartContract() override = default;
 
-  ConstByteArray contract_digest() const { return digest_; }
+  ConstByteArray contract_digest() const
+  {
+    return digest_;
+  }
 
 private:
   using Script    = fetch::vm::Script;
@@ -59,10 +62,10 @@ private:
   Status InvokeAction(std::string const &name, Transaction const &tx);
   Status InvokeQuery(std::string const &name, Query const &request, Query &response);
 
-  std::string    source_; ///< The source of the current contract
-  ConstByteArray digest_; ///< The digest of the current contract
-  ScriptPtr      script_; ///< The internal script object of the parsed source
-  ModulePtr      module_; ///< The internal module instance for the contract
+  std::string    source_;  ///< The source of the current contract
+  ConstByteArray digest_;  ///< The digest of the current contract
+  ScriptPtr      script_;  ///< The internal script object of the parsed source
+  ModulePtr      module_;  ///< The internal module instance for the contract
 };
 
 }  // namespace ledger

@@ -19,121 +19,122 @@
 #include "core/commandline/cli_header.hpp"
 #include "core/commandline/params.hpp"
 #include "vm/analyser.hpp"
-#include "vm/typeids.hpp"
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
+#include "vm/typeids.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/vm_factory.hpp"
 
 #include <fstream>
+#include <memory>
 #include <sstream>
 #include <streambuf>
 #include <vector>
-#include <memory>
 
 namespace {
 
-  using fetch::vm::Script;
-  using fetch::vm::Module;
-  using fetch::vm::Ptr;
-  using fetch::vm::VM;
-  using fetch::vm::String;
-  using fetch::vm::TypeId;
-  using fetch::vm_modules::VMFactory;
+using fetch::vm::Script;
+using fetch::vm::Module;
+using fetch::vm::Ptr;
+using fetch::vm::VM;
+using fetch::vm::String;
+using fetch::vm::TypeId;
+using fetch::vm_modules::VMFactory;
 
-  class Parameters
+class Parameters
+{
+public:
+  using ParamParser = fetch::commandline::ParamsParser;
+  using ArgList     = std::vector<char *>;
+  using StringList  = std::vector<std::string>;
+
+  void Parse(int argc, char **argv)
   {
-  public:
-    using ParamParser = fetch::commandline::ParamsParser;
-    using ArgList     = std::vector<char *>;
-    using StringList  = std::vector<std::string>;
+    const std::string SEPARATOR{"--"};
 
-    void Parse(int argc, char **argv)
+    ArgList program_args{};
+    ArgList script_args{};
+
+    // first parameter is common between both argument set
+    program_args.push_back(argv[0]);
+    script_args.push_back(argv[0]);
+
+    // loop through all the parameters
+    ArgList *current_list = &program_args;
+    for (int i = 1; i < argc; ++i)
     {
-      const std::string SEPARATOR{"--"};
-
-      ArgList program_args{};
-      ArgList script_args{};
-
-      // first parameter is common between both argument set
-      program_args.push_back(argv[0]);
-      script_args.push_back(argv[0]);
-
-      // loop through all the parameters
-      ArgList *current_list = &program_args;
-      for (int i = 1; i < argc; ++i)
+      if (SEPARATOR == argv[i])
       {
-        if (SEPARATOR == argv[i])
-        {
-          // switch the list
-          current_list = &script_args;
-        }
-        else
-        {
-          // add the string to the list
-          current_list->push_back(argv[i]);
-        }
+        // switch the list
+        current_list = &script_args;
       }
-
-      // parse the program arguments
-      program_params_.Parse(static_cast<int>(program_args.size()), program_args.data());
-
-      // copy the script arguments
-      for (auto const *s : script_args)
+      else
       {
-        script_args_.emplace_back(s);
+        // add the string to the list
+        current_list->push_back(argv[i]);
       }
     }
 
-    ParamParser const &program() const
+    // parse the program arguments
+    program_params_.Parse(static_cast<int>(program_args.size()), program_args.data());
+
+    // copy the script arguments
+    for (auto const *s : script_args)
     {
-      return program_params_;
+      script_args_.emplace_back(s);
     }
-
-    StringList const &script() const
-    {
-      return script_args_;
-    }
-
-  private:
-
-    ParamParser program_params_{};
-    StringList script_args_{};
-  };
-
-  std::string ReadFileContents(std::string const &path)
-  {
-    std::ifstream f(path.c_str());
-    std::string str{};
-
-    // pre-allocate the string buffer
-    f.seekg(0, std::ios::end);
-    str.reserve(static_cast<std::size_t>(f.tellg()));
-    f.seekg(0, std::ios::beg);
-
-    // assign the contents
-    str.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
-
-    return str;
   }
 
-  // data
-  Parameters params;
-
-  int32_t Argc(VM *, TypeId)
+  ParamParser const &program() const
   {
-    return static_cast<int32_t>(params.script().size());
+    return program_params_;
   }
 
-  Ptr<String> Argv(VM *vm, TypeId, int32_t index)
+  StringList const &script() const
   {
-    return {new String{vm, params.script().at(static_cast<std::size_t>(index))}};
+    return script_args_;
   }
 
-  // placeholder class
-  struct System : public fetch::vm::Object {};
+private:
+  ParamParser program_params_{};
+  StringList  script_args_{};
+};
 
-} // namespace
+std::string ReadFileContents(std::string const &path)
+{
+  std::ifstream f(path.c_str());
+  std::string   str{};
+
+  // pre-allocate the string buffer
+  f.seekg(0, std::ios::end);
+  str.reserve(static_cast<std::size_t>(f.tellg()));
+  f.seekg(0, std::ios::beg);
+
+  // assign the contents
+  str.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
+
+  return str;
+}
+
+// data
+Parameters params;
+
+int32_t Argc(VM *, TypeId)
+{
+  return static_cast<int32_t>(params.script().size());
+}
+
+Ptr<String> Argv(VM *vm, TypeId, int32_t index)
+{
+  return {new String{vm, params.script().at(static_cast<std::size_t>(index))}};
+}
+
+// placeholder class
+struct System : public fetch::vm::Object
+{
+};
+
+}  // namespace
 
 int main(int argc, char **argv)
 {
@@ -158,8 +159,8 @@ int main(int argc, char **argv)
 
   // additional module bindings
   module->CreateClassType<System>("System")
-    .CreateTypeFunction("Argc", &Argc)
-    .CreateTypeFunction("Argv", &Argv);
+      .CreateTypeFunction("Argc", &Argc)
+      .CreateTypeFunction("Argv", &Argv);
 
   // attempt to compile the program
   auto errors = VMFactory::Compile(module, source, *script);
@@ -184,8 +185,8 @@ int main(int argc, char **argv)
   std::string        error;
   std::string        console;
   fetch::vm::Variant output;
-  bool const success = vm->Execute(*script, params.program().GetParam("func", "main"), error,
-                                   console, output);
+  bool const         success =
+      vm->Execute(*script, params.program().GetParam("func", "main"), error, console, output);
 
   // if there is any console output print it
   if (!console.empty())

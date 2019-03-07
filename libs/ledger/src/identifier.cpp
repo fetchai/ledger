@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
 #include "ledger/identifier.hpp"
+#include "core/byte_array/byte_array.hpp"
 
-#include <stdexcept>
 #include <regex>
+#include <stdexcept>
 
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ByteArray;
@@ -45,11 +45,9 @@ bool IsBase64(ConstByteArray const &value)
 
   for (std::size_t i = 0; i < LENGTH; ++i, ++buffer)
   {
-    bool const valid = ((('a' <= *buffer) && ('z' >= *buffer)) ||
-                        (('A' <= *buffer) && ('Z' >= *buffer)) ||
-                        (('0' <= *buffer) && ('9' >= *buffer)) ||
-                        (*buffer == '+') ||
-                        (*buffer == '/'));
+    bool const valid =
+        ((('a' <= *buffer) && ('z' >= *buffer)) || (('A' <= *buffer) && ('Z' >= *buffer)) ||
+         (('0' <= *buffer) && ('9' >= *buffer)) || (*buffer == '+') || (*buffer == '/'));
 
     if (!valid)
     {
@@ -70,15 +68,15 @@ bool IsBase64(ConstByteArray const &value)
 
 bool IsDigest(ConstByteArray const &value)
 {
-  return IsBase64<43,1>(value);
+  return IsBase64<43, 1>(value);
 }
 
 bool IsIdentity(ConstByteArray const &value)
 {
-  return IsBase64<86,2>(value);
+  return IsBase64<86, 2>(value);
 }
 
-} // namespace
+}  // namespace
 
 const char Identifier::SEPARATOR{'.'};
 
@@ -209,7 +207,6 @@ void Identifier::UpdateType()
     }
   }
 }
-
 
 /**
  * Determine if the current identifier is a parent to a specified identifier

@@ -42,7 +42,6 @@ protected:
   {
     contract_ = std::make_unique<DummyContract>();
     storage_  = std::make_unique<MockStorageUnit>();
-
   }
 
   DummyContractPtr contract_;

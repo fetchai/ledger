@@ -64,7 +64,7 @@ protected:
     ContractTest::SetUp();
 
     // create the
-    contract_ = std::make_unique<TokenContract>();
+    contract_      = std::make_unique<TokenContract>();
     contract_name_ = std::make_shared<Identifier>(std::string{TokenContract::NAME});
   }
 
@@ -161,7 +161,7 @@ protected:
   bool Transfer(Address const &from, Address const &to, PrivateKeys const &keys_to_sign,
                 uint64_t amount, bool const set_call_expected = true)
   {
-    EXPECT_CALL(*storage_, Get(_)).Times(set_call_expected ? 2: 1);
+    EXPECT_CALL(*storage_, Get(_)).Times(set_call_expected ? 2 : 1);
     EXPECT_CALL(*storage_, GetOrCreate(_)).Times(0);
     EXPECT_CALL(*storage_, Set(_, _)).Times(set_call_expected ? 2 : 0);
     EXPECT_CALL(*storage_, Lock(_)).Times(2);
@@ -214,7 +214,6 @@ protected:
     return success;
   }
 };
-
 
 TEST_F(TokenContractTests, CheckWealthCreation)
 {

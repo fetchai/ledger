@@ -17,8 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/contract_http_interface.hpp"
-#include "ledger/chaincode/contract.hpp"
-#include "ledger/state_sentinel.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
@@ -28,6 +26,8 @@
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/wire_transaction.hpp"
+#include "ledger/chaincode/contract.hpp"
+#include "ledger/state_sentinel.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "variant/variant.hpp"
 
@@ -160,15 +160,14 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
   }
 
   Post("/api/contract/(digest=[a-fA-F0-9]{64})/(identifier=[a-fA-F0-9]{128})/(query=.+)",
-      [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+       [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+         // build the contract name
+         auto const contract_name =
+             ToBase64(FromHex(params["digest"])) + "." + ToBase64(FromHex(params["identifier"]));
 
-        // build the contract name
-        auto const contract_name = ToBase64(FromHex(params["digest"])) + "." +
-                                   ToBase64(FromHex(params["identifier"]));
-
-        // proxy the call to the query handler
-        return OnQuery(contract_name, params["query"], request);
-      });
+         // proxy the call to the query handler
+         return OnQuery(contract_name, params["query"], request);
+       });
 
   Post("/api/contract/submit",
        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
@@ -372,9 +371,8 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Failed to match expected_contract_name: ", expected_contract, " with ",
-                     tx.contract_name());
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to match expected_contract_name: ", expected_contract,
+                     " with ", tx.contract_name());
     }
   }
 
