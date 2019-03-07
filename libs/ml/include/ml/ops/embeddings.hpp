@@ -33,7 +33,7 @@ public:
   using ArrayPtrType = std::shared_ptr<ArrayType>;
   using SizeType     = typename ArrayType::SizeType;
 
-  Embeddings(unsigned int dataPoints, unsigned int dimensions)
+  Embeddings(SizeType dataPoints, SizeType dimensions)
   {
     this->SetData(std::make_shared<ArrayType>(std::vector<SizeType>({dataPoints, dimensions})));
   }
@@ -52,7 +52,7 @@ public:
       this->embeddings_output_ = std::make_shared<ArrayType>(
           std::vector<SizeType>({inputs[0]->size(), this->output_->shape()[1]}));
     }
-    uint64_t j(0);
+    SizeType j(0);
     for (DataType const &i : *(inputs[0]))
     {
       this->embeddings_output_->Slice(j).Copy(
@@ -68,7 +68,7 @@ public:
     ASSERT(inputs.size() == 1);
     ASSERT(inputs[0]->shape().size() == 1);
 
-    uint64_t j(0);
+    SizeType j(0);
     for (DataType const &i : *(inputs[0]))
     {
       this->gradientAccumulation_->Slice(typename ArrayType::SizeType(double(i)))

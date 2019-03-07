@@ -18,10 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "ml/layers/layer.hpp"
-
-#include "ml/layers/fully_connected.hpp"
-#include "ml/ops/activations/softmax.hpp"
-#include "ml/ops/add.hpp"
+#include "ml/ops/activations/sigmoid.hpp"
+#include "ml/ops/embeddings.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/transpose.hpp"
@@ -38,9 +36,11 @@ class SkipGram : public Layer<T>
 {
 public:
   using ArrayType    = T;
+  using SizeType     = typename T::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
 
-  SkipGram(std::uint64_t in_size, std::uint64_t out, std::uint64_t embedding_size,
+  SkipGram(SizeType in_size, SizeType out, SizeType embedding_size,
            std::string const &name = "SkipGram", WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
     : Layer<T>(in_size, out)
   {
@@ -53,9 +53,9 @@ public:
 
     // embed both inputs
     std::string embed_in = this->template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
-        name + "_Embed_Input", {input});
+        name + "_Embed_Input", {input}, in_size, embedding_size);
     std::string embed_ctx = this->template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
-        name + "_Embed_Input", {context});
+        name + "_Embed_Context", {context}, in_size, embedding_size);
 
     // dot product input and context embeddings
     std::string transpose_ctx = this->template AddNode<fetch::ml::ops::Transpose<ArrayType>>(

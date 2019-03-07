@@ -85,9 +85,9 @@ public:
   {
     std::string name = UpdateVariableName<OperationType>(node_name);
     std::shared_ptr<Node<ArrayType, OperationType>> op =
-        std::make_shared<Node<ArrayType, OperationType>>(node_name, params...);
+        std::make_shared<Node<ArrayType, OperationType>>(name, params...);
     AddNodeImpl<OperationType>(name, inputs, op);
-    FETCH_LOG_INFO("ML_LIB", "Created non-trainable node [", node_name, "]");
+    FETCH_LOG_INFO("ML_LIB", "Created non-trainable node [", name, "]");
     return name;
   }
 
@@ -105,10 +105,10 @@ public:
   {
     std::string name = UpdateVariableName<OperationType>(node_name);
     std::shared_ptr<Node<ArrayType, OperationType>> op =
-        std::make_shared<Node<ArrayType, OperationType>>(node_name, params...);
+        std::make_shared<Node<ArrayType, OperationType>>(name, params...);
     AddNodeImpl<OperationType>(name, inputs, op);
-    FETCH_LOG_INFO("ML_LIB", "Created trainable node [", node_name, "]");
-    trainable_[node_name] = op;
+    FETCH_LOG_INFO("ML_LIB", "Created trainable node [", name, "]");
+    trainable_[name] = op;
     return name;
   }
 
@@ -118,10 +118,10 @@ public:
    * @param nodeName name of the placeholder node in the graph (must be unique)
    * @param data the pointer to a tensor to assign to the placeholder
    */
-  void SetInput(std::string const &nodeName, ArrayPtrType data)
+  void SetInput(std::string const &node_name, ArrayPtrType data)
   {
     std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>> placeholder =
-        std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<ArrayType>>(nodes_[nodeName]);
+        std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<ArrayType>>(nodes_[node_name]);
 
     if (placeholder)
     {
@@ -130,7 +130,7 @@ public:
     }
     else
     {
-      throw std::runtime_error("No placeholder node with name [" + nodeName + "] found in graph!");
+      throw std::runtime_error("No placeholder node with name [" + node_name + "] found in graph!");
     }
   }
 
