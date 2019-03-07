@@ -36,9 +36,7 @@ public:
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
     ASSERT(inputs.size() == 1);
-
-    this->output_ = std::make_shared<ArrayType>(inputs[0]->Clone());
-    this->output_->Transpose();
+    this->output_ = std::make_shared<ArrayType>(inputs[0]->Clone().Transpose());
     return this->output_;
   }
 
@@ -46,7 +44,6 @@ public:
                                              ArrayPtrType                     errorSignal)
   {
     ASSERT(inputs.size() == 1);
-
     return {std::make_shared<ArrayType>(errorSignal->Clone().Transpose())};
   }
 
