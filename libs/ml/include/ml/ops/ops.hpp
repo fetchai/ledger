@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
+#include <memory>
 
 namespace fetch {
 namespace ml {
