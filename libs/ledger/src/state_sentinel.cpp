@@ -33,8 +33,7 @@ namespace ledger {
 StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope)
   : storage_{storage}
   , scope_{std::move(scope)}
-{
-}
+{}
 
 /**
  * Read a value from the state store
@@ -137,7 +136,8 @@ ResourceAddress StateAdapter::CreateAddress(Identifier const &scope, ConstByteAr
  * @param storage The underlying storage engine
  * @param scope The scope for all state
  */
-StateSentinelAdapter::StateSentinelAdapter(StorageInterface &storage, Identifier scope, ResourceSet resources)
+StateSentinelAdapter::StateSentinelAdapter(StorageInterface &storage, Identifier scope,
+                                           ResourceSet resources)
   : StateAdapter{storage, std::move(scope)}
   , resources_{std::move(resources)}
 {
