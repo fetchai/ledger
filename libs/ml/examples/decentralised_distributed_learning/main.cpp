@@ -113,6 +113,8 @@ public:
     fetch::ml::StateDict<ArrayType> averageStateDict =
         fetch::ml::StateDict<ArrayType>::MergeList(stateDicts);
     g_.LoadStateDict(g_.StateDict().Merge(averageStateDict, MERGE_RATIO));
+    // Clear the peers after update, we'll get a new set for next one
+    peers_.clear();
   }
 
   std::vector<float> const &GetLossesValues() const
@@ -149,31 +151,17 @@ int main(int ac, char **av)
     clients[i] = std::make_shared<TrainingClient>(av[1], av[2]);
   }
 
-  std::stringstream ss;
-  ss << "digraph net {\n";
-  for (unsigned int i(0); i < NUMBER_OF_CLIENTS; ++i)
-  {
-    for (unsigned int j(0); j < NUMBER_OF_PEERS; ++j)
-    {
-      unsigned int r = (unsigned int)rand() % clients.size();
-      if (clients[i]->AddPeer(clients[r]))
-      {
-        ss << (char)(i + 'A') << " -> " << (char)(r + 'A') << ";" << std::endl;
-      }
-    }
-  }
-  ss << "}";
-  // Render graph architechture : dot -Tpng net.dot -o net.png
-  std::ofstream graphfile("net.dot", std::ofstream::out | std::ofstream::trunc);
-  graphfile << ss.str();
-  graphfile.close();
-
   for (unsigned int it(0); it < NUMBER_OF_ITERATIONS; ++it)
   {
     std::cout << "================= ITERATION : " << it << " =================" << std::endl;
     std::list<std::thread> threads;
     for (auto &c : clients)
     {
+      for (unsigned int j(0); j < NUMBER_OF_PEERS;)
+      {
+        unsigned int r = (unsigned int)rand() % clients.size();
+        j += (clients[i]->AddPeer(clients[r]) ? 1 : 0);
+      }
       // Start each client to train on NUMBER_OF_BATCHES * BATCH_SIZE examples
       threads.emplace_back([&c] { c->Train(NUMBER_OF_BATCHES); });
     }
