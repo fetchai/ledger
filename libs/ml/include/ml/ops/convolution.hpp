@@ -24,7 +24,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Convolution : public fetch::ml::Ops<T>
+class Convolution : public Ops<T>
 {
 public:
   using ArrayType    = T;
@@ -88,6 +88,8 @@ public:
   {
     return {errorSignal};
   }
+
+  static constexpr char const *DESCRIPTOR = "Convolution";
 };
 
 }  // namespace ops

@@ -49,7 +49,7 @@ public:
    * @param nodeName name of node to evaluate for output
    * @return pointer to array containing node output
    */
-  ArrayPtrType Evaluate(std::string const &nodeName)
+  ArrayPtrType Evaluate(std::string const &node_name)
   {
     if (nodes_[node_name])
     {
