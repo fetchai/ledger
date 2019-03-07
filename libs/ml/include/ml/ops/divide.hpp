@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/ml/activation_functions/softmax.hpp"
+#include "math/free_functions/fundamental_operators.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -25,53 +25,56 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Softmax : public fetch::ml::Ops<T>
+class Divide : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  Softmax()          = default;
-  virtual ~Softmax() = default;
+  Divide()          = default;
+  virtual ~Divide() = default;
 
+  /**
+   * elementwise multiplication
+   * @param inputs  left & right inputs to Divide
+   * @return
+   */
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
-    assert(inputs.size() == 1);
-    if (!this->output_ || this->output_->shape() != inputs[0]->shape())
+    assert(inputs.size() > 1);
+    for (std::size_t i = 1; i < inputs.size(); ++i)
     {
-      this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
+      assert(inputs[i]->shape() == inputs[i - 1]->shape());
     }
 
-    fetch::math::Softmax(*inputs[0], *this->output_);
+    std::vector<std::uint64_t> outputShape(inputs[0]->shape());
+    if (!this->output_ || this->output_->shape() != outputShape)
+    {
+      this->output_ = std::make_shared<ArrayType>(outputShape);
+    }
+
+    fetch::math::Divide(inputs[0], inputs[1], this->output_);
+    if (inputs.size() > 2)
+    {
+      for (std::size_t i = 2; i < inputs.size(); ++i)
+      {
+        fetch::math::Divide(this->output_, inputs[i], this->output_);
+      }
+    }
 
     return this->output_;
   }
 
+  /**
+   * elementwise multiplication is not trainable - just pass the error signal back
+   */
   virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
                                              ArrayPtrType                     errorSignal)
   {
-    assert(inputs.size() == 1);
-    assert(inputs[0]->shape() == errorSignal->shape());
-
-    ArrayPtrType t = this->Forward(inputs);
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
-    {
-      errorSignal->At(i) *= t->At(i);
-    }
-    typename ArrayType::Type sum(0);
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
-    {
-      sum += errorSignal->At(i);
-    }
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
-    {
-      errorSignal->At(i) -= (t->At(i) * sum);
-    }
-    return {errorSignal};
+    return std::vector<ArrayPtrType>(inputs.size(), errorSignal);
   }
 
-  static constexpr char const *DESCRIPTOR = "Softmax";
+  static constexpr char const *DESCRIPTOR = "Divide";
 };
 
 }  // namespace ops
