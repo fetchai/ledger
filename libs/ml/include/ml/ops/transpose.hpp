@@ -17,26 +17,39 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include <memory>
-#include <vector>
+#include "ml/ops/ops.hpp"
 
 namespace fetch {
 namespace ml {
+namespace ops {
 
 template <class T>
-class Ops
+class Transpose : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual ArrayPtrType              Forward(std::vector<ArrayPtrType> const &inputs) = 0;
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     error)                     = 0;
+  Transpose()          = default;
+  virtual ~Transpose() = default;
 
-protected:
-  ArrayPtrType output_;
+  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  {
+    ASSERT(inputs.size() == 1);
+    this->output_ = std::make_shared<ArrayType>(inputs[0]->Clone().Transpose());
+    return this->output_;
+  }
+
+  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
+                                             ArrayPtrType                     errorSignal)
+  {
+    ASSERT(inputs.size() == 1);
+    return {std::make_shared<ArrayType>(errorSignal->Clone().Transpose())};
+  }
+
+  static constexpr char const *DESCRIPTOR = "Transpose";
 };
+
+}  // namespace ops
 }  // namespace ml
 }  // namespace fetch

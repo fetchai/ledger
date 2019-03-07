@@ -480,11 +480,65 @@ template <typename ArrayType>
 meta::IfIsNonBlasArray<ArrayType, void> Subtract(ArrayType const &array, ArrayType const &array2,
                                                  ArrayType &ret)
 {
-  assert(array.size() == array2.size());
-  assert(array.size() == ret.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
+  assert((array.size() == array2.size()) ||
+         ((array.shape()[0] == array2.shape()[0]) &&
+          ((array.shape()[1] == 1) || (array2.shape()[1] == 1))) ||
+         ((array.shape()[1] == array2.shape()[1]) &&
+          ((array.shape()[0] == 1) || (array2.shape()[0] == 1))));
+  assert((array.size() == ret.size()) || (array2.size() == ret.size()));
+
+  if (array.size() == array2.size())
   {
-    ret.Set(i, array.At(i) - array2.At(i));
+    for (std::size_t i = 0; i < ret.size(); ++i)
+    {
+      ret.Set(i, array.At(i) - array2.At(i));
+    }
+  }
+
+  // matrix - vector subtraction (i.e. broadcasting)
+  else if (array.shape()[0] == 1)
+  {
+    for (std::size_t i = 0; i < array2.shape()[0]; ++i)
+    {
+      for (std::size_t j = 0; j < array2.shape()[1]; ++j)
+      {
+        ret.Set({i, j}, array.At({0, j}) - array2.At({i, j}));
+      }
+    }
+  }
+  else if (array.shape()[1] == 1)
+  {
+    for (std::size_t i = 0; i < array2.shape()[0]; ++i)
+    {
+      for (std::size_t j = 0; j < array2.shape()[1]; ++j)
+      {
+        ret.Set({i, j}, array.At({i, 0}) - array2.At({i, j}));
+      }
+    }
+  }
+  else if (array2.shape()[0] == 1)
+  {
+    for (std::size_t i = 0; i < array2.shape()[0]; ++i)
+    {
+      for (std::size_t j = 0; j < array2.shape()[1]; ++j)
+      {
+        ret.Set({i, j}, array.At({i, j}) - array2.At({0, j}));
+      }
+    }
+  }
+  else if (array2.shape()[1] == 1)
+  {
+    for (std::size_t i = 0; i < array2.shape()[0]; ++i)
+    {
+      for (std::size_t j = 0; j < array2.shape()[1]; ++j)
+      {
+        ret.Set({i, j}, array.At({0, j}) - array2.At({i, 0}));
+      }
+    }
+  }
+  else
+  {
+    throw std::runtime_error("broadcast subtraction for tensors more than 2D not yet handled");
   }
 }
 

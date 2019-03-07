@@ -21,6 +21,7 @@
 #include "ml/graph.hpp"
 
 #include "ml/layers/fully_connected.hpp"
+
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
 
