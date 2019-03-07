@@ -31,12 +31,12 @@ namespace fetch
 namespace modules
 {
 
-double Sqrt(fetch::vm::VM * /*vm*/, double x)
+inline double Sqrt(fetch::vm::VM * /*vm*/, double x)
 {
   return std::sqrt(x);
 }
 
-void BindSqrt(vm::Module &module)
+inline void BindSqrt(vm::Module &module)
 {
   module.CreateFreeFunction("sqrt", &Sqrt);
 }

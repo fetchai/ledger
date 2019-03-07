@@ -16,7 +16,7 @@ namespace fetch
 namespace consensus
 {
 
-void CreateConensusVMModule(fetch::vm::Module &module)
+inline void CreateConensusVMModule(fetch::vm::Module &module)
 {
   module.CreateTemplateInstantiationType<fetch::vm::Array, int32_t >(fetch::vm::TypeIds::IArray);
   module.CreateTemplateInstantiationType<fetch::vm::Array, int64_t >(fetch::vm::TypeIds::IArray);

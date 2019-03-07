@@ -31,12 +31,12 @@ namespace fetch
 namespace modules
 {
 
-double Exp(fetch::vm::VM * /*vm*/, double x)
+inline double Exp(fetch::vm::VM * /*vm*/, double x)
 {
   return std::exp(x);
 }
 
-void BindExp(vm::Module &module)
+inline void BindExp(vm::Module &module)
 {
   module.CreateFreeFunction("exp", &Exp);
 }

@@ -176,6 +176,7 @@ struct CommandLineArguments
     p.add(args.cfg.transient_peers,       "transient-peers",       "The number of the peers which will be random in answer sent to peer requests.", DEFAULT_TRANSIENT_PEERS);
     p.add(args.cfg.peers_update_cycle_ms, "peers-update-cycle-ms", "How fast to do peering changes.",                                               uint32_t{0});
     p.add(args.cfg.standalone,            "standalone",            "Expect the node to run in on its own (useful for testing and development)",     false);
+    p.add(args.cfg.synergetic_mine,       "synergetic-mine",       "Mines solutions to synergetic contracts.",                                      true);
     // clang-format on
 
     // parse the args
@@ -487,7 +488,7 @@ int main(int argc, char **argv)
     // register the signal handler
     volatile void *x = (void*)InterruptHandler;
     FETCH_UNUSED(x);
-    // std::signal(SIGINT, InterruptHandler);
+    std::signal(SIGINT, InterruptHandler);
 
     // run the application
     constellation->Run(args.peers);

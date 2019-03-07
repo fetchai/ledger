@@ -1,3 +1,5 @@
+#pragma once
+
 #include "vm/analyser.hpp"
 #include "vm/typeids.hpp"
 
@@ -13,10 +15,7 @@ namespace fetch
 {
 namespace consensus
 {
-/**
- * Thoughts on VM:
- *   - Can I pass variants from one VM to another safely?
- **/
+
 class SynergeticMiner {
 public:
   SynergeticMiner(fetch::ledger::DAG &dag)

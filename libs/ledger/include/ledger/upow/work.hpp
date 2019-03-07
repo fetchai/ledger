@@ -19,10 +19,10 @@ struct Work
 
   /// 
   ContractAddress contract_address;
-  WorkId work_id; // TODO(tfr): Not relevant yet
+
   Identity miner;    
   int64_t nonce;
-  double score = std::numeric_limits<double>::infinity();
+  double score = std::numeric_limits<double>::infinity(); // TODO: Change to fixed point
   
   int64_t operator()()
   {
@@ -30,7 +30,6 @@ struct Work
     hasher.Reset();
 
     hasher.Update(contract_address);
-    hasher.Update(work_id);
     hasher.Update(miner);
     hasher.Update(nonce);
 
@@ -46,6 +45,10 @@ struct Work
     return fnv.Final<int64_t>();
   }  
 
+  bool operator<(Work const &other) const 
+  {
+    return score < other.score;
+  }
   
 
 };

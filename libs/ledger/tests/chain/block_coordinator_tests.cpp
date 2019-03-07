@@ -57,6 +57,8 @@ using ScheduleStatus      = fetch::ledger::ExecutionManagerInterface::ScheduleSt
 using BlockSinkPtr        = std::unique_ptr<FakeBlockSink>;
 using TxCachePtr          = std::unique_ptr<TransactionStatusCache>;
 using State               = fetch::ledger::BlockCoordinator::State;
+using DAG                 = fetch::ledger::DAG;
+using DAGPtr              = std::shared_ptr< DAG >;
 
 static constexpr char const *LOGGING_NAME = "BlockCoordinatorTests";
 static constexpr std::size_t NUM_LANES    = 1;
@@ -75,13 +77,14 @@ protected:
     ECDSASigner const signer{};
 
     main_chain_        = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
+    dag_               = std::make_unique<DAG>();
     storage_unit_      = std::make_unique<MockStorageUnit>();
     execution_manager_ = std::make_unique<MockExecutionManager>(storage_unit_->fake);
     packer_            = std::make_unique<MockBlockPacker>();
     block_sink_        = std::make_unique<FakeBlockSink>();
     tx_status_         = std::make_unique<TransactionStatusCache>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
-        *main_chain_, *execution_manager_, *storage_unit_, *packer_, *block_sink_, *tx_status_,
+        *main_chain_, *dag_, *execution_manager_, *storage_unit_, *packer_, *block_sink_, *tx_status_,
         signer.identity().identifier(), NUM_LANES, NUM_SLICES, 1u);
   }
 
@@ -93,6 +96,7 @@ protected:
     packer_.reset();
     execution_manager_.reset();
     storage_unit_.reset();
+    dag_.reset();
     main_chain_.reset();
   }
 
@@ -116,6 +120,7 @@ protected:
   }
 
   MainChainPtr        main_chain_;
+  DAGPtr              dag_;
   ExecutionMgrPtr     execution_manager_;
   StorageUnitPtr      storage_unit_;
   BlockPackerPtr      packer_;

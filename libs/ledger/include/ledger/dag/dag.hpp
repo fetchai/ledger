@@ -39,6 +39,7 @@ public:
   using NodeArray       = std::vector<DAGNode>;
   using NodeMap         = std::unordered_map<Digest, DAGNode>;
   using DigestSet         = std::unordered_set<Digest>;
+  using DigestVector      = std::vector<Digest>;  
   using Mutex             = mutex::Mutex;
   using CallbackFunction  = std::function< void(DAGNode) > ;
   
@@ -50,6 +51,7 @@ public:
 
   bool Push(DAGNode node);
   bool PushBlock(DAGNode node);
+  DigestVector UncertifiedTipsAsVector() const;
   DigestSet const tips() const;
   DigestSet const tips_unsafe() const;
 
@@ -78,48 +80,67 @@ public:
 
   /// Control logic for setting the time of the nodes.
   /// @{
-  void SetNodeTime(uint64_t block_number, DigestArray hashes)
+  bool SetNodeTime(uint64_t block_number, DigestArray hashes)
   {
     FETCH_LOCK(maintenance_mutex_); 
 
-    std::queue< Digest > queue;
+    std::vector< Digest > updated_hashes{};
+    std::queue< Digest >  queue;
+
+    // Preparing graph traversal
     for(auto const& h :hashes)
     {
       queue.push(h);
     }
 
+    // Traversing
     while(!queue.empty())
     {
       auto hash = queue.front();
       queue.pop();
+    
       if(nodes_.find(hash) == nodes_.end())
       {
+        // Revert to previous state if an invalid hash is given
+        for(auto &h: updated_hashes)
+        {
+          auto &node = nodes_[h];
+          h.timestamp = DAGNode::INVALID_TIMESTAMP;
+        }
         // FETCH_LOG_ERROR
-        return;
+        return false;
       }
 
+      // Checking if the node was already certified.
       auto &node = nodes_[hash];
       if(node.timestamp == DAGNode::INVALID_TIMESTAMP)
       {
+
+        // If not we certify it and proceed to its parents
         node.timestamp = block_number;
         for(auto &p: node.previous)
         {
           queue.push(p);
         }
+
+        // Keeping track of updated nodes in case we need to revert.
+        updated_hashes.push_back(hash);
       }
     }
 
+    return true;
   }
 
-  void ClearNodeTime(DigestArray hashes)
+  void RevertTo(uint64_t block_number)
   {
     FETCH_LOCK(maintenance_mutex_);
     // TODO: Implement to revert.
   }
 
-  NodeArray ExtractSegment(uint64_t block_number, DigestArray hashes)
+  NodeArray ExtractSegment(uint64_t block_number)
   {
-    // TODO: 
+    FETCH_LOCK(maintenance_mutex_);    
+    // TODO: implement.
     return {};
   }
   /// }

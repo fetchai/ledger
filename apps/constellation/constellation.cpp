@@ -168,10 +168,10 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   }
   , dag_{}
   , dag_rpc_service_{muddle_, muddle_.AsEndpoint(), dag_}
-  , mock_chain_{}
   , chain_{ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes, cfg_.num_slices}
   , block_coordinator_{chain_,
+                       dag_,
                        *execution_manager_,
                        *storage_,
                        block_packer_,
@@ -192,8 +192,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
         std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
   
-      std::make_shared<ledger::DAGHTTPInterface>(dag_, dag_rpc_service_),
-      std::make_shared<ledger::MockChainHTTPInterface>(cfg_.log2_num_lanes, mock_chain_)
+      std::make_shared<ledger::DAGHTTPInterface>(dag_, dag_rpc_service_)
   }
 {
 
@@ -267,15 +266,14 @@ void Constellation::Run(UriList const &initial_peers)
 
   // start all the services
   network_manager_.Start();
+
   http_network_manager_.Start();
   muddle_.Start({p2p_port_});
-
   /// LANE / SHARD SERVERS
 
   // start all the lane services and wait for them to start accepting
   // connections
   lane_services_.Start();
-
   FETCH_LOG_INFO(LOGGING_NAME, "Starting shard services...");
   if (!WaitForLaneServersToStart())
   {
@@ -337,18 +335,26 @@ void Constellation::Run(UriList const &initial_peers)
   execution_manager_->Start();
   tx_processor_.Start();
 
-  dag_.OnNewNode([this](fetch::ledger::DAGNode /*node*/)
-  {
-    mock_chain_.SetTips(dag_.tips_unsafe());
-  });
 
-  mock_chain_.OnBlock([this](fetch::ledger::Block block)
-  {
-    dag_.SetNodeTime(block.body.block_number, block.body.dag_nodes);
-  });
+  /////////////////////////////////
+  //// TODO
+  
+//  dag_.OnNewNode([this](fetch::ledger::DAGNode /*node*/)
+//  {
+//    // TODO: Replace with a way of updating the contents of the next block being mined.
+//    mock_chain_.SetTips(dag_.tips_unsafe());
+//  });
+
+//  // TODO: Replace
+//  mock_chain_.OnBlock([this](fetch::ledger::Block block)
+//  {
+//    //dag_.SetNodeTime(block.body.block_number, block.body.dag_nodes);
+//  });
+  //// TODO
+  /////////////////////////////////
+
 
   dag_rpc_service_.Start();
-  mock_chain_.Start();
   /// P2P (TRUST) HIGH LEVEL MANAGEMENT
 
   // P2P configuration
@@ -363,7 +369,6 @@ void Constellation::Run(UriList const &initial_peers)
   //---------------------------------------------------------------
   // Step 2. Main monitor loop
   //---------------------------------------------------------------
-
   // monitor loop
   while (active_)
   {
@@ -384,9 +389,8 @@ void Constellation::Run(UriList const &initial_peers)
   http_.Stop();
   p2p_.Stop();
 
-  mock_chain_.Stop();
+
   dag_rpc_service_.Stop();
-  mock_chain_.OnBlock(nullptr);
   dag_.OnNewNode(nullptr);
 
 

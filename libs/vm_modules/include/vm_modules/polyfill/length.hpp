@@ -7,31 +7,31 @@ namespace fetch
 namespace modules
 {
 
-int32_t LenByteArray(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::modules::ByteArrayWrapper> const &s)
+inline int32_t LenByteArray(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::modules::ByteArrayWrapper> const &s)
 {
   return int32_t(s->byte_array().size());
 }
 
 
-int32_t LenString(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
+inline int32_t LenString(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
   return int32_t(s->str.size());
 }
 
 template< typename T >
-int32_t LenArray(fetch::vm::VM * /*vm*/, vm::Ptr< vm::Array< T > > const & arr)
+inline int32_t LenArray(fetch::vm::VM * /*vm*/, vm::Ptr< vm::Array< T > > const & arr)
 {
   return int32_t(arr->elements.size());
 }
 
 template< typename T >
-int32_t LenArrayObj(fetch::vm::VM * /*vm*/, vm::Ptr< vm::Array< vm::Ptr< T > > > const & arr)
+inline int32_t LenArrayObj(fetch::vm::VM * /*vm*/, vm::Ptr< vm::Array< vm::Ptr< T > > > const & arr)
 {
   return int32_t(arr->elements.size());
 }
 
 
-void BindLen(vm::Module &module)
+inline void BindLen(vm::Module &module)
 {
 
   module.CreateFreeFunction("lengthOf", &LenByteArray);

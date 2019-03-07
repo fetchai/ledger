@@ -45,7 +45,7 @@ T RightShift(fetch::vm::VM * /*vm*/, T x, T s)
   return T(x >> s);
 }
 
-void BindBitShift(vm::Module &module)
+inline void BindBitShift(vm::Module &module)
 {
   module.CreateFreeFunction("leftShift", &LeftShift<int32_t>);
   module.CreateFreeFunction("leftShift", &LeftShift<int64_t>);

@@ -7,72 +7,72 @@ namespace fetch
 namespace vm_modules
 {
 
-void PrintByteArray(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::modules::ByteArrayWrapper> const &s)
+inline void PrintByteArray(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::modules::ByteArrayWrapper> const &s)
 {
 //  std::cout << byte_array::ToBase64(s->byte_array());
   std::cout << s->byte_array();
 }
 
-void PrintLnByteArray(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::modules::ByteArrayWrapper> const &s)
+inline void PrintLnByteArray(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::modules::ByteArrayWrapper> const &s)
 {
 //  std::cout << byte_array::ToBase64(s->byte_array()) << std::endl;
   std::cout << s->byte_array() << std::endl;
 }
 
-void PrintString(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
+inline void PrintString(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
   std::cout << s->str;
 }
 
-void PrintLnString(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
+inline void PrintLnString(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
   std::cout << s->str << std::endl;
 }
 
 
-void PrintInt32(fetch::vm::VM * /*vm*/, int32_t const &s)
+inline void PrintInt32(fetch::vm::VM * /*vm*/, int32_t const &s)
 {
   std::cout << s;
 }
 
-void PrintLnInt32(fetch::vm::VM * /*vm*/, int32_t const &s)
+inline void PrintLnInt32(fetch::vm::VM * /*vm*/, int32_t const &s)
 {
   std::cout << s << std::endl;
 }
 
-void PrintInt64(fetch::vm::VM * /*vm*/, int64_t const &s)
+inline void PrintInt64(fetch::vm::VM * /*vm*/, int64_t const &s)
 {
   std::cout << s;
 }
 
-void PrintLnInt64(fetch::vm::VM * /*vm*/, int64_t const &s)
+inline void PrintLnInt64(fetch::vm::VM * /*vm*/, int64_t const &s)
 {
   std::cout << s << std::endl;
 }
 
-void PrintFloat(fetch::vm::VM * /*vm*/, float const &s)
+inline void PrintFloat(fetch::vm::VM * /*vm*/, float const &s)
 {
   std::cout << s;
 }
 
-void PrintLnFloat(fetch::vm::VM * /*vm*/, float const &s)
+inline void PrintLnFloat(fetch::vm::VM * /*vm*/, float const &s)
 {
   std::cout << s;
 }
 
-void PrintDouble(fetch::vm::VM * /*vm*/, double const &s)
+inline void PrintDouble(fetch::vm::VM * /*vm*/, double const &s)
 {
   std::cout << s;
 }
 
-void PrintLnDouble(fetch::vm::VM * /*vm*/, double const &s)
+inline void PrintLnDouble(fetch::vm::VM * /*vm*/, double const &s)
 {
   std::cout << s << std::endl;
 }
 
 
 template<typename T>
-void PrintArrayPrimitive(fetch::vm::VM * /*vm*/, vm::Ptr< vm::Array< T > > const &g)
+inline void PrintArrayPrimitive(fetch::vm::VM * /*vm*/, vm::Ptr< vm::Array< T > > const &g)
 {
   std::cout << "[";
   for(std::size_t i=0; i < g->elements.size(); ++i )
@@ -88,7 +88,7 @@ void PrintArrayPrimitive(fetch::vm::VM * /*vm*/, vm::Ptr< vm::Array< T > > const
 
 
 
-void CreatePrint(vm::Module& module)
+inline void CreatePrint(vm::Module& module)
 {
   module.CreateFreeFunction("print", &PrintByteArray);
   module.CreateFreeFunction("printLn", &PrintLnByteArray);
@@ -111,7 +111,7 @@ void CreatePrint(vm::Module& module)
   module.CreateFreeFunction("print", &PrintArrayPrimitive<double>);  
 }
 
-void CreatePrint(std::shared_ptr<vm::Module> module)
+inline void CreatePrint(std::shared_ptr<vm::Module> module)
 {
   CreatePrint(*module.get());
 }

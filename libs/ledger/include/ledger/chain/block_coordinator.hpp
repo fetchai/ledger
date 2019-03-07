@@ -21,6 +21,8 @@
 #include "core/state_machine.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/dag/dag.hpp"
+#include "ledger/upow/synergetic_executor.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -62,24 +64,31 @@ class BlockSinkInterface;
  *           ┌─────────────────────────┴────────────────────────┐                │
  *           │                                                  │                │
  *           │                                                  ▼                │
- *           │                                        ┌──────────────────┐       │
- *           │                                        │   Synchronised   │       │
- *           │                         ┌──────────────│                  │◀ ┐    │
+ *  Pipe 1   │                Pipe 2                  ┌──────────────────┐       │
+ *           │                                        │   Synchronised   │       │ < (v) Add DAG hashes to block here.
+ *           │                         ┌──────────────│Reverts as needed │◀ ┐    │ < ( ) Add revert here
  *           │                         │              └──────────────────┘       │
  *           │                         │                        │           │    │
  *           │                         │                        │                │
  *           │                         │                        ├ ─ ─ ─ ─ ─ ┘    │
  *           ▼                         ▼                        │                │
- * ┌──────────────────┐      ┌──────────────────┐               │                │
- * │ Pre Exec. Block  │      │  Pack New Block  │               │                │
- * │    Validation    │      │                  │               │                │
+ * ┌──────────────────┐      ┌──────────────────┐               │                │ < 1: Add synergetic validation here
+ * │ Pre Exec. Block  │      │  Pack New Block  │               │                │ 
+ * │    Validation    │      │                  │               │                │ 
  * └──────────────────┘      └──────────────────┘               │                │
  *           │                         │                        │                │
  *           │                         │                        │                │
+ *           │                         │                        │                │
  *           ▼                         ▼                        │                │
+ * ┌──────────────────┐      ┌──────────────────┐               │                │ < 1 & 2: Add synergetic execution here
+ * │ Synergetic       │      │  Synergetic new  │               │                │ < // TODO: Move one down below wait for transactions
+ * │ execution        │      │  execution       │               │                │ 
+ * └──────────────────┘      └──────────────────┘               │                │
+ *           │                         │                        │                │
+ *           ▼                         ▼                        │                │ 
  * ┌──────────────────┐      ┌──────────────────┐               │                │
  * │  Schedule Block  │      │Execute New Block │               │                │
- * │    Execution     │      │                  │               │                │
+ * │    Execution     │      │                  │               │                │ 
  * └──────────────────┘      └──────────────────┘               │                │
  *           │                         │                        │                │
  *           │                         │                        │                │
@@ -120,28 +129,38 @@ public:
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
   using Identity = byte_array::ConstByteArray;
+  using DAG      = fetch::ledger::DAG;
 
   enum class State
   {
+    // Main loop
     SYNCHRONIZING,                 ///< Catch up with the outstanding blocks
     SYNCHRONIZED,                  ///< Caught up waiting to generate a new block
+
+    // Pipe 1
     PRE_EXEC_BLOCK_VALIDATION,     ///< Validation stage before block execution
+    SYNERGETIC_EXECUTION,    
     WAIT_FOR_TRANSACTIONS,         ///< Halts the state machine until all the block transactions are
                                    ///< present
     SCHEDULE_BLOCK_EXECUTION,      ///< Schedule the block to be executed
     WAIT_FOR_EXECUTION,            ///< Wait for the execution to be completed
     POST_EXEC_BLOCK_VALIDATION,    ///< Perform final block validation
+
+    // Pipe 2
     PACK_NEW_BLOCK,                ///< Mine a new block from the head of the chain
+    NEW_SYNERGETIC_EXECUTION,   
     EXECUTE_NEW_BLOCK,             ///< Schedule the execution of the new block
     WAIT_FOR_NEW_BLOCK_EXECUTION,  ///< Wait for the new block to be executed
     PROOF_SEARCH,                  ///< New Block: Waiting until a hash can be found
     TRANSMIT_BLOCK,                ///< Transmit the new block to
+
+    // Main loop
     RESET                          ///< Cycle complete
   };
   using StateMachine = core::StateMachine<State>;
 
   // Construction / Destruction
-  BlockCoordinator(MainChain &chain, ExecutionManagerInterface &execution_manager,
+  BlockCoordinator(MainChain &chain, DAG &dag, ExecutionManagerInterface &execution_manager,
                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                    BlockSinkInterface &block_sink, TransactionStatusCache &status_cache,
                    Identity identity, std::size_t num_lanes, std::size_t num_slices,
@@ -197,17 +216,24 @@ private:
   using MinerPtr        = std::shared_ptr<consensus::ConsensusMinerInterface>;
   using TxSet           = std::unordered_set<TransactionSummary::TxDigest>;
   using TxSetPtr        = std::unique_ptr<TxSet>;
+  using SynergeticExecutor = fetch::consensus::SynergeticExecutor;
 
   /// @name Monitor State
   /// @{
   State OnSynchronizing();
   State OnSynchronized(State current, State previous);
+
+  // Phase 1
   State OnPreExecBlockValidation();
   State OnWaitForTransactions();
+  State OnSynergeticExecution();
   State OnScheduleBlockExecution();
   State OnWaitForExecution();
   State OnPostExecBlockValidation();
+
+  // Phase 2
   State OnPackNewBlock();
+  State OnNewSynergeticExecution();  
   State OnExecuteNewBlock();
   State OnWaitForNewBlockExecution();
   State OnProofSearch();
@@ -228,6 +254,7 @@ private:
   /// @name External Components
   /// @{
   MainChain &                chain_;              ///< Ref to system chain
+  DAG &                      dag_;                ///< Ref to DAG
   ExecutionManagerInterface &execution_manager_;  ///< Ref to system execution manager
   StorageUnitInterface &     storage_unit_;       ///< Ref to the storage unit
   BlockPackerInterface &     block_packer_;       ///< Ref to the block packer
@@ -250,8 +277,14 @@ private:
   Timepoint       next_block_time_;       ///< THe next point that a block should be generated
   BlockPtr        current_block_{};       ///< The pointer to the current block (read only)
   NextBlockPtr    next_block_{};          ///< The next block being created (read / write)
-  TxSetPtr        pending_txs_{};  ///< The list of pending transactions that are being waited on
+  TxSetPtr        pending_txs_{};         ///< The list of pending transactions that are being waited on
   /// @}
+
+
+  /// @name Synergetic Contracts
+  /// @{
+  SynergeticExecutor         synergetic_executor_;
+  /// }
 };
 
 template <typename R, typename P>

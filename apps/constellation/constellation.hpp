@@ -36,10 +36,7 @@
 #include "network/p2pservice/manifest.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
-#include "mock_chain.hpp" // TODO(tfr): remove in the long term
 
-
-#include "mock_chain.hpp"
 #include "ledger/dag/dag.hpp"
 #include "ledger/protocols/dag_rpc_service.hpp"
 #include "ledger/dag/dag_muddle_configuration.hpp" //< TODO(tfr): Move to where it belongs
@@ -81,7 +78,6 @@ public:
   using CertificatePtr   = Peer2PeerService::CertificatePtr;
   using UriList          = std::vector<network::Uri>;
   using Manifest         = network::Manifest;
-  using MockChain = fetch::ledger::MockChain;
 
   static constexpr uint32_t DEFAULT_BLOCK_DIFFICULTY = 6;
 
@@ -101,6 +97,7 @@ public:
     uint32_t    block_difficulty{DEFAULT_BLOCK_DIFFICULTY};
     uint32_t    peers_update_cycle_ms{0};
     bool        standalone{false};
+    bool        synergetic_mine{true};
 
     uint32_t num_lanes() const
     {
@@ -186,7 +183,6 @@ private:
   /// @{
   DAG dag_;
   DAGRpcService dag_rpc_service_;
-  MockChain mock_chain_;
  /// @}
 
 

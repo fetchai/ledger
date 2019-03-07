@@ -1,4 +1,5 @@
 #pragma once
+#include "ledger/upow/synergetic_vm_module.hpp"
 
 #include "vm/analyser.hpp"
 #include "vm/typeids.hpp"
