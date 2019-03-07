@@ -17,36 +17,54 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/contract.hpp"
-
-#include <atomic>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace fetch {
 namespace ledger {
 
-class DummyContract : public Contract
+/**
+ * Exception class that is generated in response to loading and running Smart Contracts
+ */
+class SmartContractException : public std::exception
 {
 public:
-  static constexpr char const *NAME = "fetch.dummy";
 
-  DummyContract();
-  ~DummyContract() override = default;
-
-  static constexpr char const *LOGGING_NAME = "DummyContract";
-
-  std::size_t counter() const
+  enum class Category
   {
-    return counter_;
+    UNKNOWN,
+    COMPILATION
+  };
+
+  using Errors = std::vector<std::string>;
+
+  SmartContractException(Category category, Errors errors)
+    : category_{category}
+    , errors_{std::move(errors)}
+  {
+  }
+
+  Errors const &errors() const { return errors_; }
+  Category category() const { return category_; }
+
+  const char* what() const noexcept override
+  {
+    if (errors_.empty())
+    {
+      return "Unknown Smart Contract Error";
+    }
+    else
+    {
+      return errors_.front().c_str();
+    }
   }
 
 private:
-  using Counter = std::atomic<std::size_t>;
 
-  Status Wait(Transaction const &tx);
-  Status Run(Transaction const &tx);
-
-  Counter counter_{0};
+  Category category_{Category::UNKNOWN};
+  Errors   errors_{};
 };
 
-}  // namespace ledger
-}  // namespace fetch
+} // namespace ledger
+} // namespace fetch

@@ -18,26 +18,35 @@
 
 #include "ledger/chaincode/factory.hpp"
 #include "core/logger.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
 #include "ledger/chaincode/dummy_contract.hpp"
+#include "ledger/chaincode/smart_contract.hpp"
+#include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 
+#include <unordered_map>
 #include <stdexcept>
 
 static constexpr char const *LOGGING_NAME = "ChainCodeFactory";
+
+using fetch::byte_array::ConstByteArray;
 
 namespace fetch {
 namespace ledger {
 namespace {
 
-using FactoryRegistry = ChainCodeFactory::FactoryRegistry;
+using ContractPtr     = ChainCodeFactory::ContractPtr;
 using ContractNameSet = ChainCodeFactory::ContractNameSet;
+using FactoryCallable = std::function<ContractPtr()>;
+using FactoryRegistry = std::unordered_map<ConstByteArray, FactoryCallable>;
 
 FactoryRegistry CreateRegistry()
 {
   FactoryRegistry registry;
 
-  registry["fetch.dummy"] = []() { return std::make_shared<DummyContract>(); };
-  registry["fetch.token"] = []() { return std::make_shared<TokenContract>(); };
+  registry[DummyContract::NAME]        = []() { return std::make_shared<DummyContract>(); };
+  registry[TokenContract::NAME]        = []() { return std::make_shared<TokenContract>(); };
+  registry[SmartContractManager::NAME] = []() { return std::make_shared<SmartContractManager>(); };
 
   return registry;
 }
@@ -59,29 +68,54 @@ ContractNameSet const global_contract_set = CreateContractSet(global_registry);
 
 }  // namespace
 
-ChainCodeFactory::ContractPtr ChainCodeFactory::Create(ContractName const &name) const
+ChainCodeFactory::ContractPtr ChainCodeFactory::Create(Identifier const &contract_id, StorageInterface &storage) const
 {
+  ContractPtr contract{};
 
-  // lookup the chain code instance
-  auto it = global_registry.find(name);
-  if (it == global_registry.end())
+  // determine based on the identifier is the requested contract a VM based smart contract or is it
+  // referencing a hard coded "chain code"
+  if (Identifier::Type::SMART_CONTRACT == contract_id.type())
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to lookup requested chain code: ", name);
-    throw std::runtime_error("Invalid chain code name");
+    // create the resource address for the contract
+    auto const resource = SmartContractManager::CreateAddressForContract(contract_id);
+
+    // query the contents of the address
+    auto const result = storage.Get(resource);
+
+    if (!result.failed)
+    {
+      ConstByteArray contract_source;
+
+      // deserialise the contract source
+      serializers::ByteArrayBuffer adapter{result.document};
+      adapter >> contract_source;
+
+      // attempt to construct the smart contract in question
+      contract = std::make_shared<SmartContract>(std::string{contract_source});
+    }
+  }
+  else // invalid or chain code
+  {
+    // attempt to lookup the chain code instance
+    auto it = global_registry.find(contract_id.full_name());
+    if (it != global_registry.end())
+    {
+      // execute the factory to create the chain code instance
+      contract = it->second();
+    }
   }
 
-  // create the chain code instance
-  ContractPtr chain_code = it->second();
-  if (!chain_code)
+  // finally throw an exception if the contract in question can not be found
+  if (!contract)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to construct requested chain code: ", name);
+    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to construct requested chain code: ", contract_id.full_name());
     throw std::runtime_error("Unable to create required chain code");
   }
 
-  return chain_code;
+  return contract;
 }
 
-ChainCodeFactory::ContractNameSet const &ChainCodeFactory::GetContracts() const
+ContractNameSet const &ChainCodeFactory::GetChainCodeContracts() const
 {
   return global_contract_set;
 }

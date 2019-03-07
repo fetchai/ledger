@@ -23,6 +23,7 @@
 #include "core/logger.hpp"
 #include "crypto/ecdsa.hpp"
 #include "http/json_response.hpp"
+#include "ledger/state_sentinel.hpp"
 #include "ledger/chain/helper_functions.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -204,7 +205,9 @@ http::HTTPResponse WalletHttpInterface::OnBalance(http::HTTPRequest const &reque
     doc.Parse(request.body());
 
     variant::Variant response;
-    contract.Attach(state_);
+
+    StateAdapter adapter{state_, Identifier{TokenContract::NAME}};
+    contract.Attach(adapter);
     contract.DispatchQuery("balance", doc.root(), response);
     contract.Detach();
 

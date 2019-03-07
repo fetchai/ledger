@@ -16,64 +16,200 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/byte_array.hpp"
 #include "ledger/identifier.hpp"
 
 #include <stdexcept>
+#include <regex>
+
+using fetch::byte_array::ConstByteArray;
+using fetch::byte_array::ByteArray;
+
+static constexpr char const *LOGGING_NAME = "Identifier";
 
 namespace fetch {
 namespace ledger {
+namespace {
 
-constexpr char                   Identifier::SEPARATOR;
-byte_array::ConstByteArray const Identifier::separator_{
-    reinterpret_cast<byte_array::ConstByteArray::container_type const *>(&Identifier::SEPARATOR),
-    1};
+template <std::size_t LENGTH, std::size_t PADDING>
+bool IsBase64(ConstByteArray const &value)
+{
+  static constexpr std::size_t TOTAL_LENGTH = LENGTH + PADDING;
+
+  char const *buffer = value.char_pointer();
+
+  if (TOTAL_LENGTH != value.size())
+  {
+    return false;
+  }
+
+  for (std::size_t i = 0; i < LENGTH; ++i, ++buffer)
+  {
+    bool const valid = ((('a' <= *buffer) && ('z' >= *buffer)) ||
+                        (('A' <= *buffer) && ('Z' >= *buffer)) ||
+                        (('0' <= *buffer) && ('9' >= *buffer)) ||
+                        (*buffer == '+') ||
+                        (*buffer == '/'));
+
+    if (!valid)
+    {
+      return false;
+    }
+  }
+
+  for (std::size_t i = 0; i < PADDING; ++i, ++buffer)
+  {
+    if (*buffer != '=')
+    {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool IsDigest(ConstByteArray const &value)
+{
+  return IsBase64<43,1>(value);
+}
+
+bool IsIdentity(ConstByteArray const &value)
+{
+  return IsBase64<86,2>(value);
+}
+
+} // namespace
+
+const char Identifier::SEPARATOR{'.'};
 
 /**
  * Construct an identifier from a fully qualified name
  *
  * @param identifier The fully qualified name to parse
  */
-Identifier::Identifier(string_type identifier)
+Identifier::Identifier(ConstByteArray identifier)
   : full_{std::move(identifier)}
 {
-  Tokenise();
+  if (!Tokenise())
+  {
+    throw std::runtime_error("Unable to parse identifier");
+  }
+}
+
+/**
+ * Construct an identifier from another set of tokens
+ * @param tokens
+ * @param count
+ */
+Identifier::Identifier(Tokens const &tokens, std::size_t count)
+{
+  if (count <= tokens.size())
+  {
+    ByteArray full;
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+      // select the current token
+      auto const &current_token = tokens[i];
+
+      // add the token to the list
+      tokens_.push_back(current_token);
+
+      // regenerate the full name
+      if (i)
+      {
+        full.Append(".");
+      }
+
+      full.Append(current_token);
+    }
+
+    // regenerate the full name
+    full_ = std::move(full);
+
+    // update the type
+    UpdateType();
+  }
+}
+
+/**
+ * Get the parent to the identifier
+ * @return
+ */
+Identifier Identifier::GetParent() const
+{
+  std::size_t const num_tokens = tokens_.size();
+
+  return Identifier{tokens_, (num_tokens) ? (num_tokens - 1) : 0};
 }
 
 /**
  * Internal: Break up the fully qualified name into tokens
  */
-void Identifier::Tokenise()
+bool Identifier::Tokenise()
 {
+  // ensure the tokens storage is empty
   tokens_.clear();
 
   std::size_t offset = 0;
   for (;;)
   {
-    std::size_t index = full_.Find(SEPARATOR, offset);
+    // find the next instance of the separator
+    std::size_t const index = full_.Find(SEPARATOR, offset);
 
-    if (index == string_type::NPOS)
+    // determine if this is the last token
+    bool const last_token = (ConstByteArray::NPOS == index);
+
+    // calculate the size of the element
+    std::size_t const size = (last_token) ? (full_.size() - offset) : (index - offset);
+
+    // empty tokens are invalid
+    if (size == 0)
     {
-      std::size_t const size = full_.size() - offset;
-      if (size == 0)
-      {
-        throw std::runtime_error("identifier contains empty tokens");
-      }
+      FETCH_LOG_WARN(LOGGING_NAME, "Identifier contains empty tokens");
+      return false;
+    }
 
-      tokens_.push_back(full_.SubArray(offset, size));
+    // add the new token to the array
+    tokens_.push_back(full_.SubArray(offset, size));
+
+    if (last_token)
+    {
       break;
     }
-    else
+
+    // update the index
+    offset = index + 1;
+  }
+
+  // update the type
+  UpdateType();
+
+  return true;
+}
+
+void Identifier::UpdateType()
+{
+  // successful parse
+  type_ = Type::NORMAL;
+
+  // once the parse is complete decide if this identifier matches that of a smart contract
+  if ((1u <= tokens_.size()) && (3u >= tokens_.size()))
+  {
+    bool is_smart_contract = IsDigest(tokens_[0]);
+
+    if (2u <= tokens_.size())
     {
-      std::size_t const size = index - offset;
-      if (size == 0)
-      {
-        throw std::runtime_error("identifier contains empty tokens");
-      }
-      tokens_.push_back(full_.SubArray(offset, size));
-      offset = index + 1;
+      is_smart_contract &= IsIdentity(tokens_[1]);
+    }
+
+    if (is_smart_contract)
+    {
+      type_ = Type::SMART_CONTRACT;
     }
   }
 }
+
 
 /**
  * Determine if the current identifier is a parent to a specified identifier
@@ -94,7 +230,7 @@ bool Identifier::IsParentTo(Identifier const &other) const
 }
 
 /**
- * Determmine if the current identifier is a child to a specified identifier
+ * Determine if the current identifier is a child to a specified identifier
  *
  * @param other The prospective parent identifier
  * @return true if it is a parent, otherwise false

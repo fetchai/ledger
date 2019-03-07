@@ -39,7 +39,8 @@ public:
     RESOURCE_FAILURE,
     INEXPLICABLE_FAILURE,
     CHAIN_CODE_LOOKUP_FAILURE,
-    CHAIN_CODE_EXEC_FAILURE
+    CHAIN_CODE_EXEC_FAILURE,
+    CONTRACT_NAME_PARSE_FAILURE,
   };
 
   /// @name Executor Interface
@@ -76,6 +77,9 @@ inline char const *ToString(ExecutorInterface::Status status)
     break;
   case ExecutorInterface::Status::CHAIN_CODE_EXEC_FAILURE:
     text = "Chain Code Execution Failure";
+    break;
+  case ExecutorInterface::Status::CONTRACT_NAME_PARSE_FAILURE:
+    text = "Contract Name Parse Failure";
     break;
   }
 

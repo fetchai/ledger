@@ -19,33 +19,28 @@
 
 #include "ledger/chaincode/contract.hpp"
 
-#include <atomic>
-
 namespace fetch {
 namespace ledger {
 
-class DummyContract : public Contract
+class Identifier;
+
+class SmartContractManager : public Contract
 {
 public:
-  static constexpr char const *NAME = "fetch.dummy";
+  static constexpr char const *NAME = "fetch.contract";
+  static constexpr char const *LOGGING_NAME = "SmartContractManager";
 
-  DummyContract();
-  ~DummyContract() override = default;
+  static storage::ResourceAddress CreateAddressForContract(Identifier const &contract_id);
 
-  static constexpr char const *LOGGING_NAME = "DummyContract";
-
-  std::size_t counter() const
-  {
-    return counter_;
-  }
+  SmartContractManager();
+  ~SmartContractManager() override = default;
 
 private:
-  using Counter = std::atomic<std::size_t>;
 
-  Status Wait(Transaction const &tx);
-  Status Run(Transaction const &tx);
-
-  Counter counter_{0};
+  /// @name Transaction Handlers
+  /// @{
+  Status OnCreate(Transaction const &tx);
+  /// @}
 };
 
 }  // namespace ledger

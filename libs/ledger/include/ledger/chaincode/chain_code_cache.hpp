@@ -17,7 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "crypto/fnv.hpp" // needed for std::hash<ConstByteArray>
 #include "ledger/chaincode/factory.hpp"
+#include "ledger/identifier.hpp"
 #include "meta/is_log2.hpp"
 
 #include <algorithm>
@@ -32,8 +34,9 @@ class ChainCodeCache
 {
 public:
   using ContractPtr = ChainCodeFactory::ContractPtr;
+  using StoragePtr  = ledger::StorageInterface;
 
-  ContractPtr Lookup(byte_array::ConstByteArray const &contract_name);
+  ContractPtr Lookup(Identifier const &contract_id, StorageInterface &storage);
 
   ChainCodeFactory const &factory() const
   {
@@ -59,9 +62,8 @@ private:
   static constexpr uint64_t CLEANUP_PERIOD = 16;
   static constexpr uint64_t CLEANUP_MASK   = CLEANUP_PERIOD - 1u;
 
-  ContractPtr FindInCache(byte_array::ConstByteArray const &name);
-  ContractPtr CreateContract(byte_array::ConstByteArray const &name);
-
+  // Utils
+  ContractPtr FindInCache(Identifier const &name);
   void RunMaintenance();
 
   std::size_t      counter_;

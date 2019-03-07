@@ -23,12 +23,12 @@ namespace vm_modules {
 /**
  * method for printing string to std::cout
  */
-static void Print(fetch::vm::VM *, fetch::vm::Ptr<fetch::vm::String> const &s)
+static void Print(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
-  std::cout << s->str << std::endl;
+  vm->AddOutputLine(s->str);
 }
 
-void CreatePrint(std::shared_ptr<fetch::vm::Module> module)
+void CreatePrint(std::shared_ptr<fetch::vm::Module> &module)
 {
   module->CreateFreeFunction("Print", &Print);
 }

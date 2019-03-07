@@ -19,6 +19,8 @@
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/dummy_contract.hpp"
+#include "ledger/state_sentinel.hpp"
+
 #include "mock_storage_unit.hpp"
 
 #include <gmock/gmock.h>
@@ -33,19 +35,18 @@ using namespace fetch::ledger;
 class DummyContractTests : public ::testing::Test
 {
 protected:
-  using contract_type = std::unique_ptr<DummyContract>;
-  using storage_type  = std::unique_ptr<MockStorageUnit>;
+  using DummyContractPtr = std::unique_ptr<DummyContract>;
+  using StoragePtr       = std::unique_ptr<MockStorageUnit>;
 
   void SetUp() override
   {
     contract_ = std::make_unique<DummyContract>();
     storage_  = std::make_unique<MockStorageUnit>();
 
-    contract_->Attach(*storage_);
   }
 
-  contract_type contract_;
-  storage_type  storage_;
+  DummyContractPtr contract_;
+  StoragePtr       storage_;
 };
 
 TEST_F(DummyContractTests, CheckConstruction)
@@ -87,8 +88,13 @@ TEST_F(DummyContractTests, CheckDispatch)
   tx.set_contract_name("fetch.dummy.wait");
 
   Identifier identifier;
-  identifier.Parse(tx.contract_name());
+  ASSERT_TRUE(identifier.Parse(tx.contract_name()));
 
+  // create the storage adapter
+  StateSentinelAdapter adapter(*storage_, identifier.GetParent(), tx.resources());
+
+  // attach, dispatch and detach (run the life cycle)
+  contract_->Attach(adapter);
   contract_->DispatchTransaction(identifier.name(), VerifiedTransaction::Create(tx));
-  EXPECT_EQ(contract_->GetTransactionCounter("wait"), 1u);
+  contract_->Detach();
 }

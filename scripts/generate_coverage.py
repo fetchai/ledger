@@ -173,12 +173,16 @@ def get_targets_cmake() -> map:
 
     output = output.decode("utf-8")
 
-    for line in output.split('\n'):
-        search = re.search("Test command: .", line)
 
-        if not search == None:
-            command = line.split("Test command: ")[1]
-            target = command.split(R"/")[-1]
+    for line in output.splitlines():
+        match = re.match(r'\d+: Test command: ([\w/-]+)( \"\w+\")?', line)
+        if match is not None:
+
+            # extract the full command
+            command = match.group(1)
+            target = os.path.basename(command)
+
+            # print('???', target, command)
             targets[target] = command
 
     if len(targets) == 0:
