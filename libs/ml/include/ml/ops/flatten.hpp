@@ -17,9 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "ml/ops/ops.hpp"
-#include <vector>
 
 namespace fetch {
 namespace ml {

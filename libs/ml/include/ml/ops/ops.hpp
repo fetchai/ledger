@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <vector>
+#include "core/assert.hpp"
 
 namespace fetch {
 namespace ml {
