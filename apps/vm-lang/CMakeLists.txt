@@ -1,10 +1,10 @@
 ################################################################################
-# F E T C H   A P P S
+# F E T C H   V M   L A N G
 ################################################################################
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
-project(fetch-apps)
+project(fetch-vmlang)
 
-add_subdirectory(miner)
-add_subdirectory(constellation)
-add_subdirectory(tx)
-add_subdirectory(vm-lang)
+setup_compiler()
+
+add_executable(vm-lang main.cpp)
+target_link_libraries(vm-lang PRIVATE fetch-vm-modules)
