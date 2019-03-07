@@ -33,24 +33,15 @@
 
 namespace {
 
-using ::testing::_;
 using ::testing::InSequence;
 using fetch::crypto::SHA256;
-using fetch::crypto::Identity;
-using fetch::crypto::ECDSASigner;
 using fetch::ledger::SmartContract;
 using fetch::byte_array::ConstByteArray;
-using fetch::ledger::MutableTransaction;
-using fetch::ledger::VerifiedTransaction;
 using fetch::ledger::TransactionSummary;
-using fetch::ledger::Identifier;
 using fetch::storage::ResourceAddress;
 using fetch::variant::Variant;
 using fetch::byte_array::ToBase64;
-using fetch::byte_array::ToHex;
 using fetch::serializers::ByteArrayBuffer;
-using fetch::ledger::StateAdapter;
-using fetch::ledger::StateSentinelAdapter;
 
 using ContractDigest = ConstByteArray;
 

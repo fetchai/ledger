@@ -30,10 +30,11 @@ namespace ledger {
  * @param storage The reference to the storage engine
  * @param scope The reference to the scope
  */
-StateAdapter::StateAdapter(StorageInterface &storage, Identifier const &scope)
+StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope)
   : storage_{storage}
-  , scope_{scope}
-{}
+  , scope_{std::move(scope)}
+{
+}
 
 /**
  * Read a value from the state store
@@ -86,6 +87,10 @@ StateAdapter::Status StateAdapter::Read(std::string const &key, void *data, uint
  */
 StateAdapter::Status StateAdapter::Write(std::string const &key, void const *data, uint64_t size)
 {
+  FETCH_UNUSED(key);
+  FETCH_UNUSED(data);
+  FETCH_UNUSED(size);
+
   // this operation is not supported in this version of the adapter
   return Status::PERMISSION_DENIED;
 }
@@ -132,10 +137,9 @@ ResourceAddress StateAdapter::CreateAddress(Identifier const &scope, ConstByteAr
  * @param storage The underlying storage engine
  * @param scope The scope for all state
  */
-StateSentinelAdapter::StateSentinelAdapter(StorageInterface &storage, Identifier const &scope,
-                                           ResourceSet const &resources)
-  : StateAdapter{storage, scope}
-  , resources_{resources}
+StateSentinelAdapter::StateSentinelAdapter(StorageInterface &storage, Identifier scope, ResourceSet resources)
+  : StateAdapter{storage, std::move(scope)}
+  , resources_{std::move(resources)}
 {
   // lock all the resources
   for (auto const &resource : resources_)

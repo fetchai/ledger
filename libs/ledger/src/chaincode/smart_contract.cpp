@@ -202,6 +202,8 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
 SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query const &request,
                                                  Query &response)
 {
+  FETCH_UNUSED(request);
+
   // get clean VM instance
   auto vm = vm_modules::VMFactory::GetVM(module_);
   vm->SetIOObserver(state());

@@ -34,7 +34,6 @@
 namespace {
 
 using fetch::vm::Script;
-using fetch::vm::Module;
 using fetch::vm::Ptr;
 using fetch::vm::VM;
 using fetch::vm::String;

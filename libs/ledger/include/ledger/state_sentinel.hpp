@@ -40,7 +40,7 @@ public:
   static ResourceAddress CreateAddress(Identifier const &scope, ConstByteArray const &key);
 
   // Construction / Destruction
-  StateAdapter(StorageInterface &storage, Identifier const &scope);
+  StateAdapter(StorageInterface &storage, Identifier scope);
   ~StateAdapter() override = default;
 
   /// @name Io Observer Interface
@@ -65,8 +65,7 @@ public:
   using ResourceSet = TransactionSummary::ResourceSet;
 
   // Construction / Destruction
-  StateSentinelAdapter(StorageInterface &storage, Identifier const &scope,
-                       ResourceSet const &resources);
+  StateSentinelAdapter(StorageInterface &storage, Identifier scope, ResourceSet resources);
   ~StateSentinelAdapter() override;
 
   /// @name IO Observer Interface
