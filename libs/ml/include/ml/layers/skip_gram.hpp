@@ -40,11 +40,8 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  SkipGram(std::uint64_t in_size,
-          std::uint64_t out,
-          std::uint64_t embedding_size,
-          std::string const &name = "SkipGram",
-          WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
+  SkipGram(std::uint64_t in_size, std::uint64_t out, std::uint64_t embedding_size,
+           std::string const &name = "SkipGram", WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
     : Layer<T>(in_size, out)
   {
 
@@ -55,13 +52,14 @@ public:
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Context", {});
 
     // embed both inputs
-    std::string embed_in =
-        this->template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(name + "_Embed_Input", {input});
-    std::string embed_ctx =
-        this->template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(name + "_Embed_Input", {context});
+    std::string embed_in = this->template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
+        name + "_Embed_Input", {input});
+    std::string embed_ctx = this->template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
+        name + "_Embed_Input", {context});
 
     // dot product input and context embeddings
-    std::string transpose_ctx = this->template AddNode<fetch::ml::ops::Transpose<ArrayType>>(name + "_TransposeCtx", {embed_ctx});
+    std::string transpose_ctx = this->template AddNode<fetch::ml::ops::Transpose<ArrayType>>(
+        name + "_TransposeCtx", {embed_ctx});
     std::string in_ctx_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
         name + "_In_Ctx_MatMul", {embed_in, transpose_ctx});
 
@@ -73,11 +71,11 @@ public:
     this->SetOutputNode(output);
 
     // set up data for embeddings
-    ArrayPtrType embeddings_ptr = std::make_shared<ArrayType>(std::vector<std::uint64_t>({in_size, embedding_size}));
+    ArrayPtrType embeddings_ptr =
+        std::make_shared<ArrayType>(std::vector<std::uint64_t>({in_size, embedding_size}));
     this->Initialise(embeddings_ptr, init_mode);
     this->SetInput(embed_in, embeddings_ptr);
     this->SetInput(embed_ctx, embeddings_ptr);
-
   }
 
   static constexpr char const *DESCRIPTOR = "SkipGram";
