@@ -160,7 +160,7 @@ int main(int ac, char **av)
       // Re-arrange the graph every time
       for (unsigned int j(0); j < NUMBER_OF_PEERS;)
       {
-        unsigned int r = (unsigned int)rand() % clients.size();
+        unsigned int r = (unsigned int)rand() % (unsigned int)clients.size();
         j += (c->AddPeer(clients[r]) ? 1 : 0);
       }
       // Start each client to train on NUMBER_OF_BATCHES * BATCH_SIZE examples

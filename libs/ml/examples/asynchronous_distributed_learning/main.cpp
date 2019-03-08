@@ -79,19 +79,19 @@ public:
         input = dataloader_.GetRandom();
         g_.SetInput("Input", input.second);
         gt->Fill(0);
-        gt->At(input.first)                = DataType(1.0);
-	{
-	  std::lock_guard<std::mutex> l(m_);
-	  std::shared_ptr<ArrayType> results = g_.Evaluate("Softmax");
-	  loss += criterion.Forward({results, gt});
-	  g_.BackPropagate("Softmax", criterion.Backward({results, gt}));
-	}
+        gt->At(input.first) = DataType(1.0);
+        {
+          std::lock_guard<std::mutex> l(m_);
+          std::shared_ptr<ArrayType>  results = g_.Evaluate("Softmax");
+          loss += criterion.Forward({results, gt});
+          g_.BackPropagate("Softmax", criterion.Backward({results, gt}));
+        }
       }
       losses_values_.push_back(loss);
       {
-	// Updating the weights
-	std::lock_guard<std::mutex> l(m_);
-	g_.Step(LEARNING_RATE);
+        // Updating the weights
+        std::lock_guard<std::mutex> l(m_);
+        g_.Step(LEARNING_RATE);
       }
     }
     UpdateWeights();
@@ -99,27 +99,26 @@ public:
 
   fetch::ml::StateDict<fetch::math::Tensor<float>> GetStateDict() const
   {
-    std::lock_guard<std::mutex> l(const_cast<std::mutex&>(m_));
+    std::lock_guard<std::mutex> l(const_cast<std::mutex &>(m_));
     return g_.StateDict();
   }
 
   void AddPeers(std::vector<std::shared_ptr<TrainingClient>> const &clientList)
   {
     for (auto const &p : clientList)
+    {
+      if (p.get() != this)
       {
-	if (p.get() != this)
-	  {
-	    peers_.push_back(p);
-	  }
+        peers_.push_back(p);
       }
+    }
     std::random_shuffle(peers_.begin(), peers_.end());
   }
-
 
   void UpdateWeights()
   {
     std::list<const fetch::ml::StateDict<ArrayType>> stateDicts;
-    for (unsigned int i(0) ; i < NUMBER_OF_PEERS ; ++i)
+    for (unsigned int i(0); i < NUMBER_OF_PEERS; ++i)
     {
       // Collect the stateDicts from randomly selected peers
       stateDicts.push_back(peers_[i]->GetStateDict());
@@ -171,10 +170,10 @@ int main(int ac, char **av)
     clients[i] = std::make_shared<TrainingClient>(av[1], av[2]);
   }
   for (unsigned int i(0); i < NUMBER_OF_CLIENTS; ++i)
-    {
-      // Give every client the full list of other clients
-      clients[i]->AddPeers(clients);
-    }
+  {
+    // Give every client the full list of other clients
+    clients[i]->AddPeers(clients);
+  }
 
   for (unsigned int it(0); it < NUMBER_OF_ITERATIONS; ++it)
   {
