@@ -49,9 +49,16 @@ public:
    * @param nodeName name of node to evaluate for output
    * @return pointer to array containing node output
    */
-  ArrayPtrType Evaluate(std::string const &nodeName)
+  ArrayPtrType Evaluate(std::string const &node_name)
   {
-    return nodes_[nodeName]->Evaluate();
+    if (nodes_[node_name])
+    {
+      return nodes_[node_name]->Evaluate();
+    }
+    else
+    {
+      throw std::runtime_error("Cannot evaluate: node [" + node_name + "] not in graph");
+    }
   }
 
   /**
@@ -73,7 +80,7 @@ public:
    * @param params input parameters to the node op
    */
   template <class OperationType, typename... Params>
-  meta::IfIsNotTrainable<ArrayType, OperationType, void> AddNode(
+  meta::IfIsNotTrainable<ArrayType, OperationType, std::string> AddNode(
       std::string const &node_name, std::vector<std::string> const &inputs, Params... params)
   {
     std::string name = UpdateVariableName<OperationType>(node_name);
@@ -81,6 +88,7 @@ public:
         std::make_shared<Node<ArrayType, OperationType>>(node_name, params...);
     AddNodeImpl<OperationType>(name, inputs, op);
     FETCH_LOG_INFO("ML_LIB", "Created non-trainable node [", node_name, "]");
+    return name;
   }
 
   /**
@@ -92,7 +100,7 @@ public:
    * @param params input parameters to the node op
    */
   template <class OperationType, typename... Params>
-  meta::IfIsTrainable<ArrayType, OperationType, void> AddNode(
+  meta::IfIsTrainable<ArrayType, OperationType, std::string> AddNode(
       std::string const &node_name, std::vector<std::string> const &inputs, Params... params)
   {
     std::string name = UpdateVariableName<OperationType>(node_name);
@@ -101,6 +109,7 @@ public:
     AddNodeImpl<OperationType>(name, inputs, op);
     FETCH_LOG_INFO("ML_LIB", "Created trainable node [", node_name, "]");
     trainable_[node_name] = op;
+    return name;
   }
 
   /**
@@ -113,6 +122,7 @@ public:
   {
     std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>> placeholder =
         std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<ArrayType>>(nodes_[nodeName]);
+
     if (placeholder)
     {
       placeholder->SetData(data);
@@ -191,7 +201,7 @@ private:
   {
     if (!(nodes_.find(node_name) == nodes_.end()))
     {
-      throw;
+      throw std::runtime_error("node named [" + node_name + "] already exists");
     }
 
     nodes_[node_name] = op;

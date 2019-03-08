@@ -46,25 +46,28 @@ public:
     : Layer<T>(in, out)
   {
 
-    this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
-    this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_Flatten",
-                                                               {name + "_Input"});
-    this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
-    this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
-        name + "_MatrixMultiply", {name + "_Flatten", name + "_Weights"});
-    this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Bias", {});
-    this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
-        name + "_Add", {name + "_MatrixMultiply", name + "_Bias"});
+    std::string input =
+        this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
+    std::string flat_input =
+        this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_Flatten", {input});
+    std::string weights =
+        this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
+    std::string weights_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
+        name + "_MatrixMultiply", {flat_input, weights});
+    std::string bias =
+        this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Bias", {});
+    std::string output = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
+        name + "_Add", {weights_matmul, bias});
 
-    this->AddInputNodes(name + "_Input");
-    this->SetOutputNode(name + "_Add");
+    this->AddInputNodes(input);
+    this->SetOutputNode(output);
 
-    ArrayPtrType weights = std::make_shared<ArrayType>(std::vector<std::uint64_t>({in, out}));
-    this->Initialise(weights, init_mode);
-    this->SetInput(name + "_Weights", weights);
+    ArrayPtrType weights_ptr = std::make_shared<ArrayType>(std::vector<std::uint64_t>({in, out}));
+    this->Initialise(weights_ptr, init_mode);
+    this->SetInput(weights, weights_ptr);
 
-    ArrayPtrType bias = std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, out}));
-    this->SetInput(name + "_Bias", bias);
+    ArrayPtrType bias_ptr = std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, out}));
+    this->SetInput(bias, bias_ptr);
   }
 
   static constexpr char const *DESCRIPTOR = "FullyConnected";
