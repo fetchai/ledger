@@ -127,14 +127,8 @@ int main(int ac, char **av)
     gt->Fill(0);
     gt->At(input.second)               = DataType(1);
     std::shared_ptr<ArrayType> results = g.Evaluate(output_name);
-//
-//    std::cout << "results->At(0): " << results->At(0) << std::endl;
-//    std::cout << "results->At(1): " << results->At(1) << std::endl;
-//    std::cout << "gt->At(0): " << gt->At(0) << std::endl;
-//    std::cout << "gt->At(1): " << gt->At(1) << std::endl;
 
     loss += criterion.Forward({results, gt});
-//    std::cout << "loss: " << loss << std::endl;
 
     g.BackPropagate(output_name, criterion.Backward({results, gt}));
 
@@ -160,8 +154,6 @@ int main(int ac, char **av)
   // embeddings
   std::cout << "embeddings dimensions: " << embeddings->shape()[1] << std::endl;
   std::cout << "vocab size: " << embeddings->shape()[0] << std::endl;
-  //
-  //  dataloader.Size()
 
   return 0;
 }
