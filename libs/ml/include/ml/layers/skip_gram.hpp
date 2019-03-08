@@ -20,7 +20,7 @@
 #include "math/free_functions/exponentiation/exponentiation.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/layers/layer.hpp"
-#include "ml/ops/activations/logsoftmax.hpp"
+#include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/embeddings.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
@@ -70,13 +70,14 @@ public:
     std::string dense      = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
         name + "_Dense", {in_ctx_matmul}, dense_size, out);
 
-    //    // sigmoid activation
-    //    std::string output =
-    //        this->template AddNode<fetch::ml::ops::Sigmoid<ArrayType>>(name + "_Output", {dense});
-
     // sigmoid activation
     std::string output =
-        this->template AddNode<fetch::ml::ops::LogSoftmax<ArrayType>>(name + "_Output", {dense});
+        this->template AddNode<fetch::ml::ops::Softmax<ArrayType>>(name + "_Output", {dense});
+
+    //    // sigmoid activation
+    //    std::string output =
+    //        this->template AddNode<fetch::ml::ops::LogSoftmax<ArrayType>>(name + "_Output",
+    //        {dense});
 
     this->AddInputNode(input);
     this->AddInputNode(context);

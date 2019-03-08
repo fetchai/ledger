@@ -83,7 +83,7 @@ std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType vocab_size, SizeType 
   g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
   g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Context", {});
   std::string ret_name = g.AddNode<fetch::ml::layers::SkipGram<ArrayType>>(
-      "SkipGram", {"Input", "Context"}, vocab_size, batch_size, embeddings_size);
+      "SkipGram", {"Input", "Context"}, vocab_size, SizeType(2), embeddings_size);
 
   return ret_name;
 }
@@ -109,7 +109,7 @@ int main(int ac, char **av)
 
   std::pair<std::pair<std::shared_ptr<ArrayType>, std::shared_ptr<ArrayType>>, SizeType> input;
   std::shared_ptr<ArrayType>                                                             gt =
-      std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1, 1}));
+      std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1, 2}));
 
   //  gt->At(0)         = 1.0;
   DataType loss = 0;
@@ -122,10 +122,9 @@ int main(int ac, char **av)
     g.SetInput("Input", input.first.first);
     g.SetInput("Context", input.first.second);
     gt->Fill(0);
-    gt->At(0)                          = DataType(input.second);
+    gt->At(input.second)               = DataType(1);
     std::shared_ptr<ArrayType> results = g.Evaluate(output_name);
     loss += criterion.Forward({results, gt});
-
     g.BackPropagate(output_name, criterion.Backward({results, gt}));
 
     if (i % 50 == 0)

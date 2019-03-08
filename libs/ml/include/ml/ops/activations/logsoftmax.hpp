@@ -57,19 +57,14 @@ public:
     assert(inputs.size() == 1);
     assert(inputs[0]->shape() == errorSignal->shape());
 
-    std::cout << "errorSignal->At(0): " << errorSignal->At(0) << std::endl;
-    fetch::math::Exp(*errorSignal, *errorSignal);
+    assert(errorSignal->size() == 1);
 
+    fetch::math::Exp(*errorSignal, *errorSignal);
     for (std::size_t j = 0; j < errorSignal->size(); ++j)
     {
       fetch::math::Add(DataType(1), errorSignal->At(j), errorSignal->At(j));
     }
-
-    std::cout << "errorSignal->At(0): " << errorSignal->At(0) << std::endl;
     fetch::math::Divide(DataType(1), *errorSignal, *errorSignal);
-
-    std::cout << "errorSignal->At(0): " << errorSignal->At(0) << std::endl;
-
     return {errorSignal};
   }
 
