@@ -73,3 +73,51 @@ TYPED_TEST(SoftmaxTest, backward_test)
   ASSERT_TRUE(
       prediction[0]->AllClose(*gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }
+
+TYPED_TEST(SoftmaxTest, batch_forward_test)
+{
+  std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(std::vector<uint64_t>({2, 10}));
+  std::shared_ptr<TypeParam> gt   = std::make_shared<TypeParam>(std::vector<uint64_t>({2, 10}));
+  std::vector<double>        gtInput({0.0001, 0.0002, 0.0006, 0.0016, 0.0043, 0.0116, 0.0315,
+                               0.0856, 0.2326, 0.6321, 0.0001, 0.0002, 0.0006, 0.0016,
+                               0.0043, 0.0116, 0.0315, 0.0856, 0.2326, 0.6321});
+  for (std::uint64_t i(0); i < 20; ++i)
+  {
+    data->Set(i, typename TypeParam::Type(i + 1));
+    gt->Set(i, typename TypeParam::Type(gtInput[i]));
+  }
+  fetch::ml::ops::Softmax<TypeParam> op;
+  std::shared_ptr<TypeParam>         prediction = op.Forward({data});
+
+  // test correct values
+  ASSERT_TRUE(
+      prediction->AllClose(*gt, typename TypeParam::Type(1e-4), typename TypeParam::Type(1e-4)));
+}
+
+TYPED_TEST(SoftmaxTest, batch_backward_test)
+{
+  std::shared_ptr<TypeParam> data  = std::make_shared<TypeParam>(std::vector<uint64_t>({2, 10}));
+  std::shared_ptr<TypeParam> error = std::make_shared<TypeParam>(std::vector<uint64_t>({2, 10}));
+  std::shared_ptr<TypeParam> gt    = std::make_shared<TypeParam>(std::vector<uint64_t>({2, 10}));
+  std::vector<double> gtInput({-1.6544e-08, 2.1202e-04,  -1.2224e-07, -3.3229e-07, -9.0326e-07,
+                               -2.4553e-06, -6.6742e-06, -1.8142e-05, -4.9316e-05, -1.3406e-04,
+                               -1.2224e-07, -3.3229e-07, -9.0326e-07, 1.5645e-03,  -6.6742e-06,
+                               -1.8142e-05, -4.9316e-05, -1.3406e-04, -3.6440e-04, -9.9054e-04});
+
+  for (std::uint64_t i(0); i < 20; ++i)
+  {
+    data->Set(i, typename TypeParam::Type(typename TypeParam::Type(i + 1)));
+    error->Set(i, typename TypeParam::Type(typename TypeParam::Type((i == 1 || i == 13) ? 1 : 0)));
+    gt->Set(i, typename TypeParam::Type(gtInput[i]));
+  }
+
+  fetch::ml::ops::Softmax<TypeParam>      op;
+  std::vector<std::shared_ptr<TypeParam>> prediction = op.Backward({data}, error);
+
+  std::cout << prediction[0]->ToString() << std::endl;
+  std::cout << gt->ToString() << std::endl;
+
+  // test correct values
+  ASSERT_TRUE(
+      prediction[0]->AllClose(*gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
+}

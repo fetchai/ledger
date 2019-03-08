@@ -52,19 +52,33 @@ public:
     assert(inputs.size() == 1);
     assert(inputs[0]->shape() == errorSignal->shape());
 
+    // Indicate if we're running in batch mode
+    bool unsqueeze = (inputs[0]->shape().size() == 1);
+    if (unsqueeze)
+    {
+      inputs[0]->Unsqueeze();
+      errorSignal->Unsqueeze();
+    }
+
     ArrayPtrType t = this->Forward(inputs);
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
+    errorSignal->InlineMultiply(*t);
+    for (uint64_t b(0); b < inputs[0]->shape()[0]; ++b)
     {
-      errorSignal->At(i) *= t->At(i);
+      ArrayType                inputBatchItem       = inputs[0]->Slice(b);
+      ArrayType                errorSignalBatchItem = errorSignal->Slice(b);
+      ArrayType                tBatchItem           = t->Slice(b);
+      typename ArrayType::Type sum                  = errorSignalBatchItem.Sum();
+      for (std::size_t i(0); i < inputBatchItem.size(); ++i)
+      {
+        errorSignalBatchItem.At(i) -= (tBatchItem.At(i) * sum);
+      }
     }
-    typename ArrayType::Type sum(0);
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
+
+    // Go back to input data format
+    if (unsqueeze)
     {
-      sum += errorSignal->At(i);
-    }
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
-    {
-      errorSignal->At(i) -= (t->At(i) * sum);
+      inputs[0]->Squeeze();
+      errorSignal->Squeeze();
     }
     return {errorSignal};
   }
