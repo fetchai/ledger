@@ -20,7 +20,6 @@
 #include "core/mutex.hpp"
 #include "core/threading/synchronised_state.hpp"
 #include "ledger/chain/constants.hpp"
-#include "ledger/chaincode/cache.hpp"
 #include "ledger/execution_item.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/executor.hpp"
@@ -107,7 +106,6 @@ private:
 
   SyncedState state_{State::IDLE};
 
-  ChainCodeCache contracts_;
   StorageUnitPtr storage_;
 
   Mutex         execution_plan_lock_;  ///< guards `execution_plan_`

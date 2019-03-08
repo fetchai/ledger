@@ -123,10 +123,11 @@ int main(int argc, char **argv)
 
   // Setting VM up and running
   std::string        error;
+  std::string        console;
   fetch::vm::Variant output;
 
   fetch::vm::VM vm(&module);
-  if (!vm.Execute(script, "main", error, output))
+  if (!vm.Execute(script, "main", error, console, output))
   {
     std::cout << "Runtime error on line " << error << std::endl;
   }

@@ -17,29 +17,56 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-
-#include <functional>
-#include <memory>
-#include <unordered_set>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace fetch {
 namespace ledger {
 
-class Identifier;
-class Contract;
-class StorageInterface;
-
-class ChainCodeFactory
+/**
+ * Exception class that is generated in response to loading and running Smart Contracts
+ */
+class SmartContractException : public std::exception
 {
 public:
-  using ConstByteArray  = byte_array::ConstByteArray;
-  using ContractPtr     = std::shared_ptr<Contract>;
-  using ContractNameSet = std::unordered_set<ConstByteArray>;
+  enum class Category
+  {
+    UNKNOWN,
+    COMPILATION
+  };
 
-  ContractPtr Create(Identifier const &name, StorageInterface &storage) const;
+  using Errors = std::vector<std::string>;
 
-  ContractNameSet const &GetChainCodeContracts() const;
+  SmartContractException(Category category, Errors errors)
+    : category_{category}
+    , errors_{std::move(errors)}
+  {}
+
+  Errors const &errors() const
+  {
+    return errors_;
+  }
+  Category category() const
+  {
+    return category_;
+  }
+
+  const char *what() const noexcept override
+  {
+    if (errors_.empty())
+    {
+      return "Unknown Smart Contract Error";
+    }
+    else
+    {
+      return errors_.front().c_str();
+    }
+  }
+
+private:
+  Category category_{Category::UNKNOWN};
+  Errors   errors_{};
 };
 
 }  // namespace ledger
