@@ -42,9 +42,7 @@ public:
     {
       this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
     }
-
     fetch::math::Softmax(*inputs[0], *this->output_);
-
     return this->output_;
   }
 

@@ -17,28 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/kernels/approx_logistic.hpp"
-#include "math/kernels/basic_arithmetics.hpp"
-#include "math/kernels/relu.hpp"
-#include "math/kernels/standard_functions.hpp"
-
 #include "core/assert.hpp"
-#include "math/meta/math_type_traits.hpp"
-#include "vectorise/memory/range.hpp"
-#include <algorithm>
-#include <cassert>
-#include <numeric>
-#include <vector>
 
 #include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
-#include "math/free_functions/standard_functions/abs.hpp"
 #include "math/free_functions/standard_functions/exp.hpp"
-#include "math/free_functions/standard_functions/fmod.hpp"
-#include "math/free_functions/standard_functions/remainder.hpp"
 
-#include "math/free_functions/comparison/comparison.hpp"
-#include "math/free_functions/exponentiation/exponentiation.hpp"
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
+#include "math/free_functions/matrix_operations/matrix_operations.hpp"  // Max
 #include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
@@ -93,7 +77,6 @@ void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
     ArrayType cur_slice = array.Slice(i);
     ArrayType ret_slice = ret.Slice(i);
     Softmax1DImplementation(cur_slice, ret_slice);
-    ret.Slice(i).Copy(ret_slice);
   }
 }
 }  // namespace details
@@ -101,15 +84,15 @@ void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
 template <typename ArrayType>
 void Softmax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeType axis)
 {
-  assert(ret.size() == array.size());
+  assert(ret.shape() == array.shape());
 
   if ((array.shape().size() == 1) && (ret.shape().size() == 1))
   {
-    assert(axis == 0);
     details::Softmax1DImplementation(array, ret);
   }
   else if ((array.shape().size() == 2) && (ret.shape().size() == 2))
   {
+    assert(axis == 0);
     details::Softmax2DImplementation(array, ret, axis);
   }
   else
@@ -117,24 +100,27 @@ void Softmax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeTyp
     throw std::runtime_error("softmax for nDimensions not yet handled");
   }
 }
+
 template <typename ArrayType>
 void Softmax(ArrayType const &array, ArrayType &ret)
 {
-  assert(ret.size() == array.size());
+  assert(ret.shape() == array.shape());
   Softmax(array, ret, typename ArrayType::SizeType(0));
 }
+
 template <typename ArrayType>
 ArrayType Softmax(ArrayType const &array, typename ArrayType::SizeType axis)
 {
-  ArrayType ret{array.size()};
+  ArrayType ret{array.shape()};
   Softmax(array, ret, axis);
   return ret;
 }
+
 template <typename ArrayType>
 ArrayType Softmax(ArrayType const &array)
 {
-  ArrayType ret{array.size()};
-  Softmax(array, ret, 0);
+  ArrayType ret{array.shape()};
+  Softmax(array, ret, typename ArrayType::SizeType(0));
   return ret;
 }
 

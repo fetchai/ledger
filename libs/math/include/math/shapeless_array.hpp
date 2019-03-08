@@ -30,6 +30,9 @@
 #include "vectorise/memory/shared_array.hpp"
 
 #include "math/free_functions/free_functions.hpp"
+#include "math/free_functions/standard_functions/abs.hpp"
+#include "math/free_functions/standard_functions/fmod.hpp"
+#include "math/free_functions/standard_functions/remainder.hpp"
 #include "math/free_functions/statistics/mean.hpp"
 #include "math/meta/math_type_traits.hpp"
 
