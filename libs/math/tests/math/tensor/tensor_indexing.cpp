@@ -713,3 +713,115 @@ TYPED_TEST(TensorIndexingTest, two_dimentional_unsqueeze_test)
     i += TypeParam(1);
   }
 }
+
+TYPED_TEST(TensorIndexingTest, one_dimentional_squeeze_test)
+{
+  fetch::math::Tensor<TypeParam> t({5});
+  ASSERT_THROW(t.Squeeze(), std::runtime_error);
+}
+
+TYPED_TEST(TensorIndexingTest, two_dimentional_squeeze_test)
+{
+  fetch::math::Tensor<TypeParam> t({1, 5});
+  TypeParam                      i(0);
+  for (TypeParam &e : t)
+  {
+    e = i;
+    i += TypeParam(1);
+  }
+
+  EXPECT_EQ(t.shape(), std::vector<std::uint64_t>({1u, 5u}));
+  t.Squeeze();
+  EXPECT_EQ(t.shape(), std::vector<std::uint64_t>({5u}));
+
+  ASSERT_EQ(t.OffsetOfElement({0}), 0);
+  ASSERT_EQ(t.OffsetOfElement({1}), 1);
+  ASSERT_EQ(t.OffsetOfElement({2}), 2);
+  ASSERT_EQ(t.OffsetOfElement({3}), 3);
+  ASSERT_EQ(t.OffsetOfElement({4}), 4);
+
+  ASSERT_EQ(t.IndicesOfElement(0), std::vector<std::uint64_t>({0u}));
+  ASSERT_EQ(t.IndicesOfElement(1), std::vector<std::uint64_t>({1u}));
+  ASSERT_EQ(t.IndicesOfElement(2), std::vector<std::uint64_t>({2u}));
+  ASSERT_EQ(t.IndicesOfElement(3), std::vector<std::uint64_t>({3u}));
+  ASSERT_EQ(t.IndicesOfElement(4), std::vector<std::uint64_t>({4u}));
+
+  ASSERT_EQ(t.DimensionSize(0), 1);
+  ASSERT_EQ(t.DimensionSize(1), 0);
+  ASSERT_EQ(t.DimensionSize(2), 0);
+  ASSERT_EQ(t.DimensionSize(3), 0);
+
+  i = 0;
+  for (TypeParam &e : t)
+  {
+    EXPECT_EQ(e, i);
+    i += TypeParam(1);
+  }
+}
+
+TYPED_TEST(TensorIndexingTest, three_dimentional_squeeze_test)
+{
+  fetch::math::Tensor<TypeParam> t({1, 3, 5});
+
+  TypeParam i(0);
+  for (TypeParam &e : t)
+  {
+    e = i;
+    i += TypeParam(1);
+  }
+
+  EXPECT_EQ(t.shape(), std::vector<std::uint64_t>({1u, 3u, 5u}));
+  t.Squeeze();
+  EXPECT_EQ(t.shape(), std::vector<std::uint64_t>({3u, 5u}));
+
+  ASSERT_EQ(t.size(), 15);
+  ASSERT_EQ(t.Capacity(), 24);
+
+  ASSERT_EQ(t.OffsetOfElement({0, 0}), 0);
+  ASSERT_EQ(t.OffsetOfElement({0, 1}), 1);
+  ASSERT_EQ(t.OffsetOfElement({0, 2}), 2);
+  ASSERT_EQ(t.OffsetOfElement({0, 3}), 3);
+  ASSERT_EQ(t.OffsetOfElement({0, 4}), 4);
+
+  ASSERT_EQ(t.OffsetOfElement({1, 0}), 8);
+  ASSERT_EQ(t.OffsetOfElement({1, 1}), 9);
+  ASSERT_EQ(t.OffsetOfElement({1, 2}), 10);
+  ASSERT_EQ(t.OffsetOfElement({1, 3}), 11);
+  ASSERT_EQ(t.OffsetOfElement({1, 4}), 12);
+
+  ASSERT_EQ(t.OffsetOfElement({2, 0}), 16);
+  ASSERT_EQ(t.OffsetOfElement({2, 1}), 17);
+  ASSERT_EQ(t.OffsetOfElement({2, 2}), 18);
+  ASSERT_EQ(t.OffsetOfElement({2, 3}), 19);
+  ASSERT_EQ(t.OffsetOfElement({2, 4}), 20);
+
+  ASSERT_EQ(t.IndicesOfElement(0), std::vector<std::uint64_t>({0, 0}));
+  ASSERT_EQ(t.IndicesOfElement(1), std::vector<std::uint64_t>({0, 1}));
+  ASSERT_EQ(t.IndicesOfElement(2), std::vector<std::uint64_t>({0, 2}));
+  ASSERT_EQ(t.IndicesOfElement(3), std::vector<std::uint64_t>({0, 3}));
+  ASSERT_EQ(t.IndicesOfElement(4), std::vector<std::uint64_t>({0, 4}));
+
+  ASSERT_EQ(t.IndicesOfElement(5), std::vector<std::uint64_t>({1, 0}));
+  ASSERT_EQ(t.IndicesOfElement(6), std::vector<std::uint64_t>({1, 1}));
+  ASSERT_EQ(t.IndicesOfElement(7), std::vector<std::uint64_t>({1, 2}));
+  ASSERT_EQ(t.IndicesOfElement(8), std::vector<std::uint64_t>({1, 3}));
+  ASSERT_EQ(t.IndicesOfElement(9), std::vector<std::uint64_t>({1, 4}));
+
+  ASSERT_EQ(t.IndicesOfElement(10), std::vector<std::uint64_t>({2, 0}));
+  ASSERT_EQ(t.IndicesOfElement(11), std::vector<std::uint64_t>({2, 1}));
+  ASSERT_EQ(t.IndicesOfElement(12), std::vector<std::uint64_t>({2, 2}));
+  ASSERT_EQ(t.IndicesOfElement(13), std::vector<std::uint64_t>({2, 3}));
+  ASSERT_EQ(t.IndicesOfElement(14), std::vector<std::uint64_t>({2, 4}));
+
+  ASSERT_EQ(t.DimensionSize(0), 8);
+  ASSERT_EQ(t.DimensionSize(1), 1);
+  ASSERT_EQ(t.DimensionSize(2), 0);
+  ASSERT_EQ(t.DimensionSize(3), 0);
+
+  i = 0;
+  for (TypeParam &e : t)
+  {
+    EXPECT_EQ(e, i);
+    i += TypeParam(1);
+  }
+}

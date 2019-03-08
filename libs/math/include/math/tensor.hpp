@@ -336,6 +336,24 @@ public:
     padding_.insert(padding_.begin(), 0);
   }
 
+  /*
+   * Inverse of unsqueze : Collapse a empty leading dimension
+   */
+  void Squeeze()
+  {
+    if (shape_.front() == 1)
+    {
+      shape_.erase(shape_.begin());
+      strides_.erase(strides_.begin());
+      padding_.erase(padding_.begin());
+    }
+    else
+    {
+      throw std::runtime_error("Can't squeeze tensor with leading dimension of size " +
+                               std::to_string(shape_[0]));
+    }
+  }
+
   std::shared_ptr<const std::vector<T>> Storage() const
   {
     return storage_;
