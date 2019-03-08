@@ -46,7 +46,7 @@ TxStatusHttpInterface::TxStatusHttpInterface(TransactionStatusCache &status_cach
           // convert the digest back to binary
           auto const digest = FromHex(params["digest"]);
 
-          FETCH_LOG_INFO(LOGGING_NAME, "Querying status of: ", digest.ToBase64());
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Querying status of: ", digest.ToBase64());
 
           // prepare the response
           Variant response   = Variant::Object();
