@@ -516,10 +516,15 @@ void MainChain::WriteToFile()
       FETCH_LOG_DEBUG(LOGGING_NAME, "Updating HEAD to ", ToBase64(block->body.hash));
 
       // Walk down the file to check we have an unbroken chain
-      while (LookupBlock(block->body.previous_hash, block) &&
-             !block_store_->Has(storage::ResourceID(block->body.hash)))
+      while (LookupBlockFromCache(block->body.previous_hash, block))
       {
-        block_store_->Set(storage::ResourceID(block->body.hash), *block);
+        storage::ResourceID block_storage_key{block->body.hash};
+
+        // add the block to the file storage if it
+        if (!block_store_->Has(block_storage_key))
+        {
+          block_store_->Set(block_storage_key, *block);
+        }
 
         // Clear the block from ram
         FlushBlock(block);
@@ -766,9 +771,9 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
  * @param block The output block to be populated
  * @return true if successful, otherwise false
  */
-bool MainChain::LookupBlock(BlockHash hash, IntBlockPtr &block) const
+bool MainChain::LookupBlock(BlockHash hash, IntBlockPtr &block, bool add_to_cache) const
 {
-  return LookupBlockFromCache(hash, block) || LookupBlockFromStorage(hash, block);
+  return LookupBlockFromCache(hash, block) || LookupBlockFromStorage(hash, block, add_to_cache);
 }
 
 /**
@@ -802,7 +807,7 @@ bool MainChain::LookupBlockFromCache(BlockHash hash, IntBlockPtr &block) const
  * @param block The output block to be populated
  * @return true if successful, otherwise false
  */
-bool MainChain::LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block) const
+bool MainChain::LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block, bool add_to_cache) const
 {
   bool success{false};
 
@@ -816,8 +821,14 @@ bool MainChain::LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block) const
 
     if (success)
     {
-      // add the newly loaded block to the cache
-      AddBlockToCache(output_block);
+      // hash not serialised, needs to be recomputed
+      output_block->UpdateDigest();
+
+      // add the newly loaded block to the cache (if required)
+      if (add_to_cache)
+      {
+        AddBlockToCache(output_block);
+      }
 
       // update the returned shared pointer
       block = output_block;
@@ -850,7 +861,7 @@ void MainChain::AddBlockToCache(IntBlockPtr const &block) const
   if (!IsBlockInCache(block->body.hash))
   {
     // add the item to the block chain storage
-    block_chain_[block->body.hash] = block;
+    block_chain_.emplace(block->body.hash, block);
   }
 }
 
