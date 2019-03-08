@@ -62,9 +62,13 @@ TYPED_TEST(EmbeddingsTest, forward)
   }
 
   e.SetData(weights);
-  std::shared_ptr<TypeParam> input  = std::make_shared<TypeParam>(std::vector<uint64_t>({2}));
-  input->At(0)                      = typename TypeParam::Type(3);
-  input->At(1)                      = typename TypeParam::Type(5);
+  std::shared_ptr<TypeParam> input  = std::make_shared<TypeParam>(std::vector<uint64_t>({6}));
+  input->At(0)                      = typename TypeParam::Type(0);
+  input->At(1)                      = typename TypeParam::Type(0);
+  input->At(2)                      = typename TypeParam::Type(0);
+  input->At(3)                      = typename TypeParam::Type(1);
+  input->At(4)                      = typename TypeParam::Type(0);
+  input->At(5)                      = typename TypeParam::Type(1);
   std::shared_ptr<TypeParam> output = e.Forward({input});
 
   ASSERT_EQ(output->shape().size(), 2);

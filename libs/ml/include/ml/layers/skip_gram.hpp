@@ -54,10 +54,12 @@ public:
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Context", {});
 
     // embed both inputs
+    embeddings_ptr_ =
+        std::make_shared<ArrayType>(std::vector<std::uint64_t>({in_size, embedding_size}));
     std::string embed_in = this->template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
-        name + "_Embed_Input", {input}, in_size, embedding_size);
+        name + "_Embed_Input", {input}, in_size, embedding_size, embeddings_ptr_);
     std::string embed_ctx = this->template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
-        name + "_Embed_Context", {context}, in_size, embedding_size);
+        name + "_Embed_Context", {context}, in_size, embedding_size, embeddings_ptr_);
 
     // dot product input and context embeddings
     std::string transpose_ctx = this->template AddNode<fetch::ml::ops::Transpose<ArrayType>>(
@@ -79,8 +81,6 @@ public:
     this->SetOutputNode(output);
 
     // set up data for embeddings
-    embeddings_ptr_ =
-        std::make_shared<ArrayType>(std::vector<std::uint64_t>({in_size, embedding_size}));
     this->Initialise(embeddings_ptr_, init_mode);
     this->SetInput(embed_in, embeddings_ptr_);
     this->SetInput(embed_ctx, embeddings_ptr_);

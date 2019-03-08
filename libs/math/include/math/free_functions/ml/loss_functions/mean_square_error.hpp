@@ -30,8 +30,10 @@ typename ArrayType::Type MeanSquareError(ArrayType const &A, ArrayType const &B)
 {
   assert(A.shape() == B.shape());
   ArrayType tmp_array(A.shape());
+
   Subtract(A, B, tmp_array);
-  Square(tmp_array);
+
+  Square(tmp_array, tmp_array);
 
   typename ArrayType::Type ret = Sum(tmp_array);
   ret                          = Divide(ret, typename ArrayType::Type(A.size()));

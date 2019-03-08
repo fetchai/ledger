@@ -24,6 +24,8 @@
 #include "ml/ops/loss_functions/cross_entropy.hpp"
 #include "w2v_dataloader.hpp"
 
+#include "math/free_functions/ml/loss_functions/mean_square_error.hpp"
+
 #include <iostream>
 #include <math/tensor.hpp>
 
@@ -51,27 +53,20 @@ struct PARAMS
       3;                     // dimension of the embedding vector - 4th root of vocab size is good
   SizeType skip_window = 2;  // words to include in frame (left & right)
   //  std::uint64_t num_skips      = 2;      // n times to reuse an input to generate a label
-  SizeType k_neg_samps    = 2;  // number of negative examples to sample
-  SizeType training_steps = 50000;
+  SizeType k_neg_samps    = 2;    // number of negative examples to sample
+  double   discard_thresh = 0.9;  // larger the training data set, lower the discard threshold
+  SizeType training_steps = 10000;
 };
 
 std::string TRAINING_DATA =
-    "Word2vec is a group of related models that are used to produce word embeddings. "
-    "These models are shallow, two-layer neural networks that are trained to reconstruct "
-    "linguistic "
-    "contexts of words. Word2vec takes as its input a large corpus of text and produces a vector "
-    "space, "
-    "typically of several hundred dimensions, with each unique word in the corpus being assigned a "
-    "corresponding vector in the space. Word vectors are positioned in the vector space such that "
-    "words that share common contexts in the corpus are located in close proximity to one another "
-    "in "
-    "the space."
-    "Word2vec was created by a team of researchers led by Tomáš Mikolov at Google and patented. "
-    "The "
-    "algorithm has been subsequently analysed and explained by other researchers. Embedding "
-    "vectors "
-    "created using the Word2vec algorithm have many advantages compared to earlier algorithms such "
-    "as latent semantic analysis.";
+    "A cat is not a dog.\n"
+    "But a cat is sort of related to a dog in some ways.\n"
+    "For example they are both animals.\n"
+    "Unlike a car which is not an animal.\n"
+    "A car is a machine.\n"
+    "Machines ares types of automated tools, like a computer or a hammer.\n"
+    "Word2vec is also a tool; but it is software.\n"
+    "Software is a tool that you cannot touch.";
 
 ////////////////////////
 /// MODEL DEFINITION ///
@@ -88,6 +83,61 @@ std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType vocab_size, SizeType 
   return ret_name;
 }
 
+void TestEmbeddings(fetch::ml::Graph<ArrayType> &g, std::string &skip_gram_name,
+                    fetch::ml::W2VLoader<ArrayType> &dl)
+{
+
+  // first get hold of the skipgram layer by searching the return name in the graph
+  std::shared_ptr<fetch::ml::layers::SkipGram<ArrayType>> sg_layer =
+      std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<ArrayType>>(g.GetNode(skip_gram_name));
+
+  // next get hold of the embeddings
+  std::shared_ptr<ArrayType> embeddings = sg_layer->GetEmbeddings();
+
+  std::cout << "embeddings->At(0): " << embeddings->At(0) << std::endl;
+
+  // embeddings
+  std::cout << "embeddings dimensions: " << embeddings->shape()[1] << std::endl;
+  std::cout << "vocab size: " << embeddings->shape()[0] << std::endl;
+
+  // cat
+  std::string lookup_word = "cat";
+  SizeType    cat_idx     = dl.VocabLookup(lookup_word);
+  for (std::size_t j = 0; j < embeddings->shape()[1]; ++j)
+  {
+    std::cout << "embeddings->At({cat_idx, j}): " << embeddings->At({cat_idx, j}) << std::endl;
+  }
+  std::cout << "\n " << std::endl;
+
+  // dog
+  lookup_word      = "dog";
+  SizeType dog_idx = dl.VocabLookup(lookup_word);
+  for (std::size_t j = 0; j < embeddings->shape()[1]; ++j)
+  {
+    std::cout << "embeddings->At({dog_idx, j}): " << embeddings->At({dog_idx, j}) << std::endl;
+  }
+  std::cout << "\n " << std::endl;
+
+  // computer
+  lookup_word           = "computer";
+  SizeType computer_idx = dl.VocabLookup(lookup_word);
+  for (std::size_t j = 0; j < embeddings->shape()[1]; ++j)
+  {
+    std::cout << "embeddings->At({computer_idx, j}): " << embeddings->At({computer_idx, j})
+              << std::endl;
+  }
+
+  DataType result;
+  // distance from cat to dog (using MSE as distance)
+  result = fetch::math::MeanSquareError(embeddings->Slice(cat_idx), embeddings->Slice(dog_idx));
+  std::cout << "distance from cat to dog: " << result << std::endl;
+
+  // distance from cat to computer (using MSE as distance)
+  result =
+      fetch::math::MeanSquareError(embeddings->Slice(cat_idx), embeddings->Slice(computer_idx));
+  std::cout << "distance from cat to computer: " << result << std::endl;
+}
+
 int main(int ac, char **av)
 {
 
@@ -97,12 +147,16 @@ int main(int ac, char **av)
 
   // set up dataloader
   std::cout << "Setting up training data...: " << std::endl;
-  fetch::ml::W2VLoader<ArrayType> dataloader(TRAINING_DATA, p.skip_window, p.cbow, p.k_neg_samps);
+  fetch::ml::W2VLoader<ArrayType> dataloader(TRAINING_DATA, p.skip_window, p.cbow, p.k_neg_samps,
+                                             p.discard_thresh);
 
   // set up model architecture
   std::cout << "building model architecture...: " << std::endl;
   fetch::ml::Graph<ArrayType> g;
   std::string output_name = Model(g, dataloader.VocabSize(), p.batch_size, p.embedding_size);
+
+  // Test untrained embeddings
+  TestEmbeddings(g, output_name, dataloader);
 
   // set up loss
   CrossEntropy<ArrayType> criterion;
@@ -144,16 +198,8 @@ int main(int ac, char **av)
   /// EXTRACT THE TRAINED EMBEDDINGS ///
   //////////////////////////////////////
 
-  // first get hold of the skipgram layer by searching the return name in the graph
-  std::shared_ptr<fetch::ml::layers::SkipGram<ArrayType>> sg_layer =
-      std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<ArrayType>>(g.GetNode(output_name));
-
-  // next get hold of the embeddings
-  std::shared_ptr<ArrayType> embeddings = sg_layer->GetEmbeddings();
-
-  // embeddings
-  std::cout << "embeddings dimensions: " << embeddings->shape()[1] << std::endl;
-  std::cout << "vocab size: " << embeddings->shape()[0] << std::endl;
+  // Test untrained embeddings
+  TestEmbeddings(g, output_name, dataloader);
 
   return 0;
 }

@@ -38,6 +38,12 @@ public:
     this->SetData(std::make_shared<ArrayType>(std::vector<SizeType>({dataPoints, dimensions})));
   }
 
+  Embeddings(SizeType dataPoints, SizeType dimensions, ArrayPtrType output)
+  {
+    this->SetData(std::make_shared<ArrayType>(std::vector<SizeType>({dataPoints, dimensions})));
+    this->embeddings_output_ = output;
+  }
+
   virtual ~Embeddings() = default;
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
@@ -52,11 +58,15 @@ public:
           std::vector<SizeType>({inputs[0]->size(), this->output_->shape()[1]}));
     }
     SizeType j(0);
+    SizeType k(0);
     for (DataType const &i : *(inputs[0]))
     {
-      this->embeddings_output_->Slice(j).Copy(
-          this->output_->Slice(typename ArrayType::SizeType(double(i))));
-      j++;
+      if (i == DataType(1))
+      {
+        this->embeddings_output_->Slice(j).Copy(this->output_->Slice(k));
+        j++;
+      }
+      k++;
     }
     return this->embeddings_output_;
   }
