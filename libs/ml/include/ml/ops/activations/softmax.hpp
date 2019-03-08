@@ -62,7 +62,7 @@ public:
 
     ArrayPtrType t = this->Forward(inputs);
     errorSignal->InlineMultiply(*t);
-    for (uint64_t b(0); b < inputs[0]->shape()[0]; ++b)
+    for (uint64_t b(0); b < inputs[0]->shape()[0]; ++b)  // Loop over batch dimension
     {
       ArrayType                inputBatchItem       = inputs[0]->Slice(b);
       ArrayType                errorSignalBatchItem = errorSignal->Slice(b);

@@ -66,7 +66,7 @@ public:
   }
 
   /**
-   * elementwise multiplication is not trainable - just pass the error signal back
+   * elementwise division is not trainable - just pass the error signal back
    */
   virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
                                              ArrayPtrType                     errorSignal)

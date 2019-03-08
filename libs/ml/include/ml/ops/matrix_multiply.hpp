@@ -37,31 +37,54 @@ public:
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
     assert(inputs.size() == 2);
-    assert(inputs[0]->shape().size() == 2);
-    assert(inputs[1]->shape().size() == 2);
-    assert(inputs[0]->shape()[1] == inputs[1]->shape()[0]);
+    assert(inputs[0]->shape().size() == 2 || inputs[0]->shape().size() == 3);
+    assert(inputs[1]->shape().size() == 2 || inputs[1]->shape().size() == 3);
 
-    std::vector<std::uint64_t> outputShape({inputs[0]->shape()[0], inputs[1]->shape()[1]});
+    // Indicate if we're running in batch mode
+    bool unsqueeze = (inputs[0]->shape().size() == 2);
+    if (unsqueeze)
+      {
+	inputs[0]->Unsqueeze();
+	inputs[1]->Unsqueeze();
+      }
+
+    std::vector<std::uint64_t> outputShape({inputs[0]->shape()[0], inputs[0]->shape()[1], inputs[1]->shape()[2]});
     if (!this->output_ || this->output_->shape() != outputShape)
     {
       this->output_ = std::make_shared<ArrayType>(outputShape);
     }
 
-    for (std::uint64_t i(0); i < inputs[0]->shape()[0]; ++i)
-    {
-      for (std::uint64_t j(0); j < inputs[1]->shape()[1]; ++j)
+    for (uint64_t b(0) ; b < inputs[0]->shape()[0] ; ++b)
       {
-        this->output_->At(std::vector<std::uint64_t>({i, j})) =
-            inputs[0]->At(std::vector<std::uint64_t>({i, 0})) *
-            inputs[1]->At(std::vector<std::uint64_t>({0, j}));
-        for (std::uint64_t k(1); k < inputs[0]->shape()[1]; ++k)
-        {
-          this->output_->At(std::vector<std::uint64_t>({i, j})) +=
-              inputs[0]->At(std::vector<std::uint64_t>({i, k})) *
-              inputs[1]->At(std::vector<std::uint64_t>({k, j}));
-        }
+	ArrayType inputBatch1 = inputs[0]->Slice(b);
+	ArrayType inputBatch2 = inputs[1]->Slice(b);
+	ArrayType outputBatch = this->output_->Slice(b);
+	assert(inputBatch1shape()[1] == inputBatch2shape()[0]);
+	for (std::uint64_t i(0); i < inputBatch1.shape()[0] ; ++i)
+	  {
+	    for (std::uint64_t j(0); j < inputBatch2.shape()[1] ; ++j)
+	      {
+		outputBatch.At(std::vector<std::uint64_t>({i, j})) =
+		  inputBatch1.At(std::vector<std::uint64_t>({i, 0})) *
+		  inputBatch2.At(std::vector<std::uint64_t>({0, j}));
+		for (std::uint64_t k(1); k < inputBatch1.shape()[1] ; ++k)
+		  {
+		    outputBatch.At(std::vector<std::uint64_t>({i, j})) +=
+		      inputBatch1.At(std::vector<std::uint64_t>({i, k})) *
+		      inputBatch2.At(std::vector<std::uint64_t>({k, j}));
+		  }
+	      }
+	  }
       }
-    }
+
+    // Go back to input data format
+    if (unsqueeze)
+      {
+	inputs[0]->Squeeze();
+	inputs[1]->Squeeze();
+	this->output_->Squeeze();
+      }
+    
     return this->output_;
   }
 
@@ -70,11 +93,39 @@ public:
   {
     assert(inputs.size() == 2);
 
+    // Indicate if we're running in batch mode
+    bool unsqueeze = (inputs[0]->shape().size() == 2);
+    if (unsqueeze)
+      {
+	inputs[0]->Unsqueeze();
+	inputs[1]->Unsqueeze();
+	errorSignal->Unsqueeze();
+      }
+    
+
     ArrayPtrType errorSignal1 = std::make_shared<ArrayType>(inputs[0]->shape());
     ArrayPtrType errorSignal2 = std::make_shared<ArrayType>(inputs[1]->shape());
 
-    fetch::math::DotTranspose(*errorSignal, *inputs[1], *errorSignal1);
-    fetch::math::TransposeDot(*inputs[0], *errorSignal, *errorSignal2);
+    for (uint64_t b(0) ; b < inputs[0]->shape().front() ; ++b) // Looping over batch dimension
+      {
+	ArrayType input1Batch = inputs[0]->Slice(b);
+	ArrayType input2Batch = inputs[1]->Slice(b);
+	ArrayType errorSignalBatch = errorSignal->Slice(b);
+	ArrayType errorSignal1Batch = errorSignal1->Slice(b);
+	ArrayType errorSignal2Batch = errorSignal2->Slice(b);
+	
+	fetch::math::DotTranspose(errorSignalBatch, input2Batch, errorSignal1Batch);
+	fetch::math::TransposeDot(input1Batch, errorSignalBatch, errorSignal2Batch);
+      }
+
+    if (unsqueeze)
+      {
+	inputs[0]->Squeeze();
+	inputs[1]->Squeeze();
+	errorSignal->Squeeze();
+	errorSignal1->Squeeze();
+	errorSignal2->Squeeze();
+      }
 
     return {errorSignal1, errorSignal2};
   }
