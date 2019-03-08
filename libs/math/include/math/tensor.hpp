@@ -325,6 +325,17 @@ public:
     return ret;
   }
 
+  /*
+   * Add a dummy leading dimension
+   * Ex: [4, 5, 6].Unsqueeze() -> [1, 4, 5, 6]
+   */
+  void Unsqueeze()
+  {
+    shape_.insert(shape_.begin(), 1);
+    strides_.insert(strides_.begin(), strides_.front() * shape_[1]);
+    padding_.insert(padding_.begin(), 0);
+  }
+
   std::shared_ptr<const std::vector<T>> Storage() const
   {
     return storage_;
@@ -446,9 +457,9 @@ public:
   T Sum() const
   {
     T sum(0);
-    for (SizeType i(0); i < size(); ++i)
+    for (T const &e : *this)
     {
-      sum = sum + At(i);
+      sum += e;
     }
     return sum;
   }
