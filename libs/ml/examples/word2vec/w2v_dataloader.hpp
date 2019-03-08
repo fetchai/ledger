@@ -53,6 +53,11 @@ public:
     return size_;
   }
 
+  SizeType VocabSize()
+  {
+    return vocab_.size();
+  }
+
   virtual bool IsDone() const
   {
     return cursor_ >= size_;
@@ -66,22 +71,29 @@ public:
   virtual std::pair<std::pair<std::shared_ptr<T>, std::shared_ptr<T>>, SizeType> GetAtIndex(
       SizeType idx)
   {
-    std::shared_ptr<T> input_buffer   = std::make_shared<T>(std::vector<SizeType>({vocab_.size()}));
-    std::shared_ptr<T> context_buffer = std::make_shared<T>(std::vector<SizeType>({vocab_.size()}));
+    std::shared_ptr<T> input_buffer =
+        std::make_shared<ArrayType>(std::vector<SizeType>({1, vocab_.size()}));
+    std::shared_ptr<T> context_buffer =
+        std::make_shared<ArrayType>(std::vector<SizeType>({1, vocab_.size()}));
 
     // input word
+    typename ArrayType::Type val;
     for (SizeType i(0); i < vocab_.size(); ++i)
     {
-      input_buffer->At(i) = typename T::Type(data_[idx].first[i]);
+      val = typename ArrayType::Type(data_input_[idx][i]);
+      assert((val == 0) || (val == 1));
+      input_buffer->At(i) = val;
     }
 
     // context word
     for (SizeType i(0); i < vocab_.size(); ++i)
     {
-      context_buffer->At(i) = typename T::Type(data_[idx].second[i]);
+      val = typename ArrayType::Type(data_context_[idx][i]);
+      assert((val == 0) || (val == 1));
+      context_buffer->At(i) = typename ArrayType::Type(data_context_[idx][i]);
     }
 
-    SizeType label = (SizeType)(labels_[idx]);
+    SizeType label = SizeType(labels_[idx]);
     cursor_++;
 
     return std::make_pair(std::make_pair(input_buffer, context_buffer), label);
@@ -99,7 +111,7 @@ public:
 
   std::pair<std::pair<std::shared_ptr<T>, std::shared_ptr<T>>, SizeType> GetRandom()
   {
-    return GetAtIndex((SizeType)rand() % Size());
+    return GetAtIndex(static_cast<SizeType>(rand()) % Size());
   }
 
 private:
@@ -124,9 +136,16 @@ private:
       assert(words.size() > (skip_window * 2));
 
       // insert words uniquely into the vocabulary
-      for (std::uint64_t i = 0; i < words.size(); i++)
+      SizeType word_counter = 1;  // 0 rserved for unknown word
+      vocab_.insert(std::make_pair("UNK", 0));
+      for (std::string cur_word : words)
       {
-        vocab_.insert(std::pair<std::string, SizeType>(words[i], i));
+        bool ret = vocab_.insert(std::make_pair(cur_word, word_counter)).second;
+
+        if (ret)
+        {
+          ++word_counter;
+        }
       }
 
       // generate training pairs
@@ -136,42 +155,59 @@ private:
       size_                              = n_training_pairs;
 
       // now we know the size of the training data
-      data_.resize(n_training_pairs);
-      labels_.resize(n_training_pairs);
+      //      std::vector<std::pair<std::vector<SizeType>, std::vector<SizeType>>>
+      //      data{n_training_pairs}; std::vector<SizeType> labels{n_training_pairs};
+
+      data_input_.reserve(n_training_pairs);
+      data_context_.reserve(n_training_pairs);
+      labels_.reserve(n_training_pairs);
 
       // generate positive training pairs
-      SizeType pos_count = 0;
+      SizeType              pos_count = 0;
+      SizeType              cur_vocab_idx;
+      SizeType              cur_context_idx;
+      std::vector<SizeType> input_one_hot(vocab_.size());
+      std::vector<SizeType> context_one_hot(vocab_.size());
+      SizeType              tmp;
+
       for (SizeType i = skip_window; i < (words.size() - skip_window); i++)
       {
         // current input word idx
-        SizeType cur_vocab_idx = vocab_[words[i]];
+        cur_vocab_idx = SizeType(vocab_[words[i]]);
+        assert(cur_vocab_idx > 0);  // unknown words not yet handled
+        assert(cur_vocab_idx < vocab_.size());
 
         for (SizeType j = 0; j < (2 * skip_window) + 1; j++)
         {
           if (j != skip_window)  // i.e. when input == context
           {
             // context word idx
-            SizeType cur_context_idx = vocab_[words[i + j - skip_window]];
+            cur_context_idx = vocab_[words[i + j - skip_window]];
+            assert(cur_context_idx > 0);  // unknown words not yet handled
+            assert(cur_context_idx < vocab_.size());
 
             // build input one hot
-            std::vector<SizeType> input_one_hot{vocab_.size()};
-            std::vector<SizeType> context_one_hot{vocab_.size()};
-            for (unsigned int k = 0; k < vocab_.size(); k++)
+            for (SizeType k = 0; k < vocab_.size(); k++)
             {
-              input_one_hot.emplace_back(SizeType(k == cur_vocab_idx));
+              tmp = SizeType(k == cur_vocab_idx);
+              assert((tmp == 0) || (tmp == 1));
+              input_one_hot[k] = tmp;
             }
 
             // build context one hot
-            for (unsigned int k = 0; k < vocab_.size(); k++)
+            for (SizeType k = 0; k < vocab_.size(); k++)
             {
-              context_one_hot.emplace_back(SizeType(k == cur_context_idx));
+              tmp = SizeType(k == cur_context_idx);
+              assert((tmp == 0) || (tmp == 1));
+              context_one_hot[k] = tmp;
             }
 
-            data_[pos_count] = std::pair<std::vector<SizeType>, std::vector<SizeType>>(
-                input_one_hot, context_one_hot);
+            // assign data
+            data_input_.emplace_back(input_one_hot);
+            data_context_.emplace_back(context_one_hot);
 
             // assign label
-            labels_[pos_count] = SizeType(1);
+            labels_.emplace_back(SizeType(1));
 
             ++pos_count;
           }
@@ -181,16 +217,18 @@ private:
       // generate negative training pairs
       SizeType neg_count                          = 0;
       SizeType n_negative_training_pairs_per_word = (skip_window * 2) * k_negative_samples;
+      SizeType negative_context_idx;
       for (SizeType i = skip_window; i < (words.size() - skip_window); i++)
       {
         // current input word idx
-        SizeType cur_vocab_idx = vocab_[words[i]];
+        cur_vocab_idx = vocab_[words[i]];
+        assert(cur_vocab_idx > 0);
+        assert(cur_vocab_idx < vocab_.size());
 
         for (SizeType j = 0; j < n_negative_training_pairs_per_word; j++)
         {
           // ran select value
-          bool     ongoing = true;
-          SizeType negative_context_idx;
+          bool ongoing = true;
           while (ongoing)
           {
             negative_context_idx = SizeType(SizeType(rand()) % words.size());
@@ -200,26 +238,46 @@ private:
               ongoing = false;
             }
           }
+          negative_context_idx = vocab_[words[negative_context_idx]];
+          assert(negative_context_idx > 0);
+          assert(negative_context_idx < vocab_.size());
 
           // build input one hot
-          std::vector<SizeType> input_one_hot{vocab_.size()};
-          std::vector<SizeType> context_one_hot{vocab_.size()};
           for (unsigned int k = 0; k < vocab_.size(); k++)
           {
-            input_one_hot.emplace_back(SizeType(k == cur_vocab_idx));
+            tmp = SizeType(k == cur_vocab_idx);
+            assert((tmp == 0) || (tmp == 1));
+            input_one_hot[k] = tmp;
           }
 
           // build context one hot
           for (unsigned int k = 0; k < vocab_.size(); k++)
           {
-            context_one_hot.emplace_back(SizeType(k == negative_context_idx));
+            tmp = SizeType(k == negative_context_idx);
+            assert((tmp == 0) || (tmp == 1));
+            context_one_hot[k] = tmp;
           }
 
-          data_[pos_count + neg_count] = std::pair<std::vector<SizeType>, std::vector<SizeType>>(
-              input_one_hot, context_one_hot);
+          if ((pos_count + neg_count) == 1367)
+          {
+            for (std::size_t zi = 0; zi < input_one_hot.size(); ++zi)
+            {
+              std::cout << "input_one_hot[zi]: " << input_one_hot[zi] << std::endl;
+            }
+          }
+          if ((pos_count + neg_count) == 1367)
+          {
+            for (std::size_t zi = 0; zi < context_one_hot.size(); ++zi)
+            {
+              std::cout << "context_one_hot[zi]: " << context_one_hot[zi] << std::endl;
+            }
+          }
+
+          data_input_.push_back(input_one_hot);
+          data_context_.push_back(context_one_hot);
 
           // assign label
-          labels_[pos_count + neg_count] = SizeType(0);
+          labels_.push_back(SizeType(0));
           ++neg_count;
         }
       }
@@ -231,8 +289,9 @@ private:
 
   SizeType cursor_;
 
-  std::vector<std::pair<std::vector<SizeType>, std::vector<SizeType>>> data_;
-  std::vector<SizeType>                                                labels_;
+  std::vector<std::vector<SizeType>> data_input_;
+  std::vector<std::vector<SizeType>> data_context_;
+  std::vector<SizeType>              labels_;
 };
 }  // namespace ml
 }  // namespace fetch

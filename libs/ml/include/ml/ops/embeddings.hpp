@@ -45,7 +45,6 @@ public:
     ASSERT(this->output_);
     ASSERT(inputs.size() == 1);
     ASSERT(inputs[0]->size() == 1);
-
     if (!this->embeddings_output_ || this->embeddings_output_->shape()[0] != inputs[0]->size() ||
         this->embeddings_output_->shape()[1] != this->output_->shape()[1])
     {

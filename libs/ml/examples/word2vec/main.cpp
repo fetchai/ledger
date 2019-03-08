@@ -45,14 +45,14 @@ using SizeType  = typename ArrayType::SizeType;
 
 struct PARAMS
 {
-  bool          cbow       = false;  // skipgram model if false, cbow if true
-  std::uint64_t batch_size = 1;      // training data batch size
-  std::uint64_t embedding_size =
-      3;  // dimension of the embedding vector - 4th root of vocab size is good
-  std::uint64_t skip_window = 2;  // words to include in frame (left & right)
+  bool     cbow       = false;  // skipgram model if false, cbow if true
+  SizeType batch_size = 1;      // training data batch size
+  SizeType embedding_size =
+      3;                     // dimension of the embedding vector - 4th root of vocab size is good
+  SizeType skip_window = 2;  // words to include in frame (left & right)
   //  std::uint64_t num_skips      = 2;      // n times to reuse an input to generate a label
-  std::uint64_t k_neg_samps    = 5;  // number of negative examples to sample
-  std::uint64_t training_steps = 50000;
+  SizeType k_neg_samps    = 2;  // number of negative examples to sample
+  SizeType training_steps = 50000;
 };
 
 std::string TRAINING_DATA =
@@ -102,7 +102,7 @@ int main(int ac, char **av)
   // set up model architecture
   std::cout << "building model architecture...: " << std::endl;
   fetch::ml::Graph<ArrayType> g;
-  std::string output_name = Model(g, dataloader.Size(), p.batch_size, p.embedding_size);
+  std::string output_name = Model(g, dataloader.VocabSize(), p.batch_size, p.embedding_size);
 
   // set up loss
   CrossEntropy<ArrayType> criterion;
@@ -110,21 +110,32 @@ int main(int ac, char **av)
   std::pair<std::pair<std::shared_ptr<ArrayType>, std::shared_ptr<ArrayType>>, SizeType> input;
   std::shared_ptr<ArrayType>                                                             gt =
       std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1, 2}));
-
-  //  gt->At(0)         = 1.0;
   DataType loss = 0;
+
+  /////////////////////////////////
+  /// TRAIN THE WORD EMBEDDINGS ///
+  /////////////////////////////////
 
   std::cout << "beginning training...: " << std::endl;
 
   for (std::size_t i = 0; i < p.training_steps; ++i)
   {
     input = dataloader.GetRandom();
+
     g.SetInput("Input", input.first.first);
     g.SetInput("Context", input.first.second);
     gt->Fill(0);
     gt->At(input.second)               = DataType(1);
     std::shared_ptr<ArrayType> results = g.Evaluate(output_name);
+//
+//    std::cout << "results->At(0): " << results->At(0) << std::endl;
+//    std::cout << "results->At(1): " << results->At(1) << std::endl;
+//    std::cout << "gt->At(0): " << gt->At(0) << std::endl;
+//    std::cout << "gt->At(1): " << gt->At(1) << std::endl;
+
     loss += criterion.Forward({results, gt});
+//    std::cout << "loss: " << loss << std::endl;
+
     g.BackPropagate(output_name, criterion.Backward({results, gt}));
 
     if (i % 50 == 0)
@@ -134,5 +145,23 @@ int main(int ac, char **av)
       loss = 0;
     }
   }
+
+  //////////////////////////////////////
+  /// EXTRACT THE TRAINED EMBEDDINGS ///
+  //////////////////////////////////////
+
+  // first get hold of the skipgram layer by searching the return name in the graph
+  std::shared_ptr<fetch::ml::layers::SkipGram<ArrayType>> sg_layer =
+      std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<ArrayType>>(g.GetNode(output_name));
+
+  // next get hold of the embeddings
+  std::shared_ptr<ArrayType> embeddings = sg_layer->GetEmbeddings();
+
+  // embeddings
+  std::cout << "embeddings dimensions: " << embeddings->shape()[1] << std::endl;
+  std::cout << "vocab size: " << embeddings->shape()[0] << std::endl;
+  //
+  //  dataloader.Size()
+
   return 0;
 }

@@ -70,28 +70,31 @@ public:
     std::string dense      = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
         name + "_Dense", {in_ctx_matmul}, dense_size, out);
 
-    // sigmoid activation
+    // softmax activation
     std::string output =
         this->template AddNode<fetch::ml::ops::Softmax<ArrayType>>(name + "_Output", {dense});
-
-    //    // sigmoid activation
-    //    std::string output =
-    //        this->template AddNode<fetch::ml::ops::LogSoftmax<ArrayType>>(name + "_Output",
-    //        {dense});
 
     this->AddInputNode(input);
     this->AddInputNode(context);
     this->SetOutputNode(output);
 
     // set up data for embeddings
-    ArrayPtrType embeddings_ptr =
+    embeddings_ptr_ =
         std::make_shared<ArrayType>(std::vector<std::uint64_t>({in_size, embedding_size}));
-    this->Initialise(embeddings_ptr, init_mode);
-    this->SetInput(embed_in, embeddings_ptr);
-    this->SetInput(embed_ctx, embeddings_ptr);
+    this->Initialise(embeddings_ptr_, init_mode);
+    this->SetInput(embed_in, embeddings_ptr_);
+    this->SetInput(embed_ctx, embeddings_ptr_);
+  }
+
+  ArrayPtrType GetEmbeddings()
+  {
+    return embeddings_ptr_;
   }
 
   static constexpr char const *DESCRIPTOR = "SkipGram";
+
+private:
+  ArrayPtrType embeddings_ptr_;
 };
 
 }  // namespace layers

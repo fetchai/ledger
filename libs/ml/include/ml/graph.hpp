@@ -112,6 +112,11 @@ public:
     return name;
   }
 
+  std::shared_ptr<fetch::ml::NodeInterface<ArrayType>> GetNode(std::string const &node_name)
+  {
+    return nodes_[node_name];
+  }
+
   /**
    * Assigns data to a placeholder if the node can be found in the graph.
    * Also resets the graph cache to avoid erroneous leftover outputs
