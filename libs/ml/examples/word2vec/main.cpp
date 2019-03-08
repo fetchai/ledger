@@ -105,9 +105,9 @@ int main(int ac, char **av)
   // set up loss
   CrossEntropy<ArrayType> criterion;
 
-  std::pair<std::shared_ptr<ArrayType>, SizeType> input;
-  std::shared_ptr<ArrayType>                      gt =
-      std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1, 2}));
+  std::pair<std::pair<std::shared_ptr<ArrayType>, std::shared_ptr<ArrayType>>, SizeType> input;
+  std::shared_ptr<ArrayType>                                                             gt =
+      std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1, 1}));
 
   //  gt->At(0)         = 1.0;
   DataType     loss = 0;
@@ -117,11 +117,19 @@ int main(int ac, char **av)
   while (true)
   {
     input = dataloader.GetRandom();
-    g.SetInput("Input", input.first);
+    g.SetInput("Input", input.first.first);
+    g.SetInput("Context", input.first.second);
     gt->Fill(0);
-    gt->At(input.second) = DataType(1.0);
+    gt->At(0) = DataType(input.second);
+
+    std::cout << "inputs.first.first.size(): " << input.first.first->size() << std::endl;
+    std::cout << "input.first.second.size(): " << input.first.second->size() << std::endl;
+    std::cout << "output_name: " << output_name << std::endl;
 
     std::shared_ptr<ArrayType> results = g.Evaluate(output_name);
+
+    std::cout << "results->size(): " << results->size() << std::endl;
+
     loss += criterion.Forward({results, gt});
 
     g.BackPropagate(output_name, criterion.Backward({results, gt}));

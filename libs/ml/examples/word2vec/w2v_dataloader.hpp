@@ -63,34 +63,45 @@ public:
     cursor_ = 0;
   }
 
-  virtual std::pair<std::shared_ptr<T>, SizeType> GetAtIndex(SizeType idx)
+  virtual std::pair<std::pair<std::shared_ptr<T>, std::shared_ptr<T>>, SizeType> GetAtIndex(
+      SizeType idx)
   {
-    std::shared_ptr<T> buffer = std::make_shared<T>(std::vector<SizeType>({2 * vocab_.size()}));
+    std::cout << "data_.size(): " << data_.size() << std::endl;
+
+    std::shared_ptr<T> input_buffer   = std::make_shared<T>(std::vector<SizeType>({vocab_.size()}));
+    std::shared_ptr<T> context_buffer = std::make_shared<T>(std::vector<SizeType>({vocab_.size()}));
 
     // input word
     for (SizeType i(0); i < vocab_.size(); ++i)
     {
-      buffer->At(i) = typename T::Type(data_[idx][i]);
+      std::cout << "input_buffer->Size(): " << input_buffer->size() << std::endl;
+      std::cout << "data_[idx].first[i]: " << data_[idx].first[i] << std::endl;
+      input_buffer->At(i) = typename T::Type(data_[idx].first[i]);
     }
 
     // context word
     for (SizeType i(0); i < vocab_.size(); ++i)
     {
-      buffer->At(vocab_.size() + i) = typename T::Type(data_[idx][vocab_.size() + i]);
+      context_buffer->At(i) = typename T::Type(data_[idx].second[i]);
     }
 
     SizeType label = (SizeType)(labels_[idx]);
     cursor_++;
 
-    return std::make_pair(buffer, label);
+    return std::make_pair(std::make_pair(input_buffer, context_buffer), label);
   }
 
   virtual std::pair<std::shared_ptr<T>, SizeType> GetNext()
   {
-    return GetAtIndex(cursor_++);
+    throw std::runtime_error(
+        "GetNext temporariliy disabled since does"
+        "not conform to DataLoader abstract class standard");
+    std::pair<std::pair<std::shared_ptr<T>, std::shared_ptr<T>>, SizeType> tmp =
+        GetAtIndex(cursor_++);
+    return std::make_pair(tmp.first.first, tmp.second);
   }
 
-  std::pair<std::shared_ptr<T>, SizeType> GetRandom()
+  std::pair<std::pair<std::shared_ptr<T>, std::shared_ptr<T>>, SizeType> GetRandom()
   {
     return GetAtIndex((SizeType)rand() % Size());
   }
@@ -122,20 +133,22 @@ private:
       }
 
       // generate training pairs
-      SizeType n_positive_training_pairs = words.size() * 2 * skip_window;
+      SizeType n_positive_training_pairs = ((words.size() - (2 * skip_window)) * 2 * skip_window);
       SizeType n_negative_training_pairs = n_positive_training_pairs;
       SizeType n_training_pairs          = n_positive_training_pairs + n_negative_training_pairs;
       size_                              = n_training_pairs;
-      SizeType **_dataset                = new SizeType *[n_training_pairs];
-      SizeType * _labels_dataset         = new SizeType[n_training_pairs];
+
+      // now we know the size of the training data
+      data_.resize(n_training_pairs);
+      labels_.resize(n_training_pairs);
 
       // generate positive training pairs
+      SizeType pos_count = 0;
       for (SizeType i = skip_window; i < (words.size() - skip_window); i++)
       {
         // current input word idx
         SizeType cur_vocab_idx = vocab_[words[i]];
 
-        SizeType skip_window_count = 0;
         for (SizeType j = 0; j < (2 * skip_window) + 1; j++)
         {
           if (j != skip_window)  // i.e. when input == context
@@ -143,49 +156,39 @@ private:
             // context word idx
             SizeType cur_context_idx = vocab_[words[i + j - skip_window]];
 
-            _dataset[(i * 2 * skip_window) + skip_window_count] = new SizeType[2 * vocab_.size()];
             // build input one hot
+            std::vector<SizeType> input_one_hot{vocab_.size()};
+            std::vector<SizeType> context_one_hot{vocab_.size()};
             for (unsigned int k = 0; k < vocab_.size(); k++)
             {
-              if (k == cur_vocab_idx)
-              {
-                _dataset[(i * 2 * skip_window) + skip_window_count][k] = 1;
-              }
-              else
-              {
-                _dataset[(i * 2 * skip_window) + skip_window_count][k] = 0;
-              }
+              input_one_hot.emplace_back(SizeType(k == cur_vocab_idx));
             }
 
             // build context one hot
             for (unsigned int k = 0; k < vocab_.size(); k++)
             {
-              if (k == cur_context_idx)
-              {
-                _dataset[(i * 2 * skip_window) + skip_window_count][k + vocab_.size()] = 1;
-              }
-              else
-              {
-                _dataset[(i * 2 * skip_window) + skip_window_count][k + vocab_.size()] = 0;
-              }
+              context_one_hot.emplace_back(SizeType(k == cur_context_idx));
             }
 
-            // assign label
-            _labels_dataset[(i * 2 * skip_window) + skip_window_count] = 1;
+            data_[pos_count] = std::pair<std::vector<SizeType>, std::vector<SizeType>>(
+                input_one_hot, context_one_hot);
 
-            ++skip_window_count;
+            // assign label
+            labels_[pos_count] = SizeType(1);
+
+            ++pos_count;
           }
         }
       }
 
       // generate negative training pairs
+      SizeType neg_count                          = 0;
       SizeType n_negative_training_pairs_per_word = skip_window * 2;
       for (SizeType i = skip_window; i < (words.size() - skip_window); i++)
       {
         // current input word idx
         SizeType cur_vocab_idx = vocab_[words[i]];
 
-        SizeType skip_window_count = 0;
         for (SizeType j = 0; j < n_negative_training_pairs_per_word; j++)
         {
           // ran select value
@@ -201,48 +204,32 @@ private:
             }
           }
 
-          _dataset[n_positive_training_pairs + (i * 2 * skip_window) + skip_window_count] =
-              new SizeType[2 * vocab_.size()];
           // build input one hot
+          std::vector<SizeType> input_one_hot{vocab_.size()};
+          std::vector<SizeType> context_one_hot{vocab_.size()};
           for (unsigned int k = 0; k < vocab_.size(); k++)
           {
-            SizeType cur_idx =
-                n_positive_training_pairs + (i * 2 * skip_window) + skip_window_count;
-            if (k == cur_vocab_idx)
-            {
-              _dataset[cur_idx][k] = 1;
-            }
-            else
-            {
-              _dataset[cur_idx][k] = 0;
-            }
+            input_one_hot.emplace_back(SizeType(k == cur_vocab_idx));
           }
 
-          // negative context word
-          // build input one hot
+          // build context one hot
           for (unsigned int k = 0; k < vocab_.size(); k++)
           {
-            if (k == negative_context_idx)
-            {
-              _dataset[n_positive_training_pairs + (i * 2 * skip_window) + skip_window_count][k] =
-                  1;
-            }
-            else
-            {
-              _dataset[n_positive_training_pairs + (i * 2 * skip_window) + skip_window_count][k] =
-                  0;
-            }
+            context_one_hot.emplace_back(SizeType(k == negative_context_idx));
           }
+
+          data_[pos_count + neg_count] = std::pair<std::vector<SizeType>, std::vector<SizeType>>(
+              input_one_hot, context_one_hot);
 
           // assign label
-          _labels_dataset[n_positive_training_pairs + (i * 2 * skip_window) + skip_window_count] =
-              0;
-
-          ++skip_window_count;
+          labels_[pos_count + neg_count] = SizeType(0);
+          ++neg_count;
         }
       }
-      data_   = _dataset;
-      labels_ = _labels_dataset;
+      std::cout << "pos_count: " << pos_count << std::endl;
+      std::cout << "neg_count: " << neg_count << std::endl;
+      std::cout << "pos_count + neg_count: " << pos_count + neg_count << std::endl;
+      std::cout << "n_training_pairs: " << n_training_pairs << std::endl;
     }
   }
 
@@ -251,8 +238,8 @@ private:
 
   SizeType cursor_;
 
-  SizeType **data_;
-  SizeType * labels_;
+  std::vector<std::pair<std::vector<SizeType>, std::vector<SizeType>>> data_;
+  std::vector<SizeType>                                                labels_;
 };
 }  // namespace ml
 }  // namespace fetch

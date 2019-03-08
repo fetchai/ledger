@@ -83,15 +83,17 @@ public:
       ArrayPtrType errorSignal)
   {
     //    FETCH_LOG_INFO("ML_LIB", "Backpropagating node [", name_, "]");
-    std::vector<ArrayPtrType> inputs                     = GatherInputs();
-    std::vector<ArrayPtrType> backpropagatedErrorSignals = this->Backward(inputs, errorSignal);
-    std::vector<std::pair<NodeInterface<T> *, ArrayPtrType>> nonBackpropagatedErrorSignals;
-    assert(backpropagatedErrorSignals.size() == inputs.size() || inputs.empty());
+    std::vector<ArrayPtrType> inputs                        = GatherInputs();
+    std::vector<ArrayPtrType> back_propagated_error_signals = this->Backward(inputs, errorSignal);
+    std::vector<std::pair<NodeInterface<T> *, ArrayPtrType>> non_back_propagated_error_signals;
+
+    assert((back_propagated_error_signals.size() == inputs.size()) || inputs.empty());
+
     for (std::uint64_t i(0); i < inputs_.size(); ++i)
     {
-      auto ret = inputs_[i]->BackPropagate(backpropagatedErrorSignals[i]);
-      nonBackpropagatedErrorSignals.insert(nonBackpropagatedErrorSignals.end(), ret.begin(),
-                                           ret.end());
+      auto ret = inputs_[i]->BackPropagate(back_propagated_error_signals[i]);
+      non_back_propagated_error_signals.insert(non_back_propagated_error_signals.end(), ret.begin(),
+                                               ret.end());
     }
     // If no input to backprop to, return gradient to caller
     // This is used to propagate outside of a SubGraph
@@ -99,12 +101,12 @@ public:
     // so it sends its unpropagated gradient to its wrapper node that will forward them out
     if (inputs_.empty())
     {
-      for (auto g : backpropagatedErrorSignals)
+      for (auto g : back_propagated_error_signals)
       {
-        nonBackpropagatedErrorSignals.push_back(std::make_pair(this, g));
+        non_back_propagated_error_signals.push_back(std::make_pair(this, g));
       }
     }
-    return nonBackpropagatedErrorSignals;
+    return non_back_propagated_error_signals;
   }
 
   void AddInput(std::shared_ptr<NodeInterface<T>> const &i)

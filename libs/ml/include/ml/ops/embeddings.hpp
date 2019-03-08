@@ -75,7 +75,9 @@ public:
           .Copy(errorSignal->Slice(j));
       j++;
     }
-    return {};
+
+    // TODO ()
+    return {errorSignal};
   }
 
 private:
