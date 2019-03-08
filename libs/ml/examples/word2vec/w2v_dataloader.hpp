@@ -66,16 +66,12 @@ public:
   virtual std::pair<std::pair<std::shared_ptr<T>, std::shared_ptr<T>>, SizeType> GetAtIndex(
       SizeType idx)
   {
-    std::cout << "data_.size(): " << data_.size() << std::endl;
-
     std::shared_ptr<T> input_buffer   = std::make_shared<T>(std::vector<SizeType>({vocab_.size()}));
     std::shared_ptr<T> context_buffer = std::make_shared<T>(std::vector<SizeType>({vocab_.size()}));
 
     // input word
     for (SizeType i(0); i < vocab_.size(); ++i)
     {
-      std::cout << "input_buffer->Size(): " << input_buffer->size() << std::endl;
-      std::cout << "data_[idx].first[i]: " << data_[idx].first[i] << std::endl;
       input_buffer->At(i) = typename T::Type(data_[idx].first[i]);
     }
 
@@ -226,10 +222,6 @@ private:
           ++neg_count;
         }
       }
-      std::cout << "pos_count: " << pos_count << std::endl;
-      std::cout << "neg_count: " << neg_count << std::endl;
-      std::cout << "pos_count + neg_count: " << pos_count + neg_count << std::endl;
-      std::cout << "n_training_pairs: " << n_training_pairs << std::endl;
     }
   }
 
