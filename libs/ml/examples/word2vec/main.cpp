@@ -45,12 +45,14 @@ using SizeType  = typename ArrayType::SizeType;
 
 struct PARAMS
 {
-  bool          cbow           = false;  // skipgram model if false, cbow if true
-  std::uint64_t batch_size     = 1;      // training data batch size
-  std::uint64_t embedding_size = 10;     // dimension of the embedding vector
-  std::uint64_t skip_window    = 2;      // words to include in frame (left & right)
+  bool          cbow       = false;  // skipgram model if false, cbow if true
+  std::uint64_t batch_size = 1;      // training data batch size
+  std::uint64_t embedding_size =
+      3;  // dimension of the embedding vector - 4th root of vocab size is good
+  std::uint64_t skip_window = 2;  // words to include in frame (left & right)
   //  std::uint64_t num_skips      = 2;      // n times to reuse an input to generate a label
-  //  std::uint64_t num_sampled    = 64;     // number of negative examples to sample
+  std::uint64_t k_neg_samps    = 5;  // number of negative examples to sample
+  std::uint64_t training_steps = 50000;
 };
 
 std::string TRAINING_DATA =
@@ -95,7 +97,7 @@ int main(int ac, char **av)
 
   // set up dataloader
   std::cout << "Setting up training data...: " << std::endl;
-  fetch::ml::W2VLoader<ArrayType> dataloader(TRAINING_DATA, p.skip_window, p.cbow);
+  fetch::ml::W2VLoader<ArrayType> dataloader(TRAINING_DATA, p.skip_window, p.cbow, p.k_neg_samps);
 
   // set up model architecture
   std::cout << "building model architecture...: " << std::endl;
@@ -110,11 +112,11 @@ int main(int ac, char **av)
       std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1, 1}));
 
   //  gt->At(0)         = 1.0;
-  DataType     loss = 0;
-  unsigned int i(0);
+  DataType loss = 0;
 
   std::cout << "beginning training...: " << std::endl;
-  while (true)
+
+  for (std::size_t i = 0; i < p.training_steps; ++i)
   {
     input = dataloader.GetRandom();
     g.SetInput("Input", input.first.first);
@@ -126,10 +128,9 @@ int main(int ac, char **av)
 
     g.BackPropagate(output_name, criterion.Backward({results, gt}));
 
-    i++;
-    if (i % 60 == 0)
+    if (i % 50 == 0)
     {
-      std::cout << "MiniBatch: " << i / 60 << " -- Loss : " << loss << std::endl;
+      std::cout << "MiniBatch: " << i / 50 << " -- Loss : " << loss << std::endl;
       g.Step(0.01f);
       loss = 0;
     }

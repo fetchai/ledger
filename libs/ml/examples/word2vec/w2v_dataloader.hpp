@@ -39,13 +39,13 @@ class W2VLoader : public DataLoader<std::shared_ptr<T>, typename T::SizeType>
   using SizeType  = typename T::SizeType;
 
 public:
-  W2VLoader(std::string &data, SizeType skip_window, bool cbow)
+  W2VLoader(std::string &data, SizeType skip_window, bool cbow, SizeType k_negative_samples)
     : cursor_(0)
   {
     assert(skip_window > 0);
 
     // set up training dataset
-    BuildTrainingData(data, skip_window, cbow);
+    BuildTrainingData(data, skip_window, cbow, k_negative_samples);
   }
 
   virtual SizeType Size() const
@@ -104,7 +104,8 @@ public:
 
 private:
   // naive vector representations - just one-hot encoding on a first come first serve basis
-  void BuildTrainingData(std::string &training_data, SizeType skip_window, bool cbow)
+  void BuildTrainingData(std::string &training_data, SizeType skip_window, bool cbow,
+                         SizeType k_negative_samples)
   {
     if (cbow)
     {
@@ -130,7 +131,7 @@ private:
 
       // generate training pairs
       SizeType n_positive_training_pairs = ((words.size() - (2 * skip_window)) * 2 * skip_window);
-      SizeType n_negative_training_pairs = n_positive_training_pairs;
+      SizeType n_negative_training_pairs = k_negative_samples * n_positive_training_pairs;
       SizeType n_training_pairs          = n_positive_training_pairs + n_negative_training_pairs;
       size_                              = n_training_pairs;
 
@@ -179,7 +180,7 @@ private:
 
       // generate negative training pairs
       SizeType neg_count                          = 0;
-      SizeType n_negative_training_pairs_per_word = skip_window * 2;
+      SizeType n_negative_training_pairs_per_word = (skip_window * 2) * k_negative_samples;
       for (SizeType i = skip_window; i < (words.size() - skip_window); i++)
       {
         // current input word idx
