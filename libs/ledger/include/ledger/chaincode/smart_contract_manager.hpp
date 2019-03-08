@@ -17,29 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-
-#include <functional>
-#include <memory>
-#include <unordered_set>
+#include "ledger/chaincode/contract.hpp"
 
 namespace fetch {
 namespace ledger {
 
 class Identifier;
-class Contract;
-class StorageInterface;
 
-class ChainCodeFactory
+class SmartContractManager : public Contract
 {
 public:
-  using ConstByteArray  = byte_array::ConstByteArray;
-  using ContractPtr     = std::shared_ptr<Contract>;
-  using ContractNameSet = std::unordered_set<ConstByteArray>;
+  static constexpr char const *NAME         = "fetch.contract";
+  static constexpr char const *LOGGING_NAME = "SmartContractManager";
 
-  ContractPtr Create(Identifier const &name, StorageInterface &storage) const;
+  static storage::ResourceAddress CreateAddressForContract(Identifier const &contract_id);
 
-  ContractNameSet const &GetChainCodeContracts() const;
+  SmartContractManager();
+  ~SmartContractManager() override = default;
+
+private:
+  /// @name Transaction Handlers
+  /// @{
+  Status OnCreate(Transaction const &tx);
+  /// @}
 };
 
 }  // namespace ledger

@@ -22,41 +22,20 @@
 #include "ledger/chain/wire_transaction.hpp"
 #include <memory>
 
-namespace fetch {
-namespace ledger {
-
 namespace {
 
 using namespace fetch;
 using namespace fetch::ledger;
 
-class WiredTransactionTest : public ::testing::Test
+TEST(WireTransactionTests, BasicChecks)
 {
-protected:
-  void SetUp() override
-  {}
-
-  void TearDown() override
-  {}
-};
-
-TEST_F(WiredTransactionTest, basic)
-{
-  for (std::size_t i = 0; i < 100; ++i)
+  for (std::size_t i = 0; i < 10; ++i)
   {
     MutableTransaction tx{RandomTransaction()};
     ASSERT_TRUE(tx.Verify());
 
-    // std::cout << "tx = " << std::endl << tx << std::endl;
-
-    // tx.set_signatures(MutableTransaction::signatures_type{});
-    // std::cout << "tx[after] = " << tx << std::endl;
-
     auto wire_tx = ToWireTransaction(tx, true);
-    std::cout << "wire tx = " << std::endl << wire_tx << std::endl;
-
     auto tx_deserialised{FromWireTransaction(wire_tx)};
-    // std::cout << "tx[deserialised] = " << std::endl << tx_deserialised << std::endl;
 
     EXPECT_TRUE(tx_deserialised.Verify());
 
@@ -69,7 +48,5 @@ TEST_F(WiredTransactionTest, basic)
     EXPECT_EQ(tx.digest(), tx_deserialised.digest());
   }
 }
-}  // namespace
 
-}  // namespace ledger
-}  // namespace fetch
+}  // namespace

@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/cache.hpp"
+#include "ledger/chaincode/chain_code_cache.hpp"
 #include "ledger/chaincode/factory.hpp"
 #include "meta/is_log2.hpp"
 
@@ -28,15 +28,21 @@
 namespace fetch {
 namespace ledger {
 
-ChainCodeCache::ContractPtr ChainCodeCache::Lookup(byte_array::ConstByteArray const &contract_name)
+ChainCodeCache::ContractPtr ChainCodeCache::Lookup(Identifier const &contract_id,
+                                                   StorageInterface &storage)
 {
   // attempt to locate the contract in the cache
-  ContractPtr contract = FindInCache(contract_name);
+  ContractPtr contract = FindInCache(contract_id);
 
   // if this fails create the contract
   if (!contract)
   {
-    contract = CreateContract(contract_name);
+    // it is expected that the create function will throw on errors
+    contract = factory_.Create(contract_id, storage);
+    assert(static_cast<bool>(contract));
+
+    // update the cache
+    cache_.emplace(contract_id.qualifier(), contract);
   }
 
   // periodically run cache maintenance
@@ -48,29 +54,18 @@ ChainCodeCache::ContractPtr ChainCodeCache::Lookup(byte_array::ConstByteArray co
   return contract;
 }
 
-ChainCodeCache::ContractPtr ChainCodeCache::FindInCache(byte_array::ConstByteArray const &name)
+ChainCodeCache::ContractPtr ChainCodeCache::FindInCache(Identifier const &contract_id)
 {
   ContractPtr contract;
 
   // attempt to lookup the contract in the cache
-  auto it = cache_.find(name);
+  auto it = cache_.find(contract_id.qualifier());
   if (it != cache_.end())
   {
-
     // extract the contract and refresh the cache timestamp
     contract             = it->second.chain_code;
     it->second.timestamp = Clock::now();
   }
-
-  return contract;
-}
-
-ChainCodeCache::ContractPtr ChainCodeCache::CreateContract(byte_array::ConstByteArray const &name)
-{
-  ContractPtr contract = factory_.Create(name);
-
-  // update the cache
-  cache_.emplace(name, contract);
 
   return contract;
 }

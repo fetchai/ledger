@@ -84,8 +84,9 @@ public:
   }
 
   ConstByteArray(std::string const &s)
-    : ConstByteArray(s.c_str())
+    : ConstByteArray(reinterpret_cast<uint8_t const *>(s.data()), s.size())
   {}
+
   ConstByteArray(self_type const &other) = default;
   ConstByteArray(self_type &&other)      = default;
   // TODO(pbukva): (private issue #229: confusion what method does without analysing implementation

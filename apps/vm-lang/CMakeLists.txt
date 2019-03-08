@@ -1,13 +1,10 @@
 ################################################################################
-# F E T C H   V M   T E S T S
+# F E T C H   V M   L A N G
 ################################################################################
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
-project(fetch-ledger)
+project(fetch-vmlang)
 
-# CMake configuration
-include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
-
-# Compiler Configuration
 setup_compiler()
 
-add_fetch_test(vm_modules_gtest fetch-vm-modules ./)
+add_executable(vm-lang main.cpp)
+target_link_libraries(vm-lang PRIVATE fetch-vm-modules)

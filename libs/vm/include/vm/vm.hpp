@@ -20,7 +20,10 @@
 #include "math/arithmetic/comparison.hpp"
 #include "math/free_functions/free_functions.hpp"
 #include "vm/defs.hpp"
+#include "vm/io_observer_interface.hpp"
 #include "vm/string.hpp"
+
+#include <sstream>
 
 namespace fetch {
 namespace vm {
@@ -103,37 +106,52 @@ public:
   ~VM() = default;
 
   template <typename... Ts>
-  bool Execute(Script const &script, std::string const &name, std::string &error, Variant &output,
-               Ts const &... parameters)
+  bool Execute(Script const &script, std::string const &name, std::string &error,
+               std::string &console_output, Variant &output, Ts const &... parameters)
   {
+    bool success{false};
+
     Script::Function const *f = script.FindFunction(name);
-    if (f == nullptr)
+    if (f)
     {
-      error = "unable to find function '" + name + "'";
-      return false;
-    }
-    constexpr int num_parameters = int(sizeof...(Ts));
-    if (num_parameters != f->num_parameters)
-    {
-      error = "mismatched parameters";
-      return false;
-    }
-    AssignParameters<0, Ts...>::Assign(stack_, registered_types_, parameters...);
-    for (size_t i = 0; i < size_t(num_parameters); ++i)
-    {
-      if (stack_[i].type_id != f->variables[i].type_id)
+      constexpr int num_parameters = int(sizeof...(Ts));
+
+      if (num_parameters == f->num_parameters)
+      {
+        AssignParameters<0, Ts...>::Assign(stack_, registered_types_, parameters...);
+        for (size_t i = 0; i < size_t(num_parameters); ++i)
+        {
+          if (stack_[i].type_id != f->variables[i].type_id)
+          {
+            error = "mismatched parameters";
+            for (size_t j = 0; j < size_t(num_parameters); ++j)
+            {
+              stack_[j].Reset();
+            }
+            return false;
+          }
+        }
+
+        script_   = &script;
+        function_ = f;
+
+        // execute the function
+        success = Execute(error, output);
+      }
+      else
       {
         error = "mismatched parameters";
-        for (size_t j = 0; j < size_t(num_parameters); ++j)
-        {
-          stack_[j].Reset();
-        }
-        return false;
       }
     }
-    script_   = &script;
-    function_ = f;
-    return Execute(error, output);
+    else
+    {
+      error = "unable to find function '" + name + "'";
+    }
+
+    // transfer the console output buffer
+    console_output = output_buffer_.str();
+
+    return success;
   }
 
   template <typename T>
@@ -146,6 +164,27 @@ public:
   Ptr<T> CreateNewObject(Args &&... args)
   {
     return new T(this, GetTypeId<T>(), std::forward<Args>(args)...);
+  }
+
+  void SetIOObserver(IoObserverInterface &observer)
+  {
+    io_observer_ = &observer;
+  }
+
+  bool HasIoObserver() const
+  {
+    return io_observer_ != nullptr;
+  }
+
+  IoObserverInterface &GetIOObserver()
+  {
+    assert(io_observer_ != nullptr);
+    return *io_observer_;
+  }
+
+  void AddOutputLine(std::string const &line)
+  {
+    output_buffer_ << line << '\n';
   }
 
 private:
@@ -201,7 +240,6 @@ private:
   template <typename ReturnType, typename TypeFunction, typename... Ts>
   friend struct TypeFunctionInvokerHelper;
 
-private:
   Script const *script_;
   Variant       stack_[STACK_SIZE];
   int           sp_;
@@ -214,6 +252,9 @@ private:
   Script::Instruction const *instruction_;
   bool                       stop_;
   std::string                error_;
+  std::ostringstream         output_buffer_;
+
+  IoObserverInterface *io_observer_{nullptr};
 
   bool Execute(std::string &error, Variant &output);
   void Destruct(int scope_number);

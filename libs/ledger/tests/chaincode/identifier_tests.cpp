@@ -16,12 +16,32 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "ledger/identifier.hpp"
+
 #include <gtest/gtest.h>
 
 using fetch::ledger::Identifier;
+using fetch::byte_array::ConstByteArray;
+using fetch::byte_array::ByteArray;
+using fetch::byte_array::ToBase64;
 
-TEST(identifier_gtest, basic_checks)
+ConstByteArray GenerateSequence(std::size_t size)
+{
+  ByteArray buffer{};
+  buffer.Resize(size);
+
+  for (std::size_t i = 0; i < size; ++i)
+  {
+    buffer[i] = i & 0xff;
+  }
+
+  return {buffer};
+}
+
+TEST(IdentifierTests, BasicChecks)
 {
   Identifier id("foo.bar.baz");
   EXPECT_EQ(id.name(), "baz");
@@ -29,8 +49,11 @@ TEST(identifier_gtest, basic_checks)
   EXPECT_EQ(id[0], "foo");
   EXPECT_EQ(id[1], "bar");
   EXPECT_EQ(id[2], "baz");
+  EXPECT_EQ(Identifier::Type::NORMAL, id.type());
+  EXPECT_EQ(ConstByteArray{"foo.bar.baz"}, id.qualifier());
 }
-TEST(identifier_ancestry_checks, direct_parent)
+
+TEST(IdentifierTests, DirectParent)
 {
   Identifier parent("foo");
   Identifier child("foo.bar");
@@ -40,8 +63,11 @@ TEST(identifier_ancestry_checks, direct_parent)
   EXPECT_TRUE(child.IsDirectChildTo(parent));
   EXPECT_FALSE(parent.IsChildTo(child));
   EXPECT_FALSE(child.IsParentTo(parent));
+  EXPECT_EQ(Identifier::Type::NORMAL, parent.type());
+  EXPECT_EQ(Identifier::Type::NORMAL, child.type());
 }
-TEST(identifier_ancestry_checks, indirect_Parent)
+
+TEST(IdentifierTests, InDirectParent)
 {
   Identifier parent("foo");
   Identifier child("foo.bar.baz");
@@ -51,8 +77,11 @@ TEST(identifier_ancestry_checks, indirect_Parent)
   EXPECT_FALSE(child.IsDirectChildTo(parent));
   EXPECT_FALSE(parent.IsChildTo(child));
   EXPECT_FALSE(child.IsParentTo(parent));
+  EXPECT_EQ(Identifier::Type::NORMAL, parent.type());
+  EXPECT_EQ(Identifier::Type::NORMAL, child.type());
 }
-TEST(identifier_ancestry_checks, Child)
+
+TEST(IdentifierTests, Child)
 {
   Identifier parent("foo.baz");
   Identifier child("foo.bar");
@@ -60,42 +89,41 @@ TEST(identifier_ancestry_checks, Child)
   EXPECT_FALSE(child.IsChildTo(parent));
   EXPECT_FALSE(child.IsParentTo(parent));
   EXPECT_FALSE(parent.IsChildTo(child));
+  EXPECT_EQ(Identifier::Type::NORMAL, parent.type());
+  EXPECT_EQ(Identifier::Type::NORMAL, child.type());
 }
-TEST(identifier_ancestry_checks, Append)
+
+TEST(IdentifierTests, CheckInvalid)
 {
-  Identifier id;
-  id.Append("foo");
-  id.Append("bar");
-  id.Append("baz");
-  id.Append("x.y.z");
-  EXPECT_EQ(id.full_name(), "foo.bar.baz.x.y.z");
+  Identifier id{};
+  EXPECT_FALSE(id.Parse("foo..baz"));
+
+  // check that the exception is thrown from the constructor also
+  ASSERT_THROW(Identifier{"foo..baz"}, std::runtime_error);
 }
-TEST(identifier_ancestry_checks, Append_invalid_namespace_at_beginning)
+
+TEST(IdentifierTests, CheckSmartContractDigest)
 {
-  Identifier id;
-  bool       exception_received = false;
-  try
-  {
-    id.Append(".foo");
-  }
-  catch (std::runtime_error const &ex)
-  {
-    exception_received = true;
-  }
-  EXPECT_TRUE(exception_received);
+  auto const digest = GenerateSequence(32);
+
+  Identifier id{ToBase64(digest)};
+
+  EXPECT_EQ(Identifier::Type::SMART_CONTRACT, id.type());
+  EXPECT_EQ(ToBase64(digest), id.qualifier());
 }
-TEST(identifier_ancestry_checks, Append_invalid_namespace_in_the_middle)
+
+TEST(IdentifierTests, CheckContractName)
 {
-  Identifier id;
-  id.Append("foo");
-  bool exception_received = false;
-  try
-  {
-    id.Append(".bar");
-  }
-  catch (std::runtime_error const &ex)
-  {
-    exception_received = true;
-  }
-  EXPECT_TRUE(exception_received);
+  auto const digest     = GenerateSequence(32);
+  auto const public_key = GenerateSequence(64);
+
+  auto const ns = ToBase64(digest) + "." + ToBase64(public_key);
+
+  Identifier id{ns + "." + "main"};
+
+  EXPECT_EQ(Identifier::Type::SMART_CONTRACT, id.type());
+  EXPECT_EQ(ns, id.name_space());
+  EXPECT_EQ(ConstByteArray{"main"}, id.name());
+  EXPECT_EQ(ns + "." + "main", id.full_name());
+  EXPECT_EQ(ToBase64(digest), id.qualifier());
 }

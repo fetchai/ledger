@@ -21,8 +21,10 @@
 #include "core/logger.hpp"
 #include "core/threading.hpp"
 #include "ledger/executor.hpp"
+#include "ledger/state_sentinel.hpp"
 #include "storage/resource_mapper.hpp"
 
+#include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 
 #include <chrono>
@@ -145,42 +147,31 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
   execution_plan_.clear();
   execution_plan_.resize(block.slices.size());
 
-  //  FETCH_LOG_INFO(LOGGING_NAME,"Planning ", block.slices.size(), " slices...");
-
   std::size_t slice_index = 0;
   for (auto const &slice : block.slices)
   {
     auto &slice_plan = execution_plan_[slice_index];
 
-    //    FETCH_LOG_INFO(LOGGING_NAME,"Planning slice ", slice_index, "...");
-
     // process the transactions
     for (auto const &tx : slice)
     {
-      Identifier id;
-      id.Parse(tx.contract_name);
-      auto contract = contracts_.Lookup(id.name_space());
-
-      if (contract)
+      Identifier contract_id;
+      if (!contract_id.Parse(tx.contract_name))
       {
-        auto item = std::make_unique<ExecutionItem>(tx.transaction_hash, slice_index);
-
-        // transform the resources into lane allocation
-        for (auto const &resource : tx.resources)
-        {
-          storage::ResourceID const id{contract->CreateStateIndex(resource)};
-          item->AddLane(id.lane(block.log2_num_lanes));
-        }
-
-        // insert the item into the execution plan
-        slice_plan.emplace_back(std::move(item));
-      }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Unable to plan execution of tx: ",
-                       byte_array::ToBase64(tx.transaction_hash));
         return false;
       }
+
+      auto item = std::make_unique<ExecutionItem>(tx.transaction_hash, slice_index);
+
+      // transform the resources into lane allocation
+      for (auto const &resource : tx.resources)
+      {
+        item->AddLane(
+            StateAdapter::CreateAddress(contract_id, resource).lane(block.log2_num_lanes));
+      }
+
+      // insert the item into the execution plan
+      slice_plan.emplace_back(std::move(item));
     }
 
     ++slice_index;
@@ -455,11 +446,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
           case ExecutionItem::Status::TX_LOOKUP_FAILURE:
             ++num_stalls;
             break;
-          case ExecutionItem::Status::NOT_RUN:
-          case ExecutionItem::Status::RESOURCE_FAILURE:
-          case ExecutionItem::Status::INEXPLICABLE_FAILURE:
-          case ExecutionItem::Status::CHAIN_CODE_LOOKUP_FAILURE:
-          case ExecutionItem::Status::CHAIN_CODE_EXEC_FAILURE:
+          default:
             ++num_errors;
             break;
           }
