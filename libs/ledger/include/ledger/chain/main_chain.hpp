@@ -151,7 +151,7 @@ private:
     bool Update(Block const &);
   };
 
-  static constexpr uint32_t block_confirmation_ = 10;
+  static constexpr uint32_t block_confirmation_ = 50;
 
   /// @name Persistence Management
   /// @{
@@ -169,9 +169,9 @@ private:
   /// @name Block Lookup
   /// @{
   BlockStatus InsertBlock(IntBlockPtr const &block, bool evaluate_loose_blocks = true);
-  bool        LookupBlock(BlockHash hash, IntBlockPtr &block) const;
+  bool        LookupBlock(BlockHash hash, IntBlockPtr &block, bool add_to_cache = true) const;
   bool        LookupBlockFromCache(BlockHash hash, IntBlockPtr &block) const;
-  bool        LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block) const;
+  bool        LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block, bool add_to_cache) const;
   bool        IsBlockInCache(BlockHash hash) const;
   void        AddBlockToCache(IntBlockPtr const &) const;
   /// @}
@@ -215,8 +215,8 @@ bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container) const
   std::size_t blocks_checked = 0;
   auto const  start_time     = Clock::now();
 
-  auto block = GetBlock(starting_hash);
-  if (!block || block->is_loose)
+  IntBlockPtr block;
+  if (!LookupBlock(starting_hash, block, false) || block->is_loose)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "TX uniqueness verify on bad block hash");
     return false;
@@ -249,11 +249,8 @@ bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container) const
       }
     }
 
-    // Note we don't need to hold the lock for the whole search
-    block = GetBlock(block->body.previous_hash);
-
     // exit the loop once we can no longer find the block
-    if (!block)
+    if (!LookupBlock(block->body.previous_hash, block, false))
     {
       break;
     }
