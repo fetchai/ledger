@@ -151,7 +151,7 @@ private:
     bool Update(Block const &);
   };
 
-  static constexpr uint32_t block_confirmation_ = 10;
+  static constexpr uint32_t block_confirmation_ = 50;
 
   /// @name Persistence Management
   /// @{
