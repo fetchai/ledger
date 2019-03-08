@@ -215,7 +215,6 @@ bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container) const
   std::size_t blocks_checked = 0;
   auto const  start_time     = Clock::now();
 
-
   IntBlockPtr block;
   if (!LookupBlock(starting_hash, block, false) || block->is_loose)
   {
@@ -251,7 +250,7 @@ bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container) const
     }
 
     // exit the loop once we can no longer find the block
-    if (!LookupBlock(block->body.previous_hash, block, false) )
+    if (!LookupBlock(block->body.previous_hash, block, false))
     {
       break;
     }
