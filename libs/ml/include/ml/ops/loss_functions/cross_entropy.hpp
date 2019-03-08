@@ -41,10 +41,7 @@ public:
 
   virtual typename ArrayType::Type Forward(std::vector<ArrayPtrType> const &inputs)
   {
-    std::cout << "inputs.size(): " << inputs.size() << std::endl;
     assert(inputs.size() == 2);
-    std::cout << "inputs[0]->size(): " << inputs[0]->size() << std::endl;
-    std::cout << "inputs[1]->size(): " << inputs[1]->size() << std::endl;
     assert(inputs[0]->size() == inputs[1]->size());
 
     typename ArrayType::Type result = fetch::math::CrossEntropyLoss(*inputs[0], *inputs[1]);
@@ -55,8 +52,6 @@ public:
   virtual ArrayPtrType Backward(std::vector<ArrayPtrType> const &inputs)
   {
     assert(inputs.size() == 2);
-    std::cout << "inputs[0]->size(): " << inputs[0]->size() << std::endl;
-    std::cout << "inputs[1]->size(): " << inputs[1]->size() << std::endl;
     assert(inputs[0]->size() == inputs[1]->size());
 
     typename ArrayType::Type n_classes = static_cast<typename ArrayType::Type>(inputs[1]->size());
