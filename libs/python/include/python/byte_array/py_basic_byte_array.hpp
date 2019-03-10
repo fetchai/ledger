@@ -25,8 +25,10 @@ namespace byte_array {
 
 fetch::byte_array::ConstByteArray BytesToFetchBytes(py::bytes const &b)
 {
-  std::string s = std::string(b);
-  return fetch::byte_array::ConstByteArray((const unsigned char *const)s.c_str(), s.size());
+  std::string s{b};
+  using ConstByteArray = fetch::byte_array::ConstByteArray;
+  return ConstByteArray(reinterpret_cast<ConstByteArray::container_type const *>(s.c_str()),
+                        s.size());
 }
 
 void BuildConstByteArray(pybind11::module &module)
