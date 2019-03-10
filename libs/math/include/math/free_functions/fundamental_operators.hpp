@@ -81,7 +81,7 @@ meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array1, ArrayType
 {
   for (std::size_t i = 0; i < ret.size(); ++i)
   {
-    ret.At(i) = array1 - array2.At(i);
+    ret.At(i) = array1.At(i) - array2.At(i);
   }
 }
 
@@ -110,27 +110,31 @@ meta::IfIsFixedPoint<S, S> Add(S const &scalar1, S const &scalar2)
   return ret;
 }
 
-template <typename T, typename ArrayType>
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapeArray<ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
 {
   ArrayType ret{array.shape()};
   Add(array, scalar, ret);
   return ret;
 }
-template <typename T, typename ArrayType>
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapelessArray<ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
 {
   ArrayType ret{array.size()};
   Add(array, scalar, ret);
   return ret;
 }
-template <typename T, typename ArrayType>
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathArray<ArrayType, ArrayType> Add(T const &scalar, ArrayType const &array)
 {
   return Add(array, scalar);
 }
 
-template <typename T, typename ArrayType>
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathArray<ArrayType, void> Add(T const &scalar, ArrayType const &array, ArrayType &ret)
 {
   ret = Add(array, scalar, ret);
@@ -161,13 +165,8 @@ meta::IfIsArithmetic<S, void> Add(S const &scalar1, S const &scalar2, S &ret)
   ret = scalar1 + scalar2;
 }
 
-template <typename S>
-meta::IfIsFixedPoint<S, void> Add(S const &scalar1, S const &scalar2, S &ret)
-{
-  ret = scalar1 + scalar2;
-}
-
-template <typename T, typename ArrayType>
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsNonBlasArray<ArrayType, void> Add(ArrayType const &array, T const &scalar, ArrayType &ret)
 {
   assert(array.size() == ret.size());
@@ -177,7 +176,8 @@ meta::IfIsNonBlasArray<ArrayType, void> Add(ArrayType const &array, T const &sca
   }
 }
 
-template <typename T, typename ArrayType>
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathFixedPointArray<ArrayType, void> Add(ArrayType const &array, T const &scalar,
                                                    ArrayType &ret)
 {
@@ -188,7 +188,8 @@ meta::IfIsMathFixedPointArray<ArrayType, void> Add(ArrayType const &array, T con
   }
 }
 
-template <typename T, typename ArrayType>
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsBlasArray<ArrayType, void> Add(ArrayType const &array, T const &scalar, ArrayType &ret)
 {
   assert(array.size() == ret.size());
@@ -270,32 +271,6 @@ meta::IfIsBlasArray<ArrayType, void> Add(ArrayType const &array1, ArrayType cons
   details::Add(array1, array2, range, ret);
 }
 
-//////////////////////////////////////
-///// ARRAY BROADCASTING ADDITION  ///
-//////////////////////////////////////
-//
-///**
-// * Adds two ndarrays together with broadcasting
-// * @tparam T
-// * @tparam C
-// * @param array1
-// * @param array2
-// * @param range
-// * @param ret
-// */
-// template <typename T, typename C>
-// void Add(NDArray<T, C> &array1, NDArray<T, C> &array2, NDArray<T, C> &ret)
-//{
-//  Broadcast([](T x, T y) { return x + y; }, array1, array2, ret);
-//}
-// template <typename T, typename C>
-// NDArray<T, C> Add(NDArray<T, C> &array1, NDArray<T, C> &array2)
-//{
-//  NDArray<T, C> ret{array1.shape()};
-//  Add(array1, array2, ret);
-//  return ret;
-//}
-
 //////////////////////////
 /// ADDITION OPERATORS ///
 //////////////////////////
@@ -314,21 +289,24 @@ meta::IfIsMath<OtherType, void> operator+=(OtherType &left, OtherType const &rig
 /// INTERFACE ///
 /////////////////
 
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapeArray<ArrayType, ArrayType> Subtract(T const &scalar, ArrayType const &array)
 {
   ArrayType ret{array.shape()};
   Subtract(scalar, array, ret);
   return ret;
 }
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapeArray<ArrayType, ArrayType> Subtract(ArrayType const &array, T const &scalar)
 {
   ArrayType ret{array.shape()};
   Subtract(array, scalar, ret);
   return ret;
 }
-template <typename T, typename ArrayType>
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapelessArray<ArrayType, ArrayType> Subtract(ArrayType const &array, T const &scalar)
 {
   ArrayType ret{array.size()};
@@ -369,12 +347,21 @@ meta::IfIsMathShapeArray<ArrayType, ArrayType> Subtract(ArrayType const &    obj
   Subtract(obj1, obj2, range, ret);
   return ret;
 }
-
+template <typename ArrayType>
+meta::IfIsMathShapeArray<ArrayType, ArrayType> Subtract(ArrayType const &obj1,
+                                                        ArrayType const &obj2)
+{
+  assert(obj1.size() == obj2.size());
+  ArrayType ret{obj1.shape()};
+  Subtract(obj1, obj2, ret);
+  return ret;
+}
 //////////////////////
 /// IMPLEMENTATION ///
 //////////////////////
 
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapeArray<ArrayType, void> Subtract(T const &scalar, ArrayType const &array,
                                                    ArrayType &ret)
 {
@@ -385,7 +372,8 @@ meta::IfIsMathShapeArray<ArrayType, void> Subtract(T const &scalar, ArrayType co
     ret.At(i) = scalar - array.At(i);
   }
 }
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapelessArray<ArrayType, void> Subtract(T const &scalar, ArrayType const &array,
                                                        ArrayType &ret)
 {
@@ -396,7 +384,8 @@ meta::IfIsMathShapelessArray<ArrayType, void> Subtract(T const &scalar, ArrayTyp
   }
 }
 
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathFixedPointArray<ArrayType, void> Subtract(ArrayType const &array, T const &scalar,
                                                         ArrayType &ret)
 {
@@ -406,7 +395,8 @@ meta::IfIsMathFixedPointArray<ArrayType, void> Subtract(ArrayType const &array, 
     ret.At(i) = array.At(i) - scalar;
   }
 }
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsNonBlasArray<ArrayType, void> Subtract(ArrayType const &array, T const &scalar,
                                                  ArrayType &ret)
 {
@@ -425,7 +415,8 @@ meta::IfIsNonBlasArray<ArrayType, void> Subtract(ArrayType const &array, T const
  * @param scalar
  * @param ret
  */
-template <typename T, typename ArrayType>
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsBlasArray<ArrayType, void> Subtract(ArrayType const &array, T const &scalar,
                                               ArrayType &ret)
 {
@@ -440,7 +431,7 @@ meta::IfIsBlasArray<ArrayType, void> Subtract(ArrayType const &array, T const &s
       array.data());
 }
 
-template <typename T, typename C>
+template <typename T, typename C, typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathShapelessArray<ShapelessArray<T, C>, void> Subtract(T const &scalar,
                                                                   ShapelessArray<T, C> const &array,
                                                                   ShapelessArray<T, C> &      ret)
@@ -489,10 +480,65 @@ template <typename ArrayType>
 meta::IfIsNonBlasArray<ArrayType, void> Subtract(ArrayType const &array, ArrayType const &array2,
                                                  ArrayType &ret)
 {
-  assert(array.size() == ret.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
+  assert((array.size() == array2.size()) ||
+         ((array.shape()[0] == array2.shape()[0]) &&
+          ((array.shape()[1] == 1) || (array2.shape()[1] == 1))) ||
+         ((array.shape()[1] == array2.shape()[1]) &&
+          ((array.shape()[0] == 1) || (array2.shape()[0] == 1))));
+  assert((array.size() == ret.size()) || (array2.size() == ret.size()));
+
+  if (array.size() == array2.size())
   {
-    ret.Set(i, array.At(i) - array2.At(i));
+    for (std::size_t i = 0; i < ret.size(); ++i)
+    {
+      ret.Set(i, array.At(i) - array2.At(i));
+    }
+  }
+
+  // matrix - vector subtraction (i.e. broadcasting)
+  else if (array.shape()[0] == 1)
+  {
+    for (std::size_t i = 0; i < array2.shape()[0]; ++i)
+    {
+      for (std::size_t j = 0; j < array2.shape()[1]; ++j)
+      {
+        ret.Set({i, j}, array.At({0, j}) - array2.At({i, j}));
+      }
+    }
+  }
+  else if (array.shape()[1] == 1)
+  {
+    for (std::size_t i = 0; i < array2.shape()[0]; ++i)
+    {
+      for (std::size_t j = 0; j < array2.shape()[1]; ++j)
+      {
+        ret.Set({i, j}, array.At({i, 0}) - array2.At({i, j}));
+      }
+    }
+  }
+  else if (array2.shape()[0] == 1)
+  {
+    for (std::size_t i = 0; i < array2.shape()[0]; ++i)
+    {
+      for (std::size_t j = 0; j < array2.shape()[1]; ++j)
+      {
+        ret.Set({i, j}, array.At({i, j}) - array2.At({0, j}));
+      }
+    }
+  }
+  else if (array2.shape()[1] == 1)
+  {
+    for (std::size_t i = 0; i < array2.shape()[0]; ++i)
+    {
+      for (std::size_t j = 0; j < array2.shape()[1]; ++j)
+      {
+        ret.Set({i, j}, array.At({0, j}) - array2.At({i, 0}));
+      }
+    }
+  }
+  else
+  {
+    throw std::runtime_error("broadcast subtraction for tensors more than 2D not yet handled");
   }
 }
 
@@ -500,37 +546,13 @@ template <typename ArrayType>
 meta::IfIsMathFixedPointArray<ArrayType, void> Subtract(ArrayType const &array,
                                                         ArrayType const &array2, ArrayType &ret)
 {
+  assert(array.size() == array2.size());
   assert(array.size() == ret.size());
   for (std::size_t i = 0; i < ret.size(); ++i)
   {
     ret[i] = array[i] - array2[i];
   }
 }
-/////////////////////////////////////////
-///// ARRAY BROADCASTING SUBTRACTION  ///
-/////////////////////////////////////////
-//
-///**
-// * subtract array from another array with broadcasting
-// * @tparam T
-// * @tparam C
-// * @param array1
-// * @param scalar
-// * @param ret
-// */
-// template <typename T, typename C>
-// void Subtract(NDArray<T, C> &obj1, NDArray<T, C> &obj2, NDArray<T, C> &ret)
-//{
-//  Broadcast([](T x, T y) { return x - y; }, obj1, obj2, ret);
-//}
-// template <typename T, typename C>
-// NDArray<T, C> Subtract(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
-//{
-//  assert(obj1.shape() == obj2.shape());
-//  NDArray<T, C> ret{obj1.shape()};
-//  Subtract(obj1, obj2, ret);
-//  return ret;
-//}
 
 ///////////////////////////////////////////////////////
 /// SUBTRACTIONS - SCALAR & SCALAR - NO FIXED POINT ///
@@ -560,108 +582,6 @@ fetch::meta::IfIsArithmetic<S, S> Subtract(S const &scalar1, S const &scalar2)
 /// Multiply ///
 ////////////////
 
-//////////////////
-/// INTERFACES ///
-//////////////////
-
-template <typename ArrayType, typename T>
-meta::IfIsMathArray<ArrayType, void> Multiply(T const &scalar, ArrayType const &array,
-                                              ArrayType &ret)
-{
-  Multiply(array, scalar, ret);
-}
-template <typename ArrayType, typename T>
-meta::IfIsMathArray<ArrayType, ArrayType> Multiply(T const &scalar, ArrayType const &array)
-{
-  return Multiply(array, scalar);
-}
-template <typename ArrayType, typename T>
-meta::IfIsMathShapeArray<ArrayType, ArrayType> Multiply(ArrayType const &array, T const &scalar)
-{
-  ArrayType ret{array.shape()};
-  Multiply(array, scalar, ret);
-  return ret;
-}
-template <typename ArrayType, typename T>
-meta::IfIsMathShapelessArray<ArrayType, ArrayType> Multiply(ArrayType const &array, T const &scalar)
-{
-  ArrayType ret{array.size()};
-  Multiply(array, scalar, ret);
-  return ret;
-}
-
-template <typename ArrayType>
-meta::IfIsMathShapelessArray<ArrayType, ArrayType> Multiply(ArrayType const &    obj1,
-                                                            ArrayType const &    obj2,
-                                                            memory::Range const &range)
-{
-  ArrayType ret{obj1.size()};
-  Multiply(obj1, obj2, range, ret);
-  return ret;
-}
-template <typename ArrayType>
-meta::IfIsMathFixedPointArray<ArrayType, void> Multiply(ArrayType const &obj1,
-                                                        ArrayType const &obj2, ArrayType &ret)
-{
-  details::Multiply(obj1, obj2, ret);
-}
-template <typename ArrayType>
-meta::IfIsNonBlasArray<ArrayType, void> Multiply(ArrayType const &obj1, ArrayType const &obj2,
-                                                 ArrayType &ret)
-{
-  details::Multiply(obj1, obj2, ret);
-}
-
-template <typename ArrayType>
-meta::IfIsBlasArray<ArrayType, void> Multiply(ArrayType const &obj1, ArrayType const &obj2,
-                                              ArrayType &ret)
-{
-  memory::Range range{0, std::min(obj1.data().size(), obj2.data().size()), 1};
-  Multiply(obj1, obj2, range, ret);
-}
-
-template <typename ArrayType>
-meta::IfIsMathShapelessArray<ArrayType, ArrayType> Multiply(ArrayType const &obj1,
-                                                            ArrayType const &obj2)
-{
-  assert(obj1.size() == obj2.size());
-  ArrayType ret{obj1.size()};
-  Multiply(obj1, obj2, ret);
-  return ret;
-}
-template <typename ArrayType>
-meta::IfIsMathFixedPointArray<ArrayType, ArrayType> Multiply(ArrayType const &obj1,
-                                                             ArrayType const &obj2)
-{
-  assert(obj1.size() == obj2.size());
-  ArrayType ret{obj1.size()};
-  Multiply(obj1, obj2, ret);
-  return ret;
-}
-
-template <typename ArrayType>
-meta::IfIsMathShapeArray<ArrayType, void> Multiply(ArrayType const &array1, ArrayType const &array2,
-                                                   ArrayType &ret)
-{
-  memory::Range range{0, std::min(array1.data().size(), array2.data().size()), 1};
-  Multiply(array1, array2, range, ret);
-}
-template <typename ArrayType>
-meta::IfIsMathShapeArray<ArrayType, ArrayType> Multiply(ArrayType const &array1,
-                                                        ArrayType const &array2)
-{
-  ArrayType ret{array1.shape()};
-  Multiply(array1, array2, ret);
-  return ret;
-}
-template <typename S>
-meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
-{
-  S ret;
-  Multiply(scalar1, scalar2, ret);
-  return ret;
-}
-
 //////////////////////////////////
 /// MULTIPLY - IMPLEMENTATIONS ///
 //////////////////////////////////
@@ -674,7 +594,8 @@ meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
  * @param scalar
  * @param ret
  */
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsBlasArray<ArrayType, void> Multiply(ArrayType const &array, T const &scalar,
                                               ArrayType &ret)
 {
@@ -687,18 +608,20 @@ meta::IfIsBlasArray<ArrayType, void> Multiply(ArrayType const &array, T const &s
       array.data());
 }
 
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsNonBlasArray<ArrayType, void> Multiply(ArrayType const &array, T const &scalar,
                                                  ArrayType &ret)
 {
   assert(array.size() == ret.size());
   for (std::size_t i = 0; i < ret.size(); ++i)
   {
-    ret.Set(i, array.At(i) * scalar);
+    ret.Set(i, array.At(i) * typename ArrayType::Type(scalar));
   }
 }
 
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathFixedPointArray<ArrayType, void> Multiply(ArrayType const &array, T const &scalar,
                                                         ArrayType &ret)
 {
@@ -781,6 +704,104 @@ meta::IfIsArithmetic<S, void> Multiply(S const &scalar1, S const &scalar2, S &re
   ret = scalar1 * scalar2;
 }
 
+//////////////////
+/// INTERFACES ///
+//////////////////
+
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
+meta::IfIsMathArray<ArrayType, void> Multiply(T const &scalar, ArrayType const &array,
+                                              ArrayType &ret)
+{
+  Multiply(array, scalar, ret);
+}
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
+meta::IfIsMathArray<ArrayType, ArrayType> Multiply(T const &scalar, ArrayType const &array)
+{
+  return Multiply(array, scalar);
+}
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
+meta::IfIsMathShapeArray<ArrayType, ArrayType> Multiply(ArrayType const &array, T const &scalar)
+{
+  ArrayType ret{array.shape()};
+  Multiply(array, scalar, ret);
+  return ret;
+}
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
+meta::IfIsMathShapelessArray<ArrayType, ArrayType> Multiply(ArrayType const &array, T const &scalar)
+{
+  ArrayType ret{array.size()};
+  Multiply(array, scalar, ret);
+  return ret;
+}
+
+template <typename ArrayType>
+meta::IfIsMathShapelessArray<ArrayType, ArrayType> Multiply(ArrayType const &    obj1,
+                                                            ArrayType const &    obj2,
+                                                            memory::Range const &range)
+{
+  ArrayType ret{obj1.size()};
+  Multiply(obj1, obj2, range, ret);
+  return ret;
+}
+template <typename ArrayType>
+meta::IfIsMathFixedPointArray<ArrayType, void> Multiply(ArrayType const &obj1,
+                                                        ArrayType const &obj2, ArrayType &ret)
+{
+  details::Multiply(obj1, obj2, ret);
+}
+template <typename ArrayType>
+meta::IfIsNonBlasArray<ArrayType, void> Multiply(ArrayType const &obj1, ArrayType const &obj2,
+                                                 ArrayType &ret)
+{
+  details::Multiply(obj1, obj2, ret);
+}
+
+template <typename ArrayType>
+meta::IfIsBlasArray<ArrayType, void> Multiply(ArrayType const &obj1, ArrayType const &obj2,
+                                              ArrayType &ret)
+{
+  memory::Range range{0, std::min(obj1.data().size(), obj2.data().size()), 1};
+  Multiply(obj1, obj2, range, ret);
+}
+
+template <typename ArrayType>
+meta::IfIsMathShapelessArray<ArrayType, ArrayType> Multiply(ArrayType const &obj1,
+                                                            ArrayType const &obj2)
+{
+  assert(obj1.size() == obj2.size());
+  ArrayType ret{obj1.size()};
+  Multiply(obj1, obj2, ret);
+  return ret;
+}
+template <typename ArrayType>
+meta::IfIsMathFixedPointArray<ArrayType, ArrayType> Multiply(ArrayType const &obj1,
+                                                             ArrayType const &obj2)
+{
+  assert(obj1.size() == obj2.size());
+  ArrayType ret{obj1.size()};
+  Multiply(obj1, obj2, ret);
+  return ret;
+}
+template <typename ArrayType>
+meta::IfIsMathNonFixedPointShapeArray<ArrayType, ArrayType> Multiply(ArrayType const &array1,
+                                                                     ArrayType const &array2)
+{
+  ArrayType ret{array1.shape()};
+  Multiply(array1, array2, ret);
+  return ret;
+}
+template <typename S>
+meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
+{
+  S ret;
+  Multiply(scalar1, scalar2, ret);
+  return ret;
+}
+
 //////////////
 /// DIVIDE ///
 //////////////
@@ -832,13 +853,6 @@ meta::IfIsMathShapelessArray<ArrayType, ArrayType> Divide(T const &scalar, Array
  * @param ret
  */
 template <typename ArrayType>
-meta::IfIsBlasArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
-                                            ArrayType &ret)
-{
-  memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
-  Divide(obj1, obj2, range, ret);
-}
-template <typename ArrayType>
 meta::IfIsMathShapelessArray<ArrayType, ArrayType> Divide(ArrayType const &obj1,
                                                           ArrayType const &obj2)
 {
@@ -889,7 +903,8 @@ meta::IfIsBlasArray<ArrayType, void> Divide(T const &scalar, ArrayType const &ar
       array.data());
 }
 
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsNonBlasArray<ArrayType, void> Divide(ArrayType const &array, T const &scalar,
                                                ArrayType &ret)
 {
@@ -899,7 +914,8 @@ meta::IfIsNonBlasArray<ArrayType, void> Divide(ArrayType const &array, T const &
     ret.At(i) = array.At(i) / scalar;
   }
 }
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathFixedPointArray<ArrayType, void> Divide(ArrayType const &array, T const &scalar,
                                                       ArrayType &ret)
 {
@@ -909,7 +925,8 @@ meta::IfIsMathFixedPointArray<ArrayType, void> Divide(ArrayType const &array, T 
     ret.At(i) = array.At(i) / scalar;
   }
 }
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsNonBlasArray<ArrayType, void> Divide(T const &scalar, ArrayType const &array,
                                                ArrayType &ret)
 {
@@ -919,7 +936,8 @@ meta::IfIsNonBlasArray<ArrayType, void> Divide(T const &scalar, ArrayType const 
     ret.At(i) = scalar / array.At(i);
   }
 }
-template <typename ArrayType, typename T>
+template <typename ArrayType, typename T,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathFixedPointArray<ArrayType, void> Divide(T const &scalar, ArrayType const &array,
                                                       ArrayType &ret)
 {
@@ -958,13 +976,15 @@ meta::IfIsBlasArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType con
     }
   }
 }
+
 template <typename ArrayType>
-meta::IfIsMathShapeArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
-                                                 ArrayType &ret)
+meta::IfIsBlasArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
+                                            ArrayType &ret)
 {
   memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
   Divide(obj1, obj2, range, ret);
 }
+
 template <typename ArrayType>
 meta::IfIsMathShapeArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2)
 {
@@ -990,50 +1010,57 @@ meta::IfIsMathShapeArray<ArrayType, ArrayType> Divide(T const &scalar, ArrayType
  * @param scalar
  * @param ret
  */
+
+namespace details {
+
+template <typename ArrayType>
+void NaiveDivideArray(ArrayType const &obj1, ArrayType const &obj2, ArrayType &ret)
+{
+  assert(obj1.size() == obj2.size());
+  for (std::size_t i = 0; i < ret.size(); ++i)
+  {
+    ret[i] = obj1[i] / obj2[i];
+  }
+}
+
+}  // namespace details
+
 template <typename ArrayType>
 meta::IfIsMathFixedPointArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
                                                       ArrayType &ret)
 {
   assert(obj1.size() == obj2.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
-  {
-    ret[i] = obj1[i] / obj2[i];
-  }
+  assert(ret.size() == obj2.size());
+  details::NaiveDivideArray(obj1, obj2, ret);
 }
+
 template <typename ArrayType>
-meta::IfIsMathFixedPointArray<ArrayType, ArrayType> Divide(ArrayType const &obj1,
-                                                           ArrayType const &obj2)
+meta::IfIsMathFixedPointArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2)
 {
   assert(obj1.size() == obj2.size());
-  ArrayType ret{obj1.size()};
-  for (std::size_t i = 0; i < ret.size(); ++i)
-  {
-    ret[i] = obj1[i] / obj2[i];
-  }
+  ArrayType ret{obj1.shape()};
+  Divide(obj1, obj2, ret);
   return ret;
 }
-//
-///**
-// * subtract array from another array with broadcasting
-// * @tparam T
-// * @tparam C
-// * @param array1
-// * @param scalar
-// * @param ret
-// */
-// template <typename T, typename C>
-// void Divide(NDArray<T, C> &obj1, NDArray<T, C> &obj2, NDArray<T, C> &ret)
-//{
-//  Broadcast([](T x, T y) { return x / y; }, obj1, obj2, ret);
-//}
-// template <typename T, typename C>
-// NDArray<T, C> Divide(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
-//{
-//  assert(obj1.shape() == obj2.shape());
-//  NDArray<T, C> ret{obj1.shape()};
-//  Divide(obj1, obj2, ret);
-//  return ret;
-//}
+
+template <typename ArrayType>
+meta::IfIsNonBlasArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
+                                               ArrayType &ret)
+{
+  assert(obj1.shape() == obj2.shape());
+  assert(ret.shape() == obj2.shape());
+  details::NaiveDivideArray(obj1, obj2, ret);
+}
+
+template <typename ArrayType>
+meta::IfIsNonBlasArray<ArrayType, ArrayType> Divide(ArrayType const &obj1, ArrayType const &obj2)
+{
+  assert(obj1.shape() == obj2.shape());
+  ArrayType ret{obj1.shape()};
+  Divide(obj1, obj2, ret);
+  return ret;
+}
+
 /**
  * Implementation for scalar division. Implementing this helps keeps a uniform interface
  * @tparam T

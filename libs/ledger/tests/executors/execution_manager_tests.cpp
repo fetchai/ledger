@@ -171,6 +171,8 @@ protected:
 
 TEST_P(ExecutionManagerTests, CheckIncrementalExecution)
 {
+  EXPECT_CALL(*mock_storage_, Commit());
+
   BlockConfig const &config = GetParam();
 
   // generate a block with the desired lane and slice configuration
@@ -196,4 +198,5 @@ TEST_P(ExecutionManagerTests, CheckIncrementalExecution)
   manager_->Stop();
 }
 
-INSTANTIATE_TEST_CASE_P(Param, ExecutionManagerTests, ::testing::ValuesIn(BlockConfig::MAIN_SET), );
+INSTANTIATE_TEST_CASE_P(Param, ExecutionManagerTests,
+                        ::testing::ValuesIn(BlockConfig::REDUCED_SET), );

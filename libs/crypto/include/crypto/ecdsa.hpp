@@ -113,7 +113,7 @@ public:
     return private_key_.KeyAsBin();
   }
 
-  PrivateKey const &underlying_private_key()
+  PrivateKey const &underlying_private_key() const
   {
     return private_key_;
   }

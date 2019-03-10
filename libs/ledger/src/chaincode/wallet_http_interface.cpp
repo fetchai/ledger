@@ -27,6 +27,7 @@
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/token_contract.hpp"
+#include "ledger/state_sentinel.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "storage/object_store.hpp"
@@ -204,7 +205,9 @@ http::HTTPResponse WalletHttpInterface::OnBalance(http::HTTPRequest const &reque
     doc.Parse(request.body());
 
     variant::Variant response;
-    contract.Attach(state_);
+
+    StateAdapter adapter{state_, Identifier{TokenContract::NAME}};
+    contract.Attach(adapter);
     contract.DispatchQuery("balance", doc.root(), response);
     contract.Detach();
 

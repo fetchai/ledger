@@ -78,25 +78,12 @@ public:
 
   RevertibleDocumentStoreProtocol(NewRevertibleDocumentStore *doc_store, lane_type const &lane,
                                   lane_type const &maxlanes)
-    : fetch::service::Protocol()
-    , doc_store_(doc_store)
-    , lane_assignment_(lane)
+    : RevertibleDocumentStoreProtocol(doc_store)
   {
+    lane_assignment_ = lane;
 
     SetLaneLog2(maxlanes);
     assert(maxlanes == (1u << log2_lanes_));
-
-    this->Expose(GET, this, &RevertibleDocumentStoreProtocol::GetLaneChecked);
-    this->Expose(GET_OR_CREATE, this, &RevertibleDocumentStoreProtocol::GetOrCreateLaneChecked);
-    this->ExposeWithClientContext(SET, this, &RevertibleDocumentStoreProtocol::SetLaneChecked);
-
-    this->Expose(COMMIT, doc_store, &NewRevertibleDocumentStore::Commit);
-    this->Expose(REVERT_TO_HASH, doc_store, &NewRevertibleDocumentStore::RevertToHash);
-    this->Expose(CURRENT_HASH, doc_store, &NewRevertibleDocumentStore::CurrentHash);
-
-    this->ExposeWithClientContext(LOCK, this, &RevertibleDocumentStoreProtocol::LockResource);
-    this->ExposeWithClientContext(UNLOCK, this, &RevertibleDocumentStoreProtocol::UnlockResource);
-    this->ExposeWithClientContext(HAS_LOCK, this, &RevertibleDocumentStoreProtocol::HasLock);
   }
 
   bool HasLock(CallContext const *context, ResourceID const &rid)

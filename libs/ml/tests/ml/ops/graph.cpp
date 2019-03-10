@@ -18,8 +18,11 @@
 
 #include "ml/graph.hpp"
 #include "math/tensor.hpp"
+#include "ml/ops/activations/relu.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "ml/ops/relu.hpp"
+
+#include "ml/layers/self_attention.hpp"
+
 #include <gtest/gtest.h>
 
 using ArrayType = typename fetch::math::Tensor<int>;
@@ -50,7 +53,7 @@ TEST(graph_test, node_relu)
 {
   fetch::ml::Graph<ArrayType> g;
   g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
-  g.AddNode<fetch::ml::ops::ReluLayer<ArrayType>>("Relu", {"Input"});
+  g.AddNode<fetch::ml::ops::Relu<ArrayType>>("Relu", {"Input"});
 
   std::shared_ptr<ArrayType> data =
       std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({4, 4}));
@@ -74,4 +77,29 @@ TEST(graph_test, node_relu)
 
   // test correct values
   ASSERT_TRUE(prediction->AllClose(*gt));
+}
+
+TEST(graph_test, getStateDict)
+{
+  fetch::ml::Graph<fetch::math::Tensor<float>>          g;
+  fetch::ml::ops::StateDict<fetch::math::Tensor<float>> sd = g.StateDict();
+
+  EXPECT_TRUE(sd.weights_ == nullptr);
+  EXPECT_TRUE(sd.dict_.empty());
+}
+
+TEST(graph_test, no_such_node_test)  // Use the class as a Node
+{
+  fetch::ml::Graph<fetch::math::Tensor<float>> g;
+
+  g.template AddNode<fetch::ml::ops::PlaceHolder<fetch::math::Tensor<float>>>("Input", {});
+  g.template AddNode<fetch::ml::layers::SelfAttention<fetch::math::Tensor<float>>>(
+      "SelfAttention", {"Input"}, 50u, 42u, 10u);
+
+  std::shared_ptr<fetch::math::Tensor<float>> data = std::make_shared<fetch::math::Tensor<float>>(
+      std::vector<typename fetch::math::Tensor<float>::SizeType>({5, 10}));
+  g.SetInput("Input", data);
+
+  ASSERT_ANY_THROW(std::shared_ptr<fetch::math::Tensor<float>> prediction =
+                       g.Evaluate("FullyConnected"));
 }

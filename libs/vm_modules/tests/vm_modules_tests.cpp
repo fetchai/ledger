@@ -16,7 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/io_observer_interface.hpp"
 #include "vm_modules/vm_factory.hpp"
+
 #include <gtest/gtest.h>
 
 using namespace fetch;
@@ -27,15 +29,6 @@ class VMTests : public ::testing::Test
 protected:
   using Module = std::shared_ptr<fetch::vm::Module>;
   using VM     = std::unique_ptr<fetch::vm::VM>;
-
-  VMTests()
-  {}
-
-  void SetUp() override
-  {
-    // storage_.reset(new underlying_storage_type);
-    // executor_ = std::make_unique<underlying_executor_type>(storage_);
-  }
 
   template <typename T>
   void AddBinding(std::string const &name, T function)
@@ -52,21 +45,25 @@ protected:
       std::cerr << error << std::endl;
     }
 
-    return errors.size() == 0;
+    return errors.empty();
   }
 
   bool Execute(std::string const &function = "main")
   {
     vm_ = VMFactory::GetVM(module_);
+
     std::string        error;
+    std::string        console;
     fetch::vm::Variant output;
 
     // Execute our fn
-    if (!vm_->Execute(script_, function, error, output))
+    if (!vm_->Execute(script_, function, error, console, output))
     {
       std::cerr << "Runtime error: " << error << std::endl;
       return false;
     }
+
+    std::cerr << "output:\n" << console << std::endl;
 
     return true;
   }
@@ -133,7 +130,7 @@ TEST_F(VMTests, CheckCustomBinding)
 
   EXPECT_EQ(res, true);
 
-  for (std::size_t i = 0; i < 3; ++i)
+  for (uint64_t i = 0; i < 3; ++i)
   {
     res = Execute();
     EXPECT_EQ(res, true);

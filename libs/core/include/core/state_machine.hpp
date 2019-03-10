@@ -74,18 +74,21 @@ public:
   }
 
   // Operators
+  // Operators
   StateMachine &operator=(StateMachine const &) = delete;
   StateMachine &operator=(StateMachine &&) = delete;
 
 private:
-  using Clock       = std::chrono::high_resolution_clock;
+  using Clock       = std::chrono::steady_clock;
   using Timepoint   = Clock::time_point;
+  using Duration    = Clock::duration;
   using CallbackMap = std::unordered_map<State, Callback>;
-  using Mutex       = mutex::Mutex;
+  using Mutex       = std::mutex;
 
   std::string const   logging_name_;
-  Mutex               callbacks_mutex_{__LINE__, __FILE__};
+  mutable Mutex       callbacks_mutex_;
   CallbackMap         callbacks_{};
+  Duration            stall_duration_{};
   std::atomic<State>  current_state_;
   std::atomic<State>  previous_state_{current_state_.load()};
   Timepoint           next_execution_{};
@@ -156,7 +159,7 @@ bool StateMachine<S>::IsReadyToExecute() const
 
   if (next_execution_.time_since_epoch().count())
   {
-    ready = (next_execution_ >= Clock::now());
+    ready = (Clock::now() >= next_execution_);
   }
 
   return ready;
@@ -186,6 +189,12 @@ void StateMachine<S>::Execute()
       {
         state_change_callback_(current_state_, previous_state_);
       }
+    }
+    else
+    {
+      // if there has been no state change then to avoid spinning in an infinte loop we should
+      // plan a further exectution
+      next_execution_ = Clock::now() + std::chrono::milliseconds{10};
     }
   }
 }
