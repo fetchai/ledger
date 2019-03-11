@@ -391,7 +391,7 @@ TEST_F(SmartContractTests, CheckParameterizedActionAndQuery)
 
   // make the query
   {
-    Variant request = Variant::Object();
+    Variant request   = Variant::Object();
     request["amount"] = 100;
 
     Variant response;

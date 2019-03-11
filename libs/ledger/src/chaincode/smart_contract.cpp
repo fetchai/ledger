@@ -202,52 +202,53 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Var
  * @param variant The input variant from which the value is extracted
  */
 template <typename T>
-void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expected_type, T const &variant)
+void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expected_type,
+                        T const &variant)
 {
   switch (expected_type)
   {
-    case vm::TypeIds::Bool:
-      AddToParameterPack<bool>(params, variant);
-      break;
+  case vm::TypeIds::Bool:
+    AddToParameterPack<bool>(params, variant);
+    break;
 
-    case vm::TypeIds::Int8:
-      AddToParameterPack<int8_t>(params, variant);
-      break;
+  case vm::TypeIds::Int8:
+    AddToParameterPack<int8_t>(params, variant);
+    break;
 
-    case vm::TypeIds::Byte:
-      AddToParameterPack<uint8_t>(params, variant);
-      break;
+  case vm::TypeIds::Byte:
+    AddToParameterPack<uint8_t>(params, variant);
+    break;
 
-    case vm::TypeIds::Int16:
-      AddToParameterPack<int16_t>(params, variant);
-      break;
+  case vm::TypeIds::Int16:
+    AddToParameterPack<int16_t>(params, variant);
+    break;
 
-    case vm::TypeIds::UInt16:
-      AddToParameterPack<uint16_t>(params, variant);
-      break;
+  case vm::TypeIds::UInt16:
+    AddToParameterPack<uint16_t>(params, variant);
+    break;
 
-    case vm::TypeIds::Int32:
-      AddToParameterPack<int32_t>(params, variant);
-      break;
+  case vm::TypeIds::Int32:
+    AddToParameterPack<int32_t>(params, variant);
+    break;
 
-    case vm::TypeIds::UInt32:
-      AddToParameterPack<uint32_t>(params, variant);
-      break;
+  case vm::TypeIds::UInt32:
+    AddToParameterPack<uint32_t>(params, variant);
+    break;
 
-    case vm::TypeIds::Int64:
-      AddToParameterPack<int64_t>(params, variant);
-      break;
+  case vm::TypeIds::Int64:
+    AddToParameterPack<int64_t>(params, variant);
+    break;
 
-    case vm::TypeIds::UInt64:
-      AddToParameterPack<uint64_t>(params, variant);
-      break;
+  case vm::TypeIds::UInt64:
+    AddToParameterPack<uint64_t>(params, variant);
+    break;
 
-    case vm::TypeIds::Address:
-      AddAddressToParameterPack(vm, params, variant);
-      break;
+  case vm::TypeIds::Address:
+    AddAddressToParameterPack(vm, params, variant);
+    break;
 
-    default:
-      throw std::runtime_error("Unable to map data type to VM entity");
+  default:
+    throw std::runtime_error("Unable to map data type to VM entity");
   }
 }
 
@@ -360,7 +361,8 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
 
   // lookup the function / entry point which will be executed
   Script::Function const *target_function = script_->FindFunction(name);
-  if (!target_function || (input_params.size() != static_cast<std::size_t>(target_function->num_parameters)))
+  if (!target_function ||
+      (input_params.size() != static_cast<std::size_t>(target_function->num_parameters)))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Incorrect number of parameters provided for target function");
     return Status::FAILED;
@@ -371,7 +373,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
   // start to populate the parameter pack
   try
   {
-    for (std::size_t  i = 0; i < input_params.size(); ++i)
+    for (std::size_t i = 0; i < input_params.size(); ++i)
     {
       auto const &input_parameter    = input_params.at(i);
       auto const &expected_parameter = target_function->variables.at(i);
@@ -457,8 +459,8 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   std::string console;
   if (!vm->Execute(*script_, name, error, console, output, params))
   {
-    response["status"] = "failed";
-    response["msg"] = error;
+    response["status"]  = "failed";
+    response["msg"]     = error;
     response["console"] = console;
     return Status::FAILED;
   }

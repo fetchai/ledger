@@ -66,9 +66,8 @@ protected:
   class PayloadPacker
   {
   public:
-
-    template <typename ... Args>
-    PayloadPacker(Args ... args)
+    template <typename... Args>
+    PayloadPacker(Args... args)
     {
       // initialise the array
       packer_.pack_array(sizeof...(args));
@@ -78,18 +77,14 @@ protected:
 
     ConstByteArray GetBuffer() const
     {
-      return ConstByteArray{
-        reinterpret_cast<uint8_t const *>(buffer_.data()),
-        buffer_.size()
-      };
+      return ConstByteArray{reinterpret_cast<uint8_t const *>(buffer_.data()), buffer_.size()};
     }
 
   private:
-
     using Buffer = msgpack::sbuffer;
     using Packer = msgpack::packer<Buffer>;
 
-    template <typename T, typename ... Args>
+    template <typename T, typename... Args>
     void Pack(T const &arg, Args... args)
     {
       // packet this argument
@@ -118,8 +113,9 @@ protected:
     Packer packer_{&buffer_};
   };
 
-  template<typename ... Args>
-  Contract::Status SendActionWithParams(ConstByteArray const &action, Resources const &resources, Args...args)
+  template <typename... Args>
+  Contract::Status SendActionWithParams(ConstByteArray const &action, Resources const &resources,
+                                        Args... args)
   {
     // pack all the data into a single payload
     PayloadPacker p{args...};

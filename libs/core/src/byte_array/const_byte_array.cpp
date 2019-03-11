@@ -32,5 +32,5 @@ ConstByteArray ConstByteArray::ToHex() const
   return ::fetch::byte_array::ToHex(*this);
 }
 
-} // namespace byte_array
-} // namespace fetch
+}  // namespace byte_array
+}  // namespace fetch

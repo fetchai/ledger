@@ -164,7 +164,8 @@ struct Map : public IMap
     keyv.Reset();
   }
 
-  virtual void OnUpdate(Key const &key, Value const &value) {}
+  virtual void OnUpdate(Key const &key, Value const &value)
+  {}
 
   std::unordered_map<Variant, Variant, H<Key>, E<Key>> map;
 };

@@ -28,15 +28,8 @@ namespace fetch {
 namespace vm {
 
 Parser::Parser()
-  : template_names_{
-    "Matrix",
-    "Array",
-    "Map",
-    "State",
-    "StateMap"
-  }
-{
-}
+  : template_names_{"Matrix", "Array", "Map", "State", "StateMap"}
+{}
 
 BlockNodePtr Parser::Parse(std::string const &source, Strings &errors)
 {

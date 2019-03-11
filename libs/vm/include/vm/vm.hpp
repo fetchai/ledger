@@ -102,16 +102,14 @@ class Module;
 class ParameterPack
 {
 public:
-
   // Construction / Destruction
   explicit ParameterPack(RegisteredTypes const &registered_types)
     : registered_types_{registered_types}
-  {
-  }
+  {}
 
   ParameterPack(ParameterPack const &) = delete;
-  ParameterPack(ParameterPack &&) = delete;
-  ~ParameterPack() = default;
+  ParameterPack(ParameterPack &&)      = delete;
+  ~ParameterPack()                     = default;
 
   Variant const &operator[](std::size_t index) const
   {
@@ -127,8 +125,8 @@ public:
     return params_.size();
   }
 
-  template <typename T, typename ... Args>
-  bool Add(T const &parameter, Args const & ... args)
+  template <typename T, typename... Args>
+  bool Add(T const &parameter, Args const &... args)
   {
     bool success{false};
 
@@ -182,7 +180,6 @@ public:
   ParameterPack &operator=(ParameterPack &&) = delete;
 
 private:
-
   using VariantArray = std::vector<Variant>;
 
   RegisteredTypes const &registered_types_;

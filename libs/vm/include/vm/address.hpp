@@ -26,7 +26,7 @@ class Address : public Object
 {
 public:
   static constexpr std::size_t SIZE = 64;
-  using Buffer = std::vector<uint8_t>;
+  using Buffer                      = std::vector<uint8_t>;
 
   static Ptr<Address> Constructor(VM *vm, TypeId id)
   {
@@ -69,10 +69,9 @@ public:
   }
 
 private:
-
   Buffer address_{};
   bool   signed_tx_{false};
 };
 
-} // namespace vm
-} // namespace fetch
+}  // namespace vm
+}  // namespace fetch
