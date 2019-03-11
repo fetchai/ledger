@@ -30,19 +30,32 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  Flatten()          = default;
+  Flatten(unsigned int dimsToKeep)
+    : dimsToKeep_(dimsToKeep)
+  {}
+
   virtual ~Flatten() = default;
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
     ASSERT(inputs.size() == 1);
-    input_shape_  = inputs[0]->shape();
-    this->output_ = std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, inputs[0]->size()}));
-    // TODO(private, 521) remove useless copy and replace with lightweight view
-    for (std::uint64_t i(0); i < inputs[0]->size(); ++i)
+    input_shape_ = inputs[0]->shape();
+    std::vector<std::uint64_t> output_shape;
+
+    unsigned int m(1);
+    if (dimsToKeep_ == 0)
     {
-      this->output_->At(i) = inputs[0]->At(i);
+      output_shape.push_back(1);
     }
+    for (unsigned int i(0); i < dimsToKeep_; ++i)
+    {
+      output_shape.push_back(input_shape_[i]);
+      m *= input_shape_[i];
+    }
+    output_shape.push_back(inputs[0]->size() / m);
+    this->output_ = std::make_shared<ArrayType>(output_shape);
+    // TODO(private, 521) remove useless copy and replace with lightweight view
+    this->output_->Copy(*inputs[0]);
     return this->output_;
   }
 
@@ -50,11 +63,8 @@ public:
                                              ArrayPtrType                     errorSignal)
   {
     ASSERT(inputs.size() == 1);
-    std::shared_ptr<ArrayType> ret = std::make_shared<ArrayType>(input_shape_);
-    for (std::uint64_t i(0); i < ret->size(); ++i)
-    {
-      ret->At(i) = errorSignal->At(i);
-    }
+    ArrayPtrType ret = std::make_shared<ArrayType>(input_shape_);
+    ret->Copy(*errorSignal);
     return {ret};
   }
 
@@ -62,6 +72,7 @@ public:
 
 private:
   std::vector<std::uint64_t> input_shape_;
+  unsigned int               dimsToKeep_;
 };
 
 }  // namespace ops

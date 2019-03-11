@@ -50,7 +50,7 @@ public:
 
     // key & value dense layer
     std::string flat_input = this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(
-        name + "_Flatten_Input", {input});
+        name + "_Flatten_Input", {input}, 0u);
     std::string query_name = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
         name + "_KEY_VAL", {flat_input}, in, hidden);
 

@@ -114,9 +114,6 @@ TYPED_TEST(SoftmaxTest, batch_backward_test)
   fetch::ml::ops::Softmax<TypeParam>      op;
   std::vector<std::shared_ptr<TypeParam>> prediction = op.Backward({data}, error);
 
-  std::cout << prediction[0]->ToString() << std::endl;
-  std::cout << gt->ToString() << std::endl;
-
   // test correct values
   ASSERT_TRUE(
       prediction[0]->AllClose(*gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
