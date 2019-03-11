@@ -141,6 +141,7 @@ private:
     std::remove_copy_if(word.begin(), word.end(),
                         std::back_inserter(result),  // Store output
                         std::ptr_fun<int, int>(&std::ispunct));
+    word = result;
   }
 
   bool CheckEndOfSentence(std::string &word)
@@ -165,60 +166,11 @@ private:
     else
     {
       // put all words into an array
-      std::string word;
-      words_.push_back(std::vector<std::string>{});
-      for (std::stringstream s(training_data); s >> word;)
-      {
-        // must check this before we strip punctuation
-        bool new_sentence = CheckEndOfSentence(word);
+      BuildVocab(training_data);
 
-        // strip punctuation
-        StripPunctuation(word);
+      // discard words randomly according to word frequency
+      DiscardFrequent();
 
-        // lower case
-        std::transform(word.begin(), word.end(), word.begin(), ::tolower);
-
-        words_[sentence_count_].push_back(word);
-        ++word_count_;
-
-        // if new sentence
-        if (new_sentence)
-        {
-          words_.push_back(std::vector<std::string>{});
-          ++sentence_count_;
-        }
-      }
-
-      // just in case the final word has a full stop or newline - we remove the empty vector
-      if (words_.back().size() == 0)
-      {
-        words_.pop_back();
-      }
-
-      assert(word_count_ > (skip_window_ * 2));
-
-      // insert words uniquely into the vocabulary
-      SizeType word_counter = 1;  // 0 reserved for unknown word
-      vocab_.insert(std::make_pair("UNK", 0));
-      vocab_frequency_.insert(std::make_pair("UNK", 0));
-
-      for (std::vector<std::string> &cur_sentence : words_)
-      {
-        for (std::string cur_word : cur_sentence)
-        {
-          bool ret = vocab_.insert(std::make_pair(cur_word, word_counter)).second;
-
-          if (ret)
-          {
-            vocab_frequency_[cur_word] = 1;
-            ++word_counter;
-          }
-          else
-          {
-            vocab_frequency_[cur_word] += 1;
-          }
-        }
-      }
 
       SizeType              pos_count = 0;
       SizeType              cur_vocab_idx;
@@ -249,40 +201,38 @@ private:
               if (j != skip_window_)  // i.e. when input != context
               {
                 std::string context_word = words_[sntce_idx][i + j - skip_window_];
-                if (!(this->DiscardExample(context_word)))
+
+                // context word idx
+                cur_context_idx = vocab_[context_word];
+                assert(cur_context_idx > 0);  // unknown words not yet handled
+                assert(cur_context_idx < vocab_.size());
+
+                // build input one hot
+                for (SizeType k = 0; k < vocab_.size(); k++)
                 {
-                  // context word idx
-                  cur_context_idx = vocab_[context_word];
-                  assert(cur_context_idx > 0);  // unknown words not yet handled
-                  assert(cur_context_idx < vocab_.size());
-
-                  // build input one hot
-                  for (SizeType k = 0; k < vocab_.size(); k++)
-                  {
-                    tmp = SizeType(k == cur_vocab_idx);
-                    assert((tmp == 0) || (tmp == 1));
-                    input_one_hot[k] = tmp;
-                  }
-
-                  // build context one hot
-                  for (SizeType k = 0; k < vocab_.size(); k++)
-                  {
-                    tmp = SizeType(k == cur_context_idx);
-                    assert((tmp == 0) || (tmp == 1));
-                    context_one_hot[k] = tmp;
-                  }
-
-                  // assign data
-                  data_input_.emplace_back(input_one_hot);
-                  data_context_.emplace_back(context_one_hot);
-
-                  // assign label
-                  labels_.emplace_back(SizeType(1));
-
-                  ++size_;
-
-                  ++pos_count;
+                  tmp = SizeType(k == cur_vocab_idx);
+                  assert((tmp == 0) || (tmp == 1));
+                  input_one_hot[k] = tmp;
                 }
+
+                // build context one hot
+                for (SizeType k = 0; k < vocab_.size(); k++)
+                {
+                  tmp = SizeType(k == cur_context_idx);
+                  assert((tmp == 0) || (tmp == 1));
+                  context_one_hot[k] = tmp;
+                }
+
+                // assign data
+                data_input_.emplace_back(input_one_hot);
+                data_context_.emplace_back(context_one_hot);
+
+                // assign label
+                labels_.emplace_back(SizeType(1));
+
+                ++size_;
+
+                ++pos_count;
               }
             }
           }
@@ -328,55 +278,138 @@ private:
 
               std::string context_word = words_[sntce_idx][negative_context_idx];
 
-              if (!(this->DiscardExample(context_word)))
+              negative_context_idx = vocab_[context_word];
+              assert(negative_context_idx > 0);
+              assert(negative_context_idx < vocab_.size());
+
+              // build input one hot
+              for (unsigned int k = 0; k < vocab_.size(); k++)
               {
-                negative_context_idx = vocab_[context_word];
-                assert(negative_context_idx > 0);
-                assert(negative_context_idx < vocab_.size());
-
-                // build input one hot
-                for (unsigned int k = 0; k < vocab_.size(); k++)
-                {
-                  tmp = SizeType(k == cur_vocab_idx);
-                  assert((tmp == 0) || (tmp == 1));
-                  input_one_hot[k] = tmp;
-                }
-
-                // build context one hot
-                for (unsigned int k = 0; k < vocab_.size(); k++)
-                {
-                  tmp = SizeType(k == negative_context_idx);
-                  assert((tmp == 0) || (tmp == 1));
-                  context_one_hot[k] = tmp;
-                }
-
-                if ((pos_count + neg_count) == 1367)
-                {
-                  for (std::size_t zi = 0; zi < input_one_hot.size(); ++zi)
-                  {
-                    std::cout << "input_one_hot[zi]: " << input_one_hot[zi] << std::endl;
-                  }
-                }
-                if ((pos_count + neg_count) == 1367)
-                {
-                  for (std::size_t zi = 0; zi < context_one_hot.size(); ++zi)
-                  {
-                    std::cout << "context_one_hot[zi]: " << context_one_hot[zi] << std::endl;
-                  }
-                }
-
-                data_input_.push_back(input_one_hot);
-                data_context_.push_back(context_one_hot);
-
-                // assign label
-                labels_.push_back(SizeType(0));
-
-                ++size_;
-                ++neg_count;
+                tmp = SizeType(k == cur_vocab_idx);
+                assert((tmp == 0) || (tmp == 1));
+                input_one_hot[k] = tmp;
               }
+
+              // build context one hot
+              for (unsigned int k = 0; k < vocab_.size(); k++)
+              {
+                tmp = SizeType(k == negative_context_idx);
+                assert((tmp == 0) || (tmp == 1));
+                context_one_hot[k] = tmp;
+              }
+
+              if ((pos_count + neg_count) == 1367)
+              {
+                for (std::size_t zi = 0; zi < input_one_hot.size(); ++zi)
+                {
+                  std::cout << "input_one_hot[zi]: " << input_one_hot[zi] << std::endl;
+                }
+              }
+              if ((pos_count + neg_count) == 1367)
+              {
+                for (std::size_t zi = 0; zi < context_one_hot.size(); ++zi)
+                {
+                  std::cout << "context_one_hot[zi]: " << context_one_hot[zi] << std::endl;
+                }
+              }
+
+              data_input_.push_back(input_one_hot);
+              data_context_.push_back(context_one_hot);
+
+              // assign label
+              labels_.push_back(SizeType(0));
+
+              ++size_;
+              ++neg_count;
             }
           }
         }
+      }
+    }
+  }
+
+  /**
+   * converst a single long string training corpus into arrays of words - strips punctuation and lowers
+   * @param training_data
+   */
+  void BuildVocab(std::string &training_data)
+  {
+    std::string word;
+    words_.push_back(std::vector<std::string>{});
+    for (std::stringstream s(training_data); s >> word;)
+    {
+      // must check this before we strip punctuation
+      bool new_sentence = CheckEndOfSentence(word);
+
+      // strip punctuation
+      StripPunctuation(word);
+
+      // lower case
+      std::transform(word.begin(), word.end(), word.begin(), ::tolower);
+
+      words_[sentence_count_].push_back(word);
+      ++word_count_;
+
+      // if new sentence
+      if (new_sentence)
+      {
+        words_.push_back(std::vector<std::string>{});
+        ++sentence_count_;
+      }
+    }
+
+    // just in case the final word has a full stop or newline - we remove the empty vector
+    if (words_.back().size() == 0)
+    {
+      words_.pop_back();
+    }
+
+    assert(word_count_ > (skip_window_ * 2));
+
+    // insert words uniquely into the vocabulary
+    SizeType word_counter = 1;  // 0 reserved for unknown word
+    vocab_.insert(std::make_pair("UNK", 0));
+    vocab_frequency_.insert(std::make_pair("UNK", 0));
+
+    for (std::vector<std::string> &cur_sentence : words_)
+    {
+      for (std::string cur_word : cur_sentence)
+      {
+        bool ret = vocab_.insert(std::make_pair(cur_word, word_counter)).second;
+
+        if (ret)
+        {
+          vocab_frequency_[cur_word] = 1;
+          ++word_counter;
+        }
+        else
+        {
+          vocab_frequency_[cur_word] += 1;
+        }
+      }
+    }
+
+  }
+
+  void DiscardFrequent()
+  {
+    // iterate through all sentences
+    for (SizeType sntce_idx = 0; sntce_idx < sentence_count_; sntce_idx++)
+    {
+      // iterate through words in the sentence choosing which to discard
+      std::vector<SizeType> discards{};
+      for (SizeType i = 0; i < words_[sntce_idx].size(); i++)
+      {
+        if (DiscardExample(words_[sntce_idx][i]))
+        {
+          discards.push_back(i);
+        }
+      }
+
+      // reverse iterate and discard those elements
+      for (SizeType j = discards.size(); j > 0; --j)
+      {
+        words_[sntce_idx].erase(words_[sntce_idx].begin() + int(discards[j - SizeType(1)]));
       }
     }
   }
@@ -387,8 +420,12 @@ private:
    */
   bool DiscardExample(std::string &word)
   {
+    std::cout << "vocab_frequency_[word]: " << vocab_frequency_[word] << std::endl;
+    std::cout << "words_.size(): " << words_.size() << std::endl;
     double word_probability = double(vocab_frequency_[word]) / words_.size();
+    std::cout << "word_probability: " << word_probability << std::endl;
     double prob_thresh      = 1.0 - std::sqrt(discard_threshold_ / word_probability);
+    std::cout << "prob_thresh: " << prob_thresh << std::endl;
     double f                = (double)rand() / RAND_MAX;
 
     if (f < prob_thresh)

@@ -38,12 +38,6 @@ public:
     this->SetData(std::make_shared<ArrayType>(std::vector<SizeType>({dataPoints, dimensions})));
   }
 
-  Embeddings(SizeType dataPoints, SizeType dimensions, ArrayPtrType output)
-  {
-    this->SetData(std::make_shared<ArrayType>(std::vector<SizeType>({dataPoints, dimensions})));
-    this->embeddings_output_ = output;
-  }
-
   virtual ~Embeddings() = default;
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
@@ -51,11 +45,14 @@ public:
     ASSERT(this->output_);
     ASSERT(inputs.size() == 1);
     ASSERT(inputs[0]->size() == 1);
-    if (!this->embeddings_output_ || this->embeddings_output_->shape()[0] != inputs[0]->size() ||
+
+    SizeType row_count = this->CheckRows(inputs[0]);
+
+    if (!this->embeddings_output_ || this->embeddings_output_->shape()[0] != row_count ||
         this->embeddings_output_->shape()[1] != this->output_->shape()[1])
     {
       this->embeddings_output_ = std::make_shared<ArrayType>(
-          std::vector<SizeType>({inputs[0]->size(), this->output_->shape()[1]}));
+          std::vector<SizeType>({row_count, this->output_->shape()[1]}));
     }
     SizeType j(0);
     SizeType k(0);
@@ -68,6 +65,7 @@ public:
       }
       k++;
     }
+
     return this->embeddings_output_;
   }
 
@@ -78,15 +76,33 @@ public:
     ASSERT(inputs[0]->shape().size() == 1);
 
     SizeType j(0);
-    for (DataType const &i : *(inputs[0]))
+    for (SizeType i = 0; i < inputs[0]->size(); ++i)
     {
-      this->gradientAccumulation_->Slice(typename ArrayType::SizeType(double(i)))
-          .Copy(errorSignal->Slice(j));
-      j++;
+      if (inputs[0]->At(i) == DataType(1))
+      {
+        this->gradientAccumulation_->Slice(SizeType(double(i)))
+            .Copy(errorSignal->Slice(SizeType(double(j))));
+        ++j;
+      }
     }
 
     // TODO ()
     return {errorSignal};
+  }
+
+private:
+  SizeType CheckRows(ArrayPtrType input)
+  {
+    SizeType row_count = 0;
+    for (SizeType l = 0; l < input->size(); ++l)
+    {
+      assert(input->At(l) == DataType(1) || input->At(l) == DataType(0));
+      if (input->At(l) == DataType(1))
+      {
+        ++row_count;
+      }
+    }
+    return row_count;
   }
 
 private:

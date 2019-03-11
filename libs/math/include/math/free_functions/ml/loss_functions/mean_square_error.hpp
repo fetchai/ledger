@@ -29,6 +29,8 @@ template <typename ArrayType>
 typename ArrayType::Type MeanSquareError(ArrayType const &A, ArrayType const &B)
 {
   assert(A.shape() == B.shape());
+  assert(typename ArrayType::Type(A.size()) != 0);
+
   ArrayType tmp_array(A.shape());
 
   Subtract(A, B, tmp_array);
@@ -36,7 +38,8 @@ typename ArrayType::Type MeanSquareError(ArrayType const &A, ArrayType const &B)
   Square(tmp_array, tmp_array);
 
   typename ArrayType::Type ret = Sum(tmp_array);
-  ret                          = Divide(ret, typename ArrayType::Type(A.size()));
+
+  ret = Divide(ret, typename ArrayType::Type(A.size()));
   // TODO(private 343)
   // division by 2 allows us to cancel out with a 2 in the derivative
   ret = Divide(ret, typename ArrayType::Type(2));

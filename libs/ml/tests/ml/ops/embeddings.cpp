@@ -38,7 +38,7 @@ TYPED_TEST(EmbeddingsTest, forward_shape)
   std::shared_ptr<TypeParam> input = std::make_shared<TypeParam>(std::vector<uint64_t>({10}));
   for (unsigned int i(0); i < 10; ++i)
   {
-    input->At(i) = typename TypeParam::Type(i);
+    input->At(i) = typename TypeParam::Type(1);
   }
   std::shared_ptr<TypeParam> output = e.Forward({input});
 
@@ -62,12 +62,9 @@ TYPED_TEST(EmbeddingsTest, forward)
   }
 
   e.SetData(weights);
-  std::shared_ptr<TypeParam> input  = std::make_shared<TypeParam>(std::vector<uint64_t>({6}));
-  input->At(0)                      = typename TypeParam::Type(0);
-  input->At(1)                      = typename TypeParam::Type(0);
-  input->At(2)                      = typename TypeParam::Type(0);
+  std::shared_ptr<TypeParam> input = std::make_shared<TypeParam>(std::vector<uint64_t>({10}));
+  input->Fill(typename TypeParam::Type(0));
   input->At(3)                      = typename TypeParam::Type(1);
-  input->At(4)                      = typename TypeParam::Type(0);
   input->At(5)                      = typename TypeParam::Type(1);
   std::shared_ptr<TypeParam> output = e.Forward({input});
 
@@ -94,24 +91,36 @@ TYPED_TEST(EmbeddingsTest, backward)
     }
   }
   e.SetData(weights);
-  std::shared_ptr<TypeParam> input  = std::make_shared<TypeParam>(std::vector<uint64_t>({2}));
-  input->At(0)                      = typename TypeParam::Type(3);
-  input->At(1)                      = typename TypeParam::Type(5);
+  std::shared_ptr<TypeParam> input = std::make_shared<TypeParam>(std::vector<uint64_t>({10}));
+  input->Fill(typename TypeParam::Type(0));
+  input->At(3)                      = typename TypeParam::Type(1);
+  input->At(5)                      = typename TypeParam::Type(1);
   std::shared_ptr<TypeParam> output = e.Forward({input});
 
   std::shared_ptr<TypeParam> errorSignal =
-      std::make_shared<TypeParam>(std::vector<uint64_t>({2, 6}));
-  for (unsigned int j(0); j < 12; ++j)
+      std::make_shared<TypeParam>(std::vector<uint64_t>({10, 6}));
+
+  for (unsigned int j(0); j < 6; ++j)
   {
-    errorSignal->Set(j, typename TypeParam::Type(j));
+    errorSignal->Set({3, j}, typename TypeParam::Type(j));
+  }
+  for (unsigned int j(6); j < 12; ++j)
+  {
+    errorSignal->Set({5, j - 6}, typename TypeParam::Type(j));
   }
   e.Backward({input}, errorSignal);
   e.Step(typename TypeParam::Type(1));
 
   output = e.Forward({input});
   std::vector<int> gt{30, 30, 30, 30, 30, 30, 44, 44, 44, 44, 44, 44};
-  for (unsigned int i(0); i < 12; ++i)
+
+  for (std::size_t j = 0; j < output->size(); ++j)
   {
-    EXPECT_EQ(output->At(i), typename TypeParam::Type(gt[i]));
+    std::cout << "output->At(j): " << output->At(j) << std::endl;
+  }
+
+  for (unsigned int j(0); j < 12; ++j)
+  {
+    EXPECT_EQ(output->At(j), typename TypeParam::Type(gt[j]));
   }
 }

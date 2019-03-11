@@ -16,12 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "math/tensor.hpp"
-//#include "ml/ops/activation.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/skip_gram.hpp"
-#include "ml/ops/loss_functions/cross_entropy.hpp"
+#include "ml/ops/loss_functions/scaled_cross_entropy.hpp"
 #include "w2v_dataloader.hpp"
 
 #include "math/free_functions/ml/loss_functions/mean_square_error.hpp"
@@ -31,9 +29,10 @@
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
-using DataType  = float;
-using ArrayType = fetch::math::Tensor<DataType>;
-using SizeType  = typename ArrayType::SizeType;
+using DataType     = double;
+using ArrayType    = fetch::math::Tensor<DataType>;
+using ArrayPtrType = std::shared_ptr<ArrayType>;
+using SizeType     = typename ArrayType::SizeType;
 
 ////////////////////////////////
 /// PARAMETERS AND CONSTANTS ///
@@ -48,25 +47,71 @@ using SizeType  = typename ArrayType::SizeType;
 struct PARAMS
 {
   bool     cbow       = false;  // skipgram model if false, cbow if true
-  SizeType batch_size = 1;      // training data batch size
+  SizeType batch_size = 128;    // training data batch size
   SizeType embedding_size =
       3;                     // dimension of the embedding vector - 4th root of vocab size is good
   SizeType skip_window = 2;  // words to include in frame (left & right)
   //  std::uint64_t num_skips      = 2;      // n times to reuse an input to generate a label
-  SizeType k_neg_samps    = 2;    // number of negative examples to sample
-  double   discard_thresh = 0.9;  // larger the training data set, lower the discard threshold
-  SizeType training_steps = 10000;
+  SizeType k_neg_samps    = 1;    // number of negative examples to sample
+  double   discard_thresh = 0.3;  // larger the training data set, lower the discard threshold
+  SizeType training_steps = 128000;
 };
 
+
 std::string TRAINING_DATA =
-    "A cat is not a dog.\n"
-    "But a cat is sort of related to a dog in some ways.\n"
-    "For example they are both animals.\n"
-    "Unlike a car which is not an animal.\n"
-    "A car is a machine.\n"
-    "Machines ares types of automated tools, like a computer or a hammer.\n"
-    "Word2vec is also a tool; but it is software.\n"
-    "Software is a tool that you cannot touch.";
+"The Ugly Duckling.\n"
+"\n"
+"A duck made her nest under some leaves.\n"
+"She sat on the eggs to keep them warm.\n"
+"At last the eggs broke, one after the other. Little ducks came out.\n"
+"Only one egg was left. It was a very large one.\n"
+"At last it broke, and out came a big, ugly duckling.\n"
+"\"What a big duckling!\" said the old duck. \"He does not look like us. Can he be a turkey? We will see. If he does not like the water, he is not a duck.\"\n"
+"\n"
+"The next day the mother duck took her ducklings to the pond.\n"
+"Splash! Splash! The mother duck was in the water. Then she called the ducklings to come in. They all jumped in and began to swim. The big, ugly duckling swam, too.\n"
+"The mother duck said, \"He is not a turkey. He is my own little duck. He will not be so ugly when he is bigger.\"\n"
+"\n"
+"Then she said to the ducklings, \"Come with me. I want you to see the other ducks. Stay by me and look out for the cat.\"\n"
+"They all went into the duck yard. What a noise the ducks made!\n"
+"While the mother duck was eating a big bug, an old duck bit the ugly duckling.\n"
+"\"Let him alone,\" said the mother duck. \"He did not hurt you.\"\n"
+"\"I know that,\" said the duck, \"but he is so ugly, I bit him.\"\n"
+"\n"
+"The next duck they met, said, \"You have lovely ducklings. They are all pretty but one. He is very ugly.\"\n"
+"The mother duck said, \"I know he is not pretty. But he is very good.\"\n"
+"Then she said to the ducklings, \"Now, my dears, have a good time.\"\n"
+"But the poor, big, ugly duckling did not have a good time.\n"
+"The hens all bit him. The big ducks walked on him.\n"
+"The poor duckling was very sad. He did not want to be so ugly. But he could not help it.\n"
+"He ran to hide under some bushes. The little birds in the bushes were afraid and flew away.\n"
+"\n"
+"\"It is all because I am so ugly,\" said the duckling. So he ran away.\n"
+"At night he came to an old house. The house looked as if it would fall down. It was so old. But the wind blew so hard that the duckling went into the house.\n"
+"An old woman lived there with her cat and her hen.\n"
+"The old woman said, \"I will keep the duck. I will have some eggs.\"\n"
+"\n"
+"The next day, the cat saw the duckling and began to growl.\n"
+"The hen said, \"Can you lay eggs?\" The duckling said, \"No.\"\n"
+"\"Then keep still,\" said the hen. The cat said, \"Can you growl?\"\n"
+"\"No,\" said the duckling.\n"
+"\"Then keep still,\" said the cat.\n"
+"And the duckling hid in a corner. The next day he went for a walk. He saw a big pond. He said, \"I will have a good swim.\"\n"
+"But all of the animals made fun of him. He was so ugly.\n"
+"\n"
+"The summer went by.\n"
+"Then the leaves fell and it was very cold. The poor duckling had a hard time.\n"
+"It is too sad to tell what he did all winter.\n"
+"At last it was spring.\n"
+"The birds sang. The ugly duckling was big now.\n"
+"One day he flew far away.\n"
+"Soon he saw three white swans on the lake.\n"
+"He said, \"I am going to see those birds. I am afraid they will kill me, for I am so ugly.\"\n"
+"He put his head down to the water. What did he see? He saw himself in the water. But he was not an ugly duck. He was a white swan.\n"
+"The other swans came to see him.\n"
+"The children said, \"Oh, see the lovely swans. The one that came last is the best.\"\n"
+"And they gave him bread and cake.\n"
+"It was a happy time for the ugly duckling.";
 
 ////////////////////////
 /// MODEL DEFINITION ///
@@ -83,8 +128,9 @@ std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType vocab_size, SizeType 
   return ret_name;
 }
 
-void TestEmbeddings(fetch::ml::Graph<ArrayType> &g, std::string &skip_gram_name,
-                    fetch::ml::W2VLoader<ArrayType> &dl)
+std::vector<DataType> TestEmbeddings(fetch::ml::Graph<ArrayType> &    g,
+                                             std::string &                    skip_gram_name,
+                                             fetch::ml::W2VLoader<ArrayType> &dl)
 {
 
   // first get hold of the skipgram layer by searching the return name in the graph
@@ -92,50 +138,41 @@ void TestEmbeddings(fetch::ml::Graph<ArrayType> &g, std::string &skip_gram_name,
       std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<ArrayType>>(g.GetNode(skip_gram_name));
 
   // next get hold of the embeddings
-  std::shared_ptr<ArrayType> embeddings = sg_layer->GetEmbeddings();
-
-  std::cout << "embeddings->At(0): " << embeddings->At(0) << std::endl;
-
-  // embeddings
-  std::cout << "embeddings dimensions: " << embeddings->shape()[1] << std::endl;
-  std::cout << "vocab size: " << embeddings->shape()[0] << std::endl;
+  std::shared_ptr<fetch::ml::ops::Embeddings<ArrayType>> embeddings =
+      sg_layer->GetEmbeddings(sg_layer);
 
   // cat
-  std::string lookup_word = "cat";
-  SizeType    cat_idx     = dl.VocabLookup(lookup_word);
-  for (std::size_t j = 0; j < embeddings->shape()[1]; ++j)
-  {
-    std::cout << "embeddings->At({cat_idx, j}): " << embeddings->At({cat_idx, j}) << std::endl;
-  }
-  std::cout << "\n " << std::endl;
+  ArrayPtrType embed_cat_input = std::make_shared<ArrayType>(dl.VocabSize());
+  std::string  cat_lookup      = "cat";
+  SizeType     cat_idx         = dl.VocabLookup(cat_lookup);
+  embed_cat_input->At(cat_idx) = 1;
+  ArrayType cat_output         = embeddings->Forward({embed_cat_input})->Clone();
 
-  // dog
-  lookup_word      = "dog";
-  SizeType dog_idx = dl.VocabLookup(lookup_word);
-  for (std::size_t j = 0; j < embeddings->shape()[1]; ++j)
-  {
-    std::cout << "embeddings->At({dog_idx, j}): " << embeddings->At({dog_idx, j}) << std::endl;
-  }
-  std::cout << "\n " << std::endl;
+  ArrayPtrType embed_duckling_input = std::make_shared<ArrayType>(dl.VocabSize());
+  std::string  duckling_lookup      = "duckling";
+  SizeType     duckling_idx         = dl.VocabLookup(duckling_lookup);
+  embed_duckling_input->At(duckling_idx) = 1;
+  ArrayType duckling_output         = embeddings->Forward({embed_duckling_input})->Clone();
 
-  // computer
-  lookup_word           = "computer";
-  SizeType computer_idx = dl.VocabLookup(lookup_word);
-  for (std::size_t j = 0; j < embeddings->shape()[1]; ++j)
-  {
-    std::cout << "embeddings->At({computer_idx, j}): " << embeddings->At({computer_idx, j})
-              << std::endl;
-  }
+  ArrayPtrType embed_ugly_input = std::make_shared<ArrayType>(dl.VocabSize());
+  std::string  ugly_lookup      = "ugly";
+  SizeType     ugly_idx         = dl.VocabLookup(ugly_lookup);
+  embed_ugly_input->At(ugly_idx)  = 1;
+  ArrayType ugly_output         = embeddings->Forward({embed_ugly_input})->Clone();
 
-  DataType result;
-  // distance from cat to dog (using MSE as distance)
-  result = fetch::math::MeanSquareError(embeddings->Slice(cat_idx), embeddings->Slice(dog_idx));
-  std::cout << "distance from cat to dog: " << result << std::endl;
+  DataType result_cat_duckling, result_cat_ugly, result_duckling_ugly;
+  // distance from cat to duckling (using MSE as distance)
+  result_cat_duckling = fetch::math::MeanSquareError(cat_output, duckling_output);
 
   // distance from cat to computer (using MSE as distance)
-  result =
-      fetch::math::MeanSquareError(embeddings->Slice(cat_idx), embeddings->Slice(computer_idx));
-  std::cout << "distance from cat to computer: " << result << std::endl;
+  result_cat_ugly = fetch::math::MeanSquareError(cat_output, ugly_output);
+
+  // distance from cat to computer (using MSE as distance)
+  result_duckling_ugly = fetch::math::MeanSquareError(duckling_output, ugly_output);
+
+
+  std::vector<DataType> ret = {result_cat_duckling, result_cat_ugly, result_duckling_ugly};
+  return ret;
 }
 
 int main(int ac, char **av)
@@ -145,32 +182,37 @@ int main(int ac, char **av)
 
   PARAMS p;
 
+  ///////////////////////////////////////
+  /// CONVERT TEXT INTO TRAINING DATA ///
+  ///////////////////////////////////////
+
   // set up dataloader
   std::cout << "Setting up training data...: " << std::endl;
   fetch::ml::W2VLoader<ArrayType> dataloader(TRAINING_DATA, p.skip_window, p.cbow, p.k_neg_samps,
                                              p.discard_thresh);
 
+  ////////////////////////////////
+  /// SETUP MODEL ARCHITECTURE ///
+  ////////////////////////////////
+
   // set up model architecture
   std::cout << "building model architecture...: " << std::endl;
   fetch::ml::Graph<ArrayType> g;
-  std::string output_name = Model(g, dataloader.VocabSize(), p.batch_size, p.embedding_size);
-
-  // Test untrained embeddings
-  TestEmbeddings(g, output_name, dataloader);
+  std::string                 output_name = Model(g, dataloader.VocabSize(), 1, p.embedding_size);
 
   // set up loss
-  CrossEntropy<ArrayType> criterion;
-
-  std::pair<std::pair<std::shared_ptr<ArrayType>, std::shared_ptr<ArrayType>>, SizeType> input;
-  std::shared_ptr<ArrayType>                                                             gt =
-      std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1, 2}));
-  DataType loss = 0;
+  ScaledCrossEntropy<ArrayType> criterion;
 
   /////////////////////////////////
   /// TRAIN THE WORD EMBEDDINGS ///
   /////////////////////////////////
 
   std::cout << "beginning training...: " << std::endl;
+
+  std::pair<std::pair<std::shared_ptr<ArrayType>, std::shared_ptr<ArrayType>>, SizeType> input;
+  std::shared_ptr<ArrayType>                                                             gt =
+      std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1, 2}));
+  DataType loss = 0;
 
   for (std::size_t i = 0; i < p.training_steps; ++i)
   {
@@ -182,14 +224,24 @@ int main(int ac, char **av)
     gt->At(input.second)               = DataType(1);
     std::shared_ptr<ArrayType> results = g.Evaluate(output_name);
 
-    loss += criterion.Forward({results, gt});
+    std::shared_ptr<ArrayType> scale_factor = std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1}));
+
+    if (input.second == 0)
+    {
+      scale_factor->At(0) = p.k_neg_samps;
+    }
+    else
+    {
+      scale_factor->At(0) = 1;
+    }
+    loss += criterion.Forward({results, gt, scale_factor});
 
     g.BackPropagate(output_name, criterion.Backward({results, gt}));
 
-    if (i % 50 == 0)
+    if (i % p.batch_size == 0)
     {
-      std::cout << "MiniBatch: " << i / 50 << " -- Loss : " << loss << std::endl;
-      g.Step(0.01f);
+      std::cout << "MiniBatch: " << i / p.batch_size << " -- Loss : " << loss << std::endl;
+      g.Step(0.1f);
       loss = 0;
     }
   }
@@ -198,8 +250,12 @@ int main(int ac, char **av)
   /// EXTRACT THE TRAINED EMBEDDINGS ///
   //////////////////////////////////////
 
-  // Test untrained embeddings
-  TestEmbeddings(g, output_name, dataloader);
+  // Test trained embeddings
+  std::vector<DataType> trained_distances = TestEmbeddings(g, output_name, dataloader);
+
+  std::cout << "final cat-duckling distance: " << trained_distances[0] << std::endl;
+  std::cout << "final cat-ugly distance: " << trained_distances[1] << std::endl;
+  std::cout << "final duckling-ugly distance: " << trained_distances[2] << std::endl;
 
   return 0;
 }

@@ -114,7 +114,12 @@ public:
 
   std::shared_ptr<fetch::ml::NodeInterface<ArrayType>> GetNode(std::string const &node_name)
   {
-    return nodes_[node_name];
+    std::shared_ptr<fetch::ml::NodeInterface<ArrayType>> ret = nodes_[node_name];
+    if (!ret)
+    {
+      throw std::runtime_error("couldn't find node [" + node_name + "] in graph!");
+    }
+    return ret;
   }
 
   /**

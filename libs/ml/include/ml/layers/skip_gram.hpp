@@ -54,18 +54,16 @@ public:
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Context", {});
 
     // embed both inputs
-    embeddings_ptr_ =
-        std::make_shared<ArrayType>(std::vector<std::uint64_t>({in_size, embedding_size}));
-    std::string embed_in = this->template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
-        name + "_Embed_Input", {input}, in_size, embedding_size, embeddings_ptr_);
+    embed_in_ = this->template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
+        name + "_Embed_Input", {input}, in_size, embedding_size);
     std::string embed_ctx = this->template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
-        name + "_Embed_Context", {context}, in_size, embedding_size, embeddings_ptr_);
+        name + "_Embed_Context", {context}, in_size, embedding_size);
 
     // dot product input and context embeddings
     std::string transpose_ctx = this->template AddNode<fetch::ml::ops::Transpose<ArrayType>>(
         name + "_TransposeCtx", {embed_ctx});
     std::string in_ctx_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
-        name + "_In_Ctx_MatMul", {transpose_ctx, embed_in});
+        name + "_In_Ctx_MatMul", {transpose_ctx, embed_in_});
 
     // dense layer
     SizeType    dense_size = fetch::math::Square(embedding_size);
@@ -80,21 +78,22 @@ public:
     this->AddInputNode(context);
     this->SetOutputNode(output);
 
-    // set up data for embeddings
-    this->Initialise(embeddings_ptr_, init_mode);
-    this->SetInput(embed_in, embeddings_ptr_);
-    this->SetInput(embed_ctx, embeddings_ptr_);
+    ArrayPtrType weights_ptr =
+        std::make_shared<ArrayType>(std::vector<SizeType>({in_size, embedding_size}));
+    this->Initialise(weights_ptr, init_mode);
+    this->SetInput(embed_in_, weights_ptr);
+    this->SetInput(embed_ctx, weights_ptr);
   }
 
-  ArrayPtrType GetEmbeddings()
+  std::shared_ptr<ops::Embeddings<ArrayType>> GetEmbeddings(std::shared_ptr<SkipGram<ArrayType>> &g)
   {
-    return embeddings_ptr_;
+    return std::dynamic_pointer_cast<ops::Embeddings<ArrayType>>(g->GetNode(embed_in_));
   }
 
   static constexpr char const *DESCRIPTOR = "SkipGram";
 
 private:
-  ArrayPtrType embeddings_ptr_;
+  std::string embed_in_ = "";
 };
 
 }  // namespace layers
