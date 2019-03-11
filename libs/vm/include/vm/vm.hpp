@@ -165,7 +165,6 @@ public:
   ParameterPack &operator=(ParameterPack &&) = delete;
 
 private:
-
   template <typename T>
   bool AddInternal(T const &value)
   {
