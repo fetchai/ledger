@@ -31,7 +31,7 @@ namespace vm {
 template <typename T, typename = void>
 struct Getter;
 template <typename T>
-struct Getter<T, typename std::enable_if_t<IsPrimitive<T>::value>>
+struct Getter<T, IfIsPrimitive<T>>
 {
   static TypeId GetTypeId(RegisteredTypes const &types, T const & /* parameter */)
   {
@@ -39,11 +39,11 @@ struct Getter<T, typename std::enable_if_t<IsPrimitive<T>::value>>
   }
 };
 template <typename T>
-struct Getter<T, typename std::enable_if_t<IsPtr<T>::value>>
+struct Getter<T, IfIsPtr<T>>
 {
   static TypeId GetTypeId(RegisteredTypes const &types, T const & /* parameter */)
   {
-    using ManagedType = typename GetManagedType<T>::type;
+    using ManagedType = typename GetManagedType<std::decay_t<T>>::type;
     return types.GetTypeId(TypeIndex(typeid(ManagedType)));
   }
 };
@@ -126,30 +126,30 @@ public:
   }
 
   template <typename T, typename... Args>
-  bool Add(T const &parameter, Args const &... args)
+  bool Add(T &&parameter, Args &&... args)
   {
     bool success{false};
 
-    success &= Add(parameter);
-    success &= Add(args...);
+    success &= AddI(std::forward<T>(parameter));
+    success &= Add(std::forward<Args>(args)...);
 
     return success;
   }
 
   template <typename T>
-  IfIsPrimitive<T, bool> Add(T const &parameter)
+  IfIsPrimitive<T, bool> AddI(T &&parameter)
   {
-    return AddInternal(parameter);
+    return AddInternal(std::forward<T>(parameter));
   }
 
   template <typename T>
-  IfIsPtr<T, bool> Add(T const &obj)
+  IfIsPtr<T, bool> AddI(T &&obj)
   {
     bool success{false};
 
     if (obj)
     {
-      success = AddInternal(obj);
+      success = AddInternal(std::forward<T>(obj));
     }
 
     return success;
@@ -166,7 +166,7 @@ public:
 
 private:
   template <typename T>
-  bool AddInternal(T const &value)
+  bool AddInternal(T &&value)
   {
     bool success{false};
 
@@ -175,7 +175,7 @@ private:
     if (TypeIds::Unknown != type_id)
     {
       // add the value to the map
-      params_.emplace_back(value, type_id);
+      params_.emplace_back(std::forward<T>(value), type_id);
 
       // signal great success
       success = true;

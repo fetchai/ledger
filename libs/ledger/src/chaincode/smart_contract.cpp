@@ -108,6 +108,7 @@ void AddToParameterPack(vm::ParameterPack &pack, msgpack::object const &obj)
   obj.convert(value);
 
   // add it to the parameter pack
+  //pack.Add(std::move(value));
   pack.Add(value);
 }
 
@@ -160,8 +161,10 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
       uint8_t const *end   = start + ext.size;
 
       // create the instance of the address
-      auto address = vm::Address::Constructor(vm, vm::TypeIds::Address);
+      vm::Ptr<vm::Address> address = vm::Address::Constructor(vm, vm::TypeIds::Address);
       address->SetBytes(std::vector<uint8_t>{start, end});
+
+      static_assert(vm::IsPtr<vm::Ptr<vm::Address>>::value, "");
 
       // add the address to the parameter pack
       pack.Add(address);

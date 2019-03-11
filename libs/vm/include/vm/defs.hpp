@@ -44,7 +44,7 @@ struct IsPrimitive<T, typename std::enable_if_t<
 };
 
 template <typename T, typename R = void>
-using IfIsPrimitive = typename std::enable_if<IsPrimitive<T>::value, R>::type;
+using IfIsPrimitive = typename std::enable_if<IsPrimitive<std::decay_t<T>>::value, R>::type;
 
 template <typename T, typename = void>
 struct IsObject : std::false_type
@@ -65,7 +65,7 @@ struct IsPtr<Ptr<T>> : std::true_type
 };
 
 template <typename T, typename R = void>
-using IfIsPtr = typename std::enable_if<IsPtr<T>::value, R>::type;
+using IfIsPtr = typename std::enable_if<IsPtr<std::decay_t<T>>::value, R>::type;
 
 template <typename T, typename = void>
 struct IsVariant : std::false_type
