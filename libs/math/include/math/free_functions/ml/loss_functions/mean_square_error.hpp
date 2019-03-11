@@ -29,7 +29,7 @@ template <typename ArrayType>
 typename ArrayType::Type MeanSquareError(ArrayType const &A, ArrayType const &B)
 {
   assert(A.shape() == B.shape());
-  assert(typename ArrayType::Type(A.size()) != 0);
+  assert(A.size() != typename ArrayType::SizeType(0));
 
   ArrayType tmp_array(A.shape());
 
