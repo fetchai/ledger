@@ -108,8 +108,7 @@ void AddToParameterPack(vm::ParameterPack &pack, msgpack::object const &obj)
   obj.convert(value);
 
   // add it to the parameter pack
-  //pack.Add(std::move(value));
-  pack.Add(value);
+  pack.Add(std::move(value));
 }
 
 /**
@@ -167,7 +166,7 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
       static_assert(vm::IsPtr<vm::Ptr<vm::Address>>::value, "");
 
       // add the address to the parameter pack
-      pack.Add(address);
+      pack.Add(std::move(address));
       valid = true;
     }
   }
