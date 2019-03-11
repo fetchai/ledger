@@ -50,7 +50,10 @@ public:
         this->output_->Slice(i).Copy(inputs[0]->Slice(i).Transpose());
       }
     }
-
+    else
+    {
+      throw std::runtime_error("Can't transpose this tensor");
+    }
     return this->output_;
   }
 
@@ -58,7 +61,24 @@ public:
                                              ArrayPtrType                     errorSignal)
   {
     ASSERT(inputs.size() == 1);
-    return {std::make_shared<ArrayType>(errorSignal->Clone().Transpose())};
+    if (inputs[0]->shape().size() == 2)  // Non batch
+    {
+      return {std::make_shared<ArrayType>(errorSignal->Clone().Transpose())};
+    }
+    else if (inputs[0]->shape().size() == 3)  // Batch
+    {
+      std::vector<typename ArrayType::SizeType> inputShape = inputs[0]->shape();
+      ArrayPtrType                              ret        = std::make_shared<ArrayType>(
+          std::vector<typename ArrayType::SizeType>({inputShape[0], inputShape[2], inputShape[1]}));
+      for (unsigned int i(0); i < inputShape[0]; ++i)
+      {
+        ret->Slice(i).Copy(errorSignal->Slice(i).Transpose());
+      }
+    }
+    else
+    {
+      throw std::runtime_error("Can't transpose this tensor");
+    }
   }
 
   static constexpr char const *DESCRIPTOR = "Transpose";
