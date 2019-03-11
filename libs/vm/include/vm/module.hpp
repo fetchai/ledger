@@ -26,6 +26,7 @@
 #include "vm/module/instance_function_invoke.hpp"
 #include "vm/module/type_constructor_invoke.hpp"
 #include "vm/module/type_function_invoke.hpp"
+#include "vm/address.hpp"
 #include "vm/state.hpp"
 #include "vm/vm.hpp"
 

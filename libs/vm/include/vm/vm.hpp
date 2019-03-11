@@ -99,37 +99,156 @@ struct AssignParameters<POSITION>
 // Forward declarations
 class Module;
 
+class ParameterPack
+{
+public:
+
+  // Construction / Destruction
+  explicit ParameterPack(RegisteredTypes const &registered_types)
+    : registered_types_{registered_types}
+  {
+  }
+
+  ParameterPack(ParameterPack const &) = delete;
+  ParameterPack(ParameterPack &&) = delete;
+  ~ParameterPack() = default;
+
+  Variant const &operator[](std::size_t index) const
+  {
+#ifndef NDEBUG
+    return params_.at(index);
+#else
+    return params_[index];
+#endif
+  }
+
+  std::size_t size() const
+  {
+    return params_.size();
+  }
+
+  template <typename T, typename ... Args>
+  bool Add(T const &parameter, Args const & ... args)
+  {
+    bool success{false};
+
+    success &= Add(parameter);
+    success &= Add(args...);
+
+    return success;
+  }
+
+  template <typename T>
+  IfIsPrimitive<T, bool> Add(T const &parameter)
+  {
+    bool success{false};
+
+    // determine the type if the parameter based on the input
+    TypeId type_id = Getter<T>::GetTypeId(registered_types_, parameter);
+
+    if (type_id != TypeIds::Unknown)
+    {
+      // add the parameter to the list
+      params_.emplace_back(parameter, type_id);
+
+      success = true;
+    }
+
+    return success;
+  }
+
+  template <typename T>
+  IfIsPtr<T, bool> Add(T const &obj)
+  {
+    bool success{false};
+
+    if (obj)
+    {
+      TypeId type_id = Getter<T>::GetTypeId(registered_types_, obj);
+
+      params_.emplace_back(obj, type_id);
+    }
+
+    return success;
+  }
+
+  bool Add()
+  {
+    return true;
+  }
+
+  // Operators
+  ParameterPack &operator=(ParameterPack const &) = delete;
+  ParameterPack &operator=(ParameterPack &&) = delete;
+
+private:
+
+  using VariantArray = std::vector<Variant>;
+
+  RegisteredTypes const &registered_types_;
+  VariantArray           params_{};
+};
+
 class VM
 {
 public:
   VM(Module *module);
   ~VM() = default;
 
+  RegisteredTypes const &registered_types() const
+  {
+    return registered_types_;
+  }
+
   template <typename... Ts>
   bool Execute(Script const &script, std::string const &name, std::string &error,
                std::string &console_output, Variant &output, Ts const &... parameters)
+
+  {
+    ParameterPack parameter_pack{registered_types_};
+
+    if (!parameter_pack.Add(parameters...))
+    {
+      error = "Unable to generate parameter pack";
+      return false;
+    }
+
+    return Execute(script, name, error, console_output, output, parameter_pack);
+  }
+
+  bool Execute(Script const &script, std::string const &name, std::string &error,
+               std::string &console_output, Variant &output, ParameterPack const &parameters)
   {
     bool success{false};
 
     Script::Function const *f = script.FindFunction(name);
     if (f)
     {
-      constexpr int num_parameters = int(sizeof...(Ts));
+      auto const num_parameters = static_cast<std::size_t>(f->num_parameters);
 
-      if (num_parameters == f->num_parameters)
+      if (parameters.size() == num_parameters)
       {
-        AssignParameters<0, Ts...>::Assign(stack_, registered_types_, parameters...);
-        for (size_t i = 0; i < size_t(num_parameters); ++i)
+        // loop through the parameters, type check and populate the stack
+        for (std::size_t i = 0; i < num_parameters; ++i)
         {
-          if (stack_[i].type_id != f->variables[i].type_id)
+          Variant const &parameter = parameters[i];
+
+          // type check
+          if (parameter.type_id != f->variables[i].type_id)
           {
             error = "mismatched parameters";
-            for (size_t j = 0; j < size_t(num_parameters); ++j)
+
+            // clean up
+            for (std::size_t j = 0; j < num_parameters; ++j)
             {
               stack_[j].Reset();
             }
+
             return false;
           }
+
+          // assign
+          stack_[i].Assign(parameter, parameter.type_id);
         }
 
         script_   = &script;

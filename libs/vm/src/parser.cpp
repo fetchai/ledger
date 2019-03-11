@@ -28,8 +28,14 @@ namespace fetch {
 namespace vm {
 
 Parser::Parser()
+  : template_names_{
+    "Matrix",
+    "Array",
+    "Map",
+    "State",
+    "StateMap"
+  }
 {
-  template_names_ = {"Matrix", "Array", "Map", "State"};
 }
 
 BlockNodePtr Parser::Parse(std::string const &source, Strings &errors)
@@ -937,14 +943,8 @@ void Parser::SkipFunctionDefinition()
 
 bool Parser::IsTemplateName(std::string const &name) const
 {
-  for (size_t i = 0; i < template_names_.size(); ++i)
-  {
-    if (name == template_names_[i])
-    {
-      return true;
-    }
-  }
-  return false;
+  auto const it = template_names_.find(name);
+  return template_names_.end() != it;
 }
 
 ExpressionNodePtr Parser::ParseType()
