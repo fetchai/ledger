@@ -140,7 +140,6 @@ struct Map : public IMap
   IfIsPrimitive<U> Store(Variant &keyv, Variant &valuev)
   {
     map.insert(Pair(keyv, valuev));
-    OnUpdate(keyv.Get<Key>(), valuev.Get<Value>());
   }
 
   template <typename U>
@@ -149,7 +148,6 @@ struct Map : public IMap
     if (keyv.object)
     {
       map.insert(Pair(keyv, valuev));
-      OnUpdate(keyv.Get<Key>(), valuev.Get<Value>());
       return;
     }
     RuntimeError("map key is null reference");
@@ -163,9 +161,6 @@ struct Map : public IMap
     valuev.Reset();
     keyv.Reset();
   }
-
-  virtual void OnUpdate(Key const &key, Value const &value)
-  {}
 
   std::unordered_map<Variant, Variant, H<Key>, E<Key>> map;
 };
