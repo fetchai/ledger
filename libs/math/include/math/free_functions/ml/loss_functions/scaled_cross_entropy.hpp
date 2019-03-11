@@ -35,7 +35,8 @@ namespace math {
  * @return
  */
 template <typename ArrayType>
-typename ArrayType::Type ScaledCrossEntropyLoss(ArrayType const &x, ArrayType const &y, typename ArrayType::Type const &scalar)
+typename ArrayType::Type ScaledCrossEntropyLoss(ArrayType const &x, ArrayType const &y,
+                                                typename ArrayType::Type const &scalar)
 {
   assert(x.shape() == y.shape());
 

@@ -45,7 +45,8 @@ public:
     assert(inputs[0]->size() == inputs[1]->size());
     assert(inputs[2]->size() == 1);
 
-    typename ArrayType::Type result = fetch::math::ScaledCrossEntropyLoss(*inputs[0], *inputs[1], (*inputs[2])[0]);
+    typename ArrayType::Type result =
+        fetch::math::ScaledCrossEntropyLoss(*inputs[0], *inputs[1], (*inputs[2])[0]);
 
     return result;
   }
@@ -55,8 +56,8 @@ public:
     assert(inputs.size() == 2);
     assert(inputs[0]->size() == inputs[1]->size());
 
-    auto n_classes = static_cast<typename ArrayType::Type>(inputs[1]->size());
-    ArrayPtrType             ret       = std::make_shared<ArrayType>(
+    auto         n_classes = static_cast<typename ArrayType::Type>(inputs[1]->size());
+    ArrayPtrType ret       = std::make_shared<ArrayType>(
         fetch::math::Divide(fetch::math::Subtract(*inputs[0], *inputs[1]), n_classes));
     return ret;
   }

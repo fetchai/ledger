@@ -36,9 +36,16 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Abs(ArrayType &x)
 }
 
 template <typename Type>
-fetch::math::meta::IfIsArithmetic<Type, void> Abs(Type &x)
+fetch::math::meta::IfIsArithmetic<Type, void> Abs(Type &x, Type &ret)
 {
-  x = std::abs(x);
+  ret = std::abs(x);
+}
+template <typename Type>
+fetch::math::meta::IfIsArithmetic<Type, Type> Abs(Type &x)
+{
+  Type ret;
+  Abs(x, ret);
+  return ret;
 }
 
 template <std::size_t I, std::size_t F>

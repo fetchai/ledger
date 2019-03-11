@@ -16,11 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/dataloaders/dataloader.hpp"
+#include "ml/dataloaders/w2v_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/skip_gram.hpp"
 #include "ml/ops/loss_functions/scaled_cross_entropy.hpp"
-#include "w2v_dataloader.hpp"
 
 #include "math/free_functions/ml/loss_functions/mean_square_error.hpp"
 
@@ -46,72 +45,79 @@ using SizeType     = typename ArrayType::SizeType;
 
 struct PARAMS
 {
-  bool     cbow       = false;  // skipgram model if false, cbow if true
-  SizeType batch_size = 128;    // training data batch size
-  SizeType embedding_size =
-      3;                     // dimension of the embedding vector - 4th root of vocab size is good
-  SizeType skip_window = 2;  // words to include in frame (left & right)
-  //  std::uint64_t num_skips      = 2;      // n times to reuse an input to generate a label
-  SizeType k_neg_samps    = 1;    // number of negative examples to sample
-  double   discard_thresh = 0.3;  // larger the training data set, lower the discard threshold
-  SizeType training_steps = 128000;
+  SizeType batch_size     = 128;     // training data batch size
+  SizeType embedding_size = 10;      // dimension of embedding vec
+  SizeType training_steps = 128000;  //
+
+  bool     cbow           = false;    // skipgram model if false, cbow if true
+  SizeType skip_window    = 5;        // max size of context window one way
+  SizeType super_samp     = 10;       // n times to reuse an input to generate a label
+  SizeType k_neg_samps    = 1;        // number of negative examples to sample
+  double   discard_thresh = 0.00001;  // probability of discard
 };
 
-
 std::string TRAINING_DATA =
-"The Ugly Duckling.\n"
-"\n"
-"A duck made her nest under some leaves.\n"
-"She sat on the eggs to keep them warm.\n"
-"At last the eggs broke, one after the other. Little ducks came out.\n"
-"Only one egg was left. It was a very large one.\n"
-"At last it broke, and out came a big, ugly duckling.\n"
-"\"What a big duckling!\" said the old duck. \"He does not look like us. Can he be a turkey? We will see. If he does not like the water, he is not a duck.\"\n"
-"\n"
-"The next day the mother duck took her ducklings to the pond.\n"
-"Splash! Splash! The mother duck was in the water. Then she called the ducklings to come in. They all jumped in and began to swim. The big, ugly duckling swam, too.\n"
-"The mother duck said, \"He is not a turkey. He is my own little duck. He will not be so ugly when he is bigger.\"\n"
-"\n"
-"Then she said to the ducklings, \"Come with me. I want you to see the other ducks. Stay by me and look out for the cat.\"\n"
-"They all went into the duck yard. What a noise the ducks made!\n"
-"While the mother duck was eating a big bug, an old duck bit the ugly duckling.\n"
-"\"Let him alone,\" said the mother duck. \"He did not hurt you.\"\n"
-"\"I know that,\" said the duck, \"but he is so ugly, I bit him.\"\n"
-"\n"
-"The next duck they met, said, \"You have lovely ducklings. They are all pretty but one. He is very ugly.\"\n"
-"The mother duck said, \"I know he is not pretty. But he is very good.\"\n"
-"Then she said to the ducklings, \"Now, my dears, have a good time.\"\n"
-"But the poor, big, ugly duckling did not have a good time.\n"
-"The hens all bit him. The big ducks walked on him.\n"
-"The poor duckling was very sad. He did not want to be so ugly. But he could not help it.\n"
-"He ran to hide under some bushes. The little birds in the bushes were afraid and flew away.\n"
-"\n"
-"\"It is all because I am so ugly,\" said the duckling. So he ran away.\n"
-"At night he came to an old house. The house looked as if it would fall down. It was so old. But the wind blew so hard that the duckling went into the house.\n"
-"An old woman lived there with her cat and her hen.\n"
-"The old woman said, \"I will keep the duck. I will have some eggs.\"\n"
-"\n"
-"The next day, the cat saw the duckling and began to growl.\n"
-"The hen said, \"Can you lay eggs?\" The duckling said, \"No.\"\n"
-"\"Then keep still,\" said the hen. The cat said, \"Can you growl?\"\n"
-"\"No,\" said the duckling.\n"
-"\"Then keep still,\" said the cat.\n"
-"And the duckling hid in a corner. The next day he went for a walk. He saw a big pond. He said, \"I will have a good swim.\"\n"
-"But all of the animals made fun of him. He was so ugly.\n"
-"\n"
-"The summer went by.\n"
-"Then the leaves fell and it was very cold. The poor duckling had a hard time.\n"
-"It is too sad to tell what he did all winter.\n"
-"At last it was spring.\n"
-"The birds sang. The ugly duckling was big now.\n"
-"One day he flew far away.\n"
-"Soon he saw three white swans on the lake.\n"
-"He said, \"I am going to see those birds. I am afraid they will kill me, for I am so ugly.\"\n"
-"He put his head down to the water. What did he see? He saw himself in the water. But he was not an ugly duck. He was a white swan.\n"
-"The other swans came to see him.\n"
-"The children said, \"Oh, see the lovely swans. The one that came last is the best.\"\n"
-"And they gave him bread and cake.\n"
-"It was a happy time for the ugly duckling.";
+    "The Ugly Duckling.\n"
+    "\n"
+    "A duck made her nest under some leaves.\n"
+    "She sat on the eggs to keep them warm.\n"
+    "At last the eggs broke, one after the other. Little ducks came out.\n"
+    "Only one egg was left. It was a very large one.\n"
+    "At last it broke, and out came a big, ugly duckling.\n"
+    "\"What a big duckling!\" said the old duck. \"He does not look like us. Can he be a turkey? "
+    "We will see. If he does not like the water, he is not a duck.\"\n"
+    "\n"
+    "The next day the mother duck took her ducklings to the pond.\n"
+    "Splash! Splash! The mother duck was in the water. Then she called the ducklings to come in. "
+    "They all jumped in and began to swim. The big, ugly duckling swam, too.\n"
+    "The mother duck said, \"He is not a turkey. He is my own little duck. He will not be so ugly "
+    "when he is bigger.\"\n"
+    "\n"
+    "Then she said to the ducklings, \"Come with me. I want you to see the other ducks. Stay by me "
+    "and look out for the cat.\"\n"
+    "They all went into the duck yard. What a noise the ducks made!\n"
+    "While the mother duck was eating a big bug, an old duck bit the ugly duckling.\n"
+    "\"Let him alone,\" said the mother duck. \"He did not hurt you.\"\n"
+    "\"I know that,\" said the duck, \"but he is so ugly, I bit him.\"\n"
+    "\n"
+    "The next duck they met, said, \"You have lovely ducklings. They are all pretty but one. He is "
+    "very ugly.\"\n"
+    "The mother duck said, \"I know he is not pretty. But he is very good.\"\n"
+    "Then she said to the ducklings, \"Now, my dears, have a good time.\"\n"
+    "But the poor, big, ugly duckling did not have a good time.\n"
+    "The hens all bit him. The big ducks walked on him.\n"
+    "The poor duckling was very sad. He did not want to be so ugly. But he could not help it.\n"
+    "He ran to hide under some bushes. The little birds in the bushes were afraid and flew away.\n"
+    "\n"
+    "\"It is all because I am so ugly,\" said the duckling. So he ran away.\n"
+    "At night he came to an old house. The house looked as if it would fall down. It was so old. "
+    "But the wind blew so hard that the duckling went into the house.\n"
+    "An old woman lived there with her cat and her hen.\n"
+    "The old woman said, \"I will keep the duck. I will have some eggs.\"\n"
+    "\n"
+    "The next day, the cat saw the duckling and began to growl.\n"
+    "The hen said, \"Can you lay eggs?\" The duckling said, \"No.\"\n"
+    "\"Then keep still,\" said the hen. The cat said, \"Can you growl?\"\n"
+    "\"No,\" said the duckling.\n"
+    "\"Then keep still,\" said the cat.\n"
+    "And the duckling hid in a corner. The next day he went for a walk. He saw a big pond. He "
+    "said, \"I will have a good swim.\"\n"
+    "But all of the animals made fun of him. He was so ugly.\n"
+    "\n"
+    "The summer went by.\n"
+    "Then the leaves fell and it was very cold. The poor duckling had a hard time.\n"
+    "It is too sad to tell what he did all winter.\n"
+    "At last it was spring.\n"
+    "The birds sang. The ugly duckling was big now.\n"
+    "One day he flew far away.\n"
+    "Soon he saw three white swans on the lake.\n"
+    "He said, \"I am going to see those birds. I am afraid they will kill me, for I am so ugly.\"\n"
+    "He put his head down to the water. What did he see? He saw himself in the water. But he was "
+    "not an ugly duck. He was a white swan.\n"
+    "The other swans came to see him.\n"
+    "The children said, \"Oh, see the lovely swans. The one that came last is the best.\"\n"
+    "And they gave him bread and cake.\n"
+    "It was a happy time for the ugly duckling.";
 
 ////////////////////////
 /// MODEL DEFINITION ///
@@ -128,9 +134,8 @@ std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType vocab_size, SizeType 
   return ret_name;
 }
 
-std::vector<DataType> TestEmbeddings(fetch::ml::Graph<ArrayType> &    g,
-                                             std::string &                    skip_gram_name,
-                                             fetch::ml::W2VLoader<ArrayType> &dl)
+std::vector<DataType> TestEmbeddings(fetch::ml::Graph<ArrayType> &g, std::string &skip_gram_name,
+                                     fetch::ml::W2VLoader<ArrayType> &dl)
 {
 
   // first get hold of the skipgram layer by searching the return name in the graph
@@ -148,17 +153,17 @@ std::vector<DataType> TestEmbeddings(fetch::ml::Graph<ArrayType> &    g,
   embed_cat_input->At(cat_idx) = 1;
   ArrayType cat_output         = embeddings->Forward({embed_cat_input})->Clone();
 
-  ArrayPtrType embed_duckling_input = std::make_shared<ArrayType>(dl.VocabSize());
-  std::string  duckling_lookup      = "duckling";
-  SizeType     duckling_idx         = dl.VocabLookup(duckling_lookup);
+  ArrayPtrType embed_duckling_input      = std::make_shared<ArrayType>(dl.VocabSize());
+  std::string  duckling_lookup           = "duckling";
+  SizeType     duckling_idx              = dl.VocabLookup(duckling_lookup);
   embed_duckling_input->At(duckling_idx) = 1;
-  ArrayType duckling_output         = embeddings->Forward({embed_duckling_input})->Clone();
+  ArrayType duckling_output              = embeddings->Forward({embed_duckling_input})->Clone();
 
-  ArrayPtrType embed_ugly_input = std::make_shared<ArrayType>(dl.VocabSize());
-  std::string  ugly_lookup      = "ugly";
-  SizeType     ugly_idx         = dl.VocabLookup(ugly_lookup);
-  embed_ugly_input->At(ugly_idx)  = 1;
-  ArrayType ugly_output         = embeddings->Forward({embed_ugly_input})->Clone();
+  ArrayPtrType embed_ugly_input  = std::make_shared<ArrayType>(dl.VocabSize());
+  std::string  ugly_lookup       = "ugly";
+  SizeType     ugly_idx          = dl.VocabLookup(ugly_lookup);
+  embed_ugly_input->At(ugly_idx) = 1;
+  ArrayType ugly_output          = embeddings->Forward({embed_ugly_input})->Clone();
 
   DataType result_cat_duckling, result_cat_ugly, result_duckling_ugly;
   // distance from cat to duckling (using MSE as distance)
@@ -169,7 +174,6 @@ std::vector<DataType> TestEmbeddings(fetch::ml::Graph<ArrayType> &    g,
 
   // distance from cat to computer (using MSE as distance)
   result_duckling_ugly = fetch::math::MeanSquareError(duckling_output, ugly_output);
-
 
   std::vector<DataType> ret = {result_cat_duckling, result_cat_ugly, result_duckling_ugly};
   return ret;
@@ -188,8 +192,8 @@ int main(int ac, char **av)
 
   // set up dataloader
   std::cout << "Setting up training data...: " << std::endl;
-  fetch::ml::W2VLoader<ArrayType> dataloader(TRAINING_DATA, p.skip_window, p.cbow, p.k_neg_samps,
-                                             p.discard_thresh);
+  fetch::ml::W2VLoader<ArrayType> dataloader(TRAINING_DATA, p.cbow, p.skip_window, p.super_samp,
+                                             p.k_neg_samps, p.discard_thresh);
 
   ////////////////////////////////
   /// SETUP MODEL ARCHITECTURE ///
@@ -224,7 +228,8 @@ int main(int ac, char **av)
     gt->At(input.second)               = DataType(1);
     std::shared_ptr<ArrayType> results = g.Evaluate(output_name);
 
-    std::shared_ptr<ArrayType> scale_factor = std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1}));
+    std::shared_ptr<ArrayType> scale_factor =
+        std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1}));
 
     if (input.second == 0)
     {
