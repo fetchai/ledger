@@ -30,11 +30,14 @@
 #include "variant/variant_utils.hpp"
 #include "vm_modules/vm_factory.hpp"
 
+#include "ledger/fetch_msgpack.hpp"
+
 #include <algorithm>
 #include <stdexcept>
 #include <string>
 
 using fetch::byte_array::ConstByteArray;
+using fetch::byte_array::FromBase64;
 
 namespace fetch {
 namespace ledger {
@@ -90,6 +93,167 @@ ConstByteArray GenerateDigest(std::string const &source)
   return hash.Final();
 }
 
+/**
+ * Extract the a given type from the container type and insert it into the parameter pack
+ *
+ * @tparam T The type to be extracted
+ * @param pack The parameter pack to populate
+ * @param obj The source object to extract the value from
+ */
+template <typename T>
+void AddToParameterPack(vm::ParameterPack &pack, msgpack::object const &obj)
+{
+  // extract the value from the message pack object
+  T value{};
+  obj.convert(value);
+
+  // add it to the parameter pack
+  pack.Add(std::move(value));
+}
+
+/**
+ * Extract the a given type from the container type and insert it into the parameter pack
+ *
+ * @tparam T The type to be extracted
+ * @param pack The parameter pack to populate
+ * @param obj The source object to extract the value from
+ */
+template <typename T>
+void AddToParameterPack(vm::ParameterPack &pack, variant::Variant const &obj)
+{
+  // extract and add to the pack
+  pack.Add(obj.As<T>());
+}
+
+/**
+ * Convert a byte array into a std::vector
+ *
+ * @param buffer The reference to the buffer
+ * @return The converted buffer
+ */
+std::vector<uint8_t> Convert(ConstByteArray const &buffer)
+{
+  return {buffer.pointer(), buffer.pointer() + buffer.size()};
+}
+
+/**
+ * Extract an address from a msgpack::object
+ *
+ * @param vm The instance to the VM
+ * @param pack The reference to the parameter pack to be populated
+ * @param obj The object to extract the address from
+ */
+void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::object const &obj)
+{
+  static int8_t const   ADDRESS_ID   = static_cast<int8_t>(0xAD);
+  static uint32_t const ADDRESS_SIZE = 64u;
+
+  bool valid{false};
+
+  if (msgpack::type::EXT == obj.type)
+  {
+    auto const &ext = obj.via.ext;
+
+    if ((ADDRESS_ID == ext.type()) && (ADDRESS_SIZE == ext.size))
+    {
+      uint8_t const *start = reinterpret_cast<uint8_t const *>(ext.data());
+      uint8_t const *end   = start + ext.size;
+
+      // create the instance of the address
+      vm::Ptr<vm::Address> address = vm::Address::Constructor(vm, vm::TypeIds::Address);
+      address->SetBytes(std::vector<uint8_t>{start, end});
+
+      static_assert(vm::IsPtr<vm::Ptr<vm::Address>>::value, "");
+
+      // add the address to the parameter pack
+      pack.Add(std::move(address));
+      valid = true;
+    }
+  }
+
+  if (!valid)
+  {
+    throw std::runtime_error("Invalid address formart");
+  }
+}
+
+/**
+ * Extract an address from a JSON object
+ *
+ * @param vm The pointer to the VM
+ * @param pack The parameter pack to be populated
+ * @param obj The variant to extract the address from
+ */
+void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Variant const &obj)
+{
+  // create the instance of the address
+  auto address = vm::Address::Constructor(vm, vm::TypeIds::Address);
+  address->SetBytes(Convert(FromBase64(obj.As<ConstByteArray>())));
+
+  // add it to the parameter list
+  pack.Add(address);
+}
+
+/**
+ * Extract a value from the variant type specified based on the expected type id and add it to the
+ * given parameter pack
+ *
+ * @tparam T The variant type
+ * @param params The parameter pack to be populated
+ * @param expected_type The expected type to be extracted
+ * @param variant The input variant from which the value is extracted
+ */
+template <typename T>
+void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expected_type,
+                        T const &variant)
+{
+  switch (expected_type)
+  {
+  case vm::TypeIds::Bool:
+    AddToParameterPack<bool>(params, variant);
+    break;
+
+  case vm::TypeIds::Int8:
+    AddToParameterPack<int8_t>(params, variant);
+    break;
+
+  case vm::TypeIds::Byte:
+    AddToParameterPack<uint8_t>(params, variant);
+    break;
+
+  case vm::TypeIds::Int16:
+    AddToParameterPack<int16_t>(params, variant);
+    break;
+
+  case vm::TypeIds::UInt16:
+    AddToParameterPack<uint16_t>(params, variant);
+    break;
+
+  case vm::TypeIds::Int32:
+    AddToParameterPack<int32_t>(params, variant);
+    break;
+
+  case vm::TypeIds::UInt32:
+    AddToParameterPack<uint32_t>(params, variant);
+    break;
+
+  case vm::TypeIds::Int64:
+    AddToParameterPack<int64_t>(params, variant);
+    break;
+
+  case vm::TypeIds::UInt64:
+    AddToParameterPack<uint64_t>(params, variant);
+    break;
+
+  case vm::TypeIds::Address:
+    AddAddressToParameterPack(vm, params, variant);
+    break;
+
+  default:
+    throw std::runtime_error("Unable to map data type to VM entity");
+  }
+}
+
 }  // namespace
 
 /**
@@ -112,8 +276,7 @@ SmartContract::SmartContract(std::string const &source)
   FETCH_LOG_WARN(LOGGING_NAME, "Constructing contract: ", contract_digest().ToBase64());
 
   // create and compile the script
-  auto module = vm_modules::VMFactory::GetModule();
-  auto errors = vm_modules::VMFactory::Compile(module, source_, *script_);
+  auto errors = vm_modules::VMFactory::Compile(module_, source_, *script_);
 
   // if there are any compilation errors
   if (!errors.empty())
@@ -163,26 +326,75 @@ SmartContract::SmartContract(std::string const &source)
  */
 Contract::Status SmartContract::InvokeAction(std::string const &name, Transaction const &tx)
 {
-  variant::Variant data;
-  if (!ParseAsJson(tx, data))
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse data from SC. TX data: ", tx.data());
-    /* malformatted TXs should cause block execution failure (although there is no guard for this)
-     */
-    return Status::FAILED;
-  }
+  std::vector<msgpack::object> input_params;
 
-  FETCH_LOG_WARN(LOGGING_NAME, "Running smart contract target: ", name);
+  // if the tx has a payload parse it
+  if (!tx.data().empty())
+  {
+    // load the input data into msgpack for deserialisation
+    msgpack::unpacker p;
+    p.reserve_buffer(tx.data().size());
+    std::memcpy(p.buffer(), tx.data().pointer(), tx.data().size());
+    p.buffer_consumed(tx.data().size());
+
+    msgpack::object_handle h;
+    if (!p.next(h))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Parse error");
+      return Status::FAILED;
+    }
+
+    auto const &container = h.get();
+
+    if (msgpack::type::ARRAY != container.type)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Incorrect format, expected array of arguments");
+      return Status::FAILED;
+    }
+
+    // access the elements of the array
+    container.convert(input_params);
+  }
 
   // Get clean VM instance
   auto vm = vm_modules::VMFactory::GetVM(module_);
   vm->SetIOObserver(state());
 
+  // lookup the function / entry point which will be executed
+  Script::Function const *target_function = script_->FindFunction(name);
+  if (!target_function ||
+      (input_params.size() != static_cast<std::size_t>(target_function->num_parameters)))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Incorrect number of parameters provided for target function");
+    return Status::FAILED;
+  }
+
+  vm::ParameterPack params{vm->registered_types()};
+
+  // start to populate the parameter pack
+  try
+  {
+    for (std::size_t i = 0; i < input_params.size(); ++i)
+    {
+      auto const &input_parameter    = input_params.at(i);
+      auto const &expected_parameter = target_function->variables.at(i);
+
+      AddToParameterPack(vm.get(), params, expected_parameter.type_id, input_parameter);
+    }
+  }
+  catch (std::exception const &)
+  {
+    // this can happen for a number of reasons
+    return Status::FAILED;
+  }
+
+  FETCH_LOG_WARN(LOGGING_NAME, "Running smart contract target: ", name);
+
   // Execute the requested function
   std::string        error;
   std::string        console;
   fetch::vm::Variant output;
-  if (!vm->Execute(*script_, name, error, console, output))
+  if (!vm->Execute(*script_, name, error, console, output, params))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
     return Status::FAILED;
@@ -202,11 +414,43 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
 SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query const &request,
                                                  Query &response)
 {
-  FETCH_UNUSED(request);
-
   // get clean VM instance
   auto vm = vm_modules::VMFactory::GetVM(module_);
   vm->SetIOObserver(state());
+
+  // lookup the script
+  Script::Function const *target_function = script_->FindFunction(name);
+  if (!target_function)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup target function");
+    return Status::FAILED;
+  }
+
+  auto const num_parameters = static_cast<std::size_t>(target_function->num_parameters);
+
+  // create and populate the parameter pack
+  vm::ParameterPack params{vm->registered_types()};
+
+  try
+  {
+    for (std::size_t i = 0; i < num_parameters; ++i)
+    {
+      auto const &parameter = target_function->variables[i];
+
+      if (!request.Has(parameter.name))
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup variable: ", parameter.name);
+        return Status::FAILED;
+      }
+
+      // add to the parameter pack
+      AddToParameterPack(vm.get(), params, parameter.type_id, request[parameter.name]);
+    }
+  }
+  catch (std::exception const &ex)
+  {
+    return Status::FAILED;
+  }
 
   // create the initial query response
   response = Query::Object();
@@ -214,9 +458,11 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   vm::Variant output;
   std::string error;
   std::string console;
-  if (!vm->Execute(*script_, name, error, console, output))
+  if (!vm->Execute(*script_, name, error, console, output, params))
   {
-    response["status"] = "failed";
+    response["status"]  = "failed";
+    response["msg"]     = error;
+    response["console"] = console;
     return Status::FAILED;
   }
 
