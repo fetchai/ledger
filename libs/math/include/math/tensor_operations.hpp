@@ -22,33 +22,21 @@
 #include <vector>
 
 namespace fetch {
-namespace ml {
+namespace math {
 
-template <class T>
-class Ops
-{
-public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-
-  virtual ArrayPtrType              Forward(std::vector<ArrayPtrType> const &inputs) = 0;
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     error) = 0;
-  virtual ArrayPtrType              ForwardBatch(std::vector<ArrayPtrType> const &inputs)
+  template<typename T>
+  std::shared_ptr<fetch::math::Tensor<T>> ConcatenateTensors(std::vector<std::shared_ptr<fetch::math::Tensor<T>>> const &tensors)
   {
-    std::cerr << "ForwardBatch not implemented" << std::endl;
-    assert(false);
-    return nullptr;
+    std::vector<typename fetch::math::Tensor<T>::SizeType> retSize;
+    retSize.push_back(tensors.size());
+    retSize.insert(retSize.back(), tensors.front()->shape().begin(), tensors.front()->shape().end());
+    std::shared_ptr<fetch::math::Tensor<T>> ret = std::make_shared<fetch::math::Tensor<T>>(retSize);
+    for (typename fetch::math::Tensor<T>::SizeType i(0) ; i < tensors.size() ; ++i)
+      {
+	ret->Slice(i).Copy(*(tensors[i]));
+      }
+    return ret;
   }
 
-  virtual void SetBatch(bool b)
-  {
-    batch_ = b;
-  }
-
-protected:
-  bool         batch_ = false;
-  ArrayPtrType output_;
-};
-}  // namespace ml
+}  // namespace math
 }  // namespace fetch

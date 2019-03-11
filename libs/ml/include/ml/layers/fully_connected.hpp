@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/tensor_operations.hpp"
+
 #include "ml/layers/layer.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/flatten.hpp"
@@ -68,6 +70,17 @@ public:
 
     ArrayPtrType bias_ptr = std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, out}));
     this->SetInput(bias, bias_ptr);
+  }
+
+  virtual ArrayPtrType              ForwardBatch(std::vector<ArrayPtrType> const &inputs)
+  {
+    assert(inputs.size() == 1);
+    std::vector<ArrayPtrType> results;
+    for (typename ArrayType::SizeType b(0) ; b < inputs[0]->shape()[0] ; ++b) // Loop over batch dim
+      {
+	// results.push_back(this->Forward(inputs[0]->Slice(b)));
+      }
+    return ConcatenateTensors(results);
   }
 
   static constexpr char const *DESCRIPTOR = "FullyConnected";

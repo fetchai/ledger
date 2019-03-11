@@ -118,7 +118,7 @@ public:
    * @param nodeName name of the placeholder node in the graph (must be unique)
    * @param data the pointer to a tensor to assign to the placeholder
    */
-  void SetInput(std::string const &nodeName, ArrayPtrType data)
+  void SetInput(std::string const &nodeName, ArrayPtrType data, bool batch = false)
   {
     std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>> placeholder =
         std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<ArrayType>>(nodes_[nodeName]);
@@ -132,6 +132,10 @@ public:
     {
       throw std::runtime_error("No placeholder node with name [" + nodeName + "] found in graph!");
     }
+    for (auto &n : nodes_)
+      {
+	n.second->SetBatch(batch);
+      }
   }
 
   /**

@@ -72,7 +72,7 @@ int main(int ac, char **av)
       dataloader.Reset();
     }
     input = dataloader.GetNext();
-    g.SetInput("Input", input.second);
+    g.SetInput("Input", input.second, true);
     gt->Fill(0);
     gt->At(input.first)                = DataType(1.0);
     std::shared_ptr<ArrayType> results = g.Evaluate("Softmax");

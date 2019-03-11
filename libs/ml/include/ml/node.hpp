@@ -41,6 +41,7 @@ public:
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayPtrType>> BackPropagate(
       ArrayPtrType errorSignal) = 0;
   virtual void ResetCache()     = 0;
+  virtual void SetBatch(bool b) = 0;
 };
 
 template <class T, class O>
@@ -74,7 +75,14 @@ public:
     {
       std::vector<ArrayPtrType> inputs = GatherInputs();
       FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
-      cachedOutput_ = this->Forward(inputs);
+      if (this->batch_)
+	{
+	  cachedOutput_ = this->ForwardBatch(inputs);
+	}
+      else
+	{
+	  cachedOutput_ = this->Forward(inputs);
+	}
     }
     return cachedOutput_;
   }
@@ -115,6 +123,11 @@ public:
   virtual void ResetCache()
   {
     cachedOutput_ = nullptr;
+  }
+
+  virtual void SetBatch(bool b)
+  {
+    O::SetBatch(b);
   }
 
 private:
