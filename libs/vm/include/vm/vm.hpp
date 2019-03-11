@@ -130,20 +130,20 @@ public:
   {
     bool success{false};
 
-    success &= AddI(std::forward<T>(parameter));
+    success &= Add(std::forward<T>(parameter));
     success &= Add(std::forward<Args>(args)...);
 
     return success;
   }
 
   template <typename T>
-  IfIsPrimitive<T, bool> AddI(T &&parameter)
+  IfIsPrimitive<T, bool> Add(T &&parameter)
   {
     return AddInternal(std::forward<T>(parameter));
   }
 
   template <typename T>
-  IfIsPtr<T, bool> AddI(T &&obj)
+  IfIsPtr<T, bool> Add(T &&obj)
   {
     bool success{false};
 
