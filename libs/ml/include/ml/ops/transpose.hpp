@@ -74,11 +74,13 @@ public:
       {
         ret->Slice(i).Copy(errorSignal->Slice(i).Transpose());
       }
+      return {ret};
     }
     else
     {
       throw std::runtime_error("Can't transpose this tensor");
     }
+    return {nullptr};
   }
 
   static constexpr char const *DESCRIPTOR = "Transpose";
