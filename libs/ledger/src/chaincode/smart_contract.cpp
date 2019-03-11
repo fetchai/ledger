@@ -274,8 +274,7 @@ SmartContract::SmartContract(std::string const &source)
   FETCH_LOG_WARN(LOGGING_NAME, "Constructing contract: ", contract_digest().ToBase64());
 
   // create and compile the script
-  auto module = vm_modules::VMFactory::GetModule();
-  auto errors = vm_modules::VMFactory::Compile(module, source_, *script_);
+  auto errors = vm_modules::VMFactory::Compile(module_, source_, *script_);
 
   // if there are any compilation errors
   if (!errors.empty())

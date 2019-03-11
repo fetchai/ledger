@@ -35,8 +35,6 @@ CachedStorageAdapter::CachedStorageAdapter(StorageInterface &storage)
  */
 CachedStorageAdapter::~CachedStorageAdapter()
 {
-  // ensure all values are flushed to the storage engine
-  Flush();
 }
 
 /**

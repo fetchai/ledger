@@ -139,20 +139,7 @@ public:
   template <typename T>
   IfIsPrimitive<T, bool> Add(T const &parameter)
   {
-    bool success{false};
-
-    // determine the type if the parameter based on the input
-    TypeId type_id = Getter<T>::GetTypeId(registered_types_, parameter);
-
-    if (type_id != TypeIds::Unknown)
-    {
-      // add the parameter to the list
-      params_.emplace_back(parameter, type_id);
-
-      success = true;
-    }
-
-    return success;
+    return AddInternal(parameter);
   }
 
   template <typename T>
@@ -162,9 +149,7 @@ public:
 
     if (obj)
     {
-      TypeId type_id = Getter<T>::GetTypeId(registered_types_, obj);
-
-      params_.emplace_back(obj, type_id);
+      success = AddInternal(obj);
     }
 
     return success;
@@ -180,6 +165,26 @@ public:
   ParameterPack &operator=(ParameterPack &&) = delete;
 
 private:
+
+  template <typename T>
+  bool AddInternal(T const &value)
+  {
+    bool success{false};
+
+    TypeId const type_id = Getter<T>::GetTypeId(registered_types_, value);
+
+    if (TypeIds::Unknown != type_id)
+    {
+      // add the value to the map
+      params_.emplace_back(value, type_id);
+
+      // signal great success
+      success = true;
+    }
+
+    return success;
+  }
+
   using VariantArray = std::vector<Variant>;
 
   RegisteredTypes const &registered_types_;
