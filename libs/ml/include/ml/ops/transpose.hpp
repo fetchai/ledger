@@ -36,7 +36,21 @@ public:
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
     ASSERT(inputs.size() == 1);
-    this->output_ = std::make_shared<ArrayType>(inputs[0]->Clone().Transpose());
+    if (inputs[0]->shape().size() == 2)  // Non batch
+    {
+      this->output_ = std::make_shared<ArrayType>(inputs[0]->Clone().Transpose());
+    }
+    else if (inputs[0]->shape().size() == 3)  // Batch
+    {
+      std::vector<typename ArrayType::SizeType> inputShape = inputs[0]->shape();
+      this->output_                                        = std::make_shared<ArrayType>(
+          std::vector<typename ArrayType::SizeType>({inputShape[0], inputShape[2], inputShape[1]}));
+      for (unsigned int i(0); i < inputShape[0]; ++i)
+      {
+        this->output_->Slice(i).Copy(inputs[0]->Slice(i).Transpose());
+      }
+    }
+
     return this->output_;
   }
 
