@@ -45,14 +45,14 @@ using SizeType     = typename ArrayType::SizeType;
 
 struct PARAMS
 {
-  SizeType batch_size     = 128;     // training data batch size
-  SizeType embedding_size = 10;      // dimension of embedding vec
-  SizeType training_steps = 128000;  //
+  SizeType batch_size     = 128;      // training data batch size
+  SizeType embedding_size = 10;       // dimension of embedding vec
+  SizeType training_steps = 1280000;  //
 
   bool     cbow           = false;    // skipgram model if false, cbow if true
   SizeType skip_window    = 5;        // max size of context window one way
   SizeType super_samp     = 10;       // n times to reuse an input to generate a label
-  SizeType k_neg_samps    = 1;        // number of negative examples to sample
+  SizeType k_neg_samps    = 2;        // number of negative examples to sample
   double   discard_thresh = 0.00001;  // probability of discard
 };
 
