@@ -32,54 +32,88 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<f
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(FlattenTest, MyTypes);
 
-TYPED_TEST(FlattenTest, forward_0_test)
+TYPED_TEST(FlattenTest, forward_test)
 {
-  std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(std::vector<std::uint64_t>({8, 8}));
-  fetch::ml::ops::Flatten<TypeParam> op(0u);
-  std::shared_ptr<TypeParam>         prediction = op.Forward({data});
+  std::shared_ptr<TypeParam> data =
+      std::make_shared<TypeParam>(std::vector<std::uint64_t>({8, 8, 8, 8, 8, 8}));
 
-  // test correct values
-  ASSERT_EQ(prediction->shape().size(), 2);
-  ASSERT_EQ(prediction->shape()[0], 1);
-  ASSERT_EQ(prediction->shape()[1], 64);
+  {
+    fetch::ml::ops::Flatten<TypeParam> op(0u, false);
+    std::shared_ptr<TypeParam>         prediction = op.Forward({data});
+    ASSERT_EQ(prediction->shape(), std::vector<uint64_t>({1, 262144}));
+  }
+  {
+    fetch::ml::ops::Flatten<TypeParam> op(1u, false);
+    std::shared_ptr<TypeParam>         prediction = op.Forward({data});
+    ASSERT_EQ(prediction->shape(), std::vector<uint64_t>({8, 32768}));
+  }
+  {
+    fetch::ml::ops::Flatten<TypeParam> op(2u, false);
+    std::shared_ptr<TypeParam>         prediction = op.Forward({data});
+    ASSERT_EQ(prediction->shape(), std::vector<uint64_t>({8, 8, 4096}));
+  }
+  {
+    fetch::ml::ops::Flatten<TypeParam> op(3u, false);
+    std::shared_ptr<TypeParam>         prediction = op.Forward({data});
+    ASSERT_EQ(prediction->shape(), std::vector<uint64_t>({8, 8, 8, 512}));
+  }
+  {
+    fetch::ml::ops::Flatten<TypeParam> op(4u, false);
+    std::shared_ptr<TypeParam>         prediction = op.Forward({data});
+    ASSERT_EQ(prediction->shape(), std::vector<uint64_t>({8, 8, 8, 8, 64}));
+  }
+
+  {
+    fetch::ml::ops::Flatten<TypeParam> op(0u, true);
+    std::shared_ptr<TypeParam>         prediction = op.Forward({data});
+    ASSERT_EQ(prediction->shape(), std::vector<uint64_t>({8, 1, 32768}));
+  }
+  {
+    fetch::ml::ops::Flatten<TypeParam> op(1u, true);
+    std::shared_ptr<TypeParam>         prediction = op.Forward({data});
+    ASSERT_EQ(prediction->shape(), std::vector<uint64_t>({8, 8, 4096}));
+  }
+  {
+    fetch::ml::ops::Flatten<TypeParam> op(2u, true);
+    std::shared_ptr<TypeParam>         prediction = op.Forward({data});
+    ASSERT_EQ(prediction->shape(), std::vector<uint64_t>({8, 8, 8, 512}));
+  }
+  {
+    fetch::ml::ops::Flatten<TypeParam> op(3u, true);
+    std::shared_ptr<TypeParam>         prediction = op.Forward({data});
+    ASSERT_EQ(prediction->shape(), std::vector<uint64_t>({8, 8, 8, 8, 64}));
+  }
+  {
+    fetch::ml::ops::Flatten<TypeParam> op(4u, true);
+    std::shared_ptr<TypeParam>         prediction = op.Forward({data});
+    ASSERT_EQ(prediction->shape(), std::vector<uint64_t>({8, 8, 8, 8, 8, 8}));
+  }
 }
 
-TYPED_TEST(FlattenTest, backward_0_test)
+TYPED_TEST(FlattenTest, backward_test)
 {
-  std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(std::vector<std::uint64_t>({8, 8}));
-  fetch::ml::ops::Flatten<TypeParam> op(0u);
-  std::shared_ptr<TypeParam>         prediction  = op.Forward({data});
-  std::shared_ptr<TypeParam>         errorSignal = std::make_shared<TypeParam>(prediction->shape());
-  std::vector<std::shared_ptr<TypeParam>> gradients = op.Backward({data}, errorSignal);
+  std::shared_ptr<TypeParam> data =
+      std::make_shared<TypeParam>(std::vector<std::uint64_t>({8, 8, 8, 8, 8, 8}));
 
-  ASSERT_EQ(gradients.size(), 1);
-  ASSERT_EQ(gradients[0]->shape().size(), 2);
-  ASSERT_EQ(gradients[0]->shape()[0], 8);
-  ASSERT_EQ(gradients[0]->shape()[1], 8);
-}
+  for (unsigned int i(0); i < 5; ++i)
+  {
+    {
+      fetch::ml::ops::Flatten<TypeParam> op(i, false);
+      std::shared_ptr<TypeParam>         prediction = op.Forward({data});
+      std::shared_ptr<TypeParam> errorSignal = std::make_shared<TypeParam>(prediction->shape());
+      std::vector<std::shared_ptr<TypeParam>> gradients = op.Backward({data}, errorSignal);
 
-TYPED_TEST(FlattenTest, forward_1_test)
-{
-  std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(std::vector<std::uint64_t>({8, 8}));
-  fetch::ml::ops::Flatten<TypeParam> op(1u);
-  std::shared_ptr<TypeParam>         prediction = op.Forward({data});
+      ASSERT_EQ(gradients.size(), 1);
+      ASSERT_EQ(gradients[0]->shape(), std::vector<std::uint64_t>({8, 8, 8, 8, 8, 8}));
+    }
+    {
+      fetch::ml::ops::Flatten<TypeParam> op(i, true);
+      std::shared_ptr<TypeParam>         prediction = op.Forward({data});
+      std::shared_ptr<TypeParam> errorSignal = std::make_shared<TypeParam>(prediction->shape());
+      std::vector<std::shared_ptr<TypeParam>> gradients = op.Backward({data}, errorSignal);
 
-  // test correct values
-  ASSERT_EQ(prediction->shape().size(), 2);
-  ASSERT_EQ(prediction->shape()[0], 8);
-  ASSERT_EQ(prediction->shape()[1], 8);
-}
-
-TYPED_TEST(FlattenTest, backward_1_test)
-{
-  std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(std::vector<std::uint64_t>({8, 8}));
-  fetch::ml::ops::Flatten<TypeParam> op(1u);
-  std::shared_ptr<TypeParam>         prediction  = op.Forward({data});
-  std::shared_ptr<TypeParam>         errorSignal = std::make_shared<TypeParam>(prediction->shape());
-  std::vector<std::shared_ptr<TypeParam>> gradients = op.Backward({data}, errorSignal);
-
-  ASSERT_EQ(gradients.size(), 1);
-  ASSERT_EQ(gradients[0]->shape().size(), 2);
-  ASSERT_EQ(gradients[0]->shape()[0], 8);
-  ASSERT_EQ(gradients[0]->shape()[1], 8);
+      ASSERT_EQ(gradients.size(), 1);
+      ASSERT_EQ(gradients[0]->shape(), std::vector<std::uint64_t>({8, 8, 8, 8, 8, 8}));
+    }
+  }
 }

@@ -30,8 +30,9 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  Flatten(unsigned int dimsToKeep)
+  Flatten(unsigned int dimsToKeep, bool batch = false)
     : dimsToKeep_(dimsToKeep)
+    , batch_(batch)
   {}
 
   virtual ~Flatten() = default;
@@ -42,19 +43,23 @@ public:
     input_shape_ = inputs[0]->shape();
     std::vector<std::uint64_t> output_shape;
 
-    unsigned int m(1);
+    std::size_t m(1);
+    if (batch_)
+    {
+      output_shape.push_back(input_shape_[0]);
+      m *= input_shape_[0];
+    }
     if (dimsToKeep_ == 0)
     {
       output_shape.push_back(1);
     }
-    for (unsigned int i(0); i < dimsToKeep_; ++i)
+    for (unsigned int i(batch_ ? 1 : 0); i < dimsToKeep_ + (batch_ ? 1 : 0); ++i)
     {
       output_shape.push_back(input_shape_[i]);
       m *= input_shape_[i];
     }
     output_shape.push_back(inputs[0]->size() / m);
     this->output_ = std::make_shared<ArrayType>(output_shape);
-    // TODO(private, 521) remove useless copy and replace with lightweight view
     this->output_->Copy(*inputs[0]);
     return this->output_;
   }
@@ -68,11 +73,17 @@ public:
     return {ret};
   }
 
+  void setBatch(bool b)
+  {
+    batch_ = b;
+  }
+
   static constexpr char const *DESCRIPTOR = "Flatten";
 
 private:
   std::vector<std::uint64_t> input_shape_;
   unsigned int               dimsToKeep_;
+  bool                       batch_;
 };
 
 }  // namespace ops

@@ -48,8 +48,8 @@ public:
 
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
-    std::string flat_input =
-        this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_Flatten", {input}, 2u);
+    std::string flat_input = this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(
+        name + "_Flatten", {input}, 0u, false);
     std::string weights =
         this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
     std::string weights_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
