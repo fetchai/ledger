@@ -44,48 +44,85 @@ public:
   Graph()
   {}
 
-  ArrayPtrType Evaluate(std::string const &nodeName)
+  /**
+   * Evaluates the output of a node (calling all necessary forward prop)
+   * @param nodeName name of node to evaluate for output
+   * @return pointer to array containing node output
+   */
+  ArrayPtrType Evaluate(std::string const &node_name)
   {
-    return nodes_[nodeName]->Evaluate();
+    if (nodes_[node_name])
+    {
+      return nodes_[node_name]->Evaluate();
+    }
+    else
+    {
+      throw std::runtime_error("Cannot evaluate: node [" + node_name + "] not in graph");
+    }
   }
 
+  /**
+   * Backpropagate an error signal through the graph
+   * @param nodeName name of node from which to begin backprop
+   * @param errorSignal pointer to array containing error signal to backprop
+   */
   void BackPropagate(std::string const &nodeName, ArrayPtrType errorSignal)
   {
     nodes_[nodeName]->BackPropagate(errorSignal);
   }
 
-  /*
-   * Called for node without trainable parameters
+  /**
+   * Adds a node without trainable parameters.
+   * @tparam OperationType Op template type
+   * @tparam Params template for input parameters to node
+   * @param node_name non-unique specified node name
+   * @param inputs names of node inputs to the node
+   * @param params input parameters to the node op
    */
   template <class OperationType, typename... Params>
-  meta::IfIsNotTrainable<ArrayType, OperationType, void> AddNode(
+  meta::IfIsNotTrainable<ArrayType, OperationType, std::string> AddNode(
       std::string const &node_name, std::vector<std::string> const &inputs, Params... params)
   {
     std::string name = UpdateVariableName<OperationType>(node_name);
     std::shared_ptr<Node<ArrayType, OperationType>> op =
         std::make_shared<Node<ArrayType, OperationType>>(node_name, params...);
-    AddNodeImpl<OperationType>(name, inputs, op, true);
+    AddNodeImpl<OperationType>(name, inputs, op);
+    FETCH_LOG_INFO("ML_LIB", "Created non-trainable node [", node_name, "]");
+    return name;
   }
 
-  /*
-   * Called for nodes with trainable parameters
-   * Will keep the node in the trainable_ list to step through them
+  /**
+   * Adds a node with trainable parameters.
+   * @tparam OperationType Op template type
+   * @tparam Params template for input parameters to node
+   * @param node_name non-unique specified node name
+   * @param inputs names of node inputs to the node
+   * @param params input parameters to the node op
    */
   template <class OperationType, typename... Params>
-  meta::IfIsTrainable<ArrayType, OperationType, void> AddNode(
+  meta::IfIsTrainable<ArrayType, OperationType, std::string> AddNode(
       std::string const &node_name, std::vector<std::string> const &inputs, Params... params)
   {
     std::string name = UpdateVariableName<OperationType>(node_name);
     std::shared_ptr<Node<ArrayType, OperationType>> op =
         std::make_shared<Node<ArrayType, OperationType>>(node_name, params...);
-    AddNodeImpl<OperationType>(name, inputs, op, true);
+    AddNodeImpl<OperationType>(name, inputs, op);
+    FETCH_LOG_INFO("ML_LIB", "Created trainable node [", node_name, "]");
     trainable_[node_name] = op;
+    return name;
   }
 
+  /**
+   * Assigns data to a placeholder if the node can be found in the graph.
+   * Also resets the graph cache to avoid erroneous leftover outputs
+   * @param nodeName name of the placeholder node in the graph (must be unique)
+   * @param data the pointer to a tensor to assign to the placeholder
+   */
   void SetInput(std::string const &nodeName, ArrayPtrType data)
   {
     std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>> placeholder =
         std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<ArrayType>>(nodes_[nodeName]);
+
     if (placeholder)
     {
       placeholder->SetData(data);
@@ -93,13 +130,14 @@ public:
     }
     else
     {
-      std::cerr << "No placeholder node with name [" << nodeName << "]" << std::endl;
-      assert(false);
+      throw std::runtime_error("No placeholder node with name [" + nodeName + "] found in graph!");
     }
-    placeholder->SetData(data);
-    ResetGraphCache();
   }
 
+  /**
+   * takes a training step
+   * @param learningRate the learning rate (alpha) hyperparameter
+   */
   virtual void Step(Datatype learningRate)
   {
     for (auto &t : trainable_)
@@ -108,6 +146,9 @@ public:
     }
   }
 
+  /**
+   * Resets graph cache, clearing stored evaluation outputs
+   */
   void ResetGraphCache()
   {
     for (auto &node : nodes_)
@@ -116,7 +157,10 @@ public:
     }
   }
 
-  // Returns the graph trainable parameters as a nested structure for serializing
+  /**
+   * Assigns all trainable parameters to a stateDict for exporting and serialising
+   * @return  d is the StateDict of all trainable params
+   */
   virtual struct ops::StateDict<ArrayType> StateDict() const
   {
     struct ops::StateDict<ArrayType> d;
@@ -127,7 +171,12 @@ public:
     return d;
   }
 
-  // Import trainable parameters from an exported model
+  //
+
+  /**
+   * Import trainable parameters from an exported model
+   * @param dict  state dictionary to import to weights
+   */
   virtual void
   LoadStateDict(struct ops::StateDict<T> const &dict)
   {
@@ -139,18 +188,24 @@ public:
   }
 
 private:
-  template <typename OperationType, typename... Params>
+  /**
+   * Implementation of AddNode that is common to trainable and non-trainable ops
+   * @tparam OperationType  The type of Op (or layer) to be added
+   * @param node_name  the initial provided node name - might not be unique
+   * @param inputs  vector of names of nodes that input to this node
+   * @param op  the op to be added to the graph as a new node
+   */
+  template <typename OperationType>
   void AddNodeImpl(std::string const &node_name, std::vector<std::string> const &inputs,
-                   std::shared_ptr<Node<ArrayType, OperationType>> op, bool trainable)
+                   std::shared_ptr<Node<ArrayType, OperationType>> op)
   {
     if (!(nodes_.find(node_name) == nodes_.end()))
     {
-      throw;
+      throw std::runtime_error("node named [" + node_name + "] already exists");
     }
 
     nodes_[node_name] = op;
 
-    FETCH_LOG_INFO("ML_LIB", "Creating node [", node_name, "], trainable: ", trainable);
     for (auto const &i : inputs)
     {
       nodes_[node_name]->AddInput(nodes_[i]);

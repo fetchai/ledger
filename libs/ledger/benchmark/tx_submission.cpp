@@ -22,6 +22,7 @@
 #include "crypto/ecdsa.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chain/transaction_serialization.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
 #include "storage/transient_object_store.hpp"
 

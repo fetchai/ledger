@@ -86,9 +86,9 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   // clang-format on
 
   // for debug purposes
-#ifdef FETCH_LOG_INFO_ENABLED
+#ifdef FETCH_LOG_DEBUG_ENABLED
   state_machine_->OnStateChange([](State current, State previous) {
-    FETCH_LOG_INFO(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
   });
 #endif  // FETCH_LOG_DEBUG_ENABLED
 }
