@@ -26,6 +26,8 @@
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "mock_storage_unit.hpp"
 
+#include "ledger/fetch_msgpack.hpp"
+
 #include <gtest/gtest.h>
 
 class ContractTest : public ::testing::Test
@@ -35,6 +37,7 @@ protected:
   using MutableTransaction   = fetch::ledger::MutableTransaction;
   using VerifiedTransaction  = fetch::ledger::VerifiedTransaction;
   using ConstByteArray       = fetch::byte_array::ConstByteArray;
+  using ByteArray            = fetch::byte_array::ByteArray;
   using Contract             = fetch::ledger::Contract;
   using ContractPtr          = std::shared_ptr<Contract>;
   using MockStorageUnitPtr   = std::unique_ptr<MockStorageUnit>;
@@ -58,6 +61,66 @@ protected:
     contract_name_.reset();
     storage_.reset();
     certificate_.reset();
+  }
+
+  class PayloadPacker
+  {
+  public:
+    template <typename... Args>
+    PayloadPacker(Args... args)
+    {
+      // initialise the array
+      packer_.pack_array(sizeof...(args));
+
+      Pack(args...);
+    }
+
+    ConstByteArray GetBuffer() const
+    {
+      return ConstByteArray{reinterpret_cast<uint8_t const *>(buffer_.data()), buffer_.size()};
+    }
+
+  private:
+    using Buffer = msgpack::sbuffer;
+    using Packer = msgpack::packer<Buffer>;
+
+    template <typename T, typename... Args>
+    void Pack(T const &arg, Args... args)
+    {
+      // packet this argument
+      packer_.pack(arg);
+
+      // pack the other arguments
+      Pack(args...);
+    }
+
+    template <typename T>
+    void Pack(T const &arg)
+    {
+      packer_.pack(arg);
+    }
+
+    void Pack(fetch::crypto::Identity const &identity)
+    {
+      auto const &id = identity.identifier();
+
+      // pack as an address
+      packer_.pack_ext(id.size(), static_cast<int8_t>(0xAD));
+      packer_.pack_ext_body(id.char_pointer(), static_cast<uint32_t>(id.size()));
+    }
+
+    Buffer buffer_{};
+    Packer packer_{&buffer_};
+  };
+
+  template <typename... Args>
+  Contract::Status SendActionWithParams(ConstByteArray const &action, Resources const &resources,
+                                        Args... args)
+  {
+    // pack all the data into a single payload
+    PayloadPacker p{args...};
+
+    return SendAction(action, resources, p.GetBuffer());
   }
 
   Contract::Status SendAction(ConstByteArray const &action, Resources const &resources,
