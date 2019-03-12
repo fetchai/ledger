@@ -25,9 +25,9 @@
 TEST(node_test, node_placeholder)
 {
   fetch::ml::Node<fetch::math::Tensor<int>, fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>>>
-    placeholder("PlaceHolder");
+                                            placeholder("PlaceHolder");
   std::shared_ptr<fetch::math::Tensor<int>> data =
-    std::make_shared<fetch::math::Tensor<int>>(std::vector<std::uint64_t>({5, 5}));
+      std::make_shared<fetch::math::Tensor<int>>(std::vector<std::uint64_t>({5, 5}));
   placeholder.SetData(data);
 
   EXPECT_EQ(placeholder.Forward({}), *data);
@@ -38,23 +38,23 @@ TEST(node_test, node_relu)
 {
   std::shared_ptr<fetch::ml::Node<fetch::math::Tensor<int>,
                                   fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>>>>
-    placeholder =
-    std::make_shared<fetch::ml::Node<fetch::math::Tensor<int>,
-				     fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>>>>(
-											     "PlaceHolder");
+      placeholder =
+          std::make_shared<fetch::ml::Node<fetch::math::Tensor<int>,
+                                           fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>>>>(
+              "PlaceHolder");
 
   std::shared_ptr<
-    fetch::ml::Node<fetch::math::Tensor<int>, fetch::ml::ops::Relu<fetch::math::Tensor<int>>>>
-    relu =
-    std::make_shared<fetch::ml::Node<fetch::math::Tensor<int>,
-				     fetch::ml::ops::Relu<fetch::math::Tensor<int>>>>("Relu");
-  
+      fetch::ml::Node<fetch::math::Tensor<int>, fetch::ml::ops::Relu<fetch::math::Tensor<int>>>>
+      relu =
+          std::make_shared<fetch::ml::Node<fetch::math::Tensor<int>,
+                                           fetch::ml::ops::Relu<fetch::math::Tensor<int>>>>("Relu");
+
   relu->AddInput(placeholder);
 
   std::shared_ptr<fetch::math::Tensor<int>> data =
-    std::make_shared<fetch::math::Tensor<int>>(std::vector<std::uint64_t>({4, 4}));
+      std::make_shared<fetch::math::Tensor<int>>(std::vector<std::uint64_t>({4, 4}));
   std::shared_ptr<fetch::math::Tensor<int>> gt =
-    std::make_shared<fetch::math::Tensor<int>>(std::vector<std::uint64_t>({4, 4}));
+      std::make_shared<fetch::math::Tensor<int>>(std::vector<std::uint64_t>({4, 4}));
   std::vector<int> dataValues({0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15, 16});
   std::vector<int> gtValues({0, 0, 2, 0, 4, 0, 6, 0, 8, 0, 10, 0, 12, 0, 14, 0, 16});
   placeholder->SetData(data);

@@ -60,7 +60,7 @@ TYPED_TEST(MatrixMultiplyTest, forward_test)
   }
 
   fetch::ml::ops::MatrixMultiply<TypeParam> op;
-  TypeParam                prediction = op.Forward({a, b});
+  TypeParam                                 prediction = op.Forward({a, b});
 
   // // test correct values
   ASSERT_EQ(prediction.shape(), std::vector<typename TypeParam::SizeType>({1, 4}));
@@ -111,7 +111,8 @@ TYPED_TEST(MatrixMultiplyTest, backward_test)
   }
 
   fetch::ml::ops::MatrixMultiply<TypeParam> op;
-  std::vector<TypeParam>   backpropagatedSignals = op.Backward(std::vector<std::reference_wrapper<TypeParam const>>({a, b}), e);
+  std::vector<TypeParam>                    backpropagatedSignals =
+      op.Backward(std::vector<std::reference_wrapper<TypeParam const>>({a, b}), e);
 
   // test correct shapes
   ASSERT_EQ(backpropagatedSignals.size(), 2);

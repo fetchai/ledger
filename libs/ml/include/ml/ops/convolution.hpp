@@ -34,7 +34,7 @@ public:
   Convolution()          = default;
   virtual ~Convolution() = default;
 
-  virtual ArrayType                 Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     assert(inputs.size() == 2);
     // Input should be a 3D tensor [C x H x W]
@@ -58,11 +58,14 @@ public:
         for (uint64_t k(0); k < outputShape[2]; ++k)  // Iterate over output width
         {
           typename ArrayType::Type sum(0);
-          for (uint64_t ki(0); ki < inputs.at(1).get().shape()[1]; ki++)  // Iterate over Input channel
+          for (uint64_t ki(0); ki < inputs.at(1).get().shape()[1];
+               ki++)  // Iterate over Input channel
           {
-            for (uint64_t kj(0); kj < inputs.at(1).get().shape()[2]; kj++)  // Iterate over kernel height
+            for (uint64_t kj(0); kj < inputs.at(1).get().shape()[2];
+                 kj++)  // Iterate over kernel height
             {
-              for (uint64_t kk(0); kk < inputs.at(1).get().shape()[3]; kk++)  // Iterate over kernel width
+              for (uint64_t kk(0); kk < inputs.at(1).get().shape()[3];
+                   kk++)  // Iterate over kernel width
               {
                 std::vector<typename ArrayType::SizeType> kernelIdx({i, ki, kj, kk});
                 std::vector<typename ArrayType::SizeType> inputIdx(3);
@@ -83,7 +86,9 @@ public:
     return *this->output_;
   }
 
-  virtual std::vector<ArrayType>    Backward(std::vector<std::reference_wrapper<ArrayType const >> const &inputs, ArrayType const & errorSignal)
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal)
   {
     return {errorSignal};
   }

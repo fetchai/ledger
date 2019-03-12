@@ -33,16 +33,19 @@ public:
   Flatten()          = default;
   virtual ~Flatten() = default;
 
-  virtual ArrayType                 Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     ASSERT(inputs.size() == 1);
-    input_shape_  = inputs.front().get().shape();
-    this->output_ = std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, inputs.front().get().size()}));
+    input_shape_ = inputs.front().get().shape();
+    this->output_ =
+        std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, inputs.front().get().size()}));
     this->output_->Copy(inputs.front().get());
     return *this->output_;
   }
 
-  virtual std::vector<ArrayType>    Backward(std::vector<std::reference_wrapper<ArrayType const >> const &inputs, ArrayType const & errorSignal)
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 1);
     ArrayType ret(input_shape_);

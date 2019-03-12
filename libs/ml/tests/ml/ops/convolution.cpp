@@ -26,12 +26,10 @@ class ConvolutionTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<
-  fetch::math::Tensor<int>,
-  fetch::math::Tensor<float>,
-  fetch::math::Tensor<double>,
-  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
+                                 fetch::math::Tensor<double>,
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(ConvolutionTest, MyTypes);
 
 TYPED_TEST(ConvolutionTest, forward_1x1x1_1x1x1x1)
@@ -41,7 +39,7 @@ TYPED_TEST(ConvolutionTest, forward_1x1x1_1x1x1x1)
   input.At(0)   = typename TypeParam::Type(5);
   weigths.At(0) = typename TypeParam::Type(-4);
   fetch::ml::ops::Convolution<TypeParam> c;
-  TypeParam output = c.Forward({input, weigths});
+  TypeParam                              output = c.Forward({input, weigths});
 
   ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({1, 1, 1}));
   EXPECT_EQ(output.At(0), typename TypeParam::Type(-20));
@@ -52,12 +50,12 @@ TYPED_TEST(ConvolutionTest, forward_1x3x3_1x1x3x3)
   TypeParam input(std::vector<uint64_t>({1, 3, 3}));
   TypeParam weigths(std::vector<uint64_t>({1, 1, 3, 3}));
   for (uint64_t i(0); i < 9; ++i)
-    {
-      input.At(i)   = typename TypeParam::Type(i);
-      weigths.At(i) = typename TypeParam::Type(i);
-    }
+  {
+    input.At(i)   = typename TypeParam::Type(i);
+    weigths.At(i) = typename TypeParam::Type(i);
+  }
   fetch::ml::ops::Convolution<TypeParam> c;
-  TypeParam             output = c.Forward({input, weigths});
+  TypeParam                              output = c.Forward({input, weigths});
 
   ASSERT_EQ(output.shape(), std::vector<uint64_t>({1, 1, 1}));
   EXPECT_EQ(output.At(0), typename TypeParam::Type(204));
@@ -73,7 +71,7 @@ TYPED_TEST(ConvolutionTest, forward_3x3x3_1x3x3x3)
     weigths.At(i) = typename TypeParam::Type(i);
   }
   fetch::ml::ops::Convolution<TypeParam> c;
-  TypeParam             output = c.Forward({input, weigths});
+  TypeParam                              output = c.Forward({input, weigths});
 
   ASSERT_EQ(output.shape(), std::vector<uint64_t>({1, 1, 1}));
   EXPECT_EQ(output.At(0), typename TypeParam::Type(6201));
@@ -81,20 +79,20 @@ TYPED_TEST(ConvolutionTest, forward_3x3x3_1x3x3x3)
 
 TYPED_TEST(ConvolutionTest, forward_3x3x3_5x3x3x3)
 {
-  TypeParam input(std::vector<uint64_t>({3, 3, 3}));
-  TypeParam weigths(std::vector<uint64_t>({5, 3, 3, 3}));
+  TypeParam                              input(std::vector<uint64_t>({3, 3, 3}));
+  TypeParam                              weigths(std::vector<uint64_t>({5, 3, 3, 3}));
   fetch::ml::ops::Convolution<TypeParam> c;
-  TypeParam             output = c.Forward({input, weigths});
+  TypeParam                              output = c.Forward({input, weigths});
 
   ASSERT_EQ(output.shape(), std::vector<uint64_t>({5, 1, 1}));
 }
 
 TYPED_TEST(ConvolutionTest, forward_1x5x5_1x1x3x3)
 {
-  TypeParam input(std::vector<uint64_t>({1, 5, 5}));
-  TypeParam weigths(std::vector<uint64_t>({1, 1, 3, 3}));
+  TypeParam                              input(std::vector<uint64_t>({1, 5, 5}));
+  TypeParam                              weigths(std::vector<uint64_t>({1, 1, 3, 3}));
   fetch::ml::ops::Convolution<TypeParam> c;
-  TypeParam             output = c.Forward({input, weigths});
+  TypeParam                              output = c.Forward({input, weigths});
 
   ASSERT_EQ(output.shape(), std::vector<uint64_t>({1, 3, 3}));
 }

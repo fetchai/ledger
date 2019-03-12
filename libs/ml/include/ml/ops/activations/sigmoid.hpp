@@ -36,7 +36,7 @@ public:
   Sigmoid()          = default;
   virtual ~Sigmoid() = default;
 
-  virtual ArrayType                 Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     assert(inputs.size() == 1);
     if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
@@ -48,14 +48,17 @@ public:
     return *this->output_;
   }
 
-  virtual std::vector<ArrayType>    Backward(std::vector<std::reference_wrapper<ArrayType const >> const &inputs, ArrayType const & errorSignal)
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal)
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape() == errorSignal.shape());
 
-    ArrayType t = this->Forward(inputs);
+    ArrayType t            = this->Forward(inputs);
     ArrayType returnSignal = errorSignal.Clone();
-    fetch::math::Add(errorSignal, fetch::math::Multiply(t, fetch::math::Subtract(DataType(1), t)), returnSignal);
+    fetch::math::Add(errorSignal, fetch::math::Multiply(t, fetch::math::Subtract(DataType(1), t)),
+                     returnSignal);
     return {returnSignal};
   }
 

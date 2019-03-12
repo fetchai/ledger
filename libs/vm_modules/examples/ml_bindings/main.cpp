@@ -108,7 +108,8 @@
 
 //   // Wont compile if parameter is not const &
 //   // The actual fetch::vm::Ptr is const, but the pointed to memory is modified
-//   fetch::vm::Ptr<TrainingPairWrapper> GetData(fetch::vm::Ptr<TrainingPairWrapper> const &dataHolder)
+//   fetch::vm::Ptr<TrainingPairWrapper> GetData(fetch::vm::Ptr<TrainingPairWrapper> const
+//   &dataHolder)
 //   {
 //     std::pair<uint64_t, std::shared_ptr<fetch::math::Tensor<float>>> d = loader_.GetNext();
 //     std::shared_ptr<fetch::math::Tensor<float>>                      a = *(dataHolder->second);
@@ -145,87 +146,89 @@
 
 int main(int argc, char **argv)
 {
-//   if (argc < 2)
-//   {
-//     std::cerr << "usage ./" << argv[0] << " [filename]" << std::endl;
-//     exit(-9);
-//   }
+  //   if (argc < 2)
+  //   {
+  //     std::cerr << "usage ./" << argv[0] << " [filename]" << std::endl;
+  //     exit(-9);
+  //   }
 
-//   for (int i = 2; i < argc; ++i)
-//   {
-//     System::args.push_back(std::string(argv[i]));
-//   }
+  //   for (int i = 2; i < argc; ++i)
+  //   {
+  //     System::args.push_back(std::string(argv[i]));
+  //   }
 
-//   // Reading file
-//   std::ifstream      file(argv[1], std::ios::binary);
-//   std::ostringstream ss;
-//   ss << file.rdbuf();
-//   const std::string source = ss.str();
-//   file.close();
+  //   // Reading file
+  //   std::ifstream      file(argv[1], std::ios::binary);
+  //   std::ostringstream ss;
+  //   ss << file.rdbuf();
+  //   const std::string source = ss.str();
+  //   file.close();
 
-//   auto module = std::make_shared<fetch::vm::Module>();
+  //   auto module = std::make_shared<fetch::vm::Module>();
 
-//   module->CreateFreeFunction("Print", &PrintNumber<int>);
-//   module->CreateFreeFunction("Print", &PrintNumber<uint64_t>);
-//   module->CreateFreeFunction("Print", &PrintNumber<float>);
-//   module->CreateFreeFunction("Print", &PrintNumber<double>);
-//   module->CreateFreeFunction("Print", &Print);
-//   module->CreateFreeFunction("toString", &toString);
+  //   module->CreateFreeFunction("Print", &PrintNumber<int>);
+  //   module->CreateFreeFunction("Print", &PrintNumber<uint64_t>);
+  //   module->CreateFreeFunction("Print", &PrintNumber<float>);
+  //   module->CreateFreeFunction("Print", &PrintNumber<double>);
+  //   module->CreateFreeFunction("Print", &Print);
+  //   module->CreateFreeFunction("toString", &toString);
 
-//   module->CreateClassType<System>("System")
-//       .CreateTypeFunction("Argc", &System::Argc)
-//       .CreateTypeFunction("Argv", &System::Argv);
+  //   module->CreateClassType<System>("System")
+  //       .CreateTypeFunction("Argc", &System::Argc)
+  //       .CreateTypeFunction("Argv", &System::Argv);
 
-//   module->CreateTemplateInstantiationType<fetch::vm::Array, uint64_t>(fetch::vm::TypeIds::IArray);
+  //   module->CreateTemplateInstantiationType<fetch::vm::Array,
+  //   uint64_t>(fetch::vm::TypeIds::IArray);
 
-//   fetch::vm_modules::ml::CreateTensor(module);
-//   fetch::vm_modules::ml::CreateGraph(module);
-//   fetch::vm_modules::ml::CreateCrossEntropy(module);
+  //   fetch::vm_modules::ml::CreateTensor(module);
+  //   fetch::vm_modules::ml::CreateGraph(module);
+  //   fetch::vm_modules::ml::CreateCrossEntropy(module);
 
-//   module->CreateClassType<TrainingPairWrapper>("TrainingPair")
-//       .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>()
-//       .CreateInstanceFunction("Data", &TrainingPairWrapper::data)
-//       .CreateInstanceFunction("Label", &TrainingPairWrapper::label);
+  //   module->CreateClassType<TrainingPairWrapper>("TrainingPair")
+  //       .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>()
+  //       .CreateInstanceFunction("Data", &TrainingPairWrapper::data)
+  //       .CreateInstanceFunction("Label", &TrainingPairWrapper::label);
 
-//   module->CreateClassType<DataLoaderWrapper>("MNISTLoader")
-//       .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>>()
-//       .CreateInstanceFunction("GetData", &DataLoaderWrapper::GetData)
-//       .CreateInstanceFunction("Display", &DataLoaderWrapper::Display);
+  //   module->CreateClassType<DataLoaderWrapper>("MNISTLoader")
+  //       .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm::String>,
+  //       fetch::vm::Ptr<fetch::vm::String>>() .CreateInstanceFunction("GetData",
+  //       &DataLoaderWrapper::GetData) .CreateInstanceFunction("Display",
+  //       &DataLoaderWrapper::Display);
 
-//   // Setting compiler up
-//   fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(module.get());
-//   fetch::vm::Script        script;
-//   std::vector<std::string> errors;
+  //   // Setting compiler up
+  //   fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(module.get());
+  //   fetch::vm::Script        script;
+  //   std::vector<std::string> errors;
 
-//   // Compiling
-//   bool compiled = compiler->Compile(source, "myscript", script, errors);
+  //   // Compiling
+  //   bool compiled = compiler->Compile(source, "myscript", script, errors);
 
-//   if (!compiled)
-//   {
-//     std::cout << "Failed to compile" << std::endl;
-//     for (auto &s : errors)
-//     {
-//       std::cout << s << std::endl;
-//     }
-//     return -1;
-//   }
+  //   if (!compiled)
+  //   {
+  //     std::cout << "Failed to compile" << std::endl;
+  //     for (auto &s : errors)
+  //     {
+  //       std::cout << s << std::endl;
+  //     }
+  //     return -1;
+  //   }
 
-//   if (!script.FindFunction("main"))
-//   {
-//     std::cout << "Function 'main' not found" << std::endl;
-//     return -2;
-//   }
+  //   if (!script.FindFunction("main"))
+  //   {
+  //     std::cout << "Function 'main' not found" << std::endl;
+  //     return -2;
+  //   }
 
-//   // Setting VM up and running
-//   std::string        error;
-//   fetch::vm::Variant output;
-//   std::string        console;
+  //   // Setting VM up and running
+  //   std::string        error;
+  //   fetch::vm::Variant output;
+  //   std::string        console;
 
-//   fetch::vm::VM vm(module.get());
-//   if (!vm.Execute(script, "main", error, console, output))
-//   {
-//     std::cout << "Runtime error on line " << error << std::endl;
-//   }
-//   delete compiler;
+  //   fetch::vm::VM vm(module.get());
+  //   if (!vm.Execute(script, "main", error, console, output))
+  //   {
+  //     std::cout << "Runtime error on line " << error << std::endl;
+  //   }
+  //   delete compiler;
   return 0;
 }

@@ -36,7 +36,7 @@ public:
   Relu()          = default;
   virtual ~Relu() = default;
 
-  virtual ArrayType                 Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     assert(inputs.size() == 1);
     if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
@@ -48,19 +48,21 @@ public:
     return *(this->output_);
   }
 
-  virtual std::vector<ArrayType>    Backward(std::vector<std::reference_wrapper<ArrayType const >> const &inputs, ArrayType const & errorSignal)
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal)
   {
     assert(inputs.size() == 1);
     assert(inputs[0].shape() == errorSignal.shape());
 
     ArrayType returnSignal = errorSignal.Clone();
     for (std::size_t i = 0; i < inputs.front().get().size(); ++i)
+    {
+      if (inputs.front().get()[i] <= DataType(0))
       {
-	if (inputs.front().get()[i] <= DataType(0))
-	  {
-	    returnSignal.Set(i, DataType(0));
-	  }
+        returnSignal.Set(i, DataType(0));
       }
+    }
     return {returnSignal};
   }
 

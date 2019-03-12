@@ -35,7 +35,7 @@ public:
   Add()          = default;
   virtual ~Add() = default;
 
-  virtual ArrayType                 Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     ASSERT(inputs.size() == 2);
     ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
@@ -51,7 +51,9 @@ public:
     return *this->output_;
   }
 
-  virtual std::vector<ArrayType>    Backward(std::vector<std::reference_wrapper<ArrayType const >> const &inputs, ArrayType const & errorSignal)
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 2);
     ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());

@@ -57,7 +57,7 @@ TEST(graph_test, node_relu)
 
   std::shared_ptr<ArrayType> data =
       std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({4, 4}));
-  ArrayType gt(std::vector<typename ArrayType::SizeType>({4, 4}));
+  ArrayType        gt(std::vector<typename ArrayType::SizeType>({4, 4}));
   std::vector<int> dataValues({0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15, 16});
   std::vector<int> gtValues({0, 0, 2, 0, 4, 0, 6, 0, 8, 0, 10, 0, 12, 0, 14, 0, 16});
   for (int i(0); i < 4; ++i)
@@ -67,7 +67,7 @@ TEST(graph_test, node_relu)
       data->Set(std::vector<std::uint64_t>({std::uint64_t(i), std::uint64_t(j)}),
                 dataValues[std::uint64_t(i * 4 + j)]);
       gt.Set(std::vector<std::uint64_t>({std::uint64_t(i), std::uint64_t(j)}),
-              gtValues[std::uint64_t(i * 4 + j)]);
+             gtValues[std::uint64_t(i * 4 + j)]);
     }
   }
 
@@ -95,7 +95,8 @@ TEST(graph_test, getStateDict)
 //   g.template AddNode<fetch::ml::layers::SelfAttention<fetch::math::Tensor<float>>>(
 //       "SelfAttention", {"Input"}, 50u, 42u, 10u);
 
-//   std::shared_ptr<fetch::math::Tensor<float>> data = std::make_shared<fetch::math::Tensor<float>>(
+//   std::shared_ptr<fetch::math::Tensor<float>> data =
+//   std::make_shared<fetch::math::Tensor<float>>(
 //       std::vector<typename fetch::math::Tensor<float>::SizeType>({5, 10}));
 //   g.SetInput("Input", data);
 

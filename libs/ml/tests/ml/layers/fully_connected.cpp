@@ -104,7 +104,7 @@ TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
   TypeParam prediction = fc.Evaluate();
 
   TypeParam errorSignal(std::vector<typename TypeParam::SizeType>({1, 42}));
-  auto backpropagatedErrorSignals = fc.BackPropagate(errorSignal);
+  auto      backpropagatedErrorSignals = fc.BackPropagate(errorSignal);
 
   ASSERT_EQ(backpropagatedErrorSignals.size(), 1);
   ASSERT_EQ(backpropagatedErrorSignals[0].second.shape().size(), 2);

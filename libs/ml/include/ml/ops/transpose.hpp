@@ -33,14 +33,16 @@ public:
   Transpose()          = default;
   virtual ~Transpose() = default;
 
-  virtual ArrayType                 Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     ASSERT(inputs.size() == 1);
     this->output_ = std::make_shared<ArrayType>(inputs.front().get().Clone().Transpose());
     return *this->output_;
   }
 
-  virtual std::vector<ArrayType>    Backward(std::vector<std::reference_wrapper<ArrayType const >> const &inputs, ArrayType const & errorSignal)
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 1);
     return {errorSignal.Clone().Transpose()};

@@ -60,7 +60,7 @@ int main(int ac, char **av)
   std::pair<size_t, std::shared_ptr<ArrayType>> input;
   ArrayType gt(std::vector<typename ArrayType::SizeType>({1, 10}));
 
-  gt.At(0)         = 1.0;
+  gt.At(0)          = 1.0;
   DataType     loss = 0;
   unsigned int i(0);
 
@@ -74,7 +74,7 @@ int main(int ac, char **av)
     g.SetInput("Input", input.second);
     gt.Fill(0);
     gt.At(input.first) = DataType(1.0);
-    ArrayType results = g.Evaluate("Softmax");
+    ArrayType results  = g.Evaluate("Softmax");
 
     loss += criterion.Forward({results, gt});
     g.BackPropagate("Softmax", criterion.Backward({results, gt}));

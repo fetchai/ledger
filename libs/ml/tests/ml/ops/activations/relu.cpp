@@ -34,9 +34,9 @@ TYPED_TEST_CASE(ReluTest, MyTypes);
 
 TYPED_TEST(ReluTest, forward_all_positive_test)
 {
-  TypeParam data(8);
-  TypeParam gt(8);
-  std::uint64_t              i(0);
+  TypeParam     data(8);
+  TypeParam     gt(8);
+  std::uint64_t i(0);
   for (int e : {1, 2, 3, 4, 5, 6, 7, 8})
   {
     data.Set(i, typename TypeParam::Type(e));
@@ -44,7 +44,7 @@ TYPED_TEST(ReluTest, forward_all_positive_test)
     i++;
   }
   fetch::ml::ops::Relu<TypeParam> op;
-  TypeParam      prediction = op.Forward({data});
+  TypeParam                       prediction = op.Forward({data});
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -52,9 +52,9 @@ TYPED_TEST(ReluTest, forward_all_positive_test)
 
 TYPED_TEST(ReluTest, forward_all_negative_integer_test)
 {
-  TypeParam data(8);
-  TypeParam gt(8);
-  std::uint64_t              i(0);
+  TypeParam     data(8);
+  TypeParam     gt(8);
+  std::uint64_t i(0);
   for (int e : {-1, -2, -3, -4, -5, -6, -7, -8})
   {
     data.Set(i, typename TypeParam::Type(e));
@@ -62,7 +62,7 @@ TYPED_TEST(ReluTest, forward_all_negative_integer_test)
     i++;
   }
   fetch::ml::ops::Relu<TypeParam> op;
-  TypeParam      prediction = op.Forward({data});
+  TypeParam                       prediction = op.Forward({data});
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -70,17 +70,17 @@ TYPED_TEST(ReluTest, forward_all_negative_integer_test)
 
 TYPED_TEST(ReluTest, forward_mixed_test)
 {
-  TypeParam data(8);
-  TypeParam gt(8);
-  std::vector<int>           dataInput({1, -2, 3, -4, 5, -6, 7, -8});
-  std::vector<int>           gtInput({1, 0, 3, 0, 5, 0, 7, 0});
+  TypeParam        data(8);
+  TypeParam        gt(8);
+  std::vector<int> dataInput({1, -2, 3, -4, 5, -6, 7, -8});
+  std::vector<int> gtInput({1, 0, 3, 0, 5, 0, 7, 0});
   for (std::uint64_t i(0); i < 8; ++i)
-    {
-      data.Set(i, typename TypeParam::Type(dataInput[i]));
-      gt.Set(i, typename TypeParam::Type(gtInput[i]));
+  {
+    data.Set(i, typename TypeParam::Type(dataInput[i]));
+    gt.Set(i, typename TypeParam::Type(gtInput[i]));
   }
   fetch::ml::ops::Relu<TypeParam> op;
-  TypeParam      prediction = op.Forward({data});
+  TypeParam                       prediction = op.Forward({data});
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -88,20 +88,20 @@ TYPED_TEST(ReluTest, forward_mixed_test)
 
 TYPED_TEST(ReluTest, backward_mixed_test)
 {
-  TypeParam data(8);
-  TypeParam error(8);
-  TypeParam gt(8);
-  std::vector<int>           dataInput({1, -2, 3, -4, 5, -6, 7, -8});
-  std::vector<int>           errorInput({-1, 2, 3, -5, -8, 13, -21, -34});
-  std::vector<int>           gtInput({-1, 0, 3, 0, -8, 0, -21, 0});
+  TypeParam        data(8);
+  TypeParam        error(8);
+  TypeParam        gt(8);
+  std::vector<int> dataInput({1, -2, 3, -4, 5, -6, 7, -8});
+  std::vector<int> errorInput({-1, 2, 3, -5, -8, 13, -21, -34});
+  std::vector<int> gtInput({-1, 0, 3, 0, -8, 0, -21, 0});
   for (std::uint64_t i(0); i < 8; ++i)
   {
     data.Set(i, typename TypeParam::Type(dataInput[i]));
     error.Set(i, typename TypeParam::Type(errorInput[i]));
     gt.Set(i, typename TypeParam::Type(gtInput[i]));
   }
-  fetch::ml::ops::Relu<TypeParam>         op;
-  std::vector<TypeParam> prediction = op.Backward({data}, error);
+  fetch::ml::ops::Relu<TypeParam> op;
+  std::vector<TypeParam>          prediction = op.Backward({data}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt));

@@ -36,11 +36,11 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual ArrayType const & Evaluate() = 0;
-  virtual void         AddInput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
+  virtual ArrayType const &Evaluate()                                           = 0;
+  virtual void             AddInput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
-      ArrayType const & errorSignal) = 0;
-  virtual void ResetCache()     = 0;
+      ArrayType const &errorSignal) = 0;
+  virtual void ResetCache()         = 0;
 };
 
 template <class T, class O>
@@ -69,29 +69,31 @@ public:
     return inputs;
   }
 
-  virtual ArrayType const & Evaluate()
+  virtual ArrayType const &Evaluate()
   {
     if (!cachedOutputPresent_)
     {
       std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
       FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
-      cachedOutput_ = this->Forward(inputs);
+      cachedOutput_        = this->Forward(inputs);
       cachedOutputPresent_ = true;
     }
     return cachedOutput_;
   }
 
-  virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(ArrayType const & errorSignal)
+  virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
+      ArrayType const &errorSignal)
   {
     //    FETCH_LOG_INFO("ML_LIB", "Backpropagating node [", name_, "]");
-    std::vector<std::reference_wrapper<const ArrayType>> inputs                     = GatherInputs();
+    std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
     std::vector<ArrayType> backpropagatedErrorSignals = this->Backward(inputs, errorSignal);
     std::vector<std::pair<NodeInterface<T> *, ArrayType>> nonBackpropagatedErrorSignals;
     assert(backpropagatedErrorSignals.size() == inputs.size() || inputs.empty());
     for (std::uint64_t i(0); i < inputs_.size(); ++i)
     {
       auto ret = inputs_[i]->BackPropagate(backpropagatedErrorSignals[i]);
-      nonBackpropagatedErrorSignals.insert(nonBackpropagatedErrorSignals.end(), ret.begin(), ret.end());
+      nonBackpropagatedErrorSignals.insert(nonBackpropagatedErrorSignals.end(), ret.begin(),
+                                           ret.end());
     }
     // If no input to backprop to, return gradient to caller
     // This is used to propagate outside of a SubGraph

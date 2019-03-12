@@ -26,8 +26,7 @@ class FlattenTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>,
-				 fetch::math::Tensor<float>,
+using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
                                  fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
@@ -35,9 +34,9 @@ TYPED_TEST_CASE(FlattenTest, MyTypes);
 
 TYPED_TEST(FlattenTest, forward_test)
 {
-  TypeParam data(std::vector<std::uint64_t>({8, 8}));
+  TypeParam                          data(std::vector<std::uint64_t>({8, 8}));
   fetch::ml::ops::Flatten<TypeParam> op;
-  TypeParam         prediction = op.Forward({data});
+  TypeParam                          prediction = op.Forward({data});
 
   // test correct values
   ASSERT_EQ(prediction.shape(), std::vector<typename TypeParam::SizeType>({1, 64}));
@@ -45,11 +44,11 @@ TYPED_TEST(FlattenTest, forward_test)
 
 TYPED_TEST(FlattenTest, backward_test)
 {
-  TypeParam data(std::vector<std::uint64_t>({8, 8}));
+  TypeParam                          data(std::vector<std::uint64_t>({8, 8}));
   fetch::ml::ops::Flatten<TypeParam> op;
-  TypeParam         prediction  = op.Forward({data});
-  TypeParam         errorSignal(prediction.shape());
-  std::vector<TypeParam> gradients = op.Backward({data}, errorSignal);
+  TypeParam                          prediction = op.Forward({data});
+  TypeParam                          errorSignal(prediction.shape());
+  std::vector<TypeParam>             gradients = op.Backward({data}, errorSignal);
 
   ASSERT_EQ(gradients.size(), 1);
   ASSERT_EQ(gradients[0].shape(), std::vector<typename TypeParam::SizeType>({8, 8}));

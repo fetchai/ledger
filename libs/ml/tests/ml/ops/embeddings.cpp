@@ -26,8 +26,7 @@ class EmbeddingsTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>,
-				 fetch::math::Tensor<float>,
+using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
                                  fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
@@ -36,7 +35,7 @@ TYPED_TEST_CASE(EmbeddingsTest, MyTypes);
 TYPED_TEST(EmbeddingsTest, forward_shape)
 {
   fetch::ml::ops::Embeddings<TypeParam> e(100, 60);
-  TypeParam input(std::vector<uint64_t>({10}));
+  TypeParam                             input(std::vector<uint64_t>({10}));
   for (unsigned int i(0); i < 10; ++i)
   {
     input.At(i) = typename TypeParam::Type(i);
@@ -62,8 +61,8 @@ TYPED_TEST(EmbeddingsTest, forward)
 
   e.SetData(weights);
   TypeParam input(std::vector<uint64_t>({2}));
-  input.At(0)                      = typename TypeParam::Type(3);
-  input.At(1)                      = typename TypeParam::Type(5);
+  input.At(0)      = typename TypeParam::Type(3);
+  input.At(1)      = typename TypeParam::Type(5);
   TypeParam output = e.Forward({input});
 
   ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({2, 6}));
@@ -88,8 +87,8 @@ TYPED_TEST(EmbeddingsTest, backward)
   }
   e.SetData(weights);
   TypeParam input(std::vector<uint64_t>({2}));
-  input.At(0)                      = typename TypeParam::Type(3);
-  input.At(1)                      = typename TypeParam::Type(5);
+  input.At(0)      = typename TypeParam::Type(3);
+  input.At(1)      = typename TypeParam::Type(5);
   TypeParam output = e.Forward({input});
 
   TypeParam errorSignal(std::vector<uint64_t>({2, 6}));
