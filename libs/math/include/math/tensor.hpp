@@ -359,9 +359,9 @@ public:
 
   Tensor<T> &InlineAdd(T const &o)
   {
-    for (SizeType i(0); i < size(); ++i)
+    for (T &e : *this)
     {
-      At(i) = At(i) + o;
+      e += o;
     }
     return *this;
   }
@@ -378,10 +378,10 @@ public:
 
   Tensor<T> &InlineSubtract(T const &o)
   {
-    for (SizeType i(0); i < size(); ++i)
-    {
-      At(i) = At(i) - o;
-    }
+    for (T &e : *this)
+      {
+	e -= o;
+      }
     return *this;
   }
 
@@ -407,9 +407,9 @@ public:
 
   Tensor<T> &InlineMultiply(T const &o)
   {
-    for (SizeType i(0); i < size(); ++i)
+    for (T &e : *this)
     {
-      At(i) = At(i) * o;
+      e *= o;
     }
     return *this;
   }
@@ -426,10 +426,10 @@ public:
 
   Tensor<T> &InlineDivide(T const &o)
   {
-    for (SizeType i(0); i < size(); ++i)
-    {
-      At(i) = At(i) / o;
-    }
+    for (T &e : *this)
+      {
+	e /= o;
+      }
     return *this;
   }
 
@@ -446,10 +446,10 @@ public:
   T Sum() const
   {
     T sum(0);
-    for (SizeType i(0); i < size(); ++i)
-    {
-      sum = sum + At(i);
-    }
+    for (T const &e : *this)
+      {
+	sum += e;
+      }
     return sum;
   }
 
