@@ -260,7 +260,7 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
   {
     current_peer_address_ = peer;
     current_request_      = rpc_client_.CallSpecificAddress(
-        current_peer_address_, RPC_MAIN_CHAIN, MainChainProtocol::HEAVIEST_CHAIN, uint32_t{1000});
+        current_peer_address_, RPC_MAIN_CHAIN, MainChainProtocol::HEAVIEST_CHAIN, uint32_t{100000});
 
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
   }
