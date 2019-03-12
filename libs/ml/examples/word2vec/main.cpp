@@ -123,8 +123,7 @@ std::string TRAINING_DATA =
 /// MODEL DEFINITION ///
 ////////////////////////
 
-std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType vocab_size, SizeType batch_size,
-                  SizeType embeddings_size)
+std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType vocab_size, SizeType embeddings_size)
 {
   g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
   g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Context", {});
@@ -179,7 +178,7 @@ std::vector<DataType> TestEmbeddings(fetch::ml::Graph<ArrayType> &g, std::string
   return ret;
 }
 
-int main(int ac, char **av)
+int main()
 {
 
   std::cout << "FETCH Word2Vec Demo" << std::endl;
@@ -202,7 +201,7 @@ int main(int ac, char **av)
   // set up model architecture
   std::cout << "building model architecture...: " << std::endl;
   fetch::ml::Graph<ArrayType> g;
-  std::string                 output_name = Model(g, dataloader.VocabSize(), 1, p.embedding_size);
+  std::string                 output_name = Model(g, dataloader.VocabSize(), p.embedding_size);
 
   // set up loss
   ScaledCrossEntropy<ArrayType> criterion;
