@@ -19,7 +19,7 @@
 
 #include "core/mutex.hpp"
 #include "http/module.hpp"
-#include "ledger/chaincode/cache.hpp"
+#include "ledger/chaincode/chain_code_cache.hpp"
 
 #include <algorithm>
 #include <fstream>

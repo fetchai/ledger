@@ -98,6 +98,7 @@ private:
   TypePtr           array_type_;
   TypePtr           map_type_;
   TypePtr           state_type_;
+  TypePtr           address_type_;
   TypePtr           string_type_;
   OpTable           op_table_;
   OpTable           left_op_table_;

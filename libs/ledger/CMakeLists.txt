@@ -24,7 +24,9 @@ target_link_libraries(fetch-ledger PUBLIC
   fetch-storage
   fetch-miner
   fetch-vm
+  fetch-vm-modules
   fetch-metrics
+  vendor-msgpack
 )
 
 add_test_target()

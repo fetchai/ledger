@@ -13,3 +13,6 @@
 [submodule "vendor/mio"]
 	path = vendor/mio
 	url = https://github.com/mandreyel/mio.git
+[submodule "vendor/msgpack"]
+	path = vendor/msgpack
+	url = https://github.com/msgpack/msgpack-c.git

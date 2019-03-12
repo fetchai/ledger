@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/contract_http_interface.hpp"
+#include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/stl_types.hpp"
@@ -25,6 +26,8 @@
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/wire_transaction.hpp"
+#include "ledger/chaincode/contract.hpp"
+#include "ledger/state_sentinel.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "variant/variant.hpp"
 
@@ -35,7 +38,10 @@ namespace ledger {
 namespace {
 
 using fetch::variant::Variant;
+using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
+using fetch::byte_array::FromHex;
+using fetch::byte_array::ToBase64;
 
 struct AdaptedTx
 {
@@ -102,13 +108,13 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
   , access_log_{"access.log"}
 {
   // create all the contracts
-  auto const &contracts = contract_cache_.factory().GetContracts();
+  auto const &contracts = contract_cache_.factory().GetChainCodeContracts();
   for (auto const &contract_name : contracts)
   {
     // create the contract
-    auto contract = contract_cache_.factory().Create(contract_name);
+    auto contract = contract_cache_.factory().Create(Identifier{contract_name}, storage_);
 
-    byte_array::ByteArray contract_path{contract_name};
+    ByteArray contract_path{contract_name};
     contract_path.Replace(static_cast<char const &>(CONTRACT_NAME_SEPARATOR[0]),
                           static_cast<char const &>(PATH_SEPARATOR[0]));
 
@@ -116,10 +122,10 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
     auto const &query_handlers = contract->query_handlers();
     for (auto const &handler : query_handlers)
     {
-      byte_array::ConstByteArray const &query_name = handler.first;
+      ConstByteArray const &query_name = handler.first;
 
       // build up the API path
-      byte_array::ByteArray api_path;
+      ByteArray api_path;
       api_path.Append(API_PATH_CONTRACT_PREFIX, contract_path, PATH_SEPARATOR, query_name);
 
       FETCH_LOG_INFO(LOGGING_NAME, "Query API: ", api_path);
@@ -133,14 +139,14 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
     auto const &transaction_handlers = contract->transaction_handlers();
     for (auto const &handler : transaction_handlers)
     {
-      byte_array::ConstByteArray const &transaction_name = handler.first;
+      ConstByteArray const &transaction_name = handler.first;
 
       // build up the API path
-      byte_array::ByteArray api_path;
+      ByteArray api_path;
       api_path.Append(API_PATH_CONTRACT_PREFIX, contract_path, PATH_SEPARATOR, transaction_name);
 
       // build up the canonical contract name
-      byte_array::ByteArray canonical_contract_name;
+      ByteArray canonical_contract_name;
       canonical_contract_name.Append(contract_name, CONTRACT_NAME_SEPARATOR, transaction_name);
 
       FETCH_LOG_INFO(LOGGING_NAME, "   Tx API: ", api_path, " : ", canonical_contract_name);
@@ -152,6 +158,16 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
       });
     }
   }
+
+  Post("/api/contract/(digest=[a-fA-F0-9]{64})/(identifier=[a-fA-F0-9]{128})/(query=.+)",
+       [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+         // build the contract name
+         auto const contract_name =
+             ToBase64(FromHex(params["digest"])) + "." + ToBase64(FromHex(params["identifier"]));
+
+         // proxy the call to the query handler
+         return OnQuery(contract_name, params["query"], request);
+       });
 
   Post("/api/contract/submit",
        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
@@ -178,6 +194,8 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
                     " from: ", request.originating_address(), ':', request.originating_port());
     FETCH_LOG_DEBUG(LOGGING_NAME, request.body());
 
+    Identifier contract_id{contract_name};
+
     // record an entry in the access log
     RecordQuery(contract_name, query, request);
 
@@ -187,14 +205,17 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
 
     // dispatch the contract type
     variant::Variant response;
-    auto             contract = contract_cache_.Lookup(contract_name);
+    auto             contract = contract_cache_.Lookup(contract_id, storage_);
+
+    // adapt the storage engine so that that get and sets are sandboxed for the contract
+    StateAdapter storage_adapter{storage_, contract_id};
 
     // attach, dispatch and detach
-    contract->Attach(storage_);
+    contract->Attach(storage_adapter);
     auto const status = contract->DispatchQuery(query, doc.root(), response);
     contract->Detach();
 
-    if (status == Contract::Status::OK)
+    if (Contract::Status::OK == status)
     {
       return http::CreateJsonResponse(response);
     }
@@ -347,6 +368,11 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
       txs.emplace_back(tx.digest());
       processor_.AddTransaction(std::move(tx));
       ++submitted;
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to match expected_contract_name: ", expected_contract,
+                     " with ", tx.contract_name());
     }
   }
 
