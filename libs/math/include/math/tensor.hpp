@@ -379,9 +379,9 @@ public:
   Tensor<T> &InlineSubtract(T const &o)
   {
     for (T &e : *this)
-      {
-	e -= o;
-      }
+    {
+      e -= o;
+    }
     return *this;
   }
 
@@ -427,9 +427,9 @@ public:
   Tensor<T> &InlineDivide(T const &o)
   {
     for (T &e : *this)
-      {
-	e /= o;
-      }
+    {
+      e /= o;
+    }
     return *this;
   }
 
@@ -445,12 +445,7 @@ public:
 
   T Sum() const
   {
-    T sum(0);
-    for (T const &e : *this)
-      {
-	sum += e;
-      }
-    return sum;
+    return std::accumulate(begin(), end(), T(0));
   }
 
   Tensor<T> Transpose() const
