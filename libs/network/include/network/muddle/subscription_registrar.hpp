@@ -101,15 +101,15 @@ public:
   void Debug(std::string const &prefix) const;
 
 private:
-  using Mutex              = mutex::Mutex;
+  using Mutex              = std::mutex;
   using Index              = uint32_t;
   using AddressIndex       = std::tuple<uint32_t, Address>;
   using DispatchMap        = std::map<Index, SubscriptionFeed>;
   using AddressDispatchMap = std::map<AddressIndex, SubscriptionFeed>;
 
-  mutable Mutex      lock_{__LINE__, __FILE__};  ///< The registrar lock
-  DispatchMap        dispatch_map_;              ///< The {service,channel} dispatch map
-  AddressDispatchMap address_dispatch_map_;      ///< The {address,service,channel} dispatch map
+  mutable Mutex      lock_;                 ///< The registrar lock
+  DispatchMap        dispatch_map_;         ///< The {service,channel} dispatch map
+  AddressDispatchMap address_dispatch_map_; ///< The {address,service,channel} dispatch map
 };
 
 }  // namespace muddle
