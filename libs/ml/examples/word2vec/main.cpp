@@ -45,9 +45,9 @@ using SizeType     = typename ArrayType::SizeType;
 
 struct PARAMS
 {
-  SizeType batch_size     = 128;      // training data batch size
-  SizeType embedding_size = 10;       // dimension of embedding vec
-  SizeType training_steps = 1280000;  //
+  SizeType batch_size     = 128;       // training data batch size
+  SizeType embedding_size = 10;        // dimension of embedding vec
+  SizeType training_steps = 12800000;  //
 
   bool     cbow           = false;    // skipgram model if false, cbow if true
   SizeType skip_window    = 5;        // max size of context window one way

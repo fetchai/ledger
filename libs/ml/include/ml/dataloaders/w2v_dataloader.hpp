@@ -210,11 +210,14 @@ private:
       // discard words randomly according to word frequency
       DiscardFrequent();
 
-      // generate positive examples - i.e. within context window
-      GeneratePositive();
+      for (std::size_t j = 0; j < super_sampling_; ++j)
+      {
+        // generate positive examples - i.e. within context window
+        GeneratePositive();
 
-      // generate negative training examples - i.e. from outside of training window
-      GenerateNegative();
+        // generate negative training examples - i.e. from outside of training window
+        GenerateNegative();
+      }
     }
   }
 
