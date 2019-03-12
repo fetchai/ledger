@@ -36,42 +36,38 @@ TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as
   std::shared_ptr<TypeParam>                   inputData =
       std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({10, 10}));
   fc.SetInput("FC_Input", inputData);
-  std::shared_ptr<TypeParam> output = fc.Evaluate("FC_MatrixMultiply");
+  TypeParam output = fc.Evaluate("FC_MatrixMultiply");
 
-  ASSERT_EQ(output->shape().size(), 2);
-  ASSERT_EQ(output->shape()[0], 1);
-  ASSERT_EQ(output->shape()[1], 10);
+  ASSERT_EQ(output.shape().size(), 2);
+  ASSERT_EQ(output.shape()[0], 1);
+  ASSERT_EQ(output.shape()[1], 10);
   // No way to test actual values for now as weights are randomly initialised.
 }
 
 TYPED_TEST(FullyConnectedTest, ops_forward_test)  // Use the class as an Ops
 {
   fetch::ml::layers::FullyConnected<TypeParam> fc(50, 10);
-  std::shared_ptr<TypeParam>                   inputData =
-      std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 10}));
-  std::shared_ptr<TypeParam> output = fc.Forward({inputData});
+  TypeParam inputData(std::vector<typename TypeParam::SizeType>({5, 10}));
+  TypeParam output = fc.Forward({inputData});
 
-  ASSERT_EQ(output->shape().size(), 2);
-  ASSERT_EQ(output->shape()[0], 1);
-  ASSERT_EQ(output->shape()[1], 10);
+  ASSERT_EQ(output.shape().size(), 2);
+  ASSERT_EQ(output.shape()[0], 1);
+  ASSERT_EQ(output.shape()[1], 10);
   // No way to test actual values for now as weights are randomly initialised.
 }
 
 TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
 {
   fetch::ml::layers::FullyConnected<TypeParam> fc(50, 10);
-  std::shared_ptr<TypeParam>                   inputData =
-      std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 10}));
-  std::shared_ptr<TypeParam> output = fc.Forward({inputData});
-  std::shared_ptr<TypeParam> errorSignal =
-      std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({1, 10}));
+  TypeParam inputData(std::vector<typename TypeParam::SizeType>({5, 10}));
+  TypeParam output = fc.Forward({inputData});
+  TypeParam errorSignal(std::vector<typename TypeParam::SizeType>({1, 10}));
 
-  std::vector<std::shared_ptr<TypeParam>> backpropagatedErrorSignals =
-      fc.Backward({inputData}, errorSignal);
+  std::vector<TypeParam> backpropagatedErrorSignals = fc.Backward({inputData}, errorSignal);
   ASSERT_EQ(backpropagatedErrorSignals.size(), 1);
-  ASSERT_EQ(backpropagatedErrorSignals[0]->shape().size(), 2);
-  ASSERT_EQ(backpropagatedErrorSignals[0]->shape()[0], 5);
-  ASSERT_EQ(backpropagatedErrorSignals[0]->shape()[1], 10);
+  ASSERT_EQ(backpropagatedErrorSignals[0].shape().size(), 2);
+  ASSERT_EQ(backpropagatedErrorSignals[0].shape()[0], 5);
+  ASSERT_EQ(backpropagatedErrorSignals[0].shape()[1], 10);
   // No way to test actual values for now as weights are randomly initialised.
 }
 
@@ -87,11 +83,11 @@ TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
       "FullyConnected", 50u, 42u, "FullyConnected");
   fc.AddInput(placeholder);
 
-  std::shared_ptr<TypeParam> prediction = fc.Evaluate();
+  TypeParam prediction = fc.Evaluate();
 
-  ASSERT_EQ(prediction->shape().size(), 2);
-  ASSERT_EQ(prediction->shape()[0], 1);
-  ASSERT_EQ(prediction->shape()[1], 42);
+  ASSERT_EQ(prediction.shape().size(), 2);
+  ASSERT_EQ(prediction.shape()[0], 1);
+  ASSERT_EQ(prediction.shape()[1], 42);
 }
 
 TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
@@ -105,16 +101,15 @@ TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
   fetch::ml::Node<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>> fc(
       "FullyConnected", 50u, 42u, "FullyConnected");
   fc.AddInput(placeholder);
-  std::shared_ptr<TypeParam> prediction = fc.Evaluate();
+  TypeParam prediction = fc.Evaluate();
 
-  std::shared_ptr<TypeParam> errorSignal =
-      std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({1, 42}));
+  TypeParam errorSignal(std::vector<typename TypeParam::SizeType>({1, 42}));
   auto backpropagatedErrorSignals = fc.BackPropagate(errorSignal);
 
   ASSERT_EQ(backpropagatedErrorSignals.size(), 1);
-  ASSERT_EQ(backpropagatedErrorSignals[0].second->shape().size(), 2);
-  ASSERT_EQ(backpropagatedErrorSignals[0].second->shape()[0], 5);
-  ASSERT_EQ(backpropagatedErrorSignals[0].second->shape()[1], 10);
+  ASSERT_EQ(backpropagatedErrorSignals[0].second.shape().size(), 2);
+  ASSERT_EQ(backpropagatedErrorSignals[0].second.shape()[0], 5);
+  ASSERT_EQ(backpropagatedErrorSignals[0].second.shape()[1], 10);
 }
 
 TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
@@ -129,10 +124,10 @@ TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
       std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 10}));
   g.SetInput("Input", data);
 
-  std::shared_ptr<TypeParam> prediction = g.Evaluate("FullyConnected");
-  ASSERT_EQ(prediction->shape().size(), 2);
-  ASSERT_EQ(prediction->shape()[0], 1);
-  ASSERT_EQ(prediction->shape()[1], 42);
+  TypeParam prediction = g.Evaluate("FullyConnected");
+  ASSERT_EQ(prediction.shape().size(), 2);
+  ASSERT_EQ(prediction.shape()[0], 1);
+  ASSERT_EQ(prediction.shape()[1], 42);
 }
 
 TYPED_TEST(FullyConnectedTest, getStateDict)

@@ -49,7 +49,7 @@ public:
    * @param nodeName name of node to evaluate for output
    * @return pointer to array containing node output
    */
-  ArrayPtrType Evaluate(std::string const &node_name)
+  ArrayType const & Evaluate(std::string const &node_name)
   {
     if (nodes_[node_name])
     {
@@ -66,7 +66,7 @@ public:
    * @param nodeName name of node from which to begin backprop
    * @param errorSignal pointer to array containing error signal to backprop
    */
-  void BackPropagate(std::string const &nodeName, ArrayPtrType errorSignal)
+  void BackPropagate(std::string const &nodeName, ArrayType const & errorSignal)
   {
     nodes_[nodeName]->BackPropagate(errorSignal);
   }

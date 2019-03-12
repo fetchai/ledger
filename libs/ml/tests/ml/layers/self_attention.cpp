@@ -42,8 +42,8 @@ TYPED_TEST(SelfAttentionTest, output_shape_test)  // Use the class as a Node
       std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 10}));
   g.SetInput("Input", data);
 
-  std::shared_ptr<TypeParam> prediction = g.Evaluate("SelfAttention");
-  ASSERT_EQ(prediction->shape().size(), 2);
-  ASSERT_EQ(prediction->shape()[0], 1);
-  ASSERT_EQ(prediction->shape()[1], 42);
+  TypeParam prediction = g.Evaluate("SelfAttention");
+  ASSERT_EQ(prediction.shape().size(), 2);
+  ASSERT_EQ(prediction.shape()[0], 1);
+  ASSERT_EQ(prediction.shape()[1], 42);
 }

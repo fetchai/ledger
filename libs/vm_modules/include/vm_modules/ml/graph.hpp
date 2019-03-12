@@ -49,8 +49,7 @@ public:
 
   fetch::vm::Ptr<TensorWrapper> Evaluate(fetch::vm::Ptr<fetch::vm::String> const &name)
   {
-    std::shared_ptr<fetch::math::Tensor<float>> t =
-        fetch::ml::Graph<fetch::math::Tensor<float>>::Evaluate(name->str);
+    fetch::math::Tensor<float> t = fetch::ml::Graph<fetch::math::Tensor<float>>::Evaluate(name->str);
     fetch::vm::Ptr<TensorWrapper> ret = this->vm_->CreateNewObject<TensorWrapper>(t->shape());
     (*ret)->Copy(*t);
     return ret;

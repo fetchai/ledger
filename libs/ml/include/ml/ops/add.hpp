@@ -35,28 +35,27 @@ public:
   Add()          = default;
   virtual ~Add() = default;
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayType                 Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     ASSERT(inputs.size() == 2);
-    ASSERT(inputs[0]->size() == inputs[1]->size());
-    if (!this->output_ || this->output_->shape() != inputs[0]->shape())
+    ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
+    if (!this->output_ || this->output_->shape() != inputs.at(0).get().shape())
     {
-      this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
+      this->output_ = std::make_shared<ArrayType>(inputs.at(0).get().shape());
     }
 
-    for (std::uint64_t i = 0; i < inputs[0]->size(); ++i)
+    for (std::uint64_t i = 0; i < inputs.at(0).get().size(); ++i)
     {
-      this->output_->Set(i, inputs[0]->At(i) + inputs[1]->At(i));
+      this->output_->Set(i, inputs.at(0).get().At(i) + inputs.at(1).get().At(i));
     }
-    return this->output_;
+    return *this->output_;
   }
 
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  virtual std::vector<ArrayType>    Backward(std::vector<std::reference_wrapper<ArrayType const >> const &inputs, ArrayType const & errorSignal)
   {
     ASSERT(inputs.size() == 2);
-    ASSERT(inputs[0]->size() == inputs[1]->size());
-    ASSERT(errorSignal->size() == inputs[1]->size());
+    ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
+    ASSERT(errorSignal.size() == inputs.at(1).get().size());
     return {errorSignal, errorSignal};
   }
 

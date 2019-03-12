@@ -103,11 +103,10 @@ public:
   Weights()          = default;
   virtual ~Weights() = default;
 
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  virtual std::vector<ArrayType>    Backward(std::vector<std::reference_wrapper<ArrayType const >> const &inputs, ArrayType const & errorSignal)
   {
     ASSERT(inputs.empty());
-    gradientAccumulation_->InlineAdd(*errorSignal);
+    gradientAccumulation_->InlineAdd(errorSignal);
     return {};
   }
 

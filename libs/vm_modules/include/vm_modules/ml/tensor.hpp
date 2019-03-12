@@ -23,7 +23,7 @@
 namespace fetch {
 namespace vm_modules {
 namespace ml {
-class TensorWrapper : public fetch::vm::Object, public std::shared_ptr<fetch::math::Tensor<float>>
+class TensorWrapper : public fetch::vm::Object, public fetch::math::Tensor<float>
 {
 
 public:
@@ -33,7 +33,7 @@ public:
   TensorWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                 std::vector<std::uint64_t> const &shape)
     : fetch::vm::Object(vm, type_id)
-    , std::shared_ptr<ArrayType>(new ArrayType(shape))
+    , ArrayType(shape)
   {}
 
   static fetch::vm::Ptr<TensorWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
@@ -44,12 +44,12 @@ public:
 
   void SetAt(uint64_t index, float value)
   {
-    (*this)->At(index) = value;
+    (*this).At(index) = value;
   }
 
   fetch::vm::Ptr<fetch::vm::String> ToString()
   {
-    return new fetch::vm::String(vm_, (*this)->ToString());
+    return new fetch::vm::String(vm_, (*this).ToString());
   }
 };
 

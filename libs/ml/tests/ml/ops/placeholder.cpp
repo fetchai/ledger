@@ -33,10 +33,10 @@ TEST(placeholder_test, setData)
   }
   fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>> op;
   op.SetData(data);
-  std::shared_ptr<fetch::math::Tensor<int>> prediction = op.Forward({});
+  fetch::math::Tensor<int> prediction = op.Forward({});
 
   // test correct values
-  ASSERT_TRUE(prediction->AllClose(*gt));
+  ASSERT_TRUE(prediction.AllClose(*gt));
 }
 
 TEST(placeholder_test, resetData)
@@ -54,10 +54,10 @@ TEST(placeholder_test, resetData)
   }
   fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>> op;
   op.SetData(data);
-  std::shared_ptr<fetch::math::Tensor<int>> prediction = op.Forward({});
+  fetch::math::Tensor<int> prediction = op.Forward({});
 
   // test correct values
-  ASSERT_TRUE(prediction->AllClose(*gt));
+  ASSERT_TRUE(prediction.AllClose(*gt));
 
   // reset
   {
@@ -74,5 +74,5 @@ TEST(placeholder_test, resetData)
   prediction = op.Forward({});
 
   // test correct values
-  ASSERT_TRUE(prediction->AllClose(*gt));
+  ASSERT_TRUE(prediction.AllClose(*gt));
 }
