@@ -71,18 +71,6 @@ public:
     this->SetInput(bias, bias_data);
   }
 
-  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
-  {
-    assert(inputs.size() == 1);
-    std::vector<ArrayType> results;
-    for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
-    {
-      ArrayType slice = inputs.front().get().Slice(b);
-      results.push_back(this->Forward({slice}));
-    }
-    return ConcatenateTensors(results);
-  }
-
   static constexpr char const *DESCRIPTOR = "FullyConnected";
 };
 

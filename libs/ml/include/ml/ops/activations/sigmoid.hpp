@@ -26,7 +26,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Sigmoid : public fetch::ml::Ops<T>
+class Sigmoid : public fetch::ml::ElementWiseOps<T>
 {
 public:
   using ArrayType    = T;

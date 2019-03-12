@@ -25,18 +25,13 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class PlaceHolder : public fetch::ml::Ops<T>
+class PlaceHolder : public fetch::ml::ElementWiseOps<T>
 {
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   PlaceHolder() = default;
-
-  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
-  {
-    return Forward(inputs);
-  }
 
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {

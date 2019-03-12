@@ -24,7 +24,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Flatten : public fetch::ml::Ops<T>
+class Flatten : public fetch::ml::ElementWiseOps<T>
 {
 public:
   using ArrayType    = T;
@@ -32,9 +32,6 @@ public:
 
   Flatten()          = default;
   virtual ~Flatten() = default;
-
-  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
-  {}
 
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {

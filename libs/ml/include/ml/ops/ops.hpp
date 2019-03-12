@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/tensor_operations.hpp"
 #include <memory>
 #include <vector>
 
@@ -36,14 +37,44 @@ public:
   virtual std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal) = 0;
-  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
-  {
-    // TODO(private 735) -- Make that function pure virtual
-    return Forward(inputs);
-  }
+  virtual ArrayType ForwardBatch(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
 
 protected:
   ArrayPtrType output_;  // TODO(private, 736) -- Remove
 };
+
+template <class T>
+class ElementWiseOps : public Ops<T>
+{
+public:
+  using ArrayType = T;
+
+  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    return this->Forward(inputs);
+  }
+};
+
+template <class T>
+class BatchOps : public Ops<T>
+{
+public:
+  using ArrayType = T;
+
+  // Overload that method for optimisation purposes
+  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    assert(inputs.size() == 1);
+    std::vector<ArrayType> results;
+    for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
+    {
+      ArrayType slice = inputs.front().get().Slice(b);
+      results.push_back(this->Forward({slice}));
+    }
+    return ConcatenateTensors(results);
+  }
+};
+
 }  // namespace ml
 }  // namespace fetch

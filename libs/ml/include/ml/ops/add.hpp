@@ -25,7 +25,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Add : public fetch::ml::Ops<T>
+class Add : public fetch::ml::ElementWiseOps<T>
 {
 public:
   using ArrayType    = T;
