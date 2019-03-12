@@ -516,7 +516,7 @@ private:
    */
   bool DiscardExample(std::string &word)
   {
-    double word_probability = double(vocab_frequency_[word]) / words_.size();
+    double word_probability = double(vocab_frequency_[word]) / double(words_.size());
     double prob_thresh      = 1.0 - std::sqrt(discard_threshold_ / word_probability);
     double f                = lfg_.AsDouble();
 

@@ -233,11 +233,11 @@ int main(int ac, char **av)
 
     if (input.second == 0)
     {
-      scale_factor->At(0) = p.k_neg_samps;
+      scale_factor->At(0) = DataType(p.k_neg_samps);
     }
     else
     {
-      scale_factor->At(0) = 1;
+      scale_factor->At(0) = DataType(1);
     }
     loss += criterion.Forward({results, gt, scale_factor});
 
