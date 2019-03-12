@@ -19,6 +19,7 @@
 
 #include "core/mutex.hpp"
 #include "core/state_machine.hpp"
+#include "core/periodic_action.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 
@@ -233,6 +234,7 @@ private:
   BlockPackerInterface &     block_packer_;       ///< Ref to the block packer
   BlockSinkInterface &       block_sink_;         ///< Ref to the output sink interface
   TransactionStatusCache &   status_cache_;       ///< Ref to the tx status cache
+  PeriodicAction             periodic_print_;
   MinerPtr                   miner_;
   /// @}
 
@@ -250,7 +252,7 @@ private:
   Timepoint       next_block_time_;       ///< THe next point that a block should be generated
   BlockPtr        current_block_{};       ///< The pointer to the current block (read only)
   NextBlockPtr    next_block_{};          ///< The next block being created (read / write)
-  TxSetPtr        pending_txs_{};  ///< The list of pending transactions that are being waited on
+  TxSetPtr        pending_txs_{};         ///< The list of pending txs that are being waited on
   /// @}
 };
 
