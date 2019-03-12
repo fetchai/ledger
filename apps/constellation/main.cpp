@@ -357,6 +357,11 @@ struct CommandLineArguments
     s << "max peers.................: " << args.cfg.max_peers << '\n';
     s << "peers update cycle........: " << args.cfg.peers_update_cycle_ms << "ms\n";
 
+    if (args.cfg.standalone)
+    {
+      s << "stand alone...............: Enabled\n";
+    }
+
     // generate the peer listing
     s << "peers.....................: ";
     for (auto const &peer : args.peers)
