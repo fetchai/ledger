@@ -62,7 +62,6 @@ private:
   };
 
   using Cache = std::unordered_map<ResourceAddress, CacheEntry>;
-  using Mutex = mutex::Mutex;
 
   /// @name Cache Helpers
   /// @{

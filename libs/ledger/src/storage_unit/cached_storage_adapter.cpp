@@ -22,7 +22,7 @@ namespace fetch {
 namespace ledger {
 
 /**
- * Construct the Cache Adpater
+ * Construct the Cache Adapter
  *
  * @param storage The reference to the underlying storage engine
  */
