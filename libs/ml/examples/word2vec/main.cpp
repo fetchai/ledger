@@ -21,7 +21,8 @@
 #include "ml/layers/skip_gram.hpp"
 #include "ml/ops/loss_functions/scaled_cross_entropy.hpp"
 
-#include "math/free_functions/ml/loss_functions/mean_square_error.hpp"
+//#include "math/free_functions/ml/loss_functions/mean_square_error.hpp"
+#include "math/distance/cosine.hpp"
 
 #include <iostream>
 #include <math/tensor.hpp>
@@ -45,15 +46,16 @@ using SizeType     = typename ArrayType::SizeType;
 
 struct PARAMS
 {
-  SizeType batch_size     = 128;       // training data batch size
-  SizeType embedding_size = 10;        // dimension of embedding vec
-  SizeType training_steps = 12800000;  //
+  SizeType batch_size     = 128;      // training data batch size
+  SizeType embedding_size = 5;        // dimension of embedding vec
+  SizeType training_steps = 1280000;  // total number of training steps
+  double   learning_rate  = 0.01;     // alpha - the learning rate
 
-  bool     cbow           = false;    // skipgram model if false, cbow if true
-  SizeType skip_window    = 5;        // max size of context window one way
-  SizeType super_samp     = 10;       // n times to reuse an input to generate a label
-  SizeType k_neg_samps    = 2;        // number of negative examples to sample
-  double   discard_thresh = 0.00001;  // probability of discard
+  bool     cbow           = false;  // skipgram model if false, cbow if true
+  SizeType skip_window    = 5;      // max size of context window one way
+  SizeType super_samp     = 10;     // n times to reuse an input to generate a label
+  SizeType k_neg_samps    = 5;      // number of negative examples to sample
+  double   discard_thresh = 0.4;    // probability of discard
 };
 
 std::string TRAINING_DATA =
@@ -164,17 +166,34 @@ std::vector<DataType> TestEmbeddings(fetch::ml::Graph<ArrayType> &g, std::string
   embed_ugly_input->At(ugly_idx) = 1;
   ArrayType ugly_output          = embeddings->Forward({embed_ugly_input})->Clone();
 
-  DataType result_cat_duckling, result_cat_ugly, result_duckling_ugly;
+  ArrayPtrType embed_egg_input = std::make_shared<ArrayType>(dl.VocabSize());
+  std::string  egg_lookup      = "egg";
+  SizeType     egg_idx         = dl.VocabLookup(egg_lookup);
+  embed_egg_input->At(egg_idx) = 1;
+  ArrayType egg_output         = embeddings->Forward({embed_egg_input})->Clone();
+
+  DataType result_cat_duckling, result_cat_ugly, result_duckling_ugly, result_duckling_egg;
+
   // distance from cat to duckling (using MSE as distance)
-  result_cat_duckling = fetch::math::MeanSquareError(cat_output, duckling_output);
+  result_cat_duckling = fetch::math::distance::Cosine(cat_output, duckling_output);
 
-  // distance from cat to computer (using MSE as distance)
-  result_cat_ugly = fetch::math::MeanSquareError(cat_output, ugly_output);
+  // distance from cat to ugly (using MSE as distance)
+  result_cat_ugly = fetch::math::distance::Cosine(cat_output, ugly_output);
 
-  // distance from cat to computer (using MSE as distance)
-  result_duckling_ugly = fetch::math::MeanSquareError(duckling_output, ugly_output);
+  // distance from duckling to ugly (using MSE as distance)
+  result_duckling_ugly = fetch::math::distance::Cosine(duckling_output, ugly_output);
 
-  std::vector<DataType> ret = {result_cat_duckling, result_cat_ugly, result_duckling_ugly};
+  // distance from duckling to egg (using MSE as distance)
+  result_duckling_egg = fetch::math::distance::Cosine(duckling_output, egg_output);
+
+  std::vector<DataType> ret = {result_cat_duckling, result_cat_ugly, result_duckling_ugly,
+                               result_duckling_egg};
+
+  std::cout << "cat-duckling distance: " << ret[0] << std::endl;
+  std::cout << "cat-ugly distance: " << ret[1] << std::endl;
+  std::cout << "duckling-ugly distance: " << ret[2] << std::endl;
+  std::cout << "duckling-egg distance: " << ret[3] << std::endl;
+
   return ret;
 }
 
@@ -242,11 +261,17 @@ int main()
 
     g.BackPropagate(output_name, criterion.Backward({results, gt}));
 
-    if (i % p.batch_size == 0)
+    if (i % p.batch_size == (p.batch_size - 1))
     {
       std::cout << "MiniBatch: " << i / p.batch_size << " -- Loss : " << loss << std::endl;
-      g.Step(0.1f);
+      g.Step(p.learning_rate);
       loss = 0;
+    }
+
+    if (i % (p.batch_size * 100) == ((p.batch_size * 100) - 1))
+    {
+      // Test trained embeddings
+      std::vector<DataType> trained_distances = TestEmbeddings(g, output_name, dataloader);
     }
   }
 
@@ -260,6 +285,7 @@ int main()
   std::cout << "final cat-duckling distance: " << trained_distances[0] << std::endl;
   std::cout << "final cat-ugly distance: " << trained_distances[1] << std::endl;
   std::cout << "final duckling-ugly distance: " << trained_distances[2] << std::endl;
+  std::cout << "final duckling-egg distance: " << trained_distances[3] << std::endl;
 
   return 0;
 }

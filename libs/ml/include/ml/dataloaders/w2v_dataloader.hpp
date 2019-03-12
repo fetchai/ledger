@@ -48,7 +48,9 @@ class W2VLoader : public DataLoader<std::shared_ptr<T>, typename T::SizeType>
 
 private:
   // training data parsing containers
-  SizeType                                  size_ = 0;         // # training pairs
+  SizeType                                  size_     = 0;     // # training pairs
+  SizeType                                  pos_size_ = 0;     // # positive training pairs
+  SizeType                                  neg_size_ = 0;     // # negative training pairs
   std::unordered_map<std::string, SizeType> vocab_;            // full unique vocab
   std::unordered_map<SizeType, std::string> reverse_vocab_;    // full unique vocab
   std::unordered_map<std::string, SizeType> vocab_frequency_;  // word frequencies
@@ -65,6 +67,7 @@ private:
 
   SizeType sentence_count_ = 0;  // total sentences in training corpus
   SizeType word_count_     = 0;  // total words in training corpus
+  SizeType discard_count_  = 0;  // total count of discarded (frequent) words
 
   // containers for the data and labels
   std::vector<std::vector<SizeType>> data_input_;
@@ -156,7 +159,8 @@ public:
 
   std::pair<std::pair<std::shared_ptr<T>, std::shared_ptr<T>>, SizeType> GetRandom()
   {
-    return GetAtIndex(static_cast<SizeType>(lcg_()) % Size());
+    SizeType tmp = static_cast<SizeType>(lcg_());
+    return GetAtIndex(tmp % Size());
   }
 
   std::string VocabLookup(SizeType idx)
@@ -235,52 +239,49 @@ private:
     // iterate through all sentences
     for (SizeType sntce_idx = 0; sntce_idx < sentence_count_; sntce_idx++)
     {
-      // ignore useless short sentences
-      if (words_[sntce_idx].size() > ((skip_window_ * 2) + 1))
+      for (SizeType i = 0; i < words_[sntce_idx].size(); i++)
       {
-        for (SizeType i = 0; i < words_[sntce_idx].size(); i++)
+        // current input word idx
+        cur_vocab_idx = SizeType(vocab_[words_[sntce_idx][i]]);
+        assert(cur_vocab_idx > 0);  // unknown words not yet handled
+        assert(cur_vocab_idx < vocab_.size());
+
+        for (SizeType j = 0; j < (2 * skip_window_) + 1; j++)
         {
-          // current input word idx
-          cur_vocab_idx = SizeType(vocab_[words_[sntce_idx][i]]);
-          assert(cur_vocab_idx > 0);  // unknown words not yet handled
-          assert(cur_vocab_idx < vocab_.size());
-
-          for (SizeType j = 0; j < (2 * skip_window_) + 1; j++)
+          if (WindowPositionCheck(i, j, words_[sntce_idx].size()) && DynamicWindowCheck(j))
           {
-            if (WindowPositionCheck(i, j, words_[sntce_idx].size()) && DynamicWindowCheck(j))
+            std::string context_word = words_[sntce_idx][i + j - skip_window_];
+
+            // context word idx
+            cur_context_idx = vocab_[context_word];
+            assert(cur_context_idx > 0);  // unknown words not yet handled
+            assert(cur_context_idx < vocab_.size());
+
+            // build input one hot
+            for (SizeType k = 0; k < vocab_.size(); k++)
             {
-              std::string context_word = words_[sntce_idx][i + j - skip_window_];
-
-              // context word idx
-              cur_context_idx = vocab_[context_word];
-              assert(cur_context_idx > 0);  // unknown words not yet handled
-              assert(cur_context_idx < vocab_.size());
-
-              // build input one hot
-              for (SizeType k = 0; k < vocab_.size(); k++)
-              {
-                one_hot_tmp = SizeType(k == cur_vocab_idx);
-                assert((one_hot_tmp == 0) || (one_hot_tmp == 1));
-                input_one_hot[k] = one_hot_tmp;
-              }
-
-              // build context one hot
-              for (SizeType k = 0; k < vocab_.size(); k++)
-              {
-                one_hot_tmp = SizeType(k == cur_context_idx);
-                assert((one_hot_tmp == 0) || (one_hot_tmp == 1));
-                context_one_hot[k] = one_hot_tmp;
-              }
-
-              // assign data
-              data_input_.emplace_back(input_one_hot);
-              data_context_.emplace_back(context_one_hot);
-
-              // assign label
-              labels_.emplace_back(SizeType(1));
-
-              ++size_;
+              one_hot_tmp = SizeType(k == cur_vocab_idx);
+              assert((one_hot_tmp == 0) || (one_hot_tmp == 1));
+              input_one_hot[k] = one_hot_tmp;
             }
+
+            // build context one hot
+            for (SizeType k = 0; k < vocab_.size(); k++)
+            {
+              one_hot_tmp = SizeType(k == cur_context_idx);
+              assert((one_hot_tmp == 0) || (one_hot_tmp == 1));
+              context_one_hot[k] = one_hot_tmp;
+            }
+
+            // assign data
+            data_input_.emplace_back(input_one_hot);
+            data_context_.emplace_back(context_one_hot);
+
+            // assign label
+            labels_.emplace_back(SizeType(1));
+
+            ++size_;
+            ++pos_size_;
           }
         }
       }
@@ -296,7 +297,8 @@ private:
     std::vector<SizeType> input_one_hot(vocab_.size());
     std::vector<SizeType> context_one_hot(vocab_.size());
     SizeType              one_hot_tmp;
-    SizeType n_negative_training_pairs_per_word = (skip_window_ * 2) * k_negative_samples_;
+    SizeType              n_negative_training_pairs_per_word =
+        static_cast<SizeType>(GetUnigramExpectation() * double(k_negative_samples_));
     SizeType negative_context_idx;
 
     // iterate through all sentences
@@ -360,6 +362,7 @@ private:
           labels_.push_back(SizeType(0));
 
           ++size_;
+          ++neg_size_;
         }
       }
     }
@@ -509,6 +512,7 @@ private:
       for (SizeType j = discards.size(); j > 0; --j)
       {
         words_[sntce_idx].erase(words_[sntce_idx].begin() + int(discards[j - SizeType(1)]));
+        ++discard_count_;
       }
     }
   }
@@ -528,6 +532,20 @@ private:
       return true;
     }
     return false;
+  }
+
+  /**
+   * calculates the mean frequency of words under unigram for given max skip_window_
+   */
+  double GetUnigramExpectation()
+  {
+    double ret = 0;
+    for (SizeType i = 1; i < skip_window_; ++i)
+    {
+      ret += 1.0 / double(i);
+    }
+    ret *= 2;
+    return ret;
   }
 };
 
