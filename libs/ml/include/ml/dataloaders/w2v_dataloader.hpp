@@ -51,6 +51,7 @@ private:
   SizeType                                  size_     = 0;     // # training pairs
   SizeType                                  pos_size_ = 0;     // # positive training pairs
   SizeType                                  neg_size_ = 0;     // # negative training pairs
+  SizeType                                  n_words_  = 0;     // # of total words in training data
   std::unordered_map<std::string, SizeType> vocab_;            // full unique vocab
   std::unordered_map<SizeType, std::string> reverse_vocab_;    // full unique vocab
   std::unordered_map<std::string, SizeType> vocab_frequency_;  // word frequencies
@@ -431,6 +432,7 @@ private:
         }
       }
     }
+    n_words_ = word_counter - 1;
   }
 
   /**
@@ -523,7 +525,7 @@ private:
    */
   bool DiscardExample(std::string &word)
   {
-    double word_probability = double(vocab_frequency_[word]) / double(words_.size());
+    double word_probability = double(vocab_frequency_[word]) / double(n_words_);
     double prob_thresh      = 1.0 - std::sqrt(discard_threshold_ / word_probability);
     double f                = lfg_.AsDouble();
 
