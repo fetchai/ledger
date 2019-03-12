@@ -109,8 +109,11 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
       // detach the chain code from the current context
       chain_code->Detach();
 
-      // force the flushing of the cache
-      storage_cache.Flush();
+      // force the flushing of the cache *** only if the contract was successful ***
+      if(result == Contract::Status::OK)
+      {
+        storage_cache.Flush();
+      }
     }
 
     // map the dispatch the result

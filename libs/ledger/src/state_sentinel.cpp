@@ -153,7 +153,6 @@ StateSentinelAdapter::StateSentinelAdapter(StorageInterface &storage, Identifier
   // lock all the resources
   for (auto const &resource : resources_)
   {
-    FETCH_LOG_WARN("removeme", "Locking resource: ", resource);
     storage_.Lock(CreateAddress(scope_.back(), resource));
   }
 }
