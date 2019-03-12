@@ -160,7 +160,7 @@ protected:
   void SignalLeave()
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connection terminated for handle ", handle_.load(),
-                   ", SignalLeave called.");
+                    ", SignalLeave called.");
     std::function<void(void)> cb;
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);

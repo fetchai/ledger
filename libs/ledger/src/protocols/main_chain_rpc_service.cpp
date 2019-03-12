@@ -262,8 +262,9 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
   if (!peer.empty())
   {
     current_peer_address_ = peer;
-    current_request_      = rpc_client_.CallSpecificAddress(
-        current_peer_address_, RPC_MAIN_CHAIN, MainChainProtocol::HEAVIEST_CHAIN, MAX_CHAIN_REQUEST_SIZE);
+    current_request_ =
+        rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
+                                        MainChainProtocol::HEAVIEST_CHAIN, MAX_CHAIN_REQUEST_SIZE);
 
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
   }

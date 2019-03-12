@@ -35,10 +35,10 @@ public:
 
   // Construction / Destruction
   template <typename R, typename P>
-  PeriodicAction(std::chrono::duration<R,P> const &period, Callback callback = Callback{});
+  PeriodicAction(std::chrono::duration<R, P> const &period, Callback callback = Callback{});
   PeriodicAction(PeriodicAction const &) = delete;
-  PeriodicAction(PeriodicAction &&) = default;
-  ~PeriodicAction() = default;
+  PeriodicAction(PeriodicAction &&)      = default;
+  ~PeriodicAction()                      = default;
 
   void SetCallback(Callback callback);
   bool Poll();
@@ -66,12 +66,11 @@ private:
  * @param callback A callback function to be called at the given interval
  */
 template <typename R, typename P>
-PeriodicAction::PeriodicAction(std::chrono::duration<R,P> const &period, Callback callback)
+PeriodicAction::PeriodicAction(std::chrono::duration<R, P> const &period, Callback callback)
   : period_{std::chrono::duration_cast<Duration>(period)}
   , next_action_time_{Clock::now() + period_}
   , callback_{std::move(callback)}
-{
-}
+{}
 
 /**
  * Sets the callback on the action
@@ -110,5 +109,4 @@ inline bool PeriodicAction::Poll()
   return triggered;
 }
 
-
-} // namespace fetch
+}  // namespace fetch

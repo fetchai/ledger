@@ -96,7 +96,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   state_machine_->OnStateChange([this](State current, State previous) {
     if (periodic_print_.Poll())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current), " (previous: ", ToString(previous), ")");
+      FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
+                     " (previous: ", ToString(previous), ")");
     }
   });
 #endif  // FETCH_LOG_DEBUG_ENABLED

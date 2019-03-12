@@ -107,9 +107,9 @@ private:
   using DispatchMap        = std::map<Index, SubscriptionFeed>;
   using AddressDispatchMap = std::map<AddressIndex, SubscriptionFeed>;
 
-  mutable Mutex      lock_;                 ///< The registrar lock
-  DispatchMap        dispatch_map_;         ///< The {service,channel} dispatch map
-  AddressDispatchMap address_dispatch_map_; ///< The {address,service,channel} dispatch map
+  mutable Mutex      lock_;                  ///< The registrar lock
+  DispatchMap        dispatch_map_;          ///< The {service,channel} dispatch map
+  AddressDispatchMap address_dispatch_map_;  ///< The {address,service,channel} dispatch map
 };
 
 }  // namespace muddle

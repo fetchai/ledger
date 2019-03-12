@@ -337,8 +337,8 @@ void Constellation::Run(UriList const &initial_peers)
   while (active_)
   {
     // determine the status of the main chain server
-    bool const is_in_sync = ledger::MainChainRpcService::State::SYNCHRONISED ==
-                            main_chain_service_->state();
+    bool const is_in_sync =
+        ledger::MainChainRpcService::State::SYNCHRONISED == main_chain_service_->state();
 
     // control from the top level block production based on the chain sync state
     block_coordinator_.EnableMining(is_in_sync);
