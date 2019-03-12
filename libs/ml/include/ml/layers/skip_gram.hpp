@@ -20,7 +20,7 @@
 #include "math/free_functions/exponentiation/exponentiation.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/layers/layer.hpp"
-#include "ml/ops/activations/softmax.hpp"
+#include "ml/ops/activations/sigmoid.hpp"
 #include "ml/ops/embeddings.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
@@ -72,7 +72,7 @@ public:
 
     // softmax activation
     std::string output =
-        this->template AddNode<fetch::ml::ops::Softmax<ArrayType>>(name + "_Output", {dense});
+        this->template AddNode<fetch::ml::ops::Sigmoid<ArrayType>>(name + "_Output", {dense});
 
     this->AddInputNode(input);
     this->AddInputNode(context);

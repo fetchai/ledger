@@ -60,11 +60,6 @@ public:
     ArrayPtrType ret       = std::make_shared<ArrayType>(
         fetch::math::Divide(fetch::math::Subtract(*inputs[0], *inputs[1]), n_classes));
 
-    for (std::size_t j = 0; j < ret->size(); ++j)
-    {
-      std::cout << "ret->At(j): " << ret->At(j) << std::endl;
-    }
-
     return ret;
   }
 

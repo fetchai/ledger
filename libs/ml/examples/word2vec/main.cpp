@@ -16,13 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/distance/cosine.hpp"
 #include "ml/dataloaders/w2v_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/skip_gram.hpp"
-#include "ml/ops/loss_functions/scaled_cross_entropy.hpp"
-
-//#include "math/free_functions/ml/loss_functions/mean_square_error.hpp"
-#include "math/distance/cosine.hpp"
+#include "ml/ops/loss_functions/softmax_cross_entropy.hpp"
 
 #include <iostream>
 #include <math/tensor.hpp>
@@ -40,16 +38,15 @@ using SizeType     = typename ArrayType::SizeType;
 
 struct PARAMS
 {
-  SizeType batch_size     = 512;      // training data batch size
+  SizeType batch_size     = 128;      // training data batch size
   SizeType embedding_size = 3;        // dimension of embedding vec
-  SizeType training_steps = 5120000;  // total number of training steps
-  double   learning_rate  = 0.001;    // alpha - the learning rate
-
-  bool     cbow           = false;  // skipgram model if false, cbow if true
-  SizeType skip_window    = 5;      // max size of context window one way
-  SizeType super_samp     = 10;     // n times to reuse an input to generate a label
-  SizeType k_neg_samps    = 1;      // number of negative examples to sample
-  double   discard_thresh = 0.01;   // probability of discard
+  SizeType training_steps = 1280000;  // total number of training steps
+  double   learning_rate  = 0.01;     // alpha - the learning rate
+  bool     cbow           = false;    // skipgram model if false, cbow if true
+  SizeType skip_window    = 5;        // max size of context window one way
+  SizeType super_samp     = 10;       // n times to reuse an input to generate a label
+  SizeType k_neg_samps    = 20;       // number of negative examples to sample
+  double   discard_thresh = 0.01;     // controls how aggressively to discard frequent words
 };
 
 std::string TRAINING_DATA =
@@ -124,7 +121,7 @@ std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType vocab_size, SizeType 
   g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
   g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Context", {});
   std::string ret_name = g.AddNode<fetch::ml::layers::SkipGram<ArrayType>>(
-      "SkipGram", {"Input", "Context"}, vocab_size, SizeType(2), embeddings_size);
+      "SkipGram", {"Input", "Context"}, vocab_size, SizeType(1), embeddings_size);
 
   return ret_name;
 }
@@ -217,7 +214,7 @@ int main()
   std::string                 output_name = Model(g, dataloader.VocabSize(), p.embedding_size);
 
   // set up loss
-  ScaledCrossEntropy<ArrayType> criterion;
+  SoftmaxCrossEntropy<ArrayType> criterion;
 
   /////////////////////////////////
   /// TRAIN THE WORD EMBEDDINGS ///
@@ -227,7 +224,7 @@ int main()
 
   std::pair<std::pair<std::shared_ptr<ArrayType>, std::shared_ptr<ArrayType>>, SizeType> input;
   std::shared_ptr<ArrayType>                                                             gt =
-      std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1, 2}));
+      std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1, 1}));
   DataType loss = 0;
 
   for (std::size_t i = 0; i < p.training_steps; ++i)
@@ -237,22 +234,21 @@ int main()
     g.SetInput("Input", input.first.first);
     g.SetInput("Context", input.first.second);
     gt->Fill(0);
-    gt->At(input.second)               = DataType(1);
+    gt->At(0)                          = DataType(input.second);
     std::shared_ptr<ArrayType> results = g.Evaluate(output_name);
 
-    std::shared_ptr<ArrayType> scale_factor =
-        std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1}));
+    std::shared_ptr<ArrayType> result =
+        std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1, 1}));
 
+    DataType tmp_loss = criterion.Forward({results, gt});
     if (input.second == 0)
     {
-      scale_factor->At(0) = DataType(p.k_neg_samps);
+      tmp_loss *= DataType(p.k_neg_samps);
     }
-    else
-    {
-      scale_factor->At(0) = DataType(1);
-    }
+    //    else{
+    //      tmp_loss *= DataType(-1);
+    //    }
 
-    DataType tmp_loss = criterion.Forward({results, gt, scale_factor});
     loss += tmp_loss;
 
     g.BackPropagate(output_name, criterion.Backward({results, gt}));

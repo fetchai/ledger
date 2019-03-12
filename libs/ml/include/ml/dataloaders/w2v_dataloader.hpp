@@ -55,7 +55,8 @@ private:
   std::unordered_map<std::string, SizeType> vocab_;            // full unique vocab
   std::unordered_map<SizeType, std::string> reverse_vocab_;    // full unique vocab
   std::unordered_map<std::string, SizeType> vocab_frequency_;  // word frequencies
-  std::vector<std::vector<std::string>>     words_;            // all training data by sentence
+  std::vector<double>                       adj_vocab_frequency_;  // word frequencies
+  std::vector<std::vector<std::string>>     words_;                // all training data by sentence
 
   // used for iterating through all examples incrementally
   SizeType cursor_;
@@ -69,6 +70,10 @@ private:
   SizeType sentence_count_ = 0;  // total sentences in training corpus
   SizeType word_count_     = 0;  // total words in training corpus
   SizeType discard_count_  = 0;  // total count of discarded (frequent) words
+
+  SizeType unigram_table_size_ = 10000000;      // size of unigram table for negative sampling
+  std::vector<SizeType> unigram_table_;         // the unigram table container
+  double                unigram_power_ = 0.75;  // adjusted unigram distribution
 
   // containers for the data and labels
   std::vector<std::vector<SizeType>> data_input_;
@@ -92,6 +97,7 @@ public:
     , lcg_(seed)
   {
     assert(skip_window > 0);
+    unigram_table_ = std::vector<SizeType>(unigram_table_size_);
 
     // set up training dataset
     BuildTrainingData(data);
@@ -209,11 +215,8 @@ private:
     }
     else
     {
-      // put all words into an array
-      BuildVocab(training_data);
-
-      // discard words randomly according to word frequency
-      DiscardFrequent();
+      // convers text into training pairs & related preparatory work
+      ProcessTrainingData(training_data);
 
       for (std::size_t j = 0; j < super_sampling_; ++j)
       {
@@ -319,10 +322,10 @@ private:
           bool ongoing = true;
           while (ongoing)
           {
-            // randomly select a word in the vocabulary (excluding UNK)
+            // randomly select a word from the unigram_table
             SizeType ran_val     = SizeType(lcg_());
-            SizeType max_val     = (vocab_.size() - 1);
-            negative_context_idx = SizeType(ran_val % max_val) + SizeType(1);
+            SizeType max_val     = unigram_table_size_;
+            negative_context_idx = unigram_table_[ran_val % max_val];
             assert(negative_context_idx > 0);
             assert(negative_context_idx < vocab_.size());
             ongoing = false;
@@ -370,11 +373,10 @@ private:
   }
 
   /**
-   * converst a single long string training corpus into arrays of words - strips punctuation and
-   * lowers
+   * removes punctuation and handles casing of all words in training data
    * @param training_data
    */
-  void BuildVocab(std::string &training_data)
+  void PreProcessWords(std::string &training_data)
   {
     std::string word;
     words_.push_back(std::vector<std::string>{});
@@ -407,32 +409,93 @@ private:
     }
 
     assert(word_count_ > (skip_window_ * 2));
+  }
 
+  /**
+   * builds vocab out of parsed training data
+   */
+  void BuildVocab()
+  {
     // insert words uniquely into the vocabulary
-    SizeType word_counter = 1;  // 0 reserved for unknown word
+    SizeType unique_word_counter = 1;  // 0 reserved for unknown word
     vocab_.insert(std::make_pair("UNK", 0));
-    reverse_vocab_.insert(std::make_pair(0, "UNK"));
-    vocab_frequency_.insert(std::make_pair("UNK", 0));
+    reverse_vocab_.emplace(0, "UNK");
+    vocab_frequency_.emplace("UNK", 0);
 
     for (std::vector<std::string> &cur_sentence : words_)
     {
       for (std::string cur_word : cur_sentence)
       {
-        bool ret = vocab_.insert(std::make_pair(cur_word, word_counter)).second;
-        reverse_vocab_.insert(std::make_pair(word_counter, cur_word));
+        auto ret = vocab_.emplace(cur_word, unique_word_counter);
 
-        if (ret)
+        if (ret.second)
         {
+          reverse_vocab_.emplace(unique_word_counter, cur_word);
           vocab_frequency_[cur_word] = 1;
-          ++word_counter;
+          ++unique_word_counter;
         }
         else
         {
           vocab_frequency_[cur_word] += 1;
         }
+        ++n_words_;
       }
     }
-    n_words_ = word_counter - 1;
+  }
+
+  /**
+   * builds the unigram table for negative sampling
+   */
+  void BuildUnigramTable()
+  {
+    // calculate adjusted word frequencies
+    double sum_adj_vocab = 0.0;
+    for (SizeType j = 0; j < vocab_frequency_.size(); ++j)
+    {
+      adj_vocab_frequency_.emplace_back(
+          std::pow(double(vocab_frequency_[reverse_vocab_[j]]), unigram_power_));
+      sum_adj_vocab += adj_vocab_frequency_[j];
+    }
+
+    SizeType cur_idx = 0;
+    SizeType n_rows  = 0;
+    for (SizeType j = 0; j < vocab_.size(); ++j)
+    {
+      assert(cur_idx < unigram_table_size_);
+
+      double adjusted_word_probability = adj_vocab_frequency_[j] / sum_adj_vocab;
+
+      // word frequency
+      n_rows = SizeType(adjusted_word_probability * double(unigram_table_size_));
+
+      for (std::size_t k = 0; k < n_rows; ++k)
+      {
+        unigram_table_[cur_idx] = j;
+        ++cur_idx;
+      }
+    }
+    unigram_table_.resize(cur_idx - 1);
+    unigram_table_size_ = cur_idx - 1;
+  }
+
+  /**
+   * Preprocesses all training data, then builds vocabulary
+   * @param training_data
+   */
+  void ProcessTrainingData(std::string &training_data)
+  {
+
+    // strip punctuation and handle casing
+    PreProcessWords(training_data);
+
+    // build unique vocabulary and get word counts
+    BuildVocab();
+
+    // build unigram table used for negative sampling
+    BuildUnigramTable();
+
+    // discard words randomly according to word frequency
+    DiscardFrequent();
   }
 
   /**
@@ -526,14 +589,18 @@ private:
   bool DiscardExample(std::string &word)
   {
     double word_probability = double(vocab_frequency_[word]) / double(n_words_);
-    double prob_thresh      = 1.0 - std::sqrt(discard_threshold_ / word_probability);
-    double f                = lfg_.AsDouble();
+
+    double prob_thresh = (std::sqrt(word_probability / discard_threshold_) + 1.0);
+    prob_thresh *= (discard_threshold_ / word_probability);
+
+    //    double prob_thresh      = 1.0 - std::sqrt(discard_threshold_ / word_probability);
+    double f = lfg_.AsDouble();
 
     if (f < prob_thresh)
     {
-      return true;
+      return false;
     }
-    return false;
+    return true;
   }
 
   /**

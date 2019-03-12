@@ -53,7 +53,8 @@ public:
     assert(inputs.size() == 2);
     assert(inputs[0]->size() == inputs[1]->size());
 
-    typename ArrayType::Type n_classes = static_cast<typename ArrayType::Type>(inputs[1]->size());
+    //    typename ArrayType::Type n_classes = static_cast<typename
+    //    ArrayType::Type>(inputs[1]->size());
     ArrayPtrType ret = std::make_shared<ArrayType>(fetch::math::Subtract(*inputs[0], *inputs[1]));
     return ret;
   }
