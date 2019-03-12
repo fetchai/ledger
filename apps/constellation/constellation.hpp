@@ -75,7 +75,7 @@ public:
   using UriList          = std::vector<network::Uri>;
   using Manifest         = network::Manifest;
 
-  static constexpr uint32_t DEFAULT_BLOCK_DIFFICULTY = 3;
+  static constexpr uint32_t DEFAULT_BLOCK_DIFFICULTY = 6;
 
   struct Config
   {

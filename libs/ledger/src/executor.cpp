@@ -88,7 +88,7 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
     Contract::Status result{Contract::Status::FAILED};
     {
       // create the cache and state sentinel (lock and unlock resources as well as sandbox)
-      //CachedStorageAdapter storage_cache{*resources_}; // TODO(HUT): rename here - confusing.
+      CachedStorageAdapter storage_cache{*resources_};
       StateSentinelAdapter storage_adapter{*resources_, contract.GetParent(), tx.resources()};
 
       // lookup or create the instance of the contract as is needed
@@ -110,7 +110,7 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
       chain_code->Detach();
 
       // force the flushing of the cache
-      //storage_cache.Flush();
+      storage_cache.Flush();
     }
 
     // map the dispatch the result

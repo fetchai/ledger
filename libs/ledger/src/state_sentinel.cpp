@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/state_sentinel.hpp"
-//#include "vm/string.hpp"
 
 using fetch::storage::ResourceAddress;
 
@@ -47,9 +46,6 @@ StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope)
 StateAdapter::Status StateAdapter::Read(std::string const &key, void *data, uint64_t &size)
 {
   Status status{Status::ERROR};
-
-  std::cerr << "read: " << key << std::endl;
-  std::cerr << "scope: " << scope_.back().full_name() << std::endl;
 
   // make the request to the storage engine
   auto const result = storage_.Get(CreateAddress(scope_.back(), key));
@@ -215,8 +211,6 @@ StateSentinelAdapter::Status StateSentinelAdapter::Write(std::string const &key,
 {
   Status status{Status::PERMISSION_DENIED};
 
-  std::cerr << "write: " << key << std::endl;
-
   // ensure the key is in the allowed set
   if (IsAllowedResource(key))
   {
@@ -242,8 +236,6 @@ StateSentinelAdapter::Status StateSentinelAdapter::Write(std::string const &key,
 StateSentinelAdapter::Status StateSentinelAdapter::Exists(std::string const &key)
 {
   Status status{Status::PERMISSION_DENIED};
-
-  std::cerr << "exists: " << key << std::endl;
 
   // ensure the key is in the allowed set
   if (IsAllowedResource(key))

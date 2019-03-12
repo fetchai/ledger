@@ -115,7 +115,7 @@ protected:
   template <typename T>
   void SetStateRecord(T const &record, ConstByteArray const &key);
 
-  ledger::StateAdapter &state(); // TODO(HUT): rename this
+  ledger::StateAdapter &state();
   /// @}
 
 private:

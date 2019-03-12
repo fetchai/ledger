@@ -83,8 +83,6 @@ public:
   {
     value_ = value.Get<Value>();
 
-    std::cerr << "SETTING" << std::endl;
-
     // flush the value if it is being observed
     FlushIO();
   }
