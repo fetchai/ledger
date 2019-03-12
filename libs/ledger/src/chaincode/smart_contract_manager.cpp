@@ -60,7 +60,7 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
   if (!ParseAsJson(tx, data))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "FAILED TO PARSE TRANSACTION");
-    return Status::FAILED;  // TODO(HUT):  // discuss with ed
+    return Status::FAILED;
   }
 
   ConstByteArray contract_source;
@@ -113,7 +113,6 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
 
     switch (kind)
     {
-    // TODO(HUT): rename this kind thing
     case vm::Kind::ON_INIT:
       if (on_init_function.size() > 0)
       {
@@ -141,6 +140,7 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
     return Status::FAILED;
   }
 
+  // Convert the TX signature to a base64
   auto pub_key_b64 = tx_signatures.begin()->first.identifier().ToBase64();
 
   Identifier scope;
@@ -161,7 +161,7 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
   // if there is an init function to run
   if (on_init_function.size() > 0)
   {
-    vm::ParameterPack params{vm->registered_types()};  // TODO(HUT): refactor this away.
+    vm::ParameterPack params{vm->registered_types()};
 
     // Execute the requested function
     std::string        error;
