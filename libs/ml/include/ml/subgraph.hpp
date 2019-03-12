@@ -41,8 +41,7 @@ public:
     ASSERT(inputs.size() == this->input_nodes_.size());
     for (std::uint64_t i(0); i < inputs.size(); ++i)
     {
-      this->SetInput(input_nodes_[i],
-                     std::make_shared<ArrayType>(inputs.at(i)));  // TODO : Fix this shit
+      this->SetInput(input_nodes_[i], inputs.at(i));
     }
     return output_node_->Evaluate();
   }

@@ -57,8 +57,8 @@ int main(int ac, char **av)
 
   CrossEntropy<ArrayType> criterion;
 
-  std::pair<size_t, std::shared_ptr<ArrayType>> input;
-  ArrayType gt(std::vector<typename ArrayType::SizeType>({1, 10}));
+  std::pair<size_t, ArrayType> input;
+  ArrayType                    gt(std::vector<typename ArrayType::SizeType>({1, 10}));
 
   gt.At(0)          = 1.0;
   DataType     loss = 0;

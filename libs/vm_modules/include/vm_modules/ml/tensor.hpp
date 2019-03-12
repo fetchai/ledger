@@ -49,7 +49,7 @@ public:
 
   fetch::vm::Ptr<fetch::vm::String> ToString()
   {
-    return new fetch::vm::String(vm_, (*this).ToString());
+    return new fetch::vm::String(vm_, (*this).Tensor::ToString());
   }
 };
 

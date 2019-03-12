@@ -62,12 +62,12 @@ public:
     this->AddInputNodes(input);
     this->SetOutputNode(output);
 
-    ArrayPtrType weights_ptr = std::make_shared<ArrayType>(std::vector<std::uint64_t>({in, out}));
-    this->Initialise(weights_ptr, init_mode);
-    this->SetInput(weights, weights_ptr);
+    ArrayType weights_data(std::vector<std::uint64_t>({in, out}));
+    this->Initialise(weights_data, init_mode);
+    this->SetInput(weights, weights_data);
 
-    ArrayPtrType bias_ptr = std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, out}));
-    this->SetInput(bias, bias_ptr);
+    ArrayType bias_data(std::vector<std::uint64_t>({1, out}));
+    this->SetInput(bias, bias_data);
   }
 
   static constexpr char const *DESCRIPTOR = "FullyConnected";

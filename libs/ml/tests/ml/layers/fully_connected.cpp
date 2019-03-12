@@ -33,8 +33,7 @@ TYPED_TEST_CASE(FullyConnectedTest, MyTypes);
 TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
   fetch::ml::layers::FullyConnected<TypeParam> fc(100u, 10u);
-  std::shared_ptr<TypeParam>                   inputData =
-      std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({10, 10}));
+  TypeParam inputData(std::vector<typename TypeParam::SizeType>({10, 10}));
   fc.SetInput("FC_Input", inputData);
   TypeParam output = fc.Evaluate("FC_MatrixMultiply");
 
@@ -73,8 +72,7 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
 
 TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
 {
-  std::shared_ptr<TypeParam> data =
-      std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 10}));
+  TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10}));
   std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
       std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
   placeholder->SetData(data);
@@ -92,8 +90,7 @@ TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
 
 TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
 {
-  std::shared_ptr<TypeParam> data =
-      std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 10}));
+  TypeParam                                                                           data({5, 10});
   std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
       std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
   placeholder->SetData(data);
@@ -120,8 +117,7 @@ TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
   g.template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>("FullyConnected", {"Input"}, 50u,
                                                                    42u);
 
-  std::shared_ptr<TypeParam> data =
-      std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 10}));
+  TypeParam data({5, 10});
   g.SetInput("Input", data);
 
   TypeParam prediction = g.Evaluate("FullyConnected");

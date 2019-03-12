@@ -118,7 +118,7 @@ public:
    * @param nodeName name of the placeholder node in the graph (must be unique)
    * @param data the pointer to a tensor to assign to the placeholder
    */
-  void SetInput(std::string const &nodeName, ArrayPtrType data)
+  void SetInput(std::string const &nodeName, ArrayType data)
   {
     std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>> placeholder =
         std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<ArrayType>>(nodes_[nodeName]);

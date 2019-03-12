@@ -35,7 +35,7 @@ public:
 
   Embeddings(unsigned int dataPoints, unsigned int dimensions)
   {
-    this->SetData(std::make_shared<ArrayType>(std::vector<SizeType>({dataPoints, dimensions})));
+    this->SetData(ArrayType(std::vector<SizeType>({dataPoints, dimensions})));
   }
 
   virtual ~Embeddings() = default;

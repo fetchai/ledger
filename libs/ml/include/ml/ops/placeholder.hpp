@@ -48,9 +48,9 @@ public:
     return {errorSignal};
   }
 
-  virtual void SetData(ArrayPtrType const &data)
+  virtual void SetData(ArrayType const &data)
   {
-    this->output_ = data;
+    this->output_ = std::make_shared<ArrayType>(data);
   }
 
   static constexpr char const *DESCRIPTOR = "PlaceHolder";

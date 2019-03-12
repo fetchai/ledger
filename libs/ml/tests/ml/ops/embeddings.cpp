@@ -49,13 +49,13 @@ TYPED_TEST(EmbeddingsTest, forward)
 {
   fetch::ml::ops::Embeddings<TypeParam> e(10, 6);
 
-  std::shared_ptr<TypeParam> weights = std::make_shared<TypeParam>(std::vector<uint64_t>({10, 6}));
+  TypeParam weights(std::vector<uint64_t>({10, 6}));
 
   for (unsigned int i(0); i < 10; ++i)
   {
     for (unsigned int j(0); j < 6; ++j)
     {
-      weights->Set({i, j}, typename TypeParam::Type(i * 10 + j));
+      weights.Set({i, j}, typename TypeParam::Type(i * 10 + j));
     }
   }
 
@@ -77,12 +77,12 @@ TYPED_TEST(EmbeddingsTest, forward)
 TYPED_TEST(EmbeddingsTest, backward)
 {
   fetch::ml::ops::Embeddings<TypeParam> e(10, 6);
-  std::shared_ptr<TypeParam> weights = std::make_shared<TypeParam>(std::vector<uint64_t>({10, 6}));
+  TypeParam                             weights(std::vector<uint64_t>({10, 6}));
   for (unsigned int i(0); i < 10; ++i)
   {
     for (unsigned int j(0); j < 6; ++j)
     {
-      weights->Set({i, j}, typename TypeParam::Type(i * 10 + j));
+      weights.Set({i, j}, typename TypeParam::Type(i * 10 + j));
     }
   }
   e.SetData(weights);

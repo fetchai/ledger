@@ -16,26 +16,26 @@
 //
 //------------------------------------------------------------------------------
 
-// #include "math/tensor.hpp"
-// #include "ml/dataloaders/mnist_loader.hpp"
-// #include "ml/graph.hpp"
-// #include "ml/layers/fully_connected.hpp"
-// #include "ml/ops/activation.hpp"
-// #include "ml/ops/loss_functions/mean_square_error.hpp"
+#include "math/tensor.hpp"
+#include "ml/dataloaders/mnist_loader.hpp"
+#include "ml/graph.hpp"
+#include "ml/layers/fully_connected.hpp"
+#include "ml/ops/activation.hpp"
+#include "ml/ops/loss_functions/mean_square_error.hpp"
 
-// #include "vm/analyser.hpp"
-// #include "vm/typeids.hpp"
+#include "vm/analyser.hpp"
+#include "vm/typeids.hpp"
 
-// #include "vm/compiler.hpp"
-// #include "vm/module.hpp"
-// #include "vm/vm.hpp"
+#include "vm/compiler.hpp"
+#include "vm/module.hpp"
+#include "vm/vm.hpp"
 
-// #include "vm_modules/ml/cross_entropy.hpp"
-// #include "vm_modules/ml/graph.hpp"
+#include "vm_modules/ml/cross_entropy.hpp"
+#include "vm_modules/ml/graph.hpp"
 
-// #include <fstream>
-// #include <sstream>
-// #include <vector>
+#include <fstream>
+#include <sstream>
+#include <vector>
 
 // struct System : public fetch::vm::Object
 // {
