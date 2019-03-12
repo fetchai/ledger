@@ -36,29 +36,35 @@ public:
   Sigmoid()          = default;
   virtual ~Sigmoid() = default;
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
-    assert(inputs.size() == 1);
-    if (!this->output_ || this->output_->shape() != inputs[0]->shape())
-    {
-      this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
-    }
-
-    fetch::math::Sigmoid(*inputs[0], *this->output_);
-    return this->output_;
+    return Forward(inputs);
   }
 
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     assert(inputs.size() == 1);
-    assert(inputs[0]->shape() == errorSignal->shape());
+    if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
+    {
+      this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
+    }
 
-    ArrayPtrType t = this->Forward(inputs);
-    fetch::math::Add(*errorSignal,
-                     fetch::math::Multiply(*t, fetch::math::Subtract(DataType(1), *t)),
-                     *errorSignal);
-    return {errorSignal};
+    fetch::math::Sigmoid(inputs.front().get(), *this->output_);
+    return *this->output_;
+  }
+
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal)
+  {
+    assert(inputs.size() == 1);
+    assert(inputs.front().get().shape() == errorSignal.shape());
+
+    ArrayType t            = this->Forward(inputs);
+    ArrayType returnSignal = errorSignal.Clone();
+    fetch::math::Add(errorSignal, fetch::math::Multiply(t, fetch::math::Subtract(DataType(1), t)),
+                     returnSignal);
+    return {returnSignal};
   }
 
   static constexpr char const *DESCRIPTOR = "Sigmoid";

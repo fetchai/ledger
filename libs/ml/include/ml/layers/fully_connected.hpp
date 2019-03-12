@@ -47,7 +47,6 @@ public:
                  WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
     : Layer<T>(in, out)
   {
-
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
     std::string flat_input =
@@ -64,22 +63,23 @@ public:
     this->AddInputNodes(input);
     this->SetOutputNode(output);
 
-    ArrayPtrType weights_ptr = std::make_shared<ArrayType>(std::vector<std::uint64_t>({in, out}));
-    this->Initialise(weights_ptr, init_mode);
-    this->SetInput(weights, weights_ptr);
+    ArrayType weights_data(std::vector<std::uint64_t>({in, out}));
+    this->Initialise(weights_data, init_mode);
+    this->SetInput(weights, weights_data);
 
-    ArrayPtrType bias_ptr = std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, out}));
-    this->SetInput(bias, bias_ptr);
+    ArrayType bias_data(std::vector<std::uint64_t>({1, out}));
+    this->SetInput(bias, bias_data);
   }
 
-  virtual ArrayPtrType              ForwardBatch(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     assert(inputs.size() == 1);
-    std::vector<ArrayPtrType> results;
-    for (typename ArrayType::SizeType b(0) ; b < inputs[0]->shape()[0] ; ++b) // Loop over batch dim
-      {
-	// results.push_back(this->Forward(inputs[0]->Slice(b)));
-      }
+    std::vector<ArrayType> results;
+    for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
+    {
+      ArrayType slice = inputs.front().get().Slice(b);
+      results.push_back(this->Forward({slice}));
+    }
     return ConcatenateTensors(results);
   }
 

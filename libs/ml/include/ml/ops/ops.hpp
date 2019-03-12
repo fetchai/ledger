@@ -31,24 +31,19 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual ArrayPtrType              Forward(std::vector<ArrayPtrType> const &inputs) = 0;
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     error) = 0;
-  virtual ArrayPtrType              ForwardBatch(std::vector<ArrayPtrType> const &inputs)
-  {
-    std::cerr << "ForwardBatch not implemented" << std::endl;
-    assert(false);
-    return nullptr;
-  }
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
 
-  virtual void SetBatch(bool b)
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal) = 0;
+  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
-    batch_ = b;
+    // TODO(private 735) -- Make that function pure virtual
+    return Forward(inputs);
   }
 
 protected:
-  bool         batch_ = false;
-  ArrayPtrType output_;
+  ArrayPtrType output_;  // TODO(private, 736) -- Remove
 };
 }  // namespace ml
 }  // namespace fetch

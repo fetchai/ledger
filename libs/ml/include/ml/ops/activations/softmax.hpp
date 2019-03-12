@@ -35,40 +35,37 @@ public:
   Softmax()          = default;
   virtual ~Softmax() = default;
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
-    assert(inputs.size() == 1);
-    if (!this->output_ || this->output_->shape() != inputs[0]->shape())
-    {
-      this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
-    }
-
-    fetch::math::Softmax(*inputs[0], *this->output_);
-
-    return this->output_;
+    // Batch detection is handled in fetch::math::Softmax
+    return Forward(inputs);
   }
 
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     assert(inputs.size() == 1);
-    assert(inputs[0]->shape() == errorSignal->shape());
+    if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
+    {
+      this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
+    }
+    fetch::math::Softmax(inputs[0].get(), *this->output_);
+    return *this->output_;
+  }
 
-    ArrayPtrType t = this->Forward(inputs);
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
-    {
-      errorSignal->At(i) *= t->At(i);
-    }
-    typename ArrayType::Type sum(0);
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
-    {
-      sum += errorSignal->At(i);
-    }
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
-    {
-      errorSignal->At(i) -= (t->At(i) * sum);
-    }
-    return {errorSignal};
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal)
+  {
+    assert(inputs.size() == 1);
+    assert(inputs.front().get().shape() == errorSignal.shape());
+
+    ArrayType returnSignal = errorSignal.Clone();
+    ArrayType t            = this->Forward(inputs);
+    returnSignal.InlineMultiply(t);
+    typename ArrayType::Type sum = returnSignal.Sum();
+    t.InlineMultiply(sum);
+    returnSignal.InlineSubtract(t);
+    return {returnSignal};
   }
 
   static constexpr char const *DESCRIPTOR = "Softmax";
