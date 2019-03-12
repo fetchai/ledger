@@ -71,8 +71,7 @@ public:
   }
 
   ~State() override
-  {
-  }
+  {}
 
   TemplateParameter Get() const override
   {

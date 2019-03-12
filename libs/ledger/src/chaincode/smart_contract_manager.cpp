@@ -113,29 +113,29 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
 
     switch (kind)
     {
-      // TODO(HUT): rename this kind thing
-      case vm::Kind::ON_INIT:
-        if(on_init_function.size() > 0)
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "More than one init function found in SC. Terminating.");
-          return Status::FAILED;
-        }
-        FETCH_LOG_WARN(LOGGING_NAME, "Found init function for SC");
-        on_init_function = fn.name;
-        break;
-
-      case vm::Kind::INVALID:
-        FETCH_LOG_WARN(LOGGING_NAME, "Invalid function decorator found when adding SC");
+    // TODO(HUT): rename this kind thing
+    case vm::Kind::ON_INIT:
+      if (on_init_function.size() > 0)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "More than one init function found in SC. Terminating.");
         return Status::FAILED;
+      }
+      FETCH_LOG_WARN(LOGGING_NAME, "Found init function for SC");
+      on_init_function = fn.name;
+      break;
 
-      default:
-        break;
+    case vm::Kind::INVALID:
+      FETCH_LOG_WARN(LOGGING_NAME, "Invalid function decorator found when adding SC");
+      return Status::FAILED;
+
+    default:
+      break;
     }
   }
 
   auto tx_signatures = tx.signatures();
 
-  if(tx_signatures.size() != 1)
+  if (tx_signatures.size() != 1)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Only one signature allowed when setting up smart contract");
     return Status::FAILED;
@@ -159,9 +159,9 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
   FETCH_LOG_WARN(LOGGING_NAME, "Running SC init code: ", calculated_hash);
 
   // if there is an init function to run
-  if(on_init_function.size() > 0)
+  if (on_init_function.size() > 0)
   {
-    vm::ParameterPack params{vm->registered_types()}; // TODO(HUT): refactor this away.
+    vm::ParameterPack params{vm->registered_types()};  // TODO(HUT): refactor this away.
 
     // Execute the requested function
     std::string        error;
@@ -174,7 +174,8 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
     }
   }
 
-  FETCH_LOG_WARN(LOGGING_NAME, "Adding smart contract, ID: ", calculated_hash, " on_init called: ", on_init_function.size() != 0);
+  FETCH_LOG_WARN(LOGGING_NAME, "Adding smart contract, ID: ", calculated_hash,
+                 " on_init called: ", on_init_function.size() != 0);
 
   state().PopContext();
 

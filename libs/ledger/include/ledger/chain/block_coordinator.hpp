@@ -238,18 +238,18 @@ private:
 
   /// @name State Machine State
   /// @{
-  Identity        identity_{};            ///< The miner identity
-  StateMachinePtr state_machine_;         ///< The main state machine for this service
-  std::size_t     block_difficulty_;      ///< The number of leading zeros needed in the proof
-  std::size_t     num_lanes_;             ///< The current number of lanes
-  std::size_t     num_slices_;            ///< The current number of slices
-  std::size_t     stall_count_{0};        ///< The number of times the execution has been stalled
-  Flag            mining_{false};         ///< Flag to signal if this node generating blocks
+  Identity        identity_{};             ///< The miner identity
+  StateMachinePtr state_machine_;          ///< The main state machine for this service
+  std::size_t     block_difficulty_;       ///< The number of leading zeros needed in the proof
+  std::size_t     num_lanes_;              ///< The current number of lanes
+  std::size_t     num_slices_;             ///< The current number of slices
+  std::size_t     stall_count_{0};         ///< The number of times the execution has been stalled
+  Flag            mining_{false};          ///< Flag to signal if this node generating blocks
   Flag            mining_enabled_{false};  ///< Short term signal to toggle on and off
-  BlockPeriod     block_period_;          ///< The desired period before a block is generated
-  Timepoint       next_block_time_;       ///< THe next point that a block should be generated
-  BlockPtr        current_block_{};       ///< The pointer to the current block (read only)
-  NextBlockPtr    next_block_{};          ///< The next block being created (read / write)
+  BlockPeriod     block_period_;           ///< The desired period before a block is generated
+  Timepoint       next_block_time_;        ///< THe next point that a block should be generated
+  BlockPtr        current_block_{};        ///< The pointer to the current block (read only)
+  NextBlockPtr    next_block_{};           ///< The next block being created (read / write)
   TxSetPtr        pending_txs_{};  ///< The list of pending transactions that are being waited on
   /// @}
 };

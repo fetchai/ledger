@@ -28,8 +28,8 @@
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
-#include "vm_modules/vm_factory.hpp"
 #include "vm/function_decorators.hpp"
+#include "vm_modules/vm_factory.hpp"
 
 #include "ledger/fetch_msgpack.hpp"
 
@@ -118,7 +118,8 @@ SmartContract::SmartContract(std::string const &source)
 
     case vm::Kind::INVALID:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Invalid function decorator found");
-      throw SmartContractException(SmartContractException::Category::COMPILATION, {"Invalid decorator found in contract"});
+      throw SmartContractException(SmartContractException::Category::COMPILATION,
+                                   {"Invalid decorator found in contract"});
       break;
     }
   }

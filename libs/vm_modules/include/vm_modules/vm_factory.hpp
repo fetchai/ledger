@@ -96,18 +96,18 @@ public:
       errors.push_back("Failed to compile.");
     }
 
-    #ifndef NDEBUG
+#ifndef NDEBUG
     std::ostringstream all_errors;
-    for(auto const &error : errors)
+    for (auto const &error : errors)
     {
       all_errors << error << std::endl;
     }
 
-    if(errors.size() > 0)
+    if (errors.size() > 0)
     {
       FETCH_LOG_WARN("VM_FACTORY", "Found badly constructed SC. Debug:\n", all_errors.str());
     }
-    #endif
+#endif
 
     return errors;
   }

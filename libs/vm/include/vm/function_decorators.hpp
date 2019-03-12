@@ -22,13 +22,12 @@ namespace vm {
 
 enum class Kind
 {
-  NORMAL,  ///< Normal (undecorated) function
-  ACTION,  ///< A Transaction handler
-  QUERY,   ///< A Query handler
-  ON_INIT,   ///< A function to be called on smart contract construction
-  INVALID,   ///< The function has an invalid decorator
+  NORMAL,   ///< Normal (undecorated) function
+  ACTION,   ///< A Transaction handler
+  QUERY,    ///< A Query handler
+  ON_INIT,  ///< A function to be called on smart contract construction
+  INVALID,  ///< The function has an invalid decorator
 };
-
 
 /**
  * Determine the type of the VM function
@@ -69,7 +68,5 @@ inline Kind DetermineKind(vm::Script::Function const &fn)
   return kind;
 }
 
-
 }  // namespace vm
 }  // namespace fetch
-

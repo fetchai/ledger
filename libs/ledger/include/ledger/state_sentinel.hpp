@@ -54,7 +54,7 @@ public:
   void PopContext();
 
 protected:
-  StorageInterface        &storage_;
+  StorageInterface &      storage_;
   std::vector<Identifier> scope_;
 };
 

@@ -20,9 +20,9 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/identifier.hpp"
+#include "ledger/state_sentinel.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "variant/variant.hpp"
-#include "ledger/state_sentinel.hpp"
 
 #include <atomic>
 #include <functional>

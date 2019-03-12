@@ -51,8 +51,8 @@ private:
   using ScriptPtr = std::shared_ptr<Script>;
   using ModulePtr = std::shared_ptr<vm::Module>;
 
-  ScriptPtr      script_;  ///< The internal script object of the parsed source
-  ModulePtr      module_;  ///< The internal module instance for the contract
+  ScriptPtr script_;  ///< The internal script object of the parsed source
+  ModulePtr module_;  ///< The internal module instance for the contract
 };
 
 }  // namespace ledger
