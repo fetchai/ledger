@@ -30,7 +30,7 @@ namespace ledger {
 /**
  * Read Only Adapter between the VM IO interface and the main ledger state database
  */
-class StateAdapter : public vm::IoObserverInterface
+class StateAdapter : public ::fetch::vm::IoObserverInterface
 {
 public:
   using ConstByteArray  = byte_array::ConstByteArray;
@@ -50,9 +50,12 @@ public:
   Status Exists(std::string const &key) override;
   /// @}
 
+  void PushContext(Identifier const &scope);
+  void PopContext();
+
 protected:
-  StorageInterface &storage_;
-  Identifier        scope_;
+  StorageInterface        &storage_;
+  std::vector<Identifier> scope_;
 };
 
 /**

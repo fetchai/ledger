@@ -463,6 +463,8 @@ StorageUnitClient::Document StorageUnitClient::GetOrCreate(ResourceAddress const
 {
   Document doc;
 
+  std::cerr << "GetOrCreate " << key.as_resource_id().ToString() << std::endl;
+
   try
   {
     // make the request to the RPC client
@@ -485,6 +487,8 @@ StorageUnitClient::Document StorageUnitClient::GetOrCreate(ResourceAddress const
 StorageUnitClient::Document StorageUnitClient::Get(ResourceAddress const &key)
 {
   Document doc;
+
+  std::cerr << "Get " << key.as_resource_id().ToString() << std::endl;
 
   try
   {
@@ -509,6 +513,9 @@ StorageUnitClient::Document StorageUnitClient::Get(ResourceAddress const &key)
 
 void StorageUnitClient::Set(ResourceAddress const &key, StateValue const &value)
 {
+
+  std::cerr << "Setting " << key.as_resource_id().ToString() << " to " << value  << std::endl;
+
   try
   {
     // make the request to the RPC server

@@ -22,7 +22,7 @@
 #include "ledger/identifier.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "variant/variant.hpp"
-#include "vm/io_observer_interface.hpp"
+#include "ledger/state_sentinel.hpp"
 
 #include <atomic>
 #include <functional>
@@ -32,14 +32,12 @@
 
 namespace fetch {
 
-namespace vm {
-class IoObserverInterface;
-}
-
 namespace variant {
 class Variant;
 }
 namespace ledger {
+
+class StateAdapter;
 
 /**
  * Contract - Base class for all smart contract and chain code instances
@@ -76,7 +74,7 @@ public:
 
   /// @name Contract Lifecycle Handlers
   /// @{
-  void Attach(vm::IoObserverInterface &state);
+  void Attach(ledger::StateAdapter &state);
   void Detach();
 
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
@@ -117,7 +115,7 @@ protected:
   template <typename T>
   void SetStateRecord(T const &record, ConstByteArray const &key);
 
-  vm::IoObserverInterface &state();
+  ledger::StateAdapter &state(); // TODO(HUT): rename this
   /// @}
 
 private:
@@ -136,7 +134,7 @@ private:
 
   /// @name State
   /// @{
-  vm::IoObserverInterface *state_ = nullptr;
+  ledger::StateAdapter *state_ = nullptr;
   /// @}
 };
 
@@ -145,7 +143,7 @@ private:
  *
  * @param state The reference
  */
-inline void Contract::Attach(vm::IoObserverInterface &state)
+inline void Contract::Attach(ledger::StateAdapter &state)
 {
   state_ = &state;
 }

@@ -31,7 +31,7 @@ fetch::math::meta::IfIsArithmetic<T, fetch::vm::Ptr<fetch::vm::String>> toString
   return ret;
 }
 
-void CreateToString(std::shared_ptr<fetch::vm::Module> &module)
+static void CreateToString(std::shared_ptr<fetch::vm::Module> &module)
 {
   module->CreateFreeFunction("toString", &toString<int32_t>);
   module->CreateFreeFunction("toString", &toString<uint32_t>);

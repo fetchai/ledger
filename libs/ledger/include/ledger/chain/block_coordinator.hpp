@@ -245,7 +245,7 @@ private:
   std::size_t     num_slices_;            ///< The current number of slices
   std::size_t     stall_count_{0};        ///< The number of times the execution has been stalled
   Flag            mining_{false};         ///< Flag to signal if this node generating blocks
-  Flag            mining_enabled_{true};  ///< Short term signal to toggle on and off
+  Flag            mining_enabled_{false};  ///< Short term signal to toggle on and off
   BlockPeriod     block_period_;          ///< The desired period before a block is generated
   Timepoint       next_block_time_;       ///< THe next point that a block should be generated
   BlockPtr        current_block_{};       ///< The pointer to the current block (read only)

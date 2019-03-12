@@ -148,7 +148,7 @@ bool Contract::ParseAsJson(Transaction const &tx, variant::Variant &output)
  *
  * @return The reference to the state instance
  */
-vm::IoObserverInterface &Contract::state()
+ledger::StateAdapter &Contract::state()
 {
   detailed_assert(state_ != nullptr);
   return *state_;

@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/state_sentinel.hpp"
-#include "vm/string.hpp"
+//#include "vm/string.hpp"
 
 using fetch::storage::ResourceAddress;
 
@@ -48,8 +48,11 @@ StateAdapter::Status StateAdapter::Read(std::string const &key, void *data, uint
 {
   Status status{Status::ERROR};
 
+  std::cerr << "read: " << key << std::endl;
+  std::cerr << "scope: " << scope_.back().full_name() << std::endl;
+
   // make the request to the storage engine
-  auto const result = storage_.Get(CreateAddress(scope_, key));
+  auto const result = storage_.Get(CreateAddress(scope_.back(), key));
 
   // ensure the check was not found
   if (!result.failed)
@@ -106,7 +109,7 @@ StateAdapter::Status StateAdapter::Exists(std::string const &key)
   Status status{Status::ERROR};
 
   // request the result
-  auto const result = storage_.Get(CreateAddress(scope_, key));
+  auto const result = storage_.Get(CreateAddress(scope_.back(), key));
 
   if (!result.failed)
   {
@@ -130,6 +133,16 @@ ResourceAddress StateAdapter::CreateAddress(Identifier const &scope, ConstByteAr
   return ResourceAddress{scope.full_name() + ".state." + key};
 }
 
+void StateAdapter::PushContext(Identifier const &scope)
+{
+  scope_.push_back(scope);
+}
+
+void StateAdapter::PopContext()
+{
+  scope_.pop_back();
+}
+
 /**
  * Creates a read/write state adapter based on a specified storage engine and scope
  *
@@ -144,7 +157,8 @@ StateSentinelAdapter::StateSentinelAdapter(StorageInterface &storage, Identifier
   // lock all the resources
   for (auto const &resource : resources_)
   {
-    storage_.Lock(CreateAddress(scope_, resource));
+    FETCH_LOG_WARN("removeme", "Locking resource: ", resource);
+    storage_.Lock(CreateAddress(scope_.back(), resource));
   }
 }
 
@@ -153,7 +167,7 @@ StateSentinelAdapter::~StateSentinelAdapter()
   // unlock all the resources
   for (auto const &resource : resources_)
   {
-    storage_.Unlock(CreateAddress(scope_, resource));
+    storage_.Unlock(CreateAddress(scope_.back(), resource));
   }
 }
 
@@ -201,11 +215,13 @@ StateSentinelAdapter::Status StateSentinelAdapter::Write(std::string const &key,
 {
   Status status{Status::PERMISSION_DENIED};
 
+  std::cerr << "write: " << key << std::endl;
+
   // ensure the key is in the allowed set
   if (IsAllowedResource(key))
   {
     // set the value on the storage engine
-    storage_.Set(CreateAddress(scope_, key),
+    storage_.Set(CreateAddress(scope_.back(), key),
                  ConstByteArray{reinterpret_cast<uint8_t const *>(data), size});
   }
   else
@@ -226,6 +242,8 @@ StateSentinelAdapter::Status StateSentinelAdapter::Write(std::string const &key,
 StateSentinelAdapter::Status StateSentinelAdapter::Exists(std::string const &key)
 {
   Status status{Status::PERMISSION_DENIED};
+
+  std::cerr << "exists: " << key << std::endl;
 
   // ensure the key is in the allowed set
   if (IsAllowedResource(key))
