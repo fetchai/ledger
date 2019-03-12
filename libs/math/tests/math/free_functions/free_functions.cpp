@@ -23,73 +23,62 @@
 #include "core/random/lcg.hpp"
 #include "math/free_functions/free_functions.hpp"
 
-#include "math/ndarray.hpp"
+#include "core/fixed_point/fixed_point.hpp"
+#include "math/tensor.hpp"
+
+template <typename T>
+class FreeFunctionsTest : public ::testing::Test
+{
+};
+
+using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+TYPED_TEST_CASE(FreeFunctionsTest, MyTypes);
 
 ///////////////////
 /// Sigmoid 2x2 ///
 ///////////////////
 // Test sigmoid function output against numpy output for 2x2 input matrix of random values
 
-template <typename T, typename ArrayType>
-void sigmoid_22()
+TYPED_TEST(FreeFunctionsTest, sigmoid_2x2)
 {
-  ArrayType array1{4};
-  array1.Reshape({2, 2});
+  TypeParam array1{{2, 2}};
 
-  array1[0] = T(0.3);
-  array1[1] = T(1.2);
-  array1[2] = T(0.7);
-  array1[3] = T(22);
+  array1.Set(0, typename TypeParam::Type(0.3));
+  array1.Set(1, typename TypeParam::Type(1.2));
+  array1.Set(2, typename TypeParam::Type(0.7));
+  array1.Set(3, typename TypeParam::Type(22));
 
-  ArrayType output = fetch::math::Sigmoid(array1);
+  TypeParam output = fetch::math::Sigmoid(array1);
 
-  ArrayType numpy_output{4};
-  numpy_output.Reshape({2, 2});
+  TypeParam numpy_output{{2, 2}};
 
-  numpy_output[0] = T(0.57444252);
-  numpy_output[1] = T(0.76852478);
-  numpy_output[2] = T(0.66818777);
-  numpy_output[3] = T(1);
+  numpy_output.Set(0, typename TypeParam::Type(0.57444252));
+  numpy_output.Set(1, typename TypeParam::Type(0.76852478));
+  numpy_output.Set(2, typename TypeParam::Type(0.66818777));
+  numpy_output.Set(3, typename TypeParam::Type(1));
 
   ASSERT_TRUE(output.AllClose(numpy_output));
-}
-TEST(ndarray, sigmoid_2x2_ndarray_float)
-{
-  sigmoid_22<float, fetch::math::NDArray<float>>();
-}
-TEST(ndarray, sigmoid_2x2_ndarray_double)
-{
-  sigmoid_22<double, fetch::math::NDArray<double>>();
 }
 
 ///////////////////
 /// Sigmoid 1x1 ///
 ///////////////////
 // Test sigmoid function output against numpy output for 2x2 input matrix of random values
-
-template <typename T, typename ArrayType>
-void sigmoid_11()
+TYPED_TEST(FreeFunctionsTest, sigmoid_11)
 {
-  ArrayType input{1};
-  ArrayType output{1};
-  ArrayType numpy_output{1};
+  TypeParam input{1};
+  TypeParam output{1};
+  TypeParam numpy_output{1};
 
-  input[0]        = T(0.3);
-  numpy_output[0] = 0;
+  input.Set(0, typename TypeParam::Type(0.3));
+  numpy_output.Set(0, typename TypeParam::Type(0));
 
   output = fetch::math::Sigmoid(input);
 
-  numpy_output[0] = T(0.574442516811659);
+  numpy_output[0] = typename TypeParam::Type(0.574442516811659);
 
   ASSERT_TRUE(output.AllClose(numpy_output));
-}
-TEST(ndarray, sigmoid_11_ndarray_float)
-{
-  sigmoid_11<float, fetch::math::NDArray<float>>();
-}
-TEST(ndarray, sigmoid_11_ndarray_double)
-{
-  sigmoid_11<double, fetch::math::NDArray<double>>();
 }
 
 ////////////////
@@ -97,35 +86,24 @@ TEST(ndarray, sigmoid_11_ndarray_double)
 ////////////////
 // Test sigmoid function output against numpy output for 2x2 input matrix of random values
 
-template <typename T, typename ArrayType>
-void tanh_22()
+TYPED_TEST(FreeFunctionsTest, tanh_22)
 {
-  ArrayType array1{4};
-  array1.Reshape({2, 2});
+  TypeParam array1{{2, 2}};
 
-  array1[0] = T(0.3);
-  array1[1] = T(1.2);
-  array1[2] = T(0.7);
-  array1[3] = T(22);
+  array1.Set(0, typename TypeParam::Type(0.3));
+  array1.Set(1, typename TypeParam::Type(1.2));
+  array1.Set(2, typename TypeParam::Type(0.7));
+  array1.Set(3, typename TypeParam::Type(22));
 
-  ArrayType output = array1;
+  TypeParam output = array1;
   fetch::math::Tanh(output);
 
-  ArrayType numpy_output{4};
-  array1.Reshape({2, 2});
+  TypeParam numpy_output{{2, 2}};
 
-  numpy_output[0] = T(0.29131261);
-  numpy_output[1] = T(0.83365461);
-  numpy_output[2] = T(0.60436778);
-  numpy_output[3] = T(1);
+  numpy_output.Set(0, typename TypeParam::Type(0.29131261));
+  numpy_output.Set(1, typename TypeParam::Type(0.83365461));
+  numpy_output.Set(2, typename TypeParam::Type(0.60436778));
+  numpy_output.Set(3, typename TypeParam::Type(1));
 
   ASSERT_TRUE(output.AllClose(numpy_output));
-}
-TEST(ndarray, Tanh_22_ndarray_float)
-{
-  sigmoid_11<float, fetch::math::NDArray<float>>();
-}
-TEST(ndarray, Tanh_22_ndarray_double)
-{
-  sigmoid_11<double, fetch::math::NDArray<double>>();
 }

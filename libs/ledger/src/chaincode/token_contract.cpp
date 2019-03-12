@@ -33,7 +33,6 @@ namespace fetch {
 namespace ledger {
 
 TokenContract::TokenContract()
-  : Contract("fetch.token")
 {
   // TODO(tfr): I think the function CreateWealth should be OnInit?
   OnTransaction("deed", this, &TokenContract::Deed);
@@ -59,7 +58,7 @@ Contract::Status TokenContract::CreateWealth(Transaction const &tx)
 
     // retrieve the record (if it exists)
     WalletRecord record{};
-    GetOrCreateStateRecord(record, address);
+    GetStateRecord(record, address);
 
     // update the balance
     record.balance += amount;
@@ -102,10 +101,7 @@ Contract::Status TokenContract::Deed(Transaction const &tx)
 
   // retrieve the record (if it exists)
   WalletRecord record{};
-  if (!GetOrCreateStateRecord(record, address))
-  {
-    return Status::FAILED;
-  }
+  GetStateRecord(record, address);
 
   if (record.deed)
   {
@@ -202,10 +198,8 @@ Contract::Status TokenContract::Transfer(Transaction const &tx)
     }
   }
 
-  if (!GetOrCreateStateRecord(to_record, to_address))
-  {
-    return Status::FAILED;
-  }
+  // get the state record for the target address
+  GetStateRecord(to_record, to_address);
 
   // update the records
   from_record.balance -= amount;

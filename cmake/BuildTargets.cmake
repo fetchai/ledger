@@ -192,6 +192,11 @@ function(configure_vendor_targets)
   add_library(vendor-mio INTERFACE)
   target_include_directories(vendor-mio INTERFACE ${FETCH_ROOT_VENDOR_DIR}/mio/include)
 
+  # MsgPack
+  add_library(vendor-msgpack INTERFACE)
+  target_include_directories(vendor-msgpack INTERFACE ${FETCH_ROOT_VENDOR_DIR}/msgpack/include)
+  target_compile_definitions(vendor-msgpack INTERFACE -DMSGPACK_CXX11=ON)
+
 endfunction(configure_vendor_targets)
 
 function(configure_library_targets)

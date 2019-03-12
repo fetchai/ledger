@@ -24,6 +24,11 @@
 namespace fetch {
 namespace ml {
 
+/**
+ * A SubGraph is a collection of nodes in the graph.
+ * Layers should inherit from SubGraph
+ * @tparam T  the tensor/array type
+ */
 template <class T>
 class SubGraph : public Graph<T>, public Ops<T>
 {
@@ -33,10 +38,10 @@ public:
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
-    ASSERT(inputs.size() == this->inputs_nodes_.size());
+    ASSERT(inputs.size() == this->input_nodes_.size());
     for (std::uint64_t i(0); i < inputs.size(); ++i)
     {
-      this->SetInput(inputs_nodes_[i], inputs[i]);
+      this->SetInput(input_nodes_[i], inputs[i]);
     }
     this->output_ = output_node_->Evaluate();
     return this->output_;
@@ -45,12 +50,12 @@ public:
   virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
                                              ArrayPtrType                     error)
   {
-    ASSERT(inputs.size() == this->inputs_nodes_.size());
+    ASSERT(inputs.size() == this->input_nodes_.size());
     std::vector<std::pair<NodeInterface<T> *, ArrayPtrType>> nonBackpropagatedErrorSignals =
         this->output_node_->BackPropagate(error);
     std::vector<ArrayPtrType> backpropagatedErrorSignals;
 
-    for (std::string const &s : inputs_nodes_)
+    for (std::string const &s : input_nodes_)
     {
       std::shared_ptr<NodeInterface<T>> node = this->nodes_[s];
       for (auto const &grad : nonBackpropagatedErrorSignals)
@@ -65,21 +70,25 @@ public:
   }
 
 protected:
-  void AddInputNodes(std::string const &nodeName)
+  void AddInputNodes(std::string const &node_name)
   {
-    inputs_nodes_.push_back(nodeName);
+    input_nodes_.push_back(node_name);
+  }
+  void AddInputNodes(std::vector<std::string> const &node_names)
+  {
+    input_nodes_ = node_names;
   }
 
-  void SetOutputNode(std::string const &nodeName)
+  void SetOutputNode(std::string const &node_name)
   {
-    output_node_ = this->nodes_[nodeName];
+    output_node_ = this->nodes_[node_name];
   }
 
 protected:
   SubGraph() = default;
 
 private:
-  std::vector<std::string>          inputs_nodes_;
+  std::vector<std::string>          input_nodes_;
   std::shared_ptr<NodeInterface<T>> output_node_;
 };
 

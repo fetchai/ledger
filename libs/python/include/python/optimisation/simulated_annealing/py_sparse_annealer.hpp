@@ -18,9 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "optimisation/simulated_annealing/sparse_annealer.hpp"
+#include "python/fetch_pybind.hpp"
 
-#include <pybind11/operators.h>
-#include <pybind11/pybind11.h>
 namespace fetch {
 namespace optimisers {
 

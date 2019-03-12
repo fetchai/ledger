@@ -17,7 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/free_functions.hpp"
+#include "core/assert.hpp"
+#include <memory>
+#include <vector>
 
 namespace fetch {
 namespace ml {

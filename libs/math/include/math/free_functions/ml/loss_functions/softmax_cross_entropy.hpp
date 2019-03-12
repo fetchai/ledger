@@ -1,0 +1,66 @@
+#pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
+#include "math/free_functions/exponentiation/exponentiation.hpp"
+#include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
+#include "math/kernels/standard_functions.hpp"
+#include <cassert>
+
+namespace fetch {
+namespace math {
+
+/**
+ * Cross entropy loss with x as the prediction, and y as the ground truth
+ * @tparam ArrayType
+ * @param x a 2d array with axis 0 = examples, and axis 1 = dimension in prediction space
+ * @param y same size as x with the correct predictions set to 1 in axis 1 and all other positions =
+ * 0
+ * @return Returns an Array of size 1 containing the loss value
+ */
+template <typename ArrayType>
+ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
+{
+  assert(x.shape() == y.shape());
+  assert(x.shape().size() == 2);
+
+  auto n_examples = x.shape()[0];
+
+  ArrayType sce_x{x.shape()};
+  sce_x.Copy(x);
+
+  // we don't explicitly call softmax, because we assume softmax was already included in the graph
+  // (i.e. x is the output
+  //  of softmax layer)
+
+  auto      gt = ArgMax(y, 1);
+  ArrayType log_likelihood{1};
+  log_likelihood[0] = 0;
+
+  for (typename ArrayType::SizeType idx = 0; idx < n_examples; ++idx)
+  {
+    sce_x.Set(idx, static_cast<typename ArrayType::SizeType>(gt[idx]),
+              std::log(sce_x.At(idx, static_cast<typename ArrayType::SizeType>(gt[idx]))));
+    log_likelihood[0] -= sce_x.At(idx, static_cast<typename ArrayType::SizeType>(gt[idx]));
+  }
+
+  return Divide(log_likelihood, static_cast<typename ArrayType::Type>(n_examples));
+}
+
+}  // namespace math
+}  // namespace fetch

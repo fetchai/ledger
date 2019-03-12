@@ -19,20 +19,26 @@
 
 #include "core/assert.hpp"
 #include "math/free_functions/standard_functions/abs.hpp"
+#include "tensor_iterator.hpp"
+
+#include "core/random/lcg.hpp"
 
 #include <iostream>
 #include <memory>
+#include <numeric>
+#include <random>
 #include <vector>
 
 namespace fetch {
 namespace math {
 
 template <typename T>
-class Tensor  // Using name Tensor to not clash with current NDArray
+class Tensor
 {
 public:
   using Type                             = T;
   using SizeType                         = std::uint64_t;
+  using SelfType                         = Tensor<T>;
   static const SizeType DefaultAlignment = 8;  // Arbitrary picked
 
 public:
@@ -42,13 +48,13 @@ public:
          std::shared_ptr<std::vector<T>> storage = nullptr, SizeType offset = 0)
     : shape_(std::move(shape))
     , padding_(std::move(padding))
-    , strides_(std::move(strides))
+    , input_strides_(std::move(strides))
     , storage_(std::move(storage))
     , offset_(offset)
   {
     ASSERT(padding.empty() || padding.size() == shape.size());
     ASSERT(strides.empty() || strides.size() == shape.size());
-    Init(strides_, padding_);
+    Init(input_strides_, padding_);
   }
 
   Tensor(SizeType size)
@@ -57,6 +63,16 @@ public:
     Init(strides_, padding_);
   }
 
+  Tensor(Tensor const &t)     = default;
+  Tensor(Tensor &&t) noexcept = default;
+  Tensor &operator=(Tensor const &other) = default;
+  Tensor &operator=(Tensor &&) = default;
+
+  /**
+   * Initialises default values for stride padding etc.
+   * @param strides
+   * @param padding
+   */
   void Init(std::vector<SizeType> const &strides = std::vector<SizeType>(),
             std::vector<SizeType> const &padding = std::vector<SizeType>())
   {
@@ -65,6 +81,10 @@ public:
       if (strides.empty())
       {
         strides_ = std::vector<SizeType>(shape_.size(), 1);
+      }
+      else
+      {
+        strides_ = strides;
       }
       if (padding.empty())
       {
@@ -91,10 +111,61 @@ public:
     }
   }
 
-  std::vector<SizeType> const &shape()
-      const  // TODO(private, 520) fix capitalisation (kepping it consistent with NDArray for now)
+  /**
+   * Returns a deep copy of this tensor
+   * @return
+   */
+  SelfType Clone() const
+  {
+    SelfType copy;
+
+    copy.shape_   = this->shape_;
+    copy.padding_ = this->padding_;
+    copy.strides_ = this->strides_;
+    copy.offset_  = this->offset_;
+
+    if (storage_)
+    {
+      copy.storage_ = std::make_shared<std::vector<T>>(*storage_);
+    }
+    return copy;
+  }
+
+  /**
+   * Copy data from another tensor into this one
+   * assumes relevant stride/offset etc. are still applicable
+   * @param other
+   * @return
+   */
+  void Copy(SelfType const &other)
+  {
+    assert(other.size() == this->size());
+
+    for (std::size_t j = 0; j < this->size(); ++j)
+    {
+      this->At(j) = other.At(j);
+    }
+  }
+
+  // TODO(private, 520) fix capitalisation (kepping it consistent with NDArray for now)
+  std::vector<SizeType> const &shape() const
   {
     return shape_;
+  }
+
+  std::vector<SizeType> const &Strides() const
+  {
+    return input_strides_;
+  }
+
+  std::vector<SizeType> const &Padding() const
+  {
+    return padding_;
+  }
+
+  SizeType Offset() const
+  {
+    return offset_;
   }
 
   SizeType DimensionSize(SizeType dim) const
@@ -168,13 +239,22 @@ public:
     }
   }
 
-  void Copy(Tensor<T> const &o)
+  /////////////////
+  /// Iterators ///
+  /////////////////
+
+  TensorIterator<T, SizeType> begin() const  // Need to stay lowercase for range basedloops
   {
-    assert(size() == o.size());
-    for (SizeType i(0); i < size(); ++i)
-    {
-      At(i) = o.At(i);
-    }
+    return TensorIterator<T, SizeType>(shape_, strides_, padding_,
+                                       std::vector<SizeType>(shape_.size()), storage_, offset_);
+  }
+
+  TensorIterator<T, SizeType> end() const  // Need to stay lowercase for range basedloops
+  {
+    std::vector<SizeType> endCoordinate(shape_.size());
+    endCoordinate[0] = shape_[0];
+    return TensorIterator<T, SizeType>(shape_, strides_, padding_, endCoordinate, storage_,
+                                       offset_);
   }
 
   /////////////////
@@ -193,15 +273,15 @@ public:
 
   T const &operator()(std::vector<SizeType> const &indices) const
   {
-    return Get(indices);
+    return At(indices);
   }
 
-  T const &Get(std::vector<SizeType> const &indices) const
+  T const &At(std::vector<SizeType> const &indices) const
   {
     return (*storage_)[OffsetOfElement(indices)];
   }
 
-  T &Get(std::vector<SizeType> const &indices)
+  T &At(std::vector<SizeType> const &indices)
   {
     return (*storage_)[OffsetOfElement(indices)];
   }
@@ -225,10 +305,15 @@ public:
     return At(i);
   }
 
+  T const &operator[](SizeType i) const
+  {
+    return At(i);
+  }
+
   /*
    * return a slice of the tensor along the first dimension
    */
-  Tensor<T> Slice(SizeType i)
+  Tensor<T> Slice(SizeType i) const
   {
     assert(shape_.size() > 1 && i < shape_[0]);
     Tensor<T> ret(std::vector<SizeType>(std::next(shape_.begin()), shape_.end()),     /* shape */
@@ -246,15 +331,15 @@ public:
   }
 
   bool AllClose(Tensor<T> const &o, T const &relative_tolerance = T(1e-5),
-                T const &absolute_tolerance = T(1e-8))
+                T const &absolute_tolerance = T(1e-8)) const
   {
     // Only enforcing number of elements
     // we allow for different shapes as long as element are in same order
     ASSERT(o.size() == size());
     for (SizeType i(0); i < size(); ++i)
     {
-      T e1 = Get(IndicesOfElement(i));
-      T e2 = o.Get(o.IndicesOfElement(i));
+      T e1 = At(IndicesOfElement(i));
+      T e2 = o.At(o.IndicesOfElement(i));
 
       T abs_e1 = e1;
       fetch::math::Abs(abs_e1);
@@ -380,17 +465,45 @@ public:
     return ret;
   }
 
+  /**
+   * randomly reassigns the data within the tensor - expensive method since it requires data copy
+   */
+  void Shuffle()
+  {
+    std::default_random_engine rng{};
+    std::vector<SizeType>      idxs(size());
+    std::iota(std::begin(idxs), std::end(idxs), 0);
+    std::shuffle(idxs.begin(), idxs.end(), rng);
+
+    // instantiate new tensor with copy of data
+    Tensor<Type> tmp = this->Clone();
+
+    // copy data back according to shuffle
+    for (std::size_t j = 0; j < tmp.size(); ++j)
+    {
+      this->Set(j, tmp.At(idxs[j]));
+    }
+  }
+
   std::string ToString() const
   {
     std::stringstream ss;
     ss << std::setprecision(5) << std::fixed << std::showpos;
+    if (shape_.size() == 1)
+    {
+      for (SizeType i(0); i < shape_[0]; ++i)
+      {
+        ss << At(i) << "\t";
+      }
+      ss << "\n";
+    }
     if (shape_.size() == 2)
     {
       for (SizeType i(0); i < shape_[0]; ++i)
       {
         for (SizeType j(0); j < shape_[1]; ++j)
         {
-          ss << Get({i, j}) << "\t";
+          ss << At({i, j}) << "\t";
         }
         ss << "\n";
       }
@@ -398,10 +511,36 @@ public:
     return ss.str();
   }
 
+  //////////////////////
+  /// equality check ///
+  //////////////////////
+
+  /**
+   * equality operator for tensors. checks size, shape, and data.
+   * Fast when tensors not equal, slow otherwise
+   * @param other
+   * @return
+   */
+  bool operator==(Tensor const &other) const
+  {
+    bool ret = false;
+    if ((this->size() == other.size()) && (this->shape_ == other.shape()))
+    {
+      ret = this->AllClose(other);
+    }
+    return ret;
+  }
+
+  bool operator!=(Tensor const &other) const
+  {
+    return !(*this == other);
+  }
+
 private:
   std::vector<SizeType>           shape_;
   std::vector<SizeType>           padding_;
   std::vector<SizeType>           strides_;
+  std::vector<SizeType>           input_strides_;
   std::shared_ptr<std::vector<T>> storage_;
   SizeType                        offset_;
 };
