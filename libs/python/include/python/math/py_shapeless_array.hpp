@@ -269,7 +269,7 @@ void BuildShapelessArray(std::string const &custom_name, pybind11::module &modul
       .def("AllClose", &ShapelessArray<T>::AllClose)
 
       // various free functions
-      .def("Abs", [](ShapelessArray<T> &a) { fetch::math::Abs(a); })
+      .def("Abs", [](ShapelessArray<T> &a) { fetch::math::Abs(a, a); })
       .def("Exp", [](ShapelessArray<T> &a) { fetch::math::Exp(a); })
       .def("Exp2", [](ShapelessArray<T> &a) { fetch::math::Exp2(a); })
       .def("Expm1", [](ShapelessArray<T> &a) { fetch::math::Expm1(a); })

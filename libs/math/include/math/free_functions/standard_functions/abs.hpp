@@ -29,33 +29,61 @@ namespace fetch {
 namespace math {
 
 template <typename ArrayType>
-fetch::math::meta::IfIsMathArray<ArrayType, void> Abs(ArrayType &x)
+fetch::math::meta::IfIsBlasArray<ArrayType, void> Abs(ArrayType &x, ArrayType &ret)
 {
   math::free_functions::kernels::Abs<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
+  ret.data().in_parallel().Apply(kernel, x.data());
+}
+
+template <typename ArrayType>
+fetch::math::meta::IfIsNonBlasArray<ArrayType, void> Abs(ArrayType &x, ArrayType &ret)
+{
+  assert(x.size() == ret.size());
+  for (std::size_t j = 0; j < ret.size(); ++j)
+  {
+    x.At(j) = std::abs(ret.At(j));
+  }
 }
 
 template <typename Type>
-fetch::math::meta::IfIsArithmetic<Type, void> Abs(Type &x, Type &ret)
+fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void> Abs(Type &x, Type &ret)
 {
   ret = std::abs(x);
 }
+
 template <typename Type>
-fetch::math::meta::IfIsArithmetic<Type, Type> Abs(Type &x)
+fetch::math::meta::IfIsFixedPoint<Type, void> Abs(Type &n, Type &ret)
 {
-  Type ret;
+  ret = n;
+  if (ret < Type(0))
+  {
+    ret *= Type(-1);
+  }
+}
+
+template <typename ArrayType>
+fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> Abs(ArrayType &x)
+{
+  ArrayType ret{x.shape()};
   Abs(x, ret);
   return ret;
 }
-
-template <std::size_t I, std::size_t F>
-void Abs(fetch::fixed_point::FixedPoint<I, F> &n)
+template <typename Type>
+fetch::math::meta::IfIsArithmetic<Type, Type> Abs(Type &n)
 {
-  if (n < fetch::fixed_point::FixedPoint<I, F>(0))
-  {
-    n *= fetch::fixed_point::FixedPoint<I, F>(-1);
-  }
+  Type ret;
+  Abs(n, ret);
+  return ret;
 }
+
+//
+// void Abs(fetch::fixed_point::FixedPoint<I, F> &n)
+//{
+//  if (n < fetch::fixed_point::FixedPoint<I, F>(0))
+//  {
+//    n *= fetch::fixed_point::FixedPoint<I, F>(-1);
+//  }
+//}
 
 }  // namespace math
 }  // namespace fetch

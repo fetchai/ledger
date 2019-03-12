@@ -342,11 +342,11 @@ public:
       T e2 = o.At(o.IndicesOfElement(i));
 
       T abs_e1 = e1;
-      fetch::math::Abs(abs_e1);
+      fetch::math::Abs(abs_e1, abs_e1);
       T abs_e2 = e2;
-      fetch::math::Abs(abs_e2);
+      fetch::math::Abs(abs_e2, abs_e2);
       T abs_diff = e1 - e2;
-      fetch::math::Abs(abs_diff);
+      fetch::math::Abs(abs_diff, abs_diff);
       T tolerance = std::max(absolute_tolerance, std::max(abs_e1, abs_e2) * relative_tolerance);
       if (abs_diff > tolerance)
       {

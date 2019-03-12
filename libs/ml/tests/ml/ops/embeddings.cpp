@@ -98,26 +98,21 @@ TYPED_TEST(EmbeddingsTest, backward)
   std::shared_ptr<TypeParam> output = e.Forward({input});
 
   std::shared_ptr<TypeParam> errorSignal =
-      std::make_shared<TypeParam>(std::vector<uint64_t>({10, 6}));
+      std::make_shared<TypeParam>(std::vector<uint64_t>({2, 6}));
 
   for (unsigned int j(0); j < 6; ++j)
   {
-    errorSignal->Set({3, j}, typename TypeParam::Type(j));
+    errorSignal->Set({0, j}, typename TypeParam::Type(j));
   }
-  for (unsigned int j(6); j < 12; ++j)
+  for (unsigned int j(0); j < 6; ++j)
   {
-    errorSignal->Set({5, j - 6}, typename TypeParam::Type(j));
+    errorSignal->Set({1, j}, typename TypeParam::Type(j + 6));
   }
   e.Backward({input}, errorSignal);
   e.Step(typename TypeParam::Type(1));
 
   output = e.Forward({input});
   std::vector<int> gt{30, 30, 30, 30, 30, 30, 44, 44, 44, 44, 44, 44};
-
-  for (std::size_t j = 0; j < output->size(); ++j)
-  {
-    std::cout << "output->At(j): " << output->At(j) << std::endl;
-  }
 
   for (unsigned int j(0); j < 12; ++j)
   {
