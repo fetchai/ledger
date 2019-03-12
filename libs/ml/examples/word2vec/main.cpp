@@ -41,12 +41,12 @@ struct PARAMS
   SizeType batch_size     = 128;      // training data batch size
   SizeType embedding_size = 10;       // dimension of embedding vec
   SizeType training_steps = 1280000;  // total number of training steps
-  double   learning_rate  = 0.01;     // alpha - the learning rate
+  double   learning_rate  = 0.001;    // alpha - the learning rate
   bool     cbow           = false;    // skipgram model if false, cbow if true
   SizeType skip_window    = 5;        // max size of context window one way
   SizeType super_samp     = 10;       // n times to reuse an input to generate a label
   SizeType k_neg_samps    = 15;       // number of negative examples to sample
-  double   discard_thresh = 0.003;    // controls how aggressively to discard frequent words
+  double   discard_thresh = 0.01;     // controls how aggressively to discard frequent words
 };
 
 std::string TRAINING_DATA =
@@ -248,7 +248,7 @@ int main()
 
     loss += tmp_loss;
 
-    g.BackPropagate(output_name, criterion.Backward({results, gt}));
+    g.BackPropagate(output_name, criterion.Backward({gt, results}));
 
     if (i % p.batch_size == (p.batch_size - 1))
     {
