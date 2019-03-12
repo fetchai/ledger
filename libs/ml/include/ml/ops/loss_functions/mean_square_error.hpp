@@ -38,22 +38,20 @@ public:
   MeanSquareError()          = default;
   virtual ~MeanSquareError() = default;
 
-  virtual typename ArrayType::Type Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual typename ArrayType::Type Forward(std::vector<ArrayType> const &inputs)
   {
     assert(inputs.size() == 2);
-    assert(inputs[0]->shape() == inputs[1]->shape());
+    assert(inputs[0].shape() == inputs[1].shape());
 
-    typename ArrayType::Type ret = fetch::math::MeanSquareError(*inputs[0], *inputs[1]);
+    typename ArrayType::Type ret = fetch::math::MeanSquareError(inputs[0], inputs[1]);
     return ret;
   }
 
-  virtual ArrayPtrType Backward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayType Backward(std::vector<ArrayType> const &inputs)
   {
     assert(inputs.size() == 2);
-    assert(inputs[0]->shape() == inputs[1]->shape());
-    ArrayPtrType ret = std::make_shared<ArrayType>(fetch::math::Subtract(*inputs[0], *inputs[1]));
-
-    return ret;
+    assert(inputs[0].shape() == inputs[1].shape());
+    return fetch::math::Subtract(inputs[0], inputs[1]);
   }
 
   static constexpr char const *DESCRIPTOR = "MeanSquareError";
