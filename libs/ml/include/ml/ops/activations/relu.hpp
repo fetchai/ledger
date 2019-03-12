@@ -53,7 +53,7 @@ public:
       ArrayType const &                                           errorSignal)
   {
     assert(inputs.size() == 1);
-    assert(inputs[0].shape() == errorSignal.shape());
+    assert(inputs[0].get().shape() == errorSignal.shape());
 
     ArrayType returnSignal = errorSignal.Clone();
     for (std::size_t i = 0; i < inputs.front().get().size(); ++i)
