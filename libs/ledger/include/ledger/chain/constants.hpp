@@ -22,6 +22,8 @@
 namespace fetch {
 namespace ledger {
 
+constexpr uint64_t FINALITY_PERIOD = 50;
+
 extern const byte_array::ConstByteArray GENESIS_DIGEST;
 extern const byte_array::ConstByteArray GENESIS_MERKLE_ROOT;
 
