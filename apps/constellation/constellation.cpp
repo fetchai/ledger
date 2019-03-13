@@ -345,9 +345,6 @@ void Constellation::Run(UriList const &initial_peers)
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Still alive...");
     std::this_thread::sleep_for(std::chrono::milliseconds{500});
-
-    uint32_t *bang = nullptr;
-    *bang = 0xDEAD;
   }
 
   //---------------------------------------------------------------
