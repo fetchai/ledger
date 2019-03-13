@@ -33,6 +33,8 @@
 #include <utility>
 #include <vector>
 
+#include <dirent.h>  // may be compatibility issues
+
 namespace fetch {
 namespace ml {
 
@@ -172,13 +174,40 @@ public:
 
   std::string VocabLookup(SizeType idx)
   {
-    return vocab_[idx];
+    return reverse_vocab_[idx];
   }
 
   SizeType VocabLookup(std::string &idx)
   {
+    std::cout << "idx: " << idx << std::endl;
+    std::cout << "vocab_[idx]: " << vocab_[idx] << std::endl;
+    assert(vocab_[idx] < vocab_.size());
+    assert(vocab_[idx] != 0);  // dont currently handle unknowns elegantly
     return vocab_[idx];
   }
+  //
+  //  void NTopWords()
+  //  {
+  //    SizeType top_val = 0;
+  //    SizeType top_idx = 0;
+  //    SizeType j(0);
+  //    for (auto &e : vocab_frequency_)
+  //    {
+  //      if (e.second > top_val)
+  //      {
+  //        if (e.second != 1414)
+  //        {
+  //          top_idx = j;
+  //          top_val = e.second;
+  //        }
+  //      }
+  //      ++j;
+  //    }
+  //
+  //    std::cout << "reverse_vocab_[top_idx]: " << reverse_vocab_[top_idx] << std::endl;
+  //    reverse_vocab_[top_idx];
+  //
+  //  }
 
 private:
   /**
@@ -206,9 +235,58 @@ private:
     return false;
   }
 
+  std::vector<std::string> GetAllTextFiles(std::string dir_name)
+  {
+    std::vector<std::string> ret;
+    DIR *                    d;
+    struct dirent *          ent;
+    char *                   p1;
+    char *                   p2;
+    int                      txt_cmp;
+    if ((d = opendir(dir_name.c_str())) != NULL)
+    {
+      while ((ent = readdir(d)) != NULL)
+      {
+        p1 = strtok(ent->d_name, ".");
+        p2 = strtok(NULL, ".");
+        if (p2 != NULL)
+        {
+          txt_cmp = strcmp(p2, "txt");
+          if (txt_cmp == 0)
+          {
+            ret.emplace_back(ent->d_name);
+          }
+        }
+      }
+      closedir(d);
+    }
+    return ret;
+  }
+
   // naive vector representations - just one-hot encoding on a first come first serve basis
   void BuildTrainingData(std::string &training_data)
   {
+    std::string full_training_text;
+
+    std::vector<std::string> file_names = GetAllTextFiles(training_data);
+    if (file_names.size() == 0)
+    {
+      full_training_text = training_data;
+    }
+    else
+    {
+      //      for (std::size_t j = 0; j < file_names.size(); ++j)
+      for (std::size_t j = 0; j < 100; ++j)
+      {
+        std::string   cur_file = training_data + "/" + file_names[j] + ".txt";
+        std::ifstream t(cur_file);
+
+        std::string cur_text((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+
+        full_training_text += cur_text;
+      }
+    }
+
     if (cbow_)
     {
       throw std::runtime_error("cbow_ not yet implemented");
@@ -216,7 +294,9 @@ private:
     else
     {
       // convers text into training pairs & related preparatory work
-      ProcessTrainingData(training_data);
+      ProcessTrainingData(full_training_text);
+
+      //      NTopWords();
 
       for (std::size_t j = 0; j < super_sampling_; ++j)
       {
@@ -241,8 +321,18 @@ private:
     SizeType              one_hot_tmp;
 
     // iterate through all sentences
+    std::size_t per_cent_count = 0;
     for (SizeType sntce_idx = 0; sntce_idx < sentence_count_; sntce_idx++)
     {
+      if (sntce_idx % (sentence_count_ / 20) == ((sentence_count_ / 20) - 1))
+      {
+        ++per_cent_count;
+        for (std::size_t j = 0; j < per_cent_count; ++j)
+        {
+          std::cout << "+: ";
+        }
+        std::cout << std::endl;
+      }
       for (SizeType i = 0; i < words_[sntce_idx].size(); i++)
       {
         // current input word idx
@@ -306,9 +396,18 @@ private:
     SizeType negative_context_idx;
 
     // iterate through all sentences
+    std::size_t per_cent_count = 0;
     for (SizeType sntce_idx = 0; sntce_idx < sentence_count_; sntce_idx++)
     {
-
+      if (sntce_idx % (sentence_count_ / 20) == ((sentence_count_ / 20) - 1))
+      {
+        ++per_cent_count;
+        for (std::size_t j = 0; j < per_cent_count; ++j)
+        {
+          std::cout << "+: ";
+        }
+        std::cout << std::endl;
+      }
       for (SizeType i = 0; i < words_[sntce_idx].size(); i++)
       {
         // current input word idx
@@ -609,9 +708,9 @@ private:
   double GetUnigramExpectation()
   {
     double ret = 0;
-    for (SizeType i = 1; i < skip_window_; ++i)
+    for (SizeType i = 0; i < skip_window_; ++i)
     {
-      ret += 1.0 / double(i);
+      ret += 1.0 / double(i + 1);
     }
     ret *= 2;
     return ret;

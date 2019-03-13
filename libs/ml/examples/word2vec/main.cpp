@@ -38,17 +38,18 @@ using SizeType     = typename ArrayType::SizeType;
 
 struct PARAMS
 {
-  SizeType batch_size     = 128;      // training data batch size
-  SizeType embedding_size = 10;       // dimension of embedding vec
-  SizeType training_steps = 1280000;  // total number of training steps
-  double   learning_rate  = 0.001;    // alpha - the learning rate
-  bool     cbow           = false;    // skipgram model if false, cbow if true
-  SizeType skip_window    = 5;        // max size of context window one way
-  SizeType super_samp     = 10;       // n times to reuse an input to generate a label
-  SizeType k_neg_samps    = 15;       // number of negative examples to sample
-  double   discard_thresh = 0.01;     // controls how aggressively to discard frequent words
+  SizeType batch_size     = 32;      // training data batch size
+  SizeType embedding_size = 10;      // dimension of embedding vec
+  SizeType training_steps = 320000;  // total number of training steps
+  double   learning_rate  = 0.1;     // alpha - the learning rate
+  bool     cbow           = false;   // skipgram model if false, cbow if true
+  SizeType skip_window    = 5;       // max size of context window one way
+  SizeType super_samp     = 1;       // n times to reuse an input to generate a label
+  SizeType k_neg_samps    = 5;       // number of negative examples to sample
+  double   discard_thresh = 0.001;   // controls how aggressively to discard frequent words
 };
 
+// std::string TRAINING_DATA = "/Users/khan/fetch/corpora/imdb_movie_review/aclImdb/train/unsup";
 std::string TRAINING_DATA =
     "The Ugly Duckling.\n"
     "\n"
@@ -204,6 +205,8 @@ int main()
   fetch::ml::W2VLoader<ArrayType> dataloader(TRAINING_DATA, p.cbow, p.skip_window, p.super_samp,
                                              p.k_neg_samps, p.discard_thresh);
 
+  std::cout << "dataloader.VocabSize(): " << dataloader.VocabSize() << std::endl;
+
   ////////////////////////////////
   /// SETUP MODEL ARCHITECTURE ///
   ////////////////////////////////
@@ -248,7 +251,7 @@ int main()
 
     loss += tmp_loss;
 
-    g.BackPropagate(output_name, criterion.Backward({gt, results}));
+    g.BackPropagate(output_name, criterion.Backward({results, gt}));
 
     if (i % p.batch_size == (p.batch_size - 1))
     {
