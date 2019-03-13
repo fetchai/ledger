@@ -34,10 +34,7 @@ CachedStorageAdapter::CachedStorageAdapter(StorageInterface &storage)
  * Destruct the Cache Adapter, this might cause a flush to occur
  */
 CachedStorageAdapter::~CachedStorageAdapter()
-{
-  // ensure all values are flushed to the storage engine
-  Flush();
-}
+{}
 
 /**
  * Trigger a flush of the cached entries to the storage engine

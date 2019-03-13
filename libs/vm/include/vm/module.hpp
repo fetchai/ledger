@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/address.hpp"
 #include "vm/array.hpp"
 #include "vm/compiler.hpp"
 #include "vm/map.hpp"

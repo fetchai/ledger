@@ -124,8 +124,6 @@ TEST_F(SmartContractTests, CheckSimpleContract)
   auto const expected_resource = ResourceAddress{expected_key};
   auto const expected_value    = RawBytes<int32_t>(11);
 
-  std::cout << fetch::byte_array::ToHex(expected_resource.id()) << std::endl;
-
   {
     InSequence seq;
 
@@ -312,6 +310,96 @@ TEST_F(SmartContractTests, CheckQueryReturnTypes)
     // check the response is as we expect
     ASSERT_TRUE(response.Has("result"));
     EXPECT_EQ(response["result"].As<ConstByteArray>(), "Why hello there");
+
+    ASSERT_TRUE(response.Has("status"));
+    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
+  }
+}
+
+TEST_F(SmartContractTests, CheckParameterizedActionAndQuery)
+{
+  std::string const contract_source = R"(
+    @action
+    function increment(increment: Int32)
+      var state = State<Int32>("value", 10);
+      state.set(state.get() + increment);
+    endfunction
+
+    @query
+    function value() : Int32
+      var state = State<Int32>("value", 10);
+      return state.get();
+    endfunction
+
+    @query
+    function offset(amount: Int32) : Int32
+      var state = State<Int32>("value", 10);
+      return state.get() + amount;
+    endfunction
+  )";
+
+  // create the contract
+  CreateContract(contract_source);
+
+  // check the registered handlers
+  auto const transaction_handlers = contract_->transaction_handlers();
+  ASSERT_EQ(1u, transaction_handlers.size());
+  EXPECT_TRUE(IsIn(transaction_handlers, "increment"));
+
+  // check the query handlers
+  auto const query_handlers = contract_->query_handlers();
+  ASSERT_EQ(2u, query_handlers.size());
+  EXPECT_TRUE(IsIn(query_handlers, "value"));
+  EXPECT_TRUE(IsIn(query_handlers, "offset"));
+
+  // define our what we expect the values to be in our storage requests
+  auto const expected_key      = contract_name_->full_name() + ".state.value";
+  auto const expected_resource = ResourceAddress{expected_key};
+  auto const expected_value    = RawBytes<int32_t>(30);
+
+  {
+    using ::testing::_;
+    InSequence seq;
+
+    // from the action
+    EXPECT_CALL(*storage_, Lock(expected_resource));
+    EXPECT_CALL(*storage_, Get(expected_resource));
+    EXPECT_CALL(*storage_, Set(expected_resource, expected_value)).Times(2);
+    EXPECT_CALL(*storage_, Unlock(expected_resource));
+
+    // from the query
+    EXPECT_CALL(*storage_, Get(expected_resource));
+    EXPECT_CALL(*storage_, Get(expected_resource));
+  }
+
+  // send the smart contract an "increment" action
+  EXPECT_EQ(SmartContract::Status::OK, SendActionWithParams("increment", {"value"}, 20));
+
+  // make the query
+  {
+    Variant request = Variant::Object();
+    Variant response;
+    EXPECT_EQ(SmartContract::Status::OK, SendQuery("value", request, response));
+
+    // check the response is as we expect
+    ASSERT_TRUE(response.Has("result"));
+    EXPECT_EQ(response["result"].As<int32_t>(), 30);
+
+    ASSERT_TRUE(response.Has("status"));
+    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
+  }
+
+  // make the query
+  {
+    Variant request   = Variant::Object();
+    request["amount"] = 100;
+
+    Variant response;
+    EXPECT_EQ(SmartContract::Status::OK, SendQuery("offset", request, response));
+
+    // check the response is as we expect
+    ASSERT_TRUE(response.Has("result"));
+    EXPECT_EQ(response["result"].As<int32_t>(), 130);
 
     ASSERT_TRUE(response.Has("status"));
     EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
