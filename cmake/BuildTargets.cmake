@@ -263,13 +263,22 @@ endmacro()
 
 function (generate_configuration_file)
 
-  # execute git to determine the version
-  execute_process(
-    COMMAND git describe --dirty=-wip --always
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    OUTPUT_VARIABLE version
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
+  if (DEFINED ENV{FETCH_BUILD_VERSION})
+
+    set (version "$ENV{FETCH_BUILD_VERSION}")
+    message (STATUS "Using predefined version: ${version}")
+
+  else()
+
+    # execute git to determine the version
+    execute_process(
+      COMMAND git describe --dirty=-wip --always
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      OUTPUT_VARIABLE version
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+  endif()
 
   # determine the format of the output from the above command
   string(REGEX MATCHALL "^v.*" is_normal_version "${version}")

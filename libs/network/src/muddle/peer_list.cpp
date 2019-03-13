@@ -246,7 +246,7 @@ void PeerConnectionList::Disconnect(Uri const &peer)
     peer_connections_.erase(peer);
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.uri(), " shut down");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Connection to ", peer.uri(), " shut down");
 }
 
 bool PeerConnectionList::ReadyForRetry(const PeerMetadata &metadata) const

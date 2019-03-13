@@ -61,7 +61,7 @@ private:
     return Copy(chain_.GetChainPreceding(at, maxsize));
   }
 
-  Blocks GetCommonSubChain(BlockHash const &start, BlockHash &last_seen, uint64_t limit)
+  Blocks GetCommonSubChain(BlockHash const &start, BlockHash const &last_seen, uint64_t limit)
   {
     LOG_STACK_TRACE_POINT;
 

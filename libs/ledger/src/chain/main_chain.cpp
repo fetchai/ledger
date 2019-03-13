@@ -23,6 +23,7 @@
 #include <utility>
 
 using fetch::byte_array::ToBase64;
+using fetch::generics::MilliTimer;
 
 namespace fetch {
 namespace ledger {
@@ -63,7 +64,7 @@ char const *ToString(BlockStatus status)
  */
 MainChain::MainChain(Mode mode)
 {
-  RLock lock(main_mutex_);
+  FETCH_LOCK(lock_);
 
   // create the genesis block and add it to the cache
   auto genesis = CreateGenesisBlock();
@@ -117,7 +118,7 @@ BlockStatus MainChain::AddBlock(Block const &blk)
  */
 MainChain::BlockPtr MainChain::GetHeaviestBlock() const
 {
-  RLock lock(main_mutex_);
+  FETCH_LOCK(lock_);
   return GetBlock(heaviest_.hash);
 }
 
@@ -135,8 +136,7 @@ bool MainChain::RemoveBlock(BlockHash hash)
 
   bool success{false};
 
-  RLock lock_main(main_mutex_);
-  RLock lock_loose(loose_mutex_);
+  FETCH_LOCK(lock_);
 
   // Check that the input block hash is actually in the cache
   auto invalid_block_it = block_chain_.find(hash);
@@ -224,8 +224,9 @@ bool MainChain::RemoveBlock(BlockHash hash)
  */
 MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
 {
-  fetch::generics::MilliTimer myTimer("MainChain::HeaviestChain");
-  RLock                       lock(main_mutex_);
+  MilliTimer myTimer("MainChain::HeaviestChain");
+
+  FETCH_LOCK(lock_);
 
   return GetChainPreceding(GetHeaviestBlockHash(), limit);
 }
@@ -240,8 +241,9 @@ MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
  */
 MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
 {
-  fetch::generics::MilliTimer myTimer("MainChain::ChainPreceding");
-  RLock                       lock(main_mutex_);
+  MilliTimer myTimer("MainChain::ChainPreceding");
+
+  FETCH_LOCK(lock_);
 
   Blocks result;
 
@@ -290,10 +292,11 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
 bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
                                         uint64_t limit) const
 {
-  fetch::generics::MilliTimer myTimer("MainChain::GetPathToCommonAncestor");
-  RLock                       lock(main_mutex_);
+  MilliTimer myTimer("MainChain::GetPathToCommonAncestor");
 
-  bool success{false};
+  FETCH_LOCK(lock_);
+
+  bool success{true};
 
   // clear the output structure
   blocks.clear();
@@ -315,6 +318,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
       if (!left)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup block (left): ", ToBase64(left_hash));
+        success = false;
         break;
       }
 
@@ -329,6 +333,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
       if (!right)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup block (right): ", ToBase64(right_hash));
+        success = false;
         break;
       }
     }
@@ -338,22 +343,24 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
 
     if (left_hash == right_hash)
     {
-      // exit condition
-      success = true;
       break;
     }
-    else
-    {
-      if (left->body.block_number <= right->body.block_number)
-      {
-        right_hash = right->body.previous_hash;
-      }
 
-      if (left->body.block_number >= right->body.block_number)
-      {
-        left_hash = left->body.previous_hash;
-      }
+    if (left->body.block_number <= right->body.block_number)
+    {
+      right_hash = right->body.previous_hash;
     }
+
+    if (left->body.block_number >= right->body.block_number)
+    {
+      left_hash = left->body.previous_hash;
+    }
+  }
+
+  // If an lookup error has occured then we do not return anything
+  if (!success)
+  {
+    blocks.clear();
   }
 
   return success;
@@ -367,19 +374,43 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
  */
 MainChain::BlockPtr MainChain::GetBlock(BlockHash hash) const
 {
-  RLock lock(main_mutex_);
+  FETCH_LOCK(lock_);
 
   BlockPtr output_block{};
 
   // attempt to lookup the block
   auto internal_block = std::make_shared<Block>();
-  if (LookupBlock(hash, internal_block))
+  if (LookupBlock(std::move(hash), internal_block))
   {
     // convert the pointer type to per const
     output_block = std::static_pointer_cast<Block const>(internal_block);
   }
 
   return output_block;
+}
+
+/**
+ * Return a copy of the missing block tips
+ *
+ * @return A set of tip hashes
+ */
+MainChain::BlockHashSet MainChain::GetMissingTips() const
+{
+  FETCH_LOCK(lock_);
+
+  BlockHashSet tips{};
+  for (auto const &element : loose_blocks_)
+  {
+    // tips are blocks that are referenced but we have not seen them yet. Since all loose blocks are
+    // stored in the cache, we simply evalute which of the loose references we do not currently
+    // have in the cache
+    if (!IsBlockInCache(element.first))
+    {
+      tips.insert(element.first);
+    }
+  }
+
+  return tips;
 }
 
 /**
@@ -390,7 +421,7 @@ MainChain::BlockPtr MainChain::GetBlock(BlockHash hash) const
  */
 MainChain::BlockHashs MainChain::GetMissingBlockHashes(std::size_t maximum) const
 {
-  RLock lock(loose_mutex_);
+  FETCH_LOCK(lock_);
 
   BlockHashs results;
 
@@ -413,7 +444,7 @@ MainChain::BlockHashs MainChain::GetMissingBlockHashes(std::size_t maximum) cons
  */
 bool MainChain::HasMissingBlocks() const
 {
-  RLock lock(loose_mutex_);
+  FETCH_LOCK(lock_);
   return !loose_blocks_.empty();
 }
 
@@ -424,7 +455,7 @@ bool MainChain::HasMissingBlocks() const
  */
 MainChain::BlockHashSet MainChain::GetTips() const
 {
-  RLock lock(loose_mutex_);
+  FETCH_LOCK(lock_);
 
   BlockHashSet hash_set;
   for (auto const &element : tips_)
@@ -446,7 +477,7 @@ void MainChain::RecoverFromFile(Mode mode)
 
   assert(static_cast<bool>(block_store_));
 
-  RLock lock(main_mutex_);
+  FETCH_LOCK(lock_);
 
   // load the database files
   if (Mode::CREATE_PERSISTENT_DB == mode)
@@ -490,14 +521,14 @@ void MainChain::WriteToFile()
   // skip if the block store is not persistent
   if (block_store_)
   {
-    fetch::generics::MilliTimer myTimer("MainChain::WriteToFile", 500);
+    MilliTimer myTimer("MainChain::WriteToFile", 500);
 
     // Add confirmed blocks to file
     IntBlockPtr block  = block_chain_.at(heaviest_.hash);
     bool        failed = false;
 
     // Find the block N back from our heaviest
-    for (std::size_t i = 0; i < block_confirmation_; ++i)
+    for (std::size_t i = 0; i < FINALITY_PERIOD; ++i)
     {
       if (!LookupBlock(block->body.previous_hash, block))
       {
@@ -530,6 +561,85 @@ void MainChain::WriteToFile()
         FlushBlock(block);
       }
     }
+
+    // as final step do some sanity checks
+    TrimCache();
+  }
+}
+
+/**
+ * Trim the in memory cache
+ *
+ * Only should be called if the block store is being used
+ */
+void MainChain::TrimCache()
+{
+  static const uint64_t CACHE_TRIM_THRESHOLD = 2 * FINALITY_PERIOD;
+  assert(static_cast<bool>(block_store_));
+
+  MilliTimer myTimer("MainChain::TrimCache");
+
+  FETCH_LOCK(lock_);
+
+  uint64_t const heaviest_block_num = GetHeaviestBlock()->body.block_number;
+
+  if (CACHE_TRIM_THRESHOLD < heaviest_block_num)
+  {
+    uint64_t const trim_threshold = heaviest_block_num - CACHE_TRIM_THRESHOLD;
+
+    // Loop through the block chain store looking for blocks which are outside of our finality
+    // period. This is needed to ensure that the block chain map does not grow forever
+    auto chain_it = block_chain_.begin();
+    while (chain_it != block_chain_.end())
+    {
+      auto const &block = chain_it->second->body;
+
+      if (trim_threshold >= block.block_number)
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Removing loose block: ", block.hash.ToBase64());
+
+        // remove the entry from the tips map
+        tips_.erase(block.hash);
+
+        // remove any reference in the loose map
+        auto loose_it = loose_blocks_.find(block.previous_hash);
+        if (loose_it != loose_blocks_.end())
+        {
+          // remove the hash from the list
+          loose_it->second.remove(block.hash);
+
+          // if, as a result, the list is empty then also remove the entry from the loose blocks
+          if (loose_it->second.empty())
+          {
+            loose_blocks_.erase(loose_it);
+          }
+        }
+
+        // remove the entry from the main block chain
+        chain_it = block_chain_.erase(chain_it);
+      }
+      else
+      {
+        // normal case advance to the next one
+        ++chain_it;
+      }
+    }
+  }
+
+  // Debug and sanity check
+  auto loose_it = loose_blocks_.begin();
+  while (loose_it != loose_blocks_.end())
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Cleaning loose map entry: ", loose_it->first.ToBase64());
+
+    if (loose_it->second.empty())
+    {
+      loose_it = loose_blocks_.erase(loose_it);
+    }
+    else
+    {
+      ++loose_it;
+    }
   }
 }
 
@@ -551,8 +661,7 @@ void MainChain::FlushBlock(IntBlockPtr const &block)
 // walk through it adding the blocks, so long as we do breadth first search (!!)
 void MainChain::CompleteLooseBlocks(IntBlockPtr const &block)
 {
-  RLock lock_main(main_mutex_);
-  RLock lock(loose_mutex_);
+  FETCH_LOCK(lock_);
 
   // Determine if this block is actually a loose block, if it isn't exit immediately
   auto it = loose_blocks_.find(block->body.hash);
@@ -585,7 +694,7 @@ void MainChain::CompleteLooseBlocks(IntBlockPtr const &block)
       InsertBlock(add_block, false);
 
       // The added block was not loose. Continue to clear
-      auto it = loose_blocks_.find(add_block->body.hash);
+      auto const it = loose_blocks_.find(add_block->body.hash);
       if (it != loose_blocks_.end())
       {
         // add all the items to the next list
@@ -607,7 +716,7 @@ void MainChain::CompleteLooseBlocks(IntBlockPtr const &block)
  */
 void MainChain::RecordLooseBlock(IntBlockPtr const &block)
 {
-  RLock lock(loose_mutex_);
+  FETCH_LOCK(lock_);
 
   // Get vector of waiting blocks and push ours on
   auto &waiting_blocks = loose_blocks_[block->body.previous_hash];
@@ -649,8 +758,9 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
 {
   assert(block->body.previous_hash.size() > 0);
 
-  fetch::generics::MilliTimer myTimer("MainChain::InsertBlock", 500);
-  RLock                       lock(main_mutex_);
+  MilliTimer myTimer("MainChain::InsertBlock", 500);
+
+  FETCH_LOCK(lock_);
 
   if (block->body.hash.empty())
   {
@@ -787,7 +897,7 @@ bool MainChain::LookupBlockFromCache(BlockHash hash, IntBlockPtr &block) const
 {
   bool success{false};
 
-  RLock lock(main_mutex_);
+  FETCH_LOCK(lock_);
 
   // perform the lookup
   auto const it = block_chain_.find(hash);
@@ -872,7 +982,7 @@ void MainChain::AddBlockToCache(IntBlockPtr const &block) const
  */
 bool MainChain::AddTip(IntBlockPtr const &block)
 {
-  RLock lock(main_mutex_);
+  FETCH_LOCK(lock_);
 
   // record the tip weight
   tips_[block->body.hash] = Tip{block->total_weight};
@@ -887,8 +997,9 @@ bool MainChain::AddTip(IntBlockPtr const &block)
  */
 bool MainChain::DetermineHeaviestTip()
 {
-  bool  success{false};
-  RLock lock(main_mutex_);
+  bool success{false};
+
+  FETCH_LOCK(lock_);
 
   if (!tips_.empty())
   {
@@ -922,7 +1033,7 @@ bool MainChain::DetermineHeaviestTip()
 bool MainChain::ReindexTips()
 {
   // TODO(private issue 666): Improve performance of block removal
-  RLock lock(main_mutex_);
+  FETCH_LOCK(lock_);
 
   // Step 1. Generate a new set of blocks (so that we can order them)
   std::vector<IntBlockPtr> block_list{};
@@ -1002,7 +1113,7 @@ MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
  */
 MainChain::BlockHash MainChain::GetHeaviestBlockHash() const
 {
-  RLock lock(main_mutex_);
+  FETCH_LOCK(lock_);
   return heaviest_.hash;
 }
 
