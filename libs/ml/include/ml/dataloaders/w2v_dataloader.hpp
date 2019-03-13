@@ -46,6 +46,7 @@ template <typename T>
 class W2VLoader : public DataLoader<std::shared_ptr<T>, typename T::SizeType>
 {
   using ArrayType = T;
+  using DataType  = typename T::Type;
   using SizeType  = typename T::SizeType;
 
 private:
@@ -125,51 +126,43 @@ public:
     cursor_ = 0;
   }
 
-  virtual std::pair<std::pair<std::shared_ptr<T>, std::shared_ptr<T>>, SizeType> GetAtIndex(
-      SizeType idx)
+  virtual std::pair<std::shared_ptr<T>, SizeType> GetAtIndex(SizeType idx)
   {
-    std::shared_ptr<T> input_buffer =
-        std::make_shared<ArrayType>(std::vector<SizeType>({1, vocab_.size()}));
-    std::shared_ptr<T> context_buffer =
-        std::make_shared<ArrayType>(std::vector<SizeType>({1, vocab_.size()}));
+    std::shared_ptr<T> input_and_context_buffer =
+        std::make_shared<ArrayType>(std::vector<SizeType>({1, vocab_.size() * 2}));
 
     // input word
     typename ArrayType::Type val;
     for (SizeType i(0); i < vocab_.size(); ++i)
     {
-      val = typename ArrayType::Type(data_input_[idx][i]);
-      assert((val == 0) || (val == 1));
-      input_buffer->At(i) = val;
+      val = DataType(data_input_[idx][i]);
+      assert((val == DataType(0)) || (val == DataType(1)));
+      input_and_context_buffer->At(i) = val;
     }
 
     // context word
     for (SizeType i(0); i < vocab_.size(); ++i)
     {
       val = typename ArrayType::Type(data_context_[idx][i]);
-      assert((val == 0) || (val == 1));
-      context_buffer->At(i) = typename ArrayType::Type(data_context_[idx][i]);
+      assert((val == DataType(0)) || (val == DataType(1)));
+      input_and_context_buffer->At(vocab_.size() + i) =
+          typename ArrayType::Type(data_context_[idx][i]);
     }
 
     SizeType label = SizeType(labels_[idx]);
     cursor_++;
 
-    return std::make_pair(std::make_pair(input_buffer, context_buffer), label);
+    return std::make_pair(input_and_context_buffer, label);
   }
 
   virtual std::pair<std::shared_ptr<T>, SizeType> GetNext()
   {
-    throw std::runtime_error(
-        "GetNext temporariliy disabled since does"
-        "not conform to DataLoader abstract class standard");
-    std::pair<std::pair<std::shared_ptr<T>, std::shared_ptr<T>>, SizeType> tmp =
-        GetAtIndex(cursor_++);
-    return std::make_pair(tmp.first.first, tmp.second);
+    return GetAtIndex(cursor_);
   }
 
-  std::pair<std::pair<std::shared_ptr<T>, std::shared_ptr<T>>, SizeType> GetRandom()
+  std::pair<std::shared_ptr<T>, SizeType> GetRandom()
   {
-    SizeType tmp = static_cast<SizeType>(lcg_());
-    return GetAtIndex(tmp % Size());
+    return GetAtIndex(SizeType(static_cast<SizeType>(lcg_())) % Size());
   }
 
   std::string VocabLookup(SizeType idx)
@@ -179,8 +172,6 @@ public:
 
   SizeType VocabLookup(std::string &idx)
   {
-    std::cout << "idx: " << idx << std::endl;
-    std::cout << "vocab_[idx]: " << vocab_[idx] << std::endl;
     assert(vocab_[idx] < vocab_.size());
     assert(vocab_[idx] != 0);  // dont currently handle unknowns elegantly
     return vocab_[idx];
@@ -321,18 +312,8 @@ private:
     SizeType              one_hot_tmp;
 
     // iterate through all sentences
-    std::size_t per_cent_count = 0;
     for (SizeType sntce_idx = 0; sntce_idx < sentence_count_; sntce_idx++)
     {
-      if (sntce_idx % (sentence_count_ / 20) == ((sentence_count_ / 20) - 1))
-      {
-        ++per_cent_count;
-        for (std::size_t j = 0; j < per_cent_count; ++j)
-        {
-          std::cout << "+: ";
-        }
-        std::cout << std::endl;
-      }
       for (SizeType i = 0; i < words_[sntce_idx].size(); i++)
       {
         // current input word idx
@@ -396,18 +377,8 @@ private:
     SizeType negative_context_idx;
 
     // iterate through all sentences
-    std::size_t per_cent_count = 0;
     for (SizeType sntce_idx = 0; sntce_idx < sentence_count_; sntce_idx++)
     {
-      if (sntce_idx % (sentence_count_ / 20) == ((sentence_count_ / 20) - 1))
-      {
-        ++per_cent_count;
-        for (std::size_t j = 0; j < per_cent_count; ++j)
-        {
-          std::cout << "+: ";
-        }
-        std::cout << std::endl;
-      }
       for (SizeType i = 0; i < words_[sntce_idx].size(); i++)
       {
         // current input word idx

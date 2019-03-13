@@ -38,15 +38,15 @@ using SizeType     = typename ArrayType::SizeType;
 
 struct PARAMS
 {
-  SizeType batch_size     = 32;      // training data batch size
-  SizeType embedding_size = 10;      // dimension of embedding vec
-  SizeType training_steps = 320000;  // total number of training steps
-  double   learning_rate  = 0.1;     // alpha - the learning rate
-  bool     cbow           = false;   // skipgram model if false, cbow if true
-  SizeType skip_window    = 5;       // max size of context window one way
-  SizeType super_samp     = 1;       // n times to reuse an input to generate a label
-  SizeType k_neg_samps    = 5;       // number of negative examples to sample
-  double   discard_thresh = 0.001;   // controls how aggressively to discard frequent words
+  SizeType batch_size     = 32;       // training data batch size
+  SizeType embedding_size = 4;        // dimension of embedding vec
+  SizeType training_steps = 3200000;  // total number of training steps
+  double   learning_rate  = 0.01;     // alpha - the learning rate
+  bool     cbow           = false;    // skipgram model if false, cbow if true
+  SizeType skip_window    = 5;        // max size of context window one way
+  SizeType super_samp     = 3;        // n times to reuse an input to generate a label
+  SizeType k_neg_samps    = 1;        // number of negative examples to sample
+  double   discard_thresh = 0.1;      // controls how aggressively to discard frequent words
 };
 
 // std::string TRAINING_DATA = "/Users/khan/fetch/corpora/imdb_movie_review/aclImdb/train/unsup";
@@ -225,32 +225,54 @@ int main()
 
   std::cout << "beginning training...: " << std::endl;
 
-  std::pair<std::pair<std::shared_ptr<ArrayType>, std::shared_ptr<ArrayType>>, SizeType> input;
-  std::shared_ptr<ArrayType>                                                             gt =
+  std::pair<std::shared_ptr<ArrayType>, SizeType> data;
+  std::shared_ptr<ArrayType>                      input = std::make_shared<ArrayType>(
+      std::vector<typename ArrayType::SizeType>({1, dataloader.VocabSize()}));
+  ;
+  std::shared_ptr<ArrayType> context = std::make_shared<ArrayType>(
+      std::vector<typename ArrayType::SizeType>({1, dataloader.VocabSize()}));
+  std::shared_ptr<ArrayType> gt =
       std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1, 1}));
   DataType loss = 0;
 
   for (std::size_t i = 0; i < p.training_steps; ++i)
   {
-    input = dataloader.GetRandom();
+    // get random data point
+    data = dataloader.GetRandom();
 
-    g.SetInput("Input", input.first.first);
-    g.SetInput("Context", input.first.second);
+    // assign input and context vectors
+    SizeType count_idx = 0;
+    for (auto &e : *(data.first))
+    {
+      if (count_idx < dataloader.VocabSize())
+      {
+        input->At(count_idx) = e;
+      }
+      else
+      {
+        context->At(count_idx - dataloader.VocabSize()) = e;
+      }
+      ++count_idx;
+    }
+    g.SetInput("Input", input);
+    g.SetInput("Context", context);
+
+    // assign label
     gt->Fill(0);
-    gt->At(0)                          = DataType(input.second);
+    gt->At(0) = DataType(data.second);
+
+    // forward pass
     std::shared_ptr<ArrayType> results = g.Evaluate(output_name);
 
-    std::shared_ptr<ArrayType> result =
-        std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1, 1}));
-
+    // cost function
     DataType tmp_loss = criterion.Forward({results, gt});
-    if (input.second == 0)
+    if (data.second == 0)
     {
-      tmp_loss *= DataType(p.k_neg_samps);
+      tmp_loss /= DataType(p.k_neg_samps);
     }
-
     loss += tmp_loss;
 
+    // backprop
     g.BackPropagate(output_name, criterion.Backward({results, gt}));
 
     if (i % p.batch_size == (p.batch_size - 1))
