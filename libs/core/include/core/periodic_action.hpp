@@ -31,16 +31,14 @@ namespace fetch {
 class PeriodicAction
 {
 public:
-  using Callback = std::function<void()>;
 
   // Construction / Destruction
   template <typename R, typename P>
-  PeriodicAction(std::chrono::duration<R, P> const &period, Callback callback = Callback{});
+  PeriodicAction(std::chrono::duration<R, P> const &period);
   PeriodicAction(PeriodicAction const &) = delete;
   PeriodicAction(PeriodicAction &&)      = default;
   ~PeriodicAction()                      = default;
 
-  void SetCallback(Callback callback);
   bool Poll();
 
   // Operators
@@ -53,8 +51,9 @@ private:
   using Duration  = Clock::duration;
 
   Duration  period_;
-  Timepoint next_action_time_;
-  Callback  callback_;
+  Timepoint start_time_;
+  Duration::rep last_index_{0};
+
 };
 
 /**
@@ -63,24 +62,12 @@ private:
  * @tparam R The type of the representation
  * @tparam P The type fo the period
  * @param period The minimum period for which the action should be called
- * @param callback A callback function to be called at the given interval
  */
 template <typename R, typename P>
-PeriodicAction::PeriodicAction(std::chrono::duration<R, P> const &period, Callback callback)
+PeriodicAction::PeriodicAction(std::chrono::duration<R, P> const &period)
   : period_{std::chrono::duration_cast<Duration>(period)}
-  , next_action_time_{Clock::now() + period_}
-  , callback_{std::move(callback)}
+  , start_time_{Clock::now() + period_}
 {}
-
-/**
- * Sets the callback on the action
- *
- * @param callback The callback to be set
- */
-inline void PeriodicAction::SetCallback(Callback callback)
-{
-  callback_ = std::move(callback);
-}
 
 /**
  * Called periodically to trigger the action is needed
@@ -89,18 +76,12 @@ inline bool PeriodicAction::Poll()
 {
   bool triggered{false};
 
-  auto const now = Clock::now();
+  Duration::rep const current_index = ((Clock::now() - start_time_)  / period_);
 
-  if (now >= next_action_time_)
+  if (current_index > last_index_)
   {
-    // execute the callback if it exists
-    if (callback_)
-    {
-      callback_();
-    }
-
-    // reset the next action time
-    next_action_time_ = now + period_;
+    // update the index
+    last_index_ = current_index;
 
     // signal that the action has been triggered
     triggered = true;
