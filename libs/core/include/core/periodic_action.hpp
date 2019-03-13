@@ -31,7 +31,6 @@ namespace fetch {
 class PeriodicAction
 {
 public:
-
   // Construction / Destruction
   template <typename R, typename P>
   PeriodicAction(std::chrono::duration<R, P> const &period);
@@ -50,10 +49,9 @@ private:
   using Timepoint = Clock::time_point;
   using Duration  = Clock::duration;
 
-  Duration  period_;
-  Timepoint start_time_;
+  Duration      period_;
+  Timepoint     start_time_;
   Duration::rep last_index_{0};
-
 };
 
 /**
@@ -76,7 +74,7 @@ inline bool PeriodicAction::Poll()
 {
   bool triggered{false};
 
-  Duration::rep const current_index = ((Clock::now() - start_time_)  / period_);
+  Duration::rep const current_index = ((Clock::now() - start_time_) / period_);
 
   if (current_index > last_index_)
   {
