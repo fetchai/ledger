@@ -288,7 +288,7 @@ byte_array::ConstByteArray StorageUnitClient::Commit()
     if (!HashInStack(tree_root))
     {
       state_merkle_stack_.push_back(tree);
-      if (state_merkle_stack_.size() > FINALITY_PERIOD)
+      while (state_merkle_stack_.size() > FINALITY_PERIOD)
       {
         state_merkle_stack_.pop_front();
       }
