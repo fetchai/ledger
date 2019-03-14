@@ -120,8 +120,9 @@ public:
 
   /// @name Missing / Loose Management
   /// @{
-  BlockHashs GetMissingBlockHashes(std::size_t limit = ALL) const;
-  bool       HasMissingBlocks() const;
+  BlockHashSet GetMissingTips() const;
+  BlockHashs   GetMissingBlockHashes(std::size_t limit = ALL) const;
+  bool         HasMissingBlocks() const;
   /// @}
 
   template <typename T>
@@ -151,12 +152,11 @@ private:
     bool Update(Block const &);
   };
 
-  static constexpr uint32_t block_confirmation_ = 50;
-
   /// @name Persistence Management
   /// @{
   void RecoverFromFile(Mode mode);
   void WriteToFile();
+  void TrimCache();
   void FlushBlock(IntBlockPtr const &block);
   /// @}
 
@@ -187,13 +187,11 @@ private:
 
   BlockStorePtr block_store_;  /// < Long term storage and backup
 
-  mutable RMutex   main_mutex_;   ///< Mutex protecting block_chain_, tips_ & heaviest_
-  mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
-  TipsMap          tips_;         ///< Keep track of the tips
-  HeaviestTip      heaviest_;     ///< Heaviest block/tip
-
-  mutable RMutex loose_mutex_;   ///< Mutex protecting the loose blocks
-  LooseBlockMap  loose_blocks_;  ///< Waiting (loose) blocks
+  mutable RMutex   lock_;          ///< Mutex protecting block_chain_, tips_ & heaviest_
+  mutable BlockMap block_chain_;   ///< All recent blocks are kept in memory
+  TipsMap          tips_;          ///< Keep track of the tips
+  HeaviestTip      heaviest_;      ///< Heaviest block/tip
+  LooseBlockMap    loose_blocks_;  ///< Waiting (loose) blocks
 };
 
 /**

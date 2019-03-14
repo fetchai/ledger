@@ -36,11 +36,6 @@ public:
   Relu()          = default;
   virtual ~Relu() = default;
 
-  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
-  {
-    return Forward(inputs);
-  }
-
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     assert(inputs.size() == 1);

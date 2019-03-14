@@ -77,7 +77,6 @@ public:
     {
       std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
       FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
-
       if (batch_)
       {
         cachedOutput_ = this->ForwardBatch(inputs);

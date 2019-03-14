@@ -71,9 +71,9 @@ TYPED_TEST(MatrixMultiplyTest, backward_test)
 {
   TypeParam a(std::vector<std::uint64_t>({1, 5}));
   TypeParam b(std::vector<std::uint64_t>({5, 4}));
-  TypeParam e(std::vector<std::uint64_t>({1, 4}));
-  TypeParam ig(std::vector<std::uint64_t>({1, 5}));
-  TypeParam wg(std::vector<std::uint64_t>({5, 4}));
+  TypeParam error(std::vector<std::uint64_t>({1, 4}));
+  TypeParam gradient_a(std::vector<std::uint64_t>({1, 5}));
+  TypeParam gradient_b(std::vector<std::uint64_t>({5, 4}));
 
   std::vector<int> data({1, 2, -3, 4, 5});
   std::vector<int> weights(
@@ -96,23 +96,24 @@ TYPED_TEST(MatrixMultiplyTest, backward_test)
   }
   for (std::uint64_t i(0); i < errorSignal.size(); ++i)
   {
-    e.Set(i, typename TypeParam::Type(errorSignal[i]));
+    error.Set(i, typename TypeParam::Type(errorSignal[i]));
   }
   for (std::uint64_t i(0); i < inputGrad.size(); ++i)
   {
-    ig.Set(i, typename TypeParam::Type(inputGrad[i]));
+    gradient_a.Set(i, typename TypeParam::Type(inputGrad[i]));
   }
   for (std::uint64_t i(0); i < 5; ++i)
   {
     for (std::uint64_t j(0); j < 4; ++j)
     {
-      wg.Set(std::vector<std::uint64_t>({i, j}), typename TypeParam::Type(weightsGrad[i * 4 + j]));
+      gradient_b.Set(std::vector<std::uint64_t>({i, j}),
+                     typename TypeParam::Type(weightsGrad[i * 4 + j]));
     }
   }
 
   fetch::ml::ops::MatrixMultiply<TypeParam> op;
   std::vector<TypeParam>                    backpropagatedSignals =
-      op.Backward(std::vector<std::reference_wrapper<TypeParam const>>({a, b}), e);
+      op.Backward(std::vector<std::reference_wrapper<TypeParam const>>({a, b}), error);
 
   // test correct shapes
   ASSERT_EQ(backpropagatedSignals.size(), 2);
@@ -120,6 +121,6 @@ TYPED_TEST(MatrixMultiplyTest, backward_test)
   ASSERT_EQ(backpropagatedSignals[1].shape(), std::vector<typename TypeParam::SizeType>({5, 4}));
 
   // test correct values
-  EXPECT_TRUE(backpropagatedSignals[0].AllClose(ig));
-  EXPECT_TRUE(backpropagatedSignals[1].AllClose(wg));
+  EXPECT_TRUE(backpropagatedSignals[0].AllClose(gradient_a));
+  EXPECT_TRUE(backpropagatedSignals[1].AllClose(gradient_b));
 }
