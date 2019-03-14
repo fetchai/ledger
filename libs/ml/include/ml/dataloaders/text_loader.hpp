@@ -50,7 +50,8 @@ public:
 
   SizeType n_data_buffers = 0;  // number of data points to return when called
   SizeType max_sentences  = 0;  // maximum number of sentences in training set
-  SizeType window_size_   = 0;  // the size of the context window
+  SizeType min_sentence_length = 0; // minimum number of words in a sentence
+  SizeType window_size   = 0;  // the size of the context window
 
   // optional processing
   bool unigram_table    = false;  // build a unigram table
@@ -105,7 +106,6 @@ protected:
 
   std::unordered_map<SizeType, SizeType> word_idx_sentence_idx; // lookup table for sentence number from word number
   std::unordered_map<SizeType, SizeType> sentence_idx_word_idx; // lookup table for word number from word sentence
-  std::unordered_map<std::pair<SizeType, SizeType>, SizeType> sentence_idx_word_offset_idx; // lookup table for word offset from word & sentence number
 
   // containers for the data and labels
   std::vector<std::vector<SizeType>> data_buffers_;
@@ -187,7 +187,7 @@ public:
     for (SizeType j = 0; j < p_.n_data_buffers; ++j)
     {
       SizeType sentence_idx = word_idx_sentence_idx[idx];
-      SizeType word_idx = sentence_idx_word_offset_idx[std::pair<SizeType, SizeType>(sentence_idx, idx)];
+      SizeType word_idx = GetWordOffsetFromWordIdx(idx);
       full_buffer->At(j) = DataType(data_.at(sentence_idx).at(word_idx));
     }
 
@@ -249,7 +249,7 @@ public:
   bool AddData(std::string const &s)
   {
     std::vector<SizeType> indexes = StringsToIndices(BuildText(s));
-    if (indexes.size() >= 2 * p_.window_size_ + 1)
+    if (indexes.size() >= 2 * p_.window_size + 1)
     {
       data_.push_back(std::move(indexes));
       return true;
@@ -284,7 +284,7 @@ private:
    * method for building up the training pairs that the Get funtions will reference
    * @param training_data
    */
-  virtual void GetDatum(SizeType idxs) = 0;
+  virtual std::vector<SizeType> GetData(SizeType idxs) = 0;
 
   /**
    * return a single sentence from the dataset
@@ -302,28 +302,33 @@ private:
    */
   SizeType GetWordOffsetFromWordIdx(SizeType word_idx)
   {
+    SizeType word_offset;
     SizeType sentence_idx = sentence_idx_word_idx[word_idx];
-    return sentence_idx_word_offset_idx[std::pair<SizeType, SizeType>(sentence_idx, word_idx)];
+
+    if (sentence_idx == 0)
+    {
+      word_offset = word_idx;
+    }
+    else
+    {
+      SizeType cur_word_idx = word_idx - 1;
+      SizeType word_idx_for_offset_zero;
+      bool not_found = true;
+      while(not_found)
+      {
+        if (sentence_idx != sentence_idx_word_idx[cur_word_idx])
+        {
+          // first word in current sentence is therefore
+          word_idx_for_offset_zero = cur_word_idx + 1;
+
+          word_offset = word_idx - word_idx_for_offset_zero;
+        }
+      }
+      not_found = false;
+    }
+    return word_offset;
   }
 
-  /**
-   *
-   * @param sentences to indices
-   * @return
-   */
-  void StringsToIndices(std::vector<std::string> const &strings)
-  {
-    if (strings.size() >= p_.window_size_ + 1) // Don't bother processing too short inputs
-    {
-//    	indexes.reserve(strings.size());
-	    for (std::string const &s : strings)
-      {
-	      // 0 is reserved for UNK
-	      auto value = vocab_.insert(std::pair<std::string, SizeType>(s, (SizeType)(vocab_.size() + 1)));
-	      data_.push_back((*value.first).second);
-      }
-    }
-  }
 
   /**
    * helper for stripping punctuation from words
@@ -414,12 +419,6 @@ private:
     }
   }
 
-  SizeType GetSentenceIdxFromWordIdx(SizeType idx)
-  {
-
-
-  }
-
   /**
    * builds all training text
    * @param training_data
@@ -446,9 +445,6 @@ private:
 
     // build unique vocabulary and get word counts
     BuildVocab(sentences);
-
-    // convert the sentences into values
-    StringsToIndices(sentences);
 
     // build unigram table used for negative sampling
     BuildUnigramTable();
@@ -482,7 +478,6 @@ private:
 
       word_idx_sentence_idx.emplace_back(word_count_, sentence_count_);
       sentence_idx_word_idx.emplace_back(sentence_count_, word_count_);
-      sentence_idx_word_offset_idx.emplace_back(std::pair<SizeType, SizeType>(sentence_count_, word_count_), word_offset);
 
       ++word_offset;
 
@@ -510,30 +505,38 @@ private:
   /**
    * builds vocab out of parsed training data
    */
-  void BuildVocab(std::string &sentences)
+  void BuildVocab(std::vector<std::vector<std::string>> &sentences)
   {
     // insert words uniquely into the vocabulary
     vocab_.emplace(std::make_pair("UNK", 0));
     reverse_vocab_.emplace(0, "UNK");
     vocab_frequency_.emplace("UNK", 0);
 
+    sentence_count_ = 0;
+    data_.emplace_back({});
     for (std::vector<std::string> &cur_sentence : sentences)
     {
-      for (std::string cur_word : cur_sentence)
+      if (cur_sentence.size() > p_.min_sentence_length)
       {
-        auto ret = vocab_.emplace(cur_word, unique_word_count_);
+        for (std::string cur_word : cur_sentence)
+        {
+          auto ret = vocab_.emplace(cur_word, unique_word_count_);
 
-        if (ret.second)
-        {
-          reverse_vocab_.emplace(unique_word_count_, cur_word);
-          vocab_frequency_[cur_word] = 1;
-          ++unique_word_count_;
+          if (ret.second)
+          {
+            reverse_vocab_.emplace(unique_word_count_, cur_word);
+            vocab_frequency_[cur_word] = 1;
+            ++unique_word_count_;
+          }
+          else
+          {
+            vocab_frequency_[cur_word] += 1;
+          }
+          ++n_words_;
+
+          data_.at(sentence_count_).emplace_back(ret.first.second);
         }
-        else
-        {
-          vocab_frequency_[cur_word] += 1;
-        }
-        ++n_words_;
+        sentence_count_++;
       }
     }
   }
@@ -579,7 +582,7 @@ private:
   /**
    * discards words in training data set based on word frequency
    */
-  void DiscardFrequent(std::string &sentences)
+  void DiscardFrequent(std::vector<std::vector<std::string>> &sentences)
   {
     if (p_.discard_frequent)
     {

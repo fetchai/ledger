@@ -61,8 +61,8 @@ SkipGramTextParams<T> SetParams()
   ret.discard_frequent  = true;   // discard most frqeuent words
   ret.discard_threshold = 0.001;  // controls how aggressively to discard frequent words
 
-  ret.skip_window        = SizeType(5);   // max size of context window one way
-  ret.super_sampling     = SizeType(1);   // n times to reuse an input to generate a label
+  ret.window_size        = SizeType(5);   // max size of context window one way
+  ret.min_sentence_length = SizeType(4);  // maximum number of sentences to use
   ret.k_negative_samples = SizeType(15);  // number of negative examples to sample
 
   return ret;

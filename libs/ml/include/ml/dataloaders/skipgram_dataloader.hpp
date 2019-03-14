@@ -80,9 +80,6 @@ public:
     // sanity checks on SkipGram parameters
     assert(this->word_count_ > (p_.window_size * 2));
     assert(p_.window_size > 0);
-
-    // set up training dataset
-    BuildTrainingPairs(data);
   }
 
 private:
@@ -92,14 +89,14 @@ private:
    * @param idx
    * @return
    */
-  std::vector<SizeType> &ret GetDatum(SizeType idx)
+  std::vector<SizeType> GetData(SizeType idx)
   {
     if (SelectValence())
     {
-      GeneratePositive(idx);
+      return GeneratePositive(idx);
     }
     {
-      GenerateNegative(idx);
+      return GenerateNegative(idx);
     }
   }
 
@@ -138,6 +135,66 @@ private:
   }
 
   /**
+   * given the index of the input word, return a negative training pair
+   * @param idx
+   * @return
+   */
+  std::vector<SizeType> GenerateNegative(SizeType idx)
+  {
+    std::vector<SizeType> ret{};
+
+    // first index is the input word
+    ret.emplace_back(idx);
+
+    // second index is a non-context word
+    ret.emplace_back(SelectNegativeContextWord(idx));
+
+    return ret;
+  }
+
+  /**
+   * given a word idx randomly select a negative non-context word
+   * @param idx
+   * @return
+   */
+  SizeType SelectNegativeContextWord(SizeType idx)
+  {
+    std::vector<SizeType> sentence = this->GetSentenceFromWordIdx(idx);
+    SizeType sentence_len = sentence.size();
+    SizeType word_offset = this->GetWordOffsetFromWordIdx(idx);
+
+    // randomly select a negative context word
+    bool ongoing = true;
+    SizeType negative_context_idx;
+    while (ongoing)
+    {
+      // randomly select a word from the unigram_table
+      SizeType ran_val     = SizeType(this->lcg_());
+      SizeType max_val     = p_.unigram_table_size;
+      negative_context_idx = this->unigram_table_[ran_val % max_val];
+      assert(negative_context_idx > 0);
+      assert(negative_context_idx < this->vocab_.size());
+      ongoing = false;
+
+      // check if selected negative word actually within context window
+      for (SizeType j = 0; j < (2 * p_.window_size) + 1; j++)
+      {
+        if (WindowPositionCheck(word_offset, j, sentence_len))
+        {
+          if (this->data_[this->sentence_idx_word_idx[idx]][j] == this->reverse_vocab_[negative_context_idx])
+          {
+            ongoing = true;
+          }
+        }
+      }
+    }
+
+    return negative_context_idx;
+  }
+
+
+
+  /**
    * select a context index position
    * @param idx
    * @return
@@ -170,152 +227,9 @@ private:
     }
 
     SizeType context_offset = this->lcg_() % unigram_selection.size();
-    SizeType context_idx = word_idx + context_offset - p_.window_size;
+    SizeType context_idx = idx + context_offset - p_.window_size;
 
     return context_idx;
-  }
-
-
-  /**
-   * generates positive training example
-   */
-  void GeneratePositive()
-  {
-    SizeType              cur_vocab_idx   = 0;
-    SizeType              cur_context_idx = 0;
-    std::vector<SizeType> input_one_hot(this->vocab_.size());
-    std::vector<SizeType> context_one_hot(this->vocab_.size());
-    SizeType              one_hot_tmp;
-
-    // iterate through all sentences
-    for (SizeType sntce_idx = 0; sntce_idx < this->sentence_count_; sntce_idx++)
-    {
-      for (SizeType i = 0; i < this->words_[sntce_idx].size(); i++)
-      {
-        // current input word idx
-        cur_vocab_idx = SizeType(this->vocab_[this->words_[sntce_idx][i]]);
-        assert(cur_vocab_idx > 0);  // unknown words not yet handled
-        assert(cur_vocab_idx < this->vocab_.size());
-
-        for (SizeType j = 0; j < (2 * p_.window_size) + 1; j++)
-        {
-          if (WindowPositionCheck(i, j, this->words_[sntce_idx].size()) && DynamicWindowCheck(j))
-          {
-            std::string context_word = this->words_[sntce_idx][i + j - p_.window_size];
-
-            // context word idx
-            cur_context_idx = this->vocab_[context_word];
-            assert(cur_context_idx > 0);  // unknown words not yet handled
-            assert(cur_context_idx < this->vocab_.size());
-
-            // build input one hot
-            for (SizeType k = 0; k < this->vocab_.size(); k++)
-            {
-              one_hot_tmp = SizeType(k == cur_vocab_idx);
-              assert((one_hot_tmp == 0) || (one_hot_tmp == 1));
-              input_one_hot[k] = one_hot_tmp;
-            }
-
-            // build context one hot
-            for (SizeType k = 0; k < this->vocab_.size(); k++)
-            {
-              one_hot_tmp = SizeType(k == cur_context_idx);
-              assert((one_hot_tmp == 0) || (one_hot_tmp == 1));
-              context_one_hot[k] = one_hot_tmp;
-            }
-
-            // assign data
-            this->data_buffers_.at(0).emplace_back(input_one_hot);
-            this->data_buffers_.at(1).emplace_back(context_one_hot);
-
-            // assign label
-            this->labels_.emplace_back(SizeType(1));
-
-            ++this->size_;
-            ++pos_size_;
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * generates negative training pairs
-   */
-  void GenerateNegative()
-  {
-    SizeType              cur_vocab_idx = 0;
-    std::vector<SizeType> input_one_hot(this->vocab_.size());
-    std::vector<SizeType> context_one_hot(this->vocab_.size());
-    SizeType              one_hot_tmp;
-    SizeType              n_negative_training_pairs_per_word =
-        static_cast<SizeType>(this->GetUnigramExpectation() * double(p_.k_negative_samples));
-    SizeType negative_context_idx;
-
-    // iterate through all sentences
-    for (SizeType sntce_idx = 0; sntce_idx < this->sentence_count_; sntce_idx++)
-    {
-      for (SizeType i = 0; i < this->words_[sntce_idx].size(); i++)
-      {
-        // current input word idx
-        cur_vocab_idx = SizeType(this->vocab_[this->words_[sntce_idx][i]]);
-        assert(cur_vocab_idx > 0);  // unknown words not yet handled
-        assert(cur_vocab_idx < this->vocab_.size());
-
-        for (SizeType j = 0; j < n_negative_training_pairs_per_word; j++)
-        {
-          // randomly select a negative context word
-          bool ongoing = true;
-          while (ongoing)
-          {
-            // randomly select a word from the unigram_table
-            SizeType ran_val     = SizeType(this->lcg_());
-            SizeType max_val     = p_.unigram_table_size;
-            negative_context_idx = this->unigram_table_[ran_val % max_val];
-            assert(negative_context_idx > 0);
-            assert(negative_context_idx < this->vocab_.size());
-            ongoing = false;
-
-            // check if selected negative word actually within context window
-            for (SizeType j = 0; j < (2 * p_.window_size) + 1; j++)
-            {
-              if (WindowPositionCheck(i, j, this->words_[sntce_idx].size()))
-              {
-                if (this->words_[sntce_idx][j] == this->reverse_vocab_[negative_context_idx])
-                {
-                  ongoing = true;
-                }
-              }
-            }
-          }
-
-          // build input one hot
-          for (unsigned int k = 0; k < this->vocab_.size(); k++)
-          {
-            one_hot_tmp = SizeType(k == cur_vocab_idx);
-            assert((one_hot_tmp == 0) || (one_hot_tmp == 1));
-            input_one_hot[k] = one_hot_tmp;
-          }
-
-          // build context one hot
-          for (unsigned int k = 0; k < this->vocab_.size(); k++)
-          {
-            one_hot_tmp = SizeType(k == negative_context_idx);
-            assert((one_hot_tmp == 0) || (one_hot_tmp == 1));
-            context_one_hot[k] = one_hot_tmp;
-          }
-
-          this->data_buffers_.at(0).push_back(input_one_hot);
-          this->data_buffers_.at(1).push_back(context_one_hot);
-
-          // assign label
-          this->labels_.push_back(SizeType(0));
-
-          ++this->size_;
-          ++neg_size_;
-        }
-      }
-    }
   }
 
   /**
