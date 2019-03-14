@@ -33,28 +33,23 @@ public:
   Flatten()          = default;
   virtual ~Flatten() = default;
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     ASSERT(inputs.size() == 1);
-    input_shape_  = inputs[0]->shape();
-    this->output_ = std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, inputs[0]->size()}));
-    // TODO(private, 521) remove useless copy and replace with lightweight view
-    for (std::uint64_t i(0); i < inputs[0]->size(); ++i)
-    {
-      this->output_->At(i) = inputs[0]->At(i);
-    }
-    return this->output_;
+    input_shape_ = inputs.front().get().shape();
+    this->output_ =
+        std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, inputs.front().get().size()}));
+    this->output_->Copy(inputs.front().get());
+    return *this->output_;
   }
 
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 1);
-    std::shared_ptr<ArrayType> ret = std::make_shared<ArrayType>(input_shape_);
-    for (std::uint64_t i(0); i < ret->size(); ++i)
-    {
-      ret->At(i) = errorSignal->At(i);
-    }
+    ArrayType ret(input_shape_);
+    ret.Copy(errorSignal);
     return {ret};
   }
 

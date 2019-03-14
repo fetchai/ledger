@@ -34,18 +34,18 @@ public:
   Convolution()          = default;
   virtual ~Convolution() = default;
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     assert(inputs.size() == 2);
     // Input should be a 3D tensor [C x H x W]
-    assert(inputs[0]->shape().size() == 3);
+    assert(inputs.at(0).get().shape().size() == 3);
     // Weights should be a 4D tensor [oC x iC x H x W]
-    assert(inputs[1]->shape().size() == 4);
+    assert(inputs.at(1).get().shape().size() == 4);
 
     std::vector<typename ArrayType::SizeType> outputShape;
-    outputShape.push_back(inputs[1]->shape()[0]);
-    outputShape.push_back(inputs[0]->shape()[1] - inputs[1]->shape()[2] + 1);
-    outputShape.push_back(inputs[0]->shape()[2] - inputs[1]->shape()[3] + 1);
+    outputShape.push_back(inputs.at(1).get().shape()[0]);
+    outputShape.push_back(inputs.at(0).get().shape()[1] - inputs.at(1).get().shape()[2] + 1);
+    outputShape.push_back(inputs.at(0).get().shape()[2] - inputs.at(1).get().shape()[3] + 1);
     if (!this->output_ || this->output_->shape() != outputShape)
     {
       this->output_ = std::make_shared<ArrayType>(outputShape);
@@ -58,19 +58,22 @@ public:
         for (uint64_t k(0); k < outputShape[2]; ++k)  // Iterate over output width
         {
           typename ArrayType::Type sum(0);
-          for (uint64_t ki(0); ki < inputs[1]->shape()[1]; ki++)  // Iterate over Input channel
+          for (uint64_t ki(0); ki < inputs.at(1).get().shape()[1];
+               ki++)  // Iterate over Input channel
           {
-            for (uint64_t kj(0); kj < inputs[1]->shape()[2]; kj++)  // Iterate over kernel height
+            for (uint64_t kj(0); kj < inputs.at(1).get().shape()[2];
+                 kj++)  // Iterate over kernel height
             {
-              for (uint64_t kk(0); kk < inputs[1]->shape()[3]; kk++)  // Iterate over kernel width
+              for (uint64_t kk(0); kk < inputs.at(1).get().shape()[3];
+                   kk++)  // Iterate over kernel width
               {
                 std::vector<typename ArrayType::SizeType> kernelIdx({i, ki, kj, kk});
                 std::vector<typename ArrayType::SizeType> inputIdx(3);
                 inputIdx[0]                = ki;
                 inputIdx[1]                = j + kj;
                 inputIdx[2]                = k + kk;
-                typename ArrayType::Type i = inputs[0]->At(inputIdx);
-                typename ArrayType::Type w = inputs[1]->At(kernelIdx);
+                typename ArrayType::Type i = inputs.at(0).get().At(inputIdx);
+                typename ArrayType::Type w = inputs.at(1).get().At(kernelIdx);
                 sum += i * w;
               }
             }
@@ -80,11 +83,12 @@ public:
       }
     }
 
-    return this->output_;
+    return *this->output_;
   }
 
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal)
   {
     return {errorSignal};
   }

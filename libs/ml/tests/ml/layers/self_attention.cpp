@@ -38,12 +38,11 @@ TYPED_TEST(SelfAttentionTest, output_shape_test)  // Use the class as a Node
   g.template AddNode<fetch::ml::layers::SelfAttention<TypeParam>>("SelfAttention", {"Input"}, 50u,
                                                                   42u, 10u);
 
-  std::shared_ptr<TypeParam> data =
-      std::make_shared<TypeParam>(std::vector<typename TypeParam::SizeType>({5, 10}));
+  TypeParam data({5, 10});
   g.SetInput("Input", data);
 
-  std::shared_ptr<TypeParam> prediction = g.Evaluate("SelfAttention");
-  ASSERT_EQ(prediction->shape().size(), 2);
-  ASSERT_EQ(prediction->shape()[0], 1);
-  ASSERT_EQ(prediction->shape()[1], 42);
+  TypeParam prediction = g.Evaluate("SelfAttention");
+  ASSERT_EQ(prediction.shape().size(), 2);
+  ASSERT_EQ(prediction.shape()[0], 1);
+  ASSERT_EQ(prediction.shape()[1], 42);
 }

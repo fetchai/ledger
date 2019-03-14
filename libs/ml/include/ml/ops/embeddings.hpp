@@ -35,44 +35,46 @@ public:
 
   Embeddings(unsigned int dataPoints, unsigned int dimensions)
   {
-    this->SetData(std::make_shared<ArrayType>(std::vector<SizeType>({dataPoints, dimensions})));
+    this->SetData(ArrayType(std::vector<SizeType>({dataPoints, dimensions})));
   }
 
   virtual ~Embeddings() = default;
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     ASSERT(this->output_);
     ASSERT(inputs.size() == 1);
-    ASSERT(inputs[0]->size() == 1);
+    ASSERT(inputs.front().get().shape().size() == 1);
 
-    if (!this->embeddings_output_ || this->embeddings_output_->shape()[0] != inputs[0]->size() ||
+    if (!this->embeddings_output_ ||
+        this->embeddings_output_->shape()[0] != inputs.front().get().size() ||
         this->embeddings_output_->shape()[1] != this->output_->shape()[1])
     {
       this->embeddings_output_ = std::make_shared<ArrayType>(
-          std::vector<SizeType>({inputs[0]->size(), this->output_->shape()[1]}));
+          std::vector<SizeType>({inputs.front().get().size(), this->output_->shape()[1]}));
     }
     uint64_t j(0);
-    for (DataType const &i : *(inputs[0]))
+    for (DataType const &i : inputs.front().get())
     {
       this->embeddings_output_->Slice(j).Copy(
           this->output_->Slice(typename ArrayType::SizeType(double(i))));
       j++;
     }
-    return this->embeddings_output_;
+    return *this->embeddings_output_;
   }
 
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 1);
-    ASSERT(inputs[0]->shape().size() == 1);
+    ASSERT(inputs.front().get().shape().size() == 1);
 
     uint64_t j(0);
-    for (DataType const &i : *(inputs[0]))
+    for (DataType const &i : inputs.front().get())
     {
       this->gradientAccumulation_->Slice(typename ArrayType::SizeType(double(i)))
-          .Copy(errorSignal->Slice(j));
+          .Copy(errorSignal.Slice(j));
       j++;
     }
     return {};
