@@ -25,10 +25,10 @@
 #include "ledger/testing/block_generator.hpp"
 #include "ledger/transaction_status_cache.hpp"
 
+#include "../chaincode/mock_storage_unit.hpp"
 #include "fake_block_sink.hpp"
 #include "mock_block_packer.hpp"
 #include "mock_execution_manager.hpp"
-#include "../chaincode/mock_storage_unit.hpp"
 
 #include <gtest/gtest.h>
 #include <iostream>
