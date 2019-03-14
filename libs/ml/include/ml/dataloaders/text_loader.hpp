@@ -24,7 +24,7 @@
 
 #include <algorithm>                // random_shuffle
 #include <fstream>                  // file streaming
-#include <string>                   //
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -200,6 +200,9 @@ public:
    */
   virtual std::pair<std::shared_ptr<T>, SizeType> GetNext()
   {
+
+    // TODO
+
     if (cursor_ > vocab_.size())
     {
       Reset();
@@ -207,8 +210,10 @@ public:
     }
     else
     {
+      if (discards_(cursor_))
       is_done_ = false;
     }
+
 
     return GetAtIndex(cursor_);
   }
@@ -596,8 +601,12 @@ private:
         {
           if (DiscardExample(sentences[sntce_idx][i]))
           {
-            discards_.at(discard_sentence_idx_).push_back(i);
+            discards_.at(discard_sentence_idx_).push_back(1);
             ++discard_count_;
+          }
+          else
+          {
+            discards_.at(discard_sentence_idx_).push_back(0);
           }
         }
 
