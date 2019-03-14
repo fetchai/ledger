@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/distance/cosine.hpp"
-#include "ml/dataloaders/w2v_dataloader.hpp"
+#include "ml/dataloaders/skipgram_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/skip_gram.hpp"
 #include "ml/ops/loss_functions/scaled_cross_entropy.hpp"
@@ -25,6 +25,8 @@
 #include <iostream>
 #include <math/tensor.hpp>
 
+using namespace fetch::ml;
+using namespace fetch::ml::dataloaders;
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 using DataType     = double;
@@ -36,19 +38,35 @@ using SizeType     = typename ArrayType::SizeType;
 /// PARAMETERS AND CONSTANTS ///
 ////////////////////////////////
 
-struct PARAMS
+struct TrainingParams
 {
   SizeType batch_size     = 128;       // training data batch size
-  SizeType embedding_size = 20;       // dimension of embedding vec
+  SizeType embedding_size = 20;        // dimension of embedding vec
   SizeType training_steps = 12800000;  // total number of training steps
   double   learning_rate  = 0.0001;    // alpha - the learning rate
-  bool     cbow           = false;     // skipgram model if false, cbow if true
-  SizeType skip_window    = 5;         // max size of context window one way
-  SizeType super_samp     = 1;         // n times to reuse an input to generate a label
-  SizeType k_neg_samps    = 15;        // number of negative examples to sample
-  double   discard_thresh = 0.001;     // controls how aggressively to discard frequent words
-  SizeType max_sentences  = 20;       // maximum number of sentences to use
 };
+
+template <typename T>
+SkipGramTextParams<T> SetParams()
+{
+  SkipGramTextParams<T> ret;
+
+  ret.n_data_buffers = SizeType(2);   // input and context buffers
+  ret.max_sentences  = SizeType(20);  // maximum number of sentences to use
+
+  ret.unigram_table      = true;  // unigram table for sampling negative training pairs
+  ret.unigram_table_size = SizeType(10000000);  // size of unigram table for negative sampling
+  ret.unigram_power      = 0.75;                // adjusted unigram distribution
+
+  ret.discard_frequent  = true;   // discard most frqeuent words
+  ret.discard_threshold = 0.001;  // controls how aggressively to discard frequent words
+
+  ret.skip_window        = SizeType(5);   // max size of context window one way
+  ret.super_sampling     = SizeType(1);   // n times to reuse an input to generate a label
+  ret.k_negative_samples = SizeType(15);  // number of negative examples to sample
+
+  return ret;
+}
 
 std::string TRAINING_DATA = "/Users/khan/fetch/corpora/imdb_movie_review/aclImdb/train/unsup";
 
@@ -66,8 +84,8 @@ std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType vocab_size, SizeType 
   return ret_name;
 }
 
-std::vector<DataType> TestEmbeddings(fetch::ml::Graph<ArrayType> &g, std::string &skip_gram_name,
-                                     fetch::ml::W2VLoader<ArrayType> &dl)
+std::vector<DataType> TestEmbeddings(Graph<ArrayType> &g, std::string &skip_gram_name,
+                                     SkipGramLoader<ArrayType> &dl)
 {
 
   // first get hold of the skipgram layer by searching the return name in the graph
@@ -133,7 +151,8 @@ int main()
 
   std::cout << "FETCH Word2Vec Demo" << std::endl;
 
-  PARAMS p;
+  TrainingParams                tp;
+  SkipGramTextParams<ArrayType> sp = SetParams<ArrayType>();
 
   ///////////////////////////////////////
   /// CONVERT TEXT INTO TRAINING DATA ///
@@ -141,10 +160,7 @@ int main()
 
   // set up dataloader
   std::cout << "Setting up training data...: " << std::endl;
-  fetch::ml::W2VLoader<ArrayType> dataloader(TRAINING_DATA, p.cbow, p.skip_window, p.super_samp,
-                                             p.k_neg_samps, p.discard_thresh, p.max_sentences);
-
-  std::cout << "dataloader.VocabSize(): " << dataloader.VocabSize() << std::endl;
+  SkipGramLoader<ArrayType> dataloader(TRAINING_DATA, sp);
 
   ////////////////////////////////
   /// SETUP MODEL ARCHITECTURE ///
@@ -153,7 +169,7 @@ int main()
   // set up model architecture
   std::cout << "building model architecture...: " << std::endl;
   fetch::ml::Graph<ArrayType> g;
-  std::string                 output_name = Model(g, dataloader.VocabSize(), p.embedding_size);
+  std::string                 output_name = Model(g, dataloader.VocabSize(), tp.embedding_size);
 
   // set up loss
   ScaledCrossEntropy<ArrayType> criterion;
@@ -167,7 +183,6 @@ int main()
   std::pair<std::shared_ptr<ArrayType>, SizeType> data;
   std::shared_ptr<ArrayType>                      input = std::make_shared<ArrayType>(
       std::vector<typename ArrayType::SizeType>({1, dataloader.VocabSize()}));
-  ;
   std::shared_ptr<ArrayType> context = std::make_shared<ArrayType>(
       std::vector<typename ArrayType::SizeType>({1, dataloader.VocabSize()}));
   std::shared_ptr<ArrayType> gt =
@@ -176,7 +191,7 @@ int main()
   std::shared_ptr<ArrayType> scale_factor =
       std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1, 1}));
 
-  for (std::size_t i = 0; i < p.training_steps; ++i)
+  for (std::size_t i = 0; i < tp.training_steps; ++i)
   {
     // get random data point
     data = dataloader.GetRandom();
@@ -206,21 +221,20 @@ int main()
     // forward pass
     std::shared_ptr<ArrayType> results = g.Evaluate(output_name);
 
-
     //    // result interpreted as probability True - so reverse for gt == 0
 
-    std::cout << "gt->At(0): " << gt->At(0) << std::endl;
-    std::cout << "results->At(0): " << results->At(0) << std::endl;
+//    std::cout << "gt->At(0): " << gt->At(0) << std::endl;
+//    std::cout << "results->At(0): " << results->At(0) << std::endl;
     if (gt->At(0) == DataType(0))
     {
-      results->At(0) = DataType(1) - results->At(0);
-      scale_factor->At(0) = DataType(p.k_neg_samps * 2);
+      results->At(0)      = DataType(1) - results->At(0);
+      scale_factor->At(0) = DataType(sp.k_negative_samples);
     }
     else
     {
       scale_factor->At(0) = DataType(1);
     }
-    std::cout << "results->At(0): " << results->At(0) << std::endl;
+//    std::cout << "results->At(0): " << results->At(0) << std::endl;
 
     // cost function
     DataType tmp_loss = criterion.Forward({results, gt, scale_factor});
@@ -228,26 +242,26 @@ int main()
     // diminish size of updates due to negative examples
     if (data.second == 0)
     {
-      tmp_loss /= DataType(p.k_neg_samps);
+      tmp_loss /= DataType(sp.k_negative_samples);
     }
 
     loss += tmp_loss;
-
-    std::cout << "gt->At(0: " << gt->At(0) << std::endl;
-    std::cout << "results->At(0): " << results->At(0) << std::endl;
-    std::cout << "tmp_loss: " << tmp_loss << std::endl;
+//
+//    std::cout << "gt->At(0: " << gt->At(0) << std::endl;
+//    std::cout << "results->At(0): " << results->At(0) << std::endl;
+//    std::cout << "tmp_loss: " << tmp_loss << std::endl;
 
     // backprop
     g.BackPropagate(output_name, criterion.Backward({results, gt}));
 
-    if (i % p.batch_size == (p.batch_size - 1))
+    if (i % tp.batch_size == (tp.batch_size - 1))
     {
-      std::cout << "MiniBatch: " << i / p.batch_size << " -- Loss : " << loss << std::endl;
-      g.Step(p.learning_rate);
+      std::cout << "MiniBatch: " << i / tp.batch_size << " -- Loss : " << loss << std::endl;
+      g.Step(tp.learning_rate);
       loss = 0;
     }
 
-    if (i % (p.batch_size * 100) == ((p.batch_size * 100) - 1))
+    if (i % (tp.batch_size * 100) == ((tp.batch_size * 100) - 1))
     {
       // Test trained embeddings
       std::vector<DataType> trained_distances = TestEmbeddings(g, output_name, dataloader);
