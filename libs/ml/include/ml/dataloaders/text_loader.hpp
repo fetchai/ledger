@@ -24,7 +24,7 @@
 
 #include <algorithm>                // random_shuffle
 #include <fstream>                  // file streaming
-#include <string>                   //
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -200,14 +200,27 @@ public:
    */
   virtual std::pair<std::shared_ptr<T>, SizeType> GetNext()
   {
-    if (cursor_ > vocab_.size())
+    // loop until we find a non-discarded data point
+    bool not_found = true;
+    while(not_found)
     {
-      Reset();
-      is_done_ = true;
-    }
-    else
-    {
-      is_done_ = false;
+      if (cursor_ > vocab_.size())
+      {
+        Reset();
+        is_done_ = true;
+      }
+
+      SizeType sentence_idx = GetSentenceIdxFromWordIdx(cursor_);
+      SizeType word_offset = GetWordOffsetFromWordIdx(cursor_);
+      if (!(discards_.at(sentence_idx).at(word_offset)))
+      {
+        is_done_ = false;
+        not_found = false;
+      }
+      else
+      {
+        ++cursor_;
+      }
     }
 
     return GetAtIndex(cursor_);
@@ -219,11 +232,28 @@ public:
    */
   std::pair<std::shared_ptr<T>, SizeType> GetRandom()
   {
-    if (cursor_ > vocab_.size())
+    // loop until we find a non-discarded data point
+    bool not_found = true;
+    while(not_found)
     {
-      Reset();
-      is_done_             = true;
-      new_random_sequence_ = true;
+      if (cursor_ > vocab_.size())
+      {
+        Reset();
+        is_done_ = true;
+        new_random_sequence_ = true;
+      }
+
+      SizeType sentence_idx = GetSentenceIdxFromWordIdx(cursor_);
+      SizeType word_offset = GetWordOffsetFromWordIdx(cursor_);
+      if (!(discards_.at(sentence_idx).at(word_offset)))
+      {
+        is_done_ = false;
+        not_found = false;
+      }
+      else
+      {
+        ++cursor_;
+      }
     }
 
     if (new_random_sequence_)
@@ -274,6 +304,16 @@ public:
     assert(vocab_[idx] < vocab_.size());
     assert(vocab_[idx] != 0);  // dont currently handle unknowns elegantly
     return vocab_[idx];
+  }
+
+  /**
+   * return a single sentence from the dataset
+   * @param word_idx
+   * @return
+   */
+  SizeType GetSentenceIdxFromWordIdx(SizeType word_idx)
+  {
+    return word_idx_sentence_idx[word_idx];
   }
 
   /**
@@ -596,8 +636,12 @@ private:
         {
           if (DiscardExample(sentences[sntce_idx][i]))
           {
-            discards_.at(discard_sentence_idx_).push_back(i);
+            discards_.at(discard_sentence_idx_).push_back(1);
             ++discard_count_;
+          }
+          else
+          {
+            discards_.at(discard_sentence_idx_).push_back(0);
           }
         }
 
