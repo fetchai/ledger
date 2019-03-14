@@ -62,14 +62,16 @@ namespace ledger {
 
 const std::size_t TransactionStoreSyncService::BATCH_SIZE = 30;
 
-TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, MuddlePtr muddle, ObjectStorePtr store)
+TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, MuddlePtr muddle,
+                                                         ObjectStorePtr store)
   : cfg_{cfg}
   , muddle_(std::move(muddle))
   , store_(std::move(store))
   , verifier_(*this, cfg_.verification_threads, "TxV-L" + std::to_string(cfg_.lane_id))
 {
-  client_ = std::make_shared<Client>("R:TxSync-L" + std::to_string(cfg_.lane_id), muddle_->AsEndpoint(),
-                                     Muddle::Address(), SERVICE_LANE, CHANNEL_RPC);
+  client_ =
+      std::make_shared<Client>("R:TxSync-L" + std::to_string(cfg_.lane_id), muddle_->AsEndpoint(),
+                               Muddle::Address(), SERVICE_LANE, CHANNEL_RPC);
 
   this->Allow(State::QUERY_OBJECT_COUNTS, State::INITIAL)
       .Allow(State::RESOLVING_OBJECT_COUNTS, State::QUERY_OBJECT_COUNTS)
@@ -140,7 +142,8 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
     }
     if (counts.pending > 0)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Still waiting for object counts...");
+      FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ",
+                     "Still waiting for object counts...");
       if (!promise_wait_timeout_.IsDue())
       {
         result = false;
@@ -159,7 +162,8 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
     // where roots to sync are all objects with the key starting with those bits
     if (max_object_count_ != 0)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Expected tx size: ", max_object_count_);
+      FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ",
+                     "Expected tx size: ", max_object_count_);
 
       root_size_ = platform::Log2Ceil(((max_object_count_ / (PULL_LIMIT_ / 2)) + 1)) + 1;
 
@@ -256,8 +260,8 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
       }
       else
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Timeout for subtree promises count!",
-                       counts.pending);
+        FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ",
+                       "Timeout for subtree promises count!", counts.pending);
         // get the pending
         auto pending = pending_subtree_.GetPending();
         for (auto &req : pending)

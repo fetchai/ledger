@@ -141,17 +141,16 @@ protected:
   }
 
 private:
-
   Config const        cfg_;
   MuddlePtr           muddle_;
   ClientPtr           client_;
   ObjectStorePtr      store_;  ///< The pointer to the object store
   TransactionVerifier verifier_;
 
-  FutureTimepoint           timeout_;
-  FutureTimepoint           promise_wait_timeout_;
-  bool                      timeout_set_ = false;
-  FutureTimepoint           fetch_object_wait_timeout_;
+  FutureTimepoint timeout_;
+  FutureTimepoint promise_wait_timeout_;
+  bool            timeout_set_ = false;
+  FutureTimepoint fetch_object_wait_timeout_;
 
   RequestingObjectCount pending_object_count_;
   uint64_t              max_object_count_;
