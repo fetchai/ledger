@@ -16,14 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/macros.hpp"
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
-enum class State
-{
 
-};
-
-static char const *ToString(fetch::ledger::tx_sync::State state)
+static char const * FETCH_MAYBE_UNUSED ToString(fetch::ledger::tx_sync::State state)
 {
   using State = fetch::ledger::tx_sync::State;
 
@@ -106,30 +103,6 @@ TransactionStoreSyncService::~TransactionStoreSyncService()
 
 bool TransactionStoreSyncService::PossibleNewState(State &current_state)
 {
-//  {
-//    FETCH_LOCK(mutex_);
-//    if (current_state == State::INITIAL && !timeout_set_)
-//    {
-//      SetTimeOut();
-//      return false;
-//    }
-//    if (current_state == State::INITIAL && timeout_.IsDue())
-//    {
-//      auto connections = lane_controller_->GetPeers();
-//      if (connections.size() == 0)
-//      {
-//        timeout_set_ = false;
-//        SetTimeOut();
-//        return false;
-//      }
-//      else
-//      {
-//        current_state = State::QUERY_OBJECT_COUNTS;
-//        fetch_object_wait_timeout_.Set(fetch_object_wait_duration_);
-//        return true;
-//      }
-//    }
-//  }
   bool result = false;
   switch (current_state)
   {
@@ -167,8 +140,6 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
     for (auto &result : pending_object_count_.Get(MAX_OBJECT_COUNT_RESOLUTION_PER_CYCLE))
     {
       max_object_count_ = std::max(max_object_count_, result.promised);
-
-      FETCH_LOG_INFO(LOGGING_NAME, "Promised TX Count: ", result.promised, " max: ", max_object_count_);
     }
     if (counts.failed > 0)
     {
@@ -190,7 +161,6 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
       }
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, ": ", "Expected tx size: ", max_object_count_);
 
     // If there are objects to sync from the network, fetch N roots from each of the peers in
     // parallel. So if we decided to split the sync into 4 roots, the mask would be 2 (bits) and
@@ -198,6 +168,8 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
     // where roots to sync are all objects with the key starting with those bits
     if (max_object_count_ != 0)
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, ": ", "Expected tx size: ", max_object_count_);
+
       root_size_ = platform::Log2Ceil(((max_object_count_ / (PULL_LIMIT_ / 2)) + 1)) + 1;
 
       for (uint64_t i = 0, end = (1 << (root_size_)); i < end; ++i)
@@ -247,6 +219,8 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
   case State::RESOLVING_SUBTREE:
   {
     auto counts = pending_subtree_.Resolve();
+
+    std::size_t synced_tx{0};
     for (auto &result : pending_subtree_.Get(MAX_SUBTREE_RESOLUTION_PER_CYCLE))
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", id_, ": ", "Got ", result.promised.size(),
@@ -254,9 +228,18 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
 
       for (auto &tx : result.promised)
       {
+        // add the transaction to the verifier
         verifier_.AddTransaction(tx.AsMutable());
+
+        ++synced_tx;
       }
     }
+
+    if (synced_tx)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, " Incorporated ", synced_tx, " txs");
+    }
+
     FETCH_LOCK(mutex_);
     if (counts.failed > 0)
     {
@@ -322,6 +305,8 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
   case State::RESOLVING_OBJECTS:
   {
     auto counts = pending_objects_.Resolve();
+
+    std::size_t synced_tx{0};
     for (auto &result : pending_objects_.Get(MAX_OBJECT_RESOLUTION_PER_CYCLE))
     {
       if (!result.promised.empty())
@@ -333,7 +318,13 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
       for (auto &tx : result.promised)
       {
         verifier_.AddTransaction(tx.AsMutable());
+        ++synced_tx;
       }
+    }
+
+    if (synced_tx)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, " Pulled ", synced_tx, " txs");
     }
 
     FETCH_LOCK(mutex_);
@@ -371,7 +362,7 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
 
   if (result)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Updating state to: ", ToString(current_state));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Updating state to: ", ToString(current_state));
   }
 
   return result;

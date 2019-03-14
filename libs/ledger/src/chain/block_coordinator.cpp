@@ -28,16 +28,15 @@
 
 #include <chrono>
 
-using std::this_thread::sleep_for;
 using std::chrono::microseconds;
 using fetch::byte_array::ToBase64;
 
 using ScheduleStatus = fetch::ledger::ExecutionManagerInterface::ScheduleStatus;
 using ExecutionState = fetch::ledger::ExecutionManagerInterface::State;
 
+static const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};
+static const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{500};
 static const std::chrono::seconds      NOTIFY_INTERVAL{10};
-static const std::chrono::milliseconds STALL_INTERVAL{250};
-static const std::size_t               STALL_THRESHOLD{20};
 static const std::size_t               DIGEST_LENGTH_BYTES{32};
 static const std::size_t               IDENTITY_LENGTH_BYTES{64};
 
@@ -69,6 +68,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   , block_difficulty_{block_difficulty}
   , num_lanes_{num_lanes}
   , num_slices_{num_slices}
+  , tx_wait_periodic_{TX_SYNC_NOTIFY_INTERVAL}
+  , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
 {
   // configure the state machine
   // clang-format off
@@ -88,7 +89,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   // clang-format on
 
   // for debug purposes
-#ifdef FETCH_LOG_INFO_ENABLED
+#ifdef FETCH_LOG_DEBUG_ENABLED
   state_machine_->OnStateChange([](State current, State previous) {
     FETCH_LOG_INFO(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
   });
@@ -337,6 +338,9 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     return State::RESET;
   }
 
+  // reset the tx wait period
+  tx_wait_periodic_.Reset();
+
   // All the checks pass
   return State::WAIT_FOR_TRANSACTIONS;
 }
@@ -365,8 +369,6 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions()
   {
     if (storage_unit_.HasTransaction(*it))
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "TX has been synced: ", ToBase64(*it));
-
       // success - remove this element from the set
       it = pending_txs_->erase(it);
     }
@@ -390,9 +392,14 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions()
   }
   else
   {
-    // we really want to stall the whole state machine here because the TX sync process can take
-    // a little while and we would just needlessly poll the transaction shards
-    sleep_for(std::chrono::milliseconds{500});
+    // status debug
+    if (tx_wait_periodic_.Poll())
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for ", pending_txs_->size(), " transactions to sync");
+    }
+
+    // signal the the next execution of the state machine should be much later in the future
+    state_machine_->Delay(std::chrono::milliseconds{200});
   }
 
   return next_state;
@@ -405,6 +412,8 @@ BlockCoordinator::State BlockCoordinator::OnScheduleBlockExecution()
   // schedule the current block for execution
   if (ScheduleCurrentBlock())
   {
+    exec_wait_periodic_.Reset();
+
     next_state = State::WAIT_FOR_EXECUTION;
   }
 
@@ -423,23 +432,17 @@ BlockCoordinator::State BlockCoordinator::OnWaitForExecution()
     break;
 
   case ExecutionStatus::RUNNING:
+
+    if (exec_wait_periodic_.Poll())
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for execution to complete for block: ", current_block_->body.hash.ToBase64());
+    }
+
+    // signal that the next execution should not happen immediately
+    state_machine_->Delay(std::chrono::milliseconds{20});
     break;
 
   case ExecutionStatus::STALLED:
-    if (stall_count_ < STALL_THRESHOLD)
-    {
-      ++stall_count_;
-
-      sleep_for(STALL_INTERVAL);
-      next_state = State::EXECUTE_NEW_BLOCK;
-    }
-    else
-    {
-      next_state = State::RESET;
-    }
-
-    break;
-
   case ExecutionStatus::ERROR:
     next_state = State::RESET;
     break;
@@ -543,6 +546,8 @@ BlockCoordinator::State BlockCoordinator::OnExecuteNewBlock()
   // schedule the current block for execution
   if (ScheduleNextBlock())
   {
+    exec_wait_periodic_.Reset();
+
     next_state = State::WAIT_FOR_NEW_BLOCK_EXECUTION;
   }
 
@@ -568,25 +573,16 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
   }
 
   case ExecutionStatus::RUNNING:
+    if (exec_wait_periodic_.Poll())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Waiting for new block execution (following: ", next_block_->body.previous_hash.ToBase64(), ")");
+    }
+
+    // signal that the next execution should not happen immediately
+    state_machine_->Delay(std::chrono::milliseconds{20});
     break;
 
   case ExecutionStatus::STALLED:
-
-    // TODO(private issue 540): Possibly endless stalling in the error case
-    if (stall_count_ < STALL_THRESHOLD)
-    {
-      ++stall_count_;
-
-      sleep_for(STALL_INTERVAL);
-      next_state = State::EXECUTE_NEW_BLOCK;
-    }
-    else
-    {
-      next_state = State::RESET;
-    }
-
-    break;
-
   case ExecutionStatus::ERROR:
     next_state = State::RESET;
     break;
