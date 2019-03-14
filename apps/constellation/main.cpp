@@ -456,7 +456,7 @@ void InterruptHandler(int /*signal*/)
   }
 }
 
-bool HasVersionFlag(int argc, char** argv)
+bool HasVersionFlag(int argc, char **argv)
 {
   static const std::string FULL_VERSION_FLAG{"--version"};
   static const std::string SHORT_VERSION_FLAG{"-v"};

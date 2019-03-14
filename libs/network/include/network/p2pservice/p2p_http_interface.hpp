@@ -54,7 +54,8 @@ public:
   static constexpr char const *LOGGING_NAME = "P2PHttpInterface";
 
   P2PHttpInterface(uint32_t log2_num_lanes, MainChain &chain, Muddle &muddle,
-                   P2PService &p2p_service, TrustSystem &trust, BlockPackerInterface &packer, WeakStateMachines state_machines)
+                   P2PService &p2p_service, TrustSystem &trust, BlockPackerInterface &packer,
+                   WeakStateMachines state_machines)
     : log2_num_lanes_(log2_num_lanes)
     , chain_(chain)
     , muddle_(muddle)

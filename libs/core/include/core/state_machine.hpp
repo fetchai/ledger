@@ -34,8 +34,7 @@ namespace fetch {
 namespace core {
 
 template <typename State>
-class StateMachine : public StateMachineInterface
-                   , public Runnable
+class StateMachine : public StateMachineInterface, public Runnable
 {
 public:
   static_assert(std::is_enum<State>::value, "");
@@ -68,7 +67,7 @@ public:
   /// @name State Machine Interface
   /// @{
   char const *GetName() const override;
-  uint64_t GetStateCode() const override;
+  uint64_t    GetStateCode() const override;
   char const *GetStateName() const override;
   /// @}
 
