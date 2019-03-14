@@ -83,7 +83,6 @@ public:
   }
 
 private:
-
   /**
    * get a single training pair from a word index
    * @param idx
@@ -105,8 +104,8 @@ private:
    */
   bool SelectValence()
   {
-    double cur_val = this->lfg_.AsDouble();
-    double positive_threshold = 1.0 / p_.k_negative_samples;
+    double                cur_val            = this->lfg_.AsDouble();
+    double                positive_threshold = 1.0 / p_.k_negative_samples;
     std::vector<SizeType> ret{};
 
     if (cur_val < positive_threshold)
@@ -159,12 +158,12 @@ private:
    */
   SizeType SelectNegativeContextWord(SizeType idx)
   {
-    std::vector<SizeType> sentence = this->GetSentenceFromWordIdx(idx);
-    SizeType sentence_len = sentence.size();
-    SizeType word_offset = this->GetWordOffsetFromWordIdx(idx);
+    std::vector<SizeType> sentence     = this->GetSentenceFromWordIdx(idx);
+    SizeType              sentence_len = sentence.size();
+    SizeType              word_offset  = this->GetWordOffsetFromWordIdx(idx);
 
     // randomly select a negative context word
-    bool ongoing = true;
+    bool     ongoing = true;
     SizeType negative_context_idx;
     while (ongoing)
     {
@@ -181,7 +180,7 @@ private:
       {
         if (WindowPositionCheck(word_offset, j, sentence_len))
         {
-          if (this->data_[this->sentence_idx_word_idx[idx]][j] == negative_context_idx)
+          if (this->data_[this->word_idx_sentence_idx[idx]][j] == negative_context_idx)
           {
             ongoing = true;
           }
@@ -192,8 +191,6 @@ private:
     return negative_context_idx;
   }
 
-
-
   /**
    * select a context index position
    * @param idx
@@ -202,19 +199,19 @@ private:
   SizeType SelectContextPosition(SizeType idx)
   {
 
-    std::vector<SizeType> sentence = this->GetSentenceFromWordIdx(idx);
-    SizeType sentence_len = sentence.size();
-    SizeType word_offset = this->GetWordOffsetFromWordIdx(idx);
+    std::vector<SizeType> sentence     = this->GetSentenceFromWordIdx(idx);
+    SizeType              sentence_len = sentence.size();
+    SizeType              word_offset  = this->GetWordOffsetFromWordIdx(idx);
 
     // check all potential context positions
-    double current_probability;
-    int normalised_context_position;
+    double                current_probability;
+    int                   normalised_context_position;
     std::vector<SizeType> unigram_selection;
 
     for (SizeType j = 0; j < (1 + (2 * p_.window_size)); ++j)
     {
       normalised_context_position = int(j) - int(p_.window_size);
-      int abs_dist_to_target          = fetch::math::Abs(normalised_context_position);
+      int abs_dist_to_target      = fetch::math::Abs(normalised_context_position);
       if (WindowPositionCheck(word_offset, j, sentence_len))
       {
         current_probability = 1.0 / abs_dist_to_target;
@@ -227,7 +224,7 @@ private:
     }
 
     SizeType context_offset = this->lcg_() % unigram_selection.size();
-    SizeType context_idx = idx + context_offset - p_.window_size;
+    SizeType context_idx    = idx + context_offset - p_.window_size;
 
     return context_idx;
   }
@@ -262,46 +259,46 @@ private:
       return true;
     }
   }
-//
-//  /**
-//   * Dynamic context windows probabilistically reject words from the context window according to
-//   * unigram distribution There is also a fixed maximum distance
-//   * @param j the current word position
-//   * @return
-//   */
-//  bool DynamicWindowCheck(SizeType context_position)
-//  {
-//    int normalised_context_position = int(context_position) - int(p_.window_size);
-//    int abs_dist_to_target          = fetch::math::Abs(normalised_context_position);
-//    if (abs_dist_to_target == 1)
-//    {
-//      return true;
-//    }
-//    else
-//    {
-//      double cur_val          = this->lfg_.AsDouble();
-//      double accept_threshold = 1.0 / abs_dist_to_target;
-//      if (cur_val < accept_threshold)
-//      {
-//        return true;
-//      }
-//      return false;
-//    }
-//  }
-//
-//  /**
-//   * calculates the mean frequency of words under unigram for given max window_size
-//   */
-//  double GetUnigramExpectation()
-//  {
-//    double ret = 0;
-//    for (SizeType i = 0; i < p_.window_size; ++i)
-//    {
-//      ret += 1.0 / double(i + 1);
-//    }
-//    ret *= 2;
-//    return ret;
-//  }
+  //
+  //  /**
+  //   * Dynamic context windows probabilistically reject words from the context window according to
+  //   * unigram distribution There is also a fixed maximum distance
+  //   * @param j the current word position
+  //   * @return
+  //   */
+  //  bool DynamicWindowCheck(SizeType context_position)
+  //  {
+  //    int normalised_context_position = int(context_position) - int(p_.window_size);
+  //    int abs_dist_to_target          = fetch::math::Abs(normalised_context_position);
+  //    if (abs_dist_to_target == 1)
+  //    {
+  //      return true;
+  //    }
+  //    else
+  //    {
+  //      double cur_val          = this->lfg_.AsDouble();
+  //      double accept_threshold = 1.0 / abs_dist_to_target;
+  //      if (cur_val < accept_threshold)
+  //      {
+  //        return true;
+  //      }
+  //      return false;
+  //    }
+  //  }
+  //
+  //  /**
+  //   * calculates the mean frequency of words under unigram for given max window_size
+  //   */
+  //  double GetUnigramExpectation()
+  //  {
+  //    double ret = 0;
+  //    for (SizeType i = 0; i < p_.window_size; ++i)
+  //    {
+  //      ret += 1.0 / double(i + 1);
+  //    }
+  //    ret *= 2;
+  //    return ret;
+  //  }
 };
 
 }  // namespace dataloaders

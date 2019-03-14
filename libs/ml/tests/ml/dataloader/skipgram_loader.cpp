@@ -39,8 +39,7 @@ SkipGramTextParams<T> SetParams()
   ret.max_sentences      = SizeType(1);  // maximum number of sentences to use
   ret.unigram_table      = false;        // unigram table for sampling negative training pairs
   ret.discard_frequent   = false;        // discard most frqeuent words
-  ret.skip_window        = SizeType(1);  // max size of context window one way
-  ret.super_sampling     = SizeType(1);  // n times to reuse an input to generate a label
+  ret.window_size        = SizeType(1);  // max size of context window one way
   ret.k_negative_samples = SizeType(0);  // number of negative examples to sample
 
   return ret;

@@ -61,9 +61,9 @@ SkipGramTextParams<T> SetParams()
   ret.discard_frequent  = true;   // discard most frqeuent words
   ret.discard_threshold = 0.001;  // controls how aggressively to discard frequent words
 
-  ret.window_size        = SizeType(5);   // max size of context window one way
-  ret.min_sentence_length = SizeType(4);  // maximum number of sentences to use
-  ret.k_negative_samples = SizeType(15);  // number of negative examples to sample
+  ret.window_size         = SizeType(5);   // max size of context window one way
+  ret.min_sentence_length = SizeType(4);   // maximum number of sentences to use
+  ret.k_negative_samples  = SizeType(15);  // number of negative examples to sample
 
   return ret;
 }
@@ -223,8 +223,8 @@ int main()
 
     //    // result interpreted as probability True - so reverse for gt == 0
 
-//    std::cout << "gt->At(0): " << gt->At(0) << std::endl;
-//    std::cout << "results->At(0): " << results->At(0) << std::endl;
+    //    std::cout << "gt->At(0): " << gt->At(0) << std::endl;
+    //    std::cout << "results->At(0): " << results->At(0) << std::endl;
     if (gt->At(0) == DataType(0))
     {
       results->At(0)      = DataType(1) - results->At(0);
@@ -234,7 +234,7 @@ int main()
     {
       scale_factor->At(0) = DataType(1);
     }
-//    std::cout << "results->At(0): " << results->At(0) << std::endl;
+    //    std::cout << "results->At(0): " << results->At(0) << std::endl;
 
     // cost function
     DataType tmp_loss = criterion.Forward({results, gt, scale_factor});
@@ -246,10 +246,10 @@ int main()
     }
 
     loss += tmp_loss;
-//
-//    std::cout << "gt->At(0: " << gt->At(0) << std::endl;
-//    std::cout << "results->At(0): " << results->At(0) << std::endl;
-//    std::cout << "tmp_loss: " << tmp_loss << std::endl;
+    //
+    //    std::cout << "gt->At(0: " << gt->At(0) << std::endl;
+    //    std::cout << "results->At(0): " << results->At(0) << std::endl;
+    //    std::cout << "tmp_loss: " << tmp_loss << std::endl;
 
     // backprop
     g.BackPropagate(output_name, criterion.Backward({results, gt}));
