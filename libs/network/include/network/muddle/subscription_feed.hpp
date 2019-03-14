@@ -51,11 +51,11 @@ public:
                 Payload const &payload, Address const &transmitter);
 
 private:
-  using Mutex               = mutex::Mutex;
+  using Mutex               = std::mutex;
   using SubscriptionWeakPtr = std::weak_ptr<Subscription>;
   using SubscriptionList    = std::vector<SubscriptionWeakPtr>;
 
-  mutable Mutex    feed_lock_{__LINE__, __FILE__};
+  mutable Mutex    feed_lock_;
   SubscriptionList feed_;
 };
 

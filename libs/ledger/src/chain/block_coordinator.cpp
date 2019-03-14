@@ -35,6 +35,7 @@ using fetch::byte_array::ToBase64;
 using ScheduleStatus = fetch::ledger::ExecutionManagerInterface::ScheduleStatus;
 using ExecutionState = fetch::ledger::ExecutionManagerInterface::State;
 
+static const std::chrono::seconds      NOTIFY_INTERVAL{10};
 static const std::chrono::milliseconds STALL_INTERVAL{250};
 static const std::size_t               STALL_THRESHOLD{20};
 static const std::size_t               DIGEST_LENGTH_BYTES{32};
@@ -61,6 +62,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   , block_packer_{packer}
   , block_sink_{block_sink}
   , status_cache_{status_cache}
+  , periodic_print_{NOTIFY_INTERVAL}
   , miner_{std::make_shared<consensus::DummyMiner>()}
   , identity_{std::move(identity)}
   , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RESET)}
@@ -88,7 +90,15 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   // for debug purposes
 #ifdef FETCH_LOG_DEBUG_ENABLED
   state_machine_->OnStateChange([](State current, State previous) {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
+    FETCH_LOG_INFO(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
+  });
+#else
+  state_machine_->OnStateChange([this](State current, State previous) {
+    if (periodic_print_.Poll())
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
+                     " (previous: ", ToString(previous), ")");
+    }
   });
 #endif  // FETCH_LOG_DEBUG_ENABLED
 }

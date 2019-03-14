@@ -44,10 +44,9 @@ public:
       this->output_ = std::make_shared<ArrayType>(inputs.at(0).get().shape());
     }
 
-    for (std::uint64_t i = 0; i < inputs.at(0).get().size(); ++i)
-    {
-      this->output_->Set(i, inputs.at(0).get().At(i) + inputs.at(1).get().At(i));
-    }
+    this->output_->Fill(DataType(0));
+    this->output_->InlineAdd(inputs[0]);
+    this->output_->InlineAdd(inputs[1]);
     return *this->output_;
   }
 
