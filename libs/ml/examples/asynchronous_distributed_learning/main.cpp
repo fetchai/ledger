@@ -65,16 +65,17 @@ public:
 
   void Train(unsigned int numberOfBatches)
   {
-    float                        loss = 0;
-    CrossEntropy<ArrayType>      criterion;
-    std::pair<size_t, ArrayType> input;
-    ArrayType                    gt(std::vector<typename ArrayType::SizeType>({1, 10}));
+    float                             loss = 0;
+    CrossEntropy<ArrayType>           criterion;
+    std::pair<std::size_t, ArrayType> input;
+    ArrayType                         gt(std::vector<typename ArrayType::SizeType>({1, 10}));
     for (unsigned int i(0); i < numberOfBatches; ++i)
     {
       loss = 0;
       for (unsigned int j(0); j < BATCH_SIZE; ++j)
       {
-        // Randomly sampling the dataset, should ensure everyone is training on different data
+        // Random sampling ensures that for relatively few training steps the proportion of shared
+        // training data is low
         input = dataloader_.GetRandom();
         g_.SetInput("Input", input.second);
         gt.Fill(0);

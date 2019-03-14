@@ -34,6 +34,7 @@
 #define NUMBER_OF_ITERATIONS 20
 #define BATCH_SIZE 32
 #define NUMBER_OF_BATCHES 10
+#define LEARNING_RATE 0.01f
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
@@ -56,19 +57,19 @@ public:
     g_.AddNode<Softmax<ArrayType>>("Softmax", {"FC3"});
   }
 
-  void Train(unsigned int numberOfBatches)
+  void Train(unsigned int number_of_batches)
   {
-    float                        loss = 0;
-    CrossEntropy<ArrayType>      criterion;
-    std::pair<size_t, ArrayType> input;
-    ArrayType                    gt(std::vector<typename ArrayType::SizeType>({1, 10}));
-    for (unsigned int i(0); i < numberOfBatches; ++i)
+    float                             loss = 0;
+    CrossEntropy<ArrayType>           criterion;
+    std::pair<std::size_t, ArrayType> input;
+    ArrayType                         gt(std::vector<typename ArrayType::SizeType>({1, 10}));
+    for (unsigned int i(0); i < number_of_batches; ++i)
     {
       loss = 0;
       for (unsigned int j(0); j < BATCH_SIZE; ++j)
       {
-        // Randomly sampling through the dataset, should ensure everyone is training on different
-        // data
+        // Random sampling ensures that for relatively few training steps the proportion of shared
+        // training data is low
         input = dataloader_.GetRandom();
         g_.SetInput("Input", input.second);
         gt.Fill(0);
@@ -79,7 +80,7 @@ public:
       }
       losses_values_.push_back(loss);
       // Updating the weights
-      g_.Step(0.01f);
+      g_.Step(LEARNING_RATE);
     }
   }
 
