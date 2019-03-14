@@ -164,9 +164,9 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
     FETCH_LOCK(mutex_);
     for (auto &result : pending_object_count_.Get(MAX_OBJECT_COUNT_RESOLUTION_PER_CYCLE))
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Promised TX Count: ", max_object_count_);
-
       max_object_count_ = std::max(max_object_count_, result.promised);
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Promised TX Count: ", result.promised, " max: ", max_object_count_);
     }
     if (counts.failed > 0)
     {
