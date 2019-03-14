@@ -402,7 +402,7 @@ void TransientObjectStore<O>::ThreadLoop()
     // Populating: We are filling up our batch of objects from the queue that is being posted
     case Phase::Populating:
     {
-      assert(extracted_count < (BATCH_SIZE - 1u));
+      assert(extracted_count < BATCH_SIZE);
 
       // ensure the write count is reset
       written_count = 0;

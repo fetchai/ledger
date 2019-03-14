@@ -242,13 +242,6 @@ public:
    */
   void Set(std::size_t const &i, type const &object)
   {
-#if 0
-    if (std::string::npos != filename_.find("transaction"))
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "RAS: ", filename_, " Set Object");
-    }
-#endif
-
     assert(filename_ != "");
     assert(i < size());
     int64_t start = int64_t(i * sizeof(type) + header_.size());

@@ -62,21 +62,13 @@ namespace ledger {
 
 const std::size_t TransactionStoreSyncService::BATCH_SIZE = 30;
 
-TransactionStoreSyncService::TransactionStoreSyncService(
-    uint32_t lane_id, MuddlePtr muddle, ObjectStorePtr store, LaneControllerPtr controller_ptr,
-    std::size_t verification_threads, std::chrono::milliseconds the_timeout,
-    std::chrono::milliseconds promise_wait_timeout,
-    std::chrono::milliseconds fetch_object_wait_duration)
-  : muddle_(std::move(muddle))
+TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, MuddlePtr muddle, ObjectStorePtr store)
+  : cfg_{cfg}
+  , muddle_(std::move(muddle))
   , store_(std::move(store))
-  , verifier_(*this, verification_threads, "TxV-L" + std::to_string(lane_id))
-  , lane_controller_(std::move(controller_ptr))
-  , time_duration_(the_timeout)
-  , promise_wait_time_duration_(promise_wait_timeout)
-  , fetch_object_wait_duration_(fetch_object_wait_duration)
-  , id_(lane_id)
+  , verifier_(*this, cfg_.verification_threads, "TxV-L" + std::to_string(cfg_.lane_id))
 {
-  client_ = std::make_shared<Client>("R:TxSync-L" + std::to_string(lane_id), muddle_->AsEndpoint(),
+  client_ = std::make_shared<Client>("R:TxSync-L" + std::to_string(cfg_.lane_id), muddle_->AsEndpoint(),
                                      Muddle::Address(), SERVICE_LANE, CHANNEL_RPC);
 
   this->Allow(State::QUERY_OBJECT_COUNTS, State::INITIAL)
@@ -93,12 +85,12 @@ TransactionStoreSyncService::TransactionStoreSyncService(
 
 TransactionStoreSyncService::~TransactionStoreSyncService()
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id_, ": teardown sync service");
+  FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": teardown sync service");
   muddle_->Shutdown();
   client_ = nullptr;
   muddle_ = nullptr;
   store_  = nullptr;
-  FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id_, ": sync service done!");
+  FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": sync service done!");
 }
 
 bool TransactionStoreSyncService::PossibleNewState(State &current_state)
@@ -129,7 +121,7 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
     FETCH_LOCK(mutex_);
     max_object_count_ = 0;
     current_state     = State::RESOLVING_OBJECT_COUNTS;
-    promise_wait_timeout_.Set(time_duration_);
+    promise_wait_timeout_.Set(cfg_.main_timeout);
     result = true;
     break;
   }
@@ -143,12 +135,12 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
     }
     if (counts.failed > 0)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Lane ", id_, ": ", "Failed object count promises ",
+      FETCH_LOG_ERROR(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Failed object count promises ",
                       counts.failed);
     }
     if (counts.pending > 0)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, ": ", "Still waiting for object counts...");
+      FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Still waiting for object counts...");
       if (!promise_wait_timeout_.IsDue())
       {
         result = false;
@@ -156,7 +148,7 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
       }
       else
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id_, ": ",
+        FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ",
                        "Still pending object count promises, but limit approached!");
       }
     }
@@ -167,7 +159,7 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
     // where roots to sync are all objects with the key starting with those bits
     if (max_object_count_ != 0)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, ": ", "Expected tx size: ", max_object_count_);
+      FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Expected tx size: ", max_object_count_);
 
       root_size_ = platform::Log2Ceil(((max_object_count_ / (PULL_LIMIT_ / 2)) + 1)) + 1;
 
@@ -210,7 +202,7 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
       result = false;
       break;
     }
-    promise_wait_timeout_.Set(promise_wait_time_duration_);
+    promise_wait_timeout_.Set(cfg_.promise_wait_timeout);
     current_state = State::RESOLVING_SUBTREE;
     result        = true;
     break;
@@ -222,7 +214,7 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
     std::size_t synced_tx{0};
     for (auto &result : pending_subtree_.Get(MAX_SUBTREE_RESOLUTION_PER_CYCLE))
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", id_, ": ", "Got ", result.promised.size(),
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Got ", result.promised.size(),
                       " subtree objects!");
 
       for (auto &tx : result.promised)
@@ -236,13 +228,13 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
 
     if (synced_tx)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, " Incorporated ", synced_tx, " txs");
+      FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, " Incorporated ", synced_tx, " txs");
     }
 
     FETCH_LOCK(mutex_);
     if (counts.failed > 0)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id_, ": ", "Failed subtree promises count ",
+      FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Failed subtree promises count ",
                      counts.failed);
       for (auto &fail : pending_subtree_.GetFailures(MAX_SUBTREE_RESOLUTION_PER_CYCLE))
       {
@@ -264,7 +256,7 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
       }
       else
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id_, ": ", "Timeout for subtree promises count!",
+        FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Timeout for subtree promises count!",
                        counts.pending);
         // get the pending
         auto pending = pending_subtree_.GetPending();
@@ -294,8 +286,8 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
       pending_objects_.Add(connection, promise);
     }
     current_state = State::RESOLVING_OBJECTS;
-    promise_wait_timeout_.Set(promise_wait_time_duration_);
-    fetch_object_wait_timeout_.Set(fetch_object_wait_duration_);
+    promise_wait_timeout_.Set(cfg_.promise_wait_timeout);
+    fetch_object_wait_timeout_.Set(cfg_.fetch_object_wait_duration);
     FETCH_LOCK(is_ready_mutex_);
     is_ready_ = true;
     result    = true;
@@ -310,7 +302,7 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
     {
       if (!result.promised.empty())
       {
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", id_, ": ", "Got ", result.promised.size(),
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Got ", result.promised.size(),
                         " objects!");
       }
 
@@ -323,7 +315,7 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
 
     if (synced_tx)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, " Pulled ", synced_tx, " txs");
+      FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, " Pulled ", synced_tx, " txs");
     }
 
     FETCH_LOCK(mutex_);
@@ -334,13 +326,13 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
         result = false;
         break;
       }
-      FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id_, ": ",
+      FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ",
                      "Still pending object promises but limit approached!");
     }
 
     if (counts.failed)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id_, ": ", "Failed promises: ", counts.failed);
+      FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Failed promises: ", counts.failed);
     }
 
     current_state = State::TRIM_CACHE;
