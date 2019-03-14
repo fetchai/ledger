@@ -171,7 +171,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
                                                               cfg_.standalone)}
   , tx_processor_{*storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
-  , http_{http_network_manager_}  // clang-format off
+  , http_{http_network_manager_}
   , http_modules_{
     std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_, cfg_.num_lanes()),
     std::make_shared<p2p::P2PHttpInterface>(
@@ -184,8 +184,6 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
     std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
     std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_)
   }
-// clang-format on
-
 {
   // print the start up log banner
   FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.interface_address, " E ",
