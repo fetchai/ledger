@@ -147,6 +147,8 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
   {
     for (auto const &connection : muddle_->AsEndpoint().GetDirectlyConnectedPeers())
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Query objects from: muddle://", connection.ToBase64());
+
       auto prom = PromiseOfObjectCount(client_->CallSpecificAddress(
           connection, RPC_TX_STORE_SYNC, TransactionStoreSyncProtocol::OBJECT_COUNT));
       pending_object_count_.Add(connection, prom);
