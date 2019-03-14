@@ -171,6 +171,11 @@ public:
     return *state_machine_;
   }
 
+  std::weak_ptr<core::StateMachineInterface> GetWeakStateMachine()
+  {
+    return state_machine_;
+  }
+
   // Operators
   BlockCoordinator &operator=(BlockCoordinator const &) = delete;
   BlockCoordinator &operator=(BlockCoordinator &&) = delete;

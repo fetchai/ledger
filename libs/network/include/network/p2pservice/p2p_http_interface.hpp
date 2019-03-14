@@ -22,6 +22,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
+#include "core/state_machine_interface.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"
 #include "ledger/block_packer_interface.hpp"
@@ -47,17 +48,21 @@ public:
   using Muddle               = muddle::Muddle;
   using TrustSystem          = P2PTrustInterface<Muddle::Address>;
   using BlockPackerInterface = ledger::BlockPackerInterface;
+  using WeakStateMachine     = std::weak_ptr<core::StateMachineInterface>;
+  using WeakStateMachines    = std::vector<WeakStateMachine>;
 
   static constexpr char const *LOGGING_NAME = "P2PHttpInterface";
 
   P2PHttpInterface(uint32_t log2_num_lanes, MainChain &chain, Muddle &muddle,
-                   P2PService &p2p_service, TrustSystem &trust, BlockPackerInterface &packer)
+                   P2PService &p2p_service, TrustSystem &trust, BlockPackerInterface &packer,
+                   WeakStateMachines state_machines)
     : log2_num_lanes_(log2_num_lanes)
     , chain_(chain)
     , muddle_(muddle)
     , p2p_(p2p_service)
     , trust_(trust)
     , packer_(packer)
+    , state_machines_(std::move(state_machines))
   {
     Get("/api/status/chain",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
@@ -78,6 +83,10 @@ public:
     Get("/api/status/backlog",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
           return GetBacklogStatus(params, request);
+        });
+    Get("/api/status/states",
+        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+          return GetStateMachineStatus(params, request);
         });
     Get("/api/status",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
@@ -210,6 +219,23 @@ private:
     return http::CreateJsonResponse(data);
   }
 
+  http::HTTPResponse GetStateMachineStatus(http::ViewParameters const & /*params*/,
+                                           http::HTTPRequest const & /*request*/)
+  {
+    variant::Variant data = variant::Variant::Object();
+
+    for (auto const &sm : state_machines_)
+    {
+      auto instance = sm.lock();
+      if (instance)
+      {
+        data[instance->GetName()] = instance->GetStateName();
+      }
+    }
+
+    return http::CreateJsonResponse(data);
+  }
+
   Variant GenerateBlockList(bool include_transactions, std::size_t length)
   {
     using byte_array::ToBase64;
@@ -315,6 +341,7 @@ private:
   P2PService &          p2p_;
   TrustSystem &         trust_;
   BlockPackerInterface &packer_;
+  WeakStateMachines     state_machines_;
 };
 
 }  // namespace p2p
