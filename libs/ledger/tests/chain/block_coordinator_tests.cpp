@@ -28,7 +28,7 @@
 #include "fake_block_sink.hpp"
 #include "mock_block_packer.hpp"
 #include "mock_execution_manager.hpp"
-#include "mock_storage_unit.hpp"
+#include "../chaincode/mock_storage_unit.hpp"
 
 #include <gtest/gtest.h>
 #include <iostream>
@@ -76,7 +76,7 @@ protected:
 
     main_chain_        = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
     storage_unit_      = std::make_unique<MockStorageUnit>();
-    execution_manager_ = std::make_unique<MockExecutionManager>(storage_unit_->fake);
+    execution_manager_ = std::make_unique<MockExecutionManager>(storage_unit_->GetFake());
     packer_            = std::make_unique<MockBlockPacker>();
     block_sink_        = std::make_unique<FakeBlockSink>();
     tx_status_         = std::make_unique<TransactionStatusCache>();

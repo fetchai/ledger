@@ -39,14 +39,18 @@ StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope,
   for (auto const &hash : contract_hashes)
   {
     allowed_accesses_.insert(std::string{hash});
+#ifndef NDEBUG
     FETCH_LOG_INFO(LOGGING_NAME, "Pushing allowed: ", std::string{hash});
+#endif
   }
 
   for (auto const &key : resources)
   {
     std::string full = std::string{scope.full_name()} + ".state." + std::string{key};
     allowed_accesses_.insert(full);
-    FETCH_LOG_INFO(LOGGING_NAME, "Pushing allowed2: ", full);
+#ifndef NDEBUG
+    FETCH_LOG_INFO(LOGGING_NAME, "Pushing allowed (raw): ", full);
+#endif
   }
 
   for (auto const &full_resource : allowed_accesses_)

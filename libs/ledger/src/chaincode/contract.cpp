@@ -132,7 +132,6 @@ bool Contract::ParseAsJson(Transaction const &tx, variant::Variant &output)
   }
   catch (json::JSONParseException const &)
   {
-    // TODO(HUT): this can't be good for performance
   }
 
   if (success)

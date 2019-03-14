@@ -99,8 +99,6 @@ struct TransactionSummary
     {
       for (auto const &hash : contract_hashes)
       {
-        // TODO(HUT): this should possibly check for base64 length if that's what we're going with
-        // here
         if (hash.size() == 0)
         {
           FETCH_LOG_INFO("TransactionSummary",

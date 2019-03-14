@@ -160,7 +160,6 @@ protected:
     Identifier full_contract_name{tx.contract_name()};
 
     // adapt the storage engine for this execution
-    // TODO(HUT): fix
     StateAdapter storage_adapter{*storage_, *contract_name_, tx.resources(), tx.resources()};
 
     // dispatch the transaction to the contract

@@ -178,7 +178,6 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
 
   state().PopContext();
 
-  // store the contract TODO(HUT): this needs to check for success too.
   auto success = true;
   SetStateRecord(contract_source, calculated_hash);
 
