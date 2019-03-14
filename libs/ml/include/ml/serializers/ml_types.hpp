@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/serializers/math_types.hpp"
 #include "ml/ops/weights.hpp"
 
 namespace fetch {

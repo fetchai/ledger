@@ -132,12 +132,15 @@ public:
   }
 
   /**
-   * Copy from another tensor
+   * Copy data from another tensor into this one
+   * assumes relevant stride/offset etc. are still applicable
    * @param other
    * @return
    */
   void Copy(SelfType const &other)
   {
+    assert(other.size() == this->size());
+
     for (std::size_t j = 0; j < this->size(); ++j)
     {
       this->At(j) = other.At(j);
@@ -356,9 +359,9 @@ public:
 
   Tensor<T> &InlineAdd(T const &o)
   {
-    for (SizeType i(0); i < size(); ++i)
+    for (T &e : *this)
     {
-      At(i) = At(i) + o;
+      e += o;
     }
     return *this;
   }
@@ -375,9 +378,9 @@ public:
 
   Tensor<T> &InlineSubtract(T const &o)
   {
-    for (SizeType i(0); i < size(); ++i)
+    for (T &e : *this)
     {
-      At(i) = At(i) - o;
+      e -= o;
     }
     return *this;
   }
@@ -404,9 +407,9 @@ public:
 
   Tensor<T> &InlineMultiply(T const &o)
   {
-    for (SizeType i(0); i < size(); ++i)
+    for (T &e : *this)
     {
-      At(i) = At(i) * o;
+      e *= o;
     }
     return *this;
   }
@@ -423,9 +426,9 @@ public:
 
   Tensor<T> &InlineDivide(T const &o)
   {
-    for (SizeType i(0); i < size(); ++i)
+    for (T &e : *this)
     {
-      At(i) = At(i) / o;
+      e /= o;
     }
     return *this;
   }
@@ -442,12 +445,7 @@ public:
 
   T Sum() const
   {
-    T sum(0);
-    for (SizeType i(0); i < size(); ++i)
-    {
-      sum = sum + At(i);
-    }
-    return sum;
+    return std::accumulate(begin(), end(), T(0));
   }
 
   Tensor<T> Transpose() const

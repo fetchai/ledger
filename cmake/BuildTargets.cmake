@@ -192,6 +192,11 @@ function(configure_vendor_targets)
   add_library(vendor-mio INTERFACE)
   target_include_directories(vendor-mio INTERFACE ${FETCH_ROOT_VENDOR_DIR}/mio/include)
 
+  # MsgPack
+  add_library(vendor-msgpack INTERFACE)
+  target_include_directories(vendor-msgpack INTERFACE ${FETCH_ROOT_VENDOR_DIR}/msgpack/include)
+  target_compile_definitions(vendor-msgpack INTERFACE -DMSGPACK_CXX11=ON)
+
 endfunction(configure_vendor_targets)
 
 function(configure_library_targets)
@@ -258,13 +263,22 @@ endmacro()
 
 function (generate_configuration_file)
 
-  # execute git to determine the version
-  execute_process(
-    COMMAND git describe --dirty=-wip --always
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    OUTPUT_VARIABLE version
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
+  if (DEFINED ENV{FETCH_BUILD_VERSION})
+
+    set (version "$ENV{FETCH_BUILD_VERSION}")
+    message (STATUS "Using predefined version: ${version}")
+
+  else()
+
+    # execute git to determine the version
+    execute_process(
+      COMMAND git describe --dirty=-wip --always
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      OUTPUT_VARIABLE version
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+  endif()
 
   # determine the format of the output from the above command
   string(REGEX MATCHALL "^v.*" is_normal_version "${version}")

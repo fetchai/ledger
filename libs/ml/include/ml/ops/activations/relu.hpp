@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/free_functions/ml/activation_functions/relu.hpp"
+
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -24,7 +26,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Relu : public fetch::ml::Ops<T>
+class Relu : public fetch::ml::ElementWiseOps<T>
 {
 public:
   using ArrayType    = T;
@@ -34,39 +36,34 @@ public:
   Relu()          = default;
   virtual ~Relu() = default;
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     assert(inputs.size() == 1);
-    if (!this->output_ || this->output_->shape() != inputs[0]->shape())
+    if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
     {
-      this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
+      this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
     }
 
-    this->output_->Fill(DataType(0));
-    for (std::size_t i = 0; i < inputs[0]->size(); ++i)
-    {
-      if ((*(inputs[0]))[i] > DataType(0))
-      {
-        this->output_->Set(i, DataType((*(inputs[0]))[i]));
-      }
-    }
-    return this->output_;
+    fetch::math::Relu(inputs.front().get(), *this->output_);
+    return *(this->output_);
   }
 
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal)
   {
     assert(inputs.size() == 1);
-    assert(inputs[0]->shape() == errorSignal->shape());
+    assert(inputs[0].get().shape() == errorSignal.shape());
 
-    for (std::size_t i = 0; i < inputs[0]->size(); ++i)
+    ArrayType returnSignal = errorSignal.Clone();
+    for (std::size_t i = 0; i < inputs.front().get().size(); ++i)
     {
-      if ((*(inputs[0]))[i] <= DataType(0))
+      if (inputs.front().get()[i] <= DataType(0))
       {
-        errorSignal->Set(i, DataType(0));
+        returnSignal.Set(i, DataType(0));
       }
     }
-    return {errorSignal};
+    return {returnSignal};
   }
 
   static constexpr char const *DESCRIPTOR = "Relu";

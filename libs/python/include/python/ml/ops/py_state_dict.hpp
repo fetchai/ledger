@@ -17,13 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include <core/serializers/byte_array_buffer.hpp>
-#include <core/serializers/fixed_point.hpp>
-#include <math/serializers/math_types.hpp>
-#include <ml/ops/weights.hpp>
-#include <ml/serializers/ml_types.hpp>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/fixed_point.hpp"
+#include "ml/ops/weights.hpp"
+#include "ml/serializers/ml_types.hpp"
+#include "python/fetch_pybind.hpp"
 
 namespace py = pybind11;
 

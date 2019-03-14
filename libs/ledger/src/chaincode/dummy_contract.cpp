@@ -29,7 +29,6 @@ namespace fetch {
 namespace ledger {
 
 DummyContract::DummyContract()
-  : Contract("fetch.dummy")
 {
   OnTransaction("wait", this, &DummyContract::Wait);
   OnTransaction("run", this, &DummyContract::Run);

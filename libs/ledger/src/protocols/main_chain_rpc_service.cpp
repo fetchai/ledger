@@ -33,6 +33,9 @@ using BlockSerializer        = fetch::serializers::ByteArrayBuffer;
 using BlockSerializerCounter = fetch::serializers::SizeCounter<BlockSerializer>;
 using PromiseState           = fetch::service::PromiseState;
 
+static const uint32_t MAX_CHAIN_REQUEST_SIZE = 10000;
+static const uint64_t MAX_SUB_CHAIN_SIZE     = 1000;
+
 namespace fetch {
 namespace ledger {
 
@@ -46,7 +49,8 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   , main_chain_protocol_(chain_)
   , rpc_client_("R:MChain", endpoint, Address{}, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
   , state_machine_{std::make_shared<StateMachine>(
-        "MainChain", standalone ? State::SYNCHRONISED : State::REQUEST_HEAVIEST_CHAIN)}
+        "MainChain", standalone ? State::SYNCHRONISED : State::REQUEST_HEAVIEST_CHAIN,
+        [](State state) { return ToString(state); })}
 {
   // register the main chain protocol
   Add(RPC_MAIN_CHAIN, &main_chain_protocol_);
@@ -259,8 +263,9 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
   if (!peer.empty())
   {
     current_peer_address_ = peer;
-    current_request_      = rpc_client_.CallSpecificAddress(
-        current_peer_address_, RPC_MAIN_CHAIN, MainChainProtocol::HEAVIEST_CHAIN, uint32_t{1000});
+    current_request_ =
+        rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
+                                        MainChainProtocol::HEAVIEST_CHAIN, MAX_CHAIN_REQUEST_SIZE);
 
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
   }
@@ -316,11 +321,11 @@ MainChainRpcService::State MainChainRpcService::OnSynchronising()
   State next_state{State::SYNCHRONISED};
 
   // get the next missing block
-  auto const missing_blocks = chain_.GetMissingBlockHashes(1u);
+  auto const missing_blocks = chain_.GetMissingTips();
 
   if (!missing_blocks.empty())
   {
-    current_missing_block_ = missing_blocks[0];
+    current_missing_block_ = *missing_blocks.begin();
     current_peer_address_  = GetRandomTrustedPeer();
 
     // in the case that we don't trust any one we need to simply wait until we do
@@ -335,7 +340,7 @@ MainChainRpcService::State MainChainRpcService::OnSynchronising()
     // make the RPC call to the block source with a request for the chain
     current_request_ = rpc_client_.CallSpecificAddress(
         current_peer_address_, RPC_MAIN_CHAIN, MainChainProtocol::COMMON_SUB_CHAIN,
-        current_missing_block_, chain_.GetHeaviestBlockHash(), uint64_t{1000});
+        current_missing_block_, chain_.GetHeaviestBlockHash(), MAX_SUB_CHAIN_SIZE);
 
     next_state = State::WAITING_FOR_RESPONSE;
   }
