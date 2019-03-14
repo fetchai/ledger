@@ -31,12 +31,13 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual ArrayPtrType              Forward(std::vector<ArrayPtrType> const &inputs) = 0;
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     error)                     = 0;
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal) = 0;
 
 protected:
-  ArrayPtrType output_;
+  ArrayPtrType output_;  // TODO(private, 736) : remove
 };
 }  // namespace ml
 }  // namespace fetch

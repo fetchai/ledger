@@ -26,7 +26,6 @@ class FlattenTest : public ::testing::Test
 {
 };
 
-// TODO(private, 520) Adapt for NDArray
 using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
                                  fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
@@ -35,26 +34,22 @@ TYPED_TEST_CASE(FlattenTest, MyTypes);
 
 TYPED_TEST(FlattenTest, forward_test)
 {
-  std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(std::vector<std::uint64_t>({8, 8}));
+  TypeParam                          data(std::vector<std::uint64_t>({8, 8}));
   fetch::ml::ops::Flatten<TypeParam> op;
-  std::shared_ptr<TypeParam>         prediction = op.Forward({data});
+  TypeParam                          prediction = op.Forward({data});
 
   // test correct values
-  ASSERT_EQ(prediction->shape().size(), 2);
-  ASSERT_EQ(prediction->shape()[0], 1);
-  ASSERT_EQ(prediction->shape()[1], 64);
+  ASSERT_EQ(prediction.shape(), std::vector<typename TypeParam::SizeType>({1, 64}));
 }
 
 TYPED_TEST(FlattenTest, backward_test)
 {
-  std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(std::vector<std::uint64_t>({8, 8}));
+  TypeParam                          data(std::vector<std::uint64_t>({8, 8}));
   fetch::ml::ops::Flatten<TypeParam> op;
-  std::shared_ptr<TypeParam>         prediction  = op.Forward({data});
-  std::shared_ptr<TypeParam>         errorSignal = std::make_shared<TypeParam>(prediction->shape());
-  std::vector<std::shared_ptr<TypeParam>> gradients = op.Backward({data}, errorSignal);
+  TypeParam                          prediction = op.Forward({data});
+  TypeParam                          errorSignal(prediction.shape());
+  std::vector<TypeParam>             gradients = op.Backward({data}, errorSignal);
 
   ASSERT_EQ(gradients.size(), 1);
-  ASSERT_EQ(gradients[0]->shape().size(), 2);
-  ASSERT_EQ(gradients[0]->shape()[0], 8);
-  ASSERT_EQ(gradients[0]->shape()[1], 8);
+  ASSERT_EQ(gradients[0].shape(), std::vector<typename TypeParam::SizeType>({8, 8}));
 }

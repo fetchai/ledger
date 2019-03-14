@@ -35,27 +35,28 @@ public:
   Add()          = default;
   virtual ~Add() = default;
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     ASSERT(inputs.size() == 2);
-    ASSERT(inputs[0]->size() == inputs[1]->size());
-    if (!this->output_ || this->output_->shape() != inputs[0]->shape())
+    ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
+    if (!this->output_ || this->output_->shape() != inputs.at(0).get().shape())
     {
-      this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
+      this->output_ = std::make_shared<ArrayType>(inputs.at(0).get().shape());
     }
 
     this->output_->Fill(DataType(0));
-    this->output_->InlineAdd(*inputs[0]);
-    this->output_->InlineAdd(*inputs[1]);
-    return this->output_;
+    this->output_->InlineAdd(inputs[0]);
+    this->output_->InlineAdd(inputs[1]);
+    return *this->output_;
   }
 
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 2);
-    ASSERT(inputs[0]->size() == inputs[1]->size());
-    ASSERT(errorSignal->size() == inputs[1]->size());
+    ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
+    ASSERT(errorSignal.size() == inputs.at(1).get().size());
     return {errorSignal, errorSignal};
   }
 

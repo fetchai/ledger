@@ -22,50 +22,50 @@
 
 TEST(placeholder_test, setData)
 {
-  std::shared_ptr<fetch::math::Tensor<int>> data = std::make_shared<fetch::math::Tensor<int>>(8);
-  std::shared_ptr<fetch::math::Tensor<int>> gt   = std::make_shared<fetch::math::Tensor<int>>(8);
-  std::uint64_t                             i(0);
+  fetch::math::Tensor<int> data(8);
+  fetch::math::Tensor<int> gt(8);
+  std::uint64_t            i(0);
   for (int e : {1, 2, 3, 4, 5, 6, 7, 8})
   {
-    data->Set(i, e);
-    gt->Set(i, e);
+    data.Set(i, e);
+    gt.Set(i, e);
     i++;
   }
   fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>> op;
   op.SetData(data);
-  std::shared_ptr<fetch::math::Tensor<int>> prediction = op.Forward({});
+  fetch::math::Tensor<int> prediction = op.Forward({});
 
   // test correct values
-  ASSERT_TRUE(prediction->AllClose(*gt));
+  ASSERT_TRUE(prediction.AllClose(gt));
 }
 
 TEST(placeholder_test, resetData)
 {
-  std::shared_ptr<fetch::math::Tensor<int>> data = std::make_shared<fetch::math::Tensor<int>>(8);
-  std::shared_ptr<fetch::math::Tensor<int>> gt   = std::make_shared<fetch::math::Tensor<int>>(8);
+  fetch::math::Tensor<int> data(8);
+  fetch::math::Tensor<int> gt(8);
   {
     std::uint64_t i(0);
     for (int e : {1, 2, 3, 4, 5, 6, 7, 8})
     {
-      data->Set(i, e);
-      gt->Set(i, e);
+      data.Set(i, e);
+      gt.Set(i, e);
       i++;
     }
   }
   fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>> op;
   op.SetData(data);
-  std::shared_ptr<fetch::math::Tensor<int>> prediction = op.Forward({});
+  fetch::math::Tensor<int> prediction = op.Forward({});
 
   // test correct values
-  ASSERT_TRUE(prediction->AllClose(*gt));
+  ASSERT_TRUE(prediction.AllClose(gt));
 
   // reset
   {
     std::uint64_t i(0);
     for (int e : {12, 13, -14, 15, 16, -17, 18, 19})
     {
-      data->Set(i, e);
-      gt->Set(i, e);
+      data.Set(i, e);
+      gt.Set(i, e);
       i++;
     }
   }
@@ -74,5 +74,5 @@ TEST(placeholder_test, resetData)
   prediction = op.Forward({});
 
   // test correct values
-  ASSERT_TRUE(prediction->AllClose(*gt));
+  ASSERT_TRUE(prediction.AllClose(gt));
 }
