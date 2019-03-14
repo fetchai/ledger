@@ -130,7 +130,7 @@ TEST_F(SmartContractTests, CheckSimpleContract)
     // from the action
     EXPECT_CALL(*storage_, Lock(expected_resource));
     EXPECT_CALL(*storage_, Get(expected_resource));
-    EXPECT_CALL(*storage_, Set(expected_resource, expected_value)).Times(2);
+    EXPECT_CALL(*storage_, Set(expected_resource, expected_value)).Times(1);
     EXPECT_CALL(*storage_, Unlock(expected_resource));
 
     // from the query
@@ -364,7 +364,7 @@ TEST_F(SmartContractTests, CheckParameterizedActionAndQuery)
     // from the action
     EXPECT_CALL(*storage_, Lock(expected_resource));
     EXPECT_CALL(*storage_, Get(expected_resource));
-    EXPECT_CALL(*storage_, Set(expected_resource, expected_value)).Times(2);
+    EXPECT_CALL(*storage_, Set(expected_resource, expected_value)).Times(1);
     EXPECT_CALL(*storage_, Unlock(expected_resource));
 
     // from the query

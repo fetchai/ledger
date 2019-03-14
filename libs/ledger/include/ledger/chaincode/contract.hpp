@@ -281,7 +281,6 @@ void Contract::SetStateRecord(T const &record, ConstByteArray const &key)
   auto const &data = buffer.data();
 
   // store the buffer
-  //return state().Write(std::string{key}, data.pointer(), data.size());
   state().Write(std::string{key}, data.pointer(), data.size());
 }
 

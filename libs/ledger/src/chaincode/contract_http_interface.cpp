@@ -208,9 +208,8 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
     auto             contract = contract_cache_.Lookup(contract_id, storage_);
 
     // adapt the storage engine so that that get and sets are sandboxed for the contract
-    // TODO(HUT): this is wrong and will break queries
     StateAdapter storage_adapter{storage_, contract_id};
-    storage_adapter.query_mode = true;
+    storage_adapter.QueryMode(true);
 
     // attach, dispatch and detach
     contract->Attach(storage_adapter);

@@ -21,6 +21,7 @@
 
 #include <gmock/gmock.h>
 
+// TODO(HUT): there are two mock storage units. delete one.
 class MockStorageUnit final : public fetch::ledger::StorageUnitInterface
 {
 public:

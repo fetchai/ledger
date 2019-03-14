@@ -30,7 +30,7 @@ namespace ledger {
  * @param storage The reference to the storage engine
  * @param scope The reference to the scope
  */
-StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope, ResourceSet resources, ResourceSet contract_hashes)
+StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope, ResourceSet const &resources, ResourceSet const &contract_hashes)
   : storage_{storage}
   , scope_{std::move(scope)}
 {
@@ -48,34 +48,18 @@ StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope, Resource
     FETCH_LOG_INFO(LOGGING_NAME, "Pushing allowed2: ", full);
   }
 
-  // TODO(HUT): think about locking here also
-}
-
-/**
- * Constructs a state adapter from a storage interface and a scope
- *
- * @param storage The reference to the storage engine
- * @param scope The reference to the scope
- */
-StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope, ResourceSet resources)
-  : storage_{storage}
-  , scope_{std::move(scope)}
-{
-  // Populate the allowed resources
-  for(auto const &key : resources)
+  for(auto const &full_resource : allowed_accesses_)
   {
-    std::string full = std::string{scope.full_name()} + ".state." + std::string{key};
-    allowed_accesses_.insert(full);
-    FETCH_LOG_INFO("ee", "Pushing allowed2: ", full);
+    storage_.Lock(CreateAddress(full_resource));
   }
-
-  // TODO(HUT): think about locking here also
 }
 
-StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope)
-  : storage_{storage}
-  , scope_{std::move(scope)}
+StateAdapter::~StateAdapter()
 {
+  for(auto const &full_resource : allowed_accesses_)
+  {
+    storage_.Unlock(CreateAddress(full_resource));
+  }
 }
 
 /**
@@ -250,6 +234,10 @@ void StateAdapter::PopContext()
   scope_.pop_back();
 }
 
+void StateAdapter::QueryMode(bool mode)
+{
+  query_mode = mode;
+}
 
 }  // namespace ledger
 }  // namespace fetch

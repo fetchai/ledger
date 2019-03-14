@@ -142,8 +142,7 @@ protected:
     VerifiedTransaction tx = VerifiedTransaction::Create(std::move(mtx));
 
     // adapt the storage engine for this execution
-    // TODO(HUT): fix
-    StateAdapter storage_adapter{*storage_, *contract_name_, tx.resources(), tx.resources()};
+    StateAdapter storage_adapter{*storage_, *contract_name_, tx.resources()};
 
     // dispatch the transaction to the contract
     contract_->Attach(storage_adapter);
@@ -176,6 +175,7 @@ protected:
   {
     // adapt the storage engine for queries
     StateAdapter storage_adapter{*storage_, *contract_name_};
+    storage_adapter.QueryMode(true);
 
     // attach, dispatch and detach again
     contract_->Attach(storage_adapter);

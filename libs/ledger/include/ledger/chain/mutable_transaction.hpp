@@ -573,14 +573,6 @@ void Deserialize(T &stream, TxSigningAdapter<MUTABLE_TX> &tx)
   stream >> tx_.signatures_;
   success_counter = 0;
 
-  /*
-  std::cerr << "TX contract hashes: " << std::endl;
-
-  for(auto const &i : tx_.contract_hashes())
-  {
-    std::cerr << i << std::endl;
-  }*/
-
   tx.Reset();
 }
 

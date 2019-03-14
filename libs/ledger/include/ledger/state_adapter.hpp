@@ -31,7 +31,7 @@ namespace ledger {
  * Adapter between the VM IO interface and the main ledger state database. This also keeps track
  * of the allowed accesses.
  */
-class StateAdapter : public ::fetch::vm::IoObserverInterface
+class StateAdapter : public vm::IoObserverInterface
 {
 public:
   using ConstByteArray  = byte_array::ConstByteArray;
@@ -45,10 +45,8 @@ public:
   static ResourceAddress CreateAddress(ConstByteArray const &key);
 
   // Construction / Destruction
-  StateAdapter(StorageInterface &storage, Identifier scope, ResourceSet resources, ResourceSet contract_hashes);
-  StateAdapter(StorageInterface &storage, Identifier scope, ResourceSet resources);
-  StateAdapter(StorageInterface &storage, Identifier scope);
-  ~StateAdapter() override = default;
+  StateAdapter(StorageInterface &storage, Identifier scope, ResourceSet const &resources = ResourceSet{}, ResourceSet const &contract_hashes = ResourceSet{});
+  ~StateAdapter() override;
 
   /// @name Io Observer Interface
   /// @{
@@ -57,13 +55,14 @@ public:
   Status Exists(std::string const &key) override;
   /// @}
 
-  bool             query_mode = false;
   void PushContext(Identifier const &scope);
   void PopContext();
+  void QueryMode(bool mode);
 
 protected:
   StorageInterface &storage_;
   std::vector<Identifier> scope_;
+  bool             query_mode = false;
 
   bool IsAllowedResource(std::string const &key) const;
   std::set<std::string> allowed_accesses_;

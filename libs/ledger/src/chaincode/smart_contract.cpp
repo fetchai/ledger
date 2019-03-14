@@ -317,9 +317,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
 
     if (msgpack::type::ARRAY != container.type)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Data was: ", tx.data());
-
-      FETCH_LOG_WARN(LOGGING_NAME, "Incorrect format, expected array of arguments");
+      FETCH_LOG_WARN(LOGGING_NAME, "Incorrect format, expected array of arguments. Input: ", tx.data());
       return Status::FAILED;
     }
 
