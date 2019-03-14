@@ -25,6 +25,11 @@
 namespace fetch {
 namespace math {
 
+/*
+ * Concatenate tensor by creating a new leading dimention
+ * Example [2, 5, 5] + [2, 5, 5] + [2, 5, 5] = [3, 2, 5, 5]
+ * Returns newly allocated memory
+ */
 template <typename T>
 fetch::math::Tensor<T> ConcatenateTensors(std::vector<fetch::math::Tensor<T>> const &tensors)
 {
