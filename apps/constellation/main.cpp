@@ -456,11 +456,37 @@ void InterruptHandler(int /*signal*/)
   }
 }
 
+bool HasVersionFlag(int argc, char **argv)
+{
+  static const std::string FULL_VERSION_FLAG{"--version"};
+  static const std::string SHORT_VERSION_FLAG{"-v"};
+
+  bool has_version{false};
+
+  for (int i = 1; i < argc; ++i)
+  {
+    if ((FULL_VERSION_FLAG == argv[i]) || (SHORT_VERSION_FLAG == argv[i]))
+    {
+      has_version = true;
+      break;
+    }
+  }
+
+  return has_version;
+}
+
 }  // namespace
 
 int main(int argc, char **argv)
 {
   int exit_code = EXIT_FAILURE;
+
+  // Special case for the version flag
+  if (HasVersionFlag(argc, argv))
+  {
+    std::cout << fetch::version::FULL << std::endl;
+    return 0;
+  }
 
   fetch::commandline::DisplayCLIHeader("Constellation");
 

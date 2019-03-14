@@ -17,38 +17,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/placeholder.hpp"
-#include "ml/ops/weights.hpp"
-#include "ml/subgraph.hpp"
-
-#include <cmath>
-
 namespace fetch {
-namespace ml {
-namespace layers {
+namespace core {
 
-template <class T>
-class Layer : public SubGraph<T>
+class StateMachineInterface
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
+  StateMachineInterface()          = default;
+  virtual ~StateMachineInterface() = default;
 
-  std::uint64_t in_size;
-  std::uint64_t out_size;
-
-  Layer(std::uint64_t in, std::uint64_t out)
-    : in_size(in)
-    , out_size(out)
-  {}
-
-  void Initialise(ArrayType &weights, WeightsInit init_mode)
-  {
-    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, in_size, out_size, init_mode);
-  }
+  /// @name State Machine Interface
+  /// @{
+  virtual char const *GetName() const      = 0;
+  virtual uint64_t    GetStateCode() const = 0;
+  virtual char const *GetStateName() const = 0;
+  /// @}
 };
 
-}  // namespace layers
-}  // namespace ml
+}  // namespace core
 }  // namespace fetch
