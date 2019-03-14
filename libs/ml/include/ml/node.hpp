@@ -41,6 +41,7 @@ public:
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
       ArrayType const &errorSignal) = 0;
   virtual void ResetCache()         = 0;
+  virtual void SetBatch(bool b)     = 0;
 };
 
 template <class T, class O>
@@ -55,6 +56,7 @@ public:
     : O(params...)
     , name_(std::move(name))
     , cachedOutputPresent_(false)
+    , batch_(false)
   {}
 
   virtual ~Node() = default;
@@ -75,7 +77,14 @@ public:
     {
       std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
       FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
-      cachedOutput_        = this->Forward(inputs);
+      if (batch_)
+      {
+        cachedOutput_ = this->ForwardBatch(inputs);
+      }
+      else
+      {
+        cachedOutput_ = this->Forward(inputs);
+      }
       cachedOutputPresent_ = true;
     }
     return cachedOutput_;
@@ -119,11 +128,17 @@ public:
     cachedOutputPresent_ = false;
   }
 
+  virtual void SetBatch(bool b)
+  {
+    batch_ = b;
+  }
+
 private:
   std::vector<std::shared_ptr<NodeInterface<T>>> inputs_;
   std::string                                    name_;
   ArrayType                                      cachedOutput_;
   bool                                           cachedOutputPresent_;
+  bool                                           batch_;
 };
 
 }  // namespace ml
