@@ -18,6 +18,47 @@
 
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
+enum class State
+{
+
+};
+
+static char const *ToString(fetch::ledger::tx_sync::State state)
+{
+  using State = fetch::ledger::tx_sync::State;
+
+  char const *text = "Unknown";
+
+  switch (state)
+  {
+  case State::INITIAL:
+    text = "Initial";
+    break;
+  case State::QUERY_OBJECT_COUNTS:
+    text = "Query Object Counts";
+    break;
+  case State::RESOLVING_OBJECT_COUNTS:
+    text = "Resolving Object Counts";
+    break;
+  case State::QUERY_SUBTREE:
+    text = "Query Subtree";
+    break;
+  case State::RESOLVING_SUBTREE:
+    text = "Resolving Subtree";
+    break;
+  case State::QUERY_OBJECTS:
+    text = "Query Objects";
+    break;
+  case State::RESOLVING_OBJECTS:
+    text = "Resolving Objects";
+    break;
+  case State::TRIM_CACHE:
+    text = "Trim Cache";
+    break;
+  }
+
+  return text;
+}
 
 namespace fetch {
 namespace ledger {
@@ -65,42 +106,46 @@ TransactionStoreSyncService::~TransactionStoreSyncService()
 
 bool TransactionStoreSyncService::PossibleNewState(State &current_state)
 {
-  {
-    FETCH_LOCK(mutex_);
-    if (current_state == State::INITIAL && !timeout_set_)
-    {
-      SetTimeOut();
-      return false;
-    }
-    if (current_state == State::INITIAL && timeout_.IsDue())
-    {
-      auto connections = lane_controller_->GetPeers();
-      if (connections.size() == 0)
-      {
-        timeout_set_ = false;
-        SetTimeOut();
-        return false;
-      }
-      else
-      {
-        current_state = State::QUERY_OBJECT_COUNTS;
-        fetch_object_wait_timeout_.Set(fetch_object_wait_duration_);
-        return true;
-      }
-    }
-  }
+//  {
+//    FETCH_LOCK(mutex_);
+//    if (current_state == State::INITIAL && !timeout_set_)
+//    {
+//      SetTimeOut();
+//      return false;
+//    }
+//    if (current_state == State::INITIAL && timeout_.IsDue())
+//    {
+//      auto connections = lane_controller_->GetPeers();
+//      if (connections.size() == 0)
+//      {
+//        timeout_set_ = false;
+//        SetTimeOut();
+//        return false;
+//      }
+//      else
+//      {
+//        current_state = State::QUERY_OBJECT_COUNTS;
+//        fetch_object_wait_timeout_.Set(fetch_object_wait_duration_);
+//        return true;
+//      }
+//    }
+//  }
   bool result = false;
   switch (current_state)
   {
   case State::INITIAL:
   {
-    result = false;
+    if (!muddle_->AsEndpoint().GetDirectlyConnectedPeers().empty())
+    {
+      current_state = State::QUERY_OBJECT_COUNTS;
+      result = true;
+    }
+
     break;
   }
   case State::QUERY_OBJECT_COUNTS:
   {
-    auto active_connections = lane_controller_->GetPeers();
-    for (auto const &connection : active_connections)
+    for (auto const &connection : muddle_->AsEndpoint().GetDirectlyConnectedPeers())
     {
       auto prom = PromiseOfObjectCount(client_->CallSpecificAddress(
           connection, RPC_TX_STORE_SYNC, TransactionStoreSyncProtocol::OBJECT_COUNT));
@@ -162,9 +207,8 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
   }
   case State::QUERY_SUBTREE:
   {
-    auto active_connections = lane_controller_->GetPeers();
     FETCH_LOCK(mutex_);
-    for (auto const &connection : active_connections)
+    for (auto const &connection : muddle_->AsEndpoint().GetDirectlyConnectedPeers())
     {
       if (roots_to_sync_.empty())
       {
@@ -256,8 +300,8 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
       result = false;
       break;
     }
-    auto active_connections = lane_controller_->GetPeers();
-    for (auto const &connection : active_connections)
+
+    for (auto const &connection : muddle_->AsEndpoint().GetDirectlyConnectedPeers())
     {
       auto promise = PromiseOfTxList(client_->CallSpecificAddress(
           connection, RPC_TX_STORE_SYNC, TransactionStoreSyncProtocol::PULL_OBJECTS));
@@ -320,6 +364,12 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
     break;
   }
   };
+
+  if (result)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Updating state to: ", ToString(current_state));
+  }
+
   return result;
 }
 

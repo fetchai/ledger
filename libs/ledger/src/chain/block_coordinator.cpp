@@ -88,7 +88,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   // clang-format on
 
   // for debug purposes
-#ifdef FETCH_LOG_DEBUG_ENABLED
+#ifdef FETCH_LOG_INFO_ENABLED
   state_machine_->OnStateChange([](State current, State previous) {
     FETCH_LOG_INFO(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
   });
@@ -365,7 +365,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions()
   {
     if (storage_unit_.HasTransaction(*it))
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "TX has been synced: ", ToBase64(*it));
+      FETCH_LOG_INFO(LOGGING_NAME, "TX has been synced: ", ToBase64(*it));
 
       // success - remove this element from the set
       it = pending_txs_->erase(it);
