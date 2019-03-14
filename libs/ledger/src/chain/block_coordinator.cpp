@@ -435,7 +435,8 @@ BlockCoordinator::State BlockCoordinator::OnWaitForExecution()
 
     if (exec_wait_periodic_.Poll())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for execution to complete for block: ", current_block_->body.hash.ToBase64());
+      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for execution to complete for block: ",
+                     current_block_->body.hash.ToBase64());
     }
 
     // signal that the next execution should not happen immediately
@@ -575,7 +576,8 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
   case ExecutionStatus::RUNNING:
     if (exec_wait_periodic_.Poll())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Waiting for new block execution (following: ", next_block_->body.previous_hash.ToBase64(), ")");
+      FETCH_LOG_WARN(LOGGING_NAME, "Waiting for new block execution (following: ",
+                     next_block_->body.previous_hash.ToBase64(), ")");
     }
 
     // signal that the next execution should not happen immediately

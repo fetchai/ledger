@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
+#include "core/macros.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
 
-static char const * FETCH_MAYBE_UNUSED ToString(fetch::ledger::tx_sync::State state)
+static char const *FETCH_MAYBE_UNUSED ToString(fetch::ledger::tx_sync::State state)
 {
   using State = fetch::ledger::tx_sync::State;
 
@@ -111,7 +111,7 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
     if (!muddle_->AsEndpoint().GetDirectlyConnectedPeers().empty())
     {
       current_state = State::QUERY_OBJECT_COUNTS;
-      result = true;
+      result        = true;
     }
 
     break;
@@ -160,7 +160,6 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
                        "Still pending object count promises, but limit approached!");
       }
     }
-
 
     // If there are objects to sync from the network, fetch N roots from each of the peers in
     // parallel. So if we decided to split the sync into 4 roots, the mask would be 2 (bits) and

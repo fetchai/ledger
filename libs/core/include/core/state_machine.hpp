@@ -221,6 +221,5 @@ void StateMachine<S>::Delay(std::chrono::duration<R, P> const &delay)
   next_execution_ = Clock::now() + delay;
 }
 
-
 }  // namespace core
 }  // namespace fetch

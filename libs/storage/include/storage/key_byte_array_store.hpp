@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "storage/random_access_stack.hpp"
 #include "storage/document_store.hpp"
+#include "storage/random_access_stack.hpp"
 
 namespace fetch {
 namespace storage {
