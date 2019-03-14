@@ -37,7 +37,7 @@ public:
       ArrayType const &                                           errorSignal) = 0;
 
 protected:
-  ArrayPtrType output_;  // TODO : remove
+  ArrayPtrType output_;  // TODO(private, 736) : remove
 };
 }  // namespace ml
 }  // namespace fetch
