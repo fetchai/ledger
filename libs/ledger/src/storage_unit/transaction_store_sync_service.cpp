@@ -164,6 +164,8 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
     FETCH_LOCK(mutex_);
     for (auto &result : pending_object_count_.Get(MAX_OBJECT_COUNT_RESOLUTION_PER_CYCLE))
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Promised TX Count: ", max_object_count_);
+
       max_object_count_ = std::max(max_object_count_, result.promised);
     }
     if (counts.failed > 0)
@@ -186,14 +188,14 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
       }
     }
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, ": ", "Expected tx size: ", max_object_count_);
+
     // If there are objects to sync from the network, fetch N roots from each of the peers in
     // parallel. So if we decided to split the sync into 4 roots, the mask would be 2 (bits) and
     // the roots to sync 00, 10, 01 and 11...
     // where roots to sync are all objects with the key starting with those bits
     if (max_object_count_ != 0)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, ": ", "Expected tx size: ", max_object_count_);
-
       root_size_ = platform::Log2Ceil(((max_object_count_ / (PULL_LIMIT_ / 2)) + 1)) + 1;
 
       for (uint64_t i = 0, end = (1 << (root_size_)); i < end; ++i)
