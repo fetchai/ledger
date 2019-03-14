@@ -27,6 +27,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <numeric>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -37,20 +38,29 @@
 
 namespace fetch {
 namespace ml {
+namespace dataloaders {
 
+template <typename T>
 struct TextParams
 {
-//  SizeType skip_window_        = 0;      // the size of the context window
-//  SizeType super_sampling_     = 0;      // # iterations to super sample
-//  SizeType k_negative_samples_ = 0;      // # negative samples per positive training pair
-//  double   discard_threshold_  = 0.0;    // random discard probability threshold
-//  SizeType max_sentences_      = 0;      // maximum number of sentences in training set
-//
-//  // unigram params
-//  SizeType unigram_table_size_ = 10000000;      // size of unigram table for negative sampling
-//  std::vector<SizeType> unigram_table_;         // the unigram table container
-//  double                unigram_power_ = 0.75;  // adjusted unigram distribution
+  using SizeType = typename T::SizeType;
 
+public:
+  TextParams(){};
+
+  SizeType n_data_buffers = 0;  // number of data points to return when called
+  SizeType max_sentences  = 0;  // maximum number of sentences in training set
+
+  // optional processing
+  bool unigram_table    = false;  // build a unigram table
+  bool discard_frequent = false;  // discard frequent words
+
+  // discard params
+  double discard_threshold = 0.0;  // random discard probability threshold
+
+  // unigram params
+  SizeType unigram_table_size = 0;  // size of unigram table for negative sampling
+  double   unigram_power      = 0;  // adjusted unigram distribution
 };
 
 /**
@@ -64,10 +74,10 @@ class TextLoader : public DataLoader<std::shared_ptr<T>, typename T::SizeType>
   using DataType  = typename T::Type;
   using SizeType  = typename T::SizeType;
 
-private:
-
+protected:
   // training data parsing containers
-  SizeType                                  n_words_  = 0;     // # of total words in training data
+  SizeType                                  size_    = 0;      // # training pairs
+  SizeType                                  n_words_ = 0;      // # of total words in training data
   std::unordered_map<std::string, SizeType> vocab_;            // full unique vocab
   std::unordered_map<SizeType, std::string> reverse_vocab_;    // full unique vocab
   std::unordered_map<std::string, SizeType> vocab_frequency_;  // word frequencies
@@ -75,10 +85,13 @@ private:
   std::vector<std::vector<std::string>>     words_;                // all training data by sentence
 
   // used for iterating through all examples incrementally
-  SizeType cursor_;
+  SizeType cursor_;                   // indexes through data
+  bool     is_done_         = false;  // tracks progress of cursor
+  bool new_random_sequence_ = true;   // whether to generate a new random sequence for training data
+  std::vector<SizeType> ran_idx_;     // random indices container
 
   // params
-  TextParams p;
+  TextParams<ArrayType> p_;
 
   // counts
   SizeType sentence_count_ = 0;  // total sentences in training corpus
@@ -86,59 +99,82 @@ private:
   SizeType discard_count_  = 0;  // total count of discarded (frequent) words
 
   // containers for the data and labels
-  std::vector<std::vector<SizeType>> data_input_;
-  std::vector<std::vector<SizeType>> data_context_;
-  std::vector<SizeType>              labels_;
+  std::vector<std::vector<std::vector<SizeType>>> data_buffers_;
+  std::vector<SizeType>                           labels_;
 
   // random generators
   fetch::random::LaggedFibonacciGenerator<>  lfg_;
   fetch::random::LinearCongruentialGenerator lcg_;
 
+  // the unigram table container
+  std::vector<SizeType> unigram_table_;
+
 public:
-  TextLoader(std::string &data, TextParams const &params, SizeType seed = 123456789)
+  TextLoader(std::string &data, TextParams<ArrayType> const &p, SizeType seed = 123456789)
     : cursor_(0)
-    , skip_window_(skip_window)
-    , super_sampling_(super_sampling)
-    , k_negative_samples_(k_negative_samples)
-    , discard_threshold_(discard_threshold)
-    , max_sentences_(max_sentences)
+    , p_(p)
     , lfg_(seed)
     , lcg_(seed)
   {
-    assert(skip_window > 0);
-    unigram_table_ = std::vector<SizeType>(unigram_table_size_);
+
+    if (p_.unigram_table)
+    {
+      unigram_table_ = std::vector<SizeType>(p_.unigram_table_size);
+    }
+
+    data_buffers_.resize(p_.n_data_buffers);
 
     // set up training dataset
-    BuildTrainingData(data);
+    BuildText(data);
   }
 
+  /**
+   *  Returns the total number of training pairs
+   */
   virtual SizeType Size() const
   {
     return size_;
   }
 
+  /**
+   * Returns the total number of unique words in the vocabulary
+   * @return
+   */
   SizeType VocabSize()
   {
     return vocab_.size();
   }
 
+  /**
+   * Returns whether we've iterated through all the data
+   * @return
+   */
   virtual bool IsDone() const
   {
     return cursor_ >= size_;
   }
 
+  /**
+   * resets the cursor for iterating through multiple epochs
+   */
   virtual void Reset()
   {
     cursor_ = 0;
   }
 
+  /**
+   * Gets the data at specified index
+   * @param idx
+   * @return  returns a pair of output buffer and label (i.e. X & Y)
+   */
   virtual std::pair<std::shared_ptr<T>, SizeType> GetAtIndex(SizeType idx)
   {
-    std::shared_ptr<T> full_buffer = std::make_shared<ArrayType>(std::vector<SizeType>({1, vocab_.size() * n_output_buffers_}));
+    std::shared_ptr<T> full_buffer =
+        std::make_shared<ArrayType>(std::vector<SizeType>({1, vocab_.size() * p_.n_data_buffers}));
 
     // pull data from multiple data buffers into single output buffer
     typename ArrayType::Type val;
-    for (std::size_t j = 0; j < n_output_buffers_; ++j)
+    for (std::size_t j = 0; j < p_.n_data_buffers; ++j)
     {
       for (SizeType i(0); i < vocab_.size(); ++i)
       {
@@ -151,24 +187,68 @@ public:
     SizeType label = SizeType(labels_[idx]);
     cursor_++;
 
-    return std::make_pair(input_and_context_buffer, label);
+    return std::make_pair(full_buffer, label);
   }
 
+  /**
+   * get the next data point in order
+   * @return
+   */
   virtual std::pair<std::shared_ptr<T>, SizeType> GetNext()
   {
+    if (cursor_ > vocab_.size())
+    {
+      Reset();
+      is_done_ = true;
+    }
+    else
+    {
+      is_done_ = false;
+    }
+
     return GetAtIndex(cursor_);
   }
 
+  /**
+   * gets the next data point at random
+   * @return
+   */
   std::pair<std::shared_ptr<T>, SizeType> GetRandom()
   {
-    return GetAtIndex(SizeType(static_cast<SizeType>(lcg_())) % Size());
+    if (cursor_ > vocab_.size())
+    {
+      Reset();
+      is_done_             = true;
+      new_random_sequence_ = true;
+    }
+
+    if (new_random_sequence_)
+    {
+      ran_idx_ = std::vector<SizeType>(Size());
+      std::iota(ran_idx_.begin(), ran_idx_.end(), 0);
+      std::random_shuffle(ran_idx_.begin(), ran_idx_.end());
+      new_random_sequence_ = false;
+      is_done_             = false;
+    }
+    //    return GetAtIndex(SizeType(static_cast<SizeType>(lcg_())) % Size());
+    return GetAtIndex(ran_idx_.at(cursor_));
   }
 
+  /**
+   * lookup a word given the vocab index
+   * @param idx
+   * @return
+   */
   std::string VocabLookup(SizeType idx)
   {
     return reverse_vocab_[idx];
   }
 
+  /**
+   * lookup a vocab index for a word
+   * @param idx
+   * @return
+   */
   SizeType VocabLookup(std::string &idx)
   {
     assert(vocab_[idx] < vocab_.size());
@@ -177,6 +257,12 @@ public:
   }
 
 private:
+  /**
+   * method for building up the training pairs that the Get funtions will reference
+   * @param training_data
+   */
+  virtual void BuildTrainingPairs(std::string &training_data) = 0;
+
   /**
    * helper for stripping punctuation from words
    * @param word
@@ -268,10 +354,10 @@ private:
   }
 
   /**
-   * builds all training pairs
+   * builds all training text
    * @param training_data
    */
-  void BuildTextString(std::string &training_data)
+  void BuildText(std::string &training_data)
   {
     std::string full_training_text;
     GetTextString(training_data, full_training_text);
@@ -308,7 +394,7 @@ private:
         words_.push_back(std::vector<std::string>{});
         ++sentence_count_;
 
-        if (sentence_count_ > max_sentences_)
+        if (sentence_count_ > p_.max_sentences)
         {
           break;
         }
@@ -320,8 +406,6 @@ private:
     {
       words_.pop_back();
     }
-
-    assert(word_count_ > (skip_window_ * 2));
   }
 
   /**
@@ -361,14 +445,14 @@ private:
    */
   void BuildUnigramTable()
   {
-    if (build_unigram_table_)
+    if (p_.unigram_table)
     {
       // calculate adjusted word frequencies
       double sum_adj_vocab = 0.0;
       for (SizeType j = 0; j < vocab_frequency_.size(); ++j)
       {
         adj_vocab_frequency_.emplace_back(
-            std::pow(double(vocab_frequency_[reverse_vocab_[j]]), unigram_power_));
+            std::pow(double(vocab_frequency_[reverse_vocab_[j]]), p_.unigram_power));
         sum_adj_vocab += adj_vocab_frequency_[j];
       }
 
@@ -376,12 +460,12 @@ private:
       SizeType n_rows  = 0;
       for (SizeType j = 0; j < vocab_.size(); ++j)
       {
-        assert(cur_idx < unigram_table_size_);
+        assert(cur_idx < p_.unigram_table_size);
 
         double adjusted_word_probability = adj_vocab_frequency_[j] / sum_adj_vocab;
 
         // word frequency
-        n_rows = SizeType(adjusted_word_probability * double(unigram_table_size_));
+        n_rows = SizeType(adjusted_word_probability * double(p_.unigram_table_size));
 
         for (std::size_t k = 0; k < n_rows; ++k)
         {
@@ -390,7 +474,7 @@ private:
         }
       }
       unigram_table_.resize(cur_idx - 1);
-      unigram_table_size_ = cur_idx - 1;
+      p_.unigram_table_size = cur_idx - 1;
     }
   }
 
@@ -415,68 +499,11 @@ private:
   }
 
   /**
-   * checks is a context position is valid for the sentence
-   * @param target_pos current target position in sentence
-   * @param context_pos current context position in sentence
-   * @param sentence_len total sentence length
-   * @return
-   */
-  bool WindowPositionCheck(SizeType target_pos, SizeType context_pos, SizeType sentence_len)
-  {
-    int normalised_context_pos = int(context_pos) - int(skip_window_);
-    if (normalised_context_pos == 0)
-    {
-      // context position is on top of target position
-      return false;
-    }
-    else if (int(target_pos) + normalised_context_pos < 0)
-    {
-      // context position is before start of sentence
-      return false;
-    }
-    else if (int(target_pos) + normalised_context_pos >= int(sentence_len))
-    {
-      // context position is after end of sentence
-      return false;
-    }
-    else
-    {
-      return true;
-    }
-  }
-
-  /**
-   * Dynamic context windows probabilistically reject words from the context window according to
-   * unigram distribution There is also a fixed maximum distance
-   * @param j the current word position
-   * @return
-   */
-  bool DynamicWindowCheck(SizeType context_position)
-  {
-    int normalised_context_position = int(context_position) - int(skip_window_);
-    int abs_dist_to_target          = fetch::math::Abs(normalised_context_position);
-    if (abs_dist_to_target == 1)
-    {
-      return true;
-    }
-    else
-    {
-      double cur_val          = lfg_.AsDouble();
-      double accept_threshold = 1.0 / abs_dist_to_target;
-      if (cur_val < accept_threshold)
-      {
-        return true;
-      }
-      return false;
-    }
-  }
-
-  /**
    * discards words in training data set based on word frequency
    */
   void DiscardFrequent()
   {
-    if (discard_frequent_)
+    if (p_.discard_frequent)
     {
       // iterate through all sentences
       for (SizeType sntce_idx = 0; sntce_idx < sentence_count_; sntce_idx++)
@@ -509,10 +536,8 @@ private:
   {
     double word_probability = double(vocab_frequency_[word]) / double(n_words_);
 
-    double prob_thresh = (std::sqrt(word_probability / discard_threshold_) + 1.0);
-    prob_thresh *= (discard_threshold_ / word_probability);
-
-    //    double prob_thresh      = 1.0 - std::sqrt(discard_threshold_ / word_probability);
+    double prob_thresh = (std::sqrt(word_probability / p_.discard_threshold) + 1.0);
+    prob_thresh *= (p_.discard_threshold / word_probability);
     double f = lfg_.AsDouble();
 
     if (f < prob_thresh)
@@ -521,21 +546,8 @@ private:
     }
     return true;
   }
-
-  /**
-   * calculates the mean frequency of words under unigram for given max skip_window_
-   */
-  double GetUnigramExpectation()
-  {
-    double ret = 0;
-    for (SizeType i = 0; i < skip_window_; ++i)
-    {
-      ret += 1.0 / double(i + 1);
-    }
-    ret *= 2;
-    return ret;
-  }
 };
 
+}  // namespace dataloaders
 }  // namespace ml
 }  // namespace fetch
