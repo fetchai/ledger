@@ -181,7 +181,7 @@ private:
       {
         if (WindowPositionCheck(word_offset, j, sentence_len))
         {
-          if (this->data_[this->sentence_idx_word_idx[idx]][j] == this->reverse_vocab_[negative_context_idx])
+          if (this->data_[this->sentence_idx_word_idx[idx]][j] == negative_context_idx)
           {
             ongoing = true;
           }
@@ -219,7 +219,7 @@ private:
       {
         current_probability = 1.0 / abs_dist_to_target;
 
-        for (std::size_t k = 0; k < int(current_probability * double(p_.unigram_precision)); ++k)
+        for (int k = 0; k < int(current_probability * double(p_.unigram_precision)); ++k)
         {
           unigram_selection.push_back(j);
         }

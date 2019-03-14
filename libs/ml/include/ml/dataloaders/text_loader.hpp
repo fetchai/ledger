@@ -181,7 +181,7 @@ public:
     std::shared_ptr<T> full_buffer = std::make_shared<ArrayType>(std::vector<SizeType>({1, p_.n_data_buffers}));
 
     // pull data from multiple data buffers into single output buffer
-    std::vector<SizeType> buffer_idxs = GetDatum(idx);
+    std::vector<SizeType> buffer_idxs = GetData(idx);
     assert(buffer_idxs.size() == p_.n_data_buffers);
 
     for (SizeType j = 0; j < p_.n_data_buffers; ++j)
@@ -279,13 +279,6 @@ public:
     return vocab_[idx];
   }
 
-private:
-  /**
-   * method for building up the training pairs that the Get funtions will reference
-   * @param training_data
-   */
-  virtual std::vector<SizeType> GetData(SizeType idxs) = 0;
-
   /**
    * return a single sentence from the dataset
    * @param word_idx
@@ -329,6 +322,12 @@ private:
     return word_offset;
   }
 
+private:
+  /**
+   * method for building up the training pairs that the Get funtions will reference
+   * @param training_data
+   */
+  virtual std::vector<SizeType> GetData(SizeType idxs) = 0;
 
   /**
    * helper for stripping punctuation from words
@@ -450,7 +449,7 @@ private:
     BuildUnigramTable();
 
     // discard words randomly according to word frequency
-    DiscardFrequent();
+    DiscardFrequent(sentences);
   }
 
   /**
@@ -476,8 +475,8 @@ private:
       sentences[sentence_count_].push_back(word);
       ++word_count_;
 
-      word_idx_sentence_idx.emplace_back(word_count_, sentence_count_);
-      sentence_idx_word_idx.emplace_back(sentence_count_, word_count_);
+      word_idx_sentence_idx.emplace(std::pair<SizeType, SizeType>(word_count_, sentence_count_));
+      sentence_idx_word_idx.emplace(std::pair<SizeType, SizeType>(sentence_count_, word_count_));
 
       ++word_offset;
 
@@ -513,9 +512,10 @@ private:
     vocab_frequency_.emplace("UNK", 0);
 
     sentence_count_ = 0;
-    data_.emplace_back({});
+    SizeType cur_val;
     for (std::vector<std::string> &cur_sentence : sentences)
     {
+      data_.emplace_back(std::vector<SizeType>({}));
       if (cur_sentence.size() > p_.min_sentence_length)
       {
         for (std::string cur_word : cur_sentence)
@@ -534,7 +534,8 @@ private:
           }
           ++n_words_;
 
-          data_.at(sentence_count_).emplace_back(ret.first.second);
+          cur_val = (*ret.first).second;
+          data_.at(sentence_count_).emplace_back(cur_val);
         }
         sentence_count_++;
       }
