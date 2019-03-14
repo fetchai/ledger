@@ -20,6 +20,7 @@
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
 #include "core/runnable.hpp"
+#include "core/state_machine_interface.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -33,16 +34,18 @@ namespace fetch {
 namespace core {
 
 template <typename State>
-class StateMachine : public Runnable
+class StateMachine : public StateMachineInterface
+                   , public Runnable
 {
 public:
   static_assert(std::is_enum<State>::value, "");
 
   using Callback            = std::function<State(State /*current*/, State /*previous*/)>;
   using StateChangeCallback = std::function<void(State /*current*/, State /*previous*/)>;
+  using StateMapper         = std::function<char const *(State)>;
 
   // Construction / Destruction
-  explicit StateMachine(std::string const &name, State initial);
+  explicit StateMachine(std::string name, State initial, StateMapper mapper = StateMapper{});
   StateMachine(StateMachine const &)     = delete;
   StateMachine(StateMachine &&) noexcept = delete;
   ~StateMachine() override               = default;
@@ -60,6 +63,13 @@ public:
   void Reset();
 
   void OnStateChange(StateChangeCallback cb);
+  /// @}
+
+  /// @name State Machine Interface
+  /// @{
+  char const *GetName() const override;
+  uint64_t GetStateCode() const override;
+  char const *GetStateName() const override;
   /// @}
 
   /// @name Runnable Interface
@@ -85,7 +95,9 @@ private:
   using CallbackMap = std::unordered_map<State, Callback>;
   using Mutex       = std::mutex;
 
+  std::string const   name_;
   std::string const   logging_name_;
+  StateMapper         mapper_;
   mutable Mutex       callbacks_mutex_;
   CallbackMap         callbacks_{};
   Duration            stall_duration_{};
@@ -96,8 +108,10 @@ private:
 };
 
 template <typename S>
-StateMachine<S>::StateMachine(std::string const &name, S initial)
-  : logging_name_{"SM:" + name}
+StateMachine<S>::StateMachine(std::string name, S initial, StateMapper mapper)
+  : name_{std::move(name)}
+  , logging_name_{"SM:" + name_}
+  , mapper_{std::move(mapper)}
   , current_state_{initial}
 {}
 
@@ -145,6 +159,31 @@ void StateMachine<S>::OnStateChange(StateChangeCallback cb)
 {
   FETCH_LOCK(callbacks_mutex_);
   state_change_callback_ = std::move(cb);
+}
+
+template <typename S>
+char const *StateMachine<S>::GetName() const
+{
+  return name_.c_str();
+}
+
+template <typename S>
+uint64_t StateMachine<S>::GetStateCode() const
+{
+  return static_cast<uint64_t>(state());
+}
+
+template <typename S>
+char const *StateMachine<S>::GetStateName() const
+{
+  char const *text = "Unknown";
+
+  if (mapper_)
+  {
+    text = mapper_(state());
+  }
+
+  return text;
 }
 
 /**

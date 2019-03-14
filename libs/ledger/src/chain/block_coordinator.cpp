@@ -65,7 +65,13 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   , periodic_print_{NOTIFY_INTERVAL}
   , miner_{std::make_shared<consensus::DummyMiner>()}
   , identity_{std::move(identity)}
-  , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RESET)}
+  , state_machine_{
+    std::make_shared<StateMachine>("BlockCoordinator", State::RESET,
+      [](State state) {
+        return ToString(state);
+      }
+    )
+  }
   , block_difficulty_{block_difficulty}
   , num_lanes_{num_lanes}
   , num_slices_{num_slices}
