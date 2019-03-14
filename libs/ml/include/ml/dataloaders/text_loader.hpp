@@ -50,6 +50,7 @@ public:
 
   SizeType n_data_buffers = 0;  // number of data points to return when called
   SizeType max_sentences  = 0;  // maximum number of sentences in training set
+  SizeType window_size_   = 0;  // the size of the context window
 
   // optional processing
   bool unigram_table    = false;  // build a unigram table
@@ -59,8 +60,9 @@ public:
   double discard_threshold = 0.0;  // random discard probability threshold
 
   // unigram params
-  SizeType unigram_table_size = 0;  // size of unigram table for negative sampling
-  double   unigram_power      = 0;  // adjusted unigram distribution
+  SizeType unigram_table_size = 10000000;  // size of unigram table for negative sampling
+  double   unigram_power      = 0.75;  // adjusted unigram distribution
+  SizeType unigram_precision  = 10;
 };
 
 /**
@@ -76,13 +78,15 @@ class TextLoader : public DataLoader<std::shared_ptr<T>, typename T::SizeType>
 
 protected:
   // training data parsing containers
-  SizeType                                  size_    = 0;      // # training pairs
-  SizeType                                  n_words_ = 0;      // # of total words in training data
-  std::unordered_map<std::string, SizeType> vocab_;            // full unique vocab
-  std::unordered_map<SizeType, std::string> reverse_vocab_;    // full unique vocab
-  std::unordered_map<std::string, SizeType> vocab_frequency_;  // word frequencies
-  std::vector<double>                       adj_vocab_frequency_;  // word frequencies
-  std::vector<std::vector<std::string>>     words_;                // all training data by sentence
+  SizeType                                  size_    = 0;         // # training pairs
+  SizeType                                  n_words_ = 0;         // # of total words in training data
+  std::unordered_map<std::string, SizeType> vocab_;               // full unique vocab
+  std::unordered_map<SizeType, std::string> reverse_vocab_;       // full unique vocab
+  std::unordered_map<std::string, SizeType> vocab_frequency_;     // word frequencies
+  std::vector<double>                       adj_vocab_frequency_; // word frequencies
+  std::vector<std::vector<SizeType>>        data_;                // all training data by sentence
+  std::vector<std::vector<SizeType>>        discards_;            // record of discarded words
+  SizeType discard_sentence_idx_ = 0;                             // keeps track of sentences already having discard applied
 
   // used for iterating through all examples incrementally
   SizeType cursor_;                   // indexes through data
@@ -97,10 +101,15 @@ protected:
   SizeType sentence_count_ = 0;  // total sentences in training corpus
   SizeType word_count_     = 0;  // total words in training corpus
   SizeType discard_count_  = 0;  // total count of discarded (frequent) words
+  SizeType unique_word_count_ = 1;  // 0 reserved for unknown word
+
+  std::unordered_map<SizeType, SizeType> word_idx_sentence_idx; // lookup table for sentence number from word number
+  std::unordered_map<SizeType, SizeType> sentence_idx_word_idx; // lookup table for word number from word sentence
+  std::unordered_map<std::pair<SizeType, SizeType>, SizeType> sentence_idx_word_offset_idx; // lookup table for word offset from word & sentence number
 
   // containers for the data and labels
-  std::vector<std::vector<std::vector<SizeType>>> data_buffers_;
-  std::vector<SizeType>                           labels_;
+  std::vector<std::vector<SizeType>> data_buffers_;
+  std::vector<SizeType>              labels_;
 
   // random generators
   fetch::random::LaggedFibonacciGenerator<>  lfg_;
@@ -129,11 +138,11 @@ public:
   }
 
   /**
-   *  Returns the total number of training pairs
+   *  Returns the total number of words
    */
   virtual SizeType Size() const
   {
-    return size_;
+    return word_count_;
   }
 
   /**
@@ -169,19 +178,17 @@ public:
    */
   virtual std::pair<std::shared_ptr<T>, SizeType> GetAtIndex(SizeType idx)
   {
-    std::shared_ptr<T> full_buffer =
-        std::make_shared<ArrayType>(std::vector<SizeType>({1, vocab_.size() * p_.n_data_buffers}));
+    std::shared_ptr<T> full_buffer = std::make_shared<ArrayType>(std::vector<SizeType>({1, p_.n_data_buffers}));
 
     // pull data from multiple data buffers into single output buffer
-    typename ArrayType::Type val;
-    for (std::size_t j = 0; j < p_.n_data_buffers; ++j)
+    std::vector<SizeType> buffer_idxs = GetDatum(idx);
+    assert(buffer_idxs.size() == p_.n_data_buffers);
+
+    for (SizeType j = 0; j < p_.n_data_buffers; ++j)
     {
-      for (SizeType i(0); i < vocab_.size(); ++i)
-      {
-        val = DataType(data_buffers_.at(j).at(idx).at(i));
-        assert((val == DataType(0)) || (val == DataType(1)));
-        full_buffer->At((vocab_.size() * j) + i) = val;
-      }
+      SizeType sentence_idx = word_idx_sentence_idx[idx];
+      SizeType word_idx = sentence_idx_word_offset_idx[std::pair<SizeType, SizeType>(sentence_idx, idx)];
+      full_buffer->At(j) = DataType(data_.at(sentence_idx).at(word_idx));
     }
 
     SizeType label = SizeType(labels_[idx]);
@@ -235,6 +242,22 @@ public:
   }
 
   /**
+   * add more text data after construction
+   * @param s
+   * @return
+   */
+  bool AddData(std::string const &s)
+  {
+    std::vector<SizeType> indexes = StringsToIndices(BuildText(s));
+    if (indexes.size() >= 2 * p_.window_size_ + 1)
+    {
+      data_.push_back(std::move(indexes));
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * lookup a word given the vocab index
    * @param idx
    * @return
@@ -261,7 +284,46 @@ private:
    * method for building up the training pairs that the Get funtions will reference
    * @param training_data
    */
-  virtual void BuildTrainingPairs(std::string &training_data) = 0;
+  virtual void GetDatum(SizeType idxs) = 0;
+
+  /**
+   * return a single sentence from the dataset
+   * @param word_idx
+   * @return
+   */
+  std::vector<SizeType> GetSentenceFromWordIdx(SizeType word_idx)
+  {
+    SizeType sentence_idx = sentence_idx_word_idx[word_idx];
+    return data_[sentence_idx];
+  }
+
+  /**
+   * return the word offset within sentence from word idx
+   */
+  SizeType GetWordOffsetFromWordIdx(SizeType word_idx)
+  {
+    SizeType sentence_idx = sentence_idx_word_idx[word_idx];
+    return sentence_idx_word_offset_idx[std::pair<SizeType, SizeType>(sentence_idx, word_idx)];
+  }
+
+  /**
+   *
+   * @param sentences to indices
+   * @return
+   */
+  void StringsToIndices(std::vector<std::string> const &strings)
+  {
+    if (strings.size() >= p_.window_size_ + 1) // Don't bother processing too short inputs
+    {
+//    	indexes.reserve(strings.size());
+	    for (std::string const &s : strings)
+      {
+	      // 0 is reserved for UNK
+	      auto value = vocab_.insert(std::pair<std::string, SizeType>(s, (SizeType)(vocab_.size() + 1)));
+	      data_.push_back((*value.first).second);
+      }
+    }
+  }
 
   /**
    * helper for stripping punctuation from words
@@ -340,8 +402,7 @@ private:
     }
     else
     {
-      //      for (std::size_t j = 0; j < file_names.size(); ++j)
-      for (std::size_t j = 0; j < 100; ++j)
+      for (SizeType j = 0; j < file_names.size(); ++j)
       {
         std::string   cur_file = training_data + "/" + file_names[j] + ".txt";
         std::ifstream t(cur_file);
@@ -351,6 +412,12 @@ private:
         full_training_text += cur_text;
       }
     }
+  }
+
+  SizeType GetSentenceIdxFromWordIdx(SizeType idx)
+  {
+
+
   }
 
   /**
@@ -367,13 +434,38 @@ private:
   }
 
   /**
+   * Preprocesses all training data, then builds vocabulary
+   * @param training_data
+   */
+  void ProcessTrainingData(std::string &training_data)
+  {
+    std::vector<std::vector<std::string>> sentences;
+
+    // strip punctuation and handle casing
+    PreProcessWords(training_data, sentences);
+
+    // build unique vocabulary and get word counts
+    BuildVocab(sentences);
+
+    // convert the sentences into values
+    StringsToIndices(sentences);
+
+    // build unigram table used for negative sampling
+    BuildUnigramTable();
+
+    // discard words randomly according to word frequency
+    DiscardFrequent();
+  }
+
+  /**
    * removes punctuation and handles casing of all words in training data
    * @param training_data
    */
-  void PreProcessWords(std::string &training_data)
+  void PreProcessWords(std::string &training_data, std::vector<std::vector<std::string>> &sentences)
   {
     std::string word;
-    words_.push_back(std::vector<std::string>{});
+    sentences.push_back(std::vector<std::string>{});
+    SizeType word_offset = 0;
     for (std::stringstream s(training_data); s >> word;)
     {
       // must check this before we strip punctuation
@@ -385,14 +477,21 @@ private:
       // lower case
       std::transform(word.begin(), word.end(), word.begin(), ::tolower);
 
-      words_[sentence_count_].push_back(word);
+      sentences[sentence_count_].push_back(word);
       ++word_count_;
+
+      word_idx_sentence_idx.emplace_back(word_count_, sentence_count_);
+      sentence_idx_word_idx.emplace_back(sentence_count_, word_count_);
+      sentence_idx_word_offset_idx.emplace_back(std::pair<SizeType, SizeType>(sentence_count_, word_count_), word_offset);
+
+      ++word_offset;
 
       // if new sentence
       if (new_sentence)
       {
-        words_.push_back(std::vector<std::string>{});
+        sentences.push_back(std::vector<std::string>{});
         ++sentence_count_;
+        word_offset = 0;
 
         if (sentence_count_ > p_.max_sentences)
         {
@@ -402,34 +501,33 @@ private:
     }
 
     // just in case the final word has a full stop or newline - we remove the empty vector
-    if (words_.back().size() == 0)
+    if (sentences.back().size() == 0)
     {
-      words_.pop_back();
+      sentences.pop_back();
     }
   }
 
   /**
    * builds vocab out of parsed training data
    */
-  void BuildVocab()
+  void BuildVocab(std::string &sentences)
   {
     // insert words uniquely into the vocabulary
-    SizeType unique_word_counter = 1;  // 0 reserved for unknown word
-    vocab_.insert(std::make_pair("UNK", 0));
+    vocab_.emplace(std::make_pair("UNK", 0));
     reverse_vocab_.emplace(0, "UNK");
     vocab_frequency_.emplace("UNK", 0);
 
-    for (std::vector<std::string> &cur_sentence : words_)
+    for (std::vector<std::string> &cur_sentence : sentences)
     {
       for (std::string cur_word : cur_sentence)
       {
-        auto ret = vocab_.emplace(cur_word, unique_word_counter);
+        auto ret = vocab_.emplace(cur_word, unique_word_count_);
 
         if (ret.second)
         {
-          reverse_vocab_.emplace(unique_word_counter, cur_word);
+          reverse_vocab_.emplace(unique_word_count_, cur_word);
           vocab_frequency_[cur_word] = 1;
-          ++unique_word_counter;
+          ++unique_word_count_;
         }
         else
         {
@@ -467,7 +565,7 @@ private:
         // word frequency
         n_rows = SizeType(adjusted_word_probability * double(p_.unigram_table_size));
 
-        for (std::size_t k = 0; k < n_rows; ++k)
+        for (SizeType k = 0; k < n_rows; ++k)
         {
           unigram_table_[cur_idx] = j;
           ++cur_idx;
@@ -479,51 +577,27 @@ private:
   }
 
   /**
-   * Preprocesses all training data, then builds vocabulary
-   * @param training_data
-   */
-  void ProcessTrainingData(std::string &training_data)
-  {
-
-    // strip punctuation and handle casing
-    PreProcessWords(training_data);
-
-    // build unique vocabulary and get word counts
-    BuildVocab();
-
-    // build unigram table used for negative sampling
-    BuildUnigramTable();
-
-    // discard words randomly according to word frequency
-    DiscardFrequent();
-  }
-
-  /**
    * discards words in training data set based on word frequency
    */
-  void DiscardFrequent()
+  void DiscardFrequent(std::string &sentences)
   {
     if (p_.discard_frequent)
     {
       // iterate through all sentences
-      for (SizeType sntce_idx = 0; sntce_idx < sentence_count_; sntce_idx++)
+      for (SizeType sntce_idx = 0; sntce_idx < sentences.size(); sntce_idx++)
       {
+        discards_.push_back({});
         // iterate through words in the sentence choosing which to discard
-        std::vector<SizeType> discards{};
-        for (SizeType i = 0; i < words_[sntce_idx].size(); i++)
+        for (SizeType i = 0; i < sentences[sntce_idx].size(); i++)
         {
-          if (DiscardExample(words_[sntce_idx][i]))
+          if (DiscardExample(sentences[sntce_idx][i]))
           {
-            discards.push_back(i);
+            discards_.at(discard_sentence_idx_).push_back(i);
+            ++discard_count_;
           }
         }
 
-        // reverse iterate and discard those elements
-        for (SizeType j = discards.size(); j > 0; --j)
-        {
-          words_[sntce_idx].erase(words_[sntce_idx].begin() + int(discards[j - SizeType(1)]));
-          ++discard_count_;
-        }
+        ++discard_sentence_idx_;
       }
     }
   }
