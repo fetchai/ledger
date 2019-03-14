@@ -175,7 +175,7 @@ struct CommandLineArguments
     p.add(args.cfg.max_peers,             "max-peers",             "The number of maximal peers to send to peer requests",                          DEFAULT_MAX_PEERS);
     p.add(args.cfg.transient_peers,       "transient-peers",       "The number of the peers which will be random in answer sent to peer requests",  DEFAULT_TRANSIENT_PEERS);
     p.add(args.cfg.peers_update_cycle_ms, "peers-update-cycle-ms", "How fast to do peering changes",                                                uint32_t{0});
-    p.add(args.cfg.sign_packets,          "sign-packets",          "Sign outbound packets (and verify those inbound)", bool{});
+    p.add(args.cfg.disable_signing,       "disable-signing",       "Do not sign outbound packets or verify those inbound, in trusted network",      bool{});
     p.add(args.cfg.standalone,            "standalone",            "Expect the node to run in on its own (useful for testing and development)",     false);
     // clang-format on
 

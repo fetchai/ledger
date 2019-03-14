@@ -1935,7 +1935,6 @@ static void yy_load_buffer_state  (yyscan_t yyscanner)
         b->yy_bs_lineno = 1;
         b->yy_bs_column = 0;
     }
-    }
 
         b->yy_is_interactive = file ? (isatty( fileno(file) ) > 0) : 0;
     
@@ -2206,7 +2205,6 @@ int yyget_lineno  (yyscan_t yyscanner)
 
         if (! YY_CURRENT_BUFFER)
             return 0;
-        }
     
     return yylineno;
 }
@@ -2220,7 +2218,6 @@ int yyget_column  (yyscan_t yyscanner)
 
         if (! YY_CURRENT_BUFFER)
             return 0;
-        }
     
     return yycolumn;
 }
@@ -2283,7 +2280,6 @@ void yyset_lineno (int  _line_number , yyscan_t yyscanner)
         /* lineno is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
            YY_FATAL_ERROR( "yyset_lineno called with no buffer" );
-        }
     
     yylineno = _line_number;
 }
@@ -2299,7 +2295,6 @@ void yyset_column (int  _column_no , yyscan_t yyscanner)
         /* column is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
            YY_FATAL_ERROR( "yyset_column called with no buffer" );
-        }
     
     yycolumn = _column_no;
 }
@@ -2360,14 +2355,12 @@ int yylex_init(yyscan_t* ptr_yy_globals)
         errno = EINVAL;
         return 1;
     }
-    }
 
     *ptr_yy_globals = (yyscan_t) yyalloc ( sizeof( struct yyguts_t ), NULL );
 
     if (*ptr_yy_globals == NULL){
         errno = ENOMEM;
         return 1;
-    }
     }
 
     /* By setting to 0xAA, we expose bugs in yy_init_globals. Leave at 0x00 for releases. */
@@ -2393,14 +2386,12 @@ int yylex_init_extra( YY_EXTRA_TYPE yy_user_defined, yyscan_t* ptr_yy_globals )
         errno = EINVAL;
         return 1;
     }
-    }
 
     *ptr_yy_globals = (yyscan_t) yyalloc ( sizeof( struct yyguts_t ), &dummy_yyguts );
 
     if (*ptr_yy_globals == NULL){
         errno = ENOMEM;
         return 1;
-    }
     }
 
     /* By setting to 0xAA, we expose bugs in

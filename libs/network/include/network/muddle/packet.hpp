@@ -159,8 +159,7 @@ private:
   mutable Address target_;
   mutable Address sender_;
 
-  void         SetStamped() noexcept;
-  void         DropStamped() noexcept;
+  void         SetStamped(bool set = true) noexcept;
   BinaryHeader StaticHeader() const noexcept;
 
   template <typename T>
@@ -286,19 +285,19 @@ inline Packet::Stamp const &Packet::GetStamp() const noexcept
 inline void Packet::SetDirect(bool set) noexcept
 {
   header_.direct = (set) ? 1 : 0;
-  DropStamped();
+  SetStamped(false);
 }
 
 inline void Packet::SetBroadcast(bool set) noexcept
 {
   header_.broadcast = (set) ? 1 : 0;
-  DropStamped();
+  SetStamped(false);
 }
 
 inline void Packet::SetExchange(bool set) noexcept
 {
   header_.exchange = (set) ? 1 : 0;
-  DropStamped();
+  SetStamped(false);
 }
 
 inline void Packet::SetTTL(uint8_t ttl) noexcept
@@ -310,54 +309,49 @@ inline void Packet::SetTTL(uint8_t ttl) noexcept
 inline void Packet::SetService(uint16_t service_num) noexcept
 {
   header_.service = service_num;
-  DropStamped();
+  SetStamped(false);
 }
 
 inline void Packet::SetProtocol(uint16_t protocol_num) noexcept
 {
   header_.proto = protocol_num;
-  DropStamped();
+  SetStamped(false);
 }
 
 inline void Packet::SetMessageNum(uint16_t message_num) noexcept
 {
   header_.msg_num = message_num;
-  DropStamped();
+  SetStamped(false);
 }
 
 inline void Packet::SetNetworkId(uint32_t network_id) noexcept
 {
   header_.network = network_id;
-  DropStamped();
+  SetStamped(false);
 }
 
 inline void Packet::SetTarget(RawAddress const &address)
 {
   std::memcpy(header_.target.data(), address.data(), address.size());
-  DropStamped();
+  SetStamped(false);
 }
 
 inline void Packet::SetTarget(Address const &address)
 {
   assert(address.size() == ADDRESS_SIZE);
   std::memcpy(header_.target.data(), address.pointer(), address.size());
-  DropStamped();
+  SetStamped(false);
 }
 
 inline void Packet::SetPayload(Payload const &payload)
 {
   payload_ = payload;
-  DropStamped();
+  SetStamped(false);
 }
 
-inline void Packet::SetStamped() noexcept
+inline void Packet::SetStamped(bool set) noexcept
 {
-  header_.stamped = 1;
-}
-
-inline void Packet::DropStamped() noexcept
-{
-  header_.stamped = 0;
+  header_.stamped = set;
 }
 
 inline Packet::BinaryHeader Packet::StaticHeader() const noexcept
@@ -370,13 +364,15 @@ inline Packet::BinaryHeader Packet::StaticHeader() const noexcept
 inline void Packet::Sign(crypto::Prover &prover)
 {
   SetStamped();
-  if (prover.Sign((serializers::ByteArrayBuffer() << StaticHeader() << payload_).data()))
+  if (prover.Sign((
+			  serializers::ByteArrayBuffer() << StaticHeader() << payload_)
+		  .data()))
   {
     stamp_ = prover.signature();
   }
   else
   {
-    DropStamped();
+    SetStamped(false);
   }
 }
 
@@ -387,7 +383,10 @@ inline bool Packet::Verify() const
     return false;  // null signature is not genuine in non-trusted networks
   }
   auto retVal = crypto::Verify(
-      GetSender(), (serializers::ByteArrayBuffer() << StaticHeader() << payload_).data(), stamp_);
+      GetSender(),
+      (
+	      serializers::ByteArrayBuffer() << StaticHeader() << payload_)
+      .data(), stamp_);
   return retVal;
 }
 

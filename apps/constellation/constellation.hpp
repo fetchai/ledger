@@ -92,7 +92,7 @@ public:
     uint32_t    block_interval_ms{0};
     uint32_t    block_difficulty{DEFAULT_BLOCK_DIFFICULTY};
     uint32_t    peers_update_cycle_ms{0};
-    bool        sign_packets;
+    bool        disable_signing{false};
     bool        standalone{false};
 
     uint32_t num_lanes() const
