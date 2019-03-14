@@ -69,6 +69,7 @@ private:
   SizeType super_sampling_     = 0;      // # iterations to super sample
   SizeType k_negative_samples_ = 0;      // # negative samples per positive training pair
   double   discard_threshold_  = 0.0;    // random discard probability threshold
+  SizeType max_sentences_      = 0;      // maximum number of sentences in training set
 
   SizeType sentence_count_ = 0;  // total sentences in training corpus
   SizeType word_count_     = 0;  // total words in training corpus
@@ -89,13 +90,15 @@ private:
 
 public:
   W2VLoader(std::string &data, bool cbow, SizeType skip_window, SizeType super_sampling,
-            SizeType k_negative_samples, double discard_threshold, SizeType seed = 123456789)
+            SizeType k_negative_samples, double discard_threshold, SizeType max_sentences,
+            SizeType seed = 123456789)
     : cursor_(0)
     , cbow_(cbow)
     , skip_window_(skip_window)
     , super_sampling_(super_sampling)
     , k_negative_samples_(k_negative_samples)
     , discard_threshold_(discard_threshold)
+    , max_sentences_(max_sentences)
     , lfg_(seed)
     , lcg_(seed)
   {
@@ -176,29 +179,6 @@ public:
     assert(vocab_[idx] != 0);  // dont currently handle unknowns elegantly
     return vocab_[idx];
   }
-  //
-  //  void NTopWords()
-  //  {
-  //    SizeType top_val = 0;
-  //    SizeType top_idx = 0;
-  //    SizeType j(0);
-  //    for (auto &e : vocab_frequency_)
-  //    {
-  //      if (e.second > top_val)
-  //      {
-  //        if (e.second != 1414)
-  //        {
-  //          top_idx = j;
-  //          top_val = e.second;
-  //        }
-  //      }
-  //      ++j;
-  //    }
-  //
-  //    std::cout << "reverse_vocab_[top_idx]: " << reverse_vocab_[top_idx] << std::endl;
-  //    reverse_vocab_[top_idx];
-  //
-  //  }
 
 private:
   /**
@@ -226,6 +206,11 @@ private:
     return false;
   }
 
+  /**
+   * returns a vector of filenames of txt files
+   * @param dir_name  the directory to scan
+   * @return
+   */
   std::vector<std::string> GetAllTextFiles(std::string dir_name)
   {
     std::vector<std::string> ret;
@@ -254,11 +239,13 @@ private:
     return ret;
   }
 
-  // naive vector representations - just one-hot encoding on a first come first serve basis
-  void BuildTrainingData(std::string &training_data)
+  /**
+   * returns the full training text as one string, either gathered from txt files or pass through
+   * @param training_data
+   * @param full_training_text
+   */
+  void GetTextString(std::string &training_data, std::string &full_training_text)
   {
-    std::string full_training_text;
-
     std::vector<std::string> file_names = GetAllTextFiles(training_data);
     if (file_names.size() == 0)
     {
@@ -277,6 +264,17 @@ private:
         full_training_text += cur_text;
       }
     }
+  }
+
+  /**
+   * builds all training pairs
+   * @param training_data
+   */
+  void BuildTrainingData(std::string &training_data)
+  {
+    std::cout << "loading training data: " << std::endl;
+    std::string full_training_text;
+    GetTextString(training_data, full_training_text);
 
     if (cbow_)
     {
@@ -284,11 +282,11 @@ private:
     }
     else
     {
+      std::cout << "preprocessing text: " << std::endl;
       // convers text into training pairs & related preparatory work
       ProcessTrainingData(full_training_text);
 
-      //      NTopWords();
-
+      std::cout << "generating positive and negative training pairs: " << std::endl;
       for (std::size_t j = 0; j < super_sampling_; ++j)
       {
         // generate positive examples - i.e. within context window
@@ -469,6 +467,11 @@ private:
       {
         words_.push_back(std::vector<std::string>{});
         ++sentence_count_;
+
+        if (sentence_count_ > max_sentences_)
+        {
+          break;
+        }
       }
     }
 

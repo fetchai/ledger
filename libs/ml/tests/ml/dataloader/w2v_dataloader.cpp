@@ -68,7 +68,7 @@ TYPED_TEST(W2VDataloaderTest, loader_test)
   //  using Type = typename TypeParam::Type;
   //  using SizeType = typename TypeParam::SizeType;
 
-  fetch::ml::W2VLoader<TypeParam> loader(TRAINING_DATA, false, 1, 1, 0, 1);
+  fetch::ml::W2VLoader<TypeParam> loader(TRAINING_DATA, false, 1, 1, 0, 1, 1);
 
   std::vector<std::string> gt_input({"this", "is", "is", "a", "a", "test", "test", "sentence",
                                      "sentence", "of", "of", "total", "total", "length", "length",
