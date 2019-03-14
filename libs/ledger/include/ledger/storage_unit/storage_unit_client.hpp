@@ -100,7 +100,7 @@ private:
   using AddressList   = std::vector<MuddleEndpoint::Address>;
   using MerkleTree    = crypto::MerkleTree;
   using MerkleTreePtr = std::shared_ptr<MerkleTree>;
-  using MerkleStack   = std::vector<MerkleTreePtr>;
+  using MerkleStack   = std::deque<MerkleTreePtr>;
   using Mutex         = fetch::mutex::Mutex;
 
   Address const &LookupAddress(LaneIndex lane) const;

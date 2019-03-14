@@ -43,7 +43,7 @@ public:
     , out_size(out)
   {}
 
-  void Initialise(ArrayPtrType weights, WeightsInit init_mode)
+  void Initialise(ArrayType &weights, WeightsInit init_mode)
   {
     fetch::ml::ops::Weights<ArrayType>::Initialise(weights, in_size, out_size, init_mode);
   }

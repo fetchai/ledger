@@ -17,32 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/exponentiation/exponentiation.hpp"  // square
-#include "math/free_functions/fundamental_operators.hpp"          // add, subtract etc.
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
-#include <cassert>
+#include "core/assert.hpp"
+#include "math/tensor.hpp"
+#include <memory>
+#include <vector>
 
 namespace fetch {
 namespace math {
 
-template <typename ArrayType>
-typename ArrayType::Type MeanSquareError(ArrayType const &A, ArrayType const &B)
+/*
+ * Concatenate tensor by creating a new leading dimention
+ * Example [2, 5, 5] + [2, 5, 5] + [2, 5, 5] = [3, 2, 5, 5]
+ * Returns newly allocated memory
+ */
+template <typename T>
+fetch::math::Tensor<T> ConcatenateTensors(std::vector<fetch::math::Tensor<T>> const &tensors)
 {
-  assert(A.shape() == B.shape());
-  ArrayType tmp_array(A.shape());
-
-  Subtract(A, B, tmp_array);
-
-  Square(tmp_array);
-
-  typename ArrayType::Type ret = Sum(tmp_array);
-
-  ret = Divide(ret, typename ArrayType::Type(A.size()));
-
-  // TODO(private 343)
-  // division by 2 allows us to cancel out with a 2 in the derivative
-  ret = Divide(ret, typename ArrayType::Type(2));
-
+  std::vector<typename fetch::math::Tensor<T>::SizeType> retSize;
+  retSize.push_back(tensors.size());
+  retSize.insert(retSize.end(), tensors.front().shape().begin(), tensors.front().shape().end());
+  fetch::math::Tensor<T> ret(retSize);
+  for (typename fetch::math::Tensor<T>::SizeType i(0); i < tensors.size(); ++i)
+  {
+    ret.Slice(i).Copy(tensors[i]);
+  }
   return ret;
 }
 

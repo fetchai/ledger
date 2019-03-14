@@ -336,9 +336,12 @@ void Constellation::Run(UriList const &initial_peers)
   // monitor loop
   while (active_)
   {
+    // determine the status of the main chain server
+    bool const is_in_sync =
+        ledger::MainChainRpcService::State::SYNCHRONISED == main_chain_service_->state();
+
     // control from the top level block production based on the chain sync state
-    block_coordinator_.EnableMining(ledger::MainChainRpcService::State::SYNCHRONISED ==
-                                    main_chain_service_->state());
+    block_coordinator_.EnableMining(is_in_sync);
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Still alive...");
     std::this_thread::sleep_for(std::chrono::milliseconds{500});

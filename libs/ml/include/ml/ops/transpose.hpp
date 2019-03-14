@@ -24,7 +24,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Transpose : public fetch::ml::Ops<T>
+class Transpose : public fetch::ml::BatchOps<T>
 {
 public:
   using ArrayType    = T;
@@ -33,18 +33,19 @@ public:
   Transpose()          = default;
   virtual ~Transpose() = default;
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     ASSERT(inputs.size() == 1);
-    this->output_ = std::make_shared<ArrayType>(inputs[0]->Clone().Transpose());
-    return this->output_;
+    this->output_ = std::make_shared<ArrayType>(inputs.front().get().Clone().Transpose());
+    return *this->output_;
   }
 
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 1);
-    return {std::make_shared<ArrayType>(errorSignal->Clone().Transpose())};
+    return {errorSignal.Clone().Transpose()};
   }
 
   static constexpr char const *DESCRIPTOR = "Transpose";
