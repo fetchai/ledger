@@ -24,7 +24,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Transpose : public fetch::ml::Ops<T>
+class Transpose : public fetch::ml::BatchOps<T>
 {
 public:
   using ArrayType    = T;

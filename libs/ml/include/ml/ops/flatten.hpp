@@ -24,7 +24,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Flatten : public fetch::ml::Ops<T>
+class Flatten : public fetch::ml::ElementWiseOps<T>
 {
 public:
   using ArrayType    = T;

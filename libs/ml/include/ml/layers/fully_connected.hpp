@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/tensor_operations.hpp"
+
 #include "ml/layers/layer.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/flatten.hpp"
@@ -45,7 +47,6 @@ public:
                  WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
     : Layer<T>(in, out)
   {
-
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
     std::string flat_input =
