@@ -23,9 +23,10 @@
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
 #include "ledger/chaincode/contract.hpp"
-#include "ledger/state_sentinel.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "metrics/metrics.hpp"
+
+#include "ledger/state_adapter.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -89,7 +90,7 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
     {
       // create the cache and state sentinel (lock and unlock resources as well as sandbox)
       CachedStorageAdapter storage_cache{*resources_};
-      StateSentinelAdapter storage_adapter{storage_cache, contract.GetParent(), tx.resources()};
+      StateAdapter storage_adapter{storage_cache, contract.GetParent(), tx.resources(), tx.contract_hashes()};
 
       // lookup or create the instance of the contract as is needed
       auto chain_code = chain_code_cache_.Lookup(contract.GetParent(), *resources_);

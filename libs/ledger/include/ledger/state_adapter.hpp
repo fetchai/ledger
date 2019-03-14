@@ -28,18 +28,25 @@ namespace fetch {
 namespace ledger {
 
 /**
- * Read Only Adapter between the VM IO interface and the main ledger state database
+ * Adapter between the VM IO interface and the main ledger state database. This also keeps track
+ * of the allowed accesses.
  */
 class StateAdapter : public ::fetch::vm::IoObserverInterface
 {
 public:
   using ConstByteArray  = byte_array::ConstByteArray;
   using ResourceAddress = storage::ResourceAddress;
+  using ResourceSet = std::set<byte_array::ConstByteArray>;
+
+  static constexpr char const *LOGGING_NAME = "StateAdapter";
 
   // Resource Mapping
   static ResourceAddress CreateAddress(Identifier const &scope, ConstByteArray const &key);
+  static ResourceAddress CreateAddress(ConstByteArray const &key);
 
   // Construction / Destruction
+  StateAdapter(StorageInterface &storage, Identifier scope, ResourceSet resources, ResourceSet contract_hashes);
+  StateAdapter(StorageInterface &storage, Identifier scope, ResourceSet resources);
   StateAdapter(StorageInterface &storage, Identifier scope);
   ~StateAdapter() override = default;
 
@@ -50,38 +57,16 @@ public:
   Status Exists(std::string const &key) override;
   /// @}
 
+  bool             query_mode = false;
   void PushContext(Identifier const &scope);
   void PopContext();
 
 protected:
-  StorageInterface &      storage_;
+  StorageInterface &storage_;
   std::vector<Identifier> scope_;
-};
 
-/**
- * Read / Write interface between the VM IO interface the and main ledger state database. Will
- * actively check to ensure reads and writes occur on permissible resources.
- */
-class StateSentinelAdapter : public StateAdapter
-{
-public:
-  using ResourceSet = TransactionSummary::ResourceSet;
-
-  // Construction / Destruction
-  StateSentinelAdapter(StorageInterface &storage, Identifier scope, ResourceSet resources);
-  ~StateSentinelAdapter() override;
-
-  /// @name IO Observer Interface
-  /// @{
-  Status Read(std::string const &key, void *data, uint64_t &size) override;
-  Status Write(std::string const &key, void const *data, uint64_t size) override;
-  Status Exists(std::string const &key) override;
-  /// @}
-
-private:
   bool IsAllowedResource(std::string const &key) const;
-
-  ResourceSet const resources_;
+  std::set<std::string> allowed_accesses_;
 };
 
 }  // namespace ledger

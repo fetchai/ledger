@@ -21,7 +21,7 @@
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
-#include "ledger/state_sentinel.hpp"
+#include "ledger/state_adapter.hpp"
 
 #include "contract_test.hpp"
 #include "mock_storage_unit.hpp"

@@ -60,15 +60,20 @@ void Deserialize(T &serializer, Signature &b)
 
 struct TransactionSummary
 {
-  using Resource     = byte_array::ConstByteArray;
-  using TxDigest     = byte_array::ConstByteArray;
-  using ContractName = byte_array::ConstByteArray;
-  using ResourceSet  = std::set<Resource>;
-  using Fee          = uint64_t;
+  using Resource       = byte_array::ConstByteArray;
+  using TxDigest       = byte_array::ConstByteArray;
+  using ContractName   = byte_array::ConstByteArray;
+  using ResourceSet    = std::set<Resource>;
+  using ContractHashes = std::set<Resource>;
+  using Fee            = uint64_t;
 
   ResourceSet resources;
-  TxDigest    transaction_hash;
-  Fee         fee{0};
+
+  // Hashes of the body of the smart contract(s) accessed - note these are base64
+  ContractHashes contract_hashes;
+
+  TxDigest transaction_hash;
+  Fee      fee{0};
 
   // TODO(issue 33): Needs to be replaced with some kind of ID
   ContractName contract_name;
@@ -92,6 +97,18 @@ struct TransactionSummary
   {
     if (resources.size() > 0 && transaction_hash.size() > 0 && contract_name.size() > 0)
     {
+      for (auto const &hash : contract_hashes)
+      {
+        // TODO(HUT): this should possibly check for base64 length if that's what we're going with
+        // here
+        if (hash.size() == 0)
+        {
+          FETCH_LOG_INFO("TransactionSummary",
+                         "Found invalid TX: smart contact hash ref size: ", hash.size());
+          return false;
+        }
+      }
+
       return true;
     }
     else
@@ -104,13 +121,13 @@ struct TransactionSummary
 template <typename T>
 void Serialize(T &serializer, TransactionSummary const &b)
 {
-  serializer << b.resources << b.fee << b.transaction_hash << b.contract_name;
+  serializer << b.resources << b.contract_hashes << b.fee << b.transaction_hash << b.contract_name;
 }
 
 template <typename T>
 void Deserialize(T &serializer, TransactionSummary &b)
 {
-  serializer >> b.resources >> b.fee >> b.transaction_hash >> b.contract_name;
+  serializer >> b.resources >> b.contract_hashes >> b.fee >> b.transaction_hash >> b.contract_name;
 }
 
 class MutableTransaction;
@@ -300,6 +317,11 @@ public:
     return summary_.contract_name;
   }
 
+  TransactionSummary::ContractHashes const &contract_hashes() const
+  {
+    return summary_.contract_hashes;
+  }
+
   TxDigest const &digest() const
   {
     return summary_.transaction_hash;
@@ -347,6 +369,15 @@ public:
               std::back_inserter(resources));
     std::sort(resources.begin(), resources.end());
     for (auto const &e : resources)
+    {
+      hash.Update(e);
+    }
+
+    std::vector<byte_array::ConstByteArray> contract_hashes;
+    std::copy(summary().contract_hashes.begin(), summary().contract_hashes.end(),
+              std::back_inserter(contract_hashes));
+    std::sort(contract_hashes.begin(), contract_hashes.end());
+    for (auto const &e : contract_hashes)
     {
       hash.Update(e);
     }
@@ -408,6 +439,11 @@ public:
     summary_.resources.insert(res);
   }
 
+  void PushContractHash(byte_array::ConstByteArray const &res)
+  {
+    summary_.contract_hashes.insert(res);
+  }
+
   void set_summary(TransactionSummary const &summary)
   {
     summary_ = summary;
@@ -426,6 +462,11 @@ public:
   void set_contract_name(TransactionSummary::ContractName const &name)
   {
     summary_.contract_name = name;
+  }
+
+  void set_contract_hash(TransactionSummary::ContractHashes const &hashes)
+  {
+    summary_.contract_hashes = hashes;
   }
 
   void set_fee(uint64_t fee)
@@ -479,7 +520,8 @@ void TxSigningAdapter<MUTABLE_TX>::Update() const
   if (stream_->size() == 0)
   {
     serializers::ByteArrayBuffer &stream = *stream_.get();
-    stream.Append(tx_->contract_name(), tx_->fee(), tx_->resources(), tx_->data());
+    stream.Append(tx_->contract_name(), tx_->fee(), tx_->resources(), tx_->contract_hashes(),
+                  tx_->data());
     // tx_data_hash_.Reset();
     tx_data_hash_->Update(stream.data());
   }
@@ -495,9 +537,50 @@ void Serialize(T &stream, TxSigningAdapter<MUTABLE_TX> const &tx)
 template <typename T, typename MUTABLE_TX>
 void Deserialize(T &stream, TxSigningAdapter<MUTABLE_TX> &tx)
 {
+  const char *log_name = "DESER_MUTABLE_TX";
+
+  FETCH_LOG_DEBUG(log_name, "Deserializing mutable transaction");
+
+  uint16_t success_counter = 1;
+
+  auto deleter = [&](uint16_t *dummy) {
+    if (success_counter != 0)
+    {
+      FETCH_LOG_INFO(log_name, "Failed to deser. tx! Counter: ", success_counter);
+    };
+  };
+  std::unique_ptr<uint16_t, decltype(deleter)> on_exit(&success_counter, deleter);
+
+  FETCH_UNUSED(success_counter);
+  FETCH_UNUSED(log_name);
+
   MutableTransaction &tx_ = tx;
-  stream >> tx_.summary_.contract_name >> tx_.summary_.fee >> tx_.summary_.resources >> tx_.data_ >>
-      tx_.signatures_;
+  stream >> tx_.summary_.contract_name;
+  success_counter++;
+
+  stream >> tx_.summary_.fee;
+  success_counter++;
+
+  stream >> tx_.summary_.resources;
+  success_counter++;
+
+  stream >> tx_.summary_.contract_hashes;
+  success_counter++;
+
+  stream >> tx_.data_;
+  success_counter++;
+
+  stream >> tx_.signatures_;
+  success_counter = 0;
+
+  /*
+  std::cerr << "TX contract hashes: " << std::endl;
+
+  for(auto const &i : tx_.contract_hashes())
+  {
+    std::cerr << i << std::endl;
+  }*/
+
   tx.Reset();
 }
 
@@ -506,7 +589,8 @@ bool TxSigningAdapter<MUTABLE_TX>::operator==(TxSigningAdapter<MUTABLE_TX> const
 {
   MutableTransaction const &left = left_tx;
   return tx_->contract_name() == left.contract_name() && tx_->fee() == left.fee() &&
-         tx_->resources() == left.resources() && tx_->data() == left.data();
+         tx_->resources() == left.resources() && tx_->contract_hashes() == left.contract_hashes() &&
+         tx_->data() == left.data();
 }
 
 template <typename MUTABLE_TX>

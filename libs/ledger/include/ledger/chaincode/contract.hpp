@@ -20,9 +20,10 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/identifier.hpp"
-#include "ledger/state_sentinel.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "variant/variant.hpp"
+
+#include "ledger/state_adapter.hpp"
 
 #include <atomic>
 #include <functional>
@@ -37,7 +38,6 @@ class Variant;
 }
 namespace ledger {
 
-class StateAdapter;
 
 /**
  * Contract - Base class for all smart contract and chain code instances
@@ -281,6 +281,7 @@ void Contract::SetStateRecord(T const &record, ConstByteArray const &key)
   auto const &data = buffer.data();
 
   // store the buffer
+  //return state().Write(std::string{key}, data.pointer(), data.size());
   state().Write(std::string{key}, data.pointer(), data.size());
 }
 

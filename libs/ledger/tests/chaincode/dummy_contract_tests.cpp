@@ -19,7 +19,8 @@
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/dummy_contract.hpp"
-#include "ledger/state_sentinel.hpp"
+
+#include "ledger/state_adapter.hpp"
 
 #include "mock_storage_unit.hpp"
 
@@ -90,7 +91,8 @@ TEST_F(DummyContractTests, CheckDispatch)
   ASSERT_TRUE(identifier.Parse(tx.contract_name()));
 
   // create the storage adapter
-  StateSentinelAdapter adapter(*storage_, identifier.GetParent(), tx.resources());
+  // TODO(HUT): fix
+  StateAdapter adapter(*storage_, identifier.GetParent(), tx.resources(), tx.contract_hashes());
 
   // attach, dispatch and detach (run the life cycle)
   contract_->Attach(adapter);

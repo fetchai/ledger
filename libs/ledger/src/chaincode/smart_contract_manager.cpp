@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/smart_contract_manager.hpp"
-#include "ledger/state_sentinel.hpp"
 
 #include "core/byte_array/decoders.hpp"
 #include "crypto/fnv.hpp"
@@ -179,8 +178,15 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
 
   state().PopContext();
 
-  // store the contract
+  // store the contract TODO(HUT): this needs to check for success too.
+  auto success = true;
   SetStateRecord(contract_source, calculated_hash);
+
+  if(!success)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Failed to store smart contract to state DB!");
+    return Status::FAILED;
+  }
 
   return Status::OK;
 }
