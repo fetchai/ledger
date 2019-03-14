@@ -74,8 +74,8 @@ private:
 
   /// @name Cache Data
   /// @{
-  Cache         cache_{};                ///< The local cache
-  bool          flush_required_{false};  ///< Top level cache flush flag
+  Cache cache_{};                ///< The local cache
+  bool  flush_required_{false};  ///< Top level cache flush flag
   /// @}
 };
 

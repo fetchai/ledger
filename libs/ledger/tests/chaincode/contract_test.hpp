@@ -43,7 +43,7 @@ protected:
   using MockStorageUnitPtr   = std::unique_ptr<MockStorageUnit>;
   using Resources            = std::vector<ConstByteArray>;
   using CertificatePtr       = std::unique_ptr<fetch::crypto::ECDSASigner>;
-  using StateAdapter = fetch::ledger::StateAdapter;
+  using StateAdapter         = fetch::ledger::StateAdapter;
   using Query                = Contract::Query;
   using IdentifierPtr        = std::shared_ptr<Identifier>;
   using CachedStorageAdapter = fetch::ledger::CachedStorageAdapter;

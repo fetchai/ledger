@@ -317,7 +317,8 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
 
     if (msgpack::type::ARRAY != container.type)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Incorrect format, expected array of arguments. Input: ", tx.data());
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Incorrect format, expected array of arguments. Input: ", tx.data());
       return Status::FAILED;
     }
 
@@ -334,7 +335,9 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
   if (!target_function ||
       (input_params.size() != static_cast<std::size_t>(target_function->num_parameters)))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Incorrect number of parameters provided for target function. Received: ", input_params.size(), " Expected: ", target_function->num_parameters);
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Incorrect number of parameters provided for target function. Received: ",
+                   input_params.size(), " Expected: ", target_function->num_parameters);
     return Status::FAILED;
   }
 

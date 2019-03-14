@@ -38,7 +38,6 @@ class Variant;
 }
 namespace ledger {
 
-
 /**
  * Contract - Base class for all smart contract and chain code instances
  */

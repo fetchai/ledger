@@ -90,7 +90,8 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
     {
       // create the cache and state sentinel (lock and unlock resources as well as sandbox)
       CachedStorageAdapter storage_cache{*resources_};
-      StateAdapter storage_adapter{storage_cache, contract.GetParent(), tx.resources(), tx.contract_hashes()};
+      StateAdapter         storage_adapter{storage_cache, contract.GetParent(), tx.resources(),
+                                   tx.contract_hashes()};
 
       // lookup or create the instance of the contract as is needed
       auto chain_code = chain_code_cache_.Lookup(contract.GetParent(), *resources_);
@@ -111,7 +112,7 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
       chain_code->Detach();
 
       // force the flushing of the cache *** only if the contract was successful ***
-      if(result == Contract::Status::OK)
+      if (result == Contract::Status::OK)
       {
         storage_cache.Flush();
       }

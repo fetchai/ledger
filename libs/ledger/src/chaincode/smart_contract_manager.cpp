@@ -182,7 +182,7 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
   auto success = true;
   SetStateRecord(contract_source, calculated_hash);
 
-  if(!success)
+  if (!success)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Failed to store smart contract to state DB!");
     return Status::FAILED;

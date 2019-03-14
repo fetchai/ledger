@@ -173,8 +173,7 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
 
       for (auto const &contract_hash : tx.contract_hashes)
       {
-        item->AddLane(
-            StateAdapter::CreateAddress(contract_hash).lane(block.log2_num_lanes));
+        item->AddLane(StateAdapter::CreateAddress(contract_hash).lane(block.log2_num_lanes));
       }
 
       // insert the item into the execution plan

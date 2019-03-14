@@ -36,7 +36,7 @@ class StateAdapter : public vm::IoObserverInterface
 public:
   using ConstByteArray  = byte_array::ConstByteArray;
   using ResourceAddress = storage::ResourceAddress;
-  using ResourceSet = std::set<byte_array::ConstByteArray>;
+  using ResourceSet     = std::set<byte_array::ConstByteArray>;
 
   static constexpr char const *LOGGING_NAME = "StateAdapter";
 
@@ -45,7 +45,9 @@ public:
   static ResourceAddress CreateAddress(ConstByteArray const &key);
 
   // Construction / Destruction
-  StateAdapter(StorageInterface &storage, Identifier scope, ResourceSet const &resources = ResourceSet{}, ResourceSet const &contract_hashes = ResourceSet{});
+  StateAdapter(StorageInterface &storage, Identifier scope,
+               ResourceSet const &resources       = ResourceSet{},
+               ResourceSet const &contract_hashes = ResourceSet{});
   ~StateAdapter() override;
 
   /// @name Io Observer Interface
@@ -60,11 +62,11 @@ public:
   void QueryMode(bool mode);
 
 protected:
-  StorageInterface &storage_;
+  StorageInterface &      storage_;
   std::vector<Identifier> scope_;
-  bool             query_mode = false;
+  bool                    query_mode = false;
 
-  bool IsAllowedResource(std::string const &key) const;
+  bool                  IsAllowedResource(std::string const &key) const;
   std::set<std::string> allowed_accesses_;
 };
 

@@ -30,25 +30,26 @@ namespace ledger {
  * @param storage The reference to the storage engine
  * @param scope The reference to the scope
  */
-StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope, ResourceSet const &resources, ResourceSet const &contract_hashes)
+StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope,
+                           ResourceSet const &resources, ResourceSet const &contract_hashes)
   : storage_{storage}
   , scope_{std::move(scope)}
 {
   // Populate the allowed resources
-  for(auto const &hash : contract_hashes)
+  for (auto const &hash : contract_hashes)
   {
     allowed_accesses_.insert(std::string{hash});
     FETCH_LOG_INFO(LOGGING_NAME, "Pushing allowed: ", std::string{hash});
   }
 
-  for(auto const &key : resources)
+  for (auto const &key : resources)
   {
     std::string full = std::string{scope.full_name()} + ".state." + std::string{key};
     allowed_accesses_.insert(full);
     FETCH_LOG_INFO(LOGGING_NAME, "Pushing allowed2: ", full);
   }
 
-  for(auto const &full_resource : allowed_accesses_)
+  for (auto const &full_resource : allowed_accesses_)
   {
     storage_.Lock(CreateAddress(full_resource));
   }
@@ -56,7 +57,7 @@ StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope, Resource
 
 StateAdapter::~StateAdapter()
 {
-  for(auto const &full_resource : allowed_accesses_)
+  for (auto const &full_resource : allowed_accesses_)
   {
     storage_.Unlock(CreateAddress(full_resource));
   }
@@ -125,7 +126,7 @@ StateAdapter::Status StateAdapter::Write(std::string const &key, void const *dat
   std::string new_key{scope_.back().full_name() + ".state." + std::string{key}};
 
   // pretend to write in query mode
-  if(query_mode)
+  if (query_mode)
   {
     return Status::OK;
   }
@@ -200,7 +201,7 @@ ResourceAddress StateAdapter::CreateAddress(ConstByteArray const &key)
 
 bool StateAdapter::IsAllowedResource(std::string const &key) const
 {
-  if(query_mode)
+  if (query_mode)
   {
     return true;
   }
@@ -208,16 +209,17 @@ bool StateAdapter::IsAllowedResource(std::string const &key) const
   bool result = allowed_accesses_.find(key) != allowed_accesses_.end();
 
 #ifndef NDEBUG
-  if(!result)
+  if (!result)
   {
     std::ostringstream all_resources;
 
-    for(auto const &access : allowed_accesses_)
+    for (auto const &access : allowed_accesses_)
     {
       all_resources << access << std::endl;
     }
 
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to access resource \n", key, "\nAll resources: \n", all_resources.str());
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to access resource \n", key, "\nAll resources: \n",
+                   all_resources.str());
   }
 #endif
 
@@ -241,4 +243,3 @@ void StateAdapter::QueryMode(bool mode)
 
 }  // namespace ledger
 }  // namespace fetch
-
