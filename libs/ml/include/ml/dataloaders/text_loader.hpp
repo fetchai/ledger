@@ -22,16 +22,10 @@
 #include "math/free_functions/standard_functions/abs.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 
-#include <algorithm>
-#include <exception>
-#include <fstream>
-#include <iostream>
-#include <memory>
-#include <numeric>
-#include <sstream>
-#include <string>
+#include <algorithm>                // random_shuffle
+#include <fstream>                  // file streaming
+#include <string>                   //
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
 #include <dirent.h>  // may be compatibility issues
