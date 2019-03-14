@@ -124,6 +124,11 @@ void Analyser::Initialise()
   CreateTemplateType("Map", TypeIds::IMap, {any_type_, any_type_}, map_type_);
   EnableIndexOperator(map_type_, {template_parameter1_type_}, template_parameter2_type_);
 
+  // ledger specific
+  CreateClassType("Address", TypeIds::Address, address_type_);
+  EnableOperator(address_type_, Operator::Equal);
+  EnableOperator(address_type_, Operator::NotEqual);
+
   CreateTemplateType("State", TypeIds::IState, {any_type_}, state_type_);
 }
 

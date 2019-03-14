@@ -120,8 +120,9 @@ public:
 
   /// @name Missing / Loose Management
   /// @{
-  BlockHashs GetMissingBlockHashes(std::size_t limit = ALL) const;
-  bool       HasMissingBlocks() const;
+  BlockHashSet GetMissingTips() const;
+  BlockHashs   GetMissingBlockHashes(std::size_t limit = ALL) const;
+  bool         HasMissingBlocks() const;
   /// @}
 
   template <typename T>
@@ -151,12 +152,11 @@ private:
     bool Update(Block const &);
   };
 
-  static constexpr uint32_t block_confirmation_ = 10;
-
   /// @name Persistence Management
   /// @{
   void RecoverFromFile(Mode mode);
   void WriteToFile();
+  void TrimCache();
   void FlushBlock(IntBlockPtr const &block);
   /// @}
 
@@ -169,9 +169,9 @@ private:
   /// @name Block Lookup
   /// @{
   BlockStatus InsertBlock(IntBlockPtr const &block, bool evaluate_loose_blocks = true);
-  bool        LookupBlock(BlockHash hash, IntBlockPtr &block) const;
+  bool        LookupBlock(BlockHash hash, IntBlockPtr &block, bool add_to_cache = true) const;
   bool        LookupBlockFromCache(BlockHash hash, IntBlockPtr &block) const;
-  bool        LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block) const;
+  bool        LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block, bool add_to_cache) const;
   bool        IsBlockInCache(BlockHash hash) const;
   void        AddBlockToCache(IntBlockPtr const &) const;
   /// @}
@@ -187,13 +187,11 @@ private:
 
   BlockStorePtr block_store_;  /// < Long term storage and backup
 
-  mutable RMutex   main_mutex_;   ///< Mutex protecting block_chain_, tips_ & heaviest_
-  mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
-  TipsMap          tips_;         ///< Keep track of the tips
-  HeaviestTip      heaviest_;     ///< Heaviest block/tip
-
-  mutable RMutex loose_mutex_;   ///< Mutex protecting the loose blocks
-  LooseBlockMap  loose_blocks_;  ///< Waiting (loose) blocks
+  mutable RMutex   lock_;          ///< Mutex protecting block_chain_, tips_ & heaviest_
+  mutable BlockMap block_chain_;   ///< All recent blocks are kept in memory
+  TipsMap          tips_;          ///< Keep track of the tips
+  HeaviestTip      heaviest_;      ///< Heaviest block/tip
+  LooseBlockMap    loose_blocks_;  ///< Waiting (loose) blocks
 };
 
 /**
@@ -215,8 +213,8 @@ bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container) const
   std::size_t blocks_checked = 0;
   auto const  start_time     = Clock::now();
 
-  auto block = GetBlock(starting_hash);
-  if (!block || block->is_loose)
+  IntBlockPtr block;
+  if (!LookupBlock(starting_hash, block, false) || block->is_loose)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "TX uniqueness verify on bad block hash");
     return false;
@@ -249,11 +247,8 @@ bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container) const
       }
     }
 
-    // Note we don't need to hold the lock for the whole search
-    block = GetBlock(block->body.previous_hash);
-
     // exit the loop once we can no longer find the block
-    if (!block)
+    if (!LookupBlock(block->body.previous_hash, block, false))
     {
       break;
     }

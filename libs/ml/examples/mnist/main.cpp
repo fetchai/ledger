@@ -57,11 +57,10 @@ int main(int ac, char **av)
 
   CrossEntropy<ArrayType> criterion;
 
-  std::pair<size_t, std::shared_ptr<ArrayType>> input;
-  std::shared_ptr<ArrayType>                    gt =
-      std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1, 10}));
+  std::pair<std::size_t, ArrayType> input;
+  ArrayType                         gt(std::vector<typename ArrayType::SizeType>({1, 10}));
 
-  gt->At(0)         = 1.0;
+  gt.At(0)          = 1.0;
   DataType     loss = 0;
   unsigned int errorCount(0);
   unsigned int i(0);
@@ -74,9 +73,10 @@ int main(int ac, char **av)
     }
     input = dataloader.GetNext();
     g.SetInput("Input", input.second);
-    gt->Fill(0);
-    gt->At(input.first)                = DataType(1.0);
-    std::shared_ptr<ArrayType> results = g.Evaluate("Softmax");
+    gt.Fill(0);
+    gt.At(input.first) = DataType(1.0);
+    ArrayType results  = g.Evaluate("Softmax");
+
     loss += criterion.Forward({results, gt});
     if (results->At(input.first) < .5)
     {

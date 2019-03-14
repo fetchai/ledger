@@ -29,7 +29,7 @@ namespace fetch {
 namespace ml {
 
 template <typename T>
-class MNISTLoader : public DataLoader<uint64_t, std::shared_ptr<T>>
+class MNISTLoader : public DataLoader<uint64_t, T>
 {
 public:
   MNISTLoader(std::string const &imagesFile, std::string const &labelsFile)
@@ -59,10 +59,10 @@ public:
 
   std::pair<uint64_t, std::shared_ptr<T>> GetAtIndex(uint64_t index) const
   {
-    std::shared_ptr<T> buffer = std::make_shared<T>(std::vector<std::uint64_t>({28u, 28u}));
+    T buffer({28u, 28u});
     for (std::uint64_t i(0); i < 28 * 28; ++i)
     {
-      buffer->At(i) = typename T::Type(data_[index][i]) / typename T::Type(256);
+      buffer.At(i) = typename T::Type(data_[cursor_][i]) / typename T::Type(256);
     }
     uint64_t label = (uint64_t)(labels_[index]);
     return std::make_pair(label, buffer);
@@ -78,11 +78,11 @@ public:
     return GetAtIndex((uint64_t)rand() % Size());
   }
 
-  void Display(std::shared_ptr<T> const &data) const
+  void Display(T const &data) const
   {
     for (std::uint64_t j(0); j < 784; ++j)
     {
-      std::cout << (data->At(j) > typename T::Type(0.5) ? char(219) : ' ')
+      std::cout << (data.At(j) > typename T::Type(0.5) ? char(219) : ' ')
                 << ((j % 28 == 0) ? "\n" : "");
     }
     std::cout << std::endl;
