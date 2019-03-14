@@ -275,7 +275,7 @@ public:
    */
   bool AddData(std::string const &s)
   {
-    std::vector<SizeType> indexes = StringsToIndices(BuildText(s));
+    std::vector<SizeType> indexes = BuildText(s);
     if (indexes.size() >= 2 * p_.window_size + 1)
     {
       data_.push_back(std::move(indexes));
