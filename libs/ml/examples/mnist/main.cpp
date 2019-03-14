@@ -78,7 +78,7 @@ int main(int ac, char **av)
     ArrayType results  = g.Evaluate("Softmax");
 
     loss += criterion.Forward({results, gt});
-    if (results->At(input.first) < .5)
+    if (results.At(input.first) < .5)
     {
       errorCount++;
     }

@@ -57,7 +57,7 @@ public:
     cursor_ = 0;
   }
 
-  std::pair<uint64_t, std::shared_ptr<T>> GetAtIndex(uint64_t index) const
+  std::pair<uint64_t, T> GetAtIndex(uint64_t index) const
   {
     T buffer({28u, 28u});
     for (std::uint64_t i(0); i < 28 * 28; ++i)
@@ -68,12 +68,12 @@ public:
     return std::make_pair(label, buffer);
   }
 
-  virtual std::pair<uint64_t, std::shared_ptr<T>> GetNext()
+  virtual std::pair<uint64_t, T> GetNext()
   {
     return GetAtIndex(cursor_++);
   }
 
-  std::pair<uint64_t, std::shared_ptr<T>> GetRandom()
+  std::pair<uint64_t, T> GetRandom()
   {
     return GetAtIndex((uint64_t)rand() % Size());
   }
