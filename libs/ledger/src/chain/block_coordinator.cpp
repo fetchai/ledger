@@ -28,9 +28,6 @@
 
 #include <chrono>
 
-using std::chrono::microseconds;
-using fetch::byte_array::ConstByteArray;
-using fetch::byte_array::FromBase64;
 using fetch::byte_array::ToBase64;
 
 using ScheduleStatus = fetch::ledger::ExecutionManagerInterface::ScheduleStatus;
@@ -41,8 +38,6 @@ static const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{500};
 static const std::chrono::seconds      NOTIFY_INTERVAL{10};
 static const std::size_t               DIGEST_LENGTH_BYTES{32};
 static const std::size_t               IDENTITY_LENGTH_BYTES{64};
-
-static ConstByteArray TARGET_BLOCK = FromBase64("bsxmWQ9hQiK4F6mlvpZWhzCCTmdlfXQTbCBg+9gWdJw=");
 
 namespace fetch {
 namespace ledger {
@@ -413,11 +408,6 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions()
 BlockCoordinator::State BlockCoordinator::OnScheduleBlockExecution()
 {
   State next_state{State::RESET};
-
-  if (current_block_->body.hash == TARGET_BLOCK)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "### Schedule Bad Block");
-  }
 
   // schedule the current block for execution
   if (ScheduleCurrentBlock())
