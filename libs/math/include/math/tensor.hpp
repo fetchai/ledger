@@ -369,9 +369,14 @@ public:
   Tensor<T> &InlineAdd(Tensor<T> const &o)
   {
     assert(size() == o.size());
-    for (SizeType i(0); i < size(); ++i)
+    auto it1 = this->begin();
+    auto it2 = o.begin();
+
+    while (it1 != this->end())
     {
-      At(i) = At(i) + o.At(i);
+      *it1 += *it2;
+      ++it1;
+      ++it2;
     }
     return *this;
   }
@@ -388,9 +393,14 @@ public:
   Tensor<T> &InlineSubtract(Tensor<T> const &o)
   {
     assert(size() == o.size());
-    for (SizeType i(0); i < size(); ++i)
+    auto it1 = this->begin();
+    auto it2 = o.begin();
+
+    while (it1 != this->end())
     {
-      At(i) = At(i) - o.At(i);
+      *it1 -= *it2;
+      ++it1;
+      ++it2;
     }
     return *this;
   }
@@ -417,9 +427,14 @@ public:
   Tensor<T> &InlineMultiply(Tensor<T> const &o)
   {
     assert(size() == o.size());
-    for (SizeType i(0); i < size(); ++i)
+    auto it1 = this->begin();
+    auto it2 = o.begin();
+
+    while (it1 != this->end())
     {
-      At(i) = At(i) * o.At(i);
+      *it1 *= *it2;
+      ++it1;
+      ++it2;
     }
     return *this;
   }
@@ -436,9 +451,14 @@ public:
   Tensor<T> &InlineDivide(Tensor<T> const &o)
   {
     assert(size() == o.size());
-    for (SizeType i(0); i < size(); ++i)
+    auto it1 = this->begin();
+    auto it2 = o.begin();
+
+    while (it1 != this->end())
     {
-      At(i) = At(i) / o.At(i);
+      *it1 /= *it2;
+      ++it1;
+      ++it2;
     }
     return *this;
   }
