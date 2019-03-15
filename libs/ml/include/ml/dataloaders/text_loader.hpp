@@ -74,14 +74,13 @@ class TextLoader : public DataLoader<T, typename T::SizeType>
 
 protected:
   // training data parsing containers
-  SizeType                                  size_    = 0;      // # training pairs
-  SizeType                                  n_words_ = 0;      // # of total words in training data
-  std::unordered_map<std::string, SizeType> vocab_;            // full unique vocab
-  std::unordered_map<SizeType, std::string> reverse_vocab_;    // full unique vocab
-  std::unordered_map<std::string, SizeType> vocab_frequency_;  // word frequencies
-  std::vector<double>                       adj_vocab_frequency_;  // word frequencies
-  std::vector<std::vector<SizeType>>        data_;                 // all training data by sentence
-  std::vector<std::vector<SizeType>>        discards_;             // record of discarded words
+  SizeType                                               size_ = 0;  // # training pairs
+  std::unordered_map<std::string, std::vector<SizeType>> vocab_;  // full unique vocab + frequencies
+  //  std::unordered_map<SizeType, std::string> reverse_vocab_;    // full unique vocab
+  //  std::unordered_map<std::string, SizeType> vocab_frequency_;  // word frequencies
+  std::vector<double>                adj_vocab_frequency_;  // word frequencies
+  std::vector<std::vector<SizeType>> data_;                 // all training data by sentence
+  std::vector<std::vector<SizeType>> discards_;             // record of discarded words
   SizeType discard_sentence_idx_ = 0;  // keeps track of sentences already having discard applied
 
   // used for iterating through all examples incrementally
@@ -132,7 +131,7 @@ public:
     labels_.resize(1);
 
     // set up training dataset
-    BuildText(data);
+    AddData(data);
   }
 
   /**
@@ -289,41 +288,27 @@ public:
   }
 
   /**
-   * add more text data after construction
-   * @param s
-   * @return
-   */
-  bool AddData(std::string const &s)
-  {
-    std::vector<SizeType> indexes = BuildText(s);
-    if (indexes.size() >= 2 * p_.window_size + 1)
-    {
-      data_.push_back(std::move(indexes));
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * lookup a word given the vocab index
-   * @param idx
-   * @return
-   */
-  std::string VocabLookup(SizeType idx)
-  {
-    return reverse_vocab_[idx];
-  }
-
-  /**
    * lookup a vocab index for a word
    * @param idx
    * @return
    */
   SizeType VocabLookup(std::string &idx)
   {
-    assert(vocab_[idx] < vocab_.size());
-    assert(vocab_[idx] != 0);  // dont currently handle unknowns elegantly
-    return vocab_[idx];
+    assert(vocab_[idx].first < vocab_.size());
+    assert(vocab_[idx].first != 0);  // dont currently handle unknowns elegantly
+    return vocab_[idx].first;
+  }
+
+  std::string VocabLookup(SizeType idx)
+  {
+    for (auto &e : vocab_)
+    {
+      if (e.second.at(0) == idx)
+      {
+        return e.first;
+      }
+    }
+    return "UNK";
   }
 
   /**
@@ -380,6 +365,19 @@ public:
       }
     }
     return word_offset;
+  }
+
+  /**
+   * Adds text to training data
+   * @param training_data
+   */
+  void AddData(std::string const &training_data)
+  {
+    std::string full_training_text;
+    GetTextString(training_data, full_training_text);
+
+    // converts text into training pairs & related preparatory work
+    ProcessTrainingData(full_training_text);
   }
 
 private:
@@ -460,7 +458,7 @@ private:
    * @param training_data
    * @param full_training_text
    */
-  void GetTextString(std::string &training_data, std::string &full_training_text)
+  void GetTextString(std::string const &training_data, std::string &full_training_text)
   {
     std::vector<std::string> file_names = GetAllTextFiles(training_data);
     if (file_names.size() == 0)
@@ -479,19 +477,6 @@ private:
         full_training_text += cur_text;
       }
     }
-  }
-
-  /**
-   * builds all training text
-   * @param training_data
-   */
-  void BuildText(std::string &training_data)
-  {
-    std::string full_training_text;
-    GetTextString(training_data, full_training_text);
-
-    // converts text into training pairs & related preparatory work
-    ProcessTrainingData(full_training_text);
   }
 
   /**
@@ -522,10 +507,15 @@ private:
   void PreProcessWords(std::string &training_data, std::vector<std::vector<std::string>> &sentences)
   {
     std::string word;
+    SizeType    sentence_count = 0;
     sentences.push_back(std::vector<std::string>{});
-    SizeType word_offset = 0;
     for (std::stringstream s(training_data); s >> word;)
     {
+      if (sentence_count_ + sentence_count > p_.max_sentences)
+      {
+        break;
+      }
+
       // must check this before we strip punctuation
       bool new_sentence = CheckEndOfSentence(word);
 
@@ -535,22 +525,13 @@ private:
       // lower case
       std::transform(word.begin(), word.end(), word.begin(), ::tolower);
 
-      sentences[sentence_count_].push_back(word);
-      ++word_count_;
-
-      ++word_offset;
+      sentences[sentence_count].push_back(word);
 
       // if new sentence
       if (new_sentence)
       {
         sentences.push_back(std::vector<std::string>{});
-        ++sentence_count_;
-        word_offset = 0;
-
-        if (sentence_count_ > p_.max_sentences)
-        {
-          break;
-        }
+        ++sentence_count;
       }
     }
 
@@ -567,36 +548,32 @@ private:
   void BuildVocab(std::vector<std::vector<std::string>> &sentences)
   {
     // insert words uniquely into the vocabulary
-    vocab_.emplace(std::make_pair("UNK", 0));
-    reverse_vocab_.emplace(0, "UNK");
-    vocab_frequency_.emplace("UNK", 0);
-
-    sentence_count_ = 0;
-    word_count_     = 0;
-    SizeType cur_val;
+    vocab_.emplace(std::make_pair("UNK", std::vector<SizeType>({0, 0})));
     for (std::vector<std::string> &cur_sentence : sentences)
     {
-      data_.emplace_back(std::vector<SizeType>({}));
       if (cur_sentence.size() > p_.min_sentence_length)
       {
+        data_.push_back(std::vector<SizeType>({}));
         for (std::string cur_word : cur_sentence)
         {
-          auto ret = vocab_.emplace(cur_word, unique_word_count_);
-
-          if (ret.second)
+          // if already seen this word
+          SizeType word_idx;
+          if (vocab_.find(cur_word) != vocab_.end())
           {
-            reverse_vocab_.emplace(unique_word_count_, cur_word);
-            vocab_frequency_[cur_word] = 1;
-            ++unique_word_count_;
+            word_idx           = vocab_[cur_word].at(0);
+            SizeType word_freq = vocab_[cur_word].at(1);
+            ++word_freq;
+
+            vocab_[cur_word] = std::vector<SizeType>({word_idx, word_freq});
           }
           else
           {
-            vocab_frequency_[cur_word] += 1;
+            vocab_.emplace(
+                std::make_pair(cur_word, std::vector<SizeType>({unique_word_count_, 1})));
+            word_idx = unique_word_count_;
+            unique_word_count_++;
           }
-          ++n_words_;
-
-          cur_val = (*ret.first).second;
-          data_.at(sentence_count_).emplace_back(cur_val);
+          data_.at(sentence_count_).push_back(word_idx);
           word_idx_sentence_idx.emplace(
               std::pair<SizeType, SizeType>(word_count_, sentence_count_));
           sentence_idx_word_idx.emplace(
@@ -617,11 +594,12 @@ private:
     {
       // calculate adjusted word frequencies
       double sum_adj_vocab = 0.0;
-      for (SizeType j = 0; j < vocab_frequency_.size(); ++j)
+      for (auto &e : vocab_)
       {
-        adj_vocab_frequency_.emplace_back(
-            std::pow(double(vocab_frequency_[reverse_vocab_[j]]), p_.unigram_power));
-        sum_adj_vocab += adj_vocab_frequency_[j];
+        double cur_vocab_freq = double(e.second.at(1));
+        double cur_val        = std::pow(cur_vocab_freq, p_.unigram_power);
+        adj_vocab_frequency_.emplace_back(cur_val);
+        sum_adj_vocab += cur_val;
       }
 
       SizeType cur_idx = 0;
@@ -679,7 +657,7 @@ private:
    */
   bool DiscardExample(std::string &word)
   {
-    double word_probability = double(vocab_frequency_[word]) / double(n_words_);
+    double word_probability = double(vocab_[word].at(1)) / double(word_count_);
 
     double prob_thresh = (std::sqrt(word_probability / p_.discard_threshold) + 1.0);
     prob_thresh *= (p_.discard_threshold / word_probability);

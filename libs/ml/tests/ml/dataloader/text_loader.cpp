@@ -36,7 +36,7 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<f
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(TextDataLoaderTest, MyTypes);
 
-TYPED_TEST(TextDataLoaderTest, loader_test)
+TYPED_TEST(TextDataLoaderTest, basic_loader_test)
 {
   std::string TRAINING_DATA = "This is a test sentence of total length ten words.";
 
@@ -58,6 +58,51 @@ TYPED_TEST(TextDataLoaderTest, loader_test)
 
   std::string cur_word;
   for (std::size_t j = 0; j < 20; ++j)
+  {
+    std::pair<TypeParam, SizeType> output = loader.GetNext();
+    cur_word                              = loader.VocabLookup(SizeType(output.first.At(0)));
+    ASSERT_TRUE(cur_word.compare(gt_input.at(j)) == 0);
+  }
+}
+
+TYPED_TEST(TextDataLoaderTest, adddata_loader_test)
+{
+  std::string TRAINING_DATA = "This is a test sentence of total length ten words.";
+
+  using SizeType = typename TypeParam::SizeType;
+
+  TextParams<TypeParam> p;
+  p.n_data_buffers      = 1;
+  p.max_sentences       = 1;
+  p.min_sentence_length = 0;
+  p.window_size         = 1;
+  p.unigram_table       = false;
+  p.discard_frequent    = false;
+
+  TextLoader<TypeParam> loader(TRAINING_DATA, p);
+
+  std::vector<std::string> gt_input(
+      {"this", "is", "a", "test", "sentence", "of", "total", "length", "ten", "words",
+       "this", "is", "a", "test", "sentence", "of", "total", "length", "ten", "words"});
+
+  std::string cur_word;
+  for (std::size_t j = 0; j < 20; ++j)
+  {
+    std::pair<TypeParam, SizeType> output = loader.GetNext();
+    cur_word                              = loader.VocabLookup(SizeType(output.first.At(0)));
+    ASSERT_TRUE(cur_word.compare(gt_input.at(j)) == 0);
+  }
+
+  std::string new_training_data = "This is a new sentence added after set up.";
+
+  loader.AddData(new_training_data);
+  loader.Reset();
+
+  gt_input = {"this",  "is",    "a",    "test", "sentence", "of",  "total",    "length",
+              "ten",   "words", "this", "is",   "a",        "new", "sentence", "added",
+              "after", "set",   "up",   "this", "is",       "a"};
+
+  for (std::size_t j = 0; j < 22; ++j)
   {
     std::pair<TypeParam, SizeType> output = loader.GetNext();
     cur_word                              = loader.VocabLookup(SizeType(output.first.At(0)));

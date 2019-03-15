@@ -267,46 +267,6 @@ private:
       return true;
     }
   }
-  //
-  //  /**
-  //   * Dynamic context windows probabilistically reject words from the context window according to
-  //   * unigram distribution There is also a fixed maximum distance
-  //   * @param j the current word position
-  //   * @return
-  //   */
-  //  bool DynamicWindowCheck(SizeType context_position)
-  //  {
-  //    int normalised_context_position = int(context_position) - int(p_.window_size);
-  //    int abs_dist_to_target          = fetch::math::Abs(normalised_context_position);
-  //    if (abs_dist_to_target == 1)
-  //    {
-  //      return true;
-  //    }
-  //    else
-  //    {
-  //      double cur_val          = this->lfg_.AsDouble();
-  //      double accept_threshold = 1.0 / abs_dist_to_target;
-  //      if (cur_val < accept_threshold)
-  //      {
-  //        return true;
-  //      }
-  //      return false;
-  //    }
-  //  }
-  //
-  //  /**
-  //   * calculates the mean frequency of words under unigram for given max window_size
-  //   */
-  //  double GetUnigramExpectation()
-  //  {
-  //    double ret = 0;
-  //    for (SizeType i = 0; i < p_.window_size; ++i)
-  //    {
-  //      ret += 1.0 / double(i + 1);
-  //    }
-  //    ret *= 2;
-  //    return ret;
-  //  }
 };
 
 }  // namespace dataloaders
