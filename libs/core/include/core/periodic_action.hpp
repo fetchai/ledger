@@ -92,6 +92,7 @@ inline bool PeriodicAction::Poll()
 inline void PeriodicAction::Reset()
 {
   start_time_ = Clock::now();
+  last_index_ = 0;
 }
 
 }  // namespace fetch

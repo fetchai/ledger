@@ -467,7 +467,7 @@ void TransientObjectStore<O>::ThreadLoop()
     case Phase::Flushing:
     {
       FETCH_LOCK(cache_mutex_);
-      assert(extracted_count < BATCH_SIZE);
+      assert(extracted_count <= BATCH_SIZE);
       for (std::size_t i = 0; i < extracted_count; ++i)
       {
         cache_.erase(rids[i]);
