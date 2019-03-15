@@ -103,7 +103,7 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
       chain_code->Attach(storage_adapter);
 
       // Dispatch the transaction to the contract
-      FETCH_LOG_INFO(LOGGING_NAME, "Dispatch: ", contract.name());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatch: ", contract.name());
       result = chain_code->DispatchTransaction(contract.name(), tx);
 
       // detach the chain code from the current context
