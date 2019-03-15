@@ -96,7 +96,8 @@ int main(int ac, char **av)
       ArrayType groundTruth(predictions.shape());
       groundTruth.At(input.second) = DataType(1);
 
-      if (iteration % 100 == 0)
+      uint64_t argmax(uint64_t(ArgMax(predictions)));
+      if (iteration % 100 == 0 || argmax == input.second)
       {
         for (unsigned int i(0); i < CONTEXT_WINDOW_SIZE * 2 + 1; ++i)
         {
@@ -113,7 +114,6 @@ int main(int ac, char **av)
             std::cout << findWordByIndex(loader.GetVocab(), uint64_t(input.first.At(i - 1))) << " ";
           }
         }
-        uint64_t argmax(uint64_t(ArgMax(predictions)));
         std::cout << "-- " << (argmax == input.second ? "\033[0;32m" : "\033[0;31m")
                   << findWordByIndex(loader.GetVocab(), argmax) << "\033[0;0m" << std::endl;
         std::cout << "Loss : " << loss << std::endl;
