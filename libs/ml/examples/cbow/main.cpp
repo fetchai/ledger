@@ -83,7 +83,7 @@ int main(int ac, char **av)
   MeanSquareError<ArrayType> criterion;
   unsigned int               iteration(0);
   float                      loss = 0;
-  while (!loader.IsDone() && iteration < 100)
+  while (!loader.IsDone())
   {
     auto input = loader.GetNext();
     g.SetInput("Input", input.first);
@@ -94,16 +94,22 @@ int main(int ac, char **av)
     g.BackPropagate("Softmax", criterion.Backward({predictions, groundTruth}));
     g.Step(LEARNING_RATE);
 
-    if (iteration % 1 == 0)
+    if (iteration % 100 == 0)
     {
       for (unsigned int i(0); i < CONTEXT_WINDOW_SIZE * 2 + 1; ++i)
       {
         if (i < CONTEXT_WINDOW_SIZE)
+        {
           std::cout << findWordByIndex(loader.GetVocab(), uint64_t(input.first.At(i))) << " ";
+        }
         else if (i == CONTEXT_WINDOW_SIZE)
+        {
           std::cout << "[" << findWordByIndex(loader.GetVocab(), uint64_t(input.second)) << "] ";
+        }
         else
+        {
           std::cout << findWordByIndex(loader.GetVocab(), uint64_t(input.first.At(i - 1))) << " ";
+        }
       }
       std::cout << "-- " << findWordByIndex(loader.GetVocab(), uint64_t(ArgMax(predictions)))
                 << std::endl;
