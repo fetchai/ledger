@@ -31,7 +31,7 @@
 
 #define EMBEDING_DIMENSION 64u
 #define CONTEXT_WINDOW_SIZE 4  // Each side
-#define LEARNING_RATE 0.01f
+#define LEARNING_RATE 0.50f
 
 using DataType  = float;
 using ArrayType = fetch::math::Tensor<DataType>;
@@ -70,6 +70,7 @@ int main(int ac, char **av)
   {
     loader.AddData(readFile(av[i]));
   }
+
   unsigned int vocabSize = (unsigned int)loader.GetVocab().size();
   std::cout << "Vocab size : " << vocabSize << std::endl;
 
@@ -83,40 +84,48 @@ int main(int ac, char **av)
   MeanSquareError<ArrayType> criterion;
   unsigned int               iteration(0);
   float                      loss = 0;
-  while (!loader.IsDone())
-  {
-    auto input = loader.GetNext();
-    g.SetInput("Input", input.first);
-    ArrayType predictions = g.Evaluate("Softmax");
-    ArrayType groundTruth(predictions.shape());
-    groundTruth.At(input.second) = DataType(1);
-    loss += criterion.Forward({predictions, groundTruth});
-    g.BackPropagate("Softmax", criterion.Backward({predictions, groundTruth}));
-    g.Step(LEARNING_RATE);
 
-    if (iteration % 100 == 0)
+  while (true)
+  {
+    loader.Reset();
+    while (!loader.IsDone())
     {
-      for (unsigned int i(0); i < CONTEXT_WINDOW_SIZE * 2 + 1; ++i)
+      auto input = loader.GetNext();
+      g.SetInput("Input", input.first);
+      ArrayType predictions = g.Evaluate("Softmax");
+      ArrayType groundTruth(predictions.shape());
+      groundTruth.At(input.second) = DataType(1);
+
+      if (iteration % 100 == 0)
       {
-        if (i < CONTEXT_WINDOW_SIZE)
+        for (unsigned int i(0); i < CONTEXT_WINDOW_SIZE * 2 + 1; ++i)
         {
-          std::cout << findWordByIndex(loader.GetVocab(), uint64_t(input.first.At(i))) << " ";
+          if (i < CONTEXT_WINDOW_SIZE)
+          {
+            std::cout << findWordByIndex(loader.GetVocab(), uint64_t(input.first.At(i))) << " ";
+          }
+          else if (i == CONTEXT_WINDOW_SIZE)
+          {
+            std::cout << "[" << findWordByIndex(loader.GetVocab(), uint64_t(input.second)) << "] ";
+          }
+          else
+          {
+            std::cout << findWordByIndex(loader.GetVocab(), uint64_t(input.first.At(i - 1))) << " ";
+          }
         }
-        else if (i == CONTEXT_WINDOW_SIZE)
-        {
-          std::cout << "[" << findWordByIndex(loader.GetVocab(), uint64_t(input.second)) << "] ";
-        }
-        else
-        {
-          std::cout << findWordByIndex(loader.GetVocab(), uint64_t(input.first.At(i - 1))) << " ";
-        }
+        uint64_t argmax(uint64_t(ArgMax(predictions)));
+        std::cout << "-- " << (argmax == input.second ? "\033[0;32m" : "\033[0;31m")
+                  << findWordByIndex(loader.GetVocab(), argmax) << "\033[0;0m" << std::endl;
+        std::cout << "Loss : " << loss << std::endl;
+        loss = 0;
       }
-      std::cout << "-- " << findWordByIndex(loader.GetVocab(), uint64_t(ArgMax(predictions)))
-                << std::endl;
-      std::cout << "Loss : " << loss << std::endl;
-      loss = 0;
+
+      loss += criterion.Forward({predictions, groundTruth});
+      g.BackPropagate("Softmax", criterion.Backward({predictions.Clone(), groundTruth}));
+      g.Step(LEARNING_RATE);
+
+      iteration++;
     }
-    iteration++;
   }
   return 0;
 }

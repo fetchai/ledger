@@ -37,7 +37,9 @@ public:
     : currentSentence_(0)
     , currentWord_(0)
     , window_size_(window_size)
-  {}
+  {
+    vocab_[""] = 0;
+  }
 
   virtual uint64_t Size() const
   {

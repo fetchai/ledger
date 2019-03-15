@@ -514,7 +514,6 @@ public:
       {
         ss << At(i) << "\t";
       }
-      ss << "\n";
     }
     if (shape_.size() == 2)
     {
