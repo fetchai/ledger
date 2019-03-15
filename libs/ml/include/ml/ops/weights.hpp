@@ -206,9 +206,9 @@ private:
 
     // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
     std::normal_distribution<> rng(0, normalising_factor);
-    for (std::uint64_t i(0); i < array.size(); ++i)
+    for (auto &e : array)
     {
-      array.At(i) = typename ArrayType::Type(rng(gen));
+      e = typename ArrayType::Type(rng(gen));
     }
   }
 };
