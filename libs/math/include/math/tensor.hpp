@@ -370,9 +370,10 @@ public:
   {
     assert(size() == o.size());
     auto it1 = this->begin();
+    auto end = this->end();
     auto it2 = o.begin();
 
-    while (it1 != this->end())
+    while (it1 != end)
     {
       *it1 += *it2;
       ++it1;
@@ -394,9 +395,10 @@ public:
   {
     assert(size() == o.size());
     auto it1 = this->begin();
+    auto end = this->end();
     auto it2 = o.begin();
 
-    while (it1 != this->end())
+    while (it1 != end)
     {
       *it1 -= *it2;
       ++it1;
@@ -428,9 +430,10 @@ public:
   {
     assert(size() == o.size());
     auto it1 = this->begin();
+    auto end = this->end();
     auto it2 = o.begin();
 
-    while (it1 != this->end())
+    while (it1 != end)
     {
       *it1 *= *it2;
       ++it1;
@@ -452,9 +455,10 @@ public:
   {
     assert(size() == o.size());
     auto it1 = this->begin();
+    auto end = this->end();
     auto it2 = o.begin();
 
-    while (it1 != this->end())
+    while (it1 != end)
     {
       *it1 /= *it2;
       ++it1;
