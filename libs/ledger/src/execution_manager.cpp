@@ -171,7 +171,7 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
             StateAdapter::CreateAddress(contract_id, resource).lane(block.log2_num_lanes));
       }
 
-      for (auto const &contract_hash : tx.contract_hashes)
+      for (auto const &contract_hash : tx.raw_resources)
       {
         item->AddLane(StateAdapter::CreateAddress(contract_hash).lane(block.log2_num_lanes));
       }

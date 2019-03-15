@@ -47,7 +47,7 @@ public:
   // Construction / Destruction
   StateAdapter(StorageInterface &storage, Identifier scope,
                ResourceSet const &resources       = ResourceSet{},
-               ResourceSet const &contract_hashes = ResourceSet{});
+               ResourceSet const &raw_resources = ResourceSet{});
   ~StateAdapter() override;
 
   /// @name Io Observer Interface

@@ -31,7 +31,7 @@ public:
   using super_type::TxDigest;
   using super_type::ResourceSet;
   using super_type::resources;
-  using super_type::contract_hashes;
+  using super_type::raw_resources;
   using super_type::summary;
   using super_type::data;
   using super_type::signatures;

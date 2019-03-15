@@ -64,13 +64,11 @@ struct TransactionSummary
   using TxDigest       = byte_array::ConstByteArray;
   using ContractName   = byte_array::ConstByteArray;
   using ResourceSet    = std::set<Resource>;
-  using ContractHashes = std::set<Resource>;
+  using RawResourceSet = std::set<Resource>;
   using Fee            = uint64_t;
 
   ResourceSet resources;
-
-  // Hashes of the body of the smart contract(s) accessed - note these are base64
-  ContractHashes contract_hashes;
+  RawResourceSet raw_resources; // Raw hashes (not wrapped by scope)
 
   TxDigest transaction_hash;
   Fee      fee{0};
@@ -97,7 +95,7 @@ struct TransactionSummary
   {
     if (resources.size() > 0 && transaction_hash.size() > 0 && contract_name.size() > 0)
     {
-      for (auto const &hash : contract_hashes)
+      for (auto const &hash : raw_resources)
       {
         if (hash.size() == 0)
         {
@@ -119,13 +117,13 @@ struct TransactionSummary
 template <typename T>
 void Serialize(T &serializer, TransactionSummary const &b)
 {
-  serializer << b.resources << b.contract_hashes << b.fee << b.transaction_hash << b.contract_name;
+  serializer << b.resources << b.raw_resources << b.fee << b.transaction_hash << b.contract_name;
 }
 
 template <typename T>
 void Deserialize(T &serializer, TransactionSummary &b)
 {
-  serializer >> b.resources >> b.contract_hashes >> b.fee >> b.transaction_hash >> b.contract_name;
+  serializer >> b.resources >> b.raw_resources >> b.fee >> b.transaction_hash >> b.contract_name;
 }
 
 class MutableTransaction;
@@ -315,9 +313,9 @@ public:
     return summary_.contract_name;
   }
 
-  TransactionSummary::ContractHashes const &contract_hashes() const
+  TransactionSummary::RawResourceSet const &raw_resources() const
   {
-    return summary_.contract_hashes;
+    return summary_.raw_resources;
   }
 
   TxDigest const &digest() const
@@ -371,11 +369,11 @@ public:
       hash.Update(e);
     }
 
-    std::vector<byte_array::ConstByteArray> contract_hashes;
-    std::copy(summary().contract_hashes.begin(), summary().contract_hashes.end(),
-              std::back_inserter(contract_hashes));
-    std::sort(contract_hashes.begin(), contract_hashes.end());
-    for (auto const &e : contract_hashes)
+    std::vector<byte_array::ConstByteArray> raw_resources;
+    std::copy(summary().raw_resources.begin(), summary().raw_resources.end(),
+              std::back_inserter(raw_resources));
+    std::sort(raw_resources.begin(), raw_resources.end());
+    for (auto const &e : raw_resources)
     {
       hash.Update(e);
     }
@@ -439,7 +437,7 @@ public:
 
   void PushContractHash(byte_array::ConstByteArray const &res)
   {
-    summary_.contract_hashes.insert(res);
+    summary_.raw_resources.insert(res);
   }
 
   void set_summary(TransactionSummary const &summary)
@@ -462,9 +460,9 @@ public:
     summary_.contract_name = name;
   }
 
-  void set_contract_hash(TransactionSummary::ContractHashes const &hashes)
+  void set_contract_hash(TransactionSummary::RawResourceSet const &hashes)
   {
-    summary_.contract_hashes = hashes;
+    summary_.raw_resources = hashes;
   }
 
   void set_fee(uint64_t fee)
@@ -518,7 +516,7 @@ void TxSigningAdapter<MUTABLE_TX>::Update() const
   if (stream_->size() == 0)
   {
     serializers::ByteArrayBuffer &stream = *stream_.get();
-    stream.Append(tx_->contract_name(), tx_->fee(), tx_->resources(), tx_->contract_hashes(),
+    stream.Append(tx_->contract_name(), tx_->fee(), tx_->resources(), tx_->raw_resources(),
                   tx_->data());
     // tx_data_hash_.Reset();
     tx_data_hash_->Update(stream.data());
@@ -562,7 +560,7 @@ void Deserialize(T &stream, TxSigningAdapter<MUTABLE_TX> &tx)
   stream >> tx_.summary_.resources;
   success_counter++;
 
-  stream >> tx_.summary_.contract_hashes;
+  stream >> tx_.summary_.raw_resources;
   success_counter++;
 
   stream >> tx_.data_;
@@ -579,7 +577,7 @@ bool TxSigningAdapter<MUTABLE_TX>::operator==(TxSigningAdapter<MUTABLE_TX> const
 {
   MutableTransaction const &left = left_tx;
   return tx_->contract_name() == left.contract_name() && tx_->fee() == left.fee() &&
-         tx_->resources() == left.resources() && tx_->contract_hashes() == left.contract_hashes() &&
+         tx_->resources() == left.resources() && tx_->raw_resources() == left.raw_resources() &&
          tx_->data() == left.data();
 }
 

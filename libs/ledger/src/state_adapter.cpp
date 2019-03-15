@@ -31,12 +31,12 @@ namespace ledger {
  * @param scope The reference to the scope
  */
 StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope,
-                           ResourceSet const &resources, ResourceSet const &contract_hashes)
+                           ResourceSet const &resources, ResourceSet const &raw_resources)
   : storage_{storage}
   , scope_{std::move(scope)}
 {
   // Populate the allowed resources
-  for (auto const &hash : contract_hashes)
+  for (auto const &hash : raw_resources)
   {
     allowed_accesses_.insert(std::string{hash});
 #ifndef NDEBUG

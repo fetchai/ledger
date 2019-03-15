@@ -91,7 +91,7 @@ TEST_F(DummyContractTests, CheckDispatch)
   ASSERT_TRUE(identifier.Parse(tx.contract_name()));
 
   // create the storage adapter
-  StateAdapter adapter(*storage_, identifier.GetParent(), tx.resources(), tx.contract_hashes());
+  StateAdapter adapter(*storage_, identifier.GetParent(), tx.resources(), tx.raw_resources());
 
   // attach, dispatch and detach (run the life cycle)
   contract_->Attach(adapter);
