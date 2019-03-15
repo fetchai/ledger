@@ -46,10 +46,10 @@ public:
 
   /**
    * Evaluates the output of a node (calling all necessary forward prop)
-   * @param nodeName name of node to evaluate for output
+   * @param node_name name of node to evaluate for output
    * @return pointer to array containing node output
    */
-  ArrayPtrType Evaluate(std::string const &node_name)
+  ArrayType const &Evaluate(std::string const &node_name)
   {
     if (nodes_[node_name])
     {
@@ -63,12 +63,12 @@ public:
 
   /**
    * Backpropagate an error signal through the graph
-   * @param nodeName name of node from which to begin backprop
+   * @param node_name name of node from which to begin backprop
    * @param errorSignal pointer to array containing error signal to backprop
    */
-  void BackPropagate(std::string const &nodeName, ArrayPtrType errorSignal)
+  void BackPropagate(std::string const &node_name, ArrayType const &errorSignal)
   {
-    nodes_[nodeName]->BackPropagate(errorSignal);
+    nodes_[node_name]->BackPropagate(errorSignal);
   }
 
   /**
@@ -125,10 +125,10 @@ public:
   /**
    * Assigns data to a placeholder if the node can be found in the graph.
    * Also resets the graph cache to avoid erroneous leftover outputs
-   * @param nodeName name of the placeholder node in the graph (must be unique)
+   * @param node_name name of the placeholder node in the graph (must be unique)
    * @param data the pointer to a tensor to assign to the placeholder
    */
-  void SetInput(std::string const &node_name, ArrayPtrType data)
+  void SetInput(std::string const &node_name, ArrayType data, bool batch = false)
   {
     std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>> placeholder =
         std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<ArrayType>>(nodes_[node_name]);
@@ -141,6 +141,10 @@ public:
     else
     {
       throw std::runtime_error("No placeholder node with name [" + node_name + "] found in graph!");
+    }
+    for (auto &n : nodes_)
+    {
+      n.second->SetBatch(batch);
     }
   }
 

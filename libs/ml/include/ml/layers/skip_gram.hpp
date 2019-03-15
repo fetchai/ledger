@@ -78,11 +78,10 @@ public:
     this->AddInputNode(context);
     this->SetOutputNode(output);
 
-    ArrayPtrType weights_ptr =
-        std::make_shared<ArrayType>(std::vector<SizeType>({in_size, embedding_size}));
-    this->Initialise(weights_ptr, init_mode);
-    this->SetInput(embed_in_, weights_ptr);
-    this->SetInput(embed_ctx, weights_ptr);
+    ArrayType weights = std::vector<SizeType>({in_size, embedding_size});
+    this->Initialise(weights, init_mode);
+    this->SetInput(embed_in_, weights);
+    this->SetInput(embed_ctx, weights);
   }
 
   std::shared_ptr<ops::Embeddings<ArrayType>> GetEmbeddings(std::shared_ptr<SkipGram<ArrayType>> &g)

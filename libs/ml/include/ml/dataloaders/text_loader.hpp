@@ -22,8 +22,9 @@
 #include "math/free_functions/standard_functions/abs.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 
-#include <algorithm>                // random_shuffle
-#include <fstream>                  // file streaming
+#include <algorithm>  // random_shuffle
+#include <fstream>    // file streaming
+#include <numeric>    // std::iota
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -65,7 +66,7 @@ public:
  * @tparam T  tensor type
  */
 template <typename T>
-class TextLoader : public DataLoader<std::shared_ptr<T>, typename T::SizeType>
+class TextLoader : public DataLoader<T, typename T::SizeType>
 {
   using ArrayType = T;
   using DataType  = typename T::Type;
@@ -128,6 +129,7 @@ public:
     }
 
     data_buffers_.resize(p_.n_data_buffers);
+    labels_.resize(1);
 
     // set up training dataset
     BuildText(data);
@@ -156,7 +158,7 @@ public:
    */
   virtual bool IsDone() const
   {
-    return cursor_ >= size_;
+    return cursor_ >= word_count_;
   }
 
   /**
@@ -172,20 +174,21 @@ public:
    * @param idx
    * @return  returns a pair of output buffer and label (i.e. X & Y)
    */
-  virtual std::pair<std::shared_ptr<T>, SizeType> GetAtIndex(SizeType idx)
+  virtual std::pair<T, SizeType> GetAtIndex(SizeType idx)
   {
-    std::shared_ptr<T> full_buffer =
-        std::make_shared<ArrayType>(std::vector<SizeType>({1, p_.n_data_buffers}));
+    T full_buffer(std::vector<SizeType>({1, p_.n_data_buffers}));
 
     // pull data from multiple data buffers into single output buffer
     std::vector<SizeType> buffer_idxs = GetData(idx);
     assert(buffer_idxs.size() == p_.n_data_buffers);
 
+    SizeType buffer_count = 0;
     for (SizeType j = 0; j < p_.n_data_buffers; ++j)
     {
-      SizeType sentence_idx = word_idx_sentence_idx[idx];
-      SizeType word_idx     = GetWordOffsetFromWordIdx(idx);
-      full_buffer->At(j)    = DataType(data_.at(sentence_idx).at(word_idx));
+      SizeType sentence_idx = word_idx_sentence_idx[buffer_idxs.at(buffer_count)];
+      SizeType word_idx     = GetWordOffsetFromWordIdx(buffer_idxs.at(buffer_count));
+      full_buffer.At(j)     = DataType(data_.at(sentence_idx).at(word_idx));
+      ++buffer_count;
     }
 
     SizeType label = SizeType(labels_[idx]);
@@ -198,28 +201,37 @@ public:
    * get the next data point in order
    * @return
    */
-  virtual std::pair<std::shared_ptr<T>, SizeType> GetNext()
+  virtual std::pair<T, SizeType> GetNext()
   {
     // loop until we find a non-discarded data point
     bool not_found = true;
-    while(not_found)
+    while (not_found)
     {
-      if (cursor_ > vocab_.size())
+      if (cursor_ >= word_count_)
       {
         Reset();
         is_done_ = true;
       }
 
-      SizeType sentence_idx = GetSentenceIdxFromWordIdx(cursor_);
-      SizeType word_offset = GetWordOffsetFromWordIdx(cursor_);
-      if (!(discards_.at(sentence_idx).at(word_offset)))
+      if (p_.discard_frequent)
       {
-        is_done_ = false;
-        not_found = false;
+        SizeType sentence_idx = GetSentenceIdxFromWordIdx(cursor_);
+        SizeType word_offset  = GetWordOffsetFromWordIdx(cursor_);
+
+        if (!(discards_.at(sentence_idx).at(word_offset)))
+        {
+          is_done_  = false;
+          not_found = false;
+        }
+        else
+        {
+          ++cursor_;
+        }
       }
       else
       {
-        ++cursor_;
+        is_done_  = false;
+        not_found = false;
       }
     }
 
@@ -230,29 +242,37 @@ public:
    * gets the next data point at random
    * @return
    */
-  std::pair<std::shared_ptr<T>, SizeType> GetRandom()
+  std::pair<T, SizeType> GetRandom()
   {
     // loop until we find a non-discarded data point
     bool not_found = true;
-    while(not_found)
+    while (not_found)
     {
       if (cursor_ > vocab_.size())
       {
         Reset();
-        is_done_ = true;
+        is_done_             = true;
         new_random_sequence_ = true;
       }
 
       SizeType sentence_idx = GetSentenceIdxFromWordIdx(cursor_);
-      SizeType word_offset = GetWordOffsetFromWordIdx(cursor_);
-      if (!(discards_.at(sentence_idx).at(word_offset)))
+      SizeType word_offset  = GetWordOffsetFromWordIdx(cursor_);
+      if (p_.discard_frequent)
       {
-        is_done_ = false;
-        not_found = false;
+        if (!(discards_.at(sentence_idx).at(word_offset)))
+        {
+          is_done_  = false;
+          not_found = false;
+        }
+        else
+        {
+          ++cursor_;
+        }
       }
       else
       {
-        ++cursor_;
+        is_done_  = false;
+        not_found = false;
       }
     }
 
@@ -350,21 +370,27 @@ public:
         {
           // first word in current sentence is therefore
           word_idx_for_offset_zero = cur_word_idx + 1;
-
-          word_offset = word_idx - word_idx_for_offset_zero;
+          word_offset              = word_idx - word_idx_for_offset_zero;
+          not_found                = false;
+        }
+        else
+        {
+          --cur_word_idx;
         }
       }
-      not_found = false;
     }
     return word_offset;
   }
 
 private:
   /**
-   * method for building up the training pairs that the Get funtions will reference
+   * Override this method with a more interesting implementation
    * @param training_data
    */
-  virtual std::vector<SizeType> GetData(SizeType idxs) = 0;
+  virtual std::vector<SizeType> GetData(SizeType idx)
+  {
+    return {idx};
+  }
 
   /**
    * helper for stripping punctuation from words
@@ -625,28 +651,25 @@ private:
    */
   void DiscardFrequent(std::vector<std::vector<std::string>> &sentences)
   {
-    if (p_.discard_frequent)
+    // iterate through all sentences
+    for (SizeType sntce_idx = 0; sntce_idx < sentences.size(); sntce_idx++)
     {
-      // iterate through all sentences
-      for (SizeType sntce_idx = 0; sntce_idx < sentences.size(); sntce_idx++)
+      discards_.push_back({});
+      // iterate through words in the sentence choosing which to discard
+      for (SizeType i = 0; i < sentences[sntce_idx].size(); i++)
       {
-        discards_.push_back({});
-        // iterate through words in the sentence choosing which to discard
-        for (SizeType i = 0; i < sentences[sntce_idx].size(); i++)
+        if (DiscardExample(sentences[sntce_idx][i]))
         {
-          if (DiscardExample(sentences[sntce_idx][i]))
-          {
-            discards_.at(discard_sentence_idx_).push_back(1);
-            ++discard_count_;
-          }
-          else
-          {
-            discards_.at(discard_sentence_idx_).push_back(0);
-          }
+          discards_.at(discard_sentence_idx_).push_back(1);
+          ++discard_count_;
         }
-
-        ++discard_sentence_idx_;
+        else
+        {
+          discards_.at(discard_sentence_idx_).push_back(0);
+        }
       }
+
+      ++discard_sentence_idx_;
     }
   }
 

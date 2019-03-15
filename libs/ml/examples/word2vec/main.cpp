@@ -97,29 +97,29 @@ std::vector<DataType> TestEmbeddings(Graph<ArrayType> &g, std::string &skip_gram
       sg_layer->GetEmbeddings(sg_layer);
 
   // film
-  ArrayPtrType embed_film_input  = std::make_shared<ArrayType>(dl.VocabSize());
-  std::string  film_lookup       = "film";
-  SizeType     film_idx          = dl.VocabLookup(film_lookup);
-  embed_film_input->At(film_idx) = 1;
-  ArrayType film_output          = embeddings->Forward({embed_film_input})->Clone();
+  ArrayType   embed_film_input(dl.VocabSize());
+  std::string film_lookup       = "film";
+  SizeType    film_idx          = dl.VocabLookup(film_lookup);
+  embed_film_input.At(film_idx) = 1;
+  ArrayType film_output         = embeddings->Forward({embed_film_input}).Clone();
 
-  ArrayPtrType embed_movie_input   = std::make_shared<ArrayType>(dl.VocabSize());
-  std::string  movie_lookup        = "movie";
-  SizeType     movie_idx           = dl.VocabLookup(movie_lookup);
-  embed_movie_input->At(movie_idx) = 1;
-  ArrayType movie_output           = embeddings->Forward({embed_movie_input})->Clone();
+  ArrayType   embed_movie_input(dl.VocabSize());
+  std::string movie_lookup        = "movie";
+  SizeType    movie_idx           = dl.VocabLookup(movie_lookup);
+  embed_movie_input.At(movie_idx) = 1;
+  ArrayType movie_output          = embeddings->Forward({embed_movie_input}).Clone();
 
-  ArrayPtrType embed_great_input   = std::make_shared<ArrayType>(dl.VocabSize());
-  std::string  great_lookup        = "great";
-  SizeType     great_idx           = dl.VocabLookup(great_lookup);
-  embed_great_input->At(great_idx) = 1;
-  ArrayType great_output           = embeddings->Forward({embed_great_input})->Clone();
+  ArrayType   embed_great_input(dl.VocabSize());
+  std::string great_lookup        = "great";
+  SizeType    great_idx           = dl.VocabLookup(great_lookup);
+  embed_great_input.At(great_idx) = 1;
+  ArrayType great_output          = embeddings->Forward({embed_great_input}).Clone();
 
-  ArrayPtrType embed_the_input = std::make_shared<ArrayType>(dl.VocabSize());
-  std::string  the_lookup      = "the";
-  SizeType     the_idx         = dl.VocabLookup(the_lookup);
-  embed_the_input->At(the_idx) = 1;
-  ArrayType the_output         = embeddings->Forward({embed_the_input})->Clone();
+  ArrayType   embed_the_input(dl.VocabSize());
+  std::string the_lookup      = "the";
+  SizeType    the_idx         = dl.VocabLookup(the_lookup);
+  embed_the_input.At(the_idx) = 1;
+  ArrayType the_output        = embeddings->Forward({embed_the_input}).Clone();
 
   DataType result_film_movie, result_film_great, result_movie_great, result_movie_the;
 
@@ -180,16 +180,12 @@ int main()
 
   std::cout << "beginning training...: " << std::endl;
 
-  std::pair<std::shared_ptr<ArrayType>, SizeType> data;
-  std::shared_ptr<ArrayType>                      input = std::make_shared<ArrayType>(
-      std::vector<typename ArrayType::SizeType>({1, dataloader.VocabSize()}));
-  std::shared_ptr<ArrayType> context = std::make_shared<ArrayType>(
-      std::vector<typename ArrayType::SizeType>({1, dataloader.VocabSize()}));
-  std::shared_ptr<ArrayType> gt =
-      std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1, 1}));
-  DataType                   loss = 0;
-  std::shared_ptr<ArrayType> scale_factor =
-      std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1, 1}));
+  std::pair<ArrayType, SizeType> data;
+  ArrayType                      input(std::vector<typename ArrayType::SizeType>({1, 1}));
+  ArrayType                      context(std::vector<typename ArrayType::SizeType>({1, 1}));
+  ArrayType                      gt(std::vector<typename ArrayType::SizeType>({1, 1}));
+  DataType                       loss = 0;
+  ArrayType                      scale_factor(std::vector<typename ArrayType::SizeType>({1, 1}));
 
   for (std::size_t i = 0; i < tp.training_steps; ++i)
   {
@@ -198,15 +194,15 @@ int main()
 
     // assign input and context vectors
     SizeType count_idx = 0;
-    for (auto &e : *(data.first))
+    for (auto &e : data.first)
     {
       if (count_idx < dataloader.VocabSize())
       {
-        input->At(count_idx) = e;
+        input.At(count_idx) = e;
       }
       else
       {
-        context->At(count_idx - dataloader.VocabSize()) = e;
+        context.At(count_idx - dataloader.VocabSize()) = e;
       }
       ++count_idx;
     }
@@ -214,25 +210,25 @@ int main()
     g.SetInput("Context", context);
 
     // assign label
-    gt->Fill(0);
-    gt->At(0) = DataType(data.second);
+    gt.Fill(0);
+    gt.At(0) = DataType(data.second);
     //    gt->At(SizeType(data.second)) = DataType(1);
 
     // forward pass
-    std::shared_ptr<ArrayType> results = g.Evaluate(output_name);
+    ArrayType results = g.Evaluate(output_name);
 
     //    // result interpreted as probability True - so reverse for gt == 0
 
     //    std::cout << "gt->At(0): " << gt->At(0) << std::endl;
     //    std::cout << "results->At(0): " << results->At(0) << std::endl;
-    if (gt->At(0) == DataType(0))
+    if (gt.At(0) == DataType(0))
     {
-      results->At(0)      = DataType(1) - results->At(0);
-      scale_factor->At(0) = DataType(sp.k_negative_samples);
+      results.At(0)      = DataType(1) - results.At(0);
+      scale_factor.At(0) = DataType(sp.k_negative_samples);
     }
     else
     {
-      scale_factor->At(0) = DataType(1);
+      scale_factor.At(0) = DataType(1);
     }
     //    std::cout << "results->At(0): " << results->At(0) << std::endl;
 
@@ -252,7 +248,7 @@ int main()
     //    std::cout << "tmp_loss: " << tmp_loss << std::endl;
 
     // backprop
-    g.BackPropagate(output_name, criterion.Backward({results, gt}));
+    g.BackPropagate(output_name, criterion.Backward(std::vector<ArrayType>({results, gt})));
 
     if (i % tp.batch_size == (tp.batch_size - 1))
     {

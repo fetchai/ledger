@@ -34,9 +34,9 @@ TYPED_TEST_CASE(MatrixMultiplyTest, MyTypes);
 
 TYPED_TEST(MatrixMultiplyTest, forward_test)
 {
-  std::shared_ptr<TypeParam> a  = std::make_shared<TypeParam>(std::vector<std::uint64_t>({1, 5}));
-  std::shared_ptr<TypeParam> b  = std::make_shared<TypeParam>(std::vector<std::uint64_t>({5, 4}));
-  std::shared_ptr<TypeParam> gt = std::make_shared<TypeParam>(std::vector<std::uint64_t>({1, 4}));
+  TypeParam a(std::vector<std::uint64_t>({1, 5}));
+  TypeParam b(std::vector<std::uint64_t>({5, 4}));
+  TypeParam gt(std::vector<std::uint64_t>({1, 4}));
 
   std::vector<int> data({1, 2, -3, 4, 5});
   std::vector<int> weights(
@@ -45,37 +45,35 @@ TYPED_TEST(MatrixMultiplyTest, forward_test)
 
   for (std::uint64_t i(0); i < data.size(); ++i)
   {
-    a->Set(i, typename TypeParam::Type(data[i]));
+    a.Set(i, typename TypeParam::Type(data[i]));
   }
   for (std::uint64_t i(0); i < 5; ++i)
   {
     for (std::uint64_t j(0); j < 4; ++j)
     {
-      b->Set(std::vector<std::uint64_t>({i, j}), typename TypeParam::Type(weights[i * 4 + j]));
+      b.Set(std::vector<std::uint64_t>({i, j}), typename TypeParam::Type(weights[i * 4 + j]));
     }
   }
   for (std::uint64_t i(0); i < results.size(); ++i)
   {
-    gt->Set(i, typename TypeParam::Type(results[i]));
+    gt.Set(i, typename TypeParam::Type(results[i]));
   }
 
   fetch::ml::ops::MatrixMultiply<TypeParam> op;
-  std::shared_ptr<TypeParam>                prediction = op.Forward({a, b});
+  TypeParam                                 prediction = op.Forward({a, b});
 
   // // test correct values
-  ASSERT_TRUE(prediction->shape().size() == 2);
-  ASSERT_TRUE(prediction->shape()[0] == 1);
-  ASSERT_TRUE(prediction->shape()[1] == 4);
-  ASSERT_TRUE(prediction->AllClose(*gt));
+  ASSERT_EQ(prediction.shape(), std::vector<typename TypeParam::SizeType>({1, 4}));
+  ASSERT_TRUE(prediction.AllClose(gt));
 }
 
 TYPED_TEST(MatrixMultiplyTest, backward_test)
 {
-  std::shared_ptr<TypeParam> a  = std::make_shared<TypeParam>(std::vector<std::uint64_t>({1, 5}));
-  std::shared_ptr<TypeParam> b  = std::make_shared<TypeParam>(std::vector<std::uint64_t>({5, 4}));
-  std::shared_ptr<TypeParam> e  = std::make_shared<TypeParam>(std::vector<std::uint64_t>({1, 4}));
-  std::shared_ptr<TypeParam> ig = std::make_shared<TypeParam>(std::vector<std::uint64_t>({1, 5}));
-  std::shared_ptr<TypeParam> wg = std::make_shared<TypeParam>(std::vector<std::uint64_t>({5, 4}));
+  TypeParam a(std::vector<std::uint64_t>({1, 5}));
+  TypeParam b(std::vector<std::uint64_t>({5, 4}));
+  TypeParam error(std::vector<std::uint64_t>({1, 4}));
+  TypeParam gradient_a(std::vector<std::uint64_t>({1, 5}));
+  TypeParam gradient_b(std::vector<std::uint64_t>({5, 4}));
 
   std::vector<int> data({1, 2, -3, 4, 5});
   std::vector<int> weights(
@@ -87,45 +85,42 @@ TYPED_TEST(MatrixMultiplyTest, backward_test)
 
   for (std::uint64_t i(0); i < data.size(); ++i)
   {
-    a->Set(i, typename TypeParam::Type(data[i]));
+    a.Set(i, typename TypeParam::Type(data[i]));
   }
   for (std::uint64_t i(0); i < 5; ++i)
   {
     for (std::uint64_t j(0); j < 4; ++j)
     {
-      b->Set(std::vector<std::uint64_t>({i, j}), typename TypeParam::Type(weights[i * 4 + j]));
+      b.Set(std::vector<std::uint64_t>({i, j}), typename TypeParam::Type(weights[i * 4 + j]));
     }
   }
   for (std::uint64_t i(0); i < errorSignal.size(); ++i)
   {
-    e->Set(i, typename TypeParam::Type(errorSignal[i]));
+    error.Set(i, typename TypeParam::Type(errorSignal[i]));
   }
   for (std::uint64_t i(0); i < inputGrad.size(); ++i)
   {
-    ig->Set(i, typename TypeParam::Type(inputGrad[i]));
+    gradient_a.Set(i, typename TypeParam::Type(inputGrad[i]));
   }
   for (std::uint64_t i(0); i < 5; ++i)
   {
     for (std::uint64_t j(0); j < 4; ++j)
     {
-      wg->Set(std::vector<std::uint64_t>({i, j}), typename TypeParam::Type(weightsGrad[i * 4 + j]));
+      gradient_b.Set(std::vector<std::uint64_t>({i, j}),
+                     typename TypeParam::Type(weightsGrad[i * 4 + j]));
     }
   }
 
   fetch::ml::ops::MatrixMultiply<TypeParam> op;
-  std::vector<std::shared_ptr<TypeParam>>   backpropagatedSignals =
-      op.Backward(std::vector<std::shared_ptr<TypeParam>>({a, b}), e);
+  std::vector<TypeParam>                    backpropagatedSignals =
+      op.Backward(std::vector<std::reference_wrapper<TypeParam const>>({a, b}), error);
 
   // test correct shapes
   ASSERT_EQ(backpropagatedSignals.size(), 2);
-  ASSERT_EQ(backpropagatedSignals[0]->shape().size(), 2);
-  EXPECT_EQ(backpropagatedSignals[0]->shape()[0], 1);
-  EXPECT_EQ(backpropagatedSignals[0]->shape()[1], 5);
-  ASSERT_EQ(backpropagatedSignals[1]->shape().size(), 2);
-  EXPECT_EQ(backpropagatedSignals[1]->shape()[0], 5);
-  ASSERT_EQ(backpropagatedSignals[1]->shape()[1], 4);
+  ASSERT_EQ(backpropagatedSignals[0].shape(), std::vector<typename TypeParam::SizeType>({1, 5}));
+  ASSERT_EQ(backpropagatedSignals[1].shape(), std::vector<typename TypeParam::SizeType>({5, 4}));
 
   // test correct values
-  EXPECT_TRUE(backpropagatedSignals[0]->AllClose(*ig));
-  EXPECT_TRUE(backpropagatedSignals[1]->AllClose(*wg));
+  EXPECT_TRUE(backpropagatedSignals[0].AllClose(gradient_a));
+  EXPECT_TRUE(backpropagatedSignals[1].AllClose(gradient_b));
 }

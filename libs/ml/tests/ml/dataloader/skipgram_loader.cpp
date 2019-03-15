@@ -26,8 +26,6 @@
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 
-std::string TRAINING_DATA = "This is a test sentence of total length ten words.";
-
 template <typename T>
 SkipGramTextParams<T> SetParams()
 {
@@ -45,34 +43,6 @@ SkipGramTextParams<T> SetParams()
   return ret;
 }
 
-template <typename TypeParam>
-std::pair<std::string, std::string> GetStrings(SkipGramLoader<TypeParam> loader,
-                                               TypeParam                 input_and_context_one_hot)
-{
-  using SizeType = typename TypeParam::SizeType;
-
-  TypeParam input({1, loader.VocabSize()});
-  TypeParam context({1, loader.VocabSize()});
-  SizeType  idx = 0;
-  for (auto &e : input_and_context_one_hot)
-  {
-    if (idx < loader.VocabSize())
-    {
-      input[idx] = e;
-    }
-    else
-    {
-      context[idx - loader.VocabSize()] = e;
-    }
-    idx++;
-  }
-
-  std::string input_str   = loader.VocabLookup(SizeType(double(fetch::math::ArgMax(input))));
-  std::string context_str = loader.VocabLookup(SizeType(double(fetch::math::ArgMax(context))));
-
-  return std::make_pair(input_str, context_str);
-}
-
 template <typename T>
 class SkipGramDataloaderTest : public ::testing::Test
 {
@@ -85,24 +55,48 @@ TYPED_TEST_CASE(SkipGramDataloaderTest, MyTypes);
 
 TYPED_TEST(SkipGramDataloaderTest, loader_test)
 {
-  //  using Type = typename TypeParam::Type;
-  //  using SizeType = typename TypeParam::SizeType;
 
+  std::string TRAINING_DATA =
+      "This is a test sentence of total length ten words. This is another test sentence of total "
+      "length ten words.";
+
+  using SizeType                  = typename TypeParam::SizeType;
   SkipGramTextParams<TypeParam> p = SetParams<TypeParam>();
   SkipGramLoader<TypeParam>     loader(TRAINING_DATA, p);
 
-  std::vector<std::string> gt_input({"this", "is", "is", "a", "a", "test", "test", "sentence",
-                                     "sentence", "of", "of", "total", "total", "length", "length",
-                                     "ten", "ten", "words"});
-  std::vector<std::string> gt_context({"is", "this", "a", "is", "test", "a", "sentence", "test",
-                                       "of", "sentence", "total", "of", "length", "total", "ten",
-                                       "length", "words", "ten"});
+  std::vector<std::pair<std::string, std::string>> gt_input_context_pairs(
+      {std::pair<std::string, std::string>("this", "is"),
+       std::pair<std::string, std::string>("is", "this"),
+       std::pair<std::string, std::string>("is", "a"),
+       std::pair<std::string, std::string>("a", "is"),
+       std::pair<std::string, std::string>("a", "test"),
+       std::pair<std::string, std::string>("test", "a"),
+       std::pair<std::string, std::string>("test", "sentence"),
+       std::pair<std::string, std::string>("sentence", "test"),
+       std::pair<std::string, std::string>("sentence", "of"),
+       std::pair<std::string, std::string>("of", "sentence"),
+       std::pair<std::string, std::string>("of", "total"),
+       std::pair<std::string, std::string>("total", "of"),
+       std::pair<std::string, std::string>("total", "length"),
+       std::pair<std::string, std::string>("length", "total"),
+       std::pair<std::string, std::string>("length", "ten"),
+       std::pair<std::string, std::string>("ten", "length"),
+       std::pair<std::string, std::string>("ten", "words"),
+       std::pair<std::string, std::string>("words", "ten"),
+       std::pair<std::string, std::string>("is", "another"),
+       std::pair<std::string, std::string>("another", "is"),
+       std::pair<std::string, std::string>("another", "test"),
+       std::pair<std::string, std::string>("test", "another")});
 
-  std::pair<std::string, std::string> input_and_context;
-  for (std::size_t j = 0; j < gt_input.size(); ++j)
+  TypeParam input_and_context;
+  for (std::size_t j = 0; j < 1000; ++j)
   {
-    input_and_context = GetStrings(loader, *loader.GetNext().first);
-    ASSERT_TRUE(input_and_context.first.compare(gt_input[j]) == 0);
-    ASSERT_TRUE(input_and_context.second.compare(gt_context[j]) == 0);
+    input_and_context = loader.GetNext().first;
+
+    std::string input   = loader.VocabLookup(SizeType(input_and_context[0]));
+    std::string context = loader.VocabLookup(SizeType(input_and_context[1]));
+    ASSERT_TRUE(std::find(gt_input_context_pairs.begin(), gt_input_context_pairs.end(),
+                          std::pair<std::string, std::string>(input, context)) !=
+                gt_input_context_pairs.end());
   }
 }

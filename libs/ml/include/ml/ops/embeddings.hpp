@@ -35,74 +35,49 @@ public:
 
   Embeddings(SizeType dataPoints, SizeType dimensions)
   {
-    this->SetData(std::make_shared<ArrayType>(std::vector<SizeType>({dataPoints, dimensions})));
+    this->SetData(ArrayType(std::vector<SizeType>({dataPoints, dimensions})));
   }
 
   virtual ~Embeddings() = default;
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     ASSERT(this->output_);
     ASSERT(inputs.size() == 1);
-    ASSERT(inputs[0]->size() == 1);
+    ASSERT(inputs.front().get().shape().size() == 1);
 
-    SizeType row_count = this->CheckRows(inputs[0]);
-
-    if (!this->embeddings_output_ || this->embeddings_output_->shape()[0] != row_count ||
+    if (!this->embeddings_output_ ||
+        this->embeddings_output_->shape()[0] != inputs.front().get().size() ||
         this->embeddings_output_->shape()[1] != this->output_->shape()[1])
     {
       this->embeddings_output_ = std::make_shared<ArrayType>(
-          std::vector<SizeType>({row_count, this->output_->shape()[1]}));
+          std::vector<SizeType>({inputs.front().get().size(), this->output_->shape()[1]}));
     }
-    SizeType j(0);
-    SizeType k(0);
-    for (DataType const &i : *(inputs[0]))
+    uint64_t j(0);
+    for (DataType const &i : inputs.front().get())
     {
-      if (i == DataType(1))
-      {
-        this->embeddings_output_->Slice(j).Copy(this->output_->Slice(k));
-        j++;
-      }
-      k++;
+      this->embeddings_output_->Slice(j).Copy(
+          this->output_->Slice(typename ArrayType::SizeType(i)));
+      j++;
     }
-
-    return this->embeddings_output_;
+    return *this->embeddings_output_;
   }
 
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 1);
-    ASSERT(inputs[0]->shape().size() == 1);
+    ASSERT(inputs.front().get().shape().size() == 1);
 
-    SizeType j(0);
-    for (SizeType i = 0; i < inputs[0]->size(); ++i)
+    uint64_t j(0);
+    for (DataType const &i : inputs.front().get())
     {
-      if (inputs[0]->At(i) == DataType(1))
-      {
-        this->gradientAccumulation_->Slice(SizeType(double(i)))
-            .Copy(errorSignal->Slice(SizeType(double(j))));
-        ++j;
-      }
+      this->gradientAccumulation_->Slice(typename ArrayType::SizeType(i))
+          .Copy(errorSignal.Slice(j));
+      j++;
     }
-
-    // TODO ()
-    return {errorSignal};
-  }
-
-private:
-  SizeType CheckRows(ArrayPtrType input)
-  {
-    SizeType row_count = 0;
-    for (SizeType l = 0; l < input->size(); ++l)
-    {
-      assert(input->At(l) == DataType(1) || input->At(l) == DataType(0));
-      if (input->At(l) == DataType(1))
-      {
-        ++row_count;
-      }
-    }
-    return row_count;
+    return {};
   }
 
 private:

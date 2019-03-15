@@ -88,7 +88,7 @@ private:
    * @param idx
    * @return
    */
-  std::vector<SizeType> GetData(SizeType idx)
+  virtual std::vector<SizeType> GetData(SizeType idx) override
   {
     if (SelectValence())
     {
@@ -104,8 +104,16 @@ private:
    */
   bool SelectValence()
   {
-    double                cur_val            = this->lfg_.AsDouble();
-    double                positive_threshold = 1.0 / p_.k_negative_samples;
+    double cur_val = this->lfg_.AsDouble();
+    double positive_threshold;
+    if (p_.k_negative_samples > 0)
+    {
+      positive_threshold = 1.0 / p_.k_negative_samples;
+    }
+    else
+    {
+      positive_threshold = 1.0;
+    }
     std::vector<SizeType> ret{};
 
     if (cur_val < positive_threshold)
@@ -223,7 +231,7 @@ private:
       }
     }
 
-    SizeType context_offset = this->lcg_() % unigram_selection.size();
+    SizeType context_offset = unigram_selection.at(this->lcg_() % unigram_selection.size());
     SizeType context_idx    = idx + context_offset - p_.window_size;
 
     return context_idx;

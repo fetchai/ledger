@@ -17,38 +17,32 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/placeholder.hpp"
-#include "ml/ops/weights.hpp"
-#include "ml/subgraph.hpp"
-
-#include <cmath>
+#include "core/assert.hpp"
+#include "math/tensor.hpp"
+#include <memory>
+#include <vector>
 
 namespace fetch {
-namespace ml {
-namespace layers {
+namespace math {
 
-template <class T>
-class Layer : public SubGraph<T>
+/*
+ * Concatenate tensor by creating a new leading dimention
+ * Example [2, 5, 5] + [2, 5, 5] + [2, 5, 5] = [3, 2, 5, 5]
+ * Returns newly allocated memory
+ */
+template <typename T>
+fetch::math::Tensor<T> ConcatenateTensors(std::vector<fetch::math::Tensor<T>> const &tensors)
 {
-public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
-
-  std::uint64_t in_size;
-  std::uint64_t out_size;
-
-  Layer(std::uint64_t in, std::uint64_t out)
-    : in_size(in)
-    , out_size(out)
-  {}
-
-  void Initialise(ArrayType &weights, WeightsInit init_mode)
+  std::vector<typename fetch::math::Tensor<T>::SizeType> retSize;
+  retSize.push_back(tensors.size());
+  retSize.insert(retSize.end(), tensors.front().shape().begin(), tensors.front().shape().end());
+  fetch::math::Tensor<T> ret(retSize);
+  for (typename fetch::math::Tensor<T>::SizeType i(0); i < tensors.size(); ++i)
   {
-    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, in_size, out_size, init_mode);
+    ret.Slice(i).Copy(tensors[i]);
   }
-};
+  return ret;
+}
 
-}  // namespace layers
-}  // namespace ml
+}  // namespace math
 }  // namespace fetch
