@@ -59,8 +59,17 @@ std::string findWordByIndex(std::map<std::string, uint64_t> const &vocab, uint64
 
 int main(int ac, char **av)
 {
+  if (ac < 2)
+  {
+    std::cerr << "Usage: " << av[0] << " INPUT_FILES_TXT" << std::endl;
+    return 1;
+  }
+
   fetch::ml::CBOWLoader<DataType> loader(CONTEXT_WINDOW_SIZE);
-  loader.AddData(readFile("/Users/wilmot_p/gutenberg/4634-0.txt"));
+  for (int i(1); i < ac; ++i)
+  {
+    loader.AddData(readFile(av[i]));
+  }
   unsigned int vocabSize = (unsigned int)loader.GetVocab().size();
   std::cout << "Vocab size : " << vocabSize << std::endl;
 
@@ -74,7 +83,7 @@ int main(int ac, char **av)
   MeanSquareError<ArrayType> criterion;
   unsigned int               iteration(0);
   float                      loss = 0;
-  while (!loader.IsDone())
+  while (!loader.IsDone() && iteration < 100)
   {
     auto input = loader.GetNext();
     g.SetInput("Input", input.first);
@@ -85,8 +94,7 @@ int main(int ac, char **av)
     g.BackPropagate("Softmax", criterion.Backward({predictions, groundTruth}));
     g.Step(LEARNING_RATE);
 
-    if (iteration % 1 ==
-        0)  // At the moment, 1 iteration runs in 7 sec >< Time to do some optimisation
+    if (iteration % 1 == 0)
     {
       for (unsigned int i(0); i < CONTEXT_WINDOW_SIZE * 2 + 1; ++i)
       {
