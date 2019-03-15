@@ -35,7 +35,9 @@ public:
 
   Embeddings(unsigned int dataPoints, unsigned int dimensions)
   {
-    this->SetData(ArrayType(std::vector<SizeType>({dataPoints, dimensions})));
+    ArrayType weights = ArrayType(std::vector<SizeType>({dataPoints, dimensions}));
+    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, 10, 10);
+    this->SetData(weights);
   }
 
   virtual ~Embeddings() = default;
@@ -77,7 +79,7 @@ public:
           .Copy(errorSignal.Slice(j));
       j++;
     }
-    return {};
+    return {ArrayType(errorSignal.shape())};
   }
 
 private:
