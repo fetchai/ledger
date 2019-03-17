@@ -128,33 +128,13 @@ StateSentinelAdapter::Status StateSentinelAdapter::Exists(std::string const &key
   return StateAdapter::Exists(key);
 }
 
-///**
-// * Creates a scoped address from a string based key
-// *
-// * @param scope The contract context for the state variable
-// * @param key The input key to be converted
-// * @return The generated resource address for this key
-// */
-// ResourceAddress StateSentinelAdapter::CreateAddress(Identifier const &scope, ConstByteArray const
-// &key)
-//{
-//  FETCH_LOG_DEBUG("StateSentinelAdapter", "Creating address for key: ", key.ToBase64(),
-//                  " scope: ", scope.full_name());
-//  return ResourceAddress{scope.full_name() + ".state." + key};
-//}
-
-///**
-// * Creates a non-scoped address
-// *
-// * @param key The input key to be converted
-// * @return The generated resource address for this key
-// */
-// ResourceAddress StateSentinelAdapter::CreateAddress(ConstByteArray const &key)
-//{
-//  FETCH_LOG_DEBUG("StateSentinelAdapter", "Creating address for key: ", key.ToBase64(), " (no
-//  scope)"); return ResourceAddress{key};
-//}
-
+/**
+ * Check whether the resource being requested is allowed
+ *
+ * @param: key key to check
+ *
+ * @return: whether it is allowed
+ */
 bool StateSentinelAdapter::IsAllowedResource(std::string const &key) const
 {
   bool result = allowed_accesses_.find(key) != allowed_accesses_.end();

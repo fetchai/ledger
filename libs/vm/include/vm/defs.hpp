@@ -852,13 +852,6 @@ struct Variant
     return variant;
   }
 
-  /*
-  template <typename T>
-  typename std::enable_if_t<IsAddress<T>::value, T> Get() const
-  {
-    return *object;
-  }*/
-
   template <typename T>
   typename std::enable_if_t<IsPrimitive<T>::value, T> Move()
   {

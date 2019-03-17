@@ -47,8 +47,6 @@ ConstByteArray const CONTRACT_SOURCE{"text"};
 ConstByteArray const CONTRACT_HASH{"digest"};
 
 SmartContractManager::SmartContractManager()
-  : script_{std::make_shared<Script>()}
-  , module_{vm_modules::VMFactory::GetModule()}
 {
   OnTransaction("create", this, &SmartContractManager::OnCreate);
 }
@@ -77,7 +75,7 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
     return Status::FAILED;
   }
 
-  // decode the contents of the
+  // decode the contents of the contract
   contract_source = FromBase64(contract_source);
 
   // calculate a hash to compare against the one submitted
@@ -91,96 +89,6 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
 
     return Status::FAILED;
   }
-
-  /*
-
-  // Compile the script and run any initialization required
-  auto errors = vm_modules::VMFactory::Compile(module_, std::string{contract_source}, *script_);
-
-  // if there are any compilation errors
-  if (!errors.empty())
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to compile SC when adding it.");
-    return Status::FAILED;
-  }
-
-  // since we now have a fully compiled script we can evaluate the functions and assign the mapping
-  std::string on_init_function;
-
-  // evaluate all the visible functions in this script and register the associated handle
-  for (auto const &fn : script_->functions)
-  {
-    // determine the kind of function
-    auto const kind = vm::DetermineKind(fn);
-
-    switch (kind)
-    {
-    case vm::Kind::ON_INIT:
-      if (on_init_function.size() > 0)
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "More than one init function found in SC. Terminating.");
-        return Status::FAILED;
-      }
-      FETCH_LOG_WARN(LOGGING_NAME, "Found init function for SC");
-      on_init_function = fn.name;
-      break;
-
-    case vm::Kind::INVALID:
-      FETCH_LOG_WARN(LOGGING_NAME, "Invalid function decorator found when adding SC");
-      return Status::FAILED;
-
-    default:
-      break;
-    }
-  }
-
-  auto tx_signatures = tx.signatures();
-
-  if (tx_signatures.size() != 1)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Only one signature allowed when setting up smart contract");
-    return Status::FAILED;
-  }
-
-  // Convert the TX signature to a base64
-  auto pub_key_b64 = tx_signatures.begin()->first.identifier().ToBase64();
-
-  Identifier scope;
-  if (!scope.Parse(calculated_hash + "." + pub_key_b64))
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse scope for smart contract");
-    return Status::FAILED;
-  }
-
-  state().PushContext(scope);
-
-  // Get clean VM instance
-  auto vm = vm_modules::VMFactory::GetVM(module_);
-  vm->SetIOObserver(state());
-
-  FETCH_LOG_WARN(LOGGING_NAME, "Running SC init code: ", calculated_hash);
-
-  // if there is an init function to run
-  if (on_init_function.size() > 0)
-  {
-    vm::ParameterPack params{vm->registered_types()};
-
-    // Execute the requested function
-    std::string        error;
-    std::string        console;
-    fetch::vm::Variant output;
-    if (!vm->Execute(*script_, on_init_function, error, console, output, params))
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
-      return Status::FAILED;
-    }
-  }
-
-  FETCH_LOG_WARN(LOGGING_NAME, "Adding smart contract, ID: ", calculated_hash,
-                 " on_init called: ", on_init_function.size() != 0);
-
-  state().PopContext();
-  */
 
   // Set the scope for the smart contract to execute its on_init if it exists
   auto tx_signatures = tx.signatures();

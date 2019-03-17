@@ -95,9 +95,6 @@ template <typename T>
 class State : public IState
 {
 public:
-  // Important restriction for the moment is that the state value must be primitive
-  // static_assert(IsPrimitive<T>::value, "State value must be a primitive");
-
   // Construct state object, default argument = get from state DB, initializing to value if not
   // found
   State(VM *vm, TypeId type_id, TypeId value_type_id, Ptr<String> const &name,

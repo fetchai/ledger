@@ -25,10 +25,9 @@ namespace vm {
 class Address : public Object
 {
 public:
-  static constexpr std::size_t SIZE             = 64;
+  static constexpr std::size_t RAW_BYTES_SIZE   = 64;
   static constexpr std::size_t STRING_REPR_SIZE = 88;
   using Buffer                                  = std::vector<uint8_t>;
-  // using is_address = bool;
   bool is_address = true;
 
   static Ptr<Address> Constructor(VM *vm, TypeId id)
@@ -63,7 +62,7 @@ public:
   {
     bool success{false};
 
-    if (SIZE == address.size())
+    if (RAW_BYTES_SIZE == address.size())
     {
       address_ = std::move(address);
       success  = true;
@@ -72,47 +71,42 @@ public:
     return success;
   }
 
-  void SetStringRepresentation(std::string const &repr)
+  bool SetStringRepresentation(std::string const &repr)
   {
-    if (repr.size() != STRING_REPR_SIZE)
+    bool success{false};
+
+    if (repr.size() == STRING_REPR_SIZE)
     {
-      std::cerr << "Expected string size of " << STRING_REPR_SIZE << ", got: " << repr.size()
-                << std::endl;
+      string_representation_ = repr;
     }
 
-    string_representation_ = repr;
+    return success;
   }
 
   fetch::vm::Ptr<fetch::vm::String> AsString()
   {
-    // std::string copy_buffer{address_.begin(), address_.end()};
-    // fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm_, copy_buffer));
     fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm_, string_representation_));
     return ret;
   }
 
   uint64_t AsBytesSize() const
   {
-    return STRING_REPR_SIZE + SIZE;
+    return STRING_REPR_SIZE + RAW_BYTES_SIZE;
   }
 
   void *AsBytes()
   {
-    void *bytes = malloc(STRING_REPR_SIZE + SIZE);
-
-    std::cerr << "sizes:" << std::endl;
-    std::cerr << address_.size() << std::endl;
-    std::cerr << string_representation_.size() << std::endl;
+    void *bytes = malloc(STRING_REPR_SIZE + RAW_BYTES_SIZE);
 
     memcpy(bytes, address_.data(), address_.size());
-    memcpy((uint8_t *)bytes + SIZE, string_representation_.c_str(), string_representation_.size());
+    memcpy((uint8_t *)bytes + RAW_BYTES_SIZE, string_representation_.c_str(), string_representation_.size());
     return bytes;
   }
 
   void FromBytes(void *data)
   {
-    address_ = Buffer((uint8_t *)data, (uint8_t *)data + SIZE);
-    string_representation_.assign(((const char *)data) + SIZE, (std::size_t)STRING_REPR_SIZE);
+    address_ = Buffer((uint8_t *)data, (uint8_t *)data + RAW_BYTES_SIZE);
+    string_representation_.assign(((const char *)data) + RAW_BYTES_SIZE, (std::size_t)STRING_REPR_SIZE);
   }
 
 private:
