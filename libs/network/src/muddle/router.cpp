@@ -694,10 +694,8 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
  */
 Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/) const
 {
-  Handle handle = 0;
-
-  std::random_device rd;
-  std::mt19937       rng(rd());
+  static std::random_device rd;
+  static std::mt19937       rng(rd());
 
   {
     FETCH_LOCK(routing_table_lock_);
@@ -705,18 +703,19 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/
     if (!routing_table_.empty())
     {
       // decide the random index to access
-      std::size_t const element = rng() % routing_table_.size();
+      std::uniform_int_distribution<decltype(routing_table_)::size_type> distro(
+          0, routing_table_.size());
+      std::size_t const element = distro(rng);
 
       // advance the iterator to the correct offset
       auto it = routing_table_.cbegin();
       std::advance(it, static_cast<std::ptrdiff_t>(element));
 
-      // update the handle
-      handle = it->second.handle;
+      return it->second.handle;
     }
   }
 
-  return handle;
+  return 0;
 }
 
 /**
@@ -816,19 +815,13 @@ void Router::RoutePacket(PacketPtr packet, bool external)
   if (external)
   {
     // Handle TTL based routing timeout
-    bool message_time_expired = true;
-    if (packet->GetTTL() > 2u)
-    {
-      // decrement the TTL
-      packet->SetTTL(static_cast<uint8_t>(packet->GetTTL() - 1u));
-      message_time_expired = false;
-    }
-
-    if (message_time_expired)
+    if (packet->GetTTL() <= 2u)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Message has timed out (TTL): ", DescribePacket(*packet));
       return;
     }
+    // decrement the TTL
+    packet->SetTTL(static_cast<uint8_t>(packet->GetTTL() - 1u));
 
     // if this packet is a broadcast echo we should no longer route this packet
     if (packet->IsBroadcast() && IsEcho(*packet))
