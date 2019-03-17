@@ -364,9 +364,7 @@ inline Packet::BinaryHeader Packet::StaticHeader() const noexcept
 inline void Packet::Sign(crypto::Prover &prover)
 {
   SetStamped();
-  if (prover.Sign((
-			  serializers::ByteArrayBuffer() << StaticHeader() << payload_)
-		  .data()))
+  if (prover.Sign((serializers::ByteArrayBuffer() << StaticHeader() << payload_).data()))
   {
     stamp_ = prover.signature();
   }
@@ -383,10 +381,7 @@ inline bool Packet::Verify() const
     return false;  // null signature is not genuine in non-trusted networks
   }
   auto retVal = crypto::Verify(
-      GetSender(),
-      (
-	      serializers::ByteArrayBuffer() << StaticHeader() << payload_)
-      .data(), stamp_);
+      GetSender(), (serializers::ByteArrayBuffer() << StaticHeader() << payload_).data(), stamp_);
   return retVal;
 }
 

@@ -193,7 +193,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   reactor_.Attach(main_chain_service_->GetWeakRunnable());
 
   // configure all the lane services
-  lane_services_.Setup(network_manager_, shard_cfgs_);
+  lane_services_.Setup(network_manager_, shard_cfgs_, !config.disable_signing);
 
   // configure the middleware of the http server
   http_.AddMiddleware(http::middleware::AllowOrigin("*"));
