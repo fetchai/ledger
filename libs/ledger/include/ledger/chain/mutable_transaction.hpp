@@ -67,8 +67,8 @@ struct TransactionSummary
   using RawResourceSet = std::set<Resource>;
   using Fee            = uint64_t;
 
-  ResourceSet resources;
-  RawResourceSet raw_resources; // Raw hashes (not wrapped by scope)
+  ResourceSet    resources;
+  RawResourceSet raw_resources;  // Raw hashes (not wrapped by scope)
 
   TxDigest transaction_hash;
   Fee      fee{0};

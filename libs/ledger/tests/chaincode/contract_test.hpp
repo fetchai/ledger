@@ -160,7 +160,8 @@ protected:
     Identifier full_contract_name{tx.contract_name()};
 
     // adapt the storage engine for this execution
-    fetch::ledger::StateSentinelAdapter storage_adapter{*storage_, *contract_name_, tx.resources(), tx.resources()};
+    fetch::ledger::StateSentinelAdapter storage_adapter{*storage_, *contract_name_, tx.resources(),
+                                                        tx.resources()};
 
     // dispatch the transaction to the contract
     contract_->Attach(storage_adapter);

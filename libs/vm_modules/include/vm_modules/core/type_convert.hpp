@@ -27,7 +27,7 @@ template <typename T>
 fetch::math::meta::IfIsArithmetic<T, fetch::vm::Ptr<fetch::vm::String>> toString(fetch::vm::VM *vm,
                                                                                  T const &      a)
 {
-  if(std::is_same<T, bool>::value)
+  if (std::is_same<T, bool>::value)
   {
     fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, a ? "True" : "False"));
     return ret;

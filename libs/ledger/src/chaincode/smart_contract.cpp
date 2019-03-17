@@ -40,7 +40,6 @@
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
 using fetch::byte_array::ToBase64;
-using fetch::byte_array::ToHex;
 
 namespace fetch {
 namespace ledger {
@@ -63,27 +62,28 @@ void ValidateAddressesInParams(Transaction const &tx, vm::ParameterPack const &p
   // This doesn't work with a set (???)
   std::unordered_set<ConstByteArray> valid_addresses;
 
-  for(auto const &sig : tx.signatures())
+  for (auto const &sig : tx.signatures())
   {
-    //ConstByteArray identifier = sig.first.identifier();
+    // ConstByteArray identifier = sig.first.identifier();
     valid_addresses.insert(sig.first.identifier());
   }
 
-  for (std::size_t i = 0; i < params.size();i++)
+  for (std::size_t i = 0; i < params.size(); i++)
   {
-    if(params[i].type_id == vm::TypeIds::Address)
+    if (params[i].type_id == vm::TypeIds::Address)
     {
       auto &var = *(params[i].Get<vm::Ptr<vm::Address>>());
 
       ConstByteArray address_data{var.GetBytes().data(), var.GetBytes().size()};
 
-      if (std::find(valid_addresses.begin(), valid_addresses.end(), address_data) != valid_addresses.end())
+      if (std::find(valid_addresses.begin(), valid_addresses.end(), address_data) !=
+          valid_addresses.end())
       {
         var.SetSignedTx(true);
       }
 
       /*
-      auto find_fn = [var](ConstByteArray const &address) 
+      auto find_fn = [var](ConstByteArray const &address)
       {
         if(var.GetBytes().size() != address.size() || address.size() == 0)
         {
@@ -237,7 +237,7 @@ std::vector<uint8_t> Convert(ConstByteArray const &buffer)
  */
 void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::object const &obj)
 {
-  static uint8_t const  ADDRESS_ID   = static_cast<uint8_t>(0x4d); // 77
+  static uint8_t const  ADDRESS_ID   = static_cast<uint8_t>(0x4d);  // 77
   static uint32_t const ADDRESS_SIZE = 64u;
 
   bool valid{false};
@@ -258,7 +258,7 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
     FETCH_LOG_INFO("argh", "packing external: ", uint64_t(ext.type()));
 
     if ((ADDRESS_ID == ext.type()) && (ADDRESS_SIZE == ext.size))
-    //if (ADDRESS_SIZE == ext.size)
+    // if (ADDRESS_SIZE == ext.size)
     {
       uint8_t const *start = reinterpret_cast<uint8_t const *>(ext.data());
       uint8_t const *end   = start + ext.size;
@@ -268,7 +268,8 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
 
       std::vector<uint8_t> packed_body{start, end};
 
-      address->SetStringRepresentation(std::string{ToBase64(byte_array::ConstByteArray{packed_body.data(), packed_body.size()})});
+      address->SetStringRepresentation(std::string{
+          ToBase64(byte_array::ConstByteArray{packed_body.data(), packed_body.size()})});
       address->SetBytes(std::vector<uint8_t>{start, end});
 
       static_assert(vm::IsPtr<vm::Ptr<vm::Address>>::value, "");
@@ -375,21 +376,21 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
 Contract::Status SmartContract::InvokeAction(std::string const &name, Transaction const &tx)
 {
   // Important to keep the handle alive as long as the msgpack::object is needed to avoid segfault!
-  msgpack::object_handle h;
+  msgpack::object_handle       h;
   std::vector<msgpack::object> input_params;
 
-  bool name_is = name.compare("transfer") == 0;
+  bool name_is        = name.compare("transfer") == 0;
   auto parameter_data = byte_array::ByteArray{tx.data()};
 
-  if(name_is)
+  if (name_is)
   {
     std::cerr << "MSG: " << tx.data().ToHex() << std::endl;
 
-    //parameter_data = byte_array::FromHex("93c7404d7ff8e341cbba88c946ddc76a5906b249b583a1232b875ec263728354519ad44703302f9a3166179546e98d15a2e201b2640e8ea2e5ed76a6ab6d2f1cc069f9b3c7404d1fa1e360296d873da2b76300e737e44d939f1d0809a9d6b4e19dec57c1e7b658e8b62df19ba6a59b96cdfcef945af88789d69b8635218f62e2b5b2c8537debd7cd03ec");
+    // parameter_data =
+    // byte_array::FromHex("93c7404d7ff8e341cbba88c946ddc76a5906b249b583a1232b875ec263728354519ad44703302f9a3166179546e98d15a2e201b2640e8ea2e5ed76a6ab6d2f1cc069f9b3c7404d1fa1e360296d873da2b76300e737e44d939f1d0809a9d6b4e19dec57c1e7b658e8b62df19ba6a59b96cdfcef945af88789d69b8635218f62e2b5b2c8537debd7cd03ec");
   }
 
   FETCH_UNUSED(name_is);
-
 
   // if the tx has a payload parse it
   if (!parameter_data.empty() && parameter_data != "{}")
@@ -471,7 +472,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
 }
 
 /**
- * Invoke 
+ * Invoke
  *
  * @param name The name of the action
  * @param tx The input transaction
@@ -502,7 +503,7 @@ Contract::Status SmartContract::InvokeInit(std::string const &name, Transaction 
     address->SetStringRepresentation(std::string{ToBase64(tx_sig)});
     bool success = address->SetBytes(std::move(pub_key_bytes));
 
-    if(!success)
+    if (!success)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to pack address of TX for init method");
       return Status::FAILED;

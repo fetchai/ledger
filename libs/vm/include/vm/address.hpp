@@ -25,10 +25,10 @@ namespace vm {
 class Address : public Object
 {
 public:
-  static constexpr std::size_t SIZE = 64;
+  static constexpr std::size_t SIZE             = 64;
   static constexpr std::size_t STRING_REPR_SIZE = 88;
-  using Buffer                      = std::vector<uint8_t>;
-  //using is_address = bool;
+  using Buffer                                  = std::vector<uint8_t>;
+  // using is_address = bool;
   bool is_address = true;
 
   static Ptr<Address> Constructor(VM *vm, TypeId id)
@@ -74,9 +74,10 @@ public:
 
   void SetStringRepresentation(std::string const &repr)
   {
-    if(repr.size() != STRING_REPR_SIZE)
+    if (repr.size() != STRING_REPR_SIZE)
     {
-      std::cerr << "Expected string size of "<< STRING_REPR_SIZE <<", got: " << repr.size() << std::endl;
+      std::cerr << "Expected string size of " << STRING_REPR_SIZE << ", got: " << repr.size()
+                << std::endl;
     }
 
     string_representation_ = repr;
@@ -84,8 +85,8 @@ public:
 
   fetch::vm::Ptr<fetch::vm::String> AsString()
   {
-    //std::string copy_buffer{address_.begin(), address_.end()};
-    //fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm_, copy_buffer));
+    // std::string copy_buffer{address_.begin(), address_.end()};
+    // fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm_, copy_buffer));
     fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm_, string_representation_));
     return ret;
   }
@@ -111,14 +112,14 @@ public:
   void FromBytes(void *data)
   {
     address_ = Buffer((uint8_t *)data, (uint8_t *)data + SIZE);
-    string_representation_.assign(((const char *)data)+SIZE, (std::size_t)STRING_REPR_SIZE);
+    string_representation_.assign(((const char *)data) + SIZE, (std::size_t)STRING_REPR_SIZE);
   }
 
 private:
-  Buffer address_{};
+  Buffer      address_{};
   std::string string_representation_{"NONE_FOUND"};
-  bool   signed_tx_{false};
-  VM *vm_;
+  bool        signed_tx_{false};
+  VM *        vm_;
 };
 
 }  // namespace vm

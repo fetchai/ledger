@@ -41,8 +41,8 @@ class SmartContract : public Contract
 {
 public:
   using ConstByteArray = byte_array::ConstByteArray;
-  using Script    = fetch::vm::Script;
-  using ScriptPtr = std::shared_ptr<Script>;
+  using Script         = fetch::vm::Script;
+  using ScriptPtr      = std::shared_ptr<Script>;
 
   static constexpr char const *LOGGING_NAME = "SmartContract";
 

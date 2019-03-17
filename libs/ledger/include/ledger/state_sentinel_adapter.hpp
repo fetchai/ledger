@@ -35,8 +35,8 @@ public:
 
   // Construction / Destruction
   StateSentinelAdapter(StorageInterface &storage, Identifier scope,
-               ResourceSet const &resources       = ResourceSet{},
-               ResourceSet const &raw_resources = ResourceSet{});
+                       ResourceSet const &resources     = ResourceSet{},
+                       ResourceSet const &raw_resources = ResourceSet{});
 
   ~StateSentinelAdapter() override;
 
@@ -48,7 +48,7 @@ public:
   /// @}
 
 private:
-  bool IsAllowedResource(std::string const &key) const;
+  bool                  IsAllowedResource(std::string const &key) const;
   std::set<std::string> allowed_accesses_;
 };
 

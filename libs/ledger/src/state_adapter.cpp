@@ -33,12 +33,10 @@ namespace ledger {
 StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope)
   : storage_{storage}
   , scope_{std::move(scope)}
-{
-}
+{}
 
 StateAdapter::~StateAdapter()
-{
-}
+{}
 
 /**
  * Read a value from the state store
@@ -93,7 +91,7 @@ StateAdapter::Status StateAdapter::Read(std::string const &key, void *data, uint
  */
 StateAdapter::Status StateAdapter::Write(std::string const &key, void const *data, uint64_t size)
 {
-  if(!enable_writes_)
+  if (!enable_writes_)
   {
     return Status::OK;
   }

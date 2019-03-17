@@ -31,8 +31,9 @@ namespace ledger {
  * @param scope The reference to the scope
  */
 StateSentinelAdapter::StateSentinelAdapter(StorageInterface &storage, Identifier scope,
-                           ResourceSet const &resources, ResourceSet const &raw_resources) :
-  StateAdapter(storage, scope)
+                                           ResourceSet const &resources,
+                                           ResourceSet const &raw_resources)
+  : StateAdapter(storage, scope)
 {
   enable_writes_ = true;
 
@@ -78,9 +79,10 @@ StateSentinelAdapter::~StateSentinelAdapter()
  * back
  * @return OK if the read was successful, PERMISSION_DENIED if the key is incorrect, otherwise ERROR
  */
-StateSentinelAdapter::Status StateSentinelAdapter::Read(std::string const &key, void *data, uint64_t &size)
+StateSentinelAdapter::Status StateSentinelAdapter::Read(std::string const &key, void *data,
+                                                        uint64_t &size)
 {
-  if(!IsAllowedResource(WrapKeyWithScope(key)))
+  if (!IsAllowedResource(WrapKeyWithScope(key)))
   {
     return Status::PERMISSION_DENIED;
   }
@@ -97,9 +99,10 @@ StateSentinelAdapter::Status StateSentinelAdapter::Read(std::string const &key, 
  * @return OK if the write was successful, PERMISSION_DENIED if the key is incorrect, otherwise
  * ERROR
  */
-StateSentinelAdapter::Status StateSentinelAdapter::Write(std::string const &key, void const *data, uint64_t size)
+StateSentinelAdapter::Status StateSentinelAdapter::Write(std::string const &key, void const *data,
+                                                         uint64_t size)
 {
-  if(!IsAllowedResource(WrapKeyWithScope(key)))
+  if (!IsAllowedResource(WrapKeyWithScope(key)))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unable to write to resource: ", WrapKeyWithScope(key));
     return Status::PERMISSION_DENIED;
@@ -117,7 +120,7 @@ StateSentinelAdapter::Status StateSentinelAdapter::Write(std::string const &key,
  */
 StateSentinelAdapter::Status StateSentinelAdapter::Exists(std::string const &key)
 {
-  if(!IsAllowedResource(WrapKeyWithScope(key)))
+  if (!IsAllowedResource(WrapKeyWithScope(key)))
   {
     return Status::PERMISSION_DENIED;
   }
@@ -132,7 +135,8 @@ StateSentinelAdapter::Status StateSentinelAdapter::Exists(std::string const &key
 // * @param key The input key to be converted
 // * @return The generated resource address for this key
 // */
-//ResourceAddress StateSentinelAdapter::CreateAddress(Identifier const &scope, ConstByteArray const &key)
+// ResourceAddress StateSentinelAdapter::CreateAddress(Identifier const &scope, ConstByteArray const
+// &key)
 //{
 //  FETCH_LOG_DEBUG("StateSentinelAdapter", "Creating address for key: ", key.ToBase64(),
 //                  " scope: ", scope.full_name());
@@ -145,10 +149,10 @@ StateSentinelAdapter::Status StateSentinelAdapter::Exists(std::string const &key
 // * @param key The input key to be converted
 // * @return The generated resource address for this key
 // */
-//ResourceAddress StateSentinelAdapter::CreateAddress(ConstByteArray const &key)
+// ResourceAddress StateSentinelAdapter::CreateAddress(ConstByteArray const &key)
 //{
-//  FETCH_LOG_DEBUG("StateSentinelAdapter", "Creating address for key: ", key.ToBase64(), " (no scope)");
-//  return ResourceAddress{key};
+//  FETCH_LOG_DEBUG("StateSentinelAdapter", "Creating address for key: ", key.ToBase64(), " (no
+//  scope)"); return ResourceAddress{key};
 //}
 
 bool StateSentinelAdapter::IsAllowedResource(std::string const &key) const
@@ -167,7 +171,7 @@ bool StateSentinelAdapter::IsAllowedResource(std::string const &key) const
 
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to access resource \n", key, "\nAll resources: \n",
                    all_resources.str());
-    //exit(1);
+    // exit(1);
   }
 #endif
 
@@ -176,4 +180,3 @@ bool StateSentinelAdapter::IsAllowedResource(std::string const &key) const
 
 }  // namespace ledger
 }  // namespace fetch
-

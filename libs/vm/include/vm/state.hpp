@@ -43,33 +43,36 @@ protected:
 };
 
 template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
-inline IoObserverInterface::Status ReadHelper(std::string const &name, T *val, IoObserverInterface &io)
+inline IoObserverInterface::Status ReadHelper(std::string const &name, T *val,
+                                              IoObserverInterface &io)
 {
-  uint64_t   buffer_size = sizeof(val);
+  uint64_t buffer_size = sizeof(val);
   return io.Read(name, val, buffer_size);
 }
 
 template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
-inline IoObserverInterface::Status WriteHelper(std::string const &name, T *val, IoObserverInterface &io)
+inline IoObserverInterface::Status WriteHelper(std::string const &name, T *val,
+                                               IoObserverInterface &io)
 {
   return io.Write(name, val, sizeof(val));
 }
 
-inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<Address> *val, IoObserverInterface &io)
+inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<Address> *val,
+                                              IoObserverInterface &io)
 {
   auto exists_status = io.Exists(name);
-  if(exists_status != IoObserverInterface::Status::OK)
+  if (exists_status != IoObserverInterface::Status::OK)
   {
     return exists_status;
   }
 
   // Lets say for now that Address has fixed memory size
-  uint64_t buffer_size = (*val)->AsBytesSize();
-  void *write_buffer = malloc(buffer_size);
+  uint64_t buffer_size  = (*val)->AsBytesSize();
+  void *   write_buffer = malloc(buffer_size);
 
   auto result = io.Read(name, write_buffer, buffer_size);
 
-  if(result == IoObserverInterface::Status::OK)
+  if (result == IoObserverInterface::Status::OK)
   {
     (*val)->FromBytes(write_buffer);
   }
@@ -79,9 +82,10 @@ inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<Addre
   return result;
 }
 
-inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr<Address> *val, IoObserverInterface &io)
+inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr<Address> *val,
+                                               IoObserverInterface &io)
 {
-  auto bytes = (*val)->AsBytes();
+  auto bytes  = (*val)->AsBytes();
   auto status = io.Write(name, bytes, (*val)->AsBytesSize());
   free(bytes);
   return status;
@@ -92,7 +96,7 @@ class State : public IState
 {
 public:
   // Important restriction for the moment is that the state value must be primitive
-  //static_assert(IsPrimitive<T>::value, "State value must be a primitive");
+  // static_assert(IsPrimitive<T>::value, "State value must be a primitive");
 
   // Construct state object, default argument = get from state DB, initializing to value if not
   // found
@@ -107,7 +111,7 @@ public:
     if (vm_->HasIoObserver())
     {
       // attempt to read the value from the storage engine
-      auto const status      = ReadHelper(name_->str, &value_, vm_->GetIOObserver());
+      auto const status = ReadHelper(name_->str, &value_, vm_->GetIOObserver());
 
       // mark the variable as existed if we get a positive result back
       existed_ = (Status::OK == status);

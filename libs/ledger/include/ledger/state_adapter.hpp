@@ -55,14 +55,14 @@ public:
   Status Exists(std::string const &key) override;
   /// @}
 
-  void PushContext(Identifier const &scope);
-  void PopContext();
+  void        PushContext(Identifier const &scope);
+  void        PopContext();
   std::string WrapKeyWithScope(std::string const &key);
 
 protected:
-  StorageInterface        &storage_;
+  StorageInterface &      storage_;
   std::vector<Identifier> scope_;
-  bool enable_writes_   = false;
+  bool                    enable_writes_ = false;
 };
 
 }  // namespace ledger
