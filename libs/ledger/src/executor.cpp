@@ -26,7 +26,7 @@
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "metrics/metrics.hpp"
 
-#include "ledger/state_adapter.hpp"
+#include "ledger/state_sentinel_adapter.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -90,7 +90,7 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
     {
       // create the cache and state sentinel (lock and unlock resources as well as sandbox)
       CachedStorageAdapter storage_cache{*resources_};
-      StateAdapter         storage_adapter{storage_cache, contract.GetParent(), tx.resources(),
+      StateSentinelAdapter storage_adapter{storage_cache, contract.GetParent(), tx.resources(),
                                    tx.raw_resources()};
 
       // lookup or create the instance of the contract as is needed

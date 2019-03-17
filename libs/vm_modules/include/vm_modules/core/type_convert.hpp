@@ -39,6 +39,7 @@ static void CreateToString(std::shared_ptr<fetch::vm::Module> &module)
   module->CreateFreeFunction("toString", &toString<uint64_t>);
   module->CreateFreeFunction("toString", &toString<float_t>);
   module->CreateFreeFunction("toString", &toString<double_t>);
+  /* module->CreateFreeFunction("toString", &toStringClass<fetch::vm::Address>); */
 }
 
 }  // namespace vm_modules

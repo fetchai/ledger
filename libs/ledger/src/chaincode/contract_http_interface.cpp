@@ -209,7 +209,6 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
 
     // adapt the storage engine so that that get and sets are sandboxed for the contract
     StateAdapter storage_adapter{storage_, contract_id};
-    storage_adapter.QueryMode(true);
 
     // attach, dispatch and detach
     contract->Attach(storage_adapter);

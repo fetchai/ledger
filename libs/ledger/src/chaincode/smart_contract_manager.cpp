@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/smart_contract_manager.hpp"
+#include "ledger/chaincode/smart_contract.hpp"
 
 #include "core/byte_array/decoders.hpp"
 #include "crypto/fnv.hpp"
@@ -90,6 +91,8 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
 
     return Status::FAILED;
   }
+
+  /*
 
   // Compile the script and run any initialization required
   auto errors = vm_modules::VMFactory::Compile(module_, std::string{contract_source}, *script_);
@@ -176,6 +179,79 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
   FETCH_LOG_WARN(LOGGING_NAME, "Adding smart contract, ID: ", calculated_hash,
                  " on_init called: ", on_init_function.size() != 0);
 
+  state().PopContext();
+  */
+
+  // Set the scope for the smart contract to execute its on_init if it exists
+  auto tx_signatures = tx.signatures();
+
+  if (tx_signatures.size() != 1)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Only one signature allowed when setting up smart contract");
+    return Status::FAILED;
+  }
+
+  Identifier scope;
+
+  auto pub_key_b64 = tx_signatures.begin()->first.identifier().ToBase64();
+
+  if (!scope.Parse(calculated_hash + "." + pub_key_b64))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse scope for smart contract");
+    return Status::FAILED;
+  }
+  state().PushContext(scope);
+
+  // construct a smart contract - this can throw for various reasons, need to catch this
+  SmartContract smart_contract{std::string{contract_source}};
+
+  // Attempt to call the init method, if it exists
+  std::string on_init_function;
+
+  for (auto const &fn : smart_contract.script()->functions)
+  {
+    // determine the kind of function
+    auto const kind = DetermineKind(fn);
+
+    switch (kind)
+    {
+    case vm::Kind::ON_INIT:
+      if (on_init_function.size() > 0)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "More than one init function found in SC. Terminating.");
+        return Status::FAILED;
+      }
+      FETCH_LOG_WARN(LOGGING_NAME, "Found init function for SC");
+      on_init_function = fn.name;
+      break;
+
+    case vm::Kind::INVALID:
+      FETCH_LOG_WARN(LOGGING_NAME, "Invalid function decorator found when adding SC");
+      return Status::FAILED;
+
+    default:
+      break;
+    }
+  }
+
+  // if there is an init function to run, do so.
+  if (on_init_function.size() > 0)
+  {
+    // Attach our state to the smart contract
+    smart_contract.Attach(state());
+
+    // Dispatch to the init. method
+    auto status = smart_contract.DispatchTransaction(on_init_function, tx);
+
+    if(status != Status::OK)
+    {
+      return status;
+    }
+
+    smart_contract.Detach();
+  }
+
+  // Revert to normal context
   state().PopContext();
 
   auto success = true;

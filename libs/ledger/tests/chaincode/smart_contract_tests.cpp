@@ -323,6 +323,9 @@ TEST_F(SmartContractTests, CheckParameterizedActionAndQuery)
     function increment(increment: Int32)
       var state = State<Int32>("value", 10);
       state.set(state.get() + increment);
+
+      var add = Address();
+      var argh = State<Address>("owner", add);
     endfunction
 
     @query
@@ -373,7 +376,7 @@ TEST_F(SmartContractTests, CheckParameterizedActionAndQuery)
   }
 
   // send the smart contract an "increment" action
-  EXPECT_EQ(SmartContract::Status::OK, SendActionWithParams("increment", {"value"}, 20));
+  EXPECT_EQ(SmartContract::Status::OK, SendActionWithParams("increment", {"value", "owner"}, 20));
 
   // make the query
   {

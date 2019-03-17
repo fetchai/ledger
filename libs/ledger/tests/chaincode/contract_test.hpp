@@ -22,7 +22,7 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/identifier.hpp"
-#include "ledger/state_adapter.hpp"
+#include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "mock_storage_unit.hpp"
 
@@ -142,7 +142,7 @@ protected:
     VerifiedTransaction tx = VerifiedTransaction::Create(std::move(mtx));
 
     // adapt the storage engine for this execution
-    StateAdapter storage_adapter{*storage_, *contract_name_, tx.resources()};
+    fetch::ledger::StateSentinelAdapter storage_adapter{*storage_, *contract_name_, tx.resources()};
 
     // dispatch the transaction to the contract
     contract_->Attach(storage_adapter);
@@ -160,7 +160,7 @@ protected:
     Identifier full_contract_name{tx.contract_name()};
 
     // adapt the storage engine for this execution
-    StateAdapter storage_adapter{*storage_, *contract_name_, tx.resources(), tx.resources()};
+    fetch::ledger::StateSentinelAdapter storage_adapter{*storage_, *contract_name_, tx.resources(), tx.resources()};
 
     // dispatch the transaction to the contract
     contract_->Attach(storage_adapter);
@@ -174,7 +174,6 @@ protected:
   {
     // adapt the storage engine for queries
     StateAdapter storage_adapter{*storage_, *contract_name_};
-    storage_adapter.QueryMode(true);
 
     // attach, dispatch and detach again
     contract_->Attach(storage_adapter);

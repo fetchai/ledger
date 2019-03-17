@@ -207,7 +207,7 @@ http::HTTPResponse WalletHttpInterface::OnBalance(http::HTTPRequest const &reque
     variant::Variant response;
 
     StateAdapter adapter{state_, Identifier{TokenContract::NAME}};
-    adapter.QueryMode(true);
+
     contract.Attach(adapter);
     contract.DispatchQuery("balance", doc.root(), response);
     contract.Detach();

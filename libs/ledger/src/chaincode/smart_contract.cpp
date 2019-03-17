@@ -39,6 +39,8 @@
 
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
+using fetch::byte_array::ToBase64;
+using fetch::byte_array::ToHex;
 
 namespace fetch {
 namespace ledger {
@@ -97,6 +99,12 @@ SmartContract::SmartContract(std::string const &source)
     case vm::Kind::NORMAL:
       break;
     case vm::Kind::ON_INIT:
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Registering on_init: ", fn.name,
+                      " (Contract: ", contract_digest().ToBase64(), ')');
+
+      // register the init function
+      OnTransaction(fn.name,
+                    [this, name = fn.name](auto const &tx) { return InvokeInit(name, tx); });
       break;
     case vm::Kind::ACTION:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Registering Action: ", fn.name,
@@ -177,7 +185,7 @@ std::vector<uint8_t> Convert(ConstByteArray const &buffer)
  */
 void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::object const &obj)
 {
-  static int8_t const   ADDRESS_ID   = static_cast<int8_t>(0xAD);
+  static uint8_t const  ADDRESS_ID   = static_cast<uint8_t>(0x4d); // 77
   static uint32_t const ADDRESS_SIZE = 64u;
 
   bool valid{false};
@@ -186,13 +194,29 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
   {
     auto const &ext = obj.via.ext;
 
+    auto thisthing = ext.type();
+    FETCH_UNUSED(thisthing);
+
+    bool compare = (0x8 & ADDRESS_ID) == (0x8 & ext.type());
+    FETCH_UNUSED(compare);
+
+    auto a = ADDRESS_ID;
+    FETCH_UNUSED(a);
+
+    FETCH_LOG_INFO("argh", "packing external: ", uint64_t(ext.type()));
+
     if ((ADDRESS_ID == ext.type()) && (ADDRESS_SIZE == ext.size))
+    //if (ADDRESS_SIZE == ext.size)
     {
       uint8_t const *start = reinterpret_cast<uint8_t const *>(ext.data());
       uint8_t const *end   = start + ext.size;
 
       // create the instance of the address
       vm::Ptr<vm::Address> address = vm::Address::Constructor(vm, vm::TypeIds::Address);
+
+      std::vector<uint8_t> packed_body{start, end};
+
+      address->SetStringRepresentation(std::string{ToBase64(byte_array::ConstByteArray{packed_body.data(), packed_body.size()})});
       address->SetBytes(std::vector<uint8_t>{start, end});
 
       static_assert(vm::IsPtr<vm::Ptr<vm::Address>>::value, "");
@@ -200,6 +224,9 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
       // add the address to the parameter pack
       pack.Add(std::move(address));
       valid = true;
+
+      std::cerr << "Packed address successfully! " << std::endl;
+      std::cerr << "" << std::endl;
     }
   }
 
@@ -295,18 +322,32 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
  */
 Contract::Status SmartContract::InvokeAction(std::string const &name, Transaction const &tx)
 {
+  // Important to keep the handle alive as long as the msgpack::object is needed to avoid segfault!
+  msgpack::object_handle h;
   std::vector<msgpack::object> input_params;
 
+  bool name_is = name.compare("transfer") == 0;
+  auto parameter_data = byte_array::ByteArray{tx.data()};
+
+  if(name_is)
+  {
+    std::cerr << "MSG: " << tx.data().ToHex() << std::endl;
+
+    //parameter_data = byte_array::FromHex("93c7404d7ff8e341cbba88c946ddc76a5906b249b583a1232b875ec263728354519ad44703302f9a3166179546e98d15a2e201b2640e8ea2e5ed76a6ab6d2f1cc069f9b3c7404d1fa1e360296d873da2b76300e737e44d939f1d0809a9d6b4e19dec57c1e7b658e8b62df19ba6a59b96cdfcef945af88789d69b8635218f62e2b5b2c8537debd7cd03ec");
+  }
+
+  FETCH_UNUSED(name_is);
+
+
   // if the tx has a payload parse it
-  if (!tx.data().empty() && tx.data() != "{}")
+  if (!parameter_data.empty() && parameter_data != "{}")
   {
     // load the input data into msgpack for deserialisation
     msgpack::unpacker p;
-    p.reserve_buffer(tx.data().size());
-    std::memcpy(p.buffer(), tx.data().pointer(), tx.data().size());
-    p.buffer_consumed(tx.data().size());
+    p.reserve_buffer(parameter_data.size());
+    std::memcpy(p.buffer(), parameter_data.pointer(), parameter_data.size());
+    p.buffer_consumed(parameter_data.size());
 
-    msgpack::object_handle h;
     if (!p.next(h))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Parse error");
@@ -318,7 +359,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
     if (msgpack::type::ARRAY != container.type)
     {
       FETCH_LOG_WARN(LOGGING_NAME,
-                     "Incorrect format, expected array of arguments. Input: ", tx.data());
+                     "Incorrect format, expected array of arguments. Input: ", parameter_data);
       return Status::FAILED;
     }
 
@@ -360,7 +401,75 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
     return Status::FAILED;
   }
 
+  for (std::size_t i = 0; i < params.size();i++)
+  {
+    if(params[i].type_id == vm::TypeIds::Address)
+    {
+      //vm::Address &address = params[i].As<vm::Address>();
+      auto &var = params[i];
+      (*var.Get<vm::Ptr<vm::Address>>()).SetSignedTx(true);
+    }
+  }
+  //
+
   FETCH_LOG_WARN(LOGGING_NAME, "Running smart contract target: ", name);
+
+  // Execute the requested function
+  std::string        error;
+  std::string        console;
+  fetch::vm::Variant output;
+  if (!vm->Execute(*script_, name, error, console, output, params))
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
+    return Status::FAILED;
+  }
+
+  return Status::OK;
+}
+
+/**
+ * Invoke 
+ *
+ * @param name The name of the action
+ * @param tx The input transaction
+ * @return The corresponding status result for the operation
+ */
+Contract::Status SmartContract::InvokeInit(std::string const &name, Transaction const &tx)
+{
+  // Get clean VM instance
+  auto vm = vm_modules::VMFactory::GetVM(module_);
+  vm->SetIOObserver(state());
+
+  FETCH_LOG_WARN(LOGGING_NAME, "Running SC init function: ", name);
+
+  vm::ParameterPack params{vm->registered_types()};
+
+  // lookup the function / entry point which will be executed
+  Script::Function const *target_function = script_->FindFunction(name);
+  if (target_function->num_parameters == 1)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "One argument for init - defaulting to address population");
+
+    vm::Ptr<vm::Address> address = vm::Address::Constructor(vm.get(), vm::TypeIds::Address);
+
+    std::vector<uint8_t> pub_key_bytes;
+    auto tx_sig = byte_array::ByteArray{tx.signatures().begin()->first.identifier()};
+    pub_key_bytes.assign(tx_sig.pointer(), tx_sig.pointer() + tx_sig.size());
+
+    address->SetStringRepresentation(std::string{ToBase64(tx_sig)});
+    bool success = address->SetBytes(std::move(pub_key_bytes));
+
+    if(!success)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to pack address of TX for init method");
+      return Status::FAILED;
+    }
+
+    static_assert(vm::IsPtr<vm::Ptr<vm::Address>>::value, "");
+
+    // add the address to the parameter pack
+    params.Add(std::move(address));
+  }
 
   // Execute the requested function
   std::string        error;

@@ -43,6 +43,7 @@ Module::Module()
   RegisterType(TypeIndex(typeid(float)), TypeIds::Float32);
   RegisterType(TypeIndex(typeid(double)), TypeIds::Float64);
   RegisterClassType<String>(TypeIds::String);
+  //RegisterClassType<Address>(TypeIds::Address);
 
   RegisterTemplateType<IMatrix>(TypeIds::IMatrix).CreateTypeConstuctor<int32_t, int32_t>();
 
@@ -63,6 +64,7 @@ Module::Module()
   CreateTemplateInstantiationType<Array, double>(TypeIds::IArray);
   CreateTemplateInstantiationType<Array, Ptr<String>>(TypeIds::IArray);
 
+
   auto imap = RegisterTemplateType<IMap>(TypeIds::IMap);
   imap.CreateTypeConstuctor<>();
   imap.CreateInstanceFunction("count", &IMap::Count);
@@ -70,9 +72,14 @@ Module::Module()
   auto address = RegisterClassType<Address>(TypeIds::Address);
   address.CreateTypeConstuctor<>();
   address.CreateInstanceFunction("signed_tx", &Address::HasSignedTx);
+  address.CreateInstanceFunction("AsString", &Address::AsString);
+
+  //CreateTemplateInstantiationType<State, Address>(TypeIds::IState);
 
   auto istate = RegisterTemplateType<IState>(TypeIds::IState);
   istate.CreateTypeConstuctor<Ptr<String>, TemplateParameter>();
+  //istate.CreateTypeConstuctor<Ptr<String>, Address>();
+  //istate.CreateTypeConstuctor<Ptr<Address>, TemplateParameter>();
   istate.CreateInstanceFunction("get", &IState::Get);
   istate.CreateInstanceFunction("set", &IState::Set);
   istate.CreateInstanceFunction("existed", &IState::Existed);

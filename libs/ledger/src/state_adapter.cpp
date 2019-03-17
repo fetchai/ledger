@@ -30,41 +30,14 @@ namespace ledger {
  * @param storage The reference to the storage engine
  * @param scope The reference to the scope
  */
-StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope,
-                           ResourceSet const &resources, ResourceSet const &raw_resources)
+StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope)
   : storage_{storage}
   , scope_{std::move(scope)}
 {
-  // Populate the allowed resources
-  for (auto const &hash : raw_resources)
-  {
-    allowed_accesses_.insert(std::string{hash});
-#ifndef NDEBUG
-    FETCH_LOG_INFO(LOGGING_NAME, "Pushing allowed: ", std::string{hash});
-#endif
-  }
-
-  for (auto const &key : resources)
-  {
-    std::string full = std::string{scope.full_name()} + ".state." + std::string{key};
-    allowed_accesses_.insert(full);
-#ifndef NDEBUG
-    FETCH_LOG_INFO(LOGGING_NAME, "Pushing allowed (raw): ", full);
-#endif
-  }
-
-  for (auto const &full_resource : allowed_accesses_)
-  {
-    storage_.Lock(CreateAddress(full_resource));
-  }
 }
 
 StateAdapter::~StateAdapter()
 {
-  for (auto const &full_resource : allowed_accesses_)
-  {
-    storage_.Unlock(CreateAddress(full_resource));
-  }
 }
 
 /**
@@ -80,14 +53,7 @@ StateAdapter::Status StateAdapter::Read(std::string const &key, void *data, uint
 {
   Status status{Status::ERROR};
 
-  std::string new_key{scope_.back().full_name() + ".state." + std::string{key}};
-
-  // ensure the key is in the allowed set for reading as well as writing
-  if (!IsAllowedResource(new_key))
-  {
-    FETCH_LOG_WARN("Sentinel", "Unable to read from resource: ", new_key);
-    return Status::PERMISSION_DENIED;
-  }
+  auto new_key = WrapKeyWithScope(key);
 
   // make the request to the storage engine
   auto const result = storage_.Get(CreateAddress(new_key));
@@ -127,19 +93,12 @@ StateAdapter::Status StateAdapter::Read(std::string const &key, void *data, uint
  */
 StateAdapter::Status StateAdapter::Write(std::string const &key, void const *data, uint64_t size)
 {
-  std::string new_key{scope_.back().full_name() + ".state." + std::string{key}};
-
-  // pretend to write in query mode
-  if (query_mode)
+  if(!enable_writes_)
   {
     return Status::OK;
   }
 
-  if (!IsAllowedResource(new_key))
-  {
-    FETCH_LOG_WARN("Sentinel", "Unable to write to resource: ", new_key);
-    return Status::PERMISSION_DENIED;
-  }
+  auto new_key = WrapKeyWithScope(key);
 
   // set the value on the storage engine
   storage_.Set(CreateAddress(new_key),
@@ -159,15 +118,10 @@ StateAdapter::Status StateAdapter::Exists(std::string const &key)
 {
   Status status{Status::ERROR};
 
-  std::string new_key{scope_.back().full_name() + ".state." + std::string{key}};
-
-  if (!IsAllowedResource(new_key))
-  {
-    return Status::PERMISSION_DENIED;
-  }
+  auto new_key = WrapKeyWithScope(key);
 
   // request the result
-  auto const result = storage_.Get(CreateAddress(key));
+  auto const result = storage_.Get(CreateAddress(new_key));
 
   if (!result.failed)
   {
@@ -203,33 +157,6 @@ ResourceAddress StateAdapter::CreateAddress(ConstByteArray const &key)
   return ResourceAddress{key};
 }
 
-bool StateAdapter::IsAllowedResource(std::string const &key) const
-{
-  if (query_mode)
-  {
-    return true;
-  }
-
-  bool result = allowed_accesses_.find(key) != allowed_accesses_.end();
-
-#ifndef NDEBUG
-  if (!result)
-  {
-    std::ostringstream all_resources;
-
-    for (auto const &access : allowed_accesses_)
-    {
-      all_resources << access << std::endl;
-    }
-
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to access resource \n", key, "\nAll resources: \n",
-                   all_resources.str());
-  }
-#endif
-
-  return result;
-}
-
 void StateAdapter::PushContext(Identifier const &scope)
 {
   scope_.push_back(scope);
@@ -240,9 +167,9 @@ void StateAdapter::PopContext()
   scope_.pop_back();
 }
 
-void StateAdapter::QueryMode(bool mode)
+std::string StateAdapter::WrapKeyWithScope(std::string const &key)
 {
-  query_mode = mode;
+  return std::string{scope_.back().full_name() + ".state." + std::string{key}};
 }
 
 }  // namespace ledger

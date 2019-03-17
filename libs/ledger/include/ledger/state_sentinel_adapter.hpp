@@ -17,52 +17,39 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/identifier.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "vm/io_observer_interface.hpp"
-
-#include <unordered_set>
+#include "ledger/state_adapter.hpp"
 
 namespace fetch {
 namespace ledger {
 
 /**
- * Adapter between the VM IO interface and the main ledger state database.
- *
+ * Read / Write interface between the VM IO interface the and main ledger state database. Will
+ * actively check to ensure reads and writes occur on permissible resources.
  */
-class StateAdapter : public vm::IoObserverInterface
+class StateSentinelAdapter : public StateAdapter
 {
 public:
-  using ConstByteArray  = byte_array::ConstByteArray;
-  using ResourceAddress = storage::ResourceAddress;
-  using ResourceSet     = std::set<byte_array::ConstByteArray>;
+  using ResourceSet = TransactionSummary::ResourceSet;
 
-  static constexpr char const *LOGGING_NAME = "StateAdapter";
-
-  // Resource Mapping
-  static ResourceAddress CreateAddress(Identifier const &scope, ConstByteArray const &key);
-  static ResourceAddress CreateAddress(ConstByteArray const &key);
+  static constexpr char const *LOGGING_NAME = "StateSentinelAdapter";
 
   // Construction / Destruction
-  StateAdapter(StorageInterface &storage, Identifier scope);
-  ~StateAdapter() override;
+  StateSentinelAdapter(StorageInterface &storage, Identifier scope,
+               ResourceSet const &resources       = ResourceSet{},
+               ResourceSet const &raw_resources = ResourceSet{});
 
-  /// @name Io Observer Interface
+  ~StateSentinelAdapter() override;
+
+  /// @name IO Observer Interface
   /// @{
   Status Read(std::string const &key, void *data, uint64_t &size) override;
   Status Write(std::string const &key, void const *data, uint64_t size) override;
   Status Exists(std::string const &key) override;
   /// @}
 
-  void PushContext(Identifier const &scope);
-  void PopContext();
-  std::string WrapKeyWithScope(std::string const &key);
-
-protected:
-  StorageInterface        &storage_;
-  std::vector<Identifier> scope_;
-  bool enable_writes_   = false;
+private:
+  bool IsAllowedResource(std::string const &key) const;
+  std::set<std::string> allowed_accesses_;
 };
 
 }  // namespace ledger

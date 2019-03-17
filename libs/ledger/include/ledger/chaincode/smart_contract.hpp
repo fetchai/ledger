@@ -41,6 +41,8 @@ class SmartContract : public Contract
 {
 public:
   using ConstByteArray = byte_array::ConstByteArray;
+  using Script    = fetch::vm::Script;
+  using ScriptPtr = std::shared_ptr<Script>;
 
   static constexpr char const *LOGGING_NAME = "SmartContract";
 
@@ -53,14 +55,18 @@ public:
     return digest_;
   }
 
+  ScriptPtr script()
+  {
+    return script_;
+  }
+
 private:
-  using Script    = fetch::vm::Script;
-  using ScriptPtr = std::shared_ptr<Script>;
   using ModulePtr = std::shared_ptr<vm::Module>;
 
   // Transaction /
   Status InvokeAction(std::string const &name, Transaction const &tx);
   Status InvokeQuery(std::string const &name, Query const &request, Query &response);
+  Status InvokeInit(std::string const &name, Transaction const &tx);
 
   std::string    source_;  ///< The source of the current contract
   ConstByteArray digest_;  ///< The digest of the current contract
