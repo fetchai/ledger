@@ -58,6 +58,58 @@ ConstByteArray GenerateDigest(std::string const &source)
   return hash.Final();
 }
 
+void ValidateAddressesInParams(Transaction const &tx, vm::ParameterPack const &params)
+{
+  // This doesn't work with a set (???)
+  std::unordered_set<ConstByteArray> valid_addresses;
+
+  for(auto const &sig : tx.signatures())
+  {
+    //ConstByteArray identifier = sig.first.identifier();
+    valid_addresses.insert(sig.first.identifier());
+  }
+
+  for (std::size_t i = 0; i < params.size();i++)
+  {
+    if(params[i].type_id == vm::TypeIds::Address)
+    {
+      auto &var = *(params[i].Get<vm::Ptr<vm::Address>>());
+
+      ConstByteArray address_data{var.GetBytes().data(), var.GetBytes().size()};
+
+      if (std::find(valid_addresses.begin(), valid_addresses.end(), address_data) != valid_addresses.end())
+      {
+        var.SetSignedTx(true);
+      }
+
+      /*
+      auto find_fn = [var](ConstByteArray const &address) 
+      {
+        if(var.GetBytes().size() != address.size() || address.size() == 0)
+        {
+          return false;
+        }
+
+        if(memcmp(var.GetBytes().data(), address.pointer(), address.size()) != 0)
+        {
+          return false;
+        }
+
+        return true;
+      };
+
+      auto it = find_if(valid_addresses.begin(), valid_addresses.end(), find_fn );
+
+      if(it != valid_addresses.end())
+      {
+        std::cerr << "Verified!" << std::endl;
+        var.SetSignedTx(true);
+      }
+      */
+    }
+  }
+}
+
 /**
  * Construct a smart contract from the specified source
  *
@@ -401,16 +453,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
     return Status::FAILED;
   }
 
-  for (std::size_t i = 0; i < params.size();i++)
-  {
-    if(params[i].type_id == vm::TypeIds::Address)
-    {
-      //vm::Address &address = params[i].As<vm::Address>();
-      auto &var = params[i];
-      (*var.Get<vm::Ptr<vm::Address>>()).SetSignedTx(true);
-    }
-  }
-  //
+  ValidateAddressesInParams(tx, params);
 
   FETCH_LOG_WARN(LOGGING_NAME, "Running smart contract target: ", name);
 

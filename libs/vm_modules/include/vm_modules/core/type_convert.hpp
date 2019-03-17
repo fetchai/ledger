@@ -27,8 +27,16 @@ template <typename T>
 fetch::math::meta::IfIsArithmetic<T, fetch::vm::Ptr<fetch::vm::String>> toString(fetch::vm::VM *vm,
                                                                                  T const &      a)
 {
-  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
-  return ret;
+  if(std::is_same<T, bool>::value)
+  {
+    fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, a ? "True" : "False"));
+    return ret;
+  }
+  else
+  {
+    fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
+    return ret;
+  }
 }
 
 static void CreateToString(std::shared_ptr<fetch::vm::Module> &module)
@@ -39,6 +47,7 @@ static void CreateToString(std::shared_ptr<fetch::vm::Module> &module)
   module->CreateFreeFunction("toString", &toString<uint64_t>);
   module->CreateFreeFunction("toString", &toString<float_t>);
   module->CreateFreeFunction("toString", &toString<double_t>);
+  module->CreateFreeFunction("toString", &toString<bool>);
   /* module->CreateFreeFunction("toString", &toStringClass<fetch::vm::Address>); */
 }
 
