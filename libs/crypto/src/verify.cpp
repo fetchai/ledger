@@ -24,7 +24,7 @@ namespace crypto {
 
 /**
  * A "factory" function. Since all it does is,
- * instantiates an implementation of an interface with but a single practical method
+ * it instantiates an implementation of an interface with but a single practical method
  * (plus one getter), it seamlessly applies this method internally.
  *
  * This function, given a key, a buffer and a signature,
@@ -33,7 +33,7 @@ namespace crypto {
  * It can be done by applying all known concrete verifiers in sequence, until first one confirms.
  *
  * (This is actually what is done now, and the fact that there's but a single concrete
- * implementation to the Verifier interface is definitely beneficial.)
+ * implementation to the Verifier interface is really helpful here.)
  *
  * Or, the concrete algorithm could be guessed based on the bit pattern, simply by a watermark put
  * in by the prover.
