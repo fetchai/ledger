@@ -19,7 +19,7 @@
 #include "network/tcp/loopback_server.hpp"
 #include <iostream>
 
-int main(int /*argc*/, char * /*argv*/[])
+int main(int /*argc*/, char ** /*argv*/)
 {
   {
     std::cerr << "Starting loopback server" << std::endl;
