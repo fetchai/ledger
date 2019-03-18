@@ -88,9 +88,17 @@ LaneService::LaneService(NetworkManager nm, ShardConfig config, Mode mode)
   internal_rpc_server_->Add(RPC_CONTROLLER, controller_protocol_.get());
 
   tx_sync_protocol_ = std::make_shared<TransactionStoreSyncProtocol>(tx_store_.get(), cfg_.lane_id);
-  tx_sync_service_  = std::make_shared<TransactionStoreSyncService>(
-      cfg_.lane_id, external_muddle_, tx_store_, controller_, cfg_.verification_threads,
-      cfg_.sync_service_timeout, cfg_.sync_service_promise_timeout, cfg_.sync_service_fetch_period);
+
+  // prepare the sync config
+  TransactionStoreSyncService::Config sync_cfg{};
+  sync_cfg.lane_id                    = cfg_.lane_id;
+  sync_cfg.verification_threads       = cfg_.verification_threads;
+  sync_cfg.main_timeout               = cfg_.sync_service_timeout;
+  sync_cfg.promise_wait_timeout       = cfg_.sync_service_promise_timeout;
+  sync_cfg.fetch_object_wait_duration = cfg_.sync_service_fetch_period;
+
+  tx_sync_service_ =
+      std::make_shared<TransactionStoreSyncService>(sync_cfg, external_muddle_, tx_store_);
 
   tx_store_->SetCallback([this](VerifiedTransaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
 
