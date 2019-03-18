@@ -17,7 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/free_functions.hpp"
+#include "core/assert.hpp"
+#include "math/tensor_operations.hpp"
+#include <memory>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -29,12 +32,49 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual ArrayPtrType              Forward(std::vector<ArrayPtrType> const &inputs) = 0;
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     error)                     = 0;
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
+
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal) = 0;
+  virtual ArrayType ForwardBatch(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
 
 protected:
-  ArrayPtrType output_;
+  ArrayPtrType output_;  // TODO(private, 736) -- Remove
 };
+
+template <class T>
+class ElementWiseOps : public Ops<T>
+{
+public:
+  using ArrayType = T;
+
+  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    return this->Forward(inputs);
+  }
+};
+
+template <class T>
+class BatchOps : public Ops<T>
+{
+public:
+  using ArrayType = T;
+
+  // Overload that method for optimisation purposes
+  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    assert(inputs.size() == 1);
+    std::vector<ArrayType> results;
+    for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
+    {
+      ArrayType slice = inputs.front().get().Slice(b);
+      results.push_back(this->Forward({slice}));
+    }
+    return ConcatenateTensors(results);
+  }
+};
+
 }  // namespace ml
 }  // namespace fetch

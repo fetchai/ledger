@@ -20,8 +20,11 @@
 #include "math/arithmetic/comparison.hpp"
 #include "math/free_functions/free_functions.hpp"
 #include "vm/defs.hpp"
+#include "vm/io_observer_interface.hpp"
 #include "vm/string.hpp"
 #include "vm/pointer_register.hpp"
+
+#include <sstream>
 
 namespace fetch {
 namespace vm {
@@ -29,7 +32,7 @@ namespace vm {
 template <typename T, typename = void>
 struct Getter;
 template <typename T>
-struct Getter<T, typename std::enable_if_t<IsPrimitive<T>::value>>
+struct Getter<T, IfIsPrimitive<T>>
 {
   static TypeId GetTypeId(RegisteredTypes const &types, T const & /* parameter */)
   {
@@ -37,11 +40,11 @@ struct Getter<T, typename std::enable_if_t<IsPrimitive<T>::value>>
   }
 };
 template <typename T>
-struct Getter<T, typename std::enable_if_t<IsPtr<T>::value>>
+struct Getter<T, IfIsPtr<T>>
 {
   static TypeId GetTypeId(RegisteredTypes const &types, T const & /* parameter */)
   {
-    using ManagedType = typename GetManagedType<T>::type;
+    using ManagedType = typename GetManagedType<std::decay_t<T>>::type;
     return types.GetTypeId(TypeIndex(typeid(ManagedType)));
   }
 };
@@ -123,44 +126,179 @@ struct AssignParameters<POSITION>
 // Forward declarations
 class Module;
 
+class ParameterPack
+{
+public:
+  // Construction / Destruction
+  explicit ParameterPack(RegisteredTypes const &registered_types)
+    : registered_types_{registered_types}
+  {}
+
+  ParameterPack(ParameterPack const &) = delete;
+  ParameterPack(ParameterPack &&)      = delete;
+  ~ParameterPack()                     = default;
+
+  Variant const &operator[](std::size_t index) const
+  {
+#ifndef NDEBUG
+    return params_.at(index);
+#else
+    return params_[index];
+#endif
+  }
+
+  std::size_t size() const
+  {
+    return params_.size();
+  }
+
+  template <typename T, typename... Args>
+  bool Add(T &&parameter, Args &&... args)
+  {
+    bool success{false};
+
+    success &= Add(std::forward<T>(parameter));
+    success &= Add(std::forward<Args>(args)...);
+
+    return success;
+  }
+
+  template <typename T>
+  IfIsPrimitive<T, bool> Add(T &&parameter)
+  {
+    return AddInternal(std::forward<T>(parameter));
+  }
+
+  template <typename T>
+  IfIsPtr<T, bool> Add(T &&obj)
+  {
+    bool success{false};
+
+    if (obj)
+    {
+      success = AddInternal(std::forward<T>(obj));
+    }
+
+    return success;
+  }
+
+  bool Add()
+  {
+    return true;
+  }
+
+  // Operators
+  ParameterPack &operator=(ParameterPack const &) = delete;
+  ParameterPack &operator=(ParameterPack &&) = delete;
+
+private:
+  template <typename T>
+  bool AddInternal(T &&value)
+  {
+    bool success{false};
+
+    TypeId const type_id = Getter<T>::GetTypeId(registered_types_, value);
+
+    if (TypeIds::Unknown != type_id)
+    {
+      // add the value to the map
+      params_.emplace_back(std::forward<T>(value), type_id);
+
+      // signal great success
+      success = true;
+    }
+
+    return success;
+  }
+
+  using VariantArray = std::vector<Variant>;
+
+  RegisteredTypes const &registered_types_;
+  VariantArray           params_{};
+};
+
 class VM
 {
 public:
   VM(Module *module);
   ~VM() = default;
 
-  template <typename... Ts>
-  bool Execute(Script const &script, std::string const &name, std::string &error, Variant &output,
-               Ts const &... parameters)
+  RegisteredTypes const &registered_types() const
   {
+    return registered_types_;
+  }
+
+  template <typename... Ts>
+  bool Execute(Script const &script, std::string const &name, std::string &error,
+               std::string &console_output, Variant &output, Ts const &... parameters)
+
+  {
+    ParameterPack parameter_pack{registered_types_};
+
+    if (!parameter_pack.Add(parameters...))
+    {
+      error = "Unable to generate parameter pack";
+      return false;
+    }
+
+    return Execute(script, name, error, console_output, output, parameter_pack);
+  }
+
+  bool Execute(Script const &script, std::string const &name, std::string &error,
+               std::string &console_output, Variant &output, ParameterPack const &parameters)
+  {
+    bool success{false};
+
     Script::Function const *f = script.FindFunction(name);
-    if (f == nullptr)
+    if (f)
     {
-      error = "unable to find function '" + name + "'";
-      return false;
-    }
-    constexpr int num_parameters = int(sizeof...(Ts));
-    if (num_parameters != f->num_parameters)
-    {
-      error = "mismatched parameters";
-      return false;
-    }
-    AssignParameters<0, Ts...>::Assign(stack_, registered_types_, parameters...);
-    for (size_t i = 0; i < size_t(num_parameters); ++i)
-    {
-      if (stack_[i].type_id != f->variables[i].type_id)
+      auto const num_parameters = static_cast<std::size_t>(f->num_parameters);
+
+      if (parameters.size() == num_parameters)
+      {
+        // loop through the parameters, type check and populate the stack
+        for (std::size_t i = 0; i < num_parameters; ++i)
+        {
+          Variant const &parameter = parameters[i];
+
+          // type check
+          if (parameter.type_id != f->variables[i].type_id)
+          {
+            error = "mismatched parameters";
+
+            // clean up
+            for (std::size_t j = 0; j < num_parameters; ++j)
+            {
+              stack_[j].Reset();
+            }
+
+            return false;
+          }
+
+          // assign
+          stack_[i].Assign(parameter, parameter.type_id);
+        }
+
+        script_   = &script;
+        function_ = f;
+
+        // execute the function
+        success = Execute(error, output);
+      }
+      else
       {
         error = "mismatched parameters";
-        for (size_t j = 0; j < size_t(num_parameters); ++j)
-        {
-          stack_[j].Reset();
-        }
-        return false;
       }
     }
-    script_   = &script;
-    function_ = f;
-    return Execute(error, output);
+    else
+    {
+      error = "unable to find function '" + name + "'";
+    }
+
+    // transfer the console output buffer
+    console_output = output_buffer_.str();
+
+    return success;
   }
 
   template <typename T>
@@ -191,6 +329,27 @@ public:
     }
     return ptr;
   }
+  void SetIOObserver(IoObserverInterface &observer)
+  {
+    io_observer_ = &observer;
+  }
+
+  bool HasIoObserver() const
+  {
+    return io_observer_ != nullptr;
+  }
+
+  IoObserverInterface &GetIOObserver()
+  {
+    assert(io_observer_ != nullptr);
+    return *io_observer_;
+  }
+
+  void AddOutputLine(std::string const &line)
+  {
+    output_buffer_ << line << '\n';
+  }
+
 private:
   PointerRegister pointer_register_;
 
@@ -246,7 +405,6 @@ private:
   template <typename ReturnType, typename TypeFunction, typename... Ts>
   friend struct TypeFunctionInvokerHelper;
 
-private:
   Script const *script_;
   Variant       stack_[STACK_SIZE];
   int           sp_;
@@ -259,6 +417,9 @@ private:
   Script::Instruction const *instruction_;
   bool                       stop_;
   std::string                error_;
+  std::ostringstream         output_buffer_;
+
+  IoObserverInterface *io_observer_{nullptr};
 
   bool Execute(std::string &error, Variant &output);
   void Destruct(int scope_number);

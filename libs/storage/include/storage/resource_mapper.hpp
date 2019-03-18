@@ -215,4 +215,17 @@ struct hash<fetch::storage::ResourceID>
   }
 };
 
+template <>
+struct hash<fetch::storage::ResourceAddress>
+{
+  std::size_t operator()(fetch::storage::ResourceID const &rid) const
+  {
+    auto const &id = rid.id();
+    assert(id.size() >= sizeof(std::size_t));
+
+    // this should be fine since the ResourceAddress is actually a SHA256
+    return *reinterpret_cast<std::size_t const *>(id.pointer());
+  }
+};
+
 }  // namespace std

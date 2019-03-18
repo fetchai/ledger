@@ -103,15 +103,16 @@ public:
   Weights()          = default;
   virtual ~Weights() = default;
 
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.empty());
-    gradientAccumulation_->InlineAdd(*errorSignal);
+    gradientAccumulation_->InlineAdd(errorSignal);
     return {};
   }
 
-  virtual void SetData(ArrayPtrType const &data)
+  virtual void SetData(ArrayType const &data)
   {
     PlaceHolder<T>::SetData(data);
     if (this->output_ &&
@@ -152,23 +153,23 @@ public:
   LoadStateDict(struct fetch::ml::ops::StateDict<T> const &dict)
   {
     assert(dict.dict_.empty());
-    SetData(dict.weights_);
+    SetData(*dict.weights_);
   }
 
   /**
    * interface to call standard weights initialisation routines. defaults to xavier
    * @param mode  An enum indicating which type of initialisation to perform
    */
-  static void Initialise(ArrayPtrType array, std::uint64_t in_size, std::uint64_t out_size,
+  static void Initialise(ArrayType &array, std::uint64_t in_size, std::uint64_t out_size,
                          WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT)
   {
     switch (mode)
     {
     case WeightsInitialisation::ZEROS:
     {
-      for (std::uint64_t j = 0; j < array->size(); ++j)
+      for (std::uint64_t j = 0; j < array.size(); ++j)
       {
-        array->At(j) = typename ArrayType::Type(0);
+        array.At(j) = typename ArrayType::Type(0);
       }
       break;
     }
@@ -201,16 +202,16 @@ private:
    * using a normal distribution with mean 0 and variance 2 / (input nodes + output nodes)
    * @param weights
    */
-  static void XavierInitialisation(ArrayPtrType array, double normalising_factor)
+  static void XavierInitialisation(ArrayType &array, double normalising_factor)
   {
     std::random_device rd{};
     std::mt19937       gen{rd()};
 
     // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
     std::normal_distribution<> rng(0, normalising_factor);
-    for (std::uint64_t i(0); i < array->size(); ++i)
+    for (std::uint64_t i(0); i < array.size(); ++i)
     {
-      array->At(i) = typename ArrayType::Type(rng(gen));
+      array.At(i) = typename ArrayType::Type(rng(gen));
     }
   }
 };

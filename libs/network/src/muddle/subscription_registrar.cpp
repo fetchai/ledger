@@ -160,7 +160,7 @@ void SubscriptionRegistrar::Debug(std::string const &prefix) const
     auto numb = std::get<0>(mapping.first);
     auto addr = std::get<1>(mapping.first);
     FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                   "SubscriptionRegistrar:address_dispatch_map_ Addr=", ToBase64(addr),
+                   "SubscriptionRegistrar:address_dispatch_map_ Addr=", addr.ToBase64(),
                    "  Service=", ((numb >> 16) & 0xFFFF));
   }
   for (const auto &mapping : dispatch_map_)

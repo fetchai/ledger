@@ -49,18 +49,20 @@ meta::IfIsNonFixedPointArithmetic<Type, void> Log(Type &x, Type &ret)
 {
   ret = std::log(x);
 }
-
 template <typename Type>
-meta::IfIsNonFixedPointArithmetic<Type, void> Log(Type &x)
+meta::IfIsNonFixedPointArithmetic<Type, Type> Log(Type &x)
 {
-  Log(x, x);
+  Type ret;
+  Log(x, ret);
+  return ret;
 }
 
 //
 template <typename T>
-meta::IfIsFixedPoint<T, void> Log(T &n)
+meta::IfIsFixedPoint<T, T> Log(T &n)
 {
-  n = T(std::log(double(n)));
+  T ret = T(std::log(double(n)));
+  return ret;
 }
 
 template <typename ArrayType>

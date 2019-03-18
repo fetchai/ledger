@@ -28,11 +28,13 @@
 
 using namespace fetch::ledger;
 using namespace fetch::byte_array;
-TEST(testing_ser_deser_transactions, Ser_deser_transactions_into_ConstTransaction)
+
+TEST(TransactionTypesTests, SerialisationOfTransactionsToConstTransaction)
 {
   MutableTransaction trans;
   Transaction        tx;
   trans.PushResource("a");
+
   EXPECT_EQ(trans.resources().count("a"), 1);
   {
     VerifiedTransaction                 txTemp = VerifiedTransaction::Create(trans);
@@ -41,19 +43,24 @@ TEST(testing_ser_deser_transactions, Ser_deser_transactions_into_ConstTransactio
     arr.seek(0);
     arr >> tx;
   }
+
   EXPECT_EQ(tx.resources().count("a"), 1);
 }
-TEST(testing_ser_deser_transactions, random_transaction_generation)
+
+TEST(TransactionTypesTests, RandomTransactionVerification)
 {
-  for (std::size_t i = 0; i < 1000; ++i)
+  for (std::size_t i = 0; i < 10; ++i)
   {
     MutableTransaction        mutableTx   = fetch::ledger::RandomTransaction();
     const VerifiedTransaction transaction = VerifiedTransaction::Create(mutableTx);
+
+#if 0
     std::cout << "\n= TX[" << std::setfill('0') << std::setw(5) << i
               << "] ==========================================" << std::endl;
     std::cout << "contract name:   " << transaction.contract_name() << std::endl;
     std::cout << "hash:            " << ToHex(transaction.summary().transaction_hash) << std::endl;
     std::cout << "data:            " << ToHex(transaction.data()) << std::endl;
+
     for (auto const &sig : transaction.signatures())
     {
       std::cout << "identity:        " << ToHex(sig.first.identifier()) << std::endl;
@@ -61,6 +68,8 @@ TEST(testing_ser_deser_transactions, random_transaction_generation)
       std::cout << "signature:       " << ToHex(sig.second.signature_data) << std::endl;
       std::cout << "signature type:  " << sig.second.type << std::endl;
     }
+#endif
+
     EXPECT_TRUE(mutableTx.Verify());
   }
 }

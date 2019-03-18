@@ -22,6 +22,9 @@
 #include "core/logger.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
+#include "ledger/chaincode/contract.hpp"
+#include "ledger/state_sentinel.hpp"
+#include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "metrics/metrics.hpp"
 
 #include <algorithm>
@@ -38,25 +41,6 @@ using fetch::metrics::Metrics;
 namespace fetch {
 namespace ledger {
 
-// Useful to include when debugging:
-//
-// std::ostream &operator<<(std::ostream &stream, Executor::lane_set_type const &lane_set)
-//{
-//  std::vector<uint16_t> elements(lane_set.size());
-//  std::copy(lane_set.begin(), lane_set.end(), elements.begin());
-//  std::sort(elements.begin(), elements.end());
-//
-//  bool not_first_loop = false;
-//  for (auto element : elements)
-//  {
-//    if (not_first_loop)
-//      stream << ',';
-//    stream << element;
-//    not_first_loop = true;
-//  }
-//  return stream;
-//}
-
 /**
  * Executes a given transaction across a series of lanes
  *
@@ -71,7 +55,6 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
 
   try
   {
-
     // TODO(issue 33): Add code to validate / check lane resources
     FETCH_UNUSED(slice);
     FETCH_UNUSED(lanes);
@@ -95,28 +78,55 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
       return Status::TX_LOOKUP_FAILURE;
     }
 
-    Identifier identifier;
-    identifier.Parse(tx.contract_name());
-
-    // Lookup the chain code associated with the transaction
-    auto chain_code = chain_code_cache_.Lookup(identifier.name_space());
-    if (!chain_code)
+    // attempt to parse the full contract name from from the transaction
+    Identifier contract;
+    if (!contract.Parse(tx.contract_name()))
     {
-      return Status::CHAIN_CODE_LOOKUP_FAILURE;
+      return Status::CONTRACT_NAME_PARSE_FAILURE;
     }
 
-    // attach the chain code to the current working context
-    chain_code->Attach(*resources_);
-
-    // Dispatch the transaction to the contract
-    auto result = chain_code->DispatchTransaction(identifier.name(), tx);
-    if (Contract::Status::OK != result)
+    Contract::Status result{Contract::Status::FAILED};
     {
-      return Status::CHAIN_CODE_EXEC_FAILURE;
+      // create the cache and state sentinel (lock and unlock resources as well as sandbox)
+      CachedStorageAdapter storage_cache{*resources_};
+      StateSentinelAdapter storage_adapter{storage_cache, contract.GetParent(), tx.resources()};
+
+      // lookup or create the instance of the contract as is needed
+      auto chain_code = chain_code_cache_.Lookup(contract.GetParent(), *resources_);
+      if (!chain_code)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Chain code lookup failure!");
+        return Status::CHAIN_CODE_LOOKUP_FAILURE;
+      }
+
+      // attach the chain code to the current working context
+      chain_code->Attach(storage_adapter);
+
+      // Dispatch the transaction to the contract
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatch: ", contract.name());
+      result = chain_code->DispatchTransaction(contract.name(), tx);
+
+      // detach the chain code from the current context
+      chain_code->Detach();
+
+      // force the flushing of the cache
+      storage_cache.Flush();
     }
 
-    // detach the chain code from the current context
-    chain_code->Detach();
+    // map the dispatch the result
+    Status status{Status::CHAIN_CODE_EXEC_FAILURE};
+    switch (result)
+    {
+    case Contract::Status::OK:
+      status = Status::SUCCESS;
+      break;
+    case Contract::Status::FAILED:
+      FETCH_LOG_WARN(LOGGING_NAME, "Transaction execution failed!");
+      break;
+    case Contract::Status::NOT_FOUND:
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup transaction handler");
+      break;
+    }
 
 #ifdef FETCH_ENABLE_METRICS
     Metrics::Timestamp const completed = Metrics::Clock::now();
@@ -125,9 +135,9 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
     FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash), " (success)");
 
     FETCH_METRIC_TX_EXEC_STARTED_EX(hash, started);
-    FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, completed);
+    FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, completed)
 
-    return Status::SUCCESS;
+    return status;
   }
   catch (std::exception const &ex)
   {

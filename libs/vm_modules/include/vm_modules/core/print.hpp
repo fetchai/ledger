@@ -1,122 +1,37 @@
 #pragma once
-#include "byte_array_wrapper.hpp"
-#include "core/byte_array/encoders.hpp"
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
-namespace fetch
-{
-namespace vm_modules
-{
+namespace fetch {
+namespace vm_modules {
 
-inline void PrintByteArray(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::modules::ByteArrayWrapper> const &s)
+/**
+ * method for printing string to std::cout
+ */
+static void Print(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
-//  std::cout << byte_array::ToBase64(s->byte_array());
-  std::cout << s->byte_array();
+  vm->AddOutputLine(s->str);
 }
 
-inline void PrintLnByteArray(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::modules::ByteArrayWrapper> const &s)
+void CreatePrint(std::shared_ptr<fetch::vm::Module> &module)
 {
-//  std::cout << byte_array::ToBase64(s->byte_array()) << std::endl;
-  std::cout << s->byte_array() << std::endl;
+  module->CreateFreeFunction("Print", &Print);
 }
 
-inline void PrintString(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
-{
-  std::cout << s->str;
-}
-
-inline void PrintLnString(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
-{
-  std::cout << s->str << std::endl;
-}
-
-
-inline void PrintInt32(fetch::vm::VM * /*vm*/, int32_t const &s)
-{
-  std::cout << s;
-}
-
-inline void PrintLnInt32(fetch::vm::VM * /*vm*/, int32_t const &s)
-{
-  std::cout << s << std::endl;
-}
-
-inline void PrintInt64(fetch::vm::VM * /*vm*/, int64_t const &s)
-{
-  std::cout << s;
-}
-
-inline void PrintLnInt64(fetch::vm::VM * /*vm*/, int64_t const &s)
-{
-  std::cout << s << std::endl;
-}
-
-inline void PrintFloat(fetch::vm::VM * /*vm*/, float const &s)
-{
-  std::cout << s;
-}
-
-inline void PrintLnFloat(fetch::vm::VM * /*vm*/, float const &s)
-{
-  std::cout << s;
-}
-
-inline void PrintDouble(fetch::vm::VM * /*vm*/, double const &s)
-{
-  std::cout << s;
-}
-
-inline void PrintLnDouble(fetch::vm::VM * /*vm*/, double const &s)
-{
-  std::cout << s << std::endl;
-}
-
-
-template<typename T>
-inline void PrintArrayPrimitive(fetch::vm::VM * /*vm*/, vm::Ptr< vm::Array< T > > const &g)
-{
-  std::cout << "[";
-  for(std::size_t i=0; i < g->elements.size(); ++i )
-  {
-    if(i!=0)
-    {
-      std::cout << ", ";
-    }      
-    std::cout << g->elements[i];
-  }
-  std::cout << "]";
-}
-
-
-
-inline void CreatePrint(vm::Module& module)
-{
-  module.CreateFreeFunction("print", &PrintByteArray);
-  module.CreateFreeFunction("printLn", &PrintLnByteArray);
-  module.CreateFreeFunction("print", &PrintString);
-  module.CreateFreeFunction("printLn", &PrintLnString);
-  module.CreateFreeFunction("print", &PrintInt32);
-  module.CreateFreeFunction("printLn", &PrintLnInt32);
-  module.CreateFreeFunction("print", &PrintInt64);
-  module.CreateFreeFunction("printLn", &PrintLnInt64);
-  module.CreateFreeFunction("print", &PrintDouble);
-  module.CreateFreeFunction("printLn", &PrintLnDouble);  
-  module.CreateFreeFunction("print", &PrintFloat);
-  module.CreateFreeFunction("printLn", &PrintLnFloat);  
-
-  module.CreateFreeFunction("print", &PrintArrayPrimitive<int32_t>);  
-  module.CreateFreeFunction("print", &PrintArrayPrimitive<int64_t>);
-  module.CreateFreeFunction("print", &PrintArrayPrimitive<uint32_t>);  
-  module.CreateFreeFunction("print", &PrintArrayPrimitive<uint64_t>);
-  module.CreateFreeFunction("print", &PrintArrayPrimitive<float>);  
-  module.CreateFreeFunction("print", &PrintArrayPrimitive<double>);  
-}
-
-inline void CreatePrint(std::shared_ptr<vm::Module> module)
-{
-  CreatePrint(*module.get());
-}
-
-
-
-}
-}
+}  // namespace vm_modules
+}  // namespace fetch
