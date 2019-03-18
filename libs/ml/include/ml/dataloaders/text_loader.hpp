@@ -437,14 +437,7 @@ private:
    */
   bool CheckEndOfSentence(std::string &word)
   {
-    // if new sentence
-    if ((std::string(1, word.back()) == std::string(".")) ||
-        (std::string(1, word.back()) == std::string("!")) ||
-        (std::string(1, word.back()) == std::string("?")))
-    {
-      return true;
-    }
-    return false;
+    return std::string(".!?").find(word.back()) != std::string::npos;
   }
 
   /**
@@ -698,7 +691,7 @@ private:
     // check word actually present
     assert(p_.discard_threshold > 0);
     assert(vocab_.find(word) != vocab_.end());
-    SizeType word_frequency = vocab_[word].at(1);
+    SizeType word_frequency = vocab_.at(word).at(1);
     assert(word_frequency > 0);
 
     double word_probability = double(word_frequency) / double(word_count_);

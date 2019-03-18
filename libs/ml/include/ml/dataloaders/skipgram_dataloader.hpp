@@ -251,7 +251,7 @@ private:
    * @param sentence_len total sentence length
    * @return
    */
-  bool WindowPositionCheck(SizeType target_pos, SizeType context_pos, SizeType sentence_len)
+  bool WindowPositionCheck(SizeType target_pos, SizeType context_pos, SizeType sentence_len) const
   {
     int normalised_context_pos = int(context_pos) - int(p_.window_size);
     if (normalised_context_pos == 0)

@@ -34,7 +34,8 @@ TYPED_TEST_CASE(EmbeddingsTest, MyTypes);
 
 TYPED_TEST(EmbeddingsTest, forward_shape)
 {
-  fetch::ml::ops::Embeddings<TypeParam> e(100, 60);
+  using SizeType = typename TypeParam::SizeType;
+  fetch::ml::ops::Embeddings<TypeParam> e(SizeType(100), SizeType(60));
   TypeParam                             input(std::vector<uint64_t>({10}));
   for (unsigned int i(0); i < 10; ++i)
   {
