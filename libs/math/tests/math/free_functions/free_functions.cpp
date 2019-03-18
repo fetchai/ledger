@@ -117,15 +117,15 @@ TYPED_TEST(FreeFunctionsTest, ArgMax)
   array1.Set(2, typename TypeParam::Type(0.7));
   array1.Set(3, typename TypeParam::Type(22));
 
-  typename TypeParam::Type output;
+  typename TypeParam::SizeType output;
   fetch::math::ArgMax(array1, output);
-  ASSERT_TRUE(output == typename TypeParam::Type(3));
+  ASSERT_TRUE(output == typename TypeParam::SizeType(3));
 
   array1.Set(3, typename TypeParam::Type(0));
   fetch::math::ArgMax(array1, output);
-  ASSERT_TRUE(output == typename TypeParam::Type(1));
+  ASSERT_TRUE(output == typename TypeParam::SizeType(1));
 
   array1.Set(1, typename TypeParam::Type(0));
   fetch::math::ArgMax(array1, output);
-  ASSERT_TRUE(output == typename TypeParam::Type(2));
+  ASSERT_TRUE(output == typename TypeParam::SizeType(2));
 }
