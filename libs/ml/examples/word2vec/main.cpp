@@ -98,25 +98,25 @@ std::vector<DataType> TestEmbeddings(Graph<ArrayType> &g, std::string &skip_gram
   ArrayType   embed_hollywood_input(1);
   std::string hollywood_lookup = "hollywood";
   SizeType    hollywood_idx    = dl.VocabLookup(hollywood_lookup);
-  embed_hollywood_input.At(0)  = hollywood_idx;
+  embed_hollywood_input.At(0)  = DataType(hollywood_idx);
   ArrayType hollywood_output   = embeddings->Forward({embed_hollywood_input}).Clone();
 
   ArrayType   embed_movie_input(1);
   std::string movie_lookup = "movie";
   SizeType    movie_idx    = dl.VocabLookup(movie_lookup);
-  embed_movie_input.At(0)  = movie_idx;
+  embed_movie_input.At(0)  = DataType(movie_idx);
   ArrayType movie_output   = embeddings->Forward({embed_movie_input}).Clone();
 
   ArrayType   embed_husband_input(1);
   std::string husband_lookup = "husband";
   SizeType    husband_idx    = dl.VocabLookup(husband_lookup);
-  embed_husband_input.At(0)  = husband_idx;
+  embed_husband_input.At(0)  = DataType(husband_idx);
   ArrayType husband_output   = embeddings->Forward({embed_husband_input}).Clone();
 
   ArrayType   embed_wife_input(1);
   std::string wife_lookup = "wife";
   SizeType    wife_idx    = dl.VocabLookup(wife_lookup);
-  embed_wife_input.At(0)  = wife_idx;
+  embed_wife_input.At(0)  = DataType(wife_idx);
   ArrayType wife_output   = embeddings->Forward({embed_wife_input}).Clone();
 
   DataType result_hollywood_movie, result_hollywood_husband, result_movie_husband,
