@@ -85,6 +85,11 @@ public:
     return state_machine_;
   }
 
+  std::weak_ptr<core::StateMachineInterface> GetWeakStateMachine()
+  {
+    return state_machine_;
+  }
+
   void BroadcastBlock(Block const &block);
 
   State state() const

@@ -171,6 +171,11 @@ public:
     return *state_machine_;
   }
 
+  std::weak_ptr<core::StateMachineInterface> GetWeakStateMachine()
+  {
+    return state_machine_;
+  }
+
   // Operators
   BlockCoordinator &operator=(BlockCoordinator const &) = delete;
   BlockCoordinator &operator=(BlockCoordinator &&) = delete;
@@ -252,7 +257,9 @@ private:
   Timepoint       next_block_time_;        ///< THe next point that a block should be generated
   BlockPtr        current_block_{};        ///< The pointer to the current block (read only)
   NextBlockPtr    next_block_{};           ///< The next block being created (read / write)
-  TxSetPtr        pending_txs_{};  ///< The list of pending transactions that are being waited on
+  TxSetPtr        pending_txs_{};          ///< The list of pending txs that are being waited on
+  PeriodicAction  tx_wait_periodic_;       ///< Periodic print for transaction waiting
+  PeriodicAction  exec_wait_periodic_;     ///< Periodic print for execution
   /// @}
 };
 

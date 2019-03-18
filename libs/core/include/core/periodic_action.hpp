@@ -33,12 +33,13 @@ class PeriodicAction
 public:
   // Construction / Destruction
   template <typename R, typename P>
-  PeriodicAction(std::chrono::duration<R, P> const &period);
+  explicit PeriodicAction(std::chrono::duration<R, P> const &period);
   PeriodicAction(PeriodicAction const &) = delete;
   PeriodicAction(PeriodicAction &&)      = default;
   ~PeriodicAction()                      = default;
 
   bool Poll();
+  void Reset();
 
   // Operators
   PeriodicAction &operator=(PeriodicAction const &) = delete;
@@ -86,6 +87,12 @@ inline bool PeriodicAction::Poll()
   }
 
   return triggered;
+}
+
+inline void PeriodicAction::Reset()
+{
+  start_time_ = Clock::now();
+  last_index_ = 0;
 }
 
 }  // namespace fetch
