@@ -98,9 +98,10 @@ StateAdapter::Status StateAdapter::Write(std::string const &key, void const *dat
 
   auto new_key = WrapKeyWithScope(key);
 
+  auto write_val = ConstByteArray{reinterpret_cast<uint8_t const *>(data), size};
+
   // set the value on the storage engine
-  storage_.Set(CreateAddress(new_key),
-               ConstByteArray{reinterpret_cast<uint8_t const *>(data), size});
+  storage_.Set(CreateAddress(new_key), write_val);
 
   return Status::OK;
 }

@@ -46,7 +46,7 @@ template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
 inline IoObserverInterface::Status ReadHelper(std::string const &name, T *val,
                                               IoObserverInterface &io)
 {
-  uint64_t buffer_size = sizeof(val);
+  uint64_t buffer_size = sizeof(T);
   return io.Read(name, val, buffer_size);
 }
 
@@ -54,7 +54,7 @@ template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
 inline IoObserverInterface::Status WriteHelper(std::string const &name, T *val,
                                                IoObserverInterface &io)
 {
-  return io.Write(name, val, sizeof(val));
+  return io.Write(name, val, sizeof(T));
 }
 
 inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<Address> *val,
