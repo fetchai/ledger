@@ -84,7 +84,7 @@ public:
     for (DataType const &i : inputs.front().get())
     {
       updated_rows_.insert(typename ArrayType::SizeType(double(i)));
-      this->gradientAccumulation_->Slice(typename ArrayType::SizeType(i))
+      this->gradientAccumulation_->Slice(typename ArrayType::SizeType(double(i)))
           .Copy(errorSignal.Slice(j));
       j++;
     }
