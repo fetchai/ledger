@@ -37,8 +37,7 @@ public:
     : currentSentence_(0)
     , currentWord_(0)
     , window_size_(window_size)
-  {
-  }
+  {}
 
   virtual uint64_t Size() const
   {
@@ -127,8 +126,7 @@ private:
       indexes.reserve(strings.size());
       for (std::string const &s : strings)
       {
-        auto value =
-            vocab_.insert(std::pair<std::string, uint64_t>(s, (uint64_t)(vocab_.size())));
+        auto value = vocab_.insert(std::pair<std::string, uint64_t>(s, (uint64_t)(vocab_.size())));
         indexes.push_back((*value.first).second);
       }
     }
