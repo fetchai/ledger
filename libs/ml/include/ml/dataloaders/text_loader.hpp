@@ -451,17 +451,15 @@ private:
     DIR *                    d;
     struct dirent *          ent;
     char *                   p1;
-    char *                   p2;
     int                      txt_cmp;
     if ((d = opendir(dir_name.c_str())) != NULL)
     {
       while ((ent = readdir(d)) != NULL)
       {
-        p1 = strtok(ent->d_name, ".");
-        p2 = strtok(NULL, ".");
-        if (p2 != NULL)
+        p1 = strtok(NULL, ".");
+        if (p1 != NULL)
         {
-          txt_cmp = strcmp(p2, "txt");
+          txt_cmp = strcmp(p1, "txt");
           if (txt_cmp == 0)
           {
             ret.emplace_back(ent->d_name);
