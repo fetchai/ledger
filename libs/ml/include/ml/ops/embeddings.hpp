@@ -61,7 +61,7 @@ public:
     for (DataType const &i : inputs.front().get())
     {
       this->embeddings_output_->Slice(j).Copy(
-          this->output_->Slice(typename ArrayType::SizeType(double(i))));
+					      this->output_->Slice(typename ArrayType::SizeType(double(i))));
       j++;
     }
     return *this->embeddings_output_;
