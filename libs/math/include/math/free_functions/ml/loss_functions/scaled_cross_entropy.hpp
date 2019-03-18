@@ -36,7 +36,7 @@ namespace math {
  */
 template <typename ArrayType>
 typename ArrayType::Type ScaledCrossEntropyLoss(ArrayType const &x, ArrayType const &y,
-                                                typename ArrayType::Type const &scalar)
+                                                ArrayType const &scalar)
 {
   assert(x.shape() == y.shape());
 
@@ -45,16 +45,15 @@ typename ArrayType::Type ScaledCrossEntropyLoss(ArrayType const &x, ArrayType co
   {
     for (std::size_t j = 0; j < x.shape()[1]; ++j)
     {
-      if (y.At({i, j}) == typename ArrayType::Type(1))
-      {
-        typename ArrayType::Type tmp2 = x.At({i, j});
-        typename ArrayType::Type tmp  = Log(tmp2);
-        fetch::math::Add(plogx, fetch::math::Multiply(typename ArrayType::Type(-1), tmp), plogx);
-      }
+      typename ArrayType::Type tmp2 = x.At({i, j});
+      typename ArrayType::Type tmp  = Log(tmp2);
+      fetch::math::Add(plogx,
+                       Divide(fetch::math::Multiply(typename ArrayType::Type(-1), tmp), scalar[i]),
+                       plogx);
     }
   }
 
-  return Divide(plogx, scalar);
+  return plogx;
 }
 
 }  // namespace math

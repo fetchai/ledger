@@ -138,6 +138,9 @@ private:
     // second index is a context word
     ret.emplace_back(SelectContextPosition(idx));
 
+    // finally the label
+    ret.emplace_back(SizeType(1));
+
     return ret;
   }
 
@@ -155,6 +158,9 @@ private:
 
     // second index is a non-context word
     ret.emplace_back(SelectNegativeContextWord(idx));
+
+    // finally the label
+    ret.emplace_back(SizeType(0));
 
     return ret;
   }
@@ -177,8 +183,9 @@ private:
     {
       // randomly select a word from the unigram_table
       SizeType ran_val     = SizeType(this->lcg_());
-      SizeType max_val     = p_.unigram_table_size;
-      negative_context_idx = this->unigram_table_[ran_val % max_val];
+      SizeType max_val     = this->unigram_table_.size();
+      SizeType idx         = ran_val % max_val;
+      negative_context_idx = this->unigram_table_.at(idx);
       assert(negative_context_idx > 0);
       assert(negative_context_idx < this->vocab_.size());
       ongoing = false;

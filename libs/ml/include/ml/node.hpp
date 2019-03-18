@@ -87,13 +87,20 @@ public:
       }
       cachedOutputPresent_ = true;
     }
+
+    //    std::cout << "cached_output_.shape().size(): " << cachedOutput_.shape().size() <<
+    //    std::endl; std::cout << "cached_output_.shape()[0]: " << cachedOutput_.shape()[0] <<
+    //    std::endl; std::cout << "cached_output_.shape()[1]: " << cachedOutput_.shape()[1] <<
+    //    std::endl;
+    //
+
     return cachedOutput_;
   }
 
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
       ArrayType const &errorSignal)
   {
-    //    FETCH_LOG_INFO("ML_LIB", "Backpropagating node [", name_, "]");
+    FETCH_LOG_INFO("ML_LIB", "Backpropagating node [", name_, "]");
     std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
     std::vector<ArrayType> back_propagated_error_signals = this->Backward(inputs, errorSignal);
     std::vector<std::pair<NodeInterface<T> *, ArrayType>> non_back_propagated_error_signals;

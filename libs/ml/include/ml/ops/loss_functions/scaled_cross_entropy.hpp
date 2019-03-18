@@ -43,10 +43,9 @@ public:
   {
     assert(inputs.size() == 3);
     assert(inputs[0].size() == inputs[1].size());
-    assert(inputs[2].size() == 1);
 
     typename ArrayType::Type result =
-        fetch::math::ScaledCrossEntropyLoss(inputs[0], inputs[1], (inputs[2])[0]);
+        fetch::math::ScaledCrossEntropyLoss(inputs[0], inputs[1], inputs[2]);
 
     return result;
   }
@@ -54,9 +53,19 @@ public:
   virtual ArrayType Backward(std::vector<ArrayType> const &inputs)
   {
     assert(inputs.size() == 2);
-    assert(inputs[0].size() == inputs[1].size());
+    assert(inputs[0].shape() == inputs[1].shape());
+    assert(inputs[0].shape().size() == 2 || inputs[0].shape().size() == 1);
 
-    auto      n_classes = static_cast<typename ArrayType::Type>(inputs[1].size());
+    typename ArrayType::Type
+        n_classes;  // = static_cast<typename ArrayType::Type>(inputs[1].size());
+    if (inputs[0].shape().size() == 2)
+    {
+      n_classes = inputs[0].shape()[1];
+    }
+    else
+    {
+      n_classes = inputs[0].size();
+    }
     ArrayType ret = fetch::math::Divide(fetch::math::Subtract(inputs[0], inputs[1]), n_classes);
 
     return ret;

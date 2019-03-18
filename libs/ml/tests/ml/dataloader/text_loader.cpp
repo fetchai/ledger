@@ -109,3 +109,22 @@ TYPED_TEST(TextDataLoaderTest, adddata_loader_test)
     ASSERT_TRUE(cur_word.compare(gt_input.at(j)) == 0);
   }
 }
+
+TYPED_TEST(TextDataLoaderTest, discard_loader_test)
+{
+  std::string TRAINING_DATA = "This is a test sentence of total length ten words.";
+
+  TextParams<TypeParam> p;
+  p.n_data_buffers      = 1;
+  p.max_sentences       = 1;
+  p.min_sentence_length = 0;
+  p.window_size         = 1;
+  p.unigram_table       = false;
+
+  p.discard_frequent  = true;
+  p.discard_threshold = 0.00001;
+
+  TextLoader<TypeParam> loader(TRAINING_DATA, p);
+
+  ASSERT_TRUE(loader.VocabSize() < 10);
+}

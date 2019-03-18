@@ -19,6 +19,7 @@
 
 #include "core/assert.hpp"
 #include "ml/ops/weights.hpp"
+#include <set>
 
 namespace fetch {
 namespace ml {
@@ -35,7 +36,14 @@ public:
 
   Embeddings(SizeType dataPoints, SizeType dimensions)
   {
-    this->SetData(ArrayType(std::vector<SizeType>({dataPoints, dimensions})));
+    ArrayType weights = ArrayType(std::vector<SizeType>({dataPoints, dimensions}));
+    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, dataPoints, dimensions);
+    this->SetData(weights);
+  }
+
+  Embeddings(SizeType dataPoints, SizeType dimensions, ArrayType &weights)
+  {
+    this->SetData(weights);
   }
 
   virtual ~Embeddings() = default;
@@ -73,15 +81,30 @@ public:
     uint64_t j(0);
     for (DataType const &i : inputs.front().get())
     {
+      updated_rows_.insert(typename ArrayType::SizeType(double(i)));
       this->gradientAccumulation_->Slice(typename ArrayType::SizeType(i))
           .Copy(errorSignal.Slice(j));
       j++;
     }
-    return {};
+    return {errorSignal};
+  }
+
+  virtual void Step(typename T::Type learningRate)
+  {
+    for (auto const &r : updated_rows_)
+    {
+      ArrayType gradientAccumulationSlice = this->gradientAccumulation_->Slice(r);
+      ArrayType outputSlice               = this->output_->Slice(r);
+      gradientAccumulationSlice.InlineMultiply(-learningRate);
+      outputSlice.InlineAdd(gradientAccumulationSlice);
+      gradientAccumulationSlice.Fill(typename T::Type(0));
+    }
+    updated_rows_.clear();
   }
 
 private:
-  ArrayPtrType embeddings_output_;
+  ArrayPtrType                           embeddings_output_;
+  std::set<typename ArrayType::SizeType> updated_rows_;
 };
 
 }  // namespace ops

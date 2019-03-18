@@ -105,7 +105,6 @@ protected:
 
   // containers for the data and labels
   std::vector<std::vector<SizeType>> data_buffers_;
-  std::vector<SizeType>              labels_;
 
   // random generators
   fetch::random::LaggedFibonacciGenerator<>  lfg_;
@@ -128,7 +127,6 @@ public:
     }
 
     data_buffers_.resize(p_.n_data_buffers);
-    labels_.resize(1);
 
     // set up training dataset
     AddData(data);
@@ -179,7 +177,8 @@ public:
 
     // pull data from multiple data buffers into single output buffer
     std::vector<SizeType> buffer_idxs = GetData(idx);
-    assert(buffer_idxs.size() == p_.n_data_buffers);
+
+    assert(buffer_idxs.size() == (p_.n_data_buffers + 1));  // 1 extra for the label
 
     SizeType buffer_count = 0;
     for (SizeType j = 0; j < p_.n_data_buffers; ++j)
@@ -190,7 +189,7 @@ public:
       ++buffer_count;
     }
 
-    SizeType label = SizeType(labels_[idx]);
+    SizeType label = buffer_idxs.at(p_.n_data_buffers);
     cursor_++;
 
     return std::make_pair(full_buffer, label);
@@ -283,7 +282,7 @@ public:
       new_random_sequence_ = false;
       is_done_             = false;
     }
-    //    return GetAtIndex(SizeType(static_cast<SizeType>(lcg_())) % Size());
+
     return GetAtIndex(ran_idx_.at(cursor_));
   }
 
@@ -294,9 +293,9 @@ public:
    */
   SizeType VocabLookup(std::string &idx)
   {
-    assert(vocab_[idx].first < vocab_.size());
-    assert(vocab_[idx].first != 0);  // dont currently handle unknowns elegantly
-    return vocab_[idx].first;
+    assert(vocab_[idx].at(0) < vocab_.size());
+    assert(vocab_[idx].at(0) != 0);  // dont currently handle unknowns elegantly
+    return vocab_[idx].at(0);
   }
 
   std::string VocabLookup(SizeType idx)
@@ -387,6 +386,7 @@ private:
    */
   virtual std::vector<SizeType> GetData(SizeType idx)
   {
+    assert(p_.n_data_buffers == 1);
     return {idx};
   }
 
@@ -551,7 +551,7 @@ private:
     vocab_.emplace(std::make_pair("UNK", std::vector<SizeType>({0, 0})));
     for (std::vector<std::string> &cur_sentence : sentences)
     {
-      if (cur_sentence.size() > p_.min_sentence_length)
+      if ((cur_sentence.size() > p_.min_sentence_length) && (sentence_count_ < p_.max_sentences))
       {
         data_.push_back(std::vector<SizeType>({}));
         for (std::string cur_word : cur_sentence)
@@ -594,28 +594,33 @@ private:
     {
       // calculate adjusted word frequencies
       double sum_adj_vocab = 0.0;
+      double cur_vocab_freq;
+      double cur_val;
       for (auto &e : vocab_)
       {
-        double cur_vocab_freq = double(e.second.at(1));
-        double cur_val        = std::pow(cur_vocab_freq, p_.unigram_power);
+        cur_vocab_freq = double(e.second.at(1));
+        cur_val        = std::pow(cur_vocab_freq, p_.unigram_power);
         adj_vocab_frequency_.emplace_back(cur_val);
         sum_adj_vocab += cur_val;
       }
 
       SizeType cur_idx = 0;
       SizeType n_rows  = 0;
-      for (SizeType j = 0; j < vocab_.size(); ++j)
+      for (auto &e : vocab_)
       {
+        cur_vocab_freq = double(e.second.at(1));
+        cur_val        = std::pow(cur_vocab_freq, p_.unigram_power);
+
         assert(cur_idx < p_.unigram_table_size);
 
-        double adjusted_word_probability = adj_vocab_frequency_[j] / sum_adj_vocab;
+        double adjusted_word_probability = cur_val / sum_adj_vocab;
 
         // word frequency
         n_rows = SizeType(adjusted_word_probability * double(p_.unigram_table_size));
 
         for (SizeType k = 0; k < n_rows; ++k)
         {
-          unigram_table_[cur_idx] = j;
+          unigram_table_[cur_idx] = e.second.at(0);
           ++cur_idx;
         }
       }
@@ -629,26 +634,32 @@ private:
    */
   void DiscardFrequent(std::vector<std::vector<std::string>> &sentences)
   {
+    SizeType sentence_count = 0;
     // iterate through all sentences
     for (SizeType sntce_idx = 0; sntce_idx < sentences.size(); sntce_idx++)
     {
-      discards_.push_back({});
-      // iterate through words in the sentence choosing which to discard
-      for (SizeType i = 0; i < sentences[sntce_idx].size(); i++)
+      if ((sentences[sntce_idx].size() > p_.min_sentence_length) &&
+          (discard_sentence_idx_ + sentence_count < p_.max_sentences))
       {
-        if (DiscardExample(sentences[sntce_idx][i]))
+        discards_.push_back({});
+        // iterate through words in the sentence choosing which to discard
+        for (SizeType i = 0; i < sentences[sntce_idx].size(); i++)
         {
-          discards_.at(discard_sentence_idx_).push_back(1);
-          ++discard_count_;
+          if (DiscardExample(sentences[sntce_idx][i]))
+          {
+            discards_.at(discard_sentence_idx_ + sentence_count).push_back(1);
+            ++discard_count_;
+          }
+          else
+          {
+            discards_.at(discard_sentence_idx_ + sentence_count).push_back(0);
+          }
         }
-        else
-        {
-          discards_.at(discard_sentence_idx_).push_back(0);
-        }
-      }
 
-      ++discard_sentence_idx_;
+        ++sentence_count;
+      }
     }
+    discard_sentence_idx_ += sentence_count;
   }
 
   /**
@@ -657,7 +668,13 @@ private:
    */
   bool DiscardExample(std::string &word)
   {
-    double word_probability = double(vocab_[word].at(1)) / double(word_count_);
+    // check word actually present
+    assert(p_.discard_threshold > 0);
+    assert(vocab_.find(word) != vocab_.end());
+    SizeType word_frequency = vocab_[word].at(1);
+    assert(word_frequency > 0);
+
+    double word_probability = double(word_frequency) / double(word_count_);
 
     double prob_thresh = (std::sqrt(word_probability / p_.discard_threshold) + 1.0);
     prob_thresh *= (p_.discard_threshold / word_probability);
