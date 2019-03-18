@@ -21,6 +21,8 @@
 #include "ml/ops/weights.hpp"
 #include <set>
 
+#include <set>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -86,7 +88,7 @@ public:
           .Copy(errorSignal.Slice(j));
       j++;
     }
-    return {errorSignal};
+    return {ArrayType(errorSignal.shape())};
   }
 
   virtual void Step(typename T::Type learningRate)
