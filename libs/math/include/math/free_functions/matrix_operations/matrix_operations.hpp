@@ -560,7 +560,7 @@ void ArgMax(ArrayType const &array, typename ArrayType::SizeType &ret)
   }
 }
 template <typename ArrayType>
-typename ArrayType::Type ArgMax(ArrayType const &array)
+typename ArrayType::SizeType ArgMax(ArrayType const &array)
 {
   typename ArrayType::SizeType ret;
   ArgMax(array, ret);

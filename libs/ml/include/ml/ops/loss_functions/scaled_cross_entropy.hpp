@@ -60,11 +60,11 @@ public:
         n_classes;  // = static_cast<typename ArrayType::Type>(inputs[1].size());
     if (inputs[0].shape().size() == 2)
     {
-      n_classes = inputs[0].shape()[1];
+      n_classes = typename ArrayType::Type(inputs[0].shape()[1]);
     }
     else
     {
-      n_classes = inputs[0].size();
+      n_classes = typename ArrayType::Type(inputs[0].size());
     }
     ArrayType ret = fetch::math::Divide(fetch::math::Subtract(inputs[0], inputs[1]), n_classes);
 

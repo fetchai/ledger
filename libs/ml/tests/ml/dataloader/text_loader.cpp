@@ -60,7 +60,7 @@ TYPED_TEST(TextDataLoaderTest, basic_loader_test)
   for (std::size_t j = 0; j < 20; ++j)
   {
     std::pair<TypeParam, SizeType> output = loader.GetNext();
-    cur_word                              = loader.VocabLookup(SizeType(output.first.At(0)));
+    cur_word = loader.VocabLookup(SizeType(double(output.first.At(0))));
     ASSERT_TRUE(cur_word.compare(gt_input.at(j)) == 0);
   }
 }
@@ -89,7 +89,7 @@ TYPED_TEST(TextDataLoaderTest, adddata_loader_test)
   for (std::size_t j = 0; j < 20; ++j)
   {
     std::pair<TypeParam, SizeType> output = loader.GetNext();
-    cur_word                              = loader.VocabLookup(SizeType(output.first.At(0)));
+    cur_word = loader.VocabLookup(SizeType(double(output.first.At(0))));
     ASSERT_TRUE(cur_word.compare(gt_input.at(j)) == 0);
   }
 
@@ -105,7 +105,7 @@ TYPED_TEST(TextDataLoaderTest, adddata_loader_test)
   for (std::size_t j = 0; j < 22; ++j)
   {
     std::pair<TypeParam, SizeType> output = loader.GetNext();
-    cur_word                              = loader.VocabLookup(SizeType(output.first.At(0)));
+    cur_word = loader.VocabLookup(SizeType(double(output.first.At(0))));
     ASSERT_TRUE(cur_word.compare(gt_input.at(j)) == 0);
   }
 }

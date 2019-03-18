@@ -99,14 +99,21 @@ void TestEmbeddings(Graph<ArrayType> &g, std::string &skip_gram_name, SkipGramLo
   {
     std::cout << "output.at(j).first: " << output.at(j).first << std::endl;
     std::cout << "output.at(j).second: " << output.at(j).second << "\n" << std::endl;
-
   }
 }
 
 int main(int argc, char **argv)
 {
 
-  std::string training_text = argv[1];
+  std::string training_text;
+  if (argc == 2)
+  {
+    training_text = argv[1];
+  }
+  else
+  {
+    throw std::runtime_error("must specify filename as training text");
+  }
 
   std::cout << "FETCH Word2Vec Demo" << std::endl;
 
