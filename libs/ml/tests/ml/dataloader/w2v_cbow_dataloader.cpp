@@ -37,13 +37,13 @@ TEST(CBOWDataloaderTest, add_data_loader_test)
   EXPECT_EQ(loader.Size(), 0);
   EXPECT_EQ(loader.VocabSize(), 0);
   EXPECT_TRUE(loader.IsDone());
-  EXPECT_EQ(loader.GetVocab().size(), 0);
+  EXPECT_EQ(loader.GetVocab().size(), 1);
 
   EXPECT_TRUE(loader.AddData("Open Economic Framework"));
   EXPECT_EQ(loader.Size(), 1);
   EXPECT_EQ(loader.VocabSize(), 3);
   EXPECT_FALSE(loader.IsDone());
-  EXPECT_EQ(loader.GetVocab().size(), 3);
+  EXPECT_EQ(loader.GetVocab().size(), 4);
   EXPECT_EQ(loader.GetVocab().at("open"), 1);
   EXPECT_EQ(loader.GetVocab().at("economic"), 2);
   EXPECT_EQ(loader.GetVocab().at("framework"), 3);
@@ -54,10 +54,11 @@ TEST(CBOWDataloaderTest, loader_test)
   fetch::ml::CBOWLoader<float> loader(4);
   EXPECT_TRUE(loader.AddData(
       "Hello, World! My name is FetchBot, I am 1 year old. I eat tokens for breakfast."));
-  EXPECT_EQ(loader.Size(), 8);
-  EXPECT_EQ(loader.VocabSize(), 15);
+  EXPECT_EQ(loader.Size(), 7);
+  EXPECT_EQ(loader.VocabSize(), 14);
   EXPECT_FALSE(loader.IsDone());
   EXPECT_EQ(loader.GetVocab().size(), 15);
+
   EXPECT_EQ(loader.GetVocab().at("hello"), 1);
   EXPECT_EQ(loader.GetVocab().at("world"), 2);
   EXPECT_EQ(loader.GetVocab().at("my"), 3);
@@ -66,13 +67,13 @@ TEST(CBOWDataloaderTest, loader_test)
   EXPECT_EQ(loader.GetVocab().at("fetchbot"), 6);
   EXPECT_EQ(loader.GetVocab().at("i"), 7);
   EXPECT_EQ(loader.GetVocab().at("am"), 8);
-  EXPECT_EQ(loader.GetVocab().at("1"), 9);
-  EXPECT_EQ(loader.GetVocab().at("year"), 10);
-  EXPECT_EQ(loader.GetVocab().at("old"), 11);
-  EXPECT_EQ(loader.GetVocab().at("eat"), 12);
-  EXPECT_EQ(loader.GetVocab().at("tokens"), 13);
-  EXPECT_EQ(loader.GetVocab().at("for"), 14);
-  EXPECT_EQ(loader.GetVocab().at("breakfast"), 15);
+  EXPECT_THROW(loader.GetVocab().at("1"), std::out_of_range);
+  EXPECT_EQ(loader.GetVocab().at("year"), 9);
+  EXPECT_EQ(loader.GetVocab().at("old"), 10);
+  EXPECT_EQ(loader.GetVocab().at("eat"), 11);
+  EXPECT_EQ(loader.GetVocab().at("tokens"), 12);
+  EXPECT_EQ(loader.GetVocab().at("for"), 13);
+  EXPECT_EQ(loader.GetVocab().at("breakfast"), 14);
 
   std::pair<fetch::math::Tensor<float>, uint64_t> data;
 
@@ -87,7 +88,7 @@ TEST(CBOWDataloaderTest, loader_test)
   EXPECT_EQ(data.first.At(4), 6);   // fetchbot
   EXPECT_EQ(data.first.At(5), 7);   // i
   EXPECT_EQ(data.first.At(6), 8);   // am
-  EXPECT_EQ(data.first.At(7), 9);   // 1
+  EXPECT_EQ(data.first.At(7), 9);   // year
 
   EXPECT_FALSE(loader.IsDone());
   data = loader.GetNext();
@@ -99,8 +100,8 @@ TEST(CBOWDataloaderTest, loader_test)
   EXPECT_EQ(data.second, 6);        // fetchbot
   EXPECT_EQ(data.first.At(4), 7);   // i
   EXPECT_EQ(data.first.At(5), 8);   // am
-  EXPECT_EQ(data.first.At(6), 9);   // 1
   EXPECT_EQ(data.first.At(6), 9);   // year
+  EXPECT_EQ(data.first.At(6), 9);   // old
 
   EXPECT_FALSE(loader.IsDone());
   data = loader.GetNext();
@@ -111,19 +112,17 @@ TEST(CBOWDataloaderTest, loader_test)
   EXPECT_EQ(data.first.At(3), 6);   // fetchbot
   EXPECT_EQ(data.second, 7);        // i
   EXPECT_EQ(data.first.At(4), 8);   // am
-  EXPECT_EQ(data.first.At(5), 9);   // 1
-  EXPECT_EQ(data.first.At(6), 10);  // year
-  EXPECT_EQ(data.first.At(7), 11);  // old
+  EXPECT_EQ(data.first.At(5), 9);   // year
+  EXPECT_EQ(data.first.At(6), 10);  // old
+  EXPECT_EQ(data.first.At(7), 7);   // I
 
   EXPECT_FALSE(loader.IsDone());
-  data = loader.GetNext();  // name is FetchBot, I am 1 year old. I
+  data = loader.GetNext();  // name is FetchBot, I am year old. I eat
   EXPECT_FALSE(loader.IsDone());
-  data = loader.GetNext();  // is FetchBot, I am 1 year old. I eat
+  data = loader.GetNext();  // is FetchBot, I am year old. I eat tokens
   EXPECT_FALSE(loader.IsDone());
-  data = loader.GetNext();  // FetchBot, I am 1 year old. I eat tokens
+  data = loader.GetNext();  // FetchBot, I am year old. I eat tokens for
   EXPECT_FALSE(loader.IsDone());
-  data = loader.GetNext();  // I am 1 year old. I eat tokens for
-  EXPECT_FALSE(loader.IsDone());
-  data = loader.GetNext();  // am 1 year old. I eat tokens for breakfast
+  data = loader.GetNext();  // I am year old. I eat tokens for breakfast
   EXPECT_TRUE(loader.IsDone());
 }

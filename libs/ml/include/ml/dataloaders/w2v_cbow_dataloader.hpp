@@ -100,7 +100,7 @@ public:
 
   std::size_t VocabSize() const
   {
-    return vocab_.size();
+    return vocab_.size() - 1;  // -1 for UNKNOWN
   }
 
   bool AddData(std::string const &s)
@@ -128,9 +128,7 @@ private:
       indexes.reserve(strings.size());
       for (std::string const &s : strings)
       {
-        // +1 means that values will start at 1. 0 is reserved for UNKNOWN word
-        auto value =
-            vocab_.insert(std::pair<std::string, uint64_t>(s, (uint64_t)(vocab_.size() + 1)));
+        auto value = vocab_.insert(std::pair<std::string, uint64_t>(s, (uint64_t)(vocab_.size())));
         indexes.push_back((*value.first).second);
       }
     }
