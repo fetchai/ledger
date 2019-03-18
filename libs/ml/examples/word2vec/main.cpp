@@ -148,6 +148,7 @@ std::vector<DataType> TestEmbeddings(Graph<ArrayType> &g, std::string &skip_gram
 int main(int argc, char **argv)
 {
 
+  assert (argc == 2);
   std::string training_text = argv[1];
 
   std::cout << "FETCH Word2Vec Demo" << std::endl;
