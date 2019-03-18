@@ -343,7 +343,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
   // Important to keep the handle alive as long as the msgpack::object is needed to avoid segfault!
   msgpack::object_handle       h;
   std::vector<msgpack::object> input_params;
-  auto parameter_data = byte_array::ByteArray{tx.data()};
+  auto                         parameter_data = byte_array::ByteArray{tx.data()};
 
   // if the tx has a payload parse it
   if (!parameter_data.empty() && parameter_data != "{}")

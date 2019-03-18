@@ -28,7 +28,7 @@ public:
   static constexpr std::size_t RAW_BYTES_SIZE   = 64;
   static constexpr std::size_t STRING_REPR_SIZE = 88;
   using Buffer                                  = std::vector<uint8_t>;
-  bool is_address = true;
+  bool is_address                               = true;
 
   static Ptr<Address> Constructor(VM *vm, TypeId id)
   {
@@ -99,14 +99,16 @@ public:
     void *bytes = malloc(STRING_REPR_SIZE + RAW_BYTES_SIZE);
 
     memcpy(bytes, address_.data(), address_.size());
-    memcpy((uint8_t *)bytes + RAW_BYTES_SIZE, string_representation_.c_str(), string_representation_.size());
+    memcpy((uint8_t *)bytes + RAW_BYTES_SIZE, string_representation_.c_str(),
+           string_representation_.size());
     return bytes;
   }
 
   void FromBytes(void *data)
   {
     address_ = Buffer((uint8_t *)data, (uint8_t *)data + RAW_BYTES_SIZE);
-    string_representation_.assign(((const char *)data) + RAW_BYTES_SIZE, (std::size_t)STRING_REPR_SIZE);
+    string_representation_.assign(((const char *)data) + RAW_BYTES_SIZE,
+                                  (std::size_t)STRING_REPR_SIZE);
   }
 
 private:
