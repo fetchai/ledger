@@ -48,11 +48,11 @@ public:
       fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &pred,
       fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &groundTruth)
   {
-    std::shared_ptr<fetch::math::Tensor<float>> dt =
+    fetch::math::Tensor<float> dt =
         fetch::ml::ops::CrossEntropy<fetch::math::Tensor<float>>::Backward({*pred, *groundTruth});
     fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> ret =
-        this->vm_->CreateNewObject<fetch::vm_modules::ml::TensorWrapper>(dt->shape());
-    (*ret)->Copy(*dt);
+        this->vm_->CreateNewObject<fetch::vm_modules::ml::TensorWrapper>(dt.shape());
+    (*ret).Copy(dt);
     return ret;
   }
 };

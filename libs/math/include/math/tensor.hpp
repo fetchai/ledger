@@ -325,6 +325,37 @@ public:
     return ret;
   }
 
+  /*
+   * Add a dummy leading dimension
+   * Ex: [4, 5, 6].Unsqueeze() -> [1, 4, 5, 6]
+   */
+  Tensor<T> &Unsqueeze()
+  {
+    shape_.insert(shape_.begin(), 1);
+    strides_.insert(strides_.begin(), strides_.front() * shape_[1]);
+    padding_.insert(padding_.begin(), 0);
+    return *this;
+  }
+
+  /*
+   * Inverse of unsqueze : Collapse a empty leading dimension
+   */
+  Tensor<T> Squeeze()
+  {
+    if (shape_.front() == 1)
+    {
+      shape_.erase(shape_.begin());
+      strides_.erase(strides_.begin());
+      padding_.erase(padding_.begin());
+    }
+    else
+    {
+      throw std::runtime_error("Can't squeeze tensor with leading dimension of size " +
+                               std::to_string(shape_[0]));
+    }
+    return *this;
+  }
+
   std::shared_ptr<const std::vector<T>> Storage() const
   {
     return storage_;
@@ -342,11 +373,11 @@ public:
       T e2 = o.At(o.IndicesOfElement(i));
 
       T abs_e1 = e1;
-      fetch::math::Abs(abs_e1);
+      fetch::math::Abs(abs_e1, abs_e1);
       T abs_e2 = e2;
-      fetch::math::Abs(abs_e2);
+      fetch::math::Abs(abs_e2, abs_e2);
       T abs_diff = e1 - e2;
-      fetch::math::Abs(abs_diff);
+      fetch::math::Abs(abs_diff, abs_diff);
       T tolerance = std::max(absolute_tolerance, std::max(abs_e1, abs_e2) * relative_tolerance);
       if (abs_diff > tolerance)
       {
@@ -359,9 +390,9 @@ public:
 
   Tensor<T> &InlineAdd(T const &o)
   {
-    for (SizeType i(0); i < size(); ++i)
+    for (T &e : *this)
     {
-      At(i) = At(i) + o;
+      e += o;
     }
     return *this;
   }
@@ -369,18 +400,24 @@ public:
   Tensor<T> &InlineAdd(Tensor<T> const &o)
   {
     assert(size() == o.size());
-    for (SizeType i(0); i < size(); ++i)
+    auto it1 = this->begin();
+    auto end = this->end();
+    auto it2 = o.begin();
+
+    while (it1 != end)
     {
-      At(i) = At(i) + o.At(i);
+      *it1 += *it2;
+      ++it1;
+      ++it2;
     }
     return *this;
   }
 
   Tensor<T> &InlineSubtract(T const &o)
   {
-    for (SizeType i(0); i < size(); ++i)
+    for (T &e : *this)
     {
-      At(i) = At(i) - o;
+      e -= o;
     }
     return *this;
   }
@@ -388,9 +425,15 @@ public:
   Tensor<T> &InlineSubtract(Tensor<T> const &o)
   {
     assert(size() == o.size());
-    for (SizeType i(0); i < size(); ++i)
+    auto it1 = this->begin();
+    auto end = this->end();
+    auto it2 = o.begin();
+
+    while (it1 != end)
     {
-      At(i) = At(i) - o.At(i);
+      *it1 -= *it2;
+      ++it1;
+      ++it2;
     }
     return *this;
   }
@@ -407,9 +450,9 @@ public:
 
   Tensor<T> &InlineMultiply(T const &o)
   {
-    for (SizeType i(0); i < size(); ++i)
+    for (T &e : *this)
     {
-      At(i) = At(i) * o;
+      e *= o;
     }
     return *this;
   }
@@ -417,18 +460,24 @@ public:
   Tensor<T> &InlineMultiply(Tensor<T> const &o)
   {
     assert(size() == o.size());
-    for (SizeType i(0); i < size(); ++i)
+    auto it1 = this->begin();
+    auto end = this->end();
+    auto it2 = o.begin();
+
+    while (it1 != end)
     {
-      At(i) = At(i) * o.At(i);
+      *it1 *= *it2;
+      ++it1;
+      ++it2;
     }
     return *this;
   }
 
   Tensor<T> &InlineDivide(T const &o)
   {
-    for (SizeType i(0); i < size(); ++i)
+    for (T &e : *this)
     {
-      At(i) = At(i) / o;
+      e /= o;
     }
     return *this;
   }
@@ -436,21 +485,22 @@ public:
   Tensor<T> &InlineDivide(Tensor<T> const &o)
   {
     assert(size() == o.size());
-    for (SizeType i(0); i < size(); ++i)
+    auto it1 = this->begin();
+    auto end = this->end();
+    auto it2 = o.begin();
+
+    while (it1 != end)
     {
-      At(i) = At(i) / o.At(i);
+      *it1 /= *it2;
+      ++it1;
+      ++it2;
     }
     return *this;
   }
 
   T Sum() const
   {
-    T sum(0);
-    for (SizeType i(0); i < size(); ++i)
-    {
-      sum = sum + At(i);
-    }
-    return sum;
+    return std::accumulate(begin(), end(), T(0));
   }
 
   Tensor<T> Transpose() const
@@ -495,7 +545,6 @@ public:
       {
         ss << At(i) << "\t";
       }
-      ss << "\n";
     }
     if (shape_.size() == 2)
     {

@@ -543,26 +543,28 @@ void PeakToPeak(ArrayType arr)
  * @param array array to search for maximum value
  * @return
  */
-template <typename T, typename C>
-void ArgMax(ShapelessArray<T, C> const &array, T &ret)
+template <typename ArrayType>
+void ArgMax(ArrayType const &array, typename ArrayType::SizeType &ret)
 {
-  ret          = 0;
-  T cur_maxval = std::numeric_limits<T>::lowest();
+  ret                                 = typename ArrayType::SizeType(0);
+  typename ArrayType::Type cur_maxval = std::numeric_limits<typename ArrayType::Type>::lowest();
 
   // just using ret as a free variable to store the current maxval for the loop here
-  for (std::size_t i = 0; i < array.size(); ++i)
+  for (typename ArrayType::SizeType i(0); i < array.size(); ++i)
   {
     if (cur_maxval < array[i])
     {
-      ret = static_cast<T>(i);
+      ret        = i;
+      cur_maxval = array.At(i);
     }
   }
 }
-template <typename T, typename C>
-T ArgMax(ShapelessArray<T, C> const &array)
+template <typename ArrayType>
+typename ArrayType::SizeType ArgMax(ArrayType const &array)
 {
-  T ret;
-  return ArgMax(array, ret);
+  typename ArrayType::SizeType ret;
+  ArgMax(array, ret);
+  return ret;
 }
 
 template <typename ArrayType>
@@ -608,6 +610,8 @@ ArrayType Dot(ArrayType const &A, ArrayType const &B)
 template <class ArrayType>
 void DotTranspose(ArrayType const &A, ArrayType const &B, ArrayType &ret)
 {
+  assert(A.shape().size() == 2);
+  assert(B.shape().size() == 2);
   assert(A.shape()[1] == B.shape()[1]);
   assert(A.shape()[0] == ret.shape()[0]);
   assert(B.shape()[0] == ret.shape()[1]);

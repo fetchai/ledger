@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/tensor_operations.hpp"
+
 #include "ml/layers/layer.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/flatten.hpp"
@@ -45,7 +47,6 @@ public:
                  WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
     : Layer<T>(in, out)
   {
-
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
     std::string flat_input =
@@ -59,15 +60,15 @@ public:
     std::string output = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
         name + "_Add", {weights_matmul, bias});
 
-    this->AddInputNodes(input);
+    this->AddInputNode(input);
     this->SetOutputNode(output);
 
-    ArrayPtrType weights_ptr = std::make_shared<ArrayType>(std::vector<std::uint64_t>({in, out}));
-    this->Initialise(weights_ptr, init_mode);
-    this->SetInput(weights, weights_ptr);
+    ArrayType weights_data(std::vector<std::uint64_t>({in, out}));
+    this->Initialise(weights_data, init_mode);
+    this->SetInput(weights, weights_data);
 
-    ArrayPtrType bias_ptr = std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, out}));
-    this->SetInput(bias, bias_ptr);
+    ArrayType bias_data(std::vector<std::uint64_t>({1, out}));
+    this->SetInput(bias, bias_data);
   }
 
   static constexpr char const *DESCRIPTOR = "FullyConnected";

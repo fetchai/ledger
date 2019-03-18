@@ -52,7 +52,7 @@ public:
   bool discard_frequent = false;  // discard frequent words
 
   // discard params
-  double discard_threshold = 0.0;  // random discard probability threshold
+  double discard_threshold = 0.00001;  // random discard probability threshold; always >0
 
   // unigram params
   SizeType unigram_table_size = 10000000;  // size of unigram table for negative sampling
@@ -65,7 +65,7 @@ public:
  * @tparam T  tensor type
  */
 template <typename T>
-class TextLoader : public DataLoader<std::shared_ptr<T>, typename T::SizeType>
+class TextLoader : public DataLoader<T, typename T::SizeType>
 {
   using ArrayType = T;
   using DataType  = typename T::Type;
@@ -73,14 +73,11 @@ class TextLoader : public DataLoader<std::shared_ptr<T>, typename T::SizeType>
 
 protected:
   // training data parsing containers
-  SizeType                                  size_    = 0;      // # training pairs
-  SizeType                                  n_words_ = 0;      // # of total words in training data
-  std::unordered_map<std::string, SizeType> vocab_;            // full unique vocab
-  std::unordered_map<SizeType, std::string> reverse_vocab_;    // full unique vocab
-  std::unordered_map<std::string, SizeType> vocab_frequency_;  // word frequencies
-  std::vector<double>                       adj_vocab_frequency_;  // word frequencies
-  std::vector<std::vector<SizeType>>        data_;                 // all training data by sentence
-  std::vector<std::vector<SizeType>>        discards_;             // record of discarded words
+  SizeType                                               size_ = 0;  // # training pairs
+  std::unordered_map<std::string, std::vector<SizeType>> vocab_;  // full unique vocab + frequencies
+  std::vector<double>                adj_vocab_frequency_;  // word frequencies
+  std::vector<std::vector<SizeType>> data_;                 // all training data by sentence
+  std::vector<std::vector<SizeType>> discards_;             // record of discarded words
   SizeType discard_sentence_idx_ = 0;  // keeps track of sentences already having discard applied
 
   // used for iterating through all examples incrementally
@@ -105,7 +102,6 @@ protected:
 
   // containers for the data and labels
   std::vector<std::vector<SizeType>> data_buffers_;
-  std::vector<SizeType>              labels_;
 
   // random generators
   fetch::random::LaggedFibonacciGenerator<>  lfg_;
@@ -130,7 +126,7 @@ public:
     data_buffers_.resize(p_.n_data_buffers);
 
     // set up training dataset
-    BuildText(data);
+    AddData(data);
   }
 
   /**
@@ -156,7 +152,7 @@ public:
    */
   virtual bool IsDone() const
   {
-    return cursor_ >= size_;
+    return cursor_ >= word_count_;
   }
 
   /**
@@ -172,23 +168,25 @@ public:
    * @param idx
    * @return  returns a pair of output buffer and label (i.e. X & Y)
    */
-  virtual std::pair<std::shared_ptr<T>, SizeType> GetAtIndex(SizeType idx)
+  virtual std::pair<T, SizeType> GetAtIndex(SizeType idx)
   {
-    std::shared_ptr<T> full_buffer =
-        std::make_shared<ArrayType>(std::vector<SizeType>({1, p_.n_data_buffers}));
+    T full_buffer(std::vector<SizeType>({1, p_.n_data_buffers}));
 
     // pull data from multiple data buffers into single output buffer
     std::vector<SizeType> buffer_idxs = GetData(idx);
-    assert(buffer_idxs.size() == p_.n_data_buffers);
 
+    assert(buffer_idxs.size() == (p_.n_data_buffers + 1));  // 1 extra for the label
+
+    SizeType buffer_count = 0;
     for (SizeType j = 0; j < p_.n_data_buffers; ++j)
     {
-      SizeType sentence_idx = word_idx_sentence_idx[idx];
-      SizeType word_idx     = GetWordOffsetFromWordIdx(idx);
-      full_buffer->At(j)    = DataType(data_.at(sentence_idx).at(word_idx));
+      SizeType sentence_idx = word_idx_sentence_idx[buffer_idxs.at(buffer_count)];
+      SizeType word_idx     = GetWordOffsetFromWordIdx(buffer_idxs.at(buffer_count));
+      full_buffer.At(j)     = DataType(data_.at(sentence_idx).at(word_idx));
+      ++buffer_count;
     }
 
-    SizeType label = SizeType(labels_[idx]);
+    SizeType label = buffer_idxs.at(p_.n_data_buffers);
     cursor_++;
 
     return std::make_pair(full_buffer, label);
@@ -198,28 +196,37 @@ public:
    * get the next data point in order
    * @return
    */
-  virtual std::pair<std::shared_ptr<T>, SizeType> GetNext()
+  virtual std::pair<T, SizeType> GetNext()
   {
     // loop until we find a non-discarded data point
     bool not_found = true;
-    while(not_found)
+    while (not_found)
     {
-      if (cursor_ > vocab_.size())
+      if (cursor_ >= word_count_)
       {
         Reset();
         is_done_ = true;
       }
 
-      SizeType sentence_idx = GetSentenceIdxFromWordIdx(cursor_);
-      SizeType word_offset = GetWordOffsetFromWordIdx(cursor_);
-      if (!(discards_.at(sentence_idx).at(word_offset)))
+      if (p_.discard_frequent)
       {
-        is_done_ = false;
-        not_found = false;
+        SizeType sentence_idx = GetSentenceIdxFromWordIdx(cursor_);
+        SizeType word_offset  = GetWordOffsetFromWordIdx(cursor_);
+
+        if (!(discards_.at(sentence_idx).at(word_offset)))
+        {
+          is_done_  = false;
+          not_found = false;
+        }
+        else
+        {
+          ++cursor_;
+        }
       }
       else
       {
-        ++cursor_;
+        is_done_  = false;
+        not_found = false;
       }
     }
 
@@ -230,29 +237,37 @@ public:
    * gets the next data point at random
    * @return
    */
-  std::pair<std::shared_ptr<T>, SizeType> GetRandom()
+  std::pair<T, SizeType> GetRandom()
   {
     // loop until we find a non-discarded data point
     bool not_found = true;
-    while(not_found)
+    while (not_found)
     {
       if (cursor_ > vocab_.size())
       {
         Reset();
-        is_done_ = true;
+        is_done_             = true;
         new_random_sequence_ = true;
       }
 
       SizeType sentence_idx = GetSentenceIdxFromWordIdx(cursor_);
-      SizeType word_offset = GetWordOffsetFromWordIdx(cursor_);
-      if (!(discards_.at(sentence_idx).at(word_offset)))
+      SizeType word_offset  = GetWordOffsetFromWordIdx(cursor_);
+      if (p_.discard_frequent)
       {
-        is_done_ = false;
-        not_found = false;
+        if (!(discards_.at(sentence_idx).at(word_offset)))
+        {
+          is_done_  = false;
+          not_found = false;
+        }
+        else
+        {
+          ++cursor_;
+        }
       }
       else
       {
-        ++cursor_;
+        is_done_  = false;
+        not_found = false;
       }
     }
 
@@ -264,34 +279,7 @@ public:
       new_random_sequence_ = false;
       is_done_             = false;
     }
-    //    return GetAtIndex(SizeType(static_cast<SizeType>(lcg_())) % Size());
     return GetAtIndex(ran_idx_.at(cursor_));
-  }
-
-  /**
-   * add more text data after construction
-   * @param s
-   * @return
-   */
-  bool AddData(std::string const &s)
-  {
-    std::vector<SizeType> indexes = BuildText(s);
-    if (indexes.size() >= 2 * p_.window_size + 1)
-    {
-      data_.push_back(std::move(indexes));
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * lookup a word given the vocab index
-   * @param idx
-   * @return
-   */
-  std::string VocabLookup(SizeType idx)
-  {
-    return reverse_vocab_[idx];
   }
 
   /**
@@ -301,9 +289,48 @@ public:
    */
   SizeType VocabLookup(std::string &idx)
   {
-    assert(vocab_[idx] < vocab_.size());
-    assert(vocab_[idx] != 0);  // dont currently handle unknowns elegantly
-    return vocab_[idx];
+    assert(vocab_[idx].at(0) < vocab_.size());
+    assert(vocab_[idx].at(0) != 0);  // dont currently handle unknowns elegantly
+    return vocab_[idx].at(0);
+  }
+
+  /**
+   * lookup the string corresponding to a vocab index - EXPENSIVE
+   *
+   * @param idx
+   * @return
+   */
+  std::string VocabLookup(SizeType idx)
+  {
+    for (auto &e : vocab_)
+    {
+      if (e.second.at(0) == idx)
+      {
+        return e.first;
+      }
+    }
+    return "UNK";
+  }
+
+  /**
+   * helper function for getting the Top K most frequent words
+   */
+  std::vector<std::pair<std::string, SizeType>> BottomKVocab(SizeType k)
+  {
+    return FindK(k, false);
+  }
+
+  /**
+   * helper function for getting the Top K most frequent words
+   */
+  std::vector<std::pair<std::string, SizeType>> TopKVocab(SizeType k)
+  {
+    return FindK(k, true);
+  }
+
+  SizeType GetDiscardCount()
+  {
+    return discard_count_;
   }
 
   /**
@@ -350,21 +377,41 @@ public:
         {
           // first word in current sentence is therefore
           word_idx_for_offset_zero = cur_word_idx + 1;
-
-          word_offset = word_idx - word_idx_for_offset_zero;
+          word_offset              = word_idx - word_idx_for_offset_zero;
+          not_found                = false;
+        }
+        else
+        {
+          --cur_word_idx;
         }
       }
-      not_found = false;
     }
     return word_offset;
   }
 
-private:
   /**
-   * method for building up the training pairs that the Get funtions will reference
+   * Adds text to training data
    * @param training_data
    */
-  virtual std::vector<SizeType> GetData(SizeType idxs) = 0;
+  void AddData(std::string const &training_data)
+  {
+    std::string full_training_text;
+    GetTextString(training_data, full_training_text);
+
+    // converts text into training pairs & related preparatory work
+    ProcessTrainingData(full_training_text);
+  }
+
+private:
+  /**
+   * Override this method with a more interesting implementation
+   * @param training_data
+   */
+  virtual std::vector<SizeType> GetData(SizeType idx)
+  {
+    assert(p_.n_data_buffers == 1);
+    return {idx, 1};
+  }
 
   /**
    * helper for stripping punctuation from words
@@ -407,17 +454,15 @@ private:
     DIR *                    d;
     struct dirent *          ent;
     char *                   p1;
-    char *                   p2;
     int                      txt_cmp;
     if ((d = opendir(dir_name.c_str())) != NULL)
     {
       while ((ent = readdir(d)) != NULL)
       {
-        p1 = strtok(ent->d_name, ".");
-        p2 = strtok(NULL, ".");
-        if (p2 != NULL)
+        p1 = strtok(NULL, ".");
+        if (p1 != NULL)
         {
-          txt_cmp = strcmp(p2, "txt");
+          txt_cmp = strcmp(p1, "txt");
           if (txt_cmp == 0)
           {
             ret.emplace_back(ent->d_name);
@@ -434,7 +479,7 @@ private:
    * @param training_data
    * @param full_training_text
    */
-  void GetTextString(std::string &training_data, std::string &full_training_text)
+  void GetTextString(std::string const &training_data, std::string &full_training_text)
   {
     std::vector<std::string> file_names = GetAllTextFiles(training_data);
     if (file_names.size() == 0)
@@ -453,19 +498,6 @@ private:
         full_training_text += cur_text;
       }
     }
-  }
-
-  /**
-   * builds all training text
-   * @param training_data
-   */
-  void BuildText(std::string &training_data)
-  {
-    std::string full_training_text;
-    GetTextString(training_data, full_training_text);
-
-    // converts text into training pairs & related preparatory work
-    ProcessTrainingData(full_training_text);
   }
 
   /**
@@ -496,10 +528,15 @@ private:
   void PreProcessWords(std::string &training_data, std::vector<std::vector<std::string>> &sentences)
   {
     std::string word;
+    SizeType    sentence_count = 0;
     sentences.push_back(std::vector<std::string>{});
-    SizeType word_offset = 0;
     for (std::stringstream s(training_data); s >> word;)
     {
+      if (sentence_count_ + sentence_count > p_.max_sentences)
+      {
+        break;
+      }
+
       // must check this before we strip punctuation
       bool new_sentence = CheckEndOfSentence(word);
 
@@ -509,22 +546,13 @@ private:
       // lower case
       std::transform(word.begin(), word.end(), word.begin(), ::tolower);
 
-      sentences[sentence_count_].push_back(word);
-      ++word_count_;
-
-      ++word_offset;
+      sentences[sentence_count].push_back(word);
 
       // if new sentence
       if (new_sentence)
       {
         sentences.push_back(std::vector<std::string>{});
-        ++sentence_count_;
-        word_offset = 0;
-
-        if (sentence_count_ > p_.max_sentences)
-        {
-          break;
-        }
+        ++sentence_count;
       }
     }
 
@@ -541,36 +569,32 @@ private:
   void BuildVocab(std::vector<std::vector<std::string>> &sentences)
   {
     // insert words uniquely into the vocabulary
-    vocab_.emplace(std::make_pair("UNK", 0));
-    reverse_vocab_.emplace(0, "UNK");
-    vocab_frequency_.emplace("UNK", 0);
-
-    sentence_count_ = 0;
-    word_count_     = 0;
-    SizeType cur_val;
+    vocab_.emplace(std::make_pair("UNK", std::vector<SizeType>({0, 0})));
     for (std::vector<std::string> &cur_sentence : sentences)
     {
-      data_.emplace_back(std::vector<SizeType>({}));
-      if (cur_sentence.size() > p_.min_sentence_length)
+      if ((cur_sentence.size() > p_.min_sentence_length) && (sentence_count_ < p_.max_sentences))
       {
+        data_.push_back(std::vector<SizeType>({}));
         for (std::string cur_word : cur_sentence)
         {
-          auto ret = vocab_.emplace(cur_word, unique_word_count_);
-
-          if (ret.second)
+          // if already seen this word
+          SizeType word_idx;
+          if (vocab_.find(cur_word) != vocab_.end())
           {
-            reverse_vocab_.emplace(unique_word_count_, cur_word);
-            vocab_frequency_[cur_word] = 1;
-            ++unique_word_count_;
+            word_idx           = vocab_[cur_word].at(0);
+            SizeType word_freq = vocab_[cur_word].at(1);
+            ++word_freq;
+
+            vocab_[cur_word] = std::vector<SizeType>({word_idx, word_freq});
           }
           else
           {
-            vocab_frequency_[cur_word] += 1;
+            vocab_.emplace(
+                std::make_pair(cur_word, std::vector<SizeType>({unique_word_count_, 1})));
+            word_idx = unique_word_count_;
+            unique_word_count_++;
           }
-          ++n_words_;
-
-          cur_val = (*ret.first).second;
-          data_.at(sentence_count_).emplace_back(cur_val);
+          data_.at(sentence_count_).push_back(word_idx);
           word_idx_sentence_idx.emplace(
               std::pair<SizeType, SizeType>(word_count_, sentence_count_));
           sentence_idx_word_idx.emplace(
@@ -591,27 +615,33 @@ private:
     {
       // calculate adjusted word frequencies
       double sum_adj_vocab = 0.0;
-      for (SizeType j = 0; j < vocab_frequency_.size(); ++j)
+      double cur_vocab_freq;
+      double cur_val;
+      for (auto &e : vocab_)
       {
-        adj_vocab_frequency_.emplace_back(
-            std::pow(double(vocab_frequency_[reverse_vocab_[j]]), p_.unigram_power));
-        sum_adj_vocab += adj_vocab_frequency_[j];
+        cur_vocab_freq = double(e.second.at(1));
+        cur_val        = std::pow(cur_vocab_freq, p_.unigram_power);
+        adj_vocab_frequency_.emplace_back(cur_val);
+        sum_adj_vocab += cur_val;
       }
 
       SizeType cur_idx = 0;
       SizeType n_rows  = 0;
-      for (SizeType j = 0; j < vocab_.size(); ++j)
+      for (auto &e : vocab_)
       {
+        cur_vocab_freq = double(e.second.at(1));
+        cur_val        = std::pow(cur_vocab_freq, p_.unigram_power);
+
         assert(cur_idx < p_.unigram_table_size);
 
-        double adjusted_word_probability = adj_vocab_frequency_[j] / sum_adj_vocab;
+        double adjusted_word_probability = cur_val / sum_adj_vocab;
 
         // word frequency
         n_rows = SizeType(adjusted_word_probability * double(p_.unigram_table_size));
 
         for (SizeType k = 0; k < n_rows; ++k)
         {
-          unigram_table_[cur_idx] = j;
+          unigram_table_[cur_idx] = e.second.at(0);
           ++cur_idx;
         }
       }
@@ -625,10 +655,12 @@ private:
    */
   void DiscardFrequent(std::vector<std::vector<std::string>> &sentences)
   {
-    if (p_.discard_frequent)
+    SizeType sentence_count = 0;
+    // iterate through all sentences
+    for (SizeType sntce_idx = 0; sntce_idx < sentences.size(); sntce_idx++)
     {
-      // iterate through all sentences
-      for (SizeType sntce_idx = 0; sntce_idx < sentences.size(); sntce_idx++)
+      if ((sentences[sntce_idx].size() > p_.min_sentence_length) &&
+          (discard_sentence_idx_ + sentence_count < p_.max_sentences))
       {
         discards_.push_back({});
         // iterate through words in the sentence choosing which to discard
@@ -636,18 +668,19 @@ private:
         {
           if (DiscardExample(sentences[sntce_idx][i]))
           {
-            discards_.at(discard_sentence_idx_).push_back(1);
+            discards_.at(discard_sentence_idx_ + sentence_count).push_back(1);
             ++discard_count_;
           }
           else
           {
-            discards_.at(discard_sentence_idx_).push_back(0);
+            discards_.at(discard_sentence_idx_ + sentence_count).push_back(0);
           }
         }
 
-        ++discard_sentence_idx_;
+        ++sentence_count;
       }
     }
+    discard_sentence_idx_ += sentence_count;
   }
 
   /**
@@ -656,7 +689,13 @@ private:
    */
   bool DiscardExample(std::string &word)
   {
-    double word_probability = double(vocab_frequency_[word]) / double(n_words_);
+    // check word actually present
+    assert(p_.discard_threshold > 0);
+    assert(vocab_.find(word) != vocab_.end());
+    SizeType word_frequency = vocab_.at(word).at(1);
+    assert(word_frequency > 0);
+
+    double word_probability = double(word_frequency) / double(word_count_);
 
     double prob_thresh = (std::sqrt(word_probability / p_.discard_threshold) + 1.0);
     prob_thresh *= (p_.discard_threshold / word_probability);
@@ -667,6 +706,43 @@ private:
       return false;
     }
     return true;
+  }
+
+  /**
+   * finds the bottom or top K words by frequency
+   * @param k number of words to find
+   * @param mode true for topK, false for bottomK
+   */
+  std::vector<std::pair<std::string, SizeType>> FindK(SizeType k, bool mode)
+  {
+    std::vector<std::pair<std::string, std::vector<SizeType>>> top_k(k);
+
+    if (mode)
+    {
+      std::partial_sort_copy(vocab_.begin(), vocab_.end(), top_k.begin(), top_k.end(),
+                             [](std::pair<const std::string, std::vector<SizeType>> const &l,
+                                std::pair<const std::string, std::vector<SizeType>> const &r) {
+                               return l.second.at(1) > r.second.at(1);
+                             });
+    }
+    else
+    {
+      std::partial_sort_copy(vocab_.begin(), vocab_.end(), top_k.begin(), top_k.end(),
+                             [](std::pair<const std::string, std::vector<SizeType>> const &l,
+                                std::pair<const std::string, std::vector<SizeType>> const &r) {
+                               return l.second.at(1) < r.second.at(1);
+                             });
+    }
+
+    std::vector<std::pair<std::string, SizeType>> ret(k);
+    SizeType                                      tmp = 0;
+    for (auto &e : ret)
+    {
+      e = std::make_pair(top_k.at(tmp).first, top_k.at(tmp).second.at(1));
+      ++tmp;
+    }
+
+    return ret;
   }
 };
 

@@ -39,24 +39,23 @@ public:
   CrossEntropy()          = default;
   virtual ~CrossEntropy() = default;
 
-  virtual typename ArrayType::Type Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual typename ArrayType::Type Forward(std::vector<ArrayType> const &inputs)
   {
     assert(inputs.size() == 2);
-    assert(inputs[0]->size() == inputs[1]->size());
+    assert(inputs.at(0).size() == inputs.at(1).size());
 
-    typename ArrayType::Type result = fetch::math::CrossEntropyLoss(*inputs[0], *inputs[1]);
+    typename ArrayType::Type result = fetch::math::CrossEntropyLoss(inputs[0], inputs[1]);
 
     return result;
   }
 
-  virtual ArrayPtrType Backward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayType Backward(std::vector<ArrayType> const &inputs)
   {
     assert(inputs.size() == 2);
-    assert(inputs[0]->size() == inputs[1]->size());
+    assert(inputs[0].size() == inputs[1].size());
 
-    typename ArrayType::Type n_classes = static_cast<typename ArrayType::Type>(inputs[1]->size());
-    ArrayPtrType             ret       = std::make_shared<ArrayType>(
-        fetch::math::Divide(fetch::math::Subtract(*inputs[0], *inputs[1]), n_classes));
+    typename ArrayType::Type n_classes = static_cast<typename ArrayType::Type>(inputs[1].size());
+    ArrayType ret(fetch::math::Divide(fetch::math::Subtract(inputs[0], inputs[1]), n_classes));
     return ret;
   }
 

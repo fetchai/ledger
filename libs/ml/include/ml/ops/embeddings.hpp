@@ -19,6 +19,9 @@
 
 #include "core/assert.hpp"
 #include "ml/ops/weights.hpp"
+#include <set>
+
+#include <set>
 
 namespace fetch {
 namespace ml {
@@ -33,53 +36,77 @@ public:
   using ArrayPtrType = std::shared_ptr<ArrayType>;
   using SizeType     = typename ArrayType::SizeType;
 
-  Embeddings(unsigned int dataPoints, unsigned int dimensions)
+  Embeddings(SizeType dataPoints, SizeType dimensions)
   {
-    this->SetData(std::make_shared<ArrayType>(std::vector<SizeType>({dataPoints, dimensions})));
+    ArrayType weights = ArrayType(std::vector<SizeType>({dataPoints, dimensions}));
+    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, dataPoints, dimensions);
+    this->SetData(weights);
+  }
+
+  Embeddings(SizeType dataPoints, SizeType dimensions, ArrayType &weights)
+  {
+    this->SetData(weights);
   }
 
   virtual ~Embeddings() = default;
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     ASSERT(this->output_);
     ASSERT(inputs.size() == 1);
-    ASSERT(inputs[0]->size() == 1);
+    ASSERT(inputs.front().get().shape().size() == 1);
 
-    if (!this->embeddings_output_ || this->embeddings_output_->shape()[0] != inputs[0]->size() ||
+    if (!this->embeddings_output_ ||
+        this->embeddings_output_->shape()[0] != inputs.front().get().size() ||
         this->embeddings_output_->shape()[1] != this->output_->shape()[1])
     {
       this->embeddings_output_ = std::make_shared<ArrayType>(
-          std::vector<SizeType>({inputs[0]->size(), this->output_->shape()[1]}));
+          std::vector<SizeType>({inputs.front().get().size(), this->output_->shape()[1]}));
     }
     uint64_t j(0);
-    for (DataType const &i : *(inputs[0]))
+    for (DataType const &i : inputs.front().get())
     {
       this->embeddings_output_->Slice(j).Copy(
           this->output_->Slice(typename ArrayType::SizeType(double(i))));
       j++;
     }
-    return this->embeddings_output_;
+    return *this->embeddings_output_;
   }
 
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 1);
-    ASSERT(inputs[0]->shape().size() == 1);
+    ASSERT(inputs.front().get().shape().size() == 1);
 
     uint64_t j(0);
-    for (DataType const &i : *(inputs[0]))
+    for (DataType const &i : inputs.front().get())
     {
+      updated_rows_.insert(typename ArrayType::SizeType(double(i)));
       this->gradientAccumulation_->Slice(typename ArrayType::SizeType(double(i)))
-          .Copy(errorSignal->Slice(j));
+          .Copy(errorSignal.Slice(j));
       j++;
     }
-    return {};
+    return {ArrayType(errorSignal.shape())};
+  }
+
+  virtual void Step(typename T::Type learningRate)
+  {
+    for (auto const &r : updated_rows_)
+    {
+      ArrayType gradientAccumulationSlice = this->gradientAccumulation_->Slice(r);
+      ArrayType outputSlice               = this->output_->Slice(r);
+      gradientAccumulationSlice.InlineMultiply(-learningRate);
+      outputSlice.InlineAdd(gradientAccumulationSlice);
+      gradientAccumulationSlice.Fill(typename T::Type(0));
+    }
+    updated_rows_.clear();
   }
 
 private:
-  ArrayPtrType embeddings_output_;
+  ArrayPtrType                           embeddings_output_;
+  std::set<typename ArrayType::SizeType> updated_rows_;
 };
 
 }  // namespace ops

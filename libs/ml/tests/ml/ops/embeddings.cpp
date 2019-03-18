@@ -34,80 +34,78 @@ TYPED_TEST_CASE(EmbeddingsTest, MyTypes);
 
 TYPED_TEST(EmbeddingsTest, forward_shape)
 {
-  fetch::ml::ops::Embeddings<TypeParam> e(100, 60);
-  std::shared_ptr<TypeParam> input = std::make_shared<TypeParam>(std::vector<uint64_t>({10}));
+  using SizeType = typename TypeParam::SizeType;
+  fetch::ml::ops::Embeddings<TypeParam> e(SizeType(100), SizeType(60));
+  TypeParam                             input(std::vector<uint64_t>({10}));
   for (unsigned int i(0); i < 10; ++i)
   {
-    input->At(i) = typename TypeParam::Type(i);
+    input.At(i) = typename TypeParam::Type(i);
   }
-  std::shared_ptr<TypeParam> output = e.Forward({input});
+  TypeParam output = e.Forward({input});
 
-  ASSERT_EQ(output->shape().size(), 2);
-  EXPECT_EQ(output->shape()[0], 10);
-  EXPECT_EQ(output->shape()[1], 60);
+  ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({10, 60}));
 }
 
 TYPED_TEST(EmbeddingsTest, forward)
 {
   fetch::ml::ops::Embeddings<TypeParam> e(10, 6);
 
-  std::shared_ptr<TypeParam> weights = std::make_shared<TypeParam>(std::vector<uint64_t>({10, 6}));
+  TypeParam weights(std::vector<uint64_t>({10, 6}));
 
   for (unsigned int i(0); i < 10; ++i)
   {
     for (unsigned int j(0); j < 6; ++j)
     {
-      weights->Set({i, j}, typename TypeParam::Type(i * 10 + j));
+      weights.Set({i, j}, typename TypeParam::Type(i * 10 + j));
     }
   }
 
   e.SetData(weights);
-  std::shared_ptr<TypeParam> input  = std::make_shared<TypeParam>(std::vector<uint64_t>({2}));
-  input->At(0)                      = typename TypeParam::Type(3);
-  input->At(1)                      = typename TypeParam::Type(5);
-  std::shared_ptr<TypeParam> output = e.Forward({input});
+  TypeParam input(std::vector<uint64_t>({2}));
+  input.At(0)      = typename TypeParam::Type(3);
+  input.At(1)      = typename TypeParam::Type(5);
+  TypeParam output = e.Forward({input});
 
-  ASSERT_EQ(output->shape().size(), 2);
-  EXPECT_EQ(output->shape()[0], 2);
-  EXPECT_EQ(output->shape()[1], 6);
+  ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({2, 6}));
 
   std::vector<int> gt{30, 31, 32, 33, 34, 35, 50, 51, 52, 53, 54, 55};
   for (unsigned int i(0); i < 12; ++i)
   {
-    EXPECT_EQ(output->At(i), typename TypeParam::Type(gt[i]));
+    EXPECT_EQ(output.At(i), typename TypeParam::Type(gt[i]));
   }
 }
 
 TYPED_TEST(EmbeddingsTest, backward)
 {
   fetch::ml::ops::Embeddings<TypeParam> e(10, 6);
-  std::shared_ptr<TypeParam> weights = std::make_shared<TypeParam>(std::vector<uint64_t>({10, 6}));
+  TypeParam                             weights(std::vector<uint64_t>({10, 6}));
   for (unsigned int i(0); i < 10; ++i)
   {
     for (unsigned int j(0); j < 6; ++j)
     {
-      weights->Set({i, j}, typename TypeParam::Type(i * 10 + j));
+      weights.Set({i, j}, typename TypeParam::Type(i * 10 + j));
     }
   }
   e.SetData(weights);
-  std::shared_ptr<TypeParam> input  = std::make_shared<TypeParam>(std::vector<uint64_t>({2}));
-  input->At(0)                      = typename TypeParam::Type(3);
-  input->At(1)                      = typename TypeParam::Type(5);
-  std::shared_ptr<TypeParam> output = e.Forward({input});
 
-  std::shared_ptr<TypeParam> errorSignal =
-      std::make_shared<TypeParam>(std::vector<uint64_t>({2, 6}));
+  TypeParam input(std::vector<uint64_t>({2}));
+  input.At(0)      = typename TypeParam::Type(3);
+  input.At(1)      = typename TypeParam::Type(5);
+  TypeParam output = e.Forward({input});
+
+  TypeParam errorSignal(std::vector<uint64_t>({2, 6}));
   for (unsigned int j(0); j < 12; ++j)
   {
-    errorSignal->Set(j, typename TypeParam::Type(j));
+    errorSignal.Set(j, typename TypeParam::Type(j));
   }
   e.Backward({input}, errorSignal);
   e.Step(typename TypeParam::Type(1));
 
   output = e.Forward({input});
   std::vector<int> gt{30, 30, 30, 30, 30, 30, 44, 44, 44, 44, 44, 44};
-  for (unsigned int i(0); i < 12; ++i)
+
+  for (unsigned int j(0); j < 12; ++j)
   {
-    EXPECT_EQ(output->At(i), typename TypeParam::Type(gt[i]));
+    EXPECT_EQ(output.At(j), typename TypeParam::Type(gt[j]));
   }
 }

@@ -46,10 +46,10 @@ public:
 
   /**
    * Evaluates the output of a node (calling all necessary forward prop)
-   * @param nodeName name of node to evaluate for output
+   * @param node_name name of node to evaluate for output
    * @return pointer to array containing node output
    */
-  ArrayPtrType Evaluate(std::string const &node_name)
+  ArrayType const &Evaluate(std::string const &node_name)
   {
     if (nodes_[node_name])
     {
@@ -63,12 +63,12 @@ public:
 
   /**
    * Backpropagate an error signal through the graph
-   * @param nodeName name of node from which to begin backprop
+   * @param node_name name of node from which to begin backprop
    * @param errorSignal pointer to array containing error signal to backprop
    */
-  void BackPropagate(std::string const &nodeName, ArrayPtrType errorSignal)
+  void BackPropagate(std::string const &node_name, ArrayType const &errorSignal)
   {
-    nodes_[nodeName]->BackPropagate(errorSignal);
+    nodes_[node_name]->BackPropagate(errorSignal);
   }
 
   /**
@@ -85,9 +85,9 @@ public:
   {
     std::string name = UpdateVariableName<OperationType>(node_name);
     std::shared_ptr<Node<ArrayType, OperationType>> op =
-        std::make_shared<Node<ArrayType, OperationType>>(node_name, params...);
+        std::make_shared<Node<ArrayType, OperationType>>(name, params...);
     AddNodeImpl<OperationType>(name, inputs, op);
-    FETCH_LOG_INFO("ML_LIB", "Created non-trainable node [", node_name, "]");
+    FETCH_LOG_INFO("ML_LIB", "Created non-trainable node [", name, "]");
     return name;
   }
 
@@ -105,23 +105,33 @@ public:
   {
     std::string name = UpdateVariableName<OperationType>(node_name);
     std::shared_ptr<Node<ArrayType, OperationType>> op =
-        std::make_shared<Node<ArrayType, OperationType>>(node_name, params...);
+        std::make_shared<Node<ArrayType, OperationType>>(name, params...);
     AddNodeImpl<OperationType>(name, inputs, op);
-    FETCH_LOG_INFO("ML_LIB", "Created trainable node [", node_name, "]");
-    trainable_[node_name] = op;
+    FETCH_LOG_INFO("ML_LIB", "Created trainable node [", name, "]");
+    trainable_[name] = op;
     return name;
+  }
+
+  std::shared_ptr<fetch::ml::NodeInterface<ArrayType>> GetNode(std::string const &node_name) const
+  {
+    std::shared_ptr<fetch::ml::NodeInterface<ArrayType>> ret = nodes_.at(node_name);
+    if (!ret)
+    {
+      throw std::runtime_error("couldn't find node [" + node_name + "] in graph!");
+    }
+    return ret;
   }
 
   /**
    * Assigns data to a placeholder if the node can be found in the graph.
    * Also resets the graph cache to avoid erroneous leftover outputs
-   * @param nodeName name of the placeholder node in the graph (must be unique)
+   * @param node_name name of the placeholder node in the graph (must be unique)
    * @param data the pointer to a tensor to assign to the placeholder
    */
-  void SetInput(std::string const &nodeName, ArrayPtrType data)
+  void SetInput(std::string const &node_name, ArrayType data, bool batch = false)
   {
     std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>> placeholder =
-        std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<ArrayType>>(nodes_[nodeName]);
+        std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<ArrayType>>(nodes_[node_name]);
 
     if (placeholder)
     {
@@ -130,7 +140,11 @@ public:
     }
     else
     {
-      throw std::runtime_error("No placeholder node with name [" + nodeName + "] found in graph!");
+      throw std::runtime_error("No placeholder node with name [" + node_name + "] found in graph!");
+    }
+    for (auto &n : nodes_)
+    {
+      n.second->SetBatch(batch);
     }
   }
 
