@@ -82,7 +82,9 @@ public:
     return current_state_;
   }
 
-  // Operators
+  template <typename R, typename P>
+  void Delay(std::chrono::duration<R, P> const &delay);
+
   // Operators
   StateMachine &operator=(StateMachine const &) = delete;
   StateMachine &operator=(StateMachine &&) = delete;
@@ -212,6 +214,9 @@ void StateMachine<S>::Execute()
   auto it = callbacks_.find(current_state_);
   if (it != callbacks_.end())
   {
+    // cache the previous execution time
+    auto const previous_next_execution = next_execution_;
+
     // execute the state handler
     S const next_state = it->second(current_state_, previous_state_);
 
@@ -228,13 +233,30 @@ void StateMachine<S>::Execute()
         state_change_callback_(current_state_, previous_state_);
       }
     }
-    else
+    else if (previous_next_execution == next_execution_)
     {
       // if there has been no state change then to avoid spinning in an infinte loop we should
       // plan a further exectution
-      next_execution_ = Clock::now() + std::chrono::milliseconds{10};
+      Delay(std::chrono::milliseconds{10});
     }
   }
+}
+
+/**
+ * Configure the next execution of the state machine for a future point
+ *
+ * Note: Function to be called from within the state machine call context
+ *
+ * @tparam S The type of the state
+ * @tparam R The type of the representation
+ * @tparam P The type of the period
+ * @param delay The delay to be set until the next execution
+ */
+template <typename S>
+template <typename R, typename P>
+void StateMachine<S>::Delay(std::chrono::duration<R, P> const &delay)
+{
+  next_execution_ = Clock::now() + delay;
 }
 
 }  // namespace core

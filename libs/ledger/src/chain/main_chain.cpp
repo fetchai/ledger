@@ -630,7 +630,7 @@ void MainChain::TrimCache()
   auto loose_it = loose_blocks_.begin();
   while (loose_it != loose_blocks_.end())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Cleaning loose map entry: ", loose_it->first.ToBase64());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Cleaning loose map entry: ", loose_it->first.ToBase64());
 
     if (loose_it->second.empty())
     {

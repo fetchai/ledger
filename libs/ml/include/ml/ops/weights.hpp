@@ -124,10 +124,7 @@ public:
 
   virtual void Step(typename T::Type learningRate)
   {
-    for (std::uint64_t i(0); i < this->gradientAccumulation_->size(); ++i)
-    {
-      this->gradientAccumulation_->At(i) = this->gradientAccumulation_->At(i) * -learningRate;
-    }
+    this->gradientAccumulation_->InlineMultiply(-learningRate);
     this->output_->InlineAdd(*gradientAccumulation_);
     // Major DL framework do not do that, but as I can't think of any reason why, I'll leave it here
     // for convenience. Remove if needed -- Pierre
@@ -209,9 +206,9 @@ private:
 
     // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
     std::normal_distribution<> rng(0, normalising_factor);
-    for (std::uint64_t i(0); i < array.size(); ++i)
+    for (auto &e : array)
     {
-      array.At(i) = typename ArrayType::Type(rng(gen));
+      e = typename ArrayType::Type(rng(gen));
     }
   }
 };
