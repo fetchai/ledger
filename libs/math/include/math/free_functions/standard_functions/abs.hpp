@@ -41,7 +41,7 @@ fetch::math::meta::IfIsNonBlasArray<ArrayType, void> Abs(ArrayType &x, ArrayType
   assert(x.size() == ret.size());
   for (std::size_t j = 0; j < ret.size(); ++j)
   {
-    x.At(j) = std::abs(ret.At(j));
+    Abs(ret.At(j), x.At(j));
   }
 }
 

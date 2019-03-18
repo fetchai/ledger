@@ -544,7 +544,7 @@ void PeakToPeak(ArrayType arr)
  * @return
  */
 template <typename ArrayType>
-void ArgMax(ArrayType const &array, typename ArrayType::Type &ret)
+void ArgMax(ArrayType const &array, typename ArrayType::SizeType &ret)
 {
   ret                                 = typename ArrayType::Type(0);
   typename ArrayType::Type cur_maxval = std::numeric_limits<typename ArrayType::Type>::lowest();
@@ -554,8 +554,8 @@ void ArgMax(ArrayType const &array, typename ArrayType::Type &ret)
   {
     if (cur_maxval < array[i])
     {
-      ret        = static_cast<typename ArrayType::Type>(i);
-      cur_maxval = array[i];
+      ret        = i;
+      cur_maxval = array.At(i);
     }
   }
 }

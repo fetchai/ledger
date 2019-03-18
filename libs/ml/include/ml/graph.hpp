@@ -112,7 +112,7 @@ public:
     return name;
   }
 
-  std::shared_ptr<fetch::ml::NodeInterface<ArrayType>> GetNode(std::string const &node_name)
+  std::shared_ptr<fetch::ml::NodeInterface<ArrayType>> GetNode(std::string const &node_name) const
   {
     std::shared_ptr<fetch::ml::NodeInterface<ArrayType>> ret = nodes_[node_name];
     if (!ret)
