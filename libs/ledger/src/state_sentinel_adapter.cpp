@@ -19,8 +19,6 @@
 #include "ledger/state_sentinel_adapter.hpp"
 #include "storage/resource_mapper.hpp"
 
-using fetch::storage::ResourceAddress;
-
 namespace fetch {
 namespace ledger {
 
