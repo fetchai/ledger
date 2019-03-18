@@ -23,25 +23,9 @@ namespace fetch {
 namespace crypto {
 
 /**
- * A "factory" function. Since all it does is,
- * it instantiates an implementation of an interface with but a single practical method
- * (plus one getter), it seamlessly applies this method internally.
+ * This function, given a key, a buffer and a signature, verifies authenticity of the three.
  *
- * This function, given a key, a buffer and a signature,
- * in some magic way verifies authenticity of the three.
- *
- * It can be done by applying all known concrete verifiers in sequence, until first one confirms.
- *
- * (This is actually what is done now, and the fact that there's but a single concrete
- * implementation to the Verifier interface is really helpful here.)
- *
- * Or, the concrete algorithm could be guessed based on the bit pattern, simply by a watermark put
- * in by the prover.
- *
- * Whatever, this function encapsulates the instantiation of a concrete verifier and the
- * verification itself. It (possibly) turns three byte arrays into a single bit.
- *
- * @param identity The public key to construct a concrete (likely, ECDSA) verifier from
+ * @param identity The public key to construct a concrete (e.g. ECDSA) verifier from
  * @param data Message to be verified
  * @param signature
  */
