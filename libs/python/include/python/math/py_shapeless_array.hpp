@@ -324,12 +324,12 @@ void BuildShapelessArray(std::string const &custom_name, pybind11::module &modul
              Min(a, ret);
              return ret;
            })
-      .def("ArgMax",
-           [](ShapelessArray<T> const &a) {
-             T ret;
-             ArgMax(a, ret);
-             return ret;
-           })
+      //      .def("ArgMax",
+      //           [](ShapelessArray<T> const &a) {
+      //             T ret;
+      //             ArgMax(a, ret);
+      //             return ret;
+      //           })
       //      .def("Mean", &ShapelessArray<T>::Mean)
       .def("Product",
            [](ShapelessArray<T> const &a) {

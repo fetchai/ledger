@@ -546,7 +546,7 @@ void PeakToPeak(ArrayType arr)
 template <typename ArrayType>
 void ArgMax(ArrayType const &array, typename ArrayType::SizeType &ret)
 {
-  ret                                 = typename ArrayType::Type(0);
+  ret                                 = typename ArrayType::SizeType(0);
   typename ArrayType::Type cur_maxval = std::numeric_limits<typename ArrayType::Type>::lowest();
 
   // just using ret as a free variable to store the current maxval for the loop here
@@ -562,7 +562,7 @@ void ArgMax(ArrayType const &array, typename ArrayType::SizeType &ret)
 template <typename ArrayType>
 typename ArrayType::Type ArgMax(ArrayType const &array)
 {
-  typename ArrayType::Type ret;
+  typename ArrayType::SizeType ret;
   ArgMax(array, ret);
   return ret;
 }
