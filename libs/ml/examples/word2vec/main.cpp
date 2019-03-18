@@ -148,8 +148,15 @@ std::vector<DataType> TestEmbeddings(Graph<ArrayType> &g, std::string &skip_gram
 int main(int argc, char **argv)
 {
 
-  assert(argc == 2);
-  std::string training_text = argv[1];
+  std::string training_text;
+  if (argc == 2)
+  {
+    training_text = argv[1];
+  }
+  else
+  {
+    throw std::runtime_error("must specify filename as training text");
+  }
 
   std::cout << "FETCH Word2Vec Demo" << std::endl;
 
