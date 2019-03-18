@@ -108,7 +108,7 @@ private:
     double positive_threshold;
     if (p_.k_negative_samples > 0)
     {
-      positive_threshold = 1.0 / p_.k_negative_samples;
+      positive_threshold = 1.0 / double(p_.k_negative_samples);
     }
     else
     {
