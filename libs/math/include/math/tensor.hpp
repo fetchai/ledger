@@ -325,6 +325,37 @@ public:
     return ret;
   }
 
+  /*
+   * Add a dummy leading dimension
+   * Ex: [4, 5, 6].Unsqueeze() -> [1, 4, 5, 6]
+   */
+  Tensor<T> &Unsqueeze()
+  {
+    shape_.insert(shape_.begin(), 1);
+    strides_.insert(strides_.begin(), strides_.front() * shape_[1]);
+    padding_.insert(padding_.begin(), 0);
+    return *this;
+  }
+
+  /*
+   * Inverse of unsqueze : Collapse a empty leading dimension
+   */
+  Tensor<T> Squeeze()
+  {
+    if (shape_.front() == 1)
+    {
+      shape_.erase(shape_.begin());
+      strides_.erase(strides_.begin());
+      padding_.erase(padding_.begin());
+    }
+    else
+    {
+      throw std::runtime_error("Can't squeeze tensor with leading dimension of size " +
+                               std::to_string(shape_[0]));
+    }
+    return *this;
+  }
+
   std::shared_ptr<const std::vector<T>> Storage() const
   {
     return storage_;
@@ -369,9 +400,15 @@ public:
   Tensor<T> &InlineAdd(Tensor<T> const &o)
   {
     assert(size() == o.size());
-    for (SizeType i(0); i < size(); ++i)
+    auto it1 = this->begin();
+    auto end = this->end();
+    auto it2 = o.begin();
+
+    while (it1 != end)
     {
-      At(i) = At(i) + o.At(i);
+      *it1 += *it2;
+      ++it1;
+      ++it2;
     }
     return *this;
   }
@@ -388,9 +425,15 @@ public:
   Tensor<T> &InlineSubtract(Tensor<T> const &o)
   {
     assert(size() == o.size());
-    for (SizeType i(0); i < size(); ++i)
+    auto it1 = this->begin();
+    auto end = this->end();
+    auto it2 = o.begin();
+
+    while (it1 != end)
     {
-      At(i) = At(i) - o.At(i);
+      *it1 -= *it2;
+      ++it1;
+      ++it2;
     }
     return *this;
   }
@@ -417,9 +460,15 @@ public:
   Tensor<T> &InlineMultiply(Tensor<T> const &o)
   {
     assert(size() == o.size());
-    for (SizeType i(0); i < size(); ++i)
+    auto it1 = this->begin();
+    auto end = this->end();
+    auto it2 = o.begin();
+
+    while (it1 != end)
     {
-      At(i) = At(i) * o.At(i);
+      *it1 *= *it2;
+      ++it1;
+      ++it2;
     }
     return *this;
   }
@@ -436,9 +485,15 @@ public:
   Tensor<T> &InlineDivide(Tensor<T> const &o)
   {
     assert(size() == o.size());
-    for (SizeType i(0); i < size(); ++i)
+    auto it1 = this->begin();
+    auto end = this->end();
+    auto it2 = o.begin();
+
+    while (it1 != end)
     {
-      At(i) = At(i) / o.At(i);
+      *it1 /= *it2;
+      ++it1;
+      ++it2;
     }
     return *this;
   }
@@ -490,7 +545,6 @@ public:
       {
         ss << At(i) << "\t";
       }
-      ss << "\n";
     }
     if (shape_.size() == 2)
     {
