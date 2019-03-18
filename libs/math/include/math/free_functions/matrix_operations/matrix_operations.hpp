@@ -610,6 +610,8 @@ ArrayType Dot(ArrayType const &A, ArrayType const &B)
 template <class ArrayType>
 void DotTranspose(ArrayType const &A, ArrayType const &B, ArrayType &ret)
 {
+  assert(A.shape().size() == 2);
+  assert(B.shape().size() == 2);
   assert(A.shape()[1] == B.shape()[1]);
   assert(A.shape()[0] == ret.shape()[0]);
   assert(B.shape()[0] == ret.shape()[1]);

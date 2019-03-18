@@ -16,6 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/byte_array_buffer.hpp"
+
+#include "math/distance/cosine.hpp"
 #include "math/free_functions/matrix_operations/matrix_operations.hpp"
 #include "math/tensor.hpp"
 
@@ -25,8 +28,8 @@
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/embeddings.hpp"
 #include "ml/ops/loss_functions/mean_square_error.hpp"
+#include "ml/serializers/ml_types.hpp"
 
-#include <clocale>
 #include <iostream>
 
 #define EMBEDING_DIMENSION 64u
@@ -57,6 +60,29 @@ std::string findWordByIndex(std::map<std::string, uint64_t> const &vocab, uint64
   return "";
 }
 
+void PrintKNN(std::map<std::string, uint64_t> const &vocab, ArrayType const &embeddings,
+              std::string const &word, unsigned int k)
+{
+  ArrayType                               wordVector = embeddings.Slice(vocab.at(word)).Unsqueeze();
+  std::vector<std::pair<uint64_t, float>> distances;
+  distances.reserve(embeddings.shape()[0]);
+  for (uint64_t i(1); i < embeddings.shape()[0]; ++i)  // Start at 1, 0 is UNKNOWN
+  {
+    DataType d = fetch::math::distance::Cosine(wordVector, embeddings.Slice(i).Unsqueeze());
+    distances.emplace_back(i, d);
+  }
+  std::nth_element(distances.begin(), distances.begin() + k, distances.end(),
+                   [](std::pair<uint64_t, float> const &a, std::pair<uint64_t, float> const &b) {
+                     return a.second < b.second;
+                   });
+  std::cout << "======================" << std::endl;
+  for (uint64_t i(0); i < k; ++i)
+  {
+    std::cout << findWordByIndex(vocab, distances[i].first) << " -- " << distances[i].second
+              << std::endl;
+  }
+}
+
 int main(int ac, char **av)
 {
   if (ac < 2)
@@ -85,6 +111,7 @@ int main(int ac, char **av)
   unsigned int               iteration(0);
   float                      loss = 0;
 
+  unsigned int epoch(0);
   while (true)
   {
     loader.Reset();
@@ -126,6 +153,17 @@ int main(int ac, char **av)
 
       iteration++;
     }
+    std::cout << "End of epoch " << epoch << std::endl;
+    // Print KNN of word "one"
+    PrintKNN(loader.GetVocab(), *g.StateDict().dict_["Embeddings"].weights_, "one", 6);
+
+    // Save model
+    fetch::serializers::ByteArrayBuffer serializer;
+    serializer << g.StateDict();
+    std::fstream file("./model.fba");  // fba = FetchByteArray
+    file << std::string(serializer.data());
+    file.close();
+    epoch++;
   }
   return 0;
 }
