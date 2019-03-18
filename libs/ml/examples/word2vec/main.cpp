@@ -165,14 +165,6 @@ int main()
   std::cout << "Setting up training data...: " << std::endl;
   SkipGramLoader<ArrayType> dataloader(TRAINING_DATA, sp);
 
-  std::vector<std::pair<std::string, SizeType>> tmp = dataloader.BottomKVocab(10);
-
-  for (std::size_t j = 0; j < tmp.size(); ++j)
-  {
-    std::cout << "tmp.at(j):      " << tmp.at(j).first << std::endl;
-    std::cout << "tmp.at(j) freq: " << tmp.at(j).second << std::endl;
-  }
-
   ////////////////////////////////
   /// SETUP MODEL ARCHITECTURE ///
   ////////////////////////////////

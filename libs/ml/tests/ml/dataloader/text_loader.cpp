@@ -38,7 +38,7 @@ TYPED_TEST_CASE(TextDataLoaderTest, MyTypes);
 
 TYPED_TEST(TextDataLoaderTest, basic_loader_test)
 {
-  std::string TRAINING_DATA = "This is a test sentence of total length ten words.";
+  std::string training_data = "This is a test sentence of total length ten words.";
 
   using SizeType = typename TypeParam::SizeType;
 
@@ -50,7 +50,7 @@ TYPED_TEST(TextDataLoaderTest, basic_loader_test)
   p.unigram_table       = false;
   p.discard_frequent    = false;
 
-  TextLoader<TypeParam> loader(TRAINING_DATA, p);
+  TextLoader<TypeParam> loader(training_data, p);
 
   std::vector<std::string> gt_input(
       {"this", "is", "a", "test", "sentence", "of", "total", "length", "ten", "words",
@@ -67,19 +67,19 @@ TYPED_TEST(TextDataLoaderTest, basic_loader_test)
 
 TYPED_TEST(TextDataLoaderTest, adddata_loader_test)
 {
-  std::string TRAINING_DATA = "This is a test sentence of total length ten words.";
+  std::string training_data = "This is a test sentence of total length ten words.";
 
   using SizeType = typename TypeParam::SizeType;
 
   TextParams<TypeParam> p;
   p.n_data_buffers      = 1;
-  p.max_sentences       = 1;
+  p.max_sentences       = 2;
   p.min_sentence_length = 0;
   p.window_size         = 1;
   p.unigram_table       = false;
   p.discard_frequent    = false;
 
-  TextLoader<TypeParam> loader(TRAINING_DATA, p);
+  TextLoader<TypeParam> loader(training_data, p);
 
   std::vector<std::string> gt_input(
       {"this", "is", "a", "test", "sentence", "of", "total", "length", "ten", "words",
@@ -106,15 +106,13 @@ TYPED_TEST(TextDataLoaderTest, adddata_loader_test)
   {
     std::pair<TypeParam, SizeType> output = loader.GetNext();
     cur_word                              = loader.VocabLookup(SizeType(output.first.At(0)));
-    std::cout << "cur_word: " << cur_word << std::endl;
-    std::cout << "gt_input.at(j): " << gt_input.at(j) << std::endl;
     ASSERT_TRUE(cur_word.compare(gt_input.at(j)) == 0);
   }
 }
 
 TYPED_TEST(TextDataLoaderTest, discard_loader_test)
 {
-  std::string TRAINING_DATA = "This is a test sentence of total length ten words.";
+  std::string training_data = "This is a test sentence of total length ten words.";
 
   TextParams<TypeParam> p;
   p.n_data_buffers      = 1;
@@ -124,9 +122,10 @@ TYPED_TEST(TextDataLoaderTest, discard_loader_test)
   p.unigram_table       = false;
 
   p.discard_frequent  = true;
-  p.discard_threshold = 0.00001;
+  p.discard_threshold = 0.000000001;
 
-  TextLoader<TypeParam> loader(TRAINING_DATA, p);
+  TextLoader<TypeParam> loader(training_data, p);
 
-  ASSERT_TRUE(loader.VocabSize() < 10);
+  // compare with vocab_size - 1 because "UNK" is always in the vocab
+  ASSERT_TRUE(loader.GetDiscardCount() == (loader.VocabSize() - 1));
 }

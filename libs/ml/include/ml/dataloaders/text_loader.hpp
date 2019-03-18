@@ -332,6 +332,11 @@ public:
     return FindK(k, true);
   }
 
+  SizeType GetDiscardCount()
+  {
+    return discard_count_;
+  }
+
   /**
    * return a single sentence from the dataset
    * @param word_idx
