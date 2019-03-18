@@ -68,10 +68,6 @@ SkipGramTextParams<T> SetParams()
   return ret;
 }
 
-std::string TRAINING_DATA = "/Users/khan/fetch/corpora/imdb_movie_review/aclImdb/train/unsup";
-// std::string TRAINING_DATA = "This is a sentence of ten words, with these three. This is another
-// sentence short sentence. And one more slightly longer useless sentence for luck.";
-
 ////////////////////////
 /// MODEL DEFINITION ///
 ////////////////////////
@@ -149,8 +145,10 @@ std::vector<DataType> TestEmbeddings(Graph<ArrayType> &g, std::string &skip_gram
   return ret;
 }
 
-int main()
+int main(int argc, char **argv)
 {
+
+  std::string training_text = argv[1];
 
   std::cout << "FETCH Word2Vec Demo" << std::endl;
 
@@ -163,7 +161,7 @@ int main()
 
   // set up dataloader
   std::cout << "Setting up training data...: " << std::endl;
-  SkipGramLoader<ArrayType> dataloader(TRAINING_DATA, sp);
+  SkipGramLoader<ArrayType> dataloader(training_text, sp);
 
   ////////////////////////////////
   /// SETUP MODEL ARCHITECTURE ///
