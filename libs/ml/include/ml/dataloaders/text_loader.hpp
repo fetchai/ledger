@@ -53,7 +53,7 @@ public:
   bool discard_frequent = false;  // discard frequent words
 
   // discard params
-  double discard_threshold = 0.0;  // random discard probability threshold
+  double discard_threshold = 0.00001;  // random discard probability threshold
 
   // unigram params
   SizeType unigram_table_size = 10000000;  // size of unigram table for negative sampling
@@ -298,6 +298,12 @@ public:
     return vocab_[idx].at(0);
   }
 
+  /**
+   * lookup the string corresponding to a vocab index - EXPENSIVE
+   *
+   * @param idx
+   * @return
+   */
   std::string VocabLookup(SizeType idx)
   {
     for (auto &e : vocab_)
@@ -308,6 +314,22 @@ public:
       }
     }
     return "UNK";
+  }
+
+  /**
+   * helper function for getting the Top K most frequent words
+   */
+  std::vector<std::pair<std::string, SizeType>> BottomKVocab(SizeType k)
+  {
+    return FindK(k, false);
+  }
+
+  /**
+   * helper function for getting the Top K most frequent words
+   */
+  std::vector<std::pair<std::string, SizeType>> TopKVocab(SizeType k)
+  {
+    return FindK(k, true);
   }
 
   /**
@@ -387,7 +409,7 @@ private:
   virtual std::vector<SizeType> GetData(SizeType idx)
   {
     assert(p_.n_data_buffers == 1);
-    return {idx};
+    return {idx, 1};
   }
 
   /**
@@ -685,6 +707,43 @@ private:
       return false;
     }
     return true;
+  }
+
+  /**
+   * finds the bottom or top K words by frequency
+   * @param k number of words to find
+   * @param mode true for topK, false for bottomK
+   */
+  std::vector<std::pair<std::string, SizeType>> FindK(SizeType k, bool mode)
+  {
+    std::vector<std::pair<std::string, std::vector<SizeType>>> top_k(k);
+
+    if (mode)
+    {
+      std::partial_sort_copy(vocab_.begin(), vocab_.end(), top_k.begin(), top_k.end(),
+                             [](std::pair<const std::string, std::vector<SizeType>> const &l,
+                                std::pair<const std::string, std::vector<SizeType>> const &r) {
+                               return l.second.at(1) > r.second.at(1);
+                             });
+    }
+    else
+    {
+      std::partial_sort_copy(vocab_.begin(), vocab_.end(), top_k.begin(), top_k.end(),
+                             [](std::pair<const std::string, std::vector<SizeType>> const &l,
+                                std::pair<const std::string, std::vector<SizeType>> const &r) {
+                               return l.second.at(1) < r.second.at(1);
+                             });
+    }
+
+    std::vector<std::pair<std::string, SizeType>> ret(k);
+    SizeType                                      tmp = 0;
+    for (auto &e : ret)
+    {
+      e = std::make_pair(top_k.at(tmp).first, top_k.at(tmp).second.at(1));
+      ++tmp;
+    }
+
+    return ret;
   }
 };
 

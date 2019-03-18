@@ -106,6 +106,8 @@ TYPED_TEST(TextDataLoaderTest, adddata_loader_test)
   {
     std::pair<TypeParam, SizeType> output = loader.GetNext();
     cur_word                              = loader.VocabLookup(SizeType(output.first.At(0)));
+    std::cout << "cur_word: " << cur_word << std::endl;
+    std::cout << "gt_input.at(j): " << gt_input.at(j) << std::endl;
     ASSERT_TRUE(cur_word.compare(gt_input.at(j)) == 0);
   }
 }

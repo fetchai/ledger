@@ -69,6 +69,8 @@ SkipGramTextParams<T> SetParams()
 }
 
 std::string TRAINING_DATA = "/Users/khan/fetch/corpora/imdb_movie_review/aclImdb/train/unsup";
+// std::string TRAINING_DATA = "This is a sentence of ten words, with these three. This is another
+// sentence short sentence. And one more slightly longer useless sentence for luck.";
 
 ////////////////////////
 /// MODEL DEFINITION ///
@@ -163,6 +165,14 @@ int main()
   std::cout << "Setting up training data...: " << std::endl;
   SkipGramLoader<ArrayType> dataloader(TRAINING_DATA, sp);
 
+  std::vector<std::pair<std::string, SizeType>> tmp = dataloader.BottomKVocab(10);
+
+  for (std::size_t j = 0; j < tmp.size(); ++j)
+  {
+    std::cout << "tmp.at(j):      " << tmp.at(j).first << std::endl;
+    std::cout << "tmp.at(j) freq: " << tmp.at(j).second << std::endl;
+  }
+
   ////////////////////////////////
   /// SETUP MODEL ARCHITECTURE ///
   ////////////////////////////////
@@ -244,6 +254,7 @@ int main()
     // backprop
     g.BackPropagate(output_name, criterion.Backward(std::vector<ArrayType>({squeezed_result, gt})));
 
+    // take mini-batch learning step
     if (i % tp.batch_size == (tp.batch_size - 1))
     {
       std::cout << "MiniBatch: " << i / tp.batch_size << " -- Loss : " << loss << std::endl;
@@ -252,6 +263,7 @@ int main()
       loss = 0;
     }
 
+    // print batch loss and embeddings distances
     if (i % (tp.batch_size * 100) == ((tp.batch_size * 100) - 1))
     {
       // Test trained embeddings
