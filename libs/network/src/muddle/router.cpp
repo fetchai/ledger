@@ -395,7 +395,6 @@ void Router::Broadcast(uint16_t service, uint16_t channel, Payload const &payloa
   auto packet =
       FormatPacket(address_, network_id_, service, channel, counter, DEFAULT_TTL, payload);
   packet->SetBroadcast(true);
-  Sign(packet);
 
   RoutePacket(packet, false);
 }
