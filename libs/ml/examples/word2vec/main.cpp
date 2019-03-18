@@ -41,9 +41,9 @@ using SizeType     = typename ArrayType::SizeType;
 struct TrainingParams
 {
   SizeType batch_size     = 1;         // training data batch size
-  SizeType embedding_size = 128;       // dimension of embedding vec
+  SizeType embedding_size = 64;       // dimension of embedding vec
   SizeType training_steps = 12800000;  // total number of training steps
-  double   learning_rate  = 0.001;     // alpha - the learning rate
+  double   learning_rate  = 0.01;       // alpha - the learning rate
 };
 
 template <typename T>
@@ -52,7 +52,7 @@ SkipGramTextParams<T> SetParams()
   SkipGramTextParams<T> ret;
 
   ret.n_data_buffers = SizeType(2);       // input and context buffers
-  ret.max_sentences  = SizeType(100000);  // maximum number of sentences to use
+  ret.max_sentences  = SizeType(10000);   // maximum number of sentences to use
 
   ret.unigram_table      = true;  // unigram table for sampling negative training pairs
   ret.unigram_table_size = SizeType(10000000);  // size of unigram table for negative sampling
@@ -82,8 +82,7 @@ std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType embeddings_size, Size
   return ret_name;
 }
 
-std::vector<DataType> TestEmbeddings(Graph<ArrayType> &g, std::string &skip_gram_name,
-                                     SkipGramLoader<ArrayType> &dl)
+void TestEmbeddings(Graph<ArrayType> &g, std::string &skip_gram_name, SkipGramLoader<ArrayType> &dl)
 {
 
   // first get hold of the skipgram layer by searching the return name in the graph
@@ -94,55 +93,14 @@ std::vector<DataType> TestEmbeddings(Graph<ArrayType> &g, std::string &skip_gram
   std::shared_ptr<fetch::ml::ops::Embeddings<ArrayType>> embeddings =
       sg_layer->GetEmbeddings(sg_layer);
 
-  // hollywood
-  ArrayType   embed_hollywood_input(1);
-  std::string hollywood_lookup = "hollywood";
-  SizeType    hollywood_idx    = dl.VocabLookup(hollywood_lookup);
-  embed_hollywood_input.At(0)  = hollywood_idx;
-  ArrayType hollywood_output   = embeddings->Forward({embed_hollywood_input}).Clone();
+  std::vector<std::pair<std::string, double>> output = dl.GetKNN(embeddings->GetWeights(), "man", 3);
 
-  ArrayType   embed_movie_input(1);
-  std::string movie_lookup = "movie";
-  SizeType    movie_idx    = dl.VocabLookup(movie_lookup);
-  embed_movie_input.At(0)  = movie_idx;
-  ArrayType movie_output   = embeddings->Forward({embed_movie_input}).Clone();
+  for (std::size_t j = 0; j < output.size(); ++j)
+  {
+    std::cout << "output.at(j).first: " << output.at(j).first << std::endl;
+    std::cout << "output.at(j).second: " << output.at(j).second << "\n" << std::endl;
 
-  ArrayType   embed_husband_input(1);
-  std::string husband_lookup = "husband";
-  SizeType    husband_idx    = dl.VocabLookup(husband_lookup);
-  embed_husband_input.At(0)  = husband_idx;
-  ArrayType husband_output   = embeddings->Forward({embed_husband_input}).Clone();
-
-  ArrayType   embed_wife_input(1);
-  std::string wife_lookup = "wife";
-  SizeType    wife_idx    = dl.VocabLookup(wife_lookup);
-  embed_wife_input.At(0)  = wife_idx;
-  ArrayType wife_output   = embeddings->Forward({embed_wife_input}).Clone();
-
-  DataType result_hollywood_movie, result_hollywood_husband, result_movie_husband,
-      result_husband_wife;
-
-  // distance from hollywood to movie (using MSE as distance)
-  result_hollywood_movie = fetch::math::distance::Cosine(hollywood_output, movie_output);
-
-  // distance from hollywood to husband (using MSE as distance)
-  result_hollywood_husband = fetch::math::distance::Cosine(hollywood_output, husband_output);
-
-  // distance from movie to husband (using MSE as distance)
-  result_movie_husband = fetch::math::distance::Cosine(movie_output, husband_output);
-
-  // distance from movie to the (using MSE as distance)
-  result_husband_wife = fetch::math::distance::Cosine(husband_output, wife_output);
-
-  std::vector<DataType> ret = {result_hollywood_movie, result_hollywood_husband,
-                               result_movie_husband, result_husband_wife};
-
-  std::cout << "hollywood-movie distance: " << ret[0] << std::endl;
-  std::cout << "hollywood-husband distance: " << ret[1] << std::endl;
-  std::cout << "movie-husband distance: " << ret[2] << std::endl;
-  std::cout << "husband-wife distance: " << ret[3] << std::endl;
-
-  return ret;
+  }
 }
 
 int main(int argc, char **argv)
@@ -199,6 +157,9 @@ int main(int argc, char **argv)
       // get random data point
       data = dataloader.GetRandom();
 
+      data.first.At(0) = 10;
+      data.first.At(1) = 11;
+
       // assign input and context vectors
       input.At(j)   = data.first.At(0);
       context.At(j) = data.first.At(1);
@@ -254,10 +215,10 @@ int main(int argc, char **argv)
     }
 
     // print batch loss and embeddings distances
-    if (i % (tp.batch_size * 100) == ((tp.batch_size * 100) - 1))
+    if (i % (tp.batch_size * 1000) == ((tp.batch_size * 1000) - 1))
     {
       // Test trained embeddings
-      std::vector<DataType> trained_distances = TestEmbeddings(g, output_name, dataloader);
+      TestEmbeddings(g, output_name, dataloader);
       std::cout << "batch_loss: " << batch_loss << std::endl;
       batch_loss = 0;
     }
@@ -268,12 +229,7 @@ int main(int argc, char **argv)
   //////////////////////////////////////
 
   // Test trained embeddings
-  std::vector<DataType> trained_distances = TestEmbeddings(g, output_name, dataloader);
-
-  std::cout << "final hollywood-movie distance: " << trained_distances[0] << std::endl;
-  std::cout << "final hollywood-husband distance: " << trained_distances[1] << std::endl;
-  std::cout << "final movie-husband distance: " << trained_distances[2] << std::endl;
-  std::cout << "final husband-wife distance: " << trained_distances[3] << std::endl;
+  TestEmbeddings(g, output_name, dataloader);
 
   return 0;
 }

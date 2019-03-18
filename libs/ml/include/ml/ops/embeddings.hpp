@@ -84,7 +84,7 @@ public:
     for (DataType const &i : inputs.front().get())
     {
       updated_rows_.insert(typename ArrayType::SizeType(double(i)));
-      this->gradientAccumulation_->Slice(typename ArrayType::SizeType(i))
+      this->gradient_accumulation_->Slice(typename ArrayType::SizeType(i))
           .Copy(errorSignal.Slice(j));
       j++;
     }
@@ -93,13 +93,18 @@ public:
 
   virtual void Step(typename T::Type learningRate)
   {
+    std::cout << "updated_rows_.size(): " << updated_rows_.size() << std::endl;
+//    std::cout << "updated_rows_.at(0): " << updated_rows_.at(0) << std::endl;
     for (auto const &r : updated_rows_)
     {
-      ArrayType gradientAccumulationSlice = this->gradientAccumulation_->Slice(r);
-      ArrayType outputSlice               = this->output_->Slice(r);
-      gradientAccumulationSlice.InlineMultiply(-learningRate);
-      outputSlice.InlineAdd(gradientAccumulationSlice);
-      gradientAccumulationSlice.Fill(typename T::Type(0));
+      std::cout << "r: " << r << std::endl;
+      ArrayType gradient_accumulation_slice = this->gradient_accumulation_->Slice(r);
+      std::cout << "gradient_accumulation_slice.ToString(): " << gradient_accumulation_slice.ToString() << std::endl;
+      ArrayType output_slice               = this->output_->Slice(r);
+      std::cout << "output_slice.ToString(): " << output_slice.ToString() << std::endl;
+      gradient_accumulation_slice.InlineMultiply(-learningRate);
+      output_slice.InlineAdd(gradient_accumulation_slice);
+      gradient_accumulation_slice.Fill(typename T::Type(0));
     }
     updated_rows_.clear();
   }

@@ -21,6 +21,8 @@
 #include "core/random/lfg.hpp"
 #include "math/free_functions/standard_functions/abs.hpp"
 #include "ml/dataloaders/dataloader.hpp"
+#include "ml/ops/embeddings.hpp"
+#include "math/distance/cosine.hpp"
 
 #include <algorithm>  // random_shuffle
 #include <fstream>    // file streaming
@@ -404,6 +406,41 @@ public:
 
     // converts text into training pairs & related preparatory work
     ProcessTrainingData(full_training_text);
+  }
+
+  /**
+   * print k nearest neighbours
+   * @param vocab
+   * @param embeddings
+   * @param word
+   * @param k
+   */
+  std::vector<std::pair<std::string, double>> GetKNN(
+          ArrayType const &embeddings,
+          std::string const &word,
+          unsigned int k)
+  {
+    ArrayType wordVector = embeddings.Slice(vocab_.at(word).at(0)).Unsqueeze();
+
+    std::vector<std::pair<SizeType, double>> distances;
+    distances.reserve(VocabSize());
+    for (SizeType i(1); i < VocabSize(); ++i)  // Start at 1, 0 is UNK
+    {
+      DataType d = fetch::math::distance::Cosine(wordVector, embeddings.Slice(i).Unsqueeze());
+      distances.emplace_back(i, d);
+    }
+    std::nth_element(distances.begin(), distances.begin() + k, distances.end(),
+                     [](std::pair<SizeType, double> const &a, std::pair<SizeType, double> const &b) {
+                       return a.second < b.second;
+                     });
+
+
+    std::vector<std::pair<std::string, double>> ret;
+    for (SizeType i(0); i < k; ++i)
+    {
+      ret.emplace_back(std::make_pair(VocabLookup(distances.at(i).first), distances.at(i).second));
+    }
+    return ret;
   }
 
 private:
