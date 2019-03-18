@@ -338,7 +338,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
     switch (monitor_state)
     {
     case MonitorState::FAILED:
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Now Failed");
+      FETCH_LOG_WARN(LOGGING_NAME, "Execution Engine experience fatal error");
 
       state_.Set(State::EXECUTION_FAILED);
       monitor_state = MonitorState::IDLE;
@@ -432,6 +432,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
         std::size_t num_complete{0};
         std::size_t num_stalls{0};
         std::size_t num_errors{0};
+        std::size_t num_fatal_errors{0};
 
         // look through all execution items and determine if it was successful
         for (auto const &item : execution_plan_[current_slice])
@@ -446,20 +447,25 @@ void ExecutionManager::MonitorThreadEntrypoint()
           case ExecutionItem::Status::TX_LOOKUP_FAILURE:
             ++num_stalls;
             break;
-          default:
+          case ExecutionItem::Status::CHAIN_CODE_LOOKUP_FAILURE:
+          case ExecutionItem::Status::CHAIN_CODE_EXEC_FAILURE:
+          case ExecutionItem::Status::CONTRACT_NAME_PARSE_FAILURE:
             ++num_errors;
+            break;
+          default:
+            ++num_fatal_errors;
             break;
           }
         }
 
         // only provide debug if required
-        if (num_complete + num_stalls + num_errors)
+        if (num_complete + num_stalls + num_errors + num_fatal_errors)
         {
-          if (num_stalls + num_errors)
+          if (num_stalls + num_errors + num_fatal_errors)
           {
             FETCH_LOG_WARN(LOGGING_NAME, "Slice ", current_slice,
                            " Execution Status - Complete: ", num_complete, " Stalls: ", num_stalls,
-                           " Errors: ", num_errors);
+                           " Errors: ", num_errors, " Fatal Errors: ", num_fatal_errors);
           }
           else
           {
@@ -473,7 +479,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
         ++current_slice;
 
         // decide the next monitor state based on the status of the slice execution
-        if (num_errors)
+        if (num_fatal_errors)
         {
           monitor_state = MonitorState::FAILED;
         }
