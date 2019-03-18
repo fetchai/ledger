@@ -33,12 +33,12 @@ public:
     delete vm_;
   }
 
-  bool DefineProblem(SynergeticContract contract, Work const &work) 
+  bool DefineProblem(SynergeticContract contract) 
   { 
     // Defining problem
     if (!vm_->Execute(contract->script, contract->problem_function, error_, problem_))
     {
-      std::cerr << "Runtime error: " << error_ << std::endl;
+      // TODO: LOG
       return false;
     }
     return true;

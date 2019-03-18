@@ -105,7 +105,7 @@ public:
         for(auto &h: updated_hashes)
         {
           auto &node = nodes_[h];
-          h.timestamp = DAGNode::INVALID_TIMESTAMP;
+          node.timestamp = DAGNode::INVALID_TIMESTAMP;
         }
         // FETCH_LOG_ERROR
         return false;

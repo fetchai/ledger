@@ -18,6 +18,7 @@ struct WorkPackage
   using ContractAddress   = byte_array::ConstByteArray;  
   using SharedWorkPackage = std::shared_ptr< WorkPackage >;  
   using WorkQueue = std::priority_queue< Work >;
+  
 
   static SharedWorkPackage New(ContractAddress contract_address) {
     return SharedWorkPackage(new WorkPackage(std::move(contract_address)));
@@ -46,7 +47,8 @@ public:
   using SharedWorkPackage = std::shared_ptr< WorkPackage >;
   using ExecutionQueue    = std::vector< SharedWorkPackage >;
   using WorkMap           = std::unordered_map< ContractAddress, SharedWorkPackage >;
-  using DAG = ledger::DAG;
+  using DAG               = ledger::DAG;
+  using Block             = ledger::Block;
 
   SynergeticExecutor(DAG &dag)
   : synergetic_miner_{dag}
@@ -121,30 +123,29 @@ public:
   {
     for(auto &c: contract_queue_)
     {
-      //
-      fetch::consensus::WorkRegister work_register;
+      // Defining the problem using the data on the DAG
+      if(!miner_.DefineProblem(contract_register_.GetContract(c->first)))
+      {
+        return false;
+      }
 
       // Finding the best work
       while(!c.solutions_queue.empty())
       {
-        auto work = c.solutions_queue.front();
-        Work::ScoreType score = work.score;
+        auto work = c->solutions_queue.front();
+        c->solutions_queue.pop_front();
 
-        c.solutions_queue.pop_front();
-
-        // Defining the problem using the data on the DAG
-        // TODO: should be moved outside of the while loop - not sure why the work is there
-        if(!miner_.DefineProblem(contract_register_.GetContract(work.contract_address), work))
-        {
-          return false;
-        }
-
-        work.score = miner_.ExecuteWork(contract_register_.GetContract(work.contract_address), work);
-
+        Work::ScoreType score = miner_.ExecuteWork(contract_register_.GetContract(work.contract_address), work);
         if(score == work.score)
         {
-
-          
+          // TODO: Work was honest and we just need to update the state
+          // Need contract implementation
+          break;
+        }
+        else
+        {
+          // Work was dishonst and we slash stake
+          // TODO.
         }
       }
     }
