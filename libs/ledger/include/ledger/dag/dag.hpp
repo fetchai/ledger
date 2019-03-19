@@ -189,7 +189,7 @@ inline DAG::DigestCache const DAG::last_nodes() const
  */
 inline DAG::NodeMap const DAG::nodes() const
 {
-  FETCH_LOCK(maintenance_mutex_);  
+  FETCH_LOCK(maintenance_mutex_);
   return nodes_;
 }
 
@@ -199,7 +199,7 @@ inline DAG::NodeMap const DAG::nodes() const
  */
 inline bool DAG::HasNode(byte_array::ConstByteArray const &hash)
 {
-  FETCH_LOCK(maintenance_mutex_);    
+  FETCH_LOCK(maintenance_mutex_);
   return nodes_.find(hash) != nodes_.end();
 }
 
