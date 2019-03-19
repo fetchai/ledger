@@ -29,7 +29,7 @@
 static constexpr char const *LOGGING_NAME = "TxQueryAPI";
 
 using fetch::byte_array::FromHex;
-using fetch::byte_array::ToHex;
+using fetch::byte_array::ToBase64;
 using fetch::variant::Variant;
 
 namespace fetch {
@@ -68,7 +68,7 @@ TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit,
     tx_obj["digest"]       = ToBase64(tx.digest());
     tx_obj["fee"]          = summary.fee;
     tx_obj["contractName"] = summary.contract_name;
-    tx_obj["data"]         = ToHex(tx.data());
+    tx_obj["data"]         = ToBase64(tx.data());
     tx_obj["resources"]    = Variant::Array(summary.resources.size());
 
     std::size_t res_idx{0};
