@@ -16,13 +16,14 @@ struct Work
   using ContractAddress = byte_array::ConstByteArray;
   using WorkId          = byte_array::ConstByteArray;
   using Digest          = byte_array::ConstByteArray;
-
+  using ScoreType       = double; // TODO: Change to fixed point
+  
   /// 
   ContractAddress contract_address;
-  WorkId work_id; // TODO(tfr): Not relevant yet
+
   Identity miner;    
   int64_t nonce;
-  double score = std::numeric_limits<double>::infinity();
+  ScoreType score = std::numeric_limits<ScoreType>::max(); 
   
   int64_t operator()()
   {
@@ -30,7 +31,6 @@ struct Work
     hasher.Reset();
 
     hasher.Update(contract_address);
-    hasher.Update(work_id);
     hasher.Update(miner);
     hasher.Update(nonce);
 
@@ -46,6 +46,10 @@ struct Work
     return fnv.Final<int64_t>();
   }  
 
+  bool operator<(Work const &other) const 
+  {
+    return score < other.score;
+  }
   
 
 };

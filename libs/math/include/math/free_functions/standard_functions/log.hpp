@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/fixed_point/fixed_point_operations.hpp"
 #include "math/kernels/standard_functions/log.hpp"
 #include "math/meta/math_type_traits.hpp"
 
@@ -30,7 +29,7 @@ namespace fetch {
 namespace math {
 
 template <typename ArrayType>
-fetch::math::meta::IsBlasAndShapedArray<ArrayType, void> Log(ArrayType &x)
+fetch::math::meta::IfIsBlasArray<ArrayType, void> Log(ArrayType &x)
 {
   fetch::math::free_functions::kernels::Log<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -44,33 +43,52 @@ fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> Log(ArrayType const 
   Log(ret);
   return ret;
 }
-template <typename ArrayType>
-fetch::math::meta::IfIsMathShapelessArray<ArrayType, ArrayType> Log(ArrayType const &x)
+
+template <typename Type>
+meta::IfIsNonFixedPointArithmetic<Type, void> Log(Type &x, Type &ret)
 {
-  ArrayType ret{x.size()};
-  ret.Copy(x);
-  Log(ret);
+  ret = std::log(x);
+}
+template <typename Type>
+meta::IfIsNonFixedPointArithmetic<Type, Type> Log(Type &x)
+{
+  Type ret;
+  Log(x, ret);
   return ret;
 }
 
-template <typename Type>
-fetch::math::meta::IfIsArithmetic<Type, void> Log(Type &x)
+//
+template <typename T>
+meta::IfIsFixedPoint<T, T> Log(T &n)
 {
-  x = std::log(x);
-}
-
-template <std::size_t I, std::size_t F>
-void Log(fetch::fixed_point::FixedPoint<I, F> &n)
-{
-  n = ::log(n);
+  T ret = T(std::log(double(n)));
+  return ret;
 }
 
 template <typename ArrayType>
-fetch::math::meta::IfIsMathShapeArray<ArrayType, void> Log(ArrayType &x)
+meta::IfIsNonBlasArray<ArrayType, void> Log(ArrayType &x)
 {
-  for (std::size_t i = 0; i < x.size(); ++i)
+  for (typename ArrayType::Type &e : x)
   {
-    fetch::math::Log(x[i]);
+    fetch::math::Log(e);
+  }
+}
+template <typename ArrayType>
+meta::IfIsMathFixedPointArray<ArrayType, void> Log(ArrayType &x)
+{
+  for (typename ArrayType::Type &e : x)
+  {
+    fetch::math::Log(e);
+  }
+}
+
+template <typename T>
+meta::IfIsMathArray<T, void> Log(T const &array, T &ret)
+{
+  ret = array;
+  for (typename T::Type &e : ret)
+  {
+    Log(e);
   }
 }
 

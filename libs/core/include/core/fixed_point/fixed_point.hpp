@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/fixed_point/fixed_point_operations.hpp"
 #include "meta/tags.hpp"
 #include "meta/type_traits.hpp"
 
@@ -276,6 +275,11 @@ public:
     return data_ == o.data_;
   }
 
+  bool operator!=(const FixedPoint &o) const
+  {
+    return data_ != o.data_;
+  }
+
   bool operator<(const FixedPoint &o) const
   {
     return data_ < o.data_;
@@ -476,6 +480,11 @@ public:
   void Swap(FixedPoint &rhs)
   {
     std::swap(data_, rhs.data_);
+  }
+
+  Type Data() const
+  {
+    return data_;
   }
 
 private:

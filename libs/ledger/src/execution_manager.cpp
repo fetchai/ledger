@@ -21,8 +21,10 @@
 #include "core/logger.hpp"
 #include "core/threading.hpp"
 #include "ledger/executor.hpp"
+#include "ledger/state_sentinel.hpp"
 #include "storage/resource_mapper.hpp"
 
+#include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 
 #include <chrono>
@@ -101,7 +103,7 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
   }
 
   // cache the current state
-  if (State::ACTIVE == state_)
+  if (State::IDLE != GetState())
   {
     return ScheduleStatus::ALREADY_RUNNING;
   }
@@ -117,6 +119,9 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
   // update the last block hash
   last_block_hash_ = block.hash;
   num_slices_      = block.slices.size();
+
+  // update the state otherwise there is a race between when the executor thread wakes up
+  state_.Set(State::ACTIVE);
 
   // trigger the monitor / dispatch thread
   {
@@ -142,42 +147,31 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
   execution_plan_.clear();
   execution_plan_.resize(block.slices.size());
 
-  //  FETCH_LOG_INFO(LOGGING_NAME,"Planning ", block.slices.size(), " slices...");
-
   std::size_t slice_index = 0;
   for (auto const &slice : block.slices)
   {
     auto &slice_plan = execution_plan_[slice_index];
 
-    //    FETCH_LOG_INFO(LOGGING_NAME,"Planning slice ", slice_index, "...");
-
     // process the transactions
     for (auto const &tx : slice)
     {
-      Identifier id;
-      id.Parse(tx.contract_name);
-      auto contract = contracts_.Lookup(id.name_space());
-
-      if (contract)
+      Identifier contract_id;
+      if (!contract_id.Parse(tx.contract_name))
       {
-        auto item = std::make_unique<ExecutionItem>(tx.transaction_hash, slice_index);
-
-        // transform the resources into lane allocation
-        for (auto const &resource : tx.resources)
-        {
-          storage::ResourceID const id{contract->CreateStateIndex(resource)};
-          item->AddLane(id.lane(block.log2_num_lanes));
-        }
-
-        // insert the item into the execution plan
-        slice_plan.emplace_back(std::move(item));
-      }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Unable to plan execution of tx: ",
-                       byte_array::ToBase64(tx.transaction_hash));
         return false;
       }
+
+      auto item = std::make_unique<ExecutionItem>(tx.transaction_hash, slice_index);
+
+      // transform the resources into lane allocation
+      for (auto const &resource : tx.resources)
+      {
+        item->AddLane(
+            StateAdapter::CreateAddress(contract_id, resource).lane(block.log2_num_lanes));
+      }
+
+      // insert the item into the execution plan
+      slice_plan.emplace_back(std::move(item));
     }
 
     ++slice_index;
@@ -213,22 +207,30 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
 
   if (executor)
   {
-    ++active_count_;
+    // increment the active counters
+    counters_.Apply([](Counters &counters) { counters.active++; });
 
     // execute the item
     item.Execute(*executor);
 
-    --active_count_;
-    --remaining_executions_;
+    // determine what the status is
+    if (ExecutorInterface::Status::SUCCESS != item.status())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Error executing tx: ", item.hash().ToBase64(),
+                     " slice: ", item.slice(), " status: ", ledger::ToString(item.status()));
+    }
+
+    counters_.Apply([](Counters &counters) {
+      counters.active--;
+      counters.remaining--;
+    });
+
     ++completed_executions_;
 
     {
       std::lock_guard<Mutex> lock(idle_executors_lock_);
       idle_executors_.push_back(executor);
     }
-
-    // trigger the monitor thread to process the next slice if needed
-    monitor_notify_.notify_one();
   }
 }
 
@@ -299,7 +301,7 @@ ExecutionManagerInterface::BlockHash ExecutionManager::LastProcessedBlock()
 
 ExecutionManager::State ExecutionManager::GetState()
 {
-  return state_;
+  return state_.Get();
 }
 
 bool ExecutionManager::Abort()
@@ -336,23 +338,31 @@ void ExecutionManager::MonitorThreadEntrypoint()
     switch (monitor_state)
     {
     case MonitorState::FAILED:
-      state_        = State::EXECUTION_FAILED;
+      FETCH_LOG_WARN(LOGGING_NAME, "Execution Engine experience fatal error");
+
+      state_.Set(State::EXECUTION_FAILED);
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::STALLED:
-      state_        = State::TRANSACTIONS_UNAVAILABLE;
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Now Stalled");
+
+      state_.Set(State::TRANSACTIONS_UNAVAILABLE);
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::COMPLETED:
-      state_        = State::IDLE;
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Now Complete");
+
+      state_.Set(State::IDLE);
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::IDLE:
     {
-      state_ = State::IDLE;
+      state_.Set(State::IDLE);
+
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Now Idle");
 
       // enter the idle state where we wait for the next block to be posted
       {
@@ -360,8 +370,10 @@ void ExecutionManager::MonitorThreadEntrypoint()
         monitor_wake_.wait(lock);
       }
 
-      state_        = State::ACTIVE;
+      state_.Set(State::ACTIVE);
       current_block = last_block_hash_;
+
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Now Active");
 
       // schedule the next slice if we have been triggered
       if (running_)
@@ -387,7 +399,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
         // determine the target number of executions being expected (must be
         // done before the thread pool dispatch)
-        remaining_executions_ = slice_plan.size();
+        counters_.Set(Counters{0, slice_plan.size()});
 
         for (auto &item : slice_plan)
         {
@@ -404,21 +416,23 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
     case MonitorState::RUNNING:
     {
-
       // wait for the execution to complete
-      if (remaining_executions_ > 0)
-      {
-        std::unique_lock<std::mutex> lock(monitor_lock_);
-        monitor_notify_.wait_for(lock, std::chrono::milliseconds{100});
-      }
+      bool const finished =
+          counters_.WaitFor(std::chrono::seconds{2},
+                            [](Counters const &counters) { return counters.remaining == 0; });
 
-      // determine the next state (provided we have complete
-      if (remaining_executions_ == 0)
+      if (!finished)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME,
+                       "### Extra long execution: remaining: ", counters_.Get().remaining);
+      }
+      else
       {
         // evaluate the status of the executions
         std::size_t num_complete{0};
         std::size_t num_stalls{0};
         std::size_t num_errors{0};
+        std::size_t num_fatal_errors{0};
 
         // look through all execution items and determine if it was successful
         for (auto const &item : execution_plan_[current_slice])
@@ -433,28 +447,39 @@ void ExecutionManager::MonitorThreadEntrypoint()
           case ExecutionItem::Status::TX_LOOKUP_FAILURE:
             ++num_stalls;
             break;
-          case ExecutionItem::Status::NOT_RUN:
-          case ExecutionItem::Status::RESOURCE_FAILURE:
           case ExecutionItem::Status::CHAIN_CODE_LOOKUP_FAILURE:
           case ExecutionItem::Status::CHAIN_CODE_EXEC_FAILURE:
+          case ExecutionItem::Status::CONTRACT_NAME_PARSE_FAILURE:
             ++num_errors;
+            break;
+          default:
+            ++num_fatal_errors;
             break;
           }
         }
 
         // only provide debug if required
-        if (num_complete + num_stalls + num_errors)
+        if (num_complete + num_stalls + num_errors + num_fatal_errors)
         {
-          FETCH_LOG_WARN(LOGGING_NAME, "Slice ", current_slice,
-                         " Execution Status - Complete: ", num_complete, " Stalls: ", num_stalls,
-                         " Errors: ", num_errors);
+          if (num_stalls + num_errors + num_fatal_errors)
+          {
+            FETCH_LOG_WARN(LOGGING_NAME, "Slice ", current_slice,
+                           " Execution Status - Complete: ", num_complete, " Stalls: ", num_stalls,
+                           " Errors: ", num_errors, " Fatal Errors: ", num_fatal_errors);
+          }
+          else
+          {
+            FETCH_LOG_DEBUG(LOGGING_NAME, "Slice ", current_slice,
+                            " Execution Status - Complete: ", num_complete, " Stalls: ", num_stalls,
+                            " Errors: ", num_errors);
+          }
         }
 
         // increment the slice counter
         ++current_slice;
 
         // decide the next monitor state based on the status of the slice execution
-        if (num_errors)
+        if (num_fatal_errors)
         {
           monitor_state = MonitorState::FAILED;
         }

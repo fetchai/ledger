@@ -11,4 +11,3 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 setup_library_examples(fetch-vm)
-

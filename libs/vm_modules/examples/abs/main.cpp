@@ -26,6 +26,8 @@
 #include <fstream>
 #include <sstream>
 
+#include "vm/vm.hpp"
+
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/type_convert.hpp"
 #include "vm_modules/math/abs.hpp"
@@ -45,14 +47,14 @@ int main(int argc, char **argv)
   const std::string source = ss.str();
   file.close();
 
-  fetch::vm::Module module{};
+  auto module = std::make_shared<fetch::vm::Module>();
 
   fetch::vm_modules::CreatePrint(module);
   fetch::vm_modules::CreateToString(module);
   fetch::vm_modules::CreateAbs(module);
 
   // Setting compiler up
-  fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(&module);
+  fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(module.get());
   fetch::vm::Script        script;
   std::vector<std::string> errors;
 
@@ -78,9 +80,11 @@ int main(int argc, char **argv)
   // Setting VM up and running
   std::string        error;
   fetch::vm::Variant output;
+  std::string        console;
 
-  fetch::vm::VM vm(&module);
-  if (!vm.Execute(script, "main", error, output))
+  fetch::vm::VM vm(module.get());
+
+  if (!vm.Execute(script, "main", error, console, output))
   {
     std::cout << "Runtime error on line " << error << std::endl;
   }

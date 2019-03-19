@@ -20,6 +20,7 @@
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
 #include "core/runnable.hpp"
+#include "core/state_machine_interface.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -33,16 +34,17 @@ namespace fetch {
 namespace core {
 
 template <typename State>
-class StateMachine : public Runnable
+class StateMachine : public StateMachineInterface, public Runnable
 {
 public:
   static_assert(std::is_enum<State>::value, "");
 
   using Callback            = std::function<State(State /*current*/, State /*previous*/)>;
   using StateChangeCallback = std::function<void(State /*current*/, State /*previous*/)>;
+  using StateMapper         = std::function<char const *(State)>;
 
   // Construction / Destruction
-  explicit StateMachine(std::string const &name, State initial);
+  explicit StateMachine(std::string name, State initial, StateMapper mapper = StateMapper{});
   StateMachine(StateMachine const &)     = delete;
   StateMachine(StateMachine &&) noexcept = delete;
   ~StateMachine() override               = default;
@@ -62,6 +64,13 @@ public:
   void OnStateChange(StateChangeCallback cb);
   /// @}
 
+  /// @name State Machine Interface
+  /// @{
+  char const *GetName() const override;
+  uint64_t    GetStateCode() const override;
+  char const *GetStateName() const override;
+  /// @}
+
   /// @name Runnable Interface
   /// @{
   bool IsReadyToExecute() const override;
@@ -73,19 +82,26 @@ public:
     return current_state_;
   }
 
+  template <typename R, typename P>
+  void Delay(std::chrono::duration<R, P> const &delay);
+
   // Operators
   StateMachine &operator=(StateMachine const &) = delete;
   StateMachine &operator=(StateMachine &&) = delete;
 
 private:
-  using Clock       = std::chrono::high_resolution_clock;
+  using Clock       = std::chrono::steady_clock;
   using Timepoint   = Clock::time_point;
+  using Duration    = Clock::duration;
   using CallbackMap = std::unordered_map<State, Callback>;
-  using Mutex       = mutex::Mutex;
+  using Mutex       = std::mutex;
 
+  std::string const   name_;
   std::string const   logging_name_;
-  Mutex               callbacks_mutex_{__LINE__, __FILE__};
+  StateMapper         mapper_;
+  mutable Mutex       callbacks_mutex_;
   CallbackMap         callbacks_{};
+  Duration            stall_duration_{};
   std::atomic<State>  current_state_;
   std::atomic<State>  previous_state_{current_state_.load()};
   Timepoint           next_execution_{};
@@ -93,8 +109,10 @@ private:
 };
 
 template <typename S>
-StateMachine<S>::StateMachine(std::string const &name, S initial)
-  : logging_name_{"SM:" + name}
+StateMachine<S>::StateMachine(std::string name, S initial, StateMapper mapper)
+  : name_{std::move(name)}
+  , logging_name_{"SM:" + name_}
+  , mapper_{std::move(mapper)}
   , current_state_{initial}
 {}
 
@@ -144,6 +162,31 @@ void StateMachine<S>::OnStateChange(StateChangeCallback cb)
   state_change_callback_ = std::move(cb);
 }
 
+template <typename S>
+char const *StateMachine<S>::GetName() const
+{
+  return name_.c_str();
+}
+
+template <typename S>
+uint64_t StateMachine<S>::GetStateCode() const
+{
+  return static_cast<uint64_t>(state());
+}
+
+template <typename S>
+char const *StateMachine<S>::GetStateName() const
+{
+  char const *text = "Unknown";
+
+  if (mapper_)
+  {
+    text = mapper_(state());
+  }
+
+  return text;
+}
+
 /**
  * Determine if the runnable is ready to the run again
  * @tparam S
@@ -156,7 +199,7 @@ bool StateMachine<S>::IsReadyToExecute() const
 
   if (next_execution_.time_since_epoch().count())
   {
-    ready = (next_execution_ >= Clock::now());
+    ready = (Clock::now() >= next_execution_);
   }
 
   return ready;
@@ -171,6 +214,9 @@ void StateMachine<S>::Execute()
   auto it = callbacks_.find(current_state_);
   if (it != callbacks_.end())
   {
+    // cache the previous execution time
+    auto const previous_next_execution = next_execution_;
+
     // execute the state handler
     S const next_state = it->second(current_state_, previous_state_);
 
@@ -187,7 +233,30 @@ void StateMachine<S>::Execute()
         state_change_callback_(current_state_, previous_state_);
       }
     }
+    else if (previous_next_execution == next_execution_)
+    {
+      // if there has been no state change then to avoid spinning in an infinte loop we should
+      // plan a further exectution
+      Delay(std::chrono::milliseconds{10});
+    }
   }
+}
+
+/**
+ * Configure the next execution of the state machine for a future point
+ *
+ * Note: Function to be called from within the state machine call context
+ *
+ * @tparam S The type of the state
+ * @tparam R The type of the representation
+ * @tparam P The type of the period
+ * @param delay The delay to be set until the next execution
+ */
+template <typename S>
+template <typename R, typename P>
+void StateMachine<S>::Delay(std::chrono::duration<R, P> const &delay)
+{
+  next_execution_ = Clock::now() + delay;
 }
 
 }  // namespace core

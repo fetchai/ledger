@@ -179,5 +179,18 @@ bool DAG::PushInternal(DAGNode node)
   return true;
 }
 
+
+DAG::DigestVector DAG::UncertifiedTipsAsVector() const
+{
+  FETCH_LOCK(maintenance_mutex_);
+  DigestVector ret{};
+  for(auto const &t: tips_)
+  {
+    // TODO(tfr): Check whether certified
+    ret.push_back(t);
+  }
+  return ret;
+}
+
 } // namespace ledger
 } // namespace fetch

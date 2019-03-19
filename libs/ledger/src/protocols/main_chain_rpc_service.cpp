@@ -31,107 +31,42 @@ using fetch::byte_array::ToBase64;
 
 using BlockSerializer        = fetch::serializers::ByteArrayBuffer;
 using BlockSerializerCounter = fetch::serializers::SizeCounter<BlockSerializer>;
+using PromiseState           = fetch::service::PromiseState;
+
+static const uint32_t MAX_CHAIN_REQUEST_SIZE = 10000;
+static const uint64_t MAX_SUB_CHAIN_SIZE     = 1000;
 
 namespace fetch {
 namespace ledger {
 
-class MainChainSyncWorker
-{
-public:
-  using BlockHash       = MainChainRpcService::BlockHash;
-  using BlockList       = MainChainRpcService::BlockList;
-  using Address         = MainChainRpcService::Address;
-  using PromiseState    = fetch::service::PromiseState;
-  using Promise         = service::Promise;
-  using FutureTimepoint = network::FutureTimepoint;
-
-  static constexpr char const *LOGGING_NAME = "MainChainSyncWorker";
-
-  MainChainSyncWorker(std::shared_ptr<MainChainRpcService> client, BlockHash hash, Address address,
-                      std::chrono::milliseconds thetimeout = std::chrono::milliseconds(1000))
-    : hash_(std::move(hash))
-    , address_(std::move(address))
-    , client_(std::move(client))
-    , timeout_(thetimeout)
-  {}
-
-  template <class HASH>
-  bool Equals(const HASH &hash) const
-  {
-    return hash == hash_;
-  }
-
-  BlockHash const &hash()
-  {
-    return hash_;
-  }
-
-  PromiseState Work()
-  {
-    if (!prom_)
-    {
-      prom_ = client_->main_chain_rpc_client_.CallSpecificAddress(
-          address_, RPC_MAIN_CHAIN, MainChainProtocol::CHAIN_PRECEDING, hash_, uint32_t{16});
-    }
-    auto promise_state = prom_->GetState();
-
-    switch (promise_state)
-    {
-    case PromiseState::TIMEDOUT:
-      FETCH_LOG_INFO(LOGGING_NAME, "Preceding request timedout to: ", ToBase64(hash_));
-      return promise_state;
-    case PromiseState::FAILED:
-      FETCH_LOG_INFO(LOGGING_NAME, "Preceding request failed to: ", ToBase64(hash_));
-      return promise_state;
-    case PromiseState::WAITING:
-      if (timeout_.IsDue())
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "Preceding request timedout to: ", ToBase64(hash_));
-        return PromiseState::TIMEDOUT;
-      }
-      return promise_state;
-    case PromiseState::SUCCESS:
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Preceding request succeeded to: ", ToBase64(hash_));
-      prom_->As(blocks_);
-    }
-      return promise_state;
-    }
-    return PromiseState::WAITING;
-  }
-
-  BlockList blocks()
-  {
-    return blocks_;
-  }
-
-  Address address()
-  {
-    return address_;
-  }
-
-private:
-  Promise                              prom_;
-  BlockHash                            hash_;
-  Address                              address_;
-  std::shared_ptr<MainChainRpcService> client_;
-  FutureTimepoint                      timeout_;
-  BlockList                            blocks_;
-};
-
 MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain,
-                                         TrustSystem &trust, BlockCoordinator &block_coordinator)
+                                         TrustSystem &trust, bool standalone)
   : muddle::rpc::Server(endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
   , endpoint_(endpoint)
   , chain_(chain)
   , trust_(trust)
-  , block_coordinator_(block_coordinator)
   , block_subscription_(endpoint.Subscribe(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS))
   , main_chain_protocol_(chain_)
-  , main_chain_rpc_client_("R:MChain", endpoint, Address{}, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
+  , rpc_client_("R:MChain", endpoint, Address{}, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
+  , state_machine_{std::make_shared<StateMachine>(
+        "MainChain", standalone ? State::SYNCHRONISED : State::REQUEST_HEAVIEST_CHAIN,
+        [](State state) { return ToString(state); })}
 {
   // register the main chain protocol
   Add(RPC_MAIN_CHAIN, &main_chain_protocol_);
+
+  // configure the state machine
+  // clang-format off
+  state_machine_->RegisterHandler(State::REQUEST_HEAVIEST_CHAIN,  this, &MainChainRpcService::OnRequestHeaviestChain);
+  state_machine_->RegisterHandler(State::WAIT_FOR_HEAVIEST_CHAIN, this, &MainChainRpcService::OnWaitForHeaviestChain);
+  state_machine_->RegisterHandler(State::SYNCHRONISING,           this, &MainChainRpcService::OnSynchronising);
+  state_machine_->RegisterHandler(State::WAITING_FOR_RESPONSE,    this, &MainChainRpcService::OnWaitingForResponse);
+  state_machine_->RegisterHandler(State::SYNCHRONISED,            this, &MainChainRpcService::OnSynchronised);
+  // clang-format on
+
+  state_machine_->OnStateChange([](State current, State previous) {
+    FETCH_LOG_INFO(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
+  });
 
   // set the main chain
   block_subscription_->SetMessageHandler([this](Address const &from, uint16_t, uint16_t, uint16_t,
@@ -153,6 +88,12 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   });
 }
 
+MainChainRpcService::~MainChainRpcService()
+{
+  state_machine_->Reset();
+  state_machine_.reset();
+}
+
 void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Broadcast Block: ", ToBase64(block.body.hash));
@@ -172,8 +113,20 @@ void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block
 
 void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address const &transmitter)
 {
+#ifdef FETCH_LOG_DEBUG_ENABLED
+  // count how many transactions are present in the block
+  for (auto const &slice : block.body.slices)
+  {
+    for (auto const &tx : slice)
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Recv Ref TX: ", ToBase64(tx.transaction_hash), " (",
+                      tx.contract_name, ')');
+    }
+  }
+#endif  // FETCH_LOG_INFO_ENABLED
+
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.body.hash),
-                 " (from peer: ", ToBase64(from), ')');
+                 " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(), ")");
 
   FETCH_METRIC_BLOCK_RECEIVED(block.body.hash);
 
@@ -184,13 +137,22 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
     FETCH_METRIC_BLOCK_RECEIVED(block.body.hash);
 
     // add the new block to the chain
-    chain_.AddBlock(block);
+    auto const status = chain_.AddBlock(block);
 
-    // if we got a block and it is loose then it it probably means that we need to sync the rest of
-    // the block tree
-    if (block.is_loose)
+    switch (status)
     {
-      AddLooseBlock(block.body.hash, from);
+    case BlockStatus::ADDED:
+      FETCH_LOG_INFO(LOGGING_NAME, "Added new block: ", ToBase64(block.body.hash));
+      break;
+    case BlockStatus::LOOSE:
+      FETCH_LOG_INFO(LOGGING_NAME, "Added loose block: ", ToBase64(block.body.hash));
+      break;
+    case BlockStatus::DUPLICATE:
+      FETCH_LOG_INFO(LOGGING_NAME, "Duplicate block: ", ToBase64(block.body.hash));
+      break;
+    case BlockStatus::INVALID:
+      FETCH_LOG_INFO(LOGGING_NAME, "Attempted to add invalid block: ", ToBase64(block.body.hash));
+      break;
     }
   }
   else
@@ -200,109 +162,268 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   }
 }
 
-void MainChainRpcService::AddLooseBlock(const BlockHash &hash, const Address &address)
+char const *MainChainRpcService::ToString(State state)
 {
-  if (!workthread_)
+  char const *text = "unknown";
+
+  switch (state)
   {
-    workthread_ = std::make_shared<BackgroundedWorkThread>(
-        &bg_work_, "BW:MChainR", [this]() { this->ServiceLooseBlocks(); });
+  case State::REQUEST_HEAVIEST_CHAIN:
+    text = "Requesting Heaviest Chain";
+    break;
+  case State::WAIT_FOR_HEAVIEST_CHAIN:
+    text = "Waiting for Heaviest Chain";
+    break;
+  case State::SYNCHRONISING:
+    text = "Synchronising";
+    break;
+  case State::WAITING_FOR_RESPONSE:
+    text = "Waiting for Sync Response";
+    break;
+  case State::SYNCHRONISED:
+    text = "Synchronised";
+    break;
   }
 
-  if (!bg_work_.InFlightP(hash))
-  {
-    FETCH_LOG_INFO(LOGGING_NAME,
-                   "Block is loose, requesting longest chain from counter part: ", ToBase64(hash),
-                   " from: ", ToBase64(address));
-    auto worker = std::make_shared<MainChainSyncWorker>(shared_from_this(), hash, address);
-    bg_work_.Add(worker);
-  }
-  else
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Block is loose, query inflight: ", ToBase64(hash));
-  }
+  return text;
 }
 
-void MainChainRpcService::ServiceLooseBlocks()
+MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
 {
-  auto pending_work_count = bg_work_.CountPending();
+  static random::LinearCongruentialGenerator rng;
 
-  if ((pending_work_count == 0) && next_loose_tips_check_.IsDue())
+  Address address{};
+
+  auto const direct_peers = endpoint_.GetDirectlyConnectedPeers();
+
+  if (!direct_peers.empty())
   {
-    // At this point, ask the chain to check it has loose elments to query.
-    if (chain_.HasMissingBlocks())
-    {
-      for (auto const &hash : chain_.GetMissingBlockHashes(BLOCK_CATCHUP_STEP_SIZE))
-      {
-        // Get a random peer to send the req to...
-        auto random_peer_list = trust_.GetRandomPeers(1, 0.0);
-        if (!random_peer_list.empty())
-        {
-          AddLooseBlock(hash, *random_peer_list.begin());
-        }
-      }
-    }
-    else
-    {
-      // we appear to be idle, throttle back the working.
-      next_loose_tips_check_.Set(std::chrono::seconds(1));
-    }
+    // generate a random peer index
+    std::size_t const index = rng() % direct_peers.size();
+
+    // select the address
+    address = direct_peers[index];
   }
 
-  bg_work_.WorkCycle();
-
-  for (auto &successful_worker : bg_work_.Get(MainChainSyncWorker::PromiseState::SUCCESS, 1000))
-  {
-    if (successful_worker)
-    {
-      RequestedChainArrived(successful_worker->address(), successful_worker->blocks());
-      next_loose_tips_check_.SetTimedOut();
-    }
-  }
-
-  if (bg_work_.CountFailures() > 0 || bg_work_.CountTimeouts() > 0)
-  {
-    bg_work_.DiscardFailures();
-    bg_work_.DiscardTimeouts();
-    next_loose_tips_check_.SetTimedOut();
-  }
+  return address;
 }
 
-void MainChainRpcService::RequestedChainArrived(Address const &address, BlockList block_list)
+void MainChainRpcService::HandleChainResponse(Address const &address, BlockList block_list)
 {
-  bool new_data = false;
+  std::size_t added{0};
+  std::size_t loose{0};
+  std::size_t duplicate{0};
+  std::size_t invalid{0};
+
   for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
   {
+    // skip the geneis block
+    if (it->body.previous_hash == GENESIS_DIGEST)
+    {
+      continue;
+    }
+
     // recompute the digest
     it->UpdateDigest();
 
     // add the block
     if (it->proof())
     {
-      new_data |= chain_.AddBlock(*it);
-    }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Invalid Block Recv: ", ToBase64(it->body.hash));
-    }
-  }
+      auto const status = chain_.AddBlock(*it);
 
-  if (new_data && !block_list.empty())
-  {
-    Block blk;
-    if (chain_.Get(block_list.back().body.hash, blk))
-    {
-      blk.UpdateDigest();
-      if (blk.is_loose)
+      switch (status)
       {
-        AddLooseBlock(block_list.back().body.hash, address);
+      case BlockStatus::ADDED:
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced new block: ", ToBase64(it->body.hash),
+                        " from: muddle://", ToBase64(address));
+        ++added;
+        break;
+      case BlockStatus::LOOSE:
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced loose block: ", ToBase64(it->body.hash),
+                        " from: muddle://", ToBase64(address));
+        ++loose;
+        break;
+      case BlockStatus::DUPLICATE:
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced duplicate block: ", ToBase64(it->body.hash),
+                        " from: muddle://", ToBase64(address));
+        ++duplicate;
+        break;
+      case BlockStatus::INVALID:
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: ", ToBase64(it->body.hash),
+                        " from: muddle://", ToBase64(address));
+        ++invalid;
+        break;
       }
     }
     else
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Could not Get() recently added block ",
-                      ToBase64(block_list.back().body.hash), " from the block store!");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: ", ToBase64(it->body.hash),
+                      " from: muddle://", ToBase64(address));
+      ++invalid;
     }
   }
+
+  if (invalid)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Synced Summary: Invalid: ", invalid, " Added: ", added,
+                   " Loose: ", loose, " Duplicate: ", duplicate, " from: muddle://",
+                   ToBase64(address));
+  }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Synced Summary: Added: ", added, " Loose: ", loose,
+                   " Duplicate: ", duplicate, " from: muddle://", ToBase64(address));
+  }
+}
+
+MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
+{
+  State next_state{State::REQUEST_HEAVIEST_CHAIN};
+
+  auto const peer = GetRandomTrustedPeer();
+
+  if (!peer.empty())
+  {
+    current_peer_address_ = peer;
+    current_request_ =
+        rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
+                                        MainChainProtocol::HEAVIEST_CHAIN, MAX_CHAIN_REQUEST_SIZE);
+
+    next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
+  }
+
+  return next_state;
+}
+
+MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
+{
+  State next_state{State::WAIT_FOR_HEAVIEST_CHAIN};
+
+  if (!current_request_)
+  {
+    // something went wrong we should attempt to request the chain
+    next_state = State::REQUEST_HEAVIEST_CHAIN;
+  }
+  else
+  {
+    // determine the status of the request that is in flight
+    auto const status = current_request_->GetState();
+
+    if (PromiseState::WAITING != status)
+    {
+      if (PromiseState::SUCCESS == status)
+      {
+        // the request was successful, simply hand off the blocks to be added to the chain
+        HandleChainResponse(current_peer_address_, current_request_->As<BlockList>());
+
+        // now we have completed a request we can start normal synchronisation
+        next_state = State::SYNCHRONISING;
+      }
+      else
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Heaviest chain request to: ", ToBase64(current_peer_address_),
+                       " failed. Reason: ", service::ToString(status));
+
+        // since we want to sync at least with one chain before proceeding we restart the state
+        // machine back to the requesting
+        next_state = State::REQUEST_HEAVIEST_CHAIN;
+      }
+
+      // clear the state
+      current_peer_address_  = Address{};
+      current_missing_block_ = BlockHash{};
+    }
+  }
+
+  return next_state;
+}
+
+MainChainRpcService::State MainChainRpcService::OnSynchronising()
+{
+  State next_state{State::SYNCHRONISED};
+
+  // get the next missing block
+  auto const missing_blocks = chain_.GetMissingTips();
+
+  if (!missing_blocks.empty())
+  {
+    current_missing_block_ = *missing_blocks.begin();
+    current_peer_address_  = GetRandomTrustedPeer();
+
+    // in the case that we don't trust any one we need to simply wait until we do
+    if (current_peer_address_.empty())
+    {
+      return State::SYNCHRONISING;
+    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Requesting chain from muddle://", ToBase64(current_peer_address_),
+                   " for block ", ToBase64(current_missing_block_));
+
+    // make the RPC call to the block source with a request for the chain
+    current_request_ = rpc_client_.CallSpecificAddress(
+        current_peer_address_, RPC_MAIN_CHAIN, MainChainProtocol::COMMON_SUB_CHAIN,
+        current_missing_block_, chain_.GetHeaviestBlockHash(), MAX_SUB_CHAIN_SIZE);
+
+    next_state = State::WAITING_FOR_RESPONSE;
+  }
+
+  return next_state;
+}
+
+MainChainRpcService::State MainChainRpcService::OnWaitingForResponse()
+{
+  State next_state{State::WAITING_FOR_RESPONSE};
+
+  if (!current_request_)
+  {
+    next_state = State::SYNCHRONISED;
+  }
+  else
+  {
+    // determine the status of the request that is in flight
+    auto const status = current_request_->GetState();
+
+    if (PromiseState::WAITING != status)
+    {
+      if (PromiseState::SUCCESS == status)
+      {
+        // the request was successful, simply hand off the blocks to be added to the chain
+        HandleChainResponse(current_peer_address_, current_request_->As<BlockList>());
+      }
+      else
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Chain request to: ", ToBase64(current_peer_address_),
+                       " failed. Reason: ", service::ToString(status));
+      }
+
+      // clear the state
+      current_peer_address_  = Address{};
+      current_missing_block_ = BlockHash{};
+      next_state             = State::SYNCHRONISED;
+    }
+  }
+
+  return next_state;
+}
+
+MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, State previous)
+{
+  State next_state{State::SYNCHRONISED};
+
+  FETCH_UNUSED(current);
+
+  if (chain_.HasMissingBlocks())
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Synchronisation Lost");
+
+    next_state = State::SYNCHRONISING;
+  }
+  else if (previous != State::SYNCHRONISED)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Synchronised");
+  }
+
+  return next_state;
 }
 
 }  // namespace ledger

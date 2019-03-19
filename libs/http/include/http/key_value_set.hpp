@@ -88,11 +88,20 @@ public:
     return super_type::operator[](name);
   }
 
-  byte_array::ConstByteArray const &operator[](byte_array::ConstByteArray const &name) const
+  byte_array::ConstByteArray operator[](byte_array::ConstByteArray const &name) const
   {
     LOG_STACK_TRACE_POINT;
 
-    return this->find(name)->second;
+    auto element = this->find(name);
+
+    if (element == this->end())
+    {
+      return {};
+    }
+    else
+    {
+      return element->second;
+    }
   }
 
   void Clear()

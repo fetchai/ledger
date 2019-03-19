@@ -30,15 +30,13 @@
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/transaction_processor.hpp"
+#include "ledger/transaction_status_cache.hpp"
 #include "miner/basic_miner.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/p2pservice/manifest.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
-#include "mock_chain.hpp" // TODO(tfr): remove in the long term
 
-
-#include "mock_chain.hpp"
 #include "ledger/dag/dag.hpp"
 #include "ledger/protocols/dag_rpc_service.hpp"
 #include "ledger/dag/dag_muddle_configuration.hpp" //< TODO(tfr): Move to where it belongs
@@ -80,7 +78,9 @@ public:
   using CertificatePtr   = Peer2PeerService::CertificatePtr;
   using UriList          = std::vector<network::Uri>;
   using Manifest         = network::Manifest;
-  using MockChain = fetch::ledger::MockChain;
+
+  static constexpr uint32_t DEFAULT_BLOCK_DIFFICULTY = 6;
+
   struct Config
   {
     Manifest    manifest{};
@@ -94,8 +94,10 @@ public:
     uint32_t    max_peers{0};
     uint32_t    transient_peers{0};
     uint32_t    block_interval_ms{0};
-    uint32_t    block_difficulty{17};
+    uint32_t    block_difficulty{DEFAULT_BLOCK_DIFFICULTY};
     uint32_t    peers_update_cycle_ms{0};
+    bool        standalone{false};
+    bool        synergetic_mine{true};
 
     uint32_t num_lanes() const
     {
@@ -125,7 +127,7 @@ private:
   using MainChainRpcServicePtr = std::shared_ptr<MainChainRpcService>;
   using LaneServices           = ledger::StorageUnitBundledService;
   using StorageUnitClient      = ledger::StorageUnitClient;
-  using LaneIndex              = StorageUnitClient::LaneIndex;
+  using LaneIndex              = ledger::LaneIdentity::lane_type;
   using StorageUnitClientPtr   = std::shared_ptr<StorageUnitClient>;
   using Flag                   = std::atomic<bool>;
   using ExecutionManager       = ledger::ExecutionManager;
@@ -139,14 +141,17 @@ private:
   using TrustSystem            = p2p::P2PTrustBayRank<Muddle::Address>;
   using DAGRpcService          = fetch::ledger::DAGRpcService;
   using DAG                    = fetch::ledger::DAG;
+  using ShardConfigs           = ledger::ShardConfigs;
+  using TxStatusCache          = ledger::TransactionStatusCache;
 
   /// @name Configuration
   /// @{
-  Flag     active_;           ///< Flag to control running of main thread
-  Config   cfg_;              ///< The configuration
-  uint16_t p2p_port_;         ///< The port that the P2P interface is running from
-  uint16_t http_port_;        ///< The port of the HTTP server
-  uint16_t lane_port_start_;  ///< The starting port of all the lane services
+  Flag         active_;           ///< Flag to control running of main thread
+  Config       cfg_;              ///< The configuration
+  uint16_t     p2p_port_;         ///< The port that the P2P interface is running from
+  uint16_t     http_port_;        ///< The port of the HTTP server
+  uint16_t     lane_port_start_;  ///< The starting port of all the lane services
+  ShardConfigs shard_cfgs_;
   /// @}
 
   /// @name Network Orchestration
@@ -155,15 +160,18 @@ private:
   NetworkManager   network_manager_;       ///< Top level network coordinator
   NetworkManager   http_network_manager_;  ///< A separate net. coordinator for the http service(s)
   Muddle           muddle_;                ///< The muddle networking service
-  TrustSystem      trust_;                 ///< The trust subsystem
-  Peer2PeerService p2p_;                   ///< The main p2p networking stack
+  CertificatePtr   internal_identity_;
+  Muddle           internal_muddle_;  ///< The muddle networking service
+  TrustSystem      trust_;            ///< The trust subsystem
+  Peer2PeerService p2p_;              ///< The main p2p networking stack
   /// @}
 
   /// @name Transaction and State Database shards
   /// @{
-  LaneServices         lane_services_;  ///< The lane services
-  StorageUnitClientPtr storage_;        ///< The storage client to the lane services
-  LaneRemoteControl    lane_control_;   ///< The lane control client for the lane services
+  TxStatusCache        tx_status_cache_;  ///< Cache of transaction status
+  LaneServices         lane_services_;    ///< The lane services
+  StorageUnitClientPtr storage_;          ///< The storage client to the lane services
+  LaneRemoteControl    lane_control_;     ///< The lane control client for the lane services
   /// @}
 
   /// @name Block Processing
@@ -175,7 +183,6 @@ private:
   /// @{
   DAG dag_;
   DAGRpcService dag_rpc_service_;
-  MockChain mock_chain_;
  /// @}
 
 

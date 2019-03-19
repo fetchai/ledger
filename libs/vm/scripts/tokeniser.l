@@ -41,7 +41,8 @@ int Set(fetch::vm::Token* token, const fetch::vm::Token::Kind kind, const char* 
 	 
 
 EXP			[Ee][+-]?[0-9]+
-STR			([^"\\\n]|\\.)*
+STR1			([^"\\\n]|\\.)*
+STR2			([^'\\\n]|\\.)*
 INTEGER		[0-9][0-9]*
 REAL1		([0-9]*\.[0-9]+|[0-9]+\.){EXP}?
 REAL2		[0-9]+{EXP}
@@ -111,12 +112,13 @@ IDENT		[_a-zA-Z][_a-zA-Z0-9]*
 }
 
 	/* strings */
-\"{STR}\" |
-\'{STR}\' {
+\"{STR1}\" |
+\'{STR2}\' {
 	return Set(yylval, fetch::vm::Token::Kind::String, yytext, yyleng, yyextra);
 }
 
-\"{STR}\n { 
+\"{STR1}\n |
+\'{STR2}\n { 
 	Set(yylval, fetch::vm::Token::Kind::BadString, yytext, yyleng, yyextra);
 	yyextra->line++;
 	return 1;
@@ -161,10 +163,12 @@ IDENT		[_a-zA-Z][_a-zA-Z0-9]*
 ")"   {return Set(yylval, fetch::vm::Token::Kind::RightParenthesis, yytext, yyleng, yyextra);}
 "["   {return Set(yylval, fetch::vm::Token::Kind::LeftSquareBracket, yytext, yyleng, yyextra);}
 "]"   {return Set(yylval, fetch::vm::Token::Kind::RightSquareBracket, yytext, yyleng, yyextra);}
+"%"   {return Set(yylval, fetch::vm::Token::Kind::Modulo, yytext, yyleng, yyextra);}
 "+"   {return Set(yylval, fetch::vm::Token::Kind::Plus, yytext, yyleng, yyextra);}
 "-"   {return Set(yylval, fetch::vm::Token::Kind::Minus, yytext, yyleng, yyextra);}
 "*"   {return Set(yylval, fetch::vm::Token::Kind::Multiply, yytext, yyleng, yyextra);}
 "/"   {return Set(yylval, fetch::vm::Token::Kind::Divide, yytext, yyleng, yyextra);}
+"%="  {return Set(yylval, fetch::vm::Token::Kind::ModuloAssign, yytext, yyleng, yyextra);}
 "+="  {return Set(yylval, fetch::vm::Token::Kind::AddAssign, yytext, yyleng, yyextra);}
 "-="  {return Set(yylval, fetch::vm::Token::Kind::SubtractAssign, yytext, yyleng, yyextra);}
 "*="  {return Set(yylval, fetch::vm::Token::Kind::MultiplyAssign, yytext, yyleng, yyextra);}

@@ -49,7 +49,7 @@ static constexpr char const *LOGGING_NAME = "main";
 
 using Prover         = fetch::crypto::Prover;
 using BootstrapPtr   = std::unique_ptr<fetch::BootstrapMonitor>;
-using ProverPtr      = std::unique_ptr<Prover>;
+using ProverPtr      = std::shared_ptr<Prover>;
 using ConstByteArray = fetch::byte_array::ConstByteArray;
 using ByteArray      = fetch::byte_array::ByteArray;
 
@@ -175,6 +175,8 @@ struct CommandLineArguments
     p.add(args.cfg.max_peers,             "max-peers",             "The number of maximal peers to send to peer requests.",                         DEFAULT_MAX_PEERS);
     p.add(args.cfg.transient_peers,       "transient-peers",       "The number of the peers which will be random in answer sent to peer requests.", DEFAULT_TRANSIENT_PEERS);
     p.add(args.cfg.peers_update_cycle_ms, "peers-update-cycle-ms", "How fast to do peering changes.",                                               uint32_t{0});
+    p.add(args.cfg.standalone,            "standalone",            "Expect the node to run in on its own (useful for testing and development)",     false);
+    p.add(args.cfg.synergetic_mine,       "synergetic-mine",       "Mines solutions to synergetic contracts.",                                      true);
     // clang-format on
 
     // parse the args
@@ -356,6 +358,11 @@ struct CommandLineArguments
     s << "max peers.................: " << args.cfg.max_peers << '\n';
     s << "peers update cycle........: " << args.cfg.peers_update_cycle_ms << "ms\n";
 
+    if (args.cfg.standalone)
+    {
+      s << "stand alone...............: Enabled\n";
+    }
+
     // generate the peer listing
     s << "peers.....................: ";
     for (auto const &peer : args.peers)
@@ -377,9 +384,9 @@ ProverPtr GenerateP2PKey()
   static constexpr char const *KEY_FILENAME = "p2p.key";
 
   using Signer    = fetch::crypto::ECDSASigner;
-  using SignerPtr = std::unique_ptr<Signer>;
+  using SignerPtr = std::shared_ptr<Signer>;
 
-  SignerPtr certificate        = std::make_unique<Signer>();
+  SignerPtr certificate        = std::make_shared<Signer>();
   bool      certificate_loaded = false;
 
   // Step 1. Attempt to load the existing key
@@ -450,11 +457,37 @@ void InterruptHandler(int /*signal*/)
   }
 }
 
+bool HasVersionFlag(int argc, char **argv)
+{
+  static const std::string FULL_VERSION_FLAG{"--version"};
+  static const std::string SHORT_VERSION_FLAG{"-v"};
+
+  bool has_version{false};
+
+  for (int i = 1; i < argc; ++i)
+  {
+    if ((FULL_VERSION_FLAG == argv[i]) || (SHORT_VERSION_FLAG == argv[i]))
+    {
+      has_version = true;
+      break;
+    }
+  }
+
+  return has_version;
+}
+
 }  // namespace
 
 int main(int argc, char **argv)
 {
   int exit_code = EXIT_FAILURE;
+
+  // Special case for the version flag
+  if (HasVersionFlag(argc, argv))
+  {
+    std::cout << fetch::version::FULL << std::endl;
+    return 0;
+  }
 
   fetch::commandline::DisplayCLIHeader("Constellation");
 
@@ -486,7 +519,7 @@ int main(int argc, char **argv)
     // register the signal handler
     volatile void *x = (void*)InterruptHandler;
     FETCH_UNUSED(x);
-    // std::signal(SIGINT, InterruptHandler);
+    std::signal(SIGINT, InterruptHandler);
 
     // run the application
     constellation->Run(args.peers);

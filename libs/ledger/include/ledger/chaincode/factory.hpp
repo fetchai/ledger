@@ -17,28 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/contract.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 
 #include <functional>
 #include <memory>
-#include <string>
-#include <unordered_map>
 #include <unordered_set>
 
 namespace fetch {
 namespace ledger {
 
+class Identifier;
+class Contract;
+class StorageInterface;
+
 class ChainCodeFactory
 {
 public:
-  using ContractName    = byte_array::ConstByteArray;
+  using ConstByteArray  = byte_array::ConstByteArray;
   using ContractPtr     = std::shared_ptr<Contract>;
-  using FactoryCallable = std::function<ContractPtr()>;
-  using FactoryRegistry = std::unordered_map<ContractName, FactoryCallable>;
-  using ContractNameSet = std::unordered_set<ContractName>;
+  using ContractNameSet = std::unordered_set<ConstByteArray>;
 
-  ContractPtr            Create(ContractName const &name) const;
-  ContractNameSet const &GetContracts() const;
+  ContractPtr Create(Identifier const &name, StorageInterface &storage) const;
+
+  ContractNameSet const &GetChainCodeContracts() const;
 };
 
 }  // namespace ledger

@@ -29,18 +29,20 @@ using fetch::network::NetworkManager;
 using fetch::muddle::Muddle;
 using fetch::muddle::rpc::Client;
 using fetch::service::Promise;
-using NetworkId = fetch::muddle::Muddle::NetworkId;
+using fetch::muddle::NetworkId;
+
+using Clock       = std::chrono::high_resolution_clock;
+using PromiseList = std::vector<Promise>;
 
 int main()
 {
-  using PromiseList = std::vector<Promise>;
-
   // create and setup the muddle
   NetworkManager nm{"NetMgr", 1};
   nm.Start();
+
   auto peer = fetch::network::Uri{"tcp://127.0.0.1:8080"};
 
-  Muddle muddle{Muddle::NetworkId("TEST"), CreateKey(CLIENT_PRIVATE_KEY), nm};
+  Muddle muddle{NetworkId{"TEST"}, CreateKey(CLIENT_PRIVATE_KEY), nm};
   muddle.Start({8080});
 
   sleep_for(milliseconds{2000});
@@ -50,8 +52,6 @@ int main()
 
   auto client = std::make_shared<Client>("Client", muddle.AsEndpoint(), server_key, 1, 1);
 
-  using Clock = std::chrono::high_resolution_clock;
-
   PromiseList promises;
   promises.reserve(20);
 
@@ -59,13 +59,12 @@ int main()
 
   for (uint64_t i = 0; i < 20; ++i)
   {
-    promises.push_back(client->Call(NetworkId("1"), 1, i, i));
+    promises.push_back(client->Call(1, 1, i, i));
   }
 
   for (auto &prom : promises)
   {
     prom->Wait();
-    // FETCH_LOG_INFO("RpcClientMain", "The result is: ", prom->As<uint64_t>());
   }
 
   auto const end   = Clock::now();

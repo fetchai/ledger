@@ -22,6 +22,7 @@
 #include "crypto/ecdsa.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chain/transaction_serialization.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
 #include "storage/transient_object_store.hpp"
 
@@ -37,7 +38,7 @@ using fetch::ledger::MutableTransaction;
 using fetch::random::LinearCongruentialGenerator;
 
 using TransientStore   = fetch::storage::TransientObjectStore<VerifiedTransaction>;
-using TransactionStore = fetch::ledger::LaneService::TransactionStore;
+using TransactionStore = fetch::storage::ObjectStore<VerifiedTransaction>;
 using TransactionList  = std::vector<VerifiedTransaction>;
 
 TransactionList GenerateTransactions(std::size_t count, bool large_packets)
@@ -91,7 +92,7 @@ void TxSubmitFixedLarge(benchmark::State &state)
   {
     for (auto const &tx : transactions)
     {
-      tx_store.Set(ResourceID{tx.digest()}, tx, false);
+      tx_store.Set(ResourceID{tx.digest()}, tx);
     }
   }
 }
@@ -109,7 +110,7 @@ void TxSubmitFixedSmall(benchmark::State &state)
   {
     for (auto const &tx : transactions)
     {
-      tx_store.Set(ResourceID{tx.digest()}, tx, false);
+      tx_store.Set(ResourceID{tx.digest()}, tx);
     }
   }
 }
@@ -127,7 +128,7 @@ void TxSubmitSingleLarge(benchmark::State &state)
   for (auto _ : state)
   {
     auto const &tx = transactions.at(tx_index++);
-    tx_store.Set(ResourceID{tx.digest()}, tx, false);
+    tx_store.Set(ResourceID{tx.digest()}, tx);
   }
 }
 
@@ -144,7 +145,7 @@ void TxSubmitSingleSmall(benchmark::State &state)
   for (auto _ : state)
   {
     auto const &tx = transactions.at(tx_index++);
-    tx_store.Set(ResourceID{tx.digest()}, tx, false);
+    tx_store.Set(ResourceID{tx.digest()}, tx);
   }
 }
 

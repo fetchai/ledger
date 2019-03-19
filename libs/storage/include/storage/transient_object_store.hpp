@@ -44,6 +44,8 @@ public:
   using Archive     = ObjectStore<Object>;
   using TxSummaries = std::vector<ledger::TransactionSummary>;
 
+  static constexpr char const *LOGGING_NAME = "TransientObjectStore";
+
   // Construction / Destruction
   TransientObjectStore();
   TransientObjectStore(TransientObjectStore const &) = delete;
@@ -172,7 +174,14 @@ void TransientObjectStore<O>::Load(std::string const &doc_file, std::string cons
 template <typename O>
 bool TransientObjectStore<O>::Get(ResourceID const &rid, O &object)
 {
-  return GetFromCache(rid, object) || archive_.Get(rid, object);
+  bool const success = GetFromCache(rid, object) || archive_.Get(rid, object);
+
+  if (!success)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Unable to retrieve TX: ", byte_array::ToBase64(rid.id()));
+  }
+
+  return success;
 }
 
 /**
@@ -230,6 +239,8 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
 {
   static core::Tickets::Count prev_count{0};
 
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Adding TX: ", byte_array::ToBase64(rid.id()));
+
   // add the element into the cache
   SetInCache(rid, object);
 
@@ -242,7 +253,7 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
     {
       if (prev_count < recent_queue_alarm_threshold && count >= recent_queue_alarm_threshold)
       {
-        FETCH_LOG_WARN("TransientObjectStore", " the `most_recent_seen_` queue size ", count,
+        FETCH_LOG_WARN(LOGGING_NAME, " the `most_recent_seen_` queue size ", count,
                        " reached or is over threshold ", recent_queue_alarm_threshold, ").");
         // TODO(private issue #582): The queue became FULL - this information shall
         // be propagated out to caller, so it can make appropriate decision how to
@@ -365,7 +376,7 @@ template <typename O>
 void TransientObjectStore<O>::ThreadLoop()
 {
   static const std::size_t               BATCH_SIZE = 100;
-  static const std::chrono::milliseconds MAX_WAIT_INTERVAL{200};
+  static const std::chrono::milliseconds MAX_WAIT_INTERVAL{2000};
 
   SetThreadName("TxStore");
 
@@ -391,19 +402,29 @@ void TransientObjectStore<O>::ThreadLoop()
     // Populating: We are filling up our batch of objects from the queue that is being posted
     case Phase::Populating:
     {
-      // update the state in the case where we have fully filled up the buffer
-      if (extracted_count >= BATCH_SIZE)
+      assert(extracted_count < BATCH_SIZE);
+
+      // ensure the write count is reset
+      written_count = 0;
+
+      // attempt to extract an element in the confirmation queue
+      bool const extracted = confirm_queue_.Pop(rids[extracted_count], MAX_WAIT_INTERVAL);
+
+      // update the index if needed
+      if (extracted)
       {
-        phase         = Phase::Writing;
-        written_count = 0;
+        ++extracted_count;
       }
-      else
+
+      // determine if we have reached the end of the sequence of transactions or if we have a filled
+      // buffer.
+      bool const is_buffer_full     = (extracted_count == BATCH_SIZE);
+      bool const is_end_of_sequence = (extracted_count && (!extracted));
+
+      // trigger the next state if appropriate
+      if (is_buffer_full || is_end_of_sequence)
       {
-        // populate our resource array
-        if (confirm_queue_.Pop(rids[extracted_count], MAX_WAIT_INTERVAL))
-        {
-          ++extracted_count;
-        }
+        phase = Phase::Writing;
       }
 
       break;
@@ -446,11 +467,10 @@ void TransientObjectStore<O>::ThreadLoop()
     case Phase::Flushing:
     {
       FETCH_LOCK(cache_mutex_);
-
-      assert(extracted_count == rids.size());
-      for (auto const &rid : rids)
+      assert(extracted_count <= BATCH_SIZE);
+      for (std::size_t i = 0; i < extracted_count; ++i)
       {
-        cache_.erase(rid);
+        cache_.erase(rids[i]);
       }
 
       phase           = Phase::Populating;

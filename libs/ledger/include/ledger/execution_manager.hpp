@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "core/threading/synchronised_state.hpp"
 #include "ledger/chain/constants.hpp"
-#include "ledger/chaincode/cache.hpp"
 #include "ledger/execution_item.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/executor.hpp"
@@ -77,6 +77,12 @@ public:
   }
 
 private:
+  struct Counters
+  {
+    std::size_t active{0};
+    std::size_t remaining{0};
+  };
+
   using ExecutionItemPtr  = std::unique_ptr<ExecutionItem>;
   using ExecutionItemList = std::vector<ExecutionItemPtr>;
   using ExecutionPlan     = std::vector<ExecutionItemList>;
@@ -92,12 +98,14 @@ private:
   using Condition         = std::condition_variable;
   using ResourceID        = storage::ResourceID;
   using AtomicState       = std::atomic<State>;
+  using SyncCounters      = SynchronisedState<Counters>;
+  using SyncedState       = SynchronisedState<State>;
 
-  Flag        running_{false};
-  Flag        monitor_ready_{false};
-  AtomicState state_{State::IDLE};
+  Flag running_{false};
+  Flag monitor_ready_{false};
 
-  ChainCodeCache contracts_;
+  SyncedState state_{State::IDLE};
+
   StorageUnitPtr storage_;
 
   Mutex         execution_plan_lock_;  ///< guards `execution_plan_`
@@ -112,10 +120,10 @@ private:
   Mutex        idle_executors_lock_;  ///< guards `idle_executors`
   ExecutorList idle_executors_;
 
-  Counter active_count_{0};
   Counter completed_executions_{0};
-  Counter remaining_executions_{0};
   Counter num_slices_{0};
+
+  SyncCounters counters_{};
 
   ThreadPool thread_pool_;
   ThreadPtr  monitor_thread_;

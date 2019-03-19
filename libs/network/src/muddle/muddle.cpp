@@ -27,6 +27,8 @@
 #include "network/tcp/tcp_server.hpp"
 
 #include <chrono>
+#include <iomanip>
+#include <sstream>
 #include <thread>
 
 using fetch::byte_array::ByteArray;
@@ -44,6 +46,14 @@ static ConstByteArray ConvertAddress(Packet::RawAddress const &address)
   return ConstByteArray{output};
 }
 
+static std::string GenerateThreadPoolName(NetworkId const &identity)
+{
+  std::ostringstream oss;
+  oss << "Mdl-" << identity.ToString();
+
+  return oss.str();
+}
+
 static const auto        CLEANUP_INTERVAL        = std::chrono::seconds{10};
 static std::size_t const MAINTENANCE_INTERVAL_MS = 2500;
 static std::size_t const NUM_THREADS             = 1;
@@ -53,17 +63,16 @@ static std::size_t const NUM_THREADS             = 1;
  *
  * @param certificate The certificate/identity of this node
  */
-Muddle::Muddle(NetworkId network_id, Muddle::CertificatePtr &&certificate, NetworkManager const &nm)
+Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager const &nm)
   : certificate_(std::move(certificate))
   , identity_(certificate_->identity())
   , network_manager_(nm)
   , dispatcher_()
   , register_(std::make_shared<MuddleRegister>(dispatcher_))
   , router_(network_id, identity_.identifier(), *register_, dispatcher_)
-  , thread_pool_(
-        network::MakeThreadPool(NUM_THREADS, "Muddle " + static_cast<std::string>(network_id)))
+  , thread_pool_(network::MakeThreadPool(NUM_THREADS, GenerateThreadPoolName(network_id)))
   , clients_(router_)
-  , network_id_{network_id}
+  , network_id_(network_id)
 {}
 
 /**
@@ -77,8 +86,6 @@ void Muddle::Start(PortList const &ports, UriList const &initial_peer_list)
   // start the thread pool
   thread_pool_->Start();
   router_.Start();
-
-  FETCH_LOG_WARN(LOGGING_NAME, "MUDDLE START ");
 
   // create all the muddle servers
   for (uint16_t port : ports)
@@ -155,18 +162,26 @@ Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
 
   for (auto const &entry : routing_table)
   {
-    if (!entry.second.direct)
+    if (direct_only && !entry.second.direct)
     {
+      continue;
+    }
+
+    auto connection = register_->LookupConnection(entry.second.handle).lock();
+    if (!connection)
+    {
+      // do not care about connections that we are not connected too
+      continue;
+    }
+
+    if (!connection->is_alive())
+    {
+      // do not care about connections to whom we have not yet fully connected
       continue;
     }
 
     // convert the address to a byte array
     ConstByteArray address = ConvertAddress(entry.first);
-
-    if (direct_only && !entry.second.direct)
-    {
-      continue;
-    }
 
     // based on the handle lookup the uri
     auto it = uri_map.find(entry.second.handle);
@@ -284,6 +299,8 @@ void Muddle::CreateTcpClient(Uri const &peer)
   using ClientImpl       = network::TCPClient;
   using ConnectionRegPtr = std::shared_ptr<network::AbstractConnectionRegister>;
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Creating TCP Client connection to ", peer.ToString());
+
   ClientImpl client(network_manager_);
   auto       conn = client.connection_pointer();
 
@@ -306,16 +323,16 @@ void Muddle::CreateTcpClient(Uri const &peer)
   strong_conn->OnConnectionSuccess([this, peer]() { clients_.OnConnectionEstablished(peer); });
 
   strong_conn->OnConnectionFailed([this, peer]() {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection failed...");
+    FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.ToString(), " failed");
     clients_.RemoveConnection(peer);
   });
 
   strong_conn->OnLeave([this, peer]() {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection left...to go where?");
+    FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.ToString(), " left");
     clients_.Disconnect(peer);
   });
 
-  strong_conn->OnMessage([this, conn_handle](network::message_type const &msg) {
+  strong_conn->OnMessage([this, peer, conn_handle](network::message_type const &msg) {
     try
     {
       // un-marshall the data
@@ -329,7 +346,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
     }
     catch (std::exception &ex)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Error processing packet from ", conn_handle,
+      FETCH_LOG_ERROR(LOGGING_NAME, "Error processing packet from ", peer.ToString(),
                       " error: ", ex.what());
     }
   });

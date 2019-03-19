@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/type_util.hpp"
 #include "vm/common.hpp"
 #include <cmath>
 
@@ -36,15 +37,14 @@ struct IsPrimitive : std::false_type
 };
 template <typename T>
 struct IsPrimitive<T, typename std::enable_if_t<
-                          std::is_same<T, void>::value || std::is_same<T, bool>::value ||
-                          std::is_same<T, int8_t>::value || std::is_same<T, uint8_t>::value ||
-                          std::is_same<T, int16_t>::value || std::is_same<T, uint16_t>::value ||
-                          std::is_same<T, int32_t>::value || std::is_same<T, uint32_t>::value ||
-                          std::is_same<T, int64_t>::value || std::is_same<T, uint64_t>::value ||
-                          std::is_same<T, float>::value || std::is_same<T, double>::value>>
+                          type_util::IsAnyOfV<T, void, bool, int8_t, uint8_t, int16_t, uint16_t,
+                                              int32_t, uint32_t, int64_t, uint64_t, float, double>>>
   : std::true_type
 {
 };
+
+template <typename T, typename R = void>
+using IfIsPrimitive = typename std::enable_if<IsPrimitive<std::decay_t<T>>::value, R>::type;
 
 template <typename T, typename = void>
 struct IsObject : std::false_type
@@ -63,6 +63,9 @@ template <typename T>
 struct IsPtr<Ptr<T>> : std::true_type
 {
 };
+
+template <typename T, typename R = void>
+using IfIsPtr = typename std::enable_if<IsPtr<std::decay_t<T>>::value, R>::type;
 
 template <typename T, typename = void>
 struct IsVariant : std::false_type
@@ -96,9 +99,9 @@ struct IsConstRef<
 };
 
 template <typename T>
-struct PtrManagedType;
+struct GetManagedType;
 template <typename T>
-struct PtrManagedType<Ptr<T>>
+struct GetManagedType<Ptr<T>>
 {
   using type = T;
 };
@@ -138,14 +141,14 @@ struct IsVariantParameter<T,
 };
 
 template <typename T, typename = void>
-struct StorageType;
+struct GetStorageType;
 template <typename T>
-struct StorageType<T, typename std::enable_if_t<IsPrimitive<T>::value>>
+struct GetStorageType<T, typename std::enable_if_t<IsPrimitive<T>::value>>
 {
   using type = T;
 };
 template <typename T>
-struct StorageType<T, typename std::enable_if_t<IsPtr<T>::value>>
+struct GetStorageType<T, typename std::enable_if_t<IsPtr<T>::value>>
 {
   using type = Ptr<Object>;
 };
@@ -153,37 +156,44 @@ struct StorageType<T, typename std::enable_if_t<IsPtr<T>::value>>
 class Object
 {
 public:
-  Object() = delete;
+  Object()          = delete;
+  virtual ~Object() = default;
+
   Object(VM *vm, TypeId type_id)
   {
     vm_        = vm;
     type_id_   = type_id;
     ref_count_ = 1;
   }
-  virtual ~Object() = default;
-  virtual bool   Equals(Ptr<Object> const &lhso, Ptr<Object> const &rhso) const;
-  virtual size_t GetHashCode() const;
-  virtual void   UnaryMinusOp(Ptr<Object> &object);
-  virtual void   AddOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   LeftAddOp(Variant &lhsv, Variant &rhsv);
-  virtual void   RightAddOp(Variant &lhsv, Variant &rhsv);
-  virtual void   AddAssignOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   RightAddAssignOp(Ptr<Object> &lhso, Variant &rhsv);
-  virtual void   SubtractOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   LeftSubtractOp(Variant &lhsv, Variant &rhsv);
-  virtual void   RightSubtractOp(Variant &lhsv, Variant &rhsv);
-  virtual void   SubtractAssignOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   RightSubtractAssignOp(Ptr<Object> &lhso, Variant &rhsv);
-  virtual void   MultiplyOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   LeftMultiplyOp(Variant &lhsv, Variant &rhsv);
-  virtual void   RightMultiplyOp(Variant &lhsv, Variant &rhsv);
-  virtual void   MultiplyAssignOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   RightMultiplyAssignOp(Ptr<Object> &lhso, Variant &rhsv);
-  virtual void   DivideOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   LeftDivideOp(Variant &lhsv, Variant &rhsv);
-  virtual void   RightDivideOp(Variant &lhsv, Variant &rhsv);
-  virtual void   DivideAssignOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
-  virtual void   RightDivideAssignOp(Ptr<Object> &lhso, Variant &rhsv);
+
+  virtual size_t GetHashCode();
+  virtual bool   IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual bool   IsNotEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual bool   IsLessThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual bool   IsLessThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual bool   IsGreaterThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual bool   IsGreaterThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
+  virtual void   UnaryMinus(Ptr<Object> &object);
+  virtual void   Add(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   LeftAdd(Variant &lhsv, Variant &rhsv);
+  virtual void   RightAdd(Variant &lhsv, Variant &rhsv);
+  virtual void   AddAssign(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   RightAddAssign(Ptr<Object> &lhso, Variant &rhsv);
+  virtual void   Subtract(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   LeftSubtract(Variant &lhsv, Variant &rhsv);
+  virtual void   RightSubtract(Variant &lhsv, Variant &rhsv);
+  virtual void   SubtractAssign(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   RightSubtractAssign(Ptr<Object> &lhso, Variant &rhsv);
+  virtual void   Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   LeftMultiply(Variant &lhsv, Variant &rhsv);
+  virtual void   RightMultiply(Variant &lhsv, Variant &rhsv);
+  virtual void   MultiplyAssign(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   RightMultiplyAssign(Ptr<Object> &lhso, Variant &rhsv);
+  virtual void   Divide(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   LeftDivide(Variant &lhsv, Variant &rhsv);
+  virtual void   RightDivide(Variant &lhsv, Variant &rhsv);
+  virtual void   DivideAssign(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   RightDivideAssign(Ptr<Object> &lhso, Variant &rhsv);
   virtual void * FindElement();
   virtual void   PushElement(TypeId element_type_id);
   virtual void   PopToElement();
@@ -194,7 +204,7 @@ protected:
   Variant &       Top();
   void            RuntimeError(std::string const &message);
   TypeInfo const &GetTypeInfo(TypeId type_id);
-  bool            GetInteger(Variant const &v, size_t &index);
+  bool            GetNonNegativeInteger(Variant const &v, size_t &index);
 
   VM *   vm_;
   TypeId type_id_;
@@ -238,7 +248,7 @@ public:
     return Ptr(this__);
   }
 
-  Ptr &operator=(std::nullptr_t)
+  Ptr &operator=(std::nullptr_t /* other */)
   {
     Reset();
     return *this;
@@ -372,20 +382,56 @@ private:
   template <typename L, typename R>
   friend bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs);
 
+  template <typename L>
+  friend bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */);
+
+  template <typename R>
+  friend bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs);
+
   template <typename L, typename R>
   friend bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs);
+
+  template <typename L>
+  friend bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */);
+
+  template <typename R>
+  friend bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs);
 };
 
 template <typename L, typename R>
 inline bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs)
 {
-  return lhs.ptr_ == static_cast<L *>(rhs.ptr_);
+  return (lhs.ptr_ == static_cast<L *>(rhs.ptr_));
+}
+
+template <typename L>
+inline bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */)
+{
+  return (lhs.ptr_ == nullptr);
+}
+
+template <typename R>
+inline bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
+{
+  return (nullptr == rhs.ptr_);
 }
 
 template <typename L, typename R>
 inline bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs)
 {
-  return lhs.ptr_ != static_cast<L *>(rhs.ptr_);
+  return (lhs.ptr_ != static_cast<L *>(rhs.ptr_));
+}
+
+template <typename L>
+inline bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */)
+{
+  return (lhs.ptr_ != nullptr);
+}
+
+template <typename R>
+inline bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
+{
+  return (nullptr != rhs.ptr_);
 }
 
 union Primitive
@@ -749,20 +795,33 @@ struct Variant
       Construct(std::forward<T>(other), other_type_id);
     }
   }
+
+  template <typename T, typename std::enable_if_t<IsVariant<T>::value> * = nullptr>
+  void Assign(T const &other, TypeId /* other_type_id */)
+  {
+    operator=(other);
+  }
+
+  template <typename T, typename std::enable_if_t<IsVariant<T>::value> * = nullptr>
+  void Assign(T &&other, TypeId /* other_type_id */)
+  {
+    operator=(std::forward<T>(other));
+  }
+
   template <typename T>
-  typename std::enable_if_t<IsPrimitive<T>::value, T> Copy()
+  typename std::enable_if_t<IsPrimitive<T>::value, T> Get() const
   {
     return primitive.Get<T>();
   }
 
   template <typename T>
-  typename std::enable_if_t<IsPtr<T>::value, T> Copy()
+  typename std::enable_if_t<IsPtr<T>::value, T> Get() const
   {
     return object;
   }
 
   template <typename T>
-  typename std::enable_if_t<IsVariant<T>::value, T> Copy()
+  typename std::enable_if_t<IsVariant<T>::value, T> Get() const
   {
     T variant;
     variant.type_id = type_id;
@@ -828,16 +887,19 @@ struct Variant
   }
 };
 
-struct T : public Variant
+struct TemplateParameter : public Variant
 {
+  using Variant::Variant;
 };
 
-struct MapKey : public Variant
+struct TemplateParameter1 : public Variant
 {
+  using Variant::Variant;
 };
 
-struct MapValue : public Variant
+struct TemplateParameter2 : public Variant
 {
+  using Variant::Variant;
 };
 
 struct Script

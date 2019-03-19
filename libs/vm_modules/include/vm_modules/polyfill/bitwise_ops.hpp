@@ -45,7 +45,7 @@ T Or(fetch::vm::VM * /*vm*/, T x, T s)
   return T(x | s);
 }
 
-void BindBitwiseOps(vm::Module &module)
+inline void BindBitwiseOps(vm::Module &module)
 {
   module.CreateFreeFunction("and", &And<int32_t>);
   module.CreateFreeFunction("and", &And<int64_t>);

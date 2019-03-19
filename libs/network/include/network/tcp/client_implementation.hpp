@@ -25,7 +25,6 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/message.hpp"
-#include "network/monitor.hpp"
 
 #include "core/mutex.hpp"
 #include "network/fetch_asio.hpp"
@@ -294,7 +293,6 @@ private:
       if (!ec)
       {
         FETCH_LOG_DEBUG(LOGGING_NAME, "Read message header.");
-        DUMP_INCOMING_MESSAGE("TCP", "HEADER", header);
         ReadBody(header);
       }
       else
@@ -365,7 +363,6 @@ private:
 
       if (!ec)
       {
-        DUMP_INCOMING_MESSAGE("TCP", "BODY", message); 
         SignalMessage(message);
         ReadHeader();
       }
@@ -436,8 +433,7 @@ private:
     byte_array::ByteArray header;
     SetHeader(header, buffer.size());
 
-    DUMP_OUTGOING_MESSAGE("TCP", "HEADER", header);
-    DUMP_OUTGOING_MESSAGE("TCP", "BODY", buffer);            
+
     std::vector<asio::const_buffer> buffers{asio::buffer(header.pointer(), header.size()),
                                             asio::buffer(buffer.pointer(), buffer.size())};
 

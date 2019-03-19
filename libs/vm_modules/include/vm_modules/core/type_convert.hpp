@@ -31,11 +31,14 @@ fetch::math::meta::IfIsArithmetic<T, fetch::vm::Ptr<fetch::vm::String>> toString
   return ret;
 }
 
-void CreateToString(fetch::vm::Module &module)
+void CreateToString(std::shared_ptr<fetch::vm::Module> &module)
 {
-  module.CreateFreeFunction("toString", &toString<int32_t>);
-  module.CreateFreeFunction("toString", &toString<float_t>);
-  module.CreateFreeFunction("toString", &toString<double_t>);
+  module->CreateFreeFunction("toString", &toString<int32_t>);
+  module->CreateFreeFunction("toString", &toString<uint32_t>);
+  module->CreateFreeFunction("toString", &toString<int64_t>);
+  module->CreateFreeFunction("toString", &toString<uint64_t>);
+  module->CreateFreeFunction("toString", &toString<float_t>);
+  module->CreateFreeFunction("toString", &toString<double_t>);
 }
 
 }  // namespace vm_modules

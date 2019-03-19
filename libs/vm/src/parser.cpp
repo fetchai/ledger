@@ -28,9 +28,8 @@ namespace fetch {
 namespace vm {
 
 Parser::Parser()
-{
-  template_names_ = {"Matrix", "Array", "Map"};
-}
+  : template_names_{"Matrix", "Array", "Map", "State", "StateMap"}
+{}
 
 BlockNodePtr Parser::Parse(std::string const &source, Strings &errors)
 {
@@ -862,7 +861,11 @@ ExpressionNodePtr Parser::ParseExpressionStatement()
     return lhs;
   }
   Node::Kind kind;
-  if (token_->kind == Token::Kind::AddAssign)
+  if (token_->kind == Token::Kind::ModuloAssign)
+  {
+    kind = Node::Kind::ModuloAssignOp;
+  }
+  else if (token_->kind == Token::Kind::AddAssign)
   {
     kind = Node::Kind::AddAssignOp;
   }
@@ -933,14 +936,8 @@ void Parser::SkipFunctionDefinition()
 
 bool Parser::IsTemplateName(std::string const &name) const
 {
-  for (size_t i = 0; i < template_names_.size(); ++i)
-  {
-    if (name == template_names_[i])
-    {
-      return true;
-    }
-  }
-  return false;
+  auto const it = template_names_.find(name);
+  return template_names_.end() != it;
 }
 
 ExpressionNodePtr Parser::ParseType()
@@ -1103,6 +1100,14 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     case Token::Kind::Null:
     {
       if (HandleLiteral(Node::Kind::Null) == false)
+      {
+        return nullptr;
+      }
+      break;
+    }
+    case Token::Kind::Modulo:
+    {
+      if (HandleBinaryOp(Node::Kind::ModuloOp, OpInfo(6, Association::Left, 2)) == false)
       {
         return nullptr;
       }

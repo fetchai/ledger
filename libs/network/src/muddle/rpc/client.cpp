@@ -30,8 +30,8 @@ Client::Client(std::string name, MuddleEndpoint &endpoint, Address address, uint
   : name_(std::move(name))
   , endpoint_(endpoint)
   , address_(std::move(address))
-  , service_(service)
   , network_id_(endpoint.network_id())
+  , service_(service)
   , channel_(channel)
 {
   LOG_STACK_TRACE_POINT;    
@@ -53,6 +53,10 @@ Client::Client(std::string name, MuddleEndpoint &endpoint, Address address, uint
   running_           = true;
   background_thread_ = std::thread{&Client::BackgroundWorker, this};
 }
+
+Client::Client(std::string name, MuddleEndpoint &endpoint, uint16_t service, uint16_t channel)
+  : Client(std::move(name), endpoint, Address{}, service, channel)
+{}
 
 Client::~Client()
 {
