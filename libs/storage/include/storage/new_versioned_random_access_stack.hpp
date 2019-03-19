@@ -329,7 +329,6 @@ public:
   {
     stack_.Clear();
     history_.Clear();
-    /* ResetBookmark(); */  // TODO(HUT): deleteme
     internal_bookmark_index_ = stack_.header_extra().bookmark;
   }
 

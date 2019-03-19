@@ -132,7 +132,6 @@ bool Contract::ParseAsJson(Transaction const &tx, variant::Variant &output)
   }
   catch (json::JSONParseException const &)
   {
-    // TODO(HUT): this can't be good for performance
   }
 
   if (success)
@@ -148,7 +147,7 @@ bool Contract::ParseAsJson(Transaction const &tx, variant::Variant &output)
  *
  * @return The reference to the state instance
  */
-vm::IoObserverInterface &Contract::state()
+ledger::StateAdapter &Contract::state()
 {
   detailed_assert(state_ != nullptr);
   return *state_;

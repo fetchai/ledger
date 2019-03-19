@@ -18,7 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "math/free_functions/fundamental_operators.hpp"
-#include "math/free_functions/ml/activation_functions/sigmoid.hpp"
+#include "math/free_functions/ml/activation_functions/softmax.hpp"
+#include "math/free_functions/standard_functions/log.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -26,44 +27,48 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Sigmoid : public fetch::ml::ElementWiseOps<T>
+class LogSoftmax : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  Sigmoid()          = default;
-  virtual ~Sigmoid() = default;
+  LogSoftmax()          = default;
+  virtual ~LogSoftmax() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
     assert(inputs.size() == 1);
-    if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
+    if (!this->output_ || this->output_->shape() != inputs[0]->shape())
     {
-      this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
+      this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
     }
 
-    fetch::math::Sigmoid(inputs.front().get(), *this->output_);
-    return *this->output_;
+    fetch::math::Softmax(*inputs[0], *this->output_);
+    fetch::math::Log(*this->output_, *this->output_);
+
+    return this->output_;
   }
 
-  virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-      ArrayType const &                                           errorSignal)
+  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
+                                             ArrayPtrType                     errorSignal)
   {
     assert(inputs.size() == 1);
+    assert(inputs[0]->shape() == errorSignal->shape());
 
-    assert(inputs.front().get().shape() == errorSignal.shape());
+    assert(errorSignal->size() == 1);
 
-    ArrayType t            = this->Forward(inputs);
-    ArrayType returnSignal = errorSignal.Clone();
-    fetch::math::Add(errorSignal, fetch::math::Multiply(t, fetch::math::Subtract(DataType(1), t)),
-                     returnSignal);
-    return {returnSignal};
+    fetch::math::Exp(*errorSignal, *errorSignal);
+    for (std::size_t j = 0; j < errorSignal->size(); ++j)
+    {
+      fetch::math::Add(DataType(1), errorSignal->At(j), errorSignal->At(j));
+    }
+    fetch::math::Divide(DataType(1), *errorSignal, *errorSignal);
+    return {errorSignal};
   }
 
-  static constexpr char const *DESCRIPTOR = "Sigmoid";
+  static constexpr char const *DESCRIPTOR = "LogSoftmax";
 };
 
 }  // namespace ops
