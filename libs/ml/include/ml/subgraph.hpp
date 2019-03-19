@@ -70,7 +70,7 @@ public:
   }
 
 protected:
-  void AddInputNodes(std::string const &node_name)
+  void AddInputNode(std::string const &node_name)
   {
     input_nodes_.push_back(node_name);
   }

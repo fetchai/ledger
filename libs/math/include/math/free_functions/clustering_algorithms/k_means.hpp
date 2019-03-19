@@ -495,7 +495,10 @@ private:
           weights[m] = 0;
         }
       }
-      fetch::math::Square(weights);
+      for (auto &val : weights)
+      {
+        fetch::math::Square(val, val);
+      }
 
       // select point as new cluster centre
       std::piecewise_constant_distribution<double> dist(std::begin(interval), std::end(interval),
