@@ -17,34 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/exponentiation/exponentiation.hpp"  // square
-#include "math/free_functions/fundamental_operators.hpp"          // add, subtract etc.
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
+#include "math/distance/euclidean.hpp"
 #include <cassert>
 
 namespace fetch {
-namespace math {
+    namespace math {
 
-template <typename ArrayType>
-typename ArrayType::Type MeanSquareError(ArrayType const &A, ArrayType const &B)
-{
-  assert(A.shape() == B.shape());
-  ArrayType tmp_array(A.shape());
+        template <typename ArrayType>
+        typename ArrayType::Type MeanSquareError(ArrayType const &A, ArrayType const &B)
+        {
+          typename ArrayType::Type ret = distance::Euclidean(A, B);
 
-  Subtract(A, B, tmp_array);
+          ret = Divide(ret, typename ArrayType::Type(A.size()));
 
-  Square(tmp_array);
+          // TODO(private 343)
+          // division by 2 allows us to cancel out with a 2 in the derivative
+          ret = Divide(ret, typename ArrayType::Type(2));
 
-  typename ArrayType::Type ret = Sum(tmp_array);
+          return ret;
+        }
 
-  ret = Divide(ret, typename ArrayType::Type(A.size()));
-
-  // TODO(private 343)
-  // division by 2 allows us to cancel out with a 2 in the derivative
-  ret = Divide(ret, typename ArrayType::Type(2));
-
-  return ret;
-}
-
-}  // namespace math
+    }  // namespace math
 }  // namespace fetch
