@@ -135,11 +135,13 @@ public:
   {
     FETCH_LOCK(maintenance_mutex_);
     // TODO: Implement to revert.
+    throw std::runtime_error("DAG::RevertTo not implemented");    
   }
 
   NodeArray ExtractSegment(uint64_t block_number)
   {
     FETCH_LOCK(maintenance_mutex_);    
+    throw std::runtime_error("DAG::ExtractSegment not implemented");
     // TODO: implement.
     return {};
   }

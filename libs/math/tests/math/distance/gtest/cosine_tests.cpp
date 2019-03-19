@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,21 +16,39 @@
 //
 //------------------------------------------------------------------------------
 
-namespace fetch {
-namespace vm_modules {
+#include <gtest/gtest.h>
+#include <iomanip>
+#include <iostream>
 
-/**
- * method for printing string to std::cout
- */
-static void Print(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
+#include "core/random/lcg.hpp"
+#include "math/distance/cosine.hpp"
+#include "math/tensor.hpp"
+
+using namespace fetch::math::distance;
+using namespace fetch::math;
+
+TEST(distance_tests, cosine_distance)
 {
-  vm->AddOutputLine(s->str);
-}
+  Tensor<double> A = Tensor<double>({1, 4});
+  A.Set(0, 1);
+  A.Set(1, 2);
+  A.Set(2, 3);
+  A.Set(3, 4);
 
-void CreatePrint(fetch::vm::Module &module)
-{
-  module.CreateFreeFunction("Print", &Print);
-}
+  Tensor<double> B = Tensor<double>({1, 4});
+  B.Set(0, -1);
+  B.Set(1, -2);
+  B.Set(2, -3);
+  B.Set(3, -4);
 
-}  // namespace vm_modules
-}  // namespace fetch
+  ASSERT_TRUE(Cosine(A, A) == 1);
+  ASSERT_TRUE(Cosine(A, B) == -1);
+
+  Tensor<double> C = Tensor<double>({1, 4});
+  C.Set(0, 1);
+  C.Set(1, 2);
+  C.Set(2, 3);
+  C.Set(3, 2);
+
+  EXPECT_NEAR(Cosine(A, C), double(0.94672926240625754), 1e-7);
+}

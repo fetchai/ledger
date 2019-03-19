@@ -35,8 +35,10 @@ public:
 
   bool DefineProblem(SynergeticContract contract) 
   { 
+    text_output_ = "";
+
     // Defining problem
-    if (!vm_->Execute(contract->script, contract->problem_function, error_, problem_))
+    if (!vm_->Execute(contract->script, contract->problem_function, error_, text_output_, problem_))
     {
       // TODO: LOG
       return false;
@@ -46,16 +48,17 @@ public:
 
   double ExecuteWork(SynergeticContract contract, Work work) 
   { 
+    text_output_ = "";    
     // Executing the work function
     int64_t nonce = work();
-    if (!vm_->Execute(contract->script, contract->work_function, error_, solution_, problem_, nonce))
+    if (!vm_->Execute(contract->script, contract->work_function, error_,  text_output_, solution_, problem_, nonce))
     {
       std::cerr << "Runtime error: " << error_ << std::endl;
       return std::numeric_limits< double >::infinity();
     }
 
     // Computing objective function
-    if (!vm_->Execute(contract->script, contract->objective_function, error_, score_, problem_, solution_))
+    if (!vm_->Execute(contract->script, contract->objective_function, error_, text_output_, score_,  problem_, solution_))
     {
       std::cerr << "Runtime error: " << error_ << std::endl;      
       return std::numeric_limits< double >::infinity(); 
@@ -74,6 +77,7 @@ private:
   fetch::vm::Variant problem_;
   fetch::vm::Variant solution_; 
   fetch::vm::Variant score_;  
+  std::string text_output_;
 };
 
 

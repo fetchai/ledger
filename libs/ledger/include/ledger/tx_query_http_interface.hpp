@@ -17,21 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
+#include "http/module.hpp"
+
 namespace fetch {
-namespace vm_modules {
+namespace ledger {
 
-/**
- * method for printing string to std::cout
- */
-static void Print(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
+class StorageUnitInterface;
+
+class TxQueryHttpInterface : public http::HTTPModule
 {
-  vm->AddOutputLine(s->str);
-}
+public:
+  // Construction / Destruction
+  TxQueryHttpInterface(StorageUnitInterface &storage_unit, uint32_t log2_num_lanes);
+  TxQueryHttpInterface(TxQueryHttpInterface const &) = delete;
+  TxQueryHttpInterface(TxQueryHttpInterface &&)      = delete;
+  ~TxQueryHttpInterface()                            = default;
 
-void CreatePrint(fetch::vm::Module &module)
-{
-  module.CreateFreeFunction("Print", &Print);
-}
+  // Operators
+  TxQueryHttpInterface &operator=(TxQueryHttpInterface const &) = delete;
+  TxQueryHttpInterface &operator=(TxQueryHttpInterface &&) = delete;
 
-}  // namespace vm_modules
+private:
+  StorageUnitInterface &storage_unit_;
+  uint32_t              log2_num_lanes_{0};
+};
+
+}  // namespace ledger
 }  // namespace fetch

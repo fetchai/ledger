@@ -210,6 +210,11 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
 
 void MainChainRpcService::HandleChainResponse(Address const &address, BlockList block_list)
 {
+  std::size_t added{0};
+  std::size_t loose{0};
+  std::size_t duplicate{0};
+  std::size_t invalid{0};
+
   for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
   {
     // skip the geneis block
@@ -229,28 +234,45 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
       switch (status)
       {
       case BlockStatus::ADDED:
-        FETCH_LOG_INFO(LOGGING_NAME, "Synced new block: ", ToBase64(it->body.hash),
-                       " from: muddle://", ToBase64(address));
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced new block: ", ToBase64(it->body.hash),
+                        " from: muddle://", ToBase64(address));
+        ++added;
         break;
       case BlockStatus::LOOSE:
-        FETCH_LOG_INFO(LOGGING_NAME, "Synced loose block: ", ToBase64(it->body.hash),
-                       " from: muddle://", ToBase64(address));
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced loose block: ", ToBase64(it->body.hash),
+                        " from: muddle://", ToBase64(address));
+        ++loose;
         break;
       case BlockStatus::DUPLICATE:
-        FETCH_LOG_INFO(LOGGING_NAME, "Synced duplicate block: ", ToBase64(it->body.hash),
-                       " from: muddle://", ToBase64(address));
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced duplicate block: ", ToBase64(it->body.hash),
+                        " from: muddle://", ToBase64(address));
+        ++duplicate;
         break;
       case BlockStatus::INVALID:
-        FETCH_LOG_WARN(LOGGING_NAME, "Synced invalid block: ", ToBase64(it->body.hash),
-                       " from: muddle://", ToBase64(address));
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: ", ToBase64(it->body.hash),
+                        " from: muddle://", ToBase64(address));
+        ++invalid;
         break;
       }
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Synced bad proof block: ", ToBase64(it->body.hash),
-                     " from: muddle://", ToBase64(address));
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: ", ToBase64(it->body.hash),
+                      " from: muddle://", ToBase64(address));
+      ++invalid;
     }
+  }
+
+  if (invalid)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Synced Summary: Invalid: ", invalid, " Added: ", added,
+                   " Loose: ", loose, " Duplicate: ", duplicate, " from: muddle://",
+                   ToBase64(address));
+  }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Synced Summary: Added: ", added, " Loose: ", loose,
+                   " Duplicate: ", duplicate, " from: muddle://", ToBase64(address));
   }
 }
 

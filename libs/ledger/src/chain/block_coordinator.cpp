@@ -29,7 +29,6 @@
 
 #include <chrono>
 
-using std::chrono::microseconds;
 using fetch::byte_array::ToBase64;
 
 using ScheduleStatus = fetch::ledger::ExecutionManagerInterface::ScheduleStatus;

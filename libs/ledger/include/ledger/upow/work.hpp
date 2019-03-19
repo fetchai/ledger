@@ -16,13 +16,14 @@ struct Work
   using ContractAddress = byte_array::ConstByteArray;
   using WorkId          = byte_array::ConstByteArray;
   using Digest          = byte_array::ConstByteArray;
-
+  using ScoreType       = double; // TODO: Change to fixed point
+  
   /// 
   ContractAddress contract_address;
 
   Identity miner;    
   int64_t nonce;
-  double score = std::numeric_limits<double>::infinity(); // TODO: Change to fixed point
+  ScoreType score = std::numeric_limits<ScoreType>::max(); 
   
   int64_t operator()()
   {

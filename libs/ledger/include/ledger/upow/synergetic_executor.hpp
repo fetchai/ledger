@@ -26,23 +26,24 @@ struct WorkPackage
 
   /// @name defining work and candidate solutions
   /// @{
-  ContractAddress address{};
+  ContractAddress contract_address{};
   WorkQueue       solutions_queue{};
   /// }
 
   bool operator<(WorkPackage const &other) const 
   {
-    return address < other.address;
+    return contract_address < other.contract_address;
   }
 
 private:
-  WorkPackage(ContractAddress contract_address) : address{std::move(contract_address)} { }
+  WorkPackage(ContractAddress address) : contract_address{std::move(address)} { }
 };
 
 
 class SynergeticExecutor 
 {
 public:
+  using ConstByteArray    = byte_array::ConstByteArray;
   using ContractAddress   = byte_array::ConstByteArray;  
   using SharedWorkPackage = std::shared_ptr< WorkPackage >;
   using ExecutionQueue    = std::vector< SharedWorkPackage >;
@@ -51,7 +52,7 @@ public:
   using Block             = ledger::Block;
 
   SynergeticExecutor(DAG &dag)
-  : synergetic_miner_{dag}
+  : miner_{dag}
   , dag_{dag}
   {
 
@@ -65,7 +66,7 @@ public:
     // Traverse DAG last segment and find work
     for(auto &node: dag_.ExtractSegment(block.body.block_number))
     {
-      if(node.type == WORK) 
+      if(node.type == ledger::DAGNode::WORK) 
       {
         // Deserialising work and adding it to the work map
         Work work;
@@ -87,7 +88,7 @@ public:
         }
 
         auto pack = synergetic_work_candidates[work.contract_address];
-        pack->solutions_queue.push_back(work);
+        pack->solutions_queue.push(work);
       }
     }
 
@@ -107,14 +108,12 @@ public:
     {
       ConstByteArray source = "";  // TODO: Wait for smart contracts to be finished
 
-      if(!contract_register_.CreateContract(c->contract_address, source))
+      if(!contract_register_.CreateContract(c->contract_address, static_cast<std::string>(source) ))
       {
         return false;
       }      
 
     }
-
-
 
     return true;
   }
@@ -124,16 +123,16 @@ public:
     for(auto &c: contract_queue_)
     {
       // Defining the problem using the data on the DAG
-      if(!miner_.DefineProblem(contract_register_.GetContract(c->first)))
+      if(!miner_.DefineProblem(contract_register_.GetContract(c->contract_address)))
       {
         return false;
       }
 
       // Finding the best work
-      while(!c.solutions_queue.empty())
+      while(!c->solutions_queue.empty())
       {
-        auto work = c->solutions_queue.front();
-        c->solutions_queue.pop_front();
+        auto work = c->solutions_queue.top();
+        c->solutions_queue.pop();
 
         Work::ScoreType score = miner_.ExecuteWork(contract_register_.GetContract(work.contract_address), work);
         if(score == work.score)
@@ -149,6 +148,8 @@ public:
         }
       }
     }
+
+    return true;
   }
 
 private:

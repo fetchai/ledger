@@ -228,6 +228,7 @@ public:
     return registered_types_;
   }
 
+
   template <typename... Ts>
   bool Execute(Script const &script, std::string const &name, std::string &error,
                std::string &console_output, Variant &output, Ts const &... parameters)
