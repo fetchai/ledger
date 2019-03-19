@@ -31,7 +31,6 @@ static constexpr char const *LOGGING_NAME = "TxQueryAPI";
 using fetch::byte_array::FromHex;
 using fetch::byte_array::ToHex;
 using fetch::variant::Variant;
-using fetch::storage::ResourceID;
 
 namespace fetch {
 namespace ledger {
