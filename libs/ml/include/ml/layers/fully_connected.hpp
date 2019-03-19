@@ -60,7 +60,7 @@ public:
     std::string output = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
         name + "_Add", {weights_matmul, bias});
 
-    this->AddInputNodes(input);
+    this->AddInputNode(input);
     this->SetOutputNode(output);
 
     ArrayType weights_data(std::vector<std::uint64_t>({in, out}));

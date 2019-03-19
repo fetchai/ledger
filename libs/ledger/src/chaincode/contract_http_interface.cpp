@@ -27,7 +27,7 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/wire_transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
-#include "ledger/state_sentinel.hpp"
+#include "ledger/state_adapter.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "variant/variant.hpp"
 

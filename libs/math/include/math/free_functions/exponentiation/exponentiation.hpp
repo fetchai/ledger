@@ -37,15 +37,25 @@ namespace fetch {
 namespace math {
 
 namespace details {
+
 template <typename ArrayType>
-void SquareImpl(ArrayType const &x, ArrayType &ret)
+fetch::math::meta::IfIsMathArray<ArrayType, void> SquareImpl(ArrayType const &x, ArrayType &ret)
 {
   assert(x.size() == ret.size());
-  for (std::size_t i = 0; i < x.size(); ++i)
+  typename ArrayType::SizeType idx(0);
+  for (auto &val : x)
   {
-    ret[i] = x[i] * x[i];
+    ret.At(idx) = val * val;
+    ++idx;
   }
 }
+
+template <typename T>
+fetch::math::meta::IfIsArithmetic<T, void> SquareImpl(T const &x, T &ret)
+{
+  ret = x * x;
+}
+
 }  // namespace details
 /**
  * maps every element of the array x to x' = 2^x
@@ -189,23 +199,38 @@ fetch::math::meta::IfIsNotImplemented<ArrayType, void> Pow(ArrayType &x)
 
 /**
  * maps every element of the array x to x' = x^2
- * @param x - array
- */
-template <typename T>
-void Square(T &x)
-{
-  fetch::math::details::SquareImpl(x, x);
-}
-
-/**
- * maps every element of the array x to x' = x^2
  * returns new array without altering input array
  * @param x - array
  */
 template <typename T>
-void Square(T const &x, T &ret)
+fetch::math::meta::IfIsArithmetic<T, void> Square(T const &x, T &ret)
 {
   fetch::math::details::SquareImpl(x, ret);
+}
+
+template <typename ArrayType>
+fetch::math::meta::IfIsMathArray<ArrayType, void> Square(ArrayType const &x, ArrayType &ret)
+{
+  fetch::math::details::SquareImpl(x, ret);
+}
+/**
+ * maps every element of the array x to x' = x^2
+ * @param x - array
+ */
+template <typename ArrayType>
+fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> Square(ArrayType &x)
+{
+  ArrayType ret(x.shape());
+  Square(x, ret);
+  return ret;
+}
+
+template <typename T>
+fetch::math::meta::IfIsArithmetic<T, T> Square(T &x)
+{
+  T ret;
+  Square(x, ret);
+  return ret;
 }
 
 /**
