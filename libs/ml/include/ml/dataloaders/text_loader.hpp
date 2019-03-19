@@ -19,12 +19,13 @@
 
 #include "core/random/lcg.hpp"
 #include "core/random/lfg.hpp"
+#include "math/distance/cosine.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 
 #include <algorithm>  // random_shuffle
 #include <fstream>    // file streaming
-#include <sstream>    // file streaming
 #include <numeric>    // std::iota
+#include <sstream>    // file streaming
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -47,7 +48,7 @@ public:
   SizeType n_data_buffers      = 0;  // number of data points to return when called
   SizeType max_sentences       = 0;  // maximum number of sentences in training set
   SizeType min_sentence_length = 0;  // minimum number of words in a sentence
-  SizeType window_size         = 0;  // the size of the context window
+  SizeType window_size         = 0;  // the size of the context window (one-sided)
 
   // optional processing
   bool discard_frequent = false;  // discard frequent words
@@ -78,8 +79,8 @@ public:
   virtual std::pair<T, SizeType> GetAtIndex(SizeType idx);
   virtual std::pair<T, SizeType> GetNext();
   std::pair<T, SizeType>         GetRandom();
-  SizeType                       VocabLookup(std::string const &word);
-  std::string                    VocabLookup(SizeType const idx);
+  SizeType                       VocabLookup(std::string const &word) const;
+  std::string                    VocabLookup(SizeType const idx) const;
   SizeType                       GetDiscardCount();
 
   std::vector<std::pair<std::string, SizeType>> BottomKVocab(SizeType k);
@@ -89,7 +90,7 @@ public:
   std::vector<SizeType> GetSentenceFromWordIdx(SizeType word_idx);
   SizeType              GetWordOffsetFromWordIdx(SizeType word_idx);
 
-  void AddData(std::string const &training_data);
+  void                                        AddData(std::string const &training_data);
   std::vector<std::pair<std::string, double>> GetKNN(ArrayType const &  embeddings,
                                                      std::string const &word, unsigned int k) const;
 
@@ -131,7 +132,6 @@ protected:
   fetch::random::LaggedFibonacciGenerator<>  lfg_;
   fetch::random::LinearCongruentialGenerator lcg_;
 
-
 private:
   /////////////////////////////////////////////////////////////////////
   /// THESE METHODS MUST BE OVERWRIDDEN TO INHERIT FROM TEXT LOADER ///
@@ -144,7 +144,7 @@ private:
   /// THESE METHODS NEED NOT  ///
   ///////////////////////////////
 
-  void                     StripPunctuation(std::string &word);
+  void                     StripPunctuationAndLower(std::string &word) const;
   bool                     CheckEndOfSentence(std::string &word);
   std::vector<std::string> GetAllTextFiles(std::string dir_name);
   void GetTextString(std::string const &training_data, std::string &full_training_text);
@@ -155,7 +155,6 @@ private:
   void DiscardFrequent(std::vector<std::vector<std::string>> &sentences);
   bool DiscardExample(std::string &word);
   std::vector<std::pair<std::string, SizeType>> FindK(SizeType k, bool mode);
-
 };
 
 template <typename T>
@@ -180,7 +179,6 @@ TextLoader<T>::TextLoader(std::string &data, TextParams<T> const &p, SizeType se
   // set up training dataset
   AddData(data);
 }
-
 
 /**
  *  Returns the total number of words in the training corpus
@@ -349,7 +347,7 @@ std::pair<T, typename TextLoader<T>::SizeType> TextLoader<T>::GetRandom()
  * @return
  */
 template <typename T>
-typename TextLoader<T>::SizeType TextLoader<T>::VocabLookup(std::string const &word)
+typename TextLoader<T>::SizeType TextLoader<T>::VocabLookup(std::string const &word) const
 {
   assert(vocab_.at(word).at(0) < vocab_.size());
   assert(vocab_.at(word).at(0) != 0);  // dont currently handle unknowns elegantly
@@ -363,7 +361,7 @@ typename TextLoader<T>::SizeType TextLoader<T>::VocabLookup(std::string const &w
  * @return
  */
 template <typename T>
-std::string TextLoader<T>::VocabLookup(SizeType const idx)
+std::string TextLoader<T>::VocabLookup(typename TextLoader<T>::SizeType const idx) const
 {
   for (auto &e : vocab_)
   {
@@ -379,7 +377,8 @@ std::string TextLoader<T>::VocabLookup(SizeType const idx)
  * helper function for getting the K least frequent words
  */
 template <typename T>
-std::vector<std::pair<std::string, typename TextLoader<T>::SizeType>> TextLoader<T>::BottomKVocab(typename TextLoader<T>::SizeType k)
+std::vector<std::pair<std::string, typename TextLoader<T>::SizeType>> TextLoader<T>::BottomKVocab(
+    typename TextLoader<T>::SizeType k)
 {
   return FindK(k, false);
 }
@@ -388,7 +387,8 @@ std::vector<std::pair<std::string, typename TextLoader<T>::SizeType>> TextLoader
  * helper function for getting the K most frequent words
  */
 template <typename T>
-std::vector<std::pair<std::string, typename TextLoader<T>::SizeType>> TextLoader<T>::TopKVocab(typename TextLoader<T>::SizeType k)
+std::vector<std::pair<std::string, typename TextLoader<T>::SizeType>> TextLoader<T>::TopKVocab(
+    typename TextLoader<T>::SizeType k)
 {
   return FindK(k, true);
 }
@@ -405,7 +405,8 @@ typename TextLoader<T>::SizeType TextLoader<T>::GetDiscardCount()
  * @return
  */
 template <typename T>
-typename TextLoader<T>::SizeType TextLoader<T>::GetSentenceIdxFromWordIdx(typename TextLoader<T>::SizeType word_idx)
+typename TextLoader<T>::SizeType TextLoader<T>::GetSentenceIdxFromWordIdx(
+    typename TextLoader<T>::SizeType word_idx)
 {
   return word_idx_sentence_idx[word_idx];
 }
@@ -416,7 +417,8 @@ typename TextLoader<T>::SizeType TextLoader<T>::GetSentenceIdxFromWordIdx(typena
  * @return
  */
 template <typename T>
-std::vector<typename TextLoader<T>::SizeType> TextLoader<T>::GetSentenceFromWordIdx(typename TextLoader<T>::SizeType word_idx)
+std::vector<typename TextLoader<T>::SizeType> TextLoader<T>::GetSentenceFromWordIdx(
+    typename TextLoader<T>::SizeType word_idx)
 {
   SizeType sentence_idx = word_idx_sentence_idx[word_idx];
   return data_[sentence_idx];
@@ -426,7 +428,8 @@ std::vector<typename TextLoader<T>::SizeType> TextLoader<T>::GetSentenceFromWord
  * return the word offset within sentence from word idx
  */
 template <typename T>
-typename TextLoader<T>::SizeType TextLoader<T>::GetWordOffsetFromWordIdx(typename TextLoader<T>::SizeType word_idx)
+typename TextLoader<T>::SizeType TextLoader<T>::GetWordOffsetFromWordIdx(
+    typename TextLoader<T>::SizeType word_idx)
 {
   SizeType word_offset;
   SizeType sentence_idx = word_idx_sentence_idx[word_idx];
@@ -473,27 +476,71 @@ void TextLoader<T>::AddData(std::string const &training_data)
 }
 
 /**
+ * print k nearest neighbours
+ * @param vocab
+ * @param embeddings
+ * @param word
+ * @param k
+ */
+template <typename T>
+std::vector<std::pair<std::string, double>> TextLoader<T>::GetKNN(ArrayType const &  embeddings,
+                                                                  std::string const &word,
+                                                                  unsigned int       k) const
+{
+  ArrayType wordVector = embeddings.Slice(vocab_.at(word).at(0)).Unsqueeze();
+
+  std::vector<std::pair<SizeType, double>> distances;
+  distances.reserve(VocabSize());
+  for (SizeType i(1); i < VocabSize(); ++i)  // Start at 1, 0 is UNK
+  {
+    DataType d = fetch::math::distance::Cosine(wordVector, embeddings.Slice(i).Unsqueeze());
+    distances.emplace_back(i, d);
+  }
+  std::nth_element(distances.begin(), distances.begin() + k, distances.end(),
+                   [](std::pair<SizeType, double> const &a, std::pair<SizeType, double> const &b) {
+                     return a.second < b.second;
+                   });
+
+  std::vector<std::pair<std::string, double>> ret;
+  for (SizeType i(0); i < k; ++i)
+  {
+    ret.emplace_back(std::make_pair(VocabLookup(distances.at(i).first), distances.at(i).second));
+  }
+  return ret;
+}
+
+/**
  * Override this method with a more interesting implementation
  * @param training_data
  */
 template <typename T>
-std::vector<typename TextLoader<T>::SizeType> TextLoader<T>::GetData(typename TextLoader<T>::SizeType idx)
+std::vector<typename TextLoader<T>::SizeType> TextLoader<T>::GetData(
+    typename TextLoader<T>::SizeType idx)
 {
   assert(p_.n_data_buffers == 1);
   return {idx, 1};
 }
 
 /**
+ * empty implementation allows TextLoader to be non-abstract
+ * @return
+ */
+template <typename T>
+void TextLoader<T>::AdditionalPreProcess()
+{}
+
+/**
  * helper for stripping punctuation from words
  * @param word
  */
 template <typename T>
-void TextLoader<T>::StripPunctuation(std::string &word)
+void TextLoader<T>::StripPunctuationAndLower(std::string &word) const
 {
   std::string result;
-  std::remove_copy_if(word.begin(), word.end(),
-                      std::back_inserter(result),  // Store output
-                      std::ptr_fun<int, int>(&std::ispunct));
+  for (auto &c : word)
+  {
+    result.push_back(std::isalpha(c) ? (char)std::tolower(c) : ' ');
+  }
   word = result;
 }
 
@@ -594,7 +641,8 @@ void TextLoader<T>::ProcessTrainingData(std::string &training_data)
  * @param training_data
  */
 template <typename T>
-void TextLoader<T>::PreProcessWords(std::string &training_data, std::vector<std::vector<std::string>> &sentences)
+void TextLoader<T>::PreProcessWords(std::string &                          training_data,
+                                    std::vector<std::vector<std::string>> &sentences)
 {
   std::string word;
   SizeType    sentence_count = 0;
@@ -609,11 +657,8 @@ void TextLoader<T>::PreProcessWords(std::string &training_data, std::vector<std:
     // must check this before we strip punctuation
     bool new_sentence = CheckEndOfSentence(word);
 
-    // strip punctuation
-    StripPunctuation(word);
-
-    // lower case
-    std::transform(word.begin(), word.end(), word.begin(), ::tolower);
+    // strip punctuation & lower case
+    StripPunctuationAndLower(word);
 
     sentences[sentence_count].push_back(word);
 
@@ -659,24 +704,19 @@ void TextLoader<T>::BuildVocab(std::vector<std::vector<std::string>> &sentences)
         }
         else
         {
-          vocab_.emplace(
-              std::make_pair(cur_word, std::vector<SizeType>({unique_word_count_, 1})));
+          vocab_.emplace(std::make_pair(cur_word, std::vector<SizeType>({unique_word_count_, 1})));
           word_idx = unique_word_count_;
           unique_word_count_++;
         }
         data_.at(sentence_count_).push_back(word_idx);
-        word_idx_sentence_idx.emplace(
-            std::pair<SizeType, SizeType>(word_count_, sentence_count_));
-        sentence_idx_word_idx.emplace(
-            std::pair<SizeType, SizeType>(sentence_count_, word_count_));
+        word_idx_sentence_idx.emplace(std::pair<SizeType, SizeType>(word_count_, sentence_count_));
+        sentence_idx_word_idx.emplace(std::pair<SizeType, SizeType>(sentence_count_, word_count_));
         word_count_++;
       }
       sentence_count_++;
     }
   }
 }
-
-
 
 /**
  * discards words in training data set based on word frequency
@@ -744,7 +784,8 @@ bool TextLoader<T>::DiscardExample(std::string &word)
  * @param mode true for topK, false for bottomK
  */
 template <typename T>
-std::vector<std::pair<std::string, typename TextLoader<T>::SizeType>> TextLoader<T>::FindK(SizeType k, bool mode)
+std::vector<std::pair<std::string, typename TextLoader<T>::SizeType>> TextLoader<T>::FindK(
+    SizeType k, bool mode)
 {
   std::vector<std::pair<std::string, std::vector<SizeType>>> top_k(k);
 
@@ -775,8 +816,6 @@ std::vector<std::pair<std::string, typename TextLoader<T>::SizeType>> TextLoader
 
   return ret;
 }
-
-
 
 }  // namespace dataloaders
 }  // namespace ml

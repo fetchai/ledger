@@ -44,7 +44,6 @@ struct TrainingParams
   SizeType embedding_size = 64;        // dimension of embedding vec
   SizeType training_steps = 12800000;  // total number of training steps
   double   learning_rate  = 0.01;      // alpha - the learning rate
-
 };
 
 template <typename T>
@@ -84,7 +83,7 @@ std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType embeddings_size, Size
 }
 
 void TestEmbeddings(Graph<ArrayType> const &g, std::string const &skip_gram_name,
-                                     SkipGramLoader<ArrayType> const &dl)
+                    SkipGramLoader<ArrayType> const &dl)
 {
 
   // first get hold of the skipgram layer by searching the return name in the graph
@@ -103,7 +102,6 @@ void TestEmbeddings(Graph<ArrayType> const &g, std::string const &skip_gram_name
     std::cout << "output.at(j).first: " << output.at(j).first << std::endl;
     std::cout << "output.at(j).second: " << output.at(j).second << "\n" << std::endl;
   }
-
 }
 
 int main(int argc, char **argv)

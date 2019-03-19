@@ -17,22 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/dataloaders/text_loader.hpp"
 #include "math/free_functions/standard_functions/abs.hpp"
-
-//
-//#include <algorithm>
-//#include <exception>
-//#include <fstream>
-//#include <iostream>
-//#include <memory>
-//#include <sstream>
-//#include <string>
-//#include <unordered_map>
-//#include <utility>
-//#include <vector>
-//
-//#include <dirent.h>  // may be compatibility issues
+#include "ml/dataloaders/text_loader.hpp"
 
 namespace fetch {
 namespace ml {
@@ -83,20 +69,26 @@ private:
   double positive_threshold_ = 0.0;
 
 public:
-  explicit SkipGramLoader(std::string &data, SkipGramTextParams<T> p, SizeType seed = 123456789);
+  SkipGramLoader(SkipGramTextParams<T> p, SizeType seed = 123456789);
+  SkipGramLoader(std::string &data, SkipGramTextParams<T> p, SizeType seed = 123456789);
 
 private:
-
   virtual std::vector<SizeType> GetData(SizeType idx) override;
-  virtual void AdditionalPreProcess() override;
-  void BuildUnigramTable();
-  bool SelectValence();
-  std::vector<SizeType> GeneratePositive(SizeType idx);
-  std::vector<SizeType> GenerateNegative(SizeType idx);
-  SizeType SelectNegativeContextWord(SizeType idx);
-  SizeType SelectContextPosition(SizeType idx);
+  virtual void                  AdditionalPreProcess() override;
+  void                          BuildUnigramTable();
+  bool                          SelectValence();
+  std::vector<SizeType>         GeneratePositive(SizeType idx);
+  std::vector<SizeType>         GenerateNegative(SizeType idx);
+  SizeType                      SelectNegativeContextWord(SizeType idx);
+  SizeType                      SelectContextPosition(SizeType idx);
   bool WindowPositionCheck(SizeType target_pos, SizeType context_pos, SizeType sentence_len) const;
 };
+template <typename T>
+SkipGramLoader<T>::SkipGramLoader(SkipGramTextParams<T> p, SizeType seed)
+  : TextLoader<T>(p, seed)
+  , p_(p)
+{
+}
 
 template <typename T>
 SkipGramLoader<T>::SkipGramLoader(std::string &data, SkipGramTextParams<T> p, SizeType seed)
@@ -279,7 +271,8 @@ typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::SelectContextPosition(Si
  * @return
  */
 template <typename T>
-bool SkipGramLoader<T>::WindowPositionCheck(SizeType target_pos, SizeType context_pos, SizeType sentence_len) const
+bool SkipGramLoader<T>::WindowPositionCheck(SizeType target_pos, SizeType context_pos,
+                                            SizeType sentence_len) const
 {
   int normalised_context_pos = int(context_pos) - int(p_.window_size);
   if (normalised_context_pos == 0)
@@ -304,7 +297,7 @@ bool SkipGramLoader<T>::WindowPositionCheck(SizeType target_pos, SizeType contex
 }
 
 /**
- * For skipgram we need only one piece of additional text pre-processing, to build the unigram table
+ * For skipgram we need only one piece of additional pre-processing, to build the unigram table
  * @tparam T
  */
 template <typename T>

@@ -22,7 +22,7 @@
 #include "math/free_functions/matrix_operations/matrix_operations.hpp"
 #include "math/tensor.hpp"
 
-#include "ml/dataloaders/w2v_cbow_dataloader.hpp"
+#include "ml/dataloaders/cbow_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/softmax.hpp"
@@ -60,26 +60,13 @@ std::string findWordByIndex(std::map<std::string, uint64_t> const &vocab, uint64
   return "";
 }
 
-void PrintKNN(std::map<std::string, uint64_t> const &vocab, ArrayType const &embeddings,
-              std::string const &word, unsigned int k)
+void PrintKNN(fetch::ml::dataloaders::CBoWLoader<DataType> &loader, ArrayType const &embeddings, std::string const &word, unsigned int k)
 {
-  ArrayType                               wordVector = embeddings.Slice(vocab.at(word)).Unsqueeze();
-  std::vector<std::pair<uint64_t, float>> distances;
-  distances.reserve(embeddings.shape()[0]);
-  for (uint64_t i(1); i < embeddings.shape()[0]; ++i)  // Start at 1, 0 is UNKNOWN
-  {
-    DataType d = fetch::math::distance::Cosine(wordVector, embeddings.Slice(i).Unsqueeze());
-    distances.emplace_back(i, d);
-  }
-  std::nth_element(distances.begin(), distances.begin() + k, distances.end(),
-                   [](std::pair<uint64_t, float> const &a, std::pair<uint64_t, float> const &b) {
-                     return a.second < b.second;
-                   });
+  std::vector<std::pair<std::string, double>> results = loader.GetKNN(embeddings, word, k);
   std::cout << "======================" << std::endl;
   for (uint64_t i(0); i < k; ++i)
   {
-    std::cout << findWordByIndex(vocab, distances[i].first) << " -- " << distances[i].second
-              << std::endl;
+    std::cout << results.at(i).first << " -- " << results.at(i).second << std::endl;
   }
 }
 
@@ -91,7 +78,7 @@ int main(int ac, char **av)
     return 1;
   }
 
-  fetch::ml::CBOWLoader<DataType> loader(CONTEXT_WINDOW_SIZE);
+  fetch::ml::dataloaders::CBoWLoader<DataType> loader(CONTEXT_WINDOW_SIZE);
   for (int i(1); i < ac; ++i)
   {
     loader.AddData(readFile(av[i]));
@@ -154,8 +141,10 @@ int main(int ac, char **av)
       iteration++;
     }
     std::cout << "End of epoch " << epoch << std::endl;
+
     // Print KNN of word "one"
-    PrintKNN(loader.GetVocab(), *g.StateDict().dict_["Embeddings"].weights_, "one", 6);
+    PrintKNN(loader, *g.StateDict().dict_["Embeddings"].weights_, "one", 6);
+
 
     // Save model
     fetch::serializers::ByteArrayBuffer serializer;
