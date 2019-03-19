@@ -41,9 +41,9 @@ using SizeType     = typename ArrayType::SizeType;
 struct TrainingParams
 {
   SizeType batch_size     = 1;         // training data batch size
-  SizeType embedding_size = 64;       // dimension of embedding vec
+  SizeType embedding_size = 64;        // dimension of embedding vec
   SizeType training_steps = 12800000;  // total number of training steps
-  double   learning_rate  = 0.01;       // alpha - the learning rate
+  double   learning_rate  = 0.01;      // alpha - the learning rate
 };
 
 template <typename T>
@@ -51,8 +51,8 @@ SkipGramTextParams<T> SetParams()
 {
   SkipGramTextParams<T> ret;
 
-  ret.n_data_buffers = SizeType(2);       // input and context buffers
-  ret.max_sentences  = SizeType(10000);   // maximum number of sentences to use
+  ret.n_data_buffers = SizeType(2);      // input and context buffers
+  ret.max_sentences  = SizeType(10000);  // maximum number of sentences to use
 
   ret.unigram_table      = true;  // unigram table for sampling negative training pairs
   ret.unigram_table_size = SizeType(10000000);  // size of unigram table for negative sampling
@@ -93,7 +93,8 @@ void TestEmbeddings(Graph<ArrayType> &g, std::string &skip_gram_name, SkipGramLo
   std::shared_ptr<fetch::ml::ops::Embeddings<ArrayType>> embeddings =
       sg_layer->GetEmbeddings(sg_layer);
 
-  std::vector<std::pair<std::string, double>> output = dl.GetKNN(embeddings->GetWeights(), "man", 3);
+  std::vector<std::pair<std::string, double>> output =
+      dl.GetKNN(embeddings->GetWeights(), "man", 3);
 
   for (std::size_t j = 0; j < output.size(); ++j)
   {
