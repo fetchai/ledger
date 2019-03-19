@@ -96,7 +96,6 @@ private:
   SizeType SelectNegativeContextWord(SizeType idx);
   SizeType SelectContextPosition(SizeType idx);
   bool WindowPositionCheck(SizeType target_pos, SizeType context_pos, SizeType sentence_len) const;
-
 };
 
 }  // namespace dataloaders

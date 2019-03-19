@@ -138,6 +138,10 @@ private:
   virtual std::vector<SizeType> GetData(SizeType idx);
   virtual void                  AdditionalPreProcess();
 
+  ///////////////////////////////
+  /// THESE METHODS NEED NOT  ///
+  ///////////////////////////////
+
   void                     StripPunctuation(std::string &word);
   bool                     CheckEndOfSentence(std::string &word);
   std::vector<std::string> GetAllTextFiles(std::string dir_name);
@@ -149,6 +153,7 @@ private:
   void DiscardFrequent(std::vector<std::vector<std::string>> &sentences);
   bool DiscardExample(std::string &word);
   std::vector<std::pair<std::string, SizeType>> FindK(SizeType k, bool mode);
+
 };
 
 }  // namespace dataloaders
