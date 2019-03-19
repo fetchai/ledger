@@ -87,22 +87,30 @@ public:
       }
       cachedOutputPresent_ = true;
     }
+
+    //    std::cout << "cached_output_.shape().size(): " << cachedOutput_.shape().size() <<
+    //    std::endl; std::cout << "cached_output_.shape()[0]: " << cachedOutput_.shape()[0] <<
+    //    std::endl; std::cout << "cached_output_.shape()[1]: " << cachedOutput_.shape()[1] <<
+    //    std::endl;
+    //
+
     return cachedOutput_;
   }
 
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
       ArrayType const &errorSignal)
   {
-    //    FETCH_LOG_INFO("ML_LIB", "Backpropagating node [", name_, "]");
+    FETCH_LOG_INFO("ML_LIB", "Backpropagating node [", name_, "]");
     std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
-    std::vector<ArrayType> backpropagatedErrorSignals = this->Backward(inputs, errorSignal);
-    std::vector<std::pair<NodeInterface<T> *, ArrayType>> nonBackpropagatedErrorSignals;
-    assert(backpropagatedErrorSignals.size() == inputs.size() || inputs.empty());
+    std::vector<ArrayType> back_propagated_error_signals = this->Backward(inputs, errorSignal);
+    std::vector<std::pair<NodeInterface<T> *, ArrayType>> non_back_propagated_error_signals;
+    assert(back_propagated_error_signals.size() == inputs.size() || inputs.empty());
+
     for (std::uint64_t i(0); i < inputs_.size(); ++i)
     {
-      auto ret = inputs_[i]->BackPropagate(backpropagatedErrorSignals[i]);
-      nonBackpropagatedErrorSignals.insert(nonBackpropagatedErrorSignals.end(), ret.begin(),
-                                           ret.end());
+      auto ret = inputs_[i]->BackPropagate(back_propagated_error_signals[i]);
+      non_back_propagated_error_signals.insert(non_back_propagated_error_signals.end(), ret.begin(),
+                                               ret.end());
     }
     // If no input to backprop to, return gradient to caller
     // This is used to propagate outside of a SubGraph
@@ -110,12 +118,12 @@ public:
     // so it sends its unpropagated gradient to its wrapper node that will forward them out
     if (inputs_.empty())
     {
-      for (auto g : backpropagatedErrorSignals)
+      for (auto g : back_propagated_error_signals)
       {
-        nonBackpropagatedErrorSignals.push_back(std::make_pair(this, g));
+        non_back_propagated_error_signals.push_back(std::make_pair(this, g));
       }
     }
-    return nonBackpropagatedErrorSignals;
+    return non_back_propagated_error_signals;
   }
 
   void AddInput(std::shared_ptr<NodeInterface<T>> const &i)

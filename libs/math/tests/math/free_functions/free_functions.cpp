@@ -107,3 +107,25 @@ TYPED_TEST(FreeFunctionsTest, tanh_22)
 
   ASSERT_TRUE(output.AllClose(numpy_output));
 }
+
+TYPED_TEST(FreeFunctionsTest, ArgMax)
+{
+  TypeParam array1{{2, 2}};
+
+  array1.Set(0, typename TypeParam::Type(0.3));
+  array1.Set(1, typename TypeParam::Type(1.2));
+  array1.Set(2, typename TypeParam::Type(0.7));
+  array1.Set(3, typename TypeParam::Type(22));
+
+  typename TypeParam::SizeType output;
+  fetch::math::ArgMax(array1, output);
+  ASSERT_TRUE(output == typename TypeParam::SizeType(3));
+
+  array1.Set(3, typename TypeParam::Type(0));
+  fetch::math::ArgMax(array1, output);
+  ASSERT_TRUE(output == typename TypeParam::SizeType(1));
+
+  array1.Set(1, typename TypeParam::Type(0));
+  fetch::math::ArgMax(array1, output);
+  ASSERT_TRUE(output == typename TypeParam::SizeType(2));
+}
