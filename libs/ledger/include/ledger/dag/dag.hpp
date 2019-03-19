@@ -167,14 +167,13 @@ private:
     if(on_new_node_) on_new_node_(std::move(n));
   }
 
-
   bool PushInternal(DAGNode node);
 
-  DigestCache last_nodes_;                   ///< buffer used when creating new nodes to ensure enough referencing.
-  NodeMap     nodes_;                        ///< the full DAG.
-  DigestSet   tips_;                         ///< tips of the DAG.
-  DigestArray all_node_hashes_;              ///< contain all node hashes
-  CallbackFunction on_new_node_;  
+  DigestCache       last_nodes_;                   ///< buffer used when creating new nodes to ensure enough referencing.
+  NodeMap           nodes_;                        ///< the full DAG.
+  DigestSet         tips_;                         ///< tips of the DAG.
+  DigestArray       all_node_hashes_;              ///< contain all node hashes
+  CallbackFunction  on_new_node_;  
   mutable Mutex     maintenance_mutex_{__LINE__, __FILE__};  
 };
 

@@ -13,6 +13,7 @@ namespace fetch
 namespace consensus
 {
 
+// TODO: Move to separate file
 struct WorkPackage
 {
   using ContractAddress   = byte_array::ConstByteArray;  
@@ -39,6 +40,7 @@ private:
   WorkPackage(ContractAddress address) : contract_address{std::move(address)} { }
 };
 
+class StorageUnitInterface;
 
 class SynergeticExecutor 
 {
@@ -51,14 +53,15 @@ public:
   using DAG               = ledger::DAG;
   using Block             = ledger::Block;
 
-  SynergeticExecutor(DAG &dag)
+  SynergeticExecutor(DAG &dag, StorageUnitInterface &storage)
   : miner_{dag}
   , dag_{dag}
+  , storage_{storage}
   {
 
   }
 
-  bool PrepareWorkQueue(Block &block)
+  bool PrepareWorkQueue(Block const &block)
   {    
     WorkMap synergetic_work_candidates;
     // TODO: contract_register_.Clear();
@@ -112,7 +115,6 @@ public:
       {
         return false;
       }      
-
     }
 
     return true;

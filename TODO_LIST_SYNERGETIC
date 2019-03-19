@@ -1,1 +1,126 @@
 - ( ) Finish Synergetic Executor
+		- ( ) Deserialise block
+		- ( ) Fetch smart contract source
+- ( ) Validate DAG hashes in BlockCoordinator::OnPreExecBlockValidation
+- (v) Check that block number is set correctly
+- ( ) Implement Extract and Revert in DAG
+- ( ) Implement fetch contract into the synergetic execution
+- ( ) Streams to implement:
+	- ( ) Block generation
+	- ( ) Block validation
+	- ( ) Roll back
+
+
+
+
+Notepad:
+========
+
+    Identifier contract_id;
+    if (!contract_id.Parse(tx.contract_name()))
+    {
+      return Status::CONTRACT_NAME_PARSE_FAILURE;
+    }
+
+    // create the resource address for the contract
+    auto const resource = SmartContractManager::CreateAddressForContract(contract_id);
+
+    // query the contents of the address
+    auto const result = storage.Get(resource);
+
+    if (!result.failed)
+    {
+      ConstByteArray contract_source;
+
+      // deserialise the contract source
+      serializers::ByteArrayBuffer adapter{result.document};
+      adapter >> contract_source;
+
+      // attempt to construct the smart contract in question
+      contract = std::make_shared<SmartContract>(std::string{contract_source});
+    }
+
+from executor.cpp
+    Identifier contract;
+    if (!contract.Parse(tx.contract_name()))
+    {
+      return Status::CONTRACT_NAME_PARSE_FAILURE;
+    }
+
+    Contract::Status result{Contract::Status::FAILED};
+    {
+      // create the cache and state sentinel (lock and unlock resources as well as sandbox)
+      CachedStorageAdapter storage_cache{*resources_};
+      StateSentinelAdapter storage_adapter{storage_cache, contract.GetParent(), tx.resources(),
+                                           tx.raw_resources()};
+
+      // lookup or create the instance of the contract as is needed
+      auto chain_code = chain_code_cache_.Lookup(contract.GetParent(), *resources_);
+      if (!chain_code)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Chain code lookup failure!");
+        return Status::CHAIN_CODE_LOOKUP_FAILURE;
+      }
+
+      // attach the chain code to the current working context
+      chain_code->Attach(storage_adapter);
+
+      // Dispatch the transaction to the contract
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatch: ", contract.name());
+      result = chain_code->DispatchTransaction(contract.name(), tx);
+
+      // detach the chain code from the current context
+      chain_code->Detach();
+
+      // force the flushing of the cache *** only if the contract was successful ***
+      if (result == Contract::Status::OK)
+      {
+        storage_cache.Flush();
+      }
+    }
+
+through chain_code_cache:
+from factory.cpp
+  if (Identifier::Type::SMART_CONTRACT == contract_id.type())
+  {
+    // create the resource address for the contract
+    auto const resource = SmartContractManager::CreateAddressForContract(contract_id);
+
+    // query the contents of the address
+    auto const result = storage.Get(resource);
+
+    if (!result.failed)
+    {
+      ConstByteArray contract_source;
+
+      // deserialise the contract source
+      serializers::ByteArrayBuffer adapter{result.document};
+      adapter >> contract_source;
+
+      // attempt to construct the smart contract in question
+      contract = std::make_shared<SmartContract>(std::string{contract_source});
+    }
+  }
+
+
+from execution_manager.cpp:
+      Identifier contract_id;
+      if (!contract_id.Parse(tx.contract_name))
+      {
+        return false;
+      }
+
+      for (auto const &resource : tx.resources)
+      {
+        item->AddLane(
+            StateAdapter::CreateAddress(contract_id, resource).lane(block.log2_num_lanes));
+      }
+
+from factor.cpp:
+  if (Identifier::Type::SMART_CONTRACT == contract_id.type()) {
+    // create the resource address for the contract
+    auto const resource = SmartContractManager::CreateAddressForContract(contract_id);
+
+    // query the contents of the address
+    auto const result = storage.Get(resource);
+  }

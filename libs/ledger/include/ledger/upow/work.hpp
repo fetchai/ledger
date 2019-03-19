@@ -13,13 +13,13 @@ namespace consensus
 struct Work 
 {
   using Identity        = byte_array::ConstByteArray;
-  using ContractAddress = byte_array::ConstByteArray;
+  using ContractName = byte_array::ConstByteArray;
   using WorkId          = byte_array::ConstByteArray;
   using Digest          = byte_array::ConstByteArray;
   using ScoreType       = double; // TODO: Change to fixed point
   
   /// 
-  ContractAddress contract_address;
+  ContractName contract_name;
 
   Identity miner;    
   int64_t nonce;

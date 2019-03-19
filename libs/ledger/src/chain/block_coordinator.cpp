@@ -264,7 +264,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
     next_block_->body.previous_hash = current_block_->body.hash;
     next_block_->body.block_number  = current_block_->body.block_number + 1;
     next_block_->body.miner         = identity_;
-    next_block_->body.dag_nodes     = dag_.TipsAsVector();
+    next_block_->body.dag_nodes     = dag_.UncertifiedTipsAsVector();
 
     // ensure the difficulty is correctly set
     next_block_->proof.SetTarget(block_difficulty_);
@@ -343,7 +343,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     // TODO:
 
     // Checking that work in DAG is valid and refers to existing contracts
-    if(!synergetic_executor_.PrepareWorkQueue())
+    if(!synergetic_executor_.PrepareWorkQueue(*current_block_))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Block contains invalid work (",
                      ToBase64(current_block_->body.hash), ")");
@@ -582,7 +582,7 @@ BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
   dag_.SetNodeTime(next_block_->body.block_number, next_block_->body.dag_nodes);
 
   // Preparing the work packages on the DAG
-  if(!synergetic_executor_.PrepareWorkQueue())
+  if(!synergetic_executor_.PrepareWorkQueue(*next_block_))
   {
     dag_.RevertTo(body.block_number - 1);
     return State::RESET;
