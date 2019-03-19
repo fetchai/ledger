@@ -163,7 +163,7 @@ function(configure_vendor_targets)
     if(OPENSSL_USE_STATIC_LIBS)
       message(STATUS "OpenSSL linking: Static")
     else()
-      message(STATUS "OpenSSL linking: Shared")
+      message(STATUS "OpenSSL linking: Dynamic")
     endif()
   endif(FETCH_VERBOSE_CMAKE)
 
