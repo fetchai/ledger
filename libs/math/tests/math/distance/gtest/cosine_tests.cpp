@@ -20,7 +20,6 @@
 #include <iomanip>
 #include <iostream>
 
-#include "core/random/lcg.hpp"
 #include "math/distance/cosine.hpp"
 #include "math/tensor.hpp"
 
