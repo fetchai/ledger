@@ -21,8 +21,6 @@
 #include "ml/ops/weights.hpp"
 #include <set>
 
-#include <set>
-
 namespace fetch {
 namespace ml {
 namespace ops {
