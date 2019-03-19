@@ -22,7 +22,7 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/identifier.hpp"
-#include "ledger/state_sentinel.hpp"
+#include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "mock_storage_unit.hpp"
 
@@ -43,7 +43,6 @@ protected:
   using MockStorageUnitPtr   = std::unique_ptr<MockStorageUnit>;
   using Resources            = std::vector<ConstByteArray>;
   using CertificatePtr       = std::unique_ptr<fetch::crypto::ECDSASigner>;
-  using StateSentinelAdapter = fetch::ledger::StateSentinelAdapter;
   using StateAdapter         = fetch::ledger::StateAdapter;
   using Query                = Contract::Query;
   using IdentifierPtr        = std::shared_ptr<Identifier>;
@@ -143,7 +142,7 @@ protected:
     VerifiedTransaction tx = VerifiedTransaction::Create(std::move(mtx));
 
     // adapt the storage engine for this execution
-    StateSentinelAdapter storage_adapter{*storage_, *contract_name_, tx.resources()};
+    fetch::ledger::StateSentinelAdapter storage_adapter{*storage_, *contract_name_, tx.resources()};
 
     // dispatch the transaction to the contract
     contract_->Attach(storage_adapter);
@@ -161,7 +160,8 @@ protected:
     Identifier full_contract_name{tx.contract_name()};
 
     // adapt the storage engine for this execution
-    StateSentinelAdapter storage_adapter{*storage_, *contract_name_, tx.resources()};
+    fetch::ledger::StateSentinelAdapter storage_adapter{*storage_, *contract_name_, tx.resources(),
+                                                        tx.resources()};
 
     // dispatch the transaction to the contract
     contract_->Attach(storage_adapter);
