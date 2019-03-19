@@ -115,8 +115,7 @@ public:
     }
   }
 
-  ~State() override
-  {}
+  ~State() override = default;
 
   TemplateParameter Get() const override
   {

@@ -162,6 +162,7 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
   // Revert to normal context
   state().PopContext();
 
+  // TODO(issue 767): Needs to check success for this operation
   auto success = true;
   SetStateRecord(contract_source, calculated_hash);
 

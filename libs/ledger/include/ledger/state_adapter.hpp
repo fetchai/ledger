@@ -46,7 +46,7 @@ public:
 
   // Construction / Destruction
   StateAdapter(StorageInterface &storage, Identifier scope);
-  ~StateAdapter() override;
+  ~StateAdapter() override = default;
 
   /// @name Io Observer Interface
   /// @{

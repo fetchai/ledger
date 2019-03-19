@@ -22,7 +22,7 @@ namespace fetch {
 namespace ledger {
 
 /**
- * Construct the Cache Adapter
+ * Construct the Cache Adpater
  *
  * @param storage The reference to the underlying storage engine
  */
@@ -41,6 +41,8 @@ CachedStorageAdapter::~CachedStorageAdapter()
  */
 void CachedStorageAdapter::Flush()
 {
+  FETCH_LOCK(lock_);
+
   if (flush_required_)
   {
     for (auto &entry : cache_)
@@ -172,6 +174,8 @@ bool CachedStorageAdapter::Unlock(ResourceAddress const &key)
  */
 void CachedStorageAdapter::AddCacheEntry(ResourceAddress const &address, StateValue const &value)
 {
+  FETCH_LOCK(lock_);
+
   // update the cache and signal that a flush is required
   cache_[address] = CacheEntry{value};
   flush_required_ = true;
@@ -186,6 +190,8 @@ void CachedStorageAdapter::AddCacheEntry(ResourceAddress const &address, StateVa
 CachedStorageAdapter::StateValue CachedStorageAdapter::GetCacheEntry(
     ResourceAddress const &address) const
 {
+  FETCH_LOCK(lock_);
+
   StateValue value{};
 
   // ensure the key exists
@@ -211,6 +217,8 @@ CachedStorageAdapter::StateValue CachedStorageAdapter::GetCacheEntry(
  */
 bool CachedStorageAdapter::HasCacheEntry(ResourceAddress const &address) const
 {
+  FETCH_LOCK(lock_);
+
   return cache_.find(address) != cache_.end();
 }
 

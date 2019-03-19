@@ -361,6 +361,8 @@ public:
     }
 
     std::vector<byte_array::ConstByteArray> resources;
+    resources.reserve(summary().resources.size());
+
     std::copy(summary().resources.begin(), summary().resources.end(),
               std::back_inserter(resources));
     std::sort(resources.begin(), resources.end());
@@ -370,6 +372,8 @@ public:
     }
 
     std::vector<byte_array::ConstByteArray> raw_resources;
+    raw_resources.reserve(summary().raw_resources.size());
+
     std::copy(summary().raw_resources.begin(), summary().raw_resources.end(),
               std::back_inserter(raw_resources));
     std::sort(raw_resources.begin(), raw_resources.end());
@@ -533,41 +537,13 @@ void Serialize(T &stream, TxSigningAdapter<MUTABLE_TX> const &tx)
 template <typename T, typename MUTABLE_TX>
 void Deserialize(T &stream, TxSigningAdapter<MUTABLE_TX> &tx)
 {
-  const char *log_name = "DESER_MUTABLE_TX";
-
-  FETCH_LOG_DEBUG(log_name, "Deserializing mutable transaction");
-
-  uint16_t success_counter = 1;
-
-  auto deleter = [&](uint16_t *dummy) {
-    if (success_counter != 0)
-    {
-      FETCH_LOG_INFO(log_name, "Failed to deser. tx! Counter: ", success_counter);
-    };
-  };
-  std::unique_ptr<uint16_t, decltype(deleter)> on_exit(&success_counter, deleter);
-
-  FETCH_UNUSED(success_counter);
-  FETCH_UNUSED(log_name);
-
   MutableTransaction &tx_ = tx;
   stream >> tx_.summary_.contract_name;
-  success_counter++;
-
   stream >> tx_.summary_.fee;
-  success_counter++;
-
   stream >> tx_.summary_.resources;
-  success_counter++;
-
   stream >> tx_.summary_.raw_resources;
-  success_counter++;
-
   stream >> tx_.data_;
-  success_counter++;
-
   stream >> tx_.signatures_;
-  success_counter = 0;
 
   tx.Reset();
 }

@@ -62,6 +62,7 @@ private:
   };
 
   using Cache = std::unordered_map<ResourceAddress, CacheEntry>;
+  using Mutex = mutex::Mutex;
 
   /// @name Cache Helpers
   /// @{
@@ -74,8 +75,9 @@ private:
 
   /// @name Cache Data
   /// @{
-  Cache cache_{};                ///< The local cache
-  bool  flush_required_{false};  ///< Top level cache flush flag
+  mutable Mutex lock_{__LINE__, __FILE__};
+  Cache         cache_{};                ///< The local cache
+  bool          flush_required_{false};  ///< Top level cache flush flag
   /// @}
 };
 
