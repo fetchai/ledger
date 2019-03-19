@@ -20,7 +20,6 @@
 #include <iomanip>
 #include <iostream>
 
-#include "core/random/lcg.hpp"
 #include "math/distance/euclidean.hpp"
 #include "math/tensor.hpp"
 
@@ -29,18 +28,18 @@ using namespace fetch::math;
 
 TEST(distance_tests, euclidean_distance)
 {
-  ShapelessArray<double> A = ShapelessArray<double>(4);
-  A.Set({0}, 1);
-  A.Set({1}, 2);
-  A.Set({2}, 3);
-  A.Set({3}, 4);
+  Tensor<double> A = Tensor<double>(4);
+  A.Set(0, 1);
+  A.Set(1, 2);
+  A.Set(2, 3);
+  A.Set(3, 4);
   ASSERT_TRUE(Euclidean(A, A) == 0);
 
-  ShapelessArray<double> B = ShapelessArray<double>(4);
-  B.Set({0}, 1);
-  B.Set({1}, 2);
-  B.Set({2}, 3);
-  B.Set({3}, 2);
+  Tensor<double> B = Tensor<double>(4);
+  B.Set(0, 1);
+  B.Set(1, 2);
+  B.Set(2, 3);
+  B.Set(3, 2);
 
   ASSERT_TRUE(Euclidean(A, B) == 2);
 }

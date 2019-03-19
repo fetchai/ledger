@@ -18,9 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shapeless_array.hpp"
-#include "vectorise/memory/range.hpp"
-
+#include "math/free_functions/exponentiation/exponentiation.hpp"
+#include "math/free_functions/matrix_operations/matrix_operations.hpp"
 #include <cmath>
 
 namespace fetch {
@@ -33,13 +32,11 @@ typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
   assert(A.shape() == B.shape());
   ArrayType tmp_array(A.shape());
 
-  Subtract(A, B, tmp_array);
+  fetch::math::Subtract(A, B, tmp_array);
 
   Square(tmp_array);
 
-  typename ArrayType::Type ret = Sum(tmp_array);
-
-  return ret;
+  return fetch::math::Sum(tmp_array);
 }
 
 template <typename ArrayType>
