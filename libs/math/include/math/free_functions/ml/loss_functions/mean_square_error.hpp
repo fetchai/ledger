@@ -26,7 +26,7 @@ namespace math {
 template <typename ArrayType>
 typename ArrayType::Type MeanSquareError(ArrayType const &A, ArrayType const &B)
 {
-  typename ArrayType::Type ret = distance::Euclidean(A, B);
+  typename ArrayType::Type ret = distance::SquareDistance(A, B);
 
   ret = Divide(ret, typename ArrayType::Type(A.size()));
 

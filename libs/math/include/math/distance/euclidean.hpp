@@ -34,7 +34,7 @@ typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
 
   fetch::math::Subtract(A, B, tmp_array);
 
-  Square(tmp_array);
+  Square(tmp_array, tmp_array);
 
   return fetch::math::Sum(tmp_array);
 }
