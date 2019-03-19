@@ -21,21 +21,21 @@
 #include <cassert>
 
 namespace fetch {
-    namespace math {
+namespace math {
 
-        template <typename ArrayType>
-        typename ArrayType::Type MeanSquareError(ArrayType const &A, ArrayType const &B)
-        {
-          typename ArrayType::Type ret = distance::Euclidean(A, B);
+template <typename ArrayType>
+typename ArrayType::Type MeanSquareError(ArrayType const &A, ArrayType const &B)
+{
+  typename ArrayType::Type ret = distance::Euclidean(A, B);
 
-          ret = Divide(ret, typename ArrayType::Type(A.size()));
+  ret = Divide(ret, typename ArrayType::Type(A.size()));
 
-          // TODO(private 343)
-          // division by 2 allows us to cancel out with a 2 in the derivative
-          ret = Divide(ret, typename ArrayType::Type(2));
+  // TODO(private 343)
+  // division by 2 allows us to cancel out with a 2 in the derivative
+  ret = Divide(ret, typename ArrayType::Type(2));
 
-          return ret;
-        }
+  return ret;
+}
 
-    }  // namespace math
+}  // namespace math
 }  // namespace fetch

@@ -24,36 +24,36 @@
 #include <cmath>
 
 namespace fetch {
-    namespace math {
-        namespace distance {
+namespace math {
+namespace distance {
 
-            template <typename ArrayType>
-            typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
-            {
-                assert(A.shape() == B.shape());
-                ArrayType tmp_array(A.shape());
+template <typename ArrayType>
+typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
+{
+  assert(A.shape() == B.shape());
+  ArrayType tmp_array(A.shape());
 
-                Subtract(A, B, tmp_array);
+  Subtract(A, B, tmp_array);
 
-                Square(tmp_array);
+  Square(tmp_array);
 
-                typename ArrayType::Type ret = Sum(tmp_array);
+  typename ArrayType::Type ret = Sum(tmp_array);
 
-                return ret;
-            }
+  return ret;
+}
 
-            template <typename ArrayType>
-            typename ArrayType::Type Euclidean(ArrayType const &A, ArrayType const &B)
-            {
-                return Sqrt(SquareDistance(A, B));
-            }
+template <typename ArrayType>
+typename ArrayType::Type Euclidean(ArrayType const &A, ArrayType const &B)
+{
+  return Sqrt(SquareDistance(A, B));
+}
 
-            template <typename ArrayType>
-            typename ArrayType::Type NegativeSquareEuclidean(ArrayType const &A, ArrayType const &B)
-            {
-                return -SquareDistance(A, B);
-            }
+template <typename ArrayType>
+typename ArrayType::Type NegativeSquareEuclidean(ArrayType const &A, ArrayType const &B)
+{
+  return -SquareDistance(A, B);
+}
 
-        }  // namespace distance
-    }  // namespace math
+}  // namespace distance
+}  // namespace math
 }  // namespace fetch
