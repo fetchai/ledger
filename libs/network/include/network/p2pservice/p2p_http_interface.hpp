@@ -130,11 +130,6 @@ private:
     response["identity"] = fetch::byte_array::ToBase64(muddle_.identity().identifier());
     response["block"]    = fetch::byte_array::ToBase64(chain_.GetHeaviestBlockHash());
 
-    // TODO(private issue 532): Remove legacy API
-    response["i_am"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());
-    response["block_hex"] = fetch::byte_array::ToHex(chain_.GetHeaviestBlockHash());
-    response["i_am_hex"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
-
     return http::CreateJsonResponse(response);
   }
 
@@ -164,9 +159,6 @@ private:
   {
     Variant response          = Variant::Object();
     response["identityCache"] = GenerateIdentityCache();
-
-    // TODO(private issue 532): Remove legacy API
-    response["identity_cache"] = GenerateIdentityCache();
 
     return http::CreateJsonResponse(response);
   }
@@ -200,12 +192,6 @@ private:
     Variant response     = Variant::Object();
     response["identity"] = fetch::byte_array::ToBase64(muddle_.identity().identifier());
     response["trusts"]   = trust_list;
-
-    // TODO(private issue 532): Remove legacy API
-    response["i_am"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());
-    response["block"]     = fetch::byte_array::ToBase64(chain_.GetHeaviestBlockHash());
-    response["block_hex"] = fetch::byte_array::ToHex(chain_.GetHeaviestBlockHash());
-    response["i_am_hex"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
 
     return http::CreateJsonResponse(response);
   }
@@ -258,9 +244,6 @@ private:
       block["proof"]        = byte_array::ToBase64(b->proof.header());
       block["miner"]        = byte_array::ToBase64(b->body.miner);
       block["blockNumber"]  = b->body.block_number;
-
-      // TODO(private issue 532): Remove legacy API
-      block["currentHash"] = byte_array::ToBase64(b->body.hash);
 
       if (include_transactions)
       {
