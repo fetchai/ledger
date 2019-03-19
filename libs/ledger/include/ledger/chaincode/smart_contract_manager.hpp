@@ -20,6 +20,12 @@
 #include "ledger/chaincode/contract.hpp"
 
 namespace fetch {
+
+namespace vm {
+struct Script;
+class Module;
+}  // namespace vm
+
 namespace ledger {
 
 class Identifier;
