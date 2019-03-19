@@ -47,7 +47,6 @@ TYPED_TEST(TextDataLoaderTest, basic_loader_test)
   p.max_sentences       = 1;
   p.min_sentence_length = 0;
   p.window_size         = 1;
-  p.unigram_table       = false;
   p.discard_frequent    = false;
 
   TextLoader<TypeParam> loader(training_data, p);
@@ -76,7 +75,6 @@ TYPED_TEST(TextDataLoaderTest, adddata_loader_test)
   p.max_sentences       = 2;
   p.min_sentence_length = 0;
   p.window_size         = 1;
-  p.unigram_table       = false;
   p.discard_frequent    = false;
 
   TextLoader<TypeParam> loader(training_data, p);
@@ -119,7 +117,6 @@ TYPED_TEST(TextDataLoaderTest, discard_loader_test)
   p.max_sentences       = 1;
   p.min_sentence_length = 0;
   p.window_size         = 1;
-  p.unigram_table       = false;
 
   p.discard_frequent  = true;
   p.discard_threshold = 0.000000001;
