@@ -82,7 +82,8 @@ std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType embeddings_size, Size
   return ret_name;
 }
 
-void TestEmbeddings(Graph<ArrayType> &g, std::string &skip_gram_name, SkipGramLoader<ArrayType> &dl)
+void TestEmbeddings(Graph<ArrayType> const &g, std::string const &skip_gram_name,
+                                     SkipGramLoader<ArrayType> const &dl)
 {
 
   // first get hold of the skipgram layer by searching the return name in the graph
@@ -164,9 +165,6 @@ int main(int argc, char **argv)
     {
       // get random data point
       data = dataloader.GetRandom();
-
-      data.first.At(0) = 10;
-      data.first.At(1) = 11;
 
       // assign input and context vectors
       input.At(j)   = data.first.At(0);

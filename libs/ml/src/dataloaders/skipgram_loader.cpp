@@ -36,20 +36,25 @@ namespace fetch {
 namespace ml {
 namespace dataloaders {
 
-template <typename T>
-SkipGramLoader<T>::SkipGramLoader(std::string &data, SkipGramTextParams<T> p, SizeType seed)
+
+SkipGramLoader(std::string &data, SkipGramTextParams<T> p, SizeType seed = 123456789)
   : TextLoader<T>(data, p, seed)
   , p_(p)
 {
 
-  if (p_.unigram_table)
-  {
-    unigram_table_ = std::vector<SizeType>(p_.unigram_table_size);
-  }
-
   // sanity checks on SkipGram parameters
   assert(this->word_count_ > (p_.window_size * 2));
   assert(p_.window_size > 0);
+
+  // set probabilities for sampling positive and negative training pairs
+  if (p_.k_negative_samples > 0)
+  {
+    positive_threshold_ = 1.0 / (double(p_.k_negative_samples) + 1.0);
+  }
+  else
+  {
+    positive_threshold_ = 1.0;
+  }
 }
 
 /**
@@ -57,7 +62,7 @@ SkipGramLoader<T>::SkipGramLoader(std::string &data, SkipGramTextParams<T> p, Si
  * @param idx
  * @return
  */
-virtual std::vector<SkipGramLoader::SizeType> SkipGramLoader::GetData(SizeType idx) override
+virtual std::vector<SizeType> GetData(SizeType idx) override
 {
   if (SelectValence())
   {
@@ -69,79 +74,12 @@ virtual std::vector<SkipGramLoader::SizeType> SkipGramLoader::GetData(SizeType i
 }
 
 /**
- * additional text pre-processing that text-loader does not complete
- */
-virtual void SkipGramLoader::AdditionalPreProcess() override
-{
-  BuildUnigramTable();
-}
-
-/**
- * builds the unigram table for negative sampling
- */
-void SkipGramLoader::BuildUnigramTable()
-{
-  if (p_.unigram_table)
-  {
-    // calculate adjusted word frequencies
-    double sum_adj_vocab = 0.0;
-    double cur_vocab_freq;
-    double cur_val;
-    for (auto &e : this->vocab_)
-    {
-      cur_vocab_freq = double(e.second.at(1));
-      cur_val        = std::pow(cur_vocab_freq, p_.unigram_power);
-      this->adj_vocab_frequency_.emplace_back(cur_val);
-      sum_adj_vocab += cur_val;
-    }
-
-    SizeType cur_idx = 0;
-    SizeType n_rows  = 0;
-    for (auto &e : this->vocab_)
-    {
-      cur_vocab_freq = double(e.second.at(1));
-      cur_val        = std::pow(cur_vocab_freq, p_.unigram_power);
-
-      assert(cur_idx < p_.unigram_table_size);
-
-      double adjusted_word_probability = cur_val / sum_adj_vocab;
-
-      // word frequency
-      n_rows = SizeType(adjusted_word_probability * double(p_.unigram_table_size));
-
-      for (SizeType k = 0; k < n_rows; ++k)
-      {
-        unigram_table_[cur_idx] = e.second.at(0);
-        ++cur_idx;
-      }
-    }
-    unigram_table_.resize(cur_idx - 1);
-    p_.unigram_table_size = cur_idx - 1;
-  }
-}
-
-/**
  * randomly select whether to return a positive or negative example
  */
-bool SkipGramLoader::SelectValence()
+bool SelectValence()
 {
   double cur_val = this->lfg_.AsDouble();
-  double positive_threshold;
-  if (p_.k_negative_samples > 0)
-  {
-    positive_threshold = 1.0 / double(p_.k_negative_samples);
-  }
-  else
-  {
-    positive_threshold = 1.0;
-  }
-  std::vector<SizeType> ret{};
-
-  if (cur_val < positive_threshold)
-  {
-    return true;
-  }
-  return false;
+  return (cur_val < positive_threshold_);
 }
 
 /**
@@ -149,7 +87,7 @@ bool SkipGramLoader::SelectValence()
  * @param idx
  * @return
  */
-std::vector<SizeType> SkipGramLoader::GeneratePositive(SizeType idx)
+std::vector<SizeType> GeneratePositive(SizeType idx)
 {
   std::vector<SizeType> ret{};
 
@@ -170,7 +108,7 @@ std::vector<SizeType> SkipGramLoader::GeneratePositive(SizeType idx)
  * @param idx
  * @return
  */
-std::vector<SizeType> SkipGramLoader::GenerateNegative(SizeType idx)
+std::vector<SizeType> GenerateNegative(SizeType idx)
 {
   std::vector<SizeType> ret{};
 
@@ -191,7 +129,7 @@ std::vector<SizeType> SkipGramLoader::GenerateNegative(SizeType idx)
  * @param idx
  * @return
  */
-SizeType SkipGramLoader::SelectNegativeContextWord(SizeType idx)
+SizeType SelectNegativeContextWord(SizeType idx)
 {
   std::vector<SizeType> sentence     = this->GetSentenceFromWordIdx(idx);
   SizeType              sentence_len = sentence.size();
@@ -232,7 +170,7 @@ SizeType SkipGramLoader::SelectNegativeContextWord(SizeType idx)
  * @param idx
  * @return
  */
-SizeType SkipGramLoader::SelectContextPosition(SizeType idx)
+SizeType SelectContextPosition(SizeType idx)
 {
 
   std::vector<SizeType> sentence     = this->GetSentenceFromWordIdx(idx);
@@ -272,7 +210,7 @@ SizeType SkipGramLoader::SelectContextPosition(SizeType idx)
  * @param sentence_len total sentence length
  * @return
  */
-bool SkipGramLoader::WindowPositionCheck(SizeType target_pos, SizeType context_pos, SizeType sentence_len) const
+bool WindowPositionCheck(SizeType target_pos, SizeType context_pos, SizeType sentence_len) const
 {
   int normalised_context_pos = int(context_pos) - int(p_.window_size);
   if (normalised_context_pos == 0)
@@ -295,7 +233,6 @@ bool SkipGramLoader::WindowPositionCheck(SizeType target_pos, SizeType context_p
     return true;
   }
 }
-
 }  // namespace dataloaders
 }  // namespace ml
 }  // namespace fetch

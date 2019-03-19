@@ -18,6 +18,21 @@
 //------------------------------------------------------------------------------
 
 #include "ml/dataloaders/text_loader.hpp"
+#include "math/free_functions/standard_functions/abs.hpp"
+
+//
+//#include <algorithm>
+//#include <exception>
+//#include <fstream>
+//#include <iostream>
+//#include <memory>
+//#include <sstream>
+//#include <string>
+//#include <unordered_map>
+//#include <utility>
+//#include <vector>
+//
+//#include <dirent.h>  // may be compatibility issues
 
 namespace fetch {
 namespace ml {
@@ -65,10 +80,13 @@ private:
   // the unigram table container
   std::vector<SizeType> unigram_table_;
 
+  double positive_threshold_ = 0.0;
+
 public:
   explicit SkipGramLoader(std::string &data, SkipGramTextParams<T> p, SizeType seed = 123456789);
 
 private:
+
   virtual std::vector<SizeType> GetData(SizeType idx) override;
   virtual void AdditionalPreProcess() override;
   void BuildUnigramTable();

@@ -88,12 +88,6 @@ public:
       cachedOutputPresent_ = true;
     }
 
-    //    std::cout << "cached_output_.shape().size(): " << cachedOutput_.shape().size() <<
-    //    std::endl; std::cout << "cached_output_.shape()[0]: " << cachedOutput_.shape()[0] <<
-    //    std::endl; std::cout << "cached_output_.shape()[1]: " << cachedOutput_.shape()[1] <<
-    //    std::endl;
-    //
-
     return cachedOutput_;
   }
 

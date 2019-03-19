@@ -54,11 +54,6 @@ public:
   {
     assert(inputs.size() == 1);
 
-    //    std::cout << "inputs.front().get().shape()[0]: " << inputs.front().get().shape()[0] <<
-    //    std::endl; std::cout << "inputs.front().get().shape()[1]: " <<
-    //    inputs.front().get().shape()[1] << std::endl; std::cout << "errorSignal.shape()[0]: " <<
-    //    errorSignal.shape()[0] << std::endl; std::cout << "errorSignal.shape()[1]: " <<
-    //    errorSignal.shape()[1] << std::endl;
     assert(inputs.front().get().shape() == errorSignal.shape());
 
     ArrayType t            = this->Forward(inputs);

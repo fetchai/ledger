@@ -21,23 +21,18 @@
 #include "core/random/lfg.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 
-//#include "math/distance/cosine.hpp"
-//#include "math/free_functions/standard_functions/abs.hpp"
-//#include "ml/ops/embeddings.hpp"
-//
-//#include <algorithm>  // random_shuffle
-//#include <fstream>    // file streaming
-//#include <numeric>    // std::iota
-//#include <string>
+#include <algorithm>  // random_shuffle
+#include <fstream>    // file streaming
+#include <numeric>    // std::iota
+#include <string>
 #include <unordered_map>
 #include <vector>
-//
-//#include <dirent.h>  // may be compatibility issues
+
+#include <dirent.h>  // may be compatibility issues
 
 namespace fetch {
 namespace ml {
 namespace dataloaders {
-
 
 template <typename T>
 struct TextParams
@@ -132,9 +127,8 @@ public:
   SizeType              GetWordOffsetFromWordIdx(SizeType word_idx);
 
   void AddData(std::string const &training_data);
-
   std::vector<std::pair<std::string, double>> GetKNN(ArrayType const &  embeddings,
-                                                     std::string const &word, unsigned int k);
+                                                     std::string const &word, unsigned int k) const;
 
 private:
   /////////////////////////////////////////////////////////////////////
