@@ -250,13 +250,13 @@ private:
       {
         auto const &slices = b->body.slices;
 
-        block["slices"] = Variant::Array(slices.size());
+        block["slices"]     = Variant::Array(slices.size());
         Variant &slice_list = block["slices"];
 
         std::size_t slice_idx{0};
         for (auto const &slice : slices)
         {
-          slice_list[slice_idx] = Variant::Array(slice.size());
+          slice_list[slice_idx]     = Variant::Array(slice.size());
           Variant &transaction_list = slice_list[slice_idx];
 
           std::size_t tx_idx{0};

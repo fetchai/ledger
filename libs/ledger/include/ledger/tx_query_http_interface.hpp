@@ -27,22 +27,20 @@ class StorageUnitInterface;
 class TxQueryHttpInterface : public http::HTTPModule
 {
 public:
-
   // Construction / Destruction
   TxQueryHttpInterface(StorageUnitInterface &storage_unit, uint32_t log2_num_lanes);
   TxQueryHttpInterface(TxQueryHttpInterface const &) = delete;
-  TxQueryHttpInterface(TxQueryHttpInterface &&) = delete;
-  ~TxQueryHttpInterface() = default;
+  TxQueryHttpInterface(TxQueryHttpInterface &&)      = delete;
+  ~TxQueryHttpInterface()                            = default;
 
   // Operators
   TxQueryHttpInterface &operator=(TxQueryHttpInterface const &) = delete;
   TxQueryHttpInterface &operator=(TxQueryHttpInterface &&) = delete;
 
 private:
-
   StorageUnitInterface &storage_unit_;
-  uint32_t log2_num_lanes_{0};
+  uint32_t              log2_num_lanes_{0};
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch
