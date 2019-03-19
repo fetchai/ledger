@@ -291,11 +291,11 @@ public:
    * @param idx
    * @return
    */
-  SizeType VocabLookup(std::string &idx)
+  SizeType VocabLookup(std::string const &word)
   {
-    assert(vocab_[idx].at(0) < vocab_.size());
-    assert(vocab_[idx].at(0) != 0);  // dont currently handle unknowns elegantly
-    return vocab_[idx].at(0);
+    assert(vocab_.at(word).at(0) < vocab_.size());
+    assert(vocab_.at(word).at(0) != 0);  // dont currently handle unknowns elegantly
+    return vocab_.at(word).at(0);
   }
 
   /**

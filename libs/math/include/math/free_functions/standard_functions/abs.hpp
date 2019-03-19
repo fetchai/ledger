@@ -36,12 +36,12 @@ fetch::math::meta::IfIsBlasArray<ArrayType, void> Abs(ArrayType &x, ArrayType &r
 }
 
 template <typename ArrayType>
-fetch::math::meta::IfIsNonBlasArray<ArrayType, void> Abs(ArrayType &x, ArrayType &ret)
+fetch::math::meta::IfIsNonBlasArray<ArrayType, void> Abs(ArrayType const &x, ArrayType &ret)
 {
   assert(x.size() == ret.size());
   for (std::size_t j = 0; j < ret.size(); ++j)
   {
-    Abs(ret.At(j), x.At(j));
+    Abs(x.At(j), ret.At(j));
   }
 }
 
@@ -75,15 +75,6 @@ fetch::math::meta::IfIsArithmetic<Type, Type> Abs(Type &n)
   Abs(n, ret);
   return ret;
 }
-
-//
-// void Abs(fetch::fixed_point::FixedPoint<I, F> &n)
-//{
-//  if (n < fetch::fixed_point::FixedPoint<I, F>(0))
-//  {
-//    n *= fetch::fixed_point::FixedPoint<I, F>(-1);
-//  }
-//}
 
 }  // namespace math
 }  // namespace fetch

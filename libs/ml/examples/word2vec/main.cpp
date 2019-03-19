@@ -82,7 +82,7 @@ std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType embeddings_size, Size
   return ret_name;
 }
 
-std::vector<DataType> TestEmbeddings(Graph<ArrayType> &g, std::string &skip_gram_name,
+std::vector<DataType> TestEmbeddings(Graph<ArrayType> const &g, std::string const &skip_gram_name,
                                      SkipGramLoader<ArrayType> &dl)
 {
 

@@ -71,6 +71,8 @@ private:
 
   SkipGramTextParams<T> p_;
 
+  double positive_threshold_ = 0.0;
+
 public:
   SkipGramLoader(std::string &data, SkipGramTextParams<T> p, SizeType seed = 123456789)
     : TextLoader<T>(data, p, seed)
@@ -80,6 +82,16 @@ public:
     // sanity checks on SkipGram parameters
     assert(this->word_count_ > (p_.window_size * 2));
     assert(p_.window_size > 0);
+
+    // set probabilities for sampling positive and negative training pairs
+    if (p_.k_negative_samples > 0)
+    {
+      positive_threshold_ = 1.0 / (double(p_.k_negative_samples) + 1.0);
+    }
+    else
+    {
+      positive_threshold_ = 1.0;
+    }
   }
 
 private:
@@ -105,22 +117,7 @@ private:
   bool SelectValence()
   {
     double cur_val = this->lfg_.AsDouble();
-    double positive_threshold;
-    if (p_.k_negative_samples > 0)
-    {
-      positive_threshold = 1.0 / double(p_.k_negative_samples);
-    }
-    else
-    {
-      positive_threshold = 1.0;
-    }
-    std::vector<SizeType> ret{};
-
-    if (cur_val < positive_threshold)
-    {
-      return true;
-    }
-    return false;
+    return (cur_val < positive_threshold_);
   }
 
   /**

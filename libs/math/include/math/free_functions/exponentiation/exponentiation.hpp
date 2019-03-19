@@ -42,9 +42,11 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> SquareImpl(ArrayType const &x, ArrayType &ret)
 {
   assert(x.size() == ret.size());
-  for (typename ArrayType::SizeType i = 0; i < x.size(); ++i)
+  typename ArrayType::SizeType idx(0);
+  for (auto &val : x)
   {
-    ret[i] = x[i] * x[i];
+    ret.At(idx) = val * val;
+    ++idx;
   }
 }
 
