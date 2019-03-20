@@ -99,7 +99,7 @@ typename CBoWLoader<T>::SizeType CBoWLoader<T>::GetLabel(SizeType idx)
 {
   SizeType sentence_idx = this->word_idx_sentence_idx.at(idx);
   SizeType word_idx     = this->GetWordOffsetFromWordIdx(idx);
-  return CBoWLoader<T>::SizeType(DataType(this->data_.at(sentence_idx).at(word_idx)));
+  return CBoWLoader<T>::SizeType(double(DataType(this->data_.at(sentence_idx).at(word_idx))));
 }
 
 }  // namespace dataloaders
