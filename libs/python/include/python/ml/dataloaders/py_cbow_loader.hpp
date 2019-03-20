@@ -17,33 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-
-#include "python/ml/dataloaders/py_cbow_loader.hpp"
-#include "python/ml/dataloaders/py_mnist_loader.hpp"
-#include "python/ml/layers/py_fully_connected.hpp"
-#include "python/ml/ops/activation_functions/py_relu.hpp"
-#include "python/ml/ops/loss_functions/py_mean_square_error.hpp"
-#include "python/ml/ops/py_state_dict.hpp"
-#include "python/ml/py_graph.hpp"
+#include "ml/dataloaders/w2v_cbow_dataloader.hpp"
+#include "python/fetch_pybind.hpp"
 
 namespace py = pybind11;
 
 namespace fetch {
 namespace ml {
+namespace dataloaders {
 
 template <typename T>
-void BuildMLLibrary(pybind11::module &module)
+void BuildCBOWLoader(std::string const &custom_name, pybind11::module &module)
 {
-  fetch::ml::ops::BuildStateDict<T>("StateDict", module);
-  fetch::ml::BuildGraph<T>("Graph", module);
-  fetch::ml::ops::BuildRelu<T>("Relu", module);
-  fetch::ml::ops::BuildFullyConnected<T>("FullyConnected", module);
-  fetch::ml::ops::BuildMeanSquareError<T>("MeanSquareError", module);
-  fetch::ml::dataloaders::BuildMNISTLoader<T>("MNISTLoader", module);
-  fetch::ml::dataloaders::BuildCBOWLoader<T>("CBOWLoader", module);
+  py::class_<fetch::ml::CBOWLoader<T>>(module, custom_name.c_str())
+      .def(py::init<std::uint64_t>())
+      .def("AddData", &fetch::ml::CBOWLoader<T>::AddData)
+      .def("Size", &fetch::ml::CBOWLoader<T>::Size)
+      .def("IsDone", &fetch::ml::CBOWLoader<T>::IsDone)
+      .def("Reset", &fetch::ml::CBOWLoader<T>::Reset)
+      .def("GetNext", &fetch::ml::CBOWLoader<T>::GetNext)
+      .def("GetVocab", &fetch::ml::CBOWLoader<T>::GetVocab)
+      .def("VocabSize", &fetch::ml::CBOWLoader<T>::VocabSize);
 }
 
+}  // namespace dataloaders
 }  // namespace ml
 }  // namespace fetch
