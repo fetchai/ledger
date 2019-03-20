@@ -28,27 +28,27 @@ using namespace fetch::math;
 
 TEST(distance_tests, conditional_distance)
 {
-    Tensor<double> A = Tensor<double>({4, 4});
+  Tensor<double> A = Tensor<double>({4, 4});
 
-    A.Set({0,0},1);
-    A.Set({0,1},2);
-    A.Set({0,2},3);
-    A.Set({0,3},4);
+  A.Set({0, 0}, 1);
+  A.Set({0, 1}, 2);
+  A.Set({0, 2}, 3);
+  A.Set({0, 3}, 4);
 
-    A.Set({1,0},5);
-    A.Set({1,1},6);
-    A.Set({1,2},7);
-    A.Set({1,3},8);
+  A.Set({1, 0}, 5);
+  A.Set({1, 1}, 6);
+  A.Set({1, 2}, 7);
+  A.Set({1, 3}, 8);
 
-    A.Set({2,0},9);
-    A.Set({2,1},10);
-    A.Set({2,2},11);
-    A.Set({2,3},12);
+  A.Set({2, 0}, 9);
+  A.Set({2, 1}, 10);
+  A.Set({2, 2}, 11);
+  A.Set({2, 3}, 12);
 
-    A.Set({3,0},13);
-    A.Set({3,1},14);
-    A.Set({3,2},15);
-    A.Set({3,3},16);
+  A.Set({3, 0}, 13);
+  A.Set({3, 1}, 14);
+  A.Set({3, 2}, 15);
+  A.Set({3, 3}, 16);
 
-    std::cout<<ConditionalProbabilitiesDistance(A,1,2,0.5);
+  std::cout << ConditionalProbabilitiesDistance(A, 1, 2, 0.5);
 }
