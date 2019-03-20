@@ -514,7 +514,7 @@ void TextLoader<T>::GetData(typename TextLoader<T>::SizeType idx, T &ret)
   assert(p_.n_data_buffers == 1);
   SizeType sentence_idx = this->word_idx_sentence_idx.at(idx);
   SizeType word_idx     = this->GetWordOffsetFromWordIdx(idx);
-  ret.At(0)     = DataType(this->data_.at(sentence_idx).at(word_idx));
+  ret.At(0)             = DataType(this->data_.at(sentence_idx).at(word_idx));
 }
 
 template <typename T>

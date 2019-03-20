@@ -61,7 +61,7 @@ TYPED_TEST(TextDataLoaderTest, basic_loader_test)
   {
     std::pair<TypeParam, SizeType> output = loader.GetNext();
     cur_word = loader.VocabLookup(SizeType(double(output.first.At(0))));
-    
+
     ASSERT_EQ(cur_word, gt_input.at(j));
   }
 }
