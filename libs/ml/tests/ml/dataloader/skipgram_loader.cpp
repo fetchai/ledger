@@ -34,7 +34,7 @@ SkipGramTextParams<T> SetParams()
   SkipGramTextParams<T> ret;
 
   ret.n_data_buffers     = SizeType(2);  // input and context buffers
-  ret.max_sentences      = SizeType(1);  // maximum number of sentences to use
+  ret.max_sentences      = SizeType(2);  // maximum number of sentences to use
   ret.unigram_table      = false;        // unigram table for sampling negative training pairs
   ret.discard_frequent   = false;        // discard most frqeuent words
   ret.window_size        = SizeType(1);  // max size of context window one way

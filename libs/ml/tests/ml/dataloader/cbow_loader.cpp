@@ -33,12 +33,10 @@ CBoWTextParams<T> SetParams()
 
   CBoWTextParams<T> ret;
 
-  ret.n_data_buffers     = SizeType(2);  // input and context buffers
-  ret.max_sentences      = SizeType(1);  // maximum number of sentences to use
-  ret.unigram_table      = false;        // unigram table for sampling negative training pairs
-  ret.discard_frequent   = false;        // discard most frqeuent words
-  ret.window_size        = SizeType(1);  // max size of context window one way
-  ret.k_negative_samples = SizeType(0);  // number of negative examples to sample
+  ret.n_data_buffers   = SizeType(2);  // input and context buffers
+  ret.max_sentences    = SizeType(2);  // maximum number of sentences to use
+  ret.discard_frequent = false;        // discard most frqeuent words
+  ret.window_size      = SizeType(1);  // max size of context window one way
 
   return ret;
 }
@@ -65,40 +63,29 @@ TYPED_TEST(CBoWDataloaderTest, loader_test)
   CBoWLoader<TypeParam>     loader(p);
   loader.AddData(training_data);
 
-  std::vector<std::pair<std::string, std::string>> gt_input_context_pairs(
-      {std::pair<std::string, std::string>("this", "is"),
-       std::pair<std::string, std::string>("is", "this"),
-       std::pair<std::string, std::string>("is", "a"),
-       std::pair<std::string, std::string>("a", "is"),
-       std::pair<std::string, std::string>("a", "test"),
-       std::pair<std::string, std::string>("test", "a"),
-       std::pair<std::string, std::string>("test", "sentence"),
-       std::pair<std::string, std::string>("sentence", "test"),
-       std::pair<std::string, std::string>("sentence", "of"),
-       std::pair<std::string, std::string>("of", "sentence"),
-       std::pair<std::string, std::string>("of", "total"),
-       std::pair<std::string, std::string>("total", "of"),
-       std::pair<std::string, std::string>("total", "length"),
-       std::pair<std::string, std::string>("length", "total"),
-       std::pair<std::string, std::string>("length", "ten"),
-       std::pair<std::string, std::string>("ten", "length"),
-       std::pair<std::string, std::string>("ten", "words"),
-       std::pair<std::string, std::string>("words", "ten"),
-       std::pair<std::string, std::string>("is", "another"),
-       std::pair<std::string, std::string>("another", "is"),
-       std::pair<std::string, std::string>("another", "test"),
-       std::pair<std::string, std::string>("test", "another")});
+  std::vector<std::pair<std::string, std::string>> gt_left_right_pairs(
+      {std::pair<std::string, std::string>("this", "a"),
+       std::pair<std::string, std::string>("is", "test"),
+       std::pair<std::string, std::string>("a", "sentence"),
+       std::pair<std::string, std::string>("test", "of"),
+       std::pair<std::string, std::string>("sentence", "total"),
+       std::pair<std::string, std::string>("of", "length"),
+       std::pair<std::string, std::string>("total", "ten"),
+       std::pair<std::string, std::string>("length", "words"),
+       std::pair<std::string, std::string>("this", "another"),
+       std::pair<std::string, std::string>("is", "test"),
+       std::pair<std::string, std::string>("another", "sentence")});
 
-  TypeParam input_and_context;
+  TypeParam left_and_right;
   for (std::size_t j = 0; j < 1000; ++j)
   {
-    input_and_context = loader.GetNext().first;
+    left_and_right = loader.GetNext().first;
 
-    std::string input   = loader.VocabLookup(SizeType(double(input_and_context.At(0))));
-    std::string context = loader.VocabLookup(SizeType(double(input_and_context.At(1))));
+    std::string left  = loader.VocabLookup(SizeType(double(left_and_right.At(0))));
+    std::string right = loader.VocabLookup(SizeType(double(left_and_right.At(1))));
 
-    ASSERT_TRUE(std::find(gt_input_context_pairs.begin(), gt_input_context_pairs.end(),
-                          std::pair<std::string, std::string>(input, context)) !=
-                gt_input_context_pairs.end());
+    ASSERT_TRUE(std::find(gt_left_right_pairs.begin(), gt_left_right_pairs.end(),
+                          std::pair<std::string, std::string>(left, right)) !=
+                gt_left_right_pairs.end());
   }
 }

@@ -119,13 +119,8 @@ template <typename T>
 void SkipGramLoader<T>::GetData(SizeType idx, T &data_buffer)
 {
   std::vector<typename SkipGramLoader<T>::SizeType> lookup_idxs;
-  if (SelectValence())
-  {
-    lookup_idxs = GeneratePositive(idx);
-  }
-  {
-    lookup_idxs = GenerateNegative(idx);
-  }
+
+  lookup_idxs = SelectValence() ? GeneratePositive(idx) : GenerateNegative(idx);
 
   SizeType buffer_count = 0;
   for (SizeType j = 0; j < p_.n_data_buffers; ++j)
@@ -157,7 +152,7 @@ template <typename T>
 bool SkipGramLoader<T>::SelectValence()
 {
   double cur_val = this->lfg_.AsDouble();
-  return (cur_val < positive_threshold_);
+  return (cur_val <= positive_threshold_);
 }
 
 /**

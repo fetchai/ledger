@@ -512,7 +512,9 @@ template <typename T>
 void TextLoader<T>::GetData(typename TextLoader<T>::SizeType idx, T &ret)
 {
   assert(p_.n_data_buffers == 1);
-  ret.At(0) = typename T::Type(idx);
+  SizeType sentence_idx = this->word_idx_sentence_idx.at(idx);
+  SizeType word_idx     = this->GetWordOffsetFromWordIdx(idx);
+  ret.At(0)     = DataType(this->data_.at(sentence_idx).at(word_idx));
 }
 
 template <typename T>
@@ -577,7 +579,6 @@ bool TextLoader<T>::CheckEndOfSentence(std::string &word)
 template <typename T>
 std::vector<std::string> TextLoader<T>::GetAllTextFiles(std::string dir_name)
 {
-  std::cout << "dir_name.c_str(): " << dir_name.c_str() << std::endl;
   std::vector<std::string> ret;
   DIR *                    d;
   struct dirent *          ent;
