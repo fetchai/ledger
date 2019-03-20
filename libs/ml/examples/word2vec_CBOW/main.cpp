@@ -86,9 +86,9 @@ int main(int ac, char **av)
   p.n_data_buffers = CONTEXT_WINDOW_SIZE * 2;
   p.min_sentence_length =
       SizeType((CONTEXT_WINDOW_SIZE * 2) + 1);  // maximum number of sentences to use
-  p.max_sentences = SizeType(100000);           // maximum number of sentences to use
-  //  p.discard_frequent  = true;    // discard most frqeuent words
-  //  p.discard_threshold = 0.0001;  // controls how aggressively to discard frequent words
+  p.max_sentences     = SizeType(10000);        // maximum number of sentences to use
+  p.discard_frequent  = true;                   // discard most frqeuent words
+  p.discard_threshold = 0.01;  // controls how aggressively to discard frequent words
 
   fetch::ml::dataloaders::CBoWLoader<ArrayType> loader(p);
   for (int i(1); i < ac; ++i)
@@ -113,9 +113,10 @@ int main(int ac, char **av)
   unsigned int epoch(0);
   while (true)
   {
+    loader.Reset();
     while (!loader.IsDone())
     {
-      auto data = loader.GetNext();
+      auto data = loader.GetRandom();
 
       g.SetInput("Input", data.first);
       ArrayType predictions = g.Evaluate("Softmax");
@@ -155,7 +156,7 @@ int main(int ac, char **av)
     std::cout << "End of epoch " << epoch << std::endl;
 
     // Print KNN of word "one"
-    PrintKNN(loader, *g.StateDict().dict_["Embeddings"].weights_, "one", 6);
+    PrintKNN(loader, *g.StateDict().dict_["Embeddings"].weights_, "bother", 6);
 
     // Save model
     fetch::serializers::ByteArrayBuffer serializer;

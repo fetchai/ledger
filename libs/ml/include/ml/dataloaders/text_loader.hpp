@@ -197,7 +197,8 @@ bool TextLoader<T>::IsDone() const
 template <typename T>
 void TextLoader<T>::Reset()
 {
-  cursor_ = 0;
+  cursor_  = 0;
+  is_done_ = false;
 }
 
 /**
@@ -236,10 +237,6 @@ std::pair<T, typename TextLoader<T>::SizeType> TextLoader<T>::GetNext()
       Reset();
       is_done_ = true;
     }
-    else
-    {
-      is_done_ = false;
-    }
 
     bool valid_idx = CheckValidIndex(cursor_);
 
@@ -277,10 +274,6 @@ std::pair<T, typename TextLoader<T>::SizeType> TextLoader<T>::GetRandom()
       Reset();
       is_done_             = true;
       new_random_sequence_ = true;
-    }
-    else
-    {
-      is_done_ = false;
     }
 
     if (new_random_sequence_)

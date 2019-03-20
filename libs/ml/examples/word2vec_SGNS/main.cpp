@@ -95,7 +95,7 @@ void TestEmbeddings(Graph<ArrayType> const &g, std::string const &skip_gram_name
       sg_layer->GetEmbeddings(sg_layer);
 
   std::vector<std::pair<std::string, double>> output =
-      dl.GetKNN(embeddings->GetWeights(), "man", 3);
+      dl.GetKNN(embeddings->GetWeights(), "cold", 3);
 
   for (std::size_t j = 0; j < output.size(); ++j)
   {
