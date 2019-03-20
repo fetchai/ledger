@@ -277,7 +277,8 @@ std::pair<T, typename TextLoader<T>::SizeType> TextLoader<T>::GetRandom()
       Reset();
       is_done_             = true;
       new_random_sequence_ = true;
-    } else
+    }
+    else
     {
       is_done_ = false;
     }
