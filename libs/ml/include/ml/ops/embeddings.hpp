@@ -19,7 +19,6 @@
 
 #include "core/assert.hpp"
 #include "ml/ops/weights.hpp"
-
 #include <set>
 
 namespace fetch {
@@ -35,10 +34,15 @@ public:
   using ArrayPtrType = std::shared_ptr<ArrayType>;
   using SizeType     = typename ArrayType::SizeType;
 
-  Embeddings(unsigned int dataPoints, unsigned int dimensions)
+  Embeddings(SizeType dataPoints, SizeType dimensions)
   {
     ArrayType weights = ArrayType(std::vector<SizeType>({dataPoints, dimensions}));
-    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, 10, 10);
+    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, dataPoints, dimensions);
+    this->SetData(weights);
+  }
+
+  Embeddings(SizeType dataPoints, SizeType dimensions, ArrayType &weights)
+  {
     this->SetData(weights);
   }
 

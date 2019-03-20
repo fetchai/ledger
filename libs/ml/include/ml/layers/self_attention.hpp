@@ -82,7 +82,7 @@ public:
     std::string output = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
         name + "_OutputFC", {decoding}, in, out);
 
-    this->AddInputNodes(input);
+    this->AddInputNode(input);
     this->SetOutputNode(output);
   }
 

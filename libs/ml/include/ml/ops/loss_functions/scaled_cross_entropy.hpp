@@ -22,42 +22,56 @@
 #include <vector>
 
 #include "math/free_functions/fundamental_operators.hpp"
-#include "math/free_functions/ml/loss_functions/softmax_cross_entropy.hpp"
+#include "math/free_functions/ml/loss_functions/scaled_cross_entropy.hpp"
 
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class SoftmaxCrossEntropy
+class ScaledCrossEntropy
 {
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  SoftmaxCrossEntropy()          = default;
-  virtual ~SoftmaxCrossEntropy() = default;
+  ScaledCrossEntropy()          = default;
+  virtual ~ScaledCrossEntropy() = default;
 
   virtual typename ArrayType::Type Forward(std::vector<ArrayType> const &inputs)
   {
-    assert(inputs.size() == 2);
+    assert(inputs.size() == 3);
     assert(inputs[0].size() == inputs[1].size());
 
-    ArrayType result = fetch::math::SoftmaxCrossEntropyLoss(*inputs[0], *inputs[1]);
-    return result[0];
+    typename ArrayType::Type result =
+        fetch::math::ScaledCrossEntropyLoss(inputs[0], inputs[1], inputs[2]);
+
+    return result;
   }
 
-  virtual ArrayPtrType Backward(std::vector<ArrayType> const &inputs)
+  virtual ArrayType Backward(std::vector<ArrayType> const &inputs)
   {
     assert(inputs.size() == 2);
-    assert(inputs[0].size() == inputs[1].size());
+    assert(inputs[0].shape() == inputs[1].shape());
+    assert(inputs[0].shape().size() == 2 || inputs[0].shape().size() == 1);
 
-    ArrayType ret = fetch::math::Subtract(inputs[0], inputs[1]);
+    typename ArrayType::Type
+        n_classes;  // = static_cast<typename ArrayType::Type>(inputs[1].size());
+    if (inputs[0].shape().size() == 2)
+    {
+      n_classes = typename ArrayType::Type(inputs[0].shape()[1]);
+    }
+    else
+    {
+      n_classes = typename ArrayType::Type(inputs[0].size());
+    }
+    ArrayType ret = fetch::math::Divide(fetch::math::Subtract(inputs[0], inputs[1]), n_classes);
+
     return ret;
   }
 
-  static constexpr char const *DESCRIPTOR = "SoftmaxCrossEntropy";
+  static constexpr char const *DESCRIPTOR = "ScaledCrossEntropy";
 };
 
 }  // namespace ops

@@ -18,39 +18,37 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shapeless_array.hpp"
-#include "vectorise/memory/range.hpp"
-
+#include "math/free_functions/exponentiation/exponentiation.hpp"
+#include "math/free_functions/matrix_operations/matrix_operations.hpp"
 #include <cmath>
 
 namespace fetch {
 namespace math {
 namespace distance {
 
-template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::Type Euclidean(memory::VectorSlice<T, S> const &a,
-                                                          memory::VectorSlice<T, S> const &b)
+template <typename ArrayType>
+typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
 {
-  detailed_assert(a.size() == b.size());
-  using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
-  using Type                 = typename memory::VectorSlice<T, S>::Type;
+  assert(A.shape() == B.shape());
+  ArrayType tmp_array(A.shape());
 
-  Type dist =
-      a.in_parallel().SumReduce(memory::TrivialRange(0, a.size()),
-                                [](vector_register_type const &x, vector_register_type const &y) {
-                                  vector_register_type d = x - y;
-                                  return d * d;
-                                },
-                                b);
+  fetch::math::Subtract(A, B, tmp_array);
 
-  return std::sqrt(dist);
+  Square(tmp_array, tmp_array);
+
+  return fetch::math::Sum(tmp_array);
 }
 
-template <typename T, typename C>
-inline typename ShapelessArray<T, C>::Type Euclidean(ShapelessArray<T, C> const &a,
-                                                     ShapelessArray<T, C> const &b)
+template <typename ArrayType>
+typename ArrayType::Type Euclidean(ArrayType const &A, ArrayType const &B)
 {
-  return Euclidean(a.data(), b.data());
+  return Sqrt(SquareDistance(A, B));
+}
+
+template <typename ArrayType>
+typename ArrayType::Type NegativeSquareEuclidean(ArrayType const &A, ArrayType const &B)
+{
+  return -SquareDistance(A, B);
 }
 
 }  // namespace distance

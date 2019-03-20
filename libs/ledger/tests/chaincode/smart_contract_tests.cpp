@@ -21,7 +21,7 @@
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
-#include "ledger/state_sentinel.hpp"
+#include "ledger/state_adapter.hpp"
 
 #include "contract_test.hpp"
 #include "mock_storage_unit.hpp"
@@ -130,7 +130,7 @@ TEST_F(SmartContractTests, CheckSimpleContract)
     // from the action
     EXPECT_CALL(*storage_, Lock(expected_resource));
     EXPECT_CALL(*storage_, Get(expected_resource));
-    EXPECT_CALL(*storage_, Set(expected_resource, expected_value)).Times(2);
+    EXPECT_CALL(*storage_, Set(expected_resource, expected_value)).Times(1);
     EXPECT_CALL(*storage_, Unlock(expected_resource));
 
     // from the query
@@ -364,7 +364,7 @@ TEST_F(SmartContractTests, CheckParameterizedActionAndQuery)
     // from the action
     EXPECT_CALL(*storage_, Lock(expected_resource));
     EXPECT_CALL(*storage_, Get(expected_resource));
-    EXPECT_CALL(*storage_, Set(expected_resource, expected_value)).Times(2);
+    EXPECT_CALL(*storage_, Set(expected_resource, expected_value)).Times(1);
     EXPECT_CALL(*storage_, Unlock(expected_resource));
 
     // from the query

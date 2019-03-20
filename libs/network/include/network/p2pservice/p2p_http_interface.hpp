@@ -130,11 +130,6 @@ private:
     response["identity"] = fetch::byte_array::ToBase64(muddle_.identity().identifier());
     response["block"]    = fetch::byte_array::ToBase64(chain_.GetHeaviestBlockHash());
 
-    // TODO(private issue 532): Remove legacy API
-    response["i_am"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());
-    response["block_hex"] = fetch::byte_array::ToHex(chain_.GetHeaviestBlockHash());
-    response["i_am_hex"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
-
     return http::CreateJsonResponse(response);
   }
 
@@ -164,9 +159,6 @@ private:
   {
     Variant response          = Variant::Object();
     response["identityCache"] = GenerateIdentityCache();
-
-    // TODO(private issue 532): Remove legacy API
-    response["identity_cache"] = GenerateIdentityCache();
 
     return http::CreateJsonResponse(response);
   }
@@ -200,12 +192,6 @@ private:
     Variant response     = Variant::Object();
     response["identity"] = fetch::byte_array::ToBase64(muddle_.identity().identifier());
     response["trusts"]   = trust_list;
-
-    // TODO(private issue 532): Remove legacy API
-    response["i_am"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());
-    response["block"]     = fetch::byte_array::ToBase64(chain_.GetHeaviestBlockHash());
-    response["block_hex"] = fetch::byte_array::ToHex(chain_.GetHeaviestBlockHash());
-    response["i_am_hex"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
 
     return http::CreateJsonResponse(response);
   }
@@ -249,9 +235,10 @@ private:
     std::size_t block_idx{0};
     for (auto &b : blocks)
     {
-      // format the block number
-      auto block = Variant::Object();
+      Variant &block = block_list[block_idx++];
 
+      // format the block number
+      block                 = Variant::Object();
       block["hash"]         = byte_array::ToBase64(b->body.hash);
       block["previousHash"] = byte_array::ToBase64(b->body.previous_hash);
       block["merkleHash"]   = byte_array::ToBase64(b->body.merkle_hash);
@@ -259,53 +246,28 @@ private:
       block["miner"]        = byte_array::ToBase64(b->body.miner);
       block["blockNumber"]  = b->body.block_number;
 
-      // TODO(private issue 532): Remove legacy API
-      block["currentHash"] = byte_array::ToBase64(b->body.hash);
-
       if (include_transactions)
       {
         auto const &slices = b->body.slices;
 
-        Variant slice_list = Variant::Array(slices.size());
+        block["slices"]     = Variant::Array(slices.size());
+        Variant &slice_list = block["slices"];
 
         std::size_t slice_idx{0};
         for (auto const &slice : slices)
         {
-          Variant transaction_list = Variant::Array(slice.size());
+          slice_list[slice_idx]     = Variant::Array(slice.size());
+          Variant &transaction_list = slice_list[slice_idx];
 
           std::size_t tx_idx{0};
           for (auto const &transaction : slice)
           {
-            Variant tx_obj         = Variant::Object();
-            tx_obj["digest"]       = ToBase64(transaction.transaction_hash);
-            tx_obj["fee"]          = transaction.fee;
-            tx_obj["contractName"] = transaction.contract_name;
-
-            Variant resources_array = Variant::Array(transaction.resources.size());
-
-            std::size_t res_idx{0};
-            for (auto const &resource : transaction.resources)
-            {
-              Variant res_obj     = Variant::Object();
-              res_obj["resource"] = ToBase64(resource);
-              res_obj["lane"] =
-                  miner::MapResourceToLane(resource, transaction.contract_name, log2_num_lanes_);
-
-              resources_array[res_idx++] = res_obj;
-            }
-
-            tx_obj["resources"]        = resources_array;
-            transaction_list[tx_idx++] = tx_obj;
+            transaction_list[tx_idx++] = ToBase64(transaction.transaction_hash);
           }
 
-          slice_list[slice_idx++] = transaction_list;
+          ++slice_idx;
         }
-
-        block["slices"] = slice_list;
       }
-
-      // store the block in the array
-      block_list[block_idx++] = block;
     }
 
     return block_list;

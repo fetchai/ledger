@@ -17,29 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/standard_functions/abs.hpp"
-#include "math/meta/math_type_traits.hpp"
+#include "http/module.hpp"
 
 namespace fetch {
-namespace vm_modules {
+namespace ledger {
 
-/**
- * method for taking the absolute of a value
- */
-template <typename T>
-fetch::math::meta::IfIsMath<T, T> Abs(fetch::vm::VM *, T const &a)
+class StorageUnitInterface;
+
+class TxQueryHttpInterface : public http::HTTPModule
 {
-  T x = T(a);
-  fetch::math::Abs(x);
-  return x;
-}
+public:
+  // Construction / Destruction
+  TxQueryHttpInterface(StorageUnitInterface &storage_unit, uint32_t log2_num_lanes);
+  TxQueryHttpInterface(TxQueryHttpInterface const &) = delete;
+  TxQueryHttpInterface(TxQueryHttpInterface &&)      = delete;
+  ~TxQueryHttpInterface()                            = default;
 
-static void CreateAbs(std::shared_ptr<fetch::vm::Module> module)
-{
-  module->CreateFreeFunction<int32_t>("Abs", &Abs<int32_t>);
-  module->CreateFreeFunction<float_t>("Abs", &Abs<float_t>);
-  module->CreateFreeFunction<double_t>("Abs", &Abs<double_t>);
-}
+  // Operators
+  TxQueryHttpInterface &operator=(TxQueryHttpInterface const &) = delete;
+  TxQueryHttpInterface &operator=(TxQueryHttpInterface &&) = delete;
 
-}  // namespace vm_modules
+private:
+  StorageUnitInterface &storage_unit_;
+  uint32_t              log2_num_lanes_{0};
+};
+
+}  // namespace ledger
 }  // namespace fetch
