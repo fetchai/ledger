@@ -113,7 +113,6 @@ int main(int ac, char **av)
   unsigned int epoch(0);
   while (true)
   {
-    //    loader.Reset();
     while (!loader.IsDone())
     {
       auto data = loader.GetNext();

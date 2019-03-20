@@ -188,7 +188,7 @@ typename TextLoader<T>::SizeType TextLoader<T>::VocabSize() const
 template <typename T>
 bool TextLoader<T>::IsDone() const
 {
-  return cursor_ >= word_count_;
+  return is_done_;
 }
 
 /**
@@ -245,7 +245,6 @@ std::pair<T, typename TextLoader<T>::SizeType> TextLoader<T>::GetNext()
 
     if (valid_idx)
     {
-      is_done_  = false;
       not_found = false;
     }
     else
@@ -278,6 +277,9 @@ std::pair<T, typename TextLoader<T>::SizeType> TextLoader<T>::GetRandom()
       Reset();
       is_done_             = true;
       new_random_sequence_ = true;
+    } else
+    {
+      is_done_ = false;
     }
 
     if (new_random_sequence_)
@@ -286,14 +288,12 @@ std::pair<T, typename TextLoader<T>::SizeType> TextLoader<T>::GetRandom()
       std::iota(ran_idx_.begin(), ran_idx_.end(), 0);
       std::random_shuffle(ran_idx_.begin(), ran_idx_.end());
       new_random_sequence_ = false;
-      is_done_             = false;
     }
 
     bool valid_idx = CheckValidIndex(ran_idx_.at(cursor_));
 
     if (valid_idx)
     {
-      is_done_  = false;
       not_found = false;
     }
     else
