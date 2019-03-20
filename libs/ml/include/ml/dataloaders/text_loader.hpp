@@ -144,7 +144,7 @@ private:
   /// THESE METHODS NEED NOT  ///
   ///////////////////////////////
 
-  void                     StripPunctuationAndLower(std::string &word) const;
+  std::vector<std::string> StripPunctuationAndLower(std::string &word) const;
   bool                     CheckEndOfSentence(std::string &word);
   std::vector<std::string> GetAllTextFiles(std::string dir_name);
   void GetTextString(std::string const &training_data, std::string &full_training_text);
@@ -498,7 +498,7 @@ std::vector<std::pair<std::string, double>> TextLoader<T>::GetKNN(ArrayType cons
   }
   std::nth_element(distances.begin(), distances.begin() + k, distances.end(),
                    [](std::pair<SizeType, double> const &a, std::pair<SizeType, double> const &b) {
-                     return a.second < b.second;
+                     return a.second > b.second;
                    });
 
   std::vector<std::pair<std::string, double>> ret;
@@ -534,14 +534,42 @@ void TextLoader<T>::AdditionalPreProcess()
  * @param word
  */
 template <typename T>
-void TextLoader<T>::StripPunctuationAndLower(std::string &word) const
+std::vector<std::string> TextLoader<T>::StripPunctuationAndLower(std::string &word) const
 {
-  std::string result;
+  std::cout << "word: " << word << std::endl;
+  std::vector<std::string> ret;
+
+  // replace punct with space and lower case
+  SizeType word_idx = 0;
+  bool     new_word = true;
   for (auto &c : word)
   {
-    result.push_back(std::isalpha(c) ? (char)std::tolower(c) : ' ');
+    if (std::isalpha(c))
+    {
+      if (new_word)
+      {
+        ret.emplace_back("");
+        new_word = false;
+      }
+      ret.at(word_idx).push_back((char)std::tolower(c));
+    }
+    else if (c == '-')
+    {
+      new_word = true;
+      ++word_idx;
+    }
+    // non-hyphens are assumed to be punctuation that we should ignore
+    else
+    {
+    }
   }
-  word = result;
+
+  for (std::size_t j = 0; j < ret.size(); ++j)
+  {
+    std::cout << "ret.at(j): " << ret.at(j) << std::endl;
+  }
+
+  return ret;
 }
 
 /**
@@ -644,36 +672,35 @@ template <typename T>
 void TextLoader<T>::PreProcessWords(std::string &                          training_data,
                                     std::vector<std::vector<std::string>> &sentences)
 {
-  std::string word;
-  SizeType    sentence_count = 0;
-  sentences.push_back(std::vector<std::string>{});
+  std::string              word;
+  std::vector<std::string> parsed_word{};
+  SizeType                 sentence_count = 0;
+  bool                     new_sentence   = true;
   for (std::stringstream s(training_data); s >> word;)
   {
-    if (sentence_count_ + sentence_count > p_.max_sentences)
-    {
-      break;
-    }
-
-    // must check this before we strip punctuation
-    bool new_sentence = CheckEndOfSentence(word);
-
-    // strip punctuation & lower case
-    StripPunctuationAndLower(word);
-
-    sentences[sentence_count].push_back(word);
-
     // if new sentence
     if (new_sentence)
     {
-      sentences.push_back(std::vector<std::string>{});
       ++sentence_count;
-    }
-  }
 
-  // just in case the final word has a full stop or newline - we remove the empty vector
-  if (sentences.back().size() == 0)
-  {
-    sentences.pop_back();
+      if (sentence_count_ + sentence_count > p_.max_sentences)
+      {
+        break;
+      }
+
+      sentences.push_back(std::vector<std::string>{});
+    }
+
+    // must check this before we strip punctuation
+    new_sentence = CheckEndOfSentence(word);
+
+    // strip punctuation & lower case
+    parsed_word = StripPunctuationAndLower(word);
+
+    for (auto &cur_word : parsed_word)
+    {
+      sentences.at(sentence_count - 1).push_back(cur_word);
+    }
   }
 }
 

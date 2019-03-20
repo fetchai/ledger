@@ -37,9 +37,7 @@ public:
     : currentSentence_(0)
     , currentWord_(0)
     , window_size_(window_size)
-  {
-    vocab_[""] = 0;
-  }
+  {}
 
   virtual uint64_t Size() const
   {
@@ -119,41 +117,39 @@ public:
     return vocab_;
   }
 
-//private:
-//  std::vector<uint64_t> StringsToIndexes(std::vector<std::string> const &strings)
-//  {
-//    std::vector<uint64_t> indexes;
-//    if (strings.size() >= 2 * window_size_ + 1)  // Don't bother processing too short inputs
-//    {
-//      indexes.reserve(strings.size());
-//      for (std::string const &s : strings)
-//      {
-//        // +1 means that values will start at 1. 0 is reserved for UNKNOWN word
-//        auto value =
-//            vocab_.insert(std::pair<std::string, uint64_t>(s, (uint64_t)(vocab_.size() + 1)));
-//        indexes.push_back((*value.first).second);
-//      }
-//    }
-//    return indexes;
-//  }
-//
-//  std::vector<std::string> PreprocessString(std::string const &s)
-//  {
-//    std::string result;
-//    result.reserve(s.size());
-//    for (auto const &c : s)
-//    {
-//      result.push_back(std::isalpha(c) ? (char)std::tolower(c) : ' ');
-//    }
-//
-//    std::string              word;
-//    std::vector<std::string> words;
-//    for (std::stringstream ss(result); ss >> word;)
-//    {
-//      words.push_back(word);
-//    }
-//    return words;
-//  }
+private:
+  std::vector<uint64_t> StringsToIndexes(std::vector<std::string> const &strings)
+  {
+    std::vector<uint64_t> indexes;
+    if (strings.size() >= 2 * window_size_ + 1)  // Don't bother processing too short inputs
+    {
+      indexes.reserve(strings.size());
+      for (std::string const &s : strings)
+      {
+        auto value = vocab_.insert(std::pair<std::string, uint64_t>(s, (uint64_t)(vocab_.size())));
+        indexes.push_back((*value.first).second);
+      }
+    }
+    return indexes;
+  }
+
+  std::vector<std::string> PreprocessString(std::string const &s)
+  {
+    std::string result;
+    result.reserve(s.size());
+    for (auto const &c : s)
+    {
+      result.push_back(std::isalpha(c) ? (char)std::tolower(c) : ' ');
+    }
+
+    std::string              word;
+    std::vector<std::string> words;
+    for (std::stringstream ss(result); ss >> word;)
+    {
+      words.push_back(word);
+    }
+    return words;
+  }
 
 private:
   uint64_t                           currentSentence_;

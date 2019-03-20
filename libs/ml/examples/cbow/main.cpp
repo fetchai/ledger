@@ -36,8 +36,9 @@
 #define CONTEXT_WINDOW_SIZE 4  // Each side
 #define LEARNING_RATE 0.50f
 
-using DataType  = float;
+using DataType  = double;
 using ArrayType = fetch::math::Tensor<DataType>;
+using SizeType  = fetch::math::Tensor<DataType>::SizeType;
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
@@ -48,7 +49,7 @@ std::string readFile(std::string const &path)
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 }
 
-std::string findWordByIndex(std::map<std::string, uint64_t> const &vocab, uint64_t index)
+std::string findWordByIndex(std::map<std::string, SizeType> const &vocab, SizeType index)
 {
   for (auto const &kvp : vocab)
   {
@@ -60,11 +61,13 @@ std::string findWordByIndex(std::map<std::string, uint64_t> const &vocab, uint64
   return "";
 }
 
-void PrintKNN(fetch::ml::dataloaders::CBoWLoader<DataType> &loader, ArrayType const &embeddings, std::string const &word, unsigned int k)
+void PrintKNN(fetch::ml::dataloaders::CBoWLoader<ArrayType> &loader, ArrayType const &embeddings,
+              std::string const &word, unsigned int k)
 {
   std::vector<std::pair<std::string, double>> results = loader.GetKNN(embeddings, word, k);
+
   std::cout << "======================" << std::endl;
-  for (uint64_t i(0); i < k; ++i)
+  for (SizeType i(0); i < k; ++i)
   {
     std::cout << results.at(i).first << " -- " << results.at(i).second << std::endl;
   }
@@ -78,13 +81,22 @@ int main(int ac, char **av)
     return 1;
   }
 
-  fetch::ml::dataloaders::CBoWLoader<DataType> loader(CONTEXT_WINDOW_SIZE);
+  fetch::ml::dataloaders::TextParams<ArrayType> p;
+  p.window_size    = CONTEXT_WINDOW_SIZE;
+  p.n_data_buffers = CONTEXT_WINDOW_SIZE * 2;
+  p.min_sentence_length =
+      SizeType((CONTEXT_WINDOW_SIZE * 2) + 1);  // maximum number of sentences to use
+  p.max_sentences = SizeType(10000);            // maximum number of sentences to use
+  //  p.discard_frequent  = true;    // discard most frqeuent words
+  //  p.discard_threshold = 0.0001;  // controls how aggressively to discard frequent words
+
+  fetch::ml::dataloaders::CBoWLoader<ArrayType> loader(p);
   for (int i(1); i < ac; ++i)
   {
     loader.AddData(readFile(av[i]));
   }
 
-  unsigned int vocabSize = (unsigned int)loader.GetVocab().size();
+  unsigned int vocabSize = (unsigned int)loader.VocabSize();
   std::cout << "Vocab size : " << vocabSize << std::endl;
 
   fetch::ml::Graph<ArrayType> g;
@@ -96,40 +108,40 @@ int main(int ac, char **av)
 
   MeanSquareError<ArrayType> criterion;
   unsigned int               iteration(0);
-  float                      loss = 0;
+  double                     loss = 0;
 
   unsigned int epoch(0);
   while (true)
   {
-    loader.Reset();
+    //    loader.Reset();
     while (!loader.IsDone())
     {
-      auto input = loader.GetNext();
-      g.SetInput("Input", input.first);
+      auto data = loader.GetNext();
+      g.SetInput("Input", data.first);
       ArrayType predictions = g.Evaluate("Softmax");
       ArrayType groundTruth(predictions.shape());
-      groundTruth.At(input.second) = DataType(1);
+      groundTruth.At(data.second) = DataType(1);
 
-      uint64_t argmax(uint64_t(ArgMax(predictions)));
-      if (iteration % 100 == 0 || argmax == input.second)
+      SizeType argmax(SizeType(ArgMax(predictions)));
+      if (iteration % 100 == 0 || argmax == data.second)
       {
-        for (unsigned int i(0); i < CONTEXT_WINDOW_SIZE * 2 + 1; ++i)
+        for (unsigned int i(0); i < p.n_data_buffers + 1; ++i)
         {
-          if (i < CONTEXT_WINDOW_SIZE)
+          if (i < p.window_size)
           {
-            std::cout << findWordByIndex(loader.GetVocab(), uint64_t(input.first.At(i))) << " ";
+            std::cout << loader.VocabLookup(SizeType(data.first.At(i))) << " ";
           }
-          else if (i == CONTEXT_WINDOW_SIZE)
+          else if (i == p.window_size)
           {
-            std::cout << "[" << findWordByIndex(loader.GetVocab(), uint64_t(input.second)) << "] ";
+            std::cout << "[" << loader.VocabLookup(SizeType(data.first.At(p.window_size))) << "] ";
           }
           else
           {
-            std::cout << findWordByIndex(loader.GetVocab(), uint64_t(input.first.At(i - 1))) << " ";
+            std::cout << loader.VocabLookup(SizeType(data.first.At(i - 1))) << " ";
           }
         }
-        std::cout << "-- " << (argmax == input.second ? "\033[0;32m" : "\033[0;31m")
-                  << findWordByIndex(loader.GetVocab(), argmax) << "\033[0;0m" << std::endl;
+        std::cout << "-- " << (argmax == data.second ? "\033[0;32m" : "\033[0;31m")
+                  << loader.VocabLookup(argmax) << "\033[0;0m" << std::endl;
         std::cout << "Loss : " << loss << std::endl;
         loss = 0;
       }
@@ -145,13 +157,19 @@ int main(int ac, char **av)
     // Print KNN of word "one"
     PrintKNN(loader, *g.StateDict().dict_["Embeddings"].weights_, "one", 6);
 
-
     // Save model
     fetch::serializers::ByteArrayBuffer serializer;
     serializer << g.StateDict();
-    std::fstream file("./model.fba");  // fba = FetchByteArray
-    file << std::string(serializer.data());
-    file.close();
+    std::fstream file("./model.fba", std::fstream::out);  // fba = FetchByteArray
+    if (file)
+    {
+      file << std::string(serializer.data());
+      file.close();
+    }
+    else
+    {
+      std::cerr << "Can't open save file" << std::endl;
+    }
     epoch++;
   }
   return 0;

@@ -95,6 +95,7 @@ TYPED_TEST(SkipGramDataloaderTest, loader_test)
 
     std::string input   = loader.VocabLookup(SizeType(double(input_and_context.At(0))));
     std::string context = loader.VocabLookup(SizeType(double(input_and_context.At(1))));
+
     ASSERT_TRUE(std::find(gt_input_context_pairs.begin(), gt_input_context_pairs.end(),
                           std::pair<std::string, std::string>(input, context)) !=
                 gt_input_context_pairs.end());

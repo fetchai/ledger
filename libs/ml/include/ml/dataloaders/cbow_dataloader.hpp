@@ -24,17 +24,6 @@ namespace ml {
 namespace dataloaders {
 
 /**
- * additional params only relent for Skipgram models
- */
-template <typename T>
-struct CBoWTextParams : TextParams<T>
-{
-public:
-  CBoWTextParams()
-    : TextParams<T>(){};
-};
-
-/**
  * A custom dataloader for the Word2Vec example
  * @tparam T  tensor type
  */
@@ -46,24 +35,33 @@ class CBoWLoader : public TextLoader<T>
   using SizeType  = typename T::SizeType;
 
 private:
-  CBoWTextParams<T> p_;
+  TextParams<T> p_;
 
 public:
-  explicit CBoWLoader(std::string &data, CBoWTextParams<T> p, SizeType seed = 123456789);
+  explicit CBoWLoader(TextParams<T> p, SizeType seed = 123456789);
+  explicit CBoWLoader(std::string &data, TextParams<T> p, SizeType seed = 123456789);
 
 private:
   virtual std::vector<SizeType> GetData(SizeType idx) override;
-
 };
 
 template <typename T>
-CBoWLoader<T>::CBoWLoader(std::string &data, CBoWTextParams<T> p, SizeType seed)
+CBoWLoader<T>::CBoWLoader(TextParams<T> p, SizeType seed)
+  : TextLoader<T>(p, seed)
+  , p_(p)
+{
+
+  // sanity checks on parameters
+  assert(p_.window_size > 0);
+}
+
+template <typename T>
+CBoWLoader<T>::CBoWLoader(std::string &data, TextParams<T> p, SizeType seed)
   : TextLoader<T>(data, p, seed)
   , p_(p)
 {
 
-  // sanity checks on SkipGram parameters
-  assert(this->word_count_ > (p_.window_size * 2));
+  // sanity checks on parameters
   assert(p_.window_size > 0);
 }
 
@@ -94,7 +92,6 @@ std::vector<typename CBoWLoader<T>::SizeType> CBoWLoader<T>::GetData(SizeType id
 
   return ret;
 }
-
 
 }  // namespace dataloaders
 }  // namespace ml

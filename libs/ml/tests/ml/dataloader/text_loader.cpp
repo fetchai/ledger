@@ -108,6 +108,39 @@ TYPED_TEST(TextDataLoaderTest, adddata_loader_test)
   }
 }
 
+TYPED_TEST(TextDataLoaderTest, punctuation_test_loader_test)
+{
+  std::string training_data =
+      "This is a test sentence of total length ten words. This next sentence doesn't make things "
+      "so easy, because it has some punctuation, doesn't it? Indeed it does, and this-sentence "
+      "even-has hyphenations. And this last sentence is ignored.";
+
+  using SizeType = typename TypeParam::SizeType;
+
+  TextParams<TypeParam> p;
+  p.n_data_buffers      = 1;
+  p.max_sentences       = 3;
+  p.min_sentence_length = 0;
+  p.window_size         = 1;
+  p.discard_frequent    = false;
+
+  TextLoader<TypeParam>    loader(training_data, p);
+  std::vector<std::string> gt_input(
+      {"this",   "is",          "a",        "test", "sentence", "of",         "total",
+       "length", "ten",         "words",    "this", "next",     "sentence",   "doesnt",
+       "make",   "things",      "so",       "easy", "because",  "it",         "has",
+       "some",   "punctuation", "doesnt",   "it",   "indeed",   "it",         "does",
+       "and",    "this",        "sentence", "even", "has",      "hyphenation"});
+
+  std::string cur_word;
+  for (std::size_t j = 0; j < 20; ++j)
+  {
+    std::pair<TypeParam, SizeType> output = loader.GetNext();
+    cur_word = loader.VocabLookup(SizeType(double(output.first.At(0))));
+    ASSERT_TRUE(cur_word.compare(gt_input.at(j)) == 0);
+  }
+}
+
 TYPED_TEST(TextDataLoaderTest, discard_loader_test)
 {
   std::string training_data = "This is a test sentence of total length ten words.";

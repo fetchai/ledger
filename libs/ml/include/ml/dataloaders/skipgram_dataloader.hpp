@@ -88,6 +88,7 @@ SkipGramLoader<T>::SkipGramLoader(SkipGramTextParams<T> p, SizeType seed)
   : TextLoader<T>(p, seed)
   , p_(p)
 {
+  assert(p_.window_size > 0);
 }
 
 template <typename T>
@@ -97,7 +98,6 @@ SkipGramLoader<T>::SkipGramLoader(std::string &data, SkipGramTextParams<T> p, Si
 {
 
   // sanity checks on SkipGram parameters
-  assert(this->word_count_ > (p_.window_size * 2));
   assert(p_.window_size > 0);
 
   // set probabilities for sampling positive and negative training pairs
