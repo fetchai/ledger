@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/distance/cosine.hpp"
-#include "ml/dataloaders/skipgram_dataloader.hpp"
+#include "ml/dataloaders/word2vec_loaders/skipgram_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/skip_gram.hpp"
 #include "ml/ops/loss_functions/scaled_cross_entropy.hpp"
@@ -43,7 +43,7 @@ struct TrainingParams
   SizeType batch_size     = 1;         // training data batch size
   SizeType embedding_size = 64;        // dimension of embedding vec
   SizeType training_steps = 12800000;  // total number of training steps
-  double   learning_rate  = 0.01;      // alpha - the learning rate
+  double   learning_rate  = 0.001;     // alpha - the learning rate
 };
 
 template <typename T>
@@ -58,12 +58,12 @@ SkipGramTextParams<T> SetParams()
   ret.unigram_table_size = SizeType(10000000);  // size of unigram table for negative sampling
   ret.unigram_power      = 0.75;                // adjusted unigram distribution
 
-  ret.discard_frequent  = true;    // discard most frqeuent words
-  ret.discard_threshold = 0.0001;  // controls how aggressively to discard frequent words
+  ret.discard_frequent  = true;   // discard most frqeuent words
+  ret.discard_threshold = 0.005;  // controls how aggressively to discard frequent words
 
   ret.window_size         = SizeType(5);  // max size of context window one way
   ret.min_sentence_length = SizeType(4);  // maximum number of sentences to use
-  ret.k_negative_samples  = SizeType(1);  // number of negative examples to sample
+  ret.k_negative_samples  = SizeType(5);  // number of negative examples to sample
 
   return ret;
 }
@@ -128,7 +128,8 @@ int main(int argc, char **argv)
 
   // set up dataloader
   std::cout << "Setting up training data...: " << std::endl;
-  SkipGramLoader<ArrayType> dataloader(training_text, sp);
+  SkipGramLoader<ArrayType> dataloader(sp);
+  dataloader.AddData(training_text);
 
   ////////////////////////////////
   /// SETUP MODEL ARCHITECTURE ///

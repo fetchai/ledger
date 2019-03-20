@@ -19,7 +19,7 @@
 #include "core/fixed_point/fixed_point.hpp"
 #include "math/free_functions/matrix_operations/matrix_operations.hpp"
 #include "math/tensor.hpp"
-#include "ml/dataloaders/word2vec_loaders/skipgram_dataloader.hpp"
+#include "ml/dataloaders/word2vec_loaders/cbow_dataloader.hpp"
 #include <gtest/gtest.h>
 #include <string>
 
@@ -27,11 +27,11 @@ using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 
 template <typename T>
-SkipGramTextParams<T> SetParams()
+CBoWTextParams<T> SetParams()
 {
   using SizeType = typename T::SizeType;
 
-  SkipGramTextParams<T> ret;
+  CBoWTextParams<T> ret;
 
   ret.n_data_buffers     = SizeType(2);  // input and context buffers
   ret.max_sentences      = SizeType(1);  // maximum number of sentences to use
@@ -44,25 +44,25 @@ SkipGramTextParams<T> SetParams()
 }
 
 template <typename T>
-class SkipGramDataloaderTest : public ::testing::Test
+class CBoWDataloaderTest : public ::testing::Test
 {
 };
 
 using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
                                  fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(SkipGramDataloaderTest, MyTypes);
+TYPED_TEST_CASE(CBoWDataloaderTest, MyTypes);
 
-TYPED_TEST(SkipGramDataloaderTest, loader_test)
+TYPED_TEST(CBoWDataloaderTest, loader_test)
 {
 
   std::string training_data =
       "This is a test sentence of total length ten words. This is another test sentence of total "
       "length ten words.";
 
-  using SizeType                  = typename TypeParam::SizeType;
-  SkipGramTextParams<TypeParam> p = SetParams<TypeParam>();
-  SkipGramLoader<TypeParam>     loader(p);
+  using SizeType              = typename TypeParam::SizeType;
+  CBoWTextParams<TypeParam> p = SetParams<TypeParam>();
+  CBoWLoader<TypeParam>     loader(p);
   loader.AddData(training_data);
 
   std::vector<std::pair<std::string, std::string>> gt_input_context_pairs(

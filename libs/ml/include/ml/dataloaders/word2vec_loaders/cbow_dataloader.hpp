@@ -24,6 +24,17 @@ namespace ml {
 namespace dataloaders {
 
 /**
+ * additional params only relent for Skipgram models
+ */
+template <typename T>
+struct CBoWTextParams : TextParams<T>
+{
+public:
+  CBoWTextParams()
+    : TextParams<T>(true){};
+};
+
+/**
  * A custom dataloader for the Word2Vec example
  * @tparam T  tensor type
  */
@@ -35,29 +46,19 @@ class CBoWLoader : public TextLoader<T>
   using SizeType  = typename T::SizeType;
 
 private:
-  TextParams<T> p_;
+  CBoWTextParams<T> p_;
 
 public:
-  explicit CBoWLoader(TextParams<T> p, SizeType seed = 123456789);
-  explicit CBoWLoader(std::string &data, TextParams<T> p, SizeType seed = 123456789);
+  explicit CBoWLoader(CBoWTextParams<T> p, SizeType seed = 123456789);
 
 private:
-  virtual std::vector<SizeType> GetData(SizeType idx) override;
+  virtual void     GetData(SizeType idx, ArrayType &ret) override;
+  virtual SizeType GetLabel(SizeType idx) override;
 };
 
 template <typename T>
-CBoWLoader<T>::CBoWLoader(TextParams<T> p, SizeType seed)
+CBoWLoader<T>::CBoWLoader(CBoWTextParams<T> p, SizeType seed)
   : TextLoader<T>(p, seed)
-  , p_(p)
-{
-
-  // sanity checks on parameters
-  assert(p_.window_size > 0);
-}
-
-template <typename T>
-CBoWLoader<T>::CBoWLoader(std::string &data, TextParams<T> p, SizeType seed)
-  : TextLoader<T>(data, p, seed)
   , p_(p)
 {
 
@@ -71,26 +72,34 @@ CBoWLoader<T>::CBoWLoader(std::string &data, TextParams<T> p, SizeType seed)
  * @return
  */
 template <typename T>
-std::vector<typename CBoWLoader<T>::SizeType> CBoWLoader<T>::GetData(SizeType idx)
+void CBoWLoader<T>::GetData(SizeType idx, T &ret)
 {
-  std::vector<typename CBoWLoader<T>::SizeType> ret{};
-
   // the data assignment - left window
+  SizeType buffer_count = 0;
   for (SizeType i = idx - p_.window_size; i < idx; ++i)
   {
-    ret.emplace_back(i);
+    SizeType sentence_idx = this->word_idx_sentence_idx.at(i);
+    SizeType word_idx     = this->GetWordOffsetFromWordIdx(i);
+    ret.At(buffer_count)  = DataType(this->data_.at(sentence_idx).at(word_idx));
+    ++buffer_count;
   }
 
-  // the data assignment - right window
+  // the data assignment - left window
   for (SizeType i = idx + 1; i < idx + p_.window_size + 1; ++i)
   {
-    ret.emplace_back(i);
+    SizeType sentence_idx = this->word_idx_sentence_idx.at(i);
+    SizeType word_idx     = this->GetWordOffsetFromWordIdx(i);
+    ret.At(buffer_count)  = DataType(this->data_.at(sentence_idx).at(word_idx));
+    ++buffer_count;
   }
+}
 
-  // the label assignment
-  ret.emplace_back(idx);
-
-  return ret;
+template <typename T>
+typename CBoWLoader<T>::SizeType CBoWLoader<T>::GetLabel(SizeType idx)
+{
+  SizeType sentence_idx = this->word_idx_sentence_idx.at(idx);
+  SizeType word_idx     = this->GetWordOffsetFromWordIdx(idx);
+  return CBoWLoader<T>::SizeType(DataType(this->data_.at(sentence_idx).at(word_idx)));
 }
 
 }  // namespace dataloaders

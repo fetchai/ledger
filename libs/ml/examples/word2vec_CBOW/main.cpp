@@ -22,7 +22,7 @@
 #include "math/free_functions/matrix_operations/matrix_operations.hpp"
 #include "math/tensor.hpp"
 
-#include "ml/dataloaders/cbow_dataloader.hpp"
+#include "ml/dataloaders/word2vec_loaders/cbow_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/softmax.hpp"
@@ -81,12 +81,12 @@ int main(int ac, char **av)
     return 1;
   }
 
-  fetch::ml::dataloaders::TextParams<ArrayType> p;
+  fetch::ml::dataloaders::CBoWTextParams<ArrayType> p;
   p.window_size    = CONTEXT_WINDOW_SIZE;
   p.n_data_buffers = CONTEXT_WINDOW_SIZE * 2;
   p.min_sentence_length =
       SizeType((CONTEXT_WINDOW_SIZE * 2) + 1);  // maximum number of sentences to use
-  p.max_sentences = SizeType(10000);            // maximum number of sentences to use
+  p.max_sentences = SizeType(100000);           // maximum number of sentences to use
   //  p.discard_frequent  = true;    // discard most frqeuent words
   //  p.discard_threshold = 0.0001;  // controls how aggressively to discard frequent words
 
@@ -117,6 +117,7 @@ int main(int ac, char **av)
     while (!loader.IsDone())
     {
       auto data = loader.GetNext();
+
       g.SetInput("Input", data.first);
       ArrayType predictions = g.Evaluate("Softmax");
       ArrayType groundTruth(predictions.shape());
@@ -133,7 +134,7 @@ int main(int ac, char **av)
           }
           else if (i == p.window_size)
           {
-            std::cout << "[" << loader.VocabLookup(SizeType(data.first.At(p.window_size))) << "] ";
+            std::cout << "[" << loader.VocabLookup(SizeType(data.second)) << "] ";
           }
           else
           {

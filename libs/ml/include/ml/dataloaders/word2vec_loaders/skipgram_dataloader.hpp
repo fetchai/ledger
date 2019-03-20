@@ -32,7 +32,7 @@ struct SkipGramTextParams : TextParams<T>
 {
 public:
   SkipGramTextParams()
-    : TextParams<T>(){};
+    : TextParams<T>(false){};
 
   using SizeType              = typename TextParams<T>::SizeType;
   SizeType k_negative_samples = 0;  // # negative samples per positive training pair
@@ -68,19 +68,25 @@ private:
 
   double positive_threshold_ = 0.0;
 
+  // current label for sampling
+  SizeType cur_label_ = 0;
+
 public:
   SkipGramLoader(SkipGramTextParams<T> p, SizeType seed = 123456789);
   SkipGramLoader(std::string &data, SkipGramTextParams<T> p, SizeType seed = 123456789);
 
+  virtual void AddData(std::string const &training_data) override;
+
 private:
-  virtual std::vector<SizeType> GetData(SizeType idx) override;
-  virtual void                  AdditionalPreProcess() override;
-  void                          BuildUnigramTable();
-  bool                          SelectValence();
-  std::vector<SizeType>         GeneratePositive(SizeType idx);
-  std::vector<SizeType>         GenerateNegative(SizeType idx);
-  SizeType                      SelectNegativeContextWord(SizeType idx);
-  SizeType                      SelectContextPosition(SizeType idx);
+  virtual void     GetData(SizeType idx, ArrayType &ret) override;
+  virtual SizeType GetLabel(SizeType idx) override;
+
+  void                  BuildUnigramTable();
+  bool                  SelectValence();
+  std::vector<SizeType> GeneratePositive(SizeType idx);
+  std::vector<SizeType> GenerateNegative(SizeType idx);
+  SizeType              SelectNegativeContextWord(SizeType idx);
+  SizeType              SelectContextPosition(SizeType idx);
   bool WindowPositionCheck(SizeType target_pos, SizeType context_pos, SizeType sentence_len) const;
 };
 template <typename T>
@@ -89,13 +95,6 @@ SkipGramLoader<T>::SkipGramLoader(SkipGramTextParams<T> p, SizeType seed)
   , p_(p)
 {
   assert(p_.window_size > 0);
-}
-
-template <typename T>
-SkipGramLoader<T>::SkipGramLoader(std::string &data, SkipGramTextParams<T> p, SizeType seed)
-  : TextLoader<T>(data, p, seed)
-  , p_(p)
-{
 
   // sanity checks on SkipGram parameters
   assert(p_.window_size > 0);
@@ -117,15 +116,38 @@ SkipGramLoader<T>::SkipGramLoader(std::string &data, SkipGramTextParams<T> p, Si
  * @return
  */
 template <typename T>
-std::vector<typename SkipGramLoader<T>::SizeType> SkipGramLoader<T>::GetData(SizeType idx)
+void SkipGramLoader<T>::GetData(SizeType idx, T &data_buffer)
 {
+  std::vector<typename SkipGramLoader<T>::SizeType> lookup_idxs;
   if (SelectValence())
   {
-    return GeneratePositive(idx);
+    lookup_idxs = GeneratePositive(idx);
   }
   {
-    return GenerateNegative(idx);
+    lookup_idxs = GenerateNegative(idx);
   }
+
+  SizeType buffer_count = 0;
+  for (SizeType j = 0; j < p_.n_data_buffers; ++j)
+  {
+    SizeType sentence_idx = this->word_idx_sentence_idx.at(lookup_idxs.at(buffer_count));
+    SizeType word_idx     = this->GetWordOffsetFromWordIdx(lookup_idxs.at(buffer_count));
+    data_buffer.At(j)     = DataType(this->data_.at(sentence_idx).at(word_idx));
+    ++buffer_count;
+  }
+
+  cur_label_ = lookup_idxs.at(p_.n_data_buffers);
+}
+
+/**
+ * get a single training pair from a word index
+ * @param idx
+ * @return
+ */
+template <typename T>
+typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::GetLabel(SizeType idx)
+{
+  return cur_label_;
 }
 
 /**
@@ -297,12 +319,15 @@ bool SkipGramLoader<T>::WindowPositionCheck(SizeType target_pos, SizeType contex
 }
 
 /**
- * For skipgram we need only one piece of additional pre-processing, to build the unigram table
+ * For skipgram we need to build the unigram table as well
  * @tparam T
  */
 template <typename T>
-void SkipGramLoader<T>::AdditionalPreProcess()
+void SkipGramLoader<T>::AddData(std::string const &training_data)
 {
+  // ordinary pre-processing
+  TextLoader<T>::AddData(training_data);
+
   BuildUnigramTable();
 }
 
@@ -314,6 +339,8 @@ void SkipGramLoader<T>::BuildUnigramTable()
 {
   if (p_.unigram_table)
   {
+    unigram_table_.resize(p_.unigram_table_size);
+
     // calculate adjusted word frequencies
     double sum_adj_vocab = 0.0;
     double cur_vocab_freq;
@@ -342,7 +369,7 @@ void SkipGramLoader<T>::BuildUnigramTable()
 
       for (SizeType k = 0; k < n_rows; ++k)
       {
-        unigram_table_[cur_idx] = e.second.at(0);
+        unigram_table_.at(cur_idx) = e.second.at(0);
         ++cur_idx;
       }
     }

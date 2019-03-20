@@ -43,12 +43,15 @@ struct TextParams
 public:
   using SizeType = typename T::SizeType;
 
-  TextParams(){};
+  TextParams(bool fw = false)
+    : full_window(fw){};
 
   SizeType n_data_buffers      = 0;  // number of data points to return when called
   SizeType max_sentences       = 0;  // maximum number of sentences in training set
   SizeType min_sentence_length = 0;  // minimum number of words in a sentence
   SizeType window_size         = 0;  // the size of the context window (one-sided)
+
+  bool full_window = false;  // whether we may only index words with a full window either side
 
   // optional processing
   bool discard_frequent = false;  // discard frequent words
@@ -69,8 +72,7 @@ public:
   using DataType  = typename T::Type;
   using SizeType  = typename T::SizeType;
 
-  TextLoader(TextParams<T> const &p, SizeType seed);
-  TextLoader(std::string &data, TextParams<ArrayType> const &p, SizeType seed = 123456789);
+  TextLoader(TextParams<ArrayType> const &p, SizeType seed = 123456789);
 
   virtual SizeType               Size() const;
   SizeType                       VocabSize() const;
@@ -79,9 +81,10 @@ public:
   virtual std::pair<T, SizeType> GetAtIndex(SizeType idx);
   virtual std::pair<T, SizeType> GetNext();
   std::pair<T, SizeType>         GetRandom();
-  SizeType                       VocabLookup(std::string const &word) const;
-  std::string                    VocabLookup(SizeType const idx) const;
-  SizeType                       GetDiscardCount();
+
+  SizeType    VocabLookup(std::string const &word) const;
+  std::string VocabLookup(SizeType const idx) const;
+  SizeType    GetDiscardCount();
 
   std::vector<std::pair<std::string, SizeType>> BottomKVocab(SizeType k);
   std::vector<std::pair<std::string, SizeType>> TopKVocab(SizeType k);
@@ -90,7 +93,7 @@ public:
   std::vector<SizeType> GetSentenceFromWordIdx(SizeType word_idx);
   SizeType              GetWordOffsetFromWordIdx(SizeType word_idx);
 
-  void                                        AddData(std::string const &training_data);
+  virtual void                                AddData(std::string const &training_data);
   std::vector<std::pair<std::string, double>> GetKNN(ArrayType const &  embeddings,
                                                      std::string const &word, unsigned int k) const;
 
@@ -98,11 +101,9 @@ protected:
   // training data parsing containers
   SizeType                                               size_ = 0;  // # training pairs
   std::unordered_map<std::string, std::vector<SizeType>> vocab_;  // full unique vocab + frequencies
-  //  std::unordered_map<SizeType, std::string> reverse_vocab_;    // full unique vocab
-  //  std::unordered_map<std::string, SizeType> vocab_frequency_;  // word frequencies
-  std::vector<double>                adj_vocab_frequency_;  // word frequencies
-  std::vector<std::vector<SizeType>> data_;                 // all training data by sentence
-  std::vector<std::vector<SizeType>> discards_;             // record of discarded words
+  std::vector<double>                                    adj_vocab_frequency_;  // word frequencies
+  std::vector<std::vector<SizeType>>                     data_;  // all training data by sentence
+  std::vector<std::vector<SizeType>>                     discards_;  // record of discarded words
   SizeType discard_sentence_idx_ = 0;  // keeps track of sentences already having discard applied
 
   // used for iterating through all examples incrementally
@@ -132,23 +133,17 @@ protected:
   fetch::random::LaggedFibonacciGenerator<>  lfg_;
   fetch::random::LinearCongruentialGenerator lcg_;
 
+  // should be overwridden when inheriting from text loader
+  virtual void     GetData(SizeType idx, ArrayType &ret);
+  virtual SizeType GetLabel(SizeType idx);
+
 private:
-  /////////////////////////////////////////////////////////////////////
-  /// THESE METHODS MUST BE OVERWRIDDEN TO INHERIT FROM TEXT LOADER ///
-  /////////////////////////////////////////////////////////////////////
-
-  virtual std::vector<SizeType> GetData(SizeType idx);
-  virtual void                  AdditionalPreProcess();
-
-  ///////////////////////////////
-  /// THESE METHODS NEED NOT  ///
-  ///////////////////////////////
-
+  void                     ProcessTrainingData(std::string &training_data);
+  bool                     CheckValidIndex(SizeType idx);
   std::vector<std::string> StripPunctuationAndLower(std::string &word) const;
   bool                     CheckEndOfSentence(std::string &word);
   std::vector<std::string> GetAllTextFiles(std::string dir_name);
   void GetTextString(std::string const &training_data, std::string &full_training_text);
-  void ProcessTrainingData(std::string &training_data);
   void PreProcessWords(std::string &                          training_data,
                        std::vector<std::vector<std::string>> &sentences);
   void BuildVocab(std::vector<std::vector<std::string>> &sentences);
@@ -165,19 +160,6 @@ TextLoader<T>::TextLoader(TextParams<T> const &p, SizeType seed)
   , lcg_(seed)
 {
   data_buffers_.resize(p_.n_data_buffers);
-}
-
-template <typename T>
-TextLoader<T>::TextLoader(std::string &data, TextParams<T> const &p, SizeType seed)
-  : cursor_(0)
-  , p_(p)
-  , lfg_(seed)
-  , lcg_(seed)
-{
-  data_buffers_.resize(p_.n_data_buffers);
-
-  // set up training dataset
-  AddData(data);
 }
 
 /**
@@ -226,26 +208,16 @@ void TextLoader<T>::Reset()
 template <typename T>
 std::pair<T, typename TextLoader<T>::SizeType> TextLoader<T>::GetAtIndex(SizeType idx)
 {
-  T full_buffer(std::vector<SizeType>({1, p_.n_data_buffers}));
-
   // pull data from multiple data buffers into single output buffer
-  std::vector<SizeType> buffer_idxs = GetData(idx);
+  T data_buffer(std::vector<SizeType>({1, p_.n_data_buffers}));
+  GetData(idx, data_buffer);
 
-  assert(buffer_idxs.size() == (p_.n_data_buffers + 1));  // 1 extra for the label
+  SizeType label;
+  label = GetLabel(idx);
 
-  SizeType buffer_count = 0;
-  for (SizeType j = 0; j < p_.n_data_buffers; ++j)
-  {
-    SizeType sentence_idx = word_idx_sentence_idx[buffer_idxs.at(buffer_count)];
-    SizeType word_idx     = GetWordOffsetFromWordIdx(buffer_idxs.at(buffer_count));
-    full_buffer.At(j)     = DataType(data_.at(sentence_idx).at(word_idx));
-    ++buffer_count;
-  }
-
-  SizeType label = buffer_idxs.at(p_.n_data_buffers);
   cursor_++;
 
-  return std::make_pair(full_buffer, label);
+  return std::make_pair(data_buffer, label);
 }
 
 /**
@@ -264,26 +236,21 @@ std::pair<T, typename TextLoader<T>::SizeType> TextLoader<T>::GetNext()
       Reset();
       is_done_ = true;
     }
-
-    if (p_.discard_frequent)
-    {
-      SizeType sentence_idx = GetSentenceIdxFromWordIdx(cursor_);
-      SizeType word_offset  = GetWordOffsetFromWordIdx(cursor_);
-
-      if (!(discards_.at(sentence_idx).at(word_offset)))
-      {
-        is_done_  = false;
-        not_found = false;
-      }
-      else
-      {
-        ++cursor_;
-      }
-    }
     else
+    {
+      is_done_ = false;
+    }
+
+    bool valid_idx = CheckValidIndex(cursor_);
+
+    if (valid_idx)
     {
       is_done_  = false;
       not_found = false;
+    }
+    else
+    {
+      ++cursor_;
     }
   }
 
@@ -299,6 +266,11 @@ std::pair<T, typename TextLoader<T>::SizeType> TextLoader<T>::GetRandom()
 {
   // loop until we find a non-discarded data point
   bool not_found = true;
+  if (ran_idx_.size() == 0)
+  {
+    new_random_sequence_ = true;
+  }
+
   while (not_found)
   {
     if (cursor_ > vocab_.size())
@@ -308,39 +280,62 @@ std::pair<T, typename TextLoader<T>::SizeType> TextLoader<T>::GetRandom()
       new_random_sequence_ = true;
     }
 
-    SizeType sentence_idx = GetSentenceIdxFromWordIdx(cursor_);
-    SizeType word_offset  = GetWordOffsetFromWordIdx(cursor_);
-    if (p_.discard_frequent)
+    if (new_random_sequence_)
     {
-      if (!(discards_.at(sentence_idx).at(word_offset)))
-      {
-        is_done_  = false;
-        not_found = false;
-      }
-      else
-      {
-        ++cursor_;
-      }
+      ran_idx_ = std::vector<SizeType>(Size());
+      std::iota(ran_idx_.begin(), ran_idx_.end(), 0);
+      std::random_shuffle(ran_idx_.begin(), ran_idx_.end());
+      new_random_sequence_ = false;
+      is_done_             = false;
     }
-    else
+
+    bool valid_idx = CheckValidIndex(ran_idx_.at(cursor_));
+
+    if (valid_idx)
     {
       is_done_  = false;
       not_found = false;
     }
-  }
-
-  if (new_random_sequence_)
-  {
-    ran_idx_ = std::vector<SizeType>(Size());
-    std::iota(ran_idx_.begin(), ran_idx_.end(), 0);
-    std::random_shuffle(ran_idx_.begin(), ran_idx_.end());
-    new_random_sequence_ = false;
-    is_done_             = false;
+    else
+    {
+      ++cursor_;
+    }
   }
 
   return GetAtIndex(ran_idx_.at(cursor_));
 }
 
+/**
+ * checks if a data point may be indexed to create a training pair
+ * @return
+ */
+template <typename T>
+bool TextLoader<T>::CheckValidIndex(SizeType idx)
+{
+  SizeType sentence_idx = GetSentenceIdxFromWordIdx(idx);
+  SizeType word_offset  = GetWordOffsetFromWordIdx(idx);
+  bool     valid_idx    = true;
+
+  // may only choose indices with a full window either side
+  if (p_.full_window)
+  {
+    bool left_window  = (int(word_offset) - int(p_.window_size) >= 0);
+    bool right_window = (word_offset + p_.window_size < data_.at(sentence_idx).size());
+    if (!(left_window && right_window))
+    {
+      valid_idx = false;
+    }
+  }
+
+  if (p_.discard_frequent)
+  {
+    if (discards_.at(sentence_idx).at(word_offset))
+    {
+      valid_idx = false;
+    }
+  }
+  return valid_idx;
+}
 /**
  * lookup a vocab index for a word
  * @param idx
@@ -408,7 +403,7 @@ template <typename T>
 typename TextLoader<T>::SizeType TextLoader<T>::GetSentenceIdxFromWordIdx(
     typename TextLoader<T>::SizeType word_idx)
 {
-  return word_idx_sentence_idx[word_idx];
+  return word_idx_sentence_idx.at(word_idx);
 }
 
 /**
@@ -514,20 +509,17 @@ std::vector<std::pair<std::string, double>> TextLoader<T>::GetKNN(ArrayType cons
  * @param training_data
  */
 template <typename T>
-std::vector<typename TextLoader<T>::SizeType> TextLoader<T>::GetData(
-    typename TextLoader<T>::SizeType idx)
+void TextLoader<T>::GetData(typename TextLoader<T>::SizeType idx, T &ret)
 {
   assert(p_.n_data_buffers == 1);
-  return {idx, 1};
+  ret.At(0) = typename T::Type(idx);
 }
 
-/**
- * empty implementation allows TextLoader to be non-abstract
- * @return
- */
 template <typename T>
-void TextLoader<T>::AdditionalPreProcess()
-{}
+typename TextLoader<T>::SizeType TextLoader<T>::GetLabel(typename TextLoader<T>::SizeType idx)
+{
+  return 1;
+}
 
 /**
  * helper for stripping punctuation from words
@@ -536,7 +528,6 @@ void TextLoader<T>::AdditionalPreProcess()
 template <typename T>
 std::vector<std::string> TextLoader<T>::StripPunctuationAndLower(std::string &word) const
 {
-  std::cout << "word: " << word << std::endl;
   std::vector<std::string> ret;
 
   // replace punct with space and lower case
@@ -549,24 +540,19 @@ std::vector<std::string> TextLoader<T>::StripPunctuationAndLower(std::string &wo
       if (new_word)
       {
         ret.emplace_back("");
+        ++word_idx;
         new_word = false;
       }
-      ret.at(word_idx).push_back((char)std::tolower(c));
+      ret.at(word_idx - 1).push_back((char)std::tolower(c));
     }
     else if (c == '-')
     {
       new_word = true;
-      ++word_idx;
     }
     // non-hyphens are assumed to be punctuation that we should ignore
     else
     {
     }
-  }
-
-  for (std::size_t j = 0; j < ret.size(); ++j)
-  {
-    std::cout << "ret.at(j): " << ret.at(j) << std::endl;
   }
 
   return ret;
@@ -591,6 +577,7 @@ bool TextLoader<T>::CheckEndOfSentence(std::string &word)
 template <typename T>
 std::vector<std::string> TextLoader<T>::GetAllTextFiles(std::string dir_name)
 {
+  std::cout << "dir_name.c_str(): " << dir_name.c_str() << std::endl;
   std::vector<std::string> ret;
   DIR *                    d;
   struct dirent *          ent;
@@ -600,6 +587,7 @@ std::vector<std::string> TextLoader<T>::GetAllTextFiles(std::string dir_name)
   {
     while ((ent = readdir(d)) != NULL)
     {
+      strtok(ent->d_name, ".");
       p1 = strtok(NULL, ".");
       if (p1 != NULL)
       {
@@ -659,9 +647,6 @@ void TextLoader<T>::ProcessTrainingData(std::string &training_data)
 
   // discard words randomly according to word frequency
   DiscardFrequent(sentences);
-
-  // build unigram table used for negative sampling
-  AdditionalPreProcess();
 }
 
 /**

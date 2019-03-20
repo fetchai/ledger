@@ -49,7 +49,8 @@ TYPED_TEST(TextDataLoaderTest, basic_loader_test)
   p.window_size         = 1;
   p.discard_frequent    = false;
 
-  TextLoader<TypeParam> loader(training_data, p);
+  TextLoader<TypeParam> loader(p);
+  loader.AddData(training_data);
 
   std::vector<std::string> gt_input(
       {"this", "is", "a", "test", "sentence", "of", "total", "length", "ten", "words",
@@ -77,7 +78,8 @@ TYPED_TEST(TextDataLoaderTest, adddata_loader_test)
   p.window_size         = 1;
   p.discard_frequent    = false;
 
-  TextLoader<TypeParam> loader(training_data, p);
+  TextLoader<TypeParam> loader(p);
+  loader.AddData(training_data);
 
   std::vector<std::string> gt_input(
       {"this", "is", "a", "test", "sentence", "of", "total", "length", "ten", "words",
@@ -124,7 +126,9 @@ TYPED_TEST(TextDataLoaderTest, punctuation_test_loader_test)
   p.window_size         = 1;
   p.discard_frequent    = false;
 
-  TextLoader<TypeParam>    loader(training_data, p);
+  TextLoader<TypeParam> loader(p);
+  loader.AddData(training_data);
+
   std::vector<std::string> gt_input(
       {"this",   "is",          "a",        "test", "sentence", "of",         "total",
        "length", "ten",         "words",    "this", "next",     "sentence",   "doesnt",
@@ -154,7 +158,8 @@ TYPED_TEST(TextDataLoaderTest, discard_loader_test)
   p.discard_frequent  = true;
   p.discard_threshold = 0.000000001;
 
-  TextLoader<TypeParam> loader(training_data, p);
+  TextLoader<TypeParam> loader(p);
+  loader.AddData(training_data);
 
   // compare with vocab_size - 1 because "UNK" is always in the vocab
   ASSERT_TRUE(loader.GetDiscardCount() == (loader.VocabSize() - 1));
