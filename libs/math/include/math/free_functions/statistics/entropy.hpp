@@ -27,7 +27,8 @@ namespace math {
 namespace statistics {
 
 template <typename ArrayType>
-typename ArrayType::Type Entropy(ArrayType const &a, std::size_t index, typename ArrayType::Type &ret)
+typename ArrayType::Type Entropy(ArrayType const &a, std::size_t index,
+                                 typename ArrayType::Type &ret)
 {
   ret = 0;
   for (std::size_t j = 0; j < a.shape().at(0); ++j)

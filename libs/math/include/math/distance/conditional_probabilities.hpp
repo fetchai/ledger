@@ -28,10 +28,19 @@ namespace fetch {
 namespace math {
 namespace distance {
 
+/**
+ * Calculates the conditional probability of point j given point i in N-dimensional feature space
+ * i.e. e^(- x_i^2 / 2sigma^2) / Sum(e^(- x_j^2 / 2sigma^2))
+ * @param a input tensor of dimensions n_data x n_features
+ * @param i index of the data point on which distribution is centred
+ * @param j index of data point for which to estimate probability
+ * @param sigma controls the distribution kurtosis/width
+ * @param ret return value
+ */
 template <typename ArrayType>
 void ConditionalProbabilitiesDistance(ArrayType const &a, std::size_t i, std::size_t j,
                                       typename ArrayType::Type const sigma,
-                                      typename ArrayType::Type &     r)
+                                      typename ArrayType::Type &     ret)
 {
   assert(i < a.shape().at(0) && j < a.shape().at(0));
 
@@ -57,7 +66,7 @@ void ConditionalProbabilitiesDistance(ArrayType const &a, std::size_t i, std::si
     tmp_denominator += tmp_val;
   }
 
-  r = tmp_numerator / tmp_denominator;
+  ret = tmp_numerator / tmp_denominator;
 }
 
 template <typename ArrayType>
