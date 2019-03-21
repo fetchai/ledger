@@ -36,7 +36,7 @@ namespace math {
  * @return Returns an Array of size 1 containing the loss value
  */
 template <typename ArrayType>
-ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
+void SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y, ArrayType &ret)
 {
   assert(x.shape() == y.shape());
   assert(x.shape().size() == 2);
@@ -60,7 +60,15 @@ ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
     log_likelihood[0] -= sce_x.At({idx, static_cast<typename ArrayType::SizeType>(gt)});
   }
 
-  return Divide(log_likelihood, static_cast<typename ArrayType::Type>(n_examples));
+  Divide(log_likelihood, static_cast<typename ArrayType::Type>(n_examples), ret);
+}
+
+template <typename ArrayType>
+ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
+{
+  ArrayType ret{x.shape()};
+  SoftmaxCrossEntropyLoss(x, y, ret);
+  return ret;
 }
 
 }  // namespace math

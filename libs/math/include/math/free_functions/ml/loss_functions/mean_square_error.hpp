@@ -17,9 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/exponentiation/exponentiation.hpp"  // square
-#include "math/free_functions/fundamental_operators.hpp"          // add, subtract etc.
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
+#include "math/distance/euclidean.hpp"
 #include <cassert>
 
 namespace fetch {
@@ -28,16 +26,7 @@ namespace math {
 template <typename ArrayType>
 typename ArrayType::Type MeanSquareError(ArrayType const &A, ArrayType const &B)
 {
-  assert(A.shape() == B.shape());
-  assert(A.size() != typename ArrayType::SizeType(0));
-
-  ArrayType tmp_array(A.shape());
-
-  Subtract(A, B, tmp_array);
-
-  Square(tmp_array, tmp_array);
-
-  typename ArrayType::Type ret = Sum(tmp_array);
+  typename ArrayType::Type ret = distance::SquareDistance(A, B);
 
   ret = Divide(ret, typename ArrayType::Type(A.size()));
 

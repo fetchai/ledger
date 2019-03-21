@@ -40,10 +40,11 @@ using SizeType     = typename ArrayType::SizeType;
 
 struct TrainingParams
 {
+  SizeType output_size    = 2;
   SizeType batch_size     = 1;         // training data batch size
-  SizeType embedding_size = 64;        // dimension of embedding vec
+  SizeType embedding_size = 8;         // dimension of embedding vec
   SizeType training_steps = 12800000;  // total number of training steps
-  double   learning_rate  = 0.001;     // alpha - the learning rate
+  double   learning_rate  = 0.01;      // alpha - the learning rate
 };
 
 template <typename T>
@@ -51,8 +52,8 @@ SkipGramTextParams<T> SetParams()
 {
   SkipGramTextParams<T> ret;
 
-  ret.n_data_buffers = SizeType(2);      // input and context buffers
-  ret.max_sentences  = SizeType(10000);  // maximum number of sentences to use
+  ret.n_data_buffers = SizeType(2);    // input and context buffers
+  ret.max_sentences  = SizeType(100);  // maximum number of sentences to use
 
   ret.unigram_table      = true;  // unigram table for sampling negative training pairs
   ret.unigram_table_size = SizeType(10000000);  // size of unigram table for negative sampling
@@ -61,9 +62,9 @@ SkipGramTextParams<T> SetParams()
   ret.discard_frequent  = true;   // discard most frqeuent words
   ret.discard_threshold = 0.005;  // controls how aggressively to discard frequent words
 
-  ret.window_size         = SizeType(5);  // max size of context window one way
-  ret.min_sentence_length = SizeType(4);  // maximum number of sentences to use
-  ret.k_negative_samples  = SizeType(5);  // number of negative examples to sample
+  ret.window_size         = SizeType(5);   // max size of context window one way
+  ret.min_sentence_length = SizeType(4);   // maximum number of sentences to use
+  ret.k_negative_samples  = SizeType(10);  // number of negative examples to sample
 
   return ret;
 }
@@ -77,7 +78,7 @@ std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType embeddings_size, Size
   g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
   g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Context", {});
   std::string ret_name = g.AddNode<fetch::ml::layers::SkipGram<ArrayType>>(
-      "SkipGram", {"Input", "Context"}, SizeType(1), SizeType(1), embeddings_size, vocab_size);
+      "SkipGram", {"Input", "Context"}, SizeType(1), SizeType(2), embeddings_size, vocab_size);
 
   return ret_name;
 }
@@ -95,7 +96,7 @@ void TestEmbeddings(Graph<ArrayType> const &g, std::string const &skip_gram_name
       sg_layer->GetEmbeddings(sg_layer);
 
   std::vector<std::pair<std::string, double>> output =
-      dl.GetKNN(embeddings->GetWeights(), "cold", 3);
+      dl.GetKNN(embeddings->GetWeights(), "cold", 10);
 
   for (std::size_t j = 0; j < output.size(); ++j)
   {
@@ -152,11 +153,9 @@ int main(int argc, char **argv)
   std::pair<ArrayType, SizeType> data;
   ArrayType input(std::vector<typename ArrayType::SizeType>({tp.batch_size, 1}));
   ArrayType context(std::vector<typename ArrayType::SizeType>({tp.batch_size, 1}));
-  ArrayType gt(std::vector<typename ArrayType::SizeType>({tp.batch_size, 1}));
+  ArrayType gt(std::vector<typename ArrayType::SizeType>({tp.batch_size, tp.output_size}));
   DataType  loss = 0;
   ArrayType scale_factor(std::vector<typename ArrayType::SizeType>({tp.batch_size, 1}));
-
-  ArrayType squeezed_result({tp.batch_size, 1});
 
   double batch_loss = 0;
   for (std::size_t i = 0; i < tp.training_steps; ++i)
@@ -172,7 +171,8 @@ int main(int argc, char **argv)
       context.At(j) = data.first.At(1);
 
       // assign label
-      gt.At(j) = DataType(data.second);
+      //      gt.At(j) = DataType(data.second);
+      gt.At(data.second) = DataType(1);
     }
 
     g.SetInput("Input", input, false);
@@ -185,10 +185,8 @@ int main(int argc, char **argv)
     int neg_count = 0;
     for (std::size_t j = 0; j < tp.batch_size; ++j)
     {
-      // result interpreted as probability True - so reverse for gt == 0
-      if (gt.At(j) == DataType(0))
+      if (gt.At({j, 0}) == DataType(1))
       {
-        results.At(j)      = DataType(1) - results.At(j);
         scale_factor.At(j) = DataType(sp.k_negative_samples);
         neg_count++;
       }
@@ -197,11 +195,10 @@ int main(int argc, char **argv)
         scale_factor.At(j) = DataType(1);
         pos_count++;
       }
-      squeezed_result.At(j) = results.At(j);
     }
 
     // cost function
-    DataType tmp_loss = criterion.Forward({squeezed_result, gt, scale_factor});
+    DataType tmp_loss = criterion.Forward({results, gt, scale_factor});
     // diminish size of updates due to negative examples
     if (data.second == 0)
     {
@@ -210,7 +207,7 @@ int main(int argc, char **argv)
     loss += tmp_loss;
 
     // backprop
-    g.BackPropagate(output_name, criterion.Backward(std::vector<ArrayType>({squeezed_result, gt})));
+    g.BackPropagate(output_name, criterion.Backward(std::vector<ArrayType>({results, gt})));
 
     // take mini-batch learning step
     if (i % tp.batch_size == (tp.batch_size - 1))

@@ -82,9 +82,10 @@ public:
   virtual std::pair<T, SizeType> GetNext();
   std::pair<T, SizeType>         GetRandom();
 
-  SizeType    VocabLookup(std::string const &word) const;
-  std::string VocabLookup(SizeType const idx) const;
-  SizeType    GetDiscardCount();
+  std::unordered_map<std::string, std::vector<SizeType>> GetVocab() const;
+  SizeType                                               VocabLookup(std::string const &word) const;
+  std::string                                            VocabLookup(SizeType const idx) const;
+  SizeType                                               GetDiscardCount();
 
   std::vector<std::pair<std::string, SizeType>> BottomKVocab(SizeType k);
   std::vector<std::pair<std::string, SizeType>> TopKVocab(SizeType k);
@@ -330,6 +331,19 @@ bool TextLoader<T>::CheckValidIndex(SizeType idx)
   }
   return valid_idx;
 }
+
+/**
+ * lookup a vocab index for a word
+ * @param idx
+ * @return
+ */
+template <typename T>
+typename std::unordered_map<std::string, std::vector<typename TextLoader<T>::SizeType>>
+TextLoader<T>::GetVocab() const
+{
+  return vocab_;
+}
+
 /**
  * lookup a vocab index for a word
  * @param idx

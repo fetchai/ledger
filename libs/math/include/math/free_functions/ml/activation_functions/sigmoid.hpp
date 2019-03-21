@@ -24,7 +24,7 @@ namespace fetch {
 namespace math {
 
 /**
- * The sigmoid function
+ * The sigmoid function - numerically stable
  * @tparam ArrayType
  * @tparam T
  * @param y
@@ -35,17 +35,33 @@ template <typename ArrayType>
 void Sigmoid(ArrayType const &t, ArrayType &ret)
 {
 
-  Multiply(typename ArrayType::Type(-1.0), t, ret);
-  Exp(ret);
-  Add(ret, typename ArrayType::Type(1.0), ret);
-  Divide(typename ArrayType::Type(1.0), ret, ret);
+  typename ArrayType::SizeType idx(0);
+  for (auto &val : t)
+  {
+    if (val >= typename ArrayType::Type(0))
+    {
+      Multiply(typename ArrayType::Type(-1.0), val, ret.At(idx));
+      Exp(ret.At(idx), ret.At(idx));
+      Add(ret.At(idx), typename ArrayType::Type(1.0), ret.At(idx));
+      Divide(typename ArrayType::Type(1.0), ret.At(idx), ret.At(idx));
+    }
+    else
+    {
+      Exp(val, ret.At(idx));
+      Divide(ret.At(idx), ret.At(idx) + typename ArrayType::Type(1.0), ret.At(idx));
+    }
+    ++idx;
+  }
+  //  Multiply(typename ArrayType::Type(-1.0), t, ret);
+  //  Exp(ret);
+  //  Add(ret, typename ArrayType::Type(1.0), ret);
+  //  Divide(typename ArrayType::Type(1.0), ret, ret);
 }
 
 template <typename ArrayType>
 ArrayType Sigmoid(ArrayType const &t)
 {
-  ArrayType ret;
-  ret = t.Clone();
+  ArrayType ret(t.shape());
   Sigmoid(t, ret);
   return ret;
 }

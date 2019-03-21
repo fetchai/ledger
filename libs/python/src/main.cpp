@@ -28,13 +28,11 @@
 
 #include "python/math/distance/py_braycurtis.hpp"
 #include "python/math/distance/py_chebyshev.hpp"
-#include "python/math/distance/py_distance_matrix.hpp"
 #include "python/math/distance/py_eisen.hpp"
 #include "python/math/distance/py_euclidean.hpp"
 #include "python/math/distance/py_hamming.hpp"
 #include "python/math/distance/py_jaccard.hpp"
 #include "python/math/distance/py_manhattan.hpp"
-#include "python/math/distance/py_pairwise_distance.hpp"
 #include "python/math/distance/py_pearson.hpp"
 
 // #include "python/math/clustering/py_kmeans.hpp"
@@ -213,9 +211,6 @@ PYBIND11_MODULE(fetch, module)
   fetch::math::distance::BuildHammingDistance("Hamming", ns_fetch_math_distance);
   fetch::math::distance::BuildChebyshevDistance("Chebyshev", ns_fetch_math_distance);
   fetch::math::distance::BuildBraycurtisDistance("Braycurtis", ns_fetch_math_distance);
-
-  fetch::math::distance::BuildDistanceMatrixDistance("DistanceMatrix", ns_fetch_math_distance);
-  fetch::math::distance::BuildPairWiseDistanceDistance("PairWiseDistance", ns_fetch_math_distance);
 
   ////////////
 

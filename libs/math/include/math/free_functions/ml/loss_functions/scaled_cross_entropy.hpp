@@ -20,7 +20,7 @@
 #include "math/free_functions/exponentiation/exponentiation.hpp"
 #include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
 #include "math/free_functions/matrix_operations/matrix_operations.hpp"
-//#include "math/kernels/standard_functions.hpp"
+#include "math/free_functions/ml/loss_functions/softmax_cross_entropy.hpp"
 #include <cassert>
 
 namespace fetch {
@@ -40,20 +40,13 @@ typename ArrayType::Type ScaledCrossEntropyLoss(ArrayType const &x, ArrayType co
 {
   assert(x.shape() == y.shape());
 
-  typename ArrayType::Type plogx = typename ArrayType::Type(0);
-  for (std::size_t i = 0; i < x.shape()[0]; ++i)
-  {
-    for (std::size_t j = 0; j < x.shape()[1]; ++j)
-    {
-      typename ArrayType::Type tmp2 = x.At({i, j});
-      typename ArrayType::Type tmp  = Log(tmp2);
-      fetch::math::Add(plogx,
-                       Divide(fetch::math::Multiply(typename ArrayType::Type(-1), tmp), scalar[i]),
-                       plogx);
-    }
-  }
+  typename ArrayType::Type ret = typename ArrayType::Type(0);
+  ArrayType                tmp{scalar.shape()};
 
-  return plogx;
+  SoftmaxCrossEntropyLoss(x, y, tmp);
+  Divide(tmp, scalar, tmp);
+  Sum(tmp, ret);
+  return ret;
 }
 
 }  // namespace math
