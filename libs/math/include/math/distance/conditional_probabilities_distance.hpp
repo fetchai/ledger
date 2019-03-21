@@ -61,7 +61,7 @@ void ConditionalProbabilitiesDistance(ArrayType const &a, size_t i, size_t j,
 }
 
 template <typename ArrayType>
-typename ArrayType::Type ConditionalProbabilitiesDistance(ArrayType const &a, int i, int j,
+typename ArrayType::Type ConditionalProbabilitiesDistance(ArrayType const &a, size_t i, size_t j,
                                                           typename ArrayType::Type const sigma)
 {
   typename ArrayType::Type ret;

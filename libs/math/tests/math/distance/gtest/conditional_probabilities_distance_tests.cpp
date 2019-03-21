@@ -50,5 +50,7 @@ TEST(distance_tests, conditional_distance)
   A.Set({3, 2}, 15);
   A.Set({3, 3}, 16);
 
-  std::cout << ConditionalProbabilitiesDistance(A, 1, 2, 0.5);
+  ASSERT_TRUE(ConditionalProbabilitiesDistance(A, 1, 2, 1) == 0.5);
+
+
 }
