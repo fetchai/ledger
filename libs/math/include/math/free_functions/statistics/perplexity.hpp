@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/distance/conditional_probabilities.hpp"
+#include "math/free_functions/statistics/entropy.hpp"
 
 #include <cmath>
 
@@ -27,32 +27,23 @@ namespace math {
 namespace statistics {
 
 /**
- * Calculates the Shannon entropy of conditional probabilities of point i in N-dimensional feature
- * space i.e. for each point j do Sum(CPD(j,i)*log2(CPD(j,i))) Where CPD(j,i) means
- * ConditionalProbabilitiesDistance of points j and i, where sigma=1
+ * Calculates the Perplexity of Shannon entropy for point i in N-dimensional feature space
+ * i.e. 2^Entropy(i)
  * @param a input tensor of dimensions n_data x n_features
  * @param i index of the data point on which distribution is centred
  * @param ret return value
  */
 template <typename ArrayType>
-void Entropy(ArrayType const &a, std::size_t i, typename ArrayType::Type &ret)
+void Perplexity(ArrayType const &a, std::size_t index, typename ArrayType::Type &ret)
 {
-  ret = 0;
-  for (std::size_t j = 0; j < a.shape().at(0); ++j)
-  {
-    typename ArrayType::Type tmp_val = distance::ConditionalProbabilitiesDistance(a, i, j, 1);
-    tmp_val *= log2(tmp_val);
-    ret += tmp_val;
-  }
-
-  ret = -ret;
+  ret = pow(2, Entropy(a, index));
 }
 
 template <typename ArrayType>
-typename ArrayType::Type Entropy(ArrayType const &a, std::size_t i)
+typename ArrayType::Type Perplexity(ArrayType const &a, std::size_t index)
 {
   typename ArrayType::Type ret;
-  Entropy(a, i, ret);
+  Perplexity(a, index, ret);
   return ret;
 }
 
