@@ -74,6 +74,7 @@ public:
 
   virtual void Reset()
   {
+    std::random_shuffle(data_.begin(), data_.end());
     currentSentence_ = 0;
     currentWord_     = 0;
   }
