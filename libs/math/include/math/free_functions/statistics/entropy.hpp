@@ -19,8 +19,6 @@
 
 #include "core/assert.hpp"
 #include "math/distance/conditional_probabilities.hpp"
-#include "math/shapeless_array.hpp"
-#include "vectorise/memory/range.hpp"
 
 #include <cmath>
 
@@ -29,7 +27,7 @@ namespace math {
 namespace statistics {
 
 template <typename ArrayType>
-typename ArrayType::Type Entropy(ArrayType const &a, size_t index, typename ArrayType::Type &ret)
+typename ArrayType::Type Entropy(ArrayType const &a, std::size_t index, typename ArrayType::Type &ret)
 {
   ret = 0;
   for (std::size_t j = 0; j < a.shape().at(0); ++j)
@@ -43,7 +41,7 @@ typename ArrayType::Type Entropy(ArrayType const &a, size_t index, typename Arra
 }
 
 template <typename ArrayType>
-typename ArrayType::Type Entropy(ArrayType const &a, size_t index)
+typename ArrayType::Type Entropy(ArrayType const &a, std::size_t index)
 {
   typename ArrayType::Type ret;
   ConditionalProbabilitiesDistance(a, index, ret);
