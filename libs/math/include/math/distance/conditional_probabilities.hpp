@@ -29,16 +29,16 @@ namespace math {
 namespace distance {
 
 template <typename ArrayType>
-void ConditionalProbabilitiesDistance(ArrayType const &a, size_t i, size_t j,
+void ConditionalProbabilitiesDistance(ArrayType const &a, std::size_t i, std::size_t j,
                                       typename ArrayType::Type const sigma,
                                       typename ArrayType::Type &     r)
 {
-  assert(i < a.shape()[0] && j < a.shape()[0]);
+  assert(i < a.shape().at(0) && j < a.shape().at(0));
 
   // Calculate numerator
   typename ArrayType::Type tmp_numerator = SquareDistance(a.Slice(i), a.Slice(j));
 
-  // Divide by 2 sigma squared
+  // Divide by 2 sigma squared and make negative
   tmp_numerator = -Divide(tmp_numerator, 2.0 * sigma * sigma);
 
   Exp(tmp_numerator, tmp_numerator);
@@ -46,7 +46,7 @@ void ConditionalProbabilitiesDistance(ArrayType const &a, size_t i, size_t j,
   // Calculate denominator
   typename ArrayType::Type tmp_denominator = 0.0;
 
-  for (size_t k = 0; k < a.shape()[0]; k++)
+  for (size_t k = 0; k < a.shape().at(0); k++)
   {
     if (k == i)
       continue;
@@ -61,7 +61,8 @@ void ConditionalProbabilitiesDistance(ArrayType const &a, size_t i, size_t j,
 }
 
 template <typename ArrayType>
-typename ArrayType::Type ConditionalProbabilitiesDistance(ArrayType const &a, size_t i, size_t j,
+typename ArrayType::Type ConditionalProbabilitiesDistance(ArrayType const &a, std::size_t i,
+                                                          std::size_t                    j,
                                                           typename ArrayType::Type const sigma)
 {
   typename ArrayType::Type ret;
