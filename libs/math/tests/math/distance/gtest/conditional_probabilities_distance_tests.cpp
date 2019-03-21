@@ -51,6 +51,4 @@ TEST(distance_tests, conditional_distance)
   A.Set({3, 3}, 16);
 
   ASSERT_TRUE(ConditionalProbabilitiesDistance(A, 1, 2, 1) == 0.5);
-
-
 }
