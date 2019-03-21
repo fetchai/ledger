@@ -37,11 +37,11 @@ TYPED_TEST_CASE(SerializersTest, MyTypes);
 
 TYPED_TEST(SerializersTest, serialize_empty_state_dict)
 {
-  fetch::ml::ops::StateDict<TypeParam> sd1;
-  fetch::serializers::ByteArrayBuffer  b;
+  fetch::ml::StateDict<TypeParam>     sd1;
+  fetch::serializers::ByteArrayBuffer b;
   b << sd1;
   b.seek(0);
-  fetch::ml::ops::StateDict<TypeParam> sd2;
+  fetch::ml::StateDict<TypeParam> sd2;
   b >> sd2;
   EXPECT_EQ(sd1, sd2);
 }
@@ -50,11 +50,11 @@ TYPED_TEST(SerializersTest, serialize_state_dict)
 {
   // Generate a plausible state dict out of a fully connected layer
   fetch::ml::layers::FullyConnected<TypeParam> fc(10, 10);
-  struct fetch::ml::ops::StateDict<TypeParam>  sd1 = fc.StateDict();
+  struct fetch::ml::StateDict<TypeParam>       sd1 = fc.StateDict();
   fetch::serializers::ByteArrayBuffer          b;
   b << sd1;
   b.seek(0);
-  fetch::ml::ops::StateDict<TypeParam> sd2;
+  fetch::ml::StateDict<TypeParam> sd2;
   b >> sd2;
   EXPECT_EQ(sd1, sd2);
 }
