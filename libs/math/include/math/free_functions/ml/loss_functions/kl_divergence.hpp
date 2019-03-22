@@ -23,6 +23,14 @@
 namespace fetch {
 namespace math {
 
+/**
+ * Kullback-Leibler divergence between matrix A and B
+ * i.e. for each point j and each point i do Sum(CPD(j,i,A)*log(CPD(j,i,A)/CPD(j,i,B))) Where
+ * CPD(j,i,n) means ConditionalProbabilitiesDistance of points j and i of matrix n, where sigma=1
+ * @param A input tensor of dimensions n_data x n_features
+ * @param B input tensor of dimensions n_data x n_features
+ * @return
+ */
 template <typename ArrayType>
 typename ArrayType::Type KlDivergence(ArrayType const &A, ArrayType const &B)
 {
