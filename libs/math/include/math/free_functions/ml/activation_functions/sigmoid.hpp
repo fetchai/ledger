@@ -52,10 +52,6 @@ void Sigmoid(ArrayType const &t, ArrayType &ret)
     }
     ++idx;
   }
-  //  Multiply(typename ArrayType::Type(-1.0), t, ret);
-  //  Exp(ret);
-  //  Add(ret, typename ArrayType::Type(1.0), ret);
-  //  Divide(typename ArrayType::Type(1.0), ret, ret);
 }
 
 template <typename ArrayType>

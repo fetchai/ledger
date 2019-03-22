@@ -42,24 +42,19 @@ void SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y, ArrayType &
   assert(x.shape().size() == 2);
 
   auto n_examples = x.shape()[0];
-
-  ArrayType sce_x{x.shape()};
-  sce_x.Copy(x);
+  ArrayType sce_x = x.Clone();
 
   // we don't explicitly call softmax, because we assume softmax was already included in the graph
   // (i.e. x is the output of softmax layer)
 
   auto      gt = ArgMax(y);
   ArrayType log_likelihood{1};
-  log_likelihood[0] = 0;
+  log_likelihood.Fill(0);
 
   for (typename ArrayType::SizeType idx = 0; idx < n_examples; ++idx)
   {
-    sce_x.Set({idx, static_cast<typename ArrayType::SizeType>(gt)},
-              std::log(sce_x.At({idx, static_cast<typename ArrayType::SizeType>(gt)})));
-    log_likelihood[0] -= sce_x.At({idx, static_cast<typename ArrayType::SizeType>(gt)});
+    log_likelihood.At(0) -= std::log(sce_x.At({idx, gt}));
   }
-
   Divide(log_likelihood, static_cast<typename ArrayType::Type>(n_examples), ret);
 }
 

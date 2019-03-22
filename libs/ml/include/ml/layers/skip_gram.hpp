@@ -27,7 +27,6 @@
 #include "ml/ops/transpose.hpp"
 
 #include <cmath>
-#include <ml/ops/activation.hpp>
 #include <random>
 
 namespace fetch {
@@ -104,6 +103,11 @@ public:
   std::shared_ptr<ops::Embeddings<ArrayType>> GetEmbeddings(std::shared_ptr<SkipGram<ArrayType>> &g)
   {
     return std::dynamic_pointer_cast<ops::Embeddings<ArrayType>>(g->GetNode(embed_in_));
+  }
+
+  std::string GetEmbedName()
+  {
+    return embed_in_;
   }
 
   static constexpr char const *DESCRIPTOR = "SkipGram";

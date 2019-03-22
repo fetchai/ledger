@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/dataloaders/text_loader.hpp"
+#include "ml/dataloaders/word2vec_loaders/basic_textloader.hpp"
 
 namespace fetch {
 namespace ml {
@@ -39,7 +39,7 @@ public:
  * @tparam T  tensor type
  */
 template <typename T>
-class CBoWLoader : public TextLoader<T>
+class CBoWLoader : public BasicTextLoader<T>
 {
   using ArrayType = T;
   using DataType  = typename T::Type;
@@ -51,14 +51,16 @@ private:
 public:
   explicit CBoWLoader(CBoWTextParams<T> p, SizeType seed = 123456789);
 
+  void AddData(std::string const &training_data) override;
+
 private:
-  virtual void     GetData(SizeType idx, ArrayType &ret) override;
-  virtual SizeType GetLabel(SizeType idx) override;
+  void     GetData(SizeType idx, ArrayType &ret) override;
+  SizeType GetLabel(SizeType idx) override;
 };
 
 template <typename T>
 CBoWLoader<T>::CBoWLoader(CBoWTextParams<T> p, SizeType seed)
-  : TextLoader<T>(p, seed)
+  : BasicTextLoader<T>(p, seed)
   , p_(p)
 {
 
@@ -100,6 +102,17 @@ typename CBoWLoader<T>::SizeType CBoWLoader<T>::GetLabel(SizeType idx)
   SizeType sentence_idx = this->word_idx_sentence_idx.at(idx);
   SizeType word_idx     = this->GetWordOffsetFromWordIdx(idx);
   return CBoWLoader<T>::SizeType(double(DataType(this->data_.at(sentence_idx).at(word_idx))));
+}
+
+/**
+ * No additional processing for CBOW
+ * @tparam T
+ */
+template <typename T>
+void CBoWLoader<T>::AddData(std::string const &training_data)
+{
+  // ordinary pre-processing
+  BasicTextLoader<T>::AddData(training_data);
 }
 
 }  // namespace dataloaders

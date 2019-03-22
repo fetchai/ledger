@@ -159,7 +159,7 @@ public:
    * exports the weights Array
    * @return
    */
-  ArrayType GetWeights()
+  ArrayType const& GetWeights() const
   {
     return *this->output_;
   }

@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/free_functions/standard_functions/abs.hpp"
-#include "ml/dataloaders/text_loader.hpp"
+#include "ml/dataloaders/word2vec_loaders/basic_textloader.hpp"
 
 namespace fetch {
 namespace ml {
@@ -50,7 +50,7 @@ public:
  * @tparam T  tensor type
  */
 template <typename T>
-class SkipGramLoader : public TextLoader<T>
+class SkipGramLoader : public BasicTextLoader<T>
 {
   using ArrayType = T;
   using DataType  = typename T::Type;
@@ -91,7 +91,7 @@ private:
 };
 template <typename T>
 SkipGramLoader<T>::SkipGramLoader(SkipGramTextParams<T> p, SizeType seed)
-  : TextLoader<T>(p, seed)
+  : BasicTextLoader<T>(p, seed)
   , p_(p)
 {
   assert(p_.window_size > 0);
@@ -207,7 +207,7 @@ std::vector<typename SkipGramLoader<T>::SizeType> SkipGramLoader<T>::GenerateNeg
 template <typename T>
 typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::SelectNegativeContextWord(SizeType idx)
 {
-  std::vector<SizeType> sentence     = this->GetSentenceFromWordIdx(idx);
+  std::vector<SizeType> sentence = this->data_.at(this->word_idx_sentence_idx.at(idx));
   SizeType              sentence_len = sentence.size();
   SizeType              word_offset  = this->GetWordOffsetFromWordIdx(idx);
 
@@ -249,8 +249,7 @@ typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::SelectNegativeContextWor
 template <typename T>
 typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::SelectContextPosition(SizeType idx)
 {
-
-  std::vector<SizeType> sentence     = this->GetSentenceFromWordIdx(idx);
+  std::vector<SizeType> sentence = this->data_.at(this->word_idx_sentence_idx.at(idx));
   SizeType              sentence_len = sentence.size();
   SizeType              word_offset  = this->GetWordOffsetFromWordIdx(idx);
 
@@ -321,9 +320,12 @@ template <typename T>
 void SkipGramLoader<T>::AddData(std::string const &training_data)
 {
   // ordinary pre-processing
-  TextLoader<T>::AddData(training_data);
+  BasicTextLoader<T>::AddData(training_data);
 
-  BuildUnigramTable();
+  if ((this->sentence_count_ > 0) && (this->word_count_ > 0))
+  {
+    BuildUnigramTable();
+  }
 }
 
 /**
@@ -338,33 +340,29 @@ void SkipGramLoader<T>::BuildUnigramTable()
 
     // calculate adjusted word frequencies
     double sum_adj_vocab = 0.0;
-    double cur_vocab_freq;
     double cur_val;
-    for (auto &e : this->vocab_)
+    for (auto &e : this->vocab_frequencies)
     {
-      cur_vocab_freq = double(e.second.at(1));
-      cur_val        = std::pow(cur_vocab_freq, p_.unigram_power);
-      this->adj_vocab_frequency_.emplace_back(cur_val);
+      cur_val        = std::pow(e.second, p_.unigram_power);
       sum_adj_vocab += cur_val;
     }
 
+    assert(sum_adj_vocab > 0);
+
     SizeType cur_idx = 0;
     SizeType n_rows  = 0;
-    for (auto &e : this->vocab_)
+    for (auto &e : this->vocab_frequencies)
     {
-      cur_vocab_freq = double(e.second.at(1));
-      cur_val        = std::pow(cur_vocab_freq, p_.unigram_power);
-
       assert(cur_idx < p_.unigram_table_size);
 
-      double adjusted_word_probability = cur_val / sum_adj_vocab;
+      double adjusted_word_probability = std::pow(e.second, p_.unigram_power) / sum_adj_vocab;
 
       // word frequency
       n_rows = SizeType(adjusted_word_probability * double(p_.unigram_table_size));
 
       for (SizeType k = 0; k < n_rows; ++k)
       {
-        unigram_table_.at(cur_idx) = e.second.at(0);
+        unigram_table_.at(cur_idx) = e.first;
         ++cur_idx;
       }
     }

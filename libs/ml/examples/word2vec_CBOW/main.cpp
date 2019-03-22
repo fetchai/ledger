@@ -18,9 +18,10 @@
 
 #include "core/serializers/byte_array_buffer.hpp"
 
-#include "math/distance/cosine.hpp"
+#include "math/free_functions/clustering_algorithms/knn.hpp"
 #include "math/free_functions/matrix_operations/matrix_operations.hpp"
 #include "math/tensor.hpp"
+
 
 #include "ml/dataloaders/word2vec_loaders/cbow_dataloader.hpp"
 #include "ml/graph.hpp"
@@ -30,7 +31,9 @@
 #include "ml/ops/loss_functions/mean_square_error.hpp"
 #include "ml/serializers/ml_types.hpp"
 
+
 #include <iostream>
+#include <fstream>
 
 #define EMBEDING_DIMENSION 64u
 #define CONTEXT_WINDOW_SIZE 4  // Each side
@@ -61,16 +64,19 @@ std::string findWordByIndex(std::map<std::string, SizeType> const &vocab, SizeTy
   return "";
 }
 
-void PrintKNN(fetch::ml::dataloaders::CBoWLoader<ArrayType> &loader, ArrayType const &embeddings,
-              std::string const &word, unsigned int k)
+void PrintKNN(fetch::ml::dataloaders::CBoWLoader<ArrayType> const &dl, ArrayType const &embeddings, std::string const &word, unsigned int k)
 {
-  std::vector<std::pair<std::string, double>> results = loader.GetKNN(embeddings, word, k);
+  ArrayType arr = embeddings;
+  ArrayType one_vector = embeddings.Slice(dl.VocabLookup(word)).Unsqueeze();
+  std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output = fetch::math::clustering::KNN(arr, one_vector, k);
 
-  std::cout << "======================" << std::endl;
-  for (SizeType i(0); i < k; ++i)
+  for (std::size_t j = 0; j < output.size(); ++j)
   {
-    std::cout << results.at(i).first << " -- " << results.at(i).second << std::endl;
+    std::cout << "output.at(j).first: " << dl.VocabLookup(output.at(j).first) << std::endl;
+    std::cout << "output.at(j).second: " << output.at(j).second << "\n" << std::endl;
   }
+
+  std::cout << "hot-cold distance: " << fetch::math::distance::Cosine(embeddings.Slice(dl.VocabLookup("cold")).Unsqueeze(), embeddings.Slice(dl.VocabLookup("hot")).Unsqueeze()) << std::endl;
 }
 
 int main(int ac, char **av)
@@ -90,13 +96,13 @@ int main(int ac, char **av)
   p.discard_frequent  = true;                   // discard most frqeuent words
   p.discard_threshold = 0.01;  // controls how aggressively to discard frequent words
 
-  fetch::ml::dataloaders::CBoWLoader<ArrayType> loader(p);
+  fetch::ml::dataloaders::CBoWLoader<ArrayType> dl(p);
   for (int i(1); i < ac; ++i)
   {
-    loader.AddData(readFile(av[i]));
+    dl.AddData(readFile(av[i]));
   }
 
-  unsigned int vocabSize = (unsigned int)loader.VocabSize();
+  unsigned int vocabSize = (unsigned int)dl.VocabSize();
   std::cout << "Vocab size : " << vocabSize << std::endl;
 
   fetch::ml::Graph<ArrayType> g;
@@ -113,10 +119,10 @@ int main(int ac, char **av)
   unsigned int epoch(0);
   while (true)
   {
-    loader.Reset();
-    while (!loader.IsDone())
+    dl.Reset();
+    while (!dl.IsDone())
     {
-      auto data = loader.GetRandom();
+      auto data = dl.GetRandom();
 
       g.SetInput("Input", data.first);
       ArrayType predictions = g.Evaluate("Softmax");
@@ -130,19 +136,19 @@ int main(int ac, char **av)
         {
           if (i < p.window_size)
           {
-            std::cout << loader.VocabLookup(SizeType(data.first.At(i))) << " ";
+            std::cout << dl.VocabLookup(SizeType(data.first.At(i))) << " ";
           }
           else if (i == p.window_size)
           {
-            std::cout << "[" << loader.VocabLookup(SizeType(data.second)) << "] ";
+            std::cout << "[" << dl.VocabLookup(SizeType(data.second)) << "] ";
           }
           else
           {
-            std::cout << loader.VocabLookup(SizeType(data.first.At(i - 1))) << " ";
+            std::cout << dl.VocabLookup(SizeType(data.first.At(i - 1))) << " ";
           }
         }
         std::cout << "-- " << (argmax == data.second ? "\033[0;32m" : "\033[0;31m")
-                  << loader.VocabLookup(argmax) << "\033[0;0m" << std::endl;
+                  << dl.VocabLookup(argmax) << "\033[0;0m" << std::endl;
         std::cout << "Loss : " << loss << std::endl;
         loss = 0;
       }
@@ -156,7 +162,7 @@ int main(int ac, char **av)
     std::cout << "End of epoch " << epoch << std::endl;
 
     // Print KNN of word "one"
-    PrintKNN(loader, *g.StateDict().dict_["Embeddings"].weights_, "bother", 6);
+    PrintKNN(dl, *g.StateDict().dict_["Embeddings"].weights_, "cold", 10);
 
     // Save model
     fetch::serializers::ByteArrayBuffer serializer;
