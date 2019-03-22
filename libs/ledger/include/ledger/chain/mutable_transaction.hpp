@@ -367,6 +367,13 @@ public:
   {
     for (auto const &sig : signatures_)
     {
+      if (sig.first.identifier().empty())
+      {
+        FETCH_LOG_WARN("TxVerify",
+                       "Failed to validate the signature because the identity is not there");
+        throw std::runtime_error("Empty identity error");
+      }
+
       bool const ver_res = tx_sign_adapter.Verify(sig);
 
       if (!ver_res)
