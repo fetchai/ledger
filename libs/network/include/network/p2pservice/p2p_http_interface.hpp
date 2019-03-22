@@ -261,8 +261,8 @@ private:
           {
             auto &tx = tx_list[tx_idx];
 
-            tx = Variant::Object();
-            tx["hash"] = ToBase64(transaction.transaction_hash);
+            tx          = Variant::Object();
+            tx["hash"]  = ToBase64(transaction.transaction_hash);
             tx["slice"] = slice_idx;
 
             ++tx_idx;

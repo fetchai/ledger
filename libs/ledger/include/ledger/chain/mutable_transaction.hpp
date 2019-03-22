@@ -400,7 +400,8 @@ public:
     {
       if (sig.first.identifier().empty())
       {
-        FETCH_LOG_WARN("TxVerify", "Failed to validate the signature because the identity is not there");
+        FETCH_LOG_WARN("TxVerify",
+                       "Failed to validate the signature because the identity is not there");
         throw std::runtime_error("Empty identity error");
       }
 
