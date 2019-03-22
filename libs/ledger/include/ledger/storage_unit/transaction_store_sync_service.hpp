@@ -135,7 +135,7 @@ protected:
     {
       return;
     }
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", id_, ": ", "Timeout set ", time_duration_.count());
+    //FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", id_, ": ", "Timeout set ", time_duration_.count());
     timeout_.Set(cfg_.main_timeout);
     timeout_set_ = true;
   }

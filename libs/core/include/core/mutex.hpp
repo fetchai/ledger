@@ -26,6 +26,7 @@
 #include <mutex>
 #include <thread>
 #include <utility>
+#include <signal.h>
 
 namespace fetch {
 namespace mutex {
@@ -60,7 +61,7 @@ class DebugMutex : public AbstractMutex
   class MutexTimeout
   {
   public:
-    static constexpr std::size_t DEFAULT_TIMEOUT_MS = 300;
+    static constexpr std::size_t DEFAULT_TIMEOUT_MS = 3000;
 
     MutexTimeout(std::string filename, int const &line, std::size_t timeout_ms = DEFAULT_TIMEOUT_MS)
       : filename_(std::move(filename))
@@ -102,9 +103,10 @@ class DebugMutex : public AbstractMutex
     void Eval()
     {
       LOG_STACK_TRACE_POINT;
-      FETCH_LOG_ERROR(LOGGING_NAME, "Mutex timed out: ", filename_, " ", line_);
+      FETCH_LOG_ERROR(LOGGING_NAME, "The system will terminate, mutex timed out: ", filename_, " ", line_);
 
-      exit(-1);
+      // Send a sigint to ourselves since we have a handler for this
+      kill(0, SIGINT);
     }
 
   private:
@@ -195,7 +197,7 @@ private:
 #ifdef NDEBUG
 using Mutex = ProductionMutex;
 #else
-using Mutex = DebugMutex;
+using Mutex = ProductionMutex;
 #endif
 
 #define FETCH_JOIN_IMPL(x, y) x##y

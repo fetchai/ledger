@@ -21,6 +21,9 @@
 #include "crypto/fnv_detail.hpp"
 #include "crypto/stream_hasher.hpp"
 
+#include <functional>
+#include <unordered_set>
+
 namespace fetch {
 namespace crypto {
 

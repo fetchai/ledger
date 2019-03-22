@@ -23,6 +23,7 @@
 #include <utility>
 
 using fetch::byte_array::ToBase64;
+using fetch::byte_array::ToHumanReadable;
 using fetch::generics::MilliTimer;
 
 namespace fetch {
@@ -64,7 +65,13 @@ char const *ToString(BlockStatus status)
  */
 MainChain::MainChain(Mode mode)
 {
-  FETCH_LOCK(lock_);
+  if (Mode::IN_MEMORY_DB != mode)
+  {
+    // create the block store
+    block_store_ = std::make_unique<BlockStore>();
+
+    RecoverFromFile(mode);
+  }
 
   // create the genesis block and add it to the cache
   auto genesis = CreateGenesisBlock();
@@ -74,13 +81,13 @@ MainChain::MainChain(Mode mode)
 
   // add the tip for this block
   AddTip(genesis);
+}
 
-  if (Mode::IN_MEMORY_DB != mode)
+MainChain::~MainChain()
+{
+  if(block_store_)
   {
-    // create the block store
-    block_store_ = std::make_unique<BlockStore>();
-
-    RecoverFromFile(mode);
+    block_store_->Flush(false);
   }
 }
 
@@ -483,6 +490,7 @@ void MainChain::RecoverFromFile(Mode mode)
   if (Mode::CREATE_PERSISTENT_DB == mode)
   {
     block_store_->New("chain.db", "chain.index.db");
+    return;
   }
   else if (Mode::LOAD_PERSISTENT_DB == mode)
   {
@@ -493,24 +501,58 @@ void MainChain::RecoverFromFile(Mode mode)
     assert(false);
   }
 
-  // load the head block
+  // load the head block, and attempt verify that this block forms a complete chain to genesis
   IntBlockPtr block = std::make_shared<Block>();
   if (block_store_->Get(storage::ResourceAddress("head"), *block))
   {
-    block->UpdateDigest();
-    InsertBlock(block);
+    auto block_index = block->body.block_number;
 
-    IntBlockPtr next = std::make_shared<Block>();
-    while (block_store_->Get(storage::ResourceID(block->body.previous_hash), *next))
+    FETCH_LOG_INFO(LOGGING_NAME, "Head block found from main chain. Checking for completeness. Head index: ", block_index, " HR: ", ToHumanReadable(block->body.hash));
+
+    // Copy head block so as to walk down the chain
+    IntBlockPtr next = std::make_shared<Block>(*block);
+    while (block_store_->Get(storage::ResourceID(next->body.previous_hash), *next))
     {
-      block->UpdateDigest();
+      if(next->body.block_number != block_index - 1)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Discontinuity found when walking main chain during recovery. Current: ", block_index, " prev: ", next->body.block_number, " Resetting");
+        break;
+      }
 
-      InsertBlock(block);
+      FETCH_LOG_WARN(LOGGING_NAME, "hash: ", ToHumanReadable(next->body.hash));
+      FETCH_LOG_WARN(LOGGING_NAME, "Prev block index: ", next->body.block_number);
 
-      // swap the pointers
-      std::swap(block, next);
+      block_index = next->body.block_number;
+      next->body.block_number = 99;
+    }
+
+    if(block_index != 0)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to walk main chain when recovering from disk. Got as far back as: ", block_index, ". Resetting.");
+    }
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Recovering main chain with heaviest block: ", block_index);
+
+      // Add heaviest to cache
+      block_chain_[block->body.hash] = block;
+
+      // Update this as our heaviest
+      bool result = heaviest_.Update(*block);
+
+      if(!result)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to update heaviest when loading from file.");
+      }
     }
   }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "No head block found in chain data store! Resetting chain data store.");
+  }
+
+  // Recovering the chain has failed in some way, reset the storage.
+  block_store_->New("chain.db", "chain.index.db");
 }
 
 /**
@@ -523,7 +565,7 @@ void MainChain::WriteToFile()
   {
     MilliTimer myTimer("MainChain::WriteToFile", 500);
 
-    // Add confirmed blocks to file
+    // Add confirmed blocks to file, minus finality
     IntBlockPtr block  = block_chain_.at(heaviest_.hash);
     bool        failed = false;
 
@@ -542,9 +584,46 @@ void MainChain::WriteToFile()
     {
       // store both the HEAD block as both its has and the "HEAD" entry
       block_store_->Set(storage::ResourceAddress("head"), *block);
+
       block_store_->Set(storage::ResourceID(block->body.hash), *block);
 
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Updating HEAD to ", ToBase64(block->body.hash));
+      FETCH_LOG_WARN(LOGGING_NAME, "Updating HEAD to ", ToHumanReadable(block->body.hash), " AKA ", block->body.hash.ToBase64());
+
+      // Test that the write went correctly
+      {
+        IntBlockPtr tmp = std::make_shared<Block>();
+        bool success = block_store_->Get(storage::ResourceID(block->body.hash), *tmp);
+
+        FETCH_LOG_INFO(LOGGING_NAME, "Success: ", success);
+        FETCH_LOG_INFO(LOGGING_NAME, "Head index (recovered): ", tmp->body.block_number);
+        FETCH_LOG_INFO(LOGGING_NAME, "Head hash (recovered): ", ToHumanReadable(tmp->body.hash));
+        FETCH_LOG_INFO(LOGGING_NAME, "Head prev hash (recovered): ", ToHumanReadable(tmp->body.previous_hash));
+
+        if(!success)
+        {
+          std::cerr << "odd!" << std::endl;
+        }
+
+        if(block_store_->Get(storage::ResourceID(block->body.previous_hash), *tmp))
+        {
+          FETCH_LOG_INFO(LOGGING_NAME, "Head index -1 (recovered): ", tmp->body.block_number);
+          FETCH_LOG_INFO(LOGGING_NAME, "Head hash -1 (recovered): ", ToHumanReadable(tmp->body.hash));
+          FETCH_LOG_INFO(LOGGING_NAME, "Head prev hash -1 (recovered): ", ToHumanReadable(tmp->body.previous_hash));
+        }
+
+        FETCH_UNUSED(success);
+      }
+
+      // !! Flush on every write
+      block_store_->Flush(false);
+
+      IntBlockPtr tmp = std::make_shared<Block>();
+      bool success = block_store_->Get(storage::ResourceID(block->body.hash), *tmp);
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Success: ", success);
+      FETCH_LOG_INFO(LOGGING_NAME, "Head index (recovered2): ", tmp->body.block_number);
+      FETCH_LOG_INFO(LOGGING_NAME, "Head hash (recovered2): ", ToHumanReadable(tmp->body.hash));
+      FETCH_LOG_INFO(LOGGING_NAME, "Head prev hash (recovered2): ", ToHumanReadable(tmp->body.previous_hash));
 
       // Walk down the file to check we have an unbroken chain
       while (LookupBlockFromCache(block->body.previous_hash, block))
@@ -560,6 +639,10 @@ void MainChain::WriteToFile()
         // Clear the block from ram
         FlushBlock(block);
       }
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to walk back the chain when writing to file! Block head: ", block_chain_.at(heaviest_.hash)->body.block_number);
     }
 
     // as final step do some sanity checks

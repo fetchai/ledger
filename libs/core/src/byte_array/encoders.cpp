@@ -18,6 +18,8 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/byte_array/details/encode_decode.hpp"
+#include "core/string/word_list.hpp"
+#include "crypto/fnv.hpp"
 
 namespace fetch {
 namespace byte_array {
@@ -174,6 +176,40 @@ ConstByteArray ToBinReverse(ConstByteArray const &str)
     ret[j++]  = uint8_t(c & 0x01 ? '1' : '0');
   }
   return ret;
+}
+
+ConstByteArray ToHumanReadable(ConstByteArray const &str)
+{
+#ifdef NDEBUG
+  return {"human readable strings not available unless in debug mode"};
+#endif
+
+  if (str.size() == 0)
+  {
+    return {"NULL HUMAN READABLE"};
+  }
+
+  static std::map<uint64_t, std::string> words = WORD_LIST;
+  std::size_t rnd{0};
+
+  {
+    crypto::FNV hash;
+    hash.Reset();
+    hash.Update(str.pointer(), str.size());
+
+    rnd = hash.Final<std::size_t>();
+  }
+
+  ByteArray readable;
+
+  for (std::size_t i = 0; i < 3; ++i)
+  {
+    readable.Append(words[rnd % words.size()], "_");
+    rnd *= 123456789ULL;
+  }
+  readable.Append(words[rnd % words.size()]);
+
+  return readable;
 }
 
 }  // namespace byte_array

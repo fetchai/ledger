@@ -132,8 +132,11 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
   // ensure that we have a current block that we are executing
   if (!current_block_)
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Entered synchronising state with no current block. Fetching heaviest block from main chain.");
     current_block_ = chain_.GetHeaviestBlock();
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Heaviest block found from main chain, block number: ", current_block_->body.block_number);
 
   // cache some useful variables
   auto const current_hash         = current_block_->body.hash;
@@ -256,7 +259,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
     next_block_->body.miner         = identity_;
 
     // ensure the difficulty is correctly set
-    next_block_->proof.SetTarget(block_difficulty_);
+    next_block_->proof.SetTarget(block_difficulty_/2);
 
     // discard the current block (we are making a new one)
     current_block_.reset();

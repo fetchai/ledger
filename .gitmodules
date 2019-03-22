@@ -16,3 +16,6 @@
 [submodule "vendor/msgpack"]
 	path = vendor/msgpack
 	url = https://github.com/msgpack/msgpack-c.git
+[submodule "vendor/spdlog"]
+	path = vendor/spdlog
+	url = git@github.com:gabime/spdlog.git

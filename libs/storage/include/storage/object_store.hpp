@@ -153,7 +153,11 @@ public:
     }
 
     serializer_type ser(doc.document);
+
+    std::cerr <<  rid.ToString() << " xxyyzz getting is: " << ser.data().ToBase64() << std::endl;
+
     ser >> object;
+
     return true;
   }
 
@@ -187,7 +191,10 @@ public:
     serializer_type ser;
     ser << object;
 
+    std::cerr <<  rid.ToString() << " xxyyzz This is: " << ser.data().ToBase64() << std::endl;
+
     store_.Set(rid, ser.data());  // temporarily disable disk writes
+
     if (set_callback_)
     {
       set_callback_(object);

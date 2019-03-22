@@ -355,6 +355,9 @@ PrivateKeys GetPrivateKeys(std::string const &priv_keys_filename_argument)
  */
 int main(int argc, char **argv)
 {
+
+  std::cerr << "this happened!" << std::endl;
+
   try
   {
     auto const args = CommandLineArguments::Parse(argc, argv);

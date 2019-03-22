@@ -32,6 +32,10 @@
 #include <utility>
 #include <vector>
 
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/rotating_file_sink.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
+
 namespace fetch {
 
 namespace log {
@@ -740,6 +744,30 @@ private:
   std::unordered_map<std::thread::id, shared_context_type> context_;
 };
 }  // namespace details
+
+class LoggerManager
+{
+  /*
+  */
+
+
+  static void Initialize()
+  {
+    std::vector<spdlog::sink_ptr> sinks;
+
+    auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    /* console_sink->set_level(spdlog::level::warn); */
+
+    sinks.push_back(console_sink);
+
+    logger_ = std::make_shared<spdlog::logger>("fetch_default_logger", begin(sinks), end(sinks));
+  }
+
+private:
+  static std::shared_ptr<spdlog::logger> logger_;
+};
+
+
 }  // namespace log
 
 extern log::details::LogWrapper logger;
@@ -818,12 +846,15 @@ extern log::details::LogWrapper logger;
 #define FETCH_LOG_PROMISE() FETCH_LOG_WARN(LOGGING_NAME, "Promise wait: ", __FILE__, ":", __LINE__)
 #endif
 
+// Spdlog global async logger
+
+
 // Logging macros
 
 // Debug
 #if FETCH_COMPILE_LOGGING_LEVEL >= 4
 #define FETCH_LOG_DEBUG_ENABLED
-#define FETCH_LOG_DEBUG(name, ...) fetch::logger.DebugWithName(name, __VA_ARGS__)
+#define FETCH_LOG_DEBUG(name, ...) fetch::logger.InfoWithName(name, __VA_ARGS__)
 #else
 #define FETCH_LOG_DEBUG(name, ...) (void)name
 #endif

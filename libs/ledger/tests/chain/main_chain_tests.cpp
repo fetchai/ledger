@@ -182,7 +182,7 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
   // invalidate the middle of the side chain this will cause the blocks to be
   ASSERT_TRUE(chain_->RemoveBlock(main2->body.hash));
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Heaviest: ", ToBase64(chain_->heaviest_block_hash()));
+  /*FETCH_LOG_DEBUG(LOGGING_NAME, "Heaviest: ", ToBase64(chain_->heaviest_block_hash())); */
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), side2->body.hash);
 }
 

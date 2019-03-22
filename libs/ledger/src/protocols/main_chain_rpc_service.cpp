@@ -96,7 +96,7 @@ MainChainRpcService::~MainChainRpcService()
 
 void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block)
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Broadcast Block: ", ToBase64(block.hash()));
+  /*FETCH_LOG_DEBUG(LOGGING_NAME, "Broadcast Block: ", ToBase64(block.hash()));*/
 
   // determine the serialised size of the block
   BlockSerializerCounter counter;
