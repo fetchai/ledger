@@ -22,7 +22,6 @@
 #include "math/free_functions/matrix_operations/matrix_operations.hpp"
 #include "math/tensor.hpp"
 
-
 #include "ml/dataloaders/word2vec_loaders/cbow_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
@@ -31,9 +30,8 @@
 #include "ml/ops/loss_functions/mean_square_error.hpp"
 #include "ml/serializers/ml_types.hpp"
 
-
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
 #define EMBEDING_DIMENSION 64u
 #define CONTEXT_WINDOW_SIZE 4  // Each side
@@ -64,11 +62,13 @@ std::string findWordByIndex(std::map<std::string, SizeType> const &vocab, SizeTy
   return "";
 }
 
-void PrintKNN(fetch::ml::dataloaders::CBoWLoader<ArrayType> const &dl, ArrayType const &embeddings, std::string const &word, unsigned int k)
+void PrintKNN(fetch::ml::dataloaders::CBoWLoader<ArrayType> const &dl, ArrayType const &embeddings,
+              std::string const &word, unsigned int k)
 {
-  ArrayType arr = embeddings;
+  ArrayType arr        = embeddings;
   ArrayType one_vector = embeddings.Slice(dl.VocabLookup(word)).Unsqueeze();
-  std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output = fetch::math::clustering::KNN(arr, one_vector, k);
+  std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
+      fetch::math::clustering::KNN(arr, one_vector, k);
 
   for (std::size_t j = 0; j < output.size(); ++j)
   {
@@ -76,7 +76,10 @@ void PrintKNN(fetch::ml::dataloaders::CBoWLoader<ArrayType> const &dl, ArrayType
     std::cout << "output.at(j).second: " << output.at(j).second << "\n" << std::endl;
   }
 
-  std::cout << "hot-cold distance: " << fetch::math::distance::Cosine(embeddings.Slice(dl.VocabLookup("cold")).Unsqueeze(), embeddings.Slice(dl.VocabLookup("hot")).Unsqueeze()) << std::endl;
+  std::cout << "hot-cold distance: "
+            << fetch::math::distance::Cosine(embeddings.Slice(dl.VocabLookup("cold")).Unsqueeze(),
+                                             embeddings.Slice(dl.VocabLookup("hot")).Unsqueeze())
+            << std::endl;
 }
 
 int main(int ac, char **av)

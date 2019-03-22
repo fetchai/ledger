@@ -207,7 +207,7 @@ std::vector<typename SkipGramLoader<T>::SizeType> SkipGramLoader<T>::GenerateNeg
 template <typename T>
 typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::SelectNegativeContextWord(SizeType idx)
 {
-  std::vector<SizeType> sentence = this->data_.at(this->word_idx_sentence_idx.at(idx));
+  std::vector<SizeType> sentence     = this->data_.at(this->word_idx_sentence_idx.at(idx));
   SizeType              sentence_len = sentence.size();
   SizeType              word_offset  = this->GetWordOffsetFromWordIdx(idx);
 
@@ -249,7 +249,7 @@ typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::SelectNegativeContextWor
 template <typename T>
 typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::SelectContextPosition(SizeType idx)
 {
-  std::vector<SizeType> sentence = this->data_.at(this->word_idx_sentence_idx.at(idx));
+  std::vector<SizeType> sentence     = this->data_.at(this->word_idx_sentence_idx.at(idx));
   SizeType              sentence_len = sentence.size();
   SizeType              word_offset  = this->GetWordOffsetFromWordIdx(idx);
 
@@ -343,7 +343,7 @@ void SkipGramLoader<T>::BuildUnigramTable()
     double cur_val;
     for (auto &e : this->vocab_frequencies)
     {
-      cur_val        = std::pow(e.second, p_.unigram_power);
+      cur_val = std::pow(e.second, p_.unigram_power);
       sum_adj_vocab += cur_val;
     }
 

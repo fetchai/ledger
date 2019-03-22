@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/dataloaders/text_loader.hpp"
 #include "core/fixed_point/fixed_point.hpp"
 #include "math/free_functions/matrix_operations/matrix_operations.hpp"
 #include "math/tensor.hpp"
+#include "ml/dataloaders/word2vec_loaders/basic_textloader.hpp"
 #include <gtest/gtest.h>
 #include <string>
 
@@ -49,7 +49,7 @@ TYPED_TEST(TextDataLoaderTest, basic_loader_test)
   p.window_size         = 1;
   p.discard_frequent    = false;
 
-  TextLoader<TypeParam> loader(p);
+  BasicTextLoader<TypeParam> loader(p);
   loader.AddData(training_data);
 
   std::vector<std::string> gt_input(
@@ -79,7 +79,7 @@ TYPED_TEST(TextDataLoaderTest, adddata_loader_test)
   p.window_size         = 1;
   p.discard_frequent    = false;
 
-  TextLoader<TypeParam> loader(p);
+  BasicTextLoader<TypeParam> loader(p);
   loader.AddData(training_data);
 
   std::vector<std::string> gt_input(
@@ -127,7 +127,7 @@ TYPED_TEST(TextDataLoaderTest, punctuation_test_loader_test)
   p.window_size         = 1;
   p.discard_frequent    = false;
 
-  TextLoader<TypeParam> loader(p);
+  BasicTextLoader<TypeParam> loader(p);
   loader.AddData(training_data);
 
   std::vector<std::string> gt_input(
@@ -159,7 +159,7 @@ TYPED_TEST(TextDataLoaderTest, discard_loader_test)
   p.discard_frequent  = true;
   p.discard_threshold = 0.000000001;
 
-  TextLoader<TypeParam> loader(p);
+  BasicTextLoader<TypeParam> loader(p);
   loader.AddData(training_data);
 
   // compare with vocab_size - 1 because "UNK" is always in the vocab

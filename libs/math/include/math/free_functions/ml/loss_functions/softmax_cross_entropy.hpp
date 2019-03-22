@@ -41,8 +41,8 @@ void SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y, ArrayType &
   assert(x.shape() == y.shape());
   assert(x.shape().size() == 2);
 
-  auto n_examples = x.shape()[0];
-  ArrayType sce_x = x.Clone();
+  auto      n_examples = x.shape()[0];
+  ArrayType sce_x      = x.Clone();
 
   // we don't explicitly call softmax, because we assume softmax was already included in the graph
   // (i.e. x is the output of softmax layer)

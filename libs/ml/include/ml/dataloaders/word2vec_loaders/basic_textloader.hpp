@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/dataloaders/text_loader.hpp"
-#include "ml/dataloaders/dataloader.hpp"
 #include "core/random/lcg.hpp"
 #include "core/random/lfg.hpp"
+#include "ml/dataloaders/dataloader.hpp"
+#include "ml/dataloaders/text_loader.hpp"
 
 #include <algorithm>  // random_shuffle
 #include <numeric>    // std::iota
@@ -42,10 +42,9 @@ public:
   SizeType min_sentence_length = 0;  // minimum number of words in a sentence
   SizeType max_sentences       = 0;  // maximum number of sentences in training set
 
-
-  SizeType n_data_buffers      = 0;  // number of data points to return when called
-  SizeType window_size         = 0;  // the size of the context window (one-sided)
-  SizeType max_idx_search      = 1000;
+  SizeType n_data_buffers = 0;  // number of data points to return when called
+  SizeType window_size    = 0;  // the size of the context window (one-sided)
+  SizeType max_idx_search = 1000;
 
   bool full_window = false;  // whether we may only index words with a full window either side
 
@@ -71,17 +70,17 @@ public:
   explicit BasicTextLoader(TextParams<ArrayType> const &p, SizeType seed = 123456789);
 
   // overloaded member from dataloader
-  virtual std::pair<T, SizeType> GetNext() override;
-  virtual std::pair<T, SizeType> GetRandom() override;
-  virtual SizeType               Size() const override;
-  virtual bool                   IsDone() const override;
-  virtual void                   Reset() override;
+  std::pair<T, SizeType>         GetNext() override;
+  virtual std::pair<T, SizeType> GetRandom();
+  SizeType                       Size() const override;
+  bool                           IsDone() const override;
+  void                           Reset() override;
 
   virtual std::pair<T, SizeType> GetAtIndex(SizeType idx);
-  SizeType GetDiscardCount();
+  SizeType                       GetDiscardCount();
+  void                           AddData(std::string const &text) override;
 
 protected:
-
   // params
   TextParams<ArrayType> p_;
 
@@ -94,26 +93,24 @@ protected:
 
   // discard related containers and counts
   std::vector<std::vector<SizeType>> discards_;  // record of discarded words
-  SizeType discard_sentence_idx_ = 0;            // keeps track of sentences already having discard applied
-  SizeType discard_count_     = 0;  // total count of discarded (frequent) words
+  SizeType discard_sentence_idx_ = 0;  // keeps track of sentences already having discard applied
+  SizeType discard_count_        = 0;  // total count of discarded (frequent) words
 
   // used for iterating through all examples incrementally
-  SizeType cursor_;                   // indexes through data
-  bool     is_done_         = false;  // tracks progress of cursor
-  std::vector<SizeType> ran_idx_;     // random indices container
+  SizeType              cursor_;           // indexes through data
+  bool                  is_done_ = false;  // tracks progress of cursor
+  std::vector<SizeType> ran_idx_;          // random indices container
 
-  virtual void     GetData(SizeType idx, ArrayType &ret) override;
-  virtual SizeType GetLabel(SizeType idx) override;
-  void             AddData(std::string const &text) override;
+  void     GetData(SizeType idx, ArrayType &ret) override;
+  SizeType GetLabel(SizeType idx) override;
 
-  SizeType    GetWordOffsetFromWordIdx(SizeType word_idx) const;
+  SizeType GetWordOffsetFromWordIdx(SizeType word_idx) const;
 
 private:
-  bool        GetNextValidIndex(bool random, typename BasicTextLoader<T>::SizeType &ret);
-  bool        CheckValidIndex(SizeType idx);
-  void        DiscardFrequent();
-  bool        DiscardExample(SizeType word_frequency);
-
+  bool GetNextValidIndex(bool random, typename BasicTextLoader<T>::SizeType &ret);
+  bool CheckValidIndex(SizeType idx);
+  void DiscardFrequent();
+  bool DiscardExample(SizeType word_frequency);
 };
 
 /**
@@ -148,7 +145,7 @@ template <typename T>
 std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetNext()
 {
   SizeType idx;
-  if(GetNextValidIndex(false, idx))
+  if (GetNextValidIndex(false, idx))
   {
     return GetAtIndex(idx);
   }
@@ -167,7 +164,7 @@ template <typename T>
 std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetRandom()
 {
   SizeType idx;
-  if(GetNextValidIndex(true, idx))
+  if (GetNextValidIndex(true, idx))
   {
     return GetAtIndex(idx);
   }
@@ -215,7 +212,6 @@ void BasicTextLoader<T>::Reset()
   DiscardFrequent();
 }
 
-
 /**
  * Gets the data at the specified word index
  * @param idx the word index (i.e. the word position in the entire training set)
@@ -237,7 +233,8 @@ std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetAtInd
 }
 
 /**
- * Reports the total number of 'discarded' words. Note that words are never really discarded, only masked
+ * Reports the total number of 'discarded' words. Note that words are never really discarded, only
+ * masked
  * @tparam T  Array Type
  * @return the count of discarded/masked words
  */
@@ -245,27 +242,6 @@ template <typename T>
 typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::GetDiscardCount()
 {
   return discard_count_;
-}
-
-////////////////////////////////////////
-/// protected member implementations ///
-////////////////////////////////////////
-
-
-/**
- * For the Basic dataloader GetData simply returns the word at the word index given. Inheriting data loaders
- * will usually override this method
- * @tparam T
- * @param idx
- * @param ret
- */
-template <typename T>
-void BasicTextLoader<T>::GetData(typename BasicTextLoader<T>::SizeType idx, T &ret)
-{
-  assert(p_.n_data_buffers == 1);
-  SizeType sentence_idx = this->word_idx_sentence_idx.at(idx);
-  SizeType word_idx     = this->GetWordOffsetFromWordIdx(idx);
-  ret.At(0)             = DataType(this->data_.at(sentence_idx).at(word_idx));
 }
 
 /**
@@ -281,6 +257,26 @@ void BasicTextLoader<T>::AddData(std::string const &text)
   this->Reset();
 }
 
+////////////////////////////////////////
+/// protected member implementations ///
+////////////////////////////////////////
+
+/**
+ * For the Basic dataloader GetData simply returns the word at the word index given. Inheriting data
+ * loaders will usually override this method
+ * @tparam T
+ * @param idx
+ * @param ret
+ */
+template <typename T>
+void BasicTextLoader<T>::GetData(typename BasicTextLoader<T>::SizeType idx, T &ret)
+{
+  assert(p_.n_data_buffers == 1);
+  SizeType sentence_idx = this->word_idx_sentence_idx.at(idx);
+  SizeType word_idx     = this->GetWordOffsetFromWordIdx(idx);
+  ret.At(0)             = DataType(this->data_.at(sentence_idx).at(word_idx));
+}
+
 /**
  * The basic text loader isn't useful for training, but implementing a GetLabel method
  * allows us to make it concrete and then run common unit tests
@@ -289,7 +285,8 @@ void BasicTextLoader<T>::AddData(std::string const &text)
  * @return dummy label
  */
 template <typename T>
-typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::GetLabel(typename BasicTextLoader<T>::SizeType idx)
+typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::GetLabel(
+    typename BasicTextLoader<T>::SizeType idx)
 {
   return 1;
 }
@@ -340,7 +337,6 @@ typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::GetWordOffsetFromWordI
 /// private member implementations ///
 //////////////////////////////////////
 
-
 /**
  * finds the next valid index
  * @tparam T  Array type
@@ -352,7 +348,7 @@ template <typename T>
 bool BasicTextLoader<T>::GetNextValidIndex(bool random, typename BasicTextLoader<T>::SizeType &ret)
 {
   // loop until we find a non-discarded data point
-  bool not_found = true;
+  bool     not_found     = true;
   SizeType timeout_count = 0;
   while (not_found)
   {
@@ -363,7 +359,7 @@ bool BasicTextLoader<T>::GetNextValidIndex(bool random, typename BasicTextLoader
       is_done_ = true;
     }
 
-    if(random ? CheckValidIndex(ran_idx_.at(cursor_)) : CheckValidIndex(cursor_))
+    if (random ? CheckValidIndex(ran_idx_.at(cursor_)) : CheckValidIndex(cursor_))
     {
       not_found = false;
     }
@@ -473,7 +469,6 @@ bool BasicTextLoader<T>::DiscardExample(SizeType word_frequency)
   }
   return true;
 }
-
 
 }  // namespace dataloaders
 }  // namespace ml

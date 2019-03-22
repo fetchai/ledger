@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include <string>
 #include <sstream>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -38,15 +38,15 @@ public:
   using DataType  = typename T::Type;
   using SizeType  = typename T::SizeType;
 
-  using WordIdxType = std::vector<std::vector<SizeType>>;
-  using VocabType = std::unordered_map<std::string, std::vector<SizeType>>;
+  using WordIdxType   = std::vector<std::vector<SizeType>>;
+  using VocabType     = std::unordered_map<std::string, std::vector<SizeType>>;
   using SentencesType = std::vector<std::vector<std::string>>;
 
   TextLoader() = default;
 
-  SizeType Size() const;
-  SizeType VocabSize() const;
-  SizeType VocabLookup(std::string const &word) const;
+  SizeType    Size() const;
+  SizeType    VocabSize() const;
+  SizeType    VocabLookup(std::string const &word) const;
   std::string VocabLookup(SizeType idx) const;
 
   std::unordered_map<std::string, SizeType> GetVocab() const;
@@ -55,16 +55,16 @@ public:
 
 protected:
   // training data parsing containers
-  SizeType size_ = 0;         // # training pairs
-  SizeType min_sent_len_ = 0; // minimum number of words in permissible sentence
-  SizeType max_sent_len_ = 0; // maximum number of sentences permissible in vocabulary
-  std::unordered_map<std::string, SizeType> vocab_;         // unique vocab of words
-  std::unordered_map<SizeType, SizeType> vocab_frequencies; // the count of each vocab word
-  WordIdxType data_;          // all training data by sentence_idx[word_idx]
+  SizeType size_         = 0;  // # training pairs
+  SizeType min_sent_len_ = 0;  // minimum number of words in permissible sentence
+  SizeType max_sent_len_ = 0;  // maximum number of sentences permissible in vocabulary
+  std::unordered_map<std::string, SizeType> vocab_;             // unique vocab of words
+  std::unordered_map<SizeType, SizeType>    vocab_frequencies;  // the count of each vocab word
+  WordIdxType                               data_;  // all training data by sentence_idx[word_idx]
 
   // counts
-  SizeType sentence_count_    = 0;  // total sentences in training corpus
-  SizeType word_count_        = 0;  // total words in training corpus
+  SizeType sentence_count_ = 0;  // total sentences in training corpus
+  SizeType word_count_     = 0;  // total words in training corpus
 
   std::unordered_map<SizeType, SizeType>
       word_idx_sentence_idx;  // lookup table for sentence number from word number
@@ -73,14 +73,13 @@ protected:
 
   // should be overwridden when inheriting from text loader
   virtual void     GetData(SizeType idx, ArrayType &ret) = 0;
-  virtual SizeType GetLabel(SizeType idx) = 0;
+  virtual SizeType GetLabel(SizeType idx)                = 0;
 
 private:
-
   void PreProcessWords(std::string const &training_data, SentencesType &sentences);
   void BuildVocab(SentencesType &sentences);
   std::vector<std::string> StripPunctuationAndLower(std::string &word) const;
-  bool CheckEndOfSentence(std::string &word);
+  bool                     CheckEndOfSentence(std::string &word);
 };
 
 /**
@@ -163,7 +162,6 @@ void TextLoader<T>::AddData(std::string const &text)
   // build unique vocabulary and get word counts
   BuildVocab(sentences);
 }
-
 
 ///////////////////////////////////////////////
 /// Private member function implementations ///

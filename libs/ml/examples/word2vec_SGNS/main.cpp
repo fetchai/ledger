@@ -18,11 +18,11 @@
 
 #include "math/free_functions/clustering_algorithms/knn.hpp"
 
+#include "file_loader.hpp"
+#include "ml/dataloaders/word2vec_loaders/skipgram_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/skip_gram.hpp"
 #include "ml/ops/loss_functions/scaled_cross_entropy.hpp"
-#include "ml/dataloaders/word2vec_loaders/skipgram_dataloader.hpp"
-#include "file_loader.hpp"
 
 #include <iostream>
 #include <math/tensor.hpp>
@@ -42,11 +42,11 @@ using SizeType     = typename ArrayType::SizeType;
 
 struct TrainingParams
 {
-  SizeType output_size    = 2;
-  SizeType batch_size     = 1;         // training data batch size
-  SizeType embedding_size = 16;         // dimension of embedding vec
-  SizeType training_epochs = 1000;      // total number of training epochs
-  double   learning_rate  = 0.01;      // alpha - the learning rate
+  SizeType output_size     = 2;
+  SizeType batch_size      = 1;     // training data batch size
+  SizeType embedding_size  = 16;    // dimension of embedding vec
+  SizeType training_epochs = 1000;  // total number of training epochs
+  double   learning_rate   = 0.01;  // alpha - the learning rate
 };
 
 template <typename T>
@@ -64,8 +64,8 @@ SkipGramTextParams<T> SetParams()
   ret.discard_frequent  = true;   // discard most frqeuent words
   ret.discard_threshold = 0.005;  // controls how aggressively to discard frequent words
 
-  ret.window_size         = SizeType(5);   // max size of context window one way
-  ret.min_sentence_length = SizeType(4);   // maximum number of sentences to use
+  ret.window_size         = SizeType(5);  // max size of context window one way
+  ret.min_sentence_length = SizeType(4);  // maximum number of sentences to use
   ret.k_negative_samples  = SizeType(5);  // number of negative examples to sample
 
   return ret;
@@ -85,12 +85,13 @@ std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType embeddings_size, Size
   return ret_name;
 }
 
-
-void PrintKNN(SkipGramLoader<ArrayType> const &dl, ArrayType const &embeddings, std::string const &word, unsigned int k)
+void PrintKNN(SkipGramLoader<ArrayType> const &dl, ArrayType const &embeddings,
+              std::string const &word, unsigned int k)
 {
-  ArrayType arr = embeddings;
+  ArrayType arr        = embeddings;
   ArrayType one_vector = embeddings.Slice(dl.VocabLookup(word)).Unsqueeze();
-  std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output = fetch::math::clustering::KNN(arr, one_vector, k);
+  std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
+      fetch::math::clustering::KNN(arr, one_vector, k);
 
   for (std::size_t j = 0; j < output.size(); ++j)
   {
@@ -98,7 +99,10 @@ void PrintKNN(SkipGramLoader<ArrayType> const &dl, ArrayType const &embeddings, 
     std::cout << "output.at(j).second: " << output.at(j).second << "\n" << std::endl;
   }
 
-  std::cout << "hot-cold distance: " << fetch::math::distance::Cosine(embeddings.Slice(dl.VocabLookup("cold")).Unsqueeze(), embeddings.Slice(dl.VocabLookup("hot")).Unsqueeze()) << std::endl;
+  std::cout << "hot-cold distance: "
+            << fetch::math::distance::Cosine(embeddings.Slice(dl.VocabLookup("cold")).Unsqueeze(),
+                                             embeddings.Slice(dl.VocabLookup("hot")).Unsqueeze())
+            << std::endl;
 }
 
 void TestEmbeddings(Graph<ArrayType> const &g, std::string const &skip_gram_name,
@@ -148,7 +152,7 @@ int main(int argc, char **argv)
 
   std::cout << "dataloader.VocabSize(): " << dataloader.VocabSize() << std::endl;
   std::cout << "dataloader.Size(): " << dataloader.Size() << std::endl;
-  
+
   ////////////////////////////////
   /// SETUP MODEL ARCHITECTURE ///
   ////////////////////////////////
@@ -176,7 +180,7 @@ int main(int argc, char **argv)
 
   for (std::size_t i = 0; i < tp.training_epochs; ++i)
   {
-    double epoch_loss = 0;
+    double   epoch_loss = 0;
     SizeType step_count = 0;
     while (!dataloader.IsDone())
     {

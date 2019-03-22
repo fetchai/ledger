@@ -26,7 +26,8 @@ namespace clustering {
 namespace details {
 
 template <typename ArrayType>
-std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> GetKNNImplementation(ArrayType array, ArrayType one_vector, unsigned int k)
+std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> GetKNNImplementation(
+    ArrayType array, ArrayType one_vector, unsigned int k)
 {
   using DataType = typename ArrayType::Type;
   using SizeType = typename ArrayType::SizeType;
@@ -40,14 +41,14 @@ std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> G
   similarities.reserve(array.shape().at(0));
   for (SizeType i(0); i < array.shape().at(0); ++i)
   {
-    typename ArrayType::Type d = fetch::math::distance::Cosine(one_vector, array.Slice(i).Unsqueeze());
+    typename ArrayType::Type d =
+        fetch::math::distance::Cosine(one_vector, array.Slice(i).Unsqueeze());
     similarities.emplace_back(i, d);
   }
 
   std::nth_element(similarities.begin(), similarities.begin() + k, similarities.end(),
-                   [](std::pair<SizeType, DataType> const &a, std::pair<SizeType, DataType> const &b) {
-                     return a.second > b.second;
-                   });
+                   [](std::pair<SizeType, DataType> const &a,
+                      std::pair<SizeType, DataType> const &b) { return a.second > b.second; });
 
   std::vector<std::pair<SizeType, DataType>> ret;
   for (SizeType i(0); i < k; ++i)
@@ -57,7 +58,7 @@ std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> G
   return ret;
 }
 
-} // details
+}  // namespace details
 
 /**
  * Interface to get K nearest neighbours method comparing array with input vector
@@ -66,7 +67,8 @@ std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> G
  * @param k  value of k - i.e. how many nearest data points to find
  */
 template <typename ArrayType>
-std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> KNN(ArrayType array, ArrayType one_vector, unsigned int k)
+std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> KNN(
+    ArrayType array, ArrayType one_vector, unsigned int k)
 {
   return details::GetKNNImplementation(array, one_vector, k);
 }
@@ -78,13 +80,13 @@ std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> K
  * @param k  value of k - i.e. how many nearest data points to find
  */
 template <typename ArrayType>
-std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> KNN(ArrayType array, typename ArrayType::SizeType idx, typename ArrayType::SizeType k)
+std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> KNN(
+    ArrayType array, typename ArrayType::SizeType idx, typename ArrayType::SizeType k)
 {
   ArrayType one_vector = array.slice(idx);
   return details::GetKNNImplementation(array, one_vector, k);
 }
 
-
-} // clustering
-} // math
-} // fetch
+}  // namespace clustering
+}  // namespace math
+}  // namespace fetch
