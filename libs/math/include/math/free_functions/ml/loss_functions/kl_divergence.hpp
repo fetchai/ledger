@@ -32,27 +32,36 @@ namespace math {
  * @return
  */
 template <typename ArrayType>
-typename ArrayType::Type KlDivergence(ArrayType const &A, ArrayType const &B)
+typename ArrayType::Type KlDivergence(ArrayType const &a, ArrayType const &b,
+                                      typename ArrayType::Type &ret)
 {
-  assert(A.shape().at(0) == B.shape().at(0));
+  assert(a.shape().at(0) == b.shape().at(0));
 
-  typename ArrayType::Type ret = 0;
-  for (std::size_t i = 0; i < A.shape().at(0); i++)
-    for (std::size_t j = 0; j < A.shape().at(0); j++)
+  ret = 0;
+  for (std::size_t i = 0; i < a.shape().at(0); i++)
+    for (std::size_t j = 0; j < a.shape().at(0); j++)
     {
       {
         if (i == j)
           continue;
 
         typename ArrayType::Type tmp_p_j_i;
-        distance::ConditionalProbabilitiesDistance(A, i, j, 1, tmp_p_j_i);
+        distance::ConditionalProbabilitiesDistance(a, i, j, 1, tmp_p_j_i);
         typename ArrayType::Type tmp_q_j_i;
-        distance::ConditionalProbabilitiesDistance(B, i, j, 1, tmp_q_j_i);
+        distance::ConditionalProbabilitiesDistance(b, i, j, 1, tmp_q_j_i);
 
         ret += tmp_p_j_i * log10(Divide(tmp_p_j_i, tmp_q_j_i));
       }
     }
 
+  return ret;
+}
+
+template <typename ArrayType>
+typename ArrayType::Type KlDivergence(ArrayType const &a, ArrayType const &b)
+{
+  typename ArrayType::Type ret;
+  KlDivergence(a, b, ret);
   return ret;
 }
 
