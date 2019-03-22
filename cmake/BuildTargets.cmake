@@ -171,10 +171,7 @@ function(configure_vendor_targets)
   target_link_libraries(vendor-openssl INTERFACE ${OPENSSL_LIBRARIES})
 
   if(OPENSSL_USE_STATIC_LIBS)
-    target_link_libraries(vendor-openssl INTERFACE ${CMAKE_DL_LIBS})
-    if(CMAKE_THREAD_LIBS_INIT)
-      target_link_libraries(vendor-openssl INTERFACE ${CMAKE_THREAD_LIBS_INIT})
-    endif(CMAKE_THREAD_LIBS_INIT)
+    target_link_libraries(vendor-openssl INTERFACE ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT})
   endif(OPENSSL_USE_STATIC_LIBS)
 
   target_include_directories(vendor-openssl INTERFACE ${OPENSSL_INCLUDE_DIR})
