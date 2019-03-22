@@ -26,9 +26,13 @@ namespace vm_modules {
 static void Print(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
   vm->AddOutputLine(s->str);
+
+#ifndef NDEBUG
+  FETCH_LOG_WARN("VM", "VM printed: ", s->str);
+#endif
 }
 
-void CreatePrint(std::shared_ptr<fetch::vm::Module> &module)
+static void CreatePrint(std::shared_ptr<fetch::vm::Module> &module)
 {
   module->CreateFreeFunction("Print", &Print);
 }

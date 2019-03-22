@@ -359,6 +359,11 @@ public:
     return (static_cast<float>(data_) / one);
   }
 
+  operator unsigned long long() const
+  {
+    return (static_cast<unsigned long long>(data_) / one);
+  }
+
   //  // casting operators
   //  operator uint32_t () const {
   //    return (data_ & integer_mask) >> fractional_bits;

@@ -24,7 +24,7 @@ namespace fetch {
 namespace serializers {
 
 template <typename T, typename U>
-inline void Serialize(T &serializer, struct ml::ops::StateDict<U> const &sd)
+inline void Serialize(T &serializer, struct ml::StateDict<U> const &sd)
 {
   if (sd.weights_)
   {
@@ -48,7 +48,7 @@ inline void Serialize(T &serializer, struct ml::ops::StateDict<U> const &sd)
 }
 
 template <typename T, typename U>
-inline void Deserialize(T &serializer, struct ml::ops::StateDict<U> &sd)
+inline void Deserialize(T &serializer, struct ml::StateDict<U> &sd)
 {
   bool hasWeight;
   bool hasDict;

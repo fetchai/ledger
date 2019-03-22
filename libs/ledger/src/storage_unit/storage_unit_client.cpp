@@ -144,8 +144,6 @@ bool StorageUnitClient::RevertToHash(Hash const &hash)
   else
   {
     // Try to find whether we believe the hash exists (look in memory)
-    // TODO(HUT): this is going to be tricky if the previous state has less/more lanes
-
     FETCH_LOCK(merkle_mutex_);
 
     auto it = std::find_if(state_merkle_stack_.rbegin(), state_merkle_stack_.rend(),
@@ -233,7 +231,6 @@ bool StorageUnitClient::RevertToHash(Hash const &hash)
     FETCH_LOG_PROMISE();
     if (!p->As<bool>())
     {
-      // TODO(HUT): revert all lanes to their previous state
       throw std::runtime_error(
           "Failed to revert all of the lanes -\
           the system may have entered an unknown state");
@@ -462,7 +459,6 @@ bool StorageUnitClient::HasTransaction(ConstByteArray const &digest)
   return present;
 }
 
-// TODO(HUT): comment these doxygen-style
 StorageUnitClient::Document StorageUnitClient::GetOrCreate(ResourceAddress const &key)
 {
   Document doc;
@@ -513,6 +509,7 @@ StorageUnitClient::Document StorageUnitClient::Get(ResourceAddress const &key)
 
 void StorageUnitClient::Set(ResourceAddress const &key, StateValue const &value)
 {
+
   try
   {
     // make the request to the RPC server
@@ -523,7 +520,7 @@ void StorageUnitClient::Set(ResourceAddress const &key, StateValue const &value)
     FETCH_LOG_PROMISE();
 
     // wait for the response
-    promise->Wait();  // TODO(HUT): no error state is checked/allowed for setting things?
+    promise->Wait();
   }
   catch (std::runtime_error &e)
   {

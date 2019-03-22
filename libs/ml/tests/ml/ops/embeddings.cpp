@@ -34,7 +34,8 @@ TYPED_TEST_CASE(EmbeddingsTest, MyTypes);
 
 TYPED_TEST(EmbeddingsTest, forward_shape)
 {
-  fetch::ml::ops::Embeddings<TypeParam> e(100, 60);
+  using SizeType = typename TypeParam::SizeType;
+  fetch::ml::ops::Embeddings<TypeParam> e(SizeType(100), SizeType(60));
   TypeParam                             input(std::vector<uint64_t>({10}));
   for (unsigned int i(0); i < 10; ++i)
   {
@@ -86,6 +87,7 @@ TYPED_TEST(EmbeddingsTest, backward)
     }
   }
   e.SetData(weights);
+
   TypeParam input(std::vector<uint64_t>({2}));
   input.At(0)      = typename TypeParam::Type(3);
   input.At(1)      = typename TypeParam::Type(5);
@@ -101,8 +103,9 @@ TYPED_TEST(EmbeddingsTest, backward)
 
   output = e.Forward({input});
   std::vector<int> gt{30, 30, 30, 30, 30, 30, 44, 44, 44, 44, 44, 44};
-  for (unsigned int i(0); i < 12; ++i)
+
+  for (unsigned int j(0); j < 12; ++j)
   {
-    EXPECT_EQ(output.At(i), typename TypeParam::Type(gt[i]));
+    EXPECT_EQ(output.At(j), typename TypeParam::Type(gt[j]));
   }
 }
