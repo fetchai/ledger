@@ -17,59 +17,56 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/module.hpp"
 #include "http/json_response.hpp"
+#include "http/module.hpp"
 
 namespace fetch {
 
 class HealthCheckHttpModule : public http::HTTPModule
 {
 public:
-  using BlockCoordinator       = ledger::BlockCoordinator;
-  using MainChain              = ledger::MainChain;
-  using MainChainRpcService    = ledger::MainChainRpcService;
+  using BlockCoordinator    = ledger::BlockCoordinator;
+  using MainChain           = ledger::MainChain;
+  using MainChainRpcService = ledger::MainChainRpcService;
 
-  HealthCheckHttpModule(MainChain &chain, MainChainRpcService &chain_service, BlockCoordinator &block_coordinator)
+  HealthCheckHttpModule(MainChain &chain, MainChainRpcService &chain_service,
+                        BlockCoordinator &block_coordinator)
     : chain_{chain}
     , chain_service_{chain_service}
     , block_coordinator_{block_coordinator}
   {
-    Get("/api/health/alive",
-        [](http::ViewParameters const &, http::HTTPRequest const &) {
-          return http::CreateJsonResponse("{}");
-        });
+    Get("/api/health/alive", [](http::ViewParameters const &, http::HTTPRequest const &) {
+      return http::CreateJsonResponse("{}");
+    });
 
-    Get("/api/health/ready",
-        [this](http::ViewParameters const &, http::HTTPRequest const &) {
+    Get("/api/health/ready", [this](http::ViewParameters const &, http::HTTPRequest const &) {
+      // determine the state of the machine system state machines
+      bool const chain_synced = chain_service_.state() == MainChainRpcService::State::SYNCHRONISED;
+      bool const chain_executed_finished =
+          block_coordinator_.GetStateMachine().state() == BlockCoordinator::State::SYNCHRONIZED;
+      bool const chain_execution_complete =
+          block_coordinator_.GetLastExecutedBlock() == chain_.GetHeaviestBlockHash();
 
-          // determine the state of the machine system state machines
-          bool const chain_synced = chain_service_.state() == MainChainRpcService::State::SYNCHRONISED;
-          bool const chain_executed_finished = block_coordinator_.GetStateMachine().state() == BlockCoordinator::State::SYNCHRONIZED;
-          bool const chain_execution_complete = block_coordinator_.GetLastExecutedBlock() == chain_.GetHeaviestBlockHash();
+      variant::Variant response            = variant::Variant::Object();
+      response["chain_synced"]             = chain_synced;
+      response["chain_executed_finished"]  = chain_executed_finished;
+      response["chain_execution_complete"] = chain_execution_complete;
 
-          variant::Variant response = variant::Variant::Object();
-          response["chain_synced"] = chain_synced;
-          response["chain_executed_finished"] = chain_executed_finished;
-          response["chain_execution_complete"] = chain_execution_complete;
+      // determine the status code for the response
+      http::Status status{http::Status::CLIENT_ERROR_PRECONDITION_FAILED};
+      if (chain_synced && chain_executed_finished && chain_execution_complete)
+      {
+        status = http::Status::SUCCESS_OK;
+      }
 
-          // determine the status code for the response
-          http::Status status{http::Status::CLIENT_ERROR_PRECONDITION_FAILED};
-          if (chain_synced && chain_executed_finished && chain_execution_complete)
-          {
-            status = http::Status::SUCCESS_OK;
-          }
-
-          return http::CreateJsonResponse(response, status);
-        });
+      return http::CreateJsonResponse(response, status);
+    });
   }
 
-
-
 private:
-
-  MainChain &chain_;
+  MainChain &          chain_;
   MainChainRpcService &chain_service_;
-  BlockCoordinator &block_coordinator_;
+  BlockCoordinator &   block_coordinator_;
 };
 
-} // namespace fetch
+}  // namespace fetch
