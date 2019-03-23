@@ -36,6 +36,48 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<f
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(TextDataLoaderTest, MyTypes);
 
+TYPED_TEST(TextDataLoaderTest, empty_loader_test)
+{
+  TextParams<TypeParam>      p;
+  BasicTextLoader<TypeParam> loader(p);
+  EXPECT_EQ(loader.Size(), 0);
+  EXPECT_EQ(loader.VocabSize(), 0);
+  EXPECT_TRUE(loader.IsDone());
+}
+
+TYPED_TEST(TextDataLoaderTest, add_data_loader_test)
+{
+  TextParams<TypeParam> p;
+  p.full_window         = true;  //  require full window either side
+  p.n_data_buffers      = 1;
+  p.max_sentences       = 1;
+  p.min_sentence_length = 0;
+  p.window_size         = 2;
+  p.discard_frequent    = false;
+
+  BasicTextLoader<TypeParam> loader(p);
+
+  EXPECT_FALSE(loader.AddData("Hello world."));
+  // With a window size of 2, and full_window set to true, we need sentences of at least 5 words (2
+  // + 1 + 2) to actually train We currently don't have any, hence the size == 0
+  EXPECT_EQ(loader.Size(), 0);
+  EXPECT_EQ(loader.VocabSize(), 0);
+  EXPECT_TRUE(loader.IsDone());
+  EXPECT_EQ(loader.GetVocab().size(), 0);
+
+  EXPECT_TRUE(loader.AddData("A longer, five-word sentence"));
+  EXPECT_EQ(loader.Size(), 5);
+  EXPECT_EQ(loader.VocabSize(), 5);
+  EXPECT_FALSE(loader.IsDone());
+  EXPECT_EQ(loader.GetVocab().size(), 5);
+
+  //  EXPECT_EQ(loader.GetVocab().at("a"), 0);
+  //  EXPECT_EQ(loader.GetVocab().at("longer"), 1);
+  //  EXPECT_EQ(loader.GetVocab().at("five"), 2);
+  //  EXPECT_EQ(loader.GetVocab().at("word"), 2);
+  //  EXPECT_EQ(loader.GetVocab().at("sentence"), 2);
+}
+
 TYPED_TEST(TextDataLoaderTest, basic_loader_test)
 {
   std::string training_data = "This is a test sentence of total length ten words.";
@@ -111,7 +153,7 @@ TYPED_TEST(TextDataLoaderTest, adddata_loader_test)
   }
 }
 
-TYPED_TEST(TextDataLoaderTest, punctuation_test_loader_test)
+TYPED_TEST(TextDataLoaderTest, punctuation_loader_test)
 {
   std::string training_data =
       "This is a test sentence of total length ten words. This next sentence doesn't make things "
@@ -131,18 +173,18 @@ TYPED_TEST(TextDataLoaderTest, punctuation_test_loader_test)
   loader.AddData(training_data);
 
   std::vector<std::string> gt_input(
-      {"this",   "is",          "a",        "test", "sentence", "of",         "total",
-       "length", "ten",         "words",    "this", "next",     "sentence",   "doesnt",
-       "make",   "things",      "so",       "easy", "because",  "it",         "has",
-       "some",   "punctuation", "doesnt",   "it",   "indeed",   "it",         "does",
-       "and",    "this",        "sentence", "even", "has",      "hyphenation"});
+      {"this",     "is",    "a",    "test",       "sentence", "of",    "total", "length",
+       "ten",      "words", "this", "next",       "sentence", "doesn", "t",     "make",
+       "things",   "so",    "easy", "because",    "it",       "has",   "some",  "punctuation",
+       "doesn",    "t",     "it",   "indeed",     "it",       "does",  "and",   "this",
+       "sentence", "even",  "has",  "hyphenation"});
 
   std::string cur_word;
   for (std::size_t j = 0; j < 20; ++j)
   {
     std::pair<TypeParam, SizeType> output = loader.GetNext();
     cur_word = loader.VocabLookup(SizeType(double(output.first.At(0))));
-    ASSERT_TRUE(cur_word.compare(gt_input.at(j)) == 0);
+    ASSERT_EQ(cur_word, gt_input.at(j));
   }
 }
 
@@ -162,6 +204,5 @@ TYPED_TEST(TextDataLoaderTest, discard_loader_test)
   BasicTextLoader<TypeParam> loader(p);
   loader.AddData(training_data);
 
-  // compare with vocab_size - 1 because "UNK" is always in the vocab
-  ASSERT_TRUE(loader.GetDiscardCount() == (loader.VocabSize() - 1));
+  ASSERT_TRUE(loader.GetDiscardCount() == loader.VocabSize());
 }

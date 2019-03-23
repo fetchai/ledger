@@ -51,7 +51,7 @@ private:
 public:
   explicit CBoWLoader(CBoWTextParams<T> p, SizeType seed = 123456789);
 
-  void AddData(std::string const &training_data) override;
+  bool AddData(std::string const &training_data) override;
 
 private:
   void     GetData(SizeType idx, ArrayType &ret) override;
@@ -109,10 +109,10 @@ typename CBoWLoader<T>::SizeType CBoWLoader<T>::GetLabel(SizeType idx)
  * @tparam T
  */
 template <typename T>
-void CBoWLoader<T>::AddData(std::string const &training_data)
+bool CBoWLoader<T>::AddData(std::string const &training_data)
 {
   // ordinary pre-processing
-  BasicTextLoader<T>::AddData(training_data);
+  return BasicTextLoader<T>::AddData(training_data);
 }
 
 }  // namespace dataloaders

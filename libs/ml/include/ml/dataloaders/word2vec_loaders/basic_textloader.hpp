@@ -78,7 +78,7 @@ public:
 
   virtual std::pair<T, SizeType> GetAtIndex(SizeType idx);
   SizeType                       GetDiscardCount();
-  void                           AddData(std::string const &text) override;
+  bool                           AddData(std::string const &text) override;
 
 protected:
   // params
@@ -97,9 +97,8 @@ protected:
   SizeType discard_count_        = 0;  // total count of discarded (frequent) words
 
   // used for iterating through all examples incrementally
-  SizeType              cursor_;           // indexes through data
-  bool                  is_done_ = false;  // tracks progress of cursor
-  std::vector<SizeType> ran_idx_;          // random indices container
+  SizeType              cursor_;   // indexes through data
+  std::vector<SizeType> ran_idx_;  // random indices container
 
   void     GetData(SizeType idx, ArrayType &ret) override;
   SizeType GetLabel(SizeType idx) override;
@@ -124,12 +123,27 @@ BasicTextLoader<T>::BasicTextLoader(TextParams<T> const &p, SizeType seed)
   , lcg_(seed)
   , cursor_(0)
 {
+  // User doesn't need to specify minimum sentence length, default is always set to minimum viable
+  // sentence length
+  SizeType min_viable_sentnce;
+  if (p_.full_window)
+  {
+    min_viable_sentnce = ((p_.window_size * 2) + 1);
+  }
+  else
+  {
+    // one word sentence cannot have a positive input-context pair, so isn't valid
+    min_viable_sentnce = 2;
+  }
+
+  if (p_.min_sentence_length < min_viable_sentnce)
+  {
+    p_.min_sentence_length = min_viable_sentnce;
+  }
   this->min_sent_len_ = p_.min_sentence_length;
   this->max_sent_len_ = p_.max_sentences;
 
   data_buffers_.resize(p_.n_data_buffers);
-
-  Reset();
 }
 
 /////////////////////////////////////
@@ -191,7 +205,11 @@ typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::Size() const
 template <typename T>
 bool BasicTextLoader<T>::IsDone() const
 {
-  return is_done_;
+  if (this->data_.empty() || (cursor_ >= this->word_count_))
+  {
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -200,8 +218,7 @@ bool BasicTextLoader<T>::IsDone() const
 template <typename T>
 void BasicTextLoader<T>::Reset()
 {
-  cursor_  = 0;
-  is_done_ = false;
+  cursor_ = 0;
 
   // generate a new random sequence for random sampling
   ran_idx_ = std::vector<SizeType>(this->Size());
@@ -249,12 +266,16 @@ typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::GetDiscardCount()
  * @param training_data
  */
 template <typename T>
-void BasicTextLoader<T>::AddData(std::string const &text)
+bool BasicTextLoader<T>::AddData(std::string const &text)
 {
-  TextLoader<T>::AddData(text);
+  bool success = false;
+
+  success = TextLoader<T>::AddData(text);
 
   // have to reset to regenerate random indices for newly resized data
   this->Reset();
+
+  return success;
 }
 
 ////////////////////////////////////////
@@ -352,11 +373,9 @@ bool BasicTextLoader<T>::GetNextValidIndex(bool random, typename BasicTextLoader
   SizeType timeout_count = 0;
   while (not_found)
   {
-    is_done_ = false;
-    if (cursor_ >= this->word_count_)
+    if (IsDone())
     {
       Reset();
-      is_done_ = true;
     }
 
     if (random ? CheckValidIndex(ran_idx_.at(cursor_)) : CheckValidIndex(cursor_))

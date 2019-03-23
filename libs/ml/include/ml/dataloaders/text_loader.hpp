@@ -51,7 +51,7 @@ public:
 
   std::unordered_map<std::string, SizeType> GetVocab() const;
 
-  virtual void AddData(std::string const &text);
+  virtual bool AddData(std::string const &text);
 
 protected:
   // training data parsing containers
@@ -77,7 +77,7 @@ protected:
 
 private:
   void PreProcessWords(std::string const &training_data, SentencesType &sentences);
-  void BuildVocab(SentencesType &sentences);
+  bool BuildVocab(SentencesType &sentences);
   std::vector<std::string> StripPunctuationAndLower(std::string &word) const;
   bool                     CheckEndOfSentence(std::string &word);
 };
@@ -125,7 +125,9 @@ typename TextLoader<T>::SizeType TextLoader<T>::VocabLookup(std::string const &w
   {
     return vocab_.at(word);
   }
-  return SizeType(0);
+
+  // using max value to represent unknown word
+  return std::numeric_limits<SizeType>::max();
 }
 
 /**
@@ -152,7 +154,7 @@ std::string TextLoader<T>::VocabLookup(typename TextLoader<T>::SizeType const id
  * @param training_data
  */
 template <typename T>
-void TextLoader<T>::AddData(std::string const &text)
+bool TextLoader<T>::AddData(std::string const &text)
 {
   std::vector<std::vector<std::string>> sentences;
 
@@ -160,7 +162,7 @@ void TextLoader<T>::AddData(std::string const &text)
   PreProcessWords(text, sentences);
 
   // build unique vocabulary and get word counts
-  BuildVocab(sentences);
+  return BuildVocab(sentences);
 }
 
 ///////////////////////////////////////////////
@@ -210,14 +212,14 @@ void TextLoader<T>::PreProcessWords(std::string const &training_data, SentencesT
  * builds vocab out of parsed training data
  */
 template <typename T>
-void TextLoader<T>::BuildVocab(std::vector<std::vector<std::string>> &sentences)
+bool TextLoader<T>::BuildVocab(std::vector<std::vector<std::string>> &sentences)
 {
+  bool sentence_added = false;
+
   // insert words uniquely into the vocabulary
-  vocab_.emplace(std::make_pair("UNK", SizeType(0)));
-  vocab_frequencies.emplace(std::make_pair(SizeType(0), SizeType(0)));
   for (std::vector<std::string> &cur_sentence : sentences)
   {
-    if ((cur_sentence.size() > min_sent_len_) && (sentence_count_ < max_sent_len_))
+    if ((cur_sentence.size() >= min_sent_len_) && (sentence_count_ < max_sent_len_))
     {
       data_.push_back(std::vector<SizeType>({}));
       SizeType word_idx;
@@ -241,8 +243,10 @@ void TextLoader<T>::BuildVocab(std::vector<std::vector<std::string>> &sentences)
         word_count_++;
       }
       sentence_count_++;
+      sentence_added = true;
     }
   }
+  return sentence_added;
 }
 
 /**
@@ -269,7 +273,7 @@ std::vector<std::string> TextLoader<T>::StripPunctuationAndLower(std::string &wo
       }
       ret.at(word_idx - 1).push_back((char)std::tolower(c));
     }
-    // TODO - catches two character scenarios? like " asdf ?"
+    // TODO (776) - need to handle 2 character sentence ends
     else if ((c == '-') || (c == '\'') || (c == '.') || (c == '\t') || (c == '\n'))
     {
       new_word = true;

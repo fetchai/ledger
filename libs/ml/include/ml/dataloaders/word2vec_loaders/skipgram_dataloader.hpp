@@ -75,7 +75,7 @@ public:
   SkipGramLoader(SkipGramTextParams<T> p, SizeType seed = 123456789);
   SkipGramLoader(std::string &data, SkipGramTextParams<T> p, SizeType seed = 123456789);
 
-  virtual void AddData(std::string const &training_data) override;
+  virtual bool AddData(std::string const &training_data) override;
 
 private:
   virtual void     GetData(SizeType idx, ArrayType &ret) override;
@@ -317,15 +317,18 @@ bool SkipGramLoader<T>::WindowPositionCheck(SizeType target_pos, SizeType contex
  * @tparam T
  */
 template <typename T>
-void SkipGramLoader<T>::AddData(std::string const &training_data)
+bool SkipGramLoader<T>::AddData(std::string const &training_data)
 {
-  // ordinary pre-processing
-  BasicTextLoader<T>::AddData(training_data);
+  bool success = false;
 
-  if ((this->sentence_count_ > 0) && (this->word_count_ > 0))
+  // ordinary pre-processing
+  success = BasicTextLoader<T>::AddData(training_data);
+
+  if (success)
   {
     BuildUnigramTable();
   }
+  return success;
 }
 
 /**
