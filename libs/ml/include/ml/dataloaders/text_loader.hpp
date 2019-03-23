@@ -56,8 +56,8 @@ public:
 protected:
   // training data parsing containers
   SizeType size_         = 0;  // # training pairs
-  SizeType min_sent_len_ = 0;  // minimum number of words in permissible sentence
-  SizeType max_sent_len_ = 0;  // maximum number of sentences permissible in vocabulary
+  SizeType min_sent_len_ = 0;  // minimum length of a permissible sentence
+  SizeType max_sent_     = 0;  // maximum number of sentences permissible in vocabulary
   std::unordered_map<std::string, SizeType> vocab_;             // unique vocab of words
   std::unordered_map<SizeType, SizeType>    vocab_frequencies;  // the count of each vocab word
   WordIdxType                               data_;  // all training data by sentence_idx[word_idx]
@@ -76,9 +76,11 @@ protected:
   virtual SizeType GetLabel(SizeType idx)                = 0;
 
 private:
-  void PreProcessWords(std::string const &training_data, SentencesType &sentences);
-  bool BuildVocab(SentencesType &sentences);
-  std::vector<std::string> StripPunctuationAndLower(std::string &word) const;
+  std::vector<char> word_break_{'-', '\'', '.', '\t', '\n', '!', '?'};
+  std::vector<char> sentence_break_{'.', '\t', '\n', '!', '?'};
+
+  bool                     AddSentenceToVocab(std::vector<std::string> &sentence);
+  std::vector<std::string> StripPunctuationAndLower(std::string const &word) const;
   bool                     CheckEndOfSentence(std::string &word);
 };
 
@@ -121,13 +123,31 @@ std::unordered_map<std::string, typename TextLoader<T>::SizeType> TextLoader<T>:
 template <typename T>
 typename TextLoader<T>::SizeType TextLoader<T>::VocabLookup(std::string const &word) const
 {
-  if (vocab_.find(word) != vocab_.end())
-  {
-    return vocab_.at(word);
-  }
+  // strip case and punctuation in the same way as when vocabulary is added
+  std::vector<std::string> parsed_word = StripPunctuationAndLower(word);
 
-  // using max value to represent unknown word
-  return std::numeric_limits<SizeType>::max();
+  if (parsed_word.empty())
+  {
+    // word seems to be invalid (e.g. a string of punctuation)
+    return std::numeric_limits<SizeType>::max();
+  }
+  else if (parsed_word.size() > 1)
+  {
+    // string seems to resolve to multiple words (which would have multiple embeddings)
+    // we treat this as an invalid lookup
+    return std::numeric_limits<SizeType>::max();
+  }
+  else
+  {
+    if (vocab_.find(parsed_word.at(0)) != vocab_.end())
+    {
+      // return found word
+      return vocab_.at(parsed_word.at(0));
+    }
+
+    // couldn't find the word in the vocabular
+    return std::numeric_limits<SizeType>::max();
+  }
 }
 
 /**
@@ -156,43 +176,21 @@ std::string TextLoader<T>::VocabLookup(typename TextLoader<T>::SizeType const id
 template <typename T>
 bool TextLoader<T>::AddData(std::string const &text)
 {
-  std::vector<std::vector<std::string>> sentences;
-
-  // strip punctuation and handle casing
-  PreProcessWords(text, sentences);
-
-  // build unique vocabulary and get word counts
-  return BuildVocab(sentences);
-}
-
-///////////////////////////////////////////////
-/// Private member function implementations ///
-///////////////////////////////////////////////
-
-/**
- * removes punctuation and handles casing of all words in training data
- * @param training_data
- */
-template <typename T>
-void TextLoader<T>::PreProcessWords(std::string const &training_data, SentencesType &sentences)
-{
   std::string              word;
   std::vector<std::string> parsed_word{};
-  SizeType                 sentence_count = 0;
   bool                     new_sentence   = true;
-  for (std::stringstream s(training_data); s >> word;)
+  bool                     sentence_added = false;
+  std::vector<std::string> cur_sentence;
+  for (std::stringstream s(text); s >> word;)
   {
-    // if new sentence
+    if (sentence_count_ >= max_sent_)
+    {
+      break;
+    }
+
     if (new_sentence)
     {
-      ++sentence_count;
-
-      if (sentence_count_ + sentence_count > max_sent_len_)
-      {
-        break;
-      }
-
-      sentences.push_back(std::vector<std::string>{});
+      cur_sentence.clear();
     }
 
     // must check this before we strip punctuation
@@ -201,52 +199,76 @@ void TextLoader<T>::PreProcessWords(std::string const &training_data, SentencesT
     // strip punctuation & lower case
     parsed_word = StripPunctuationAndLower(word);
 
+    // sometimes we split a word into two words after removing punctuation
     for (auto &cur_word : parsed_word)
     {
-      sentences.at(sentence_count - 1).push_back(cur_word);
+      cur_sentence.emplace_back(cur_word);
+    }
+
+    // insert sentence of words uniquely into vocab
+    if (new_sentence)
+    {
+      if (AddSentenceToVocab(cur_sentence))
+      {
+        sentence_added = true;
+        sentence_count_++;
+      }
     }
   }
+
+  // if the entire text stream ends without a sentence end character - we'll assume that's the end
+  // of a sentence
+  if (!new_sentence)
+  {
+    if (AddSentenceToVocab(cur_sentence))
+    {
+      sentence_added = true;
+      sentence_count_++;
+    }
+  }
+
+  return sentence_added;
 }
+
+///////////////////////////////////////////////
+/// Private member function implementations ///
+///////////////////////////////////////////////
 
 /**
  * builds vocab out of parsed training data
  */
 template <typename T>
-bool TextLoader<T>::BuildVocab(std::vector<std::vector<std::string>> &sentences)
+bool TextLoader<T>::AddSentenceToVocab(std::vector<std::string> &sentence)
 {
-  bool sentence_added = false;
-
-  // insert words uniquely into the vocabulary
-  for (std::vector<std::string> &cur_sentence : sentences)
+  if (sentence.size() >= min_sent_len_)
   {
-    if ((cur_sentence.size() >= min_sent_len_) && (sentence_count_ < max_sent_len_))
+    data_.push_back(std::vector<SizeType>({}));
+    SizeType word_idx;
+    for (std::string const &cur_word : sentence)
     {
-      data_.push_back(std::vector<SizeType>({}));
-      SizeType word_idx;
-      for (std::string cur_word : cur_sentence)
+      // if already seen this word
+      if (vocab_.find(cur_word) != vocab_.end())
       {
-        // if already seen this word
-        if (vocab_.find(cur_word) != vocab_.end())
-        {
-          vocab_frequencies.at(vocab_.at(cur_word))++;
-          word_idx = vocab_.at(cur_word);
-        }
-        else
-        {
-          word_idx = vocab_.size();
-          vocab_frequencies.emplace(std::make_pair(vocab_.size(), SizeType(1)));
-          vocab_.emplace(std::make_pair(cur_word, vocab_.size()));
-        }
-        data_.back().push_back(word_idx);
-        word_idx_sentence_idx.emplace(std::pair<SizeType, SizeType>(word_count_, sentence_count_));
-        sentence_idx_word_idx.emplace(std::pair<SizeType, SizeType>(sentence_count_, word_count_));
-        word_count_++;
+        vocab_frequencies.at(vocab_.at(cur_word))++;
+        word_idx = vocab_.at(cur_word);
       }
-      sentence_count_++;
-      sentence_added = true;
+      else
+      {
+        word_idx = vocab_.size();
+        vocab_frequencies.emplace(std::make_pair(vocab_.size(), SizeType(1)));
+        vocab_.emplace(std::make_pair(cur_word, vocab_.size()));
+      }
+      data_.back().push_back(word_idx);
+      word_idx_sentence_idx.emplace(std::pair<SizeType, SizeType>(word_count_, sentence_count_));
+      sentence_idx_word_idx.emplace(std::pair<SizeType, SizeType>(sentence_count_, word_count_));
+      word_count_++;
     }
+    return true;
   }
-  return sentence_added;
+  else
+  {
+    return false;
+  }
 }
 
 /**
@@ -254,14 +276,14 @@ bool TextLoader<T>::BuildVocab(std::vector<std::vector<std::string>> &sentences)
  * @param word
  */
 template <typename T>
-std::vector<std::string> TextLoader<T>::StripPunctuationAndLower(std::string &word) const
+std::vector<std::string> TextLoader<T>::StripPunctuationAndLower(std::string const &word) const
 {
   std::vector<std::string> ret;
 
   // replace punct with space and lower case
   SizeType word_idx = 0;
   bool     new_word = true;
-  for (auto &c : word)
+  for (auto const &c : word)
   {
     if (std::isalpha(c))
     {
@@ -273,8 +295,7 @@ std::vector<std::string> TextLoader<T>::StripPunctuationAndLower(std::string &wo
       }
       ret.at(word_idx - 1).push_back((char)std::tolower(c));
     }
-    // TODO (776) - need to handle 2 character sentence ends
-    else if ((c == '-') || (c == '\'') || (c == '.') || (c == '\t') || (c == '\n'))
+    else if (std::find(word_break_.begin(), word_break_.end(), c) != word_break_.end())
     {
       new_word = true;
     }
@@ -295,7 +316,22 @@ std::vector<std::string> TextLoader<T>::StripPunctuationAndLower(std::string &wo
 template <typename T>
 bool TextLoader<T>::CheckEndOfSentence(std::string &word)
 {
-  return std::string(".!?").find(word.back()) != std::string::npos;
+  // check last character
+  bool end_of_sen = (std::find(sentence_break_.begin(), sentence_break_.end(), word.back()) !=
+                     sentence_break_.end());
+
+  // another common way to end the sentence if there is a quote is to use two punctuation chars such
+  // as ." !" or ?"
+  if (word.back() == '\"')
+  {
+    if ((std::find(sentence_break_.begin(), sentence_break_.end(), word.end()[-2]) !=
+         sentence_break_.end()))
+    {
+      end_of_sen = true;
+    };
+  }
+
+  return end_of_sen;
 }
 
 }  // namespace dataloaders

@@ -25,7 +25,7 @@ namespace ml {
 namespace dataloaders {
 
 /**
- * additional params only relent for Skipgram models
+ * additional params only relevant for Skipgram models
  */
 template <typename T>
 struct SkipGramTextParams : TextParams<T>
@@ -58,9 +58,6 @@ class SkipGramLoader : public BasicTextLoader<T>
 
 private:
   // training data parsing containers
-  SizeType pos_size_ = 0;  // # positive training pairs
-  SizeType neg_size_ = 0;  // # negative training pairs
-
   SkipGramTextParams<T> p_;
 
   // the unigram table container

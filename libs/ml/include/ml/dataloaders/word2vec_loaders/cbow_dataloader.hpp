@@ -24,7 +24,7 @@ namespace ml {
 namespace dataloaders {
 
 /**
- * additional params only relent for Skipgram models
+ * only different from the basic text params in that it enforces full_window by default
  */
 template <typename T>
 struct CBoWTextParams : TextParams<T>
@@ -45,15 +45,13 @@ class CBoWLoader : public BasicTextLoader<T>
   using DataType  = typename T::Type;
   using SizeType  = typename T::SizeType;
 
-private:
-  CBoWTextParams<T> p_;
-
 public:
   explicit CBoWLoader(CBoWTextParams<T> p, SizeType seed = 123456789);
-
   bool AddData(std::string const &training_data) override;
 
 private:
+  CBoWTextParams<T> p_;
+
   void     GetData(SizeType idx, ArrayType &ret) override;
   SizeType GetLabel(SizeType idx) override;
 };

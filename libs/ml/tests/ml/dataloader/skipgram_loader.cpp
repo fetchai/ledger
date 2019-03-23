@@ -55,12 +55,11 @@ TYPED_TEST_CASE(SkipGramDataloaderTest, MyTypes);
 
 TYPED_TEST(SkipGramDataloaderTest, loader_test)
 {
+  using SizeType = typename TypeParam::SizeType;
 
-  std::string training_data =
-      "This is a test sentence of total length ten words. This is another test sentence of total "
-      "length ten words.";
+  std::string training_data = "This is a test sentence of total length ten words.";
+  SizeType    total_words   = 10;
 
-  using SizeType                  = typename TypeParam::SizeType;
   SkipGramTextParams<TypeParam> p = SetParams<TypeParam>();
   SkipGramLoader<TypeParam>     loader(p);
   loader.AddData(training_data);
@@ -83,22 +82,30 @@ TYPED_TEST(SkipGramDataloaderTest, loader_test)
        std::pair<std::string, std::string>("length", "ten"),
        std::pair<std::string, std::string>("ten", "length"),
        std::pair<std::string, std::string>("ten", "words"),
-       std::pair<std::string, std::string>("words", "ten"),
-       std::pair<std::string, std::string>("is", "another"),
-       std::pair<std::string, std::string>("another", "is"),
-       std::pair<std::string, std::string>("another", "test"),
-       std::pair<std::string, std::string>("test", "another")});
+       std::pair<std::string, std::string>("words", "ten")});
 
-  TypeParam input_and_context;
-  for (std::size_t j = 0; j < 1000; ++j)
+  TypeParam left_and_right;
+  for (std::size_t j = 0; j < 100; ++j)
   {
-    input_and_context = loader.GetNext().first;
+    left_and_right            = loader.GetNext().first;
+    std::string input         = loader.VocabLookup(SizeType(double(left_and_right.At(0))));
+    std::string context       = loader.VocabLookup(SizeType(double(left_and_right.At(1))));
+    auto        input_context = std::make_pair(input, context);
 
-    std::string input   = loader.VocabLookup(SizeType(double(input_and_context.At(0))));
-    std::string context = loader.VocabLookup(SizeType(double(input_and_context.At(1))));
-
-    ASSERT_TRUE(std::find(gt_input_context_pairs.begin(), gt_input_context_pairs.end(),
-                          std::pair<std::string, std::string>(input, context)) !=
-                gt_input_context_pairs.end());
+    if (j % total_words == 0)
+    {
+      ASSERT_EQ(input_context, gt_input_context_pairs.at(0));
+    }
+    else if (j % total_words == total_words - 1)
+    {
+      ASSERT_EQ(input_context, gt_input_context_pairs.back());
+    }
+    else
+    {
+      bool valid_option_one =
+          (input_context == gt_input_context_pairs.at((2 * (j % total_words)) - 1));
+      bool valid_option_two = (input_context == gt_input_context_pairs.at(2 * (j % total_words)));
+      ASSERT_NE(valid_option_one, valid_option_two);
+    }
   }
 }

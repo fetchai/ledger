@@ -39,10 +39,10 @@ public:
   TextParams(bool fw = false)
     : full_window(fw){};
 
-  SizeType min_sentence_length = 0;  // minimum number of words in a sentence
+  SizeType min_sentence_length = 2;  // minimum number of words in a sentence
   SizeType max_sentences       = 0;  // maximum number of sentences in training set
 
-  SizeType n_data_buffers = 0;  // number of data points to return when called
+  SizeType n_data_buffers = 1;  // number of word indices to return when called
   SizeType window_size    = 0;  // the size of the context window (one-sided)
   SizeType max_idx_search = 1000;
 
@@ -73,7 +73,7 @@ public:
   std::pair<T, SizeType>         GetNext() override;
   virtual std::pair<T, SizeType> GetRandom();
   SizeType                       Size() const override;
-  bool                           IsDone() const override;
+  virtual bool                   IsDone() const override;
   void                           Reset() override;
 
   virtual std::pair<T, SizeType> GetAtIndex(SizeType idx);
@@ -106,7 +106,7 @@ protected:
   SizeType GetWordOffsetFromWordIdx(SizeType word_idx) const;
 
 private:
-  bool GetNextValidIndex(bool random, typename BasicTextLoader<T>::SizeType &ret);
+  bool GetNextValidIndex(bool random, typename BasicTextLoader<T>::SizeType &cursor);
   bool CheckValidIndex(SizeType idx);
   void DiscardFrequent();
   bool DiscardExample(SizeType word_frequency);
@@ -123,25 +123,21 @@ BasicTextLoader<T>::BasicTextLoader(TextParams<T> const &p, SizeType seed)
   , lcg_(seed)
   , cursor_(0)
 {
-  // User doesn't need to specify minimum sentence length, default is always set to minimum viable
-  // sentence length
+  assert(p_.min_sentence_length > 1);
+
+  // If user specifies to use full windows, they dont need to specify minimum sentence length
   SizeType min_viable_sentnce;
   if (p_.full_window)
   {
     min_viable_sentnce = ((p_.window_size * 2) + 1);
-  }
-  else
-  {
-    // one word sentence cannot have a positive input-context pair, so isn't valid
-    min_viable_sentnce = 2;
+    if (p_.min_sentence_length < min_viable_sentnce)
+    {
+      p_.min_sentence_length = min_viable_sentnce;
+    }
   }
 
-  if (p_.min_sentence_length < min_viable_sentnce)
-  {
-    p_.min_sentence_length = min_viable_sentnce;
-  }
   this->min_sent_len_ = p_.min_sentence_length;
-  this->max_sent_len_ = p_.max_sentences;
+  this->max_sent_     = p_.max_sentences;
 
   data_buffers_.resize(p_.n_data_buffers);
 }
@@ -158,10 +154,9 @@ BasicTextLoader<T>::BasicTextLoader(TextParams<T> const &p, SizeType seed)
 template <typename T>
 std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetNext()
 {
-  SizeType idx;
-  if (GetNextValidIndex(false, idx))
+  if (GetNextValidIndex(false, cursor_))
   {
-    return GetAtIndex(idx);
+    return GetAtIndex(cursor_);
   }
   else
   {
@@ -177,10 +172,9 @@ std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetNext(
 template <typename T>
 std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetRandom()
 {
-  SizeType idx;
-  if (GetNextValidIndex(true, idx))
+  if (GetNextValidIndex(true, cursor_))
   {
-    return GetAtIndex(idx);
+    return GetAtIndex(cursor_);
   }
   else
   {
@@ -189,13 +183,32 @@ std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetRando
 }
 
 /**
- * Size method of dataloader implemented in textloader
+ * Indicates total number of training data point if p_.full_window, otherwise indicates total number
+ * of valid training indices (i.e. target words) which determines the minimum number of training
+ * data points
  * @return
  */
 template <typename T>
 typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::Size() const
 {
-  return TextLoader<T>::Size();
+  SizeType size(0);
+  // for each sentence
+  for (auto const &s : this->data_)
+  {
+    // not strictly necessary to check this, since text_loader won't add too short sentences anyway
+    if ((SizeType)s.size() >= p_.min_sentence_length)
+    {
+      if (p_.full_window)
+      {
+        size += (SizeType)s.size() - (p_.min_sentence_length - 1);
+      }
+      else
+      {
+        size += (SizeType)s.size();
+      }
+    }
+  }
+  return size;
 }
 
 /**
@@ -205,11 +218,15 @@ typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::Size() const
 template <typename T>
 bool BasicTextLoader<T>::IsDone() const
 {
-  if (this->data_.empty() || (cursor_ >= this->word_count_))
+  // check if no more valid positions until cursor reaches end
+  if (!p_.full_window)
   {
-    return true;
+    return (this->data_.empty() || (cursor_ >= this->word_count_));
   }
-  return false;
+  else
+  {
+    return (this->data_.empty() || (cursor_ >= (this->word_count_ - p_.window_size)));
+  }
 }
 
 /**
@@ -268,9 +285,7 @@ typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::GetDiscardCount()
 template <typename T>
 bool BasicTextLoader<T>::AddData(std::string const &text)
 {
-  bool success = false;
-
-  success = TextLoader<T>::AddData(text);
+  bool success = TextLoader<T>::AddData(text);
 
   // have to reset to regenerate random indices for newly resized data
   this->Reset();
@@ -366,7 +381,8 @@ typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::GetWordOffsetFromWordI
  * @return  returns a bool indicating failure condition
  */
 template <typename T>
-bool BasicTextLoader<T>::GetNextValidIndex(bool random, typename BasicTextLoader<T>::SizeType &ret)
+bool BasicTextLoader<T>::GetNextValidIndex(bool                                   random,
+                                           typename BasicTextLoader<T>::SizeType &cursor)
 {
   // loop until we find a non-discarded data point
   bool     not_found     = true;
@@ -378,13 +394,13 @@ bool BasicTextLoader<T>::GetNextValidIndex(bool random, typename BasicTextLoader
       Reset();
     }
 
-    if (random ? CheckValidIndex(ran_idx_.at(cursor_)) : CheckValidIndex(cursor_))
+    if (random ? CheckValidIndex(ran_idx_.at(cursor)) : CheckValidIndex(cursor))
     {
       not_found = false;
     }
     else
     {
-      ++cursor_;
+      ++cursor;
       ++timeout_count;
       if (timeout_count > p_.max_idx_search)
       {
@@ -392,7 +408,7 @@ bool BasicTextLoader<T>::GetNextValidIndex(bool random, typename BasicTextLoader
       }
     }
   }
-  ret = random ? ran_idx_.at(cursor_) : cursor_;
+  cursor = random ? ran_idx_.at(cursor) : cursor;
   return true;
 }
 
@@ -441,6 +457,7 @@ void BasicTextLoader<T>::DiscardFrequent()
     // iterate through all sentences
     for (SizeType sntce_idx = 0; sntce_idx < this->data_.size(); sntce_idx++)
     {
+      // again, not strictly necessary to check for this under current text_loader implementation
       if ((this->data_.at(sntce_idx).size() > p_.min_sentence_length) &&
           (discard_sentence_idx_ + sentence_count < p_.max_sentences))
       {
