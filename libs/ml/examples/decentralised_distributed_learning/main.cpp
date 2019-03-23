@@ -103,7 +103,7 @@ public:
 
   void UpdateWeights()
   {
-    std::list<const fetch::ml::StateDict<ArrayType>> stateDicts;
+    std::list<fetch::ml::StateDict<ArrayType>> stateDicts;
     for (auto &c : peers_)
     {
       // Collect all the stateDicts from peers
