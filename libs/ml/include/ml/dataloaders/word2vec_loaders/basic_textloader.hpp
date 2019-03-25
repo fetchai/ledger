@@ -397,38 +397,35 @@ typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::GetWordOffsetFromWordI
 template <typename T>
 void BasicTextLoader<T>::GetNextValidIndices()
 {
-  if (IsDone())
-  {
-    throw std::runtime_error("");
-  }
   cursor_set_     = false;
   ran_cursor_set_ = false;
-
-  assert(ran_idx_.size() == this->word_count_);
-
-  for (SizeType i = cursor_; i < this->word_count_; ++i)
+  // when Adding data may be IsDone = True, in which case don't need to do anything
+  if (!IsDone())
   {
-    if (!cursor_set_)
+    for (SizeType i = cursor_; i < this->word_count_; ++i)
     {
-      if (CheckValidIndex(i))
+      if (!cursor_set_)
       {
-        cursor_     = i;
-        cursor_set_ = true;
+        if (CheckValidIndex(i))
+        {
+          cursor_     = i;
+          cursor_set_ = true;
+        }
       }
-    }
 
-    if (!ran_cursor_set_)
-    {
-      if (CheckValidIndex(ran_idx_.at(i)))
+      if (!ran_cursor_set_)
       {
-        ran_cursor_     = ran_idx_.at(i);
-        ran_cursor_set_ = true;
+        if (CheckValidIndex(ran_idx_.at(i)))
+        {
+          ran_cursor_     = ran_idx_.at(i);
+          ran_cursor_set_ = true;
+        }
       }
-    }
 
-    if (cursor_set_ && ran_cursor_set_)
-    {
-      break;
+      if (cursor_set_ && ran_cursor_set_)
+      {
+        break;
+      }
     }
   }
 }
