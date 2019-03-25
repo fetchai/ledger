@@ -59,7 +59,7 @@ std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> G
 
   std::sort(ret.begin(), ret.end(),
             [](std::pair<SizeType, DataType> const &a, std::pair<SizeType, DataType> const &b) {
-              return a.second < b.second;
+              return a.second > b.second;
             });
 
   return ret;

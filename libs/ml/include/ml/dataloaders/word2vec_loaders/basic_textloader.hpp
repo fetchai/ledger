@@ -159,11 +159,8 @@ std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetNext(
 {
   GetNextValidIndices();
 
-  if (!IsDone() && cursor_set_)
-  {
-    return GetAtIndex(cursor_);
-  }
-  throw std::runtime_error("exceeded maximum attempts to find valid index");
+  assert((IsDone() || !(cursor_set_)));
+  return GetAtIndex(cursor_);
 }
 
 /**
@@ -175,11 +172,9 @@ template <typename T>
 std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetRandom()
 {
   GetNextValidIndices();
-  if (!IsDone() && ran_cursor_set_)
-  {
-    return GetAtIndex(ran_cursor_);
-  }
-  throw std::runtime_error("exceeded maximum attempts to find valid index");
+
+  assert((IsDone() || !(ran_cursor_set_)));
+  return GetAtIndex(ran_cursor_);
 }
 
 /**
@@ -470,6 +465,7 @@ void BasicTextLoader<T>::DiscardFrequent()
   {
     discards_.clear();
     discard_count_          = 0;
+    discard_sentence_idx_   = 0;
     SizeType sentence_count = 0;
 
     // iterate through all sentences

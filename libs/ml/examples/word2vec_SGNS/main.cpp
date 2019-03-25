@@ -56,8 +56,8 @@ SkipGramTextParams<T> SetParams()
 {
   SkipGramTextParams<T> ret;
 
-  ret.n_data_buffers = SizeType(2);    // input and context buffers
-  ret.max_sentences  = SizeType(100);  // maximum number of sentences to use
+  ret.n_data_buffers = SizeType(2);      // input and context buffers
+  ret.max_sentences  = SizeType(10000);  // maximum number of sentences to use
 
   ret.unigram_table      = true;  // unigram table for sampling negative training pairs
   ret.unigram_table_size = SizeType(10000000);  // size of unigram table for negative sampling
@@ -90,15 +90,23 @@ std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType embeddings_size, Size
 void PrintKNN(SkipGramLoader<ArrayType> const &dl, ArrayType const &embeddings,
               std::string const &word, SizeType k)
 {
-  ArrayType arr        = embeddings;
-  ArrayType one_vector = embeddings.Slice(dl.VocabLookup(word)).Unsqueeze();
-  std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
-      fetch::math::clustering::KNN(arr, one_vector, k);
+  ArrayType arr = embeddings;
 
-  for (std::size_t j = 0; j < output.size(); ++j)
+  if (dl.VocabLookup(word) > dl.VocabSize())
   {
-    std::cout << "output.at(j).first: " << dl.VocabLookup(output.at(j).first) << std::endl;
-    std::cout << "output.at(j).second: " << output.at(j).second << "\n" << std::endl;
+    std::cout << "WARNING! could not find [" + word + "] in vocabulary" << std::endl;
+  }
+  else
+  {
+    ArrayType one_vector = embeddings.Slice(dl.VocabLookup(word)).Unsqueeze();
+    std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
+        fetch::math::clustering::KNN(arr, one_vector, k);
+
+    for (std::size_t j = 0; j < output.size(); ++j)
+    {
+      std::cout << "output.at(j).first: " << dl.VocabLookup(output.at(j).first) << std::endl;
+      std::cout << "output.at(j).second: " << output.at(j).second << "\n" << std::endl;
+    }
   }
 }
 
@@ -179,6 +187,7 @@ int main(int argc, char **argv)
   {
     double   epoch_loss = 0;
     SizeType step_count = 0;
+    dataloader.Reset();
     while (!dataloader.IsDone())
     {
       gt.Fill(0);
@@ -239,7 +248,6 @@ int main(int argc, char **argv)
       }
       ++step_count;
     }
-    dataloader.Reset();
 
     // print batch loss and embeddings distances
     // Test trained embeddings
