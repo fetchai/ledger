@@ -159,7 +159,7 @@ std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetNext(
 {
   GetNextValidIndices();
 
-  assert((IsDone() || !(cursor_set_)));
+  assert(cursor_set_);
   return GetAtIndex(cursor_);
 }
 
@@ -173,7 +173,7 @@ std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetRando
 {
   GetNextValidIndices();
 
-  assert((IsDone() || !(ran_cursor_set_)));
+  assert(ran_cursor_set_);
   return GetAtIndex(ran_cursor_);
 }
 
@@ -220,7 +220,9 @@ bool BasicTextLoader<T>::IsDone() const
   }
   else
   {
-    return (this->data_.empty() || (cursor_ >= (this->word_count_ - p_.window_size)));
+    bool tmp  = this->data_.empty();
+    bool tmp2 = cursor_ >= (this->word_count_ - p_.window_size);
+    return (tmp || tmp2);
   }
 }
 

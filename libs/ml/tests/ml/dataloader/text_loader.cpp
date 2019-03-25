@@ -288,6 +288,18 @@ TYPED_TEST(TextDataLoaderTest, discard_loader_test)
   ASSERT_TRUE(loader.AddData(training_data));
   ASSERT_EQ(loader.GetDiscardCount(), loader.VocabSize());
 
-  // since there are no valid words, calling get next will loop until max_idx_search tries exceeded
-  EXPECT_THROW(loader.GetNext(), std::runtime_error);
+  // since there are no valid words, calling get next will fail leaving an unset cursor position
+  // which is forbidden
+  EXPECT_DEATH(loader.GetNext(), ".*");
+
+  // to demonstrate this doesn't happen without discards we repeat the experiment
+  TextParams<TypeParam> p2;
+  p2.max_sentences    = 1;
+  p2.window_size      = 1;
+  p2.discard_frequent = false;
+
+  BasicTextLoader<TypeParam> loader2(p2);
+  ASSERT_TRUE(loader2.AddData(training_data));
+
+  std::pair<TypeParam, typename TypeParam::SizeType> output = loader2.GetNext();
 }
