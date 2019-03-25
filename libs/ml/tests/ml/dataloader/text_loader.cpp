@@ -290,7 +290,7 @@ TYPED_TEST(TextDataLoaderTest, discard_loader_test)
 
   // since there are no valid words, calling get next will fail leaving an unset cursor position
   // which is forbidden
-  EXPECT_DEATH(loader.GetNext(), ".*");
+  EXPECT_THROW(loader.GetNext(), std::runtime_error);
 
   // to demonstrate this doesn't happen without discards we repeat the experiment
   TextParams<TypeParam> p2;

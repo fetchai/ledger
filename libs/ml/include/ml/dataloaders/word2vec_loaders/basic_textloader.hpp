@@ -158,9 +158,11 @@ template <typename T>
 std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetNext()
 {
   GetNextValidIndices();
-
-  assert(cursor_set_);
-  return GetAtIndex(cursor_);
+  if (cursor_set_)
+  {
+    return GetAtIndex(cursor_);
+  }
+  throw std::runtime_error("no valid cursor position set");
 }
 
 /**
@@ -172,9 +174,11 @@ template <typename T>
 std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetRandom()
 {
   GetNextValidIndices();
-
-  assert(ran_cursor_set_);
-  return GetAtIndex(ran_cursor_);
+  if (ran_cursor_set_)
+  {
+    return GetAtIndex(ran_cursor_);
+  }
+  throw std::runtime_error("no valid cursor position set");
 }
 
 /**
