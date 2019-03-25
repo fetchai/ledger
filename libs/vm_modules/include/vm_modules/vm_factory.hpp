@@ -56,17 +56,17 @@ public:
     auto module = std::make_shared<fetch::vm::Module>();
 
     // core modules
-    CreatePrint(module);
-    CreateToString(module);
+    CreatePrint(*module);
+    CreateToString(*module);
 
     // math modules
-    CreateAbs(module);
+    CreateAbs(*module);
 
     // ml modules - order is important!!
-    ml::CreateTensor(module);
-    ml::CreateGraph(module);
-    ml::CreateCrossEntropy(module);
-    ml::CreateMeanSquareError(module);
+    ml::CreateTensor(*module);
+    ml::CreateGraph(*module);
+    ml::CreateCrossEntropy(*module);
+    ml::CreateMeanSquareError(*module);
 
     return module;
   }

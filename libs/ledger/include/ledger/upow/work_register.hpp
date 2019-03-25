@@ -13,42 +13,40 @@ namespace consensus
 class WorkRegister 
 {
 public:
-  using WorkAddress = byte_array::ConstByteArray;
+  using ContractName = byte_array::ConstByteArray;
 
   void RegisterWork(Work const &work)
   {
-    WorkAddress address = work.contract_address;
-
-    if(work_pool_.find(address) == work_pool_.end())
+    ContractName name = work.contract_name;
+    if(work_pool_.find(name) == work_pool_.end())
     {
-      work_pool_[address] = work;
+      work_pool_[name] = work;
       return;
     }
 
-    auto cur_work = work_pool_[address];
+    auto cur_work = work_pool_[name];
     if(cur_work.score > work.score)
     {
-      work_pool_[address] = work;      
+      work_pool_[name] = work;      
     }
   }
 
-  void ClearWorkPool(SynergeticContract contract)
+  Work ClearWorkPool(SynergeticContract contract)
   {
-    WorkAddress address = contract->address;
+    ContractName name = contract->name;
 
-    auto it = work_pool_.find(address);    
+    auto it = work_pool_.find(name);    
     if(it == work_pool_.end())
     {
-      // TODO: Nothing to do
-      return;
+      return {};
     }
 
-    std::cout << "Invoke clear contract for " << address << std::endl;
-    std::cout << "Work score: " << it->second.score << std::endl;
-    std::cout << "Nonce: " << it->second() << std::endl;
+    Work ret = it->second;
+    work_pool_.erase(it);
+    return ret;
   }
 private:
-  std::unordered_map< WorkAddress, Work > work_pool_;
+  std::unordered_map< ContractName, Work > work_pool_;
 };
 
 }

@@ -1,7 +1,33 @@
+- ( ) Refactor output
+- ( ) Make DAG Service a State machine
+- ( ) Change DAG
+    - ( ) Follow the design pattern of a state machine for the RPC protocol
+    - (v) Simplify and improve tips
+
+- ( ) Validate DAG hashes in BlockCoordinator::OnPreExecBlockValidation
+    - ( ) Traverse back to last known nodes
+    - ( ) Implement Extract Segment
+    - ( ) Implement Revert
+
 - ( ) Finish Synergetic Executor
 		- ( ) Deserialise block
-		- ( ) Fetch smart contract source
-- ( ) Validate DAG hashes in BlockCoordinator::OnPreExecBlockValidation
+    - (v) Pass StorageInterface to executor
+    - ( ) Fetch smart contract source
+    - ( ) Workout how to attach the state thingie to the contract
+
+- ( ) Contract name replicated in DAGNode and Work -- Remove one place
+
+- ( ) Write tests for:
+    - ( ) Move contract mockup to tests
+    - ( ) DAG syncronisation
+    - ( ) SyncronisationExecutor
+          - ( ) PrepareWorkQueue
+          - ( ) ValidateWorkAndUpdateState
+          - ( ) 
+    - (v) SynergeticMiner
+    - ( ) Variant serialisation [Check with Nathan if this already works]
+
+
 - (v) Check that block number is set correctly
 - ( ) Implement Extract and Revert in DAG
 - ( ) Implement fetch contract into the synergetic execution

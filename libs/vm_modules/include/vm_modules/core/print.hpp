@@ -32,7 +32,7 @@ static void Print(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
 #endif
 }
 
-void CreatePrint(fetch::vm::Module &module)
+inline void CreatePrint(fetch::vm::Module &module)
 {
   module.CreateFreeFunction("Print", &Print);
 }

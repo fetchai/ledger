@@ -6,6 +6,9 @@
 #include "ledger/upow/synergetic_miner.hpp"
 #include "ledger/upow/synergetic_vm_module.hpp"
 
+#include "ledger/chain/block.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
+
 #include <algorithm>
 #include <queue>
 namespace fetch
@@ -13,7 +16,6 @@ namespace fetch
 namespace consensus
 {
 
-// TODO: Move to separate file
 struct WorkPackage
 {
   using ContractAddress   = byte_array::ConstByteArray;  
@@ -40,7 +42,6 @@ private:
   WorkPackage(ContractAddress address) : contract_address{std::move(address)} { }
 };
 
-class StorageUnitInterface;
 
 class SynergeticExecutor 
 {
@@ -52,20 +53,30 @@ public:
   using WorkMap           = std::unordered_map< ContractAddress, SharedWorkPackage >;
   using DAG               = ledger::DAG;
   using Block             = ledger::Block;
+  using StorageUnitInterface = ledger::StorageUnitInterface;
+  
+  enum StatusType 
+  {
+    SUCCESS,
+    CONTRACT_NAME_PARSE_FAILURE,
+    INVALID_NODE
+  };
 
-  SynergeticExecutor(DAG &dag, StorageUnitInterface &storage)
+  SynergeticExecutor(DAG &dag, StorageUnitInterface &storage_unit)
   : miner_{dag}
   , dag_{dag}
-  , storage_{storage}
+  , storage_unit_{storage_unit}
   {
-
+    (void)dag_;
+    (void)storage_unit_;
   }
 
-  bool PrepareWorkQueue(Block const &block)
-  {    
-    WorkMap synergetic_work_candidates;
+  StatusType PrepareWorkQueue(Block &block)
+  {
+    return StatusType::SUCCESS;
+//    WorkMap synergetic_work_candidates;
     // TODO: contract_register_.Clear();
-
+/*
     // Traverse DAG last segment and find work
     for(auto &node: dag_.ExtractSegment(block.body.block_number))
     {
@@ -77,20 +88,30 @@ public:
         try
         {
           // TODO: Deserialise
+          serializers::TypedByteArrayBuffer buf(node.contents);
+          buf >> ret;
         }
         catch(std::exception const &e)
         {
-          return false;
+          return INVALID_NODE;
+        }
+
+        Identifier contract_id;
+        if (!contract_id.Parse(node.contract_name)
+        {
+          return Status::CONTRACT_NAME_PARSE_FAILURE;
         }
 
         // Adding the work to 
-        auto it = synergetic_work_candidates.find(work.contract_address);
+        ConstByteArray contract_address = ""; 
+
+        auto it = synergetic_work_candidates.find(contract_address);
         if(it == synergetic_work_candidates.end())
         {
-          synergetic_work_candidates[work.contract_address] = WorkPackage::New(work.contract_address);
+          synergetic_work_candidates[contract_address] = WorkPackage::New(contract_address);
         }
 
-        auto pack = synergetic_work_candidates[work.contract_address];
+        auto pack = synergetic_work_candidates[contract_address];
         pack->solutions_queue.push(work);
       }
     }
@@ -115,13 +136,16 @@ public:
       {
         return false;
       }      
+
     }
 
     return true;
+    */
   }
 
   bool ValidateWorkAndUpdateState()
   {
+    /*
     for(auto &c: contract_queue_)
     {
       // Defining the problem using the data on the DAG
@@ -150,7 +174,7 @@ public:
         }
       }
     }
-
+*/
     return true;
   }
 
@@ -158,6 +182,7 @@ private:
   SynergeticContractRegister contract_register_;  ///< Cache for synergetic contracts
   SynergeticMiner            miner_;              ///< Miner to validate the work
   DAG &                      dag_;                           ///< DAG with work to be executed
+  StorageUnitInterface &     storage_unit_;
 
   ExecutionQueue contract_queue_;
 };

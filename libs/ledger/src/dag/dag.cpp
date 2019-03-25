@@ -33,10 +33,7 @@ DAG::DAG()
 
   // Use PushInternal to bypass checks on previous hashes
   PushInternal(n);
-
-  FETCH_LOG_INFO("DAG", "Number of initial nodes: ", last_nodes_.size());
 }
-
 
 /**
  * @brief push a node to the DAG.
@@ -155,25 +152,25 @@ bool DAG::PushInternal(DAGNode node)
   // Finalise and get the node time.
   node.Finalise();
 
+  // CLearing all tips that are being referenced a lot
   for(auto &h: node.previous)
   {
     auto it = tips_.find(h);
     if(it != tips_.end())
     {
-      tips_.erase(it);
+      it->second += 1;
+      if(it->second > PARAMETER_REFERENCES_TO_BE_TIP)
+      {
+        tips_.erase(it);
+      }
     }
   }
 
-  tips_.insert(node.hash);
+  // Adding node
+  tips_.insert({node.hash, 0});
 
   nodes_[node.hash] = node;
   all_node_hashes_.push_back(node.hash);
-  last_nodes_.push_back(node.hash);
-
-  if(last_nodes_.size() > 6 ) // TODO(tfr): Set as pamareter;
-  {
-    last_nodes_.pop_front();
-  }
 
   SignalNewNode(node);
   return true;
@@ -187,7 +184,7 @@ DAG::DigestVector DAG::UncertifiedTipsAsVector() const
   for(auto const &t: tips_)
   {
     // TODO(tfr): Check whether certified
-    ret.push_back(t);
+    ret.push_back(t.first);
   }
   return ret;
 }

@@ -57,71 +57,6 @@ struct Getter<T, typename std::enable_if_t<IsVariant<T>::value>>
   }
 };
 
-template <int POSITION, typename... Ts>
-struct AssignParameters;
-
-template <int POSITION, typename T, typename... Ts>
-struct AssignParameters<POSITION, T, Ts...>
-{
-  // Invoked on non-final parameter
-  static void Assign(Variant *stack, RegisteredTypes const &types, T const &parameter,
-                     Ts const &... parameters)
-  {
-    TypeId type_id = Getter<T>::GetTypeId(types, parameter);
-    if (type_id != TypeIds::Unknown)
-    {
-      Variant &v = stack[POSITION];
-      v.Assign(parameter, type_id);
-      AssignParameters<POSITION + 1, Ts...>::Assign(stack, types, parameters...);
-    }
-  }
-};
-
-template <int POSITION,  typename... Ts>
-struct AssignParameters<POSITION, Variant, Ts...>
-{
-  // Invoked on non-final parameter
-  static void Assign(Variant *stack, RegisteredTypes &types, Variant const &parameter,
-                     Ts const &... parameters)
-  {
-    stack[POSITION] = parameter;
-    AssignParameters<POSITION + 1, Ts...>::Assign(stack, types, parameters...);
-  }
-};
-
-template <int POSITION, typename T>
-struct AssignParameters<POSITION, T>
-{
-  // Invoked on final parameter
-  static void Assign(Variant *stack, RegisteredTypes const &types, T const &parameter)
-  {
-    TypeId type_id = Getter<T>::GetTypeId(types, parameter);
-    if (type_id != TypeIds::Unknown)
-    {
-      Variant &v = stack[POSITION];
-      v.Assign(parameter, type_id);
-    }
-  }
-};
-
-template <int POSITION>
-struct AssignParameters<POSITION, Variant>
-{
-  // Invoked on final parameter
-  static void Assign(Variant *stack, RegisteredTypes &types, Variant const &parameter)
-  {
-    stack[POSITION] = parameter;
-  }
-};
-
-
-template <int POSITION>
-struct AssignParameters<POSITION>
-{
-  // Invoked on zero parameters
-  static void Assign(Variant * /* stack */, RegisteredTypes const & /* types */)
-  {}
-};
 
 // Forward declarations
 class Module;
@@ -155,22 +90,31 @@ public:
   template <typename T, typename... Args>
   bool Add(T &&parameter, Args &&... args)
   {
-    bool success{false};
+    bool success{true};
 
-    success &= Add(std::forward<T>(parameter));
+    success &= AddSingle(std::forward<T>(parameter));
     success &= Add(std::forward<Args>(args)...);
 
     return success;
   }
 
+
+  bool AddSingle(Variant parameter)
+  {
+    // TODO: Probably should make a deep copy
+
+    params_.push_back(std::move(parameter));
+    return true;
+  }
+
   template <typename T>
-  IfIsPrimitive<T, bool> Add(T &&parameter)
+  IfIsPrimitive<T, bool> AddSingle(T &&parameter)
   {
     return AddInternal(std::forward<T>(parameter));
   }
 
   template <typename T>
-  IfIsPtr<T, bool> Add(T &&obj)
+  IfIsPtr<T, bool> AddSingle(T &&obj)
   {
     bool success{false};
 
@@ -181,6 +125,7 @@ public:
 
     return success;
   }
+
 
   bool Add()
   {
@@ -235,13 +180,11 @@ public:
 
   {
     ParameterPack parameter_pack{registered_types_};
-
     if (!parameter_pack.Add(parameters...))
     {
       error = "Unable to generate parameter pack";
       return false;
     }
-
     return Execute(script, name, error, console_output, output, parameter_pack);
   }
 

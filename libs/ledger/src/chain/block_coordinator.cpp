@@ -72,7 +72,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAG &dag, ExecutionManagerI
   , num_slices_{num_slices}
   , tx_wait_periodic_{TX_SYNC_NOTIFY_INTERVAL}
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
-  , synergetic_executor_{dag}
+  , synergetic_executor_{dag, storage_unit_}
 {
   // configure the state machine
   // clang-format off
@@ -341,7 +341,8 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 
     // Validating DAG hashes
     // TODO:
-
+    /* 
+    TODO:
     // Checking that work in DAG is valid and refers to existing contracts
     if(!synergetic_executor_.PrepareWorkQueue(*current_block_))
     {
@@ -350,7 +351,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       chain_.RemoveBlock(current_block_->body.hash);
       return State::RESET;      
     }
-
+    */
   }
 
   // Check: Ensure the digests are the correct size
@@ -578,6 +579,8 @@ BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
 {
 //  State next_state{State::RESET};
 
+  /*
+  TODO
   // Certifying the contents of the DAG.
   dag_.SetNodeTime(next_block_->body.block_number, next_block_->body.dag_nodes);
 
@@ -601,6 +604,7 @@ BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
     dag_.RevertTo(body.block_number - 1);
     return State::RESET;    
   }
+  */
 
   return State::EXECUTE_NEW_BLOCK;
 }

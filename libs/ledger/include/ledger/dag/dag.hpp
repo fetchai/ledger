@@ -31,18 +31,20 @@ class DAG
 {
 public:
 
-  using ConstByteArray  = byte_array::ConstByteArray;
-  using Digest          = ConstByteArray;
-  using DigestCache     = std::deque<Digest>;
-  using DigestArray     = std::vector<Digest>;
-  using NodeList        = std::list<DAGNode>;
-  using NodeArray       = std::vector<DAGNode>;
-  using NodeMap         = std::unordered_map<Digest, DAGNode>;
-  using DigestSet         = std::unordered_set<Digest>;
-  using DigestVector      = std::vector<Digest>;  
+  using ConstByteArray    = byte_array::ConstByteArray;
+  using Digest            = ConstByteArray;
+  using DigestCache       = std::deque<Digest>;
+  using DigestArray       = std::vector<Digest>;
+  using NodeList          = std::list<DAGNode>;
+  using NodeArray         = std::vector<DAGNode>;
+  using NodeMap           = std::unordered_map<Digest, DAGNode>;
+  using DigestMap         = std::unordered_map<Digest, uint64_t>;
+  using DigestVector      = std::vector<Digest>;
   using Mutex             = mutex::Mutex;
   using CallbackFunction  = std::function< void(DAGNode) > ;
   
+  static const uint64_t PARAMETER_REFERENCES_TO_BE_TIP = 3;
+
   // Construction / Destruction
   DAG();
   DAG(DAG const &) = delete;
@@ -52,8 +54,8 @@ public:
   bool Push(DAGNode node);
   bool PushBlock(DAGNode node);
   DigestVector UncertifiedTipsAsVector() const;
-  DigestSet const tips() const;
-  DigestSet const tips_unsafe() const;
+  DigestMap const tips() const;
+  DigestMap const tips_unsafe() const;
 
   DigestCache const last_nodes() const;
   NodeMap const nodes() const;
@@ -169,9 +171,8 @@ private:
 
   bool PushInternal(DAGNode node);
 
-  DigestCache       last_nodes_;                   ///< buffer used when creating new nodes to ensure enough referencing.
   NodeMap           nodes_;                        ///< the full DAG.
-  DigestSet         tips_;                         ///< tips of the DAG.
+  DigestMap         tips_;                         ///< tips of the DAG.
   DigestArray       all_node_hashes_;              ///< contain all node hashes
   CallbackFunction  on_new_node_;  
   mutable Mutex     maintenance_mutex_{__LINE__, __FILE__};  
@@ -180,7 +181,7 @@ private:
 /**
  * @brief returns the tips of the DAG.
  */
-inline std::unordered_set< byte_array::ConstByteArray > const DAG::tips() const
+inline DAG::DigestMap const DAG::tips() const
 {
   FETCH_LOCK(maintenance_mutex_);    
   return tips_;
@@ -189,22 +190,11 @@ inline std::unordered_set< byte_array::ConstByteArray > const DAG::tips() const
 /**
  * @brief returns the tips of the DAG.
  */
-inline std::unordered_set< byte_array::ConstByteArray > const DAG::tips_unsafe() const
+inline DAG::DigestMap const DAG::tips_unsafe() const
 {
   return tips_;
 }
 
-
-/**
- * @brief returns the last nodes.
- *
- * TODO(tfr): make the number of cached last nodes configurable.
- */
-inline DAG::DigestCache const DAG::last_nodes() const
-{
-  FETCH_LOCK(maintenance_mutex_);  
-  return last_nodes_;
-}
 
 /**
  * @brief returns all nodes.

@@ -101,16 +101,16 @@ using DAG = fetch::ledger::DAG;
  * ./libs/ledger/examples/example-ledger-dag-consensus ../libs/ledger/examples/dag_consensus/configurations/node1.json
  * ./libs/ledger/examples/example-ledger-dag-consensus ../libs/ledger/examples/dag_consensus/configurations/node2.json
  **/
-
+/*
 static DAGNode GenerateNode(ConstByteArray const &data, Rng &rng, ECDSASigner &certificate, DAG &dag)
-{
+{  
   // build up the DAG node
   DAGNode node;
   node.contents = data;
   node.identity = certificate.identity();
 
   // TODO: Set previous and type
-  auto prev_candidates = dag.last_nodes();
+  auto prev_candidates = dag.nodes();
 
   if(prev_candidates.size() > 0 )
   {
@@ -162,9 +162,10 @@ static DAGNode GenerateNode(Rng &rng, ECDSASigner &certificate, DAG &dag)
 
   return GenerateNode(buffer, rng, certificate, dag);
 }
-
+*/
 int main(int argc, char **argv)
 {
+  /*
   std::unique_ptr<fetch::crypto::ECDSASigner> signer = std::make_unique<fetch::crypto::ECDSASigner>();
   std::unique_ptr<fetch::crypto::ECDSASigner> certificate = std::make_unique<fetch::crypto::ECDSASigner>();  
 
@@ -211,9 +212,7 @@ int main(int argc, char **argv)
   }
 
   // Setting  up
-  fetch::network::DumpNetworkActivityTo("netdump-"+ params.GetArg(2));
-  std::cout << "XXX: " << fetch::network::MonitoringClass::monitor.get() <<std::endl;
-  DUMP_INCOMING_MESSAGE("xxx","yyy", "zzz");
+
 //  exit(0);
 
   NetworkManager network_manager("nid-name", params.GetParam<std::size_t>("threads", 16) );
@@ -248,19 +247,6 @@ int main(int argc, char **argv)
   sleep_for(milliseconds{3000});
 
   // Building initial stake holder board
-  /*
-  std::vector<fetch::ledger::Candidacy> stake_holders;
-  std::cout << "Setting committee up" << std::endl;
-  auto committee = doc["committee"];
-  for(std::size_t i=0; i < committee.size(); ++i)
-  {    
-    auto param = committee[i]["parameters"].As<fetch::byte_array::ConstByteArray>();
-    auto pk = committee[i]["key"].As<fetch::byte_array::ConstByteArray>();
-
-    fetch::crypto::Identity identity{ param, fetch::byte_array::FromBase64(pk) };
-    stake_holders.push_back( {identity, 5} );
-  }
-  */
 
   // Initial genesis
   std::vector< uint64_t > genesis_entropy = {128831, 86942827};  
@@ -319,7 +305,7 @@ int main(int argc, char **argv)
         
     ++nodes_generated;
   }
-
+*/
   return 0;
 }
 

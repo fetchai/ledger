@@ -178,9 +178,9 @@ int main(int argc, char **argv)
 
   module->CreateTemplateInstantiationType<fetch::vm::Array, uint64_t>(fetch::vm::TypeIds::IArray);
 
-  fetch::vm_modules::ml::CreateTensor(module);
-  fetch::vm_modules::ml::CreateGraph(module);
-  fetch::vm_modules::ml::CreateCrossEntropy(module);
+  fetch::vm_modules::ml::CreateTensor(*module);
+  fetch::vm_modules::ml::CreateGraph(*module);
+  fetch::vm_modules::ml::CreateCrossEntropy(*module);
 
   module->CreateClassType<TrainingPairWrapper>("TrainingPair")
       .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>()

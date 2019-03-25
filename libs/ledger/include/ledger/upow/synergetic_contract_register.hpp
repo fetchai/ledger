@@ -31,10 +31,10 @@ public:
     delete compiler_;
   }
 
-  SynergeticContract CreateContract(ContractAddress const &contract_address, std::string const &source)
+  SynergeticContract CreateContract(ContractAddress const &contract_name, std::string const &source)
   {
-    SynergeticContract ret = NewSynergeticContract(compiler_, contract_address, source);
-    contracts_[contract_address] = ret;
+    SynergeticContract ret = SynergeticContractClass::New(compiler_, contract_name, source);
+    contracts_[contract_name] = ret;
     return ret;
   }
 

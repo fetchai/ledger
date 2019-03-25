@@ -149,10 +149,11 @@ int main(int argc, char **argv)
 
   fetch::consensus::SynergeticMiner miner(dag);
   fetch::consensus::Work work;
-  work.contract_address = "0xf232";
+  work.contract_name = "0xf232";
   work.miner = "troels";
 
-  if(!miner.DefineProblem(cregister.GetContract(work.contract_address), work))
+  std::cout << "Defining problem!" << std::endl;
+  if(!miner.DefineProblem(cregister.GetContract(work.contract_name)))
   {
     std::cout << "Could not define problem!" << std::endl;
     exit(-1);
@@ -160,14 +161,14 @@ int main(int argc, char **argv)
 
   // Let's mine
   fetch::consensus::WorkRegister wreg;
-
+  std::cout << "Working" << std::endl;
   for(int64_t i = 0; i < 10; ++i) {
     work.nonce = 29188 + i;
-    work.score = miner.ExecuteWork(cregister.GetContract(work.contract_address), work);
+    work.score = miner.ExecuteWork(cregister.GetContract(work.contract_name), work);
     wreg.RegisterWork(work);
   }
 
-  wreg.ClearWorkPool( cregister.GetContract(work.contract_address) );
+  wreg.ClearWorkPool( cregister.GetContract(work.contract_name) );
 
   return 0;
 }

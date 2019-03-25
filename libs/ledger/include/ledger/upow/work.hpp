@@ -13,24 +13,27 @@ namespace consensus
 struct Work 
 {
   using Identity        = byte_array::ConstByteArray;
-  using ContractName = byte_array::ConstByteArray;
+  using ContractName    = byte_array::ConstByteArray;
   using WorkId          = byte_array::ConstByteArray;
   using Digest          = byte_array::ConstByteArray;
   using ScoreType       = double; // TODO: Change to fixed point
   
-  /// 
-  ContractName contract_name;
-
-  Identity miner;    
+  /// Serialisable
+  /// @{
   int64_t nonce;
   ScoreType score = std::numeric_limits<ScoreType>::max(); 
-  
+  /// }
+
+  /// Used internally after deserialisation
+  ContractName contract_name;
+  Identity miner;
+
   int64_t operator()()
   {
     crypto::SHA256 hasher;
     hasher.Reset();
 
-    hasher.Update(contract_address);
+    hasher.Update(contract_name);
     hasher.Update(miner);
     hasher.Update(nonce);
 
@@ -51,8 +54,19 @@ struct Work
     return score < other.score;
   }
   
-
 };
+
+template<typename T>
+void Serialize(T &serializer, Work const &work)
+{
+  serializer << work.miner << work.nonce << work.score;
+}
+
+template<typename T>
+void Deserialize(T &serializer, Work &work)
+{
+  serializer >> work.miner >> work.nonce >> work.score;
+}
 
 }
 }

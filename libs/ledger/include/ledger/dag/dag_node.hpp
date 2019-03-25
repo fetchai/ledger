@@ -43,12 +43,30 @@ struct DAGNode
   uint64_t          timestamp{INVALID_TIMESTAMP};    ///< timestamp to that keeps the time since last validated block.
   uint64_t          type{WORK};                      ///< type of the DAG node
   DigestList        previous;                        ///< previous nodes.
-  ConstByteArray    contents;                        ///< payload to be deserialised.
-  ConstByteArray    contract_address;                ///< The contract which this node is associated with.
-  // TODO(tfr): NOT READY YET byte_array::ConstByteArray work_id;  
+  ConstByteArray    contents;                        ///< payload to be deserialised.  
+  ConstByteArray    contract_name;                   ///< The contract which this node is associated with.
   crypto::Identity  identity;                        ///< identity of the creator.
   Digest            hash;                            ///< DAG hash.
   Signature         signature;                       ///< creators signature.
+
+  template< typename T >
+  bool SetObject(T const &obj)
+  {
+    serializers::ByteArrayBuffer serializer;
+    serializer << obj;
+    contents = serializer.data();
+
+    return true;   
+  }
+
+  template< typename T >
+  bool GetObject(T &obj)
+  {
+    serializers::ByteArrayBuffer serializer(contents);
+    serializer >> obj;
+
+    return true;
+  }  
 
   /**
    * @brief finalises the node by creating the hash.
@@ -57,7 +75,7 @@ struct DAGNode
   {
     serializers::ByteArrayBuffer buf;
     buf << type << previous << contents;
-    buf << contract_address;
+    buf << contract_name;
     buf << identity;
 
     HasherType hasher;
@@ -65,19 +83,20 @@ struct DAGNode
     hasher.Update(buf.data());
     this->hash = hasher.Final();
   }
+
 };
 
 template<typename T>
 void Serialize(T &serializer, DAGNode const &node)
 {
-  serializer << node.type << node.previous << node.contents << node.contract_address << node.identity 
+  serializer << node.type << node.previous << node.contents << node.contract_name << node.identity 
              << node.hash << node.signature;
 }
 
 template<typename T>
 void Deserialize(T &serializer, DAGNode &node)
 {
-  serializer >> node.type >> node.previous >> node.contents >> node.contract_address >> node.identity
+  serializer >> node.type >> node.previous >> node.contents >> node.contract_name >> node.identity
              >> node.hash >> node.signature;
 }
 

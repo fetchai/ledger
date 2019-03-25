@@ -62,6 +62,8 @@ function smartMarketProblemDefinition() : Array< Float64 >
     endfor
   endfor
 
+  Print("Defined problem.");
+
   return problem;
 endfunction
 
@@ -85,7 +87,7 @@ endfunction
 
 @clear
 function clearMarketPool(problem : Array< Float64 >, state : Array< Int32 >)
-/*
+  /*
   print("Cost = ");
   printLn( computeExtractedValue(problem, state) );
   for(j in 0:lengthOf(state)-1)
@@ -94,14 +96,15 @@ function clearMarketPool(problem : Array< Float64 >, state : Array< Int32 >)
   endfor
 
   printLn("");
-  */
   // TODO: Needs states before this bit can be implemented.  
+  */
 endfunction
 
 @work
 function proposeMarketConfiguration(problem : Array< Float64 >, nonce : Int64) : Array< Int32 >
   // Computing problem size
   var N = toInt32(sqrt(toFloat64(lengthOf(problem))));
+  Print("xx");
 
   // Instantiating random generator
   var rng = CryptoRNG( toUInt64(nonce) );
@@ -125,6 +128,7 @@ function proposeMarketConfiguration(problem : Array< Float64 >, nonce : Int64) :
   var delta = (beta1 - beta0) / toFloat64(run_time);
   
   for(i in toInt64(0):run_time)
+    Print("xx");
     for(j in 0:N-1)
 
       if(state[j] == 0)
@@ -158,3 +162,7 @@ function proposeMarketConfiguration(problem : Array< Float64 >, nonce : Int64) :
   return state;
 endfunction
 
+@test_dag_generator
+function makeDAGnode(epoch : Int64, entropy : Int64) : DAGNode
+  
+endfunction
