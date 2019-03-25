@@ -218,7 +218,6 @@ typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::SelectNegativeContextWor
     SizeType max_val     = this->unigram_table_.size();
     SizeType idx         = ran_val % max_val;
     negative_context_idx = this->unigram_table_.at(idx);
-    assert(negative_context_idx > 0);
     assert(negative_context_idx < this->vocab_.size());
     ongoing = false;
 

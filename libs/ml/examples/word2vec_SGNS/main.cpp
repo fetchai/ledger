@@ -42,11 +42,13 @@ using SizeType     = typename ArrayType::SizeType;
 
 struct TrainingParams
 {
-  SizeType output_size     = 2;
-  SizeType batch_size      = 1;     // training data batch size
-  SizeType embedding_size  = 16;    // dimension of embedding vec
-  SizeType training_epochs = 1000;  // total number of training epochs
-  double   learning_rate   = 0.01;  // alpha - the learning rate
+  SizeType    output_size     = 2;
+  SizeType    batch_size      = 1;       // training data batch size
+  SizeType    embedding_size  = 16;      // dimension of embedding vec
+  SizeType    training_epochs = 1000;    // total number of training epochs
+  double      learning_rate   = 0.01;    // alpha - the learning rate
+  SizeType    K               = 10;      // how many nearest neighbours to compare against
+  std::string test_word       = "cold";  // test word to consider
 };
 
 template <typename T>
@@ -86,7 +88,7 @@ std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType embeddings_size, Size
 }
 
 void PrintKNN(SkipGramLoader<ArrayType> const &dl, ArrayType const &embeddings,
-              std::string const &word, unsigned int k)
+              std::string const &word, SizeType k)
 {
   ArrayType arr        = embeddings;
   ArrayType one_vector = embeddings.Slice(dl.VocabLookup(word)).Unsqueeze();
@@ -98,15 +100,10 @@ void PrintKNN(SkipGramLoader<ArrayType> const &dl, ArrayType const &embeddings,
     std::cout << "output.at(j).first: " << dl.VocabLookup(output.at(j).first) << std::endl;
     std::cout << "output.at(j).second: " << output.at(j).second << "\n" << std::endl;
   }
-
-  std::cout << "hot-cold distance: "
-            << fetch::math::distance::Cosine(embeddings.Slice(dl.VocabLookup("cold")).Unsqueeze(),
-                                             embeddings.Slice(dl.VocabLookup("hot")).Unsqueeze())
-            << std::endl;
 }
 
 void TestEmbeddings(Graph<ArrayType> const &g, std::string const &skip_gram_name,
-                    SkipGramLoader<ArrayType> const &dl)
+                    SkipGramLoader<ArrayType> const &dl, std::string test_word, SizeType K)
 {
 
   // first get hold of the skipgram layer by searching the return name in the graph
@@ -117,7 +114,7 @@ void TestEmbeddings(Graph<ArrayType> const &g, std::string const &skip_gram_name
   std::shared_ptr<fetch::ml::ops::Embeddings<ArrayType>> embeddings =
       sg_layer->GetEmbeddings(sg_layer);
 
-  PrintKNN(dl, embeddings->GetWeights(), "cold", 10);
+  PrintKNN(dl, embeddings->GetWeights(), test_word, K);
 }
 
 int main(int argc, char **argv)
@@ -246,7 +243,7 @@ int main(int argc, char **argv)
 
     // print batch loss and embeddings distances
     // Test trained embeddings
-    TestEmbeddings(g, output_name, dataloader);
+    TestEmbeddings(g, output_name, dataloader, tp.test_word, tp.K);
     std::cout << "epoch_loss: " << epoch_loss << std::endl;
   }
 
@@ -255,7 +252,7 @@ int main(int argc, char **argv)
   //////////////////////////////////////
 
   // Test trained embeddings
-  TestEmbeddings(g, output_name, dataloader);
+  TestEmbeddings(g, output_name, dataloader, tp.test_word, tp.K);
 
   return 0;
 }

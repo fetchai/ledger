@@ -36,6 +36,8 @@
 #define EMBEDING_DIMENSION 64u
 #define CONTEXT_WINDOW_SIZE 4  // Each side
 #define LEARNING_RATE 0.50f
+#define K 10u
+std::string TEST_WORD = "cold";
 
 using DataType  = double;
 using ArrayType = fetch::math::Tensor<DataType>;
@@ -75,11 +77,6 @@ void PrintKNN(fetch::ml::dataloaders::CBoWLoader<ArrayType> const &dl, ArrayType
     std::cout << "output.at(j).first: " << dl.VocabLookup(output.at(j).first) << std::endl;
     std::cout << "output.at(j).second: " << output.at(j).second << "\n" << std::endl;
   }
-
-  std::cout << "hot-cold distance: "
-            << fetch::math::distance::Cosine(embeddings.Slice(dl.VocabLookup("cold")).Unsqueeze(),
-                                             embeddings.Slice(dl.VocabLookup("hot")).Unsqueeze())
-            << std::endl;
 }
 
 int main(int ac, char **av)
@@ -91,13 +88,11 @@ int main(int ac, char **av)
   }
 
   fetch::ml::dataloaders::CBoWTextParams<ArrayType> p;
-  p.window_size    = CONTEXT_WINDOW_SIZE;
-  p.n_data_buffers = CONTEXT_WINDOW_SIZE * 2;
-  p.min_sentence_length =
-      SizeType((CONTEXT_WINDOW_SIZE * 2) + 1);  // maximum number of sentences to use
-  p.max_sentences     = SizeType(10000);        // maximum number of sentences to use
-  p.discard_frequent  = true;                   // discard most frqeuent words
-  p.discard_threshold = 0.01;  // controls how aggressively to discard frequent words
+  p.window_size       = CONTEXT_WINDOW_SIZE;
+  p.n_data_buffers    = CONTEXT_WINDOW_SIZE * 2;
+  p.max_sentences     = SizeType(10000);  // maximum number of sentences to use
+  p.discard_frequent  = true;             // discard most frqeuent words
+  p.discard_threshold = 0.01;             // controls how aggressively to discard frequent words
 
   fetch::ml::dataloaders::CBoWLoader<ArrayType> dl(p);
   for (int i(1); i < ac; ++i)
@@ -165,7 +160,7 @@ int main(int ac, char **av)
     std::cout << "End of epoch " << epoch << std::endl;
 
     // Print KNN of word "one"
-    PrintKNN(dl, *g.StateDict().dict_["Embeddings"].weights_, "cold", 10);
+    PrintKNN(dl, *g.StateDict().dict_["Embeddings"].weights_, TEST_WORD, K);
 
     // Save model
     fetch::serializers::ByteArrayBuffer serializer;

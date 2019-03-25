@@ -27,7 +27,7 @@ namespace details {
 
 template <typename ArrayType>
 std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> GetKNNImplementation(
-    ArrayType array, ArrayType one_vector, unsigned int k)
+    ArrayType array, ArrayType one_vector, typename ArrayType::SizeType k)
 {
   using DataType = typename ArrayType::Type;
   using SizeType = typename ArrayType::SizeType;
@@ -46,15 +46,22 @@ std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> G
     similarities.emplace_back(i, d);
   }
 
-  std::nth_element(similarities.begin(), similarities.begin() + k, similarities.end(),
+  std::nth_element(similarities.begin(), similarities.begin() + unsigned(k), similarities.end(),
                    [](std::pair<SizeType, DataType> const &a,
                       std::pair<SizeType, DataType> const &b) { return a.second > b.second; });
 
+  // fill the return container with the top K
   std::vector<std::pair<SizeType, DataType>> ret;
   for (SizeType i(0); i < k; ++i)
   {
     ret.emplace_back(std::make_pair(similarities.at(i).first, similarities.at(i).second));
   }
+
+  std::sort(ret.begin(), ret.end(),
+            [](std::pair<SizeType, DataType> const &a, std::pair<SizeType, DataType> const &b) {
+              return a.second < b.second;
+            });
+
   return ret;
 }
 
@@ -68,7 +75,7 @@ std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> G
  */
 template <typename ArrayType>
 std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> KNN(
-    ArrayType array, ArrayType one_vector, unsigned int k)
+    ArrayType array, ArrayType one_vector, typename ArrayType::SizeType k)
 {
   return details::GetKNNImplementation(array, one_vector, k);
 }

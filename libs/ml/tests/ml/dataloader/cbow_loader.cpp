@@ -84,6 +84,11 @@ TYPED_TEST(CBoWDataloaderTest, small_window_loader_test)
   TypeParam left_and_right;
   for (std::size_t j = 0; j < 100; ++j)
   {
+    if (loader.IsDone())
+    {
+      loader.Reset();
+    }
+
     left_and_right = loader.GetNext().first;
 
     std::string left  = loader.VocabLookup(SizeType(double(left_and_right.At(0))));

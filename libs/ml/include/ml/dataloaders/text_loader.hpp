@@ -39,17 +39,17 @@ public:
   using SizeType  = typename T::SizeType;
 
   using WordIdxType   = std::vector<std::vector<SizeType>>;
-  using VocabType     = std::unordered_map<std::string, std::vector<SizeType>>;
+  using VocabType     = std::unordered_map<std::string, SizeType>;
   using SentencesType = std::vector<std::vector<std::string>>;
 
   TextLoader() = default;
 
-  SizeType    Size() const;
-  SizeType    VocabSize() const;
-  SizeType    VocabLookup(std::string const &word) const;
-  std::string VocabLookup(SizeType idx) const;
+  SizeType           Size() const;
+  SizeType           VocabSize() const;
+  SizeType           VocabLookup(std::string const &word) const;
+  std::string const &VocabLookup(SizeType const idx) const;
 
-  std::unordered_map<std::string, SizeType> GetVocab() const;
+  VocabType const &GetVocab() const;
 
   virtual bool AddData(std::string const &text);
 
@@ -76,8 +76,9 @@ protected:
   virtual SizeType GetLabel(SizeType idx)                = 0;
 
 private:
-  std::vector<char> word_break_{'-', '\'', '.', '\t', '\n', '!', '?'};
-  std::vector<char> sentence_break_{'.', '\t', '\n', '!', '?'};
+  const std::vector<char> word_break_{'-', '\'', '.', '\t', '\n', '!', '?'};
+  const std::vector<char> sentence_break_{'.', '\t', '\n', '!', '?'};
+  const std::string       unknown_ = "UNK";
 
   bool                     AddSentenceToVocab(std::vector<std::string> &sentence);
   std::vector<std::string> StripPunctuationAndLower(std::string const &word) const;
@@ -109,7 +110,7 @@ typename TextLoader<T>::SizeType TextLoader<T>::VocabSize() const
  * @return unordered map from string to word index & vocab frequency
  */
 template <typename T>
-std::unordered_map<std::string, typename TextLoader<T>::SizeType> TextLoader<T>::GetVocab() const
+typename TextLoader<T>::VocabType const &TextLoader<T>::GetVocab() const
 {
   return vocab_;
 }
@@ -139,10 +140,11 @@ typename TextLoader<T>::SizeType TextLoader<T>::VocabLookup(std::string const &w
   }
   else
   {
-    if (vocab_.find(parsed_word.at(0)) != vocab_.end())
+    auto it = vocab_.find(parsed_word.at(0));
+    if (it != vocab_.end())
     {
       // return found word
-      return vocab_.at(parsed_word.at(0));
+      return it->second;
     }
 
     // couldn't find the word in the vocabular
@@ -157,7 +159,7 @@ typename TextLoader<T>::SizeType TextLoader<T>::VocabLookup(std::string const &w
  * @return
  */
 template <typename T>
-std::string TextLoader<T>::VocabLookup(typename TextLoader<T>::SizeType const idx) const
+std::string const &TextLoader<T>::VocabLookup(typename TextLoader<T>::SizeType const idx) const
 {
   for (auto &e : vocab_)
   {
@@ -166,7 +168,7 @@ std::string TextLoader<T>::VocabLookup(typename TextLoader<T>::SizeType const id
       return e.first;
     }
   }
-  return "UNK";
+  return unknown_;
 }
 
 /**
@@ -247,10 +249,11 @@ bool TextLoader<T>::AddSentenceToVocab(std::vector<std::string> &sentence)
     for (std::string const &cur_word : sentence)
     {
       // if already seen this word
-      if (vocab_.find(cur_word) != vocab_.end())
+      auto it = vocab_.find(cur_word);
+      if (it != vocab_.end())
       {
-        vocab_frequencies.at(vocab_.at(cur_word))++;
-        word_idx = vocab_.at(cur_word);
+        vocab_frequencies.at(it->second)++;
+        word_idx = it->second;
       }
       else
       {

@@ -44,7 +44,6 @@ public:
 
   SizeType n_data_buffers = 1;  // number of word indices to return when called
   SizeType window_size    = 0;  // the size of the context window (one-sided)
-  SizeType max_idx_search = 1000;
 
   bool full_window = false;  // whether we may only index words with a full window either side
 
@@ -97,8 +96,9 @@ protected:
   SizeType discard_count_        = 0;  // total count of discarded (frequent) words
 
   // used for iterating through all examples incrementally
-  SizeType              cursor_;   // indexes through data
-  std::vector<SizeType> ran_idx_;  // random indices container
+  SizeType              cursor_;      // indexes through data sequentially
+  SizeType              ran_cursor_;  // indexes through data randomly
+  std::vector<SizeType> ran_idx_;     // random indices container
 
   void     GetData(SizeType idx, ArrayType &ret) override;
   SizeType GetLabel(SizeType idx) override;
@@ -106,7 +106,10 @@ protected:
   SizeType GetWordOffsetFromWordIdx(SizeType word_idx) const;
 
 private:
-  bool GetNextValidIndex(bool random, typename BasicTextLoader<T>::SizeType &cursor);
+  bool cursor_set_     = false;  // whether cursor currently set to a valid position
+  bool ran_cursor_set_ = false;  // whether random cursor currently set to a valid position
+
+  void GetNextValidIndices();
   bool CheckValidIndex(SizeType idx);
   void DiscardFrequent();
   bool DiscardExample(SizeType word_frequency);
@@ -154,14 +157,13 @@ BasicTextLoader<T>::BasicTextLoader(TextParams<T> const &p, SizeType seed)
 template <typename T>
 std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetNext()
 {
-  if (GetNextValidIndex(false, cursor_))
+  GetNextValidIndices();
+
+  if (!IsDone() && cursor_set_)
   {
     return GetAtIndex(cursor_);
   }
-  else
-  {
-    throw std::runtime_error("exceeded maximum attempts to find valid index");
-  }
+  throw std::runtime_error("exceeded maximum attempts to find valid index");
 }
 
 /**
@@ -172,14 +174,12 @@ std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetNext(
 template <typename T>
 std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetRandom()
 {
-  if (GetNextValidIndex(true, cursor_))
+  GetNextValidIndices();
+  if (!IsDone() && ran_cursor_set_)
   {
-    return GetAtIndex(cursor_);
+    return GetAtIndex(ran_cursor_);
   }
-  else
-  {
-    throw std::runtime_error("exceeded maximum attempts to find valid index");
-  }
+  throw std::runtime_error("exceeded maximum attempts to find valid index");
 }
 
 /**
@@ -238,12 +238,16 @@ void BasicTextLoader<T>::Reset()
   cursor_ = 0;
 
   // generate a new random sequence for random sampling
-  ran_idx_ = std::vector<SizeType>(this->Size());
+  // note that ran_idx_ is of size word_count_ not of size number of valid training pairs
+  ran_idx_ = std::vector<SizeType>(this->TextLoader<T>::Size());
   std::iota(ran_idx_.begin(), ran_idx_.end(), 0);
   std::random_shuffle(ran_idx_.begin(), ran_idx_.end());
 
   // recompute which words should be ignored based on their frequency
   DiscardFrequent();
+
+  // assign the cursors to their first valid position
+  GetNextValidIndices();
 }
 
 /**
@@ -258,10 +262,14 @@ std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetAtInd
   T data_buffer(std::vector<SizeType>({1, p_.n_data_buffers}));
   GetData(idx, data_buffer);
 
-  SizeType label;
-  label = GetLabel(idx);
+  SizeType label = GetLabel(idx);
 
-  cursor_++;
+  // increment the cursor find the next valid position
+  ++cursor_;
+  if (cursor_ < this->TextLoader<T>::Size())
+  {
+    ran_cursor_ = ran_idx_.at(cursor_);
+  }
 
   return std::make_pair(data_buffer, label);
 }
@@ -287,8 +295,11 @@ bool BasicTextLoader<T>::AddData(std::string const &text)
 {
   bool success = TextLoader<T>::AddData(text);
 
-  // have to reset to regenerate random indices for newly resized data
-  this->Reset();
+  // don't reset if no need data added!
+  if (success)
+  {
+    this->Reset();
+  }
 
   return success;
 }
@@ -381,35 +392,40 @@ typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::GetWordOffsetFromWordI
  * @return  returns a bool indicating failure condition
  */
 template <typename T>
-bool BasicTextLoader<T>::GetNextValidIndex(bool                                   random,
-                                           typename BasicTextLoader<T>::SizeType &cursor)
+void BasicTextLoader<T>::GetNextValidIndices()
 {
-  // loop until we find a non-discarded data point
-  bool     not_found     = true;
-  SizeType timeout_count = 0;
-  while (not_found)
+  cursor_set_     = false;
+  ran_cursor_set_ = false;
+  if (!IsDone())
   {
-    if (IsDone())
-    {
-      Reset();
-    }
+    assert(ran_idx_.size() == this->TextLoader<T>::Size());
 
-    if (random ? CheckValidIndex(ran_idx_.at(cursor)) : CheckValidIndex(cursor))
+    for (SizeType i = cursor_; i < this->TextLoader<T>::Size(); ++i)
     {
-      not_found = false;
-    }
-    else
-    {
-      ++cursor;
-      ++timeout_count;
-      if (timeout_count > p_.max_idx_search)
+      if (!cursor_set_)
       {
-        return false;
+        if (CheckValidIndex(i))
+        {
+          cursor_     = i;
+          cursor_set_ = true;
+        }
+      }
+
+      if (!ran_cursor_set_)
+      {
+        if (CheckValidIndex(ran_idx_.at(i)))
+        {
+          ran_cursor_     = ran_idx_.at(i);
+          ran_cursor_set_ = true;
+        }
+      }
+
+      if (cursor_set_ && ran_cursor_set_)
+      {
+        break;
       }
     }
   }
-  cursor = random ? ran_idx_.at(cursor) : cursor;
-  return true;
 }
 
 /**
@@ -452,13 +468,15 @@ void BasicTextLoader<T>::DiscardFrequent()
 {
   if (p_.discard_frequent)
   {
+    discards_.clear();
+    discard_count_          = 0;
     SizeType sentence_count = 0;
 
     // iterate through all sentences
     for (SizeType sntce_idx = 0; sntce_idx < this->data_.size(); sntce_idx++)
     {
       // again, not strictly necessary to check for this under current text_loader implementation
-      if ((this->data_.at(sntce_idx).size() > p_.min_sentence_length) &&
+      if ((this->data_.at(sntce_idx).size() >= p_.min_sentence_length) &&
           (discard_sentence_idx_ + sentence_count < p_.max_sentences))
       {
         discards_.push_back({});

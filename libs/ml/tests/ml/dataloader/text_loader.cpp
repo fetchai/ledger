@@ -68,7 +68,6 @@ TYPED_TEST(TextDataLoaderTest, add_data_loader_test)
   EXPECT_FALSE(loader.IsDone());
   EXPECT_EQ(loader.GetVocab().size(), 5);
 
-  // since vocab stores words in an unordered map, we don't know where each word will
   EXPECT_EQ(loader.VocabLookup(0), "a");
   EXPECT_EQ(loader.VocabLookup(1), "longer");
   EXPECT_EQ(loader.VocabLookup(2), "five");
@@ -175,6 +174,10 @@ TYPED_TEST(TextDataLoaderTest, basic_loader_cycle_test)
   std::string cur_word;
   for (std::size_t j = 0; j < 20; ++j)
   {
+    if (loader.IsDone())
+    {
+      loader.Reset();
+    }
     std::pair<TypeParam, SizeType> output = loader.GetNext();
     cur_word = loader.VocabLookup(SizeType(double(output.first.At(0))));
 
@@ -202,6 +205,10 @@ TYPED_TEST(TextDataLoaderTest, adddata_loader_test)
   std::string cur_word;
   for (std::size_t j = 0; j < 20; ++j)
   {
+    if (loader.IsDone())
+    {
+      loader.Reset();
+    }
     std::pair<TypeParam, SizeType> output = loader.GetNext();
     cur_word = loader.VocabLookup(SizeType(double(output.first.At(0))));
     ASSERT_TRUE(cur_word.compare(gt_input.at(j)) == 0);
@@ -218,6 +225,10 @@ TYPED_TEST(TextDataLoaderTest, adddata_loader_test)
 
   for (std::size_t j = 0; j < 22; ++j)
   {
+    if (loader.IsDone())
+    {
+      loader.Reset();
+    }
     std::pair<TypeParam, SizeType> output = loader.GetNext();
     cur_word = loader.VocabLookup(SizeType(double(output.first.At(0))));
     ASSERT_TRUE(cur_word.compare(gt_input.at(j)) == 0);
@@ -252,6 +263,10 @@ TYPED_TEST(TextDataLoaderTest, punctuation_loader_test)
   std::string cur_word;
   for (std::size_t j = 0; j < gt_input.size(); ++j)
   {
+    if (loader.IsDone())
+    {
+      loader.Reset();
+    }
     std::pair<TypeParam, SizeType> output = loader.GetNext();
     cur_word = loader.VocabLookup(SizeType(double(output.first.At(0))));
     ASSERT_EQ(cur_word, gt_input.at(j));
