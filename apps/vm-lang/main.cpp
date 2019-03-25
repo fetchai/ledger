@@ -16,18 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/decoders.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "core/commandline/cli_header.hpp"
 #include "core/commandline/params.hpp"
+#include "core/json/document.hpp"
+#include "variant/variant.hpp"
 #include "vm/analyser.hpp"
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
 #include "vm/typeids.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/vm_factory.hpp"
-#include "variant/variant.hpp"
-#include "core/json/document.hpp"
-#include "core/byte_array/encoders.hpp"
-#include "core/byte_array/decoders.hpp"
 
 #include <fstream>
 #include <memory>
@@ -157,12 +157,11 @@ struct System : public fetch::vm::Object
 struct JsonStateMap : public fetch::vm::IoObserverInterface
 {
 public:
-
   // Construction / Destruction
-  JsonStateMap() = default;
+  JsonStateMap()                     = default;
   JsonStateMap(JsonStateMap const &) = delete;
-  JsonStateMap(JsonStateMap &&) = delete;
-  ~JsonStateMap() override = default;
+  JsonStateMap(JsonStateMap &&)      = delete;
+  ~JsonStateMap() override           = default;
 
   /// @name Save and Restore Operations
   /// @{
@@ -245,7 +244,6 @@ public:
   JsonStateMap &operator=(JsonStateMap &&) = delete;
 
 private:
-
   Variant data_{Variant::Object()};
 };
 
