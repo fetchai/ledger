@@ -47,7 +47,7 @@ struct TrainingParams
   SizeType    embedding_size  = 16;      // dimension of embedding vec
   SizeType    training_epochs = 1000;    // total number of training epochs
   double      learning_rate   = 0.01;    // alpha - the learning rate
-  SizeType    K               = 10;      // how many nearest neighbours to compare against
+  SizeType    k               = 10;      // how many nearest neighbours to compare against
   std::string test_word       = "cold";  // test word to consider
 };
 
@@ -251,7 +251,7 @@ int main(int argc, char **argv)
 
     // print batch loss and embeddings distances
     // Test trained embeddings
-    TestEmbeddings(g, output_name, dataloader, tp.test_word, tp.K);
+    TestEmbeddings(g, output_name, dataloader, tp.test_word, tp.k);
     std::cout << "epoch_loss: " << epoch_loss << std::endl;
   }
 
@@ -260,7 +260,7 @@ int main(int argc, char **argv)
   //////////////////////////////////////
 
   // Test trained embeddings
-  TestEmbeddings(g, output_name, dataloader, tp.test_word, tp.K);
+  TestEmbeddings(g, output_name, dataloader, tp.test_word, tp.k);
 
   return 0;
 }

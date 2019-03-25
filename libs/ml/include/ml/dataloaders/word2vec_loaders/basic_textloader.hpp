@@ -178,6 +178,7 @@ std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetRando
   {
     return GetAtIndex(ran_cursor_);
   }
+
   throw std::runtime_error("no valid cursor position set");
 }
 
@@ -243,6 +244,7 @@ void BasicTextLoader<T>::Reset()
   ran_idx_ = std::vector<SizeType>(this->TextLoader<T>::Size());
   std::iota(ran_idx_.begin(), ran_idx_.end(), 0);
   std::random_shuffle(ran_idx_.begin(), ran_idx_.end());
+  assert(ran_idx_.size() == this->word_count_);
 
   // recompute which words should be ignored based on their frequency
   DiscardFrequent();
@@ -399,9 +401,9 @@ void BasicTextLoader<T>::GetNextValidIndices()
   ran_cursor_set_ = false;
   if (!IsDone())
   {
-    assert(ran_idx_.size() == this->TextLoader<T>::Size());
+    assert(ran_idx_.size() == this->word_count_);
 
-    for (SizeType i = cursor_; i < this->TextLoader<T>::Size(); ++i)
+    for (SizeType i = cursor_; i < this->word_count_; ++i)
     {
       if (!cursor_set_)
       {
