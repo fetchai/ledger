@@ -317,6 +317,12 @@ int main(int argc, char **argv)
     std::cout << console << std::endl;
   }
 
+  // display the error message if the script execution was not successful
+  if (!success)
+  {
+    std::cout << error << std::endl;
+  }
+
   // save any specified data file
   if (!data_path.empty())
   {
