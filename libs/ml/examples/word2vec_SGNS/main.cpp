@@ -56,8 +56,8 @@ SkipGramTextParams<T> SetParams()
 {
   SkipGramTextParams<T> ret;
 
-  ret.n_data_buffers = SizeType(2);      // input and context buffers
-  ret.max_sentences  = SizeType(10000);  // maximum number of sentences to use
+  ret.n_data_buffers = SizeType(2);     // input and context buffers
+  ret.max_sentences  = SizeType(1000);  // maximum number of sentences to use
 
   ret.unigram_table      = true;  // unigram table for sampling negative training pairs
   ret.unigram_table_size = SizeType(10000000);  // size of unigram table for negative sampling
@@ -67,7 +67,7 @@ SkipGramTextParams<T> SetParams()
   ret.discard_threshold = 0.005;  // controls how aggressively to discard frequent words
 
   ret.window_size         = SizeType(5);  // max size of context window one way
-  ret.min_sentence_length = SizeType(4);  // maximum number of sentences to use
+  ret.min_sentence_length = SizeType(4);  //
   ret.k_negative_samples  = SizeType(5);  // number of negative examples to sample
 
   return ret;
@@ -177,11 +177,11 @@ int main(int argc, char **argv)
   std::cout << "beginning training...: " << std::endl;
 
   std::pair<ArrayType, SizeType> data;
-  ArrayType input(std::vector<typename ArrayType::SizeType>({tp.batch_size, 1}));
-  ArrayType context(std::vector<typename ArrayType::SizeType>({tp.batch_size, 1}));
-  ArrayType gt(std::vector<typename ArrayType::SizeType>({tp.batch_size, tp.output_size}));
-  DataType  loss = 0;
-  ArrayType scale_factor(std::vector<typename ArrayType::SizeType>({tp.batch_size, 1}));
+  ArrayType                      input(std::vector<typename ArrayType::SizeType>({1, 1}));
+  ArrayType                      context(std::vector<typename ArrayType::SizeType>({1, 1}));
+  ArrayType                      gt(std::vector<typename ArrayType::SizeType>({1, tp.output_size}));
+  DataType                       loss = 0;
+  ArrayType                      scale_factor(std::vector<typename ArrayType::SizeType>({1, 1}));
 
   for (std::size_t i = 0; i < tp.training_epochs; ++i)
   {
@@ -191,18 +191,16 @@ int main(int argc, char **argv)
     while (!dataloader.IsDone())
     {
       gt.Fill(0);
-      for (std::size_t j = 0; j < tp.batch_size; ++j)
-      {
-        // get random data point
-        data = dataloader.GetRandom();
 
-        // assign input and context vectors
-        input.At(j)   = data.first.At(0);
-        context.At(j) = data.first.At(1);
+      // get random data point
+      data = dataloader.GetRandom();
 
-        // assign label
-        gt.At(data.second) = DataType(1);
-      }
+      // assign input and context vectors
+      input.At(0)   = data.first.At(0);
+      context.At(0) = data.first.At(1);
+
+      // assign label
+      gt.At(data.second) = DataType(1);
 
       g.SetInput("Input", input, false);
       g.SetInput("Context", context, false);
@@ -210,20 +208,13 @@ int main(int argc, char **argv)
       // forward pass
       ArrayType results = g.Evaluate(output_name);
 
-      int pos_count = 0;
-      int neg_count = 0;
-      for (std::size_t j = 0; j < tp.batch_size; ++j)
+      if (gt.At({0, 0}) == DataType(1))
       {
-        if (gt.At({j, 0}) == DataType(1))
-        {
-          scale_factor.At(j) = DataType(sp.k_negative_samples);
-          neg_count++;
-        }
-        else
-        {
-          scale_factor.At(j) = DataType(1);
-          pos_count++;
-        }
+        scale_factor.At(0) = DataType(sp.k_negative_samples);
+      }
+      else
+      {
+        scale_factor.At(0) = DataType(1);
       }
 
       // cost function
@@ -239,9 +230,10 @@ int main(int argc, char **argv)
       g.BackPropagate(output_name, criterion.Backward(std::vector<ArrayType>({results, gt})));
 
       // take mini-batch learning step
-      if (step_count % 32 == (32 - 1))
+      if (step_count % tp.batch_size == (tp.batch_size - 1))
       {
-        std::cout << "MiniBatch: " << step_count / 32 << " -- Loss : " << loss << std::endl;
+        std::cout << "MiniBatch: " << step_count / tp.batch_size << " -- Loss : " << loss
+                  << std::endl;
         g.Step(tp.learning_rate);
         epoch_loss += loss;
         loss = 0;

@@ -174,7 +174,6 @@ template <typename T>
 std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetRandom()
 {
   GetNextValidIndices();
-  std::cout << "ran_cursor_set_: " << ran_cursor_set_ << std::endl;
   if (ran_cursor_set_)
   {
     return GetAtIndex(ran_cursor_);
@@ -208,6 +207,8 @@ typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::Size() const
       }
     }
   }
+  size -= discard_count_;
+
   return size;
 }
 
@@ -221,11 +222,12 @@ bool BasicTextLoader<T>::IsDone() const
   // check if no more valid positions until cursor reaches end
   if (p_.full_window)
   {
-    return (this->data_.empty() || (cursor_ >= (this->word_count_ - p_.window_size)));
+    return (this->data_.empty() ||
+            (cursor_ >= (this->word_count_ - p_.window_size - discard_count_)));
   }
   else
   {
-    return (this->data_.empty() || (cursor_ >= this->word_count_));
+    return (this->data_.empty() || (cursor_ >= (this->word_count_ - discard_count_)));
   }
 }
 
@@ -395,45 +397,40 @@ typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::GetWordOffsetFromWordI
 template <typename T>
 void BasicTextLoader<T>::GetNextValidIndices()
 {
+  if (IsDone())
+  {
+    throw std::runtime_error("");
+  }
   cursor_set_     = false;
   ran_cursor_set_ = false;
-  if (!IsDone())
+
+  assert(ran_idx_.size() == this->word_count_);
+
+  for (SizeType i = cursor_; i < this->word_count_; ++i)
   {
-    assert(ran_idx_.size() == this->word_count_);
-
-    for (SizeType i = cursor_; i < this->word_count_; ++i)
+    if (!cursor_set_)
     {
-      if (!cursor_set_)
+      if (CheckValidIndex(i))
       {
-        if (CheckValidIndex(i))
-        {
-          cursor_     = i;
-          cursor_set_ = true;
-        }
-      }
-
-      if (!ran_cursor_set_)
-      {
-        if (CheckValidIndex(ran_idx_.at(i)))
-        {
-          ran_cursor_     = ran_idx_.at(i);
-          ran_cursor_set_ = true;
-        }
-      }
-
-      if (cursor_set_ && ran_cursor_set_)
-      {
-        break;
+        cursor_     = i;
+        cursor_set_ = true;
       }
     }
+
+    if (!ran_cursor_set_)
+    {
+      if (CheckValidIndex(ran_idx_.at(i)))
+      {
+        ran_cursor_     = ran_idx_.at(i);
+        ran_cursor_set_ = true;
+      }
+    }
+
+    if (cursor_set_ && ran_cursor_set_)
+    {
+      break;
+    }
   }
-  std::cout << "ran_cursor_: " << ran_cursor_ << std::endl;
-  std::cout << "ran_cursor_set_: " << ran_cursor_set_ << std::endl;
-  std::cout << "cursor_: " << cursor_ << std::endl;
-  std::cout << "cursor_set_: " << cursor_set_ << std::endl;
-  std::cout << "IsDone(): " << IsDone() << std::endl;
-  std::cout << "this->word_count_: " << this->word_count_ << std::endl;
-  std::cout << "ran_idx.size(): " << ran_idx.size() << std::endl;
 }
 
 /**
