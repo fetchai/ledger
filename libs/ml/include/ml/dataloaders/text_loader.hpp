@@ -320,10 +320,13 @@ template <typename T>
 bool TextLoader<T>::CheckEndOfSentence(std::string &word)
 {
   // if the word ends with two new-lines consecutively we assume it is a sentence break
-  if (((word.size() > 1) && (word.end()[-2] == '\n')) && (word.end()[-1] == '\n'))
+  if (word.size() > 1)
   {
-    return true;
-  };
+    if ((word.end()[-2] == '\n') && (word.end()[-1] == '\n'))
+    {
+      return true;
+    }
+  }
 
   // check last character
   bool end_of_sen = (std::find(sentence_break_.begin(), sentence_break_.end(), word.back()) !=
