@@ -77,7 +77,7 @@ protected:
 
 private:
   const std::vector<char> word_break_{'-', '\'', '.', '\t', '\n', '!', '?'};
-  const std::vector<char> sentence_break_{'.', '\t', '\n', '!', '?'};
+  const std::vector<char> sentence_break_{'.', '!', '?'};
   const std::string       unknown_ = "UNK";
 
   bool                     AddSentenceToVocab(std::vector<std::string> &sentence);
@@ -319,6 +319,12 @@ std::vector<std::string> TextLoader<T>::StripPunctuationAndLower(std::string con
 template <typename T>
 bool TextLoader<T>::CheckEndOfSentence(std::string &word)
 {
+  // if the word ends with two new-lines consecutively we assume it is a sentence break
+  if ((word.end()[-2] == '\n') && (word.end()[-1] == '\n'))
+  {
+    return true;
+  };
+
   // check last character
   bool end_of_sen = (std::find(sentence_break_.begin(), sentence_break_.end(), word.back()) !=
                      sentence_break_.end());
