@@ -21,8 +21,9 @@
 #include "core/logger.hpp"
 #include "core/threading.hpp"
 #include "ledger/executor.hpp"
-#include "ledger/state_sentinel.hpp"
 #include "storage/resource_mapper.hpp"
+
+#include "ledger/state_adapter.hpp"
 
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
@@ -168,6 +169,11 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
       {
         item->AddLane(
             StateAdapter::CreateAddress(contract_id, resource).lane(block.log2_num_lanes));
+      }
+
+      for (auto const &contract_hash : tx.raw_resources)
+      {
+        item->AddLane(StateAdapter::CreateAddress(contract_hash).lane(block.log2_num_lanes));
       }
 
       // insert the item into the execution plan

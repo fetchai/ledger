@@ -37,9 +37,7 @@ public:
     : currentSentence_(0)
     , currentWord_(0)
     , window_size_(window_size)
-  {
-    vocab_[""] = 0;
-  }
+  {}
 
   virtual uint64_t Size() const
   {
@@ -76,6 +74,7 @@ public:
 
   virtual void Reset()
   {
+    std::random_shuffle(data_.begin(), data_.end());
     currentSentence_ = 0;
     currentWord_     = 0;
   }
@@ -128,9 +127,7 @@ private:
       indexes.reserve(strings.size());
       for (std::string const &s : strings)
       {
-        // +1 means that values will start at 1. 0 is reserved for UNKNOWN word
-        auto value =
-            vocab_.insert(std::pair<std::string, uint64_t>(s, (uint64_t)(vocab_.size() + 1)));
+        auto value = vocab_.insert(std::pair<std::string, uint64_t>(s, (uint64_t)(vocab_.size())));
         indexes.push_back((*value.first).second);
       }
     }

@@ -53,6 +53,7 @@ public:
       ArrayType const &                                           errorSignal)
   {
     assert(inputs.size() == 1);
+
     assert(inputs.front().get().shape() == errorSignal.shape());
 
     ArrayType t            = this->Forward(inputs);

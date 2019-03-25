@@ -1552,6 +1552,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
                "unable to find matching constructor for type '" + lhs->type->name + "'");
       return false;
     }
+
     FunctionGroupPtr fg = ConvertToFunctionGroupPtr(symbol);
     TypePtrArray     actual_parameter_types;
     FunctionPtr f = FindFunction(lhs->type, fg, supplied_parameter_types, actual_parameter_types);
@@ -1559,7 +1560,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
     {
       // No matching constructor, or ambiguous
       AddError(lhs->token,
-               "unable to find matching constructor for type '" + lhs->type->name + "'");
+               "unable to find matching constructor for type/function '" + lhs->type->name + "'");
       return false;
     }
 

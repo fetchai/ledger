@@ -19,7 +19,9 @@
 
 #include "math/free_functions/exponentiation/exponentiation.hpp"
 #include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
+#include "math/free_functions/matrix_operations/matrix_operations.hpp"
 #include "math/kernels/standard_functions.hpp"
+
 #include <cassert>
 
 namespace fetch {
@@ -45,18 +47,17 @@ ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
   sce_x.Copy(x);
 
   // we don't explicitly call softmax, because we assume softmax was already included in the graph
-  // (i.e. x is the output
-  //  of softmax layer)
+  // (i.e. x is the output of softmax layer)
 
-  auto      gt = ArgMax(y, 1);
+  auto      gt = ArgMax(y);
   ArrayType log_likelihood{1};
   log_likelihood[0] = 0;
 
   for (typename ArrayType::SizeType idx = 0; idx < n_examples; ++idx)
   {
-    sce_x.Set(idx, static_cast<typename ArrayType::SizeType>(gt[idx]),
-              std::log(sce_x.At(idx, static_cast<typename ArrayType::SizeType>(gt[idx]))));
-    log_likelihood[0] -= sce_x.At(idx, static_cast<typename ArrayType::SizeType>(gt[idx]));
+    sce_x.Set({idx, static_cast<typename ArrayType::SizeType>(gt)},
+              std::log(sce_x.At({idx, static_cast<typename ArrayType::SizeType>(gt)})));
+    log_likelihood[0] -= sce_x.At({idx, static_cast<typename ArrayType::SizeType>(gt)});
   }
 
   return Divide(log_likelihood, static_cast<typename ArrayType::Type>(n_examples));

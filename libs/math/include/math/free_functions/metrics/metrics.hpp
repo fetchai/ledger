@@ -61,7 +61,7 @@ ArrayType EuclideanDistance(ArrayType const &A, ArrayType const &B,
   }
   ArrayType ret(retSize);
   Subtract(A, B, temp);
-  Square(temp);
+  Square(temp, temp);
   ret = ReduceSum(temp, axis);
   Sqrt(ret);
 

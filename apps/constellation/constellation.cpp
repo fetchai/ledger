@@ -24,12 +24,15 @@
 #include "ledger/chaincode/wallet_http_interface.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
+#include "ledger/tx_query_http_interface.hpp"
 #include "ledger/tx_status_http_interface.hpp"
 #include "network/generics/atomic_inflight_counter.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 #include "network/p2pservice/p2p_http_interface.hpp"
 #include "network/uri.hpp"
+
+#include "health_check_http_module.hpp"
 
 #include <memory>
 #include <random>
@@ -179,7 +182,9 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
             p2p::P2PHttpInterface::WeakStateMachines{main_chain_service_->GetWeakStateMachine(),
                                                      block_coordinator_.GetWeakStateMachine()}),
         std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
-        std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_)}
+        std::make_shared<ledger::TxQueryHttpInterface>(*storage_, cfg_.log2_num_lanes),
+        std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
+        std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_)}
 {
   // print the start up log banner
   FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.interface_address, " E ",
