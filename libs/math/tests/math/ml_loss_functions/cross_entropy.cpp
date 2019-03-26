@@ -105,6 +105,5 @@ TYPED_TEST(CrossEntropyTest, value_test)
   score = fetch::math::CrossEntropyLoss(test_array, gt_array);
 
   // test correct values
-  ASSERT_NEAR(score, typename TypeParam::Type(1.78777539730072021484375),
-              typename TypeParam::Type(1.0e-5f));
+  ASSERT_NEAR(score, typename TypeParam::Type(0.893887639), typename TypeParam::Type(1.0e-5f));
 }

@@ -21,8 +21,8 @@
 #include <memory>
 #include <vector>
 
-#include "math/free_functions/fundamental_operators.hpp"
-#include "math/free_functions/ml/loss_functions/softmax_cross_entropy.hpp"
+#include "math/free_functions/ml/activation_functions/softmax.hpp"
+#include "math/free_functions/ml/loss_functions/cross_entropy.hpp"
 
 namespace fetch {
 namespace ml {
@@ -41,20 +41,23 @@ public:
 
   virtual typename ArrayType::Type Forward(std::vector<ArrayType> const &inputs)
   {
+    // third term may be present for scaling
     assert(inputs.size() == 2);
-    assert(inputs[0].size() == inputs[1].size());
+    assert(inputs.at(0).size() == inputs.at(1).size());
 
-    ArrayType result = fetch::math::SoftmaxCrossEntropyLoss(*inputs[0], *inputs[1]);
-    return result[0];
+    // softmax forward & then CrossEntropy
+    typename ArrayType::Type result =
+        fetch::math::CrossEntropyLoss(fetch::math::Softmax(inputs[0]), inputs[1]);
+
+    return result;
   }
 
-  virtual ArrayPtrType Backward(std::vector<ArrayType> const &inputs)
+  virtual ArrayType Backward(std::vector<ArrayType> const &inputs)
   {
     assert(inputs.size() == 2);
     assert(inputs[0].size() == inputs[1].size());
 
-    ArrayType ret = fetch::math::Subtract(inputs[0], inputs[1]);
-    return ret;
+    return fetch::math::Subtract(inputs[0], inputs[1]);
   }
 
   static constexpr char const *DESCRIPTOR = "SoftmaxCrossEntropy";

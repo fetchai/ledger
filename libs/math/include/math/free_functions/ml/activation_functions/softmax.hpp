@@ -126,14 +126,14 @@ void Softmax(ArrayType const &array, ArrayType &ret)
 template <typename ArrayType>
 ArrayType Softmax(ArrayType const &array, typename ArrayType::SizeType axis)
 {
-  ArrayType ret{array.size()};
+  ArrayType ret{array.shape()};
   Softmax(array, ret, axis);
   return ret;
 }
 template <typename ArrayType>
 ArrayType Softmax(ArrayType const &array)
 {
-  ArrayType ret{array.size()};
+  ArrayType ret{array.shape()};
   Softmax(array, ret, 0);
   return ret;
 }

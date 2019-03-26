@@ -51,6 +51,7 @@ public:
   {
     assert(inputs.size() == 2);
     assert(inputs[0].shape() == inputs[1].shape());
+    std::cout << "fetch::math::Subtract(inputs[0], inputs[1]).At(0): " << fetch::math::Subtract(inputs[0], inputs[1]).At(0) << std::endl;
     return fetch::math::Subtract(inputs[0], inputs[1]);
   }
 

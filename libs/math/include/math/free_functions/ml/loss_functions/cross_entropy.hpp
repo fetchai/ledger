@@ -17,10 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/exponentiation/exponentiation.hpp"
-#include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
-//#include "math/kernels/standard_functions.hpp"
+#include "math/free_functions/exponentiation/exponentiation.hpp"        // log
+#include "math/free_functions/fundamental_operators.hpp"                // divide
+#include "math/free_functions/matrix_operations/matrix_operations.hpp"  //
 #include <cassert>
 
 namespace fetch {
@@ -38,24 +37,19 @@ template <typename ArrayType>
 typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
 {
   assert(x.shape() == y.shape());
+  assert(x.shape().size() == 2);
 
-  typename ArrayType::Type plogx = typename ArrayType::Type(0);
-  for (std::size_t i = 0; i < x.shape()[0]; ++i)
+  auto                     n_examples = x.shape().at(0);
+  ArrayType                gt  = ArgMax(y);  // y must be one hot - and we can ignore the zero cases
+  typename ArrayType::Type ret = typename ArrayType::Type(0);
+
+  for (typename ArrayType::SizeType idx = 0; idx < n_examples; ++idx)
   {
-    for (std::size_t j = 0; j < x.shape()[1]; ++j)
-    {
-      if (y.At({i, j}) == typename ArrayType::Type(1))
-      {
-        typename ArrayType::Type tmp2 = x.At({i, j});
-        typename ArrayType::Type tmp  = Log(tmp2);
-        fetch::math::Add(plogx, fetch::math::Multiply(typename ArrayType::Type(-1), tmp), plogx);
-      }
-    }
+    ret -= Log(x.At({idx, typename ArrayType::SizeType(gt.At(idx))}));
   }
+  Divide(ret, static_cast<typename ArrayType::Type>(n_examples), ret);
 
-  typename ArrayType::Type n = typename ArrayType::Type(x.shape()[1]);
-  return Divide(plogx, n);
+  return ret;
 }
-
 }  // namespace math
 }  // namespace fetch

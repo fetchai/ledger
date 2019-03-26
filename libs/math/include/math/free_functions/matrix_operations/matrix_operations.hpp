@@ -544,26 +544,60 @@ void PeakToPeak(ArrayType arr)
  * @return
  */
 template <typename ArrayType>
-void ArgMax(ArrayType const &array, typename ArrayType::SizeType &ret)
+void ArgMax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeType axis = 0)
 {
-  ret                                 = typename ArrayType::SizeType(0);
+  assert((array.shape().size() == 1) || (array.shape().size() == 2));
+  assert((axis == 0) || (axis == 1));
+
   typename ArrayType::Type cur_maxval = std::numeric_limits<typename ArrayType::Type>::lowest();
 
-  // just using ret as a free variable to store the current maxval for the loop here
-  for (typename ArrayType::SizeType i(0); i < array.size(); ++i)
+  if (array.shape().size() == 1)
   {
-    if (cur_maxval < array[i])
+    // just using ret as a free variable to store the current maxval for the loop here
+    for (typename ArrayType::SizeType i(0); i < array.size(); ++i)
     {
-      ret        = i;
-      cur_maxval = array.At(i);
+      if (cur_maxval < array[i])
+      {
+        cur_maxval = array.At(i);
+        ret.At(0)  = typename ArrayType::Type(i);
+      }
+    }
+  }
+  else
+  {
+    // get arg max for each row indexing by axis 0
+    for (std::size_t j = 0; j < array.shape().at(axis); ++j)
+    {
+      ret.At(j) = ArgMax(array.Slice(j), axis).At(0);
     }
   }
 }
 template <typename ArrayType>
-typename ArrayType::SizeType ArgMax(ArrayType const &array)
+ArrayType ArgMax(ArrayType const &array, typename ArrayType::SizeType axis = 0)
 {
-  typename ArrayType::SizeType ret;
-  ArgMax(array, ret);
+  assert((array.shape().size() == 1) || (array.shape().size() == 2));
+  assert((axis == 0) || (axis == 1));
+
+  ArrayType ret;
+  if (array.shape().size() == 1)
+  {
+    // 1D argmax result has size 1
+    ret = ArrayType{1};
+  }
+  else
+  {
+    // 2D argmax result has size
+    if (axis == 0)
+    {
+      ret = ArrayType{{array.shape().at(axis), typename ArrayType::SizeType(1)}};
+    }
+    else
+    {
+      ret = ArrayType{{typename ArrayType::SizeType(1), array.shape().at(axis)}};
+    }
+  }
+
+  ArgMax(array, ret, axis);
   return ret;
 }
 

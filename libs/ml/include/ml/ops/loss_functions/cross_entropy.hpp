@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "math/free_functions/fundamental_operators.hpp"
+#include "math/free_functions/ml/activation_functions/softmax.hpp"
 #include "math/free_functions/ml/loss_functions/cross_entropy.hpp"
 
 namespace fetch {
@@ -54,8 +55,10 @@ public:
     assert(inputs.size() == 2);
     assert(inputs[0].size() == inputs[1].size());
 
-    typename ArrayType::Type n_classes = static_cast<typename ArrayType::Type>(inputs[1].size());
-    ArrayType ret(fetch::math::Divide(fetch::math::Subtract(inputs[0], inputs[1]), n_classes));
+    ArrayType ret = fetch::math::Softmax(inputs[0]);
+    fetch::math::Divide(inputs[1], ret, ret);
+    fetch::math::Multiply(typename ArrayType::Type(-1), ret, ret);
+
     return ret;
   }
 

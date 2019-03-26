@@ -22,7 +22,7 @@
 #include "ml/dataloaders/word2vec_loaders/skipgram_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/skip_gram.hpp"
-#include "ml/ops/loss_functions/scaled_cross_entropy.hpp"
+#include "ml/ops/loss_functions/softmax_cross_entropy.hpp"
 
 #include <iostream>
 #include <math/tensor.hpp>
@@ -43,9 +43,9 @@ using SizeType     = typename ArrayType::SizeType;
 struct TrainingParams
 {
   SizeType    output_size     = 2;
-  SizeType    batch_size      = 1;       // training data batch size
+  SizeType    batch_size      = 128;     // training data batch size
   SizeType    embedding_size  = 16;      // dimension of embedding vec
-  SizeType    training_epochs = 1000;    // total number of training epochs
+  SizeType    training_epochs = 100000;  // total number of training epochs
   double      learning_rate   = 0.01;    // alpha - the learning rate
   SizeType    k               = 10;      // how many nearest neighbours to compare against
   std::string test_word       = "cold";  // test word to consider
@@ -56,8 +56,8 @@ SkipGramTextParams<T> SetParams()
 {
   SkipGramTextParams<T> ret;
 
-  ret.n_data_buffers = SizeType(2);     // input and context buffers
-  ret.max_sentences  = SizeType(1000);  // maximum number of sentences to use
+  ret.n_data_buffers = SizeType(2);    // input and context buffers
+  ret.max_sentences  = SizeType(300);  // maximum number of sentences to use
 
   ret.unigram_table      = true;  // unigram table for sampling negative training pairs
   ret.unigram_table_size = SizeType(10000000);  // size of unigram table for negative sampling
@@ -68,7 +68,7 @@ SkipGramTextParams<T> SetParams()
 
   ret.window_size         = SizeType(5);  // max size of context window one way
   ret.min_sentence_length = SizeType(4);  //
-  ret.k_negative_samples  = SizeType(5);  // number of negative examples to sample
+  ret.k_negative_samples  = SizeType(1);  // number of negative examples to sample
 
   return ret;
 }
@@ -168,7 +168,7 @@ int main(int argc, char **argv)
   std::string                 output_name = Model(g, tp.embedding_size, dataloader.VocabSize());
 
   // set up loss
-  ScaledCrossEntropy<ArrayType> criterion;
+  SoftmaxCrossEntropy<ArrayType> criterion;
 
   /////////////////////////////////
   /// TRAIN THE WORD EMBEDDINGS ///
@@ -180,17 +180,39 @@ int main(int argc, char **argv)
   ArrayType                      input(std::vector<typename ArrayType::SizeType>({1, 1}));
   ArrayType                      context(std::vector<typename ArrayType::SizeType>({1, 1}));
   ArrayType                      gt(std::vector<typename ArrayType::SizeType>({1, tp.output_size}));
-  DataType                       loss = 0;
   ArrayType                      scale_factor(std::vector<typename ArrayType::SizeType>({1, 1}));
 
-  for (std::size_t i = 0; i < tp.training_epochs; ++i)
+  DataType correct_score      = 0;
+  DataType sum_average_scores = 0;
+  DataType sum_average_count  = 0;
+  DataType loss               = 0;
+  DataType batch_loss         = 0;
+  DataType epoch_loss         = 0;
+
+  SizeType batch_count = 0;
+  SizeType step_count  = 0;
+
+  ArrayType results;  // store predictions
+
+  for (SizeType i = 0; i < tp.training_epochs; ++i)
   {
-    double   epoch_loss = 0;
-    SizeType step_count = 0;
     dataloader.Reset();
+
+    sum_average_scores = 0;
+    sum_average_count  = 0;
+
+    batch_count = 0;
+    step_count  = 0;
+
+    epoch_loss = 0;
+    batch_loss = 0;
+
+    // effectively clears any leftover gradients
+    g.Step(0);
+
     while (!dataloader.IsDone())
     {
-      gt.Fill(0);
+      gt.Fill(DataType(0));
 
       // get random data point
       data = dataloader.GetRandom();
@@ -206,7 +228,7 @@ int main(int argc, char **argv)
       g.SetInput("Context", context, false);
 
       // forward pass
-      ArrayType results = g.Evaluate(output_name);
+      results = g.Evaluate(output_name);
 
       if (gt.At({0, 0}) == DataType(1))
       {
@@ -217,14 +239,23 @@ int main(int argc, char **argv)
         scale_factor.At(0) = DataType(1);
       }
 
+      // measure accuracy
+      if (((results.At(0) > 0.5) && (gt.At(0) == DataType(1))) ||
+          ((results.At(1) > 0.5) && (gt.At(1) == DataType(1))))
+      {
+        ++correct_score;
+      }
+      assert(results.At(0) + results.At(1) - DataType(1) < 0.0001);
+
       // cost function
-      DataType tmp_loss = criterion.Forward({results, gt, scale_factor});
+      loss = criterion.Forward({results, gt});
+
       // diminish size of updates due to negative examples
       if (data.second == 0)
       {
-        tmp_loss /= DataType(sp.k_negative_samples);
+        loss /= DataType(sp.k_negative_samples);
       }
-      loss += tmp_loss;
+      batch_loss += loss;
 
       // backprop
       g.BackPropagate(output_name, criterion.Backward(std::vector<ArrayType>({results, gt})));
@@ -232,11 +263,18 @@ int main(int argc, char **argv)
       // take mini-batch learning step
       if (step_count % tp.batch_size == (tp.batch_size - 1))
       {
-        std::cout << "MiniBatch: " << step_count / tp.batch_size << " -- Loss : " << loss
-                  << std::endl;
         g.Step(tp.learning_rate);
-        epoch_loss += loss;
-        loss = 0;
+
+        // average prediction scores
+        sum_average_scores += (correct_score / double(tp.batch_size));
+        sum_average_count++;
+        correct_score = 0;
+
+        // sum epoch losses
+        epoch_loss += batch_loss;
+        batch_loss = 0;
+
+        ++batch_count;
       }
       ++step_count;
     }
@@ -245,6 +283,10 @@ int main(int argc, char **argv)
     // Test trained embeddings
     TestEmbeddings(g, output_name, dataloader, tp.test_word, tp.k);
     std::cout << "epoch_loss: " << epoch_loss << std::endl;
+    std::cout << "average_score: " << sum_average_scores / sum_average_count << std::endl;
+    std::cout << "over [" << batch_count << "] batches involving [" << step_count
+              << "] steps total." << std::endl;
+    std::cout << "\n: " << std::endl;
   }
 
   //////////////////////////////////////

@@ -74,12 +74,13 @@ public:
 
     // dense layer
     SizeType    dense_size = fetch::math::Square(embedding_size);
-    std::string dense      = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+    std::string output     = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
         name + "_Dense", {in_ctx_matmul}, dense_size, out);
 
-    // softmax activation
-    std::string output =
-        this->template AddNode<fetch::ml::ops::Softmax<ArrayType>>(name + "_Output", {dense});
+    // we use the softmax cross entropy criterion and therefore should not compute softmax ourselves
+//    // softmax activation
+//    std::string output =
+//        this->template AddNode<fetch::ml::ops::Softmax<ArrayType>>(name + "_Output", {dense});
 
     this->AddInputNode(input);
     this->AddInputNode(context);
