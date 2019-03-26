@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/dataloaders/mnist_loader.hpp"
+#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace py = pybind11;

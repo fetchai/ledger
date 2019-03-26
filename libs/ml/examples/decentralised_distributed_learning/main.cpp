@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include "ml/dataloaders/mnist_loader.hpp"
+#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 #include "ml/graph.hpp"
 
 #include "ml/layers/fully_connected.hpp"

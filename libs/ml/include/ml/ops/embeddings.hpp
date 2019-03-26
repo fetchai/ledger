@@ -82,7 +82,7 @@ public:
     for (DataType const &i : inputs.front().get())
     {
       updated_rows_.insert(typename ArrayType::SizeType(double(i)));
-      this->gradientAccumulation_->Slice(typename ArrayType::SizeType(double(i)))
+      this->gradient_accumulation_->Slice(typename ArrayType::SizeType(double(i)))
           .Copy(errorSignal.Slice(j));
       j++;
     }
@@ -93,11 +93,11 @@ public:
   {
     for (auto const &r : updated_rows_)
     {
-      ArrayType gradientAccumulationSlice = this->gradientAccumulation_->Slice(r);
-      ArrayType outputSlice               = this->output_->Slice(r);
-      gradientAccumulationSlice.InlineMultiply(-learningRate);
-      outputSlice.InlineAdd(gradientAccumulationSlice);
-      gradientAccumulationSlice.Fill(typename T::Type(0));
+      ArrayType gradient_accumulation_slice = this->gradient_accumulation_->Slice(r);
+      ArrayType output_slice                = this->output_->Slice(r);
+      gradient_accumulation_slice.InlineMultiply(-learningRate);
+      output_slice.InlineAdd(gradient_accumulation_slice);
+      gradient_accumulation_slice.Fill(typename T::Type(0));
     }
     updated_rows_.clear();
   }
