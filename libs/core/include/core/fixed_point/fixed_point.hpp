@@ -270,34 +270,40 @@ public:
   /// comparison operators ///
   ////////////////////////////
 
-  bool operator==(const FixedPoint &o) const
+  template <typename OtherType>
+  bool operator==(const OtherType &o) const
   {
-    return data_ == o.data_;
+    return (data_ == FixedPoint(o).data_);
   }
 
-  bool operator!=(const FixedPoint &o) const
+  template <typename OtherType>
+  bool operator!=(const OtherType &o) const
   {
-    return data_ != o.data_;
+    return data_ != FixedPoint(o).data_;
   }
 
-  bool operator<(const FixedPoint &o) const
+  template <typename OtherType>
+  bool operator<(const OtherType &o) const
   {
-    return data_ < o.data_;
+    return data_ < FixedPoint(o).data_;
   }
 
-  bool operator>(const FixedPoint &o) const
+  template <typename OtherType>
+  bool operator>(const OtherType &o) const
   {
-    return data_ > o.data_;
+    return data_ > FixedPoint(o).data_;
   }
 
-  bool operator<=(const FixedPoint &o) const
+  template <typename OtherType>
+  bool operator<=(const OtherType &o) const
   {
-    return data_ <= o.data_;
+    return data_ <= FixedPoint(o).data_;
   }
 
-  bool operator>=(const FixedPoint &o) const
+  template <typename OtherType>
+  bool operator>=(const OtherType &o) const
   {
-    return data_ >= o.data_;
+    return data_ >= FixedPoint(o).data_;
   }
 
   ///////////////////////

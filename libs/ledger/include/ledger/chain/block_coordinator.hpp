@@ -20,6 +20,7 @@
 #include "core/mutex.hpp"
 #include "core/periodic_action.hpp"
 #include "core/state_machine.hpp"
+#include "core/threading/synchronised_state.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 
@@ -120,7 +121,8 @@ class BlockCoordinator
 public:
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
-  using Identity = byte_array::ConstByteArray;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using Identity       = ConstByteArray;
 
   enum class State
   {
@@ -181,6 +183,11 @@ public:
     waiting_for_startup_ = false;
   }
 
+  ConstByteArray GetLastExecutedBlock() const
+  {
+    return last_executed_block_.Get();
+  }
+
   // Operators
   BlockCoordinator &operator=(BlockCoordinator const &) = delete;
   BlockCoordinator &operator=(BlockCoordinator &&) = delete;
@@ -195,19 +202,20 @@ private:
   };
 
   //  using Super         = core::StateMachine<BlockCoordinatorState>;
-  using Mutex           = fetch::mutex::Mutex;
-  using BlockPtr        = MainChain::BlockPtr;
-  using NextBlockPtr    = std::unique_ptr<Block>;
-  using PendingBlocks   = std::deque<BlockPtr>;
-  using PendingStack    = std::vector<BlockPtr>;
-  using Flag            = std::atomic<bool>;
-  using BlockPeriod     = std::chrono::milliseconds;
-  using Clock           = std::chrono::system_clock;
-  using Timepoint       = Clock::time_point;
-  using StateMachinePtr = std::shared_ptr<StateMachine>;
-  using MinerPtr        = std::shared_ptr<consensus::ConsensusMinerInterface>;
-  using TxSet           = std::unordered_set<TransactionSummary::TxDigest>;
-  using TxSetPtr        = std::unique_ptr<TxSet>;
+  using Mutex             = fetch::mutex::Mutex;
+  using BlockPtr          = MainChain::BlockPtr;
+  using NextBlockPtr      = std::unique_ptr<Block>;
+  using PendingBlocks     = std::deque<BlockPtr>;
+  using PendingStack      = std::vector<BlockPtr>;
+  using Flag              = std::atomic<bool>;
+  using BlockPeriod       = std::chrono::milliseconds;
+  using Clock             = std::chrono::system_clock;
+  using Timepoint         = Clock::time_point;
+  using StateMachinePtr   = std::shared_ptr<StateMachine>;
+  using MinerPtr          = std::shared_ptr<consensus::ConsensusMinerInterface>;
+  using TxSet             = std::unordered_set<TransactionSummary::TxDigest>;
+  using TxSetPtr          = std::unique_ptr<TxSet>;
+  using LastExecutedBlock = SynchronisedState<ConstByteArray>;
 
   /// @name Monitor State
   /// @{
@@ -247,6 +255,11 @@ private:
   TransactionStatusCache &   status_cache_;       ///< Ref to the tx status cache
   PeriodicAction             periodic_print_;
   MinerPtr                   miner_;
+  /// @}
+
+  /// @name Status
+  /// @{
+  LastExecutedBlock last_executed_block_;
   /// @}
 
   /// @name State Machine State

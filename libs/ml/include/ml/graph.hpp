@@ -175,9 +175,9 @@ public:
    * Assigns all trainable parameters to a stateDict for exporting and serialising
    * @return  d is the StateDict of all trainable params
    */
-  virtual struct ops::StateDict<ArrayType> StateDict() const
+  virtual struct fetch::ml::StateDict<ArrayType> StateDict() const
   {
-    struct ops::StateDict<ArrayType> d;
+    struct fetch::ml::StateDict<ArrayType> d;
     for (auto const &t : trainable_)
     {
       d.dict_.emplace(t.first, t.second->StateDict());
@@ -192,7 +192,7 @@ public:
    * @param dict  state dictionary to import to weights
    */
   virtual void
-  LoadStateDict(struct ops::StateDict<T> const &dict)
+  LoadStateDict(struct fetch::ml::StateDict<T> const &dict)
   {
     assert(!dict.weights_);
     for (auto const &t : trainable_)

@@ -248,21 +248,24 @@ private:
 
       if (include_transactions)
       {
-        auto const &slices = b->body.slices;
+        // create and allocate the variant array
+        block["txs"] = Variant::Array(b->GetTransactionCount());
 
-        block["slices"]     = Variant::Array(slices.size());
-        Variant &slice_list = block["slices"];
+        Variant &tx_list = block["txs"];
 
+        std::size_t tx_idx{0};
         std::size_t slice_idx{0};
-        for (auto const &slice : slices)
+        for (auto const &slice : b->body.slices)
         {
-          slice_list[slice_idx]     = Variant::Array(slice.size());
-          Variant &transaction_list = slice_list[slice_idx];
-
-          std::size_t tx_idx{0};
           for (auto const &transaction : slice)
           {
-            transaction_list[tx_idx++] = ToBase64(transaction.transaction_hash);
+            auto &tx = tx_list[tx_idx];
+
+            tx          = Variant::Object();
+            tx["hash"]  = ToBase64(transaction.transaction_hash);
+            tx["slice"] = slice_idx;
+
+            ++tx_idx;
           }
 
           ++slice_idx;

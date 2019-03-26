@@ -57,16 +57,25 @@ public:
     cursor_ = 0;
   }
 
-  virtual std::pair<uint64_t, T> GetNext()
+  std::pair<uint64_t, T> GetAtIndex(uint64_t index) const
   {
     T buffer({28u, 28u});
     for (std::uint64_t i(0); i < 28 * 28; ++i)
     {
       buffer.At(i) = typename T::Type(data_[cursor_][i]) / typename T::Type(256);
     }
-    uint64_t label = (uint64_t)(labels_[cursor_]);
-    cursor_++;
+    uint64_t label = (uint64_t)(labels_[index]);
     return std::make_pair(label, buffer);
+  }
+
+  virtual std::pair<uint64_t, T> GetNext()
+  {
+    return GetAtIndex(cursor_++);
+  }
+
+  std::pair<uint64_t, T> GetRandom()
+  {
+    return GetAtIndex((uint64_t)rand() % Size());
   }
 
   void Display(T const &data) const

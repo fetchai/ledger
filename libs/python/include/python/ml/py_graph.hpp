@@ -20,6 +20,7 @@
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
+#include "ml/ops/embeddings.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "python/fetch_pybind.hpp"
 
@@ -59,6 +60,12 @@ void BuildGraph(std::string const &custom_name, pybind11::module &module)
       .def("AddSoftmax",
            [](fetch::ml::Graph<ArrayType> &g, std::string const &name, std::string const &input) {
              g.template AddNode<fetch::ml::ops::Softmax<ArrayType>>(name, {input});
+           })
+      .def("AddEmbeddings",
+           [](fetch::ml::Graph<ArrayType> &g, std::string const &name, std::string const &input,
+              uint64_t vocabSize, uint64_t embeddingsDimension) {
+             g.template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(name, {input}, vocabSize,
+                                                                       embeddingsDimension);
            });
 }
 }  // namespace ml
