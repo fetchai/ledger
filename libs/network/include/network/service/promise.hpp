@@ -63,6 +63,7 @@ public:
 
   static constexpr char const *LOGGING_NAME = "Promise";
   static constexpr uint32_t    FOREVER      = std::numeric_limits<uint32_t>::max();
+  static constexpr uint32_t    DEFAULT      = 1000 * 60;
 
   enum class State
   {
@@ -196,10 +197,11 @@ public:
 
   /// @name Waits
   /// @{
-  bool Wait(uint32_t timeout_ms = FOREVER, bool throw_exception = true) const;
+  bool Wait(uint32_t timeout_ms = DEFAULT, bool throw_exception = true) const;
+
   bool Wait(bool throw_exception) const
   {
-    return Wait(FOREVER, throw_exception);
+    return Wait(DEFAULT, throw_exception);
   }
   /// @}
 

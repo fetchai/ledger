@@ -507,10 +507,6 @@ void ExecutionManager::MonitorThreadEntrypoint()
     }
 
     case MonitorState::BOOKMARKING_STATE:
-
-      // trigger the storage to archive the current state
-      storage_->Commit();
-
       // finished processing the block
       monitor_state = MonitorState::IDLE;
       break;

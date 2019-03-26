@@ -168,6 +168,8 @@ public:
 
   void Load(std::string const &filename, bool const &create_if_not_exist = false)
   {
+    std::cerr << "Load : " << filename << std::endl; // DELETEME_NH
+
     filename_    = filename;
     file_handle_ = STREAM(filename_, std::ios::in | std::ios::out | std::ios::binary);
 
@@ -207,6 +209,7 @@ public:
 
   void New(std::string const &filename)
   {
+    std::cerr << "New : " << filename << std::endl; // DELETEME_NH
     filename_ = filename;
     Clear();
     file_handle_ = STREAM(filename_, std::ios::in | std::ios::out | std::ios::binary);

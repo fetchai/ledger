@@ -38,18 +38,10 @@ using namespace fetch::testing;
 
 using ByteArray = fetch::byte_array::ByteArray;
 
-TEST(versioned_random_access_stack_gtest, basic_example_of_commit_revert)
+TEST(versioned_random_access_stack_gtest, basic_example_of_commit_revert2)
 {
   NewVersionedRandomAccessStack<StringProxy> stack;
   stack.New("b_main.db", "b_history.db");
-
-  // Create a bunch of hashes we want to bookmark with
-  std::vector<ByteArray> hashes;
-
-  for (std::size_t i = 0; i < 4; ++i)
-  {
-    hashes.push_back(Hash<crypto::SHA256>(std::to_string(i)));
-  }
 
   // Make some changes to the stack
   for (std::size_t i = 0; i < 17; ++i)
@@ -62,6 +54,14 @@ TEST(versioned_random_access_stack_gtest, basic_example_of_commit_revert)
   {
     EXPECT_NE(stack.Get(i), std::to_string(i + 11));  // counter check
     EXPECT_EQ(stack.Get(i), std::to_string(i));
+  }
+
+  // Create a bunch of hashes we want to bookmark with
+  std::vector<ByteArray> hashes;
+
+  for (std::size_t i = 0; i < 4; ++i)
+  {
+    hashes.push_back(Hash<crypto::SHA256>(std::to_string(i)));
   }
 
   // *** Commit this ***
@@ -138,4 +138,74 @@ TEST(versioned_random_access_stack_gtest, try_to_revert_to_bad_hash)
 
   // Revert to bad hash
   ASSERT_THROW(stack.RevertToHash(hashes[1]), StorageException);
+}
+
+TEST(versioned_random_access_stack_gtest, loading_file)
+{
+  // Create a bunch of hashes we want to bookmark with
+  std::vector<ByteArray> hashes;
+
+  for (std::size_t i = 0; i < 4; ++i)
+  {
+    hashes.push_back(Hash<crypto::SHA256>(std::to_string(i)));
+  }
+
+  {
+    NewVersionedRandomAccessStack<StringProxy> stack;
+    stack.New("c_main.db", "c_history.db");
+
+    // Make some changes to the stack
+    for (std::size_t i = 0; i < 17; ++i)
+    {
+      stack.Push(std::to_string(i));
+    }
+
+    // Verify state is correct with no changes
+    for (std::size_t i = 0; i < 17; ++i)
+    {
+      EXPECT_NE(stack.Get(i), std::to_string(i + 11));  // counter check
+      EXPECT_EQ(stack.Get(i), std::to_string(i));
+    }
+
+    // *** Commit this ***
+    stack.Commit(hashes[0]);
+
+    // Verify state is the same
+    for (std::size_t i = 0; i < 17; ++i)
+    {
+      EXPECT_EQ(stack.Get(i), std::to_string(i));
+    }
+
+    // mash the state
+    for (std::size_t i = 0; i < 17; ++i)
+    {
+      stack.Set(i, std::to_string(i + 5));
+    }
+  }
+
+  {
+    NewVersionedRandomAccessStack<StringProxy> stack;
+    stack.Load("c_main.db", "c_history.db");
+
+    std::cerr << "this is post load!" << std::endl; // DELETEME_NH
+    std::cerr << "this is post load!" << std::endl; // DELETEME_NH
+    std::cerr << "this is post load!" << std::endl; // DELETEME_NH
+    std::cerr << "this is post load!" << std::endl; // DELETEME_NH
+    std::cerr << "this is post load!" << std::endl; // DELETEME_NH
+
+    // Verify the change is correct after loading the file up
+    for (std::size_t i = 0; i < 17; ++i)
+    {
+      EXPECT_EQ(stack.Get(i), std::to_string(i + 5));
+    }
+
+    // Revert!
+    stack.RevertToHash(hashes[0]);
+
+    // Verify old state is as it was
+    for (std::size_t i = 0; i < 17; ++i)
+    {
+      EXPECT_EQ(stack.Get(i), std::to_string(i));
+    }
+  }
 }

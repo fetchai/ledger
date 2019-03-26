@@ -169,7 +169,7 @@ private:
   /// @name Block Lookup
   /// @{
   BlockStatus InsertBlock(IntBlockPtr const &block, bool evaluate_loose_blocks = true);
-  bool        LookupBlock(BlockHash hash, IntBlockPtr &block, bool add_to_cache = true) const;
+  bool        LookupBlock(BlockHash hash, IntBlockPtr &block, bool add_to_cache = false) const;
   bool        LookupBlockFromCache(BlockHash hash, IntBlockPtr &block) const;
   bool        LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block, bool add_to_cache) const;
   bool        IsBlockInCache(BlockHash hash) const;

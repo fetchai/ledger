@@ -503,14 +503,20 @@ void MainChain::RecoverFromFile(Mode mode)
 
   // load the head block, and attempt verify that this block forms a complete chain to genesis
   IntBlockPtr block = std::make_shared<Block>();
+  IntBlockPtr head   = std::make_shared<Block>();
+
   if (block_store_->Get(storage::ResourceAddress("head"), *block))
   {
     auto block_index = block->body.block_number;
+
+    // Save the head
+    head = block;
 
     FETCH_LOG_INFO(LOGGING_NAME, "Head block found from main chain. Checking for completeness. Head index: ", block_index, " HR: ", ToHumanReadable(block->body.hash));
 
     // Copy head block so as to walk down the chain
     IntBlockPtr next = std::make_shared<Block>(*block);
+
     while (block_store_->Get(storage::ResourceID(next->body.previous_hash), *next))
     {
       if(next->body.block_number != block_index - 1)
@@ -519,11 +525,7 @@ void MainChain::RecoverFromFile(Mode mode)
         break;
       }
 
-      FETCH_LOG_WARN(LOGGING_NAME, "hash: ", ToHumanReadable(next->body.hash));
-      FETCH_LOG_WARN(LOGGING_NAME, "Prev block index: ", next->body.block_number);
-
       block_index = next->body.block_number;
-      next->body.block_number = 99;
     }
 
     if(block_index != 0)
@@ -532,18 +534,30 @@ void MainChain::RecoverFromFile(Mode mode)
     }
     else
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Recovering main chain with heaviest block: ", block_index);
+      FETCH_LOG_INFO(LOGGING_NAME, "Recovering main chain with heaviest block: ", head->body.block_number);
 
       // Add heaviest to cache
-      block_chain_[block->body.hash] = block;
+      block_chain_[head->body.hash] = head;
 
       // Update this as our heaviest
-      bool result = heaviest_.Update(*block);
+      bool result = heaviest_.Update(*head);
+      tips_[head->body.hash] = Tip{head->total_weight};
 
       if(!result)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Failed to update heaviest when loading from file.");
       }
+
+      // Sanity check
+      uint64_t heaviest_block_num = GetHeaviestBlock()->body.block_number;
+      FETCH_LOG_INFO(LOGGING_NAME, "Heaviest blcok: ", heaviest_block_num);
+
+      DetermineHeaviestTip();
+      heaviest_block_num = GetHeaviestBlock()->body.block_number;
+      FETCH_LOG_INFO(LOGGING_NAME, "Heaviest blcok now: ", heaviest_block_num);
+      FETCH_LOG_INFO(LOGGING_NAME, "Heaviest blcok weight: ", GetHeaviestBlock()->total_weight);
+
+      return;
     }
   }
   else
@@ -579,71 +593,66 @@ void MainChain::WriteToFile()
       }
     }
 
-    // This block is now the head in our file
-    if (!failed)
+    if(failed)
     {
-      // store both the HEAD block as both its has and the "HEAD" entry
-      block_store_->Set(storage::ResourceAddress("head"), *block);
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to walk back the chain when writing to file! Block head: ", block_chain_.at(heaviest_.hash)->body.block_number);
+      return;
+    }
 
+    // This block will now become the head in our file
+    // Corner case - block is genesis
+    if (block->body.previous_hash == GENESIS_DIGEST)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Writing genesis. ");
+      block_store_->Set(storage::ResourceAddress("head"), *block);
       block_store_->Set(storage::ResourceID(block->body.hash), *block);
 
-      FETCH_LOG_WARN(LOGGING_NAME, "Updating HEAD to ", ToHumanReadable(block->body.hash), " AKA ", block->body.hash.ToBase64());
-
-      // Test that the write went correctly
-      {
-        IntBlockPtr tmp = std::make_shared<Block>();
-        bool success = block_store_->Get(storage::ResourceID(block->body.hash), *tmp);
-
-        FETCH_LOG_INFO(LOGGING_NAME, "Success: ", success);
-        FETCH_LOG_INFO(LOGGING_NAME, "Head index (recovered): ", tmp->body.block_number);
-        FETCH_LOG_INFO(LOGGING_NAME, "Head hash (recovered): ", ToHumanReadable(tmp->body.hash));
-        FETCH_LOG_INFO(LOGGING_NAME, "Head prev hash (recovered): ", ToHumanReadable(tmp->body.previous_hash));
-
-        if(!success)
-        {
-          std::cerr << "odd!" << std::endl;
-        }
-
-        if(block_store_->Get(storage::ResourceID(block->body.previous_hash), *tmp))
-        {
-          FETCH_LOG_INFO(LOGGING_NAME, "Head index -1 (recovered): ", tmp->body.block_number);
-          FETCH_LOG_INFO(LOGGING_NAME, "Head hash -1 (recovered): ", ToHumanReadable(tmp->body.hash));
-          FETCH_LOG_INFO(LOGGING_NAME, "Head prev hash -1 (recovered): ", ToHumanReadable(tmp->body.previous_hash));
-        }
-
-        FETCH_UNUSED(success);
-      }
-
-      // !! Flush on every write
-      block_store_->Flush(false);
-
-      IntBlockPtr tmp = std::make_shared<Block>();
-      bool success = block_store_->Get(storage::ResourceID(block->body.hash), *tmp);
-
-      FETCH_LOG_INFO(LOGGING_NAME, "Success: ", success);
-      FETCH_LOG_INFO(LOGGING_NAME, "Head index (recovered2): ", tmp->body.block_number);
-      FETCH_LOG_INFO(LOGGING_NAME, "Head hash (recovered2): ", ToHumanReadable(tmp->body.hash));
-      FETCH_LOG_INFO(LOGGING_NAME, "Head prev hash (recovered2): ", ToHumanReadable(tmp->body.previous_hash));
-
-      // Walk down the file to check we have an unbroken chain
-      while (LookupBlockFromCache(block->body.previous_hash, block))
-      {
-        storage::ResourceID block_storage_key{block->body.hash};
-
-        // add the block to the file storage if it
-        if (!block_store_->Has(block_storage_key))
-        {
-          block_store_->Set(block_storage_key, *block);
-        }
-
-        // Clear the block from ram
-        FlushBlock(block);
-      }
+      // Test we can recover genesis too
+      IntBlockPtr dummy = std::make_shared<Block>();
+      block_store_->Get(storage::ResourceAddress("head"), *dummy);
+      block_store_->Get(storage::ResourceID(block->body.hash), *dummy);
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to walk back the chain when writing to file! Block head: ", block_chain_.at(heaviest_.hash)->body.block_number);
+      FETCH_LOG_INFO(LOGGING_NAME, "Writing block. ", block->body.block_number);
+
+      // Recover the current head block from the file
+      IntBlockPtr current_file_head= std::make_shared<Block>();
+      IntBlockPtr block_head = block;
+      block_store_->Get(storage::ResourceAddress("head"), *current_file_head);
+
+      // Now keep adding the block and its prev to the file until we are certain the file contains an unbroken chain.
+      // Assuming that the current_file_head is unbroken we can write until we touch it or it's root.
+      for(;;)
+      {
+        block_store_->Set(storage::ResourceID(block->body.hash), *block);
+
+        // Keep the current_file_head one block behind
+        while(current_file_head->body.block_number != block->body.block_number - 1)
+        {
+          block_store_->Get(storage::ResourceID(current_file_head->body.previous_hash), *current_file_head);
+        }
+
+        // Successful case
+        if(current_file_head->body.hash == block->body.previous_hash)
+        {
+          break;
+        }
+
+        // Continue to push prevs into file
+        LookupBlock(block->body.previous_hash, block);
+      }
+
+      // Success - we kept a copy of the new head to write
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Updating HEAD to ", ToHumanReadable(block_head->body.hash), " AKA ", block_head->body.hash.ToBase64());
+      block_store_->Set(storage::ResourceAddress("head"), *block_head);
     }
+
+    // Clear the block from ram
+    FlushBlock(block);
+
+    // Force flush of the file object!
+    block_store_->Flush(false);
 
     // as final step do some sanity checks
     TrimCache();
@@ -826,6 +835,8 @@ bool MainChain::UpdateTips(IntBlockPtr const &block)
   tips_.erase(block->body.previous_hash);
   tips_[block->body.hash] = Tip{block->total_weight};
 
+  std::cerr << "updating heaviest 1" << std::endl; // DELETEME_NH
+
   // attempt to update the heaviest tip
   return heaviest_.Update(*block);
 }
@@ -962,6 +973,8 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
  *
  * @param hash The hash of the block to search for
  * @param block The output block to be populated
+ * @param add_to_cache Whether to add to the cache as it is recent TODO(HUT): delete this.
+ *
  * @return true if successful, otherwise false
  */
 bool MainChain::LookupBlock(BlockHash hash, IntBlockPtr &block, bool add_to_cache) const
@@ -1100,6 +1113,14 @@ bool MainChain::DetermineHeaviestTip()
     heaviest_.hash   = it->first;
     heaviest_.weight = it->second.total_weight;
     success          = true;
+
+    ERROR_BACKTRACE;
+
+    std::cerr << "updating heaviest 2" << std::endl; // DELETEME_NH
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Heaviest blcok weight: ", GetHeaviestBlock()->total_weight);
+      FETCH_LOG_INFO(LOGGING_NAME, "Heaviest blcok number: ", GetHeaviestBlock()->body.block_number);
+
   }
 
   return success;

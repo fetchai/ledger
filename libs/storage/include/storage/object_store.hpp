@@ -146,6 +146,7 @@ public:
    */
   bool LocklessGet(ResourceID const &rid, type &object)
   {
+    //assert(object != nullptr);
     Document doc = store_.Get(rid);
     if (doc.failed)
     {
@@ -153,8 +154,6 @@ public:
     }
 
     serializer_type ser(doc.document);
-
-    std::cerr <<  rid.ToString() << " xxyyzz getting is: " << ser.data().ToBase64() << std::endl;
 
     ser >> object;
 
@@ -190,8 +189,6 @@ public:
   {
     serializer_type ser;
     ser << object;
-
-    std::cerr <<  rid.ToString() << " xxyyzz This is: " << ser.data().ToBase64() << std::endl;
 
     store_.Set(rid, ser.data());  // temporarily disable disk writes
 
