@@ -233,12 +233,22 @@ public:
 
   void Fill(T const &value)
   {
-    for (SizeType i(0); i < size(); ++i)
+    for (T &e : this)
     {
-      At(i) = value;
+      e = value;
     }
   }
 
+  template <typename U>
+  void Fill(std::vector<U> const &values)
+  {
+    assert(size() == values.size());
+    for (SizeType i(0); i < size(); ++i)
+    {
+      At(i) = T(values[i]);
+    }
+  }
+  
   /////////////////
   /// Iterators ///
   /////////////////

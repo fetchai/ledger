@@ -29,6 +29,22 @@ using MyTypes = ::testing::Types<int, long, float, double, fetch::fixed_point::F
                                  fetch::fixed_point::FixedPoint<32, 32>>;
 TYPED_TEST_CASE(TensorOperationsTest, MyTypes);
 
+TYPED_TEST(TensorOperationsTest, fill_test)
+{
+  std::vector<int> values({1, 2, 3, 5, 7, 12, 19, 31, 50});
+  fetch::math::Tensor<TypeParam> t({3, 3, 3});
+  t.Fill(values);
+  EXPECT_EQ(t.At(0), TypeParam(1));
+  EXPECT_EQ(t.At(1), TypeParam(2));
+  EXPECT_EQ(t.At(2), TypeParam(3));
+  EXPECT_EQ(t.At(3), TypeParam(5));
+  EXPECT_EQ(t.At(4), TypeParam(7));
+  EXPECT_EQ(t.At(5), TypeParam(12));
+  EXPECT_EQ(t.At(6), TypeParam(19));
+  EXPECT_EQ(t.At(7), TypeParam(31));
+  EXPECT_EQ(t.At(8), TypeParam(50));
+}
+
 TYPED_TEST(TensorOperationsTest, inline_add_test)
 {
   fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({3, 5}));
