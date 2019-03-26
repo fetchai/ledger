@@ -100,8 +100,8 @@ public:
 
   Ptr<String> AsBase64String()
   {
-    return new String{vm_, static_cast<std::string>(
-      byte_array::ToBase64(byte_array::ConstByteArray{address_.data(), address_.size()}))};
+    return new String{vm_, static_cast<std::string>(byte_array::ToBase64(
+                               byte_array::ConstByteArray{address_.data(), address_.size()}))};
   }
 
   std::vector<uint8_t> ToBytes() const

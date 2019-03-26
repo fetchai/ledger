@@ -454,13 +454,15 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
 
   fetch::crypto::ECDSASigner target{};
 
-  auto const owner_key      = contract_name_->full_name() + ".state." + ToBase64(certificate_->identity().identifier());
-  auto const target_key     = contract_name_->full_name() + ".state." + ToBase64(target.identity().identifier());
+  auto const owner_key =
+      contract_name_->full_name() + ".state." + ToBase64(certificate_->identity().identifier());
+  auto const target_key =
+      contract_name_->full_name() + ".state." + ToBase64(target.identity().identifier());
 
-  auto const owner_resource = ResourceAddress{owner_key};
-  auto const target_resource = ResourceAddress{target_key};
-  auto const initial_supply = RawBytes<uint64_t>(100000000000ull);
-  auto const transfer_amount = RawBytes<uint64_t>(1000000000ull);
+  auto const owner_resource   = ResourceAddress{owner_key};
+  auto const target_resource  = ResourceAddress{target_key};
+  auto const initial_supply   = RawBytes<uint64_t>(100000000000ull);
+  auto const transfer_amount  = RawBytes<uint64_t>(1000000000ull);
   auto const remaining_amount = RawBytes<uint64_t>(99000000000ull);
 
   {
@@ -495,7 +497,7 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
 
   // check to see if the owners balance is present
   {
-    Variant request = Variant::Object();
+    Variant request    = Variant::Object();
     request["address"] = ToBase64(certificate_->identity().identifier());
 
     Variant response;
@@ -509,16 +511,16 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
     EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
   }
 
-
   // send the smart contract an "increment" action
-  EXPECT_EQ(SmartContract::Status::OK, SendActionWithParams("transfer", {ToBase64(
-    certificate_->identity().identifier()), ToBase64(target.identity().identifier())},
-                                                            certificate_->identity(),
-                                                            target.identity(), 1000000000ull));
+  EXPECT_EQ(SmartContract::Status::OK,
+            SendActionWithParams("transfer",
+                                 {ToBase64(certificate_->identity().identifier()),
+                                  ToBase64(target.identity().identifier())},
+                                 certificate_->identity(), target.identity(), 1000000000ull));
 
   // make the query
   {
-    Variant request = Variant::Object();
+    Variant request    = Variant::Object();
     request["address"] = ToBase64(certificate_->identity().identifier());
 
     Variant response;
@@ -534,7 +536,7 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
 
   // make the query
   {
-    Variant request = Variant::Object();
+    Variant request    = Variant::Object();
     request["address"] = ToBase64(target.identity().identifier());
 
     Variant response;

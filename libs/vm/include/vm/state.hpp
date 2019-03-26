@@ -28,11 +28,11 @@ public:
   IState()          = delete;
   virtual ~IState() = default;
 
-  static Ptr <IState> Constructor(VM *vm, TypeId type_id, Ptr <String> const &name,
-                                  TemplateParameter const &value);
+  static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<String> const &name,
+                                 TemplateParameter const &value);
 
-  static Ptr <IState> Constructor(VM *vm, TypeId type_id, Ptr <Address> const &address,
-                                  TemplateParameter const &value);
+  static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<Address> const &address,
+                                 TemplateParameter const &value);
 
   virtual TemplateParameter Get() const                         = 0;
   virtual void              Set(TemplateParameter const &value) = 0;
@@ -74,7 +74,7 @@ inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<Addre
   std::vector<uint8_t> bytes(256, 0);
 
   uint64_t buffer_size = bytes.size();
-  auto result = io.Read(name, bytes.data(), buffer_size);
+  auto     result      = io.Read(name, bytes.data(), buffer_size);
 
   if (IoObserverInterface::Status::OK == result)
   {
@@ -237,13 +237,11 @@ inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<String> const
   return Construct(vm, type_id, name, value);
 }
 
-inline Ptr <IState> IState::Constructor(VM *vm, TypeId type_id, Ptr <Address> const &address,
-                                        TemplateParameter const &value)
+inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<Address> const &address,
+                                       TemplateParameter const &value)
 {
   return Construct(vm, type_id, address->AsBase64String(), value);
 }
-
-
 
 }  // namespace vm
 }  // namespace fetch

@@ -192,9 +192,8 @@ protected:
 
   Contract::Status InvokeInit(Identity const &owner)
   {
-    StateSentinelAdapter storage_adapter{*storage_, *contract_name_, {
-      fetch::byte_array::ToBase64(owner.identifier())
-    }};
+    StateSentinelAdapter storage_adapter{
+        *storage_, *contract_name_, {fetch::byte_array::ToBase64(owner.identifier())}};
 
     contract_->Attach(storage_adapter);
     auto const status = contract_->DispatchInitialise(owner);

@@ -94,7 +94,6 @@ public:
   Contract &operator=(Contract &&) = delete;
 
 protected:
-
   /// @name Initialise Handlers
   /// @{
   void OnInitialise(InitialiseHandler &&handler);
