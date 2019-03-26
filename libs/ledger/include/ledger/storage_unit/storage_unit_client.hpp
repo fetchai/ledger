@@ -108,9 +108,6 @@ private:
       serializers::TypedByteArrayBuffer buff;
       buff << tree;
 
-      auto dummy = buff.data().size();
-      FETCH_UNUSED(dummy);
-
       assert(buff.data().size() == 92 || buff.data().size() == 60);
 
       size_ = buff.data().size();
@@ -125,16 +122,7 @@ private:
 
       buff.Allocate(size_);
 
-      auto argh = buff.data().pointer();
-      auto arghaa = buff.data().size();
-
       std::memcpy((uint8_t *)buff.data().pointer(), (uint8_t *)data_, size_);
-
-      FETCH_UNUSED(argh);
-      FETCH_UNUSED(arghaa);
-
-      //buff.ReadBytes(data_, size_);
-      //buff.seek(0);
 
       try
       {
@@ -142,7 +130,7 @@ private:
       }
       catch (std::exception e)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "FAILED TO DESERIALIZE! ", size_);
+        FETCH_LOG_WARN(LOGGING_NAME, "FAILED TO DESERIALIZE MERKLE TREE PROXY! ", size_);
         return ret;
       }
 
@@ -158,8 +146,6 @@ private:
   using LaneIndex            = LaneIdentity::lane_type;
   using AddressList          = std::vector<MuddleEndpoint::Address>;
   using MerkleTree           = crypto::MerkleTree;
-  //using MerkleTreePtr        = std::shared_ptr<MerkleTree>; // TODO(HUT): delete this.
-  //using MerkleStack          = std::deque<MerkleTreePtr>;
   using PermanentMerkleStack = storage::RandomAccessStack<MerkleTreeProxy>;
   using Mutex                = fetch::mutex::Mutex;
 

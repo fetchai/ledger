@@ -835,7 +835,6 @@ bool MainChain::UpdateTips(IntBlockPtr const &block)
   tips_.erase(block->body.previous_hash);
   tips_[block->body.hash] = Tip{block->total_weight};
 
-  std::cerr << "updating heaviest 1" << std::endl; // DELETEME_NH
 
   // attempt to update the heaviest tip
   return heaviest_.Update(*block);
@@ -1113,14 +1112,6 @@ bool MainChain::DetermineHeaviestTip()
     heaviest_.hash   = it->first;
     heaviest_.weight = it->second.total_weight;
     success          = true;
-
-    ERROR_BACKTRACE;
-
-    std::cerr << "updating heaviest 2" << std::endl; // DELETEME_NH
-
-      FETCH_LOG_INFO(LOGGING_NAME, "Heaviest blcok weight: ", GetHeaviestBlock()->total_weight);
-      FETCH_LOG_INFO(LOGGING_NAME, "Heaviest blcok number: ", GetHeaviestBlock()->body.block_number);
-
   }
 
   return success;
