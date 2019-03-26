@@ -126,11 +126,15 @@ public:
       }
       else
       {
-        request->ParseHeader(*buffer_ptr, len);
-
-        if (is_open_)
+        // only parse the header if there is data to be parsed
+        if (len)
         {
-          ReadBody(buffer_ptr, request);
+          request->ParseHeader(*buffer_ptr, len);
+
+          if (is_open_)
+          {
+            ReadBody(buffer_ptr, request);
+          }
         }
       }
     };

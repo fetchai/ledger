@@ -76,7 +76,7 @@ struct StateDict
    * All are weighted equally -- Usefull for averaging weights of multiple similar models
    * @param stateDictList
    */
-  static StateDict MergeList(std::list<StateDict const> const &stateDictList)
+  static StateDict MergeList(std::list<StateDict> const &stateDictList)
   {
     StateDict ret;
     for (auto const &sd : stateDictList)

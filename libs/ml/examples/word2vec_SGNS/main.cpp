@@ -17,13 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "math/free_functions/clustering_algorithms/knn.hpp"
-
 #include "file_loader.hpp"
 #include "ml/dataloaders/word2vec_loaders/skipgram_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/skip_gram.hpp"
 #include "ml/ops/loss_functions/softmax_cross_entropy.hpp"
-
 #include <iostream>
 #include <math/tensor.hpp>
 
