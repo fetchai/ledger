@@ -117,7 +117,7 @@ public:
 
   void UpdateWeights()
   {
-    std::list<const fetch::ml::StateDict<ArrayType>> stateDicts;
+    std::list<fetch::ml::StateDict<ArrayType>> stateDicts;
     for (unsigned int i(0); i < NUMBER_OF_PEERS; ++i)
     {
       // Collect the stateDicts from randomly selected peers

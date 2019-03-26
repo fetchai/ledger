@@ -167,7 +167,7 @@ TYPED_TEST(StateDictTest, merge_list_test)
   c.weights_->Fill(typename TypeParam::Type(6));
   d.weights_->Fill(typename TypeParam::Type(8));
 
-  std::list<fetch::ml::StateDict<TypeParam> const> l;
+  std::list<fetch::ml::StateDict<TypeParam>> l;
   l.push_back(a);
   l.push_back(b);
   l.push_back(c);
@@ -205,7 +205,7 @@ TYPED_TEST(StateDictTest, nested_merge_list_test)
   c.dict_["nest1"].dict_["nest2"].weights_->Fill(typename TypeParam::Type(6));
   d.dict_["nest1"].dict_["nest2"].weights_->Fill(typename TypeParam::Type(8));
 
-  std::list<fetch::ml::StateDict<TypeParam> const> l;
+  std::list<fetch::ml::StateDict<TypeParam>> l;
   l.push_back(a);
   l.push_back(b);
   l.push_back(c);
