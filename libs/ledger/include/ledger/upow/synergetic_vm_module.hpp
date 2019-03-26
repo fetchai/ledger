@@ -7,6 +7,7 @@
 #include "vm_modules/polyfill/bitwise_ops.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
 #include "vm_modules/core/print.hpp"
+#include "vm_modules/core/type_convert.hpp"
 #include "vm_modules/ledger/dag_node_wrapper.hpp"
 #include "vm_modules/ledger/dag_accessor.hpp"
 #include "vm_modules/polyfill/length.hpp"
@@ -25,20 +26,22 @@ inline void CreateConensusVMModule(fetch::vm::Module &module)
   module.CreateTemplateInstantiationType<fetch::vm::Array, double >(fetch::vm::TypeIds::IArray);
   module.CreateTemplateInstantiationType<fetch::vm::Array, float >(fetch::vm::TypeIds::IArray);
 
-  fetch::modules::CryptoRNG::Bind(module);
-  fetch::modules::ByteArrayWrapper::Bind(module);
-  fetch::modules::DAGNodeWrapper::Bind(module);
+  fetch::vm_modules::CryptoRNG::Bind(module);
+  fetch::vm_modules::ByteArrayWrapper::Bind(module);
+  fetch::vm_modules::DAGNodeWrapper::Bind(module);
 
-	module.CreateTemplateInstantiationType<fetch::vm::Array, fetch::vm::Ptr<modules::DAGNodeWrapper>>(fetch::vm::TypeIds::IArray);    
+	module.CreateTemplateInstantiationType<fetch::vm::Array, fetch::vm::Ptr<vm_modules::DAGNodeWrapper>>(fetch::vm::TypeIds::IArray);    
 
-  fetch::modules::DAGWrapper::Bind(module);
+  fetch::vm_modules::DAGWrapper::Bind(module);
 
-  fetch::modules::BindExp(module);
-  fetch::modules::BindSqrt(module);  
+  fetch::vm_modules::BindExp(module);
+  fetch::vm_modules::BindSqrt(module);  
   fetch::vm_modules::CreatePrint(module);
-  fetch::modules::BindLen(module);
-  fetch::modules::BindBitShift(module);
-  fetch::modules::BindBitwiseOps(module);
+  fetch::vm_modules::BindLen(module);
+  fetch::vm_modules::BindBitShift(module);
+  fetch::vm_modules::BindBitwiseOps(module);
+  fetch::vm_modules::CreateToString(module);
+  fetch::vm_modules::CreateToBool(module);  
 }
 
 }

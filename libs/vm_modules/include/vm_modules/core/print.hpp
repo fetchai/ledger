@@ -17,25 +17,139 @@
 //
 //------------------------------------------------------------------------------
 
+#include "byte_array_wrapper.hpp"
+#include "core/byte_array/encoders.hpp"
+
 namespace fetch {
 namespace vm_modules {
 
 /**
  * method for printing string to std::cout
  */
-static void Print(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
-{
-  vm->AddOutputLine(s->str);
 
-#ifndef NDEBUG
-  FETCH_LOG_WARN("VM", "VM printed: ", s->str);
-#endif
+inline void PrintByteArray(fetch::vm::VM * vm, fetch::vm::Ptr<fetch::vm_modules::ByteArrayWrapper> const &s)
+{
+  auto &out = vm->GetOutputDevice("stdout"); 
+//  std::cout << byte_array::ToBase64(s->byte_array());
+  out << s->byte_array();
 }
 
-inline void CreatePrint(fetch::vm::Module &module)
+inline void PrintLnByteArray(fetch::vm::VM * vm, fetch::vm::Ptr<fetch::vm_modules::ByteArrayWrapper> const &s)
 {
-  module.CreateFreeFunction("Print", &Print);
+  auto &out = vm->GetOutputDevice("stdout"); 
+//  out << byte_array::ToBase64(s->byte_array()) << std::endl;
+  out << s->byte_array() << std::endl;
 }
+
+inline void PrintString(fetch::vm::VM * vm, fetch::vm::Ptr<fetch::vm::String> const &s)
+{
+  auto &out = vm->GetOutputDevice("stdout"); 
+  out << s->str;
+}
+
+inline void PrintLnString(fetch::vm::VM * vm, fetch::vm::Ptr<fetch::vm::String> const &s)
+{
+  auto &out = vm->GetOutputDevice("stdout"); 
+  out << s->str << std::endl;
+}
+
+
+inline void PrintInt32(fetch::vm::VM * vm, int32_t const &s)
+{
+  auto &out = vm->GetOutputDevice("stdout"); 
+  out << s;
+}
+
+inline void PrintLnInt32(fetch::vm::VM * vm, int32_t const &s)
+{
+  auto &out = vm->GetOutputDevice("stdout"); 
+  out << s << std::endl;
+}
+
+inline void PrintInt64(fetch::vm::VM * vm, int64_t const &s)
+{
+  auto &out = vm->GetOutputDevice("stdout"); 
+  out << s;
+}
+
+inline void PrintLnInt64(fetch::vm::VM * vm, int64_t const &s)
+{
+  auto &out = vm->GetOutputDevice("stdout"); 
+  out << s << std::endl;
+}
+
+inline void PrintFloat(fetch::vm::VM * vm, float const &s)
+{
+  auto &out = vm->GetOutputDevice("stdout"); 
+  out << s;
+}
+
+inline void PrintLnFloat(fetch::vm::VM * vm, float const &s)
+{
+  auto &out = vm->GetOutputDevice("stdout"); 
+  out << s;
+}
+
+inline void PrintDouble(fetch::vm::VM * vm, double const &s)
+{
+  auto &out = vm->GetOutputDevice("stdout"); 
+  out << s;
+}
+
+inline void PrintLnDouble(fetch::vm::VM * vm, double const &s)
+{
+  auto &out = vm->GetOutputDevice("stdout"); 
+  out << s << std::endl;
+}
+
+
+template<typename T>
+inline void PrintArrayPrimitive(fetch::vm::VM * vm, vm::Ptr< vm::Array< T > > const &g)
+{
+  auto &out = vm->GetOutputDevice("stdout"); 
+  out << "[";
+  for(std::size_t i=0; i < g->elements.size(); ++i )
+  {
+    if(i!=0)
+    {
+      out << ", ";
+    }      
+    out << g->elements[i];
+  }
+  out << "]";
+}
+
+
+
+inline void CreatePrint(vm::Module& module)
+{
+  module.CreateFreeFunction("print", &PrintByteArray);
+  module.CreateFreeFunction("printLn", &PrintLnByteArray);
+  module.CreateFreeFunction("print", &PrintString);
+  module.CreateFreeFunction("printLn", &PrintLnString);
+  module.CreateFreeFunction("print", &PrintInt32);
+  module.CreateFreeFunction("printLn", &PrintLnInt32);
+  module.CreateFreeFunction("print", &PrintInt64);
+  module.CreateFreeFunction("printLn", &PrintLnInt64);
+  module.CreateFreeFunction("print", &PrintDouble);
+  module.CreateFreeFunction("printLn", &PrintLnDouble);  
+  module.CreateFreeFunction("print", &PrintFloat);
+  module.CreateFreeFunction("printLn", &PrintLnFloat);  
+
+  module.CreateFreeFunction("print", &PrintArrayPrimitive<int32_t>);  
+  module.CreateFreeFunction("print", &PrintArrayPrimitive<int64_t>);
+  module.CreateFreeFunction("print", &PrintArrayPrimitive<uint32_t>);  
+  module.CreateFreeFunction("print", &PrintArrayPrimitive<uint64_t>);
+  module.CreateFreeFunction("print", &PrintArrayPrimitive<float>);  
+  module.CreateFreeFunction("print", &PrintArrayPrimitive<double>);  
+}
+
+inline void CreatePrint(std::shared_ptr<vm::Module> module)
+{
+  CreatePrint(*module.get());
+}
+
+
 
 }  // namespace vm_modules
 }  // namespace fetch

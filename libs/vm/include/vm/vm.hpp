@@ -165,6 +165,9 @@ private:
 class VM
 {
 public:
+  using InputDeviceMap = std::unordered_map< std::string, std::istream* >;
+  using OutputDeviceMap = std::unordered_map< std::string, std::ostream* >;
+
   VM(Module *module);
   ~VM() = default;
 
@@ -176,7 +179,7 @@ public:
 
   template <typename... Ts>
   bool Execute(Script const &script, std::string const &name, std::string &error,
-               std::string &console_output, Variant &output, Ts const &... parameters)
+               Variant &output, Ts const &... parameters)
 
   {
     ParameterPack parameter_pack{registered_types_};
@@ -185,11 +188,11 @@ public:
       error = "Unable to generate parameter pack";
       return false;
     }
-    return Execute(script, name, error, console_output, output, parameter_pack);
+    return Execute(script, name, error, output, parameter_pack);
   }
 
   bool Execute(Script const &script, std::string const &name, std::string &error,
-               std::string &console_output, Variant &output, ParameterPack const &parameters)
+               Variant &output, ParameterPack const &parameters)
   {
     bool success{false};
 
@@ -239,9 +242,6 @@ public:
       error = "unable to find function '" + name + "'";
     }
 
-    // transfer the console output buffer
-    console_output = output_buffer_.str();
-
     return success;
   }
 
@@ -289,14 +289,47 @@ public:
     return *io_observer_;
   }
 
-  void AddOutputLine(std::string const &line)
+  std::ostream& GetOutputDevice(std::string name)
   {
-    output_buffer_ << line << '\n';
+    if(output_devices_.find(name) == output_devices_.end())
+    {
+      RuntimeError("output device "+name+" does not exist.");
+      return std::cout;
+    }
+    return *output_devices_[name];
   }
 
-private:
-  PointerRegister pointer_register_;
+  std::istream& GetInputDevice(std::string name)
+  {
+    if(input_devices_.find(name) == input_devices_.end())
+    {
+      RuntimeError("input device "+name+" does not exist.");
+      return std::cin;
+    }
+    return *input_devices_[name];
+  }  
 
+  // TODO: Only access through module
+  void AttachInputDevice(std::string name, std::istream& device)
+  {
+    if(input_devices_.find(name)!=input_devices_.end())
+    {
+      throw std::runtime_error("Input device already exists.");
+    }
+
+    input_devices_.insert({std::move(name), &device});
+  }
+
+  void AttachOutputDevice(std::string name, std::ostream& device)
+  {
+    if(output_devices_.find(name)!=output_devices_.end())
+    {
+      throw std::runtime_error("output device already exists.");
+    }
+    
+    output_devices_.insert({std::move(name), &device});
+  }  
+private:
   static const int FRAME_STACK_SIZE = 50;
   static const int STACK_SIZE       = 5000;
   static const int MAX_LIVE_OBJECTS = 200;
@@ -361,9 +394,11 @@ private:
   Script::Instruction const *instruction_;
   bool                       stop_;
   std::string                error_;
-  std::ostringstream         output_buffer_;
 
-  IoObserverInterface *io_observer_{nullptr};
+  IoObserverInterface       *io_observer_{nullptr};
+  OutputDeviceMap            output_devices_;
+  InputDeviceMap             input_devices_;  
+  PointerRegister            pointer_register_;
 
   bool Execute(std::string &error, Variant &output);
   void Destruct(int scope_number);

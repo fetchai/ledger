@@ -27,7 +27,7 @@
 
 namespace fetch
 {
-namespace modules
+namespace vm_modules
 {
 
 class CryptoRNG : public fetch::vm::Object

@@ -20,8 +20,13 @@ struct SynergeticContractClass
 
   static SynergeticContract New(vm::Compiler *compiler, byte_array::ByteArray const & name, std::string const &source)
   {
+    if(source.empty())
+    {
+      std::cout << "No source present" << std::endl;
+      return nullptr;
+    }
+    
     SynergeticContract ret = std::make_shared<SynergeticContractClass>();
-
     ret->name = name;
     // TODO: Compute address
     // ret->address = TODO.    
@@ -53,8 +58,7 @@ struct SynergeticContractClass
       bool is_objective = false;    
       bool is_problem = false;
       bool is_clear_function = false;      
-      bool is_generator = false;
-
+      bool is_test_dag_generator = false;
 
       for(auto &a : f.annotations)
       {
@@ -88,16 +92,19 @@ struct SynergeticContractClass
 
     if(ret->work_function == "")
     {
+      std::cout << "Failed to find work function" << std::endl;            
       return nullptr;
     }
 
     if(ret->objective_function == "")
     {
+      std::cout << "Failed to find objective function" << std::endl;      
       return nullptr;
     }
 
     if(ret->problem_function == "")
     {
+      std::cout << "Failed to find problem function" << std::endl;
       return nullptr;
     }    
 

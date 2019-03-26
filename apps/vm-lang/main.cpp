@@ -180,13 +180,21 @@ int main(int argc, char **argv)
   // create the VM instance
   auto vm = VMFactory::GetVM(module);
 
+  vm->AttachOutputDevice("stdout", std::cout);
+  vm->AttachOutputDevice("stderr", std::cerr);  
+
   // Execute the requested function
   std::string        error;
   std::string        console;
   fetch::vm::Variant output;
   bool const         success =
-      vm->Execute(*script, params.program().GetParam("func", "main"), error, console, output);
+      vm->Execute(*script, params.program().GetParam("func", "main"), error, output);
 
+  if(!success)
+  {
+    std::cerr << error << std::endl;
+    return 1;
+  }
   // if there is any console output print it
   if (!console.empty())
   {

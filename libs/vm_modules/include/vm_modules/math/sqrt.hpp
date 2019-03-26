@@ -28,7 +28,7 @@
 
 namespace fetch
 {
-namespace modules
+namespace vm_modules
 {
 
 inline double Sqrt(fetch::vm::VM * /*vm*/, double x)

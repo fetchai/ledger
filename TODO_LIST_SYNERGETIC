@@ -1,4 +1,7 @@
-- ( ) Refactor output
+- (v) Refactor VM output
+- (v) Extend print
+- (v) Make it possible to create DAG node 'toDAGNode( type )'
+- ( ) Implement DAG->SetNodeReferences( node );
 - ( ) Make DAG Service a State machine
 - ( ) Change DAG
     - ( ) Follow the design pattern of a state machine for the RPC protocol

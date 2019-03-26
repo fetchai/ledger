@@ -67,7 +67,12 @@ public:
     Parse(document);
   }
 
-  JSONDocument()                     = default;
+  JSONDocument()
+  {
+    // The default of a JSONDocument is to be an empty object
+    variant_ =  Variant::Object();
+  }
+  
   JSONDocument(JSONDocument const &) = delete;
   JSONDocument(JSONDocument &&)      = default;
   ~JSONDocument()                    = default;

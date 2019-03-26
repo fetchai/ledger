@@ -28,7 +28,7 @@
 
 namespace fetch
 {
-namespace modules
+namespace vm_modules
 {
 
 inline double Exp(fetch::vm::VM * /*vm*/, double x)

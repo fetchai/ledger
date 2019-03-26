@@ -74,14 +74,28 @@ public:
 
     // Adding contract
     std::string source;
-    // TODO: load source
+
+    std::ifstream      file("./synergetic_test_contract.etch", std::ios::binary);
+    if(!file)
+    {
+      throw std::runtime_error("Could not open contract code.");
+    }
+    std::ostringstream ss;
+    ss << file.rdbuf();
+    source = ss.str();
+
     if(!cregister_.CreateContract(CONTRACT_NAME, source))
     {
       std::cout << "Could not attach contract." << std::endl;
+      TearDown();
       exit(-1);
     }
 
-    random_.Seed(42);    
+    random_.Seed(42);
+
+    auto contract = cregister_.GetContract(CONTRACT_NAME);
+    auto node = miner_->CreateDAGTestData(contract, 12, static_cast<int32_t>( random_() & ((1ul<<31) - 1ul ) ) );
+    std::cout << node.contents << std::endl;
   }
 
   void TearDown() override
@@ -125,23 +139,22 @@ private:
         }
 
         node.SetObject(work);
-        node.contract_name = work.contract_name;
+        node.contract_name = CONTRACT_NAME;
 
         dag_->Push(node);
       }
       else
       {
         // Generating data in this round
-        fetch::ledger::DAGNode node;
-        node.type = fetch::ledger::DAGNode::DATA;
+        auto contract = cregister_.GetContract(CONTRACT_NAME);
+        auto node = miner_->CreateDAGTestData(contract, static_cast<int32_t>(chain_->size()), static_cast<int32_t>( random_() & ((1ul<<31) - 1ul ) ) );
 
+        // TODO: Implement dag_.SetNodeReferences(node);
+        node.contract_name = CONTRACT_NAME;
         for(auto n: dag_->tips())
         {
           node.previous.push_back(n.first);
         }
-
-        // TODO: Add relevant contents for the next mining process
-        node.contents = "yada yada";
 
         dag_->Push(node);
       }
@@ -221,5 +234,5 @@ private:
 
 TEST_F(SynergeticExecutorTest, CheckMiningFlow)
 {
-
+  ExecuteRound();
 }

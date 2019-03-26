@@ -1,14 +1,19 @@
 @problem
 function smartMarketProblemDefinition() : Array< Float64 >
   // Getting data from DAG
+  printLn("Was here 0");  
   var dag = DAG();
+  printLn("Was here 1");
   var nodes = dag.getNodes();
+  printLn("Was here 2");
   var N = lengthOf(nodes);
+  printLn("Was here 3");
 
   // Generating problem
   var item_count = 0;
   var bid_count = 0;
 
+  printLn("Was here 4");
   for(i in 0: N-1) 
     var type = nodes[i].getInt32("type");
     if(type == 2)
@@ -18,6 +23,7 @@ function smartMarketProblemDefinition() : Array< Float64 >
     endif
   endfor
 
+  printLn("Was here 5");
   // Sorting elements according to type
   var items = Array< Float64 >(item_count);
   var bids = Array< DAGNode >(bid_count);  
@@ -62,7 +68,7 @@ function smartMarketProblemDefinition() : Array< Float64 >
     endfor
   endfor
 
-  Print("Defined problem.");
+  print("Defined problem.");
 
   return problem;
 endfunction
@@ -104,7 +110,6 @@ endfunction
 function proposeMarketConfiguration(problem : Array< Float64 >, nonce : Int64) : Array< Int32 >
   // Computing problem size
   var N = toInt32(sqrt(toFloat64(lengthOf(problem))));
-  Print("xx");
 
   // Instantiating random generator
   var rng = CryptoRNG( toUInt64(nonce) );
@@ -128,7 +133,6 @@ function proposeMarketConfiguration(problem : Array< Float64 >, nonce : Int64) :
   var delta = (beta1 - beta0) / toFloat64(run_time);
   
   for(i in toInt64(0):run_time)
-    Print("xx");
     for(j in 0:N-1)
 
       if(state[j] == 0)
@@ -163,6 +167,17 @@ function proposeMarketConfiguration(problem : Array< Float64 >, nonce : Int64) :
 endfunction
 
 @test_dag_generator
-function makeDAGnode(epoch : Int64, entropy : Int64) : DAGNode
-  
+function makeDAGnode(epoch : Int32, entropy : Int32) : DAGNode
+  var ret = DAGNode();
+  var is_item : Bool = toBool(and(entropy, 1));
+
+  // TODO: Fill in the blanks
+  ret.set("type", epoch);
+  ret.set("data", entropy);  
+  print("Type is ");
+  printLn(ret.getInt32("type"));
+  print("Data is ");
+  printLn(ret.getNumber("data"));
+
+  return ret;
 endfunction

@@ -4,10 +4,10 @@
 
 namespace fetch
 {
-namespace modules
+namespace vm_modules
 {
 
-inline int32_t LenByteArray(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::modules::ByteArrayWrapper> const &s)
+inline int32_t LenByteArray(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm_modules::ByteArrayWrapper> const &s)
 {
   return int32_t(s->byte_array().size());
 }

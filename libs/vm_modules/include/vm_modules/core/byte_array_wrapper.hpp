@@ -12,7 +12,7 @@
 
 namespace fetch
 {
-namespace modules
+namespace vm_modules
 {
 
 

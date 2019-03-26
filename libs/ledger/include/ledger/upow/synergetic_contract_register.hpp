@@ -33,6 +33,7 @@ public:
 
   SynergeticContract CreateContract(ContractAddress const &contract_name, std::string const &source)
   {
+    
     SynergeticContract ret = SynergeticContractClass::New(compiler_, contract_name, source);
     contracts_[contract_name] = ret;
     return ret;
