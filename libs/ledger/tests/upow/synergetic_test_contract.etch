@@ -1,19 +1,14 @@
 @problem
 function smartMarketProblemDefinition() : Array< Float64 >
   // Getting data from DAG
-  printLn("Was here 0");  
   var dag = DAG();
-  printLn("Was here 1");
   var nodes = dag.getNodes();
-  printLn("Was here 2");
   var N = lengthOf(nodes);
-  printLn("Was here 3");
 
   // Generating problem
   var item_count = 0;
   var bid_count = 0;
 
-  printLn("Was here 4");
   for(i in 0: N-1) 
     var type = nodes[i].getInt32("type");
     if(type == 2)
@@ -23,18 +18,22 @@ function smartMarketProblemDefinition() : Array< Float64 >
     endif
   endfor
 
-  printLn("Was here 5");
   // Sorting elements according to type
   var items = Array< Float64 >(item_count);
   var bids = Array< DAGNode >(bid_count);  
 
+  var h = 0;
+  var k = 0;
+  // TODO: use PK
+
   for(i in 0: N-1) 
     var type = nodes[i].getInt32("type");  
-    var id = nodes[i].getInt32("id");
     if(type == 2)    
-      items[id] = nodes[i].getNumber("price");
+      items[h] = nodes[i].getNumber("price");
+      h = h + 1;
     else
-      bids[id] = nodes[i];
+      bids[k] = nodes[i];
+      k = k + 1;      
     endif
   endfor
 
@@ -67,8 +66,6 @@ function smartMarketProblemDefinition() : Array< Float64 >
       problem[j * bid_count + i] = toFloat64(100.); // TODO: Something better      
     endfor
   endfor
-
-  print("Defined problem.");
 
   return problem;
 endfunction
@@ -172,12 +169,16 @@ function makeDAGnode(epoch : Int32, entropy : Int32) : DAGNode
   var is_item : Bool = toBool(and(entropy, 1));
 
   // TODO: Fill in the blanks
-  ret.set("type", epoch);
-  ret.set("data", entropy);  
-  print("Type is ");
-  printLn(ret.getInt32("type"));
-  print("Data is ");
-  printLn(ret.getNumber("data"));
+  var type = 2; // 1 + and(entropy, 1);
+  ret.set("type",type);
+  if(type == 2)
+    ret.set("price", 12.3);  
+  else
+    // TODO: Add bid on
+  endif
 
+  // Ensuring low collission probability
+  ret.set("nonce1", entropy);
+  ret.set("nonce2", epoch);  
   return ret;
 endfunction

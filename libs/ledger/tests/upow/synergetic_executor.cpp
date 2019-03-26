@@ -50,7 +50,7 @@ public:
   using ContractRegister      = fetch::consensus::SynergeticContractRegister;
   using Work                  = fetch::consensus::Work;
   using RandomGenerator       = fetch::random::LaggedFibonacciGenerator<>;
-
+  using UniqueCertificate     = std::unique_ptr<fetch::crypto::ECDSASigner>;
   char const* CONTRACT_NAME = "fetch.synergetic";
 
   SynergeticExecutorTest() = default;
@@ -62,6 +62,7 @@ public:
     executor_ = UniqueExecutor( new SynergeticExecutor(*dag_.get(), *storage_.get()) );    
     chain_ = UniqueBlockChain( new FakeChain() );
     miner_ = UniqueMiner( new SynergeticMiner(*dag_.get()) );
+    certificate_ = std::make_unique<fetch::crypto::ECDSASigner>();    
 
     // Preparing genesis block
     Block next_block;
@@ -92,14 +93,11 @@ public:
     }
 
     random_.Seed(42);
-
-    auto contract = cregister_.GetContract(CONTRACT_NAME);
-    auto node = miner_->CreateDAGTestData(contract, 12, static_cast<int32_t>( random_() & ((1ul<<31) - 1ul ) ) );
-    std::cout << node.contents << std::endl;
   }
 
   void TearDown() override
   {
+    certificate_.reset();
     miner_.reset();
     chain_.reset();
     executor_.reset();
@@ -107,10 +105,10 @@ public:
     storage_.reset();    
   }
 
-  void ExecuteRound()
+  void ExecuteRound(uint64_t N = 100, uint64_t mine_every = 5)
   {
     // Data is generated
-    GenerateDAGData();
+    GenerateDAGData(N, mine_every);
 
     // Block is mined
     MakeBlock();
@@ -120,9 +118,13 @@ public:
 
   }
 
+  UniqueDAG&          dag() { return dag_; }
+  uint64_t random() { return random_(); }
 private:
   void GenerateDAGData(uint64_t N = 100, uint64_t mine_every = 5)
   {
+    std::cout << "Adding nodes"<< std::endl;
+
     for(uint32_t i=0; i < N; ++i)
     {
       if( (N % mine_every) == 0 )
@@ -133,13 +135,18 @@ private:
         // Storing the work in the DAG
         fetch::ledger::DAGNode node;
         node.type = fetch::ledger::DAGNode::WORK;
-        for(auto n: dag_->tips())
-        {
-          node.previous.push_back(n.first);
-        }
 
         node.SetObject(work);
         node.contract_name = CONTRACT_NAME;
+        dag_->SetNodeReferences(node);
+
+        node.identity = certificate_->identity();
+        node.Finalise();
+        if(!certificate_->Sign(node.hash))
+        {
+          throw std::runtime_error("Signing failed");
+        }
+        node.signature = certificate_->signature();
 
         dag_->Push(node);
       }
@@ -149,12 +156,17 @@ private:
         auto contract = cregister_.GetContract(CONTRACT_NAME);
         auto node = miner_->CreateDAGTestData(contract, static_cast<int32_t>(chain_->size()), static_cast<int32_t>( random_() & ((1ul<<31) - 1ul ) ) );
 
-        // TODO: Implement dag_.SetNodeReferences(node);
         node.contract_name = CONTRACT_NAME;
-        for(auto n: dag_->tips())
+        dag_->SetNodeReferences(node);
+    
+        node.identity = certificate_->identity();
+        node.Finalise();
+        if(!certificate_->Sign(node.hash))
         {
-          node.previous.push_back(n.first);
+          throw std::runtime_error("Signing failed");
         }
+        node.signature = certificate_->signature();
+
 
         dag_->Push(node);
       }
@@ -163,6 +175,7 @@ private:
 
   void MakeBlock()
   {
+    std::cout << "Making block"<< std::endl;    
     auto current_block = chain_->back();
 
     Block next_block;
@@ -176,6 +189,7 @@ private:
   
   void ExecuteBlock()
   {
+    std::cout << "Executing block"<< std::endl;      
     auto current_block = chain_->back();
 
     // Annotating nodes in the DAG
@@ -190,7 +204,6 @@ private:
 
   Work Mine(int64_t search_length = 10) 
   {
-
     fetch::consensus::Work work;
     work.contract_name = CONTRACT_NAME;
     work.miner = "miner9";
@@ -203,7 +216,6 @@ private:
 
     // Let's mine
     fetch::consensus::WorkRegister wreg;
-
     fetch::consensus::Work::ScoreType best_score = std::numeric_limits< fetch::consensus::Work::ScoreType >::max();
     for(int64_t i = 0; i < search_length; ++i) {
       work.nonce = 29188 + i;
@@ -229,10 +241,25 @@ private:
   UniqueMiner        miner_;  
   ContractRegister   cregister_;  
   RandomGenerator    random_;
+  UniqueCertificate  certificate_;
 };
 
 
 TEST_F(SynergeticExecutorTest, CheckMiningFlow)
 {
-  ExecuteRound();
+  std::vector< uint64_t > dag_counters;
+  uint64_t total = 1; // Genesis
+
+  // Mining 100 rounds
+  for(std::size_t i=0; i < 100; ++i)
+  {
+    uint64_t N = random() % 100;
+    dag_counters.push_back(N);
+    total += N;
+    ExecuteRound(N);
+    std::cout << dag()->size() << " VS " << total << std::endl;
+    EXPECT_TRUE(dag()->size() == total);
+  }
+
+  // TEST CERTIFICATION
 }

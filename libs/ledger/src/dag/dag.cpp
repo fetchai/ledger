@@ -32,7 +32,7 @@ DAG::DAG()
   n.contents = "genesis"; // TODO(tfr): make configurable
 
   // Use PushInternal to bypass checks on previous hashes
-  PushInternal(n);
+  PushInternal(n, false);
 }
 
 /**
@@ -43,7 +43,6 @@ DAG::DAG()
 bool DAG::Push(DAGNode node)
 {
   FETCH_LOCK(maintenance_mutex_);  
-
   LOG_STACK_TRACE_POINT;
 
   // Checking that the previous nodes are valid.
@@ -146,11 +145,24 @@ bool DAG::ValidatePreviousInternal(DAGNode const &node)
  *
  * @param node is the node to be added to the DAG.
  */
-bool DAG::PushInternal(DAGNode node)
+bool DAG::PushInternal(DAGNode node, bool check_signature)
 {
   LOG_STACK_TRACE_POINT;
-  // Finalise and get the node time.
+
+  // Finalise to get the node hash
   node.Finalise();
+
+  if(check_signature)
+  {
+    // Ensuring that the identity is not empty
+    if(!static_cast<bool>(node.identity))
+    {
+      return false;
+    }
+
+    // Checking the signature
+    // TODO:
+  }
 
   // CLearing all tips that are being referenced a lot
   for(auto &h: node.previous)
@@ -177,10 +189,10 @@ bool DAG::PushInternal(DAGNode node)
 }
 
 
-DAG::DigestVector DAG::UncertifiedTipsAsVector() const
+DAG::DigestArray DAG::UncertifiedTipsAsVector() const
 {
   FETCH_LOCK(maintenance_mutex_);
-  DigestVector ret{};
+  DigestArray ret{};
   for(auto const &t: tips_)
   {
     // TODO(tfr): Check whether certified

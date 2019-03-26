@@ -1,16 +1,14 @@
 - (v) Refactor VM output
 - (v) Extend print
 - (v) Make it possible to create DAG node 'toDAGNode( type )'
-- ( ) Implement DAG->SetNodeReferences( node );
-- ( ) Make DAG Service a State machine
-- ( ) Change DAG
-    - ( ) Follow the design pattern of a state machine for the RPC protocol
-    - (v) Simplify and improve tips
+- (v) Implement DAG->SetNodeReferences( node );
+- ( ) Implement Extract Segment
+- ( ) Implement Revert
+- ( ) Add nonce to script -> Change entropy to ByteArray
 
+- ( ) Verify signature of DAGNode
 - ( ) Validate DAG hashes in BlockCoordinator::OnPreExecBlockValidation
     - ( ) Traverse back to last known nodes
-    - ( ) Implement Extract Segment
-    - ( ) Implement Revert
 
 - ( ) Finish Synergetic Executor
 		- ( ) Deserialise block
@@ -40,7 +38,10 @@
 	- ( ) Roll back
 
 
-
+- ( ) Make DAG Service a State machine
+- ( ) Change DAG
+    - ( ) Follow the design pattern of a state machine for the RPC protocol
+    - (v) Simplify and improve tips
 
 Notepad:
 ========

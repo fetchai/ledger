@@ -37,12 +37,10 @@ vm::Ptr< vm::Array< vm::Ptr< T > > > CreateNewArray(vm::VM *vm, std::vector< vm:
 {
   vm::Ptr< vm::Array< fetch::vm::Ptr<T> > > array = new vm::Array< fetch::vm::Ptr<T> > (vm, vm->GetTypeId< vm::IArray >(), int32_t(items.size()));
   std::size_t idx = 0;
-  std::cout << "XX" << std::endl;
   for(auto const &e: items)
   {
     array->elements[idx++] = e;
   }
-  std::cout << "YY" << std::endl;
   return array;
 }
 
@@ -74,29 +72,30 @@ public:
 
   vm::Ptr< vm::Array< vm::Ptr< DAGNodeWrapper > > > GetNodes()
   {
-    std::cout << "A" << std::endl;
     std::vector< vm::Ptr< DAGNodeWrapper > > items;
 
-    std::cout << "B" << std::endl;
     if(dag_ == nullptr)
     {
       RuntimeError("DAG pointer is null.");
       return nullptr;
     }
 
-    std::cout << "C" << std::endl;
     auto nodes = dag_->nodes();
     for(auto &n : nodes )
     {
+      // We ignore anything that does not reference the past
       if(n.second.previous.size() == 0)
       {
         continue;
       }
-      // TODO: Ignore everything that isn't data.
-      items.push_back( vm_->CreateNewObject< DAGNodeWrapper >( n.second ) );
+
+      // Only data is available inside the contract
+      if(n.second.type == ledger::DAGNode::DATA)
+      {
+        items.push_back( vm_->CreateNewObject< DAGNodeWrapper >( n.second ) );
+      }
     }
 
-    std::cout << "D" << std::endl;
     return CreateNewArray(vm_, items);
   }  
     

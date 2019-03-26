@@ -39,7 +39,6 @@ public:
   using NodeArray         = std::vector<DAGNode>;
   using NodeMap           = std::unordered_map<Digest, DAGNode>;
   using DigestMap         = std::unordered_map<Digest, uint64_t>;
-  using DigestVector      = std::vector<Digest>;
   using Mutex             = mutex::Mutex;
   using CallbackFunction  = std::function< void(DAGNode) > ;
   
@@ -53,11 +52,10 @@ public:
 
   bool Push(DAGNode node);
   bool PushBlock(DAGNode node);
-  DigestVector UncertifiedTipsAsVector() const;
+  DigestArray UncertifiedTipsAsVector() const;
   DigestMap const tips() const;
   DigestMap const tips_unsafe() const;
 
-  DigestCache const last_nodes() const;
   NodeMap const nodes() const;
   NodeList const block_nodes() const;
 
@@ -133,6 +131,26 @@ public:
     return true;
   }
 
+  void SetNodeReferences(DAGNode &node, int count = 2)
+  {
+    DigestArray tips_to_select_from;
+    for(auto n: tips())
+    {
+      tips_to_select_from.push_back(n.first);
+    }    
+    std::random_shuffle(tips_to_select_from.begin(), tips_to_select_from.end());
+
+    while(count > 0)
+    {
+      node.previous.push_back(tips_to_select_from.back());
+      if(tips_to_select_from.size() > 1)
+      {
+        tips_to_select_from.pop_back();
+      }
+      --count;
+    }
+  }
+
   void RevertTo(uint64_t block_number)
   {
     FETCH_LOCK(maintenance_mutex_);
@@ -160,6 +178,7 @@ public:
     return ValidatePreviousInternal(node);
   }
 
+  std::size_t size() const { return nodes_.size(); }
 private:
   // Not thread safe
   bool ValidatePreviousInternal(DAGNode const &node);
@@ -169,7 +188,7 @@ private:
     if(on_new_node_) on_new_node_(std::move(n));
   }
 
-  bool PushInternal(DAGNode node);
+  bool PushInternal(DAGNode node, bool check_signature = true);
 
   NodeMap           nodes_;                        ///< the full DAG.
   DigestMap         tips_;                         ///< tips of the DAG.
