@@ -46,6 +46,8 @@ StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope)
  */
 StateAdapter::Status StateAdapter::Read(std::string const &key, void *data, uint64_t &size)
 {
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Read: ", key);
+
   Status status{Status::ERROR};
 
   auto new_key = WrapKeyWithScope(key);
@@ -88,6 +90,8 @@ StateAdapter::Status StateAdapter::Read(std::string const &key, void *data, uint
  */
 StateAdapter::Status StateAdapter::Write(std::string const &key, void const *data, uint64_t size)
 {
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Write: ", key, " size: ", size);
+
   if (!enable_writes_)
   {
     return Status::OK;
@@ -112,6 +116,8 @@ StateAdapter::Status StateAdapter::Write(std::string const &key, void const *dat
  */
 StateAdapter::Status StateAdapter::Exists(std::string const &key)
 {
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Exists: ", key);
+
   Status status{Status::ERROR};
 
   auto new_key = WrapKeyWithScope(key);
@@ -136,7 +142,7 @@ StateAdapter::Status StateAdapter::Exists(std::string const &key)
  */
 ResourceAddress StateAdapter::CreateAddress(Identifier const &scope, ConstByteArray const &key)
 {
-  FETCH_LOG_DEBUG("StateAdapter", "Creating address for key: ", key.ToBase64(),
+  FETCH_LOG_DEBUG("StateAdapter", "Creating address for key: ", key,
                   " scope: ", scope.full_name());
   return ResourceAddress{scope.full_name() + ".state." + key};
 }
@@ -149,7 +155,7 @@ ResourceAddress StateAdapter::CreateAddress(Identifier const &scope, ConstByteAr
  */
 ResourceAddress StateAdapter::CreateAddress(ConstByteArray const &key)
 {
-  FETCH_LOG_DEBUG("StateAdapter", "Creating address for key: ", key.ToBase64(), " (no scope)");
+  FETCH_LOG_DEBUG("StateAdapter", "Creating address for key: ", key, " (no scope)");
   return ResourceAddress{key};
 }
 

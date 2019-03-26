@@ -149,8 +149,7 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
     smart_contract.Attach(state());
 
     // Dispatch to the init. method
-    auto status = smart_contract.DispatchTransaction(on_init_function, tx);
-
+    auto const status = smart_contract.DispatchInitialise(tx.signatures().begin()->first);
     if (status != Status::OK)
     {
       return status;
