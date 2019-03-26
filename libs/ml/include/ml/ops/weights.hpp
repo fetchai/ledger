@@ -61,7 +61,7 @@ public:
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
 protected:
-  ArrayPtrType gradientAccumulation_;
+  ArrayPtrType gradient_accumulation_;
 
 public:
   Weights()          = default;
@@ -72,7 +72,7 @@ public:
       ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.empty());
-    gradientAccumulation_->InlineAdd(errorSignal);
+    gradient_accumulation_->InlineAdd(errorSignal);
     return {};
   }
 
@@ -80,19 +80,19 @@ public:
   {
     PlaceHolder<T>::SetData(data);
     if (this->output_ &&
-        (!gradientAccumulation_ || gradientAccumulation_->shape() != this->output_->shape()))
+        (!gradient_accumulation_ || gradient_accumulation_->shape() != this->output_->shape()))
     {
-      gradientAccumulation_ = std::make_shared<ArrayType>(this->output_->shape());
+      gradient_accumulation_ = std::make_shared<ArrayType>(this->output_->shape());
     }
   }
 
   virtual void Step(typename T::Type learningRate)
   {
-    this->gradientAccumulation_->InlineMultiply(-learningRate);
-    this->output_->InlineAdd(*gradientAccumulation_);
+    this->gradient_accumulation_->InlineMultiply(-learningRate);
+    this->output_->InlineAdd(*gradient_accumulation_);
     // Major DL framework do not do that, but as I can't think of any reason why, I'll leave it here
     // for convenience. Remove if needed -- Pierre
-    gradientAccumulation_->Fill(typename T::Type(0));
+    gradient_accumulation_->Fill(typename T::Type(0));
   }
 
   /**
@@ -153,6 +153,15 @@ public:
       std::cerr << "unrecognised weights initialisation" << std::endl;
       throw;
     }
+  }
+
+  /**
+   * exports the weights Array
+   * @return
+   */
+  ArrayType const &GetWeights() const
+  {
+    return *this->output_;
   }
 
   static constexpr char const *DESCRIPTOR = "Weights";
