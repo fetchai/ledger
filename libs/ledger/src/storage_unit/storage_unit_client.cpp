@@ -131,8 +131,6 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Reverting state to genesis.");
 
-      /*ERROR_BACKTRACE;*/
-
       // create the new tree
       MerkleTree tree{num_lanes()};
 
@@ -189,8 +187,6 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
                                             RevertibleDocumentStoreProtocol::HASH_EXISTS, hash);
 
         promises.push_back(promise);
-
-        std::cerr << "checking to see if lane has hash: " << ToHumanReadable(hash) << std::endl; // DELETEME_NH
       }
 
       std::vector<uint32_t> failed_lanes;
@@ -230,8 +226,6 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
 
       // add the promise to the queue
       promises.push_back(promise);
-
-      std::cerr << "Reverting lane to hash: " << ToHumanReadable(hash) << std::endl; // DELETEME_NH
     }
 
     for (auto &p : promises)
@@ -257,12 +251,6 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
     // since the state has now been restored we can update the current merkle reference
     current_merkle_ = tree;
   }
-
-  /*
-  // Check that the revert actually worked!
-  std::cerr << "asdfsdf" << std::endl; // DELETEME_NH
-  assert(hash == StorageUnitClient::CurrentHash());
-  std::cerr << "asdfaaaasdf" << std::endl; // DELETEME_NH*/
 
   return true;
 }
@@ -293,7 +281,6 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t commit_index)
     FETCH_LOG_PROMISE();
     tree[index] = p->As<byte_array::ByteArray>();
 
-    std::cerr << "Committed lane: " << index << " to " << ToHumanReadable(tree[index]) << std::endl; // DELETEME_NH
     ++index;
   }
 

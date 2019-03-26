@@ -92,19 +92,19 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   // clang-format on
 
   // for debug purposes
-//#ifdef FETCH_LOG_DEBUG_ENABLED
+#ifdef FETCH_LOG_DEBUG_ENABLED
   state_machine_->OnStateChange([](State current, State previous) {
     FETCH_LOG_WARN(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
   });
-//#else
-//  state_machine_->OnStateChange([this](State current, State previous) {
-//    if (periodic_print_.Poll())
-//    {
-//      FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
-//                     " (previous: ", ToString(previous), ")");
-//    }
-//  });
-//#endif  // FETCH_LOG_DEBUG_ENABLED
+#else
+  state_machine_->OnStateChange([this](State current, State previous) {
+    if (periodic_print_.Poll())
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
+                     " (previous: ", ToString(previous), ")");
+    }
+  });
+#endif  // FETCH_LOG_DEBUG_ENABLED
 }
 
 /**
@@ -261,7 +261,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
     next_block_->body.miner         = identity_;
 
     // ensure the difficulty is correctly set
-    next_block_->proof.SetTarget(block_difficulty_/2);
+    next_block_->proof.SetTarget(block_difficulty_);
 
     // discard the current block (we are making a new one)
     current_block_.reset();
@@ -430,17 +430,14 @@ BlockCoordinator::State BlockCoordinator::OnWaitForExecution()
   State next_state{State::WAIT_FOR_EXECUTION};
 
   auto const status = QueryExecutorStatus();
-  std::cerr << "asdfasdf" << std::endl; // DELETEME_NH
 
   switch (status)
   {
   case ExecutionStatus::IDLE:
-    std::cerr << "stat1" << std::endl; // DELETEME_NH
     next_state = State::POST_EXEC_BLOCK_VALIDATION;
     break;
 
   case ExecutionStatus::RUNNING:
-    std::cerr << "stat2" << std::endl; // DELETEME_NH
 
     if (exec_wait_periodic_.Poll())
     {
@@ -453,9 +450,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForExecution()
     break;
 
   case ExecutionStatus::STALLED:
-    std::cerr << "stat3" << std::endl; // DELETEME_NH
   case ExecutionStatus::ERROR:
-    std::cerr << "stat4" << std::endl; // DELETEME_NH
     next_state = State::RESET;
     break;
   }
@@ -466,8 +461,6 @@ BlockCoordinator::State BlockCoordinator::OnWaitForExecution()
 BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
 {
   State next_state{State::RESET};
-
-  std::cerr << "HERE!!!!" << std::endl; // DELETEME_NH
 
   // Check: Ensure the merkle hash is correct for this block
   auto const state_hash = storage_unit_.CurrentHash();
@@ -691,9 +684,8 @@ void BlockCoordinator::RecoverFromStartup()
       }
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Got here!");
-    FETCH_LOG_WARN(LOGGING_NAME, "Reverted to: ", ToHumanReadable(heaviest_block->body.merkle_hash));
-    FETCH_LOG_WARN(LOGGING_NAME, "Sanity check: ", ToHumanReadable(storage_unit_.CurrentHash()));
+    FETCH_LOG_INFO(LOGGING_NAME, "Reverted to merkle hash: ", ToHumanReadable(heaviest_block->body.merkle_hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "Sanity check, computed hash is: ", ToHumanReadable(storage_unit_.CurrentHash()));
 
     // We have reverted the state to heaviest_block, try and setup as if we just executed it
     auto prev_to_heaviest = chain_.GetBlock(heaviest_block->body.previous_hash);
@@ -711,21 +703,6 @@ void BlockCoordinator::RecoverFromStartup()
       return;
     }
   }
-
-  /*
-  auto const current_hash         = current_block_->body.hash;
-  auto const previous_hash        = current_block_->body.previous_hash;
-  auto const desired_state        = current_block_->body.merkle_hash;
-  auto const last_committed_state = storage_unit_.LastCommitHash();
-  auto const current_state        = storage_unit_.CurrentHash();
-  auto const last_processed_block = execution_manager_.LastProcessedBlock();
-
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Current......: ", ToBase64(current_hash));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Previous.....: ", ToBase64(previous_hash));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Desired State: ", ToBase64(desired_state));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Current State: ", ToBase64(current_state));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: LCommit State: ", ToBase64(last_committed_state));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Last Block...: ", ToBase64(last_processed_block));*/
 
   FETCH_LOG_INFO(LOGGING_NAME, "Successfully reverted to block: ", heaviest_block->body.block_number);
 }

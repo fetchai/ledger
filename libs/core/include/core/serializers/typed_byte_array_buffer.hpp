@@ -85,8 +85,6 @@ SizeCounter<TypedByteArrayBuffer> &SizeCounter<TypedByteArrayBuffer>::operator<<
 template <>
 inline void TypedByteArrayBuffer::ReadBytes(uint8_t *arr, std::size_t const &size)
 {
-  auto aa = bytes_left();
-  FETCH_UNUSED(aa);
   if (int64_t(size) > bytes_left())
   {
     throw SerializableException(error::TYPE_ERROR,
