@@ -190,7 +190,7 @@ ConstByteArray ToHumanReadable(ConstByteArray const &str)
   }
 
   static std::map<uint64_t, std::string> words = WORD_LIST;
-  std::size_t rnd{0};
+  std::size_t                            rnd{0};
 
   {
     crypto::FNV hash;

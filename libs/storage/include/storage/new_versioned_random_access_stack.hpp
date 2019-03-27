@@ -46,7 +46,6 @@
 
 #include <cstring>
 
-
 namespace fetch {
 namespace storage {
 
@@ -319,10 +318,10 @@ public:
     stack_.Load(filename, create_if_not_exist);
     history_.Load(history, create_if_not_exist);
 
-    std::cerr << "after history load, size is : " << history_.size() << std::endl; // DELETEME_NH
-    std::cerr << "Loading: " << history << std::endl; // DELETEME_NH
+    std::cerr << "after history load, size is : " << history_.size() << std::endl;  // DELETEME_NH
+    std::cerr << "Loading: " << history << std::endl;                               // DELETEME_NH
 
-    hash_history_.Load("hash_history_"+history, create_if_not_exist);
+    hash_history_.Load("hash_history_" + history, create_if_not_exist);
     internal_bookmark_index_ = stack_.header_extra().bookmark;
   }
 
@@ -330,11 +329,11 @@ public:
   {
     stack_.New(filename);
     history_.New(history);
-    hash_history_.New("hash_history_"+history);
+    hash_history_.New("hash_history_" + history);
     internal_bookmark_index_ = stack_.header_extra().bookmark;
 
-    std::cerr << "after history new, size is : " << history_.size() << std::endl; // DELETEME_NH
-    std::cerr << "New: " << history << std::endl; // DELETEME_NH
+    std::cerr << "after history new, size is : " << history_.size() << std::endl;  // DELETEME_NH
+    std::cerr << "New: " << history << std::endl;                                  // DELETEME_NH
   }
 
   void Clear()
@@ -343,7 +342,7 @@ public:
     history_.Clear();
     hash_history_.Clear();
 
-    std::cerr << "Cleared!!!" << std::endl; // DELETEME_NH
+    std::cerr << "Cleared!!!" << std::endl;  // DELETEME_NH
     ERROR_BACKTRACE;
 
     internal_bookmark_index_ = stack_.header_extra().bookmark;
@@ -433,15 +432,15 @@ public:
     return internal_bookmark_index_ - 1;
   }
 
-  bool HashExists(DefaultKey const & key) const
+  bool HashExists(DefaultKey const &key) const
   {
-    if(hash_history_.empty())
+    if (hash_history_.empty())
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Attempted to find if hash exists, but history is empty!");
       return false;
     }
 
-    uint64_t hash_history_size = hash_history_.size();
+    uint64_t        hash_history_size = hash_history_.size();
     HistoryBookmark book;
 
     for (std::size_t i = 0; i < hash_history_size; ++i)
@@ -449,14 +448,14 @@ public:
       uint64_t reverse_index = hash_history_size - i - 1;
       hash_history_.Get(reverse_index, book);
 
-      if(book.key == key)
+      if (book.key == key)
       {
-        std::cerr << "Hash exists: return true" << std::endl; // DELETEME_NH
+        std::cerr << "Hash exists: return true" << std::endl;  // DELETEME_NH
         return true;
       }
     }
 
-    std::cerr << "Hash exists: return false" << std::endl; // DELETEME_NH
+    std::cerr << "Hash exists: return false" << std::endl;  // DELETEME_NH
     return false;
   }
 
@@ -472,9 +471,9 @@ public:
   {
     bool bookmark_found = false;
 
-    std::cerr << "history0 : " << history_.size() << std::endl; // DELETEME_NH
-    std::cerr << "history1 : " << hash_history_.size() << std::endl; // DELETEME_NH
-    std::cerr << "history2 : " << stack_.size() << std::endl; // DELETEME_NH
+    std::cerr << "history0 : " << history_.size() << std::endl;       // DELETEME_NH
+    std::cerr << "history1 : " << hash_history_.size() << std::endl;  // DELETEME_NH
+    std::cerr << "history2 : " << stack_.size() << std::endl;         // DELETEME_NH
 
     while (!bookmark_found)
     {
@@ -537,9 +536,9 @@ public:
   }
 
 private:
-  VariantStack history_;
+  VariantStack                       history_;
   RandomAccessStack<HistoryBookmark> hash_history_;
-  uint64_t     internal_bookmark_index_{0};
+  uint64_t                           internal_bookmark_index_{0};
 
   event_handler_type on_file_loaded_;
   event_handler_type on_before_flush_;
@@ -563,11 +562,11 @@ private:
     // will make reverting to the same hash twice in a row valid.
     if (!(key_to_compare == book.key))
     {
-      std::cerr << "reverting!" << std::endl; // DELETEME_NH
+      std::cerr << "reverting!" << std::endl;  // DELETEME_NH
       history_.Pop();
 
       // Sanity check, the hash history matches
-      if(!(hash_history_.Top().key == book.key) || hash_history_.size() == 0)
+      if (!(hash_history_.Top().key == book.key) || hash_history_.size() == 0)
       {
         FETCH_LOG_ERROR(LOGGING_NAME, "Hash history top does not match bookmark being removed!");
       }
@@ -575,12 +574,15 @@ private:
       hash_history_.Pop();
     }
     {
-      std::cerr << "popping" << std::endl; // DELETEME_NH
+      std::cerr << "popping" << std::endl;  // DELETEME_NH
     }
 
-    std::cerr << "reverting bookmark! key: " << byte_array::ToHumanReadable(key_to_compare.ToByteArray()) << std::endl; // DELETEME_NH
-    std::cerr << "reverting bookmark! book: " << byte_array::ToHumanReadable(book.key.ToByteArray()) << std::endl; // DELETEME_NH
-    std::cerr << "reverting bookmark! this: " << this << std::endl; // DELETEME_NH
+    std::cerr << "reverting bookmark! key: "
+              << byte_array::ToHumanReadable(key_to_compare.ToByteArray())
+              << std::endl;  // DELETEME_NH
+    std::cerr << "reverting bookmark! book: " << byte_array::ToHumanReadable(book.key.ToByteArray())
+              << std::endl;                                          // DELETEME_NH
+    std::cerr << "reverting bookmark! this: " << this << std::endl;  // DELETEME_NH
 
     return key_to_compare == book.key;
   }

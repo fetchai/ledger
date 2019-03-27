@@ -50,7 +50,7 @@ bool NewRevertibleDocumentStore::Load(std::string const &state, std::string cons
                                       std::string const &index, std::string const &index_history,
                                       bool create = true)
 {
-  std::cerr << "LOAD RDS" << std::endl; // DELETEME_NH
+  std::cerr << "LOAD RDS" << std::endl;  // DELETEME_NH
   // cache the filenames
   state_path_         = state;
   state_history_path_ = state_history;
@@ -66,7 +66,7 @@ bool NewRevertibleDocumentStore::New(std::string const &state, std::string const
                                      std::string const &index, std::string const &index_history,
                                      bool /*create*/ = true)
 {
-  std::cerr << "NEW RDS" << std::endl; // DELETEME_NH
+  std::cerr << "NEW RDS" << std::endl;  // DELETEME_NH
   // cache the filenames
   state_path_         = state;
   state_history_path_ = state_history;
@@ -118,9 +118,9 @@ bool NewRevertibleDocumentStore::RevertToHash(Hash const &state)
   }
   else
   {
-    std::cerr << "Reverting to hash. Size: " << storage_.size() << std::endl; // DELETEME_NH
+    std::cerr << "Reverting to hash. Size: " << storage_.size() << std::endl;  // DELETEME_NH
     success = storage_.RevertToHash(state);
-    std::cerr << "Success: " << success << std::endl; // DELETEME_NH
+    std::cerr << "Success: " << success << std::endl;  // DELETEME_NH
   }
 
   return success;

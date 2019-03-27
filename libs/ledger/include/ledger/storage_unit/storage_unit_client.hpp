@@ -40,8 +40,8 @@
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 
-#include "crypto/merkle_tree.hpp"
 #include "core/serializers/typed_byte_array_buffer.hpp"
+#include "crypto/merkle_tree.hpp"
 
 #include <chrono>
 #include <thread>
@@ -95,7 +95,6 @@ public:
   StorageUnitClient &operator=(StorageUnitClient &&) = delete;
 
 private:
-
   struct MerkleTreeProxy
   {
     MerkleTreeProxy()
@@ -138,7 +137,7 @@ private:
     }
 
     uint64_t size_{0};
-    uint8_t data_[92];
+    uint8_t  data_[92];
   };
 
   using Client               = muddle::rpc::Client;
@@ -165,9 +164,9 @@ private:
 
   /// @name State Hash Support
   /// @{
-  mutable Mutex merkle_mutex_{__LINE__, __FILE__};
-  MerkleTree    current_merkle_;
-  PermanentMerkleStack   permanent_state_merkle_stack_{};
+  mutable Mutex        merkle_mutex_{__LINE__, __FILE__};
+  MerkleTree           current_merkle_;
+  PermanentMerkleStack permanent_state_merkle_stack_{};
   /// @}
 };
 

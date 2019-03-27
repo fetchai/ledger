@@ -227,6 +227,5 @@ TEST(new_revertible_store_test, basic_example_of_commit_revert_with_load)
       EXPECT_EQ(document.failed, false);
       EXPECT_EQ(ConstByteArray(document), ByteArray(std::to_string(i)));
     }
-
   }
 }

@@ -146,7 +146,7 @@ public:
    */
   bool LocklessGet(ResourceID const &rid, type &object)
   {
-    //assert(object != nullptr);
+    // assert(object != nullptr);
     Document doc = store_.Get(rid);
     if (doc.failed)
     {

@@ -38,7 +38,8 @@ public:
     ON_CALL(*this, CurrentHash()).WillByDefault(Invoke(&fake_, &FakeStorageUnit::CurrentHash));
     ON_CALL(*this, LastCommitHash())
         .WillByDefault(Invoke(&fake_, &FakeStorageUnit::LastCommitHash));
-    ON_CALL(*this, RevertToHash(_, _)).WillByDefault(Invoke(&fake_, &FakeStorageUnit::RevertToHash));
+    ON_CALL(*this, RevertToHash(_, _))
+        .WillByDefault(Invoke(&fake_, &FakeStorageUnit::RevertToHash));
     ON_CALL(*this, Commit(_)).WillByDefault(Invoke(&fake_, &FakeStorageUnit::Commit));
     ON_CALL(*this, HashExists(_, _)).WillByDefault(Invoke(&fake_, &FakeStorageUnit::HashExists));
 

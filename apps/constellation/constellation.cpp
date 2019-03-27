@@ -340,7 +340,6 @@ void Constellation::Run(UriList const &initial_peers)
   // in the case of a crash
   block_coordinator_.Run();
 
-
   //---------------------------------------------------------------
   // Step 2. Main monitor loop
   //---------------------------------------------------------------

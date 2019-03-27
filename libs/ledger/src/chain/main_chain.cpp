@@ -85,7 +85,7 @@ MainChain::MainChain(Mode mode)
 
 MainChain::~MainChain()
 {
-  if(block_store_)
+  if (block_store_)
   {
     block_store_->Flush(false);
   }
@@ -503,7 +503,7 @@ void MainChain::RecoverFromFile(Mode mode)
 
   // load the head block, and attempt verify that this block forms a complete chain to genesis
   IntBlockPtr block = std::make_shared<Block>();
-  IntBlockPtr head   = std::make_shared<Block>();
+  IntBlockPtr head  = std::make_shared<Block>();
 
   if (block_store_->Get(storage::ResourceAddress("head"), *block))
   {
@@ -512,38 +512,45 @@ void MainChain::RecoverFromFile(Mode mode)
     // Save the head
     head = block;
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Head block found from main chain. Checking for completeness. Head index: ", block_index, " HR: ", ToHumanReadable(block->body.hash));
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "Head block found from main chain. Checking for completeness. Head index: ",
+                   block_index, " HR: ", ToHumanReadable(block->body.hash));
 
     // Copy head block so as to walk down the chain
     IntBlockPtr next = std::make_shared<Block>(*block);
 
     while (block_store_->Get(storage::ResourceID(next->body.previous_hash), *next))
     {
-      if(next->body.block_number != block_index - 1)
+      if (next->body.block_number != block_index - 1)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Discontinuity found when walking main chain during recovery. Current: ", block_index, " prev: ", next->body.block_number, " Resetting");
+        FETCH_LOG_WARN(LOGGING_NAME,
+                       "Discontinuity found when walking main chain during recovery. Current: ",
+                       block_index, " prev: ", next->body.block_number, " Resetting");
         break;
       }
 
       block_index = next->body.block_number;
     }
 
-    if(block_index != 0)
+    if (block_index != 0)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to walk main chain when recovering from disk. Got as far back as: ", block_index, ". Resetting.");
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Failed to walk main chain when recovering from disk. Got as far back as: ",
+                     block_index, ". Resetting.");
     }
     else
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Recovering main chain with heaviest block: ", head->body.block_number);
+      FETCH_LOG_INFO(LOGGING_NAME,
+                     "Recovering main chain with heaviest block: ", head->body.block_number);
 
       // Add heaviest to cache
       block_chain_[head->body.hash] = head;
 
       // Update this as our heaviest
-      bool result = heaviest_.Update(*head);
+      bool result            = heaviest_.Update(*head);
       tips_[head->body.hash] = Tip{head->total_weight};
 
-      if(!result)
+      if (!result)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Failed to update heaviest when loading from file.");
       }
@@ -562,7 +569,8 @@ void MainChain::RecoverFromFile(Mode mode)
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "No head block found in chain data store! Resetting chain data store.");
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "No head block found in chain data store! Resetting chain data store.");
   }
 
   // Recovering the chain has failed in some way, reset the storage.
@@ -593,9 +601,11 @@ void MainChain::WriteToFile()
       }
     }
 
-    if(failed)
+    if (failed)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to walk back the chain when writing to file! Block head: ", block_chain_.at(heaviest_.hash)->body.block_number);
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Failed to walk back the chain when writing to file! Block head: ",
+                     block_chain_.at(heaviest_.hash)->body.block_number);
       return;
     }
 
@@ -617,24 +627,26 @@ void MainChain::WriteToFile()
       FETCH_LOG_INFO(LOGGING_NAME, "Writing block. ", block->body.block_number);
 
       // Recover the current head block from the file
-      IntBlockPtr current_file_head= std::make_shared<Block>();
-      IntBlockPtr block_head = block;
+      IntBlockPtr current_file_head = std::make_shared<Block>();
+      IntBlockPtr block_head        = block;
       block_store_->Get(storage::ResourceAddress("head"), *current_file_head);
 
-      // Now keep adding the block and its prev to the file until we are certain the file contains an unbroken chain.
-      // Assuming that the current_file_head is unbroken we can write until we touch it or it's root.
-      for(;;)
+      // Now keep adding the block and its prev to the file until we are certain the file contains
+      // an unbroken chain. Assuming that the current_file_head is unbroken we can write until we
+      // touch it or it's root.
+      for (;;)
       {
         block_store_->Set(storage::ResourceID(block->body.hash), *block);
 
         // Keep the current_file_head one block behind
-        while(current_file_head->body.block_number != block->body.block_number - 1)
+        while (current_file_head->body.block_number != block->body.block_number - 1)
         {
-          block_store_->Get(storage::ResourceID(current_file_head->body.previous_hash), *current_file_head);
+          block_store_->Get(storage::ResourceID(current_file_head->body.previous_hash),
+                            *current_file_head);
         }
 
         // Successful case
-        if(current_file_head->body.hash == block->body.previous_hash)
+        if (current_file_head->body.hash == block->body.previous_hash)
         {
           break;
         }
@@ -644,7 +656,8 @@ void MainChain::WriteToFile()
       }
 
       // Success - we kept a copy of the new head to write
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Updating HEAD to ", ToHumanReadable(block_head->body.hash), " AKA ", block_head->body.hash.ToBase64());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Updating HEAD to ", ToHumanReadable(block_head->body.hash),
+                      " AKA ", block_head->body.hash.ToBase64());
       block_store_->Set(storage::ResourceAddress("head"), *block_head);
     }
 
@@ -834,7 +847,6 @@ bool MainChain::UpdateTips(IntBlockPtr const &block)
   // remove the tip if exists and add the new one
   tips_.erase(block->body.previous_hash);
   tips_[block->body.hash] = Tip{block->total_weight};
-
 
   // attempt to update the heaviest tip
   return heaviest_.Update(*block);

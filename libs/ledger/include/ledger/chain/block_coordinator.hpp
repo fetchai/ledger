@@ -275,11 +275,12 @@ private:
   BlockPeriod     block_period_;           ///< The desired period before a block is generated
   Timepoint       next_block_time_;        ///< The next point that a block should be generated
   BlockPtr        current_block_{};        ///< The pointer to the current block (read only)
-  NextBlockPtr    next_block_{};           ///< The next block being created (read / write) - only in mining mode
-  TxSetPtr        pending_txs_{};          ///< The list of pending txs that are being waited on
-  PeriodicAction  tx_wait_periodic_;       ///< Periodic print for transaction waiting
-  PeriodicAction  exec_wait_periodic_;     ///< Periodic print for execution
-  bool            waiting_for_startup_{true}; ///< Wait for networking elements to come online
+  NextBlockPtr
+                 next_block_{};  ///< The next block being created (read / write) - only in mining mode
+  TxSetPtr       pending_txs_{};              ///< The list of pending txs that are being waited on
+  PeriodicAction tx_wait_periodic_;           ///< Periodic print for transaction waiting
+  PeriodicAction exec_wait_periodic_;         ///< Periodic print for execution
+  bool           waiting_for_startup_{true};  ///< Wait for networking elements to come online
   /// @}
 };
 

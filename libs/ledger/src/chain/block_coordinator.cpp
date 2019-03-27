@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/block_coordinator.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "core/threading.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/block_sink_interface.hpp"
@@ -25,7 +26,6 @@
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_status_cache.hpp"
-#include "core/byte_array/encoders.hpp"
 
 #include <chrono>
 
@@ -210,7 +210,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
 
     // we expect that the common parent in this case will always have been processed, but this
     // should be checked
-    if (!storage_unit_.HashExists(common_parent->body.merkle_hash, common_parent->body.block_number))
+    if (!storage_unit_.HashExists(common_parent->body.merkle_hash,
+                                  common_parent->body.block_number))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's state hash cannot be retrieved for block: ",
                       ToBase64(current_hash), " number; ", common_parent->body.block_number);
@@ -228,7 +229,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
     }
 
     // revert the storage back to the known state
-    if (!storage_unit_.RevertToHash(common_parent->body.merkle_hash, common_parent->body.block_number))
+    if (!storage_unit_.RevertToHash(common_parent->body.merkle_hash,
+                                    common_parent->body.block_number))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Unable to restore state for block", ToBase64(current_hash));
       return State::RESET;
@@ -497,7 +499,8 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     if (previous_block)
     {
       // signal the storage engine to make these changes
-      if (storage_unit_.RevertToHash(previous_block->body.merkle_hash, previous_block->body.block_number))
+      if (storage_unit_.RevertToHash(previous_block->body.merkle_hash,
+                                     previous_block->body.block_number))
       {
         execution_manager_.SetLastProcessedBlock(previous_block->body.hash);
         revert_successful = true;
@@ -518,7 +521,6 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
   {
     // mark all the transactions as been executed
     UpdateTxStatus(*current_block_);
-
 
     // Commit this state
     storage_unit_.Commit(current_block_->body.block_number);
@@ -664,47 +666,56 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 void BlockCoordinator::RecoverFromStartup()
 {
   // Recovery code - system has been powered on, attempt to recover without a walk from genesis.
-  auto heaviest_block      = chain_.GetHeaviestBlock();
+  auto heaviest_block = chain_.GetHeaviestBlock();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Attempting to recover to block: ", heaviest_block->body.block_number, " : ", ToBase64(heaviest_block->body.hash));
+  FETCH_LOG_INFO(LOGGING_NAME,
+                 "Attempting to recover to block: ", heaviest_block->body.block_number, " : ",
+                 ToBase64(heaviest_block->body.hash));
 
-  // Attempt to revert to the state given in the head block, failing that keep walking back the chain
-  for(;;)
+  // Attempt to revert to the state given in the head block, failing that keep walking back the
+  // chain
+  for (;;)
   {
-    while (heaviest_block && !storage_unit_.RevertToHash(heaviest_block->body.merkle_hash, heaviest_block->body.block_number))
+    while (heaviest_block && !storage_unit_.RevertToHash(heaviest_block->body.merkle_hash,
+                                                         heaviest_block->body.block_number))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to revert state during startup! Block: ", heaviest_block->body.block_number,". Walking back.");
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to revert state during startup! Block: ",
+                     heaviest_block->body.block_number, ". Walking back.");
 
       heaviest_block = chain_.GetBlock(heaviest_block->body.previous_hash);
 
-      if(!heaviest_block || heaviest_block->body.previous_hash == GENESIS_DIGEST)
+      if (!heaviest_block || heaviest_block->body.previous_hash == GENESIS_DIGEST)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Failed to revert state after walking the whole chain");
         return;
       }
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Reverted to merkle hash: ", ToHumanReadable(heaviest_block->body.merkle_hash));
-    FETCH_LOG_INFO(LOGGING_NAME, "Sanity check, computed hash is: ", ToHumanReadable(storage_unit_.CurrentHash()));
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "Reverted to merkle hash: ", ToHumanReadable(heaviest_block->body.merkle_hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "Sanity check, computed hash is: ",
+                   ToHumanReadable(storage_unit_.CurrentHash()));
 
     // We have reverted the state to heaviest_block, try and setup as if we just executed it
     auto prev_to_heaviest = chain_.GetBlock(heaviest_block->body.previous_hash);
 
-    if(prev_to_heaviest)
+    if (prev_to_heaviest)
     {
       current_block_ = heaviest_block;
       execution_manager_.SetLastProcessedBlock(prev_to_heaviest->body.hash);
       break;
     }
 
-    if(!heaviest_block || !prev_to_heaviest || heaviest_block->body.previous_hash == GENESIS_DIGEST)
+    if (!heaviest_block || !prev_to_heaviest ||
+        heaviest_block->body.previous_hash == GENESIS_DIGEST)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to revert state after walking the whole chain");
       return;
     }
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Successfully reverted to block: ", heaviest_block->body.block_number);
+  FETCH_LOG_INFO(LOGGING_NAME,
+                 "Successfully reverted to block: ", heaviest_block->body.block_number);
 }
 
 BlockCoordinator::State BlockCoordinator::OnReset()
@@ -714,9 +725,9 @@ BlockCoordinator::State BlockCoordinator::OnReset()
   pending_txs_.reset();
   stall_count_ = 0;
 
-  if(waiting_for_startup_)
+  if (waiting_for_startup_)
   {
-    while(waiting_for_startup_)
+    while (waiting_for_startup_)
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }

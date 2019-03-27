@@ -114,7 +114,7 @@ FakeStorageUnit::Hash FakeStorageUnit::LastCommitHash()
   return current_hash_;
 }
 
-bool FakeStorageUnit::RevertToHash(Hash const &hash, uint64_t index)
+bool FakeStorageUnit::RevertToHash(Hash const &hash, uint64_t /*index*/)
 {
   bool success{false};
 
@@ -149,13 +149,13 @@ FakeStorageUnit::Hash FakeStorageUnit::Commit(uint64_t index)
   return EmulateCommit(commit_hash, index);
 }
 
-bool FakeStorageUnit::HashExists(Hash const &hash, uint64_t index)
+bool FakeStorageUnit::HashExists(Hash const &hash, uint64_t /*index*/)
 {
   auto const it = std::find(state_history_stack_.begin(), state_history_stack_.end(), hash);
   return (state_history_stack_.end() != it);
 }
 
-FakeStorageUnit::Hash FakeStorageUnit::EmulateCommit(Hash const &commit_hash, uint64_t index)
+FakeStorageUnit::Hash FakeStorageUnit::EmulateCommit(Hash const &commit_hash, uint64_t /*index*/)
 {
   if (state_history_.find(commit_hash) != state_history_.end())
   {

@@ -89,7 +89,7 @@ TEST_F(FakeStorageUnitTests, BasicCheck)
   ASSERT_TRUE(storage_->RevertToHash(state1, 0));
   ASSERT_EQ(storage_->LastCommitHash(), state1);
   ASSERT_TRUE(storage_->HashExists(state1, 0));
-  ASSERT_FALSE(storage_->HashExists(state2,1));
+  ASSERT_FALSE(storage_->HashExists(state2, 1));
   ASSERT_FALSE(storage_->HashExists(state3, 2));
 
   CheckValueIsPresent("key 1", "value 1");
