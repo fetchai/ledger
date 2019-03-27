@@ -441,9 +441,9 @@ Contract::Status SmartContract::InvokeInit(Identity const &owner)
     FETCH_LOG_DEBUG(LOGGING_NAME, "One argument for init - defaulting to address population");
 
     // create the public key from the identity
-    auto const identity = owner.identifier();
+    auto const &identity = owner.identifier();
 
-    // create the address instance to be passed to the initialiser
+    // create the address instance to be passed to the init function
     vm::Ptr<vm::Address> address = vm::Address::Constructor(vm.get(), vm::TypeIds::Address);
 
     // assign the string value
