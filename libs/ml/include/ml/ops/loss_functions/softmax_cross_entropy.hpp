@@ -45,6 +45,9 @@ public:
     assert(inputs.size() == 2);
     assert(inputs.at(0).size() == inputs.at(1).size());
 
+    // sanity check the softmax adds up to 1
+    assert(Sum(fetch::math::Softmax(inputs[0])) - (DataType(1)) < 0.0001);
+
     // softmax forward & then CrossEntropy
     typename ArrayType::Type result =
         fetch::math::CrossEntropyLoss(fetch::math::Softmax(inputs[0]), inputs[1]);

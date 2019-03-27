@@ -20,7 +20,7 @@
 #include "math/free_functions/exponentiation/exponentiation.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/layers/layer.hpp"
-#include "ml/ops/activations/softmax.hpp"
+#include "ml/ops/activations/sigmoid.hpp"
 #include "ml/ops/embeddings.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
@@ -69,15 +69,26 @@ public:
     // dot product input and context embeddings
     std::string transpose_ctx = this->template AddNode<fetch::ml::ops::Transpose<ArrayType>>(
         name + "_TransposeCtx", {embed_ctx});
+    //    std::string in_ctx_matmul = this->template
+    //    AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
+    //        name + "_In_Ctx_MatMul", {transpose_ctx, embed_in_});
     std::string in_ctx_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
-        name + "_In_Ctx_MatMul", {transpose_ctx, embed_in_});
+        name + "_In_Ctx_MatMul", {embed_in_, transpose_ctx});
 
     // dense layer
-    SizeType    dense_size = fetch::math::Square(embedding_size);
-    std::string output     = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-        name + "_Dense", {in_ctx_matmul}, dense_size, out);
+    //    SizeType    dense_size = fetch::math::Square(embedding_size);
+    //    std::string output     = this->template
+    //    AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+    //        name + "_Dense", {in_ctx_matmul}, dense_size, out);
+    std::string fc_out = this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+        name + "_Dense", {in_ctx_matmul}, in_size, out);
 
-    // We should use the softmax cross entropy criterion and therefore we should NOT compute softmax here
+    // sigmoid activation
+    std::string output =
+        this->template AddNode<fetch::ml::ops::Sigmoid<ArrayType>>(name + "_Sigmoid", {fc_out});
+
+    // We should use the softmax cross entropy criterion and therefore we should NOT compute softmax
+    // here
 
     this->AddInputNode(input);
     this->AddInputNode(context);

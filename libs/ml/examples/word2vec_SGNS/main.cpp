@@ -16,14 +16,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/clustering_algorithms/knn.hpp"
 #include "file_loader.hpp"
+
+#include "math/free_functions/clustering_algorithms/knn.hpp"
+#include "math/free_functions/matrix_operations/matrix_operations.hpp"
+
 #include "ml/dataloaders/word2vec_loaders/skipgram_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/skip_gram.hpp"
-#include "ml/ops/loss_functions/softmax_cross_entropy.hpp"
+#include "ml/ops/loss_functions/cross_entropy.hpp"
+
 #include <iostream>
 #include <math/tensor.hpp>
+#include <numeric>
 
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
@@ -40,13 +45,14 @@ using SizeType     = typename ArrayType::SizeType;
 
 struct TrainingParams
 {
-  SizeType    output_size     = 2;
+  SizeType    output_size     = 1;
   SizeType    batch_size      = 128;     // training data batch size
   SizeType    embedding_size  = 16;      // dimension of embedding vec
   SizeType    training_epochs = 100000;  // total number of training epochs
-  double      learning_rate   = 0.01;    // alpha - the learning rate
+  double      learning_rate   = 0.005;    // alpha - the learning rate
   SizeType    k               = 10;      // how many nearest neighbours to compare against
   std::string test_word       = "cold";  // test word to consider
+  DataType    epsilon         = 1e-7;     // small value for avoiding numerical instability
 };
 
 template <typename T>
@@ -62,11 +68,11 @@ SkipGramTextParams<T> SetParams()
   ret.unigram_power      = 0.75;                // adjusted unigram distribution
 
   ret.discard_frequent  = true;   // discard most frqeuent words
-  ret.discard_threshold = 0.005;  // controls how aggressively to discard frequent words
+  ret.discard_threshold = 0.001;  // controls how aggressively to discard frequent words
 
-  ret.window_size         = SizeType(5);  // max size of context window one way
+  ret.window_size         = SizeType(8);  // max size of context window one way
   ret.min_sentence_length = SizeType(4);  //
-  ret.k_negative_samples  = SizeType(1);  // number of negative examples to sample
+  ret.k_negative_samples  = SizeType(1); // number of negative examples to sample
 
   return ret;
 }
@@ -80,7 +86,7 @@ std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType embeddings_size, Size
   g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
   g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Context", {});
   std::string ret_name = g.AddNode<fetch::ml::layers::SkipGram<ArrayType>>(
-      "SkipGram", {"Input", "Context"}, SizeType(1), SizeType(2), embeddings_size, vocab_size);
+      "SkipGram", {"Input", "Context"}, SizeType(1), SizeType(1), embeddings_size, vocab_size);
 
   return ret_name;
 }
@@ -166,7 +172,7 @@ int main(int argc, char **argv)
   std::string                 output_name = Model(g, tp.embedding_size, dataloader.VocabSize());
 
   // set up loss
-  SoftmaxCrossEntropy<ArrayType> criterion;
+  CrossEntropy<ArrayType> criterion;
 
   /////////////////////////////////
   /// TRAIN THE WORD EMBEDDINGS ///
@@ -220,7 +226,7 @@ int main(int argc, char **argv)
       context.At(0) = data.first.At(1);
 
       // assign label
-      gt.At(data.second) = DataType(1);
+      gt.At(0) = DataType(data.second);
 
       g.SetInput("Input", input, false);
       g.SetInput("Context", context, false);
@@ -228,24 +234,14 @@ int main(int argc, char **argv)
       // forward pass
       results = g.Evaluate(output_name);
 
-      if (gt.At({0, 0}) == DataType(1))
-      {
-        scale_factor.At(0) = DataType(sp.k_negative_samples);
-      }
-      else
-      {
-        scale_factor.At(0) = DataType(1);
-      }
+      scale_factor.At(0) = (gt.At(0) == DataType(0)) ? DataType(sp.k_negative_samples) : DataType(1);
 
-      // measure accuracy
-      if (((results.At(0) > 0.5) && (gt.At(0) == DataType(1))) ||
-          ((results.At(1) > 0.5) && (gt.At(1) == DataType(1))))
+      if (((results.At(0) >= DataType(0.5)) && (gt.At(0) == DataType(1))) ||
+          ((results.At(0) < DataType(0.5)) && (gt.At(0) == DataType(0))))
       {
         ++correct_score;
       }
-      assert(results.At(0) + results.At(1) - DataType(1) < 0.0001);
 
-      // cost function
       loss = criterion.Forward({results, gt});
 
       // diminish size of updates due to negative examples

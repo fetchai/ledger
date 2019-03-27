@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/free_functions/fundamental_operators.hpp"
+#include "math/free_functions/matrix_operations/matrix_operations.hpp"
 #include "math/free_functions/ml/activation_functions/sigmoid.hpp"
 #include "ml/ops/ops.hpp"
 
@@ -45,6 +46,14 @@ public:
     }
 
     fetch::math::Sigmoid(inputs.front().get(), *this->output_);
+
+    // ensures numerical stability
+    for (auto &val : *this->output_)
+    {
+      val = fetch::math::Max(val, epsilon_, val);
+      val = fetch::math::Min(val, DataType(1 - epsilon_), val);
+    }
+
     return *this->output_;
   }
 
@@ -53,7 +62,6 @@ public:
       ArrayType const &                                           errorSignal)
   {
     assert(inputs.size() == 1);
-
     assert(inputs.front().get().shape() == errorSignal.shape());
 
     ArrayType t            = this->Forward(inputs);
@@ -64,6 +72,11 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "Sigmoid";
+
+private:
+  // minimum possible output value of the sigmoid should not be zero, but actually epsilon
+  // likewise maximum output should be 1 - epsilon
+  DataType epsilon_ = DataType(1e-12);
 };
 
 }  // namespace ops

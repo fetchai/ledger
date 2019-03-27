@@ -17,8 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <vector>
 #include <fstream>
-//#include <sstream>
+#include <sstream>
 #include <dirent.h>
 
 // TODO - also handle a string that specifies one text file only
