@@ -25,7 +25,6 @@ using fetch::storage::RevertibleDocumentStoreProtocol;
 using fetch::muddle::MuddleEndpoint;
 using fetch::service::Promise;
 using fetch::byte_array::ToBase64;
-using fetch::byte_array::ToHumanReadable;
 
 namespace fetch {
 namespace ledger {
@@ -309,10 +308,6 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t commit_index)
     permanent_state_merkle_stack_.Set(commit_index, MerkleTreeProxy{tree});
     permanent_state_merkle_stack_.Flush(false);
   }
-
-  FETCH_LOG_INFO(LOGGING_NAME,
-                 "After commit, size of stack is: ", permanent_state_merkle_stack_.size(),
-                 "and we committed to: ", ToHumanReadable(current_merkle_.root()));
 
   return tree_root;
 }

@@ -18,8 +18,6 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/byte_array/details/encode_decode.hpp"
-#include "core/string/word_list.hpp"
-#include "crypto/fnv.hpp"
 
 namespace fetch {
 namespace byte_array {
@@ -86,7 +84,7 @@ ConstByteArray ToBase64(ConstByteArray const &str)
     }
   }
 
-  return std::move(ret);
+  return ret;
 }
 
 ConstByteArray ToHex(ConstByteArray const &str)
@@ -102,7 +100,7 @@ ConstByteArray ToHex(ConstByteArray const &str)
     ret[j++]  = uint8_t(details::hexChars[(c >> 4) & 0xF]);
     ret[j++]  = uint8_t(details::hexChars[c & 0xF]);
   }
-  return std::move(ret);
+  return ret;
 }
 
 // Reverse bits in byte
@@ -129,7 +127,7 @@ ConstByteArray ToHexReverse(ConstByteArray const &str)
     ret[j++]  = uint8_t(details::hexChars[(c >> 4) & 0xF]);
     ret[j++]  = uint8_t(details::hexChars[c & 0xF]);
   }
-  return std::move(ret);
+  return ret;
 }
 
 ConstByteArray ToBin(ConstByteArray const &str)
@@ -151,7 +149,7 @@ ConstByteArray ToBin(ConstByteArray const &str)
     ret[j++]  = uint8_t(c & 0x02 ? '1' : '0');
     ret[j++]  = uint8_t(c & 0x01 ? '1' : '0');
   }
-  return std::move(ret);
+  return ret;
 }
 
 // To bin, but with the bits in the bytes reversed endianness
@@ -175,41 +173,7 @@ ConstByteArray ToBinReverse(ConstByteArray const &str)
     ret[j++]  = uint8_t(c & 0x02 ? '1' : '0');
     ret[j++]  = uint8_t(c & 0x01 ? '1' : '0');
   }
-  return std::move(ret);
-}
-
-ConstByteArray ToHumanReadable(ConstByteArray const &str)
-{
-#ifdef NDEBUG
-  return {"human readable strings not available unless in debug mode"};
-#endif
-
-  if (str.size() == 0)
-  {
-    return {"NULL HUMAN READABLE"};
-  }
-
-  static std::map<uint64_t, std::string> words = WORD_LIST;
-  std::size_t                            rnd{0};
-
-  {
-    crypto::FNV hash;
-    hash.Reset();
-    hash.Update(str.pointer(), str.size());
-
-    rnd = hash.Final<std::size_t>();
-  }
-
-  ByteArray readable;
-
-  for (std::size_t i = 0; i < 3; ++i)
-  {
-    readable.Append(words[rnd % words.size()], "_");
-    rnd *= 123456789ULL;
-  }
-  readable.Append(words[rnd % words.size()]);
-
-  return std::move(readable);
+  return ret;
 }
 
 }  // namespace byte_array

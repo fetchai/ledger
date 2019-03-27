@@ -30,7 +30,6 @@
 #include <chrono>
 
 using fetch::byte_array::ToBase64;
-using fetch::byte_array::ToHumanReadable;
 
 using ScheduleStatus = fetch::ledger::ExecutionManagerInterface::ScheduleStatus;
 using ExecutionState = fetch::ledger::ExecutionManagerInterface::State;
@@ -95,7 +94,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   // for debug purposes
 #ifdef FETCH_LOG_DEBUG_ENABLED
   state_machine_->OnStateChange([](State current, State previous) {
-    FETCH_LOG_WARN(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
   });
 #else
   state_machine_->OnStateChange([this](State current, State previous) {
@@ -689,11 +688,6 @@ void BlockCoordinator::RecoverFromStartup()
         return;
       }
     }
-
-    FETCH_LOG_INFO(LOGGING_NAME,
-                   "Reverted to merkle hash: ", ToHumanReadable(heaviest_block->body.merkle_hash));
-    FETCH_LOG_INFO(LOGGING_NAME, "Sanity check, computed hash is: ",
-                   ToHumanReadable(storage_unit_.CurrentHash()));
 
     // We have reverted the state to heaviest_block, try and setup as if we just executed it
     auto prev_to_heaviest = chain_.GetBlock(heaviest_block->body.previous_hash);

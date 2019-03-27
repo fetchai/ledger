@@ -23,7 +23,6 @@
 #include <utility>
 
 using fetch::byte_array::ToBase64;
-using fetch::byte_array::ToHumanReadable;
 using fetch::generics::MilliTimer;
 
 namespace fetch {
@@ -512,10 +511,6 @@ void MainChain::RecoverFromFile(Mode mode)
     // Save the head
     head = block;
 
-    FETCH_LOG_INFO(LOGGING_NAME,
-                   "Head block found from main chain. Checking for completeness. Head index: ",
-                   block_index, " HR: ", ToHumanReadable(block->body.hash));
-
     // Copy head block so as to walk down the chain
     IntBlockPtr next = std::make_shared<Block>(*block);
 
@@ -618,8 +613,6 @@ void MainChain::WriteToFile()
       block_store_->Set(storage::ResourceID(block->body.hash), *block);
 
       // Test we can recover genesis too
-      IntBlockPtr dummy = std::make_shared<Block>();
-      block_store_->Get(storage::ResourceAddress("head"), *dummy);
       block_store_->Get(storage::ResourceID(block->body.hash), *dummy);
     }
     else
@@ -656,8 +649,6 @@ void MainChain::WriteToFile()
       }
 
       // Success - we kept a copy of the new head to write
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Updating HEAD to ", ToHumanReadable(block_head->body.hash),
-                      " AKA ", block_head->body.hash.ToBase64());
       block_store_->Set(storage::ResourceAddress("head"), *block_head);
     }
 
