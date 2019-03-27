@@ -18,11 +18,11 @@
 
 #include "core/serializers/byte_array_buffer.hpp"
 
-#include "math/distance/cosine.hpp"
+#include "math/free_functions/clustering_algorithms/knn.hpp"
 #include "math/free_functions/matrix_operations/matrix_operations.hpp"
 #include "math/tensor.hpp"
 
-#include "ml/dataloaders/w2v_cbow_dataloader.hpp"
+#include "ml/dataloaders/word2vec_loaders/cbow_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/softmax.hpp"
@@ -30,14 +30,18 @@
 #include "ml/ops/loss_functions/mean_square_error.hpp"
 #include "ml/serializers/ml_types.hpp"
 
+#include <fstream>
 #include <iostream>
 
 #define EMBEDING_DIMENSION 64u
 #define CONTEXT_WINDOW_SIZE 4  // Each side
 #define LEARNING_RATE 0.50f
+#define K 10u
+std::string TEST_WORD = "cold";
 
-using DataType  = float;
+using DataType  = double;
 using ArrayType = fetch::math::Tensor<DataType>;
+using SizeType  = fetch::math::Tensor<DataType>::SizeType;
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
@@ -48,7 +52,7 @@ std::string readFile(std::string const &path)
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 }
 
-std::string findWordByIndex(std::map<std::string, uint64_t> const &vocab, uint64_t index)
+std::string findWordByIndex(std::map<std::string, SizeType> const &vocab, SizeType index)
 {
   for (auto const &kvp : vocab)
   {
@@ -60,26 +64,18 @@ std::string findWordByIndex(std::map<std::string, uint64_t> const &vocab, uint64
   return "";
 }
 
-void PrintKNN(std::map<std::string, uint64_t> const &vocab, ArrayType const &embeddings,
+void PrintKNN(fetch::ml::dataloaders::CBoWLoader<ArrayType> const &dl, ArrayType const &embeddings,
               std::string const &word, unsigned int k)
 {
-  ArrayType                               wordVector = embeddings.Slice(vocab.at(word)).Unsqueeze();
-  std::vector<std::pair<uint64_t, float>> distances;
-  distances.reserve(embeddings.shape()[0]);
-  for (uint64_t i(0); i < embeddings.shape()[0]; ++i)
+  ArrayType arr        = embeddings;
+  ArrayType one_vector = embeddings.Slice(dl.VocabLookup(word)).Unsqueeze();
+  std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
+      fetch::math::clustering::KNN(arr, one_vector, k);
+
+  for (std::size_t j = 0; j < output.size(); ++j)
   {
-    DataType d = fetch::math::distance::Cosine(wordVector, embeddings.Slice(i).Unsqueeze());
-    distances.emplace_back(i, d);
-  }
-  std::nth_element(distances.begin(), distances.begin() + k, distances.end(),
-                   [](std::pair<uint64_t, float> const &a, std::pair<uint64_t, float> const &b) {
-                     return a.second > b.second;
-                   });
-  std::cout << "======================" << std::endl;
-  for (uint64_t i(0); i < k; ++i)
-  {
-    std::cout << findWordByIndex(vocab, distances[i].first) << " -- " << distances[i].second
-              << std::endl;
+    std::cout << "output.at(j).first: " << dl.VocabLookup(output.at(j).first) << std::endl;
+    std::cout << "output.at(j).second: " << output.at(j).second << "\n" << std::endl;
   }
 }
 
@@ -91,13 +87,20 @@ int main(int ac, char **av)
     return 1;
   }
 
-  fetch::ml::CBOWLoader<DataType> loader(CONTEXT_WINDOW_SIZE);
+  fetch::ml::dataloaders::CBoWTextParams<ArrayType> p;
+  p.window_size       = CONTEXT_WINDOW_SIZE;
+  p.n_data_buffers    = CONTEXT_WINDOW_SIZE * 2;
+  p.max_sentences     = SizeType(10000);  // maximum number of sentences to use
+  p.discard_frequent  = true;             // discard most frqeuent words
+  p.discard_threshold = 0.01;             // controls how aggressively to discard frequent words
+
+  fetch::ml::dataloaders::CBoWLoader<ArrayType> dl(p);
   for (int i(1); i < ac; ++i)
   {
-    loader.AddData(readFile(av[i]));
+    dl.AddData(readFile(av[i]));
   }
 
-  unsigned int vocabSize = (unsigned int)loader.GetVocab().size();
+  unsigned int vocabSize = (unsigned int)dl.VocabSize();
   std::cout << "Vocab size : " << vocabSize << std::endl;
 
   fetch::ml::Graph<ArrayType> g;
@@ -109,40 +112,41 @@ int main(int ac, char **av)
 
   MeanSquareError<ArrayType> criterion;
   unsigned int               iteration(0);
-  float                      loss = 0;
+  double                     loss = 0;
 
   unsigned int epoch(0);
   while (true)
   {
-    loader.Reset();
-    while (!loader.IsDone())
+    dl.Reset();
+    while (!dl.IsDone())
     {
-      auto input = loader.GetNext();
-      g.SetInput("Input", input.first);
+      auto data = dl.GetRandom();
+
+      g.SetInput("Input", data.first);
       ArrayType predictions = g.Evaluate("Softmax");
       ArrayType groundTruth(predictions.shape());
-      groundTruth.At(input.second) = DataType(1);
+      groundTruth.At(data.second) = DataType(1);
 
-      uint64_t argmax(uint64_t(ArgMax(predictions)));
-      if (iteration % 100 == 0 || argmax == input.second)
+      SizeType argmax(SizeType(ArgMax(predictions)));
+      if (iteration % 100 == 0 || argmax == data.second)
       {
-        for (unsigned int i(0); i < CONTEXT_WINDOW_SIZE * 2 + 1; ++i)
+        for (unsigned int i(0); i < p.n_data_buffers + 1; ++i)
         {
-          if (i < CONTEXT_WINDOW_SIZE)
+          if (i < p.window_size)
           {
-            std::cout << findWordByIndex(loader.GetVocab(), uint64_t(input.first.At(i))) << " ";
+            std::cout << dl.VocabLookup(SizeType(data.first.At(i))) << " ";
           }
-          else if (i == CONTEXT_WINDOW_SIZE)
+          else if (i == p.window_size)
           {
-            std::cout << "[" << findWordByIndex(loader.GetVocab(), uint64_t(input.second)) << "] ";
+            std::cout << "[" << dl.VocabLookup(SizeType(data.second)) << "] ";
           }
           else
           {
-            std::cout << findWordByIndex(loader.GetVocab(), uint64_t(input.first.At(i - 1))) << " ";
+            std::cout << dl.VocabLookup(SizeType(data.first.At(i - 1))) << " ";
           }
         }
-        std::cout << "-- " << (argmax == input.second ? "\033[0;32m" : "\033[0;31m")
-                  << findWordByIndex(loader.GetVocab(), argmax) << "\033[0;0m" << std::endl;
+        std::cout << "-- " << (argmax == data.second ? "\033[0;32m" : "\033[0;31m")
+                  << dl.VocabLookup(argmax) << "\033[0;0m" << std::endl;
         std::cout << "Loss : " << loss << std::endl;
         loss = 0;
       }
@@ -154,8 +158,9 @@ int main(int ac, char **av)
       iteration++;
     }
     std::cout << "End of epoch " << epoch << std::endl;
+
     // Print KNN of word "one"
-    PrintKNN(loader.GetVocab(), *g.StateDict().dict_["Embeddings"].weights_, "mind", 6);
+    PrintKNN(dl, *g.StateDict().dict_["Embeddings"].weights_, TEST_WORD, K);
 
     // Save model
     fetch::serializers::ByteArrayBuffer serializer;

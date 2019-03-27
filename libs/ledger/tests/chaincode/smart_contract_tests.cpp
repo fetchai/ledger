@@ -406,4 +406,149 @@ TEST_F(SmartContractTests, CheckParameterizedActionAndQuery)
   }
 }
 
+TEST_F(SmartContractTests, CheckBasicTokenContract)
+{
+  std::string const contract_source = R"(
+    @init
+    function initialize(owner: Address)
+        var INITIAL_SUPPLY = 100000000000ul;
+
+        var account = State<UInt64>(owner, 0ul);
+        account.set(INITIAL_SUPPLY);
+    endfunction
+
+    @action
+    function transfer(from: Address, to: Address, amount: UInt64)
+
+      // define the accounts
+      var from_account = State<UInt64>(from, 0ul);
+      var to_account = State<UInt64>(to, 0ul); // if new sets to 0u
+
+      // Check if the sender has enough balance to proceed
+      if (from_account.get() >= amount)
+        from_account.set(from_account.get() - amount);
+        to_account.set(to_account.get() + amount);
+      endif
+
+    endfunction
+
+    @query
+    function balance(address: Address) : UInt64
+        var account = State<UInt64>(address, 0ul);
+        return account.get();
+    endfunction
+  )";
+
+  // create the contract
+  CreateContract(contract_source);
+
+  // check the registered handlers
+  auto const transaction_handlers = contract_->transaction_handlers();
+  ASSERT_EQ(1u, transaction_handlers.size());
+  EXPECT_TRUE(IsIn(transaction_handlers, "transfer"));
+
+  // check the query handlers
+  auto const query_handlers = contract_->query_handlers();
+  ASSERT_EQ(1u, query_handlers.size());
+  EXPECT_TRUE(IsIn(query_handlers, "balance"));
+
+  fetch::crypto::ECDSASigner target{};
+
+  auto const owner_key =
+      contract_name_->full_name() + ".state." + ToBase64(certificate_->identity().identifier());
+  auto const target_key =
+      contract_name_->full_name() + ".state." + ToBase64(target.identity().identifier());
+
+  auto const owner_resource   = ResourceAddress{owner_key};
+  auto const target_resource  = ResourceAddress{target_key};
+  auto const initial_supply   = RawBytes<uint64_t>(100000000000ull);
+  auto const transfer_amount  = RawBytes<uint64_t>(1000000000ull);
+  auto const remaining_amount = RawBytes<uint64_t>(99000000000ull);
+
+  {
+    using ::testing::_;
+    InSequence seq;
+
+    // from the init
+    EXPECT_CALL(*storage_, Lock(owner_resource));
+    EXPECT_CALL(*storage_, Get(owner_resource));
+    EXPECT_CALL(*storage_, Set(owner_resource, initial_supply));
+    EXPECT_CALL(*storage_, Unlock(owner_resource));
+
+    // from the query
+    EXPECT_CALL(*storage_, Get(owner_resource));
+
+    // from the action
+    EXPECT_CALL(*storage_, Lock(_));
+    EXPECT_CALL(*storage_, Lock(_));
+    EXPECT_CALL(*storage_, Get(_));
+    EXPECT_CALL(*storage_, Get(_));
+    EXPECT_CALL(*storage_, Set(_, remaining_amount));
+    EXPECT_CALL(*storage_, Set(_, transfer_amount));
+    EXPECT_CALL(*storage_, Unlock(_));
+    EXPECT_CALL(*storage_, Unlock(_));
+
+    // from the queries
+    EXPECT_CALL(*storage_, Get(owner_resource));
+    EXPECT_CALL(*storage_, Get(target_resource));
+  }
+
+  EXPECT_EQ(SmartContract::Status::OK, InvokeInit(certificate_->identity()));
+
+  // check to see if the owners balance is present
+  {
+    Variant request    = Variant::Object();
+    request["address"] = ToBase64(certificate_->identity().identifier());
+
+    Variant response;
+    EXPECT_EQ(SmartContract::Status::OK, SendQuery("balance", request, response));
+
+    // check the response is as we expect
+    ASSERT_TRUE(response.Has("result"));
+    EXPECT_EQ(response["result"].As<uint64_t>(), 100000000000ull);
+
+    ASSERT_TRUE(response.Has("status"));
+    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
+  }
+
+  // send the smart contract an "increment" action
+  EXPECT_EQ(SmartContract::Status::OK,
+            SendActionWithParams("transfer",
+                                 {ToBase64(certificate_->identity().identifier()),
+                                  ToBase64(target.identity().identifier())},
+                                 certificate_->identity(), target.identity(), 1000000000ull));
+
+  // make the query
+  {
+    Variant request    = Variant::Object();
+    request["address"] = ToBase64(certificate_->identity().identifier());
+
+    Variant response;
+    EXPECT_EQ(SmartContract::Status::OK, SendQuery("balance", request, response));
+
+    // check the response is as we expect
+    ASSERT_TRUE(response.Has("result"));
+    EXPECT_EQ(response["result"].As<uint64_t>(), 99000000000ull);
+
+    ASSERT_TRUE(response.Has("status"));
+    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
+  }
+
+  // make the query
+  {
+    Variant request    = Variant::Object();
+    request["address"] = ToBase64(target.identity().identifier());
+
+    Variant response;
+    EXPECT_EQ(SmartContract::Status::OK, SendQuery("balance", request, response));
+
+    // check the response is as we expect
+    ASSERT_TRUE(response.Has("result"));
+    EXPECT_EQ(response["result"].As<uint64_t>(), 1000000000ull);
+
+    ASSERT_TRUE(response.Has("status"));
+    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
+  }
+}
+
 }  // namespace

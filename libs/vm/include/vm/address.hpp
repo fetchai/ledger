@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/decoders.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "vm/vm.hpp"
 
 namespace fetch {
@@ -35,12 +38,36 @@ public:
     return new Address{vm, id};
   }
 
+  static Ptr<Address> Constructor(VM *vm, TypeId id, Ptr<String> const &address)
+  {
+    return new Address{vm, id, address};
+  }
+
   // Construction / Destruction
-  Address(VM *vm, TypeId id, bool signed_tx = false)
+  Address(VM *vm, TypeId id, Ptr<String> const &address = Ptr<String>{}, bool signed_tx = false)
     : Object(vm, id)
     , signed_tx_{signed_tx}
     , vm_{vm}
-  {}
+  {
+    if (address)
+    {
+      if (STRING_REPR_SIZE != address->str.size())
+      {
+        vm->RuntimeError("Incorrectly sized string value for Address value");
+        return;
+      }
+
+      // decode the base64 address (public key)
+      auto const decoded = byte_array::FromBase64(address->str);
+
+      // resize the buffer
+      address_.resize(decoded.size());
+
+      // copy the contents of the address
+      std::memcpy(address_.data(), decoded.pointer(), decoded.size());
+    }
+  }
+
   ~Address() override = default;
 
   bool HasSignedTx() const
@@ -71,44 +98,27 @@ public:
     return success;
   }
 
-  bool SetStringRepresentation(std::string const &repr)
+  Ptr<String> AsBase64String()
   {
-    bool success{false};
+    return new String{vm_, static_cast<std::string>(byte_array::ToBase64(
+                               byte_array::ConstByteArray{address_.data(), address_.size()}))};
+  }
 
-    if (repr.size() == STRING_REPR_SIZE)
+  std::vector<uint8_t> ToBytes() const
+  {
+    return address_;
+  }
+
+  void FromBytes(std::vector<uint8_t> &&data)
+  {
+    if (RAW_BYTES_SIZE != data.size())
     {
-      string_representation_ = repr;
+      vm_->RuntimeError("Invalid address format");
+      return;
     }
 
-    return success;
-  }
-
-  fetch::vm::Ptr<fetch::vm::String> AsString()
-  {
-    fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm_, string_representation_));
-    return ret;
-  }
-
-  uint64_t AsBytesSize() const
-  {
-    return STRING_REPR_SIZE + RAW_BYTES_SIZE;
-  }
-
-  void *AsBytes()
-  {
-    void *bytes = malloc(STRING_REPR_SIZE + RAW_BYTES_SIZE);
-
-    memcpy(bytes, address_.data(), address_.size());
-    memcpy((uint8_t *)bytes + RAW_BYTES_SIZE, string_representation_.c_str(),
-           string_representation_.size());
-    return bytes;
-  }
-
-  void FromBytes(void *data)
-  {
-    address_ = Buffer((uint8_t *)data, (uint8_t *)data + RAW_BYTES_SIZE);
-    string_representation_.assign(((const char *)data) + RAW_BYTES_SIZE,
-                                  (std::size_t)STRING_REPR_SIZE);
+    // update the value
+    address_ = std::move(data);
   }
 
 private:

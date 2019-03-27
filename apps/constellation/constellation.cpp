@@ -147,7 +147,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   , reactor_{"Reactor"}
   , network_manager_{"NetMgr", CalcNetworkManagerThreads(cfg_.num_lanes())}
   , http_network_manager_{"Http", HTTP_THREADS}
-  , muddle_{muddle::NetworkId{"IHUB"}, certificate, network_manager_}
+  , muddle_{muddle::NetworkId{"IHUB"}, std::move(certificate), network_manager_,
+            !config.disable_signing}
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
   , internal_muddle_{muddle::NetworkId{"ISRD"}, internal_identity_, network_manager_}
   , trust_{}
@@ -197,7 +198,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   reactor_.Attach(main_chain_service_->GetWeakRunnable());
 
   // configure all the lane services
-  lane_services_.Setup(network_manager_, shard_cfgs_);
+  lane_services_.Setup(network_manager_, shard_cfgs_, !config.disable_signing);
 
   // configure the middleware of the http server
   http_.AddMiddleware(http::middleware::AllowOrigin("*"));

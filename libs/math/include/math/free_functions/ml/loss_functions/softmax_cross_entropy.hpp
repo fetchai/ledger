@@ -36,31 +36,34 @@ namespace math {
  * @return Returns an Array of size 1 containing the loss value
  */
 template <typename ArrayType>
-ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
+void SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y, ArrayType &ret)
 {
   assert(x.shape() == y.shape());
   assert(x.shape().size() == 2);
 
-  auto n_examples = x.shape()[0];
-
-  ArrayType sce_x{x.shape()};
-  sce_x.Copy(x);
+  auto      n_examples = x.shape()[0];
+  ArrayType sce_x      = x.Clone();
 
   // we don't explicitly call softmax, because we assume softmax was already included in the graph
   // (i.e. x is the output of softmax layer)
 
   auto      gt = ArgMax(y);
   ArrayType log_likelihood{1};
-  log_likelihood[0] = 0;
+  log_likelihood.Fill(0);
 
   for (typename ArrayType::SizeType idx = 0; idx < n_examples; ++idx)
   {
-    sce_x.Set({idx, static_cast<typename ArrayType::SizeType>(gt)},
-              std::log(sce_x.At({idx, static_cast<typename ArrayType::SizeType>(gt)})));
-    log_likelihood[0] -= sce_x.At({idx, static_cast<typename ArrayType::SizeType>(gt)});
+    log_likelihood.At(0) -= std::log(sce_x.At({idx, gt}));
   }
+  Divide(log_likelihood, static_cast<typename ArrayType::Type>(n_examples), ret);
+}
 
-  return Divide(log_likelihood, static_cast<typename ArrayType::Type>(n_examples));
+template <typename ArrayType>
+ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
+{
+  ArrayType ret{x.shape()};
+  SoftmaxCrossEntropyLoss(x, y, ret);
+  return ret;
 }
 
 }  // namespace math
