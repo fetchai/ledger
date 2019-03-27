@@ -112,50 +112,46 @@ TEST(new_revertible_store_test, basic_example_of_commit_revert1)
     EXPECT_EQ(document.failed, false);
     EXPECT_EQ(ConstByteArray(document), ByteArray(std::to_string(i)));
   }
-
-  // Test: we should fail badly trying to revert to a hash that doesn't exist // TODO(HUT): this no longer throws!
-  ASSERT_THROW(store.RevertToHash(storage::ResourceAddress("non-existent key").id()),
-               StorageException);
 }
 
-//TEST(DISABLED_new_revertible_store_test, more_involved_commit_revert)
-//{
-//  NewRevertibleDocumentStore store;
-//  store.New("a_12.db", "b_12.db", "c_12.db", "d_12.db", true);
-//
-//  // Keep track of the hashes we get from committing
-//  std::vector<ByteArray> hashes;
-//
-//  // Our keys will be selected to be very close to each other
-//  auto unique_hashes = GenerateUniqueHashes(1000);
-//
-//  // Make some changes to the store
-//  for (std::size_t i = 0; i < unique_hashes.size(); ++i)
-//  {
-//    std::string set_me{std::to_string(i)};
-//    store.Set(storage::ResourceID(unique_hashes[i]), set_me);
-//    ASSERT_EQ(store.size(), i + 1); /* This fails */
-//  }
-//
-//  // Verify state is correct with no changes
-//  for (std::size_t i = 0; i < unique_hashes.size(); ++i)
-//  {
-//    // Test for success
-//    {
-//      auto document = store.Get(storage::ResourceID(unique_hashes[i]));
-//      EXPECT_EQ(document.failed, false);
-//      EXPECT_EQ(ConstByteArray(document), ByteArray(std::to_string(i)));
-//    }
-//
-//    // Test for fail
-//    {
-//      auto document = store.Get(storage::ResourceAddress(std::to_string(10000 + i)));
-//      EXPECT_EQ(document.failed, true);
-//      EXPECT_EQ(document.was_created, false);
-//      EXPECT_NE(ConstByteArray(document), ByteArray(std::to_string(10000 + i)));
-//    }
-//  }
-//}
+TEST(DISABLED_new_revertible_store_test, more_involved_commit_revert)
+{
+  NewRevertibleDocumentStore store;
+  store.New("a_12.db", "b_12.db", "c_12.db", "d_12.db", true);
+
+  // Keep track of the hashes we get from committing
+  std::vector<ByteArray> hashes;
+
+  // Our keys will be selected to be very close to each other
+  auto unique_hashes = GenerateUniqueHashes(1000);
+
+  // Make some changes to the store
+  for (std::size_t i = 0; i < unique_hashes.size(); ++i)
+  {
+    std::string set_me{std::to_string(i)};
+    store.Set(storage::ResourceID(unique_hashes[i]), set_me);
+    ASSERT_EQ(store.size(), i + 1); /* This fails */
+  }
+
+  // Verify state is correct with no changes
+  for (std::size_t i = 0; i < unique_hashes.size(); ++i)
+  {
+    // Test for success
+    {
+      auto document = store.Get(storage::ResourceID(unique_hashes[i]));
+      EXPECT_EQ(document.failed, false);
+      EXPECT_EQ(ConstByteArray(document), ByteArray(std::to_string(i)));
+    }
+
+    // Test for fail
+    {
+      auto document = store.Get(storage::ResourceAddress(std::to_string(10000 + i)));
+      EXPECT_EQ(document.failed, true);
+      EXPECT_EQ(document.was_created, false);
+      EXPECT_NE(ConstByteArray(document), ByteArray(std::to_string(10000 + i)));
+    }
+  }
+}
 
 TEST(new_revertible_store_test, basic_example_of_commit_revert_with_load)
 {
