@@ -336,8 +336,6 @@ public:
     history_.Clear();
     hash_history_.Clear();
 
-    ERROR_BACKTRACE;
-
     internal_bookmark_index_ = stack_.header_extra().bookmark;
   }
 
