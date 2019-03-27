@@ -217,8 +217,6 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
       FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's state hash cannot be retrieved for block: ",
                       ToBase64(current_hash), " number; ", common_parent->body.block_number);
 
-      exit(1);
-
       // this is a bad situation so the easiest solution is to revert back to genesis
       execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
       if (!storage_unit_.RevertToHash(GENESIS_MERKLE_ROOT, 0))
