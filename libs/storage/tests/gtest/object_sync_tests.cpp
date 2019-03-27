@@ -172,7 +172,7 @@ LaneServicePtr CreateLaneService(uint16_t start_port, NetworkManager const &nm, 
   cfg.internal_port       = static_cast<uint16_t>(start_port + 1u);
   cfg.internal_network_id = NetworkId{"INT-"};
 
-  return std::make_shared<LaneService>(nm, cfg, LaneService::Mode::CREATE_DATABASE);
+  return std::make_shared<LaneService>(nm, cfg, false, LaneService::Mode::CREATE_DATABASE);
 }
 
 // TODO(private issue 686): Reinstate object store tests

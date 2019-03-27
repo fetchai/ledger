@@ -16,20 +16,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/tcp/loopback_server.hpp"
-#include <iostream>
+#include "crypto/ecdsa.hpp"
+#include "crypto/verifier.hpp"
 
-int main(int /*argc*/, char ** /*argv*/)
+namespace fetch {
+namespace crypto {
+
+/**
+ * This function, given a key, a buffer and a signature, verifies authenticity of the three.
+ *
+ * @param identity The public key to construct a concrete (e.g. ECDSA) verifier from
+ * @param data Message to be verified
+ * @param signature
+ */
+
+bool Verify(byte_array::ConstByteArray key, byte_array::ConstByteArray const &data,
+            byte_array::ConstByteArray const &signature)
 {
-  {
-    std::cerr << "Starting loopback server" << std::endl;
-    fetch::network::LoopbackServer echo(8080);
-
-    char dummy;
-    std::cout << "press any key to quit" << std::endl;
-    std::cin >> dummy;
-  }
-
-  std::cout << "Finished" << std::endl;
-  return 0;
+  return ECDSAVerifier(Identity(std::move(key))).Verify(data, signature);
 }
+
+}  // namespace crypto
+}  // namespace fetch
