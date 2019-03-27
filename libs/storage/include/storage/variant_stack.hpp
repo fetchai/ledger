@@ -106,7 +106,6 @@ public:
 
   void Load(std::string const &filename, bool const &create_if_not_exists = true)
   {
-    std::cerr << "Load VS: " << filename << std::endl;  // DELETEME_NH
 
     filename_    = filename;
     file_handle_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
@@ -114,7 +113,6 @@ public:
     {
       if (create_if_not_exists)
       {
-        std::cerr << "clearing." << std::endl;  // DELETEME_NH
         Clear();
         file_handle_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
       }
@@ -129,7 +127,6 @@ public:
 
   void New(std::string const &filename)
   {
-    std::cerr << "New VS: " << filename << std::endl;  // DELETEME_NH
     filename_ = filename;
     Clear();
     file_handle_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
@@ -246,8 +243,6 @@ public:
    */
   void Clear()
   {
-    std::cerr << "*** cleared the variant stack!" << std::endl;  // DELETEME_NH
-
     assert(filename_ != "");
     std::fstream fin(filename_, std::ios::out | std::ios::binary);
     fin.seekg(0, fin.beg);
@@ -283,9 +278,6 @@ protected:
   {
     file_handle_.seekg(0, file_handle_.beg);
     file_handle_.read(reinterpret_cast<char *>(&header_), sizeof(Header));
-
-    std::cerr << "*** After reading header, size is : " << size()
-              << " and file size is : " << file_handle_.tellg() << std::endl;  // DELETEME_NH
   }
 
   void WriteHeader()

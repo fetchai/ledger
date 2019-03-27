@@ -187,12 +187,6 @@ TEST(versioned_random_access_stack_gtest, loading_file)
     NewVersionedRandomAccessStack<StringProxy> stack;
     stack.Load("c_main.db", "c_history.db");
 
-    std::cerr << "this is post load!" << std::endl;  // DELETEME_NH
-    std::cerr << "this is post load!" << std::endl;  // DELETEME_NH
-    std::cerr << "this is post load!" << std::endl;  // DELETEME_NH
-    std::cerr << "this is post load!" << std::endl;  // DELETEME_NH
-    std::cerr << "this is post load!" << std::endl;  // DELETEME_NH
-
     // Verify the change is correct after loading the file up
     for (std::size_t i = 0; i < 17; ++i)
     {
