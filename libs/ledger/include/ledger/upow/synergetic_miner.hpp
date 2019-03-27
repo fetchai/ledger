@@ -37,12 +37,12 @@ public:
     delete vm_;
   }
 
-  bool DefineProblem(SynergeticContract contract) 
+  bool DefineProblem() 
   { 
-    assert(contract != nullptr);
+    assert(contract_ != nullptr);
 
     // Defining problem
-    if (!vm_->Execute(contract->script, contract->problem_function, error_, problem_))
+    if (!vm_->Execute(contract_->script, contract_->problem_function, error_, problem_))
     {
       std::cout << "Failed to execute problem function: " << error_ << std::endl;
       return false;
@@ -50,10 +50,10 @@ public:
     return true;
   }
 
-  ScoreType ExecuteWork(SynergeticContract contract, Work work) 
+  ScoreType ExecuteWork(Work work) 
   { 
 
-    if(work.contract_name != contract->name)
+    if(work.contract_name != contract_->name)
     {
       throw std::runtime_error("Contract name between work and used contract differs.");
     }
@@ -61,14 +61,14 @@ public:
     // Executing the work function
     int64_t nonce = work();
 
-    if (!vm_->Execute(contract->script, contract->work_function, error_,  solution_, problem_, nonce))
+    if (!vm_->Execute(contract_->script, contract_->work_function, error_,  solution_, problem_, nonce))
     {
       std::cerr << "Runtime error: " << error_ << std::endl;
       return std::numeric_limits< ScoreType >::max();
     }
 
     // Computing objective function
-    if (!vm_->Execute(contract->script, contract->objective_function, error_, score_,  problem_, solution_))
+    if (!vm_->Execute(contract_->script, contract_->objective_function, error_, score_,  problem_, solution_))
     {
       std::cerr << "Runtime error: " << error_ << std::endl;
       return std::numeric_limits< ScoreType >::max();
@@ -77,11 +77,17 @@ public:
     return score_.primitive.f64; // TODO: Migrate to i64 and fixed points
   }
 
-  DAGNode CreateDAGTestData(SynergeticContract contract, int32_t epoch, int32_t entropy)
+  bool ClearContest()
+  {
+    throw std::runtime_error("clear problem is not implemented just yet");
+    return false;
+  }
+
+  DAGNode CreateDAGTestData(int32_t epoch, int32_t entropy)
   {
     fetch::vm::Variant new_dag_node;
 
-    if (!vm_->Execute(contract->script, contract->test_dag_generator, error_, new_dag_node, epoch, entropy))
+    if (!vm_->Execute(contract_->script, contract_->test_dag_generator, error_, new_dag_node, epoch, entropy))
     {
       std::cerr << "Runtime error: " << error_ << std::endl;
       return DAGNode();
@@ -97,6 +103,16 @@ public:
 
     return node_wrapper->ToDAGNode();
   }
+
+  void AttachContract(SynergeticContract contract)
+  {
+    contract_ = contract;
+  }
+
+  void DetachContract()
+  {
+    contract_ = nullptr;
+  }  
 private:
   fetch::ledger::DAG  &dag_;
   fetch::vm::Module    module_;
@@ -107,6 +123,7 @@ private:
   fetch::vm::Variant solution_; 
   fetch::vm::Variant score_;  
   std::string text_output_;
+  SynergeticContract contract_{nullptr};
 };
 
 

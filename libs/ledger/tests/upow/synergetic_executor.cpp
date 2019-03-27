@@ -115,11 +115,11 @@ public:
 
     // Block is executed
     ExecuteBlock();
-
   }
 
   UniqueDAG&          dag() { return dag_; }
   uint64_t random() { return random_(); }
+  UniqueBlockChain&   chain() { return chain_; }
 private:
   void GenerateDAGData(uint64_t N = 100, uint64_t mine_every = 5)
   {
@@ -153,8 +153,9 @@ private:
       else
       {
         // Generating data in this round
-        auto contract = cregister_.GetContract(CONTRACT_NAME);
-        auto node = miner_->CreateDAGTestData(contract, static_cast<int32_t>(chain_->size()), static_cast<int32_t>( random_() & ((1ul<<31) - 1ul ) ) );
+        miner_->AttachContract(cregister_.GetContract(CONTRACT_NAME));
+        auto node = miner_->CreateDAGTestData(static_cast<int32_t>(chain_->size()), static_cast<int32_t>( random_() & ((1ul<<31) - 1ul ) ) );
+        miner_->DetachContract();
 
         node.contract_name = CONTRACT_NAME;
         dag_->SetNodeReferences(node);
@@ -187,19 +188,30 @@ private:
     chain_->push_back(next_block);
   }
   
-  void ExecuteBlock()
+  enum ExecuteStatus
   {
+    SUCCESS = 0,
+    REJECT_BLOCK
+  };
+
+  ExecuteStatus ExecuteBlock()
+  {
+    using PStatus = SynergeticExecutor::PreparationStatusType;
+
     std::cout << "Executing block"<< std::endl;      
     auto current_block = chain_->back();
 
-    // Annotating nodes in the DAG
-    dag_->SetNodeTime(current_block.body.block_number, current_block.body.dag_nodes);
-
     // Testing executor - preparing work
-    executor_->PrepareWorkQueue(current_block);
+    if(PStatus::SUCCESS != executor_->PrepareWorkQueue(current_block)) 
+    {
+      std::cout << "FAILED TO PREPARE!" << std::endl;
+      return ExecuteStatus::REJECT_BLOCK;
+    }
 
     // Executing work
     executor_->ValidateWorkAndUpdateState();
+
+    return ExecuteStatus::SUCCESS;
   }
 
   Work Mine(int64_t search_length = 10) 
@@ -208,8 +220,11 @@ private:
     work.contract_name = CONTRACT_NAME;
     work.miner = "miner9";
 
-    if(!miner_->DefineProblem(cregister_.GetContract(work.contract_name)))
+    miner_->AttachContract(cregister_.GetContract(work.contract_name));
+
+    if(!miner_->DefineProblem())
     {
+      miner_->DetachContract();
       std::cout << "Could not define problem!" << std::endl;
       exit(-1);
     }
@@ -219,7 +234,7 @@ private:
     fetch::consensus::Work::ScoreType best_score = std::numeric_limits< fetch::consensus::Work::ScoreType >::max();
     for(int64_t i = 0; i < search_length; ++i) {
       work.nonce = 29188 + i;
-      work.score = miner_->ExecuteWork(cregister_.GetContract(work.contract_name), work);
+      work.score = miner_->ExecuteWork(work);
 
       if(work.score < best_score)
       {
@@ -228,6 +243,8 @@ private:
       
       wreg.RegisterWork(work);
     }
+
+    miner_->DetachContract();
 
     // Returning the best work from this round
     return wreg.ClearWorkPool( cregister_.GetContract(work.contract_name) );
@@ -248,18 +265,28 @@ private:
 TEST_F(SynergeticExecutorTest, CheckMiningFlow)
 {
   std::vector< uint64_t > dag_counters;
-  uint64_t total = 1; // Genesis
+  dag_counters.push_back(0); // 0 dag nodes before genesis
+  uint64_t total = 1; // 1 becuase of Genesis
+  uint64_t rounds = 10;
 
-  // Mining 100 rounds
-  for(std::size_t i=0; i < 100; ++i)
+  // Testing live execution for a number of rounds
+  for(std::size_t i=0; i < rounds; ++i)
   {
     uint64_t N = random() % 100;
     dag_counters.push_back(N);
     total += N;
+    std::cout << "Adding " << N << " nodes" << std::endl;
     ExecuteRound(N);
-    std::cout << dag()->size() << " VS " << total << std::endl;
     EXPECT_TRUE(dag()->size() == total);
   }
 
-  // TEST CERTIFICATION
+  // Verifying DAG certification
+  auto &ch = *chain();
+  for(std::size_t i=0; i < ch.size(); ++i)
+  {
+    auto block = ch[i];
+    auto segment = dag()->ExtractSegment(block.body.block_number);
+    std::cout << segment.size() << " vs " <<  dag_counters[i] << std::endl;
+    EXPECT_TRUE(segment.size() == dag_counters[i]);
+  }  
 }

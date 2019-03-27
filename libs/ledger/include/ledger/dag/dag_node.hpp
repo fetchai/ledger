@@ -32,6 +32,7 @@ struct DAGNode
   using DigestList = std::vector<Digest>;
 
   static constexpr uint64_t INVALID_TIMESTAMP = std::numeric_limits<uint64_t>::max();
+  static constexpr uint64_t GENESIS_TIME = std::numeric_limits<uint64_t>::max() - 1;
 
   // Different types of DAG nodes.
   enum

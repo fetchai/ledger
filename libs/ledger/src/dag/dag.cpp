@@ -30,6 +30,7 @@ DAG::DAG()
   DAGNode n;
   n.type = DAGNode::WORK;
   n.contents = "genesis"; // TODO(tfr): make configurable
+  n.timestamp = DAGNode::GENESIS_TIME;
 
   // Use PushInternal to bypass checks on previous hashes
   PushInternal(n, false);
@@ -149,8 +150,15 @@ bool DAG::PushInternal(DAGNode node, bool check_signature)
 {
   LOG_STACK_TRACE_POINT;
 
-  // Finalise to get the node hash
+  // Finalise to get the node hash and force no time on them
   node.Finalise();
+  node.timestamp = DAGNode::INVALID_TIMESTAMP;
+
+  // Special treatment of genesis node
+  if(nodes_.size() == 0)
+  {
+    node.timestamp = DAGNode::GENESIS_TIME;
+  }
 
   if(check_signature)
   {
@@ -161,7 +169,12 @@ bool DAG::PushInternal(DAGNode node, bool check_signature)
     }
 
     // Checking the signature
-    // TODO:
+    VerifierType verfifier(node.identity);
+    if (!verfifier.Verify(node.hash, node.signature))
+    {
+      // TODO: Update trust system
+      return false;
+    }
   }
 
   // CLearing all tips that are being referenced a lot

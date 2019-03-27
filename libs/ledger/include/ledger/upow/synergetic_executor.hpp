@@ -1,5 +1,5 @@
 #pragma once
-
+#include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/upow/synergetic_contract_register.hpp"
 #include "ledger/upow/work.hpp"
 #include "ledger/upow/work_register.hpp"
@@ -8,6 +8,7 @@
 
 #include "ledger/chain/block.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "ledger/identifier.hpp"
 
 #include <algorithm>
 #include <queue>
@@ -18,17 +19,19 @@ namespace consensus
 
 struct WorkPackage
 {
-  using ContractAddress   = byte_array::ConstByteArray;  
-  using SharedWorkPackage = std::shared_ptr< WorkPackage >;  
-  using WorkQueue = std::priority_queue< Work >;
+  using ContractName         = byte_array::ConstByteArray;
+  using ContractAddress      = storage::ResourceAddress;  
+  using SharedWorkPackage    = std::shared_ptr< WorkPackage >;  
+  using WorkQueue            = std::priority_queue< Work >;
   
 
-  static SharedWorkPackage New(ContractAddress contract_address) {
-    return SharedWorkPackage(new WorkPackage(std::move(contract_address)));
+  static SharedWorkPackage New(ContractName name, ContractAddress contract_address) {
+    return SharedWorkPackage(new WorkPackage(std::move(name), std::move(contract_address)));
   }
 
   /// @name defining work and candidate solutions
   /// @{
+  ContractName    contract_name{};
   ContractAddress contract_address{};
   WorkQueue       solutions_queue{};
   /// }
@@ -39,46 +42,55 @@ struct WorkPackage
   }
 
 private:
-  WorkPackage(ContractAddress address) : contract_address{std::move(address)} { }
+  WorkPackage(ContractName name, ContractAddress address) 
+  : contract_name{std::move(name)}
+  , contract_address{std::move(address)} { }
 };
 
 
 class SynergeticExecutor 
 {
 public:
-  using ConstByteArray    = byte_array::ConstByteArray;
-  using ContractAddress   = byte_array::ConstByteArray;  
-  using SharedWorkPackage = std::shared_ptr< WorkPackage >;
-  using ExecutionQueue    = std::vector< SharedWorkPackage >;
-  using WorkMap           = std::unordered_map< ContractAddress, SharedWorkPackage >;
-  using DAG               = ledger::DAG;
-  using Block             = ledger::Block;
+  using Identifier           = ledger::Identifier;
+  using ContractAddress      = storage::ResourceAddress;
+  using ConstByteArray       = byte_array::ConstByteArray;
+  using SharedWorkPackage    = std::shared_ptr< WorkPackage >;
+  using ExecutionQueue       = std::vector< SharedWorkPackage >;
+  using WorkMap              = std::unordered_map< ContractAddress, SharedWorkPackage >;
+  using DAG                  = ledger::DAG;
+  using Block                = ledger::Block;
   using StorageUnitInterface = ledger::StorageUnitInterface;
   
-  enum StatusType 
+  enum PreparationStatusType 
   {
     SUCCESS,
     CONTRACT_NAME_PARSE_FAILURE,
-    INVALID_NODE
+    INVALID_CONTRACT_ADDRESS,
+    INVALID_NODE,
+    INVALID_BLOCK,
+    CONTRACT_REGISTRATION_FAILED
   };
 
   SynergeticExecutor(DAG &dag, StorageUnitInterface &storage_unit)
   : miner_{dag}
   , dag_{dag}
-  , storage_unit_{storage_unit}
-  {
-    (void)dag_;
-    (void)storage_unit_;
-  }
+  , storage_{storage_unit}
+  { }
 
-  StatusType PrepareWorkQueue(Block &block)
+  PreparationStatusType PrepareWorkQueue(Block &block)
   {
-    return StatusType::SUCCESS;
-//    WorkMap synergetic_work_candidates;
-    // TODO: contract_register_.Clear();
-/*
-    // Traverse DAG last segment and find work
-    for(auto &node: dag_.ExtractSegment(block.body.block_number))
+    WorkMap synergetic_work_candidates;
+
+    // Annotating nodes in the DAG
+    if(!dag_.SetNodeTime(block.body.block_number, block.body.dag_nodes))
+    {
+      return PreparationStatusType::INVALID_BLOCK;      
+    }
+
+    auto segment = dag_.ExtractSegment(block.body.block_number);
+
+    // Extracting relevant contract names
+    for(auto &node: segment)
     {
       if(node.type == ledger::DAGNode::WORK) 
       {
@@ -87,32 +99,32 @@ public:
 
         try
         {
-          // TODO: Deserialise
-          serializers::TypedByteArrayBuffer buf(node.contents);
-          buf >> ret;
+          node.GetObject(work);
         }
         catch(std::exception const &e)
         {
-          return INVALID_NODE;
+          return PreparationStatusType::INVALID_NODE;
         }
 
+        // Getting the contract name
         Identifier contract_id;
-        if (!contract_id.Parse(node.contract_name)
+        if (!contract_id.Parse(node.contract_name))
         {
-          return Status::CONTRACT_NAME_PARSE_FAILURE;
+          return PreparationStatusType::CONTRACT_NAME_PARSE_FAILURE;
         }
 
-        // Adding the work to 
-        ConstByteArray contract_address = ""; 
+        // create the resource address for the contract
+        ContractAddress contract_address = ledger::SmartContractManager::CreateAddressForContract(contract_id);
 
         auto it = synergetic_work_candidates.find(contract_address);
         if(it == synergetic_work_candidates.end())
         {
-          synergetic_work_candidates[contract_address] = WorkPackage::New(contract_address);
+          synergetic_work_candidates[contract_address] = WorkPackage::New(node.contract_name, contract_address);
         }
 
         auto pack = synergetic_work_candidates[contract_address];
         pack->solutions_queue.push(work);
+
       }
     }
 
@@ -130,26 +142,38 @@ public:
     // Fetching the contracts
     for(auto &c: contract_queue_)
     {
-      ConstByteArray source = "";  // TODO: Wait for smart contracts to be finished
+      // Getting contract source and registering the contract
+      auto const result = storage_.Get(c->contract_address);
 
-      if(!contract_register_.CreateContract(c->contract_address, static_cast<std::string>(source) ))
+      // Invalid address
+      if (result.failed)
       {
-        return false;
-      }      
+        return PreparationStatusType::INVALID_CONTRACT_ADDRESS;
+      }
 
+      // Extracting the source 
+      ConstByteArray source; 
+      serializers::ByteArrayBuffer adapter{result.document};      
+      adapter >> source;
+
+      // Registering contract
+      if(!contract_register_.CreateContract(c->contract_name, static_cast<std::string>(source) ))
+      {
+        return PreparationStatusType::CONTRACT_REGISTRATION_FAILED;
+      }      
     }
 
-    return true;
-    */
+    return PreparationStatusType::SUCCESS;
   }
 
   bool ValidateWorkAndUpdateState()
   {
-    /*
-    for(auto &c: contract_queue_)
+    for(auto &c: contract_queue_)      
     {
+      miner_.AttachContract(contract_register_.GetContract(c->contract_name));
+
       // Defining the problem using the data on the DAG
-      if(!miner_.DefineProblem(contract_register_.GetContract(c->contract_address)))
+      if(!miner_.DefineProblem())
       {
         return false;
       }
@@ -158,31 +182,36 @@ public:
       while(!c->solutions_queue.empty())
       {
         auto work = c->solutions_queue.top();
+
         c->solutions_queue.pop();
 
-        Work::ScoreType score = miner_.ExecuteWork(contract_register_.GetContract(work.contract_address), work);
+        Work::ScoreType score = miner_.ExecuteWork(work);
         if(score == work.score)
         {
-          // TODO: Work was honest and we just need to update the state
-          // Need contract implementation
+          // Work was honest
+          miner_.ClearProblem();
+
+          // TODO (tfr): placeholder to issue reward to winning miner
           break;
         }
         else
         {
-          // Work was dishonst and we slash stake
-          // TODO.
+          // TODO (tfr): place holder to slash the stake that was put up to add DAG nodes to the net
+          // work was dishonest
         }
       }
+
+      miner_.DetachContract();
     }
-*/
+
     return true;
   }
 
 private:
   SynergeticContractRegister contract_register_;  ///< Cache for synergetic contracts
   SynergeticMiner            miner_;              ///< Miner to validate the work
-  DAG &                      dag_;                           ///< DAG with work to be executed
-  StorageUnitInterface &     storage_unit_;
+  DAG &                      dag_;                ///< DAG with work to be executed
+  StorageUnitInterface &     storage_;
 
   ExecutionQueue contract_queue_;
 };

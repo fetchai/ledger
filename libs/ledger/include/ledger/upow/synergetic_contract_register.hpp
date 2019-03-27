@@ -18,7 +18,7 @@ namespace consensus
 class SynergeticContractRegister
 {
 public:
-  using ContractAddress = byte_array::ConstByteArray;
+  using ContractName      = byte_array::ConstByteArray;
 
   SynergeticContractRegister()
   {
@@ -31,7 +31,7 @@ public:
     delete compiler_;
   }
 
-  SynergeticContract CreateContract(ContractAddress const &contract_name, std::string const &source)
+  SynergeticContract CreateContract(ContractName const &contract_name, std::string const &source)
   {
     
     SynergeticContract ret = SynergeticContractClass::New(compiler_, contract_name, source);
@@ -39,9 +39,9 @@ public:
     return ret;
   }
 
-  SynergeticContract GetContract(ContractAddress const &address)
+  SynergeticContract GetContract(ContractName const &name)
   {
-    auto it = contracts_.find(address);
+    auto it = contracts_.find(name);
     if(it == contracts_.end())
     {
       return nullptr;
@@ -51,7 +51,7 @@ public:
 private:
   vm::Module     module_;
   vm::Compiler  *compiler_ = nullptr;
-  std::unordered_map< ContractAddress, SynergeticContract > contracts_;
+  std::unordered_map< ContractName, SynergeticContract > contracts_;
 };
 
 }

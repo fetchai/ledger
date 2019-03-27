@@ -30,7 +30,7 @@ namespace ledger {
 class DAG
 {
 public:
-
+  using VerifierType      = crypto::ECDSAVerifier;
   using ConstByteArray    = byte_array::ConstByteArray;
   using Digest            = ConstByteArray;
   using DigestCache       = std::deque<Digest>;
@@ -42,7 +42,7 @@ public:
   using Mutex             = mutex::Mutex;
   using CallbackFunction  = std::function< void(DAGNode) > ;
   
-  static const uint64_t PARAMETER_REFERENCES_TO_BE_TIP = 3;
+  static const uint64_t PARAMETER_REFERENCES_TO_BE_TIP = 2;
 
   // Construction / Destruction
   DAG();
@@ -94,6 +94,7 @@ public:
     }
 
     // Traversing
+    std::size_t n = 0;
     while(!queue.empty())
     {
       auto hash = queue.front();
@@ -102,12 +103,14 @@ public:
       if(nodes_.find(hash) == nodes_.end())
       {
         // Revert to previous state if an invalid hash is given
+        n = 0;
         for(auto &h: updated_hashes)
         {
           auto &node = nodes_[h];
           node.timestamp = DAGNode::INVALID_TIMESTAMP;
         }
         // FETCH_LOG_ERROR
+
         return false;
       }
 
@@ -120,11 +123,13 @@ public:
         node.timestamp = block_number;
         for(auto &p: node.previous)
         {
+          // TODO: Check whether already added
           queue.push(p);
         }
 
         // Keeping track of updated nodes in case we need to revert.
         updated_hashes.push_back(hash);
+        ++n;
       }
     }
 
@@ -160,10 +165,50 @@ public:
 
   NodeArray ExtractSegment(uint64_t block_number)
   {
-    FETCH_LOCK(maintenance_mutex_);    
-    throw std::runtime_error("DAG::ExtractSegment not implemented");
-    // TODO: implement.
-    return {};
+    FETCH_LOCK(maintenance_mutex_);
+    NodeArray ret;
+
+    std::queue< Digest > queue;
+    std::unordered_set< Digest > added;
+
+    for(auto &t: tips_)
+    {
+      // Only include unreferenced tips here
+      if(t.second == 0)
+      {
+        queue.push(t.first);
+      }
+    }
+
+    while(!queue.empty())
+    {
+      auto &node = nodes_[queue.front()];
+      queue.pop();
+
+      if((node.timestamp < block_number) && (node.timestamp != DAGNode::INVALID_TIMESTAMP))
+      {
+        continue;
+      }
+
+      if(node.timestamp == block_number)
+      {
+        ret.push_back(node);
+      }
+
+      for(auto &p: node.previous)
+      {
+        if(added.find(p) != added.end())
+        {
+          continue;
+        }
+
+        added.insert( p );          
+        queue.push(p);
+      }
+      
+    }
+
+    return ret;
   }
   /// }
 

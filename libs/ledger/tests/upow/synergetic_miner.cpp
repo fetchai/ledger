@@ -74,7 +74,8 @@ public:
     work.contract_name = "fetch.synergetic";
     work.miner = "miner9";
 
-    if(!miner_->DefineProblem(cregister_.GetContract(work.contract_name)))
+    miner_->AttachContract(cregister_.GetContract(work.contract_name));
+    if(!miner_->DefineProblem())
     {
       std::cout << "Could not define problem!" << std::endl;
       return false;
@@ -86,7 +87,7 @@ public:
     fetch::consensus::Work::ScoreType best_score = std::numeric_limits< fetch::consensus::Work::ScoreType >::max();
     for(int64_t i = 0; i < 10; ++i) {
       work.nonce = 29188 + i;
-      work.score = miner_->ExecuteWork(cregister_.GetContract(work.contract_name), work);
+      work.score = miner_->ExecuteWork(work);
 
       if(work.score < best_score)
       {
@@ -97,6 +98,7 @@ public:
 
     auto best_work = wreg.ClearWorkPool( cregister_.GetContract(work.contract_name) );
 
+    miner_->DetachContract();
 
     return  best_work.score == best_score;
   }
