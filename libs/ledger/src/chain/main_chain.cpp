@@ -611,9 +611,6 @@ void MainChain::WriteToFile()
       FETCH_LOG_INFO(LOGGING_NAME, "Writing genesis. ");
       block_store_->Set(storage::ResourceAddress("head"), *block);
       block_store_->Set(storage::ResourceID(block->body.hash), *block);
-
-      // Test we can recover genesis too
-      block_store_->Get(storage::ResourceID(block->body.hash), *dummy);
     }
     else
     {
