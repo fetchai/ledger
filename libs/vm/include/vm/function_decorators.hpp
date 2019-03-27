@@ -54,7 +54,7 @@ inline Kind DetermineKind(vm::Script::Function const &fn)
     {
       kind = Kind::ACTION;
     }
-    else if (annotation.name == "@on_init")
+    else if (annotation.name == "@init")
     {
       kind = Kind::ON_INIT;
     }

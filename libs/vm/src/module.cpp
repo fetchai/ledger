@@ -69,11 +69,12 @@ Module::Module()
 
   auto address = RegisterClassType<Address>(TypeIds::Address);
   address.CreateTypeConstuctor<>();
+  address.CreateTypeConstuctor<Ptr<String>>();
   address.CreateInstanceFunction("signed_tx", &Address::HasSignedTx);
-  address.CreateInstanceFunction("AsString", &Address::AsString);
 
   auto istate = RegisterTemplateType<IState>(TypeIds::IState);
   istate.CreateTypeConstuctor<Ptr<String>, TemplateParameter>();
+  istate.CreateTypeConstuctor<Ptr<Address>, TemplateParameter>();
   istate.CreateInstanceFunction("get", &IState::Get);
   istate.CreateInstanceFunction("set", &IState::Set);
   istate.CreateInstanceFunction("existed", &IState::Existed);
