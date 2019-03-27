@@ -65,6 +65,10 @@ typename ArrayType::Type CrossEntropyLoss(
       else
       {
         DataType tmp = DataType(1) - x.At(idx);
+        if (tmp <= 0)
+        {
+          throw std::runtime_error("cannot take log of negative values");
+        }
         ret -= Log(tmp);
       }
     }

@@ -17,10 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include <vector>
+#include <dirent.h>
 #include <fstream>
 #include <sstream>
-#include <dirent.h>
+#include <vector>
+
+namespace fetch {
+namespace ml {
+namespace examples {
 
 // TODO - also handle a string that specifies one text file only
 /**
@@ -87,3 +91,7 @@ std::string GetTextString(std::string const &training_data)
   }
   return ret;
 }
+
+}  // namespace examples
+}  // namespace ml
+}  // namespace fetch

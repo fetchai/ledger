@@ -17,6 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "file_loader.hpp"
+//#include "core/serializers/byte_array_buffer.hpp"
+//#include "ml/serializers/ml_types.hpp"
+#include "model_saver.hpp"
 
 #include "math/free_functions/clustering_algorithms/knn.hpp"
 #include "math/free_functions/matrix_operations/matrix_operations.hpp"
@@ -46,13 +49,13 @@ using SizeType     = typename ArrayType::SizeType;
 struct TrainingParams
 {
   SizeType    output_size     = 1;
-  SizeType    batch_size      = 128;     // training data batch size
-  SizeType    embedding_size  = 16;      // dimension of embedding vec
-  SizeType    training_epochs = 100000;  // total number of training epochs
-  double      learning_rate   = 0.005;    // alpha - the learning rate
-  SizeType    k               = 10;      // how many nearest neighbours to compare against
-  std::string test_word       = "cold";  // test word to consider
-  DataType    epsilon         = 1e-7;     // small value for avoiding numerical instability
+  SizeType    batch_size      = 128;            // training data batch size
+  SizeType    embedding_size  = 16;             // dimension of embedding vec
+  SizeType    training_epochs = 100000;         // total number of training epochs
+  double      learning_rate   = 0.1;            // alpha - the learning rate
+  SizeType    k               = 10;             // how many nearest neighbours to compare against
+  std::string test_word       = "cold";         // test word to consider
+  std::string save_loc        = "./model.fba";  // small value for avoiding numerical instability
 };
 
 template <typename T>
@@ -72,7 +75,7 @@ SkipGramTextParams<T> SetParams()
 
   ret.window_size         = SizeType(8);  // max size of context window one way
   ret.min_sentence_length = SizeType(4);  //
-  ret.k_negative_samples  = SizeType(1); // number of negative examples to sample
+  ret.k_negative_samples  = SizeType(1);  // number of negative examples to sample
 
   return ret;
 }
@@ -157,7 +160,7 @@ int main(int argc, char **argv)
   SkipGramLoader<ArrayType> dataloader(sp);
 
   // load text from files as necessary and process text with dataloader
-  dataloader.AddData(GetTextString(training_text));
+  dataloader.AddData(fetch::ml::examples::GetTextString(training_text));
 
   std::cout << "dataloader.VocabSize(): " << dataloader.VocabSize() << std::endl;
   std::cout << "dataloader.Size(): " << dataloader.Size() << std::endl;
@@ -234,7 +237,8 @@ int main(int argc, char **argv)
       // forward pass
       results = g.Evaluate(output_name);
 
-      scale_factor.At(0) = (gt.At(0) == DataType(0)) ? DataType(sp.k_negative_samples) : DataType(1);
+      scale_factor.At(0) =
+          (gt.At(0) == DataType(0)) ? DataType(sp.k_negative_samples) : DataType(1);
 
       if (((results.At(0) >= DataType(0.5)) && (gt.At(0) == DataType(1))) ||
           ((results.At(0) < DataType(0.5)) && (gt.At(0) == DataType(0))))
@@ -281,6 +285,9 @@ int main(int argc, char **argv)
     std::cout << "over [" << batch_count << "] batches involving [" << step_count
               << "] steps total." << std::endl;
     std::cout << "\n: " << std::endl;
+
+    // Save model
+    fetch::ml::examples::SaveModel(g, tp.save_loc);
   }
 
   //////////////////////////////////////

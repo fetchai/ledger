@@ -159,7 +159,7 @@ int main(int ac, char **av)
     }
     std::cout << "End of epoch " << epoch << std::endl;
 
-    // Print KNN of word "one"
+    // Print KNN of test word
     PrintKNN(dl, *g.StateDict().dict_["Embeddings"].weights_, TEST_WORD, K);
 
     // Save model

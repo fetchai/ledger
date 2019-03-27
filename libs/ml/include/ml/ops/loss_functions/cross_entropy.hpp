@@ -56,7 +56,6 @@ public:
     assert(inputs.size() == 2);
     assert(inputs[0].size() == inputs[1].size());
     assert(inputs[0].shape().size() == 2);
-    assert((inputs[0].shape().at(1) == 1) || (inputs[0].shape().at(1) == 2));
 
     ArrayType ret;
     if (inputs[0].shape().at(1) == 1)  // not one-hot

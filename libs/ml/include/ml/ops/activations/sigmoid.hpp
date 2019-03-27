@@ -50,8 +50,8 @@ public:
     // ensures numerical stability
     for (auto &val : *this->output_)
     {
-      val = fetch::math::Max(val, epsilon_, val);
-      val = fetch::math::Min(val, DataType(1 - epsilon_), val);
+      fetch::math::Max(val, epsilon_, val);
+      fetch::math::Min(val, fetch::math::Subtract(DataType(1), epsilon_), val);
     }
 
     return *this->output_;
