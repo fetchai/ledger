@@ -154,7 +154,7 @@ public:
   {
     return true;
   };
-  Hash Commit() override
+  Hash Commit(uint64_t) override
   {
     return "";
   };

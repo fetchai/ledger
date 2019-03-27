@@ -336,8 +336,8 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
     EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-    EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash));
-    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash));
+    EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash, ::testing::_));
+    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash, ::testing::_));
 
     // pre block validation
     // none
@@ -359,8 +359,8 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
     EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-    EXPECT_CALL(*storage_unit_, HashExists(b1->body.merkle_hash));
-    EXPECT_CALL(*storage_unit_, RevertToHash(b1->body.merkle_hash));
+    EXPECT_CALL(*storage_unit_, HashExists(b1->body.merkle_hash, ::testing::_));
+    EXPECT_CALL(*storage_unit_, RevertToHash(b1->body.merkle_hash, ::testing::_));
 
     // pre block validation
     // none
@@ -382,8 +382,8 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
     EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-    EXPECT_CALL(*storage_unit_, HashExists(b2->body.merkle_hash));
-    EXPECT_CALL(*storage_unit_, RevertToHash(b2->body.merkle_hash));
+    EXPECT_CALL(*storage_unit_, HashExists(b2->body.merkle_hash, ::testing::_));
+    EXPECT_CALL(*storage_unit_, RevertToHash(b2->body.merkle_hash, ::testing::_));
 
     // pre block validation
     // none
@@ -590,8 +590,8 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
     EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-    EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash));
-    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash));
+    EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash, ::testing::_));
+    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash, ::testing::_));
 
     // syncing
     EXPECT_CALL(*storage_unit_, LastCommitHash());
@@ -679,8 +679,8 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
     EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-    EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash));
-    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash));
+    EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash, ::testing::_));
+    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash, ::testing::_));
 
     // syncing
     EXPECT_CALL(*storage_unit_, LastCommitHash());
@@ -768,8 +768,8 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
     EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-    EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash));
-    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash));
+    EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash, ::testing::_));
+    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash, ::testing::_));
 
     // syncing
     EXPECT_CALL(*storage_unit_, LastCommitHash());

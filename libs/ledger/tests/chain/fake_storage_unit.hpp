@@ -56,13 +56,13 @@ public:
   /// @{
   Hash CurrentHash();
   Hash LastCommitHash();
-  bool RevertToHash(Hash const &hash);
-  Hash Commit();
-  bool HashExists(Hash const &hash);
+  bool RevertToHash(Hash const &hash, uint64_t index);
+  Hash Commit(uint64_t index);
+  bool HashExists(Hash const &hash, uint64_t index);
   /// @}
 
   // Useful for test to force the hash
-  Hash EmulateCommit(Hash const &hash);
+  Hash EmulateCommit(Hash const &hash, uint64_t index);
 
 private:
   using TransactionStore = std::map<Transaction::TxDigest, Transaction>;

@@ -25,7 +25,9 @@ using fetch::byte_array::ToBase64;
 
 FakeExecutionManager::FakeExecutionManager(FakeStorageUnit &storage)
   : storage_{storage}
-{}
+{
+  FETCH_UNUSED(storage_);
+}
 
 FakeExecutionManager::ScheduleStatus FakeExecutionManager::Execute(Block::Body const &block)
 {
@@ -72,16 +74,6 @@ FakeExecutionManager::State FakeExecutionManager::GetState()
   if (execution_complete)
   {
     last_processed_ = current_hash_.Copy();
-
-    // trigger a commit on the "state"
-    if (current_merkle_root_.empty())
-    {
-      storage_.Commit();
-    }
-    else
-    {
-      storage_.EmulateCommit(current_merkle_root_);
-    }
 
     current_hash_ = BlockHash{};
   }

@@ -67,14 +67,14 @@ TEST_F(FakeStorageUnitTests, BasicCheck)
   CheckValueIsPresent("key 1", "value 1");
 
   // create the commit
-  auto const state1 = storage_->Commit();
+  auto const state1 = storage_->Commit(0);
   ASSERT_EQ(storage_->LastCommitHash(), state1);
 
   storage_->Set(ResourceAddress{"key 2"}, "value 2");
   CheckValueIsPresent("key 1", "value 1");
   CheckValueIsPresent("key 2", "value 2");
 
-  auto const state2 = storage_->Commit();
+  auto const state2 = storage_->Commit(1);
   ASSERT_EQ(storage_->LastCommitHash(), state2);
 
   storage_->Set(ResourceAddress{"key 3"}, "value 3");
@@ -82,15 +82,15 @@ TEST_F(FakeStorageUnitTests, BasicCheck)
   CheckValueIsPresent("key 2", "value 2");
   CheckValueIsPresent("key 3", "value 3");
 
-  auto const state3 = storage_->Commit();
+  auto const state3 = storage_->Commit(2);
   ASSERT_EQ(storage_->LastCommitHash(), state3);
 
   // revert back to state 1
-  ASSERT_TRUE(storage_->RevertToHash(state1));
+  ASSERT_TRUE(storage_->RevertToHash(state1, 0));
   ASSERT_EQ(storage_->LastCommitHash(), state1);
-  ASSERT_TRUE(storage_->HashExists(state1));
-  ASSERT_FALSE(storage_->HashExists(state2));
-  ASSERT_FALSE(storage_->HashExists(state3));
+  ASSERT_TRUE(storage_->HashExists(state1, 0));
+  ASSERT_FALSE(storage_->HashExists(state2,1));
+  ASSERT_FALSE(storage_->HashExists(state3, 2));
 
   CheckValueIsPresent("key 1", "value 1");
   CheckKeyIsNotPresent("key 2");
@@ -102,10 +102,6 @@ TEST_F(FakeStorageUnitTests, BasicCheck)
   CheckKeyIsNotPresent("key 3");
   CheckValueIsPresent("key 4", "value 4");
 
-  auto const state4 = storage_->Commit();
+  auto const state4 = storage_->Commit(3);
   ASSERT_EQ(storage_->LastCommitHash(), state4);
-
-  //  auto const commit =
-  //
-  //  storage_->Set(ResourceAddress{"key 2"}, "value 2");
 }
