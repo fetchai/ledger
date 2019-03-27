@@ -265,7 +265,7 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
   Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
 }
 
-TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
+TEST_F(BlockCoordinatorTests, DISABLED_CheckLongBlockStartUp)
 {
   auto genesis = block_generator_();
   auto b1      = block_generator_(genesis);
@@ -550,7 +550,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 }
 
-TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
+TEST_F(BlockCoordinatorTests, DISABLED_CheckInvalidMinerIdentity)
 {
   auto genesis = block_generator_();
 
@@ -639,7 +639,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 }
 
-TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
+TEST_F(BlockCoordinatorTests, DISABLED_CheckInvalidNumLanes)
 {
   auto genesis = block_generator_();
 
@@ -728,7 +728,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 }
 
-TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
+TEST_F(BlockCoordinatorTests, DISABLED_CheckInvalidNumSlices)
 {
   auto genesis = block_generator_();
 
