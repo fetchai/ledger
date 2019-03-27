@@ -50,7 +50,7 @@ public:
   using NetworkManager = network::NetworkManager;
   using Mode           = LaneService::Mode;
 
-  void Setup(NetworkManager const &mgr, ShardConfigs const &configs,
+  void Setup(NetworkManager const &mgr, ShardConfigs const &configs, bool sign_packets,
              Mode mode = Mode::LOAD_DATABASE)
   {
     // create all the lane pointers
@@ -58,7 +58,7 @@ public:
 
     for (std::size_t i = 0; i < configs.size(); ++i)
     {
-      lanes_[i] = std::make_shared<LaneService>(mgr, configs[i], mode);
+      lanes_[i] = std::make_shared<LaneService>(mgr, configs[i], sign_packets, mode);
     }
   }
 
