@@ -55,7 +55,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
                                    BlockSinkInterface &    block_sink,
                                    TransactionStatusCache &status_cache, Identity identity,
                                    std::size_t num_lanes, std::size_t num_slices,
-                                   std::size_t block_difficulty)
+                                   std::size_t block_difficulty, bool waiting_for_startup)
   : chain_{chain}
   , execution_manager_{execution_manager}
   , storage_unit_{storage_unit}
@@ -73,6 +73,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   , num_slices_{num_slices}
   , tx_wait_periodic_{TX_SYNC_NOTIFY_INTERVAL}
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
+  , waiting_for_startup_{waiting_for_startup}
 {
   // configure the state machine
   // clang-format off

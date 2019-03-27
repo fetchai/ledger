@@ -170,7 +170,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
                        muddle_.identity().identifier(),
                        cfg_.num_lanes(),
                        cfg_.num_slices,
-                       cfg_.block_difficulty}
+                       cfg_.block_difficulty,
+                       true}
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
                                                               cfg_.standalone)}
   , tx_processor_{*storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}

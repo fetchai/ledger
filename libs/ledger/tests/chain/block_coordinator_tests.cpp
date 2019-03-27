@@ -82,7 +82,7 @@ protected:
     tx_status_         = std::make_unique<TransactionStatusCache>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
         *main_chain_, *execution_manager_, *storage_unit_, *packer_, *block_sink_, *tx_status_,
-        signer.identity().identifier(), NUM_LANES, NUM_SLICES, 1u);
+        signer.identity().identifier(), NUM_LANES, NUM_SLICES, 1u, false);
 
     block_coordinator_->EnableMining(true);
   }
