@@ -975,7 +975,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
  *
  * @param hash The hash of the block to search for
  * @param block The output block to be populated
- * @param add_to_cache Whether to add to the cache as it is recent TODO(HUT): delete this.
+ * @param add_to_cache Whether to add to the cache as it is recent
  *
  * @return true if successful, otherwise false
  */

@@ -318,7 +318,7 @@ bool StorageUnitClient::HashExists(Hash const &hash, uint64_t index)
   return HashInStack(hash, index);
 }
 
-// Search backwards through stack // TODO(HUT): use an index to make this fast.
+// Search backwards through stack
 // TODO(HUT): should be const correct
 bool StorageUnitClient::HashInStack(Hash const &hash, uint64_t index)
 {
