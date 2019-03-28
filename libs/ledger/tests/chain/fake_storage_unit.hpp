@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/block.hpp"
+#include "ledger/chain/constants.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <map>
@@ -64,6 +65,12 @@ public:
   // Useful for test to force the hash
   Hash EmulateCommit(Hash const &hash, uint64_t index);
 
+  // Required to emulate the state being changed
+  void SetCurrentHash(Hash const &hash);
+
+  // Use the current state to set the hash
+  void UpdateHash();
+
 private:
   using TransactionStore = std::map<Transaction::TxDigest, Transaction>;
   using State            = std::map<ResourceAddress, StateValue>;
@@ -71,13 +78,10 @@ private:
   using StateHistory     = std::unordered_map<Hash, StatePtr>;
   using StateHashStack   = std::vector<Hash>;
 
-  static Hash CreateHashFromCounter(uint64_t count);
-
   TransactionStore transaction_store_{};
   StatePtr         state_{std::make_shared<State>()};
   StateHistory     state_history_{};
-  StateHashStack   state_history_stack_{};
-  uint64_t         hash_counter_{0};
-  Hash             current_hash_{CreateHashFromCounter(hash_counter_)};
+  StateHashStack   state_history_stack_{fetch::ledger::GENESIS_MERKLE_ROOT};
+  Hash             current_hash_{fetch::ledger::GENESIS_MERKLE_ROOT};
   Hash             last_commit_hash_{};
 };

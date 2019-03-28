@@ -44,6 +44,10 @@ FakeExecutionManager::ScheduleStatus FakeExecutionManager::Execute(Block::Body c
   current_merkle_root_ = block.merkle_hash.Copy();
   current_polls_       = 2;
 
+  // For the purposes of testing, after execution, we will set the state here to be in line with the
+  // block state
+  storage_.SetCurrentHash(current_merkle_root_);
+
   return ScheduleStatus::SCHEDULED;
 }
 

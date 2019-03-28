@@ -74,6 +74,9 @@ TEST_F(FakeStorageUnitTests, BasicCheck)
   CheckValueIsPresent("key 1", "value 1");
   CheckValueIsPresent("key 2", "value 2");
 
+  // Currently need to update/set hash manually
+  storage_->UpdateHash();
+
   auto const state2 = storage_->Commit(1);
   ASSERT_EQ(storage_->LastCommitHash(), state2);
 
@@ -81,6 +84,8 @@ TEST_F(FakeStorageUnitTests, BasicCheck)
   CheckValueIsPresent("key 1", "value 1");
   CheckValueIsPresent("key 2", "value 2");
   CheckValueIsPresent("key 3", "value 3");
+
+  storage_->UpdateHash();
 
   auto const state3 = storage_->Commit(2);
   ASSERT_EQ(storage_->LastCommitHash(), state3);
@@ -101,6 +106,8 @@ TEST_F(FakeStorageUnitTests, BasicCheck)
   CheckKeyIsNotPresent("key 2");
   CheckKeyIsNotPresent("key 3");
   CheckValueIsPresent("key 4", "value 4");
+
+  storage_->UpdateHash();
 
   auto const state4 = storage_->Commit(3);
   ASSERT_EQ(storage_->LastCommitHash(), state4);

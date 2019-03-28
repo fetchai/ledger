@@ -45,6 +45,7 @@ using fetch::ledger::testing::BlockGenerator;
 using fetch::ledger::TransactionStatusCache;
 
 using ::testing::_;
+using ::testing::AtLeast;
 using ::testing::InSequence;
 
 using BlockCoordinatorPtr = std::unique_ptr<BlockCoordinator>;
@@ -111,8 +112,41 @@ protected:
     // match the current state of the machine
     ASSERT_EQ(starting_state, state_machine.state());
 
-    // run one step of the state machine¦
+    // run one step of the state machine
     block_coordinator_->GetRunnable().Execute();
+
+    ASSERT_EQ(final_state, state_machine.state());
+  }
+
+  /**
+   * Run the state machine until it reaches the next state, or times out
+   *
+   * @param starting_state The expected state before the state machine is run
+   * @param final_state The expected state after the state machine has run
+   */
+  void Tock(State starting_state, State final_state)
+  {
+    auto const &state_machine = block_coordinator_->GetStateMachine();
+
+    // match the current state of the machine
+    ASSERT_EQ(starting_state, state_machine.state());
+
+    uint64_t max_iterations = 50;
+
+    while (final_state != state_machine.state())
+    {
+      // run one step of the state machine
+      block_coordinator_->GetRunnable().Execute();
+
+      max_iterations--;
+
+      if (max_iterations == 0)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "Failed to advance state machine after ", max_iterations,
+                        " iterations!");
+        throw std::runtime_error("Failed test.");
+      }
+    }
 
     ASSERT_EQ(final_state, state_machine.state());
   }
@@ -265,7 +299,7 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
   Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
 }
 
-TEST_F(BlockCoordinatorTests, DISABLED_CheckLongBlockStartUp)
+TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
 {
   auto genesis = block_generator_();
   auto b1      = block_generator_(genesis);
@@ -292,29 +326,16 @@ TEST_F(BlockCoordinatorTests, DISABLED_CheckLongBlockStartUp)
   FETCH_LOG_INFO(LOGGING_NAME, "B5     : ", ToBase64(b5->body.hash), " <- ",
                  ToBase64(b5->body.previous_hash));
 
-  // define the call expectations
+  // processing of genesis block
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
+
   {
+    // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash()).Times(AtLeast(1));
+    EXPECT_CALL(*storage_unit_, CurrentHash()).Times(AtLeast(1));
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock()).Times(AtLeast(1));
+
     InSequence s;
-
-    // syncing
-    EXPECT_CALL(*storage_unit_, LastCommitHash());
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-
-    // syncing
-    EXPECT_CALL(*storage_unit_, LastCommitHash());
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-
-    // syncing
-    EXPECT_CALL(*storage_unit_, LastCommitHash());
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-
-    // syncing
-    EXPECT_CALL(*storage_unit_, LastCommitHash());
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
     // pre block validation
     // none
@@ -323,103 +344,45 @@ TEST_F(BlockCoordinatorTests, DISABLED_CheckLongBlockStartUp)
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(genesis)));
 
     // wait for the execution to complete
-    EXPECT_CALL(*execution_manager_, GetState());
-    EXPECT_CALL(*execution_manager_, GetState());
+    EXPECT_CALL(*execution_manager_, GetState()).Times(AtLeast(1));
 
     // post block validation
     EXPECT_CALL(*storage_unit_, CurrentHash());
 
-    // reset
-    // none
+    // Commit to state
+    EXPECT_CALL(*storage_unit_, Commit(0));
 
-    // syncing
-    EXPECT_CALL(*storage_unit_, LastCommitHash());
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-    EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash, ::testing::_));
-    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash, ::testing::_));
+    // B3 start
+    EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash, 0));
+    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash, 0));
 
-    // pre block validation
-    // none
-
-    // schedule of the genesis block
+    // schedule of the next block
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(b1)));
 
-    // wait for the execution to complete
-    EXPECT_CALL(*execution_manager_, GetState());
-    EXPECT_CALL(*execution_manager_, GetState());
+    EXPECT_CALL(*execution_manager_, GetState()).Times(AtLeast(1));
 
-    // post block validation
-    EXPECT_CALL(*storage_unit_, CurrentHash());
+    // Commit to state, B1
+    EXPECT_CALL(*storage_unit_, Commit(1));
 
-    // reset
-    // none
+    // B2 start
+    EXPECT_CALL(*storage_unit_, HashExists(b1->body.merkle_hash, 1));
+    EXPECT_CALL(*storage_unit_, RevertToHash(b1->body.merkle_hash, 1));
 
-    // syncing
-    EXPECT_CALL(*storage_unit_, LastCommitHash());
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-    EXPECT_CALL(*storage_unit_, HashExists(b1->body.merkle_hash, ::testing::_));
-    EXPECT_CALL(*storage_unit_, RevertToHash(b1->body.merkle_hash, ::testing::_));
-
-    // pre block validation
-    // none
-
-    // schedule of the genesis block
+    // schedule of the next block
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(b2)));
 
-    // wait for the execution to complete
-    EXPECT_CALL(*execution_manager_, GetState());
-    EXPECT_CALL(*execution_manager_, GetState());
+    EXPECT_CALL(*execution_manager_, GetState()).Times(AtLeast(1));
 
-    // post block validation
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-
-    // reset
-    // none
-
-    // syncing
-    EXPECT_CALL(*storage_unit_, LastCommitHash());
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-    EXPECT_CALL(*storage_unit_, HashExists(b2->body.merkle_hash, ::testing::_));
-    EXPECT_CALL(*storage_unit_, RevertToHash(b2->body.merkle_hash, ::testing::_));
-
-    // pre block validation
-    // none
-
-    // schedule of the genesis block
-    EXPECT_CALL(*execution_manager_, Execute(IsBlock(b3)));
-
-    // wait for the execution to complete
-    EXPECT_CALL(*execution_manager_, GetState());
-    EXPECT_CALL(*execution_manager_, GetState());
-
-    // post block validation
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-
-    // reset
-    // none
-
-    // syncing
-    EXPECT_CALL(*storage_unit_, LastCommitHash());
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
+    // Commit to state, B2
+    EXPECT_CALL(*storage_unit_, Commit(2));
   }
 
-  // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
-
   Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tock(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
   Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
+  Tock(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 
@@ -431,8 +394,7 @@ TEST_F(BlockCoordinatorTests, DISABLED_CheckLongBlockStartUp)
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
   Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
+  Tock(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b1->body.hash);
 
@@ -444,38 +406,13 @@ TEST_F(BlockCoordinatorTests, DISABLED_CheckLongBlockStartUp)
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
   Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
+  Tock(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b2->body.hash);
 
   Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
   Tick(State::RESET, State::SYNCHRONIZING);
 
-  // processing of B3 block
-  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
-  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
-  Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
-
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b3->body.hash);
-
-  Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-
-  // synchronised loop
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-
-  // simulate new blocks being added  (from the network or similar)
-  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b4));
-  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b5));
   // TODO(EJF): More ticks here please
 }
 
@@ -550,7 +487,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 }
 
-TEST_F(BlockCoordinatorTests, DISABLED_CheckInvalidMinerIdentity)
+TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
 {
   auto genesis = block_generator_();
 
@@ -728,7 +665,7 @@ TEST_F(BlockCoordinatorTests, DISABLED_CheckInvalidNumLanes)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 }
 
-TEST_F(BlockCoordinatorTests, DISABLED_CheckInvalidNumSlices)
+TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
 {
   auto genesis = block_generator_();
 
