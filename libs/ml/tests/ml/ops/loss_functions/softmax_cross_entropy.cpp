@@ -173,5 +173,5 @@ TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
 
   fetch::ml::ops::SoftmaxCrossEntropy<TypeParam> op;
 
-  EXPECT_TRUE(op.Backward({data1, err_sig}).AllClose(gt, DataType(1e-10), DataType(1e-10)));
+  EXPECT_TRUE(op.Backward({data1, err_sig}).AllClose(gt, DataType(1e-7), DataType(1e-7)));
 }

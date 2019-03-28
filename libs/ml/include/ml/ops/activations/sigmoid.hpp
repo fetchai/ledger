@@ -67,7 +67,7 @@ public:
     ArrayType t{inputs.front().get().shape()};
 
     // gradient of sigmoid function is s(x)(1 - s(x))
-    fetch::math::Sigmoid(inputs.front().get(), t);
+    t = this->Forward(inputs);
     fetch::math::Subtract(DataType(1), t, returnSignal);
     fetch::math::Multiply(t, returnSignal, returnSignal);
 

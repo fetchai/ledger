@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstring>
 #include <dirent.h>
 #include <fstream>
 #include <sstream>
@@ -47,7 +48,7 @@ std::vector<std::string> GetAllTextFiles(std::string const &dir_name)
       p1 = strtok(NULL, ".");
       if (p1 != NULL)
       {
-        txt_cmp = strcmp(p1, "txt");
+        txt_cmp = std::strcmp(p1, "txt");
         if (txt_cmp == 0)
         {
           ret.emplace_back(ent->d_name);
