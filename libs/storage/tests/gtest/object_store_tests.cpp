@@ -21,12 +21,14 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
 #include "storage/object_store.hpp"
+#include "testing/common_testing_functionality.hpp"
 #include <algorithm>
 #include <gtest/gtest.h>
 #include <iostream>
 
 using namespace fetch::storage;
 using namespace fetch::byte_array;
+using namespace fetch::testing;
 
 /**
  * Test class used to verify that the object store can ser/deser objects correctly
@@ -458,4 +460,41 @@ TEST(storage_object_store_with_STL_gtest, subtree_iterator_over_basic_struc_spli
     bool allMatch = std::equal(objectsCopy.begin(), objectsCopy.end(), objects.begin());
     EXPECT_EQ(allMatch, true);
   }
+}
+
+TEST(storage_object_store, correlated_strings_work_correctly_working)
+{
+  ObjectStore<std::string> testStore;
+  testStore.New("testFile_01.db", "testIndex_01.db");
+
+  auto unique_ids = GenerateUniqueIDs(65);
+  uint64_t expected_size = 0;
+
+  // Set each key to itself as a string
+  for(auto const &id : unique_ids)
+  {
+    testStore.Set(id, id.ToString());
+    EXPECT_EQ(testStore.size(), ++expected_size);
+  }
+
+  ASSERT_EQ(testStore.size(), unique_ids.size()) << "ERROR: Failed to verify final size!";
+}
+
+// Disabled test - needs immediate attention!
+TEST(storage_object_store, DISABLED_correlated_strings_work_correctly_failing)
+{
+  ObjectStore<std::string> testStore;
+  testStore.New("testFile_01.db", "testIndex_01.db");
+
+  auto unique_ids = GenerateUniqueIDs(66);
+  uint64_t expected_size = 0;
+
+  // Set each key to itself as a string
+  for(auto const &id : unique_ids)
+  {
+    testStore.Set(id, id.ToString());
+    EXPECT_EQ(testStore.size(), ++expected_size);
+  }
+
+  ASSERT_EQ(testStore.size(), unique_ids.size()) << "ERROR: Failed to verify final size!";
 }
