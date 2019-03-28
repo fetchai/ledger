@@ -47,7 +47,8 @@ public:
     assert(inputs.at(0).size() == inputs.at(1).size());
 
     // sanity check the softmax adds up to 1
-    assert(Sum(fetch::math::Softmax(inputs[0])) - (DataType(1)) < 0.0001);
+    assert(Sum(fetch::math::Softmax(inputs.at(0))) - (DataType(inputs.at(0).shape().at(0))) <
+           0.0001);
 
     SizeType n_classes{2};
     if (inputs.size() == 3)
@@ -66,6 +67,12 @@ public:
   {
     assert(inputs.size() == 2);
     assert(inputs[0].size() == inputs[1].size());
+
+    for (std::size_t j = 0; j < fetch::math::Softmax(inputs[0]).size(); ++j)
+    {
+      std::cout << "fetch::math::Softmax(inputs[0]).At(j): "
+                << fetch::math::Softmax(inputs[0]).At(j) << std::endl;
+    }
 
     return fetch::math::Subtract(fetch::math::Softmax(inputs[0]), inputs[1]);
   }

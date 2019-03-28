@@ -65,10 +65,13 @@ public:
     assert(inputs.front().get().shape() == errorSignal.shape());
     ArrayType returnSignal{errorSignal.shape()};
     ArrayType t{inputs.front().get().shape()};
+
+    // gradient of sigmoid function is s(x)(1 - s(x))
     fetch::math::Sigmoid(inputs.front().get(), t);
     fetch::math::Subtract(DataType(1), t, returnSignal);
     fetch::math::Multiply(t, returnSignal, returnSignal);
 
+    // multiply by errorSignal (chain rule)
     fetch::math::Multiply(errorSignal, returnSignal, returnSignal);
 
     return {returnSignal};

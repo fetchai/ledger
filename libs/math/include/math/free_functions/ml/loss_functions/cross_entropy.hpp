@@ -52,6 +52,11 @@ typename ArrayType::Type CrossEntropyLoss(
 
   DataType ret = DataType(0);
 
+  for (std::size_t j = 0; j < x.size(); ++j)
+  {
+    std::cout << "x.At(j): " << x.At(j) << std::endl;
+  }
+
   // if not a one-hot, must be binary logistic regression cost
   if (n_dims == 1)
   {

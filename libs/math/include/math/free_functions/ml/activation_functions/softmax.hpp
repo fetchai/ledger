@@ -74,7 +74,6 @@ void Softmax1DImplementation(ArrayType const &array, ArrayType &ret)
   Exp(ret, ret);
   typename ArrayType::Type array_sum = typename ArrayType::Type(0);
   Sum(ret, array_sum);
-
   Divide(ret, array_sum, ret);
 }
 
