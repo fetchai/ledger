@@ -43,7 +43,6 @@ TYPED_TEST(TanhTest, forward_all_positive_test)
 
   std::vector<float> dataInput({0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 20, 100});
   std::vector<float> gtInput({0.0, 0.197375, 0.379949, 0.53705, 0.664037, 0.761594, 0.833655, 0.885352, 1.0, 1.0});
-  std::uint64_t i(0);
 
   for (std::uint64_t i(0); i < 10; ++i)
   {
@@ -66,7 +65,6 @@ TYPED_TEST(TanhTest, forward_all_negative_test)
 
   std::vector<float> dataInput({-0, -0.2, -0.4, -0.6, -0.8, -1, -1.2, -1.4, -20, -100});
   std::vector<float> gtInput({-0.0, -0.197375, -0.379949, -0.53705, -0.664037, -0.761594, -0.833655, -0.885352, -1.0, -1.0});
-  std::uint64_t i(0);
 
   for (std::uint64_t i(0); i < 10; ++i)
   {
