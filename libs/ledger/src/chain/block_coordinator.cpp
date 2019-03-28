@@ -74,12 +74,13 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
 {
   // Change the state machine starting state
   State initial = State::RESET;
-  if(waiting_for_startup_)
+  if (waiting_for_startup_)
   {
     initial = State::STARTUP;
   }
 
-  state_machine_ = std::make_shared<StateMachine>("BlockCoordinator", initial, [](State state) { return ToString(state); });
+  state_machine_ = std::make_shared<StateMachine>("BlockCoordinator", initial,
+                                                  [](State state) { return ToString(state); });
 
   // configure the state machine
   // clang-format off
@@ -897,9 +898,12 @@ char const *BlockCoordinator::ToString(State state)
     break;
   case State::RESET:
     text = "Reset";
+    break;
   case State::STARTUP:
     text = "Startup";
     break;
+  default:
+    text = "Unknown!";
   }
 
   return text;

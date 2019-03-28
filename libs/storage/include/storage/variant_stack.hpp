@@ -171,7 +171,7 @@ public:
     file_handle_.write(reinterpret_cast<char const *>(&separator), sizeof(Separator));
     header_.end += sizeof(T) + sizeof(Separator);
     ++header_.object_count;
-    //WriteHeader();
+    // WriteHeader();
   }
 
   /**
@@ -187,7 +187,7 @@ public:
 
     header_.end = separator.previous;
     --header_.object_count;
-    //WriteHeader();
+    // WriteHeader();
   }
 
   /**
