@@ -467,11 +467,11 @@ TEST(storage_object_store, correlated_strings_work_correctly_working)
   ObjectStore<std::string> testStore;
   testStore.New("testFile_01.db", "testIndex_01.db");
 
-  auto unique_ids = GenerateUniqueIDs(65);
+  auto     unique_ids    = GenerateUniqueIDs(65);
   uint64_t expected_size = 0;
 
   // Set each key to itself as a string
-  for(auto const &id : unique_ids)
+  for (auto const &id : unique_ids)
   {
     testStore.Set(id, id.ToString());
     EXPECT_EQ(testStore.size(), ++expected_size);
@@ -486,11 +486,11 @@ TEST(storage_object_store, DISABLED_correlated_strings_work_correctly_failing)
   ObjectStore<std::string> testStore;
   testStore.New("testFile_01.db", "testIndex_01.db");
 
-  auto unique_ids = GenerateUniqueIDs(66);
+  auto     unique_ids    = GenerateUniqueIDs(66);
   uint64_t expected_size = 0;
 
   // Set each key to itself as a string
-  for(auto const &id : unique_ids)
+  for (auto const &id : unique_ids)
   {
     testStore.Set(id, id.ToString());
     EXPECT_EQ(testStore.size(), ++expected_size);
