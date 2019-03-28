@@ -67,7 +67,7 @@ public:
     assert(inputs.size() == 2);
     assert(inputs[0].size() == inputs[1].size());
 
-    return fetch::math::Subtract(inputs[0], inputs[1]);
+    return fetch::math::Subtract(fetch::math::Softmax(inputs[0]), inputs[1]);
   }
 
   static constexpr char const *DESCRIPTOR = "SoftmaxCrossEntropy";

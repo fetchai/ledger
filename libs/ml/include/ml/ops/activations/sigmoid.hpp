@@ -63,12 +63,14 @@ public:
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape() == errorSignal.shape());
-
-    ArrayType t            = this->Forward(inputs);
-    ArrayType returnSignal = errorSignal.Clone();
+    ArrayType returnSignal{errorSignal.shape()};
+    ArrayType t{inputs.front().get().shape()};
+    fetch::math::Sigmoid(inputs.front().get(), t);
     fetch::math::Subtract(DataType(1), t, returnSignal);
     fetch::math::Multiply(t, returnSignal, returnSignal);
-    fetch::math::Add(errorSignal, returnSignal, returnSignal);
+
+    fetch::math::Multiply(errorSignal, returnSignal, returnSignal);
+
     return {returnSignal};
   }
 

@@ -69,7 +69,7 @@ void PlusOneTest()
   SizeType input_size  = SizeType(1);
   SizeType output_size = SizeType(1);
   SizeType n_batches   = SizeType(300);
-  SizeType hidden_size = SizeType(1000);
+  SizeType hidden_size = SizeType(100);
 
   fetch::ml::Graph<TypeParam> g;
 
@@ -163,7 +163,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
   SizeType input_size  = SizeType(n_classes.At(0));
   SizeType output_size = SizeType(n_classes.At(0));
   SizeType n_batches   = SizeType(300);
-  SizeType hidden_size = SizeType(1000);
+  SizeType hidden_size = SizeType(100);
 
   fetch::ml::Graph<TypeParam> g;
 
@@ -260,7 +260,7 @@ void CategoricalXorTest(bool add_softmax = false)
   SizeType input_size  = SizeType(n_classes.At(0));
   SizeType output_size = SizeType(n_classes.At(0));
   SizeType n_batches   = SizeType(300);
-  SizeType hidden_size = SizeType(1000);
+  SizeType hidden_size = SizeType(100);
 
   fetch::ml::Graph<TypeParam> g;
 
@@ -325,7 +325,6 @@ void CategoricalXorTest(bool add_softmax = false)
       g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
     }
 
-    // This task is a little more tricky so we only require loss fall every 10 steps
     EXPECT_GT(current_loss, loss);
     current_loss = loss;
     g.Step(alpha);
@@ -347,12 +346,11 @@ TYPED_TEST(BasicTrainingTest, plus_one_relu_test)
   PlusOneTest<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>,
               fetch::ml::ops::Relu<TypeParam>>();
 }
-//
-// TYPED_TEST(BasicTrainingTest, plus_one_sigmoid_test)
-//{
-//  PlusOneTest<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>,
-//              fetch::ml::ops::Sigmoid<TypeParam>>();
-//}
+TYPED_TEST(BasicTrainingTest, plus_one_sigmoid_test)
+{
+  PlusOneTest<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>,
+              fetch::ml::ops::Sigmoid<TypeParam>>();
+}
 
 TYPED_TEST(BasicTrainingTest, categorical_plus_one_CE_relu_test)
 {
@@ -364,19 +362,18 @@ TYPED_TEST(BasicTrainingTest, categorical_plus_one_SCE_relu_test)
   CategoricalPlusOneTest<TypeParam, fetch::ml::ops::SoftmaxCrossEntropy<TypeParam>,
                          fetch::ml::ops::Relu<TypeParam>>(false);
 }
-// TYPED_TEST(BasicTrainingTest, categorical_plus_one_CE_sigmoid_test)
-//{
-//  CategoricalPlusOneTest<TypeParam, fetch::ml::ops::CrossEntropy<TypeParam>,
-//                         fetch::ml::ops::Sigmoid<TypeParam>>(true);
-//}
-// TYPED_TEST(BasicTrainingTest, categorical_plus_one_SCE_sigmoid_test)
-//{
-//  CategoricalPlusOneTest<TypeParam, fetch::ml::ops::SoftmaxCrossEntropy<TypeParam>,
-//                         fetch::ml::ops::Sigmoid<TypeParam>>(false);
-//}
+TYPED_TEST(BasicTrainingTest, categorical_plus_one_CE_sigmoid_test)
+{
+  CategoricalPlusOneTest<TypeParam, fetch::ml::ops::CrossEntropy<TypeParam>,
+                         fetch::ml::ops::Sigmoid<TypeParam>>(true);
+}
+TYPED_TEST(BasicTrainingTest, categorical_plus_one_SCE_sigmoid_test)
+{
+  CategoricalPlusOneTest<TypeParam, fetch::ml::ops::SoftmaxCrossEntropy<TypeParam>,
+                         fetch::ml::ops::Sigmoid<TypeParam>>(false);
+}
 TYPED_TEST(BasicTrainingTest, categorical_xor_CE_relu_test)
 {
-  // working
   CategoricalXorTest<TypeParam, fetch::ml::ops::CrossEntropy<TypeParam>,
                      fetch::ml::ops::Relu<TypeParam>>(true);
 }
@@ -385,13 +382,3 @@ TYPED_TEST(BasicTrainingTest, categorical_xor_SCE_relu_test)
   CategoricalXorTest<TypeParam, fetch::ml::ops::SoftmaxCrossEntropy<TypeParam>,
                      fetch::ml::ops::Relu<TypeParam>>(false);
 }
-// TYPED_TEST(BasicTrainingTest, categorical_xor_CE_sigmoid_test)
-//{
-//  CategoricalXorTest<TypeParam, fetch::ml::ops::CrossEntropy<TypeParam>,
-//                         fetch::ml::ops::Sigmoid<TypeParam>>(true);
-//}
-// TYPED_TEST(BasicTrainingTest, categorical_xor_SCE_sigmoid_test)
-//{
-//  CategoricalXorTest<TypeParam, fetch::ml::ops::SoftmaxCrossEntropy<TypeParam>,
-//                         fetch::ml::ops::Sigmoid<TypeParam>>(false);
-//}

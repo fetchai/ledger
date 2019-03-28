@@ -66,9 +66,16 @@ public:
     ArrayType ret;
     if (inputs[0].shape().at(1) == 1)  // not one-hot
     {
+      std::cout << "inputs[0].At(0): " << inputs[0].At(0) << std::endl;
+      std::cout << "inputs[0].At(1): " << inputs[0].At(1) << std::endl;
+
+      std::cout << "ret: " << ret.At(0) << std::endl;
       ret = fetch::math::Sigmoid(inputs[0]);
+      std::cout << "ret: " << ret.At(0) << std::endl;
       fetch::math::Subtract(ret, inputs[1], ret);
+      std::cout << "ret: " << ret.At(0) << std::endl;
       fetch::math::Multiply(ret, inputs[0], ret);
+      std::cout << "ret: " << ret.At(0) << std::endl;
     }
     else if (inputs[0].shape().size())  // one-hot
     {
