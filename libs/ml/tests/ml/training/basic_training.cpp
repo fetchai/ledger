@@ -59,51 +59,6 @@ ArrayType GenerateXorGt(typename ArrayType::SizeType dims)
   return gt;
 }
 
-template <typename ArrayType, typename Criterion>
-typename std::pair<typename ArrayType::Type, typename ArrayType::Type> TrainOneBatch(
-    fetch::ml::Graph<ArrayType> &g, ArrayType &data, ArrayType &gt, std::string &input_name,
-    std::string &output_name, Criterion &criterion, typename ArrayType::Type alpha,
-    bool add_softmax = false)
-{
-  typename ArrayType::Type loss = typename ArrayType::Type(0);
-  typename ArrayType::Type acc  = typename ArrayType::Type(0);
-  ArrayType                cur_gt{{1, gt.shape().at(1)}};
-  ArrayType                cur_input{{1, data.shape().at(1)}};
-
-  for (typename ArrayType::SizeType step{0}; step < 4; ++step)
-  {
-    cur_input = data.Slice(step);
-    g.SetInput(input_name, cur_input, false);
-
-    for (std::size_t i = 0; i < gt.shape().at(1); ++i)
-    {
-      cur_gt.At(i) = gt.At({step, i});
-    }
-
-    auto results = g.Evaluate(output_name);
-
-    for (std::size_t j = 0; j < results.size(); ++j)
-    {
-      if (add_softmax)
-      {
-        auto tmp = fetch::math::Softmax(results);
-        acc += (gt.At({step, j}) - tmp.At(j)) * (gt.At({step, j}) - tmp.At(j));
-      }
-      else
-      {
-        acc += (gt.At({step, j}) - results.At(j)) * (gt.At({step, j}) - results.At(j));
-      }
-    }
-
-    loss += criterion.Forward({results, cur_gt});
-
-    g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
-  }
-  g.Step(alpha);
-
-  return std::make_pair(loss, acc);
-}
-
 template <typename TypeParam, typename CriterionType, typename ActivationType>
 void PlusOneTest()
 {
@@ -371,11 +326,8 @@ void CategoricalXorTest(bool add_softmax = false)
     }
 
     // This task is a little more tricky so we only require loss fall every 10 steps
-    if (i % 100 == 99)
-    {
-      EXPECT_GT(current_loss, loss);
-      current_loss = loss;
-    }
+    EXPECT_GT(current_loss, loss);
+    current_loss = loss;
     g.Step(alpha);
   }
 }
