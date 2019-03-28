@@ -65,8 +65,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   , miner_{std::make_shared<consensus::DummyMiner>()}
   , last_executed_block_{GENESIS_DIGEST}
   , identity_{std::move(identity)}
-  , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RESET,
-                                                  [](State state) { return ToString(state); })}
   , block_difficulty_{block_difficulty}
   , num_lanes_{num_lanes}
   , num_slices_{num_slices}
@@ -74,6 +72,15 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
   , waiting_for_startup_{waiting_for_startup}
 {
+  // Change the state machine starting state
+  State initial = State::RESET;
+  if(waiting_for_startup_)
+  {
+    initial = State::STARTUP;
+  }
+
+  state_machine_ = std::make_shared<StateMachine>("BlockCoordinator", initial, [](State state) { return ToString(state); });
+
   // configure the state machine
   // clang-format off
   state_machine_->RegisterHandler(State::SYNCHRONIZING,                this, &BlockCoordinator::OnSynchronizing);
@@ -89,6 +96,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   state_machine_->RegisterHandler(State::PROOF_SEARCH,                 this, &BlockCoordinator::OnProofSearch);
   state_machine_->RegisterHandler(State::TRANSMIT_BLOCK,               this, &BlockCoordinator::OnTransmitBlock);
   state_machine_->RegisterHandler(State::RESET,                        this, &BlockCoordinator::OnReset);
+  state_machine_->RegisterHandler(State::STARTUP,                      this, &BlockCoordinator::OnStartup);
   // clang-format on
 
   // for debug purposes
@@ -711,22 +719,25 @@ void BlockCoordinator::RecoverFromStartup()
                  "Successfully reverted to block: ", heaviest_block->body.block_number);
 }
 
+BlockCoordinator::State BlockCoordinator::OnStartup()
+{
+  State next_state{State::STARTUP};
+
+  if (!waiting_for_startup_)
+  {
+    RecoverFromStartup();
+    next_state = State::RESET;
+  }
+
+  return next_state;
+}
+
 BlockCoordinator::State BlockCoordinator::OnReset()
 {
   current_block_.reset();
   next_block_.reset();
   pending_txs_.reset();
   stall_count_ = 0;
-
-  if (waiting_for_startup_)
-  {
-    while (waiting_for_startup_)
-    {
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-
-    RecoverFromStartup();
-  }
 
   // we should update the next block time
   UpdateNextBlockTime();
@@ -886,6 +897,8 @@ char const *BlockCoordinator::ToString(State state)
     break;
   case State::RESET:
     text = "Reset";
+  case State::STARTUP:
+    text = "Startup";
     break;
   }
 

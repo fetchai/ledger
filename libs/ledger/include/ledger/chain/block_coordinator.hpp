@@ -126,6 +126,7 @@ public:
 
   enum class State
   {
+    STARTUP,                       ///< When starting up for the first time, try to recover state
     SYNCHRONIZING,                 ///< Catch up with the outstanding blocks
     SYNCHRONIZED,                  ///< Caught up waiting to generate a new block
     PRE_EXEC_BLOCK_VALIDATION,     ///< Validation stage before block execution
@@ -219,6 +220,7 @@ private:
 
   /// @name Monitor State
   /// @{
+  State OnStartup();
   State OnSynchronizing();
   State OnSynchronized(State current, State previous);
   State OnPreExecBlockValidation();
