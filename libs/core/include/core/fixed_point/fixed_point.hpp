@@ -365,6 +365,16 @@ public:
     return (static_cast<float>(data_) / one);
   }
 
+  explicit operator unsigned() const
+  {
+    return (static_cast<unsigned>(data_) / one);
+  }
+
+  explicit operator unsigned long() const
+  {
+    return (static_cast<unsigned long>(data_) / one);
+  }
+
   explicit operator unsigned long long() const
   {
     return (static_cast<unsigned long long>(data_) / one);
