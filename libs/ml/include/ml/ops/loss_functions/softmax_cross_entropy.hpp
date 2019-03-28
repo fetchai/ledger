@@ -68,12 +68,6 @@ public:
     assert(inputs.size() == 2);
     assert(inputs[0].size() == inputs[1].size());
 
-    for (std::size_t j = 0; j < fetch::math::Softmax(inputs[0]).size(); ++j)
-    {
-      std::cout << "fetch::math::Softmax(inputs[0]).At(j): "
-                << fetch::math::Softmax(inputs[0]).At(j) << std::endl;
-    }
-
     return fetch::math::Subtract(fetch::math::Softmax(inputs[0]), inputs[1]);
   }
 

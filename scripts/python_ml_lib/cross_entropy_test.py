@@ -7,11 +7,11 @@ import numpy as np
 # x = np.array([0.2, 0.5, 0.2, 0.1])
 # t = np.array([0.0, 0.0, 0.1, 0.0])                     # target probability distribution
 
-x = np.array([0.05, 0.05, 0.8, 0.1])
-t = np.array([0.0, 0.0, 0.0, 0.1])                     # target probability distribution
+# x = np.array([0.05, 0.05, 0.8, 0.1])
+# t = np.array([0.0, 0.0, 0.0, 0.1])                     # target probability distribution
 
-# x = np.array([0.5, 0.1,  0.1, 0.3])
-# t = np.array([0.1, 0.0, 0.0, 0.0])                     # target probability distribution
+x = np.array([0.5, 0.1,  0.1, 0.3])
+t = np.array([0.1, 0.0, 0.0, 0.0])                     # target probability distribution
 
 
 ## Function definitions

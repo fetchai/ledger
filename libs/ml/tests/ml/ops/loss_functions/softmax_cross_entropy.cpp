@@ -138,9 +138,13 @@ TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
   /// python script computing these values can be found at
   /// scripts/python_ml_lib/cross_entropy_test.py
   gt.Fill(DataType(0));
-  std::vector<double> gt_vals{0.20340866, 0.30961474, 0.1934883,  0.1934883, 0.23503441, 0.31726326,
-                              0.13503441, 0.21266793, 0.1934883,  0.1934883, 0.40961474, 0.10340866,
-                              0.21651871, 0.21216884, 0.21216884, 0.25914361};
+  std::vector<double> gt_vals{
+      0.20340865850448608398, 0.30961471796035766602, 0.19348828494548797607,
+      0.19348828494548797607, 0.23503439128398895264, 0.31726324558258056641,
+      0.13503438234329223633, 0.21266791224479675293, 0.19348828494548797607,
+      0.19348828494548797607, 0.40961471199989318848, 0.1034086570143699646,
+      0.2165187150239944458,  0.21216882765293121338, 0.21216882765293121338,
+      0.25914362072944641113};
 
   SizeType idx_count = 0;
   for (SizeType i = 0; i < n_data_points; ++i)
@@ -155,7 +159,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
   std::vector<double> vals{0.1,  0.8,  0.05, 0.05, 0.2, 0.5, 0.2, 0.1,
                            0.05, 0.05, 0.8,  0.1,  0.5, 0.1, 0.1, 0.3};
   std::vector<double> err{0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0,
-                          0.0, 0.0, 0.0, 0.1, 1.0, 0.,  0.,  0.};
+                          0.0, 0.0, 0.0, 0.1, 0.1, 0.0, 0.0, 0.0};
   idx_count = 0;
   for (SizeType i = 0; i < n_data_points; ++i)
   {
@@ -169,5 +173,5 @@ TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
 
   fetch::ml::ops::SoftmaxCrossEntropy<TypeParam> op;
 
-  EXPECT_TRUE(op.Backward({data1, err_sig}).AllClose(gt, DataType(1e-5), DataType(1e-5)));
+  EXPECT_TRUE(op.Backward({data1, err_sig}).AllClose(gt, DataType(1e-10), DataType(1e-10)));
 }
