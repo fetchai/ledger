@@ -66,8 +66,9 @@ public:
 
     ArrayType t            = this->Forward(inputs);
     ArrayType returnSignal = errorSignal.Clone();
-    fetch::math::Add(errorSignal, fetch::math::Multiply(t, fetch::math::Subtract(DataType(1), t)),
-                     returnSignal);
+    fetch::math::Subtract(DataType(1), t, returnSignal);
+    fetch::math::Multiply(t, returnSignal, returnSignal);
+    fetch::math::Add(errorSignal, returnSignal, returnSignal);
     return {returnSignal};
   }
 

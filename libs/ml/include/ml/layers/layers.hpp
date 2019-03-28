@@ -17,6 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/loss_functions/cross_entropy.hpp"
-#include "ml/ops/loss_functions/mean_square_error.hpp"
-#include "ml/ops/loss_functions/softmax_cross_entropy.hpp"
+#include "fully_connected.hpp"
+#include "self_attention.hpp"
+#include "skip_gram.hpp"

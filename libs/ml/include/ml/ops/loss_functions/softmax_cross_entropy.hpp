@@ -34,6 +34,7 @@ class SoftmaxCrossEntropy
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
+  using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   SoftmaxCrossEntropy()          = default;
@@ -41,16 +42,22 @@ public:
 
   virtual typename ArrayType::Type Forward(std::vector<ArrayType> const &inputs)
   {
-    // third term may be present for scaling
-    assert(inputs.size() == 2);
+    // third term may be present for specifying n_classes
+    assert((inputs.size() == 2) || ((inputs.size() == 3) && (inputs.at(2).size() == 1)));
     assert(inputs.at(0).size() == inputs.at(1).size());
 
     // sanity check the softmax adds up to 1
     assert(Sum(fetch::math::Softmax(inputs[0])) - (DataType(1)) < 0.0001);
 
+    SizeType n_classes{2};
+    if (inputs.size() == 3)
+    {
+      n_classes = SizeType(inputs.at(2).At(0));
+    }
+
     // softmax forward & then CrossEntropy
     typename ArrayType::Type result =
-        fetch::math::CrossEntropyLoss(fetch::math::Softmax(inputs[0]), inputs[1]);
+        fetch::math::CrossEntropyLoss(fetch::math::Softmax(inputs[0]), inputs[1], n_classes);
 
     return result;
   }

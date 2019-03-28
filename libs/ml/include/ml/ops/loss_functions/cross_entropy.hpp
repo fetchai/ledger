@@ -36,17 +36,23 @@ class CrossEntropy
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
+  using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   CrossEntropy()          = default;
   virtual ~CrossEntropy() = default;
 
-  virtual typename ArrayType::Type Forward(std::vector<ArrayType> const &inputs)
+  virtual DataType Forward(std::vector<ArrayType> const &inputs)
   {
-    assert(inputs.size() == 2);
+    assert((inputs.size() == 2) || ((inputs.size() == 3) && (inputs.at(2).size() == 1)));
     assert(inputs.at(0).size() == inputs.at(1).size());
 
-    typename ArrayType::Type result = fetch::math::CrossEntropyLoss(inputs[0], inputs[1]);
+    SizeType n_classes{2};
+    if (inputs.size() == 3)
+    {
+      n_classes = SizeType(inputs.at(2).At(0));
+    }
+    DataType result = fetch::math::CrossEntropyLoss(inputs[0], inputs[1], n_classes);
 
     return result;
   }
@@ -68,7 +74,7 @@ public:
     {
       ret = fetch::math::Softmax(inputs[0], 0);
       fetch::math::Divide(inputs[1], ret, ret);
-      fetch::math::Multiply(typename ArrayType::Type(-1), ret, ret);
+      fetch::math::Multiply(DataType(-1), ret, ret);
     }
 
     return ret;

@@ -778,8 +778,8 @@ template <typename ArrayType>
 meta::IfIsMathFixedPointArray<ArrayType, ArrayType> Multiply(ArrayType const &obj1,
                                                              ArrayType const &obj2)
 {
-  assert(obj1.size() == obj2.size());
-  ArrayType ret{obj1.size()};
+  assert(obj1.shape() == obj2.shape());
+  ArrayType ret{obj1.shape()};
   Multiply(obj1, obj2, ret);
   return ret;
 }
