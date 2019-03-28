@@ -85,9 +85,9 @@ TYPED_TEST(SoftmaxCrossEntropyTest, simple_forward_test)
   }
 
   fetch::ml::ops::SoftmaxCrossEntropy<TypeParam> op;
-  ASSERT_FLOAT_EQ(float(op.Forward({data1, gt})), (1.4480233671411693 + 0.8925382250479597 +
+  ASSERT_FLOAT_EQ(float(op.Forward({data1, gt})), float((1.4480233671411693 + 0.8925382250479597 +
                                                    1.5925382250479596 + 1.1503729081395468) /
-                                                      n_data_points);
+                                                      double(n_data_points)));
 }
 
 TYPED_TEST(SoftmaxCrossEntropyTest, trivial_one_dimensional_backward_test)
