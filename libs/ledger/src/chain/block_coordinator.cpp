@@ -114,6 +114,10 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
     }
   });
 #endif  // FETCH_LOG_DEBUG_ENABLED
+
+
+  // TODO(private issue 792): this shouldn't be here, but if it is, it locks the whole system on startup.
+  // RecoverFromStartup();
 }
 
 /**
@@ -904,6 +908,7 @@ char const *BlockCoordinator::ToString(State state)
     break;
   default:
     text = "Unknown!";
+    break;
   }
 
   return text;

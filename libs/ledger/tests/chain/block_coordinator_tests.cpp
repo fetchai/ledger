@@ -124,14 +124,12 @@ protected:
    * @param starting_state The expected state before the state machine is run
    * @param final_state The expected state after the state machine has run
    */
-  void Tock(State starting_state, State final_state)
+  void Tock(State starting_state, State final_state, uint64_t max_iterations = 50)
   {
     auto const &state_machine = block_coordinator_->GetStateMachine();
 
     // match the current state of the machine
     ASSERT_EQ(starting_state, state_machine.state());
-
-    uint64_t max_iterations = 50;
 
     while (final_state != state_machine.state())
     {
@@ -576,7 +574,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 }
 
-TEST_F(BlockCoordinatorTests, DISABLED_CheckInvalidNumLanes)
+TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
 {
   auto genesis = block_generator_();
 
@@ -601,6 +599,9 @@ TEST_F(BlockCoordinatorTests, DISABLED_CheckInvalidNumLanes)
 
     // post block validation
     EXPECT_CALL(*storage_unit_, CurrentHash());
+
+    // block coord now commits
+    EXPECT_CALL(*storage_unit_, Commit(0));
 
     // reset
     // none
