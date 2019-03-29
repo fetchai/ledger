@@ -17,10 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/exponentiation/exponentiation.hpp"
-#include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
-//#include "math/kernels/standard_functions.hpp"
+#include "math/free_functions/exponentiation/exponentiation.hpp"        // log
+#include "math/free_functions/fundamental_operators.hpp"                // divide
+#include "math/free_functions/matrix_operations/matrix_operations.hpp"  //
 #include <cassert>
 
 namespace fetch {
@@ -32,30 +31,61 @@ namespace math {
  * @param x a 2d array with axis 0 = examples, and axis 1 = dimension in prediction space
  * @param y same size as x with the correct predictions set to 1 in axis 1 and all other positions =
  * 0
+ * @param n_classes if y is not a one-hot, then the number of classes should be 2, or otherwise
+ * specified
  * @return
  */
 template <typename ArrayType>
-typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
+typename ArrayType::Type CrossEntropyLoss(
+    ArrayType const &x, ArrayType const &y,
+    typename ArrayType::SizeType n_classes = typename ArrayType::SizeType(2))
 {
-  assert(x.shape() == y.shape());
+  using DataType = typename ArrayType::Type;
+  using SizeType = typename ArrayType::SizeType;
 
-  typename ArrayType::Type plogx = typename ArrayType::Type(0);
-  for (std::size_t i = 0; i < x.shape()[0]; ++i)
+  assert(x.shape() == y.shape());
+  assert(x.shape().size() == 2);
+  assert(n_classes > SizeType(1));
+
+  auto n_examples = x.shape().at(0);
+  auto n_dims     = x.shape().at(1);
+
+  DataType ret = DataType(0);
+
+  // if not a one-hot, must be binary logistic regression cost
+  if (n_dims == 1)
   {
-    for (std::size_t j = 0; j < x.shape()[1]; ++j)
+    assert(n_classes == SizeType(2));
+    for (SizeType idx = 0; idx < n_examples; ++idx)
     {
-      if (y.At({i, j}) == typename ArrayType::Type(1))
+      assert((y.At(idx) == DataType(1)) || (y.At(idx) == DataType(0)));
+      if (y.At(idx) == DataType(1))
       {
-        typename ArrayType::Type tmp2 = x.At({i, j});
-        typename ArrayType::Type tmp  = Log(tmp2);
-        fetch::math::Add(plogx, fetch::math::Multiply(typename ArrayType::Type(-1), tmp), plogx);
+        ret -= Log(x.At(idx));
+      }
+      else
+      {
+        DataType tmp = DataType(1) - x.At(idx);
+        if (tmp <= 0)
+        {
+          throw std::runtime_error("cannot take log of negative values");
+        }
+        ret -= Log(tmp);
       }
     }
   }
+  // if a one-hot, could be arbitrary n_classes
+  else
+  {
+    ArrayType gt = ArgMax(y);  // y must be one hot - and we can ignore the zero cases
 
-  typename ArrayType::Type n = typename ArrayType::Type(x.shape()[1]);
-  return Divide(plogx, n);
+    for (SizeType idx = 0; idx < n_examples; ++idx)
+    {
+      ret -= Log(x.At({idx, SizeType(gt.At(idx))}));
+    }
+  }
+  Divide(ret, static_cast<DataType>(n_examples), ret);
+  return ret;
 }
-
 }  // namespace math
 }  // namespace fetch
