@@ -44,7 +44,7 @@ struct TrainingParams
 {
   SizeType    output_size     = 2;
   SizeType    batch_size      = 1;       // training data batch size
-  SizeType    embedding_size  = 16;      // dimension of embedding vec
+  SizeType    embedding_size  = 100;     // dimension of embedding vec
   SizeType    training_epochs = 1000;    // total number of training epochs
   double      learning_rate   = 0.01;    // alpha - the learning rate
   SizeType    k               = 10;      // how many nearest neighbours to compare against
@@ -56,8 +56,8 @@ SkipGramTextParams<T> SetParams()
 {
   SkipGramTextParams<T> ret;
 
-  ret.n_data_buffers = SizeType(2);     // input and context buffers
-  ret.max_sentences  = SizeType(1000);  // maximum number of sentences to use
+  ret.n_data_buffers = SizeType(2);       // input and context buffers
+  ret.max_sentences  = SizeType(100000);  // maximum number of sentences to use
 
   ret.unigram_table      = true;  // unigram table for sampling negative training pairs
   ret.unigram_table_size = SizeType(10000000);  // size of unigram table for negative sampling
@@ -66,7 +66,7 @@ SkipGramTextParams<T> SetParams()
   ret.discard_frequent  = true;   // discard most frqeuent words
   ret.discard_threshold = 0.005;  // controls how aggressively to discard frequent words
 
-  ret.window_size         = SizeType(5);  // max size of context window one way
+  ret.window_size         = SizeType(8);  // max size of context window one way
   ret.min_sentence_length = SizeType(4);  //
   ret.k_negative_samples  = SizeType(5);  // number of negative examples to sample
 
