@@ -17,6 +17,35 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/ml/loss_functions/cross_entropy.hpp"
-#include "math/free_functions/ml/loss_functions/l2_norm.hpp"
-#include "math/free_functions/ml/loss_functions/mean_square_error.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
+#include "ml/serializers/ml_types.hpp"
+
+namespace fetch {
+namespace ml {
+namespace examples {
+
+/**
+ * Saves the state dict of a graph to a file location specified by user
+ * @param g the graph to save
+ * @param save_location a string specifying save location
+ */
+template <typename GraphType>
+void SaveModel(GraphType const &g, std::string const &save_location)
+{
+  fetch::serializers::ByteArrayBuffer serializer;
+  serializer << g.StateDict();
+  std::fstream file(save_location, std::fstream::out);  // fba = FetchByteArray
+  if (file)
+  {
+    file << std::string(serializer.data());
+    file.close();
+  }
+  else
+  {
+    std::cerr << "Can't open save file" << std::endl;
+  }
+}
+
+}  // namespace examples
+}  // namespace ml
+}  // namespace fetch
