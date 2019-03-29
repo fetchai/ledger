@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "math/kernels/standard_functions/log.hpp"
 #include "math/meta/math_type_traits.hpp"
-#include "core/assert.hpp"
 
 /**
  * natural logarithm of x

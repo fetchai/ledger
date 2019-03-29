@@ -575,7 +575,9 @@ void ArgMax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeType
     }
     else
     {
-      throw std::runtime_error("Argmax for axis == 1 not yet implemented; depends upon arbitrary dimension slicing for tensor");
+      throw std::runtime_error(
+          "Argmax for axis == 1 not yet implemented; depends upon arbitrary dimension slicing for "
+          "tensor");
     }
   }
 }

@@ -52,7 +52,9 @@ public:
   {
     ASSERT(this->output_);
     ASSERT(inputs.size() == 1);
-    ASSERT((inputs.front().get().shape().size() == 1) || ((inputs.front().get().shape().size() == 2) && (inputs.front().get().shape().at(1) == 1)));
+    ASSERT(
+        (inputs.front().get().shape().size() == 1) ||
+        ((inputs.front().get().shape().size() == 2) && (inputs.front().get().shape().at(1) == 1)));
 
     if (!this->embeddings_output_ ||
         this->embeddings_output_->shape()[0] != inputs.front().get().size() ||
@@ -76,7 +78,9 @@ public:
       ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 1);
-    ASSERT((inputs.front().get().shape().size() == 1) || ((inputs.front().get().shape().size() == 2) && (inputs.front().get().shape().at(1) == 1)));
+    ASSERT(
+        (inputs.front().get().shape().size() == 1) ||
+        ((inputs.front().get().shape().size() == 2) && (inputs.front().get().shape().at(1) == 1)));
 
     uint64_t j(0);
     for (DataType const &i : inputs.front().get())
