@@ -16,33 +16,31 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/ops/tanh.hpp"
 #include "core/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
-#include "ml/ops/tanh.hpp"
-
 
 template <typename T>
 class TanhTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>,
-                                 fetch::math::Tensor<float>,
+using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
                                  fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>
-                                 >;
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 
 TYPED_TEST_CASE(TanhTest, MyTypes);
 
 TYPED_TEST(TanhTest, forward_all_positive_test)
 {
-  TypeParam     data(1);
-  TypeParam     gt(10);
+  TypeParam data(1);
+  TypeParam gt(10);
 
   std::vector<float> dataInput({0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 20, 100});
-  std::vector<float> gtInput({0.0, 0.197375, 0.379949, 0.53705, 0.664037, 0.761594, 0.833655, 0.885352, 1.0, 1.0});
+  std::vector<float> gtInput(
+      {0.0, 0.197375, 0.379949, 0.53705, 0.664037, 0.761594, 0.833655, 0.885352, 1.0, 1.0});
 
   for (std::uint64_t i(0); i < 10; ++i)
   {
@@ -57,14 +55,14 @@ TYPED_TEST(TanhTest, forward_all_positive_test)
   ASSERT_TRUE(prediction.AllClose(gt));
 }
 
-
 TYPED_TEST(TanhTest, forward_all_negative_test)
 {
-  TypeParam     data(1);
-  TypeParam     gt(10);
+  TypeParam data(1);
+  TypeParam gt(10);
 
   std::vector<float> dataInput({-0, -0.2, -0.4, -0.6, -0.8, -1, -1.2, -1.4, -20, -100});
-  std::vector<float> gtInput({-0.0, -0.197375, -0.379949, -0.53705, -0.664037, -0.761594, -0.833655, -0.885352, -1.0, -1.0});
+  std::vector<float> gtInput({-0.0, -0.197375, -0.379949, -0.53705, -0.664037, -0.761594, -0.833655,
+                              -0.885352, -1.0, -1.0});
 
   for (std::uint64_t i(0); i < 10; ++i)
   {

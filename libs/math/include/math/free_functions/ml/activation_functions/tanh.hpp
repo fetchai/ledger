@@ -34,12 +34,12 @@ namespace math {
 template <typename ArrayType>
 void TanhLayer(ArrayType const &t, ArrayType &ret)
 {
-    typename ArrayType::SizeType idx(0);
-    for(auto &val: t){        
-        Tanh(val, ret.At(idx));
-        ++idx;
-    };
-    
+  typename ArrayType::SizeType idx(0);
+  for (auto &val : t)
+  {
+    Tanh(val, ret.At(idx));
+    ++idx;
+  };
 }
 
 template <typename ArrayType>
