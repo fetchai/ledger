@@ -20,6 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "storage/resource_mapper.hpp"
 
 #include <set>
 
@@ -109,6 +110,22 @@ inline std::vector<fetch::byte_array::ByteArray> GenerateUniqueHashes(uint64_t s
       }
       arrays.insert(hash);
     }
+  }
+
+  return ret;
+}
+
+// Convenience function - generate unique IDs
+inline std::vector<storage::ResourceID> GenerateUniqueIDs(uint64_t size, uint64_t seed = 0,
+                                                          bool verify_unique = false)
+{
+  std::vector<storage::ResourceID> ret;
+  auto                             hashes = GenerateUniqueHashes(size, seed);
+
+  for (auto const &i : hashes)
+  {
+    byte_array::ConstByteArray as_const{i};
+    ret.emplace_back(as_const);
   }
 
   return ret;
