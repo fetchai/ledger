@@ -27,6 +27,21 @@ namespace fetch {
 namespace ml {
 namespace examples {
 
+/**
+ * helper function for identifying file extensions
+ * @param value the string to test
+ * @param ending the extension to check for (e.g. .txt)
+ * @return boolean indicating whether string ends with extension specified
+ */
+inline bool ends_with(std::string const &value, std::string const &ending)
+{
+  if (ending.size() > value.size())
+  {
+    return false;
+  }
+  return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+}
+
 // TODO - also handle a string that specifies one text file only
 /**
  * returns a vector of filenames of txt files
@@ -44,12 +59,9 @@ std::vector<std::string> GetAllTextFiles(std::string const &dir_name)
     while ((ent = readdir(d)) != nullptr)
     {
       p1 = ent->d_name;
-      if (p1.find('.'))
+      if (ends_with(p1, ".txt"))
       {
-        if (p1.compare("txt"))
-        {
-          ret.emplace_back(ent->d_name);
-        }
+        ret.emplace_back(ent->d_name);
       }
     }
     closedir(d);
