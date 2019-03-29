@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shapeless_array.hpp"
 #include "vectorise/memory/range.hpp"
 
 #include <cmath>
@@ -30,14 +29,16 @@ namespace statistics {
 template <typename A>
 inline typename A::Type GeometricMean(A const &a)
 {
-  using vector_register_type = typename A::vector_register_type;
-  using type                 = typename A::Type;
+  using DataType = typename A::Type;
 
-  type ret = a.data().in_parallel().Reduce(
-      memory::TrivialRange(0, a.size()),
-      [](vector_register_type const &a, vector_register_type const &b) { return a * b; });
+  DataType gm = 1;
 
-  return type(std::pow(ret, double(1.) / double(a.size())));
+  for (auto &e : a)
+  {
+    gm *= e;
+  }
+  Pow(gm, DataType(1. / a.size()), gm);
+  return gm;
 }
 
 }  // namespace statistics

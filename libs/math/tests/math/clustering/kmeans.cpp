@@ -25,7 +25,6 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <math/shapeless_array.hpp>
 #include <math/tensor.hpp>
 #include <string>
 #include <vector>

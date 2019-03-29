@@ -44,13 +44,6 @@
 namespace fetch {
 namespace math {
 
-/**
- * softmax over all data in shapelessarray
- * @tparam T type
- * @tparam C container_type
- * @param array original data upon which to call softmax
- * @param ret new data with softmax applied
- */
 namespace details {
 
 /*

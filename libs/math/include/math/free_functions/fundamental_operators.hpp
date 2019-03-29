@@ -218,7 +218,7 @@ meta::IfIsMathShapeArray<ArrayType, void> Add(ArrayType const &array1, ArrayType
 
   for (std::size_t i = 0; i < ret.size(); ++i)
   {
-    ret.At(i) = array1.At(i) - array2.At(i);
+    ret.At(i) = array1.At(i) + array2.At(i);
   }
 }
 
