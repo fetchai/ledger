@@ -107,6 +107,6 @@ TYPED_TEST(SoftmaxTest, exact_values_test)
   // test correct values
   for (std::size_t j = 0; j < gt_array.size(); ++j)
   {
-    ASSERT_NEAR(test_array[j], gt_array[j], typename TypeParam::Type(1e-7));
+    ASSERT_NEAR(double(test_array[j]), double(gt_array[j]), double(1e-7));
   }
 }

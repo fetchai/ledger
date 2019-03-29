@@ -14,11 +14,17 @@ setup_compiler()
 add_fetch_test(combinatorics_gtest fetch-math math/combinatorics)
 
 add_fetch_test(free_functions_gtest fetch-math math/free_functions)
-add_fetch_test(activation_functions fetch-math math/ml_activation_functions)
-add_fetch_test(loss_functions fetch-math math/ml_loss_functions)
+add_fetch_test(activation_functions_gtest fetch-math math/ml_activation_functions)
+add_fetch_test(loss_functions_gtest fetch-math math/ml_loss_functions)
 
 add_fetch_test(sign_gtest fetch-math math/kernels/sign)
 
+<<<<<<< HEAD
+=======
+add_fetch_test(l2loss_gtest fetch-math math/shapeless_array/l2loss)
+add_fetch_test(shapeless_array_basic_gtest fetch-math math/shapeless_array/basic_tests)
+
+>>>>>>> 7cd26df2260a4f19319e6655e4e69b6db7863628
 add_fetch_test(big_number_gtest fetch-math math/basic_math_tests)
 add_fetch_test(distances_gtest fetch-math math/distance/gtest)
 add_fetch_test(clustering_gtest fetch-math math/clustering)

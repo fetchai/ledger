@@ -25,12 +25,6 @@
 #include <type_traits>
 
 namespace fetch {
-
-// namespace fixed_point {
-//    template <std::size_t I, std::size_t F>
-//    class FixedPoint;
-//} // fixed_point
-
 namespace math {
 
 template <typename T, typename C>
