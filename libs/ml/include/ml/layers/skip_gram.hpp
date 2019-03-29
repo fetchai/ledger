@@ -62,9 +62,9 @@ public:
 
     // embed both inputs
     embed_in_ = this->template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
-        name + "_Embed_Inputs", {input}, in_size, embedding_size, weights);
+        name + "_Embed_Inputs", {input}, weights);
     std::string embed_ctx = this->template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
-        name + "_Embed_Context", {context}, in_size, embedding_size, weights);
+        name + "_Embed_Context", {context}, weights);
 
     // dot product input and context embeddings
     std::string transpose_ctx = this->template AddNode<fetch::ml::ops::Transpose<ArrayType>>(

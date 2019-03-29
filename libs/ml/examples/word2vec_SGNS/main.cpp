@@ -17,8 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "file_loader.hpp"
-//#include "core/serializers/byte_array_buffer.hpp"
-//#include "ml/serializers/ml_types.hpp"
 #include "model_saver.hpp"
 
 #include "math/free_functions/clustering_algorithms/knn.hpp"
@@ -50,12 +48,12 @@ struct TrainingParams
 {
   SizeType    output_size     = 1;
   SizeType    batch_size      = 128;            // training data batch size
-  SizeType    embedding_size  = 16;             // dimension of embedding vec
+  SizeType    embedding_size  = 32;             // dimension of embedding vec
   SizeType    training_epochs = 100000;         // total number of training epochs
   double      learning_rate   = 0.1;            // alpha - the learning rate
   SizeType    k               = 10;             // how many nearest neighbours to compare against
-  std::string test_word       = "cold";         // test word to consider
-  std::string save_loc        = "./model.fba";  // small value for avoiding numerical instability
+  std::string test_word       = "action";       // test word to consider
+  std::string save_loc        = "./model.fba";  // save file location for exporting graph
 };
 
 template <typename T>
@@ -64,18 +62,18 @@ SkipGramTextParams<T> SetParams()
   SkipGramTextParams<T> ret;
 
   ret.n_data_buffers = SizeType(2);    // input and context buffers
-  ret.max_sentences  = SizeType(300);  // maximum number of sentences to use
+  ret.max_sentences  = SizeType(1000);  // maximum number of sentences to use
 
   ret.unigram_table      = true;  // unigram table for sampling negative training pairs
   ret.unigram_table_size = SizeType(10000000);  // size of unigram table for negative sampling
   ret.unigram_power      = 0.75;                // adjusted unigram distribution
 
   ret.discard_frequent  = true;   // discard most frqeuent words
-  ret.discard_threshold = 0.001;  // controls how aggressively to discard frequent words
+  ret.discard_threshold = 0.0001;  // controls how aggressively to discard frequent words
 
-  ret.window_size         = SizeType(8);  // max size of context window one way
+  ret.window_size         = SizeType(5);  // max size of context window one way
   ret.min_sentence_length = SizeType(4);  //
-  ret.k_negative_samples  = SizeType(1);  // number of negative examples to sample
+  ret.k_negative_samples  = SizeType(10);  // number of negative examples to sample
 
   return ret;
 }

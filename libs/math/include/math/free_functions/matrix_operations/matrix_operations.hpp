@@ -565,10 +565,17 @@ void ArgMax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeType
   }
   else
   {
-    // get arg max for each row indexing by axis 0
-    for (std::size_t j = 0; j < array.shape().at(axis); ++j)
+    if (axis == 0)
     {
-      ret.At(j) = ArgMax(array.Slice(j), axis).At(0);
+      // get arg max for each row indexing by axis 0
+      for (std::size_t j = 0; j < array.shape().at(axis); ++j)
+      {
+        ret.At(j) = ArgMax(array.Slice(j), axis).At(0);
+      }
+    }
+    else
+    {
+      throw std::runtime_error("Argmax for axis == 1 not yet implemented; depends upon arbitrary dimension slicing for tensor");
     }
   }
 }

@@ -28,10 +28,9 @@ namespace examples {
  * Saves the state dict of a graph to a file location specified by user
  * @param g the graph to save
  * @param save_location a string specifying save location
- * @return bool specifiy succes
  */
 template <typename GraphType>
-void SaveModel(GraphType g, std::string const &save_location)
+void SaveModel(GraphType const &g, std::string const &save_location)
 {
   fetch::serializers::ByteArrayBuffer serializer;
   serializer << g.StateDict();

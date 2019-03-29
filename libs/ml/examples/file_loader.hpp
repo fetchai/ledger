@@ -38,18 +38,15 @@ std::vector<std::string> GetAllTextFiles(std::string const &dir_name)
   std::vector<std::string> ret;
   DIR *                    d;
   struct dirent *          ent;
-  char *                   p1;
-  int                      txt_cmp;
-  if ((d = opendir(dir_name.c_str())) != NULL)
+  std::string              p1;
+  if ((d = opendir(dir_name.c_str())) != nullptr)
   {
-    while ((ent = readdir(d)) != NULL)
+    while ((ent = readdir(d)) != nullptr)
     {
-      strtok(ent->d_name, ".");
-      p1 = strtok(NULL, ".");
-      if (p1 != NULL)
+      p1 = ent->d_name;
+      if (p1.find('.'))
       {
-        txt_cmp = std::strcmp(p1, "txt");
-        if (txt_cmp == 0)
+        if (p1.compare("txt"))
         {
           ret.emplace_back(ent->d_name);
         }
