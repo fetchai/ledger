@@ -87,7 +87,7 @@ public:
   }
 
   virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      std::vector<std::reference_wrapper<ArrayType const>> const &/*inputs*/,
       ArrayType const &                                           errorSignal)
   {
     return {errorSignal};

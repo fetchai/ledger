@@ -72,7 +72,7 @@ TEST_P(TestClass, basic_Test)
     EXPECT_EQ(yao[i], lcg2()) << "3: memory doesn't store what it is supposed to";
   }
 
-  array = array;
+//  array = array;
   /*
   if(array.reference_count() != 3)
   {

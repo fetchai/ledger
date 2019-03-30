@@ -73,14 +73,13 @@ macro(setup_compiler)
   # Suppress visibility link warnings
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 
-  #fetch_info("Using compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
   if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pragmas")
   endif()
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   if(FETCH_WARNINGS_AS_ERRORS)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wno-unused-parameter")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
   endif(FETCH_WARNINGS_AS_ERRORS)
 
   # prefer PIC
@@ -190,6 +189,13 @@ function(configure_vendor_targets)
   target_include_directories(vendor-asio INTERFACE ${FETCH_ROOT_VENDOR_DIR}/asio/asio/include)
   target_compile_definitions(vendor-asio INTERFACE ASIO_STANDALONE ASIO_HEADER_ONLY ASIO_HAS_STD_SYSTEM_ERROR)
 
+  # required for latest version of Xcode: Apple LLVM version 10.0.1 (clang-1001.0.46.3). In this
+  # version the string view has been removed from: <experimental/string_view>. This will need to be
+  # set across all compilers when C++17 support is standard.
+  if (APPLE)
+    target_compile_definitions(vendor-asio INTERFACE ASIO_HAS_STD_STRING_VIEW)
+  endif (APPLE)
+
   # Pybind11
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/pybind11)
 
@@ -239,6 +245,8 @@ endfunction(configure_library_targets)
 macro(detect_environment)
 
   set (CMAKE_EXPORT_COMPILE_COMMANDS  ON)
+
+  message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 
   # detect if we are running in a Jetbrains IDE
   set(FETCH_IS_JETBRAINS_IDE FALSE)
