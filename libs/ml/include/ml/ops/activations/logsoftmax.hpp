@@ -54,6 +54,8 @@ public:
   virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
                                              ArrayPtrType                     errorSignal)
   {
+    FETCH_UNUSED(inputs);
+
     assert(inputs.size() == 1);
     assert(inputs[0]->shape() == errorSignal->shape());
 
