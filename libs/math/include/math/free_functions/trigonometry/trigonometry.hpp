@@ -181,10 +181,18 @@ fixed_point::FixedPoint<I, F> Tanh(fixed_point::FixedPoint<I, F> &x)
 template <typename T>
 fetch::math::meta::IfIsMathArray<T, void> Tanh(T const &array, T &ret)
 {
-  ret = array;
-  for (typename T::Type &e : ret)
+  // ret = array;
+  // for (typename T::Type &e : ret)
+  // {
+  //   e = static_cast<typename T::Type>(std::tanh(double(e)));
+  // }
+
+  assert(ret.shape() == array.shape());
+  typename T::SizeType idx{0};
+  for (auto &e : array)
   {
-    e = static_cast<typename T::Type>(std::tanh(double(e)));
+    Tanh(e, ret.At(idx));
+    idx++;
   }
 }
 
