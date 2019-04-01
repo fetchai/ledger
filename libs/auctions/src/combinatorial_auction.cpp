@@ -107,7 +107,7 @@ void CombinatorialAuction::Mine(std::size_t random_seed, std::size_t run_time)
       if (new_reward > best_value_)
       {
         best_active_ = active_.Clone();
-        best_value_ = new_reward;
+        best_value_  = new_reward;
       }
 
       // stochastically ignore (or keep) new activation set
