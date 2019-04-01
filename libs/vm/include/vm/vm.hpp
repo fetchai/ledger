@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/arithmetic/comparison.hpp"
+#include <cassert>
 #include "vm/defs.hpp"
 #include "vm/io_observer_interface.hpp"
 #include "vm/string.hpp"
