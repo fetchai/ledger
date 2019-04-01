@@ -77,7 +77,7 @@ ConstByteArray FromBase64(ConstByteArray const &str) noexcept
     break;
   }
 
-  return ret;
+  return std::move(ret);
 }
 
 ConstByteArray FromHex(ConstByteArray const &str) noexcept
@@ -107,7 +107,7 @@ ConstByteArray FromHex(ConstByteArray const &str) noexcept
     return ConstByteArray();
   }
 
-  return ret;
+  return std::move(ret);
 }
 
 }  // namespace byte_array
