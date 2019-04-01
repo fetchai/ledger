@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/free_functions/fundamental_operators.hpp"
-#include "math/free_functions/ml/activation_functions/tanh.hpp"
+#include "math/free_functions/trigonometry/trigonometry.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -44,7 +44,7 @@ public:
       this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
     }
 
-    fetch::math::TanhLayer(inputs.front().get(), *this->output_);
+    fetch::math::Tanh(inputs.front().get(), *this->output_);
     return *(this->output_);
   }
 
@@ -58,8 +58,8 @@ public:
 
     ArrayType t            = this->Forward(inputs);
     ArrayType returnSignal = errorSignal.Clone();
-    fetch::math::Add(errorSignal, fetch::math::Subtract(DataType(1), fetch::math::Multiply(t, t)),
-                     returnSignal);
+    fetch::math::Multiply(
+        errorSignal, fetch::math::Subtract(DataType(1), fetch::math::Multiply(t, t)), returnSignal);
     return {returnSignal};
   }
 

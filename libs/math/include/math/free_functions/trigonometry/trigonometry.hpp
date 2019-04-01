@@ -135,19 +135,56 @@ fetch::math::meta::IfIsBlasArray<ArrayType, void> Tanh(ArrayType &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 template <typename ArrayType>
-fetch::math::meta::IfIsNonBlasArray<ArrayType, void> Tanh(ArrayType &x)
+fetch::math::meta::IfIsNonBlasArray<ArrayType, ArrayType> Tanh(ArrayType const &x)
 {
+  ArrayType                    ret(x);
+  typename ArrayType::SizeType idx{0};
   for (typename ArrayType::Type &e : x)
   {
-    e = std::tanh(e);
+    ret.At(idx) = std::tanh(e);
+    idx++;
   }
+
+  return ret;
 }
 template <typename ArrayType>
-fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> Tanh(ArrayType &x)
+fetch::math::meta::IfIsMathFixedPointArray<ArrayType, ArrayType> Tanh(ArrayType const &x)
 {
+  ArrayType                    ret(x);
+  typename ArrayType::SizeType idx{0};
   for (typename ArrayType::Type &e : x)
   {
-    e = static_cast<typename ArrayType::Type>(std::tanh(double(e)));
+    ret.At(idx) = static_cast<typename ArrayType::Type>(std::tanh(double(e)));
+    idx++;
+  }
+
+  return ret;
+}
+template <typename T>
+fetch::math::meta::IfIsArithmetic<T, void> Tanh(T const &x, T &ret)
+{
+  ret = T(std::tanh(static_cast<double>(x)));
+}
+template <typename T>
+fetch::math::meta::IfIsArithmetic<T, T> Tanh(T const &x)
+{
+  T ret;
+  ret = std::tanh(x);
+  return ret;
+}
+template <std::size_t I, std::size_t F>
+fixed_point::FixedPoint<I, F> Tanh(fixed_point::FixedPoint<I, F> &x)
+{
+  fixed_point::FixedPoint<I, F> ret(std::tanh(double(x)));
+  return ret;
+}
+template <typename T>
+fetch::math::meta::IfIsMathArray<T, void> Tanh(T const &array, T &ret)
+{
+  ret = array;
+  for (typename T::Type &e : ret)
+  {
+    e = static_cast<typename T::Type>(std::tanh(double(e)));
   }
 }
 
