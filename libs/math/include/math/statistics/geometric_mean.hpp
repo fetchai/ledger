@@ -37,7 +37,7 @@ inline typename A::Type GeometricMean(A const &a)
   {
     gm *= e;
   }
-  Pow(gm, DataType(1. / a.size()), gm);
+  Pow(gm, DataType(1.) / DataType(a.size()), gm);
   return gm;
 }
 
