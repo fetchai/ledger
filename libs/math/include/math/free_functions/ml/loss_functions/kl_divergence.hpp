@@ -37,22 +37,22 @@ typename ArrayType::Type KlDivergence(ArrayType const &a, ArrayType const &b,
 {
   assert(a.shape().at(0) == b.shape().at(0));
 
-  ret = 0;
+  ret = typename ArrayType::Type(0);
   for (std::size_t i = 0; i < a.shape().at(0); i++)
+  {
     for (std::size_t j = 0; j < a.shape().at(0); j++)
     {
-      {
-        if (i == j)
-          continue;
+      if (i == j)
+        continue;
 
-        typename ArrayType::Type tmp_p_j_i;
-        distance::ConditionalProbabilitiesDistance(a, i, j, 1, tmp_p_j_i);
-        typename ArrayType::Type tmp_q_j_i;
-        distance::ConditionalProbabilitiesDistance(b, i, j, 1, tmp_q_j_i);
+      typename ArrayType::Type tmp_p_j_i;
+      distance::ConditionalProbabilitiesDistance(a, i, j, typename ArrayType::Type(1), tmp_p_j_i);
+      typename ArrayType::Type tmp_q_j_i;
+      distance::ConditionalProbabilitiesDistance(b, i, j, typename ArrayType::Type(1), tmp_q_j_i);
 
-        ret += tmp_p_j_i * log10(Divide(tmp_p_j_i, tmp_q_j_i));
-      }
+      ret += Multiply(tmp_p_j_i, (typename ArrayType::Type)log10(Divide(tmp_p_j_i, tmp_q_j_i)));
     }
+  }
 
   return ret;
 }

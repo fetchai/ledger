@@ -48,19 +48,20 @@ void ConditionalProbabilitiesDistance(ArrayType const &a, std::size_t i, std::si
   typename ArrayType::Type tmp_numerator = SquareDistance(a.Slice(i), a.Slice(j));
 
   // Divide by 2 sigma squared and make negative
-  tmp_numerator = -Divide(tmp_numerator, 2.0 * sigma * sigma);
+  tmp_numerator =
+      -Divide(tmp_numerator, Multiply(typename ArrayType::Type(2.0), Multiply(sigma, sigma)));
 
   Exp(tmp_numerator, tmp_numerator);
 
   // Calculate denominator
-  typename ArrayType::Type tmp_denominator = 0.0;
+  typename ArrayType::Type tmp_denominator(0.0);
 
   for (size_t k = 0; k < a.shape().at(0); k++)
   {
     if (k == i)
       continue;
     typename ArrayType::Type tmp_val = SquareDistance(a.Slice(i), a.Slice(k));
-    tmp_val                          = -Divide(tmp_val, 2.0 * sigma * sigma);
+    tmp_val = -Divide(tmp_val, Multiply(typename ArrayType::Type(2.0), Multiply(sigma, sigma)));
     Exp(tmp_val, tmp_val);
 
     tmp_denominator += tmp_val;

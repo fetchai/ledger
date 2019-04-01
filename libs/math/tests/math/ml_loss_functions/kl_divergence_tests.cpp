@@ -31,100 +31,103 @@ class KlDivergenceTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+/*using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+*/
+
+using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
 
 TYPED_TEST_CASE(KlDivergenceTest, MyTypes);
 
 TYPED_TEST(KlDivergenceTest, same_tensors_divergence_test)
 {
-  Tensor<double> A = Tensor<double>({4, 4});
+  TypeParam A({4, 4});
 
-  A.Set({0, 0}, 0.1);
-  A.Set({0, 1}, 0.2);
-  A.Set({0, 2}, 0.3);
-  A.Set({0, 3}, 0.4);
+  A.Set({0, 0}, typename TypeParam::Type(0.1));
+  A.Set({0, 1}, typename TypeParam::Type(0.2));
+  A.Set({0, 2}, typename TypeParam::Type(0.3));
+  A.Set({0, 3}, typename TypeParam::Type(0.4));
 
-  A.Set({1, 0}, -0.1);
-  A.Set({1, 1}, -0.2);
-  A.Set({1, 2}, -0.3);
-  A.Set({1, 3}, -0.4);
+  A.Set({1, 0}, typename TypeParam::Type(-0.1));
+  A.Set({1, 1}, typename TypeParam::Type(-0.2));
+  A.Set({1, 2}, typename TypeParam::Type(-0.3));
+  A.Set({1, 3}, typename TypeParam::Type(-0.4));
 
-  A.Set({2, 0}, -1.1);
-  A.Set({2, 1}, -1.2);
-  A.Set({2, 2}, -1.3);
-  A.Set({2, 3}, -1.4);
+  A.Set({2, 0}, typename TypeParam::Type(-1.1));
+  A.Set({2, 1}, typename TypeParam::Type(-1.2));
+  A.Set({2, 2}, typename TypeParam::Type(-1.3));
+  A.Set({2, 3}, typename TypeParam::Type(-1.4));
 
-  A.Set({3, 0}, 1.1);
-  A.Set({3, 1}, 1.2);
-  A.Set({3, 2}, 1.3);
-  A.Set({3, 3}, 1.4);
+  A.Set({3, 0}, typename TypeParam::Type(1.1));
+  A.Set({3, 1}, typename TypeParam::Type(1.2));
+  A.Set({3, 2}, typename TypeParam::Type(1.3));
+  A.Set({3, 3}, typename TypeParam::Type(1.4));
 
-  Tensor<double> B = Tensor<double>({4, 4});
+  TypeParam B({4, 4});
 
-  B.Set({0, 0}, 0.1);
-  B.Set({0, 1}, 0.2);
-  B.Set({0, 2}, 0.3);
-  B.Set({0, 3}, 0.4);
+  B.Set({0, 0}, typename TypeParam::Type(0.1));
+  B.Set({0, 1}, typename TypeParam::Type(0.2));
+  B.Set({0, 2}, typename TypeParam::Type(0.3));
+  B.Set({0, 3}, typename TypeParam::Type(0.4));
 
-  B.Set({1, 0}, -0.1);
-  B.Set({1, 1}, -0.2);
-  B.Set({1, 2}, -0.3);
-  B.Set({1, 3}, -0.4);
+  B.Set({1, 0}, typename TypeParam::Type(-0.1));
+  B.Set({1, 1}, typename TypeParam::Type(-0.2));
+  B.Set({1, 2}, typename TypeParam::Type(-0.3));
+  B.Set({1, 3}, typename TypeParam::Type(-0.4));
 
-  B.Set({2, 0}, -1.1);
-  B.Set({2, 1}, -1.2);
-  B.Set({2, 2}, -1.3);
-  B.Set({2, 3}, -1.4);
+  B.Set({2, 0}, typename TypeParam::Type(-1.1));
+  B.Set({2, 1}, typename TypeParam::Type(-1.2));
+  B.Set({2, 2}, typename TypeParam::Type(-1.3));
+  B.Set({2, 3}, typename TypeParam::Type(-1.4));
 
-  B.Set({3, 0}, 1.1);
-  B.Set({3, 1}, 1.2);
-  B.Set({3, 2}, 1.3);
-  B.Set({3, 3}, 1.4);
+  B.Set({3, 0}, typename TypeParam::Type(1.1));
+  B.Set({3, 1}, typename TypeParam::Type(1.2));
+  B.Set({3, 2}, typename TypeParam::Type(1.3));
+  B.Set({3, 3}, typename TypeParam::Type(1.4));
 
-  EXPECT_NEAR(KlDivergence(A, B), 0.0, 1e-7);
-  EXPECT_NEAR(KlDivergence(B, A), 0.0, 1e-7);
+  EXPECT_NEAR(KlDivergence(A, B), 0.0, 1e-5);
+  EXPECT_NEAR(KlDivergence(B, A), 0.0, 1e-5);
 }
 
 TYPED_TEST(KlDivergenceTest, other_divergence_test)
 {
-  Tensor<double> A = Tensor<double>({4, 4});
+  TypeParam A({4, 4});
 
-  A.Set({0, 0}, 0.1);
-  A.Set({0, 1}, 0.2);
-  A.Set({0, 2}, 0.3);
-  A.Set({0, 3}, 0.4);
+  A.Set({0, 0}, typename TypeParam::Type(0.1));
+  A.Set({0, 1}, typename TypeParam::Type(0.2));
+  A.Set({0, 2}, typename TypeParam::Type(0.3));
+  A.Set({0, 3}, typename TypeParam::Type(0.4));
 
-  A.Set({1, 0}, -0.1);
-  A.Set({1, 1}, -0.2);
-  A.Set({1, 2}, -0.3);
-  A.Set({1, 3}, -0.4);
+  A.Set({1, 0}, typename TypeParam::Type(-0.1));
+  A.Set({1, 1}, typename TypeParam::Type(-0.2));
+  A.Set({1, 2}, typename TypeParam::Type(-0.3));
+  A.Set({1, 3}, typename TypeParam::Type(-0.4));
 
-  A.Set({2, 0}, -1.1);
-  A.Set({2, 1}, -1.2);
-  A.Set({2, 2}, -1.3);
-  A.Set({2, 3}, -1.4);
+  A.Set({2, 0}, typename TypeParam::Type(-1.1));
+  A.Set({2, 1}, typename TypeParam::Type(-1.2));
+  A.Set({2, 2}, typename TypeParam::Type(-1.3));
+  A.Set({2, 3}, typename TypeParam::Type(-1.4));
 
-  A.Set({3, 0}, 1.1);
-  A.Set({3, 1}, 1.2);
-  A.Set({3, 2}, 1.3);
-  A.Set({3, 3}, 1.4);
+  A.Set({3, 0}, typename TypeParam::Type(1.1));
+  A.Set({3, 1}, typename TypeParam::Type(1.2));
+  A.Set({3, 2}, typename TypeParam::Type(1.3));
+  A.Set({3, 3}, typename TypeParam::Type(1.4));
 
-  Tensor<double> B = Tensor<double>({4, 2});
+  TypeParam B({4, 2});
 
-  B.Set({0, 0}, 1.1);
-  B.Set({0, 1}, 1.2);
+  B.Set({0, 0}, typename TypeParam::Type(1.1));
+  B.Set({0, 1}, typename TypeParam::Type(1.2));
 
-  B.Set({1, 0}, -1.1);
-  B.Set({1, 1}, -1.2);
+  B.Set({1, 0}, typename TypeParam::Type(-1.1));
+  B.Set({1, 1}, typename TypeParam::Type(-1.2));
 
-  B.Set({2, 0}, -0.1);
-  B.Set({2, 1}, -0.2);
+  B.Set({2, 0}, typename TypeParam::Type(-0.1));
+  B.Set({2, 1}, typename TypeParam::Type(-0.2));
 
-  B.Set({3, 0}, 0.1);
-  B.Set({3, 1}, 0.2);
+  B.Set({3, 0}, typename TypeParam::Type(0.1));
+  B.Set({3, 1}, typename TypeParam::Type(0.2));
 
-  EXPECT_NEAR(KlDivergence(A, B), 3.8460455925219406, 1e-7);
-  EXPECT_NEAR(KlDivergence(B, A), 6.8452644686571968, 1e-7);
+  EXPECT_NEAR(KlDivergence(A, B), 3.8460455925219406, 1e-5);
+  EXPECT_NEAR(KlDivergence(B, A), 6.8452644686571968, 1e-5);
 }
