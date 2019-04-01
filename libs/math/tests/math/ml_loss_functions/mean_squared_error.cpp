@@ -60,7 +60,7 @@ TYPED_TEST(MeanSquareErrorTest, perfect_match_test)
   score = fetch::math::MeanSquareError(test_array, gt_array);
 
   // test correct values
-  ASSERT_NEAR(score, typename TypeParam::Type(0), typename TypeParam::Type(1.0e-5f));
+  ASSERT_NEAR(double(score), double(0.0), double(1.0e-5f));
 }
 
 TYPED_TEST(MeanSquareErrorTest, value_test)
@@ -91,6 +91,5 @@ TYPED_TEST(MeanSquareErrorTest, value_test)
   score = fetch::math::MeanSquareError(test_array, gt_array);
 
   // test correct values
-  ASSERT_NEAR(score, typename TypeParam::Type(191.18f / 8.0f / 2.0f),
-              typename TypeParam::Type(1.0e-5f));
+  ASSERT_NEAR(double(score), double(191.18f / 8.0f / 2.0f), double(1.0e-5f));
 }

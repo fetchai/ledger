@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "crypto/prover.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "network/muddle/blacklist.hpp"
@@ -51,6 +52,7 @@ public:
   using Handle              = network::AbstractConnection::connection_handle_type;
   using ThreadPool          = network::ThreadPool;
   using HandleDirectAddrMap = std::unordered_map<Handle, Address>;
+  using Prover              = crypto::Prover;
 
   struct RoutingData
   {
@@ -67,7 +69,8 @@ public:
   static Packet::Address    ConvertAddress(Packet::RawAddress const &address);
 
   // Construction / Destruction
-  Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher);
+  Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher,
+         Prover *certificate = nullptr);
   Router(Router const &) = delete;
   Router(Router &&)      = delete;
   ~Router() override     = default;
@@ -185,6 +188,9 @@ private:
   bool IsEcho(Packet const &packet, bool register_echo = true);
   void CleanEchoCache();
 
+  PacketPtr const &Sign(PacketPtr const &p) const;
+  bool             Genuine(PacketPtr const &p) const;
+
   Address const         address_;
   RawAddress const      address_raw_;
   MuddleRegister const &register_;
@@ -192,6 +198,7 @@ private:
   Dispatcher &          dispatcher_;
   SubscriptionRegistrar registrar_;
   NetworkId             network_id_;
+  Prover *              prover_ = nullptr;
 
   mutable Mutex routing_table_lock_{__LINE__, __FILE__};
   RoutingTable  routing_table_;  ///< The map routing table from address to handle (Protected by

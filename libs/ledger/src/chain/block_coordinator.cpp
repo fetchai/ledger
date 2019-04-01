@@ -62,6 +62,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   , status_cache_{status_cache}
   , periodic_print_{NOTIFY_INTERVAL}
   , miner_{std::make_shared<consensus::DummyMiner>()}
+  , last_executed_block_{GENESIS_DIGEST}
   , identity_{std::move(identity)}
   , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RESET,
                                                   [](State state) { return ToString(state); })}
@@ -512,6 +513,9 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
   {
     // mark all the transactions as been executed
     UpdateTxStatus(*current_block_);
+
+    // signal the last block that has been executed
+    last_executed_block_.Set(current_block_->body.hash);
   }
 
   return next_state;
@@ -629,6 +633,9 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 
       // mark this blocks transactions as being executed
       UpdateTxStatus(*next_block_);
+
+      // signal the last block that has been executed
+      last_executed_block_.Set(next_block_->body.hash);
 
       // dispatch the block that has been generated
       block_sink_.OnBlock(*next_block_);

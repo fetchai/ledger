@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include "ml/dataloaders/mnist_loader.hpp"
+#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 #include "ml/graph.hpp"
 
 #include "ml/layers/fully_connected.hpp"
@@ -139,7 +139,7 @@ int main(int ac, char **av)
       // Wait for everyone to be done
       t.join();
     }
-    std::list<const fetch::ml::StateDict<ArrayType>> stateDicts;
+    std::list<fetch::ml::StateDict<ArrayType>> stateDicts;
     for (auto &c : clients)
     {
       // Collect all the stateDicts

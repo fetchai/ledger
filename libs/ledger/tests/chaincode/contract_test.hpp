@@ -19,6 +19,7 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/ecdsa.hpp"
+#include "crypto/identity.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/identifier.hpp"
@@ -33,6 +34,7 @@
 class ContractTest : public ::testing::Test
 {
 protected:
+  using Identity             = fetch::crypto::Identity;
   using Identifier           = fetch::ledger::Identifier;
   using MutableTransaction   = fetch::ledger::MutableTransaction;
   using VerifiedTransaction  = fetch::ledger::VerifiedTransaction;
@@ -44,6 +46,7 @@ protected:
   using Resources            = std::vector<ConstByteArray>;
   using CertificatePtr       = std::unique_ptr<fetch::crypto::ECDSASigner>;
   using StateAdapter         = fetch::ledger::StateAdapter;
+  using StateSentinelAdapter = fetch::ledger::StateSentinelAdapter;
   using Query                = Contract::Query;
   using IdentifierPtr        = std::shared_ptr<Identifier>;
   using CachedStorageAdapter = fetch::ledger::CachedStorageAdapter;
@@ -87,24 +90,27 @@ protected:
     void Pack(T const &arg, Args... args)
     {
       // packet this argument
-      packer_.pack(arg);
+      PackInternal(arg);
 
       // pack the other arguments
       Pack(args...);
     }
 
+    void Pack()
+    {}
+
     template <typename T>
-    void Pack(T const &arg)
+    void PackInternal(T const &arg)
     {
       packer_.pack(arg);
     }
 
-    void Pack(fetch::crypto::Identity const &identity)
+    void PackInternal(fetch::crypto::Identity const &identity)
     {
       auto const &id = identity.identifier();
 
       // pack as an address
-      packer_.pack_ext(id.size(), static_cast<int8_t>(0xAD));
+      packer_.pack_ext(id.size(), static_cast<int8_t>(0x4D));
       packer_.pack_ext_body(id.char_pointer(), static_cast<uint32_t>(id.size()));
     }
 
@@ -142,7 +148,7 @@ protected:
     VerifiedTransaction tx = VerifiedTransaction::Create(std::move(mtx));
 
     // adapt the storage engine for this execution
-    fetch::ledger::StateSentinelAdapter storage_adapter{*storage_, *contract_name_, tx.resources()};
+    StateSentinelAdapter storage_adapter{*storage_, *contract_name_, tx.resources()};
 
     // dispatch the transaction to the contract
     contract_->Attach(storage_adapter);
@@ -160,8 +166,8 @@ protected:
     Identifier full_contract_name{tx.contract_name()};
 
     // adapt the storage engine for this execution
-    fetch::ledger::StateSentinelAdapter storage_adapter{*storage_, *contract_name_, tx.resources(),
-                                                        tx.resources()};
+    StateSentinelAdapter storage_adapter{*storage_, *contract_name_, tx.resources(),
+                                         tx.resources()};
 
     // dispatch the transaction to the contract
     contract_->Attach(storage_adapter);
@@ -179,6 +185,18 @@ protected:
     // attach, dispatch and detach again
     contract_->Attach(storage_adapter);
     auto const status = contract_->DispatchQuery(query, request, response);
+    contract_->Detach();
+
+    return status;
+  }
+
+  Contract::Status InvokeInit(Identity const &owner)
+  {
+    StateSentinelAdapter storage_adapter{
+        *storage_, *contract_name_, {fetch::byte_array::ToBase64(owner.identifier())}};
+
+    contract_->Attach(storage_adapter);
+    auto const status = contract_->DispatchInitialise(owner);
     contract_->Detach();
 
     return status;

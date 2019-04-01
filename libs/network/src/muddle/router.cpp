@@ -27,6 +27,7 @@
 #include "network/muddle/muddle_register.hpp"
 #include "network/muddle/packet.hpp"
 
+#include <cstring>
 #include <iomanip>
 #include <memory>
 #include <random>
@@ -76,18 +77,7 @@ std::size_t GenerateEchoId(Packet const &packet)
  */
 bool CompareAddress(uint8_t const *a, uint8_t const *b)
 {
-  bool equal = true;
-
-  for (std::size_t i = 0; i < Packet::ADDRESS_SIZE; ++i)
-  {
-    if (a[i] != b[i])
-    {
-      equal = false;
-      break;
-    }
-  }
-
-  return equal;
+  return std::memcmp(a, b, Packet::ADDRESS_SIZE * sizeof(uint8_t)) == 0;
 }
 
 /**
@@ -113,7 +103,7 @@ ConstByteArray ToConstByteArray(Packet::RawAddress const &addr)
   ByteArray buffer;
   buffer.Resize(addr.size());
   std::memcpy(buffer.pointer(), addr.data(), addr.size());
-  return buffer;
+  return std::move(buffer);
 }
 
 /**
@@ -211,13 +201,14 @@ Packet::Address Router::ConvertAddress(Packet::RawAddress const &address)
  * @param address The address of the current node
  * @param reg The connection register
  */
-Router::Router(NetworkId network_id, Router::Address address, MuddleRegister const &reg,
-               Dispatcher &dispatcher)
+Router::Router(NetworkId network_id, Address address, MuddleRegister const &reg,
+               Dispatcher &dispatcher, Prover *prover)
   : address_(std::move(address))
   , address_raw_(ConvertAddress(address_))
   , register_(reg)
   , dispatcher_(dispatcher)
-  , network_id_(network_id)
+  , network_id_(std::move(network_id))
+  , prover_(prover)
   , dispatch_thread_pool_(network::MakeThreadPool(NUMBER_OF_ROUTER_THREADS, "Router"))
 {}
 
@@ -235,6 +226,20 @@ void Router::Start()
 void Router::Stop()
 {
   dispatch_thread_pool_->Stop();
+}
+
+inline bool Router::Genuine(PacketPtr const &p) const
+{
+  return p->Verify() || !(prover_ || p->IsStamped());
+}
+
+Router::PacketPtr const &Router::Sign(PacketPtr const &p) const
+{
+  if (prover_)
+  {
+    p->Sign(*prover_);
+  }
+  return p;
 }
 
 /**
@@ -258,22 +263,36 @@ void Router::Route(Handle handle, PacketPtr packet)
   if (packet->IsDirect())
   {
     // when it is a direct message we must handle this
-    DispatchDirect(handle, packet);
+    if (Genuine(packet))
+    {
+      DispatchDirect(handle, packet);
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Packet's authenticity not verified:", DescribePacket(*packet));
+    }
   }
   else if (packet->GetTargetRaw() == address_)
   {
     // when the message is targetted at us we must handle it
-    Address transmitter;
-
-    if (HandleToDirectAddress(handle, transmitter))
+    if (Genuine(packet))
     {
-      DispatchPacket(packet, transmitter);
+      Address transmitter;
+
+      if (HandleToDirectAddress(handle, transmitter))
+      {
+        DispatchPacket(packet, transmitter);
+      }
+      else
+      {
+        // The connection has gone away while we were processing things so far.
+        FETCH_LOG_WARN(LOGGING_NAME,
+                       "Cannot get transmitter address for packet: ", DescribePacket(*packet));
+      }
     }
     else
     {
-      // The connection has gone away while we were processing things so far.
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Cannot get transmitter address for packet: ", DescribePacket(*packet));
+      FETCH_LOG_WARN(LOGGING_NAME, "Packet's authenticity not verified:", DescribePacket(*packet));
     }
   }
   else
@@ -302,8 +321,9 @@ void Router::AddConnection(Handle handle)
   // create and format the packet
   auto packet = FormatDirect(address_, network_id_, SERVICE_MUDDLE, CHANNEL_ROUTING);
   packet->SetExchange(true);  // signal that this is the request half of a direct message
+  Sign(packet);
 
-  // send the
+  // send it
   SendToConnection(handle, packet);
 }
 
@@ -331,6 +351,7 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel,
   auto packet =
       FormatPacket(address_, network_id_, service, channel, counter, DEFAULT_TTL, message);
   packet->SetTarget(address);
+  Sign(packet);
 
   RoutePacket(packet, false);
 }
@@ -351,6 +372,7 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel, ui
   auto packet =
       FormatPacket(address_, network_id_, service, channel, message_num, DEFAULT_TTL, payload);
   packet->SetTarget(address);
+  Sign(packet);
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange Response: ", ToBase64(address), " (", service, '-',
                   channel, '-', message_num, ")");
@@ -470,6 +492,8 @@ Router::Response Router::Exchange(Address const &address, uint16_t service, uint
       FormatPacket(address_, network_id_, service, channel, counter, DEFAULT_TTL, request);
   packet->SetTarget(address);
   packet->SetExchange();
+  Sign(packet);
+
   RoutePacket(packet, false);
 
   // return the response
@@ -669,10 +693,8 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
  */
 Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/) const
 {
-  Handle handle = 0;
-
-  std::random_device rd;
-  std::mt19937       rng(rd());
+  static std::random_device rd;
+  static std::mt19937       rng(rd());
 
   {
     FETCH_LOCK(routing_table_lock_);
@@ -680,18 +702,19 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/
     if (!routing_table_.empty())
     {
       // decide the random index to access
-      std::size_t const element = rng() % routing_table_.size();
+      std::uniform_int_distribution<decltype(routing_table_)::size_type> distro(
+          0, routing_table_.size());
+      std::size_t const element = distro(rng);
 
       // advance the iterator to the correct offset
       auto it = routing_table_.cbegin();
       std::advance(it, static_cast<std::ptrdiff_t>(element));
 
-      // update the handle
-      handle = it->second.handle;
+      return it->second.handle;
     }
   }
 
-  return handle;
+  return 0;
 }
 
 /**
@@ -769,6 +792,7 @@ void Router::SendToConnection(Handle handle, PacketPtr packet)
     serializers::ByteArrayBuffer buffer;
     buffer << *packet;
 
+    FETCH_LOG_WARN(LOGGING_NAME, "Sending out", DescribePacket(*packet));
     // dispatch to the connection object
     conn->Send(buffer.data());
   }
@@ -790,19 +814,13 @@ void Router::RoutePacket(PacketPtr packet, bool external)
   if (external)
   {
     // Handle TTL based routing timeout
-    bool message_time_expired = true;
-    if (packet->GetTTL() > 2u)
-    {
-      // decrement the TTL
-      packet->SetTTL(static_cast<uint8_t>(packet->GetTTL() - 1u));
-      message_time_expired = false;
-    }
-
-    if (message_time_expired)
+    if (packet->GetTTL() <= 2u)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Message has timed out (TTL): ", DescribePacket(*packet));
       return;
     }
+    // decrement the TTL
+    packet->SetTTL(static_cast<uint8_t>(packet->GetTTL() - 1u));
 
     // if this packet is a broadcast echo we should no longer route this packet
     if (packet->IsBroadcast() && IsEcho(*packet))
@@ -879,8 +897,8 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
       // send back a direct response if that is required
       if (packet->IsExchange())
       {
-        SendToConnection(handle,
-                         FormatDirect(address_, network_id_, SERVICE_MUDDLE, CHANNEL_ROUTING));
+        SendToConnection(
+            handle, Sign(FormatDirect(address_, network_id_, SERVICE_MUDDLE, CHANNEL_ROUTING)));
       }
     }
   }

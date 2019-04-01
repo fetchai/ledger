@@ -20,6 +20,7 @@ option(FETCH_ENABLE_CLANG_TIDY      "Enable clang tidy checking"        OFF)
 option(FETCH_ENABLE_COVERAGE        "Enable coverage generation"        OFF)
 option(FETCH_ENABLE_METRICS         "Enable the collection of metrics"  OFF)
 option(FETCH_DISABLE_COLOUR_LOG     "Disable the colour logging"        OFF)
+option(FETCH_STATIC_LINK            "Enable static linking"             OFF)
 
 # custom string options
 set(FETCH_DEBUG_SANITIZER "" CACHE STRING "The clang based sanitizer to be enabled")
@@ -60,6 +61,10 @@ detect_environment()
 
 # generate the project configuration file
 generate_configuration_file()
+
+if(FETCH_STATIC_LINK)
+  set(OPENSSL_USE_STATIC_LIBS TRUE)
+endif(FETCH_STATIC_LINK)
 
 # Enable CTest support
 if (FETCH_ENABLE_TESTS)
