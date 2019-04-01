@@ -96,7 +96,7 @@ meta::IfIsArithmetic<Type, void> Square(Type const &x, Type &ret)
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Square(ArrayType const &x)
 {
-  ArrayType ret;
+  ArrayType ret{x.shape()};
   Pow(x, typename ArrayType::Type(2), ret);
   return ret;
 }

@@ -87,6 +87,7 @@ public:
   void AddFeedback(IDENTITY const &peer_ident, ConstByteArray const & /*object_ident*/,
                    TrustSubject subject, TrustQuality quality) override
   {
+    FETCH_UNUSED(subject);
     FETCH_LOCK(mutex_);
 
     auto ranking = ranking_store_.find(peer_ident);

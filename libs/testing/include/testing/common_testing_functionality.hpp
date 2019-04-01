@@ -116,8 +116,7 @@ inline std::vector<fetch::byte_array::ByteArray> GenerateUniqueHashes(uint64_t s
 }
 
 // Convenience function - generate unique IDs
-inline std::vector<storage::ResourceID> GenerateUniqueIDs(uint64_t size, uint64_t seed = 0,
-                                                          bool verify_unique = false)
+inline std::vector<storage::ResourceID> GenerateUniqueIDs(uint64_t size, uint64_t seed = 0)
 {
   std::vector<storage::ResourceID> ret;
   auto                             hashes = GenerateUniqueHashes(size, seed);

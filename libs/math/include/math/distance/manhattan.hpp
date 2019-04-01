@@ -19,6 +19,7 @@
 
 #include "core/assert.hpp"
 #include "math/fundamental_operators.hpp"
+#include "math/standard_functions/abs.hpp"
 #include <cmath>
 
 namespace fetch {
@@ -37,6 +38,7 @@ inline typename ArrayType::Type Manhattan(ArrayType const &a, ArrayType const &b
   for (auto &val : a)
   {
     result += Abs(Subtract(val, b.At(count)));
+    ++count;
   }
 
   return result;

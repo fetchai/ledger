@@ -42,7 +42,7 @@ inline typename ArrayType::Type Hamming(ArrayType const &a, ArrayType const &b)
     count++;
   }
 
-  return result / Type(a.size());
+  return result;
 }
 
 }  // namespace distance

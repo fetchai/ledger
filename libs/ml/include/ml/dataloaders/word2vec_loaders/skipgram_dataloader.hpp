@@ -136,7 +136,7 @@ void SkipGramLoader<T>::GetData(SizeType idx, T &data_buffer)
  * @return
  */
 template <typename T>
-typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::GetLabel(SizeType idx)
+typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::GetLabel(SizeType /*idx*/)
 {
   return cur_label_;
 }

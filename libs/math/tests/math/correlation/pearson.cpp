@@ -42,7 +42,7 @@ TYPED_TEST(PearsonCorrelationTest, simple_test)
   Tensor<double> A{3};
   A.Fill(0.0);
   A.At(0) = 1.0;
-  EXPECT_EQ(1, Pearson(A, A));
+  EXPECT_FLOAT_EQ(float(1), float(Pearson(A, A)));
 }
 
 TEST(correlation_gtest, pearson_correlation_test)
@@ -55,5 +55,5 @@ TEST(correlation_gtest, pearson_correlation_test)
   B.At(0) = 3.0;
   B.At(1) = 2.0;
   B.At(2) = 1.0;
-  EXPECT_EQ(-1, Pearson(A, A));
+  EXPECT_FLOAT_EQ(float(-1), float(Pearson(A, B)));
 }

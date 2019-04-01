@@ -29,14 +29,8 @@ class TanhTest : public ::testing::Test
 };
 
 using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(TanhTest, MyTypes);
-
-////////////////
-/// Tanh 2x2 ///
-////////////////
-// Test sigmoid function output against numpy output for 2x2 input matrix of random values
 
 TYPED_TEST(TanhTest, tanh_22)
 {

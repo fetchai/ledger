@@ -268,6 +268,7 @@ fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> TanH(ArrayType const
     // TODO(800) - native fixed point implementation required - casting to double will not be
     // permitted in future
     val = typename ArrayType::Type(std::tanh(double(x.At(idx))));
+    ++idx;
   }
 }
 template <typename ArrayType>
