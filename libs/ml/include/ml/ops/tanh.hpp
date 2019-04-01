@@ -50,17 +50,23 @@ public:
 
   virtual std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-      ArrayType const &                                           errorSignal)
+      ArrayType const &                                           error_signal)
   {
     assert(inputs.size() == 1);
 
-    assert(inputs.front().get().shape() == errorSignal.shape());
+    assert(inputs.front().get().shape() == error_signal.shape());
 
-    ArrayType t            = this->Forward(inputs);
-    ArrayType returnSignal = errorSignal.Clone();
-    fetch::math::Multiply(
-        errorSignal, fetch::math::Subtract(DataType(1), fetch::math::Multiply(t, t)), returnSignal);
-    return {returnSignal};
+    ArrayType return_signal = error_signal.Clone();
+    ArrayType t             = this->Forward(inputs);
+
+    // gradient of tanh: 1 - tanh(x)^2
+    fetch::math::Multiply(t, t, t);
+    fetch::math::Subtract(DataType(1), t, t);
+
+    // apply chain rule
+    fetch::math::Multiply(error_signal, t, return_signal);
+
+    return {return_signal};
   }
 
   static constexpr char const *DESCRIPTOR = "Tanh";
