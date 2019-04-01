@@ -67,7 +67,7 @@ void ReadFile(fetch::math::Tensor<double> &matrix, std::string const &path)
   }
 }
 
-int main(int argc, char **argv)
+int main()
 {
 
   SizeType n_data_size           = 100;
