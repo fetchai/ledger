@@ -336,7 +336,7 @@ void BasicTextLoader<T>::GetData(typename BasicTextLoader<T>::SizeType idx, T &r
  */
 template <typename T>
 typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::GetLabel(
-    typename BasicTextLoader<T>::SizeType idx)
+    typename BasicTextLoader<T>::SizeType /*idx*/)
 {
   return 1;
 }

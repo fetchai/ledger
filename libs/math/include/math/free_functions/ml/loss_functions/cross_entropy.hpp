@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/macros.hpp"
 #include "math/free_functions/exponentiation/exponentiation.hpp"        // log
 #include "math/free_functions/fundamental_operators.hpp"                // divide
 #include "math/free_functions/matrix_operations/matrix_operations.hpp"  //
@@ -42,6 +43,8 @@ typename ArrayType::Type CrossEntropyLoss(
 {
   using DataType = typename ArrayType::Type;
   using SizeType = typename ArrayType::SizeType;
+
+  FETCH_UNUSED(n_classes);
 
   assert(x.shape() == y.shape());
   assert(x.shape().size() == 2);
