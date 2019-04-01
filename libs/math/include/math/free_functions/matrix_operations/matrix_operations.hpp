@@ -515,14 +515,14 @@ template <typename ArrayType>
 ArrayType ReduceMean(ArrayType const &obj1, typename ArrayType::SizeType const &axis)
 {
   assert(axis == 0 || axis == 1);
-  typename ArrayType::DataType n;
+  typename ArrayType::Type n;
   if (axis == 0)
   {
-    n = obj1.shape()[1];
+    n = static_cast<typename ArrayType::Type>(obj1.shape()[0]);
   }
   else
   {
-    n = obj1.shape()[0];
+    n = static_cast<typename ArrayType::Type>(obj1.shape()[1]);
   }
   return Divide(ReduceSum(obj1, axis), n);
 }
