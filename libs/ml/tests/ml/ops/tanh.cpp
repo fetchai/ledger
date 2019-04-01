@@ -28,7 +28,7 @@ class TanhTest : public ::testing::Test
 
 using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
                                  fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
+                                 // fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 
 TYPED_TEST_CASE(TanhTest, MyTypes);
@@ -73,4 +73,51 @@ TYPED_TEST(TanhTest, forward_all_negative_test)
   TypeParam                       prediction = op.Forward({data});
 
   ASSERT_TRUE(prediction.AllClose(gt));
+}
+
+TYPED_TEST(TanhTest, backward_all_positive_test)
+{
+
+  u_int8_t            n = 9;
+  TypeParam           data(n);
+  TypeParam           error(n);
+  TypeParam           gt(n);
+  std::vector<double> dataInput({0, 0.2, 0.4, 0.6, 0.8, 1.2, 1.4, 20, 100});
+  std::vector<double> errorInput({{0.2, 0.1, 0.3, 0.2, 0.5, 0.1, 0.0, 0.3, 0.4}});
+  std::vector<double> gtInput(
+      {0.2, 0.096104, 0.256692, 0.142316, 0.279528, 0.030502, 0.0, 0.0, 0.0});
+  for (std::uint64_t i(0); i < n; ++i)
+  {
+    data.Set(i, typename TypeParam::Type(dataInput[i]));
+    error.Set(i, typename TypeParam::Type(errorInput[i]));
+    gt.Set(i, typename TypeParam::Type(gtInput[i]));
+  }
+  fetch::ml::ops::Tanh<TypeParam> op;
+  std::vector<TypeParam>          prediction = op.Backward({data}, error);
+
+  // test correct values
+  ASSERT_TRUE(prediction[0].AllClose(gt));
+}
+
+TYPED_TEST(TanhTest, backward_all_negative_test)
+{
+  u_int8_t            n = 9;
+  TypeParam           data(n);
+  TypeParam           error(n);
+  TypeParam           gt(n);
+  std::vector<double> dataInput({-0, -0.2, -0.4, -0.6, -0.8, -1.2, -1.4, -20, -100});
+  std::vector<double> errorInput({{-0.2, -0.1, -0.3, -0.2, -0.5, -0.1, -0.0, -0.3, -0.4}});
+  std::vector<double> gtInput(
+      {-0.2, -0.096104, -0.256692, -0.142316, -0.279528, -0.030502, 0.0, 0.0, 0.0});
+  for (std::uint64_t i(0); i < n; ++i)
+  {
+    data.Set(i, typename TypeParam::Type(dataInput[i]));
+    error.Set(i, typename TypeParam::Type(errorInput[i]));
+    gt.Set(i, typename TypeParam::Type(gtInput[i]));
+  }
+  fetch::ml::ops::Tanh<TypeParam> op;
+  std::vector<TypeParam>          prediction = op.Backward({data}, error);
+
+  // test correct values
+  ASSERT_TRUE(prediction[0].AllClose(gt));
 }
