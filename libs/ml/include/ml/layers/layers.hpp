@@ -17,6 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/ml/loss_functions/cross_entropy.hpp"
-#include "math/free_functions/ml/loss_functions/l2_norm.hpp"
-#include "math/free_functions/ml/loss_functions/mean_square_error.hpp"
+#include "fully_connected.hpp"
+#include "self_attention.hpp"
+#include "skip_gram.hpp"

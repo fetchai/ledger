@@ -70,7 +70,6 @@ private:
 
 public:
   SkipGramLoader(SkipGramTextParams<T> p, SizeType seed = 123456789);
-  SkipGramLoader(std::string &data, SkipGramTextParams<T> p, SizeType seed = 123456789);
 
   virtual bool AddData(std::string const &training_data) override;
 
@@ -137,7 +136,7 @@ void SkipGramLoader<T>::GetData(SizeType idx, T &data_buffer)
  * @return
  */
 template <typename T>
-typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::GetLabel(SizeType idx)
+typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::GetLabel(SizeType /*idx*/)
 {
   return cur_label_;
 }

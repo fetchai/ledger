@@ -68,7 +68,7 @@ struct StaticMockContextPrimitive<TestType>
 class Deleter
 {
 public:
-  void operator()(TestType *ptr)  // NOLINT
+  void operator()(TestType *)  // NOLINT
   {}
 };
 

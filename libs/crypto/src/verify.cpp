@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,6 +16,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/ml/loss_functions/cross_entropy.hpp"
-#include "math/free_functions/ml/loss_functions/l2_norm.hpp"
-#include "math/free_functions/ml/loss_functions/mean_square_error.hpp"
+#include "crypto/ecdsa.hpp"
+#include "crypto/verifier.hpp"
+
+namespace fetch {
+namespace crypto {
+
+/**
+ * This function, given a key, a buffer and a signature, verifies authenticity of the three.
+ *
+ * @param identity The public key to construct a concrete (e.g. ECDSA) verifier from
+ * @param data Message to be verified
+ * @param signature
+ */
+
+bool Verify(byte_array::ConstByteArray key, byte_array::ConstByteArray const &data,
+            byte_array::ConstByteArray const &signature)
+{
+  return ECDSAVerifier(Identity(std::move(key))).Verify(data, signature);
+}
+
+}  // namespace crypto
+}  // namespace fetch

@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "math/kernels/standard_functions/log.hpp"
 #include "math/meta/math_type_traits.hpp"
 
@@ -45,50 +46,61 @@ fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> Log(ArrayType const 
 }
 
 template <typename Type>
-meta::IfIsNonFixedPointArithmetic<Type, void> Log(Type &x, Type &ret)
+meta::IfIsNonFixedPointArithmetic<Type, void> Log(Type const &x, Type &ret)
 {
   ret = std::log(x);
 }
+
 template <typename Type>
-meta::IfIsNonFixedPointArithmetic<Type, Type> Log(Type &x)
+meta::IfIsNonFixedPointArithmetic<Type, Type> Log(Type const &x)
 {
   Type ret;
   Log(x, ret);
   return ret;
 }
 
+template <typename T>
+meta::IfIsFixedPoint<T, void> Log(T const &n, T &ret)
+{
+  ret = T(std::log(double(n)));
+}
+
 //
 template <typename T>
-meta::IfIsFixedPoint<T, T> Log(T &n)
+meta::IfIsFixedPoint<T, T> Log(T const &n)
 {
   T ret = T(std::log(double(n)));
   return ret;
 }
 
 template <typename ArrayType>
-meta::IfIsNonBlasArray<ArrayType, void> Log(ArrayType &x)
+meta::IfIsNonBlasArray<ArrayType, ArrayType> Log(ArrayType const &x)
 {
   for (typename ArrayType::Type &e : x)
   {
-    fetch::math::Log(e);
+    fetch::math::Log(e, e);
   }
+  return x;
 }
 template <typename ArrayType>
-meta::IfIsMathFixedPointArray<ArrayType, void> Log(ArrayType &x)
+meta::IfIsMathFixedPointArray<ArrayType, ArrayType> Log(ArrayType const &x)
 {
   for (typename ArrayType::Type &e : x)
   {
-    fetch::math::Log(e);
+    fetch::math::Log(e, e);
   }
+  return x;
 }
 
-template <typename T>
-meta::IfIsMathArray<T, void> Log(T const &array, T &ret)
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> Log(ArrayType const &array, ArrayType &ret)
 {
-  ret = array;
-  for (typename T::Type &e : ret)
+  ASSERT(ret.shape() == array.shape());
+  typename ArrayType::SizeType ret_count{0};
+  for (typename ArrayType::Type &e : array)
   {
-    Log(e);
+    Log(e, ret.At(ret_count));
+    ++ret_count;
   }
 }
 
