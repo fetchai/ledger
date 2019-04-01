@@ -20,8 +20,8 @@
 #include <iomanip>
 #include <iostream>
 
-#include "math/free_functions/clustering_algorithms/k_means.hpp"
-#include "math/free_functions/combinatorics/combinatorics.hpp"
+#include "math/clustering/k_means.hpp"
+#include "math/combinatorics.hpp"
 #include <algorithm>
 #include <chrono>
 #include <cmath>

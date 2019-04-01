@@ -18,33 +18,31 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shapeless_array.hpp"
-#include "vectorise/memory/range.hpp"
 
 namespace fetch {
 namespace math {
 namespace distance {
 
-template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::Type Hamming(memory::VectorSlice<T, S> const &a,
-                                                        memory::VectorSlice<T, S> const &b)
+template <typename ArrayType>
+inline typename ArrayType::Type Hamming(ArrayType const &a, ArrayType const &b)
 {
   detailed_assert(a.size() == b.size());
-  using Type                 = typename memory::VectorSlice<T, S>::Type;
-  using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
+  using Type     = typename ArrayType::Type;
+  using SizeType = typename ArrayType::SizeType;
 
-  double dist = a.in_parallel().SumReduce(
-      memory::TrivialRange(0, a.size()),
-      [](vector_register_type const &x, vector_register_type const &y) { return x != y; }, b);
+  Type     result = Type(0);
+  SizeType count  = SizeType(0);
+  for (auto &val : a)
+  {
+    // TODO(private issue 193): implement boolean only array
+    if (val != b.At(count))
+    {
+      result += Type(1);
+    };
+    count++;
+  }
 
-  return Type(dist) / Type(a.size());
-}
-
-template <typename T, typename C>
-inline typename ShapelessArray<T, C>::Type Hamming(ShapelessArray<T, C> const &a,
-                                                   ShapelessArray<T, C> const &b)
-{
-  return Hamming(a.data(), b.data());
+  return result / Type(a.size());
 }
 
 }  // namespace distance

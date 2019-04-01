@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/fundamental_operators.hpp"
-#include "math/free_functions/ml/activation_functions/softmax.hpp"
-#include "math/free_functions/standard_functions/log.hpp"
+#include "math/fundamental_operators.hpp"
+#include "math/ml/activation_functions/softmax.hpp"
+#include "math/standard_functions/log.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {

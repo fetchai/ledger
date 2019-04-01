@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "auctions/combinatorial_auction.hpp"
+#include "math/matrix_operations.hpp"
 
 namespace fetch {
 namespace auctions {
@@ -131,7 +132,7 @@ std::uint32_t CombinatorialAuction::Active(std::size_t n)
   return active_[n];
 }
 
-fetch::math::ShapelessArray<Value> CombinatorialAuction::LocalFields()
+fetch::math::Tensor<Value> CombinatorialAuction::LocalFields()
 {
   return local_fields_;
 }
@@ -183,7 +184,7 @@ void CombinatorialAuction::SelectBid(std::size_t const &bid)
 {
   if (active_.size() != bids_.size())
   {
-    active_.Resize(bids_.size());
+    active_ = fetch::math::Tensor<std::uint32_t>(bids_.size());
   }
 
   for (std::size_t j = 0; j < bids_.size(); ++j)
@@ -203,8 +204,10 @@ void CombinatorialAuction::SelectBid(std::size_t const &bid)
 void CombinatorialAuction::BuildGraph()
 {
   couplings_    = fetch::math::Tensor<Value>({bids_.size(), bids_.size()});
-  local_fields_ = fetch::math::ShapelessArray<Value>::Zeroes({bids_.size()});
-  active_       = fetch::math::ShapelessArray<std::uint32_t>::Zeroes({bids_.size()});
+  local_fields_ = fetch::math::Tensor<Value>(bids_.size());
+  active_       = fetch::math::Tensor<std::uint32_t>(bids_.size());
+  local_fields_.Fill(Value(0));
+  active_.Fill(std::uint32_t(0));
 
   // check for any cases where bids specify to 'exclude all' and set up the relevant 'excludes'
   // vector

@@ -19,8 +19,8 @@
 #include "file_loader.hpp"
 #include "model_saver.hpp"
 
-#include "math/free_functions/clustering_algorithms/knn.hpp"
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
+#include "math/clustering/knn.hpp"
+#include "math/matrix_operations.hpp"
 
 #include "ml/dataloaders/word2vec_loaders/skipgram_dataloader.hpp"
 #include "ml/graph.hpp"
@@ -46,15 +46,6 @@ using SizeType     = typename ArrayType::SizeType;
 
 struct TrainingParams
 {
-<<<<<<< HEAD
-  SizeType    output_size     = 2;
-  SizeType    batch_size      = 1;       // training data batch size
-  SizeType    embedding_size  = 100;     // dimension of embedding vec
-  SizeType    training_epochs = 1000;    // total number of training epochs
-  double      learning_rate   = 0.01;    // alpha - the learning rate
-  SizeType    k               = 10;      // how many nearest neighbours to compare against
-  std::string test_word       = "cold";  // test word to consider
-=======
   SizeType    output_size     = 1;
   SizeType    batch_size      = 128;            // training data batch size
   SizeType    embedding_size  = 32;             // dimension of embedding vec
@@ -63,7 +54,6 @@ struct TrainingParams
   SizeType    k               = 10;             // how many nearest neighbours to compare against
   std::string test_word       = "action";       // test word to consider
   std::string save_loc        = "./model.fba";  // save file location for exporting graph
->>>>>>> 7cd26df2260a4f19319e6655e4e69b6db7863628
 };
 
 template <typename T>
@@ -81,15 +71,9 @@ SkipGramTextParams<T> SetParams()
   ret.discard_frequent  = true;    // discard most frqeuent words
   ret.discard_threshold = 0.0001;  // controls how aggressively to discard frequent words
 
-<<<<<<< HEAD
-  ret.window_size         = SizeType(8);  // max size of context window one way
-  ret.min_sentence_length = SizeType(4);  //
-  ret.k_negative_samples  = SizeType(5);  // number of negative examples to sample
-=======
   ret.window_size         = SizeType(5);   // max size of context window one way
   ret.min_sentence_length = SizeType(4);   //
   ret.k_negative_samples  = SizeType(10);  // number of negative examples to sample
->>>>>>> 7cd26df2260a4f19319e6655e4e69b6db7863628
 
   return ret;
 }

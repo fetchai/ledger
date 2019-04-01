@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/distance/hamming.hpp"
+#include "math/tensor.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -41,10 +42,8 @@ inline void BuildHammingDistance(std::string const &custom_name, pybind11::modul
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperHamming<RectangularArray<double>>)
-      .def(custom_name.c_str(), &WrapperHamming<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperHamming<ShapelessArray<double>>)
-      .def(custom_name.c_str(), &WrapperHamming<ShapelessArray<float>>);
+  module.def(custom_name.c_str(), &WrapperHamming<Tensor<double>>)
+      .def(custom_name.c_str(), &WrapperHamming<Tensor<float>>);
 }
 
 }  // namespace distance

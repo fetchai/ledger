@@ -20,7 +20,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
-#include "math/free_functions/statistics/normal.hpp"
+#include "math/statistics/normal.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
 
 #include <algorithm>

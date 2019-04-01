@@ -19,7 +19,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include "math/free_functions/ml/activation_functions/relu.hpp"
+#include "math/ml/activation_functions/relu.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 

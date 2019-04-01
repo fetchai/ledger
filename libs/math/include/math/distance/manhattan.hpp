@@ -18,38 +18,28 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shapeless_array.hpp"
-#include "vectorise/memory/range.hpp"
-
+#include "math/fundamental_operators.hpp"
 #include <cmath>
 
 namespace fetch {
 namespace math {
 namespace distance {
 
-template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::Type Manhattan(memory::VectorSlice<T, S> const &a,
-                                                          memory::VectorSlice<T, S> const &b)
+template <typename ArrayType>
+inline typename ArrayType::Type Manhattan(ArrayType const &a, ArrayType const &b)
 {
-  detailed_assert(a.size() == b.size());
-  using Type                 = typename memory::VectorSlice<T, S>::Type;
-  using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
+  assert(a.size() == b.size());
+  using Type     = typename ArrayType::Type;
+  using SizeType = typename ArrayType::SizeType;
 
-  Type dist =
-      a.in_parallel().SumReduce(memory::TrivialRange(0, a.size()),
-                                [](vector_register_type const &x, vector_register_type const &y) {
-                                  return max(x, y) - min(x, y);
-                                },
-                                b);
+  Type     result = 0;
+  SizeType count  = 0;
+  for (auto &val : a)
+  {
+    result += Abs(Subtract(val, b.At(count)));
+  }
 
-  return dist;
-}
-
-template <typename T, typename C>
-inline typename ShapelessArray<T, C>::Type Manhattan(ShapelessArray<T, C> const &a,
-                                                     ShapelessArray<T, C> const &b)
-{
-  return Manhattan(a.data(), b.data());
+  return result;
 }
 
 }  // namespace distance
