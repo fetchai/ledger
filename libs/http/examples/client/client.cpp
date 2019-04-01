@@ -45,7 +45,7 @@ int main(int argc, char **argv)
   // make the request
   fetch::http::HTTPRequest req;
   req.SetMethod(fetch::http::Method::GET);
-  req.SetURI("/api/");
+  req.SetURI(endpoint);
 
   fetch::http::HTTPResponse response;
   if (client.Request(req, response))

@@ -31,10 +31,10 @@ if(FETCH_ENABLE_EXAMPLES)
   target_link_libraries(example-network-rpc-server PRIVATE fetch-network)
 
   add_executable(example-network-rpc-client rpc/client.cpp)
-  target_link_libraries(example-network-rpc-client PRIVATE fetch-network)
+  target_link_libraries(example-network-rpc-client PRIVATE fetch-network fetch-crypto)
 
   add_executable(example-network-mrpc-server muddle_rpc/server.cpp)
-  target_link_libraries(example-network-mrpc-server PRIVATE fetch-network)
+  target_link_libraries(example-network-mrpc-server PRIVATE fetch-network fetch-crypto)
 
   add_executable(example-network-mrpc-client muddle_rpc/client.cpp)
   target_link_libraries(example-network-mrpc-client PRIVATE fetch-network)

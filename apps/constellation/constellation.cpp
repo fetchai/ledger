@@ -32,6 +32,8 @@
 #include "network/p2pservice/p2p_http_interface.hpp"
 #include "network/uri.hpp"
 
+#include "health_check_http_module.hpp"
+
 #include <memory>
 #include <random>
 #include <utility>
@@ -145,7 +147,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   , reactor_{"Reactor"}
   , network_manager_{"NetMgr", CalcNetworkManagerThreads(cfg_.num_lanes())}
   , http_network_manager_{"Http", HTTP_THREADS}
-  , muddle_{muddle::NetworkId{"IHUB"}, certificate, network_manager_}
+  , muddle_{muddle::NetworkId{"IHUB"}, std::move(certificate), network_manager_,
+            !config.disable_signing}
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
   , internal_muddle_{muddle::NetworkId{"ISRD"}, internal_identity_, network_manager_}
   , trust_{}
@@ -181,7 +184,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
                                                      block_coordinator_.GetWeakStateMachine()}),
         std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
         std::make_shared<ledger::TxQueryHttpInterface>(*storage_, cfg_.log2_num_lanes),
-        std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_)}
+        std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
+        std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_)}
 {
   // print the start up log banner
   FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.interface_address, " E ",
@@ -194,7 +198,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   reactor_.Attach(main_chain_service_->GetWeakRunnable());
 
   // configure all the lane services
-  lane_services_.Setup(network_manager_, shard_cfgs_);
+  lane_services_.Setup(network_manager_, shard_cfgs_, !config.disable_signing);
 
   // configure the middleware of the http server
   http_.AddMiddleware(http::middleware::AllowOrigin("*"));
