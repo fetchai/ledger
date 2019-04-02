@@ -273,9 +273,9 @@ private:
   BlockPtr        current_block_{};        ///< The pointer to the current block (read only)
   NextBlockPtr
                  next_block_{};  ///< The next block being created (read / write) - only in mining mode
-  TxSetPtr       pending_txs_{};              ///< The list of pending txs that are being waited on
-  PeriodicAction tx_wait_periodic_;           ///< Periodic print for transaction waiting
-  PeriodicAction exec_wait_periodic_;         ///< Periodic print for execution
+  TxSetPtr       pending_txs_{};       ///< The list of pending txs that are being waited on
+  PeriodicAction tx_wait_periodic_;    ///< Periodic print for transaction waiting
+  PeriodicAction exec_wait_periodic_;  ///< Periodic print for execution
   /// @}
 };
 

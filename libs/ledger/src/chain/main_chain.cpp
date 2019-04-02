@@ -567,7 +567,7 @@ void MainChain::RecoverFromFile(Mode mode)
   else
   {
     FETCH_LOG_INFO(LOGGING_NAME,
-                  "No head block found in chain data store! Resetting chain data store.");
+                   "No head block found in chain data store! Resetting chain data store.");
   }
 
   // Recovering the chain has failed in some way, reset the storage.

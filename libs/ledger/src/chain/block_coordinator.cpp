@@ -65,13 +65,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   , miner_{std::make_shared<consensus::DummyMiner>()}
   , last_executed_block_{GENESIS_DIGEST}
   , identity_{std::move(identity)}
-  , state_machine_{
-    std::make_shared<StateMachine>(
-      "BlockCoordinator",
-      State::RELOAD_STATE,
-      [](State state) { return ToString(state); }
-    )
-  }
+  , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RELOAD_STATE,
+                                                  [](State state) { return ToString(state); })}
   , block_difficulty_{block_difficulty}
   , num_lanes_{num_lanes}
   , num_slices_{num_slices}
@@ -111,8 +106,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   });
 #endif  // FETCH_LOG_DEBUG_ENABLED
 
-  // TODO(private issue 792): this shouldn't be here, but if it is, it locks the whole system on startup.
-  // RecoverFromStartup();
+  // TODO(private issue 792): this shouldn't be here, but if it is, it locks the whole system on
+  // startup. RecoverFromStartup();
 }
 
 /**
@@ -140,7 +135,8 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
 {
   State next_state{State::RESET};
 
-  // if no current block then this is the first time in the state therefore lookup the heaviest block
+  // if no current block then this is the first time in the state therefore lookup the heaviest
+  // block
   if (!current_block_)
   {
     current_block_ = chain_.GetHeaviestBlock();

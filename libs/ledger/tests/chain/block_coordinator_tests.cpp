@@ -937,7 +937,6 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 }
 
-
 TEST_F(BlockCoordinatorTests, CheckBlockMining)
 {
   auto genesis = block_generator_();
@@ -973,7 +972,7 @@ TEST_F(BlockCoordinatorTests, CheckBlockMining)
     // -- Event: Generate a block
 
     // block packing
-    EXPECT_CALL(*packer_, GenerateBlock(IsBlockFollowing(genesis),_,_,_));
+    EXPECT_CALL(*packer_, GenerateBlock(IsBlockFollowing(genesis), _, _, _));
 
     // new block execution
     EXPECT_CALL(*execution_manager_, Execute(IsBlockBodyFollowing(genesis)));
