@@ -44,13 +44,13 @@ TYPED_TEST(ManhattenTest, simple_test)
   using SizeType = typename TypeParam::SizeType;
 
   TypeParam A = TypeParam(3);
-  A.Fill(DataType {0});
-  A.Set(SizeType{0}, DataType {1});
+  A.Fill(DataType{0});
+  A.Set(SizeType{0}, DataType{1});
   EXPECT_EQ(DataType{0}, Manhattan(A, A));
 
   TypeParam B = TypeParam(3);
   B.Fill(DataType{0});
-  B.Set(SizeType{1}, DataType {1});
+  B.Set(SizeType{1}, DataType{1});
   EXPECT_EQ(Manhattan(A, B), DataType{2});
 
   B.Fill(DataType{0});

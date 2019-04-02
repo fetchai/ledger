@@ -140,7 +140,6 @@ using IfIsMathFixedPointArray = IfIsFixedPoint<typename T::Type, IfIsMathArray<T
 template <typename T, typename R>
 using IfIsMathNonFixedPointArray = IfIsNotFixedPoint<typename T::Type, IfIsMathArray<T, R>>;
 
-
 //////////////////////////////////////////////////
 ///// MATH ARRAY & SCALAR TYPE CHECKS TOGETHER ///
 //////////////////////////////////////////////////
@@ -158,7 +157,8 @@ using IfIsArrayScalar = IfIsArithmetic<T, IfIsMathArray<ArrayType, R>>;
  * 3. ArrayType::Type and T are the same type
  */
 template <typename ArrayType, typename T, typename R = void>
-using IfIsValidArrayScalarPair = IsSameArrayScalarType<ArrayType, T, IfIsArrayScalar<ArrayType, T, R>>;
+using IfIsValidArrayScalarPair =
+    IsSameArrayScalarType<ArrayType, T, IfIsArrayScalar<ArrayType, T, R>>;
 
 }  // namespace meta
 }  // namespace math

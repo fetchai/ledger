@@ -17,136 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
 namespace math {
-namespace details {
-
-template <typename ArrayType>
-::fetch::math::meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &    array1,
-                                                        ArrayType const &    array2,
-                                                        memory::Range const &range, ArrayType &ret)
-{
-  assert(array1.size() == array2.size());
-  assert(array1.size() == ret.size());
-  //  ret.Reshape(array1.size());
-
-  // TODO (private 516)
-  assert(range.is_trivial() || range.is_undefined());
-
-  if (range.is_undefined())
-  {
-    Add(array1, array2, ret);
-  }
-  else
-  {
-    auto r = range.ToTrivialRange(ret.data().size());
-
-    ret.data().in_parallel().Apply(r,
-                                   [](typename ArrayType::vector_register_type const &x,
-                                      typename ArrayType::vector_register_type const &y,
-                                      typename ArrayType::vector_register_type &z) { z = x + y; },
-                                   array1.data(), array2.data());
-  }
-}
-
-template <typename ArrayType>
-::fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &    array1,
-                                                             ArrayType const &    array2,
-                                                             memory::Range const &range)
-{
-  ArrayType ret{array1.size()};
-  Add(array1, array2, range, ret);
-  return ret;
-}
-
-template <typename ArrayType>
-::fetch::math::meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &obj1,
-                                                             ArrayType const &obj2, ArrayType &ret)
-{
-  assert(obj1.size() == obj2.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
-  {
-    ret[i] = obj1[i] * obj2[i];
-  }
-}
-
-template <typename ArrayType, typename T>
-::fetch::math::meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array1,
-                                                             ArrayType const &array2,
-                                                             ArrayType &      ret)
-{
-  for (std::size_t i = 0; i < ret.size(); ++i)
-  {
-    ret.At(i) = array1.At(i) - array2.At(i);
-  }
-}
-
-}  // namespace details
-
-/////////////////
-/// ADDITIONS ///
-/////////////////
-
-//////////////////
-/// INTERFACES ///
-//////////////////
-
-template <typename S>
-meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
-{
-  S ret;
-  Add(scalar1, scalar2, ret);
-  return ret;
-}
-template <typename S>
-meta::IfIsFixedPoint<S, S> Add(S const &scalar1, S const &scalar2)
-{
-  S ret;
-  Add(scalar1, scalar2, ret);
-  return ret;
-}
-
-template <typename T, typename ArrayType, typename = std::enable_if_t<meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
-{
-  ArrayType ret{array.shape()};
-  Add(array, scalar, ret);
-  return ret;
-}
-template <typename T, typename ArrayType,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, ArrayType> Add(T const &scalar, ArrayType const &array)
-{
-  return Add(array, scalar);
-}
-
-template <typename T, typename ArrayType,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, void> Add(T const &scalar, ArrayType const &array, ArrayType &ret)
-{
-  ret = Add(array, scalar, ret);
-}
-template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2)
-{
-  assert(array1.shape() == array2.shape());
-  ArrayType ret{array1.shape()};
-  Add(array1, array2, ret);
-  return ret;
-}
 
 ///////////////////////
 /// IMPLEMENTATIONS ///
 ///////////////////////
 
+namespace fundamental_operators_details {
+
+/// Additions ///
+
 /**
- * Implementation for scalar addition. Implementing this helps keeps a uniform interface
- * @tparam T
+ * scalar addition implementation
+ * @tparam S
  * @param scalar1
  * @param scalar2
  * @param ret
+ * @return
  */
 template <typename S>
 meta::IfIsArithmetic<S, void> Add(S const &scalar1, S const &scalar2, S &ret)
@@ -154,259 +45,146 @@ meta::IfIsArithmetic<S, void> Add(S const &scalar1, S const &scalar2, S &ret)
   ret = scalar1 + scalar2;
 }
 
-template <typename T, typename ArrayType,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array, T const &scalar, ArrayType &ret)
-{
-  assert(array.size() == ret.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
-  {
-    ret.Set(i, array.At(i) + scalar);
-  }
-}
-
 /**
- * Adds two arrays together
- * @tparam T
- * @tparam C
+ * Array addition implementation
+ * @tparam ArrayType
  * @param array1
  * @param array2
  * @param ret
+ * @return
  */
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
                                          ArrayType &ret)
 {
-  assert(array1.shape() == array2.shape());
-  assert(array1.shape() == ret.shape());
-
-  for (std::size_t i = 0; i < ret.size(); ++i)
+  ASSERT(array1.shape() == array2.shape());
+  ASSERT(ret.shape() == array2.shape());
+  // TODO(804) - no tensor zip implemented
+  typename ArrayType::SizeType idx{0};
+  for (auto &val : array1)
   {
-    ret.At(i) = array1.At(i) + array2.At(i);
+    Add(val, array2.At(idx), ret.At(idx));
+    ++idx;
   }
 }
-
-//////////////////////////
-/// ADDITION OPERATORS ///
-//////////////////////////
-
-template <typename OtherType>
-meta::IfIsMath<OtherType, void> operator+=(OtherType &left, OtherType const &right)
-{
-  Add(left, right, left);
-}
-
-///////////////////
-/// SUBTRACTION ///
-///////////////////
-
-/////////////////
-/// INTERFACE ///
-/////////////////
-
-template <typename ArrayType, typename T,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, ArrayType> Subtract(T const &scalar, ArrayType const &array)
-{
-  ArrayType ret{array.shape()};
-  Subtract(scalar, array, ret);
-  return ret;
-}
-template <typename ArrayType, typename T,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, ArrayType> Subtract(ArrayType const &array, T const &scalar)
-{
-  ArrayType ret{array.shape()};
-  Subtract(array, scalar, ret);
-  return ret;
-}
-template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, ArrayType> Subtract(ArrayType const &obj1, ArrayType const &obj2,
-                                                   memory::Range const &range)
-{
-  ArrayType ret{obj1.shape()};
-  Subtract(obj1, obj2, range, ret);
-  return ret;
-}
-template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, ArrayType> Subtract(ArrayType const &obj1, ArrayType const &obj2)
-{
-  assert(obj1.size() == obj2.size());
-  ArrayType ret{obj1.shape()};
-  Subtract(obj1, obj2, ret);
-  return ret;
-}
-//////////////////////
-/// IMPLEMENTATION ///
-//////////////////////
-
-template <typename ArrayType, typename T,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, void> Subtract(T const &scalar, ArrayType const &array,
-                                              ArrayType &ret)
-{
-  assert(array.size() == ret.size());
-  assert(array.shape() == ret.shape());
-  for (std::size_t i = 0; i < ret.size(); ++i)
-  {
-    ret.At(i) = scalar - array.At(i);
-  }
-}
-
-template <typename ArrayType, typename T,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array, T const &scalar,
-                                              ArrayType &ret)
-{
-  assert(array.size() == ret.size());
-  assert(array.shape() == ret.shape());
-  for (std::size_t i = 0; i < ret.size(); ++i)
-  {
-    ret.At(i) = array.At(i) - scalar;
-  }
-}
-
-template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array, ArrayType const &array2,
-                                              ArrayType &ret)
-{
-  assert((array.size() == array2.size()) ||
-         ((array.shape()[0] == array2.shape()[0]) &&
-          ((array.shape()[1] == 1) || (array2.shape()[1] == 1))) ||
-         ((array.shape()[1] == array2.shape()[1]) &&
-          ((array.shape()[0] == 1) || (array2.shape()[0] == 1))));
-  assert((array.size() == ret.size()) || (array2.size() == ret.size()));
-
-  if (array.size() == array2.size())
-  {
-    for (std::size_t i = 0; i < ret.size(); ++i)
-    {
-      ret.Set(i, array.At(i) - array2.At(i));
-    }
-  }
-
-  // matrix - vector subtraction (i.e. broadcasting)
-  else if (array.shape()[0] == 1)
-  {
-    for (std::size_t i = 0; i < array2.shape()[0]; ++i)
-    {
-      for (std::size_t j = 0; j < array2.shape()[1]; ++j)
-      {
-        ret.Set({i, j}, array.At({0, j}) - array2.At({i, j}));
-      }
-    }
-  }
-  else if (array.shape()[1] == 1)
-  {
-    for (std::size_t i = 0; i < array2.shape()[0]; ++i)
-    {
-      for (std::size_t j = 0; j < array2.shape()[1]; ++j)
-      {
-        ret.Set({i, j}, array.At({i, 0}) - array2.At({i, j}));
-      }
-    }
-  }
-  else if (array2.shape()[0] == 1)
-  {
-    for (std::size_t i = 0; i < array2.shape()[0]; ++i)
-    {
-      for (std::size_t j = 0; j < array2.shape()[1]; ++j)
-      {
-        ret.Set({i, j}, array.At({i, j}) - array2.At({0, j}));
-      }
-    }
-  }
-  else if (array2.shape()[1] == 1)
-  {
-    for (std::size_t i = 0; i < array2.shape()[0]; ++i)
-    {
-      for (std::size_t j = 0; j < array2.shape()[1]; ++j)
-      {
-        ret.Set({i, j}, array.At({0, j}) - array2.At({i, 0}));
-      }
-    }
-  }
-  else
-  {
-    throw std::runtime_error("broadcast subtraction for tensors more than 2D not yet handled");
-  }
-}
-
-///////////////////////////////////////////////////////
-/// SUBTRACTIONS - SCALAR & SCALAR - NO FIXED POINT ///
-///////////////////////////////////////////////////////
 
 /**
- * Implementation for scalar subtraction. Implementing this helps keeps a uniform interface
+ * Array-Scalar addition
  * @tparam T
+ * @tparam ArrayType
+ * @param array
+ * @param scalar
+ * @param ret
+ * @return
+ */
+template <typename ArrayType, typename T>
+meta::IfIsValidArrayScalarPair<ArrayType, T, void> Add(ArrayType const &array, T const &scalar,
+                                                       ArrayType &ret)
+{
+  ASSERT(array.shape() == ret.shape());
+  // TODO(804) - no tensor zip implemented
+  typename ArrayType::SizeType idx{0};
+  for (auto &val : array)
+  {
+    Add(val, scalar, ret.At(idx));
+    ++idx;
+  }
+}
+
+/// Subtractions ///
+
+/**
+ * scalar subtraction implementation
+ * @tparam S
  * @param scalar1
  * @param scalar2
  * @param ret
+ * @return
  */
 template <typename S>
 meta::IfIsArithmetic<S, void> Subtract(S const &scalar1, S const &scalar2, S &ret)
 {
   ret = scalar1 - scalar2;
 }
-template <typename S>
-meta::IfIsArithmetic<S, S> Subtract(S const &scalar1, S const &scalar2)
-{
-  S ret;
-  Subtract(scalar1, scalar2, ret);
-  return ret;
-}
 
-////////////////
-/// Multiply ///
-////////////////
-
-//////////////////////////////////
-/// MULTIPLY - IMPLEMENTATIONS ///
-//////////////////////////////////
-
-template <typename ArrayType, typename T,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &array, T const &scalar,
+/**
+ * Array subtraction implementation
+ * @tparam ArrayType
+ * @param array1
+ * @param array2
+ * @param ret
+ * @return
+ */
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array1, ArrayType const &array2,
                                               ArrayType &ret)
 {
-  assert(array.size() == ret.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
+  ASSERT(array1.shape() == array2.shape());
+  ASSERT(ret.shape() == array2.shape());
+  // TODO(804) - no tensor zip implemented
+  typename ArrayType::SizeType idx{0};
+  for (auto &val : array1)
   {
-    ret.Set(i, array.At(i) * typename ArrayType::Type(scalar));
+    Subtract(val, array2.At(idx), ret.At(idx));
+    ++idx;
   }
 }
 
-template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &obj1, ArrayType const &obj2,
-                                              memory::Range const &range, ArrayType &ret)
-{
-  assert(obj1.size() == obj2.size());
-  assert(obj1.size() == ret.size());
-
-  // TODO (private 516)
-  assert(range.is_trivial() || range.is_undefined());
-
-  if (range.is_undefined())
-  {
-    Multiply(obj1, obj2, ret);
-  }
-  else
-  {
-    auto r = range.ToTrivialRange(ret.data().size());
-
-    ret.data().in_parallel().Apply(r,
-                                   [](typename ArrayType::vector_register_type const &x,
-                                      typename ArrayType::vector_register_type const &y,
-                                      typename ArrayType::vector_register_type &z) { z = x * y; },
-                                   obj1.data(), obj2.data());
-  }
-}
 /**
- * Implementation for scalar multiplication. Implementing this helps keeps a uniform interface
+ * Scalar-Array subtraction
  * @tparam T
+ * @tparam ArrayType
+ * @param array
+ * @param scalar
+ * @param ret
+ * @return
+ */
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsValidArrayScalarPair<ArrayType, T, void> Subtract(T const &scalar, ArrayType const &array,
+                                                            ArrayType &ret)
+{
+  ASSERT(array.shape() == ret.shape());
+  // TODO(804) - no tensor zip implemented
+  typename ArrayType::SizeType idx{0};
+  for (auto &val : array)
+  {
+    Subtract(scalar, val, ret.At(idx));
+    ++idx;
+  }
+}
+
+/**
+ * Array-Scalar subtraction
+ * @tparam T
+ * @tparam ArrayType
+ * @param array
+ * @param scalar
+ * @param ret
+ * @return
+ */
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsValidArrayScalarPair<ArrayType, T, void> Subtract(ArrayType const &array, T const &scalar,
+                                                            ArrayType &ret)
+{
+  ASSERT(array.shape() == ret.shape());
+  // TODO(804) - no tensor zip implemented
+  typename ArrayType::SizeType idx{0};
+  for (auto &val : array)
+  {
+    Subtract(val, scalar, ret.At(idx));
+    ++idx;
+  }
+}
+
+/// Multiply ///
+
+/**
+ * scalar multiplication implementation
+ * @tparam S
  * @param scalar1
  * @param scalar2
  * @param ret
+ * @return
  */
 template <typename S>
 meta::IfIsArithmetic<S, void> Multiply(S const &scalar1, S const &scalar2, S &ret)
@@ -414,165 +192,468 @@ meta::IfIsArithmetic<S, void> Multiply(S const &scalar1, S const &scalar2, S &re
   ret = scalar1 * scalar2;
 }
 
-//////////////////
-/// INTERFACES ///
-//////////////////
-
-template <typename ArrayType, typename T,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, void> Multiply(T const &scalar, ArrayType const &array,
+/**
+ * Array elementwise multiplication implementation
+ * @tparam ArrayType
+ * @param array1
+ * @param array2
+ * @param ret
+ * @return
+ */
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &array1, ArrayType const &array2,
                                               ArrayType &ret)
 {
-  Multiply(array, scalar, ret);
-}
-template <typename ArrayType, typename T,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, ArrayType> Multiply(T const &scalar, ArrayType const &array)
-{
-  return Multiply(array, scalar);
-}
-template <typename ArrayType, typename T,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, ArrayType> Multiply(ArrayType const &array, T const &scalar)
-{
-  ArrayType ret{array.shape()};
-  Multiply(array, scalar, ret);
-  return ret;
-}
-template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &obj1, ArrayType const &obj2,
-                                              ArrayType &ret)
-{
-  details::Multiply(obj1, obj2, ret);
-}
-template <typename S>
-meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
-{
-  S ret;
-  Multiply(scalar1, scalar2, ret);
-  return ret;
-}
-
-//////////////
-/// DIVIDE ///
-//////////////
-
-/////////////////
-/// INTERFACE ///
-/////////////////
-
-template <typename ArrayType, typename T,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, ArrayType> Divide(ArrayType const &array, T const &scalar)
-{
-  ArrayType ret{array.shape()};
-  Divide(array, scalar, ret);
-  return ret;
-}
-
-//////////////////////
-/// IMPLEMENTATION ///
-//////////////////////
-
-template <typename ArrayType, typename T,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, void> Divide(ArrayType const &array, T const &scalar, ArrayType &ret)
-{
-  assert(array.size() == ret.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
+  ASSERT(array1.shape() == array2.shape());
+  ASSERT(ret.shape() == array2.shape());
+  // TODO(804) - no tensor zip implemented
+  typename ArrayType::SizeType idx{0};
+  for (auto &val : array1)
   {
-    ret.At(i) = array.At(i) / scalar;
+    Multiply(val, array2.At(idx), ret.At(idx));
+    ++idx;
   }
-}
-template <typename ArrayType, typename T,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, void> Divide(T const &scalar, ArrayType const &array, ArrayType &ret)
-{
-  assert(array.size() == ret.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
-  {
-    ret.At(i) = scalar / array.At(i);
-  }
-}
-
-template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2)
-{
-  ArrayType ret{obj1.shape()};
-
-  Divide(obj1, obj2, ret);
-  return ret;
-}
-
-template <typename T, typename ArrayType,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, ArrayType> Divide(T const &scalar, ArrayType const &array)
-{
-  ArrayType ret{array.shape()};
-  Divide(scalar, array, ret);
-  return ret;
 }
 
 /**
- * subtract array from another array
+ * Array-Scalar multiplication
  * @tparam T
- * @tparam C
- * @param array1
+ * @tparam ArrayType
+ * @param array
  * @param scalar
  * @param ret
+ * @return
  */
-
-namespace details {
-
-template <typename ArrayType>
-void NaiveDivideArray(ArrayType const &obj1, ArrayType const &obj2, ArrayType &ret)
+template <typename ArrayType, typename T>
+meta::IfIsValidArrayScalarPair<ArrayType, T, void> Multiply(ArrayType const &array, T const &scalar,
+                                                            ArrayType &ret)
 {
-  assert(obj1.size() == obj2.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
+  ASSERT(array.shape() == ret.shape());
+  // TODO(804) - no tensor zip implemented
+  typename ArrayType::SizeType idx{0};
+  for (auto &val : array)
   {
-    ret[i] = obj1[i] / obj2[i];
+    Multiply(val, scalar, ret.At(idx));
+    ++idx;
   }
 }
 
-}  // namespace details
-
-template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
-                                            ArrayType &ret)
-{
-  assert(obj1.shape() == obj2.shape());
-  assert(ret.shape() == obj2.shape());
-  details::NaiveDivideArray(obj1, obj2, ret);
-}
-
-template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, ArrayType> Divide(ArrayType const &obj1, ArrayType const &obj2)
-{
-  assert(obj1.shape() == obj2.shape());
-  ArrayType ret{obj1.shape()};
-  Divide(obj1, obj2, ret);
-  return ret;
-}
+/// Divide ///
 
 /**
- * Implementation for scalar division. Implementing this helps keeps a uniform interface
- * @tparam T
+ * scalar division implementation
+ * @tparam S
  * @param scalar1
  * @param scalar2
  * @param ret
+ * @return
  */
 template <typename S>
 meta::IfIsArithmetic<S, void> Divide(S const &scalar1, S const &scalar2, S &ret)
 {
+  ASSERT(scalar2 != S(0));
   ret = scalar1 / scalar2;
+}
+
+/**
+ * Array elementwise division implementation
+ * @tparam ArrayType
+ * @param array1
+ * @param array2
+ * @param ret
+ * @return
+ */
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> Divide(ArrayType const &array1, ArrayType const &array2,
+                                            ArrayType &ret)
+{
+  ASSERT(array1.shape() == array2.shape());
+  ASSERT(ret.shape() == array2.shape());
+  // TODO(804) - no tensor zip implemented
+  typename ArrayType::SizeType idx{0};
+  for (auto &val : array1)
+  {
+    Divide(val, array2.At(idx), ret.At(idx));
+    ++idx;
+  }
+}
+
+/**
+ * Scalar-Array division
+ * @tparam T
+ * @tparam ArrayType
+ * @param array
+ * @param scalar
+ * @param ret
+ * @return
+ */
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsValidArrayScalarPair<ArrayType, T, void> Divide(T const &scalar, ArrayType const &array,
+                                                          ArrayType &ret)
+{
+  ASSERT(array.shape() == ret.shape());
+  // TODO(804) - no tensor zip implemented
+  typename ArrayType::SizeType idx{0};
+  for (auto &val : array)
+  {
+    Divide(scalar, val, ret.At(idx));
+    ++idx;
+  }
+}
+
+/**
+ * Array-Scalar division
+ * @tparam T
+ * @tparam ArrayType
+ * @param array
+ * @param scalar
+ * @param ret
+ * @return
+ */
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsValidArrayScalarPair<ArrayType, T, void> Divide(ArrayType const &array, T const &scalar,
+                                                          ArrayType &ret)
+{
+  ASSERT(array.shape() == ret.shape());
+  // TODO(804) - no tensor zip implemented
+  typename ArrayType::SizeType idx{0};
+  for (auto &val : array)
+  {
+    Divide(val, scalar, ret.At(idx));
+    ++idx;
+  }
+}
+
+}  // namespace fundamental_operators_details
+
+//////////////////
+/// INTERFACES ///
+//////////////////
+
+/// ADDITIONS
+
+/// SCALAR - SCALAR
+template <typename S>
+meta::IfIsArithmetic<S, void> Add(S const &scalar1, S const &scalar2, S &ret)
+{
+  fundamental_operators_details::Add(scalar1, scalar2, ret);
+}
+
+template <typename S>
+meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
+{
+  S ret;
+  fundamental_operators_details::Add(scalar1, scalar2, ret);
+  return ret;
+}
+
+/// ARRAY - SCALAR
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsValidArrayScalarPair<ArrayType, T, void> Add(ArrayType const &array, T const &scalar,
+                                                       ArrayType &ret)
+{
+  ASSERT(ret.shape() == array.shape());
+  fundamental_operators_details::Add(array, scalar, ret);
+}
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsValidArrayScalarPair<ArrayType, T, ArrayType> Add(ArrayType const &array, T const &scalar)
+{
+  ArrayType ret{array.shape()};
+  fundamental_operators_details::Add(array, scalar, ret);
+  return ret;
+}
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsValidArrayScalarPair<ArrayType, T, void> Add(T const &scalar, ArrayType const &array,
+                                                       ArrayType &ret)
+{
+  ASSERT(ret.shape() == array.shape());
+  fundamental_operators_details::Add(array, scalar, ret);
+}
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsValidArrayScalarPair<ArrayType, T, ArrayType> Add(T const &scalar, ArrayType const &array)
+{
+  ArrayType ret{array.shape()};
+  fundamental_operators_details::Add(array, scalar, ret);
+  return ret;
+}
+
+/// ARRAY - ARRAY
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
+                                         ArrayType &ret)
+{
+  ASSERT(array1.shape() == array2.shape());
+  ASSERT(array1.shape() == ret.shape());
+  fundamental_operators_details::Add(array1, array2, ret);
+}
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2)
+{
+  ASSERT(array1.shape() == array2.shape());
+  ArrayType ret{array1.shape()};
+  fundamental_operators_details::Add(array1, array2, ret);
+  return ret;
+}
+
+/// Subtractions
+
+/// SCALAR - SCALAR
+template <typename S>
+meta::IfIsArithmetic<S, void> Subtract(S const &scalar1, S const &scalar2, S &ret)
+{
+  fundamental_operators_details::Subtract(scalar1, scalar2, ret);
+}
+
+template <typename S>
+meta::IfIsArithmetic<S, S> Subtract(S const &scalar1, S const &scalar2)
+{
+  S ret;
+  fundamental_operators_details::Subtract(scalar1, scalar2, ret);
+  return ret;
+}
+
+/// ARRAY - SCALAR
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsValidArrayScalarPair<ArrayType, T, void> Subtract(ArrayType const &array, T const &scalar,
+                                                            ArrayType &ret)
+{
+  ASSERT(ret.shape() == array.shape());
+  fundamental_operators_details::Subtract(array, scalar, ret);
+}
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsValidArrayScalarPair<ArrayType, T, ArrayType> Subtract(ArrayType const &array,
+                                                                 T const &        scalar)
+{
+  ArrayType ret{array.shape()};
+  fundamental_operators_details::Subtract(array, scalar, ret);
+  return ret;
+}
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsValidArrayScalarPair<ArrayType, T, void> Subtract(T const &scalar, ArrayType const &array,
+                                                            ArrayType &ret)
+{
+  ASSERT(ret.shape() == array.shape());
+  fundamental_operators_details::Subtract(scalar, array, ret);
+}
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsValidArrayScalarPair<ArrayType, T, ArrayType> Subtract(T const &        scalar,
+                                                                 ArrayType const &array)
+{
+  ArrayType ret{array.shape()};
+  fundamental_operators_details::Subtract(scalar, array, ret);
+  return ret;
+}
+
+/// ARRAY - ARRAY
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array1, ArrayType const &array2,
+                                              ArrayType &ret)
+{
+  ASSERT(array1.shape() == array2.shape());
+  ASSERT(array1.shape() == ret.shape());
+  fundamental_operators_details::Subtract(array1, array2, ret);
+}
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, ArrayType> Subtract(ArrayType const &array1, ArrayType const &array2)
+{
+  ASSERT(array1.shape() == array2.shape());
+  ArrayType ret{array1.shape()};
+  fundamental_operators_details::Subtract(array1, array2, ret);
+  return ret;
+}
+
+/// Multiplications
+
+/// SCALAR - SCALAR
+template <typename S>
+meta::IfIsArithmetic<S, void> Multiply(S const &scalar1, S const &scalar2, S &ret)
+{
+  fundamental_operators_details::Multiply(scalar1, scalar2, ret);
+}
+
+template <typename S>
+meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
+{
+  S ret;
+  fundamental_operators_details::Multiply(scalar1, scalar2, ret);
+  return ret;
+}
+
+/// ARRAY - SCALAR
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsValidArrayScalarPair<ArrayType, T, void> Multiply(ArrayType const &array, T const &scalar,
+                                                            ArrayType &ret)
+{
+  ASSERT(ret.shape() == array.shape());
+  fundamental_operators_details::Multiply(array, scalar, ret);
+}
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsValidArrayScalarPair<ArrayType, T, ArrayType> Multiply(ArrayType const &array,
+                                                                 T const &        scalar)
+{
+  ArrayType ret{array.shape()};
+  fundamental_operators_details::Multiply(array, scalar, ret);
+  return ret;
+}
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsValidArrayScalarPair<ArrayType, T, void> Multiply(T const &scalar, ArrayType const &array,
+                                                            ArrayType &ret)
+{
+  ASSERT(ret.shape() == array.shape());
+  fundamental_operators_details::Multiply(array, scalar, ret);
+}
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsValidArrayScalarPair<ArrayType, T, ArrayType> Multiply(T const &        scalar,
+                                                                 ArrayType const &array)
+{
+  ArrayType ret{array.shape()};
+  fundamental_operators_details::Multiply(array, scalar, ret);
+  return ret;
+}
+
+/// ARRAY - ARRAY
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &array1, ArrayType const &array2,
+                                              ArrayType &ret)
+{
+  ASSERT(array1.shape() == array2.shape());
+  ASSERT(array1.shape() == ret.shape());
+  fundamental_operators_details::Multiply(array1, array2, ret);
+}
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, ArrayType> Multiply(ArrayType const &array1, ArrayType const &array2)
+{
+  ASSERT(array1.shape() == array2.shape());
+  ArrayType ret{array1.shape()};
+  fundamental_operators_details::Multiply(array1, array2, ret);
+  return ret;
+}
+
+/// Division
+
+/// SCALAR - SCALAR
+template <typename S>
+meta::IfIsArithmetic<S, void> Divide(S const &scalar1, S const &scalar2, S &ret)
+{
+  fundamental_operators_details::Divide(scalar1, scalar2, ret);
 }
 
 template <typename S>
 meta::IfIsArithmetic<S, S> Divide(S const &scalar1, S const &scalar2)
 {
   S ret;
-  Divide(scalar1, scalar2, ret);
+  fundamental_operators_details::Divide(scalar1, scalar2, ret);
   return ret;
+}
+
+/// ARRAY - SCALAR
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsValidArrayScalarPair<ArrayType, T, void> Divide(ArrayType const &array, T const &scalar,
+                                                          ArrayType &ret)
+{
+  ASSERT(ret.shape() == array.shape());
+  fundamental_operators_details::Divide(array, scalar, ret);
+}
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsValidArrayScalarPair<ArrayType, T, ArrayType> Divide(ArrayType const &array,
+                                                               T const &        scalar)
+{
+  ArrayType ret{array.shape()};
+  fundamental_operators_details::Divide(array, scalar, ret);
+  return ret;
+}
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsValidArrayScalarPair<ArrayType, T, void> Divide(T const &scalar, ArrayType const &array,
+                                                          ArrayType &ret)
+{
+  ASSERT(ret.shape() == array.shape());
+  fundamental_operators_details::Divide(scalar, array, ret);
+}
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsValidArrayScalarPair<ArrayType, T, ArrayType> Divide(T const &        scalar,
+                                                               ArrayType const &array)
+{
+  ArrayType ret{array.shape()};
+  fundamental_operators_details::Divide(scalar, array, ret);
+  return ret;
+}
+
+/// ARRAY - ARRAY
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> Divide(ArrayType const &array1, ArrayType const &array2,
+                                            ArrayType &ret)
+{
+  ASSERT(array1.shape() == array2.shape());
+  ASSERT(array1.shape() == ret.shape());
+  fundamental_operators_details::Divide(array1, array2, ret);
+}
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, ArrayType> Divide(ArrayType const &array1, ArrayType const &array2)
+{
+  ASSERT(array1.shape() == array2.shape());
+  ArrayType ret{array1.shape()};
+  fundamental_operators_details::Divide(array1, array2, ret);
+  return ret;
+}
+
+/////////////////
+/// OPERATORS ///
+/////////////////
+
+template <typename OtherType>
+meta::IfIsMath<OtherType, OtherType> operator+(OtherType &left, OtherType const &right)
+{
+  OtherType ret;
+  fundamental_operators_details::Add(left, right, ret);
+  return ret;
+}
+
+template <typename OtherType>
+meta::IfIsMath<OtherType, void> operator+=(OtherType &left, OtherType const &right)
+{
+  fundamental_operators_details::Add(left, right, left);
+}
+
+template <typename OtherType>
+meta::IfIsMath<OtherType, OtherType> operator-(OtherType &left, OtherType const &right)
+{
+  OtherType ret;
+  fundamental_operators_details::Subtract(left, right, ret);
+  return ret;
+}
+
+template <typename OtherType>
+meta::IfIsMath<OtherType, void> operator-=(OtherType &left, OtherType const &right)
+{
+  fundamental_operators_details::Subtract(left, right, left);
+}
+
+template <typename OtherType>
+meta::IfIsMath<OtherType, OtherType> operator*(OtherType &left, OtherType const &right)
+{
+  OtherType ret;
+  fundamental_operators_details::Multiply(left, right, ret);
+  return ret;
+}
+
+template <typename OtherType>
+meta::IfIsMath<OtherType, void> operator*=(OtherType &left, OtherType const &right)
+{
+  fundamental_operators_details::Multiply(left, right, left);
+}
+
+template <typename OtherType>
+meta::IfIsMath<OtherType, OtherType> operator/(OtherType &left, OtherType const &right)
+{
+  OtherType ret;
+  fundamental_operators_details::Divide(left, right, ret);
+  return ret;
+}
+
+template <typename OtherType>
+meta::IfIsMath<OtherType, void> operator/=(OtherType &left, OtherType const &right)
+{
+  fundamental_operators_details::Divide(left, right, left);
 }
 
 }  // namespace math

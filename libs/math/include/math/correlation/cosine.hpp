@@ -19,8 +19,8 @@
 
 #include "core/assert.hpp"
 #include "math/fundamental_operators.hpp"
-#include "math/standard_functions/sqrt.hpp"
 #include "math/matrix_operations.hpp"
+#include "math/standard_functions/sqrt.hpp"
 
 #include <cmath>
 

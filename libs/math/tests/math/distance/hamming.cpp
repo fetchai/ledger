@@ -42,7 +42,7 @@ TYPED_TEST_CASE(HammingTest, MyTypes);
 TYPED_TEST(HammingTest, simple_test)
 {
   using DataType = typename TypeParam::Type;
-  TypeParam A = TypeParam(4);
+  TypeParam A    = TypeParam(4);
   A.Set(0, DataType(1));
   A.Set(1, DataType(2));
   A.Set(2, DataType(3));
