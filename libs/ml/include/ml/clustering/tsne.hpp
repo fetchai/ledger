@@ -59,10 +59,10 @@ public:
   {
     // Initialize variables
     ArrayType output_symmetric_affinities(input_pairwise_affinities.shape());
-    DataType  initial_momentum = 0.5;
-    DataType  final_momentum   = 0.8;
-    DataType  min_gain         = 0.01;
-    DataType  momentum         = initial_momentum;
+    DataType  initial_momentum(0.5f);
+    DataType  final_momentum(0.8f);
+    DataType  min_gain(0.01f);
+    DataType  momentum = initial_momentum;
 
     // i_y is output_matrix value from last iteration
     ArrayType i_y(output_matrix.shape());
@@ -71,7 +71,7 @@ public:
     ArrayType gains(output_matrix.shape());
     for (SizeType i = 0; i < gains.size(); i++)
     {
-      gains.Set(i, 1.0);
+      gains.Set(i, DataType(1));
     }
 
     // Start optimization
@@ -97,12 +97,12 @@ public:
         {
           if ((gradient.At({i, j}) > 0.0) != (i_y.At({i, j}) > 0.0))
           {
-            gains.Set({i, j}, gains.At({i, j}) + 0.2);
+            gains.Set({i, j}, gains.At({i, j}) + DataType(0.2));
           }
 
           if ((gradient.At({i, j}) > 0.0) == (i_y.At({i, j}) > 0.0))
           {
-            gains.Set({i, j}, gains.At({i, j}) * 0.8);
+            gains.Set({i, j}, gains.At({i, j}) * DataType(0.8));
           }
         }
       }
@@ -123,13 +123,15 @@ public:
       ReducedSubtract(output_matrix, y_mean, output_matrix);
 
       // Compute current value of cost function
-      std::cout << "Loss: " << KlDivergence(input_symmetric_affinities, output_symmetric_affinities)
+      std::cout << "Loss: "
+                << static_cast<double>(
+                       KlDivergence(input_symmetric_affinities, output_symmetric_affinities))
                 << std::endl;
 
       // Later P-values correction
       if (iter == 10)
       {
-        input_symmetric_affinities = fetch::math::Divide(input_symmetric_affinities, 4.0);
+        input_symmetric_affinities = fetch::math::Divide(input_symmetric_affinities, DataType(4));
       }
     }
   }
@@ -145,8 +147,8 @@ private:
    */
   void Init(const ArrayType &input_matrix, const ArrayType &output_matrix)
   {
-    DataType perplexity           = 20.0;
-    DataType perplexity_tolerance = 1e-5;
+    DataType perplexity(20.0);
+    DataType perplexity_tolerance(1e-5f);
 
     // Initialize high dimensional values
     this->input_matrix       = input_matrix;
@@ -161,13 +163,14 @@ private:
     // Pij=(Pj|i+Pi|j)/sum(Pij)
     input_symmetric_affinities =
         fetch::math::Add(input_pairwise_affinities, input_pairwise_affinities.Transpose());
+
     input_symmetric_affinities = fetch::math::Divide(input_symmetric_affinities,
                                                      fetch::math::Sum(input_symmetric_affinities));
     // Early exaggeration
-    input_symmetric_affinities = fetch::math::Multiply(input_symmetric_affinities, 4.0);
+    input_symmetric_affinities = fetch::math::Multiply(input_symmetric_affinities, DataType(4));
 
     // Limit minimum value to 1e-12
-    LimitMin(input_symmetric_affinities, 1e-12);
+    LimitMin(input_symmetric_affinities, DataType(1e-12));
 
     // Initialize low dimensional values
     this->output_matrix = output_matrix;
@@ -182,7 +185,7 @@ private:
 
     for (SizeType i = 0; i < output_matrix.size(); i++)
     {
-      output_matrix.Set(i, GetRandom(0.0, 1.0));
+      output_matrix.Set(i, GetRandom(DataType(0), DataType(1)));
     }
   }
 
@@ -199,14 +202,14 @@ private:
   {
     // P = np.exp(-D.copy() * beta)
     p = Gaussian(fetch::math::Multiply(d, beta));
-    p.Set(k, 0.0);
+    p.Set(k, DataType(0));
 
     DataType sum_p = fetch::math::Sum(p);
 
     // H = np.log(sumP) + beta * np.sum(D * P) / sumP
     DataType sum_d_p = fetch::math::Sum(fetch::math::Multiply(p, d));
 
-    entropy = std::log(sum_p) + beta * sum_d_p / sum_p;
+    entropy = fetch::math::Log(sum_p) + beta * sum_d_p / sum_p;
 
     // P = P / sumP
     p = fetch::math::Divide(p, sum_p);
@@ -235,16 +238,17 @@ private:
 
     // D = np.add(np.add(-2 * np.dot(X, X.T), sum_X).T, sum_X)
     ArrayType d =
-        fetch::math::Multiply(-2.0, fetch::math::DotTranspose(input_matrix, input_matrix));
+        fetch::math::Multiply(DataType(-2), fetch::math::DotTranspose(input_matrix, input_matrix));
     d = ReducedAdd(ReducedAdd(d, sum_x).Transpose(), sum_x);
 
     // beta = 1/(2*sigma^2)
     // Prefill beta array with 1.0
     ArrayType beta(input_data_size);
-    std::fill(beta.begin(), beta.end(), 1.0);
+    std::fill(beta.begin(), beta.end(), DataType(1));
 
     // Calculate entropy value from perplexity
-    DataType target_entropy = std::log(target_perplexity);
+    // DataType target_entropy = std::log(target_perplexity);
+    DataType target_entropy = fetch::math::Log(target_perplexity);
 
     /*
      * Loop over all datapoints
@@ -263,14 +267,14 @@ private:
       ArrayType this_P(input_data_size);
 
       DataType current_entropy;
-      d.Set({i, i}, 0.0);
+      d.Set({i, i}, DataType(0));
       Hbeta(d.Slice(i), this_P, current_entropy, beta.At(i), i);
 
       // Evaluate whether the perplexity is within tolerance
       DataType entropy_diff = current_entropy - target_entropy;
       SizeType tries        = 0;
 
-      while (abs(entropy_diff) > tolerance && tries < 50)
+      while (fetch::math::Abs(entropy_diff) > tolerance && tries < 50)
       {
 
         // If not, increase or decrease precision
@@ -279,11 +283,11 @@ private:
           beta_min = beta.At(i);
           if (beta_max == inf || beta_max == -inf)
           {
-            beta.Set(i, beta.At(i) * 2.0);
+            beta.Set(i, beta.At(i) * DataType(2));
           }
           else
           {
-            beta.Set(i, (beta.At(i) + beta_max) / 2);
+            beta.Set(i, (beta.At(i) + beta_max) / DataType(2));
           }
         }
         else
@@ -291,11 +295,11 @@ private:
           beta_max = beta.At(i);
           if (beta_min == inf || beta_min == -inf)
           {
-            beta.Set(i, beta.At(i) / 2.0);
+            beta.Set(i, beta.At(i) / DataType(2));
           }
           else
           {
-            beta.Set(i, (beta.At(i) + beta_min) / 2);
+            beta.Set(i, (beta.At(i) + beta_min) / DataType(2));
           }
         }
 
@@ -310,7 +314,7 @@ private:
       {
         if (i == j)
         {
-          pairwise_affinities.Set({i, j}, 0.0);
+          pairwise_affinities.Set({i, j}, DataType(0));
           continue;
         }
         pairwise_affinities.Set({i, j}, this_P.At(j));
@@ -337,7 +341,8 @@ private:
         fetch::math::ReduceSum(fetch::math::Multiply(output_matrix, output_matrix), 1);
 
     // num = -2. * np.dot(Y, Y.T)
-    num = fetch::math::Multiply(-2.0, fetch::math::DotTranspose(output_matrix, output_matrix));
+    num = fetch::math::Multiply(DataType(-2),
+                                fetch::math::DotTranspose(output_matrix, output_matrix));
 
     // num = 1. / (1. + np.add(np.add(num, sum_Y).T, sum_Y))
     // Optimize
@@ -355,21 +360,21 @@ private:
     {
       for (SizeType j = 0; j < tmp_val.shape().at(1); j++)
       {
-        num.Set({i, j}, 1 / (1 + tmp_val.At({j, i}) + sum_Y.At(i)));
+        num.Set({i, j}, DataType(1) / (DataType(1) + tmp_val.At({j, i}) + sum_Y.At(i)));
       }
     }
 
     // num[range(n), range(n)] = 0.
     for (SizeType i = 0; i < num.shape().at(0); i++)
     {
-      num.Set({i, i}, 0.0);
+      num.Set({i, i}, DataType(0));
     }
 
     // Q = num / np.sum(num)
     output_symmetric_affinities = fetch::math::Divide(num, fetch::math::Sum(num));
 
     // Q=np.maximum(Q, 1e-12)
-    LimitMin(output_symmetric_affinities, 1e-12);
+    LimitMin(output_symmetric_affinities, DataType(1e-12));
   }
 
   /**
@@ -380,8 +385,9 @@ private:
    */
   DataType GetRandom(DataType mean, DataType standard_deviation)
   {
-    std::normal_distribution<DataType> distribution(mean, standard_deviation);
-    return distribution(rng_);
+    std::normal_distribution<double> distribution(static_cast<double>(mean),
+                                                  static_cast<double>(standard_deviation));
+    return DataType(distribution(rng_));
   }
 
   void Gaussian(ArrayType const &a, ArrayType &ret)
@@ -393,6 +399,7 @@ private:
 
       tmp_val = -a.At(i);
       fetch::math::Exp(tmp_val, tmp_val);
+
       ret.Set(i, tmp_val);
     }
   }
@@ -417,7 +424,7 @@ private:
   {
     assert(input_pairwise_affinities.shape() == output_pairwise_affinities.shape());
 
-    ret = 0;
+    ret = DataType(0);
     for (SizeType j = 0; j < input_pairwise_affinities.shape().at(0); j++)
     {
       for (SizeType i = 0; i < input_pairwise_affinities.shape().at(0); i++)
@@ -429,7 +436,7 @@ private:
 
         DataType tmp_q_j_given_i = output_pairwise_affinities.At({i, j});
 
-        ret += tmp_p_j_given_i * std::log(tmp_p_j_given_i / tmp_q_j_given_i);
+        ret += tmp_p_j_given_i * fetch::math::Log(tmp_p_j_given_i / tmp_q_j_given_i);
       }
     }
   }
