@@ -24,6 +24,7 @@
 
 #include "auctions/combinatorial_auction.hpp"
 #include "auctions/type_def.hpp"
+#include "math/tensor.hpp"
 
 namespace fetch {
 namespace auctions {

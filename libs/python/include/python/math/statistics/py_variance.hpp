@@ -17,7 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/statistics/variance.hpp"
+#include "math/statistics/variance.hpp"
+#include "math/tensor.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -36,10 +37,8 @@ inline void BuildVarianceStatistics(std::string const &custom_name, pybind11::mo
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperVariance<RectangularArray<double>>)
-      .def(custom_name.c_str(), &WrapperVariance<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperVariance<ShapelessArray<double>>)
-      .def(custom_name.c_str(), &WrapperVariance<ShapelessArray<float>>);
+  module.def(custom_name.c_str(), &WrapperVariance<Tensor<double>>)
+      .def(custom_name.c_str(), &WrapperVariance<Tensor<float>>);
 }
 
 }  // namespace statistics

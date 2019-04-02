@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/free_functions/standard_functions/abs.hpp"
+#include "math/standard_functions/abs.hpp"
 #include "tensor_iterator.hpp"
 
 #include "core/random/lcg.hpp"
@@ -319,7 +319,7 @@ public:
     Tensor<T> ret(std::vector<SizeType>(std::next(shape_.begin()), shape_.end()),     /* shape */
                   std::vector<SizeType>(std::next(strides_.begin()), strides_.end()), /* stride */
                   std::vector<SizeType>(std::next(padding_.begin()), padding_.end()), /* padding */
-                  storage_, offset_ + i * DimensionSize(0));
+                  storage_, offset_ + (i * DimensionSize(0)));
     ret.strides_ = std::vector<SizeType>(std::next(strides_.begin()), strides_.end());
     ret.padding_ = std::vector<SizeType>(std::next(padding_.begin()), padding_.end());
     return ret;
