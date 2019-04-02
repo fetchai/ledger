@@ -34,6 +34,7 @@
 //                                  └─────────────────────┴─────────────────────┘
 
 #include "core/assert.hpp"
+#include "core/macros.hpp"
 #include "storage/storage_exception.hpp"
 #include <cassert>
 #include <cstring>
@@ -272,6 +273,8 @@ public:
 
   void Flush(bool lazy = false)
   {
+    FETCH_UNUSED(lazy);
+
     WriteHeader();
   }
 

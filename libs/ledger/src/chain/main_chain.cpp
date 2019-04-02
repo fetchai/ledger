@@ -298,7 +298,7 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
 bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
                                         uint64_t limit) const
 {
-  MilliTimer myTimer("MainChain::GetPathToCommonAncestor");
+  MilliTimer myTimer("MainChain::GetPathToCommonAncestor", 500);
 
   FETCH_LOCK(lock_);
 
@@ -504,6 +504,7 @@ void MainChain::RecoverFromFile(Mode mode)
   IntBlockPtr block = std::make_shared<Block>();
   IntBlockPtr head  = std::make_shared<Block>();
 
+  bool recovery_complete{false};
   if (block_store_->Get(storage::ResourceAddress("head"), *block))
   {
     auto block_index = block->body.block_number;
@@ -542,7 +543,7 @@ void MainChain::RecoverFromFile(Mode mode)
       block_chain_[head->body.hash] = head;
 
       // Update this as our heaviest
-      bool result            = heaviest_.Update(*head);
+      bool const result      = heaviest_.Update(*head);
       tips_[head->body.hash] = Tip{head->total_weight};
 
       if (!result)
@@ -552,24 +553,28 @@ void MainChain::RecoverFromFile(Mode mode)
 
       // Sanity check
       uint64_t heaviest_block_num = GetHeaviestBlock()->body.block_number;
-      FETCH_LOG_INFO(LOGGING_NAME, "Heaviest blcok: ", heaviest_block_num);
+      FETCH_LOG_INFO(LOGGING_NAME, "Heaviest block: ", heaviest_block_num);
 
       DetermineHeaviestTip();
       heaviest_block_num = GetHeaviestBlock()->body.block_number;
-      FETCH_LOG_INFO(LOGGING_NAME, "Heaviest blcok now: ", heaviest_block_num);
-      FETCH_LOG_INFO(LOGGING_NAME, "Heaviest blcok weight: ", GetHeaviestBlock()->total_weight);
+      FETCH_LOG_INFO(LOGGING_NAME, "Heaviest block now: ", heaviest_block_num);
+      FETCH_LOG_INFO(LOGGING_NAME, "Heaviest block weight: ", GetHeaviestBlock()->total_weight);
 
-      return;
+      // signal that the recovery was successful
+      recovery_complete = true;
     }
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME,
-                   "No head block found in chain data store! Resetting chain data store.");
+    FETCH_LOG_INFO(LOGGING_NAME,
+                  "No head block found in chain data store! Resetting chain data store.");
   }
 
   // Recovering the chain has failed in some way, reset the storage.
-  block_store_->New("chain.db", "chain.index.db");
+  if (!recovery_complete)
+  {
+    block_store_->New("chain.db", "chain.index.db");
+  }
 }
 
 /**
@@ -577,16 +582,18 @@ void MainChain::RecoverFromFile(Mode mode)
  */
 void MainChain::WriteToFile()
 {
+  // lookup the heaviest block
+  IntBlockPtr block = block_chain_.at(heaviest_.hash);
+
   // skip if the block store is not persistent
-  if (block_store_)
+  if (block_store_ && (block->body.block_number >= FINALITY_PERIOD))
   {
     MilliTimer myTimer("MainChain::WriteToFile", 500);
 
     // Add confirmed blocks to file, minus finality
-    IntBlockPtr block  = block_chain_.at(heaviest_.hash);
-    bool        failed = false;
 
     // Find the block N back from our heaviest
+    bool failed = false;
     for (std::size_t i = 0; i < FINALITY_PERIOD; ++i)
     {
       if (!LookupBlock(block->body.previous_hash, block))
@@ -608,13 +615,14 @@ void MainChain::WriteToFile()
     // Corner case - block is genesis
     if (block->body.previous_hash == GENESIS_DIGEST)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Writing genesis. ");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Writing genesis. ");
+
       block_store_->Set(storage::ResourceAddress("head"), *block);
       block_store_->Set(storage::ResourceID(block->body.hash), *block);
     }
     else
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Writing block. ", block->body.block_number);
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Writing block. ", block->body.block_number);
 
       // Recover the current head block from the file
       IntBlockPtr current_file_head = std::make_shared<Block>();

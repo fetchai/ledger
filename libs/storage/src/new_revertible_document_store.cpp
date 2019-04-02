@@ -95,7 +95,7 @@ void NewRevertibleDocumentStore::Set(ResourceID const &rid, ByteArray const &val
 // State-based operations
 Hash NewRevertibleDocumentStore::Commit()
 {
-  auto ret = storage_.Commit();
+  Hash ret{std::move(storage_.Commit())};
   storage_.Flush(false);
   return ret;
 }

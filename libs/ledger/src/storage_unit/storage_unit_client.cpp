@@ -166,7 +166,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
         return false;
       }
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Successfully found merkle at: ", index);
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Successfully found merkle at: ", index);
     }  // End set merkle stack
 
     // Note: we shouldn't be touching the lanes at this point from other threads
@@ -260,7 +260,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
 // We have finished execution presumably, commit this state
 byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t commit_index)
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "Committing: ", commit_index);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Committing: ", commit_index);
 
   MerkleTree tree{num_lanes()};
 

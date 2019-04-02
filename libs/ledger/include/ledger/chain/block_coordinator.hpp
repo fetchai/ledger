@@ -126,7 +126,7 @@ public:
 
   enum class State
   {
-    STARTUP,                       ///< When starting up for the first time, try to recover state
+    RELOAD_STATE,                  ///< Recovering previous state
     SYNCHRONIZING,                 ///< Catch up with the outstanding blocks
     SYNCHRONIZED,                  ///< Caught up waiting to generate a new block
     PRE_EXEC_BLOCK_VALIDATION,     ///< Validation stage before block execution
@@ -149,7 +149,7 @@ public:
                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                    BlockSinkInterface &block_sink, TransactionStatusCache &status_cache,
                    Identity identity, std::size_t num_lanes, std::size_t num_slices,
-                   std::size_t block_difficulty, bool waiting_for_startup);
+                   std::size_t block_difficulty);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator();
@@ -177,11 +177,6 @@ public:
   std::weak_ptr<core::StateMachineInterface> GetWeakStateMachine()
   {
     return state_machine_;
-  }
-
-  void Run()
-  {
-    waiting_for_startup_ = false;
   }
 
   ConstByteArray GetLastExecutedBlock() const
@@ -220,7 +215,7 @@ private:
 
   /// @name Monitor State
   /// @{
-  State OnStartup();
+  State OnReloadState();
   State OnSynchronizing();
   State OnSynchronized(State current, State previous);
   State OnPreExecBlockValidation();
@@ -242,7 +237,6 @@ private:
   ExecutionStatus QueryExecutorStatus();
   void            UpdateNextBlockTime();
   void            UpdateTxStatus(Block const &block);
-  void            RecoverFromStartup();
 
   static char const *ToString(State state);
   static char const *ToString(ExecutionStatus state);
@@ -282,7 +276,6 @@ private:
   TxSetPtr       pending_txs_{};              ///< The list of pending txs that are being waited on
   PeriodicAction tx_wait_periodic_;           ///< Periodic print for transaction waiting
   PeriodicAction exec_wait_periodic_;         ///< Periodic print for execution
-  bool           waiting_for_startup_{true};  ///< Wait for networking elements to come online
   /// @}
 };
 

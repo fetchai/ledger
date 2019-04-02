@@ -792,7 +792,8 @@ void Router::SendToConnection(Handle handle, PacketPtr packet)
     serializers::ByteArrayBuffer buffer;
     buffer << *packet;
 
-    FETCH_LOG_WARN(LOGGING_NAME, "Sending out", DescribePacket(*packet));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Sending out", DescribePacket(*packet));
+
     // dispatch to the connection object
     conn->Send(buffer.data());
   }

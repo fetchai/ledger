@@ -133,8 +133,10 @@ FakeStorageUnit::Hash FakeStorageUnit::LastCommitHash()
   return state_history_stack_.back();
 }
 
-bool FakeStorageUnit::RevertToHash(Hash const &hash, uint64_t /*index*/)
+bool FakeStorageUnit::RevertToHash(Hash const &hash, uint64_t index)
 {
+  FETCH_UNUSED(index);
+
   bool success{false};
 
   // attempt to locate the hash in the current stack
