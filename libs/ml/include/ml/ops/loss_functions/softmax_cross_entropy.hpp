@@ -21,8 +21,8 @@
 #include <memory>
 #include <vector>
 
-#include "math/free_functions/ml/activation_functions/softmax.hpp"
-#include "math/free_functions/ml/loss_functions/cross_entropy.hpp"
+#include "math/ml/activation_functions/softmax.hpp"
+#include "math/ml/loss_functions/cross_entropy.hpp"
 
 namespace fetch {
 namespace ml {

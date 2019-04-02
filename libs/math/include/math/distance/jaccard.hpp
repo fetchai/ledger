@@ -19,44 +19,24 @@
 
 #include "core/assert.hpp"
 #include "math/correlation/jaccard.hpp"
-#include "math/shapeless_array.hpp"
-#include "vectorise/memory/range.hpp"
-
 #include <cmath>
 
 namespace fetch {
 namespace math {
 namespace distance {
 
-template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::Type Jaccard(memory::VectorSlice<T, S> const &a,
-                                                        memory::VectorSlice<T, S> const &b)
+template <typename ArrayType>
+inline typename ArrayType::Type Jaccard(ArrayType const &a, ArrayType const &b)
 {
-  using Type = typename memory::VectorSlice<T, S>::Type;
-
+  using Type = typename ArrayType::Type;
   return Type(1) - correlation::Jaccard(a, b);
 }
 
-template <typename T, typename C>
-inline typename ShapelessArray<T, C>::Type Jaccard(ShapelessArray<T, C> const &a,
-                                                   ShapelessArray<T, C> const &b)
+template <typename ArrayType>
+inline typename ArrayType::Type GeneralisedJaccard(ArrayType const &a, ArrayType const &b)
 {
-  return Jaccard(a.data(), b.data());
-}
-
-template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::Type GeneralisedJaccard(
-    memory::VectorSlice<T, S> const &a, memory::VectorSlice<T, S> const &b)
-{
-  using Type = typename memory::VectorSlice<T, S>::Type;
+  using Type = typename ArrayType::Type;
   return Type(1) - correlation::GeneralisedJaccard(a, b);
-}
-
-template <typename T, typename C>
-inline typename ShapelessArray<T, C>::Type GeneralisedJaccard(ShapelessArray<T, C> const &a,
-                                                              ShapelessArray<T, C> const &b)
-{
-  return GeneralisedJaccard(a.data(), b.data());
 }
 
 }  // namespace distance

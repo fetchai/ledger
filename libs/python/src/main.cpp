@@ -20,15 +20,13 @@
 
 #include "python/core/fixed_point/py_fixed_point.hpp"
 
-#include "python/math/py_shapeless_array.hpp"
 #include "python/memory/py_array.hpp"
 #include "python/memory/py_range.hpp"
-#include "python/memory/py_rectangular_array.hpp"
 #include "python/memory/py_shared_array.hpp"
 
 #include "python/math/distance/py_braycurtis.hpp"
 #include "python/math/distance/py_chebyshev.hpp"
-#include "python/math/distance/py_eisen.hpp"
+#include "python/math/distance/py_cosine.hpp"
 #include "python/math/distance/py_euclidean.hpp"
 #include "python/math/distance/py_hamming.hpp"
 #include "python/math/distance/py_jaccard.hpp"
@@ -43,7 +41,7 @@
 #include "python/math/py_tensor.hpp"
 #include "python/math/spline/py_linear.hpp"
 
-#include "python/math/correlation/py_eisen.hpp"
+#include "python/math/correlation/py_cosine.hpp"
 #include "python/math/correlation/py_jaccard.hpp"
 #include "python/math/correlation/py_pearson.hpp"
 
@@ -137,56 +135,9 @@ PYBIND11_MODULE(fetch, module)
   fetch::memory::BuildSharedArray<double>("SharedArrayDouble", ns_fetch_memory);
 
   fetch::memory::BuildRange("Range", ns_fetch_memory);
-  /*
-  fetch::math::BuildShapelessArray<int8_t>("ShapelessArrayInt8",
-  ns_fetch_memory);
-  fetch::math::BuildShapelessArray<int16_t>("ShapelessArrayInt16",
-  ns_fetch_memory);
-  fetch::math::BuildShapelessArray<int32_t>("ShapelessArrayInt32",
-  ns_fetch_memory);
-  fetch::math::BuildShapelessArray<int64_t>("ShapelessArrayInt64",
-  ns_fetch_memory);
-
-  fetch::math::BuildShapelessArray<uint8_t>("ShapelessArrayUInt8",
-  ns_fetch_memory);
-  fetch::math::BuildShapelessArray<uint16_t>("ShapelessArrayUInt16",
-  ns_fetch_memory);
-  fetch::math::BuildShapelessArray<uint32_t>("ShapelessArrayUInt32",
-  ns_fetch_memory);
-  fetch::math::BuildShapelessArray<uint64_t>("ShapelessArrayUInt64",
-  ns_fetch_memory);
-  */
-  fetch::math::BuildShapelessArray<float>("ShapelessArrayFloat", ns_fetch_memory);
-  fetch::math::BuildShapelessArray<double>("ShapelessArrayDouble", ns_fetch_memory);
-
-  /*
-  fetch::math::BuildRectangularArray<int8_t>("RectangularArrayInt8",
-  ns_fetch_memory);
-  fetch::math::BuildRectangularArray<int16_t>("RectangularArrayInt16",
-  ns_fetch_memory);
-  fetch::math::BuildRectangularArray<int32_t>("RectangularArrayInt32",
-  ns_fetch_memory);
-  fetch::math::BuildRectangularArray<int64_t>("RectangularArrayInt64",
-  ns_fetch_memory);
-
-  fetch::math::BuildRectangularArray<uint8_t>("RectangularArrayUInt8",
-  ns_fetch_memory);
-  fetch::math::BuildRectangularArray<uint16_t>("RectangularArrayUInt16",
-  ns_fetch_memory);
-  fetch::math::BuildRectangularArray<uint32_t>("RectangularArrayUInt32",
-  ns_fetch_memory);
-  fetch::math::BuildRectangularArray<uint64_t>("RectangularArrayUInt64",
-  ns_fetch_memory);
-  */
-  fetch::math::BuildRectangularArray<float>("RectangularArrayFloat", ns_fetch_memory);
-  fetch::math::BuildRectangularArray<double>("RectangularArrayDouble", ns_fetch_memory);
 
   //  fetch::math::BuildExp< 0, 60801, false>("Exp0", ns_fetch_math);
   //  fetch::math::BuildLog(ns_fetch_math);
-
-  //  fetch::math::BuildNDArray<float>("NDArrayFloat", ns_fetch_math);
-  //  fetch::math::BuildNDArray<double>("NDArrayDouble", ns_fetch_math);
-  //  fetch::math::BuildNDArray<std::size_t>("NDArrayUInt", ns_fetch_math);
 
   //  fetch::math::BuildSpline(ns_fetch_math_spline);
 

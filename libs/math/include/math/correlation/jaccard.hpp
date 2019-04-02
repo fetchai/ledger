@@ -18,73 +18,52 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shapeless_array.hpp"
-#include "vectorise/memory/range.hpp"
-
+#include "math/comparison.hpp"
+#include "math/fundamental_operators.hpp"
 #include <cmath>
 
 namespace fetch {
 namespace math {
 namespace correlation {
 
-template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::Type Jaccard(memory::VectorSlice<T, S> const &a,
-                                                        memory::VectorSlice<T, S> const &b)
+template <typename ArrayType>
+inline typename ArrayType::Type Jaccard(ArrayType const &a, ArrayType const &b)
 {
-  detailed_assert(a.size() == b.size());
-  using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
-  using Type                 = typename memory::VectorSlice<T, S>::Type;
+  ASSERT(a.size() == b.size());
+  using DataType = typename ArrayType::Type;
+  using SizeType = typename ArrayType::SizeType;
 
-  vector_register_type zero(Type(0));
+  DataType sumA  = 0;
+  DataType sumB  = 0;
+  SizeType count = 0;
+  for (auto &val : a)
+  {
+    sumA += Min(val != 0, b.At(count) != 0);
+    sumB += Max(val != 0, b.At(count) != 0);
+    count++;
+  }
 
-  Type sumA = a.in_parallel().SumReduce(
-      memory::TrivialRange(0, a.size()),
-      [zero](vector_register_type const &x, vector_register_type const &y) {
-        return min(x != zero, y != zero);
-      },
-      b);
-
-  Type sumB = a.in_parallel().SumReduce(
-      memory::TrivialRange(0, a.size()),
-      [zero](vector_register_type const &x, vector_register_type const &y) {
-        return max(x != zero, y != zero);
-      },
-      b);
-
-  return Type(sumA / (sumB));
+  return Divide(sumA, sumB);
 }
 
-template <typename T, typename C>
-inline typename ShapelessArray<T, C>::Type Jaccard(ShapelessArray<T, C> const &a,
-                                                   ShapelessArray<T, C> const &b)
+template <typename ArrayType>
+inline typename ArrayType::Type GeneralisedJaccard(ArrayType const &a, ArrayType const &b)
 {
-  return Jaccard(a.data(), b.data());
-}
+  ASSERT(a.size() == b.size());
+  using DataType = typename ArrayType::Type;
+  using SizeType = typename ArrayType::SizeType;
 
-template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::Type GeneralisedJaccard(
-    memory::VectorSlice<T, S> const &a, memory::VectorSlice<T, S> const &b)
-{
-  detailed_assert(a.size() == b.size());
-  using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
-  using Type                 = typename memory::VectorSlice<T, S>::Type;
+  DataType sumA  = 0;
+  DataType sumB  = 0;
+  SizeType count = 0;
+  for (auto &val : a)
+  {
+    sumA += Min(val, b.At(count));
+    sumB += Max(val, b.At(count));
+    count++;
+  }
 
-  Type sumA = a.in_parallel().SumReduce(
-      memory::TrivialRange(0, a.size()),
-      [](vector_register_type const &x, vector_register_type const &y) { return min(x, y); }, b);
-
-  Type sumB = a.in_parallel().SumReduce(
-      memory::TrivialRange(0, a.size()),
-      [](vector_register_type const &x, vector_register_type const &y) { return max(x, y); }, b);
-
-  return Type(sumA / sumB);
-}
-
-template <typename T, typename C>
-inline typename ShapelessArray<T, C>::Type GeneralisedJaccard(ShapelessArray<T, C> const &a,
-                                                              ShapelessArray<T, C> const &b)
-{
-  return GeneralisedJaccard(a.data(), b.data());
+  return Divide(sumA, sumB);
 }
 
 }  // namespace correlation

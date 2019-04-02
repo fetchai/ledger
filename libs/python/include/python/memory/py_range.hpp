@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/rectangular_array.hpp"
 #include "python/fetch_pybind.hpp"
 #include "vectorise/memory/range.hpp"
 
