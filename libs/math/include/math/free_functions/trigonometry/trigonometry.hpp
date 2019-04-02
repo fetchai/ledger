@@ -150,7 +150,7 @@ fetch::math::meta::IfIsNonBlasArray<ArrayType, ArrayType> Tanh(ArrayType const &
 template <typename ArrayType>
 fetch::math::meta::IfIsMathFixedPointArray<ArrayType, ArrayType> Tanh(ArrayType const &x)
 {
-  ArrayType                    ret(x);
+  ArrayType                    ret{x.shape()};
   typename ArrayType::SizeType idx{0};
   for (typename ArrayType::Type &e : x)
   {
