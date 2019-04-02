@@ -606,12 +606,12 @@ public:
     {
       for (std::size_t i = 0; i < N; ++i)
       {
-        double va = this->At(i);
+        double va = double(this->At(i));
         if (ignoreNaN && std::isnan(va))
         {
           continue;
         }
-        double vb = other[i];
+        double vb = double(other[i]);
         if (ignoreNaN && std::isnan(vb))
         {
           continue;
