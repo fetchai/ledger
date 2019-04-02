@@ -171,7 +171,7 @@ protected:
     }
 
     storage_service_ = std::make_shared<StorageUnitBundledService>();
-    storage_service_->Setup(*network_manager_, shards,
+    storage_service_->Setup(*network_manager_, shards, false,
                             StorageUnitBundledService::Mode::CREATE_DATABASE);
     storage_service_->Start();
 

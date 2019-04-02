@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/fundamental_operators.hpp"
-#include "math/free_functions/ml/activation_functions/softmax.hpp"
-#include "math/free_functions/standard_functions/log.hpp"
+#include "math/fundamental_operators.hpp"
+#include "math/ml/activation_functions/softmax.hpp"
+#include "math/standard_functions/log.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -54,6 +54,8 @@ public:
   virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
                                              ArrayPtrType                     errorSignal)
   {
+    FETCH_UNUSED(inputs);
+
     assert(inputs.size() == 1);
     assert(inputs[0]->shape() == errorSignal->shape());
 

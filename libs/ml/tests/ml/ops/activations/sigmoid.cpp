@@ -58,8 +58,7 @@ TYPED_TEST(SigmoidTest, backward_test)
   TypeParam           gt(8);
   std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<double> errorInput({0, 0, 0, 0, 1, 0, 0, 0});
-  std::vector<double> gtInput({-0.196612, -0.104994, -0.0451767, -0.0176627, 0.993352, -0.00246651,
-                               -0.000910167, -0.000335238});
+  std::vector<double> gtInput({0, 0, 0, 0, 0.00664803, 0, 0, 0});
   for (std::uint64_t i(0); i < 8; ++i)
   {
     data.Set(i, typename TypeParam::Type(dataInput[i]));

@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/free_functions.hpp"
+#include "math/fundamental_operators.hpp"
 #include "math/tensor.hpp"
 #include "vm/vm.hpp"
 

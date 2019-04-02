@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/dataloaders/w2v_cbow_dataloader.hpp"
+#include "ml/dataloaders/word2vec_loaders/cbow_dataloader.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace py = pybind11;
@@ -29,15 +29,17 @@ namespace dataloaders {
 template <typename T>
 void BuildCBOWLoader(std::string const &custom_name, pybind11::module &module)
 {
-  py::class_<fetch::ml::CBOWLoader<T>>(module, custom_name.c_str())
-      .def(py::init<std::uint64_t>())
-      .def("AddData", &fetch::ml::CBOWLoader<T>::AddData)
-      .def("Size", &fetch::ml::CBOWLoader<T>::Size)
-      .def("IsDone", &fetch::ml::CBOWLoader<T>::IsDone)
-      .def("Reset", &fetch::ml::CBOWLoader<T>::Reset)
-      .def("GetNext", &fetch::ml::CBOWLoader<T>::GetNext)
-      .def("GetVocab", &fetch::ml::CBOWLoader<T>::GetVocab)
-      .def("VocabSize", &fetch::ml::CBOWLoader<T>::VocabSize);
+  using ArrayType = fetch::math::Tensor<T>;
+  py::class_<fetch::ml::dataloaders::CBoWLoader<ArrayType>>(module, custom_name.c_str())
+      .def(py::init<fetch::ml::dataloaders::CBoWTextParams<ArrayType>>())
+      .def("AddData", &fetch::ml::dataloaders::CBoWLoader<ArrayType>::AddData)
+      .def("Size", &fetch::ml::dataloaders::CBoWLoader<ArrayType>::Size)
+      .def("IsDone", &fetch::ml::dataloaders::CBoWLoader<ArrayType>::IsDone)
+      .def("Reset", &fetch::ml::dataloaders::CBoWLoader<ArrayType>::Reset)
+      .def("GetNext", &fetch::ml::dataloaders::CBoWLoader<ArrayType>::GetNext)
+      .def("GetRandom", &fetch::ml::dataloaders::CBoWLoader<ArrayType>::GetRandom)
+      .def("GetVocab", &fetch::ml::dataloaders::CBoWLoader<ArrayType>::GetVocab)
+      .def("VocabSize", &fetch::ml::dataloaders::CBoWLoader<ArrayType>::VocabSize);
 }
 
 }  // namespace dataloaders

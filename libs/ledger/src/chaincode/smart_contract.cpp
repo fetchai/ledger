@@ -39,7 +39,6 @@
 
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
-using fetch::byte_array::ToBase64;
 
 namespace fetch {
 namespace ledger {
@@ -107,7 +106,7 @@ SmartContract::SmartContract(std::string const &source)
                                  {"No source present in contract"});
   }
 
-  FETCH_LOG_WARN(LOGGING_NAME, "Constructing contract: ", contract_digest().ToBase64());
+  FETCH_LOG_INFO(LOGGING_NAME, "Constructing contract: ", contract_digest().ToBase64());
 
   // create and compile the script
   auto errors = vm_modules::VMFactory::Compile(module_, source_, *script_);
@@ -134,9 +133,11 @@ SmartContract::SmartContract(std::string const &source)
       FETCH_LOG_DEBUG(LOGGING_NAME, "Registering on_init: ", fn.name,
                       " (Contract: ", contract_digest().ToBase64(), ')');
 
-      // register the init function
-      OnTransaction(fn.name,
-                    [this, name = fn.name](auto const &tx) { return InvokeInit(name, tx); });
+      // also record the function
+      init_fn_name_ = fn.name;
+
+      // register the initialiser (on duplicate this will throw)
+      OnInitialise(this, &SmartContract::InvokeInit);
       break;
     case vm::Kind::ACTION:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Registering Action: ", fn.name,
@@ -233,14 +234,7 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
 
       // create the instance of the address
       vm::Ptr<vm::Address> address = vm::Address::Constructor(vm, vm::TypeIds::Address);
-
-      std::vector<uint8_t> packed_body{start, end};
-
-      address->SetStringRepresentation(std::string{
-          ToBase64(byte_array::ConstByteArray{packed_body.data(), packed_body.size()})});
       address->SetBytes(std::vector<uint8_t>{start, end});
-
-      static_assert(vm::IsPtr<vm::Ptr<vm::Address>>::value, "");
 
       // add the address to the parameter pack
       pack.Add(std::move(address));
@@ -409,7 +403,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
 
   ValidateAddressesInParams(tx, params);
 
-  FETCH_LOG_WARN(LOGGING_NAME, "Running smart contract target: ", name);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Running smart contract target: ", name);
 
   // Execute the requested function
   std::string        error;
@@ -425,43 +419,44 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
 }
 
 /**
- * Invoke
+ * Invoke the initialise functionality
  *
- * @param name The name of the action
- * @param tx The input transaction
+ * @param owner The owner identity of the contract (i.e. the creator of the contract)
  * @return The corresponding status result for the operation
  */
-Contract::Status SmartContract::InvokeInit(std::string const &name, Transaction const &tx)
+Contract::Status SmartContract::InvokeInit(Identity const &owner)
 {
   // Get clean VM instance
   auto vm = vm_modules::VMFactory::GetVM(module_);
   vm->SetIOObserver(state());
 
-  FETCH_LOG_WARN(LOGGING_NAME, "Running SC init function: ", name);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Running SC init function: ", init_fn_name_);
 
   vm::ParameterPack params{vm->registered_types()};
 
   // lookup the function / entry point which will be executed
-  Script::Function const *target_function = script_->FindFunction(name);
+  Script::Function const *target_function = script_->FindFunction(init_fn_name_);
   if (target_function->num_parameters == 1)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "One argument for init - defaulting to address population");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "One argument for init - defaulting to address population");
 
+    // create the public key from the identity
+    auto const &identity = owner.identifier();
+
+    // create the address instance to be passed to the init function
     vm::Ptr<vm::Address> address = vm::Address::Constructor(vm.get(), vm::TypeIds::Address);
 
+    // assign the string value
     std::vector<uint8_t> pub_key_bytes;
-    auto tx_sig = byte_array::ByteArray{tx.signatures().begin()->first.identifier()};
-    pub_key_bytes.assign(tx_sig.pointer(), tx_sig.pointer() + tx_sig.size());
+    pub_key_bytes.assign(identity.pointer(), identity.pointer() + identity.size());
 
-    address->SetStringRepresentation(std::string{ToBase64(tx_sig)});
-    bool success = address->SetBytes(std::move(pub_key_bytes));
-
-    if (!success)
+    if (!address->SetBytes(std::move(pub_key_bytes)))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to pack address of TX for init method");
       return Status::FAILED;
     }
 
+    // not sure what this is testing?
     static_assert(vm::IsPtr<vm::Ptr<vm::Address>>::value, "");
 
     // add the address to the parameter pack
@@ -472,7 +467,7 @@ Contract::Status SmartContract::InvokeInit(std::string const &name, Transaction 
   std::string        error;
   std::string        console;
   fetch::vm::Variant output;
-  if (!vm->Execute(*script_, name, error, console, output, params))
+  if (!vm->Execute(*script_, init_fn_name_, error, console, output, params))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
     return Status::FAILED;

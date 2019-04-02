@@ -24,6 +24,24 @@ namespace fetch {
 namespace ledger {
 
 /**
+ * Dispatch the initialisation handler
+ *
+ * @param tx The reference to the originating transaction
+ * @return The corresponding status result for the operation
+ */
+Contract::Status Contract::DispatchInitialise(Identity const &owner)
+{
+  Status status{Status::OK};
+
+  if (init_handler_)
+  {
+    status = init_handler_(owner);
+  }
+
+  return status;
+}
+
+/**
  * Dispatch the specified contract query
  *
  * @param name The name of the query
@@ -67,6 +85,23 @@ Contract::Status Contract::DispatchTransaction(byte_array::ConstByteArray const 
   }
 
   return status;
+}
+
+/**
+ * Register the init. handler
+ *
+ * @param handler The init handler
+ */
+void Contract::OnInitialise(InitialiseHandler &&handler)
+{
+  // detect if a handler has already been set
+  if (init_handler_)
+  {
+    throw std::runtime_error("Duplicate initialise handler");
+  }
+
+  // register the handler
+  init_handler_ = std::move(handler);
 }
 
 /**

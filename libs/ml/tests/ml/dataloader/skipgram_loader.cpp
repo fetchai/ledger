@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/fixed_point/fixed_point.hpp"
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
+#include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
-#include "ml/dataloaders/skipgram_dataloader.hpp"
+#include "ml/dataloaders/word2vec_loaders/skipgram_dataloader.hpp"
 #include <gtest/gtest.h>
 #include <string>
 
@@ -34,7 +34,7 @@ SkipGramTextParams<T> SetParams()
   SkipGramTextParams<T> ret;
 
   ret.n_data_buffers     = SizeType(2);  // input and context buffers
-  ret.max_sentences      = SizeType(1);  // maximum number of sentences to use
+  ret.max_sentences      = SizeType(2);  // maximum number of sentences to use
   ret.unigram_table      = false;        // unigram table for sampling negative training pairs
   ret.discard_frequent   = false;        // discard most frqeuent words
   ret.window_size        = SizeType(1);  // max size of context window one way
@@ -55,14 +55,14 @@ TYPED_TEST_CASE(SkipGramDataloaderTest, MyTypes);
 
 TYPED_TEST(SkipGramDataloaderTest, loader_test)
 {
+  using SizeType = typename TypeParam::SizeType;
 
-  std::string TRAINING_DATA =
-      "This is a test sentence of total length ten words. This is another test sentence of total "
-      "length ten words.";
+  std::string training_data = "This is a test sentence of total length ten words.";
+  SizeType    total_words   = 10;
 
-  using SizeType                  = typename TypeParam::SizeType;
   SkipGramTextParams<TypeParam> p = SetParams<TypeParam>();
-  SkipGramLoader<TypeParam>     loader(TRAINING_DATA, p);
+  SkipGramLoader<TypeParam>     loader(p);
+  loader.AddData(training_data);
 
   std::vector<std::pair<std::string, std::string>> gt_input_context_pairs(
       {std::pair<std::string, std::string>("this", "is"),
@@ -82,21 +82,34 @@ TYPED_TEST(SkipGramDataloaderTest, loader_test)
        std::pair<std::string, std::string>("length", "ten"),
        std::pair<std::string, std::string>("ten", "length"),
        std::pair<std::string, std::string>("ten", "words"),
-       std::pair<std::string, std::string>("words", "ten"),
-       std::pair<std::string, std::string>("is", "another"),
-       std::pair<std::string, std::string>("another", "is"),
-       std::pair<std::string, std::string>("another", "test"),
-       std::pair<std::string, std::string>("test", "another")});
+       std::pair<std::string, std::string>("words", "ten")});
 
-  TypeParam input_and_context;
-  for (std::size_t j = 0; j < 1000; ++j)
+  TypeParam left_and_right;
+  for (std::size_t j = 0; j < 100; ++j)
   {
-    input_and_context = loader.GetNext().first;
+    if (loader.IsDone())
+    {
+      loader.Reset();
+    }
+    left_and_right            = loader.GetNext().first;
+    std::string input         = loader.VocabLookup(SizeType(double(left_and_right.At(0))));
+    std::string context       = loader.VocabLookup(SizeType(double(left_and_right.At(1))));
+    auto        input_context = std::make_pair(input, context);
 
-    std::string input   = loader.VocabLookup(SizeType(double(input_and_context.At(0))));
-    std::string context = loader.VocabLookup(SizeType(double(input_and_context.At(1))));
-    ASSERT_TRUE(std::find(gt_input_context_pairs.begin(), gt_input_context_pairs.end(),
-                          std::pair<std::string, std::string>(input, context)) !=
-                gt_input_context_pairs.end());
+    if (j % total_words == 0)
+    {
+      ASSERT_EQ(input_context, gt_input_context_pairs.at(0));
+    }
+    else if (j % total_words == total_words - 1)
+    {
+      ASSERT_EQ(input_context, gt_input_context_pairs.back());
+    }
+    else
+    {
+      bool valid_option_one =
+          (input_context == gt_input_context_pairs.at((2 * (j % total_words)) - 1));
+      bool valid_option_two = (input_context == gt_input_context_pairs.at(2 * (j % total_words)));
+      ASSERT_NE(valid_option_one, valid_option_two);
+    }
   }
 }

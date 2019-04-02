@@ -19,7 +19,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include "math/free_functions/ml/activation_functions/sigmoid.hpp"
+#include "math/ml/activation_functions/sigmoid.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 
@@ -134,4 +134,50 @@ TYPED_TEST(SigmoidTest, exact_values)
   // test correct values
   ASSERT_TRUE(test_array.AllClose(gt_array, typename TypeParam::Type(1e-5),
                                   typename TypeParam::Type(1e-5)));
+}
+
+///////////////////
+/// Sigmoid 2x2 ///
+///////////////////
+// Test sigmoid function output against numpy output for 2x2 input matrix of random values
+
+TYPED_TEST(SigmoidTest, sigmoid_2x2)
+{
+  TypeParam array1{{2, 2}};
+
+  array1.Set(0, typename TypeParam::Type(0.3));
+  array1.Set(1, typename TypeParam::Type(1.2));
+  array1.Set(2, typename TypeParam::Type(0.7));
+  array1.Set(3, typename TypeParam::Type(22));
+
+  TypeParam output = fetch::math::Sigmoid(array1);
+
+  TypeParam numpy_output{{2, 2}};
+
+  numpy_output.Set(0, typename TypeParam::Type(0.57444252));
+  numpy_output.Set(1, typename TypeParam::Type(0.76852478));
+  numpy_output.Set(2, typename TypeParam::Type(0.66818777));
+  numpy_output.Set(3, typename TypeParam::Type(1));
+
+  ASSERT_TRUE(output.AllClose(numpy_output));
+}
+
+///////////////////
+/// Sigmoid 1x1 ///
+///////////////////
+// Test sigmoid function output against numpy output for 2x2 input matrix of random values
+TYPED_TEST(SigmoidTest, sigmoid_11)
+{
+  TypeParam input{1};
+  TypeParam output{1};
+  TypeParam numpy_output{1};
+
+  input.Set(0, typename TypeParam::Type(0.3));
+  numpy_output.Set(0, typename TypeParam::Type(0));
+
+  output = fetch::math::Sigmoid(input);
+
+  numpy_output[0] = typename TypeParam::Type(0.574442516811659);
+
+  ASSERT_TRUE(output.AllClose(numpy_output));
 }
