@@ -20,7 +20,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include "math/free_functions/combinatorics/combinatorics.hpp"
+#include "math/combinatorics.hpp"
 #include <math/tensor.hpp>
 
 using namespace fetch::math::combinatorics;

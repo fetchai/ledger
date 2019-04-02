@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/distance/chebyshev.hpp"
+#include "math/tensor.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -41,10 +42,8 @@ inline void BuildChebyshevDistance(std::string const &custom_name, pybind11::mod
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperChebyshev<RectangularArray<double>>)
-      .def(custom_name.c_str(), &WrapperChebyshev<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperChebyshev<ShapelessArray<double>>)
-      .def(custom_name.c_str(), &WrapperChebyshev<ShapelessArray<float>>);
+  module.def(custom_name.c_str(), &WrapperChebyshev<Tensor<double>>)
+      .def(custom_name.c_str(), &WrapperChebyshev<Tensor<float>>);
 }
 
 }  // namespace distance

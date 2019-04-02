@@ -18,6 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "math/distance/euclidean.hpp"
+#include <math/fundamental_operators.hpp>
+#include <math/matrix_operations.hpp>
+#include <math/standard_functions/exp.hpp>
+#include <math/standard_functions/log.hpp>
 #include <math/tensor.hpp>
 
 #include <chrono>

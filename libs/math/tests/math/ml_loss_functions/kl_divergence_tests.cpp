@@ -20,10 +20,9 @@
 #include <iomanip>
 #include <iostream>
 
-#include "math/free_functions/ml/loss_functions/kl_divergence.hpp"
+#include "math/ml/loss_functions/kl_divergence.hpp"
 #include "math/tensor.hpp"
 
-using namespace fetch::math::free_functions;
 using namespace fetch::math;
 
 template <typename T>
@@ -31,12 +30,8 @@ class KlDivergenceTest : public ::testing::Test
 {
 };
 
-/*using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
+using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-*/
-
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
 
 TYPED_TEST_CASE(KlDivergenceTest, MyTypes);
 
@@ -86,8 +81,8 @@ TYPED_TEST(KlDivergenceTest, same_tensors_divergence_test)
   B.Set({3, 2}, typename TypeParam::Type(1.3));
   B.Set({3, 3}, typename TypeParam::Type(1.4));
 
-  EXPECT_NEAR(KlDivergence(A, B), 0.0, 1e-5);
-  EXPECT_NEAR(KlDivergence(B, A), 0.0, 1e-5);
+  EXPECT_NEAR(double(KlDivergence(A, B)), 0.0, 1e-5);
+  EXPECT_NEAR(double(KlDivergence(B, A)), 0.0, 1e-5);
 }
 
 TYPED_TEST(KlDivergenceTest, other_divergence_test)
@@ -128,6 +123,6 @@ TYPED_TEST(KlDivergenceTest, other_divergence_test)
   B.Set({3, 0}, typename TypeParam::Type(0.1));
   B.Set({3, 1}, typename TypeParam::Type(0.2));
 
-  EXPECT_NEAR(KlDivergence(A, B), 3.8460455925219406, 1e-5);
-  EXPECT_NEAR(KlDivergence(B, A), 6.8452644686571968, 1e-5);
+  EXPECT_NEAR(double(KlDivergence(A, B)), 8.8558472483164721, 1e-4);
+  EXPECT_NEAR(double(KlDivergence(B, A)), 15.761803923131868, 1e-4);
 }
