@@ -149,14 +149,6 @@ meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
   Add(scalar1, scalar2, ret);
   return ret;
 }
-// template <typename S>
-// meta::IfIsFixedPoint<S, S> Add(S const &scalar1, S const &scalar2)
-// {
-//   S ret;
-//   Add(scalar1, scalar2, ret);
-//   return ret;
-// }
-
 template <typename T, typename ArrayType, typename = std::enable_if_t<meta::IsArithmetic<T>>>
 meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
 {
