@@ -17,8 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/fundamental_operators.hpp"
-#include "math/free_functions/trigonometry/trigonometry.hpp"
+#include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
+#include "math/trigonometry.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -26,15 +27,14 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Tanh : public fetch::ml::ElementWiseOps<T>
+class TanH : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType = T;
+  using DataType  = typename ArrayType::Type;
 
-  Tanh()          = default;
-  virtual ~Tanh() = default;
+  TanH()          = default;
+  virtual ~TanH() = default;
 
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
@@ -44,7 +44,17 @@ public:
       this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
     }
 
-    fetch::math::Tanh(inputs.front().get(), *this->output_);
+    fetch::math::TanH(inputs.front().get(), *this->output_);
+
+    // ensures numerical stability
+    for (auto &val : *this->output_)
+    {
+      // Minimum value of tanh is restricted to -1+epsilon
+      fetch::math::Max(val, fetch::math::Add(DataType(1) * -1, epsilon_), val);
+      // Maximum value of tanh is restricted to 1-epsilon
+      fetch::math::Min(val, fetch::math::Subtract(DataType(1), epsilon_), val);
+    }
+
     return *(this->output_);
   }
 
@@ -69,7 +79,12 @@ public:
     return {return_signal};
   }
 
-  static constexpr char const *DESCRIPTOR = "Tanh";
+  static constexpr char const *DESCRIPTOR = "TanH";
+
+private:
+  // minimum possible output value of the tanh should not be -1, but actually (-1 + epsilon)
+  // likewise maximum output should be (1 - epsilon)
+  DataType epsilon_ = DataType(1e-12);
 };
 
 }  // namespace ops
