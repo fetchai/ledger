@@ -33,8 +33,8 @@ inline typename ArrayType::Type Manhattan(ArrayType const &a, ArrayType const &b
   using Type     = typename ArrayType::Type;
   using SizeType = typename ArrayType::SizeType;
 
-  Type     result = 0;
-  SizeType count  = 0;
+  Type result{0};
+  SizeType count{0};
   for (auto &val : a)
   {
     result += Abs(Subtract(val, b.At(count)));

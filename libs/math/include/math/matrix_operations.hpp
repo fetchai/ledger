@@ -212,8 +212,8 @@ void Max(Tensor<T> const &array, typename Tensor<T>::SizeType const &axis, Tenso
  * @param array input array
  * @param ret return value
  */
-template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, T &ret)
+template< typename ArrayType, typename T>
+meta::IfIsValidArrayScalarPair<ArrayType, T, void> Min(ArrayType const &array, T &ret)
 {
   ret = std::numeric_limits<T>::max();
   for (T &e : array)

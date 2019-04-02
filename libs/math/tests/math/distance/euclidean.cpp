@@ -16,19 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
 #include <iomanip>
 #include <iostream>
 
-#include "core/random/lcg.hpp"
-#include "math/distance/manhattan.hpp"
+#include "math/distance/euclidean.hpp"
 #include "math/tensor.hpp"
-#include <gtest/gtest.h>
 
 using namespace fetch::math::distance;
 using namespace fetch::math;
 
 template <typename T>
-class ManhattenTest : public ::testing::Test
+class EuclideanTest : public ::testing::Test
 {
 };
 
@@ -36,26 +35,25 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 
-TYPED_TEST_CASE(ManhattenTest, MyTypes);
+TYPED_TEST_CASE(EuclideanTest, MyTypes);
 
-TYPED_TEST(ManhattenTest, simple_test)
+TYPED_TEST(EuclideanTest, simple_test)
 {
-  Tensor<double> A = Tensor<double>(3);
-  A.Fill(0);
-  A.Set(0, 1);
-  EXPECT_EQ(0, Manhattan(A, A));
+  using DataType = typename TypeParam::Type;
+  using SizeType = typename TypeParam::SizeType;
 
-  Tensor<double> B = Tensor<double>(3);
-  B.Fill(0);
-  B.Set(1, 1);
-  EXPECT_EQ(Manhattan(A, B), 2);
+  TypeParam A{4};
+  A.Set(SizeType{0}, DataType{1});
+  A.Set(SizeType{1}, DataType{2});
+  A.Set(SizeType{2}, DataType{3});
+  A.Set(SizeType{3}, DataType{4});
+  ASSERT_TRUE(Euclidean(A, A) == DataType{0});
 
-  B.Fill(0);
-  B.Set(1, 2);
-  EXPECT_EQ(Manhattan(A, B), 3);
+  TypeParam B = TypeParam(4);
+  B.Set(SizeType{0}, DataType{1});
+  B.Set(SizeType{1}, DataType{2});
+  B.Set(SizeType{2}, DataType{3});
+  B.Set(SizeType{3}, DataType{2});
 
-  B.Fill(0);
-  B.Set(0, 1);
-  B.Set(1, 1);
-  EXPECT_EQ(Manhattan(A, B), 1);
+  ASSERT_TRUE(Euclidean(A, B) == DataType{2});
 }

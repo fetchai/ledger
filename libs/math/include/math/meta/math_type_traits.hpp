@@ -62,15 +62,17 @@ constexpr bool IsArithmetic = std::is_arithmetic<T>::value || IsFixedPoint<T>;
 template <typename T>
 constexpr bool IsNonFixedPointArithmetic = std::is_arithmetic<T>::value;
 
-template <typename T, typename R>
-using IfIsFixedPoint = typename std::enable_if<IsFixedPoint<T>, R>::type;
+template <typename ArrayType, typename T>
+constexpr bool IsArrayScalarType = std::is_same<typename ArrayType::Type, T>::value;
 
 template <typename T, typename R>
-using IfIsNotFixedPoint = typename std::enable_if<IsNotFixedPoint<T>, R>::type;
+using IfIsFixedPoint = EnableIf<IsFixedPoint<T>, R>;
 
-////////////////////////////////////////////////
-/// TYPES INDIRECTED FROM META / TYPE_TRAITS ///
-////////////////////////////////////////////////
+template <typename T, typename R>
+using IfIsNotFixedPoint = EnableIf<IsNotFixedPoint<T>, R>;
+
+template <typename ArrayType, typename T, typename R>
+using IsSameArrayScalarType = EnableIf<IsArrayScalarType<ArrayType, T>, R>;
 
 template <typename T, typename R>
 using IfIsArithmetic = EnableIf<IsArithmetic<T>, R>;
@@ -115,9 +117,9 @@ struct IsMathImpl<Tensor<T>, R>
 template <typename A, typename R>
 using IfIsMath = typename IsMathImpl<A, R>::Type;
 
-///////////////////////////////////
-/// MATH ARRAY - NO FIXED POINT ///
-///////////////////////////////////
+//////////////////
+/// MATH ARRAY ///
+//////////////////
 
 template <typename A, typename R>
 struct IsMathArrayImpl
@@ -128,6 +130,7 @@ struct IsMathArrayImpl<Tensor<T>, R>
 {
   using Type = R;
 };
+
 template <typename T, typename R>
 using IfIsMathArray = typename IsMathArrayImpl<T, R>::Type;
 
@@ -136,6 +139,26 @@ using IfIsMathFixedPointArray = IfIsFixedPoint<typename T::Type, IfIsMathArray<T
 
 template <typename T, typename R>
 using IfIsMathNonFixedPointArray = IfIsNotFixedPoint<typename T::Type, IfIsMathArray<T, R>>;
+
+
+//////////////////////////////////////////////////
+///// MATH ARRAY & SCALAR TYPE CHECKS TOGETHER ///
+//////////////////////////////////////////////////
+
+/**
+ * true if ArrayType is a valid math array AND T is a valid arithmetic type
+ */
+template <typename ArrayType, typename T, typename R = void>
+using IfIsArrayScalar = IfIsArithmetic<T, IfIsMathArray<ArrayType, R>>;
+
+/**
+ * true if:
+ * 1. ArrayType is a valid math array,
+ * 2. T is a valid arithmetic type,
+ * 3. ArrayType::Type and T are the same type
+ */
+template <typename ArrayType, typename T, typename R = void>
+using IfIsValidArrayScalarPair = IsSameArrayScalarType<ArrayType, T, IfIsArrayScalar<ArrayType, T, R>>;
 
 }  // namespace meta
 }  // namespace math

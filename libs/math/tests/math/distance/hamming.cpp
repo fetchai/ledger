@@ -39,32 +39,33 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
 
 TYPED_TEST_CASE(HammingTest, MyTypes);
 
-TEST(HammingTest, simple_test)
+TYPED_TEST(HammingTest, simple_test)
 {
-  Tensor<double> A = Tensor<double>(4);
-  A.Set(0, 1);
-  A.Set(1, 2);
-  A.Set(2, 3);
-  A.Set(3, 4);
+  using DataType = typename TypeParam::Type;
+  TypeParam A = TypeParam(4);
+  A.Set(0, DataType(1));
+  A.Set(1, DataType(2));
+  A.Set(2, DataType(3));
+  A.Set(3, DataType(4));
   EXPECT_EQ(Hamming(A, A), 0);
 
-  Tensor<double> B = Tensor<double>(4);
-  B.Set(0, 1);
-  B.Set(1, 2);
-  B.Set(2, 3);
-  B.Set(3, 2);
+  TypeParam B = TypeParam(4);
+  B.Set(0, DataType(1));
+  B.Set(1, DataType(2));
+  B.Set(2, DataType(3));
+  B.Set(3, DataType(2));
 
   EXPECT_EQ(Hamming(A, B), 1);
 
-  Tensor<double> C = Tensor<double>(3);
-  C.Set(0, 1);
-  C.Set(1, 2);
-  C.Set(2, 3);
+  TypeParam C = TypeParam(3);
+  C.Set(0, DataType(1));
+  C.Set(1, DataType(2));
+  C.Set(2, DataType(3));
 
-  Tensor<double> D = Tensor<double>(3);
-  D.Set(0, 1);
-  D.Set(1, 2);
-  D.Set(2, 9);
+  TypeParam D = TypeParam(3);
+  D.Set(0, DataType(1));
+  D.Set(1, DataType(2));
+  D.Set(2, DataType(9));
 
   EXPECT_EQ(Hamming(C, D), 1);
 }

@@ -19,6 +19,7 @@
 
 #include "core/assert.hpp"
 #include "math/fundamental_operators.hpp"
+#include "math/standard_functions/sqrt.hpp"
 #include "math/matrix_operations.hpp"
 
 #include <cmath>
@@ -48,7 +49,7 @@ void Cosine(ArrayType const &a, ArrayType const &b, typename ArrayType::Type &r)
   assert(dp_ret.size() == 1);
   b_r = dp_ret[0];
 
-  denom_r = std::sqrt(fetch::math::Multiply(a_r, b_r));
+  denom_r = Sqrt(fetch::math::Multiply(a_r, b_r));
 
   r /= denom_r;
 }
