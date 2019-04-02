@@ -69,7 +69,6 @@ void ReadFile(fetch::math::Tensor<double> &matrix, std::string const &path)
 
 int main()
 {
-
   SizeType n_data_size           = 100;
   SizeType n_input_feature_size  = 3;
   SizeType n_output_feature_size = 2;

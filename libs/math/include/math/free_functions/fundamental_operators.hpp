@@ -719,7 +719,8 @@ meta::IfIsMathArray<ArrayType, ArrayType> Multiply(T const &scalar, ArrayType co
   return Multiply(array, scalar);
 }
 template <typename ArrayType, typename T,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
+          typename = std::enable_if_t<meta::IsArithmetic<T> &&
+                                      std::is_same<T, typename ArrayType::Type>::value>>
 meta::IfIsMathShapeArray<ArrayType, ArrayType> Multiply(ArrayType const &array, T const &scalar)
 {
   ArrayType ret{array.shape()};
@@ -808,7 +809,8 @@ meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
 /////////////////
 
 template <typename ArrayType, typename T,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
+          typename = std::enable_if_t<meta::IsArithmetic<T> &&
+                                      std::is_same<T, typename ArrayType::Type>::value>>
 meta::IfIsMathShapeArray<ArrayType, ArrayType> Divide(ArrayType const &array, T const &scalar)
 {
   ArrayType ret{array.shape()};
