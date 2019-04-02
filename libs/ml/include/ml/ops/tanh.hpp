@@ -50,7 +50,7 @@ public:
     for (auto &val : *this->output_)
     {
       // Minimum value of tanh is restricted to -1+epsilon
-      fetch::math::Max(val, fetch::math::Add(DataType(1) * -1, epsilon_), val);
+      fetch::math::Max(val, fetch::math::Add(DataType(-1), epsilon_), val);
       // Maximum value of tanh is restricted to 1-epsilon
       fetch::math::Min(val, fetch::math::Subtract(DataType(1), epsilon_), val);
     }
