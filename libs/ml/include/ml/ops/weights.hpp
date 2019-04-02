@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/random/lfg.hpp"
+
 #include "ml/ops/placeholder.hpp"
 #include "ml/state_dict.hpp"
 
@@ -58,6 +60,7 @@ class Weights : public fetch::ml::ops::PlaceHolder<T>, public Trainable<T>
 {
 public:
   using ArrayType    = T;
+  using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
 protected:
@@ -172,16 +175,22 @@ private:
    * using a normal distribution with mean 0 and variance 2 / (input nodes + output nodes)
    * @param weights
    */
-  static void XavierInitialisation(ArrayType &array, double normalising_factor)
+  static void XavierInitialisation(ArrayType &array, double normalising_factor,
+                                   SizeType seed = 123456789)
   {
-    std::random_device rd{};
-    std::mt19937       gen{rd()};
+    // TODO (665) this is a uniform distribution; in principle we should be using a guassian
+    // distribution instead we use a unifrom from -std dev -> + std dev
+    fetch::random::LaggedFibonacciGenerator<> lfg_(seed);
 
     // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
-    std::normal_distribution<> rng(0, normalising_factor);
     for (auto &e : array)
     {
-      e = typename ArrayType::Type(rng(gen));
+      auto ran_val = lfg_.AsDouble();  // random value in range 0 <-> 1
+      ran_val -= 0.5;
+      ran_val *= 2.0;                 // random value in range -1 <-> +1
+      ran_val *= normalising_factor;  // random value in range -sigma <-> +sigma
+
+      e = typename ArrayType::Type(ran_val);
     }
   }
 };

@@ -77,7 +77,7 @@ public:
 
   void SetSignedTx(bool set = true)
   {
-    signed_tx_ = true;
+    signed_tx_ = set;
   }
 
   Buffer const &GetBytes() const

@@ -17,9 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include <fstream>
-//#include <sstream>
+#include <cstring>
 #include <dirent.h>
+#include <fstream>
+#include <sstream>
+#include <vector>
+
+namespace fetch {
+namespace ml {
+namespace examples {
+
+/**
+ * helper function for identifying file extensions
+ * @param value the string to test
+ * @param ending the extension to check for (e.g. .txt)
+ * @return boolean indicating whether string ends with extension specified
+ */
+inline bool ends_with(std::string const &value, std::string const &ending)
+{
+  if (ending.size() > value.size())
+  {
+    return false;
+  }
+  return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+}
 
 // TODO - also handle a string that specifies one text file only
 /**
@@ -32,21 +53,15 @@ std::vector<std::string> GetAllTextFiles(std::string const &dir_name)
   std::vector<std::string> ret;
   DIR *                    d;
   struct dirent *          ent;
-  char *                   p1;
-  int                      txt_cmp;
-  if ((d = opendir(dir_name.c_str())) != NULL)
+  std::string              p1;
+  if ((d = opendir(dir_name.c_str())) != nullptr)
   {
-    while ((ent = readdir(d)) != NULL)
+    while ((ent = readdir(d)) != nullptr)
     {
-      strtok(ent->d_name, ".");
-      p1 = strtok(NULL, ".");
-      if (p1 != NULL)
+      p1 = ent->d_name;
+      if (ends_with(p1, ".txt"))
       {
-        txt_cmp = strcmp(p1, "txt");
-        if (txt_cmp == 0)
-        {
-          ret.emplace_back(ent->d_name);
-        }
+        ret.emplace_back(ent->d_name);
       }
     }
     closedir(d);
@@ -86,3 +101,7 @@ std::string GetTextString(std::string const &training_data)
   }
   return ret;
 }
+
+}  // namespace examples
+}  // namespace ml
+}  // namespace fetch

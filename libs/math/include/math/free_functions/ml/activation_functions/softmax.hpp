@@ -74,7 +74,6 @@ void Softmax1DImplementation(ArrayType const &array, ArrayType &ret)
   Exp(ret, ret);
   typename ArrayType::Type array_sum = typename ArrayType::Type(0);
   Sum(ret, array_sum);
-
   Divide(ret, array_sum, ret);
 }
 
@@ -126,14 +125,14 @@ void Softmax(ArrayType const &array, ArrayType &ret)
 template <typename ArrayType>
 ArrayType Softmax(ArrayType const &array, typename ArrayType::SizeType axis)
 {
-  ArrayType ret{array.size()};
+  ArrayType ret{array.shape()};
   Softmax(array, ret, axis);
   return ret;
 }
 template <typename ArrayType>
 ArrayType Softmax(ArrayType const &array)
 {
-  ArrayType ret{array.size()};
+  ArrayType ret{array.shape()};
   Softmax(array, ret, 0);
   return ret;
 }
