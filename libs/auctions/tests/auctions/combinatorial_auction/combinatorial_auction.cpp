@@ -20,6 +20,7 @@
 #include <iomanip>
 #include <iostream>
 
+#include "math/tensor.hpp"
 #include <auctions/combinatorial_auction.hpp>
 
 using namespace fetch::auctions;
@@ -74,7 +75,7 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
 
   // set up bidders
   std::vector<Bidder> bidders{};
-  bidders.push_back(Bidder(0, 500));
+  bidders.emplace_back(Bidder(0, 500));
 
   // make bids
 

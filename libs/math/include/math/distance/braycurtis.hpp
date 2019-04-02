@@ -18,39 +18,24 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shapeless_array.hpp"
-#include "vectorise/memory/range.hpp"
-
+#include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
 #include <cmath>
 
 namespace fetch {
 namespace math {
 namespace distance {
 
-template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::Type Braycurtis(memory::VectorSlice<T, S> const &a,
-                                                           memory::VectorSlice<T, S> const &b)
+template <typename ArrayType>
+inline typename ArrayType::Type Braycurtis(ArrayType const &a, ArrayType const &b)
 {
   detailed_assert(a.size() == b.size());
-  using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
-  using Type                 = typename memory::VectorSlice<T, S>::Type;
+  using DataType = typename ArrayType::Type;
 
-  Type sumA = a.in_parallel().SumReduce(
-      memory::TrivialRange(0, a.size()),
-      [](vector_register_type const &x, vector_register_type const &y) { return abs(x - y); }, b);
+  DataType numerator   = Sum(Subtract(a, b));
+  DataType denominator = Sum(Add(a, b));
 
-  Type sumB = a.in_parallel().SumReduce(
-      memory::TrivialRange(0, b.size()),
-      [](vector_register_type const &x, vector_register_type const &y) { return abs(x + y); }, b);
-
-  return Type(sumA / sumB);
-}
-
-template <typename T, typename C>
-inline typename ShapelessArray<T, C>::Type Braycurtis(ShapelessArray<T, C> const &a,
-                                                      ShapelessArray<T, C> const &b)
-{
-  return Braycurtis(a.data(), b.data());
+  return numerator / denominator;
 }
 
 }  // namespace distance

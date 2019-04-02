@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/distance/braycurtis.hpp"
+#include "math/tensor.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -41,10 +42,8 @@ inline void BuildBraycurtisDistance(std::string const &custom_name, pybind11::mo
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperBraycurtis<RectangularArray<double>>)
-      .def(custom_name.c_str(), &WrapperBraycurtis<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperBraycurtis<ShapelessArray<double>>)
-      .def(custom_name.c_str(), &WrapperBraycurtis<ShapelessArray<float>>);
+  module.def(custom_name.c_str(), &WrapperBraycurtis<Tensor<double>>)
+      .def(custom_name.c_str(), &WrapperBraycurtis<Tensor<float>>);
 }
 
 }  // namespace distance

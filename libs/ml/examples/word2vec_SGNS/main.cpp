@@ -19,8 +19,8 @@
 #include "file_loader.hpp"
 #include "model_saver.hpp"
 
-#include "math/free_functions/clustering_algorithms/knn.hpp"
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
+#include "math/clustering/knn.hpp"
+#include "math/matrix_operations.hpp"
 
 #include "ml/dataloaders/word2vec_loaders/skipgram_dataloader.hpp"
 #include "ml/graph.hpp"
@@ -61,8 +61,8 @@ SkipGramTextParams<T> SetParams()
 {
   SkipGramTextParams<T> ret;
 
-  ret.n_data_buffers = SizeType(2);     // input and context buffers
-  ret.max_sentences  = SizeType(1000);  // maximum number of sentences to use
+  ret.n_data_buffers = SizeType(2);       // input and context buffers
+  ret.max_sentences  = SizeType(100000);  // maximum number of sentences to use
 
   ret.unigram_table      = true;  // unigram table for sampling negative training pairs
   ret.unigram_table_size = SizeType(10000000);  // size of unigram table for negative sampling

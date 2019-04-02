@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/exponentiation/exponentiation.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/layers/layer.hpp"
 #include "ml/ops/activations/sigmoid.hpp"

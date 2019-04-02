@@ -18,8 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/free_functions/fundamental_operators.hpp"
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
+#include "math/correlation/cosine.hpp"
 
 #include <cmath>
 
@@ -28,37 +27,10 @@ namespace math {
 namespace distance {
 
 template <typename ArrayType>
-void Cosine(ArrayType const &a, ArrayType const &b, typename ArrayType::Type &r)
+inline typename ArrayType::Type Cosine(ArrayType const &a, ArrayType const &b)
 {
-  assert(a.size() == b.size());
-
-  // get inner product
-  ArrayType dp_ret = fetch::math::DotTranspose(a, b);
-  assert(dp_ret.size() == 1);
-  r = dp_ret[0];
-
-  // self products
-  typename ArrayType::Type a_r, b_r, denom_r;
-
-  dp_ret = fetch::math::DotTranspose(a, a);
-  assert(dp_ret.size() == 1);
-  a_r = dp_ret[0];
-
-  dp_ret = fetch::math::DotTranspose(b, b);
-  assert(dp_ret.size() == 1);
-  b_r = dp_ret[0];
-
-  denom_r = std::sqrt(a_r) * std::sqrt(b_r);
-
-  r /= denom_r;
-}
-
-template <typename ArrayType>
-typename ArrayType::Type Cosine(ArrayType const &a, ArrayType const &b)
-{
-  typename ArrayType::Type ret;
-  Cosine(a, b, ret);
-  return ret;
+  using Type = typename ArrayType::Type;
+  return Type(1) - fetch::math::correlation::Cosine(a, b);
 }
 
 }  // namespace distance

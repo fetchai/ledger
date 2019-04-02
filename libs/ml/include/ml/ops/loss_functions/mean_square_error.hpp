@@ -21,7 +21,7 @@
 #include <memory>
 #include <vector>
 
-#include "math/free_functions/ml/loss_functions/mean_square_error.hpp"
+#include "math/ml/loss_functions/mean_square_error.hpp"
 
 namespace fetch {
 namespace ml {
