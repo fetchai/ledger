@@ -18,35 +18,34 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shapeless_array.hpp"
-#include "vectorise/memory/range.hpp"
-
 #include <cmath>
 
 namespace fetch {
 namespace math {
 namespace distance {
 
-template <typename A, typename F>
-inline A &PairWiseDistance(A &r, A const &a, F &&metric)
+template <typename ArrayType, typename F>
+inline ArrayType &PairWiseDistance(ArrayType &r, ArrayType const &a, F &&metric)
 {
+  using SizeType = typename ArrayType::SizeType;
+
   detailed_assert(r.height() == 1);
   detailed_assert(r.width() == (a.height() * (a.height() - 1) / 2));
 
-  std::size_t offset1 = 0;
-  std::size_t k       = 0;
+  SizeType offset1 = 0;
+  SizeType k       = 0;
 
-  for (std::size_t i = 0; i < a.height(); ++i)
+  for (SizeType i = 0; i < a.height(); ++i)
   {
-    typename A::vector_slice_type slice1 = a.data().slice(offset1, a.width());
+    ArrayType slice1 = a.data().slice(offset1, a.width());
     offset1 += a.padded_width();
-    std::size_t offset2 = offset1;
+    SizeType offset2 = offset1;
 
-    for (std::size_t j = i + 1; j < a.height(); ++j)
+    for (SizeType j = i + 1; j < a.height(); ++j)
     {
-      typename A::vector_slice_type slice2 = a.data().slice(offset2, a.width());
+      ArrayType slice2 = a.data().slice(offset2, a.width());
       offset2 += a.padded_width();
-      r(std::size_t(0), k++) = metric(slice1, slice2);
+      r(SizeType(0), k++) = metric(slice1, slice2);
     }
   }
 
