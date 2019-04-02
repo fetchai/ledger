@@ -31,10 +31,17 @@ namespace math {
 /// IMPLEMENTATIONS ///
 ///////////////////////
 
+namespace abs_details {
 template <typename Type>
-meta::IfIsNonFixedPointArithmetic<Type, void> Abs(Type const &x, Type &ret)
+meta::IfIsNonFixedSignedArithmetic<Type, void> Abs(Type const &x, Type &ret)
 {
   ret = std::abs(x);
+}
+
+template <typename Type>
+meta::IfIsUnsignedInteger<Type, void> Abs(Type const &x, Type &ret)
+{
+  ret = x;
 }
 
 // TODO(800) - native implementations of fixed point are required; casting to double will not be
@@ -44,6 +51,7 @@ meta::IfIsFixedPoint<T, void> Abs(T const &n, T &ret)
 {
   ret = T(std::abs(double(n)));
 }
+}  // namespace abs_details
 
 //////////////////
 /// INTERFACES ///
@@ -53,8 +61,14 @@ template <typename Type>
 meta::IfIsArithmetic<Type, Type> Abs(Type const &x)
 {
   Type ret;
-  Abs(x, ret);
+  abs_details::Abs(x, ret);
   return ret;
+}
+
+template <typename Type>
+meta::IfIsArithmetic<Type, void> Abs(Type const &x, Type &ret)
+{
+  abs_details::Abs(x, ret);
 }
 
 template <typename ArrayType>
@@ -64,7 +78,7 @@ meta::IfIsMathArray<ArrayType, void> Abs(ArrayType const &array, ArrayType &ret)
   typename ArrayType::SizeType ret_count{0};
   for (typename ArrayType::Type &e : array)
   {
-    Abs(e, ret.At(ret_count));
+    abs_details::Abs(e, ret.At(ret_count));
     ++ret_count;
   }
 }
@@ -76,7 +90,7 @@ meta::IfIsMathArray<ArrayType, ArrayType> Abs(ArrayType const &array)
   typename ArrayType::SizeType ret_count{0};
   for (typename ArrayType::Type &e : array)
   {
-    Abs(e, ret.At(ret_count));
+    abs_details::Abs(e, ret.At(ret_count));
     ++ret_count;
   }
   return ret;

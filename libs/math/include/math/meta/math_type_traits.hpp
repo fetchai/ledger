@@ -83,8 +83,12 @@ using IfIsNonFixedPointArithmetic = EnableIf<IsNonFixedPointArithmetic<T>, R>;
 template <typename T, typename R>
 using IfIsNotImplemented = fetch::meta::IfIsNotImplemented<T, R>;
 
-template <typename T>
-using IfIsUnsignedInteger = fetch::meta::IfIsUnsignedInteger<T>;
+template <typename T, typename R>
+using IfIsUnsignedInteger = fetch::meta::IfIsUnsignedInteger<T, R>;
+
+template <typename T, typename R>
+using IfIsNonFixedSignedArithmetic =
+    IfIsNonFixedPointArithmetic<EnableIf<!fetch::meta::IsUnsignedInteger<T>, T>, R>;
 
 ////////////////////////////////////
 /// MATH LIKE SPECIALIZATIONS
