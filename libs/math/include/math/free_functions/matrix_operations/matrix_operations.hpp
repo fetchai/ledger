@@ -518,11 +518,11 @@ ArrayType ReduceMean(ArrayType const &obj1, typename ArrayType::SizeType const &
   typename ArrayType::Type n;
   if (axis == 0)
   {
-    n = static_cast<typename ArrayType::Type>(obj1.shape()[0]);
+    n = static_cast<typename ArrayType::Type>(obj1.shape().at(0));
   }
   else
   {
-    n = static_cast<typename ArrayType::Type>(obj1.shape()[1]);
+    n = static_cast<typename ArrayType::Type>(obj1.shape().at(1));
   }
   return Divide(ReduceSum(obj1, axis), n);
 }

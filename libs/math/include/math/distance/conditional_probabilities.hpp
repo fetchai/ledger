@@ -42,26 +42,28 @@ void ConditionalProbabilitiesDistance(ArrayType const &a, std::size_t i, std::si
                                       typename ArrayType::Type const sigma,
                                       typename ArrayType::Type &     ret)
 {
+  using DataType = typename ArrayType::Type;
   assert(i < a.shape().at(0) && j < a.shape().at(0));
 
   // Calculate numerator
-  typename ArrayType::Type tmp_numerator = SquareDistance(a.Slice(i), a.Slice(j));
+  DataType tmp_numerator = SquareDistance(a.Slice(i), a.Slice(j));
 
   // Divide by 2 sigma squared and make negative
-  tmp_numerator =
-      -Divide(tmp_numerator, Multiply(typename ArrayType::Type(2.0), Multiply(sigma, sigma)));
-
+  tmp_numerator = Divide(tmp_numerator, Multiply(DataType(2.0), Multiply(sigma, sigma)));
+  fetch::math::Multiply(DataType(-1), tmp_numerator, tmp_numerator);
   Exp(tmp_numerator, tmp_numerator);
 
   // Calculate denominator
-  typename ArrayType::Type tmp_denominator(0.0);
+  DataType tmp_denominator{0.0};
 
   for (size_t k = 0; k < a.shape().at(0); k++)
   {
     if (k == i)
       continue;
-    typename ArrayType::Type tmp_val = SquareDistance(a.Slice(i), a.Slice(k));
-    tmp_val = -Divide(tmp_val, Multiply(typename ArrayType::Type(2.0), Multiply(sigma, sigma)));
+
+    DataType tmp_val = SquareDistance(a.Slice(i), a.Slice(k));
+    tmp_val          = Divide(tmp_val, Multiply(DataType(2.0), Multiply(sigma, sigma)));
+    fetch::math::Multiply(DataType(-1), tmp_val, tmp_val);
     Exp(tmp_val, tmp_val);
 
     tmp_denominator += tmp_val;

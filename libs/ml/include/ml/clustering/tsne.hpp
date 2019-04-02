@@ -59,9 +59,9 @@ public:
   {
     // Initialize variables
     ArrayType output_symmetric_affinities(input_pairwise_affinities.shape());
-    DataType  initial_momentum(0.5f);
-    DataType  final_momentum(0.8f);
-    DataType  min_gain(0.01f);
+    DataType  initial_momentum{0.5f};
+    DataType  final_momentum{0.8f};
+    DataType  min_gain{0.01f};
     DataType  momentum = initial_momentum;
 
     // i_y is output_matrix value from last iteration
@@ -147,8 +147,8 @@ private:
    */
   void Init(const ArrayType &input_matrix, const ArrayType &output_matrix)
   {
-    DataType perplexity(20.0);
-    DataType perplexity_tolerance(1e-5f);
+    DataType perplexity{20};
+    DataType perplexity_tolerance{1e-5f};
 
     // Initialize high dimensional values
     this->input_matrix       = input_matrix;
@@ -390,8 +390,9 @@ private:
     return DataType(distribution(rng_));
   }
 
-  void Gaussian(ArrayType const &a, ArrayType &ret)
+  ArrayType Gaussian(ArrayType const &a)
   {
+    ArrayType ret(a.shape());
     for (SizeType i = 0; i < a.size(); i++)
     {
 
@@ -402,12 +403,6 @@ private:
 
       ret.Set(i, tmp_val);
     }
-  }
-
-  ArrayType Gaussian(ArrayType const &a)
-  {
-    ArrayType ret(a.shape());
-    Gaussian(a, ret);
     return ret;
   }
 
@@ -419,12 +414,12 @@ private:
    * @param B input tensor of dimensions n_data x n_features
    * @return
    */
-  void KlDivergence(ArrayType const &input_pairwise_affinities,
-                    ArrayType const &output_pairwise_affinities, DataType &ret)
+  DataType KlDivergence(ArrayType const &input_pairwise_affinities,
+                        ArrayType const &output_pairwise_affinities)
   {
     assert(input_pairwise_affinities.shape() == output_pairwise_affinities.shape());
 
-    ret = DataType(0);
+    DataType ret{0};
     for (SizeType j = 0; j < input_pairwise_affinities.shape().at(0); j++)
     {
       for (SizeType i = 0; i < input_pairwise_affinities.shape().at(0); i++)
@@ -439,13 +434,6 @@ private:
         ret += tmp_p_j_given_i * fetch::math::Log(tmp_p_j_given_i / tmp_q_j_given_i);
       }
     }
-  }
-
-  DataType KlDivergence(ArrayType const &input_pairwise_affinities,
-                        ArrayType const &output_pairwise_affinities)
-  {
-    DataType ret;
-    KlDivergence(input_pairwise_affinities, output_pairwise_affinities, ret);
     return ret;
   }
 
@@ -458,13 +446,13 @@ private:
    * @param num Tensor of precalculated
    * @param ret return value output_matrix shaped tensor of gradient values.
    */
-  void ComputeGradient(ArrayType const &output_matrix, ArrayType const &input_symmetric_affinities,
-                       ArrayType const &output_symmetric_affinities, ArrayType const &num,
-                       ArrayType &ret)
+  ArrayType ComputeGradient(ArrayType const &output_matrix,
+                            ArrayType const &input_symmetric_affinities,
+                            ArrayType const &output_symmetric_affinities, ArrayType const &num)
   {
     assert(input_matrix.shape().at(0) == output_matrix.shape().at(0));
 
-    ret = ArrayType(output_matrix.shape());
+    ArrayType ret(output_matrix.shape());
 
     for (SizeType i = 0; i < output_matrix.shape().at(0); i++)
     {
@@ -495,15 +483,6 @@ private:
         ret.Set({i, k}, -tmp_slice.At(k));
       }
     }
-  }
-
-  ArrayType ComputeGradient(ArrayType const &output_matrix,
-                            ArrayType const &input_symmetric_affinities,
-                            ArrayType const &output_symmetric_affinities, ArrayType const &num)
-  {
-    ArrayType ret;
-    ComputeGradient(output_matrix, input_symmetric_affinities, output_symmetric_affinities, num,
-                    ret);
     return ret;
   }
 
