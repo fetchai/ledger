@@ -45,7 +45,6 @@ using fetch::ledger::testing::BlockGenerator;
 using fetch::ledger::TransactionStatusCache;
 
 using ::testing::_;
-using ::testing::AtLeast;
 using ::testing::InSequence;
 using ::testing::StrictMock;
 
