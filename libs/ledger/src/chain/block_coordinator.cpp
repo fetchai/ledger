@@ -866,9 +866,6 @@ char const *BlockCoordinator::ToString(State state)
   case State::RESET:
     text = "Reset";
     break;
-  default:
-    text = "Unknown!";
-    break;
   }
 
   return text;
