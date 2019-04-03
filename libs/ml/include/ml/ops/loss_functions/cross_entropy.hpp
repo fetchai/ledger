@@ -21,8 +21,10 @@
 #include <memory>
 #include <vector>
 
-#include "math/free_functions/fundamental_operators.hpp"
-#include "math/free_functions/ml/loss_functions/cross_entropy.hpp"
+#include "math/fundamental_operators.hpp"
+#include "math/ml/activation_functions/sigmoid.hpp"
+#include "math/ml/activation_functions/softmax.hpp"
+#include "math/ml/loss_functions/cross_entropy.hpp"
 
 namespace fetch {
 namespace ml {
@@ -34,17 +36,23 @@ class CrossEntropy
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
+  using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   CrossEntropy()          = default;
   virtual ~CrossEntropy() = default;
 
-  virtual typename ArrayType::Type Forward(std::vector<ArrayType> const &inputs)
+  virtual DataType Forward(std::vector<ArrayType> const &inputs)
   {
-    assert(inputs.size() == 2);
+    assert((inputs.size() == 2) || ((inputs.size() == 3) && (inputs.at(2).size() == 1)));
     assert(inputs.at(0).size() == inputs.at(1).size());
 
-    typename ArrayType::Type result = fetch::math::CrossEntropyLoss(inputs[0], inputs[1]);
+    SizeType n_classes{2};
+    if (inputs.size() == 3)
+    {
+      n_classes = SizeType(inputs.at(2).At(0));
+    }
+    DataType result = fetch::math::CrossEntropyLoss(inputs[0], inputs[1], n_classes);
 
     return result;
   }
@@ -53,9 +61,22 @@ public:
   {
     assert(inputs.size() == 2);
     assert(inputs[0].size() == inputs[1].size());
+    assert(inputs[0].shape().size() == 2);
 
-    typename ArrayType::Type n_classes = static_cast<typename ArrayType::Type>(inputs[1].size());
-    ArrayType ret(fetch::math::Divide(fetch::math::Subtract(inputs[0], inputs[1]), n_classes));
+    ArrayType ret;
+    if (inputs[0].shape().at(1) == 1)  // not one-hot
+    {
+      ret = fetch::math::Sigmoid(inputs[0]);
+      fetch::math::Subtract(ret, inputs[1], ret);
+      fetch::math::Multiply(ret, inputs[0], ret);
+    }
+    else if (inputs[0].shape().size())  // one-hot
+    {
+      ret = fetch::math::Softmax(inputs[0], 0);
+      fetch::math::Divide(inputs[1], ret, ret);
+      fetch::math::Multiply(DataType(-1), ret, ret);
+    }
+
     return ret;
   }
 

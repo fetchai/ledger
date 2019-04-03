@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/fixed_point/fixed_point.hpp"
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
+#include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/word2vec_loaders/cbow_dataloader.hpp"
 #include <gtest/gtest.h>

@@ -13,5 +13,5 @@ add_fetch_test(ml_ops_gtest fetch-ml ml/ops)
 add_fetch_test(ml_serializers_gtest fetch-ml ml/serializers)
 add_fetch_test(ml_dataloader_gtest fetch-ml ml/dataloader)
 add_fetch_test(ml_layers_gtest fetch-ml ml/layers)
-
+add_fetch_test(ml_training_gtest fetch-ml ml/training SLOW)
 

@@ -82,7 +82,7 @@ struct Printer
  * This is to avoid error due to misc-unused-parameters,-warnings-as-errors
  * when the only place you use a named parameter is in an assert
  */
-#ifdef DEBUG
+#ifndef NDEBUG
 #define ASSERT assert
 #else
 #define ASSERT(...) (void)(__VA_ARGS__)
