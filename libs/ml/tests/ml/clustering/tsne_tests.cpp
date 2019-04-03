@@ -81,7 +81,8 @@ TYPED_TEST(TsneTests, tsne_test_2d)
 
   fetch::ml::TSNE<ArrayType> tsn(A, N_OUTPUT_FEATURE_SIZE, PERPLEXITY, RANDOM_SEED);
 
-  tsn.Optimize(LEARNING_RATE, MAX_ITERATIONS, INITIAL_MOMENTUM, FINAL_MOMENTUM, FINAL_MOMENTUM_STEPS);
+  tsn.Optimize(LEARNING_RATE, MAX_ITERATIONS, INITIAL_MOMENTUM, FINAL_MOMENTUM,
+               FINAL_MOMENTUM_STEPS);
   ArrayType output_matrix = tsn.GetOutputMatrix();
   ASSERT_EQ(output_matrix.shape().at(0), N_DATA_SIZE);
   ASSERT_EQ(output_matrix.shape().at(1), N_OUTPUT_FEATURE_SIZE);

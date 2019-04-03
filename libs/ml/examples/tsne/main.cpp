@@ -70,12 +70,12 @@ int main()
 {
   SizeType RANDOM_SEED           = 123456;
   DataType LEARNING_RATE         = 500;  // (seems very high!)
-  SizeType MAX_ITERATIONS             = 100;
+  SizeType MAX_ITERATIONS        = 100;
   DataType PERPLEXITY            = 20;
   SizeType N_DATA_SIZE           = 100;
   SizeType N_INPUT_FEATURE_SIZE  = 3;
   SizeType N_OUTPUT_FEATURE_SIZE = 2;
-  DataType INITIAL_MOMENTUM     = 0.5;
+  DataType INITIAL_MOMENTUM      = 0.5;
   DataType FINAL_MOMENTUM        = 0.8;
   SizeType FINAL_MOMENTUM_STEPS  = 20;
 
@@ -110,7 +110,8 @@ int main()
 
   // Initialize TSNE
   TSNE<Tensor<DataType>> tsn(input_matrix, N_OUTPUT_FEATURE_SIZE, PERPLEXITY, RANDOM_SEED);
-  tsn.Optimize(LEARNING_RATE, MAX_ITERATIONS, INITIAL_MOMENTUM, FINAL_MOMENTUM, FINAL_MOMENTUM_STEPS);
+  tsn.Optimize(LEARNING_RATE, MAX_ITERATIONS, INITIAL_MOMENTUM, FINAL_MOMENTUM,
+               FINAL_MOMENTUM_STEPS);
   std::cout << "Result: " << tsn.GetOutputMatrix().ToString() << std::endl;
 
   return 0;
