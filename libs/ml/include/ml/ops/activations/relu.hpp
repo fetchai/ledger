@@ -55,12 +55,12 @@ public:
     assert(inputs.size() == 1);
     assert(inputs[0].get().shape() == errorSignal.shape());
 
-    ArrayType returnSignal = errorSignal.Clone();
+    ArrayType returnSignal = errorSignal.Copy();
     for (std::size_t i = 0; i < inputs.front().get().size(); ++i)
     {
       if (inputs.front().get()[i] <= DataType(0))
       {
-        returnSignal.Set(i, DataType(0));
+        returnSignal.data().Set(i, DataType(0)); // TODO: 
       }
     }
     return {returnSignal};

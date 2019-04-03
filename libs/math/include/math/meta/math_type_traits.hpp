@@ -33,7 +33,7 @@ class ShapelessArray;
 template <typename T, typename C, bool H, bool W>
 class RectangularArray;
 
-template <typename T>
+template <typename T, typename C>
 class Tensor;
 
 namespace meta {
@@ -45,19 +45,8 @@ using EnableIf = typename std::enable_if<C, R>::type;
 /// FIXED POINT CHECKING ///
 ////////////////////////////
 
-template <typename T, typename = int>
-struct HasFixedPointTag : std::false_type
-{
-};
-
-// TODO (private 490)
 template <typename T>
-struct HasFixedPointTag<T, decltype((void)T::fixed_point_tag, 0)> : std::true_type
-{
-};
-
-template <typename T>
-constexpr bool IsFixedPoint = HasFixedPointTag<T>::value;
+constexpr bool IsFixedPoint =  std::is_base_of<fixed_point::BaseFixedpointType, T  >::value;
 
 template <typename T>
 constexpr bool IsNotFixedPoint = !IsFixedPoint<T>;
@@ -132,8 +121,8 @@ struct IsMathImpl<fetch::math::RectangularArray<T, C, H, W>, R>
 {
   using Type = R;
 };
-template <typename R, typename T>
-struct IsMathImpl<Tensor<T>, R>
+template <typename R, typename T, typename C>
+struct IsMathImpl<Tensor<T, C>, R>
 {
   using Type = R;
 };
@@ -158,8 +147,8 @@ struct IsMathArrayImpl<fetch::math::RectangularArray<T, C, H, W>, R>
 {
   using Type = R;
 };
-template <typename R, typename T>
-struct IsMathArrayImpl<Tensor<T>, R>
+template <typename R, typename T, typename C>
+struct IsMathArrayImpl<Tensor<T, C>, R>
 {
   using Type = R;
 };
@@ -182,8 +171,8 @@ struct IsMathShapeArrayImpl<fetch::math::RectangularArray<T, C, H, W>, R>
 {
   using Type = R;
 };
-template <typename R, typename T>
-struct IsMathShapeArrayImpl<Tensor<T>, R>
+template <typename R, typename T, typename C>
+struct IsMathShapeArrayImpl<Tensor<T, C>, R>
 {
   using Type = R;
 };
@@ -233,8 +222,8 @@ struct IsMathFixedPointArrayImpl<fetch::math::RectangularArray<T, C, H, W>, R>
 {
   using Type = R;
 };
-template <typename R, typename T>
-struct IsMathFixedPointArrayImpl<fetch::math::Tensor<T>, R>
+template <typename R, typename T, typename C>
+struct IsMathFixedPointArrayImpl<fetch::math::Tensor<T, C>, R>
 {
   using Type = R;
 };
@@ -255,8 +244,8 @@ struct IsMathFixedPointShapeArrayImpl<fetch::math::RectangularArray<T, C, H, W>,
 {
   using Type = R;
 };
-template <typename R, typename T>
-struct IsMathFixedPointShapeArrayImpl<fetch::math::Tensor<T>, R>
+template <typename R, typename T, typename C>
+struct IsMathFixedPointShapeArrayImpl<fetch::math::Tensor<T, C>, R>
 {
   using Type = R;
 };
@@ -310,8 +299,8 @@ template <typename A, typename R>
 struct IsNonBlasArrayImpl
 {
 };
-template <typename R, typename T>
-struct IsNonBlasArrayImpl<Tensor<T>, R>
+template <typename R, typename T, typename C>
+struct IsNonBlasArrayImpl<Tensor<T, C>, R>
 {
   using Type = R;
 };

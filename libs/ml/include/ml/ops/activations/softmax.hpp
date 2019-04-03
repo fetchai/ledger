@@ -53,7 +53,7 @@ public:
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape() == errorSignal.shape());
 
-    ArrayType returnSignal = errorSignal.Clone();
+    ArrayType returnSignal = errorSignal.Copy();
     ArrayType t            = this->Forward(inputs);
     returnSignal.InlineMultiply(t);
     typename ArrayType::Type sum = returnSignal.Sum();

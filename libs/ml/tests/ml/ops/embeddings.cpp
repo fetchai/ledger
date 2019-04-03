@@ -64,14 +64,21 @@ TYPED_TEST(EmbeddingsTest, forward)
   TypeParam input(std::vector<uint64_t>({2}));
   input.At(0)      = typename TypeParam::Type(3);
   input.At(1)      = typename TypeParam::Type(5);
+  std::cout << "FW!" << std::endl;
   TypeParam output = e.Forward({input});
 
   ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({2, 6}));
 
   std::vector<int> gt{30, 31, 32, 33, 34, 35, 50, 51, 52, 53, 54, 55};
+  std::cout << " ---- " << std::endl;
   for (unsigned int i(0); i < 12; ++i)
   {
     EXPECT_EQ(output.At(i), typename TypeParam::Type(gt[i]));
+    if(output.At(i) != (typename TypeParam::Type(gt[i])))
+    {
+      std::cerr << "ERROR: " << output.At(i) << " " << typename TypeParam::Type(gt[i]) << std::endl;
+      exit(-1);
+    } 
   }
 }
 

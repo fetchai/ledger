@@ -50,6 +50,7 @@ TYPED_TEST(TensorOperationsTest, inline_add_test)
   }
 }
 
+/*
 TYPED_TEST(TensorOperationsTest, inline_add_with_stride_test)
 {
   fetch::math::Tensor<TypeParam> t1({3, 5});
@@ -70,6 +71,7 @@ TYPED_TEST(TensorOperationsTest, inline_add_with_stride_test)
     EXPECT_EQ(t2.At(i), TypeParam(t2Input[i]));
   }
 }
+*/
 
 TYPED_TEST(TensorOperationsTest, inline_mul_test)
 {
@@ -130,6 +132,7 @@ TYPED_TEST(TensorOperationsTest, transpose_test)
   }
 }
 
+/*
 TYPED_TEST(TensorOperationsTest, transpose_with_stride_test)
 {
   fetch::math::Tensor<TypeParam> t1({3, 5}, {2, 3});
@@ -150,6 +153,7 @@ TYPED_TEST(TensorOperationsTest, transpose_with_stride_test)
     }
   }
 }
+*/
 
 TYPED_TEST(TensorOperationsTest, transpose_untranspose_test)
 {
@@ -221,6 +225,7 @@ TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
   EXPECT_EQ(t3.At(14), TypeParam(29));
 }
 
+/*
 TYPED_TEST(TensorOperationsTest, shuffle_test)
 {
   // instantiate tensor with 0-5 in order
@@ -253,3 +258,4 @@ TYPED_TEST(TensorOperationsTest, shuffle_test)
     EXPECT_TRUE(all_present[j]);
   }
 }
+*/

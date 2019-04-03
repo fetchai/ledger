@@ -349,10 +349,10 @@ void BuildShapelessArray(std::string const &custom_name, pybind11::module &modul
       .def("Fill", (void (ShapelessArray<T>::*)(T const &)) & ShapelessArray<T>::Fill)
       .def("Fill", (void (ShapelessArray<T>::*)(T const &, memory::Range const &)) &
                        ShapelessArray<T>::Fill)
-      .def("At", (T & (ShapelessArray<T>::*)(const typename ShapelessArray<T>::SizeType &)) &
-                     ShapelessArray<T>::At)
-      .def("Reserve", &ShapelessArray<T>::Reserve)
-      .def("Resize", &ShapelessArray<T>::Resize)
+//      .def("At", (T & (ShapelessArray<T>::*)(const typename ShapelessArray<T>::SizeType &)) &
+//                     ShapelessArray<T>::At)
+// TODO: Reimplement      .def("Reserve", &ShapelessArray<T>::Reserve)
+// TODO: Reimplement      .def("Resize", &ShapelessArray<T>::Resize)
       .def("capacity", &ShapelessArray<T>::capacity)
       .def("size", &ShapelessArray<T>::size)
       .def("BooleanMask",

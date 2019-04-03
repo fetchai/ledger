@@ -55,7 +55,7 @@ TYPED_TEST(CrossEntropyTest, perfect_match_test)
       }
     }
   }
-  TypeParam test_array = gt_array.Clone();
+  TypeParam test_array = gt_array.Copy();
 
   // initialise to non-zero just to avoid correct value at initialisation
   typename TypeParam::Type score(100);

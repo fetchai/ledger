@@ -29,6 +29,7 @@
 #include "math/kernels/basic_arithmetics.hpp"
 #include "math/kernels/standard_functions.hpp"
 #include "math/meta/math_type_traits.hpp"
+#include "math/tensor_squeeze.hpp"
 
 namespace fetch {
 namespace math {
@@ -36,10 +37,10 @@ namespace math {
 template <typename T, typename C>
 class ShapelessArray;
 
-template <typename T>
+template <typename T, typename C>
 class Tensor;
 
-template <typename T, typename SizeType>
+template <typename T, typename C, typename TensorType>
 class TensorIterator;
 
 template <typename T, typename C>
@@ -166,7 +167,7 @@ template <typename ArrayType, typename T>
 meta::IfIsMathArray<ArrayType, void> Max(ArrayType const &array, T &ret)
 {
   ret = std::numeric_limits<T>::lowest();
-  for (T &e : array)
+  for (T const &e : array)
   {
     if (e > ret)
     {
@@ -213,8 +214,8 @@ inline void Max(ShapelessArray<T, C> const &array, memory::Range r, T &ret)
  * @param axis
  * @param ret
  */
-template <typename T>
-void Max(Tensor<T> const &array, typename Tensor<T>::SizeType const &axis, Tensor<T> &ret)
+template <typename T, typename C>
+void Max(Tensor<T, C> const &array, typename Tensor<T,C>::SizeType const &axis, Tensor<T,C> &ret)
 {
   assert(array.shape().size() <= 2);
   assert(axis < array.shape().size());
@@ -224,7 +225,7 @@ void Max(Tensor<T> const &array, typename Tensor<T>::SizeType const &axis, Tenso
     assert(axis == 0);
 
     T cur_max = std::numeric_limits<T>::lowest();
-    for (T &e : array)
+    for (T const &e : array)
     {
       if (e > cur_max)
       {
@@ -235,7 +236,7 @@ void Max(Tensor<T> const &array, typename Tensor<T>::SizeType const &axis, Tenso
   }
   else
   {
-    typename Tensor<T>::SizeType off_axis = 0;
+    typename Tensor<T, C>::SizeType off_axis = 0;
     if (axis == 0)
     {
       off_axis = 1;
@@ -280,7 +281,7 @@ template <typename ArrayType, typename T>
 meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, T &ret)
 {
   ret = std::numeric_limits<T>::max();
-  for (T &e : array)
+  for (T const &e : array)
   {
     if (ret < e)
     {
@@ -417,20 +418,22 @@ T Sum(ShapelessArray<T, C> const &obj1)
   Sum(obj1, ret);
   return ret;
 }
-template <typename T>
-T Sum(Tensor<T> const &obj1)
+template <typename T, typename C>
+T Sum(Tensor<T, C> const &obj1)
 {
   T ret(0);
   Sum(obj1, ret);
   return ret;
 }
-template <typename T>
-void Sum(Tensor<T> const &obj1, T &ret)
+template <typename T, typename C>
+void Sum(Tensor<T, C> const &obj1, T &ret)
 {
-  for (typename Tensor<T>::SizeType j = 0; j < obj1.size(); ++j)
+  ret = T(0);
+  for(auto const &e: obj1)
   {
-    ret += obj1.At(j);
+    ret += e;
   }
+
 }
 
 /**
@@ -549,19 +552,30 @@ void ArgMax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeType
   assert((array.shape().size() == 1) || (array.shape().size() == 2));
   assert((axis == 0) || (axis == 1));
 
+  using Type = typename ArrayType::Type;
+  Reduce([](Type const &x, Type const &z) { return std::max(x, z); }, array, ret, axis);  
+/*
   typename ArrayType::Type cur_maxval = std::numeric_limits<typename ArrayType::Type>::lowest();
 
   if (array.shape().size() == 1)
   {
     // just using ret as a free variable to store the current maxval for the loop here
-    for (typename ArrayType::SizeType i(0); i < array.size(); ++i)
+    auto it = array.cbegin();
+    auto eit = array.cend();
+    typename ArrayType::SizeVector idx{0};
+    typename ArrayType::Type i{0};
+    typename ArrayType::Type max_arg = ret.At( idx );
+    while(it != eit )
     {
-      if (cur_maxval < array[i])
+      if(*it > cur_maxval)
       {
-        cur_maxval = array.At(i);
-        ret.At(0)  = typename ArrayType::Type(i);
+        cur_maxval = *it;
+        max_arg = i;
       }
+      ++i;
+      ++it;
     }
+    ret.Set(idx, max_arg);
   }
   else
   {
@@ -580,6 +594,7 @@ void ArgMax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeType
           "tensor");
     }
   }
+  */
 }
 template <typename ArrayType>
 ArrayType ArgMax(ArrayType const &array, typename ArrayType::SizeType axis = 0)

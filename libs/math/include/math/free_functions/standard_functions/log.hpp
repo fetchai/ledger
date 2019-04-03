@@ -74,7 +74,7 @@ meta::IfIsFixedPoint<T, T> Log(T const &n)
 }
 
 template <typename ArrayType>
-meta::IfIsNonBlasArray<ArrayType, ArrayType> Log(ArrayType const &x)
+meta::IfIsNonBlasArray<ArrayType, ArrayType> Log(ArrayType  &x)
 {
   for (typename ArrayType::Type &e : x)
   {
@@ -83,7 +83,7 @@ meta::IfIsNonBlasArray<ArrayType, ArrayType> Log(ArrayType const &x)
   return x;
 }
 template <typename ArrayType>
-meta::IfIsMathFixedPointArray<ArrayType, ArrayType> Log(ArrayType const &x)
+meta::IfIsMathFixedPointArray<ArrayType, ArrayType> Log(ArrayType &x)
 {
   for (typename ArrayType::Type &e : x)
   {
@@ -96,11 +96,15 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Log(ArrayType const &array, ArrayType &ret)
 {
   ASSERT(ret.shape() == array.shape());
-  typename ArrayType::SizeType ret_count{0};
-  for (typename ArrayType::Type &e : array)
+  auto it1 = array.begin();
+  auto it2 = ret.begin();
+  auto eit1 = array.end();
+
+  while(it1 != eit1)
   {
-    Log(e, ret.At(ret_count));
-    ++ret_count;
+    Log(*it1, *it2);
+    ++it1;
+    ++it2;
   }
 }
 

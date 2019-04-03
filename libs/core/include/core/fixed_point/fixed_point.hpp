@@ -153,7 +153,7 @@ std::size_t HighestSetBit(T n_input)
  * helper function that checks no bit overflow when shifting
  * @tparam T the input original type
  * @param n the value of the datum
- * @param fractional_bits the number of fractional_bits to be set
+ * @param FRANCTIONAL_BITS the number of FRANCTIONAL_BITS to be set
  * @param total_bits the total number of bits
  * @return true if there is no overflow, false otherwise
  */
@@ -201,55 +201,53 @@ bool CheckNoRounding(T n, std::size_t fractional_bits)
 
 }  // namespace details
 
+struct BaseFixedpointType {};
+
 template <std::size_t I, std::size_t F>
-class FixedPoint
+class FixedPoint : public BaseFixedpointType
 {
   static_assert(details::TypeFromSize<I + F>::is_valid, "invalid combination of sizes");
 
 public:
-  static const std::size_t fractional_bits = F;
-  static const std::size_t total_bits      = I + F;
+  enum {
+    FRANCTIONAL_BITS = F,
+    TOTAL_BITS       = I + F
+  };
 
-  // this tag is used for matching templates - see math_type_traits.hpp
-  FixedPointTag fixed_point_tag;
-
-  using BaseTypeInfo = details::TypeFromSize<total_bits>;
-
-  using Type         = typename BaseTypeInfo::ValueType;
+  using BaseTypeInfo = details::TypeFromSize<TOTAL_BITS>;
+  using Type         = typename BaseTypeInfo::ValueType;  
   using NextType     = typename BaseTypeInfo::NextSize::ValueType;
   using UnsignedType = typename BaseTypeInfo::UnsignedType;
 
-  const Type fractional_mask = Type((2 ^ fractional_bits) - 1);
-  const Type integer_mask    = ~fractional_mask;
-
-  static const Type one = Type(1) << fractional_bits;
+  enum {
+    FRACTIONAL_MASK  = Type( ((1ull << FRANCTIONAL_BITS) - 1) ),
+    INTEGER_MASK     = Type( ~FRACTIONAL_MASK ),
+    CONST_ONE = Type(1) << FRANCTIONAL_BITS
+  };
 
 private:
-  Type data_;  // the value to be stored
+  Type data_{0};  // the value to be stored
 
 public:
   ////////////////////
   /// constructors ///
   ////////////////////
-
-  FixedPoint()
-    : data_(0)
-  {}  // initialise to zero
+  FixedPoint() = default;
 
   template <typename T>
   explicit FixedPoint(T n, meta::IfIsInteger<T> * = nullptr)
-    : data_(static_cast<Type>(n) << static_cast<Type>(fractional_bits))
+    : data_(static_cast<Type>(n) << static_cast<Type>(FRANCTIONAL_BITS))
   {
-    assert(details::CheckNoOverflow(n, fractional_bits, total_bits));
+    assert(details::CheckNoOverflow(n, FRANCTIONAL_BITS, TOTAL_BITS));
   }
 
   template <typename T>
   explicit FixedPoint(T n, meta::IfIsFloat<T> * = nullptr)
-    : data_(static_cast<Type>(n * one))
+    : data_(static_cast<Type>(n * CONST_ONE))
   {
-    assert(details::CheckNoOverflow(n, fractional_bits, total_bits));
+    assert(details::CheckNoOverflow(n, FRANCTIONAL_BITS, total_bits));
     // TODO(private, 629)
-    // assert(details::CheckNoRounding(n, fractional_bits));
+    // assert(details::CheckNoRounding(n, FRANCTIONAL_BITS));
   }
 
   FixedPoint(const FixedPoint &o)
@@ -331,13 +329,13 @@ public:
 
   FixedPoint &operator++()
   {
-    data_ += one;
+    data_ += CONST_ONE;
     return *this;
   }
 
   FixedPoint &operator--()
   {
-    data_ -= one;
+    data_ -= CONST_ONE;
     return *this;
   }
 
@@ -352,37 +350,37 @@ public:
 
   explicit operator double() const
   {
-    return (static_cast<double>(data_) / one);
+    return (static_cast<double>(data_) / CONST_ONE);
   }
 
   explicit operator int() const
   {
-    return int((data_ & integer_mask) >> fractional_bits);
+    return int((data_ & INTEGER_MASK) >> FRANCTIONAL_BITS);
   }
 
   explicit operator float() const
   {
-    return (static_cast<float>(data_) / one);
+    return (static_cast<float>(data_) / CONST_ONE);
   }
 
   explicit operator unsigned() const
   {
-    return (static_cast<unsigned>(data_) / one);
+    return (static_cast<unsigned>(data_) / CONST_ONE);
   }
 
   explicit operator unsigned long() const
   {
-    return (static_cast<unsigned long>(data_) / one);
+    return (static_cast<unsigned long>(data_) / CONST_ONE);
   }
 
   explicit operator unsigned long long() const
   {
-    return (static_cast<unsigned long long>(data_) / one);
+    return (static_cast<unsigned long long>(data_) / CONST_ONE);
   }
 
   //  // casting operators
   //  operator uint32_t () const {
-  //    return (data_ & integer_mask) >> fractional_bits;
+  //    return (data_ & INTEGER_MASK) >> FRANCTIONAL_BITS;
   //  }
 
   //////////////////////

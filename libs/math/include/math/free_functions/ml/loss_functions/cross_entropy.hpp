@@ -59,16 +59,18 @@ typename ArrayType::Type CrossEntropyLoss(
   if (n_dims == 1)
   {
     assert(n_classes == SizeType(2));
+
+    // TODO: Use iterators instead to be correct
     for (SizeType idx = 0; idx < n_examples; ++idx)
     {
-      assert((y.At(idx) == DataType(1)) || (y.At(idx) == DataType(0)));
-      if (y.At(idx) == DataType(1))
+      assert((y.data()[idx] == DataType(1)) || (y.data()[idx] == DataType(0)));
+      if (y.data()[idx] == DataType(1))
       {
-        ret -= Log(x.At(idx));
+        ret -= Log(x.data()[idx]);
       }
       else
       {
-        DataType tmp = DataType(1) - x.At(idx);
+        DataType tmp = DataType(1) - x.data()[idx];
         if (tmp <= 0)
         {
           throw std::runtime_error("cannot take log of negative values");
@@ -84,7 +86,7 @@ typename ArrayType::Type CrossEntropyLoss(
 
     for (SizeType idx = 0; idx < n_examples; ++idx)
     {
-      ret -= Log(x.At({idx, SizeType(gt.At(idx))}));
+      ret -= Log(x.At(std::vector<SizeType>({idx, SizeType(gt.data()[idx])})));
     }
   }
   Divide(ret, static_cast<DataType>(n_examples), ret);

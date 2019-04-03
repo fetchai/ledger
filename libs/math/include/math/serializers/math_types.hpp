@@ -22,46 +22,14 @@
 namespace fetch {
 namespace serializers {
 
+/*
 template <typename T, typename U>
-inline void Serialize(T &serializer, math::Tensor<U> const &t)
-{
-  Serialize(serializer, t.shape());
-  Serialize(serializer, t.Strides());
-  Serialize(serializer, t.Padding());
-  Serialize(serializer, t.Offset());
-  if (t.Storage())
-  {
-    Serialize(serializer, true);
-    Serialize(serializer, *(t.Storage()));
-  }
-  else
-  {
-    Serialize(serializer, false);
-  }
-}
+void Serialize(T &serializer, math::Tensor<U> const &t)
+
 
 template <typename T, typename U>
-inline void Deserialize(T &serializer, math::Tensor<U> &t)
-{
-  std::vector<typename math::Tensor<U>::SizeType> shape;
-  std::vector<typename math::Tensor<U>::SizeType> strides;
-  std::vector<typename math::Tensor<U>::SizeType> padding;
-  typename math::Tensor<U>::SizeType              offset;
-  bool                                            hasStorage;
-  std::shared_ptr<std::vector<U>>                 storage;
-
-  Deserialize(serializer, shape);
-  Deserialize(serializer, strides);
-  Deserialize(serializer, padding);
-  Deserialize(serializer, offset);
-  Deserialize(serializer, hasStorage);
-  if (hasStorage)
-  {
-    storage = std::make_shared<std::vector<U>>();
-    Deserialize(serializer, *storage);
-  }
-  t = math::Tensor<U>(shape, strides, padding, storage, offset);
-}
+void Deserialize(T &serializer, math::Tensor<U> &t)
+*/
 
 }  // namespace serializers
 }  // namespace fetch

@@ -29,6 +29,7 @@
 #include "vectorise/memory/range.hpp"
 #include "vectorise/memory/shared_array.hpp"
 
+#include "math/base_types.hpp"
 #include "math/free_functions/free_functions.hpp"
 #include "math/free_functions/statistics/mean.hpp"
 #include "math/meta/math_type_traits.hpp"
@@ -44,7 +45,7 @@ template <typename DataType, typename ArrayType>
 static void ArangeImplementation(DataType const &from, DataType const &to, DataType const &delta,
                                  ArrayType &ret)
 {
-  std::size_t N = std::size_t((to - from) / delta);
+  SizeType N = SizeType((to - from) / delta);
   ret.LazyResize(N);
   ret.SetPaddedZero();
   ret.FillArange(from, to);
@@ -57,7 +58,7 @@ class ShapelessArray
 public:
   using Type                          = T;
   using container_type                = C;
-  using SizeType                      = std::size_t;
+  using SizeType                      = SizeType;
   using vector_slice_type             = typename container_type::vector_slice_type;
   using vector_register_type          = typename container_type::vector_register_type;
   using vector_register_iterator_type = typename container_type::vector_register_iterator_type;
@@ -83,7 +84,7 @@ public:
   static constexpr char const *LOGGING_NAME = "ShapelessArray";
 
   /* Contructs an empty shape-less array. */
-  explicit ShapelessArray(std::size_t const &n)
+  explicit ShapelessArray(SizeType const &n)
     : data_(n)
     , size_(n)
   {}
@@ -132,11 +133,11 @@ public:
       }
     }
 
-    std::size_t m = elems.size();
+    SizeType m = elems.size();
     this->Resize(m);
     this->SetAllZero();
 
-    for (std::size_t i = 0; i < m; ++i)
+    for (SizeType i = 0; i < m; ++i)
     {
       this->Set(i, elems[i]);
     }
@@ -160,7 +161,7 @@ public:
    */
   void SetAllOne()
   {
-    for (std::size_t i = 0; i < data().size(); i++)
+    for (SizeType i = 0; i < data().size(); i++)
     {
       data()[i] = 1;
     }
@@ -412,7 +413,7 @@ public:
    * Note this accessor is "slow" as it takes care that the developer
    * does not accidently enter the padded area of the memory.
    */
-  virtual Type const &At(size_t const &i) const
+  Type const &At(size_t const &i) const
   {
     return data_[i];
   }
@@ -420,7 +421,7 @@ public:
   /* One-dimensional reference access function.
    * @param i is the index which is being accessed.
    */
-  virtual Type &At(size_t const &i)
+  Type &At(size_t const &i)
   {
     return data_[i];
   }
@@ -486,10 +487,10 @@ public:
   {
     ShapelessArray ret;
 
-    std::size_t N     = this->size();
+    SizeType N     = this->size();
     Type        d     = static_cast<Type>(from);
     Type        delta = static_cast<Type>(to - from) / static_cast<Type>(N);
-    for (std::size_t i = 0; i < N; ++i)
+    for (SizeType i = 0; i < N; ++i)
     {
       this->data()[i] = Type(d);
       d += delta;
@@ -497,7 +498,7 @@ public:
     return *this;
   }
 
-  static ShapelessArray UniformRandom(std::size_t const &N)
+  static ShapelessArray UniformRandom(SizeType const &N)
   {
 
     ShapelessArray ret;
@@ -508,7 +509,7 @@ public:
     return ret;
   }
 
-  static ShapelessArray UniformRandomIntegers(std::size_t const &N, int64_t const &min,
+  static ShapelessArray UniformRandomIntegers(SizeType const &N, int64_t const &min,
                                               int64_t const &max)
   {
     ShapelessArray ret;
@@ -521,7 +522,7 @@ public:
 
   ShapelessArray &FillUniformRandom()
   {
-    for (std::size_t i = 0; i < this->size(); ++i)
+    for (SizeType i = 0; i < this->size(); ++i)
     {
       this->data()[i] = Type(random::Random::generator.AsDouble());
     }
@@ -534,7 +535,7 @@ public:
 
     uint64_t diff = uint64_t(max - min);
 
-    for (std::size_t i = 0; i < this->size(); ++i)
+    for (SizeType i = 0; i < this->size(); ++i)
     {
       this->data()[i] = Type(int64_t(random::Random::generator() % diff) + min);
     }
@@ -542,7 +543,7 @@ public:
     return *this;
   }
 
-  static ShapelessArray Zeroes(std::size_t const &n)
+  static ShapelessArray Zeroes(SizeType const &n)
   {
     ShapelessArray ret;
     ret.Resize(n);
@@ -556,7 +557,7 @@ public:
    * @param shape : a vector representing the shape of the NDArray
    * @return NDArray with all ones
    */
-  static ShapelessArray Ones(std::size_t const &n)
+  static ShapelessArray Ones(SizeType const &n)
   {
     ShapelessArray ret;
     ret.Resize(n);
@@ -567,13 +568,13 @@ public:
   bool AllClose(self_type const &other, double const &rtol = 1e-5, double const &atol = 1e-8,
                 bool ignoreNaN = true) const
   {
-    std::size_t N = this->size();
+    SizeType N = this->size();
     if (other.size() != N)
     {
       return false;
     }
     bool ret = true;
-    for (std::size_t i = 0; ret && (i < N); ++i)
+    for (SizeType i = 0; ret && (i < N); ++i)
     {
       double va = static_cast<double>(this->At(i));
       if (ignoreNaN && std::isnan(va))
@@ -604,7 +605,7 @@ public:
     }
     if (!ret)
     {
-      for (std::size_t i = 0; i < N; ++i)
+      for (SizeType i = 0; i < N; ++i)
       {
         double va = double(this->At(i));
         if (ignoreNaN && std::isnan(va))
@@ -638,7 +639,7 @@ public:
     return ret;
   }
 
-  bool LazyReserve(std::size_t const &n)
+  bool LazyReserve(SizeType const &n)
   {
     if (data_.size() < n)
     {
@@ -648,37 +649,39 @@ public:
     return false;
   }
 
-  void Reserve(std::size_t const &n)
+  void Reserve(SizeType const &n)
   {
     container_type old_data = data_;
 
     if (LazyReserve(n))
     {
-      std::size_t ns = std::min(old_data.size(), n);
+      SizeType ns = std::min(old_data.size(), n);
       memcpy(data_.pointer(), old_data.pointer(), ns);
       data_.SetZeroAfter(ns);
     }
   }
 
-  void ReplaceData(std::size_t const &n, container_type const &data)
+  void ReplaceData(SizeType const &n, container_type const &data)
   {
     assert(n <= data.size());
     data_ = data;
     size_ = n;
   }
 
-  void LazyResize(std::size_t const &n)
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, void>::type LazyResize(S const &n)
   {
     LazyReserve(n);
     size_ = n;
-    data_.SetZeroAfter(n);
+    data_.SetZeroAfter(n);        
   }
 
-  void Resize(std::size_t const &n)
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, void>::type Resize(S const &n)
   {
-    container_type old_data = data_;
+    SizeType oldsize = size_;    
     LazyResize(n);
-    size_ = n;
+    data_.SetZeroAfter(oldsize);
   }
 
   iterator begin()
@@ -704,7 +707,7 @@ public:
   {
     ret.LazyResize(size_);
     // TODO(TFR): Vectorize
-    for (std::size_t i = 0; i < size_; ++i)
+    for (SizeType i = 0; i < size_; ++i)
     {
       ret.data_[i] = data_[i];
     }
@@ -725,7 +728,7 @@ public:
     this->size_ = x.size_;
   }
 
-  Type const &Set(std::size_t const &idx, Type const &val)
+  Type const &Set(SizeType const &idx, Type const &val)
   {
     Type &e = At(idx);
     e       = val;
@@ -737,7 +740,7 @@ public:
   {
     return data_[indices];
   }
-  //  T Get(std::size_t const &idx) { return data_[idx]; } const
+  //  T Get(SizeType const &idx) { return data_[idx]; } const
 
   container_type const &data() const
   {
@@ -747,7 +750,7 @@ public:
   {
     return data_;
   }
-  std::size_t size() const
+  SizeType size() const
   {
     return size_;
   }
@@ -1142,7 +1145,7 @@ public:
 
 protected:
   container_type data_;
-  std::size_t    size_ = 0;
+  SizeType    size_ = 0;
 };
 }  // namespace math
 }  // namespace fetch

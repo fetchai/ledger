@@ -131,9 +131,9 @@ public:
     {
     case WeightsInitialisation::ZEROS:
     {
-      for (std::uint64_t j = 0; j < array.size(); ++j)
+      for (std::uint64_t j = 0; j < array.data().size(); ++j)
       {
-        array.At(j) = typename ArrayType::Type(0);
+        array.data()[j] = typename ArrayType::Type(0);
       }
       break;
     }

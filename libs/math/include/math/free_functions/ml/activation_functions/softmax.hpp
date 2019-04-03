@@ -116,12 +116,14 @@ void Softmax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeTyp
     throw std::runtime_error("softmax for nDimensions not yet handled");
   }
 }
+
 template <typename ArrayType>
 void Softmax(ArrayType const &array, ArrayType &ret)
 {
   assert(ret.size() == array.size());
   Softmax(array, ret, typename ArrayType::SizeType(0));
 }
+
 template <typename ArrayType>
 ArrayType Softmax(ArrayType const &array, typename ArrayType::SizeType axis)
 {

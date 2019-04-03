@@ -166,10 +166,17 @@ template <typename T, typename ArrayType,
           typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsNonBlasArray<ArrayType, void> Add(ArrayType const &array, T const &scalar, ArrayType &ret)
 {
-  assert(array.size() == ret.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
+  assert(array1.shape() == ret.shape());
+
+  auto it1 = array.cbegin();
+  auto eit1 = array.cend();  
+  auto rit = ret.begin();
+
+  while(it1 != eit1)
   {
-    ret.Set(i, array.At(i) + scalar);
+    *rit = (*it1) + scalar;
+    ++it1;
+    ++rit;
   }
 }
 
@@ -213,9 +220,17 @@ meta::IfIsMathShapeArray<ArrayType, void> Add(ArrayType const &array1, ArrayType
   assert(array1.shape() == array2.shape());
   assert(array1.shape() == ret.shape());
 
-  for (std::size_t i = 0; i < ret.size(); ++i)
+  auto it1 = array1.cbegin();
+  auto it2 = array2.cbegin();  
+  auto eit1 = array1.cend();  
+  auto rit = ret.begin();
+
+  while(it1 != eit1)
   {
-    ret.At(i) = array1.At(i) + array2.At(i);
+    *rit = (*it1) + (*it2);
+    ++it1;
+    ++it2;
+    ++rit;
   }
 }
 
@@ -397,10 +412,17 @@ template <typename ArrayType, typename T,
 meta::IfIsNonBlasArray<ArrayType, void> Subtract(ArrayType const &array, T const &scalar,
                                                  ArrayType &ret)
 {
-  assert(array.size() == ret.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
+  assert(array1.shape() == ret.shape());
+
+  auto it1 = array.cbegin();
+  auto eit1 = array.cend();  
+  auto rit = ret.begin();
+
+  while(it1 != eit1)
   {
-    ret.At(i) = array.At(i) - scalar;
+    *rit = (*it1) - scalar;
+    ++it1;
+    ++rit;
   }
 }
 
@@ -474,16 +496,36 @@ meta::IfIsBlasArray<ArrayType, void> Subtract(ArrayType const &obj1, ArrayType c
 }
 
 template <typename ArrayType>
-meta::IfIsNonBlasArray<ArrayType, void> Subtract(ArrayType const &array, ArrayType const &array2,
+meta::IfIsNonBlasArray<ArrayType, void> Subtract(ArrayType const &array1, ArrayType const &array2,
                                                  ArrayType &ret)
 {
+  // TODO: Broadcast
+  assert(array1.shape() == array2.shape());
+  assert(array1.shape() == ret.shape());
+
+  auto it1 = array1.cbegin();
+  auto it2 = array2.cbegin();  
+  auto eit1 = array1.cend();  
+  auto rit = ret.begin();
+
+  while(it1 != eit1)
+  {
+    *rit = (*it1) - (*it2);
+    ++it1;
+    ++it2;
+    ++rit;
+  }
+
+  /*
   assert((array.size() == array2.size()) ||
          ((array.shape()[0] == array2.shape()[0]) &&
           ((array.shape()[1] == 1) || (array2.shape()[1] == 1))) ||
          ((array.shape()[1] == array2.shape()[1]) &&
           ((array.shape()[0] == 1) || (array2.shape()[0] == 1))));
   assert((array.size() == ret.size()) || (array2.size() == ret.size()));
-
+  */
+/*
+TODO: Use broadcast functionality ffs
   if (array.size() == array2.size())
   {
     for (std::size_t i = 0; i < ret.size(); ++i)
@@ -537,6 +579,7 @@ meta::IfIsNonBlasArray<ArrayType, void> Subtract(ArrayType const &array, ArrayTy
   {
     throw std::runtime_error("broadcast subtraction for tensors more than 2D not yet handled");
   }
+  */
 }
 
 template <typename ArrayType>
@@ -611,10 +654,17 @@ meta::IfIsNonBlasArray<ArrayType, void> Multiply(ArrayType const &array, T const
                                                  ArrayType &ret)
 {
   assert(array.size() == ret.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
+  auto it1 = array.cbegin();
+  auto eit1 = array.cend();  
+  auto it2 = ret.begin();
+
+  while(it1 != eit1)
   {
-    ret.Set(i, array.At(i) * typename ArrayType::Type(scalar));
+    *it2 = scalar * (*it1);
+    ++it1;
+    ++it2;
   }
+
 }
 
 template <typename ArrayType, typename T,
@@ -906,11 +956,19 @@ template <typename ArrayType, typename T,
 meta::IfIsNonBlasArray<ArrayType, void> Divide(ArrayType const &array, T const &scalar,
                                                ArrayType &ret)
 {
-  assert(array.size() == ret.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
+  assert(array1.shape() == ret.shape());
+
+  auto it1 = array.cbegin();
+  auto eit1 = array.cend();  
+  auto rit = ret.begin();
+
+  while(it1 != eit1)
   {
-    ret.At(i) = array.At(i) / scalar;
+    *rit = (*it1) / scalar;
+    ++it1;
+    ++rit;
   }
+
 }
 template <typename ArrayType, typename T,
           typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>

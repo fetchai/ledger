@@ -36,7 +36,7 @@ public:
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     ASSERT(inputs.size() == 1);
-    this->output_ = std::make_shared<ArrayType>(inputs.front().get().Clone().Transpose());
+    this->output_ = std::make_shared<ArrayType>(inputs.front().get().Transpose());
     return *this->output_;
   }
 
@@ -45,7 +45,7 @@ public:
       ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 1);
-    return {errorSignal.Clone().Transpose()};
+    return {errorSignal.Transpose()};
   }
 
   static constexpr char const *DESCRIPTOR = "Transpose";

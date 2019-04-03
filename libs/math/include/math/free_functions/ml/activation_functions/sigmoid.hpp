@@ -36,19 +36,19 @@ void Sigmoid(ArrayType const &t, ArrayType &ret)
 {
 
   typename ArrayType::SizeType idx(0);
-  for (auto &val : t)
+  for (auto const &val : t)
   {
-    if (val >= typename ArrayType::Type(0))
+    if (val >= typename ArrayType::Type(0)) // TODO: Reimplement using iterators - this is ugly
     {
-      Multiply(typename ArrayType::Type(-1.0), val, ret.At(idx));
-      Exp(ret.At(idx), ret.At(idx));
-      Add(ret.At(idx), typename ArrayType::Type(1.0), ret.At(idx));
-      Divide(typename ArrayType::Type(1.0), ret.At(idx), ret.At(idx));
+      Multiply(typename ArrayType::Type(-1.0), val, ret.data().At(idx));
+      Exp(ret.data().At(idx), ret.data().At(idx));
+      Add(ret.data().At(idx), typename ArrayType::Type(1.0), ret.data().At(idx));
+      Divide(typename ArrayType::Type(1.0), ret.data().At(idx), ret.data().At(idx));
     }
     else
     {
-      Exp(val, ret.At(idx));
-      Divide(ret.At(idx), ret.At(idx) + typename ArrayType::Type(1.0), ret.At(idx));
+      Exp(val, ret.data().At(idx));
+      Divide(ret.data().At(idx), ret.data().At(idx) + typename ArrayType::Type(1.0), ret.data().At(idx));
     }
     ++idx;
   }
