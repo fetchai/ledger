@@ -40,17 +40,18 @@ public:
 
   static constexpr char const *DESCRIPTOR = "TSNE";
 
-  TSNE(const ArrayType &input_matrix, const ArrayType &output_matrix)
+  TSNE(const ArrayType &input_matrix, const ArrayType &output_matrix, const DataType &perplexity)
   {
-    Init(input_matrix, output_matrix);
+    Init(input_matrix, output_matrix, perplexity);
   }
 
-  TSNE(const ArrayType &input_matrix, const SizeType &output_dimensions, const SizeType random_seed)
+  TSNE(const ArrayType &input_matrix, const SizeType &output_dimensions, const DataType &perplexity,
+       const SizeType random_seed)
   {
     ArrayType output_matrix({input_matrix.shape().at(0), output_dimensions});
     rng_.seed(random_seed);
     RandomInitWeights(output_matrix);
-    Init(input_matrix, output_matrix);
+    Init(input_matrix, output_matrix, perplexity);
   }
 
   /**
@@ -58,12 +59,12 @@ public:
    * @param learning_rate input Learning rate
    * @param max_iters input Number of optimization iterations
    */
-  void Optimize(const DataType &learning_rate, const SizeType &max_iters)
+  void Optimize(const DataType &learning_rate, const SizeType &max_iters,
+                const DataType &initial_momentum, const DataType &final_momentum,
+                const SizeType &final_momentum_steps)
   {
     // Initialize variables
     output_symmetric_affinities_.Fill(DataType(0));
-    DataType initial_momentum{0.5f};
-    DataType final_momentum{0.8f};
     DataType min_gain{0.01f};
     DataType momentum = initial_momentum;
 
@@ -89,7 +90,7 @@ public:
                                            output_symmetric_affinities_, num);
 
       // Perform the update
-      if (iter >= 20)
+      if (iter >= final_momentum_steps)
       {
         momentum = final_momentum;
       }
@@ -148,9 +149,9 @@ private:
   /**
    * i.e. Sets initial values of TSNE and calculate P values
    */
-  void Init(const ArrayType &input_matrix, const ArrayType &output_matrix)
+  void Init(const ArrayType &input_matrix, const ArrayType &output_matrix,
+            const DataType &perplexity)
   {
-    DataType perplexity{20};
     DataType perplexity_tolerance{1e-5f};
 
     // Initialize high dimensional values

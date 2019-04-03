@@ -59,27 +59,7 @@ TYPED_TEST(KlDivergenceTest, same_tensors_divergence_test)
   A.Set({3, 2}, typename TypeParam::Type(1.3));
   A.Set({3, 3}, typename TypeParam::Type(1.4));
 
-  TypeParam B({4, 4});
-
-  B.Set({0, 0}, typename TypeParam::Type(0.1));
-  B.Set({0, 1}, typename TypeParam::Type(0.2));
-  B.Set({0, 2}, typename TypeParam::Type(0.3));
-  B.Set({0, 3}, typename TypeParam::Type(0.4));
-
-  B.Set({1, 0}, typename TypeParam::Type(-0.1));
-  B.Set({1, 1}, typename TypeParam::Type(-0.2));
-  B.Set({1, 2}, typename TypeParam::Type(-0.3));
-  B.Set({1, 3}, typename TypeParam::Type(-0.4));
-
-  B.Set({2, 0}, typename TypeParam::Type(-1.1));
-  B.Set({2, 1}, typename TypeParam::Type(-1.2));
-  B.Set({2, 2}, typename TypeParam::Type(-1.3));
-  B.Set({2, 3}, typename TypeParam::Type(-1.4));
-
-  B.Set({3, 0}, typename TypeParam::Type(1.1));
-  B.Set({3, 1}, typename TypeParam::Type(1.2));
-  B.Set({3, 2}, typename TypeParam::Type(1.3));
-  B.Set({3, 3}, typename TypeParam::Type(1.4));
+  TypeParam B = A.Clone();
 
   EXPECT_NEAR(double(KlDivergence(A, B)), 0.0, 1e-5);
   EXPECT_NEAR(double(KlDivergence(B, A)), 0.0, 1e-5);

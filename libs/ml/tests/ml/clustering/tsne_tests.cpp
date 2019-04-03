@@ -40,13 +40,20 @@ TYPED_TEST(TsneTests, tsne_test_2d)
   using ArrayType = TypeParam;
   using SizeType  = typename TypeParam::SizeType;
 
-  SizeType n_data_size           = 100;
-  SizeType n_input_feature_size  = 3;
-  SizeType n_output_feature_size = 2;
+  SizeType RANDOM_SEED{123456};
+  DataType LEARNING_RATE{500};  // (seems very high!)
+  SizeType MAX_ITERS{30};
+  DataType PERPLEXITY{20};
+  SizeType N_DATA_SIZE{100};
+  SizeType N_INPUT_FEATURE_SIZE{3};
+  SizeType N_OUTPUT_FEATURE_SIZE{2};
+  DataType INITITAL_MOMENTUM{0.5f};
+  DataType FINAL_MOMENTUM{0.8f};
+  SizeType FINAL_MOMENTUM_STEPS{20};
 
-  ArrayType A({n_data_size, n_input_feature_size});
-  ArrayType ret({n_data_size, n_output_feature_size});
+  ArrayType A({N_DATA_SIZE, N_INPUT_FEATURE_SIZE});
 
+  // Generate easily separable clusters of data
   for (SizeType i = 0; i < 25; ++i)
   {
     A.Set({i, 0}, -static_cast<DataType>(i) - static_cast<DataType>(50));
@@ -72,13 +79,12 @@ TYPED_TEST(TsneTests, tsne_test_2d)
     A.Set({i, 2}, static_cast<DataType>(i) + static_cast<DataType>(50));
   }
 
-  SizeType                   random_seed(123456);
-  fetch::ml::TSNE<ArrayType> tsn(A, n_output_feature_size, random_seed);
+  fetch::ml::TSNE<ArrayType> tsn(A, N_OUTPUT_FEATURE_SIZE, PERPLEXITY, RANDOM_SEED);
 
-  tsn.Optimize(DataType(500), SizeType(30));
+  tsn.Optimize(LEARNING_RATE, MAX_ITERS, INITITAL_MOMENTUM, FINAL_MOMENTUM, FINAL_MOMENTUM_STEPS);
   ArrayType output_matrix = tsn.GetOutputMatrix();
-  ASSERT_EQ(output_matrix.shape().at(0), n_data_size);
-  ASSERT_EQ(output_matrix.shape().at(1), n_output_feature_size);
+  ASSERT_EQ(output_matrix.shape().at(0), N_DATA_SIZE);
+  ASSERT_EQ(output_matrix.shape().at(1), N_OUTPUT_FEATURE_SIZE);
 
   EXPECT_NEAR(double(output_matrix.At({0, 0})), -1.064013785364649, 1);
   EXPECT_NEAR(double(output_matrix.At({0, 1})), -7.6949466236324255, 1);

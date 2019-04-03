@@ -20,17 +20,16 @@
 
 #include "ml/clustering/tsne.hpp"
 
-#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <random>
 #include <sstream>
 
 using namespace fetch::math;
-using namespace fetch::math::distance;
+using namespace fetch::ml;
 
 using DataType  = double;
-using ArrayType = fetch::math::Tensor<DataType>;
+using ArrayType = Tensor<DataType>;
 using SizeType  = typename ArrayType::SizeType;
 
 #include <math/tensor.hpp>
@@ -41,7 +40,7 @@ using SizeType  = typename ArrayType::SizeType;
  * @param matrix output matrix to be filled
  * @param path input Path to file with values
  */
-void ReadFile(fetch::math::Tensor<double> &matrix, std::string const &path)
+void ReadFile(Tensor<DataType> &matrix, std::string const &path)
 {
 
   std::ifstream source;                  // build a read-Stream
@@ -60,7 +59,7 @@ void ReadFile(fetch::math::Tensor<double> &matrix, std::string const &path)
 
     for (std::size_t j = 0; j < matrix.shape().at(1); j++)
     {
-      double num;
+      DataType num;
       in >> num;
       matrix.Set({i, j}, num);
     }
@@ -69,14 +68,21 @@ void ReadFile(fetch::math::Tensor<double> &matrix, std::string const &path)
 
 int main()
 {
-  SizeType n_data_size           = 100;
-  SizeType n_input_feature_size  = 3;
-  SizeType n_output_feature_size = 2;
+  SizeType RANDOM_SEED           = 123456;
+  DataType LEARNING_RATE         = 500;  // (seems very high!)
+  SizeType MAX_ITERS             = 100;
+  DataType PERPLEXITY            = 20;
+  SizeType N_DATA_SIZE           = 100;
+  SizeType N_INPUT_FEATURE_SIZE  = 3;
+  SizeType N_OUTPUT_FEATURE_SIZE = 2;
+  DataType INITITAL_MOMENTUM     = 0.5;
+  DataType FINAL_MOMENTUM        = 0.8;
+  SizeType FINAL_MOMENTUM_STEPS  = 20;
 
-  // high dimensional temson of dims n_data_points x n_featrues
-  Tensor<double> input_matrix({n_data_size, n_input_feature_size});
-  Tensor<double> output_matrix({n_data_size, n_output_feature_size});
+  // high dimensional tensor of dims n_data_points x n_features
+  Tensor<DataType> input_matrix({N_DATA_SIZE, N_INPUT_FEATURE_SIZE});
 
+  // Generate easily separable clusters of data
   for (SizeType i = 0; i < 25; ++i)
   {
     input_matrix.Set({i, 0}, -static_cast<DataType>(i) - 50);
@@ -102,8 +108,9 @@ int main()
     input_matrix.Set({i, 2}, static_cast<DataType>(i) + 50);
   }
 
-  fetch::ml::TSNE<Tensor<double>> tsn(input_matrix, n_output_feature_size, 123456);
-  tsn.Optimize(500, 100);
+  // Initialize TSNE
+  TSNE<Tensor<DataType>> tsn(input_matrix, N_OUTPUT_FEATURE_SIZE, PERPLEXITY, RANDOM_SEED);
+  tsn.Optimize(LEARNING_RATE, MAX_ITERS, INITITAL_MOMENTUM, FINAL_MOMENTUM, FINAL_MOMENTUM_STEPS);
   std::cout << "Result: " << tsn.GetOutputMatrix().ToString() << std::endl;
 
   return 0;

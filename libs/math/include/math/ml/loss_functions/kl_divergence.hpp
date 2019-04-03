@@ -18,8 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "math/distance/conditional_probabilities.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include "math/standard_functions/log.hpp"
-#include <cassert>
+#include <core/assert.hpp>
 
 namespace fetch {
 namespace math {
@@ -33,11 +34,12 @@ namespace math {
  * @return
  */
 template <typename ArrayType>
-typename ArrayType::Type KlDivergence(ArrayType const &a, ArrayType const &b,
-                                      typename ArrayType::Type &ret)
+meta::IfIsMathArray<ArrayType, typename ArrayType::Type> KlDivergence(ArrayType const &         a,
+                                                                      ArrayType const &         b,
+                                                                      typename ArrayType::Type &ret)
 {
   using DataType = typename ArrayType::Type;
-  assert(a.shape().at(0) == b.shape().at(0));
+  ASSERT(a.shape().at(0) == b.shape().at(0));
 
   ret = DataType(0);
   for (std::size_t i = 0; i < a.shape().at(0); i++)
@@ -58,7 +60,8 @@ typename ArrayType::Type KlDivergence(ArrayType const &a, ArrayType const &b,
 }
 
 template <typename ArrayType>
-typename ArrayType::Type KlDivergence(ArrayType const &a, ArrayType const &b)
+meta::IfIsMathArray<ArrayType, typename ArrayType::Type> KlDivergence(ArrayType const &a,
+                                                                      ArrayType const &b)
 {
   typename ArrayType::Type ret;
   KlDivergence(a, b, ret);
