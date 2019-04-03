@@ -34,7 +34,6 @@ namespace ml {
  *  Implementation of T-SNE clustering algorithm based on paper:
  *  http://www.jmlr.org/papers/volume9/vandermaaten08a/vandermaaten08a.pdf
  *  i.e. Algorithm for high dimensional data reduction for visualisation
- *  Algorithm uses
  */
 template <class T>
 class TSNE
