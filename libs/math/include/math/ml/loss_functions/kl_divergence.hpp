@@ -50,7 +50,7 @@ typename ArrayType::Type KlDivergence(ArrayType const &a, ArrayType const &b,
       DataType tmp_p_j_i(distance::ConditionalProbabilitiesDistance(a, i, j, DataType(1)));
       DataType tmp_q_j_i(distance::ConditionalProbabilitiesDistance(b, i, j, DataType(1)));
 
-      ret += Multiply(tmp_p_j_i, Log((Divide(tmp_p_j_i, tmp_q_j_i))));
+      ret += Multiply(tmp_p_j_i, Log(Divide(tmp_p_j_i, tmp_q_j_i)));
     }
   }
 

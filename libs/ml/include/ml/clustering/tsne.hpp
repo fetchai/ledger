@@ -24,7 +24,6 @@
 #include <math/standard_functions/log.hpp>
 #include <math/tensor.hpp>
 
-#include <chrono>
 #include <cmath>
 #include <random>
 
@@ -62,17 +61,17 @@ public:
   void Optimize(const DataType &learning_rate, const SizeType &max_iters)
   {
     // Initialize variables
-    ArrayType output_symmetric_affinities(input_pairwise_affinities.shape());
-    DataType  initial_momentum{0.5f};
-    DataType  final_momentum{0.8f};
-    DataType  min_gain{0.01f};
-    DataType  momentum = initial_momentum;
+    output_symmetric_affinities_.Fill(DataType(0));
+    DataType initial_momentum{0.5f};
+    DataType final_momentum{0.8f};
+    DataType min_gain{0.01f};
+    DataType momentum = initial_momentum;
 
     // i_y is output_matrix value from last iteration
-    ArrayType i_y(output_matrix.shape());
+    ArrayType i_y(output_matrix_.shape());
 
     // Initialize gains with value 1.0
-    ArrayType gains(output_matrix.shape());
+    ArrayType gains(output_matrix_.shape());
     for (SizeType i = 0; i < gains.size(); i++)
     {
       gains.Set(i, DataType(1));
@@ -83,11 +82,11 @@ public:
     {
       // Compute output matrix pairwise affinities
       ArrayType num;
-      CalculateSymmetricAffinitiesQ(output_matrix, output_symmetric_affinities, num);
+      CalculateSymmetricAffinitiesQ(output_matrix_, output_symmetric_affinities_, num);
 
       // Compute gradient
-      ArrayType gradient = ComputeGradient(output_matrix, input_symmetric_affinities,
-                                           output_symmetric_affinities, num);
+      ArrayType gradient = ComputeGradient(output_matrix_, input_symmetric_affinities_,
+                                           output_symmetric_affinities_, num);
 
       // Perform the update
       if (iter >= 20)
@@ -95,9 +94,9 @@ public:
         momentum = final_momentum;
       }
 
-      for (SizeType i = 0; i < output_matrix.shape().at(0); i++)
+      for (SizeType i = 0; i < output_matrix_.shape().at(0); i++)
       {
-        for (SizeType j = 0; j < output_matrix.shape().at(1); j++)
+        for (SizeType j = 0; j < output_matrix_.shape().at(1); j++)
         {
           if ((gradient.At({i, j}) > 0.0) != (i_y.At({i, j}) > 0.0))
           {
@@ -118,31 +117,31 @@ public:
           i_y, fetch::math::Multiply(learning_rate, fetch::math::Multiply(gains, gradient)));
 
       // output_matrix = output_matrix + i_y
-      output_matrix = fetch::math::Add(output_matrix, i_y);
+      output_matrix_ = fetch::math::Add(output_matrix_, i_y);
 
       //  Y = Y - np.tile(np.mean(Y, 0), (n, 1))
-      ArrayType y_mean = fetch::math::Divide(fetch::math::ReduceSum(output_matrix, 0),
-                                             static_cast<DataType>(output_matrix.shape().at(0)));
+      ArrayType y_mean = fetch::math::Divide(fetch::math::ReduceSum(output_matrix_, 0),
+                                             static_cast<DataType>(output_matrix_.shape().at(0)));
 
-      ReducedSubtract(output_matrix, y_mean, output_matrix);
+      ReducedSubtract(output_matrix_, y_mean, output_matrix_);
 
       // Compute current value of cost function
       std::cout << "Loss: "
                 << static_cast<double>(
-                       KlDivergence(input_symmetric_affinities, output_symmetric_affinities))
+                       KlDivergence(input_symmetric_affinities_, output_symmetric_affinities_))
                 << std::endl;
 
       // Later P-values correction
       if (iter == 10)
       {
-        input_symmetric_affinities = fetch::math::Divide(input_symmetric_affinities, DataType(4));
+        input_symmetric_affinities_ = fetch::math::Divide(input_symmetric_affinities_, DataType(4));
       }
     }
   }
 
   const ArrayType GetOutputMatrix() const
   {
-    return output_matrix;
+    return output_matrix_;
   }
 
 private:
@@ -155,29 +154,30 @@ private:
     DataType perplexity_tolerance{1e-5f};
 
     // Initialize high dimensional values
-    this->input_matrix       = input_matrix;
+    input_matrix_            = input_matrix;
     SizeType input_data_size = input_matrix.shape().at(0);
 
     // Find Pj|i values for given perplexity value within perplexity_tolerance
-    input_pairwise_affinities = ArrayType({input_data_size, input_data_size});
-    CalculatePairwiseAffinitiesP(input_matrix, input_pairwise_affinities, perplexity,
+    input_pairwise_affinities_ = ArrayType({input_data_size, input_data_size});
+    CalculatePairwiseAffinitiesP(input_matrix, input_pairwise_affinities_, perplexity,
                                  perplexity_tolerance);
 
     // Calculate input_symmetric_affinities from input_pairwise_affinities
     // Pij=(Pj|i+Pi|j)/sum(Pij)
-    input_symmetric_affinities =
-        fetch::math::Add(input_pairwise_affinities, input_pairwise_affinities.Transpose());
+    input_symmetric_affinities_ =
+        fetch::math::Add(input_pairwise_affinities_, input_pairwise_affinities_.Transpose());
 
-    input_symmetric_affinities = fetch::math::Divide(input_symmetric_affinities,
-                                                     fetch::math::Sum(input_symmetric_affinities));
+    input_symmetric_affinities_ = fetch::math::Divide(
+        input_symmetric_affinities_, fetch::math::Sum(input_symmetric_affinities_));
     // Early exaggeration
-    input_symmetric_affinities = fetch::math::Multiply(input_symmetric_affinities, DataType(4));
+    input_symmetric_affinities_ = fetch::math::Multiply(input_symmetric_affinities_, DataType(4));
 
     // Limit minimum value to 1e-12
-    LimitMin(input_symmetric_affinities, DataType(1e-12));
+    LimitMin(input_symmetric_affinities_, DataType(1e-12));
 
     // Initialize low dimensional values
-    this->output_matrix = output_matrix;
+    output_matrix_               = output_matrix;
+    output_symmetric_affinities_ = ArrayType(input_pairwise_affinities_.shape());
   }
 
   /**
@@ -248,7 +248,7 @@ private:
     // beta = 1/(2*sigma^2)
     // Prefill beta array with 1.0
     ArrayType beta(input_data_size);
-    std::fill(beta.begin(), beta.end(), DataType(1));
+    beta.Fill(DataType(1));
 
     // Calculate entropy value from perplexity
     // DataType target_entropy = std::log(target_perplexity);
@@ -454,7 +454,7 @@ private:
                             ArrayType const &input_symmetric_affinities,
                             ArrayType const &output_symmetric_affinities, ArrayType const &num)
   {
-    assert(input_matrix.shape().at(0) == output_matrix.shape().at(0));
+    assert(input_matrix_.shape().at(0) == output_matrix.shape().at(0));
 
     ArrayType ret(output_matrix.shape());
 
@@ -575,8 +575,9 @@ private:
     }
   }
 
-  ArrayType                  input_matrix, output_matrix;
-  ArrayType                  input_pairwise_affinities, input_symmetric_affinities;
+  ArrayType                  input_matrix_, output_matrix_;
+  ArrayType                  input_pairwise_affinities_, input_symmetric_affinities_;
+  ArrayType                  output_symmetric_affinities_;
   std::default_random_engine rng_;
 };
 
