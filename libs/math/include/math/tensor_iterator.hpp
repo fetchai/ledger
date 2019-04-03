@@ -87,7 +87,7 @@ public:
   static TensorIterator EndIterator(TensorType &array)
   {
     auto ret = TensorIterator(array);
-    ret.size_ = ret.counter_;
+    ret.counter_ = ret.size_;
     return ret;
   }
 
@@ -239,6 +239,11 @@ public:
     return size_;
   }
 
+  SizeType counter() const
+  {
+    return counter_;
+  }
+
   template <typename A, typename B>
   friend bool UpgradeIteratorFromBroadcast(std::vector<SizeType> const &,
                                            TensorIterator<A, B> &);
@@ -265,12 +270,12 @@ public:
 
   bool operator==(TensorIterator const& other) const
   {
-    return other.size_ == size_;
+    return other.counter_ == counter_;
   }
 
   bool operator!=(TensorIterator const& other) const
   {
-    return other.size_ == size_;
+    return other.counter_ != counter_;    
   }  
 protected:
   std::vector<TensorIteratorRange> ranges_;

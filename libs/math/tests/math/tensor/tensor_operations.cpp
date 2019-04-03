@@ -42,7 +42,9 @@ TYPED_TEST(TensorOperationsTest, inline_add_test)
     t1.Set(i, TypeParam(t1Input[i]));
     t2.Set(i, TypeParam(t2Input[i]));
   }
+
   t1.InlineAdd(t2);
+
   for (std::uint64_t i(0); i < 8; ++i)
   {
     EXPECT_EQ(t1.At(i), TypeParam(gtInput[i]));
