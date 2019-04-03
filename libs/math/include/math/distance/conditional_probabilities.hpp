@@ -58,7 +58,9 @@ void ConditionalProbabilitiesDistance(ArrayType const &a, std::size_t i, std::si
   for (size_t k = 0; k < a.shape().at(0); k++)
   {
     if (k == i)
+    {
       continue;
+    }
     typename ArrayType::Type tmp_val = SquareDistance(a.Slice(i), a.Slice(k));
     tmp_val                          = -Divide(tmp_val, 2.0 * sigma * sigma);
     Exp(tmp_val, tmp_val);

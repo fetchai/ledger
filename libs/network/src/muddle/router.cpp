@@ -202,13 +202,14 @@ Packet::Address Router::ConvertAddress(Packet::RawAddress const &address)
  * @param reg The connection register
  */
 Router::Router(NetworkId network_id, Address address, MuddleRegister const &reg,
-               Dispatcher &dispatcher, Prover *prover)
+               Dispatcher &dispatcher, Prover *prover, bool sign_broadcasts)
   : address_(std::move(address))
   , address_raw_(ConvertAddress(address_))
   , register_(reg)
   , dispatcher_(dispatcher)
   , network_id_(std::move(network_id))
   , prover_(prover)
+  , sign_broadcasts_(prover && sign_broadcasts)
   , dispatch_thread_pool_(network::MakeThreadPool(NUMBER_OF_ROUTER_THREADS, "Router"))
 {}
 
@@ -230,12 +231,17 @@ void Router::Stop()
 
 inline bool Router::Genuine(PacketPtr const &p) const
 {
+  if (p->IsBroadcast())
+  {
+    // broadcasts are only verified if really needed
+    return !sign_broadcasts_ || p->Verify();
+  }
   return p->Verify() || !(prover_ || p->IsStamped());
 }
 
 Router::PacketPtr const &Router::Sign(PacketPtr const &p) const
 {
-  if (prover_)
+  if (prover_ && (sign_broadcasts_ || !p->IsBroadcast()))
   {
     p->Sign(*prover_);
   }
@@ -395,6 +401,7 @@ void Router::Broadcast(uint16_t service, uint16_t channel, Payload const &payloa
   auto packet =
       FormatPacket(address_, network_id_, service, channel, counter, DEFAULT_TTL, payload);
   packet->SetBroadcast(true);
+  Sign(packet);
 
   RoutePacket(packet, false);
 }
