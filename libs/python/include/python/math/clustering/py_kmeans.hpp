@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/clustering_algorithms/k_means.hpp"
+#include "math/clustering/k_means.hpp"
 #include "math/tensor.hpp"
 #include "python/fetch_pybind.hpp"
 

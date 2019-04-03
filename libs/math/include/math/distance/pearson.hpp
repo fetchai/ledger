@@ -19,8 +19,6 @@
 
 #include "core/assert.hpp"
 #include "math/correlation/pearson.hpp"
-#include "math/shapeless_array.hpp"
-#include "vectorise/memory/range.hpp"
 
 #include <cmath>
 
@@ -28,19 +26,11 @@ namespace fetch {
 namespace math {
 namespace distance {
 
-template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::Type Pearson(memory::VectorSlice<T, S> const &a,
-                                                        memory::VectorSlice<T, S> const &b)
+template <typename ArrayType>
+inline typename ArrayType::Type Pearson(ArrayType const &a, ArrayType const &b)
 {
-  using Type = typename memory::VectorSlice<T, S>::Type;
-  return Type(1) - correlation::Pearson(a, b);
-}
-
-template <typename T, typename C>
-inline typename ShapelessArray<T, C>::Type Pearson(ShapelessArray<T, C> const &a,
-                                                   ShapelessArray<T, C> const &b)
-{
-  return Pearson(a.data(), b.data());
+  using Type = typename ArrayType::Type;
+  return Type(1) - fetch::math::correlation::Pearson(a, b);
 }
 
 }  // namespace distance

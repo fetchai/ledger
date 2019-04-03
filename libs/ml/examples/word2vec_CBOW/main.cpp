@@ -18,8 +18,8 @@
 
 #include "core/serializers/byte_array_buffer.hpp"
 
-#include "math/free_functions/clustering_algorithms/knn.hpp"
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
+#include "math/clustering/knn.hpp"
+#include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 
 #include "ml/dataloaders/word2vec_loaders/cbow_dataloader.hpp"
@@ -127,7 +127,7 @@ int main(int ac, char **av)
       ArrayType groundTruth(predictions.shape());
       groundTruth.At(data.second) = DataType(1);
 
-      SizeType argmax(SizeType(ArgMax(predictions)));
+      SizeType argmax(SizeType(ArgMax(predictions).At(0)));
       if (iteration % 100 == 0 || argmax == data.second)
       {
         for (unsigned int i(0); i < p.n_data_buffers + 1; ++i)
@@ -159,7 +159,7 @@ int main(int ac, char **av)
     }
     std::cout << "End of epoch " << epoch << std::endl;
 
-    // Print KNN of word "one"
+    // Print KNN of test word
     PrintKNN(dl, *g.StateDict().dict_["Embeddings"].weights_, TEST_WORD, K);
 
     // Save model

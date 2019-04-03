@@ -103,7 +103,7 @@ ConstByteArray ToConstByteArray(Packet::RawAddress const &addr)
   ByteArray buffer;
   buffer.Resize(addr.size());
   std::memcpy(buffer.pointer(), addr.data(), addr.size());
-  return buffer;
+  return std::move(buffer);
 }
 
 /**

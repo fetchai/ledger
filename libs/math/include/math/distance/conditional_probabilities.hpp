@@ -19,8 +19,9 @@
 
 #include "core/assert.hpp"
 #include "math/distance/euclidean.hpp"
-#include "math/free_functions/fundamental_operators.hpp"
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
+#include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
+#include "math/standard_functions/exp.hpp"
 
 #include <cmath>
 

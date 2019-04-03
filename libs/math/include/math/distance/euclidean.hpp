@@ -18,8 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/free_functions/exponentiation/exponentiation.hpp"
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
+#include "math/matrix_operations.hpp"
+#include "math/standard_functions/pow.hpp"
+#include "math/standard_functions/sqrt.hpp"
 #include <cmath>
 
 namespace fetch {
@@ -34,7 +35,7 @@ typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
 
   fetch::math::Subtract(A, B, tmp_array);
 
-  Square(tmp_array, tmp_array);
+  Pow(tmp_array, typename ArrayType::Type(2), tmp_array);
 
   return fetch::math::Sum(tmp_array);
 }
