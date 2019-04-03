@@ -565,9 +565,20 @@ public:
    */
   SelfType InlineAdd(Tensor const &other)
   {
-    Add(*this, other, *this);
+    auto it1 = this->begin();
+    auto it2 = other.begin();
+    auto endit = this->end();
+
+    while (it1 != endit)
+      {
+	*it1 += *it2;
+	++it1;
+	++it2;
+      }
+    
     return *this;
   }
+  
   /**
    * adds a scalar to every element in the array and returns the new output
    * @param scalar to add
