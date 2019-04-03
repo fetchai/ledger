@@ -89,54 +89,6 @@ template <typename ArrayType, typename T>
 /// ADDITIONS ///
 /////////////////
 
-//////////////////
-/// INTERFACES ///
-//////////////////
-
-template <typename S>
-meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
-{
-  S ret;
-  Add(scalar1, scalar2, ret);
-  return ret;
-}
-template <typename S>
-meta::IfIsFixedPoint<S, S> Add(S const &scalar1, S const &scalar2)
-{
-  S ret;
-  Add(scalar1, scalar2, ret);
-  return ret;
-}
-
-template <typename T, typename ArrayType, typename = std::enable_if_t<meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
-{
-  ArrayType ret{array.shape()};
-  Add(array, scalar, ret);
-  return ret;
-}
-template <typename T, typename ArrayType,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, ArrayType> Add(T const &scalar, ArrayType const &array)
-{
-  return Add(array, scalar);
-}
-
-template <typename T, typename ArrayType,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, void> Add(T const &scalar, ArrayType const &array, ArrayType &ret)
-{
-  ret = Add(array, scalar, ret);
-}
-template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2)
-{
-  assert(array1.shape() == array2.shape());
-  ArrayType ret{array1.shape()};
-  Add(array1, array2, ret);
-  return ret;
-}
-
 ///////////////////////
 /// IMPLEMENTATIONS ///
 ///////////////////////
@@ -184,6 +136,46 @@ meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType cons
   {
     ret.At(i) = array1.At(i) + array2.At(i);
   }
+}
+
+//////////////////
+/// INTERFACES ///
+//////////////////
+
+template <typename S>
+meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
+{
+  S ret;
+  Add(scalar1, scalar2, ret);
+  return ret;
+}
+template <typename T, typename ArrayType, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
+{
+  ArrayType ret{array.shape()};
+  Add(array, scalar, ret);
+  return ret;
+}
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
+meta::IfIsMathArray<ArrayType, ArrayType> Add(T const &scalar, ArrayType const &array)
+{
+  return Add(array, scalar);
+}
+
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
+meta::IfIsMathArray<ArrayType, void> Add(T const &scalar, ArrayType const &array, ArrayType &ret)
+{
+  ret = Add(array, scalar, ret);
+}
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2)
+{
+  assert(array1.shape() == array2.shape());
+  ArrayType ret{array1.shape()};
+  Add(array1, array2, ret);
+  return ret;
 }
 
 //////////////////////////
