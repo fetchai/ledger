@@ -40,13 +40,13 @@ public:
 
   static constexpr char const *DESCRIPTOR = "TSNE";
 
-  TSNE(const ArrayType &input_matrix, const ArrayType &output_matrix, const DataType &perplexity)
+  TSNE(ArrayType const &input_matrix, ArrayType const &output_matrix, DataType const &perplexity)
   {
     Init(input_matrix, output_matrix, perplexity);
   }
 
-  TSNE(const ArrayType &input_matrix, const SizeType &output_dimensions, const DataType &perplexity,
-       const SizeType random_seed)
+  TSNE(ArrayType const &input_matrix, SizeType const &output_dimensions, DataType const &perplexity,
+       SizeType const &random_seed)
   {
     ArrayType output_matrix({input_matrix.shape().at(0), output_dimensions});
     rng_.seed(random_seed);
@@ -59,9 +59,9 @@ public:
    * @param learning_rate input Learning rate
    * @param max_iters input Number of optimization iterations
    */
-  void Optimize(const DataType &learning_rate, const SizeType &max_iters,
-                const DataType &initial_momentum, const DataType &final_momentum,
-                const SizeType &final_momentum_steps)
+  void Optimize(DataType const &learning_rate, SizeType const &max_iters,
+                DataType const &initial_momentum, DataType const &final_momentum,
+                SizeType const &final_momentum_steps)
   {
     // Initialize variables
     output_symmetric_affinities_.Fill(DataType(0));
@@ -73,13 +73,13 @@ public:
 
     // Initialize gains with value 1.0
     ArrayType gains(output_matrix_.shape());
-    for (SizeType i = 0; i < gains.size(); i++)
+    for (SizeType i{0}; i < gains.size(); i++)
     {
       gains.Set(i, DataType(1));
     }
 
     // Start optimization
-    for (SizeType iter = 0; iter < max_iters; iter++)
+    for (SizeType iter{0}; iter < max_iters; iter++)
     {
       // Compute output matrix pairwise affinities
       ArrayType num;
@@ -95,9 +95,9 @@ public:
         momentum = final_momentum;
       }
 
-      for (SizeType i = 0; i < output_matrix_.shape().at(0); i++)
+      for (SizeType i{0}; i < output_matrix_.shape().at(0); i++)
       {
-        for (SizeType j = 0; j < output_matrix_.shape().at(1); j++)
+        for (SizeType j{0}; j < output_matrix_.shape().at(1); j++)
         {
           if ((gradient.At({i, j}) > 0.0) != (i_y.At({i, j}) > 0.0))
           {
@@ -124,7 +124,7 @@ public:
       ArrayType y_mean = fetch::math::Divide(fetch::math::ReduceSum(output_matrix_, 0),
                                              static_cast<DataType>(output_matrix_.shape().at(0)));
 
-      ReducedSubtract(output_matrix_, y_mean, output_matrix_);
+      fetch::math::Subtract(output_matrix_, y_mean, output_matrix_);
 
       // Compute current value of cost function
       std::cout << "Loss: "
@@ -149,8 +149,8 @@ private:
   /**
    * i.e. Sets initial values of TSNE and calculate P values
    */
-  void Init(const ArrayType &input_matrix, const ArrayType &output_matrix,
-            const DataType &perplexity)
+  void Init(ArrayType const &input_matrix, ArrayType const &output_matrix,
+            DataType const &perplexity)
   {
     DataType perplexity_tolerance{1e-5f};
 
@@ -188,7 +188,7 @@ private:
   void RandomInitWeights(ArrayType &output_matrix)
   {
 
-    for (SizeType i = 0; i < output_matrix.size(); i++)
+    for (SizeType i{0}; i < output_matrix.size(); i++)
     {
       output_matrix.Set(i, GetRandom(DataType(0), DataType(1)));
     }
@@ -202,8 +202,8 @@ private:
    * @param beta beta = 1/(2*sigma^2)
    * @param k i value excluded from sums from p(i,i)
    */
-  void Hbeta(const ArrayType &d, ArrayType &p, DataType &entropy, const DataType &beta,
-             const SizeType &k)
+  void Hbeta(ArrayType const &d, ArrayType &p, DataType &entropy, DataType const &beta,
+             SizeType const &k)
   {
     // P = np.exp(-D.copy() * beta)
     p = Gaussian(fetch::math::Multiply(d, beta));
@@ -228,8 +228,8 @@ private:
    * @param target_perplexity input Target perplexity value
    * @param tolerance input Tolerance of perplexity value
    */
-  void CalculatePairwiseAffinitiesP(const ArrayType &input_matrix, ArrayType &pairwise_affinities,
-                                    const DataType &target_perplexity, const DataType &tolerance)
+  void CalculatePairwiseAffinitiesP(ArrayType const &input_matrix, ArrayType &pairwise_affinities,
+                                    DataType const &target_perplexity, DataType const &tolerance)
   {
 
     SizeType input_data_size = input_matrix.shape().at(0);
@@ -244,7 +244,7 @@ private:
     // D = np.add(np.add(-2 * np.dot(X, X.T), sum_X).T, sum_X)
     ArrayType d =
         fetch::math::Multiply(DataType(-2), fetch::math::DotTranspose(input_matrix, input_matrix));
-    d = ReducedAdd(ReducedAdd(d, sum_x).Transpose(), sum_x);
+    d = fetch::math::Add(fetch::math::Add(d, sum_x).Transpose(), sum_x);
 
     // beta = 1/(2*sigma^2)
     // Prefill beta array with 1.0
@@ -259,7 +259,7 @@ private:
      * Loop over all datapoints
      */
 
-    for (SizeType i = 0; i < input_data_size; i++)
+    for (SizeType i{0}; i < input_data_size; i++)
     {
 
       // Compute the Gaussian kernel and entropy for the current precision
@@ -315,7 +315,7 @@ private:
       }
 
       //  Set the final row of pairwise affinities
-      for (SizeType j = 0; j < pairwise_affinities.shape().at(1); j++)
+      for (SizeType j{0}; j < pairwise_affinities.shape().at(1); j++)
       {
         if (i == j)
         {
@@ -333,7 +333,7 @@ private:
    * @param output_symmetric_affinities output Q values
    * @param num output Precalculated values of Student-t based distribution
    */
-  void CalculateSymmetricAffinitiesQ(const ArrayType &output_matrix,
+  void CalculateSymmetricAffinitiesQ(ArrayType const &output_matrix,
                                      ArrayType &output_symmetric_affinities, ArrayType &num)
   {
     /*
@@ -350,18 +350,9 @@ private:
                                 fetch::math::DotTranspose(output_matrix, output_matrix));
 
     // num = 1. / (1. + np.add(np.add(num, sum_Y).T, sum_Y))
-    // Optimize
-    ArrayType tmp_val(num.shape());
+    ArrayType tmp_val(fetch::math::Add(num, sum_Y));
 
-    for (SizeType i = 0; i < num.shape().at(0); i++)
-    {
-      for (SizeType j = 0; j < num.shape().at(1); j++)
-      {
-        tmp_val.Set({i, j}, num.At({i, j}) + sum_Y.At(i));
-      }
-    }
-
-    for (SizeType i = 0; i < sum_Y.size(); i++)
+    for (SizeType i{0}; i < sum_Y.size(); i++)
     {
       for (SizeType j = 0; j < tmp_val.shape().at(1); j++)
       {
@@ -370,7 +361,7 @@ private:
     }
 
     // num[range(n), range(n)] = 0.
-    for (SizeType i = 0; i < num.shape().at(0); i++)
+    for (SizeType i{0}; i < num.shape().at(0); i++)
     {
       num.Set({i, i}, DataType(0));
     }
@@ -398,7 +389,7 @@ private:
   ArrayType Gaussian(ArrayType const &a)
   {
     ArrayType ret(a.shape());
-    for (SizeType i = 0; i < a.size(); i++)
+    for (SizeType i{0}; i < a.size(); i++)
     {
 
       DataType tmp_val;
@@ -425,9 +416,9 @@ private:
     assert(input_pairwise_affinities.shape() == output_pairwise_affinities.shape());
 
     DataType ret{0};
-    for (SizeType j = 0; j < input_pairwise_affinities.shape().at(0); j++)
+    for (SizeType j{0}; j < input_pairwise_affinities.shape().at(0); j++)
     {
-      for (SizeType i = 0; i < input_pairwise_affinities.shape().at(0); i++)
+      for (SizeType i{0}; i < input_pairwise_affinities.shape().at(0); i++)
       {
         if (i == j)
           continue;
@@ -459,11 +450,11 @@ private:
 
     ArrayType ret(output_matrix.shape());
 
-    for (SizeType i = 0; i < output_matrix.shape().at(0); i++)
+    for (SizeType i{0}; i < output_matrix.shape().at(0); i++)
     {
 
       ArrayType tmp_slice(output_matrix.shape().at(1));
-      for (SizeType j = 0; j < output_matrix.shape().at(0); j++)
+      for (SizeType j{0}; j < output_matrix.shape().at(0); j++)
       {
         if (i == j)
           continue;
@@ -491,85 +482,15 @@ private:
     return ret;
   }
 
-  // Functions that can be dragged to math library
-
-  void ReducedAdd(const ArrayType &a, const ArrayType &b, ArrayType &ret)
-  {
-    assert(a.shape().at(0) == b.shape().at(0) || a.shape().at(1) == b.shape().at(1));
-
-    if (b.shape().at(1) == 1)
-    {
-      for (SizeType i = 0; i < a.shape().at(0); i++)
-      {
-        for (SizeType j = 0; j < a.shape().at(1); j++)
-        {
-          ret.Set({i, j}, a.At({i, j}) + b.At(i));
-        }
-      }
-    }
-
-    if (b.shape().at(0) == 1)
-    {
-      for (SizeType i = 0; i < a.shape().at(0); i++)
-      {
-        for (SizeType j = 0; j < a.shape().at(1); j++)
-        {
-          ret.Set({i, j}, a.At({i, j}) + b.At(j));
-        }
-      }
-    }
-  }
-
-  ArrayType ReducedAdd(const ArrayType &a, const ArrayType &b)
-  {
-    ArrayType ret(a.shape());
-    ReducedAdd(a, b, ret);
-    return ret;
-  }
-
-  void ReducedSubtract(const ArrayType &a, const ArrayType &b, ArrayType &ret)
-  {
-    assert(a.shape().at(0) == b.shape().at(0) || a.shape().at(1) == b.shape().at(1));
-
-    if (b.shape().at(1) == 1)
-    {
-      for (SizeType i = 0; i < a.shape().at(0); i++)
-      {
-        for (SizeType j = 0; j < a.shape().at(1); j++)
-        {
-          ret.Set({i, j}, a.At({i, j}) - b.At(i));
-        }
-      }
-    }
-
-    if (b.shape().at(0) == 1)
-    {
-      for (SizeType i = 0; i < a.shape().at(0); i++)
-      {
-        for (SizeType j = 0; j < a.shape().at(1); j++)
-        {
-          ret.Set({i, j}, a.At({i, j}) - b.At(j));
-        }
-      }
-    }
-  }
-
-  ArrayType ReducedSubtract(const ArrayType &a, const ArrayType &b)
-  {
-    ArrayType ret(a.shape());
-    ReducedSubtract(a, b, ret);
-    return ret;
-  }
-
   /**
    * i.e. if any value of input matrix is lower than min, sets it to min
    * @param matrix input tensor
    * @param min limit value to be applied
    * @return
    */
-  void LimitMin(ArrayType &matrix, DataType min)
+  void LimitMin(ArrayType &matrix, DataType const &min)
   {
-    for (SizeType i = 0; i < matrix.size(); i++)
+    for (SizeType i{0}; i < matrix.size(); i++)
     {
       if (matrix.At(i) < min)
         matrix.Set(i, min);
