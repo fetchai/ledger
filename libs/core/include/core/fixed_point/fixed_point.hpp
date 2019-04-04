@@ -245,7 +245,7 @@ public:
   explicit FixedPoint(T n, meta::IfIsFloat<T> * = nullptr)
     : data_(static_cast<Type>(n * CONST_ONE))
   {
-    assert(details::CheckNoOverflow(n, FRANCTIONAL_BITS, total_bits));
+    assert(details::CheckNoOverflow(n, FRANCTIONAL_BITS, TOTAL_BITS));
     // TODO(private, 629)
     // assert(details::CheckNoRounding(n, FRANCTIONAL_BITS));
   }

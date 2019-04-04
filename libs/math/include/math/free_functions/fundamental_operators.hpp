@@ -166,7 +166,7 @@ template <typename T, typename ArrayType,
           typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsNonBlasArray<ArrayType, void> Add(ArrayType const &array, T const &scalar, ArrayType &ret)
 {
-  assert(array1.shape() == ret.shape());
+  assert(array.shape() == ret.shape());
 
   auto it1 = array.cbegin();
   auto eit1 = array.cend();  
@@ -412,7 +412,7 @@ template <typename ArrayType, typename T,
 meta::IfIsNonBlasArray<ArrayType, void> Subtract(ArrayType const &array, T const &scalar,
                                                  ArrayType &ret)
 {
-  assert(array1.shape() == ret.shape());
+  assert(array.shape() == ret.shape());
 
   auto it1 = array.cbegin();
   auto eit1 = array.cend();  
@@ -956,7 +956,7 @@ template <typename ArrayType, typename T,
 meta::IfIsNonBlasArray<ArrayType, void> Divide(ArrayType const &array, T const &scalar,
                                                ArrayType &ret)
 {
-  assert(array1.shape() == ret.shape());
+  assert(array.shape() == ret.shape());
 
   auto it1 = array.cbegin();
   auto eit1 = array.cend();  

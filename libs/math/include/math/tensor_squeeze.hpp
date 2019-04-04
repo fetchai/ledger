@@ -111,6 +111,27 @@ void Squeeze(Tensor<T, C> &arr, SizeSet const &axes)
   arr.Reshape(newshape);
 }
 
+namespace reduce_details
+{
+  template <typename F, typename T, typename C>
+  inline void Reduce(F fnc, ConstTensorIterator<T, C> &it_a, TensorIterator<T, C> &it_b, SizeType const &N)
+  {
+    while (bool(it_a) && bool(it_b))
+    {
+
+      *it_b = *it_a;
+      ++it_a;
+
+      for (SizeType i = 0; i < N - 1; ++i)
+      {
+        *it_b = fnc(*it_b, *it_a);
+        ++it_a;
+      }
+      ++it_b;
+    }
+  }
+}
+
 /* Reduce an Tensor by one dimension.
  * @param fnc is the reduction function.
  * @param input is the array the input array.
@@ -122,9 +143,9 @@ inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeT
 {
   SizeType N;
 
-  SizeType              k = 1;
-  SizeVector out_shape;
-  for (SizeType i = 0; i < input.shape().size(); ++i)
+  SizeType              k{1};
+  SizeVector out_shape{1};
+  for (SizeType i{0}; i < input.shape().size(); ++i)
   {
     if (i != axis)
     {
@@ -147,19 +168,7 @@ inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeT
 
   N = it_a.range(0).total_steps;
 
-  while (bool(it_a) && bool(it_b))
-  {
-
-    *it_b = *it_a;
-    ++it_a;
-
-    for (SizeType i = 0; i < N - 1; ++i)
-    {
-      *it_b = fnc(*it_b, *it_a);
-      ++it_a;
-    }
-    ++it_b;
-  }
+  reduce_details::Reduce(fnc, it_a, it_b, N);
 }
 
 /* Reduce an Tensor by one dimension.
@@ -201,20 +210,10 @@ inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeV
     N *= it_a.range(i).total_steps;
   }
 
-  while (bool(it_a) && bool(it_b))
-  {
+  reduce_details::Reduce(fnc, it_a, it_b, N);
 
-    *it_b = *it_a;
-    ++it_a;
-
-    for (SizeType i = 0; i < N - 1; ++i)
-    {
-      *it_b = fnc(*it_b, *it_a);
-      ++it_a;
-    }
-    ++it_b;
-  }
 }
+
 
 }  // namespace math
 }  // namespace fetch

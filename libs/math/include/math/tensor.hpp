@@ -31,28 +31,23 @@
 
 #include <numeric>
 #include <utility>
-#include <vector>
 
 
-
-// OLD
-#include "core/assert.hpp"
-#include "math/free_functions/standard_functions/abs.hpp"
-#include "tensor_iterator2.hpp"
-#include "shapeless_array.hpp"
-
-#include "core/random/lcg.hpp"
-
-#include <iostream>
-#include <memory>
-#include <numeric>
-#include <random>
-#include <vector>
+//
+//// OLD
+//#include "core/assert.hpp"
+//#include "math/free_functions/standard_functions/abs.hpp"
+//#include "tensor_iterator2.hpp"
+//#include "shapeless_array.hpp"
+//
+//#include "core/random/lcg.hpp"
+//
+//#include <iostream>
+//#include <memory>
+//#include <random>
 
 namespace fetch {
 namespace math {
-
-
 
 template <typename T, typename C = memory::SharedArray<T>>
 class Tensor : public ShapelessArray<T, C>
@@ -65,9 +60,8 @@ public:
   using SelfType             = Tensor<T, C>;
   using IteratorType         = TensorIterator<T, typename SelfType::ContainerType>;
   using ConstIteratorType    = ConstTensorIterator<T, typename SelfType::ContainerType>; 
-  using SizeType             = uint64_t;
-  using SizeVector           = std::vector< SizeType >;
-  // SizeVector
+  using SizeType             = fetch::math::SizeType;
+  using SizeVector           = fetch::math::SizeVector;
 
   enum MAJOR_ORDER
   {
@@ -279,7 +273,7 @@ public:
   }
   Type operator()(SizeType const &index) const
   {
-    assert(index == size_);
+    assert(index == this->size_);
     return this->operator[](index);
   }
 
@@ -428,8 +422,12 @@ public:
    * @param array_view
    * @return
    */
-  SelfType GetRange(TensorView array_view) const
+  SelfType GetRange(SizeVector &from, SizeVector &to, SizeVector &step) const
   {
+    TensorView array_view;
+    array_view.from = from;
+    array_view.to = to;
+    array_view.step = step;
     SizeVector new_shape;
 
     // instantiate new array of the right shape
@@ -744,7 +742,7 @@ public:
    * returns the current major order of the array
    * @return
    */
-  MAJOR_ORDER MajorOrder()
+  MAJOR_ORDER MajorOrder() const
   {
     return major_order_;
   }
@@ -820,8 +818,57 @@ public:
 
   } 
 
+  /**
+   * useful for printing tensor contents
+   * @return
+   */
+  std::string ToString() const
+  {
+    std::stringstream ss;
+    ss << std::setprecision(5) << std::fixed << std::showpos;
+    if (shape_.size() == 1)
+    {
+      for (SizeType i(0); i < shape_[0]; ++i)
+      {
+        ss << At(i) << "\t";
+      }
+    }
+    if (shape_.size() == 2)
+    {
+      for (SizeType i(0); i < shape_[0]; ++i)
+      {
+        for (SizeType j(0); j < shape_[1]; ++j)
+        {
+          ss << At({i, j}) << "\t";
+        }
+        ss << "\n";
+      }
+    }
+    return ss.str();
+  }
+
+  /**
+   * find index of value in tensor. If it's not there return max_val
+   * @param val
+   * @return
+   */
+  SizeType Find(Type val) const
+  {
+    SizeType idx{0};
+    for (auto cur_val : *this)
+    {
+      if (cur_val == val)
+      {
+        return idx;
+      }
+      ++idx;
+    }
+    return std::numeric_limits<SizeType>::max();
+  }
+
+
 private:
-  SizeType              size_ = 0;
+//  SizeType              size_ = 0;
   SizeVector shape_;
   MAJOR_ORDER major_order_ = COLUMN;
 
@@ -957,608 +1004,608 @@ private:
 
 
 
-
-
-
-template <typename T>
-class Tensor2
-{
-public:
-  using Type                             = T;
-  using SizeType                         = std::uint64_t;
-  using SelfType                         = Tensor2<T>;
-  using SharedArray                      = memory::SharedArray<T>;
-  using StorageType                      = ShapelessArray<T, SharedArray >;
-  using SizeVector                       = std::vector< SizeType >;
-  static const SizeType DefaultAlignment = 8;  // Arbitrary picked
-
-public:
-  Tensor2(SizeVector            shape   = SizeVector (),
-         SizeVector            strides = SizeVector (),
-         SizeVector            padding = SizeVector (),
-         StorageType           storage = StorageType{}, 
-         SizeType               offset = 0)
-    : shape_(std::move(shape))
-    , padding_(std::move(padding))
-    , input_strides_(std::move(strides))
-    , storage_(std::move(storage))
-    , offset_(offset)
-  {
-    ASSERT(padding.empty() || padding.size() == shape.size());
-    ASSERT(strides.empty() || strides.size() == shape.size());
-    Init(input_strides_, padding_);
-  }
-
-  Tensor2(SizeType size)
-    : shape_({size})
-  {
-    Init(strides_, padding_);
-  }
-
-  Tensor2(Tensor2 const &t)     = default;
-  Tensor2(Tensor2 &&t) = default;
-  Tensor2 &operator=(Tensor2 const &other) = default;
-  Tensor2 &operator=(Tensor2 &&) = default;
-
-  template <typename S, typename U>
-  friend void Serialize(S &serializer, Tensor2<U> const &t) 
-  {
-    serializer << t.shape_;
-    serializer << t.strides_;
-    serializer << t.padding_;
-    serializer << t.offset_;
-
-    serializer << t.data().size();
-    for(std::size_t i=0; i < t.data().size(); ++i)
-    {
-      serializer << t.data()[i];
-    }
-
-  }
-
-  template <typename S, typename U>
-  friend void Deserialize(S &serializer, Tensor2<U> &t)
-  {
-    using StorageType = typename math::Tensor2<U>::StorageType;  
-
-    serializer >> t.shape_;
-    serializer >> t.strides_;
-    serializer >> t.padding_;
-    serializer >> t.offset_;
-    serializer >> t.size_;
-
-    StorageType storage;
-    storage.Resize(t.size_);
-
-    for(std::size_t i=0; i < t.data().size(); ++i)
-    {
-      serializer >> storage[i];
-    }
-    t.storage_ = storage;
-
-  //  t = math::Tensor2<U>(shape, strides, padding, storage, offset);
-  }  
-  /**
-   * Returns a deep copy of this tensor2
-   * @return
-   */
-
-  SelfType Clone() const
-  {
-    SelfType copy;
-
-    copy.shape_   = this->shape_;
-    copy.padding_ = this->padding_;
-    copy.strides_ = this->strides_;
-    copy.offset_  = this->offset_;
-    copy.size_    = this->size_;
-
-    copy.storage_ = storage_.Copy();
-
-    return copy;
-  }
-
-  /**
-   * Copy data from another tensor2 into this one
-   * assumes relevant stride/offset etc. are still applicable
-   * @param other
-   * @return
-   */
-  void Copy(SelfType const &other)
-  {
-    assert(other.size() == this->size());
-
-    storage_ = other.storage_.Copy();
-  }
-
-  // TODO(private, 520) fix capitalisation (kepping it consistent with Tensor for now)
-  SizeVector  const &shape() const
-  {
-    return shape_;
-  }
-
-  SizeType Capacity() const
-  {
-    return storage_.size();
-  }
-
-  // TODO(private, 520): fix capitalisation (kepping it consistent with Tensor for now)
-  SizeType size() const
-  {
-    return size_;
-  }
-
-  /**
-   * Return the coordinates of the nth element in N dimensions
-   * @param element     ordinal position of the element we want
-   * @return            coordinate of said element in the tensor2
-   */
-  SizeVector  IndicesOfElement(SizeType element) const
-  {
-    ASSERT(element < size());
-    SizeVector  results(shape_.size());
-    results.back() = element;
-    for (SizeType i(shape_.size() - 1); i > 0; --i)
-    {
-      results[i - 1] = results[i] / shape_[i];
-      results[i] %= shape_[i];
-    }
-    return results;
-  }
-
-  /**
-   * Return the offset of element at specified coordinates in the low level memory array
-   * @param indices     coordinate of requested element in the tensor2
-   * @return            offset in low level memory array
-   */
-  SizeType OffsetOfElement(SizeVector  const &indices) const
-  {
-    SizeType index(offset_);
-    for (SizeType i(0); i < indices.size(); ++i)
-    {
-      ASSERT(indices[i] < shape_[i]);
-      index += indices[i] * DimensionSize(i);
-    }
-    return index;
-  }
-
-  void Fill(T const &value)
-  {
-    for (SizeType i(0); i < size(); ++i)
-    {
-      At(i) = value;
-    }
-  }
-
-
-
-  /////////////////
-  /// Iterators ///
-  /////////////////
-
-  TensorIterator2<T, SizeType> begin() const  // Need to stay lowercase for range basedloops
-  {
-    return TensorIterator2<T, SizeType>(shape_, strides_, padding_,
-                                       SizeVector (shape_.size()), storage_, offset_);
-  }
-
-  TensorIterator2<T, SizeType> end() const  // Need to stay lowercase for range basedloops
-  {
-    SizeVector  endCoordinate(shape_.size());
-    endCoordinate[0] = shape_[0];
-    return TensorIterator2<T, SizeType>(shape_, strides_, padding_, endCoordinate, storage_,
-                                       offset_);
-  }
-
-  /////////////////
-  /// ACCESSORS ///
-  /////////////////
-
-  T &At(SizeType i)
-  {
-    return storage_[OffsetOfElement(IndicesOfElement(i))];
-  }
-
-  T const &At(SizeType i) const
-  {
-    return storage_[OffsetOfElement(IndicesOfElement(i))];
-  }
-
-  T const &operator()(SizeVector  const &indices) const
-  {
-    return At(indices);
-  }
-
-  T const &At(SizeVector  const &indices) const
-  {
-    return storage_[OffsetOfElement(indices)];
-  }
-
-  T &At(SizeVector  const &indices)
-  {
-    return storage_[OffsetOfElement(indices)];
-  }
-
-  ///////////////
-  /// SETTERS ///
-  ///////////////
-
-  void Set(SizeVector  const &indices, T value)
-  {
-    storage_[OffsetOfElement(indices)] = value;
-  }
-
-  void Set(SizeType i, T value)
-  {
-    storage_[OffsetOfElement(IndicesOfElement(i))] = value;
-  }
-
-  T &operator[](SizeType i)
-  {
-    return At(i);
-  }
-
-  T const &operator[](SizeType i) const
-  {
-    return At(i);
-  }
-
-  /*
-   * return a slice of the tensor2 along the first dimension
-   */
-  Tensor2<T> Slice(SizeType i) const
-  {
-    assert(shape_.size() > 1 && i < shape_[0]);
-    Tensor2<T> ret(SizeVector (std::next(shape_.begin()), shape_.end()),     /* shape */
-                  SizeVector (std::next(strides_.begin()), strides_.end()), /* stride */
-                  SizeVector (std::next(padding_.begin()), padding_.end()), /* padding */
-                  storage_, offset_ + i * DimensionSize(0));
-    ret.strides_ = SizeVector (std::next(strides_.begin()), strides_.end());
-    ret.padding_ = SizeVector (std::next(padding_.begin()), padding_.end());
-    return ret;
-  }
-
-  /*
-   * Add a dummy leading dimension
-   * Ex: [4, 5, 6].Unsqueeze() -> [1, 4, 5, 6]
-   */
-  
-  Tensor2<T> &Unsqueeze()
-  {
-    shape_.insert(shape_.begin(), 1);
-    strides_.insert(strides_.begin(), strides_.front() * shape_[1]);
-    padding_.insert(padding_.begin(), 0);
-    return *this;
-  }
-  
-  /*
-   * Inverse of unsqueze : Collapse a empty leading dimension
-   */
-  /*
-  Tensor2<T>& Squeeze()
-  {
-    if (shape_.front() == 1)
-    {
-      shape_.erase(shape_.begin());
-      strides_.erase(strides_.begin());
-      padding_.erase(padding_.begin());
-    }
-    else
-    {
-      throw std::runtime_error("Can't squeeze tensor2 with leading dimension of size " +
-                               std::to_string(shape_[0]));
-    }
-    return *this;
-  }
-*/
-  bool AllClose(Tensor2<T> const &o, T const &relative_tolerance = T(1e-5),
-                T const &absolute_tolerance = T(1e-8)) const
-  {
-    // Only enforcing number of elements
-    // we allow for different shapes as long as element are in same order
-    ASSERT(o.size() == size());
-    for (SizeType i(0); i < size(); ++i)
-    {
-      T e1 = At(IndicesOfElement(i));
-      T e2 = o.At(o.IndicesOfElement(i));
-
-      T abs_e1 = e1;
-      fetch::math::Abs(abs_e1, abs_e1);
-      T abs_e2 = e2;
-      fetch::math::Abs(abs_e2, abs_e2);
-      T abs_diff = e1 - e2;
-      fetch::math::Abs(abs_diff, abs_diff);
-      T tolerance = std::max(absolute_tolerance, std::max(abs_e1, abs_e2) * relative_tolerance);
-      if (abs_diff > tolerance)
-      {
-        std::cout << "AllClose[" << i << "] - " << e1 << " != " << e2 << std::endl;
-        return false;
-      }
-    }
-    return true;
-  }
-
-  Tensor2<T> &InlineAdd(T const &o)
-  {
-    for (T &e : *this)
-    {
-      e += o;
-    }
-    return *this;
-  }
-
-  Tensor2<T> &InlineAdd(Tensor2<T> const &o)
-  {
-    assert(size() == o.size());
-    auto it1 = this->begin();
-    auto end = this->end();
-    auto it2 = o.begin();
-
-    while (it1 != end)
-    {
-      *it1 += *it2;
-      ++it1;
-      ++it2;
-    }
-    return *this;
-  }
-
-  Tensor2<T> &InlineSubtract(T const &o)
-  {
-    for (T &e : *this)
-    {
-      e -= o;
-    }
-    return *this;
-  }
-
-  Tensor2<T> &InlineSubtract(Tensor2<T> const &o)
-  {
-    assert(size() == o.size());
-    auto it1 = this->begin();
-    auto end = this->end();
-    auto it2 = o.begin();
-
-    while (it1 != end)
-    {
-      *it1 -= *it2;
-      ++it1;
-      ++it2;
-    }
-    return *this;
-  }
-
-  Tensor2<T> &InlineReverseSubtract(Tensor2<T> const &o)
-  {
-    assert(size() == o.size());
-    for (SizeType i(0); i < size(); ++i)
-    {
-      At(i) = o.At(i) - At(i);
-    }
-    return *this;
-  }
-
-  Tensor2<T> &InlineMultiply(T const &o)
-  {
-    for (T &e : *this)
-    {
-      e *= o;
-    }
-    return *this;
-  }
-
-  Tensor2<T> &InlineMultiply(Tensor2<T> const &o)
-  {
-    assert(size() == o.size());
-    auto it1 = this->begin();
-    auto end = this->end();
-    auto it2 = o.begin();
-
-    while (it1 != end)
-    {
-      *it1 *= *it2;
-      ++it1;
-      ++it2;
-    }
-    return *this;
-  }
-
-  Tensor2<T> &InlineDivide(T const &o)
-  {
-    for (T &e : *this)
-    {
-      e /= o;
-    }
-    return *this;
-  }
-
-  Tensor2<T> &InlineDivide(Tensor2<T> const &o)
-  {
-    assert(size() == o.size());
-    auto it1 = this->begin();
-    auto end = this->end();
-    auto it2 = o.begin();
-
-    while (it1 != end)
-    {
-      *it1 /= *it2;
-      ++it1;
-      ++it2;
-    }
-    return *this;
-  }
-
-  T Sum() const
-  {
-    return std::accumulate(begin(), end(), T(0));
-  }
-  
-
-  Tensor2<T> Transpose() const
-  {
-    assert(shape_.size() == 2);
-    Tensor2<T> ret(SizeVector ({shape_[1], shape_[0]}), // shape 
-                  SizeVector (),                       // stride 
-                  SizeVector (),                       // padding 
-                  storage_, offset_);
-    ret.strides_ = SizeVector (strides_.rbegin(), strides_.rend());
-    ret.padding_ = SizeVector (padding_.rbegin(), padding_.rend());
-    return ret;
-  }
-
-  /**
-   * randomly reassigns the data within the tensor2 - expensive method since it requires data copy
-   */
-/*  
-  void Shuffle() // TODO: Really poor implementation
-  {
-    std::default_random_engine rng{};
-    SizeVector       idxs(size());
-    std::iota(std::begin(idxs), std::end(idxs), 0);
-    std::shuffle(idxs.begin(), idxs.end(), rng);
-
-    // instantiate new tensor2 with copy of data
-    Tensor2<Type> tmp = this->Clone();
-
-    // copy data back according to shuffle
-    for (std::size_t j = 0; j < tmp.size(); ++j)
-    {
-      this->Set(j, tmp.At(idxs[j]));
-    }
-  }
-  */
-
-  std::string ToString() const
-  {
-    std::stringstream ss;
-    ss << std::setprecision(5) << std::fixed << std::showpos;
-    if (shape_.size() == 1)
-    {
-      for (SizeType i(0); i < shape_[0]; ++i)
-      {
-        ss << At(i) << "\t";
-      }
-    }
-    if (shape_.size() == 2)
-    {
-      for (SizeType i(0); i < shape_[0]; ++i)
-      {
-        for (SizeType j(0); j < shape_[1]; ++j)
-        {
-          ss << At({i, j}) << "\t";
-        }
-        ss << "\n";
-      }
-    }
-    return ss.str();
-  }
-
-  //////////////////////
-  /// equality check ///
-  //////////////////////
-
-  /**
-   * equality operator for tensor2s. checks size, shape, and data.
-   * Fast when tensor2s not equal, slow otherwise
-   * @param other
-   * @return
-   */
-  bool operator==(Tensor2 const &other) const
-  {
-    bool ret = false;
-    if ((this->size() == other.size()) && (this->shape_ == other.shape()))
-    {
-      ret = this->AllClose(other);
-    }
-    return ret;
-  }
-
-  bool operator!=(Tensor2 const &other) const
-  {
-    return !(*this == other);
-  }
-
-  SharedArray data() { return storage_.data(); }
-  SharedArray const& data() const { return storage_.data(); }  
-private:
-  SizeType DimensionSize(SizeType dim) const
-  {
-    if (!shape_.empty() && dim < shape_.size())
-    {
-      return strides_[dim];
-    }
-    return 0;
-  }
-
-
-  /**
-   * Initialises default values for stride padding etc.
-   * @param strides
-   * @param padding
-   */
-  void Init(SizeVector  const &strides = SizeVector (),
-            SizeVector  const &padding = SizeVector ())
-  {
-    if (!shape_.empty())
-    {
-      if (strides.empty())
-      {
-        strides_ = SizeVector (shape_.size(), 1);
-      }
-      else
-      {
-        strides_ = strides;
-      }
-
-      if (padding.empty())
-      {
-        padding_        = SizeVector (shape_.size(), 0);
-        padding_.back() = DefaultAlignment - ((strides_.back() * shape_.back()) % DefaultAlignment);
-      }
-
-      SizeType dim = 1;
-      for (SizeType i(shape_.size()); i-- > 0;)
-      {
-        dim *= strides_[i];
-        strides_[i] = dim;
-        dim *= shape_[i];
-        dim += padding_[i];
-      }
-
-      if (storage_.size() == 0)
-      {
-        offset_ = 0;
-        if (!shape_.empty())
-        {
-          storage_.Resize(std::max(SizeType(1), DimensionSize(0) * shape_[0] + padding_[0]));
-        }
-      }
-    }
-
-    // TODO: You gotta be fucking kidding me!
-    if (shape_.empty())
-    {
-      size_ = 0;
-    }
-    else
-    {
-      SizeType n(1);
-      for (SizeType d : shape_)
-      {
-        n *= d;
-      }
-      size_ = n;
-    }
-  }
-
-
-  SizeVector                      shape_;
-  SizeVector                      padding_;
-  SizeVector                      strides_;
-  SizeVector                      input_strides_;
-  StorageType                     storage_{};
-  SizeType                        offset_{0};
-  SizeType                        size_{0};
-};
+//
+//
+//
+//template <typename T>
+//class Tensor2
+//{
+//public:
+//  using Type                             = T;
+//  using SizeType                         = std::uint64_t;
+//  using SelfType                         = Tensor2<T>;
+//  using SharedArray                      = memory::SharedArray<T>;
+//  using StorageType                      = ShapelessArray<T, SharedArray >;
+//  using SizeVector                       = std::vector< SizeType >;
+//  static const SizeType DefaultAlignment = 8;  // Arbitrary picked
+//
+//public:
+//  Tensor2(SizeVector            shape   = SizeVector (),
+//         SizeVector            strides = SizeVector (),
+//         SizeVector            padding = SizeVector (),
+//         StorageType           storage = StorageType{},
+//         SizeType               offset = 0)
+//    : shape_(std::move(shape))
+//    , padding_(std::move(padding))
+//    , input_strides_(std::move(strides))
+//    , storage_(std::move(storage))
+//    , offset_(offset)
+//  {
+//    ASSERT(padding.empty() || padding.size() == shape.size());
+//    ASSERT(strides.empty() || strides.size() == shape.size());
+//    Init(input_strides_, padding_);
+//  }
+//
+//  Tensor2(SizeType size)
+//    : shape_({size})
+//  {
+//    Init(strides_, padding_);
+//  }
+//
+//  Tensor2(Tensor2 const &t)     = default;
+//  Tensor2(Tensor2 &&t) = default;
+//  Tensor2 &operator=(Tensor2 const &other) = default;
+//  Tensor2 &operator=(Tensor2 &&) = default;
+//
+//  template <typename S, typename U>
+//  friend void Serialize(S &serializer, Tensor2<U> const &t)
+//  {
+//    serializer << t.shape_;
+//    serializer << t.strides_;
+//    serializer << t.padding_;
+//    serializer << t.offset_;
+//
+//    serializer << t.data().size();
+//    for(std::size_t i=0; i < t.data().size(); ++i)
+//    {
+//      serializer << t.data()[i];
+//    }
+//
+//  }
+//
+//  template <typename S, typename U>
+//  friend void Deserialize(S &serializer, Tensor2<U> &t)
+//  {
+//    using StorageType = typename math::Tensor2<U>::StorageType;
+//
+//    serializer >> t.shape_;
+//    serializer >> t.strides_;
+//    serializer >> t.padding_;
+//    serializer >> t.offset_;
+//    serializer >> t.size_;
+//
+//    StorageType storage;
+//    storage.Resize(t.size_);
+//
+//    for(std::size_t i=0; i < t.data().size(); ++i)
+//    {
+//      serializer >> storage[i];
+//    }
+//    t.storage_ = storage;
+//
+//  //  t = math::Tensor2<U>(shape, strides, padding, storage, offset);
+//  }
+//  /**
+//   * Returns a deep copy of this tensor2
+//   * @return
+//   */
+//
+//  SelfType Clone() const
+//  {
+//    SelfType copy;
+//
+//    copy.shape_   = this->shape_;
+//    copy.padding_ = this->padding_;
+//    copy.strides_ = this->strides_;
+//    copy.offset_  = this->offset_;
+//    copy.size_    = this->size_;
+//
+//    copy.storage_ = storage_.Copy();
+//
+//    return copy;
+//  }
+//
+//  /**
+//   * Copy data from another tensor2 into this one
+//   * assumes relevant stride/offset etc. are still applicable
+//   * @param other
+//   * @return
+//   */
+//  void Copy(SelfType const &other)
+//  {
+//    assert(other.size() == this->size());
+//
+//    storage_ = other.storage_.Copy();
+//  }
+//
+//  // TODO(private, 520) fix capitalisation (kepping it consistent with Tensor for now)
+//  SizeVector  const &shape() const
+//  {
+//    return shape_;
+//  }
+//
+//  SizeType Capacity() const
+//  {
+//    return storage_.size();
+//  }
+//
+//  // TODO(private, 520): fix capitalisation (kepping it consistent with Tensor for now)
+//  SizeType size() const
+//  {
+//    return size_;
+//  }
+//
+//  /**
+//   * Return the coordinates of the nth element in N dimensions
+//   * @param element     ordinal position of the element we want
+//   * @return            coordinate of said element in the tensor2
+//   */
+//  SizeVector  IndicesOfElement(SizeType element) const
+//  {
+//    ASSERT(element < size());
+//    SizeVector  results(shape_.size());
+//    results.back() = element;
+//    for (SizeType i(shape_.size() - 1); i > 0; --i)
+//    {
+//      results[i - 1] = results[i] / shape_[i];
+//      results[i] %= shape_[i];
+//    }
+//    return results;
+//  }
+//
+//  /**
+//   * Return the offset of element at specified coordinates in the low level memory array
+//   * @param indices     coordinate of requested element in the tensor2
+//   * @return            offset in low level memory array
+//   */
+//  SizeType OffsetOfElement(SizeVector  const &indices) const
+//  {
+//    SizeType index(offset_);
+//    for (SizeType i(0); i < indices.size(); ++i)
+//    {
+//      ASSERT(indices[i] < shape_[i]);
+//      index += indices[i] * DimensionSize(i);
+//    }
+//    return index;
+//  }
+//
+//  void Fill(T const &value)
+//  {
+//    for (SizeType i(0); i < size(); ++i)
+//    {
+//      At(i) = value;
+//    }
+//  }
+//
+//
+//
+//  /////////////////
+//  /// Iterators ///
+//  /////////////////
+//
+//  TensorIterator2<T, SizeType> begin() const  // Need to stay lowercase for range basedloops
+//  {
+//    return TensorIterator2<T, SizeType>(shape_, strides_, padding_,
+//                                       SizeVector (shape_.size()), storage_, offset_);
+//  }
+//
+//  TensorIterator2<T, SizeType> end() const  // Need to stay lowercase for range basedloops
+//  {
+//    SizeVector  endCoordinate(shape_.size());
+//    endCoordinate[0] = shape_[0];
+//    return TensorIterator2<T, SizeType>(shape_, strides_, padding_, endCoordinate, storage_,
+//                                       offset_);
+//  }
+//
+//  /////////////////
+//  /// ACCESSORS ///
+//  /////////////////
+//
+//  T &At(SizeType i)
+//  {
+//    return storage_[OffsetOfElement(IndicesOfElement(i))];
+//  }
+//
+//  T const &At(SizeType i) const
+//  {
+//    return storage_[OffsetOfElement(IndicesOfElement(i))];
+//  }
+//
+//  T const &operator()(SizeVector  const &indices) const
+//  {
+//    return At(indices);
+//  }
+//
+//  T const &At(SizeVector  const &indices) const
+//  {
+//    return storage_[OffsetOfElement(indices)];
+//  }
+//
+//  T &At(SizeVector  const &indices)
+//  {
+//    return storage_[OffsetOfElement(indices)];
+//  }
+//
+//  ///////////////
+//  /// SETTERS ///
+//  ///////////////
+//
+//  void Set(SizeVector  const &indices, T value)
+//  {
+//    storage_[OffsetOfElement(indices)] = value;
+//  }
+//
+//  void Set(SizeType i, T value)
+//  {
+//    storage_[OffsetOfElement(IndicesOfElement(i))] = value;
+//  }
+//
+//  T &operator[](SizeType i)
+//  {
+//    return At(i);
+//  }
+//
+//  T const &operator[](SizeType i) const
+//  {
+//    return At(i);
+//  }
+//
+//  /*
+//   * return a slice of the tensor2 along the first dimension
+//   */
+//  Tensor2<T> Slice(SizeType i) const
+//  {
+//    assert(shape_.size() > 1 && i < shape_[0]);
+//    Tensor2<T> ret(SizeVector (std::next(shape_.begin()), shape_.end()),     /* shape */
+//                  SizeVector (std::next(strides_.begin()), strides_.end()), /* stride */
+//                  SizeVector (std::next(padding_.begin()), padding_.end()), /* padding */
+//                  storage_, offset_ + i * DimensionSize(0));
+//    ret.strides_ = SizeVector (std::next(strides_.begin()), strides_.end());
+//    ret.padding_ = SizeVector (std::next(padding_.begin()), padding_.end());
+//    return ret;
+//  }
+//
+//  /*
+//   * Add a dummy leading dimension
+//   * Ex: [4, 5, 6].Unsqueeze() -> [1, 4, 5, 6]
+//   */
+//
+//  Tensor2<T> &Unsqueeze()
+//  {
+//    shape_.insert(shape_.begin(), 1);
+//    strides_.insert(strides_.begin(), strides_.front() * shape_[1]);
+//    padding_.insert(padding_.begin(), 0);
+//    return *this;
+//  }
+//
+//  /*
+//   * Inverse of unsqueze : Collapse a empty leading dimension
+//   */
+//  /*
+//  Tensor2<T>& Squeeze()
+//  {
+//    if (shape_.front() == 1)
+//    {
+//      shape_.erase(shape_.begin());
+//      strides_.erase(strides_.begin());
+//      padding_.erase(padding_.begin());
+//    }
+//    else
+//    {
+//      throw std::runtime_error("Can't squeeze tensor2 with leading dimension of size " +
+//                               std::to_string(shape_[0]));
+//    }
+//    return *this;
+//  }
+//*/
+//  bool AllClose(Tensor2<T> const &o, T const &relative_tolerance = T(1e-5),
+//                T const &absolute_tolerance = T(1e-8)) const
+//  {
+//    // Only enforcing number of elements
+//    // we allow for different shapes as long as element are in same order
+//    ASSERT(o.size() == size());
+//    for (SizeType i(0); i < size(); ++i)
+//    {
+//      T e1 = At(IndicesOfElement(i));
+//      T e2 = o.At(o.IndicesOfElement(i));
+//
+//      T abs_e1 = e1;
+//      fetch::math::Abs(abs_e1, abs_e1);
+//      T abs_e2 = e2;
+//      fetch::math::Abs(abs_e2, abs_e2);
+//      T abs_diff = e1 - e2;
+//      fetch::math::Abs(abs_diff, abs_diff);
+//      T tolerance = std::max(absolute_tolerance, std::max(abs_e1, abs_e2) * relative_tolerance);
+//      if (abs_diff > tolerance)
+//      {
+//        std::cout << "AllClose[" << i << "] - " << e1 << " != " << e2 << std::endl;
+//        return false;
+//      }
+//    }
+//    return true;
+//  }
+//
+//  Tensor2<T> &InlineAdd(T const &o)
+//  {
+//    for (T &e : *this)
+//    {
+//      e += o;
+//    }
+//    return *this;
+//  }
+//
+//  Tensor2<T> &InlineAdd(Tensor2<T> const &o)
+//  {
+//    assert(size() == o.size());
+//    auto it1 = this->begin();
+//    auto end = this->end();
+//    auto it2 = o.begin();
+//
+//    while (it1 != end)
+//    {
+//      *it1 += *it2;
+//      ++it1;
+//      ++it2;
+//    }
+//    return *this;
+//  }
+//
+//  Tensor2<T> &InlineSubtract(T const &o)
+//  {
+//    for (T &e : *this)
+//    {
+//      e -= o;
+//    }
+//    return *this;
+//  }
+//
+//  Tensor2<T> &InlineSubtract(Tensor2<T> const &o)
+//  {
+//    assert(size() == o.size());
+//    auto it1 = this->begin();
+//    auto end = this->end();
+//    auto it2 = o.begin();
+//
+//    while (it1 != end)
+//    {
+//      *it1 -= *it2;
+//      ++it1;
+//      ++it2;
+//    }
+//    return *this;
+//  }
+//
+//  Tensor2<T> &InlineReverseSubtract(Tensor2<T> const &o)
+//  {
+//    assert(size() == o.size());
+//    for (SizeType i(0); i < size(); ++i)
+//    {
+//      At(i) = o.At(i) - At(i);
+//    }
+//    return *this;
+//  }
+//
+//  Tensor2<T> &InlineMultiply(T const &o)
+//  {
+//    for (T &e : *this)
+//    {
+//      e *= o;
+//    }
+//    return *this;
+//  }
+//
+//  Tensor2<T> &InlineMultiply(Tensor2<T> const &o)
+//  {
+//    assert(size() == o.size());
+//    auto it1 = this->begin();
+//    auto end = this->end();
+//    auto it2 = o.begin();
+//
+//    while (it1 != end)
+//    {
+//      *it1 *= *it2;
+//      ++it1;
+//      ++it2;
+//    }
+//    return *this;
+//  }
+//
+//  Tensor2<T> &InlineDivide(T const &o)
+//  {
+//    for (T &e : *this)
+//    {
+//      e /= o;
+//    }
+//    return *this;
+//  }
+//
+//  Tensor2<T> &InlineDivide(Tensor2<T> const &o)
+//  {
+//    assert(size() == o.size());
+//    auto it1 = this->begin();
+//    auto end = this->end();
+//    auto it2 = o.begin();
+//
+//    while (it1 != end)
+//    {
+//      *it1 /= *it2;
+//      ++it1;
+//      ++it2;
+//    }
+//    return *this;
+//  }
+//
+//  T Sum() const
+//  {
+//    return std::accumulate(begin(), end(), T(0));
+//  }
+//
+//
+//  Tensor2<T> Transpose() const
+//  {
+//    assert(shape_.size() == 2);
+//    Tensor2<T> ret(SizeVector ({shape_[1], shape_[0]}), // shape
+//                  SizeVector (),                       // stride
+//                  SizeVector (),                       // padding
+//                  storage_, offset_);
+//    ret.strides_ = SizeVector (strides_.rbegin(), strides_.rend());
+//    ret.padding_ = SizeVector (padding_.rbegin(), padding_.rend());
+//    return ret;
+//  }
+//
+//  /**
+//   * randomly reassigns the data within the tensor2 - expensive method since it requires data copy
+//   */
+///*
+//  void Shuffle() // TODO: Really poor implementation
+//  {
+//    std::default_random_engine rng{};
+//    SizeVector       idxs(size());
+//    std::iota(std::begin(idxs), std::end(idxs), 0);
+//    std::shuffle(idxs.begin(), idxs.end(), rng);
+//
+//    // instantiate new tensor2 with copy of data
+//    Tensor2<Type> tmp = this->Clone();
+//
+//    // copy data back according to shuffle
+//    for (std::size_t j = 0; j < tmp.size(); ++j)
+//    {
+//      this->Set(j, tmp.At(idxs[j]));
+//    }
+//  }
+//  */
+//
+//  std::string ToString() const
+//  {
+//    std::stringstream ss;
+//    ss << std::setprecision(5) << std::fixed << std::showpos;
+//    if (shape_.size() == 1)
+//    {
+//      for (SizeType i(0); i < shape_[0]; ++i)
+//      {
+//        ss << At(i) << "\t";
+//      }
+//    }
+//    if (shape_.size() == 2)
+//    {
+//      for (SizeType i(0); i < shape_[0]; ++i)
+//      {
+//        for (SizeType j(0); j < shape_[1]; ++j)
+//        {
+//          ss << At({i, j}) << "\t";
+//        }
+//        ss << "\n";
+//      }
+//    }
+//    return ss.str();
+//  }
+//
+//  //////////////////////
+//  /// equality check ///
+//  //////////////////////
+//
+//  /**
+//   * equality operator for tensor2s. checks size, shape, and data.
+//   * Fast when tensor2s not equal, slow otherwise
+//   * @param other
+//   * @return
+//   */
+//  bool operator==(Tensor2 const &other) const
+//  {
+//    bool ret = false;
+//    if ((this->size() == other.size()) && (this->shape_ == other.shape()))
+//    {
+//      ret = this->AllClose(other);
+//    }
+//    return ret;
+//  }
+//
+//  bool operator!=(Tensor2 const &other) const
+//  {
+//    return !(*this == other);
+//  }
+//
+//  SharedArray data() { return storage_.data(); }
+//  SharedArray const& data() const { return storage_.data(); }
+//private:
+//  SizeType DimensionSize(SizeType dim) const
+//  {
+//    if (!shape_.empty() && dim < shape_.size())
+//    {
+//      return strides_[dim];
+//    }
+//    return 0;
+//  }
+//
+//
+//  /**
+//   * Initialises default values for stride padding etc.
+//   * @param strides
+//   * @param padding
+//   */
+//  void Init(SizeVector  const &strides = SizeVector (),
+//            SizeVector  const &padding = SizeVector ())
+//  {
+//    if (!shape_.empty())
+//    {
+//      if (strides.empty())
+//      {
+//        strides_ = SizeVector (shape_.size(), 1);
+//      }
+//      else
+//      {
+//        strides_ = strides;
+//      }
+//
+//      if (padding.empty())
+//      {
+//        padding_        = SizeVector (shape_.size(), 0);
+//        padding_.back() = DefaultAlignment - ((strides_.back() * shape_.back()) % DefaultAlignment);
+//      }
+//
+//      SizeType dim = 1;
+//      for (SizeType i(shape_.size()); i-- > 0;)
+//      {
+//        dim *= strides_[i];
+//        strides_[i] = dim;
+//        dim *= shape_[i];
+//        dim += padding_[i];
+//      }
+//
+//      if (storage_.size() == 0)
+//      {
+//        offset_ = 0;
+//        if (!shape_.empty())
+//        {
+//          storage_.Resize(std::max(SizeType(1), DimensionSize(0) * shape_[0] + padding_[0]));
+//        }
+//      }
+//    }
+//
+//    // TODO: You gotta be fucking kidding me!
+//    if (shape_.empty())
+//    {
+//      size_ = 0;
+//    }
+//    else
+//    {
+//      SizeType n(1);
+//      for (SizeType d : shape_)
+//      {
+//        n *= d;
+//      }
+//      size_ = n;
+//    }
+//  }
+//
+//
+//  SizeVector                      shape_;
+//  SizeVector                      padding_;
+//  SizeVector                      strides_;
+//  SizeVector                      input_strides_;
+//  StorageType                     storage_{};
+//  SizeType                        offset_{0};
+//  SizeType                        size_{0};
+//};
 }  // namespace math
 }  // namespace fetch

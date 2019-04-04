@@ -23,18 +23,21 @@
 
 // TODO: Reimplement - this is shit
 
+namespace fetch {
+namespace math {
+
 class TensorView
 {
 public:
-  std::vector<std::size_t> from;
-  std::vector<std::size_t> to;
-  std::vector<std::size_t> step;
+  SizeVector from;
+  SizeVector to;
+  SizeVector step;
 
   // variables for copying view
-  std::size_t              cur_dim;
-  std::vector<std::size_t> input_idxs;
-  std::vector<std::size_t> output_idxs;
-  std::size_t              output_dims;
+  SizeType cur_dim;
+  SizeVector input_idxs;
+  SizeVector output_idxs;
+  SizeType output_dims;
 
   TensorView()
   {}
@@ -170,3 +173,6 @@ private:
     }
   }
 };
+
+} // math
+} // fetch

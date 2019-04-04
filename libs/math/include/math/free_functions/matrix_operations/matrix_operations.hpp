@@ -553,7 +553,34 @@ void ArgMax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeType
   assert((axis == 0) || (axis == 1));
 
   using Type = typename ArrayType::Type;
-  Reduce([](Type const &x, Type const &z) { return std::max(x, z); }, array, ret, axis);  
+  if (array.shape().size() == 1)
+  {
+    Reduce([](Type const &x, Type const &z) { return std::max(x, z); }, array, ret, axis);
+    ret[0] = Type(array.Find(ret[0]));
+  }
+  else
+  {
+    SizeVector from{{0, 0}};
+    SizeVector to{{0, 0}};
+    SizeVector step{{1, 1}};
+
+    ArrayType tmp_array{{1, 1}};
+
+    for (std::size_t i{0}; i < array.shape().at(axis); ++i)
+    {
+      from[axis] = i;
+      to[axis] = i+1;
+
+      from[1 - axis] = 0;
+      to[1 - axis] = array.shape().at(1 - axis);
+      auto tmp1 = array.GetRange(from, to, step);
+
+      Reduce([](Type const &x, Type const &z) { return std::max(x, z); }, tmp1, tmp_array, 1-axis);
+      ret[i] = Type(tmp1.Find(tmp_array[0]));
+    }
+  }
+
+
 /*
   typename ArrayType::Type cur_maxval = std::numeric_limits<typename ArrayType::Type>::lowest();
 
