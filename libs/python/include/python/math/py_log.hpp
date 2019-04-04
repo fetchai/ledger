@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/standard_functions/log.hpp"
+#include "math/standard_functions/log.hpp"
 #include "math/tensor.hpp"
 #include "python/fetch_pybind.hpp"
 
@@ -37,9 +37,7 @@ inline void BuildLogStatistics(std::string const &custom_name, pybind11::module 
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperLog<RectangularArray<double>>)
-      .def(custom_name.c_str(), &WrapperLog<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperLog<Tensor<double>>)
+  module.def(custom_name.c_str(), &WrapperLog<Tensor<double>>)
       .def(custom_name.c_str(), &WrapperLog<Tensor<float>>);
 }
 

@@ -25,6 +25,9 @@
 namespace fetch {
 namespace ml {
 
+/*
+ * Abstract Ops interface
+ */
 template <class T>
 class Ops
 {
@@ -39,11 +42,17 @@ public:
       ArrayType const &                                           errorSignal) = 0;
   virtual ArrayType ForwardBatch(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
+  virtual std::vector<ArrayType> BackwardBatch(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal) = 0;
 
 protected:
   ArrayPtrType output_;  // TODO(private, 736) -- Remove
 };
 
+/*
+ * Abstract class for Ops that works element wise (relu, sigmoid, ...)
+ */
 template <class T>
 class ElementWiseOps : public Ops<T>
 {
@@ -54,8 +63,19 @@ public:
   {
     return this->Forward(inputs);
   }
+
+  virtual std::vector<ArrayType> BackwardBatch(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal)
+  {
+    return this->Backward(inputs, errorSignal);
+  }
 };
 
+/*
+ * Abstract class for Ops that works with batch (convolution, softmax, ...)
+ * (assuming a structure like [BATCH x OTHER_DIMS x ...])
+ */
 template <class T>
 class BatchOps : public Ops<T>
 {
@@ -73,6 +93,32 @@ public:
       results.push_back(this->Forward({slice}));
     }
     return ConcatenateTensors(results);
+  }
+
+  virtual std::vector<ArrayType> BackwardBatch(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal)
+  {
+    return this->Backward(inputs, errorSignal);
+    assert(inputs.size() == 1);
+    assert(inputs.front().get().shape()[0] == errorSignal.shape()[0]);
+    std::vector<std::vector<ArrayType>> results;
+    for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
+    {
+      ArrayType inputSlice = inputs.front().get().Slice(b);
+      ArrayType errorSlice = errorSignal.Slice(b);
+      auto      ret        = this->Backward({inputSlice}, errorSlice);
+      for (std::size_t i(0); i < ret.size(); ++i)
+      {
+        results[i].push_back(ret[i]);
+      }
+    }
+    std::vector<ArrayType> concatenatedResults;
+    for (auto const &tensorList : results)
+    {
+      concatenatedResults.push_back(ConcatenateTensors(tensorList));
+    }
+    return concatenatedResults;
   }
 };
 

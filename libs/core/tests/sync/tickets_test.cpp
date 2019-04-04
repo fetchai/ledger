@@ -191,7 +191,7 @@ TEST_F(TicketsTest, multiple_cycles_fails_if_less_posts_than_waits)
   constexpr Tickets::Count num_of_posts{5};
   constexpr Tickets::Count num_of_waits{num_of_posts + 2};
   // PRECONDITION for test OBJECTIVE
-  ASSERT_TRUE(num_of_waits > num_of_posts);
+  ASSERT_GT(num_of_waits, num_of_posts);
 
   Tickets    ticket;
   auto const num_of_failed_waits = test_wait_with_timeout(ticket, num_of_posts, num_of_waits);
@@ -209,8 +209,7 @@ TEST_F(TicketsTest, multiple_cycles_fails_if_more_posts_than_waits)
   constexpr Tickets::Count num_of_posts{num_of_waits + 2};
 
   // PRECONDITION for test OBJECTIVE
-  ASSERT_TRUE(num_of_waits < num_of_posts);
-
+  ASSERT_LT(num_of_waits, num_of_posts);
   Tickets    ticket;
   auto const num_of_failed_waits = test_wait_with_timeout(ticket, num_of_posts, num_of_waits);
 
@@ -234,7 +233,7 @@ TEST_F(TicketsTest, multiple_cycles_no_timeout)
   constexpr Tickets::Count num_of_posts{num_of_waits};
 
   // PRECONDITION for test OBJECTIVE
-  ASSERT_TRUE(num_of_waits == num_of_posts);
+  ASSERT_EQ(num_of_waits, num_of_posts);
 
   Tickets          ticket;
   ThreadsContainer threads = wait_with_no_timeout(ticket, num_of_posts, num_of_waits);
@@ -248,7 +247,7 @@ TEST_F(TicketsTest, multiple_cycles_no_timeout_fail_if_less_posts_than_waits)
   constexpr Tickets::Count num_of_waits{num_of_posts + 2};
 
   // PRECONDITION for test OBJECTIVE
-  ASSERT_TRUE(num_of_waits > num_of_posts);
+  ASSERT_GT(num_of_waits, num_of_posts);
 
   Tickets          ticket;
   ThreadsContainer threads = wait_with_no_timeout(ticket, num_of_posts, num_of_waits);
@@ -263,7 +262,7 @@ TEST_F(TicketsTest, multiple_cycles_no_timeout_fail_if_more_posts_than_waits)
   constexpr Tickets::Count num_of_posts{num_of_waits + 2};
 
   // PRECONDITION for test OBJECTIVE
-  ASSERT_TRUE(num_of_waits < num_of_posts);
+  ASSERT_LT(num_of_waits, num_of_posts);
 
   Tickets          ticket;
   ThreadsContainer threads = wait_with_no_timeout(ticket, num_of_posts, num_of_waits);

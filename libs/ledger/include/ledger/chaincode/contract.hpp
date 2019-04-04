@@ -51,9 +51,11 @@ public:
     NOT_FOUND,
   };
 
+  using Identity              = crypto::Identity;
   using ConstByteArray        = byte_array::ConstByteArray;
   using ContractName          = TransactionSummary::ContractName;
   using Query                 = variant::Variant;
+  using InitialiseHandler     = std::function<Status(Identity const &)>;
   using TransactionHandler    = std::function<Status(Transaction const &)>;
   using TransactionHandlerMap = std::unordered_map<ContractName, TransactionHandler>;
   using QueryHandler          = std::function<Status(Query const &, Query &)>;
@@ -76,6 +78,7 @@ public:
   void Attach(ledger::StateAdapter &state);
   void Detach();
 
+  Status DispatchInitialise(Identity const &owner);
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
   Status DispatchTransaction(ConstByteArray const &name, Transaction const &tx);
   /// @}
@@ -91,6 +94,13 @@ public:
   Contract &operator=(Contract &&) = delete;
 
 protected:
+  /// @name Initialise Handlers
+  /// @{
+  void OnInitialise(InitialiseHandler &&handler);
+  template <typename C>
+  void OnInitialise(C *instance, Status (C::*func)(Identity const &));
+  /// @}
+
   /// @name Transaction Handlers
   /// @{
   void OnTransaction(std::string const &name, TransactionHandler &&handler);
@@ -122,6 +132,7 @@ private:
 
   /// @name Dispatch Maps - built on construction
   /// @{
+  InitialiseHandler     init_handler_{};
   QueryHandlerMap       query_handlers_{};
   TransactionHandlerMap transaction_handlers_{};
   /// @}
@@ -173,6 +184,19 @@ inline Contract::QueryHandlerMap const &Contract::query_handlers() const
 inline Contract::TransactionHandlerMap const &Contract::transaction_handlers() const
 {
   return transaction_handlers_;
+}
+
+/**
+ * Register a class member function as an init handler
+ *
+ * @tparam C The class type
+ * @param instance The pointer to the class instance
+ * @param func The member function pointer
+ */
+template <typename C>
+void Contract::OnInitialise(C *instance, Status (C::*func)(Identity const &))
+{
+  OnInitialise([instance, func](Identity const &owner) { return (instance->*func)(owner); });
 }
 
 /**

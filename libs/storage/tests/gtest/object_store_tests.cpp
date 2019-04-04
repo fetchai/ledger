@@ -21,12 +21,14 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
 #include "storage/object_store.hpp"
+#include "testing/common_testing_functionality.hpp"
 #include <algorithm>
 #include <gtest/gtest.h>
 #include <iostream>
 
 using namespace fetch::storage;
 using namespace fetch::byte_array;
+using namespace fetch::testing;
 
 /**
  * Test class used to verify that the object store can ser/deser objects correctly
@@ -110,7 +112,7 @@ TEST(storage_object_store_basic_functionality, Setting_and_getting_elements)
       // Suppress most expects to avoid spamming terminal
       if (i != result || i == 0)
       {
-        EXPECT_TRUE(i == result);
+        EXPECT_EQ(i, result);
       }
     }
 
@@ -124,7 +126,7 @@ TEST(storage_object_store_basic_functionality, Setting_and_getting_elements)
       // Suppress most expects to avoid spamming terminal
       if (i != result || i == 0)
       {
-        EXPECT_TRUE(i == result);
+        EXPECT_EQ(i, result);
       }
     }
 
@@ -138,7 +140,7 @@ TEST(storage_object_store_basic_functionality, Setting_and_getting_elements)
       // Suppress most expects to avoid spamming terminal
       if (0 != result || i == 1)
       {
-        EXPECT_TRUE(0 == result);
+        EXPECT_EQ(0, result);
       }
     }
   }
@@ -190,7 +192,7 @@ TEST(storage_object_store_basic_functionality, find_over_basic_struct)
       index++;
     }
 
-    EXPECT_TRUE(successfullyFound == true && index == index);
+    EXPECT_TRUE(successfullyFound);
 
     successfullyFound = false;
 
@@ -205,7 +207,7 @@ TEST(storage_object_store_basic_functionality, find_over_basic_struct)
       }
     }
 
-    EXPECT_TRUE(successfullyFound == false);
+    EXPECT_FALSE(successfullyFound);
   }
 }
 
@@ -244,7 +246,7 @@ TEST(storage_object_store_with_STL_gtest, find_over_basic_struct_expect_failures
       }
     }
 
-    EXPECT_TRUE(successfullyFound == false);
+    EXPECT_FALSE(successfullyFound);
   }
 }
 
@@ -314,9 +316,9 @@ TEST(storage_object_store_with_STL_gtest, iterator_over_basic_struct)
 
     std::sort(objectsCopy.begin(), objectsCopy.end());
 
-    EXPECT_TRUE(objectsCopy.size() == objects.size());
+    EXPECT_EQ(objectsCopy.size(), objects.size());
     bool allMatch = std::equal(objectsCopy.begin(), objectsCopy.end(), objects.begin());
-    EXPECT_TRUE(allMatch == true);
+    EXPECT_TRUE(allMatch);
   }
 }
 
@@ -383,7 +385,7 @@ TEST(storage_object_store_with_STL_gtest, subtree_iterator_over_basic_struct)
     std::sort(objectsCopy.begin(), objectsCopy.end());
 
     bool allMatch = std::equal(objectsCopy.begin(), objectsCopy.end(), objects.begin());
-    EXPECT_TRUE(allMatch == true);
+    EXPECT_TRUE(allMatch);
   }
 }
 
@@ -458,4 +460,41 @@ TEST(storage_object_store_with_STL_gtest, subtree_iterator_over_basic_struc_spli
     bool allMatch = std::equal(objectsCopy.begin(), objectsCopy.end(), objects.begin());
     EXPECT_EQ(allMatch, true);
   }
+}
+
+TEST(storage_object_store, correlated_strings_work_correctly_working)
+{
+  ObjectStore<std::string> testStore;
+  testStore.New("testFile_01.db", "testIndex_01.db");
+
+  auto     unique_ids    = GenerateUniqueIDs(65);
+  uint64_t expected_size = 0;
+
+  // Set each key to itself as a string
+  for (auto const &id : unique_ids)
+  {
+    testStore.Set(id, id.ToString());
+    EXPECT_EQ(testStore.size(), ++expected_size);
+  }
+
+  ASSERT_EQ(testStore.size(), unique_ids.size()) << "ERROR: Failed to verify final size!";
+}
+
+// Disabled test - needs immediate attention!
+TEST(storage_object_store, DISABLED_correlated_strings_work_correctly_failing)
+{
+  ObjectStore<std::string> testStore;
+  testStore.New("testFile_01.db", "testIndex_01.db");
+
+  auto     unique_ids    = GenerateUniqueIDs(66);
+  uint64_t expected_size = 0;
+
+  // Set each key to itself as a string
+  for (auto const &id : unique_ids)
+  {
+    testStore.Set(id, id.ToString());
+    EXPECT_EQ(testStore.size(), ++expected_size);
+  }
+
+  ASSERT_EQ(testStore.size(), unique_ids.size()) << "ERROR: Failed to verify final size!";
 }

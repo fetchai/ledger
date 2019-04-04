@@ -270,34 +270,40 @@ public:
   /// comparison operators ///
   ////////////////////////////
 
-  bool operator==(const FixedPoint &o) const
+  template <typename OtherType>
+  bool operator==(const OtherType &o) const
   {
-    return data_ == o.data_;
+    return (data_ == FixedPoint(o).data_);
   }
 
-  bool operator!=(const FixedPoint &o) const
+  template <typename OtherType>
+  bool operator!=(const OtherType &o) const
   {
-    return data_ != o.data_;
+    return data_ != FixedPoint(o).data_;
   }
 
-  bool operator<(const FixedPoint &o) const
+  template <typename OtherType>
+  bool operator<(const OtherType &o) const
   {
-    return data_ < o.data_;
+    return data_ < FixedPoint(o).data_;
   }
 
-  bool operator>(const FixedPoint &o) const
+  template <typename OtherType>
+  bool operator>(const OtherType &o) const
   {
-    return data_ > o.data_;
+    return data_ > FixedPoint(o).data_;
   }
 
-  bool operator<=(const FixedPoint &o) const
+  template <typename OtherType>
+  bool operator<=(const OtherType &o) const
   {
-    return data_ <= o.data_;
+    return data_ <= FixedPoint(o).data_;
   }
 
-  bool operator>=(const FixedPoint &o) const
+  template <typename OtherType>
+  bool operator>=(const OtherType &o) const
   {
-    return data_ >= o.data_;
+    return data_ >= FixedPoint(o).data_;
   }
 
   ///////////////////////
@@ -344,22 +350,32 @@ public:
   /// casting operators ///
   /////////////////////////
 
-  operator double() const
+  explicit operator double() const
   {
     return (static_cast<double>(data_) / one);
   }
 
-  operator int() const
+  explicit operator int() const
   {
     return int((data_ & integer_mask) >> fractional_bits);
   }
 
-  operator float() const
+  explicit operator float() const
   {
     return (static_cast<float>(data_) / one);
   }
 
-  operator unsigned long long() const
+  explicit operator unsigned() const
+  {
+    return (static_cast<unsigned>(data_) / one);
+  }
+
+  explicit operator unsigned long() const
+  {
+    return (static_cast<unsigned long>(data_) / one);
+  }
+
+  explicit operator unsigned long long() const
   {
     return (static_cast<unsigned long long>(data_) / one);
   }

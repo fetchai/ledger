@@ -55,11 +55,11 @@ public:
     return *pos_;
   }
 
-  bool operator==(ForwardIterator const &other)
+  bool operator==(ForwardIterator const &other) const
   {
     return other.pos_ == pos_;
   }
-  bool operator!=(ForwardIterator const &other)
+  bool operator!=(ForwardIterator const &other) const
   {
     return other.pos_ != pos_;
   }
@@ -101,11 +101,11 @@ public:
     return *pos_;
   }
 
-  bool operator==(BackwardIterator const &other)
+  bool operator==(BackwardIterator const &other) const
   {
     return other.pos_ == pos_;
   }
-  bool operator!=(BackwardIterator const &other)
+  bool operator!=(BackwardIterator const &other) const
   {
     return other.pos_ != pos_;
   }

@@ -18,10 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "math/arithmetic/comparison.hpp"
-#include "math/free_functions/free_functions.hpp"
 #include "vm/defs.hpp"
 #include "vm/io_observer_interface.hpp"
 #include "vm/string.hpp"
+#include <cassert>
 
 #include <sstream>
 

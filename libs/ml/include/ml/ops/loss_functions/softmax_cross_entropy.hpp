@@ -21,8 +21,8 @@
 #include <memory>
 #include <vector>
 
-#include "math/free_functions/fundamental_operators.hpp"
-#include "math/free_functions/ml/loss_functions/softmax_cross_entropy.hpp"
+#include "math/ml/activation_functions/softmax.hpp"
+#include "math/ml/loss_functions/cross_entropy.hpp"
 
 namespace fetch {
 namespace ml {
@@ -34,6 +34,7 @@ class SoftmaxCrossEntropy
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
+  using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   SoftmaxCrossEntropy()          = default;
@@ -41,20 +42,33 @@ public:
 
   virtual typename ArrayType::Type Forward(std::vector<ArrayType> const &inputs)
   {
-    assert(inputs.size() == 2);
-    assert(inputs[0].size() == inputs[1].size());
+    // third term may be present for specifying n_classes
+    assert((inputs.size() == 2) || ((inputs.size() == 3) && (inputs.at(2).size() == 1)));
+    assert(inputs.at(0).size() == inputs.at(1).size());
 
-    ArrayType result = fetch::math::SoftmaxCrossEntropyLoss(*inputs[0], *inputs[1]);
-    return result[0];
+    // sanity check the softmax adds up to 1
+    assert(Sum(fetch::math::Softmax(inputs.at(0))) - (DataType(inputs.at(0).shape().at(0))) <
+           0.0001);
+
+    SizeType n_classes{2};
+    if (inputs.size() == 3)
+    {
+      n_classes = SizeType(inputs.at(2).At(0));
+    }
+
+    // softmax forward & then CrossEntropy
+    typename ArrayType::Type result =
+        fetch::math::CrossEntropyLoss(fetch::math::Softmax(inputs[0]), inputs[1], n_classes);
+
+    return result;
   }
 
-  virtual ArrayPtrType Backward(std::vector<ArrayType> const &inputs)
+  virtual ArrayType Backward(std::vector<ArrayType> const &inputs)
   {
     assert(inputs.size() == 2);
     assert(inputs[0].size() == inputs[1].size());
 
-    ArrayType ret = fetch::math::Subtract(inputs[0], inputs[1]);
-    return ret;
+    return fetch::math::Subtract(fetch::math::Softmax(inputs[0]), inputs[1]);
   }
 
   static constexpr char const *DESCRIPTOR = "SoftmaxCrossEntropy";

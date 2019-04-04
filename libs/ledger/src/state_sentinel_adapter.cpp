@@ -40,7 +40,7 @@ StateSentinelAdapter::StateSentinelAdapter(StorageInterface &storage, Identifier
   {
     allowed_accesses_.insert(std::string{hash});
 #ifndef NDEBUG
-    FETCH_LOG_INFO(LOGGING_NAME, "Pushing allowed: ", std::string{hash});
+    FETCH_LOG_INFO(LOGGING_NAME, "Pushing allowed (raw): ", std::string{hash});
 #endif
   }
 
@@ -49,7 +49,7 @@ StateSentinelAdapter::StateSentinelAdapter(StorageInterface &storage, Identifier
     std::string full = std::string{scope.full_name()} + ".state." + std::string{key};
     allowed_accesses_.insert(full);
 #ifndef NDEBUG
-    FETCH_LOG_INFO(LOGGING_NAME, "Pushing allowed (raw): ", full);
+    FETCH_LOG_INFO(LOGGING_NAME, "Pushing allowed: ", full);
 #endif
   }
 
