@@ -87,16 +87,18 @@ public:
 
   bool operator==(BitVectorImplementation const &other) const
   {
-    bool ret = this->size_ == other.size_;
-    if (!ret)
+    if (size_ != other.size_)
     {
-      return ret;
+      return false;
     }
     for (std::size_t i = 0; i < blocks_; ++i)
     {
-      ret &= (this->operator()(i) == other(i));
+      if (operator()(i) != other(i))
+      {
+        return false;
+      }
     }
-    return ret;
+    return true;
   }
 
   bool operator!=(BitVectorImplementation const &other) const
