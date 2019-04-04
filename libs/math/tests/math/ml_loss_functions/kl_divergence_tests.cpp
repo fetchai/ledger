@@ -69,40 +69,48 @@ TYPED_TEST(KlDivergenceTest, other_divergence_test)
 {
   TypeParam A({4, 4});
 
-  A.Set({0, 0}, typename TypeParam::Type(0.1));
-  A.Set({0, 1}, typename TypeParam::Type(0.2));
-  A.Set({0, 2}, typename TypeParam::Type(0.3));
-  A.Set({0, 3}, typename TypeParam::Type(0.4));
+  A.Set({0, 0}, typename TypeParam::Type(0.15));
+  A.Set({0, 1}, typename TypeParam::Type(0.16));
+  A.Set({0, 2}, typename TypeParam::Type(0.17));
+  A.Set({0, 3}, typename TypeParam::Type(0.18));
 
-  A.Set({1, 0}, typename TypeParam::Type(-0.1));
-  A.Set({1, 1}, typename TypeParam::Type(-0.2));
-  A.Set({1, 2}, typename TypeParam::Type(-0.3));
-  A.Set({1, 3}, typename TypeParam::Type(-0.4));
+  A.Set({1, 0}, typename TypeParam::Type(0.19));
+  A.Set({1, 1}, typename TypeParam::Type(0.20));
+  A.Set({1, 2}, typename TypeParam::Type(0.21));
+  A.Set({1, 3}, typename TypeParam::Type(0.22));
 
-  A.Set({2, 0}, typename TypeParam::Type(-1.1));
-  A.Set({2, 1}, typename TypeParam::Type(-1.2));
-  A.Set({2, 2}, typename TypeParam::Type(-1.3));
-  A.Set({2, 3}, typename TypeParam::Type(-1.4));
+  A.Set({2, 0}, typename TypeParam::Type(0.23));
+  A.Set({2, 1}, typename TypeParam::Type(0.24));
+  A.Set({2, 2}, typename TypeParam::Type(0.25));
+  A.Set({2, 3}, typename TypeParam::Type(0.26));
 
-  A.Set({3, 0}, typename TypeParam::Type(1.1));
-  A.Set({3, 1}, typename TypeParam::Type(1.2));
-  A.Set({3, 2}, typename TypeParam::Type(1.3));
-  A.Set({3, 3}, typename TypeParam::Type(1.4));
+  A.Set({3, 0}, typename TypeParam::Type(0.27));
+  A.Set({3, 1}, typename TypeParam::Type(0.28));
+  A.Set({3, 2}, typename TypeParam::Type(0.29));
+  A.Set({3, 3}, typename TypeParam::Type(0.30));
 
-  TypeParam B({4, 2});
+  TypeParam B({4, 4});
 
-  B.Set({0, 0}, typename TypeParam::Type(1.1));
-  B.Set({0, 1}, typename TypeParam::Type(1.2));
+  B.Set({0, 0}, typename TypeParam::Type(0.31));
+  B.Set({0, 1}, typename TypeParam::Type(0.32));
+  B.Set({0, 2}, typename TypeParam::Type(0.33));
+  B.Set({0, 3}, typename TypeParam::Type(0.34));
 
-  B.Set({1, 0}, typename TypeParam::Type(-1.1));
-  B.Set({1, 1}, typename TypeParam::Type(-1.2));
+  B.Set({1, 0}, typename TypeParam::Type(0.35));
+  B.Set({1, 1}, typename TypeParam::Type(0.36));
+  B.Set({1, 2}, typename TypeParam::Type(0.37));
+  B.Set({1, 3}, typename TypeParam::Type(0.38));
 
-  B.Set({2, 0}, typename TypeParam::Type(-0.1));
-  B.Set({2, 1}, typename TypeParam::Type(-0.2));
+  B.Set({2, 0}, typename TypeParam::Type(0.39));
+  B.Set({2, 1}, typename TypeParam::Type(0.40));
+  B.Set({2, 2}, typename TypeParam::Type(0.41));
+  B.Set({2, 3}, typename TypeParam::Type(0.42));
 
-  B.Set({3, 0}, typename TypeParam::Type(0.1));
-  B.Set({3, 1}, typename TypeParam::Type(0.2));
+  B.Set({3, 0}, typename TypeParam::Type(0.43));
+  B.Set({3, 1}, typename TypeParam::Type(0.44));
+  B.Set({3, 2}, typename TypeParam::Type(0.45));
+  B.Set({3, 3}, typename TypeParam::Type(0.46));
 
-  EXPECT_NEAR(double(KlDivergence(A, B)), 8.8558472483164721, 1e-4);
-  EXPECT_NEAR(double(KlDivergence(B, A)), 15.761803923131868, 1e-4);
+  EXPECT_NEAR(double(KlDivergence(A, B)), -1.920114985949124, 1e-4);
+  EXPECT_NEAR(double(KlDivergence(B, A)), 3.3324871063232422, 1e-4);
 }

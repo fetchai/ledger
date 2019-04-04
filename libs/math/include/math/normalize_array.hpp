@@ -18,36 +18,31 @@
 //------------------------------------------------------------------------------
 
 #include "math/fundamental_operators.hpp"
-#include "math/meta/math_type_traits.hpp"
-#include "math/standard_functions/log.hpp"
-#include <core/assert.hpp>
-#include <math/matrix_operations.hpp>
+#include "math/matrix_operations.hpp"
+#include <math/standard_functions/log.hpp>
+
+#include <cmath>
 
 namespace fetch {
 namespace math {
 
 /**
- * Kullback-Leibler divergence between matrix P and Q
- * KL(P||Q) = P log (P / Q)
- * * i.e. for each val in p and q do sum(p*log(p/q))
- * @param q input tensor/vector/scalar of probabilities
- * @param p input tensor/vector/scalar of probabilities
- * @return
+ * Divide each value of an array by sum of all values
+ * i.e. x / Sum(x)
+ * @param a input array of values
+ * @param ret return normalized value
  */
 template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, void> KlDivergence(ArrayType const &p, ArrayType const &q,
-                                                  typename ArrayType::Type &ret)
+void NormalizeArray(ArrayType const &a, ArrayType &ret)
 {
-  ASSERT(p.shape().at(0) == q.shape().at(0));
-  ret = Sum(Multiply(p, Log(Divide(p, q))));
+  Divide(a, Sum(a), ret);
 }
 
 template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, typename ArrayType::Type> KlDivergence(ArrayType const &p,
-                                                                      ArrayType const &q)
+ArrayType NormalizeArray(ArrayType const &a)
 {
-  typename ArrayType::Type ret;
-  KlDivergence(p, q, ret);
+  ArrayType ret(a.shape());
+  NormalizeArray(a, ret);
   return ret;
 }
 

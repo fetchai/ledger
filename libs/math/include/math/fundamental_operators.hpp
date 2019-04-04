@@ -574,15 +574,6 @@ meta::IfIsMathArray<ArrayType, void> Divide(T const &scalar, ArrayType const &ar
   }
 }
 
-template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2)
-{
-  ArrayType ret{obj1.shape()};
-
-  Divide(obj1, obj2, ret);
-  return ret;
-}
-
 template <typename T, typename ArrayType,
           typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
 meta::IfIsMathArray<ArrayType, ArrayType> Divide(T const &scalar, ArrayType const &array)

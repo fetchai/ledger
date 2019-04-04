@@ -50,6 +50,7 @@ TYPED_TEST(TsneTests, tsne_test_2d)
   DataType INITIAL_MOMENTUM{0.5f};
   DataType FINAL_MOMENTUM{0.8f};
   SizeType FINAL_MOMENTUM_STEPS{20};
+  SizeType P_LATER_CORRECTION_ITERATION{10};
 
   ArrayType A({N_DATA_SIZE, N_INPUT_FEATURE_SIZE});
 
@@ -82,7 +83,7 @@ TYPED_TEST(TsneTests, tsne_test_2d)
   fetch::ml::TSNE<ArrayType> tsn(A, N_OUTPUT_FEATURE_SIZE, PERPLEXITY, RANDOM_SEED);
 
   tsn.Optimize(LEARNING_RATE, MAX_ITERATIONS, INITIAL_MOMENTUM, FINAL_MOMENTUM,
-               FINAL_MOMENTUM_STEPS);
+               FINAL_MOMENTUM_STEPS, P_LATER_CORRECTION_ITERATION);
   ArrayType output_matrix = tsn.GetOutputMatrix();
   ASSERT_EQ(output_matrix.shape().at(0), N_DATA_SIZE);
   ASSERT_EQ(output_matrix.shape().at(1), N_OUTPUT_FEATURE_SIZE);

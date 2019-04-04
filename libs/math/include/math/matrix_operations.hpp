@@ -377,14 +377,8 @@ meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &          
   assert(axis == 0 || axis == 1);
   typename ArrayType::Type n;
 
-  if (axis == 0)
-  {
-    n = static_cast<typename ArrayType::Type>(obj1.shape().at(0));
-  }
-  else
-  {
-    n = static_cast<typename ArrayType::Type>(obj1.shape().at(1));
-  }
+  n = static_cast<typename ArrayType::Type>(obj1.shape().at(axis));
+
   return Divide(ReduceSum(obj1, axis), n);
 }
 

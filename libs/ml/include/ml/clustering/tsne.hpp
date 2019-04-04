@@ -18,8 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "math/distance/euclidean.hpp"
+#include <core/assert.hpp>
 #include <math/fundamental_operators.hpp>
 #include <math/matrix_operations.hpp>
+#include <math/ml/loss_functions/kl_divergence.hpp>
 #include <math/standard_functions/exp.hpp>
 #include <math/standard_functions/log.hpp>
 #include <math/tensor.hpp>
@@ -66,7 +68,7 @@ public:
    */
   void Optimize(DataType const &learning_rate, SizeType const &max_iters,
                 DataType const &initial_momentum, DataType const &final_momentum,
-                SizeType const &final_momentum_steps)
+                SizeType const &final_momentum_steps, SizeType const &p_later_correction_iteration)
   {
     // Initialize variables
     output_symmetric_affinities_.Fill(DataType(0));
@@ -138,7 +140,7 @@ public:
                 << std::endl;
 
       // Later P-values correction
-      if (iter == 10)
+      if (iter == p_later_correction_iteration)
       {
         input_symmetric_affinities_ = fetch::math::Divide(input_symmetric_affinities_, DataType(4));
       }
@@ -158,6 +160,7 @@ private:
             DataType const &perplexity)
   {
     DataType perplexity_tolerance{1e-5f};
+    SizeType max_tries{50};
 
     // Initialize high dimensional values
     input_matrix_            = input_matrix;
@@ -166,7 +169,7 @@ private:
     // Find Pj|i values for given perplexity value within perplexity_tolerance
     input_pairwise_affinities_ = ArrayType({input_data_size, input_data_size});
     CalculatePairwiseAffinitiesP(input_matrix, input_pairwise_affinities_, perplexity,
-                                 perplexity_tolerance);
+                                 perplexity_tolerance, max_tries);
 
     // Calculate input_symmetric_affinities from input_pairwise_affinities
     // Pij=(Pj|i+Pi|j)/sum(Pij)
@@ -210,18 +213,18 @@ private:
   void Hbeta(ArrayType const &d, ArrayType &p, DataType &entropy, DataType const &beta,
              SizeType const &k)
   {
-    // P = np.exp(-D.copy() * beta)
+    // p = exp(d * beta)
     p = Gaussian(fetch::math::Multiply(d, beta));
     p.Set(k, DataType(0));
 
     DataType sum_p = fetch::math::Sum(p);
 
-    // H = np.log(sumP) + beta * np.sum(D * P) / sumP
+    // entropy = log(sum_p) + beta * sum(d * p) / sum_p
     DataType sum_d_p = fetch::math::Sum(fetch::math::Multiply(p, d));
 
     entropy = fetch::math::Log(sum_p) + beta * sum_d_p / sum_p;
 
-    // P = P / sumP
+    // p = p / sum_p
     p = fetch::math::Divide(p, sum_p);
   }
 
@@ -234,7 +237,8 @@ private:
    * @param tolerance input Tolerance of perplexity value
    */
   void CalculatePairwiseAffinitiesP(ArrayType const &input_matrix, ArrayType &pairwise_affinities,
-                                    DataType const &target_perplexity, DataType const &tolerance)
+                                    DataType const &target_perplexity, DataType const &tolerance,
+                                    SizeType const &max_tries)
   {
 
     SizeType input_data_size = input_matrix.shape().at(0);
@@ -242,10 +246,10 @@ private:
     /*
      * Initialize some variables
      */
-    // sum_X = np.sum(np.square(X), 1)
+    // sum_x = sum(square(x), 1)
     ArrayType sum_x = fetch::math::ReduceSum(fetch::math::Multiply(input_matrix, input_matrix), 1);
 
-    // D = np.add(np.add(-2 * np.dot(X, X.T), sum_X).T, sum_X)
+    // d= ((-2 * dot(X, X.T))+sum_x).T+sum_x
     ArrayType d =
         fetch::math::Multiply(DataType(-2), fetch::math::DotTranspose(input_matrix, input_matrix));
     d = fetch::math::Add(fetch::math::Add(d, sum_x).Transpose(), sum_x);
@@ -283,7 +287,7 @@ private:
       DataType entropy_diff = current_entropy - target_entropy;
       SizeType tries        = 0;
 
-      while (fetch::math::Abs(entropy_diff) > tolerance && tries < 50)
+      while (fetch::math::Abs(entropy_diff) > tolerance && tries < max_tries)
       {
 
         // If not, increase or decrease precision
@@ -345,15 +349,15 @@ private:
      */
     ArrayType output_matrix_T = output_matrix.Transpose();
 
-    // sum_Y = np.sum(np.square(Y), 1)
+    // sum_y = sum(square(y), 1)
     ArrayType sum_Y =
         fetch::math::ReduceSum(fetch::math::Multiply(output_matrix, output_matrix), 1);
 
-    // num = -2. * np.dot(Y, Y.T)
+    // num = -2. * dot(Y, Y.T)
     num = fetch::math::Multiply(DataType(-2),
                                 fetch::math::DotTranspose(output_matrix, output_matrix));
 
-    // num = 1. / (1. + np.add(np.add(num, sum_Y).T, sum_Y))
+    // num = 1 / (1 + (num+sum_y).T+sum_y)
     ArrayType tmp_val(fetch::math::Add(num, sum_Y));
 
     for (SizeType i{0}; i < sum_Y.size(); i++)
@@ -370,10 +374,10 @@ private:
       num.Set({i, i}, DataType(0));
     }
 
-    // Q = num / np.sum(num)
+    // Q = num / sum(num)
     output_symmetric_affinities = fetch::math::Divide(num, fetch::math::Sum(num));
 
-    // Q=np.maximum(Q, 1e-12)
+    // Crop minimal value to 1e-12
     LimitMin(output_symmetric_affinities, DataType(1e-12));
   }
 
@@ -407,37 +411,6 @@ private:
   }
 
   /**
-   * Kullback-Leibler divergence between matrix A and B
-   * i.e. for each point j and each point i do Sum(CPD(j,i,A)*log(CPD(j,i,A)/CPD(j,i,B))) Where
-   * CPD(j,i,n) means ConditionalProbabilitiesDistance of points j and i of matrix n
-   * @param A input tensor of dimensions n_data x n_features
-   * @param B input tensor of dimensions n_data x n_features
-   * @return
-   */
-  DataType KlDivergence(ArrayType const &input_pairwise_affinities,
-                        ArrayType const &output_pairwise_affinities)
-  {
-    assert(input_pairwise_affinities.shape() == output_pairwise_affinities.shape());
-
-    DataType ret{0};
-    for (SizeType j{0}; j < input_pairwise_affinities.shape().at(0); j++)
-    {
-      for (SizeType i{0}; i < input_pairwise_affinities.shape().at(0); i++)
-      {
-        if (i == j)
-          continue;
-
-        DataType tmp_p_j_given_i = input_pairwise_affinities.At({i, j});
-
-        DataType tmp_q_j_given_i = output_pairwise_affinities.At({i, j});
-
-        ret += tmp_p_j_given_i * fetch::math::Log(tmp_p_j_given_i / tmp_q_j_given_i);
-      }
-    }
-    return ret;
-  }
-
-  /**
    * i.e. Calculates the gradient of the Kullback-Leibler divergence between P and the Student-t
    * based joint probability distribution Q
    * @param output_matrix output low dimensional values tensor
@@ -450,7 +423,7 @@ private:
                             ArrayType const &input_symmetric_affinities,
                             ArrayType const &output_symmetric_affinities, ArrayType const &num)
   {
-    assert(input_matrix_.shape().at(0) == output_matrix.shape().at(0));
+    ASSERT(input_matrix_.shape().at(0) == output_matrix.shape().at(0));
 
     ArrayType ret(output_matrix.shape());
 
@@ -461,7 +434,9 @@ private:
       for (SizeType j{0}; j < output_matrix.shape().at(0); j++)
       {
         if (i == j)
+        {
           continue;
+        }
 
         DataType tmp_p_i_j;
         tmp_p_i_j = input_symmetric_affinities.At({i, j});
@@ -494,10 +469,9 @@ private:
    */
   void LimitMin(ArrayType &matrix, DataType const &min)
   {
-    for (SizeType i{0}; i < matrix.size(); i++)
+    for (auto &val : matrix)
     {
-      if (matrix.At(i) < min)
-        matrix.Set(i, min);
+      val = (val < min) ? min : val;
     }
   }
 
