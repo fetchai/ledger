@@ -22,6 +22,7 @@
 #include <math/fundamental_operators.hpp>
 #include <math/matrix_operations.hpp>
 #include <math/ml/loss_functions/kl_divergence.hpp>
+#include <math/normalize_array.hpp>
 #include <math/standard_functions/exp.hpp>
 #include <math/standard_functions/log.hpp>
 #include <math/tensor.hpp>
@@ -80,10 +81,7 @@ public:
 
     // Initialize gains with value 1.0
     ArrayType gains(output_matrix_.shape());
-    for (SizeType i{0}; i < gains.size(); i++)
-    {
-      gains.Set(i, DataType(1));
-    }
+    gains.Fill(DataType(1));
 
     // Start optimization
     for (SizeType iter{0}; iter < max_iters; iter++)
@@ -213,8 +211,8 @@ private:
   void Hbeta(ArrayType const &d, ArrayType &p, DataType &entropy, DataType const &beta,
              SizeType const &k)
   {
-    // p = exp(d * beta)
-    p = Gaussian(fetch::math::Multiply(d, beta));
+    // p = -exp(d * beta)
+    p = fetch::math::Exp(fetch::math::Multiply(DataType(-1), fetch::math::Multiply(d, beta)));
     p.Set(k, DataType(0));
 
     DataType sum_p = fetch::math::Sum(p);
@@ -266,7 +264,6 @@ private:
     /*
      * Loop over all datapoints
      */
-
     for (SizeType i{0}; i < input_data_size; i++)
     {
 
@@ -350,23 +347,16 @@ private:
     ArrayType output_matrix_T = output_matrix.Transpose();
 
     // sum_y = sum(square(y), 1)
-    ArrayType sum_Y =
-        fetch::math::ReduceSum(fetch::math::Multiply(output_matrix, output_matrix), 1);
+    ArrayType sum_y = fetch::math::ReduceSum(fetch::math::Square(output_matrix), 1);
 
     // num = -2. * dot(Y, Y.T)
     num = fetch::math::Multiply(DataType(-2),
                                 fetch::math::DotTranspose(output_matrix, output_matrix));
 
     // num = 1 / (1 + (num+sum_y).T+sum_y)
-    ArrayType tmp_val(fetch::math::Add(num, sum_Y));
-
-    for (SizeType i{0}; i < sum_Y.size(); i++)
-    {
-      for (SizeType j = 0; j < tmp_val.shape().at(1); j++)
-      {
-        num.Set({i, j}, DataType(1) / (DataType(1) + tmp_val.At({j, i}) + sum_Y.At(i)));
-      }
-    }
+    ArrayType tmp_val(fetch::math::Add(num, sum_y).Transpose());
+    num = fetch::math::Divide(DataType(1),
+                              fetch::math::Add(DataType(1), fetch::math::Add(tmp_val, sum_y)));
 
     // num[range(n), range(n)] = 0.
     for (SizeType i{0}; i < num.shape().at(0); i++)
@@ -375,7 +365,7 @@ private:
     }
 
     // Q = num / sum(num)
-    output_symmetric_affinities = fetch::math::Divide(num, fetch::math::Sum(num));
+    output_symmetric_affinities = fetch::math::NormalizeArray(num);
 
     // Crop minimal value to 1e-12
     LimitMin(output_symmetric_affinities, DataType(1e-12));
@@ -394,29 +384,13 @@ private:
     return DataType(distribution(rng_));
   }
 
-  ArrayType Gaussian(ArrayType const &a)
-  {
-    ArrayType ret(a.shape());
-    for (SizeType i{0}; i < a.size(); i++)
-    {
-
-      DataType tmp_val;
-
-      tmp_val = -a.At(i);
-      fetch::math::Exp(tmp_val, tmp_val);
-
-      ret.Set(i, tmp_val);
-    }
-    return ret;
-  }
-
   /**
    * i.e. Calculates the gradient of the Kullback-Leibler divergence between P and the Student-t
    * based joint probability distribution Q
    * @param output_matrix output low dimensional values tensor
    * @param input_symmetric_affinities Tensor of symmetrized input matrix pairwise affinities
    * @param output_symmetric_affinities Tensor of symmetrized output matrix pairwise affinities
-   * @param num Tensor of precalculated
+   * @param num Tensor of precalculated values num[i,j]=1+||yi-yj||^2
    * @param ret return value output_matrix shaped tensor of gradient values.
    */
   ArrayType ComputeGradient(ArrayType const &output_matrix,
@@ -429,7 +403,6 @@ private:
 
     for (SizeType i{0}; i < output_matrix.shape().at(0); i++)
     {
-
       ArrayType tmp_slice(output_matrix.shape().at(1));
       for (SizeType j{0}; j < output_matrix.shape().at(0); j++)
       {
@@ -444,20 +417,23 @@ private:
         DataType tmp_q_i_j = output_symmetric_affinities.At({i, j});
 
         // (Pij-Qij)
-        DataType tmp_val = (tmp_p_i_j - tmp_q_i_j);
+        DataType tmp_val = fetch::math::Subtract(tmp_p_i_j, tmp_q_i_j);
 
         // /(1+||yi-yj||^2)
-        tmp_val *= num.At({i, j});
+        fetch::math::Multiply(num.At({i, j}), tmp_val, tmp_val);
 
         // tmp_val*(yi-yj), where tmp_val=(Pij-Qij)/(1+||yi-yj||^2)
-        tmp_slice += Multiply(tmp_val, Subtract(output_matrix.Slice(j), output_matrix.Slice(i)));
+        fetch::math::Add(
+            tmp_slice, Multiply(tmp_val, Subtract(output_matrix.Slice(j), output_matrix.Slice(i))),
+            tmp_slice);
       }
 
       for (SizeType k = 0; k < output_matrix.shape().at(1); k++)
       {
-        ret.Set({i, k}, -tmp_slice.At(k));
+        ret.Set({i, k}, fetch::math::Multiply(DataType(-1), tmp_slice.At(k)));
       }
     }
+
     return ret;
   }
 
