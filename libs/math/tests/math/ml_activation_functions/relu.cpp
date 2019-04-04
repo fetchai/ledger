@@ -68,7 +68,7 @@ TYPED_TEST(ReluTest, negative_response)
   // sanity check that all values less than 0
   for (std::size_t i = 0; i < n; ++i)
   {
-    ASSERT_TRUE(test_array[i] < typename TypeParam::Type(0));
+    ASSERT_LT(test_array[i], typename TypeParam::Type(0));
   }
 
   //
@@ -77,7 +77,7 @@ TYPED_TEST(ReluTest, negative_response)
   // check that all values 0
   for (std::size_t i = 0; i < n; ++i)
   {
-    ASSERT_TRUE(test_array_2[i] == typename TypeParam::Type(0));
+    ASSERT_EQ(test_array_2[i], typename TypeParam::Type(0));
   }
 }
 
@@ -91,16 +91,16 @@ TYPED_TEST(ReluTest, positive_response)
   // sanity check that all values gte 0
   for (std::size_t i = 0; i < n; ++i)
   {
-    ASSERT_TRUE(test_array[i] >= typename TypeParam::Type(0));
+    ASSERT_GE(test_array[i], typename TypeParam::Type(0));
   }
 
   fetch::math::Relu(test_array, test_array_2);
-  ASSERT_TRUE(test_array.size() == test_array_2.size());
-  ASSERT_TRUE(test_array.shape() == test_array_2.shape());
+  ASSERT_EQ(test_array.size(), test_array_2.size());
+  ASSERT_EQ(test_array.shape(), test_array_2.shape());
 
   // check that all values unchanged
   for (std::size_t i = 0; i < n; ++i)
   {
-    ASSERT_TRUE(test_array_2[i] == test_array[i]);
+    ASSERT_EQ(test_array_2[i], test_array[i]);
   }
 }
