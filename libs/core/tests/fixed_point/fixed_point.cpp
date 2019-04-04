@@ -165,9 +165,9 @@ TEST(FixedPointTest, Comparison)
   fetch::fixed_point::FixedPoint<32, 32> one(1);
   fetch::fixed_point::FixedPoint<32, 32> two(2);
 
-  EXPECT_TRUE(zero < one);
-  EXPECT_TRUE(zero < two);
-  EXPECT_TRUE(one < two);
+  EXPECT_LT(zero, one);
+  EXPECT_LT(zero, two);
+  EXPECT_LT(one, two);
 
   EXPECT_FALSE(zero > one);
   EXPECT_FALSE(zero > two);
@@ -177,25 +177,25 @@ TEST(FixedPointTest, Comparison)
   EXPECT_FALSE(zero == two);
   EXPECT_FALSE(one == two);
 
-  EXPECT_TRUE(zero == zero);
-  EXPECT_TRUE(one == one);
-  EXPECT_TRUE(two == two);
+  EXPECT_EQ(zero, zero);
+  EXPECT_EQ(one, one);
+  EXPECT_EQ(two, two);
 
-  EXPECT_TRUE(zero >= zero);
-  EXPECT_TRUE(one >= one);
-  EXPECT_TRUE(two >= two);
+  EXPECT_GE(zero, zero);
+  EXPECT_GE(one, one);
+  EXPECT_GE(two, two);
 
-  EXPECT_TRUE(zero <= zero);
-  EXPECT_TRUE(one <= one);
-  EXPECT_TRUE(two <= two);
+  EXPECT_LE(zero, zero);
+  EXPECT_LE(one, one);
+  EXPECT_LE(two, two);
 
   fetch::fixed_point::FixedPoint<32, 32> zero_point_five(0.5);
   fetch::fixed_point::FixedPoint<32, 32> one_point_five(1.5);
   fetch::fixed_point::FixedPoint<32, 32> two_point_five(2.5);
 
-  EXPECT_TRUE(zero_point_five < one);
-  EXPECT_TRUE(zero_point_five < two);
-  EXPECT_TRUE(one_point_five < two);
+  EXPECT_LT(zero_point_five, one);
+  EXPECT_LT(zero_point_five, two);
+  EXPECT_LT(one_point_five, two);
 
   EXPECT_FALSE(zero_point_five > one);
   EXPECT_FALSE(zero_point_five > two);
@@ -205,25 +205,25 @@ TEST(FixedPointTest, Comparison)
   EXPECT_FALSE(zero_point_five == two);
   EXPECT_FALSE(one_point_five == two);
 
-  EXPECT_TRUE(zero_point_five == zero_point_five);
-  EXPECT_TRUE(one_point_five == one_point_five);
-  EXPECT_TRUE(two_point_five == two_point_five);
+  EXPECT_EQ(zero_point_five, zero_point_five);
+  EXPECT_EQ(one_point_five, one_point_five);
+  EXPECT_EQ(two_point_five, two_point_five);
 
-  EXPECT_TRUE(zero_point_five >= zero_point_five);
-  EXPECT_TRUE(one_point_five >= one_point_five);
-  EXPECT_TRUE(two_point_five >= two_point_five);
+  EXPECT_GE(zero_point_five, zero_point_five);
+  EXPECT_GE(one_point_five, one_point_five);
+  EXPECT_GE(two_point_five, two_point_five);
 
-  EXPECT_TRUE(zero_point_five <= zero_point_five);
-  EXPECT_TRUE(one_point_five <= one_point_five);
-  EXPECT_TRUE(two_point_five <= two_point_five);
+  EXPECT_LE(zero_point_five, zero_point_five);
+  EXPECT_LE(one_point_five, one_point_five);
+  EXPECT_LE(two_point_five, two_point_five);
 
   fetch::fixed_point::FixedPoint<32, 32> m_zero(-0);
   fetch::fixed_point::FixedPoint<32, 32> m_one(-1.0);
   fetch::fixed_point::FixedPoint<32, 32> m_two(-2);
 
-  EXPECT_TRUE(m_zero > m_one);
-  EXPECT_TRUE(m_zero > m_two);
-  EXPECT_TRUE(m_one > m_two);
+  EXPECT_GT(m_zero, m_one);
+  EXPECT_GT(m_zero, m_two);
+  EXPECT_GT(m_one, m_two);
 
   EXPECT_FALSE(m_zero < m_one);
   EXPECT_FALSE(m_zero < m_two);
@@ -233,23 +233,23 @@ TEST(FixedPointTest, Comparison)
   EXPECT_FALSE(m_zero == m_two);
   EXPECT_FALSE(m_one == m_two);
 
-  EXPECT_TRUE(zero == m_zero);
-  EXPECT_TRUE(m_zero == m_zero);
-  EXPECT_TRUE(m_one == m_one);
-  EXPECT_TRUE(m_two == m_two);
+  EXPECT_EQ(zero, m_zero);
+  EXPECT_EQ(m_zero, m_zero);
+  EXPECT_EQ(m_one, m_one);
+  EXPECT_EQ(m_two, m_two);
 
-  EXPECT_TRUE(m_zero >= m_zero);
-  EXPECT_TRUE(m_one >= m_one);
-  EXPECT_TRUE(m_two >= m_two);
+  EXPECT_GE(m_zero, m_zero);
+  EXPECT_GE(m_one, m_one);
+  EXPECT_GE(m_two, m_two);
 
-  EXPECT_TRUE(m_zero <= m_zero);
-  EXPECT_TRUE(m_one <= m_one);
-  EXPECT_TRUE(m_two <= m_two);
+  EXPECT_LE(m_zero, m_zero);
+  EXPECT_LE(m_one, m_one);
+  EXPECT_LE(m_two, m_two);
 
-  EXPECT_TRUE(zero > m_one);
-  EXPECT_TRUE(zero > m_two);
-  EXPECT_TRUE(one > m_two);
+  EXPECT_GT(zero, m_one);
+  EXPECT_GT(zero, m_two);
+  EXPECT_GT(one, m_two);
 
-  EXPECT_TRUE(m_two < one);
-  EXPECT_TRUE(m_one < two);
+  EXPECT_LT(m_two, one);
+  EXPECT_LT(m_one, two);
 }

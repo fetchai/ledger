@@ -45,8 +45,7 @@ static void CacheLineRandomAccessStackBench_misshit(benchmark::State &st)
   stack_.New("RAS_bench.db");
 
   EXPECT_TRUE(stack_.is_open());
-  EXPECT_TRUE(stack_.DirectWrite() == true)
-      << "Expected cache line random access stack to be direct write";
+  EXPECT_TRUE(stack_.DirectWrite()) << "Expected cache line random access stack to be direct write";
 
   stack_.SetMemoryLimit(std::size_t(1ULL << 22));
   N        dummy;
@@ -86,8 +85,7 @@ static void CacheLineRandomAccessStackBench_miss(benchmark::State &st)
   stack_.New("RAS_bench.db");
 
   EXPECT_TRUE(stack_.is_open());
-  EXPECT_TRUE(stack_.DirectWrite() == true)
-      << "Expected cache line random access stack to be direct write";
+  EXPECT_TRUE(stack_.DirectWrite()) << "Expected cache line random access stack to be direct write";
 
   stack_.SetMemoryLimit(std::size_t(1ULL << 22));
   N        dummy;
@@ -126,8 +124,7 @@ static void CacheLineRandomAccessStackBench_hit(benchmark::State &st)
   stack_.New("RAS_bench.db");
 
   EXPECT_TRUE(stack_.is_open());
-  EXPECT_TRUE(stack_.DirectWrite() == true)
-      << "Expected cache line random access stack to be direct write";
+  EXPECT_TRUE(stack_.DirectWrite()) << "Expected cache line random access stack to be direct write";
 
   stack_.SetMemoryLimit(std::size_t(1ULL << 22));
   N dummy;

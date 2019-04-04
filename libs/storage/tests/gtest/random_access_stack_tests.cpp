@@ -31,7 +31,7 @@ public:
   uint64_t value1 = 0;
   uint8_t  value2 = 0;
 
-  bool operator==(TestClass const &rhs)
+  bool operator==(TestClass const &rhs) const
   {
     return value1 == rhs.value1 && value2 == rhs.value2;
   }
@@ -130,7 +130,7 @@ TEST(random_access_stack, basic_functionality)
   stack.New("RAS_test.db");
 
   EXPECT_TRUE(stack.is_open());
-  EXPECT_TRUE(stack.DirectWrite() == true) << "Expected random access stack to be direct write";
+  EXPECT_TRUE(stack.DirectWrite()) << "Expected random access stack to be direct write";
 
   // Test push/top
   for (uint64_t i = 0; i < testSize; ++i)
@@ -145,19 +145,18 @@ TEST(random_access_stack, basic_functionality)
       reference.push_back(temp);
     }
 
-    ASSERT_TRUE(stack.Top() == reference[i])
-        << "Stack did not match reference stack at index " << i;
+    ASSERT_EQ(stack.Top(), reference[i]) << "Stack did not match reference stack at index " << i;
   }
 
   // Test index
   {
-    ASSERT_TRUE(stack.size() == reference.size());
+    ASSERT_EQ(stack.size(), reference.size());
 
     for (uint64_t i = 0; i < testSize; ++i)
     {
       TestClass temp;
       stack.Get(i, temp);
-      ASSERT_TRUE(temp == reference[i]);
+      ASSERT_EQ(temp, reference[i]);
     }
   }
 
@@ -191,14 +190,14 @@ TEST(random_access_stack, basic_functionality)
       TestClass c;
       stack.Get(pos1, c);
 
-      ASSERT_TRUE(c == b) << "Stack swap test failed, iteration " << i;
+      ASSERT_EQ(c, b) << "Stack swap test failed, iteration " << i;
     }
 
     {
       TestClass c;
       stack.Get(pos2, c);
 
-      ASSERT_TRUE(c == a) << "Stack swap test failed, iteration " << i;
+      ASSERT_EQ(c, a) << "Stack swap test failed, iteration " << i;
     }
   }
 
@@ -210,8 +209,8 @@ TEST(random_access_stack, basic_functionality)
     ASSERT_EQ(stack.size(), reference.size());
   }
 
-  ASSERT_TRUE(stack.size() == 0);
-  ASSERT_TRUE(stack.empty() == true);
+  ASSERT_EQ(stack.size(), 0);
+  ASSERT_TRUE(stack.empty());
 }
 
 TEST(random_access_stack, file_writing_and_recovery)
@@ -232,10 +231,10 @@ TEST(random_access_stack, file_writing_and_recovery)
 
     stack.New("RAS_test_2.db");
 
-    EXPECT_TRUE(file_loaded == true);
+    EXPECT_TRUE(file_loaded);
 
     stack.SetExtraHeader(0x00deadbeefcafe00);
-    EXPECT_TRUE(stack.header_extra() == 0x00deadbeefcafe00);
+    EXPECT_EQ(stack.header_extra(), 0x00deadbeefcafe00);
 
     // Fill with random numbers
     for (uint64_t i = 0; i < testSize; ++i)
@@ -250,7 +249,7 @@ TEST(random_access_stack, file_writing_and_recovery)
     }
 
     stack.Flush();
-    EXPECT_TRUE(file_flushed == true);
+    EXPECT_TRUE(file_flushed);
   }
 
   // Check values against loaded file
@@ -259,16 +258,16 @@ TEST(random_access_stack, file_writing_and_recovery)
 
     stack.Load("RAS_test_2.db");
 
-    EXPECT_TRUE(stack.header_extra() == 0x00deadbeefcafe00);
+    EXPECT_EQ(stack.header_extra(), 0x00deadbeefcafe00);
 
     {
-      ASSERT_TRUE(stack.size() == reference.size());
+      ASSERT_EQ(stack.size(), reference.size());
 
       for (uint64_t i = 0; i < testSize; ++i)
       {
         TestClass temp;
         stack.Get(i, temp);
-        ASSERT_TRUE(temp == reference[i]);
+        ASSERT_EQ(temp, reference[i]);
       }
     }
 
@@ -287,7 +286,7 @@ TEST(random_access_stack, bulk_functionality)
   stack.New("RAS_test.db");
 
   EXPECT_TRUE(stack.is_open());
-  EXPECT_TRUE(stack.DirectWrite() == true) << "Expected random access stack to be direct write";
+  EXPECT_TRUE(stack.DirectWrite()) << "Expected random access stack to be direct write";
 
   for (uint64_t i = 0; i < testSize; i++)
   {
@@ -304,6 +303,6 @@ TEST(random_access_stack, bulk_functionality)
 
   for (uint64_t i = 0; i < testSize; i++)
   {
-    EXPECT_TRUE(referenceSet[i] == referenceGet[i]);
+    EXPECT_EQ(referenceSet[i], referenceGet[i]);
   }
 }
