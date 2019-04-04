@@ -85,7 +85,7 @@ public:
     data_.SetAllZero();
   }
 
-  bool operator==(BitVectorImplementation const &other)
+  bool operator==(BitVectorImplementation const &other) const
   {
     bool ret = this->size_ == other.size_;
     if (!ret)
@@ -99,9 +99,9 @@ public:
     return ret;
   }
 
-  bool operator!=(BitVectorImplementation const &other)
+  bool operator!=(BitVectorImplementation const &other) const
   {
-    return !(this->operator==(other));
+    return !operator==(other);
   }
 
   BitVectorImplementation &operator^=(BitVectorImplementation const &other)

@@ -30,7 +30,7 @@ public:
   uint64_t value1 = 0;
   uint8_t  value2 = 0;
 
-  bool operator==(TestClass const &rhs)
+  bool operator==(TestClass const &rhs) const
   {
     return value1 == rhs.value1 && value2 == rhs.value2;
   }
@@ -46,7 +46,7 @@ TEST(cached_random_access_stack, basic_functionality)
   stack.New("CRAS_test.db");
 
   EXPECT_TRUE(stack.is_open());
-  EXPECT_TRUE(stack.DirectWrite() == false) << "Expected cached random access stack to be caching";
+  EXPECT_FALSE(stack.DirectWrite()) << "Expected cached random access stack to be caching";
 
   // Test push/top
   for (uint64_t i = 0; i < testSize; ++i)
@@ -61,21 +61,20 @@ TEST(cached_random_access_stack, basic_functionality)
       reference.push_back(temp);
     }
 
-    ASSERT_TRUE(stack.Top() == reference[i])
-        << "Stack did not match reference stack at index " << i;
+    ASSERT_EQ(stack.Top(), reference[i]) << "Stack did not match reference stack at index " << i;
   }
 
   stack.Flush();
 
   // Test index
   {
-    ASSERT_TRUE(stack.size() == reference.size());
+    ASSERT_EQ(stack.size(), reference.size());
 
     for (uint64_t i = 0; i < testSize; ++i)
     {
       TestClass temp;
       stack.Get(i, temp);
-      ASSERT_TRUE(temp == reference[i]);
+      ASSERT_EQ(temp, reference[i]);
     }
   }
 
@@ -109,14 +108,14 @@ TEST(cached_random_access_stack, basic_functionality)
       TestClass c;
       stack.Get(pos1, c);
 
-      ASSERT_TRUE(c == b) << "Stack swap test failed, iteration " << i;
+      ASSERT_EQ(c, b) << "Stack swap test failed, iteration " << i;
     }
 
     {
       TestClass c;
       stack.Get(pos2, c);
 
-      ASSERT_TRUE(c == a) << "Stack swap test failed, iteration " << i;
+      ASSERT_EQ(c, a) << "Stack swap test failed, iteration " << i;
     }
   }
 
@@ -126,8 +125,8 @@ TEST(cached_random_access_stack, basic_functionality)
     stack.Pop();
   }
 
-  ASSERT_TRUE(stack.size() == 0);
-  ASSERT_TRUE(stack.empty() == true);
+  ASSERT_EQ(stack.size(), 0);
+  ASSERT_TRUE(stack.empty());
 }
 
 TEST(cached_random_access_stack, file_writing_and_recovery)
@@ -148,10 +147,10 @@ TEST(cached_random_access_stack, file_writing_and_recovery)
 
     stack.New("CRAS_test_2.db");
 
-    EXPECT_TRUE(file_loaded == true);
+    EXPECT_TRUE(file_loaded);
 
     stack.SetExtraHeader(0x00deadbeefcafe00);
-    EXPECT_TRUE(stack.header_extra() == 0x00deadbeefcafe00);
+    EXPECT_EQ(stack.header_extra(), 0x00deadbeefcafe00);
 
     // Fill with random numbers
     for (uint64_t i = 0; i < testSize; ++i)
@@ -166,7 +165,7 @@ TEST(cached_random_access_stack, file_writing_and_recovery)
     }
 
     stack.Flush();
-    EXPECT_TRUE(file_flushed == true);
+    EXPECT_TRUE(file_flushed);
   }
 
   // Check values against loaded file
@@ -175,16 +174,16 @@ TEST(cached_random_access_stack, file_writing_and_recovery)
 
     stack.Load("CRAS_test_2.db");
 
-    EXPECT_TRUE(stack.header_extra() == 0x00deadbeefcafe00);
+    EXPECT_EQ(stack.header_extra(), 0x00deadbeefcafe00);
 
     {
-      ASSERT_TRUE(stack.size() == reference.size());
+      ASSERT_EQ(stack.size(), reference.size());
 
       for (uint64_t i = 0; i < testSize; ++i)
       {
         TestClass temp;
         stack.Get(i, temp);
-        ASSERT_TRUE(temp == reference[i]);
+        ASSERT_EQ(temp, reference[i]);
       }
     }
 
@@ -197,10 +196,10 @@ TEST(cached_random_access_stack, file_writing_and_recovery)
 
     stack.Load("CRAS_test_2.db");
 
-    EXPECT_TRUE(stack.header_extra() == 0x00deadbeefcafe00);
+    EXPECT_EQ(stack.header_extra(), 0x00deadbeefcafe00);
 
     {
-      ASSERT_TRUE(stack.size() == reference.size());
+      ASSERT_EQ(stack.size(), reference.size());
 
       for (uint64_t i = 0; i < testSize; ++i)
       {
@@ -224,13 +223,13 @@ TEST(cached_random_access_stack, file_writing_and_recovery)
     stack.Load("CRAS_test_2.db");
 
     {
-      ASSERT_TRUE(stack.size() == reference.size());
+      ASSERT_EQ(stack.size(), reference.size());
 
       for (uint64_t i = 0; i < testSize; ++i)
       {
         TestClass temp;
         stack.Get(i, temp);
-        EXPECT_TRUE(temp == reference[i]);
+        EXPECT_EQ(temp, reference[i]);
       }
     }
 
