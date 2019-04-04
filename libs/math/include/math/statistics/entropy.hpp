@@ -17,8 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "math/distance/conditional_probabilities.hpp"
+#include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
+#include <math/standard_functions/log.hpp>
 
 #include <cmath>
 
@@ -27,32 +28,23 @@ namespace math {
 namespace statistics {
 
 /**
- * Calculates the Shannon entropy of conditional probabilities of point i in N-dimensional feature
- * space i.e. for each point j do Sum(CPD(j,i)*log2(CPD(j,i))) Where CPD(j,i) means
- * ConditionalProbabilitiesDistance of points j and i, where sigma=1
- * @param a input tensor of dimensions n_data x n_features
- * @param i index of the data point on which distribution is centred
+ * Calculates the Shannon entropy of probability values array a
+ * i.e. -sum(a*log2(a))
+ * @param a input array of probabilities
  * @param ret return value
  */
 template <typename ArrayType>
-void Entropy(ArrayType const &a, std::size_t i, typename ArrayType::Type &ret)
+void Entropy(ArrayType const &a, typename ArrayType::Type &ret)
 {
-  ret = 0;
-  for (std::size_t j = 0; j < a.shape().at(0); ++j)
-  {
-    typename ArrayType::Type tmp_val = distance::ConditionalProbabilitiesDistance(a, i, j, 1);
-    tmp_val *= log2(tmp_val);
-    ret += tmp_val;
-  }
-
-  ret = -ret;
+  using DataType = typename ArrayType::Type;
+  ret            = Multiply(DataType(-1), Sum(Multiply(a, fetch::math::Log2(a))));
 }
 
 template <typename ArrayType>
-typename ArrayType::Type Entropy(ArrayType const &a, std::size_t i)
+typename ArrayType::Type Entropy(ArrayType const &a)
 {
   typename ArrayType::Type ret;
-  Entropy(a, i, ret);
+  Entropy(a, ret);
   return ret;
 }
 

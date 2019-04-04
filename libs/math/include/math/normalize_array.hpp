@@ -17,38 +17,33 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "math/standard_functions/pow.hpp"
-#include "math/statistics/entropy.hpp"
+#include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
 
 #include <cmath>
 
 namespace fetch {
 namespace math {
-namespace statistics {
 
 /**
- * Calculates the Perplexity of Shannon entropy for point i in N-dimensional feature space
- * i.e. 2^Entropy(i)
- * @param a input tensor of dimensions n_data x n_features
- * @param i index of the data point on which distribution is centred
- * @param ret return value
+ * Divide each value of an array by sum of all values
+ * i.e. x / Sum(x)
+ * @param a input array of values
+ * @param ret return normalized value
  */
 template <typename ArrayType>
-void Perplexity(ArrayType const &a, typename ArrayType::Type &ret)
+void NormalizeArray(ArrayType const &a, ArrayType &ret)
 {
-  using DataType = typename ArrayType::Type;
-  Pow(DataType(2), Entropy(a), ret);
+  Divide(a, Sum(a), ret);
 }
 
 template <typename ArrayType>
-typename ArrayType::Type Perplexity(ArrayType const &a)
+ArrayType NormalizeArray(ArrayType const &a)
 {
-  typename ArrayType::Type ret;
-  Perplexity(a, ret);
+  ArrayType ret(a.shape());
+  NormalizeArray(a, ret);
   return ret;
 }
 
-}  // namespace statistics
 }  // namespace math
 }  // namespace fetch
