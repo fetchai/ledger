@@ -27,11 +27,11 @@ namespace fetch {
 namespace math {
 
 /**
- * Kullback-Leibler divergence between matrix P and Q
+ * Kullback-Leibler divergence between array P and Q
  * KL(P||Q) = P log (P / Q)
  * * i.e. for each val in p and q do sum(p*log(p/q))
- * @param q input tensor/vector/scalar of probabilities
- * @param p input tensor/vector/scalar of probabilities
+ * @param q input array of probabilities
+ * @param p input array of probabilities
  * @return
  */
 template <typename ArrayType>

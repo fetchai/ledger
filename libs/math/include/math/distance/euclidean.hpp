@@ -49,7 +49,8 @@ typename ArrayType::Type Euclidean(ArrayType const &A, ArrayType const &B)
 template <typename ArrayType>
 typename ArrayType::Type NegativeSquareEuclidean(ArrayType const &A, ArrayType const &B)
 {
-  return -SquareDistance(A, B);
+  using DataType = typename ArrayType::Type;
+  return Multiply(DataType(-1), SquareDistance(A, B));
 }
 
 }  // namespace distance

@@ -19,7 +19,6 @@
 
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
-#include <math/standard_functions/log.hpp>
 
 #include <cmath>
 
