@@ -27,7 +27,6 @@ def Hbeta(D=np.array([]), beta=1.0):
     P = np.exp(-D.copy() * beta)
     sumP = sum(P)
     H = np.log(sumP) + beta * np.sum(D * P) / sumP
-    #print("H",H)
     P = P / sumP
     return H, P
 
@@ -47,8 +46,6 @@ def x2p(X=np.array([]), tol=1e-5, perplexity=30.0):
     beta = np.ones((n, 1))
     logU = np.log(perplexity)
 
-    print("logU",logU)
-
     # Loop over all datapoints
     for i in range(n):
 
@@ -62,14 +59,10 @@ def x2p(X=np.array([]), tol=1e-5, perplexity=30.0):
         Di = D[i, np.concatenate((np.r_[0:i], np.r_[i+1:n]))]
         (H, thisP) = Hbeta(Di, beta[i])
 
-#	print(i,"H",H)
-#	print(i,"thisP",thisP)
-
         # Evaluate whether the perplexity is within tolerance
         Hdiff = H - logU
         tries = 0
         while np.abs(Hdiff) > tol and tries < 50:
-	    #print(i," h_diff: ",Hdiff)
 
             # If not, increase or decrease precision
             if Hdiff > 0:
@@ -91,10 +84,8 @@ def x2p(X=np.array([]), tol=1e-5, perplexity=30.0):
             tries += 1
 
         # Set the final row of P
-	print(i," this_p: ",thisP)
         P[i, np.concatenate((np.r_[0:i], np.r_[i+1:n]))] = thisP
 
-    #print("SIGMA: ",np.sqrt(1 / beta))
     # Return final P-matrix
     print("Mean value of sigma: %f" % np.mean(np.sqrt(1 / beta)))
     return P
@@ -130,7 +121,7 @@ def tsne(X=np.array([]), no_dims=2, initial_dims=50, perplexity=30.0):
     # Initialize variables
     
     # PCA can be optionaly used for reducing input matrix dimmensions in order to make TSNE run faster
-    #X = pca(X, initial_dims).real
+    # X = pca(X, initial_dims).real
     
     (n, d) = X.shape
     max_iter = 100
@@ -163,7 +154,7 @@ def tsne(X=np.array([]), no_dims=2, initial_dims=50, perplexity=30.0):
         num = 1. / (1. + np.add(np.add(num, sum_Y).T, sum_Y))
         num[range(n), range(n)] = 0.
         Q = num / np.sum(num)
-	Q = np.maximum(Q, 1e-12)
+	    Q = np.maximum(Q, 1e-12)
 
 	# Compute gradient
         PQ = P - Q
