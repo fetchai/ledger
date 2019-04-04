@@ -34,8 +34,10 @@ public:
   Transpose()          = default;
   virtual ~Transpose() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
+    (void)output;
     ASSERT(inputs.size() == 1);
     this->output_ = std::make_shared<ArrayType>(inputs.front().get().Clone().Transpose());
     return *this->output_;
@@ -49,7 +51,8 @@ public:
     return {errorSignal.Clone().Transpose()};
   }
 
-  virtual std::vector<SizeType> ComputeOutputSize(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual std::vector<SizeType> ComputeOutputSize(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     return {inputs.front().get().shape().at(1), inputs.front().get().shape().at(0)};
   }

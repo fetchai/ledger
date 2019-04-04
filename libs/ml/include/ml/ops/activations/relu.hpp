@@ -36,8 +36,10 @@ public:
   Relu()          = default;
   virtual ~Relu() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
+    (void)output;
     assert(inputs.size() == 1);
     if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
     {

@@ -72,15 +72,15 @@ public:
     this->SetInput(bias, bias_data);
   }
 
-  virtual std::vector<SizeType> ComputeOutputSize(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual std::vector<SizeType> ComputeOutputSize(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     (void)inputs;
     return {1, this->out_size};
   }
 
   static constexpr char const *DESCRIPTOR = "FullyConnected";
-
-  };
+};
 
 }  // namespace layers
 }  // namespace ml

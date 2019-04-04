@@ -35,8 +35,10 @@ public:
   Softmax()          = default;
   virtual ~Softmax() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
+    (void)output;
     assert(inputs.size() == 1);
     if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
     {
@@ -54,7 +56,9 @@ public:
     assert(inputs.front().get().shape() == errorSignal.shape());
 
     ArrayType returnSignal = errorSignal.Clone();
-    ArrayType t            = this->Forward(inputs);
+
+    ArrayType t(this->ComputeOutputSize(inputs));
+    t = this->Forward(inputs, t);
     returnSignal.InlineMultiply(t);
     typename ArrayType::Type sum = returnSignal.Sum();
     t.InlineMultiply(sum);

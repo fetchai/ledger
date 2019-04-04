@@ -35,8 +35,10 @@ public:
   Add()          = default;
   virtual ~Add() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
+    (void)output;
     ASSERT(inputs.size() == 2);
     ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
     if (!this->output_ || this->output_->shape() != inputs.at(0).get().shape())

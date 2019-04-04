@@ -36,8 +36,10 @@ public:
   TanH()          = default;
   virtual ~TanH() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
+    (void)output;
     assert(inputs.size() == 1);
     if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
     {
@@ -67,7 +69,7 @@ public:
     assert(inputs.front().get().shape() == error_signal.shape());
 
     ArrayType return_signal = error_signal.Clone();
-    ArrayType t             = this->Forward(inputs);
+    ArrayType t             = this->Ops<T>::Forward(inputs);
 
     // gradient of tanh: 1 - tanh(x)^2
     fetch::math::Multiply(t, t, t);

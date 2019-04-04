@@ -87,7 +87,8 @@ public:
     this->SetOutputNode(output);
   }
 
-  virtual std::vector<SizeType> ComputeOutputSize(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual std::vector<SizeType> ComputeOutputSize(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     return inputs.front().get().shape();
   }

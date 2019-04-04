@@ -37,8 +37,10 @@ public:
   Sigmoid()          = default;
   virtual ~Sigmoid() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
+    (void)output;
     assert(inputs.size() == 1);
     if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
     {
@@ -67,7 +69,7 @@ public:
     ArrayType t{inputs.front().get().shape()};
 
     // gradient of sigmoid function is s(x)(1 - s(x))
-    t = this->Forward(inputs);
+    t = Ops<T>::Forward(inputs);
     fetch::math::Subtract(DataType(1), t, returnSignal);
     fetch::math::Multiply(t, returnSignal, returnSignal);
 

@@ -35,8 +35,10 @@ public:
   Convolution()          = default;
   virtual ~Convolution() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
+    (void)output;
     assert(inputs.size() == 2);
     // Input should be a 3D tensor [C x H x W]
     assert(inputs.at(0).get().shape().size() == 3);
@@ -91,12 +93,13 @@ public:
     return {errorSignal};
   }
 
-  virtual std::vector<SizeType> ComputeOutputSize(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual std::vector<SizeType> ComputeOutputSize(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     std::vector<typename ArrayType::SizeType> outputShape;
     outputShape.push_back(inputs.at(1).get().shape()[0]);
     outputShape.push_back(inputs.at(0).get().shape()[1] - inputs.at(1).get().shape()[2] + 1);
-    outputShape.push_back(inputs.at(0).get().shape()[2] - inputs.at(1).get().shape()[3] + 1);    
+    outputShape.push_back(inputs.at(0).get().shape()[2] - inputs.at(1).get().shape()[3] + 1);
     return outputShape;
   }
 

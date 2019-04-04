@@ -83,7 +83,7 @@ public:
       }
       else
       {
-        cachedOutput_ = this->Forward(inputs);
+        cachedOutput_ = this->Forward(inputs, cachedOutput_);
       }
       cachedOutputPresent_ = true;
     }

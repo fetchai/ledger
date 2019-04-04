@@ -44,7 +44,7 @@ TYPED_TEST(ReluTest, forward_all_positive_test)
     i++;
   }
   fetch::ml::ops::Relu<TypeParam> op;
-  TypeParam                       prediction = op.Forward({data});
+  TypeParam                       prediction = op.Ops::Forward({data});
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -62,7 +62,7 @@ TYPED_TEST(ReluTest, forward_all_negative_integer_test)
     i++;
   }
   fetch::ml::ops::Relu<TypeParam> op;
-  TypeParam                       prediction = op.Forward({data});
+  TypeParam                       prediction = op.Ops::Forward({data});
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -80,7 +80,7 @@ TYPED_TEST(ReluTest, forward_mixed_test)
     gt.Set(i, typename TypeParam::Type(gtInput[i]));
   }
   fetch::ml::ops::Relu<TypeParam> op;
-  TypeParam                       prediction = op.Forward({data});
+  TypeParam                       prediction = op.Ops::Forward({data});
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));

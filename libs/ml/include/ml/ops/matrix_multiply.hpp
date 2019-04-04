@@ -35,8 +35,10 @@ public:
   MatrixMultiply()          = default;
   virtual ~MatrixMultiply() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
+    (void)output;
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().shape().size() == 2);
     assert(inputs.at(1).get().shape().size() == 2);
@@ -83,11 +85,12 @@ public:
     return {errorSignal1, errorSignal2};
   }
 
-  virtual std::vector<SizeType> ComputeOutputSize(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual std::vector<SizeType> ComputeOutputSize(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     return {inputs.at(0).get().shape()[0], inputs.at(1).get().shape()[1]};
   }
-  
+
   static constexpr char const *DESCRIPTOR = "MatrixMultiply";
 };
 

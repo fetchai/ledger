@@ -36,7 +36,14 @@ public:
   using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    ArrayType output(ComputeOutputSize(inputs));
+    return Forward(inputs, output);
+  }
+
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output) = 0;
   virtual std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal) = 0;
@@ -45,7 +52,8 @@ public:
   virtual std::vector<ArrayType> BackwardBatch(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal) = 0;
-  virtual std::vector<SizeType> ComputeOutputSize(std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
+  virtual std::vector<SizeType> ComputeOutputSize(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
 
 protected:
   ArrayPtrType output_;  // TODO(private, 736) -- Remove
@@ -64,7 +72,8 @@ public:
 
   virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
-    return this->Forward(inputs);
+    ArrayType output;  // Temporary Dummy
+    return this->Forward(inputs, output);
   }
 
   virtual std::vector<ArrayType> BackwardBatch(
@@ -74,7 +83,8 @@ public:
     return this->Backward(inputs, errorSignal);
   }
 
-  virtual std::vector<SizeType> ComputeOutputSize(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual std::vector<SizeType> ComputeOutputSize(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     return inputs.front().get().shape();
   }
@@ -100,7 +110,8 @@ public:
     for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
     {
       ArrayType slice = inputs.front().get().Slice(b);
-      results.push_back(this->Forward({slice}));
+      ArrayType output;  // Temporary Dummy
+      results.push_back(this->Forward({slice}, output));
     }
     return ConcatenateTensors(results);
   }

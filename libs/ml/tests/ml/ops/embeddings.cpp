@@ -41,7 +41,7 @@ TYPED_TEST(EmbeddingsTest, forward_shape)
   {
     input.At(i) = typename TypeParam::Type(i);
   }
-  TypeParam output = e.Forward({input});
+  TypeParam output = e.Ops::Forward({input});
 
   ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({10, 60}));
 }
@@ -64,7 +64,7 @@ TYPED_TEST(EmbeddingsTest, forward)
   TypeParam input(std::vector<uint64_t>({2}));
   input.At(0)      = typename TypeParam::Type(3);
   input.At(1)      = typename TypeParam::Type(5);
-  TypeParam output = e.Forward({input});
+  TypeParam output = e.Ops::Forward({input});
 
   ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({2, 6}));
 
@@ -91,7 +91,7 @@ TYPED_TEST(EmbeddingsTest, backward)
   TypeParam input(std::vector<uint64_t>({2}));
   input.At(0)      = typename TypeParam::Type(3);
   input.At(1)      = typename TypeParam::Type(5);
-  TypeParam output = e.Forward({input});
+  TypeParam output = e.Ops::Forward({input});
 
   TypeParam errorSignal(std::vector<uint64_t>({2, 6}));
   for (unsigned int j(0); j < 12; ++j)
@@ -101,7 +101,7 @@ TYPED_TEST(EmbeddingsTest, backward)
   e.Backward({input}, errorSignal);
   e.Step(typename TypeParam::Type(1));
 
-  output = e.Forward({input});
+  output = e.Ops::Forward({input});
   std::vector<int> gt{30, 30, 30, 30, 30, 30, 44, 44, 44, 44, 44, 44};
 
   for (unsigned int j(0); j < 12; ++j)

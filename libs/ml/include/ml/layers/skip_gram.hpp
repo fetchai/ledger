@@ -92,7 +92,7 @@ public:
     {
       ArrayType slice_input   = inputs.front().get().Slice(b);
       ArrayType slice_context = inputs.back().get().Slice(b);
-      results.push_back(this->Forward({slice_input, slice_context}));
+      results.push_back(this->Ops<T>::Forward({slice_input, slice_context}));
     }
     return ConcatenateTensors(results);
     //    return this->fetch::ml::Ops<T>::ForwardBatch(inputs);
@@ -108,7 +108,8 @@ public:
     return embed_in_;
   }
 
-  virtual std::vector<SizeType> ComputeOutputSize(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual std::vector<SizeType> ComputeOutputSize(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     (void)inputs;
     return {1, this->out_size};
