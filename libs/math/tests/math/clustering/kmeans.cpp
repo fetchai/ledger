@@ -70,22 +70,22 @@ TEST(clustering_test, kmeans_test_2d_4k)
   SizeType group_0 = static_cast<SizeType>(clusters[0]);
   for (SizeType j = 0; j < 25; ++j)
   {
-    ASSERT_TRUE(group_0 == static_cast<SizeType>(clusters[j]));
+    ASSERT_EQ(group_0, static_cast<SizeType>(clusters[j]));
   }
   SizeType group_1 = static_cast<SizeType>(clusters[25]);
   for (SizeType j = 25; j < 50; ++j)
   {
-    ASSERT_TRUE(group_1 == static_cast<SizeType>(clusters[j]));
+    ASSERT_EQ(group_1, static_cast<SizeType>(clusters[j]));
   }
   SizeType group_2 = static_cast<SizeType>(clusters[50]);
   for (SizeType j = 50; j < 75; ++j)
   {
-    ASSERT_TRUE(group_2 == static_cast<SizeType>(clusters[j]));
+    ASSERT_EQ(group_2, static_cast<SizeType>(clusters[j]));
   }
   SizeType group_3 = static_cast<SizeType>(clusters[75]);
   for (SizeType j = 75; j < 100; ++j)
   {
-    ASSERT_TRUE(group_3 == static_cast<SizeType>(clusters[j]));
+    ASSERT_EQ(group_3, static_cast<SizeType>(clusters[j]));
   }
 }
 
@@ -132,12 +132,12 @@ TEST(clustering_test, kmeans_test_previous_assignment)
   SizeType group_0 = static_cast<SizeType>(clusters[0]);
   for (SizeType j = 0; j < 25; ++j)
   {
-    ASSERT_TRUE(group_0 == static_cast<SizeType>(clusters[j]));
+    ASSERT_EQ(group_0, static_cast<SizeType>(clusters[j]));
   }
   SizeType group_1 = static_cast<SizeType>(clusters[25]);
   for (SizeType j = 25; j < 50; ++j)
   {
-    ASSERT_TRUE(group_1 == static_cast<SizeType>(clusters[j]));
+    ASSERT_EQ(group_1, static_cast<SizeType>(clusters[j]));
   }
 }
 
@@ -188,12 +188,12 @@ TEST(clustering_test, kmeans_simple_previous_assignment_no_K)
   SizeType group_0 = 0;
   for (SizeType j = 0; j < 25; ++j)
   {
-    ASSERT_TRUE(group_0 == static_cast<SizeType>(clusters[j]));
+    ASSERT_EQ(group_0, static_cast<SizeType>(clusters[j]));
   }
   SizeType group_1 = 1;
   for (SizeType j = 25; j < 50; ++j)
   {
-    ASSERT_TRUE(group_1 == static_cast<SizeType>(clusters[j]));
+    ASSERT_EQ(group_1, static_cast<SizeType>(clusters[j]));
   }
 }
 
@@ -276,18 +276,18 @@ TEST(clustering_test, kmeans_remap_previous_assignment_no_K)
 
   for (SizeType j = 0; j < 25; ++j)
   {
-    ASSERT_TRUE(group_0 == static_cast<int>(clusters[j]));
+    ASSERT_EQ(group_0, static_cast<int>(clusters[j]));
   }
   for (SizeType j = 25; j < 50; ++j)
   {
-    ASSERT_TRUE(group_1 == static_cast<int>(clusters[j]));
+    ASSERT_EQ(group_1, static_cast<int>(clusters[j]));
   }
   for (SizeType j = 50; j < 75; ++j)
   {
-    ASSERT_TRUE(group_2 == static_cast<int>(clusters[j]));
+    ASSERT_EQ(group_2, static_cast<int>(clusters[j]));
   }
   for (SizeType j = 75; j < 100; ++j)
   {
-    ASSERT_TRUE(group_3 == static_cast<int>(clusters[j]));
+    ASSERT_EQ(group_3, static_cast<int>(clusters[j]));
   }
 }
