@@ -89,7 +89,15 @@ IDENT		[_a-zA-Z][_a-zA-Z0-9]*
 	return Set(yylval, fetch::vm::Token::Kind::Integer32, yytext, yyleng, yyextra);
 }
 
+{INTEGER}i32 {
+	return Set(yylval, fetch::vm::Token::Kind::Integer32, yytext, yyleng, yyextra);
+}
+
 {INTEGER}u {
+	return Set(yylval, fetch::vm::Token::Kind::UnsignedInteger32, yytext, yyleng, yyextra);
+}
+
+{INTEGER}u32 {
 	return Set(yylval, fetch::vm::Token::Kind::UnsignedInteger32, yytext, yyleng, yyextra);
 }
 
@@ -97,7 +105,15 @@ IDENT		[_a-zA-Z][_a-zA-Z0-9]*
 	return Set(yylval, fetch::vm::Token::Kind::Integer64, yytext, yyleng, yyextra);
 }
 
+{INTEGER}i64 {
+	return Set(yylval, fetch::vm::Token::Kind::Integer64, yytext, yyleng, yyextra);
+}
+
 {INTEGER}ul {
+	return Set(yylval, fetch::vm::Token::Kind::UnsignedInteger64, yytext, yyleng, yyextra);
+}
+
+{INTEGER}u64 {
 	return Set(yylval, fetch::vm::Token::Kind::UnsignedInteger64, yytext, yyleng, yyextra);
 }
 
