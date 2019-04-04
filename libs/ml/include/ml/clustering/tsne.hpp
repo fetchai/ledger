@@ -242,7 +242,6 @@ private:
     /*
      * Initialize some variables
      */
-
     // sum_X = np.sum(np.square(X), 1)
     ArrayType sum_x = fetch::math::ReduceSum(fetch::math::Multiply(input_matrix, input_matrix), 1);
 
