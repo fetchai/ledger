@@ -44,8 +44,7 @@ public:
     // inner dimension check
     assert(inputs.at(0).get().shape()[1] == inputs.at(1).get().shape()[0]);
 
-    std::vector<SizeType> outputShape(
-        {inputs.at(0).get().shape()[0], inputs.at(1).get().shape()[1]});
+    std::vector<SizeType> outputShape(ComputeOutputSize(inputs));
     if (!this->output_ || this->output_->shape() != outputShape)
     {
       this->output_ = std::make_shared<ArrayType>(outputShape);
@@ -84,6 +83,11 @@ public:
     return {errorSignal1, errorSignal2};
   }
 
+  virtual std::vector<SizeType> ComputeOutputSize(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    return {inputs.at(0).get().shape()[0], inputs.at(1).get().shape()[1]};
+  }
+  
   static constexpr char const *DESCRIPTOR = "MatrixMultiply";
 };
 

@@ -41,6 +41,7 @@ class FullyConnected : public Layer<T>
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using SizeType     = typename ArrayType::SizeType;
   using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
 
   FullyConnected(std::uint64_t in, std::uint64_t out, std::string const &name = "FC",
@@ -71,8 +72,15 @@ public:
     this->SetInput(bias, bias_data);
   }
 
+  virtual std::vector<SizeType> ComputeOutputSize(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    (void)inputs;
+    return {1, this->out_size};
+  }
+
   static constexpr char const *DESCRIPTOR = "FullyConnected";
-};
+
+  };
 
 }  // namespace layers
 }  // namespace ml

@@ -28,6 +28,7 @@ class Convolution : public BatchOps<T>
 {
 public:
   using ArrayType    = T;
+  using SizeType     = typename ArrayType::SizeType;
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
@@ -42,10 +43,7 @@ public:
     // Weights should be a 4D tensor [oC x iC x H x W]
     assert(inputs.at(1).get().shape().size() == 4);
 
-    std::vector<typename ArrayType::SizeType> outputShape;
-    outputShape.push_back(inputs.at(1).get().shape()[0]);
-    outputShape.push_back(inputs.at(0).get().shape()[1] - inputs.at(1).get().shape()[2] + 1);
-    outputShape.push_back(inputs.at(0).get().shape()[2] - inputs.at(1).get().shape()[3] + 1);
+    auto outputShape = ComputeOutputSize(inputs);
     if (!this->output_ || this->output_->shape() != outputShape)
     {
       this->output_ = std::make_shared<ArrayType>(outputShape);
@@ -91,6 +89,15 @@ public:
       ArrayType const &errorSignal)
   {
     return {errorSignal};
+  }
+
+  virtual std::vector<SizeType> ComputeOutputSize(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    std::vector<typename ArrayType::SizeType> outputShape;
+    outputShape.push_back(inputs.at(1).get().shape()[0]);
+    outputShape.push_back(inputs.at(0).get().shape()[1] - inputs.at(1).get().shape()[2] + 1);
+    outputShape.push_back(inputs.at(0).get().shape()[2] - inputs.at(1).get().shape()[3] + 1);    
+    return outputShape;
   }
 
   static constexpr char const *DESCRIPTOR = "Convolution";

@@ -108,6 +108,12 @@ public:
     return embed_in_;
   }
 
+  virtual std::vector<SizeType> ComputeOutputSize(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    (void)inputs;
+    return {1, this->out_size};
+  }
+
   static constexpr char const *DESCRIPTOR = "SkipGram";
 
 private:

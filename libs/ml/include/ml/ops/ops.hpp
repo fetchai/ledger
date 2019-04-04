@@ -33,10 +33,10 @@ class Ops
 {
 public:
   using ArrayType    = T;
+  using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
-
   virtual std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal) = 0;
@@ -45,6 +45,7 @@ public:
   virtual std::vector<ArrayType> BackwardBatch(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal) = 0;
+  virtual std::vector<SizeType> ComputeOutputSize(std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
 
 protected:
   ArrayPtrType output_;  // TODO(private, 736) -- Remove
@@ -57,7 +58,9 @@ template <class T>
 class ElementWiseOps : public Ops<T>
 {
 public:
-  using ArrayType = T;
+  using ArrayType    = T;
+  using SizeType     = typename ArrayType::SizeType;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
@@ -70,6 +73,11 @@ public:
   {
     return this->Backward(inputs, errorSignal);
   }
+
+  virtual std::vector<SizeType> ComputeOutputSize(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    return inputs.front().get().shape();
+  }
 };
 
 /*
@@ -80,7 +88,9 @@ template <class T>
 class BatchOps : public Ops<T>
 {
 public:
-  using ArrayType = T;
+  using ArrayType    = T;
+  using SizeType     = typename ArrayType::SizeType;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   // Overload that method for optimisation purposes
   virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
