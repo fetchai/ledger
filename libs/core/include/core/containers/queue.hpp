@@ -184,6 +184,8 @@ public:
   template <typename U, typename R, typename P>
   meta::EnableIfSame<T, meta::Decay<U>, bool> Push(U &&element, std::size_t &count,
                                                    std::chrono::duration<R, P> const &duration);
+  std::size_t Size() const;
+  bool Empty() const;
   /// @}
 
   // Operators
@@ -349,13 +351,13 @@ meta::EnableIfSame<T, meta::Decay<U>, bool> Queue<T, N, P, C>::Push(
 }
 
 template <typename T, std::size_t N, typename P, typename C>
-bool Queue<T, N, P, C>::empty()
+bool Queue<T, N, P, C>::Empty() const
 {
-  return size() == 0;
+  return Size() == 0;
 }
 
 template <typename T, std::size_t N, typename P, typename C>
-std::size_t Queue<T, N, P, C>::size()
+std::size_t Queue<T, N, P, C>::Size() const
 {
   return write_index_ - read_index_;
 }
