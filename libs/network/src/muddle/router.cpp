@@ -231,10 +231,12 @@ void Router::Stop()
 
 inline bool Router::Genuine(PacketPtr const &p) const
 {
-  return p->IsBroadcast() ?
-                          // broadcasts are only verified if really needed
-             !sign_broadcasts_ || p->Verify()
-                          : p->Verify() || !(prover_ || p->IsStamped());
+  if (p->IsBroadcast())
+  {
+    // broadcasts are only verified if really needed
+    return !sign_broadcasts_ || p->Verify();
+  }
+  return p->Verify() || !(prover_ || p->IsStamped());
 }
 
 Router::PacketPtr const &Router::Sign(PacketPtr const &p) const
