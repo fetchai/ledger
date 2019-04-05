@@ -37,8 +37,9 @@ struct DAGNode
   // Different types of DAG nodes.
   enum
   {
-    WORK  = 1,
-    DATA  = 2
+    GENESIS = 1,
+    WORK    = 2,
+    DATA    = 3
   };
 
   uint64_t          timestamp{INVALID_TIMESTAMP};    ///< timestamp to that keeps the time since last validated block.
@@ -68,6 +69,18 @@ struct DAGNode
 
     return true;
   }  
+
+  bool operator==(DAGNode const &other ) const
+  {
+    return (timestamp == other.timestamp) &&
+          (type == other.type) &&
+          (previous == other.previous) &&
+          (contents == other.contents) &&
+          (contract_name == other.contract_name) &&
+          (identity == other.identity) &&
+          (hash == other.hash) &&
+          (signature == other.signature);
+  }
 
   /**
    * @brief finalises the node by creating the hash.

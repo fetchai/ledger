@@ -73,21 +73,28 @@ public:
 
   SynergeticExecutor(DAG &dag, StorageUnitInterface &storage_unit)
   : miner_{dag}
+
   , dag_{dag}
   , storage_{storage_unit}
   { }
 
-  PreparationStatusType PrepareWorkQueue(Block &block)
+  PreparationStatusType PrepareWorkQueue(Block const &previous, Block const &current)
   {
+    contract_queue_.clear();
     WorkMap synergetic_work_candidates;
 
     // Annotating nodes in the DAG
-    if(!dag_.SetNodeTime(block.body.block_number, block.body.dag_nodes))
+    if(!dag_.SetNodeTime(current))
     {
-      return PreparationStatusType::INVALID_BLOCK;      
+      return PreparationStatusType::INVALID_BLOCK;
     }
 
-    auto segment = dag_.ExtractSegment(block.body.block_number);
+    // Work is certified by current block
+    auto segment = dag_.ExtractSegment(current);
+
+    // but data is used from the previous block
+    miner_.SetBlock(previous);
+    assert((previous.body.block_number +1) == current.body.block_number );
 
     // Extracting relevant contract names
     for(auto &node: segment)
@@ -96,10 +103,12 @@ public:
       {
         // Deserialising work and adding it to the work map
         Work work;
-
         try
         {
           node.GetObject(work);
+          work.contract_name = node.contract_name;
+          work.miner = node.identity.identifier();
+          assert((current.body.block_number - 1) == work.block_number);
         }
         catch(std::exception const &e)
         {
@@ -160,7 +169,7 @@ public:
       if(!contract_register_.CreateContract(c->contract_name, static_cast<std::string>(source) ))
       {
         return PreparationStatusType::CONTRACT_REGISTRATION_FAILED;
-      }      
+      }
     }
 
     return PreparationStatusType::SUCCESS;
@@ -170,7 +179,7 @@ public:
   {
     for(auto &c: contract_queue_)      
     {
-      miner_.AttachContract(contract_register_.GetContract(c->contract_name));
+      miner_.AttachContract(storage_, contract_register_.GetContract(c->contract_name));
 
       // Defining the problem using the data on the DAG
       if(!miner_.DefineProblem())
@@ -182,6 +191,7 @@ public:
       while(!c->solutions_queue.empty())
       {
         auto work = c->solutions_queue.top();
+        assert( work.miner != "");
 
         c->solutions_queue.pop();
 
@@ -189,15 +199,21 @@ public:
         if(score == work.score)
         {
           // Work was honest
-          miner_.ClearProblem();
+          miner_.ClearContest();
 
-          // TODO (tfr): placeholder to issue reward to winning miner
+          assert( on_reward_work_ );
+          if(on_reward_work_)
+          {
+            on_reward_work_(work);
+          }
           break;
         }
         else
         {
-          // TODO (tfr): place holder to slash the stake that was put up to add DAG nodes to the net
-          // work was dishonest
+          if(on_dishonest_work_)
+          {
+            on_dishonest_work_(work);
+          }
         }
       }
 
@@ -207,11 +223,17 @@ public:
     return true;
   }
 
+  void OnDishonestWork(std::function< void(Work) > on_dishonest_work)
+  {
+    on_dishonest_work_ = std::move(on_dishonest_work);
+  }
 private:
   SynergeticContractRegister contract_register_;  ///< Cache for synergetic contracts
   SynergeticMiner            miner_;              ///< Miner to validate the work
   DAG &                      dag_;                ///< DAG with work to be executed
   StorageUnitInterface &     storage_;
+
+  std::function< void(Work) > on_dishonest_work_;
 
   ExecutionQueue contract_queue_;
 };

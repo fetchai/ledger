@@ -33,13 +33,14 @@ struct SynergeticContractClass
     ret->work_function = "";
     ret->objective_function = "";
     ret->problem_function = "";
+    ret->clear_function = "";
 
     // TODO: Expose errors externally - possibly throw exception?
     fetch::vm::Strings errors;
 
     // Compiling contract
-    std::string str_address = std::string( name );
-    if(!compiler->Compile(source, str_address , ret->script, errors))
+    std::string str_name = std::string( name );
+    if(!compiler->Compile(source, str_name , ret->script, errors))
     {
       // TODO: Get rid off error message
       std::cout << "Failed to compile" << std::endl;
@@ -84,6 +85,11 @@ struct SynergeticContractClass
         ret->problem_function = f.name;
       }
 
+      if(is_clear_function)
+      {
+        ret->clear_function = f.name;
+      }      
+
       if(is_test_dag_generator)
       {
         ret->test_dag_generator = f.name;
@@ -106,6 +112,12 @@ struct SynergeticContractClass
     {
       std::cout << "Failed to find problem function" << std::endl;
       return nullptr;
+    }
+
+    if(ret->clear_function == "")
+    {
+      std::cout << "Failed to find clear function" << std::endl;
+      return nullptr;
     }    
 
     //
@@ -114,7 +126,7 @@ struct SynergeticContractClass
   }
 
 
-  byte_array::ByteArray name;   //< TODO: Set
+  byte_array::ByteArray name;   
   byte_array::ByteArray address;
   vm::Script script;
 

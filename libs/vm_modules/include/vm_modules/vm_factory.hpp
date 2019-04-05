@@ -26,8 +26,10 @@
 
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/type_convert.hpp"
+#include "vm_modules/crypto/sha256.hpp"
 
 #include "vm_modules/math/abs.hpp"
+#include "vm_modules/math/bignumber.hpp"
 
 #include "vm_modules/ml/cross_entropy.hpp"
 #include "vm_modules/ml/graph.hpp"
@@ -55,12 +57,20 @@ public:
   {
     auto module = std::make_shared<fetch::vm::Module>();
 
+    ByteArrayWrapper::Bind(*module);
+    BigNumberWrapper::Bind(*module);    
+    SHA256Wrapper::Bind(*module);
+    
     // core modules
     CreatePrint(*module);
     CreateToString(*module);
 
     // math modules
     CreateAbs(*module);
+
+
+
+
 
     // ml modules - order is important!!
     ml::CreateTensor(*module);

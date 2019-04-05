@@ -11,6 +11,7 @@
 #include "crypto/ecdsa.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/dag/dag_node.hpp"
+#include "ledger/chain/block.hpp"
 
 
 #include <unordered_set>
@@ -80,7 +81,7 @@ public:
 
   /// Control logic for setting the time of the nodes.
   /// @{
-  bool SetNodeTime(uint64_t block_number, DigestArray hashes)
+  bool SetNodeTime(Block const&block)
   {
     FETCH_LOCK(maintenance_mutex_); 
 
@@ -88,7 +89,7 @@ public:
     std::queue< Digest >  queue;
 
     // Preparing graph traversal
-    for(auto const& h :hashes)
+    for(auto const& h : block.body.dag_nodes)
     {
       queue.push(h);
     }
@@ -120,7 +121,7 @@ public:
       {
 
         // If not we certify it and proceed to its parents
-        node.timestamp = block_number;
+        node.timestamp = block.body.block_number;
         for(auto &p: node.previous)
         {
           // TODO: Check whether already added
@@ -163,21 +164,22 @@ public:
     throw std::runtime_error("DAG::RevertTo not implemented");    
   }
 
-  NodeArray ExtractSegment(uint64_t block_number)
+  NodeArray ExtractSegment(Block const &block)
   {
+    // It is important that the block is used to extract the segment 
+    // and not just the block time. If the hashes starting the extract
+    // are not consistent accross nodes, the order of the extract will
+    // come out differently.    
     FETCH_LOCK(maintenance_mutex_);
     NodeArray ret;
 
     std::queue< Digest > queue;
-    std::unordered_set< Digest > added;
+    std::unordered_set< Digest > added_to_queue;
 
-    for(auto &t: tips_)
+    for(auto &t: block.body.dag_nodes)
     {
-      // Only include unreferenced tips here
-      if(t.second == 0)
-      {
-        queue.push(t.first);
-      }
+      added_to_queue.insert(t);
+      queue.push(t);
     }
 
     while(!queue.empty())
@@ -185,24 +187,24 @@ public:
       auto &node = nodes_[queue.front()];
       queue.pop();
 
-      if((node.timestamp < block_number) && (node.timestamp != DAGNode::INVALID_TIMESTAMP))
+      if((node.timestamp < block.body.block_number) && (node.timestamp != DAGNode::INVALID_TIMESTAMP))
       {
         continue;
       }
 
-      if(node.timestamp == block_number)
+      if(node.timestamp == block.body.block_number)
       {
         ret.push_back(node);
       }
 
       for(auto &p: node.previous)
       {
-        if(added.find(p) != added.end())
+        if(added_to_queue.find(p) != added_to_queue.end())
         {
           continue;
         }
 
-        added.insert( p );          
+        added_to_queue.insert( p );          
         queue.push(p);
       }
       

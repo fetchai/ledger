@@ -26,7 +26,9 @@
 
 #include "core/json/document.hpp"
 #include "ledger/dag/dag.hpp"
-#include "dag_node_wrapper.hpp"
+#include "ledger/chain/block.hpp"
+#include "vm_modules/ledger/dag_node_wrapper.hpp"
+#include "vm_modules/ledger/chain_state.hpp"
 namespace fetch
 {
 namespace vm_modules
@@ -58,15 +60,15 @@ public:
       .CreateInstanceFunction("getNodes", &DAGWrapper::GetNodes);
   }
 
-  DAGWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, ledger::DAG *dag)
+  DAGWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, ChainState *chain_state)
     : fetch::vm::Object(vm, type_id)
-    , dag_(dag)
+    , chain_state_(chain_state)
     , vm_(vm)
   { }
 
   static fetch::vm::Ptr<DAGWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
   {
-    auto dag = vm->GetGlobalPointer<ledger::DAG> ();
+    auto dag = vm->GetGlobalPointer<ChainState> ();
     return new DAGWrapper(vm, type_id, dag);
   }
 
@@ -74,25 +76,27 @@ public:
   {
     std::vector< vm::Ptr< DAGNodeWrapper > > items;
 
-    if(dag_ == nullptr)
+    if(chain_state_->dag == nullptr)
     {
       RuntimeError("DAG pointer is null.");
       return nullptr;
     }
 
-    auto nodes = dag_->nodes();
+    // TODO: Make it such that multiple block times can be extracted
+    auto nodes = chain_state_->dag->ExtractSegment(chain_state_->block); 
+    std::cout << "Extracting segment for block " << chain_state_->block.body.block_number << std::endl;
     for(auto &n : nodes )
     {
       // We ignore anything that does not reference the past
-      if(n.second.previous.size() == 0)
+      if(n.previous.size() == 0)
       {
         continue;
       }
 
       // Only data is available inside the contract
-      if(n.second.type == ledger::DAGNode::DATA)
+      if(n.type == ledger::DAGNode::DATA)
       {
-        items.push_back( vm_->CreateNewObject< DAGNodeWrapper >( n.second ) );
+        items.push_back( vm_->CreateNewObject< DAGNodeWrapper >( n ) );
       }
     }
 
@@ -100,7 +104,7 @@ public:
   }  
     
 private:
-  ledger::DAG *dag_{nullptr};
+  ChainState* chain_state_;
   fetch::vm::VM *vm_;
 };
 

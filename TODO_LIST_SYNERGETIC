@@ -8,35 +8,56 @@
 - (v) Validate DAG hashes in BlockCoordinator::OnPreExecBlockValidation
     - (v) Traverse back to last known nodes
     - (v) Test for bad blocks
-- ( ) Test with real data.
-
-- ( ) Finish Synergetic Executor
-		- (v) Deserialise block
+- (v) Finish Synergetic Executor
+    - (v) Deserialise block
     - (v) Pass StorageInterface to executor
     - (v) Fetch smart contract source
-    - ( ) Workout how to attach the state thingie to the contract
+    - (v) Workout how to attach the state thingie to the contract
+- (v) Check that block number is set correctly
+- (v) Add state adapters
+- (v) Store the contract in the database
+- (v) Add Array serialisation
+- (v) Extract correct DAG portion for miner, i.e., miner needs to be chain aware
+    - (v) Make DAG"Adapter"
+    - (v) Make it possible to set block number
+- (v) Make check that the extracted data is correct for validation.
+- ( ) Rewrite test contract
+    - (v) Implement SHA256
+    - (v) Implement BigNumber
+    - (v) Add id to data elements [implement getString]
+    - ( ) Update contract to simpliest possible search
+    - (v) Update nonce to ByteArray
+    - (v) Update entropy to ByteArray
+
+- ( ) Make contract signature validator
+- ( ) Test with real data.
+- ( ) Fix any problems in the test.
+- ( ) Tidy code up
+- ( ) Add revert test 
+- ( ) Engrave public key into nonce        
+- ( ) Move implementation to block coordinator
+    - ( ) Create disable functionality
+    - ( ) 
 
 - ( ) Write tests for:
     - ( ) Move contract mockup to tests
     - ( ) DAG syncronisation
+    - ( ) DAG Segment extraction
+          - ( ) Check size
+          - ( ) Check order
     - ( ) SyncronisationExecutor
-          - ( ) PrepareWorkQueue
-          - ( ) ValidateWorkAndUpdateState
-          - ( ) 
+          - (v) PrepareWorkQueue
+          - (v) ValidateWorkAndUpdateState
     - (v) SynergeticMiner
-
-
-- (v) Check that block number is set correctly
+- ( ) Make it possible to extract multiple block segments
 - ( ) Streams to implement:
 	- ( ) Block generation
 	- ( ) Block validation
 	- ( ) Roll back
-
 - ( ) Make DAG Service a State machine
 - ( ) Change DAG
     - ( ) Follow the design pattern of a state machine for the RPC protocol
     - (v) Simplify and improve tips
-
 - ( ) Fix tips selection
 - ( ) Implement Revert
 - ( ) Add nonce to script -> Change entropy to ByteArray

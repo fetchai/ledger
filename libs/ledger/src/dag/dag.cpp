@@ -28,7 +28,7 @@ DAG::DAG()
   // It is important that the initial DAG node is not a block
   // as the DAG nodes are not allowed to refer to blocks.
   DAGNode n;
-  n.type = DAGNode::WORK;
+  n.type = DAGNode::GENESIS;
   n.contents = "genesis"; // TODO(tfr): make configurable
   n.timestamp = DAGNode::GENESIS_TIME;
 

@@ -38,7 +38,7 @@ inline void PrintLnByteArray(fetch::vm::VM * vm, fetch::vm::Ptr<fetch::vm_module
 {
   auto &out = vm->GetOutputDevice("stdout"); 
 //  out << byte_array::ToBase64(s->byte_array()) << std::endl;
-  out << s->byte_array() << std::endl;
+  out << byte_array::ToHex(s->byte_array()) << std::endl;  
 }
 
 inline void PrintString(fetch::vm::VM * vm, fetch::vm::Ptr<fetch::vm::String> const &s)
@@ -103,7 +103,7 @@ inline void PrintLnDouble(fetch::vm::VM * vm, double const &s)
 }
 
 
-template<typename T>
+template<typename T, bool NL = false>
 inline void PrintArrayPrimitive(fetch::vm::VM * vm, vm::Ptr< vm::Array< T > > const &g)
 {
   auto &out = vm->GetOutputDevice("stdout"); 
@@ -117,6 +117,10 @@ inline void PrintArrayPrimitive(fetch::vm::VM * vm, vm::Ptr< vm::Array< T > > co
     out << g->elements[i];
   }
   out << "]";
+  if(NL)
+  {
+    out << std::endl;
+  }
 }
 
 
@@ -142,6 +146,12 @@ inline void CreatePrint(vm::Module& module)
   module.CreateFreeFunction("print", &PrintArrayPrimitive<uint64_t>);
   module.CreateFreeFunction("print", &PrintArrayPrimitive<float>);  
   module.CreateFreeFunction("print", &PrintArrayPrimitive<double>);  
+  module.CreateFreeFunction("printLn", &PrintArrayPrimitive<int32_t,true>);  
+  module.CreateFreeFunction("printLn", &PrintArrayPrimitive<int64_t,true>);
+  module.CreateFreeFunction("printLn", &PrintArrayPrimitive<uint32_t,true>);  
+  module.CreateFreeFunction("printLn", &PrintArrayPrimitive<uint64_t,true>);
+  module.CreateFreeFunction("printLn", &PrintArrayPrimitive<float,true>);  
+  module.CreateFreeFunction("printLn", &PrintArrayPrimitive<double,true>);    
 }
 
 inline void CreatePrint(std::shared_ptr<vm::Module> module)

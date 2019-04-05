@@ -58,7 +58,7 @@ public:
     if (n > 0)
     {
       data_ = std::shared_ptr<T>(
-          reinterpret_cast<type *>(_mm_malloc(this->padded_size() * sizeof(type), 16)), _mm_free);
+          reinterpret_cast<type *>(_mm_malloc(this->padded_size() * sizeof(type), 64)), _mm_free);
 
       this->pointer_ = data_.get();
     }

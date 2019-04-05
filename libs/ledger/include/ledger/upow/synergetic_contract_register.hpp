@@ -39,6 +39,12 @@ public:
     return ret;
   }
 
+  bool HasContract(ContractName const &name) const
+  {
+    auto it = contracts_.find(name);
+    return (it != contracts_.end());
+  }
+
   SynergeticContract GetContract(ContractName const &name)
   {
     auto it = contracts_.find(name);
@@ -47,6 +53,11 @@ public:
       return nullptr;
     }
     return it->second;
+  }
+
+  void Clear()
+  {
+    contracts_.clear();
   }
 private:
   vm::Module     module_;

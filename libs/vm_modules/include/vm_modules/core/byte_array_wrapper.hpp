@@ -26,7 +26,7 @@ public:
 
   static void Bind(vm::Module &module)
   {
-    module.CreateClassType<ByteArrayWrapper>("ByteArray")
+    module.CreateClassType<ByteArrayWrapper>("Buffer")
       .CreateTypeConstuctor<int32_t>()
       .CreateInstanceFunction("copy", &ByteArrayWrapper::Copy)
       .EnableIndexOperator<uint8_t, int32_t>();

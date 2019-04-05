@@ -273,10 +273,17 @@ public:
     }
     return ptr;
   }
+
   void SetIOObserver(IoObserverInterface &observer)
   {
     io_observer_ = &observer;
   }
+
+  void ClearIOObserver()
+  {
+    io_observer_ = nullptr;
+  }
+
 
   bool HasIoObserver() const
   {

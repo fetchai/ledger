@@ -66,7 +66,7 @@ public:
   {
     if(!cregister_.CreateContract("fetch.synergetic", source_))
     {
-      std::cout << "Could not attach contract." << std::endl;
+      std::cout << "Could not create contract." << std::endl;
       return false;
     }
 
@@ -74,7 +74,18 @@ public:
     work.contract_name = "fetch.synergetic";
     work.miner = "miner9";
 
-    miner_->AttachContract(cregister_.GetContract(work.contract_name));
+    auto contract = cregister_.GetContract(work.contract_name);
+    if(contract == nullptr)
+    {
+      std::cout << "Could not contract is null.";
+      exit(-1);
+    }
+
+    if(!miner_->AttachContract(contract))
+    {
+      std::cout << "Could not attach contract";
+      exit(-1);
+    }
     if(!miner_->DefineProblem())
     {
       std::cout << "Could not define problem!" << std::endl;
@@ -83,10 +94,13 @@ public:
 
     // Let's mine
     fetch::consensus::WorkRegister wreg;
+    fetch::math::BigUnsigned nonce(29188);
 
     fetch::consensus::Work::ScoreType best_score = std::numeric_limits< fetch::consensus::Work::ScoreType >::max();
     for(int64_t i = 0; i < 10; ++i) {
-      work.nonce = 29188 + i;
+      work.nonce = nonce;
+      ++nonce;
+      
       work.score = miner_->ExecuteWork(work);
 
       if(work.score < best_score)
@@ -148,6 +162,7 @@ private:
 
     // #agent_id, #items item0 ... itemN price #exludes exclude0 ... exludeM
     j = 0;
+
     for(; i < bid_count; ++i)  
     {
       fetch::variant::Variant doc = fetch::variant::Variant::Object();
