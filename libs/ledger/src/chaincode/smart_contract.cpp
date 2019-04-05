@@ -64,7 +64,7 @@ ConstByteArray GenerateDigest(std::string const &source)
  */
 void ValidateAddressesInParams(Transaction const &tx, vm::ParameterPack const &params)
 {
-  // This doesn't work with a set (???)
+  // TODO(issue 772): This doesn't work with a set
   std::unordered_set<ConstByteArray> valid_addresses;
 
   for (auto const &sig : tx.signatures())
