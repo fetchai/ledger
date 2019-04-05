@@ -267,22 +267,16 @@ public:
     CONST_ONE       = Type(1) << FRACTIONAL_BITS
   };
 
-  // Constants/Limits
-  static const Type one = Type(1) << fractional_bits;
-  const Type smallest_fraction = 1;
-  const Type largest_fraction = fractional_mask;
-  const Type largest_int = Type(fractional_mask >> 1) << fractional_bits;
-  const Type smallest_int = integer_mask & ((Type(1) << (total_bits -1)));
-  const Type max = largest_int | largest_fraction;
-  const Type min = smallest_int - largest_fraction;
-
   ////////////////////
   /// constructors ///
   ////////////////////
-  FixedPoint() = default;
-
   constexpr FixedPoint() = default;
 
+  /**
+   * Templated constructor existing only for T is an integer and assigns data
+   * @tparam T any integer type
+   * @param n integer value to set FixedPoint to
+   */
   template <typename T>
   constexpr explicit FixedPoint(T n, meta::IfIsInteger<T> * = nullptr)
     : data_{static_cast<Type>(n)}
