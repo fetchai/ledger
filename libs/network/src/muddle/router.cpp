@@ -236,7 +236,13 @@ inline bool Router::Genuine(PacketPtr const &p) const
     // broadcasts are only verified if really needed
     return !sign_broadcasts_ || p->Verify();
   }
-  return p->Verify() || !(prover_ || p->IsStamped());
+  if (p->IsStamped())
+  {
+    // stamped packages are verified in any circumstances
+    return p->Verify();
+  }
+  // non-stamped packages are genuine in a trusted network
+  return !prover_;
 }
 
 Router::PacketPtr const &Router::Sign(PacketPtr const &p) const
