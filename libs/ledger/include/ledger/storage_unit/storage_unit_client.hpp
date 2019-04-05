@@ -95,7 +95,6 @@ public:
   StorageUnitClient &operator=(StorageUnitClient &&) = delete;
 
 private:
-
   /**
    * On Disk representation of a merkle tree
    */

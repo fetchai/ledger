@@ -198,7 +198,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last Block...: ", ToBase64(last_processed_block));
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last BlockInt: ", ToBase64(last_executed_block_.Get()));
   }
-#endif // FETCH_LOG_DEBUG_ENABLED
+#endif  // FETCH_LOG_DEBUG_ENABLED
 
   // initial condition, the last processed block is empty
   if (GENESIS_DIGEST == last_processed_block)
@@ -259,10 +259,12 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
 
       // calculate a percentage syncronisation
       std::size_t const current_block_num = next_block->body.block_number;
-      std::size_t const total_block_num = current_block_->body.block_number;
-      double const completion = static_cast<double>(current_block_num * 100) / static_cast<double>(total_block_num);
+      std::size_t const total_block_num   = current_block_->body.block_number;
+      double const      completion =
+          static_cast<double>(current_block_num * 100) / static_cast<double>(total_block_num);
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Synchronising of chain in progress. ", completion, "% (block ", next_block->body.block_number, " of ", current_block_->body.block_number, ")");
+      FETCH_LOG_INFO(LOGGING_NAME, "Synchronising of chain in progress. ", completion, "% (block ",
+                     next_block->body.block_number, " of ", current_block_->body.block_number, ")");
     }
 
     // we expect that the common parent in this case will always have been processed, but this

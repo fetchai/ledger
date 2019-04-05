@@ -127,7 +127,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
 
   // Set merkle stack to this hash, get the tree
   MerkleTree tree{num_lanes()};
-  if (genesis_state && (index == 0)) // this is truely the genesis block
+  if (genesis_state && (index == 0))  // this is truely the genesis block
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Reverting state to genesis.");
 
@@ -177,9 +177,9 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
     assert(!hash.empty());
 
     // make the call to the RPC server
-    auto promise =
-        rpc_client_.CallSpecificAddress(LookupAddress(lane_index++), RPC_STATE,
-                                        RevertibleDocumentStoreProtocol::REVERT_TO_HASH, lane_merkle_hash);
+    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(lane_index++), RPC_STATE,
+                                                   RevertibleDocumentStoreProtocol::REVERT_TO_HASH,
+                                                   lane_merkle_hash);
 
     // add the promise to the queue
     promises.emplace_back(std::move(promise));
@@ -193,7 +193,8 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
 
     if (!p->As<bool>())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to revert shard ", lane_index, " to ", tree[lane_index].ToHex());
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to revert shard ", lane_index, " to ",
+                     tree[lane_index].ToHex());
 
       all_success &= false;
     }
