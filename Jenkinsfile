@@ -31,6 +31,7 @@ pipeline {
         stage('Static Analysis') {
           agent {
             docker {
+              label "ledger"
               image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
             }
           }
@@ -48,6 +49,7 @@ pipeline {
         stage('Clang 6 Debug') {
           agent {
             docker {
+              label "ledger"
               image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
             }
           }
@@ -79,6 +81,7 @@ pipeline {
         stage('Clang 6 Release') {
           agent {
             docker {
+              label "ledger"
               image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
             }
           }
@@ -110,6 +113,7 @@ pipeline {
         stage('GCC 7 Debug') {
           agent {
             docker {
+              label "ledger"
               image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
             }
           }
@@ -146,6 +150,7 @@ pipeline {
         stage('GCC 7 Release') {
           agent {
             docker {
+              label "ledger"
               image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
             }
           }
