@@ -146,21 +146,14 @@ inline void Multiply(const FixedPoint<I, F> &lhs, const FixedPoint<I, F> &rhs, F
 template <typename T>
 inline std::size_t HighestSetBit(T n_input)
 {
-  int n = static_cast<int>(n_input);
+  uint64_t n = n_input;
 
   if (n == 0)
   {
     return 0;
   }
 
-  std::size_t msb = 0;
-  while (n != 0)
-  {
-    n = n / 2;
-    msb++;
-  }
-
-  return msb;
+  return sizeof(n)*8 - __builtin_clzll(n);
 }
 
 /**
@@ -250,19 +243,19 @@ public:
   ////////////////////
 
   inline FixedPoint()
-    : data_(0)
+    : data_{0}
   {}  // initialise to zero
 
   template <typename T>
   inline explicit FixedPoint(T n, meta::IfIsInteger<T> * = nullptr)
-    : data_(static_cast<Type>(n) << static_cast<Type>(fractional_bits))
+    : data_{static_cast<Type>(n) << static_cast<Type>(fractional_bits)}
   {
     assert(details::CheckNoOverflow(n, fractional_bits, total_bits));
   }
 
   template <typename T>
   inline explicit FixedPoint(T n, meta::IfIsFloat<T> * = nullptr)
-    : data_(static_cast<Type>(n * one))
+    : data_{static_cast<Type>(n * one)}
   {
     assert(details::CheckNoOverflow(n, fractional_bits, total_bits));
     // TODO(private, 629)
@@ -270,16 +263,16 @@ public:
   }
 
   inline FixedPoint(const FixedPoint &o)
-    : data_(o.data_)
+    : data_{o.data_}
   {}
 
   inline FixedPoint(const Type &integer, const Type &fraction)
-    : data_((integer_mask & (Type(integer) << fractional_bits)) | (fraction & fractional_mask))
+    : data_{(integer_mask & (Type(integer) << fractional_bits)) | (fraction & fractional_mask)}
   {}
 
   inline const Type integer() const 
   {
-    return (data_ & integer_mask) >> fractional_bits;
+    return Type((data_ & integer_mask) >> fractional_bits);
   }
 
   inline const Type fraction() const
@@ -548,7 +541,6 @@ private:
 
 private:
   Type data_;  // the value to be stored
-
 };
 
 template <std::size_t I, std::size_t F>
