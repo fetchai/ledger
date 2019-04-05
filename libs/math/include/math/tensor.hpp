@@ -409,13 +409,38 @@ public:
       step.emplace_back(1);
     }
 
-    return GetRange(from, to, step);
+    SelfType ret = GetRange(from, to, step);
+    ret.Squeeze();
+    return ret;
   }
+
 
   SelfType Transpose() const
   {
-    throw std::runtime_error("Transpose not implemented.");    
-    return SelfType();
+    ASSERT(shape_.size() == 2);
+    SizeVector new_axes{1, 0};
+
+    SelfType ret({shape().at(1), shape().at(0)});
+    TransposeImplementation(new_axes, ret);
+    return ret;
+  }
+
+  SelfType Transpose(SizeVector &new_axes) const
+  {
+    // this implementation is for tensors with more than 2 dimensions
+    ASSERT(shape_.size() > 2);
+    ASSERT(shape_.size() == new_axes.size());
+
+    SelfType ret(shape());
+    TransposeImplementation(new_axes, ret);
+    return ret;
+  }
+
+  SelfType& Squeeze()
+  {
+    ASSERT(shape_.at(0) == 1);
+    shape_.erase(shape_.begin());
+    return *this;
   }
 
   SelfType& Unsqueeze()
@@ -992,6 +1017,21 @@ private:
     else
     {
       major_order_ = MAJOR_ORDER::ROW;
+    }
+  }
+
+  void TransposeImplementation(SizeVector &new_axes, SelfType &ret) const
+  {
+    auto it = this->begin();
+    auto eit = this->end();
+    auto ret_it = ret.end();
+    ret_it.Transpose(new_axes);
+
+    while(it != eit)
+    {
+      *ret_it = *it;
+      ++it;
+      ++ret_it;
     }
   }
 };

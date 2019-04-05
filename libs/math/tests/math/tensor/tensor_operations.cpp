@@ -182,11 +182,17 @@ TYPED_TEST(TensorOperationsTest, transpose_untranspose_test)
 TYPED_TEST(TensorOperationsTest, transpose_and_slice_test)
 {
   fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({3, 5}));
-  for (std::uint64_t i(0); i < t1.size(); ++i)
+  std::uint64_t count = 0;
+  for (std::uint64_t i{0}; i < 3; ++i)
   {
-    t1.At(i) = TypeParam(i);
+    for (std::uint64_t j{0}; j < 5; ++j)
+    {
+      t1.At({i, j}) = TypeParam(count);
+      ++count;
+    }
   }
   fetch::math::Tensor<TypeParam> t2 = t1.Transpose();
+
   EXPECT_EQ(t2.shape(), std::vector<std::uint64_t>({5, 3}));
   fetch::math::Tensor<TypeParam> t3 = t2.Slice(2);
   EXPECT_EQ(t3.shape(), std::vector<std::uint64_t>({3}));
@@ -199,31 +205,56 @@ TYPED_TEST(TensorOperationsTest, transpose_and_slice_test)
 TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
 {
   fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({2, 3, 5}));
-  for (std::uint64_t i(0); i < t1.size(); ++i)
+  std::uint64_t count = 0;
+  for (std::uint64_t i{0}; i < 2; ++i)
   {
-    t1.At(i) = TypeParam(i);
+    for (std::uint64_t j{0}; j < 3; ++j)
+    {
+      for (std::uint64_t k{0}; k < 5; ++k)
+      {
+        t1.At({i, j, k}) = TypeParam(count);
+        ++count;
+      }
+    }
   }
 
   fetch::math::Tensor<TypeParam> t2 = t1.Slice(1);
   EXPECT_EQ(t2.shape(), std::vector<std::uint64_t>({3, 5}));
 
+  EXPECT_EQ(t2.At(0), TypeParam(15));
+  EXPECT_EQ(t2.At(1), TypeParam(20));
+  EXPECT_EQ(t2.At(2), TypeParam(25));
+  EXPECT_EQ(t2.At(3), TypeParam(16));
+  EXPECT_EQ(t2.At(4), TypeParam(21));
+  EXPECT_EQ(t2.At(5), TypeParam(26));
+  EXPECT_EQ(t2.At(6), TypeParam(17));
+  EXPECT_EQ(t2.At(7), TypeParam(22));
+  EXPECT_EQ(t2.At(8), TypeParam(27));
+  EXPECT_EQ(t2.At(9), TypeParam(18));
+  EXPECT_EQ(t2.At(10), TypeParam(23));
+  EXPECT_EQ(t2.At(11), TypeParam(28));
+  EXPECT_EQ(t2.At(12), TypeParam(19));
+  EXPECT_EQ(t2.At(13), TypeParam(24));
+  EXPECT_EQ(t2.At(14), TypeParam(29));
+
   fetch::math::Tensor<TypeParam> t3 = t2.Transpose();
   EXPECT_EQ(t3.shape(), std::vector<std::uint64_t>({5, 3}));
 
+  // tensor is column major
   EXPECT_EQ(t3.At(0), TypeParam(15));
-  EXPECT_EQ(t3.At(1), TypeParam(20));
-  EXPECT_EQ(t3.At(2), TypeParam(25));
-  EXPECT_EQ(t3.At(3), TypeParam(16));
-  EXPECT_EQ(t3.At(4), TypeParam(21));
-  EXPECT_EQ(t3.At(5), TypeParam(26));
-  EXPECT_EQ(t3.At(6), TypeParam(17));
+  EXPECT_EQ(t3.At(1), TypeParam(16));
+  EXPECT_EQ(t3.At(2), TypeParam(17));
+  EXPECT_EQ(t3.At(3), TypeParam(18));
+  EXPECT_EQ(t3.At(4), TypeParam(19));
+  EXPECT_EQ(t3.At(5), TypeParam(20));
+  EXPECT_EQ(t3.At(6), TypeParam(21));
   EXPECT_EQ(t3.At(7), TypeParam(22));
-  EXPECT_EQ(t3.At(8), TypeParam(27));
-  EXPECT_EQ(t3.At(9), TypeParam(18));
-  EXPECT_EQ(t3.At(10), TypeParam(23));
-  EXPECT_EQ(t3.At(11), TypeParam(28));
-  EXPECT_EQ(t3.At(12), TypeParam(19));
-  EXPECT_EQ(t3.At(13), TypeParam(24));
+  EXPECT_EQ(t3.At(8), TypeParam(23));
+  EXPECT_EQ(t3.At(9), TypeParam(24));
+  EXPECT_EQ(t3.At(10), TypeParam(25));
+  EXPECT_EQ(t3.At(11), TypeParam(26));
+  EXPECT_EQ(t3.At(12), TypeParam(27));
+  EXPECT_EQ(t3.At(13), TypeParam(28));
   EXPECT_EQ(t3.At(14), TypeParam(29));
 }
 
