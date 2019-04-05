@@ -396,13 +396,20 @@ public:
     return true;
   }
 
-  SelfType Slice(SizeType /*i*/) const
+  SelfType Slice(SizeType i) const
   {
-    SelfType ret;
+    SizeVector from{i};
+    SizeVector to{i + 1};
+    SizeVector step{1};
 
-    throw std::runtime_error("Slice not implemented.");
+    for (SizeType j{1}; j < shape().size(); ++j)
+    {
+      from.emplace_back(0);
+      to.emplace_back(shape().at(j));
+      step.emplace_back(1);
+    }
 
-    return ret;
+    return GetRange(from, to, step);
   }
 
   SelfType Transpose() const
