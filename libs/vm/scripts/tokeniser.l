@@ -85,22 +85,34 @@ IDENT		[_a-zA-Z][_a-zA-Z0-9]*
 	
 	/* numbers */
 		
-{INTEGER}    |
+{INTEGER}i8 {
+	return Set(yylval, fetch::vm::Token::Kind::Integer8, yytext, yyleng, yyextra);
+}
+
+{INTEGER}u8 {
+	return Set(yylval, fetch::vm::Token::Kind::UnsignedInteger8, yytext, yyleng, yyextra);
+}
+
+{INTEGER}i16 {
+	return Set(yylval, fetch::vm::Token::Kind::Integer16, yytext, yyleng, yyextra);
+}
+
+{INTEGER}u16 {
+	return Set(yylval, fetch::vm::Token::Kind::UnsignedInteger16, yytext, yyleng, yyextra);
+}
+
 {INTEGER}i32 {
 	return Set(yylval, fetch::vm::Token::Kind::Integer32, yytext, yyleng, yyextra);
 }
 
-{INTEGER}u   |
 {INTEGER}u32 {
 	return Set(yylval, fetch::vm::Token::Kind::UnsignedInteger32, yytext, yyleng, yyextra);
 }
 
-{INTEGER}l   |
 {INTEGER}i64 {
 	return Set(yylval, fetch::vm::Token::Kind::Integer64, yytext, yyleng, yyextra);
 }
 
-{INTEGER}ul  |
 {INTEGER}u64 {
 	return Set(yylval, fetch::vm::Token::Kind::UnsignedInteger64, yytext, yyleng, yyextra);
 }
