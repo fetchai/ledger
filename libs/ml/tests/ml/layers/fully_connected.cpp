@@ -50,7 +50,7 @@ TYPED_TEST(FullyConnectedTest, ops_forward_test)  // Use the class as an Ops
 {
   fetch::ml::layers::FullyConnected<TypeParam> fc(50, 10);
   TypeParam inputData(std::vector<typename TypeParam::SizeType>({5, 10}));
-  TypeParam output = fc.Ops::Forward({inputData});
+  TypeParam output = fc.template Ops<TypeParam>::Forward({inputData});
 
   ASSERT_EQ(output.shape().size(), 2);
   ASSERT_EQ(output.shape()[0], 1);
@@ -62,7 +62,7 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
 {
   fetch::ml::layers::FullyConnected<TypeParam> fc(50, 10);
   TypeParam inputData(std::vector<typename TypeParam::SizeType>({5, 10}));
-  TypeParam output = fc.Ops::Forward({inputData});
+  TypeParam output = fc.template Ops<TypeParam>::Forward({inputData});
   TypeParam errorSignal(std::vector<typename TypeParam::SizeType>({1, 10}));
 
   std::vector<TypeParam> backpropagatedErrorSignals = fc.Backward({inputData}, errorSignal);

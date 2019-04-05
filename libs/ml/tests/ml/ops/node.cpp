@@ -29,7 +29,7 @@ TEST(node_test, node_placeholder)
   fetch::math::Tensor<int> data(std::vector<std::uint64_t>({5, 5}));
   placeholder.SetData(data);
 
-  EXPECT_EQ(placeholder.Ops::Forward({}), data);
+  EXPECT_EQ(placeholder.template Ops<fetch::math::Tensor<int>>::Forward({}), data);
   EXPECT_EQ(placeholder.Evaluate(), data);
 }
 
@@ -65,7 +65,7 @@ TEST(node_test, node_relu)
     }
   }
 
-  EXPECT_EQ(placeholder->Ops::Forward({}), data);
+  EXPECT_EQ(placeholder->template Ops<fetch::math::Tensor<int>>::Forward({}), data);
   EXPECT_EQ(placeholder->Evaluate(), data);
   EXPECT_TRUE(relu->Evaluate().AllClose(gt));
 }
