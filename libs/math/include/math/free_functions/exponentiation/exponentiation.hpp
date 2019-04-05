@@ -49,6 +49,8 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> SquareImpl(ArrayType const &x,
   while(it != eit)
   {
     *rit = (*it) * (*it);
+    ++it;
+    ++rit;
   }
 
 }

@@ -549,9 +549,11 @@ void PeakToPeak(ArrayType arr)
 template <typename ArrayType>
 void ArgMax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeType axis = 0)
 {
+
   assert((array.shape().size() == 1) || (array.shape().size() == 2));
   assert((axis == 0) || (axis == 1));
 
+  /* this implementation seems to be slower than using slice actually */
   using Type = typename ArrayType::Type;
   if (array.shape().size() == 1)
   {
@@ -621,7 +623,8 @@ void ArgMax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeType
           "tensor");
     }
   }
-  */
+*/
+
 }
 template <typename ArrayType>
 ArrayType ArgMax(ArrayType const &array, typename ArrayType::SizeType axis = 0)

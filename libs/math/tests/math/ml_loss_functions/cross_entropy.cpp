@@ -67,6 +67,7 @@ TYPED_TEST(CrossEntropyTest, perfect_match_test)
 
 TYPED_TEST(CrossEntropyTest, value_test)
 {
+  using SizeType = typename fetch::math::SizeType;
   typename TypeParam::SizeType n_classes = 4;
   typename TypeParam::SizeType n_data    = 8;
 
@@ -95,9 +96,14 @@ TYPED_TEST(CrossEntropyTest, value_test)
                              0.1, 0.5, 0.1,  0.1,  0.3, 0.2, 0.3, 0.1, 0.4,  0.1,  0.7,
                              0.1, 0.1, 0.7,  0.1,  0.1, 0.1, 0.1, 0.1, 0.5,  0.3};
 
-  for (std::uint64_t i = 0; i < n_data * n_classes; ++i)
+  SizeType idx{0};
+  for (SizeType i{0}; i < n_data; ++i)
   {
-    test_array.Set(i, typename TypeParam::Type(logits[i]));
+    for (SizeType j{0}; j < n_classes; ++j)
+    {
+      test_array.Set({i, j}, typename TypeParam::Type(logits.at(idx)));
+      idx++;
+    }
   }
 
   // initialise to non-zero just to avoid correct value at initialisation

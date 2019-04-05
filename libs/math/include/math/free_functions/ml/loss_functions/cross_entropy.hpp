@@ -86,7 +86,7 @@ typename ArrayType::Type CrossEntropyLoss(
 
     for (SizeType idx = 0; idx < n_examples; ++idx)
     {
-      ret -= Log(x.At(std::vector<SizeType>({idx, SizeType(gt.data()[idx])})));
+      ret -= Log(x.At(std::vector<SizeType>({idx, SizeType(gt[idx])})));
     }
   }
   Divide(ret, static_cast<DataType>(n_examples), ret);
