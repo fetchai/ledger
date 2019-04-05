@@ -55,3 +55,75 @@ TYPED_TEST(FlattenTest, backward_test)
   ASSERT_EQ(gradients.size(), 1);
   ASSERT_EQ(gradients[0].shape(), std::vector<typename TypeParam::SizeType>({8, 8}));
 }
+
+TYPED_TEST(FlattenTest, forward_batch_test)
+{
+  TypeParam data(std::vector<std::uint64_t>({5, 8, 8}));
+  // Set incrementing values
+  typename TypeParam::Type i(0);
+  for (auto &e : data)
+  {
+    e = i;
+    i += typename TypeParam::Type(1);
+  }
+
+  fetch::ml::ops::Flatten<TypeParam> op;
+  TypeParam prediction = op.fetch::ml::template Ops<TypeParam>::ForwardBatch(
+      std::vector<std::reference_wrapper<TypeParam const>>({data}));
+
+  // test correct shape
+  ASSERT_EQ(prediction.shape(), std::vector<typename TypeParam::SizeType>({5, 1, 64}));
+
+  // Make sure values are in order
+  typename TypeParam::Type j(0);
+  for (auto &e : prediction)
+  {
+    EXPECT_EQ(e, j);
+    j += typename TypeParam::Type(1);
+  }
+
+  // Make sure input is left untouched
+  typename TypeParam::Type k(0);
+  for (auto &e : data)
+  {
+    EXPECT_EQ(e, k);
+    k += typename TypeParam::Type(1);
+  }
+}
+
+TYPED_TEST(FlattenTest, backward_batch_test)
+{
+  TypeParam data(std::vector<std::uint64_t>({5, 8, 8}));
+  // Set incrementing values
+  typename TypeParam::Type i(0);
+  for (auto &e : data)
+  {
+    e = i;
+    i += typename TypeParam::Type(1);
+  }
+
+  fetch::ml::ops::Flatten<TypeParam> op;
+  TypeParam prediction = op.fetch::ml::template Ops<TypeParam>::ForwardBatch(
+      std::vector<std::reference_wrapper<TypeParam const>>({data}));
+  std::vector<TypeParam> error_signal = op.fetch::ml::template BatchOps<TypeParam>::BackwardBatch(
+      std::vector<std::reference_wrapper<TypeParam const>>({data}), prediction);
+
+  EXPECT_EQ(error_signal.size(), 1);
+  EXPECT_EQ(error_signal.front().shape(), data.shape());
+
+  // Make sure values are in order
+  typename TypeParam::Type j(0);
+  for (auto &e : error_signal.front())
+  {
+    EXPECT_EQ(e, j);
+    j += typename TypeParam::Type(1);
+  }
+
+  // Make sure input is left untouched
+  typename TypeParam::Type k(0);
+  for (auto &e : data)
+  {
+    EXPECT_EQ(e, k);
+    k += typename TypeParam::Type(1);
+  }
+}

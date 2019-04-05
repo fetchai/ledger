@@ -36,10 +36,18 @@ public:
   using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
+  // Convenince method to call without having to allocate output buffer
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     ArrayType output(ComputeOutputSize(inputs));
     return Forward(inputs, output);
+  }
+
+  // Convenince method to call without having to allocate output buffer
+  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    ArrayType output(ComputeOutputSize(inputs, true));
+    return ForwardBatch(inputs, output);
   }
 
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
@@ -68,9 +76,6 @@ public:
     }
     return ComputeOutputSize(inputs);
   }
-
-  // protected:
-  //   ArrayPtrType output_;  // TODO(private, 736) -- Remove
 };
 
 /*
@@ -135,26 +140,17 @@ public:
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
-    return this->Backward(inputs, errorSignal);
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape()[0] == errorSignal.shape()[0]);
-    std::vector<std::vector<ArrayType>> results;
+    std::vector<ArrayType> results;
     for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
     {
       ArrayType inputSlice = inputs.front().get().Slice(b);
       ArrayType errorSlice = errorSignal.Slice(b);
       auto      ret        = this->Backward({inputSlice}, errorSlice);
-      for (std::size_t i(0); i < ret.size(); ++i)
-      {
-        results[i].push_back(ret[i]);
-      }
+      results.push_back(ret.front());
     }
-    std::vector<ArrayType> concatenatedResults;
-    for (auto const &tensorList : results)
-    {
-      concatenatedResults.push_back(ConcatenateTensors(tensorList));
-    }
-    return concatenatedResults;
+    return {ConcatenateTensors(results)};
   }
 };
 
