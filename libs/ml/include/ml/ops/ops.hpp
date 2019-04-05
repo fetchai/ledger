@@ -46,14 +46,28 @@ public:
                             ArrayType &                                                 output) = 0;
   virtual std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-      ArrayType const &                                           errorSignal) = 0;
-  virtual ArrayType ForwardBatch(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
+      ArrayType const &                                           errorSignal)                 = 0;
+  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                                 ArrayType &output) = 0;
   virtual std::vector<ArrayType> BackwardBatch(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal) = 0;
   virtual std::vector<SizeType> ComputeOutputSize(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
+  virtual std::vector<SizeType> ComputeOutputSize(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs, bool batch)
+  {
+    if (batch)
+    {
+      auto      shape     = inputs.front().get().shape();
+      SizeType  batchSize = shape.front();
+      ArrayType slice     = inputs.front().get().Slice(0);
+      shape               = ComputeOutputSize({slice});
+      shape.insert(shape.begin(), batchSize);
+      return shape;
+    }
+    return ComputeOutputSize(inputs);
+  }
 
   // protected:
   //   ArrayPtrType output_;  // TODO(private, 736) -- Remove
@@ -70,9 +84,9 @@ public:
   using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                                 ArrayType &                                                 output)
   {
-    ArrayType output;  // Temporary Dummy
     return this->Forward(inputs, output);
   }
 
@@ -103,17 +117,18 @@ public:
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   // Overload that method for optimisation purposes
-  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                                 ArrayType &                                                 output)
   {
     assert(inputs.size() == 1);
-    std::vector<ArrayType> results;
+
     for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
     {
-      ArrayType slice = inputs.front().get().Slice(b);
-      ArrayType output;  // Temporary Dummy
-      results.push_back(this->Forward({slice}, output));
+      ArrayType input_slice  = inputs.front().get().Slice(b);
+      ArrayType output_slice = output.Slice(b);
+      this->Forward({input_slice}, output_slice);
     }
-    return ConcatenateTensors(results);
+    return output;
   }
 
   virtual std::vector<ArrayType> BackwardBatch(

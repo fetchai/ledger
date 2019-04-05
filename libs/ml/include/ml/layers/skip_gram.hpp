@@ -85,17 +85,18 @@ public:
   }
 
   // Overload that method for optimisation purposes
-  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                                 ArrayType &                                                 output)
   {
     std::vector<ArrayType> results;
     for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
     {
       ArrayType slice_input   = inputs.front().get().Slice(b);
       ArrayType slice_context = inputs.back().get().Slice(b);
-      results.push_back(this->Ops<T>::Forward({slice_input, slice_context}));
+      ArrayType slice_output  = output.Slice(b);
+      this->Forward({slice_input, slice_context}, output);
     }
-    return ConcatenateTensors(results);
-    //    return this->fetch::ml::Ops<T>::ForwardBatch(inputs);
+    return output;
   }
 
   std::shared_ptr<ops::Embeddings<ArrayType>> GetEmbeddings(std::shared_ptr<SkipGram<ArrayType>> &g)
