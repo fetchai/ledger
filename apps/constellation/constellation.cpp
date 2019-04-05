@@ -194,7 +194,6 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   FETCH_LOG_INFO(LOGGING_NAME, "");
 
   // attach the services to the reactor
-  reactor_.Attach(block_coordinator_.GetWeakRunnable());
   reactor_.Attach(main_chain_service_->GetWeakRunnable());
 
   // configure all the lane services
@@ -336,6 +335,10 @@ void Constellation::Run(UriList const &initial_peers)
 
   // Finally start the HTTP server
   http_.Start(http_port_);
+
+  // The block coordinator needs to access correctly started lanes to recover state in the case of
+  // a crash.
+  reactor_.Attach(block_coordinator_.GetWeakRunnable());
 
   //---------------------------------------------------------------
   // Step 2. Main monitor loop
