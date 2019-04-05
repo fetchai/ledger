@@ -431,6 +431,8 @@ public:
    */
   SelfType GetRange(SizeVector &from, SizeVector &to, SizeVector &step) const
   {
+    // TODO we probably don't want to #include TensorView in a lot of places where we need to call GetRange
+    // on the other hand these copies aren't ideal
     TensorView array_view;
     array_view.from = from;
     array_view.to = to;
