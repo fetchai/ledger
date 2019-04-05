@@ -31,7 +31,7 @@
 #include <utility>
 
 #include <core/mutex.hpp>
-#include <core/type_util.hpp>
+#include <meta/type_util.hpp>
 #include <storage/key_value_index.hpp>
 
 namespace fetch {

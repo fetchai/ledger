@@ -104,18 +104,32 @@ static constexpr auto IsAnyOfV = IsAnyOf<T, Ts...>::value;
 
 // Little pack utilities
 
+template<class F, class RetVal>
+inline constexpr auto FoldL(F &&, RetVal &&retVal)
+	noexcept(std::is_nothrow_move_constructible<RetVal>::value)
+{
+  return std::forward<RetVal>(retVal);
+}
+
+template<class F, class First, class Last>
+inline constexpr auto FoldL(F &&f, First &&first, Last &&last)
+	noexcept(noexcept(std::forward<F>(f)(std::forward<First>(first), std::forward<Last>(last))))
+{
+  return std::forward<F>(f)(std::forward<First>(first), std::forward<Last>(last));
+}
+
 template<class F, class Car, class Cadr, class... Cddr>
 inline constexpr auto FoldL(F &&f, Car &&car, Cadr &&cadr, Cddr &&...cddr)
+	noexcept(noexcept(FoldL(f, f(std::forward<Car>(car), std::forward<Cadr>(cadr)), std::forward<Cddr>(cddr)...)))
 {
   // no std::invoke yet
   return FoldL(f, f(std::forward<Car>(car), std::forward<Cadr>(cadr)), std::forward<Cddr>(cddr)...);
 }
 
-template<class F, class RetVal>
-inline constexpr auto FoldL(F &&, RetVal &&retVal)
+template<class RetVal> struct Const
 {
-  return std::forward<RetVal>(retVal);
-}
+  template<class> using type = RetVal;
+};
 
 }  // namespace type_util
 }  // namespace fetch

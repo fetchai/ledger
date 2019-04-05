@@ -118,7 +118,6 @@ public:
   using Identity        = crypto::Identity;
   using Address         = Router::Address;
   using ConnectionState = PeerConnectionList::ConnectionState;
-  using NetworkId       = MuddleEndpoint::NetworkId;
   using Timepoint       = Clock::time_point;
 
   using Handle = network::AbstractConnection::connection_handle_type;

@@ -420,8 +420,7 @@ protected:
   template <typename... Arg>
   self_type &Append(Arg const &... others)
   {
-    Accommodate(others...);
-    AppendInternal(size(), others...);
+    AppendInternal<type_util::Const<self_type const &>::template type<Arg const &>...>(others...);
     return *this;
   }
 
@@ -444,13 +443,10 @@ protected:
   }
 
 private:
-  template<class... Others> void Accommodate(Others &&...others)
-  {
-    Resize(fetch::type_util::FoldL(std::plus<void>{}, size(), others.size()...));
-  }
-
   template<class... Others> void AppendInternal(Others &&...others)
   {
+    Resize(fetch::type_util::FoldL(std::plus<void>{}, size(), others.size()...));
+
     fetch::type_util::FoldL(
 	    [this](std::size_t acc, auto &&other){
 		    std::memcpy(pointer() + acc, other.pointer(), other.size());
