@@ -32,6 +32,7 @@ class Sigmoid : public fetch::ml::ElementWiseOps<T>
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
+  using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   Sigmoid()          = default;
@@ -40,23 +41,16 @@ public:
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                             ArrayType &                                                 output)
   {
-    (void)output;
     assert(inputs.size() == 1);
-    if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
-    {
-      this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
-    }
-
-    fetch::math::Sigmoid(inputs.front().get(), *this->output_);
-
+    ASSERT(output.shape() == this->ComputeOutputSize(inputs));
+    fetch::math::Sigmoid(inputs.front().get(), output);
     // ensures numerical stability
-    for (auto &val : *this->output_)
+    for (auto &val : output)
     {
       fetch::math::Max(val, epsilon_, val);
       fetch::math::Min(val, fetch::math::Subtract(DataType(1), epsilon_), val);
     }
-
-    return *this->output_;
+    return output;
   }
 
   virtual std::vector<ArrayType> Backward(

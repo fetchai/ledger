@@ -46,11 +46,7 @@ public:
     assert(inputs.at(1).get().shape().size() == 4);
 
     auto outputShape = ComputeOutputSize(inputs);
-    if (!this->output_ || this->output_->shape() != outputShape)
-    {
-      this->output_ = std::make_shared<ArrayType>(outputShape);
-    }
-
+    ASSERT(output.shape() == outputShape);
     for (uint64_t i(0); i < outputShape[0]; ++i)  // Iterate over output channels
     {
       for (uint64_t j(0); j < outputShape[1]; ++j)  // Iterate over output height
@@ -78,12 +74,11 @@ public:
               }
             }
           }
-          this->output_->Set(std::vector<typename ArrayType::SizeType>({i, j, k}), sum);
+          output.Set(std::vector<typename ArrayType::SizeType>({i, j, k}), sum);
         }
       }
     }
-
-    return *this->output_;
+    return output;
   }
 
   virtual std::vector<ArrayType> Backward(

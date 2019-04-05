@@ -77,14 +77,18 @@ public:
     {
       std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
       FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
+      if (cachedOutput_.shape() != this->ComputeOutputSize(inputs))
+	{
+	  cachedOutput_ = ArrayType(this->ComputeOutputSize(inputs));
+	}
       if (batch_)
-      {
-        cachedOutput_ = this->ForwardBatch(inputs);
-      }
+	{
+	  cachedOutput_ = this->ForwardBatch(inputs);
+	}
       else
-      {
-        cachedOutput_ = this->Forward(inputs, cachedOutput_);
-      }
+	{
+	  cachedOutput_ = this->Forward(inputs, cachedOutput_);
+	}
       cachedOutputPresent_ = true;
     }
 

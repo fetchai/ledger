@@ -37,10 +37,10 @@ public:
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                             ArrayType &                                                 output)
   {
-    (void)output;
     ASSERT(inputs.size() == 1);
-    this->output_ = std::make_shared<ArrayType>(inputs.front().get().Clone().Transpose());
-    return *this->output_;
+    ASSERT(output.shape() == this->ComputeOutputSize(inputs));
+    output.Copy(inputs.front().get().Transpose());
+    return output;
   }
 
   virtual std::vector<ArrayType> Backward(

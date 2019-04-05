@@ -24,10 +24,11 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Flatten : public fetch::ml::ElementWiseOps<T>
+class Flatten : public fetch::ml::BatchOps<T>
 {
 public:
   using ArrayType    = T;
+  using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   Flatten()          = default;
@@ -38,11 +39,10 @@ public:
   {
     (void)output;
     ASSERT(inputs.size() == 1);
+    ASSERT(output.shape() == ComputeOutputSize(inputs));
     input_shape_ = inputs.front().get().shape();
-    this->output_ =
-        std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, inputs.front().get().size()}));
-    this->output_->Copy(inputs.front().get());
-    return *this->output_;
+    output.Copy(inputs.front().get());
+    return output;
   }
 
   virtual std::vector<ArrayType> Backward(
@@ -54,6 +54,13 @@ public:
     ret.Copy(errorSignal);
     return {ret};
   }
+
+  virtual std::vector<SizeType> ComputeOutputSize(
+						  std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    return {1, inputs.front().get().size()};
+  }
+
 
   static constexpr char const *DESCRIPTOR = "Flatten";
 

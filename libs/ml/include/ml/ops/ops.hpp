@@ -55,8 +55,8 @@ public:
   virtual std::vector<SizeType> ComputeOutputSize(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
 
-protected:
-  ArrayPtrType output_;  // TODO(private, 736) -- Remove
+// protected:
+//   ArrayPtrType output_;  // TODO(private, 736) -- Remove
 };
 
 /*

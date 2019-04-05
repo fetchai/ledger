@@ -64,6 +64,9 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "PlaceHolder";
+  
+protected:
+  ArrayPtrType output_;
 };
 
 }  // namespace ops

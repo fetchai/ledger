@@ -39,15 +39,10 @@ public:
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                             ArrayType &                                                 output)
   {
-    (void)output;
     assert(inputs.size() == 1);
-    if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
-    {
-      this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
-    }
-
-    fetch::math::Relu(inputs.front().get(), *this->output_);
-    return *(this->output_);
+    ASSERT(output.shape() == this->ComputeOutputSize(inputs));
+    fetch::math::Relu(inputs.front().get(), output);
+    return output;
   }
 
   virtual std::vector<ArrayType> Backward(

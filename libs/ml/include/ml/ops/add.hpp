@@ -41,15 +41,12 @@ public:
     (void)output;
     ASSERT(inputs.size() == 2);
     ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
-    if (!this->output_ || this->output_->shape() != inputs.at(0).get().shape())
-    {
-      this->output_ = std::make_shared<ArrayType>(inputs.at(0).get().shape());
-    }
+    ASSERT(output.shape() == this->ComputeOutputSize(inputs));
 
-    this->output_->Fill(DataType(0));
-    this->output_->InlineAdd(inputs[0]);
-    this->output_->InlineAdd(inputs[1]);
-    return *this->output_;
+    output.Fill(DataType(0));
+    output.InlineAdd(inputs[0]);
+    output.InlineAdd(inputs[1]);
+    return output;
   }
 
   virtual std::vector<ArrayType> Backward(
