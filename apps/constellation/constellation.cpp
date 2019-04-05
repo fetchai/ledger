@@ -148,7 +148,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   , network_manager_{"NetMgr", CalcNetworkManagerThreads(cfg_.num_lanes())}
   , http_network_manager_{"Http", HTTP_THREADS}
   , muddle_{muddle::NetworkId{"IHUB"}, std::move(certificate), network_manager_,
-            !config.disable_signing}
+            !config.disable_signing, config.sign_broadcasts}
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
   , internal_muddle_{muddle::NetworkId{"ISRD"}, internal_identity_, network_manager_}
   , trust_{}

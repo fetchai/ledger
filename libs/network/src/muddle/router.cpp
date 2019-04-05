@@ -202,13 +202,14 @@ Packet::Address Router::ConvertAddress(Packet::RawAddress const &address)
  * @param reg The connection register
  */
 Router::Router(NetworkId network_id, Address address, MuddleRegister const &reg,
-               Dispatcher &dispatcher, Prover *prover)
+               Dispatcher &dispatcher, Prover *prover, bool sign_broadcasts)
   : address_(std::move(address))
   , address_raw_(ConvertAddress(address_))
   , register_(reg)
   , dispatcher_(dispatcher)
   , network_id_(std::move(network_id))
   , prover_(prover)
+  , sign_broadcasts_(prover && sign_broadcasts)
   , dispatch_thread_pool_(network::MakeThreadPool(NUMBER_OF_ROUTER_THREADS, "Router"))
 {}
 
@@ -230,12 +231,23 @@ void Router::Stop()
 
 inline bool Router::Genuine(PacketPtr const &p) const
 {
-  return p->Verify() || !(prover_ || p->IsStamped());
+  if (p->IsBroadcast())
+  {
+    // broadcasts are only verified if really needed
+    return !sign_broadcasts_ || p->Verify();
+  }
+  if (p->IsStamped())
+  {
+    // stamped packages are verified in any circumstances
+    return p->Verify();
+  }
+  // non-stamped packages are genuine in a trusted network
+  return !prover_;
 }
 
 Router::PacketPtr const &Router::Sign(PacketPtr const &p) const
 {
-  if (prover_)
+  if (prover_ && (sign_broadcasts_ || !p->IsBroadcast()))
   {
     p->Sign(*prover_);
   }
@@ -260,39 +272,31 @@ void Router::Route(Handle handle, PacketPtr packet)
     return;
   }
 
+  if (!Genuine(packet))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Packet's authenticity not verified:", DescribePacket(*packet));
+    return;
+  }
+
   if (packet->IsDirect())
   {
     // when it is a direct message we must handle this
-    if (Genuine(packet))
-    {
-      DispatchDirect(handle, packet);
-    }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Packet's authenticity not verified:", DescribePacket(*packet));
-    }
+    DispatchDirect(handle, packet);
   }
   else if (packet->GetTargetRaw() == address_)
   {
     // when the message is targetted at us we must handle it
-    if (Genuine(packet))
-    {
-      Address transmitter;
+    Address transmitter;
 
-      if (HandleToDirectAddress(handle, transmitter))
-      {
-        DispatchPacket(packet, transmitter);
-      }
-      else
-      {
-        // The connection has gone away while we were processing things so far.
-        FETCH_LOG_WARN(LOGGING_NAME,
-                       "Cannot get transmitter address for packet: ", DescribePacket(*packet));
-      }
+    if (HandleToDirectAddress(handle, transmitter))
+    {
+      DispatchPacket(packet, transmitter);
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Packet's authenticity not verified:", DescribePacket(*packet));
+      // The connection has gone away while we were processing things so far.
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Cannot get transmitter address for packet: ", DescribePacket(*packet));
     }
   }
   else
@@ -395,6 +399,7 @@ void Router::Broadcast(uint16_t service, uint16_t channel, Payload const &payloa
   auto packet =
       FormatPacket(address_, network_id_, service, channel, counter, DEFAULT_TTL, payload);
   packet->SetBroadcast(true);
+  Sign(packet);
 
   RoutePacket(packet, false);
 }
