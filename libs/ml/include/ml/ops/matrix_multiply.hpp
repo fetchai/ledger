@@ -43,7 +43,7 @@ public:
     assert(inputs.at(0).get().shape().size() == 2);
     assert(inputs.at(1).get().shape().size() == 2);
     ASSERT(output.shape() == ComputeOutputSize(inputs));
-    
+
     // inner dimension check
     assert(inputs.at(0).get().shape()[1] == inputs.at(1).get().shape()[0]);
 

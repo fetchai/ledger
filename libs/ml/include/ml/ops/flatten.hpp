@@ -56,11 +56,10 @@ public:
   }
 
   virtual std::vector<SizeType> ComputeOutputSize(
-						  std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     return {1, inputs.front().get().size()};
   }
-
 
   static constexpr char const *DESCRIPTOR = "Flatten";
 

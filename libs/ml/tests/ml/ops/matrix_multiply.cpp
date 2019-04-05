@@ -60,7 +60,8 @@ TYPED_TEST(MatrixMultiplyTest, forward_test)
   }
 
   fetch::ml::ops::MatrixMultiply<TypeParam> op;
-  TypeParam prediction = op.template Ops<TypeParam>::Forward({a, b});
+  TypeParam prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
+      std::vector<std::reference_wrapper<TypeParam const>>({a, b}));
 
   // // test correct values
   ASSERT_EQ(prediction.shape(), std::vector<typename TypeParam::SizeType>({1, 4}));

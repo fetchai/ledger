@@ -64,7 +64,7 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "PlaceHolder";
-  
+
 protected:
   ArrayPtrType output_;
 };
