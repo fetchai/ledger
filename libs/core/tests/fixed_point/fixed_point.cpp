@@ -51,7 +51,7 @@ TEST(FixedPointTest, Conversion_16_16)
   EXPECT_EQ(double(m_one), -1.0);
   EXPECT_EQ(double(m_two), -2.0);
 
-  // CONST_ZERO
+  // Zero
   fetch::fixed_point::FixedPoint<16, 16> zero(0);
   fetch::fixed_point::FixedPoint<16, 16> m_zero(-0);
 
@@ -189,27 +189,17 @@ TEST(FixedPointTest, Conversion_32_32)
   // Smallest possible Fixed Point number.
   fetch::fixed_point::FixedPoint<32, 32> smallest_fixed_point = smallest_int - almost_one;
 
-<<<<<<< HEAD
   EXPECT_EQ(infinitesimal.Data(),        fp64::SMALLEST_FRACTION);
   EXPECT_EQ(almost_one.Data(),           fp64::LARGEST_FRACTION);
   EXPECT_EQ(largest_int.Data(),          fp64::MAX_INT);
   EXPECT_EQ(smallest_int.Data(),         fp64::MIN_INT);
   EXPECT_EQ(largest_fixed_point.Data(),  fp64::MAX);
   EXPECT_EQ(smallest_fixed_point.Data(), fp64::MIN);
-=======
-  EXPECT_EQ(infinitesimal.Data(),        infinitesimal.smallest_fraction);
-  EXPECT_EQ(almost_one.Data(),           almost_one.largest_fraction);
-  EXPECT_EQ(largest_int.Data(),          largest_int.largest_int);
-  EXPECT_EQ(smallest_int.Data(),         smallest_int.smallest_int);
-  EXPECT_EQ(largest_fixed_point.Data(),  largest_fixed_point.max);
-  EXPECT_EQ(smallest_fixed_point.Data(), smallest_fixed_point.min);
->>>>>>> Extend FixedPoint class to work with only integer arithmetic, extend tests
 
   // We cannot be smaller than the actual negative integer of the actual type
   EXPECT_TRUE(smallest_fixed_point.Data() > std::numeric_limits<int64_t>::min());
   // On the other hand we expect to be exactly the same as the largest positive integer of int64_t
   EXPECT_TRUE(largest_fixed_point.Data() == std::numeric_limits<int64_t>::max());
-<<<<<<< HEAD
 
   EXPECT_EQ(sizeof(one), 8);
 
@@ -267,8 +257,6 @@ TEST(FixedPointTest, Addition_16_16)
   EXPECT_EQ(almost_one + infinitesimal, one);
   // The same for negative
   EXPECT_EQ(-almost_one - infinitesimal, m_one);
-=======
->>>>>>> Extend FixedPoint class to work with only integer arithmetic, extend tests
 }
 
 TEST(FixedPointTest, Addition_32_32)
