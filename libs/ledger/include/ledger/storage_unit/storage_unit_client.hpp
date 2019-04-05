@@ -95,14 +95,18 @@ public:
   StorageUnitClient &operator=(StorageUnitClient &&) = delete;
 
 private:
-  struct MerkleTreeProxy
+
+  /**
+   * On Disk representation of a merkle tree
+   */
+  struct MerkleTreeBlock
   {
-    MerkleTreeProxy()
+    MerkleTreeBlock()
     {
       std::memset(this, -1, sizeof(*this));
     }
 
-    explicit MerkleTreeProxy(crypto::MerkleTree const &tree)
+    explicit MerkleTreeBlock(crypto::MerkleTree const &tree)
     {
       serializers::TypedByteArrayBuffer buff;
       buff << tree;
@@ -113,7 +117,7 @@ private:
       std::memcpy((uint8_t *)data_, (uint8_t *)buff.data().pointer(), size_);
     }
 
-    crypto::MerkleTree DeProxy(uint64_t num_lanes)
+    crypto::MerkleTree Extract(uint64_t num_lanes)
     {
       crypto::MerkleTree ret{num_lanes};
 
@@ -145,7 +149,7 @@ private:
   using LaneIndex            = LaneIdentity::lane_type;
   using AddressList          = std::vector<MuddleEndpoint::Address>;
   using MerkleTree           = crypto::MerkleTree;
-  using PermanentMerkleStack = storage::RandomAccessStack<MerkleTreeProxy>;
+  using PermanentMerkleStack = storage::RandomAccessStack<MerkleTreeBlock>;
   using Mutex                = fetch::mutex::Mutex;
 
   static constexpr char const *MERKLE_FILENAME = "merkle_stack.db";
