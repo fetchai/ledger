@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/type_traits.hpp"
 #include "vectorise/vectorise.hpp"
 
 namespace fetch {
@@ -212,6 +213,12 @@ inline uint32_t ToLog2(uint32_t value)
   static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;
   return static_cast<uint32_t>(VALUE_SIZE_IN_BITS -
                                static_cast<uint32_t>(__builtin_clz(value) + 1));
+}
+
+// https://graphics.stanford.edu/~seander/bithacks.html
+inline bool IsLog2(uint64_t value)
+{
+  return value && !(value & (value - 1));
 }
 
 }  // namespace platform

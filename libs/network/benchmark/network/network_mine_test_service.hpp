@@ -48,7 +48,7 @@ public:
     LOG_STACK_TRACE_POINT;
     FETCH_LOG_DEBUG(LOGGING_NAME, "Constructing test node service with TCP port: ", tcpPort,
                     " and HTTP port: ", httpPort);
-    node_ = std::make_shared<T>(tcpPort);
+    node_ = std::make_shared<T>();
 
     server = MuddleTestServer::CreateTestServer(tcpPort);
 

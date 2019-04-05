@@ -25,7 +25,7 @@ namespace ledger {
 class ExecutorInterface
 {
 public:
-  using TxDigest  = chain::Transaction::TxDigest;
+  using TxDigest  = Transaction::TxDigest;
   using LaneIndex = uint32_t;
   using LaneSet   = std::unordered_set<LaneIndex>;
 
@@ -34,11 +34,15 @@ public:
     SUCCESS = 0,
 
     // Errors
+    CHAIN_CODE_LOOKUP_FAILURE,
+    CHAIN_CODE_EXEC_FAILURE,
+    CONTRACT_NAME_PARSE_FAILURE,
+
+    // Fatal Errors
     NOT_RUN,
     TX_LOOKUP_FAILURE,
     RESOURCE_FAILURE,
-    CHAIN_CODE_LOOKUP_FAILURE,
-    CHAIN_CODE_EXEC_FAILURE
+    INEXPLICABLE_FAILURE,
   };
 
   /// @name Executor Interface
@@ -48,6 +52,41 @@ public:
 
   virtual ~ExecutorInterface() = default;
 };
+
+inline char const *ToString(ExecutorInterface::Status status)
+{
+  char const *text = "Unknown";
+
+  switch (status)
+  {
+  case ExecutorInterface::Status::SUCCESS:
+    text = "Success";
+    break;
+  case ExecutorInterface::Status::NOT_RUN:
+    text = "Not Run";
+    break;
+  case ExecutorInterface::Status::TX_LOOKUP_FAILURE:
+    text = "Tx Lookup Failure";
+    break;
+  case ExecutorInterface::Status::RESOURCE_FAILURE:
+    text = "Resource Failure";
+    break;
+  case ExecutorInterface::Status::INEXPLICABLE_FAILURE:
+    text = "Inexplicable Error";
+    break;
+  case ExecutorInterface::Status::CHAIN_CODE_LOOKUP_FAILURE:
+    text = "Chain Code Lookup Failure";
+    break;
+  case ExecutorInterface::Status::CHAIN_CODE_EXEC_FAILURE:
+    text = "Chain Code Execution Failure";
+    break;
+  case ExecutorInterface::Status::CONTRACT_NAME_PARSE_FAILURE:
+    text = "Contract Name Parse Failure";
+    break;
+  }
+
+  return text;
+}
 
 template <typename T>
 void Serialize(T &stream, ExecutorInterface::Status const &status)

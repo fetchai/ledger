@@ -21,6 +21,7 @@
 #include <thread>
 
 #include "core/byte_array/decoders.hpp"
+#include "core/macros.hpp"
 #include "crypto/ecdsa.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/muddle/muddle.hpp"
@@ -35,6 +36,7 @@ using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
 using fetch::byte_array::ToBase64;
+using fetch::muddle::NetworkId;
 
 class MuddleStressTests : public ::testing::Test
 {
@@ -85,12 +87,12 @@ protected:
   void SetUp() override
   {
     managerA_ = std::make_unique<NetworkManager>("NetMgrA", 4);
-    networkA_ = std::make_unique<Muddle>(Muddle::NetworkId("Test"),
-                                         LoadIdentity(NETWORK_A_PRIVATE_KEY), *managerA_);
+    networkA_ = std::make_unique<Muddle>(NetworkId{"Test"}, LoadIdentity(NETWORK_A_PRIVATE_KEY),
+                                         *managerA_);
 
     managerB_ = std::make_unique<NetworkManager>("NetMgrB", 4);
-    networkB_ = std::make_unique<Muddle>(Muddle::NetworkId("Test"),
-                                         LoadIdentity(NETWORK_B_PRIVATE_KEY), *managerB_);
+    networkB_ = std::make_unique<Muddle>(NetworkId{"Test"}, LoadIdentity(NETWORK_B_PRIVATE_KEY),
+                                         *managerB_);
 
     managerA_->Start();
     managerB_->Start();
@@ -123,7 +125,7 @@ protected:
     {
       buffer[i] = fill;
     }
-    return buffer;
+    return std::move(buffer);
   }
 
   static void ClientServer(MuddleEndpoint &endpoint, char const *target)
@@ -137,6 +139,9 @@ protected:
     subscription->SetMessageHandler([&num_messages](Address const &from, uint16_t service,
                                                     uint16_t channel, uint16_t counter,
                                                     Payload const &payload, Address const &) {
+      FETCH_UNUSED(from);
+      FETCH_UNUSED(counter);
+
       EXPECT_EQ(service, uint16_t{SERVICE});
       EXPECT_EQ(channel, uint16_t{CHANNEL});
       EXPECT_EQ(payload.size(), PAYLOAD_LENGTH);

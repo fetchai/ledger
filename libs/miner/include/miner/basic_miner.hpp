@@ -18,8 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "ledger/block_packer_interface.hpp"
+#include "ledger/chain/block.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "meta/is_log2.hpp"
-#include "miner/miner_interface.hpp"
 #include "miner/optimisation/bitvector.hpp"
 #include "vectorise/threading/pool.hpp"
 #include <list>
@@ -36,10 +38,13 @@ namespace miner {
  * transferred to the main queue when it is evaluated in order to generate new blocks. During this
  * operation the main queue is locked.
  */
-class BasicMiner : public MinerInterface
+class BasicMiner : public ledger::BlockPackerInterface
 {
 public:
   static constexpr char const *LOGGING_NAME = "BasicMiner";
+
+  using Block     = ledger::Block;
+  using MainChain = ledger::MainChain;
 
   // Construction / Destruction
   explicit BasicMiner(uint32_t log2_num_lanes, uint32_t num_slices);
@@ -49,14 +54,10 @@ public:
 
   /// @name Miner Interface
   /// @{
-  void EnqueueTransaction(chain::TransactionSummary const &tx) override;
-  void GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, std::size_t num_slices,
-                     chain::MainChain const &chain) override;
+  void EnqueueTransaction(ledger::TransactionSummary const &tx) override;
+  void GenerateBlock(Block &block, std::size_t num_lanes, std::size_t num_slices,
+                     MainChain const &chain) override;
   /// @}
-
-  // Operators
-  BasicMiner &operator=(BasicMiner const &) = delete;
-  BasicMiner &operator=(BasicMiner &&) = delete;
 
   uint64_t  GetBacklog() const override;
   uint32_t &log2_num_lanes()
@@ -64,26 +65,30 @@ public:
     return log2_num_lanes_;
   }
 
+  // Operators
+  BasicMiner &operator=(BasicMiner const &) = delete;
+  BasicMiner &operator=(BasicMiner &&) = delete;
+
 private:
   using BitVector = bitmanip::BitVector;
 
   struct TransactionEntry
   {
-    BitVector                 resources;
-    chain::TransactionSummary transaction;
+    BitVector                  resources;
+    ledger::TransactionSummary transaction;
 
-    TransactionEntry(chain::TransactionSummary const &summary, uint32_t log2_num_lanes);
+    TransactionEntry(ledger::TransactionSummary const &summary, uint32_t log2_num_lanes);
     ~TransactionEntry() = default;
   };
 
   using Mutex           = mutex::Mutex;
   using TransactionList = std::list<TransactionEntry>;
-  using TransactionSet  = std::set<chain::TransactionSummary>;
+  using TransactionSet  = std::set<ledger::TransactionSummary>;
   using ThreadPool      = threading::Pool;
 
-  static void GenerateSlices(TransactionList &tx, chain::BlockBody &block, std::size_t offset,
+  static void GenerateSlices(TransactionList &tx, Block::Body &block, std::size_t offset,
                              std::size_t interval, std::size_t num_lanes);
-  static void GenerateSlice(TransactionList &tx, chain::BlockSlice &slice, std::size_t slice_index,
+  static void GenerateSlice(TransactionList &tx, Block::Slice &slice, std::size_t slice_index,
                             std::size_t num_lanes);
 
   static bool SortByFee(TransactionEntry const &a, TransactionEntry const &b);

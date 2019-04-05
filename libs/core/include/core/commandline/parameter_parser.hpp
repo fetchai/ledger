@@ -22,129 +22,90 @@
 #include <map>
 #include <sstream>
 #include <vector>
+
 namespace fetch {
 namespace commandline {
 
 class ParamsParser
 {
-private:
-  std::map<std::string, std::string> params_;
-  std::vector<std::string>           args_;
-  int                                arg_count_;
-
 public:
-  void Parse(int argc, char **argv)
-  {
-    arg_count_        = argc;
-    std::size_t sargs = std::size_t(argc);
-    for (std::size_t i = 0; i < sargs; ++i)
-    {
-      std::string name(argv[i]);
-      if (name.find("-") == 0)
-      {
-        name = name.substr(1);
-        ++i;
-        if (i == sargs)
-        {
-          params_[name] = "1";
-          continue;
-        }
+  // Construction / Destruction
+  ParamsParser()                     = default;
+  ParamsParser(ParamsParser const &) = delete;
+  ParamsParser(ParamsParser &&)      = delete;
+  ~ParamsParser()                    = default;
 
-        std::string value(argv[i]);
-
-        if (value.find("-") == 0)
-        {
-          params_[name] = "1";
-          --i;
-        }
-        else
-        {
-          params_[name] = value;
-        }
-      }
-      else
-      {
-        args_.push_back(name);
-      }
-    }
-  }
+  void Parse(int argc, char **argv);
 
   template <typename T>
-  T GetArg(std::size_t const &i, T const &default_value) const
-  {
-    if (i >= args_.size())
-    {
-      return default_value;
-    }
-
-    std::stringstream s(args_[i]);
-    T                 ret;
-    s >> ret;
-    return ret;
-  }
+  T GetArg(std::size_t const &i, T const &default_value) const;
+  template <typename T>
+  T           GetArg(std::size_t const &i) const;
+  std::string GetArg(std::size_t const &i) const;
+  std::string GetArg(std::size_t const &i, std::string const &default_value) const;
 
   template <typename T>
-  T GetArg(std::size_t const &i) const
-  {
-    if (i >= args_.size())
-    {
-      throw std::runtime_error("parameter does not exist");
-    }
+  T           GetParam(std::string const &key, T const &default_value) const;
+  std::string GetParam(std::string const &key, std::string const &default_value) const;
 
-    std::stringstream s(args_[i]);
-    T                 ret;
-    s >> ret;
-    return ret;
-  }
+  std::size_t arg_size() const;
 
-  std::string GetArg(std::size_t const &i) const
-  {
-    if (i >= args_.size())
-    {
-      throw std::runtime_error("parameter does not exist");
-    }
+  // Operators
+  ParamsParser &operator=(ParamsParser const &) = delete;
+  ParamsParser &operator=(ParamsParser &&) = delete;
 
-    return args_[i];
-  }
-
-  std::string GetArg(std::size_t const &i, std::string const &default_value) const
-  {
-    if (i >= args_.size())
-    {
-      return default_value;
-    }
-
-    return args_[i];
-  }
-
-  std::string GetParam(std::string const &key, std::string const &default_value) const
-  {
-    if (params_.find(key) == params_.end())
-    {
-      return default_value;
-    }
-
-    return params_.find(key)->second;
-  }
-
-  template <typename T>
-  T GetParam(std::string const &key, T const &default_value) const
-  {
-    if (params_.find(key) == params_.end())
-    {
-      return default_value;
-    }
-
-    std::stringstream s(params_.find(key)->second);
-    T                 ret;
-    s >> ret;
-    return ret;
-  }
-
-  std::size_t arg_size() const
-  {
-    return args_.size();
-  }
+private:
+  std::map<std::string, std::string> params_{};
+  std::vector<std::string>           args_{};
+  std::size_t                        arg_count_{0};
 };
+
+template <typename T>
+T ParamsParser::GetArg(std::size_t const &i, T const &default_value) const
+{
+  if (i >= args_.size())
+  {
+    return default_value;
+  }
+
+  std::stringstream s(args_[i]);
+  T                 ret;
+  s >> ret;
+  return ret;
+}
+
+template <typename T>
+T ParamsParser::GetArg(std::size_t const &i) const
+{
+  if (i >= args_.size())
+  {
+    throw std::runtime_error("parameter does not exist");
+  }
+
+  std::stringstream s(args_[i]);
+  T                 ret;
+  s >> ret;
+  return ret;
+}
+
+template <typename T>
+T ParamsParser::GetParam(std::string const &key, T const &default_value) const
+{
+  if (params_.find(key) == params_.end())
+  {
+    return default_value;
+  }
+
+  std::stringstream s(params_.find(key)->second);
+  T                 ret;
+  s >> ret;
+  return ret;
+}
+
+inline std::size_t ParamsParser::arg_size() const
+{
+  return args_.size();
+}
+
 }  // namespace commandline
 }  // namespace fetch

@@ -21,8 +21,8 @@
 namespace fetch {
 namespace auctions {
 
-FirstPriceAuction::FirstPriceAuction(BlockId start_block_id, BlockId end_block_id)
-  : Auction(start_block_id, end_block_id, false, std::numeric_limits<std::size_t>::max())
+FirstPriceAuction::FirstPriceAuction()
+  : Auction(false, std::numeric_limits<std::size_t>::max())
 {
   max_items_         = std::numeric_limits<std::size_t>::max();
   max_bids_          = std::numeric_limits<std::size_t>::max();
@@ -30,25 +30,26 @@ FirstPriceAuction::FirstPriceAuction(BlockId start_block_id, BlockId end_block_i
   max_bids_per_item_ = std::numeric_limits<std::size_t>::max();
 }
 
-bool FirstPriceAuction::Execute(BlockId current_block)
+ErrorCode FirstPriceAuction::Execute()
 {
-  if ((end_block_ == current_block) && auction_valid_)
+  if (!(auction_valid_ == AuctionState::LISTING))
   {
-    assert(max_items_per_bid_ == 1);
-
-    // pick winning bid
-    SelectWinners();
-
-    // deduct funds from winner
-
-    // transfer item to winner
-
-    // close auction
-    auction_valid_ = false;
-
-    return true;
+    return ErrorCode::AUCTION_CLOSED;
   }
-  return false;
+
+  assert(max_items_per_bid_ == 1);
+
+  // pick winning bid
+  SelectWinners();
+
+  // deduct funds from winner
+
+  // transfer item to winner
+
+  // close auction
+  auction_valid_ = AuctionState::CLEARED;
+
+  return ErrorCode::SUCCESS;
 }
 
 /**

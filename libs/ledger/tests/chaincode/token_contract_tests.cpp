@@ -20,9 +20,11 @@
 #include "core/json/document.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/token_contract.hpp"
-#include "ledger/chaincode/token_contract_deed.hpp"
 #include "mock_storage_unit.hpp"
+
+#include "contract_test.hpp"
 
 #include <gmock/gmock.h>
 
@@ -39,17 +41,16 @@ namespace {
 
 using ::testing::_;
 using fetch::variant::Variant;
-using chain::Signatories;
 using ConstByteArray = byte_array::ConstByteArray;
-using PrivateKey     = fetch::chain::TxSigningAdapter<>::private_key_type;
-using MutTx          = chain::MutableTransaction;
-using VerifTx        = chain::VerifiedTransaction;
+using PrivateKey     = TxSigningAdapter<>::private_key_type;
+using MutTx          = MutableTransaction;
+using VerifTx        = VerifiedTransaction;
 using PrivateKeys    = std::vector<PrivateKey>;
 
 using SigneesPtr    = std::shared_ptr<Deed::Signees>;
 using ThresholdsPtr = std::shared_ptr<Deed::OperationTresholds>;
 
-class TokenContractTests : public ::testing::Test
+class TokenContractTests : public ContractTest
 {
 protected:
   using Query              = Contract::Query;
@@ -59,10 +60,12 @@ protected:
 
   void SetUp() override
   {
-    contract_ = std::make_unique<TokenContract>();
-    storage_  = std::make_unique<MockStorageUnit>();
+    // setup the base class
+    ContractTest::SetUp();
 
-    contract_->Attach(*storage_);
+    // create the
+    contract_      = std::make_unique<TokenContract>();
+    contract_name_ = std::make_shared<Identifier>(std::string{TokenContract::NAME});
   }
 
   static ConstByteArray CreateTxDeedData(Address const &address, SigneesPtr const signees,
@@ -105,7 +108,7 @@ protected:
 
   static void SignTx(MutTx &tx, PrivateKeys const &keys_to_sign_tx)
   {
-    auto sign_adapter{chain::TxSigningAdapterFactory(tx)};
+    auto sign_adapter{TxSigningAdapterFactory(tx)};
     for (auto const &key : keys_to_sign_tx)
     {
       tx.Sign(key, sign_adapter);
@@ -116,14 +119,11 @@ protected:
                   SigneesPtr const &signees, ThresholdsPtr const &thresholds,
                   bool const set_call_expected = true, uint64_t const *const balance = nullptr)
   {
-    EXPECT_CALL(*storage_, Get(_)).Times(0);
-    EXPECT_CALL(*storage_, GetOrCreate(_)).Times(1);
+    EXPECT_CALL(*storage_, Get(_)).Times(1);
+    EXPECT_CALL(*storage_, GetOrCreate(_)).Times(0);
     EXPECT_CALL(*storage_, Set(_, _)).Times(set_call_expected ? 1 : 0);
-    EXPECT_CALL(*storage_, Lock(_)).Times(1);
-    EXPECT_CALL(*storage_, Unlock(_)).Times(1);
-    EXPECT_CALL(*storage_, Hash()).Times(0);
-    EXPECT_CALL(*storage_, Commit(_)).Times(0);
-    EXPECT_CALL(*storage_, Revert(_)).Times(0);
+    EXPECT_CALL(*storage_, Lock(_)).Times(testing::AnyNumber());
+    EXPECT_CALL(*storage_, Unlock(_)).Times(testing::AnyNumber());
     EXPECT_CALL(*storage_, AddTransaction(_)).Times(0);
     EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
 
@@ -133,27 +133,17 @@ protected:
     tx.PushResource(address);
     SignTx(tx, keys_to_sign_tx);
 
-    Identifier identifier;
-    identifier.Parse(tx.contract_name());
-
     // dispatch the transaction
-    auto status =
-        contract_->DispatchTransaction(identifier.name(), chain::VerifiedTransaction::Create(tx));
-
+    auto const status = SendAction(tx);
     return (Contract::Status::OK == status);
   }
 
   bool CreateWealth(Address const &address, uint64_t amount)
   {
-
-    EXPECT_CALL(*storage_, Get(_)).Times(0);
-    EXPECT_CALL(*storage_, GetOrCreate(_)).Times(1);
+    EXPECT_CALL(*storage_, Get(_)).Times(1);
     EXPECT_CALL(*storage_, Set(_, _)).Times(1);
-    EXPECT_CALL(*storage_, Lock(_)).Times(1);
-    EXPECT_CALL(*storage_, Unlock(_)).Times(1);
-    EXPECT_CALL(*storage_, Hash()).Times(0);
-    EXPECT_CALL(*storage_, Commit(_)).Times(0);
-    EXPECT_CALL(*storage_, Revert(_)).Times(0);
+    EXPECT_CALL(*storage_, Lock(_)).Times(testing::AnyNumber());
+    EXPECT_CALL(*storage_, Unlock(_)).Times(testing::AnyNumber());
     EXPECT_CALL(*storage_, AddTransaction(_)).Times(0);
     EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
 
@@ -162,18 +152,8 @@ protected:
         << R"("address": ")" << static_cast<std::string>(byte_array::ToBase64(address)) << "\", "
         << R"("amount": )" << amount << " }";
 
-    // create the transaction
-    chain::MutableTransaction tx;
-    tx.set_contract_name("fetch.token.wealth");
-    tx.set_data(oss.str());
-    tx.PushResource(address);
-
-    Identifier identifier;
-    identifier.Parse(tx.contract_name());
-
-    // dispatch the transaction
-    auto status =
-        contract_->DispatchTransaction(identifier.name(), chain::VerifiedTransaction::Create(tx));
+    // send the action to the contract
+    auto const status = SendAction("wealth", {address}, oss.str());
 
     return (Contract::Status::OK == status);
   }
@@ -181,14 +161,11 @@ protected:
   bool Transfer(Address const &from, Address const &to, PrivateKeys const &keys_to_sign,
                 uint64_t amount, bool const set_call_expected = true)
   {
-    EXPECT_CALL(*storage_, Get(_)).Times(1);
-    EXPECT_CALL(*storage_, GetOrCreate(_)).Times(set_call_expected ? 1 : 0);
+    EXPECT_CALL(*storage_, Get(_)).Times(set_call_expected ? 2 : 1);
+    EXPECT_CALL(*storage_, GetOrCreate(_)).Times(0);
     EXPECT_CALL(*storage_, Set(_, _)).Times(set_call_expected ? 2 : 0);
-    EXPECT_CALL(*storage_, Lock(_)).Times(2);
-    EXPECT_CALL(*storage_, Unlock(_)).Times(2);
-    EXPECT_CALL(*storage_, Hash()).Times(0);
-    EXPECT_CALL(*storage_, Commit(_)).Times(0);
-    EXPECT_CALL(*storage_, Revert(_)).Times(0);
+    EXPECT_CALL(*storage_, Lock(_)).Times(testing::AnyNumber());
+    EXPECT_CALL(*storage_, Unlock(_)).Times(testing::AnyNumber());
     EXPECT_CALL(*storage_, AddTransaction(_)).Times(0);
     EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
 
@@ -199,33 +176,25 @@ protected:
         << R"("amount": )" << amount << " }";
 
     // create the transaction
-    chain::MutableTransaction tx;
+    MutableTransaction tx;
     tx.set_contract_name("fetch.token.transfer");
     tx.set_data(oss.str());
     tx.PushResource(from);
     tx.PushResource(to);
     SignTx(tx, keys_to_sign);
 
-    // dispatch the transaction
-    Identifier identifier;
-    identifier.Parse(tx.contract_name());
-
-    auto status =
-        contract_->DispatchTransaction(identifier.name(), chain::VerifiedTransaction::Create(tx));
+    // send the transaction to the contract
+    auto const status = SendAction(tx);
     return (Contract::Status::OK == status);
   }
 
   bool GetBalance(Address const &address, uint64_t &balance)
   {
-
     EXPECT_CALL(*storage_, Get(_)).Times(1);
     EXPECT_CALL(*storage_, GetOrCreate(_)).Times(0);
     EXPECT_CALL(*storage_, Set(_, _)).Times(0);
-    EXPECT_CALL(*storage_, Lock(_)).Times(0);
-    EXPECT_CALL(*storage_, Unlock(_)).Times(0);
-    EXPECT_CALL(*storage_, Hash()).Times(0);
-    EXPECT_CALL(*storage_, Commit(_)).Times(0);
-    EXPECT_CALL(*storage_, Revert(_)).Times(0);
+    EXPECT_CALL(*storage_, Lock(_)).Times(testing::AnyNumber());
+    EXPECT_CALL(*storage_, Unlock(_)).Times(testing::AnyNumber());
     EXPECT_CALL(*storage_, AddTransaction(_)).Times(0);
     EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
 
@@ -236,7 +205,7 @@ protected:
     query["address"] = byte_array::ToBase64(address);
 
     Query response;
-    if (Contract::Status::OK == contract_->DispatchQuery("balance", query, response))
+    if (Contract::Status::OK == SendQuery("balance", query, response))
     {
       balance = response["balance"].As<uint64_t>();
       success = true;
@@ -244,9 +213,6 @@ protected:
 
     return success;
   }
-
-  TokenContractPtr   contract_;
-  MockStorageUnitPtr storage_;
 };
 
 TEST_F(TokenContractTests, CheckWealthCreation)

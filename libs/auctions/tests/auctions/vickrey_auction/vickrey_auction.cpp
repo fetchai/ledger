@@ -39,20 +39,16 @@ private:
   Bidder() = default;
 };
 
-VickreyAuction SetupAuction(std::size_t start_block_val, std::size_t end_block_val)
+VickreyAuction SetupAuction()
 {
-  BlockId start_block(start_block_val);
-  BlockId end_block(end_block_val);
-  return VickreyAuction(start_block, end_block);
+  return VickreyAuction();
 }
 
 TEST(vickrey_auction, one_bid_auction)
 {
 
   // set up auction
-  std::size_t    start_block = 10000;
-  std::size_t    end_block   = 10010;
-  VickreyAuction va          = SetupAuction(start_block, end_block);
+  VickreyAuction va = SetupAuction();
 
   // add item to auction
   ItemId    item_id   = 0;
@@ -60,39 +56,27 @@ TEST(vickrey_auction, one_bid_auction)
   Value     min_price = 7;
   Item      item(item_id, seller_id, min_price);
   ErrorCode err = va.AddItem(item);
-  ASSERT_TRUE(err == ErrorCode::SUCCESS);
+  ASSERT_EQ(err, ErrorCode::SUCCESS);
 
   // set up bidders
   std::vector<Bidder> bidders{};
   bidders.push_back(Bidder(0, 100));
   BidId bid_id = 0;
-  Bid   cur_bid(bid_id, {item}, bidders[0].funds, bidders[0].id);
+  Bid   cur_bid(bid_id, {item.id}, bidders[0].funds, bidders[0].id);
   err = va.PlaceBid(cur_bid);
-  ASSERT_TRUE(err == ErrorCode::SUCCESS);
+  ASSERT_EQ(err, ErrorCode::SUCCESS);
 
-  std::size_t cur_block_val   = start_block;
-  std::size_t execution_block = 0;
-  for (std::size_t j = 0; j < 20; ++j)
-  {
-    bool success = va.Execute(BlockId(cur_block_val));
-    if (success)
-    {
-      execution_block = cur_block_val;
-    }
-    cur_block_val++;
-  }
+  err = va.Execute();
 
-  ASSERT_TRUE(execution_block == end_block);
-  ASSERT_TRUE(va.Winner(item.id) == bidders[0].id);
-  ASSERT_TRUE(va.items()[0].sell_price == bidders[0].funds);
+  ASSERT_EQ(err, ErrorCode::SUCCESS);
+  ASSERT_EQ(va.Winner(item.id), bidders[0].id);
+  ASSERT_EQ(va.items()[0].sell_price, bidders[0].funds);
 }
 
 TEST(vickrey_auction, two_bid_auction)
 {
   // set up auction
-  std::size_t    start_block = 10000;
-  std::size_t    end_block   = 10010;
-  VickreyAuction va          = SetupAuction(start_block, end_block);
+  VickreyAuction va = SetupAuction();
 
   // add item to auction
   ItemId    item_id   = 0;
@@ -100,7 +84,7 @@ TEST(vickrey_auction, two_bid_auction)
   Value     min_price = 7;
   Item      item(item_id, seller_id, min_price);
   ErrorCode err = va.AddItem(item);
-  ASSERT_TRUE(err == ErrorCode::SUCCESS);
+  ASSERT_EQ(err, ErrorCode::SUCCESS);
 
   // set up bidders
   std::vector<Bidder> bidders{};
@@ -108,38 +92,26 @@ TEST(vickrey_auction, two_bid_auction)
   bidders.push_back(Bidder(1, 50));
 
   BidId bid_id = 0;
-  Bid   bid1(bid_id, {item}, bidders[0].funds, bidders[0].id);
+  Bid   bid1(bid_id, {item.id}, bidders[0].funds, bidders[0].id);
   err = va.PlaceBid(bid1);
-  ASSERT_TRUE(err == ErrorCode::SUCCESS);
+  ASSERT_EQ(err, ErrorCode::SUCCESS);
 
   bid_id = 1;
-  Bid bid2(bid_id, {item}, bidders[1].funds, bidders[1].id);
+  Bid bid2(bid_id, {item.id}, bidders[1].funds, bidders[1].id);
   err = va.PlaceBid(bid2);
-  ASSERT_TRUE(err == ErrorCode::SUCCESS);
+  ASSERT_EQ(err, ErrorCode::SUCCESS);
 
-  std::size_t cur_block       = start_block;
-  std::size_t execution_block = 0;
-  for (std::size_t j = 0; j < 20; ++j)
-  {
-    bool success = va.Execute(BlockId(cur_block));
-    if (success)
-    {
-      execution_block = cur_block;
-    }
-    cur_block++;
-  }
+  err = va.Execute();
 
-  ASSERT_TRUE(execution_block == end_block);
-  ASSERT_TRUE(va.Winner(item.id) == bidders[0].id);
-  ASSERT_TRUE(va.items()[0].sell_price == bidders[1].funds);
+  ASSERT_EQ(err, ErrorCode::SUCCESS);
+  ASSERT_EQ(va.Winner(item.id), bidders[0].id);
+  ASSERT_EQ(va.items()[0].sell_price, bidders[1].funds);
 }
 
 TEST(vickrey_auction, many_bid_auction)
 {
   // set up auction
-  std::size_t    start_block = 10000;
-  std::size_t    end_block   = 10010;
-  VickreyAuction va          = SetupAuction(start_block, end_block);
+  VickreyAuction va = SetupAuction();
 
   // add item to auction
   ItemId    item_id   = 0;
@@ -147,7 +119,7 @@ TEST(vickrey_auction, many_bid_auction)
   Value     min_price = 7;
   Item      item(item_id, seller_id, min_price);
   ErrorCode err = va.AddItem(item);
-  ASSERT_TRUE(err == ErrorCode::SUCCESS);
+  ASSERT_EQ(err, ErrorCode::SUCCESS);
 
   // set up bidders
   std::size_t         n_bidders = 10;
@@ -162,26 +134,16 @@ TEST(vickrey_auction, many_bid_auction)
   for (std::size_t j = 0; j < n_bidders; ++j)
   {
     bid_id = static_cast<BidId>(j);
-    Bid cur_bid(bid_id, {item}, bidders[j].funds, bidders[j].id);
+    Bid cur_bid(bid_id, {item.id}, bidders[j].funds, bidders[j].id);
     err = va.PlaceBid(cur_bid);
-    ASSERT_TRUE(err == ErrorCode::SUCCESS);
+    ASSERT_EQ(err, ErrorCode::SUCCESS);
   }
 
-  std::size_t cur_block       = start_block;
-  std::size_t execution_block = 0;
-  for (std::size_t j = 0; j < 20; ++j)
-  {
-    bool success = va.Execute(BlockId(cur_block));
-    if (success)
-    {
-      execution_block = cur_block;
-    }
-    cur_block++;
-  }
+  err = va.Execute();
 
-  ASSERT_TRUE(execution_block == end_block);
-  ASSERT_TRUE(va.Winner(item.id) == bidders[bidders.size() - 1].id);
-  ASSERT_TRUE(va.items()[0].sell_price == bidders[bidders.size() - 2].funds);
+  ASSERT_EQ(err, ErrorCode::SUCCESS);
+  ASSERT_EQ(va.Winner(item.id), bidders[bidders.size() - 1].id);
+  ASSERT_EQ(va.items()[0].sell_price, bidders[bidders.size() - 2].funds);
 }
 
 TEST(vickrey_auction, many_bid_many_item_auction)
@@ -189,10 +151,8 @@ TEST(vickrey_auction, many_bid_many_item_auction)
   ErrorCode err;
 
   // set up auction
-  std::size_t    start_block = 10000;
-  std::size_t    end_block   = 10010;
-  std::size_t    n_items     = 10;
-  VickreyAuction va          = SetupAuction(start_block, end_block);
+  std::size_t    n_items = 10;
+  VickreyAuction va      = SetupAuction();
 
   // add item to auction
   std::vector<Item> items{};
@@ -207,7 +167,7 @@ TEST(vickrey_auction, many_bid_many_item_auction)
     Item item(item_id, seller_id, min_price);
     items.emplace_back(item);
     err = va.AddItem(item);
-    ASSERT_TRUE(err == ErrorCode::SUCCESS);
+    ASSERT_EQ(err, ErrorCode::SUCCESS);
   }
 
   // set up bidders
@@ -226,29 +186,19 @@ TEST(vickrey_auction, many_bid_many_item_auction)
     for (std::size_t j = 0; j < n_bidders; ++j)
     {
       bid_id = static_cast<BidId>(bid_count);
-      Bid cur_bid(bid_id, {items[i]}, bidders[j].funds / 10, bidders[j].id);
+      Bid cur_bid(bid_id, {items[i].id}, bidders[j].funds / 10, bidders[j].id);
       err = va.PlaceBid(cur_bid);
-      ASSERT_TRUE(err == ErrorCode::SUCCESS);
+      ASSERT_EQ(err, ErrorCode::SUCCESS);
       bid_count += 1;
     }
   }
 
-  std::size_t cur_block       = start_block;
-  std::size_t execution_block = 0;
-  for (std::size_t j = 0; j < 20; ++j)
-  {
-    bool success = va.Execute(BlockId(cur_block));
-    if (success)
-    {
-      execution_block = cur_block;
-    }
-    cur_block++;
-  }
+  err = va.Execute();
+  ASSERT_EQ(err, ErrorCode::SUCCESS);
 
   for (std::size_t j = 0; j < n_items; ++j)
   {
-    ASSERT_TRUE(execution_block == end_block);
-    ASSERT_TRUE(va.Winner(j) == bidders[bidders.size() - 1].id);
-    ASSERT_TRUE(va.items()[j].sell_price == bidders[bidders.size() - 2].funds / 10);
+    ASSERT_EQ(va.Winner(j), bidders[bidders.size() - 1].id);
+    ASSERT_EQ(va.items()[j].sell_price, bidders[bidders.size() - 2].funds / 10);
   }
 }

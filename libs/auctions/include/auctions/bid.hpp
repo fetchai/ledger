@@ -34,29 +34,51 @@ constexpr AgentId DEFAULT_BID_BIDDER = std::numeric_limits<AgentId>::max();
 class Bid
 {
 public:
-  Bid(BidId id, std::vector<Item> items, Value price, AgentId bidder,
-      std::vector<Bid> excludes = {})
+  Bid(BidId id, std::vector<ItemId> item_ids, Value price, AgentId bidder)
+    : id(id)
+    , price(price)
+    , bidder(bidder)
+    , item_ids_(std::move(item_ids))
+  {
+    assert(item_ids_.size() > 0);
+    exclude_all = false;
+  }
+
+  Bid(BidId id, std::vector<ItemId> item_ids, Value price, AgentId bidder,
+      std::vector<BidId> excludes)
     : id(id)
     , price(price)
     , bidder(bidder)
     , excludes(std::move(excludes))
-    , items_(std::move(items))
+    , item_ids_(std::move(item_ids))
   {
-    assert(items_.size() > 0);
+    assert(item_ids_.size() > 0);
+    exclude_all = false;
   }
 
-  std::vector<Item> items() const
+  Bid(BidId id, std::vector<ItemId> item_ids, Value price, AgentId bidder, bool exclude_all)
+    : id(id)
+    , price(price)
+    , bidder(bidder)
+    , exclude_all(exclude_all)
+    , item_ids_(std::move(item_ids))
   {
-    return items_;
+    assert(item_ids_.size() > 0);
   }
 
-  BidId            id     = DEFAULT_BID_ID;
-  Value            price  = DEFAULT_BID_PRICE;
-  AgentId          bidder = DEFAULT_BID_BIDDER;
-  std::vector<Bid> excludes{};
+  std::vector<ItemId> item_ids() const
+  {
+    return item_ids_;
+  }
+
+  BidId              id     = DEFAULT_BID_ID;
+  Value              price  = DEFAULT_BID_PRICE;
+  AgentId            bidder = DEFAULT_BID_BIDDER;
+  std::vector<BidId> excludes{};
+  bool               exclude_all = false;
 
 private:
-  std::vector<Item> items_{};
+  std::vector<ItemId> item_ids_{};
 };
 
 }  // namespace auctions

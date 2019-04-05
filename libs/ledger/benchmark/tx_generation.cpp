@@ -22,8 +22,8 @@
 
 #include <benchmark/benchmark.h>
 
-using fetch::chain::MutableTransaction;
-using fetch::chain::TxSigningAdapter;
+using fetch::ledger::MutableTransaction;
+using fetch::ledger::TxSigningAdapter;
 using fetch::crypto::ECDSASigner;
 using fetch::byte_array::ToBase64;
 using fetch::serializers::ByteArrayBuffer;

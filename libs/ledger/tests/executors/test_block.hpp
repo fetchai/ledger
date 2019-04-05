@@ -27,16 +27,16 @@
 struct TestBlock
 {
   using ResourceIdMap = std::vector<std::string>;
-  using Block         = fetch::ledger::ExecutionManager::Block;
-  using BlockHash     = fetch::ledger::ExecutionManager::BlockHash;
+  using BlockBody     = fetch::ledger::Block::Body;
+  using BlockHash     = fetch::ledger::Block::Digest;
 
   static constexpr char const *LOGGING_NAME = "TestBlock";
 
   static constexpr uint64_t    IV          = uint64_t(-1);
   static constexpr std::size_t HASH_LENGTH = 32;
 
-  Block block;
-  int   num_transactions = 0;
+  BlockBody block;
+  int       num_transactions = 0;
 
   template <typename RNG>
   static BlockHash GenerateHash(RNG &rng)
@@ -103,7 +103,7 @@ struct TestBlock
           {
 
             // create the transaction summary
-            fetch::chain::TransactionSummary summary;
+            fetch::ledger::TransactionSummary summary;
             summary.transaction_hash = GenerateHash(rng);
             summary.contract_name    = "fetch.dummy.run";
 
@@ -120,7 +120,7 @@ struct TestBlock
               summary.resources.insert(resources.at(index));
             }
 
-            current_slice.transactions.emplace_back(std::move(summary));
+            current_slice.emplace_back(std::move(summary));
             ++num_transactions;
           }
 
@@ -188,7 +188,7 @@ struct TestBlock
   }
 
   static TestBlock Generate(std::size_t log2_num_lanes, std::size_t num_slices, uint32_t seed,
-                            BlockHash const &previous_hash = fetch::chain::GENESIS_DIGEST)
+                            BlockHash const &previous_hash = fetch::ledger::GENESIS_DIGEST)
   {
     TestBlock block;
     block.GenerateBlock(seed, static_cast<uint32_t>(log2_num_lanes), num_slices, previous_hash);

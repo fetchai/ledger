@@ -250,6 +250,14 @@ void ThreadPoolImplementation::ProcessLoop(std::size_t index)
       {
         std::unique_lock<std::mutex> lock(idle_mutex_);
 
+        // double check the emptiness of the queue because there is a race here
+        if (!work_.IsEmpty())
+        {
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Restarting the inactive thread (thread: ", index,
+                          " queue: ", name_, ')');
+          continue;
+        }
+
         FETCH_LOG_DEBUG(LOGGING_NAME, "Entering idle state (thread: ", index, ')');
 
         // snooze for a while or until more work arrives

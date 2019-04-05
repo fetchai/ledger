@@ -29,6 +29,7 @@
 
 #include <cstring>
 #include <ctime>
+#include <iomanip>
 #include <memory>
 #include <random>
 #include <sstream>
@@ -77,7 +78,7 @@ std::size_t GenerateEchoId(Packet const &packet)
  */
 bool CompareAddress(uint8_t const *a, uint8_t const *b)
 {
-  return std::memcmp(a, b, Packet::ADDRESS_SIZE) == 0;
+  return std::memcmp(a, b, Packet::ADDRESS_SIZE * sizeof(uint8_t)) == 0;
 }
 
 /**
@@ -103,7 +104,7 @@ ConstByteArray ToConstByteArray(Packet::RawAddress const &addr)
   ByteArray buffer;
   buffer.Resize(addr.size());
   std::memcpy(buffer.pointer(), addr.data(), addr.size());
-  return buffer;
+  return std::move(buffer);
 }
 
 /**
@@ -114,9 +115,10 @@ ConstByteArray ToConstByteArray(Packet::RawAddress const &addr)
  * @param channel The channel identifier
  * @return The packet
  */
-Router::PacketPtr FormatDirect(Packet::Address const &from, uint16_t service, uint16_t channel)
+Router::PacketPtr FormatDirect(Packet::Address const &from, NetworkId const &network,
+                               uint16_t service, uint16_t channel)
 {
-  auto packet = std::make_shared<Packet>(from);
+  auto packet = std::make_shared<Packet>(from, network.value());
   packet->SetService(service);
   packet->SetProtocol(channel);
   packet->SetDirect(true);
@@ -135,10 +137,11 @@ Router::PacketPtr FormatDirect(Packet::Address const &from, uint16_t service, ui
  * @param payload The reference to the payload to be send
  * @return A new packet with common field populated
  */
-Router::PacketPtr FormatPacket(Packet::Address const &from, uint16_t service, uint16_t channel,
-                               uint16_t counter, uint8_t ttl, Packet::Payload const &payload)
+Router::PacketPtr FormatPacket(Packet::Address const &from, NetworkId const &network,
+                               uint16_t service, uint16_t channel, uint16_t counter, uint8_t ttl,
+                               Packet::Payload const &payload)
 {
-  auto packet = std::make_shared<Packet>(from);
+  auto packet = std::make_shared<Packet>(from, network.value());
   packet->SetService(service);
   packet->SetProtocol(channel);
   packet->SetMessageNum(counter);
@@ -153,10 +156,10 @@ std::string DescribePacket(Packet const &packet)
   std::ostringstream oss;
 
   oss << "To: " << ToBase64(packet.GetTarget()) << " From: " << ToBase64(packet.GetSender())
-      << " Route: " << packet.GetService() << ':' << packet.GetProtocol() << ':'
-      << packet.GetMessageNum() << " Type: " << (packet.IsDirect() ? 'D' : 'R')
-      << (packet.IsBroadcast() ? 'B' : 'T') << (packet.IsExchange() ? 'X' : 'F')
-      << " TTL: " << static_cast<std::size_t>(packet.GetTTL());
+      << " Route: " << NetworkId{packet.GetNetworkId()}.ToString() << ':' << packet.GetService()
+      << ':' << packet.GetProtocol() << ':' << packet.GetMessageNum()
+      << " Type: " << (packet.IsDirect() ? 'D' : 'R') << (packet.IsBroadcast() ? 'B' : 'T')
+      << (packet.IsExchange() ? 'X' : 'F') << " TTL: " << static_cast<std::size_t>(packet.GetTTL());
 
   return oss.str();
 }
@@ -188,19 +191,25 @@ Packet::RawAddress Router::ConvertAddress(Packet::Address const &address)
   return raw_address;
 }
 
+Packet::Address Router::ConvertAddress(Packet::RawAddress const &address)
+{
+  return {address.data(), address.size()};
+}
+
 /**
  * Constructs a muddle router instance
  *
  * @param address The address of the current node
  * @param reg The connection register
  */
-Router::Router(NetworkId network_id, Router::Address address, MuddleRegister const &reg,
-               Dispatcher &dispatcher)
+Router::Router(NetworkId network_id, Address address, MuddleRegister const &reg,
+               Dispatcher &dispatcher, Prover *prover)
   : address_(std::move(address))
   , address_raw_(ConvertAddress(address_))
   , register_(reg)
   , dispatcher_(dispatcher)
   , network_id_(std::move(network_id))
+  , prover_(prover)
   , dispatch_thread_pool_(network::MakeThreadPool(NUMBER_OF_ROUTER_THREADS, "Router"))
   , black_outs_(routing_table_lock_)
 {}
@@ -234,6 +243,20 @@ void Router::Stop()
   dispatch_thread_pool_->Stop();
 }
 
+inline bool Router::Genuine(PacketPtr const &p) const
+{
+  return p->Verify() || !(prover_ || p->IsStamped());
+}
+
+Router::PacketPtr const &Router::Sign(PacketPtr const &p) const
+{
+  if (prover_)
+  {
+    p->Sign(*prover_);
+  }
+  return p;
+}
+
 /**
  * Takes an input packet from the network layer and routes it across the network
  *
@@ -244,25 +267,47 @@ void Router::Route(Handle handle, PacketPtr packet)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Routing packet: ", DescribePacket(*packet));
 
+  // discard all foreign packets
+  if (packet->GetNetworkId() != network_id_.value())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Discarding foreign packet: ", DescribePacket(*packet), " at ",
+                   ToBase64(address_), ":", network_id_.ToString());
+    return;
+  }
+
   if (packet->IsDirect())
   {
     // when it is a direct message we must handle this
-    DispatchDirect(handle, packet);
+    if (Genuine(packet))
+    {
+      DispatchDirect(handle, packet);
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Packet's authenticity not verified:", DescribePacket(*packet));
+    }
   }
   else if (packet->GetTargetRaw() == address_)
   {
     // when the message is targetted at us we must handle it
-    Address transmitter;
-
-    if (HandleToDirectAddress(handle, transmitter))
+    if (Genuine(packet))
     {
-      DispatchPacket(packet, transmitter);
+      Address transmitter;
+
+      if (HandleToDirectAddress(handle, transmitter))
+      {
+        DispatchPacket(packet, transmitter);
+      }
+      else
+      {
+        // The connection has gone away while we were processing things so far.
+        FETCH_LOG_WARN(LOGGING_NAME,
+                       "Cannot get transmitter address for packet: ", DescribePacket(*packet));
+      }
     }
     else
     {
-      // The connection has gone away while we were processing things so far.
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Cannot get transmitter address for packet: ", DescribePacket(*packet));
+      FETCH_LOG_WARN(LOGGING_NAME, "Packet's authenticity not verified:", DescribePacket(*packet));
     }
   }
   else
@@ -289,17 +334,18 @@ void Router::Route(Handle handle, PacketPtr packet)
 void Router::AddConnection(Handle handle)
 {
   // create and format the packet
-  auto packet = FormatDirect(address_, SERVICE_MUDDLE, CHANNEL_ROUTING);
+  auto packet = FormatDirect(address_, network_id_, SERVICE_MUDDLE, CHANNEL_ROUTING);
   packet->SetExchange(true);  // signal that this is the request half of a direct message
+  Sign(packet);
 
-  // send the
+  // send it
   SendToConnection(handle, packet);
 }
 
 void Router::RemoveConnection(Handle /*handle*/)
 {
   // TODO(EJF): Need to tear down handle routes etc. Also in more complicated scenario implement
-  // alternative routing
+  //            alternative routing
 }
 
 /**
@@ -317,8 +363,10 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel,
   uint16_t const counter = dispatcher_.GetNextCounter();
 
   // format the packet
-  auto packet = FormatPacket(address_, service, channel, counter, DEFAULT_TTL, message);
+  auto packet =
+      FormatPacket(address_, network_id_, service, channel, counter, DEFAULT_TTL, message);
   packet->SetTarget(address);
+  Sign(packet);
 
   RoutePacket(packet, false);
 }
@@ -336,8 +384,10 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel, ui
                   Payload const &payload)
 {
   // format the packet
-  auto packet = FormatPacket(address_, service, channel, message_num, DEFAULT_TTL, payload);
+  auto packet =
+      FormatPacket(address_, network_id_, service, channel, message_num, DEFAULT_TTL, payload);
   packet->SetTarget(address);
+  Sign(packet);
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange Response: ", ToBase64(address), " (", service, '-',
                   channel, '-', message_num, ")");
@@ -357,7 +407,8 @@ void Router::Broadcast(uint16_t service, uint16_t channel, Payload const &payloa
   // get the next counter for this message
   uint16_t const counter = dispatcher_.GetNextCounter();
 
-  auto packet = FormatPacket(address_, service, channel, counter, DEFAULT_TTL, payload);
+  auto packet =
+      FormatPacket(address_, network_id_, service, channel, counter, DEFAULT_TTL, payload);
   packet->SetBroadcast(true);
 
   RoutePacket(packet, false);
@@ -446,15 +497,18 @@ Router::Response Router::Exchange(Address const &address, uint16_t service, uint
   uint16_t const counter = dispatcher_.GetNextCounter();
 
   // register with the dispatcher that we are expecting a response
-  auto promise = dispatcher_.RegisterExchange(service, channel, counter);
+  auto promise = dispatcher_.RegisterExchange(service, channel, counter, address);
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange Request: ", ToBase64(address), " (", service, '-',
                   channel, '-', counter, ") prom: ", promise->id());
 
   // format the packet and route the packet
-  auto packet = FormatPacket(address_, service, channel, counter, DEFAULT_TTL, request);
+  auto packet =
+      FormatPacket(address_, network_id_, service, channel, counter, DEFAULT_TTL, request);
   packet->SetTarget(address);
   packet->SetExchange();
+  Sign(packet);
+
   RoutePacket(packet, false);
 
   // return the response
@@ -485,6 +539,28 @@ MuddleEndpoint::SubscriptionPtr Router::Subscribe(Address const &address, uint16
                                                   uint16_t channel)
 {
   return registrar_.Register(address, service, channel);
+}
+
+MuddleEndpoint::AddressList Router::GetDirectlyConnectedPeers() const
+{
+  AddressList addresses{};
+
+  FETCH_LOCK(routing_table_lock_);
+  for (auto const &entry : routing_table_)
+  {
+    if (entry.second.direct)
+    {
+      // lookup the connection
+      auto connection = register_.LookupConnection(entry.second.handle).lock();
+
+      if (connection && connection->is_alive())
+      {
+        addresses.emplace_back(ConvertAddress(entry.first));
+      }
+    }
+  }
+
+  return addresses;
 }
 
 /**
@@ -581,7 +657,7 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
   {
     char const *route_type = (direct) ? "direct" : "normal";
 
-    FETCH_LOG_INFO(LOGGING_NAME, "==> Adding ", route_type,
+    FETCH_LOG_INFO(LOGGING_NAME, "Adding ", route_type,
                    " route for: ", ToBase64(ToConstByteArray(address)));
   }
 
@@ -632,10 +708,8 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
  */
 Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/) const
 {
-  Handle handle = 0;
-
-  std::random_device rd;
-  std::mt19937       rng(rd());
+  static std::random_device rd;
+  static std::mt19937       rng(rd());
 
   {
     FETCH_LOCK(routing_table_lock_);
@@ -643,18 +717,19 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/
     if (!routing_table_.empty())
     {
       // decide the random index to access
-      std::size_t const element = rng() % routing_table_.size();
+      std::uniform_int_distribution<decltype(routing_table_)::size_type> distro(
+          0, routing_table_.size());
+      std::size_t const element = distro(rng);
 
       // advance the iterator to the correct offset
       auto it = routing_table_.cbegin();
       std::advance(it, static_cast<std::ptrdiff_t>(element));
 
-      // update the handle
-      handle = it->second.handle;
+      return it->second.handle;
     }
   }
 
-  return handle;
+  return 0;
 }
 
 /**
@@ -732,6 +807,7 @@ void Router::SendToConnection(Handle handle, PacketPtr packet)
     serializers::ByteArrayBuffer buffer;
     buffer << *packet;
 
+    FETCH_LOG_WARN(LOGGING_NAME, "Sending out", DescribePacket(*packet));
     // dispatch to the connection object
     conn->Send(buffer.data());
   }
@@ -754,19 +830,13 @@ void Router::RoutePacket(PacketPtr packet, bool external)
   if (external)
   {
     // Handle TTL based routing timeout
-    bool message_time_expired = true;
-    if (packet->GetTTL() > 2u)
-    {
-      // decrement the TTL
-      packet->SetTTL(static_cast<uint8_t>(packet->GetTTL() - 1u));
-      message_time_expired = false;
-    }
-
-    if (message_time_expired)
+    if (packet->GetTTL() <= 2u)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Message has timed out (TTL): ", DescribePacket(*packet));
       return;
     }
+    // decrement the TTL
+    packet->SetTTL(static_cast<uint8_t>(packet->GetTTL() - 1u));
 
     // if this packet is a broadcast echo we should no longer route this packet
     if (packet->IsBroadcast() && IsEcho(*packet))
@@ -809,17 +879,17 @@ void Router::RoutePacket(PacketPtr packet, bool external)
       return;
     }
 
+    if (black_outs_.IsBlacklisted(packet->GetTarget()))
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "The packet's target currently would not accept it.");
+      return;
+    }
     // if direct routing fails then randomly select a handle. In future a better routing scheme
     // should be implemented.
     handle = LookupRandomHandle(packet->GetTargetRaw());
     if (handle)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Speculative routing");
-      if (black_outs_.IsBlacklisted(packet->GetTarget()))
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "The packet's target currently would not accept it.");
-        return;
-      }
+      FETCH_LOG_WARN(LOGGING_NAME, "Speculative routing to peer: ", ToBase64(packet->GetTarget()));
       SendToConnection(handle, packet);
     }
   }
@@ -851,7 +921,8 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
       // send back a direct response if that is required
       if (packet->IsExchange())
       {
-        SendToConnection(handle, FormatDirect(address_, SERVICE_MUDDLE, CHANNEL_ROUTING));
+        SendToConnection(
+            handle, Sign(FormatDirect(address_, network_id_, SERVICE_MUDDLE, CHANNEL_ROUTING)));
       }
       break;
     case CHANNEL_MAINTENANCE:
@@ -926,7 +997,9 @@ void Router::DispatchPacket(PacketPtr packet, Address transmitter)
       return;
     }
 
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to locate handler for routed message");
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Unable to locate handler for routed message. Net: ", packet->GetNetworkId(),
+                   " Service: ", packet->GetService(), " Channel: ", packet->GetProtocol());
   });
 }
 

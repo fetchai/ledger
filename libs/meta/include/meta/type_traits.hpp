@@ -17,15 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-// would be nice to remove these
-//#include "core/byte_array/byte_array.hpp"
-//#include "core/byte_array/const_byte_array.hpp"
-// #include "core/fixed_point/fixed_point.hpp"
+#include "meta/tags.hpp"
 
 #include <string>
 #include <type_traits>
-
-#include "core/fixed_point/fixed_point_tag.hpp"
 
 namespace fetch {
 
@@ -37,9 +32,6 @@ class ConstByteArray;
 namespace fixed_point {
 template <std::size_t I, std::size_t F>
 class FixedPoint;
-//{
-//    struct fixed_point_tag {};
-//}
 }  // namespace fixed_point
 
 namespace meta {
@@ -85,8 +77,14 @@ constexpr bool IsStringLike = IsStdString<T> || IsAByteArray<T>;
 template <typename T>
 constexpr bool IsNullPtr = std::is_null_pointer<T>::value;
 
+template <typename T>
+using Decay = typename std::decay<T>::type;
+
 template <bool C, typename R = void>
 using EnableIf = typename std::enable_if<C, R>::type;
+
+template <typename T, typename U, typename R = void>
+using EnableIfSame = EnableIf<std::is_same<T, U>::value, R>;
 
 // template <typename T, typename R = T>
 // using IfIsArithmetic = EnableIf<std::is_arithmetic<T>::value, R>;

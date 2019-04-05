@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/distance/euclidean.hpp"
-#include "math/linalg/matrix.hpp"
+#include "math/tensor.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -38,16 +38,12 @@ inline typename A::Type WrapperEuclidean(A const &a, A const &b)
 
 inline void BuildEuclideanDistance(std::string const &custom_name, pybind11::module &module)
 {
-  using namespace fetch::math::linalg;
+  using namespace fetch::math;
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperEuclidean<Matrix<double>>)
-      .def(custom_name.c_str(), &WrapperEuclidean<Matrix<float>>)
-      .def(custom_name.c_str(), &WrapperEuclidean<RectangularArray<double>>)
-      .def(custom_name.c_str(), &WrapperEuclidean<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperEuclidean<ShapelessArray<double>>)
-      .def(custom_name.c_str(), &WrapperEuclidean<ShapelessArray<float>>);
+  module.def(custom_name.c_str(), &WrapperEuclidean<Tensor<double>>)
+      .def(custom_name.c_str(), &WrapperEuclidean<Tensor<float>>);
 }
 
 }  // namespace distance

@@ -118,6 +118,7 @@ def parse_commandline():
     parser.add_argument('-p', '--build-path-prefix', default='build-', help='The prefix to be used for the naming of the build folder')
     parser.add_argument('-B', '--build', action='store_true', help='Build the project')
     parser.add_argument('-T', '--test', action='store_true', help='Test the project')
+    parser.add_argument('-I', '--integration-tests', action='store_true', help='Run the integration tests for the project')
     parser.add_argument('-f', '--force-build-folder', help='Specify the folder directly that should be used for the build / test')
     parser.add_argument('-m', '--metrics', action='store_true', help='Store the metrics.')
     return parser.parse_args()
@@ -147,7 +148,7 @@ def build_project(project_root, build_root, options):
     if os.path.exists(os.path.join(build_root, "build.ninja")):
         cmd = ["ninja"]
     else:
-        # manually specifying the number of cores is required because make automatic dectection is
+        # manually specifying the number of cores is required because make automatic detection is
         # flakey inside docker.
         cmd = ['make', '-j', str(CONCURRENCY)]
 
@@ -158,7 +159,7 @@ def build_project(project_root, build_root, options):
         sys.exit(exit_code)
 
 
-def test_project(build_root):
+def test_project(build_root, label):
     TEST_NAME = 'Test'
 
     if not os.path.isdir(build_root):
@@ -174,7 +175,14 @@ def test_project(build_root):
     # Python 3.7+ support need to have explicit path to application
     ctest_executable = shutil.which('ctest')
 
-    exit_code = subprocess.call([ctest_executable, '--no-compress-output', '-T', TEST_NAME], cwd=build_root, env={"CTEST_OUTPUT_ON_FAILURE":"1"})
+    cmd = [
+        ctest_executable,
+        '--no-compress-output',
+        '-T', TEST_NAME,
+        '-L', str(label),
+    ]
+    env = {"CTEST_OUTPUT_ON_FAILURE":"1"}
+    exit_code = subprocess.call(cmd, cwd=build_root, env=env)
 
     # load the test format
     test_tag_path = os.path.join(build_root, 'Testing', 'TAG')
@@ -223,7 +231,11 @@ def main():
         build_project(project_root, build_root, options)
 
     if args.test:
-        test_project(build_root)
+        test_project(build_root, 'Normal')
+
+    if args.integration_tests:
+        test_project(build_root, 'Slow')
+        test_project(build_root, 'Integration')
 
 
 if __name__ == '__main__':

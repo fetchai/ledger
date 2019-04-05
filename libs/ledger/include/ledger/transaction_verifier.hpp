@@ -30,8 +30,6 @@ namespace ledger {
 class TransactionVerifier
 {
 public:
-  using MutableTransaction = chain::MutableTransaction;
-
   static constexpr char const *LOGGING_NAME = "TxVerifier";
 
   // Construction / Destruction
@@ -66,8 +64,8 @@ private:
   static constexpr std::size_t DEFAULT_BATCH_SIZE = 1000;
 
   using Flag            = std::atomic<bool>;
-  using VerifiedQueue   = core::SimpleQueue<chain::VerifiedTransaction, QUEUE_SIZE>;
-  using UnverifiedQueue = core::SimpleQueue<chain::MutableTransaction, QUEUE_SIZE>;
+  using VerifiedQueue   = core::MPSCQueue<VerifiedTransaction, QUEUE_SIZE>;
+  using UnverifiedQueue = core::MPMCQueue<MutableTransaction, QUEUE_SIZE>;
   using ThreadPtr       = std::unique_ptr<std::thread>;
   using Threads         = std::vector<ThreadPtr>;
   using Sink            = VerifiedTransactionSink;

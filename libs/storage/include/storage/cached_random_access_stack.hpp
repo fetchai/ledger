@@ -253,7 +253,6 @@ public:
         else
         {
           assert(index < stack_.size());
-          std::cerr << "SETTING" << std::endl;
           stack_.Set(index, cached_element.data);
         }
       }

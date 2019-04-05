@@ -34,16 +34,25 @@ class ECDSAVerifier : public Verifier
 public:
   ECDSAVerifier(Identity ident)
     : identity_{std::move(ident)}
-    , public_key_{identity_.identifier()}
+    , public_key_{identity_ ? PublicKey(identity_.identifier()) : PublicKey()}
   {}
 
   bool Verify(byte_array_type const &data, byte_array_type const &signature) override
   {
+    if (!identity_)
+    {
+      return false;
+    }
     Signature sig{signature};
     return sig.Verify(public_key_, data);
   }
 
   Identity identity() override
+  {
+    return identity_;
+  }
+
+  operator bool() const
   {
     return identity_;
   }
@@ -104,7 +113,7 @@ public:
     return private_key_.KeyAsBin();
   }
 
-  PrivateKey const &underlying_private_key()
+  PrivateKey const &underlying_private_key() const
   {
     return private_key_;
   }

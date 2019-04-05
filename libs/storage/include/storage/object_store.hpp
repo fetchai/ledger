@@ -226,12 +226,12 @@ public:
       ++wrapped_iterator_;
     }
 
-    bool operator==(Iterator const &rhs)
+    bool operator==(Iterator const &rhs) const
     {
       return wrapped_iterator_ == rhs.wrapped_iterator_;
     }
 
-    bool operator!=(Iterator const &rhs)
+    bool operator!=(Iterator const &rhs) const
     {
       return !(wrapped_iterator_ == rhs.wrapped_iterator_);
     }

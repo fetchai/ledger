@@ -18,6 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "core/random/lcg.hpp"
+#include "core/state_machine.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/protocols/main_chain_rpc_protocol.hpp"
 #include "network/generics/backgrounded_work.hpp"
@@ -32,31 +34,36 @@
 #include <memory>
 
 namespace fetch {
-namespace chain {
-class MainChain;
-class BlockCoordinator;
-}  // namespace chain
 namespace ledger {
 
+class BlockCoordinator;
+class MainChain;
 class MainChainSyncWorker;
 
 class MainChainRpcService : public muddle::rpc::Server,
                             public std::enable_shared_from_this<MainChainRpcService>
 {
 public:
-  friend class MainChainSyncWorker;
-  using MuddleEndpoint   = muddle::MuddleEndpoint;
-  using MainChain        = chain::MainChain;
-  using BlockCoordinator = chain::BlockCoordinator;
-  using Subscription     = muddle::Subscription;
-  using SubscriptionPtr  = std::shared_ptr<Subscription>;
-  using Address          = muddle::Packet::Address;
-  using Block            = chain::MainChain::BlockType;
-  using BlockHash        = chain::MainChain::BlockHash;
-  using Promise          = service::Promise;
-  using RpcClient        = muddle::rpc::Client;
-  using TrustSystem      = p2p::P2PTrustInterface<Address>;
-  using FutureTimepoint  = network::FutureTimepoint;
+  enum class State
+  {
+    REQUEST_HEAVIEST_CHAIN,
+    WAIT_FOR_HEAVIEST_CHAIN,
+    SYNCHRONISING,
+    WAITING_FOR_RESPONSE,
+    SYNCHRONISED,
+  };
+
+  using MuddleEndpoint  = muddle::MuddleEndpoint;
+  using MainChain       = ledger::MainChain;
+  using Subscription    = muddle::Subscription;
+  using SubscriptionPtr = std::shared_ptr<Subscription>;
+  using Address         = muddle::Packet::Address;
+  using Block           = ledger::Block;
+  using BlockHash       = Block::Digest;
+  using Promise         = service::Promise;
+  using RpcClient       = muddle::rpc::Client;
+  using TrustSystem     = p2p::P2PTrustInterface<Address>;
+  using FutureTimepoint = network::FutureTimepoint;
 
   using Worker                    = MainChainSyncWorker;
   using WorkerPtr                 = std::shared_ptr<Worker>;
@@ -64,41 +71,85 @@ public:
   using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
 
+  static constexpr char const *LOGGING_NAME = "MainChainRpc";
+
+  // Construction / Destruction
   MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust,
-                      BlockCoordinator &block_coordinator);
+                      bool standalone);
+  MainChainRpcService(MainChainRpcService const &) = delete;
+  MainChainRpcService(MainChainRpcService &&)      = delete;
+  ~MainChainRpcService() override;
+
+  core::WeakRunnable GetWeakRunnable()
+  {
+    return state_machine_;
+  }
+
+  std::weak_ptr<core::StateMachineInterface> GetWeakStateMachine()
+  {
+    return state_machine_;
+  }
 
   void BroadcastBlock(Block const &block);
+
+  State state() const
+  {
+    return state_machine_->state();
+  }
+
+  // Operators
+  MainChainRpcService &operator=(MainChainRpcService const &) = delete;
+  MainChainRpcService &operator=(MainChainRpcService &&) = delete;
 
 private:
   static constexpr std::size_t BLOCK_CATCHUP_STEP_SIZE = 30;
 
-  using BlockList     = fetch::ledger::MainChainProtocol::BlockList;
-  using ChainRequests = network::RequestingQueueOf<Address, BlockList>;
+  using BlockList       = fetch::ledger::MainChainProtocol::Blocks;
+  using StateMachine    = core::StateMachine<State>;
+  using StateMachinePtr = std::shared_ptr<StateMachine>;
 
+  /// @name Subscription Handlers
+  /// @{
   void OnNewBlock(Address const &from, Block &block, Address const &transmitter);
+  /// @}
 
-  bool RequestHeaviestChainFromPeer(Address const &from);
+  /// @name Utilities
+  /// @{
+  static char const *ToString(State state);
+  Address            GetRandomTrustedPeer() const;
+  void               HandleChainResponse(Address const &peer, BlockList block_list);
+  /// @}
 
-  void AddLooseBlock(const BlockHash &hash, const Address &address);
-  void ServiceLooseBlocks();
-  void RequestedChainArrived(Address const &peer, BlockList block_list);
+  /// @name State Machine Handlers
+  /// @{
+  State OnRequestHeaviestChain();
+  State OnWaitForHeaviestChain();
+  State OnSynchronising();
+  State OnWaitingForResponse();
+  State OnSynchronised(State current, State previous);
+  /// @}
 
-  MuddleEndpoint &  endpoint_;
-  MainChain &       chain_;
-  TrustSystem &     trust_;
-  BlockCoordinator &block_coordinator_;
+  /// @name System Components
+  /// @{
+  MuddleEndpoint &endpoint_;
+  MainChain &     chain_;
+  TrustSystem &   trust_;
+  /// @}
+
+  /// @name RPC Server
+  /// @{
   SubscriptionPtr   block_subscription_;
-
   MainChainProtocol main_chain_protocol_;
+  /// @}
 
-  Mutex     main_chain_rpc_client_lock_{__LINE__, __FILE__};
-  RpcClient main_chain_rpc_client_;
-
-  BackgroundedWork          bg_work_;
-  BackgroundedWorkThreadPtr workthread_;
-
-  Address         last_good_address_;
-  FutureTimepoint next_loose_tips_check_;
+  /// @name State Machine Data
+  /// @{
+  RpcClient       rpc_client_;
+  StateMachinePtr state_machine_;
+  Address         current_peer_address_;
+  BlockHash       current_missing_block_;
+  Promise         current_request_;
+  /// @}
 };
 
 }  // namespace ledger

@@ -19,12 +19,13 @@
 
 #include "core/mutex.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
-//#include "core/service_ids.hpp"
+#include "crypto/prover.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/generics/blackset.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "network/muddle/blacklist.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
+#include "network/muddle/network_id.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/muddle/subscription_registrar.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
@@ -37,9 +38,7 @@ namespace fetch {
 namespace muddle {
 
 class Packet;
-
 class Dispatcher;
-
 class MuddleRegister;
 
 /**
@@ -58,8 +57,7 @@ public:
   using ThreadPool          = network::ThreadPool;
   using HandleDirectAddrMap = std::unordered_map<Handle, Address>;
   using BlackTime           = generics::black::Timepoint;
-
-  static Packet::RawAddress ConvertAddress(Packet::Address const &address);
+  using Prover              = crypto::Prover;
 
   struct RoutingData
   {
@@ -69,14 +67,17 @@ public:
 
   using RoutingTable = std::unordered_map<Packet::RawAddress, RoutingData>;
 
-  static constexpr char const *LOGGING_NAME = "MuddleRouter";
+  static constexpr char const *LOGGING_NAME = "Router";
+
+  // Helper functions
+  static Packet::RawAddress ConvertAddress(Packet::Address const &address);
+  static Packet::Address    ConvertAddress(Packet::RawAddress const &address);
 
   // Construction / Destruction
-  Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher);
-  template <class... Args>
   Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher,
-         Args &&... args);
-
+         Prover *certificate = nullptr);
+  Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher,
+         Prover *certificate, Args &&... args);
   Router(Router const &) = delete;
   Router(Router &&)      = delete;
   ~Router() override     = default;
@@ -113,6 +114,8 @@ public:
 
   SubscriptionPtr Subscribe(uint16_t service, uint16_t channel) override;
   SubscriptionPtr Subscribe(Address const &address, uint16_t service, uint16_t channel) override;
+
+  AddressList GetDirectlyConnectedPeers() const override;
 
   RoutingTable GetRoutingTable() const;
   /// @}
@@ -185,6 +188,10 @@ public:
 
   Handle LookupHandle(Packet::RawAddress const &address) const;
 
+  // Operators
+  Router &operator=(Router const &) = delete;
+  Router &operator=(Router &&) = delete;
+
 private:
   using HandleMap       = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
   using Mutex           = mutex::Mutex;
@@ -220,12 +227,16 @@ private:
   template <typename T>
   void SendMaintenance(Address const &address, uint64_t tag, T &&arg);
 
+  PacketPtr const &Sign(PacketPtr const &p) const;
+  bool             Genuine(PacketPtr const &p) const;
+
   Address const         address_;
   RawAddress const      address_raw_;
   MuddleRegister const &register_;
   Dispatcher &          dispatcher_;
   SubscriptionRegistrar registrar_;
   NetworkId             network_id_;
+  Prover *              prover_ = nullptr;
 
   mutable Mutex routing_table_lock_{__LINE__, __FILE__};
   // Addresses-to-handles map (protected by routing_table_lock_)

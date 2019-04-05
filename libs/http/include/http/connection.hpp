@@ -126,11 +126,15 @@ public:
       }
       else
       {
-        request->ParseHeader(*buffer_ptr, len);
-
-        if (is_open_)
+        // only parse the header if there is data to be parsed
+        if (len)
         {
-          ReadBody(buffer_ptr, request);
+          request->ParseHeader(*buffer_ptr, len);
+
+          if (is_open_)
+          {
+            ReadBody(buffer_ptr, request);
+          }
         }
       }
     };
@@ -148,6 +152,12 @@ public:
     {
       request->ParseBody(*buffer_ptr);
 
+      // at this point if the read has been successful populate the remote address information
+      // inside the request
+      auto const &remote_endpoint = socket_.remote_endpoint();
+      request->SetOriginatingAddress(remote_endpoint.address().to_string(), remote_endpoint.port());
+
+      // push the request to the main server
       manager_.PushRequest(handle_, *request);
 
       if (is_open_)
@@ -160,6 +170,8 @@ public:
     // Reading remaining bits if not all was read.
     auto self = shared_from_this();
     auto cb = [this, buffer_ptr, request, self](std::error_code const &ec, std::size_t const &len) {
+      FETCH_UNUSED(len);
+
       FETCH_LOG_DEBUG(LOGGING_NAME, "Read HTTP body cb");
       if (ec)
       {

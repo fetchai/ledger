@@ -27,8 +27,10 @@ namespace ledger {
 class DummyContract : public Contract
 {
 public:
+  static constexpr char const *NAME = "fetch.dummy";
+
   DummyContract();
-  ~DummyContract() = default;
+  ~DummyContract() override = default;
 
   static constexpr char const *LOGGING_NAME = "DummyContract";
 

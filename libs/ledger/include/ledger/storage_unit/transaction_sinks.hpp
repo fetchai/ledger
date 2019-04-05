@@ -25,7 +25,7 @@ namespace ledger {
 class UnverifiedTransactionSink
 {
 public:
-  using TransactionList = std::vector<chain::UnverifiedTransaction>;
+  using TransactionList = std::vector<UnverifiedTransaction>;
 
   // Construction / Destruction
   UnverifiedTransactionSink()          = default;
@@ -33,14 +33,14 @@ public:
 
   /// @name Transaction Handlers
   /// @{
-  virtual void OnTransaction(chain::UnverifiedTransaction const &tx) = 0;
+  virtual void OnTransaction(UnverifiedTransaction const &tx) = 0;
   /// @}
 };
 
 class VerifiedTransactionSink
 {
 public:
-  using TransactionList = std::vector<chain::VerifiedTransaction>;
+  using TransactionList = std::vector<VerifiedTransaction>;
 
   // Construction / Destruction
   VerifiedTransactionSink()          = default;
@@ -48,7 +48,7 @@ public:
 
   /// @name Transaction Handlers
   /// @{
-  virtual void OnTransaction(chain::VerifiedTransaction const &tx) = 0;
+  virtual void OnTransaction(VerifiedTransaction const &tx) = 0;
   virtual void OnTransactions(TransactionList const &txs);
   /// @}
 };

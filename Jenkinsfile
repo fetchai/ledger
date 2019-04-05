@@ -58,12 +58,21 @@ pipeline {
                 sh './scripts/ci-tool.py -B Debug'
               }
             }
+
             stage('Debug Unit Tests') {
               steps {
                 sh './scripts/ci-tool.py -T Debug'
               }
             }
 
+            stage('Debug Integration Tests') {
+              when {
+                branch "develop"
+              }
+              steps {
+                sh './scripts/ci-tool.py -I Debug'
+              }
+            }
           }
         } // clang 6 debug
 
@@ -80,16 +89,20 @@ pipeline {
                 sh './scripts/ci-tool.py -B Release'
               }
             }
+
             stage('Unit Tests') {
               steps {
                 sh './scripts/ci-tool.py -T Release'
               }
             }
-          }
 
-          post {
-            always {
-              junit 'build-release/TestResults.xml'
+            stage('Integration Tests') {
+              when {
+                branch "develop"
+              }
+              steps {
+                sh './scripts/ci-tool.py -I Release'
+              }
             }
           }
         } // clang 6 release
@@ -112,9 +125,19 @@ pipeline {
                 sh './scripts/ci-tool.py -B Debug'
               }
             }
+
             stage('GCC Debug Unit Tests') {
               steps {
                 sh './scripts/ci-tool.py -T Debug'
+              }
+            }
+
+            stage('GCC Debug Integration Tests') {
+              when {
+                branch "develop"
+              }
+              steps {
+                sh './scripts/ci-tool.py -I Debug'
               }
             }
           }
@@ -138,9 +161,19 @@ pipeline {
                 sh './scripts/ci-tool.py -B Release'
               }
             }
+
             stage('GCC Release Unit Tests') {
               steps {
                 sh './scripts/ci-tool.py -T Release'
+              }
+            }
+
+            stage('GCC Release Integration Tests') {
+              when {
+                branch "develop"
+              }
+              steps {
+                sh './scripts/ci-tool.py -I Release'
               }
             }
           }

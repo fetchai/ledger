@@ -19,10 +19,14 @@
 #include "ledger/execution_manager.hpp"
 #include "core/assert.hpp"
 #include "core/logger.hpp"
+#include "core/mutex.hpp"
 #include "core/threading.hpp"
 #include "ledger/executor.hpp"
 #include "storage/resource_mapper.hpp"
 
+#include "ledger/state_adapter.hpp"
+
+#include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 
 #include <chrono>
@@ -64,26 +68,15 @@ namespace ledger {
  * @param num_executors The specified number of executors (and threads)
  */
 // std::make_shared<fetch::network::ThreadPool>(num_executors)
-ExecutionManager::ExecutionManager(std::string const &storage_path, std::size_t num_executors,
-                                   StorageUnitPtr storage, ExecutorFactory const &factory)
+ExecutionManager::ExecutionManager(std::size_t num_executors, StorageUnitPtr storage,
+                                   ExecutorFactory const &factory)
   : storage_(std::move(storage))
   , idle_executors_(num_executors)
   , thread_pool_(network::MakeThreadPool(num_executors, "Executor"))
 {
-  // define all the file paths for the databases
-  FilePaths const state_archive_paths = FilePaths::Create(storage_path, "exec_state_bookmark_map");
-  FilePaths const block_state_paths   = FilePaths::Create(storage_path, "exec_block_state_map");
-
-  // load state archive updates
-  {
-    std::lock_guard<Mutex> lock(state_archive_lock_);
-    state_archive_.New(state_archive_paths.data_path, state_archive_paths.index_path);
-    block_state_cache_.New(block_state_paths.data_path, block_state_paths.index_path);
-  }
-
   // setup the executor pool
   {
-    std::lock_guard<Mutex> lock(idle_executors_lock_);
+    FETCH_LOCK(idle_executors_lock_);
 
     // ensure lists are reserved
     idle_executors_.reserve(num_executors);
@@ -102,7 +95,7 @@ ExecutionManager::ExecutionManager(std::string const &storage_path, std::size_t 
  * @param block The block to be executed
  * @return the status of the execution
  */
-ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block const &block)
+ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &block)
 {
   // if the execution manager is not running then no further transactions
   // should be scheduled
@@ -112,26 +105,9 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block const &block)
   }
 
   // cache the current state
-  if (State::ACTIVE == state_)
+  if (State::IDLE != GetState())
   {
     return ScheduleStatus::ALREADY_RUNNING;
-  }
-
-  // if we have seen the transactions for this block simply revert to the known
-  // state of the block
-  if (AttemptRestoreToBlock(block.hash))
-  {
-    last_block_hash_ = block.hash;
-    return ScheduleStatus::RESTORED;
-  }
-
-  // determine if the current block doesn't follow on from the previous block
-  if (block.previous_hash != last_block_hash_)
-  {
-    if (!AttemptRestoreToBlock(block.previous_hash))
-    {
-      return ScheduleStatus::NO_PARENT_BLOCK;
-    }
   }
 
   // TODO(issue 33): Detect and handle number of lanes updates
@@ -146,9 +122,12 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block const &block)
   last_block_hash_ = block.hash;
   num_slices_      = block.slices.size();
 
+  // update the state otherwise there is a race between when the executor thread wakes up
+  state_.Set(State::ACTIVE);
+
   // trigger the monitor / dispatch thread
   {
-    std::lock_guard<std::mutex> lock(monitor_lock_);
+    FETCH_LOCK(monitor_lock_);
     monitor_wake_.notify_one();
   }
 
@@ -162,50 +141,44 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block const &block)
  * @param block The input block to plan
  * @return true if successful, otherwise false
  */
-bool ExecutionManager::PlanExecution(Block const &block)
+bool ExecutionManager::PlanExecution(Block::Body const &block)
 {
-  std::lock_guard<Mutex> lock(execution_plan_lock_);
+  FETCH_LOCK(execution_plan_lock_);
 
   // clear and resize the execution plan
   execution_plan_.clear();
   execution_plan_.resize(block.slices.size());
-
-  //  FETCH_LOG_INFO(LOGGING_NAME,"Planning ", block.slices.size(), " slices...");
 
   std::size_t slice_index = 0;
   for (auto const &slice : block.slices)
   {
     auto &slice_plan = execution_plan_[slice_index];
 
-    //    FETCH_LOG_INFO(LOGGING_NAME,"Planning slice ", slice_index, "...");
-
     // process the transactions
-    for (auto const &tx : slice.transactions)
+    for (auto const &tx : slice)
     {
-      Identifier id;
-      id.Parse(tx.contract_name);
-      auto contract = contracts_.Lookup(id.name_space());
-
-      if (contract)
+      Identifier contract_id;
+      if (!contract_id.Parse(tx.contract_name))
       {
-        auto item = std::make_unique<ExecutionItem>(tx.transaction_hash, slice_index);
-
-        // transform the resources into lane allocation
-        for (auto const &resource : tx.resources)
-        {
-          storage::ResourceID const id{contract->CreateStateIndex(resource)};
-          item->AddLane(id.lane(block.log2_num_lanes));
-        }
-
-        // insert the item into the execution plan
-        slice_plan.emplace_back(std::move(item));
-      }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Unable to plan execution of tx: ",
-                       byte_array::ToBase64(tx.transaction_hash));
         return false;
       }
+
+      auto item = std::make_unique<ExecutionItem>(tx.transaction_hash, slice_index);
+
+      // transform the resources into lane allocation
+      for (auto const &resource : tx.resources)
+      {
+        item->AddLane(
+            StateAdapter::CreateAddress(contract_id, resource).lane(block.log2_num_lanes));
+      }
+
+      for (auto const &contract_hash : tx.raw_resources)
+      {
+        item->AddLane(StateAdapter::CreateAddress(contract_hash).lane(block.log2_num_lanes));
+      }
+
+      // insert the item into the execution plan
+      slice_plan.emplace_back(std::move(item));
     }
 
     ++slice_index;
@@ -227,7 +200,7 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
 
   // lookup a free executor
   {
-    std::lock_guard<Mutex> lock(idle_executors_lock_);
+    FETCH_LOCK(idle_executors_lock_);
     if (!idle_executors_.empty())
     {
       executor = idle_executors_.back();
@@ -241,22 +214,34 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
 
   if (executor)
   {
-    ++active_count_;
+    // increment the active counters
+    counters_.Apply([](Counters &counters) { counters.active++; });
 
     // execute the item
     item.Execute(*executor);
 
-    --active_count_;
-    --remaining_executions_;
+    // determine what the status is
+    if (ExecutorInterface::Status::SUCCESS != item.status())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Error executing tx: ", item.hash().ToBase64(),
+                     " slice: ", item.slice(), " status: ", ledger::ToString(item.status()));
+    }
+
+    counters_.Apply([](Counters &counters) {
+      counters.active--;
+      counters.remaining--;
+    });
+
     ++completed_executions_;
 
     {
-      std::lock_guard<Mutex> lock(idle_executors_lock_);
-      idle_executors_.push_back(executor);
+      FETCH_LOCK(idle_executors_lock_);
+      idle_executors_.push_back(std::move(executor));
     }
-
-    // trigger the monitor thread to process the next slice if needed
-    monitor_notify_.notify_one();
+  }
+  else
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Failed to secure an idle executor");
   }
 }
 
@@ -300,7 +285,7 @@ void ExecutionManager::Stop()
   // trigger the monitor thread to wake up (so that it sees the change in
   // running_)
   {
-    std::lock_guard<std::mutex> lock(monitor_lock_);
+    FETCH_LOCK(monitor_lock_);
     monitor_wake_.notify_all();
     monitor_notify_.notify_all();
   }
@@ -313,6 +298,12 @@ void ExecutionManager::Stop()
   thread_pool_->Stop();
 }
 
+void ExecutionManager::SetLastProcessedBlock(BlockHash hash)
+{
+  // TODO(issue 33): thread safety
+  last_block_hash_ = hash;
+}
+
 ExecutionManagerInterface::BlockHash ExecutionManager::LastProcessedBlock()
 {
   // TODO(issue 33): thread safety
@@ -321,7 +312,7 @@ ExecutionManagerInterface::BlockHash ExecutionManager::LastProcessedBlock()
 
 ExecutionManager::State ExecutionManager::GetState()
 {
-  return state_;
+  return state_.Get();
 }
 
 bool ExecutionManager::Abort()
@@ -358,23 +349,31 @@ void ExecutionManager::MonitorThreadEntrypoint()
     switch (monitor_state)
     {
     case MonitorState::FAILED:
-      state_        = State::EXECUTION_FAILED;
+      FETCH_LOG_WARN(LOGGING_NAME, "Execution Engine experience fatal error");
+
+      state_.Set(State::EXECUTION_FAILED);
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::STALLED:
-      state_        = State::TRANSACTIONS_UNAVAILABLE;
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Now Stalled");
+
+      state_.Set(State::TRANSACTIONS_UNAVAILABLE);
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::COMPLETED:
-      state_        = State::IDLE;
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Now Complete");
+
+      state_.Set(State::IDLE);
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::IDLE:
     {
-      state_ = State::IDLE;
+      state_.Set(State::IDLE);
+
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Now Idle");
 
       // enter the idle state where we wait for the next block to be posted
       {
@@ -382,8 +381,10 @@ void ExecutionManager::MonitorThreadEntrypoint()
         monitor_wake_.wait(lock);
       }
 
-      state_        = State::ACTIVE;
+      state_.Set(State::ACTIVE);
       current_block = last_block_hash_;
+
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Now Active");
 
       // schedule the next slice if we have been triggered
       if (running_)
@@ -397,7 +398,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
     case MonitorState::SCHEDULE_NEXT_SLICE:
     {
-      std::lock_guard<Mutex> lock(execution_plan_lock_);
+      FETCH_LOCK(execution_plan_lock_);
 
       if (execution_plan_.empty())
       {
@@ -409,12 +410,12 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
         // determine the target number of executions being expected (must be
         // done before the thread pool dispatch)
-        remaining_executions_ = slice_plan.size();
+        counters_.Set(Counters{0, slice_plan.size()});
 
+        auto self = shared_from_this();
         for (auto &item : slice_plan)
         {
           // create the closure and dispatch to the thread pool
-          auto self = shared_from_this();
           thread_pool_->Post([self, &item]() { self->DispatchExecution(*item); });
         }
 
@@ -426,21 +427,23 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
     case MonitorState::RUNNING:
     {
-
       // wait for the execution to complete
-      if (remaining_executions_ > 0)
-      {
-        std::unique_lock<std::mutex> lock(monitor_lock_);
-        monitor_notify_.wait_for(lock, std::chrono::milliseconds{100});
-      }
+      bool const finished =
+          counters_.WaitFor(std::chrono::seconds{2},
+                            [](Counters const &counters) { return counters.remaining == 0; });
 
-      // determine the next state (provided we have complete
-      if (remaining_executions_ == 0)
+      if (!finished)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME,
+                       "### Extra long execution: remaining: ", counters_.Get().remaining);
+      }
+      else
       {
         // evaluate the status of the executions
         std::size_t num_complete{0};
         std::size_t num_stalls{0};
         std::size_t num_errors{0};
+        std::size_t num_fatal_errors{0};
 
         // look through all execution items and determine if it was successful
         for (auto const &item : execution_plan_[current_slice])
@@ -455,28 +458,39 @@ void ExecutionManager::MonitorThreadEntrypoint()
           case ExecutionItem::Status::TX_LOOKUP_FAILURE:
             ++num_stalls;
             break;
-          case ExecutionItem::Status::NOT_RUN:
-          case ExecutionItem::Status::RESOURCE_FAILURE:
           case ExecutionItem::Status::CHAIN_CODE_LOOKUP_FAILURE:
           case ExecutionItem::Status::CHAIN_CODE_EXEC_FAILURE:
+          case ExecutionItem::Status::CONTRACT_NAME_PARSE_FAILURE:
             ++num_errors;
+            break;
+          default:
+            ++num_fatal_errors;
             break;
           }
         }
 
         // only provide debug if required
-        if (num_complete + num_stalls + num_errors)
+        if (num_complete + num_stalls + num_errors + num_fatal_errors)
         {
-          FETCH_LOG_WARN(LOGGING_NAME, "Slice ", current_slice,
-                         " Execution Status - Complete: ", num_complete, " Stalls: ", num_stalls,
-                         " Errors: ", num_errors);
+          if (num_stalls + num_errors + num_fatal_errors)
+          {
+            FETCH_LOG_WARN(LOGGING_NAME, "Slice ", current_slice,
+                           " Execution Status - Complete: ", num_complete, " Stalls: ", num_stalls,
+                           " Errors: ", num_errors, " Fatal Errors: ", num_fatal_errors);
+          }
+          else
+          {
+            FETCH_LOG_DEBUG(LOGGING_NAME, "Slice ", current_slice,
+                            " Execution Status - Complete: ", num_complete, " Stalls: ", num_stalls,
+                            " Errors: ", num_errors);
+          }
         }
 
         // increment the slice counter
         ++current_slice;
 
         // decide the next monitor state based on the status of the slice execution
-        if (num_errors)
+        if (num_fatal_errors)
         {
           monitor_state = MonitorState::FAILED;
         }
@@ -498,87 +512,15 @@ void ExecutionManager::MonitorThreadEntrypoint()
     }
 
     case MonitorState::BOOKMARKING_STATE:
-    {
-      // calculate the final state hash
-      crypto::SHA256 hash;
-      hash.Update(storage_->Hash());
-      StateHash state_hash = hash.Final();
 
-      // request a bookmark
-      Bookmark bookmark     = 0;
-      bool     new_bookmark = false;
-
-      if (state_hash.size())
-      {
-        std::lock_guard<Mutex> lock(state_archive_lock_);
-        new_bookmark = state_archive_.AllocateBookmark(state_hash, bookmark);
-      }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Unable to request state hash");
-      }
-
-      // only need to commit the new bookmark if there is actually a change in
-      // state
-      if (new_bookmark)
-      {
-        // commit the changes in state
-        try
-        {
-          storage_->Commit(bookmark);
-        }
-        catch (std::exception const &ex)
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "Unable to commit state. Error: ", ex.what());
-        }
-
-        // update the state archives
-        {
-          std::lock_guard<Mutex> lock(state_archive_lock_);
-          if (!state_archive_.ConfirmBookmark(state_hash, bookmark))
-          {
-            FETCH_LOG_WARN(LOGGING_NAME, "Unable to confirm bookmark: ", bookmark);
-          }
-
-          // update the block state cache
-          block_state_cache_.Set(ResourceID{current_block}, state_hash);
-        }
-      }
+      // trigger the storage to archive the current state
+      storage_->Commit();
 
       // finished processing the block
       monitor_state = MonitorState::IDLE;
-
       break;
     }
-    }
   }
-}
-
-bool ExecutionManager::AttemptRestoreToBlock(BlockHash const &digest)
-{
-  bool success = false;
-
-  assert(digest.size() == 32);
-
-  std::lock_guard<Mutex> lock(state_archive_lock_);
-
-  // need to load the state from a previous application, so lookup the
-  // corresponding state hash
-  StateHash state_hash{};
-  if (block_state_cache_.Get(ResourceID{digest}, state_hash))
-  {
-    Bookmark bookmark{0};
-
-    // lookup the bookmark
-    if (state_archive_.LookupBookmark(state_hash, bookmark))
-    {
-      // revert
-      storage_->Revert(bookmark);
-      success = true;
-    }
-  }
-
-  return success;
 }
 
 }  // namespace ledger

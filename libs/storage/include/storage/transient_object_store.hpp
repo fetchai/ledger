@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/containers/queue.hpp"
+#include "core/logger.hpp"
 #include "core/mutex.hpp"
 #include "core/threading.hpp"
 #include "storage/object_store.hpp"
@@ -41,7 +42,9 @@ class TransientObjectStore
 public:
   using Callback    = std::function<void(Object const &)>;
   using Archive     = ObjectStore<Object>;
-  using TxSummaries = std::vector<fetch::chain::TransactionSummary>;
+  using TxSummaries = std::vector<ledger::TransactionSummary>;
+
+  static constexpr char const *LOGGING_NAME = "TransientObjectStore";
 
   // Construction / Destruction
   TransientObjectStore();
@@ -77,8 +80,8 @@ public:
 
 private:
   using Mutex       = fetch::mutex::Mutex;
-  using Queue       = fetch::core::SimpleQueue<ResourceID, 1 << 15>;
-  using RecentQueue = fetch::core::SimpleQueue<chain::TransactionSummary, 1 << 15>;
+  using Queue       = fetch::core::MPMCQueue<ResourceID, 1 << 15>;
+  using RecentQueue = fetch::core::MPMCQueue<ledger::TransactionSummary, 1 << 15>;
   using Cache       = std::unordered_map<ResourceID, Object>;
   using ThreadPtr   = std::shared_ptr<std::thread>;
   using Flag        = std::atomic<bool>;
@@ -97,7 +100,12 @@ private:
   ThreadPtr     thread_;                           ///< The background worker thread
   Callback      set_callback_;                     ///< The completion handler
   Flag          stop_{false};                      ///< Flag to signal the stop of the worker
+  static constexpr core::Tickets::Count recent_queue_alarm_threshold{RecentQueue::QUEUE_LENGTH >>
+                                                                     1};
 };
+
+template <typename O>
+constexpr core::Tickets::Count TransientObjectStore<O>::recent_queue_alarm_threshold;
 
 /**
  * Construct a transient object store
@@ -166,7 +174,14 @@ void TransientObjectStore<O>::Load(std::string const &doc_file, std::string cons
 template <typename O>
 bool TransientObjectStore<O>::Get(ResourceID const &rid, O &object)
 {
-  return GetFromCache(rid, object) || archive_.Get(rid, object);
+  bool const success = GetFromCache(rid, object) || archive_.Get(rid, object);
+
+  if (!success)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Unable to retrieve TX: ", byte_array::ToBase64(rid.id()));
+  }
+
+  return success;
 }
 
 /**
@@ -181,7 +196,7 @@ typename TransientObjectStore<O>::TxSummaries TransientObjectStore<O>::GetRecent
     uint32_t max_to_poll)
 {
   TransientObjectStore<O>::TxSummaries   ret;
-  chain::TransactionSummary              summary;
+  ledger::TransactionSummary             summary;
   static const std::chrono::milliseconds MAX_WAIT_INTERVAL{5};
 
   for (std::size_t i = 0; i < max_to_poll; ++i)
@@ -222,12 +237,30 @@ bool TransientObjectStore<O>::Has(ResourceID const &rid)
 template <typename O>
 void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool newly_seen)
 {
+  static core::Tickets::Count prev_count{0};
+
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Adding TX: ", byte_array::ToBase64(rid.id()));
+
   // add the element into the cache
   SetInCache(rid, object);
 
   if (newly_seen)
   {
-    most_recent_seen_.TryPush(object.summary());
+    std::size_t count{most_recent_seen_.QUEUE_LENGTH};
+    bool const  inserted =
+        most_recent_seen_.Push(object.summary(), count, std::chrono::milliseconds{100});
+    if (inserted && prev_count != count)
+    {
+      if (prev_count < recent_queue_alarm_threshold && count >= recent_queue_alarm_threshold)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, " the `most_recent_seen_` queue size ", count,
+                       " reached or is over threshold ", recent_queue_alarm_threshold, ").");
+        // TODO(private issue #582): The queue became FULL - this information shall
+        // be propagated out to caller, so it can make appropriate decision how to
+        // proceed.
+      }
+      prev_count = count;
+    }
   }
 
   // dispatch the callback if necessary
@@ -343,7 +376,7 @@ template <typename O>
 void TransientObjectStore<O>::ThreadLoop()
 {
   static const std::size_t               BATCH_SIZE = 100;
-  static const std::chrono::milliseconds MAX_WAIT_INTERVAL{200};
+  static const std::chrono::milliseconds MAX_WAIT_INTERVAL{2000};
 
   SetThreadName("TxStore");
 
@@ -369,19 +402,29 @@ void TransientObjectStore<O>::ThreadLoop()
     // Populating: We are filling up our batch of objects from the queue that is being posted
     case Phase::Populating:
     {
-      // update the state in the case where we have fully filled up the buffer
-      if (extracted_count >= BATCH_SIZE)
+      assert(extracted_count < BATCH_SIZE);
+
+      // ensure the write count is reset
+      written_count = 0;
+
+      // attempt to extract an element in the confirmation queue
+      bool const extracted = confirm_queue_.Pop(rids[extracted_count], MAX_WAIT_INTERVAL);
+
+      // update the index if needed
+      if (extracted)
       {
-        phase         = Phase::Writing;
-        written_count = 0;
+        ++extracted_count;
       }
-      else
+
+      // determine if we have reached the end of the sequence of transactions or if we have a filled
+      // buffer.
+      bool const is_buffer_full     = (extracted_count == BATCH_SIZE);
+      bool const is_end_of_sequence = (extracted_count && (!extracted));
+
+      // trigger the next state if appropriate
+      if (is_buffer_full || is_end_of_sequence)
       {
-        // populate our resource array
-        if (confirm_queue_.Pop(rids[extracted_count], MAX_WAIT_INTERVAL))
-        {
-          ++extracted_count;
-        }
+        phase = Phase::Writing;
       }
 
       break;
@@ -424,11 +467,10 @@ void TransientObjectStore<O>::ThreadLoop()
     case Phase::Flushing:
     {
       FETCH_LOCK(cache_mutex_);
-
-      assert(extracted_count == rids.size());
-      for (auto const &rid : rids)
+      assert(extracted_count <= BATCH_SIZE);
+      for (std::size_t i = 0; i < extracted_count; ++i)
       {
-        cache_.erase(rid);
+        cache_.erase(rids[i]);
       }
 
       phase           = Phase::Populating;

@@ -124,13 +124,13 @@ std::size_t Size(const T &item)
 template <typename T>
 T NextTransaction(std::size_t bytesToAdd = 0)
 {
-  fetch::chain::MutableTransaction trans;
+  fetch::ledger::MutableTransaction trans;
 
   trans.PushResource(GetRandomByteArray(64));
 
-  chain::Signatories signatures;
+  ledger::Signatories signatures;
   signatures[fetch::crypto::Identity{"identity_params", "identity"}] =
-      fetch::chain::Signature{"sig_data", "sig_type"};
+      fetch::ledger::Signature{"sig_data", "sig_type"};
   byte_array::ByteArray contract_name, data;
   MakeString(contract_name);
   MakeString(data, 1 + bytesToAdd);
@@ -170,7 +170,7 @@ void BlockUntilTime(uint64_t startTime)
 namespace network_benchmark {
 
 // Transactions are packaged up into blocks and referred to using a hash
-using transaction_type = fetch::chain::Transaction;
+using transaction_type = fetch::ledger::Transaction;
 using block_hash       = std::size_t;
 using block_type       = std::vector<transaction_type>;
 using network_block    = std::pair<block_hash, block_type>;

@@ -84,9 +84,10 @@ public:
 
   /// @name Persistent connections
   /// @{
-  bool        AddPersistentPeer(Uri const &peer);
-  void        RemovePersistentPeer(Uri const &peer);
-  void        RemovePersistentPeer(Handle handle);
+  bool AddPersistentPeer(Uri const &peer);
+  void RemovePersistentPeer(Uri const &peer);
+  void RemovePersistentPeer(Handle handle);
+
   std::size_t GetNumPeers() const;
   /// @}
 

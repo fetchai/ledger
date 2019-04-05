@@ -24,13 +24,12 @@ namespace auctions {
 
 class Bid;
 
-constexpr ItemId  DefaultItemId        = std::numeric_limits<ItemId>::max();
-constexpr AgentId DefaultItemAgentId   = std::numeric_limits<AgentId>::max();
-constexpr Value   DefaultItemMinPrice  = std::numeric_limits<Value>::max();
-constexpr Value   DefaultItemMaxBid    = std::numeric_limits<Value>::min();
-constexpr Value   DefaultItemSellPrice = std::numeric_limits<Value>::min();
-
-constexpr AgentId DefaultItemWinner = std::numeric_limits<AgentId>::max();
+constexpr ItemId  DEFAULT_ITEM_ID         = std::numeric_limits<ItemId>::max();
+constexpr AgentId DEFAULT_ITEM_AGENT_ID   = std::numeric_limits<AgentId>::max();
+constexpr Value   DEFAULT_ITEM_MIN_PRICE  = std::numeric_limits<Value>::max();
+constexpr Value   DEFAULT_ITEM_MAX_BID    = std::numeric_limits<Value>::min();
+constexpr Value   DEFAULT_ITEM_SELL_PRICE = std::numeric_limits<Value>::min();
+constexpr AgentId DEFAULT_ITEM_WINNER     = std::numeric_limits<AgentId>::max();
 
 /**
  * An item in the auction which may be bid upon
@@ -45,17 +44,17 @@ public:
     , min_price(min_price)
   {}
 
-  ItemId  id        = DefaultItemId;
-  AgentId seller_id = DefaultItemAgentId;
-  Value   min_price = DefaultItemMinPrice;
+  ItemId  id        = DEFAULT_ITEM_ID;
+  AgentId seller_id = DEFAULT_ITEM_AGENT_ID;
+  Value   min_price = DEFAULT_ITEM_MIN_PRICE;
 
-  Value max_bid    = DefaultItemMaxBid;
-  Value sell_price = DefaultItemSellPrice;
+  Value max_bid    = DEFAULT_ITEM_MAX_BID;
+  Value sell_price = DEFAULT_ITEM_SELL_PRICE;
 
   std::vector<Bid> bids{};
 
   std::uint32_t bid_count = 0;
-  BidId         winner    = DefaultItemWinner;
+  BidId         winner    = DEFAULT_ITEM_WINNER;
 
   std::unordered_map<AgentId, std::size_t> agent_bid_count{};
 };

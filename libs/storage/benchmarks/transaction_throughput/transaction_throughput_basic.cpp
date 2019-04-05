@@ -30,8 +30,8 @@
 
 using fetch::byte_array::ByteArray;
 using fetch::storage::ResourceID;
-using fetch::chain::VerifiedTransaction;
-using fetch::chain::MutableTransaction;
+using fetch::ledger::VerifiedTransaction;
+using fetch::ledger::MutableTransaction;
 using fetch::random::LinearCongruentialGenerator;
 
 using ObjectStore      = fetch::storage::ObjectStore<VerifiedTransaction>;

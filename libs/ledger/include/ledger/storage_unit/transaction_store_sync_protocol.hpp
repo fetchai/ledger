@@ -51,9 +51,7 @@ public:
     PULL_SUBTREE = 3
   };
 
-  using UnverifiedTransaction = chain::UnverifiedTransaction;
-  using VerifiedTransaction   = chain::VerifiedTransaction;
-  using ObjectStore           = storage::TransientObjectStore<VerifiedTransaction>;
+  using ObjectStore = storage::TransientObjectStore<VerifiedTransaction>;
 
   static constexpr char const *LOGGING_NAME = "ObjectStoreSyncProtocol";
 
@@ -94,7 +92,7 @@ private:
 
   using Self   = TransactionStoreSyncProtocol;
   using Cache  = std::vector<CachedObject>;
-  using TxList = std::vector<chain::UnverifiedTransaction>;
+  using TxList = std::vector<UnverifiedTransaction>;
 
   uint64_t ObjectCount();
   TxList   PullObjects(service::CallContext const *call_context);

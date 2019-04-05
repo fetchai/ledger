@@ -112,7 +112,7 @@ void ExecutionManagerRpcClient::WorkCycle(void)
 ExecutionManagerRpcClient::ExecutionManagerRpcClient(NetworkManager const &network_manager)
   : network_manager_(network_manager)
 {
-  muddle_ = Muddle::CreateMuddle(Muddle::NetworkId("EXEM"), network_manager_);
+  muddle_ = Muddle::CreateMuddle(muddle::NetworkId{"EXEM"}, network_manager_);
   client_ = std::make_shared<Client>("R:ExecMgr", muddle_->AsEndpoint(), Muddle::Address(),
                                      SERVICE_LANE, CHANNEL_RPC);
   muddle_->Start({});
@@ -132,7 +132,8 @@ void ExecutionManagerRpcClient::AddConnection(const Uri &                      u
   bg_work_.Add(worker);
 }
 
-ExecutionManagerRpcClient::ScheduleStatus ExecutionManagerRpcClient::Execute(Block const &block)
+ExecutionManagerRpcClient::ScheduleStatus ExecutionManagerRpcClient::Execute(
+    Block::Body const &block)
 {
   auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
                                              ExecutionManagerRpcProtocol::EXECUTE, block);
@@ -158,6 +159,13 @@ bool ExecutionManagerRpcClient::Abort()
   auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
                                              ExecutionManagerRpcProtocol::ABORT);
   return result->As<bool>();
+}
+
+void ExecutionManagerRpcClient::SetLastProcessedBlock(ExecutionManagerInterface::BlockHash hash)
+{
+  auto result = client_->CallSpecificAddress(
+      address_, RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::SET_LAST_PROCESSED_BLOCK, hash);
+  result->Wait();
 }
 
 }  // namespace ledger

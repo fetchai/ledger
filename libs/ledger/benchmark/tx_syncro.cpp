@@ -45,8 +45,8 @@
 // using fetch::byte_array::ConstByteArray;
 // using fetch::byte_array::ByteArray;
 // using fetch::storage::ResourceID;
-// using fetch::chain::VerifiedTransaction;
-// using fetch::chain::MutableTransaction;
+// using fetch::ledger::VerifiedTransaction;
+// using fetch::ledger::MutableTransaction;
 // using fetch::crypto::ECDSASigner;
 // using fetch::random::LinearCongruentialGenerator;
 //
@@ -56,7 +56,7 @@
 // using namespace fetch::storage;
 // using namespace fetch::byte_array;
 // using namespace fetch::network;
-// using namespace fetch::chain;
+// using namespace fetch::ledger;
 // using namespace fetch::service;
 // using namespace fetch::ledger;
 //

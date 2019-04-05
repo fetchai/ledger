@@ -17,8 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/statistics/standard_deviation.hpp"
-#include "math/linalg/matrix.hpp"
+#include "math/statistics/standard_deviation.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -34,16 +33,12 @@ inline typename A::Type WrapperStandardDeviation(A const &a)
 inline void BuildStandardDeviationStatistics(std::string const &custom_name,
                                              pybind11::module & module)
 {
-  using namespace fetch::math::linalg;
+  using namespace fetch::math;
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperStandardDeviation<Matrix<double>>)
-      .def(custom_name.c_str(), &WrapperStandardDeviation<Matrix<float>>)
-      .def(custom_name.c_str(), &WrapperStandardDeviation<RectangularArray<double>>)
-      .def(custom_name.c_str(), &WrapperStandardDeviation<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperStandardDeviation<ShapelessArray<double>>)
-      .def(custom_name.c_str(), &WrapperStandardDeviation<ShapelessArray<float>>);
+  module.def(custom_name.c_str(), &WrapperStandardDeviation<Tensor<double>>)
+      .def(custom_name.c_str(), &WrapperStandardDeviation<Tensor<float>>);
 }
 
 }  // namespace statistics

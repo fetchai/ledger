@@ -38,7 +38,7 @@
 #include <unordered_set>
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 class BlockGenerator
 {
@@ -453,5 +453,5 @@ private:
   transaction_matrix_type staged_;
 };
 
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

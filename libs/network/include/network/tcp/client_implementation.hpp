@@ -235,7 +235,7 @@ public:
     });
   }
 
-  bool Closed() override
+  bool Closed() const override
   {
     return socket_.expired();
   }
@@ -342,6 +342,8 @@ private:
     self_type self   = shared_from_this();
     auto      socket = socket_.lock();
     auto      cb     = [this, self, message, socket, strand](std::error_code ec, std::size_t len) {
+      FETCH_UNUSED(len);
+
       shared_self_type selfLock = self.lock();
       if (!selfLock)
       {
@@ -426,6 +428,8 @@ private:
     auto socket = socket_.lock();
 
     auto cb = [this, selfLock, socket, buffer, header](std::error_code ec, std::size_t len) {
+      FETCH_UNUSED(len);
+
       {
         std::lock_guard<mutex_type> lock(can_write_mutex_);
         can_write_ = true;

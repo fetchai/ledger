@@ -1,6 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<namespace id="fetch::platform" name="platform" xmlns="http://jessevdk.github.com/cldoc/1.0">
-  <enum anonymous="yes" id="fetch::platform::(anonymous::1)" name="(anonymous::1)">
-    <enumvalue id="fetch::platform::LITTLE_ENDIAN_MAGIC" name="LITTLE_ENDIAN_MAGIC" value="1337" />
-  </enum>
-</namespace>

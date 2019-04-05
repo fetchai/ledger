@@ -79,8 +79,8 @@ protected:
 
     ECDSAAffineCoordinatesConversion<>::ConvertFromCanonical(serialized_to_ba, x2.get(), y2.get());
 
-    EXPECT_TRUE(0 == BN_cmp(x.get(), x2.get()));
-    EXPECT_TRUE(0 == BN_cmp(y.get(), y2.get()));
+    EXPECT_EQ(0, BN_cmp(x.get(), x2.get()));
+    EXPECT_EQ(0, BN_cmp(y.get(), y2.get()));
   }
 };
 
@@ -94,8 +94,8 @@ TEST_F(ECDSAAffineCoordinatesConversionTest, test_convert_canonical_with_padding
 
   ASSERT_NE(x_ba, y_ba);
 
-  ASSERT_TRUE(nullptr != BN_bin2bn(x_ba.pointer(), static_cast<int>(x_ba.size()), x.get()));
-  ASSERT_TRUE(nullptr != BN_bin2bn(y_ba.pointer(), static_cast<int>(y_ba.size()), y.get()));
+  ASSERT_NE(nullptr, BN_bin2bn(x_ba.pointer(), static_cast<int>(x_ba.size()), x.get()));
+  ASSERT_NE(nullptr, BN_bin2bn(y_ba.pointer(), static_cast<int>(y_ba.size()), y.get()));
 
   ASSERT_NE(0, BN_cmp(x.get(), y.get()));
 

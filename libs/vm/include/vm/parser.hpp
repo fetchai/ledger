@@ -19,6 +19,8 @@
 
 #include "vm/node.hpp"
 
+#include <unordered_set>
+
 namespace fetch {
 namespace vm {
 
@@ -34,7 +36,7 @@ private:
   {
     // [group opener, prefix op or operand] is required
     PreOperand,
-    // [postfix op, binary op, group separator or group closer] is optional
+    // [postfix op, binary op, comma or group closer] is optional
     PostOperand
   };
 
@@ -64,10 +66,14 @@ private:
     bool              is_operator;
     ExpressionNodePtr node;
     OpInfo            op_info;
-    int               count;
+    Token::Kind       closer_token_kind;
+    std::string       closer_token_text;
+    int               num_members;
   };
 
-  Strings                 template_names_;
+  using StringSet = std::unordered_set<std::string>;
+
+  StringSet               template_names_;
   std::vector<Token>      tokens_;
   int                     index_;
   Token *                 token_;
@@ -75,7 +81,7 @@ private:
   std::vector<Node::Kind> blocks_;
   State                   state_;
   bool                    found_expression_terminator_;
-  std::vector<int>        groups_;
+  std::vector<size_t>     groups_;
   std::vector<Expr>       operators_;
   std::vector<Expr>       rpn_;
   std::vector<Expr>       infix_stack_;
@@ -83,6 +89,9 @@ private:
   void              Tokenise(std::string const &source);
   bool              ParseBlock(BlockNode &node);
   BlockNodePtr      ParseFunctionDefinition();
+  NodePtr           ParseAnnotations();
+  NodePtr           ParseAnnotation();
+  NodePtr           ParseAnnotationLiteral();
   BlockNodePtr      ParseWhileStatement();
   BlockNodePtr      ParseForStatement();
   NodePtr           ParseIfStatement();
@@ -107,21 +116,23 @@ private:
   void HandleIncDec(Node::Kind prefix_kind, OpInfo const &prefix_op_info, Node::Kind postfix_kind,
                     OpInfo const &postfix_op_info);
   bool HandleDot();
-  void HandleOpener(Node::Kind prefix_kind, Node::Kind postfix_kind);
+  bool HandleOpener(Node::Kind prefix_kind, Node::Kind postfix_kind, Token::Kind closer_token_kind,
+                    std::string const &closer_token_text);
   bool HandleCloser(bool is_conditional_expression);
   bool HandleComma();
   void HandleOp(Node::Kind kind, OpInfo const &op_info);
-  void AddGroup(Node::Kind kind, int initial_arity);
+  void AddGroup(Node::Kind kind, int arity, Token::Kind closer_token_kind,
+                std::string const &closer_token_text);
   void AddOp(Node::Kind kind, OpInfo const &op_info);
   void AddOperand(Node::Kind kind);
   void AddError(std::string const &message);
 
-  void IncrementNodeCount()
+  void IncrementGroupMembers()
   {
     if (groups_.size())
     {
-      Expr &group = operators_[std::size_t(groups_.back())];
-      ++(group.count);
+      Expr &groupop = operators_[groups_.back()];
+      ++(groupop.num_members);
     }
   }
 

@@ -15,7 +15,7 @@ setup_compiler()
 #-------------------------------------------------------------------------------
 
 setup_library(fetch-storage)
-target_link_libraries(fetch-storage INTERFACE fetch-core fetch-crypto fetch-ledger vendor-mio)
+target_link_libraries(fetch-storage PUBLIC fetch-core fetch-crypto fetch-ledger fetch-testing vendor-mio)
 
 #-------------------------------------------------------------------------------
 # Example Targets

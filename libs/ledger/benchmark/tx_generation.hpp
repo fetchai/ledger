@@ -27,7 +27,7 @@
 namespace {
 
 using fetch::crypto::ECDSASigner;
-using fetch::chain::VerifiedTransaction;
+using fetch::ledger::VerifiedTransaction;
 
 using TransactionList = std::vector<VerifiedTransaction>;
 
@@ -38,11 +38,11 @@ inline TransactionList GenerateTransactions(std::size_t count, bool large_packet
   static constexpr std::size_t TX_WORD_SIZE = TX_SIZE / sizeof(uint64_t);
   static_assert((TX_SIZE % sizeof(uint64_t)) == 0, "The transaction must be a multiple of 64bits");
 
-  using fetch::chain::UnverifiedTransaction;
-  using fetch::chain::MutableTransaction;
-  using fetch::chain::TxSigningAdapter;
+  using fetch::ledger::UnverifiedTransaction;
+  using fetch::ledger::MutableTransaction;
+  using fetch::ledger::TxSigningAdapter;
   using fetch::byte_array::ByteArray;
-  using fetch::chain::TxSigningAdapter;
+  using fetch::ledger::TxSigningAdapter;
   using fetch::random::LinearCongruentialGenerator;
 
   LinearCongruentialGenerator rng;

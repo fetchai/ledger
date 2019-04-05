@@ -80,7 +80,7 @@ def get_coverage_reports(targets : map):
 
         # Execute the binary target, this will generate a default.profraw
         try:
-            subprocess.check_call(val, cwd=build_directory, stdout=subprocess.PIPE, timeout=1*60)
+            subprocess.check_output([val], cwd=build_directory, timeout=1*60)
         except subprocess.TimeoutExpired:
             print("\nWARNING: Timed out. this may not provide an accurate coverage report")
 
@@ -102,12 +102,12 @@ def get_coverage_reports(targets : map):
             sys.exit(1)
 
         # Generate an indexed file target.profdata
-        subprocess.check_call(["llvm-profdata", "merge", "-sparse", raw_file_name, "-o", indexed_file_name],
-            cwd=build_directory, stdout=subprocess.PIPE)
+        subprocess.check_output(["llvm-profdata", "merge", "-sparse", raw_file_name, "-o", indexed_file_name],
+            cwd=build_directory)
 
         # Generate the coverage in coverate/target_coverate
-        subprocess.check_call(["llvm-cov", "show", "-Xdemangler", "c++filt",
-            val, "-instr-profile="+indexed_file_name, "-format=html", "-o", directory_name], cwd=build_directory, stdout=subprocess.PIPE)
+        subprocess.check_output(["llvm-cov", "show", "-Xdemangler", "c++filt",
+            val, "-instr-profile="+indexed_file_name, "-format=html", "-o", directory_name], cwd=build_directory)
 
 # Once coverage reports for other binaries have been created, this function just creates a report
 # for all binaries
@@ -173,12 +173,16 @@ def get_targets_cmake() -> map:
 
     output = output.decode("utf-8")
 
-    for line in output.split('\n'):
-        search = re.search("Test command: .", line)
 
-        if not search == None:
-            command = line.split("Test command: ")[1]
-            target = command.split(R"/")[-1]
+    for line in output.splitlines():
+        match = re.match(r'\d+: Test command: ([\w/-]+)( \"\w+\")?', line)
+        if match is not None:
+
+            # extract the full command
+            command = match.group(1)
+            target = os.path.basename(command)
+
+            # print('???', target, command)
             targets[target] = command
 
     if len(targets) == 0:

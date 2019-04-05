@@ -21,6 +21,7 @@
 #include "core/mutex.hpp"
 #include "network/service/protocol.hpp"
 #include "storage/document_store.hpp"
+#include "storage/new_revertible_document_store.hpp"
 #include "storage/revertible_document_store.hpp"
 
 #include <map>
@@ -45,55 +46,44 @@ public:
     GET_OR_CREATE,
     LAZY_GET,
     SET,
+
     COMMIT,
-    REVERT,
-    HASH,
+    REVERT_TO_HASH,
+    CURRENT_HASH,
+    HASH_EXISTS,
 
     LOCK = 20,
     UNLOCK,
     HAS_LOCK
   };
 
-  explicit RevertibleDocumentStoreProtocol(RevertibleDocumentStore *doc_store)
+  explicit RevertibleDocumentStoreProtocol(NewRevertibleDocumentStore *doc_store)
     : fetch::service::Protocol()
     , doc_store_(doc_store)
   {
-    this->Expose(GET, (RevertibleDocumentStore::super_type *)doc_store,
-                 &RevertibleDocumentStore::super_type::Get);
-    this->Expose(GET_OR_CREATE, (RevertibleDocumentStore::super_type *)doc_store,
-                 &RevertibleDocumentStore::super_type::GetOrCreate);
-    this->Expose(SET, (RevertibleDocumentStore::super_type *)doc_store,
-                 &RevertibleDocumentStore::super_type::Set);
-    this->Expose(COMMIT, doc_store, &RevertibleDocumentStore::Commit);
-    this->Expose(REVERT, doc_store, &RevertibleDocumentStore::Revert);
-    this->Expose(HASH, doc_store, &RevertibleDocumentStore::Hash);
+    this->Expose(GET, doc_store, &NewRevertibleDocumentStore::Get);
+    this->Expose(GET_OR_CREATE, doc_store, &NewRevertibleDocumentStore::GetOrCreate);
+    this->Expose(SET, doc_store, &NewRevertibleDocumentStore::Set);
+
+    // Functionality for hashing/state
+    this->Expose(COMMIT, doc_store, &NewRevertibleDocumentStore::Commit);
+    this->Expose(REVERT_TO_HASH, doc_store, &NewRevertibleDocumentStore::RevertToHash);
+    this->Expose(CURRENT_HASH, doc_store, &NewRevertibleDocumentStore::CurrentHash);
+    this->Expose(HASH_EXISTS, doc_store, &NewRevertibleDocumentStore::HashExists);
 
     this->ExposeWithClientContext(LOCK, this, &RevertibleDocumentStoreProtocol::LockResource);
     this->ExposeWithClientContext(UNLOCK, this, &RevertibleDocumentStoreProtocol::UnlockResource);
     this->ExposeWithClientContext(HAS_LOCK, this, &RevertibleDocumentStoreProtocol::HasLock);
   }
 
-  RevertibleDocumentStoreProtocol(RevertibleDocumentStore *doc_store, lane_type const &lane,
+  RevertibleDocumentStoreProtocol(NewRevertibleDocumentStore *doc_store, lane_type const &lane,
                                   lane_type const &maxlanes)
-    : fetch::service::Protocol()
-    , doc_store_(doc_store)
-    , lane_assignment_(lane)
+    : RevertibleDocumentStoreProtocol(doc_store)
   {
+    lane_assignment_ = lane;
 
     SetLaneLog2(maxlanes);
     assert(maxlanes == (1u << log2_lanes_));
-
-    this->Expose(GET, this, &RevertibleDocumentStoreProtocol::GetLaneChecked);
-    this->Expose(GET_OR_CREATE, this, &RevertibleDocumentStoreProtocol::GetOrCreateLaneChecked);
-    this->ExposeWithClientContext(SET, this, &RevertibleDocumentStoreProtocol::SetLaneChecked);
-
-    this->Expose(COMMIT, doc_store, &RevertibleDocumentStore::Commit);
-    this->Expose(REVERT, doc_store, &RevertibleDocumentStore::Revert);
-    this->Expose(HASH, doc_store, &RevertibleDocumentStore::Hash);
-
-    this->ExposeWithClientContext(LOCK, this, &RevertibleDocumentStoreProtocol::LockResource);
-    this->ExposeWithClientContext(UNLOCK, this, &RevertibleDocumentStoreProtocol::UnlockResource);
-    this->ExposeWithClientContext(HAS_LOCK, this, &RevertibleDocumentStoreProtocol::HasLock);
   }
 
   bool HasLock(CallContext const *context, ResourceID const &rid)
@@ -248,7 +238,7 @@ private:
     log2_lanes_ = uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
   }
 
-  RevertibleDocumentStore *doc_store_;
+  NewRevertibleDocumentStore *doc_store_;
 
   uint32_t log2_lanes_ = 0;
 

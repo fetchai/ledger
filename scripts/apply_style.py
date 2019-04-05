@@ -68,6 +68,7 @@ def parse_commandline():
     parser.add_argument('-j', dest='jobs', type=int, default=multiprocessing.cpu_count(), help='The number of jobs to do in parallel')
     parser.add_argument('-a', '--all', dest='all', action='store_true', help='Evaluate all files, do not stop on first failure')
     parser.add_argument('-b', '--embrace', dest='dont_goto_fail', action='store_true', help='Put single-statement then/else clauses and loop bodies in braces')
+    parser.add_argument('-n', '--names-only', dest='names_only', action='store_true', help='In warn-only mode, only list names of files to be formatted')
     parser.add_argument('filename', metavar='<filename>', action='store', nargs='*', help='process only <filename>s (default: the whole project tree)')
 
     return parser.parse_args()
@@ -176,7 +177,7 @@ def project_sources(project_root):
                     yield source_path
 
 
-def compare_against_original(reformatted, source_path, rel_path):
+def compare_against_original(reformatted, source_path, rel_path, names_only):
 
     # read the contents of the original file
     original = None
@@ -196,10 +197,13 @@ def compare_against_original(reformatted, source_path, rel_path):
 
     success = True
     if len(out) != 0:
-        output('Style mismatch in: {}'.format(rel_path))
-        output()
-        output('\n'.join(out[3:])) # first 3 elements are garbage
-        success = False
+        if names_only:
+            output(rel_path)
+        else:
+            output('Style mismatch in: {}'.format(rel_path))
+            output()
+            output('\n'.join(out[3:])) # first 3 elements are garbage
+            success = False
 
     return success
 
@@ -240,14 +244,17 @@ def main():
             formatted_output = postprocess_contents(formatted_output)
 
         rel_path = os.path.relpath(source_path, project_root)
-        return compare_against_original(formatted_output, source_path, rel_path)
+        return compare_against_original(formatted_output, source_path, rel_path, args.names_only)
 
     if args.fix:
         handler = apply_style_to_file
         output('Applying style...')
     else:
         handler = diff_style_to_file
-        output('Checking style...')
+        if args.names_only:
+            output('Files to reformat:')
+        else:
+            output('Checking style...')
 
     # process all the files
     success = False

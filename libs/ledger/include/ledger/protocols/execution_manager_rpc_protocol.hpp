@@ -32,7 +32,8 @@ public:
     EXECUTE = 1,
     LAST_PROCESSED_BLOCK,
     GET_STATE,
-    ABORT
+    ABORT,
+    SET_LAST_PROCESSED_BLOCK
   };
 
   explicit ExecutionManagerRpcProtocol(ExecutionManagerInterface &manager)
@@ -40,6 +41,7 @@ public:
   {
     // define the RPC endpoints
     Expose(EXECUTE, this, &ExecutionManagerRpcProtocol::Execute);
+    Expose(SET_LAST_PROCESSED_BLOCK, &manager_, &ExecutionManagerInterface::SetLastProcessedBlock);
     Expose(LAST_PROCESSED_BLOCK, &manager_, &ExecutionManagerInterface::LastProcessedBlock);
     Expose(GET_STATE, &manager_, &ExecutionManagerInterface::GetState);
     Expose(ABORT, &manager_, &ExecutionManagerInterface::Abort);
@@ -47,17 +49,15 @@ public:
 
 private:
   using ScheduleStatus = ExecutionManagerInterface::ScheduleStatus;
-  using Block          = ExecutionManagerInterface::Block;
-  using FullBlock      = chain::MainChain::BlockType;
 
-  ScheduleStatus Execute(Block const &block)
+  ScheduleStatus Execute(Block::Body const &block_body)
   {
     // since the hash is not serialised we need to recalculate it
-    FullBlock full_block{};
-    full_block.SetBody(block);
+    Block full_block{};
+    full_block.body = block_body;
     full_block.UpdateDigest();
 
-    return manager_.Execute(full_block.body());
+    return manager_.Execute(full_block.body);
   }
 
   ExecutionManagerInterface &manager_;

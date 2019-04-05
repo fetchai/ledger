@@ -1,9 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<struct id="fetch::script::Function::Operation" name="Operation" xmlns="http://jessevdk.github.com/cldoc/1.0">
-  <field id="fetch::script::Function::Operation::operation" name="operation">
-    <type name="uint64_t" />
-  </field>
-  <field id="fetch::script::Function::Operation::symbol" name="symbol">
-    <type name="byte_array_type" ref="fetch::script::Function#fetch::script::Function::byte_array_type" />
-  </field>
-</struct>

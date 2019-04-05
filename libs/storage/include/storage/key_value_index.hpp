@@ -59,6 +59,7 @@
 #include "crypto/sha256.hpp"
 #include "storage/cached_random_access_stack.hpp"
 #include "storage/key.hpp"
+#include "storage/new_versioned_random_access_stack.hpp"
 #include "storage/random_access_stack.hpp"
 #include "storage/storage_exception.hpp"
 #include "storage/versioned_random_access_stack.hpp"
@@ -169,7 +170,7 @@ struct KeyValuePair
  *
  * The kvi is versioned, so it includes the functionality to revert to a previous state
  */
-template <typename KV = KeyValuePair<>, typename D = VersionedRandomAccessStack<KV, uint64_t>>
+template <typename KV = KeyValuePair<>, typename D = VersionedRandomAccessStack<KV>>
 class KeyValueIndex
 {
   /**
@@ -371,7 +372,7 @@ public:
     {
       kv.key        = key;
       kv.parent     = uint64_t(-1);
-      kv.split      = uint16_t(key.size());
+      kv.split      = uint16_t(key.size_in_bits());
       update_parent = kv.UpdateLeaf(args...);
 
       index = stack_.Push(kv);
@@ -393,7 +394,7 @@ public:
         pid = right.parent;
 
         left.key   = key;
-        left.split = uint16_t(key.size());
+        left.split = uint16_t(key.size_in_bits());
 
         left.parent  = stack_.size() + 1;
         right.parent = stack_.size() + 1;
@@ -410,7 +411,7 @@ public:
         pid = left.parent;
 
         right.key   = key;
-        right.split = uint16_t(key.size());
+        right.split = uint16_t(key.size_in_bits());
 
         right.parent = stack_.size() + 1;
         left.parent  = stack_.size() + 1;
@@ -492,6 +493,11 @@ public:
     return kv.Hash();
   }
 
+  stack_type &underlying_stack()
+  {
+    return stack_;
+  }
+
   std::size_t size() const
   {
     return stack_.size();
@@ -517,6 +523,7 @@ public:
     stack_.Close();
   }
 
+  // TODO(HUT): this will be removed when updating the versioned stack
   using bookmark_type = uint64_t;
   bookmark_type Commit()
   {
@@ -534,6 +541,8 @@ public:
 
     root_ = stack_.header_extra();
   }
+
+  //*/
 
   uint64_t const &root_element() const
   {
@@ -561,12 +570,12 @@ public:
     Iterator &operator=(Iterator const &rhs) = default;
     Iterator &operator=(Iterator &&rhs) = default;
 
-    bool operator==(Iterator const &rhs)
+    bool operator==(Iterator const &rhs) const
     {
       return kv_ == rhs.kv_;
     }
 
-    bool operator!=(Iterator const &rhs)
+    bool operator!=(Iterator const &rhs) const
     {
       return !(kv_ == rhs.kv_);
     }
@@ -734,7 +743,7 @@ private:
       ++depth;
       index = next;
 
-      pos = int(key.size());
+      pos = int(key.size_in_bits());
 
       stack_.Get(next, kv);
 

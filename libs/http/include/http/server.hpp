@@ -219,7 +219,6 @@ public:
   }
 
 private:
-  // TODO(unknown): (HUT) : investigate why this times out in debug mode
   std::mutex eval_mutex_;
 
   std::vector<request_middleware_type>  pre_view_middleware_;

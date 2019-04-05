@@ -39,6 +39,7 @@
 using ::testing::_;
 using fetch::network::AtomicInFlightCounter;
 using fetch::network::AtomicCounterName;
+using fetch::muddle::NetworkId;
 
 class ExecutorRpcTests : public ::testing::Test
 {
@@ -139,13 +140,12 @@ protected:
     // --- Start the MUDDLE on top of the NETWORK MANAGER -----------
 
     ProverPtr p2p_key = GenerateP2PKey();
-    muddle_ =
-        Muddle::CreateMuddle(Muddle::NetworkId("Test"), std::move(p2p_key), *network_manager_);
+    muddle_ = Muddle::CreateMuddle(NetworkId{"Test"}, std::move(p2p_key), *network_manager_);
     muddle_->Start({P2P_RPC_PORT});
 
     // --- Start the EXECUTOR SERVICE -------------------------------
 
-    auto executor_muddle = Muddle::CreateMuddle(Muddle::NetworkId("Test"), *network_manager_);
+    auto executor_muddle = Muddle::CreateMuddle(NetworkId{"Test"}, *network_manager_);
     executor_service_ =
         std::make_unique<ExecutorRpcService>(EXECUTOR_RPC_PORT, storage_, executor_muddle);
     executor_service_->Start();
@@ -189,11 +189,11 @@ protected:
     network_manager_.reset();
   }
 
-  fetch::chain::Transaction CreateDummyTransaction()
+  fetch::ledger::Transaction CreateDummyTransaction()
   {
-    fetch::chain::MutableTransaction tx;
+    fetch::ledger::MutableTransaction tx;
     tx.set_contract_name("fetch.dummy.wait");
-    return fetch::chain::VerifiedTransaction::Create(std::move(tx));
+    return fetch::ledger::VerifiedTransaction::Create(std::move(tx));
   }
 
   fetch::byte_array::ConstByteArray CreateAddress()
@@ -209,9 +209,8 @@ protected:
     return {address};
   }
 
-  fetch::chain::Transaction CreateWalletTransaction()
+  fetch::ledger::Transaction CreateWalletTransaction()
   {
-
     // generate an address
     auto address = CreateAddress();
 
@@ -223,11 +222,12 @@ protected:
         << R"("amount": )" << 1000 << " }";
 
     // create the transaction
-    fetch::chain::MutableTransaction tx;
+    fetch::ledger::MutableTransaction tx;
     tx.set_contract_name("fetch.token.wealth");
+    tx.PushResource(address);
     tx.set_data(oss.str());
 
-    return fetch::chain::VerifiedTransaction::Create(std::move(tx));
+    return fetch::ledger::VerifiedTransaction::Create(std::move(tx));
   }
 
   NetworkManagerPtr     network_manager_;
@@ -241,7 +241,6 @@ protected:
 
 TEST_F(ExecutorRpcTests, CheckDummyContract)
 {
-
   EXPECT_CALL(*storage_, AddTransaction(_)).Times(1);
   EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(1);
 
@@ -257,11 +256,14 @@ TEST_F(ExecutorRpcTests, CheckDummyContract)
 
 TEST_F(ExecutorRpcTests, CheckTokenContract)
 {
+  ::testing::InSequence seq;
 
   EXPECT_CALL(*storage_, AddTransaction(_)).Times(1);
   EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(1);
-  EXPECT_CALL(*storage_, GetOrCreate(_)).Times(1);
+  EXPECT_CALL(*storage_, Lock(_)).Times(1);
+  EXPECT_CALL(*storage_, Get(_)).Times(1);
   EXPECT_CALL(*storage_, Set(_, _)).Times(1);
+  EXPECT_CALL(*storage_, Unlock(_)).Times(1);
 
   // create the dummy contract
   auto tx = CreateWalletTransaction();

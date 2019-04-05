@@ -25,6 +25,7 @@ static constexpr uint16_t SERVICE_MUDDLE     = 0;  // reserved
 static constexpr uint16_t SERVICE_P2P        = 1001;
 static constexpr uint16_t SERVICE_MAIN_CHAIN = 2002;
 static constexpr uint16_t SERVICE_LANE       = 3003;
+static constexpr uint16_t SERVICE_LANE_CTRL  = 3004;
 static constexpr uint16_t SERVICE_EXECUTOR   = 4004;
 
 // Common Service Channels

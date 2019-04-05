@@ -21,7 +21,7 @@
 #include "ledger/chain/transaction.hpp"
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 template <typename T>
 inline void Serialize(T &serializer, UnverifiedTransaction const &b)
@@ -101,5 +101,5 @@ inline void Deserialize(T &serializer, VerifiedTransaction &b)
   b.set_contract_name(contract_name);
 }
 
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

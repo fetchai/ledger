@@ -18,66 +18,40 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shapeless_array.hpp"
-#include "vectorise/memory/range.hpp"
-
+#include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
+#include "math/standard_functions/pow.hpp"
+#include "math/standard_functions/sqrt.hpp"
+#include "math/statistics/mean.hpp"
 #include <cmath>
 
 namespace fetch {
 namespace math {
 namespace correlation {
 
-template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::Type Pearson(memory::VectorSlice<T, S> const &a,
-                                                        memory::VectorSlice<T, S> const &b)
+template <typename ArrayType>
+inline typename ArrayType::Type Pearson(ArrayType const &a, ArrayType const &b)
 {
-  detailed_assert(a.size() == b.size());
-  using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
-  using Type                 = typename memory::VectorSlice<T, S>::Type;
+  ASSERT(a.size() == b.size());
+  using Type     = typename ArrayType::Type;
+  using SizeType = typename ArrayType::SizeType;
 
-  Type meanA = a.in_parallel().Reduce(
-      [](vector_register_type const &x, vector_register_type const &y) { return x + y; });
+  Type meanA  = fetch::math::statistics::Mean(a);
+  Type meanB  = fetch::math::statistics::Mean(b);
+  Type innerA = Sum(Square(Subtract(a, meanA)));
+  Type innerB = Sum(Square(Subtract(b, meanB)));
 
-  Type meanB = b.in_parallel().Reduce(
-      [](vector_register_type const &x, vector_register_type const &y) { return x + y; });
+  Type     numerator = 0;
+  SizeType count     = 0;
+  for (auto &val : a)
+  {
+    numerator += ((val - meanA) * (b.At(count) - meanB));
+    ++count;
+  }
 
-  meanA /= Type(a.size());
-  meanB /= Type(b.size());
+  Type denom = Type(fetch::math::Multiply(fetch::math::Sqrt(innerA), fetch::math::Sqrt(innerB)));
 
-  vector_register_type mA(meanA);
-  vector_register_type mB(meanB);
-
-  Type innerA = a.in_parallel().SumReduce(memory::TrivialRange(0, a.size()),
-                                          [mA](vector_register_type const &x) {
-                                            vector_register_type d = x - mA;
-                                            return d * d;
-                                          });
-
-  Type innerB = b.in_parallel().SumReduce(memory::TrivialRange(0, b.size()),
-                                          [mB](vector_register_type const &x) {
-                                            vector_register_type d = x - mB;
-                                            return d * d;
-                                          });
-
-  Type top = a.in_parallel().SumReduce(
-      memory::TrivialRange(0, a.size()),
-      [mA, mB](vector_register_type const &x, vector_register_type const &y) {
-        vector_register_type d1 = x - mA;
-        vector_register_type d2 = y - mB;
-        return d1 * d2;
-      },
-      b);
-
-  Type denom = Type(sqrt(innerA * innerB));
-
-  return Type(top / denom);
-}
-
-template <typename T, typename C>
-inline typename ShapelessArray<T, C>::Type Pearson(ShapelessArray<T, C> const &a,
-                                                   ShapelessArray<T, C> const &b)
-{
-  return Pearson(a.data(), b.data());
+  return Type(numerator / denom);
 }
 
 }  // namespace correlation

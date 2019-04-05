@@ -37,8 +37,8 @@
 using namespace fetch;
 using namespace fetch::optimisers;
 
-chain::BlockGenerator generator;
-std::mt19937          rng(42);
+ledger::BlockGenerator generator;
+std::mt19937           rng(42);
 
 static byte_array::ConstByteArray CreateResource(int64_t value)
 {
@@ -89,7 +89,7 @@ static void load_format_a(std::string const &input_file, std::size_t &N, std::si
     }
     std::stringstream s(line);
 
-    fetch::chain::TransactionSummary summary;
+    fetch::ledger::TransactionSummary summary;
     summary.transaction_hash = GenerateHash();
 
     while (s)
@@ -194,7 +194,7 @@ static void load_format_b(std::string const &input_file, std::size_t &N, std::si
     }
     std::stringstream s(line);
 
-    fetch::chain::TransactionSummary summary;
+    fetch::ledger::TransactionSummary summary;
     summary.transaction_hash = GenerateHash();
 
     int V = -1;
@@ -404,7 +404,7 @@ int main(int argc, char **argv)
   {
     generator.Reset();
     generator.GenerateBlock(lane_count, slice_count,
-                            static_cast<chain::BlockGenerator::Strategy>(strategy), batch_size,
+                            static_cast<ledger::BlockGenerator::Strategy>(strategy), batch_size,
                             explore);
 
     if (print_solution)

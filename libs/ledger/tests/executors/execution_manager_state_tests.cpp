@@ -34,7 +34,7 @@
 #include <random>
 #include <thread>
 
-using ::testing::_;
+// using ::testing::_;
 
 class ExecutionManagerStateTests : public ::testing::TestWithParam<BlockConfig>
 {
@@ -59,9 +59,8 @@ protected:
     executors_.clear();
 
     // create the manager
-    manager_ =
-        std::make_shared<ExecutionManager>("exec_mgr_state_tests_", config.executors, mock_storage_,
-                                           [this]() { return CreateExecutor(); });
+    manager_ = std::make_shared<ExecutionManager>(config.executors, mock_storage_,
+                                                  [this]() { return CreateExecutor(); });
   }
 
   FakeExecutorPtr CreateExecutor()
@@ -145,9 +144,6 @@ std::ostream &operator<<(std::ostream &s, ExecutionManagerStateTests::ScheduleSt
 
   switch (status)
   {
-  case ExecutionManager::ScheduleStatus::RESTORED:
-    s << "Status::RESTORED";
-    break;
   case ExecutionManager::ScheduleStatus::SCHEDULED:
     s << "Status::SCHEDULED";
     break;
@@ -171,6 +167,8 @@ std::ostream &operator<<(std::ostream &s, ExecutionManagerStateTests::ScheduleSt
   return s;
 }
 
+// TODO(private issue 633): Reinstate this test
+#if 0
 TEST_P(ExecutionManagerStateTests, DISABLED_CheckStateRollBack)
 {
   BlockConfig const &config = GetParam();
@@ -194,17 +192,13 @@ TEST_P(ExecutionManagerStateTests, DISABLED_CheckStateRollBack)
   manager_->Start();
 
   {
-    EXPECT_CALL(*mock_storage_, Hash()).Times(1);
     EXPECT_CALL(*mock_storage_, Set(_, _)).Times(block1.num_transactions);
-    EXPECT_CALL(*mock_storage_, Commit(_)).Times(1);
 
     ExecuteBlock(block1);
   }
 
   {
-    EXPECT_CALL(*mock_storage_, Hash()).Times(1);
     EXPECT_CALL(*mock_storage_, Set(_, _)).Times(block2.num_transactions);
-    EXPECT_CALL(*mock_storage_, Commit(_)).Times(1);
 
     ExecuteBlock(block2);
   }
@@ -236,6 +230,7 @@ TEST_P(ExecutionManagerStateTests, DISABLED_CheckStateRollBack)
   // stop the ex
   manager_->Stop();
 }
+#endif
 
 INSTANTIATE_TEST_CASE_P(Param, ExecutionManagerStateTests,
                         ::testing::ValuesIn(BlockConfig::REDUCED_SET), );

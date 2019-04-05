@@ -94,7 +94,7 @@ void TCPServer::Start()
       }
       catch (std::exception const &e)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Failed to open socket: ", port_, " with error: ", e.what());
+        FETCH_LOG_ERROR(LOGGING_NAME, "Failed to open socket: ", port_, " with error: ", e.what());
       }
 
       counter_.Completed();
@@ -188,7 +188,7 @@ void TCPServer::Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor)
 
     if (!ec)
     {
-      auto conn = std::make_shared<ClientConnection>(strongSocket, manager_);
+      auto conn = std::make_shared<ClientConnection>(strongSocket, manager_, network_manager_);
       auto ptr  = connection_register_.lock();
 
       if (ptr)

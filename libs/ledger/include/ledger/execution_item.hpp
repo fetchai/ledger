@@ -33,7 +33,7 @@ class ExecutionItem
 {
 public:
   using LaneIndex = uint32_t;
-  using TxDigest  = chain::Transaction::TxDigest;
+  using TxDigest  = Transaction::TxDigest;
   using LaneSet   = std::unordered_set<LaneIndex>;
   using Status    = ExecutorInterface::Status;
 
@@ -49,6 +49,21 @@ public:
     , lanes_{lane}
     , slice_(slice)
   {}
+
+  TxDigest hash() const
+  {
+    return hash_;
+  }
+
+  LaneSet const &lanes() const
+  {
+    return lanes_;
+  }
+
+  std::size_t slice() const
+  {
+    return slice_;
+  }
 
   Status status() const
   {

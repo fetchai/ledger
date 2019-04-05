@@ -20,6 +20,7 @@
 #include <iomanip>
 #include <iostream>
 
+#include "math/tensor.hpp"
 #include <auctions/combinatorial_auction.hpp>
 
 using namespace fetch::auctions;
@@ -39,22 +40,13 @@ private:
   Bidder() = default;
 };
 
-CombinatorialAuction SetupAuction(std::size_t start_block_val, std::size_t end_block_val)
-{
-  BlockId start_block(start_block_val);
-  BlockId end_block(end_block_val);
-  return CombinatorialAuction(start_block, end_block);
-}
-
 TEST(combinatorial_auction, many_bid_many_item_auction)
 {
 
   ErrorCode err;
 
   // set up auction
-  std::size_t          start_block = 10000;
-  std::size_t          end_block   = 10010;
-  CombinatorialAuction ca          = SetupAuction(start_block, end_block);
+  CombinatorialAuction ca = CombinatorialAuction();
 
   // add items to auction
   std::vector<Item> items{};
@@ -78,60 +70,60 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
   for (std::size_t k = 0; k < items.size(); ++k)
   {
     err = ca.AddItem(items[k]);
-    ASSERT_TRUE(err == ErrorCode::SUCCESS);
+    ASSERT_EQ(err, ErrorCode::SUCCESS);
   }
 
   // set up bidders
   std::vector<Bidder> bidders{};
-  bidders.push_back(Bidder(0, 500));
+  bidders.emplace_back(Bidder(0, 500));
 
   // make bids
 
   BidId bid_id    = 0;
   Value bid_price = 10;
-  Bid   bid1(bid_id, {items[0]}, bid_price, bidders[0].id);
+  Bid   bid1(bid_id, {items[0].id}, bid_price, bidders[0].id);
   err = ca.PlaceBid(bid1);
-  ASSERT_TRUE(err == ErrorCode::SUCCESS);
+  ASSERT_EQ(err, ErrorCode::SUCCESS);
 
   bid_id    = 1;
   bid_price = 8;
-  Bid bid2(bid_id, {items[1]}, bid_price, bidders[0].id);
+  Bid bid2(bid_id, {items[1].id}, bid_price, bidders[0].id);
   err = ca.PlaceBid(bid2);
-  ASSERT_TRUE(err == ErrorCode::SUCCESS);
+  ASSERT_EQ(err, ErrorCode::SUCCESS);
 
   bid_id    = 2;
   bid_price = 7;
-  Bid bid3(bid_id, {items[2]}, bid_price, bidders[0].id);
+  Bid bid3(bid_id, {items[2].id}, bid_price, bidders[0].id);
   err = ca.PlaceBid(bid3);
-  ASSERT_TRUE(err == ErrorCode::SUCCESS);
+  ASSERT_EQ(err, ErrorCode::SUCCESS);
 
   bid_id    = 3;
   bid_price = 29;
-  Bid bid4(bid_id, {items[0], items[1], items[2]}, bid_price, bidders[0].id);
+  Bid bid4(bid_id, {items[0].id, items[1].id, items[2].id}, bid_price, bidders[0].id);
   err = ca.PlaceBid(bid4);
-  ASSERT_TRUE(err == ErrorCode::SUCCESS);
+  ASSERT_EQ(err, ErrorCode::SUCCESS);
 
   bid_id    = 4;
   bid_price = 20;
-  Bid bid5(bid_id, {items[0], items[1], items[2]}, bid_price, bidders[0].id);
+  Bid bid5(bid_id, {items[0].id, items[1].id, items[2].id}, bid_price, bidders[0].id);
 
   bid_id    = 5;
   bid_price = 30;
-  Bid bid6(bid_id, {items[0], items[1], items[3]}, bid_price, bidders[0].id);
+  Bid bid6(bid_id, {items[0].id, items[1].id, items[3].id}, bid_price, bidders[0].id);
 
-  bid5.excludes = {bid6};
-  bid6.excludes = {bid5};
+  bid5.excludes.emplace_back(bid6.id);
+  bid6.excludes.emplace_back(bid5.id);
 
   err = ca.PlaceBid(bid5);
-  ASSERT_TRUE(err == ErrorCode::SUCCESS);
+  ASSERT_EQ(err, ErrorCode::SUCCESS);
   err = ca.PlaceBid(bid6);
-  ASSERT_TRUE(err == ErrorCode::SUCCESS);
+  ASSERT_EQ(err, ErrorCode::SUCCESS);
 
   bid_id    = 6;
   bid_price = 7;
-  Bid bid7(bid_id, {items[3]}, bid_price, bidders[0].id);
+  Bid bid7(bid_id, {items[3].id}, bid_price, bidders[0].id);
   err = ca.PlaceBid(bid7);
-  ASSERT_TRUE(err == ErrorCode::SUCCESS);
+  ASSERT_EQ(err, ErrorCode::SUCCESS);
 
   for (std::size_t j = 0; j < 10; ++j)
   {

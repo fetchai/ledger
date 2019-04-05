@@ -20,7 +20,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
-#include "math/free_functions/statistics/normal.hpp"
+#include "math/statistics/normal.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
 
 #include <algorithm>
@@ -87,6 +87,7 @@ public:
   void AddFeedback(IDENTITY const &peer_ident, ConstByteArray const & /*object_ident*/,
                    TrustSubject subject, TrustQuality quality) override
   {
+    FETCH_UNUSED(subject);
     FETCH_LOCK(mutex_);
 
     auto ranking = ranking_store_.find(peer_ident);
@@ -103,8 +104,8 @@ public:
       pos = ranking->second;
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Feedback: ", byte_array::ToBase64(peer_ident),
-                   " subj=", ToString(subject), " qual=", ToString(quality));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Feedback: ", byte_array::ToBase64(peer_ident),
+                    " subj=", ToString(subject), " qual=", ToString(quality));
     if (quality == TrustQuality::NEW_PEER)
     {
       trust_store_[pos].update_score();

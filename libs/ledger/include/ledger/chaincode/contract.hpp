@@ -23,6 +23,8 @@
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "variant/variant.hpp"
 
+#include "ledger/state_adapter.hpp"
+
 #include <atomic>
 #include <functional>
 #include <stdexcept>
@@ -30,11 +32,15 @@
 #include <unordered_map>
 
 namespace fetch {
+
 namespace variant {
 class Variant;
 }
 namespace ledger {
 
+/**
+ * Contract - Base class for all smart contract and chain code instances
+ */
 class Contract
 {
 public:
@@ -45,9 +51,11 @@ public:
     NOT_FOUND,
   };
 
-  using ContractName          = chain::TransactionSummary::ContractName;
-  using Transaction           = chain::Transaction;
+  using Identity              = crypto::Identity;
+  using ConstByteArray        = byte_array::ConstByteArray;
+  using ContractName          = TransactionSummary::ContractName;
   using Query                 = variant::Variant;
+  using InitialiseHandler     = std::function<Status(Identity const &)>;
   using TransactionHandler    = std::function<Status(Transaction const &)>;
   using TransactionHandlerMap = std::unordered_map<ContractName, TransactionHandler>;
   using QueryHandler          = std::function<Status(Query const &, Query &)>;
@@ -55,259 +63,249 @@ public:
   using Counter               = std::atomic<std::size_t>;
   using CounterMap            = std::unordered_map<ContractName, Counter>;
   using StorageInterface      = ledger::StorageInterface;
-  using ResourceSet           = chain::TransactionSummary::ResourceSet;
-
-  Contract(Contract const &) = delete;
-  Contract(Contract &&)      = delete;
-  Contract &operator=(Contract const &) = delete;
-  Contract &operator=(Contract &&) = delete;
+  using ResourceSet           = TransactionSummary::ResourceSet;
 
   static constexpr char const *LOGGING_NAME = "Contract";
 
-  Status DispatchQuery(ContractName const &name, Query const &query, Query &response)
-  {
-    Status status{Status::NOT_FOUND};
+  // Construction / Destruction
+  Contract()                 = default;
+  Contract(Contract const &) = delete;
+  Contract(Contract &&)      = delete;
+  virtual ~Contract()        = default;
 
-    auto it = query_handlers_.find(name);
-    if (it != query_handlers_.end())
-    {
-      status = it->second(query, response);
-      ++query_counters_[name];
-    }
+  /// @name Contract Lifecycle Handlers
+  /// @{
+  void Attach(ledger::StateAdapter &state);
+  void Detach();
 
-    return status;
-  }
+  Status DispatchInitialise(Identity const &owner);
+  Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
+  Status DispatchTransaction(ConstByteArray const &name, Transaction const &tx);
+  /// @}
 
-  Status DispatchTransaction(byte_array::ConstByteArray const &name, Transaction const &tx)
-  {
-    Status status{Status::NOT_FOUND};
+  /// @name Dispatch Maps Accessors
+  /// @{
+  QueryHandlerMap const &      query_handlers() const;
+  TransactionHandlerMap const &transaction_handlers() const;
+  /// @}
 
-    auto it = transaction_handlers_.find(name);
-    if (it != transaction_handlers_.end())
-    {
-
-      // lock the contract resources
-      if (!LockResources(tx.summary().resources))
-      {
-        FETCH_LOG_ERROR(LOGGING_NAME, "LockResources failed.");
-        return Status::FAILED;
-      }
-
-      // dispatch the contract
-      status = it->second(tx);
-
-      // unlock the contract resources
-      if (!UnlockResources(tx.summary().resources))
-      {
-        FETCH_LOG_ERROR(LOGGING_NAME, "UnlockResources failed.");
-        return Status::FAILED;
-      }
-
-      ++transaction_counters_[name];
-    }
-
-    return status;
-  }
-
-  void Attach(StorageInterface &state)
-  {
-    state_ = &state;
-  }
-
-  void Detach()
-  {
-    state_ = nullptr;
-  }
-
-  std::size_t GetQueryCounter(std::string const &name)
-  {
-    auto it = query_counters_.find(name);
-    if (it != query_counters_.end())
-    {
-      return it->second;
-    }
-    else
-    {
-      return 0;
-    }
-  }
-
-  std::size_t GetTransactionCounter(std::string const &name)
-  {
-    auto it = transaction_counters_.find(name);
-    if (it != transaction_counters_.end())
-    {
-      return it->second;
-    }
-    else
-    {
-      return 0;
-    }
-  }
-
-  bool ParseAsJson(Transaction const &tx, variant::Variant &output);
-
-  Identifier const &identifier() const
-  {
-    return contract_identifier_;
-  }
-
-  QueryHandlerMap const &query_handlers() const
-  {
-    return query_handlers_;
-  }
-
-  TransactionHandlerMap const &transaction_handlers() const
-  {
-    return transaction_handlers_;
-  }
-
-  storage::ResourceAddress CreateStateIndex(byte_array::ByteArray const &suffix) const
-  {
-    byte_array::ByteArray index;
-    index.Append(contract_identifier_.name_space(), ".state.", suffix);
-    return storage::ResourceAddress{index};
-  }
+  // Operators
+  Contract &operator=(Contract const &) = delete;
+  Contract &operator=(Contract &&) = delete;
 
 protected:
-  explicit Contract(byte_array::ConstByteArray const &identifier)
-    : contract_identifier_{identifier}
-  {}
-
+  /// @name Initialise Handlers
+  /// @{
+  void OnInitialise(InitialiseHandler &&handler);
   template <typename C>
-  void OnTransaction(std::string const &name, C *instance, Status (C::*func)(Transaction const &))
-  {
-    if (transaction_handlers_.find(name) == transaction_handlers_.end())
-    {
-      transaction_handlers_[name] = [instance, func](Transaction const &tx) {
-        return (instance->*func)(tx);
-      };
-      transaction_counters_[name] = 0;
-    }
-    else
-    {
-      throw std::logic_error("Duplicate transaction handler registered");
-    }
-  }
+  void OnInitialise(C *instance, Status (C::*func)(Identity const &));
+  /// @}
 
+  /// @name Transaction Handlers
+  /// @{
+  void OnTransaction(std::string const &name, TransactionHandler &&handler);
   template <typename C>
-  void OnQuery(std::string const &name, C *instance, Status (C::*func)(Query const &, Query &))
-  {
-    if (query_handlers_.find(name) == query_handlers_.end())
-    {
-      query_handlers_[name] = [instance, func](Query const &query, Query &response) {
-        return (instance->*func)(query, response);
-      };
-      query_counters_[name] = 0;
-    }
-    else
-    {
-      throw std::logic_error("Duplicate query handler registered");
-    }
-  }
+  void OnTransaction(std::string const &name, C *instance, Status (C::*func)(Transaction const &));
+  /// @}
 
-  StorageInterface &state()
-  {
-    detailed_assert(state_ != nullptr);
-    return *state_;
-  }
+  /// @name Query Handler Registration
+  /// @{
+  void OnQuery(std::string const &name, QueryHandler &&handler);
+  template <typename C>
+  void OnQuery(std::string const &name, C *instance, Status (C::*func)(Query const &, Query &));
+  /// @}
+
+  /// @name Chain Code State Utils
+  /// @{
+  bool ParseAsJson(Transaction const &tx, variant::Variant &output);
 
   template <typename T>
-  bool GetOrCreateStateRecord(T &record, byte_array::ByteArray const &address)
-  {
-
-    // create the index that is required
-    auto index = CreateStateIndex(address);
-
-    // retrieve the state data
-    auto document = state().GetOrCreate(index);
-    if (document.failed)
-    {
-      return false;
-    }
-
-    // update the document if it wasn't created
-    if (!document.was_created)
-    {
-      serializers::ByteArrayBuffer buffer(document.document);
-      buffer >> record;
-    }
-
-    return true;
-  }
-
+  bool GetStateRecord(T &record, ConstByteArray const &key);
   template <typename T>
-  bool GetStateRecord(T &record, byte_array::ByteArray const &address)
-  {
+  void SetStateRecord(T const &record, ConstByteArray const &key);
 
-    // create the index that is required
-    auto index = CreateStateIndex(address);
-
-    // retrieve the state data
-    auto document = state().Get(index);
-    if (document.failed)
-    {
-      return false;
-    }
-
-    // update the document if it wasn't created
-    serializers::ByteArrayBuffer buffer(document.document);
-    buffer >> record;
-
-    return true;
-  }
-
-  template <typename T>
-  void SetStateRecord(T const &record, byte_array::ByteArray const &address)
-  {
-    auto index = CreateStateIndex(address);
-
-    // serialize the record to the buffer
-    serializers::ByteArrayBuffer buffer;
-    buffer << record;
-
-    // store the buffer
-    state().Set(index, buffer.data());
-  }
+  ledger::StateAdapter &state();
+  /// @}
 
 private:
-  bool LockResources(ResourceSet const &resources)
-  {
-    bool success = true;
+  static constexpr std::size_t DEFAULT_BUFFER_SIZE = 512;
 
-    for (auto const &group : resources)
-    {
-      if (!state().Lock(CreateStateIndex(group)))
-      {
-        success = false;
-      }
-    }
-
-    return success;
-  }
-
-  bool UnlockResources(ResourceSet const &resources)
-  {
-    bool success = true;
-
-    for (auto const &group : resources)
-    {
-      if (!state().Unlock(CreateStateIndex(group)))
-      {
-        success = false;
-      }
-    }
-
-    return success;
-  }
-
-  Identifier            contract_identifier_;
+  /// @name Dispatch Maps - built on construction
+  /// @{
+  InitialiseHandler     init_handler_{};
   QueryHandlerMap       query_handlers_{};
   TransactionHandlerMap transaction_handlers_{};
-  CounterMap            transaction_counters_{};
-  CounterMap            query_counters_{};
-  StorageInterface *    state_ = nullptr;
+  /// @}
+
+  /// @name Statistics
+  CounterMap transaction_counters_{};
+  CounterMap query_counters_{};
+  /// @}
+
+  /// @name State
+  /// @{
+  ledger::StateAdapter *state_ = nullptr;
+  /// @}
 };
+
+/**
+ * Attach the state interface to the contract instance
+ *
+ * @param state The reference
+ */
+inline void Contract::Attach(ledger::StateAdapter &state)
+{
+  state_ = &state;
+}
+
+/**
+ * Detach the state interface from the contract instance
+ */
+inline void Contract::Detach()
+{
+  state_ = nullptr;
+}
+
+/**
+ * Query Handler Map Accessor
+ *
+ * @return The query handler map
+ */
+inline Contract::QueryHandlerMap const &Contract::query_handlers() const
+{
+  return query_handlers_;
+}
+
+/**
+ * Transaction Handler Map Accessor
+ *
+ * @return The transaction handler map
+ */
+inline Contract::TransactionHandlerMap const &Contract::transaction_handlers() const
+{
+  return transaction_handlers_;
+}
+
+/**
+ * Register a class member function as an init handler
+ *
+ * @tparam C The class type
+ * @param instance The pointer to the class instance
+ * @param func The member function pointer
+ */
+template <typename C>
+void Contract::OnInitialise(C *instance, Status (C::*func)(Identity const &))
+{
+  OnInitialise([instance, func](Identity const &owner) { return (instance->*func)(owner); });
+}
+
+/**
+ * Register class member function transaction handler
+ *
+ * @tparam C The class type
+ * @param name The action name
+ * @param instance The pointer to the class instance
+ * @param func The member function pointer
+ */
+template <typename C>
+void Contract::OnTransaction(std::string const &name, C *instance,
+                             Status (C::*func)(Transaction const &))
+{
+  // create the function handler and pass it to the normal function
+  OnTransaction(name, [instance, func](Transaction const &tx) { return (instance->*func)(tx); });
+}
+
+/**
+ * Register class member query handler
+ *
+ * @tparam C The class type
+ * @param name THe query name
+ * @param instance The pointer to the class instance
+ * @param func THe member function pointer
+ */
+template <typename C>
+void Contract::OnQuery(std::string const &name, C *instance,
+                       Status (C::*func)(Query const &, Query &))
+{
+  OnQuery(name, [instance, func](Query const &query, Query &response) {
+    return (instance->*func)(query, response);
+  });
+}
+
+/**
+ * Lookup the state record stored with the specified key
+ *
+ * @tparam T The type of the state record
+ * @param record The reference to the record to be populated
+ * @param key The key of the index
+ * @return true if successful, otherwise false
+ */
+template <typename T>
+bool Contract::GetStateRecord(T &record, ConstByteArray const &key)
+{
+  using fetch::byte_array::ByteArray;
+
+  bool success{false};
+
+  ByteArray buffer;
+  buffer.Resize(std::size_t{DEFAULT_BUFFER_SIZE});  // initial guess, can be tuned over time
+
+  uint64_t buffer_length = buffer.size();
+  auto     status        = state().Read(std::string{key}, buffer.pointer(), buffer_length);
+
+  // in rare cases the initial buffer might be too small in this case we need to reallocate and then
+  // re-query
+  if (vm::IoObserverInterface::Status::BUFFER_TOO_SMALL == status)
+  {
+    // reallocate the buffer
+    buffer.Resize(buffer_length);
+
+    // retry the read
+    status = state().Read(std::string{key}, buffer.pointer(), buffer_length);
+  }
+
+  switch (status)
+  {
+  case vm::IoObserverInterface::Status::OK:
+  {
+    // adapt the buffer for deserialization
+    serializers::ByteArrayBuffer adapter{buffer};
+    adapter >> record;
+
+    success = true;
+    break;
+  }
+  case vm::IoObserverInterface::Status::ERROR:
+    break;
+  case vm::IoObserverInterface::Status::PERMISSION_DENIED:
+    break;
+  case vm::IoObserverInterface::Status::BUFFER_TOO_SMALL:
+    break;
+  }
+
+  return success;
+}
+
+/**
+ * Store a state record at a specified key
+ *
+ * @tparam T The type of the state record
+ * @param record The reference to the record
+ * @param key The key for the state record
+ */
+template <typename T>
+void Contract::SetStateRecord(T const &record, ConstByteArray const &key)
+{
+  // serialize the record to the buffer
+  serializers::ByteArrayBuffer buffer;
+  buffer << record;
+
+  // lookup reference to the underlying buffer
+  auto const &data = buffer.data();
+
+  // store the buffer
+  state().Write(std::string{key}, data.pointer(), data.size());
+}
 
 }  // namespace ledger
 }  // namespace fetch

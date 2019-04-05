@@ -12,15 +12,15 @@ compile the `vm` examples and be familiar with the build system.
 Writing your first VM code 
 --------------------------
 In this first example we are going to build a `Hello world`-application. We will do that
-using the first example vm code `example_01_basic_vm`. To build this code type
+using the first example vm code `example-vm-01-basic-vm`. To build this code type
 
 
 .. code-block:: bash
 
-                $ make example_01_basic_vm
+                $ make example-vm-01-basic-vm
 
 after having initialized the `build` directory. This will give you an executable 
-`./libs/vm/examples/example_01_basic_vm` that can execute scripts. For now, we will not be 
+`./libs/vm/examples/example-vm-01-basic-vm` that can execute scripts. For now, we will not be
 concerned with the the internals of this program but just get started with the language. The first
 program we will write looks like this:
 
@@ -30,7 +30,7 @@ You can try this script by running
 
 .. code-block:: bash
 
-                $ ./libs/vm/examples/example_01_basic_vm ../libs/vm/examples/01_basic_vm/scripts/hello_world.fetch
+                $ ./libs/vm/examples/example-vm-01-basic-vm ../libs/vm/examples/01_basic_vm/scripts/hello_world.fetch
                 Hello world!
 
 The Fetch language is strongly typed meaning that the type is determined at compile time. In many cases, types are 
@@ -45,7 +45,7 @@ running this script is:
 
 .. code-block:: bash
 
-                $ ./libs/vm/examples/example_01_basic_vm ../libs/vm/examples/01_basic_vm/scripts/hello_world2.fetch
+                $ ./libs/vm/examples/example-vm-01-basic-vm ../libs/vm/examples/01_basic_vm/scripts/hello_world2.fetch
                 Hello world
                 Hello Fetch
 
@@ -61,9 +61,9 @@ The result of executing this code a message stating `The result is: 5` as you wo
 
 Branching and looping
 ---------------------
-Next, let's loops and branches. While the VM does not support system arguments natively, `example_01_basic_vm` implements 
-support for system arguments. Making loops in the Fetch VM is easy and below we show how one can iterate over all
-passed system arguments:
+Next, let's look at loops and branches. While the VM does not support system arguments natively, `example-vm-01-basic-vm`
+implements support for system arguments. Making loops in the Fetch VM is easy and below we show how one can iterate
+over all passed system arguments:
 
 .. literalinclude:: ../../../libs/vm/examples/01_basic_vm/scripts/using_system_args.fetch
 
@@ -88,8 +88,8 @@ With this, the most basic functionality is covered and we will explore how to ex
 
 Extending the functionality
 ===========================
-In this section we will go through the details on how to build extensions for the VM. We will start out be 
-investigating the implementation of the `example_01_basic_vm`.
+In this section we will go through the details on how to build extensions for the VM. We will start out by
+investigating the implementation of the `example-vm-01-basic-vm`.
 
 Adding free functions
 ---------------------

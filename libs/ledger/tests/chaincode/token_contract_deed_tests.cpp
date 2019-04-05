@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/transaction.hpp"
-#include "ledger/chaincode/token_contract_deed.hpp"
+#include "ledger/chaincode/deed.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 
@@ -29,9 +29,9 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-using VerifTx    = chain::VerifiedTransaction;
-using MutTx      = chain::MutableTransaction;
-using PrivateKey = fetch::chain::TxSigningAdapter<>::private_key_type;
+using VerifTx    = VerifiedTransaction;
+using MutTx      = MutableTransaction;
+using PrivateKey = TxSigningAdapter<>::private_key_type;
 using byte_array::ConstByteArray;
 using variant::Variant;
 using Amount = uint64_t;
@@ -62,7 +62,7 @@ protected:
     tx.PushResource(from);
     tx.PushResource(to);
 
-    auto sign_adapter = chain::TxSigningAdapterFactory(tx);
+    auto sign_adapter = TxSigningAdapterFactory(tx);
     for (auto const &key : signing_keys)
     {
       tx.Sign(key, sign_adapter);

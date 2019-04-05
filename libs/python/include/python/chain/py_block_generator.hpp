@@ -21,7 +21,7 @@
 
 #include "fetch_pybind.hpp"
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 void BuildBlockGenerator(pybind11::module &module)
 {
@@ -36,5 +36,5 @@ void BuildBlockGenerator(pybind11::module &module)
       .def("PushTransactionSummary", &BlockGenerator::PushTransactionSummary)
       .def("PrintTransactionSummary", &BlockGenerator::PrintTransactionSummary);
 }
-};  // namespace chain
+};  // namespace ledger
 };  // namespace fetch

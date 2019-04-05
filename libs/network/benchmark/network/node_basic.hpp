@@ -129,6 +129,8 @@ public:
   // TODO(issue 28): get rid of start in fn names
   void StartTestAsMaster(uint64_t startTime)
   {
+    FETCH_UNUSED(startTime);
+
     if (thread_.joinable())
     {
       thread_.join();

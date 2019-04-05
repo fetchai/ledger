@@ -75,7 +75,9 @@ private:
  */
 inline ResourceID::ResourceID(byte_array::ConstByteArray id)
   : id_(std::move(id))
-{}
+{
+  assert(id.size() == RESOURCE_ID_SIZE_IN_BYTES);
+}
 
 /**
  * Gets the current id (hashed) value
@@ -181,6 +183,16 @@ public:
     return *this;
   }
 
+  bool operator<(ResourceAddress const &other) const
+  {
+    return address_ < other.address_;
+  }
+
+  bool operator==(ResourceAddress const &other) const
+  {
+    return address_ == other.address_;
+  }
+
 private:
   byte_array::ByteArray address_;  ///< The canonical resource address
 };
@@ -199,6 +211,19 @@ struct hash<fetch::storage::ResourceID>
     assert(id.size() >= sizeof(std::size_t));
 
     // this is generally fine because the resource ID is in fact a SHA256
+    return *reinterpret_cast<std::size_t const *>(id.pointer());
+  }
+};
+
+template <>
+struct hash<fetch::storage::ResourceAddress>
+{
+  std::size_t operator()(fetch::storage::ResourceID const &rid) const
+  {
+    auto const &id = rid.id();
+    assert(id.size() >= sizeof(std::size_t));
+
+    // this should be fine since the ResourceAddress is actually a SHA256
     return *reinterpret_cast<std::size_t const *>(id.pointer());
   }
 };

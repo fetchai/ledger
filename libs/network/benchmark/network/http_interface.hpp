@@ -115,6 +115,8 @@ public:
 
   http::HTTPResponse AddEndpoint(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    FETCH_UNUSED(params);
+
     LOG_STACK_TRACE_POINT;
     json::JSONDocument doc;
     try
@@ -136,6 +138,9 @@ public:
 
   http::HTTPResponse Transactions(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    FETCH_UNUSED(params);
+    FETCH_UNUSED(req);
+
     auto transactions = node_->GetTransactions();
 
     variant::Variant result = variant::Variant::Array(transactions.size());
@@ -154,6 +159,8 @@ public:
 
   http::HTTPResponse SetTPC(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    FETCH_UNUSED(params);
+
     json::JSONDocument doc;
     try
     {
@@ -174,6 +181,9 @@ public:
 
   http::HTTPResponse Reset(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    FETCH_UNUSED(params);
+    FETCH_UNUSED(req);
+
     node_->Reset();
     return http::HTTPResponse(successString);
   }
@@ -181,6 +191,9 @@ public:
   http::HTTPResponse TransactionsHash(http::ViewParameters const &params,
                                       http::HTTPRequest const &   req)
   {
+    FETCH_UNUSED(params);
+    FETCH_UNUSED(req);
+
     auto res = node_->TransactionsHash();
 
     variant::Variant result = variant::Variant::Object();
@@ -197,6 +210,8 @@ public:
   http::HTTPResponse TransactionsToSync(http::ViewParameters const &params,
                                         http::HTTPRequest const &   req)
   {
+    FETCH_UNUSED(params);
+
     json::JSONDocument doc;
     try
     {
@@ -215,6 +230,8 @@ public:
 
   http::HTTPResponse StopCondition(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    FETCH_UNUSED(params);
+
     json::JSONDocument doc;
     try
     {
@@ -233,12 +250,17 @@ public:
 
   http::HTTPResponse IsSlave(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    FETCH_UNUSED(params);
+    FETCH_UNUSED(req);
+
     node_->isSlave();
     return http::HTTPResponse(successString);
   }
 
   http::HTTPResponse StartTime(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    FETCH_UNUSED(params);
+
     LOG_STACK_TRACE_POINT;
     json::JSONDocument doc;
     try
@@ -259,6 +281,8 @@ public:
   http::HTTPResponse StartTestAsMaster(http::ViewParameters const &params,
                                        http::HTTPRequest const &   req)
   {
+    FETCH_UNUSED(params);
+
     LOG_STACK_TRACE_POINT;
     json::JSONDocument doc;
     try
@@ -279,6 +303,9 @@ public:
   http::HTTPResponse TimeToComplete(http::ViewParameters const &params,
                                     http::HTTPRequest const &   req)
   {
+    FETCH_UNUSED(params);
+    FETCH_UNUSED(req);
+
     LOG_STACK_TRACE_POINT;
     variant::Variant result = variant::Variant::Object();
 
@@ -292,6 +319,9 @@ public:
 
   http::HTTPResponse Finished(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    FETCH_UNUSED(params);
+    FETCH_UNUSED(req);
+
     LOG_STACK_TRACE_POINT;
     variant::Variant result = variant::Variant::Object();
 
@@ -306,6 +336,8 @@ public:
   http::HTTPResponse TransactionSize(http::ViewParameters const &params,
                                      http::HTTPRequest const &   req)
   {
+    FETCH_UNUSED(params);
+
     json::JSONDocument doc;
     try
     {

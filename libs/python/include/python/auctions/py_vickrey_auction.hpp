@@ -32,7 +32,7 @@ void BuildVickreyAuction(std::string const &custom_name, pybind11::module &modul
 
   namespace py = pybind11;
   py::class_<VickreyAuction>(module, custom_name.c_str())
-      .def(py::init<BlockId, BlockId>())
+      .def(py::init<>())
       .def("AddItem",
            [](VickreyAuction &ca, Item const &item) {
              ErrorCode ec;

@@ -47,7 +47,7 @@ struct StackSetter
   static void Set(VM *vm, int sp_offset, T &&result, TypeId type_id)
   {
     Variant &v = vm->stack_[vm->sp_ - sp_offset];
-    v.Assign(std::move(result), type_id);
+    v.Assign(std::forward<T>(result), type_id);
   }
 };
 
@@ -66,7 +66,17 @@ struct TypeGetter<T, typename std::enable_if_t<IsPtr<T>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
-    using ManagedType = typename ptr_managed_type<T>::type;
+    using ManagedType = typename GetManagedType<T>::type;
+    return TypeIndex(typeid(ManagedType));
+  }
+};
+
+template <typename T>
+struct TypeGetter<T, typename std::enable_if_t<IsAddress<T>::value>>
+{
+  static TypeIndex GetTypeIndex()
+  {
+    using ManagedType = typename GetManagedType<Ptr<T>>::type;
     return TypeIndex(typeid(ManagedType));
   }
 };
@@ -87,7 +97,7 @@ struct ParameterTypeGetter<T, typename std::enable_if_t<IsPtrParameter<T>::value
 {
   static TypeIndex GetTypeIndex()
   {
-    using ManagedType = typename ptr_managed_type<std::decay_t<T>>::type;
+    using ManagedType = typename GetManagedType<std::decay_t<T>>::type;
     return TypeIndex(typeid(ManagedType));
   }
 };

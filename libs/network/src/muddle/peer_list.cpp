@@ -49,8 +49,7 @@ bool PeerConnectionList::AddPersistentPeer(Uri const &peer)
   {
     return false;
   }
-  persistent_peers_.emplace(peer);
-  return true;
+  return persistent_peers_.emplace(peer).second;
 }
 
 void PeerConnectionList::RemovePersistentPeer(Uri const &peer)
@@ -261,9 +260,7 @@ void PeerConnectionList::Disconnect(Uri const &peer)
     peer_connections_.erase(peer);
   }
 
-  persistent_peers_.erase(peer);
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.uri(), " shut down");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Connection to ", peer.uri(), " shut down");
 }
 
 bool PeerConnectionList::ReadyForRetry(const PeerMetadata &metadata) const

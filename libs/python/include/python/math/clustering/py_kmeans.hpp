@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/clustering_algorithms/k_means.hpp"
-#include "math/linalg/matrix.hpp"
+#include "math/clustering/k_means.hpp"
+#include "math/tensor.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -43,12 +43,12 @@ inline fetch::math::clustering::ClusteringType WrapperKMeans(
 
 inline void BuildKMeansClustering(std::string const &custom_name, pybind11::module &module)
 {
-  using namespace fetch::math::linalg;
+  using namespace fetch::math;
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperKMeans<Matrix<double>>)
-      .def(custom_name.c_str(), &WrapperKMeans<Matrix<float>>);
+  module.def(custom_name.c_str(), &WrapperKMeans<Tensor<double>>)
+      .def(custom_name.c_str(), &WrapperKMeans<Tensor<float>>);
 }
 
 }  // namespace clustering

@@ -47,8 +47,8 @@ protected:
   {
     shrd_ptr_type<BIGNUM> orig_bn{BN_new()};
 
-    ASSERT_TRUE(nullptr != BN_bin2bn(orig_bin_bn.pointer(), static_cast<int>(orig_bin_bn.size()),
-                                     orig_bn.get()));
+    ASSERT_NE(nullptr, BN_bin2bn(orig_bin_bn.pointer(), static_cast<int>(orig_bin_bn.size()),
+                                 orig_bn.get()));
 
     byte_array::ConstByteArray const padding_bin(num_of_padding_bytes);
     byte_array::ConstByteArray       padded_bin_bn;
@@ -84,9 +84,9 @@ protected:
 
     shrd_ptr_type<BIGNUM> padded_bn{BN_new()};
 
-    ASSERT_TRUE(nullptr !=
-                BN_bin2bn(static_cast<byte_array::ConstByteArray const &>(padded_bin_bn).pointer(),
-                          static_cast<int>(padded_bin_bn.size()), padded_bn.get()));
+    ASSERT_NE(nullptr,
+              BN_bin2bn(static_cast<byte_array::ConstByteArray const &>(padded_bin_bn).pointer(),
+                        static_cast<int>(padded_bin_bn.size()), padded_bn.get()));
 
     EXPECT_EQ(expected_comparison_result, 0 == BN_cmp(orig_bn.get(), padded_bn.get()));
   }

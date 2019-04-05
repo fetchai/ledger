@@ -70,14 +70,16 @@ macro(setup_compiler)
   # warnings
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wconversion -Wpedantic")
 
-  #fetch_info("Using compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+  # Suppress visibility link warnings
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
+
   if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pragmas")
   endif()
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   if(FETCH_WARNINGS_AS_ERRORS)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wno-unused-parameter")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
   endif(FETCH_WARNINGS_AS_ERRORS)
 
   # prefer PIC
@@ -150,18 +152,30 @@ macro(setup_compiler)
 
 endmacro(setup_compiler)
 
+
 function(configure_vendor_targets)
 
+  # OpenSSL
   find_package(OpenSSL REQUIRED)
+  find_package(Threads)
 
   if(FETCH_VERBOSE_CMAKE)
     message(STATUS "OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
     message(STATUS "OpenSSL libraries: ${OPENSSL_LIBRARIES}")
+    if(OPENSSL_USE_STATIC_LIBS)
+      message(STATUS "OpenSSL linking: Static")
+    else()
+      message(STATUS "OpenSSL linking: Dynamic")
+    endif()
   endif(FETCH_VERBOSE_CMAKE)
 
-  # OpenSSL
   add_library(vendor-openssl INTERFACE)
   target_link_libraries(vendor-openssl INTERFACE ${OPENSSL_LIBRARIES})
+
+  if(OPENSSL_USE_STATIC_LIBS)
+    target_link_libraries(vendor-openssl INTERFACE ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+  endif(OPENSSL_USE_STATIC_LIBS)
+
   target_include_directories(vendor-openssl INTERFACE ${OPENSSL_INCLUDE_DIR})
 
   # setup the testing
@@ -174,6 +188,13 @@ function(configure_vendor_targets)
   add_library(vendor-asio INTERFACE)
   target_include_directories(vendor-asio INTERFACE ${FETCH_ROOT_VENDOR_DIR}/asio/asio/include)
   target_compile_definitions(vendor-asio INTERFACE ASIO_STANDALONE ASIO_HEADER_ONLY ASIO_HAS_STD_SYSTEM_ERROR)
+
+  # required for latest version of Xcode: Apple LLVM version 10.0.1 (clang-1001.0.46.3). In this
+  # version the string view has been removed from: <experimental/string_view>. This will need to be
+  # set across all compilers when C++17 support is standard.
+  if (APPLE)
+    target_compile_definitions(vendor-asio INTERFACE ASIO_HAS_STD_STRING_VIEW)
+  endif (APPLE)
 
   # Pybind11
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/pybind11)
@@ -191,6 +212,11 @@ function(configure_vendor_targets)
   # mio vendor library
   add_library(vendor-mio INTERFACE)
   target_include_directories(vendor-mio INTERFACE ${FETCH_ROOT_VENDOR_DIR}/mio/include)
+
+  # MsgPack
+  add_library(vendor-msgpack INTERFACE)
+  target_include_directories(vendor-msgpack INTERFACE ${FETCH_ROOT_VENDOR_DIR}/msgpack/include)
+  target_compile_definitions(vendor-msgpack INTERFACE -DMSGPACK_CXX11=ON)
 
 endfunction(configure_vendor_targets)
 
@@ -219,6 +245,8 @@ endfunction(configure_library_targets)
 macro(detect_environment)
 
   set (CMAKE_EXPORT_COMPILE_COMMANDS  ON)
+
+  message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 
   # detect if we are running in a Jetbrains IDE
   set(FETCH_IS_JETBRAINS_IDE FALSE)
@@ -258,13 +286,22 @@ endmacro()
 
 function (generate_configuration_file)
 
-  # execute git to determine the version
-  execute_process(
-    COMMAND git describe --dirty=-wip --always
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    OUTPUT_VARIABLE version
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
+  if (DEFINED ENV{FETCH_BUILD_VERSION})
+
+    set (version "$ENV{FETCH_BUILD_VERSION}")
+    message (STATUS "Using predefined version: ${version}")
+
+  else()
+
+    # execute git to determine the version
+    execute_process(
+      COMMAND git describe --dirty=-wip --always
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      OUTPUT_VARIABLE version
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+  endif()
 
   # determine the format of the output from the above command
   string(REGEX MATCHALL "^v.*" is_normal_version "${version}")

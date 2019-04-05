@@ -1,8 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<category id="DevelopersGuide" name="DevelopersGuide" xmlns="http://jessevdk.github.com/cldoc/1.0">
-  <brief>Developers documentation.</brief>
-  <doc># Devlopers Guide
-</doc>
-  <category name="GettingStarted" ref="DevelopersGuide::GettingStarted#DevelopersGuide::GettingStarted" />
-  <category name="StyleGuide" ref="DevelopersGuide::StyleGuide#DevelopersGuide::StyleGuide" />
-</category>

@@ -21,6 +21,7 @@
 
 #include "auctions/combinatorial_auction.hpp"
 #include "auctions/error_codes.hpp"
+#include "math/tensor.hpp"
 
 #include "python/fetch_pybind.hpp"
 
@@ -29,10 +30,9 @@ namespace auctions {
 
 void BuildCombinatorialAuction(std::string const &custom_name, pybind11::module &module)
 {
-
   namespace py = pybind11;
   py::class_<CombinatorialAuction>(module, custom_name.c_str())
-      .def(py::init<BlockId, BlockId>())
+      .def(py::init<>())
       .def("AddItem",
            [](CombinatorialAuction &ca, Item const &item) {
              ErrorCode ec;

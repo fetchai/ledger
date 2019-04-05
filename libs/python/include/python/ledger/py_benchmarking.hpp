@@ -36,8 +36,8 @@ namespace ledger {
 
 struct AdaptedTx
 {
-  chain::MutableTransaction                          tx;
-  chain::TxSigningAdapter<chain::MutableTransaction> adapter{tx};
+  ledger::MutableTransaction                           tx;
+  ledger::TxSigningAdapter<ledger::MutableTransaction> adapter{tx};
 
   template <typename T>
   friend void Serialize(T &s, AdaptedTx const &a)

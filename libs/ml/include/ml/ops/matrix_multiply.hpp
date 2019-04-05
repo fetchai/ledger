@@ -17,9 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/free_functions.hpp"
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
-#include "ml/ops/derivatives/derivatives.hpp"
+#include "math/matrix_operations.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -27,59 +25,66 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class MatrixMultiply : public fetch::ml::Ops<T>
+class MatrixMultiply : public fetch::ml::BatchOps<T>
 {
 public:
   using ArrayType    = T;
+  using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   MatrixMultiply()          = default;
   virtual ~MatrixMultiply() = default;
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     assert(inputs.size() == 2);
-    assert(inputs[0]->shape().size() == 2);
-    assert(inputs[1]->shape().size() == 2);
-    assert(inputs[0]->shape()[1] == inputs[1]->shape()[0]);
+    assert(inputs.at(0).get().shape().size() == 2);
+    assert(inputs.at(1).get().shape().size() == 2);
 
-    std::vector<std::size_t> outputShape({inputs[0]->shape()[0], inputs[1]->shape()[1]});
+    // inner dimension check
+    assert(inputs.at(0).get().shape()[1] == inputs.at(1).get().shape()[0]);
+
+    std::vector<SizeType> outputShape(
+        {inputs.at(0).get().shape()[0], inputs.at(1).get().shape()[1]});
     if (!this->output_ || this->output_->shape() != outputShape)
     {
       this->output_ = std::make_shared<ArrayType>(outputShape);
     }
 
-    for (std::size_t i(0); i < inputs[0]->shape()[0]; ++i)
+    for (SizeType i(0); i < inputs.at(0).get().shape()[0]; ++i)
     {
-      for (std::size_t j(0); j < inputs[1]->shape()[1]; ++j)
+      for (SizeType j(0); j < inputs.at(1).get().shape()[1]; ++j)
       {
-        this->output_->Get(std::vector<std::size_t>({i, j})) =
-            inputs[0]->Get(std::vector<std::size_t>({i, 0})) *
-            inputs[1]->Get(std::vector<std::size_t>({0, j}));
-        for (std::size_t k(1); k < inputs[0]->shape()[1]; ++k)
+        this->output_->At(std::vector<SizeType>({i, j})) =
+            inputs.at(0).get().At(std::vector<SizeType>({i, 0})) *
+            inputs.at(1).get().At(std::vector<SizeType>({0, j}));
+        for (SizeType k(1); k < inputs.at(0).get().shape()[1]; ++k)
         {
-          this->output_->Get(std::vector<std::size_t>({i, j})) +=
-              inputs[0]->Get(std::vector<std::size_t>({i, k})) *
-              inputs[1]->Get(std::vector<std::size_t>({k, j}));
+          this->output_->At(std::vector<SizeType>({i, j})) +=
+              inputs.at(0).get().At(std::vector<SizeType>({i, k})) *
+              inputs.at(1).get().At(std::vector<SizeType>({k, j}));
         }
       }
     }
-    return this->output_;
+    return *this->output_;
   }
 
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal)
   {
     assert(inputs.size() == 2);
 
-    ArrayPtrType errorSignal1 = std::make_shared<ArrayType>(inputs[0]->shape());
-    ArrayPtrType errorSignal2 = std::make_shared<ArrayType>(inputs[1]->shape());
+    ArrayType errorSignal1(inputs.at(0).get().shape());
+    ArrayType errorSignal2(inputs.at(1).get().shape());
 
-    fetch::math::DotTranspose(*errorSignal, *inputs[1], *errorSignal1);
-    fetch::math::TransposeDot(*inputs[0], *errorSignal, *errorSignal2);
+    fetch::math::DotTranspose(errorSignal, inputs.at(1).get(), errorSignal1);
+    fetch::math::TransposeDot(inputs.at(0).get(), errorSignal, errorSignal2);
 
     return {errorSignal1, errorSignal2};
   }
+
+  static constexpr char const *DESCRIPTOR = "MatrixMultiply";
 };
 
 }  // namespace ops

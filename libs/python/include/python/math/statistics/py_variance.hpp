@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/statistics/variance.hpp"
-#include "math/linalg/matrix.hpp"
+#include "math/statistics/variance.hpp"
+#include "math/tensor.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -33,16 +33,12 @@ inline typename A::Type WrapperVariance(A const &a)
 
 inline void BuildVarianceStatistics(std::string const &custom_name, pybind11::module &module)
 {
-  using namespace fetch::math::linalg;
+  using namespace fetch::math;
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperVariance<Matrix<double>>)
-      .def(custom_name.c_str(), &WrapperVariance<Matrix<float>>)
-      .def(custom_name.c_str(), &WrapperVariance<RectangularArray<double>>)
-      .def(custom_name.c_str(), &WrapperVariance<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperVariance<ShapelessArray<double>>)
-      .def(custom_name.c_str(), &WrapperVariance<ShapelessArray<float>>);
+  module.def(custom_name.c_str(), &WrapperVariance<Tensor<double>>)
+      .def(custom_name.c_str(), &WrapperVariance<Tensor<float>>);
 }
 
 }  // namespace statistics

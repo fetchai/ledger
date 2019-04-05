@@ -3,9 +3,8 @@ import fetch.auctions
 import fetch.byte_array
 
 
-ba1 = fetch.byte_array.ByteArray("StartBlockId")
 ba2 = fetch.byte_array.ByteArray("ExecuteBlockId")
-ca = fetch.auctions.CombinatorialAuction(ba1, ba2)
+ca = fetch.auctions.CombinatorialAuction(ba2)
 
 
 item_id_offset = 200
@@ -34,7 +33,7 @@ for cur_bid in range(n_bids):
 	id = bid_id_offset + count
 	price = bid_price_offset + count
 	bidder = bid_bidder_offset + count
-	bids.append(fetch.auctions.Bid(id, [items[-1]], price, bidder))
+	bids.append(fetch.auctions.Bid(id, [items[-1].Id()], price, bidder))
 	count += 1
 
 # add item

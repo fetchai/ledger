@@ -65,7 +65,7 @@ public:
     auto ptr = connection_register_.lock();
     if (ptr)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "~AbstractConnection calling Leave");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "~AbstractConnection calling Leave");
       ptr->Leave(handle_);
     }
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connection destroyed for handle ", h);
@@ -74,7 +74,7 @@ public:
   virtual void     Send(message_type const &) = 0;
   virtual uint16_t Type() const               = 0;
   virtual void     Close()                    = 0;
-  virtual bool     Closed()                   = 0;
+  virtual bool     Closed() const             = 0;
   virtual bool     is_alive() const           = 0;
 
   // Common to all
@@ -159,8 +159,8 @@ protected:
 
   void SignalLeave()
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Connection terminated for handle ", handle_.load(),
-                   ", SignalLeave called.");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection terminated for handle ", handle_.load(),
+                    ", SignalLeave called.");
     std::function<void(void)> cb;
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
@@ -172,7 +172,7 @@ protected:
       cb();
     }
     DeactivateSelfManage();
-    FETCH_LOG_WARN(LOGGING_NAME, "SignalLeave is done");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "SignalLeave is done");
   }
 
   void SignalMessage(network::message_type const &msg)

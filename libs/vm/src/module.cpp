@@ -26,9 +26,9 @@ Module::Module()
   next_type_id_ = TypeIds::NumReserved;
   next_opcode_  = Opcodes::NumReserved;
 
-  RegisterType(TypeIndex(typeid(T)), TypeIds::Parameter1);
-  RegisterType(TypeIndex(typeid(MapKey)), TypeIds::Parameter1);
-  RegisterType(TypeIndex(typeid(MapValue)), TypeIds::Parameter2);
+  RegisterType(TypeIndex(typeid(TemplateParameter)), TypeIds::TemplateParameter1);
+  RegisterType(TypeIndex(typeid(TemplateParameter1)), TypeIds::TemplateParameter1);
+  RegisterType(TypeIndex(typeid(TemplateParameter2)), TypeIds::TemplateParameter2);
 
   RegisterType(TypeIndex(typeid(void)), TypeIds::Void);
   RegisterType(TypeIndex(typeid(bool)), TypeIds::Bool);
@@ -42,14 +42,42 @@ Module::Module()
   RegisterType(TypeIndex(typeid(uint64_t)), TypeIds::UInt64);
   RegisterType(TypeIndex(typeid(float)), TypeIds::Float32);
   RegisterType(TypeIndex(typeid(double)), TypeIds::Float64);
+  RegisterClassType<String>(TypeIds::String);
 
   RegisterTemplateType<IMatrix>(TypeIds::IMatrix).CreateTypeConstuctor<int32_t, int32_t>();
 
-  RegisterTemplateType<IArray>(TypeIds::IArray).CreateTypeConstuctor<int32_t>();
+  auto iarray = RegisterTemplateType<IArray>(TypeIds::IArray);
+  iarray.CreateTypeConstuctor<int32_t>();
+  iarray.CreateInstanceFunction("count", &IArray::Count);
 
-  RegisterTemplateType<IMap>(TypeIds::IMap).CreateTypeConstuctor<>();
+  CreateTemplateInstantiationType<Array, bool>(TypeIds::IArray);
+  CreateTemplateInstantiationType<Array, int8_t>(TypeIds::IArray);
+  CreateTemplateInstantiationType<Array, uint8_t>(TypeIds::IArray);
+  CreateTemplateInstantiationType<Array, int16_t>(TypeIds::IArray);
+  CreateTemplateInstantiationType<Array, uint16_t>(TypeIds::IArray);
+  CreateTemplateInstantiationType<Array, int32_t>(TypeIds::IArray);
+  CreateTemplateInstantiationType<Array, uint32_t>(TypeIds::IArray);
+  CreateTemplateInstantiationType<Array, int64_t>(TypeIds::IArray);
+  CreateTemplateInstantiationType<Array, uint64_t>(TypeIds::IArray);
+  CreateTemplateInstantiationType<Array, float>(TypeIds::IArray);
+  CreateTemplateInstantiationType<Array, double>(TypeIds::IArray);
+  CreateTemplateInstantiationType<Array, Ptr<String>>(TypeIds::IArray);
 
-  RegisterClassType<String>(TypeIds::String);
+  auto imap = RegisterTemplateType<IMap>(TypeIds::IMap);
+  imap.CreateTypeConstuctor<>();
+  imap.CreateInstanceFunction("count", &IMap::Count);
+
+  auto address = RegisterClassType<Address>(TypeIds::Address);
+  address.CreateTypeConstuctor<>();
+  address.CreateTypeConstuctor<Ptr<String>>();
+  address.CreateInstanceFunction("signed_tx", &Address::HasSignedTx);
+
+  auto istate = RegisterTemplateType<IState>(TypeIds::IState);
+  istate.CreateTypeConstuctor<Ptr<String>, TemplateParameter>();
+  istate.CreateTypeConstuctor<Ptr<Address>, TemplateParameter>();
+  istate.CreateInstanceFunction("get", &IState::Get);
+  istate.CreateInstanceFunction("set", &IState::Set);
+  istate.CreateInstanceFunction("existed", &IState::Existed);
 }
 
 }  // namespace vm

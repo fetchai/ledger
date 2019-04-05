@@ -33,7 +33,7 @@ def print_warning(warning):
                 from colors import red, green, blue
                 print(red(warning))
             except:
-                print(warning)
+                print("*** "+warning)
 
 # For each changed hpp file, find a cpp file that depends on it (clang-tidy requires cpp files only) and replace it in the set.
 # To do this, find cmake generated depend.make files
@@ -76,7 +76,19 @@ def convert_to_dependencies(changed_files_fullpath : set, build_path, verbose = 
 
             if os.path.exists(dependency_file) and '.cpp' in target_cpp_file and dependency_file in changed_files_fullpath:
 
+                if verbose:
+                    print("globbing for:")
+                    print(target_cpp_file)
+
+                target_cpp_file_save = target_cpp_file
                 target_cpp_file = glob.glob("**"+target_cpp_file, recursive=True)
+
+                if target_cpp_file is None or len(target_cpp_file) == 0:
+                    print_warning("Failed to find file/dependency: ")
+                    print_warning("File: {}".format(target_cpp_file_save))
+                    print_warning("Dependency: {}".format(dependency_file))
+                    print_warning("Your build directory may be old")
+                    break;
 
                 if target_cpp_file == None or len(target_cpp_file) > 1:
                     print("Too many files found matching {}".format(target_cpp_file))
@@ -157,7 +169,7 @@ def main():
 
     print("Running static analysis")
     # static analysis uses cpp files only
-    changed_files_fullpath_cpp_only = convert_to_dependencies(changed_files_fullpath, build_path)
+    changed_files_fullpath_cpp_only = convert_to_dependencies(changed_files_fullpath, build_path, args.verbose)
     sys.argv = ['_', build_path, '--fix', '--only-these-files']
     sys.argv.extend(changed_files_fullpath_cpp_only)
     if args.verbose:

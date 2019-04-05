@@ -35,18 +35,12 @@
 #include <vector>
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 struct Signature
 {
   byte_array::ConstByteArray signature_data;
   byte_array::ConstByteArray type;
-
-  void Clone()
-  {
-    signature_data = signature_data.Copy();
-    type           = type.Copy();
-  }
 };
 
 using Signatories = std::unordered_map<crypto::Identity, Signature>;
@@ -66,15 +60,18 @@ void Deserialize(T &serializer, Signature &b)
 
 struct TransactionSummary
 {
-  using Resource     = byte_array::ConstByteArray;
-  using TxDigest     = byte_array::ConstByteArray;
-  using ContractName = byte_array::ConstByteArray;
-  using ResourceSet  = std::set<Resource>;
-  using Fee          = uint64_t;
+  using Resource       = byte_array::ConstByteArray;
+  using TxDigest       = byte_array::ConstByteArray;
+  using ContractName   = byte_array::ConstByteArray;
+  using ResourceSet    = std::set<Resource>;
+  using RawResourceSet = std::set<Resource>;
+  using Fee            = uint64_t;
 
-  ResourceSet resources;
-  TxDigest    transaction_hash;
-  Fee         fee{0};
+  ResourceSet    resources;
+  RawResourceSet raw_resources;  // Raw hashes (not wrapped by scope)
+
+  TxDigest transaction_hash;
+  Fee      fee{0};
 
   // TODO(issue 33): Needs to be replaced with some kind of ID
   ContractName contract_name;
@@ -98,6 +95,16 @@ struct TransactionSummary
   {
     if (resources.size() > 0 && transaction_hash.size() > 0 && contract_name.size() > 0)
     {
+      for (auto const &hash : raw_resources)
+      {
+        if (hash.size() == 0)
+        {
+          FETCH_LOG_INFO("TransactionSummary",
+                         "Found invalid TX: smart contact hash ref size: ", hash.size());
+          return false;
+        }
+      }
+
       return true;
     }
     else
@@ -110,13 +117,13 @@ struct TransactionSummary
 template <typename T>
 void Serialize(T &serializer, TransactionSummary const &b)
 {
-  serializer << b.resources << b.fee << b.transaction_hash << b.contract_name;
+  serializer << b.resources << b.raw_resources << b.fee << b.transaction_hash << b.contract_name;
 }
 
 template <typename T>
 void Deserialize(T &serializer, TransactionSummary &b)
 {
-  serializer >> b.resources >> b.fee >> b.transaction_hash >> b.contract_name;
+  serializer >> b.resources >> b.raw_resources >> b.fee >> b.transaction_hash >> b.contract_name;
 }
 
 class MutableTransaction;
@@ -306,6 +313,11 @@ public:
     return summary_.contract_name;
   }
 
+  TransactionSummary::RawResourceSet const &raw_resources() const
+  {
+    return summary_.raw_resources;
+  }
+
   TxDigest const &digest() const
   {
     return summary_.transaction_hash;
@@ -349,10 +361,23 @@ public:
     }
 
     std::vector<byte_array::ConstByteArray> resources;
+    resources.reserve(summary().resources.size());
+
     std::copy(summary().resources.begin(), summary().resources.end(),
               std::back_inserter(resources));
     std::sort(resources.begin(), resources.end());
     for (auto const &e : resources)
+    {
+      hash.Update(e);
+    }
+
+    std::vector<byte_array::ConstByteArray> raw_resources;
+    raw_resources.reserve(summary().raw_resources.size());
+
+    std::copy(summary().raw_resources.begin(), summary().raw_resources.end(),
+              std::back_inserter(raw_resources));
+    std::sort(raw_resources.begin(), raw_resources.end());
+    for (auto const &e : raw_resources)
     {
       hash.Update(e);
     }
@@ -373,6 +398,13 @@ public:
   {
     for (auto const &sig : signatures_)
     {
+      if (sig.first.identifier().empty())
+      {
+        FETCH_LOG_WARN("TxVerify",
+                       "Failed to validate the signature because the identity is not there");
+        throw std::runtime_error("Empty identity error");
+      }
+
       bool const ver_res = tx_sign_adapter.Verify(sig);
 
       if (!ver_res)
@@ -414,6 +446,11 @@ public:
     summary_.resources.insert(res);
   }
 
+  void PushContractHash(byte_array::ConstByteArray const &res)
+  {
+    summary_.raw_resources.insert(res);
+  }
+
   void set_summary(TransactionSummary const &summary)
   {
     summary_ = summary;
@@ -432,6 +469,11 @@ public:
   void set_contract_name(TransactionSummary::ContractName const &name)
   {
     summary_.contract_name = name;
+  }
+
+  void set_contract_hash(TransactionSummary::RawResourceSet const &hashes)
+  {
+    summary_.raw_resources = hashes;
   }
 
   void set_fee(uint64_t fee)
@@ -485,7 +527,8 @@ void TxSigningAdapter<MUTABLE_TX>::Update() const
   if (stream_->size() == 0)
   {
     serializers::ByteArrayBuffer &stream = *stream_.get();
-    stream.Append(tx_->contract_name(), tx_->fee(), tx_->resources(), tx_->data());
+    stream.Append(tx_->contract_name(), tx_->fee(), tx_->resources(), tx_->raw_resources(),
+                  tx_->data());
     // tx_data_hash_.Reset();
     tx_data_hash_->Update(stream.data());
   }
@@ -502,8 +545,13 @@ template <typename T, typename MUTABLE_TX>
 void Deserialize(T &stream, TxSigningAdapter<MUTABLE_TX> &tx)
 {
   MutableTransaction &tx_ = tx;
-  stream >> tx_.summary_.contract_name >> tx_.summary_.fee >> tx_.summary_.resources >> tx_.data_ >>
-      tx_.signatures_;
+  stream >> tx_.summary_.contract_name;
+  stream >> tx_.summary_.fee;
+  stream >> tx_.summary_.resources;
+  stream >> tx_.summary_.raw_resources;
+  stream >> tx_.data_;
+  stream >> tx_.signatures_;
+
   tx.Reset();
 }
 
@@ -512,7 +560,8 @@ bool TxSigningAdapter<MUTABLE_TX>::operator==(TxSigningAdapter<MUTABLE_TX> const
 {
   MutableTransaction const &left = left_tx;
   return tx_->contract_name() == left.contract_name() && tx_->fee() == left.fee() &&
-         tx_->resources() == left.resources() && tx_->data() == left.data();
+         tx_->resources() == left.resources() && tx_->raw_resources() == left.raw_resources() &&
+         tx_->data() == left.data();
 }
 
 template <typename MUTABLE_TX>
@@ -534,5 +583,5 @@ void Deserialize(T &serializer, Signatory &b)
   serializer >> b.first >> b.second;
 }
 
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

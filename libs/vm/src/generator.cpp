@@ -49,15 +49,17 @@ void Generator::CreateFunctions(BlockNodePtr const &root)
     {
     case Node::Kind::FunctionDefinitionStatement:
     {
-      BlockNodePtr      function_definition_node = ConvertToBlockNodePtr(child);
+      BlockNodePtr        function_definition_node = ConvertToBlockNodePtr(child);
+      NodePtr             annotations_node         = function_definition_node->children[0];
+      Script::Annotations annotations;
+      CreateAnnotations(annotations_node, annotations);
       ExpressionNodePtr identifier_node =
-          ConvertToExpressionNodePtr(function_definition_node->children[0]);
-
+          ConvertToExpressionNodePtr(function_definition_node->children[1]);
       FunctionPtr        f              = identifier_node->function;
       std::string const &name           = f->name;
       int const          num_parameters = (int)f->parameter_variables.size();
       TypeId const       return_type_id = f->return_type->id;
-      Script::Function   function(name, num_parameters, return_type_id);
+      Script::Function   function(name, annotations, num_parameters, return_type_id);
       for (VariablePtr const &v : f->parameter_variables)
       {
         v->index = function.AddVariable(v->name, v->type->id);
@@ -71,6 +73,82 @@ void Generator::CreateFunctions(BlockNodePtr const &root)
     }
     }  // switch
   }
+}
+
+void Generator::CreateAnnotations(NodePtr const &annotations_node, Script::Annotations &annotations)
+{
+  annotations.clear();
+  if (annotations_node == nullptr)
+  {
+    return;
+  }
+  for (NodePtr const &annotation_node : annotations_node->children)
+  {
+    Script::Annotation annotation;
+    annotation.name = annotation_node->token.text;
+    for (NodePtr const &annotation_element_node : annotation_node->children)
+    {
+      Script::AnnotationElement element;
+      if (annotation_element_node->kind == Node::Kind::AnnotationNameValuePair)
+      {
+        element.type = Script::AnnotationElementType::NameValuePair;
+        SetAnnotationLiteral(annotation_element_node->children[0], element.name);
+        SetAnnotationLiteral(annotation_element_node->children[1], element.value);
+      }
+      else
+      {
+        element.type = Script::AnnotationElementType::Value;
+        SetAnnotationLiteral(annotation_element_node, element.value);
+      }
+      annotation.elements.push_back(element);
+    }
+    annotations.push_back(annotation);
+  }
+}
+
+void Generator::SetAnnotationLiteral(NodePtr const &node, Script::AnnotationLiteral &literal)
+{
+  const std::string &text = node->token.text;
+  switch (node->kind)
+  {
+  case Node::Kind::True:
+  {
+    literal.SetBoolean(true);
+    break;
+  }
+  case Node::Kind::False:
+  {
+    literal.SetBoolean(false);
+    break;
+  }
+  case Node::Kind::Integer64:
+  {
+    int64_t i = atol(text.c_str());
+    literal.SetInteger(i);
+    break;
+  }
+  case Node::Kind::Float64:
+  {
+    double r = atof(text.c_str());
+    literal.SetReal(r);
+    break;
+  }
+  case Node::Kind::String:
+  {
+    std::string s = text.substr(1, text.size() - 2);
+    literal.SetString(s);
+    break;
+  }
+  case Node::Kind::Identifier:
+  {
+    literal.SetIdentifier(text);
+    break;
+  }
+  default:
+  {
+    break;
+  }
+  }  // switch
 }
 
 void Generator::HandleBlock(BlockNodePtr const &block)
@@ -122,6 +200,7 @@ void Generator::HandleBlock(BlockNodePtr const &block)
       break;
     }
     case Node::Kind::AssignOp:
+    case Node::Kind::ModuloAssignOp:
     case Node::Kind::AddAssignOp:
     case Node::Kind::SubtractAssignOp:
     case Node::Kind::MultiplyAssignOp:
@@ -150,7 +229,7 @@ void Generator::HandleBlock(BlockNodePtr const &block)
 
 void Generator::HandleFunctionDefinitionStatement(BlockNodePtr const &node)
 {
-  ExpressionNodePtr identifier_node = ConvertToExpressionNodePtr(node->children[0]);
+  ExpressionNodePtr identifier_node = ConvertToExpressionNodePtr(node->children[1]);
   FunctionPtr       f               = identifier_node->function;
   function_                         = &(script_.functions[f->index]);
 
@@ -160,8 +239,7 @@ void Generator::HandleFunctionDefinitionStatement(BlockNodePtr const &node)
 
   if (f->return_type->id == TypeIds::Void)
   {
-    // 0 is not correct line number, it should be the line number of the endfunction token
-    Script::Instruction instruction(Opcodes::Return, 0);
+    Script::Instruction instruction(Opcodes::Return, node->block_terminator.line);
     instruction.type_id  = TypeIds::Void;
     instruction.data.i32 = 0;  // scope number
     function_->AddInstruction(instruction);
@@ -192,8 +270,7 @@ void Generator::HandleWhileStatement(BlockNodePtr const &node)
   HandleBlock(node);
   ScopeLeave(node);
 
-  // 0 is not correct line number, it should be the line number of the endwhile token
-  Script::Instruction jump_instruction(Opcodes::Jump, 0);
+  Script::Instruction jump_instruction(Opcodes::Jump, node->block_terminator.line);
 
   jump_instruction.index = continue_pc;
   function_->AddInstruction(jump_instruction);
@@ -251,13 +328,12 @@ void Generator::HandleForStatement(BlockNodePtr const &node)
   HandleBlock(node);
   ScopeLeave(node);
 
-  // 0 is not correct line number, it should be the line number of the endfor token
-  Script::Instruction jump_instruction(Opcodes::Jump, 0);
+  Script::Instruction jump_instruction(Opcodes::Jump, node->block_terminator.line);
   jump_instruction.index = iterate_pc;
   function_->AddInstruction(jump_instruction);
 
-  // 0 is not correct line number, it should be the line number of the endfor token
-  Script::Instruction terminate_instruction(Opcodes::ForRangeTerminate, 0);
+  Script::Instruction terminate_instruction(Opcodes::ForRangeTerminate,
+                                            node->block_terminator.line);
 
   terminate_instruction.index   = v->index;
   terminate_instruction.type_id = v->type->id;
@@ -313,8 +389,7 @@ void Generator::HandleIfStatement(NodePtr const &node)
       if (i < last_index)
       {
         // Only arrange jump to the endif if not the last block
-        // 0 is not correct line number!
-        Script::Instruction jump_instruction(Opcodes::Jump, 0);
+        Script::Instruction jump_instruction(Opcodes::Jump, block->block_terminator.line);
         jump_instruction.index = 0;  // pc placeholder
         Index const jump_pc    = function_->AddInstruction(jump_instruction);
         jump_pcs.push_back(jump_pc);
@@ -501,40 +576,51 @@ void Generator::HandleAssignmentStatement(ExpressionNodePtr const &node)
     }
     break;
   }
+  case Node::Kind::ModuloAssignOp:
+  {
+    if (assigning_to_variable)
+    {
+      opcode = Opcodes::VariableModuloAssign;
+    }
+    else  // assigning to element
+    {
+      opcode = Opcodes::ElementModuloAssign;
+    }
+    break;
+  }
   case Node::Kind::AddAssignOp:
   {
     opcode = GetArithmeticAssignmentOpcode(
-        assigning_to_variable, lhs_is_primitive, rhs_is_primitive,
-        Opcodes::VariablePrimitiveAddAssign, Opcodes::VariableRightAddAssign,
-        Opcodes::VariableObjectAddAssign, Opcodes::ElementPrimitiveAddAssign,
-        Opcodes::ElementRightAddAssign, Opcodes::ElementObjectAddAssign);
+        assigning_to_variable, lhs_is_primitive, rhs_is_primitive, Opcodes::VariableAddAssign,
+        Opcodes::VariableRightAddAssign, Opcodes::VariableObjectAddAssign,
+        Opcodes::ElementAddAssign, Opcodes::ElementRightAddAssign, Opcodes::ElementObjectAddAssign);
     break;
   }
   case Node::Kind::SubtractAssignOp:
   {
     opcode = GetArithmeticAssignmentOpcode(
-        assigning_to_variable, lhs_is_primitive, rhs_is_primitive,
-        Opcodes::VariablePrimitiveSubtractAssign, Opcodes::VariableRightSubtractAssign,
-        Opcodes::VariableObjectSubtractAssign, Opcodes::ElementPrimitiveSubtractAssign,
-        Opcodes::ElementRightSubtractAssign, Opcodes::ElementObjectSubtractAssign);
+        assigning_to_variable, lhs_is_primitive, rhs_is_primitive, Opcodes::VariableSubtractAssign,
+        Opcodes::VariableRightSubtractAssign, Opcodes::VariableObjectSubtractAssign,
+        Opcodes::ElementSubtractAssign, Opcodes::ElementRightSubtractAssign,
+        Opcodes::ElementObjectSubtractAssign);
     break;
   }
   case Node::Kind::MultiplyAssignOp:
   {
     opcode = GetArithmeticAssignmentOpcode(
-        assigning_to_variable, lhs_is_primitive, rhs_is_primitive,
-        Opcodes::VariablePrimitiveMultiplyAssign, Opcodes::VariableRightMultiplyAssign,
-        Opcodes::VariableObjectMultiplyAssign, Opcodes::ElementPrimitiveMultiplyAssign,
-        Opcodes::ElementRightMultiplyAssign, Opcodes::ElementObjectMultiplyAssign);
+        assigning_to_variable, lhs_is_primitive, rhs_is_primitive, Opcodes::VariableMultiplyAssign,
+        Opcodes::VariableRightMultiplyAssign, Opcodes::VariableObjectMultiplyAssign,
+        Opcodes::ElementMultiplyAssign, Opcodes::ElementRightMultiplyAssign,
+        Opcodes::ElementObjectMultiplyAssign);
     break;
   }
   case Node::Kind::DivideAssignOp:
   {
     opcode = GetArithmeticAssignmentOpcode(
-        assigning_to_variable, lhs_is_primitive, rhs_is_primitive,
-        Opcodes::VariablePrimitiveDivideAssign, Opcodes::VariableRightDivideAssign,
-        Opcodes::VariableObjectDivideAssign, Opcodes::ElementPrimitiveDivideAssign,
-        Opcodes::ElementRightDivideAssign, Opcodes::ElementObjectDivideAssign);
+        assigning_to_variable, lhs_is_primitive, rhs_is_primitive, Opcodes::VariableDivideAssign,
+        Opcodes::VariableRightDivideAssign, Opcodes::VariableObjectDivideAssign,
+        Opcodes::ElementDivideAssign, Opcodes::ElementRightDivideAssign,
+        Opcodes::ElementObjectDivideAssign);
     break;
   }
   default:
@@ -624,14 +710,14 @@ void Generator::HandleExpression(ExpressionNodePtr const &node)
     HandleUnsignedInteger64(node);
     break;
   }
-  case Node::Kind::SinglePrecisionNumber:
+  case Node::Kind::Float32:
   {
-    HandleSinglePrecisionNumber(node);
+    HandleFloat32(node);
     break;
   }
-  case Node::Kind::DoublePrecisionNumber:
+  case Node::Kind::Float64:
   {
-    HandleDoublePrecisionNumber(node);
+    HandleFloat64(node);
     break;
   }
   case Node::Kind::String:
@@ -662,6 +748,7 @@ void Generator::HandleExpression(ExpressionNodePtr const &node)
     HandleIncDecOp(node);
     break;
   }
+  case Node::Kind::ModuloOp:
   case Node::Kind::AddOp:
   case Node::Kind::SubtractOp:
   case Node::Kind::MultiplyOp:
@@ -682,11 +769,6 @@ void Generator::HandleExpression(ExpressionNodePtr const &node)
   case Node::Kind::NotOp:
   {
     HandleUnaryOp(node);
-    break;
-  }
-  case Node::Kind::SquareBracketGroup:
-  {
-    // ???
     break;
   }
   case Node::Kind::IndexOp:
@@ -752,7 +834,7 @@ void Generator::HandleUnsignedInteger64(ExpressionNodePtr const &node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleSinglePrecisionNumber(ExpressionNodePtr const &node)
+void Generator::HandleFloat32(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
   instruction.type_id  = TypeIds::Float32;
@@ -760,7 +842,7 @@ void Generator::HandleSinglePrecisionNumber(ExpressionNodePtr const &node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleDoublePrecisionNumber(ExpressionNodePtr const &node)
+void Generator::HandleFloat64(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
   instruction.type_id  = TypeIds::Float64;
@@ -893,17 +975,23 @@ void Generator::HandleBinaryOp(ExpressionNodePtr const &node)
 
   switch (node->kind)
   {
+  case Node::Kind::ModuloOp:
+  {
+    opcode  = Opcodes::Modulo;
+    type_id = node->type->id;
+    break;
+  }
   case Node::Kind::AddOp:
   {
-    opcode  = GetArithmeticOpcode(lhs_is_primitive, rhs_is_primitive, Opcodes::PrimitiveAdd,
-                                 Opcodes::LeftAdd, Opcodes::RightAdd, Opcodes::ObjectAdd);
+    opcode = GetArithmeticOpcode(lhs_is_primitive, rhs_is_primitive, Opcodes::Add, Opcodes::LeftAdd,
+                                 Opcodes::RightAdd, Opcodes::ObjectAdd);
     type_id = node->type->id;
     break;
   }
   case Node::Kind::SubtractOp:
   {
     opcode =
-        GetArithmeticOpcode(lhs_is_primitive, rhs_is_primitive, Opcodes::PrimitiveSubtract,
+        GetArithmeticOpcode(lhs_is_primitive, rhs_is_primitive, Opcodes::Subtract,
                             Opcodes::LeftSubtract, Opcodes::RightSubtract, Opcodes::ObjectSubtract);
     type_id = node->type->id;
     break;
@@ -911,28 +999,21 @@ void Generator::HandleBinaryOp(ExpressionNodePtr const &node)
   case Node::Kind::MultiplyOp:
   {
     opcode =
-        GetArithmeticOpcode(lhs_is_primitive, rhs_is_primitive, Opcodes::PrimitiveMultiply,
+        GetArithmeticOpcode(lhs_is_primitive, rhs_is_primitive, Opcodes::Multiply,
                             Opcodes::LeftMultiply, Opcodes::RightMultiply, Opcodes::ObjectMultiply);
     type_id = node->type->id;
     break;
   }
   case Node::Kind::DivideOp:
   {
-    opcode  = GetArithmeticOpcode(lhs_is_primitive, rhs_is_primitive, Opcodes::PrimitiveDivide,
+    opcode  = GetArithmeticOpcode(lhs_is_primitive, rhs_is_primitive, Opcodes::Divide,
                                  Opcodes::LeftDivide, Opcodes::RightDivide, Opcodes::ObjectDivide);
     type_id = node->type->id;
     break;
   }
   case Node::Kind::EqualOp:
   {
-    if (lhs_is_primitive)
-    {
-      opcode = Opcodes::PrimitiveEqual;
-    }
-    else
-    {
-      opcode = Opcodes::ObjectEqual;
-    }
+    opcode = lhs_is_primitive ? Opcodes::Equal : Opcodes::ObjectEqual;
     if ((lhs->type->id == TypeIds::Null) && (rhs->type->id == TypeIds::Null))
     {
       // Type-uninferable nulls (e.g. in "null == null") are transformed to integral zero
@@ -946,14 +1027,7 @@ void Generator::HandleBinaryOp(ExpressionNodePtr const &node)
   }
   case Node::Kind::NotEqualOp:
   {
-    if (lhs_is_primitive)
-    {
-      opcode = Opcodes::PrimitiveNotEqual;
-    }
-    else
-    {
-      opcode = Opcodes::ObjectNotEqual;
-    }
+    opcode = lhs_is_primitive ? Opcodes::NotEqual : Opcodes::ObjectNotEqual;
     if ((lhs->type->id == TypeIds::Null) && (rhs->type->id == TypeIds::Null))
     {
       // Type-uninferable nulls (e.g. in "null == null") are transformed to integral zero
@@ -967,25 +1041,25 @@ void Generator::HandleBinaryOp(ExpressionNodePtr const &node)
   }
   case Node::Kind::LessThanOp:
   {
-    opcode  = Opcodes::PrimitiveLessThan;
+    opcode  = lhs_is_primitive ? Opcodes::LessThan : Opcodes::ObjectLessThan;
     type_id = lhs->type->id;
     break;
   }
   case Node::Kind::LessThanOrEqualOp:
   {
-    opcode  = Opcodes::PrimitiveLessThanOrEqual;
+    opcode  = lhs_is_primitive ? Opcodes::LessThanOrEqual : Opcodes::ObjectLessThanOrEqual;
     type_id = lhs->type->id;
     break;
   }
   case Node::Kind::GreaterThanOp:
   {
-    opcode  = Opcodes::PrimitiveGreaterThan;
+    opcode  = lhs_is_primitive ? Opcodes::GreaterThan : Opcodes::ObjectGreaterThan;
     type_id = lhs->type->id;
     break;
   }
   case Node::Kind::GreaterThanOrEqualOp:
   {
-    opcode  = Opcodes::PrimitiveGreaterThanOrEqual;
+    opcode  = lhs_is_primitive ? Opcodes::GreaterThanOrEqual : Opcodes::ObjectGreaterThanOrEqual;
     type_id = lhs->type->id;
     break;
   }
@@ -1029,7 +1103,7 @@ void Generator::HandleUnaryOp(ExpressionNodePtr const &node)
   {
   case Node::Kind::UnaryMinusOp:
   {
-    opcode  = is_primitive ? Opcodes::PrimitiveUnaryMinus : Opcodes::ObjectUnaryMinus;
+    opcode  = is_primitive ? Opcodes::UnaryMinus : Opcodes::ObjectUnaryMinus;
     type_id = node->type->id;
     break;
   }
@@ -1140,9 +1214,8 @@ void Generator::ScopeLeave(BlockNodePtr block_node)
     // present, already take care of destructing objects
     if (block_node->kind != Node::Kind::FunctionDefinitionStatement)
     {
-      // 0 is not correct line number, should be end of block!
-      Script::Instruction instruction(Opcodes::Destruct, 0);
-      // Arrange for all live objects with scope >= scope_number to be destucted
+      Script::Instruction instruction(Opcodes::Destruct, block_node->block_terminator.line);
+      // Arrange for all live objects with scope >= scope_number to be destructed
       instruction.data.i32 = scope_number;
       function_->AddInstruction(instruction);
     }

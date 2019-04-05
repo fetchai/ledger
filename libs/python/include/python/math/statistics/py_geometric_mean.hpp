@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/statistics/geometric_mean.hpp"
-#include "math/linalg/matrix.hpp"
+#include "math/statistics/geometric_mean.hpp"
+#include "math/tensor.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -33,16 +33,12 @@ inline typename A::Type WrapperGeometricMean(A const &a)
 
 inline void BuildGeometricMeanStatistics(std::string const &custom_name, pybind11::module &module)
 {
-  using namespace fetch::math::linalg;
+  using namespace fetch::math;
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperGeometricMean<Matrix<double>>)
-      .def(custom_name.c_str(), &WrapperGeometricMean<Matrix<float>>)
-      .def(custom_name.c_str(), &WrapperGeometricMean<RectangularArray<double>>)
-      .def(custom_name.c_str(), &WrapperGeometricMean<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperGeometricMean<ShapelessArray<double>>)
-      .def(custom_name.c_str(), &WrapperGeometricMean<ShapelessArray<float>>);
+  module.def(custom_name.c_str(), &WrapperGeometricMean<Tensor<double>>)
+      .def(custom_name.c_str(), &WrapperGeometricMean<Tensor<float>>);
 }
 
 }  // namespace statistics

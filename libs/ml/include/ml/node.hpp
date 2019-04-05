@@ -17,7 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/logger.hpp"
 #include "ops/ops.hpp"
+
 #include <iostream>
 #include <memory>
 #include <unordered_map>
@@ -34,11 +36,12 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual ArrayPtrType Evaluate()                                           = 0;
-  virtual void         AddInput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
-  virtual std::vector<std::pair<NodeInterface<T> *, ArrayPtrType>> BackPropagate(
-      ArrayPtrType errorSignal) = 0;
-  virtual void ResetCache()     = 0;
+  virtual ArrayType const &Evaluate()                                           = 0;
+  virtual void             AddInput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
+  virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
+      ArrayType const &errorSignal) = 0;
+  virtual void ResetCache()         = 0;
+  virtual void SetBatch(bool b)     = 0;
 };
 
 template <class T, class O>
@@ -52,13 +55,15 @@ public:
   Node(std::string const name, Params... params)
     : O(params...)
     , name_(std::move(name))
+    , cachedOutputPresent_(false)
+    , batch_(false)
   {}
 
   virtual ~Node() = default;
 
-  std::vector<ArrayPtrType> GatherInputs() const
+  std::vector<std::reference_wrapper<const ArrayType>> GatherInputs() const
   {
-    std::vector<ArrayPtrType> inputs;
+    std::vector<std::reference_wrapper<const ArrayType>> inputs;
     for (auto const &i : inputs_)
     {
       inputs.push_back(i->Evaluate());
@@ -66,43 +71,53 @@ public:
     return inputs;
   }
 
-  virtual ArrayPtrType Evaluate()
+  virtual ArrayType const &Evaluate()
   {
-    if (!cachedOutput_)
+    if (!cachedOutputPresent_)
     {
-      std::vector<ArrayPtrType> inputs = GatherInputs();
+      std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
       FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
-      cachedOutput_ = this->Forward(inputs);
+      if (batch_)
+      {
+        cachedOutput_ = this->ForwardBatch(inputs);
+      }
+      else
+      {
+        cachedOutput_ = this->Forward(inputs);
+      }
+      cachedOutputPresent_ = true;
     }
+
     return cachedOutput_;
   }
 
-  virtual std::vector<std::pair<NodeInterface<T> *, ArrayPtrType>> BackPropagate(
-      ArrayPtrType errorSignal)
+  virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
+      ArrayType const &errorSignal)
   {
-    //    FETCH_LOG_INFO("ML_LIB", "Backpropagating node [", name_, "]");
-    std::vector<ArrayPtrType> inputs                     = GatherInputs();
-    std::vector<ArrayPtrType> backpropagatedErrorSignals = this->Backward(inputs, errorSignal);
-    std::vector<std::pair<NodeInterface<T> *, ArrayPtrType>> nonBackpropagatedErrorSignals;
-    assert(backpropagatedErrorSignals.size() == inputs.size() || inputs.empty());
-    for (std::size_t i(0); i < inputs_.size(); ++i)
+    FETCH_LOG_INFO("ML_LIB", "Backpropagating node [", name_, "]");
+    std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
+    std::vector<ArrayType> back_propagated_error_signals = this->Backward(inputs, errorSignal);
+    std::vector<std::pair<NodeInterface<T> *, ArrayType>> non_back_propagated_error_signals;
+    assert(back_propagated_error_signals.size() == inputs.size() || inputs.empty());
+
+    for (std::uint64_t i(0); i < inputs_.size(); ++i)
     {
-      auto ret = inputs_[i]->BackPropagate(backpropagatedErrorSignals[i]);
-      nonBackpropagatedErrorSignals.insert(nonBackpropagatedErrorSignals.end(), ret.begin(),
-                                           ret.end());
+      auto ret = inputs_[i]->BackPropagate(back_propagated_error_signals[i]);
+      non_back_propagated_error_signals.insert(non_back_propagated_error_signals.end(), ret.begin(),
+                                               ret.end());
     }
     // If no input to backprop to, return gradient to caller
     // This is used to propagate outside of a SubGraph
     // The SubGraph has no knowledge of the rest of the network,
-    // so it sens its unpropagated gradient to its wrapper node that will forward them out
+    // so it sends its unpropagated gradient to its wrapper node that will forward them out
     if (inputs_.empty())
     {
-      for (auto g : backpropagatedErrorSignals)
+      for (auto g : back_propagated_error_signals)
       {
-        nonBackpropagatedErrorSignals.push_back(std::make_pair(this, g));
+        non_back_propagated_error_signals.push_back(std::make_pair(this, g));
       }
     }
-    return nonBackpropagatedErrorSignals;
+    return non_back_propagated_error_signals;
   }
 
   void AddInput(std::shared_ptr<NodeInterface<T>> const &i)
@@ -112,13 +127,20 @@ public:
 
   virtual void ResetCache()
   {
-    cachedOutput_ = nullptr;
+    cachedOutputPresent_ = false;
+  }
+
+  virtual void SetBatch(bool b)
+  {
+    batch_ = b;
   }
 
 private:
   std::vector<std::shared_ptr<NodeInterface<T>>> inputs_;
   std::string                                    name_;
-  ArrayPtrType                                   cachedOutput_;
+  ArrayType                                      cachedOutput_;
+  bool                                           cachedOutputPresent_;
+  bool                                           batch_;
 };
 
 }  // namespace ml

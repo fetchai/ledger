@@ -51,11 +51,11 @@ protected:
     executor_ = std::make_unique<underlying_executor_type>(storage_);
   }
 
-  fetch::chain::Transaction CreateDummyTransaction()
+  fetch::ledger::Transaction CreateDummyTransaction()
   {
-    fetch::chain::MutableTransaction tx;
+    fetch::ledger::MutableTransaction tx;
     tx.set_contract_name("fetch.dummy.wait");
-    return fetch::chain::VerifiedTransaction::Create(std::move(tx));
+    return fetch::ledger::VerifiedTransaction::Create(std::move(tx));
   }
 
   fetch::byte_array::ConstByteArray CreateAddress()
@@ -71,7 +71,7 @@ protected:
     return {address};
   }
 
-  fetch::chain::Transaction CreateWalletTransaction()
+  fetch::ledger::Transaction CreateWalletTransaction()
   {
 
     // generate an address
@@ -85,11 +85,12 @@ protected:
         << R"("amount": )" << 1000 << " }";
 
     // create the transaction
-    fetch::chain::MutableTransaction tx;
+    fetch::ledger::MutableTransaction tx;
     tx.set_contract_name("fetch.token.wealth");
+    tx.PushResource(address);
     tx.set_data(oss.str());
 
-    return fetch::chain::VerifiedTransaction::Create(std::move(tx));
+    return fetch::ledger::VerifiedTransaction::Create(std::move(tx));
   }
 
   storage_type  storage_;
@@ -99,7 +100,6 @@ protected:
 
 TEST_F(ExecutorTests, CheckDummyContract)
 {
-
   EXPECT_CALL(*storage_, AddTransaction(_)).Times(1);
   EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(1);
 
@@ -114,11 +114,14 @@ TEST_F(ExecutorTests, CheckDummyContract)
 
 TEST_F(ExecutorTests, CheckTokenContract)
 {
+  ::testing::InSequence seq;
 
   EXPECT_CALL(*storage_, AddTransaction(_)).Times(1);
   EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(1);
-  EXPECT_CALL(*storage_, GetOrCreate(_)).Times(1);
+  EXPECT_CALL(*storage_, Lock(_)).Times(1);
+  EXPECT_CALL(*storage_, Get(_)).Times(1);
   EXPECT_CALL(*storage_, Set(_, _)).Times(1);
+  EXPECT_CALL(*storage_, Unlock(_)).Times(1);
 
   // create the dummy contract
   auto tx = CreateWalletTransaction();

@@ -17,18 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fixed_point_tag.hpp"
+#include "meta/tags.hpp"
+#include "meta/type_traits.hpp"
+
 #include <iostream>
 #include <sstream>
 
-//#include <ostream>
-//#include <exception>
-//#include <cstddef>      // std::size_t
-//#include <cstdint>
-//#include <type_traits>
-
-#include "meta/type_traits.hpp"
 #include <cassert>
+#include <iomanip>
 #include <limits>
 
 namespace fetch {
@@ -105,12 +101,11 @@ struct TypeFromSize<8>
  * @return
  */
 template <std::size_t I, std::size_t F>
-FixedPoint<I, F> Divide(const FixedPoint<I, F> & /*numerator*/,
-                        const FixedPoint<I, F> & /*denominator*/, FixedPoint<I, F> & /*remainder*/)
+FixedPoint<I, F> Divide(const FixedPoint<I, F> &numerator, const FixedPoint<I, F> &denominator,
+                        FixedPoint<I, F> & /*remainder*/)
 {
-  assert(0);  // not yet implemented
-  FixedPoint<I, F> quotient(0);
-  return quotient;
+  // TODO(private, 501) --
+  return numerator / denominator;
 }
 
 /**
@@ -122,10 +117,10 @@ FixedPoint<I, F> Divide(const FixedPoint<I, F> & /*numerator*/,
  * @param result
  */
 template <std::size_t I, std::size_t F>
-void Multiply(const FixedPoint<I, F> & /*lhs*/, const FixedPoint<I, F> & /*rhs*/,
-              FixedPoint<I, F> & /*result*/)
+void Multiply(const FixedPoint<I, F> &lhs, const FixedPoint<I, F> &rhs, FixedPoint<I, F> &result)
 {
-  assert(0);  // not yet implemented
+  // TODO(private, 501) -- Remove cast
+  result = rhs * lhs;
 }
 
 /**
@@ -224,7 +219,7 @@ public:
   using NextType     = typename BaseTypeInfo::NextSize::ValueType;
   using UnsignedType = typename BaseTypeInfo::UnsignedType;
 
-  const Type fractional_mask = UnsignedType((2 ^ fractional_bits) - 1);
+  const Type fractional_mask = Type((2 ^ fractional_bits) - 1);
   const Type integer_mask    = ~fractional_mask;
 
   static const Type one = Type(1) << fractional_bits;
@@ -253,7 +248,8 @@ public:
     : data_(static_cast<Type>(n * one))
   {
     assert(details::CheckNoOverflow(n, fractional_bits, total_bits));
-    assert(details::CheckNoRounding(n, fractional_bits));
+    // TODO(private, 629)
+    // assert(details::CheckNoRounding(n, fractional_bits));
   }
 
   FixedPoint(const FixedPoint &o)
@@ -274,14 +270,40 @@ public:
   /// comparison operators ///
   ////////////////////////////
 
-  bool operator==(const FixedPoint &o) const
+  template <typename OtherType>
+  bool operator==(const OtherType &o) const
   {
-    return data_ == o.data_;
+    return (data_ == FixedPoint(o).data_);
   }
 
-  bool operator<(const FixedPoint &o) const
+  template <typename OtherType>
+  bool operator!=(const OtherType &o) const
   {
-    return data_ < o.data_;
+    return data_ != FixedPoint(o).data_;
+  }
+
+  template <typename OtherType>
+  bool operator<(const OtherType &o) const
+  {
+    return data_ < FixedPoint(o).data_;
+  }
+
+  template <typename OtherType>
+  bool operator>(const OtherType &o) const
+  {
+    return data_ > FixedPoint(o).data_;
+  }
+
+  template <typename OtherType>
+  bool operator<=(const OtherType &o) const
+  {
+    return data_ <= FixedPoint(o).data_;
+  }
+
+  template <typename OtherType>
+  bool operator>=(const OtherType &o) const
+  {
+    return data_ >= FixedPoint(o).data_;
   }
 
   ///////////////////////
@@ -328,19 +350,34 @@ public:
   /// casting operators ///
   /////////////////////////
 
-  operator double() const
+  explicit operator double() const
   {
     return (static_cast<double>(data_) / one);
   }
 
-  operator int() const
+  explicit operator int() const
   {
-    return (data_ & integer_mask) >> fractional_bits;
+    return int((data_ & integer_mask) >> fractional_bits);
   }
 
-  operator float() const
+  explicit operator float() const
   {
     return (static_cast<float>(data_) / one);
+  }
+
+  explicit operator unsigned() const
+  {
+    return (static_cast<unsigned>(data_) / one);
+  }
+
+  explicit operator unsigned long() const
+  {
+    return (static_cast<unsigned long>(data_) / one);
+  }
+
+  explicit operator unsigned long long() const
+  {
+    return (static_cast<unsigned long long>(data_) / one);
   }
 
   //  // casting operators
@@ -354,7 +391,9 @@ public:
 
   FixedPoint operator+(const FixedPoint &n) const
   {
-    return FixedPoint(data_ + n.data_);
+    FixedPoint fp;
+    fp.data_ = data_ + n.data_;
+    return fp;
   }
 
   template <typename T>
@@ -365,7 +404,9 @@ public:
 
   FixedPoint operator-(const FixedPoint &n) const
   {
-    return FixedPoint(data_ - n.data_);
+    FixedPoint fp;
+    fp.data_ = data_ - n.data_;
+    return fp;
   }
 
   template <typename T>
@@ -376,7 +417,8 @@ public:
 
   FixedPoint operator*(const FixedPoint &n) const
   {
-    return FixedPoint(data_ * n.data_);
+    // TODO(private, 501)
+    return FixedPoint(double(*this) * double(n));
   }
 
   template <typename T>
@@ -387,7 +429,8 @@ public:
 
   FixedPoint operator/(const FixedPoint &n) const
   {
-    return FixedPoint(data_ / n.data_);
+    // TODO(private, 501)
+    return FixedPoint(double(*this) / double(n));
   }
 
   template <typename T>
@@ -460,6 +503,11 @@ public:
     std::swap(data_, rhs.data_);
   }
 
+  Type Data() const
+  {
+    return data_;
+  }
+
 private:
   // this makes it simpler to create a fixed point object from
   // a native type without scaling
@@ -478,6 +526,17 @@ public:
     return FixedPoint(n, NoScale());
   }
 };
+
+template <std::size_t I, std::size_t F>
+std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
+{
+  std::ios_base::fmtflags f(s.flags());
+  s << std::setprecision(F);
+  s << std::fixed;
+  s << double(n);
+  s.flags(f);
+  return s;
+}
 
 }  // namespace fixed_point
 }  // namespace fetch

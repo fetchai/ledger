@@ -22,7 +22,7 @@
 
 #include <benchmark/benchmark.h>
 
-using fetch::chain::MutableTransaction;
+using fetch::ledger::MutableTransaction;
 using fetch::crypto::ECDSASigner;
 
 namespace {

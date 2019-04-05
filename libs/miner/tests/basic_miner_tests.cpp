@@ -47,15 +47,14 @@ protected:
   using Rng                 = std::mt19937_64;
   using BasicMiner          = fetch::miner::BasicMiner;
   using BasicMinerPtr       = std::unique_ptr<BasicMiner>;
-  using MutableTransaction  = fetch::chain::MutableTransaction;
-  using VerifiedTransaction = fetch::chain::VerifiedTransaction;
-  using BlockBody           = fetch::chain::BlockBody;
+  using MutableTransaction  = fetch::ledger::MutableTransaction;
+  using VerifiedTransaction = fetch::ledger::VerifiedTransaction;
   using Clock               = std::chrono::high_resolution_clock;
   using Timepoint           = Clock::time_point;
   using BitVector           = fetch::bitmanip::BitVector;
-  using TransactionSummary  = fetch::chain::TransactionSummary;
-  using MainChain           = fetch::chain::MainChain;
-  using Block               = fetch::chain::MainChain::BlockType;
+  using TransactionSummary  = fetch::ledger::TransactionSummary;
+  using MainChain           = fetch::ledger::MainChain;
+  using Block               = fetch::ledger::Block;
 
   void SetUp() override
   {
@@ -102,25 +101,24 @@ protected:
   BasicMinerPtr miner_;
 };
 
-TEST_P(BasicMinerTests, Sample)
+TEST_P(BasicMinerTests, SimpleExample)
 {
   std::size_t const num_tx = GetParam();
 
   PopulateWithTransactions(num_tx);
 
-  BlockBody block;
-  MainChain dummy;
+  Block     block;
+  MainChain dummy{MainChain::Mode::IN_MEMORY_DB};
 
-  auto &heaviest_block = dummy.HeaviestBlock();
-  block.previous_hash  = heaviest_block.hash();
+  block.body.previous_hash = dummy.GetHeaviestBlockHash();
 
   miner_->GenerateBlock(block, NUM_LANES, NUM_SLICES, dummy);
 
-  for (auto const &slice : block.slices)
+  for (auto const &slice : block.body.slices)
   {
     BitVector lanes{NUM_LANES};
 
-    for (auto const &tx : slice.transactions)
+    for (auto const &tx : slice)
     {
       BitVector resources{NUM_LANES};
 
@@ -152,34 +150,26 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
   std::size_t lanes  = 16;
   std::size_t slices = 16;
 
-  // Takes too long in debug mode
-#if !defined(NDEBUG)
-  num_tx = num_tx / 16;
-  lanes  = lanes / 4;
-  slices = slices / 4;
-#endif
-
   miner_->log2_num_lanes() = uint32_t(fetch::platform::ToLog2(uint32_t(lanes)));
 
   PopulateWithTransactions(num_tx, 1);
-  MainChain                    chain;
+  MainChain                    chain{MainChain::Mode::IN_MEMORY_DB};
   std::set<TransactionSummary> transactions_already_seen;
   std::set<TransactionSummary> transactions_within_block;
 
   while (miner_->GetBacklog() > 0)
   {
-    BlockBody body;
+    Block block;
 
-    auto &heaviest_block = chain.HeaviestBlock();
-    body.previous_hash   = heaviest_block.hash();
+    block.body.previous_hash = chain.GetHeaviestBlockHash();
 
-    miner_->GenerateBlock(body, lanes, slices, chain);
+    miner_->GenerateBlock(block, lanes, slices, chain);
 
     // Check no duplicate transactions within a block
     transactions_within_block.clear();
-    for (auto const &slice : body.slices)
+    for (auto const &slice : block.body.slices)
     {
-      for (auto const &tx : slice.transactions)
+      for (auto const &tx : slice)
       {
         // Guarantee each body fresh transactions
         bool not_found = transactions_within_block.find(tx) == transactions_within_block.end();
@@ -198,9 +188,8 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
       transactions_already_seen.insert(tx);
     }
 
-    Block block;
-    block.SetBody(body);
     block.UpdateDigest();
+
     /* Note no mining needed here - main chain doesn't care */
     chain.AddBlock(block);
   }
@@ -213,23 +202,22 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
 
   while (miner_->GetBacklog() > 0)
   {
-    BlockBody body;
+    Block block;
 
-    auto &heaviest_block = chain.HeaviestBlock();
-    body.previous_hash   = heaviest_block.hash();
+    block.body.previous_hash = chain.GetHeaviestBlockHash();
 
-    miner_->GenerateBlock(body, NUM_LANES, NUM_SLICES, chain);
+    miner_->GenerateBlock(block, NUM_LANES, NUM_SLICES, chain);
 
-    for (auto const &slice : body.slices)
+    for (auto const &slice : block.body.slices)
     {
-      EXPECT_EQ(slice.transactions.size(), 0);
+      EXPECT_EQ(slice.size(), 0);
     }
 
     // Check no duplicate transactions within a block
     transactions_within_block.clear();
-    for (auto const &slice : body.slices)
+    for (auto const &slice : block.body.slices)
     {
-      for (auto const &tx : slice.transactions)
+      for (auto const &tx : slice)
       {
         // Guarantee each body fresh transactions
         bool not_found = transactions_within_block.find(tx) == transactions_within_block.end();
@@ -248,12 +236,11 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
       transactions_already_seen.insert(tx);
     }
 
-    Block block;
-    block.SetBody(body);
     block.UpdateDigest();
+
     /* Note no mining needed here - main chain doesn't care */
     chain.AddBlock(block);
   }
 }
 
-INSTANTIATE_TEST_CASE_P(ParamBased, BasicMinerTests, ::testing::Values(10000, 20000, 30000), );
+INSTANTIATE_TEST_CASE_P(ParamBased, BasicMinerTests, ::testing::Values(10, 20), );

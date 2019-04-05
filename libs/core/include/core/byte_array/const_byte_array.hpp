@@ -89,8 +89,9 @@ public:
   {}
 
   ConstByteArray(std::string const &s)
-    : ConstByteArray(s.c_str())
+    : ConstByteArray(reinterpret_cast<uint8_t const *>(s.data()), s.size())
   {}
+
   ConstByteArray(self_type const &other) = default;
   ConstByteArray(self_type &&other)      = default;
   // TODO(pbukva): (private issue #229: confusion what method does without analysing implementation
@@ -238,6 +239,12 @@ public:
   {
     return length_;
   }
+
+  bool empty() const
+  {
+    return 0 == length_;
+  }
+
   container_type const *pointer() const
   {
     return arr_pointer_;
@@ -265,12 +272,8 @@ public:
     return atof(value.c_str());
   }
 
-  std::string ToBase64() const;
-
-  static std::string ToBase64(self_type const &convert)
-  {
-    return convert.ToBase64();
-  }
+  ConstByteArray ToBase64() const;
+  ConstByteArray ToHex() const;
 
   // Non-const functions go here
   void FromByteArray(self_type const &other, std::size_t start, std::size_t length)
@@ -468,13 +471,6 @@ inline std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)
 inline ConstByteArray operator+(char const *a, ConstByteArray const &b)
 {
   return ConstByteArray(a) + b;
-}
-
-ConstByteArray ToBase64(ConstByteArray const &str);
-
-inline std::string ConstByteArray::ToBase64() const
-{
-  return static_cast<std::string>(fetch::byte_array::ToBase64(*this));
 }
 
 inline ConstByteArray ToConstByteArray(ConstByteArray t) noexcept

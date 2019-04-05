@@ -21,25 +21,26 @@
 namespace fetch {
 namespace auctions {
 
-bool VickreyAuction::Execute(BlockId current_block)
+ErrorCode VickreyAuction::Execute()
 {
-  if ((end_block_ == current_block) && auction_valid_)
+  if (!(auction_valid_ == AuctionState::LISTING))
   {
-    assert(max_items_per_bid_ == 1);
-
-    // pick winning bid
-    SelectWinners();
-
-    // deduct funds from winner
-
-    // transfer item to winner
-
-    // close auction
-    auction_valid_ = false;
-
-    return true;
+    return ErrorCode::AUCTION_CLOSED;
   }
-  return false;
+
+  assert(max_items_per_bid_ == 1);
+
+  // pick winning bid
+  SelectWinners();
+
+  // deduct funds from winner
+
+  // transfer item to winner
+
+  // close auction
+  auction_valid_ = AuctionState::CLEARED;
+
+  return ErrorCode::SUCCESS;
 }
 
 /**

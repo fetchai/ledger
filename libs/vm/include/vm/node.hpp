@@ -24,6 +24,26 @@
 namespace fetch {
 namespace vm {
 
+enum class Operator : uint16_t
+{
+  Unknown = 0,
+  Equal,
+  NotEqual,
+  LessThan,
+  LessThanOrEqual,
+  GreaterThan,
+  GreaterThanOrEqual,
+  UnaryMinus,
+  Add,
+  Subtract,
+  Multiply,
+  Divide,
+  AddAssign,
+  SubtractAssign,
+  MultiplyAssign,
+  DivideAssign
+};
+
 struct Symbol
 {
   enum class Kind : uint16_t
@@ -236,7 +256,11 @@ struct Node
 {
   enum class Kind : uint16_t
   {
+    Unknown = 0,
     Root,
+    Annotations,
+    Annotation,
+    AnnotationNameValuePair,
     FunctionDefinitionStatement,
     WhileStatement,
     ForStatement,
@@ -251,6 +275,7 @@ struct Node
     BreakStatement,
     ContinueStatement,
     AssignOp,
+    ModuloAssignOp,
     AddAssignOp,
     SubtractAssignOp,
     MultiplyAssignOp,
@@ -261,8 +286,8 @@ struct Node
     UnsignedInteger32,
     Integer64,
     UnsignedInteger64,
-    SinglePrecisionNumber,
-    DoublePrecisionNumber,
+    Float32,
+    Float64,
     String,
     True,
     False,
@@ -282,6 +307,7 @@ struct Node
     PostfixDecOp,
     UnaryPlusOp,
     UnaryMinusOp,
+    ModuloOp,
     AddOp,
     SubtractOp,
     MultiplyOp,
@@ -289,8 +315,7 @@ struct Node
     IndexOp,
     DotOp,
     InvokeOp,
-    RoundBracketGroup,
-    SquareBracketGroup
+    ParenthesisGroup
   };
   Node(Kind kind__, Token *token__)
   {
@@ -302,7 +327,10 @@ struct Node
   {
     for (auto &child : children)
     {
-      child->Reset();
+      if (child)
+      {
+        child->Reset();
+      }
     }
   }
   Kind         kind;
@@ -329,6 +357,7 @@ struct BlockNode : public Node
     }
   }
   NodePtrArray   block_children;
+  Token          block_terminator;
   SymbolTablePtr symbol_table;
 };
 using BlockNodePtr      = std::shared_ptr<BlockNode>;

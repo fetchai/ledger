@@ -27,73 +27,29 @@
 
 namespace {
 
-template <class Stream, class Array>
-Stream &printArray(Stream &cerr, Array const &a)
-{
-  static constexpr std::size_t width = 80;
-  if (!a.empty())
-  {
-    auto        rle{a.front()};
-    std::string buf{std::to_string(rle)};
-    std::size_t count{1};
-
-    for (std::size_t i{1}; i < a.size() - 1; ++i)
-    {
-      auto val{a[i]};
-      if (val != rle)
-      {
-        if (count > 1)
-        {
-          buf += " x " + std::to_string(count);
-          count = 1;
-        }
-        buf += ',';
-        if (buf.size() >= width)
-        {
-          cerr << buf << '\n';
-          buf = std::to_string(val);
-        }
-        else
-        {
-          buf += ' ' + std::to_string(val);
-        }
-        rle = val;
-      }
-      else
-      {
-        ++count;
-      }
-    }
-    if (a.size() > 1)
-    {
-      auto val{a.back()};
-      if (val != rle)
-      {
-        if (count > 1)
-        {
-          buf += " x " + std::to_string(count);
-          count = 1;
-        }
-        buf += ", " + std::to_string(val);
-      }
-      else
-      {
-        buf += " x " + std::to_string(count + 1);
-      }
-    }
-    cerr << buf << '\n';
-  }
-  return cerr;
-}
-
 class QueueTests : public ::testing::Test
 {
 protected:
   static constexpr std::size_t ELEMENT_SIZE = 1024;
   using Element                             = std::array<uint16_t, ELEMENT_SIZE>;
 
-  template <std::size_t NUM_THREADS, typename Queue>
-  void RunTestMultiProducerTest(Queue &queue)
+  template <typename Element>
+  void VerifyElementConsistency(Element const &element, uint16_t &acqired_thread_id)
+  {
+    // thread the thread index counter
+    ASSERT_EQ(element.front(), element.back());
+
+    // check the contents of the array
+    acqired_thread_id = element[1];
+    for (std::size_t j = 2; j < (ELEMENT_SIZE - 1); ++j)
+    {
+      ASSERT_EQ(acqired_thread_id, element[j]);
+    }
+  }
+
+  template <std::size_t NUM_PROD_THREADS, std::size_t NUM_CONS_THREADS, std::size_t NUM_LOOPS,
+            typename Queue>
+  void ProducerConsumerTest(Queue &queue)
   {
     // ensure the queue element type is valid
     static_assert(std::is_same<typename Queue::Element, Element>::value, "");
@@ -101,22 +57,27 @@ protected:
     using ThreadPtr  = std::unique_ptr<std::thread>;
     using ThreadList = std::vector<ThreadPtr>;
 
-    static constexpr std::size_t NUM_LOOPS = 50;
-    static constexpr std::size_t NUM_ELEMENTS_PER_THREAD =
-        (Queue::QUEUE_LENGTH * NUM_LOOPS) / NUM_THREADS;
-    static constexpr std::size_t TOTAL_NUM_ELEMENTS = NUM_THREADS * NUM_ELEMENTS_PER_THREAD;
+    static const std::size_t NUM_ELEMENTS_PER_THREAD =
+        (Queue::QUEUE_LENGTH * NUM_LOOPS) / NUM_PROD_THREADS;
 
-    ThreadList threads(NUM_THREADS);
-
-    uint16_t thread_idx{0};
+    ThreadList  threads(NUM_PROD_THREADS);
+    uint16_t    thread_idx{0};
+    std::size_t num_of_elements = Queue::QUEUE_LENGTH * NUM_LOOPS;
+    std::size_t num_elements_per_thread{num_of_elements / threads.size()};
     for (auto &thread : threads)
     {
-      thread = std::make_unique<std::thread>([&queue, thread_idx]() {
+      if (num_of_elements < num_elements_per_thread)
+      {
+        num_elements_per_thread = num_of_elements;
+      }
+      num_of_elements -= num_elements_per_thread;
+
+      thread = std::make_unique<std::thread>([&queue, thread_idx, num_elements_per_thread]() {
         // create the boilerplate element
         Element element;
         std::fill(element.begin(), element.end(), thread_idx);
 
-        for (std::size_t i = 0; i < NUM_ELEMENTS_PER_THREAD; ++i)
+        for (std::size_t i = 0; i < num_elements_per_thread; ++i)
         {
           // uniquely identify the element
           element.front() = static_cast<uint16_t>(i);
@@ -131,74 +92,134 @@ protected:
     }
 
     // create the counters
-    std::array<std::size_t, NUM_THREADS> counters{};
-
+    std::array<std::size_t, NUM_PROD_THREADS> counters{};
     // check initialisation
     for (auto const &count : counters)
     {
       ASSERT_EQ(count, 0);
     }
+    std::mutex counter_mutex;
 
-    Element element;
-    for (std::size_t i = 0; i < TOTAL_NUM_ELEMENTS; ++i)
+    ThreadList threads_consumer(NUM_CONS_THREADS);
+    num_of_elements         = Queue::QUEUE_LENGTH * NUM_LOOPS;
+    num_elements_per_thread = num_of_elements / threads_consumer.size();
+    for (auto &thread : threads_consumer)
     {
-      // pop the element from the queue
-      ASSERT_TRUE(queue.Pop(element, std::chrono::seconds{4}));
-
-      if (element.front() != element.back())
+      if (num_of_elements < num_elements_per_thread)
       {
-        printArray(std::cerr << "Corrupt array:\n", element) << '\n';
+        num_elements_per_thread = num_of_elements;
       }
+      num_of_elements -= num_elements_per_thread;
 
-      // thread the thread index counter
-      ASSERT_EQ(element.front(), element.back());
-
-      // check the contents of the array
-      uint16_t const thread_id = element[1];
-      for (std::size_t j = 2; j < (ELEMENT_SIZE - 1); ++j)
-      {
-        if (thread_id != element[j])
-        {
-          printArray(std::cerr << "Corrupt array:\n", element) << '\n';
-        }
-        ASSERT_EQ(thread_id, element[j]);
-      }
-
-      // update the thread counters
-      counters.at(thread_id) += 1;
+      thread = std::make_unique<std::thread>(
+          [this, &queue, &counters, &counter_mutex, num_elements_per_thread]() {
+            Element element;
+            for (std::size_t i = 0; i < num_elements_per_thread; ++i)
+            {
+              // pop the element from the queue
+              ASSERT_TRUE(queue.Pop(element, std::chrono::seconds{4}));
+              uint16_t acquired_thread_id{NUM_PROD_THREADS + 1};
+              VerifyElementConsistency(element, acquired_thread_id);
+              // update the thread counters
+              {
+                std::lock_guard<std::mutex> lock(counter_mutex);
+                counters.at(acquired_thread_id) += 1;
+              }
+            }
+          });
     }
-
-    // ensure all the counters are correct
-    for (auto const &count : counters)
-    {
-      ASSERT_EQ(count, NUM_ELEMENTS_PER_THREAD);
-    }
-
     // wait for all the threads to complete
     for (auto &thread : threads)
     {
       thread->join();
     }
     threads.clear();
+
+    // wait for all the consumer threads to complete
+    for (auto &thread : threads_consumer)
+    {
+      thread->join();
+    }
+    threads_consumer.clear();
+
+    // ensure all the counters are correct
+    for (auto const &count : counters)
+    {
+      ASSERT_EQ(count, NUM_ELEMENTS_PER_THREAD);
+    }
   }
 };
 
-TEST_F(QueueTests, CheckMultiProducerSingleConsumer)
+TEST_F(QueueTests, ProducerConsumer_100p_100c_1000x)
 {
-  static constexpr std::size_t QUEUE_SIZE  = 1024;
-  static constexpr std::size_t NUM_THREADS = 8;
-
-  fetch::core::MPSCQueue<Element, QUEUE_SIZE> queue;
-  RunTestMultiProducerTest<NUM_THREADS>(queue);
-}
-
-TEST_F(QueueTests, CheckMultiProducerMultiConsumer)
-{
-  static constexpr std::size_t QUEUE_SIZE  = 1024;
-  static constexpr std::size_t NUM_THREADS = 8;
+  static constexpr std::size_t QUEUE_SIZE = 1024;
 
   fetch::core::MPMCQueue<Element, QUEUE_SIZE> queue;
-  RunTestMultiProducerTest<NUM_THREADS>(queue);
+  ProducerConsumerTest<100, 100, 1000>(queue);
+}
+
+TEST_F(QueueTests, ProducerConsumer_50p_50c_1000x)
+{
+  static constexpr std::size_t QUEUE_SIZE = 1024;
+
+  fetch::core::MPMCQueue<Element, QUEUE_SIZE> queue;
+  ProducerConsumerTest<50, 50, 1000>(queue);
+}
+
+TEST_F(QueueTests, ProducerConsumer_50p_2c_1000x)
+{
+  static constexpr std::size_t QUEUE_SIZE = 1024;
+
+  fetch::core::MPMCQueue<Element, QUEUE_SIZE> queue;
+  ProducerConsumerTest<50, 2, 1000>(queue);
+}
+
+TEST_F(QueueTests, ProducerConsumer_50p_1c_1000x_MPSCQueue)
+{
+  static constexpr std::size_t QUEUE_SIZE = 1024;
+
+  fetch::core::MPSCQueue<Element, QUEUE_SIZE> queue;
+  ProducerConsumerTest<50, 1, 1000>(queue);
+}
+
+TEST_F(QueueTests, ProducerConsumer_50p_1c_1000x_MPMCQueue)
+{
+  static constexpr std::size_t QUEUE_SIZE = 1024;
+
+  fetch::core::MPMCQueue<Element, QUEUE_SIZE> queue;
+  ProducerConsumerTest<50, 1, 1000>(queue);
+}
+
+TEST_F(QueueTests, ProducerConsumer_1p_1c_1000x_SPSCQueue)
+{
+  static constexpr std::size_t QUEUE_SIZE = 1024;
+
+  fetch::core::SPSCQueue<Element, QUEUE_SIZE> queue;
+  ProducerConsumerTest<1, 1, 1000>(queue);
+}
+
+TEST_F(QueueTests, ProducerConsumer_1p_1c_1000x_MPMCQueue)
+{
+  static constexpr std::size_t QUEUE_SIZE = 1024;
+
+  fetch::core::MPMCQueue<Element, QUEUE_SIZE> queue;
+  ProducerConsumerTest<1, 1, 1000>(queue);
+}
+
+TEST_F(QueueTests, ProducerConsumer_1p_50c_1000x_SPMCQueue)
+{
+  static constexpr std::size_t QUEUE_SIZE = 1024;
+
+  fetch::core::SPMCQueue<Element, QUEUE_SIZE> queue;
+  ProducerConsumerTest<1, 50, 1000>(queue);
+}
+
+TEST_F(QueueTests, ProducerConsumer_1p_50c_1000x__MPMCQueue)
+{
+  static constexpr std::size_t QUEUE_SIZE = 1024;
+
+  fetch::core::SPMCQueue<Element, QUEUE_SIZE> queue;
+  ProducerConsumerTest<1, 50, 1000>(queue);
 }
 
 }  // namespace

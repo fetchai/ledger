@@ -59,13 +59,6 @@ public:
     }
 
     members_[name] = protocol;
-
-#if 0
-    for (auto &feed : protocol->feeds())
-    {
-      feed->AttachToService(this);
-    }
-#endif
   }
 
   virtual bool Disconnect(connection_handle_type)

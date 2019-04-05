@@ -29,7 +29,7 @@ namespace p2p {
 
 P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust,
                        std::size_t max_peers, std::size_t transient_peers,
-                       uint32_t process_cycle_ms)
+                       uint32_t peer_update_cycle_ms)
   : muddle_(muddle)
   , muddle_ep_(muddle.AsEndpoint())
   , lane_management_{lane_management}
@@ -42,7 +42,8 @@ P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInt
   , local_services_(lane_management_)
   , max_peers_(max_peers)
   , transient_peers_(transient_peers)
-  , process_cycle_ms_(process_cycle_ms)
+  , peer_update_cycle_ms_(peer_update_cycle_ms)
+  , manifest_update_cycle_ms_(2000)
 {
   // register the services with the rpc server
   rpc_server_.Add(RPC_P2P_RESOLVER, &resolver_proto_);
@@ -64,15 +65,14 @@ void P2PService::Start(UriList const &initial_peer_list)
     muddle_.AddPeer(uri);
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Establishing CORE Service on tcp://127.0.0.1:", "??",
-                 " ID: ", byte_array::ToBase64(muddle_.identity().identifier()));
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting P2PService...");
 
-  thread_pool_->SetIdleInterval(process_cycle_ms_);
+  thread_pool_->SetIdleInterval(1000);
   thread_pool_->Start();
-  if (process_cycle_ms_ > 0)
-  {
-    thread_pool_->PostIdle([this]() { WorkCycle(); });
-  }
+  thread_pool_->PostIdle([this]() { WorkCycle(); });
+
+  process_future_timepoint_.Set(peer_update_cycle_ms_);
+  manifests_next_update_timepoint_.Set(manifest_update_cycle_ms_);
 }
 
 void P2PService::Stop()
@@ -83,30 +83,84 @@ void P2PService::Stop()
 
 void P2PService::WorkCycle()
 {
-  // get the summary of all the current connections
-  ConnectionMap active_connections;
-  AddressSet    active_addresses;
-  GetConnectionStatus(active_connections, active_addresses);
+  if (peer_update_cycle_ms_.count() > 0 && process_future_timepoint_.IsDue())
+  {
+    // Important, set the cycle time early to prevent rapid re-calls
+    // in the case of exceptions.
+    process_future_timepoint_.Set(peer_update_cycle_ms_);
 
-  // update our identity cache (address -> uri mapping)
-  identity_cache_.Update(active_connections);
+    AddressSet    active_addresses;
+    ConnectionMap active_connections;
 
-  // update the trust system with current connection information
-  UpdateTrustStatus(active_connections);
+    // get the summary of all the current connections
+    GetConnectionStatus(active_connections, active_addresses);
 
-  // discover new good peers on the network
-  PeerDiscovery(active_addresses);
+    // update our identity cache (address -> uri mapping)
+    identity_cache_.Update(active_connections);
 
-  // make the decisions about which peers are desired and which ones we now need to drop
-  RenewDesiredPeers(active_addresses);
+    // update the trust system with current connection information
+    UpdateTrustStatus(active_connections);
 
-  // perform connections updates and drops based on previous step
-  UpdateMuddlePeers(active_addresses);
+    // discover new good peers on the network
+    PeerDiscovery(active_addresses);
 
-  // collect up manifests from connected peers
-  UpdateManifests(active_addresses);
+    // make the decisions about which peers are desired and which ones we now need to drop
+    RenewDesiredPeers(active_addresses);
 
-  // increment the work cycle counter (used for scheduling of periodic events)
+    // perform connections updates and drops based on previous step
+    UpdateMuddlePeers(active_addresses);
+  }
+
+  if (manifest_update_cycle_ms_.count() > 0 && manifests_next_update_timepoint_.IsDue())
+  {
+    // Important, set the cycle time early to prevent rapid re-calls
+    // in the case of exceptions.
+    process_future_timepoint_.Set(manifest_update_cycle_ms_);
+
+    AddressSet    active_addresses;
+    ConnectionMap active_connections;
+
+    GetConnectionStatus(active_connections, active_addresses);
+
+    // Now we have the list of active addresses from the networking,
+    // make all the subsystems try to match it. We work off the
+    // network's ACTUAL connections instead of the trust system's
+    // ideally desired peer list because this means that we know we've
+    // got one connection to the target and hence the subsystem
+    // connections can be more expected to work.
+
+    // Peter fix to ensure that the reverse connections
+    AddressSet non_muddle_addresses{};
+    for (auto const &active_connection : active_connections)
+    {
+      if (Uri::Scheme::Tcp == active_connection.second.scheme())
+      {
+        non_muddle_addresses.insert(active_connection.first);
+      }
+    }
+
+    UpdateManifests(non_muddle_addresses);
+
+    // At this point, if we aren't doing the peer-churning section
+    // above, we'll "fake" the trust system's contents by adding the
+    // connected peers into it.  This will have the effect of making
+    // the HTTP requests for SwarmEye work for static network geometry
+    // as well as dynamic.
+    if (!peer_update_cycle_ms_.count())
+    {
+      for (const auto &c : active_connections)
+      {
+        if (muddle_.IsConnected(c.first))
+        {
+          if (desired_peers_.find(c.first) == desired_peers_.end())
+          {
+            desired_peers_.insert(c.first);
+            trust_system_.AddFeedback(c.first, TrustSubject::PEER, TrustQuality::NEW_PEER);
+          }
+        }
+      }
+    }
+  }
 }
 
 void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
