@@ -240,7 +240,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     }
 
     // This task is so easy the loss should fall on every training step
-    EXPECT_GT(current_loss, loss);
+    EXPECT_GE(current_loss, loss);
     current_loss = loss;
     g.Step(alpha);
   }
@@ -325,7 +325,7 @@ void CategoricalXorTest(bool add_softmax = false)
       g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
     }
 
-    EXPECT_GT(current_loss, loss);
+    EXPECT_GE(current_loss, loss);
     current_loss = loss;
     g.Step(alpha);
   }
