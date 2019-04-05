@@ -72,6 +72,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   , num_slices_{num_slices}
   , tx_wait_periodic_{TX_SYNC_NOTIFY_INTERVAL}
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
+  , syncing_periodic_{NOTIFY_INTERVAL}
 {
   // configure the state machine
   // clang-format off
@@ -174,6 +175,9 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
     current_block_ = chain_.GetHeaviestBlock();
   }
 
+  // determine if extra debug is wanted or needed
+  bool const extra_debug = syncing_periodic_.Poll();
+
   // cache some useful variables
   auto const current_hash         = current_block_->body.hash;
   auto const previous_hash        = current_block_->body.previous_hash;
@@ -182,12 +186,19 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
   auto const current_state        = storage_unit_.CurrentHash();
   auto const last_processed_block = execution_manager_.LastProcessedBlock();
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Current......: ", ToBase64(current_hash));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Previous.....: ", ToBase64(previous_hash));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Desired State: ", ToBase64(desired_state));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Current State: ", ToBase64(current_state));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: LCommit State: ", ToBase64(last_committed_state));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Last Block...: ", ToBase64(last_processed_block));
+#ifdef FETCH_LOG_DEBUG_ENABLED
+  if (extra_debug)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Heaviest.....: ", ToBase64(chain_.GetHeaviestBlockHash()));
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Current......: ", ToBase64(current_hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Previous.....: ", ToBase64(previous_hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Desired State: ", ToBase64(desired_state));
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Current State: ", ToBase64(current_state));
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: LCommit State: ", ToBase64(last_committed_state));
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last Block...: ", ToBase64(last_processed_block));
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last BlockInt: ", ToBase64(last_executed_block_.Get()));
+  }
+#endif // FETCH_LOG_DEBUG_ENABLED
 
   // initial condition, the last processed block is empty
   if (GENESIS_DIGEST == last_processed_block)
@@ -241,8 +252,18 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
     BlockPtr common_parent = *block_path_it++;
     BlockPtr next_block    = *block_path_it++;
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Common Parent: ", ToBase64(common_parent->body.hash));
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Next Block...: ", ToBase64(next_block->body.hash));
+    if (extra_debug)
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Common Parent: ", ToBase64(common_parent->body.hash));
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Next Block...: ", ToBase64(next_block->body.hash));
+
+      // calculate a percentage syncronisation
+      std::size_t const current_block_num = next_block->body.block_number;
+      std::size_t const total_block_num = current_block_->body.block_number;
+      double const completion = static_cast<double>(current_block_num * 100) / static_cast<double>(total_block_num);
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Synchronising of chain in progress. ", completion, "% (block ", next_block->body.block_number, " of ", current_block_->body.block_number, ")");
+    }
 
     // we expect that the common parent in this case will always have been processed, but this
     // should be checked
@@ -282,6 +303,9 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
 {
   FETCH_UNUSED(current);
   State next_state{State::SYNCHRONIZED};
+
+  // ensure the periodic print is not trigger once we have synced
+  syncing_periodic_.Reset();
 
   // if we have detected a change in the chain then we need to re-evaluate the chain
   if (chain_.GetHeaviestBlockHash() != current_block_->body.hash)
