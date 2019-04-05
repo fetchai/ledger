@@ -111,7 +111,7 @@ public:
    *
    * @return The network identifier
    */
-  virtual NetworkId const &network_id() const = 0;
+  virtual NetworkId network_id() const = 0;
 
   /**
    * Request the list of peers that this muddle is directly connected to at the moment

@@ -217,12 +217,14 @@ Router::Router(NetworkId network_id, Address address, MuddleRegister const &reg,
 
 template <class... Args>
 Router::Router(NetworkId network_id, Router::Address address, MuddleRegister const &reg,
-               Dispatcher &dispatcher, Args &&... args)
+               Dispatcher &dispatcher, Prover *prover, bool sign_broadcasts, Args &&... args)
   : address_(std::move(address))
   , address_raw_(ConvertAddress(address_))
   , register_(reg)
   , dispatcher_(dispatcher)
   , network_id_(std::move(network_id))
+  , prover_(prover)
+  , sign_broadcasts_(prover && sign_broadcasts)
   , dispatch_thread_pool_(network::MakeThreadPool(NUMBER_OF_ROUTER_THREADS, "Router"))
   , black_ins_(std::forward<Args>(args)...)
   , black_outs_(routing_table_lock_)

@@ -98,10 +98,7 @@ public:
     if (ptr)
     {
       ptr->Join(shared_from_this());
-      ReadHeader();
     }
-
-    ptr->Join(shared_from_this());
 
     auto strong_strand = network_manager_.CreateIO<Strand>();
     if (!strong_strand)

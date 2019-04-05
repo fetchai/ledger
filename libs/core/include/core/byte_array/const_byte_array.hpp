@@ -19,10 +19,12 @@
 
 #include "core/common.hpp"
 #include "core/logger.hpp"
+#include "meta/type_util.hpp"
 #include "vectorise/memory/shared_array.hpp"
 #include <algorithm>
 #include <cassert>
 #include <cstring>
+#include <functional>
 #include <iostream>
 #include <ostream>
 #include <type_traits>
@@ -235,7 +237,7 @@ public:
     return NPOS;
   }
 
-  std::size_t const &size() const
+  std::size_t size() const
   {
     return length_;
   }
@@ -418,6 +420,7 @@ protected:
   template <typename... Arg>
   self_type &Append(Arg const &... others)
   {
+    Accommodate(others...);
     AppendInternal(size(), others...);
     return *this;
   }
@@ -441,17 +444,18 @@ protected:
   }
 
 private:
-  void AppendInternal(std::size_t const acc_size)
+  template<class... Others> void Accommodate(Others &&...others)
   {
-    Resize(acc_size);
+    Resize(fetch::type_util::FoldL(std::plus<void>{}, size(), others.size()...));
   }
 
-  // TODO(pbukva) (private issue #257)
-  template <typename... Arg>
-  void AppendInternal(std::size_t const acc_size, self_type const &other, Arg const &... others)
+  template<class... Others> void AppendInternal(Others &&...others)
   {
-    AppendInternal(acc_size + other.size(), others...);
-    std::memcpy(pointer() + acc_size, other.pointer(), other.size());
+    fetch::type_util::FoldL(
+	    [this](std::size_t acc, auto &&other){
+		    std::memcpy(pointer() + acc, other.pointer(), other.size());
+		    return acc + other.size();
+	    }, size(), std::forward<Others>(others)...);
   }
 
   template <typename T>

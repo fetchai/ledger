@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include <type_traits>
+#include <utility>
 
 namespace fetch {
 namespace type_util {
@@ -100,6 +101,21 @@ struct IsAnyOf
 
 template <class T, class... Ts>
 static constexpr auto IsAnyOfV = IsAnyOf<T, Ts...>::value;
+
+// Little pack utilities
+
+template<class F, class Car, class Cadr, class... Cddr>
+inline constexpr auto FoldL(F &&f, Car &&car, Cadr &&cadr, Cddr &&...cddr)
+{
+  // no std::invoke yet
+  return FoldL(f, f(std::forward<Car>(car), std::forward<Cadr>(cadr)), std::forward<Cddr>(cddr)...);
+}
+
+template<class F, class RetVal>
+inline constexpr auto FoldL(F &&, RetVal &&retVal)
+{
+  return std::forward<RetVal>(retVal);
+}
 
 }  // namespace type_util
 }  // namespace fetch
