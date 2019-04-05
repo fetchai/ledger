@@ -145,21 +145,14 @@ inline void Multiply(const FixedPoint<I, F> &lhs, const FixedPoint<I, F> &rhs, F
 template <typename T>
 inline std::uint16_t HighestSetBit(T n_input)
 {
-  int n = static_cast<int>(n_input);
+  uint64_t n = n_input;
 
   if (n == 0)
   {
     return 0;
   }
 
-  std::uint16_t msb = 0;
-  while (n != 0)
-  {
-    n = n / 2;
-    msb++;
-  }
-
-  return msb;
+  return sizeof(n)*8 - __builtin_clzll(n);
 }
 
 /**
@@ -256,6 +249,7 @@ public:
   ////////////////////
   FixedPoint() = default;
 
+<<<<<<< HEAD
   /**
    * Templated constructor existing only for T is an integer and assigns data
    * @tparam T any integer type
@@ -278,16 +272,16 @@ public:
   }
 
   inline FixedPoint(const FixedPoint &o)
-    : data_(o.data_)
+    : data_{o.data_}
   {}
 
   inline FixedPoint(const Type &integer, const Type &fraction)
-    : data_((integer_mask & (Type(integer) << fractional_bits)) | (fraction & fractional_mask))
+    : data_{(integer_mask & (Type(integer) << fractional_bits)) | (fraction & fractional_mask)}
   {}
 
   inline const Type integer() const 
   {
-    return (data_ & integer_mask) >> fractional_bits;
+    return Type((data_ & integer_mask) >> fractional_bits);
   }
 
   inline const Type fraction() const
