@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,47 +17,33 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/compiler.hpp"
-#include "vm/module.hpp"
+#include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
+
+#include <cmath>
 
 namespace fetch {
-namespace vm {
+namespace math {
 
-Compiler::Compiler(Module *module)
+/**
+ * Divide each value of an array by sum of all values
+ * i.e. x / Sum(x)
+ * @param a input array of values
+ * @param ret return normalized value
+ */
+template <typename ArrayType>
+void NormalizeArray(ArrayType const &a, ArrayType &ret)
 {
-  analyser_.Initialise();
-  module->CompilerSetup(this);
+  Divide(a, Sum(a), ret);
 }
 
-Compiler::~Compiler()
+template <typename ArrayType>
+ArrayType NormalizeArray(ArrayType const &a)
 {
-  analyser_.UnInitialise();
+  ArrayType ret(a.shape());
+  NormalizeArray(a, ret);
+  return ret;
 }
 
-bool Compiler::Compile(std::string const &source, std::string const &name, Script &script,
-                       Strings &errors)
-{
-  BlockNodePtr root = parser_.Parse(source, errors);
-  if (root == nullptr)
-  {
-    return false;
-  }
-
-  TypeInfoTable type_info_table;
-  bool          analysed = analyser_.Analyse(root, type_info_table, errors);
-  if (!analysed)
-  {
-    root->Reset();
-    root = nullptr;
-    return false;
-  }
-
-  generator_.Generate(root, type_info_table, name, script);
-
-  root->Reset();
-  root = nullptr;
-  return true;
-}
-
-}  // namespace vm
+}  // namespace math
 }  // namespace fetch

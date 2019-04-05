@@ -211,7 +211,7 @@ TYPED_TEST(TextDataLoaderTest, adddata_loader_test)
     }
     std::pair<TypeParam, SizeType> output = loader.GetNext();
     cur_word = loader.VocabLookup(SizeType(double(output.first.At(0))));
-    ASSERT_TRUE(cur_word.compare(gt_input.at(j)) == 0);
+    ASSERT_EQ(cur_word.compare(gt_input.at(j)), 0);
   }
 
   std::string new_training_data = "This is a new sentence added after set up.";
@@ -231,7 +231,7 @@ TYPED_TEST(TextDataLoaderTest, adddata_loader_test)
     }
     std::pair<TypeParam, SizeType> output = loader.GetNext();
     cur_word = loader.VocabLookup(SizeType(double(output.first.At(0))));
-    ASSERT_TRUE(cur_word.compare(gt_input.at(j)) == 0);
+    ASSERT_EQ(cur_word.compare(gt_input.at(j)), 0);
   }
 }
 

@@ -17,38 +17,39 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "math/standard_functions/pow.hpp"
-#include "math/statistics/entropy.hpp"
-
-#include <cmath>
+#include "math/fundamental_operators.hpp"
+#include "math/meta/math_type_traits.hpp"
+#include "math/standard_functions/log.hpp"
+#include <core/assert.hpp>
+#include <math/matrix_operations.hpp>
 
 namespace fetch {
 namespace math {
-namespace statistics {
 
 /**
- * Calculates the Perplexity of Shannon entropy for point i in N-dimensional feature space
- * i.e. 2^Entropy(i)
- * @param a input tensor of dimensions n_data x n_features
- * @param i index of the data point on which distribution is centred
- * @param ret return value
+ * Kullback-Leibler divergence between array P and Q
+ * KL(P||Q) = P log (P / Q)
+ * * i.e. for each val in p and q do sum(p*log(p/q))
+ * @param q input array of probabilities
+ * @param p input array of probabilities
+ * @return
  */
 template <typename ArrayType>
-void Perplexity(ArrayType const &a, typename ArrayType::Type &ret)
+meta::IfIsMathArray<ArrayType, void> KlDivergence(ArrayType const &p, ArrayType const &q,
+                                                  typename ArrayType::Type &ret)
 {
-  using DataType = typename ArrayType::Type;
-  Pow(DataType(2), Entropy(a), ret);
+  ASSERT(p.shape().at(0) == q.shape().at(0));
+  ret = Sum(Multiply(p, Log(Divide(p, q))));
 }
 
 template <typename ArrayType>
-typename ArrayType::Type Perplexity(ArrayType const &a)
+meta::IfIsMathArray<ArrayType, typename ArrayType::Type> KlDivergence(ArrayType const &p,
+                                                                      ArrayType const &q)
 {
   typename ArrayType::Type ret;
-  Perplexity(a, ret);
+  KlDivergence(p, q, ret);
   return ret;
 }
 
-}  // namespace statistics
 }  // namespace math
 }  // namespace fetch

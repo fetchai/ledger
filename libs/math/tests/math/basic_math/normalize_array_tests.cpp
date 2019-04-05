@@ -20,14 +20,13 @@
 #include <iomanip>
 #include <iostream>
 
-#include "math/statistics/entropy.hpp"
+#include "math/normalize_array.hpp"
 #include "math/tensor.hpp"
 
-using namespace fetch::math::statistics;
 using namespace fetch::math;
 
 template <typename T>
-class EntropyTest : public ::testing::Test
+class DistanceTest : public ::testing::Test
 {
 };
 
@@ -35,19 +34,32 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 
-TYPED_TEST_CASE(EntropyTest, MyTypes);
+TYPED_TEST_CASE(DistanceTest, MyTypes);
 
-TYPED_TEST(EntropyTest, entropy)
+TYPED_TEST(DistanceTest, conditional_distance)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
 
-  ArrayType A(4);
+  ArrayType A = ArrayType({4});
 
-  A.Set(0, DataType(0.1));
-  A.Set(1, DataType(0.2));
-  A.Set(2, DataType(0.3));
-  A.Set(3, DataType(0.4));
+  A.Set({0}, DataType(1));
+  A.Set({1}, DataType(2));
+  A.Set({2}, DataType(3));
+  A.Set({3}, DataType(4));
 
-  EXPECT_NEAR(double(Entropy(A)), 1.84643934467102, 1e-4);
+  // Expected results
+  ArrayType A_norm_expected = ArrayType({4});
+  A_norm_expected.Set({0}, DataType(0.1));
+  A_norm_expected.Set({1}, DataType(0.2));
+  A_norm_expected.Set({2}, DataType(0.3));
+  A_norm_expected.Set({3}, DataType(0.4));
+
+  // Compare results with expected results
+  ArrayType A_norm = NormalizeArray(A);
+  for (SizeType i{0}; i < A.size(); i++)
+  {
+    EXPECT_NEAR(double(A_norm.At(i)), double(A_norm_expected.At(i)), 1e-4);
+  }
 }

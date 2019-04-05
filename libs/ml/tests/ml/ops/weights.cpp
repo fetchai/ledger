@@ -66,7 +66,7 @@ TYPED_TEST(WeightsTest, stateDict)
   fetch::ml::ops::Weights<TypeParam> w;
   fetch::ml::StateDict<TypeParam>    sd = w.StateDict();
 
-  EXPECT_TRUE(sd.weights_ == nullptr);
+  EXPECT_EQ(sd.weights_, nullptr);
   EXPECT_TRUE(sd.dict_.empty());
 
   TypeParam data(8);

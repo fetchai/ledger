@@ -44,7 +44,7 @@ TYPED_TEST(EuclideanTest, simple_test)
   A.Set(1, 2);
   A.Set(2, 3);
   A.Set(3, 4);
-  ASSERT_TRUE(Euclidean(A, A) == 0);
+  ASSERT_EQ(Euclidean(A, A), 0);
 
   Tensor<double> B = Tensor<double>(4);
   B.Set(0, 1);
@@ -52,5 +52,5 @@ TYPED_TEST(EuclideanTest, simple_test)
   B.Set(2, 3);
   B.Set(3, 2);
 
-  ASSERT_TRUE(Euclidean(A, B) == 2);
+  ASSERT_EQ(Euclidean(A, B), 2);
 }
