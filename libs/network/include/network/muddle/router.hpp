@@ -75,9 +75,10 @@ public:
 
   // Construction / Destruction
   Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher,
-         Prover *certificate = nullptr);
+         Prover *certificate = nullptr, bool sign_broadcasts = false);
+  template<class... Args>
   Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher,
-         Prover *certificate, Args &&... args);
+         Prover *certificate, bool sign_broadcasts, Args &&... args);
   Router(Router const &) = delete;
   Router(Router &&)      = delete;
   ~Router() override     = default;
@@ -188,10 +189,6 @@ public:
 
   Handle LookupHandle(Packet::RawAddress const &address) const;
 
-  // Operators
-  Router &operator=(Router const &) = delete;
-  Router &operator=(Router &&) = delete;
-
 private:
   using HandleMap       = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
   using Mutex           = mutex::Mutex;
@@ -236,7 +233,8 @@ private:
   Dispatcher &          dispatcher_;
   SubscriptionRegistrar registrar_;
   NetworkId             network_id_;
-  Prover *              prover_ = nullptr;
+  Prover *              prover_          = nullptr;
+  bool                  sign_broadcasts_ = false;
 
   mutable Mutex routing_table_lock_{__LINE__, __FILE__};
   // Addresses-to-handles map (protected by routing_table_lock_)
