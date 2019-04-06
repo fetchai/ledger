@@ -371,8 +371,8 @@ static void yynoreturn yy_fatal_error ( const char* msg , yyscan_t yyscanner );
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
-#define YY_NUM_RULES 76
-#define YY_END_OF_BUFFER 77
+#define YY_NUM_RULES 77
+#define YY_END_OF_BUFFER 78
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -382,25 +382,25 @@ struct yy_trans_info
 	};
 static const flex_int16_t yy_accept[175] =
     {   0,
-        0,    0,    0,    0,   77,   75,    1,    2,   72,   75,
-       53,   75,   75,   49,   50,   56,   54,   45,   55,   46,
-       57,   75,   47,   48,   66,   63,   68,   75,   43,   51,
-       52,   43,   43,   43,   43,   43,   43,   43,   43,   43,
-       43,   75,    5,    4,    6,    5,    1,   65,    0,   23,
-       21,    0,   58,   70,    0,   24,   22,    0,   61,   73,
-       59,   74,   60,   19,    3,    0,   62,   19,    0,    0,
-        0,    0,   67,   64,   69,   44,   43,   43,   43,   43,
-       43,   43,   43,   43,   35,   33,   43,   43,   43,   43,
-       43,   71,    5,    6,    6,    7,    0,   17,    0,    8,
+        0,    0,    0,    0,   78,   76,    1,    2,   73,   76,
+       54,   76,   76,   50,   51,   57,   55,   46,   56,   47,
+       58,   17,   48,   49,   67,   64,   69,   76,   44,   52,
+       53,   44,   44,   44,   44,   44,   44,   44,   44,   44,
+       44,   76,    5,    4,    6,    5,    1,   66,    0,   24,
+       22,    0,   59,   71,    0,   25,   23,    0,   62,   74,
+       60,   75,   61,   20,    3,    0,   63,   20,   17,    0,
+        0,    0,   68,   65,   70,   45,   44,   44,   44,   44,
+       44,   44,   44,   44,   36,   34,   44,   44,   44,   44,
+       44,   72,    5,    6,    6,    7,    0,   18,    0,    8,
 
-        0,   20,    0,    0,    0,    9,    0,    0,    0,   10,
-       44,   43,   43,   43,   43,   43,   32,   43,   43,   43,
-       43,   39,   43,    0,   19,   18,   11,   13,   15,   12,
-       14,   16,   43,   43,   37,   43,   43,   43,   43,   43,
-       27,   43,   25,   43,   41,   43,   43,   43,   43,   38,
-       43,   26,   43,   43,   30,   43,   36,   34,   43,   43,
-       43,   40,   43,   43,   43,   43,   42,   43,   31,   28,
-       43,   43,   29,    0
+        0,   21,    0,    0,    0,    9,    0,    0,    0,   10,
+       45,   44,   44,   44,   44,   44,   33,   44,   44,   44,
+       44,   40,   44,    0,   20,   19,   11,   13,   15,   12,
+       14,   16,   44,   44,   38,   44,   44,   44,   44,   44,
+       28,   44,   26,   44,   42,   44,   44,   44,   44,   39,
+       44,   27,   44,   44,   31,   44,   37,   35,   44,   44,
+       44,   41,   44,   44,   44,   44,   43,   44,   32,   29,
+       44,   44,   30,    0
     } ;
 
 static const YY_CHAR yy_ec[256] =
@@ -1079,40 +1079,47 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case 17:
-#line 122 "tokeniser.l"
-case 18:
 YY_RULE_SETUP
-#line 122 "tokeniser.l"
+#line 121 "tokeniser.l"
+{
+	return Set(yylval, fetch::vm::Token::Kind::Integer32, yytext, yyleng, yyextra);
+}
+	YY_BREAK
+case 18:
+#line 126 "tokeniser.l"
+case 19:
+YY_RULE_SETUP
+#line 126 "tokeniser.l"
 {
 	return Set(yylval, fetch::vm::Token::Kind::Float32, yytext, yyleng, yyextra);
 }
 	YY_BREAK
-case 19:
-#line 127 "tokeniser.l"
 case 20:
+#line 131 "tokeniser.l"
+case 21:
 YY_RULE_SETUP
-#line 127 "tokeniser.l"
+#line 131 "tokeniser.l"
 {
 	return Set(yylval, fetch::vm::Token::Kind::Float64, yytext, yyleng, yyextra);
 }
 	YY_BREAK
 /* strings */
-case 21:
-#line 133 "tokeniser.l"
 case 22:
+#line 137 "tokeniser.l"
+case 23:
 YY_RULE_SETUP
-#line 133 "tokeniser.l"
+#line 137 "tokeniser.l"
 {
 	return Set(yylval, fetch::vm::Token::Kind::String, yytext, yyleng, yyextra);
 }
 	YY_BREAK
-case 23:
-/* rule 23 can match eol */
-#line 138 "tokeniser.l"
 case 24:
 /* rule 24 can match eol */
+#line 142 "tokeniser.l"
+case 25:
+/* rule 25 can match eol */
 YY_RULE_SETUP
-#line 138 "tokeniser.l"
+#line 142 "tokeniser.l"
 { 
 	Set(yylval, fetch::vm::Token::Kind::BadString, yytext, yyleng, yyextra);
 	yyextra->line++;
@@ -1120,280 +1127,280 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 /* keywords */
-case 25:
-YY_RULE_SETUP
-#line 145 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::True, yytext, yyleng, yyextra);}
-	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 146 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::False, yytext, yyleng, yyextra);}
+#line 149 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::True, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 147 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::Null, yytext, yyleng, yyextra);}
+#line 150 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::False, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 148 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::Function, yytext, yyleng, yyextra);}
+#line 151 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::Null, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 149 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::EndFunction, yytext, yyleng, yyextra);}
+#line 152 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::Function, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 150 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::While, yytext, yyleng, yyextra);}
+#line 153 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::EndFunction, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 151 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::EndWhile, yytext, yyleng, yyextra);}
+#line 154 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::While, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 152 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::For, yytext, yyleng, yyextra);}
+#line 155 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::EndWhile, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 153 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::In, yytext, yyleng, yyextra);}
+#line 156 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::For, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 154 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::EndFor, yytext, yyleng, yyextra);}
+#line 157 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::In, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 155 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::If, yytext, yyleng, yyextra);}
+#line 158 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::EndFor, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 156 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::ElseIf, yytext, yyleng, yyextra);}
+#line 159 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::If, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 157 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::Else, yytext, yyleng, yyextra);}
+#line 160 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::ElseIf, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 158 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::EndIf, yytext, yyleng, yyextra);}
+#line 161 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::Else, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 159 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::Var, yytext, yyleng, yyextra);}
+#line 162 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::EndIf, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 160 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::Return, yytext, yyleng, yyextra);}
+#line 163 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::Var, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 161 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::Break, yytext, yyleng, yyextra);}
+#line 164 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::Return, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 162 "tokeniser.l"
+#line 165 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::Break, yytext, yyleng, yyextra);}
+	YY_BREAK
+case 43:
+YY_RULE_SETUP
+#line 166 "tokeniser.l"
 {return Set(yylval, fetch::vm::Token::Kind::Continue, yytext, yyleng, yyextra);}
 	YY_BREAK
 /* identifiers */
-case 43:
+case 44:
 YY_RULE_SETUP
-#line 165 "tokeniser.l"
+#line 169 "tokeniser.l"
 {
 	return Set(yylval, fetch::vm::Token::Kind::Identifier, yytext, yyleng, yyextra);
 }
 	YY_BREAK
 /* annotation identifiers */
-case 44:
+case 45:
 YY_RULE_SETUP
-#line 170 "tokeniser.l"
+#line 174 "tokeniser.l"
 {
 	return Set(yylval, fetch::vm::Token::Kind::AnnotationIdentifier, yytext, yyleng, yyextra);
 }
 	YY_BREAK
 /*  punctuation and operators */
-case 45:
-YY_RULE_SETUP
-#line 175 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::Comma, yytext, yyleng, yyextra);}
-	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 176 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::Dot, yytext, yyleng, yyextra);}
+#line 179 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::Comma, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 177 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::Colon, yytext, yyleng, yyextra);}
+#line 180 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::Dot, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 178 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::SemiColon, yytext, yyleng, yyextra);}
+#line 181 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::Colon, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 179 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::LeftParenthesis, yytext, yyleng, yyextra);}
+#line 182 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::SemiColon, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 180 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::RightParenthesis, yytext, yyleng, yyextra);}
+#line 183 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::LeftParenthesis, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 181 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::LeftSquareBracket, yytext, yyleng, yyextra);}
+#line 184 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::RightParenthesis, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 182 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::RightSquareBracket, yytext, yyleng, yyextra);}
+#line 185 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::LeftSquareBracket, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 183 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::Modulo, yytext, yyleng, yyextra);}
+#line 186 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::RightSquareBracket, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 184 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::Plus, yytext, yyleng, yyextra);}
+#line 187 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::Modulo, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 185 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::Minus, yytext, yyleng, yyextra);}
+#line 188 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::Plus, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 186 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::Multiply, yytext, yyleng, yyextra);}
+#line 189 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::Minus, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 187 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::Divide, yytext, yyleng, yyextra);}
+#line 190 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::Multiply, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 188 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::ModuloAssign, yytext, yyleng, yyextra);}
+#line 191 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::Divide, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 189 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::AddAssign, yytext, yyleng, yyextra);}
+#line 192 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::ModuloAssign, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 190 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::SubtractAssign, yytext, yyleng, yyextra);}
+#line 193 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::AddAssign, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 191 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::MultiplyAssign, yytext, yyleng, yyextra);}
+#line 194 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::SubtractAssign, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 192 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::DivideAssign, yytext, yyleng, yyextra);}
+#line 195 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::MultiplyAssign, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 193 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::Assign, yytext, yyleng, yyextra);}
+#line 196 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::DivideAssign, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 194 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::Equal, yytext, yyleng, yyextra);}
+#line 197 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::Assign, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 195 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::NotEqual, yytext, yyleng, yyextra);}
+#line 198 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::Equal, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 196 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::LessThan, yytext, yyleng, yyextra);}
+#line 199 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::NotEqual, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 197 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::LessThanOrEqual, yytext, yyleng, yyextra);}
+#line 200 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::LessThan, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 198 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::GreaterThan, yytext, yyleng, yyextra);}
+#line 201 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::LessThanOrEqual, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 199 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::GreaterThanOrEqual, yytext, yyleng, yyextra);}
+#line 202 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::GreaterThan, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 200 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::And, yytext, yyleng, yyextra);}
+#line 203 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::GreaterThanOrEqual, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 201 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::Or, yytext, yyleng, yyextra);}
+#line 204 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::And, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 202 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::Not, yytext, yyleng, yyextra);}
+#line 205 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::Or, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 203 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::Inc, yytext, yyleng, yyextra);}
+#line 206 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::Not, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 204 "tokeniser.l"
+#line 207 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::Inc, yytext, yyleng, yyextra);}
+	YY_BREAK
+case 75:
+YY_RULE_SETUP
+#line 208 "tokeniser.l"
 {return Set(yylval, fetch::vm::Token::Kind::Dec, yytext, yyleng, yyextra);}
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(COMMENT):
-#line 206 "tokeniser.l"
+#line 210 "tokeniser.l"
 {Set(yylval, fetch::vm::Token::Kind::EndOfInput, "", 0, yyextra); return 0;}
 	YY_BREAK
 /* catch-all for unrecognised */
-case 75:
-YY_RULE_SETUP
-#line 209 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::Unknown, yytext, yyleng, yyextra);}
-	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 211 "tokeniser.l"
+#line 213 "tokeniser.l"
+{return Set(yylval, fetch::vm::Token::Kind::Unknown, yytext, yyleng, yyextra);}
+	YY_BREAK
+case 77:
+YY_RULE_SETUP
+#line 215 "tokeniser.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1376 "../src/tokeniser.cpp"
+#line 1383 "../src/tokeniser.cpp"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2572,6 +2579,6 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 211 "tokeniser.l"
+#line 215 "tokeniser.l"
 
 // clang-format on

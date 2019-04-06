@@ -117,6 +117,10 @@ IDENT		[_a-zA-Z][_a-zA-Z0-9]*
 	return Set(yylval, fetch::vm::Token::Kind::UnsignedInteger64, yytext, yyleng, yyextra);
 }
 
+{INTEGER} {
+	return Set(yylval, fetch::vm::Token::Kind::Integer32, yytext, yyleng, yyextra);
+}
+
 {REAL1}f |
 {REAL2}f {
 	return Set(yylval, fetch::vm::Token::Kind::Float32, yytext, yyleng, yyextra);
