@@ -130,7 +130,7 @@ private:
       {
         buff >> ret;
       }
-      catch (std::exception const &e)
+      catch (std::exception const &)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "FAILED TO DESERIALIZE MERKLE TREE PROXY! ", size_);
         return ret;
