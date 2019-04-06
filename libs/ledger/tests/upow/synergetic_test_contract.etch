@@ -17,17 +17,17 @@ function dagState() : Array< Buffer >
 endfunction
 
 @objective
-function proofOfWork(problem : Array< Buffer >, solution : Int32 ) : Float64 
+function proofOfWork(problem : Array< Buffer >, solution : Int32 ) : Int64 
   if( solution >= 0)
     var hasher = SHA256();
     hasher.update(problem[solution]);    
     var number = BigUInt( hasher.final() );
     var value = toFloat64(number.toInt32());
 
-    return value;
+    return toInt64(value * toFloat64(leftShift(1, 31) ) );
   endif
 
-  return 1e300;
+  return leftShift(1l,63l);
 endfunction
 
 @clear

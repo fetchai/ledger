@@ -317,7 +317,19 @@ public:
     return *input_devices_[name];
   }  
 
-  // TODO: Only access through module
+  void DetachInputDevice(std::string name)
+  {
+    auto it = input_devices_.find(name);
+    if(it != input_devices_.end())
+    {
+      input_devices_.erase(it);
+    }
+    else
+    {
+      throw std::runtime_error("Input device does not exists.");      
+    }
+  }
+
   void AttachInputDevice(std::string name, std::istream& device)
   {
     if(input_devices_.find(name)!=input_devices_.end())
@@ -326,6 +338,19 @@ public:
     }
 
     input_devices_.insert({std::move(name), &device});
+  }
+
+  void DetachOutputDevice(std::string name)
+  {
+    auto it = output_devices_.find(name);
+    if(it != output_devices_.end())
+    {
+      output_devices_.erase(it);
+    }
+    else
+    {
+      throw std::runtime_error("Output device does not exists.");      
+    }
   }
 
   void AttachOutputDevice(std::string name, std::ostream& device)

@@ -29,6 +29,8 @@ public:
   using Identifier           = ledger::Identifier;
   using StorageInterface     = ledger::StorageInterface;
   using BigUnsigned          = math::BigUnsigned;
+  using UniqueVM             = std::unique_ptr< fetch::vm::VM >;
+  using VMVariant            = fetch::vm::Variant;
 
   SynergeticMiner(fetch::ledger::DAG &dag)
   : dag_(dag)
@@ -36,23 +38,34 @@ public:
     CreateConensusVMModule(module_);
 
     // Preparing VM & compiler
-    vm_               = new fetch::vm::VM(&module_);
+    vm_.reset(new fetch::vm::VM(&module_));
     chain_state_.dag  =  &dag_;
 
-    // TODO: Workout what to do with the stdout
-    vm_->AttachOutputDevice("stdout", std::cout);
+    // Making the chainstate available to the VM
     vm_->RegisterGlobalPointer(&chain_state_);    
   }
 
-  ~SynergeticMiner() 
+  ~SynergeticMiner() = default;
+
+  void AttachStandardOutputDevice(std::ostream& device)
   {
-    delete vm_;
+    // Attaching input/output device
+    vm_->AttachOutputDevice("stdout", device);
+    vm_->AttachOutputDevice("stderr", device);
   }
+
+  void DetachStandardOutputDevice()
+  {
+    vm_->DetachOutputDevice("stdout");
+    vm_->DetachOutputDevice("stderr");  
+  }
+
 
   bool DefineProblem() 
   { 
     assert(contract_ != nullptr);
 
+    // Attaching the state - when defining the problem, the state can only be read.
     if(has_state())
     {
       vm_->SetIOObserver(read_only_state());
@@ -80,6 +93,7 @@ public:
     assert(contract_ != nullptr);    
     assert(work.block_number == chain_state_.block.body.block_number);
 
+    // Also execute only allows reading the state
     if(has_state())
     {
       vm_->SetIOObserver(read_only_state());
@@ -119,12 +133,13 @@ public:
       return std::numeric_limits< ScoreType >::max();
     }
     
-    return score_.primitive.f64; // TODO: Migrate to i64 and fixed points
+    return score_.primitive.i64; 
   }
 
   bool ClearContest()
   {
-    assert(contract_ != nullptr);    
+    assert(contract_ != nullptr);
+    // Clear contest is the only function for which synergetic contracts can change the state 
     if(has_state())
     {
       vm_->SetIOObserver(read_write_state());
@@ -137,7 +152,7 @@ public:
     }
 
     // Invoking the clear function
-    fetch::vm::Variant output;
+    VMVariant output;
     if (!vm_->Execute(contract_->script, contract_->clear_function, error_,  output, problem_, solution_))
     {
       errors_.push_back("Error while clearing contest during execution.");
@@ -154,7 +169,7 @@ public:
   DAGNode CreateDAGTestData(int32_t epoch, int64_t n_entropy)
   {
     assert(contract_ != nullptr);    
-    fetch::vm::Variant new_dag_node;
+    VMVariant new_dag_node;
 
     // Generating entropy
     fetch::crypto::SHA256 hasher;
@@ -273,12 +288,12 @@ private:
 
   fetch::ledger::DAG  &dag_;
   fetch::vm::Module    module_;
-  fetch::vm::VM *      vm_;
+  UniqueVM      vm_;
 
   std::string        error_;
-  fetch::vm::Variant problem_;
-  fetch::vm::Variant solution_; 
-  fetch::vm::Variant score_;  
+  VMVariant problem_;
+  VMVariant solution_; 
+  VMVariant score_;  
   std::string text_output_;
   SynergeticContract contract_{nullptr};
 

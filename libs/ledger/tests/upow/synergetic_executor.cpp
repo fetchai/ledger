@@ -69,10 +69,14 @@ public:
     dag_ = UniqueDAG( new DAG() );
     executor_ = UniqueExecutor( new SynergeticExecutor(*dag_.get(), *storage_.get()) );    
     chain_ = UniqueBlockChain( new FakeChain() );
-    miner_ = UniqueMiner( new SynergeticMiner(*dag_.get()) );
+    miner_ = UniqueMiner( new SynergeticMiner(*dag_.get()) );    
     certificate_ = std::make_unique<fetch::crypto::ECDSASigner>();
 
-    // Preparing genesis block
+    // Adding input/output
+    executor_->AttachStandardOutputDevice(std::cout);    
+    miner_->AttachStandardOutputDevice(std::cout);
+
+    // Preparing genesis block    
     Block next_block;
     next_block.body.previous_hash = "genesis";
     next_block.body.block_number  = 0;
@@ -102,7 +106,17 @@ public:
     storage_->Set(contract_address, adapter.data());
 
     EXPECT_EQ(GetContract(), source);
-    EXPECT_TRUE(cregister_.CreateContract(CONTRACT_NAME, source));
+
+    auto contract = cregister_.CreateContract(CONTRACT_NAME, source);
+    if(!contract)
+    {
+      std::stringstream ss;
+      for(auto &e: cregister_.errors())
+      {
+        ss << e << std::endl;
+      }
+      FAIL() << ss.str();
+    }
 
     // Clearing the register
     cregister_.Clear();
@@ -129,7 +143,6 @@ public:
 
           if(w.score < work.score)
           {
-            std::cout << w.contract_name << " "  << std::endl;
             FAIL() << "There exists work in segment that performs better: " << w.score << " vs " << work.score;
           }
         }

@@ -53,6 +53,8 @@ public:
 
     dag_ = UniqueDAG( new DAG() );
     miner_ = UniqueMiner( new SynergeticMiner(*dag_.get()) );
+    miner_->AttachStandardOutputDevice(std::cout);
+    
     LoadDAG("./synergetic_test_dag.dag");
   }
 

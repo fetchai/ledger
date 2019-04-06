@@ -132,7 +132,7 @@ public:
 
   using ConstByteArray = byte_array::ConstByteArray;
   using Identity       = ConstByteArray;
-  using DAG      = fetch::ledger::DAG;
+  using DAG            = fetch::ledger::DAG;
 
   enum class State
   {
@@ -309,6 +309,7 @@ private:
 
   /// @name Synergetic Contracts
   /// @{
+  bool                       synergetic_contracts_enabled_{true}; //< Variable to disable synergetic contracts
   SynergeticExecutor         synergetic_executor_;
   /// }
 };

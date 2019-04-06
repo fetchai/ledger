@@ -49,6 +49,16 @@ public:
   , storage_{storage_unit}
   { }
 
+  void AttachStandardOutputDevice(std::ostream& device)
+  {
+    miner_.AttachStandardOutputDevice(device);
+  }
+
+  void DetachStandardOutputDevice()  
+  {
+    miner_.DetachStandardOutputDevice();
+  }
+
   PreparationStatusType PrepareWorkQueue(Block const &previous, Block const &current)
   {
     contract_queue_.clear();

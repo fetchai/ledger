@@ -10,6 +10,9 @@
 
 #include "synergetic_contract.hpp"
 
+#include <vector>
+#include <string>
+
 namespace fetch
 {
 namespace consensus
@@ -19,22 +22,20 @@ class SynergeticContractRegister
 {
 public:
   using ContractName      = byte_array::ConstByteArray;
+  using UniqueCompiler    = std::unique_ptr< vm::Compiler >;
 
   SynergeticContractRegister()
   {
     CreateConensusVMModule(module_);    
-    compiler_ = new fetch::vm::Compiler(&module_); // TODO: Make unique_ptr;
+    compiler_.reset( new fetch::vm::Compiler(&module_) );
   }
 
-  ~SynergeticContractRegister()
-  {
-    delete compiler_;
-  }
+  ~SynergeticContractRegister() = default;
 
   SynergeticContract CreateContract(ContractName const &contract_name, std::string const &source)
   {
-    
-    SynergeticContract ret = SynergeticContractClass::New(compiler_, contract_name, source);
+    errors_.clear();
+    SynergeticContract ret = SynergeticContractClass::New(compiler_, contract_name, source, errors_);
     contracts_[contract_name] = ret;
     return ret;
   }
@@ -58,10 +59,14 @@ public:
   void Clear()
   {
     contracts_.clear();
+    errors_.clear();
   }
+
+  std::vector< std::string > const &errors() const { return errors_; }
 private:
   vm::Module     module_;
-  vm::Compiler  *compiler_ = nullptr;
+  UniqueCompiler compiler_{nullptr};
+  std::vector< std::string > errors_;    
   std::unordered_map< ContractName, SynergeticContract > contracts_;
 };
 

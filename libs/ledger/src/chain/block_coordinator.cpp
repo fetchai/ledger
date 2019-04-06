@@ -405,20 +405,6 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       chain_.RemoveBlock(current_block_->body.hash);
       return State::RESET;
     }
-
-    // Validating DAG hashes
-    // TODO:
-    /* 
-    TODO:
-    // Checking that work in DAG is valid and refers to existing contracts
-    if(!synergetic_executor_.PrepareWorkQueue(*current_block_))
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Block contains invalid work (",
-                     ToBase64(current_block_->body.hash), ")");
-      chain_.RemoveBlock(current_block_->body.hash);
-      return State::RESET;      
-    }
-    */
   }
 
   // Check: Ensure the digests are the correct size
@@ -430,17 +416,44 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     return State::RESET;
   }
 
+  // Validating DAG hashes
+  if( (!is_genesis) && synergetic_contracts_enabled_)
+  {
+    BlockPtr previous_block = chain_.GetBlock(current_block_->body.previous_hash);    
+
+    // All work is identified on the latest DAG segment and prepared in a queue
+    auto result = synergetic_executor_.PrepareWorkQueue(*previous_block, *current_block_);
+    if( SynergeticExecutor::PreparationStatusType::SUCCESS != result)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Block certifies work that possibly is malicious (",
+                     ToBase64(current_block_->body.hash), ")");
+      chain_.RemoveBlock(current_block_->body.hash);
+      return State::RESET;      
+    }
+  }
+
   // reset the tx wait period
   tx_wait_periodic_.Reset();
 
   // All the checks pass
-  return State::WAIT_FOR_TRANSACTIONS;
+  return State::SYNERGETIC_EXECUTION;
 }
 
 BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
 {
-  // Validating all work done
+  bool const is_genesis = current_block_->body.previous_hash == GENESIS_DIGEST;
 
+  // Validating all work done
+  if( (!is_genesis) && synergetic_contracts_enabled_)
+  {
+    if(!synergetic_executor_.ValidateWorkAndUpdateState())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (",
+                     ToBase64(current_block_->body.hash), ")");
+      chain_.RemoveBlock(current_block_->body.hash);
+      return State::RESET;      
+    }
+  }
 
   return State::WAIT_FOR_TRANSACTIONS;
 }

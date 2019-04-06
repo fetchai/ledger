@@ -2,6 +2,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/sha256.hpp"
 #include "crypto/fnv.hpp"
+#include "ledger/upow/synergetic_base_types.hpp"
 
 #include <limits>
 
@@ -16,7 +17,7 @@ struct Work
   using ContractName    = byte_array::ConstByteArray;
   using WorkId          = byte_array::ConstByteArray;
   using Digest          = byte_array::ConstByteArray;  
-  using ScoreType       = double; // TODO: Change to fixed point
+  using ScoreType       = SynergeticScoreType;
   using BigUnsigned     = math::BigUnsigned;
 
   enum {
