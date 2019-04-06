@@ -40,6 +40,7 @@
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 
+#include "core/serializers/typed_byte_array_buffer.hpp"
 #include "crypto/merkle_tree.hpp"
 
 #include <chrono>
@@ -83,9 +84,9 @@ public:
   // state hash functions
   byte_array::ConstByteArray CurrentHash() override;
   byte_array::ConstByteArray LastCommitHash() override;
-  bool                       RevertToHash(Hash const &hash) override;
-  byte_array::ConstByteArray Commit() override;
-  bool                       HashExists(Hash const &hash) override;
+  bool                       RevertToHash(Hash const &hash, uint64_t index) override;
+  byte_array::ConstByteArray Commit(uint64_t index) override;
+  bool                       HashExists(Hash const &hash, uint64_t index) override;
   bool                       Lock(ResourceAddress const &key) override;
   bool                       Unlock(ResourceAddress const &key) override;
   /// @}
@@ -94,19 +95,68 @@ public:
   StorageUnitClient &operator=(StorageUnitClient &&) = delete;
 
 private:
-  using Client        = muddle::rpc::Client;
-  using ClientPtr     = std::shared_ptr<Client>;
-  using LaneIndex     = LaneIdentity::lane_type;
-  using AddressList   = std::vector<MuddleEndpoint::Address>;
-  using MerkleTree    = crypto::MerkleTree;
-  using MerkleTreePtr = std::shared_ptr<MerkleTree>;
-  using MerkleStack   = std::deque<MerkleTreePtr>;
-  using Mutex         = fetch::mutex::Mutex;
+  /**
+   * On Disk representation of a merkle tree
+   */
+  struct MerkleTreeBlock
+  {
+    MerkleTreeBlock()
+    {
+      std::memset(this, -1, sizeof(*this));
+    }
+
+    explicit MerkleTreeBlock(crypto::MerkleTree const &tree)
+    {
+      serializers::TypedByteArrayBuffer buff;
+      buff << tree;
+
+      assert(buff.data().size() == 92 || buff.data().size() == 60);
+
+      size_ = buff.data().size();
+      std::memcpy((uint8_t *)data_, (uint8_t *)buff.data().pointer(), size_);
+    }
+
+    crypto::MerkleTree Extract(uint64_t num_lanes)
+    {
+      crypto::MerkleTree ret{num_lanes};
+
+      serializers::TypedByteArrayBuffer buff;
+
+      buff.Allocate(size_);
+
+      std::memcpy((uint8_t *)buff.data().pointer(), (uint8_t *)data_, size_);
+
+      try
+      {
+        buff >> ret;
+      }
+      catch (std::exception e)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "FAILED TO DESERIALIZE MERKLE TREE PROXY! ", size_);
+        return ret;
+      }
+
+      return ret;
+    }
+
+    uint64_t size_{0};
+    uint8_t  data_[92];
+  };
+
+  using Client               = muddle::rpc::Client;
+  using ClientPtr            = std::shared_ptr<Client>;
+  using LaneIndex            = LaneIdentity::lane_type;
+  using AddressList          = std::vector<MuddleEndpoint::Address>;
+  using MerkleTree           = crypto::MerkleTree;
+  using PermanentMerkleStack = storage::RandomAccessStack<MerkleTreeBlock>;
+  using Mutex                = fetch::mutex::Mutex;
+
+  static constexpr char const *MERKLE_FILENAME = "merkle_stack.db";
 
   Address const &LookupAddress(LaneIndex lane) const;
   Address const &LookupAddress(storage::ResourceID const &resource) const;
 
-  bool HashInStack(Hash const &hash);
+  bool HashInStack(Hash const &hash, uint64_t index);
 
   /// @name Client Information
   /// @{
@@ -117,9 +167,9 @@ private:
 
   /// @name State Hash Support
   /// @{
-  mutable Mutex merkle_mutex_{__LINE__, __FILE__};
-  MerkleTreePtr current_merkle_{};
-  MerkleStack   state_merkle_stack_{};
+  mutable Mutex        merkle_mutex_{__LINE__, __FILE__};
+  MerkleTree           current_merkle_;
+  PermanentMerkleStack permanent_state_merkle_stack_{};
   /// @}
 };
 

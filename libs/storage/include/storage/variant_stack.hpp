@@ -34,6 +34,7 @@
 //                                  └─────────────────────┴─────────────────────┘
 
 #include "core/assert.hpp"
+#include "core/macros.hpp"
 #include "storage/storage_exception.hpp"
 #include <cassert>
 #include <cstring>
@@ -106,13 +107,13 @@ public:
 
   void Load(std::string const &filename, bool const &create_if_not_exists = true)
   {
+
     filename_    = filename;
     file_handle_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
     if (!file_handle_)
     {
       if (create_if_not_exists)
       {
-
         Clear();
         file_handle_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
       }
@@ -171,7 +172,7 @@ public:
     file_handle_.write(reinterpret_cast<char const *>(&separator), sizeof(Separator));
     header_.end += sizeof(T) + sizeof(Separator);
     ++header_.object_count;
-    //    WriteHeader();
+    // WriteHeader();
   }
 
   /**
@@ -187,7 +188,7 @@ public:
 
     header_.end = separator.previous;
     --header_.object_count;
-    //    WriteHeader();
+    // WriteHeader();
   }
 
   /**
@@ -268,6 +269,13 @@ public:
   std::size_t size() const
   {
     return std::size_t(header_.object_count);
+  }
+
+  void Flush(bool lazy = false)
+  {
+    FETCH_UNUSED(lazy);
+
+    WriteHeader();
   }
 
 protected:
