@@ -58,7 +58,7 @@ class ShapelessArray
 public:
   using Type                          = T;
   using container_type                = C;
-  using SizeType                      = SizeType;
+
   using vector_slice_type             = typename container_type::vector_slice_type;
   using vector_register_type          = typename container_type::vector_register_type;
   using vector_register_iterator_type = typename container_type::vector_register_iterator_type;

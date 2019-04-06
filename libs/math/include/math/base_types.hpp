@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <unordered_set>
+#include <cstdint>
 
 namespace fetch
 {

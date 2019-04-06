@@ -1,3 +1,9 @@
+( ) Reimplement slice
+( ) Get rid of GetRange
+( ) Get rid of current At operator
+( ) Add strides
+
+
 // Easy
 ( )  Tensor(Tensor &&t) = default;
 ( )  Tensor &operator=(Tensor &&) = default;
@@ -16,40 +22,4 @@
 
 
 // NEW FUNCTIONALITY
-( )  SelfType Clone()                               // ESSENTIALLY COPY
 ( )  Tensor<T> Slice(SizeType i) const
-( )  Tensor<T> &Unsqueeze()
-( )  Tensor<T> Transpose() const
-
-
-
-(v)  Tensor(SizeType size)
-(v)  Tensor(Tensor const &t)     = default;
-(v)  Tensor &operator=(Tensor const &other) = default;
-(v)  void Copy(SelfType const &other)
-(v)  SizeVector  const &shape()
-(v)  SizeType Capacity()
-(v)  SizeType size()
-(v)  SizeType OffsetOfElement(SizeVector  const &indices)
-(v)  void Fill(T const &value)
-(v)  T const &operator()(SizeVector  const &indices) const
-(v)  void Set(SizeVector  const &indices, T value)
-(v)  bool AllClose(Tensor<T> const &o, T const &relative_tolerance = T(1e-5), T const &absolute_tolerance = T(1e-8)) const
-
-(v)  Tensor<T> &InlineAdd(T const &o)
-(v)  Tensor<T> &InlineAdd(Tensor<T> const &o)
-(v)  Tensor<T> &InlineSubtract(T const &o)
-(v)  Tensor<T> &InlineSubtract(Tensor<T> const &o)
-(v)  Tensor<T> &InlineReverseSubtract(Tensor<T> const &o)
-
-(v)  Tensor<T> &InlineMultiply(T const &o)
-(v)  Tensor<T> &InlineMultiply(Tensor<T> const &o)
-(v)  Tensor<T> &InlineDivide(T const &o)
-(v)  Tensor<T> &InlineDivide(Tensor<T> const &o)
-(v)  T Sum() const
-  
-(v)  bool operator==(Tensor const &other) const
-(v)  bool operator!=(Tensor const &other) const
-(v)  SharedArray data() { return storage_.data(); }
-(v)  SharedArray const& data() const { return storage_.data(); }  
- 

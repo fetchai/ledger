@@ -67,7 +67,7 @@ TYPED_TEST(CrossEntropyTest, perfect_match_test)
 
 TYPED_TEST(CrossEntropyTest, value_test)
 {
-  using SizeType = typename fetch::math::SizeType;
+  using SizeType = fetch::math::SizeType;
   typename TypeParam::SizeType n_classes = 4;
   typename TypeParam::SizeType n_data    = 8;
 
