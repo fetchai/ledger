@@ -34,7 +34,7 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
 
 TYPED_TEST_CASE(TsneTests, MyTypes);
 
-TYPED_TEST(TsneTests, tsne_test_2d)
+TYPED_TEST(TsneTests, DISABLED_tsne_test_2d)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
