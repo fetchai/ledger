@@ -141,6 +141,7 @@ public:
    */
   bool LocklessGet(ResourceID const &rid, type &object)
   {
+    // assert(object != nullptr);
     Document doc = store_.Get(rid);
     if (doc.failed)
     {
@@ -148,7 +149,9 @@ public:
     }
 
     serializer_type ser(doc.document);
+
     ser >> object;
+
     return true;
   }
 
@@ -181,6 +184,7 @@ public:
     ser << object;
 
     store_.Set(rid, ser.data());  // temporarily disable disk writes
+
     if (set_callback_)
     {
       set_callback_(object);
