@@ -27,9 +27,13 @@ class IState : public Object
 public:
   IState()          = delete;
   virtual ~IState() = default;
-  static Ptr<IState>        Constructor(VM *vm, TypeId type_id, Ptr<String> const &name);
-  static Ptr<IState>        Constructor(VM *vm, TypeId type_id, Ptr<String> const &name,
-                                        TemplateParameter const &value);
+
+  static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<String> const &name,
+                                 TemplateParameter const &value);
+
+  static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<Address> const &address,
+                                 TemplateParameter const &value);
+
   virtual TemplateParameter Get() const                         = 0;
   virtual void              Set(TemplateParameter const &value) = 0;
   virtual bool              Existed() const                     = 0;
@@ -43,52 +47,62 @@ protected:
 };
 
 template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
-inline IoObserverInterface::Status ReadHelper(std::string const &name, T *val,
+inline IoObserverInterface::Status ReadHelper(std::string const &name, T &val,
                                               IoObserverInterface &io)
 {
   uint64_t buffer_size = sizeof(T);
-  return io.Read(name, val, buffer_size);
+  return io.Read(name, &val, buffer_size);
 }
 
 template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
-inline IoObserverInterface::Status WriteHelper(std::string const &name, T *val,
+inline IoObserverInterface::Status WriteHelper(std::string const &name, T const &val,
                                                IoObserverInterface &io)
 {
-  return io.Write(name, val, sizeof(T));
+  return io.Write(name, &val, sizeof(T));
 }
 
-inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<Address> *val,
+inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<Address> &val,
                                               IoObserverInterface &io)
 {
-  auto exists_status = io.Exists(name);
+  auto const exists_status = io.Exists(name);
   if (exists_status != IoObserverInterface::Status::OK)
   {
     return exists_status;
   }
 
-  // Lets say for now that Address has fixed memory size
-  uint64_t buffer_size  = (*val)->AsBytesSize();
-  void *   write_buffer = malloc(buffer_size);
+  // create an initial buffer size
+  std::vector<uint8_t> bytes(256, 0);
 
-  auto result = io.Read(name, write_buffer, buffer_size);
+  uint64_t buffer_size = bytes.size();
+  auto     result      = io.Read(name, bytes.data(), buffer_size);
 
-  if (result == IoObserverInterface::Status::OK)
+  if (IoObserverInterface::Status::OK == result)
   {
-    (*val)->FromBytes(write_buffer);
+    // chop down the size of the buffer
+    bytes.resize(buffer_size);
+  }
+  else if (IoObserverInterface::Status::BUFFER_TOO_SMALL == result)
+  {
+    // increase the buffer size
+    bytes.resize(buffer_size);
+
+    // make the second call to the io observer
+    result = io.Read(name, bytes.data(), buffer_size);
   }
 
-  free(write_buffer);
+  // get the type to convert itself
+  val->FromBytes(std::move(bytes));
 
   return result;
 }
 
-inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr<Address> *val,
+inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr<Address> const &val,
                                                IoObserverInterface &io)
 {
-  auto bytes  = (*val)->AsBytes();
-  auto status = io.Write(name, bytes, (*val)->AsBytesSize());
-  free(bytes);
-  return status;
+  // convert the object to bytes
+  auto bytes = val->ToBytes();
+
+  return io.Write(name, bytes.data(), bytes.size());
 }
 
 template <typename T>
@@ -97,10 +111,10 @@ class State : public IState
 public:
   // Construct state object, default argument = get from state DB, initializing to value if not
   // found
-  State(VM *vm, TypeId type_id, TypeId value_type_id, Ptr<String> const &name,
+  State(VM *vm, TypeId type_id, TypeId value_type_id, Ptr<String> name,
         TemplateParameter const &value)
     : IState(vm, type_id)
-    , name_{name}
+    , name_{std::move(name)}
     , value_{value.Get<Value>()}
     , value_type_id_{value_type_id}
   {
@@ -108,7 +122,7 @@ public:
     if (vm_->HasIoObserver())
     {
       // attempt to read the value from the storage engine
-      auto const status = ReadHelper(name_->str, &value_, vm_->GetIOObserver());
+      auto const status = ReadHelper(name_->str, value_, vm_->GetIOObserver());
 
       // mark the variable as existed if we get a positive result back
       existed_ = (Status::OK == status);
@@ -144,7 +158,7 @@ private:
     // if we have an IO observer then inform it of the changes
     if (vm_->HasIoObserver())
     {
-      WriteHelper(name_->str, &value_, vm_->GetIOObserver());
+      WriteHelper(name_->str, value_, vm_->GetIOObserver());
     }
   }
 
@@ -221,6 +235,12 @@ inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<String> const
                                        TemplateParameter const &value)
 {
   return Construct(vm, type_id, name, value);
+}
+
+inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<Address> const &address,
+                                       TemplateParameter const &value)
+{
+  return Construct(vm, type_id, address->AsBase64String(), value);
 }
 
 }  // namespace vm

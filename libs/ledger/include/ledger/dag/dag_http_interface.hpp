@@ -84,20 +84,9 @@ private:
     DAGNode node;
     node.contents = data;
     node.identity = certificate_.identity();
+    node.type = type;
 
-    // TODO: Set previous and type
-    auto prev_candidates = dag_.last_nodes();
-
-    if(prev_candidates.size() > 0 )
-    {
-      node.previous.push_back( prev_candidates[ rng_() % prev_candidates.size() ]);
-    }
-
-    if(prev_candidates.size() > 3 )
-    {
-      node.previous.push_back( prev_candidates[ rng_() % prev_candidates.size() ]);
-    }
-
+    dag_.SetNodeReferences(node);
     node.Finalise();
 
     if(!certificate_.Sign(node.hash))
@@ -137,7 +126,7 @@ private:
 
 
   http::HTTPResponse Status(http::ViewParameters const & /*params*/,
-                            http::HTTPRequest const &request)
+                            http::HTTPRequest const &/*request*/)
   {
     Variant response     = Variant::Object();
 
@@ -145,7 +134,7 @@ private:
   }
 
   http::HTTPResponse List(http::ViewParameters const & /*params*/,
-                          http::HTTPRequest const &request)
+                          http::HTTPRequest const &/*request*/)
   {
     uint64_t from = 0;
     uint64_t to = dag_.node_count();

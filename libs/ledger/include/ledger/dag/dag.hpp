@@ -157,7 +157,7 @@ public:
     }
   }
 
-  void RevertTo(uint64_t block_number)
+  void RevertTo(uint64_t /*block_number*/)
   {
     FETCH_LOCK(maintenance_mutex_);
     // TODO: Implement to revert.

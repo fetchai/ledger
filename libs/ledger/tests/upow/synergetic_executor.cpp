@@ -108,7 +108,7 @@ public:
     cregister_.Clear();
 
     // Testing that no work is deemed invalid
-    executor_->OnDishonestWork([](Work work){
+    executor_->OnDishonestWork([](Work /*work*/){
       FAIL() << "This test is not supposed to have any dishonest work.";
     });
 
@@ -307,9 +307,9 @@ private:
     EXPECT_TRUE(executor_->ValidateWorkAndUpdateState());
   }
 
-  Work Mine(int64_t search_length = 10) 
+  Work Mine(int32_t search_length = 10) 
   {
-    Work work = executor_->Mine(certificate_, CONTRACT_NAME, chain_->back(), 277326, 10);
+    Work work = executor_->Mine(certificate_, CONTRACT_NAME, chain_->back(), 277326, search_length);
     EXPECT_TRUE(bool(work));
 
     return work;

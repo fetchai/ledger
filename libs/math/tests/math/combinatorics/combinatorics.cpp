@@ -20,7 +20,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include "math/free_functions/combinatorics/combinatorics.hpp"
+#include "math/combinatorics.hpp"
 #include <math/tensor.hpp>
 
 using namespace fetch::math::combinatorics;
@@ -45,7 +45,7 @@ TYPED_TEST(CombinatoricsTest, test_factorial_zero)
 {
   SizeType input  = 0;
   SizeType output = factorial(input);
-  ASSERT_TRUE(output == 1);
+  ASSERT_EQ(output, 1);
 }
 
 // Factorial function - test standard input (12!)
@@ -54,7 +54,7 @@ TYPED_TEST(CombinatoricsTest, test_factorial_standard_input)
   SizeType input        = 12;
   SizeType output       = factorial(input);
   SizeType numpy_output = 479001600;
-  ASSERT_TRUE(output == numpy_output);
+  ASSERT_EQ(output, numpy_output);
 }
 
 // calculateNumCombinations function - test standard input
@@ -97,7 +97,7 @@ TYPED_TEST(CombinatoricsTest, test_num_combinations_edge_case1)
   SizeType fetch_output  = calculateNumCombinations(n, r);
   SizeType python_output = 1;
 
-  ASSERT_TRUE(fetch_output == python_output);
+  ASSERT_EQ(fetch_output, python_output);
 }
 
 // Combinations function - edge case - n=r=1
@@ -109,7 +109,7 @@ TYPED_TEST(CombinatoricsTest, test_num_combinations_edge_case2)
   SizeType fetch_output  = calculateNumCombinations(n, r);
   SizeType python_output = 1;
 
-  ASSERT_TRUE(fetch_output == python_output);
+  ASSERT_EQ(fetch_output, python_output);
 }
 
 // Combinations function - edge case - r=0
@@ -121,7 +121,7 @@ TYPED_TEST(CombinatoricsTest, test_num_combinations_edge_case3)
   SizeType fetch_output  = calculateNumCombinations(n, r);
   SizeType python_output = 1;
 
-  ASSERT_TRUE(fetch_output == python_output);
+  ASSERT_EQ(fetch_output, python_output);
 }
 
 // Combinations function - test standard input

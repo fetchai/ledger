@@ -35,6 +35,8 @@
 #include "network/p2pservice/p2p_http_interface.hpp"
 #include "network/uri.hpp"
 
+#include "health_check_http_module.hpp"
+
 #include <memory>
 #include <random>
 #include <utility>
@@ -148,7 +150,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   , reactor_{"Reactor"}
   , network_manager_{"NetMgr", CalcNetworkManagerThreads(cfg_.num_lanes())}
   , http_network_manager_{"Http", HTTP_THREADS}
-  , muddle_{muddle::NetworkId{"IHUB"}, certificate, network_manager_}
+  , muddle_{muddle::NetworkId{"IHUB"}, std::move(certificate), network_manager_,
+            !config.disable_signing, config.sign_broadcasts}
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
   , internal_muddle_{muddle::NetworkId{"ISRD"}, internal_identity_, network_manager_}
   , trust_{}
@@ -195,6 +198,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
         std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
         std::make_shared<ledger::TxQueryHttpInterface>(*storage_, cfg_.log2_num_lanes),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
+        std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_),
         std::make_shared<ledger::DAGHTTPInterface>(dag_, dag_rpc_service_)
   }
 {
@@ -207,11 +211,10 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   FETCH_LOG_INFO(LOGGING_NAME, "");
 
   // attach the services to the reactor
-  reactor_.Attach(block_coordinator_.GetWeakRunnable());
   reactor_.Attach(main_chain_service_->GetWeakRunnable());
 
   // configure all the lane services
-  lane_services_.Setup(network_manager_, shard_cfgs_);
+  lane_services_.Setup(network_manager_, shard_cfgs_, !config.disable_signing);
 
   // configure the middleware of the http server
   http_.AddMiddleware(http::middleware::AllowOrigin("*"));
@@ -368,6 +371,10 @@ void Constellation::Run(UriList const &initial_peers)
 
   // Finally start the HTTP server
   http_.Start(http_port_);
+
+  // The block coordinator needs to access correctly started lanes to recover state in the case of
+  // a crash.
+  reactor_.Attach(block_coordinator_.GetWeakRunnable());
 
   //---------------------------------------------------------------
   // Step 2. Main monitor loop

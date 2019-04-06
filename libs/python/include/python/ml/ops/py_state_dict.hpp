@@ -33,19 +33,19 @@ template <typename T>
 void BuildStateDict(std::string const &custom_name, pybind11::module &module)
 {
   using ArrayType = fetch::math::Tensor<T>;
-  py::class_<fetch::ml::ops::StateDict<ArrayType>>(module, custom_name.c_str())
+  py::class_<fetch::ml::StateDict<ArrayType>>(module, custom_name.c_str())
       .def(py::init<>())
-      .def_readwrite("weights", &fetch::ml::ops::StateDict<ArrayType>::weights_)
-      .def_readwrite("dict", &fetch::ml::ops::StateDict<ArrayType>::dict_)
-      .def("Merge", &fetch::ml::ops::StateDict<ArrayType>::Merge)
+      .def_readwrite("weights", &fetch::ml::StateDict<ArrayType>::weights_)
+      .def_readwrite("dict", &fetch::ml::StateDict<ArrayType>::dict_)
+      .def("Merge", &fetch::ml::StateDict<ArrayType>::Merge)
       .def("Serialize",
-           [](fetch::ml::ops::StateDict<ArrayType> &sd) {
+           [](fetch::ml::StateDict<ArrayType> &sd) {
              fetch::serializers::ByteArrayBuffer b;
              b << sd;
              return b;
            })
-      .def("Deserialize", [](fetch::ml::ops::StateDict<ArrayType> &sd,
-                             fetch::serializers::ByteArrayBuffer   b) { b >> sd; });
+      .def("Deserialize", [](fetch::ml::StateDict<ArrayType> &   sd,
+                             fetch::serializers::ByteArrayBuffer b) { b >> sd; });
 }
 
 }  // namespace ops

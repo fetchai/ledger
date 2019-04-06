@@ -96,6 +96,8 @@ public:
     uint32_t    block_interval_ms{0};
     uint32_t    block_difficulty{DEFAULT_BLOCK_DIFFICULTY};
     uint32_t    peers_update_cycle_ms{0};
+    bool        disable_signing{false};
+    bool        sign_broadcasts{false};
     bool        standalone{false};
     bool        synergetic_mine{true};
 

@@ -83,9 +83,8 @@ public:
   }
 
   bool LessThan(Ptr< BigNumberWrapper > const & other)
-  {
-    // TODO'
-    return true;
+  {    
+    return number_ < other->number_;
   }
 
   void Increase()

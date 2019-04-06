@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/layers/fully_connected.hpp"
+#include "core/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 
@@ -27,7 +28,9 @@ class FullyConnectedTest : public ::testing::Test
 
 // TODO (private 507)
 using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-                                 fetch::math::Tensor<double>>;
+                                 fetch::math::Tensor<double>,
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
 TYPED_TEST_CASE(FullyConnectedTest, MyTypes);
 
 TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as a subgraph
@@ -129,16 +132,16 @@ TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
 TYPED_TEST(FullyConnectedTest, getStateDict)
 {
   fetch::ml::layers::FullyConnected<TypeParam> fc(50, 10, "FCTest");
-  fetch::ml::ops::StateDict<TypeParam>         sd = fc.StateDict();
+  fetch::ml::StateDict<TypeParam>              sd = fc.StateDict();
 
   EXPECT_EQ(sd.weights_, nullptr);
   EXPECT_EQ(sd.dict_.size(), 2);
 
-  ASSERT_TRUE(sd.dict_["FCTest_Weights"].weights_ != nullptr);
+  ASSERT_NE(sd.dict_["FCTest_Weights"].weights_, nullptr);
   EXPECT_EQ(sd.dict_["FCTest_Weights"].weights_->shape(),
             std::vector<typename TypeParam::SizeType>({50, 10}));
 
-  ASSERT_TRUE(sd.dict_["FCTest_Bias"].weights_ != nullptr);
+  ASSERT_NE(sd.dict_["FCTest_Bias"].weights_, nullptr);
   EXPECT_EQ(sd.dict_["FCTest_Bias"].weights_->shape(),
             std::vector<typename TypeParam::SizeType>({1, 10}));
 }

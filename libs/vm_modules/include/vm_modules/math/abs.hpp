@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/standard_functions/abs.hpp"
 #include "math/meta/math_type_traits.hpp"
+#include "math/standard_functions/abs.hpp"
 
 namespace fetch {
 namespace vm_modules {

@@ -17,7 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/random/lfg.hpp"
+
 #include "ml/ops/placeholder.hpp"
+#include "ml/state_dict.hpp"
+
 #include <random>
 
 namespace fetch {
@@ -36,44 +40,6 @@ enum class WeightsInitialisation
 };
 
 /**
- * A utility class to extract the network trainable parameter and serialize them for saving /
- * sharing
- * @tparam T
- */
-template <class T>
-struct StateDict
-{
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  ArrayPtrType                        weights_;
-  std::map<std::string, StateDict<T>> dict_;
-
-  bool operator==(StateDict<T> const &o) const
-  {
-    return !((bool(weights_) ^ bool(o.weights_)) || (weights_ && (*weights_ != *(o.weights_))) ||
-             (dict_ != o.dict_));
-  }
-
-  StateDict &Merge(StateDict const &o, float ratio = .5f)
-  {
-    assert(ratio >= 0.0f && ratio <= 1.0f);
-    if (ratio > 0)
-    {
-      if (weights_)
-      {
-        weights_->InlineMultiply(typename ArrayType::Type(1.0f - ratio));
-        weights_->InlineAdd(o.weights_->Clone().InlineMultiply(typename ArrayType::Type(ratio)));
-      }
-      for (auto &e : dict_)
-      {
-        e.second.Merge(o.dict_.at(e.first));
-      }
-    }
-    return *this;
-  }
-};
-
-/**
  * Provide an interface for any trainable ops
  * @tparam T passes tensors to graph during update step
  */
@@ -84,9 +50,9 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual void                Step(typename T::Type learningRate)                            = 0;
-  virtual struct StateDict<T> StateDict() const                                              = 0;
-  virtual void                LoadStateDict(struct fetch::ml::ops::StateDict<T> const &dict) = 0;
+  virtual void                           Step(typename T::Type learningRate) = 0;
+  virtual struct fetch::ml::StateDict<T> StateDict() const                   = 0;
+  virtual void LoadStateDict(struct fetch::ml::StateDict<T> const &dict)     = 0;
 };
 
 template <class T>
@@ -94,10 +60,11 @@ class Weights : public fetch::ml::ops::PlaceHolder<T>, public Trainable<T>
 {
 public:
   using ArrayType    = T;
+  using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
 protected:
-  ArrayPtrType gradientAccumulation_;
+  ArrayPtrType gradient_accumulation_;
 
 public:
   Weights()          = default;
@@ -108,7 +75,7 @@ public:
       ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.empty());
-    gradientAccumulation_->InlineAdd(errorSignal);
+    gradient_accumulation_->InlineAdd(errorSignal);
     return {};
   }
 
@@ -116,28 +83,28 @@ public:
   {
     PlaceHolder<T>::SetData(data);
     if (this->output_ &&
-        (!gradientAccumulation_ || gradientAccumulation_->shape() != this->output_->shape()))
+        (!gradient_accumulation_ || gradient_accumulation_->shape() != this->output_->shape()))
     {
-      gradientAccumulation_ = std::make_shared<ArrayType>(this->output_->shape());
+      gradient_accumulation_ = std::make_shared<ArrayType>(this->output_->shape());
     }
   }
 
   virtual void Step(typename T::Type learningRate)
   {
-    this->gradientAccumulation_->InlineMultiply(-learningRate);
-    this->output_->InlineAdd(*gradientAccumulation_);
+    this->gradient_accumulation_->InlineMultiply(-learningRate);
+    this->output_->InlineAdd(*gradient_accumulation_);
     // Major DL framework do not do that, but as I can't think of any reason why, I'll leave it here
     // for convenience. Remove if needed -- Pierre
-    gradientAccumulation_->Fill(typename T::Type(0));
+    gradient_accumulation_->Fill(typename T::Type(0));
   }
 
   /**
    * constructs a state dictionary used for exporting/saving weights
    * @return
    */
-  virtual struct StateDict<T> StateDict() const
+  virtual struct fetch::ml::StateDict<T> StateDict() const
   {
-    struct fetch::ml::ops::StateDict<T> d;
+    struct fetch::ml::StateDict<T> d;
     d.weights_ = this->output_;
     return d;
   }
@@ -147,7 +114,7 @@ public:
    * @param dict
    */
   virtual void
-  LoadStateDict(struct fetch::ml::ops::StateDict<T> const &dict)
+  LoadStateDict(struct fetch::ml::StateDict<T> const &dict)
   {
     assert(dict.dict_.empty());
     SetData(*dict.weights_);
@@ -191,6 +158,15 @@ public:
     }
   }
 
+  /**
+   * exports the weights Array
+   * @return
+   */
+  ArrayType const &GetWeights() const
+  {
+    return *this->output_;
+  }
+
   static constexpr char const *DESCRIPTOR = "Weights";
 
 private:
@@ -199,16 +175,22 @@ private:
    * using a normal distribution with mean 0 and variance 2 / (input nodes + output nodes)
    * @param weights
    */
-  static void XavierInitialisation(ArrayType &array, double normalising_factor)
+  static void XavierInitialisation(ArrayType &array, double normalising_factor,
+                                   SizeType seed = 123456789)
   {
-    std::random_device rd{};
-    std::mt19937       gen{rd()};
+    // TODO (665) this is a uniform distribution; in principle we should be using a guassian
+    // distribution instead we use a unifrom from -std dev -> + std dev
+    fetch::random::LaggedFibonacciGenerator<> lfg_(seed);
 
     // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
-    std::normal_distribution<> rng(0, normalising_factor);
     for (auto &e : array)
     {
-      e = typename ArrayType::Type(rng(gen));
+      auto ran_val = lfg_.AsDouble();  // random value in range 0 <-> 1
+      ran_val -= 0.5;
+      ran_val *= 2.0;                 // random value in range -1 <-> +1
+      ran_val *= normalising_factor;  // random value in range -sigma <-> +sigma
+
+      e = typename ArrayType::Type(ran_val);
     }
   }
 };

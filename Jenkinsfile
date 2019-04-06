@@ -25,6 +25,11 @@ pipeline {
                 sh './scripts/apply_style.py -w -a'
               }
             }
+            stage('CMake Version Check') {
+              steps {
+                sh './scripts/check-cmake-versions.py'
+              }
+            }
           }
         } // basic checks
 

@@ -33,7 +33,7 @@ protected:
     stack_.New("VRAS_bench.db", "VRAS_diff_bench.db");
 
     EXPECT_TRUE(stack_.is_open());
-    EXPECT_TRUE(stack_.DirectWrite() == true)
+    EXPECT_TRUE(stack_.DirectWrite())
         << "Expected versioned random access stack to be direct write as default stack type is RAS";
   }
 

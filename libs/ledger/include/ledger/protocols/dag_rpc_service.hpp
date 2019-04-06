@@ -85,9 +85,9 @@ public:
 
     this->Add(DAG_SYNCRONISATION, &dag_protocol_); // TODO: Use shared pointers
 
-    dag_subscription_->SetMessageHandler([this](Address const &from, uint16_t, uint16_t, uint16_t,
+    dag_subscription_->SetMessageHandler([this](Address const &, uint16_t, uint16_t, uint16_t,
                                                 Packet::Payload const &payload,
-                                                Address                transmitter)  {
+                                                Address          )  {
         DAGNode node = UnpackNode(payload);
         thread_pool_->Post([this, node]() { 
 

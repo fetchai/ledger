@@ -163,7 +163,7 @@ static DAGNode GenerateNode(Rng &rng, ECDSASigner &certificate, DAG &dag)
   return GenerateNode(buffer, rng, certificate, dag);
 }
 */
-int main(int argc, char **argv)
+int main(int /*argc*/, char ** /*argv*/)
 {
   /*
   std::unique_ptr<fetch::crypto::ECDSASigner> signer = std::make_unique<fetch::crypto::ECDSASigner>();

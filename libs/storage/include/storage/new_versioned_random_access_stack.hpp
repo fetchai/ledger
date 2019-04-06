@@ -42,6 +42,8 @@
 #include "storage/storage_exception.hpp"
 #include "storage/variant_stack.hpp"
 
+#include "core/byte_array/encoders.hpp"
+
 #include <cstring>
 
 namespace fetch {
@@ -315,6 +317,8 @@ public:
   {
     stack_.Load(filename, create_if_not_exist);
     history_.Load(history, create_if_not_exist);
+
+    hash_history_.Load("hash_history_" + history, create_if_not_exist);
     internal_bookmark_index_ = stack_.header_extra().bookmark;
   }
 
@@ -322,6 +326,7 @@ public:
   {
     stack_.New(filename);
     history_.New(history);
+    hash_history_.New("hash_history_" + history);
     internal_bookmark_index_ = stack_.header_extra().bookmark;
   }
 
@@ -329,6 +334,8 @@ public:
   {
     stack_.Clear();
     history_.Clear();
+    hash_history_.Clear();
+
     internal_bookmark_index_ = stack_.header_extra().bookmark;
   }
 
@@ -401,6 +408,7 @@ public:
     HistoryBookmark history_bookmark{internal_bookmark_index_, key};
 
     history_.Push(history_bookmark, HistoryBookmark::value);
+    hash_history_.Push(history_bookmark);
 
     // Update our header with this information (the bookmark index)
     header_type h = stack_.header_extra();
@@ -409,12 +417,35 @@ public:
 
     internal_bookmark_index_++;
 
+    // Optionally flush since this is a checkpoint
+    Flush(false);
+
     return internal_bookmark_index_ - 1;
   }
 
-  bool HashExists(DefaultKey const & /*key*/) const
+  bool HashExists(DefaultKey const &key) const
   {
-    throw std::runtime_error("HashExists functionality not yet implemented");
+    if (hash_history_.empty())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Attempted to find if hash exists, but history is empty!");
+      return false;
+    }
+
+    uint64_t        hash_history_size = hash_history_.size();
+    HistoryBookmark book;
+
+    for (std::size_t i = 0; i < hash_history_size; ++i)
+    {
+      uint64_t reverse_index = hash_history_size - i - 1;
+      hash_history_.Get(reverse_index, book);
+
+      if (book.key == key)
+      {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -468,7 +499,10 @@ public:
 
   void Flush(bool lazy = true)
   {
+    // Note that the variant stack (history) does not need flushing
     stack_.Flush(lazy);
+    history_.Flush(lazy);
+    hash_history_.Flush(lazy);
   }
 
   std::size_t size() const
@@ -487,8 +521,9 @@ public:
   }
 
 private:
-  VariantStack history_;
-  uint64_t     internal_bookmark_index_{0};
+  VariantStack                       history_;
+  RandomAccessStack<HistoryBookmark> hash_history_;
+  uint64_t                           internal_bookmark_index_{0};
 
   event_handler_type on_file_loaded_;
   event_handler_type on_before_flush_;
@@ -513,6 +548,14 @@ private:
     if (!(key_to_compare == book.key))
     {
       history_.Pop();
+
+      // Sanity check, the hash history matches
+      if (!(hash_history_.Top().key == book.key) || hash_history_.size() == 0)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "Hash history top does not match bookmark being removed!");
+      }
+
+      hash_history_.Pop();
     }
 
     return key_to_compare == book.key;

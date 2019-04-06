@@ -18,8 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "auctions/auction.hpp"
-#include "math/free_functions/exponentiation/exponentiation.hpp"
-#include "math/shapeless_array.hpp"
 #include "math/tensor.hpp"
 
 #include "core/random/lcg.hpp"
@@ -36,6 +34,7 @@ class CombinatorialAuction : public Auction
 public:
   explicit CombinatorialAuction(std::uint32_t max_flips = 3)
     : Auction(true, std::numeric_limits<std::size_t>::max())
+    , best_value_(std::numeric_limits<Value>::lowest())
     , max_flips_(max_flips)
   {
     max_items_         = std::numeric_limits<std::size_t>::max();
@@ -44,27 +43,27 @@ public:
     max_bids_per_item_ = std::numeric_limits<std::size_t>::max();
   }
 
-  void                               BuildGraph();
-  void                               SelectBid(std::size_t const &bid);
-  Value                              TotalBenefit();
-  fetch::math::Tensor<Value>         Couplings();
-  ErrorCode                          Execute() override;
-  fetch::math::ShapelessArray<Value> LocalFields();
-  std::uint32_t                      Active(std::size_t n);
-  void                               Mine(std::size_t random_seed, std::size_t run_time);
-  ErrorCode                          PlaceBid(Bid const &bid);
-  ErrorCode                          AddItem(Item const &item);
-  ErrorCode                          ShowAuctionResult();
+  void                       BuildGraph();
+  void                       SelectBid(std::size_t const &bid);
+  Value                      TotalBenefit();
+  fetch::math::Tensor<Value> Couplings();
+  ErrorCode                  Execute() override;
+  fetch::math::Tensor<Value> LocalFields();
+  std::uint32_t              Active(std::size_t n);
+  void                       Mine(std::size_t random_seed, std::size_t run_time);
+  ErrorCode                  PlaceBid(Bid const &bid);
+  ErrorCode                  AddItem(Item const &item);
+  ErrorCode                  ShowAuctionResult();
 
 private:
   // bids on binary vector
-  fetch::math::Tensor<Value>                 couplings_;
-  fetch::math::ShapelessArray<Value>         local_fields_;
-  fetch::math::ShapelessArray<std::uint32_t> active_;
-  fetch::math::ShapelessArray<std::uint32_t> prev_active_;
+  fetch::math::Tensor<Value>         couplings_;
+  fetch::math::Tensor<Value>         local_fields_;
+  fetch::math::Tensor<std::uint32_t> active_;
+  fetch::math::Tensor<std::uint32_t> prev_active_;
 
-  Value                                      best_value_;
-  fetch::math::ShapelessArray<std::uint32_t> best_active_;
+  Value                              best_value_;
+  fetch::math::Tensor<std::uint32_t> best_active_;
 
   std::uint32_t max_flips_ = std::numeric_limits<std::uint32_t>::max();
 
