@@ -5,6 +5,7 @@
 #include "ledger/upow/work_register.hpp"
 #include "ledger/upow/synergetic_miner.hpp"
 #include "ledger/upow/synergetic_vm_module.hpp"
+#include "ledger/upow/work_package.hpp"
 
 #include "ledger/chain/block.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
@@ -16,37 +17,6 @@ namespace fetch
 {
 namespace consensus
 {
-
-struct WorkPackage
-{
-  using ContractName         = byte_array::ConstByteArray;
-  using ContractAddress      = storage::ResourceAddress;  
-  using SharedWorkPackage    = std::shared_ptr< WorkPackage >;  
-  using WorkQueue            = std::priority_queue< Work >;
-  
-
-  static SharedWorkPackage New(ContractName name, ContractAddress contract_address) {
-    return SharedWorkPackage(new WorkPackage(std::move(name), std::move(contract_address)));
-  }
-
-  /// @name defining work and candidate solutions
-  /// @{
-  ContractName    contract_name{};
-  ContractAddress contract_address{};
-  WorkQueue       solutions_queue{};
-  /// }
-
-  bool operator<(WorkPackage const &other) const 
-  {
-    return contract_address < other.contract_address;
-  }
-
-private:
-  WorkPackage(ContractName name, ContractAddress address) 
-  : contract_name{std::move(name)}
-  , contract_address{std::move(address)} { }
-};
-
 
 class SynergeticExecutor 
 {
@@ -60,7 +30,9 @@ public:
   using DAG                  = ledger::DAG;
   using Block                = ledger::Block;
   using StorageUnitInterface = ledger::StorageUnitInterface;
-  
+  using UniqueCertificate    = std::unique_ptr<fetch::crypto::ECDSASigner>;
+  using DAGNode              = ledger::DAGNode;
+
   enum PreparationStatusType 
   {
     SUCCESS,
@@ -73,7 +45,6 @@ public:
 
   SynergeticExecutor(DAG &dag, StorageUnitInterface &storage_unit)
   : miner_{dag}
-
   , dag_{dag}
   , storage_{storage_unit}
   { }
@@ -151,22 +122,7 @@ public:
     // Fetching the contracts
     for(auto &c: contract_queue_)
     {
-      // Getting contract source and registering the contract
-      auto const result = storage_.Get(c->contract_address);
-
-      // Invalid address
-      if (result.failed)
-      {
-        return PreparationStatusType::INVALID_CONTRACT_ADDRESS;
-      }
-
-      // Extracting the source 
-      ConstByteArray source; 
-      serializers::ByteArrayBuffer adapter{result.document};      
-      adapter >> source;
-
-      // Registering contract
-      if(!contract_register_.CreateContract(c->contract_name, static_cast<std::string>(source) ))
+      if(!RegisterContract(c->contract_name, c->contract_address))
       {
         return PreparationStatusType::CONTRACT_REGISTRATION_FAILED;
       }
@@ -177,6 +133,8 @@ public:
 
   bool ValidateWorkAndUpdateState()
   {
+    // For each contract that was referenced by work in the DAG, we 
+    // perform an update
     for(auto &c: contract_queue_)      
     {
       miner_.AttachContract(storage_, contract_register_.GetContract(c->contract_name));
@@ -190,26 +148,34 @@ public:
       // Finding the best work
       while(!c->solutions_queue.empty())
       {
+        // Work is taking from a queue starting with the most promising 
+        // work to avoid wasting time on verify all work.
         auto work = c->solutions_queue.top();
+        c->solutions_queue.pop();        
         assert( work.miner != "");
 
-        c->solutions_queue.pop();
-
+        // Verifying the score
         Work::ScoreType score = miner_.ExecuteWork(work);
+
         if(score == work.score)
         {
           // Work was honest
           miner_.ClearContest();
 
-          assert( on_reward_work_ );
+          // In case we are making a reward scheme for work, we emit 
+          // a reward signal.
           if(on_reward_work_)
           {
             on_reward_work_(work);
           }
+
+          // We are done for this contract and can move on to the next one
           break;
         }
         else
         {
+          // In case the work was dishonest, we emit a dishonest work signal
+          // which can be used to update trust models.
           if(on_dishonest_work_)
           {
             on_dishonest_work_(work);
@@ -223,19 +189,150 @@ public:
     return true;
   }
 
+  DAGNode SubmitWork(UniqueCertificate &certificate, Work const & work) 
+  {
+    fetch::ledger::DAGNode node;
+    node.type = DAGNode::WORK;
+
+    // Creating node details
+    node.SetObject(work);
+    node.contract_name = work.contract_name;
+    node.identity = certificate->identity();
+    dag_.SetNodeReferences(node);
+
+    // Signing
+    node.Finalise();
+    if(!certificate->Sign(node.hash))
+    {
+      return DAGNode();
+    }
+
+    node.signature = certificate->signature();
+
+    // Pushing
+    if(!dag_.Push(node))
+    {
+      return DAGNode();
+    }
+
+    return node;
+  }
+
+  Work Mine(UniqueCertificate &certificate, byte_array::ConstByteArray contract_name, Block &latest_block, uint64_t nonce_start = 23273, int32_t search_length = 10) 
+  {
+    // Preparing the work meta data
+    fetch::consensus::Work work;    
+    work.contract_name = std::move(contract_name);
+    work.miner = certificate->identity().identifier();
+    work.block_number = latest_block.body.block_number;
+
+    // Getting or creating contract
+    auto contract = contract_register_.GetContract(work.contract_name);
+    if(contract == nullptr)
+    {
+      // Getting the contract name
+      Identifier contract_id;
+      if (!contract_id.Parse(work.contract_name))
+      {
+        return Work();
+      }
+
+      // create the resource address for the contract
+      ContractAddress contract_address = ledger::SmartContractManager::CreateAddressForContract(contract_id);
+      if(!RegisterContract(contract_name, contract_address))
+      {
+        return Work();
+      }
+
+      contract = contract_register_.GetContract(work.contract_name);
+    }
+
+    // Attaching the contract
+    if(!miner_.AttachContract(storage_, contract))
+    {
+      return Work();
+    }
+
+    // Ensuring that the DAG is correctly certified and that
+    // we are extracting the right part of the DAG
+    miner_.SetBlock(latest_block);
+    dag_.SetNodeTime(latest_block);
+
+    // Defining the problem we mine
+    if(!miner_.DefineProblem())
+    {
+      miner_.DetachContract();
+      return Work();
+    }
+
+    // Preparing to mine
+    fetch::math::BigUnsigned nonce(nonce_start);
+    fetch::consensus::WorkRegister work_register;
+
+    // ... and mining
+    for(int64_t i = 0; i < search_length; ++i) {      
+      work.nonce = nonce.Copy();
+      work.score = miner_.ExecuteWork(work);
+      
+      ++nonce;
+      work_register.RegisterWork(work);
+    }
+
+    miner_.DetachContract();
+
+    // Returning the best work from this round
+    return work_register.ClearWorkPool( contract );
+  }
+
+
   void OnDishonestWork(std::function< void(Work) > on_dishonest_work)
   {
     on_dishonest_work_ = std::move(on_dishonest_work);
   }
+
+  void OnRewardWork(std::function< void(Work) > on_reward_work)
+  {
+    on_reward_work_ = std::move(on_reward_work);
+  }
+
+  std::vector< std::string > const &errors() const
+  {
+    return miner_.errors();
+  }
 private:
-  SynergeticContractRegister contract_register_;  ///< Cache for synergetic contracts
+  bool RegisterContract(byte_array::ConstByteArray contract_name, ContractAddress contract_address)
+  {
+    // Getting contract source and registering the contract
+    auto const result = storage_.Get(contract_address);
+
+    // Invalid address
+    if (result.failed)
+    {
+      return false;
+    }
+
+    // Extracting the source 
+    ConstByteArray source; 
+    serializers::ByteArrayBuffer adapter{result.document};      
+    adapter >> source;
+
+    // Registering contract
+    if(!contract_register_.CreateContract(contract_name, static_cast<std::string>(source) ))
+    {
+      return false;
+    }
+    return true;
+  }
+
   SynergeticMiner            miner_;              ///< Miner to validate the work
   DAG &                      dag_;                ///< DAG with work to be executed
   StorageUnitInterface &     storage_;
 
-  std::function< void(Work) > on_dishonest_work_;
+  std::function< void(Work) > on_dishonest_work_; ///< Callback to handle dishonest work 
+  std::function< void(Work) > on_reward_work_;    ///< Callback for rewards for accepted work
 
-  ExecutionQueue contract_queue_;
+  SynergeticContractRegister contract_register_;  ///< Cache for synergetic contracts
+  ExecutionQueue contract_queue_;                 ///< Queue for contracts invoked in an epoch
 };
 
 }

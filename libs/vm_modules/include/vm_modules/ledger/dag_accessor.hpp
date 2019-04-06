@@ -84,7 +84,7 @@ public:
 
     // TODO: Make it such that multiple block times can be extracted
     auto nodes = chain_state_->dag->ExtractSegment(chain_state_->block); 
-    std::cout << "Extracting segment for block " << chain_state_->block.body.block_number << std::endl;
+
     for(auto &n : nodes )
     {
       // We ignore anything that does not reference the past

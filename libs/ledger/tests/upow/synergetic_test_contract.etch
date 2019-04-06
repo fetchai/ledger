@@ -23,8 +23,6 @@ function proofOfWork(problem : Array< Buffer >, solution : Int32 ) : Float64
     hasher.update(problem[solution]);    
     var number = BigUInt( hasher.final() );
     var value = toFloat64(number.toInt32());
-//    print("Validated Value: ");
-//    printLn(value);
 
     return value;
   endif
@@ -41,8 +39,7 @@ function applyWork(problem : Array< Buffer >, solution : Int32)
 
     var number = BigUInt( hasher.final() );
     var value = toFloat64(number.toInt32());
-//    print("Cleared by: ");
-//    printLn(value);
+
   endif
 endfunction
 
@@ -57,42 +54,23 @@ function mineWork(problem : Array< Buffer >, nonce : BigUInt) :  Int32
   var solution = -1;
   var N = lengthOf(problem);
 
-//  print("Number of nodes: ");
-//  printLn(N);
-//  print("DAGBlock: ") ;
-//  printLn(toInt32(getDAGBlockNumber()));  
-
   if( N == 0)
     return solution;
   endif
 
   var i = nonce.toInt32();
-  if( i < 0)
+  if(i < 0)
     i = -i;
   endif
   i = i % N;
 
-  // For debugging only
-  var hasher = SHA256();
-  hasher.update(problem[i]);
-
-  var number = BigUInt( hasher.final() );
-  var value = toFloat64(number.toInt32());
-/*
-  print("Mined Value: ");
-  printLn(value);
-  print("Problem size: ") ;
-  printLn(N);
-  print("DAGBlock: ") ;
-  printLn(toInt32(getDAGBlockNumber()));  
-*/
   return i;
 endfunction
 
 @test_dag_generator
 function makeDAGnode(epoch : Int32, entropy : BigUInt) : DAGNode
   var ret = DAGNode();
-//  printLn("GENERATING Dag");
+
   ret.set("key", entropy.toBuffer());  
 
   return ret;

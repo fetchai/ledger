@@ -22,13 +22,13 @@ namespace consensus
 
 class SynergeticMiner {
 public:
-  using ScoreType          = Work::ScoreType;
-  using DAGNode            = ledger::DAGNode;
+  using ScoreType            = Work::ScoreType;
+  using DAGNode              = ledger::DAGNode;
   using ChainState           = vm_modules::ChainState;    
-  using UniqueStateAdapter = std::unique_ptr< SynergeticStateAdapter >;
-  using Identifier         = ledger::Identifier;
-  using StorageInterface   = ledger::StorageInterface;
-  using BigUnsigned        = math::BigUnsigned;
+  using UniqueStateAdapter   = std::unique_ptr< SynergeticStateAdapter >;
+  using Identifier           = ledger::Identifier;
+  using StorageInterface     = ledger::StorageInterface;
+  using BigUnsigned          = math::BigUnsigned;
 
   SynergeticMiner(fetch::ledger::DAG &dag)
   : dag_(dag)
@@ -36,7 +36,7 @@ public:
     CreateConensusVMModule(module_);
 
     // Preparing VM & compiler
-    vm_             = new fetch::vm::VM(&module_);
+    vm_               = new fetch::vm::VM(&module_);
     chain_state_.dag  =  &dag_;
 
     // TODO: Workout what to do with the stdout
@@ -60,13 +60,15 @@ public:
     else
     {
       vm_->ClearIOObserver();
+      errors_.push_back("Could not attach state in clear contest.");
+      return false;
     }
 
     // Defining problem
     if (!vm_->Execute(contract_->script, contract_->problem_function, error_, problem_))
     {
-      std::cerr << "DefineProblem - TODO - work out how to propagate error" << std::endl;                  
-      std::cout << "Failed to execute problem function: " << error_ << std::endl;
+      errors_.push_back("Error while defining problem.");
+      errors_.push_back(error_);
       return false;
     }
 
@@ -76,7 +78,7 @@ public:
   ScoreType ExecuteWork(Work work) 
   { 
     assert(contract_ != nullptr);    
-//    assert(work.block_number == chain_state_.block.body.block_number);
+    assert(work.block_number == chain_state_.block.body.block_number);
 
     if(has_state())
     {
@@ -85,11 +87,14 @@ public:
     else
     {
       vm_->ClearIOObserver();
+      errors_.push_back("Could not attach state in clear contest.");
+      return false;
     }
 
     if(work.contract_name != contract_->name)
     {
-      throw std::runtime_error("Contract name between work and used contract differs: "+ static_cast<std::string>(work.contract_name) + " vs " + static_cast<std::string>(contract_->name) );
+      errors_.push_back("Contract name between work and used contract differs: "+ static_cast<std::string>(work.contract_name) + " vs " + static_cast<std::string>(contract_->name) );
+      return std::numeric_limits< ScoreType >::max();
     }
 
     // Executing the work function
@@ -97,7 +102,9 @@ public:
 
     if (!vm_->Execute(contract_->script, contract_->work_function, error_,  solution_, problem_, hashed_nonce))
     {
-      std::cerr << "Runtime error: " << error_ << std::endl;
+      errors_.push_back("Error while executing work function.");
+      errors_.push_back(error_);
+
       vm_->ClearIOObserver();
       return std::numeric_limits< ScoreType >::max();
     }
@@ -105,8 +112,10 @@ public:
     // Computing objective function
     if (!vm_->Execute(contract_->script, contract_->objective_function, error_, score_,  problem_, solution_))
     {
-      std::cerr << "ExecuteWork - TODO - work out how to propagate error" << std::endl;            
-      std::cerr << "Runtime error: " << error_ << std::endl;
+      errors_.push_back("Error while executing objective function for work.");
+      errors_.push_back(error_);
+
+      vm_->ClearIOObserver();      
       return std::numeric_limits< ScoreType >::max();
     }
     
@@ -123,14 +132,17 @@ public:
     else
     {
       vm_->ClearIOObserver();
+      errors_.push_back("Could not attach state in clear contest.");
+      return false;
     }
 
     // Invoking the clear function
     fetch::vm::Variant output;
     if (!vm_->Execute(contract_->script, contract_->clear_function, error_,  output, problem_, solution_))
     {
-      std::cerr << "ClearContest - TODO - work out how to propagate error" << std::endl;      
-      std::cerr << "Runtime error during clear: " << error_ << std::endl;
+      errors_.push_back("Error while clearing contest during execution.");
+      errors_.push_back(error_);      
+
       vm_->ClearIOObserver();
       return false;
     }
@@ -149,23 +161,25 @@ public:
     hasher.Update( n_entropy );
     auto entropy = vm_->template CreateNewObject< fetch::vm_modules::BigNumberWrapper >(hasher.Final());
 
-
-
+    // Executing main routine for data creation
     if (!vm_->Execute(contract_->script, contract_->test_dag_generator, error_, new_dag_node, epoch, entropy))
     {
-      std::cerr << "CreateDAGTestData - TODO - work out how to propagate error" << std::endl;
-      std::cerr << "Runtime error: " << error_ << std::endl;
+      errors_.push_back("Error during execution while creating DAG test data.");
+      errors_.push_back(error_);
+
       return DAGNode();
     }
 
+    // Checking that return type is good.
     if(new_dag_node.type_id != vm_->GetTypeId<vm_modules::DAGNodeWrapper >())
     {
-      std::cerr << "TODO: Expected DAG node" << std::endl;
+      errors_.push_back("Return type error while creating DAG test data.");
+
       return DAGNode();
     }
 
+    // Returning the result
     auto node_wrapper = new_dag_node.Get< vm::Ptr< vm_modules::DAGNodeWrapper > >();
-
     return node_wrapper->ToDAGNode();
   }
 
@@ -216,6 +230,11 @@ public:
     chain_state_.block = std::move(block);
   }
 
+  ledger::Block block()
+  {
+    return chain_state_.block;
+  }
+
   template <typename T, typename... Args>
   vm::Ptr<T> CreateNewObject(Args &&... args)
   {
@@ -231,6 +250,11 @@ public:
   {
     return chain_state_.block.body.block_number;
   }
+
+  std::vector< std::string > const &errors() const
+  {
+    return errors_;
+  }  
 private:
   bool has_state() const
   {
@@ -260,6 +284,8 @@ private:
 
   UniqueStateAdapter read_only_state_{nullptr};
   UniqueStateAdapter read_write_state_{nullptr};
+
+  std::vector< std::string > errors_;
 
   ChainState chain_state_;
 };

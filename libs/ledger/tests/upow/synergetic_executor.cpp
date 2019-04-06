@@ -64,27 +64,24 @@ public:
 
   void SetUp() override
   {
+    // Component setup
     storage_     = std::make_unique<FakeStorageUnit>();
     dag_ = UniqueDAG( new DAG() );
     executor_ = UniqueExecutor( new SynergeticExecutor(*dag_.get(), *storage_.get()) );    
     chain_ = UniqueBlockChain( new FakeChain() );
     miner_ = UniqueMiner( new SynergeticMiner(*dag_.get()) );
-    certificate_ = std::make_unique<fetch::crypto::ECDSASigner>();    
+    certificate_ = std::make_unique<fetch::crypto::ECDSASigner>();
 
-//    std::cout << fetch::byte_array::ToBase64(certificate_->identity().identifier()) << std::endl;
-    std::cout << fetch::byte_array::ToBase64(fetch::crypto::Hash<fetch::crypto::SHA256>("xxx")) << std::endl;
     // Preparing genesis block
     Block next_block;
     next_block.body.previous_hash = "genesis";
     next_block.body.block_number  = 0;
     next_block.body.miner         = "unkown";
     next_block.body.dag_nodes     = {};
-
     chain_->push_back(next_block);
 
     // Adding contract
     std::string source;
-
     std::ifstream      file("./synergetic_test_contract.etch", std::ios::binary);
     if(!file)
     {
@@ -96,37 +93,49 @@ public:
 
     // Adding contract to stroge
     Identifier contract_id;
-    if (!contract_id.Parse(CONTRACT_NAME))
-    {
-      std::cerr << "Could not parse contract name" << std::endl;
-      TearDown();
-      exit(-1);
-    }
+    EXPECT_TRUE(contract_id.Parse(CONTRACT_NAME));
 
-    // create the resource address for the contract
+    // Create the resource address for the contract
     ContractAddress contract_address = fetch::ledger::SmartContractManager::CreateAddressForContract(contract_id);    
     fetch::serializers::ByteArrayBuffer adapter;
     adapter << static_cast<ConstByteArray>(source);
     storage_->Set(contract_address, adapter.data());
 
-    if(GetContract() != source)
-    {
-      std::cout << "Contract not correctly retreived." << std::endl;
-      TearDown();
-      exit(-1);
-
-    }
-
-    // Testing contract creation
-    if(!cregister_.CreateContract(CONTRACT_NAME, source))
-    {
-      std::cout << "Could not create contract." << std::endl;
-      TearDown();
-      exit(-1);
-    }
+    EXPECT_EQ(GetContract(), source);
+    EXPECT_TRUE(cregister_.CreateContract(CONTRACT_NAME, source));
 
     // Clearing the register
     cregister_.Clear();
+
+    // Testing that no work is deemed invalid
+    executor_->OnDishonestWork([](Work work){
+      FAIL() << "This test is not supposed to have any dishonest work.";
+    });
+
+    // Checking that winning work really is best in the segment.
+    executor_->OnRewardWork([this](Work work){
+      // The work block number contains the block number at which 
+      // the data should be extract from. The work is located in the 
+      // following segment 
+      auto block = chain_->at(work.block_number + 1);
+      auto segment = dag_->ExtractSegment(block);
+
+      for(auto &s: segment)
+      {
+        if(s.type == fetch::ledger::DAGNode::WORK)
+        {
+          Work w;
+          s.GetObject(w);
+
+          if(w.score < work.score)
+          {
+            std::cout << w.contract_name << " "  << std::endl;
+            FAIL() << "There exists work in segment that performs better: " << w.score << " vs " << work.score;
+          }
+        }
+      }
+
+    });
 
     random_.Seed(42);
   }
@@ -134,23 +143,13 @@ public:
   std::string GetContract()
   {
     Identifier contract_id;
-    if (!contract_id.Parse(CONTRACT_NAME))
-    {
-      std::cerr << "Could not parse contract name" << std::endl;
-      TearDown();
-      exit(-1);
-    }
+    EXPECT_TRUE(contract_id.Parse(CONTRACT_NAME));
 
     // create the resource address for the contract
     ContractAddress contract_address = fetch::ledger::SmartContractManager::CreateAddressForContract(contract_id);    
 
     auto const result = storage_->Get(contract_address);    
-    if (result.failed)
-    {
-      std::cout << "Failed to get contract" << std::endl;
-      TearDown();
-      exit(-1);
-    }
+    EXPECT_FALSE(result.failed);
 
     ConstByteArray source; 
     fetch::serializers::ByteArrayBuffer adapter{result.document};
@@ -172,29 +171,20 @@ public:
   {
     if(!cregister_.HasContract(CONTRACT_NAME))
     {
-      if(!cregister_.CreateContract(CONTRACT_NAME, GetContract()))
-      {
-        std::cout << "Could not add contract" << std::endl;
-      }
+      EXPECT_TRUE(cregister_.CreateContract(CONTRACT_NAME, GetContract()));
     }
+
     // Data is generated
-    std::cout << "GENERATING DATA!" << std::endl;
     GenerateDAGData(N, mine_every);
 
     // The remaining bits should work with out the contract register
     cregister_.Clear();
 
-    std::cout << "MINING!" << std::endl;
     // Block is mined
     MakeBlock();
 
-    std::cout << "EXECUTING!" << std::endl;
-    std::cout << "EXECUTING!" << std::endl << std::endl;
     // Block is executed
     ExecuteBlock();
-    std::cout << std::endl;
-    std::cout << "DONE EXECUTING!" << std::endl;
-    std::cout << "DONE EXECUTING!" << std::endl << std::endl;    
   }
 
   UniqueDAG&          dag() { return dag_; }
@@ -203,88 +193,61 @@ public:
 private:
   void GenerateDAGData(uint64_t N = 100, uint64_t mine_every = 5)
   {
-    std::cout << "Adding nodes"<< std::endl;
-
     for(uint32_t i=0; i < N; ++i)
     {
       if( (i % mine_every) == 0 )
       {
         // Mining solutions to the data submitted in the last round
-        std::cout << " --- > uPoW-ing for block "  << std::endl;
         auto work = Mine();
+        miner_->SetBlock(chain_->back());
 
         // Keeping the old segment for later testing.
         auto old_segment = dag_->ExtractSegment(chain_->back());
+        assert(work.block_number == chain_->back().body.block_number);
 
-        // Testing that work was correctly mined
-        miner_->AttachContract(*storage_, cregister_.GetContract(work.contract_name));
-        miner_->DefineProblem();
-        auto test_score = miner_->ExecuteWork(work);
-        EXPECT_EQ(test_score, work.score);
-        miner_->DetachContract();
-        std::cout << "WORK MINED WORK MINED WORK MINED WORK MINED WORK MINED WORK MINED " << std::endl;
-        std::cout << test_score << std::endl;
-        std::cout << fetch::byte_array::ToBase64(work.miner) << std::endl;        
-        std::cout << fetch::byte_array::ToBase64(work.nonce) << std::endl;
-        std::cout << fetch::byte_array::ToBase64(work()) << std::endl;
-        std::cout << "Based on DAG segment: " << miner_->block_number() << " " << work.block_number << std::endl;
-        for(auto &t: old_segment)
-        {
-          std::cout << " - " << fetch::byte_array::ToBase64(t.hash) << std::endl;
+        { // Testing that work was correctly mined
+          EXPECT_EQ( work.contract_name, CONTRACT_NAME );
+          miner_->AttachContract(*storage_, cregister_.GetContract(work.contract_name));
+          miner_->DefineProblem();
+
+          auto test_score = miner_->ExecuteWork(work);
+          EXPECT_EQ(test_score, work.score);
+
+          miner_->DetachContract();
         }
-        std::cout << "END END END END END END END " << std::endl;
-        // Business logic: Storing the work in the DAG
-        fetch::ledger::DAGNode node;
-        node.type = fetch::ledger::DAGNode::WORK;
 
-        node.SetObject(work);
-        node.contract_name = work.contract_name;
-        node.identity = certificate_->identity();
-        dag_->SetNodeReferences(node);
-
-        node.Finalise();
-        EXPECT_TRUE(certificate_->Sign(node.hash));
-
-        node.signature = certificate_->signature();
-        dag_->Push(node);
-
+        // Storing the work in the DAG
+        auto node = executor_->SubmitWork(certificate_, work);
+        EXPECT_TRUE( bool(node) );
 
         // Testing that nodes in two segments are the same
         auto new_segment = dag_->ExtractSegment(chain_->back());        
         EXPECT_EQ( old_segment.size(), new_segment.size() );
         EXPECT_EQ( old_segment, new_segment);
 
-        // Testing that work is correctly deserialised
-        Work work2;
-        node.GetObject(work2);
-        work2.contract_name = node.contract_name;
-        work2.miner = node.identity.identifier();
+        { // Testing that work is correctly deserialised
+          Work work2;
+          node.GetObject(work2);
+          work2.contract_name = node.contract_name;
+          work2.miner = node.identity.identifier();
 
-        EXPECT_EQ(work, work2);
+          EXPECT_EQ(work, work2);
 
-        // Testing that work is reproducible
-        miner_->AttachContract(*storage_, cregister_.GetContract(work2.contract_name));
-        miner_->DefineProblem();
-        auto test_score2 = miner_->ExecuteWork(work2);
-        EXPECT_EQ(test_score2, work.score);
-        miner_->DetachContract();        
-
+          miner_->AttachContract(*storage_, cregister_.GetContract(work2.contract_name));
+          miner_->DefineProblem();
+          auto test_score2 = miner_->ExecuteWork(work2);
+          EXPECT_EQ(test_score2, work.score);
+          miner_->DetachContract();        
+        }
       }
       else
       {
-        std::cout << " ---- > Generating Node!" << std::endl;
         // Generating data in this round
-        if(!miner_->AttachContract(*storage_, cregister_.GetContract(CONTRACT_NAME)))
-        {
-          std::cout << "Failed attaching the contract in Generate DAG" << std::endl; 
-          TearDown();
-          exit(-1);
-        }
+        EXPECT_TRUE(miner_->AttachContract(*storage_, cregister_.GetContract(CONTRACT_NAME)));
 
         // Creating test node
         auto node = miner_->CreateDAGTestData(static_cast<int32_t>(chain_->size()), static_cast<int64_t>( random_() & ((1ul<<31) - 1ul ) ));
         miner_->DetachContract();
-
 
         // Adding it to the DAG
         node.contract_name = CONTRACT_NAME;
@@ -314,7 +277,7 @@ private:
     next_block.body.block_number  = current_block.body.block_number + 1;
     next_block.body.miner         = "unkown";
     next_block.body.dag_nodes     = dag_->UncertifiedTipsAsVector();
-    std::cout << "Making block: " << next_block.body.block_number <<  std::endl;    
+
     chain_->push_back(next_block);
   }
   
@@ -324,107 +287,42 @@ private:
     REJECT_BLOCK
   };
 
-  ExecuteStatus ExecuteBlock()
+  void ExecuteBlock()
   {
     using PStatus = SynergeticExecutor::PreparationStatusType;
 
     // Ignoring genesis block as no work was done prior to this
     if(chain_->size() < 2)
     {
-      return ExecuteStatus::SUCCESS;
+      return;
     }
-
-    std::cout << "Executing block: ";
-    std::cout << chain_->back().body.block_number;
-    std::cout << std::endl;
 
     auto current_block = chain_->back();
     auto previous_block = chain_->at(chain_->size() - 2);
 
     // Testing executor - preparing work
-    if(PStatus::SUCCESS != executor_->PrepareWorkQueue(previous_block, current_block)) 
-    {
-      std::cout << "FAILED TO PREPARE!" << std::endl;
-      return ExecuteStatus::REJECT_BLOCK;
-    }
+    EXPECT_EQ(PStatus::SUCCESS, executor_->PrepareWorkQueue(previous_block, current_block)) ;
 
     // Executing work
-    if(!executor_->ValidateWorkAndUpdateState())
-    {
-      std::cout << "FAILED TO VALIDATE!" << std::endl;
-      return ExecuteStatus::REJECT_BLOCK;
-    }
-
-    return ExecuteStatus::SUCCESS;
+    EXPECT_TRUE(executor_->ValidateWorkAndUpdateState());
   }
 
   Work Mine(int64_t search_length = 10) 
   {
-    fetch::consensus::Work work;    
-    work.contract_name = CONTRACT_NAME;
-    work.miner = certificate_->identity().identifier();
-    work.block_number = chain_->back().body.block_number;
+    Work work = executor_->Mine(certificate_, CONTRACT_NAME, chain_->back(), 277326, 10);
+    EXPECT_TRUE(bool(work));
 
-    if(!miner_->AttachContract(*storage_, cregister_.GetContract(work.contract_name)))
-    {
-      std::cout << "Failed attaching the contract in Mine" << std::endl;
-      TearDown();
-      exit(-1);
-    }
-
-    // Ensuring that we are extracting the right part of the DAG
-    if(chain_->size() > 0)
-    {
-      miner_->SetBlock(chain_->back());
-      dag_->SetNodeTime(chain_->back());
-    }
-    else
-    {
-      std::cerr << "Genesis block is not present" << std::endl;
-      exit(-1);
-    }
-
-    // Defining the problem we mine
-    if(!miner_->DefineProblem())
-    {
-      miner_->DetachContract();
-      std::cout << "Could not define problem!" << std::endl;
-      TearDown();      
-      exit(-1);
-    }
-
-    // Let's mine
-    fetch::math::BigUnsigned nonce(29188);
-    fetch::consensus::WorkRegister wreg;
-    fetch::consensus::Work::ScoreType best_score = std::numeric_limits< fetch::consensus::Work::ScoreType >::max();
-    for(int64_t i = 0; i < search_length; ++i) {      
-      work.nonce = nonce.Copy();
-      work.score = miner_->ExecuteWork(work);
-
-      if(work.score < best_score)
-      {
-        best_score = work.score;
-      }
-      
-      ++nonce;
-      wreg.RegisterWork(work);
-    }
-
-    miner_->DetachContract();
-
-    // Returning the best work from this round
-    return wreg.ClearWorkPool( cregister_.GetContract(work.contract_name) );
+    return work;
   }
-
 
   FakeStorageUnitPtr storage_;
   UniqueDAG          dag_;
   UniqueExecutor     executor_;
   UniqueBlockChain   chain_;
   UniqueMiner        miner_;  
-  ContractRegister   cregister_;  
-  RandomGenerator    random_;
   UniqueCertificate  certificate_;
+  ContractRegister cregister_;  
+  RandomGenerator    random_;
 };
 
 
@@ -432,16 +330,16 @@ TEST_F(SynergeticExecutorTest, CheckMiningFlow)
 {
   std::vector< uint64_t > dag_counters;
   dag_counters.push_back(0); // 0 dag nodes before genesis
-  uint64_t total = 1; // 1 becuase of Genesis
-  uint64_t rounds = 3;
+  uint64_t total  = 1;       // 1 becuase of Genesis
+  uint64_t rounds = 30;
 
   // Testing live execution for a number of rounds
   for(std::size_t i=0; i < rounds; ++i)
   {
-    uint64_t N = 5 + 2*i; //random() % 15;
+    uint64_t N = random() % 100;
     dag_counters.push_back(N);
     total += N;
-    std::cout << "Adding " << N << " nodes" << std::endl;
+
     ExecuteRound(N);
     EXPECT_TRUE(dag()->size() == total);    
   }  
@@ -452,26 +350,17 @@ TEST_F(SynergeticExecutorTest, CheckMiningFlow)
   {
     auto block = ch[i];
     auto segment = dag()->ExtractSegment(block);
-    std::cout << "Block " << block.body.block_number << " : " << segment.size() << " vs " <<  dag_counters[i] << " DAG nodes" << std::endl;    
 
     for(auto &s: segment)
     {
-      std::cout << fetch::byte_array::ToBase64(s.hash) <<" : " << s.type << " " << s.timestamp << std::endl;
       if(s.type == fetch::ledger::DAGNode::WORK)      
       {
         fetch::consensus::Work work;
         s.GetObject(work);
-        std::cout <<"   -> " << work.score << " " << fetch::byte_array::ToBase64(work.nonce) << " " << work.block_number << std::endl;
         EXPECT_EQ(block.body.block_number - 1, work.block_number);
       }
-      else
-      {
-        std::cout << "   -> " << s.contents << std::endl;
-      }
     }
-
-
-    std::cout << " --- " << std::endl;    
+    
     EXPECT_TRUE(segment.size() == dag_counters[i]);
   }  
 }

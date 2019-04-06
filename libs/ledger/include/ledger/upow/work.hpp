@@ -19,19 +19,31 @@ struct Work
   using ScoreType       = double; // TODO: Change to fixed point
   using BigUnsigned     = math::BigUnsigned;
 
+  enum {
+    WORK_NOT_VALID = uint64_t(-1)
+  };
+
   /// Serialisable
   /// @{
-  uint64_t block_number;
-  BigUnsigned nonce;
+  uint64_t block_number{WORK_NOT_VALID};
+  BigUnsigned nonce{};
   ScoreType score = std::numeric_limits<ScoreType>::max(); 
   /// }
 
   // Used internally after deserialisation
   // This information is already stored in the DAG and hence
   // we don't want to store it again.
-  ContractName contract_name;
-  Identity miner;
+  ContractName contract_name{};
+  Identity miner{};
+  
+  operator bool()
+  {
+    return block_number != WORK_NOT_VALID;
+  }
 
+  /*
+   * @brief computes the hashed nonce for work execution.
+   */
   BigUnsigned operator()()
   {
     crypto::SHA256 hasher;
@@ -44,9 +56,13 @@ struct Work
     Digest digest = hasher.Final();
     hasher.Reset();
     hasher.Update(digest);
+
     return hasher.Final();
   }  
 
+  /*
+   * @brief work can be prioritised based on 
+   */  
   bool operator<(Work const &other) const 
   {
     return score < other.score;
@@ -54,7 +70,8 @@ struct Work
   
   bool operator==(Work const &other) const 
   {
-    return (score == other.score) &&
+    return (block_number == other.block_number) &&
+           (score == other.score) &&
            (nonce == other.nonce) &&
            (contract_name == other.contract_name) &&
            (miner == other.miner);

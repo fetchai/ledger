@@ -37,19 +37,29 @@ struct DAGNode
   // Different types of DAG nodes.
   enum
   {
-    GENESIS = 1,
-    WORK    = 2,
-    DATA    = 3
+    GENESIS = 1,         //< Used to identify the genesis DAG node
+    WORK    = 2,         //< Indicates that work is stored in the contents
+    DATA    = 3,         //< DAG contains data that can be used inside the contract.
+    INVALID_NODE = 255   //< The node is not valid (default on construction)
   };
 
   uint64_t          timestamp{INVALID_TIMESTAMP};    ///< timestamp to that keeps the time since last validated block.
-  uint64_t          type{WORK};                      ///< type of the DAG node
+  uint64_t          type{INVALID_NODE};              ///< type of the DAG node
   DigestList        previous;                        ///< previous nodes.
   ConstByteArray    contents;                        ///< payload to be deserialised.  
   ConstByteArray    contract_name;                   ///< The contract which this node is associated with.
   crypto::Identity  identity;                        ///< identity of the creator.
   Digest            hash;                            ///< DAG hash.
   Signature         signature;                       ///< creators signature.
+
+
+  /**
+   * @brief tests whether a node is valid or not.
+   */  
+  operator bool() const
+  {
+    return type != INVALID_NODE;
+  }
 
   template< typename T >
   bool SetObject(T const &obj)
