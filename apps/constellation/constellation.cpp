@@ -148,7 +148,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   , network_manager_{"NetMgr", CalcNetworkManagerThreads(cfg_.num_lanes())}
   , http_network_manager_{"Http", HTTP_THREADS}
   , muddle_{muddle::NetworkId{"IHUB"}, std::move(certificate), network_manager_,
-            !config.disable_signing}
+            !config.disable_signing, config.sign_broadcasts}
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
   , internal_muddle_{muddle::NetworkId{"ISRD"}, internal_identity_, network_manager_}
   , trust_{}
@@ -194,7 +194,6 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   FETCH_LOG_INFO(LOGGING_NAME, "");
 
   // attach the services to the reactor
-  reactor_.Attach(block_coordinator_.GetWeakRunnable());
   reactor_.Attach(main_chain_service_->GetWeakRunnable());
 
   // configure all the lane services
@@ -336,6 +335,10 @@ void Constellation::Run(UriList const &initial_peers)
 
   // Finally start the HTTP server
   http_.Start(http_port_);
+
+  // The block coordinator needs to access correctly started lanes to recover state in the case of
+  // a crash.
+  reactor_.Attach(block_coordinator_.GetWeakRunnable());
 
   //---------------------------------------------------------------
   // Step 2. Main monitor loop
