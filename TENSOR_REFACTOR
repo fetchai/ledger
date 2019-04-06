@@ -1,8 +1,13 @@
-( ) Reimplement slice
-( ) Get rid of GetRange
-( ) Get rid of current At operator
+(v) Reimplement slice
 ( ) Add strides
-
+    ( ) Compute strides
+    ( ) Get rid of At( )
+    ( ) 
+( ) Get rid of GetRange
+( ) Get rid of TensorView
+( ) Get rid of current At operator
+( ) Get rid of the entire matrix operations library - it's garbage!
+( ) Delete as much of the math library as possible.
 
 // Easy
 ( )  Tensor(Tensor &&t) = default;

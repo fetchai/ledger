@@ -17,11 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/kernels/approx_logistic.hpp"
-#include "math/kernels/basic_arithmetics.hpp"
-#include "math/kernels/relu.hpp"
-#include "math/kernels/standard_functions.hpp"
-
 #include "core/assert.hpp"
 #include "math/meta/math_type_traits.hpp"
 #include "vectorise/memory/range.hpp"
@@ -58,23 +53,35 @@ namespace details {
  * TODO(private, 520) -- Clean up once we get unified ArrayType + operations
  */
 
-template <typename ArrayType>
-void Softmax1DImplementation(ArrayType const &array, ArrayType &ret)
+template <typename ArrayType1, typename ArrayType2>
+void Softmax1DImplementation(ArrayType1 const &array, ArrayType2 &ret)
 {
+  using Type = typename ArrayType1::Type;
   assert(ret.size() == array.size());
   assert(array.shape().size() == 1);
   assert(ret.shape().size() == 1);
 
   // subtract max for numerical stability
-  typename ArrayType::Type array_max = std::numeric_limits<typename ArrayType::Type>::lowest();
+  Type array_max = std::numeric_limits<Type>::lowest();  
   Max(array, array_max);
-  Subtract(array, array_max, ret);
 
-  // softmax (Exp(x) / Sum(Exp(x)))
-  Exp(ret, ret);
-  typename ArrayType::Type array_sum = typename ArrayType::Type(0);
-  Sum(ret, array_sum);
-  Divide(ret, array_sum, ret);
+  auto it1 = array.begin();
+  auto it2 = ret.begin();
+  Type sum = Type(0);
+  while(it1.is_valid())
+  {
+    *it2 = Exp(*it1 - array_max);
+    sum += *it2;
+    ++it2;
+    ++it1;
+  }
+
+  auto it3 = ret.begin(); // TODO: Fix implictly deleted copy const. for iterator 
+  while(it3.is_valid())
+  {
+    *it3 /= sum;
+    ++it3;
+  }
 }
 
 template <typename ArrayType>
@@ -89,10 +96,10 @@ void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
 
   for (std::size_t i = 0; i < array.shape()[axis]; ++i)
   {
-    ArrayType cur_slice = array.Slice(i);
-    ArrayType ret_slice = ret.Slice(i);
+    auto cur_slice = array.Slice(i);
+    auto ret_slice = ret.Slice(i);
     Softmax1DImplementation(cur_slice, ret_slice);
-    ret.Slice(i).Copy(ret_slice);
+    ret.Slice(i).Assign(ret_slice);
   }
 }
 }  // namespace details

@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/kernels/standard_functions/log.hpp"
+//#include "math/kernels/standard_functions/log.hpp"
 #include "math/meta/math_type_traits.hpp"
 
 /**
@@ -28,13 +28,6 @@
 
 namespace fetch {
 namespace math {
-
-template <typename ArrayType>
-fetch::math::meta::IfIsBlasArray<ArrayType, void> Log(ArrayType &x)
-{
-  fetch::math::free_functions::kernels::Log<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
 
 template <typename ArrayType>
 fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> Log(ArrayType const &x)

@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/kernels/standard_functions/remainder.hpp"
+//#include "math/kernels/standard_functions/remainder.hpp"
 #include "math/meta/math_type_traits.hpp"
 
 /**
@@ -26,20 +26,6 @@
  */
 namespace fetch {
 namespace math {
-
-template <typename ArrayType>
-fetch::math::meta::IfIsMathArray<ArrayType, void> Remainder(ArrayType const &x, ArrayType const &y,
-                                                            ArrayType &z)
-{
-  free_functions::kernels::Remainder<typename ArrayType::Type> kernel;
-  z.data().in_parallel().Apply(kernel, x.data(), y.data());
-}
-template <typename ArrayType>
-fetch::math::meta::IfIsMathArray<ArrayType, void> Remainder(ArrayType const &x, ArrayType &y)
-{
-  free_functions::kernels::Remainder<typename ArrayType::Type> kernel;
-  y.data().in_parallel().Apply(kernel, x.data(), y.data());
-}
 
 template <typename Type>
 fetch::math::meta::IfIsArithmetic<Type, void> Remainder(Type const &x, Type const &y, Type &z)

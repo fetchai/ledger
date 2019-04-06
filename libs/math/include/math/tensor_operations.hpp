@@ -30,16 +30,16 @@ namespace math {
  * Example [2, 5, 5] + [2, 5, 5] + [2, 5, 5] = [3, 2, 5, 5]
  * Returns newly allocated memory
  */
-template <typename T>
-fetch::math::Tensor<T> ConcatenateTensors(std::vector<fetch::math::Tensor<T>> const &tensors)
+template <typename T, typename C>
+fetch::math::Tensor<T, C> ConcatenateTensors(std::vector<fetch::math::Tensor<T, C>> const &tensors)
 {
-  std::vector<typename fetch::math::Tensor<T>::SizeType> retSize;
+  SizeVector retSize;
   retSize.push_back(tensors.size());
   retSize.insert(retSize.end(), tensors.front().shape().begin(), tensors.front().shape().end());
   fetch::math::Tensor<T> ret(retSize);
   for (typename fetch::math::Tensor<T>::SizeType i(0); i < tensors.size(); ++i)
   {
-    ret.Slice(i).Copy(tensors[i]);
+    ret.Slice(i).Assign(tensors[i]);
   }
   return ret;
 }

@@ -21,9 +21,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
 #include "core/random.hpp"
-#include "math/kernels/standard_deviation.hpp"
-#include "math/kernels/standard_functions.hpp"
-#include "math/kernels/variance.hpp"
+
 #include "math/meta/math_type_traits.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/range.hpp"
@@ -326,70 +324,6 @@ public:
   {
     LazyResize(x.size());
     fetch::math::Remainder(data_, x.data(), data_);
-  }
-
-  void Remquo(self_type const &x)
-  {
-    LazyResize(x.size());
-
-    kernels::stdlib::Remquo<Type> kernel;
-    data_.in_parallel().Apply(kernel, x.data_);
-  }
-
-  void Fma(self_type const &x)
-  {
-    LazyResize(x.size());
-
-    kernels::stdlib::Fma<Type> kernel;
-    data_.in_parallel().Apply(kernel, x.data_);
-  }
-
-  void Fmax(self_type const &x)
-  {
-    LazyResize(x.size());
-
-    kernels::stdlib::Fmax<Type> kernel;
-    data_.in_parallel().Apply(kernel, x.data_);
-  }
-
-  void Fmin(self_type const &x)
-  {
-    LazyResize(x.size());
-
-    kernels::stdlib::Fmin<Type> kernel;
-    data_.in_parallel().Apply(kernel, x.data_);
-  }
-
-  void Fdim(self_type const &x)
-  {
-    LazyResize(x.size());
-
-    kernels::stdlib::Fdim<Type> kernel;
-    data_.in_parallel().Apply(kernel, x.data_);
-  }
-
-  void Nan(self_type const &x)
-  {
-    LazyResize(x.size());
-
-    kernels::stdlib::Nan<Type> kernel;
-    data_.in_parallel().Apply(kernel, x.data_);
-  }
-
-  void Nanf(self_type const &x)
-  {
-    LazyResize(x.size());
-
-    kernels::stdlib::Nanf<Type> kernel;
-    data_.in_parallel().Apply(kernel, x.data_);
-  }
-
-  void Nanl(self_type const &x)
-  {
-    LazyResize(x.size());
-
-    kernels::stdlib::Nanl<Type> kernel;
-    data_.in_parallel().Apply(kernel, x.data_);
   }
 
   /**

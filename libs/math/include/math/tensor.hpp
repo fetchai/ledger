@@ -37,7 +37,6 @@
 // OLD
 #include "core/assert.hpp"
 #include "math/free_functions/standard_functions/abs.hpp"
-#include "tensor_iterator2.hpp"
 #include "shapeless_array.hpp"
 
 #include "core/random/lcg.hpp"
@@ -256,6 +255,7 @@ public:
   {
     shape_.clear();
     shape_.push_back(SuperType::size());
+    UpdateStrides();
   }
 
   /**
@@ -349,20 +349,6 @@ public:
   }
   // END TODO END TODO
 
-  /*
-  Type &At(std::vector<SizeType> const &indices) 
-  {
-    assert(indices.size() == shape_.size());
-    return this->operator[](ComputeColIndex(indices));
-  }
-
-  Type const &At(std::vector<SizeType> const &indices) const
-  {
-    assert(indices.size() == shape_.size());
-    return this->operator[](ComputeColIndex(indices));
-  }
-  */
-
   bool AllClose(SelfType const &o, Type const &relative_tolerance = Type(1e-5),
                 Type const &absolute_tolerance = Type(1e-8)) const
   {
@@ -396,38 +382,158 @@ public:
     return true;
   }
 
-  class TensorSlice {
+  template< typename STensor >
+  class TensorSliceImplementation {
   public:
-    TensorSlice(Tensor &t, SizeVector from, SizeVector, to, SizeVector step)
+    using Type = typename STensor::Type;
+
+    TensorSliceImplementation(STensor &t, std::vector<std::vector<SizeType>> range)
     : tensor_{t}
-    , from_{std::move(from)}
-    , to_{std::move(to)}
-    , step_{std::move(step)} {}
+    , range_{std::move(range)}
+    {}
 
-  private:
-    Tensor &tensor_;
-    SizeVector from_;
-    SizeVector to_;
-    SizeVector step_;
-  };
-
-  SelfType Slice(SizeType i) const
-  {
-    SizeVector from{i};
-    SizeVector to{i + 1};
-    SizeVector step{1};
-
-    for (SizeType j{1}; j < shape().size(); ++j)
+    operator Tensor()
     {
-      from.emplace_back(0);
-      to.emplace_back(shape().at(j));
-      step.emplace_back(1);
+      Tensor ret;
+      throw std::runtime_error("Not implemented yet");
+      return ret;
     }
 
-    SelfType ret = GetRange(from, to, step);
-    ret.Squeeze();
-    return ret;
+    ConstIteratorType begin() const
+    {
+      return ConstIteratorType(tensor_, range_);
+    }
+
+    ConstIteratorType end() const
+    {
+      return ConstIteratorType::EndIterator(tensor_);
+    }
+
+    Tensor Unsqueeze() const
+    {
+      throw std::runtime_error("TODO: not supported.");
+    }
+
+
+  protected:
+    STensor &tensor_;
+    std::vector<std::vector<SizeType>> range_;
+  };
+
+  using ConstTensorSlice = TensorSliceImplementation< Tensor const >;
+
+  class TensorSlice : public TensorSliceImplementation< Tensor >
+  {
+  public:
+    using Type = T; 
+    using TensorSliceImplementation< Tensor >::TensorSliceImplementation;
+    using TensorSliceImplementation< Tensor >::begin;
+    using TensorSliceImplementation< Tensor >::end;    
+
+    IteratorType begin()
+    {
+      return IteratorType(this->tensor_, this->range_);
+    }
+
+    IteratorType end()
+    {
+      return IteratorType::EndIterator(this->tensor_);
+    }
+
+    template< typename X >
+    void Assign(TensorSliceImplementation<X> const &other)
+    {
+      auto it1 = begin();
+      auto it2 = other.begin();
+      assert(it1.size() == it2.size());
+      while(!it1.is_valid())
+      {
+        *it1 = *it2;
+        ++it1;
+        ++it2;
+      }
+    }
+
+    void Assign(Tensor const &other)
+    {
+      auto it1 = begin();
+      auto it2 = other.begin();
+      assert(it1.size() == it2.size());
+      while(!it1.is_valid())
+      {
+        *it1 = *it2;
+        ++it1;
+        ++it2;
+      }
+    }
+
+    void Fill(Type t)
+    {
+      auto it1 = begin();
+      while(!it1.is_valid())
+      {
+        *it1 = t;
+        ++it1;
+      }
+    }
+
+  };
+
+
+  ConstTensorSlice Slice(SizeType i) const
+  {
+    std::vector< std::vector< SizeType > > range;
+    range.push_back({i, i+1, 1});
+
+    for (SizeType j=1; j < shape().size(); ++j)
+    {
+      range.push_back({0, shape().at(j), 1});      
+    }    
+
+    return ConstTensorSlice(*this, range);
   }
+
+  TensorSlice Slice(SizeType i)
+  {
+    std::vector< std::vector< SizeType > > range;
+    range.push_back({i, i+1, 1});
+
+
+    for (SizeType j=1; j < shape().size(); ++j)
+    {
+      range.push_back({0, shape().at(j), 1});      
+    }    
+
+    return TensorSlice(*this, range);
+  }
+
+  Tensor& operator=(ConstTensorSlice const &slice)
+  {
+    auto it1 = begin();
+    auto it2 = slice.begin();
+    assert(it1.size() == it2.size());
+    while(it1.is_valid())
+    {
+      *it1 = *it2;
+      ++it1;
+      ++it2;
+    }
+    return *this;
+  }
+
+  Tensor& operator=(TensorSlice const & slice)
+  {
+    auto it1 = begin();
+    auto it2 = slice.begin();
+    assert(it1.size() == it2.size());
+    while(it1.is_valid())
+    {
+      *it1 = *it2;
+      ++it1;
+      ++it2;
+    }    
+    return *this;
+  }  
 
 
   SelfType Transpose() const
@@ -457,12 +563,16 @@ public:
   {
     ASSERT(shape_.at(0) == 1);
     shape_.erase(shape_.begin());
+    UpdateStrides();
+
     return *this;
   }
 
   SelfType& Unsqueeze()
   {
     shape_.insert(shape_.begin(), 1);
+    UpdateStrides();
+
     return *this;
   }
   
@@ -546,6 +656,7 @@ public:
   void LazyReshape(SizeVector const &shape)
   {
     shape_ = shape;
+    UpdateStrides();    
   }
 
   /**
@@ -575,13 +686,14 @@ public:
   void Reshape(SizeVector const &shape)
   {
     assert(CanReshape(shape));
-    this->ReshapeForce(shape);
+    this->ReshapeForce(shape); // TODO: This construct makes no sense.
   }
 
   /**
    * Executes a reshape (with no memory checks)
    * @param shape
    */
+  // TODO: Work out why this one is here. Seems wrong.
   void ReshapeForce(SizeVector const &shape)
   {
     shape_.clear();
@@ -590,6 +702,7 @@ public:
     {
       shape_.push_back(s);
     }
+    UpdateStrides();
   }
 
   /**
@@ -921,7 +1034,24 @@ public:
 private:
 //  SizeType              size_ = 0;
   SizeVector shape_;
+  SizeVector stride_;
+
   MAJOR_ORDER major_order_ = COLUMN;
+  void UpdateStrides() 
+  {
+    stride_.resize(shape_.size());
+    SizeType n_dims = shape_.size();
+    SizeType base   = 1;
+
+    for (SizeType i = 0; i < n_dims; ++i)
+    {
+      stride_[i] = base;
+      base *= shape_[i];
+    }
+
+    // TODO: Reverse order if row major.
+  }
+
 
   // TODO(tfr): replace with strides
   SizeType ComputeRowIndex(SizeVector const &indices) const

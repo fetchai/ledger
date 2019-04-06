@@ -17,79 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/kernels/standard_functions.hpp"
 #include "math/meta/math_type_traits.hpp"
 #include <cassert>
 
 namespace fetch {
 namespace math {
-
-/**
- *
- * @param x
- */
-template <typename ArrayType>
-fetch::math::meta::IfIsNotImplemented<ArrayType, void> Isgreater(ArrayType &x)
-{
-  kernels::stdlib::Isgreater<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename ArrayType>
-void Isgreaterequal(ArrayType const &x, ArrayType const &y, ArrayType &z)
-{
-  kernels::stdlib::Isgreaterequal<typename ArrayType::Type> kernel;
-  z.data().in_parallel().Apply(kernel, x.data(), y.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename ArrayType>
-fetch::math::meta::IfIsNotImplemented<ArrayType, void> Isless(ArrayType &x)
-{
-  kernels::stdlib::Isless<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename ArrayType>
-fetch::math::meta::IfIsNotImplemented<ArrayType, void> Islessequal(ArrayType &x)
-{
-  kernels::stdlib::Islessequal<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- *
- * @param x
- */
-template <typename ArrayType>
-fetch::math::meta::IfIsNotImplemented<ArrayType, void> Islessgreater(ArrayType &x)
-{
-  kernels::stdlib::Islessgreater<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * Determines if the floating point numbers x and y are unordered, that is, one or both are NaN and
- * thus cannot be meaningfully compared with each other.
- * @param x
- */
-template <typename ArrayType>
-fetch::math::meta::IfIsNotImplemented<ArrayType, void> Isunordered(ArrayType &x)
-{
-  kernels::stdlib::Isunordered<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
 
 /**
  * Max function for two values

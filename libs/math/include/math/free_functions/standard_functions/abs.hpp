@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/kernels/standard_functions/abs.hpp"
 #include "math/meta/math_type_traits.hpp"
 
 /**
@@ -27,13 +26,6 @@
 
 namespace fetch {
 namespace math {
-
-template <typename ArrayType>
-fetch::math::meta::IfIsBlasArray<ArrayType, void> Abs(ArrayType &x, ArrayType &ret)
-{
-  math::free_functions::kernels::Abs<typename ArrayType::Type> kernel;
-  ret.data().in_parallel().Apply(kernel, x.data());
-}
 
 template <typename ArrayType>
 fetch::math::meta::IfIsNonBlasArray<ArrayType, void> Abs(ArrayType const &x, ArrayType &ret)

@@ -19,7 +19,6 @@
 
 #include "math/base_types.hpp"
 
-//#include "math/Tensor.hpp"
 #include <algorithm>
 #include <cassert>
 #include <vector>
@@ -28,8 +27,6 @@
 namespace fetch {
 namespace math {
 
-// template <typename T, typename C>
-// class ShapelessArray;
 template <typename T, typename C>
 class Tensor;
 
@@ -73,6 +70,11 @@ public:
     Setup(step, array_.shape());
   }
 
+  TensorIterator(TensorIterator const &other) = default;
+  TensorIterator& operator=(TensorIterator const &other) = default;  
+  TensorIterator(TensorIterator &&other) = default;
+  TensorIterator& operator=(TensorIterator &&other) = default;    
+
   /**
    * Iterator for more interesting ranges
    * @param array the Tensor to operate upon
@@ -108,6 +110,11 @@ public:
    * @return boolean indicating validity
    */
   operator bool()
+  {
+    return counter_ < size_;
+  }
+
+  bool is_valid() const
   {
     return counter_ < size_;
   }
@@ -270,6 +277,10 @@ public:
 
   bool operator==(TensorIterator const& other) const
   {
+    if( this->end_of_iterator() && other->end_of_iterator())
+    {
+      return true;
+    }
     return other.counter_ == counter_;
   }
 

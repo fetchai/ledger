@@ -192,19 +192,6 @@ meta::IfIsMathFixedPointArray<ArrayType, void> Add(ArrayType const &array, T con
   }
 }
 
-template <typename T, typename ArrayType,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
-meta::IfIsBlasArray<ArrayType, void> Add(ArrayType const &array, T const &scalar, ArrayType &ret)
-{
-  assert(array.size() == ret.size());
-  typename ArrayType::vector_register_type val(scalar);
-
-  ret.data().in_parallel().Apply(
-      [val](typename ArrayType::vector_register_type const &x,
-            typename ArrayType::vector_register_type &      z) { z = x + val; },
-      array.data());
-}
-
 /**
  * Adds two arrays together
  * @tparam T
@@ -368,6 +355,7 @@ meta::IfIsMathShapeArray<ArrayType, ArrayType> Subtract(ArrayType const &obj1,
   Subtract(obj1, obj2, ret);
   return ret;
 }
+
 //////////////////////
 /// IMPLEMENTATION ///
 //////////////////////

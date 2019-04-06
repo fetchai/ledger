@@ -33,7 +33,7 @@ TEST(distance_tests, euclidean_distance)
   A.Set(1, 2);
   A.Set(2, 3);
   A.Set(3, 4);
-  ASSERT_TRUE(Euclidean(A, A) == 0);
+  EXPECT_EQ(Euclidean(A, A), 0);
 
   Tensor<double> B = Tensor<double>(4);
   B.Set(0, 1);
@@ -41,5 +41,5 @@ TEST(distance_tests, euclidean_distance)
   B.Set(2, 3);
   B.Set(3, 2);
 
-  ASSERT_TRUE(Euclidean(A, B) == 2);
+  EXPECT_EQ(Euclidean(A, B), 2);
 }

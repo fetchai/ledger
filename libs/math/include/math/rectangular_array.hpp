@@ -19,6 +19,7 @@
 
 #include "core/assert.hpp"
 #include "math/shapeless_array.hpp"
+#include "math/base_types.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
 #include "vectorise/platform.hpp"
@@ -51,7 +52,6 @@ public:
   using super_type     = math::ShapelessArray<T, C>;
   using Type           = typename super_type::Type;
   using container_type = typename super_type::container_type;
-  using SizeType       = typename super_type::SizeType;
 
   using self_type                     = RectangularArray<T, C>;
   using vector_register_type          = typename super_type::vector_register_type;

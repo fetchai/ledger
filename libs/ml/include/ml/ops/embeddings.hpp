@@ -66,7 +66,7 @@ public:
     uint64_t j(0);
     for (DataType const &i : inputs.front().get())
     {
-      this->embeddings_output_->Slice(j).Copy(
+      this->embeddings_output_->Slice(j).Assign(
           this->output_->Slice(typename ArrayType::SizeType(i)));
       j++;
     }
@@ -87,7 +87,7 @@ public:
     {
       updated_rows_.insert(typename ArrayType::SizeType(double(i)));
       this->gradient_accumulation_->Slice(typename ArrayType::SizeType(double(i)))
-          .Copy(errorSignal.Slice(j));
+          .Assign(errorSignal.Slice(j));
       j++;
     }
     return {ArrayType(errorSignal.shape())};

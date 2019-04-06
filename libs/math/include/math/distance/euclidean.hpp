@@ -29,12 +29,22 @@ namespace distance {
 template <typename ArrayType>
 typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
 {
-  assert(A.shape() == B.shape());
-  ArrayType tmp_array(A.shape());
+  using Type = typename ArrayType::Type;
+  auto it1 = A.begin();
+  auto it2 = B.begin();
+  assert(it1.size() == it2.size());
+  Type ret = Type(0);
 
-  fetch::math::Subtract(A, B, tmp_array);
-  Square(tmp_array, tmp_array);
-  return fetch::math::Sum(tmp_array);
+  while(it1.is_valid())
+  {
+    Type d = (*it1) - (*it2);
+
+    ret += d*d;
+    ++it1;
+    ++it2;
+  }
+  return ret;
+
 }
 
 template <typename ArrayType>

@@ -179,6 +179,7 @@ TYPED_TEST(TensorOperationsTest, transpose_untranspose_test)
   }
 }
 
+/*
 TYPED_TEST(TensorOperationsTest, transpose_and_slice_test)
 {
   fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({3, 5}));
@@ -257,7 +258,7 @@ TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
   EXPECT_EQ(t3.At(13), TypeParam(28));
   EXPECT_EQ(t3.At(14), TypeParam(29));
 }
-
+*/
 /*
 TYPED_TEST(TensorOperationsTest, shuffle_test)
 {
