@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chain/constants.hpp"
 #include "ledger/execution_manager.hpp"
 #include "storage/resource_mapper.hpp"
 
@@ -25,18 +26,20 @@
 
 struct TestBlock
 {
-  using resource_id_map_type = std::vector<std::string>;
-  using block_type           = fetch::ledger::ExecutionManager::block_type;
-  using block_digest_type    = fetch::ledger::ExecutionManager::block_digest_type;
+  using ResourceIdMap = std::vector<std::string>;
+  using BlockBody     = fetch::ledger::Block::Body;
+  using BlockHash     = fetch::ledger::Block::Digest;
+
+  static constexpr char const *LOGGING_NAME = "TestBlock";
 
   static constexpr uint64_t    IV          = uint64_t(-1);
   static constexpr std::size_t HASH_LENGTH = 32;
 
-  block_type block;
-  int        num_transactions = 0;
+  BlockBody block;
+  int       num_transactions = 0;
 
   template <typename RNG>
-  static block_digest_type GenerateHash(RNG &rng)
+  static BlockHash GenerateHash(RNG &rng)
   {
     static constexpr std::size_t HASH_SIZE = 32;
     fetch::byte_array::ByteArray digest;
@@ -49,16 +52,15 @@ struct TestBlock
   }
 
   void GenerateBlock(uint32_t seed, uint32_t log2_num_lanes, std::size_t num_slices,
-                     block_digest_type const &previous_hash)
+                     BlockHash const &previous_hash)
   {
-
     std::mt19937 rng;
     rng.seed(seed);
 
-    resource_id_map_type resources = BuildResourceMap(log2_num_lanes);
-    std::size_t const    num_lanes = 1u << log2_num_lanes;
+    ResourceIdMap     resources = BuildResourceMap(log2_num_lanes);
+    std::size_t const num_lanes = 1u << log2_num_lanes;
 
-    fetch::logger.Info("Generating block: ", num_lanes, " x ", num_slices);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Generating block: ", num_lanes, " x ", num_slices);
 
     // generate the block hash and assign the previous hash
     fetch::byte_array::ByteArray digest;
@@ -101,11 +103,11 @@ struct TestBlock
           {
 
             // create the transaction summary
-            fetch::chain::TransactionSummary summary;
+            fetch::ledger::TransactionSummary summary;
             summary.transaction_hash = GenerateHash(rng);
             summary.contract_name    = "fetch.dummy.run";
 
-            //            fetch::logger.Info("Generating TX: ",
+            //            FETCH_LOG_INFO(LOGGING_NAME,"Generating TX: ",
             //            fetch::byte_array::ToBase64(summary.transaction_hash));
 
             // update the groups
@@ -113,12 +115,12 @@ struct TestBlock
             {
               std::size_t const index = (i + lane_offset);
 
-              //              fetch::logger.Info(" - Resource: ", index);
+              //              FETCH_LOG_INFO(LOGGING_NAME," - Resource: ", index);
 
               summary.resources.insert(resources.at(index));
             }
 
-            current_slice.transactions.emplace_back(std::move(summary));
+            current_slice.emplace_back(std::move(summary));
             ++num_transactions;
           }
 
@@ -130,7 +132,7 @@ struct TestBlock
     }
   }
 
-  resource_id_map_type BuildResourceMap(uint32_t log2_num_lanes)
+  ResourceIdMap BuildResourceMap(uint32_t log2_num_lanes)
   {
     //#define PROFILE_GENERATION_TIME
 
@@ -144,7 +146,7 @@ struct TestBlock
 
     uint32_t const num_lanes = 1u << log2_num_lanes;
 
-    resource_id_map_type         values{num_lanes};
+    ResourceIdMap                values{num_lanes};
     std::unordered_set<uint32_t> set;
     for (uint32_t i = 0; i < num_lanes; ++i)
     {
@@ -186,7 +188,7 @@ struct TestBlock
   }
 
   static TestBlock Generate(std::size_t log2_num_lanes, std::size_t num_slices, uint32_t seed,
-                            block_digest_type const &previous_hash = block_digest_type{})
+                            BlockHash const &previous_hash = fetch::ledger::GENESIS_DIGEST)
   {
     TestBlock block;
     block.GenerateBlock(seed, static_cast<uint32_t>(log2_num_lanes), num_slices, previous_hash);

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public:
     ON_CALL(*this, Execute(_, _, _)).WillByDefault(Invoke(&fake_, &FakeExecutor::Execute));
   }
 
-  MOCK_METHOD3(Execute, Status(tx_digest_type const &, std::size_t, lane_set_type const &));
+  MOCK_METHOD3(Execute, Status(TxDigest const &, std::size_t, LaneSet const &));
 
 private:
   FakeExecutor fake_;

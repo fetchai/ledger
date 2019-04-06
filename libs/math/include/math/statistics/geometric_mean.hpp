@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shape_less_array.hpp"
 #include "vectorise/memory/range.hpp"
 
 #include <cmath>
@@ -28,16 +27,18 @@ namespace math {
 namespace statistics {
 
 template <typename A>
-inline typename A::type GeometricMean(A const &a)
+inline typename A::Type GeometricMean(A const &a)
 {
-  using vector_register_type = typename A::vector_register_type;
-  using type                 = typename A::type;
+  using DataType = typename A::Type;
 
-  type ret = a.data().in_parallel().Reduce(
-      memory::TrivialRange(0, a.size()),
-      [](vector_register_type const &a, vector_register_type const &b) { return a * b; });
+  DataType gm = 1;
 
-  return type(std::pow(ret, double(1.) / double(a.size())));
+  for (auto &e : a)
+  {
+    gm *= e;
+  }
+  Pow(gm, DataType(1.) / DataType(a.size()), gm);
+  return gm;
 }
 
 }  // namespace statistics

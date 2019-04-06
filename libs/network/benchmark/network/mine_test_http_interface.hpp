@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
-#include "core/script/variant.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "http/middleware/color_log.hpp"
 #include "http/server.hpp"
 #include "network_classes.hpp"
+#include "variant/variant.hpp"
 
 namespace fetch {
 namespace network_mine_test {
@@ -31,7 +31,11 @@ template <typename T>
 class HttpInterface : public fetch::http::HTTPModule
 {
 public:
-  explicit HttpInterface(std::shared_ptr<T> node) : node_{node} { AttachPages(); }
+  explicit HttpInterface(std::shared_ptr<T> node)
+    : node_{node}
+  {
+    AttachPages();
+  }
 
   void AttachPages()
   {
@@ -76,6 +80,8 @@ public:
 
   http::HTTPResponse AddEndpoint(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    FETCH_UNUSED(params);
+
     LOG_STACK_TRACE_POINT;
     json::JSONDocument doc;
     try
@@ -97,6 +103,9 @@ public:
 
   http::HTTPResponse Start(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    FETCH_UNUSED(params);
+    FETCH_UNUSED(req);
+
     LOG_STACK_TRACE_POINT;
 
     node_->startMining();
@@ -105,6 +114,9 @@ public:
 
   http::HTTPResponse Stop(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    FETCH_UNUSED(params);
+    FETCH_UNUSED(req);
+
     LOG_STACK_TRACE_POINT;
 
     node_->stopMining();
@@ -113,25 +125,30 @@ public:
 
   http::HTTPResponse Reset(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    FETCH_UNUSED(params);
+    FETCH_UNUSED(req);
+
     node_->reset();
     return http::HTTPResponse(successString);
   }
 
   http::HTTPResponse Mainchain(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    FETCH_UNUSED(params);
+    FETCH_UNUSED(req);
+
     auto chainArray = node_->HeaviestChain();
 
-    script::Variant result = script::Variant::Array(chainArray.size());
+    variant::Variant result = variant::Variant::Array(chainArray.size());
 
     std::size_t index = 0;
     for (auto &i : chainArray)
     {
 
-      script::Variant temp = script::Variant::Object();
-      temp["minerNumber"]  = i.body().miner_number;
-      temp["blockNumber"]  = i.body().block_number;
-      temp["hashcurrent"]  = ToHex(i.hash());
-      temp["hashprev"]     = ToHex(i.body().previous_hash);
+      variant::Variant temp = variant::Variant::Object();
+      temp["blockNumber"]   = i.body.block_number;
+      temp["hashcurrent"]   = ToHex(i.body.hash);
+      temp["hashprev"]      = ToHex(i.body.previous_hash);
 
       result[index++] = temp;
     }
@@ -149,10 +166,10 @@ public:
   //  auto heaviestBlock = chainArray.first;
   //  auto chainArrays   = chainArray.second;
 
-  //  script::Variant result = script::Variant::Object();
+  //  variant::Variant result = variant::Variant::Object();
 
   //  {
-  //    script::Variant temp = script::Variant::Object();
+  //    variant::Variant temp = variant::Variant::Object();
   //    temp["minerNumber"]  = heaviestBlock.body().miner_number;
   //    temp["blockNumber"]  = heaviestBlock.body().block_number;
   //    temp["hashcurrent"]  = ToHex(heaviestBlock.hash());
@@ -162,17 +179,17 @@ public:
   //  }
 
   //  // We now have an array of arrays
-  //  script::Variant arrays = script::Variant::Array(chainArray.second.size());
+  //  variant::Variant arrays = variant::Variant::Array(chainArray.second.size());
 
   //  std::size_t i = 0;
   //  std::size_t j = 0;
   //  for (auto &chain : chainArray.second)
   //  {
-  //    script::Variant chainVar = script::Variant::Array(chain.size());
+  //    variant::Variant chainVar = variant::Variant::Array(chain.size());
 
   //    for (auto &block : chain)
   //    {
-  //      script::Variant temp = script::Variant::Object();
+  //      variant::Variant temp = variant::Variant::Object();
   //      temp["minerNumber"]  = block.body().miner_number;
   //      temp["blockNumber"]  = block.body().block_number;
   //      temp["hashcurrent"]  = ToHex(block.hash());
@@ -193,7 +210,10 @@ public:
   //  return http::HTTPResponse(ret.str());
   //}
 
-  const std::shared_ptr<T> &node() const { return node_; };
+  const std::shared_ptr<T> &node() const
+  {
+    return node_;
+  };
 
 private:
   std::shared_ptr<T> node_;

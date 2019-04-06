@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,42 +17,54 @@
 //
 //------------------------------------------------------------------------------
 
-#include <string>
+#include <core/byte_array/byte_array.hpp>
 #include <vector>
 
 namespace fetch {
 namespace ledger {
 
 /**
- * A string identifier which is seperated with '.' used as to hierarchically
- * group related objects.
+ * A string identifier which is related to the piece of chain code or a smart contract. In general,
+ * this is represented by a series of tokens separated with the '.' character
  *
  * For example:
  *
- *   `foo.bar` & `foo.baz` are in the same logic `foo` group
+ *   `foo.bar` & `foo.baz` are in the same logical `foo` group
  */
 class Identifier
 {
 public:
-  using tokens_type = std::vector<std::string>;
+  enum class Type
+  {
+    INVALID,
+    NORMAL,
+    SMART_CONTRACT
+  };
 
-  static constexpr char SEPERATOR = '.';
+  using ConstByteArray = byte_array::ConstByteArray;
+  using Tokens         = std::vector<ConstByteArray>;
 
   // Construction / Destruction
   Identifier() = default;
-  explicit Identifier(std::string identifier);
+  explicit Identifier(ConstByteArray identifier);
   Identifier(Identifier const &) = default;
   Identifier(Identifier &&)      = default;
   ~Identifier()                  = default;
 
   // Accessors
-  std::string        name() const;
-  std::string        name_space() const;
-  std::string const &full_name() const;
+  Type                  type() const;
+  ConstByteArray        name() const;
+  ConstByteArray        name_space() const;
+  ConstByteArray const &full_name() const;
+  ConstByteArray        qualifier() const;
+  std::size_t           size() const;
+  bool                  empty() const;
+
+  Identifier GetParent() const;
 
   // Parsing
-  void Parse(std::string const &name);
-  void Parse(std::string &&name);
+  bool Parse(ConstByteArray const &name);
+  bool Parse(ConstByteArray &&name);
 
   // Comparison
   bool IsParentTo(Identifier const &other) const;
@@ -60,21 +72,35 @@ public:
   bool IsDirectParentTo(Identifier const &other) const;
   bool IsDirectChildTo(Identifier const &other) const;
 
-  void Append(std::string const &element);
-
   // Operators
-  Identifier &       operator=(Identifier const &) = default;
-  Identifier &       operator=(Identifier &&) = default;
-  std::string const &operator[](std::size_t index) const;
-  bool               operator==(Identifier const &other) const;
-  bool               operator!=(Identifier const &other) const;
+  Identifier &          operator=(Identifier const &) = default;
+  Identifier &          operator=(Identifier &&) = default;
+  ConstByteArray const &operator[](std::size_t index) const;
+  bool                  operator==(Identifier const &other) const;
+  bool                  operator!=(Identifier const &other) const;
 
 private:
-  std::string full_{};    ///< The fully qualified name
-  tokens_type tokens_{};  ///< The individual elements of the name
+  Identifier(Tokens const &tokens, std::size_t count);
 
-  void Tokenise();
+  static const char SEPARATOR;
+
+  bool Tokenise();
+  void UpdateType();
+
+  Type           type_{Type::INVALID};
+  ConstByteArray full_{};    ///< The fully qualified name
+  Tokens         tokens_{};  ///< The individual elements of the name
 };
+
+/**
+ * Gets the current type of the identifier
+ *
+ * @return The current type
+ */
+inline Identifier::Type Identifier::type() const
+{
+  return type_;
+}
 
 /**
  * Gets the top level name i.e. in the case of `foo.bar` `bar` would be
@@ -82,7 +108,7 @@ private:
  *
  * @return the top level name or an empty string if the identifier is empty
  */
-inline std::string Identifier::name() const
+inline Identifier::ConstByteArray Identifier::name() const
 {
   if (tokens_.empty())
   {
@@ -100,11 +126,11 @@ inline std::string Identifier::name() const
  *
  * @return The namespace for the identifier
  */
-inline std::string Identifier::name_space() const
+inline Identifier::ConstByteArray Identifier::name_space() const
 {
   if (tokens_.size() >= 2)
   {
-    return full_.substr(0, full_.size() - (tokens_.back().size() + 1));
+    return full_.SubArray(0, full_.size() - (tokens_.back().size() + 1));
   }
   else
   {
@@ -117,17 +143,54 @@ inline std::string Identifier::name_space() const
  *
  * @return The fully qualified name
  */
-inline std::string const &Identifier::full_name() const { return full_; }
+inline Identifier::ConstByteArray const &Identifier::full_name() const
+{
+  return full_;
+}
+
+/**
+ * Get the unique qualifier for this identifier
+ *
+ * @return
+ */
+inline Identifier::ConstByteArray Identifier::qualifier() const
+{
+  ConstByteArray identifier{};
+
+  switch (type_)
+  {
+  case Type::INVALID:
+    break;
+  case Type::NORMAL:
+    identifier = full_name();
+    break;
+  case Type::SMART_CONTRACT:
+    identifier = tokens_[0];
+    break;
+  }
+
+  return identifier;
+}
+
+inline std::size_t Identifier::size() const
+{
+  return tokens_.size();
+}
+
+inline bool Identifier::empty() const
+{
+  return tokens_.empty();
+}
 
 /**
  * Parses an fully qualified name
  *
  * @param name The fully qualified name
  */
-inline void Identifier::Parse(std::string const &name)
+inline bool Identifier::Parse(ConstByteArray const &name)
 {
   full_ = name;
-  Tokenise();
+  return Tokenise();
 }
 
 /**
@@ -135,10 +198,10 @@ inline void Identifier::Parse(std::string const &name)
  *
  * @param name The fully qualified name
  */
-inline void Identifier::Parse(std::string &&name)
+inline bool Identifier::Parse(ConstByteArray &&name)
 {
   full_ = std::move(name);
-  Tokenise();
+  return Tokenise();
 }
 
 /**
@@ -147,12 +210,12 @@ inline void Identifier::Parse(std::string &&name)
  * @param index The index to be accessed
  * @return The element of the name
  */
-inline std::string const &Identifier::operator[](std::size_t index) const
+inline Identifier::ConstByteArray const &Identifier::operator[](std::size_t index) const
 {
 #ifndef NDEBUG
-  return tokens_[index];
-#else   // !NDEBUG
   return tokens_.at(index);
+#else   // !NDEBUG
+  return tokens_[index];
 #endif  // NDEBUG
 }
 
@@ -162,7 +225,10 @@ inline std::string const &Identifier::operator[](std::size_t index) const
  * @param other The reference to the other identifier
  * @return true if both identifiers are the same, otherwise false
  */
-inline bool Identifier::operator==(Identifier const &other) const { return (full_ == other.full_); }
+inline bool Identifier::operator==(Identifier const &other) const
+{
+  return (full_ == other.full_);
+}
 
 /**
  * Inequality operator
@@ -170,18 +236,9 @@ inline bool Identifier::operator==(Identifier const &other) const { return (full
  * @param other The reference to the other identifier
  * @return true if identifiers are not the same, otherwise false
  */
-inline bool Identifier::operator!=(Identifier const &other) const { return (full_ != other.full_); }
-
-/**
- * Append an element to a name
- *
- * @param element The element to be added to the name
- */
-inline void Identifier::Append(std::string const &element)
+inline bool Identifier::operator!=(Identifier const &other) const
 {
-  full_.push_back(SEPERATOR);
-  full_.append(element);
-  tokens_.push_back(element);
+  return (full_ != other.full_);
 }
 
 }  // namespace ledger

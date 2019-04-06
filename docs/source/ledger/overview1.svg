@@ -1,0 +1,1616 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="204.52916mm"
+   height="135.7375mm"
+   viewBox="0 0 204.52916 135.7375"
+   version="1.1"
+   id="svg8"
+   inkscape:version="0.92.2 5c3e80d, 2017-08-06"
+   sodipodi:docname="overview1.svg">
+  <defs
+     id="defs2">
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible"
+       id="marker12678"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="EmptyDiamondL">
+      <path
+         transform="scale(0.8)"
+         style="fill-rule:evenodd;fill:#ffffff;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         d="M 0,-7.0710768 L -7.0710894,0 L 0,7.0710589 L 7.0710462,0 L 0,-7.0710768 z "
+         id="path12676" />
+    </marker>
+    <marker
+       inkscape:stockid="EmptyDiamondL"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="marker12287"
+       style="overflow:visible"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         id="path12285"
+         d="M 0,-7.0710768 L -7.0710894,0 L 0,7.0710589 L 7.0710462,0 L 0,-7.0710768 z "
+         style="fill-rule:evenodd;fill:#ffffff;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         transform="scale(0.8)" />
+    </marker>
+    <marker
+       inkscape:stockid="EmptyDiamondL"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="marker11763"
+       style="overflow:visible"
+       inkscape:isstock="true">
+      <path
+         id="path11761"
+         d="M 0,-7.0710768 L -7.0710894,0 L 0,7.0710589 L 7.0710462,0 L 0,-7.0710768 z "
+         style="fill-rule:evenodd;fill:#ffffff;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         transform="scale(0.8)" />
+    </marker>
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible"
+       id="marker10793"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="EmptyDiamondL"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8)"
+         style="fill-rule:evenodd;fill:#ffffff;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         d="M 0,-7.0710768 L -7.0710894,0 L 0,7.0710589 L 7.0710462,0 L 0,-7.0710768 z "
+         id="path10791" />
+    </marker>
+    <marker
+       inkscape:stockid="EmptyDiamondL"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="marker10405"
+       style="overflow:visible"
+       inkscape:isstock="true">
+      <path
+         id="path10403"
+         d="M 0,-7.0710768 L -7.0710894,0 L 0,7.0710589 L 7.0710462,0 L 0,-7.0710768 z "
+         style="fill-rule:evenodd;fill:#ffffff;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         transform="scale(0.8)" />
+    </marker>
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible;"
+       id="marker8985"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend">
+      <path
+         transform="scale(1.1) rotate(180) translate(1,0)"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         style="fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round;stroke:#000000;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         id="path8983" />
+    </marker>
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible"
+       id="marker8879"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lstart">
+      <path
+         transform="scale(1.1) translate(1,0)"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         style="fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round;stroke:#000000;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         id="path8877" />
+    </marker>
+    <marker
+       inkscape:stockid="EmptyDiamondL"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="marker7805"
+       style="overflow:visible"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         id="path7803"
+         d="M 0,-7.0710768 L -7.0710894,0 L 0,7.0710589 L 7.0710462,0 L 0,-7.0710768 z "
+         style="fill-rule:evenodd;fill:#ffffff;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         transform="scale(0.8)" />
+    </marker>
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible"
+       id="marker7069"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="EmptyDiamondL"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8)"
+         style="fill-rule:evenodd;fill:#ffffff;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         d="M 0,-7.0710768 L -7.0710894,0 L 0,7.0710589 L 7.0710462,0 L 0,-7.0710768 z "
+         id="path7067" />
+    </marker>
+    <marker
+       inkscape:stockid="EmptyDiamondL"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="marker6885"
+       style="overflow:visible"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         id="path6883"
+         d="M 0,-7.0710768 L -7.0710894,0 L 0,7.0710589 L 7.0710462,0 L 0,-7.0710768 z "
+         style="fill-rule:evenodd;fill:#ffffff;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         transform="scale(0.8)" />
+    </marker>
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible"
+       id="marker6701"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="EmptyDiamondL"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8)"
+         style="fill-rule:evenodd;fill:#ffffff;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         d="M 0,-7.0710768 L -7.0710894,0 L 0,7.0710589 L 7.0710462,0 L 0,-7.0710768 z "
+         id="path6699" />
+    </marker>
+    <marker
+       inkscape:stockid="EmptyDiamondL"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="marker5601"
+       style="overflow:visible"
+       inkscape:isstock="true">
+      <path
+         id="path5599"
+         d="M 0,-7.0710768 L -7.0710894,0 L 0,7.0710589 L 7.0710462,0 L 0,-7.0710768 z "
+         style="fill-rule:evenodd;fill:#ffffff;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         transform="scale(0.8)" />
+    </marker>
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible"
+       id="marker5307"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="EmptyDiamondL">
+      <path
+         transform="scale(0.8)"
+         style="fill-rule:evenodd;fill:#ffffff;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         d="M 0,-7.0710768 L -7.0710894,0 L 0,7.0710589 L 7.0710462,0 L 0,-7.0710768 z "
+         id="path5305" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow2Lstart"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow2Lstart"
+       style="overflow:visible"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         id="path855"
+         style="fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round;stroke:#000000;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="scale(1.1) translate(1,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Send"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow1Send"
+       style="overflow:visible;"
+       inkscape:isstock="true">
+      <path
+         id="path852"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         transform="scale(0.2) rotate(180) translate(6,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lstart"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow1Lstart"
+       style="overflow:visible"
+       inkscape:isstock="true">
+      <path
+         id="path837"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         transform="scale(0.8) translate(12.5,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow2Lend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="marker2073"
+       style="overflow:visible;"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         id="path2071"
+         style="fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round;stroke:#000000;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="scale(1.1) rotate(180) translate(1,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow2Lend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow2Lend"
+       style="overflow:visible;"
+       inkscape:isstock="true">
+      <path
+         id="path858"
+         style="fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round;stroke:#000000;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="scale(1.1) rotate(180) translate(1,0)" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="7.2407734"
+     inkscape:cx="444.41914"
+     inkscape:cy="227.72819"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     inkscape:window-width="1440"
+     inkscape:window-height="784"
+     inkscape:window-x="0"
+     inkscape:window-y="1"
+     inkscape:window-maximized="1"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:snap-grids="false"
+     inkscape:snap-to-guides="false"
+     inkscape:snap-object-midpoints="false"
+     inkscape:snap-midpoints="false"
+     inkscape:snap-intersection-paths="true"
+     inkscape:snap-nodes="true"
+     inkscape:snap-bbox="true"
+     inkscape:bbox-nodes="true"
+     inkscape:snap-global="true"
+     inkscape:snap-others="true"
+     inkscape:object-nodes="true"
+     showguides="false"
+     inkscape:snap-bbox-edge-midpoints="true"
+     inkscape:snap-center="true"
+     inkscape:snap-text-baseline="true"
+     inkscape:bbox-paths="true"
+     inkscape:snap-smooth-nodes="true">
+    <inkscape:grid
+       type="xygrid"
+       id="grid4621"
+       originx="-7.5374999"
+       originy="-142.475" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     style="display:inline"
+     transform="translate(-24.841783,93.059073)">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:6.46529722px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       x="27.591234"
+       y="32.418861"
+       id="explainbox"
+       inkscape:label="#text4809"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         sodipodi:role="line"
+         x="27.591234"
+         y="32.418861"
+         id="tspan_top"
+         style="stroke-width:0.16163243">Info on mouse over</tspan><tspan
+         sodipodi:role="line"
+         x="27.591234"
+         y="40.500484"
+         style="stroke-width:0.16163243"
+         id="tspan_bottom"></tspan></text>
+    <rect
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect4631"
+       width="203.72916"
+       height="134.9375"
+       x="25.241783"
+       y="-92.659073" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.80000001;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 25.241783,26.403427 H 228.97095"
+       id="path4633"
+       inkscape:connector-curvature="0" />
+    <rect
+       ry="0"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.28243169;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       y="-68.846573"
+       x="154.88762"
+       height="17.019327"
+       width="27.593588"
+       id="rect3783" />
+    <g
+       id="g2733"
+       transform="translate(121.56451,-2.6831996)">
+      <rect
+         y="-82.075737"
+         x="35.825108"
+         height="5.2916751"
+         width="15.875006"
+         id="rect4657"
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+         x="36.935043"
+         y="-77.876801"
+         id="text4698"
+         onmouseover="var a = 'Used to configure a node on startup';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+         onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+         onclick=""
+         transform="scale(0.99561938,1.0043999)"><tspan
+           sodipodi:role="line"
+           id="tspan4696"
+           x="36.935043"
+           y="-77.876801"
+           style="font-size:3.23264861px;stroke-width:0.16163243">Manifest</tspan></text>
+    </g>
+    <rect
+       id="rect19"
+       width="27.673994"
+       height="5.2899389"
+       x="154.84741"
+       y="-74.170662"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.20859894;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       ry="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       x="156.57187"
+       y="-64.676582"
+       id="text4598"
+       onmouseover="var a = 'The P2P networking service';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='../network/index.html';"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         sodipodi:role="line"
+         id="tspan4596"
+         x="156.57187"
+         y="-64.676582"
+         style="font-size:3.23264861px;stroke-width:0.16163243">Muddle</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker2073);paint-order:normal"
+       d="m 165.32712,-79.467269 v 4.670474"
+       id="path27"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cc" />
+    <text
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='../';"
+       onmouseover="var a = 'The main controlling node';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       id="text1137"
+       y="-69.945076"
+       x="156.57187"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         style="font-size:3.23264861px;stroke-width:0.16163243"
+         y="-69.945076"
+         x="156.57187"
+         id="tspan1135"
+         sodipodi:role="line">Constellation</tspan></text>
+    <text
+       transform="scale(0.99561938,1.0043999)"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='../network/index.html';"
+       onmouseover="var a = 'The public/private key pair used for network interactions';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       id="text1147"
+       y="-60.725227"
+       x="156.57187"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"><tspan
+         style="font-size:3.23264861px;stroke-width:0.16163243"
+         y="-60.725227"
+         x="156.57187"
+         id="tspan1145"
+         sodipodi:role="line">Identity</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker6885)"
+       d="m 183.84795,-72.150962 6.56085,0.0608"
+       id="path2747"
+       inkscape:connector-curvature="0" />
+    <rect
+       id="rect3005"
+       width="20.904446"
+       height="9.5489016"
+       x="190.5602"
+       y="-71.435905"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.13736522;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       ry="0" />
+    <rect
+       ry="0"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.17654426;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       y="-76.744514"
+       x="190.55286"
+       height="5.2995577"
+       width="20.919123"
+       id="rect3007" />
+    <text
+       transform="scale(0.99561938,1.0043999)"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       x="192.52313"
+       y="-72.876633"
+       id="text3015"
+       onmouseover="var a = 'The http pages exposed to clients';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       onclick="window.location='../';"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
+         sodipodi:role="line"
+         id="tspan3013"
+         x="192.52313"
+         y="-72.876633"
+         style="font-size:3.23264861px;stroke-width:0.16163243">HTTP pages</tspan></text>
+    <g
+       id="g3969"
+       transform="matrix(1.2362534,0,0,1.1533248,104.55549,7.2507667)">
+      <rect
+         y="-67.523651"
+         x="70.220947"
+         height="5.8465209"
+         width="14.470139"
+         id="rect3866"
+         style="opacity:1;fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal" />
+      <rect
+         style="opacity:1;fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         id="rect3888"
+         width="14.470139"
+         height="5.8465209"
+         x="70.220947"
+         y="-67.523651" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path3949"
+         d="m 85.261921,-61.152128 -0.570836,-0.525005"
+         style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="m 84.691086,-67.523651 0.570836,0.525005 -10e-7,5.846518"
+         id="path3951"
+         inkscape:connector-curvature="0" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="m 70.220947,-61.677132 0.570836,0.525005 14.470138,-10e-7"
+         id="path3953"
+         inkscape:connector-curvature="0" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path3955"
+         d="m 85.261922,-66.998646 0.570836,0.525005 -10e-7,5.846518"
+         style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path3957"
+         d="m 70.791783,-61.152127 0.570836,0.525005 14.470138,-10e-7"
+         style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="m 85.832757,-60.627123 -0.570836,-0.525005"
+         id="path3959"
+         inkscape:connector-curvature="0" />
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:1.33231699px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.03330793"
+       x="180.90475"
+       y="-73.472855"
+       id="text3985"
+       transform="scale(1.0608564,0.94263464)"
+       onmouseover="var a = 'HTTP interface allows account creation (debug)';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       onmouseout="var a = '';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "><tspan
+         sodipodi:role="line"
+         id="tspan3983"
+         x="180.90475"
+         y="-73.472855"
+         style="stroke-width:0.03330793">/api/wallet/register</tspan><tspan
+         sodipodi:role="line"
+         x="180.90475"
+         y="-71.807457"
+         style="stroke-width:0.03330793"
+         id="tspan3987">/api/wallet/balance</tspan><tspan
+         sodipodi:role="line"
+         x="180.90475"
+         y="-70.142059"
+         style="stroke-width:0.03330793"
+         id="tspan3989">/api/wallet/transfer</tspan><tspan
+         sodipodi:role="line"
+         x="180.90475"
+         y="-68.476669"
+         style="stroke-width:0.03330793"
+         id="tspan3991">...</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.19412841;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Arrow2Lstart)"
+       d="m 210.57517,-66.232928 h 5.0201 v -19.838548"
+       id="path3993"
+       inkscape:connector-curvature="0" />
+    <text
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='../';"
+       onmouseover="var a = 'Scripts call http endpoints to create accounts and transactions';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       id="text3997"
+       y="-87.200066"
+       x="204.27068"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         style="font-size:3.23264861px;stroke-width:0.16163243"
+         y="-87.200066"
+         x="204.27068"
+         id="tspan3995"
+         sodipodi:role="line">External scripts</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.30311826px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 199.72295,-62.533937 v 5.556251"
+       id="path4079"
+       inkscape:connector-curvature="0" />
+    <text
+       transform="scale(0.99561938,1.0043999)"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       x="201.93047"
+       y="-58.045212"
+       id="text4135"
+       onmouseover="var a = 'Contracts are created in wallet_http_interface (debug)';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       onclick="window.location='transaction.html';"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
+         sodipodi:role="line"
+         id="tspan4133"
+         x="201.93047"
+         y="-58.045212"
+         style="font-size:1.41111112px;stroke-width:0.16163243">Transaction created</tspan></text>
+    <text
+       transform="scale(0.99561938,1.0043999)"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='../network/index.html';"
+       onmouseover="var a = 'Manages connections to lanes, which might be on another server';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       id="text4159"
+       y="-56.760002"
+       x="156.6351"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"><tspan
+         style="font-size:3.23264861px;stroke-width:0.16163243"
+         y="-56.760002"
+         x="156.6351"
+         id="tspan4157"
+         sodipodi:role="line">Lane remote ctrl</tspan></text>
+    <rect
+       ry="0"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.10421577;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       y="-51.544647"
+       x="190.33493"
+       height="5.098186"
+       width="22.536667"
+       id="rect4169" />
+    <rect
+       id="rect4171"
+       width="22.514202"
+       height="5.2973471"
+       x="190.34616"
+       y="-56.831913"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.18311316;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       ry="0" />
+    <text
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='../';"
+       onmouseover="var a = 'Verifies transactions' signatures and dispatches them';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       id="text4175"
+       y="-53.054356"
+       x="192.31203"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         style="font-size:3.23264861px;stroke-width:0.16163243"
+         y="-53.054356"
+         x="192.31203"
+         id="tspan4173"
+         sodipodi:role="line">TX processor</tspan></text>
+    <text
+       transform="scale(0.99561938,1.0043999)"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='../network/index.html';"
+       onmouseover="var a = 'Verifies that transactions are valid';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       id="text4179"
+       y="-47.554016"
+       x="191.40862"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"><tspan
+         style="font-size:3.23264861px;stroke-width:0.16163243"
+         y="-47.554016"
+         x="191.40862"
+         id="tspan4177"
+         sodipodi:role="line">Verifier</tspan></text>
+    <path
+       inkscape:connector-curvature="0"
+       id="path4187"
+       d="m 183.84795,-54.953045 6.56085,0.0608"
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker7069)" />
+    <rect
+       id="rect4373"
+       width="35.289749"
+       height="17.218004"
+       x="131.21623"
+       y="-30.34413"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.23966052;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       ry="0" />
+    <rect
+       ry="0"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.22915269;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       y="-35.64193"
+       x="131.19005"
+       height="5.2848649"
+       width="35.342068"
+       id="rect4375" />
+    <text
+       transform="scale(0.99561938,1.0043999)"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       x="133.99203"
+       y="-31.711353"
+       id="text4379"
+       onmouseover="var a = 'Given a stream of transactions, packs them efficiently and'; var b = 'executes POW to create a valid block';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = b; "
+       onclick="window.location='../';"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
+         sodipodi:role="line"
+         id="tspan4377"
+         x="133.99203"
+         y="-31.711353"
+         style="font-size:3.23264861px;stroke-width:0.16163243">Main chain miner</tspan></text>
+    <rect
+       ry="0"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.13509844;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       y="-31.601515"
+       x="190.46416"
+       height="5.0760689"
+       width="38.037472"
+       id="rect4385" />
+    <rect
+       id="rect4387"
+       width="37.999554"
+       height="5.2743659"
+       x="190.48311"
+       y="-36.865845"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.2373758;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       ry="0" />
+    <text
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='../';"
+       onmouseover="var a = 'Provides an abstract interface to the storage';var b = 'which is sharded across lanes'; document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = b; "
+       id="text4391"
+       y="-33.19809"
+       x="192.41621"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         style="font-size:3.23264861px;stroke-width:0.16163243"
+         y="-33.19809"
+         x="192.41621"
+         id="tspan4389"
+         sodipodi:role="line">Storage unit interface</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 205.01461,-46.394353 v 3.96875 h 5.29167 v 5.953125"
+       id="path4397"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 158.84483,-35.81102 v -6.614583"
+       id="path4401"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.20787373;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker6701)"
+       d="m 173.30137,-50.430538 v 19.791624 l 17.13653,0.06064"
+       id="path4409"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 158.71253,-42.425604 H 171.9417"
+       id="path5291"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 171.9417,-42.425604 v -1.322917 l 2.64583,10e-7"
+       id="path5293"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 174.58753,-43.748521 v 1.322917 l 30.42708,10e-7"
+       id="path5295"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.19135076;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker7805)"
+       d="m 156.06671,-50.286451 v 14.519436"
+       id="path5597"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       x="134.12778"
+       y="-25.364267"
+       id="text6163"
+       onmouseover="var a = 'Given a block, executes POW on it';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       onclick="window.location='../network/index.html';"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         sodipodi:role="line"
+         id="tspan6161"
+         x="134.12778"
+         y="-25.364267"
+         style="font-size:3.23264861px;stroke-width:0.16163243">POW miner</tspan></text>
+    <rect
+       y="-16.905128"
+       x="67.637856"
+       height="14.282273"
+       width="40.359489"
+       id="rect6261"
+       style="opacity:1;fill:none;stroke:#000000;stroke-width:0.22970958;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal" />
+    <rect
+       style="opacity:1;fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+       id="rect6263"
+       width="40.359489"
+       height="14.282273"
+       x="67.637856"
+       y="-16.905128" />
+    <path
+       inkscape:connector-curvature="0"
+       id="path6265"
+       d="m 109.58949,-1.3403452 -1.59215,-1.2825173"
+       style="fill:none;stroke:#000000;stroke-width:0.22970958;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 107.99734,-16.905127 1.59215,1.282517 v 14.2822648"
+       id="path6267"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 67.637848,-2.6228601 1.59215,1.2825173 40.359492,-2.4e-6"
+       id="path6269"
+       inkscape:connector-curvature="0" />
+    <path
+       inkscape:connector-curvature="0"
+       id="path6271"
+       d="m 109.58949,-15.62261 1.59215,1.282517 v 14.28226442"
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       inkscape:connector-curvature="0"
+       id="path6273"
+       d="m 69.229998,-1.3403428 1.59215,1.28251722 40.359492,-3e-6"
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.22970958;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 111.18164,-0.05782858 109.58949,-1.3403452"
+       id="path6275"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 67.660648,-11.972571 H 107.86969"
+       id="path6287"
+       inkscape:connector-curvature="0" />
+    <text
+       transform="scale(0.99561938,1.0043999)"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       x="69.266586"
+       y="-13.111662"
+       id="text6291"
+       onmouseover="var a = 'Lanes each have their own sharded set of storage elements, at least';var b = 'a state store and a transactions store';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = b; "
+       onclick="window.location='../';"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
+         sodipodi:role="line"
+         id="tspan6289"
+         x="69.266586"
+         y="-13.111662"
+         style="font-size:3.23264861px;stroke-width:0.16163243">Storage unit interfaces</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.29757044;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:2.3805634, 0.29757043;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 203.6917,-26.550605 V -8.1437409"
+       id="path6313"
+       inkscape:connector-curvature="0" />
+    <text
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='transaction.html';"
+       onmouseover="var a = '';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       id="text6317"
+       y="-18.551548"
+       x="205.77818"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         style="font-size:1.41111112px;stroke-width:0.16163243"
+         y="-18.551548"
+         x="205.77818"
+         id="tspan6315"
+         sodipodi:role="line">Network connection</tspan></text>
+    <rect
+       id="rect6319"
+       width="31.666527"
+       height="5.0842905"
+       x="28.28158"
+       y="-7.5098109"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.12336619;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       ry="0" />
+    <rect
+       ry="0"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.21676156;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       y="-12.782665"
+       x="28.297342"
+       height="5.2829084"
+       width="31.63496"
+       id="rect6321" />
+    <text
+       transform="scale(0.99561938,1.0043999)"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       x="29.528992"
+       y="-9.2121153"
+       id="text6325"
+       onmouseover="var a = 'Persistent store of transactions, usually sharded';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       onclick="window.location='../';"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
+         sodipodi:role="line"
+         id="tspan6323"
+         x="29.528992"
+         y="-9.2121153"
+         style="font-size:3.23264861px;stroke-width:0.16163243">Transaction store</tspan></text>
+    <text
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='../';"
+       onmouseover="var a = 'Generic map that writes to disk for persistent storage and caching efficiency';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       id="text6329"
+       y="-3.8112166"
+       x="29.751541"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"
+       transform="scale(0.99561938,1.0043999)"
+       inkscape:transform-center-y="-4.9695428"><tspan
+         style="font-size:3.23264861px;stroke-width:0.16163243"
+         y="-3.8112166"
+         x="29.751541"
+         id="tspan6327"
+         sodipodi:role="line">Object store</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.20029068;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker12287)"
+       d="m 59.693058,-8.9406807 6.60221,0.060595"
+       id="path6337"
+       inkscape:connector-curvature="0" />
+    <rect
+       style="opacity:1;fill:none;stroke:#000000;stroke-width:0.22970958;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+       id="rect6595"
+       width="40.359489"
+       height="14.282273"
+       x="68.748619"
+       y="2.9649711" />
+    <rect
+       y="2.9649711"
+       x="68.748619"
+       height="14.282273"
+       width="40.359489"
+       id="rect6597"
+       style="opacity:1;fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.22970958;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 110.70026,18.529755 -1.59215,-1.282517"
+       id="path6599"
+       inkscape:connector-curvature="0" />
+    <path
+       inkscape:connector-curvature="0"
+       id="path6601"
+       d="m 109.10811,2.9649721 1.59215,1.2825168 V 18.529755"
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       inkscape:connector-curvature="0"
+       id="path6603"
+       d="m 68.748618,17.24724 1.59215,1.282518 40.359492,-3e-6"
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 110.70026,4.2474889 1.59215,1.2825167 V 19.812272"
+       id="path6605"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 70.340768,18.529758 1.59215,1.282517 40.359492,-3e-6"
+       id="path6607"
+       inkscape:connector-curvature="0" />
+    <path
+       inkscape:connector-curvature="0"
+       id="path6609"
+       d="m 112.29241,19.812272 -1.59215,-1.282517"
+       style="fill:none;stroke:#000000;stroke-width:0.22970958;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       inkscape:connector-curvature="0"
+       id="path6611"
+       d="M 68.771418,7.8975296 H 108.98046"
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <text
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='../';"
+       onmouseover="var a = 'Transaction sync protocol aims to rapidly sync transactions across';var b = 'the network to reduce latencies in block verification';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = b; "
+       id="text6615"
+       y="6.6713934"
+       x="70.382248"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         style="font-size:3.23264861px;stroke-width:0.16163243"
+         y="6.6713934"
+         x="70.382248"
+         id="tspan6613"
+         sodipodi:role="line">Transaction sync proto</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 88.806918,3.4073704 V -0.56137948"
+       id="path6617"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.30167139;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:2.41337114, 0.30167139;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 129.7522,12.002182 H 112.55428"
+       id="path6637"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.35561138;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:2.84489105, 0.35561138;stroke-dashoffset:0;stroke-opacity:1"
+       d="m 65.299391,-28.935376 h 14.81666"
+       id="path6639"
+       inkscape:connector-curvature="0" />
+    <text
+       transform="scale(0.99561938,1.0043999)"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       x="116.89722"
+       y="10.612503"
+       id="text6643"
+       onmouseover="var a = 'Valid transactions are synchronised over the P2P network';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       onclick="window.location='transaction.html';"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
+         sodipodi:role="line"
+         id="tspan6641"
+         x="116.89722"
+         y="10.612503"
+         style="font-size:1.41111112px;stroke-width:0.16163243">P2P network</tspan></text>
+    <text
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='transaction.html';"
+       onmouseover="var a = 'Blocks are gossiped to and from the P2P network';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       id="text6647"
+       y="-30.145723"
+       x="68.371414"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         style="font-size:1.41111112px;stroke-width:0.16163243"
+         y="-30.145723"
+         x="68.371414"
+         id="tspan6645"
+         sodipodi:role="line">P2P network</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       x="70.595337"
+       y="11.295175"
+       id="text6651"
+       onmouseover="var a = 'The public/private key pair used for network interactions';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       onclick="window.location='../network/index.html';"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         sodipodi:role="line"
+         id="tspan6649"
+         x="70.595337"
+         y="11.295175"
+         style="font-size:3.23264861px;stroke-width:0.16163243">Identity</tspan></text>
+    <text
+       transform="scale(0.99561938,1.0043999)"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='../network/index.html';"
+       onmouseover="var a = 'The trust model that is ranks peers by behaviour';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       id="text6655"
+       y="15.246539"
+       x="70.595337"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"><tspan
+         style="font-size:3.23264861px;stroke-width:0.16163243"
+         y="15.246539"
+         x="70.595337"
+         id="tspan6653"
+         sodipodi:role="line">Trust</tspan></text>
+    <rect
+       ry="0"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.21885373;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       y="-61.028553"
+       x="78.924416"
+       height="5.0841861"
+       width="30.218052"
+       id="rect8677" />
+    <rect
+       id="rect8679"
+       width="30.187927"
+       height="5.2828007"
+       x="78.939484"
+       y="-66.3013"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.21885373;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       ry="0" />
+    <text
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='../';"
+       onmouseover="var a = 'Coordinates with the execution manager and main chain to execute';var b =  'new blocks as they arrive, and if necessary switch forks';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = b; "
+       id="text8691"
+       y="-62.49646"
+       x="80.183098"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         style="font-size:3.23264861px;stroke-width:0.16163243"
+         y="-62.49646"
+         x="80.183098"
+         id="tspan8689"
+         sodipodi:role="line">Block coordinator</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#marker8985)"
+       d="M 119.96751,-40.101744 H 96.155012 l 10e-7,-15.874998"
+       id="path8693"
+       inkscape:connector-curvature="0" />
+    <rect
+       id="rect9089"
+       width="34.233288"
+       height="10.68767"
+       x="72.054245"
+       y="-84.994774"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.33773479;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       ry="0" />
+    <rect
+       ry="0"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.23313519;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       y="-90.312546"
+       x="72.019066"
+       height="5.275516"
+       width="34.303654"
+       id="rect9091" />
+    <text
+       transform="scale(0.99561938,1.0043999)"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       x="73.637688"
+       y="-86.339973"
+       id="text9095"
+       onmouseover="var a = 'Orchestrates the execution of a block by delegating to executors';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       onclick="window.location='../';"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
+         sodipodi:role="line"
+         id="tspan9093"
+         x="73.637688"
+         y="-86.339973"
+         style="font-size:3.23264861px;stroke-width:0.16163243">Execution manager</tspan></text>
+    <rect
+       ry="0"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.17751008;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       y="-80.288887"
+       x="129.67761"
+       height="5.1044817"
+       width="19.800421"
+       id="rect9099" />
+    <rect
+       id="rect9101"
+       width="19.780682"
+       height="5.3038888"
+       x="129.68748"
+       y="-85.582672"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.17751008;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       ry="0" />
+    <text
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='../';"
+       onmouseover="var a = 'The main chain stores and manages blocks, keeping track of the';var b = 'heaviest block/valid chain';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = b; "
+       id="text9105"
+       y="-81.672806"
+       x="131.18037"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         style="font-size:3.23264861px;stroke-width:0.16163243"
+         y="-81.672806"
+         x="131.18037"
+         id="tspan9103"
+         sodipodi:role="line">Main chain</tspan></text>
+    <rect
+       ry="0"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.19874421;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       y="-30.782259"
+       x="79.706032"
+       height="5.0940576"
+       width="24.871681"
+       id="rect11379" />
+    <rect
+       id="rect11381"
+       width="24.846886"
+       height="5.2930579"
+       x="79.71843"
+       y="-36.065239"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.19874421;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       ry="0" />
+    <text
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='../';"
+       onmouseover="var a = 'Block synchronisation protocol aims to get valid blocks quickly';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       id="text11385"
+       y="-32.313187"
+       x="81.392944"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         style="font-size:3.23264861px;stroke-width:0.16163243"
+         y="-32.313187"
+         x="81.392944"
+         id="tspan11383"
+         sodipodi:role="line">Block sync (?)</tspan></text>
+    <text
+       transform="scale(0.99561938,1.0043999)"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       x="98.334152"
+       y="-46.725998"
+       id="text11391"
+       onmouseover="var a = 'Blocks can be added from the P2P network or the miner';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       onclick="window.location='transaction.html';"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
+         sodipodi:role="line"
+         id="tspan11389"
+         x="98.334152"
+         y="-46.725998"
+         style="font-size:1.41111112px;stroke-width:0.16163243">AddBlock</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.22913602px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#marker10793)"
+       d="m 149.44243,-67.3011 h 3.96875"
+       id="path11675"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 149.44243,-80.530265 h 2.64583"
+       id="path11677"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 152.08826,-67.3011 V -80.530265"
+       id="path11679"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.23855841px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#marker11763)"
+       d="m 109.25189,-60.336907 h 44.09414"
+       id="path11749"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.45530766px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 106.09322,-77.884432 h 23.50546"
+       id="path11985"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.20977081px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 119.52164,-39.969452 v 10.810381"
+       id="path12531"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.25944832px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 119.62653,-29.159071 h 11.44858"
+       id="path12533"
+       inkscape:connector-curvature="0" />
+    <text
+       transform="scale(0.99561938,1.0043999)"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='../network/index.html';"
+       onmouseover="var a = 'Packs transactions into a MxN block';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       id="text12537"
+       y="-19.85726"
+       x="133.99203"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"><tspan
+         style="font-size:3.23264861px;stroke-width:0.16163243"
+         y="-19.85726"
+         x="133.99203"
+         id="tspan12535"
+         sodipodi:role="line">Block packer</tspan></text>
+    <text
+       transform="scale(0.99561938,1.0043999)"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       x="180.81511"
+       y="-39.568306"
+       id="text12545"
+       onmouseover="var a = 'Transaction metadata is passed around internally for efficiency';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       onclick="window.location='transaction.html';"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
+         sodipodi:role="line"
+         id="tspan12543"
+         x="180.81511"
+         y="-39.568306"
+         style="font-size:1.41111112px;stroke-width:0.16163243">Transaction metadata</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 131.07511,-23.867405 h -19.84375 l 1e-5,-5.291665 -6.61459,0"
+       id="path12547"
+       inkscape:connector-curvature="0" />
+    <text
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='transaction.html';"
+       onmouseover="var a = 'Blocks will be broadcast to the network after POW';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       id="text12551"
+       y="-21.148588"
+       x="112.79015"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         style="font-size:1.41111112px;stroke-width:0.16163243"
+         y="-21.148588"
+         x="112.79015"
+         id="tspan12549"
+         sodipodi:role="line">BroadcastBlock</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 149.44243,-67.3011 -26.30602,-0.08123 0.001,-8.078823"
+       id="path12592"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 123.13741,-75.461153 H 105.9397"
+       id="path12594"
+       inkscape:connector-curvature="0" />
+    <rect
+       y="-66.822113"
+       x="28.007826"
+       height="14.282273"
+       width="40.359489"
+       id="rect12604"
+       style="opacity:1;fill:none;stroke:#000000;stroke-width:0.22970958;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal" />
+    <rect
+       style="opacity:1;fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+       id="rect12606"
+       width="40.359489"
+       height="14.282273"
+       x="28.007826"
+       y="-66.822113" />
+    <path
+       inkscape:connector-curvature="0"
+       id="path12608"
+       d="m 69.959456,-51.257326 -1.59215,-1.282517"
+       style="fill:none;stroke:#000000;stroke-width:0.22970958;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 68.367306,-66.822109 1.59215,1.282517 v 14.282266"
+       id="path12610"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 28.007817,-52.539841 1.59215,1.282518 40.359489,-3e-6"
+       id="path12612"
+       inkscape:connector-curvature="0" />
+    <path
+       inkscape:connector-curvature="0"
+       id="path12614"
+       d="m 69.959456,-65.539592 1.59215,1.282517 v 14.282266"
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       inkscape:connector-curvature="0"
+       id="path12616"
+       d="m 29.599967,-51.257323 1.59215,1.282517 40.359489,-3e-6"
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.22970958;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 71.551606,-49.974809 -1.59215,-1.282517"
+       id="path12618"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 28.030617,-61.889551 H 68.239656"
+       id="path12620"
+       inkscape:connector-curvature="0" />
+    <text
+       transform="scale(0.99561938,1.0043999)"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       x="29.462202"
+       y="-62.809978"
+       id="text12624"
+       onmouseover="var a = 'Executors synchronise, schedule and execute transactions in a block';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       onclick="window.location='../';"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
+         sodipodi:role="line"
+         id="tspan12622"
+         x="29.462202"
+         y="-62.809978"
+         style="font-size:3.23264861px;stroke-width:0.16163243">Executors</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 47.731366,-66.200738 V -80.75282 l 23.8125,0"
+       id="path12640"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:2.11666654, 0.26458332;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 203.88581,-8.0114492 H 111.28164"
+       id="path12646"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.24960899;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1.99687195, 0.249609;stroke-dashoffset:0;stroke-opacity:1"
+       d="m 47.72764,-48.999273 v 22.364778 l 27.788737,1e-6"
+       id="path12648"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.31305918;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:2.50447341, 0.31305918;stroke-dashoffset:0;stroke-opacity:1"
+       d="m 75.512615,-26.513237 v 9.260415"
+       id="path12650"
+       inkscape:connector-curvature="0" />
+    <text
+       transform="scale(0.99561938,1.0043999)"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='../network/index.html';"
+       onmouseover="var a = 'Executors need a reference to the storage so as to query and make'; var b ='changes to the world state';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = b; "
+       id="text12654"
+       y="-57.116188"
+       x="30.350527"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"><tspan
+         style="font-size:3.23264861px;stroke-width:0.16163243"
+         y="-57.116188"
+         x="30.350527"
+         id="tspan12652"
+         sodipodi:role="line">Storage unit interface ptr</tspan></text>
+    <rect
+       ry="0"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.12336619;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       y="6.6676326"
+       x="27.690166"
+       height="5.0842905"
+       width="31.666527"
+       id="rect12662" />
+    <rect
+       id="rect12664"
+       width="31.63496"
+       height="5.2829084"
+       x="27.705929"
+       y="1.3947784"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.21676156;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       ry="0" />
+    <text
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='../';"
+       onmouseover="var a = 'Allows access to the current world state';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       id="text12668"
+       y="4.9032226"
+       x="28.934978"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         style="font-size:3.23264861px;stroke-width:0.16163243"
+         y="4.9032226"
+         x="28.934978"
+         id="tspan12666"
+         sodipodi:role="line">State store</tspan></text>
+    <text
+       inkscape:transform-center-y="-4.9695428"
+       transform="scale(0.99561938,1.0043999)"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       x="29.157536"
+       y="10.304121"
+       id="text12672"
+       onmouseover="var a = 'The world state is managed by this. It effectively allows advances'; var b = 'and roll-backs of the world state';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = b; "
+       onclick="window.location='../';"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
+         sodipodi:role="line"
+         id="tspan12670"
+         x="29.157536"
+         y="10.304121"
+         style="font-size:3.23264861px;stroke-width:0.16163243">Versioned RAS</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 59.637616,6.5596781 h 2.645833 l 1e-6,-15.874998"
+       id="path12800"
+       inkscape:connector-curvature="0" />
+    <rect
+       style="opacity:1;fill:none;stroke:#db352d;stroke-width:0.2;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:1.6,0.2;stroke-dashoffset:0;stroke-opacity:1;paint-order:normal"
+       id="rect12802"
+       width="100.3278"
+       height="44.438789"
+       x="26.737783"
+       y="-19.531363" />
+    <text
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='../';"
+       onmouseover="var a = 'Lanes shard lane-specific state and transactions';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       id="text12806"
+       y="-21.306793"
+       x="26.193106"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#db352d;fill-opacity:1;stroke:none;stroke-width:0.16163243;"
+       xml:space="preserve"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         style="font-size:3.23264861px;stroke-width:0.16163243;fill:#db352d;fill-opacity:1;"
+         y="-21.306793"
+         x="26.193106"
+         id="tspan12804"
+         sodipodi:role="line">Lanes</tspan></text>
+    <rect
+       ry="0"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.21828012;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       y="5.4929514"
+       x="156.61819"
+       height="14.292481"
+       width="35.266239"
+       id="rect12808" />
+    <rect
+       id="rect12810"
+       width="35.342068"
+       height="5.2848649"
+       x="156.58026"
+       y="0.18339637"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.22915269;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       ry="0" />
+    <text
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='../';"
+       onmouseover="var a = 'Routes RPC to the network generally, or an identity';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       id="text12814"
+       y="3.9570353"
+       x="159.49396"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         style="font-size:3.23264861px;stroke-width:0.16163243"
+         y="3.9570353"
+         x="159.49396"
+         id="tspan12812"
+         sodipodi:role="line">Muddle</tspan></text>
+    <text
+       transform="scale(0.99561938,1.0043999)"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='../network/index.html';"
+       onmouseover="var a = 'The public/private key pair used for network interactions';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       id="text12826"
+       y="10.304121"
+       x="159.89156"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"><tspan
+         style="font-size:3.23264861px;stroke-width:0.16163243"
+         y="10.304121"
+         x="159.89156"
+         id="tspan12824"
+         sodipodi:role="line">Identity</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       x="159.89156"
+       y="14.255486"
+       id="text12830"
+       onmouseover="var a = 'The trust model that is ranks peers by behaviour';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       onclick="window.location='../network/index.html';"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         sodipodi:role="line"
+         id="tspan12828"
+         x="159.89156"
+         y="14.255486"
+         style="font-size:3.23264861px;stroke-width:0.16163243">Trust</tspan></text>
+    <path
+       inkscape:connector-curvature="0"
+       id="path12832"
+       d="M 209.12721,11.851345 H 191.92929"
+       style="fill:none;stroke:#000000;stroke-width:0.30167139;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:2.41337114, 0.30167139;stroke-dashoffset:0;stroke-opacity:1" />
+    <text
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       onclick="window.location='transaction.html';"
+       onmouseover="var a = 'Muddle interfaces with the P2P network';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       id="text12836"
+       y="10.462327"
+       x="196.62148"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       xml:space="preserve"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         style="font-size:1.41111112px;stroke-width:0.16163243"
+         y="10.462327"
+         x="196.62148"
+         id="tspan12834"
+         sodipodi:role="line">P2P network</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 156.21053,11.719055 H 142.98136"
+       id="path12838"
+       inkscape:connector-curvature="0" />
+    <text
+       transform="scale(0.99561938,1.0043999)"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       x="144.46576"
+       y="10.330617"
+       id="text12842"
+       onmouseover="var a = 'Calls are made to the muddle instance'; var b = 'which routes them appropriately';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = b; "
+       onclick="window.location='transaction.html';"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
+         sodipodi:role="line"
+         id="tspan12840"
+         x="144.46576"
+         y="10.330617"
+         style="font-size:1.41111112px;stroke-width:0.16163243">Local calls</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 96.051907,-36.179806 0.103103,-3.92194"
+       id="path12958"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 91.504381,-66.462196 -0.103354,-7.95817"
+       id="path13290"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       x="134.02873"
+       y="-14.618709"
+       id="text14497"
+       onmouseover="var a = 'Required to determine the heaviest block to build on';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       onclick="window.location='../network/index.html';"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         sodipodi:role="line"
+         id="tspan14495"
+         x="134.02873"
+         y="-14.618709"
+         style="font-size:3.23264861px;stroke-width:0.16163243">Main chain ptr</tspan></text>
+  </g>
+</svg>

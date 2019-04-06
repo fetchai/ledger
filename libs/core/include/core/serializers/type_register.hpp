@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -24,11 +24,16 @@
 namespace fetch {
 namespace serializers {
 
+class CallContext;
+
 template <typename T>
 struct TypeRegister
 {
   using value_type = uint8_t;
-  static constexpr char const *name() { return typeid(T).name(); };
+  static constexpr char const *name()
+  {
+    return typeid(T).name();
+  };
   enum
   {
     value = 0
@@ -38,43 +43,55 @@ struct TypeRegister
 template <std::size_t E>
 struct TypeErrorRegister
 {
-  static constexpr char const *name() { return "unknown"; };
+  static constexpr char const *name()
+  {
+    return "unknown";
+  };
   enum
   {
     value = 0
   };
 };
 
-#define REGISTER_SERIALIZE_SYMBOL_TYPE(symbol, type, val)   \
-  template <>                                               \
-  struct TypeRegister<type>                                 \
-  {                                                         \
-    static constexpr char const *name() { return symbol; }; \
-    enum                                                    \
-    {                                                       \
-      value = uint8_t(val)                                  \
-    };                                                      \
+#define REGISTER_SERIALIZE_SYMBOL_TYPE(symbol, type, val) \
+  template <>                                             \
+  struct TypeRegister<type>                               \
+  {                                                       \
+    static constexpr char const *name()                   \
+    {                                                     \
+      return symbol;                                      \
+    };                                                    \
+    enum                                                  \
+    {                                                     \
+      value = uint8_t(val)                                \
+    };                                                    \
   }
 
-#define REGISTER_SERIALIZE_TYPE(symbol, type, val)          \
-  template <>                                               \
-  struct TypeRegister<type>                                 \
-  {                                                         \
-    static constexpr char const *name() { return symbol; }; \
-    enum                                                    \
-    {                                                       \
-      value = uint8_t(val)                                  \
-    };                                                      \
-  };                                                        \
-                                                            \
-  template <>                                               \
-  struct TypeErrorRegister<val>                             \
-  {                                                         \
-    static constexpr char const *name() { return symbol; }; \
-    enum                                                    \
-    {                                                       \
-      value = uint8_t(val)                                  \
-    };                                                      \
+#define REGISTER_SERIALIZE_TYPE(symbol, type, val) \
+  template <>                                      \
+  struct TypeRegister<type>                        \
+  {                                                \
+    static constexpr char const *name()            \
+    {                                              \
+      return symbol;                               \
+    };                                             \
+    enum                                           \
+    {                                              \
+      value = uint8_t(val)                         \
+    };                                             \
+  };                                               \
+                                                   \
+  template <>                                      \
+  struct TypeErrorRegister<val>                    \
+  {                                                \
+    static constexpr char const *name()            \
+    {                                              \
+      return symbol;                               \
+    };                                             \
+    enum                                           \
+    {                                              \
+      value = uint8_t(val)                         \
+    };                                             \
   }
 
 REGISTER_SERIALIZE_TYPE("double", double, 1);
@@ -103,6 +120,7 @@ REGISTER_SERIALIZE_SYMBOL_TYPE("str", char const *, 12);
 REGISTER_SERIALIZE_SYMBOL_TYPE("str", char *, 12);
 
 REGISTER_SERIALIZE_TYPE("excep", SerializableException, 13);
+REGISTER_SERIALIZE_TYPE("contextp", CallContext const *, 14);
 
 #undef REGISTER_SERIALIZE_TYPE
 #undef REGISTER_SERIALIZE_SYMBOL_TYPE

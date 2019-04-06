@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,9 +19,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/stream_hasher.hpp"
-
 #include <openssl/sha.h>
-#include <stdexcept>
 
 namespace fetch {
 namespace crypto {
@@ -29,42 +27,34 @@ namespace crypto {
 class SHA256 : public StreamHasher
 {
 public:
-  using byte_array_type = typename StreamHasher::byte_array_type;
+  using StreamHasher::Update;
+  using StreamHasher::Final;
 
-  void Reset() override
+  // Construction / Destruction
+  SHA256();
+  ~SHA256() override = default;
+
+  static constexpr std::size_t size_in_bytes()
   {
-    digest_.Resize(0);
-    if (!SHA256_Init(&data_)) throw std::runtime_error("could not intialialise SHA256.");
+    return SHA256_DIGEST_LENGTH;
   }
 
-  bool Update(byte_array_type const &s) override { return Update(s.pointer(), s.size()); }
-
-  void Final() override
-  {
-    digest_.Resize(SHA256_DIGEST_LENGTH);
-    Final(reinterpret_cast<uint8_t *>(digest_.pointer()));
-  }
-
-  bool Update(uint8_t const *p, std::size_t const &size) override
-  {
-    if (!SHA256_Update(&data_, p, size)) return false;
-    return true;
-  }
-
-  void Final(uint8_t *p) override
-  {
-    if (!SHA256_Final(p, &data_)) throw std::runtime_error("could not finalize SHA256.");
-  }
-
-  byte_array_type digest() override
-  {
-    assert(digest_.size() == SHA256_DIGEST_LENGTH);
-    return digest_;
-  }
+  /// @name Stream Hasher Interface
+  /// @{
+  void        Reset() override;
+  bool        Update(uint8_t const *data_to_hash, std::size_t const &size) override;
+  void        Final(uint8_t *hash, std::size_t const &size) override;
+  std::size_t GetSizeInBytes() const override;
+  /// @}
 
 private:
-  byte_array_type digest_;
-  SHA256_CTX      data_;
+  SHA256_CTX context_;
 };
+
+inline std::size_t SHA256::GetSizeInBytes() const
+{
+  return size_in_bytes();
+}
+
 }  // namespace crypto
 }  // namespace fetch

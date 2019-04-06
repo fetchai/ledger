@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -26,24 +26,18 @@ class LaneControllerProtocol : public service::Protocol
 public:
   enum
   {
-    CONNECT = 1,
-    TRY_CONNECT,
-    SHUTDOWN,
+    SHUTDOWN = 1,
     START_SYNC,
     STOP_SYNC,
     INCOMING_PEERS,
-    OUTGOING_PEERS
+    OUTGOING_PEERS,
+    USE_THESE_PEERS,
   };
 
   LaneControllerProtocol(LaneController *ctrl)
   {
-
-    this->Expose(CONNECT, ctrl, &LaneController::RPCConnect);
-    this->Expose(TRY_CONNECT, ctrl, &LaneController::TryConnect);
-
     this->Expose(SHUTDOWN, ctrl, &LaneController::Shutdown);
-    this->Expose(INCOMING_PEERS, ctrl, &LaneController::IncomingPeers);
-    this->Expose(OUTGOING_PEERS, ctrl, &LaneController::OutgoingPeers);
+    this->Expose(USE_THESE_PEERS, ctrl, &LaneController::UseThesePeers);
   }
 };
 

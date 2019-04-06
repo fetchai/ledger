@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/linalg/matrix.hpp"
 #include "math/statistics/standard_deviation.hpp"
 #include "python/fetch_pybind.hpp"
 
@@ -26,7 +25,7 @@ namespace math {
 namespace statistics {
 
 template <typename A>
-inline typename A::type WrapperStandardDeviation(A const &a)
+inline typename A::Type WrapperStandardDeviation(A const &a)
 {
   return StandardDeviation(a);
 }
@@ -34,16 +33,12 @@ inline typename A::type WrapperStandardDeviation(A const &a)
 inline void BuildStandardDeviationStatistics(std::string const &custom_name,
                                              pybind11::module & module)
 {
-  using namespace fetch::math::linalg;
+  using namespace fetch::math;
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperStandardDeviation<Matrix<double>>)
-      .def(custom_name.c_str(), &WrapperStandardDeviation<Matrix<float>>)
-      .def(custom_name.c_str(), &WrapperStandardDeviation<RectangularArray<double>>)
-      .def(custom_name.c_str(), &WrapperStandardDeviation<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperStandardDeviation<ShapeLessArray<double>>)
-      .def(custom_name.c_str(), &WrapperStandardDeviation<ShapeLessArray<float>>);
+  module.def(custom_name.c_str(), &WrapperStandardDeviation<Tensor<double>>)
+      .def(custom_name.c_str(), &WrapperStandardDeviation<Tensor<float>>);
 }
 
 }  // namespace statistics

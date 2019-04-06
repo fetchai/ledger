@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,9 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "optimisation/simulated_annealing/sparse_annealer.hpp"
+#include "python/fetch_pybind.hpp"
 
-#include <pybind11/operators.h>
-#include <pybind11/pybind11.h>
 namespace fetch {
 namespace optimisers {
 

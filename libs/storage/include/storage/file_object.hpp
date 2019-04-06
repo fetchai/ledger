@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/sha256.hpp"
 #include "storage/cached_random_access_stack.hpp"
+#include "storage/storage_exception.hpp"
 #include "storage/versioned_random_access_stack.hpp"
 
 #include <cstdint>
@@ -66,6 +67,8 @@ public:
   using block_type  = typename stack_type::type;
   using hasher_type = crypto::SHA256;
 
+  static constexpr char const *LOGGING_NAME = "FileObject";
+
   enum
   {
     HEADER_SIZE = 2 * sizeof(uint64_t)
@@ -77,7 +80,10 @@ public:
   FileObject &operator=(FileObject &&other) = default;
 
   FileObject(stack_type &stack)
-    : stack_(stack), block_number_(0), byte_index_(HEADER_SIZE), length_(HEADER_SIZE)
+    : stack_(stack)
+    , block_number_(0)
+    , byte_index_(HEADER_SIZE)
+    , length_(HEADER_SIZE)
   {
     block_type block;
     last_position_ = stack_.size();
@@ -89,11 +95,16 @@ public:
     block_index_ = id_ = stack_.Push(block);
 
     block_count_ = length_ / block_type::BYTES;
-    if (block_count_ * block_type::BYTES < length_) ++block_count_;
+    if (block_count_ * block_type::BYTES < length_)
+    {
+      ++block_count_;
+    }
   }
 
   FileObject(stack_type &stack, std::size_t const &position)
-    : stack_(stack), block_number_(0), byte_index_(HEADER_SIZE)
+    : stack_(stack)
+    , block_number_(0)
+    , byte_index_(HEADER_SIZE)
   {
     block_type first;
     assert(position < stack_.size());
@@ -104,11 +115,20 @@ public:
     memcpy(reinterpret_cast<uint8_t *>(&last_position_), first.data, sizeof(uint64_t));
     memcpy(reinterpret_cast<uint8_t *>(&length_), first.data + sizeof(uint64_t), sizeof(uint64_t));
 
+    // Previously written blocks should at least have header size - if not something has gone wrong
+    assert(length_ >= HEADER_SIZE);
+
     block_count_ = length_ / block_type::BYTES;
-    if (block_count_ * block_type::BYTES < length_) ++block_count_;
+    if (block_count_ * block_type::BYTES < length_)
+    {
+      ++block_count_;
+    }
   }
 
-  ~FileObject() { Flush(); }
+  ~FileObject()
+  {
+    Flush();
+  }
 
   void Flush()
   {
@@ -136,7 +156,7 @@ public:
 
       if (block_number_ >= block_count_)
       {
-        TODO_FAIL("Seek is out of bounds");
+        throw StorageException("Seek is out of bounds");
       }
     }
 
@@ -149,7 +169,7 @@ public:
 
       if (block_number_ >= block_count_)
       {
-        TODO_FAIL("Seek is out of bounds");
+        throw StorageException("Seek is out of bounds");
       }
     }
 
@@ -159,7 +179,10 @@ public:
 
   uint64_t Tell()
   {
-    if ((block_index_ == 0) && (byte_index_ < HEADER_SIZE)) return 0;
+    if ((block_index_ == 0) && (byte_index_ < HEADER_SIZE))
+    {
+      return 0;
+    }
     return block_index_ * block_type::BYTES + byte_index_ - HEADER_SIZE;
   }
 
@@ -182,7 +205,7 @@ public:
 
       if (block_number_ >= block_count_)
       {
-        TODO_FAIL("Seek is out of bounds");
+        throw StorageException("Seek is out of bounds");
       }
     }
 
@@ -196,17 +219,23 @@ public:
   {
     Seek(0);
     size += HEADER_SIZE;
-    TODO_FAIL("Grow is not implemented yet");
+    throw StorageException("Grow is not implemented yet");
   }
 
-  void Write(byte_array::ConstByteArray const &arr) { Write(arr.pointer(), arr.size()); }
+  void Write(byte_array::ConstByteArray const &arr)
+  {
+    Write(arr.pointer(), arr.size());
+  }
 
   void Write(uint8_t const *bytes, uint64_t const &m)
   {
     uint64_t n = m + byte_index_ + block_number_ * block_type::BYTES;
 
     uint64_t last_block = (n) / block_type::BYTES;
-    if (last_block * block_type::BYTES < n) ++last_block;
+    if (last_block * block_type::BYTES < n)
+    {
+      ++last_block;
+    }
     --last_block;
 
     uint64_t first_bytes = block_type::BYTES - byte_index_;
@@ -295,14 +324,20 @@ public:
     Flush();
   }
 
-  void Read(byte_array::ByteArray &arr) { Read(arr.pointer(), arr.size()); }
+  void Read(byte_array::ByteArray &arr)
+  {
+    Read(arr.pointer(), arr.size());
+  }
 
   void Read(uint8_t *bytes, uint64_t const &m)
   {
     uint64_t n = m + byte_index_ + block_number_ * block_type::BYTES;
 
     uint64_t last_block = (n) / block_type::BYTES;
-    if (last_block * block_type::BYTES < n) ++last_block;
+    if (last_block * block_type::BYTES < n)
+    {
+      ++last_block;
+    }
     --last_block;
 
     uint64_t first_bytes = block_type::BYTES - byte_index_;
@@ -321,7 +356,7 @@ public:
 
     if ((last_block != 0) && (block.next == block_type::UNDEFINED))
     {
-      TODO_FAIL("Could not read block");
+      throw StorageException("Could not read block");
     }
 
     memcpy(bytes, block.data + byte_index_, first_bytes);
@@ -343,7 +378,7 @@ public:
 
         if (block.next == block_type::UNDEFINED)
         {
-          TODO_FAIL("Could not read block");
+          throw StorageException("Could not read block");
         }
 
         memcpy(bytes + offset, block.data, block_type::BYTES);
@@ -364,17 +399,22 @@ public:
     }
   }
 
-  uint64_t const &id() const { return id_; }
+  uint64_t const &id() const
+  {
+    return id_;
+  }
 
-  uint64_t size() const { return length_ - HEADER_SIZE; }
+  uint64_t size() const
+  {
+    return length_ - HEADER_SIZE;
+  }
 
   byte_array::ConstByteArray Hash()
   {
     hasher_type hasher;
     hasher.Reset();
     UpdateHash(hasher);
-    hasher.Final();
-    return hasher.digest();
+    return hasher.Final();
   }
 
   void UpdateHash(crypto::StreamHasher &hasher)
@@ -395,7 +435,7 @@ public:
       bi = block.next;
       if (bi == block_type::UNDEFINED)
       {
-        TODO_FAIL("File corrupted");
+        throw StorageException("File corrupted");
       }
 
       stack_.Get(bi, block);

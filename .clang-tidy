@@ -1,8 +1,11 @@
-Checks: '-*,bugprone-*,modernize-use-using,modernize-make-shared,modernize-make-unique,modernize-pass-by-value,readability-identifier-naming,google-readability-todo'
+Checks: '-*,bugprone-*,modernize-use-using,modernize-make-shared,modernize-make-unique,modernize-pass-by-value,readability-identifier-naming,google-readability-todo,readability-braces-around-statements,-bugprone-macro-parentheses,misc-unused-alias-decls,misc-unused-parameters,misc-unused-using-decls'
+
+#misc-unused-alias-decls,misc-unused-parameters,misc-unused-using-decls
 
 FormatStyle: file
 
-HeaderFilterRegex: '(apps|libs)/[a-zA-Z]+/include'
+# Note: it is possible to exclude specific files using ';xxx'
+HeaderFilterRegex: '(apps|libs)/[a-zA-Z]+/include;-vm/include/tokeniser.hpp'
 
 CheckOptions:
   - key:             readability-identifier-naming.FunctionCase

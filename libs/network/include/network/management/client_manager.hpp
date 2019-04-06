@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -40,7 +40,11 @@ public:
   using connection_type        = typename AbstractConnection::shared_type;
   using connection_handle_type = typename AbstractConnection::connection_handle_type;
 
-  ClientManager(AbstractNetworkServer &server) : server_(server), clients_mutex_(__LINE__, __FILE__)
+  static constexpr char const *LOGGING_NAME = "ClientManager";
+
+  ClientManager(AbstractNetworkServer &server)
+    : server_(server)
+    , clients_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;
   }
@@ -49,7 +53,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
     connection_handle_type handle = client->handle();
-    fetch::logger.Info("Client joining with handle ", handle);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Client ", handle, " is joining");
 
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
     clients_[handle] = client;
@@ -62,10 +66,11 @@ public:
     LOG_STACK_TRACE_POINT;
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
 
-    if (clients_.find(handle) != clients_.end())
+    auto client{clients_.find(handle)};
+    if (client != clients_.end())
     {
-      fetch::logger.Info("Client ", handle, " is leaving");
-      clients_.erase(handle);
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Client ", handle, " is leaving");
+      clients_.erase(client);
     }
   }
 
@@ -75,17 +80,18 @@ public:
     bool ret = true;
     clients_mutex_.lock();
 
-    if (clients_.find(client) != clients_.end())
+    auto which{clients_.find(client)};
+    if (which != clients_.end())
     {
-      auto c = clients_[client];
+      auto c = which->second;
       clients_mutex_.unlock();
       c->Send(msg);
-      fetch::logger.Debug("Client manager did send message to ", client);
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Client manager did send message to ", client);
       clients_mutex_.lock();
     }
     else
     {
-      fetch::logger.Debug("Client not found.");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Client not found.");
       ret = false;
     }
     clients_mutex_.unlock();
@@ -109,7 +115,15 @@ public:
   void PushRequest(connection_handle_type client, message_type const &msg)
   {
     LOG_STACK_TRACE_POINT;
-    server_.PushRequest(client, msg);
+    try
+    {
+      server_.PushRequest(client, msg);
+    }
+    catch (std::exception &ex)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Error processing packet from ", client, " error: ", ex.what());
+      throw;
+    }
   }
 
   std::string GetAddress(connection_handle_type client)

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -40,6 +40,8 @@ class Function;
 template <typename R, typename... Args>
 class Function<R(Args...)> : public AbstractCallable
 {
+  static constexpr char const *LOGGING_NAME = "Function<R(Args...)>";
+
 private:
   using return_type   = R;
   using function_type = std::function<R(Args...)>;
@@ -142,8 +144,8 @@ public:
 
     UnrollArguments<>::template LoopOver<Args...>::Unroll(result, this->function_, params);
   }
-  void operator()(serializer_type &result, CallableArgumentList const &additional_args,
-                  serializer_type &params) override
+  void operator()(serializer_type & /*result*/, CallableArgumentList const & /*additional_args*/,
+                  serializer_type & /*params*/) override
   {
     TODO_FAIL("No support for custom added args yet");
   }
@@ -161,6 +163,8 @@ private:
   using function_type = std::function<R()>;
 
 public:
+  static constexpr char const *LOGGING_NAME = "Function<R()>";
+
   Function(function_type value)
   {
     LOG_STACK_TRACE_POINT;
@@ -168,15 +172,15 @@ public:
     function_ = value;
   }
 
-  void operator()(serializer_type &result, serializer_type &params) override
+  void operator()(serializer_type &result, serializer_type & /*params*/) override
   {
     LOG_STACK_TRACE_POINT;
 
     result << R(function_());
   }
 
-  void operator()(serializer_type &result, CallableArgumentList const &additional_args,
-                  serializer_type &params) override
+  void operator()(serializer_type & /*result*/, CallableArgumentList const & /*additional_args*/,
+                  serializer_type & /*params*/) override
   {
     TODO_FAIL("No support for custom added args yet");
   }
@@ -194,20 +198,22 @@ private:
   using function_type = std::function<void()>;
 
 public:
+  static constexpr char const *LOGGING_NAME = "Function<void()>";
+
   Function(function_type value)
   {
     LOG_STACK_TRACE_POINT;
     function_ = value;
   }
 
-  void operator()(serializer_type &result, serializer_type &params) override
+  void operator()(serializer_type &result, serializer_type & /*params*/) override
   {
     LOG_STACK_TRACE_POINT;
     result << 0;
     function_();
   }
-  void operator()(serializer_type &result, CallableArgumentList const &additional_args,
-                  serializer_type &params) override
+  void operator()(serializer_type & /*result*/, CallableArgumentList const & /*additional_args*/,
+                  serializer_type & /*params*/) override
   {
     TODO_FAIL("No support for custom added args yet");
   }

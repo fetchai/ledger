@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -43,12 +43,17 @@ public:
   using shared_request_type = std::shared_ptr<HTTPRequest>;
   using buffer_ptr_type     = std::shared_ptr<asio::streambuf>;
 
+  static constexpr char const *LOGGING_NAME = "HTTPConnection";
+
   HTTPConnection(asio::ip::tcp::tcp::socket socket, HTTPConnectionManager &manager)
-    : socket_(std::move(socket)), manager_(manager), write_mutex_(__LINE__, __FILE__)
+    : socket_(std::move(socket))
+    , manager_(manager)
+    , write_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;
 
-    fetch::logger.Debug("HTTP connection from ", socket_.remote_endpoint().address().to_string());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "HTTP connection from ",
+                    socket_.remote_endpoint().address().to_string());
   }
 
   ~HTTPConnection()
@@ -64,7 +69,10 @@ public:
 
     is_open_ = true;
     handle_  = manager_.Join(shared_from_this());
-    if (is_open_) ReadHeader();
+    if (is_open_)
+    {
+      ReadHeader();
+    }
   }
 
   void Send(HTTPResponse const &response) override
@@ -82,26 +90,34 @@ public:
     }
   }
 
-  std::string Address() override { return socket_.remote_endpoint().address().to_string(); }
+  std::string Address() override
+  {
+    return socket_.remote_endpoint().address().to_string();
+  }
 
-  asio::ip::tcp::tcp::socket &socket() { return socket_; }
+  asio::ip::tcp::tcp::socket &socket()
+  {
+    return socket_;
+  }
 
 public:
   void ReadHeader(buffer_ptr_type buffer_ptr = nullptr)
   {
     LOG_STACK_TRACE_POINT;
 
-    fetch::logger.Debug("Ready to ready HTTP header");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Ready to ready HTTP header");
 
     shared_request_type request = std::make_shared<HTTPRequest>();
     if (!buffer_ptr)
+    {
       buffer_ptr = std::make_shared<asio::streambuf>(std::numeric_limits<std::size_t>::max());
+    }
 
     auto self = shared_from_this();
 
     auto cb = [this, buffer_ptr, request, self](std::error_code const &ec, std::size_t const &len) {
-      fetch::logger.Debug("Read HTTP header");
-      fetch::logger.Debug("Read HTTP header of " + std::to_string(len) + " bytes");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Read HTTP header");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Read HTTP header of " + std::to_string(len) + " bytes");
 
       if (ec)
       {
@@ -110,8 +126,16 @@ public:
       }
       else
       {
-        HTTPRequest::SetHeader(*request, *buffer_ptr, len);
-        if (is_open_) ReadBody(buffer_ptr, request);
+        // only parse the header if there is data to be parsed
+        if (len)
+        {
+          request->ParseHeader(*buffer_ptr, len);
+
+          if (is_open_)
+          {
+            ReadBody(buffer_ptr, request);
+          }
+        }
       }
     };
 
@@ -122,22 +146,33 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    fetch::logger.Debug("Read HTTP body");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Read HTTP body");
     // Check if we got all the body
     if (request->content_length() <= buffer_ptr->size())
     {
-      HTTPRequest::SetBody(*request, *buffer_ptr);
+      request->ParseBody(*buffer_ptr);
 
+      // at this point if the read has been successful populate the remote address information
+      // inside the request
+      auto const &remote_endpoint = socket_.remote_endpoint();
+      request->SetOriginatingAddress(remote_endpoint.address().to_string(), remote_endpoint.port());
+
+      // push the request to the main server
       manager_.PushRequest(handle_, *request);
 
-      if (is_open_) ReadHeader(buffer_ptr);
+      if (is_open_)
+      {
+        ReadHeader(buffer_ptr);
+      }
       return;
     }
 
     // Reading remaining bits if not all was read.
     auto self = shared_from_this();
     auto cb = [this, buffer_ptr, request, self](std::error_code const &ec, std::size_t const &len) {
-      fetch::logger.Debug("Read HTTP body cb");
+      FETCH_UNUSED(len);
+
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Read HTTP body cb");
       if (ec)
       {
         this->HandleError(ec, request);
@@ -145,7 +180,10 @@ public:
       }
       else
       {
-        if (is_open_) ReadBody(buffer_ptr, request);
+        if (is_open_)
+        {
+          ReadBody(buffer_ptr, request);
+        }
       }
     };
 
@@ -153,13 +191,13 @@ public:
                      asio::transfer_exactly(request->content_length() - buffer_ptr->size()), cb);
   }
 
-  void HandleError(std::error_code const &ec, shared_request_type req)
+  void HandleError(std::error_code const &ec, shared_request_type /*req*/)
   {
     LOG_STACK_TRACE_POINT;
 
     std::stringstream ss;
     ss << ec << ":" << ec.message();
-    fetch::logger.Debug("HTTP error: ", ss.str());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "HTTP error: ", ss.str());
 
     Close();
   }
@@ -175,7 +213,7 @@ public:
     write_queue_.pop_front();
     write_mutex_.unlock();
 
-    HTTPResponse::WriteToBuffer(res, *buffer_ptr);
+    res.ToStream(*buffer_ptr);
     auto self = shared_from_this();
     auto cb   = [this, self, buffer_ptr](std::error_code ec, std::size_t) {
       if (!ec)

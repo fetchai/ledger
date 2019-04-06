@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,134 +17,97 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/json/document.hpp"
-#include "core/logger.hpp"
-#include "core/string/replace.hpp"
-#include "http/json_response.hpp"
+#include "core/mutex.hpp"
 #include "http/module.hpp"
-#include "ledger/chaincode/cache.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "ledger/transaction_processor.hpp"
-#include "miner/miner_interface.hpp"
+#include "ledger/chaincode/chain_code_cache.hpp"
 
-#include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
-
-#include <sstream>
-
+#include <algorithm>
+#include <fstream>
 #include <iostream>
+#include <sstream>
+#include <vector>
 
 namespace fetch {
+
+namespace variant {
+class Variant;
+}  // namespace variant
+
 namespace ledger {
+
+class StorageInterface;
+class TransactionProcessor;
 
 class ContractHttpInterface : public http::HTTPModule
 {
+
 public:
-  ContractHttpInterface(StorageInterface &storage, TransactionProcessor &processor)
-    : storage_{storage}, processor_{processor}
-  {
+  static constexpr char const *LOGGING_NAME = "ContractHttpInterface";
 
-    // create all the contracts
-    auto const &contracts = contract_cache_.factory().GetContracts();
-    for (auto const &contract_name : contracts)
-    {
+  // Construction / Destruction
+  ContractHttpInterface(StorageInterface &storage, TransactionProcessor &processor);
+  ContractHttpInterface(ContractHttpInterface const &) = delete;
+  ContractHttpInterface(ContractHttpInterface &&)      = delete;
+  ~ContractHttpInterface()                             = default;
 
-      // create the contract
-      auto contract = contract_cache_.factory().Create(contract_name);
-
-      // define the api prefix
-      std::string const api_prefix =
-          "/api/contract/" + string::Replace(contract_name, '.', '/') + '/';
-
-      // enumerate all of the contract query handlers
-      auto const &query_handlers = contract->query_handlers();
-      for (auto const &handler : query_handlers)
-      {
-        std::string const &query_name = handler.first;
-        std::string const  api_path   = api_prefix + query_name;
-
-        fetch::logger.Info("API: ", api_path);
-
-        Post(api_path, [this, contract_name, query_name](http::ViewParameters const &,
-                                                         http::HTTPRequest const &request) {
-          return OnQuery(contract_name, query_name, request);
-        });
-      }
-    }
-
-    // add custom debug handlers
-    Post("/api/debug/submit",
-         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-           chain::MutableTransaction tx;
-           tx.PushResource("foo.bar.baz" + std::to_string(transaction_index_));
-           tx.set_fee(transaction_index_);
-           tx.set_contract_name("fetch.dummy.run");
-           tx.set_data(std::to_string(transaction_index_++));
-
-           auto vtx = chain::VerifiedTransaction::Create(std::move(tx));
-
-           processor_.AddTransaction(vtx);
-
-           std::ostringstream oss;
-           oss << R"({ "submitted": true, "tx": ")"
-               << static_cast<std::string>(byte_array::ToBase64(vtx.digest())) << "\" }";
-
-           return http::CreateJsonResponse(oss.str());
-         });
-  }
+  // Operators
+  ContractHttpInterface &operator=(ContractHttpInterface const &) = delete;
+  ContractHttpInterface &operator=(ContractHttpInterface &&) = delete;
 
 private:
-  http::HTTPResponse OnQuery(std::string const &contract_name, std::string const &query,
-                             http::HTTPRequest const &request)
+  using Mutex          = mutex::Mutex;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using TxHashes       = std::vector<ConstByteArray>;
+
+  /**
+   * Structure containing status of of multi-transaction submission.
+   *
+   * The structure is supposed to carry information about how many transactions
+   * have been successfully processed and how many transactions have been
+   * actually received for processing.
+   * The structure is supposed to be used as return value for methods which
+   * are dedicated to handle HTTP request for bulk transaction (multi-transaction)
+   * reception, giving caller ability to check status of how request has been
+   * handled (transaction reception/processing).
+   *
+   * @see SubmitJsonTx
+   * @see SubmitNativeTx
+   */
+  struct SubmitTxStatus
   {
-    try
-    {
+    std::size_t processed{0};
+    std::size_t received{0};
+  };
 
-      // parse the incoming request
-      json::JSONDocument doc;
-      doc.Parse(request.body());
+  /// @name Query Handler
+  /// @{
+  http::HTTPResponse OnQuery(ConstByteArray const &contract_name, ConstByteArray const &query,
+                             http::HTTPRequest const &request);
+  /// @}
 
-      // dispatch the contract type
-      script::Variant response;
-      auto            contract = contract_cache_.Lookup(contract_name);
+  /// @name Transaction Handlers
+  /// @{
+  http::HTTPResponse OnTransaction(http::HTTPRequest const &req, ConstByteArray expected_contract);
+  SubmitTxStatus     SubmitJsonTx(http::HTTPRequest const &req, ConstByteArray expected_contract,
+                                  TxHashes &txs);
+  SubmitTxStatus     SubmitNativeTx(http::HTTPRequest const &req, ConstByteArray expected_contract,
+                                    TxHashes &txs);
+  /// @}
 
-      // attach, dispatch and detach
-      contract->Attach(storage_);
-      auto const status = contract->DispatchQuery(query, doc.root(), response);
-      contract->Detach();
-
-      if (status == Contract::Status::OK)
-      {
-        // encode the response
-        std::ostringstream oss;
-        oss << response;
-
-        // generate the response object
-        return http::CreateJsonResponse(oss.str());
-      }
-      else
-      {
-        fetch::logger.Warn("Error running query. status = ", static_cast<int>(status));
-      }
-    }
-    catch (std::exception &ex)
-    {
-      fetch::logger.Warn("Query error: ", ex.what());
-    }
-
-    return JsonBadRequest();
-  }
-
-  static http::HTTPResponse JsonBadRequest()
-  {
-    return http::CreateJsonResponse("", http::status_code::CLIENT_ERROR_BAD_REQUEST);
-  }
-
-  std::size_t transaction_index_{0};
+  /// @name Access Log
+  /// @{
+  void RecordTransaction(SubmitTxStatus const &status, http::HTTPRequest const &request,
+                         ConstByteArray expected_contract);
+  void RecordQuery(ConstByteArray const &contract_name, ConstByteArray const &query,
+                   http::HTTPRequest const &request);
+  void WriteToAccessLog(variant::Variant const &entry);
+  /// @}
 
   StorageInterface &    storage_;
   TransactionProcessor &processor_;
-  ChainCodeCache        contract_cache_;
+  ChainCodeCache        contract_cache_{};
+  Mutex                 access_log_lock_{__LINE__, __FILE__};
+  std::ofstream         access_log_;
 };
 
 }  // namespace ledger

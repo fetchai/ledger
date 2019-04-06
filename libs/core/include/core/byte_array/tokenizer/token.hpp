@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -25,30 +25,64 @@ namespace byte_array {
 class Token : public ConstByteArray
 {
 public:
-  Token() : ConstByteArray() {}
+  Token()
+    : ConstByteArray()
+  {}
 
-  Token(char const *str) : ConstByteArray(str) {}
+  Token(char const *str)
+    : ConstByteArray(str)
+  {}
 
-  Token(std::string const &str) : ConstByteArray(str.c_str()) {}
+  Token(std::string const &str)
+    : ConstByteArray(str.c_str())
+  {}
 
-  Token(ConstByteArray const &other) : ConstByteArray(other) {}
-  Token(ConstByteArray &&other) : ConstByteArray(other) {}
+  Token(ConstByteArray const &other)
+    : ConstByteArray(other)
+  {}
+  Token(ConstByteArray &&other)
+    : ConstByteArray(other)
+  {}
 
   Token(ConstByteArray const &other, std::size_t const &start, std::size_t const &length)
     : ConstByteArray(other, start, length)
   {}
 
-  bool operator==(ConstByteArray const &other) const { return ConstByteArray::operator==(other); }
+  bool operator==(ConstByteArray const &other) const
+  {
+    return ConstByteArray::operator==(other);
+  }
 
-  bool operator!=(ConstByteArray const &other) const { return !(*this == other); }
+  bool operator!=(ConstByteArray const &other) const
+  {
+    return !(*this == other);
+  }
 
-  void SetType(int const &t) { type_ = t; }
-  void SetLine(int const &l) { line_ = l; }
-  void SetChar(std::size_t const &c) { char_ = c; }
+  void SetType(int const &t)
+  {
+    type_ = t;
+  }
+  void SetLine(int const &l)
+  {
+    line_ = l;
+  }
+  void SetChar(std::size_t const &c)
+  {
+    char_ = c;
+  }
 
-  int         type() const { return type_; }
-  int         line() const { return line_; }
-  std::size_t character() const { return char_; }
+  int type() const
+  {
+    return type_;
+  }
+  int line() const
+  {
+    return line_;
+  }
+  std::size_t character() const
+  {
+    return char_;
+  }
 
 private:
   int         type_ = -1;

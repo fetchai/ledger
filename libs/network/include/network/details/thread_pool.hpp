@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -30,320 +30,131 @@
 #include "core/mutex.hpp"
 
 #include "network/details/future_work_store.hpp"
+#include "network/details/idle_work_store.hpp"
+#include "network/details/work_store.hpp"
+#include "network/generics/milli_timer.hpp"
 
 namespace fetch {
 namespace network {
 namespace details {
 
+/**
+ * @brief Application thread pool for dispatching work
+ *
+ * The application thread pool at a conceptual level is a simple set queue of ordered
+ * work queues.
+ *
+ * The main work queue is a FIFO based model and these jobs are extracted by the dispatch
+ * threads.
+ *
+ * The other work queue is the future work queue. These jobs are ordered by due time and
+ * once the due time has been reached they are placed at the end of the work queue. Users
+ * should note that the due timestamp can be thought of as the mimimum schedule time.
+ *
+ * The third queue is an "idle" work store. This is probably better thought of as a
+ * periodic or reoccuring work. Work from this store is executed directly. The design of
+ * the thread pool assumes that the number of such tasks will be relatively small and that
+ * execution of these items will be relatively short. If this is not the case throughput
+ * performance might be affected.
+ *
+ *
+ *        ┌────────────────────┐
+ *        │ Future Work Queue  │──┐
+ *        └────────────────────┘  │
+ *                                │
+ *     ┌──────────────────────────┘
+ *     │
+ *     │  ┌────────────────────┐
+ *     └─▶│     Work Queue     │ ──────┐
+ *        └────────────────────┘       │       ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+ *                                     │                              │
+ *                                     ├──────▶│   Dispatch Threads
+ *                                     │                              │
+ *        ┌────────────────────┐       │       └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+ *        │  Idle Work Store   │ ──────┘
+ *        └────────────────────┘
+ */
 class ThreadPoolImplementation : public std::enable_shared_from_this<ThreadPoolImplementation>
 {
-protected:
-  using event_function_type = std::function<void()>;
-  using event_handle_type   = uint64_t;
-  using shared_ptr_type     = std::shared_ptr<ThreadPoolImplementation>;
-  using mutex_type          = std::mutex;
-  using lock_type           = std::unique_lock<mutex_type>;
-  using work_queue_type     = std::queue<event_function_type>;
-
-  enum thread_state_type
-  {
-    THREAD_IDLE        = 0x00,
-    THREAD_WORKED      = 0x01,
-    THREAD_SHOULD_QUIT = 0x02,
-  };
-
-  using idle_work_type = std::list<event_function_type>;
-
 public:
-  static std::shared_ptr<ThreadPoolImplementation> Create(std::size_t threads)
-  {
-    return std::make_shared<ThreadPoolImplementation>(threads);
-  }
+  static constexpr char const *LOGGING_NAME = "ThreadPoolImpl";
 
-  ThreadPoolImplementation(std::size_t threads) : number_of_threads_(threads)
-  {
+  using ThreadPoolPtr = std::shared_ptr<ThreadPoolImplementation>;
+  using WorkItem      = std::function<void()>;
 
-    fetch::logger.Debug("Creating thread manager");
-    shutdown_ = false;
-  }
+  static ThreadPoolPtr Create(std::size_t threads, std::string const &name);
 
+  explicit ThreadPoolImplementation(std::size_t threads, std::string name);
   ThreadPoolImplementation(ThreadPoolImplementation const &) = delete;
+  ThreadPoolImplementation(ThreadPoolImplementation &&)      = default;
+  ~ThreadPoolImplementation();
 
-  ThreadPoolImplementation(ThreadPoolImplementation &&) = default;
+  /// @name Current / Future Work
+  /// @{
+  void Post(WorkItem work, uint32_t milliseconds);
+  void Post(WorkItem work);
+  /// @}
 
-  virtual ~ThreadPoolImplementation()
+  /// @name Idle / Background tasks
+  /// @{
+  void PostIdle(WorkItem work);
+  void SetIdleInterval(std::size_t milliseconds);
+  /// @}
+
+  /// @name Thread pool control
+  /// @{
+  void Start();
+  void Stop();
+  void Clear();
+  /// @}
+
+  std::size_t execute_count() const
   {
-    Stop();
-    fetch::logger.Debug("Destroying thread manager");
+    return counter_;
   }
 
-  virtual void Post(event_function_type item)
-  {
-    if (!shutdown_)
-    {
-      lock_type lock(mutex_);
-      queue_.push(item);
-      cv_.notify_one();
-    }
-  }
-
-  virtual void Sleep() { lock_type lock(mutex_); }
-
-  virtual void SetIdleWork(event_function_type idle_work)
-  {
-    lock_type lock(mutex_);
-    idleWork_.push_back(idle_work);
-  }
-
-  virtual void ProcessLoop()
-  {
-    while (!shutdown_)
-    {
-      thread_state_type state = Poll();
-      if (state & THREAD_SHOULD_QUIT)
-      {
-        return;  // we're done -- return & become joinable.
-      }
-      if (state & THREAD_WORKED)
-      {
-        // no delay, go do more.
-        continue;
-      }
-      // THREAD_IDLE:
-      {
-        // snooze for a while or until more work arrives
-        lock_type lock(mutex_);
-        cv_.wait_for(
-            lock,
-            std::chrono::milliseconds(100));  // so the future work will get serviced eventually.
-        // go round again.
-      }
-    }
-  }
-
-  virtual thread_state_type Poll()
-  {
-    {
-      lock_type lock(mutex_);
-      if (shutdown_)
-      {
-        return THREAD_SHOULD_QUIT;
-      }
-    }
-
-    thread_state_type r = THREAD_IDLE;
-    {
-      lock_type lock(mutex_);
-      if (!queue_.empty())
-      {
-        auto workload = queue_.front();
-        queue_.pop();
-        lock.unlock();
-        r = std::max(r, ExecuteWorkload(workload));
-      }
-    }
-
-    if (shutdown_)
-    {
-      return THREAD_SHOULD_QUIT;
-    }
-
-    if (!r)
-    {
-      r = std::max(r, TryFutureWork());
-    }
-
-    if (shutdown_)
-    {
-      return THREAD_SHOULD_QUIT;
-    }
-
-    if (!r)
-    {
-      r = std::max(r, TryIdleWork());
-    }
-
-    if (shutdown_)
-    {
-      return THREAD_SHOULD_QUIT;
-    }
-
-    return r;
-  }
-
-  virtual void Start()
-  {
-    std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
-    if (threads_.size() == 0)
-    {
-      fetch::logger.Info("Starting thread manager");
-      shared_ptr_type self = shared_from_this();
-      for (std::size_t i = 0; i < number_of_threads_; ++i)
-      {
-        threads_.push_back(new std::thread([self]() { self->ProcessLoop(); }));
-      }
-    }
-  }
-
-  virtual thread_state_type TryIdleWork()
-  {
-    thread_state_type            r = THREAD_IDLE;
-    std::unique_lock<std::mutex> lock(futureWorkProtector_, std::try_to_lock);
-    if (lock)
-    {
-      for (auto workload : idleWork_)
-      {
-        workload();
-        // workload may be longer running, we
-        // need to test for exits here.
-        if (shutdown_)  // workload may be longer running, we need to test for
-                        // exits here.
-        {
-          return THREAD_SHOULD_QUIT;
-        }
-        r = THREAD_WORKED;
-      }
-    }  // if we didn't get the lock, one thread is already doing future work --
-       // leave it be.
-    return r;
-  }
-
-  virtual thread_state_type TryFutureWork()
-  {
-    thread_state_type            r = THREAD_IDLE;
-    std::unique_lock<std::mutex> lock(futureWorkProtector_, std::try_to_lock);
-    if (lock)
-    {
-      while (futureWork_.IsDue())
-      {
-        // removes work from the pool and returns it.
-        auto moreWork = futureWork_.GetNext();  // removes work from the pool and returns it.
-        Post(moreWork);                         // We give that work to the other threads.
-        r = THREAD_WORKED;                      // We did something.
-      }
-    }
-    // if we didn't get the lock, one thread is already
-    // doing future work -- leave it be.
-    return r;
-  }
-
-  void Stop()
-  {
-    std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
-
-    bool tryingToKillFromThreadWeOwn = false;
-    shutdown_                        = true;
-    for (auto &thread : threads_)
-    {
-      if (std::this_thread::get_id() == thread->get_id())
-      {
-        tryingToKillFromThreadWeOwn = true;
-      }
-    }
-
-    if (tryingToKillFromThreadWeOwn)
-    {
-      fetch::logger.Error("Thread pools must not be killed by a thread they own.");
-    }
-
-    if (threads_.size() != 0)
-    {
-
-      fetch::logger.Info("Stopping thread pool");
-
-      {
-        lock_type lock(mutex_);
-        while (!queue_.empty())
-        {
-          queue_.pop();
-        }
-      }
-
-      {
-        lock_type lock(mutex_);
-        cv_.notify_all();
-      }
-
-      for (auto &thread : threads_)
-      {
-        if (std::this_thread::get_id() != thread->get_id())
-        {
-          thread->join();
-          delete thread;
-        }
-        else
-        {
-          fetch::logger.Error(
-              "Thread pools must not be killed by a thread they own"
-              "so I'm not going to try joining myself.");
-          thread->detach();
-          delete thread;
-        }
-      }
-
-      threads_.clear();
-    }
-  }
-
-  template <typename F>
-  void Post(F &&f, uint32_t milliseconds)
-  {
-    if (!shutdown_)
-    {
-      futureWork_.Post(f, milliseconds);
-      lock_type lock(mutex_);
-      cv_.notify_one();
-    }
-  }
+  // Operators
+  ThreadPoolImplementation &operator=(ThreadPoolImplementation const &) = delete;
+  ThreadPoolImplementation &operator=(ThreadPoolImplementation &&) = delete;
 
 private:
-  virtual thread_state_type ExecuteWorkload(event_function_type workload)
-  {
-    if (shutdown_)
-    {
-      return THREAD_SHOULD_QUIT;
-    }
+  using Mutex      = fetch::mutex::Mutex;
+  using ThreadPtr  = std::shared_ptr<std::thread>;
+  using ThreadPool = std::vector<ThreadPtr>;
+  using Flag       = std::atomic<bool>;
+  using Counter    = std::atomic<std::size_t>;
+  using Condition  = std::condition_variable;
 
-    thread_state_type r = THREAD_IDLE;
-    try
-    {
-      workload();
-      r = std::max(r, THREAD_WORKED);
-    }
-    catch (...)
-    {
-      fetch::logger.Error("Caught exception in ThreadPool::ExecuteWorkload");
-    }
+  void ProcessLoop(std::size_t index);
 
-    if (shutdown_)
-    {
-      return THREAD_SHOULD_QUIT;
-    }
+  bool Poll();
+  bool ExecuteWorkload(WorkItem const &workload);
 
-    return r;
-  }
+  std::size_t const max_threads_ = 1;  ///< Config: Max number of threads
 
-  std::size_t                number_of_threads_ = 1;
-  std::vector<std::thread *> threads_;
+  mutable Mutex threads_mutex_{__LINE__, __FILE__};  ///< Mutex protecting the thread store
+  ThreadPool    threads_;                            ///< Container of threads
 
-  FutureWorkStore futureWork_;
-  work_queue_type queue_;
-  idle_work_type  idleWork_;
+  WorkStore       work_;         ///< The main work queue
+  FutureWorkStore future_work_;  ///< The future work queue
+  IdleWorkStore   idle_work_;    ///< The idle work store
 
-  mutable fetch::mutex::Mutex     futureWorkProtector_;
-  mutable fetch::mutex::Mutex     thread_mutex_{__LINE__, __FILE__};
-  mutable std::condition_variable cv_;
-  mutable mutex_type              mutex_;
-  std::atomic<bool>               shutdown_;
+  Condition     work_available_;                  ///< Work available condition
+  mutable Mutex idle_mutex_{__LINE__, __FILE__};  ///< Associated mutex for condition
+  Flag          shutdown_{false};                 ///< Flag to signal the pool should stop
+  Counter       counter_{0};                      ///< The number of jobs executed
+  Counter       inactive_threads_{0};             ///< The number of threads waiting for work
+
+  std::string name_{};
 };
 
 }  // namespace details
 
 using ThreadPool = typename std::shared_ptr<details::ThreadPoolImplementation>;
 
-inline ThreadPool MakeThreadPool(std::size_t threads = 1)
+inline ThreadPool MakeThreadPool(std::size_t threads = 1, std::string const &name = "")
 {
-  return details::ThreadPoolImplementation::Create(threads);
+  return details::ThreadPoolImplementation::Create(threads, name);
 }
 
 }  // namespace network

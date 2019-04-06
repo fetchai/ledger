@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -32,9 +32,13 @@ public:
   using vector_register_type = VectorRegister<T, N>;
   using mm_register_type     = typename vector_register_type::mm_register_type;
 
-  VectorRegisterIterator() : ptr_(nullptr), end_(nullptr) {}
+  VectorRegisterIterator()
+    : ptr_(nullptr)
+    , end_(nullptr)
+  {}
   VectorRegisterIterator(type const *d, std::size_t size)
-    : ptr_((mm_register_type *)d), end_((mm_register_type *)(d + size))
+    : ptr_((mm_register_type *)d)
+    , end_((mm_register_type *)(d + size))
   {}
 
   void Next(vector_register_type &m)

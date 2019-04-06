@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
-#include "ledger/chaincode/cache.hpp"
+#include "core/threading/synchronised_state.hpp"
+#include "ledger/chain/constants.hpp"
 #include "ledger/execution_item.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/executor.hpp"
-#include "ledger/state_summary_archive.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "network/details/thread_pool.hpp"
+#include "storage/object_store.hpp"
 
 #include "core/byte_array/encoders.hpp"
 
@@ -48,39 +49,21 @@ class ExecutionManager : public ExecutionManagerInterface,
                          public std::enable_shared_from_this<ExecutionManager>
 {
 public:
-  using shared_executor_type = std::shared_ptr<ExecutorInterface>;
-  using executor_list_type   = std::vector<shared_executor_type>;
-  using block_slices_type    = std::vector<chain::BlockSlice>;
-  using block_digest_type    = byte_array::ConstByteArray;
-  using contract_cache_type  = ChainCodeCache;
-
-  using execution_item_type = std::unique_ptr<ExecutionItem>;
-  using execution_list_type = std::vector<execution_item_type>;
-  using execution_plan_type = std::vector<execution_list_type>;
-
-  using thread_pool_type      = fetch::network::ThreadPool;
-  using mutex_type            = std::mutex;
-  using counter_type          = std::atomic<std::size_t>;
-  using flag_type             = std::atomic<bool>;
-  using thread_type           = std::unique_ptr<std::thread>;
-  using executor_factory_type = std::function<shared_executor_type()>;
-  using storage_unit_type     = std::shared_ptr<StorageUnitInterface>;
-  using bookmark_type         = StorageUnitInterface::bookmark_type;
-  using hash_type             = StorageUnitInterface::hash_type;
-  using block_state_cache_type =
-      std::unordered_map<block_digest_type, hash_type, crypto::CallableFNV>;
+  using StorageUnitPtr  = std::shared_ptr<StorageUnitInterface>;
+  using ExecutorPtr     = std::shared_ptr<ExecutorInterface>;
+  using ExecutorFactory = std::function<ExecutorPtr()>;
 
   // Construction / Destruction
-  explicit ExecutionManager(std::size_t num_executors, storage_unit_type storage,
-                            executor_factory_type const &factory);
+  ExecutionManager(std::size_t num_executors, StorageUnitPtr storage,
+                   ExecutorFactory const &factory);
 
   /// @name Execution Manager Interface
   /// @{
-  Status            Execute(block_type const &block) override;
-  block_digest_type LastProcessedBlock() override;
-  bool              IsActive() override;
-  bool              IsIdle() override;
-  bool              Abort() override;
+  ScheduleStatus Execute(Block::Body const &block) override;
+  void           SetLastProcessedBlock(BlockHash hash) override;
+  BlockHash      LastProcessedBlock() override;
+  State          GetState() override;
+  bool           Abort() override;
   /// @}
 
   // general control of the operation of the module
@@ -88,46 +71,67 @@ public:
   void Stop();
 
   // statistics
-  std::size_t completed_executions() const { return completed_executions_; }
+  std::size_t completed_executions() const
+  {
+    return completed_executions_;
+  }
 
 private:
-  flag_type running_{false};
-  flag_type active_{false};
-  flag_type monitor_ready_{false};
+  struct Counters
+  {
+    std::size_t active{0};
+    std::size_t remaining{0};
+  };
 
-  contract_cache_type contracts_;
-  storage_unit_type   storage_;
-  execution_plan_type execution_plan_;
-  mutex_type          execution_plan_lock_;
-  block_digest_type   last_block_hash_;
+  using ExecutionItemPtr  = std::unique_ptr<ExecutionItem>;
+  using ExecutionItemList = std::vector<ExecutionItemPtr>;
+  using ExecutionPlan     = std::vector<ExecutionItemList>;
+  using ThreadPool        = fetch::network::ThreadPool;
+  using Mutex             = std::mutex;
+  using Counter           = std::atomic<std::size_t>;
+  using Flag              = std::atomic<bool>;
+  using StateHash         = StorageUnitInterface::Hash;
+  using ExecutorList      = std::vector<ExecutorPtr>;
+  using StateHashCache    = storage::ObjectStore<StateHash>;
+  using ThreadPtr         = std::unique_ptr<std::thread>;
+  using BlockSliceList    = ledger::Block::Slices;
+  using Condition         = std::condition_variable;
+  using ResourceID        = storage::ResourceID;
+  using AtomicState       = std::atomic<State>;
+  using SyncCounters      = SynchronisedState<Counters>;
+  using SyncedState       = SynchronisedState<State>;
 
-  std::condition_variable monitor_wake_;
-  std::condition_variable monitor_notify_;
+  Flag running_{false};
+  Flag monitor_ready_{false};
 
-  mutex_type         idle_executors_lock_;
-  executor_list_type idle_executors_;
+  SyncedState state_{State::IDLE};
 
-  counter_type     active_count_{0};
-  counter_type     completed_executions_{0};
-  counter_type     remaining_executions_{0};
-  thread_pool_type thread_pool_;
-  thread_type      monitor_thread_;
+  StorageUnitPtr storage_;
 
-  // std::size_t slice_index_{0};
-  std::atomic<std::size_t> num_slices_;
+  Mutex         execution_plan_lock_;  ///< guards `execution_plan_`
+  ExecutionPlan execution_plan_;
 
-  mutex_type state_archive_lock_;  ///< guards both the state_archive_ and the
-                                   ///< block_state_cache_
-  StateSummaryArchive    state_archive_;
-  block_state_cache_type block_state_cache_;  // TODO(issue 33): Both these caches require
-                                              // maintenance to stop them growing forever
+  BlockHash last_block_hash_ = GENESIS_DIGEST;
+
+  Mutex     monitor_lock_;
+  Condition monitor_wake_;
+  Condition monitor_notify_;
+
+  Mutex        idle_executors_lock_;  ///< guards `idle_executors`
+  ExecutorList idle_executors_;
+
+  Counter completed_executions_{0};
+  Counter num_slices_{0};
+
+  SyncCounters counters_{};
+
+  ThreadPool thread_pool_;
+  ThreadPtr  monitor_thread_;
 
   void MonitorThreadEntrypoint();
 
-  bool PlanExecution(block_type const &block);
+  bool PlanExecution(Block::Body const &block);
   void DispatchExecution(ExecutionItem &item);
-
-  bool AttemptRestoreToBlock(block_digest_type const &digest);
 };
 
 }  // namespace ledger

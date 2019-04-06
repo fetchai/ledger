@@ -1,0 +1,12 @@
+function main()
+  var message : String;
+
+  if( System.Argc() <= 1)
+    Print("Please supply some more command line arguments.");
+  elseif( System.Argc() <= 3)
+    Print("Com'on supply a few more.");
+  else 
+    Print("Thank you.");
+  endif
+
+endfunction

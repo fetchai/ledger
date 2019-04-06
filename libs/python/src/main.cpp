@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,31 +17,31 @@
 //------------------------------------------------------------------------------
 
 #include "python/fetch_pybind.hpp"
+
+#include "python/core/fixed_point/py_fixed_point.hpp"
+
 #include "python/memory/py_array.hpp"
 #include "python/memory/py_range.hpp"
-#include "python/memory/py_shape_less_array.hpp"
 #include "python/memory/py_shared_array.hpp"
-//#include "python/memory/py_ndarray.hpp"
-#include "python/memory/py_rectangular_array.hpp"
 
 #include "python/math/distance/py_braycurtis.hpp"
 #include "python/math/distance/py_chebyshev.hpp"
-#include "python/math/distance/py_distance_matrix.hpp"
-#include "python/math/distance/py_eisen.hpp"
+#include "python/math/distance/py_cosine.hpp"
 #include "python/math/distance/py_euclidean.hpp"
 #include "python/math/distance/py_hamming.hpp"
 #include "python/math/distance/py_jaccard.hpp"
 #include "python/math/distance/py_manhattan.hpp"
-#include "python/math/distance/py_pairwise_distance.hpp"
 #include "python/math/distance/py_pearson.hpp"
-#include "python/math/linalg/py_matrix.hpp"
+
+// #include "python/math/clustering/py_kmeans.hpp"
+
 #include "python/math/py_bignumber.hpp"
 #include "python/math/py_exp.hpp"
 #include "python/math/py_log.hpp"
-#include "python/math/py_ndarray.hpp"
+#include "python/math/py_tensor.hpp"
 #include "python/math/spline/py_linear.hpp"
 
-#include "python/math/correlation/py_eisen.hpp"
+#include "python/math/correlation/py_cosine.hpp"
 #include "python/math/correlation/py_jaccard.hpp"
 #include "python/math/correlation/py_pearson.hpp"
 
@@ -65,6 +65,15 @@
 #include "python/random/py_lcg.hpp"
 #include "python/random/py_lfg.hpp"
 
+#include "python/ml/all.hpp"
+
+#include "python/auctions/py_bid.hpp"
+#include "python/auctions/py_combinatorial_auction.hpp"
+#include "python/auctions/py_item.hpp"
+#include "python/auctions/py_mock_smart_ledger.hpp"
+
+#include "python/serializers/py_byte_array_buffer.hpp"
+
 // !!!!
 namespace py = pybind11;
 
@@ -75,18 +84,29 @@ PYBIND11_MODULE(fetch, module)
 
   // Namespaces
 
+  py::module ns_fetch_fixed_point      = module.def_submodule("fixed_point");
   py::module ns_fetch_random           = module.def_submodule("random");
   py::module ns_fetch_vectorize        = module.def_submodule("vectorize");
   py::module ns_fetch_image            = module.def_submodule("image");
   py::module ns_fetch_image_colors     = ns_fetch_image.def_submodule("colors");
   py::module ns_fetch_math             = module.def_submodule("math");
+  py::module ns_fetch_ml               = module.def_submodule("ml");
   py::module ns_fetch_math_correlation = ns_fetch_math.def_submodule("correlation");
   py::module ns_fetch_math_distance    = ns_fetch_math.def_submodule("distance");
+  py::module ns_fetch_math_clustering  = ns_fetch_math.def_submodule("clustering");
   py::module ns_fetch_math_statistics  = ns_fetch_math.def_submodule("statistics");
   py::module ns_fetch_math_spline      = ns_fetch_math.def_submodule("spline");
+  py::module ns_fetch_math_tensor      = ns_fetch_math.def_submodule("tensor");
   py::module ns_fetch_memory           = module.def_submodule("memory");
   py::module ns_fetch_byte_array       = module.def_submodule("byte_array");
   py::module ns_fetch_math_linalg      = ns_fetch_math.def_submodule("linalg");
+  py::module ns_fetch_auctions         = module.def_submodule("auctions");
+  py::module ns_fetch_serializer       = module.def_submodule("serializers");
+
+  fetch::math::BuildTensor<float>("TensorFloat", ns_fetch_math_tensor);
+  fetch::math::BuildTensor<double>("TensorDouble", ns_fetch_math_tensor);
+  fetch::math::BuildTensor<fetch::fixed_point::FixedPoint<32, 32>>("TensorFixed32_32",
+                                                                   ns_fetch_math_tensor);
 
   fetch::memory::BuildArray<int8_t>("ArrayInt8", ns_fetch_memory);
   fetch::memory::BuildArray<int16_t>("ArrayInt16", ns_fetch_memory);
@@ -115,86 +135,11 @@ PYBIND11_MODULE(fetch, module)
   fetch::memory::BuildSharedArray<double>("SharedArrayDouble", ns_fetch_memory);
 
   fetch::memory::BuildRange("Range", ns_fetch_memory);
-  /*
-  fetch::math::BuildShapeLessArray<int8_t>("ShapeLessArrayInt8",
-  ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<int16_t>("ShapeLessArrayInt16",
-  ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<int32_t>("ShapeLessArrayInt32",
-  ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<int64_t>("ShapeLessArrayInt64",
-  ns_fetch_memory);
-
-  fetch::math::BuildShapeLessArray<uint8_t>("ShapeLessArrayUInt8",
-  ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<uint16_t>("ShapeLessArrayUInt16",
-  ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<uint32_t>("ShapeLessArrayUInt32",
-  ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<uint64_t>("ShapeLessArrayUInt64",
-  ns_fetch_memory);
-  */
-  fetch::math::BuildShapeLessArray<float>("ShapeLessArrayFloat", ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<double>("ShapeLessArrayDouble", ns_fetch_memory);
-
-  /*
-  fetch::math::BuildRectangularArray<int8_t>("RectangularArrayInt8",
-  ns_fetch_memory);
-  fetch::math::BuildRectangularArray<int16_t>("RectangularArrayInt16",
-  ns_fetch_memory);
-  fetch::math::BuildRectangularArray<int32_t>("RectangularArrayInt32",
-  ns_fetch_memory);
-  fetch::math::BuildRectangularArray<int64_t>("RectangularArrayInt64",
-  ns_fetch_memory);
-
-  fetch::math::BuildRectangularArray<uint8_t>("RectangularArrayUInt8",
-  ns_fetch_memory);
-  fetch::math::BuildRectangularArray<uint16_t>("RectangularArrayUInt16",
-  ns_fetch_memory);
-  fetch::math::BuildRectangularArray<uint32_t>("RectangularArrayUInt32",
-  ns_fetch_memory);
-  fetch::math::BuildRectangularArray<uint64_t>("RectangularArrayUInt64",
-  ns_fetch_memory);
-  */
-  fetch::math::BuildRectangularArray<float>("RectangularArrayFloat", ns_fetch_memory);
-  fetch::math::BuildRectangularArray<double>("RectangularArrayDouble", ns_fetch_memory);
 
   //  fetch::math::BuildExp< 0, 60801, false>("Exp0", ns_fetch_math);
   //  fetch::math::BuildLog(ns_fetch_math);
 
-  //  fetch::math::linalg::BuildMatrix<int8_t>("MatrixInt8",
-  //  ns_fetch_math_linalg);
-  //  fetch::math::linalg::BuildMatrix<int16_t>("MatrixInt16",
-  //  ns_fetch_math_linalg);
-  //  fetch::math::linalg::BuildMatrix<int32_t>("MatrixInt32",
-  //  ns_fetch_math_linalg);
-  //  fetch::math::linalg::BuildMatrix<int64_t>("MatrixInt64",
-  //  ns_fetch_math_linalg);
-
-  //  fetch::math::linalg::BuildMatrix<uint8_t>("MatrixUInt8",
-  //  ns_fetch_math_linalg);
-  //  fetch::math::linalg::BuildMatrix<uint16_t>("MatrixUInt16",
-  //  ns_fetch_math_linalg);
-  //  fetch::math::linalg::BuildMatrix<uint32_t>("MatrixUInt32",
-  //  ns_fetch_math_linalg);
-  //  fetch::math::linalg::BuildMatrix<uint64_t>("MatrixUInt64",
-  //  ns_fetch_math_linalg);
-
-  fetch::math::linalg::BuildMatrix<float>("MatrixFloat", ns_fetch_math_linalg);
-  fetch::math::linalg::BuildMatrix<double>("MatrixDouble", ns_fetch_math_linalg);
-
-  fetch::math::BuildNDArray<float>("NDArrayFloat", ns_fetch_math);
-  fetch::math::BuildNDArray<double>("NDArrayDouble", ns_fetch_math);
-
   //  fetch::math::BuildSpline(ns_fetch_math_spline);
-  //  fetch::image::colors::BuildAbstractColor<uint32_t, 8,
-  //  3>("ColorRGB8",ns_fetch_image_colors);
-  //  fetch::image::colors::BuildAbstractColor<uint32_t, 8,
-  //  4>("ColorRGBA8",ns_fetch_image_colors);
-
-  //  fetch::image::BuildImageType< fetch::image::colors::RGB8 >("ImageRGB8",
-  //  ns_fetch_image); fetch::image::BuildImageType< fetch::image::colors::RGBA8
-  //  >("ImageRGBA8", ns_fetch_image);
 
   ///////////
   // Comparisons
@@ -218,8 +163,9 @@ PYBIND11_MODULE(fetch, module)
   fetch::math::distance::BuildChebyshevDistance("Chebyshev", ns_fetch_math_distance);
   fetch::math::distance::BuildBraycurtisDistance("Braycurtis", ns_fetch_math_distance);
 
-  fetch::math::distance::BuildDistanceMatrixDistance("DistanceMatrix", ns_fetch_math_distance);
-  fetch::math::distance::BuildPairWiseDistanceDistance("PairWiseDistance", ns_fetch_math_distance);
+  ////////////
+
+  // fetch::math::clustering::BuildKMeansClustering("KMeans", ns_fetch_math_clustering);
 
   ////////////
 
@@ -227,8 +173,8 @@ PYBIND11_MODULE(fetch, module)
   fetch::math::BuildLogStatistics("Log", ns_fetch_math_statistics);
 
   // Statisticsfetch_math_statistics);
-  fetch::math::statistics::BuildMinStatistics("Min", ns_fetch_math_statistics);
-  fetch::math::statistics::BuildMaxStatistics("Max", ns_fetch_math_statistics);
+  fetch::math::BuildMinStatistics("Min", ns_fetch_math_statistics);
+  fetch::math::BuildMaxStatistics("Max", ns_fetch_math_statistics);
   fetch::math::statistics::BuildMeanStatistics("Mean", ns_fetch_math_statistics);
   fetch::math::statistics::BuildGeometricMeanStatistics("GeometricMean", ns_fetch_math_statistics);
   fetch::math::statistics::BuildVarianceStatistics("Variance", ns_fetch_math_statistics);
@@ -244,4 +190,27 @@ PYBIND11_MODULE(fetch, module)
 
   // py::module ns_fetch_network_swarm = module.def_submodule("network_swarm");
   // fetch::swarm::BuildSwarmAgentApi(ns_fetch_network_swarm);
+
+  // FixedPoint
+  fetch::fixed_point::BuildFixedPoint<32, 32>("FixedPoint32_32", ns_fetch_fixed_point);
+
+  // Machine Learning
+  py::module ns_fetch_ml_float = ns_fetch_ml.def_submodule("float");
+  fetch::ml::BuildMLLibrary<float>(ns_fetch_ml_float);
+
+  py::module ns_fetch_ml_double = ns_fetch_ml.def_submodule("double");
+  fetch::ml::BuildMLLibrary<double>(ns_fetch_ml_double);
+
+  py::module ns_fetch_ml_fixed_32_32 = ns_fetch_ml.def_submodule("fixed_32_32");
+  fetch::ml::BuildMLLibrary<fetch::fixed_point::FixedPoint<32, 32>>(ns_fetch_ml_fixed_32_32);
+
+  /////////////
+
+  fetch::auctions::BuildCombinatorialAuction("CombinatorialAuction", ns_fetch_auctions);
+  fetch::auctions::BuildItem("Item", ns_fetch_auctions);
+  fetch::auctions::BuildBid("Bid", ns_fetch_auctions);
+
+  fetch::auctions::BuildMockSmartLedger("MockSmartLedger", ns_fetch_auctions);
+
+  fetch::serializers::BuildByteArrayBuffer(ns_fetch_serializer);
 }

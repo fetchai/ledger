@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -32,7 +32,10 @@ template <typename T>
 bool Load(T &optimiser, std::string const &filename)
 {
   std::fstream fin(filename, std::ios::in);
-  if (!fin) return false;
+  if (!fin)
+  {
+    return false;
+  }
 
   std::string line;
 
@@ -53,15 +56,24 @@ bool Load(T &optimiser, std::string const &filename)
     std::getline(fin, line);
 
     uint64_t p = uint64_t(line.find('#'));
-    if (p != std::string::npos) line = line.substr(0, std::size_t(p));
+    if (p != std::string::npos)
+    {
+      line = line.substr(0, std::size_t(p));
+    }
     string::Trim(line);
-    if (line == "") continue;
+    if (line == "")
+    {
+      continue;
+    }
     std::stringstream ss(line);
     Coupling          c;
     int               i, j;
 
     ss >> i >> j >> c.c;
-    if ((i == -1) || (j == -1)) break;
+    if ((i == -1) || (j == -1))
+    {
+      break;
+    }
 
     if (indices.find(i) == indices.end())
     {
@@ -87,12 +99,18 @@ bool Load(T &optimiser, std::string const &filename)
   std::size_t connect_count = 0;
   for (auto &p : connectivity)
   {
-    if (connect_count < p.second) connect_count = p.second;
+    if (connect_count < p.second)
+    {
+      connect_count = p.second;
+    }
   }
 
   optimiser.Resize(k, connect_count);
 
-  for (auto &c : couplings) optimiser.Insert(c.i, c.j, c.c);
+  for (auto &c : couplings)
+  {
+    optimiser.Insert(c.i, c.j, c.c);
+  }
   return true;
 }
 }  // namespace optimisers

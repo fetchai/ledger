@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ public:
   using weak_ptr_type          = std::weak_ptr<AbstractConnection>;
   using weak_register_type     = std::weak_ptr<AbstractConnectionRegister>;
 
+  static constexpr char const *LOGGING_NAME = "AbstractConnection";
+
   enum
   {
     TYPE_UNDEFINED = 0,
@@ -42,11 +44,19 @@ public:
     TYPE_OUTGOING  = 2
   };
 
-  AbstractConnection() { handle_ = AbstractConnection::next_handle(); }
+  AbstractConnection()
+  {
+    handle_ = AbstractConnection::next_handle();
+  }
 
   // Interface
   virtual ~AbstractConnection()
   {
+    auto h = handle_.load();
+
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection destruction in progress for handle ", h);
+    FETCH_LOG_VARIABLE(h);
+
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
       on_message_ = nullptr;
@@ -55,15 +65,16 @@ public:
     auto ptr = connection_register_.lock();
     if (ptr)
     {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "~AbstractConnection calling Leave");
       ptr->Leave(handle_);
     }
-    fetch::logger.Debug("Connection destroyed");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection destroyed for handle ", h);
   }
 
   virtual void     Send(message_type const &) = 0;
   virtual uint16_t Type() const               = 0;
   virtual void     Close()                    = 0;
-  virtual bool     Closed()                   = 0;
+  virtual bool     Closed() const             = 0;
   virtual bool     is_alive() const           = 0;
 
   // Common to all
@@ -73,17 +84,35 @@ public:
     return address_;
   }
 
-  uint16_t port() const { return port_; }
+  uint16_t port() const
+  {
+    return port_;
+  }
 
-  connection_handle_type handle() const noexcept { return handle_; }
-  void SetConnectionManager(weak_register_type const &reg) { connection_register_ = reg; }
+  connection_handle_type handle() const noexcept
+  {
+    return handle_;
+  }
+  void SetConnectionManager(weak_register_type const &reg)
+  {
+    connection_register_ = reg;
+  }
 
-  weak_ptr_type connection_pointer() { return shared_from_this(); }
+  weak_ptr_type connection_pointer()
+  {
+    return shared_from_this();
+  }
 
   void OnMessage(std::function<void(network::message_type const &msg)> const &f)
   {
     std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
     on_message_ = f;
+  }
+
+  void OnConnectionSuccess(std::function<void()> const &fnc)
+  {
+    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+    on_connection_success_ = fnc;
   }
 
   void OnConnectionFailed(std::function<void()> const &fnc)
@@ -101,13 +130,20 @@ public:
   void ClearClosures() noexcept
   {
     std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
-    on_connection_failed_ = nullptr;
-    on_message_           = nullptr;
+    on_connection_failed_  = nullptr;
+    on_connection_success_ = nullptr;
+    on_message_            = nullptr;
   }
 
-  void ActivateSelfManage() { self_ = shared_from_this(); }
+  void ActivateSelfManage()
+  {
+    self_ = shared_from_this();
+  }
 
-  void DeactivateSelfManage() { self_.reset(); }
+  void DeactivateSelfManage()
+  {
+    self_.reset();
+  }
 
 protected:
   void SetAddress(std::string const &addr)
@@ -116,46 +152,97 @@ protected:
     address_ = addr;
   }
 
-  void SetPort(uint16_t const &p) { port_ = p; }
+  void SetPort(uint16_t const &p)
+  {
+    port_ = p;
+  }
 
   void SignalLeave()
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
-    fetch::logger.Debug("Connection terminated");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection terminated for handle ", handle_.load(),
+                    ", SignalLeave called.");
+    std::function<void(void)> cb;
+    {
+      std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+      cb = on_leave_;
+    }
 
-    if (on_leave_) on_leave_();
+    if (cb)
+    {
+      cb();
+    }
     DeactivateSelfManage();
+    FETCH_LOG_DEBUG(LOGGING_NAME, "SignalLeave is done");
   }
 
   void SignalMessage(network::message_type const &msg)
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
-    if (on_message_) on_message_(msg);
+    std::function<void(network::message_type const &)> cb;
+    {
+      std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+      cb = on_message_;
+    }
+    if (cb)
+    {
+      cb(msg);
+    }
   }
 
   void SignalConnectionFailed()
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
-    if (on_connection_failed_) on_connection_failed_();
+    std::function<void()> cb;
+    {
+      std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+      cb = on_leave_;
+    }
+    if (cb)
+    {
+      cb();
+    }
+
+    DeactivateSelfManage();
+  }
+
+  void SignalConnectionSuccess()
+  {
+    std::function<void()> cb;
+    {
+      std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+      cb = on_connection_success_;
+    }
+
+    if (cb)
+    {
+      cb();
+    }
 
     DeactivateSelfManage();
   }
 
 private:
   std::function<void(network::message_type const &msg)> on_message_;
+  std::function<void()>                                 on_connection_success_;
   std::function<void()>                                 on_connection_failed_;
   std::function<void()>                                 on_leave_;
 
   std::string           address_;
   std::atomic<uint16_t> port_;
 
-  mutable mutex::Mutex address_mutex_;
+  mutable mutex::Mutex address_mutex_{__LINE__, __FILE__};
 
   static connection_handle_type next_handle()
   {
-    std::lock_guard<fetch::mutex::Mutex> lck(global_handle_mutex_);
-    connection_handle_type               ret = global_handle_counter_;
-    ++global_handle_counter_;
+    connection_handle_type ret = 0;
+
+    {
+      std::lock_guard<fetch::mutex::Mutex> lck(global_handle_mutex_);
+
+      while (ret == 0)
+      {
+        ret = global_handle_counter_++;
+      }
+    }
+
     return ret;
   }
 
@@ -164,8 +251,7 @@ private:
 
   static connection_handle_type global_handle_counter_;
   static fetch::mutex::Mutex    global_handle_mutex_;
-
-  mutable fetch::mutex::Mutex callback_mutex_;
+  mutable fetch::mutex::Mutex   callback_mutex_{__LINE__, __FILE__};
 
   shared_type self_;
 

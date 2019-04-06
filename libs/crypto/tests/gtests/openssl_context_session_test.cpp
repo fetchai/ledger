@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -55,14 +55,21 @@ struct StaticMockContextPrimitive;
 template <>
 struct StaticMockContextPrimitive<TestType>
 {
-  static void start(TestType *ptr) { MockContextPrimitive::value->start(ptr); }
-  static void end(TestType *ptr) { MockContextPrimitive::value->end(ptr); }
+  static void start(TestType *ptr)
+  {
+    MockContextPrimitive::value->start(ptr);
+  }
+  static void end(TestType *ptr)
+  {
+    MockContextPrimitive::value->end(ptr);
+  }
 };
 
 class Deleter
 {
 public:
-  void operator()(TestType *ptr) {}
+  void operator()(TestType *)  // NOLINT
+  {}
 };
 
 class OpenSSLContextSessionTest : public testing::Test
@@ -75,16 +82,22 @@ protected:
 
   MockContextPrimitive::SharedPtr &contextMock_ = MockContextPrimitive::value;
 
-  void SetUp() { contextMock_ = std::make_shared<MockContextPrimitive::Type>(); }
+  void SetUp()
+  {
+    contextMock_ = std::make_shared<MockContextPrimitive::Type>();
+  }
 
-  void TearDown() { contextMock_ = MockContextPrimitive::SharedPtr(); }
+  void TearDown()
+  {
+    contextMock_ = MockContextPrimitive::SharedPtr();
+  }
 };
 
 TEST_F(OpenSSLContextSessionTest, test_Session_basic_scenario_constructro_and_destructor)
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*contextMock_, start(&testValue)).WillOnce(Return());
   EXPECT_CALL(*contextMock_, end(&testValue)).WillOnce(Return());
 
@@ -100,7 +113,7 @@ TEST_F(OpenSSLContextSessionTest, test_Session_constructor_and_end)
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*contextMock_, start(&testValue)).WillOnce(Return());
   EXPECT_CALL(*contextMock_, end(&testValue)).WillOnce(Return());
 
@@ -117,7 +130,7 @@ TEST_F(OpenSSLContextSessionTest, test_Session_started_and_destructor)
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*contextMock_, end(&testValue)).WillOnce(Return());
 
   {
@@ -132,7 +145,7 @@ TEST_F(OpenSSLContextSessionTest, test_Session_started_and_end)
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*contextMock_, end(&testValue)).WillOnce(Return());
 
   {
@@ -148,7 +161,7 @@ TEST_F(OpenSSLContextSessionTest, test_Session_constructor_and_start_and_destruc
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*contextMock_, start(&testValue)).WillOnce(Return());
   EXPECT_CALL(*contextMock_, end(&testValue)).WillOnce(Return());
 

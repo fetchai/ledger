@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -28,11 +28,8 @@ inline void ColorLog(fetch::http::HTTPResponse &res, fetch::http::HTTPRequest co
   using namespace fetch::commandline::VT100;
   std::string color = "";
 
-  switch (res.status().code / 100)
+  switch (static_cast<uint16_t>(res.status()) / 100u)
   {
-  case 0:
-    color = GetColor(9, 9);
-    break;
   case 1:
     color = GetColor(4, 9);
     break;
@@ -48,10 +45,12 @@ inline void ColorLog(fetch::http::HTTPResponse &res, fetch::http::HTTPRequest co
   case 5:
     color = GetColor(6, 9);
     break;
+  default:
+    color = GetColor(9, 9);
+    break;
   };
 
-  std::cout << "[ " << color << res.status().explanation << DefaultAttributes() << " ] "
-            << req.uri();
+  std::cout << "[ " << color << ToString(res.status()) << DefaultAttributes() << " ] " << req.uri();
   std::cout << ", " << GetColor(5, 9) << res.mime_type().type << DefaultAttributes() << std::endl;
 }
 }  // namespace middleware

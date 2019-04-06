@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -30,51 +30,53 @@ namespace http {
 class HTTPResponse : public std::enable_shared_from_this<HTTPResponse>
 {
 public:
-  HTTPResponse(byte_array::ConstByteArray body, MimeType mime = {".html", "text/html"},
-               Status status = status_code::SUCCESS_OK)
-    : body_(body), mime_(std::move(mime)), status_(std::move(status))
+  HTTPResponse() = default;
+
+  explicit HTTPResponse(byte_array::ConstByteArray const &body,
+                        MimeType mime = {".html", "text/html"}, Status status = Status::SUCCESS_OK)
+    : body_(std::move(body))
+    , mime_(std::move(mime))
+    , status_(status)
   {
     header_.Add("content-length", int64_t(body_.size()));
     header_.Add("content-type", mime_.type);
   }
 
-  static void WriteToBuffer(HTTPResponse &res, asio::streambuf &buffer)
+  bool ParseHeader(asio::streambuf &buffer, std::size_t length);
+  bool ParseBody(asio::streambuf &buffer, std::size_t length);
+  bool ToStream(asio::streambuf &buffer) const;
+
+  byte_array::ConstByteArray const &body() const
   {
-    LOG_STACK_TRACE_POINT;
-
-    std::ostream out(&buffer);
-
-    out << "HTTP/1.1 " << res.status_.code << "\r\n";
-
-    if (!res.header_.Has("content-length"))
-    {
-      res.header_.Add("content-length", res.body_.size());
-    }
-
-    for (auto &field : res.header_)
-    {
-      out << field.first << ": " << field.second << "\r\n";
-    }
-    out << "\r\n";
-    out.write(const_cast<const byte_array::ConstByteArray &>(res.body_).char_pointer(),
-              static_cast<int>(res.body_.size()));
+    return body_;
+  }
+  Status status() const
+  {
+    return status_;
+  }
+  MimeType const &mime_type() const
+  {
+    return mime_;
+  }
+  Header const &header() const
+  {
+    return header_;
   }
 
-  byte_array::ConstByteArray const &body() const { return body_; }
+  void AddHeader(byte_array::ConstByteArray const &key, byte_array::ConstByteArray const &value)
+  {
+    header_.Add(key, value);
+  }
 
-  Status const &status() const { return status_; }
-
-  Status &status() { return status_; }
-
-  MimeType const &mime_type() const { return mime_; }
-
-  MimeType &mime_type() { return mime_; }
-
-  Header const &header() const { return header_; }
-
-  Header &header() { return header_; }
+  void SetBody(byte_array::ConstByteArray const &body)
+  {
+    body_ = body;
+  }
 
 private:
+  bool ParseFirstLine(char const *begin, char const *end);
+  bool ParseHeaderLine(std::size_t line_idx, char const *begin, char const *end);
+
   byte_array::ConstByteArray body_;
   MimeType                   mime_;
   Status                     status_;

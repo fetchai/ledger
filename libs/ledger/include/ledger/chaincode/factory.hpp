@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,27 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/contract.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 
 #include <functional>
 #include <memory>
-#include <string>
-#include <unordered_map>
 #include <unordered_set>
 
 namespace fetch {
 namespace ledger {
 
+class Identifier;
+class Contract;
+class StorageInterface;
+
 class ChainCodeFactory
 {
 public:
-  using chain_code_type       = std::shared_ptr<Contract>;
-  using factory_callable_type = std::function<chain_code_type()>;
-  using factory_registry_type = std::unordered_map<std::string, factory_callable_type>;
-  using contract_set_type     = std::unordered_set<std::string>;
+  using ConstByteArray  = byte_array::ConstByteArray;
+  using ContractPtr     = std::shared_ptr<Contract>;
+  using ContractNameSet = std::unordered_set<ConstByteArray>;
 
-  chain_code_type          Create(std::string const &name) const;
-  contract_set_type const &GetContracts() const;
+  ContractPtr Create(Identifier const &name, StorageInterface &storage) const;
+
+  ContractNameSet const &GetChainCodeContracts() const;
 };
 
 }  // namespace ledger

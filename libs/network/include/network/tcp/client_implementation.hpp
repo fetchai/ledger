@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -49,6 +49,8 @@ public:
   using resolver_type        = asio::ip::tcp::resolver;
   using mutex_type           = std::mutex;
 
+  static constexpr char const *LOGGING_NAME = "TCPClientImpl";
+
   TCPClientImplementation(network_manager_type const &network_manager) noexcept
     : networkManager_(network_manager)
   {}
@@ -59,7 +61,13 @@ public:
   TCPClientImplementation &operator=(TCPClientImplementation const &rhs) = delete;
   TCPClientImplementation &operator=(TCPClientImplementation &&rhs) = delete;
 
-  ~TCPClientImplementation() { destructing_ = true; }
+  ~TCPClientImplementation()
+  {
+    if (!Closed() && !posted_close_)
+    {
+      Close();
+    }
+  }
 
   void Connect(byte_array::ConstByteArray const &host, uint16_t port)
   {
@@ -70,16 +78,22 @@ public:
   {
     self_type self = shared_from_this();
 
-    fetch::logger.Debug("Client posting connect");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Client posting connect");
 
     networkManager_.Post([this, self, host, port] {
       shared_self_type selfLock = self.lock();
-      if (!selfLock) return;
+      if (!selfLock)
+      {
+        return;
+      }
 
       // We get IO objects from the network manager, they will only be strong
       // while in the post
       auto strand = networkManager_.CreateIO<strand_type>();
-      if (!strand) return;
+      if (!strand)
+      {
+        return;
+      }
       {
         std::lock_guard<mutex_type> lock(io_creation_mutex_);
         strand_ = strand;
@@ -87,13 +101,16 @@ public:
 
       strand->post([this, self, host, port, strand] {
         shared_self_type selfLock = self.lock();
-        if (!selfLock) return;
+        if (!selfLock)
+        {
+          return;
+        }
 
         std::shared_ptr<socket_type> socket = networkManager_.CreateIO<socket_type>();
 
         {
           std::lock_guard<mutex_type> lock(io_creation_mutex_);
-          if (!postedClose_)
+          if (!posted_close_)
           {
             socket_ = socket;
           }
@@ -104,13 +121,17 @@ public:
         auto cb = [this, self, res, socket, strand, port](std::error_code ec,
                                                           resolver_type::iterator) {
           shared_self_type selfLock = self.lock();
-          if (!selfLock) return;
+          if (!selfLock)
+          {
+            return;
+          }
 
           LOG_STACK_TRACE_POINT;
-          fetch::logger.Info("Finished connecting.");
+
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Finished connecting.");
           if (!ec)
           {
-            fetch::logger.Debug("Connection established!");
+            FETCH_LOG_DEBUG(LOGGING_NAME, "Connection established!");
 
             // Prevent this from throwing
             std::error_code         ec2;
@@ -124,12 +145,13 @@ public:
             }
             else
             {
-              fetch::logger.Warn("Failed to get endpoint of socket after connection");
+              FETCH_LOG_INFO(LOGGING_NAME, "Failed to get endpoint of socket after connection");
             }
           }
           else
           {
-            fetch::logger.Debug("Client failed to connect");
+            FETCH_LOG_INFO(LOGGING_NAME, "Client failed to connect on port ", port, ": ",
+                           ec.message());
             SignalLeave();
           }
         };
@@ -143,8 +165,8 @@ public:
         }
         else
         {
+          FETCH_LOG_ERROR(LOGGING_NAME, "Failed to create valid socket");
           SignalLeave();
-          fetch::logger.Error("Failed to create valid socket");
         }
       });  // end strand post
     });    // end NM post
@@ -160,7 +182,7 @@ public:
   {
     if (!connected_)
     {
-      fetch::logger.Warn("Attempting to write to socket too early. Returning.");
+      FETCH_LOG_WARN(LOGGING_NAME, "Attempting to write to socket too early. Returning.");
       return;
     }
     //    std::cout << "SENDING: " << this->Address() << ":" << this->port() <<
@@ -177,18 +199,24 @@ public:
     networkManager_.Post([this, self, strand] {
       shared_self_type selfLock   = self.lock();
       auto             strandLock = strand_.lock();
-      if (!selfLock || !strandLock) return;
+      if (!selfLock || !strandLock)
+      {
+        return;
+      }
 
       strandLock->post([this, selfLock] { WriteNext(selfLock); });
     });
   }
 
-  uint16_t Type() const override { return AbstractConnection::TYPE_OUTGOING; }
+  uint16_t Type() const override
+  {
+    return AbstractConnection::TYPE_OUTGOING;
+  }
 
   void Close() override
   {
     std::lock_guard<mutex_type> lock(io_creation_mutex_);
-    postedClose_                          = true;
+    posted_close_                         = true;
     std::weak_ptr<socket_type> socketWeak = socket_;
     std::weak_ptr<strand_type> strandWeak = strand_;
 
@@ -207,11 +235,13 @@ public:
     });
   }
 
-  bool Closed() override { return socket_.expired(); }
+  bool Closed() const override
+  {
+    return socket_.expired();
+  }
 
 private:
   static const uint64_t networkMagic_ = 0xFE7C80A1FE7C80A1;
-  bool                  destructing_  = false;
 
   network_manager_type networkManager_;
   // IO objects should be guaranteed to have lifetime less than the
@@ -225,7 +255,7 @@ private:
 
   mutable mutex_type can_write_mutex_;
   bool               can_write_{true};
-  bool               postedClose_ = false;
+  bool               posted_close_ = false;
 
   mutable mutex_type callback_mutex_;
   std::atomic<bool>  connected_{false};
@@ -247,16 +277,20 @@ private:
 
     auto cb = [this, self, socket, header, strand](std::error_code ec, std::size_t) {
       shared_self_type selfLock = self.lock();
-      if (!selfLock) return;
+      if (!selfLock)
+      {
+        return;
+      }
 
       if (!ec)
       {
-        fetch::logger.Debug("Read message header.");
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Read message header.");
         ReadBody(header);
       }
       else
       {
         // We expect to get an ec here when the socked is closed via a post
+        FETCH_LOG_INFO(LOGGING_NAME, "Socket closed inside ReadHeader: ", ec.message());
         SignalLeave();
       }
     };
@@ -265,10 +299,17 @@ private:
     {
       assert(strand->running_in_this_thread());
       asio::async_read(*socket, asio::buffer(header.pointer(), header.size()), strand->wrap(cb));
-      connected_ = true;
+
+      bool const previously_connected = connected_.exchange(true);
+
+      if (!previously_connected)
+      {
+        SignalConnectionSuccess();
+      }
     }
     else
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Socket no longer valid in ReadHeader");
       connected_ = false;
       SignalLeave();
     }
@@ -289,8 +330,9 @@ private:
       SetHeader(dummy, 0);
       dummy.Resize(16);
 
-      fetch::logger.Error("Magic incorrect during network read:\ngot:      ", ToHex(header),
-                          "\nExpected: ", ToHex(byte_array::ByteArray(dummy)));
+      FETCH_LOG_ERROR(LOGGING_NAME,
+                      "Magic incorrect during network read:\ngot:      ", ToHex(header),
+                      "\nExpected: ", ToHex(byte_array::ByteArray(dummy)));
       return;
     }
 
@@ -300,8 +342,13 @@ private:
     self_type self   = shared_from_this();
     auto      socket = socket_.lock();
     auto      cb     = [this, self, message, socket, strand](std::error_code ec, std::size_t len) {
+      FETCH_UNUSED(len);
+
       shared_self_type selfLock = self.lock();
-      if (!selfLock) return;
+      if (!selfLock)
+      {
+        return;
+      }
 
       if (!ec)
       {
@@ -310,7 +357,7 @@ private:
       }
       else
       {
-        fetch::logger.Error("Reading body failed, dying: ", ec);
+        FETCH_LOG_ERROR(LOGGING_NAME, "Reading body failed, dying: ", ec, ec.message());
         SignalLeave();
       }
     };
@@ -322,6 +369,7 @@ private:
     }
     else
     {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Invalid socket when attempting to read body");
       SignalLeave();
     }
   }
@@ -380,6 +428,8 @@ private:
     auto socket = socket_.lock();
 
     auto cb = [this, selfLock, socket, buffer, header](std::error_code ec, std::size_t len) {
+      FETCH_UNUSED(len);
+
       {
         std::lock_guard<mutex_type> lock(can_write_mutex_);
         can_write_ = true;
@@ -387,7 +437,7 @@ private:
 
       if (ec)
       {
-        fetch::logger.Error("Error writing to socket, closing.");
+        FETCH_LOG_ERROR(LOGGING_NAME, "Error writing to socket, closing.");
         SignalLeave();
       }
       else
@@ -410,18 +460,10 @@ private:
     }
     else
     {
-      fetch::logger.Error("Failed to lock socket in WriteNext!");
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to lock socket in WriteNext!");
       SignalLeave();
     }
   }
-
-  /*
-  void PushMessage(message_type message)
-  {
-    std::lock_guard< mutex_type > lock(callback_mutex_);
-    if(on_push_message_) on_push_message_(message);
-  }
-  */
 };
 
 }  // namespace network

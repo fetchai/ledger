@@ -1,0 +1,32 @@
+# Default catch all
+*                   @uvue-git/ledger-dev
+
+# External dependencies
+docker-images       @ejfitzgerald @n-hutton
+vendor/*            @ejfitzgerald @n-hutton
+
+# CI / CD
+cmake/*             @ejfitzgerald @n-hutton
+.clang-tidy         @ejfitzgerald @n-hutton
+.clang-format       @ejfitzgerald @n-hutton
+Jenkinsfile         @ejfitzgerald @n-hutton
+
+# Core Libraries
+apps/*              @uvue-git/ledger-core
+libs/core/*         @uvue-git/ledger-core
+libs/crypto/*       @uvue-git/ledger-core
+libs/http/*         @uvue-git/ledger-core
+libs/ledger/*       @uvue-git/ledger-core
+libs/meta/*         @uvue-git/ledger-core
+libs/metrics/*      @uvue-git/ledger-core
+libs/miner/*        @uvue-git/ledger-core
+libs/network/*      @uvue-git/ledger-core
+libs/storage/*      @uvue-git/ledger-core
+libs/testing/*      @uvue-git/ledger-core
+libs/variant/*      @uvue-git/ledger-core
+
+# VM + ML Libraries
+libs/ml/*           @uvue-git/ledger-vm
+libs/python/*       @uvue-git/ledger-vm
+libs/vm/*           @uvue-git/ledger-vm
+libs/vectorise/*    @uvue-git/ledger-vm

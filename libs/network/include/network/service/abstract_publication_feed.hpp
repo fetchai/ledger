@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -42,7 +42,8 @@ public:
    */
   using function_type = std::function<void(fetch::byte_array::ConstByteArray)>;
 
-  virtual ~AbstractPublicationFeed() {}
+  virtual ~AbstractPublicationFeed()
+  {}
 
   /* Creates publication function.
    * @feed is the feed handler.

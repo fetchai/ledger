@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,38 +18,30 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shape_less_array.hpp"
-#include "vectorise/memory/range.hpp"
-
+#include "math/fundamental_operators.hpp"
+#include "math/standard_functions/abs.hpp"
 #include <cmath>
 
 namespace fetch {
 namespace math {
 namespace distance {
 
-template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::type Manhattan(memory::VectorSlice<T, S> const &a,
-                                                          memory::VectorSlice<T, S> const &b)
+template <typename ArrayType>
+inline typename ArrayType::Type Manhattan(ArrayType const &a, ArrayType const &b)
 {
-  detailed_assert(a.size() == b.size());
-  using type                 = typename memory::VectorSlice<T, S>::type;
-  using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
+  assert(a.size() == b.size());
+  using Type     = typename ArrayType::Type;
+  using SizeType = typename ArrayType::SizeType;
 
-  type dist =
-      a.in_parallel().SumReduce(memory::TrivialRange(0, a.size()),
-                                [](vector_register_type const &x, vector_register_type const &y) {
-                                  return max(x, y) - min(x, y);
-                                },
-                                b);
+  Type     result = 0;
+  SizeType count  = 0;
+  for (auto &val : a)
+  {
+    result += Abs(Subtract(val, b.At(count)));
+    ++count;
+  }
 
-  return dist;
-}
-
-template <typename T, typename C>
-inline typename ShapeLessArray<T, C>::type Manhattan(ShapeLessArray<T, C> const &a,
-                                                     ShapeLessArray<T, C> const &b)
-{
-  return Manhattan(a.data(), b.data());
+  return result;
 }
 
 }  // namespace distance

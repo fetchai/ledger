@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -32,12 +32,30 @@ public:
   using iterator        = map_type::iterator;
   using const_iterator  = map_type::const_iterator;
 
-  iterator       begin() noexcept { return map_type::begin(); }
-  iterator       end() noexcept { return map_type::end(); }
-  const_iterator begin() const noexcept { return map_type::begin(); }
-  const_iterator end() const noexcept { return map_type::end(); }
-  const_iterator cbegin() const noexcept { return map_type::cbegin(); }
-  const_iterator cend() const noexcept { return map_type::cend(); }
+  iterator begin() noexcept
+  {
+    return map_type::begin();
+  }
+  iterator end() noexcept
+  {
+    return map_type::end();
+  }
+  const_iterator begin() const noexcept
+  {
+    return map_type::begin();
+  }
+  const_iterator end() const noexcept
+  {
+    return map_type::end();
+  }
+  const_iterator cbegin() const noexcept
+  {
+    return map_type::cbegin();
+  }
+  const_iterator cend() const noexcept
+  {
+    return map_type::cend();
+  }
 
   void Add(byte_array_type const &name, byte_array_type const &value)
   {
@@ -70,11 +88,20 @@ public:
     return super_type::operator[](name);
   }
 
-  byte_array::ConstByteArray const &operator[](byte_array::ConstByteArray const &name) const
+  byte_array::ConstByteArray operator[](byte_array::ConstByteArray const &name) const
   {
     LOG_STACK_TRACE_POINT;
 
-    return this->find(name)->second;
+    auto element = this->find(name);
+
+    if (element == this->end())
+    {
+      return {};
+    }
+    else
+    {
+      return element->second;
+    }
   }
 
   void Clear()

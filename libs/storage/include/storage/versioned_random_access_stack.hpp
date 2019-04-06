@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,14 +17,38 @@
 //
 //------------------------------------------------------------------------------
 
+//
+//                   RANDOM ACCESS STACK
+//
+//  ┌──────┬───────────┬───────────┬───────────┬───────────┐
+//  │      │           │           │           │           │
+//  │HEADER│  OBJECT   │  OBJECT   │  OBJECT   │  OBJECT   │
+//  │      │           │           │           │           │......
+//  │      │           │           │           │           │
+//  └──────┴───────────┴───────────┴───────────┴───────────┘
+//               │         ▲
+//               │         │
+//               │         │
+//               ▼         │
+//       ┌──────┬──────┬──────┬──────┬──────┐
+//       │      │      │      │      │      │
+// ......│ PUSH │ POP  │ SWAP │BKMARK│ PUSH │  HISTORY
+//       │      │      │      │      │      │
+//       └──────┴──────┴──────┴──────┴──────┘
+
 #include "storage/cached_random_access_stack.hpp"
 #include "storage/random_access_stack.hpp"
+#include "storage/storage_exception.hpp"
 #include "storage/variant_stack.hpp"
 
 #include <cstring>
+
 namespace fetch {
 namespace storage {
 
+/**
+ * Bookmark represents a position in the history which can be reverted to
+ */
 template <typename B>
 struct BookmarkHeader
 {
@@ -32,6 +56,16 @@ struct BookmarkHeader
   uint64_t bookmark;
 };
 
+/**
+ * VersionedRandomAccessStack implements a random access stack that can revert to a previous state.
+ * It does this by having a random access stack, and also keeping a stack recording all of the
+ * state-changing operations made to the stack (in the history).
+ * The user can place bookmarks which allow reverting the stack to it's state at that point in time.
+ *
+ * The history is a variant stack so as to allow different operations to be saved. However note that
+ * the stack itself has elements of constant width, so no dynamically allocated memory.
+ *
+ */
 template <typename T, typename B = uint64_t, typename S = RandomAccessStack<T, BookmarkHeader<B>>>
 class VersionedRandomAccessStack
 {
@@ -40,11 +74,24 @@ private:
   using header_extra_type = B;
   using header_type       = BookmarkHeader<B>;
 
+  static constexpr char const *LOGGING_NAME = "VersionedRandomAccessStack";
+
+  /**
+   * To be pushed onto the history stack as a variant.
+   *
+   * Represents a 'bookmark' that users can revert to.
+   */
   struct HistoryBookmark
   {
-    HistoryBookmark() { memset(this, 0, sizeof(decltype(*this))); }
-    HistoryBookmark(B const &val)
+    HistoryBookmark()
     {
+      // Clear the whole structure (including padded regions) are zeroed
+      memset(this, 0, sizeof(decltype(*this)));
+    }
+
+    explicit HistoryBookmark(B const &val)
+    {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
       bookmark = val;
     }
@@ -53,16 +100,28 @@ private:
     {
       value = 0
     };
+
     B bookmark = 0;
   };
 
+  /**
+   * To be pushed onto the history stack as a variant.
+   *
+   * Represents a swap on the main stack, holds the information about which elements were swapped
+   */
   struct HistorySwap
   {
-    HistorySwap() { memset(this, 0, sizeof(decltype(*this))); }
+    HistorySwap()
+    {
+      // Clear the whole structure (including padded regions) are zeroed
+      memset(this, 0, sizeof(decltype(*this)));
+    }
 
     HistorySwap(uint64_t const &i_, uint64_t const &j_)
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
+
       i = i_;
       j = j_;
     }
@@ -71,17 +130,29 @@ private:
     {
       value = 1
     };
+
     uint64_t i = 0;
     uint64_t j = 0;
   };
 
+  /**
+   * To be pushed onto the history stack as a variant.
+   *
+   * Represents a pop on the main stack, holds the popped element T from the main stack
+   */
   struct HistoryPop
   {
-    HistoryPop() { memset(this, 0, sizeof(decltype(*this))); }
-
-    HistoryPop(T const &d)
+    HistoryPop()
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
+    }
+
+    explicit HistoryPop(T const &d)
+    {
+      // Clear the whole structure (including padded regions) are zeroed
+      memset(this, 0, sizeof(decltype(*this)));
+
       data = d;
     }
 
@@ -89,12 +160,23 @@ private:
     {
       value = 2
     };
-    T data;
+
+    T data{};
   };
 
+  /**
+   * To be pushed onto the history stack as a variant.
+   *
+   * Represents a push on the main stack, doesn't need any meta data since when reverting the
+   * history this corresponds to a pop
+   */
   struct HistoryPush
   {
-    HistoryPush() { memset(this, 0, sizeof(decltype(*this))); }
+    HistoryPush()
+    {
+      // Clear the whole structure (including padded regions) are zeroed
+      memset(this, 0, sizeof(decltype(*this)));
+    }
 
     enum
     {
@@ -102,13 +184,28 @@ private:
     };
   };
 
+  /**
+   * To be pushed onto the history stack as a variant.
+   *
+   * Represents setting the history at a specific index.
+   *
+   * @param: i The index
+   * @param: d The item
+   *
+   */
   struct HistorySet
   {
-    HistorySet() { memset(this, 0, sizeof(decltype(*this))); }
+    HistorySet()
+    {
+      // Clear the whole structure (including padded regions) are zeroed
+      memset(this, 0, sizeof(decltype(*this)));
+    }
 
     HistorySet(uint64_t const &i_, T const &d)
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
+
       i    = i_;
       data = d;
     }
@@ -117,17 +214,28 @@ private:
     {
       value = 4
     };
+
     uint64_t i = 0;
     T        data;
   };
 
+  /**
+   * Represents a change to the header of the main stack, for example when changing the
+   * 'extra' data that can be stored there.
+   */
   struct HistoryHeader
   {
-    HistoryHeader() { memset(this, 0, sizeof(decltype(*this))); }
+    HistoryHeader()
+    {
+      // Clear the whole structure (including padded regions) are zeroed
+      memset(this, 0, sizeof(decltype(*this)));
+    }
 
     HistoryHeader(B const &d)
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
+
       data = d;
     }
 
@@ -135,13 +243,13 @@ private:
     {
       value = 5
     };
-    B data;
+
+    B data = 0;
   };
 
 public:
-  using type          = typename RandomAccessStack<T>::type;
-  using bookmark_type = B;
-
+  using type               = T;
+  using bookmark_type      = B;
   using event_handler_type = std::function<void()>;
 
   VersionedRandomAccessStack()
@@ -150,7 +258,10 @@ public:
     stack_.OnBeforeFlush([this]() { SignalBeforeFlush(); });
   }
 
-  ~VersionedRandomAccessStack() { stack_.ClearEventHandlers(); }
+  ~VersionedRandomAccessStack()
+  {
+    stack_.ClearEventHandlers();
+  }
 
   void ClearEventHandlers()
   {
@@ -158,21 +269,41 @@ public:
     on_before_flush_ = nullptr;
   }
 
-  void OnFileLoaded(event_handler_type const &f) { on_file_loaded_ = f; }
+  void OnFileLoaded(event_handler_type const &f)
+  {
+    on_file_loaded_ = f;
+  }
 
-  void OnBeforeFlush(event_handler_type const &f) { on_before_flush_ = f; }
+  void OnBeforeFlush(event_handler_type const &f)
+  {
+    on_before_flush_ = f;
+  }
 
   void SignalFileLoaded()
   {
-    if (on_file_loaded_) on_file_loaded_();
+    if (on_file_loaded_)
+    {
+      on_file_loaded_();
+    }
   }
 
   void SignalBeforeFlush()
   {
-    if (on_before_flush_) on_before_flush_();
+    if (on_before_flush_)
+    {
+      on_before_flush_();
+    }
   }
 
-  static constexpr bool DirectWrite() { return stack_type::DirectWrite(); }
+  /**
+   * Indicate whether the stack is writing directly to disk or caching writes.
+   *
+   * @return: Whether the stack is written straight to disk.
+   */
+  static constexpr bool DirectWrite()
+  {
+    return stack_type::DirectWrite();
+  }
 
   void Load(std::string const &filename, std::string const &history,
             bool const &create_if_not_exist = true)
@@ -204,43 +335,54 @@ public:
     return object;
   }
 
-  void Get(std::size_t const &i, type &object) const { stack_.Get(i, object); }
+  void Get(std::size_t const &i, type &object) const
+  {
+    stack_.Get(i, object);
+  }
 
   void Set(std::size_t const &i, type const &object)
   {
     type old_data;
     stack_.Get(i, old_data);
-    history_.Push(HistorySet(i, old_data), HistorySet::value);
+    history_.Push(HistorySet{i, old_data}, HistorySet::value);
     stack_.Set(i, object);
   }
 
   uint64_t Push(type const &object)
   {
-    history_.Push(HistoryPush(), HistoryPush::value);
+    history_.Push(HistoryPush{}, HistoryPush::value);
     return stack_.Push(object);
   }
 
   void Pop()
   {
     type old_data = stack_.Top();
-    history_.Push(HistoryPop(old_data), HistoryPop::value);
+    history_.Push(HistoryPop{old_data}, HistoryPop::value);
     stack_.Pop();
   }
 
-  type Top() const { return stack_.Top(); }
+  type Top() const
+  {
+    return stack_.Top();
+  }
 
   void Swap(std::size_t const &i, std::size_t const &j)
   {
-    history_.Push(HistorySwap(i, j), HistorySwap::value);
+    history_.Push(HistorySwap{i, j}, HistorySwap::value);
     stack_.Swap(i, j);
   }
 
+  /**
+   * Revert the main stack to the point at bookmark b by continually popping off changes from the
+   * history, inspecting their type, and applying a revert with that change
+   *
+   * @param: b The bookmark to revert to
+   *
+   */
   void Revert(bookmark_type const &b)
   {
-
     while ((!empty()) && (b != bookmark_))
     {
-
       if (!history_.empty())
       {
 
@@ -280,7 +422,7 @@ public:
           history_.Pop();
           break;
         default:
-          TODO_FAIL("Problem: undefined type");
+          throw StorageException("Undefined type found when reverting in versioned history");
         }
       }
     }
@@ -295,13 +437,16 @@ public:
   void SetExtraHeader(header_extra_type const &b)
   {
     header_type h = stack_.header_extra();
-    history_.Push(HistoryHeader(h.header), HistoryHeader::value);
+    history_.Push(HistoryHeader{h.header}, HistoryHeader::value);
 
     h.header = b;
     stack_.SetExtraHeader(h);
   }
 
-  header_extra_type const &header_extra() const { return stack_.header_extra().header; }
+  header_extra_type const &header_extra() const
+  {
+    return stack_.header_extra().header;
+  }
 
   bookmark_type Commit()
   {
@@ -312,8 +457,12 @@ public:
 
   bookmark_type Commit(bookmark_type const &b)
   {
+    // The flush here is vitally important since we must ensure the all flush handlers successfully
+    // execute. Failure to do this results in an incorrectly ordered difference / history stack
+    // which in turn means that the state can not be reverted
+    Flush(false);
 
-    history_.Push(HistoryBookmark(b), HistoryBookmark::value);
+    history_.Push(HistoryBookmark{b}, HistoryBookmark::value);
 
     header_type h = stack_.header_extra();
     h.bookmark = bookmark_ = b;
@@ -322,19 +471,40 @@ public:
     return b;
   }
 
-  void Flush() { stack_.Flush(); }
+  void Flush(bool lazy = true)
+  {
+    stack_.Flush(lazy);
+  }
 
-  void ResetBookmark() { bookmark_ = 0; }
+  void ResetBookmark()
+  {
+    bookmark_ = 0;
+  }
 
-  void NextBookmark() { ++bookmark_; }
+  void NextBookmark()
+  {
+    ++bookmark_;
+  }
 
-  void PreviousBookmark() { ++bookmark_; }
+  void PreviousBookmark()
+  {
+    ++bookmark_;
+  }
 
-  std::size_t size() const { return stack_.size(); }
+  std::size_t size() const
+  {
+    return stack_.size();
+  }
 
-  std::size_t empty() const { return stack_.empty(); }
+  std::size_t empty() const
+  {
+    return stack_.empty();
+  }
 
-  bool is_open() const { return stack_.is_open(); }
+  bool is_open() const
+  {
+    return stack_.is_open();
+  }
 
 private:
   VariantStack  history_;

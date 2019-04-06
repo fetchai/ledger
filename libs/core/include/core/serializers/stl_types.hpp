@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <array>
 #include <map>
 #include <set>
 #include <string>
@@ -88,7 +89,10 @@ inline void Deserialize(T &serializer, std::string &s)
   s.resize(size);
   char *buffer = new char[size];
   serializer.ReadBytes(reinterpret_cast<uint8_t *>(buffer), s.size());
-  for (std::size_t i = 0; i < size; ++i) s[i] = buffer[i];
+  for (std::size_t i = 0; i < size; ++i)
+  {
+    s[i] = buffer[i];
+  }
   delete[] buffer;
 }
 
@@ -96,6 +100,27 @@ template <typename T>
 inline void Serialize(T &serializer, char const *s)
 {
   return Serialize<T>(serializer, std::string(s));
+}
+
+template <typename T, typename U, std::size_t N>
+inline typename std::enable_if<std::is_integral<U>::value>::type Serialize(
+    T &serializer, std::array<U, N> const &val)
+{
+  static constexpr std::size_t BINARY_SIZE = sizeof(U) * N;
+  assert(N == val.size());
+
+  serializer.Allocate(BINARY_SIZE);
+  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(val.data()), BINARY_SIZE);
+}
+
+template <typename T, typename U, std::size_t N>
+inline typename std::enable_if<std::is_integral<U>::value>::type Deserialize(T &serializer,
+                                                                             std::array<U, N> &val)
+{
+  static constexpr std::size_t BINARY_SIZE = sizeof(U) * N;
+  assert(N == val.size());
+
+  serializer.ReadBytes(reinterpret_cast<uint8_t *>(val.data()), BINARY_SIZE);
 }
 
 template <typename T, typename U>
@@ -108,7 +133,10 @@ inline void Serialize(T &serializer, std::vector<U> const &vec)
   // Writing the size to the byte array
   serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size), sizeof(uint64_t));
 
-  for (auto const &a : vec) serializer << a;
+  for (auto const &a : vec)
+  {
+    serializer << a;
+  }
 }
 
 template <typename T, typename U>
@@ -122,7 +150,10 @@ inline void Deserialize(T &serializer, std::vector<U> &vec)
   vec.clear();
   vec.resize(size);
 
-  for (auto &a : vec) serializer >> a;
+  for (auto &a : vec)
+  {
+    serializer >> a;
+  }
 }
 
 template <typename T, typename fir, typename sec>
@@ -162,6 +193,46 @@ inline void Serialize(T &serializer, std::unordered_map<K, V, H> const &map)
 
 template <typename T, typename K, typename V, typename H>
 inline void Deserialize(T &serializer, std::unordered_map<K, V, H> &map)
+{
+
+  // Read the number of items in the map
+  uint64_t size{0};
+  serializer.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint64_t));
+
+  // Reset the map
+  map.clear();
+
+  // Update the map
+  K key{};
+  V value{};
+  for (uint64_t i = 0; i < size; ++i)
+  {
+    serializer >> key;
+    serializer >> value;
+
+    map[key] = value;
+  }
+}
+
+template <typename T, typename K, typename V>
+inline void Serialize(T &serializer, std::map<K, V> const &map)
+{
+  // Allocating memory for the size
+  serializer.Allocate(sizeof(uint64_t));
+
+  uint64_t size = map.size();
+
+  // Writing the size to the byte array
+  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size), sizeof(uint64_t));
+
+  for (auto const &element : map)
+  {
+    serializer << element.first << element.second;
+  }
+}
+
+template <typename T, typename K, typename V>
+inline void Deserialize(T &serializer, std::map<K, V> &map)
 {
 
   // Read the number of items in the map

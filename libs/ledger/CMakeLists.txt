@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   L E D G E R   L I B R A R Y
 ################################################################################
-cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-ledger)
 
 # CMake Configuration
@@ -23,7 +23,12 @@ target_link_libraries(fetch-ledger PUBLIC
   fetch-math
   fetch-storage
   fetch-miner
+  fetch-vm
+  fetch-vm-modules
+  fetch-metrics
+  vendor-msgpack
 )
 
 add_test_target()
 add_subdirectory(examples)
+add_subdirectory(benchmark)

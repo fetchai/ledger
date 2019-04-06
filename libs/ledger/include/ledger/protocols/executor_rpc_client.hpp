@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -20,44 +20,101 @@
 #include <memory>
 
 #include "core/serializers/stl_types.hpp"
+#include "core/service_ids.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/protocols/executor_rpc_protocol.hpp"
-#include "network/protocols/fetch_protocols.hpp"
-#include "network/service/client.hpp"
+#include "network/generics/atomic_state_machine.hpp"
+#include "network/generics/backgrounded_work.hpp"
+#include "network/generics/future_timepoint.hpp"
+#include "network/generics/has_worker_thread.hpp"
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
+#include "network/service/service_client.hpp"
 #include "network/tcp/tcp_client.hpp"
 
 namespace fetch {
 namespace ledger {
 
+class ExecutorConnectorWorker;
+
 class ExecutorRpcClient : public ExecutorInterface
 {
 public:
-  using connection_type      = network::TCPClient;
-  using service_type         = std::unique_ptr<service::ServiceClient>;
-  using network_manager_type = service::ServiceClient::network_manager_type;
+  using MuddleEp        = muddle::MuddleEndpoint;
+  using Muddle          = muddle::Muddle;
+  using Client          = muddle::rpc::Client;
+  using ClientPtr       = std::shared_ptr<Client>;
+  using ServicePtr      = std::unique_ptr<service::ServiceClient>;
+  using NetworkManager  = fetch::network::NetworkManager;
+  using ConstByteArray  = byte_array::ConstByteArray;
+  using Address         = Muddle::Address;  // == a crypto::Identity.identifier_
+  using Uri             = Muddle::Uri;
+  using PromiseState    = fetch::service::PromiseState;
+  using FutureTimepoint = network::FutureTimepoint;
 
-  ExecutorRpcClient(byte_array::ConstByteArray const &host, uint16_t const &port,
-                    network_manager_type const &network_manager)
+  std::shared_ptr<Client> client;
+
+  explicit ExecutorRpcClient(NetworkManager const &tm, Muddle &muddle)
+    : network_manager_(tm)
   {
-
-    // create the connection
-    connection_type connection{network_manager};
-    service_ = std::make_unique<service::ServiceClient>(connection, network_manager);
-
-    connection.Connect(host, port);
+    client_ = std::make_shared<Client>("R:Exec", muddle.AsEndpoint(), Muddle::Address(),
+                                       SERVICE_EXECUTOR, CHANNEL_RPC);
   }
 
-  Status Execute(tx_digest_type const &hash, std::size_t slice, lane_set_type const &lanes) override
+  void Connect(Muddle &muddle, Uri uri,
+               std::chrono::milliseconds timeout = std::chrono::milliseconds(10000));
+
+  Status Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes) override;
+
+  bool GetAddress(Address &address) const
   {
-    auto result = service_->Call(protocols::FetchProtocols::EXECUTOR, ExecutorRpcProtocol::EXECUTE,
-                                 hash, slice, lanes);
-    return result.As<Status>();
+    if (!connections_)
+    {
+      return false;
+    }
+    address = address_;
+    return true;
   }
 
-  bool is_alive() const { return service_->is_alive(); }
+  std::size_t connections() const
+  {
+    return connections_;
+  }
+
+  ClientPtr GetClient()
+  {
+    return client_;
+  }
 
 private:
-  service_type service_;
+  void WorkCycle();
+
+  friend class ExecutorConnectorWorker;
+
+  enum class State
+  {
+    INITIAL = 0,
+    CONNECTING,
+    SUCCESS,
+    TIMEDOUT,
+    FAILED,
+  };
+
+  ClientPtr      client_;
+  NetworkManager network_manager_;
+  ServicePtr     service_;
+
+  using Worker                  = ExecutorConnectorWorker;
+  using WorkerP                 = std::shared_ptr<Worker>;
+  using BackgroundedWork        = network::BackgroundedWork<Worker>;
+  using BackgroundedWorkThread  = network::HasWorkerThread<BackgroundedWork>;
+  using BackgroundedWorkThreadP = std::shared_ptr<BackgroundedWorkThread>;
+
+  Address                 address_;
+  BackgroundedWork        bg_work_;
+  BackgroundedWorkThreadP workthread_;
+  size_t                  connections_ = 0;
 };
 
 }  // namespace ledger

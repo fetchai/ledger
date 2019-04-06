@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,32 +18,27 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shape_less_array.hpp"
-#include "vectorise/memory/range.hpp"
-
+#include "math/fundamental_operators.hpp"
 #include <cmath>
 
 namespace fetch {
 namespace math {
 namespace distance {
 
-template <typename A>
-inline typename A::type Chebyshev(A const &a, A const &b)
+template <typename ArrayType>
+inline typename ArrayType::Type Chebyshev(ArrayType const &a, ArrayType const &b)
 {
-  detailed_assert(a.size() == b.size());
-  //  using vector_register_type = typename A::vector_register_type;
-  //  using type = typename A::type;
+  assert(a.size() == b.size());
 
-  throw std::runtime_error("not implemented yet due to lacking features in vectorisation unit");
+  typename ArrayType::Type     result = 0;
+  typename ArrayType::SizeType count  = 0;
+  for (auto &val : a)
+  {
+    result = Max(Abs(Subtract(val, b.At(count))), result);
+    count++;
+  }
 
-  /*
-  type m = a.data().in_parallel().Reduce(memory::TrivialRange(0, a.size()),
-  [](vector_register_type const &x, vector_register_type const &y) { return
-  max(x,y);
-    }, b.data());
-  */
-  //  return m;m
-  return 0;
+  return result;
 }
 
 }  // namespace distance

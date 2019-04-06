@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 
 #include <type_traits>
@@ -46,8 +45,7 @@ inline void Deserialize(T &serializer, byte_array::ConstByteArray &s)
   detailed_assert(int64_t(size) <= serializer.bytes_left());
 
   serializer.ReadByteArray(s, size);
-  //  s.Resize(size);
-  //  serializer.ReadBytes(reinterpret_cast<uint8_t *>(s.pointer()), s.size());
 }
+
 }  // namespace serializers
 }  // namespace fetch

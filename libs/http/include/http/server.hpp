@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -47,6 +47,8 @@ public:
   using view_type                = typename HTTPModule::view_type;
   using response_middleware_type = std::function<void(HTTPResponse &, HTTPRequest const &)>;
 
+  static constexpr char const *LOGGING_NAME = "HTTPServer";
+
   struct MountedView
   {
     Method    method;
@@ -54,35 +56,10 @@ public:
     view_type view;
   };
 
-  HTTPServer(uint16_t const &port, network_manager_type const &network_manager)
-    : eval_mutex_(__LINE__, __FILE__)
-    , networkManager_(network_manager)
-    , request_mutex_(__LINE__, __FILE__)
+  explicit HTTPServer(network_manager_type const &network_manager)
+    : networkManager_(network_manager)
   {
     LOG_STACK_TRACE_POINT;
-
-    std::shared_ptr<manager_type> manager   = manager_;
-    std::weak_ptr<socket_type> &  socRef    = socket_;
-    std::weak_ptr<acceptor_type> &accepRef  = acceptor_;
-    network_manager_type &        threadMan = networkManager_;
-
-    networkManager_.Post([&socRef, &accepRef, manager, &threadMan, port] {
-      fetch::logger.Info("Starting HTTPServer on http://127.0.0.1:", port);
-
-      // TODO(issue 28) : fix this hack
-      network_manager_type tm  = threadMan;
-      auto                 soc = threadMan.CreateIO<socket_type>();
-
-      auto accep =
-          threadMan.CreateIO<acceptor_type>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
-
-      // allow initiating class to post closes to these
-      socRef   = soc;
-      accepRef = accep;
-
-      fetch::logger.Info("Starting HTTPServer Accept");
-      HTTPServer::Accept(soc, accep, manager);
-    });
   }
 
   virtual ~HTTPServer()
@@ -111,6 +88,33 @@ public:
     manager_.reset();
   }
 
+  void Start(uint16_t port)
+  {
+    std::shared_ptr<manager_type> manager   = manager_;
+    std::weak_ptr<socket_type> &  socRef    = socket_;
+    std::weak_ptr<acceptor_type> &accepRef  = acceptor_;
+    network_manager_type &        threadMan = networkManager_;
+
+    networkManager_.Post([&socRef, &accepRef, manager, &threadMan, port] {
+      FETCH_LOG_INFO(LOGGING_NAME, "Starting HTTPServer on http://127.0.0.1:", port);
+
+      auto soc = threadMan.CreateIO<socket_type>();
+
+      auto accep =
+          threadMan.CreateIO<acceptor_type>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
+
+      // allow initiating class to post closes to these
+      socRef   = soc;
+      accepRef = accep;
+
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Starting HTTPServer Accept");
+      HTTPServer::Accept(soc, accep, manager);
+    });
+  }
+
+  void Stop()
+  {}
+
   void PushRequest(handle_type client, HTTPRequest req) override
   {
     LOG_STACK_TRACE_POINT;
@@ -120,11 +124,11 @@ public:
     {
 
       HTTPResponse res("", fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
-                       status_code::SUCCESS_OK);
-      res.header().Add("Access-Control-Allow-Origin", "*");
-      res.header().Add("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
-      res.header().Add("Access-Control-Allow-Headers",
-                       "Content-Type, Authorization, Content-Length, X-Requested-With");
+                       Status::SUCCESS_OK);
+      res.AddHeader("Access-Control-Allow-Origin", "*");
+      res.AddHeader("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
+      res.AddHeader("Access-Control-Allow-Headers",
+                    "Content-Type, Authorization, Content-Length, X-Requested-With");
 
       manager_->Send(client, res);
       return;
@@ -137,8 +141,8 @@ public:
       m(req);
     }
 
-    HTTPResponse   res("page not found", fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
-                     http::status_code::CLIENT_ERROR_NOT_FOUND);
+    HTTPResponse   res("page not found", mime_types::GetMimeTypeFromExtension(".html"),
+                     Status::CLIENT_ERROR_NOT_FOUND);
     ViewParameters params;
 
     for (auto &v : views_)
@@ -175,7 +179,7 @@ public:
       }
       else
       {
-        fetch::logger.Info("HTTP server terminated with ec: ", ec.message());
+        FETCH_LOG_WARN(LOGGING_NAME, "HTTP server terminated with ec: ", ec.message());
         return;
       }
 
@@ -186,7 +190,7 @@ public:
       HTTPServer::Accept(s, a, m);
     };
 
-    fetch::logger.Info("Starting HTTPServer async accept");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Starting HTTPServer async accept");
     accep->async_accept(*soc, cb);
   }
 
@@ -215,7 +219,7 @@ public:
   }
 
 private:
-  fetch::mutex::Mutex eval_mutex_;
+  std::mutex eval_mutex_;
 
   std::vector<request_middleware_type>  pre_view_middleware_;
   std::vector<MountedView>              views_;
@@ -223,7 +227,6 @@ private:
 
   network_manager_type          networkManager_;
   std::deque<HTTPRequest>       requests_;
-  fetch::mutex::Mutex           request_mutex_;
   std::weak_ptr<acceptor_type>  acceptor_;
   std::weak_ptr<socket_type>    socket_;
   std::shared_ptr<manager_type> manager_{std::make_shared<manager_type>(*this)};

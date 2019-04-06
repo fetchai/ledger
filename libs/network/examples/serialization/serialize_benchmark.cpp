@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@
 #include "core/serializers/counter.hpp"
 #include "core/serializers/stl_types.hpp"
 
-#include "network/service/client.hpp"
 #include "network/service/server.hpp"
+#include "network/service/service_client.hpp"
 #include <chrono>
 #include <vector>
 
@@ -49,15 +49,23 @@ std::vector<ByteArray> TestData;
 class Implementation
 {
 public:
-  std::vector<ByteArray> GetData() { return TestData; }
+  std::vector<ByteArray> GetData()
+  {
+    return TestData;
+  }
 
-  ByteArray GetData2() { return TestString; }
+  ByteArray GetData2()
+  {
+    return TestString;
+  }
 };
 
 class ServiceProtocol : public Implementation, public Protocol
 {
 public:
-  ServiceProtocol() : Implementation(), Protocol()
+  ServiceProtocol()
+    : Implementation()
+    , Protocol()
   {
 
     this->Expose(GET, new CallableClassMember<Implementation, std::vector<ByteArray>()>(
@@ -71,7 +79,8 @@ public:
 class MyCoolService : public ServiceServer<fetch::network::TCPServer>
 {
 public:
-  MyCoolService(uint16_t port, fetch::network::NetworkManager *tm) : ServiceServer(port, tm)
+  MyCoolService(uint16_t port, fetch::network::NetworkManager *tm)
+    : ServiceServer(port, tm)
   {
     this->Add(SERVICE, new ServiceProtocol());
   }
@@ -107,7 +116,7 @@ void TestSerializationSpeed()
   buffer << a;
 
   high_resolution_clock::time_point t2 = high_resolution_clock::now();
-  buffer.Seek(0);
+  buffer.seek(0);
   buffer >> b;
   std::sort(c.begin(), c.end());
   high_resolution_clock::time_point t3  = high_resolution_clock::now();

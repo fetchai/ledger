@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,33 +18,24 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/decoders.hpp"
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
+#include "ledger/chain/constants.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "network/generics/milli_timer.hpp"
 #include "storage/object_store.hpp"
 #include "storage/resource_mapper.hpp"
+
 #include <map>
 #include <memory>
 #include <set>
-
-// Specialise hash of byte_array for unordered map/set
-namespace std {
-
-template <>
-struct hash<fetch::byte_array::ByteArray>
-{
-  std::size_t operator()(const fetch::byte_array::ByteArray &k) const
-  {
-    assert(k.size() >= 8);
-    return *reinterpret_cast<std::size_t const *>(k.pointer());
-  }
-};
-}  // namespace std
+#include <unordered_set>
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 /**
  * Main chain contains and manages block headers. No verification of headers is
@@ -58,490 +49,261 @@ namespace chain {
  *
  * Loose blocks are blocks where the previous hash/block isn't found.
  * Tips keep track of all non loose chains.
- **/
+ */
 struct Tip
 {
-  uint64_t total_weight;
+  Tip() = default;
+  Tip(uint64_t weight)
+    : total_weight{weight}
+  {}
+
+  uint64_t total_weight{0};
 };
+
+enum class BlockStatus
+{
+  ADDED,      ///< The block has been added to the chain
+  LOOSE,      ///< The block has been added to the chain but is currently loose
+  DUPLICATE,  ///< The block has been detected as a duplicate
+  INVALID     ///< The block is invalid and has not been added to the chain
+};
+
+char const *ToString(BlockStatus status);
 
 class MainChain
 {
 public:
-  using BlockType = BasicBlock<fetch::chain::consensus::ProofOfWork, fetch::crypto::SHA256>;
-  using BlockHash = fetch::byte_array::ByteArray;
-  using PrevHash  = fetch::byte_array::ByteArray;
-  using ProofType = BlockType::proof_type;
+  using BlockPtr     = std::shared_ptr<Block const>;
+  using Blocks       = std::vector<BlockPtr>;
+  using BlockHash    = Block::Digest;
+  using BlockHashs   = std::vector<BlockHash>;
+  using BlockHashSet = std::unordered_set<BlockHash>;
 
-  // Hard code genesis on construction
-  MainChain(uint32_t minerNumber = std::numeric_limits<uint32_t>::max()) : minerNumber_{minerNumber}
+  static constexpr char const *LOGGING_NAME = "MainChain";
+  static constexpr uint64_t    ALL          = std::numeric_limits<uint64_t>::max();
+
+  enum class Mode
   {
-    BlockType genesis;
-    genesis.UpdateDigest();
-    genesis.body().previous_hash = genesis.hash();
+    IN_MEMORY_DB = 0,
+    CREATE_PERSISTENT_DB,
+    LOAD_PERSISTENT_DB
+  };
 
-    // Add genesis to block chain
-    genesis.loose()             = false;
-    blockChain_[genesis.hash()] = genesis;
-
-    // Create tip for genesis
-    auto tip              = std::make_shared<Tip>();
-    tip->total_weight     = genesis.weight();
-    tips_[genesis.hash()] = tip;
-    heaviest_             = std::make_pair(genesis.weight(), genesis.hash());
-
-    if (minerNumber_ != std::numeric_limits<uint32_t>::max())
-    {
-      RecoverFromFile();
-      saving_to_file_ = true;
-    }
-  }
-
+  // Construction / Destruction
+  explicit MainChain(Mode mode = Mode::IN_MEMORY_DB);
   MainChain(MainChain const &rhs) = delete;
   MainChain(MainChain &&rhs)      = delete;
+  ~MainChain();
+
+  /// @name Block Management
+  /// @{
+  BlockStatus AddBlock(Block const &block);
+  BlockPtr    GetBlock(BlockHash hash) const;
+  bool        RemoveBlock(BlockHash hash);
+  /// @}
+
+  /// @name Chain Queries
+  /// @{
+  BlockPtr  GetHeaviestBlock() const;
+  BlockHash GetHeaviestBlockHash() const;
+  Blocks    GetHeaviestChain(uint64_t limit = ALL) const;
+  Blocks    GetChainPreceding(BlockHash at, uint64_t limit = ALL) const;
+  bool      GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
+                                    uint64_t limit = ALL) const;
+  /// @}
+
+  /// @name Tips
+  /// @{
+  BlockHashSet GetTips() const;
+  bool         ReindexTips();  // testing only
+  /// @}
+
+  /// @name Missing / Loose Management
+  /// @{
+  BlockHashSet GetMissingTips() const;
+  BlockHashs   GetMissingBlockHashes(std::size_t limit = ALL) const;
+  bool         HasMissingBlocks() const;
+  /// @}
+
+  template <typename T>
+  bool StripAlreadySeenTx(BlockHash starting_hash, T &container) const;
+
+  // Operators
   MainChain &operator=(MainChain const &rhs) = delete;
   MainChain &operator=(MainChain &&rhs) = delete;
 
-  bool AddBlock(BlockType &block, bool recursive_iteration = false)
+private:
+  using IntBlockPtr   = std::shared_ptr<Block>;
+  using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;
+  using Proof         = Block::Proof;
+  using TipsMap       = std::unordered_map<BlockHash, Tip>;
+  using BlockHashList = std::list<BlockHash>;
+  using LooseBlockMap = std::unordered_map<BlockHash, BlockHashList>;
+  using BlockStore    = fetch::storage::ObjectStore<Block>;
+  using BlockStorePtr = std::unique_ptr<BlockStore>;
+  using RMutex        = std::recursive_mutex;
+  using RLock         = std::unique_lock<RMutex>;
+
+  struct HeaviestTip
   {
-    std::unique_lock<fetch::mutex::Mutex> lock(main_mutex_);
+    uint64_t  weight{0};
+    BlockHash hash{GENESIS_DIGEST};
 
-    BlockType prev_block;
+    bool Update(Block const &);
+  };
 
-    if (!recursive_iteration)
-    {
-      // First check if block already exists (not checking in object store)
-      if (blockChain_.find(block.hash()) != blockChain_.end())
-      {
-        fetch::logger.Info("Attempting to add already seen block");
-        return false;
-      }
+  /// @name Persistence Management
+  /// @{
+  void RecoverFromFile(Mode mode);
+  void WriteToFile();
+  void TrimCache();
+  void FlushBlock(IntBlockPtr const &block);
+  /// @}
 
-      // Look for the prev block to this one
-      auto it_prev = blockChain_.find(block.body().previous_hash);
+  /// @name Loose Blocks
+  /// @{
+  void CompleteLooseBlocks(IntBlockPtr const &block);
+  void RecordLooseBlock(IntBlockPtr const &block);
+  /// @}
 
-      if (it_prev == blockChain_.end())
-      {
-        // Note: think about rolling back into FS
-        fetch::logger.Info("Block prev not found");
-        // We can't find the prev, this is probably a loose block.
-        lock.unlock();
-        return CheckDiskForBlock(block);
-      }
+  /// @name Block Lookup
+  /// @{
+  BlockStatus InsertBlock(IntBlockPtr const &block, bool evaluate_loose_blocks = true);
+  bool        LookupBlock(BlockHash hash, IntBlockPtr &block, bool add_to_cache = false) const;
+  bool        LookupBlockFromCache(BlockHash hash, IntBlockPtr &block) const;
+  bool        LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block, bool add_to_cache) const;
+  bool        IsBlockInCache(BlockHash hash) const;
+  void        AddBlockToCache(IntBlockPtr const &) const;
+  /// @}
 
-      prev_block = (*it_prev).second;
+  /// @name Tip Management
+  /// @{
+  bool AddTip(IntBlockPtr const &block);
+  bool UpdateTips(IntBlockPtr const &block);
+  bool DetermineHeaviestTip();
+  /// @}
 
-      // Also a loose block if it points to a loose block
-      if (prev_block.loose() == true)
-      {
-        fetch::logger.Info("Block connects to loose block");
-        NewLooseBlock(block);
-        return true;
-      }
-    }
-    else
-    {
-      prev_block = blockChain_[block.body().previous_hash];
-    }
+  static IntBlockPtr CreateGenesisBlock();
 
-    // At this point we have a new block with a prev that's known and not loose. Update tips
-    block.loose()         = false;
-    bool heaviestAdvanced = UpdateTips(block, prev_block);
+  BlockStorePtr block_store_;  /// < Long term storage and backup
 
-    // Add block
-    fetch::logger.Info("Adding block to chain: ", ToHex(block.hash()));
-    blockChain_[block.hash()] = block;
+  mutable RMutex   lock_;          ///< Mutex protecting block_chain_, tips_ & heaviest_
+  mutable BlockMap block_chain_;   ///< All recent blocks are kept in memory
+  TipsMap          tips_;          ///< Keep track of the tips
+  HeaviestTip      heaviest_;      ///< Heaviest block/tip
+  LooseBlockMap    loose_blocks_;  ///< Waiting (loose) blocks
+};
 
-    if (heaviestAdvanced)
-    {
-      WriteToFile();
-    }
+/**
+ * Strip transactions in container that already exist in the blockchain
+ *
+ * @param: starting_hash Block to start looking downwards from
+ * @tparam: container Container to remove transactions from
+ *
+ * @return: bool whether the starting hash referred to a valid block on a valid chain
+ */
+template <typename T>
+bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container) const
+{
+  using namespace std::chrono;
+  using Clock = high_resolution_clock;
 
-    // Now we're done, it's possible this added block completed some loose blocks.
-    main_mutex_.unlock();
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TX uniqueness verify");
 
-    if (!recursive_iteration)
-    {
-      CompleteLooseBlocks(block);
-    }
+  std::size_t blocks_checked = 0;
+  auto const  start_time     = Clock::now();
 
-    return true;
-  }
-
-  BlockType const &HeaviestBlock() const
+  IntBlockPtr block;
+  if (!LookupBlock(starting_hash, block, false) || block->is_loose)
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
-
-    auto const &block = blockChain_.at(heaviest_.second);
-
-    return block;
-  }
-
-  uint64_t weight() const { return heaviest_.first; }
-
-  std::size_t totalBlocks() const { return blockChain_.size(); }
-
-  std::vector<BlockType> HeaviestChain(
-      uint64_t const &limit = std::numeric_limits<uint64_t>::max()) const
-  {
-    std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
-
-    std::vector<BlockType> result;
-
-    auto topBlock = blockChain_.at(heaviest_.second);
-
-    while ((topBlock.body().block_number != 0) && (result.size() < limit))
-    {
-      result.push_back(topBlock);
-      auto hash = topBlock.body().previous_hash;
-
-      // Walk down
-      auto it = blockChain_.find(hash);
-      if (it == blockChain_.end())
-      {
-        fetch::logger.Info(
-            "Mainchain: Failed while walking down\
-            from top block to find genesis!");
-        break;
-      }
-
-      topBlock = (*it).second;
-    }
-
-    result.push_back(topBlock);  // this should be genesis
-    return result;
-  }
-
-  void reset()
-  {
-    std::lock_guard<fetch::mutex::Mutex> lock_main(main_mutex_);
-    std::lock_guard<fetch::mutex::Mutex> lock_loose(loose_mutex_);
-
-    blockChain_.clear();
-    tips_.clear();
-    looseBlocks_.clear();
-
-    {
-      std::ostringstream fileMain;
-      std::ostringstream fileIndex;
-
-      fileMain << "chain_" << minerNumber_ << ".db";
-      fileIndex << "chainIndex_" << minerNumber_ << ".db";
-
-      blockStore_.New(fileMain.str(), fileIndex.str());
-    }
-
-    // recreate genesis
-    BlockType genesis;
-    genesis.UpdateDigest();
-    genesis.body().previous_hash = genesis.hash();
-
-    // Add genesis to block chain
-    genesis.loose()             = false;
-    blockChain_[genesis.hash()] = genesis;
-
-    // Create tip
-    auto tip              = std::make_shared<Tip>();
-    tip->total_weight     = genesis.weight();
-    tips_[genesis.hash()] = std::move(tip);
-    heaviest_             = std::make_pair(genesis.weight(), genesis.hash());
-  }
-
-  bool Get(BlockHash hash, BlockType &block) const
-  {
-    std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
-
-    auto it = blockChain_.find(hash);
-
-    if (it != blockChain_.end())
-    {
-      block = (*it).second;
-      return true;
-    }
-
+    FETCH_LOG_WARN(LOGGING_NAME, "TX uniqueness verify on bad block hash");
     return false;
   }
 
-private:
-  // Long term storage and backup
-  fetch::storage::ObjectStore<BlockType> blockStore_;
-  const uint32_t                         blockConfirmation_ = 10;
-  const uint32_t                         minerNumber_;
-  bool                                   saving_to_file_ = false;
+  // Need a set for quickly checking whether transactions are in our container
+  std::set<TransactionSummary>    transactions_to_check;
+  std::vector<TransactionSummary> transactions_duplicated;
 
-  mutable fetch::mutex::Mutex                         main_mutex_;
-  std::unordered_map<BlockHash, BlockType>            blockChain_;  // all recent blocks are here
-  std::unordered_map<BlockHash, std::shared_ptr<Tip>> tips_;        // Keep track of the tips
-  std::pair<uint64_t, BlockHash>                      heaviest_;    // Heaviest block/tip
-
-  mutable fetch::mutex::Mutex                          loose_mutex_;
-  std::unordered_map<PrevHash, std::vector<BlockHash>> looseBlocks_;  // Waiting (loose) blocks
-
-  void RecoverFromFile()
+  for (auto const &tx : container)
   {
-    std::ostringstream fileMain;
-    std::ostringstream fileIndex;
+    transactions_to_check.insert(tx.transaction);
+  }
 
-    fileMain << "chain_" << minerNumber_ << ".db";
-    fileIndex << "chainIndex_" << minerNumber_ << ".db";
+  for (;;)
+  {
+    ++blocks_checked;
 
-    blockStore_.Load(fileMain.str(), fileIndex.str());
-
-    BlockType block;
-    if (blockStore_.Get(storage::ResourceAddress("head"), block))
+    for (auto const &slice : block->body.slices)
     {
-      block.UpdateDigest();
-      AddBlock(block);
-
-      while (blockStore_.Get(storage::ResourceID(block.body().previous_hash), block))
+      for (auto const &tx : slice)
       {
-        block.UpdateDigest();
-        AddBlock(block);
-      }
-    }
-  }
+        auto it = transactions_to_check.find(tx);
 
-  void WriteToFile()
-  {
-    if (!saving_to_file_) return;
-
-    // Add confirmed blocks to file
-    BlockType block  = blockChain_.at(heaviest_.second);
-    bool      failed = false;
-
-    // Find the block N back from our heaviest
-    for (std::size_t i = 0; i < blockConfirmation_; ++i)
-    {
-      if (!GetPrev(block))
-      {
-        failed = true;
-        break;
-      }
-    }
-
-    // This block is now the head in our file
-    if (!failed)
-    {
-      blockStore_.Set(storage::ResourceAddress("head"), block);
-      blockStore_.Set(storage::ResourceID(block.hash()), block);
-    }
-
-    // Walk down the file to check we have an unbroken chain
-    while (GetPrev(block) && !blockStore_.Has(storage::ResourceID(block.hash())))
-    {
-      blockStore_.Set(storage::ResourceID(block.hash()), block);
-    }
-
-    // Clear the block from ram
-    FlushBlock(block);
-  }
-
-  void FlushBlock(BlockType const &block)
-  {
-    {
-      auto it = blockChain_.find(block.hash());
-
-      if (it != blockChain_.end())
-      {
-        blockChain_.erase(it);
-      }
-    }
-
-    auto it = tips_.find(block.hash());
-
-    if (it != tips_.end())
-    {
-      tips_.erase(it);
-    }
-  }
-
-  bool GetPrev(BlockType &block)
-  {
-
-    if (block.body().previous_hash == block.hash())
-    {
-      return false;
-    }
-
-    auto it = blockChain_.find(block.body().previous_hash);
-
-    if (it == blockChain_.end())
-    {
-      return false;
-    }
-
-    block = (*it).second;
-
-    return true;
-  }
-
-  bool GetPrevFromStore(BlockType &block)
-  {
-    if (block.body().previous_hash == block.hash())
-    {
-      return false;
-    }
-
-    return blockStore_.Get(storage::ResourceID(block.body().previous_hash), block);
-  }
-
-  // We have added a non-loose block. It is then safe to lock the loose blocks map and
-  // walk through it adding the blocks, so long as we do breadth first search (!!)
-  void CompleteLooseBlocks(BlockType const &block)
-  {
-    std::lock_guard<fetch::mutex::Mutex> lock(loose_mutex_);
-
-    auto it = looseBlocks_.find(block.hash());
-    if (it == looseBlocks_.end())
-    {
-      return;
-    }
-
-    std::vector<BlockHash> blocks_to_add = (*it).second;
-    looseBlocks_.erase(it);
-
-    fetch::logger.Info("Found loose blocks completed by addition of block: ", blocks_to_add.size());
-
-    while (blocks_to_add.size() > 0)
-    {
-      std::vector<BlockHash> next_blocks_to_add;
-
-      // This is the breadth search, for each block to add, add it, next_blocks_to_add will
-      // get pushed with the next layer of blocks
-      for (auto const &hash : blocks_to_add)
-      {
-        // This should be guaranteed safe
-        BlockType addBlock = blockChain_.at(hash);
-
-        // This won't re-call this function due to the flag
-        AddBlock(addBlock, true);
-
-        // The added block was not loose. Continue to clear
-        auto it = looseBlocks_.find(addBlock.hash());
-        if (it != looseBlocks_.end())
+        // Found a TX in the blockchain that is in our container
+        if (it != transactions_to_check.end())
         {
-          std::vector<BlockHash> const &next_blocks = (*it).second;
-
-          for (auto const &block_hash : next_blocks)
-          {
-            next_blocks_to_add.push_back(block_hash);
-          }
-          looseBlocks_.erase(it);
+          transactions_duplicated.push_back(tx);
         }
       }
+    }
 
-      blocks_to_add = std::move(next_blocks_to_add);
+    // exit the loop once we can no longer find the block
+    if (!LookupBlock(block->body.previous_hash, block, false))
+    {
+      break;
     }
   }
 
-  void NewLooseBlock(BlockType &block)
+  std::size_t duplicated_counter = 0;
+
+  // remove duplicate transactions
+  if (!transactions_duplicated.empty())
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(loose_mutex_);
-    // Get vector of waiting blocks and push ours on
-    auto &waitingBlocks = looseBlocks_[block.body().previous_hash];
-    waitingBlocks.push_back(block.hash());
-    block.loose()             = true;
-    blockChain_[block.hash()] = block;
-  }
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "TX uniqueness verify - found duplicate TXs!: ", transactions_duplicated.size());
 
-  // Case where the block prev isn't found, need to check back in history, and add the prev to
-  // our cache. This might be expensive due to disk reads and hashing.
-  bool CheckDiskForBlock(BlockType &block)
-  {
-    // Only guaranteed way to calculate the weight of the block is to walk back to genesis
-    // is by walking backwards from one of our tips
-    BlockType walk_block;
-    BlockType prev_block;
+    // Iterate our container
+    auto it = container.cbegin();
 
-    if (!blockStore_.Get(storage::ResourceID(block.body().previous_hash), prev_block))
+    // Remove this item from our container if is duplicate
+    while (it != container.end())
     {
-      std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
-      fetch::logger.Info("Didn't find block's previous, adding as loose block");
-      NewLooseBlock(block);
-      return false;
-    }
-
-    // The previous block is in our object store but we don't know its weight, need to recalculate
-    walk_block            = prev_block;
-    uint64_t total_weight = walk_block.totalWeight();
-
-    // walk block should reach genesis walking back
-    while (GetPrevFromStore(walk_block))
-    {
-      total_weight += walk_block.weight();
-    }
-
-    // We should now have an up to date prev block from file, put it in our cached blockchain and
-    // re-add
-    fetch::logger.Info("Reviving block from file");
-    {
-      std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
-      prev_block.totalWeight()       = total_weight;
-      prev_block.loose()             = false;
-      blockChain_[prev_block.hash()] = prev_block;
-    }
-
-    return AddBlock(block);
-  }
-
-  bool UpdateTips(BlockType &block, BlockType const &prev_block)
-  {
-    // Check whether blocks prev hash refers to a valid tip (common case)
-    std::shared_ptr<Tip> tip;
-    auto                 tipRef           = tips_.find(block.body().previous_hash);
-    bool                 heaviestAdvanced = false;
-
-    if (tipRef != tips_.end())
-    {
-      // To advance a tip, need to update its BlockHash in the map
-      tip = ((*tipRef).second);
-      tips_.erase(tipRef);
-      tip->total_weight += block.weight();
-      block.totalWeight() = tip->total_weight;
-      block.loose()       = false;
-
-      fetch::logger.Info("Mainchain: Pushing block onto already existing tip:");
-
-      // Update heaviest pointer if necessary
-      if ((tip->total_weight > heaviest_.first) ||
-          ((tip->total_weight == heaviest_.first) && (block.hash() > heaviest_.second)))
+      // We expect the number of duplicates to be low so vector search should be fine
+      if (std::find(transactions_duplicated.begin(), transactions_duplicated.end(),
+                    (*it).transaction) != transactions_duplicated.end())
       {
-        fetch::logger.Info("Mainchain: Updating heaviest with tip");
-
-        heaviest_.first  = tip->total_weight;
-        heaviest_.second = block.hash();
-
-        heaviestAdvanced = true;
+        it = container.erase(it);
+        duplicated_counter++;
+        continue;
       }
+
+      ++it;
     }
-    else  // Didn't find a corresponding tip
-    {
-      // We are not building on a tip, create a new tip
-      fetch::logger.Info("Mainchain: Received new block with no corresponding tip");
-
-      block.totalWeight() = block.weight() + prev_block.totalWeight();
-      tip                 = std::make_shared<Tip>();
-      tip->total_weight   = block.totalWeight();
-
-      // Check if this advanced the heaviest tip
-      if ((tip->total_weight > heaviest_.first) ||
-          ((tip->total_weight == heaviest_.first) && (block.hash() > heaviest_.second)))
-      {
-        fetch::logger.Info("Mainchain: creating new tip that is now heaviest! (new fork)");
-
-        heaviest_.first  = tip->total_weight;
-        heaviest_.second = block.hash();
-        heaviestAdvanced = true;
-      }
-    }
-
-    if (tip)
-    {
-      tips_[block.hash()] = tip;
-    }
-
-    return heaviestAdvanced;
   }
-};
 
-}  // namespace chain
+  if (duplicated_counter != transactions_duplicated.size())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Warning! Duplicated transactions might not be removed from block. Seen: ",
+                   transactions_duplicated.size(), " Removed: ", duplicated_counter);
+  }
+
+  // determine the time this function has taken to execute
+  auto const delta_time_ms = duration_cast<milliseconds>(Clock::now() - start_time).count();
+
+  if (delta_time_ms >= 100)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Finished TX uniqueness verify in: ", delta_time_ms, "ms",
+                   " checked blocks: ", blocks_checked);
+  }
+  else
+  {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Finished TX uniqueness verify in: ", delta_time_ms, "ms",
+                    " checked blocks: ", blocks_checked);
+  }
+
+  return true;
+}
+
+}  // namespace ledger
 }  // namespace fetch

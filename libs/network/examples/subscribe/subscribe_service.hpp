@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -33,18 +33,21 @@ namespace subscribe {
 class SubscribeService : public service::ServiceServer<fetch::network::TCPServer>
 {
 public:
+  static constexpr char const *LOGGING_NAME = "SubscribeService";
+
   /*
    * Constructor for SubscribeService, will create a server to respond to rpc
    * calls
    */
-  SubscribeService(fetch::network::NetworkManager tm, uint16_t tcpPort) : ServiceServer(tcpPort, tm)
+  SubscribeService(fetch::network::NetworkManager tm, uint16_t tcpPort)
+    : ServiceServer(tcpPort, tm)
   {
     // Macro used for debugging
     LOG_STACK_TRACE_POINT;
 
     // Prints when compiled in debug mode. Options: logger.Debug logger.Info
     // logger.Error
-    fetch::logger.Debug("Constructing test node service with TCP port: ", tcpPort);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Constructing test node service with TCP port: ", tcpPort);
 
     // We construct our node, and attach it to the protocol
     subscribeProto_ = std::make_unique<protocols::SubscribeProtocol>();
@@ -54,7 +57,10 @@ public:
   }
 
   // We can use this to send messages to interested nodes
-  void SendMessage(std::string const &mes) { subscribeProto_->SendMessage(mes); }
+  void SendMessage(std::string const &mes)
+  {
+    subscribeProto_->SendMessage(mes);
+  }
 
 private:
   std::unique_ptr<protocols::SubscribeProtocol> subscribeProto_;

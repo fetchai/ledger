@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -29,7 +29,10 @@ ConstByteArray FromBase64(ConstByteArray const &str) noexcept
   // https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64
   assert((str.size() % 4) == 0);
   std::size_t pad = 0;
-  while ((pad < str.size()) && (str[str.size() - pad - 1] == details::base64pad)) ++pad;
+  while ((pad < str.size()) && (str[str.size() - pad - 1] == details::base64pad))
+  {
+    ++pad;
+  }
 
   ByteArray ret;
   ret.Resize(((3 * str.size()) >> 2) - pad);
@@ -74,7 +77,7 @@ ConstByteArray FromBase64(ConstByteArray const &str) noexcept
     break;
   }
 
-  return ret;
+  return std::move(ret);
 }
 
 ConstByteArray FromHex(ConstByteArray const &str) noexcept
@@ -104,7 +107,7 @@ ConstByteArray FromHex(ConstByteArray const &str) noexcept
     return ConstByteArray();
   }
 
-  return ret;
+  return std::move(ret);
 }
 
 }  // namespace byte_array

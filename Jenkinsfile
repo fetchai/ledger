@@ -1,51 +1,193 @@
 pipeline {
 
-  agent {
-    docker {
-      image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
-    }
-  }
+  agent none
 
   stages {
 
+    stage('Builds & Tests') {
+      parallel {
 
-    stage('Clang Format Checks') {
-        steps {
-            sh './scripts/apply-style.py -w -a'
-        }
-    }
+        stage('Basic Checks') {
+          agent {
+            docker {
+              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+            }
+          }
 
-    stage('Debug Build') {
-      steps {
-        sh './scripts/ci-tool.py -B Debug'
-      }
-    }
+          stages {
+            stage('License Checks') {
+              steps {
+                sh './scripts/check_license_header.py'
+              }
+            }
+            stage('Style check') {
+              steps {
+                sh './scripts/apply_style.py -w -a'
+              }
+            }
+            stage('CMake Version Check') {
+              steps {
+                sh './scripts/check-cmake-versions.py'
+              }
+            }
+          }
+        } // basic checks
 
-    stage('Clang Tidy Checks') {
-        steps {
-            sh './scripts/run-static-analysis.py build-debug/'
-        }
-    }
+        stage('Static Analysis') {
+          agent {
+            docker {
+              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+            }
+          }
 
-    stage('Release Build') {
-      steps {
-        sh './scripts/ci-tool.py -B Release'
-      }
-    }
+          stages {
+            stage('Static Analysis') {
+              steps {
+                sh 'mkdir -p build-analysis && cd build-analysis && cmake ../'
+                sh './scripts/run_static_analysis.py build-analysis/'
+              }
+            }
+          }
+        } // basic checks
 
+        stage('Clang 6 Debug') {
+          agent {
+            docker {
+              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+            }
+          }
 
-    stage('Unit Tests') {
-      steps {
-        sh 'CTEST_OUTPUT_ON_FAILURE=1 ./scripts/ci-tool.py -T Release'
-      }
-    }
+          stages {
+            stage('Debug Build') {
+              steps {
+                sh './scripts/ci-tool.py -B Debug'
+              }
+            }
 
-  }
+            stage('Debug Unit Tests') {
+              steps {
+                sh './scripts/ci-tool.py -T Debug'
+              }
+            }
 
-  post {
-    always {
-      junit 'build-release/TestResults.xml'
-    }
-  }
-}
+            stage('Debug Integration Tests') {
+              when {
+                branch "develop"
+              }
+              steps {
+                sh './scripts/ci-tool.py -I Debug'
+              }
+            }
+          }
+        } // clang 6 debug
+
+        stage('Clang 6 Release') {
+          agent {
+            docker {
+              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+            }
+          }
+
+          stages {
+            stage('Release Build') {
+              steps {
+                sh './scripts/ci-tool.py -B Release'
+              }
+            }
+
+            stage('Unit Tests') {
+              steps {
+                sh './scripts/ci-tool.py -T Release'
+              }
+            }
+
+            stage('Integration Tests') {
+              when {
+                branch "develop"
+              }
+              steps {
+                sh './scripts/ci-tool.py -I Release'
+              }
+            }
+          }
+        } // clang 6 release
+
+        stage('GCC 7 Debug') {
+          agent {
+            docker {
+              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+            }
+          }
+
+          environment {
+            CC  = 'gcc'
+            CXX = 'g++'
+          }
+
+          stages {
+            stage('GCC Debug Build') {
+              steps {
+                sh './scripts/ci-tool.py -B Debug'
+              }
+            }
+
+            stage('GCC Debug Unit Tests') {
+              steps {
+                sh './scripts/ci-tool.py -T Debug'
+              }
+            }
+
+            stage('GCC Debug Integration Tests') {
+              when {
+                branch "develop"
+              }
+              steps {
+                sh './scripts/ci-tool.py -I Debug'
+              }
+            }
+          }
+        } // gcc 7 debug
+
+        stage('GCC 7 Release') {
+          agent {
+            docker {
+              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+            }
+          }
+
+          environment {
+            CC  = 'gcc'
+            CXX = 'g++'
+          }
+
+          stages {
+            stage('GCC Release Build') {
+              steps {
+                sh './scripts/ci-tool.py -B Release'
+              }
+            }
+
+            stage('GCC Release Unit Tests') {
+              steps {
+                sh './scripts/ci-tool.py -T Release'
+              }
+            }
+
+            stage('GCC Release Integration Tests') {
+              when {
+                branch "develop"
+              }
+              steps {
+                sh './scripts/ci-tool.py -I Release'
+              }
+            }
+          }
+        } // gcc 7 release
+
+      } // parallel
+    } // build & test
+
+  } // stages
+
+} // pipeline
 

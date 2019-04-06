@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -25,9 +25,14 @@ namespace kernels {
 template <typename type, typename vector_register_type>
 struct MultiplyScalar
 {
-  MultiplyScalar(type const &val) : scalar(val) {}
+  MultiplyScalar(type const &val)
+    : scalar(val)
+  {}
 
-  void operator()(vector_register_type const &x, vector_register_type &y) { y = scalar * x; }
+  void operator()(vector_register_type const &x, vector_register_type &y)
+  {
+    y = scalar * x;
+  }
 
   vector_register_type scalar;
 };
@@ -35,9 +40,14 @@ struct MultiplyScalar
 template <typename type, typename vector_register_type>
 struct AddScalar
 {
-  AddScalar(type const &val) : scalar(val) {}
+  AddScalar(type const &val)
+    : scalar(val)
+  {}
 
-  void operator()(vector_register_type const &x, vector_register_type &y) { y = scalar + x; }
+  void operator()(vector_register_type const &x, vector_register_type &y)
+  {
+    y = scalar + x;
+  }
 
   vector_register_type scalar;
 };
@@ -45,9 +55,14 @@ struct AddScalar
 template <typename type, typename vector_register_type>
 struct SubtractScalar
 {
-  SubtractScalar(type const &val) : scalar(val) {}
+  SubtractScalar(type const &val)
+    : scalar(val)
+  {}
 
-  void operator()(vector_register_type const &x, vector_register_type &y) { y = x - scalar; }
+  void operator()(vector_register_type const &x, vector_register_type &y)
+  {
+    y = x - scalar;
+  }
 
   vector_register_type scalar;
 };
@@ -55,9 +70,14 @@ struct SubtractScalar
 template <typename type, typename vector_register_type>
 struct DivideScalar
 {
-  DivideScalar(type const &val) : scalar(val) {}
+  DivideScalar(type const &val)
+    : scalar(val)
+  {}
 
-  void operator()(vector_register_type const &x, vector_register_type &y) { y = x / scalar; }
+  void operator()(vector_register_type const &x, vector_register_type &y)
+  {
+    y = x / scalar;
+  }
 
   vector_register_type scalar;
 };
@@ -65,9 +85,14 @@ struct DivideScalar
 template <typename type, typename vector_register_type>
 struct ScalarSubtract
 {
-  ScalarSubtract(type const &val) : scalar(val) {}
+  ScalarSubtract(type const &val)
+    : scalar(val)
+  {}
 
-  void operator()(vector_register_type const &x, vector_register_type &y) { y = scalar - x; }
+  void operator()(vector_register_type const &x, vector_register_type &y)
+  {
+    y = scalar - x;
+  }
 
   vector_register_type scalar;
 };
@@ -75,9 +100,14 @@ struct ScalarSubtract
 template <typename type, typename vector_register_type>
 struct DivideScalar
 {
-  ScalarDivide(type const &val) : scalar(val) {}
+  ScalarDivide(type const &val)
+    : scalar(val)
+  {}
 
-  void operator()(vector_register_type const &x, vector_register_type &y) { y = scalar / x; }
+  void operator()(vector_register_type const &x, vector_register_type &y)
+  {
+    y = scalar / x;
+  }
 
   vector_register_type scalar;
 };

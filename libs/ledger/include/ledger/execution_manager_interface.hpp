@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -25,13 +25,11 @@ namespace ledger {
 class ExecutionManagerInterface
 {
 public:
-  using block_type        = chain::BlockBody;
-  using block_digest_type = block_type::digest_type;
+  using BlockHash = ledger::Block::Digest;
 
-  enum class Status
+  enum class ScheduleStatus
   {
-    COMPLETE = 0,  ///< The block has been successfully applied/executed
-    SCHEDULED,     ///< The block has been successfully scheduled
+    SCHEDULED = 0,  ///< The block has been scheduled for execution
 
     // Errors
     NOT_STARTED,      ///< The executor has not been started
@@ -41,32 +39,127 @@ public:
                       ///< typically because resources issues
   };
 
+  enum class State
+  {
+    IDLE = 0,  ///< The execution manager is waiting for new blocks to execute
+    ACTIVE,    ///< The execution manager is in the process of executing a block
+
+    // Stalled states
+    TRANSACTIONS_UNAVAILABLE,  ///< The execution manager has stalled because transactions are
+                               ///< unavailable
+
+    // Error States
+    EXECUTION_ABORTED,  ///< Execution has been stopped on user request
+    EXECUTION_FAILED    ///< Execution has failed for a fundamental reason, the block can be
+                        ///< considered as bad
+  };
+
   // Construction / Destruction
   ExecutionManagerInterface()          = default;
   virtual ~ExecutionManagerInterface() = default;
 
   /// @name Execution Manager Interface
   /// @{
-  virtual Status            Execute(block_type const &block) = 0;
-  virtual block_digest_type LastProcessedBlock()             = 0;
-  virtual bool              IsActive()                       = 0;
-  virtual bool              IsIdle()                         = 0;
-  virtual bool              Abort()                          = 0;
+  virtual ScheduleStatus Execute(Block::Body const &block)     = 0;
+  virtual void           SetLastProcessedBlock(BlockHash hash) = 0;
+  virtual BlockHash      LastProcessedBlock()                  = 0;
+  virtual State          GetState()                            = 0;
+  virtual bool           Abort()                               = 0;
   /// @}
 };
 
 template <typename T>
-void Serialize(T &serializer, ExecutionManagerInterface::Status const &status)
+void Serialize(T &serializer, ExecutionManagerInterface::ScheduleStatus const &status)
 {
   serializer << static_cast<uint8_t>(status);
 }
 
 template <typename T>
-void Deserialize(T &serializer, ExecutionManagerInterface::Status &status)
+void Deserialize(T &serializer, ExecutionManagerInterface::ScheduleStatus &status)
 {
   uint8_t raw = 0xFF;
   serializer >> raw;
-  status = static_cast<ExecutionManagerInterface::Status>(raw);
+  status = static_cast<ExecutionManagerInterface::ScheduleStatus>(raw);
+}
+
+template <typename T>
+void Serialize(T &serializer, ExecutionManagerInterface::State const &status)
+{
+  serializer << static_cast<uint8_t>(status);
+}
+
+template <typename T>
+void Deserialize(T &serializer, ExecutionManagerInterface::State &status)
+{
+  uint8_t raw = 0xFF;
+  serializer >> raw;
+  status = static_cast<ExecutionManagerInterface::State>(raw);
+}
+
+/**
+ * Convert schedule status into a string
+ *
+ * @param status The status to convert
+ * @return The string representation of the status
+ */
+inline char const *ToString(ExecutionManagerInterface::ScheduleStatus status)
+{
+  using ScheduleStatus = ExecutionManagerInterface::ScheduleStatus;
+
+  char const *reason = "Unknown";
+  switch (status)
+  {
+  case ScheduleStatus::SCHEDULED:
+    reason = "Scheduled";
+    break;
+  case ScheduleStatus::NOT_STARTED:
+    reason = "Not Started";
+    break;
+  case ScheduleStatus::ALREADY_RUNNING:
+    reason = "Already Running";
+    break;
+  case ScheduleStatus::NO_PARENT_BLOCK:
+    reason = "No Parent Block";
+    break;
+  case ScheduleStatus::UNABLE_TO_PLAN:
+    reason = "Unable to Plan";
+    break;
+  }
+
+  return reason;
+}
+
+/**
+ * Convert the Execution Manager state into a string
+ *
+ * @param state The state to be converted
+ * @return The string representation of the state
+ */
+inline char const *ToString(ExecutionManagerInterface::State state)
+{
+  using State = ExecutionManagerInterface::State;
+
+  char const *text = "Unknown";
+  switch (state)
+  {
+  case State::IDLE:
+    text = "Idle";
+    break;
+  case State::ACTIVE:
+    text = "Active";
+    break;
+  case State::TRANSACTIONS_UNAVAILABLE:
+    text = "Transaction(s) Unavailable";
+    break;
+  case State::EXECUTION_ABORTED:
+    text = "Execution Aborted";
+    break;
+  case State::EXECUTION_FAILED:
+    text = "Execution Failed";
+    break;
+  }
+
+  return text;
 }
 
 }  // namespace ledger

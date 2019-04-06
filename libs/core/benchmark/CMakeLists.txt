@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   C O R E   B E N C H M A R K S
 ################################################################################
-cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-core)
 
 # CMake configuration
@@ -17,3 +17,4 @@ setup_compiler()
 add_executable(serialisation serialisation/main.cpp)
 target_link_libraries(serialisation PRIVATE fetch-core fetch-testing)
 
+add_fetch_gbench(core-random-benches fetch-core random/)

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -41,13 +41,19 @@ struct ArgsToString
 template <typename R, typename F>
 struct ArgsToString<R, F>
 {
-  static std::string Value() { return serializers::TypeRegister<base_type<F>>::name(); }
+  static std::string Value()
+  {
+    return serializers::TypeRegister<base_type<F>>::name();
+  }
 };
 
 template <typename R>
 struct ArgsToString<R, void>
 {
-  static std::string Value() { return ""; }
+  static std::string Value()
+  {
+    return "";
+  }
 };
 
 template <typename C, typename R, typename... Args>
@@ -104,7 +110,7 @@ struct Packer<T>
   static void SerializeArguments(S &serializer, T &&last)
   {
     serializer << last;
-    serializer.Seek(0);
+    serializer.seek(0);
   }
 };
 }  // namespace details
@@ -151,7 +157,7 @@ void PackCall(S &serializer, protocol_handler_type const &protocol,
 
   serializer << protocol;
   serializer << function;
-  serializer.Seek(0);
+  serializer.seek(0);
 }
 
 /* This function packs a function call using packed arguments.
@@ -177,7 +183,7 @@ void PackCallWithPackedArguments(S &serializer, protocol_handler_type const &pro
 
   serializer.Allocate(args.size());
   serializer.WriteBytes(args.pointer(), args.size());
-  serializer.Seek(0);
+  serializer.seek(0);
 }
 
 /* Function that packs arguments to serializer.
@@ -203,12 +209,13 @@ void PackArgs(S &serializer)
 {
   LOG_STACK_TRACE_POINT;
 
-  serializer.Seek(0);
+  serializer.seek(0);
 }
 
 enum Callable
 {
-  CLIENT_ID_ARG = 1ull
+  CLIENT_ID_ARG      = 1ull,
+  CLIENT_CONTEXT_ARG = 2ull,
 };
 
 struct CallableArgumentType
@@ -243,7 +250,9 @@ public:
 class AbstractCallable
 {
 public:
-  AbstractCallable(uint64_t meta_data = 0) : meta_data_(meta_data) {}
+  AbstractCallable(uint64_t meta_data = 0)
+    : meta_data_(meta_data)
+  {}
 
   virtual ~AbstractCallable(){};
 
@@ -255,11 +264,20 @@ public:
   virtual void operator()(serializer_type &result, CallableArgumentList const &additional_args,
                           serializer_type &params)                          = 0;
 
-  uint64_t const &   meta_data() const { return meta_data_; }
-  std::string const &signature() const { return signature_; }
+  uint64_t const &meta_data() const
+  {
+    return meta_data_;
+  }
+  std::string const &signature() const
+  {
+    return signature_;
+  }
 
 protected:
-  void SetSignature(std::string const &signature) { signature_ = signature; }
+  void SetSignature(std::string const &signature)
+  {
+    signature_ = signature;
+  }
 
 private:
   uint64_t    meta_data_ = 0;

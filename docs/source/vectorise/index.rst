@@ -1,7 +1,7 @@
 Fetch Vectorisation Library
 ===========================
-The Fetch vectorisation library depends on vectorisationfetch-corevectorisation to provide the
-basic datastructures. You can check vectorisationfetch-corevectorisation out by initiating the
+The Fetch vectorisation library depends on fetch-core to provide the
+basic datastructures. You can check fetch-core out by initiating the
 submodules of the supplied repository.
 
 Objective
@@ -14,7 +14,7 @@ cross-platform compatibility.
 Basic usage requirement
 -----------------------
 The vectorisation library is standalone and does as such not depend on
-any modules. However, in order to compile the examples, vectorisationfetch-corevectorisation is
+any modules. However, in order to compile the examples, fetch-core is
 required. To initialise the submodules do
 
 .. code-block:: bash
@@ -24,9 +24,9 @@ required. To initialise the submodules do
 
 In order for the vectorisation module to work correctly it is important
 that the memory is aligned according to the architecture
-requirements. The vectorisationArray<T>vectorisation and the vectorisationSharedArray<T>vectorisation from vectorisationfetch-corevectorisation
+requirements. The Array<T> and the SharedArray<T> from fetch-core
 takes care that this requirement is fulfilled. It is, however, possible
-use vectorisationfetch-vectorisevectorisation with customly allocated memory. In this case it is
+use fetch-vectorise with customly allocated memory. In this case it is
 the developers responsibility to align the memory correctly.
 
 
@@ -35,12 +35,12 @@ the developers responsibility to align the memory correctly.
 High-level examples
 -------------------
 In the following sections we will take you through small examples
-illustrating how the vectorisationfetch-vectorisationvectorisation module can be applied in
+illustrating how the fetch- module can be applied in
 different context to archive different goals. We will focus on
 high-level examples. In the next section we will discuss more advanced
 use cases where iteration over elements are done manually.
 
-The vectorisationfetch-vectorisationvectorisation module makes use of lambda functions, Functors
+The fetch- module makes use of lambda functions, Functors
 or function pointers to archive vectorisation. We refer to these
 functions as *kernels*. Depending on which type of kernels are used,
 performance will differ. C++11 introduced lambda functions which is a
@@ -53,24 +53,24 @@ considered good pratice for vectorisation. We generally discourage
 function pointers as these are much harder for the compiler to optimise
 and as a result you may encounter a performance penalty.
 
-The examples discussed can all be found in the vectorisationexamplesvectorisation directory of
-vectorisationfetch-vectorisationvectorisation.
+The examples discussed can all be found in the examples directory of
+fetch-vectorisation.
 
 Elementwise manipulation
 ------------------------
-In this example we will consider the vectorisationParallelDispatchervectorisation and its
-memberfunction vectorisationApply(kernel, arg1, ... )vectorisation
+In this example we will consider the ParallelDispatcher and its
+memberfunction Apply(kernel, arg1, ... )
 function that does elementwise manipulation to an array with an
 arbitrary number of arguments.
-We consider the case where we have two arrays vectorisationAvectorisation
-and vectorisationBvectorisation.We now want compute the value of the elements in an array vectorisationCvectorisation,
+We consider the case where we have two arrays A
+and B. We now want compute the value of the elements in an array C,
 through the formula:
 
 .. math::
    C_{i} = \frac{1}{2} \frac{A_{i} - B_{i}}{ A_{i} + B_{i} }
 
 We first investigate a standard C++ implementation. The source can be
-found in vectorisationexamples/01_elementwise_manipulation/ordinary_solution.cppvectorisation
+found in examples/01_elementwise_manipulation/ordinary_solution.cpp
 and we outline the essential part of the code below:
 
 .. literalinclude:: ../../../libs/vectorise/examples/01_elementwise_manipulation/ordinary_solution.cpp
@@ -79,10 +79,10 @@ and we outline the essential part of the code below:
 
 The Fetch way of implementing the same function differs slightly. We an
 inlined function to build a concurrent program. For the sake of making
-the programming experience effortless, the vectorisationvector_register_typesvectorisation
-needed to do this are defined as typedefs in the vectorisationfetch-corevectorisation array data
+the programming experience effortless, the vector_register_types
+needed to do this are defined as typedefs in the fetch-core array data
 structures. The example can be found in
-vectorisationexamples/01_elementwise_manipulation/fetch_solution.cppvectorisation and core part is
+examples/01_elementwise_manipulation/fetch_solution.cpp and core part is
 
 .. literalinclude:: ../../../libs/vectorise/examples/01_elementwise_manipulation_fetch/main.cpp
    :language: c++
@@ -91,11 +91,11 @@ vectorisationexamples/01_elementwise_manipulation/fetch_solution.cppvectorisatio
 We note that this is some what different from the standard C++ code in
 that it uses the inlined kernel to ensure that operations gets
 vectorised. The kernel can be a kernel with an arbitrary amount of
-arguments. Each of the arguments are added at the end of the vectorisationApplyvectorisation
+arguments. Each of the arguments are added at the end of the Apply
 function after the kernel argument. The kernel itself, follows the
-signature vectorisationkernel(arg1, ..., argN, ret)vectorisation where vectorisationarg1vectorisation through vectorisationargNvectorisation are
-constant references and vectorisationretvectorisation is a reference to an element in the
-resulting array (vectorisationCvectorisation in the code above).
+signature kernel(arg1, ..., argN, ret) where arg1 through argN are
+constant references and ret is a reference to an element in the
+resulting array (C in the code above).
 
 After building the example codes, the can be ran as follows:
 
@@ -113,21 +113,21 @@ according to the architecture.
            
 Reduction
 ---------
-Another common activity is simple reductions. The vectorisationParallelDispatchervectorisation
+Another common activity is simple reductions. The ParallelDispatcher
 makes it easy to perform these as well. In this example we will consider
-the reduction of a single array vectorisationAvectorisation through 
+the reduction of a single array A through 
 
 .. math::
    r = \sum_{i=1}^N A_{i}
 
-Below we outline the standard C++ implementation found in vectorisation02_reduction/ordinary_solution.cppvectorisation:
+Below we outline the standard C++ implementation found in 02_reduction/ordinary_solution.cpp:
 
 .. literalinclude:: ../../../libs/vectorise/examples/02_reduction/ordinary_solution.cpp
    :language: c++
    :lines: 10-19
 
 Reimplementing this the Fetch way, we make use of the parallel
-dispatchers vectorisationReducevectorisation function. The purpose of the reduce function is to
+dispatchers Reduce function. The purpose of the reduce function is to
 define how any to elements are reduced. It is in particular useful for
 trivial functions such as addition, differences, any and all. We outline
 the Fetch implementation here:
@@ -137,7 +137,7 @@ the Fetch implementation here:
    :lines: 12-22
 
 This implementation can be found in
-vectorisationexamples/02_reduction/fetch_solution.cppvectorisation.
+examples/02_reduction/fetch_solution.cpp.
 
 .. code-block:: bash
                 
@@ -156,23 +156,23 @@ performance increase without much extra coding effort.
 Sum Reduce
 ----------
 The Fetch vectorisation library also supports more advanced reductions
-such as the inner product between two vectors vectorisationAvectorisation and vectorisationBvectorisation. Consider
+such as the inner product between two vectors A and B. Consider
 implementing the following functionality: 
 
 .. math::
    r = \sum_{i=1}^N (A_{i}-B_{i})^2
 
 The standard C++ implementation is again quite trivial and can be found
-in vectorisationexamples/03_sum_reduce/ordinary_solution.cppvectorisation.
+in examples/03_sum_reduce/ordinary_solution.cpp.
 
 .. literalinclude:: ../../../libs/vectorise/examples/03_sum_reduce/ordinary_solution.cpp
    :language: c++
    :lines: 7-20
 
-In this implementation, we've chosen to use vectorisationdoublevectorisation rather than vectorisationfloatvectorisation
+In this implementation, we've chosen to use double rather than float
 as the test input in the example would cause precision error with
 floats. Writing the corresponding code is equvialent to writing the code
-for floats - that is, due to the vectorisationvector_register_typevectorisation types the user
+for floats - that is, due to the vector_register_type types the user
 does not need to worry about the underlying data structures or assmbly
 codes to perform the vectorisation:
 
@@ -181,7 +181,7 @@ codes to perform the vectorisation:
    :lines: 8-24
 
 This implementation can be found in
-vectorisationexamples/03_sum_reduce/fetch_solution.cppvectorisation. Running a benchmark we get
+examples/03_sum_reduce/fetch_solution.cpp. Running a benchmark we get
 following results with SSE enabled:
 
 .. code-block:: bash
@@ -198,15 +198,15 @@ Approximating Soft Max
 ----------------------
 In this example we go through one of the more advanced use cases of the
 vectorisation library, namely computing Soft Max function. We will
-assume that we have an array vectorisationAvectorisation and that we want compute a the values
-in a new array vectorisationBvectorisation according to:
+assume that we have an array A and that we want compute a the values
+in a new array B according to:
 
 .. math::
    B_i = \frac{ e^{A_i} }{ \sum_{j} e^{A_j} }
 
 In order to do this, we will make use of an builtin approximation to the
 exponential function. As a reference we first make an implementation
-using the C++ standard library. The code can be found in  vectorisation05_softmax_approx/ordinary_solution.cppvectorisation:
+using the C++ standard library. The code can be found in  05_softmax_approx/ordinary_solution.cpp:
 
 .. literalinclude:: ../../../libs/vectorise/examples/05_softmax_approx/ordinary_solution.cpp
    :language: c++
@@ -214,7 +214,7 @@ using the C++ standard library. The code can be found in  vectorisation05_softma
 
 
 The corresponding Fetch implementation is listed below. Two functions
-are noticiable in the implementation: vectorisationapprox_expvectorisation and vectorisationreducevectorisation. The
+are noticiable in the implementation: approx_exp and reduce. The
 first function approximates the exponential with up to 6% deviation from
 the standard exponential and the second function reduces a vector
 registers content to that of the underlying type. The algoithm is

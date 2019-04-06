@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -54,7 +54,10 @@ byte_array::ConstByteArray GetRandomByteArray(std::size_t length)
 // Time related functionality
 using time_point = std::chrono::high_resolution_clock::time_point;
 
-time_point TimePoint() { return std::chrono::high_resolution_clock::now(); }
+time_point TimePoint()
+{
+  return std::chrono::high_resolution_clock::now();
+}
 
 double TimeDifference(time_point t1, time_point t2)
 {
@@ -69,9 +72,12 @@ double TimeDifference(time_point t1, time_point t2)
 class NoCopyClass
 {
 public:
-  NoCopyClass() {}
+  NoCopyClass()
+  {}
 
-  NoCopyClass(int val) : class_value{val} {}
+  NoCopyClass(int val)
+    : class_value{val}
+  {}
 
   NoCopyClass(NoCopyClass &rhs) = delete;
   NoCopyClass &operator=(NoCopyClass &rhs) = delete;
@@ -118,16 +124,18 @@ std::size_t Size(const T &item)
 template <typename T>
 T NextTransaction(std::size_t bytesToAdd = 0)
 {
-  fetch::chain::MutableTransaction trans;
+  fetch::ledger::MutableTransaction trans;
 
   trans.PushResource(GetRandomByteArray(64));
 
-  byte_array::ByteArray sig1, contract_name, data;
-  MakeString(sig1);
+  ledger::Signatories signatures;
+  signatures[fetch::crypto::Identity{"identity_params", "identity"}] =
+      fetch::ledger::Signature{"sig_data", "sig_type"};
+  byte_array::ByteArray contract_name, data;
   MakeString(contract_name);
   MakeString(data, 1 + bytesToAdd);
 
-  trans.set_signature(sig1);
+  trans.set_signatures(signatures);
   trans.set_contract_name(std::string{contract_name.char_pointer(), contract_name.size()});
   trans.set_data(data);
 
@@ -162,7 +170,7 @@ void BlockUntilTime(uint64_t startTime)
 namespace network_benchmark {
 
 // Transactions are packaged up into blocks and referred to using a hash
-using transaction_type = fetch::chain::Transaction;
+using transaction_type = fetch::ledger::Transaction;
 using block_hash       = std::size_t;
 using block_type       = std::vector<transaction_type>;
 using network_block    = std::pair<block_hash, block_type>;

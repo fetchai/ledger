@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -26,23 +26,16 @@ class LaneIdentityProtocol : public service::Protocol
 public:
   enum
   {
-    PING = 1,
-    HELLO,
-    GET_IDENTITY,
+    GET_IDENTITY = 1,
     GET_LANE_NUMBER,
     GET_TOTAL_LANES,
-    AUTHENTICATE_CONTROLLER
-
   };
 
-  LaneIdentityProtocol(LaneIdentity *ctrl)
+  LaneIdentityProtocol(LaneIdentity &ctrl)
   {
-    this->Expose(PING, ctrl, &LaneIdentity::Ping);
-    this->ExposeWithClientArg(HELLO, ctrl, &LaneIdentity::Hello);
-    this->Expose(GET_IDENTITY, ctrl, &LaneIdentity::Identity);
-    this->Expose(GET_LANE_NUMBER, ctrl, &LaneIdentity::GetLaneNumber);
-    this->Expose(GET_TOTAL_LANES, ctrl, &LaneIdentity::GetTotalLanes);
-    this->Expose(AUTHENTICATE_CONTROLLER, ctrl, &LaneIdentity::AuthenticateController);
+    this->Expose(GET_IDENTITY, &ctrl, &LaneIdentity::Identity);
+    this->Expose(GET_LANE_NUMBER, &ctrl, &LaneIdentity::GetLaneNumber);
+    this->Expose(GET_TOTAL_LANES, &ctrl, &LaneIdentity::GetTotalLanes);
   }
 };
 

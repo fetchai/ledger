@@ -1,6 +1,25 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include "vm/node.hpp"
+
+#include <unordered_set>
 
 namespace fetch {
 namespace vm {
@@ -8,16 +27,16 @@ namespace vm {
 class Parser
 {
 public:
-  Parser() {}
-  ~Parser() {}
-  BlockNodePtr Parse(const std::string &source, std::vector<std::string> &errors);
+  Parser();
+  ~Parser() = default;
+  BlockNodePtr Parse(std::string const &source, Strings &errors);
 
 private:
   enum class State
   {
     // [group opener, prefix op or operand] is required
     PreOperand,
-    // [postfix op, binary op, group separator or group closer] is optional
+    // [postfix op, binary op, comma or group closer] is optional
     PostOperand
   };
 
@@ -29,7 +48,8 @@ private:
 
   struct OpInfo
   {
-    OpInfo() {}
+    OpInfo()
+    {}
     OpInfo(int precedence__, Association association__, int arity__)
     {
       precedence  = precedence__;
@@ -46,24 +66,32 @@ private:
     bool              is_operator;
     ExpressionNodePtr node;
     OpInfo            op_info;
-    int               count;
+    Token::Kind       closer_token_kind;
+    std::string       closer_token_text;
+    int               num_members;
   };
 
-  std::vector<Token>       tokens_;
-  int                      index_;
-  Token *                  token_;
-  std::vector<std::string> errors_;
-  std::vector<Node::Kind>  blocks_;
-  State                    state_;
-  bool                     found_expression_terminator_;
-  std::vector<int>         groups_;
-  std::vector<Expr>        operators_;
-  std::vector<Expr>        rpn_;
-  std::vector<Expr>        infix_stack_;
+  using StringSet = std::unordered_set<std::string>;
 
-  void              Tokenise(const std::string &source);
+  StringSet               template_names_;
+  std::vector<Token>      tokens_;
+  int                     index_;
+  Token *                 token_;
+  Strings                 errors_;
+  std::vector<Node::Kind> blocks_;
+  State                   state_;
+  bool                    found_expression_terminator_;
+  std::vector<size_t>     groups_;
+  std::vector<Expr>       operators_;
+  std::vector<Expr>       rpn_;
+  std::vector<Expr>       infix_stack_;
+
+  void              Tokenise(std::string const &source);
   bool              ParseBlock(BlockNode &node);
   BlockNodePtr      ParseFunctionDefinition();
+  NodePtr           ParseAnnotations();
+  NodePtr           ParseAnnotation();
+  NodePtr           ParseAnnotationLiteral();
   BlockNodePtr      ParseWhileStatement();
   BlockNodePtr      ParseForStatement();
   NodePtr           ParseIfStatement();
@@ -74,48 +102,58 @@ private:
   ExpressionNodePtr ParseExpressionStatement();
   void              GoToNextStatement();
   void              SkipFunctionDefinition();
+  bool              IsTemplateName(std::string const &name) const;
   ExpressionNodePtr ParseType();
   ExpressionNodePtr ParseConditionalExpression();
-  ExpressionNodePtr ParseExpression(const bool is_conditional_expression = false);
+  ExpressionNodePtr ParseExpression(bool is_conditional_expression = false);
   bool              HandleIdentifier();
   bool              ParseExpressionIdentifier(std::string &name);
-  bool              HandleLiteral(const Node::Kind kind);
+  bool              HandleLiteral(Node::Kind kind);
   void              HandlePlus();
   void              HandleMinus();
-  bool              HandleBinaryOp(const Node::Kind kind, const OpInfo &op_info);
+  bool              HandleBinaryOp(Node::Kind kind, OpInfo const &op_info);
   void              HandleNot();
-  void              HandleIncDec(const Node::Kind prefix_kind, const OpInfo &prefix_op_info,
-                                 const Node::Kind postfix_kind, const OpInfo &postfix_op_info);
-  bool              HandleDot();
-  void              HandleOpener(const Node::Kind prefix_kind, const Node::Kind postfix_kind);
-  bool              HandleCloser(const bool is_conditional_expression);
-  bool              HandleComma();
-  void              HandleOp(const Node::Kind kind, const OpInfo &op_info);
-  void              AddGroup(const Node::Kind kind, const int initial_arity);
-  void              AddOp(const Node::Kind kind, const OpInfo &op_info);
-  void              AddOperand(const Node::Kind kind);
-  void              AddError(const std::string &message);
+  void HandleIncDec(Node::Kind prefix_kind, OpInfo const &prefix_op_info, Node::Kind postfix_kind,
+                    OpInfo const &postfix_op_info);
+  bool HandleDot();
+  bool HandleOpener(Node::Kind prefix_kind, Node::Kind postfix_kind, Token::Kind closer_token_kind,
+                    std::string const &closer_token_text);
+  bool HandleCloser(bool is_conditional_expression);
+  bool HandleComma();
+  void HandleOp(Node::Kind kind, OpInfo const &op_info);
+  void AddGroup(Node::Kind kind, int arity, Token::Kind closer_token_kind,
+                std::string const &closer_token_text);
+  void AddOp(Node::Kind kind, OpInfo const &op_info);
+  void AddOperand(Node::Kind kind);
+  void AddError(std::string const &message);
 
-  void IncrementNodeCount()
+  void IncrementGroupMembers()
   {
     if (groups_.size())
     {
-      Expr &group = operators_[std::size_t(groups_.back())];
-      ++(group.count);
+      Expr &groupop = operators_[groups_.back()];
+      ++(groupop.num_members);
     }
   }
 
   void Next()
   {
-    if (index_ < (int)tokens_.size() - 1) token_ = &tokens_[std::size_t(++index_)];
+    if (index_ < (int)tokens_.size() - 1)
+    {
+      token_ = &tokens_[std::size_t(++index_)];
+    }
   }
 
   void Undo()
   {
     if (--index_ >= 0)
+    {
       token_ = &tokens_[std::size_t(index_)];
+    }
     else
+    {
       token_ = nullptr;
+    }
   }
 };
 

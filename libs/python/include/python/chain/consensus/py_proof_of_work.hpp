@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
 #include "fetch_pybind.hpp"
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 namespace consensus {
 
 void BuildProofOfWork(pybind11::module &module)
@@ -30,7 +30,7 @@ void BuildProofOfWork(pybind11::module &module)
   namespace py = pybind11;
   py::class_<ProofOfWork, math::BigUnsigned>(module, "ProofOfWork")
       .def(py::init<>())
-      .def(py::init<fetch::chain::consensus::ProofOfWork::header_type>())
+      .def(py::init<fetch::ledger::consensus::ProofOfWork::header_type>())
       .def("target", &ProofOfWork::target)
       .def("SetTarget", &ProofOfWork::SetTarget)
       .def("operator()", &ProofOfWork::operator())
@@ -39,5 +39,5 @@ void BuildProofOfWork(pybind11::module &module)
       .def("digest", &ProofOfWork::digest);
 }
 };  // namespace consensus
-};  // namespace chain
+};  // namespace ledger
 };  // namespace fetch

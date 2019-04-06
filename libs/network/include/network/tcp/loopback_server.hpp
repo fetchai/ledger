@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -32,9 +32,16 @@ std::atomic<std::size_t> openSessions{0};
 class BasicLoopback : public std::enable_shared_from_this<BasicLoopback>
 {
 public:
-  BasicLoopback(asio::ip::tcp::tcp::socket socket) : socket_(std::move(socket)) { openSessions++; }
+  BasicLoopback(asio::ip::tcp::tcp::socket socket)
+    : socket_(std::move(socket))
+  {
+    openSessions++;
+  }
 
-  ~BasicLoopback() { openSessions--; }
+  ~BasicLoopback()
+  {
+    openSessions--;
+  }
 
   void Start()
   {
@@ -76,9 +83,11 @@ class LoopbackServer
 {
 public:
   static constexpr std::size_t DEFAULT_NUM_THREADS = 4;
+  static constexpr char const *LOGGING_NAME        = "LoopbackServer";
 
   explicit LoopbackServer(uint16_t port, std::size_t num_threads = DEFAULT_NUM_THREADS)
-    : port_{port}, networkManager_{num_threads}
+    : port_{port}
+    , networkManager_{"Loopback", num_threads}
   {
     networkManager_.Start();
     networkManager_.Post([this] {
@@ -103,7 +112,10 @@ public:
     }
   }
 
-  ~LoopbackServer() { networkManager_.Stop(); }
+  ~LoopbackServer()
+  {
+    networkManager_.Stop();
+  }
 
 private:
   // IO objects guaranteed to have lifetime less than the
@@ -116,7 +128,10 @@ private:
   void Accept()
   {
     auto strongAccep = acceptor_.lock();
-    if (!strongAccep) return;
+    if (!strongAccep)
+    {
+      return;
+    }
     strongAccep->async_accept(
         [this, strongAccep](std::error_code ec, asio::ip::tcp::tcp::socket socket) {
           if (!ec)
@@ -125,7 +140,7 @@ private:
           }
           else
           {
-            fetch::logger.Info("Error in loopback server: ", ec.message());
+            FETCH_LOG_INFO(LOGGING_NAME, "Error in loopback server: ", ec.message());
           }
 
           Accept();

@@ -1,16 +1,48 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
-#include "vm/opcodes.hpp"
+#include "vm/common.hpp"
 #include "vm/token.hpp"
-#include "vm/typeids.hpp"
-#include <cstdint>
 #include <memory>
-#include <string>
-#include <unordered_map>
-#include <vector>
 
 namespace fetch {
 namespace vm {
+
+enum class Operator : uint16_t
+{
+  Unknown = 0,
+  Equal,
+  NotEqual,
+  LessThan,
+  LessThanOrEqual,
+  GreaterThan,
+  GreaterThanOrEqual,
+  UnaryMinus,
+  Add,
+  Subtract,
+  Multiply,
+  Divide,
+  AddAssign,
+  SubtractAssign,
+  MultiplyAssign,
+  DivideAssign
+};
 
 struct Symbol
 {
@@ -20,67 +52,99 @@ struct Symbol
     Variable,
     FunctionGroup
   };
-  Symbol(const Kind kind__, const std::string &name__)
+  Symbol(std::string const &name__, Kind kind__)
   {
-    kind = kind__;
     name = name__;
+    kind = kind__;
   }
   virtual ~Symbol() = default;
-  bool        IsType() const { return (kind == Kind::Type); }
-  bool        IsVariable() const { return (kind == Kind::Variable); }
-  bool        IsFunctionGroup() const { return (kind == Kind::FunctionGroup); }
-  Kind        kind;
+  virtual void Reset()
+  {}
+  bool IsType() const
+  {
+    return (kind == Kind::Type);
+  }
+  bool IsVariable() const
+  {
+    return (kind == Kind::Variable);
+  }
+  bool IsFunctionGroup() const
+  {
+    return (kind == Kind::FunctionGroup);
+  }
   std::string name;
+  Kind        kind;
 };
 using SymbolPtr = std::shared_ptr<Symbol>;
 
 struct SymbolTable
 {
-  void Add(const std::string &name, const SymbolPtr &symbol)
+  void Add(std::string const &name, SymbolPtr const &symbol)
   {
     map.insert(std::pair<std::string, SymbolPtr>(name, symbol));
   }
-  SymbolPtr Find(const std::string &name)
+  SymbolPtr Find(std::string const &name)
   {
     auto it = map.find(name);
-    if (it != map.end()) return it->second;
+    if (it != map.end())
+    {
+      return it->second;
+    }
     return nullptr;
+  }
+  void Reset()
+  {
+    for (auto &it : map)
+    {
+      it.second->Reset();
+    }
   }
   std::unordered_map<std::string, SymbolPtr> map;
 };
 using SymbolTablePtr = std::shared_ptr<SymbolTable>;
-inline SymbolTablePtr CreateSymbolTable() { return std::make_shared<SymbolTable>(SymbolTable()); }
+
+inline SymbolTablePtr CreateSymbolTable()
+{
+  return std::make_shared<SymbolTable>(SymbolTable());
+}
 
 struct Type;
-using TypePtr = std::shared_ptr<Type>;
+using TypePtr      = std::shared_ptr<Type>;
+using TypePtrArray = std::vector<TypePtr>;
 struct Type : public Symbol
 {
-  enum class Category : uint16_t
+  Type(std::string const &name, TypeId id__, TypeCategory category__)
+    : Symbol(name, Kind::Type)
   {
-    Primitive,
-    Template,
-    TemplateInstantiation,
-    Class
-  };
-  Type(const std::string &name, const Category category__, const TypeId id__)
-    : Symbol(Kind::Type, name)
-  {
-    category = category__;
     id       = id__;
+    category = category__;
   }
   virtual ~Type() = default;
-  bool                 IsPrimitiveType() const { return (category == Category::Primitive); }
-  Category             category;
-  TypeId               id;
-  SymbolTablePtr       symbols;
-  TypePtr              template_type;
-  std::vector<TypePtr> template_parameter_types;
+  virtual void Reset() override
+  {
+    if (symbol_table)
+    {
+      symbol_table->Reset();
+    }
+    template_type = nullptr;
+    types.clear();
+    index_input_types.clear();
+    index_output_type = nullptr;
+  }
+  TypeId         id;
+  TypeCategory   category;
+  SymbolTablePtr symbol_table;
+  TypePtr        template_type;
+  TypePtrArray   types;
+  TypePtrArray   index_input_types;
+  TypePtr        index_output_type;
 };
-inline TypePtr CreateType(const std::string &name, const Type::Category category, const TypeId id)
+
+inline TypePtr CreateType(std::string const &name, TypeId id, TypeCategory category)
 {
-  return std::make_shared<Type>(Type(name, category, id));
+  return std::make_shared<Type>(Type(name, id, category));
 }
-inline TypePtr ConvertToTypePtr(const SymbolPtr &symbol)
+inline TypePtr ConvertToTypePtr(SymbolPtr const &symbol)
 {
   return std::static_pointer_cast<Type>(symbol);
 }
@@ -93,22 +157,29 @@ struct Variable : public Symbol
     For,
     Local
   };
-  Variable(const std::string &name, const Category category__) : Symbol(Kind::Variable, name)
+  Variable(std::string const &name, Category category__)
+    : Symbol(name, Kind::Variable)
   {
     category = category__;
     index    = 0;
   }
   virtual ~Variable() = default;
+  virtual void Reset() override
+  {
+    type = nullptr;
+  }
   Category category;
   TypePtr  type;
   Index    index;
 };
-using VariablePtr = std::shared_ptr<Variable>;
-inline VariablePtr CreateVariable(const std::string &name, const Variable::Category category)
+using VariablePtr      = std::shared_ptr<Variable>;
+using VariablePtrArray = std::vector<VariablePtr>;
+
+inline VariablePtr CreateVariable(std::string const &name, Variable::Category category)
 {
   return std::make_shared<Variable>(Variable(name, category));
 }
-inline VariablePtr ConvertToVariablePtr(const SymbolPtr &symbol)
+inline VariablePtr ConvertToVariablePtr(SymbolPtr const &symbol)
 {
   return std::static_pointer_cast<Variable>(symbol);
 }
@@ -117,55 +188,79 @@ struct Function
 {
   enum class Kind : uint16_t
   {
-    UserFunction,
-    OpcodeFunction,
+    UserFreeFunction,
+    OpcodeFreeFunction,
     OpcodeTypeFunction,
     OpcodeInstanceFunction
   };
-  Function(const Kind kind__, const std::string &name__)
+  Function(std::string const &name__, Kind kind__)
   {
-    kind   = kind__;
     name   = name__;
-    opcode = Opcode::Unknown;
+    kind   = kind__;
+    opcode = Opcodes::Unknown;
     index  = 0;
   }
-  Kind                     kind;
-  std::string              name;
-  std::vector<TypePtr>     parameter_types;
-  std::vector<VariablePtr> parameter_variables;
-  TypePtr                  return_type;
-  Opcode                   opcode;
-  Index                    index;
+  void Reset()
+  {
+    parameter_types.clear();
+    parameter_variables.clear();
+    return_type = nullptr;
+  }
+  std::string      name;
+  Kind             kind;
+  Opcode           opcode;
+  Index            index;
+  TypePtrArray     parameter_types;
+  VariablePtrArray parameter_variables;
+  TypePtr          return_type;
 };
-using FunctionPtr = std::shared_ptr<Function>;
-inline FunctionPtr CreateFunction(const Function::Kind kind, const std::string &name)
+using FunctionPtr      = std::shared_ptr<Function>;
+using FunctionPtrArray = std::vector<FunctionPtr>;
+
+inline FunctionPtr CreateFunction(std::string const &name, Function::Kind kind)
 {
-  return std::make_shared<Function>(Function(kind, name));
+  return std::make_shared<Function>(Function(name, kind));
 }
 
 struct FunctionGroup : public Symbol
 {
-  FunctionGroup(const std::string &name) : Symbol(Kind::FunctionGroup, name) {}
+  FunctionGroup(std::string const &name)
+    : Symbol(name, Kind::FunctionGroup)
+  {}
   virtual ~FunctionGroup() = default;
-  std::vector<FunctionPtr> functions;
+  virtual void Reset() override
+  {
+    for (auto &function : functions)
+    {
+      function->Reset();
+    }
+  }
+  FunctionPtrArray functions;
 };
-using FunctionGroupPtr = std::shared_ptr<FunctionGroup>;
-inline FunctionGroupPtr CreateFunctionGroup(const std::string &name)
+using FunctionGroupPtr      = std::shared_ptr<FunctionGroup>;
+using FunctionGroupPtrArray = std::vector<FunctionGroupPtr>;
+
+inline FunctionGroupPtr CreateFunctionGroup(std::string const &name)
 {
   return std::make_shared<FunctionGroup>(FunctionGroup(name));
 }
-inline FunctionGroupPtr ConvertToFunctionGroupPtr(const SymbolPtr &symbol)
+inline FunctionGroupPtr ConvertToFunctionGroupPtr(SymbolPtr const &symbol)
 {
   return std::static_pointer_cast<FunctionGroup>(symbol);
 }
 
 struct Node;
-using NodePtr = std::shared_ptr<Node>;
+using NodePtr      = std::shared_ptr<Node>;
+using NodePtrArray = std::vector<NodePtr>;
 struct Node
 {
   enum class Kind : uint16_t
   {
+    Unknown = 0,
     Root,
+    Annotations,
+    Annotation,
+    AnnotationNameValuePair,
     FunctionDefinitionStatement,
     WhileStatement,
     ForStatement,
@@ -180,28 +275,27 @@ struct Node
     BreakStatement,
     ContinueStatement,
     AssignOp,
+    ModuloAssignOp,
     AddAssignOp,
     SubtractAssignOp,
     MultiplyAssignOp,
     DivideAssignOp,
     Identifier,
     Template,
+    Integer8,
+    UnsignedInteger8,
+    Integer16,
+    UnsignedInteger16,
     Integer32,
     UnsignedInteger32,
     Integer64,
     UnsignedInteger64,
-    SinglePrecisionNumber,
-    DoublePrecisionNumber,
+    Float32,
+    Float64,
     String,
     True,
     False,
     Null,
-    AddOp,
-    SubtractOp,
-    MultiplyOp,
-    DivideOp,
-    UnaryPlusOp,
-    UnaryMinusOp,
     EqualOp,
     NotEqualOp,
     LessThanOp,
@@ -215,69 +309,101 @@ struct Node
     PrefixDecOp,
     PostfixIncOp,
     PostfixDecOp,
+    UnaryPlusOp,
+    UnaryMinusOp,
+    ModuloOp,
+    AddOp,
+    SubtractOp,
+    MultiplyOp,
+    DivideOp,
     IndexOp,
     DotOp,
     InvokeOp,
-    RoundBracketGroup,
-    SquareBracketGroup
-  };
-  class Hasher
-  {
-  public:
-    size_t operator()(const Kind &key) const { return std::hash<uint16_t>{}((uint16_t)key); }
+    ParenthesisGroup
   };
   Node(Kind kind__, Token *token__)
-  {
-    kind  = kind__;
-    token = *token__;
-  }
+    : kind(kind__)
+    , token(*token__)
+  {}
   virtual ~Node() = default;
-  Kind                 kind;
-  Token                token;
-  std::vector<NodePtr> children;
+  virtual void Reset()
+  {
+    for (auto &child : children)
+    {
+      if (child)
+      {
+        child->Reset();
+      }
+    }
+  }
+  Kind         kind;
+  Token        token;
+  NodePtrArray children;
 };
 
 struct BlockNode : public Node
 {
-  BlockNode(Kind kind__, Token *token__) : Node(kind__, token__) {}
+  BlockNode(Kind kind__, Token *token__)
+    : Node(kind__, token__)
+  {}
   virtual ~BlockNode() = default;
-  std::vector<NodePtr> block_children;
-  SymbolTablePtr       symbols;
+  virtual void Reset() override
+  {
+    Node::Reset();
+    for (auto &block : block_children)
+    {
+      block->Reset();
+    }
+    if (symbol_table)
+    {
+      symbol_table->Reset();
+    }
+  }
+  NodePtrArray   block_children;
+  Token          block_terminator;
+  SymbolTablePtr symbol_table;
 };
-using BlockNodePtr = std::shared_ptr<BlockNode>;
+using BlockNodePtr      = std::shared_ptr<BlockNode>;
+using BlockNodePtrArray = std::vector<BlockNodePtr>;
 
 struct ExpressionNode : public Node
 {
   enum class Category : uint16_t
   {
-    Unknown,
+    Unknown = 0,
     Variable,
     LV,
     RV,
     Type,
     Function
   };
-  ExpressionNode(Kind kind__, Token *token__) : Node(kind__, token__)
-  {
-    category                     = Category::Unknown;
-    function_invoked_on_instance = false;
-  }
+  ExpressionNode(Kind kind__, Token *token__)
+    : Node(kind__, token__)
+  {}
   virtual ~ExpressionNode() = default;
-  Category         category;
+  virtual void Reset() override
+  {
+    Node::Reset();
+    variable = nullptr;
+    type     = nullptr;
+    fg       = nullptr;
+    function = nullptr;
+  }
+  Category         category = Category::Unknown;
   VariablePtr      variable;
   TypePtr          type;
   FunctionGroupPtr fg;
-  bool             function_invoked_on_instance;
+  bool             function_invoked_on_instance = false;
   FunctionPtr      function;
 };
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
-inline BlockNodePtr ConvertToBlockNodePtr(const NodePtr &node)
+inline BlockNodePtr ConvertToBlockNodePtr(NodePtr const &node)
 {
   return std::static_pointer_cast<BlockNode>(node);
 }
 
-inline ExpressionNodePtr ConvertToExpressionNodePtr(const NodePtr &node)
+inline ExpressionNodePtr ConvertToExpressionNodePtr(NodePtr const &node)
 {
   return std::static_pointer_cast<ExpressionNode>(node);
 }

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -23,8 +23,10 @@
 #include <cctype>
 #include <functional>
 #include <locale>
+
 namespace fetch {
 namespace string {
+
 inline void TrimFromRight(std::string &s)
 {
   s.erase(s.begin(),
@@ -43,5 +45,6 @@ inline void Trim(std::string &s)
   TrimFromRight(s);
   TrimFromLeft(s);
 }
+
 }  // namespace string
 }  // namespace fetch

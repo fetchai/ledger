@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/executor_interface.hpp"
 
+#include <atomic>
 #include <cstdint>
 #include <future>
 #include <memory>
+#include <utility>
 
 namespace fetch {
 namespace ledger {
@@ -30,27 +32,70 @@ namespace ledger {
 class ExecutionItem
 {
 public:
-  using lane_index_type = uint32_t;
-  using tx_digest_type  = chain::Transaction::digest_type;
-  using lane_set_type   = std::unordered_set<lane_index_type>;
+  using LaneIndex = uint32_t;
+  using TxDigest  = Transaction::TxDigest;
+  using LaneSet   = std::unordered_set<LaneIndex>;
+  using Status    = ExecutorInterface::Status;
 
-  ExecutionItem(tx_digest_type const &hash, std::size_t slice) : hash_(hash), slice_(slice) {}
+  static constexpr char const *LOGGING_NAME = "ExecutionItem";
 
-  ExecutionItem(tx_digest_type const &hash, lane_index_type lane, std::size_t slice)
-    : hash_(hash), lanes_{lane}, slice_(slice)
+  ExecutionItem(TxDigest hash, std::size_t slice)
+    : hash_(std::move(hash))
+    , slice_(slice)
   {}
 
-  ExecutorInterface::Status Execute(ExecutorInterface &executor)
+  ExecutionItem(TxDigest hash, LaneIndex lane, std::size_t slice)
+    : hash_(std::move(hash))
+    , lanes_{lane}
+    , slice_(slice)
+  {}
+
+  TxDigest hash() const
   {
-    return executor.Execute(hash_, slice_, lanes_);
+    return hash_;
   }
 
-  void AddLane(lane_index_type lane) { lanes_.insert(lane); }
+  LaneSet const &lanes() const
+  {
+    return lanes_;
+  }
+
+  std::size_t slice() const
+  {
+    return slice_;
+  }
+
+  Status status() const
+  {
+    return status_;
+  }
+
+  void Execute(ExecutorInterface &executor)
+  {
+    try
+    {
+      status_ = executor.Execute(hash_, slice_, lanes_);
+    }
+    catch (std::exception const &ex)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Exception thrown be executing transaction: ", ex.what());
+
+      status_ = Status::RESOURCE_FAILURE;
+    }
+  }
+
+  void AddLane(LaneIndex lane)
+  {
+    lanes_.insert(lane);
+  }
 
 private:
-  tx_digest_type hash_;
-  lane_set_type  lanes_;
-  std::size_t    slice_;
+  using AtomicStatus = std::atomic<Status>;
+
+  TxDigest     hash_;
+  LaneSet      lanes_;
+  std::size_t  slice_;
+  AtomicStatus status_{Status::NOT_RUN};
 };
 
 }  // namespace ledger

@@ -1,43 +1,73 @@
-Configure git<a name="git_configuration"/>
-==========================================
-It is necessary to configure your local git setup based on [this guide](https://github.com/uvue-git/docker-images/blob/master/README_git_setup.md), otherwise pulling the submodules might not work.
+# Ledger
 
-  
-Docker - build, develop & run stuff in docker container<a name="docker"/>
-=========================================================================
-This project has full support for Docker - it is dedicated to be used for building whole project, execute resulting binaries and do whole development using docker, please see details in [this guide](https://github.com/uvue-git/docker-images/blob/master/README.md#guick_usage_guide).
+Welcome to Fetch ledger repository. We are building the digital world for today, and the future.
 
-Initiate
-========
-git submodule update --recursive --remote
+## License
 
-Build
-=====
+Fetch Ledger is licensed under the Apache software license (see LICENSE file). Unless required by
+applicable law or agreed to in writing, software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either \express or implied.
 
-mkdir build
-cd build
-cmake ..
-make
+Fetch.AI makes no representation or guarantee that this software (including any third-party libraries)
+will perform as intended or will be free of errors, bugs or faulty code. The software may fail which
+could completely or partially limit functionality or compromise computer systems. If you use or
+implement the ledger, you do so at your own risk. In no event will Fetch.AI be liable to any party
+for any damages whatsoever, even if it had been advised of the possibility of damage.
 
-On Ubuntu
-=========
-sudo apt-get install libssl-dev cmake
-sudo apt-get install libpng-dev
-sudo apt-get install python-dev
+As such this codebase should be treated as experimental and does not contain all currently developed
+features. Fetch will be delivering regular updates.
 
-NOTE: the whole necessary setup is defined by the [Dockerfile](https://github.com/uvue-git/docker-images/blob/master/fetch-ledger-develop-image/Dockerfile), also checkout the [Docker](#docker) section bellow for more details about our docker setup.
+There is no publicly available test net currently running at this point.
+
+## Resources
+
+1. [Website](https://fetch.ai/)
+2. [Blog](https://fetch.ai/blog)
+3. Developer Portal - Coming soon - [Signup Open](https://fetch.ai/#community)
+4. [Community Telegram Group](https://t.me/fetchai)
+5. [Whitepapers](https://fetch.ai/publications.html)
+6. [Roadmap](https://fetch.ai/#/roadmap)
 
 
-Test
-====
+## Supported platforms
 
-ctest
+* MacOS Darwin 10.13x and higher (64bit)
+* Ubuntu 18.04 (x86_64)
 
-Notes
-=====
-If network gives random read/write errors, it can be an indication that
-not enough threads are available. Long term we need to have a logging
-mechanism for when this happens to ensure we can meet demand. 
-cmake -DPYTHON_LIBRARY=/opt/local/Library/Frameworks/Python.framework/Versions/2.7/lib/libpython2.7.dylib -DPYTHON_INCLUDE_DIR=/opt/local/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7 .
-cmake -DPYTHON_LIBRARY=/opt/local/Library/Frameworks/Python.framework/Versions/2.7/lib/libpython2.7.dylib -DPYTHON_INCLUDE_DIR=/opt/local/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7 -DPYTHON_EXECUTABLE=/opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin/python2.7 ..
-BB
+(We plan to support all major platforms in the future)
+
+## Getting Started
+
+A more complete guide is available in our [Getting Started Guide](docs/source/getting_started/index.rst).
+However, the following section outlines some of the initial steps.
+
+To get started, ensure all the code along with the submodules has been checked out with the
+following commands:
+
+    git clone https://github.com/fetchai/ledger.git
+
+    cd ledger
+
+    git submodule update --init
+
+## Dependencies
+
+### Ubuntu
+
+    sudo apt-get install libssl-dev cmake python3-dev clang
+
+### MacOS
+
+    sudo brew install cmake openssl
+
+## Building the code
+
+The project uses cmake so you can following formal build proceedure of:
+
+    mkdir build
+
+    cd build
+
+    cmake ../
+
+    make -j

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -29,7 +29,11 @@ namespace ledger {
 
 struct LaneConnectivityDetails
 {
-  LaneConnectivityDetails() : is_controller(false), is_peer(false), is_outgoing(false) {}
+  LaneConnectivityDetails()
+    : is_controller(false)
+    , is_peer(false)
+    , is_outgoing(false)
+  {}
 
   crypto::Identity  identity;
   std::atomic<bool> is_controller;

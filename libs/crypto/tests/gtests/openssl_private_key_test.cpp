@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "crypto/openssl_ecdsa_private_key.hpp"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -27,9 +26,6 @@ namespace crypto {
 namespace openssl {
 
 namespace {
-
-using ::testing::StrictMock;
-using ::testing::Return;
 
 class ECDCSAPrivateKeyTest : public testing::Test
 {
@@ -48,9 +44,11 @@ protected:
       0xa2, 0x6d, 0x03, 0x48, 0xec, 0x5b, 0x5c, 0x07, 0x30, 0x2d, 0xfc, 0xdb, 0xd5,
       0xcd, 0xa1, 0x73, 0x74, 0xcd, 0x2f, 0x6b, 0xec, 0xcf, 0xc4, 0x67, 0xa1, 0x51,
       0x3a, 0xa1, 0xf7, 0xb4, 0xeb, 0x3f, 0x1c, 0x00, 0x6b, 0x6e, 0xb6, 0x2b, 0x51};
-  void SetUp() {}
+  void SetUp()
+  {}
 
-  void TearDown() {}
+  void TearDown()
+  {}
 };
 
 TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_public_key__bin)
@@ -66,7 +64,7 @@ TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_publ
   EXPECT_EQ(public_key_data__bin_, x.publicKey().keyAsBin());
 }
 
-// TODO(issue 36): A bit lame test, needs to be tesetd rather with & against hardcoded DER
+// TODO(issue 36): A bit lame test, needs to be tested rather with & against hardcoded DER
 // encoded data
 TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_public_key__DER)
 {
@@ -159,6 +157,23 @@ TEST_F(ECDCSAPrivateKeyTest, test_key_conversion_to_byte_array)
   //* Expectations:
   EXPECT_TRUE(x.key());
   EXPECT_EQ(priv_key_data__bin_, x.KeyAsBin());
+}
+
+TEST_F(ECDCSAPrivateKeyTest, public_key_conversion_cycle)
+{
+  for (std::size_t i = 0; i < 100; ++i)
+  {
+    //* Generating priv & pub key pair
+    ECDSAPrivateKey<> const priv_key;
+
+    //* Production code:
+    auto const                          serialized_pub_key = priv_key.publicKey().keyAsBin();
+    decltype(priv_key)::public_key_type pub_key{serialized_pub_key};
+
+    //* Expectations:
+    EXPECT_EQ(ECDSAPrivateKey<>::ecdsa_curve_type::publicKeySize, serialized_pub_key.size());
+    EXPECT_EQ(priv_key.publicKey().keyAsBin(), pub_key.keyAsBin());
+  }
 }
 
 // TODO(issue 36): Add more tests

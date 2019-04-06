@@ -1,4 +1,21 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
 
@@ -6,13 +23,12 @@
 #include <cmath>
 #include <cstdint>
 #include <iostream>
-#include <type_traits>
 #include <vector>
 namespace fetch {
 namespace math {
 
 template <uint8_t N, uint64_t C = 60801, bool O = false>
-class ApproxExp
+class ApproxExpImplementation
 {
   // Only using the upper part of a double.
   enum
@@ -29,15 +45,23 @@ class ApproxExp
   static constexpr double exponent_offset_ = ((1ull << (E_EXPONENT - 1)) - 1);
 
 public:
-  ApproxExp(ApproxExp const &other) = delete;
-  ApproxExp operator=(ApproxExp const &other) = delete;
+  static constexpr char const *LOGGING_NAME = "ApproxExp";
 
-  ApproxExp() { CreateCorrectionTable(); }
+  ApproxExpImplementation(ApproxExpImplementation const &other) = delete;
+  ApproxExpImplementation operator=(ApproxExpImplementation const &other) = delete;
+
+  ApproxExpImplementation()
+  {
+    CreateCorrectionTable();
+  }
 
   template <typename T>
   double operator()(T const &x) const
   {
-    if (N > E_MANTISSA) return exp(x);
+    if (N > E_MANTISSA)
+    {
+      return exp(x);
+    }
     double in = x * a_ + b_;
 
     if (O)
@@ -62,7 +86,10 @@ public:
     return conv.d * corrections_[c];
   }
 
-  void SetCoefficient(double const &c) { a_ = c * multiplier_pow2_ / M_LN2; }
+  void SetCoefficient(double const &c)
+  {
+    a_ = c * multiplier_pow2_ / M_LN2;
+  }
 
 private:
   double a_ = multiplier_pow2_ / M_LN2;
@@ -73,15 +100,24 @@ private:
 
   void CreateCorrectionTable()
   {
-    if (initialized_) return;
+    if (initialized_)
+    {
+      return;
+    }
 
-    ApproxExp<0, C>     fexp;
-    std::vector<double> accumulated, frequency;
+    ApproxExpImplementation<0, C> fexp;
+    std::vector<double>           accumulated, frequency;
     accumulated.resize(E_ENTRIES);
     frequency.resize(E_ENTRIES);
 
-    for (auto &a : accumulated) a = 0;
-    for (auto &a : frequency) a = 0;
+    for (auto &a : accumulated)
+    {
+      a = 0;
+    }
+    for (auto &a : frequency)
+    {
+      a = 0;
+    }
     for (double l = 0.; l < 5; l += 0.0000001)
     {  // FIXME: set limit
       double r1 = exp(l);
@@ -99,14 +135,17 @@ private:
       }
     }
 
-    for (std::size_t i = 0; i < E_ENTRIES; ++i) corrections_[i] = accumulated[i] / frequency[i];
+    for (std::size_t i = 0; i < E_ENTRIES; ++i)
+    {
+      corrections_[i] = accumulated[i] / frequency[i];
+    }
 
     initialized_ = true;
   }
 };
 
 template <uint64_t C, bool OF>
-class ApproxExp<0, C, OF>
+class ApproxExpImplementation<0, C, OF>
 {
   enum
   {
@@ -123,9 +162,10 @@ class ApproxExp<0, C, OF>
   double                  b_               = exponent_offset_ * multiplier_pow2_ - C;
 
 public:
-  ApproxExp() {}
-  ApproxExp(ApproxExp const &other) = delete;
-  ApproxExp operator=(ApproxExp const &other) = delete;
+  ApproxExpImplementation()
+  {}
+  ApproxExpImplementation(ApproxExpImplementation const &other) = delete;
+  ApproxExpImplementation operator=(ApproxExpImplementation const &other) = delete;
 
   template <typename T>
   double operator()(T const &x) const
@@ -141,13 +181,16 @@ public:
     return conv.d;
   }
 
-  void SetCoefficient(double const &c) { a_ = c * multiplier_pow2_ / M_LN2; }
+  void SetCoefficient(double const &c)
+  {
+    a_ = c * multiplier_pow2_ / M_LN2;
+  }
 };
 
 template <uint8_t N, uint64_t C, bool OF>
-bool ApproxExp<N, C, OF>::initialized_ = false;
+bool ApproxExpImplementation<N, C, OF>::initialized_ = false;
 
 template <uint8_t N, uint64_t C, bool OF>
-double ApproxExp<N, C, OF>::corrections_[E_ENTRIES] = {0};
+double ApproxExpImplementation<N, C, OF>::corrections_[E_ENTRIES] = {0};
 }  // namespace math
 }  // namespace fetch

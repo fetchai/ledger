@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,64 +17,155 @@
 //------------------------------------------------------------------------------
 
 #include <memory>
+#include <utility>
 
 #include "core/serializers/stl_types.hpp"
+#include "core/service_ids.hpp"
 #include "ledger/protocols/execution_manager_rpc_client.hpp"
 #include "ledger/protocols/execution_manager_rpc_protocol.hpp"
-#include "network/protocols/fetch_protocols.hpp"
 
 namespace fetch {
 namespace ledger {
 
-ExecutionManagerRpcClient::ExecutionManagerRpcClient(byte_array::ConstByteArray const &host,
-                                                     uint16_t const &                  port,
-                                                     network::NetworkManager const &network_manager)
+using PendingConnectionCounter =
+    network::AtomicInFlightCounter<network::AtomicCounterName::LOCAL_SERVICE_CONNECTIONS>;
 
+class ExecutionManagerRpcConnectorWorker
 {
-  network::TCPClient connection(network_manager);
-  connection.Connect(host, port);
+public:
+  using Address         = ExecutionManagerRpcClient::Address;
+  using PromiseState    = ExecutionManagerRpcClient::PromiseState;
+  using FutureTimepoint = ExecutionManagerRpcClient::FutureTimepoint;
+  using Muddle          = ExecutionManagerRpcClient::Muddle;
+  using MuddlePtr       = std::shared_ptr<Muddle>;
+  using Uri             = ExecutionManagerRpcClient::Uri;
+  using Client          = ExecutionManagerRpcClient::Client;
 
-  service_ = std::make_unique<fetch::service::ServiceClient>(connection, network_manager);
+  Address target_address;
+
+  ExecutionManagerRpcConnectorWorker(
+      Uri thepeer, MuddlePtr themuddle,
+      std::chrono::milliseconds thetimeout = std::chrono::milliseconds(10000))
+    : peer_(std::move(thepeer))
+    , timeduration_(std::move(thetimeout))
+    , muddle_(std::move(themuddle))
+  {
+    client_ = std::make_shared<Client>("R:ExecMgrCW", muddle_->AsEndpoint(), Muddle::Address(),
+                                       SERVICE_EXECUTOR, CHANNEL_RPC);
+  }
+  static constexpr char const *LOGGING_NAME = "MuddleLaneConnectorWorker";
+
+  virtual ~ExecutionManagerRpcConnectorWorker()
+  {
+    counter_.Completed();
+  }
+
+  PromiseState Work()
+  {
+    if (!trying_)
+    {
+      trying_ = true;
+      timeout_.Set(timeduration_);
+      muddle_->AddPeer(peer_);
+      return PromiseState::WAITING;
+    }
+
+    if (timeout_.IsDue())
+    {
+      return PromiseState::TIMEDOUT;
+    }
+
+    bool connected = muddle_->UriToDirectAddress(peer_, target_address);
+    if (!connected)
+    {
+      return PromiseState::WAITING;
+    }
+
+    return PromiseState::SUCCESS;
+  }
+
+private:
+  std::shared_ptr<Client>   client_;
+  Uri                       peer_;
+  std::chrono::milliseconds timeduration_;
+  PendingConnectionCounter  counter_;
+  MuddlePtr                 muddle_;
+  FutureTimepoint           timeout_;
+  bool                      trying_ = false;
+};
+
+void ExecutionManagerRpcClient::WorkCycle(void)
+{
+  if (!bg_work_.WorkCycle())
+  {
+    return;
+  }
+  for (auto &successful_worker : bg_work_.GetSuccesses(1000))
+  {
+    address_     = std::move(successful_worker->target_address);
+    connections_ = 1;
+  }
+  bg_work_.DiscardFailures();
+  bg_work_.DiscardTimeouts();
 }
 
-ExecutionManagerRpcClient::Status ExecutionManagerRpcClient::Execute(block_type const &block)
+ExecutionManagerRpcClient::ExecutionManagerRpcClient(NetworkManager const &network_manager)
+  : network_manager_(network_manager)
 {
-  auto result = service_->Call(fetch::protocols::FetchProtocols::EXECUTION_MANAGER,
-                               ExecutionManagerRpcProtocol::EXECUTE, block);
-
-  return result.As<Status>();
+  muddle_ = Muddle::CreateMuddle(muddle::NetworkId{"EXEM"}, network_manager_);
+  client_ = std::make_shared<Client>("R:ExecMgr", muddle_->AsEndpoint(), Muddle::Address(),
+                                     SERVICE_LANE, CHANNEL_RPC);
+  muddle_->Start({});
 }
 
-ExecutionManagerInterface::block_digest_type ExecutionManagerRpcClient::LastProcessedBlock()
+void ExecutionManagerRpcClient::AddConnection(const Uri &                      uri,
+                                              const std::chrono::milliseconds &timeout)
 {
-  auto result = service_->Call(protocols::FetchProtocols::EXECUTION_MANAGER,
-                               ExecutionManagerRpcProtocol::LAST_PROCESSED_BLOCK);
+  if (!workthread_)
+  {
+    workthread_ = std::make_shared<BackgroundedWorkThread>(&bg_work_, "BW:ExcMgrRpc",
+                                                           [this]() { this->WorkCycle(); });
+  }
 
-  return result.As<block_digest_type>();
+  auto worker = std::make_shared<ExecutionManagerRpcConnectorWorker>(
+      uri, muddle_, std::chrono::milliseconds(timeout));
+  bg_work_.Add(worker);
 }
 
-bool ExecutionManagerRpcClient::IsActive()
+ExecutionManagerRpcClient::ScheduleStatus ExecutionManagerRpcClient::Execute(
+    Block::Body const &block)
 {
-  auto result = service_->Call(protocols::FetchProtocols::EXECUTION_MANAGER,
-                               ExecutionManagerRpcProtocol::IS_ACTIVE);
-
-  return result.As<bool>();
+  auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
+                                             ExecutionManagerRpcProtocol::EXECUTE, block);
+  return result->As<ScheduleStatus>();
 }
 
-bool ExecutionManagerRpcClient::IsIdle()
+ExecutionManagerInterface::BlockHash ExecutionManagerRpcClient::LastProcessedBlock()
 {
-  auto result = service_->Call(protocols::FetchProtocols::EXECUTION_MANAGER,
-                               ExecutionManagerRpcProtocol::IS_IDLE);
+  auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
+                                             ExecutionManagerRpcProtocol::LAST_PROCESSED_BLOCK);
+  return result->As<BlockHash>();
+}
 
-  return result.As<bool>();
+ExecutionManagerRpcClient::State ExecutionManagerRpcClient::GetState()
+{
+  auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
+                                             ExecutionManagerRpcProtocol::GET_STATE);
+  return result->As<State>();
 }
 
 bool ExecutionManagerRpcClient::Abort()
 {
-  auto result = service_->Call(protocols::FetchProtocols::EXECUTION_MANAGER,
-                               ExecutionManagerRpcProtocol::ABORT);
+  auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
+                                             ExecutionManagerRpcProtocol::ABORT);
+  return result->As<bool>();
+}
 
-  return result.As<bool>();
+void ExecutionManagerRpcClient::SetLastProcessedBlock(ExecutionManagerInterface::BlockHash hash)
+{
+  auto result = client_->CallSpecificAddress(
+      address_, RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::SET_LAST_PROCESSED_BLOCK, hash);
+  result->Wait();
 }
 
 }  // namespace ledger

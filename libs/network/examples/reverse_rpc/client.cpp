@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,15 +17,29 @@
 //------------------------------------------------------------------------------
 
 #define FETCH_DISABLE_LOGGING
-#include "network/service/client.hpp"
 #include "core/commandline/parameter_parser.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"
-#include "service_consts.hpp"
+#include "network/service/service_client.hpp"
+
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
+#include "service_ids.hpp"
+
+using fetch::muddle::Muddle;
+using fetch::muddle::rpc::Server;
+using fetch::muddle::rpc::Client;
+using fetch::muddle::NetworkId;
+
 #include <iostream>
+
 using namespace fetch::commandline;
 using namespace fetch::service;
 using namespace fetch::byte_array;
+
+const int SERVICE_TEST = 1;
+const int CHANNEL_RPC  = 1;
 
 class AEA
 {
@@ -49,57 +63,75 @@ public:
     return ret;
   }
 
-  void AddString(std::string const &s) { strings_.push_back(s); }
+  void AddString(std::string const &s)
+  {
+    strings_.push_back(s);
+  }
 
 private:
   std::vector<std::string> strings_;
 
-  fetch::mutex::Mutex mutex_;
+  fetch::mutex::Mutex mutex_{__LINE__, __FILE__};
 };
 
-class AEAProtocol : public AEA, public Protocol
+class AEAProtocol : public Protocol
 {
 public:
-  AEAProtocol() : AEA(), Protocol()
+  AEAProtocol(AEA *aea)
+    : Protocol()
   {
-    AEA *controller = (AEA *)this;
-
-    this->Expose(NodeToAEA::SEARCH, controller, &AEA::SearchFor);
+    this->Expose(NodeToAEA::SEARCH, aea, &AEA::SearchFor);
   }
 
 private:
 };
 
-int main(int argc, char const **argv)
+int main(int argc, char **argv)
 {
   ParamsParser params;
   params.Parse(argc, argv);
 
   // Client setup
-  fetch::network::NetworkManager tm;
-  fetch::network::TCPClient      connection(tm);
-  connection.Connect("localhost", 8080);
-  ServiceClient client(connection, tm);
+  fetch::network::NetworkManager tm{"NetMgr", 1};
 
-  AEAProtocol aea_prot;
+  auto                client_muddle = Muddle::CreateMuddle(NetworkId{"TEST"}, tm);
+  fetch::network::Uri peer("tcp://127.0.0.1:8080");
+  client_muddle->AddPeer(peer);
+  auto client = std::make_shared<Client>("Client", client_muddle->AsEndpoint(), Muddle::Address(),
+                                         SERVICE_TEST, CHANNEL_RPC);
+  auto server = std::make_shared<Server>(client_muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC);
 
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+  Muddle::Address target_address;
+  if (!client_muddle->UriToDirectAddress(peer, target_address))
+  {
+    std::cout << "Can't connect" << std::endl;
+    exit(1);
+  }
+
+  AEA         aea;
+  AEAProtocol aea_protocol(&aea);
   for (std::size_t i = 0; i < params.arg_size(); ++i)
   {
-    aea_prot.AddString(params.GetArg(i));
+    aea.AddString(params.GetArg(i));
   }
 
   tm.Start();
+  client_muddle->Start({});
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  client.Add(FetchProtocols::NODE_TO_AEA, &aea_prot);
+  server->Add(FetchProtocols::NODE_TO_AEA, &aea_protocol);
 
-  auto p = client.Call(FetchProtocols::AEA_TO_NODE, AEAToNode::REGISTER);
+  auto p =
+      client->CallSpecificAddress(target_address, FetchProtocols::AEA_TO_NODE, AEAToNode::REGISTER);
 
-  if (p.Wait())
+  FETCH_LOG_PROMISE();
+  if (p->Wait())
   {
     std::cout << "Node registered" << std::endl;
 
-    while (true)
+    for (;;)
     {
     }
   }

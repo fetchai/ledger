@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,39 +18,39 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shape_less_array.hpp"
-#include "vectorise/memory/range.hpp"
-
+#include "math/matrix_operations.hpp"
+#include "math/standard_functions/pow.hpp"
+#include "math/standard_functions/sqrt.hpp"
 #include <cmath>
 
 namespace fetch {
 namespace math {
 namespace distance {
 
-template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::type Euclidean(memory::VectorSlice<T, S> const &a,
-                                                          memory::VectorSlice<T, S> const &b)
+template <typename ArrayType>
+typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
 {
-  detailed_assert(a.size() == b.size());
-  using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
-  using type                 = typename memory::VectorSlice<T, S>::type;
+  assert(A.shape() == B.shape());
+  ArrayType tmp_array(A.shape());
 
-  type dist =
-      a.in_parallel().SumReduce(memory::TrivialRange(0, a.size()),
-                                [](vector_register_type const &x, vector_register_type const &y) {
-                                  vector_register_type d = x - y;
-                                  return d * d;
-                                },
-                                b);
+  fetch::math::Subtract(A, B, tmp_array);
 
-  return std::sqrt(dist);
+  Pow(tmp_array, typename ArrayType::Type(2), tmp_array);
+
+  return fetch::math::Sum(tmp_array);
 }
 
-template <typename T, typename C>
-inline typename ShapeLessArray<T, C>::type Euclidean(ShapeLessArray<T, C> const &a,
-                                                     ShapeLessArray<T, C> const &b)
+template <typename ArrayType>
+typename ArrayType::Type Euclidean(ArrayType const &A, ArrayType const &B)
 {
-  return Euclidean(a.data(), b.data());
+  return Sqrt(SquareDistance(A, B));
+}
+
+template <typename ArrayType>
+typename ArrayType::Type NegativeSquareEuclidean(ArrayType const &A, ArrayType const &B)
+{
+  using DataType = typename ArrayType::Type;
+  return Multiply(DataType(-1), SquareDistance(A, B));
 }
 
 }  // namespace distance

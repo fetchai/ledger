@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 
 #include "fetch_pybind.hpp"
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 void BuildBlockGenerator(pybind11::module &module)
 {
@@ -36,5 +36,5 @@ void BuildBlockGenerator(pybind11::module &module)
       .def("PushTransactionSummary", &BlockGenerator::PushTransactionSummary)
       .def("PrintTransactionSummary", &BlockGenerator::PrintTransactionSummary);
 }
-};  // namespace chain
+};  // namespace ledger
 };  // namespace fetch

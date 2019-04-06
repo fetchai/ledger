@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/correlation/pearson.hpp"
-#include "math/linalg/matrix.hpp"
+#include "math/tensor.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -26,7 +26,7 @@ namespace math {
 namespace correlation {
 
 template <typename A>
-inline typename A::type WrapperPearson(A const &a, A const &b)
+inline typename A::Type WrapperPearson(A const &a, A const &b)
 {
   if (a.size() != b.size())
   {
@@ -38,17 +38,12 @@ inline typename A::type WrapperPearson(A const &a, A const &b)
 
 inline void BuildPearsonCorrelation(std::string const &custom_name, pybind11::module &module)
 {
-  using namespace fetch::math::linalg;
+  using namespace fetch::math;
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperPearson<Matrix<double>>)
-      .def(custom_name.c_str(), &WrapperPearson<Matrix<float>>)
-      .def(custom_name.c_str(), &WrapperPearson<RectangularArray<double>>)
-      .def(custom_name.c_str(), &WrapperPearson<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperPearson<ShapeLessArray<double>>)
-      .def(custom_name.c_str(), &WrapperPearson<ShapeLessArray<float>>);
+  module.def(custom_name.c_str(), &WrapperPearson<Tensor<double>>)
+      .def(custom_name.c_str(), &WrapperPearson<Tensor<float>>);
 }
 
 }  // namespace correlation

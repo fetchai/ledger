@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,10 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include <core/random/lcg.hpp>
-#include <core/random/lfg.hpp>
-#include <math/approx_exp.hpp>
-#include <miner/optimisation/bitvector.hpp>
+#include "core/logger.hpp"
+#include "core/random/lcg.hpp"
+#include "core/random/lfg.hpp"
+#include "math/approx_exp.hpp"
+#include "miner/optimisation/bitvector.hpp"
 
 namespace fetch {
 namespace optimisers {
@@ -28,10 +29,12 @@ namespace optimisers {
 class BinaryAnnealer
 {
 public:
+  static constexpr char const *LOGGING_NAME = "BinaryAnnealer";
+
   using spin_type  = int16_t;
   using state_type = std::vector<spin_type>;
 
-  using exp_type        = math::ApproxExp<0>;
+  using exp_type        = math::ApproxExpImplementation<0>;
   using bit_data_type   = uint64_t;
   using bit_vector_type = bitmanip::BitVector;
   using cost_type       = double;
@@ -59,6 +62,7 @@ public:
       for (std::size_t i = 0; i < size_; ++i)
       {
         //        assert( i ==( block * 8*sizeof(bit_data_type) + bit ));
+        assert(i < sites_.size());
 
         Site const &s         = sites_[i];
         uint64_t    state_bit = state_.bit(block, bit);
@@ -89,7 +93,7 @@ public:
 
         default:
           B.InlineAndAssign(s.couplings, state_);
-          p = PopCount(B);
+          p = static_cast<int>(B.PopCount());
           break;
         }
 
@@ -108,7 +112,10 @@ public:
           break;
         }
 
-        if (update) state_.conditional_flip(block, bit, update);
+        if (update)
+        {
+          state_.conditional_flip(block, bit, update);
+        }
         ++bit;
         block += (bit >= 8 * sizeof(bit_data_type));
         bit &= (8 * sizeof(bit_data_type) - 1);
@@ -120,11 +127,19 @@ public:
 
   void Normalise()
   {
-    if (coupling_magnitude_ == 1.0) return;
-    if (coupling_magnitude_ == 0.0) return;
+    if (coupling_magnitude_ == 1.0)
+    {
+      return;
+    }
+    if (coupling_magnitude_ == 0.0)
+    {
+      return;
+    }
 
     for (std::size_t i = 0; i < size_; ++i)
     {
+      assert(i < sites_.size());
+
       sites_[i].local_field /= coupling_magnitude_;
     }
 
@@ -138,7 +153,7 @@ public:
     return FindMinimum(ret);
   }
 
-  cost_type FindMinimum(state_type &state, bool binary = true)
+  cost_type FindMinimum(state_type &state, bool /*binary*/ = true)
   {
     Anneal();
     cost_type ret = Energy();
@@ -169,7 +184,7 @@ public:
       bit_vector_type B    = s.couplings & state_;
       cost_type       sign = cost_type(state_.bit(block, bit));
 
-      ret += sign * (2 * s.local_field + coupling_magnitude_ * PopCount(B));
+      ret += sign * (2 * s.local_field + coupling_magnitude_ * static_cast<int>(B.PopCount()));
       ++bit;
       block += (bit >= 8 * sizeof(bit_data_type));
       bit &= (8 * sizeof(bit_data_type) - 1);
@@ -177,7 +192,7 @@ public:
     return cost_type(ret * 0.5 * normalisation_constant_);
   }
 
-  void Resize(std::size_t const &n, std::size_t const &m = std::size_t(-1))
+  void Resize(std::size_t const &n, std::size_t const & /*m*/ = std::size_t(-1))
   {
     sites_.resize(n);
     for (std::size_t i = 0; i < n; ++i)
@@ -199,18 +214,26 @@ public:
   {
     if (i == j)
     {
+      assert(j < sites_.size());
+
       sites_[j].local_field = val;
     }
     else
     {
       assert((coupling_magnitude_ == 0) || (coupling_magnitude_ == val));
+      assert(i < sites_.size());
+      assert(j < sites_.size());
+
       sites_[i].couplings.set(j, 1);
       sites_[j].couplings.set(i, 1);
       coupling_magnitude_ = val;
     }
   }
 
-  std::size_t const &size() const { return size_; }
+  std::size_t const &size() const
+  {
+    return size_;
+  }
 
   void SetBeta(double beta)
   {
@@ -218,12 +241,27 @@ public:
     fexp_.SetCoefficient(2 * beta_);
   }
 
-  double      beta() const { return beta_; }
-  std::size_t sweeps() const { return sweeps_; }
+  double beta() const
+  {
+    return beta_;
+  }
+  std::size_t sweeps() const
+  {
+    return sweeps_;
+  }
 
-  void SetSweeps(std::size_t sweeps) { sweeps_ = sweeps; }
-  void SetBetaStart(double const &b0) { beta0_ = b0; }
-  void SetBetaEnd(double const &b1) { beta1_ = b1; }
+  void SetSweeps(std::size_t sweeps)
+  {
+    sweeps_ = sweeps;
+  }
+  void SetBetaStart(double const &b0)
+  {
+    beta0_ = b0;
+  }
+  void SetBetaEnd(double const &b1)
+  {
+    beta1_ = b1;
+  }
 
   void Initialize()
   {
@@ -236,7 +274,10 @@ public:
     }
   }
 
-  bit_vector_type state() { return state_; }
+  bit_vector_type state()
+  {
+    return state_;
+  }
 
   void Reset()
   {

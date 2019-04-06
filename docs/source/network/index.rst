@@ -91,14 +91,35 @@ What if I want to send my custom class over the rpc interface?
 Refer to the serialization section if you need to understand implementation details. Otherwise,
 the quick start example creates a dummy class that illustrates how you can do this.
 
-.. literalinclude:: ../../../libs/network/examples/quick_start/node.hpp
-   :language: c++
-   :lines: 14-19
+
+.. code-block:: cpp
+   :linenos:
+
+   // Custom class we want to pass using the RPC interface
+   class DataClass
+   {
+   public:
+     std::vector<int> data_;
+   };
 
 
-.. literalinclude:: ../../../libs/network/examples/quick_start/node.hpp
-   :language: c++
-   :lines: 96-106
+.. code-block:: cpp
+   :linenos:
+
+   // All classes and data types must have an associated Serialize and Deserialize
+   // function So we define one for our class (vector already has a ser/deser)
+   template <typename T>
+   inline void Serialize(T &serializer, DataClass const &data)
+   {
+     serializer << data.data_;
+   }
+
+   template <typename T>
+   inline void Deserialize(T &serializer, DataClass &data)
+   {
+     serializer >> data.data_;
+   }
+
 
 If you fail to correctly define a serialiser/deserialiser, you will get a message to the effect of:
 
@@ -106,15 +127,3 @@ If you fail to correctly define a serialiser/deserialiser, you will get a messag
 
                 error: no matching function for call to ‘Deserialize(fetch::serializers::
                 TypedByte_ArrayBuffer&, fetch::quick_start::DataClass&)’
-
-
-Gotchas
---------------------------------------
-
-Sample text here
---------------------------------------
-
-.. literalinclude:: ../../../libs/network/examples/network_server/server.cpp
-   :language: c++
-   :lines: 7-20
-

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,62 +18,53 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "crypto/fnv_detail.hpp"
 #include "crypto/stream_hasher.hpp"
 
 namespace fetch {
 namespace crypto {
 
-class FNV : public StreamHasher
+class FNV : public StreamHasher, protected detail::FNV1a
 {
 public:
-  using byte_array_type = typename StreamHasher::byte_array_type;
+  using base_type      = StreamHasher;
+  using base_impl_type = detail::FNV1a;
+  using context_type   = typename base_impl_type::number_type;
 
-  FNV() { digest_.Resize(4); }
+  using StreamHasher::Update;
+  using StreamHasher::Final;
 
-  void Reset() override { context_ = 2166136261; }
+  void        Reset() override;
+  bool        Update(uint8_t const *data_to_hash, std::size_t const &size) override;
+  void        Final(uint8_t *hash, std::size_t const &size) override;
+  std::size_t GetSizeInBytes() const override;
 
-  bool Update(byte_array_type const &s) override
+  template <typename T = context_type>
+  auto Final() -> decltype(base_type::Final<T>())
   {
-    for (std::size_t i = 0; i < s.size(); ++i)
-    {
-      context_ = (context_ * 16777619) ^ s[i];
-    }
-    return true;
-  }
-
-  void Final() override
-  {
-    digest_[0] = uint8_t(context_);
-    digest_[1] = uint8_t(context_ >> 8);
-    digest_[2] = uint8_t(context_ >> 16);
-    digest_[3] = uint8_t(context_ >> 24);
-  }
-
-  byte_array_type digest() override
-  {
-    assert(digest_.size() == 4);
-    return digest_;
-  }
-
-  uint32_t uint_digest() { return context_; }
-
-private:
-  uint32_t        context_;
-  byte_array_type digest_;
-};
-
-struct CallableFNV
-{
-  std::size_t operator()(fetch::byte_array::ConstByteArray const &key) const
-  {
-    uint32_t hash = 2166136261;
-    for (std::size_t i = 0; i < key.size(); ++i)
-    {
-      hash = (hash * 16777619) ^ key[i];
-    }
-
-    return hash;
+    return base_type::Final<T>();
   }
 };
+
 }  // namespace crypto
 }  // namespace fetch
+
+namespace std {
+
+template <>
+struct hash<fetch::byte_array::ConstByteArray>
+{
+  std::size_t operator()(fetch::byte_array::ConstByteArray const &value) const
+  {
+    fetch::crypto::detail::FNV1a hash;
+    hash.update(value.pointer(), value.size());
+    return hash.context();
+  }
+};
+
+template <>
+struct hash<fetch::byte_array::ByteArray> : public hash<fetch::byte_array::ConstByteArray>
+{
+};
+
+}  // namespace std

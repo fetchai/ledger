@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -47,7 +47,11 @@ using time_point = std::chrono::high_resolution_clock::time_point;
 class NodeBasic
 {
 public:
-  explicit NodeBasic(network::NetworkManager tm) : nodeDirectory_{tm} {}
+  static constexpr char const *LOGGING_NAME = "NodeBasic";
+
+  explicit NodeBasic()
+    : nodeDirectory_{}
+  {}
 
   NodeBasic(NodeBasic &rhs)  = delete;
   NodeBasic(NodeBasic &&rhs) = delete;
@@ -75,7 +79,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
     std::lock_guard<std::mutex> mlock(mutex_);
-    fetch::logger.Info("Adding endpoint");
+    FETCH_LOG_INFO(LOGGING_NAME, "Adding endpoint");
     nodeDirectory_.AddEndpoint(endpoint);
   }
 
@@ -84,15 +88,15 @@ public:
     LOG_STACK_TRACE_POINT;
     std::lock_guard<std::mutex> mlock(mutex_);
     transactionsPerCall_ = tpc;
-    fetch::logger.Info("set transactions per call to ", tpc);
+    FETCH_LOG_INFO(LOGGING_NAME, "set transactions per call to ", tpc);
   }
 
   void TransactionsToSync(uint64_t transactionsToSync)
   {
     LOG_STACK_TRACE_POINT;
     std::lock_guard<std::mutex> mlock(mutex_);
-    fetch::logger.Info("set transactions to sync to ", transactionsToSync);
-    fetch::logger.Info("Building...");
+    FETCH_LOG_INFO(LOGGING_NAME, "set transactions to sync to ", transactionsToSync);
+    FETCH_LOG_INFO(LOGGING_NAME, "Building...");
     PrecreateTrans(transactionsToSync);
     AddTransToList();
   }
@@ -103,12 +107,15 @@ public:
     stopCondition_ = stopCondition;
   }
 
-  void isSlave() { slave_ = true; }
+  void isSlave()
+  {
+    slave_ = true;
+  }
 
   void StartTime(uint64_t startTime)
   {
     LOG_STACK_TRACE_POINT;
-    fetch::logger.Info("setting start time to ", startTime);
+    FETCH_LOG_INFO(LOGGING_NAME, "setting start time to ", startTime);
     startTime_ = startTime;
 
     if (thread_.joinable())
@@ -122,6 +129,8 @@ public:
   // TODO(issue 28): get rid of start in fn names
   void StartTestAsMaster(uint64_t startTime)
   {
+    FETCH_UNUSED(startTime);
+
     if (thread_.joinable())
     {
       thread_.join();
@@ -160,8 +169,8 @@ public:
     int32_t     pad        = (int32_t(transactionSize) - int32_t(baseTxSize));
     if (pad < 0)
     {
-      fetch::logger.Info("Failed to set tx size to: ", transactionSize,
-                         ". Less than base size: ", baseTxSize);
+      FETCH_LOG_INFO(LOGGING_NAME, "Failed to set tx size to: ", transactionSize,
+                     ". Less than base size: ", baseTxSize);
       exit(1);
     }
     txPad_ = uint32_t(pad);
@@ -173,7 +182,7 @@ public:
   // Nodes will invite this node to be pushed their transactions
   bool InvitePush(block_hash const &hash)
   {
-    fetch::logger.Info("Responding to invite: ", !transactionList_.Contains(hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "Responding to invite: ", !transactionList_.Contains(hash));
     return !transactionList_.Contains(hash);
   }
 
@@ -223,7 +232,10 @@ public:
     return true;
   }
 
-  int ping() { return 4; }
+  int ping()
+  {
+    return 4;
+  }
 
   ///////////////////////////////////////////////////////////
   // HTTP functions to check that synchronisation was successful
@@ -242,7 +254,7 @@ public:
 private:
   NodeDirectory                           nodeDirectory_;    // Manage connections to other nodes
   TransactionList<block_hash, block_type> transactionList_;  // List of all transactions
-  fetch::mutex::Mutex                     mutex_;
+  fetch::mutex::Mutex                     mutex_{__LINE__, __FILE__};
 
   // Transmitting thread
   std::thread                thread_;

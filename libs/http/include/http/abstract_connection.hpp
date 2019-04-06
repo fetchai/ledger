@@ -1,9 +1,7 @@
-
-
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -34,9 +32,12 @@ class AbstractHTTPConnection
 public:
   using shared_type = std::shared_ptr<AbstractHTTPConnection>;
 
-  virtual ~AbstractHTTPConnection() {}
+  AbstractHTTPConnection()          = default;
+  virtual ~AbstractHTTPConnection() = default;
+
   virtual void        Send(HTTPResponse const &) = 0;
   virtual std::string Address()                  = 0;
 };
+
 }  // namespace http
 }  // namespace fetch

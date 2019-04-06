@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -37,8 +37,8 @@
 using namespace fetch;
 using namespace fetch::optimisers;
 
-chain::BlockGenerator generator;
-std::mt19937          rng(42);
+ledger::BlockGenerator generator;
+std::mt19937           rng(42);
 
 static byte_array::ConstByteArray CreateResource(int64_t value)
 {
@@ -83,10 +83,13 @@ static void load_format_a(std::string const &input_file, std::size_t &N, std::si
   while (std::getline(f, line))
   {
     fetch::string::Trim(line);
-    if (line.size() == 0) continue;
+    if (line.size() == 0)
+    {
+      continue;
+    }
     std::stringstream s(line);
 
-    fetch::chain::TransactionSummary summary;
+    fetch::ledger::TransactionSummary summary;
     summary.transaction_hash = GenerateHash();
 
     while (s)
@@ -96,7 +99,10 @@ static void load_format_a(std::string const &input_file, std::size_t &N, std::si
 
       auto group = CreateResource(C);
 
-      if (C == -1) break;
+      if (C == -1)
+      {
+        break;
+      }
       if (V == -1)
       {
         std::cerr << "malformed input" << std::endl;
@@ -124,7 +130,10 @@ static void load_format_a(std::string const &input_file, std::size_t &N, std::si
     std::size_t resource_index = 0;
     for (auto const &resource : summary.resources)
     {
-      if (resource_index) std::cout << ", ";
+      if (resource_index)
+      {
+        std::cout << ", ";
+      }
       std::cout << static_cast<std::string>(resource);
       ++resource_index;
     }
@@ -168,7 +177,10 @@ static void load_format_b(std::string const &input_file, std::size_t &N, std::si
     break;
   }
 
-  if (N == 0) N = lanes;
+  if (N == 0)
+  {
+    N = lanes;
+  }
 
   std::size_t id = 0;
 
@@ -176,10 +188,13 @@ static void load_format_b(std::string const &input_file, std::size_t &N, std::si
   while (std::getline(f, line))
   {
     fetch::string::Trim(line);
-    if (line.size() == 0) continue;
+    if (line.size() == 0)
+    {
+      continue;
+    }
     std::stringstream s(line);
 
-    fetch::chain::TransactionSummary summary;
+    fetch::ledger::TransactionSummary summary;
     summary.transaction_hash = GenerateHash();
 
     int V = -1;
@@ -198,7 +213,10 @@ static void load_format_b(std::string const &input_file, std::size_t &N, std::si
     {
       int C = -1;
       s >> C;
-      if (C == -1) break;
+      if (C == -1)
+      {
+        break;
+      }
 
       summary.resources.insert(CreateResource(C % int(N)));
     }
@@ -210,7 +228,10 @@ static void load_format_b(std::string const &input_file, std::size_t &N, std::si
     std::size_t resource_index = 0;
     for (auto const &resource : summary.resources)
     {
-      if (resource_index) std::cout << ", ";
+      if (resource_index)
+      {
+        std::cout << ", ";
+      }
       std::cout << static_cast<std::string>(resource);
       ++resource_index;
     }
@@ -226,7 +247,10 @@ static void PrintSummary(std::size_t const &slice_count)
 {
   uint64_t    total_fee = 0;
   std::size_t total_txs = 0;
-  for (auto const &e : generator.block_fees()) total_fee += e;
+  for (auto const &e : generator.block_fees())
+  {
+    total_fee += e;
+  }
   for (auto const &slice : generator.block())
   {
     total_txs += slice.size();
@@ -240,7 +264,7 @@ static void PrintSummary(std::size_t const &slice_count)
             << occupancy_pc << "%)" << std::endl;
 }
 
-int main(int argc, char const **argv)
+int main(int argc, char **argv)
 {
   commandline::ParamsParser params;
   params.Parse(argc, argv);
@@ -379,12 +403,17 @@ int main(int argc, char const **argv)
   for (std::size_t i = 0; i < reps; ++i)
   {
     generator.Reset();
-    generator.GenerateBlock(lane_count, slice_count, strategy, batch_size, explore);
+    generator.GenerateBlock(lane_count, slice_count,
+                            static_cast<ledger::BlockGenerator::Strategy>(strategy), batch_size,
+                            explore);
 
     if (print_solution)
     {
       uint64_t total_fee = 0;
-      for (auto const &e : generator.block_fees()) total_fee += e;
+      for (auto const &e : generator.block_fees())
+      {
+        total_fee += e;
+      }
       if (total_fee < best_fee)
       {
         best_fee = total_fee;

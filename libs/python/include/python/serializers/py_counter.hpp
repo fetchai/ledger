@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -37,8 +37,8 @@ void BuildSizeCounter(std::string const &custom_name, pybind11::module &module)
       .def("ReadBytes", &SizeCounter<S>::ReadBytes)
       .def("Allocate", &SizeCounter<S>::Allocate)
       .def("size", &SizeCounter<S>::size)
-      .def("Seek", &SizeCounter<S>::Seek)
-      .def("Tell", &SizeCounter<S>::Tell)
+      .def("seek", &SizeCounter<S>::seek)
+      .def("tell", &SizeCounter<S>::tell)
       .def("Reserve", &SizeCounter<S>::Reserve);
 }
 

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -38,12 +38,14 @@ public:
   using pointer_type        = std::shared_ptr<implementation_type>;
   using weak_ref_type       = std::weak_ptr<implementation_type>;
 
-  explicit NetworkManager(std::size_t threads = 1)
-  {
-    pointer_ = std::make_shared<implementation_type>(threads);
-  }
+  static constexpr char const *LOGGING_NAME = "NetworkManager";
 
-  NetworkManager(NetworkManager const &other) : is_copy_(true)
+  NetworkManager(std::string name, std::size_t threads)
+    : pointer_{std::make_shared<implementation_type>(std::move(name), threads)}
+  {}
+
+  NetworkManager(NetworkManager const &other)
+    : is_copy_(true)
   {
     if (other.is_copy_)
     {
@@ -55,38 +57,23 @@ public:
     }
   }
 
-  ~NetworkManager()
-  {
-    if (!is_copy_)
-    {
-      Stop();
-    }
-  }
-
   NetworkManager(NetworkManager &&rhs) = delete;
   NetworkManager &operator=(NetworkManager const &rhs) = delete;
   NetworkManager &operator=(NetworkManager &&rhs) = delete;
 
   void Start()
   {
-    if (is_copy_) return;
-    auto ptr = lock();
-    if (ptr)
+    if (is_primary())
     {
-      ptr->Start();
+      pointer_->Start();
     }
   }
 
   void Stop()
   {
-    if (is_copy_)
+    if (is_primary())
     {
-      return;
-    }
-    auto ptr = lock();
-    if (ptr)
-    {
-      ptr->Stop();
+      pointer_->Stop();
     }
   }
 
@@ -100,7 +87,7 @@ public:
     }
     else
     {
-      fetch::logger.Info("Failed to post: network man dead.");
+      FETCH_LOG_INFO(LOGGING_NAME, "Failed to post: network man dead.");
     }
   }
 
@@ -114,29 +101,41 @@ public:
     }
   }
 
-  bool is_valid() { return (!is_copy_) || bool(weak_pointer_.lock()); }
+  bool is_valid()
+  {
+    return is_primary() || bool(weak_pointer_.lock());
+  }
 
-  bool is_primary() { return (!is_copy_); }
+  bool Running()
+  {
+    auto ptr = lock();
+    return ptr && ptr->Running();
+  }
+
+  bool is_primary()
+  {
+    return (!is_copy_);
+  }
 
   pointer_type lock()
   {
-    if (is_copy_)
+    if (is_primary())
     {
-      return weak_pointer_.lock();
+      return pointer_;
     }
-    return pointer_;
+    return weak_pointer_.lock();
   }
 
-  template <typename IO, typename... arguments>
-  std::shared_ptr<IO> CreateIO(arguments &&... args)
+  template <typename IO, typename... Args>
+  std::shared_ptr<IO> CreateIO(Args &&... args)
   {
     auto ptr = lock();
     if (ptr)
     {
-      return ptr->CreateIO<IO>(std::forward<arguments>(args)...);
+      return ptr->CreateIO<IO>(std::forward<Args>(args)...);
     }
     TODO_FAIL("Attempted to get IO from dead TM");
-    return std::shared_ptr<IO>(nullptr);
+    return std::shared_ptr<IO>{};
   }
 
 private:

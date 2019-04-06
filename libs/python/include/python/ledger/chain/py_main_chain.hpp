@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -23,22 +23,22 @@
 #include "ledger/chain/main_chain.hpp"
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 void BuildMainChain(pybind11::module &module)
 {
-  //  pybind11::class_<fetch::chain::MainChain::block_type>(module,
+  //  pybind11::class_<fetch::ledger::MainChain::block_type>(module,
   //  "MainChainBlock")
   //    .def(pybind11::init<>())
   //    ;
-  //  pybind11::class_<fetch::chain::MainChain,
-  //  std::shared_ptr<fetch::chain::MainChain>>(module, "MainChain")
-  //    .def(pybind11::init<fetch::chain::MainChain::block_type &>())
+  //  pybind11::class_<fetch::ledger::MainChain,
+  //  std::shared_ptr<fetch::ledger::MainChain>>(module, "MainChain")
+  //    .def(pybind11::init<fetch::ledger::MainChain::block_type &>())
   //    .def("AddBlock", &MainChain::AddBlock)
   //    .def("HeaviestBlock", &MainChain::HeaviestBlock)
   //    .def("totalBlocks", &MainChain::totalBlocks)
   //    ;
 }
 
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

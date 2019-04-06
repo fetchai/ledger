@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -67,11 +67,10 @@ enum eECDSAEncoding : int
 template <int P_ECDSA_Curve_NID = NID_secp256k1>
 class ECDSAAffineCoordinatesConversion
 {
-  static const std::size_t x_size_;
-  static const std::size_t y_size_;
-
 public:
   using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
+  static const std::size_t x_size;
+  static const std::size_t y_size;
 
   static byte_array::ByteArray Convert2Canonical(BIGNUM const *const x, BIGNUM const *const y)
   {
@@ -79,9 +78,9 @@ public:
     const std::size_t yBytes = static_cast<std::size_t>(BN_num_bytes(y));
 
     byte_array::ByteArray canonical_data;
-    canonical_data.Resize(x_size_ + y_size_);
+    canonical_data.Resize(x_size + y_size);
 
-    const std::size_t x_data_start_index = x_size_ - xBytes;
+    const std::size_t x_data_start_index = x_size - xBytes;
 
     for (std::size_t i = 0; i < x_data_start_index; ++i)
     {
@@ -97,9 +96,9 @@ public:
           "failed.");
     }
 
-    const std::size_t y_data_start_index = x_size_ + y_size_ - yBytes;
+    const std::size_t y_data_start_index = x_size + y_size - yBytes;
 
-    for (std::size_t i = x_size_; i < y_data_start_index; ++i)
+    for (std::size_t i = x_size; i < y_data_start_index; ++i)
     {
       canonical_data[i] = 0;
     }
@@ -120,14 +119,14 @@ public:
                                    BIGNUM *const y)
   {
 
-    if (!BN_bin2bn(bin_data.pointer(), static_cast<int>(x_size_), x))
+    if (!BN_bin2bn(bin_data.pointer(), static_cast<int>(x_size), x))
     {
       throw std::runtime_error(
           "Convert<...,eECDSASignatureBinaryDataFormat::canonical,...>(const "
           "byte_array::ConstByteArray&): i2d_ECDSA_SIG(..., r) failed.");
     }
 
-    if (!BN_bin2bn(bin_data.pointer() + x_size_, static_cast<int>(y_size_), y))
+    if (!BN_bin2bn(bin_data.pointer() + x_size, static_cast<int>(y_size), y))
     {
       throw std::runtime_error(
           "Convert<...,eECDSASignatureBinaryDataFormat::canonical,...>(const "
@@ -137,12 +136,12 @@ public:
 };
 
 template <int P_ECDSA_Curve_NID>
-const std::size_t ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>::x_size_ =
+const std::size_t ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>::x_size =
     ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>::ecdsa_curve_type::publicKeySize >> 1;
 
 template <int P_ECDSA_Curve_NID>
-const std::size_t ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>::y_size_ =
-    ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>::x_size_;
+const std::size_t ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>::y_size =
+    ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>::x_size;
 
 }  // namespace openssl
 }  // namespace crypto

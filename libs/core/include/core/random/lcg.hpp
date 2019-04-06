@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <limits>
+#include <utility>
 
 namespace fetch {
 namespace random {
@@ -28,15 +29,41 @@ class LinearCongruentialGenerator
 public:
   using random_type = uint64_t;
 
-  random_type Seed() const { return seed_; }
-  random_type Seed(random_type const &s) { return x_ = seed_ = s; }
-  void        Reset() { Seed(Seed()); }
-  random_type operator()() { return x_ = x_ * a_ + c_; }
-  double      AsDouble() { return double(this->operator()()) * inv_double_max_; }
+  LinearCongruentialGenerator(random_type seed = 42)
+  {
+    Seed(std::move(seed));
+  }
 
-  static constexpr random_type max() { return std::numeric_limits<random_type>::max(); }
+  random_type Seed() const
+  {
+    return seed_;
+  }
+  random_type Seed(random_type const &s)
+  {
+    return x_ = seed_ = s;
+  }
+  void Reset()
+  {
+    Seed(Seed());
+  }
+  random_type operator()()
+  {
+    return x_ = x_ * a_ + c_;
+  }
+  double AsDouble()
+  {
+    return double(this->operator()()) * inv_double_max_;
+  }
 
-  static constexpr random_type min() { return std::numeric_limits<random_type>::min(); }
+  static constexpr random_type max()
+  {
+    return std::numeric_limits<random_type>::max();
+  }
+
+  static constexpr random_type min()
+  {
+    return std::numeric_limits<random_type>::min();
+  }
 
 private:
   random_type x_    = 1;

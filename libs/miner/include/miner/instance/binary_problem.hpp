@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -29,10 +29,19 @@ public:
   using cost_type = double;
   void Reset()
   {
-    for (std::size_t i = 0; i < couplings_.size(); ++i) couplings_[i] = 0.;
-    for (std::size_t i = 0; i < coupling_sum_.size(); ++i) coupling_sum_[i] = 0;
+    for (std::size_t i = 0; i < couplings_.size(); ++i)
+    {
+      couplings_[i] = 0.;
+    }
+    for (std::size_t i = 0; i < coupling_sum_.size(); ++i)
+    {
+      coupling_sum_[i] = 0;
+    }
 
-    for (auto &c : couples_to_) c.clear();
+    for (auto &c : couples_to_)
+    {
+      c.clear();
+    }
 
     energy_offset_          = 0;
     max_abs_coupling_       = 0.0;
@@ -82,8 +91,14 @@ public:
 
       energy_offset_ += c * 0.25;  // One fourth due to symmetry
 
-      if (c < 0) c = -c;
-      if (max_abs_coupling_ < (0.25 * c)) max_abs_coupling_ = 0.25 * c;
+      if (c < 0)
+      {
+        c = -c;
+      }
+      if (max_abs_coupling_ < (0.25 * c))
+      {
+        max_abs_coupling_ = 0.25 * c;
+      }
     }
     else
     {
@@ -103,11 +118,17 @@ public:
     {
       cost_type field = -0.5 * (couplings_(i, i) + 0.5 * coupling_sum_[i]);
       cost_type ff    = field < 0 ? -field : field;
-      if (ff > max_abs_coupling_) max_abs_coupling_ = ff;
+      if (ff > max_abs_coupling_)
+      {
+        max_abs_coupling_ = ff;
+      }
     }
     normalisation_constant_ = 1. / max_abs_coupling_ / max_conn;
 
-    if (!normalise) normalisation_constant_ = 1.0;
+    if (!normalise)
+    {
+      normalisation_constant_ = 1.0;
+    }
 
     for (std::size_t i = 0; i < size_; ++i)
     {
@@ -139,13 +160,28 @@ public:
     return max_connectivity;
   }
 
-  cost_type                                  energy_offset() const { return energy_offset_; }
-  memory::RectangularArray<cost_type> const &couplings() const { return couplings_; }
-  std::size_t const &                        size() const { return size_; }
+  cost_type energy_offset() const
+  {
+    return energy_offset_;
+  }
+  memory::RectangularArray<cost_type> const &couplings() const
+  {
+    return couplings_;
+  }
+  std::size_t const &size() const
+  {
+    return size_;
+  }
 
-  cost_type max_abs_coupling() const { return max_abs_coupling_; }
+  cost_type max_abs_coupling() const
+  {
+    return max_abs_coupling_;
+  }
 
-  cost_type normalisation_constant() const { return normalisation_constant_; }
+  cost_type normalisation_constant() const
+  {
+    return normalisation_constant_;
+  }
 
 private:
   std::size_t size_          = 0;

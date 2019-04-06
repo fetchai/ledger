@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -40,15 +40,24 @@ public:
     str_ = msg.str();
   }
 
-  virtual const char *what() const throw() { return str_.c_str(); }
+  virtual const char *what() const throw()
+  {
+    return str_.c_str();
+  }
 };
 
 class JSONParseException : public std::exception
 {
 public:
-  JSONParseException(std::string err) : error_(std::move(err)) {}
-  virtual ~JSONParseException() {}
-  virtual char const *what() const throw() { return error_.c_str(); }
+  JSONParseException(std::string err)
+    : error_(std::move(err))
+  {}
+  virtual ~JSONParseException()
+  {}
+  virtual char const *what() const throw()
+  {
+    return error_.c_str();
+  }
 
 private:
   std::string error_;

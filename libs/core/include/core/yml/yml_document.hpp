@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -54,13 +54,24 @@ public:
   using string_type       = byte_array::ByteArray;
   using const_string_type = byte_array::ConstByteArray;
 
-  YMLDocument() {}
+  YMLDocument()
+  {}
 
-  YMLDocument(const_string_type const &document) : YMLDocument() { Parse(document); }
+  YMLDocument(const_string_type const &document)
+    : YMLDocument()
+  {
+    Parse(document);
+  }
 
-  script::Variant &operator[](std::size_t const &i) { return root()[i]; }
+  script::Variant &operator[](std::size_t const &i)
+  {
+    return root()[i];
+  }
 
-  script::Variant const &operator[](std::size_t const &i) const { return root()[i]; }
+  script::Variant const &operator[](std::size_t const &i) const
+  {
+    return root()[i];
+  }
 
   typename script::Variant::variant_proxy_type operator[](byte_array::ConstByteArray const &key)
   {
@@ -72,10 +83,17 @@ public:
     return root()[key];
   }
 
-  void Parse(const_string_type const &document) {}
+  void Parse(const_string_type const &document)
+  {}
 
-  script::Variant &      root() { return variants_[0]; }
-  script::Variant const &root() const { return variants_[0]; }
+  script::Variant &root()
+  {
+    return variants_[0];
+  }
+  script::Variant const &root() const
+  {
+    return variants_[0];
+  }
 
 private:
   void Tokenise(const_string_type const &document)
@@ -217,13 +235,16 @@ private:
       uint64_t indsize = ConsumeIndent(document, pos);
 
       uint64_t prev = pos;
-      while((pos < document.size()) && (document[pos)!='\n'))
+      while ((pos < document.size()) && (document[pos] != '\n'))
       {
         ++pos;
       }
       uint64_t size = pos - prev;
 
-      if (pos >= document.size()) break;
+      if (pos >= document.size())
+      {
+        break;
+      }
 
       if ((indsize != block_indent_size) && (size != 0))
       {

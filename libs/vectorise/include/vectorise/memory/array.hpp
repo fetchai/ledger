@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -61,7 +61,10 @@ public:
 
   ~Array()
   {
-    if (this->pointer_ != nullptr) _mm_free(this->pointer_);
+    if (this->pointer_ != nullptr)
+    {
+      _mm_free(this->pointer_);
+    }
   }
 
   Array() = default;
@@ -80,11 +83,18 @@ public:
     return *this;
   }
 
-  Array(Array const &other) : super_type() { this->operator=(other); }
+  Array(Array const &other)
+    : super_type()
+  {
+    this->operator=(other);
+  }
 
   self_type &operator=(Array const &other)
   {
-    if (this->pointer_ != nullptr) _mm_free(this->pointer_);
+    if (this->pointer_ != nullptr)
+    {
+      _mm_free(this->pointer_);
+    }
     this->size_ = other.size();
 
     if (this->size_ > 0)

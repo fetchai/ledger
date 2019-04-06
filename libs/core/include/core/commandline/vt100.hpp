@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -30,10 +30,20 @@ uint16_t    ColorFromString(std::string name);
 std::string GetColor(int const &fg, int const &bg);
 std::string GetColor(std::string const &f, std::string const &b);
 
-inline static constexpr const char *DefaultAttributes() { return "\33[0m"; }
-inline static constexpr const char *ClearScreen() { return "\33[2J"; }
-extern char const *                 Bold;
-extern char const *                 Return;
+inline static constexpr const char *DefaultAttributes()
+{
+#ifdef FETCH_DISABLE_COLOUR_LOG_OUTPUT
+  return "";
+#else   // !FETCH_DISABLE_COLOUR_LOG_OUTPUT
+  return "\33[0m";
+#endif  // FETCH_DISABLE_COLOUR_LOG_OUTPUT
+}
+inline static constexpr const char *ClearScreen()
+{
+  return "\33[2J";
+}
+extern char const *Bold;
+extern char const *Return;
 
 inline static const std::string Goto(uint16_t x, uint16_t y)
 {

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -26,7 +26,8 @@ template <typename T>
 class NetworkBenchmarkProtocol : public fetch::service::Protocol
 {
 public:
-  NetworkBenchmarkProtocol(std::shared_ptr<T> node) : Protocol()
+  NetworkBenchmarkProtocol(std::shared_ptr<T> node)
+    : Protocol()
   {
     this->Expose(NetworkBenchmark::INVITE_PUSH, node.get(), &T::InvitePush);
     this->Expose(NetworkBenchmark::PUSH, node.get(), &T::Push);

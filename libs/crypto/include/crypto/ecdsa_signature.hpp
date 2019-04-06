@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
+#include "core/byte_array/encoders.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/openssl_ecdsa_private_key.hpp"
 #include "crypto/sha256.hpp"
@@ -45,10 +48,10 @@ public:
 
   ECDSASignature() = default;
 
-  ECDSASignature(byte_array::ConstByteArray const &binary_signature)
+  ECDSASignature(byte_array::ConstByteArray binary_signature)
     : hash_{}
     , signature_ECDSA_SIG_{Convert(binary_signature, signatureBinaryDataFormat)}
-    , signature_{binary_signature}
+    , signature_{std::move(binary_signature)}
   {}
 
   template <eECDSAEncoding BIN_FORMAT>
@@ -90,17 +93,25 @@ public:
     return *this;
   }
 
-  const byte_array::ConstByteArray &hash() const { return hash_; }
+  const byte_array::ConstByteArray &hash() const
+  {
+    return hash_;
+  }
 
-  shrd_ptr_type<const ECDSA_SIG> signature_ECDSA_SIG() const { return signature_ECDSA_SIG_; }
+  shrd_ptr_type<const ECDSA_SIG> signature_ECDSA_SIG() const
+  {
+    return signature_ECDSA_SIG_;
+  }
 
-  const byte_array::ConstByteArray &signature() const { return signature_; }
+  const byte_array::ConstByteArray &signature() const
+  {
+    return signature_;
+  }
 
   template <eECDSAEncoding BIN_ENC, point_conversion_form_t POINT_CONV_FORM>
   static ECDSASignature Sign(private_key_type<BIN_ENC, POINT_CONV_FORM> const &private_key,
                              byte_array::ConstByteArray const &                data_to_sign)
   {
-
     return ECDSASignature(private_key, data_to_sign, eBinaryDataType::data);
   }
 
@@ -172,8 +183,7 @@ private:
   ECDSASignature(private_key_type<BIN_ENC, POINT_CONV_FORM> const &private_key,
                  byte_array::ConstByteArray const &                data_to_sign,
                  const eBinaryDataType data_type = eBinaryDataType::data)
-    : hash_{data_type == eBinaryDataType::data ? Hash<hasher_type>(data_to_sign)
-                                               : byte_array::ByteArray()}
+    : hash_{data_type == eBinaryDataType::data ? Hash<hasher_type>(data_to_sign) : data_to_sign}
     , signature_ECDSA_SIG_{CreateSignature(private_key, hash_)}
     , signature_{Convert(signature_ECDSA_SIG_, signatureBinaryDataFormat)}
   {}
@@ -313,13 +323,22 @@ private:
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
   static void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
   {
-    if (pr != nullptr) *pr = sig->r;
-    if (ps != nullptr) *ps = sig->s;
+    if (pr != nullptr)
+    {
+      *pr = sig->r;
+    }
+    if (ps != nullptr)
+    {
+      *ps = sig->s;
+    }
   }
 
   static int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
   {
-    if (r == nullptr || s == nullptr) return 0;
+    if (r == nullptr || s == nullptr)
+    {
+      return 0;
+    }
     BN_clear_free(sig->r);
     BN_clear_free(sig->s);
     sig->r = r;

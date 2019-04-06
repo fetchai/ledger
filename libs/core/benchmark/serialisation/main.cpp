@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ Result BenchmarkSingle(Args... args)
   high_resolution_clock::time_point t2 = high_resolution_clock::now();
 
   T des;
-  buffer.Seek(0);
+  buffer.seek(0);
   buffer >> des;
 
   high_resolution_clock::time_point t3  = high_resolution_clock::now();

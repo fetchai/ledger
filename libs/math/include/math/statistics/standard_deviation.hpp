@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,9 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shape_less_array.hpp"
 #include "math/statistics/variance.hpp"
-#include "vectorise/memory/range.hpp"
 
 #include <cmath>
 
@@ -29,9 +27,9 @@ namespace math {
 namespace statistics {
 
 template <typename A>
-inline typename A::type StandardDeviation(A const &a)
+inline typename A::Type StandardDeviation(A const &a)
 {
-  using type = typename A::type;
+  using type = typename A::Type;
 
   type m = Variance(a);
   return std::sqrt(m);

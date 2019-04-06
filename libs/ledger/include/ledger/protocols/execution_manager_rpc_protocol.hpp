@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chain/main_chain.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "network/service/protocol.hpp"
 
@@ -30,23 +31,35 @@ public:
   {
     EXECUTE = 1,
     LAST_PROCESSED_BLOCK,
-    IS_ACTIVE,
-    IS_IDLE,
-    ABORT
+    GET_STATE,
+    ABORT,
+    SET_LAST_PROCESSED_BLOCK
   };
 
-  explicit ExecutionManagerRpcProtocol(ExecutionManagerInterface &manager) : manager_(manager)
+  explicit ExecutionManagerRpcProtocol(ExecutionManagerInterface &manager)
+    : manager_(manager)
   {
-
     // define the RPC endpoints
-    Expose(EXECUTE, &manager_, &ExecutionManagerInterface::Execute);
+    Expose(EXECUTE, this, &ExecutionManagerRpcProtocol::Execute);
+    Expose(SET_LAST_PROCESSED_BLOCK, &manager_, &ExecutionManagerInterface::SetLastProcessedBlock);
     Expose(LAST_PROCESSED_BLOCK, &manager_, &ExecutionManagerInterface::LastProcessedBlock);
-    Expose(IS_ACTIVE, &manager_, &ExecutionManagerInterface::IsActive);
-    Expose(IS_IDLE, &manager_, &ExecutionManagerInterface::IsIdle);
+    Expose(GET_STATE, &manager_, &ExecutionManagerInterface::GetState);
     Expose(ABORT, &manager_, &ExecutionManagerInterface::Abort);
   }
 
 private:
+  using ScheduleStatus = ExecutionManagerInterface::ScheduleStatus;
+
+  ScheduleStatus Execute(Block::Body const &block_body)
+  {
+    // since the hash is not serialised we need to recalculate it
+    Block full_block{};
+    full_block.body = block_body;
+    full_block.UpdateDigest();
+
+    return manager_.Execute(full_block.body);
+  }
+
   ExecutionManagerInterface &manager_;
 };
 

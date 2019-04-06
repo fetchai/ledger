@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -74,6 +74,8 @@ namespace service {
 class HasPublicationFeed : public AbstractPublicationFeed
 {
 public:
+  static constexpr char const *LOGGING_NAME = "PublicationFeed";
+
   /* Constructor for HasPublicationFeed.
    * @n is the maximum number of support feeds.
    */
@@ -122,13 +124,16 @@ public:
     // TODO(issue 21): we should benchmark subscription too
     PackArgs(params, std::forward<Args>(args)...);
 
-    fetch::logger.Debug("Publishing data for feed ", feed);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Publishing data for feed ", feed);
 
     if (publisher_[feed])
+    {
+      LOG_STACK_TRACE_POINT
       publisher_[feed](params.data());
+    }
     else
     {
-      fetch::logger.Warn("Could not find publisher for ", feed);
+      FETCH_LOG_WARN(LOGGING_NAME, "Could not find publisher for ", feed);
       fetch::logger.StackTrace(2, false);
     }
   }

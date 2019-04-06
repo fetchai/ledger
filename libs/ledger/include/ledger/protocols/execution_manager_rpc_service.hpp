@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/service_ids.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/protocols/execution_manager_rpc_protocol.hpp"
-#include "network/protocols/fetch_protocols.hpp"
 #include "network/service/server.hpp"
 
 #include <memory>
@@ -30,28 +30,42 @@ namespace ledger {
 class ExecutionManagerRpcService : public fetch::service::ServiceServer<fetch::network::TCPServer>
 {
 public:
-  using manager_type          = std::shared_ptr<ExecutionManager>;
-  using executor_factory_type = ExecutionManager::executor_factory_type;
-  using storage_unit_type     = ExecutionManager::storage_unit_type;
+  using ExecutionManagerPtr = std::shared_ptr<ExecutionManager>;
+  using ExecutorFactory     = ExecutionManager::ExecutorFactory;
+  using StorageUnitPtr      = ExecutionManager::StorageUnitPtr;
 
   ExecutionManagerRpcService(uint16_t port, network_manager_type const &network_manager,
-                             std::size_t num_executors, storage_unit_type storage,
-                             executor_factory_type const &factory)
+                             std::size_t num_executors, StorageUnitPtr storage,
+                             ExecutorFactory const &factory)
     : ServiceServer(port, network_manager)
-    , manager_(new ExecutionManager(num_executors, storage, factory))
+    , manager_(new ExecutionManager(num_executors, std::move(storage), factory))
   {
+    this->Add(RPC_EXECUTION_MANAGER, &protocol_);
+  }
+  ~ExecutionManagerRpcService() override = default;
 
-    this->Add(fetch::protocols::FetchProtocols::EXECUTION_MANAGER, &protocol_);
+  void Start() override
+  {
+    TCPServer::Start();
+
     manager_->Start();
   }
 
-  ~ExecutionManagerRpcService() override { manager_->Stop(); }
+  void Stop() override
+  {
+    manager_->Stop();
+
+    TCPServer::Stop();
+  }
 
   // helpful statistics
-  std::size_t completed_executions() const { return manager_->completed_executions(); }
+  std::size_t completed_executions() const
+  {
+    return manager_->completed_executions();
+  }
 
 private:
-  manager_type                manager_;
+  ExecutionManagerPtr         manager_;
   ExecutionManagerRpcProtocol protocol_{*manager_};
 };
 

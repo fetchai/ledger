@@ -1,7 +1,9 @@
 ---
 BasedOnStyle: Google
-AllowShortIfStatementsOnASingleLine: true
-AllowShortLoopsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
 IndentWidth: 2
 AccessModifierOffset: -2
 ConstructorInitializerIndentWidth: 2
@@ -17,6 +19,8 @@ AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
 AlignTrailingComments: true
 MaxEmptyLinesToKeep: 1
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+BreakConstructorInitializersBeforeComma: true
 BreakConstructorInitializers: BeforeComma
 PointerAlignment: Right
 SortUsingDeclarations: false

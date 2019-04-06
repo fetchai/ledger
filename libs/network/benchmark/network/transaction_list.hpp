@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -34,10 +34,15 @@ template <typename FirstT, typename SecondT>
 class TransactionList
 {
 
-  using hasher_type = crypto::CallableFNV;
+  using hasher_type = std::hash<byte_array::ConstByteArray>;
 
 public:
-  TransactionList() { validArray_.fill(0); }
+  static constexpr char const *LOGGING_NAME = "TransactionList";
+
+  TransactionList()
+  {
+    validArray_.fill(0);
+  }
 
   TransactionList(TransactionList &rhs)  = delete;
   TransactionList(TransactionList &&rhs) = delete;
@@ -63,7 +68,7 @@ public:
 
     if (!GetWriteIndex(index, hash))
     {
-      fetch::logger.Info("Failed to add hash", hash);
+      FETCH_LOG_INFO(LOGGING_NAME, "Failed to add hash", hash);
       return false;
     }
 
@@ -85,7 +90,7 @@ public:
         return ref;
       }
     }
-    fetch::logger.Error("Warning: block not found for hash: ", hash);
+    FETCH_LOG_ERROR(LOGGING_NAME, "Warning: block not found for hash: ", hash);
     exit(1);
     auto &ref = blockArray_[0];
     return ref;
@@ -177,7 +182,7 @@ public:
       hash = hash ^ static_cast<uint32_t>(hashStruct(i.summary().transaction_hash));
     }
 
-    fetch::logger.Info("Hash is now::", hash);
+    FETCH_LOG_INFO(LOGGING_NAME, "Hash is now::", hash);
     return std::pair<uint64_t, uint64_t>(size(), hash);
   }
 
@@ -187,9 +192,9 @@ private:
   std::array<SecondT, 200> blockArray_;
   std::array<int, 200>     validArray_;
   std::size_t              getIndex_{0};
-  fetch::mutex::Mutex      mutex_;
+  fetch::mutex::Mutex      mutex_{__LINE__, __FILE__};
 
-  fetch::mutex::Mutex seenMutex_;
+  fetch::mutex::Mutex seenMutex_{__LINE__, __FILE__};
   std::set<FirstT>    seen_;
 };
 

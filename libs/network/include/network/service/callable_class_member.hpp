@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
+#include "core/serializers/pointer_types.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/serializers/typed_byte_array_buffer.hpp"
 #include "network/service/abstract_callable.hpp"
@@ -130,7 +131,7 @@ struct UnrollArguments
   struct LoopOver<R>
   {
     static void Unroll(serializer_type &result, class_type &cls, member_function_pointer &m,
-                       serializer_type &s, used_args &... used)
+                       serializer_type & /*s*/, used_args &... used)
     {
       assert(R == 0);
 
@@ -157,9 +158,9 @@ struct UnrollPointers
       if (typeid(T) != arg.type.get())
       {
         // TODO(issue 11): Make serializable
-        throw std::runtime_error(
-            "argument type mismatch for Callabale. TODO: Make custom "
-            "exception");
+        throw std::runtime_error(std::string("argument type mismatch for Callabale.") +
+                                 typeid(T).name() + " != " + arg.type.get().name() +
+                                 " TODO: Make custom " + "exception");
       }
 
       typename std::decay<T>::type *ptr = (typename std::decay<T>::type *)arg.pointer;
@@ -179,7 +180,7 @@ struct UnrollPointers<0, class_type, member_function_pointer, return_type, used_
   struct LoopOver
   {
     static void Unroll(serializer_type &result, class_type &cls, member_function_pointer &m,
-                       CallableArgumentList const &additional_args, serializer_type &s,
+                       CallableArgumentList const & /*additional_args*/, serializer_type &s,
                        used_args &... used)
     {
       UnrollArguments<class_type, member_function_pointer, return_type, used_args...>::
@@ -308,19 +309,20 @@ public:
     function_ = value;
   }
 
-  void operator()(serializer_type &result, serializer_type &params) override
+  void operator()(serializer_type &result, serializer_type & /*params*/) override
   {
     LOG_STACK_TRACE_POINT;
 
-    auto                                      ret = ((*class_).*function_)();
+    auto ret = ((*class_).*function_)();
+
     serializers::SizeCounter<serializer_type> counter;
     counter << ret;
     result.Reserve(counter.size());
     result << ret;
   }
 
-  void operator()(serializer_type &result, CallableArgumentList const &additional_args,
-                  serializer_type &params) override
+  void operator()(serializer_type &result, CallableArgumentList const & /*additional_args*/,
+                  serializer_type & /*params*/) override
   {
     LOG_STACK_TRACE_POINT;
 
@@ -363,7 +365,7 @@ public:
     function_ = value;
   }
 
-  void operator()(serializer_type &result, serializer_type &params) override
+  void operator()(serializer_type &result, serializer_type & /*params*/) override
   {
     LOG_STACK_TRACE_POINT;
 
@@ -371,8 +373,8 @@ public:
     ((*class_).*function_)();
   }
 
-  void operator()(serializer_type &result, CallableArgumentList const &additional_args,
-                  serializer_type &params) override
+  void operator()(serializer_type &result, CallableArgumentList const & /*additional_args*/,
+                  serializer_type & /*params*/) override
   {
     LOG_STACK_TRACE_POINT;
 

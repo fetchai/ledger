@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -20,17 +20,26 @@
 #include <mutex>
 #include <string>
 #include <thread>
+
 namespace fetch {
 namespace mutex {
 
 class AbstractMutex : public std::mutex
 {
 public:
-  AbstractMutex() : std::mutex() {}
+  AbstractMutex()
+    : std::mutex()
+  {}
 
-  virtual std::string AsString() { return "(mutex)"; }
+  virtual std::string AsString()
+  {
+    return "(mutex)";
+  }
 
-  virtual std::thread::id thread_id() const { return {}; }
+  virtual std::thread::id thread_id() const
+  {
+    return {};
+  }
 };
 }  // namespace mutex
 }  // namespace fetch

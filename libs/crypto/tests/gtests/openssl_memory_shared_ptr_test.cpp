@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -51,7 +51,10 @@ MockDeleterPrimitive::SharedPtr MockDeleterPrimitive::value;
 class Deleter
 {
 public:
-  void operator()(TestType *ptr) { MockDeleterPrimitive::value->free_TestType(ptr); }
+  void operator()(TestType *ptr)
+  {
+    MockDeleterPrimitive::value->free_TestType(ptr);
+  }
 };
 
 class OpenSSLSharedPtrTest : public testing::Test
@@ -62,9 +65,15 @@ protected:
 
   MockDeleterPrimitive::SharedPtr &mock_ = MockDeleterPrimitive::value;
 
-  void SetUp() override { mock_ = std::make_shared<MockDeleterPrimitive::Type>(); }
+  void SetUp() override
+  {
+    mock_ = std::make_shared<MockDeleterPrimitive::Type>();
+  }
 
-  void TearDown() override { mock_ = MockDeleterPrimitive::SharedPtr(); }
+  void TearDown() override
+  {
+    mock_ = MockDeleterPrimitive::SharedPtr();
+  }
 
   // static void SetUpTestCase() {
   //}
@@ -77,7 +86,7 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_construction)
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
 
   {
@@ -91,7 +100,7 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_not_called_for_empty_smart_ptr)
 {
   {
     //* Production code
-    ossl_shared_ptr__for_Testing<> x;
+    ossl_shared_ptr__for_Testing<> x{};
     (void)x;
   }
 }
@@ -100,7 +109,7 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_reset)
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
 
   {
@@ -115,7 +124,7 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_reset_with_specific_point
   TestType testValue;
   TestType testValue2;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
   EXPECT_CALL(*mock_, free_TestType(&testValue2)).WillOnce(Return());
 
@@ -130,13 +139,13 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_swap)
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
 
   {
     //* Production code
     ossl_shared_ptr__for_Testing<> x(&testValue);
-    ossl_shared_ptr__for_Testing<> y;
+    ossl_shared_ptr__for_Testing<> y{};
     x.swap(y);
   }
 }
@@ -145,13 +154,13 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_assign)
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
 
   {
     //* Production code
     ossl_shared_ptr__for_Testing<> x(&testValue);
-    ossl_shared_ptr__for_Testing<> y;
+    ossl_shared_ptr__for_Testing<> y{};
     x = y;
   }
 }
@@ -160,7 +169,7 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_copy_construct)
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
 
   {

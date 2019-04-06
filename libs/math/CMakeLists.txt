@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   M A T H   L I B R A R Y
 ################################################################################
-cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-math)
 
 # CMake Configuration
@@ -15,7 +15,7 @@ setup_compiler()
 #-------------------------------------------------------------------------------
 
 setup_library(fetch-math)
-target_link_libraries(fetch-math PUBLIC fetch-core)
+target_link_libraries(fetch-math INTERFACE fetch-core)
 
 add_test_target()
 

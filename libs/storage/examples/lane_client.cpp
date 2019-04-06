@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 #include "core/logger.hpp"
 #include "core/string/trim.hpp"
 #include "ledger/chain/transaction.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 #include "storage/document_store_protocol.hpp"
 #include <iostream>
 using namespace fetch;
@@ -133,20 +133,26 @@ public:
         .As<ByteArray>();
   }
 
-  void SetID(ByteArray const &id) { id_ = id; }
+  void SetID(ByteArray const &id)
+  {
+    id_ = id;
+  }
 
   void AddTransaction(ConstByteArray const &tx_data)
   {
-    json::JSONDocument doc(tx_data);
-    chain::Transaction tx;
+    json::JSONDocument  doc(tx_data);
+    ledger::Transaction tx;
   }
 
-  void AddTransaction(chain::Transaction &tx)
+  void AddTransaction(ledger::Transaction &tx)
   {
     //    tx.UpdateDigests();
   }
 
-  ByteArray const &id() { return id_; }
+  ByteArray const &id()
+  {
+    return id_;
+  }
 
 private:
   ByteArray                       id_;
@@ -163,8 +169,8 @@ enum
 
 void AddTransactionDialog()
 {
-  chain::Transaction tx;
-  std::string        contract_name, args, res;
+  ledger::Transaction tx;
+  std::string         contract_name, args, res;
   std::cout << "Contract name: ";
 
   std::getline(std::cin, contract_name);
@@ -233,7 +239,10 @@ int main(int argc, char const **argv)
 
       for (auto &t : tokenizer)
       {
-        if (t.type() != TOKEN_CATCH_ALL) command.push_back(t);
+        if (t.type() != TOKEN_CATCH_ALL)
+        {
+          command.push_back(t);
+        }
       }
 
       if (command.size() > 0)

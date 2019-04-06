@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/distance/manhattan.hpp"
-#include "math/linalg/matrix.hpp"
+#include "math/tensor.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -26,7 +26,7 @@ namespace math {
 namespace distance {
 
 template <typename A>
-inline typename A::type WrapperManhattan(A const &a, A const &b)
+inline typename A::Type WrapperManhattan(A const &a, A const &b)
 {
   if (a.size() != b.size())
   {
@@ -38,16 +38,12 @@ inline typename A::type WrapperManhattan(A const &a, A const &b)
 
 inline void BuildManhattanDistance(std::string const &custom_name, pybind11::module &module)
 {
-  using namespace fetch::math::linalg;
+  using namespace fetch::math;
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperManhattan<Matrix<double>>)
-      .def(custom_name.c_str(), &WrapperManhattan<Matrix<float>>)
-      .def(custom_name.c_str(), &WrapperManhattan<RectangularArray<double>>)
-      .def(custom_name.c_str(), &WrapperManhattan<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperManhattan<ShapeLessArray<double>>)
-      .def(custom_name.c_str(), &WrapperManhattan<ShapeLessArray<float>>);
+  module.def(custom_name.c_str(), &WrapperManhattan<Tensor<double>>)
+      .def(custom_name.c_str(), &WrapperManhattan<Tensor<float>>);
 }
 
 }  // namespace distance

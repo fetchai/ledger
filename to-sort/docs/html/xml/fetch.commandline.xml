@@ -1,5 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<namespace id="fetch::commandline" name="commandline" xmlns="http://jessevdk.github.com/cldoc/1.0">
-  <namespace name="VT100" ref="fetch::commandline::VT100#fetch::commandline::VT100" />
-  <class name="ParamsParser" ref="fetch::commandline::ParamsParser#fetch::commandline::ParamsParser" />
-</namespace>

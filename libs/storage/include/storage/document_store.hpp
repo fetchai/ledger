@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 #include <cassert>
 #include <fstream>
 #include <memory>
+#include <utility>
 
 #include "core/mutex.hpp"
 #include "network/service/protocol.hpp"
@@ -60,32 +61,47 @@ public:
 
   using index_type = typename key_value_index_type::index_type;
 
+  static constexpr char const *LOGGING_NAME = "DocumentStore";
+
   /**
    * Implementation of a document file
    */
   class DocumentFileImplementation : public file_object_type
   {
   public:
-    DocumentFileImplementation(self_type *s, byte_array::ConstByteArray const &address,
+    DocumentFileImplementation(self_type *s, byte_array::ConstByteArray address,
                                file_store_type &store)
-      : file_object_type(store), address_(address), store_(s)
+      : file_object_type(store)
+      , address_(std::move(address))
+      , store_(s)
     {}
 
-    DocumentFileImplementation(self_type *s, byte_array::ConstByteArray const &address,
+    DocumentFileImplementation(self_type *s, byte_array::ConstByteArray address,
                                file_store_type &store, std::size_t const &pos)
-      : file_object_type(store, pos), address_(address), store_(s)
+      : file_object_type(store, pos)
+      , address_(std::move(address))
+      , store_(s)
     {}
 
-    ~DocumentFileImplementation() { store_->UpdateDocumentFile(*this); }
+    ~DocumentFileImplementation()
+    {
+      store_->UpdateDocumentFile(*this);
+    }
 
     DocumentFileImplementation(DocumentFileImplementation const &other) = delete;
     DocumentFileImplementation operator=(DocumentFileImplementation const &other) = delete;
     DocumentFileImplementation(DocumentFileImplementation &&other)                = default;
     DocumentFileImplementation &operator=(DocumentFileImplementation &&other) = default;
 
-    byte_array::ConstByteArray const &address() const { return address_; }
+    byte_array::ConstByteArray const &address() const
+    {
+      return address_;
+    }
 
-    self_type const *store() const { return store_; }
+    self_type const *store() const
+    {
+      return store_;
+    }
 
   private:
     byte_array::ConstByteArray address_;
@@ -101,9 +117,14 @@ public:
   class DocumentFile
   {
   public:
-    operator bool() const { return static_cast<bool>(pointer_); }
+    operator bool() const
+    {
+      return static_cast<bool>(pointer_);
+    }
 
-    DocumentFile() : pointer_(nullptr) {}
+    DocumentFile()
+      : pointer_(nullptr)
+    {}
 
     DocumentFile(self_type *s, byte_array::ConstByteArray const &address, file_store_type &store)
     {
@@ -117,27 +138,60 @@ public:
       pointer_ = std::make_shared<DocumentFileImplementation>(s, address, store, pos);
     }
 
-    uint64_t Tell() { return pointer_->Tell(); }
+    uint64_t Tell()
+    {
+      return pointer_->Tell();
+    }
 
-    void Seek(uint64_t const &n) { pointer_->Seek(n); }
+    void Seek(uint64_t const &n)
+    {
+      pointer_->Seek(n);
+    }
 
-    void Read(byte_array::ByteArray &arr) { pointer_->Read(arr); }
+    void Read(byte_array::ByteArray &arr)
+    {
+      pointer_->Read(arr);
+    }
 
-    void Read(uint8_t *bytes, uint64_t const &m) { pointer_->Read(bytes, m); }
+    void Read(uint8_t *bytes, uint64_t const &m)
+    {
+      pointer_->Read(bytes, m);
+    }
 
-    void Shrink(uint64_t const &m) { pointer_->Shrink(m); }
+    void Shrink(uint64_t const &m)
+    {
+      pointer_->Shrink(m);
+    }
 
-    void Write(byte_array::ConstByteArray const &arr) { pointer_->Write(arr); }
+    void Write(byte_array::ConstByteArray const &arr)
+    {
+      pointer_->Write(arr);
+    }
 
-    void Write(uint8_t const *bytes, uint64_t const &m) { pointer_->Write(bytes, m); }
+    void Write(uint8_t const *bytes, uint64_t const &m)
+    {
+      pointer_->Write(bytes, m);
+    }
 
-    std::size_t id() const { return pointer_->id(); }
+    std::size_t id() const
+    {
+      return pointer_->id();
+    }
 
-    std::size_t size() const { return pointer_->size(); }
+    std::size_t size() const
+    {
+      return pointer_->size();
+    }
 
-    byte_array::ConstByteArray const &address() const { return pointer_->address(); }
+    byte_array::ConstByteArray const &address() const
+    {
+      return pointer_->address();
+    }
 
-    bool was_created() const { return was_created_; }
+    bool was_created() const
+    {
+      return was_created_;
+    }
 
   private:
     std::shared_ptr<DocumentFileImplementation> pointer_;
@@ -238,6 +292,18 @@ public:
     }
   }
 
+  std::size_t size() const
+  {
+    return file_store_.size();
+  }
+
+  void Flush(bool lazy = true)
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    file_store_.Flush(lazy);
+    key_index_.Flush(lazy);
+  }
+
   /**
    * STL-like functionality achieved with an iterator class. This has to wrap an
    * iterator to the
@@ -248,7 +314,8 @@ public:
   {
   public:
     Iterator(self_type *store, typename key_value_index_type::Iterator it)
-      : wrapped_iterator_{it}, store_{store}
+      : wrapped_iterator_{it}
+      , store_{store}
     {}
 
     Iterator()                    = default;
@@ -257,11 +324,20 @@ public:
     Iterator &operator=(Iterator const &rhs) = default;
     Iterator &operator=(Iterator &&rhs) = default;
 
-    void operator++() { ++wrapped_iterator_; }
+    void operator++()
+    {
+      ++wrapped_iterator_;
+    }
 
-    bool operator==(Iterator const &rhs) { return wrapped_iterator_ == rhs.wrapped_iterator_; }
+    bool operator==(Iterator const &rhs) const
+    {
+      return wrapped_iterator_ == rhs.wrapped_iterator_;
+    }
 
-    bool operator!=(Iterator const &rhs) { return !(wrapped_iterator_ == rhs.wrapped_iterator_); }
+    bool operator!=(Iterator const &rhs) const
+    {
+      return !(wrapped_iterator_ == rhs.wrapped_iterator_);
+    }
 
     Document operator*() const
     {
@@ -295,21 +371,69 @@ public:
    * matches the first bits of rid)
    *
    * @param: rid The key
-   * @param: bits The number of bits of rid we want to match against
+   * @param: bit_count The number of bits of rid we want to match against
    *
    * @return: an iterator to the first element of that tree
    */
-  self_type::Iterator GetSubtree(ResourceID const &rid, uint64_t bits)
+  self_type::Iterator GetSubtree(ResourceID const &rid, uint64_t bit_count)
   {
     byte_array::ConstByteArray const &address = rid.id();
-    auto                              it      = key_index_.GetSubtree(address, bits);
+    auto                              it      = key_index_.GetSubtree(address, bit_count);
 
     return Iterator(this, it);
   }
 
-  self_type::Iterator begin() { return Iterator(this, key_index_.begin()); }
+  self_type::Iterator begin()
+  {
+    return Iterator(this, key_index_.begin());
+  }
 
-  self_type::Iterator end() { return Iterator(this, key_index_.end()); }
+  self_type::Iterator end()
+  {
+    return Iterator(this, key_index_.end());
+  }
+
+  // Hash based functionality - note this will only work if both underlying files
+  // have commit functionality
+  byte_array_type Commit()
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    byte_array_type               hash = key_index_.Hash();
+
+    key_index_.underlying_stack().Commit(hash);
+    file_store_.Commit(hash);
+
+    return hash;
+  }
+
+  bool RevertToHash(byte_array_type const &hash)
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+
+    // TODO(private issue 615): HashExists implement
+    if (!(key_index_.underlying_stack().HashExists(hash) && file_store_.HashExists(hash)))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Attempted to revert to a hash that doesn't exist");
+      return false;
+    }
+
+    key_index_.underlying_stack().RevertToHash(hash);
+    file_store_.RevertToHash(hash);
+
+    return true;
+  }
+
+  bool HashExists(byte_array_type const &hash)
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    return key_index_.underlying_stack().HashExists(hash) && file_store_.HashExists(hash);
+  }
+
+  hash_type CurrentHash()
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    return key_index_.Hash();
+  }
 
 protected:
   /**
@@ -339,7 +463,7 @@ protected:
     return doc;
   }
 
-  mutex::Mutex         mutex_;
+  mutex::Mutex         mutex_{__LINE__, __FILE__};
   key_value_index_type key_index_;
   file_store_type      file_store_;
 

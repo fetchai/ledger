@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
+
+#include <utility>
 
 #include "crypto/openssl_common.hpp"
 #include "crypto/openssl_context_session.hpp"
@@ -52,10 +54,10 @@ public:
     , key_binary_{Convert(public_key.get(), group, session, binaryDataFormat)}
   {}
 
-  ECDSAPublicKey(const byte_array::ConstByteArray &key_data)
+  ECDSAPublicKey(byte_array::ConstByteArray key_data)
     : key_EC_POINT_{Convert(key_data, binaryDataFormat)}
     , key_EC_KEY_{ConvertToECKEY(key_EC_POINT_.get())}
-    , key_binary_{key_data}
+    , key_binary_{std::move(key_data)}
   {}
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
@@ -94,11 +96,20 @@ public:
     return *this;
   }
 
-  shrd_ptr_type<const EC_POINT> keyAsEC_POINT() const { return key_EC_POINT_; }
+  shrd_ptr_type<const EC_POINT> keyAsEC_POINT() const
+  {
+    return key_EC_POINT_;
+  }
 
-  shrd_ptr_type<const EC_KEY> key() const { return key_EC_KEY_; }
+  shrd_ptr_type<const EC_KEY> key() const
+  {
+    return key_EC_KEY_;
+  }
 
-  const byte_array::ConstByteArray &keyAsBin() const { return key_binary_; }
+  const byte_array::ConstByteArray &keyAsBin() const
+  {
+    return key_binary_;
+  }
 
 private:
   using affine_coord_conversion_type = ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>;
@@ -209,14 +220,14 @@ private:
     shrd_ptr_type<BIGNUM> x{BN_new()};
     shrd_ptr_type<BIGNUM> y{BN_new()};
 
-    affine_coord_conversion_type::ConvertFromCanonical(key_data, x.get(), x.get());
+    affine_coord_conversion_type::ConvertFromCanonical(key_data, x.get(), y.get());
 
     if (!EC_POINT_set_affine_coordinates_GFp(group.get(), public_key.get(), x.get(), y.get(),
                                              session.context().get()))
     {
       throw std::runtime_error(
           "ECDSAPublicKey::ConvertFromCanonical(...): "
-          "`BN_bn2bin(...)` function failed.");
+          "`EC_POINT_set_affine_coordinates_GFp(...)` function failed.");
     }
 
     return public_key;
@@ -249,7 +260,8 @@ private:
   static uniq_ptr_type<EC_KEY> ConvertToECKEY(const EC_POINT *key_EC_POINT)
   {
     uniq_ptr_type<EC_KEY> key{EC_KEY_new_by_curve_name(ecdsa_curve_type::nid)};
-    // TODO(issue 36): setting conv. form might not be really necessary (stuff works
+    // TODO(issue 36): setting conv. form might not be really necessary (stuff
+    // works
     // without it)
     EC_KEY_set_conv_form(key.get(), conversionForm);
 

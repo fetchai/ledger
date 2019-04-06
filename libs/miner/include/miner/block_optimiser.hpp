@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -27,42 +27,41 @@
 #include "ledger/chain/transaction.hpp"
 
 #include "miner/optimisation/binary_annealer.hpp"
+#include "miner/resource_mapper.hpp"
 #include "miner/transaction_item.hpp"
-#include "storage/resource_mapper.hpp"
 
 #include <algorithm>
 #include <map>
 #include <memory>
+#include <numeric>
 #include <unordered_map>
 #include <unordered_set>
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 class BlockGenerator
 {
 public:
-  using transaction_type     = std::shared_ptr<miner::TransactionItem>;
-  using block_index_map_type = std::vector<std::vector<uint64_t>>;
-  using block_fees_list_type = std::vector<uint64_t>;
-  using digest_type          = TransactionSummary::digest_type;
-  using transaction_map_type =
-      std::unordered_map<digest_type, transaction_type, crypto::CallableFNV>;
+  using transaction_type        = std::shared_ptr<miner::TransactionItem>;
+  using block_index_map_type    = std::vector<std::vector<uint64_t>>;
+  using block_fees_list_type    = std::vector<uint64_t>;
+  using digest_type             = TransactionSummary::TxDigest;
+  using transaction_map_type    = std::unordered_map<digest_type, transaction_type>;
   using transaction_list_type   = std::vector<transaction_type>;
   using transaction_matrix_type = std::vector<transaction_list_type>;
   using annealer_type           = fetch::optimisers::BinaryAnnealer;
   using state_type              = annealer_type::state_type;
 
-  static uint32_t MapResourceToLane(byte_array::ConstByteArray const &resource,
-                                    std::string const &contract, uint32_t log2_num_lanes)
+  enum class Strategy : uint8_t
   {
-    ledger::Identifier identifier(contract);
+    NOME,
+    FEE_OCCUPANCY,
+    FEE,
+    RANDOM
+  };
 
-    std::string const prefix = identifier.name_space() + ".state.";
-
-    return storage::ResourceAddress{prefix + static_cast<std::string>(resource)}.lane(
-        log2_num_lanes);
-  }
+  static constexpr char const *LOGGING_NAME = "BlockGenerator";
 
   /* Pushes a transaction into the queue of transactions that needs to
    * be mined.
@@ -78,7 +77,10 @@ public:
     // TODO(issue 30):  The size of the `all_` make grows forever!
     if (check)
     {
-      if (all_.find(tx->summary().transaction_hash) != all_.end()) return;
+      if (all_.find(tx->summary().transaction_hash) != all_.end())
+      {
+        return;
+      }
     }
 
     all_[tx->summary().transaction_hash] = tx;
@@ -121,7 +123,8 @@ public:
    * The resulting block is garantueed (issue 30) to be valid.
    */
   void GenerateBlock(std::size_t const &lane_count, std::size_t const &slice_count,
-                     int const &strategy = 0, std::size_t batch_size = 1, std::size_t explore = 10)
+                     Strategy strategy = Strategy::NOME, std::size_t batch_size = 1,
+                     std::size_t explore = 10)
   {
     block_.clear();
     block_fees_.clear();
@@ -145,13 +148,17 @@ public:
       std::vector<std::size_t> used;
 
       // TODO(issue 30): Correct incorrect states
-      std::size_t i = 0;
+      std::size_t i   = 0;
+      uint64_t    fee = 0;
       for (auto &s : best_solution_)
       {
         if (s == 1)
         {
           auto &tx = unspent_[i];
+
           occupancy_ += tx->summary().resources.size();
+          fee += tx->summary().fee;
+
           vec.push_back(tx->id());
           used.push_back(i);
         }
@@ -159,7 +166,9 @@ public:
       }
 
       // TODO(issue 30):  Check that this is actually correct
-      block_fees_.push_back(static_cast<uint64_t>(best_solution_energy_));
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Best solution Energy: ", best_solution_energy_);
+
+      block_fees_.push_back(fee);
 
       // Erasing from unspent pool
       std::reverse(used.begin(), used.end());
@@ -168,10 +177,14 @@ public:
         staged_[slice_idx].push_back(unspent_[tx_idx]);
 
         // remove the element from the vector
-        unspent_[tx_idx] = unspent_[unspent_.size() - 1];
+        //        unspent_[tx_idx] = unspent_[unspent_.size() - 1];
+        unspent_.at(tx_idx) = unspent_.at(unspent_.size() - 1);
         unspent_.pop_back();
       }
     }
+
+    uint64_t const total_fee = std::accumulate(block_fees_.begin(), block_fees_.end(), 0llu);
+    FETCH_LOG_INFO(LOGGING_NAME, "Total fee is: ", total_fee);
   }
 
   /* Unstages staged transactions.
@@ -194,40 +207,70 @@ public:
   /* Returns a constant reference to the vector containing unspent
    * transactions.
    */
-  transaction_list_type const &unspent() const { return unspent_; };
+  transaction_list_type const &unspent() const
+  {
+    return unspent_;
+  };
 
-  transaction_list_type &unspent() { return unspent_; }
+  transaction_list_type &unspent()
+  {
+    return unspent_;
+  }
 
-  transaction_matrix_type const &staged() const { return staged_; }
+  transaction_matrix_type const &staged() const
+  {
+    return staged_;
+  }
 
-  transaction_matrix_type &staged() { return staged_; }
+  transaction_matrix_type &staged()
+  {
+    return staged_;
+  }
 
   /* Returns the number of unspent transactions.
    */
-  std::size_t unspent_count() const { return unspent_.size(); }
+  std::size_t unspent_count() const
+  {
+    return unspent_.size();
+  }
 
   /* Returns the lane count.
    */
-  std::size_t lane_count() { return lane_count_; }
+  std::size_t lane_count()
+  {
+    return lane_count_;
+  }
 
   /* Returns the batch size.
    */
-  std::size_t batch_size() { return batch_size_; }
+  std::size_t batch_size()
+  {
+    return batch_size_;
+  }
 
   /* Returns a constant reference to the last generated block.
    *
    * TODO(issue 30): change to system block
    */
-  block_index_map_type const &block() const { return block_; }
+  block_index_map_type const &block() const
+  {
+    return block_;
+  }
 
   /* Returns a constant reference to a vector with the fees earned from
    * each slice.
    */
-  block_fees_list_type const &block_fees() const { return block_fees_; }
+  block_fees_list_type const &block_fees() const
+  {
+    return block_fees_;
+  }
 
   /* Returns the absolute number of
    */
-  std::size_t const &block_occupancy() { return occupancy_; }
+  std::size_t const &block_occupancy()
+  {
+    return occupancy_;
+  }
 
   /*
   std::vector< int16_t > const & block() const {
@@ -244,7 +287,7 @@ private:
    * This function identifies conflicts between transactions and uses
    * this to create the binary optimisation problem.
    */
-  void Init(std::size_t const &lane_count = 16, int strategy = 0,
+  void Init(std::size_t const &lane_count = 16, Strategy strategy = Strategy::NOME,
             std::size_t batch_size = std::size_t(-1), uint64_t penalty = 10)
   {
 
@@ -255,24 +298,26 @@ private:
 
     switch (strategy)
     {
-    case 1:
+    case Strategy::FEE_OCCUPANCY:
       std::sort(unspent_.begin(), unspent_.end(),
                 [](std::shared_ptr<miner::TransactionItem> const &a,
                    std::shared_ptr<miner::TransactionItem> const &b) {
-                  return (a->summary().fee / a->summary().resources.size()) >
+                  return (a->summary().fee / a->summary().resources.size()) <
                          (b->summary().fee / b->summary().resources.size());
                 });
       break;
-    case 2:
+    case Strategy::FEE:
 
       std::sort(unspent_.begin(), unspent_.end(),
                 [](std::shared_ptr<miner::TransactionItem> const &a,
                    std::shared_ptr<miner::TransactionItem> const &b) {
-                  return (a->summary().fee) > (b->summary().fee);
+                  return (a->summary().fee) < (b->summary().fee);
                 });
       break;
-    case 3:
+    case Strategy::RANDOM:
       std::random_shuffle(unspent_.begin(), unspent_.end());
+      break;
+    default:
       break;
     }
 
@@ -288,6 +333,7 @@ private:
     // possible earning
     for (std::size_t i = 0; i < batch_size; ++i)
     {
+      assert(i < unspent_.size());
       penalty = std::max(1 + unspent_[i]->summary().fee, penalty);
     }
 
@@ -297,31 +343,38 @@ private:
 
     for (std::size_t i = 0; i < batch_size_; ++i)
     {
+      assert(i < unspent_.size());
       auto &tx = unspent_[i];
 
       for (auto &resource : tx->summary().resources)
       {
-
         // TODO(issue 30):  Move to Transaction item?
-        std::size_t const lane_index =
-            MapResourceToLane(resource, tx->summary().contract_name, log2_lane_count_);
+        uint32_t const lane_index =
+            miner::MapResourceToLane(resource, tx->summary().contract_name, log2_lane_count_);
 
         tx->lanes.insert(lane_index);
 
+        assert(lane_index < lane_collisions.size());
         lane_collisions[lane_index].push_back(i);
       }
     }
 
     std::vector<int> group_matrix;
     group_matrix.resize(batch_size * batch_size);
-    for (auto &b : group_matrix) b = 0;
+    for (auto &b : group_matrix)
+    {
+      b = 0;
+    }
 
     for (std::size_t i = 0; i < lane_count_; ++i)
     {
-
+      assert(i < lane_collisions.size());
       auto &lane = lane_collisions[i];
+
       for (std::size_t j = 0; j < lane.size(); ++j)
       {
+        assert(j < lane.size());
+
         auto &a = lane[j];
         assert(a < batch_size_);
 
@@ -330,6 +383,9 @@ private:
           auto &b = lane[k];
           assert(b < batch_size_);
 
+          assert((a * batch_size + b) < group_matrix.size());
+          assert((b * batch_size + a) < group_matrix.size());
+
           group_matrix[a * batch_size + b] = 1;
           group_matrix[b * batch_size + a] = 1;
         }
@@ -337,14 +393,15 @@ private:
     }
 
     std::size_t k = 0;
-    annealer_.Reset();
-
     annealer_.Resize(batch_size);
+    // annealer_.Reset();
 
     uint64_t max_fee = 0;
     for (std::size_t i = 0; i < batch_size; ++i)
     {
-      if (unspent_[i]->summary().fee > max_fee) max_fee = unspent_[i]->summary().fee;
+      assert(i < unspent_.size());
+
+      max_fee = std::max(max_fee, unspent_[i]->summary().fee);
     }
 
     for (std::size_t i = 0; i < batch_size; ++i)
@@ -367,6 +424,8 @@ private:
   void GenerateBlockSlice()
   {
     state_energy_ = annealer_.FindMinimum(state_);
+
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Slice State Energy: ", state_energy_);
 
     if (state_energy_ < best_solution_energy_)
     {
@@ -394,5 +453,5 @@ private:
   transaction_matrix_type staged_;
 };
 
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

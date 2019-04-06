@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -36,7 +36,9 @@ public:
    * Constructor for subscribe protocol attaches the functions to the protocol
    * enums
    */
-  SubscribeProtocol() : Protocol(), Node()
+  SubscribeProtocol()
+    : Protocol()
+    , Node()
   {
     // We are allowing 'this' Node to register the feed new_message on the
     // protocol

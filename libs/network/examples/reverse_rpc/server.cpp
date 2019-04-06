@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,7 +17,20 @@
 //------------------------------------------------------------------------------
 
 #include "network/service/server.hpp"
-#include "service_consts.hpp"
+
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
+#include "service_ids.hpp"
+
+using fetch::muddle::Muddle;
+using fetch::muddle::NetworkId;
+using fetch::muddle::rpc::Server;
+using fetch::muddle::rpc::Client;
+
+const int SERVICE_TEST = 1;
+const int CHANNEL_RPC  = 1;
+
 #include <iostream>
 
 #include <set>
@@ -28,27 +41,26 @@ using namespace fetch::byte_array;
 class ClientRegister
 {
 public:
-  void Register(uint64_t client)
+  void Register(CallContext const *context)
   {
-    std::cout << "\rRegistering " << client << std::endl << std::endl << "> " << std::flush;
+    std::cout << "\rRegistering " << ToBase64(context->sender_address) << std::endl
+              << std::endl
+              << "> " << std::flush;
 
     mutex_.lock();
-    registered_aeas_.insert(client);
+    registered_aeas_.insert(context->sender_address);
     mutex_.unlock();
   }
 
   std::vector<std::string> SearchFor(std::string const &val)
   {
-    detailed_assert(service_ != nullptr);
-
     std::vector<std::string> ret;
     mutex_.lock();
     for (auto &id : registered_aeas_)
     {
-      auto &rpc = service_->ServiceInterfaceOf(id);
-
-      std::string s =
-          rpc.Call(FetchProtocols::NODE_TO_AEA, NodeToAEA::SEARCH, val).As<std::string>();
+      auto prom =
+          client_->CallSpecificAddress(id, FetchProtocols::NODE_TO_AEA, NodeToAEA::SEARCH, val);
+      std::string s = prom->As<std::string>();
       if (s != "")
       {
         ret.push_back(s);
@@ -60,48 +72,67 @@ public:
     return ret;
   }
 
-  void register_service_instance(ServiceServer<fetch::network::TCPServer> *ptr) { service_ = ptr; }
+  void register_service_instance(std::shared_ptr<Muddle> muddle_ptr)
+  {
+    client_ = std::make_shared<Client>("RRPClient", muddle_ptr->AsEndpoint(), Muddle::Address(),
+                                       SERVICE_TEST, CHANNEL_RPC);
+  }
 
 private:
-  ServiceServer<fetch::network::TCPServer> *service_ = nullptr;
-  std::set<uint64_t>                        registered_aeas_;
-  fetch::mutex::Mutex                       mutex_;
+  std::set<Muddle::Address> registered_aeas_;
+  fetch::mutex::Mutex       mutex_{__LINE__, __FILE__};
+  std::shared_ptr<Client>   client_;
 };
 
 // Next we make a protocol for the implementation
-class AEAToNodeProtocol : public ClientRegister, public Protocol
+class AEAToNodeProtocol : public Protocol
 {
 public:
-  AEAToNodeProtocol() : ClientRegister(), Protocol()
+  AEAToNodeProtocol()
+    : Protocol()
+  {}
+
+  void Expose(ClientRegister *target)
   {
-    this->ExposeWithClientArg(AEAToNode::REGISTER, (ClientRegister *)this,
-                              &ClientRegister::Register);
+    this->ExposeWithClientContext(AEAToNode::REGISTER, target, &ClientRegister::Register);
   }
 
 private:
 };
 
 // And finanly we build the service
-class OEFService : public ServiceServer<fetch::network::TCPServer>
+class OEFService
 {
 public:
-  OEFService(uint16_t port, fetch::network::NetworkManager tm) : ServiceServer(port, tm)
+  OEFService(std::shared_ptr<Muddle> &muddle)
   {
-    this->Add(FetchProtocols::AEA_TO_NODE, &aea_to_node_);
-    aea_to_node_.register_service_instance(this);
+    auto server = std::make_shared<Server>(muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC);
+
+    aea_to_node_protocol_.Expose(&client_register_);
+    server->Add(FetchProtocols::AEA_TO_NODE, &aea_to_node_protocol_);
+    client_register_.register_service_instance(muddle);
   }
 
-  std::vector<std::string> SearchFor(std::string const &val) { return aea_to_node_.SearchFor(val); }
+  std::vector<std::string> SearchFor(std::string const &val)
+  {
+    return client_register_.SearchFor(val);
+  }
 
 private:
-  AEAToNodeProtocol aea_to_node_;
+  AEAToNodeProtocol aea_to_node_protocol_;
+  ClientRegister    client_register_;
 };
 
 int main()
 {
-  fetch::network::NetworkManager tm(8);
-  OEFService                     serv(8080, tm);
+  fetch::network::NetworkManager tm{"NetMgr", 8};
+
+  auto server_muddle = Muddle::CreateMuddle(NetworkId{"TEST"}, tm);
+
   tm.Start();
+  server_muddle->Start({8080});
+
+  OEFService service(server_muddle);
 
   std::string search_for;
   std::cout << "Enter a string to search the AEAs for this string" << std::endl;
@@ -115,7 +146,7 @@ int main()
       break;
     }
 
-    auto results = serv.SearchFor(search_for);
+    auto results = service.SearchFor(search_for);
     for (auto &s : results)
     {
       std::cout << " - " << s << std::endl;

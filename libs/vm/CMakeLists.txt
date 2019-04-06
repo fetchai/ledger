@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   V M   L I B R A R Y
 ################################################################################
-cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-vm)
 
 # CMake Configuration
@@ -17,7 +17,7 @@ setup_compiler()
 setup_library(fetch-vm)
 target_link_libraries(fetch-vm PUBLIC fetch-math fetch-core)
 
-# add_test_target()
+#add_test_target()
 
 add_subdirectory(examples)
 

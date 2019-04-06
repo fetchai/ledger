@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:complexType name="Identity">
+    <xs:complexContent>
+      <xs:all>
+        <xs:element name="data" type="xs:base64Binary" />
+        <xs:element name="type" type="xs:string" />
+      </xs:all>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="Digest">
+    <xs:complexContent>
+      <xs:all>
+        <xs:element name="data" type="xs:base64Binary" minOccurs="0" />
+        <xs:element name="type" type="xs:string" />
+      </xs:all>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="Signature">
+    <xs:complexContent>
+      <xs:all>
+        <xs:element name="identity" type="Identity" />
+        <xs:element name="signature_data" type="xs:base64Binary" />
+        <xs:element name="digest" type="Digest" />
+      </xs:all>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="TransactionMetadata">
+    <xs:complexContent>
+      <xs:all>
+        <xs:element name="contract_name" type="xs::string" />
+        <xs:element name="resources" type="xs::base64Binary" minOccurs="0" maxOccurs="unbounded" />
+        <xs:element name="fee" type="xs::nonNegativeInteger" />
+      </xs:all>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="TransactionData">
+    <xs:complexContent>
+      <xs:extension base="TransactionMetadata">
+        <xs:all>
+          <xs:element name="data" type="xs::base64Binary" />
+        </xs:all>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="Transaction">
+    <xs:complexContent>
+      <xs:extension base="TransactionData">
+        <xs:all>
+          <xs:element name="signatures" type="Signature" maxOccurs="unbounded" />
+          <xs:element name="version" type="xs:string" />
+        </xs:all>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+</xs:schema>

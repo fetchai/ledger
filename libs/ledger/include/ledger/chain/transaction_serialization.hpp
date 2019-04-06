@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 #include "ledger/chain/transaction.hpp"
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 template <typename T>
 inline void Serialize(T &serializer, UnverifiedTransaction const &b)
@@ -30,7 +30,7 @@ inline void Serialize(T &serializer, UnverifiedTransaction const &b)
   serializer << ' ';
   serializer << b.summary();
   serializer << b.data();
-  serializer << b.signature();
+  serializer << b.signatures();
   serializer << b.contract_name();
 }
 
@@ -44,8 +44,9 @@ inline void Deserialize(T &serializer, UnverifiedTransaction &b)
   serializer >> c;
 
   TransactionSummary    summary;
-  byte_array::ByteArray data, signature;
   std::string           contract_name;
+  byte_array::ByteArray data;
+  Signatories           signatures;
 
   serializer >> summary;
   b.set_summary(summary);
@@ -53,8 +54,8 @@ inline void Deserialize(T &serializer, UnverifiedTransaction &b)
   serializer >> data;
   b.set_data(data);
 
-  serializer >> signature;
-  b.set_signature(signature);
+  serializer >> signatures;
+  b.set_signatures(signatures);
 
   serializer >> contract_name;
   b.set_contract_name(contract_name);
@@ -67,7 +68,7 @@ inline void Serialize(T &serializer, VerifiedTransaction const &b)
   serializer << 'V';
   serializer << b.summary();
   serializer << b.data();
-  serializer << b.signature();
+  serializer << b.signatures();
   serializer << b.contract_name();
 }
 
@@ -83,8 +84,9 @@ inline void Deserialize(T &serializer, VerifiedTransaction &b)
   assert(c == 'V');
 
   TransactionSummary    summary;
-  byte_array::ByteArray data, signature;
   std::string           contract_name;
+  byte_array::ByteArray data;
+  Signatories           signatures;
 
   serializer >> summary;
   b.set_summary(summary);
@@ -92,12 +94,12 @@ inline void Deserialize(T &serializer, VerifiedTransaction &b)
   serializer >> data;
   b.set_data(data);
 
-  serializer >> signature;
-  b.set_signature(signature);
+  serializer >> signatures;
+  b.set_signatures(signatures);
 
   serializer >> contract_name;
   b.set_contract_name(contract_name);
 }
 
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

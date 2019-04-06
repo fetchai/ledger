@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 #include "vectorise/memory/parallel_dispatcher.hpp"
 #include "vectorise/memory/vector_slice.hpp"
 #include "vectorise/meta/log2.hpp"
+//#include "meta/type_traits.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -39,15 +40,18 @@ class SharedArray : public VectorSlice<T, type_size>
 {
 public:
   static_assert(sizeof(T) >= type_size, "Invalid object size");
-  static_assert(std::is_pod<T>::value, "Can only be used with POD types");
 
+  // TODO(check IfIsPodOrFixedPoint memory safe)
+  //  static_assert(std::is_pod<T>::value, "Can only be used with POD types");
+  //  static_assert(meta::IfIsPodOrFixedPoint<T>::value, "can only be used with POD or FixedPoint");
   using size_type  = std::size_t;
   using data_type  = std::shared_ptr<T>;
   using super_type = VectorSlice<T, type_size>;
   using self_type  = SharedArray<T, type_size>;
   using type       = T;
 
-  SharedArray(std::size_t const &n) : super_type()
+  SharedArray(std::size_t const &n)
+    : super_type()
   {
     this->size_ = n;
 
@@ -62,7 +66,8 @@ public:
 
   SharedArray() = default;
   SharedArray(SharedArray const &other)
-    : super_type(other.data_.get(), other.size()), data_(other.data_)
+    : super_type(other.data_.get(), other.size())
+    , data_(other.data_)
   {}
 
   SharedArray(SharedArray &&other)
@@ -82,7 +87,10 @@ public:
 
   self_type &operator=(SharedArray const &other)
   {
-    if (&other == this) return *this;
+    if (&other == this)
+    {
+      return *this;
+    }
 
     this->size_ = other.size_;
 
@@ -111,6 +119,17 @@ public:
     }
 
     return ret;
+  }
+
+  bool IsUnique() const noexcept
+  {
+    return data_.use_count() < 2;
+  }
+
+  uint64_t UseCount() const noexcept
+  {
+    long const use_count = data_.use_count();
+    return use_count < 0 ? 0 : static_cast<uint64_t>(use_count);
   }
 
 private:

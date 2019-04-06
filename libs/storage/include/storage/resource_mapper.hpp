@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 
 #include <limits>
 #include <type_traits>
+#include <utility>
 
 namespace fetch {
 namespace storage {
@@ -41,12 +42,22 @@ public:
 
   // Construction
   ResourceID() = default;
-  explicit ResourceID(byte_array::ConstByteArray const &id);
+  explicit ResourceID(byte_array::ConstByteArray id);
 
   // Accessors
   byte_array::ConstByteArray id() const;
   Group                      resource_group() const;
   Group                      lane(std::size_t log2_num_lanes) const;
+
+  bool operator==(ResourceID const &other) const;
+
+  std::string ToString() const
+  {
+    return static_cast<std::string>(ToBase64(id_));
+  }
+
+  static constexpr std::size_t RESOURCE_ID_SIZE_IN_BITS  = 256;
+  static constexpr std::size_t RESOURCE_ID_SIZE_IN_BYTES = RESOURCE_ID_SIZE_IN_BITS / 8;
 
 private:
   byte_array::ConstByteArray id_;  ///< The byte array containing the hashed resource address
@@ -62,14 +73,21 @@ private:
  *
  * @param id The hashed array
  */
-inline ResourceID::ResourceID(byte_array::ConstByteArray const &id) : id_(id) {}
+inline ResourceID::ResourceID(byte_array::ConstByteArray id)
+  : id_(std::move(id))
+{
+  assert(id.size() == RESOURCE_ID_SIZE_IN_BYTES);
+}
 
 /**
  * Gets the current id (hashed) value
  *
  * @return The id value
  */
-inline byte_array::ConstByteArray ResourceID::id() const { return id_; }
+inline byte_array::ConstByteArray ResourceID::id() const
+{
+  return id_;
+}
 
 /**
  * Gets the resource group value.
@@ -98,6 +116,11 @@ inline ResourceID::Group ResourceID::lane(std::size_t log2_num_lanes) const
   Group const group_mask = (1u << log2_num_lanes) - 1u;
 
   return resource_group() & group_mask;
+}
+
+inline bool ResourceID::operator==(ResourceID const &other) const
+{
+  return id_ == other.id_;
 }
 
 /**
@@ -138,19 +161,37 @@ public:
     address_ = address;
   }
 
+  ResourceAddress() = default;
+
   /**
    * Gets the canonical resources address
    *
    * @return The byte array containing the address
    */
-  byte_array::ConstByteArray address() const { return address_; }
+  byte_array::ConstByteArray address() const
+  {
+    return address_;
+  }
 
   /**
    * Helper method to down cast this object as a resource ID
    *
    * @return The reference to the resource id of this instance
    */
-  ResourceID const &as_resource_id() const { return *this; }
+  ResourceID const &as_resource_id() const
+  {
+    return *this;
+  }
+
+  bool operator<(ResourceAddress const &other) const
+  {
+    return address_ < other.address_;
+  }
+
+  bool operator==(ResourceAddress const &other) const
+  {
+    return address_ == other.address_;
+  }
 
 private:
   byte_array::ByteArray address_;  ///< The canonical resource address
@@ -158,3 +199,33 @@ private:
 
 }  // namespace storage
 }  // namespace fetch
+
+namespace std {
+
+template <>
+struct hash<fetch::storage::ResourceID>
+{
+  std::size_t operator()(fetch::storage::ResourceID const &rid) const
+  {
+    auto const &id = rid.id();
+    assert(id.size() >= sizeof(std::size_t));
+
+    // this is generally fine because the resource ID is in fact a SHA256
+    return *reinterpret_cast<std::size_t const *>(id.pointer());
+  }
+};
+
+template <>
+struct hash<fetch::storage::ResourceAddress>
+{
+  std::size_t operator()(fetch::storage::ResourceID const &rid) const
+  {
+    auto const &id = rid.id();
+    assert(id.size() >= sizeof(std::size_t));
+
+    // this should be fine since the ResourceAddress is actually a SHA256
+    return *reinterpret_cast<std::size_t const *>(id.pointer());
+  }
+};
+
+}  // namespace std

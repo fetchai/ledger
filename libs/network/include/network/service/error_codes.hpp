@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -34,6 +34,8 @@ error_type const PROTOCOL_EXISTS        = 12 | ERROR_SERVICE_PROTOCOL;
 error_type const PROMISE_NOT_FOUND      = 21 | ERROR_SERVICE_PROTOCOL;
 error_type const COULD_NOT_DELIVER      = 31 | ERROR_SERVICE_PROTOCOL;
 error_type const UNKNOWN_MESSAGE        = 1001 | ERROR_SERVICE_PROTOCOL;
+
+error_type const PROTOCOL_RANGE = 13 | ERROR_SERVICE_PROTOCOL;
 
 }  // namespace error
 }  // namespace service

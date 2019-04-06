@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -40,9 +40,13 @@ public:
 
   using Base::Base;
   using Base::reset;
+  OsslSharedPtr()
+    : Base(nullptr)
+  {}
 
   template <class Y>
-  explicit OsslSharedPtr(Y *ptr = nullptr) : Base(ptr, Deleter())
+  explicit OsslSharedPtr(Y *ptr)
+    : Base(ptr, Deleter())
   {}
 
   template <class Y>

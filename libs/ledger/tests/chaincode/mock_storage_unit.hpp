@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 
 #include <gmock/gmock.h>
 
-class MockStorageUnit : public fetch::ledger::StorageUnitInterface
+class MockStorageUnit final : public fetch::ledger::StorageUnitInterface
 {
 public:
   MockStorageUnit()
@@ -34,13 +34,20 @@ public:
     ON_CALL(*this, Set(_, _)).WillByDefault(Invoke(&fake_, &FakeStorageUnit::Set));
     ON_CALL(*this, Lock(_)).WillByDefault(Invoke(&fake_, &FakeStorageUnit::Lock));
     ON_CALL(*this, Unlock(_)).WillByDefault(Invoke(&fake_, &FakeStorageUnit::Unlock));
-    ON_CALL(*this, Hash()).WillByDefault(Invoke(&fake_, &FakeStorageUnit::Hash));
+
+    ON_CALL(*this, CurrentHash()).WillByDefault(Invoke(&fake_, &FakeStorageUnit::CurrentHash));
+    ON_CALL(*this, LastCommitHash())
+        .WillByDefault(Invoke(&fake_, &FakeStorageUnit::LastCommitHash));
+    ON_CALL(*this, RevertToHash(_, _))
+        .WillByDefault(Invoke(&fake_, &FakeStorageUnit::RevertToHash));
     ON_CALL(*this, Commit(_)).WillByDefault(Invoke(&fake_, &FakeStorageUnit::Commit));
-    ON_CALL(*this, Revert(_)).WillByDefault(Invoke(&fake_, &FakeStorageUnit::Revert));
+    ON_CALL(*this, HashExists(_, _)).WillByDefault(Invoke(&fake_, &FakeStorageUnit::HashExists));
+
     ON_CALL(*this, AddTransaction(_))
         .WillByDefault(Invoke(&fake_, &FakeStorageUnit::AddTransaction));
     ON_CALL(*this, GetTransaction(_, _))
         .WillByDefault(Invoke(&fake_, &FakeStorageUnit::GetTransaction));
+    ON_CALL(*this, PollRecentTx(_)).WillByDefault(Invoke(&fake_, &FakeStorageUnit::PollRecentTx));
   }
 
   MOCK_METHOD1(Get, Document(ResourceAddress const &));
@@ -48,15 +55,24 @@ public:
   MOCK_METHOD2(Set, void(ResourceAddress const &, StateValue const &));
   MOCK_METHOD1(Lock, bool(ResourceAddress const &));
   MOCK_METHOD1(Unlock, bool(ResourceAddress const &));
-  MOCK_METHOD0(Hash, hash_type());
-  MOCK_METHOD1(Commit, void(bookmark_type const &));
-  MOCK_METHOD1(Revert, void(bookmark_type const &));
 
-  MOCK_METHOD1(AddTransaction, void(fetch::chain::Transaction const &));
+  MOCK_METHOD0(CurrentHash, Hash());
+  MOCK_METHOD0(LastCommitHash, Hash());
+  MOCK_METHOD2(RevertToHash, bool(Hash const &, uint64_t));
+  MOCK_METHOD1(Commit, Hash(uint64_t));
+  MOCK_METHOD2(HashExists, bool(Hash const &, uint64_t));
+
+  MOCK_METHOD1(AddTransaction, void(fetch::ledger::Transaction const &));
   MOCK_METHOD2(GetTransaction,
-               bool(fetch::byte_array::ConstByteArray const &, fetch::chain::Transaction &));
+               bool(fetch::byte_array::ConstByteArray const &, fetch::ledger::Transaction &));
+  MOCK_METHOD1(HasTransaction, bool(fetch::byte_array::ConstByteArray const &));
 
-  FakeStorageUnit &GetFake() { return fake_; }
+  MOCK_METHOD1(PollRecentTx, std::vector<fetch::ledger::TransactionSummary>(uint32_t));
+
+  FakeStorageUnit &GetFake()
+  {
+    return fake_;
+  }
 
 private:
   FakeStorageUnit fake_;

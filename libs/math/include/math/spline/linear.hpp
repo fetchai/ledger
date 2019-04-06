@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -58,7 +58,10 @@ public:
     return (data_[i + 1] - data_[i]) * z + data_[i];
   }
 
-  std::size_t size() const { return data_.size(); }
+  std::size_t size() const
+  {
+    return data_.size();
+  }
 
 private:
   float_type              range_from_, range_to_, range_span_;

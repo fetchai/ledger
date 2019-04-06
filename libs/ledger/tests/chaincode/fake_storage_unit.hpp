@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -27,20 +27,20 @@
 #include <unordered_set>
 #include <vector>
 
-class FakeStorageUnit : public fetch::ledger::StorageUnitInterface
+class FakeStorageUnit final : public fetch::ledger::StorageUnitInterface
 {
 public:
   using transaction_store_type =
-      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::chain::Transaction,
-                         fetch::crypto::CallableFNV>;
+      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::ledger::Transaction>;
   using state_store_type =
-      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::byte_array::ConstByteArray,
-                         fetch::crypto::CallableFNV>;
-  using state_archive_type = std::unordered_map<bookmark_type, state_store_type>;
-  using lock_store_type =
-      std::unordered_set<fetch::byte_array::ConstByteArray, fetch::crypto::CallableFNV>;
+      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::byte_array::ConstByteArray>;
+  /*using state_archive_type = std::unordered_map<bookmark_type, state_store_type>; */
+  using lock_store_type = std::unordered_set<fetch::byte_array::ConstByteArray>;
   using mutex_type      = std::mutex;
   using lock_guard_type = std::lock_guard<mutex_type>;
+  using hash_type       = fetch::byte_array::ConstByteArray;
+
+  static constexpr char const *LOGGING_NAME = "FakeStorageUnit";
 
   Document GetOrCreate(ResourceAddress const &key) override
   {
@@ -114,14 +114,14 @@ public:
     return success;
   }
 
-  void AddTransaction(fetch::chain::Transaction const &tx) override
+  void AddTransaction(fetch::ledger::Transaction const &tx) override
   {
     lock_guard_type lock(mutex_);
     transactions_[tx.digest()] = tx;
   }
 
   bool GetTransaction(fetch::byte_array::ConstByteArray const &digest,
-                      fetch::chain::Transaction &              tx) override
+                      fetch::ledger::Transaction &             tx) override
   {
     lock_guard_type lock(mutex_);
     bool            success = false;
@@ -136,50 +136,37 @@ public:
     return success;
   }
 
-  hash_type Hash() override
-  {
-    lock_guard_type       lock(mutex_);
-    fetch::crypto::SHA256 hasher{};
-
-    std::vector<fetch::byte_array::ConstByteArray> keys;
-    for (auto const &elem : state_)
-    {
-      keys.emplace_back(elem.first);
-    }
-
-    std::sort(keys.begin(), keys.end());
-
-    hasher.Reset();
-    for (auto const &key : keys)
-    {
-      hasher.Update(key);
-      hasher.Update(state_[key]);
-    }
-    hasher.Final();
-
-    return hasher.digest();
-  }
-
-  void Commit(bookmark_type const &bookmark) override
+  bool HasTransaction(ConstByteArray const &digest) override
   {
     lock_guard_type lock(mutex_);
-    state_archive_[bookmark] = state_;
+    return transactions_.find(digest) != transactions_.end();
   }
 
-  void Revert(bookmark_type const &bookmark) override
+  Hash CurrentHash() override
   {
-    lock_guard_type lock(mutex_);
-    auto            it = state_archive_.find(bookmark);
-    if (it != state_archive_.end())
-    {
-      state_ = it->second;
-    }
-    else
-    {
-      fetch::logger.Info("Reverting to clean state: ", bookmark);
+    return "";
+  };
+  Hash LastCommitHash() override
+  {
+    return "";
+  };
+  bool RevertToHash(Hash const &, uint64_t) override
+  {
+    return true;
+  };
+  Hash Commit(uint64_t) override
+  {
+    return "";
+  };
+  bool HashExists(Hash const &, uint64_t) override
+  {
+    return true;
+  };
 
-      state_.clear();
-    }
+  // Does nothing
+  TxSummaries PollRecentTx(uint32_t) override
+  {
+    return {};
   }
 
 private:
@@ -187,5 +174,5 @@ private:
   transaction_store_type transactions_;
   state_store_type       state_;
   lock_store_type        locks_;
-  state_archive_type     state_archive_;
+  /* state_archive_type     state_archive_; */
 };

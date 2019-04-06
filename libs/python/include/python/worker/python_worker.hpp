@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -47,7 +47,10 @@ public:
     tm_->Stop();
   }
 
-  void UseCore(std::shared_ptr<fetch::network::NetworkNodeCore> nn_core) { nn_core_ = nn_core; }
+  void UseCore(std::shared_ptr<fetch::network::NetworkNodeCore> nn_core)
+  {
+    nn_core_ = nn_core;
+  }
 
   template <typename F>
   void Post(F &&f)
@@ -60,9 +63,15 @@ public:
     tm_->Post(f, milliseconds);
   }
 
-  PythonWorker() { tm_ = fetch::network::MakeThreadPool(1); }
+  PythonWorker()
+  {
+    tm_ = fetch::network::MakeThreadPool(1, "PythonWorker");
+  }
 
-  virtual ~PythonWorker() { Stop(); }
+  virtual ~PythonWorker()
+  {
+    Stop();
+  }
 
 private:
   mutex_type                                       mutex_;

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/client.hpp"
 #include "network/service/function.hpp"
+#include "network/service/service_client.hpp"
 #include "protocols/fetch_protocols.hpp"
 #include "protocols/subscribe/commands.hpp"
 #include <iostream>
@@ -25,12 +25,12 @@
 using namespace fetch::service;
 using namespace fetch::protocols;
 
-int main(int argc, char const **argv)
+int main(int /*argc*/, char const ** /*argv*/)
 {
 
   uint16_t port = 8080;
 
-  fetch::network::NetworkManager tm;
+  fetch::network::NetworkManager tm{"NetMgr", 1};
   // Create a client connection to the server
   fetch::network::TCPClient connection(tm);
   connection.Connect("localhost", 8080);

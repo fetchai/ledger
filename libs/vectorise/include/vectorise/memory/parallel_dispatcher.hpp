@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -40,7 +40,10 @@ public:
   using vector_register_type          = typename vectorize::VectorRegister<type, vector_size>;
   using vector_register_iterator_type = vectorize::VectorRegisterIterator<type, vector_size>;
 
-  ConstParallelDispatcher(type *ptr, std::size_t const &size) : pointer_(ptr), size_(size) {}
+  ConstParallelDispatcher(type *ptr, std::size_t const &size)
+    : pointer_(ptr)
+    , size_(size)
+  {}
 
   type Reduce(vector_register_type (*vector_reduction)(vector_register_type const &,
                                                        vector_register_type const &)) const
@@ -524,12 +527,24 @@ public:
     return ret;
   }
 
-  type const *       pointer() const { return pointer_; }
-  std::size_t const &size() const { return size_; }
-  std::size_t &      size() { return size_; }
+  type const *pointer() const
+  {
+    return pointer_;
+  }
+  std::size_t const &size() const
+  {
+    return size_;
+  }
+  std::size_t &size()
+  {
+    return size_;
+  }
 
 protected:
-  type *      pointer() { return pointer_; }
+  type *pointer()
+  {
+    return pointer_;
+  }
   type *      pointer_;
   std::size_t size_;
 
@@ -552,8 +567,9 @@ protected:
     (*iters) = vector_register_iterator_type(next.pointer() + offset, size);
   }
 
-  static void InitializeVectorIterators(std::size_t const &offset, std::size_t const &size,
-                                        vector_register_iterator_type *iters)
+  static void InitializeVectorIterators(std::size_t const & /*offset*/,
+                                        std::size_t const & /*size*/,
+                                        vector_register_iterator_type * /*iters*/)
   {}
 
   template <typename G, typename... Args>
@@ -567,15 +583,15 @@ protected:
   }
 
   template <typename G>
-  static void SetPointers(std::size_t const &offset, std::size_t const &size, type const **regs,
-                          G &next)
+  static void SetPointers(std::size_t const &offset, std::size_t const & /*size*/,
+                          type const **regs, G &next)
   {
-    assert(next.size() >= offset + size);
+    // assert(next.size() >= offset + size); // Size not used
     *regs = next.pointer() + offset;
   }
 
-  static void SetPointers(std::size_t const &offset, std::size_t const &size,
-                          vector_register_iterator_type *iters)
+  static void SetPointers(std::size_t const & /*offset*/, std::size_t const & /*size*/,
+                          vector_register_iterator_type * /*iters*/)
   {}
 };
 
@@ -594,7 +610,9 @@ public:
   using vector_register_type          = typename vectorize::VectorRegister<type, vector_size>;
   using vector_register_iterator_type = vectorize::VectorRegisterIterator<type, vector_size>;
 
-  ParallelDispatcher(type *ptr, std::size_t const &size) : super_type(ptr, size) {}
+  ParallelDispatcher(type *ptr, std::size_t const &size)
+    : super_type(ptr, size)
+  {}
 
   template <typename F>
   void Apply(F &&apply)
@@ -896,7 +914,10 @@ public:
     }
   }
 
-  type *pointer() { return super_type::pointer(); }
+  type *pointer()
+  {
+    return super_type::pointer();
+  }
 
 private:
 };

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -27,18 +27,25 @@ namespace ledger {
 class DummyContract : public Contract
 {
 public:
-  using counter_type = std::atomic<std::size_t>;
+  static constexpr char const *NAME = "fetch.dummy";
 
   DummyContract();
-  ~DummyContract() = default;
+  ~DummyContract() override = default;
 
-  std::size_t counter() const { return counter_; }
+  static constexpr char const *LOGGING_NAME = "DummyContract";
+
+  std::size_t counter() const
+  {
+    return counter_;
+  }
 
 private:
-  Status Wait(transaction_type const &tx);
-  Status Run(transaction_type const &tx);
+  using Counter = std::atomic<std::size_t>;
 
-  counter_type counter_{0};
+  Status Wait(Transaction const &tx);
+  Status Run(Transaction const &tx);
+
+  Counter counter_{0};
 };
 
 }  // namespace ledger

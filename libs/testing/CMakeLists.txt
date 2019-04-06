@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   C O R E   L I B R A R Y
 ################################################################################
-cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-testing)
 
 # CMake Configuration

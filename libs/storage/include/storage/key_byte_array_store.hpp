@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "storage/document_store.hpp"
+#include "storage/random_access_stack.hpp"
+
 namespace fetch {
 namespace storage {
 
@@ -28,6 +30,7 @@ struct ByteArrayMapConfigurator
 {
   using kvi_pair_type  = KeyValuePair<>;
   using kvi_stack_type = RandomAccessStack<kvi_pair_type, uint64_t>;
+
   using kvi_store_type = KeyValueIndex<kvi_pair_type, kvi_stack_type>;
 
   using file_block_type     = FileBlockType<BLOCK_SIZE>;

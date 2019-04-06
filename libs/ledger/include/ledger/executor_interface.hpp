@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -25,27 +25,68 @@ namespace ledger {
 class ExecutorInterface
 {
 public:
-  using tx_digest_type  = chain::Transaction::digest_type;
-  using lane_index_type = uint32_t;
-  using lane_set_type   = std::unordered_set<lane_index_type>;
+  using TxDigest  = Transaction::TxDigest;
+  using LaneIndex = uint32_t;
+  using LaneSet   = std::unordered_set<LaneIndex>;
 
   enum class Status
   {
     SUCCESS = 0,
+
+    // Errors
+    CHAIN_CODE_LOOKUP_FAILURE,
+    CHAIN_CODE_EXEC_FAILURE,
+    CONTRACT_NAME_PARSE_FAILURE,
+
+    // Fatal Errors
+    NOT_RUN,
     TX_LOOKUP_FAILURE,
     RESOURCE_FAILURE,
-    CHAIN_CODE_LOOKUP_FAILURE,
-    CHAIN_CODE_EXEC_FAILURE
+    INEXPLICABLE_FAILURE,
   };
 
   /// @name Executor Interface
   /// @{
-  virtual Status Execute(tx_digest_type const &hash, std::size_t slice,
-                         lane_set_type const &lanes) = 0;
+  virtual Status Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes) = 0;
   /// @}
 
-  virtual ~ExecutorInterface() {}
+  virtual ~ExecutorInterface() = default;
 };
+
+inline char const *ToString(ExecutorInterface::Status status)
+{
+  char const *text = "Unknown";
+
+  switch (status)
+  {
+  case ExecutorInterface::Status::SUCCESS:
+    text = "Success";
+    break;
+  case ExecutorInterface::Status::NOT_RUN:
+    text = "Not Run";
+    break;
+  case ExecutorInterface::Status::TX_LOOKUP_FAILURE:
+    text = "Tx Lookup Failure";
+    break;
+  case ExecutorInterface::Status::RESOURCE_FAILURE:
+    text = "Resource Failure";
+    break;
+  case ExecutorInterface::Status::INEXPLICABLE_FAILURE:
+    text = "Inexplicable Error";
+    break;
+  case ExecutorInterface::Status::CHAIN_CODE_LOOKUP_FAILURE:
+    text = "Chain Code Lookup Failure";
+    break;
+  case ExecutorInterface::Status::CHAIN_CODE_EXEC_FAILURE:
+    text = "Chain Code Execution Failure";
+    break;
+  case ExecutorInterface::Status::CONTRACT_NAME_PARSE_FAILURE:
+    text = "Contract Name Parse Failure";
+    break;
+  }
+
+  return text;
+}
 
 template <typename T>
 void Serialize(T &stream, ExecutorInterface::Status const &status)

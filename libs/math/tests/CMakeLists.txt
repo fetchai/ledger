@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   M A T H   T E S T S
 ################################################################################
-cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-math)
 
 # CMake configuration
@@ -10,31 +10,15 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-
-
-add_fetch_gtest(blas fetch-math math/linalg/blas/)
-
-add_fetch_test(exp_test fetch-math math/test_exp.cpp)
-add_fetch_test(spline_test fetch-math math/test_spline.cpp)
-add_fetch_test(rectangular_load_save_test fetch-math math/rectangular_load_save_test.cpp)
-add_fetch_test(shared_rectangular_array_test fetch-math math/shared_rectangular_array_test.cpp)
-add_fetch_test(matrix_test fetch-math math/linalg/matrix.cpp)
-target_link_libraries(matrix_test PRIVATE pthread)
-
-add_fetch_test(hamming_test fetch-math math/distance/hamming.cpp DISABLED)
-add_fetch_test(manhattan_test fetch-math math/distance/manhattan.cpp)
-add_fetch_test(correlation_test fetch-math math/distance/correlation.cpp)
-add_fetch_test(distance_matrix_test fetch-math math/distance/distance_matrix.cpp DISABLED)
-
-add_fetch_gtest(ndarray_test fetch-math math/ndarray)
-add_fetch_gtest(ndarray_view_test fetch-math math/ndarray_view)
-add_fetch_gtest(ndarray_iterator_test fetch-math math/ndarray_iterator)
-add_fetch_gtest(ndarray_broadcast_test fetch-math math/ndarray_broadcast)
-
-add_fetch_gtest(relu_test fetch-math math/kernels/relu)
-add_fetch_gtest(sign_test fetch-math math/kernels/sign)
-add_fetch_gtest(l2loss_test fetch-math math/shape_less_array/l2loss)
-
-# disabled / not working tests
-add_fetch_test(load_image_read_exceptions_test fetch-math image/load_image_read_exceptions.cpp DISABLED)
-
+add_fetch_test(math_basic_math_gtest fetch-math math/basic_math)
+add_fetch_test(math_clustering_gtest fetch-math math/clustering)
+add_fetch_test(math_combinatorics_gtest fetch-math math/combinatorics)
+add_fetch_test(math_correlation_gtest fetch-math math/correlation)
+add_fetch_test(math_distance_gtest fetch-math math/distance)
+add_fetch_test(math_gtest_gtest fetch-math math/gtest SLOW)
+add_fetch_test(math_matrix_gtest fetch-math math/matrix_operations)
+add_fetch_test(math_activation_gtest fetch-math math/ml_activation_functions)
+add_fetch_test(math_loss_gtest fetch-math math/ml_loss_functions)
+add_fetch_test(math_serializers_gtest fetch-math math/serializers)
+add_fetch_test(math_tensor_gtest fetch-math math/tensor)
+add_fetch_test(math_trigonometry_gtest fetch-math math/trigonometry)

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-//#include"network/service/client.hpp"
+//#include"network/service/service_client.hpp"
 #include "network/service/publication_feed.hpp"
 #include "protocol.hpp"
 
@@ -27,8 +27,10 @@ namespace subscribe {
 class Node : public fetch::service::HasPublicationFeed
 {
 public:
-  Node() {}
-  ~Node() {}
+  Node()
+  {}
+  ~Node()
+  {}
 
   void SendMessage(std::string const &mess)
   {

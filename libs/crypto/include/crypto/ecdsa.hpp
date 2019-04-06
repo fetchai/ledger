@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -32,15 +32,30 @@ class ECDSAVerifier : public Verifier
   using Signature = openssl::ECDSASignature<>;
 
 public:
-  ECDSAVerifier(Identity const &ident) : identity_{ident}, public_key_{identity_.identifier()} {}
+  ECDSAVerifier(Identity ident)
+    : identity_{std::move(ident)}
+    , public_key_{identity_ ? PublicKey(identity_.identifier()) : PublicKey()}
+  {}
 
   bool Verify(byte_array_type const &data, byte_array_type const &signature) override
   {
+    if (!identity_)
+    {
+      return false;
+    }
     Signature sig{signature};
     return sig.Verify(public_key_, data);
   }
 
-  Identity identity() override { return identity_; }
+  Identity identity() override
+  {
+    return identity_;
+  }
+
+  operator bool() const
+  {
+    return identity_;
+  }
 
 private:
   Identity  identity_;
@@ -49,15 +64,24 @@ private:
 
 class ECDSASigner : public Prover
 {
+public:
   using PrivateKey = openssl::ECDSAPrivateKey<>;
   using Signature  = openssl::ECDSASignature<>;
 
-public:
-  void Load(byte_array_type const &private_key) override { SetPrivateKey(private_key); }
+  void Load(byte_array_type const &private_key) override
+  {
+    SetPrivateKey(private_key);
+  }
 
-  void SetPrivateKey(byte_array_type const &private_key) { private_key_ = PrivateKey(private_key); }
+  void SetPrivateKey(byte_array_type const &private_key)
+  {
+    private_key_ = PrivateKey(private_key);
+  }
 
-  void GenerateKeys() { private_key_ = PrivateKey(); }
+  void GenerateKeys()
+  {
+    private_key_ = PrivateKey();
+  }
 
   bool Sign(byte_array_type const &text) final override
   {
@@ -65,15 +89,34 @@ public:
     return true;
   }
 
-  Identity identity() final override
+  Identity identity() const final override
   {
     return Identity(PrivateKey::ecdsa_curve_type::sn, public_key());
   }
 
-  byte_array_type document_hash() final override { return signature_.hash(); }
-  byte_array_type signature() final override { return signature_.signature(); }
-  byte_array_type public_key() { return private_key_.publicKey().keyAsBin(); }
-  byte_array_type private_key() { return private_key_.KeyAsBin(); }
+  byte_array_type document_hash() final override
+  {
+    return signature_.hash();
+  }
+
+  byte_array_type signature() final override
+  {
+    return signature_.signature();
+  }
+  byte_array_type public_key() const
+  {
+    return private_key_.publicKey().keyAsBin();
+  }
+
+  byte_array_type private_key()
+  {
+    return private_key_.KeyAsBin();
+  }
+
+  PrivateKey const &underlying_private_key() const
+  {
+    return private_key_;
+  }
 
 private:
   PrivateKey private_key_;

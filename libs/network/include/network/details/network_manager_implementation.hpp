@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -33,63 +33,33 @@ namespace details {
 class NetworkManagerImplementation
   : public std::enable_shared_from_this<NetworkManagerImplementation>
 {
+  using Mutex = fetch::mutex::Mutex;
+  using Lock  = std::unique_lock<Mutex>;
+
 public:
-  NetworkManagerImplementation(std::size_t threads = 1) : number_of_threads_(threads)
+  static constexpr char const *LOGGING_NAME = "NetworkManagerImpl";
+
+  NetworkManagerImplementation(std::string name, std::size_t threads)
+    : name_(std::move(name))
+    , number_of_threads_(threads)
+    , running_{false}
   {
-    fetch::logger.Debug("Creating network manager");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Creating network manager");
   }
 
   ~NetworkManagerImplementation()
   {
-    fetch::logger.Debug("Destroying network manager");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Destroying network manager");
     Stop();
   }
 
   NetworkManagerImplementation(NetworkManagerImplementation const &) = delete;
   NetworkManagerImplementation(NetworkManagerImplementation &&)      = default;
 
-  void Start()
-  {
-    std::lock_guard<std::mutex> lock(thread_mutex_);
-
-    if (threads_.size() == 0)
-    {
-      owning_thread_ = std::this_thread::get_id();
-      shared_work_   = std::make_shared<asio::io_service::work>(*io_service_);
-
-      for (std::size_t i = 0; i < number_of_threads_; ++i)
-      {
-        threads_.push_back(new std::thread([this]() { io_service_->run(); }));
-      }
-    }
-  }
-
-  void Stop()
-  {
-    std::lock_guard<std::mutex> lock(thread_mutex_);
-    if (std::this_thread::get_id() != owning_thread_)
-    {
-      fetch::logger.Warn("Same thread must start and stop NetworkManager.");
-      return;
-    }
-
-    if (threads_.size() != 0)
-    {
-      shared_work_.reset();
-      fetch::logger.Info("Stopping network manager");
-
-      io_service_->stop();
-
-      for (auto &thread : threads_)
-      {
-        thread->join();
-        delete thread;
-      }
-
-      threads_.clear();
-      io_service_ = std::make_unique<asio::io_service>();
-    }
-  }
+  void Start();
+  void Work();
+  void Stop();
+  bool Running();
 
   // Must only be called within a post, then the io_service_ is always
   // guaranteed to be valid
@@ -106,14 +76,17 @@ public:
   }
 
 private:
-  std::thread::id                   owning_thread_;
-  std::size_t                       number_of_threads_ = 1;
-  std::vector<std::thread *>        threads_;
-  std::unique_ptr<asio::io_service> io_service_{new asio::io_service};
+  std::string const                         name_;
+  std::thread::id                           owning_thread_;
+  std::size_t                               number_of_threads_ = 1;
+  std::vector<std::shared_ptr<std::thread>> threads_;
+  std::atomic<bool>                         running_;
+
+  std::unique_ptr<asio::io_service> io_service_ = std::make_unique<asio::io_service>();
 
   std::shared_ptr<asio::io_service::work> shared_work_;
 
-  mutable std::mutex thread_mutex_{};
+  mutable Mutex thread_mutex_{__LINE__, __FILE__};
 };
 
 }  // namespace details

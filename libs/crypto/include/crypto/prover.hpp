@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -26,10 +26,11 @@ namespace crypto {
 class Prover
 {
 public:
-  using byte_array_type = byte_array::ByteArray;
+  using byte_array_type = byte_array::ConstByteArray;
 
-  virtual Identity identity() = 0;
-  virtual ~Prover() {}
+  virtual Identity identity() const = 0;
+  virtual ~Prover()
+  {}
 
   virtual void            Load(byte_array_type const &)     = 0;
   virtual bool            Sign(byte_array_type const &text) = 0;

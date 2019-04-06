@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -24,7 +24,10 @@ namespace storage {
 
 struct Document
 {
-  explicit operator byte_array::ConstByteArray() { return document; }
+  explicit operator byte_array::ConstByteArray()
+  {
+    return document;
+  }
 
   byte_array::ByteArray document;
   bool                  was_created = false;

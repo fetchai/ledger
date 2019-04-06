@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,142 +18,117 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/byte_array/encoders.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/stl_types.hpp"
-#include "crypto/fnv.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "ledger/chain/consensus/proof_of_work.hpp"
+#include "ledger/chain/mutable_transaction.hpp"
+
 #include <memory>
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
-struct BlockSlice
-{
-  std::vector<TransactionSummary> transactions;
-};
-
-template <typename T>
-void Serialize(T &serializer, BlockSlice const &slice)
-{
-  serializer << slice.transactions;
-}
-
-template <typename T>
-void Deserialize(T &serializer, BlockSlice &slice)
-{
-  serializer >> slice.transactions;
-}
-
-struct BlockBody
-{
-  using digest_type       = byte_array::ConstByteArray;
-  using block_slices_type = std::vector<BlockSlice>;
-
-  digest_type hash;
-  digest_type previous_hash;
-  digest_type merkle_hash;
-  // digest_type       state_hash;
-  uint64_t          block_number{0};
-  uint64_t          miner_number{0};
-  uint64_t          nonce{0};
-  uint32_t          log2_num_lanes{0};
-  block_slices_type slices;
-};
-
-template <typename T>
-void Serialize(T &serializer, BlockBody const &body)
-{
-  serializer << body.previous_hash << body.merkle_hash << body.nonce << body.block_number
-             << body.miner_number << body.log2_num_lanes << body.slices;
-}
-
-template <typename T>
-void Deserialize(T &serializer, BlockBody &body)
-{
-  serializer >> body.previous_hash >> body.merkle_hash >> body.nonce >> body.block_number >>
-      body.miner_number >> body.log2_num_lanes >> body.slices;
-}
-
-template <typename P, typename H>
-class BasicBlock
+/**
+ * The block class constitutes the complete node that forms the main chain. The block class is
+ * split into two levels. The body, which is consensus agnostic and the main block which has
+ * consensus specific details.
+ */
+class Block
 {
 public:
-  using body_type   = BlockBody;
-  using hasher_type = H;
-  using proof_type  = P;
-  using digest_type = byte_array::ConstByteArray;
+  using Identity = byte_array::ConstByteArray;
+  using Digest   = byte_array::ConstByteArray;
+  using Proof    = consensus::ProofOfWork;
+  using Slice    = std::vector<TransactionSummary>;
+  using Slices   = std::vector<Slice>;
 
-  body_type const &SetBody(body_type const &body)
+  struct Body
   {
-    body_ = body;
-    return body_;
-  }
+    // TODO(private issue 496): Populate the state hash
+    Digest   hash;               ///< The hash of the block
+    Digest   previous_hash;      ///< The hash of the previous block
+    Digest   merkle_hash;        ///< The merkle state hash across all shards
+    uint64_t block_number{0};    ///< The height of the block from genesis
+    Identity miner;              ///< The identity of the generated miner
+    uint32_t log2_num_lanes{0};  ///< The log2(number of lanes)
+    Slices   slices;             ///< The slice lists
+  };
 
-  // Meta: Update hash
-  void UpdateDigest()
-  {
+  /// @name Block Contents
+  /// @{
+  Body body;  ///< The core fields that make up a block
+  /// @}
 
-    serializers::ByteArrayBuffer buf;
-    buf << body_.previous_hash << body_.merkle_hash << body_.block_number << body_.nonce
-        << body_.miner_number;
+  /// @name Proof of Work specifics
+  /// @{
+  uint64_t nonce{0};  ///< The nonce field associated with the proof
+  Proof    proof;     ///< The consensus proof
+  /// @}
 
-    hasher_type hash;
-    hash.Reset();
-    hash.Update(buf.data());
-    hash.Final();
-    body_.hash = hash.digest();
+  /// @name Metadata for block management
+  /// @{
+  uint64_t weight       = 1;
+  uint64_t total_weight = 1;
+  bool     is_loose     = false;
+  /// @}
 
-    proof_.SetHeader(body_.hash);
-  }
-
-  body_type const &  body() const { return body_; }
-  body_type &        body() { return body_; }
-  digest_type const &hash() const { return body_.hash; }
-  digest_type const &prev() const { return body_.previous_hash; }
-
-  proof_type const &proof() const { return proof_; }
-  proof_type &      proof() { return proof_; }
-
-  uint64_t &      weight() { return weight_; }
-  uint64_t &      totalWeight() { return total_weight_; }
-  uint64_t const &totalWeight() const { return total_weight_; }
-  bool &          loose() { return is_loose_; }
-
-#if 1  // TODO(issue 33): Move to py swarm?
-  std::string hashString() const { return std::string(ToHex(body_.hash)); }
-
-  std::string prevString() const { return std::string(ToHex(body_.previous_hash)); }
-#endif
-
-private:
-  body_type  body_;
-  proof_type proof_;
-
-  // META data to help with block management
-  uint64_t weight_       = 1;
-  uint64_t total_weight_ = 1;
-  bool     is_loose_     = true;
-
-  template <typename AT, typename AP, typename AH>
-  friend inline void Serialize(AT &serializer, BasicBlock<AP, AH> const &);
-
-  template <typename AT, typename AP, typename AH>
-  friend inline void Deserialize(AT &serializer, BasicBlock<AP, AH> &b);
+  // Helper functions
+  std::size_t GetTransactionCount() const;
+  void        UpdateDigest();
 };
 
-template <typename T, typename P, typename H>
-inline void Serialize(T &serializer, BasicBlock<P, H> const &b)
+/**
+ * Serializer for the block body
+ *
+ * @tparam T The serializer type
+ * @param serializer The reference to the serializer
+ * @param body The reference to the body to be serialised
+ */
+template <typename T>
+void Serialize(T &serializer, Block::Body const &body)
 {
-  serializer << b.body_ << b.proof();
+  serializer << body.hash << body.previous_hash << body.merkle_hash << body.block_number
+             << body.miner << body.log2_num_lanes << body.slices;
 }
 
-template <typename T, typename P, typename H>
-inline void Deserialize(T &serializer, BasicBlock<P, H> &b)
+/**
+ * Deserializer for the block body
+ *
+ * @tparam T The serializer type
+ * @param serializer The reference to the serializer
+ * @param body The reference to the output body to be populated
+ */
+template <typename T>
+void Deserialize(T &serializer, Block::Body &body)
 {
-  BlockBody body;
-  serializer >> body >> b.proof();
-  b.SetBody(body);
+  serializer >> body.hash >> body.previous_hash >> body.merkle_hash >> body.block_number >>
+      body.miner >> body.log2_num_lanes >> body.slices;
 }
-}  // namespace chain
+
+/**
+ * Serializer for the block
+ *
+ * @tparam T The serializer type
+ * @param serializer The reference to hte serializer
+ * @param block The reference to the block to be serialised
+ */
+template <typename T>
+inline void Serialize(T &serializer, Block const &block)
+{
+  serializer << block.body << block.nonce << block.proof << block.weight << block.total_weight;
+}
+
+/**
+ * Deserializer for the block
+ *
+ * @tparam T The serializer type
+ * @param serializer The reference to the serializer
+ * @param block The reference to the output block to be populated
+ */
+template <typename T>
+inline void Deserialize(T &serializer, Block &block)
+{
+  serializer >> block.body >> block.nonce >> block.proof >> block.weight >> block.total_weight;
+}
+
+}  // namespace ledger
 }  // namespace fetch

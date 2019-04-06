@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,35 +16,29 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-#include "math/linalg/matrix.hpp"
-#include "math/ndarray.hpp"
-#include "math/statistics/max.hpp"
+
+#include "math/matrix_operations.hpp"
+#include "math/tensor.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
 namespace math {
-namespace statistics {
 
 template <typename A>
-inline typename A::type WrapperMax(A const &a)
+inline void WrapperMax(A const &a, typename A::Type &ret)
 {
-  return Max(a);
+  Max(a, ret);
 }
 
 inline void BuildMaxStatistics(std::string const &custom_name, pybind11::module &module)
 {
-  using namespace fetch::math::linalg;
+  using namespace fetch::math;
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperMax<Matrix<double>>)
-      .def(custom_name.c_str(), &WrapperMax<Matrix<float>>)
-      .def(custom_name.c_str(), &WrapperMax<RectangularArray<double>>)
-      .def(custom_name.c_str(), &WrapperMax<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperMax<NDArray<double>>)
-      .def(custom_name.c_str(), &WrapperMax<NDArray<float>>);
+  module.def(custom_name.c_str(), &WrapperMax<Tensor<double>>)
+      .def(custom_name.c_str(), &WrapperMax<Tensor<float>>);
 }
 
-}  // namespace statistics
 }  // namespace math
 }  // namespace fetch

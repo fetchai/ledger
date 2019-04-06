@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -21,13 +21,21 @@
 
 namespace fetch {
 namespace crypto {
+
+bool Verify(byte_array::ConstByteArray identity, byte_array::ConstByteArray const &data,
+            byte_array::ConstByteArray const &signature);
+
 class Verifier
 {
 public:
   using byte_array_type = byte_array::ConstByteArray;
 
+  virtual ~Verifier()
+  {}
+
   virtual Identity identity()                                                            = 0;
   virtual bool     Verify(byte_array_type const &data, byte_array_type const &signature) = 0;
 };
+
 }  // namespace crypto
 }  // namespace fetch

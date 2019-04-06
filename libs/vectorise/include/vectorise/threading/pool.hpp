@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "core/threading.hpp"
 
 #include <condition_variable>
 #include <functional>
@@ -33,24 +34,39 @@ namespace threading {
 class Pool
 {
 public:
-  Pool() : Pool(2 * std::thread::hardware_concurrency()) {}
+  Pool()
+    : Pool(2 * std::thread::hardware_concurrency())
+  {}
 
-  Pool(std::size_t const &n)
+  Pool(std::size_t const &n, std::string name = std::string{})
+    : name_{std::move(name)}
   {
-    running_           = true;
-    tasks_in_progress_ = 0;
-
     for (std::size_t i = 0; i < n; ++i)
     {
-      workers_.emplace_back([this]() { this->Work(); });
+      workers_.emplace_back([this, i]() {
+        if (!name_.empty())
+        {
+          SetThreadName(name_, i);
+        }
+
+        this->Work();
+      });
     }
   }
 
   ~Pool()
   {
     running_ = false;
-    condition_.notify_all();
-    for (auto &w : workers_) w.join();
+
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      condition_.notify_all();
+    }
+
+    for (auto &w : workers_)
+    {
+      w.join();
+    }
   }
 
   template <typename F, typename... Args>
@@ -75,11 +91,11 @@ public:
   {
     while (!Empty())
     {
-      std::this_thread::sleep_for(std::chrono::microseconds(100));
+      std::this_thread::sleep_for(std::chrono::nanoseconds(1));
     }
     while (tasks_in_progress_ != 0)
     {
-      std::this_thread::sleep_for(std::chrono::microseconds(100));
+      std::this_thread::sleep_for(std::chrono::nanoseconds(1));
     }
   }
 
@@ -107,17 +123,21 @@ private:
   {
     std::unique_lock<std::mutex> lock(mutex_);
     condition_.wait(lock, [this] { return (!bool(running_)) || (!tasks_.empty()); });
-    if (!bool(running_)) return std::function<void()>();
+    if (!bool(running_))
+    {
+      return std::function<void()>();
+    }
 
-    std::function<void()> task = std::move(tasks_.front());
+    std::function<void()> task = tasks_.front();
     ++tasks_in_progress_;
 
     tasks_.pop();
     return task;
   }
 
-  std::atomic<uint32_t>             tasks_in_progress_;
-  std::atomic<bool>                 running_;
+  std::string                       name_{};
+  std::atomic<uint32_t>             tasks_in_progress_{0};
+  std::atomic<bool>                 running_{true};
   std::mutex                        mutex_;
   std::vector<std::thread>          workers_;
   std::queue<std::function<void()>> tasks_;

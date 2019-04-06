@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -21,13 +21,16 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/stl_types.hpp"
-#include "network/service/client.hpp"
 #include "network/service/server.hpp"
+#include "network/service/service_client.hpp"
+#include "network/uri.hpp"
 
 #include "helper_functions.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
-
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
 #include <chrono>
 #include <random>
 #include <vector>
@@ -38,7 +41,11 @@ using namespace fetch::common;
 using namespace std::chrono;
 using namespace fetch;
 
-using transaction_type = fetch::chain::VerifiedTransaction;
+#include "network/test-helpers/muddle_test_client.hpp"
+#include "network/test-helpers/muddle_test_definitions.hpp"
+#include "network/test-helpers/muddle_test_server.hpp"
+
+using transaction_type = fetch::ledger::VerifiedTransaction;
 
 std::size_t                         sizeOfTxMin = 0;  // base size of Tx
 ByteArray                           TestString;
@@ -71,14 +78,17 @@ enum
 class Implementation
 {
 public:
-  const std::vector<transaction_type> &PullData() { return TestData; }
+  const std::vector<transaction_type> &PullData()
+  {
+    return TestData;
+  }
 
   void PushData(std::vector<transaction_type> &data)
   {
     volatile std::vector<transaction_type> hold = std::move(data);
   }
 
-  std::size_t Setup(std::size_t payload, std::size_t txPerCall, bool isMaster)
+  std::size_t Setup(std::size_t payload, std::size_t txPerCall, bool /*isMaster*/)
   {
     return MakeTransactionVector(TestData, payload, txPerCall);
   }
@@ -87,7 +97,8 @@ public:
 class ServiceProtocol : public Implementation, public Protocol
 {
 public:
-  ServiceProtocol() : Protocol()
+  ServiceProtocol()
+    : Protocol()
   {
     this->Expose(PULL, (Implementation *)this, &Implementation::PullData);
     this->Expose(PUSH, (Implementation *)this, &Implementation::PushData);
@@ -98,7 +109,8 @@ public:
 class BenchmarkService : public ServiceServer<fetch::network::TCPServer>
 {
 public:
-  BenchmarkService(uint16_t port, fetch::network::NetworkManager tm) : ServiceServer(port, tm)
+  BenchmarkService(uint16_t port, fetch::network::NetworkManager tm)
+    : ServiceServer(port, tm)
   {
     this->Add(SERVICE, &serviceProtocol_);
   }
@@ -122,22 +134,11 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
     return;
   }
 
-  std::size_t                    txData       = 0;
-  std::size_t                    rpcCalls     = 0;
-  std::size_t                    setupPayload = 0;
-  fetch::network::NetworkManager tm;
+  std::size_t txData       = 0;
+  std::size_t rpcCalls     = 0;
+  std::size_t setupPayload = 0;
 
-  fetch::network::TCPClient connection(tm);
-  connection.Connect(IP, port);
-
-  ServiceClient client(connection, tm);
-
-  tm.Start();
-
-  while (!client.is_alive())
-  {
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  }
+  TClientPtr client = MuddleTestClient::CreateTestClient(IP, port);
 
   if (!pullTest)
   {
@@ -145,16 +146,17 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
   }
   else
   {
-    auto p = client.Call(SERVICE, SETUP, payload, txPerCall, isMaster);
-    p.Wait();
-    p.As(setupPayload);
+    auto p = client->Call(SERVICE, SETUP, payload, txPerCall, isMaster);
+
+    FETCH_LOG_PROMISE();
+    p->Wait();
+    p->As(setupPayload);
   }
 
   if (0 == setupPayload)
   {
     std::cerr << "Failed to setup for payload: " << payload << " TX/call: " << txPerCall
               << std::endl;
-    tm.Stop();
     return;
   }
 
@@ -168,9 +170,11 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
 
     while (payload * rpcCalls < stopCondition)
     {
-      auto p1 = client.Call(SERVICE, PULL);
-      p1.Wait();
-      p1.As(data);
+      auto p1 = client->Call(SERVICE, PULL);
+
+      FETCH_LOG_PROMISE();
+      p1->Wait();
+      p1->As(data);
       txData += txPerCall;
       rpcCalls++;
     }
@@ -183,8 +187,10 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
 
     while (payload * rpcCalls < stopCondition)
     {
-      auto p1 = client.Call(SERVICE, PUSH, TestData);
-      p1.Wait();
+      auto p1 = client->Call(SERVICE, PUSH, TestData);
+
+      FETCH_LOG_PROMISE();
+      p1->Wait();
       txData += txPerCall;
       rpcCalls++;
     }
@@ -192,7 +198,6 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
     t1 = high_resolution_clock::now();
   }
 
-  tm.Stop();
   double seconds = duration_cast<duration<double>>(t1 - t0).count();
   double mbps    = (double(rpcCalls * setupPayload * 8) / seconds) / 1000000;
 
@@ -224,7 +229,7 @@ int main(int argc, char *argv[])
   std::string                    IP;
   uint16_t                       port     = 8080;  // Default for all benchmark tests
   bool                           pullTest = true;
-  fetch::network::NetworkManager tm(8);
+  fetch::network::NetworkManager tm{"NetMgr", 8};
   std::thread                    benchmarkThread;
 
   if (argc > 1)
@@ -249,7 +254,7 @@ int main(int argc, char *argv[])
 
     // TODO(issue 28): refactor closures to use explicit copy
     benchmarkThread = std::thread([=]() {
-      fetch::network::NetworkManager networkManager(8);
+      fetch::network::NetworkManager networkManager{"NetMgr", 8};
       BenchmarkService               serv(port, networkManager);
       networkManager.Start();
       std::string dummy;

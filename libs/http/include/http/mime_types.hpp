@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -27,7 +27,10 @@ struct MimeType
 {
   std::string extension;
   std::string type;
-  bool        operator<(MimeType const &other) const { return extension < other.extension; }
+  bool        operator<(MimeType const &other) const
+  {
+    return extension < other.extension;
+  }
 };
 
 namespace mime_types {

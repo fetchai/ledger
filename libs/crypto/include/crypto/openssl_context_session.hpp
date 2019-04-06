@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -42,18 +42,27 @@ private:
 
 public:
   explicit Session(context_smart_ptr context, const bool is_already_started = false)
-    : context_(std::move(context)), is_started_(is_already_started)
+    : context_(std::move(context))
+    , is_started_(is_already_started)
   {
     start();
   }
 
-  explicit Session() : Session(context_smart_ptr(BN_CTX_new())) {}
+  explicit Session()
+    : Session(context_smart_ptr(BN_CTX_new()))
+  {}
 
-  ~Session() { end(); }
+  ~Session()
+  {
+    end();
+  }
 
   void start()
   {
-    if (is_started_) return;
+    if (is_started_)
+    {
+      return;
+    }
 
     session_primitive_type::start(context_.get());
     is_started_ = true;
@@ -61,15 +70,24 @@ public:
 
   void end()
   {
-    if (!is_started_) return;
+    if (!is_started_)
+    {
+      return;
+    }
 
     is_started_ = false;
     session_primitive_type::end(context_.get());
   }
 
-  context_smart_ptr context() const { return context_; }
+  context_smart_ptr context() const
+  {
+    return context_;
+  }
 
-  bool isStarted() const { return is_started_; }
+  bool isStarted() const
+  {
+    return is_started_;
+  }
 };
 
 }  // namespace context

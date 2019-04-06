@@ -7,9 +7,20 @@ CMakeCache.txt
 # Merge Outputs
 *.orig
 
+nodes/
+.ipynb_checkpoints/
+
 # Legacy Editors
 \#*#
 .\#*
 *~
 *.swp
 .idea/
+*.osm
+tags
+
+*.gz
+*.so
+
+*.DS_Store
+*.ipynb_checkpoints/

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,9 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "serializers/byte_array_buffer.hpp"
-
-#include "fetch_pybind.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
+#include "pybind11/pybind11.h"
 
 namespace fetch {
 namespace serializers {
@@ -38,9 +37,9 @@ void BuildByteArrayBuffer(pybind11::module &module)
       .def("ReadBytes", &ByteArrayBuffer::ReadBytes)
       .def("Allocate", &ByteArrayBuffer::Allocate)
       .def("size", &ByteArrayBuffer::size)
-      .def("Seek", &ByteArrayBuffer::Seek)
-      .def("Tell", &ByteArrayBuffer::Tell)
+      .def("seek", &ByteArrayBuffer::seek)
+      .def("tell", &ByteArrayBuffer::tell)
       .def("Reserve", &ByteArrayBuffer::Reserve);
 }
-};  // namespace serializers
-};  // namespace fetch
+}  // namespace serializers
+}  // namespace fetch

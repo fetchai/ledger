@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,23 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/script/variant.hpp"
 #include "http/mime_types.hpp"
 #include "http/response.hpp"
+#include "variant/variant.hpp"
 
 #include <sstream>
 namespace fetch {
 namespace http {
 
 inline http::HTTPResponse CreateJsonResponse(byte_array::ConstByteArray const &body,
-                                             Status const &status = status_code::SUCCESS_OK)
+                                             Status status = Status::SUCCESS_OK)
 {
   static const auto jsonMimeType = mime_types::GetMimeTypeFromExtension(".json");
   return http::HTTPResponse(body, jsonMimeType, status);
 }
 
-inline http::HTTPResponse CreateJsonResponse(script::Variant const &doc,
-                                             Status const &status = status_code::SUCCESS_OK)
+inline http::HTTPResponse CreateJsonResponse(variant::Variant const &doc,
+                                             Status                  status = Status::SUCCESS_OK)
 {
   static const auto jsonMimeType = mime_types::GetMimeTypeFromExtension(".json");
   std::stringstream body;

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -24,9 +24,11 @@ using namespace fetch::network;
 class Server : public TCPServer
 {
 public:
-  Server(uint16_t p, NetworkManager tmanager) : TCPServer(p, tmanager) {}
+  Server(uint16_t p, NetworkManager tmanager)
+    : TCPServer(p, tmanager)
+  {}
 
-  void PushRequest(connection_handle_type client, message_type const &msg) override
+  void PushRequest(connection_handle_type /*client*/, message_type const &msg) override
   {
     std::cout << "Message: " << msg << std::endl;
   }
@@ -45,10 +47,11 @@ int main(int argc, char *argv[])
       return 1;
     }
 
-    NetworkManager tmanager;
+    NetworkManager tmanager{"NetMgr", 1};
 
     Server s(uint16_t(std::atoi(argv[1])), tmanager);
     tmanager.Start();
+    s.Start();
 
     std::cout << "Press Ctrl+C to quit" << std::endl;
 
@@ -56,6 +59,8 @@ int main(int argc, char *argv[])
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+
+    s.Stop();
     tmanager.Stop();
   }
   catch (std::exception &e)

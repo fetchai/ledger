@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -26,7 +26,8 @@ template <typename T>
 class NetworkMineTestProtocol : public fetch::service::Protocol
 {
 public:
-  NetworkMineTestProtocol(std::shared_ptr<T> node) : Protocol()
+  NetworkMineTestProtocol(std::shared_ptr<T> node)
+    : Protocol()
   {
     this->Expose(NetworkMineTest::PUSH_NEW_HEADER, node.get(), &T::ReceiveNewHeader);
     this->Expose(NetworkMineTest::PROVIDE_HEADER, node.get(), &T::ProvideHeader);

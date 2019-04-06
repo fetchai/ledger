@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 
 #include "crypto/fnv.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/chaincode/cache.hpp"
+#include "ledger/chaincode/chain_code_cache.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
@@ -35,28 +35,22 @@ namespace ledger {
 class Executor : public ExecutorInterface
 {
 public:
-  using shared_tx_type    = std::shared_ptr<chain::Transaction>;
-  using tx_store_type     = std::unordered_map<tx_digest_type, shared_tx_type, crypto::CallableFNV>;
-  using block_digest_type = fetch::byte_array::ConstByteArray;
-  using tx_digest_list_type = std::vector<tx_digest_type>;
-  using resources_type      = std::shared_ptr<StorageUnitInterface>;
-  using chain_code_type     = ChainCodeFactory::chain_code_type;
-  using contract_cache_type = std::unordered_map<std::string, chain_code_type>;
+  using Resources = std::shared_ptr<StorageUnitInterface>;
 
   // Construction / Destruction
-  explicit Executor(resources_type resources) : resources_{std::move(resources)} {}
+  explicit Executor(Resources resources)
+    : resources_{std::move(resources)}
+  {}
   ~Executor() override = default;
 
   /// @name Executor Interface
   /// @{
-  Status Execute(tx_digest_type const &hash, std::size_t slice,
-                 lane_set_type const &lanes) override;
+  Status Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes) override;
   /// @}
 
 private:
-  resources_type resources_;         ///< The collection of resources as published by
-                                     ///< the collection of lanes
-  ChainCodeCache chain_code_cache_;  ///< The factory to create new chain code instances
+  Resources      resources_;         ///< The collection of resources
+  ChainCodeCache chain_code_cache_;  //< The factory to create new chain code instances
 };
 
 }  // namespace ledger

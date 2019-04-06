@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -27,9 +27,6 @@ namespace openssl {
 
 namespace {
 
-using ::testing::StrictMock;
-using ::testing::Return;
-
 class ECDCSASignatureTest : public testing::Test
 {
 protected:
@@ -43,9 +40,28 @@ protected:
       0xaa, 0xda, 0x83, 0xe5, 0x0b, 0x16, 0xff, 0x16, 0x73, 0x62, 0x27, 0xf3,
       0xf9, 0xe9, 0x2b, 0xdd, 0x3a, 0x1d, 0xdc, 0x42, 0x01, 0xaa, 0x05};
 
-  void SetUp() {}
+  void SetUp()
+  {}
 
-  void TearDown() {}
+  void TearDown()
+  {}
+
+  template <eECDSAEncoding SIG_ENCODING, eECDSAEncoding KEY_ENCODING>
+  void test_sign_verify_hash_cycle()
+  {
+    //* Production code:
+    openssl::ECDSAPrivateKey<KEY_ENCODING> priv_key{
+        openssl::ECDSAPrivateKey<eECDSAEncoding::bin>(priv_key_data_)};
+
+    using ecdsa_signature_type          = ECDSASignature<SIG_ENCODING>;
+    auto const &         test_hash_data = test_data_;
+    ecdsa_signature_type signature{ecdsa_signature_type::SignHash(priv_key, test_hash_data)};
+
+    const auto verification_result = signature.VerifyHash(priv_key.publicKey(), test_hash_data);
+
+    //* Expectations:
+    EXPECT_TRUE(verification_result);
+  }
 
   template <eECDSAEncoding SIG_ENCODING, eECDSAEncoding KEY_ENCODING>
   void test_sign_verify_cycle()
@@ -129,7 +145,7 @@ protected:
 
     //* It is not possible to invalidate (format-wise) canonical or bin encoded
     // signature, since it
-    // does NOT contain any structural/format information exept just pure data
+    // does NOT contain any structural/format information except just pure data
     // (r & s values). Thus
     // it is only possible to make such signature not to verify.
     if (ENCODING == eECDSAEncoding::DER)
@@ -167,6 +183,21 @@ protected:
     EXPECT_FALSE(verification_result);
   }
 };
+
+TEST_F(ECDCSASignatureTest, test_sign_verify_hash_cycle)
+{
+  test_sign_verify_hash_cycle<eECDSAEncoding::canonical, eECDSAEncoding::canonical>();
+  test_sign_verify_hash_cycle<eECDSAEncoding::canonical, eECDSAEncoding::bin>();
+  test_sign_verify_hash_cycle<eECDSAEncoding::canonical, eECDSAEncoding::DER>();
+
+  test_sign_verify_hash_cycle<eECDSAEncoding::bin, eECDSAEncoding::canonical>();
+  test_sign_verify_hash_cycle<eECDSAEncoding::bin, eECDSAEncoding::bin>();
+  test_sign_verify_hash_cycle<eECDSAEncoding::bin, eECDSAEncoding::DER>();
+
+  test_sign_verify_hash_cycle<eECDSAEncoding::DER, eECDSAEncoding::canonical>();
+  test_sign_verify_hash_cycle<eECDSAEncoding::DER, eECDSAEncoding::bin>();
+  test_sign_verify_hash_cycle<eECDSAEncoding::DER, eECDSAEncoding::DER>();
+}
 
 TEST_F(ECDCSASignatureTest, test_sign_verify_cycle)
 {
@@ -247,7 +278,7 @@ TEST_F(ECDCSASignatureTest, test_canonical_signature_binary_representation_has_e
   //* Create signature from Canonical binary from:
   ecdsa_signature_type signature_from_canonical_bin{signature.signature()};
 
-  //* Verify that signature reconstructed from canonical binar data is able to
+  //* Verify that signature reconstructed from canonical binary data is able to
   // verify:
   ASSERT_TRUE(signature_from_canonical_bin.Verify(priv_key.publicKey(), test_data_));
 

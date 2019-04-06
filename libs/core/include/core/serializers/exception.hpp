@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,12 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
+
 #include <exception>
 #include <string>
 #include <utility>
+
 namespace fetch {
+namespace byte_array {
+class ConstByteArray;
+}  // namespace byte_array
 namespace serializers {
 
 namespace error {
@@ -33,52 +37,22 @@ error_type const TYPE_ERROR = 0;
 class SerializableException : public std::exception
 {
 public:
-  SerializableException() : error_code_(error::TYPE_ERROR), explanation_("unknown")
-  {
-    LOG_STACK_TRACE_POINT;
+  /// @name Construction / Destruction
+  /// @{
+  SerializableException();
+  SerializableException(std::string explanation);
+  SerializableException(byte_array::ConstByteArray const &explanation);
+  SerializableException(error::error_type error_code, std::string explanation);
+  SerializableException(error::error_type                 error_code,
+                        byte_array::ConstByteArray const &explanation);
+  ~SerializableException() override;
+  /// @}
 
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
+  char const *what() const noexcept override;
+  uint64_t    error_code() const;
+  std::string explanation() const;
 
-  SerializableException(std::string explanation)
-    : error_code_(error::TYPE_ERROR), explanation_(std::move(explanation))
-  {
-    LOG_STACK_TRACE_POINT;
-
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
-
-  SerializableException(byte_array::ConstByteArray const &explanation)
-    : error_code_(error::TYPE_ERROR), explanation_(std::string(explanation))
-  {
-    LOG_STACK_TRACE_POINT;
-
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
-
-  SerializableException(error::error_type error_code, std::string explanation)
-    : error_code_(error_code), explanation_(std::move(explanation))
-  {
-    LOG_STACK_TRACE_POINT;
-
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
-
-  SerializableException(error::error_type error_code, byte_array::ConstByteArray const &explanation)
-    : error_code_(error_code), explanation_(std::string(explanation))
-  {
-    LOG_STACK_TRACE_POINT;
-
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
-
-  virtual ~SerializableException() { LOG_STACK_TRACE_POINT; }
-
-  char const *what() const noexcept override { return explanation_.c_str(); }
-  uint64_t    error_code() const { return error_code_; }
-  std::string explanation() const { return explanation_; }
-
-  void StackTrace() const { LOG_PRINT_STACK_TRACE(stack_trace_, "Trace at time of exception") }
+  void StackTrace() const;
 
 private:
   uint64_t    error_code_;
@@ -86,5 +60,6 @@ private:
 
   LOG_CONTEXT_VARIABLE(stack_trace_)
 };
+
 }  // namespace serializers
 }  // namespace fetch

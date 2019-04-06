@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -23,6 +23,14 @@
 namespace fetch {
 namespace byte_array {
 
+fetch::byte_array::ConstByteArray BytesToFetchBytes(py::bytes const &b)
+{
+  std::string s{b};
+  using ConstByteArray = fetch::byte_array::ConstByteArray;
+  return ConstByteArray(reinterpret_cast<ConstByteArray::container_type const *>(s.c_str()),
+                        s.size());
+}
+
 void BuildConstByteArray(pybind11::module &module)
 {
   namespace py = pybind11;
@@ -30,6 +38,7 @@ void BuildConstByteArray(pybind11::module &module)
       .def(py::init<>())
       .def(py::init<const std::size_t &>())
       .def(py::init<const char *>())
+      .def(py::init<const unsigned char *const, std::size_t>())
       .def(py::init<std::initializer_list<ConstByteArray::container_type>>())
       .def(py::init<const std::string &>())
       .def(py::init<const fetch::byte_array::ConstByteArray::self_type &>())
@@ -37,19 +46,16 @@ void BuildConstByteArray(pybind11::module &module)
                     const std::size_t &>())
       .def("AsInt", &ConstByteArray::AsInt)
       .def(py::self != fetch::byte_array::ConstByteArray::self_type())
-      //    .def(py::self != char*() )
       .def(py::self < fetch::byte_array::ConstByteArray::self_type())
       .def(py::self > fetch::byte_array::ConstByteArray::self_type())
       .def("AsFloat", &ConstByteArray::AsFloat)
       .def(py::self == fetch::byte_array::ConstByteArray::self_type())
-      //    .def(py::self == char*() )
       .def(py::self + fetch::byte_array::ConstByteArray::self_type())
-      //    .def("char_pointer", &ConstByteArray::char_pointer)
-      //    .def("operator[]", &ConstByteArray::operator[])
-      .def("SubArray", &ConstByteArray::SubArray)
+      .def("SubArray",
+           static_cast<ConstByteArray (ConstByteArray::*)(std::size_t const &, std::size_t) const>(
+               &ConstByteArray::SubArray))
       .def("capacity", &ConstByteArray::capacity)
       .def("Copy", &ConstByteArray::Copy)
-      //    .def("pointer", &ConstByteArray::pointer)
       .def("Find", &ConstByteArray::Find)
       .def("Match", (bool (ConstByteArray::*)(const fetch::byte_array::ConstByteArray::self_type &,
                                               std::size_t) const) &
@@ -58,7 +64,11 @@ void BuildConstByteArray(pybind11::module &module)
            (bool (ConstByteArray::*)(const fetch::byte_array::ConstByteArray::container_type *,
                                      std::size_t) const) &
                ConstByteArray::Match)
-      .def("size", &ConstByteArray::size);
+      .def("size", &ConstByteArray::size)
+      .def("AsBytes",
+           [](ConstByteArray const &a) { return py::bytes(a.char_pointer(), a.size()); });
+
+  module.def("BytesToFetchBytes", &BytesToFetchBytes, "Convertion utility");
 }
 
 }  // namespace byte_array

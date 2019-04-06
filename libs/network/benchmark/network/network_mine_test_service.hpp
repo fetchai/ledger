@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@
 #include "http/server.hpp"
 #include "mine_test_http_interface.hpp"
 #include "network/service/server.hpp"
+#include "network/test-helpers/muddle_test_client.hpp"
+#include "network/test-helpers/muddle_test_definitions.hpp"
+#include "network/test-helpers/muddle_test_server.hpp"
 #include "protocols/fetch_protocols.hpp"
 #include "protocols/network_mine_test.hpp"
 #include <memory>
@@ -30,22 +33,29 @@ namespace fetch {
 namespace network_mine_test {
 
 template <typename T>
-class NetworkMineTestService : public service::ServiceServer<fetch::network::TCPServer>,
-                               public http::HTTPServer
+class NetworkMineTestService : public http::HTTPServer
 {
 public:
-  NetworkMineTestService(fetch::network::NetworkManager tm, uint16_t tcpPort, uint16_t httpPort)
-    : ServiceServer(tcpPort, tm), HTTPServer(httpPort, tm)
+  using NetworkManager = network::NetworkManager;
+
+  static constexpr char const *LOGGING_NAME = "NetworkMineTestService";
+  TServerPtr                   server;
+
+  NetworkMineTestService(NetworkManager const &tm, uint16_t tcpPort, uint16_t httpPort)
+    : HTTPServer(tm)
+    , http_port_(httpPort)
   {
     LOG_STACK_TRACE_POINT;
-    fetch::logger.Debug("Constructing test node service with TCP port: ", tcpPort,
-                        " and HTTP port: ", httpPort);
-    node_ = std::make_shared<T>(tm, tcpPort);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Constructing test node service with TCP port: ", tcpPort,
+                    " and HTTP port: ", httpPort);
+    node_ = std::make_shared<T>();
+
+    server = MuddleTestServer::CreateTestServer(tcpPort);
 
     httpInterface_           = std::make_shared<network_mine_test::HttpInterface<T>>(node_);
     networkMineTestProtocol_ = std::make_unique<protocols::NetworkMineTestProtocol<T>>(node_);
 
-    this->Add(protocols::FetchProtocols::NETWORK_MINE_TEST, networkMineTestProtocol_.get());
+    server->Add(protocols::FetchProtocols::NETWORK_MINE_TEST, networkMineTestProtocol_.get());
 
     // Add middleware to the HTTP server - allow requests from any address,
     // and print requests to the terminal in colour
@@ -54,7 +64,18 @@ public:
     this->AddModule(*httpInterface_);
   }
 
+  void Start()
+  {
+    HTTPServer::Start(http_port_);
+  }
+
+  void Stop()
+  {
+    HTTPServer::Stop();
+  }
+
 private:
+  uint16_t                                               http_port_;
   std::shared_ptr<T>                                     node_;
   std::shared_ptr<network_mine_test::HttpInterface<T>>   httpInterface_;
   std::unique_ptr<protocols::NetworkMineTestProtocol<T>> networkMineTestProtocol_;

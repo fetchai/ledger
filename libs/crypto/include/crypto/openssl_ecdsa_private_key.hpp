@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -46,9 +46,10 @@ public:
 
   // using public_key_type = ECDSAPublicKey<binaryDataFormat, P_ECDSA_Curve_NID,
   // P_ConversionForm>;
-  // TODO(issue 36): Implement DER encoding. It mis missing now so defaulting to canonical
+  // TODO(issue 36): Implement DER encoding. It mis missing now so defaulting to
+  // canonical
   // encoding to void
-  // failures when construcing this class (ECDSAPrivateKey) with DER encoding.
+  // failures when constructing this class (ECDSAPrivateKey) with DER encoding.
   using public_key_type =
       ECDSAPublicKey<SupportedEncodingForPublicKey<P_ECDSABinaryDataFormat>::value,
                      P_ECDSA_Curve_NID, P_ConversionForm>;
@@ -62,15 +63,17 @@ public:
 private:
   // TODO(issue 36): Keep key encrypted
   shrd_ptr_type<EC_KEY> private_key_;
-  // TODO(issue 36): Do lazy initilisation of the public key to minimize impact at
-  // construction time of this
-  // class
+  // TODO(issue 36): Do lazy initialisation of the public key to minimize impact
+  // at construction time of this class
   public_key_type public_key_;
 
 public:
-  ECDSAPrivateKey() : ECDSAPrivateKey(Generate()) {}
+  ECDSAPrivateKey()
+    : ECDSAPrivateKey(Generate())
+  {}
 
-  ECDSAPrivateKey(const byte_array::ConstByteArray &key_data) : ECDSAPrivateKey(Convert(key_data))
+  ECDSAPrivateKey(const byte_array::ConstByteArray &key_data)
+    : ECDSAPrivateKey(Convert(key_data))
   {}
 
   template <eECDSAEncoding P_ECDSABinaryDataFormat2, int P_ECDSA_Curve_NID2,
@@ -82,12 +85,14 @@ public:
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
   ECDSAPrivateKey(private_key_type<BINARY_DATA_FORMAT> const &from)
-    : private_key_(from.private_key_), public_key_(from.public_key_)
+    : private_key_(from.private_key_)
+    , public_key_(from.public_key_)
   {}
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
   ECDSAPrivateKey(private_key_type<BINARY_DATA_FORMAT> &&from)
-    : private_key_(std::move(from.private_key_)), public_key_(std::move(from.public_key_))
+    : private_key_(std::move(from.private_key_))
+    , public_key_(std::move(from.public_key_))
   {}
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
@@ -106,7 +111,10 @@ public:
     return *this;
   }
 
-  shrd_ptr_type<const EC_KEY> key() const { return private_key_; }
+  shrd_ptr_type<const EC_KEY> key() const
+  {
+    return private_key_;
+  }
 
   byte_array::ByteArray KeyAsBin() const
   {
@@ -121,11 +129,15 @@ public:
     }
   }
 
-  const public_key_type &publicKey() const { return public_key_; }
+  const public_key_type &publicKey() const
+  {
+    return public_key_;
+  }
 
 private:
   ECDSAPrivateKey(shrd_ptr_type<EC_KEY> &&key, public_key_type &&public_key)
-    : private_key_{std::move(key)}, public_key_{std::move(public_key)}
+    : private_key_{std::move(key)}
+    , public_key_{std::move(public_key)}
   {}
 
   static ECDSAPrivateKey Convert(byte_array::ConstByteArray const &key_data)
@@ -144,14 +156,14 @@ private:
   static uniq_ptr_type<BIGNUM, del_strat_type::clearing> Convert2BIGNUM(
       byte_array::ConstByteArray const &key_data)
   {
-    if (ecdsa_curve_type::privateKeySize != key_data.size())
+    if (ecdsa_curve_type::privateKeySize < key_data.size())
     {
       throw std::runtime_error(
           "ECDSAPrivateKey::Convert2BIGNUM(const "
-          "byte_array::ConstByteArray&): Lenght of "
+          "byte_array::ConstByteArray&): Length of "
           "provided "
           "byte array does not correspond to expected "
-          "lenght for selected elliptic curve");
+          "length for selected elliptic curve");
     }
 
     uniq_ptr_type<BIGNUM, del_strat_type::clearing> private_key_as_BN(BN_new());

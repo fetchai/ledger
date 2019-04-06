@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -52,24 +52,47 @@ public:
   static_assert((E_BLOCK_COUNT * sizeof(type)) == E_REGISTER_SIZE,
                 "type cannot be contained in the given register size.");
 
-  VectorRegister() {}
-  VectorRegister(type const *d) { data_ = _mm256_load_si256((mm_register_type *)d); }
+  VectorRegister()
+  {}
+  VectorRegister(type const *d)
+  {
+    data_ = _mm256_load_si256((mm_register_type *)d);
+  }
   VectorRegister(type const &c)
   {
     alignas(16) type constant[E_BLOCK_COUNT];
     details::UnrollSet<type, E_BLOCK_COUNT>::Set(constant, c);
     data_ = _mm256_load_si256((mm_register_type *)constant);
   }
-  VectorRegister(mm_register_type const &d) : data_(d) {}
-  VectorRegister(mm_register_type &&d) : data_(d) {}
+  VectorRegister(mm_register_type const &d)
+    : data_(d)
+  {}
+  VectorRegister(mm_register_type &&d)
+    : data_(d)
+  {}
 
-  explicit operator mm_register_type() { return data_; }
+  explicit operator mm_register_type()
+  {
+    return data_;
+  }
 
-  void Store(type *ptr) const { _mm256_store_si256((mm_register_type *)ptr, data_); }
-  void Stream(type *ptr) const { _mm256_stream_si256((mm_register_type *)ptr, data_); }
+  void Store(type *ptr) const
+  {
+    _mm256_store_si256((mm_register_type *)ptr, data_);
+  }
+  void Stream(type *ptr) const
+  {
+    _mm256_stream_si256((mm_register_type *)ptr, data_);
+  }
 
-  mm_register_type const &data() const { return data_; }
-  mm_register_type &      data() { return data_; }
+  mm_register_type const &data() const
+  {
+    return data_;
+  }
+  mm_register_type &data()
+  {
+    return data_;
+  }
 
 private:
   mm_register_type data_;
@@ -92,10 +115,18 @@ public:
   static_assert((E_BLOCK_COUNT * sizeof(type)) == E_REGISTER_SIZE,
                 "type cannot be contained in the given register size.");
 
-  VectorRegister() {}
-  VectorRegister(type const *d) { data_ = _mm256_load_ps(d); }
-  VectorRegister(mm_register_type const &d) : data_(d) {}
-  VectorRegister(mm_register_type &&d) : data_(d) {}
+  VectorRegister()
+  {}
+  VectorRegister(type const *d)
+  {
+    data_ = _mm256_load_ps(d);
+  }
+  VectorRegister(mm_register_type const &d)
+    : data_(d)
+  {}
+  VectorRegister(mm_register_type &&d)
+    : data_(d)
+  {}
   VectorRegister(type const &c)
   {
     alignas(16) type constant[E_BLOCK_COUNT];
@@ -103,13 +134,28 @@ public:
     data_ = _mm256_load_ps(constant);
   }
 
-  explicit operator mm_register_type() { return data_; }
+  explicit operator mm_register_type()
+  {
+    return data_;
+  }
 
-  void Store(type *ptr) const { _mm256_store_ps(ptr, data_); }
-  void Stream(type *ptr) const { _mm256_stream_ps(ptr, data_); }
+  void Store(type *ptr) const
+  {
+    _mm256_store_ps(ptr, data_);
+  }
+  void Stream(type *ptr) const
+  {
+    _mm256_stream_ps(ptr, data_);
+  }
 
-  mm_register_type const &data() const { return data_; }
-  mm_register_type &      data() { return data_; }
+  mm_register_type const &data() const
+  {
+    return data_;
+  }
+  mm_register_type &data()
+  {
+    return data_;
+  }
 
 private:
   mm_register_type data_;
@@ -132,10 +178,18 @@ public:
   static_assert((E_BLOCK_COUNT * sizeof(type)) == E_REGISTER_SIZE,
                 "type cannot be contained in the given register size.");
 
-  VectorRegister() {}
-  VectorRegister(type const *d) { data_ = _mm256_load_pd(d); }
-  VectorRegister(mm_register_type const &d) : data_(d) {}
-  VectorRegister(mm_register_type &&d) : data_(d) {}
+  VectorRegister()
+  {}
+  VectorRegister(type const *d)
+  {
+    data_ = _mm256_load_pd(d);
+  }
+  VectorRegister(mm_register_type const &d)
+    : data_(d)
+  {}
+  VectorRegister(mm_register_type &&d)
+    : data_(d)
+  {}
   VectorRegister(type const &c)
   {
     alignas(16) type constant[E_BLOCK_COUNT];
@@ -143,13 +197,28 @@ public:
     data_ = _mm256_load_pd(constant);
   }
 
-  explicit operator mm_register_type() { return data_; }
+  explicit operator mm_register_type()
+  {
+    return data_;
+  }
 
-  void Store(type *ptr) const { _mm256_stream_pd(ptr, data_); }
-  void Stream(type *ptr) const { _mm256_stream_pd(ptr, data_); }
+  void Store(type *ptr) const
+  {
+    _mm256_stream_pd(ptr, data_);
+  }
+  void Stream(type *ptr) const
+  {
+    _mm256_stream_pd(ptr, data_);
+  }
 
-  mm_register_type const &data() const { return data_; }
-  mm_register_type &      data() { return data_; }
+  mm_register_type const &data() const
+  {
+    return data_;
+  }
+  mm_register_type &data()
+  {
+    return data_;
+  }
 
 private:
   mm_register_type data_;

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -40,14 +40,21 @@ public:
   static adapter_list_type GetAdapters();
 
   Adapter(address_type address, address_type network_mask)
-    : address_{std::move(address)}, network_mask_{std::move(network_mask)}
+    : address_{std::move(address)}
+    , network_mask_{std::move(network_mask)}
   {}
   Adapter(Adapter const &) = default;
   ~Adapter()               = default;
 
-  address_type const &address() const { return address_; }
+  address_type const &address() const
+  {
+    return address_;
+  }
 
-  address_type const &network_mask() const { return network_mask_; }
+  address_type const &network_mask() const
+  {
+    return network_mask_;
+  }
 
 private:
   address_type address_;

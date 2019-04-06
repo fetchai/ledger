@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,36 +18,74 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/execution_manager_interface.hpp"
-#include "network/service/client.hpp"
+#include "network/generics/backgrounded_work.hpp"
+#include "network/generics/has_worker_thread.hpp"
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
+#include "network/service/service_client.hpp"
+#include "network/tcp/tcp_client.hpp"
 
 #include <memory>
 
 namespace fetch {
 namespace ledger {
 
+class ExecutionManagerRpcConnectorWorker;
+
 class ExecutionManagerRpcClient : public ExecutionManagerInterface
 {
 public:
-  using service_type = std::unique_ptr<fetch::service::ServiceClient>;
+  using ConstByteArray  = byte_array::ConstByteArray;
+  using NetworkManager  = network::NetworkManager;
+  using PromiseState    = fetch::service::PromiseState;
+  using Promise         = service::Promise;
+  using FutureTimepoint = network::FutureTimepoint;
+  using MuddleEp        = muddle::MuddleEndpoint;
+  using Muddle          = muddle::Muddle;
+  using MuddlePtr       = std::shared_ptr<Muddle>;
+  using Uri             = Muddle::Uri;
+  using Address         = Muddle::Address;
+  using Client          = muddle::rpc::Client;
+  using ClientPtr       = std::shared_ptr<Client>;
 
   // Construction / Destruction
-  ExecutionManagerRpcClient(byte_array::ConstByteArray const &host, uint16_t const &port,
-                            network::NetworkManager const &network_manager);
+  ExecutionManagerRpcClient(NetworkManager const &network_manager);
   ~ExecutionManagerRpcClient() override = default;
+
+  void AddConnection(const Uri &uri, const std::chrono::milliseconds &timeout);
 
   /// @name Execution Manager Interface
   /// @{
-  Status            Execute(block_type const &block) override;
-  block_digest_type LastProcessedBlock() override;
-  bool              IsActive() override;
-  bool              IsIdle() override;
-  bool              Abort() override;
+  ScheduleStatus Execute(Block::Body const &block) override;
+  void           SetLastProcessedBlock(BlockHash hash) override;
+  BlockHash      LastProcessedBlock() override;
+  State          GetState() override;
+  bool           Abort() override;
   /// @}
 
-  bool is_alive() const { return service_->is_alive(); }
+  void WorkCycle();
+
+  std::size_t connections() const
+  {
+    return connections_;
+  }
 
 private:
-  service_type service_;
+  friend class ExecutionManagerRpcConnectorWorker;
+  using Worker                    = ExecutionManagerRpcConnectorWorker;
+  using WorkerPtr                 = std::shared_ptr<Worker>;
+  using BackgroundedWork          = network::BackgroundedWork<Worker>;
+  using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
+  using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
+
+  NetworkManager            network_manager_;
+  BackgroundedWork          bg_work_;
+  BackgroundedWorkThreadPtr workthread_;
+  MuddlePtr                 muddle_;
+  Address                   address_;
+  size_t                    connections_ = 0;
+  ClientPtr                 client_;
 };
 
 }  // namespace ledger

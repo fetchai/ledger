@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,20 +18,49 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "meta/type_traits.hpp"
 
 namespace fetch {
 namespace crypto {
+
 class StreamHasher
 {
 public:
-  using byte_array_type = byte_array::ByteArray;
+  virtual void        Reset()                                                      = 0;
+  virtual bool        Update(uint8_t const *data_to_hash, std::size_t const &size) = 0;
+  virtual void        Final(uint8_t *hash, std::size_t const &size)                = 0;
+  virtual std::size_t GetSizeInBytes() const                                       = 0;
 
-  virtual void            Reset()                                           = 0;
-  virtual bool            Update(byte_array_type const &data)               = 0;
-  virtual bool            Update(uint8_t const *p, std::size_t const &size) = 0;
-  virtual void            Final()                                           = 0;
-  virtual void            Final(uint8_t *p)                                 = 0;
-  virtual byte_array_type digest()                                          = 0;
+  bool                  Update(byte_array::ConstByteArray const &data);
+  byte_array::ByteArray Final();
+
+  template <typename T>
+  meta::IfIsPod<T, T> Final()
+  {
+    typename std::remove_const<T>::type pod;
+    Final(reinterpret_cast<uint8_t *>(&pod), sizeof(pod));
+    return pod;
+  }
+
+  bool Update(std::string const &str)
+  {
+    return Update(reinterpret_cast<uint8_t const *>(str.data()), str.size());
+  }
+
+  template <typename T>
+  meta::IfIsPod<T, bool> Update(T const &pod)
+  {
+    return Update(reinterpret_cast<uint8_t const *>(&pod), sizeof(pod));
+  }
+
+  template <typename T>
+  meta::IfIsPod<T, bool> Update(std::vector<T> const &vect)
+  {
+    return Update(reinterpret_cast<uint8_t const *>(vect.data()), vect.size() * sizeof(T));
+  }
+
+  virtual ~StreamHasher() = default;
 };
+
 }  // namespace crypto
 }  // namespace fetch

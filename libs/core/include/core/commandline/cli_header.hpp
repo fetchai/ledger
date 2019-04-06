@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,16 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
 #include <string>
+
 namespace fetch {
 namespace commandline {
-inline void DisplayCLIHeader(std::string const &name, std::string const &years = "2018",
-                             std::string const &additional = "")
-{
-  std::cout << " F E ╱     " << name << std::endl;
-  std::cout << "   T C     Copyright " << years << " (c) Fetch AI Ltd." << std::endl;
-  std::cout << "     H     " << additional << std::endl << std::endl;
-}
+
+void DisplayCLIHeader(std::string const &name, std::string const &years = "2018-2019",
+                      std::string const &additional = "");
+
 }  // namespace commandline
 }  // namespace fetch

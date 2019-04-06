@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,34 +17,120 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "miner/miner_interface.hpp"
+#include "ledger/storage_unit/transaction_sinks.hpp"
+#include "ledger/transaction_verifier.hpp"
+
+#include <atomic>
+#include <thread>
 
 namespace fetch {
 namespace ledger {
 
-class TransactionProcessor
+class StorageUnitInterface;
+class BlockPackerInterface;
+class TransactionStatusCache;
+
+class TransactionProcessor : public UnverifiedTransactionSink, public VerifiedTransactionSink
 {
 public:
-  TransactionProcessor(StorageUnitInterface &storage, miner::MinerInterface &miner)
-    : storage_{storage}, miner_{miner}
-  {}
+  using ThreadPtr       = std::unique_ptr<std::thread>;
+  using TransactionList = std::vector<Transaction>;
 
-  void AddTransaction(chain::Transaction const &tx)
-  {
+  static constexpr char const *LOGGING_NAME = "TransactionProcessor";
 
-    // tell the node about the transaction
-    storage_.AddTransaction(tx);
+  // Construction / Destruction
+  TransactionProcessor(StorageUnitInterface &storage, BlockPackerInterface &packer,
+                       TransactionStatusCache &tx_status_cache, std::size_t num_threads);
+  TransactionProcessor(TransactionProcessor const &) = delete;
+  TransactionProcessor(TransactionProcessor &&)      = delete;
+  ~TransactionProcessor() override;
 
-    // tell the miner about the transaction
-    miner_.EnqueueTransaction(tx.summary());
-  }
+  /// @name Processor Controls
+  /// @{
+  void Start();
+  void Stop();
+  /// @}
+
+  /// @name Transaction Processing
+  /// @{
+  void AddTransaction(MutableTransaction const &mtx);
+  void AddTransaction(MutableTransaction &&mtx);
+  /// @}
+
+  // Operators
+  TransactionProcessor &operator=(TransactionProcessor const &) = delete;
+  TransactionProcessor &operator=(TransactionProcessor &&) = delete;
+
+protected:
+  /// @name Unverified Transaction Sink
+  /// @{
+  void OnTransaction(UnverifiedTransaction const &tx) override;
+  /// @}
+
+  /// @name Transaction Handlers
+  /// @{
+  void OnTransaction(VerifiedTransaction const &tx) override;
+  void OnTransactions(TransactionList const &txs) override;
+  /// @}
 
 private:
-  StorageUnitInterface & storage_;
-  miner::MinerInterface &miner_;
+  using Flag = std::atomic<bool>;
+
+  StorageUnitInterface &  storage_;
+  BlockPackerInterface &  packer_;
+  TransactionStatusCache &status_cache_;
+  TransactionVerifier     verifier_;
+  ThreadPtr               poll_new_tx_thread_;
+  Flag                    running_{false};
+
+  void ThreadEntryPoint();
 };
+
+/**
+ * Start the transaction processor
+ */
+inline void TransactionProcessor::Start()
+{
+  verifier_.Start();
+  running_ = true;
+  poll_new_tx_thread_ =
+      std::make_unique<std::thread>(&TransactionProcessor::ThreadEntryPoint, this);
+}
+
+/**
+ * Stop the transactions processor
+ */
+inline void TransactionProcessor::Stop()
+{
+  running_ = false;
+  if (poll_new_tx_thread_)
+  {
+    poll_new_tx_thread_->join();
+    poll_new_tx_thread_.reset();
+  }
+
+  verifier_.Stop();
+}
+
+/**
+ * Add a single transaction to the processor
+ *
+ * @param tx The reference to the new transaction to be processed
+ */
+inline void TransactionProcessor::AddTransaction(MutableTransaction const &mtx)
+{
+  verifier_.AddTransaction(mtx);
+}
+
+/**
+ * Add a single transaction to the processor
+ *
+ * @param tx The reference to the new transaction to be processed
+ */
+inline void TransactionProcessor::AddTransaction(MutableTransaction &&mtx)
+{
+  verifier_.AddTransaction(std::move(mtx));
+}
 
 }  // namespace ledger
 }  // namespace fetch

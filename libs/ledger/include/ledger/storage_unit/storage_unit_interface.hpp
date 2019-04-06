@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@
 #include "ledger/chain/transaction.hpp"
 #include "storage/document.hpp"
 #include "storage/resource_mapper.hpp"
+
+#include <vector>
 
 namespace fetch {
 namespace ledger {
@@ -45,8 +47,10 @@ public:
 class StorageUnitInterface : public StorageInterface
 {
 public:
-  using hash_type     = byte_array::ConstByteArray;
-  using bookmark_type = uint64_t;  // TODO(issue 33): From keyvalue index
+  using Hash            = byte_array::ConstByteArray;
+  using TransactionList = std::vector<Transaction>;
+  using ConstByteArray  = byte_array::ConstByteArray;
+  using TxSummaries     = std::vector<TransactionSummary>;
 
   // Construction / Destruction
   StorageUnitInterface()          = default;
@@ -54,15 +58,28 @@ public:
 
   /// @name Transaction Interface
   /// @{
-  virtual void AddTransaction(chain::Transaction const &tx)                                     = 0;
-  virtual bool GetTransaction(byte_array::ConstByteArray const &digest, chain::Transaction &tx) = 0;
+  virtual void AddTransaction(Transaction const &tx)                         = 0;
+  virtual bool GetTransaction(ConstByteArray const &digest, Transaction &tx) = 0;
+  virtual bool HasTransaction(ConstByteArray const &digest)                  = 0;
+
+  virtual void AddTransactions(TransactionList const &txs)
+  {
+    for (auto const &tx : txs)
+    {
+      AddTransaction(tx);
+    }
+  }
   /// @}
+
+  virtual TxSummaries PollRecentTx(uint32_t) = 0;
 
   /// @name Revertible Document Store Interface
   /// @{
-  virtual hash_type Hash()                                = 0;
-  virtual void      Commit(bookmark_type const &bookmark) = 0;
-  virtual void      Revert(bookmark_type const &bookmark) = 0;
+  virtual Hash CurrentHash()                                  = 0;
+  virtual Hash LastCommitHash()                               = 0;
+  virtual bool RevertToHash(Hash const &hash, uint64_t index) = 0;
+  virtual Hash Commit(uint64_t index)                         = 0;
+  virtual bool HashExists(Hash const &hash, uint64_t index)   = 0;
   /// @}
 };
 

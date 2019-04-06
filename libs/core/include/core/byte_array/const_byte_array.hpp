@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/common.hpp"
 #include "core/logger.hpp"
 #include "vectorise/memory/shared_array.hpp"
 #include <algorithm>
@@ -51,17 +52,25 @@ public:
   };
 
   ConstByteArray() = default;
-  explicit ConstByteArray(std::size_t const &n) { Resize(n); }
+
+  explicit ConstByteArray(std::size_t const &n)
+  {
+    Resize(n);
+  }
 
   ConstByteArray(char const *str)
-  {
-    assert(str != nullptr);
+    : ConstByteArray{reinterpret_cast<uint8_t const *>(str), str ? std::strlen(str) : 0}
+  {}
 
-    std::size_t n = strlen(str);
-    Reserve(n);
-    Resize(n);
-    uint8_t const *up = reinterpret_cast<uint8_t const *>(str);
-    for (std::size_t i = 0; i < n; ++i) data_[i] = up[i];
+  ConstByteArray(container_type const *const data, std::size_t const &size)
+  {
+    if (size > 0)
+    {
+      assert(data != nullptr);
+      Reserve(size);
+      Resize(size);
+      WriteBytes(data, size);
+    }
   }
 
   ConstByteArray(std::initializer_list<container_type> l)
@@ -74,26 +83,57 @@ public:
     }
   }
 
-  ConstByteArray(std::string const &s) : ConstByteArray(s.c_str()) {}
+  ConstByteArray(std::string const &s)
+    : ConstByteArray(reinterpret_cast<uint8_t const *>(s.data()), s.size())
+  {}
+
   ConstByteArray(self_type const &other) = default;
+  ConstByteArray(self_type &&other)      = default;
+  // TODO(pbukva): (private issue #229: confusion what method does without analysing implementation
+  // details - absolute vs relative[against `other.start_`] size)
   ConstByteArray(self_type const &other, std::size_t const &start, std::size_t const &length)
-    : data_(other.data_), start_(start), length_(length)
+    : data_(other.data_)
+    , start_(start)
+    , length_(length)
+    , arr_pointer_(data_.pointer() + start_)
   {
     assert(start_ + length_ <= data_.size());
-    arr_pointer_ = data_.pointer() + start_;
   }
+
+  ConstByteArray &operator=(ConstByteArray const &) = default;
+  ConstByteArray &operator=(ConstByteArray &&other) = default;
 
   ConstByteArray Copy() const
   {
-    ConstByteArray ret;
-    ret.Resize(size());
-    for (std::size_t i = 0; i < size(); ++i) ret[i] = this->operator[](i);
-    return ret;
+    return ConstByteArray{pointer(), size()};
+  }
+
+  void WriteBytes(container_type const *const src, std::size_t const &src_size,
+                  std::size_t const &dest_offset = 0)
+  {
+    assert(dest_offset + src_size <= size());
+    std::memcpy(pointer() + dest_offset, src, src_size);
+  }
+
+  void ReadBytes(container_type *const dest, std::size_t const &dest_size,
+                 std::size_t const &src_offset = 0) const
+  {
+    if (src_offset + dest_size > size())
+    {
+      FETCH_LOG_WARN("ConstByteArray",
+                     "ReadBytes target array is too big for us to fill. dest_size=", dest_size,
+                     " src_offset=", src_offset, " size=", size());
+      throw std::range_error("ReadBytes target array is too big");
+    }
+    std::memcpy(dest, pointer() + src_offset, dest_size);
   }
 
   ~ConstByteArray() = default;
 
-  explicit operator std::string() const { return {char_pointer(), length_}; }
+  explicit operator std::string() const
+  {
+    return {char_pointer(), length_};
+  }
 
   container_type const &operator[](std::size_t const &n) const
   {
@@ -107,85 +147,147 @@ public:
     std::size_t i = 0;
     for (; i < n; ++i)
     {
-      if (arr_pointer_[i] != other.arr_pointer_[i]) break;
+      if (arr_pointer_[i] != other.arr_pointer_[i])
+      {
+        break;
+      }
     }
-    if (i < n) return arr_pointer_[i] < other.arr_pointer_[i];
+    if (i < n)
+    {
+      return arr_pointer_[i] < other.arr_pointer_[i];
+    }
     return length_ < other.length_;
   }
 
-  bool operator>(self_type const &other) const { return other < (*this); }
+  bool operator>(self_type const &other) const
+  {
+    return other < (*this);
+  }
 
   bool operator==(self_type const &other) const
   {
-    if (other.size() != size()) return false;
+    if (other.size() != size())
+    {
+      return false;
+    }
     bool ret = true;
-    for (std::size_t i = 0; i < length_; ++i) ret &= (arr_pointer_[i] == other.arr_pointer_[i]);
+    for (std::size_t i = 0; i < length_; ++i)
+    {
+      ret &= (arr_pointer_[i] == other.arr_pointer_[i]);
+    }
     return ret;
   }
 
-  bool operator!=(self_type const &other) const { return !(*this == other); }
+  bool operator!=(self_type const &other) const
+  {
+    return !(*this == other);
+  }
 
-  std::size_t capacity() const { return data_.size() == 0 ? 0 : data_.size() - 1; }
+  std::size_t capacity() const
+  {
+    return data_.size();
+  }
 
   bool operator==(char const *str) const
   {
     std::size_t i = 0;
-    while ((str[i] != '\0') && (i < length_) && (str[i] == arr_pointer_[i])) ++i;
+    while ((str[i] != '\0') && (i < length_) && (str[i] == arr_pointer_[i]))
+    {
+      ++i;
+    }
     return (str[i] == '\0') && (i == length_);
   }
 
-  bool operator==(std::string const &s) const { return (*this) == s.c_str(); }
+  bool operator==(std::string const &s) const
+  {
+    return (*this) == s.c_str();
+  }
 
-  bool operator!=(char const *str) const { return !(*this == str); }
+  bool operator!=(char const *str) const
+  {
+    return !(*this == str);
+  }
 
+public:
   self_type SubArray(std::size_t const &start, std::size_t length = std::size_t(-1)) const
   {
-    length = std::min(length, length_ - start);
-    assert(start + length <= start_ + length_);
-    return self_type(*this, start + start_, length);
+    return SubArray<self_type>(start, length);
   }
 
   bool Match(self_type const &str, std::size_t pos = 0) const
   {
     std::size_t p = 0;
-    while ((pos < length_) && (p < str.size()) && (str[p] == arr_pointer_[pos])) ++pos, ++p;
+    while ((pos < length_) && (p < str.size()) && (str[p] == arr_pointer_[pos]))
+    {
+      ++pos, ++p;
+    }
     return (p == str.size());
   }
 
   bool Match(container_type const *str, std::size_t pos = 0) const
   {
     std::size_t p = 0;
-    while ((pos < length_) && (str[p] != '\0') && (str[p] == arr_pointer_[pos])) ++pos, ++p;
+    while ((pos < length_) && (str[p] != '\0') && (str[p] == arr_pointer_[pos]))
+    {
+      ++pos, ++p;
+    }
     return (str[p] == '\0');
   }
 
   std::size_t Find(char const &c, std::size_t pos) const
   {
-    while ((pos < length_) && (c != arr_pointer_[pos])) ++pos;
-    if (pos >= length_) return NPOS;
+    while ((pos < length_) && (c != arr_pointer_[pos]))
+    {
+      ++pos;
+    }
+    if (pos >= length_)
+    {
+      return NPOS;
+    }
     return pos;
   }
 
-  std::size_t const &   size() const { return length_; }
-  container_type const *pointer() const { return arr_pointer_; }
+  std::size_t const &size() const
+  {
+    return length_;
+  }
 
-  char const *char_pointer() const { return reinterpret_cast<char const *>(arr_pointer_); }
+  bool empty() const
+  {
+    return 0 == length_;
+  }
+
+  container_type const *pointer() const
+  {
+    return arr_pointer_;
+  }
+
+  char const *char_pointer() const
+  {
+    return reinterpret_cast<char const *>(arr_pointer_);
+  }
 
   self_type operator+(self_type const &other) const
   {
     self_type ret;
-
-    std::size_t n = 0, i = 0;
-    ret.Resize(size() + other.size());
-    for (; n < size(); ++n) ret[n] = this->operator[](n);
-    for (; n < ret.size(); ++n, ++i) ret[n] = other[i];
-
+    ret.Append(*this, other);
     return ret;
   }
 
-  int AsInt() const { return atoi(reinterpret_cast<char const *>(arr_pointer_)); }
+  int AsInt() const
+  {
+    std::string const value = static_cast<std::string>(*this);
+    return atoi(value.c_str());
+  }
 
-  double AsFloat() const { return atof(reinterpret_cast<char const *>(arr_pointer_)); }
+  double AsFloat() const
+  {
+    std::string const value = static_cast<std::string>(*this);
+    return atof(value.c_str());
+  }
+
+  ConstByteArray ToBase64() const;
+  ConstByteArray ToHex() const;
 
   // Non-const functions go here
   void FromByteArray(self_type const &other, std::size_t const &start, std::size_t length)
@@ -196,55 +298,191 @@ public:
     arr_pointer_ = data_.pointer() + start_;
   }
 
+  bool IsUnique() const noexcept
+  {
+    return data_.IsUnique();
+  }
+
+  uint64_t UseCount() const noexcept
+  {
+    return data_.UseCount();
+  }
+
 protected:
+  template <typename RETURN_TYPE = self_type>
+  RETURN_TYPE SubArray(std::size_t const &start, std::size_t length = std::size_t(-1)) const
+  {
+    length = std::min(length, length_ - start);
+    assert(start + length <= start_ + length_);
+    return RETURN_TYPE(*this, start + start_, length);
+  }
+
   container_type &operator[](std::size_t const &n)
   {
     assert(n < length_);
     return arr_pointer_[n];
   }
 
-  void Resize(std::size_t const &n)
+  /**
+   * Resizes the array and allocates ammount of memory necessary to contain the requested size.
+   * Memory allocation is handled by the @ref Reserve() method.
+   *
+   * Please be NOTE, that this method operates in SIZE space, which is always RELATIVE
+   * against the @ref start_ offset (as contrary to CAPACITY space - see the @ref Reserve() method)
+   * Also, this method can operate in two modes - absolute(default) and relative, please see
+   * description for @ref resize_paradigm parameter for more details
+   *
+   * @param n Requested size, is relative or absolute depending on the @ref resize_paradigm
+   * parameter
+   *
+   * @param resize_paradigm Defines mode of resize operation. When set to ABSOLUTE value, array size
+   * is going to be se to @ref n value. When set to RELATIVE value, array SIZE is going to be se to
+   * original_size + n. Where new resulting SIZE is internally still relative to the internal start_
+   * offset in BOTH cases (relative and absolute).
+   *
+   * @zero_reserved_space If true then the ammount of new memory reserved/allocated (if any) ABOVE
+   * of already allocated will be zeroed byte by byte.
+   */
+  void Resize(std::size_t const &n, ResizeParadigm const resize_paradigm = ResizeParadigm::ABSOLUTE,
+              bool const zero_reserved_space = true)
   {
-    if (data_.size() < n) Reserve(n);
-    length_ = n;
+    std::size_t new_length{0};
+
+    switch (resize_paradigm)
+    {
+    case ResizeParadigm::RELATIVE:
+      new_length = length_ + n;
+      break;
+
+    case ResizeParadigm::ABSOLUTE:
+      new_length = n;
+      break;
+    }
+
+    auto const new_capacity_for_reserve = start_ + new_length;
+
+    Reserve(new_capacity_for_reserve, ResizeParadigm::ABSOLUTE, zero_reserved_space);
+    length_ = new_length;
   }
 
-  void Reserve(std::size_t const &n)
+  /**
+   * Reserves (allocates) requested ammount of memory IF it is more than already allocated.
+   *
+   * Please be NOTE, that this method operates in CAPACITY space, which is defined by WHOLE
+   * allocated size of underlying data buffer.
+   *
+   * @param n Requested capacity, is relative or absolute depending on the @ref resize_paradigm
+   * parameter
+   *
+   * @param resize_paradigm Defines mode of resize operation. When set to ABSOLUTE value, then
+   * CAPACITY of WHOLE underlying array (allocated memory) is going to be set to @ref n value IF
+   * requested @ref n value is bigger than current CAPACITY of the the array. When set to RELATIVE
+   * value, then capacity of of WHOLE underlying array (allocated memory) is going to be set to
+   * current_capacity + n, what ALWAYS resuts to re-allocation since the requested CAPACITY is
+   * always bigger then the current one.
+   *
+   * @zero_reserved_space If true then the ammount of new memory reserved/allocated (if any) ABOVE
+   * of already allocated will be zeroed byte by byte.
+   */
+  void Reserve(std::size_t const &  n,
+               ResizeParadigm const resize_paradigm     = ResizeParadigm::ABSOLUTE,
+               bool const           zero_reserved_space = true)
   {
-    if (n <= data_.size())
+    std::size_t new_capacity_for_reserve{0};
+
+    switch (resize_paradigm)
+    {
+    case ResizeParadigm::RELATIVE:
+      new_capacity_for_reserve = data_.size() + n;
+      break;
+
+    case ResizeParadigm::ABSOLUTE:
+      new_capacity_for_reserve = n;
+      break;
+    }
+
+    if (new_capacity_for_reserve <= data_.size())
     {
       return;
     }
 
-    assert(n != 0);
+    assert(new_capacity_for_reserve != 0);
 
-    shared_array_type newdata(n);
-    newdata.SetAllZero();
-
-    std::size_t M = std::min(n, data_.size());
-    std::memcpy(newdata.pointer(), data_.pointer(), M);
+    shared_array_type newdata(new_capacity_for_reserve);
+    std::memcpy(newdata.pointer(), data_.pointer(), data_.size());
+    if (zero_reserved_space)
+    {
+      newdata.SetZeroAfter(data_.size());
+    }
 
     data_        = newdata;
     arr_pointer_ = data_.pointer() + start_;
   }
 
-  container_type *pointer() { return arr_pointer_; }
+  container_type *pointer()
+  {
+    return arr_pointer_;
+  }
 
-  char *char_pointer() { return reinterpret_cast<char *>(data_.pointer()); }
+  char *char_pointer()
+  {
+    return reinterpret_cast<char *>(data_.pointer());
+  }
+
+  template <typename... Arg>
+  self_type &Append(Arg const &... others)
+  {
+    AppendInternal(size(), others...);
+    return *this;
+  }
+
+  std::size_t Replace(char const &what, char const &with)
+  {
+    std::size_t num_of_replacements = 0;
+    std::size_t pos                 = 0;
+    while (pos < length_)
+    {
+      pos = Find(what, pos);
+      if (pos == NPOS)
+      {
+        break;
+      }
+
+      (*this)[pos] = static_cast<container_type>(with);
+      ++num_of_replacements;
+    }
+    return num_of_replacements;
+  }
+
+private:
+  void AppendInternal(std::size_t const acc_size)
+  {
+    Resize(acc_size);
+  }
+
+  // TODO(pbukva) (private issue #257)
+  template <typename... Arg>
+  void AppendInternal(std::size_t const acc_size, self_type const &other, Arg const &... others)
+  {
+    AppendInternal(acc_size + other.size(), others...);
+    std::memcpy(pointer() + acc_size, other.pointer(), other.size());
+  }
 
   template <typename T>
   friend void fetch::serializers::Deserialize(T &serializer, ConstByteArray &s);
 
-private:
   shared_array_type data_;
-  container_type *  arr_pointer_ = nullptr;
   std::size_t       start_ = 0, length_ = 0;
+  container_type *  arr_pointer_ = nullptr;
 };
 
 inline std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)
 {
   char const *arr = reinterpret_cast<char const *>(str.pointer());
-  for (std::size_t i = 0; i < str.size(); ++i) os << arr[i];
+  for (std::size_t i = 0; i < str.size(); ++i)
+  {
+    os << arr[i];
+  }
   return os;
 }
 
