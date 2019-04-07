@@ -46,7 +46,7 @@ template <typename ArrayType>
     ret.data().in_parallel().Apply(r,
                                    [](typename ArrayType::vector_register_type const &x,
                                       typename ArrayType::vector_register_type const &y,
-                                      typename ArrayType::vector_register_type &      z) { z = x + y; },
+                                      typename ArrayType::vector_register_type &z) { z = x + y; },
                                    array1.data(), array2.data());
   }
 }
@@ -468,7 +468,7 @@ meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &obj1, ArrayType c
     ret.data().in_parallel().Apply(r,
                                    [](typename ArrayType::vector_register_type const &x,
                                       typename ArrayType::vector_register_type const &y,
-                                      typename ArrayType::vector_register_type &      z) { z = x * y; },
+                                      typename ArrayType::vector_register_type &z) { z = x * y; },
                                    obj1.data(), obj2.data());
   }
 }

@@ -86,7 +86,7 @@ public:
           BlockType copy = block;
           this->SyncBlock(copy);
         }}
-	    .detach();
+            .detach();
       }
     }
   }
