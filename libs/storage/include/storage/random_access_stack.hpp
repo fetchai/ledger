@@ -510,9 +510,9 @@ private:
     }
   }
 
-  static std::fstream::pos_type Location(std::fstream::pos_type index) noexcept
+  static std::fstream::pos_type Location(std::size_t index) noexcept
   {
-    return index * sizeof(type) + Header::size();
+    return static_cast<std::streamoff>(index * sizeof(type) + Header::size());
   }
 };
 }  // namespace storage

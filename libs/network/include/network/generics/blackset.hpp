@@ -337,11 +337,11 @@ public:
   {
     persistence_.Populate(banned_, suspended_);
   }
-  Cache(Cache &&) noexcept(type_util::AnyV<std::is_nothrow_move_constructible, Persistence, Banned,
+  Cache(Cache &&) noexcept(type_util::AllV<std::is_nothrow_move_constructible, Persistence, Banned,
                                            Suspended>) = default;
 
   Cache &operator=(Cache &&) noexcept(
-      type_util::AnyV<std::is_nothrow_move_assignable, Persistence, Banned, Suspended>) = default;
+      type_util::AllV<std::is_nothrow_move_assignable, Persistence, Banned, Suspended>) = default;
 
   template <typename... Args>
   void Blacklist(Args &&... args)
@@ -490,7 +490,7 @@ public:
       }
       else
       {
-        Timepoint then{Clock::from_time_t(kv.second)};
+        Timepoint then{Clock::from_time_t(static_cast<std::time_t>(kv.second))};
         if (then > now)
         {
           suspended.emplace(kv.first, then);
