@@ -510,7 +510,7 @@ private:
     }
   }
 
-  static constexpr std::fstream::pos_type Location(std::fstream::pos_type index) noexcept
+  static std::fstream::pos_type Location(std::fstream::pos_type index) noexcept
   {
     return index * sizeof(type) + Header::size();
   }
