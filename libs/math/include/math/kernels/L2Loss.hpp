@@ -38,7 +38,7 @@ inline typename memory::VectorSlice<T, S>::type L2Loss(memory::VectorSlice<T, S>
                                   vector_register_type d = x - y;
                                   return d * d;
                                 },
-				b);
+                                b);
   l2loss /= 2;
   return l2loss;
 }
