@@ -147,7 +147,7 @@ public:
     return *this;
   }
 
-  BigUnsigned &operator<<=(std::size_t const &n)
+  BigUnsigned &operator<<=(std::size_t n)
   {
     std::size_t bits  = n & 7;
     std::size_t bytes = n >> 3;
@@ -177,7 +177,7 @@ public:
     return *this;
   }
 
-  uint8_t operator[](std::size_t const &n) const
+  uint8_t operator[](std::size_t n) const
   {
     return super_type::operator[](n);
   }

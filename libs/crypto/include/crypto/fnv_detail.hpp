@@ -84,7 +84,7 @@ template <typename FNV_CONFIG = FNVConfig_size_t, eFnvAlgorithm ALGORITHM = eFnv
 struct FNVAlgorithm
 {
   static void update(typename FNV_CONFIG::number_type &context, uint8_t const *data_to_hash,
-                     std::size_t const &size);
+                     std::size_t size);
   static void reset(typename FNV_CONFIG::number_type &context);
 };
 
@@ -92,7 +92,7 @@ template <typename FNV_CONFIG>
 struct FNVAlgorithm<FNV_CONFIG, eFnvAlgorithm::fnv1a>
 {
   static void update(typename FNV_CONFIG::number_type &context, uint8_t const *data_to_hash,
-                     std::size_t const &size)
+                     std::size_t size)
   {
     for (std::size_t i = 0; i < size; ++i)
     {
@@ -111,7 +111,7 @@ template <typename FNV_CONFIG>
 struct FNVAlgorithm<FNV_CONFIG, eFnvAlgorithm::fnv1>
 {
   static void update(typename FNV_CONFIG::number_type &context, uint8_t const *data_to_hash,
-                     std::size_t const &size)
+                     std::size_t size)
   {
     for (std::size_t i = 0; i < size; ++i)
     {
@@ -130,7 +130,7 @@ template <typename FNV_CONFIG>
 struct FNVAlgorithm<FNV_CONFIG, eFnvAlgorithm::fnv0_deprecated>
 {
   static void update(typename FNV_CONFIG::number_type &context, uint8_t const *data_to_hash,
-                     std::size_t const &size)
+                     std::size_t size)
   {
     FNVAlgorithm<FNV_CONFIG, eFnvAlgorithm::fnv1>::update(context, data_to_hash, size);
   }
@@ -158,7 +158,7 @@ public:
     reset();
   }
 
-  void update(uint8_t const *data_to_hash, std::size_t const &size)
+  void update(uint8_t const *data_to_hash, std::size_t size)
   {
     FNVAlgorithm<base_type, ALGORITHM>::update(context_, data_to_hash, size);
   }

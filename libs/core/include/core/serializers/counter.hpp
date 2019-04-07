@@ -123,7 +123,7 @@ public:
     return this->operator<<(val);
   }
 
-  void seek(std::size_t const &p)
+  void seek(std::size_t p)
   {
     pos_ = p;
   }

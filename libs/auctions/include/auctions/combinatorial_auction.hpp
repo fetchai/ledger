@@ -44,7 +44,7 @@ public:
   }
 
   void                       BuildGraph();
-  void                       SelectBid(std::size_t const &bid);
+  void                       SelectBid(std::size_t bid);
   Value                      TotalBenefit();
   fetch::math::Tensor<Value> Couplings();
   ErrorCode                  Execute() override;

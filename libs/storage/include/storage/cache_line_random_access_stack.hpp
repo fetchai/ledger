@@ -319,9 +319,6 @@ private:
   mutable uint64_t                           last_removed_index_ = 0;
   uint64_t                                   objects_            = 0;
 
-  static_assert(sizeof(typename decltype(data_)::value_type) <= memory_limit_bytes_
-		, "Insufficient memory limit for this type");
-
   void FlushLine(uint64_t line, CachedDataItem const &items) const
   {
     if (items.writes == 0)
@@ -354,7 +351,7 @@ private:
     using MapElement = typename Map::value_type;
 
     // Note: this cache's contents can possibly take at most 500K + sizeof(MapElement)
-    if (data_.size() * sizeof(MapElement) > memory_limit_bytes_;)
+    if (data_.size() * sizeof(MapElement) > memory_limit_bytes_)
     {
       // Find and remove next index up from the last one we removed
       for (auto next_to_remove = data_.upper_bound(last_removed_index_);

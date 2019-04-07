@@ -38,7 +38,7 @@ public:
     : Pool(2 * std::thread::hardware_concurrency())
   {}
 
-  Pool(std::size_t const &n, std::string name = std::string{})
+  Pool(std::size_t n, std::string name = std::string{})
     : name_{std::move(name)}
   {
     for (std::size_t i = 0; i < n; ++i)

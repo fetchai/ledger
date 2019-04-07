@@ -73,7 +73,7 @@ public:
   }
 
   template <typename G>
-  static G dsp_sum(G const *a, std::size_t const &n)
+  static G dsp_sum(G const *a, std::size_t n)
   {
     G ret(0);
     for (std::size_t i = 0; i < n; ++i)
@@ -84,7 +84,7 @@ public:
   }
 
   template <typename G>
-  static G dsp_sum_of_product(G const *a, G const *b, std::size_t const &n)
+  static G dsp_sum_of_product(G const *a, G const *b, std::size_t n)
   {
     T ret(0);
     for (std::size_t i = 0; i < n; ++i)

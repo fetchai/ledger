@@ -74,7 +74,7 @@ public:
   void Insert(type const &element)
   {}
 
-  void Erase(std::size_t const &pos)
+  void Erase(std::size_t pos)
   {}
 
   void PushBack(type const &element)
@@ -87,7 +87,7 @@ public:
     super_type::pop_back();
   }
 
-  void Resize(std::size_t const &n)
+  void Resize(std::size_t n)
   {
     super_type::resize(n);
   }

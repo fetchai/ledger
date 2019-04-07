@@ -27,8 +27,8 @@ class StreamHasher
 {
 public:
   virtual void        Reset()                                                      = 0;
-  virtual bool        Update(uint8_t const *data_to_hash, std::size_t const &size) = 0;
-  virtual void        Final(uint8_t *hash, std::size_t const &size)                = 0;
+  virtual bool        Update(uint8_t const *data_to_hash, std::size_t size) = 0;
+  virtual void        Final(uint8_t *hash, std::size_t size)                = 0;
   virtual std::size_t GetSizeInBytes() const                                       = 0;
 
   bool                  Update(byte_array::ConstByteArray const &data);

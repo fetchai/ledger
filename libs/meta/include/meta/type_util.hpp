@@ -104,26 +104,57 @@ static constexpr auto IsAnyOfV = IsAnyOf<T, Ts...>::value;
 
 // Little pack utilities
 
-template<class F, class RetVal>
-inline constexpr auto FoldL(F &&, RetVal &&retVal)
-	noexcept(std::is_nothrow_move_constructible<RetVal>::value)
+template<class F, class... Args> struct InvokeResult
 {
-  return std::forward<RetVal>(retVal);
+	using type = decltype(std::declval<F>()(std::declval<Args>()...));
+};
+template<class F, class... Args> using InvokeResultT = typename InvokeResult<F, Args...>::type;
+
+namespace impl_ {
+
+template<class F, class H, class... Ts> struct FoldL;
+template<class F, class H, class... Ts> using FoldLResultT = typename FoldL<F, H, Ts...>::type;
+
+template<class F, class Car, class Cadr, class... Cddr> struct FoldL<F, Car, Cadr, Cddr...>
+{
+	using type = FoldLResultT<F, InvokeResultT<F, Car, Cadr>, Cddr...>;
+	static type call(F &&f, Car &&car, Cadr &&cadr, Cddr &&...cddr)
+		noexcept(noexcept(FoldL<F, InvokeResultT<F, Car, Cadr>, Cddr...>::call(
+			std::forward<F>(f), f(std::forward<Car>(car), std::forward<Cadr>(cadr)), std::forward<Cddr>(cddr)...)))
+	{
+		// no std::invoke yet
+		return FoldL<F, InvokeResultT<F, Car, Cadr>, Cddr...>::call(
+			std::forward<F>(f), f(std::forward<Car>(car), std::forward<Cadr>(cadr)), std::forward<Cddr>(cddr)...);
+	}
+};
+
+template<class F, class First, class Last> struct FoldL<F, First, Last>
+{
+	using type = InvokeResultT<F, First, Last>;
+	static type call(F &&f, First &&first, Last &&last)
+		noexcept(noexcept(std::forward<F>(f)(std::forward<First>(first), std::forward<Last>(last))))
+	{
+		return std::forward<F>(f)(std::forward<First>(first), std::forward<Last>(last));
+	}
+};
+
+template<class F, class Only> struct FoldL<F, Only>
+{
+	using type = std::remove_reference_t<Only>;
+	static type call(F &&, Only &&only)
+		noexcept(std::is_nothrow_move_constructible<Only>::value)
+	{
+		return std::forward<Only>(only);
+	}
+};
+
 }
 
-template<class F, class First, class Last>
-inline constexpr auto FoldL(F &&f, First &&first, Last &&last)
-	noexcept(noexcept(std::forward<F>(f)(std::forward<First>(first), std::forward<Last>(last))))
+template<class F, class H, class... Ts>
+inline constexpr auto FoldL(F &&f, H &&h, Ts &&...ts)
+	noexcept(noexcept(impl_::FoldL<F, H, Ts...>::call(std::forward<F>(f), std::forward<H>(h), std::forward<Ts>(ts)...)))
 {
-  return std::forward<F>(f)(std::forward<First>(first), std::forward<Last>(last));
-}
-
-template<class F, class Car, class Cadr, class... Cddr>
-inline constexpr auto FoldL(F &&f, Car &&car, Cadr &&cadr, Cddr &&...cddr)
-	noexcept(noexcept(FoldL(f, f(std::forward<Car>(car), std::forward<Cadr>(cadr)), std::forward<Cddr>(cddr)...)))
-{
-  // no std::invoke yet
-  return FoldL(f, f(std::forward<Car>(car), std::forward<Cadr>(cadr)), std::forward<Cddr>(cddr)...);
+  return impl_::FoldL<F, H, Ts...>::call(std::forward<F>(f), std::forward<H>(h), std::forward<Ts>(ts)...);
 }
 
 template<class RetVal> struct Const

@@ -392,7 +392,7 @@ public:
    * @param: j Location of the second object
    *
    */
-  void Swap(std::size_t const &i, std::size_t const &j)
+  void Swap(std::size_t i, std::size_t j)
   {
     if (i == j)
     {

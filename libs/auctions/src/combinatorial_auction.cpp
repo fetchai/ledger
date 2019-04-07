@@ -180,7 +180,7 @@ Value CombinatorialAuction::TotalBenefit()
   return reward;
 }
 
-void CombinatorialAuction::SelectBid(std::size_t const &bid)
+void CombinatorialAuction::SelectBid(std::size_t bid)
 {
   if (active_.size() != bids_.size())
   {

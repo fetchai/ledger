@@ -45,7 +45,7 @@ struct FileBlockType
     next     = UNDEFINED;
   }
 
-  FileBlockType(uint64_t const &prev, uint8_t const *bytes, std::size_t const &n = std::size_t(-1))
+  FileBlockType(uint64_t const &prev, uint8_t const *bytes, std::size_t n = std::size_t(-1))
   {
     memset(this, 0, sizeof(decltype(*this)));
     memcpy(data, bytes, std::min(n, std::size_t(BYTES)));
@@ -101,7 +101,7 @@ public:
     }
   }
 
-  FileObject(stack_type &stack, std::size_t const &position)
+  FileObject(stack_type &stack, std::size_t position)
     : stack_(stack)
     , block_number_(0)
     , byte_index_(HEADER_SIZE)

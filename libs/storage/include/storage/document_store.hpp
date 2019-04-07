@@ -76,7 +76,7 @@ public:
     {}
 
     DocumentFileImplementation(self_type *s, byte_array::ConstByteArray address,
-                               file_store_type &store, std::size_t const &pos)
+                               file_store_type &store, std::size_t pos)
       : file_object_type(store, pos)
       , address_(std::move(address))
       , store_(s)
@@ -132,7 +132,7 @@ public:
     }
 
     DocumentFile(self_type *s, byte_array::ConstByteArray const &address, file_store_type &store,
-                 std::size_t const &pos)
+                 std::size_t pos)
     {
       pointer_ = std::make_shared<DocumentFileImplementation>(s, address, store, pos);
     }

@@ -105,7 +105,7 @@ public:
     return derived_from_;
   }
 
-  std::string context(std::size_t const &n = std::size_t(-1)) const
+  std::string context(std::size_t n = std::size_t(-1)) const
   {
     if (context_.size() > n)
     {

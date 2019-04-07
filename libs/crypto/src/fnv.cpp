@@ -31,13 +31,13 @@ void FNV::Reset()
   reset();
 }
 
-bool FNV::Update(uint8_t const *data_to_hash, std::size_t const &size)
+bool FNV::Update(uint8_t const *data_to_hash, std::size_t size)
 {
   update(data_to_hash, size);
   return true;
 }
 
-void FNV::Final(uint8_t *hash, std::size_t const &size)
+void FNV::Final(uint8_t *hash, std::size_t size)
 {
   if (size < base_impl_type::size_in_bytes)
   {

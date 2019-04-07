@@ -58,7 +58,7 @@ public:
 
   static_assert(E_SIMD_COUNT == (1ull << E_LOG_SIMD_COUNT), "type does not fit in SIMD");
 
-  VectorSlice(pointer_type ptr = nullptr, std::size_t const &n = 0)
+  VectorSlice(pointer_type ptr = nullptr, std::size_t n = 0)
     : pointer_(ptr)
     , size_(n)
   {}
@@ -108,12 +108,12 @@ public:
   }
 
   template <typename R = T>
-  typename std::enable_if<std::is_pod<R>::value>::type SetZeroAfter(std::size_t const &n)
+  typename std::enable_if<std::is_pod<R>::value>::type SetZeroAfter(std::size_t n)
   {
     std::memset(pointer_ + n, 0, (padded_size() - n) * sizeof(Type));
   }
 
-  vector_slice_type slice(std::size_t const &offset, std::size_t const &length) const
+  vector_slice_type slice(std::size_t offset, std::size_t length) const
   {
     assert(std::size_t(offset / E_SIMD_COUNT) * E_SIMD_COUNT == offset);
     assert((length + offset) <= padded_size());

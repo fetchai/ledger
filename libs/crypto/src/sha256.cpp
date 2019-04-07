@@ -43,7 +43,7 @@ void SHA256::Reset()
   ResetContext(context_);
 }
 
-bool SHA256::Update(uint8_t const *data_to_hash, std::size_t const &size)
+bool SHA256::Update(uint8_t const *data_to_hash, std::size_t size)
 {
   if (!SHA256_Update(&context_, data_to_hash, size))
   {
@@ -52,7 +52,7 @@ bool SHA256::Update(uint8_t const *data_to_hash, std::size_t const &size)
   return true;
 }
 
-void SHA256::Final(uint8_t *hash, std::size_t const &size)
+void SHA256::Final(uint8_t *hash, std::size_t size)
 {
   if (size < size_in_bytes())
   {

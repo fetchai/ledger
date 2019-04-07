@@ -202,7 +202,7 @@ public:
   }
 
 public:
-  self_type SubArray(std::size_t const &start, std::size_t length = std::size_t(-1)) const
+  self_type SubArray(std::size_t start, std::size_t length = std::size_t(-1)) const
   {
     return SubArray<self_type>(start, length);
   }
@@ -300,7 +300,14 @@ protected:
   template <typename RETURN_TYPE = self_type>
   RETURN_TYPE SubArray(std::size_t start, std::size_t length = std::size_t(-1)) const
   {
-    length = std::min(length, length_ - start);
+    if (start > length_)
+    {
+      start = length_;
+    }
+    if (length > length_ - start)
+    {
+      length = length_ - start;
+    }
     assert(start + length <= start_ + length_);
     return RETURN_TYPE(*this, start + start_, length);
   }
@@ -372,7 +379,7 @@ protected:
    * @zero_reserved_space If true then the ammount of new memory reserved/allocated (if any) ABOVE
    * of already allocated will be zeroed byte by byte.
    */
-  void Reserve(std::size_t const &  n,
+  void Reserve(std::size_t   n,
                ResizeParadigm const resize_paradigm     = ResizeParadigm::ABSOLUTE,
                bool const           zero_reserved_space = true)
   {
@@ -445,13 +452,15 @@ protected:
 private:
   template<class... Others> void AppendInternal(Others &&...others)
   {
-    Resize(fetch::type_util::FoldL(std::plus<void>{}, size(), others.size()...));
+    const std::size_t sz{size()};
+
+    Resize(fetch::type_util::FoldL(std::plus<void>{}, size() + start_, others.size()...));
 
     fetch::type_util::FoldL(
 	    [this](std::size_t acc, auto &&other){
 		    std::memcpy(pointer() + acc, other.pointer(), other.size());
 		    return acc + other.size();
-	    }, size(), std::forward<Others>(others)...);
+	    }, sz, std::forward<Others>(others)...);
   }
 
   template <typename T>

@@ -58,7 +58,7 @@ void ParamsParser::Parse(int argc, char **argv)
   }
 }
 
-std::string ParamsParser::GetArg(std::size_t const &i) const
+std::string ParamsParser::GetArg(std::size_t i) const
 {
   if (i >= args_.size())
   {
@@ -68,7 +68,7 @@ std::string ParamsParser::GetArg(std::size_t const &i) const
   return args_[i];
 }
 
-std::string ParamsParser::GetArg(std::size_t const &i, std::string const &default_value) const
+std::string ParamsParser::GetArg(std::size_t i, std::string const &default_value) const
 {
   if (i >= args_.size())
   {

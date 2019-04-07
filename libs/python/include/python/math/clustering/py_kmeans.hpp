@@ -27,7 +27,7 @@ namespace clustering {
 
 template <typename A>
 inline fetch::math::clustering::ClusteringType WrapperKMeans(
-    A const &data, std::size_t const &K, std::size_t const &r_seed, std::size_t max_loops,
+    A const &data, std::size_t K, std::size_t r_seed, std::size_t max_loops,
     InitMode init_mode = InitMode::KMeansPP, std::size_t max_no_change_convergence = 10)
 {
   if (K > data.shape()[0])

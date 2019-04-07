@@ -63,12 +63,12 @@ public:
     Parse(document);
   }
 
-  script::Variant &operator[](std::size_t const &i)
+  script::Variant &operator[](std::size_t i)
   {
     return root()[i];
   }
 
-  script::Variant const &operator[](std::size_t const &i) const
+  script::Variant const &operator[](std::size_t i) const
   {
     return root()[i];
   }

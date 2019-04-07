@@ -173,64 +173,64 @@ public:
     return ret;
   }
 
-  void conditional_flip(std::size_t const &block, std::size_t const &bit, uint64_t const &base)
+  void conditional_flip(std::size_t block, std::size_t bit, uint64_t const &base)
   {
     assert((base == 1) || (base == 0));
     data_[block] ^= base << bit;
   }
 
-  void conditional_flip(std::size_t const &bit, uint64_t const &base)
+  void conditional_flip(std::size_t bit, uint64_t const &base)
   {
     conditional_flip(bit >> LOG_BITS, bit & BIT_MASK, base);
   }
 
-  void flip(std::size_t const &block, std::size_t const &bit)
+  void flip(std::size_t block, std::size_t bit)
   {
     data_[block] ^= 1ull << bit;
   }
 
-  void flip(std::size_t const &bit)
+  void flip(std::size_t bit)
   {
     flip(bit >> LOG_BITS, bit & BIT_MASK);
   }
 
-  data_type bit(std::size_t const &block, std::size_t const &b) const
+  data_type bit(std::size_t block, std::size_t b) const
   {
     assert(block < data_.size());
     return (data_[block] >> b) & 1;
   }
 
-  data_type bit(std::size_t const &b) const
+  data_type bit(std::size_t b) const
   {
     return bit(b >> LOG_BITS, b & BIT_MASK);
   }
 
-  void set(std::size_t const &block, std::size_t const &bit, uint64_t const &val)
+  void set(std::size_t block, std::size_t bit, uint64_t const &val)
   {
     uint64_t mask_bit = 1ull << bit;
     data_[block] &= ~mask_bit;
     data_[block] |= val << bit;
   }
 
-  void set(std::size_t const &bit, uint64_t const &val)
+  void set(std::size_t bit, uint64_t const &val)
   {
     set(bit >> LOG_BITS, bit & BIT_MASK, val);
   }
 
-  data_type &operator()(std::size_t const &n)
+  data_type &operator()(std::size_t n)
   {
     return data_.At(n);
   }
-  data_type const &operator()(std::size_t const &n) const
+  data_type const &operator()(std::size_t n) const
   {
     return data_.At(n);
   }
 
-  std::size_t const &size() const
+  std::size_t size() const
   {
     return size_;
   }
-  std::size_t const &blocks() const
+  std::size_t blocks() const
   {
     return blocks_;
   }
