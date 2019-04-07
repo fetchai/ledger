@@ -184,8 +184,8 @@ public:
   template <typename U, typename R, typename P>
   meta::EnableIfSame<T, meta::Decay<U>, bool> Push(U &&element, std::size_t &count,
                                                    std::chrono::duration<R, P> const &duration);
-  std::size_t Size() const;
-  bool Empty() const;
+  std::size_t                                 Size() const;
+  bool                                        Empty() const;
   /// @}
 
   // Operators

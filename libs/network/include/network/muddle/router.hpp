@@ -76,7 +76,7 @@ public:
   // Construction / Destruction
   Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher,
          Prover *certificate = nullptr, bool sign_broadcasts = false);
-  template<class... Args>
+  template <class... Args>
   Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher,
          Prover *certificate, bool sign_broadcasts, Args &&... args);
   Router(Router const &) = delete;

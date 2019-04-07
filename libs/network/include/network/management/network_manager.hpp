@@ -119,7 +119,7 @@ public:
 
   pointer_type lock()
   {
-    return is_primary()? pointer_ : weak_pointer_.lock();
+    return is_primary() ? pointer_ : weak_pointer_.lock();
   }
 
   template <typename IO, typename... Args>

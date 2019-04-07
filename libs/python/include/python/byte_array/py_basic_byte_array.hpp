@@ -52,7 +52,7 @@ void BuildConstByteArray(pybind11::module &module)
       .def(py::self == fetch::byte_array::ConstByteArray::self_type())
       .def(py::self + fetch::byte_array::ConstByteArray::self_type())
       .def("SubArray",
-           static_cast<ConstByteArray (ConstByteArray::*)(std::size_t , std::size_t) const>(
+           static_cast<ConstByteArray (ConstByteArray::*)(std::size_t, std::size_t) const>(
                &ConstByteArray::SubArray))
       .def("capacity", &ConstByteArray::capacity)
       .def("Copy", &ConstByteArray::Copy)

@@ -104,8 +104,8 @@ public:
   {
     assert(i < objects_);
 
-    uint64_t cache_lookup   = i >> cache_line_ln2;              // Upper N bits
-    uint64_t cache_subindex = i & subindex_mask;  // Lower total - N bits
+    uint64_t cache_lookup   = i >> cache_line_ln2;  // Upper N bits
+    uint64_t cache_subindex = i & subindex_mask;    // Lower total - N bits
 
     auto iter = data_.find(cache_lookup);
 
@@ -135,8 +135,8 @@ public:
   {
     assert(i < objects_);
 
-    uint64_t cache_lookup   = i >> cache_line_ln2;              // Upper N bits
-    uint64_t cache_subindex = i & subindex_mask;  // Lower total - N bits
+    uint64_t cache_lookup   = i >> cache_line_ln2;  // Upper N bits
+    uint64_t cache_subindex = i & subindex_mask;    // Lower total - N bits
 
     auto iter = data_.find(cache_lookup);
 
@@ -297,7 +297,7 @@ private:
   // Cached items
   static constexpr std::size_t cache_line_ln2  = 13;  // Default cache lines 8192 * sizeof(T)
   static constexpr std::size_t cache_line_size = 1 << cache_line_ln2;
-  static constexpr uint64_t subindex_mask      = cache_line_size - 1;
+  static constexpr uint64_t    subindex_mask   = cache_line_size - 1;
   std::size_t memory_limit_bytes_              = std::size_t(1ULL << 29);  // Default 500K memory
 
   T dummy_;
@@ -310,8 +310,8 @@ private:
 
   struct CachedDataItem
   {
-    uint64_t                              reads  = 0;
-    uint64_t                              writes = 0;
+    uint64_t                          reads  = 0;
+    uint64_t                          writes = 0;
     std::array<type, cache_line_size> elements;
   };
 
@@ -355,7 +355,7 @@ private:
     {
       // Find and remove next index up from the last one we removed
       for (auto next_to_remove = data_.upper_bound(last_removed_index_);
-	   data_.size() * sizeof(MapElement) > memory_limit_bytes_;)
+           data_.size() * sizeof(MapElement) > memory_limit_bytes_;)
       {
         if (next_to_remove == data_.end())
         {

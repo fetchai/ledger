@@ -127,7 +127,7 @@ public:
       if (write_queue_.empty())
       {
         FETCH_LOG_DEBUG(LOGGING_NAME, "Sending Message");
-	write_queue_.push_back(msg);
+        write_queue_.push_back(msg);
       }
     }
 

@@ -379,9 +379,8 @@ protected:
    * @zero_reserved_space If true then the ammount of new memory reserved/allocated (if any) ABOVE
    * of already allocated will be zeroed byte by byte.
    */
-  void Reserve(std::size_t   n,
-               ResizeParadigm const resize_paradigm     = ResizeParadigm::ABSOLUTE,
-               bool const           zero_reserved_space = true)
+  void Reserve(std::size_t n, ResizeParadigm const resize_paradigm = ResizeParadigm::ABSOLUTE,
+               bool const zero_reserved_space = true)
   {
     std::size_t new_capacity_for_reserve{0};
 
@@ -450,17 +449,19 @@ protected:
   }
 
 private:
-  template<class... Others> void AppendInternal(Others &&...others)
+  template <class... Others>
+  void AppendInternal(Others &&... others)
   {
     const std::size_t sz{size()};
 
     Resize(fetch::type_util::FoldL(std::plus<void>{}, size() + start_, others.size()...));
 
     fetch::type_util::FoldL(
-	    [this](std::size_t acc, auto &&other){
-		    std::memcpy(pointer() + acc, other.pointer(), other.size());
-		    return acc + other.size();
-	    }, sz, std::forward<Others>(others)...);
+        [this](std::size_t acc, auto &&other) {
+          std::memcpy(pointer() + acc, other.pointer(), other.size());
+          return acc + other.size();
+        },
+        sz, std::forward<Others>(others)...);
   }
 
   template <typename T>

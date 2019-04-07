@@ -567,14 +567,13 @@ protected:
     (*iters) = vector_register_iterator_type(next.pointer() + offset, size);
   }
 
-  static void InitializeVectorIterators(std::size_t  /*offset*/,
-                                        std::size_t  /*size*/,
+  static void InitializeVectorIterators(std::size_t /*offset*/, std::size_t /*size*/,
                                         vector_register_iterator_type * /*iters*/)
   {}
 
   template <typename G, typename... Args>
-  static void SetPointers(std::size_t offset, std::size_t size, type const **regs,
-                          G &next, Args &&... remaining)
+  static void SetPointers(std::size_t offset, std::size_t size, type const **regs, G &next,
+                          Args &&... remaining)
   {
 
     assert(next.size() >= offset + size);
@@ -583,14 +582,13 @@ protected:
   }
 
   template <typename G>
-  static void SetPointers(std::size_t offset, std::size_t  /*size*/,
-                          type const **regs, G &next)
+  static void SetPointers(std::size_t offset, std::size_t /*size*/, type const **regs, G &next)
   {
     // assert(next.size() >= offset + size); // Size not used
     *regs = next.pointer() + offset;
   }
 
-  static void SetPointers(std::size_t  /*offset*/, std::size_t  /*size*/,
+  static void SetPointers(std::size_t /*offset*/, std::size_t /*size*/,
                           vector_register_iterator_type * /*iters*/)
   {}
 };
