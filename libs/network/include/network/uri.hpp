@@ -182,7 +182,7 @@ template <>
 struct hash<fetch::network::Uri> : private hash<fetch::byte_array::ConstByteArray>
 {
   size_t operator()(fetch::network::Uri const &x) const
-	  noexcept(noexcept(std::declval<hash<fetch::byte_array::ConstByteArray>>()(x.uri())))
+      noexcept(noexcept(std::declval<hash<fetch::byte_array::ConstByteArray>>()(x.uri())))
   {
     return hash<fetch::byte_array::ConstByteArray>::operator()(x.uri());
   }
