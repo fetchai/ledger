@@ -49,7 +49,7 @@ TYPED_TEST(EmbeddingsTest, forward_shape)
 
 TYPED_TEST(EmbeddingsTest, forward)
 {
-  fetch::ml::ops::Embeddings<TypeParam> e(10, 6);
+  fetch::ml::ops::Embeddings<TypeParam> e(10, 6);  // 10 Datapoints, 6 Dimensions
 
   TypeParam weights(std::vector<uint64_t>({10, 6}));
 
@@ -71,7 +71,7 @@ TYPED_TEST(EmbeddingsTest, forward)
   ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({2, 6}));
 
   std::vector<int> gt{30, 31, 32, 33, 34, 35, 50, 51, 52, 53, 54, 55};
-  for (unsigned int i(0); i < 12; ++i)
+  for (unsigned int i(0); i < output.size(); ++i)
   {
     EXPECT_EQ(output.At(i), typename TypeParam::Type(gt[i]));
   }
@@ -111,5 +111,41 @@ TYPED_TEST(EmbeddingsTest, backward)
   for (unsigned int j(0); j < 12; ++j)
   {
     EXPECT_EQ(output.At(j), typename TypeParam::Type(gt[j]));
+  }
+}
+
+TYPED_TEST(EmbeddingsTest, forward_batch)
+{
+  fetch::ml::ops::Embeddings<TypeParam> e(10, 6);  // 10 Datapoints, 6 Dimensions
+
+  TypeParam weights(std::vector<uint64_t>({10, 6}));
+
+  for (unsigned int i(0); i < 10; ++i)
+  {
+    for (unsigned int j(0); j < 6; ++j)
+    {
+      weights.Set({i, j}, typename TypeParam::Type(i * 10 + j));
+    }
+  }
+
+  e.SetData(weights);
+  TypeParam input(std::vector<uint64_t>({3, 2}));
+  input.Set({0, 0}, typename TypeParam::Type(3));
+  input.Set({0, 1}, typename TypeParam::Type(5));
+  input.Set({1, 0}, typename TypeParam::Type(1));
+  input.Set({1, 1}, typename TypeParam::Type(2));
+  input.Set({2, 0}, typename TypeParam::Type(2));
+  input.Set({2, 1}, typename TypeParam::Type(5));
+  TypeParam output = e.fetch::ml::template Ops<TypeParam>::ForwardBatch(
+      std::vector<std::reference_wrapper<TypeParam const>>({input}));
+
+  ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({3, 2, 6}));
+
+  std::vector<int> gt{30, 31, 32, 33, 34, 35, 50, 51, 52, 53, 54, 55, 10, 11, 12, 13, 14, 15,
+                      20, 21, 22, 23, 24, 25, 20, 21, 22, 23, 24, 25, 50, 51, 52, 53, 54, 55};
+  ASSERT_EQ(output.size(), gt.size());
+  for (unsigned int i(0); i < output.size(); ++i)
+  {
+    EXPECT_EQ(output.At(i), typename TypeParam::Type(gt[i]));
   }
 }
