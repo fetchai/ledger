@@ -34,7 +34,7 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
 
 TYPED_TEST_CASE(TsneTests, MyTypes);
 
-TYPED_TEST(TsneTests, DISABLED_tsne_test_2d)
+TYPED_TEST(TsneTests, tsne_test_2d)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
@@ -42,7 +42,7 @@ TYPED_TEST(TsneTests, DISABLED_tsne_test_2d)
 
   SizeType RANDOM_SEED{123456};
   DataType LEARNING_RATE{500};  // (seems very high!)
-  SizeType MAX_ITERATIONS{30};
+  SizeType MAX_ITERATIONS{1};
   DataType PERPLEXITY{20};
   SizeType N_DATA_SIZE{100};
   SizeType N_INPUT_FEATURE_SIZE{3};
@@ -88,12 +88,12 @@ TYPED_TEST(TsneTests, DISABLED_tsne_test_2d)
   ASSERT_EQ(output_matrix.shape().at(0), N_DATA_SIZE);
   ASSERT_EQ(output_matrix.shape().at(1), N_OUTPUT_FEATURE_SIZE);
 
-  EXPECT_NEAR(double(output_matrix.At({0, 0})), -1.064013785364649, 1);
-  EXPECT_NEAR(double(output_matrix.At({0, 1})), -7.6949466236324255, 1);
-  EXPECT_NEAR(double(output_matrix.At({25, 0})), 7.2096322015170999, 1);
-  EXPECT_NEAR(double(output_matrix.At({25, 1})), 1.3472895208253279, 1);
-  EXPECT_NEAR(double(output_matrix.At({50, 0})), -0.66978511917211891, 1);
-  EXPECT_NEAR(double(output_matrix.At({50, 1})), 6.332879767033762, 1);
-  EXPECT_NEAR(double(output_matrix.At({99, 0})), -7.4490467472508737, 1);
-  EXPECT_NEAR(double(output_matrix.At({99, 1})), -1.076941080720619, 1);
+  EXPECT_NEAR(double(output_matrix.At({0, 0})), -0.26619809865951538, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At({0, 1})), -0.60562509298324585, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At({25, 0})), 0.34291094541549683, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At({25, 1})), 1.8279048204421997, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At({50, 0})), -4.390531063079834, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At({50, 1})), -0.99320822954177856, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At({99, 0})), 2.1976754665374756, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At({99, 1})), 2.5504453182220459, 1e-4);
 }
