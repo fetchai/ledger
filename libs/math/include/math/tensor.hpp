@@ -233,7 +233,7 @@ public:
 
   void Fill(T const &value)
   {
-    for (T &e : this)
+    for (T &e : *this)
     {
       e = value;
     }
@@ -248,7 +248,7 @@ public:
       At(i) = T(values[i]);
     }
   }
-  
+
   /////////////////
   /// Iterators ///
   /////////////////
