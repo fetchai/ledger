@@ -62,7 +62,7 @@ public:
     T buffer({28u, 28u});
     for (std::uint64_t i(0); i < 28 * 28; ++i)
     {
-      buffer.At(i) = typename T::Type(data_[cursor_][i]) / typename T::Type(256);
+      buffer.At(i) = typename T::Type(data_[index][i]) / typename T::Type(256);
     }
     uint64_t label = (uint64_t)(labels_[index]);
     return std::make_pair(label, buffer);
@@ -86,6 +86,28 @@ public:
                 << ((j % 28 == 0) ? "\n" : "");
     }
     std::cout << std::endl;
+  }
+
+  std::pair<T, T> SubsetToArray(uint64_t subset_size)
+  {
+    T ret_labels({subset_size});
+    T ret_images({subset_size, 28 * 28});
+
+    for (std::uint64_t i(0); i < subset_size; ++i)
+    {
+      ret_labels.Set({i}, static_cast<typename T::Type>(labels_[i]));
+      for (std::uint64_t j(0); j < 28 * 28; ++j)
+      {
+        ret_images.Set({i, j}, static_cast<typename T::Type>(data_[i][j]) / typename T::Type(256));
+      }
+    }
+
+    return std::make_pair(ret_images, ret_labels);
+  }
+
+  std::pair<T, T> ToArray()
+  {
+    return SubsetToArray(size_);
   }
 
 private:

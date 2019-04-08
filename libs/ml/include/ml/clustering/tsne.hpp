@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/random/lfg.hpp"
 #include "math/distance/euclidean.hpp"
 #include <core/assert.hpp>
 #include <math/fundamental_operators.hpp>
@@ -28,7 +29,6 @@
 #include <math/tensor.hpp>
 
 #include <cmath>
-#include <random>
 
 namespace fetch {
 namespace ml {
@@ -56,8 +56,8 @@ public:
   TSNE(ArrayType const &input_matrix, SizeType const &output_dimensions, DataType const &perplexity,
        SizeType const &random_seed)
   {
+    lfg_ = fetch::random::LaggedFibonacciGenerator<>{random_seed};
     ArrayType output_matrix({input_matrix.shape().at(0), output_dimensions});
-    rng_.seed(random_seed);
     RandomInitWeights(output_matrix);
     Init(input_matrix, output_matrix, perplexity);
   }
@@ -132,7 +132,7 @@ public:
       fetch::math::Subtract(output_matrix_, y_mean, output_matrix_);
 
       // Compute current value of cost function
-      std::cout << "Loss: "
+      std::cout << "Iteration " << iter << ", Loss: "
                 << static_cast<double>(
                        KlDivergence(input_symmetric_affinities_, output_symmetric_affinities_))
                 << std::endl;
@@ -238,18 +238,18 @@ private:
                                     DataType const &target_perplexity, DataType const &tolerance,
                                     SizeType const &max_tries)
   {
-
     SizeType input_data_size = input_matrix.shape().at(0);
 
     /*
      * Initialize some variables
      */
     // sum_x = sum(square(x), 1)
-    ArrayType sum_x = fetch::math::ReduceSum(fetch::math::Multiply(input_matrix, input_matrix), 1);
+    ArrayType sum_x = fetch::math::ReduceSum(fetch::math::Square(input_matrix), 1);
 
     // d= ((-2 * dot(X, X.T))+sum_x).T+sum_x
     ArrayType d =
         fetch::math::Multiply(DataType(-2), fetch::math::DotTranspose(input_matrix, input_matrix));
+
     d = fetch::math::Add(fetch::math::Add(d, sum_x).Transpose(), sum_x);
 
     // beta = 1/(2*sigma^2)
@@ -266,7 +266,6 @@ private:
      */
     for (SizeType i{0}; i < input_data_size; i++)
     {
-
       // Compute the Gaussian kernel and entropy for the current precision
       DataType inf = std::numeric_limits<DataType>::max();
 
@@ -381,7 +380,7 @@ private:
   {
     std::normal_distribution<double> distribution(static_cast<double>(mean),
                                                   static_cast<double>(standard_deviation));
-    return DataType(distribution(rng_));
+    return DataType(distribution(lfg_));
   }
 
   /**
@@ -451,10 +450,10 @@ private:
     }
   }
 
-  ArrayType                  input_matrix_, output_matrix_;
-  ArrayType                  input_pairwise_affinities_, input_symmetric_affinities_;
-  ArrayType                  output_symmetric_affinities_;
-  std::default_random_engine rng_;
+  ArrayType                                 input_matrix_, output_matrix_;
+  ArrayType                                 input_pairwise_affinities_, input_symmetric_affinities_;
+  ArrayType                                 output_symmetric_affinities_;
+  fetch::random::LaggedFibonacciGenerator<> lfg_;
 };
 
 }  // namespace ml
