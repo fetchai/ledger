@@ -184,6 +184,26 @@ pipeline {
           }
         } // gcc 7 release
 
+        stage('MacOS Release') {
+          agent {
+              label 'osx'
+          }
+
+          stages {
+            stage('Release Build') {
+              steps {
+                sh './scripts/ci-tool.py -B Release'
+              }
+            }
+
+            stage('Unit Tests') {
+              steps {
+                sh './scripts/ci-tool.py -T Release'
+              }
+            }
+          }
+        } // MacOS release
+
       } // parallel
     } // build & test
 
