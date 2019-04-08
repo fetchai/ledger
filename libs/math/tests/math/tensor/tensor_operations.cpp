@@ -32,7 +32,7 @@ TYPED_TEST_CASE(TensorOperationsTest, MyTypes);
 TYPED_TEST(TensorOperationsTest, fill_test)
 {
   std::vector<int>               values({1, 2, 3, 5, 7, 12, 19, 31, 50});
-  fetch::math::Tensor<TypeParam> t({3, 3, 3});
+  fetch::math::Tensor<TypeParam> t({3, 3});
   t.Fill(values);
   EXPECT_EQ(t.At(0), TypeParam(1));
   EXPECT_EQ(t.At(1), TypeParam(2));
