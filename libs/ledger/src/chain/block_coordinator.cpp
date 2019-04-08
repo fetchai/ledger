@@ -428,6 +428,9 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       FETCH_LOG_WARN(LOGGING_NAME, "Block certifies work that possibly is malicious (",
                      ToBase64(current_block_->body.hash), ")");
       chain_.RemoveBlock(current_block_->body.hash);
+
+      // TODO: Remove malicious DAG nodes
+
       return State::RESET;      
     }
   }
@@ -443,7 +446,7 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
 {
   bool const is_genesis = current_block_->body.previous_hash == GENESIS_DIGEST;
 
-  // Validating all work done
+  // Executing synergetic work
   if( (!is_genesis) && synergetic_contracts_enabled_)
   {
     if(!synergetic_executor_.ValidateWorkAndUpdateState())
@@ -451,6 +454,9 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
       FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (",
                      ToBase64(current_block_->body.hash), ")");
       chain_.RemoveBlock(current_block_->body.hash);
+
+      // TODO: Remove malicious DAG nodes
+
       return State::RESET;      
     }
   }
@@ -665,34 +671,24 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
 
 BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
 {
-//  State next_state{State::RESET};
-
-  /*
-  TODO
-  // Certifying the contents of the DAG.
-  dag_.SetNodeTime(next_block_->body.block_number, next_block_->body.dag_nodes);
-
-  // Preparing the work packages on the DAG
-  if(!synergetic_executor_.PrepareWorkQueue(*next_block_))
+  if(synergetic_contracts_enabled_)
   {
-    dag_.RevertTo(body.block_number - 1);
-    return State::RESET;
+    BlockPtr previous_block = chain_.GetBlock(next_block_->body.previous_hash);    
+
+    // All work is identified on the latest DAG segment and prepared in a queue
+    auto result = synergetic_executor_.PrepareWorkQueue(*previous_block, *next_block_);
+    if(SynergeticExecutor::PreparationStatusType::SUCCESS != result)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Block certifies work that possibly is malicious (",
+                     ToBase64(next_block_->body.hash), ")");
+      chain_.RemoveBlock(next_block_->body.hash);
+
+      // TODO: Remove malicious DAG nodes
+
+      return State::RESET;      
+    }
   }
 
-  // Validating the work
-  if(!synergetic_executor_.ValidateWork())
-  {
-    dag_.RevertTo(body.block_number - 1);
-    return State::RESET;    
-  }
-
-  // Updating the state based on the work
-  if(!synergetic_executor_.UpdateState())
-  {
-    dag_.RevertTo(body.block_number - 1);
-    return State::RESET;    
-  }
-  */
 
   return State::EXECUTE_NEW_BLOCK;
 }
@@ -701,6 +697,21 @@ BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
 BlockCoordinator::State BlockCoordinator::OnExecuteNewBlock()
 {
   State next_state{State::RESET};
+
+  // Executing synergetic work
+  if(synergetic_contracts_enabled_)
+  {
+    if(!synergetic_executor_.ValidateWorkAndUpdateState())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (",
+                     ToBase64(next_block_->body.hash), ")");
+      chain_.RemoveBlock(next_block_->body.hash);
+
+      // TODO: Remove malicious DAG nodes
+
+      return State::RESET;      
+    }
+  }
 
   // schedule the current block for execution
   if (ScheduleNextBlock())

@@ -7,15 +7,11 @@ Synergetic Contracts
 - ( ) Add logic to block coordinator
         - (v) DAG cerification added to coordinator
         - (v) block_coordinator.cpp, 408
-        - ( ) 632
-        - ( ) 658
-        - ( ) 748
-        - ( ) Create disable functionality        
+        - (v) Create disable functionality        
         - ( ) Streams to implement:
-          - ( ) Block generation
-          - ( ) Block validation
+          - (v) Block generation
+          - (v) Block validation
           - ( ) Roll back
-        - ( ) Add enable/disable for synergetic contracts
 - (v) Get rid of address in synergetic_contract.hpp, 32
 - (v) Move error messages to member function
 - (v) Test that a contract has one, objective functions etc.
@@ -28,13 +24,13 @@ Synergetic Contracts
 - ( ) Make contract signature validator
 
 - ( ) Add revert test 
-- ( ) Implement Revert
 - ( ) Sort things out in cpp files
 - ( ) Change namespaces to ledger instead of upow and consensus
 - ( ) Make tests path independent
 - ( ) Fix all headers with license and copyright
 - ( ) Not understood what is meant by "// TODO: Lock full contract resource" in synergetic_state_adapter.hpp, 35
 - ( ) Add support for removing malicious DAG nodes
+
 
 DAG Syncronisation
 ==================
