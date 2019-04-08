@@ -708,7 +708,7 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/
     {
       // decide the random index to access
       std::uniform_int_distribution<decltype(routing_table_)::size_type> distro(
-          0, routing_table_.size());
+          0, routing_table_.size() - 1);
       std::size_t const element = distro(rng);
 
       // advance the iterator to the correct offset
