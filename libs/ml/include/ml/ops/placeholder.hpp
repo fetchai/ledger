@@ -30,11 +30,11 @@ class PlaceHolder : public fetch::ml::ElementWiseOps<T>
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SliceType    = typename ArrayType::SliceType;
+  using ConstSliceType    = typename ArrayType::ConstSliceType;
 
   PlaceHolder() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<SliceType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<const ArrayType>> const &inputs)
   {
     ASSERT(inputs.empty());
     ASSERT(this->output_);
@@ -42,7 +42,7 @@ public:
   }
 
   virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<SliceType const>> const &inputs,
+      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.empty());

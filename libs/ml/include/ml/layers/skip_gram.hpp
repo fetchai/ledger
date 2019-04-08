@@ -45,7 +45,7 @@ public:
   using SizeType     = typename T::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
   using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
-  using SliceType    = typename ArrayType::SliceType;
+  using ConstSliceType    = typename ArrayType::ConstSliceType;
 
   SkipGram(SizeType in_size, SizeType out, SizeType embedding_size, SizeType vocab_size,
            std::string const &name = "SkipGram", WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
@@ -87,7 +87,7 @@ public:
   }
 
   // Overload that method for optimisation purposes
-  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<SliceType const>> const &inputs)
+  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<const ArrayType>> const &inputs)
   {
     std::vector<ArrayType> results;
     for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)

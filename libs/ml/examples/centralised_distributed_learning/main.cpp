@@ -74,7 +74,7 @@ public:
         g_.SetInput("Input", input.second);
         gt.Fill(0);
         gt.At(input.first)       = DataType(1.0);
-        ArrayType const &results = g_.Evaluate("Softmax").Copy();
+        ArrayType results = g_.Evaluate("Softmax").Copy();
         loss += criterion.Forward({results, gt});
         g_.BackPropagate("Softmax", criterion.Backward({results, gt}));
       }

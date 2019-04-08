@@ -165,7 +165,7 @@ public:
 
   };
 
-  using ConstTensorSlice     = TensorSliceImplementation< SelfType const >;
+  using ConstSliceType       = TensorSliceImplementation< SelfType const >;
   using SliceType            = TensorSlice;
 
   enum MAJOR_ORDER
@@ -403,7 +403,7 @@ public:
     return copy;
   }
 
-  void Assign(ConstTensorSlice const &other)
+  void Assign(ConstSliceType const &other)
   {
     auto it1 = begin();
     auto it2 = other.begin();
@@ -561,27 +561,7 @@ public:
     return true;
   }
 
-  TensorSlice Slice()
-  {
-    std::vector< std::vector< SizeType > > range;
-    for (SizeType j=0; j < shape().size(); ++j)
-    {
-      range.emplace_back({0, shape().at(j), 1});
-    }
-    TensorSlice(*this, range);
-  }
-
-  ConstTensorSlice Slice() const
-  {
-    std::vector< std::vector< SizeType > > range;
-    for (SizeType j=0; j < shape().size(); ++j)
-    {
-      range.emplace_back({0, shape().at(j), 1});
-    }
-    ConstTensorSlice(*this, range);
-  }
-
-  ConstTensorSlice Slice(SizeType i, SizeType axis = 0) const
+  ConstSliceType Slice(SizeType i, SizeType axis = 0) const
   {
     std::vector< std::vector< SizeType > > range;
 
@@ -597,7 +577,7 @@ public:
       }
     }    
 
-    return ConstTensorSlice(*this, range, axis);
+    return ConstSliceType(*this, range, axis);
   }
 
   TensorSlice Slice(SizeType i, SizeType axis = 0)
@@ -620,7 +600,7 @@ public:
     return TensorSlice(*this, range, axis);
   }
 
-  Tensor& operator=(ConstTensorSlice const &slice)
+  Tensor& operator=(ConstSliceType const &slice)
   {
     auto it1 = begin();
     auto it2 = slice.begin();
@@ -1076,6 +1056,25 @@ public:
       ++idx;
     }
     return std::numeric_limits<SizeType>::max();
+  }
+
+  /**
+   * Stack tensors resulting in a new leading dimension
+   * @tparam Tensor
+   * @param tensors
+   * @return
+   */
+  static SelfType Stack(std::vector<const SelfType> &tensors)
+  {
+    SizeVector retSize;
+    retSize.push_back(tensors.size());
+    retSize.insert(retSize.end(), tensors.front().shape().begin(), tensors.front().shape().end());
+    SelfType ret(retSize);
+    for (SizeType i(0); i < tensors.size(); ++i)
+    {
+      ret.Slice(i).Assign(tensors[i]);
+    }
+    return ret;
   }
 
 

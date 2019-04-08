@@ -35,7 +35,8 @@ class NodeInterface
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SliceType    = typename ArrayType::SliceType;
+  using SliceType  = typename ArrayType::SliceType;
+  using ConstSliceType    = typename ArrayType::ConstSliceType;
 
   virtual ArrayType const &Evaluate()                                           = 0;
   virtual void             AddInput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
@@ -51,7 +52,8 @@ class Node : public NodeInterface<T>, public O
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SliceType    = typename ArrayType::SliceType;
+  using SliceType  = typename ArrayType::SliceType;
+  using ConstSliceType    = typename ArrayType::ConstSliceType;
 
   template <typename... Params>
   Node(std::string const name, Params... params)
@@ -63,12 +65,12 @@ public:
 
   virtual ~Node() = default;
 
-  std::vector<std::reference_wrapper<const SliceType>> GatherInputs() const
+  std::vector<std::reference_wrapper<const ArrayType>> GatherInputs() const
   {
-    std::vector<std::reference_wrapper<const SliceType>> inputs;
+    std::vector<std::reference_wrapper<const ArrayType>> inputs;
     for (auto const &i : inputs_)
     {
-      inputs.push_back(i->Evaluate().Slice());
+      inputs.push_back(i->Evaluate());
     }
     return inputs;
   }
@@ -77,20 +79,20 @@ public:
   {
     if (!cachedOutputPresent_)
     {
-      std::vector<std::reference_wrapper<const SliceType>> inputs = GatherInputs();
+      std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
       FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
       if (batch_)
       {
-        cachedOutput_ = this->ForwardBatch(inputs);
+        cached_output_ = this->ForwardBatch(inputs);
       }
       else
       {
-        cachedOutput_ = this->Forward(inputs);
+        cached_output_ = this->Forward(inputs);
       }
       cachedOutputPresent_ = true;
     }
 
-    return cachedOutput_;
+    return cached_output_;
   }
 
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
@@ -140,7 +142,7 @@ public:
 private:
   std::vector<std::shared_ptr<NodeInterface<T>>> inputs_;
   std::string                                    name_;
-  ArrayType                                      cachedOutput_;
+  ArrayType                                      cached_output_;
   bool                                           cachedOutputPresent_;
   bool                                           batch_;
 };

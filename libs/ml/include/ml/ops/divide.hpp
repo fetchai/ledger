@@ -30,7 +30,7 @@ class Divide : public fetch::ml::Ops<T>
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SliceType    = typename ArrayType::SliceType;
+  using ConstSliceType    = typename ArrayType::ConstSliceType;
 
   Divide()          = default;
   virtual ~Divide() = default;

@@ -62,7 +62,7 @@ public:
   using ArrayType    = T;
   using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SliceType    = typename ArrayType::SliceType;
+  using ConstSliceType    = typename ArrayType::ConstSliceType;
 
 protected:
   ArrayPtrType gradient_accumulation_;
@@ -72,7 +72,7 @@ public:
   virtual ~Weights() = default;
 
   virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<SliceType const>> const &inputs,
+      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.empty());

@@ -29,12 +29,12 @@ class Flatten : public fetch::ml::ElementWiseOps<T>
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SliceType    = typename ArrayType::SliceType;
+  using ConstSliceType    = typename ArrayType::ConstSliceType;
 
   Flatten()          = default;
   virtual ~Flatten() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<SliceType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<const ArrayType>> const &inputs)
   {
     ASSERT(inputs.size() == 1);
     input_shape_ = inputs.front().get().shape();
@@ -45,7 +45,7 @@ public:
   }
 
   virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<SliceType const>> const &inputs,
+      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 1);

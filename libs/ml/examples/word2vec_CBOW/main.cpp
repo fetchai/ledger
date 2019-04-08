@@ -123,7 +123,7 @@ int main(int ac, char **av)
       auto data = dl.GetRandom();
 
       g.SetInput("Input", data.first);
-      ArrayType predictions = g.Evaluate("Softmax");
+      ArrayType predictions = g.Evaluate("Softmax").Copy();
       ArrayType groundTruth(predictions.shape());
       groundTruth.At(data.second) = DataType(1);
 

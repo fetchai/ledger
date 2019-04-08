@@ -45,7 +45,7 @@ using namespace fetch::ml::layers;
 
 using DataType  = float;
 using ArrayType = fetch::math::Tensor<DataType>;
-using SliceType = typename ArrayType::SliceType;
+using ConstSliceType = typename ArrayType::ConstSliceType;
 
 class TrainingClient
 {
@@ -67,7 +67,7 @@ public:
     float                        loss = 0;
     CrossEntropy<ArrayType>      criterion;
     std::pair<size_t, ArrayType> input;
-    SliceType gt = ArrayType(std::vector<typename ArrayType::SizeType>({1, 10})).Slice();
+    ArrayType gt{std::vector<typename ArrayType::SizeType>({1, 10})};
     for (unsigned int i(0); i < numberOfBatches; ++i)
     {
       loss = 0;
@@ -78,7 +78,7 @@ public:
         g_.SetInput("Input", input.second);
         gt.Fill(0);
         gt.At(input.first)       = DataType(1.0);
-        ArrayType const &results = g_.Evaluate("Softmax");
+        ArrayType results = g_.Evaluate("Softmax").Copy();
         loss += criterion.Forward({results, gt});
         g_.BackPropagate("Softmax", criterion.Backward({results, gt}));
       }

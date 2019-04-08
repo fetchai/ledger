@@ -43,7 +43,7 @@ TEST(graph_test, node_placeholder)
   }
 
   g.SetInput("Input", data);
-  ArrayType prediction = g.Evaluate("Input");
+  ArrayType prediction = g.Evaluate("Input").Copy();
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -71,7 +71,7 @@ TEST(graph_test, node_relu)
   }
 
   g.SetInput("Input", data);
-  fetch::math::Tensor<int> prediction = g.Evaluate("Relu");
+  fetch::math::Tensor<int> prediction = g.Evaluate("Relu").Copy();
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
