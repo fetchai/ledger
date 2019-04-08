@@ -88,12 +88,12 @@ TYPED_TEST(TsneTests, tsne_test_2d)
   ASSERT_EQ(output_matrix.shape().at(0), N_DATA_SIZE);
   ASSERT_EQ(output_matrix.shape().at(1), N_OUTPUT_FEATURE_SIZE);
 
-  EXPECT_NEAR(double(output_matrix.At({0, 0})), -0.84471184015274048, 1e-4);
-  EXPECT_NEAR(double(output_matrix.At({0, 1})), -2.581204891204834, 1e-4);
-  EXPECT_NEAR(double(output_matrix.At({25, 0})), -1.8412222862243652, 1e-4);
-  EXPECT_NEAR(double(output_matrix.At({25, 1})), -1.9742116928100586, 1e-4);
-  EXPECT_NEAR(double(output_matrix.At({50, 0})), -1.4187822341918945, 1e-4);
-  EXPECT_NEAR(double(output_matrix.At({50, 1})), 0.2822115421295166, 1e-4);
-  EXPECT_NEAR(double(output_matrix.At({99, 0})), -1.4122257232666016, 1e-4);
-  EXPECT_NEAR(double(output_matrix.At({99, 1})), 1.9956920146942139, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At({0, 0})), -0.26619809865951538, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At({0, 1})), -0.60562509298324585, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At({25, 0})), 0.34291094541549683, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At({25, 1})), 1.8279048204421997, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At({50, 0})), -4.390531063079834, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At({50, 1})), -0.99320822954177856, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At({99, 0})), 2.1976754665374756, 1e-4);
+  EXPECT_NEAR(double(output_matrix.At({99, 1})), 2.5504453182220459, 1e-4);
 }

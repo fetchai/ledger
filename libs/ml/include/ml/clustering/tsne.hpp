@@ -377,11 +377,10 @@ private:
    * @param standard_deviation input DataType standart deviation value of normal distribution
    * @return random DataType value
    */
-  DataType GetRandom(DataType mean, DataType standard_deviation)
+  DataType GetRandom(DataType /*mean*/, DataType /*standard_deviation*/)
   {
-    std::normal_distribution<double> distribution(static_cast<double>(mean),
-                                                  static_cast<double>(standard_deviation));
-    return DataType(distribution(rng_));
+    // TODO(issue 752): use normal distribution random instead
+    return DataType(rng_.AsDouble());
   }
 
   /**
