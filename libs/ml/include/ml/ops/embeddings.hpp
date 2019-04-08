@@ -98,8 +98,9 @@ public:
   {
     for (auto const &r : updated_rows_)
     {
-      ArrayType gradient_accumulation_slice = this->gradient_accumulation_->Slice(r);
-      ArrayType output_slice                = this->output_->Slice(r);
+      auto gradient_accumulation_slice = this->gradient_accumulation_->Slice(r).Tensor();
+      auto output_slice                = this->output_->Slice(r).Tensor();
+
       gradient_accumulation_slice.InlineMultiply(-learningRate);
       output_slice.InlineAdd(gradient_accumulation_slice);
       gradient_accumulation_slice.Fill(typename T::Type(0));

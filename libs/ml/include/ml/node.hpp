@@ -38,7 +38,7 @@ public:
   using SliceType  = typename ArrayType::SliceType;
   using ConstSliceType    = typename ArrayType::ConstSliceType;
 
-  virtual ArrayType const &Evaluate()                                           = 0;
+  virtual ArrayType &Evaluate()                                           = 0;
   virtual void             AddInput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
       ArrayType const &errorSignal) = 0;
@@ -75,7 +75,7 @@ public:
     return inputs;
   }
 
-  virtual ArrayType const &Evaluate()
+  virtual ArrayType &Evaluate()
   {
     if (!cachedOutputPresent_)
     {

@@ -594,32 +594,6 @@ void ArgMax(ArrayType const &array, ArrayType &ret, SizeType axis = NO_AXIS)
 
     }
   }
-//
-//    while(it.is_valid())
-//    {
-//      for(SizeType n{0}; n < axis_length; ++n)
-//      {
-//        auto cur_slice = array.Slice(n, 0);
-//        auto slice_it = cur_slice.begin();
-//
-//        std::cout << "cur_slice.shape(): " << cur_slice.Shape().at(0) << std::endl;
-//
-//        std::cout << "value: " << value << std::endl;
-//        std::cout << "*it: " << *it << std::endl;
-//        if(*it > value)
-//        {
-//          value = *it;
-//          position = n;
-//        }
-//        std::cout << "position: " << position << std::endl;
-//        ++it;
-//      }
-//      (*it2) = static_cast<Type>(position);
-//      ++it2;
-//
-//    }
-//  }
- 
 }
 template <typename ArrayType>
 ArrayType ArgMax(ArrayType const &array, SizeType axis = 0)
@@ -635,15 +609,9 @@ ArrayType ArgMax(ArrayType const &array, SizeType axis = 0)
   }
   else
   {
-    // 2D argmax result has size
-    if (axis == 0)
-    {
-      ret = ArrayType{{array.shape().at(axis), SizeType(1)}};
-    }
-    else
-    {
-      ret = ArrayType{{SizeType(1), array.shape().at(axis)}};
-    }
+    SizeVector ret_shape = array.shape();
+    ret_shape.erase(ret_shape.begin() + int(axis));
+    ret = ArrayType{ret_shape};
   }
 
   ArgMax(array, ret, axis);

@@ -46,9 +46,9 @@ typename ArrayType::Type CrossEntropyLoss(
 
   FETCH_UNUSED(n_classes);
 
-  assert(x.shape() == y.shape());
-  assert(x.shape().size() == 2);
-  assert(n_classes > SizeType(1));
+  ASSERT(x.shape() == y.shape());
+  ASSERT(x.shape().size() == 2);
+  ASSERT(n_classes > SizeType(1));
 
   auto n_examples = x.shape().at(0);
   auto n_dims     = x.shape().at(1);
@@ -58,12 +58,12 @@ typename ArrayType::Type CrossEntropyLoss(
   // if not a one-hot, must be binary logistic regression cost
   if (n_dims == 1)
   {
-    assert(n_classes == SizeType(2));
+    ASSERT(n_classes == SizeType(2));
 
     // TODO: Use iterators instead to be correct
     for (SizeType idx = 0; idx < n_examples; ++idx)
     {
-      assert((y.data()[idx] == DataType(1)) || (y.data()[idx] == DataType(0)));
+      ASSERT((y.data()[idx] == DataType(1)) || (y.data()[idx] == DataType(0)));
       if (y.data()[idx] == DataType(1))
       {
         ret -= Log(x.data()[idx]);
@@ -82,7 +82,7 @@ typename ArrayType::Type CrossEntropyLoss(
   // if a one-hot, could be arbitrary n_classes
   else
   {
-    ArrayType gt = ArgMax(y);  // y must be one hot - and we can ignore the zero cases
+    ArrayType gt = ArgMax(y, 1);  // y must be one hot - and we can ignore the zero cases
 
     for (SizeType idx = 0; idx < n_examples; ++idx)
     {

@@ -88,12 +88,15 @@ public:
   virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<const ArrayType>> const &inputs)
   {
     assert(inputs.size() == 1);
-    std::vector<const ArrayType> results;
-    for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
-    {
-      results.push_back(this->Forward({inputs.front().get()}));
-    }
-    return ArrayType::Stack(results);
+
+//    std::vector<const ArrayType> results;
+//    for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
+//    {
+//      results.push_back(this->Forward({inputs.front().get().Slice(b)}));
+//    }
+//    return ArrayType::Stack(results);
+
+    return inputs.front().get();
   }
 
   virtual std::vector<ArrayType> BackwardBatch(
@@ -107,8 +110,12 @@ public:
     for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
     {
       auto inputSlice = inputs.front().get().Slice(b);
-      ArrayType errorSlice = errorSignal.Slice(b);
-      auto      ret        = this->Backward({inputSlice}, errorSlice);
+      auto errorSlice = errorSignal.Slice(b);
+
+      ArrayType tmp = inputSlice.Copy();
+      ArrayType tmp2 = errorSlice.Copy();
+
+      auto      ret        = this->Backward({tmp}, tmp2);
       for (std::size_t i(0); i < ret.size(); ++i)
       {
         results[i].push_back(ret[i]);
@@ -117,7 +124,7 @@ public:
     std::vector<ArrayType> concatenatedResults;
     for (auto const &tensorList : results)
     {
-      concatenatedResults.push_back(Stack(tensorList));
+      concatenatedResults.push_back(ArrayType::Stack(tensorList));
     }
     return concatenatedResults;
   }

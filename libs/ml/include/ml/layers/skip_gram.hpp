@@ -45,7 +45,6 @@ public:
   using SizeType     = typename T::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
   using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
-  using ConstSliceType    = typename ArrayType::ConstSliceType;
 
   SkipGram(SizeType in_size, SizeType out, SizeType embedding_size, SizeType vocab_size,
            std::string const &name = "SkipGram", WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
@@ -92,11 +91,11 @@ public:
     std::vector<ArrayType> results;
     for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
     {
-      ArrayType slice_input   = inputs.front().get().Slice(b);
-      ArrayType slice_context = inputs.back().get().Slice(b);
+      ArrayType slice_input   = inputs.front().get().Slice(b).Tensor();
+      ArrayType slice_context = inputs.back().get().Slice(b).Tensor();
       results.push_back(this->Forward({slice_input, slice_context}));
     }
-    return ConcatenateTensors(results);
+    return ArrayType::Stack(results);
     //    return this->fetch::ml::Ops<T>::ForwardBatch(inputs);
   }
 

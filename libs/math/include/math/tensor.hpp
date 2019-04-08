@@ -95,6 +95,10 @@ public:
       throw std::runtime_error("TODO: not supported.");
     }
 
+    Tensor const &Tensor() const
+    {
+      return tensor_;
+    }
 
   protected:
     STensor &tensor_;
@@ -1064,12 +1068,13 @@ public:
    * @param tensors
    * @return
    */
-  static SelfType Stack(std::vector<const SelfType> &tensors)
+  template <typename TensorType>
+  static SelfType Stack(std::vector<TensorType> const &tensors)
   {
     SizeVector retSize;
     retSize.push_back(tensors.size());
     retSize.insert(retSize.end(), tensors.front().shape().begin(), tensors.front().shape().end());
-    SelfType ret(retSize);
+    TensorType ret(retSize);
     for (SizeType i(0); i < tensors.size(); ++i)
     {
       ret.Slice(i).Assign(tensors[i]);
