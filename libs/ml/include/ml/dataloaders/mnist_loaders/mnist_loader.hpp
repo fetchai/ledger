@@ -38,7 +38,8 @@ public:
     std::uint32_t recordLength(0);
     data_   = read_mnist_images(imagesFile, size_, recordLength);
     labels_ = read_mnist_labels(labelsFile, size_);
-    assert(recordLength == 28 * 28);
+    figure_size_=28*28;
+    assert(recordLength == figure_size_);
   }
 
   virtual uint64_t Size() const
@@ -60,7 +61,7 @@ public:
   std::pair<uint64_t, T> GetAtIndex(uint64_t index) const
   {
     T buffer({28u, 28u});
-    for (std::uint64_t i(0); i < 28 * 28; ++i)
+    for (std::uint64_t i(0); i < figure_size_; ++i)
     {
       buffer.At(i) = typename T::Type(data_[index][i]) / typename T::Type(256);
     }
@@ -80,7 +81,7 @@ public:
 
   void Display(T const &data) const
   {
-    for (std::uint64_t j(0); j < 784; ++j)
+    for (std::uint64_t j(0); j < figure_size_; ++j)
     {
       std::cout << (data.At(j) > typename T::Type(0.5) ? char(219) : ' ')
                 << ((j % 28 == 0) ? "\n" : "");
@@ -91,12 +92,12 @@ public:
   std::pair<T, T> SubsetToArray(uint64_t subset_size)
   {
     T ret_labels({subset_size});
-    T ret_images({subset_size, 28 * 28});
+    T ret_images({subset_size, figure_size_});
 
     for (std::uint64_t i(0); i < subset_size; ++i)
     {
       ret_labels.Set({i}, static_cast<typename T::Type>(labels_[i]));
-      for (std::uint64_t j(0); j < 28 * 28; ++j)
+      for (std::uint64_t j(0); j < figure_size_; ++j)
       {
         ret_images.Set({i, j}, static_cast<typename T::Type>(data_[i][j]) / typename T::Type(256));
       }
@@ -203,6 +204,7 @@ private:
 private:
   std::uint32_t cursor_;
   std::uint32_t size_;
+  std::uint32_t figure_size_;
 
   unsigned char **data_;
   unsigned char * labels_;
