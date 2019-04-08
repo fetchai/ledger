@@ -540,57 +540,86 @@ void PeakToPeak(ArrayType arr)
  * @return
  */
 template <typename ArrayType>
-void ArgMax(ArrayType const &array, ArrayType &ret, SizeType axis = SizeType(-1))
+void ArgMax(ArrayType const &array, ArrayType &ret, SizeType axis = NO_AXIS)
 {
+  using Type = typename ArrayType::Type;
 
-
-  // Argmax over the full array
-  if(axis == SizeType(-1))
-  {
-    Type value = std::numeric_limits< Type >::min();
+  if(axis == NO_AXIS)
+  { // Argmax over the full array
+    ASSERT(ret.size() == SizeType(1));
     SizeType position;
-
-    auto it = slice.begin();
+    auto it = array.begin();
+    Type value = std::numeric_limits< Type >::lowest();
     while(it.is_valid())
     {
       if(*it > value)
       {
         value = *it;
-        position = it->counter();
+        position = it.counter();
       }
       ++it;
     }
 
-    ret.Resize(1);
     ret[0] = static_cast<Type>(position);
   }
   else
   { // Argmax along a single axis
-    SizeType axis_length = array.shap()[axis];
+    SizeType axis_length = array.shape()[axis];
+    ASSERT(axis_length > 1);
+    ASSERT(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
 
-    auto it1 = array.begin();
-    it1->MoveAxesToFront(axis);
-    auto it2 = ret.begin();
+    ret.Fill(Type(0));
+    auto max_slice = (array.Slice(0, axis)).Copy();
 
-    while(it1.is_valid())
+    for(SizeType n{1}; n < axis_length; ++n)
     {
-      Type value = std::numeric_limits< Type >::min();
-      SizeVector position;
+      auto cur_slice = array.Slice(n, axis);
 
-      for(SizeType n=0; n < axis_length; ++n)
+      auto max_slice_it = max_slice.begin();
+      auto cur_slice_it = cur_slice.begin();
+      auto ret_it = ret.begin();
+
+
+      // check every element in the n-1 dimensional return
+      while (max_slice_it.is_valid())
       {
-        if(*it1 > value)
+        if(*cur_slice_it > *max_slice_it)
         {
-          value = *it;
-          position = n;
+          *ret_it = static_cast<Type>(n);
+          *max_slice_it = *cur_slice_it;
         }
-        ++it1;
+        ++ret_it;
+        ++cur_slice_it;
+        ++max_slice_it;
       }
 
-      (*it2) = static_cast<Type>(position);
-      ++it2;
     }
   }
+//
+//    while(it.is_valid())
+//    {
+//      for(SizeType n{0}; n < axis_length; ++n)
+//      {
+//        auto cur_slice = array.Slice(n, 0);
+//        auto slice_it = cur_slice.begin();
+//
+//        std::cout << "cur_slice.shape(): " << cur_slice.Shape().at(0) << std::endl;
+//
+//        std::cout << "value: " << value << std::endl;
+//        std::cout << "*it: " << *it << std::endl;
+//        if(*it > value)
+//        {
+//          value = *it;
+//          position = n;
+//        }
+//        std::cout << "position: " << position << std::endl;
+//        ++it;
+//      }
+//      (*it2) = static_cast<Type>(position);
+//      ++it2;
+//
+//    }
+//  }
  
 }
 template <typename ArrayType>

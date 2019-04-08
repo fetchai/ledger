@@ -89,7 +89,7 @@ public:
     std::vector<ArrayType> results;
     for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
     {
-      ArrayType slice = inputs.front().get().Slice(b);
+      auto slice = inputs.front().get().Slice(b);
       results.push_back(this->Forward({slice}));
     }
     return ConcatenateTensors(results);
@@ -105,7 +105,7 @@ public:
     std::vector<std::vector<ArrayType>> results;
     for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
     {
-      ArrayType inputSlice = inputs.front().get().Slice(b);
+      auto inputSlice = inputs.front().get().Slice(b);
       ArrayType errorSlice = errorSignal.Slice(b);
       auto      ret        = this->Backward({inputSlice}, errorSlice);
       for (std::size_t i(0); i < ret.size(); ++i)

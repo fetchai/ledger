@@ -28,6 +28,7 @@ class Convolution : public BatchOps<T>
 {
 public:
   using ArrayType    = T;
+  using SizeType     = typename ArrayType::SizeType;
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
@@ -36,11 +37,11 @@ public:
 
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
-    assert(inputs.size() == 2);
+    ASSERT(inputs.size() == 2);
     // Input should be a 3D tensor [C x H x W]
-    assert(inputs.at(0).get().shape().size() == 3);
+    ASSERT(inputs.at(0).get().shape().size() == 3);
     // Weights should be a 4D tensor [oC x iC x H x W]
-    assert(inputs.at(1).get().shape().size() == 4);
+    ASSERT(inputs.at(1).get().shape().size() == 4);
 
     std::vector<typename ArrayType::SizeType> outputShape;
     outputShape.push_back(inputs.at(1).get().shape()[0]);
@@ -51,11 +52,11 @@ public:
       this->output_ = std::make_shared<ArrayType>(outputShape);
     }
 
-    for (uint64_t i(0); i < outputShape[0]; ++i)  // Iterate over output channels
+    for (SizeType i{0}; i < outputShape[0]; ++i)  // Iterate over output channels
     {
-      for (uint64_t j(0); j < outputShape[1]; ++j)  // Iterate over output height
+      for (SizeType j{0}; j < outputShape[1]; ++j)  // Iterate over output height
       {
-        for (uint64_t k(0); k < outputShape[2]; ++k)  // Iterate over output width
+        for (SizeType k{0}; k < outputShape[2]; ++k)  // Iterate over output width
         {
           typename ArrayType::Type sum(0);
           for (uint64_t ki(0); ki < inputs.at(1).get().shape()[1];
@@ -67,13 +68,13 @@ public:
               for (uint64_t kk(0); kk < inputs.at(1).get().shape()[3];
                    kk++)  // Iterate over kernel width
               {
-                std::vector<typename ArrayType::SizeType> kernelIdx({i, ki, kj, kk});
-                std::vector<typename ArrayType::SizeType> inputIdx(3);
-                inputIdx[0]                = ki;
-                inputIdx[1]                = j + kj;
-                inputIdx[2]                = k + kk;
-                typename ArrayType::Type i = inputs.at(0).get().At(inputIdx);
-                typename ArrayType::Type w = inputs.at(1).get().At(kernelIdx);
+//                std::vector<typename ArrayType::SizeType> kernelIdx({i, ki, kj, kk});
+//                std::vector<typename ArrayType::SizeType> inputIdx(3);
+//                inputIdx[0]                = ki;
+//                inputIdx[1]                = j + kj;
+//                inputIdx[2]                = k + kk;
+                typename ArrayType::Type i = inputs.at(0).get().At(ki, j + kj, k + kk);
+                typename ArrayType::Type w = inputs.at(1).get().At(i, ki, kj, kk);
                 sum += i * w;
               }
             }

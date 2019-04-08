@@ -52,6 +52,59 @@ public:
   using SizeType             = fetch::math::SizeType;
   using SizeVector           = fetch::math::SizeVector;
 
+  template< typename STensor >
+  class TensorSliceImplementation {
+  public:
+    using Type = typename STensor::Type;
+
+    TensorSliceImplementation(STensor &t, std::vector<std::vector<SizeType>> range, SizeType axis = 0)
+    : tensor_{t}
+    , range_{std::move(range)}
+    , axis_{std::move(axis)}
+    {}
+
+    SelfType Copy() const
+    {
+      SizeVector shape;
+      for (SizeType i{0}; i < this->range_.size(); ++i)
+      {
+        shape.emplace_back(this->range_[i][1] - this->range_[i][0] / this->range_[i][2]);
+      }
+      SelfType ret{shape};
+      ret.Assign(*this);
+      return ret;
+    }
+
+    ConstIteratorType begin() const
+    {
+      auto ret = ConstIteratorType(tensor_, range_);
+      if(axis_ != 0)
+      {
+        ret.MoveAxesToFront(axis_);
+      }
+      return ret;
+    }
+
+    ConstIteratorType end() const
+    {
+      return ConstIteratorType::EndIterator(tensor_);
+    }
+
+    Tensor Unsqueeze() const
+    {
+      throw std::runtime_error("TODO: not supported.");
+    }
+
+
+  protected:
+    STensor &tensor_;
+    std::vector<std::vector<SizeType>> range_;
+    SizeType axis_;
+
+  };
+
+  using ConstTensorSlice     = TensorSliceImplementation< SelfType const >;
+
   enum MAJOR_ORDER
   {
     COLUMN,
@@ -287,6 +340,19 @@ public:
     return copy;
   }
 
+  void Assign(ConstTensorSlice const &other)
+  {
+    auto it1 = begin();
+    auto it2 = other.begin();
+    ASSERT(it1.size() == it2.size());
+    while(it1.is_valid())
+    {
+      *it1 = *it2;
+      ++it1;
+      ++it2;
+    }
+  }
+
   /**
    * Flattens the array to 1 dimension efficiently
    *
@@ -432,52 +498,6 @@ public:
     return true;
   }
 
-  template< typename STensor >
-  class TensorSliceImplementation {
-  public:
-    using Type = typename STensor::Type;
-
-    TensorSliceImplementation(STensor &t, std::vector<std::vector<SizeType>> range, SizeType axis = 0)
-    : tensor_{t}
-    , range_{std::move(range)}
-    , axis_{std::move(axis)}
-    {}
-
-    operator Tensor()
-    {
-      Tensor ret;
-      throw std::runtime_error("Not implemented yet");
-      return ret;
-    }
-
-    ConstIteratorType begin() const
-    {
-      auto ret = ConstIteratorType(tensor_, range_);
-      if(axis_ != 0)
-      {
-        ret.MoveAxesToFront(axis_);
-      }
-      return ret;
-    }
-
-    ConstIteratorType end() const
-    {
-      return ConstIteratorType::EndIterator(tensor_);
-    }
-
-    Tensor Unsqueeze() const
-    {
-      throw std::runtime_error("TODO: not supported.");
-    }
-
-
-  protected:
-    STensor &tensor_;
-    std::vector<std::vector<SizeType>> range_;
-    SizeType axis_;
-  };
-
-  using ConstTensorSlice = TensorSliceImplementation< Tensor const >;
 
   class TensorSlice : public TensorSliceImplementation< Tensor >
   {
@@ -508,7 +528,7 @@ public:
       auto it1 = begin();
       auto it2 = other.begin();
       assert(it1.size() == it2.size());
-      while(!it1.is_valid())
+      while(it1.is_valid())
       {
         *it1 = *it2;
         ++it1;
@@ -521,7 +541,7 @@ public:
       auto it1 = begin();
       auto it2 = other.begin();
       assert(it1.size() == it2.size());
-      while(!it1.is_valid())
+      while(it1.is_valid())
       {
         *it1 = *it2;
         ++it1;
@@ -1012,7 +1032,7 @@ public:
       {
         for (SizeType j(0); j < shape_[1]; ++j)
         {
-          ss << At({i, j}) << "\t";
+          ss << At(i, j) << "\t";
         }
         ss << "\n";
       }

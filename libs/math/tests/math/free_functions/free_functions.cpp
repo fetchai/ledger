@@ -149,8 +149,8 @@ TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension)
   array1.Set({3, 0}, typename TypeParam::Type(21));
   array1.Set({3, 1}, typename TypeParam::Type(-0.5));
 
-  TypeParam output{{n_data, 1}};
-  fetch::math::ArgMax(array1, output);
+  TypeParam output{n_data};
+  fetch::math::ArgMax(array1, output, SizeType(1));
   EXPECT_EQ(output.At(0), typename TypeParam::SizeType(1));
   EXPECT_EQ(output.At(1), typename TypeParam::SizeType(0));
   EXPECT_EQ(output.At(2), typename TypeParam::SizeType(1));
@@ -174,8 +174,8 @@ TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension_off_axis)
   array1.Set({3, 0}, typename TypeParam::Type(21));
   array1.Set({3, 1}, typename TypeParam::Type(-0.5));
 
-  TypeParam output{{n_features, 1}};
-  fetch::math::ArgMax(array1, output, SizeType(1));
+  TypeParam output{n_features};
+  fetch::math::ArgMax(array1, output, SizeType(0));
   EXPECT_EQ(output.At(0), typename TypeParam::SizeType(3));
   EXPECT_EQ(output.At(1), typename TypeParam::SizeType(2));
 }
@@ -217,7 +217,7 @@ TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension_performance_comparison)
 //  fetch::math::Tensor2<int> output{n_data};
 
   auto start = std::chrono::system_clock::now();
-  fetch::math::ArgMax(array, output);
+  fetch::math::ArgMax(array, output, SizeType(1));
   auto end = std::chrono::system_clock::now();
 //
 //  for (std::size_t k = 0; k < n_data; ++k)
@@ -225,7 +225,7 @@ TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension_performance_comparison)
 //    EXPECT_EQ(gt.At(k), output.At(k));
 //  }
 
-  std::cout << "nd style: " << (end - start).count() << std::endl;
+  std::cout << "benchmark time: " << (end - start).count() << std::endl;
 
   for (std::size_t k = 0; k < n_data; ++k)
   {

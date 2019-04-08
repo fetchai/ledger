@@ -75,6 +75,7 @@ public:
   TensorIterator(TensorIterator &&other) = default;
   TensorIterator& operator=(TensorIterator &&other) = default;    
 
+
   /**
    * Iterator for more interesting ranges
    * @param array the Tensor to operate upon
