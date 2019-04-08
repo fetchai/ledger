@@ -73,12 +73,12 @@ public:
     return double(this->operator()()) * inv_double_max_;
   }
 
-  constexpr random_type min()
+  static constexpr random_type min()
   {
     return static_cast<random_type>(0);
   }
 
-  constexpr random_type max()
+  static constexpr random_type max()
   {
     return static_cast<random_type>(std::numeric_limits<random_type>::max());
   }
