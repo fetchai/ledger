@@ -35,8 +35,9 @@ class SubGraph : public Graph<T>, public BatchOps<T>
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using SliceType    = typename ArrayType::SliceType;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<SliceType const>> const &inputs)
   {
     ASSERT(inputs.size() == this->input_nodes_.size());
     for (std::uint64_t i(0); i < inputs.size(); ++i)
@@ -47,7 +48,7 @@ public:
   }
 
   virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      std::vector<std::reference_wrapper<SliceType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == this->input_nodes_.size());

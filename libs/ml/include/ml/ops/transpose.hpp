@@ -29,11 +29,12 @@ class Transpose : public fetch::ml::BatchOps<T>
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using SliceType    = typename ArrayType::SliceType;
 
   Transpose()          = default;
   virtual ~Transpose() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<SliceType const>> const &inputs)
   {
     ASSERT(inputs.size() == 1);
     this->output_ = std::make_shared<ArrayType>(inputs.front().get().Transpose());
@@ -41,7 +42,7 @@ public:
   }
 
   virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      std::vector<std::reference_wrapper<SliceType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 1);

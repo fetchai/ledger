@@ -30,6 +30,7 @@ class Multiply : public fetch::ml::Ops<T>
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using SliceType    = typename ArrayType::SliceType;
 
   Multiply()          = default;
   virtual ~Multiply() = default;
@@ -39,7 +40,7 @@ public:
    * @param inputs  left & right inputs to multiply
    * @return
    */
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayPtrType Forward(std::vector<std::reference_wrapper<SliceType const>> const &inputs)
   {
     assert(inputs.size() > 1);
     for (std::size_t i = 1; i < inputs.size(); ++i)
@@ -68,7 +69,7 @@ public:
   /**
    * elementwise multiplication is not trainable - just pass the error signal back
    */
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
+  virtual std::vector<ArrayPtrType> Backward(std::vector<std::reference_wrapper<SliceType const>> const &inputs,
                                              ArrayPtrType                     errorSignal)
   {
     return std::vector<ArrayPtrType>(inputs.size(), errorSignal);

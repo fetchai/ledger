@@ -40,6 +40,7 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
   using Datatype     = typename ArrayType::Type;
+  using SliceType    = typename ArrayType::SliceType;
 
   Graph()
   {}
@@ -49,7 +50,7 @@ public:
    * @param node_name name of node to evaluate for output
    * @return pointer to array containing node output
    */
-  ArrayType const &Evaluate(std::string const &node_name)
+  SliceType const &Evaluate(std::string const &node_name)
   {
     if (nodes_[node_name])
     {

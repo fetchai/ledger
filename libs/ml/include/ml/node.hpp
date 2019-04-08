@@ -35,6 +35,7 @@ class NodeInterface
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using SliceType    = typename ArrayType::SliceType;
 
   virtual ArrayType const &Evaluate()                                           = 0;
   virtual void             AddInput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
@@ -50,6 +51,7 @@ class Node : public NodeInterface<T>, public O
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using SliceType    = typename ArrayType::SliceType;
 
   template <typename... Params>
   Node(std::string const name, Params... params)
@@ -61,12 +63,12 @@ public:
 
   virtual ~Node() = default;
 
-  std::vector<std::reference_wrapper<const ArrayType>> GatherInputs() const
+  std::vector<std::reference_wrapper<const SliceType>> GatherInputs() const
   {
-    std::vector<std::reference_wrapper<const ArrayType>> inputs;
+    std::vector<std::reference_wrapper<const SliceType>> inputs;
     for (auto const &i : inputs_)
     {
-      inputs.push_back(i->Evaluate());
+      inputs.push_back(i->Evaluate().Slice());
     }
     return inputs;
   }
@@ -75,7 +77,7 @@ public:
   {
     if (!cachedOutputPresent_)
     {
-      std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
+      std::vector<std::reference_wrapper<const SliceType>> inputs = GatherInputs();
       FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
       if (batch_)
       {

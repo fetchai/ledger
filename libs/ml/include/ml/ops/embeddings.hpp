@@ -33,6 +33,7 @@ public:
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
   using SizeType     = typename ArrayType::SizeType;
+  using SliceType    = typename ArrayType::SliceType;
 
   Embeddings(SizeType dataPoints, SizeType dimensions)
   {
@@ -48,7 +49,7 @@ public:
 
   virtual ~Embeddings() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<SliceType const>> const &inputs)
   {
     ASSERT(this->output_);
     ASSERT(inputs.size() == 1);
@@ -74,7 +75,7 @@ public:
   }
 
   virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      std::vector<std::reference_wrapper<SliceType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 1);

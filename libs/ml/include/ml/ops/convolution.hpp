@@ -31,11 +31,12 @@ public:
   using SizeType     = typename ArrayType::SizeType;
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using SliceType    = typename ArrayType::SliceType;
 
   Convolution()          = default;
   virtual ~Convolution() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<SliceType const>> const &inputs)
   {
     ASSERT(inputs.size() == 2);
     // Input should be a 3D tensor [C x H x W]
@@ -88,7 +89,7 @@ public:
   }
 
   virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const & /*inputs*/,
+      std::vector<std::reference_wrapper<SliceType const>> const & /*inputs*/,
       ArrayType const &errorSignal)
   {
     return {errorSignal};

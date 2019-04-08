@@ -31,11 +31,12 @@ public:
   using ArrayType    = T;
   using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using SliceType    = typename ArrayType::SliceType;
 
   MatrixMultiply()          = default;
   virtual ~MatrixMultiply() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<SliceType const>> const &inputs)
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().shape().size() == 2);
@@ -69,8 +70,7 @@ public:
     return *this->output_;
   }
 
-  virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+  virtual std::vector<ArrayType> Backward( std::vector<std::reference_wrapper<SliceType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
     assert(inputs.size() == 2);

@@ -103,7 +103,70 @@ public:
 
   };
 
+  class TensorSlice : public TensorSliceImplementation< Tensor >
+  {
+  public:
+    using Type = T;
+    using TensorSliceImplementation< Tensor >::TensorSliceImplementation;
+    using TensorSliceImplementation< Tensor >::begin;
+    using TensorSliceImplementation< Tensor >::end;
+
+    IteratorType begin()
+    {
+      auto ret = IteratorType(this->tensor_, this->range_);
+      if(this->axis_ != 0)
+      {
+        ret.MoveAxesToFront(this->axis_);
+      }
+      return ret;
+    }
+
+    IteratorType end()
+    {
+      return IteratorType::EndIterator(this->tensor_);
+    }
+
+    template< typename X >
+    void Assign(TensorSliceImplementation<X> const &other)
+    {
+      auto it1 = begin();
+      auto it2 = other.begin();
+      assert(it1.size() == it2.size());
+      while(it1.is_valid())
+      {
+        *it1 = *it2;
+        ++it1;
+        ++it2;
+      }
+    }
+
+    void Assign(Tensor const &other)
+    {
+      auto it1 = begin();
+      auto it2 = other.begin();
+      assert(it1.size() == it2.size());
+      while(it1.is_valid())
+      {
+        *it1 = *it2;
+        ++it1;
+        ++it2;
+      }
+    }
+
+    void Fill(Type t)
+    {
+      auto it1 = begin();
+      while(!it1.is_valid())
+      {
+        *it1 = t;
+        ++it1;
+      }
+    }
+
+  };
+
   using ConstTensorSlice     = TensorSliceImplementation< SelfType const >;
+  using SliceType            = TensorSlice;
 
   enum MAJOR_ORDER
   {
@@ -498,69 +561,25 @@ public:
     return true;
   }
 
-
-  class TensorSlice : public TensorSliceImplementation< Tensor >
+  TensorSlice Slice()
   {
-  public:
-    using Type = T; 
-    using TensorSliceImplementation< Tensor >::TensorSliceImplementation;
-    using TensorSliceImplementation< Tensor >::begin;
-    using TensorSliceImplementation< Tensor >::end;    
-
-    IteratorType begin()
+    std::vector< std::vector< SizeType > > range;
+    for (SizeType j=0; j < shape().size(); ++j)
     {
-      auto ret = IteratorType(this->tensor_, this->range_);
-      if(this->axis_ != 0)
-      {
-        ret.MoveAxesToFront(this->axis_);
-      }
-      return ret;
+      range.emplace_back({0, shape().at(j), 1});
     }
+    TensorSlice(*this, range);
+  }
 
-    IteratorType end()
+  ConstTensorSlice Slice() const
+  {
+    std::vector< std::vector< SizeType > > range;
+    for (SizeType j=0; j < shape().size(); ++j)
     {
-      return IteratorType::EndIterator(this->tensor_);
+      range.emplace_back({0, shape().at(j), 1});
     }
-
-    template< typename X >
-    void Assign(TensorSliceImplementation<X> const &other)
-    {
-      auto it1 = begin();
-      auto it2 = other.begin();
-      assert(it1.size() == it2.size());
-      while(it1.is_valid())
-      {
-        *it1 = *it2;
-        ++it1;
-        ++it2;
-      }
-    }
-
-    void Assign(Tensor const &other)
-    {
-      auto it1 = begin();
-      auto it2 = other.begin();
-      assert(it1.size() == it2.size());
-      while(it1.is_valid())
-      {
-        *it1 = *it2;
-        ++it1;
-        ++it2;
-      }
-    }
-
-    void Fill(Type t)
-    {
-      auto it1 = begin();
-      while(!it1.is_valid())
-      {
-        *it1 = t;
-        ++it1;
-      }
-    }
-
-  };
-
+    ConstTensorSlice(*this, range);
+  }
 
   ConstTensorSlice Slice(SizeType i, SizeType axis = 0) const
   {

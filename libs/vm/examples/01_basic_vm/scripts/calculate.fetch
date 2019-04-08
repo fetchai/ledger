@@ -4,4 +4,5 @@ function main()
 
   b = a + b;
   Print("The result is: " + toString(b));
+
 endfunction

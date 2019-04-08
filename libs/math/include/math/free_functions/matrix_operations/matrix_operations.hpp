@@ -579,7 +579,6 @@ void ArgMax(ArrayType const &array, ArrayType &ret, SizeType axis = NO_AXIS)
       auto cur_slice_it = cur_slice.begin();
       auto ret_it = ret.begin();
 
-
       // check every element in the n-1 dimensional return
       while (max_slice_it.is_valid())
       {

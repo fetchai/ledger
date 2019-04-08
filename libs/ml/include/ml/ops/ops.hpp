@@ -34,16 +34,17 @@ class Ops
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using SliceType    = typename ArrayType::SliceType;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<SliceType const>> const &inputs) = 0;
 
   virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      std::vector<std::reference_wrapper<SliceType const>> const &inputs,
       ArrayType const &                                           errorSignal) = 0;
   virtual ArrayType ForwardBatch(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
+      std::vector<std::reference_wrapper<SliceType const>> const &inputs) = 0;
   virtual std::vector<ArrayType> BackwardBatch(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      std::vector<std::reference_wrapper<SliceType const>> const &inputs,
       ArrayType const &                                           errorSignal) = 0;
 
 protected:
@@ -58,14 +59,15 @@ class ElementWiseOps : public Ops<T>
 {
 public:
   using ArrayType = T;
+  using SliceType = typename ArrayType::SliceType;
 
-  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<SliceType const>> const &inputs)
   {
     return this->Forward(inputs);
   }
 
   virtual std::vector<ArrayType> BackwardBatch(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      std::vector<std::reference_wrapper<SliceType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
     return this->Backward(inputs, errorSignal);
@@ -81,9 +83,10 @@ class BatchOps : public Ops<T>
 {
 public:
   using ArrayType = T;
+  using SliceType = typename ArrayType::SliceType;
 
   // Overload that method for optimisation purposes
-  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<SliceType const>> const &inputs)
   {
     assert(inputs.size() == 1);
     std::vector<ArrayType> results;
@@ -96,7 +99,7 @@ public:
   }
 
   virtual std::vector<ArrayType> BackwardBatch(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      std::vector<std::reference_wrapper<SliceType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
     return this->Backward(inputs, errorSignal);

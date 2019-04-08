@@ -67,5 +67,5 @@ TEST(node_test, node_relu)
 
   EXPECT_EQ(placeholder->Forward({}), data);  // Testing pointer value
   EXPECT_EQ(placeholder->Evaluate(), data);   // Testing pointer value
-  EXPECT_TRUE(relu->Evaluate().AllClose(gt));
+  EXPECT_TRUE(relu->Evaluate().Copy().AllClose(gt));
 }

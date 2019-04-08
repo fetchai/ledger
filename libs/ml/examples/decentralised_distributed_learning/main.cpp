@@ -45,6 +45,7 @@ using namespace fetch::ml::layers;
 
 using DataType  = float;
 using ArrayType = fetch::math::Tensor<DataType>;
+using SliceType = typename ArrayType::SliceType;
 
 class TrainingClient
 {
@@ -66,7 +67,7 @@ public:
     float                        loss = 0;
     CrossEntropy<ArrayType>      criterion;
     std::pair<size_t, ArrayType> input;
-    ArrayType                    gt(std::vector<typename ArrayType::SizeType>({1, 10}));
+    SliceType gt = ArrayType(std::vector<typename ArrayType::SizeType>({1, 10})).Slice();
     for (unsigned int i(0); i < numberOfBatches; ++i)
     {
       loss = 0;
