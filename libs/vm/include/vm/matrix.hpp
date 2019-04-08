@@ -352,7 +352,7 @@ struct Matrix : public IMatrix
       RuntimeError("index out of bounds");
       return nullptr;
     }
-    return &matrix.At(std::vector<typename fetch::math::Tensor<T>::SizeType>(column, row));
+    return &matrix.At(column, row);
   }
 
   virtual void *FindElement() override

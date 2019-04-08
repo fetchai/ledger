@@ -30,3 +30,5 @@ add_fetch_test(math_gtest fetch-math math/gtest SLOW)
 
 add_fetch_test(tensor_gtest fetch-math math/tensor)
 add_fetch_test(math_serializers_gtest fetch-math math/serializers)
+
+add_fetch_test(numpy_gtest fetch-math math/numpy)

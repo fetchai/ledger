@@ -205,6 +205,7 @@ public:
     std::swap(ranges_[a], ranges_[b]);
   }
 
+  // TODO: Name correctly
   void MoveAxesToFront(SizeType const &a)
   {
     std::vector<TensorIteratorRange> new_ranges;
@@ -239,6 +240,26 @@ public:
   Type const &operator*() const
   {
     return array_[position_];
+  }
+
+  SizeType position() const 
+  {
+    return position_;
+  }
+
+  SizeType PositionAlong(SizeType axis) const
+  {
+    return ranges_[axis].current_n_dim_position;
+  }
+
+  SizeVector PositionVector() const
+  {
+    SizeVector ret;
+    for(auto const &r: ranges_)
+    {
+      ret.push_back(r.current_n_dim_position);
+    }
+    return ret;
   }
 
   SizeType size() const

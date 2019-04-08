@@ -468,7 +468,7 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
       ret[i] = typename ArrayType::Type(0);
       for (SizeType j = 0; j < obj1.shape()[0]; ++j)
       {
-        ret[i] += obj1({j, i});
+        ret[i] += obj1(j, i);
       }
     }
   }
@@ -482,7 +482,7 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
       ret[i] = typename ArrayType::Type(0);
       for (SizeType j = 0; j < obj1.shape()[1]; ++j)
       {
-        ret[i] += obj1({i, j});
+        ret[i] += obj1(i, j);
       }
     }
   }
@@ -542,37 +542,41 @@ void PeakToPeak(ArrayType arr)
 template <typename ArrayType>
 void ArgMax(ArrayType const &array, ArrayType &ret, SizeType axis = 0)
 {
-
-  assert((array.shape().size() == 1) || (array.shape().size() == 2));
-  assert((axis == 0) || (axis == 1));
-
-  /* this implementation seems to be slower than using slice actually */
+  // TODO: Make this match numpy arg max
   using Type = typename ArrayType::Type;
-  if (array.shape().size() == 1)
-  {
-    Reduce([](Type const &x, Type const &z) { return std::max(x, z); }, array, ret, axis);
-    ret[0] = Type(array.Find(ret[0]));
-  }
-  else
-  {
-    SizeVector from{{0, 0}};
-    SizeVector to{{0, 0}};
-    SizeVector step{{1, 1}};
+//  using ResultType = typename ArrayType::Type;
 
-    ArrayType tmp_array{{1, 1}};
+  assert(axis < array.shape().size());
+  SizeType result_size = array.shape()[axis];
 
-    for (std::size_t i{0}; i < array.shape().at(axis); ++i)
+  assert(ret.size() == result_size);
+  SizeType remaining = 1;
+
+  for(std::size_t i=0; i < array.shape().size(); ++i)
+  {
+    if(static_cast<SizeType>(i) != axis)
     {
-      from[axis] = i;
-      to[axis] = i+1;
-
-      from[1 - axis] = 0;
-      to[1 - axis] = array.shape().at(1 - axis);
-      auto tmp1 = array.GetRange(from, to, step);
-
-      Reduce([](Type const &x, Type const &z) { return std::max(x, z); }, tmp1, tmp_array, 1-axis);
-      ret[i] = Type(tmp1.Find(tmp_array[0]));
+      remaining *= array.shape()[i];
     }
+  }
+  (void)(ret); // TODO
+  for(SizeType i=0; i < result_size; ++i)
+  {
+    auto slice = array.Slice(i, axis);
+    Type value = std::numeric_limits< Type >::min();
+    SizeVector position;
+    auto it = slice.begin();
+    while(it.is_valid())
+    {
+      if(*it > value)
+      {
+        value = *it;
+// TODO        position = it->PositionVector();
+      }
+      ++it;      
+    }
+
+//    ret(i) = static_cast<ResultType>(position);
   }
 
 }
@@ -616,14 +620,14 @@ void Dot(ArrayType const &A, ArrayType const &B, ArrayType &ret)
   {
     for (SizeType j(0); j < B.shape()[1]; ++j)
     {
-      ret.At(SizeVector({i, j})) =
-          A.At(SizeVector({i, 0})) *
-          B.At(SizeVector({0, j}));
+      ret.At(i, j) =
+          A.At(i, 0) *
+          B.At(0, j);
       for (SizeType k(1); k < A.shape()[1]; ++k)
       {
-        ret.At(SizeVector({i, j})) +=
-            A.At(SizeVector({i, k})) *
-            B.At(SizeVector({k, j}));
+        ret.At(i, j) +=
+            A.At(i, k) *
+            B.At(k, j);
       }
     }
   }
@@ -660,9 +664,9 @@ void DotTranspose(ArrayType const &A, ArrayType const &B, ArrayType &ret)
     {
       for (size_t k(0); k < A.shape()[1]; ++k)
       {
-        ret.At(SizeVector({i, j})) +=
-            A.At(SizeVector({i, k})) *
-            B.At(SizeVector({j, k}));
+        ret.At(i, j) +=
+            A.At(i, k) *
+            B.At(j, k);
       }
     }
   }
@@ -698,9 +702,9 @@ void TransposeDot(ArrayType const &A, ArrayType const &B, ArrayType &ret)
     {
       for (size_t k(0); k < A.shape()[0]; ++k)
       {
-        ret.At(SizeVector({i, j})) +=
-            A.At(SizeVector({k, i})) *
-            B.At(SizeVector({k, j}));
+        ret.At(i, j) +=
+            A.At(k, i) *
+            B.At(k, j);
       }
     }
   }

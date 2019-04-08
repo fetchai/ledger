@@ -66,19 +66,6 @@ public:
   using iterator         = typename container_type::iterator;
   using reverse_iterator = typename container_type::reverse_iterator;
 
-  //  // TODO(private issue 282): This probably needs to be removed into the meta
-  //  template <typename Type, typename ReturnType = void>
-  //  using IsUnsignedLike =
-  //      typename std::enable_if<std::is_integral<Type>::value && std::is_unsigned<Type>::value,
-  //                              ReturnType>::type;
-  //  template <typename Type, typename ReturnType = void>
-  //  using IsSignedLike =
-  //      typename std::enable_if<std::is_integral<Type>::value && std::is_signed<Type>::value,
-  //                              ReturnType>::type;
-  //  template <typename Type, typename ReturnType = void>
-  //  using IsIntegralLike = typename std::enable_if<std::is_integral<Type>::value,
-  //  ReturnType>::type;
-
   static constexpr char const *LOGGING_NAME = "ShapelessArray";
 
   /* Contructs an empty shape-less array. */

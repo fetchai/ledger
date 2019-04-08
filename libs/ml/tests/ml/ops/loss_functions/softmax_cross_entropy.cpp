@@ -67,10 +67,10 @@ TYPED_TEST(SoftmaxCrossEntropyTest, simple_forward_test)
 
   TypeParam gt(std::vector<SizeType>{n_data_points, n_classes});
   gt.Fill(DataType(0));
-  gt.At({0, 1}) = DataType(1);
-  gt.At({1, 2}) = DataType(1);
-  gt.At({2, 3}) = DataType(1);
-  gt.At({3, 0}) = DataType(1);
+  gt.At(0, 1) = DataType(1);
+  gt.At(1, 2) = DataType(1);
+  gt.At(2, 3) = DataType(1);
+  gt.At(3, 0) = DataType(1);
 
   std::vector<double> vals{0.1,  0.8,  0.05, 0.05, 0.2, 0.5, 0.2, 0.1,
                            0.05, 0.05, 0.8,  0.1,  0.5, 0.1, 0.1, 0.3};

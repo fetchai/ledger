@@ -17,36 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
-
-// OLD ND array:
-// https://github.com/uvue-git/fetch-ledger/tree/cf2fc8441f6ae33d6248559c52473a7f15c5aef2/libs/math/include/math
-
+// https://github.com/uvue-git/fetch-ledger/tree/cf2fc8441f6ae33d6248559c52473a7f15c5aef2/libs/math/include/math
+#include "core/assert.hpp"
 #include "math/free_functions/free_functions.hpp"
 #include "math/meta/math_type_traits.hpp"
 #include "math/tensor_iterator.hpp"
-#include "math/tensor_view.hpp"
 #include "math/shapeless_array.hpp"
 #include "math/base_types.hpp"
 #include "vectorise/memory/array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/consumers.hpp"
 
 #include <numeric>
 #include <utility>
-
-
-
-// OLD
-#include "core/assert.hpp"
-#include "math/free_functions/standard_functions/abs.hpp"
-#include "shapeless_array.hpp"
-
-#include "core/random/lcg.hpp"
-
 #include <iostream>
 #include <memory>
 #include <random>
 
 namespace fetch {
 namespace math {
+
 
 template <typename T, typename C = memory::SharedArray<T>>
 class Tensor : public ShapelessArray<T, C>
@@ -69,6 +59,67 @@ public:
   };
 
   Tensor() = default;
+
+  static Tensor FromString(byte_array::ConstByteArray const &c)
+  {
+    Tensor ret;
+    SizeType       n = 1;
+    std::vector<Type> elems;
+    elems.reserve(1024);
+    bool failed = false;
+
+    for (SizeType i = 0; i < c.size();)
+    {
+      SizeType last = i;
+      switch (c[i])
+      {
+      case ';':
+        ++n;
+        ++i;
+        break;
+      case ',':
+      case ' ':
+      case '\n':
+      case '\t':
+      case '\r':
+        ++i;
+        break;
+      default:
+        if (byte_array::consumers::NumberConsumer<1, 2>(c, i) == -1)
+        {
+          failed = true;
+        }
+        else
+        {
+          elems.push_back(Type(atof(c.char_pointer() + last)));
+        }
+        break;
+      }
+    }
+    SizeType m = elems.size() / n;
+
+    if ((m * n) != elems.size())
+    {
+      failed = true;
+    }
+
+    if (!failed)
+    {
+      ret.ResizeFromShape({n,m});
+      ret.SetAllZero();
+
+      SizeType k = 0;
+      for (SizeType i = 0; i < n; ++i)
+      {
+        for (SizeType j = 0; j < m; ++j)
+        {
+          ret.Set({i, j}, elems[k++]);
+        }
+      }
+    }
+
+    return ret;
+  }
 
   /**
    * Constructor builds an Tensor with n elements initialized to 0
@@ -237,17 +288,6 @@ public:
   }
 
   /**
-   * Provides an Tensor that is a copy of a view of the the current Tensor
-   *
-   * @return       copy is a Tensor with a size and shape equal to or lesser than this array.
-   *
-   **/
-  SelfType Copy(TensorView arrayView)
-  {
-    SelfType copy;
-    return copy(arrayView);
-  }
-  /**
    * Flattens the array to 1 dimension efficiently
    *
    **/
@@ -256,25 +296,6 @@ public:
     shape_.clear();
     shape_.push_back(SuperType::size());
     UpdateStrides();
-  }
-
-  /**
-   * Operator for accessing data in the array
-   *
-   * @param[in]     indices specifies the data points to access.
-   * @return        the accessed data.
-   *
-   **/
-  Type operator()(SizeVector const &indices) const
-  {
-    assert(indices.size() == shape_.size());
-    SizeType  index = ComputeColIndex(indices);
-    return this->operator[](index);
-  }
-  Type operator()(SizeType const &index) const
-  {
-    assert(index == this->size_);
-    return this->operator[](index);
   }
 
   /**
@@ -301,33 +322,61 @@ public:
    * Gets a value from the array by N-dim index
    * @param indices index to access
    */
-  template <typename S>
-  fetch::meta::IfIsUnsignedInteger<S, T> &At(std::vector<S> const &indices)
+  // TODO: Specialise for N = 0 as stride is always 1 for this coordinate
+  template< SizeType N, typename FirstIndex, typename ... Indices >
+  SizeType UnrollComputeColIndex(FirstIndex &&index, Indices &&... indices) const
   {
-    assert(indices.size() == shape_.size());
-    return this->operator[](ComputeColIndex(indices));
+    return static_cast<SizeType>(index) * stride_[N] + UnrollComputeColIndex<N + 1>(std::forward<Indices>(indices)...);
   }
 
-  template <typename S>
-  fetch::meta::IfIsUnsignedInteger<S, T> const &At(std::vector<S> const &indices) const
+  template< SizeType N, typename FirstIndex >
+  SizeType UnrollComputeColIndex(FirstIndex &&index ) const
   {
-    assert(indices.size() == shape_.size());
-    return this->operator[](ComputeColIndex(indices));
+    return static_cast<SizeType>(index) * stride_[N];
   }
 
-
-  
-  Type &At(SizeVector const &indices)
+  template< typename ... Indices >
+  Type &At( Indices ... indices)
   {
-    assert(indices.size() == shape_.size());
-    return this->operator[](ComputeColIndex(indices));
+    assert(sizeof...(indices) == stride_.size());
+    return this->data()[ UnrollComputeColIndex<0>(std::forward<Indices>(indices)...) ] ;
+  }  
+
+  template< typename ... Indices >
+  Type At( Indices ... indices) const
+  {
+    assert(sizeof...(indices) == stride_.size());
+    SizeType N = UnrollComputeColIndex<0>(std::forward<Indices>(indices)...) ;
+    return this->data()[ std::move(N) ] ;
+  }    
+
+  /**
+   * Operator for accessing data in the array
+   *
+   * @param[in]     indices specifies the data points to access.
+   * @return        the accessed data.
+   *
+   **/
+  template< typename ... Indices >  
+  Type operator()(Indices ... indices) const
+  {
+    return this->At( std::forward< Indices >(indices) ...);
   }
 
-  Type const &At(SizeVector const &indices) const
+  template< typename ... Indices >  
+  Type& operator()(Indices ... indices)
   {
-    assert(indices.size() == shape_.size());
-    return this->operator[](ComputeColIndex(indices));
+    return this->At( std::forward< Indices >(indices) ...);
+  }  
+
+/*
+  Type operator()(SizeType const &index) const
+  {
+    assert(index == this->size_);
+    return this->operator[](index);
   }
+*/
+
 
 
   /// TODO TODO TODO
@@ -387,9 +436,10 @@ public:
   public:
     using Type = typename STensor::Type;
 
-    TensorSliceImplementation(STensor &t, std::vector<std::vector<SizeType>> range)
+    TensorSliceImplementation(STensor &t, std::vector<std::vector<SizeType>> range, SizeType axis = 0)
     : tensor_{t}
     , range_{std::move(range)}
+    , axis_{std::move(axis)}
     {}
 
     operator Tensor()
@@ -401,7 +451,12 @@ public:
 
     ConstIteratorType begin() const
     {
-      return ConstIteratorType(tensor_, range_);
+      auto ret = ConstIteratorType(tensor_, range_);
+      if(axis_ != 0)
+      {
+        ret.MoveAxesToFront(axis_);
+      }
+      return ret;
     }
 
     ConstIteratorType end() const
@@ -418,6 +473,7 @@ public:
   protected:
     STensor &tensor_;
     std::vector<std::vector<SizeType>> range_;
+    SizeType axis_;
   };
 
   using ConstTensorSlice = TensorSliceImplementation< Tensor const >;
@@ -432,7 +488,12 @@ public:
 
     IteratorType begin()
     {
-      return IteratorType(this->tensor_, this->range_);
+      auto ret = IteratorType(this->tensor_, this->range_);
+      if(this->axis_ != 0)
+      {
+        ret.MoveAxesToFront(this->axis_);
+      }
+      return ret;
     }
 
     IteratorType end()
@@ -480,31 +541,43 @@ public:
   };
 
 
-  ConstTensorSlice Slice(SizeType i) const
+  ConstTensorSlice Slice(SizeType i, SizeType axis = 0) const
   {
     std::vector< std::vector< SizeType > > range;
-    range.push_back({i, i+1, 1});
 
-    for (SizeType j=1; j < shape().size(); ++j)
+    for (SizeType j=0; j < shape().size(); ++j)
     {
-      range.push_back({0, shape().at(j), 1});      
+      if(axis == j)
+      {
+        range.push_back({i, i+1, 1});        
+      }
+      else
+      {
+        range.push_back({0, shape().at(j), 1});      
+      }
     }    
 
-    return ConstTensorSlice(*this, range);
+    return ConstTensorSlice(*this, range, axis);
   }
 
-  TensorSlice Slice(SizeType i)
+  TensorSlice Slice(SizeType i, SizeType axis = 0)
   {
     std::vector< std::vector< SizeType > > range;
     range.push_back({i, i+1, 1});
 
-
-    for (SizeType j=1; j < shape().size(); ++j)
+    for (SizeType j=0; j < shape().size(); ++j)
     {
-      range.push_back({0, shape().at(j), 1});      
+      if(axis == j)
+      {
+        range.push_back({i, i+1, 1});        
+      }
+      else
+      {
+        range.push_back({0, shape().at(j), 1});      
+      }
     }    
 
-    return TensorSlice(*this, range);
+    return TensorSlice(*this, range, axis);
   }
 
   Tensor& operator=(ConstTensorSlice const &slice)
@@ -576,71 +649,6 @@ public:
     return *this;
   }
   
-  /**
-   * extract data from Tensor based on the TensorView
-   * @param array_view
-   * @return
-   */
-  SelfType GetRange(SizeVector &from, SizeVector &to, SizeVector &step) const
-  {
-    // TODO we probably don't want to #include TensorView in a lot of places where we need to call GetRange
-    // on the other hand these copies aren't ideal
-    TensorView array_view;
-    array_view.from = from;
-    array_view.to = to;
-    array_view.step = step;
-    SizeVector new_shape;
-
-    // instantiate new array of the right shape
-    for (SizeType cur_dim = 0; cur_dim < array_view.from.size(); ++cur_dim)
-    {
-      SizeType cur_from = array_view.from[cur_dim];
-      SizeType cur_to   = array_view.to[cur_dim];
-      SizeType cur_step = array_view.step[cur_dim];
-      SizeType cur_len  = (cur_to - cur_from) / cur_step;
-
-      new_shape.push_back(cur_len);
-    }
-
-    // define output
-    SelfType output = SelfType(new_shape);
-
-    // copy all the data
-    array_view.recursive_copy(output, *this);
-
-    return output;
-  }
-
-  /**
-   * extract data from Tensor based on the TensorView
-   * @param array_view
-   * @return
-   */
-  SelfType SetRange(TensorView array_view, Tensor new_vals)
-  {
-
-    SizeVector new_shape;
-
-    // instantiate new array of the right shape
-    for (SizeType cur_dim = 0; cur_dim < array_view.from.size(); ++cur_dim)
-    {
-      SizeType cur_from = array_view.from[cur_dim];
-      SizeType cur_to   = array_view.to[cur_dim];
-      SizeType cur_step = array_view.step[cur_dim];
-      SizeType cur_len  = (cur_to - cur_from) / cur_step;
-
-      new_shape.push_back(cur_len);
-    }
-
-    // define output
-    SelfType output = SelfType(new_shape);
-
-    // copy all the data
-    array_view.recursive_copy(*this, new_vals);
-
-    return output;
-  }
-
   void ResizeFromShape(SizeVector const &shape)
   {
     this->Resize(SelfType::SizeFromShape(shape));

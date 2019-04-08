@@ -202,7 +202,7 @@ TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension_performance_comparison)
     for (SizeType j = 0; j < n_features; ++j)
     {
       auto tmp = lcg.AsDouble() * 100;
-      array.At({i, j}) = int(tmp);
+      array.At(i, j) = int(tmp);
       if (int(tmp) > cur_max)
       {
         cur_max = int(tmp);

@@ -56,13 +56,13 @@ public:
       for (SizeType j(0); j < inputs.at(1).get().shape()[1]; ++j)
       {
         this->output_->At(std::vector<SizeType>({i, j})) =
-            inputs.at(0).get().At(std::vector<SizeType>({i, 0})) *
-            inputs.at(1).get().At(std::vector<SizeType>({0, j}));
+            inputs.at(0).get().At(i, 0)) *
+            inputs.at(1).get().At(0, j));
         for (SizeType k(1); k < inputs.at(0).get().shape()[1]; ++k)
         {
           this->output_->At(std::vector<SizeType>({i, j})) +=
-              inputs.at(0).get().At(std::vector<SizeType>({i, k})) *
-              inputs.at(1).get().At(std::vector<SizeType>({k, j}));
+              inputs.at(0).get().At(i, k)) *
+              inputs.at(1).get().At(k, j));
         }
       }
     }

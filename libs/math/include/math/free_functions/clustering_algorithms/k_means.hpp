@@ -423,7 +423,7 @@ private:
     {
       for (SizeType j = 0; j < n_dimensions_; ++j)
       {
-        k_means_.Set({i, j}, data.At({data_idxs_[i], j}));
+        k_means_.Set({i, j}, data.At(data_idxs_[i], j));
       }
     }
   }
@@ -438,7 +438,7 @@ private:
     for (SizeType j = 0; j < n_dimensions_; ++j)
     {
       k_means_.Set(std::vector<SizeType>({0, j}),
-                   data.At(std::vector<SizeType>({data_idxs_[0], j})));
+                   data.At(data_idxs_[0], j));
     }
 
     // assign remaining cluster centres
@@ -465,7 +465,7 @@ private:
         {
           for (SizeType k = 0; k < n_dimensions_; ++k)
           {
-            temp_k_.Set(std::vector<SizeType>({l, k}), k_means_.At({i, k}));
+            temp_k_.Set(std::vector<SizeType>({l, k}), k_means_.At(i, k));
           }
         }
 
@@ -512,7 +512,7 @@ private:
 
       for (SizeType j = 0; j < n_dimensions_; ++j)
       {
-        k_means_.Set({cur_cluster, j}, data.At({assigned_data_points.back(), j}));
+        k_means_.Set({cur_cluster, j}, data.At(assigned_data_points.back(), j));
       }
 
       // update count of remaining data points and clusters
@@ -535,7 +535,7 @@ private:
       {
         for (SizeType k = 0; k < n_dimensions_; ++k)
         {
-          temp_k_.Set({j, k}, k_means_.At({i, k}));
+          temp_k_.Set({j, k}, k_means_.At(i, k));
         }
       }
       k_euclids_[i] = fetch::math::metrics::EuclideanDistance(data, temp_k_, 1);
@@ -635,7 +635,7 @@ private:
       cur_k = static_cast<SizeType>(k_assignment_[i]);
       for (SizeType j = 0; j < n_dimensions_; ++j)
       {
-        k_means_.Set({cur_k, j}, k_means_.At({cur_k, j}) + data.At({i, j}));
+        k_means_.Set({cur_k, j}, k_means_.At(cur_k, j) + data.At(i, j));
       }
     }
 
@@ -645,7 +645,7 @@ private:
       for (SizeType i = 0; i < n_dimensions_; ++i)
       {
         k_means_.Set({m, i},
-                     k_means_.At({m, i}) / static_cast<typename ArrayType::Type>(k_count_[m]));
+                     k_means_.At(m, i) / static_cast<typename ArrayType::Type>(k_count_[m]));
       }
     }
   }
@@ -667,8 +667,8 @@ private:
         for (SizeType j = 0; j < n_dimensions_; ++j)
         {
           k_means_.Set(std::vector<SizeType>({cur_k, j}),
-                       k_means_.At(std::vector<SizeType>({cur_k, j})) +
-                           data.At(std::vector<SizeType>({i, j})));
+                       k_means_.At(cur_k, j) +
+                           data.At(i, j));
         }
       }
     }
@@ -679,7 +679,7 @@ private:
       for (SizeType i = 0; i < n_dimensions_; ++i)
       {
         k_means_.Set(std::vector<SizeType>({m, i}),
-                     k_means_.At(std::vector<SizeType>({m, i})) /
+                     k_means_.At(m, i) /
                          static_cast<typename ArrayType::Type>(k_count_[m]));
       }
     }
