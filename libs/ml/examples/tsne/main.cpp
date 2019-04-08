@@ -19,6 +19,7 @@
 #include <math/tensor.hpp>
 
 #include "ml/clustering/tsne.hpp"
+#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -66,54 +67,39 @@ void ReadFile(Tensor<DataType> &matrix, std::string const &path)
   }
 }
 
-int main()
+int main(int ac, char **av)
 {
+  SizeType SUBSET_SIZE                  = 100;
   SizeType RANDOM_SEED                  = 123456;
   DataType LEARNING_RATE                = 500;
   SizeType MAX_ITERATIONS               = 100;
   DataType PERPLEXITY                   = 20;
-  SizeType N_DATA_SIZE                  = 100;
-  SizeType N_INPUT_FEATURE_SIZE         = 3;
   SizeType N_OUTPUT_FEATURE_SIZE        = 2;
   DataType INITIAL_MOMENTUM             = 0.5;
   DataType FINAL_MOMENTUM               = 0.8;
   SizeType FINAL_MOMENTUM_STEPS         = 20;
   SizeType P_LATER_CORRECTION_ITERATION = 10;
 
-  // high dimensional tensor of dims n_data_points x n_features
-  Tensor<DataType> input_matrix({N_DATA_SIZE, N_INPUT_FEATURE_SIZE});
+  if (ac < 3)
+  {
+    std::cout << "Usage : " << av[0]
+              << " PATH/TO/train-images-idx3-ubyte PATH/TO/train-labels-idx1-ubyte" << std::endl;
+    return 1;
+  }
 
-  // Generate easily separable clusters of data
-  for (SizeType i = 0; i < 25; ++i)
-  {
-    input_matrix.Set({i, 0}, -static_cast<DataType>(i) - 50);
-    input_matrix.Set({i, 1}, -static_cast<DataType>(i) - 50);
-    input_matrix.Set({i, 2}, -static_cast<DataType>(i) - 50);
-  }
-  for (SizeType i = 25; i < 50; ++i)
-  {
-    input_matrix.Set({i, 0}, -static_cast<DataType>(i) - 50);
-    input_matrix.Set({i, 1}, static_cast<DataType>(i) + 50);
-    input_matrix.Set({i, 2}, static_cast<DataType>(i) + 50);
-  }
-  for (SizeType i = 50; i < 75; ++i)
-  {
-    input_matrix.Set({i, 0}, static_cast<DataType>(i) + 50);
-    input_matrix.Set({i, 1}, -static_cast<DataType>(i) - 50);
-    input_matrix.Set({i, 2}, -static_cast<DataType>(i) - 50);
-  }
-  for (SizeType i = 75; i < 100; ++i)
-  {
-    input_matrix.Set({i, 0}, static_cast<DataType>(i) + 50);
-    input_matrix.Set({i, 1}, static_cast<DataType>(i) + 50);
-    input_matrix.Set({i, 2}, static_cast<DataType>(i) + 50);
-  }
+  std::cout << "Loading input data. " << std::endl;
+  fetch::ml::MNISTLoader<ArrayType> dataloader(av[1], av[2]);
+  std::pair<ArrayType, ArrayType>   input = dataloader.SubsetToArray(SUBSET_SIZE);
 
   // Initialize TSNE
-  TSNE<Tensor<DataType>> tsn(input_matrix, N_OUTPUT_FEATURE_SIZE, PERPLEXITY, RANDOM_SEED);
+  std::cout << "Running TSNE init. " << std::endl;
+  TSNE<Tensor<DataType>> tsn(input.first, N_OUTPUT_FEATURE_SIZE, PERPLEXITY, RANDOM_SEED);
+
+  std::cout << "Started optimization. " << std::endl;
   tsn.Optimize(LEARNING_RATE, MAX_ITERATIONS, INITIAL_MOMENTUM, FINAL_MOMENTUM,
                FINAL_MOMENTUM_STEPS, P_LATER_CORRECTION_ITERATION);
-  std::cout << "Result: " << tsn.GetOutputMatrix().ToString() << std::endl;
 
+  std::cout << "Result: " << tsn.GetOutputMatrix().ToString() << std::endl;
+  std::cout << "Finished! " << std::endl;
   return 0;
 }
