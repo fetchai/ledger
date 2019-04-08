@@ -540,45 +540,58 @@ void PeakToPeak(ArrayType arr)
  * @return
  */
 template <typename ArrayType>
-void ArgMax(ArrayType const &array, ArrayType &ret, SizeType axis = 0)
+void ArgMax(ArrayType const &array, ArrayType &ret, SizeType axis = SizeType(-1))
 {
-  // TODO: Make this match numpy arg max
-  using Type = typename ArrayType::Type;
-//  using ResultType = typename ArrayType::Type;
 
-  assert(axis < array.shape().size());
-  SizeType result_size = array.shape()[axis];
 
-  assert(ret.size() == result_size);
-  SizeType remaining = 1;
-
-  for(std::size_t i=0; i < array.shape().size(); ++i)
+  // Argmax over the full array
+  if(axis == SizeType(-1))
   {
-    if(static_cast<SizeType>(i) != axis)
-    {
-      remaining *= array.shape()[i];
-    }
-  }
-  (void)(ret); // TODO
-  for(SizeType i=0; i < result_size; ++i)
-  {
-    auto slice = array.Slice(i, axis);
     Type value = std::numeric_limits< Type >::min();
-    SizeVector position;
+    SizeType position;
+
     auto it = slice.begin();
     while(it.is_valid())
     {
       if(*it > value)
       {
         value = *it;
-// TODO        position = it->PositionVector();
+        position = it->counter();
       }
-      ++it;      
+      ++it;
     }
 
-//    ret(i) = static_cast<ResultType>(position);
+    ret.Resize(1);
+    ret[0] = static_cast<Type>(position);
   }
+  else
+  { // Argmax along a single axis
+    SizeType axis_length = array.shap()[axis];
 
+    auto it1 = array.begin();
+    it1->MoveAxesToFront(axis);
+    auto it2 = ret.begin();
+
+    while(it1.is_valid())
+    {
+      Type value = std::numeric_limits< Type >::min();
+      SizeVector position;
+
+      for(SizeType n=0; n < axis_length; ++n)
+      {
+        if(*it1 > value)
+        {
+          value = *it;
+          position = n;
+        }
+        ++it1;
+      }
+
+      (*it2) = static_cast<Type>(position);
+      ++it2;
+    }
+  }
+ 
 }
 template <typename ArrayType>
 ArrayType ArgMax(ArrayType const &array, SizeType axis = 0)

@@ -293,6 +293,7 @@ public:
    **/
   void Flatten()
   {
+    // TODO: Copy according to new indices
     shape_.clear();
     shape_.push_back(SuperType::size());
     UpdateStrides();
