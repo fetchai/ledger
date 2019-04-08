@@ -45,6 +45,7 @@ public:
   using ArrayType = T;
   using DataType  = typename ArrayType::Type;
   using SizeType  = typename ArrayType::SizeType;
+  using RNG       = fetch::random::LaggedFibonacciGenerator<>;
 
   static constexpr char const *DESCRIPTOR = "TSNE";
 
@@ -56,8 +57,8 @@ public:
   TSNE(ArrayType const &input_matrix, SizeType const &output_dimensions, DataType const &perplexity,
        SizeType const &random_seed)
   {
-    lfg_ = fetch::random::LaggedFibonacciGenerator<>{random_seed};
     ArrayType output_matrix({input_matrix.shape().at(0), output_dimensions});
+    rng_.Seed(random_seed);
     RandomInitWeights(output_matrix);
     Init(input_matrix, output_matrix, perplexity);
   }
@@ -380,7 +381,7 @@ private:
   {
     std::normal_distribution<double> distribution(static_cast<double>(mean),
                                                   static_cast<double>(standard_deviation));
-    return DataType(distribution(lfg_));
+    return DataType(distribution(rng_));
   }
 
   /**
@@ -450,10 +451,10 @@ private:
     }
   }
 
-  ArrayType                                 input_matrix_, output_matrix_;
-  ArrayType                                 input_pairwise_affinities_, input_symmetric_affinities_;
-  ArrayType                                 output_symmetric_affinities_;
-  fetch::random::LaggedFibonacciGenerator<> lfg_;
+  ArrayType input_matrix_, output_matrix_;
+  ArrayType input_pairwise_affinities_, input_symmetric_affinities_;
+  ArrayType output_symmetric_affinities_;
+  RNG       rng_;
 };
 
 }  // namespace ml

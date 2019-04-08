@@ -30,7 +30,7 @@ namespace ledger {
 enum class TransactionStatus
 {
   UNKNOWN,   ///< The status of the transaction is unknown
-  PENDING,   ///< The transaction is weighting to be mined
+  PENDING,   ///< The transaction is waiting to be mined
   MINED,     ///< The transaction has been mined
   EXECUTED,  ///< The transaction has been executed
 };

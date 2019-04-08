@@ -46,14 +46,12 @@ public:
   // Construction / Destruction
   ExecutorRpcService(uint16_t port, Resources resources, std::shared_ptr<Muddle> muddle)
     : executor_(std::move(resources))
+    , port_(port)
     , muddle_(std::move(muddle))
+    , identity_(muddle_->identity())
+    , server_(std::make_shared<Server>(muddle_->AsEndpoint(), SERVICE_EXECUTOR, CHANNEL_RPC))
+    , protocol_(std::make_shared<ExecutorRpcProtocol>(executor_))
   {
-    port_ = port;
-
-    identity_ = muddle_->identity();
-    server_   = std::make_shared<Server>(muddle_->AsEndpoint(), SERVICE_EXECUTOR, CHANNEL_RPC);
-    protocol_ = std::make_shared<ExecutorRpcProtocol>(executor_);
-
     server_->Add(RPC_EXECUTOR, protocol_.get());
   }
   ~ExecutorRpcService()
@@ -75,11 +73,11 @@ public:
   }
 
 private:
-  Identity               identity_;
-  uint16_t               port_;
-  ServerPtr              server_;
   Executor               executor_;
+  uint16_t               port_;
   MuddlePtr              muddle_;
+  Identity               identity_;
+  ServerPtr              server_;
   ExecutorRpcProtocolPtr protocol_;
 };
 
