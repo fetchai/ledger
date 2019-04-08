@@ -36,9 +36,9 @@ public:
     : cursor_(0)
   {
     std::uint32_t recordLength(0);
-    data_   = read_mnist_images(imagesFile, size_, recordLength);
-    labels_ = read_mnist_labels(labelsFile, size_);
-    figure_size_=28*28;
+    data_        = read_mnist_images(imagesFile, size_, recordLength);
+    labels_      = read_mnist_labels(labelsFile, size_);
+    figure_size_ = 28 * 28;
     assert(recordLength == figure_size_);
   }
 
