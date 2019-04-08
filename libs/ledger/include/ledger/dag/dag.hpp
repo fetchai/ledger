@@ -46,31 +46,33 @@ public:
   static const uint64_t PARAMETER_REFERENCES_TO_BE_TIP = 2;
 
   // Construction / Destruction
-  DAG();
+  DAG(ConstByteArray genesis_contents = "genesis");
   DAG(DAG const &) = delete;
   DAG(DAG &&) = delete;
   ~DAG() = default;
 
-  bool Push(DAGNode node);
-  bool PushBlock(DAGNode node);
-  DigestArray UncertifiedTipsAsVector() const;
-  DigestMap const tips() const;
-  DigestMap const tips_unsafe() const;
-
-  NodeMap const nodes() const;
-  NodeList const block_nodes() const;
-
-  bool HasNode(Digest const &hash);
-
-  NodeArray DAGNodes() const;
-
-  uint64_t node_count();
-
-  NodeArray GetChunk(uint64_t const &f, uint64_t const &t);
-
   // Operators
   DAG &operator=(DAG const &) = delete;
   DAG &operator=(DAG &&) = delete;
+
+  /// Methods to interact with the dag
+  /// @{
+  bool Push(DAGNode node);  
+  bool HasNode(Digest const &hash);
+  NodeArray DAGNodes() const;  
+  DigestArray UncertifiedTipsAsVector() const;
+  DigestMap const tips() const;
+  DigestMap const tips_unsafe() const;
+  NodeMap const nodes() const;
+  uint64_t node_count();
+  NodeArray GetChunk(uint64_t const &f, uint64_t const &t);
+
+  void RemoveNode(Digest const & /*hash*/)
+  {
+    // TODO: Implement.
+    throw std::runtime_error("not implemented yet");
+  }
+  /// }
 
   void OnNewNode(CallbackFunction cb)
   {
@@ -78,84 +80,11 @@ public:
     on_new_node_ = std::move(cb);
   }
 
-
   /// Control logic for setting the time of the nodes.
   /// @{
-  bool SetNodeTime(Block const&block)
-  {
-    FETCH_LOCK(maintenance_mutex_); 
-
-    std::vector< Digest > updated_hashes{};
-    std::queue< Digest >  queue;
-
-    // Preparing graph traversal
-    for(auto const& h : block.body.dag_nodes)
-    {
-      queue.push(h);
-    }
-
-    // Traversing
-    std::size_t n = 0;
-    while(!queue.empty())
-    {
-      auto hash = queue.front();
-      queue.pop();
-    
-      if(nodes_.find(hash) == nodes_.end())
-      {
-        // Revert to previous state if an invalid hash is given
-        n = 0;
-        for(auto &h: updated_hashes)
-        {
-          auto &node = nodes_[h];
-          node.timestamp = DAGNode::INVALID_TIMESTAMP;
-        }
-        // FETCH_LOG_ERROR
-
-        return false;
-      }
-
-      // Checking if the node was already certified.
-      auto &node = nodes_[hash];
-      if(node.timestamp == DAGNode::INVALID_TIMESTAMP)
-      {
-
-        // If not we certify it and proceed to its parents
-        node.timestamp = block.body.block_number;
-        for(auto &p: node.previous)
-        {
-          // TODO: Check whether already added
-          queue.push(p);
-        }
-
-        // Keeping track of updated nodes in case we need to revert.
-        updated_hashes.push_back(hash);
-        ++n;
-      }
-    }
-
-    return true;
-  }
-
-  void SetNodeReferences(DAGNode &node, int count = 2)
-  {
-    DigestArray tips_to_select_from;
-    for(auto n: tips())
-    {
-      tips_to_select_from.push_back(n.first);
-    }    
-    std::random_shuffle(tips_to_select_from.begin(), tips_to_select_from.end());
-
-    while(count > 0)
-    {
-      node.previous.push_back(tips_to_select_from.back());
-      if(tips_to_select_from.size() > 1)
-      {
-        tips_to_select_from.pop_back();
-      }
-      --count;
-    }
-  }
+  bool SetNodeTime(Block const&block);
+  NodeArray ExtractSegment(Block const &block);
+  void SetNodeReferences(DAGNode &node, int count = 2);
 
   void RevertTo(uint64_t /*block_number*/)
   {
@@ -163,62 +92,13 @@ public:
     // TODO: Implement to revert.
     throw std::runtime_error("DAG::RevertTo not implemented");    
   }
-
-  NodeArray ExtractSegment(Block const &block)
-  {
-    // It is important that the block is used to extract the segment 
-    // and not just the block time. If the hashes starting the extract
-    // are not consistent accross nodes, the order of the extract will
-    // come out differently.    
-    FETCH_LOCK(maintenance_mutex_);
-    NodeArray ret;
-
-    std::queue< Digest > queue;
-    std::unordered_set< Digest > added_to_queue;
-
-    for(auto &t: block.body.dag_nodes)
-    {
-      added_to_queue.insert(t);
-      queue.push(t);
-    }
-
-    while(!queue.empty())
-    {
-      auto &node = nodes_[queue.front()];
-      queue.pop();
-
-      if((node.timestamp < block.body.block_number) && (node.timestamp != DAGNode::INVALID_TIMESTAMP))
-      {
-        continue;
-      }
-
-      if(node.timestamp == block.body.block_number)
-      {
-        ret.push_back(node);
-      }
-
-      for(auto &p: node.previous)
-      {
-        if(added_to_queue.find(p) != added_to_queue.end())
-        {
-          continue;
-        }
-
-        added_to_queue.insert( p );          
-        queue.push(p);
-      }
-      
-    }
-
-    return ret;
-  }
   /// }
 
- /**
- * @brief validates the previous nodes referenced by a node.
- *
- * @param node is the node which needs to be checked.
- */
+  /**
+  * @brief validates the previous nodes referenced by a node.
+  *
+  * @param node is the node which needs to be checked.
+  */
   bool ValidatePrevious(DAGNode const &node)
   {
     FETCH_LOCK(maintenance_mutex_);
@@ -227,7 +107,6 @@ public:
 
   std::size_t size() const { return nodes_.size(); }
 private:
-  // Not thread safe
   bool ValidatePreviousInternal(DAGNode const &node);
   void SignalNewNode(DAGNode n)
   {

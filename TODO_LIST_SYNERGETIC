@@ -1,6 +1,26 @@
 - ( ) Tidy code up
 - ( ) Tidy test up
 
+DAG Syncronisation
+==================
+- (v) Make genesis text configurable
+- (v) Check whether already in queue, line 127 DAG.hpp
+- ( ) Make DAG implementation a state machine
+- ( ) Fix TODO on line 322 in constellation.cpp
+- ( ) Certify transactions? Maybe not for this PR
+- ( ) DAG RPC protocol, mode numbers to correct place, dag_rpc_protocol.hpp 35
+- ( ) Refactor DAG HTTP interface, line 73
+      - ( ) Updated serialiser would make life easy
+      - ( ) Wire format 117, dag_http_interface.hpp
+      - ( ) Add chunk parameters to HTTP Interface, 142 dag_http_interface.hpp
+- ( ) TODO on line 140 dag.cpp, possibly migrate to state return rather than bools
+- ( ) Add hook for updating trust system on 170 in dag.cpp
+- ( ) Check that uncertified nodes actaually are uncertified dag.cpp 211
+- ( ) Make it possible to extract a bigger segment
+
+- ( ) Fix and test tips selection
+- ( ) Move DAG muddle configuration
+
 Synergetic Contracts
 ====================
 - ( ) Implement revert, line 163 dag.hpp
@@ -22,7 +42,6 @@ Synergetic Contracts
 - (v) Change to fixedpoint, work.hpp 19
 - (v) Update test contract to int64
 - ( ) Make contract signature validator
-
 - ( ) Add revert test 
 - ( ) Sort things out in cpp files
 - ( ) Change namespaces to ledger instead of upow and consensus
@@ -32,26 +51,7 @@ Synergetic Contracts
 - ( ) Add support for removing malicious DAG nodes
 
 
-DAG Syncronisation
-==================
-- ( ) Make DAG implementation a state machine
-- ( ) Fix TODO on line 322 in constellation.cpp
-- ( ) Move DAG muddle configuration
-- ( ) Certify transactions? Maybe not for this PR
-- ( ) Check whether already in queue, line 127 DAG.hpp
-- ( ) Refactor DAG HTTP interface, line 73
-      - ( ) Updated serialiser would make life easy
-      - ( ) Wire format 117, dag_http_interface.hpp
-      - ( ) Add chunk parameters to HTTP Interface, 142 dag_http_interface.hpp
-- ( ) DAG RPC protocol, mode numbers to correct place, dag_rpc_protocol.hpp 35
-- ( ) Make genesis text configurable
-- ( ) TODO on line 140 dag.cpp, possibly migrate to state return rather than bools
-- ( ) Add hook for updating trust system on 170 in dag.cpp
-- ( ) Check that uncertified nodes actaually are uncertified dag.cpp 211
-- ( ) Make it possible to extract a bigger segment
-- ( ) Make it possible to extract multiple block segments
-- ( ) Make DAG Service a State machine
-- ( ) Fix and test tips selection
+
 
 VM
 ==

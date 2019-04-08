@@ -21,6 +21,7 @@
 #include "core/service_ids.hpp"
 #include "ledger/dag/dag.hpp"
 #include "network/service/protocol.hpp"
+#include "core/state_machine.hpp"
 
 namespace fetch
 {
@@ -52,8 +53,6 @@ public:
   }
 
 private:
-
-
   /// @name DAG Protocol Functions
   /// @{
   uint64_t NumberOfDAGNodes()
@@ -65,7 +64,12 @@ private:
   NodeList DownloadDAG(uint64_t const &part, uint64_t chunk_size) 
   {
     LOG_STACK_TRACE_POINT;
-    // TODO(tfr): Instate sanity check    chunk_size = std::min(MAX_DAG_CHUNK_SIZE, chunk_size);
+
+    if(chunk_size > MAX_DAG_CHUNK_SIZE)
+    {
+      return NodeList{};
+    }
+
     uint64_t             from = part * chunk_size;
     uint64_t             to   = from + chunk_size;
 

@@ -21,7 +21,7 @@
 namespace fetch {
 namespace ledger {
 
-DAG::DAG()
+DAG::DAG(ConstByteArray genesis_contents)
 {
   LOG_STACK_TRACE_POINT;
   // Creating the initial genesis node.
@@ -29,7 +29,7 @@ DAG::DAG()
   // as the DAG nodes are not allowed to refer to blocks.
   DAGNode n;
   n.type = DAGNode::GENESIS;
-  n.contents = "genesis"; // TODO(tfr): make configurable
+  n.contents = std::move(genesis_contents);
   n.timestamp = DAGNode::GENESIS_TIME;
 
   // Use PushInternal to bypass checks on previous hashes
@@ -130,15 +130,144 @@ bool DAG::ValidatePreviousInternal(DAGNode const &node)
       is_valid = false;
       break;
     }
-
   }
 
   if(!is_valid)
   {
-    // TODO: Not valid
     return false;
   }
   return true;
+}
+
+bool DAG::SetNodeTime(Block const& block)
+{
+  FETCH_LOCK(maintenance_mutex_); 
+
+  std::unordered_set< Digest > added_to_queue;
+  std::vector< Digest > updated_hashes{};
+  std::queue< Digest >  queue;
+
+  // Preparing graph traversal
+  for(auto const& h : block.body.dag_nodes)
+  {
+    added_to_queue.insert(h);
+    queue.push(h);
+  }
+
+  // Traversing
+  std::size_t n = 0;
+  while(!queue.empty())
+  {
+    auto hash = queue.front();
+    queue.pop();
+  
+    if(nodes_.find(hash) == nodes_.end())
+    {
+      // Revert to previous state if an invalid hash is given
+      n = 0;
+      for(auto &h: updated_hashes)
+      {
+        auto &node = nodes_[h];
+        node.timestamp = DAGNode::INVALID_TIMESTAMP;
+      }
+
+      return false;
+    }
+
+    // Checking if the node was already certified.
+    auto &node = nodes_[hash];
+    if(node.timestamp == DAGNode::INVALID_TIMESTAMP)
+    {
+
+      // If not we certify it and proceed to its parents
+      node.timestamp = block.body.block_number;
+      for(auto &p: node.previous)
+      {
+        if(added_to_queue.find(p) != added_to_queue.end())
+        {
+          continue;
+        }
+
+        added_to_queue.insert( p );   
+        queue.push(p);
+      }
+
+      // Keeping track of updated nodes in case we need to revert.
+      updated_hashes.push_back(hash);
+      ++n;
+    }
+  }
+
+  return true;
+}
+
+void DAG::SetNodeReferences(DAGNode &node, int count)
+{
+  DigestArray tips_to_select_from;
+  for(auto n: tips())
+  {
+    tips_to_select_from.push_back(n.first);
+  }    
+  std::random_shuffle(tips_to_select_from.begin(), tips_to_select_from.end());
+
+  while(count > 0)
+  {
+    node.previous.push_back(tips_to_select_from.back());
+    if(tips_to_select_from.size() > 1)
+    {
+      tips_to_select_from.pop_back();
+    }
+    --count;
+  }
+}
+
+DAG::NodeArray DAG::ExtractSegment(Block const &block)
+{
+  // It is important that the block is used to extract the segment 
+  // and not just the block time. If the hashes starting the extract
+  // are not consistent accross nodes, the order of the extract will
+  // come out differently.    
+  FETCH_LOCK(maintenance_mutex_);
+  NodeArray ret;
+
+  std::queue< Digest > queue;
+  std::unordered_set< Digest > added_to_queue;
+
+  for(auto &t: block.body.dag_nodes)
+  {
+    added_to_queue.insert(t);
+    queue.push(t);
+  }
+
+  while(!queue.empty())
+  {
+    auto &node = nodes_[queue.front()];
+    queue.pop();
+
+    if((node.timestamp < block.body.block_number) && (node.timestamp != DAGNode::INVALID_TIMESTAMP))
+    {
+      continue;
+    }
+
+    if(node.timestamp == block.body.block_number)
+    {
+      ret.push_back(node);
+    }
+
+    for(auto &p: node.previous)
+    {
+      if(added_to_queue.find(p) != added_to_queue.end())
+      {
+        continue;
+      }
+
+      added_to_queue.insert( p );          
+      queue.push(p);
+    }
+    
+  }
+
+  return ret;
 }
 
 /**
