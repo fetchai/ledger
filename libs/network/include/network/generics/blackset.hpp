@@ -420,7 +420,7 @@ public:
     : banned_(std::forward<Args>(args)...)
   {}
 
-  void Populate(Banned &banned, Suspended &) noexcept(std::is_nothrow_swappable<Banned>::value)
+  void Populate(Banned &banned, Suspended &) noexcept(noexcept(std::declval<Banned &>().swap(std::declval<Banned &>())))
   {
     banned.swap(banned_);
   }

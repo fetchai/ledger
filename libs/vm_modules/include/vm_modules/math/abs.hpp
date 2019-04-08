@@ -27,18 +27,18 @@ namespace vm_modules {
  * method for taking the absolute of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Abs(fetch::vm::VM *, T const &a)
+inline fetch::math::meta::IfIsMath<T, T> Abs(fetch::vm::VM *, T const &a)
 {
   T x = T(a);
   fetch::math::Abs(x);
   return x;
 }
 
-static void CreateAbs(std::shared_ptr<fetch::vm::Module> module)
+inline void CreateAbs(std::shared_ptr<fetch::vm::Module> module)
 {
-  module->CreateFreeFunction<int32_t>("Abs", &Abs<int32_t>);
-  module->CreateFreeFunction<float_t>("Abs", &Abs<float_t>);
-  module->CreateFreeFunction<double_t>("Abs", &Abs<double_t>);
+  module->CreateFreeFunction("Abs", &Abs<int32_t>);
+  module->CreateFreeFunction("Abs", &Abs<float_t>);
+  module->CreateFreeFunction("Abs", &Abs<double_t>);
 }
 
 }  // namespace vm_modules

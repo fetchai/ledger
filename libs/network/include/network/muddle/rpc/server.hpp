@@ -115,7 +115,7 @@ private:
     {
       FETCH_LOCK(metadata_lock_);
       index            = metadata_index_++;
-      metadata_[index] = {from, service, channel, counter};
+      metadata_[index] = Metadata{from, service, channel, counter};
     }
 
     service::CallContext context;

@@ -31,6 +31,7 @@
 #include "network/muddle/subscription.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
 
+#include <functional>
 #include <memory>
 
 namespace fetch {

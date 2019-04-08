@@ -177,11 +177,14 @@ inline Uri Uri::FromIdentity(ConstByteArray const &identity)
 }  // namespace network
 }  // namespace fetch
 
+namespace std {
 template <>
-struct std::hash<fetch::network::Uri> : private std::hash<fetch::byte_array::ConstByteArray>
+struct hash<fetch::network::Uri> : private hash<fetch::byte_array::ConstByteArray>
 {
-  std::size_t operator()(fetch::network::Uri const &x) const
+  size_t operator()(fetch::network::Uri const &x) const
+	  noexcept(noexcept(std::declval<hash<fetch::byte_array::ConstByteArray>>()(x.uri())))
   {
-    return std::hash<fetch::byte_array::ConstByteArray>::operator()(x.uri());
+    return hash<fetch::byte_array::ConstByteArray>::operator()(x.uri());
   }
 };
+}

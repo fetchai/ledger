@@ -458,7 +458,7 @@ private:
 
     fetch::type_util::FoldL(
         [this](std::size_t acc, auto &&other) {
-          std::memcpy(pointer() + acc, other.pointer(), other.size());
+          std::memcpy(this->pointer() + acc, other.pointer(), other.size());
           return acc + other.size();
         },
         sz, std::forward<Others>(others)...);
