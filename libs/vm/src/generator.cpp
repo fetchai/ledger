@@ -690,6 +690,26 @@ void Generator::HandleExpression(ExpressionNodePtr const &node)
     HandleIdentifier(node);
     break;
   }
+  case Node::Kind::Integer8:
+  {
+    HandleInteger8(node);
+    break;
+  }
+  case Node::Kind::UnsignedInteger8:
+  {
+    HandleUnsignedInteger8(node);
+    break;
+  }
+  case Node::Kind::Integer16:
+  {
+    HandleInteger16(node);
+    break;
+  }
+  case Node::Kind::UnsignedInteger16:
+  {
+    HandleUnsignedInteger16(node);
+    break;
+  }
   case Node::Kind::Integer32:
   {
     HandleInteger32(node);
@@ -802,11 +822,43 @@ void Generator::HandleIdentifier(ExpressionNodePtr const &node)
   function_->AddInstruction(instruction);
 }
 
+void Generator::HandleInteger8(ExpressionNodePtr const &node)
+{
+  Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
+  instruction.type_id = TypeIds::Int8;
+  instruction.data.i8 = static_cast<int8_t>(atoi(node->token.text.c_str()));
+  function_->AddInstruction(instruction);
+}
+
+void Generator::HandleUnsignedInteger8(ExpressionNodePtr const &node)
+{
+  Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
+  instruction.type_id  = TypeIds::Byte;
+  instruction.data.ui8 = static_cast<uint8_t>(atoi(node->token.text.c_str()));
+  function_->AddInstruction(instruction);
+}
+
+void Generator::HandleInteger16(ExpressionNodePtr const &node)
+{
+  Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
+  instruction.type_id  = TypeIds::Int16;
+  instruction.data.i16 = static_cast<int16_t>(atol(node->token.text.c_str()));
+  function_->AddInstruction(instruction);
+}
+
+void Generator::HandleUnsignedInteger16(ExpressionNodePtr const &node)
+{
+  Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
+  instruction.type_id   = TypeIds::UInt16;
+  instruction.data.ui16 = static_cast<uint16_t>(atol(node->token.text.c_str()));
+  function_->AddInstruction(instruction);
+}
+
 void Generator::HandleInteger32(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
   instruction.type_id  = TypeIds::Int32;
-  instruction.data.i32 = atoi(node->token.text.c_str());
+  instruction.data.i32 = static_cast<int32_t>(atoi(node->token.text.c_str()));
   function_->AddInstruction(instruction);
 }
 
@@ -814,7 +866,7 @@ void Generator::HandleUnsignedInteger32(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
   instruction.type_id   = TypeIds::UInt32;
-  instruction.data.ui32 = uint32_t(atoi(node->token.text.c_str()));
+  instruction.data.ui32 = static_cast<uint32_t>(atoll(node->token.text.c_str()));
   function_->AddInstruction(instruction);
 }
 
@@ -822,7 +874,7 @@ void Generator::HandleInteger64(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
   instruction.type_id  = TypeIds::Int64;
-  instruction.data.i64 = atol(node->token.text.c_str());
+  instruction.data.i64 = static_cast<int64_t>(atoll(node->token.text.c_str()));
   function_->AddInstruction(instruction);
 }
 
@@ -830,7 +882,7 @@ void Generator::HandleUnsignedInteger64(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
   instruction.type_id   = TypeIds::UInt64;
-  instruction.data.ui64 = uint64_t(atol(node->token.text.c_str()));
+  instruction.data.ui64 = static_cast<uint64_t>(atoll(node->token.text.c_str()));
   function_->AddInstruction(instruction);
 }
 
