@@ -715,6 +715,8 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/
       auto it = routing_table_.cbegin();
       std::advance(it, static_cast<std::ptrdiff_t>(element));
 
+      assert(it != routing_table_.cend());
+
       return it->second.handle;
     }
   }
