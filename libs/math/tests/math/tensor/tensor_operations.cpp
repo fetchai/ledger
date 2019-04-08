@@ -328,12 +328,11 @@ TYPED_TEST(TensorOperationsTest, concatenation_test_3D)
   auto concat_1 = fetch::math::concatenate(all_tensors, 1);
   auto concat_2 = fetch::math::concatenate(all_tensors, 2);
 
-  EXPECT_EQ(concat_0.At({0,0,0}), values_1[0][0][0]);
-  EXPECT_EQ(concat_1.At({0,0,0}), values_1[0][0][0]);
-  EXPECT_EQ(concat_2.At({0,0,0}), values_1[0][0][0]);
-  
-  EXPECT_EQ(concat_0.At({5,0,0}), values_3[1][0][0]);
-  EXPECT_EQ(concat_1.At({0,5,0}), values_3[0][1][0]);
-  EXPECT_EQ(concat_2.At({0,0,5}), values_3[0][0][1]);
+  EXPECT_EQ(concat_0.At({0, 0, 0}), values_1[0][0][0]);
+  EXPECT_EQ(concat_1.At({0, 0, 0}), values_1[0][0][0]);
+  EXPECT_EQ(concat_2.At({0, 0, 0}), values_1[0][0][0]);
 
+  EXPECT_EQ(concat_0.At({5, 0, 0}), values_3[1][0][0]);
+  EXPECT_EQ(concat_1.At({0, 5, 0}), values_3[0][1][0]);
+  EXPECT_EQ(concat_2.At({0, 0, 5}), values_3[0][0][1]);
 }
