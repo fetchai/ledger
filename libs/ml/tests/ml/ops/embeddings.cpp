@@ -149,3 +149,50 @@ TYPED_TEST(EmbeddingsTest, forward_batch)
     EXPECT_EQ(output.At(i), typename TypeParam::Type(gt[i]));
   }
 }
+
+TYPED_TEST(EmbeddingsTest, backward_batch)
+{
+  fetch::ml::ops::Embeddings<TypeParam> e(10, 6);
+  TypeParam                             weights(std::vector<uint64_t>({10, 6}));
+  for (unsigned int i(0); i < 10; ++i)
+  {
+    for (unsigned int j(0); j < 6; ++j)
+    {
+      weights.Set({i, j}, typename TypeParam::Type(i * 10 + j));
+    }
+  }
+  e.SetData(weights);
+
+  TypeParam input(std::vector<uint64_t>({3, 2}));
+  input.Set({0, 0}, typename TypeParam::Type(3));
+  input.Set({0, 1}, typename TypeParam::Type(5));
+  input.Set({1, 0}, typename TypeParam::Type(1));
+  input.Set({1, 1}, typename TypeParam::Type(2));
+  input.Set({2, 0}, typename TypeParam::Type(2));
+  input.Set({2, 1}, typename TypeParam::Type(5));
+
+  TypeParam output = e.fetch::ml::template Ops<TypeParam>::ForwardBatch(
+      std::vector<std::reference_wrapper<TypeParam const>>({input}));
+
+  ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({3, 2, 6}));
+
+  TypeParam errorSignal(output.shape());
+  errorSignal.Fill(typename TypeParam::Type(1));
+
+  e.BackwardBatch({input}, errorSignal);
+  e.Step(typename TypeParam::Type(1));
+
+  // Returns full embeddings tensor
+  output = TypeParam({10, 6});
+  output = e.fetch::ml::ops::template PlaceHolder<TypeParam>::Forward({}, output);
+  ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({10, 6}));
+  std::vector<int> gt{0,  1,  2,  3,  4,  5,  9,  10, 11, 12, 13, 14, 18, 19, 20,
+                      21, 22, 23, 29, 30, 31, 32, 33, 34, 40, 41, 42, 43, 44, 45,
+                      48, 49, 50, 51, 52, 53, 60, 61, 62, 63, 64, 65, 70, 71, 72,
+                      73, 74, 75, 80, 81, 82, 83, 84, 85, 90, 91, 92, 93, 94, 95};
+
+  for (unsigned int j(0); j < output.size(); ++j)
+  {
+    EXPECT_EQ(output.At(j), typename TypeParam::Type(gt[j]));
+  }
+}

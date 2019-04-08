@@ -83,7 +83,7 @@ public:
     {
       updated_rows_.insert(typename ArrayType::SizeType(double(i)));
       this->gradient_accumulation_->Slice(typename ArrayType::SizeType(double(i)))
-          .Copy(errorSignal.Slice(j));
+          .InlineAdd(errorSignal.Slice(j));
       j++;
     }
     return {ArrayType(errorSignal.shape())};
