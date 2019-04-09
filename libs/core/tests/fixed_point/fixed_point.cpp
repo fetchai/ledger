@@ -20,7 +20,12 @@
 #include <array>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <iomanip>
 #include <limits>
+#include <cmath>
+
+using fp32 = fetch::fixed_point::FixedPoint<16, 16>;
+using fp64 = fetch::fixed_point::FixedPoint<32, 32>;
 
 TEST(FixedPointTest, Conversion_16_16)
 {
@@ -578,6 +583,20 @@ TEST(FixedPointTest, Comparison_16_16)
 
   EXPECT_TRUE(m_two < one);
   EXPECT_TRUE(m_one < two);
+
+  EXPECT_TRUE(fp32::E       == 2.718281828459045235360287471352662498);
+  EXPECT_TRUE(fp32::LOG2E   == 1.442695040888963407359924681001892137);
+  EXPECT_TRUE(fp32::LOG10E  == 0.434294481903251827651128918916605082);
+  EXPECT_TRUE(fp32::LN2     == 0.693147180559945309417232121458176568);
+  EXPECT_TRUE(fp32::LN10    == 2.302585092994045684017991454684364208);
+  EXPECT_TRUE(fp32::PI      == 3.141592653589793238462643383279502884);
+  EXPECT_TRUE(fp32::PI_2    == 1.570796326794896619231321691639751442);
+  EXPECT_TRUE(fp32::PI_4    == 0.785398163397448309615660845819875721);
+  EXPECT_TRUE(fp32::INV_PI  == 0.318309886183790671537767526745028724);
+  EXPECT_TRUE(fp32::INV2_PI == 0.636619772367581343075535053490057448);
+  EXPECT_TRUE(fp32::INV2_SQRTPI == 1.128379167095512573896158903121545172);
+  EXPECT_TRUE(fp32::SQRT2   == 1.414213562373095048801688724209698079);
+  EXPECT_TRUE(fp32::INV_SQRT2 == 0.707106781186547524400844362104849039);
 }
 
 TEST(FixedPointTest, Comparison_32_32)
@@ -673,4 +692,68 @@ TEST(FixedPointTest, Comparison_32_32)
 
   EXPECT_TRUE(m_two < one);
   EXPECT_TRUE(m_one < two);
+
+  EXPECT_TRUE(fp64::E       == 2.718281828459045235360287471352662498);
+  EXPECT_TRUE(fp64::LOG2E   == 1.442695040888963407359924681001892137);
+  EXPECT_TRUE(fp64::LOG10E  == 0.434294481903251827651128918916605082);
+  EXPECT_TRUE(fp64::LN2     == 0.693147180559945309417232121458176568);
+  EXPECT_TRUE(fp64::LN10    == 2.302585092994045684017991454684364208);
+  EXPECT_TRUE(fp64::PI      == 3.141592653589793238462643383279502884);
+  EXPECT_TRUE(fp64::PI / 2 == fp64::PI_2);
+  EXPECT_TRUE(fp64::PI_4    == 0.785398163397448309615660845819875721);
+  EXPECT_TRUE(one / fp64::PI == fp64::INV_PI);
+  EXPECT_TRUE(fp64::INV2_PI == 0.636619772367581343075535053490057448);
+  EXPECT_TRUE(fp64::INV2_SQRTPI == 1.128379167095512573896158903121545172);
+  EXPECT_TRUE(fp64::SQRT2   == 1.414213562373095048801688724209698079);
+  EXPECT_TRUE(fp64::INV_SQRT2 == 0.707106781186547524400844362104849039);
+}
+
+TEST(FixedPointTest, Exponential_16_16)
+{
+  fetch::fixed_point::FixedPoint<16, 16> one(1);
+  fetch::fixed_point::FixedPoint<16, 16> two(2);
+  fetch::fixed_point::FixedPoint<16, 16> e1 = fp32::Exp(one);
+  fetch::fixed_point::FixedPoint<16, 16> e2 = fp32::Exp(two);
+
+std::cerr << e1 << std::endl;
+  std::cerr << e2 << std::endl;
+
+  std::cerr << std::setprecision(14);
+  EXPECT_DOUBLE_EQ((double)e1, std::exp(1.0));
+  EXPECT_DOUBLE_EQ((double)e2, std::exp(2.0));
+}
+
+TEST(FixedPointTest, Exponential_32_32)
+{
+  fetch::fixed_point::FixedPoint<32, 32> one(1);
+  fetch::fixed_point::FixedPoint<32, 32> two(2);
+  fetch::fixed_point::FixedPoint<32, 32> ten(10);
+  fetch::fixed_point::FixedPoint<32, 32> huge(20);
+  fetch::fixed_point::FixedPoint<32, 32> small(0.0001);
+  fetch::fixed_point::FixedPoint<32, 32> tiny(0, one.smallest_fraction);
+  fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Exp(one);
+  fetch::fixed_point::FixedPoint<32, 32> e2 = fp64::Exp(two);
+  fetch::fixed_point::FixedPoint<32, 32> e3 = fp64::Exp(ten);
+  fetch::fixed_point::FixedPoint<32, 32> e4 = fp64::Exp(huge);
+  fetch::fixed_point::FixedPoint<32, 32> e5 = fp64::Exp(small);
+  fetch::fixed_point::FixedPoint<32, 32> e6 = fp64::Exp(tiny);
+
+  std::cerr << e1 << std::endl;
+  std::cerr << e2 << std::endl;
+  std::cerr << e3 << std::endl;
+  std::cerr << e4 << std::endl;
+  std::cerr << e5 << std::endl;
+  std::cerr << e6 << std::endl;
+  std::cerr << one.max << std::endl;
+  std::cerr << std::log(double(one.max)) << std::endl;
+
+  std::cerr << std::setprecision(14);
+  EXPECT_DOUBLE_EQ((double)e1, std::exp(1.0));
+  EXPECT_DOUBLE_EQ((double)e2, std::exp(2.0));
+  EXPECT_DOUBLE_EQ((double)e3, std::exp(10.0));
+  EXPECT_DOUBLE_EQ((double)e4, std::exp(20));
+  EXPECT_DOUBLE_EQ((double)e5, std::exp(0.0001));
+  EXPECT_DOUBLE_EQ((double)e6, std::exp(double(tiny)));
+
+
 }
