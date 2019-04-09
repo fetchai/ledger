@@ -9,12 +9,12 @@ endif
 var trainingIterations = 1000000;
 
 var s = Array<UInt64>(2);
-s[0] = 28ul;
-s[1] = 28ul;
+s[0] = 28u64;
+s[1] = 28u64;
 var t = Tensor(s);
 
-s[0] = 1ul;
-s[1] = 10ul;
+s[0] = 1u64;
+s[1] = 10u64;
 var gt = Tensor(s);
 
 var g = Graph();

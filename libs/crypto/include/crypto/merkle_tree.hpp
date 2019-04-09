@@ -36,6 +36,8 @@ public:
   MerkleTree(MerkleTree const &rhs) = delete;
   MerkleTree(MerkleTree &&rhs)      = default;
   ~MerkleTree()                     = default;
+  MerkleTree &operator=(MerkleTree const &rhs) = default;
+  MerkleTree &operator=(MerkleTree &&rhs) = default;
 
   /// @name Leaf Node Access
   /// @{
@@ -54,9 +56,6 @@ public:
   void CalculateRoot() const;
 
   Digest &operator[](std::size_t n);
-
-  MerkleTree &operator=(MerkleTree const &rhs) = delete;
-  MerkleTree &operator=(MerkleTree &&rhs) = default;
 
 private:
   Container      leaf_nodes_;

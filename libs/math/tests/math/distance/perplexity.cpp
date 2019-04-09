@@ -39,30 +39,15 @@ TYPED_TEST_CASE(PerplexityTest, MyTypes);
 
 TYPED_TEST(PerplexityTest, entropy)
 {
-  Tensor<double> A = Tensor<double>({4, 4});
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
 
-  A.Set({0, 0}, 0.1);
-  A.Set({0, 1}, 0.2);
-  A.Set({0, 2}, 0.3);
-  A.Set({0, 3}, 0.4);
+  ArrayType A(4);
 
-  A.Set({1, 0}, -0.1);
-  A.Set({1, 1}, -0.2);
-  A.Set({1, 2}, -0.3);
-  A.Set({1, 3}, -0.4);
+  A.Set(0, DataType(0.1));
+  A.Set(1, DataType(0.2));
+  A.Set(2, DataType(0.3));
+  A.Set(3, DataType(0.4));
 
-  A.Set({2, 0}, -1.1);
-  A.Set({2, 1}, -1.2);
-  A.Set({2, 2}, -1.3);
-  A.Set({2, 3}, -1.4);
-
-  A.Set({3, 0}, 1.1);
-  A.Set({3, 1}, 1.2);
-  A.Set({3, 2}, 1.3);
-  A.Set({3, 3}, 1.4);
-
-  EXPECT_NEAR(Perplexity(A, 0), double(1.04088668950584), 1e-7);
-  EXPECT_NEAR(Perplexity(A, 1), double(1.04088668950584), 1e-7);
-  EXPECT_NEAR(Perplexity(A, 2), double(2.23458600021708e-06), 1e-13);
-  EXPECT_NEAR(Perplexity(A, 3), double(2.23458600021708e-06), 1e-13);
+  EXPECT_NEAR(double(Perplexity(A)), 3.59611546662432, 1e-3);
 }

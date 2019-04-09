@@ -331,7 +331,7 @@ struct Matrix : public IMatrix
   {
     Variant &columnv = Pop();
     size_t   column;
-    if (GetNonNegativeInteger(columnv, column) == false)
+    if (!GetNonNegativeInteger(columnv, column))
     {
       RuntimeError("negative index");
       return nullptr;
@@ -339,7 +339,7 @@ struct Matrix : public IMatrix
     columnv.Reset();
     Variant &rowv = Pop();
     size_t   row;
-    if (GetNonNegativeInteger(rowv, row) == false)
+    if (!GetNonNegativeInteger(rowv, row))
     {
       RuntimeError("negative index");
       return nullptr;

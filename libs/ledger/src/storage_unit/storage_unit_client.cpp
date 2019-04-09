@@ -54,11 +54,16 @@ StorageUnitClient::StorageUnitClient(MuddleEndpoint &muddle, ShardConfigs const 
   : addresses_(GenerateAddressList(shards))
   , log2_num_lanes_(log2_num_lanes)
   , rpc_client_("STUC", muddle, MuddleEndpoint::Address{}, SERVICE_LANE_CTRL, CHANNEL_RPC)
+  , current_merkle_{num_lanes()}
 {
   if (num_lanes() != shards.size())
   {
     throw std::logic_error("Incorrect number of shard configs");
   }
+
+  permanent_state_merkle_stack_.Load(MERKLE_FILENAME, true);
+  FETCH_LOG_INFO(LOGGING_NAME,
+                 "After recovery, size of merkle stack is: ", permanent_state_merkle_stack_.size());
 }
 
 // Get the current hash of the world state (merkle tree root)
@@ -101,156 +106,123 @@ byte_array::ConstByteArray StorageUnitClient::LastCommitHash()
   {
     FETCH_LOCK(merkle_mutex_);
 
-    if (current_merkle_)
+    auto stack_size = permanent_state_merkle_stack_.size();
+
+    if (stack_size > 0)
     {
-      last_commit_hash = current_merkle_->root();
+      return current_merkle_.root();
     }
   }
 
   return last_commit_hash;
 }
 
-// Revert to a previous hash if possible
-bool StorageUnitClient::RevertToHash(Hash const &hash)
+// Revert to a previous hash if possible. Passing the block index makes this much more efficient
+bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
 {
   // determine if the unit requests the genesis block
   bool const genesis_state = hash == GENESIS_MERKLE_ROOT;
 
-  // determine the current state hash
-  auto const current_state = CurrentHash();
+  FETCH_LOCK(merkle_mutex_);
 
-  if (current_state == hash)
+  // Set merkle stack to this hash, get the tree
+  MerkleTree tree{num_lanes()};
+  if (genesis_state && (index == 0))  // this is truely the genesis block
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "State already equal");
-
-    return true;
-  }
-
-  MerkleTreePtr tree;
-  if (genesis_state)
-  {
-    // create the new tree
-    tree = std::make_shared<MerkleTree>(num_lanes());
+    FETCH_LOG_INFO(LOGGING_NAME, "Reverting state to genesis.");
 
     // fill the tree with empty leaf nodes
     for (std::size_t i = 0; i < num_lanes(); ++i)
     {
-      (*tree)[i] = GENESIS_MERKLE_ROOT;
+      tree[i] = GENESIS_MERKLE_ROOT;
     }
 
-    FETCH_LOCK(merkle_mutex_);
-    state_merkle_stack_.clear();
+    permanent_state_merkle_stack_.New(MERKLE_FILENAME);  // clear the stack
+    permanent_state_merkle_stack_.Push(MerkleTreeBlock{tree});
   }
   else
   {
-    // Try to find whether we believe the hash exists (look in memory)
-    FETCH_LOCK(merkle_mutex_);
+    // Try to find whether we believe the hash exists (index into merkle stack)
+    MerkleTreeBlock merkle_block;
+    uint64_t const  merkle_stack_size = permanent_state_merkle_stack_.size();
 
-    auto it = std::find_if(state_merkle_stack_.rbegin(), state_merkle_stack_.rend(),
-                           [&hash](MerkleTreePtr const &ptr) { return ptr->root() == hash; });
-
-    if (state_merkle_stack_.rend() != it)
+    if (index >= merkle_stack_size)
     {
-      // update the tree
-      tree = *it;
-
-      // remove the other commits that occured later than this stack
-      state_merkle_stack_.erase(it.base(), state_merkle_stack_.end());
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Unsuccessful attempt to revert to hash ahead in the stack! Stack size: ",
+                     merkle_stack_size, " revert index: ", index);
+      return false;
     }
-  }
 
-  if (!tree)
-  {
-    FETCH_LOG_ERROR(LOGGING_NAME,
-                    "Unable to lookup the required commit hash: ", byte_array::ToBase64(hash));
-    return false;
-  }
+    permanent_state_merkle_stack_.Get(index, merkle_block);
+    tree = merkle_block.Extract(num_lanes());
+
+    if (tree.root() != hash)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Index given for merkle hash didn't match merkle stack!");
+      return false;
+    }
+
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Successfully found merkle at: ", index);
+  }  // End set merkle stack
 
   // Note: we shouldn't be touching the lanes at this point from other threads
   std::vector<service::Promise> promises;
-
-  // the check to see if the hash exists is only necessary for non genesis blocks since we know that
-  // we can always revert back to nothing!
-  if (!genesis_state)
-  {
-    // Due diligence: check all lanes can revert to this state before trying this operation
-    StorageUnitClient::LaneIndex lane_index{0};
-    for (auto const &hash : *tree)
-    {
-      assert(hash.size() > 0);
-
-      // make the request to the RPC server
-      auto promise =
-          rpc_client_.CallSpecificAddress(LookupAddress(lane_index++), RPC_STATE,
-                                          RevertibleDocumentStoreProtocol::HASH_EXISTS, hash);
-
-      promises.push_back(promise);
-    }
-
-    std::vector<uint32_t> failed_lanes;
-    uint32_t              lane_counter = 0;
-
-    for (auto &p : promises)
-    {
-      FETCH_LOG_PROMISE();
-
-      if (!p->As<bool>())
-      {
-        failed_lanes.push_back(lane_counter);
-      }
-
-      lane_counter++;
-    }
-
-    for (auto const &i : failed_lanes)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Merkle hash mismatch: hash not found in lane: ", i);
-      return false;
-    }
-
-    promises.clear();
-  }
+  promises.reserve(num_lanes());
 
   // Now perform the revert
   StorageUnitClient::LaneIndex lane_index{0};
-  for (auto const &hash : *tree)
+  for (auto const &lane_merkle_hash : tree)
   {
-    assert(hash.size() > 0);
+    assert(!hash.empty());
 
     // make the call to the RPC server
-    auto promise =
-        rpc_client_.CallSpecificAddress(LookupAddress(lane_index++), RPC_STATE,
-                                        RevertibleDocumentStoreProtocol::REVERT_TO_HASH, hash);
+    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(lane_index++), RPC_STATE,
+                                                   RevertibleDocumentStoreProtocol::REVERT_TO_HASH,
+                                                   lane_merkle_hash);
 
     // add the promise to the queue
-    promises.push_back(promise);
+    promises.emplace_back(std::move(promise));
   }
 
+  lane_index = 0;
+  bool all_success{true};
   for (auto &p : promises)
   {
     FETCH_LOG_PROMISE();
+
     if (!p->As<bool>())
     {
-      throw std::runtime_error(
-          "Failed to revert all of the lanes -\
-          the system may have entered an unknown state");
-      return false;
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to revert shard ", lane_index, " to ",
+                     tree[lane_index].ToHex());
+
+      all_success &= false;
     }
   }
 
-  // since the state has now been restored we can update the current merkle reference
+  if (all_success)
   {
-    FETCH_LOCK(merkle_mutex_);
+    // Trim the merkle stack down now that we have had success reverting the lanes
+    while (permanent_state_merkle_stack_.size() != index + 1)
+    {
+      permanent_state_merkle_stack_.Pop();
+    }
+
+    permanent_state_merkle_stack_.Flush(false);
+
+    // since the state has now been restored we can update the current merkle reference
     current_merkle_ = tree;
   }
 
-  return true;
+  return all_success;
 }
 
 // We have finished execution presumably, commit this state
-byte_array::ConstByteArray StorageUnitClient::Commit()
+byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t commit_index)
 {
-  MerkleTreePtr tree = std::make_shared<MerkleTree>(num_lanes());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Committing: ", commit_index);
+
+  MerkleTree tree{num_lanes()};
 
   std::vector<service::Promise> promises;
   promises.reserve(num_lanes());
@@ -269,45 +241,67 @@ byte_array::ConstByteArray StorageUnitClient::Commit()
   for (auto &p : promises)
   {
     FETCH_LOG_PROMISE();
-    (*tree)[index] = p->As<byte_array::ByteArray>();
+    tree[index] = p->As<byte_array::ByteArray>();
+
     ++index;
   }
 
-  tree->CalculateRoot();
+  tree.CalculateRoot();
 
-  auto const tree_root = tree->root();
+  auto const tree_root = tree.root();
 
   {
     FETCH_LOCK(merkle_mutex_);
     current_merkle_ = tree;
 
-    // this is a little
-    if (!HashInStack(tree_root))
+    if (permanent_state_merkle_stack_.size() != commit_index)
     {
-      state_merkle_stack_.push_back(tree);
-      while (state_merkle_stack_.size() > FINALITY_PERIOD)
-      {
-        state_merkle_stack_.pop_front();
-      }
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Committing to an index where there is a mismatch to the merkle stack!");
     }
+
+    while (permanent_state_merkle_stack_.size() != commit_index + 1)
+    {
+      permanent_state_merkle_stack_.Push(MerkleTreeBlock{});
+    }
+
+    permanent_state_merkle_stack_.Set(commit_index, MerkleTreeBlock{tree});
+    permanent_state_merkle_stack_.Flush(false);
   }
 
   return tree_root;
 }
 
-bool StorageUnitClient::HashExists(Hash const &hash)
+bool StorageUnitClient::HashExists(Hash const &hash, uint64_t index)
 {
-  FETCH_LOCK(merkle_mutex_);
-  return HashInStack(hash);
+  // FETCH_LOCK(merkle_mutex_);
+  return HashInStack(hash, index);
 }
 
-bool StorageUnitClient::HashInStack(Hash const &hash)
+// Search backwards through stack
+// TODO(HUT): should be const correct
+bool StorageUnitClient::HashInStack(Hash const &hash, uint64_t index)
 {
-  // small optimisation to do the search in reverse
-  auto const it = std::find_if(state_merkle_stack_.crbegin(), state_merkle_stack_.crend(),
-                               [&hash](MerkleTreePtr const &ptr) { return ptr->root() == hash; });
+  MerkleTreeBlock proxy;
+  FETCH_LOCK(merkle_mutex_);
+  uint64_t const merkle_stack_size = permanent_state_merkle_stack_.size();
 
-  return state_merkle_stack_.rend() != it;
+  if (index >= merkle_stack_size)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Tried to find hash in merkle tree when index more than stack: ",
+                   merkle_stack_size, " index: ", index);
+    return false;
+  }
+
+  permanent_state_merkle_stack_.Get(index, proxy);
+  MerkleTree deser = proxy.Extract(num_lanes());
+
+  if (deser.root() == hash)
+  {
+    return true;
+  }
+
+  return false;
 }
 
 StorageUnitClient::Address const &StorageUnitClient::LookupAddress(LaneIndex lane) const

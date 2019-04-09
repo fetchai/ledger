@@ -30,7 +30,7 @@ public:
   uint64_t value1 = 0;
   uint8_t  value2 = 0;
 
-  bool operator==(TestClass const &rhs)
+  bool operator==(TestClass const &rhs) const
   {
     return value1 == rhs.value1 && value2 == rhs.value2;
   }
@@ -69,9 +69,9 @@ TEST(variant_stack, basic_functionality)
       TestClass tmp;
       uint64_t  type = stack.Top(tmp);
 
-      EXPECT_TRUE(type == 0) << "Top did not return expected type of 0, returned: " << type;
+      EXPECT_EQ(type, 0) << "Top did not return expected type of 0, returned: " << type;
 
-      ASSERT_TRUE(tmp == std::get<0>(test_vals));
+      ASSERT_EQ(tmp, std::get<0>(test_vals));
     }
     break;
     case 1:
@@ -81,9 +81,9 @@ TEST(variant_stack, basic_functionality)
       uint64_t tmp;
       uint64_t type = stack.Top(tmp);
 
-      EXPECT_TRUE(type == 1) << "Top did not return expected type of 1, returned: " << type;
+      EXPECT_EQ(type, 1) << "Top did not return expected type of 1, returned: " << type;
 
-      ASSERT_TRUE(tmp == std::get<1>(test_vals));
+      ASSERT_EQ(tmp, std::get<1>(test_vals));
     }
     break;
     case 2:
@@ -93,9 +93,9 @@ TEST(variant_stack, basic_functionality)
       uint8_t  tmp;
       uint64_t type = stack.Top(tmp);
 
-      EXPECT_TRUE(type == 2) << "Top did not return expected type of 2, returned: " << type;
+      EXPECT_EQ(type, 2) << "Top did not return expected type of 2, returned: " << type;
 
-      ASSERT_TRUE(tmp == std::get<2>(test_vals));
+      ASSERT_EQ(tmp, std::get<2>(test_vals));
     }
     break;
     default:
@@ -108,7 +108,7 @@ TEST(variant_stack, basic_functionality)
   {
     uint64_t choose_type = i % 3;
 
-    EXPECT_TRUE(choose_type == stack.Type())
+    EXPECT_EQ(choose_type, stack.Type())
         << "Type did not return expected type of " << choose_type << ", returned: " << stack.Type();
 
     stack.Pop();
@@ -119,8 +119,8 @@ TEST(variant_stack, basic_functionality)
     }
   }
 
-  ASSERT_TRUE(stack.size() == 0);
-  ASSERT_TRUE(stack.empty() == true);
+  ASSERT_EQ(stack.size(), 0);
+  ASSERT_TRUE(stack.empty());
 }
 
 TEST(variant_stack, file_writing_and_recovery)
@@ -175,7 +175,7 @@ TEST(variant_stack, file_writing_and_recovery)
     stack.Load("VS_test_2.db");
 
     {
-      ASSERT_TRUE(stack.size() == reference.size());
+      ASSERT_EQ(stack.size(), reference.size());
 
       for (uint64_t i = testSize - 1;; --i)
       {
@@ -188,7 +188,7 @@ TEST(variant_stack, file_writing_and_recovery)
           TestClass tmp;
           stack.Top(tmp);
 
-          ASSERT_TRUE(tmp == std::get<0>(test_vals));
+          ASSERT_EQ(tmp, std::get<0>(test_vals));
         }
 
         if (choose_type == 1)
@@ -196,7 +196,7 @@ TEST(variant_stack, file_writing_and_recovery)
           uint64_t tmp;
           stack.Top(tmp);
 
-          ASSERT_TRUE(tmp == std::get<1>(test_vals));
+          ASSERT_EQ(tmp, std::get<1>(test_vals));
         }
 
         if (choose_type == 2)
@@ -204,7 +204,7 @@ TEST(variant_stack, file_writing_and_recovery)
           uint8_t tmp;
           stack.Top(tmp);
 
-          ASSERT_TRUE(tmp == std::get<2>(test_vals));
+          ASSERT_EQ(tmp, std::get<2>(test_vals));
         }
 
         stack.Pop();
@@ -228,10 +228,10 @@ TEST(variant_stack, file_writing_and_recovery)
     reference.clear();
     stack.Clear();
 
-    ASSERT_TRUE(stack.size() == reference.size());
+    ASSERT_EQ(stack.size(), reference.size());
 
-    ASSERT_TRUE(stack.size() == 0);
-    ASSERT_TRUE(stack.empty() == true);
+    ASSERT_EQ(stack.size(), 0);
+    ASSERT_TRUE(stack.empty());
 
     // push types onto variant stack
     for (uint64_t i = 0; i < testSize; ++i)
@@ -257,9 +257,9 @@ TEST(variant_stack, file_writing_and_recovery)
         TestClass tmp;
         uint64_t  type = stack.Top(tmp);
 
-        EXPECT_TRUE(type == 0) << "Top did not return expected type of 0, returned: " << type;
+        EXPECT_EQ(type, 0) << "Top did not return expected type of 0, returned: " << type;
 
-        ASSERT_TRUE(tmp == std::get<0>(test_vals));
+        ASSERT_EQ(tmp, std::get<0>(test_vals));
       }
       break;
       case 1:
@@ -269,9 +269,9 @@ TEST(variant_stack, file_writing_and_recovery)
         uint64_t tmp;
         uint64_t type = stack.Top(tmp);
 
-        EXPECT_TRUE(type == 1) << "Top did not return expected type of 1, returned: " << type;
+        EXPECT_EQ(type, 1) << "Top did not return expected type of 1, returned: " << type;
 
-        ASSERT_TRUE(tmp == std::get<1>(test_vals));
+        ASSERT_EQ(tmp, std::get<1>(test_vals));
       }
       break;
       case 2:
@@ -281,9 +281,9 @@ TEST(variant_stack, file_writing_and_recovery)
         uint8_t  tmp;
         uint64_t type = stack.Top(tmp);
 
-        EXPECT_TRUE(type == 2) << "Top did not return expected type of 2, returned: " << type;
+        EXPECT_EQ(type, 2) << "Top did not return expected type of 2, returned: " << type;
 
-        ASSERT_TRUE(tmp == std::get<2>(test_vals));
+        ASSERT_EQ(tmp, std::get<2>(test_vals));
       }
       break;
       default:
@@ -296,8 +296,8 @@ TEST(variant_stack, file_writing_and_recovery)
     {
       uint64_t choose_type = i % 3;
 
-      EXPECT_TRUE(choose_type == stack.Type()) << "Type did not return expected type of "
-                                               << choose_type << ", returned: " << stack.Type();
+      EXPECT_EQ(choose_type, stack.Type()) << "Type did not return expected type of " << choose_type
+                                           << ", returned: " << stack.Type();
 
       stack.Pop();
 

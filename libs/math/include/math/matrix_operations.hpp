@@ -374,16 +374,11 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &                   obj1,
                                                      typename ArrayType::SizeType const &axis)
 {
-  ASSERT(axis == 0 || axis == 1);
-  typename ArrayType::DataType n;
-  if (axis == 0)
-  {
-    n = obj1.shape()[1];
-  }
-  else
-  {
-    n = obj1.shape()[0];
-  }
+  assert(axis == 0 || axis == 1);
+  typename ArrayType::Type n;
+
+  n = static_cast<typename ArrayType::Type>(obj1.shape().at(axis));
+
   return Divide(ReduceSum(obj1, axis), n);
 }
 

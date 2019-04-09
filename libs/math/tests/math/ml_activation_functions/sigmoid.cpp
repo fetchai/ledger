@@ -66,7 +66,7 @@ TYPED_TEST(SigmoidTest, negative_response)
   // sanity check that all values less than 0
   for (std::size_t i = 0; i < n; ++i)
   {
-    ASSERT_TRUE(test_array[i] <= typename TypeParam::Type(0));
+    ASSERT_LE(test_array[i], typename TypeParam::Type(0));
   }
 
   //
@@ -75,7 +75,7 @@ TYPED_TEST(SigmoidTest, negative_response)
   // check that all values 0
   for (std::size_t i = 0; i < n; ++i)
   {
-    ASSERT_TRUE(test_array_2[i] < typename TypeParam::Type(0.5));
+    ASSERT_LT(test_array_2[i], typename TypeParam::Type(0.5));
   }
 }
 
@@ -89,17 +89,17 @@ TYPED_TEST(SigmoidTest, positive_response)
   // sanity check that all values gte 0
   for (std::size_t i = 0; i < n; ++i)
   {
-    ASSERT_TRUE(test_array[i] >= typename TypeParam::Type(0));
+    ASSERT_GE(test_array[i], typename TypeParam::Type(0));
   }
 
   fetch::math::Sigmoid(test_array, test_array_2);
-  ASSERT_TRUE(test_array.size() == test_array_2.size());
-  ASSERT_TRUE(test_array.shape() == test_array_2.shape());
+  ASSERT_EQ(test_array.size(), test_array_2.size());
+  ASSERT_EQ(test_array.shape(), test_array_2.shape());
 
   // check that all values unchanged
   for (std::size_t i = 0; i < n; ++i)
   {
-    ASSERT_TRUE(test_array_2[i] >= typename TypeParam::Type(0.5));
+    ASSERT_GE(test_array_2[i], typename TypeParam::Type(0.5));
   }
 }
 
@@ -128,8 +128,8 @@ TYPED_TEST(SigmoidTest, exact_values)
   gt_array[7] = typename TypeParam::Type(0.000335350130466);
 
   fetch::math::Sigmoid(test_array, test_array);
-  ASSERT_TRUE(test_array.size() == gt_array.size());
-  ASSERT_TRUE(test_array.shape() == gt_array.shape());
+  ASSERT_EQ(test_array.size(), gt_array.size());
+  ASSERT_EQ(test_array.shape(), gt_array.shape());
 
   // test correct values
   ASSERT_TRUE(test_array.AllClose(gt_array, typename TypeParam::Type(1e-5),

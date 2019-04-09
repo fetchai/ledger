@@ -33,7 +33,7 @@ protected:
     stack_.New("RAS_bench.db");
 
     EXPECT_TRUE(stack_.is_open());
-    EXPECT_TRUE(stack_.DirectWrite() == true) << "Expected random access stack to be direct write";
+    EXPECT_TRUE(stack_.DirectWrite()) << "Expected random access stack to be direct write";
   }
 
   void TearDown(const ::benchmark::State &) override

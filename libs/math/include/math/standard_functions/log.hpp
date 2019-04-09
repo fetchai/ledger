@@ -46,6 +46,20 @@ meta::IfIsFixedPoint<T, void> Log(T const &n, T &ret)
   ret = T(std::log(double(n)));
 }
 
+template <typename Type>
+meta::IfIsNonFixedPointArithmetic<Type, void> Log2(Type const &x, Type &ret)
+{
+  ret = std::log2(x);
+}
+
+// TODO(800) - native implementations of fixed point are required; casting to double will not be
+// permissible
+template <typename T>
+meta::IfIsFixedPoint<T, void> Log2(T const &n, T &ret)
+{
+  ret = T(std::log2(double(n)));
+}
+
 //////////////////
 /// INTERFACES ///
 //////////////////
@@ -78,6 +92,39 @@ meta::IfIsMathArray<ArrayType, ArrayType> Log(ArrayType const &array)
   for (typename ArrayType::Type &e : array)
   {
     Log(e, ret.At(ret_count));
+    ++ret_count;
+  }
+  return ret;
+}
+
+template <typename Type>
+meta::IfIsArithmetic<Type, Type> Log2(Type const &x)
+{
+  Type ret;
+  Log2(x, ret);
+  return ret;
+}
+
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> Log2(ArrayType const &array, ArrayType &ret)
+{
+  ASSERT(ret.shape() == array.shape());
+  typename ArrayType::SizeType ret_count{0};
+  for (typename ArrayType::Type &e : array)
+  {
+    Log2(e, ret.At(ret_count));
+    ++ret_count;
+  }
+}
+
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, ArrayType> Log2(ArrayType const &array)
+{
+  ArrayType                    ret{array.shape()};
+  typename ArrayType::SizeType ret_count{0};
+  for (typename ArrayType::Type &e : array)
+  {
+    Log2(e, ret.At(ret_count));
     ++ret_count;
   }
   return ret;

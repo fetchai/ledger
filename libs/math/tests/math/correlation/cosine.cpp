@@ -40,8 +40,8 @@ TEST(distance_tests, cosine_distance)
   B.Set(2, -3);
   B.Set(3, -4);
 
-  ASSERT_TRUE(Cosine(A, A) == 1);
-  ASSERT_TRUE(Cosine(A, B) == -1);
+  ASSERT_EQ(Cosine(A, A), 1);
+  ASSERT_EQ(Cosine(A, B), -1);
 
   Tensor<double> C = Tensor<double>({1, 4});
   C.Set(0, 1);
