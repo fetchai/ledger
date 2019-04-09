@@ -33,17 +33,9 @@ namespace math {
 ///////////////////////
 
 template <typename Type>
-meta::IfIsNonFixedPointArithmetic<Type, void> Clamp(Type const &x, Type const &min, Type const &max,
-                                                    Type &ret)
+void Clamp(Type const &x, Type const &min, Type const &max, Type &ret)
 {
   Max(x, min, ret);
-  Min(ret, max, ret);
-}
-
-template <typename T>
-meta::IfIsFixedPoint<T, void> Clamp(T const &n, T const &min, T const &max, T &ret)
-{
-  Max(n, min, ret);
   Min(ret, max, ret);
 }
 

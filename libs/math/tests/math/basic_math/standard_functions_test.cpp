@@ -42,24 +42,26 @@ TYPED_TEST(ClampTest, clamp_array_test)
   using ArrayType = TypeParam;
   using SizeType  = typename TypeParam::SizeType;
 
-  ArrayType A = ArrayType({4});
+  ArrayType A = ArrayType({6});
 
-  A.Set({0}, DataType(1));
-  A.Set({1}, DataType(2));
-  A.Set({2}, DataType(3));
-  A.Set({3}, DataType(4));
+  A.Set({0}, DataType(-10));
+  A.Set({1}, DataType(0));
+  A.Set({2}, DataType(1));
+  A.Set({3}, DataType(2));
+  A.Set({4}, DataType(3));
+  A.Set({5}, DataType(10));
 
   // Expected results
-  ArrayType A_clamp_expected = ArrayType({4});
+  ArrayType A_clamp_expected = ArrayType({6});
   A_clamp_expected.Set({0}, DataType(2));
   A_clamp_expected.Set({1}, DataType(2));
-  A_clamp_expected.Set({2}, DataType(3));
-  A_clamp_expected.Set({3}, DataType(3));
+  A_clamp_expected.Set({2}, DataType(2));
+  A_clamp_expected.Set({3}, DataType(2));
+  A_clamp_expected.Set({4}, DataType(3));
+  A_clamp_expected.Set({5}, DataType(3));
 
   // Compare results with expected results
   ArrayType A_norm = Clamp(A, DataType(2), DataType(3));
-
-  std::cout << "A_norm.ToString(): " << A_norm.ToString() << std::endl;
 
   for (SizeType i{0}; i < A.size(); i++)
   {
