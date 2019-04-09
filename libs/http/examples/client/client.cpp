@@ -16,10 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/client.hpp"
+#include "http/http_client.hpp"
+#include "http/https_client.hpp"
+#include "http/request.hpp"
+#include "http/response.hpp"
 #include "core/commandline/params.hpp"
 
+#include <memory>
 #include <iostream>
+
+using fetch::http::HttpClientInterface;
+using fetch::http::HttpClient;
+using fetch::http::HttpsClient;
+
+using ClientPtr = std::unique_ptr<HttpClientInterface>;
 
 int main(int argc, char **argv)
 {
@@ -31,16 +41,29 @@ int main(int argc, char **argv)
   uint16_t    port = 0;
   std::string method;
   std::string endpoint;
+  bool        ssl = false;
 
   parser.add(host, "host", "The hostname or IP to connect to");
-  parser.add(port, "port", "The port number to connect to", uint16_t{80});
-  parser.add(method, "method", "The http method to be used", std::string{"GET"});
+  parser.add(port, "port", "The port number to connect to", uint16_t{0});
   parser.add(endpoint, "endpoint", "The endpoint to be requested", std::string{"/"});
+  parser.add(ssl, "ssl", "Use SSL for the configuration", false);
 
   parser.Parse(argc, argv);
 
+  // if the default port is selected then choose the correct default
+  if (port == 0)
+  {
+    port = (ssl) ? HttpsClient::DEFAULT_PORT : HttpClient::DEFAULT_PORT;
+  }
+
+  std::cout << "Host     : " << host << std::endl;
+  std::cout << "Port     : " << port << std::endl;
+  std::cout << "Endpoint : GET " << endpoint << std::endl;
+  std::cout << "SSL      : " << ssl << std::endl;
+
   // create the client
-  fetch::http::HTTPClient client(host, port);
+  ClientPtr client = (ssl) ? std::make_unique<HttpsClient>(host, port)
+                           : std::make_unique<HttpClient>(host, port);
 
   // make the request
   fetch::http::HTTPRequest req;
@@ -48,11 +71,16 @@ int main(int argc, char **argv)
   req.SetURI(endpoint);
 
   fetch::http::HTTPResponse response;
-  if (client.Request(req, response))
+  if (client->Request(req, response))
   {
+    std::cout << "Status Code: " << ToString(response.status()) << std::endl;
     std::cout << response.body() << std::endl;
 
     exit_code = EXIT_SUCCESS;
+  }
+  else
+  {
+    std::cout << "Failed to make the request" << std::endl;
   }
 
   return exit_code;

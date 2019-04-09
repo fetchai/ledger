@@ -17,13 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
-#include "http/request.hpp"
-#include "http/response.hpp"
 #include "network/fetch_asio.hpp"
+#include "http_client_interface.hpp"
 
 #include <cstdint>
 #include <string>
+
+namespace asio {
+  template <typename T>
+  class basic_streambuf;
+
+  using streambuf = basic_streambuf<>;
+}
 
 namespace fetch {
 namespace http {
@@ -31,28 +36,57 @@ namespace http {
 /**
  * Simple blocking HTTP client used for querying information
  */
-class HTTPClient
+class HttpClient : public HttpClientInterface
 {
 public:
   static constexpr char const *LOGGING_NAME = "HTTPClient";
+  static constexpr uint16_t DEFAULT_PORT = 80;
 
   // Construction / Destruction
-  explicit HTTPClient(std::string host, uint16_t port = 80);
-  ~HTTPClient() = default;
+  explicit HttpClient(std::string host, uint16_t port = DEFAULT_PORT);
+  ~HttpClient() override = default;
 
-  bool Request(HTTPRequest const &request, HTTPResponse &response);
+  /// @name Accessors
+  /// @{
+  std::string const &host() const;
+  uint16_t port() const;
+  /// @}
 
-private:
+  /// @name Http Client Interface
+  /// @{
+  bool Request(HTTPRequest const &request, HTTPResponse &response) override;
+  /// @}
+
+protected:
   using IoService = asio::io_service;
   using Socket    = asio::ip::tcp::socket;
 
-  bool Connect();
+  /// @name HTTP Client Methods
+  /// @{
+  virtual bool Connect();
+  virtual void Write(asio::streambuf const &buffer, std::error_code &ec);
+  virtual std::size_t ReadUntil(asio::streambuf &buffer, char const *delimiter, std::error_code &ec);
+  virtual void ReadExactly(asio::streambuf &buffer, std::size_t length, std::error_code &ec);
+  /// @}
 
-  std::string host_;
-  uint16_t    port_;
-  IoService   io_service_;
-  Socket      socket_{io_service_};
+  IoService io_service_;
+
+private:
+
+  std::string    host_;
+  uint16_t       port_;
+  Socket         socket_{io_service_};
 };
+
+inline std::string const &HttpClient::host() const
+{
+  return host_;
+}
+
+inline uint16_t HttpClient::port() const
+{
+  return port_;
+}
 
 }  // namespace http
 }  // namespace fetch

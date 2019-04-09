@@ -17,25 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wpedantic"
-#endif
+namespace fetch {
+namespace http {
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-#pragma clang diagnostic ignored "-Wpedantic"
-#endif
+class HTTPRequest;
+class HTTPResponse;
 
-#include <asio.hpp>
-#include <asio/ssl.hpp>
+class HttpClientInterface
+{
+public:
 
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
+  // Construction / Destruction
+  HttpClientInterface() = default;
+  virtual ~HttpClientInterface() = default;
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
+  /// @name HTTP Client Interface
+  /// @{
+  virtual bool Request(HTTPRequest const &request, HTTPResponse &response) = 0;
+  /// @}
+};
+
+} // namespace http
+} // namespace fetch
