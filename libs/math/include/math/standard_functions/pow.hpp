@@ -29,7 +29,7 @@ namespace math {
 template <typename Type>
 meta::IfIsNonFixedPointArithmetic<Type, void> Pow(Type const &x, Type const &y, Type &ret)
 {
-  ret = Type(std::pow(x, std::uint64_t(y)));
+  ret = Type(std::pow(x, y));
 }
 
 // TODO(800) - native implementations of fixed point are required; casting to double will not be

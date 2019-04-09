@@ -112,7 +112,7 @@ TEST(storage_object_store_basic_functionality, Setting_and_getting_elements)
       // Suppress most expects to avoid spamming terminal
       if (i != result || i == 0)
       {
-        EXPECT_TRUE(i == result);
+        EXPECT_EQ(i, result);
       }
     }
 
@@ -126,7 +126,7 @@ TEST(storage_object_store_basic_functionality, Setting_and_getting_elements)
       // Suppress most expects to avoid spamming terminal
       if (i != result || i == 0)
       {
-        EXPECT_TRUE(i == result);
+        EXPECT_EQ(i, result);
       }
     }
 
@@ -140,7 +140,7 @@ TEST(storage_object_store_basic_functionality, Setting_and_getting_elements)
       // Suppress most expects to avoid spamming terminal
       if (0 != result || i == 1)
       {
-        EXPECT_TRUE(0 == result);
+        EXPECT_EQ(0, result);
       }
     }
   }
@@ -192,7 +192,7 @@ TEST(storage_object_store_basic_functionality, find_over_basic_struct)
       index++;
     }
 
-    EXPECT_TRUE(successfullyFound == true && index == index);
+    EXPECT_TRUE(successfullyFound);
 
     successfullyFound = false;
 
@@ -207,7 +207,7 @@ TEST(storage_object_store_basic_functionality, find_over_basic_struct)
       }
     }
 
-    EXPECT_TRUE(successfullyFound == false);
+    EXPECT_FALSE(successfullyFound);
   }
 }
 
@@ -246,7 +246,7 @@ TEST(storage_object_store_with_STL_gtest, find_over_basic_struct_expect_failures
       }
     }
 
-    EXPECT_TRUE(successfullyFound == false);
+    EXPECT_FALSE(successfullyFound);
   }
 }
 
@@ -316,9 +316,9 @@ TEST(storage_object_store_with_STL_gtest, iterator_over_basic_struct)
 
     std::sort(objectsCopy.begin(), objectsCopy.end());
 
-    EXPECT_TRUE(objectsCopy.size() == objects.size());
+    EXPECT_EQ(objectsCopy.size(), objects.size());
     bool allMatch = std::equal(objectsCopy.begin(), objectsCopy.end(), objects.begin());
-    EXPECT_TRUE(allMatch == true);
+    EXPECT_TRUE(allMatch);
   }
 }
 
@@ -385,7 +385,7 @@ TEST(storage_object_store_with_STL_gtest, subtree_iterator_over_basic_struct)
     std::sort(objectsCopy.begin(), objectsCopy.end());
 
     bool allMatch = std::equal(objectsCopy.begin(), objectsCopy.end(), objects.begin());
-    EXPECT_TRUE(allMatch == true);
+    EXPECT_TRUE(allMatch);
   }
 }
 

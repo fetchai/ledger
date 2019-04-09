@@ -70,7 +70,7 @@ public:
 
   // Construction / Destruction
   Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher,
-         Prover *certificate = nullptr);
+         Prover *certificate = nullptr, bool sign_broadcasts = false);
   Router(Router const &) = delete;
   Router(Router &&)      = delete;
   ~Router() override     = default;
@@ -198,7 +198,8 @@ private:
   Dispatcher &          dispatcher_;
   SubscriptionRegistrar registrar_;
   NetworkId             network_id_;
-  Prover *              prover_ = nullptr;
+  Prover *              prover_          = nullptr;
+  bool                  sign_broadcasts_ = false;
 
   mutable Mutex routing_table_lock_{__LINE__, __FILE__};
   RoutingTable  routing_table_;  ///< The map routing table from address to handle (Protected by

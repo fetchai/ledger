@@ -129,13 +129,119 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
                                          ArrayType &ret)
 {
-  assert(array1.shape() == array2.shape());
-  assert(array1.shape() == ret.shape());
+  assert((array1.size() == array2.size()) ||
+         ((array1.shape()[0] == array2.shape()[0]) &&
+          ((array1.shape()[1] == 1) || (array2.shape()[1] == 1))) ||
+         ((array1.shape()[1] == array2.shape()[1]) &&
+          ((array1.shape()[0] == 1) || (array2.shape()[0] == 1))));
+  assert((array1.size() == ret.size()) || (array2.size() == ret.size()));
 
-  for (std::size_t i = 0; i < ret.size(); ++i)
+  if (array1.size() == array2.size())
   {
-    ret.At(i) = array1.At(i) + array2.At(i);
+    for (std::size_t i = 0; i < ret.size(); ++i)
+    {
+      ret.Set(i, array1.At(i) + array2.At(i));
+    }
   }
+
+  // matrix - vector addition (i.e. broadcasting)
+  else if (array1.shape()[0] == 1)
+  {
+    for (std::size_t i = 0; i < array2.shape()[0]; ++i)
+    {
+      for (std::size_t j = 0; j < array2.shape()[1]; ++j)
+      {
+        ret.Set({i, j}, array1.At({0, j}) + array2.At({i, j}));
+      }
+    }
+  }
+  else if (array1.shape()[1] == 1)
+  {
+    for (std::size_t i = 0; i < array2.shape()[0]; ++i)
+    {
+      for (std::size_t j = 0; j < array2.shape()[1]; ++j)
+      {
+        ret.Set({i, j}, array1.At({i, 0}) + array2.At({i, j}));
+      }
+    }
+  }
+  else if (array2.shape()[0] == 1)
+  {
+    for (std::size_t i = 0; i < array1.shape()[0]; ++i)
+    {
+      for (std::size_t j = 0; j < array1.shape()[1]; ++j)
+      {
+        ret.Set({i, j}, array1.At({i, j}) + array2.At({0, j}));
+      }
+    }
+  }
+  else if (array2.shape()[1] == 1)
+  {
+    for (std::size_t i = 0; i < array1.shape()[0]; ++i)
+    {
+      for (std::size_t j = 0; j < array1.shape()[1]; ++j)
+      {
+        ret.Set({i, j}, array1.At({i, j}) + array2.At({i, 0}));
+      }
+    }
+  }
+  else
+  {
+    throw std::runtime_error("broadcast addition for tensors more than 2D not yet handled");
+  }
+}
+
+//////////////////
+/// INTERFACES ///
+//////////////////
+
+template <typename S>
+meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
+{
+  S ret;
+  Add(scalar1, scalar2, ret);
+  return ret;
+}
+template <typename T, typename ArrayType, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
+{
+  ArrayType ret{array.shape()};
+  Add(array, scalar, ret);
+  return ret;
+}
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
+meta::IfIsMathArray<ArrayType, ArrayType> Add(T const &scalar, ArrayType const &array)
+{
+  return Add(array, scalar);
+}
+
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
+meta::IfIsMathArray<ArrayType, void> Add(T const &scalar, ArrayType const &array, ArrayType &ret)
+{
+  ret = Add(array, scalar, ret);
+}
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2)
+{
+  assert((array1.size() == array2.size()) ||
+         ((array1.shape()[0] == array2.shape()[0]) &&
+          ((array1.shape()[1] == 1) || (array2.shape()[1] == 1))) ||
+         ((array1.shape()[1] == array2.shape()[1]) &&
+          ((array1.shape()[0] == 1) || (array2.shape()[0] == 1))));
+
+  ArrayType ret;
+  if (array1.size() > array2.size())
+  {
+    ret = ArrayType(array1.shape());
+  }
+  else
+  {
+    ret = ArrayType(array2.shape());
+  }
+  Add(array1, array2, ret);
+  return ret;
 }
 
 //////////////////
@@ -223,8 +329,21 @@ meta::IfIsMathArray<ArrayType, ArrayType> Subtract(ArrayType const &obj1, ArrayT
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Subtract(ArrayType const &obj1, ArrayType const &obj2)
 {
-  assert(obj1.size() == obj2.size());
-  ArrayType ret{obj1.shape()};
+  assert(
+      (obj1.size() == obj2.size()) ||
+      ((obj1.shape()[0] == obj2.shape()[0]) &&
+       ((obj1.shape()[1] == 1) || (obj2.shape()[1] == 1))) ||
+      ((obj1.shape()[1] == obj2.shape()[1]) && ((obj1.shape()[0] == 1) || (obj2.shape()[0] == 1))));
+
+  ArrayType ret;
+  if (obj1.size() > obj2.size())
+  {
+    ret = ArrayType(obj1.shape());
+  }
+  else
+  {
+    ret = ArrayType(obj2.shape());
+  }
   Subtract(obj1, obj2, ret);
   return ret;
 }
@@ -300,9 +419,9 @@ meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array, ArrayType 
   }
   else if (array2.shape()[0] == 1)
   {
-    for (std::size_t i = 0; i < array2.shape()[0]; ++i)
+    for (std::size_t i = 0; i < array.shape()[0]; ++i)
     {
-      for (std::size_t j = 0; j < array2.shape()[1]; ++j)
+      for (std::size_t j = 0; j < array.shape()[1]; ++j)
       {
         ret.Set({i, j}, array.At({i, j}) - array2.At({0, j}));
       }
@@ -310,11 +429,11 @@ meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array, ArrayType 
   }
   else if (array2.shape()[1] == 1)
   {
-    for (std::size_t i = 0; i < array2.shape()[0]; ++i)
+    for (std::size_t i = 0; i < array.shape()[0]; ++i)
     {
-      for (std::size_t j = 0; j < array2.shape()[1]; ++j)
+      for (std::size_t j = 0; j < array.shape()[1]; ++j)
       {
-        ret.Set({i, j}, array.At({0, j}) - array2.At({i, 0}));
+        ret.Set({i, j}, array.At({i, j}) - array2.At({i, 0}));
       }
     }
   }
@@ -437,6 +556,14 @@ meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &obj1, ArrayType c
 {
   details::Multiply(obj1, obj2, ret);
 }
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, ArrayType> Multiply(ArrayType const &obj1, ArrayType const &obj2)
+{
+  assert(obj1.size() == obj2.size());
+  ArrayType ret{obj1.shape()};
+  Multiply(obj1, obj2, ret);
+  return ret;
+}
 template <typename S>
 meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
 {
@@ -485,15 +612,6 @@ meta::IfIsMathArray<ArrayType, void> Divide(T const &scalar, ArrayType const &ar
   {
     ret.At(i) = scalar / array.At(i);
   }
-}
-
-template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2)
-{
-  ArrayType ret{obj1.shape()};
-
-  Divide(obj1, obj2, ret);
-  return ret;
 }
 
 template <typename T, typename ArrayType,

@@ -126,6 +126,7 @@ public:
 
   enum class State
   {
+    RELOAD_STATE,                  ///< Recovering previous state
     SYNCHRONIZING,                 ///< Catch up with the outstanding blocks
     SYNCHRONIZED,                  ///< Caught up waiting to generate a new block
     PRE_EXEC_BLOCK_VALIDATION,     ///< Validation stage before block execution
@@ -214,6 +215,7 @@ private:
 
   /// @name Monitor State
   /// @{
+  State OnReloadState();
   State OnSynchronizing();
   State OnSynchronized(State current, State previous);
   State OnPreExecBlockValidation();
@@ -267,12 +269,14 @@ private:
   Flag            mining_{false};          ///< Flag to signal if this node generating blocks
   Flag            mining_enabled_{false};  ///< Short term signal to toggle on and off
   BlockPeriod     block_period_;           ///< The desired period before a block is generated
-  Timepoint       next_block_time_;        ///< THe next point that a block should be generated
+  Timepoint       next_block_time_;        ///< The next point that a block should be generated
   BlockPtr        current_block_{};        ///< The pointer to the current block (read only)
-  NextBlockPtr    next_block_{};           ///< The next block being created (read / write)
-  TxSetPtr        pending_txs_{};          ///< The list of pending txs that are being waited on
-  PeriodicAction  tx_wait_periodic_;       ///< Periodic print for transaction waiting
-  PeriodicAction  exec_wait_periodic_;     ///< Periodic print for execution
+  NextBlockPtr
+                 next_block_{};  ///< The next block being created (read / write) - only in mining mode
+  TxSetPtr       pending_txs_{};       ///< The list of pending txs that are being waited on
+  PeriodicAction tx_wait_periodic_;    ///< Periodic print for transaction waiting
+  PeriodicAction exec_wait_periodic_;  ///< Periodic print for execution
+  PeriodicAction syncing_periodic_;
   /// @}
 };
 
