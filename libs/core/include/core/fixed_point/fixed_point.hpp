@@ -237,6 +237,20 @@ public:
 
   // Constants/Limits
   static const Type one = Type(1) << fractional_bits;
+  static const FixedPoint<I,F> One; /* e */
+  static const FixedPoint<I,F> E; /* e */
+  static const FixedPoint<I,F> LOG2E; /* log_2 e */
+  static const FixedPoint<I,F> LOG10E; /* log_10 e */
+  static const FixedPoint<I,F> LN2; /* log_e 2 */
+  static const FixedPoint<I,F> LN10; /* log_e 10 */
+  static const FixedPoint<I,F> PI; /* pi */
+  static const FixedPoint<I,F> PI_2; /* pi/2 */
+  static const FixedPoint<I,F> PI_4; /* pi/4 */
+  static const FixedPoint<I,F> INV_PI; /* 1/pi */
+  static const FixedPoint<I,F> INV2_PI; /* 2/pi */
+  static const FixedPoint<I,F> INV2_SQRTPI; /* 2/sqrt(pi) */
+  static const FixedPoint<I,F> SQRT2  ; /* sqrt(2) */
+  static const FixedPoint<I,F> INV_SQRT2; /* 1/sqrt(2) */
   const Type smallest_fraction = 1;
   const Type largest_fraction = fractional_mask;
   const Type largest_int = Type(fractional_mask >> 1) << fractional_bits;
@@ -249,7 +263,6 @@ public:
   ////////////////////
   FixedPoint() = default;
 
-<<<<<<< HEAD
   /**
    * Templated constructor existing only for T is an integer and assigns data
    * @tparam T any integer type
@@ -267,8 +280,7 @@ public:
     : data_(static_cast<Type>(n * CONST_ONE))
   {
     assert(CheckNoOverflow(n, FRACTIONAL_BITS, TOTAL_BITS));
-    // TODO(private, 629)
-    // assert(CheckNoRounding(n, FRACTIONAL_BITS));
+    assert(details::CheckNoRounding(n, fractional_bits));
   }
 
   inline FixedPoint(const FixedPoint &o)
@@ -288,6 +300,12 @@ public:
   {
     return (data_ & fractional_mask);
   }
+
+  inline const FixedPoint floor() const 
+  {
+    return FixedPoint(Type((data_ & integer_mask) >> fractional_bits));
+  }
+
   /////////////////
   /// operators ///
   /////////////////
@@ -507,13 +525,13 @@ public:
 
   inline FixedPoint &operator>>=(const FixedPoint &n)
   {
-    data_ >>= n.to_int();
+    data_ >>= n.integer();
     return *this;
   }
 
   inline FixedPoint &operator<<=(const FixedPoint &n)
   {
-    data_ <<= n.to_int();
+    data_ <<= n.integer();
     return *this;
   }
 
@@ -536,6 +554,60 @@ public:
     return FixedPoint(n, NoScale());
   }
 
+  static inline FixedPoint Exp(FixedPoint &x)
+  {
+    std::cerr << "x = " << x << std::endl;
+    // Find integer k and r ∈ [-0.5, 0.5) such as: x = k*ln2 + r
+    // Then exp(x) = 2^k * e^r
+    FixedPoint k = x / FixedPoint::LN2;
+    std::cerr << "k = " << k << std::endl;
+    k = k.floor();
+    std::cerr << "k = " << k << std::endl;
+
+    FixedPoint r = x - k*FixedPoint::LN2;
+    std::cerr << "r = " << r << std::endl;
+    FixedPoint e1{One};
+    std::cerr << "e1 = " << e1 << std::endl;
+    e1 <<= k;
+    std::cerr << "e1 = " << e1 << std::endl;
+
+    // The fractional part, we take the first 3 terms of the Taylor approximation
+    /*FixedPoint r2 = FixedPoint(0.5) * r * r;
+    //std::cerr << "r2 = " << r2 << std::endl;
+    FixedPoint r3 = FixedPoint(1.0/3.0) * r2 * r;
+    //std::cerr << "r3 = " << r3 << std::endl;
+    FixedPoint r4 = FixedPoint(1.0/4.0) * r3 * r;
+    //std::cerr << "r4 = " << r4 << std::endl;
+    FixedPoint r5 = FixedPoint(1.0/5.0) * r4 * r;
+    //std::cerr << "r5 = " << r5 << std::endl;
+    FixedPoint r6 = FixedPoint(1.0/6.0) * r5 * r;
+    std::cerr << "r6 = " << r6 << std::endl;
+    FixedPoint r7 = FixedPoint(1.0/7.0) * r6 * r;
+    std::cerr << "r7 = " << r7 << std::endl;
+    FixedPoint r8 = FixedPoint(1.0/8.0) * r7 * r;
+    std::cerr << "r8 = " << r8 << std::endl;
+    FixedPoint r9 = FixedPoint(1.0/9.0) * r8 * r;
+    std::cerr << "r9 = " << r9 << std::endl;*/
+    //FixedPoint e2 = FixedPoint(1) + r + r2 + r3 + r4 + r5/* + r6 + r7 + r8 + r9*/;
+    //std::cerr << "e2 = " << e2 << std::endl;
+    // https://en.wikipedia.org/wiki/Pad%C3%A9_table
+    FixedPoint r2 = r*r;
+    std::cerr << "r2 = " << r2 << std::endl;
+    FixedPoint r3 = r2*r;
+    std::cerr << "r3 = " << r3 << std::endl;
+    FixedPoint r4 = r3*r;
+    std::cerr << "r4 = " << r4 << std::endl;
+    //FixedPoint P = FixedPoint(120) + FixedPoint(60)*r + FixedPoint(12)*r2 + r3;
+    FixedPoint P = FixedPoint(1680) + FixedPoint(840)*r + FixedPoint(180)*r2 + FixedPoint(20)*r3 + r4;
+    std::cerr << "P = " << P << std::endl;
+    //FixedPoint Q = FixedPoint(120) - FixedPoint(60)*r + FixedPoint(12)*r2 - r3;
+    FixedPoint Q = FixedPoint(1680) - FixedPoint(840)*r + FixedPoint(180)*r2 - FixedPoint(20)*r3 + r4;
+    std::cerr << "Q = " << Q << std::endl;
+    FixedPoint e2 = P/Q;
+    std::cerr << "e2 = " << e2 << std::endl;
+
+    return e1 * e2;
+  }
 private:
   Type data_{0};  // the value to be stored
 
@@ -555,13 +627,27 @@ template <std::uint16_t I, std::uint16_t F>
 std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
 {
   std::ios_base::fmtflags f(s.flags());
-  s << std::dec;
-  s << n.integer();
-  s << '.';
-  s << n.fraction();
+  s << std::dec << std::setprecision(14);
+  s << (double)(n);
   s.flags(f);
   return s;
 }
+
+template <std::size_t I, std::size_t F> const FixedPoint<I, F> FixedPoint<I, F>::One{1}; /* e */
+template <std::size_t I, std::size_t F> const FixedPoint<I, F> FixedPoint<I, F>::E{2.718281828459045235360287471352662498}; /* e */
+template <std::size_t I, std::size_t F> const FixedPoint<I, F> FixedPoint<I, F>::LOG2E{1.442695040888963407359924681001892137}; /* log_2 e */
+template <std::size_t I, std::size_t F> const FixedPoint<I, F> FixedPoint<I, F>::LOG10E{0.434294481903251827651128918916605082}; /* log_10 e */
+template <std::size_t I, std::size_t F> const FixedPoint<I, F> FixedPoint<I, F>::LN2{0.693147180559945309417232121458176568}; /* log_e 2 */
+template <std::size_t I, std::size_t F> const FixedPoint<I, F> FixedPoint<I, F>::LN10{2.302585092994045684017991454684364208}; /* log_e 10 */
+template <std::size_t I, std::size_t F> const FixedPoint<I, F> FixedPoint<I, F>::PI{3.141592653589793238462643383279502884}; /* pi */
+template <std::size_t I, std::size_t F> const FixedPoint<I, F> FixedPoint<I, F>::PI_2{1.570796326794896619231321691639751442}; /* pi/2 */
+template <std::size_t I, std::size_t F> const FixedPoint<I, F> FixedPoint<I, F>::PI_4{0.785398163397448309615660845819875721}; /* pi/4 */
+template <std::size_t I, std::size_t F> const FixedPoint<I, F> FixedPoint<I, F>::INV_PI{0.318309886183790671537767526745028724}; /* 1/pi */
+template <std::size_t I, std::size_t F> const FixedPoint<I, F> FixedPoint<I, F>::INV2_PI{0.636619772367581343075535053490057448}; /* 2/pi */
+template <std::size_t I, std::size_t F> const FixedPoint<I, F> FixedPoint<I, F>::INV2_SQRTPI{1.128379167095512573896158903121545172}; /* 2/sqrt(pi) */
+template <std::size_t I, std::size_t F> const FixedPoint<I, F> FixedPoint<I, F>::SQRT2{1.414213562373095048801688724209698079}; /* sqrt(2) */
+template <std::size_t I, std::size_t F> const FixedPoint<I, F> FixedPoint<I, F>::INV_SQRT2{0.707106781186547524400844362104849039}; /* 1/sqrt(2) */
+
 
 }  // namespace fixed_point
 }  // namespace fetch
