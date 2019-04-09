@@ -294,11 +294,10 @@ void CategoricalXorTest(bool add_softmax = false)
 
   for (SizeType step{0}; step < n_data; ++step)
   {
-    cur_input = data.Slice(step).Tensor();
+    cur_input = data.Slice(step).Copy();
     g.SetInput(input_name, cur_input);
-//    cur_gt       = gt.Slice(step).Tensor().Unsqueeze();
-    cur_gt       = gt.Slice(step).Tensor();
     auto results = g.Evaluate(output_name);
+    cur_gt       = gt.Slice(step).Copy();
     loss += criterion.Forward({results, cur_gt, n_classes});
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
   }
@@ -316,10 +315,9 @@ void CategoricalXorTest(bool add_softmax = false)
 
     for (SizeType step{0}; step < n_data; ++step)
     {
-      cur_input = data.Slice(step).Tensor();
+      cur_input = data.Slice(step).Copy();
       g.SetInput(input_name, cur_input);
-//      cur_gt       = gt.Slice(step).Tensor().Unsqueeze();
-      cur_gt       = gt.Slice(step).Tensor();
+      cur_gt       = gt.Slice(step).Copy();
       auto results = g.Evaluate(output_name);
       loss += criterion.Forward({results, cur_gt, n_classes});
       g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));

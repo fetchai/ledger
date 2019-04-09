@@ -67,15 +67,10 @@ template <typename ArrayType>
                                                              ArrayType const &obj2, ArrayType &ret)
 {
   ASSERT(obj1.size() == obj2.size());
-  auto it1 = obj1.cbegin();
-  auto it2 = obj2.cbegin();
-  auto rit = ret.begin();
-  while(it1.is_valid())
+  ASSERT(ret.size() == obj2.size());
+  for (std::size_t i = 0; i < obj1.size(); ++i)
   {
-    *rit = (*it1) * (*it2);
-    ++it1;
-    ++it2;
-    ++rit;
+    ret[i] = obj1[i] * obj2[i];
   }
 }
 
@@ -84,15 +79,11 @@ template <typename ArrayType, typename T>
                                                              ArrayType const &array2,
                                                              ArrayType &      ret)
 {
-  auto it1 = array1.cbegin();
-  auto it2 = array2.cbegin();
-  auto rit = ret.begin();
-  while(it1.is_valid())
+  ASSERT(array1.size() == array2.size());
+  ASSERT(ret.size() == array2.size());
+  for (std::size_t i = 0; i < array1.size(); ++i)
   {
-    *rit = (*it1) - (*it2);
-    ++it1;
-    ++it2;
-    ++rit;
+    ret[i] = array1[i] - array2[i];
   }
 }
 
@@ -218,8 +209,8 @@ template <typename ArrayType>
 meta::IfIsMathShapeArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
                                               ArrayType &ret)
 {
-  assert(array1.shape() == array2.shape());
-  assert(array1.shape() == ret.shape());
+  ASSERT(array1.shape() == array2.shape());
+  ASSERT(array1.shape() == ret.shape());
 
   auto it1 = array1.cbegin();
   auto it2 = array2.cbegin();  
@@ -241,15 +232,12 @@ template <typename ArrayType>
 meta::IfIsMathFixedPointShapelessArray<ArrayType, void> Add(ArrayType const &array,
                                                             ArrayType const &array2, ArrayType &ret)
 {
-  assert(array.size() == ret.size());
-  auto it1 = array.begin();
-  auto it2 = array2.begin();
-  auto rit = ret.begin();
-  while(it1.is_valid())
+  ASSERT(array.size() == ret.size());
+  ASSERT(array2.size() == ret.size());
+
+  for (std::size_t i = 0; i < array.size(); ++i)
   {
-    *rit = *it1 + *it2;
-    ++it1;
-    ++rit;
+    ret[i] = array[i] + array2[i];
   }
 }
 
@@ -414,7 +402,7 @@ template <typename ArrayType, typename T,
 meta::IfIsMathFixedPointArray<ArrayType, void> Subtract(ArrayType const &array, T const &scalar,
                                                         ArrayType &ret)
 {
-  assert(array.size() == ret.size());
+  ASSERT(array.size() == ret.size());
   auto it1 = array.cbegin();
   auto rit = ret.begin();
   while(it1.is_valid())
@@ -429,8 +417,7 @@ template <typename ArrayType, typename T,
 meta::IfIsNonBlasArray<ArrayType, void> Subtract(ArrayType const &array, T const &scalar,
                                                  ArrayType &ret)
 {
-  assert(array.shape() == ret.shape());
-
+  ASSERT(array.shape() == ret.shape());
   auto it1 = array.cbegin();
   auto rit = ret.begin();
   while(it1.is_valid())
@@ -454,8 +441,8 @@ template <typename T, typename ArrayType,
 meta::IfIsBlasArray<ArrayType, void> Subtract(ArrayType const &array, T const &scalar,
                                               ArrayType &ret)
 {
-  assert(array.size() == ret.size());
-  assert(array.data().size() == ret.data().size());
+  ASSERT(array.size() == ret.size());
+  ASSERT(array.data().size() == ret.data().size());
 
   typename ArrayType::vector_register_type val(scalar);
 
@@ -605,9 +592,10 @@ template <typename ArrayType>
 meta::IfIsMathFixedPointArray<ArrayType, void> Subtract(ArrayType const &array,
                                                         ArrayType const &array2, ArrayType &ret)
 {
-  assert(array.size() == array2.size());
-  assert(array.size() == ret.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
+  ASSERT(array.size() == array2.size());
+  ASSERT(array.size() == ret.size());
+
+  for (std::size_t i = 0; i < array.size(); ++i)
   {
     ret[i] = array[i] - array2[i];
   }
@@ -672,12 +660,10 @@ template <typename ArrayType, typename T,
 meta::IfIsNonBlasArray<ArrayType, void> Multiply(ArrayType const &array, T const &scalar,
                                                  ArrayType &ret)
 {
-  assert(array.size() == ret.size());
+  ASSERT(array.size() == ret.size());
   auto it1 = array.cbegin();
-  auto eit1 = array.cend();  
   auto it2 = ret.begin();
-
-  while(it1 != eit1)
+  while(it1.is_valid())
   {
     *it2 = scalar * (*it1);
     ++it1;
@@ -691,12 +677,14 @@ template <typename ArrayType, typename T,
 meta::IfIsMathFixedPointArray<ArrayType, void> Multiply(ArrayType const &array, T const &scalar,
                                                         ArrayType &ret)
 {
-  assert(array.size() == ret.size());
-  typename ArrayType::SizeType count{0};
-  for (auto &val : ret)
+  ASSERT(array.size() == ret.size());
+  auto it1 = array.cbegin();
+  auto rit = ret.begin();
+  while(it1.is_valid())
   {
-    val = array.At(count) * scalar;
-    ++count;
+    *rit = (*it1) * scalar;
+    ++it1;
+    ++rit;
   }
 }
 
@@ -977,19 +965,15 @@ template <typename ArrayType, typename T,
 meta::IfIsNonBlasArray<ArrayType, void> Divide(ArrayType const &array, T const &scalar,
                                                ArrayType &ret)
 {
-  assert(array.shape() == ret.shape());
-
+  ASSERT(array.shape() == ret.shape());
   auto it1 = array.cbegin();
-  auto eit1 = array.cend();  
   auto rit = ret.begin();
-
-  while(it1 != eit1)
+  while(it1.is_valid())
   {
     *rit = (*it1) / scalar;
     ++it1;
     ++rit;
   }
-
 }
 template <typename ArrayType, typename T,
           typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
@@ -997,12 +981,12 @@ meta::IfIsMathFixedPointArray<ArrayType, void> Divide(ArrayType const &array, T 
                                                       ArrayType &ret)
 {
   ASSERT(array.size() == ret.size());
-  auto it = array.begin();
-  auto it2 = ret.begin();
+  auto it = array.cbegin();
+  auto rit = ret.begin();
   while (it.is_valid())
   {
-    *it2 = *it / scalar;
-    ++it2;
+    *rit = *it / scalar;
+    ++rit;
     ++it;
   }
 }
@@ -1027,7 +1011,7 @@ meta::IfIsMathFixedPointArray<ArrayType, void> Divide(T const &scalar, ArrayType
                                                       ArrayType &ret)
 {
   ASSERT(array.size() == ret.size());
-  auto it = array.begin();
+  auto it = array.cbegin();
   auto it2 = ret.begin();
   while (it.is_valid())
   {
@@ -1104,12 +1088,12 @@ meta::IfIsMathShapeArray<ArrayType, ArrayType> Divide(T const &scalar, ArrayType
 namespace details {
 
 template <typename ArrayType>
-void NaiveDivideArray(ArrayType const &obj1, ArrayType const &obj2, ArrayType &ret)
+void NaiveDivideArray(ArrayType const &array1, ArrayType const &array2, ArrayType &ret)
 {
-  assert(obj1.size() == obj2.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
-  {
-    ret[i] = obj1[i] / obj2[i];
+  ASSERT(array1.size() == array2.size());
+  ASSERT(ret.size() == array2.size());
+  for (std::size_t j = 0; j < array1.size(); ++j) {
+    ret[j] = array1[j] / array2[j];
   }
 }
 
