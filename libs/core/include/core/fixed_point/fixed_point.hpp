@@ -711,6 +711,7 @@ public:
   static constexpr FixedPoint FromBase(Type n)
   {
     return FixedPoint(n, NoScale());
+
   }
 private:
   Type data_{0};  // the value to be stored
@@ -761,7 +762,6 @@ template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I,
 template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_2_INV_SQRTPI; /* 2/sqrt(pi) */
 template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_SQRT2; /* sqrt(2) */
 template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_INV_SQRT2; /* 1/sqrt(2) */
-
 
 }  // namespace fixed_point
 }  // namespace fetch

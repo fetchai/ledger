@@ -695,8 +695,8 @@ TEST(FixedPointTest, Comparison_32_32)
   EXPECT_GT(zero, m_two);
   EXPECT_GT(one, m_two);
 
-  EXPECT_TRUE(m_two < one);
-  EXPECT_TRUE(m_one < two);
+  EXPECT_LT(m_two, one);
+  EXPECT_LT(m_one, two);
 
   EXPECT_TRUE(fp64::CONST_E       == 2.718281828459045235360287471352662498);
   EXPECT_TRUE(fp64::CONST_LOG2E   == 1.442695040888963407359924681001892137);
