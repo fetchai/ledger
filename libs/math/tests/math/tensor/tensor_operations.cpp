@@ -22,39 +22,39 @@
 #include <gtest/gtest.h>
 
 template <typename T>
-struct is_vector
+struct IsVector
 {
   static const bool value = false;
 };
 template <typename T>
-struct is_vector<std::vector<T>>
+struct IsVector<std::vector<T>>
 {
   static const bool value = true;
 };
 
 template <typename T, typename R = void>
-using IfIsVector = fetch::meta::EnableIf<is_vector<T>::value, R>;
+using IfIsVector = fetch::meta::EnableIf<IsVector<T>::value, R>;
 
 template <typename T, typename R = void>
-using IfIsNotVector = fetch::meta::EnableIf<!is_vector<T>::value, R>;
+using IfIsNotVector = fetch::meta::EnableIf<!IsVector<T>::value, R>;
 
 template <typename ScalarType, typename TensorType>
-IfIsNotVector<ScalarType, void> _init_nd_tensor(const ScalarType s, TensorType &t,
-                                                std::vector<typename TensorType::SizeType> &counter,
-                                                typename TensorType::SizeType)
+IfIsNotVector<ScalarType, void> init_nd_tensor_recursion(
+    const ScalarType s, TensorType &t, std::vector<typename TensorType::SizeType> &counter,
+    typename TensorType::SizeType)
 {
   t.At(counter) = s;
 }
 
 template <typename VectorType, typename TensorType>
-IfIsVector<VectorType, void> _init_nd_tensor(const VectorType &init_vector, TensorType &t,
-                                             std::vector<typename TensorType::SizeType> counter,
-                                             typename TensorType::SizeType              dim)
+IfIsVector<VectorType, void> init_nd_tensor_recursion(
+    const VectorType &init_vector, TensorType &t,
+    std::vector<typename TensorType::SizeType> counter, typename TensorType::SizeType dim)
 {
   for (u_int64_t i = 0; i < init_vector.size(); i++)
   {
 
-    _init_nd_tensor(init_vector[i], t, counter, dim + 1);
+    init_nd_tensor_recursion(init_vector[i], t, counter, dim + 1);
     counter[dim] += 1;
   }
 }
@@ -64,7 +64,7 @@ void init_nd_tensor(const VectorType &init_vector, TensorType &t)
 {
   std::vector<typename TensorType::SizeType> counter(t.shape().size(), 0);
   typename TensorType::SizeType              dim{0};
-  _init_nd_tensor(init_vector, t, counter, dim);
+  init_nd_tensor_recursion(init_vector, t, counter, dim);
 }
 
 template <typename T>
