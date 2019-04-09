@@ -142,20 +142,8 @@ public:
       return IteratorType::EndIterator(this->tensor_);
     }
 
-    void Assign(ConstSliceType const &other)
-    {
-      auto it1 = begin();
-      auto it2 = other.begin();
-      assert(it1.size() == it2.size());
-      while(it1.is_valid())
-      {
-        *it1 = *it2;
-        ++it1;
-        ++it2;
-      }
-    }
-
-    void Assign(TensorSlice const &other)
+    template< typename G >
+    void Assign(TensorSliceImplementation<G> const &other)
     {
       auto it1 = begin();
       auto it2 = other.begin();
@@ -430,10 +418,11 @@ public:
     return copy;
   }
 
-  void Assign(ConstSliceType const &other)
+  template< typename G >
+  void Assign(TensorSliceImplementation<G> const &other)
   {
     auto it1 = begin();
-    auto it2 = other.cbegin();
+    auto it2 = other.begin();
     ASSERT(it1.size() == it2.size());
     while(it1.is_valid())
     {
@@ -443,7 +432,7 @@ public:
     }
   }
 
-  void Assign(SliceType const &other)
+  void Assign(TensorSlice const &other)
   {
     auto it1 = begin();
     auto it2 = other.begin();
