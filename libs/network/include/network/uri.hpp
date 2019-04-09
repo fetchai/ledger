@@ -187,4 +187,4 @@ struct hash<fetch::network::Uri> : private hash<fetch::byte_array::ConstByteArra
     return hash<fetch::byte_array::ConstByteArray>::operator()(x.uri());
   }
 };
-}
+}  // namespace std
