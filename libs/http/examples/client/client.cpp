@@ -16,14 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/commandline/params.hpp"
 #include "http/http_client.hpp"
 #include "http/https_client.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
-#include "core/commandline/params.hpp"
 
-#include <memory>
 #include <iostream>
+#include <memory>
 
 using fetch::http::HttpClientInterface;
 using fetch::http::HttpClient;
@@ -62,8 +62,8 @@ int main(int argc, char **argv)
   std::cout << "SSL      : " << ssl << std::endl;
 
   // create the client
-  ClientPtr client = (ssl) ? std::make_unique<HttpsClient>(host, port)
-                           : std::make_unique<HttpClient>(host, port);
+  ClientPtr client =
+      (ssl) ? std::make_unique<HttpsClient>(host, port) : std::make_unique<HttpClient>(host, port);
 
   // make the request
   fetch::http::HTTPRequest req;

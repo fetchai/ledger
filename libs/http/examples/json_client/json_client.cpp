@@ -49,11 +49,8 @@ int main(int argc, char **argv)
   }
 
   // create the client
-  JsonClient client(
-    (ssl) ? JsonClient::ConnectionMode::HTTPS : JsonClient::ConnectionMode::HTTP,
-    host,
-    port
-  );
+  JsonClient client((ssl) ? JsonClient::ConnectionMode::HTTPS : JsonClient::ConnectionMode::HTTP,
+                    host, port);
 
   fetch::variant::Variant response;
   if (client.Get("/?format=json", response))

@@ -22,8 +22,8 @@
 #include "http/method.hpp"
 #include "variant/variant.hpp"
 
-#include <string>
 #include <memory>
+#include <string>
 #include <unordered_map>
 
 namespace fetch {
@@ -61,7 +61,6 @@ public:
   bool Post(ConstByteArray const &endpoint, Headers const &headers, Variant &response);
 
 private:
-
   using ClientPtr = std::unique_ptr<HttpClientInterface>;
 
   bool Request(Method method, ConstByteArray const &endpoint, Headers const *headers,

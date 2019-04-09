@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
 #include "http/https_client.hpp"
+#include "core/logger.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
 
@@ -94,7 +94,8 @@ void HttpsClient::Write(asio::streambuf const &buffer, std::error_code &ec)
  * @param ec The output error code from the operation
  * @return The number of bytes read from the stream
  */
-std::size_t HttpsClient::ReadUntil(asio::streambuf &buffer, char const *delimiter, std::error_code &ec)
+std::size_t HttpsClient::ReadUntil(asio::streambuf &buffer, char const *delimiter,
+                                   std::error_code &ec)
 {
   return asio::read_until(socket_, buffer, delimiter, ec);
 }
@@ -111,5 +112,5 @@ void HttpsClient::ReadExactly(asio::streambuf &buffer, std::size_t length, std::
   asio::read(socket_, buffer, asio::transfer_exactly(length), ec);
 }
 
-} // namespace http
-} // namespace fetch
+}  // namespace http
+}  // namespace fetch

@@ -17,11 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "http/json_client.hpp"
-#include "http/https_client.hpp"
+#include "core/json/document.hpp"
 #include "http/http_client.hpp"
+#include "http/https_client.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
-#include "core/json/document.hpp"
 
 #include <sstream>
 #include <utility>
@@ -30,30 +30,30 @@ namespace fetch {
 namespace http {
 namespace {
 
-  /**
-   * Select the connect default port based on the target connection mode
-   *
-   * @param mode The connection mode
-   * @return The default port for that connection type
-   */
-  uint16_t MapPort(JsonClient::ConnectionMode mode)
+/**
+ * Select the connect default port based on the target connection mode
+ *
+ * @param mode The connection mode
+ * @return The default port for that connection type
+ */
+uint16_t MapPort(JsonClient::ConnectionMode mode)
+{
+  uint16_t port{0};
+
+  switch (mode)
   {
-    uint16_t port{0};
-
-    switch (mode)
-    {
-    case JsonClient::ConnectionMode::HTTP:
-      port = HttpClient::DEFAULT_PORT;
-      break;
-    case JsonClient::ConnectionMode::HTTPS:
-      port = HttpsClient::DEFAULT_PORT;
-      break;
-    }
-
-    return port;
+  case JsonClient::ConnectionMode::HTTP:
+    port = HttpClient::DEFAULT_PORT;
+    break;
+  case JsonClient::ConnectionMode::HTTPS:
+    port = HttpsClient::DEFAULT_PORT;
+    break;
   }
 
+  return port;
 }
+
+}  // namespace
 
 /**
  * Construct a JsonClient from a mode and host
@@ -63,8 +63,7 @@ namespace {
  */
 JsonClient::JsonClient(ConnectionMode mode, std::string host)
   : JsonClient{mode, std::move(host), MapPort(mode)}
-{
-}
+{}
 
 /**
  * Construct a JsonClient from a mode, host and port
@@ -103,7 +102,7 @@ JsonClient::JsonClient(ConnectionMode mode, std::string host, uint16_t port)
  * @return true if successful, otherwise false
  */
 bool JsonClient::Request(Method method, ConstByteArray const &endpoint, Headers const *headers,
-                             Variant const *request, Variant &response)
+                         Variant const *request, Variant &response)
 {
   bool success = false;
 

@@ -34,33 +34,33 @@ public:
   // Construction / Destruction
   explicit HttpsClient(std::string host, uint16_t port = DEFAULT_PORT);
   HttpsClient(HttpsClient const &) = delete;
-  HttpsClient(HttpsClient &&) = delete;
-  ~HttpsClient() override = default;
+  HttpsClient(HttpsClient &&)      = delete;
+  ~HttpsClient() override          = default;
 
   // Operators
   HttpsClient &operator=(HttpsClient const &) = delete;
   HttpsClient &operator=(HttpsClient &&) = delete;
 
 protected:
-
   /// @name HTTP Client Controls
   /// @{
-  bool Connect() override;
-  virtual void Write(asio::streambuf const &buffer, std::error_code &ec) override;
-  virtual std::size_t ReadUntil(asio::streambuf &buffer, char const *delimiter, std::error_code &ec) override;
-  virtual void ReadExactly(asio::streambuf &buffer, std::size_t length, std::error_code &ec) override;
+  bool                Connect() override;
+  virtual void        Write(asio::streambuf const &buffer, std::error_code &ec) override;
+  virtual std::size_t ReadUntil(asio::streambuf &buffer, char const *delimiter,
+                                std::error_code &ec) override;
+  virtual void        ReadExactly(asio::streambuf &buffer, std::size_t length,
+                                  std::error_code &ec) override;
   /// @}
 
 private:
-
-  using Socket = asio::ip::tcp::socket;
-  using IoService = asio::io_service;
+  using Socket     = asio::ip::tcp::socket;
+  using IoService  = asio::io_service;
   using SslContext = asio::ssl::context;
-  using Stream = asio::ssl::stream<Socket>;
+  using Stream     = asio::ssl::stream<Socket>;
 
-  SslContext  context_{SslContext::sslv23};
-  Stream      socket_{io_service_, context_};
+  SslContext context_{SslContext::sslv23};
+  Stream     socket_{io_service_, context_};
 };
 
-} // namespace http
-} // namespace fetch
+}  // namespace http
+}  // namespace fetch

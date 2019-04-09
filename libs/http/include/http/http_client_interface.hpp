@@ -26,9 +26,8 @@ class HTTPResponse;
 class HttpClientInterface
 {
 public:
-
   // Construction / Destruction
-  HttpClientInterface() = default;
+  HttpClientInterface()          = default;
   virtual ~HttpClientInterface() = default;
 
   /// @name HTTP Client Interface
@@ -37,5 +36,5 @@ public:
   /// @}
 };
 
-} // namespace http
-} // namespace fetch
+}  // namespace http
+}  // namespace fetch
