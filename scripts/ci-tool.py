@@ -132,13 +132,24 @@ def build_project(project_root, build_root, options):
         output(' - {} = {}'.format(key, value))
     output('\n')
 
+    # determine if this is the first time that we are building the project
+    new_build_folder = not os.path.exists(build_root)
+
     # ensure the build directory exists
     os.makedirs(build_root, exist_ok=True)
 
     # run cmake
     cmd = ['cmake']
+
+    # determine if this system has the ninja build system
+    if new_build_folder and shutil.which('ninja') is not None:
+    	cmd += ['-G', 'Ninja']
+
+   	# add all the configuration options
     cmd += ['-D{}={}'.format(k, v) for k, v in options.items()]
     cmd += [project_root]
+
+    # execute the cmake configurations
     exit_code = subprocess.call(cmd, cwd=build_root)
     if exit_code != 0:
         output('Failed to configure cmake project')
@@ -147,6 +158,7 @@ def build_project(project_root, build_root, options):
     # make the project
     if os.path.exists(os.path.join(build_root, "build.ninja")):
         cmd = ["ninja"]
+
     else:
         # manually specifying the number of cores is required because make automatic detection is
         # flakey inside docker.
