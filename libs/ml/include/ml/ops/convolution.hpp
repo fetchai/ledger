@@ -69,13 +69,8 @@ public:
               for (uint64_t kk(0); kk < inputs.at(1).get().shape()[3];
                    kk++)  // Iterate over kernel width
               {
-//                std::vector<typename ArrayType::SizeType> kernelIdx({i, ki, kj, kk});
-//                std::vector<typename ArrayType::SizeType> inputIdx(3);
-//                inputIdx[0]                = ki;
-//                inputIdx[1]                = j + kj;
-//                inputIdx[2]                = k + kk;
-                typename ArrayType::Type i = inputs.at(0).get().At(ki, j + kj, k + kk);
                 typename ArrayType::Type w = inputs.at(1).get().At(i, ki, kj, kk);
+                typename ArrayType::Type i = inputs.at(0).get().At(ki, j + kj, k + kk);
                 sum += i * w;
               }
             }

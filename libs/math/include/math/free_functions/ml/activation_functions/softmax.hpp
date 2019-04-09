@@ -57,9 +57,7 @@ template <typename ArrayType1, typename ArrayType2>
 void Softmax1DImplementation(ArrayType1 const &array, ArrayType2 &ret)
 {
   using Type = typename ArrayType1::Type;
-  assert(ret.size() == array.size());
-  assert(array.shape().size() == 1);
-  assert(ret.shape().size() == 1);
+  ASSERT(ret.size() == array.size());
 
   // subtract max for numerical stability
   Type array_max = std::numeric_limits<Type>::lowest();  

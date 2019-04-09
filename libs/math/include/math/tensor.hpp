@@ -100,12 +100,24 @@ public:
       return tensor_;
     }
 
+    SizeType size() const
+    {
+      return tensor_.size();
+    }
+
+    SizeVector shape() const
+    {
+      return tensor_.shape();
+    }
+
   protected:
     STensor &tensor_;
     std::vector<std::vector<SizeType>> range_;
     SizeType axis_;
 
   };
+
+  using ConstSliceType       = TensorSliceImplementation< SelfType const >;
 
   class TensorSlice : public TensorSliceImplementation< Tensor >
   {
@@ -130,8 +142,20 @@ public:
       return IteratorType::EndIterator(this->tensor_);
     }
 
-    template< typename X >
-    void Assign(TensorSliceImplementation<X> const &other)
+    void Assign(ConstSliceType const &other)
+    {
+      auto it1 = begin();
+      auto it2 = other.begin();
+      assert(it1.size() == it2.size());
+      while(it1.is_valid())
+      {
+        *it1 = *it2;
+        ++it1;
+        ++it2;
+      }
+    }
+
+    void Assign(TensorSlice const &other)
     {
       auto it1 = begin();
       auto it2 = other.begin();
@@ -169,7 +193,6 @@ public:
 
   };
 
-  using ConstSliceType       = TensorSliceImplementation< SelfType const >;
   using SliceType            = TensorSlice;
 
   enum MAJOR_ORDER
@@ -410,6 +433,35 @@ public:
   void Assign(ConstSliceType const &other)
   {
     auto it1 = begin();
+    auto it2 = other.cbegin();
+    ASSERT(it1.size() == it2.size());
+    while(it1.is_valid())
+    {
+      *it1 = *it2;
+      ++it1;
+      ++it2;
+    }
+  }
+
+  void Assign(SliceType const &other)
+  {
+    auto it1 = begin();
+    auto it2 = other.begin();
+    assert(it1.size() == it2.size());
+    while(it1.is_valid())
+    {
+      *it1 = *it2;
+      ++it1;
+      ++it2;
+    }
+  }
+  /**
+   * assign makes a deep copy of data from another tensor into this one
+   * @param other
+   */
+  void Assign(SelfType const &other)
+  {
+    auto it1 = begin();
     auto it2 = other.begin();
     ASSERT(it1.size() == it2.size());
     while(it1.is_valid())
@@ -472,14 +524,14 @@ public:
   template< typename ... Indices >
   Type &At( Indices ... indices)
   {
-    assert(sizeof...(indices) == stride_.size());
+    ASSERT(sizeof...(indices) == stride_.size());
     return this->data()[ UnrollComputeColIndex<0>(std::forward<Indices>(indices)...) ] ;
   }  
 
   template< typename ... Indices >
   Type At( Indices ... indices) const
   {
-    assert(sizeof...(indices) == stride_.size());
+    ASSERT(sizeof...(indices) == stride_.size());
     SizeType N = UnrollComputeColIndex<0>(std::forward<Indices>(indices)...) ;
     return this->data()[ std::move(N) ] ;
   }    
@@ -587,7 +639,6 @@ public:
   TensorSlice Slice(SizeType i, SizeType axis = 0)
   {
     std::vector< std::vector< SizeType > > range;
-    range.push_back({i, i+1, 1});
 
     for (SizeType j=0; j < shape().size(); ++j)
     {
@@ -630,7 +681,7 @@ public:
       ++it2;
     }    
     return *this;
-  }  
+  }
 
 
   SelfType Transpose() const

@@ -319,7 +319,7 @@ private:
   void Setup(std::vector<std::vector<SizeType>> const &step,
              std::vector<SizeType> const &             shape)
   {
-    assert(array_.shape().size() == step.size());
+    ASSERT(array_.shape().size() == step.size());
     SizeType volume    = 1;
     size_              = 1;
     position_          = 0;

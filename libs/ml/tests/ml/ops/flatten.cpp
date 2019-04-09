@@ -38,7 +38,7 @@ TYPED_TEST(FlattenTest, forward_test)
   fetch::ml::ops::Flatten<TypeParam> op;
   TypeParam                          prediction = op.Forward({data});
 
-  // test correct values
+  // test correct shape
   ASSERT_EQ(prediction.shape(), std::vector<typename TypeParam::SizeType>({1, 64}));
 }
 

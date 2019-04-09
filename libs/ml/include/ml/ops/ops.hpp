@@ -34,7 +34,6 @@ class Ops
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   virtual ArrayType Forward(std::vector<std::reference_wrapper<const ArrayType>> const &inputs) = 0;
 
@@ -59,7 +58,6 @@ class ElementWiseOps : public Ops<T>
 {
 public:
   using ArrayType = T;
-  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<const ArrayType>> const &inputs)
   {
@@ -92,7 +90,7 @@ public:
 //    std::vector<const ArrayType> results;
 //    for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
 //    {
-//      results.push_back(this->Forward({inputs.front().get().Slice(b)}));
+//      results.push_back(this->Forward({inputs.front().get().Slice(b).Tensor()}));
 //    }
 //    return ArrayType::Stack(results);
 
@@ -109,13 +107,7 @@ public:
     std::vector<std::vector<ArrayType>> results;
     for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
     {
-      auto inputSlice = inputs.front().get().Slice(b);
-      auto errorSlice = errorSignal.Slice(b);
-
-      ArrayType tmp = inputSlice.Copy();
-      ArrayType tmp2 = errorSlice.Copy();
-
-      auto      ret        = this->Backward({tmp}, tmp2);
+      auto      ret        = this->Backward({inputs.front().get().Slice(b).Tensor()}, errorSignal.Slice(b).Tensor());
       for (std::size_t i(0); i < ret.size(); ++i)
       {
         results[i].push_back(ret[i]);

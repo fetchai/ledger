@@ -90,9 +90,14 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_forward_test)
                              0.1, 0.5, 0.1,  0.1,  0.3, 0.2, 0.3, 0.1, 0.4,  0.1,  0.7,
                              0.1, 0.1, 0.7,  0.1,  0.1, 0.1, 0.1, 0.1, 0.5,  0.3};
 
-  for (std::uint64_t i = 0; i < n_data_points * n_classes; ++i)
+  std::uint64_t counter{0};
+  for (std::uint64_t i{0}; i < n_data_points; ++i)
   {
-    data1.Set(i, typename TypeParam::Type(logits[i]));
+    for (std::uint64_t j{0}; j < n_classes; ++j)
+    {
+      data1.Set({i, j}, typename TypeParam::Type(logits[counter]));
+      ++counter;
+    }
   }
 
   fetch::ml::ops::CrossEntropy<TypeParam> op;
@@ -181,9 +186,15 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_backward_test)
                               -0., -0.244132, -0., -0.315937, -0., -0.,       -0.,       -0., -0.,
                               -0., -0.346439, -0., -0.264643, -0., -0.,       -0.264643, -0., -0.,
                               -0., -0.,       -0., -0.315937, -0.};
-  for (std::uint64_t i = 0; i < gt.size(); ++i)
+
+  std::uint64_t counter{0};
+  for (std::uint64_t i = 0; i < n_data_points; ++i)
   {
-    gt.Set(i, typename TypeParam::Type(gt_data[i]));
+    for (std::uint64_t j = 0; j < n_classes; ++j)
+    {
+      gt.Set({i, j}, typename TypeParam::Type(gt_data[counter]));
+      ++counter;
+    }
   }
 
   std::vector<double> unscaled_vals{0.1, 0.8, 0.05, 0.05, 0.2, 0.5, 0.2, 0.1, 0.05, 0.05, 0.8,
@@ -192,10 +203,16 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_backward_test)
   std::vector<double> target{0.0, 0.1, 0.00, 0.00, 0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.1,
                              0.0, 0.1, 0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.1,
                              0.0, 0.0, 0.1,  0.0,  0.0, 0.0, 0.0, 0.0, 0.1, 0.0};
-  for (std::uint64_t i = 0; i < n_data_points * n_classes; ++i)
+
+  counter = 0;
+  for (std::uint64_t i = 0; i < n_data_points; ++i)
   {
-    data1.Set(i, typename TypeParam::Type(unscaled_vals[i]));
-    data2.Set(i, typename TypeParam::Type(target[i]));
+    for (std::uint64_t j = 0; j < n_classes; ++j)
+    {
+      data1.Set({i, j}, typename TypeParam::Type(unscaled_vals[counter]));
+      data2.Set({i, j}, typename TypeParam::Type(target[counter]));
+      ++counter;
+    }
   }
 
   fetch::ml::ops::CrossEntropy<TypeParam> op;

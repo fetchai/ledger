@@ -36,29 +36,33 @@ TYPED_TEST(ConvolutionTest, forward_1x1x1_1x1x1x1)
 {
   TypeParam input(std::vector<uint64_t>({1, 1, 1}));
   TypeParam weigths(std::vector<uint64_t>({1, 1, 1, 1}));
-  input.At(0)   = typename TypeParam::Type(5);
-  weigths.At(0) = typename TypeParam::Type(-4);
+  input.At(0, 0, 0)   = typename TypeParam::Type(5);
+  weigths.At(0, 0, 0, 0) = typename TypeParam::Type(-4);
   fetch::ml::ops::Convolution<TypeParam> c;
   TypeParam                              output = c.Forward({input, weigths});
 
   ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({1, 1, 1}));
-  EXPECT_EQ(output.At(0), typename TypeParam::Type(-20));
+  EXPECT_EQ(output.At(0, 0, 0), typename TypeParam::Type(-20));
 }
 
 TYPED_TEST(ConvolutionTest, forward_1x3x3_1x1x3x3)
 {
+  using SizeType = typename TypeParam::SizeType;
   TypeParam input(std::vector<uint64_t>({1, 3, 3}));
   TypeParam weigths(std::vector<uint64_t>({1, 1, 3, 3}));
-  for (uint64_t i(0); i < 9; ++i)
+  for (SizeType i(0); i < 3; ++i)
   {
-    input.At(i)   = typename TypeParam::Type(i);
-    weigths.At(i) = typename TypeParam::Type(i);
+    for (SizeType j{0}; j < 3; ++j)
+    {
+      input.At(0, i, j)   = typename TypeParam::Type((i*3) + j);
+      weigths.At(0, 0, i, j) = typename TypeParam::Type((i*3) + j);
+    }
   }
   fetch::ml::ops::Convolution<TypeParam> c;
   TypeParam                              output = c.Forward({input, weigths});
 
   ASSERT_EQ(output.shape(), std::vector<uint64_t>({1, 1, 1}));
-  EXPECT_EQ(output.At(0), typename TypeParam::Type(204));
+  EXPECT_EQ(output.At(0, 0, 0), typename TypeParam::Type(204));
 }
 
 TYPED_TEST(ConvolutionTest, forward_3x3x3_1x3x3x3)
@@ -74,7 +78,7 @@ TYPED_TEST(ConvolutionTest, forward_3x3x3_1x3x3x3)
   TypeParam                              output = c.Forward({input, weigths});
 
   ASSERT_EQ(output.shape(), std::vector<uint64_t>({1, 1, 1}));
-  EXPECT_EQ(output.At(0), typename TypeParam::Type(6201));
+  EXPECT_EQ(output.At(0, 0, 0), typename TypeParam::Type(6201));
 }
 
 TYPED_TEST(ConvolutionTest, forward_3x3x3_5x3x3x3)

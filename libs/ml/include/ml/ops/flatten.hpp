@@ -29,7 +29,6 @@ class Flatten : public fetch::ml::ElementWiseOps<T>
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using ConstSliceType    = typename ArrayType::ConstSliceType;
 
   Flatten()          = default;
   virtual ~Flatten() = default;
@@ -40,7 +39,8 @@ public:
     input_shape_ = inputs.front().get().shape();
     this->output_ =
         std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, inputs.front().get().size()}));
-    this->output_->Copy(inputs.front().get());
+
+    this->output_->Assign(inputs.front().get());
     return *this->output_;
   }
 
@@ -50,7 +50,7 @@ public:
   {
     ASSERT(inputs.size() == 1);
     ArrayType ret(input_shape_);
-    ret.Copy(errorSignal);
+    ret.Assign(errorSignal);
     return {ret};
   }
 

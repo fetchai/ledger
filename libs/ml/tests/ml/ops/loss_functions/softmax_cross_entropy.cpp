@@ -42,14 +42,14 @@ TYPED_TEST(SoftmaxCrossEntropyTest, perfect_match_forward_test)
   TypeParam gt({n_data_points, n_classes});
 
   // these are not logits - a softmax will get called on this
-  data1.At(0) = DataType(0);
-  data1.At(1) = DataType(0);
-  data1.At(2) = DataType(999999.);
+  data1.At(0, 0) = DataType(0);
+  data1.At(0, 1) = DataType(0);
+  data1.At(0, 2) = DataType(999999.);
 
   //
-  gt.At(0) = DataType(0);
-  gt.At(1) = DataType(0);
-  gt.At(2) = DataType(1);
+  gt.At(0, 0) = DataType(0);
+  gt.At(0, 1) = DataType(0);
+  gt.At(0, 2) = DataType(1);
 
   fetch::ml::ops::SoftmaxCrossEntropy<TypeParam> op;
   EXPECT_EQ(op.Forward({data1, gt}), DataType(0));

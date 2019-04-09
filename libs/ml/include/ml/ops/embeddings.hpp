@@ -67,8 +67,9 @@ public:
     uint64_t j(0);
     for (DataType const &i : inputs.front().get())
     {
-      this->embeddings_output_->Slice(j).Assign(
-          this->output_->Slice(typename ArrayType::SizeType(i)));
+      auto tmp = this->embeddings_output_->Slice(j);
+      auto tmp2 = this->output_->Slice(typename ArrayType::SizeType(i));
+      tmp.Assign(tmp2);
       j++;
     }
     return *this->embeddings_output_;
