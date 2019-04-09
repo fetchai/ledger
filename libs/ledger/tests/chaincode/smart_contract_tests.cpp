@@ -170,17 +170,17 @@ TEST_F(SmartContractTests, CheckQueryReturnTypes)
 
     @query
     function get_uint32() : UInt32
-      return 15u;
+      return 15u32;
     endfunction
 
     @query
     function get_int64() : Int64
-      return 16l;
+      return 16i64;
     endfunction
 
     @query
     function get_uint64() : UInt64
-      return 17ul;
+      return 17u64;
     endfunction
 
     @query
@@ -411,9 +411,9 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
   std::string const contract_source = R"(
     @init
     function initialize(owner: Address)
-        var INITIAL_SUPPLY = 100000000000ul;
+        var INITIAL_SUPPLY = 100000000000u64;
 
-        var account = State<UInt64>(owner, 0ul);
+        var account = State<UInt64>(owner, 0u64);
         account.set(INITIAL_SUPPLY);
     endfunction
 
@@ -421,8 +421,8 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
     function transfer(from: Address, to: Address, amount: UInt64)
 
       // define the accounts
-      var from_account = State<UInt64>(from, 0ul);
-      var to_account = State<UInt64>(to, 0ul); // if new sets to 0u
+      var from_account = State<UInt64>(from, 0u64);
+      var to_account = State<UInt64>(to, 0u64); // if new sets to 0u
 
       // Check if the sender has enough balance to proceed
       if (from_account.get() >= amount)
@@ -434,7 +434,7 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
 
     @query
     function balance(address: Address) : UInt64
-        var account = State<UInt64>(address, 0ul);
+        var account = State<UInt64>(address, 0u64);
         return account.get();
     endfunction
   )";

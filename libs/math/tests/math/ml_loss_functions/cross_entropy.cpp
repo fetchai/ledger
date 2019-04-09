@@ -19,7 +19,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include "math/free_functions/ml/loss_functions/cross_entropy.hpp"
+#include "math/ml/loss_functions/cross_entropy.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 

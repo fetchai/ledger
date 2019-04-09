@@ -18,8 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/free_functions/exponentiation/exponentiation.hpp"
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
+#include "math/matrix_operations.hpp"
+#include "math/standard_functions/pow.hpp"
+#include "math/standard_functions/sqrt.hpp"
 #include <cmath>
 
 namespace fetch {
@@ -44,7 +45,6 @@ typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
     ++it2;
   }
   return ret;
-
 }
 
 template <typename ArrayType>
@@ -56,7 +56,8 @@ typename ArrayType::Type Euclidean(ArrayType const &A, ArrayType const &B)
 template <typename ArrayType>
 typename ArrayType::Type NegativeSquareEuclidean(ArrayType const &A, ArrayType const &B)
 {
-  return -SquareDistance(A, B);
+  using DataType = typename ArrayType::Type;
+  return Multiply(DataType(-1), SquareDistance(A, B));
 }
 
 }  // namespace distance

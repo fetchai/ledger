@@ -19,7 +19,7 @@
 
 // https://github.com/uvue-git/fetch-ledger/tree/cf2fc8441f6ae33d6248559c52473a7f15c5aef2/libs/math/include/math
 #include "core/assert.hpp"
-#include "math/free_functions/free_functions.hpp"
+//#include "math/free_functions/free_functions.hpp"
 #include "math/meta/math_type_traits.hpp"
 #include "math/tensor_iterator.hpp"
 #include "math/shapeless_array.hpp"
@@ -27,6 +27,8 @@
 #include "vectorise/memory/array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
+#include "math/standard_functions/abs.hpp"
+#include "core/random/lcg.hpp"
 
 #include <numeric>
 #include <utility>
@@ -538,7 +540,7 @@ public:
     return this->At( std::forward< Indices >(indices) ...);
   }
 
-  template< typename ... Indices >  
+  template< typename ... Indices >
   Type& operator()(Indices ... indices)
   {
     return this->At( std::forward< Indices >(indices) ...);
@@ -552,9 +554,6 @@ public:
   }
 */
 
-
-
-  /// TODO TODO TODO
   // Introduced for compatibility
   
   Type &At(SizeType const &i)
@@ -571,7 +570,6 @@ public:
   {
     this->data()[i] = val;
   }
-  // END TODO END TODO
 
   bool AllClose(SelfType const &o, Type const &relative_tolerance = Type(1e-5),
                 Type const &absolute_tolerance = Type(1e-8)) const

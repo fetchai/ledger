@@ -79,17 +79,17 @@ TEST(tokenizer_testing_individual_consumers_gtest, any_character)
 
   test_str = "hello world";
   EXPECT_TRUE(test.Parse(test_str));
-  EXPECT_TRUE(test.size() == test_str.size());
+  EXPECT_EQ(test.size(), test_str.size());
 
   test_str = "12$1adf)(SD)S(*ASdf 09812 4e12";
   EXPECT_TRUE(test.Parse(test_str));
-  EXPECT_TRUE(test.size() == test_str.size());
+  EXPECT_EQ(test.size(), test_str.size());
 
   test_str =
       "12$1adf)(SD)S(*ASdf 09812 4e12asd kalhsdak shd aopisfu q[wr "
       "iqrw'prkas'd;fkla;s'dfl;ak \"";
   EXPECT_TRUE(test.Parse(test_str));
-  EXPECT_TRUE(test.size() == test_str.size());
+  EXPECT_EQ(test.size(), test_str.size());
 }
 
 TEST(tokenizer_testing_individual_consumers_gtest, any_character_test)

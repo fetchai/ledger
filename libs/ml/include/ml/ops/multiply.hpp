@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/fundamental_operators.hpp"
+#include "math/fundamental_operators.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {

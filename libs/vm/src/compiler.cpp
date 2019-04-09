@@ -44,7 +44,7 @@ bool Compiler::Compile(std::string const &source, std::string const &name, Scrip
 
   TypeInfoTable type_info_table;
   bool          analysed = analyser_.Analyse(root, type_info_table, errors);
-  if (analysed == false)
+  if (!analysed)
   {
     root->Reset();
     root = nullptr;

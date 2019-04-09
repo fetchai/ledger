@@ -22,14 +22,33 @@
 
 #include "python/memory/py_array.hpp"
 #include "python/memory/py_range.hpp"
-
 #include "python/memory/py_shared_array.hpp"
+
+#include "python/math/distance/py_braycurtis.hpp"
+#include "python/math/distance/py_chebyshev.hpp"
+#include "python/math/distance/py_cosine.hpp"
+#include "python/math/distance/py_euclidean.hpp"
+#include "python/math/distance/py_hamming.hpp"
+#include "python/math/distance/py_jaccard.hpp"
+#include "python/math/distance/py_manhattan.hpp"
+#include "python/math/distance/py_pearson.hpp"
 
 // #include "python/math/clustering/py_kmeans.hpp"
 
 #include "python/math/py_bignumber.hpp"
 #include "python/math/py_tensor.hpp"
 #include "python/math/spline/py_linear.hpp"
+
+#include "python/math/correlation/py_cosine.hpp"
+#include "python/math/correlation/py_jaccard.hpp"
+#include "python/math/correlation/py_pearson.hpp"
+
+#include "python/math/statistics/py_geometric_mean.hpp"
+#include "python/math/statistics/py_max.hpp"
+#include "python/math/statistics/py_mean.hpp"
+#include "python/math/statistics/py_min.hpp"
+#include "python/math/statistics/py_standard_deviation.hpp"
+#include "python/math/statistics/py_variance.hpp"
 
 #include "python/byte_array/py_encoders.hpp"
 #include "python/byte_array/py_referenced_byte_array.hpp"

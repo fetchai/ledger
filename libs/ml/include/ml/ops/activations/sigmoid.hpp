@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/fundamental_operators.hpp"
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
-#include "math/free_functions/ml/activation_functions/sigmoid.hpp"
+#include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
+#include "math/ml/activation_functions/sigmoid.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {

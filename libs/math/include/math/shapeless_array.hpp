@@ -28,9 +28,13 @@
 #include "vectorise/memory/shared_array.hpp"
 
 #include "math/base_types.hpp"
-#include "math/free_functions/free_functions.hpp"
-#include "math/free_functions/statistics/mean.hpp"
-#include "math/meta/math_type_traits.hpp"
+#include "math/statistics/mean.hpp"
+#include "math/standard_functions/fmod.hpp"
+#include "math/standard_functions/remainder.hpp"
+#include "math/standard_functions/remainder.hpp"
+#include "math/matrix_operations.hpp"
+
+#include "math/ml/activation_functions/softmax.hpp"
 
 #include <algorithm>
 #include <vector>
@@ -1068,5 +1072,6 @@ protected:
   container_type data_;
   SizeType    size_ = 0;
 };
+
 }  // namespace math
 }  // namespace fetch
