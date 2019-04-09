@@ -41,7 +41,7 @@ using IfIsNotVector = fetch::meta::EnableIf<!is_vector<T>::value, R>;
 template <typename ScalarType, typename TensorType>
 IfIsNotVector<ScalarType, void> _init_nd_tensor(const ScalarType s, TensorType &t,
                                                 std::vector<typename TensorType::SizeType> &counter,
-                                                typename TensorType::SizeType               dim)
+                                                typename TensorType::SizeType)
 {
   t.At(counter) = s;
 }

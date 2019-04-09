@@ -66,6 +66,7 @@ SizeType _get_array_number(SizeType pos, std::vector<SizeType> array_sizes_cumsu
       return i;
     };
   }
+  return SizeType{0};
 }
 
 template <typename T>
@@ -140,8 +141,7 @@ std::vector<typename T::SizeType> _get_dims_along_ax_cumsummed(std::vector<T>   
 template <typename T>
 void _concatenate_assign_values(T &res_tensor, std::vector<T> tensors,
                                 typename T::SizeType               concat_axis,
-                                std::vector<typename T::SizeType> &counter,
-                                typename T::SizeType &             no_dim)
+                                std::vector<typename T::SizeType> &counter)
 {
   std::vector<typename T::SizeType> tensors_concat_dim_info{
       _get_dims_along_ax_cumsummed<T>(tensors, concat_axis)},
@@ -183,7 +183,7 @@ void _concatenate_recursive_dimension_lookup(T &res_tensor, std::vector<T> tenso
   }
   else
   {
-    _concatenate_assign_values(res_tensor, tensors, concat_axis, counter, no_dim);
+    _concatenate_assign_values(res_tensor, tensors, concat_axis, counter);
   }
 }
 
