@@ -103,68 +103,62 @@ public:
   typename std::enable_if<std::is_pod<R>::value>::type SetPaddedZero()
   {
     assert(pointer_ != nullptr);
-
     std::memset(pointer_ + size(), 0, (padded_size() - size()) * sizeof(Type));
   }
 
   template <typename R = T>
   typename std::enable_if<std::is_pod<R>::value>::type SetZeroAfter(std::size_t n)
   {
+    assert(pointer_ != nullptr && n < padded_size());
     std::memset(pointer_ + n, 0, (padded_size() - n) * sizeof(Type));
   }
 
   vector_slice_type slice(std::size_t offset, std::size_t length) const
   {
     assert(std::size_t(offset / E_SIMD_COUNT) * E_SIMD_COUNT == offset);
-    assert((length + offset) <= padded_size());
+    assert(pointer_ != nullptr && (length + offset) <= padded_size());
     return vector_slice_type(pointer_ + offset, length);
   }
 
   template <typename S>
   typename std::enable_if<std::is_integral<S>::value, T>::type &operator[](S const &n)
   {
-    assert(pointer_ != nullptr);
-    assert(std::size_t(n) < padded_size());
+    assert(pointer_ != nullptr && n >= S(0) && std::size_t(n) < padded_size());
     return pointer_[n];
   }
 
   template <typename S>
   typename std::enable_if<std::is_integral<S>::value, T>::type const &operator[](S const &n) const
   {
-    assert(pointer_ != nullptr);
-
-    assert(std::size_t(n) < padded_size());
+    assert(pointer_ != nullptr && n >= S(0) && std::size_t(n) < padded_size());
     return pointer_[n];
   }
 
   template <typename S>
   typename std::enable_if<std::is_integral<S>::value, T>::type &At(S const &n)
   {
-    assert(pointer_ != nullptr);
-    assert(n < padded_size());
+    assert(pointer_ != nullptr && n >= S(0) && n < padded_size());
     return pointer_[n];
   }
 
   template <typename S>
   typename std::enable_if<std::is_integral<S>::value, T>::type const &At(S const &n) const
   {
-    assert(pointer_ != nullptr);
-    assert(n < padded_size());
+    assert(pointer_ != nullptr && n >= S(0) && n < padded_size());
     return pointer_[n];
   }
 
   template <typename S>
   typename std::enable_if<std::is_integral<S>::value, T>::type const &Set(S const &n, T const &v)
   {
-    assert(pointer_ != nullptr);
-    assert(n < padded_size());
+    assert(pointer_ != nullptr && n >= S(0) && n < padded_size());
     pointer_[n] = v;
     return v;
   }
 
   std::size_t simd_size() const
   {
-    return (size_) >> E_LOG_SIMD_COUNT;
+    return size_ >> E_LOG_SIMD_COUNT;
   }
   std::size_t size() const
   {

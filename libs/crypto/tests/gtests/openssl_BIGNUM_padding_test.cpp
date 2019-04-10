@@ -56,6 +56,8 @@ protected:
     switch (padding)
     {
     case ePadding::prefix:
+      std::cerr << "Padbin size: " << padding_bin.size()
+                << "; orig_bin size: " << orig_bin_bn.size() << '\n';
       padded_bin_bn = padding_bin + orig_bin_bn;
       break;
     case ePadding::suffix:

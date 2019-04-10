@@ -48,7 +48,7 @@ static void CacheLineRandomAccessStackBench_misshit(benchmark::State &st)
   EXPECT_TRUE(stack_.DirectWrite()) << "Expected cache line random access stack to be direct write";
 
   stack_.SetMemoryLimit(std::size_t(1ULL << 22));
-  N        dummy;
+  N        dummy{};
   uint64_t line_count = 0;
 
   // Pushing elements till the cache gets full
@@ -88,7 +88,7 @@ static void CacheLineRandomAccessStackBench_miss(benchmark::State &st)
   EXPECT_TRUE(stack_.DirectWrite()) << "Expected cache line random access stack to be direct write";
 
   stack_.SetMemoryLimit(std::size_t(1ULL << 22));
-  N        dummy;
+  N        dummy{};
   uint64_t line_count = 0;
 
   // Pushing elements till the cache gets full
@@ -127,7 +127,7 @@ static void CacheLineRandomAccessStackBench_hit(benchmark::State &st)
   EXPECT_TRUE(stack_.DirectWrite()) << "Expected cache line random access stack to be direct write";
 
   stack_.SetMemoryLimit(std::size_t(1ULL << 22));
-  N dummy;
+  N dummy{};
 
   uint64_t line_count = 0;
 

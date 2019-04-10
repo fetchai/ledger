@@ -69,7 +69,6 @@ public:
     if (size > 0)
     {
       assert(data != nullptr);
-      Reserve(size);
       Resize(size);
       WriteBytes(data, size);
     }
@@ -259,7 +258,7 @@ public:
 
   self_type operator+(self_type const &other) const
   {
-    return self_type{}.Append(*this, other);
+    return self_type(pointer(), size()).Append(other);
   }
 
   int AsInt() const
