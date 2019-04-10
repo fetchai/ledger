@@ -17,12 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "core/fixed_point/fixed_point.hpp"
+#include "math/comparison.hpp"
 #include "math/meta/math_type_traits.hpp"
 
 /**
- * e^x
+ * Limit array's minimum and maximum value
  * @param x
  */
 
@@ -34,17 +33,10 @@ namespace math {
 ///////////////////////
 
 template <typename Type>
-meta::IfIsNonFixedPointArithmetic<Type, void> Exp(Type const &x, Type &ret)
+void Clamp(Type const &x, Type const &min, Type const &max, Type &ret)
 {
-  ret = static_cast<Type>(std::exp(static_cast<double>(x)));
-}
-
-// TODO(800) - native implementations of fixed point are required; casting to double will not be
-// permissible
-template <typename T>
-meta::IfIsFixedPoint<T, void> Exp(T const &n, T &ret)
-{
-  ret = T(std::exp(double(n)));
+  Max(x, min, ret);
+  Min(ret, max, ret);
 }
 
 //////////////////
@@ -52,33 +44,37 @@ meta::IfIsFixedPoint<T, void> Exp(T const &n, T &ret)
 //////////////////
 
 template <typename Type>
-meta::IfIsArithmetic<Type, Type> Exp(Type const &x)
+meta::IfIsArithmetic<Type, Type> Clamp(Type const &x, Type const &min, Type const &max)
 {
   Type ret;
-  Exp(x, ret);
+  Clamp(x, min, max, ret);
   return ret;
 }
 
 template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, void> Exp(ArrayType const &array, ArrayType &ret)
+meta::IfIsMathArray<ArrayType, void> Clamp(ArrayType const &               array,
+                                           typename ArrayType::Type const &min,
+                                           typename ArrayType::Type const &max, ArrayType &ret)
 {
   ASSERT(ret.shape() == array.shape());
   typename ArrayType::SizeType ret_count{0};
-  for (typename ArrayType::Type &e : array)
+  for (auto &e : array)
   {
-    Exp(e, ret.At(ret_count));
+    Clamp(e, min, max, ret.At(ret_count));
     ++ret_count;
   }
 }
 
 template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, ArrayType> Exp(ArrayType const &array)
+meta::IfIsMathArray<ArrayType, ArrayType> Clamp(ArrayType const &               array,
+                                                typename ArrayType::Type const &min,
+                                                typename ArrayType::Type const &max)
 {
   ArrayType                    ret{array.shape()};
   typename ArrayType::SizeType ret_count{0};
-  for (typename ArrayType::Type &e : array)
+  for (auto &e : array)
   {
-    Exp(e, ret.At(ret_count));
+    Clamp(e, min, max, ret.At(ret_count));
     ++ret_count;
   }
   return ret;

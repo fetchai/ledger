@@ -20,47 +20,51 @@
 #include <iomanip>
 #include <iostream>
 
-#include "math/distance/cosine.hpp"
+#include "math/standard_functions/clamp.hpp"
 #include "math/tensor.hpp"
 
-using namespace fetch::math::distance;
 using namespace fetch::math;
 
 template <typename T>
-class DistanceTest : public ::testing::Test
+class ClampTest : public ::testing::Test
 {
 };
 
 using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 
-TYPED_TEST_CASE(DistanceTest, MyTypes);
+TYPED_TEST_CASE(ClampTest, MyTypes);
 
-TYPED_TEST(DistanceTest, cosine_distance)
+TYPED_TEST(ClampTest, clamp_array_test)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
 
-  ArrayType A = ArrayType({1, 4});
-  A.Set(0, DataType(1));
-  A.Set(1, DataType(2));
-  A.Set(2, DataType(3));
-  A.Set(3, DataType(4));
+  ArrayType A = ArrayType({6});
 
-  ArrayType B = ArrayType({1, 4});
-  B.Set(0, DataType(-1));
-  B.Set(1, DataType(-2));
-  B.Set(2, DataType(-3));
-  B.Set(3, DataType(-4));
+  A.Set({0}, DataType(-10));
+  A.Set({1}, DataType(0));
+  A.Set({2}, DataType(1));
+  A.Set({3}, DataType(2));
+  A.Set({4}, DataType(3));
+  A.Set({5}, DataType(10));
 
-  EXPECT_EQ(double(Cosine(A, A)), 0);
-  EXPECT_EQ(double(Cosine(A, B)), 2);
+  // Expected results
+  ArrayType A_clamp_expected = ArrayType({6});
+  A_clamp_expected.Set({0}, DataType(2));
+  A_clamp_expected.Set({1}, DataType(2));
+  A_clamp_expected.Set({2}, DataType(2));
+  A_clamp_expected.Set({3}, DataType(2));
+  A_clamp_expected.Set({4}, DataType(3));
+  A_clamp_expected.Set({5}, DataType(3));
 
-  ArrayType C = ArrayType({1, 4});
-  C.Set(0, DataType(1));
-  C.Set(1, DataType(2));
-  C.Set(2, DataType(3));
-  C.Set(3, DataType(2));
+  // Compare results with expected results
+  ArrayType A_norm = Clamp(A, DataType(2), DataType(3));
 
-  EXPECT_NEAR(double(Cosine(A, C)), double(1.0) - double(0.94672926240625754), 1e-7);
+  for (SizeType i{0}; i < A.size(); i++)
+  {
+    EXPECT_NEAR(double(A_norm.At(i)), double(A_clamp_expected.At(i)), 1e-4);
+  }
 }
