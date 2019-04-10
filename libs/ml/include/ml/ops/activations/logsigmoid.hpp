@@ -39,24 +39,22 @@ public:
   LogSigmoid()          = default;
   virtual ~LogSigmoid() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
     assert(inputs.size() == 1);
-    if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
-    {
-      this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
-    }
+    ASSERT(output.shape() == this->ComputeOutputSize(inputs));
 
-    fetch::math::Sigmoid(inputs.front().get(), *this->output_);
-    fetch::math::Log(*this->output_, *this->output_);
+    fetch::math::Sigmoid(inputs.front().get(), output);
+    fetch::math::Log(output, output);
 
     // ensures numerical stability
-    for (auto &val : *this->output_)
+    for (auto &val : output)
     {
       fetch::math::Min(val, epsilon_, val);
     }
 
-    return *this->output_;
+    return output;
   }
 
   virtual std::vector<ArrayType> Backward(
