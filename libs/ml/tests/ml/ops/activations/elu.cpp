@@ -35,7 +35,6 @@ TYPED_TEST(EluTest, forward_test)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
-  // using SizeType  = typename TypeParam::SizeType;
 
   ArrayType           data(8);
   ArrayType           gt(8);
@@ -59,7 +58,6 @@ TYPED_TEST(EluTest, backward_test)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
-  //    using SizeType  = typename TypeParam::SizeType;
 
   ArrayType           data(8);
   ArrayType           error(8);

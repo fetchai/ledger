@@ -19,7 +19,7 @@
 
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
-#include "ml/ops/activations/parametric_relu.hpp"
+#include "math/ml/activation_functions/leaky_relu.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -34,26 +34,61 @@ public:
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  LeakyRelu()          = default;
+  LeakyRelu(DataType a = DataType(0.01))
+    : a_(a)
+  {}
+
   virtual ~LeakyRelu() = default;
 
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
-    return prelu_.Forward(inputs);
+    assert(inputs.size() == 1);
+    if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
+    {
+      this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
+    }
+
+    fetch::math::LeakyRelu(inputs.front().get(), a_, *this->output_);
+
+    return *this->output_;
   }
 
   virtual std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
-    return prelu_.Backward(inputs, errorSignal);
+    assert(inputs.size() == 1);
+    assert(inputs.front().get().shape() == errorSignal.shape());
+    ArrayType returnSignal{errorSignal.shape()};
+    ArrayType t{inputs.front().get().shape()};
+
+    // gradient of parametric relu function is for x<0 = a, x>=0 = 1.0
+    t = this->Forward(inputs);
+
+    typename ArrayType::SizeType idx(0);
+    for (auto const &val : t)
+    {
+      if (val >= DataType(0))
+      {
+        returnSignal.Set(idx, DataType(1));
+      }
+      else
+      {
+        returnSignal.Set(idx, a_);
+      }
+      ++idx;
+    }
+
+    // multiply by errorSignal (chain rule)
+    fetch::math::Multiply(errorSignal, returnSignal, returnSignal);
+
+    return {returnSignal};
   }
 
   static constexpr char const *DESCRIPTOR = "LeakyRelu";
 
 private:
-  // Leaky relu is parametric relu with leak 0.01
-  PRelu<ArrayType> prelu_ = PRelu<ArrayType>(DataType(0.01));
+  DataType a_;
 };
 
 }  // namespace ops

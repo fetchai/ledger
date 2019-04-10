@@ -32,13 +32,13 @@ namespace math {
  * @param ret
  */
 template <typename ArrayType>
-void PRelu(ArrayType const &t, typename ArrayType::Type &a, ArrayType &ret)
+void LeakyRelu(ArrayType const &t, typename ArrayType::Type &a, ArrayType &ret)
 {
   ASSERT(t.size() == ret.size());
   using DataType = typename ArrayType::Type;
 
   typename ArrayType::SizeType idx(0);
-  for (auto &val : t)
+  for (auto const &val : t)
   {
     if (val >= DataType(0))
     {
@@ -55,10 +55,10 @@ void PRelu(ArrayType const &t, typename ArrayType::Type &a, ArrayType &ret)
 }
 
 template <typename ArrayType>
-ArrayType PRelu(ArrayType &t, typename ArrayType::Type &a)
+ArrayType LeakyRelu(ArrayType &t, typename ArrayType::Type &a)
 {
   ArrayType ret(t.shape());
-  PRelu(t, a, ret);
+  LeakyRelu(t, a, ret);
   return ret;
 }
 

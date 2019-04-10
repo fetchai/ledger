@@ -38,7 +38,7 @@ void Elu(ArrayType const &t, typename ArrayType::Type &a, ArrayType &ret)
   using DataType = typename ArrayType::Type;
 
   typename ArrayType::SizeType idx(0);
-  for (auto &val : t)
+  for (auto const &val : t)
   {
     if (val >= DataType(0))
     {
@@ -48,8 +48,9 @@ void Elu(ArrayType const &t, typename ArrayType::Type &a, ArrayType &ret)
     else
     {
       // f(x)=a*(e^x-1) for x<0
-      Subtract(fetch::math::Exp(val), DataType(1.0), val);
-      Multiply(a, val, ret.At(idx));
+      DataType tmp_val = val;
+      Subtract(fetch::math::Exp(val), DataType(1.0), tmp_val);
+      Multiply(a, tmp_val, ret.At(idx));
     }
     ++idx;
   }
