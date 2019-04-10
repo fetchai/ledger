@@ -17,42 +17,33 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
-#include "http/request.hpp"
-#include "http/response.hpp"
-#include "network/fetch_asio.hpp"
+#include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
 
-#include <cstdint>
-#include <string>
+#include <cmath>
 
 namespace fetch {
-namespace http {
+namespace math {
 
 /**
- * Simple blocking HTTP client used for querying information
+ * Divide each value of an array by sum of all values
+ * i.e. x / Sum(x)
+ * @param a input array of values
+ * @param ret return normalized value
  */
-class HTTPClient
+template <typename ArrayType>
+void NormalizeArray(ArrayType const &a, ArrayType &ret)
 {
-public:
-  static constexpr char const *LOGGING_NAME = "HTTPClient";
+  Divide(a, Sum(a), ret);
+}
 
-  // Construction / Destruction
-  explicit HTTPClient(std::string host, uint16_t port = 80);
-  ~HTTPClient() = default;
+template <typename ArrayType>
+ArrayType NormalizeArray(ArrayType const &a)
+{
+  ArrayType ret(a.shape());
+  NormalizeArray(a, ret);
+  return ret;
+}
 
-  bool Request(HTTPRequest const &request, HTTPResponse &response);
-
-private:
-  using IoService = asio::io_service;
-  using Socket    = asio::ip::tcp::socket;
-
-  bool Connect();
-
-  std::string host_;
-  uint16_t    port_;
-  IoService   io_service_;
-  Socket      socket_{io_service_};
-};
-
-}  // namespace http
+}  // namespace math
 }  // namespace fetch
