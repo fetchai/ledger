@@ -66,10 +66,10 @@ public:
 
     ArrayType weights_data(std::vector<std::uint64_t>({in, out}));
     this->Initialise(weights_data, init_mode);
-    this->SetInput(weights, weights_data);
+    this->SetInput(weights, weights_data, false, false);
 
     ArrayType bias_data(std::vector<std::uint64_t>({1, out}));
-    this->SetInput(bias, bias_data);
+    this->SetInput(bias, bias_data, false, false);
   }
 
   virtual std::vector<SizeType> ComputeOutputSize(

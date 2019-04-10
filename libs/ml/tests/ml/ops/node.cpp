@@ -55,6 +55,7 @@ TEST(node_test, node_relu)
   std::vector<int> dataValues({0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15, 16});
   std::vector<int> gtValues({0, 0, 2, 0, 4, 0, 6, 0, 8, 0, 10, 0, 12, 0, 14, 0, 16});
   placeholder->SetData(data);
+  relu->ResetCache(true);
 
   for (std::uint64_t i(0); i < 4; ++i)
   {

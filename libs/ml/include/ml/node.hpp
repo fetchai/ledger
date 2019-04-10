@@ -36,12 +36,14 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual ArrayType const &Evaluate()                                           = 0;
-  virtual void             AddInput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
+  virtual ArrayType const &Evaluate()                                            = 0;
+  virtual void             AddInput(std::shared_ptr<NodeInterface<T>> const &i)  = 0;
+  virtual void             AddOutput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
-      ArrayType const &errorSignal) = 0;
-  virtual void ResetCache()         = 0;
-  virtual void SetBatch(bool b)     = 0;
+      ArrayType const &errorSignal)                                                = 0;
+  virtual void ResetCache(bool input_size_changed)                                 = 0;
+  virtual void SetBatch(bool b)                                                    = 0;
+  virtual std::vector<std::shared_ptr<NodeInterface<T>>> const &GetOutputs() const = 0;
 };
 
 template <class T, class O>
@@ -73,14 +75,10 @@ public:
 
   virtual ArrayType const &Evaluate()
   {
+    std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
+    FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
     if (!cachedOutputPresent_)
     {
-      std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
-      FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
-      if (cachedOutput_.shape() != this->ComputeOutputSize(inputs))
-      {
-        cachedOutput_ = ArrayType(this->ComputeOutputSize(inputs));
-      }
       if (batch_)
       {
         cachedOutput_ = this->ForwardBatch(inputs);
@@ -129,9 +127,27 @@ public:
     inputs_.push_back(i);
   }
 
-  virtual void ResetCache()
+  void AddOutput(std::shared_ptr<NodeInterface<T>> const &o)
+  {
+    outputs_.push_back(o);
+  }
+
+  virtual std::vector<std::shared_ptr<NodeInterface<T>>> const &GetOutputs() const
+  {
+    return outputs_;
+  }
+
+  virtual void ResetCache(bool input_size_changed)
   {
     cachedOutputPresent_ = false;
+    if (input_size_changed)
+    {
+      std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
+      if (cachedOutput_.shape() != this->ComputeOutputSize(inputs))
+      {
+        cachedOutput_ = ArrayType(this->ComputeOutputSize(inputs));
+      }
+    }
   }
 
   virtual void SetBatch(bool b)
@@ -141,6 +157,7 @@ public:
 
 private:
   std::vector<std::shared_ptr<NodeInterface<T>>> inputs_;
+  std::vector<std::shared_ptr<NodeInterface<T>>> outputs_;
   std::string                                    name_;
   ArrayType                                      cachedOutput_;
   bool                                           cachedOutputPresent_;
