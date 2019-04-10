@@ -36,7 +36,7 @@ namespace math {
 template <typename Type>
 meta::IfIsNonFixedPointArithmetic<Type, void> Exp(Type const &x, Type &ret)
 {
-  ret = std::exp(x);
+  ret = static_cast<Type>(std::exp(static_cast<double>(x)));
 }
 
 // TODO(800) - native implementations of fixed point are required; casting to double will not be
