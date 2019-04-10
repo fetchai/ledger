@@ -92,7 +92,7 @@ ArrayType EuclideanMatrix(ArrayType const &A, ArrayType const &B,
   Subtract(A, B, temp);
   Square(temp, temp);
   ret = ReduceSum(temp, axis);
-  Sqrt(ret);
+  Sqrt(ret, ret);
 
   return ret;
 }
