@@ -61,7 +61,7 @@ meta::IfIsMathArray<ArrayType, void> Sqrt(ArrayType const &array, ArrayType &ret
 
   while(arr_it.is_valid())
   {
-    *rit = std::sqrt(*arr_it);
+    Sqrt(*arr_it, *rit);
     ++arr_it;
     ++rit;
   }

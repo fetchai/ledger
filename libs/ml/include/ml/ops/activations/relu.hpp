@@ -45,7 +45,7 @@ public:
       this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
     }
 
-    fetch::math::Relu(inputs.front().get(), *this->output_);
+    (*this->output_) = fetch::math::Relu(inputs.front().get());
     return *(this->output_);
   }
 

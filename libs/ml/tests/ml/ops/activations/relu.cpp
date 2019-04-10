@@ -44,7 +44,8 @@ TYPED_TEST(ReluTest, forward_all_positive_test)
     i++;
   }
   fetch::ml::ops::Relu<TypeParam> op;
-  TypeParam                       prediction = op.Forward({data});
+
+  TypeParam prediction = op.Forward({data});
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));

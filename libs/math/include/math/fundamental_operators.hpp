@@ -288,47 +288,6 @@ template <typename ArrayType, typename T>
 /// ADDITIONS ///
 /////////////////
 
-//////////////////
-/// INTERFACES ///
-//////////////////
-
-template <typename S>
-meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
-{
-  S ret;
-  Add(scalar1, scalar2, ret);
-  return ret;
-}
-
-template <typename T, typename ArrayType, typename = std::enable_if_t<meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
-{
-  ArrayType ret{array.shape()};
-  Add(array, scalar, ret);
-  return ret;
-}
-template <typename T, typename ArrayType,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, ArrayType> Add(T const &scalar, ArrayType const &array)
-{
-  return Add(array, scalar);
-}
-
-template <typename T, typename ArrayType,
-          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, void> Add(T const &scalar, ArrayType const &array, ArrayType &ret)
-{
-  ret = Add(array, scalar, ret);
-}
-template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2)
-{
-  assert(array1.shape() == array2.shape());
-  ArrayType ret{array1.shape()};
-  Add(array1, array2, ret);
-  return ret;
-}
-
 ///////////////////////
 /// IMPLEMENTATIONS ///
 ///////////////////////
@@ -376,27 +335,73 @@ meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType cons
   ASSERT(array1.shape() == array2.shape());
   ASSERT(array1.shape() == ret.shape());
 
-  auto it1 = array1.cbegin();
-  auto it2 = array2.cbegin();
-  auto rit = ret.begin();
-  while(it1.is_valid())
+  if (array1.shape() == array2.shape())
   {
-    *rit = (*it1) + (*it2);
-    ++it1;
-    ++it2;
-    ++rit;
+    auto it1 = array1.cbegin();
+    auto it2 = array2.cbegin();
+    auto rit = ret.begin();
+    while(it1.is_valid())
+    {
+      *rit = (*it1) + (*it2);
+      ++it1;
+      ++it2;
+      ++rit;
+    }
   }
 }
+
+
+//////////////////
+/// INTERFACES ///
+//////////////////
+
+template <typename S>
+meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
+{
+  S ret;
+  Add(scalar1, scalar2, ret);
+  return ret;
+}
+
+template <typename T, typename ArrayType, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
+{
+  ArrayType ret{array.shape()};
+  Add(array, scalar, ret);
+  return ret;
+}
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
+meta::IfIsMathArray<ArrayType, ArrayType> Add(T const &scalar, ArrayType const &array)
+{
+  return Add(array, scalar);
+}
+
+template <typename T, typename ArrayType,
+          typename = std::enable_if_t<fetch::math::meta::IsArithmetic<T>>>
+meta::IfIsMathArray<ArrayType, void> Add(T const &scalar, ArrayType const &array, ArrayType &ret)
+{
+  ret = Add(array, scalar, ret);
+}
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2)
+{
+  assert(array1.shape() == array2.shape());
+  ArrayType ret{array1.shape()};
+  Add(array1, array2, ret);
+  return ret;
+}
+
 
 //////////////////////////
 /// ADDITION OPERATORS ///
 //////////////////////////
 
-template <typename OtherType>
-meta::IfIsMath<OtherType, void> operator+=(OtherType &left, OtherType const &right)
-{
-  Add(left, right, left);
-}
+//template <typename OtherType>
+//meta::IfIsMath<OtherType, void> operator+=(OtherType &left, OtherType const &right)
+//{
+//  Add(left, right, left);
+//}
 
 ///////////////////
 /// SUBTRACTION ///

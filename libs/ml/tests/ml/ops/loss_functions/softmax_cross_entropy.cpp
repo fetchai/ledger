@@ -107,7 +107,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, trivial_one_dimensional_backward_test)
 
   for (SizeType i = 0; i < gt.size(); ++i)
   {
-    gt.Set(i, DataType(gt_data[i]));
+    gt.Set({0, i}, DataType(gt_data[i]));
   }
 
   std::vector<double> unscaled_vals{-1.0, -1.0, 1.0};
@@ -115,8 +115,8 @@ TYPED_TEST(SoftmaxCrossEntropyTest, trivial_one_dimensional_backward_test)
 
   for (SizeType i = 0; i < n_data_points * n_classes; ++i)
   {
-    data1.Set(i, DataType(unscaled_vals[i]));
-    data2.Set(i, DataType(targets[i]));
+    data1.Set({0, i}, DataType(unscaled_vals[i]));
+    data2.Set({0, i}, DataType(targets[i]));
   }
 
   fetch::ml::ops::SoftmaxCrossEntropy<TypeParam> op;

@@ -32,14 +32,19 @@ template <typename ArrayType>
 void Relu(ArrayType const &t, ArrayType &ret)
 {
   assert(t.size() == ret.size());
-  for (typename ArrayType::SizeType j = 0; j < t.size(); ++j)
+
+  auto it = t.cbegin();
+  auto rit = ret.begin();
+  while(it.is_valid())
   {
-    ret[j] = fetch::math::Max(t[j], typename ArrayType::Type(0));
+    *rit = fetch::math::Max(*it, typename ArrayType::Type(0));
+    ++it;
+    ++rit;
   }
 }
 
 template <typename ArrayType>
-ArrayType Relu(ArrayType &t)
+ArrayType Relu(ArrayType const &t)
 {
   ArrayType ret(t.shape());
   Relu(t, ret);

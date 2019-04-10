@@ -69,10 +69,18 @@ TYPED_TEST(ConvolutionTest, forward_3x3x3_1x3x3x3)
 {
   TypeParam input(std::vector<uint64_t>({3, 3, 3}));
   TypeParam weigths(std::vector<uint64_t>({1, 3, 3, 3}));
-  for (uint64_t i(0); i < 27; ++i)
+  std::uint64_t counter = 0;
+  for (std::uint64_t i(0); i < 3; ++i)
   {
-    input.At(i)   = typename TypeParam::Type(i);
-    weigths.At(i) = typename TypeParam::Type(i);
+    for (std::uint64_t j(0); j < 3; ++j)
+    {
+      for (std::uint64_t k(0); k < 3; ++k)
+      {
+        input.At(i, j, k)   = typename TypeParam::Type(counter);
+        weigths.At(0, i, j, k) = typename TypeParam::Type(counter);
+        ++counter;
+      }
+    }
   }
   fetch::ml::ops::Convolution<TypeParam> c;
   TypeParam                              output = c.Forward({input, weigths});

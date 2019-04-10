@@ -321,38 +321,48 @@ private:
   {
     ASSERT(array_.shape().size() == step.size());
     SizeType volume    = 1;
-    size_              = 1;
-    position_          = 0;
 
-    for (SizeType i = 0; i < step.size(); ++i)
+    if (step.size() == 0)
     {
-      auto const &    a = step[i];
-      TensorIteratorRange s;
-      s.index = s.from = s.current_n_dim_position = a[0];
-      s.to                                        = a[1];
-
-      if (a.size() > 2)
-      {
-        s.step = a[2];
-      }
-      s.volume         = volume;
-      SizeType diff = (s.to - s.from);
-      s.total_steps    = diff / s.step;
-      if (s.total_steps * s.step < diff)
-      {
-        ++s.total_steps;
-      }
-
-      s.total_steps *= s.step;
-      s.step_volume  = s.step * volume;
-      s.total_volume = (s.total_steps) * volume;
-
-      position_ += volume * s.from;
-      size_ *= s.total_steps;
-
-      volume *= shape[i];
-      ranges_.push_back(s);
+      size_ = 0;
+      position_ = 0;
     }
+    else
+    {
+      size_              = 1;
+      position_          = 0;
+
+      for (SizeType i = 0; i < step.size(); ++i)
+      {
+        auto const &    a = step[i];
+        TensorIteratorRange s;
+        s.index = s.from = s.current_n_dim_position = a[0];
+        s.to                                        = a[1];
+
+        if (a.size() > 2)
+        {
+          s.step = a[2];
+        }
+        s.volume         = volume;
+        SizeType diff = (s.to - s.from);
+        s.total_steps    = diff / s.step;
+        if (s.total_steps * s.step < diff)
+        {
+          ++s.total_steps;
+        }
+
+        s.total_steps *= s.step;
+        s.step_volume  = s.step * volume;
+        s.total_volume = (s.total_steps) * volume;
+
+        position_ += volume * s.from;
+        size_ *= s.total_steps;
+
+        volume *= shape[i];
+        ranges_.push_back(s);
+      }
+    }
+
   }
 
   TensorType &array_;

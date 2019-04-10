@@ -263,6 +263,18 @@ void Max(Tensor<T, C> const &array, typename Tensor<T, C>::SizeType const &axis,
     }
   }
 }
+template <typename T>
+void Max(std::vector<T> const &obj1, T &ret)
+{
+  ret = *std::max_element(std::begin(obj1), std::end(obj1));
+}
+template <typename T>
+T Max(std::vector<T> const &obj1)
+{
+  T ret;
+  Max(obj1, ret);
+  return ret;
+}
 
 /**
  * Min function returns the smalled value in the array
@@ -275,7 +287,7 @@ template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsAr
 meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, T &ret)
 {
   ret = std::numeric_limits<T>::max();
-  for (T &e : array)
+  for (T const &e : array)
   {
     if (ret < e)
     {
@@ -540,7 +552,7 @@ void PeakToPeak(ArrayType arr)
  * @return
  */
 template <typename ArrayType>
-void ArgMax(ArrayType const &array, ArrayType &ret, SizeType axis = NO_AXIS)
+meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &ret, SizeType axis = NO_AXIS)
 {
   using Type = typename ArrayType::Type;
 
@@ -596,7 +608,7 @@ void ArgMax(ArrayType const &array, ArrayType &ret, SizeType axis = NO_AXIS)
   }
 }
 template <typename ArrayType>
-ArrayType ArgMax(ArrayType const &array, SizeType axis = 0)
+meta::IfIsMathArray<ArrayType, ArrayType> ArgMax(ArrayType const &array, SizeType axis = 0)
 {
   assert((array.shape().size() == 1) || (array.shape().size() == 2));
   assert((axis == 0) || (axis == 1));
@@ -618,6 +630,18 @@ ArrayType ArgMax(ArrayType const &array, SizeType axis = 0)
   return ret;
 }
 
+template <typename T>
+void ArgMax(std::vector<T> const &obj1, T &ret)
+{
+  ret = T(std::distance(std::begin(obj1), std::max_element(std::begin(obj1), std::end(obj1))));
+}
+template <typename T>
+T ArgMax(std::vector<T> const &obj1)
+{
+  T ret;
+  ArgMax(obj1, ret);
+  return ret;
+}
 
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> Dot(ArrayType const &A, ArrayType const &B, ArrayType &ret)

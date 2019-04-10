@@ -40,17 +40,17 @@ TYPED_TEST_CASE(EuclideanTest, MyTypes);
 TYPED_TEST(EuclideanTest, simple_test)
 {
   Tensor<double> A = Tensor<double>(4);
-  A.Set(0, 1);
-  A.Set(1, 2);
-  A.Set(2, 3);
-  A.Set(3, 4);
+  A.Set({0}, 1);
+  A.Set({1}, 2);
+  A.Set({2}, 3);
+  A.Set({3}, 4);
   EXPECT_EQ(Euclidean(A, A), 0);
 
   Tensor<double> B = Tensor<double>(4);
-  B.Set(0, 1);
-  B.Set(1, 2);
-  B.Set(2, 3);
-  B.Set(3, 2);
+  B.Set({0}, 1);
+  B.Set({1}, 2);
+  B.Set({2}, 3);
+  B.Set({3}, 2);
 
   EXPECT_EQ(Euclidean(A, B), 2);
 }

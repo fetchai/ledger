@@ -29,11 +29,7 @@ namespace math {
 template <typename Type>
 meta::IfIsNonFixedPointArithmetic<Type, void> Pow(Type const &x, Type const &y, Type &ret)
 {
-  ret = 1;
-  for (std::size_t i = 0; i < y; ++i)
-  {
-    ret *= (x);
-  }
+  ret = std::pow(x, y);
 }
 
 // TODO(800) - native implementations of fixed point are required; casting to double will not be
@@ -109,7 +105,7 @@ meta::IfIsMathArray<ArrayType, void> Square(ArrayType const &x, ArrayType &ret)
 
   while(arr_it.is_valid())
   {
-    *rit *= (*arr_it) * (*arr_it);
+    *rit = (*arr_it) * (*arr_it);
     ++arr_it;
     ++rit;
   }

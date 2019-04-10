@@ -71,7 +71,7 @@ TYPED_TEST(EmbeddingsTest, forward)
 
   std::vector<int> gt{30, 31, 32, 33, 34, 35, 50, 51, 52, 53, 54, 55};
   std::cout << " ---- " << std::endl;
-  for (unsigned int i(0); i < 2; ++i)
+  for (unsigned int i{0}; i < 2; ++i)
   {
     for (unsigned int j{0}; j < 6; ++j)
     {
