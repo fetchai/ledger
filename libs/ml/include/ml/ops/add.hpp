@@ -43,9 +43,19 @@ public:
     ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
     ASSERT(output.shape() == this->ComputeOutputSize(inputs));
 
-    output.Fill(DataType(0));
-    output.InlineAdd(inputs[0]);
-    output.InlineAdd(inputs[1]);
+    auto output_it  = output.begin();
+    auto output_end = output.end();
+    auto a_it       = inputs[0].get().begin();
+    auto b_it       = inputs[1].get().begin();
+
+    while (output_it != output_end)
+    {
+      *output_it = *a_it + *b_it;
+      ++output_it;
+      ++a_it;
+      ++b_it;
+    }
+
     return output;
   }
 
