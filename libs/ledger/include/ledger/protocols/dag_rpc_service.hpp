@@ -48,71 +48,76 @@ class DAGRpcService : public muddle::rpc::Server,
 public:
   static constexpr char const *LOGGING_NAME = "DAGRpcService"; 
 
-  using MuddleEndpoint  = muddle::MuddleEndpoint;  
-  using Muddle          = muddle::Muddle;
-  using SubscriptionPtr = muddle::MuddleEndpoint::SubscriptionPtr;
-  using VerifierType    = crypto::ECDSAVerifier;
-  using ThreadPool      = network::ThreadPool;
-  using NodeList        = std::vector<DAGNode>;
-  struct QueueItem {
-    DAGNode node;
-    int attempts = 0;
-    // TODO: add from adddress such that trust system can penalise bad behaviour
-  };
-
-  using NodeQueue       = std::deque<QueueItem>;
-  using Packet = fetch::muddle::Packet;
-  using DAGNodeAddedCallback = std::function< void(DAGNode const &) >;
-
   enum class State 
   {
     WAIT_FOR_NODES,
     ADD_URGENT_NODES,
-    ADD_BACKLOG_NODES,
+    ADD_BACKLOG,
     ADD_NEW_NODES
   };
 
-  enum 
+  static char const *ToString(State state) 
+  {
+    switch(state)
+    {
+    case State::WAIT_FOR_NODES:
+      return "WAIT_FOR_NODES";
+    case State::ADD_URGENT_NODES:
+      return "ADD_URGENT_NODES";
+    case State::ADD_BACKLOG:
+      return "ADD_BACKLOG";
+    case State::ADD_NEW_NODES:
+      return "ADD_NEW_NODES";    
+    }
+    return "UNKNOWN";
+  }
+
+  enum // TODO Move common place
   {
     DAG_CHUNK_SIZE = 100000
   };
 
-  using StateMachine = core::StateMachine<State>;
-  using StateMachinePtr   = std::shared_ptr<StateMachine>;  
-  
+  struct QueueItem {
+    DAGNode node;
+    int attempts = 0;
+
+    // TODO: add from adddress such that trust system can penalise bad behaviour
+  };
+
+  using MuddleEndpoint       = muddle::MuddleEndpoint;  
+  using Muddle               = muddle::Muddle;
+  using SubscriptionPtr      = muddle::MuddleEndpoint::SubscriptionPtr;
+  using VerifierType         = crypto::ECDSAVerifier;
+  using ThreadPool           = network::ThreadPool;
+  using NodeList             = std::vector<DAGNode>;
+  using NodeQueue            = std::deque<QueueItem>;
+  using Packet               = fetch::muddle::Packet;
+  using DAGNodeAddedCallback = std::function< void(DAGNode const &) >;
+  using StateMachine         = core::StateMachine<State>;
+  using StateMachinePtr      = std::shared_ptr<StateMachine>;  
+
+  /// Service functions
+  /// @{
   State IdleUntilWork();
   State AddUrgentNodes();
-  State AddBacklogNodes();
+  State AddBacklog();
   State AddNewNodes();
-  
-
+  /// }
 
   // Construction / Destruction
   DAGRpcService(Muddle &muddle, MuddleEndpoint &endpoint, DAG &dag);
   DAGRpcService(DAGRpcService const &) = delete;
   DAGRpcService(DAGRpcService &&) = delete;
-  ~DAGRpcService() = default;
+  ~DAGRpcService() 
+  {
+    state_machine_->Reset();
+    state_machine_.reset();    
+  }
 
   DAGRpcService &operator=(DAGRpcService const &) = delete;
   DAGRpcService &operator=(DAGRpcService &&) = delete;
 
-
-  void Start() 
-  {
-    // Worker thread
-    // TODO: Move to separate start function
-    thread_pool_->Start();
-    thread_pool_->Post([this]() { IdleUntilWork(); });
-  }
-
-  void Stop()
-  {
-    thread_pool_->Stop();
-  }
-
-
   void BroadcastDAGNode(DAGNode node);
-  void Synchronise();
 
   void SetCertificate(byte_array::ConstByteArray const &private_key)
   {

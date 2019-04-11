@@ -16,6 +16,8 @@ target_include_directories(ledger-executor-tests PRIVATE chaincode)
 add_fetch_test(ledger-consensus-tests fetch-ledger consensus)
 add_fetch_test(ledger-chain-tests fetch-ledger chain)
 
+add_fetch_test(ledger-dag-tests fetch-ledger dag)
+
 add_fetch_test(ledger-upow-tests fetch-ledger upow)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/upow/synergetic_test_contract.etch" 

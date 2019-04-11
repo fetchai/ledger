@@ -12,7 +12,7 @@
 #include "crypto/identity.hpp"
 #include "ledger/dag/dag_node.hpp"
 #include "ledger/chain/block.hpp"
-
+#include "ledger/dag/dag_interface.hpp"
 
 #include <unordered_set>
 #include <unordered_map>
@@ -28,7 +28,7 @@ namespace ledger {
 /**
  * DAG implementation.
  */
-class DAG
+class DAG : public DAGInterface
 {
 public:
   using VerifierType      = crypto::ECDSAVerifier;
@@ -38,6 +38,7 @@ public:
   using DigestArray       = std::vector<Digest>;
   using NodeList          = std::list<DAGNode>;
   using NodeArray         = std::vector<DAGNode>;
+  using NodeDeque         = std::deque<DAGNode>;
   using NodeMap           = std::unordered_map<Digest, DAGNode>;
   using DigestMap         = std::unordered_map<Digest, uint64_t>;
   using Mutex             = mutex::Mutex;
@@ -47,46 +48,42 @@ public:
 
   // Construction / Destruction
   DAG(ConstByteArray genesis_contents = "genesis");
-  DAG(DAG const &) = delete;
-  DAG(DAG &&) = delete;
-  ~DAG() = default;
+  DAG(DAG const &)            = delete;
+  DAG(DAG &&)                 = delete;
+  virtual ~DAG()              = default;
 
   // Operators
   DAG &operator=(DAG const &) = delete;
-  DAG &operator=(DAG &&) = delete;
+  DAG &operator=(DAG &&)      = delete;
 
   /// Methods to interact with the dag
   /// @{
-  bool Push(DAGNode node);  
-  bool HasNode(Digest const &hash);
-  NodeArray DAGNodes() const;  
-  DigestArray UncertifiedTipsAsVector() const;
-  DigestMap const tips() const;
-  DigestMap const tips_unsafe() const;
-  NodeMap const nodes() const;
-  uint64_t node_count();
-  NodeArray GetChunk(uint64_t const &f, uint64_t const &t);
-
-  void RemoveNode(Digest const & /*hash*/)
-  {
-    // TODO: Implement.
-    throw std::runtime_error("not implemented yet");
-  }
+  bool Push(DAGNode node) override;  
+  bool HasNode(Digest const &hash) override;
+  NodeArray DAGNodes() const override;  
+  DigestArray UncertifiedTipsAsVector() const override; 
+  DigestMap const tips() const override;
+  NodeMap const nodes() const override;
+  uint64_t node_count() override;
+  void RemoveNode(Digest const & hash) override;
   /// }
 
-  void OnNewNode(CallbackFunction cb)
-  {
-    LOG_STACK_TRACE_POINT;      
-    on_new_node_ = std::move(cb);
-  }
+
+  /// Methods used for syncing
+  /// @{
+  NodeArray GetChunk(uint64_t const &f, uint64_t const &t) override;
+  NodeArray GetBefore(DigestArray hashes, uint64_t const &block_number, uint64_t const &count) override;
+  NodeArray GetAfter(DigestArray hashes, uint64_t const &block_number, uint64_t const &count) override;
+  NodeDeque GetLatest() const override;
+  /// }
 
   /// Control logic for setting the time of the nodes.
   /// @{
-  bool SetNodeTime(Block const&block);
-  NodeArray ExtractSegment(Block const &block);
-  void SetNodeReferences(DAGNode &node, int count = 2);
+  bool SetNodeTime(Block const&block) override;
+  NodeArray ExtractSegment(Block const &block) override;
+  void SetNodeReferences(DAGNode &node, int count = 2) override;
 
-  void RevertTo(uint64_t /*block_number*/)
+  void RevertTo(uint64_t /*block_number*/) override
   {
     FETCH_LOCK(maintenance_mutex_);
     // TODO: Implement to revert.
@@ -99,13 +96,13 @@ public:
   *
   * @param node is the node which needs to be checked.
   */
-  bool ValidatePrevious(DAGNode const &node)
+  bool ValidatePrevious(DAGNode const &node) override
   {
     FETCH_LOCK(maintenance_mutex_);
     return ValidatePreviousInternal(node);
   }
 
-  std::size_t size() const { return nodes_.size(); }
+  std::size_t size() const { return nodes_.size(); } // TODO: check whether can be deleted
 private:
   bool ValidatePreviousInternal(DAGNode const &node);
   void SignalNewNode(DAGNode n)
@@ -120,7 +117,9 @@ private:
   DigestMap         tips_;                         ///< tips of the DAG.
   DigestArray       all_node_hashes_;              ///< contain all node hashes
   CallbackFunction  on_new_node_;  
-  mutable Mutex     maintenance_mutex_{__LINE__, __FILE__};  
+  NodeDeque         latest_;
+
+  mutable Mutex     maintenance_mutex_{__LINE__, __FILE__};
 };
 
 /**
@@ -131,15 +130,6 @@ inline DAG::DigestMap const DAG::tips() const
   FETCH_LOCK(maintenance_mutex_);    
   return tips_;
 }
-
-/**
- * @brief returns the tips of the DAG.
- */
-inline DAG::DigestMap const DAG::tips_unsafe() const
-{
-  return tips_;
-}
-
 
 /**
  * @brief returns all nodes.

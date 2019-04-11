@@ -360,7 +360,6 @@ void Constellation::Run(UriList const &initial_peers)
   /////////////////////////////////
 
 
-  dag_rpc_service_.Start();
   /// P2P (TRUST) HIGH LEVEL MANAGEMENT
 
   // P2P configuration
@@ -401,10 +400,6 @@ void Constellation::Run(UriList const &initial_peers)
 
   http_.Stop();
   p2p_.Stop();
-
-
-  dag_rpc_service_.Stop();
-  dag_.OnNewNode(nullptr);
 
 
   tx_processor_.Stop();

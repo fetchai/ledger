@@ -3,12 +3,20 @@
 
 DAG Syncronisation
 ==================
+- (v) DAG RPC protocol, mode numbers to correct place, dag_rpc_protocol.hpp 35
 - (v) Make genesis text configurable
 - (v) Check whether already in queue, line 127 DAG.hpp
+- (v) Make DAG bi-directional
+- (v) Add RemoveNode(hash)
+- (v) Write test for DAG
+- ( ) Rewrite the DAG RPC interface
+- ( ) Consider deleting GetAfter as it does not make sense
+      - ( ) Create DAG interface for testing purposes
+      - ( ) Get nodes following "list of hashes"
+      - ( ) Get nodes before "list of hashes"
+
 - ( ) Make DAG implementation a state machine
 - ( ) Fix TODO on line 322 in constellation.cpp
-- ( ) Certify transactions? Maybe not for this PR
-- ( ) DAG RPC protocol, mode numbers to correct place, dag_rpc_protocol.hpp 35
 - ( ) Refactor DAG HTTP interface, line 73
       - ( ) Updated serialiser would make life easy
       - ( ) Wire format 117, dag_http_interface.hpp
@@ -20,6 +28,9 @@ DAG Syncronisation
 
 - ( ) Fix and test tips selection
 - ( ) Move DAG muddle configuration
+- ( ) Write test for RemoveNode
+- ( ) Certify transactions? Maybe not for this PR - if not, create ticket.
+
 
 Synergetic Contracts
 ====================

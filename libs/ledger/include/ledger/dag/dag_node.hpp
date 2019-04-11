@@ -25,11 +25,12 @@ namespace ledger {
 
 struct DAGNode
 {
-  using HasherType = crypto::SHA256;
-  using ConstByteArray = byte_array::ConstByteArray;
-  using Digest = ConstByteArray;
-  using Signature = ConstByteArray;
-  using DigestList = std::vector<Digest>;
+  using HasherType      = crypto::SHA256;
+  using ConstByteArray  = byte_array::ConstByteArray;
+  using Digest          = ConstByteArray;
+  using Signature       = ConstByteArray;
+  using DigestList      = std::vector<Digest>;
+  using DigestSet       = std::unordered_set<Digest>;
 
   static constexpr uint64_t INVALID_TIMESTAMP = std::numeric_limits<uint64_t>::max();
   static constexpr uint64_t GENESIS_TIME = std::numeric_limits<uint64_t>::max() - 1;
@@ -37,21 +38,33 @@ struct DAGNode
   // Different types of DAG nodes.
   enum
   {
-    GENESIS = 1,         //< Used to identify the genesis DAG node
-    WORK    = 2,         //< Indicates that work is stored in the contents
-    DATA    = 3,         //< DAG contains data that can be used inside the contract.
+    GENESIS      = 1,    //< Used to identify the genesis DAG node
+    WORK         = 2,    //< Indicates that work is stored in the contents
+    DATA         = 3,    //< DAG contains data that can be used inside the contract.
     INVALID_NODE = 255   //< The node is not valid (default on construction)
   };
 
-  uint64_t          timestamp{INVALID_TIMESTAMP};    ///< timestamp to that keeps the time since last validated block.
-  uint64_t          type{INVALID_NODE};              ///< type of the DAG node
-  DigestList        previous;                        ///< previous nodes.
-  ConstByteArray    contents;                        ///< payload to be deserialised.  
-  ConstByteArray    contract_name;                   ///< The contract which this node is associated with.
-  crypto::Identity  identity;                        ///< identity of the creator.
-  Digest            hash;                            ///< DAG hash.
-  Signature         signature;                       ///< creators signature.
+  /// Properties derived from DAG and chain
+  /// @{
+  uint64_t          timestamp{INVALID_TIMESTAMP}; ///< timestamp to that keeps the time since last validated block.
+  DigestSet         next;                         ///< nodes referencing this node
+  /// }
 
+  /// Serialisable state-variables
+  /// @{
+  uint64_t          type{INVALID_NODE};           ///< type of the DAG node
+  DigestList        previous;                     ///< previous nodes.
+  ConstByteArray    contents;                     ///< payload to be deserialised.  
+  ConstByteArray    contract_name;                ///< The contract which this node is associated with.
+  crypto::Identity  identity;                     ///< identity of the creator.
+  /// }
+
+
+  /// Serialisable entries to verify state
+  /// @{
+  Digest            hash;                         ///< DAG hash.
+  Signature         signature;                    ///< creators signature.
+  /// }
 
   /**
    * @brief tests whether a node is valid or not.

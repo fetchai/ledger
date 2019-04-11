@@ -115,6 +115,127 @@ DAG::NodeArray DAG::GetChunk(uint64_t const &f, uint64_t const &t)
 }
 
 
+DAG::NodeArray DAG::GetBefore(DigestArray hashes, uint64_t const &block_number, uint64_t const &count) 
+{
+  FETCH_LOCK(maintenance_mutex_);
+  NodeArray ret;
+
+  std::queue< Digest > queue;
+  std::unordered_set< Digest > added_to_queue;
+
+  for(auto &t: hashes)
+  {
+    if(added_to_queue.find(t) != added_to_queue.end())
+    {
+      continue;
+    }        
+    added_to_queue.insert(t);
+    queue.push(t);
+  }
+
+  while(!queue.empty())
+  {
+    auto &node = nodes_[queue.front()];
+    queue.pop();
+
+    // Ignoring genesis
+    if(node.type == DAGNode::GENESIS)
+    {
+
+      continue;
+    }
+
+    // We stop once the time is below the 
+    // desired block time.
+    if(node.timestamp < block_number)
+    {
+      continue;
+    }
+
+    ret.push_back(node);
+    if(ret.size() > count)
+    {
+      return ret;
+    }
+    
+    for(auto &p: node.previous)
+    {
+      if(added_to_queue.find(p) != added_to_queue.end())
+      {
+        continue;
+      }
+
+      added_to_queue.insert( p );          
+      queue.push(p);
+    }
+  }
+
+  return ret;
+}
+
+
+DAG::NodeArray DAG::GetAfter(DigestArray hashes, uint64_t const &block_number, uint64_t const &count)
+{
+  FETCH_LOCK(maintenance_mutex_);
+  NodeArray ret;
+
+  std::queue< Digest > queue;
+  std::unordered_set< Digest > added_to_queue;
+
+  for(auto &t: hashes)
+  {
+    if(added_to_queue.find(t) != added_to_queue.end())
+    {
+      continue;
+    }    
+    added_to_queue.insert(t);
+    queue.push(t);
+  }
+
+  while(!queue.empty())
+  {
+    auto &node = nodes_[queue.front()];
+    queue.pop();
+
+    // Ignoring genesis
+    if(node.type == DAGNode::GENESIS)
+    {
+      continue;
+    }
+
+    // Stopping once the time passes the block time
+    if(node.timestamp >= block_number)
+    {
+      continue;
+    }
+
+    ret.push_back(node);
+    if(ret.size() > count)
+    {
+      return ret;
+    }
+
+    for(auto &p: node.next)
+    {
+      if(added_to_queue.find(p) != added_to_queue.end())
+      {
+        continue;
+      }
+
+      added_to_queue.insert( p );          
+      queue.push(p);
+    }
+    
+  }
+
+  return ret;
+}
+
+DAG::NodeDeque DAG::GetLatest() const
+{
+  return latest_;
+}
+
 bool DAG::ValidatePreviousInternal(DAGNode const &node)
 {
   LOG_STACK_TRACE_POINT;
@@ -203,8 +324,9 @@ bool DAG::SetNodeTime(Block const& block)
 
 void DAG::SetNodeReferences(DAGNode &node, int count)
 {
+  FETCH_LOCK(maintenance_mutex_);
   DigestArray tips_to_select_from;
-  for(auto n: tips())
+  for(auto n: tips_)
   {
     tips_to_select_from.push_back(n.first);
   }    
@@ -235,6 +357,11 @@ DAG::NodeArray DAG::ExtractSegment(Block const &block)
 
   for(auto &t: block.body.dag_nodes)
   {
+    if(added_to_queue.find(t) != added_to_queue.end())
+    {
+      continue;
+    }
+
     added_to_queue.insert(t);
     queue.push(t);
   }
@@ -268,6 +395,37 @@ DAG::NodeArray DAG::ExtractSegment(Block const &block)
   }
 
   return ret;
+}
+
+void DAG::RemoveNode(Digest const & hash)
+{
+  FETCH_LOCK(maintenance_mutex_);
+
+  std::queue< Digest > queue;
+  std::unordered_set< Digest > added_to_queue;
+
+  queue.push(hash);
+  added_to_queue.insert(hash);
+
+  while(!queue.empty())
+  {
+    auto h = queue.front();
+    queue.pop();
+    auto it = nodes_.find(h);
+
+    for(auto &next: it->second.next)
+    {
+      if(added_to_queue.find(next) == added_to_queue.end())
+      {
+        queue.push(next);
+        added_to_queue.insert(next);
+      }
+    }
+
+    nodes_.erase(it);
+  }
+
+
 }
 
 /**
@@ -306,9 +464,9 @@ bool DAG::PushInternal(DAGNode node, bool check_signature)
     }
   }
 
-  // CLearing all tips that are being referenced a lot
   for(auto &h: node.previous)
   {
+    // CLearing all tips that are being referenced a lot    
     auto it = tips_.find(h);
     if(it != tips_.end())
     {
@@ -318,6 +476,10 @@ bool DAG::PushInternal(DAGNode node, bool check_signature)
         tips_.erase(it);
       }
     }
+
+    // Updating all referenced nodes    
+    auto &prev = nodes_[h];
+    prev.next.insert(node.hash);
   }
 
   // Adding node
@@ -335,9 +497,14 @@ DAG::DigestArray DAG::UncertifiedTipsAsVector() const
 {
   FETCH_LOCK(maintenance_mutex_);
   DigestArray ret{};
+
   for(auto const &t: tips_)
   {
-    // TODO(tfr): Check whether certified
+    auto it = nodes_.find(t.first);
+    if(it->second.timestamp != DAGNode::INVALID_TIMESTAMP)
+    {
+      continue;
+    }
     ret.push_back(t.first);
   }
   return ret;

@@ -31,59 +31,47 @@ namespace ledger
 class DAGProtocol : public fetch::service::Protocol
 {
 public:
-  using NodeList        = std::vector<DAGNode>;
-
-  enum // TODO: move to service ids
-  {
-    NUMBER_OF_DAG_NODES = 723,
-    DOWNLOAD_DAG
-  };
+  using Digest          = DAGInterface::Digest;
+  using NodeArray       = DAGInterface::NodeArray;
+  using NodeDeque       = DAGInterface::NodeDeque;  
+  using DigestArray     = DAGInterface::DigestArray;
 
   enum 
   {
-    MAX_DAG_CHUNK_SIZE = 100000
+    GET_LATEST        = 1,
+    GET_NODES_BEFORE  = 2
   };
 
-
-  explicit DAGProtocol(DAG &dag) 
+  explicit DAGProtocol(DAGInterface &dag) 
   : dag_(dag)
   {
-    Expose(NUMBER_OF_DAG_NODES, this, &DAGProtocol::NumberOfDAGNodes);
-    Expose(DOWNLOAD_DAG, this, &DAGProtocol::DownloadDAG);
+    Expose(GET_LATEST,       this, &DAGProtocol::GetLatest);
+    Expose(GET_NODES_BEFORE, this, &DAGProtocol::GetNodesBefore);
   }
 
 private:
   /// @name DAG Protocol Functions
   /// @{
-  uint64_t NumberOfDAGNodes()
+  NodeArray GetLatest()
   {
-    LOG_STACK_TRACE_POINT;
-    return dag_.node_count();
-  }
-
-  NodeList DownloadDAG(uint64_t const &part, uint64_t chunk_size) 
-  {
-    LOG_STACK_TRACE_POINT;
-
-    if(chunk_size > MAX_DAG_CHUNK_SIZE)
+    auto latest = dag_.GetLatest();
+    
+    NodeArray ret;
+    for(auto &l: latest)
     {
-      return NodeList{};
+      ret.push_back(l);
     }
 
-    uint64_t             from = part * chunk_size;
-    uint64_t             to   = from + chunk_size;
-
-    if (to > dag_.node_count())
-    {
-      to = dag_.node_count();
-    }
-
-    FETCH_LOG_INFO("DAGProtocol", "Getting ", from, " to ", to, " / ", dag_.node_count());
-    return dag_.GetChunk(from, to);
+    return ret;
   }
+
+  NodeArray GetNodesBefore(DigestArray hashes, uint64_t const &block_number, uint64_t const &count) 
+  {
+    return dag_.GetBefore(hashes, block_number, count);
+  }  
   /// @}
 
-  DAG &dag_;
+  DAGInterface &dag_;
 };  
 
 
