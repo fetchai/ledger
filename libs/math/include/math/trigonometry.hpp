@@ -35,8 +35,8 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Sin(ArrayType const &x, ArrayT
   ASSERT(ret.size() == x.size());
 
   auto x_it = x.cbegin();
-  auto rit = ret.begin();
-  while(x_it.is_valid())
+  auto rit  = ret.begin();
+  while (x_it.is_valid())
   {
     *rit = std::sin(*x_it);
     ++x_it;
@@ -61,8 +61,8 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Cos(ArrayType const &x, ArrayT
 {
   ASSERT(ret.size() == x.size());
   auto x_it = x.cbegin();
-  auto rit = ret.begin();
-  while(x_it.is_valid())
+  auto rit  = ret.begin();
+  while (x_it.is_valid())
   {
     *rit = std::cos(*x_it);
     ++x_it;
@@ -87,8 +87,8 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Tan(ArrayType const &x, ArrayT
 {
   ASSERT(ret.size() == x.size());
   auto x_it = x.cbegin();
-  auto rit = ret.begin();
-  while(x_it.is_valid())
+  auto rit  = ret.begin();
+  while (x_it.is_valid())
   {
     *rit = std::tan(*x_it);
     ++x_it;
@@ -114,8 +114,8 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> ASin(ArrayType const &x, Array
 {
   ASSERT(ret.size() == x.size());
   auto x_it = x.cbegin();
-  auto rit = ret.begin();
-  while(x_it.is_valid())
+  auto rit  = ret.begin();
+  while (x_it.is_valid())
   {
     *rit = std::asin(*x_it);
     ++x_it;
@@ -141,8 +141,8 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> ACos(ArrayType const &x, Array
 {
   ASSERT(ret.size() == x.size());
   auto x_it = x.cbegin();
-  auto rit = ret.begin();
-  while(x_it.is_valid())
+  auto rit  = ret.begin();
+  while (x_it.is_valid())
   {
     *rit = std::acos(*x_it);
     ++x_it;
@@ -168,8 +168,8 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> ATan(ArrayType const &x, Array
 {
   ASSERT(ret.size() == x.size());
   auto x_it = x.cbegin();
-  auto rit = ret.begin();
-  while(x_it.is_valid())
+  auto rit  = ret.begin();
+  while (x_it.is_valid())
   {
     *rit = std::atan(*x_it);
     ++x_it;
@@ -196,8 +196,8 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> ATan2(ArrayType const &x, Arra
 {
   ASSERT(ret.size() == x.size());
   auto x_it = x.cbegin();
-  auto rit = ret.begin();
-  while(x_it.is_valid())
+  auto rit  = ret.begin();
+  while (x_it.is_valid())
   {
     *rit = std::atan2(*x_it);
     ++x_it;
@@ -223,8 +223,8 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> SinH(ArrayType const &x, Array
 {
   ASSERT(ret.size() == x.size());
   auto x_it = x.cbegin();
-  auto rit = ret.begin();
-  while(x_it.is_valid())
+  auto rit  = ret.begin();
+  while (x_it.is_valid())
   {
     *rit = std::sinh(*x_it);
     ++x_it;
@@ -250,8 +250,8 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> CosH(ArrayType const &x, Array
 {
   ASSERT(ret.size() == x.size());
   auto x_it = x.cbegin();
-  auto rit = ret.begin();
-  while(x_it.is_valid())
+  auto rit  = ret.begin();
+  while (x_it.is_valid())
   {
     *rit = std::cosh(*x_it);
     ++x_it;
@@ -278,8 +278,8 @@ fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> TanH(ArrayType co
 {
   ASSERT(ret.size() == x.size());
   auto x_it = x.cbegin();
-  auto rit = ret.begin();
-  while(x_it.is_valid())
+  auto rit  = ret.begin();
+  while (x_it.is_valid())
   {
     *rit = std::tanh(*x_it);
     ++x_it;
@@ -291,8 +291,8 @@ fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> TanH(ArrayType const
 {
   ASSERT(ret.size() == x.size());
   auto x_it = x.cbegin();
-  auto rit = ret.begin();
-  while(x_it.is_valid())
+  auto rit  = ret.begin();
+  while (x_it.is_valid())
   {
     // TODO(800) - native fixed point implementation required - casting to double will not be
     *rit = typename ArrayType::Type(std::tanh(double(*x_it)));
@@ -318,8 +318,8 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> ASinH(ArrayType const &x, Arra
 {
   ASSERT(ret.size() == x.size());
   auto x_it = x.cbegin();
-  auto rit = ret.begin();
-  while(x_it.is_valid())
+  auto rit  = ret.begin();
+  while (x_it.is_valid())
   {
     *rit = std::asinh(*x_it);
     ++x_it;
@@ -345,14 +345,13 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> ACosH(ArrayType const &x, Arra
 {
   ASSERT(ret.size() == x.size());
   auto x_it = x.cbegin();
-  auto rit = ret.begin();
-  while(x_it.is_valid())
+  auto rit  = ret.begin();
+  while (x_it.is_valid())
   {
     *rit = std::acosh(*x_it);
     ++x_it;
     ++rit;
   }
-
 }
 
 template <typename ArrayType>
@@ -373,14 +372,13 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> ATanH(ArrayType const &x, Arra
 {
   ASSERT(ret.size() == x.size());
   auto x_it = x.cbegin();
-  auto rit = ret.begin();
-  while(x_it.is_valid())
+  auto rit  = ret.begin();
+  while (x_it.is_valid())
   {
     *rit = std::atanh(*x_it);
     ++x_it;
     ++rit;
   }
-
 }
 
 template <typename ArrayType>
