@@ -552,13 +552,13 @@ public:
    */
   // TODO(private issue 123)
   template <typename S>
-  fetch::meta::IfIsUnsignedInteger<S, void> Set(std::vector<S> const &indices, Type const &val)
+  fetch::meta::IfIsUnsignedInteger<S, void> Set(std::vector<S> const &indices, Type val)
   {
     assert(indices.size() == shape_.size());               // dimensionality check not in parent
     data_[ComputeColIndex(indices)] = val;
   }
 
-  void Set(SizeVector const &indices, Type const &val)
+  void Set(SizeVector const &indices, Type val)
   {
     assert(indices.size() == shape_.size());               // dimensionality check not in parent
     data_[ComputeColIndex(indices)] = val;
@@ -569,7 +569,7 @@ public:
    * @param index
    * @param val
    */
-  void Set(SizeType const &index, Type const &val)
+  void Set(SizeType const &index, Type val)
   {
     ASSERT((shape_.size() == 1) || ((Product(shape_)) == Max(shape_)));
     SizeVector indices(shape_.size(), 0);
