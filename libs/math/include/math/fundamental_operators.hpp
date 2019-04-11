@@ -782,7 +782,7 @@ void NaiveDivideArray(ArrayType const &array1, ArrayType const &array2, ArrayTyp
   auto it1 = array1.begin();
   auto it2 = array2.begin();
   auto rit = ret.begin();
-  while(it1.is_valid())
+  while (it1.is_valid())
   {
     *rit = (*it1) / (*it2);
     ++rit;
