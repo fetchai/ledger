@@ -117,7 +117,6 @@ struct TypeFromSize<8>
  * @return
  */
 template <std::uint16_t I, std::uint16_t F>
-FixedPoint<I, F> Divide(const FixedPoint<I, F> &numerator, const FixedPoint<I, F> &denominator,
 inline FixedPoint<I, F> Divide(const FixedPoint<I, F> &numerator, const FixedPoint<I, F> &denominator,
                         FixedPoint<I, F> & /*remainder*/)
 {
@@ -415,9 +414,14 @@ public:
   /// casting operators ///
   /////////////////////////
 
-  inline explicit operator double() const
+  explicit operator double() const
   {
     return (static_cast<double>(data_) / CONST_ONE);
+  }
+
+  explicit operator int() const
+  {
+    return int((data_ & INTEGER_MASK) >> FRACTIONAL_BITS);
   }
 
   explicit operator float() const

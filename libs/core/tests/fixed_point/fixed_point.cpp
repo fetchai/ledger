@@ -490,7 +490,10 @@ TEST(FixedPointTest, Division_32_32)
   EXPECT_EQ(one / huge, infinitesimal * 4);
   EXPECT_EQ(huge / infinitesimal, zero);
 
+<<<<<<< HEAD
   // TODO(843): Add proper support for NaN/Infinity/etc in FixedPoint class
+=======
+>>>>>>> Multiple changes:
   EXPECT_THROW(two / zero, std::overflow_error);
   EXPECT_THROW(zero / zero, std::overflow_error);
 }
@@ -732,6 +735,7 @@ TEST(FixedPointTest, Exponential_32_32)
   fetch::fixed_point::FixedPoint<32, 32> one(1);
   fetch::fixed_point::FixedPoint<32, 32> two(2);
   fetch::fixed_point::FixedPoint<32, 32> ten(10);
+  fetch::fixed_point::FixedPoint<32, 32> huge(21);
   fetch::fixed_point::FixedPoint<32, 32> small(0.0001);
   fetch::fixed_point::FixedPoint<32, 32> tiny(0, fp64::SMALLEST_FRACTION);
   fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Exp(one);
