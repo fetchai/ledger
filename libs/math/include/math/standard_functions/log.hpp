@@ -43,7 +43,7 @@ meta::IfIsNonFixedPointArithmetic<Type, void> Log(Type const &x, Type &ret)
 template <typename T>
 meta::IfIsFixedPoint<T, void> Log(T const &n, T &ret)
 {
-  ret = T(std::log(double(n)));
+  ret = T::Log(n);
 }
 
 template <typename Type>
