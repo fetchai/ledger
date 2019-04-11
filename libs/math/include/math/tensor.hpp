@@ -119,12 +119,7 @@ public:
       return ConstIteratorType::EndIterator(tensor_);
     }
 
-    Tensor Unsqueeze() const
-    {
-      throw std::runtime_error("TODO: not supported.");
-    }
-
-    STensor &Tensor() const
+    STensor &Tensor()
     {
       return tensor_;
     }

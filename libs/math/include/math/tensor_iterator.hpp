@@ -22,13 +22,9 @@
 #include <algorithm>
 #include <cassert>
 #include <vector>
-//
 
 namespace fetch {
 namespace math {
-
-template <typename T, typename C>
-class Tensor;
 
 struct TensorIteratorRange
 {
