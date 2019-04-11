@@ -17,49 +17,110 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/random/lfg.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/ml/activation_functions/leaky_relu.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
-    namespace ml {
-        namespace ops {
+namespace ml {
+namespace ops {
 
-            template <class T>
-            class RandomRelu : public LeakyRelu<T>
-            {
-            public:
-                using ArrayType    = T;
-                using DataType     = typename ArrayType::Type;
-                using ArrayPtrType = std::shared_ptr<ArrayType>;
+template <class T>
+class RandomizedRelu : public fetch::ml::ElementWiseOps<T>
+{
+public:
+  using ArrayType    = T;
+  using DataType     = typename ArrayType::Type;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using SizeType     = typename ArrayType::SizeType;
+  using RNG          = fetch::random::LaggedFibonacciGenerator<>;
 
-                LeakyRelu(DataType a = DataType(0.01))
-                        : a_(a)
-                {}
+  RandomizedRelu(DataType const lower_bound, DataType const upper_bound,
+                 SizeType const &random_seed, bool const is_training = true)
+    : lower_bound_(lower_bound)
+    , upper_bound_(upper_bound)
+    , bounds_mean_((upper_bound_ + lower_bound_) / DataType(2))
+    , is_training_(is_training)
 
-                virtual ~RRelu() = default;
+  {
+    rng_.Seed(random_seed);
+    UpdateRandomValue();
+  }
 
-                virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
-                {
-                    assert(inputs.size() == 1);
-                    if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
-                    {
-                        this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
-                    }
+  virtual ~RandomizedRelu() = default;
 
-                    fetch::math::LeakyRelu(inputs.front().get(), a_, *this->output_);
+  void UpdateRandomValue()
+  {
+    random_value_ =
+        lower_bound_ + static_cast<DataType>(rng_.AsDouble()) * (upper_bound_ - lower_bound_);
+  }
 
-                    return *this->output_;
-                }
+  void SetTraining(bool is_training)
+  {
+    is_training_ = is_training;
+  }
 
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    assert(inputs.size() == 1);
+    if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
+    {
+      this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
+    }
 
-                static constexpr char const *DESCRIPTOR = "RandomRelu";
+    DataType tmp_alpha = is_training_ ? random_value_ : bounds_mean_;
+    fetch::math::LeakyRelu(inputs.front().get(), tmp_alpha, *this->output_);
 
-            private:
-                DataType a_;
-            };
+    return *this->output_;
+  }
 
-        }  // namespace ops
-    }  // namespace ml
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal)
+  {
+    assert(inputs.size() == 1);
+    assert(inputs.front().get().shape() == errorSignal.shape());
+    ArrayType returnSignal{errorSignal.shape()};
+    ArrayType t{inputs.front().get().shape()};
+
+    // gradient of randomized-relu function is for x<0 = alpha, x>=0 = 1.0
+    t = this->Forward(inputs);
+
+    typename ArrayType::SizeType idx(0);
+    for (auto const &val : t)
+    {
+      if (val >= DataType(0))
+      {
+        returnSignal.Set(idx, DataType(1));
+      }
+      else
+      {
+
+        DataType tmp_alpha = is_training_ ? random_value_ : bounds_mean_;
+        returnSignal.Set(idx, tmp_alpha);
+      }
+      ++idx;
+    }
+
+    // multiply by errorSignal (chain rule)
+    fetch::math::Multiply(errorSignal, returnSignal, returnSignal);
+
+    return {returnSignal};
+  }
+
+  static constexpr char const *DESCRIPTOR = "RandomizedRelu";
+
+private:
+  DataType random_value_;
+  DataType lower_bound_;
+  DataType upper_bound_;
+  DataType bounds_mean_;
+  bool     is_training_;
+  RNG      rng_;
+};
+
+}  // namespace ops
+}  // namespace ml
 }  // namespace fetch
