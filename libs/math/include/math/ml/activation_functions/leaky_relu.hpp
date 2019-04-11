@@ -55,7 +55,7 @@ void LeakyRelu(ArrayType const &t, typename ArrayType::Type &a, ArrayType &ret)
 }
 
 template <typename ArrayType>
-ArrayType LeakyRelu(ArrayType &t, typename ArrayType::Type &a)
+ArrayType LeakyRelu(ArrayType const &t, typename ArrayType::Type &a)
 {
   ArrayType ret(t.shape());
   LeakyRelu(t, a, ret);

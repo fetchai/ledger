@@ -57,7 +57,7 @@ void Elu(ArrayType const &t, typename ArrayType::Type &a, ArrayType &ret)
 }
 
 template <typename ArrayType>
-ArrayType Elu(ArrayType &t, typename ArrayType::Type &a)
+ArrayType Elu(ArrayType const &t, typename ArrayType::Type &a)
 {
   ArrayType ret(t.shape());
   Elu(t, a, ret);
