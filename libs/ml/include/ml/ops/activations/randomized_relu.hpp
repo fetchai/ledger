@@ -38,12 +38,10 @@ public:
   using RNG          = fetch::random::LaggedFibonacciGenerator<>;
 
   RandomizedRelu(DataType const lower_bound, DataType const upper_bound,
-                 SizeType const &random_seed, bool const is_training = true)
+                 SizeType const &random_seed)
     : lower_bound_(lower_bound)
     , upper_bound_(upper_bound)
     , bounds_mean_((upper_bound_ + lower_bound_) / DataType(2))
-    , is_training_(is_training)
-
   {
     rng_.Seed(random_seed);
     UpdateRandomValue();
@@ -51,26 +49,21 @@ public:
 
   virtual ~RandomizedRelu() = default;
 
-  void UpdateRandomValue()
-  {
-    random_value_ =
-        lower_bound_ + static_cast<DataType>(rng_.AsDouble()) * (upper_bound_ - lower_bound_);
-  }
-
-  void SetTraining(bool is_training)
-  {
-    is_training_ = is_training;
-  }
-
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     assert(inputs.size() == 1);
+
+    if (this->is_training_)
+    {
+      UpdateRandomValue();
+    }
+
     if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
     {
       this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
     }
 
-    DataType tmp_alpha = is_training_ ? random_value_ : bounds_mean_;
+    DataType tmp_alpha = this->is_training_ ? random_value_ : bounds_mean_;
     fetch::math::LeakyRelu(inputs.front().get(), tmp_alpha, *this->output_);
 
     return *this->output_;
@@ -98,7 +91,7 @@ public:
       else
       {
 
-        DataType tmp_alpha = is_training_ ? random_value_ : bounds_mean_;
+        DataType tmp_alpha = this->is_training_ ? random_value_ : bounds_mean_;
         returnSignal.Set(idx, tmp_alpha);
       }
       ++idx;
@@ -113,11 +106,16 @@ public:
   static constexpr char const *DESCRIPTOR = "RandomizedRelu";
 
 private:
+  void UpdateRandomValue()
+  {
+    random_value_ =
+        lower_bound_ + static_cast<DataType>(rng_.AsDouble()) * (upper_bound_ - lower_bound_);
+  }
+
   DataType random_value_;
   DataType lower_bound_;
   DataType upper_bound_;
   DataType bounds_mean_;
-  bool     is_training_;
   RNG      rng_;
 };
 

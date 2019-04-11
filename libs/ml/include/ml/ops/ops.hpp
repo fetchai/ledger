@@ -46,8 +46,14 @@ public:
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal) = 0;
 
+  void SetTraining(bool is_training)
+  {
+    is_training_ = is_training;
+  }
+
 protected:
   ArrayPtrType output_;  // TODO(private, 736) -- Remove
+  bool         is_training_ = true;
 };
 
 /*

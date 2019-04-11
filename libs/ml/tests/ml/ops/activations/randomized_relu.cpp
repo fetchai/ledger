@@ -39,7 +39,7 @@ TYPED_TEST(RandomizedReluTest, forward_test)
   ArrayType           data(8);
   ArrayType           gt(8);
   std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8});
-  std::vector<double> gtInput({1, -0.159177906, 3, -0.3183558, 5, -0.4775337, 7, -0.6367116});
+  std::vector<double> gtInput({1, -0.062793536, 3, -0.12558707, 5, -0.1883806, 7, -0.2511741});
   for (std::uint64_t i(0); i < 8; ++i)
   {
     data.Set(i, DataType(dataInput[i]));
@@ -53,9 +53,7 @@ TYPED_TEST(RandomizedReluTest, forward_test)
       prediction.AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 
   // Test after generating new random alpha value
-  op.UpdateRandomValue();
-
-  gtInput = {1, -0.062793536, 3, -0.12558707, 5, -0.1883806, 7, -0.2511741};
+  gtInput = {1, -0.157690314, 3, -0.315380628, 5, -0.47307094, 7, -0.63076125644};
   for (std::uint64_t i(0); i < 8; ++i)
   {
     gt.Set(i, DataType(gtInput[i]));
@@ -91,7 +89,7 @@ TYPED_TEST(RandomizedReluTest, backward_test)
   ArrayType           gt(8);
   std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<double> errorInput({0, 0, 0, 0, 1, 1, 0, 0});
-  std::vector<double> gtInput({0, 0, 0, 0, 1, 0.079588953, 0, 0});
+  std::vector<double> gtInput({0, 0, 0, 0, 1, 0.031396768, 0, 0});
   for (std::uint64_t i(0); i < 8; ++i)
   {
     data.Set(i, DataType(dataInput[i]));
@@ -105,9 +103,10 @@ TYPED_TEST(RandomizedReluTest, backward_test)
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType(1e-5), DataType(1e-5)));
 
   // Test after generating new random alpha value
-  op.UpdateRandomValue();
+  // Forward pass will update random value
+  op.Forward({data});
 
-  gtInput = {0, 0, 0, 0, 1, 0.031396768, 0, 0};
+  gtInput = {0, 0, 0, 0, 1, 0.066261486, 0, 0};
   for (std::uint64_t i(0); i < 8; ++i)
   {
     gt.Set(i, DataType(gtInput[i]));
