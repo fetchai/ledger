@@ -28,11 +28,11 @@
 namespace fetch {
 namespace math {
 //
-//template <typename T, typename C>
-//class Tensor;
+// template <typename T, typename C>
+// class Tensor;
 //
-//template <typename T, typename C, typename TensorType>
-//class TensorIterator;
+// template <typename T, typename C, typename TensorType>
+// class TensorIterator;
 
 // TODO - vectorisation implementations not yet called
 namespace details_vectorisation {
