@@ -62,7 +62,7 @@ public:
     return old_shape != this->output_->shape();
   }
 
-  virtual std::vector<SizeType> ComputeOutputSize(
+  virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     (void)inputs;

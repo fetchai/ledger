@@ -38,14 +38,13 @@ public:
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                             ArrayType &                                                 output)
   {
-    (void)output;
     assert(inputs.size() == 2);
     // Input should be a 3D tensor [C x H x W]
     assert(inputs.at(0).get().shape().size() == 3);
     // Weights should be a 4D tensor [oC x iC x H x W]
     assert(inputs.at(1).get().shape().size() == 4);
 
-    auto outputShape = ComputeOutputSize(inputs);
+    auto outputShape = ComputeOutputShape(inputs);
     ASSERT(output.shape() == outputShape);
     for (uint64_t i(0); i < outputShape[0]; ++i)  // Iterate over output channels
     {
@@ -88,7 +87,7 @@ public:
     return {errorSignal};
   }
 
-  virtual std::vector<SizeType> ComputeOutputSize(
+  virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     std::vector<typename ArrayType::SizeType> outputShape;

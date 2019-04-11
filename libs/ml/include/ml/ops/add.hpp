@@ -41,7 +41,7 @@ public:
     (void)output;
     ASSERT(inputs.size() == 2);
     ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
-    ASSERT(output.shape() == this->ComputeOutputSize(inputs));
+    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
 
     auto output_it  = output.begin();
     auto output_end = output.end();

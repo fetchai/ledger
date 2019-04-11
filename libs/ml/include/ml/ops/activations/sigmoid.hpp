@@ -42,7 +42,7 @@ public:
                             ArrayType &                                                 output)
   {
     assert(inputs.size() == 1);
-    ASSERT(output.shape() == this->ComputeOutputSize(inputs));
+    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
     fetch::math::Sigmoid(inputs.front().get(), output);
     // ensures numerical stability
     for (auto &val : output)

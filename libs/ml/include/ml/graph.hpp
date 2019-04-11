@@ -167,6 +167,7 @@ public:
 
   /**
    * Resets graph cache, clearing stored evaluation outputs
+   * and recursively updating the input size for all downstream nodes
    */
   void ResetGraphCache(std::shared_ptr<NodeInterface<T>> const &n, bool input_size_changed)
   {

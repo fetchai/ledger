@@ -38,7 +38,7 @@ public:
 
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
-    ArrayType output(ComputeOutputSize(inputs));
+    ArrayType output(ComputeOutputShape(inputs));
     return Forward(inputs, output);
   }
 
@@ -52,7 +52,7 @@ public:
   virtual std::vector<ArrayType> BackwardBatch(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal) = 0;
-  virtual std::vector<SizeType> ComputeOutputSize(
+  virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
 
   // protected:
@@ -83,7 +83,7 @@ public:
     return this->Backward(inputs, errorSignal);
   }
 
-  virtual std::vector<SizeType> ComputeOutputSize(
+  virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     return inputs.front().get().shape();

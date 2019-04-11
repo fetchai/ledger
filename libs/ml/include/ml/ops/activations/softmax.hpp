@@ -39,7 +39,7 @@ public:
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                             ArrayType &                                                 output)
   {
-    ASSERT(output.shape() == ComputeOutputSize(inputs));
+    ASSERT(output.shape() == ComputeOutputShape(inputs));
     assert(inputs.size() == 1);
     fetch::math::Softmax(inputs[0].get(), output);
     return output;
@@ -54,7 +54,7 @@ public:
 
     ArrayType returnSignal = errorSignal.Clone();
 
-    ArrayType t(this->ComputeOutputSize(inputs));
+    ArrayType t(this->ComputeOutputShape(inputs));
     t = this->Forward(inputs, t);
     returnSignal.InlineMultiply(t);
     typename ArrayType::Type sum = returnSignal.Sum();
@@ -63,7 +63,7 @@ public:
     return {returnSignal};
   }
 
-  virtual std::vector<SizeType> ComputeOutputSize(
+  virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     return inputs.front().get().shape();

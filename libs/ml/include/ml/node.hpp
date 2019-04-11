@@ -57,7 +57,7 @@ public:
   Node(std::string const name, Params... params)
     : O(params...)
     , name_(std::move(name))
-    , cachedOutputPresent_(false)
+    , cached_output_present_(false)
     , batch_(false)
   {}
 
@@ -77,20 +77,20 @@ public:
   {
     std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
     FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
-    if (!cachedOutputPresent_)
+    if (!cached_output_present_)
     {
       if (batch_)
       {
-        cachedOutput_ = this->ForwardBatch(inputs);
+        cached_output_ = this->ForwardBatch(inputs);
       }
       else
       {
-        cachedOutput_ = this->Forward(inputs, cachedOutput_);
+        cached_output_ = this->Forward(inputs, cached_output_);
       }
-      cachedOutputPresent_ = true;
+      cached_output_present_ = true;
     }
 
-    return cachedOutput_;
+    return cached_output_;
   }
 
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
@@ -139,13 +139,14 @@ public:
 
   virtual void ResetCache(bool input_size_changed)
   {
-    cachedOutputPresent_ = false;
+    cached_output_present_ = false;
     if (input_size_changed)
     {
       std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
-      if (cachedOutput_.shape() != this->ComputeOutputSize(inputs))
+      auto output_size = this->ComputeOutputShape(inputs);
+      if (cached_output_.shape() != output_size)
       {
-        cachedOutput_ = ArrayType(this->ComputeOutputSize(inputs));
+        cached_output_ = ArrayType(output_size);
       }
     }
   }
@@ -159,8 +160,8 @@ private:
   std::vector<std::shared_ptr<NodeInterface<T>>> inputs_;
   std::vector<std::shared_ptr<NodeInterface<T>>> outputs_;
   std::string                                    name_;
-  ArrayType                                      cachedOutput_;
-  bool                                           cachedOutputPresent_;
+  ArrayType                                      cached_output_;
+  bool                                           cached_output_present_;
   bool                                           batch_;
 };
 
