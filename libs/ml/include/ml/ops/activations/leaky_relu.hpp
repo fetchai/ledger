@@ -40,17 +40,12 @@ public:
 
   virtual ~LeakyRelu() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
     assert(inputs.size() == 1);
-    if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
-    {
-      this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
-    }
-
-    fetch::math::LeakyRelu(inputs.front().get(), a_, *this->output_);
-
-    return *this->output_;
+    fetch::math::LeakyRelu(inputs.front().get(), a_, output);
+    return output;
   }
 
   virtual std::vector<ArrayType> Backward(
@@ -63,7 +58,7 @@ public:
     ArrayType t{inputs.front().get().shape()};
 
     // gradient of parametric relu function is for x<0 = a, x>=0 = 1.0
-    t = this->Forward(inputs);
+    t = this->Forward(inputs, t);
 
     typename ArrayType::SizeType idx(0);
     for (auto const &val : t)
