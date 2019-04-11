@@ -59,9 +59,9 @@ TEST_F(DummyContractTests, CheckConstruction)
   EXPECT_CALL(*storage_, Unlock(_)).Times(0);
   EXPECT_CALL(*storage_, CurrentHash()).Times(0);
   EXPECT_CALL(*storage_, LastCommitHash()).Times(0);
-  EXPECT_CALL(*storage_, RevertToHash(_)).Times(0);
-  EXPECT_CALL(*storage_, Commit()).Times(0);
-  EXPECT_CALL(*storage_, HashExists(_)).Times(0);
+  EXPECT_CALL(*storage_, RevertToHash(_, _)).Times(0);
+  EXPECT_CALL(*storage_, Commit(_)).Times(0);
+  EXPECT_CALL(*storage_, HashExists(_, _)).Times(0);
   EXPECT_CALL(*storage_, AddTransaction(_)).Times(0);
   EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
 }
@@ -77,9 +77,9 @@ TEST_F(DummyContractTests, CheckDispatch)
   EXPECT_CALL(*storage_, Unlock(_)).Times(0);
   EXPECT_CALL(*storage_, CurrentHash()).Times(0);
   EXPECT_CALL(*storage_, LastCommitHash()).Times(0);
-  EXPECT_CALL(*storage_, RevertToHash(_)).Times(0);
-  EXPECT_CALL(*storage_, Commit()).Times(0);
-  EXPECT_CALL(*storage_, HashExists(_)).Times(0);
+  EXPECT_CALL(*storage_, RevertToHash(_, _)).Times(0);
+  EXPECT_CALL(*storage_, Commit(_)).Times(0);
+  EXPECT_CALL(*storage_, HashExists(_, _)).Times(0);
   EXPECT_CALL(*storage_, AddTransaction(_)).Times(0);
   EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
 

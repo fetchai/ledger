@@ -61,6 +61,8 @@ public:
 
   using index_type = typename key_value_index_type::index_type;
 
+  static constexpr char const *LOGGING_NAME = "DocumentStore";
+
   /**
    * Implementation of a document file
    */
@@ -409,12 +411,11 @@ public:
     std::lock_guard<mutex::Mutex> lock(mutex_);
 
     // TODO(private issue 615): HashExists implement
-    /*
     if (!(key_index_.underlying_stack().HashExists(hash) && file_store_.HashExists(hash)))
     {
+      FETCH_LOG_WARN(LOGGING_NAME, "Attempted to revert to a hash that doesn't exist");
       return false;
     }
-    */
 
     key_index_.underlying_stack().RevertToHash(hash);
     file_store_.RevertToHash(hash);
@@ -425,7 +426,7 @@ public:
   bool HashExists(byte_array_type const &hash)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
-    return key_index_.underlying_stack().HashExists(hash);
+    return key_index_.underlying_stack().HashExists(hash) && file_store_.HashExists(hash);
   }
 
   hash_type CurrentHash()

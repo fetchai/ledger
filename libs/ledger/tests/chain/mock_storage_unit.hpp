@@ -48,9 +48,9 @@ public:
 
     ON_CALL(*this, CurrentHash()).WillByDefault(Invoke(&fake, &FakeStorageUnit::CurrentHash));
     ON_CALL(*this, LastCommitHash()).WillByDefault(Invoke(&fake, &FakeStorageUnit::LastCommitHash));
-    ON_CALL(*this, RevertToHash(_)).WillByDefault(Invoke(&fake, &FakeStorageUnit::RevertToHash));
-    ON_CALL(*this, Commit()).WillByDefault(Invoke(&fake, &FakeStorageUnit::Commit));
-    ON_CALL(*this, HashExists(_)).WillByDefault(Invoke(&fake, &FakeStorageUnit::HashExists));
+    ON_CALL(*this, RevertToHash(_, _)).WillByDefault(Invoke(&fake, &FakeStorageUnit::RevertToHash));
+    ON_CALL(*this, Commit(_)).WillByDefault(Invoke(&fake, &FakeStorageUnit::Commit));
+    ON_CALL(*this, HashExists(_, _)).WillByDefault(Invoke(&fake, &FakeStorageUnit::HashExists));
   }
 
   MOCK_METHOD1(Get, Document(ResourceAddress const &));
@@ -67,9 +67,9 @@ public:
 
   MOCK_METHOD0(CurrentHash, Hash());
   MOCK_METHOD0(LastCommitHash, Hash());
-  MOCK_METHOD1(RevertToHash, bool(Hash const &));
-  MOCK_METHOD0(Commit, Hash());
-  MOCK_METHOD1(HashExists, bool(Hash const &));
+  MOCK_METHOD2(RevertToHash, bool(Hash const &, uint64_t));
+  MOCK_METHOD1(Commit, Hash(uint64_t));
+  MOCK_METHOD2(HashExists, bool(Hash const &, uint64_t));
 
   FakeStorageUnit fake;
 };

@@ -26,9 +26,7 @@ namespace math {
 /**
  * The sigmoid function - numerically stable
  * @tparam ArrayType
- * @tparam T
- * @param y
- * @param y_hat
+ * @param t
  * @param ret
  */
 template <typename ArrayType>
