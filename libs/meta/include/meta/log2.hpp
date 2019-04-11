@@ -17,18 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/meta/log2.hpp"
+#include "meta/type_traits.hpp"
 
 namespace fetch {
 namespace meta {
 
-template <uint64_t VALUE>
-struct IsLog2
+template <typename T>
+constexpr EnableIf<std::is_integral<typename std::decay<T>::type>::value, bool> isLog2(
+    T &&val) noexcept
 {
-  static constexpr uint64_t log2_value       = Log2<VALUE>::value;
-  static constexpr uint64_t calculated_value = 1u << log2_value;
-  static constexpr bool     value            = (calculated_value == VALUE);
-};
+  return static_cast<bool>(val && !(val & (val - 1)));
+}
+
+template <typename T>
+constexpr EnableIf<std::is_integral<typename std::decay<T>::type>::value,
+                   typename std::decay<T>::type>
+log2(T &&val) noexcept
+{
+  return ((val > 1) ? (1 + log2(val >> 1)) : 0);
+}
 
 }  // namespace meta
 }  // namespace fetch

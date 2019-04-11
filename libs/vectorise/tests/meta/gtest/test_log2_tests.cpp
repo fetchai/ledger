@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/meta/log2.hpp"
+#include "meta/log2.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
 
-#define TEST_LOG_EX__EQ__X(X) fetch::meta::Log2<(1ull << X)>::value == X
+#define TEST_LOG_EX__EQ__X(X) fetch::meta::log2(1ull << X) == X
 
-#define TEST_LOG_EX_PLUS_Y__EQ__X(X, Y) fetch::meta::Log2<(1ull << X) + Y>::value == X
+#define TEST_LOG_EX_PLUS_Y__EQ__X(X, Y) fetch::meta::log2((1ull << X) + Y) == X
 TEST(vectorise_exact_exponents_gtest, zero_to_nine)
 {
   EXPECT_TRUE(TEST_LOG_EX__EQ__X(0));

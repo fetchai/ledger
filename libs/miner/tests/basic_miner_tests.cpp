@@ -19,7 +19,7 @@
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
-#include "meta/is_log2.hpp"
+#include "meta/log2.hpp"
 #include "miner/basic_miner.hpp"
 #include "miner/resource_mapper.hpp"
 #include "vectorise/platform.hpp"
@@ -30,8 +30,8 @@
 #include <memory>
 #include <random>
 
-using fetch::meta::IsLog2;
-using fetch::meta::Log2;
+using fetch::meta::isLog2;
+using fetch::meta::log2;
 
 class BasicMinerTests : public ::testing::TestWithParam<std::size_t>
 {
@@ -39,10 +39,10 @@ protected:
   static constexpr uint32_t    NUM_LANES      = 64;
   static constexpr std::size_t NUM_SLICES     = 1024;
   static constexpr uint32_t    NUM_LANES_MASK = NUM_LANES - 1;
-  static constexpr uint32_t    LOG2_NUM_LANES = Log2<NUM_LANES>::value;
+  static constexpr uint32_t    LOG2_NUM_LANES = fetch::meta::log2(NUM_LANES);
   static constexpr std::size_t RANDOM_SEED    = 42;
 
-  static_assert(IsLog2<NUM_LANES>::value, "Number of lanes must be a valid 2 power");
+  static_assert(isLog2(NUM_LANES), "Number of lanes must be a valid 2 power");
 
   using Rng                 = std::mt19937_64;
   using BasicMiner          = fetch::miner::BasicMiner;

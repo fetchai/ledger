@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/decoders.hpp"
 #include "core/random/lfg.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -109,11 +110,7 @@ TEST(storage_object_store_basic_functionality, Setting_and_getting_elements)
 
       testStore.Get(ResourceAddress(std::to_string(i)), result);
 
-      // Suppress most expects to avoid spamming terminal
-      if (i != result || i == 0)
-      {
-        EXPECT_EQ(i, result);
-      }
+      EXPECT_EQ(i, result);
     }
 
     // Do a second run
@@ -123,11 +120,7 @@ TEST(storage_object_store_basic_functionality, Setting_and_getting_elements)
 
       testStore.Get(ResourceAddress(std::to_string(i)), result);
 
-      // Suppress most expects to avoid spamming terminal
-      if (i != result || i == 0)
-      {
-        EXPECT_EQ(i, result);
-      }
+      EXPECT_EQ(i, result);
     }
 
     // Check against false positives
@@ -280,39 +273,39 @@ TEST(storage_object_store_with_STL_gtest, iterator_over_basic_struct)
 
     std::sort(objects.begin(), objects.end());
 
-    auto mmm = testStore.begin();
-    while (mmm != testStore.end())
-    {
-      ++mmm;
-    }
+    // auto mmm = testStore.begin();
+    // while (mmm != testStore.end())
+    //{
+    //  ++mmm;
+    //}
 
-    auto nnn = testStore.begin();
-    while (nnn != testStore.end())
-    {
-      ++nnn;
-    }
+    // auto nnn = testStore.begin();
+    // while (nnn != testStore.end())
+    //{
+    //  ++nnn;
+    //}
+
+    // auto it = testStore.begin();
+
+    // while (it != testStore.end())
+    //{
+    //  ++it;
+    //}
 
     auto it = testStore.begin();
-
-    while (it != testStore.end())
-    {
-      ++it;
-    }
-
-    it = testStore.begin();
     while (it != testStore.end())
     {
       objectsCopy.push_back(*it);
       ++it;
     }
 
-    for (auto i : testStore)
-    {
-    }
+    // for (auto i : testStore)
+    //{
+    //}
 
-    for (auto i : testStore)
-    {
-    }
+    // for (auto i : testStore)
+    //{
+    //}
 
     std::sort(objectsCopy.begin(), objectsCopy.end());
 
@@ -360,16 +353,18 @@ TEST(storage_object_store_with_STL_gtest, subtree_iterator_over_basic_struct)
       objects.push_back(test);
     }
 
+    constexpr uint8_t bits{4};
+    constexpr uint8_t max_val{1 << bits};
     // Now, aim to split the store up and copy it across perfectly
-    for (uint8_t keyBegin = 0; keyBegin < 16; ++keyBegin)
+    for (uint8_t keyBegin = 0; keyBegin < max_val; ++keyBegin)
     {
-      array[0] = static_cast<uint8_t>((keyBegin << 4u) & 0xFF);
+      array[0] = static_cast<uint8_t>(keyBegin);
 
       auto rid = ResourceID(array);
 
       testStore.Get(rid, dummy);
 
-      auto it = testStore.GetSubtree(rid, uint64_t(4));
+      auto it = testStore.GetSubtree(rid, uint64_t{bits});
 
       while (it != testStore.end())
       {
@@ -480,14 +475,38 @@ TEST(storage_object_store, correlated_strings_work_correctly_working)
   ASSERT_EQ(testStore.size(), unique_ids.size()) << "ERROR: Failed to verify final size!";
 }
 
-// Disabled test - needs immediate attention!
-TEST(storage_object_store, DISABLED_correlated_strings_work_correctly_failing)
+TEST(storage_object_store, correlated_strings_work_correctly)
+{
+  ObjectStore<std::string> testStore;
+  testStore.New("testFile_01.db", "testIndex_01.db");
+  constexpr std::size_t num_of_ids{66};
+
+  auto     unique_ids    = GenerateUniqueIDs(num_of_ids);
+  uint64_t expected_size = 0;
+
+  ASSERT_EQ(num_of_ids, unique_ids.size());
+
+  // Set each key to itself as a string
+  for (auto const &id : unique_ids)
+  {
+    testStore.Set(id, id.ToString());
+    EXPECT_EQ(testStore.size(), ++expected_size);
+  }
+
+  ASSERT_EQ(testStore.size(), unique_ids.size()) << "ERROR: Failed to verify final size!";
+}
+
+TEST(storage_object_store, correlated_strings_work_correctly_failing_dedicated)
 {
   ObjectStore<std::string> testStore;
   testStore.New("testFile_01.db", "testIndex_01.db");
 
-  auto     unique_ids    = GenerateUniqueIDs(66);
+  std::unordered_set<ResourceID> unique_ids;
+  unique_ids.emplace(FromBase64("X+zrZv/IbzjbUnhsbWlsecLbwjndTpG0ZynXOif7V+k="));
+  unique_ids.emplace(FromBase64("X+zrZv/IbzjYUnhsbWlsecLbwjndTpG0ZynXOif7V+k="));
   uint64_t expected_size = 0;
+
+  ASSERT_EQ(2, unique_ids.size());
 
   // Set each key to itself as a string
   for (auto const &id : unique_ids)
