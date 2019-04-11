@@ -44,7 +44,7 @@ meta::IfIsNonFixedPointArithmetic<Type, void> Exp(Type const &x, Type &ret)
 template <typename T>
 meta::IfIsFixedPoint<T, void> Exp(T const &n, T &ret)
 {
-  return T::Exp(n);
+  ret = T::Exp(n);
 }
 
 //////////////////
