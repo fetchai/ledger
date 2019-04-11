@@ -256,9 +256,15 @@ template <typename ArrayType>
 {
   ASSERT(obj1.size() == obj2.size());
   ASSERT(ret.size() == obj2.size());
-  for (std::size_t i = 0; i < obj1.size(); ++i)
+  auto it1 = obj1.begin();
+  auto it2 = obj2.begin();
+  auto rit = ret.begin();
+  while (it1.is_valid())
   {
-    ret[i] = obj1[i] * obj2[i];
+    *rit = (*it1) * (*it2);
+    ++it1;
+    ++it2;
+    ++rit;
   }
 }
 
@@ -269,9 +275,15 @@ template <typename ArrayType, typename T>
 {
   ASSERT(array1.size() == array2.size());
   ASSERT(ret.size() == array2.size());
+  auto it1 = array1.begin();
+  auto it2 = array2.begin();
+  auto rit = ret.begin();
   for (std::size_t i = 0; i < array1.size(); ++i)
   {
-    ret[i] = array1[i] - array2[i];
+    *rit = (*it1) - (*it2);
+    ++rit;
+    ++it1;
+    ++it2;
   }
 }
 
@@ -767,9 +779,15 @@ void NaiveDivideArray(ArrayType const &array1, ArrayType const &array2, ArrayTyp
 {
   ASSERT(array1.size() == array2.size());
   ASSERT(ret.size() == array2.size());
-  for (std::size_t j = 0; j < array1.size(); ++j)
+  auto it1 = array1.begin();
+  auto it2 = array2.begin();
+  auto rit = ret.begin();
+  while(it1.is_valid())
   {
-    ret[j] = array1[j] / array2[j];
+    *rit = (*it1) / (*it2);
+    ++rit;
+    ++it1;
+    ++it2;
   }
 }
 

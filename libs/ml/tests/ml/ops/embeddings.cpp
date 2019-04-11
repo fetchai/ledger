@@ -78,7 +78,7 @@ TYPED_TEST(EmbeddingsTest, forward)
       EXPECT_EQ(output.At(i, j), typename TypeParam::Type(gt[(i * 6) + j]));
       if (output.At(i, j) != (typename TypeParam::Type(gt[(i * 6) + j])))
       {
-        std::cerr << "ERROR: " << output.At(i) << " " << typename TypeParam::Type(gt[i])
+        std::cerr << "ERROR: " << output.At(i, j) << " " << typename TypeParam::Type(gt[(i * 6) + j])
                   << std::endl;
         exit(-1);
       }
