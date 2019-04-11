@@ -79,18 +79,7 @@ public:
   using SizeType             = fetch::math::SizeType;
   using SizeVector           = fetch::math::SizeVector;
 
-
-//  /* Iterators for accessing and modifying the array */
-//  using iterator         = typename container_type::iterator;
-//  using reverse_iterator = typename container_type::reverse_iterator;
-
   static constexpr char const *LOGGING_NAME = "Tensor";
-
-
-
-
-
-
 
   template< typename STensor >
   class TensorSliceImplementation {
@@ -134,10 +123,6 @@ public:
     {
       throw std::runtime_error("TODO: not supported.");
     }
-
-
-
-
 
     Tensor const &Tensor() const
     {
@@ -311,7 +296,7 @@ public:
     Type zero{0};
     for (SizeType idx = 0; idx < this->size(); ++idx)
     {
-      this->operator[](idx) = zero;
+      operator[](idx) = zero;
     }
   }
 
@@ -319,8 +304,6 @@ public:
   Tensor(Tensor const &other) = default;
   Tensor &operator=(Tensor const &other) = default;
   Tensor &operator=(Tensor &&other) = default;
-
-
 
   /**
    * Constructor builds an empty Tensor pre-initialiing with zeros from a vector of dimension
@@ -332,12 +315,6 @@ public:
     ResizeFromShape(dims);
     this->SetAllZero();
   }
-//
-//  Tensor(SelfType const &arr)
-//  {
-//    ResizeFromShape(arr.shape());
-////    this->LazyReshape(arr.shape());
-//  }
 
   IteratorType begin()
   {
@@ -494,6 +471,10 @@ public:
     UpdateStrides();
   }
 
+  ////////////////////////////////
+  /// ASSIGNMENT AND ACCESSING ///
+  ////////////////////////////////
+
   template< typename ... Indices >
   Type &At( Indices ... indices)
   {
@@ -507,6 +488,61 @@ public:
     ASSERT(sizeof...(indices) == stride_.size());
     SizeType N = UnrollComputeColIndex<0>(std::forward<Indices>(indices)...) ;
     return this->data()[ std::move(N) ] ;
+  }
+
+  /* One-dimensional constant reference index operator.
+   * @param n is the index which is being accessed.
+   *
+   * This operator acts as a one-dimensional array accessor that can be
+   * used for constant object instances. Note this accessor is "slow" as
+   * it takes care that the developer does not accidently enter the
+   * padded area of the memory.
+   */
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, Type>::type const &operator[](
+      S const &i) const
+  {
+    return data_[i];
+  }
+
+
+  /**
+   * Operator for accessing data in the array
+   *
+   * @param[in]     indices specifies the data points to access.
+   * @return        the accessed data.
+   *
+   **/
+  template< typename ... Indices >
+  Type operator()(Indices ... indices) const
+  {
+    return At( std::forward< Indices >(indices) ...);
+  }
+
+  template< typename ... Indices >
+  Type& operator()(Indices ... indices)
+  {
+    return At( std::forward< Indices >(indices) ...);
+  }
+
+  Type operator()(SizeType const &index) const
+  {
+    assert(index < this->size_);
+    return operator[](index);
+  }
+
+  /* One-dimensional reference index operator.
+   * @param n is the index which is being accessed.
+   *
+   * This operator acts as a one-dimensional array accessor that is
+   * meant for non-constant object instances. Note this accessor is "slow" as
+   * it takes care that the developer does not accidently enter the
+   * padded area of the memory.
+   */
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, Type>::type &operator[](S const &i)
+  {
+    return data_[i];
   }
 
   /**
@@ -548,6 +584,38 @@ public:
     data_[ComputeColIndex(indices)] = val;
   }
 
+  void Fill(Type const &value, memory::Range const &range)
+  {
+
+    if (range.is_undefined())
+    {
+      Fill(value);
+    }
+    else if (range.is_trivial())
+    {
+      Fill(value, range.ToTrivialRange(this->size()));
+    }
+    else
+    {
+      TODO_FAIL("Support for general range is not implmenented yet");
+    }
+  }
+
+  void Fill(Type const &value, memory::TrivialRange const &range)
+  {
+    vector_register_type val(value);
+
+    this->data().in_parallel().Apply(range, [val](vector_register_type &z) { z = val; });
+  }
+
+  void Fill(Type const &value)
+  {
+    vector_register_type val(value);
+
+    this->data().in_parallel().Apply([val](vector_register_type &z) { z = val; });
+  }
+
+// TODO - general Set implementation
 //  /**
 //   * assignment using n-dimensionally many indices
 //   * @tparam Indices
@@ -578,35 +646,6 @@ public:
     return static_cast<SizeType>(index) * stride_[N];
   }
 
-
-  /**
-   * Operator for accessing data in the array
-   *
-   * @param[in]     indices specifies the data points to access.
-   * @return        the accessed data.
-   *
-   **/
-  template< typename ... Indices >  
-  Type operator()(Indices ... indices) const
-  {
-    return At( std::forward< Indices >(indices) ...);
-  }
-
-  template< typename ... Indices >
-  Type& operator()(Indices ... indices)
-  {
-    return At( std::forward< Indices >(indices) ...);
-  }  
-
-/*
-  Type operator()(SizeType const &index) const
-  {
-    assert(index == this->size_);
-    return this->operator[](index);
-  }
-*/
-
-  // Introduced for compatibility
 
 
   bool AllClose(SelfType const &o, Type const &relative_tolerance = Type(1e-5),
@@ -641,88 +680,6 @@ public:
     }
     return true;
   }
-
-//
-//  bool AllClose(SelfType const &other, double const &rtol = 1e-5, double const &atol = 1e-8,
-//                bool ignoreNaN = true) const
-//  {
-//    SizeType N = this->size();
-//    if (other.size() != N)
-//    {
-//      return false;
-//    }
-//    bool ret = true;
-//    for (SizeType i = 0; ret && (i < N); ++i)
-//    {
-//      double va = static_cast<double>(this->At(i));
-//      if (ignoreNaN && std::isnan(va))
-//      {
-//        continue;
-//      }
-//      double vb = static_cast<double>(other.At(i));
-//      if (ignoreNaN && std::isnan(vb))
-//      {
-//        continue;
-//      }
-//      double vA = (va - vb);
-//      if (vA < 0)
-//      {
-//        vA = -vA;
-//      }
-//      if (va < 0)
-//      {
-//        va = -va;
-//      }
-//      if (vb < 0)
-//      {
-//        vb = -vb;
-//      }
-//      double M = std::max(va, vb);
-//
-//      ret = (vA <= std::max(atol, M * rtol));
-//    }
-//    if (!ret)
-//    {
-//      for (SizeType i = 0; i < N; ++i)
-//      {
-//        double va = double(this->At(i));
-//        if (ignoreNaN && std::isnan(va))
-//        {
-//          continue;
-//        }
-//        double vb = double(other[i]);
-//        if (ignoreNaN && std::isnan(vb))
-//        {
-//          continue;
-//        }
-//        double vA = (va - vb);
-//        if (vA < 0)
-//        {
-//          vA = -vA;
-//        }
-//        if (va < 0)
-//        {
-//          va = -va;
-//        }
-//        if (vb < 0)
-//        {
-//          vb = -vb;
-//        }
-//        double M = std::max(va, vb);
-//        std::cout << static_cast<double>(this->At(i)) << " " << static_cast<double>(other[i]) << " "
-//                  << ((vA < std::max(atol, M * rtol)) ? " " : "*") << std::endl;
-//      }
-//    }
-//
-//    return ret;
-//  }
-
-
-
-
-
-
-
 
   ConstSliceType Slice(SizeType i, SizeType axis = 0) const
   {
@@ -804,9 +761,7 @@ public:
 
   SelfType Transpose(SizeVector &new_axes) const
   {
-    // this implementation is for tensors with more than 2 dimensions
-    // TODO: There is no reason why this could not work with two dimensions as well.
-    ASSERT(shape_.size() > 2);
+    ASSERT(shape_.size() > 1);
     ASSERT(shape_.size() == new_axes.size());
 
     SelfType ret(shape());
@@ -1694,9 +1649,9 @@ public:
     return data_.padded_size();
   }
 
-  /////////////////
-  /// OPERATORS ///
-  /////////////////
+  ////////////////////////////
+  /// COMPARISON OPERATORS ///
+  ////////////////////////////
 
   /**
    * Equality operator
@@ -1737,67 +1692,6 @@ public:
   bool operator!=(Tensor const &other) const
   {
     return !(this->operator==(other));
-  }
-
-
-  /* One-dimensional reference index operator.
-   * @param n is the index which is being accessed.
-   *
-   * This operator acts as a one-dimensional array accessor that is
-   * meant for non-constant object instances. Note this accessor is "slow" as
-   * it takes care that the developer does not accidently enter the
-   * padded area of the memory.
-   */
-  template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type &operator[](S const &i)
-  {
-    return data_[i];
-  }
-
-  /* One-dimensional constant reference index operator.
-   * @param n is the index which is being accessed.
-   *
-   * This operator acts as a one-dimensional array accessor that can be
-   * used for constant object instances. Note this accessor is "slow" as
-   * it takes care that the developer does not accidently enter the
-   * padded area of the memory.
-   */
-  template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type const &operator[](
-      S const &i) const
-  {
-    return data_[i];
-  }
-
-  void Fill(Type const &value, memory::Range const &range)
-  {
-
-    if (range.is_undefined())
-    {
-      Fill(value);
-    }
-    else if (range.is_trivial())
-    {
-      Fill(value, range.ToTrivialRange(this->size()));
-    }
-    else
-    {
-      TODO_FAIL("Support for general range is not implmenented yet");
-    }
-  }
-
-  void Fill(Type const &value, memory::TrivialRange const &range)
-  {
-    vector_register_type val(value);
-
-    this->data().in_parallel().Apply(range, [val](vector_register_type &z) { z = val; });
-  }
-
-  void Fill(Type const &value)
-  {
-    vector_register_type val(value);
-
-    this->data().in_parallel().Apply([val](vector_register_type &z) { z = val; });
   }
 
   ///////////////////////////////////////
@@ -1920,6 +1814,7 @@ private:
   SizeVector stride_;
 
   MAJOR_ORDER major_order_ = COLUMN;
+
   void UpdateStrides() 
   {
     stride_.resize(shape_.size());
@@ -1934,7 +1829,6 @@ private:
 
     // TODO: Reverse order if row major.
   }
-
 
   // TODO(tfr): replace with strides
   SizeType ComputeRowIndex(SizeVector const &indices) const
