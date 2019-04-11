@@ -101,10 +101,10 @@ TYPED_TEST(EuclideanTest, matrix_euclidean_test)
   ASSERT_EQ(ret.shape().at(0), 1);
   ASSERT_EQ(ret.shape().at(1), 4);
 
-  EXPECT_NEAR(double(ret.At(0)), 7.48331477, 1e-4);
-  EXPECT_NEAR(double(ret.At(1)), 10.7703296, 1e-4);
-  EXPECT_NEAR(double(ret.At(2)), 14.1421356, 1e-4);
-  EXPECT_NEAR(double(ret.At(3)), 17.5499287, 1e-4);
+  EXPECT_NEAR(double(ret.At(0, 0)), 7.48331477, 1e-4);
+  EXPECT_NEAR(double(ret.At(0, 1)), 10.7703296, 1e-4);
+  EXPECT_NEAR(double(ret.At(0, 2)), 14.1421356, 1e-4);
+  EXPECT_NEAR(double(ret.At(0, 3)), 17.5499287, 1e-4);
 
   ret = EuclideanMatrix(A, B, 1);
 
@@ -112,7 +112,7 @@ TYPED_TEST(EuclideanTest, matrix_euclidean_test)
   ASSERT_EQ(ret.shape().at(0), 3);
   ASSERT_EQ(ret.shape().at(1), 1);
 
-  EXPECT_NEAR(double(ret.At(0)), 10.95445156, 1e-4);
-  EXPECT_NEAR(double(ret.At(1)), 14.69693851, 1e-4);
-  EXPECT_NEAR(double(ret.At(2)), 18.54723699, 1e-4);
+  EXPECT_NEAR(double(ret.At(0, 0)), 10.95445156, 1e-4);
+  EXPECT_NEAR(double(ret.At(1, 0)), 14.69693851, 1e-4);
+  EXPECT_NEAR(double(ret.At(2, 0)), 18.54723699, 1e-4);
 }

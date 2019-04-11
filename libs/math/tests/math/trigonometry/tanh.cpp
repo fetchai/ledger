@@ -36,20 +36,20 @@ TYPED_TEST(TanhTest, tanh_22)
 {
   TypeParam array1{{2, 2}};
 
-  array1.Set(0, typename TypeParam::Type(0.3));
-  array1.Set(1, typename TypeParam::Type(1.2));
-  array1.Set(2, typename TypeParam::Type(0.7));
-  array1.Set(3, typename TypeParam::Type(22));
+  array1.Set({0, 0}, typename TypeParam::Type(0.3));
+  array1.Set({0, 1}, typename TypeParam::Type(1.2));
+  array1.Set({1, 0}, typename TypeParam::Type(0.7));
+  array1.Set({1, 1}, typename TypeParam::Type(22));
 
   TypeParam output{{2, 2}};
   fetch::math::TanH(array1, output);
 
   TypeParam numpy_output{{2, 2}};
 
-  numpy_output.Set(0, typename TypeParam::Type(0.29131261));
-  numpy_output.Set(1, typename TypeParam::Type(0.83365461));
-  numpy_output.Set(2, typename TypeParam::Type(0.60436778));
-  numpy_output.Set(3, typename TypeParam::Type(1));
+  numpy_output.Set({0, 0}, typename TypeParam::Type(0.29131261));
+  numpy_output.Set({0, 1}, typename TypeParam::Type(0.83365461));
+  numpy_output.Set({1, 0}, typename TypeParam::Type(0.60436778));
+  numpy_output.Set({1, 1}, typename TypeParam::Type(1));
 
   ASSERT_TRUE(output.AllClose(numpy_output));
 }
