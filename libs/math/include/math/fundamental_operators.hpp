@@ -392,17 +392,6 @@ meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType
   return ret;
 }
 
-
-//////////////////////////
-/// ADDITION OPERATORS ///
-//////////////////////////
-
-//template <typename OtherType>
-//meta::IfIsMath<OtherType, void> operator+=(OtherType &left, OtherType const &right)
-//{
-//  Add(left, right, left);
-//}
-
 ///////////////////
 /// SUBTRACTION ///
 ///////////////////

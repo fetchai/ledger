@@ -814,6 +814,9 @@ public:
     return ret;
   }
 
+  /**
+   * Removes the leading dimension if is has size 1
+   */
   SelfType& Squeeze()
   {
     ASSERT(shape_.at(0) == 1);
@@ -932,11 +935,12 @@ public:
     }
     else
     {
-//      if(!(Broadcast([](T x, T y) { return x + y; }, *this, other, *this));
-//      {
-//        throw std::runtime_error("arrays not broadcastable!");
-//      }
-      ObsoleteBroadcastAdd(*this, other, *this);
+      SelfType self_copy = this->Copy();
+      SelfType other_copy = other.Copy();
+      if(!(Broadcast([](T x, T y) { return x + y; }, self_copy, other_copy, *this)))
+      {
+        throw std::runtime_error("arrays not broadcastable!");
+      }
     }
     return *this;
   }
@@ -965,11 +969,12 @@ public:
     }
     else
     {
-//      if(!(Broadcast([](T x, T y) { return x - y; }, *this, other, *this));
-//      {
-//        throw std::runtime_error("arrays not broadcastable!");
-//      }
-      ObsoleteBroadcastSubtract(*this, other, *this);
+      SelfType self_copy = this->Copy();
+      SelfType other_copy = other.Copy();
+      if(!(Broadcast([](T x, T y) { return x - y; }, self_copy, other_copy, *this)))
+      {
+        throw std::runtime_error("arrays not broadcastable!");
+      }
     }
     return *this;
   }
@@ -997,11 +1002,12 @@ public:
     }
     else
     {
-//      if(!(Broadcast([](T x, T y) { return x - y; }, other, *this, *this));
-//      {
-//        throw std::runtime_error("arrays not broadcastable!");
-//      }
-      ObsoleteBroadcastSubtract(other, *this, *this);
+      SelfType self_copy = this->Copy();
+      SelfType other_copy = other.Copy();
+      if(!(Broadcast([](T x, T y) { return x - y; }, other_copy, self_copy, *this)))
+      {
+        throw std::runtime_error("arrays not broadcastable!");
+      }
     }
     return *this;
   }
@@ -1029,11 +1035,12 @@ public:
     }
     else
     {
-//      if (!(Broadcast([](T x, T y) { return x * y; }, other, *this, *this));
-//      {
-//        throw std::runtime_error("arrays not broadcastable!");
-//      }
-      throw std::runtime_error("broadcast multiply not implemented");
+      SelfType self_copy = this->Copy();
+      SelfType other_copy = other.Copy();
+      if(!(Broadcast([](T x, T y) { return x * y; }, other_copy, self_copy, *this)))
+      {
+        throw std::runtime_error("arrays not broadcastable!");
+      }
     }
     return *this;
   }
@@ -1061,11 +1068,13 @@ public:
     }
     else
     {
-//      if(!(Broadcast([](T x, T y) { return x / y; }, *this, other, *this));
-//      {
-//        throw std::runtime_error("arrays not broadcastable!");
-//      }
-      throw std::runtime_error("broadcast divide not implemented");
+      SelfType self_copy = this->Copy();
+      SelfType other_copy = other.Copy();
+      if(!(Broadcast([](T x, T y) { return x / y; }, self_copy, other_copy, *this)))
+      {
+        throw std::runtime_error("arrays not broadcastable!");
+      }
+//      throw std::runtime_error("broadcast divide not implemented");
     }
     return *this;
   }
@@ -1085,7 +1094,7 @@ public:
    * @param other
    * @return
    */
-  SelfType InlineReverseDivide(Tensor &other)
+  SelfType InlineReverseDivide(Tensor const &other)
   {
    if (other.shape() == shape_)
     {
@@ -1093,11 +1102,12 @@ public:
     }
     else
     {
-//      if(!(Broadcast([](T x, T y) { return x / y; }, other, *this, *this));
-//      {
-//        throw std::runtime_error("arrays not broadcastable!");
-//      }
-      throw std::runtime_error("broadcast divide not implemented");
+      SelfType self_copy = this->Copy();
+      SelfType other_copy = other.Copy();
+      if(!(Broadcast([](T x, T y) { return x / y; }, other_copy, self_copy, *this)))
+      {
+        throw std::runtime_error("arrays not broadcastable!");
+      }
     }
     return *this;
   }
@@ -1111,261 +1121,6 @@ public:
     Divide(scalar, *this, *this);
     return *this;
   }
-
-
-//
-//
-//  SelfType &InlineAdd(SelfType const &other, memory::Range const &range)
-//  {
-//    assert(other.size() == this->size());
-//
-//    if (range.is_undefined())
-//    {
-//      InlineAdd(other);
-//    }
-//    else if (range.is_trivial())
-//    {
-//      auto r = range.ToTrivialRange(this->data().size());
-//      this->data().in_parallel().Apply(
-//          r,
-//          [](vector_register_type const &x, vector_register_type const &y,
-//             vector_register_type &z) { z = x + y; },
-//          this->data(), other.data());
-//    }
-//    else
-//    {
-//      TODO_FAIL("Non-trivial ranges not implemented");
-//    }
-//
-//    return *this;
-//  }
-//
-//  SelfType &InlineAdd(SelfType const &other)
-//  {
-//    memory::Range range{0, other.data().size(), 1};
-//    return InlineAdd(other, range);
-//  }
-//
-//  SelfType &InlineAdd(Type const &scalar)
-//  {
-//    vector_register_type val(scalar);
-//
-//    this->data().in_parallel().Apply(
-//        [val](vector_register_type const &x, vector_register_type &z) { z = x + val; },
-//        this->data());
-//
-//    return *this;
-//  }
-//
-//  SelfType &InlineMultiply(SelfType const &other, memory::Range const &range)
-//  {
-//    assert(other.size() == this->size());
-//    if (range.is_undefined())
-//    {
-//      InlineMultiply(other);
-//    }
-//    else if (range.is_trivial())
-//    {
-//      auto r = range.ToTrivialRange(this->data().size());
-//      this->data().in_parallel().Apply(
-//          r,
-//          [](vector_register_type const &x, vector_register_type const &y,
-//             vector_register_type &z) { z = x * y; },
-//          this->data(), other.data());
-//    }
-//    else
-//    {
-//      TODO_FAIL("Non-trivial ranges not implemented");
-//    }
-//
-//    return *this;
-//  }
-//
-//  SelfType &InlineMultiply(SelfType const &other)
-//  {
-//    memory::Range range{0, other.data().size(), 1};
-//    return InlineMultiply(other, range);
-//  }
-//
-//  SelfType &InlineMultiply(Type const &scalar)
-//  {
-//    vector_register_type val(scalar);
-//
-//    this->data().in_parallel().Apply(
-//        [val](vector_register_type const &x, vector_register_type &z) { z = x * val; },
-//        this->data());
-//
-//    return *this;
-//  }
-//
-//  SelfType &InlineSubtract(SelfType const &other, memory::Range const &range)
-//  {
-//    assert(other.size() == this->size());
-//
-//    if (range.is_undefined())
-//    {
-//      InlineSubtract(other);
-//    }
-//    else if (range.is_trivial())
-//    {
-//      auto r = range.ToTrivialRange(this->data().size());
-//      this->data().in_parallel().Apply(
-//          r,
-//          [](vector_register_type const &x, vector_register_type const &y,
-//             vector_register_type &z) { z = x - y; },
-//          this->data(), other.data());
-//    }
-//    else
-//    {
-//      TODO_FAIL("Non-trivial ranges not implemented");
-//    }
-//
-//    return *this;
-//  }
-//
-//  SelfType &InlineSubtract(SelfType const &other)
-//  {
-//    memory::Range range{0, other.data().size(), 1};
-//    return InlineSubtract(other, range);
-//  }
-//
-//  SelfType &InlineReverseSubtract(SelfType const &other, memory::Range const &range)
-//  {
-//    assert(other.size() == this->size());
-//
-//    if (range.is_undefined())
-//    {
-//      InlineSubtract(other);
-//    }
-//    else if (range.is_trivial())
-//    {
-//      auto r = range.ToTrivialRange(this->data().size());
-//      this->data().in_parallel().Apply(
-//          r,
-//          [](vector_register_type const &x, vector_register_type const &y,
-//             vector_register_type &z) { z = y - x; },
-//          this->data(), other.data());
-//    }
-//    else
-//    {
-//      TODO_FAIL("Non-trivial ranges not implemented");
-//    }
-//
-//    return *this;
-//  }
-//
-//  SelfType &InlineReverseSubtract(SelfType const &other)
-//  {
-//    memory::Range range{0, other.data().size(), 1};
-//    return InlineReverseSubtract(other, range);
-//  }
-//
-//  SelfType &InlineSubtract(Type const &scalar)
-//  {
-//    vector_register_type val(scalar);
-//
-//    this->data().in_parallel().Apply(
-//        [val](vector_register_type const &y, vector_register_type &z) { z = y - val; },
-//        this->data());
-//
-//    return *this;
-//  }
-//
-//  SelfType &InlineDivide(SelfType const &other, memory::Range const &range)
-//  {
-//    assert(other.size() == this->size());
-//
-//    if (range.is_undefined())
-//    {
-//      InlineDivide(other);
-//    }
-//    else if (range.is_trivial())
-//    {
-//      auto r = range.ToTrivialRange(this->data().size());
-//      this->data().in_parallel().Apply(
-//          r,
-//          [](vector_register_type const &x, vector_register_type const &y,
-//             vector_register_type &z) { z = x / y; },
-//          this->data(), other.data());
-//    }
-//    else
-//    {
-//      TODO_FAIL("Non-trivial ranges not implemented");
-//    }
-//
-//    return *this;
-//  }
-//
-//  SelfType &InlineDivide(SelfType const &other)
-//  {
-//    memory::Range range{0, other.data().size(), 1};
-//    return InlineDivide(other, range);
-//  }
-//
-//  SelfType &InlineDivide(Type const &scalar)
-//  {
-//    vector_register_type val(scalar);
-//
-//    this->data().in_parallel().Apply(
-//        [val](vector_register_type const &y, vector_register_type &z) { z = y / val; },
-//        this->data());
-//
-//    return *this;
-//  }
-//
-//  SelfType &InlineReverseSubtract(Type const &scalar)
-//  {
-//    vector_register_type val(scalar);
-//
-//    this->data().in_parallel().Apply(
-//        [val](vector_register_type const &y, vector_register_type &z) { z = val - y; },
-//        this->data());
-//
-//    return *this;
-//  }
-//
-//  SelfType &InlineReverseDivide(SelfType const &other, memory::Range const &range)
-//  {
-//    assert(other.size() == this->size());
-//
-//    if (range.is_undefined())
-//    {
-//      InlineDivide(other);
-//    }
-//    else if (range.is_trivial())
-//    {
-//      auto r = range.ToTrivialRange(this->data().size());
-//      this->data().in_parallel().Apply(
-//          r,
-//          [](vector_register_type const &x, vector_register_type const &y,
-//             vector_register_type &z) { z = y / x; },
-//          this->data(), other.data());
-//    }
-//    else
-//    {
-//      TODO_FAIL("Non-trivial ranges not implemented");
-//    }
-//
-//    return *this;
-//  }
-//
-//  SelfType &InlineReverseDivide(SelfType const &other)
-//  {
-//    memory::Range range{0, other.data().size(), 1};
-//    return InlineReverseDivide(other, range);
-//  }
-//
-//  SelfType &InlineReverseDivide(Type const &scalar)
-//  {
-//    vector_register_type val(scalar);
-//
-//    this->data().in_parallel().Apply(
-//        [val](vector_register_type const &y, vector_register_type &z) { z = val / y; },
-//        this->data());
-//
-//    return *this;
-//  }
-
 
   void MajorOrderFlip()
   {
@@ -2096,21 +1851,28 @@ public:
     return InlineMultiply(other);
   }
 
-  Type PeakToPeak() const
+  template <typename OtherType>
+  SelfType operator*=(OtherType const &other)
   {
-    return fetch::math::PeakToPeak(*this);
+    return InlineMultiply(other);
   }
 
-  /**
-   * / operator
-   * @tparam OtherType may be a scalar or array, but must be arithmetic
-   * @param other
-   * @return
-   */
   template <typename OtherType>
   SelfType operator/(OtherType const &other)
   {
     return InlineDivide(other);
+  }
+
+  template <typename OtherType>
+  SelfType operator/=(OtherType const &other)
+  {
+    return InlineDivide(other);
+  }
+
+
+  Type PeakToPeak() const
+  {
+    return fetch::math::PeakToPeak(*this);
   }
 
   /**
@@ -2303,125 +2065,6 @@ private:
     }
   }
 
-  void ObsoleteBroadcastAdd(SelfType const &array1, SelfType const &array2, SelfType &ret)
-  {
-    assert((array1.shape().size() == 2) && (array2.shape().size() == 2));
-
-    if (array1.shape()[0] == 1)
-    {
-      for (std::size_t i = 0; i < array2.shape()[0]; ++i)
-      {
-        for (std::size_t j = 0; j < array2.shape()[1]; ++j)
-        {
-          ret.Set({i, j}, array1.At(0, j) + array2.At(i, j));
-        }
-      }
-    }
-    else if (array1.shape()[1] == 1)
-    {
-      for (std::size_t i = 0; i < array2.shape()[0]; ++i)
-      {
-        for (std::size_t j = 0; j < array2.shape()[1]; ++j)
-        {
-          ret.Set({i, j}, array1.At(i, 0) + array2.At(i, j));
-        }
-      }
-    }
-    else if (array2.shape()[0] == 1)
-    {
-      for (std::size_t i = 0; i < array1.shape()[0]; ++i)
-      {
-        for (std::size_t j = 0; j < array1.shape()[1]; ++j)
-        {
-          ret.Set({i, j}, array1.At(i, j) + array2.At(0, j));
-        }
-      }
-    }
-    else if (array2.shape()[1] == 1)
-    {
-      for (std::size_t i = 0; i < array1.shape()[0]; ++i)
-      {
-        for (std::size_t j = 0; j < array1.shape()[1]; ++j)
-        {
-          ret.Set({i, j}, array1.At(i, j) + array2.At(i, 0));
-        }
-      }
-    }
-  }
-
-  void ObsoleteBroadcastSubtract(SelfType const &array, SelfType const &array2, SelfType &ret)
-  {
-    assert(array.shape().size() == 2);
-    assert(array2.shape().size() == 2);
-    if (array.shape()[0] == 1)
-    {
-      for (std::size_t i = 0; i < array2.shape()[0]; ++i)
-      {
-        for (std::size_t j = 0; j < array2.shape()[1]; ++j)
-        {
-          ret.Set({i, j}, array.At(0, j) - array2.At(i, j));
-        }
-      }
-    }
-    else if (array.shape()[1] == 1)
-    {
-      for (std::size_t i = 0; i < array2.shape()[0]; ++i)
-      {
-        for (std::size_t j = 0; j < array2.shape()[1]; ++j)
-        {
-          ret.Set({i, j}, array.At(i, 0) - array2.At(i, j));
-        }
-      }
-    }
-    else if (array2.shape()[0] == 1)
-    {
-      for (std::size_t i = 0; i < array.shape()[0]; ++i)
-      {
-        for (std::size_t j = 0; j < array.shape()[1]; ++j)
-        {
-          ret.Set({i, j}, array.At(i, j) - array2.At(0, j));
-        }
-      }
-    }
-    else if (array2.shape()[1] == 1)
-    {
-      for (std::size_t i = 0; i < array.shape()[0]; ++i)
-      {
-        for (std::size_t j = 0; j < array.shape()[1]; ++j)
-        {
-          ret.Set({i, j}, array.At(i, j) - array2.At(i, 0));
-        }
-      }
-    }
-    else
-    {
-      throw std::runtime_error("broadcast subtraction for tensors more than 2D not yet handled");
-    }
-  }
-
-//
-//  Type &At(SizeType const &i)
-//  {
-//    return this->data()[i];
-//  }
-//
-//  Type const &At(SizeType const &i) const
-//  {
-//    return this->data()[i];
-//  }
-//
-
-//
-//  Type const &Set(SizeType const &idx, Type const &val)
-//  {
-//    Type &e = At(idx);
-//    e       = val;
-//    return e;
-//  }
-
-
-
-
   /* VECTORISED IMPLEMENTATIONS */
 
   /*
@@ -2486,6 +2129,258 @@ private:
                                     a.data(), b.data());
   }
 
+//
+//
+//  SelfType &InlineAdd(SelfType const &other, memory::Range const &range)
+//  {
+//    assert(other.size() == this->size());
+//
+//    if (range.is_undefined())
+//    {
+//      InlineAdd(other);
+//    }
+//    else if (range.is_trivial())
+//    {
+//      auto r = range.ToTrivialRange(this->data().size());
+//      this->data().in_parallel().Apply(
+//          r,
+//          [](vector_register_type const &x, vector_register_type const &y,
+//             vector_register_type &z) { z = x + y; },
+//          this->data(), other.data());
+//    }
+//    else
+//    {
+//      TODO_FAIL("Non-trivial ranges not implemented");
+//    }
+//
+//    return *this;
+//  }
+//
+//  SelfType &InlineAdd(SelfType const &other)
+//  {
+//    memory::Range range{0, other.data().size(), 1};
+//    return InlineAdd(other, range);
+//  }
+//
+//  SelfType &InlineAdd(Type const &scalar)
+//  {
+//    vector_register_type val(scalar);
+//
+//    this->data().in_parallel().Apply(
+//        [val](vector_register_type const &x, vector_register_type &z) { z = x + val; },
+//        this->data());
+//
+//    return *this;
+//  }
+//
+//  SelfType &InlineMultiply(SelfType const &other, memory::Range const &range)
+//  {
+//    assert(other.size() == this->size());
+//    if (range.is_undefined())
+//    {
+//      InlineMultiply(other);
+//    }
+//    else if (range.is_trivial())
+//    {
+//      auto r = range.ToTrivialRange(this->data().size());
+//      this->data().in_parallel().Apply(
+//          r,
+//          [](vector_register_type const &x, vector_register_type const &y,
+//             vector_register_type &z) { z = x * y; },
+//          this->data(), other.data());
+//    }
+//    else
+//    {
+//      TODO_FAIL("Non-trivial ranges not implemented");
+//    }
+//
+//    return *this;
+//  }
+//
+//  SelfType &InlineMultiply(SelfType const &other)
+//  {
+//    memory::Range range{0, other.data().size(), 1};
+//    return InlineMultiply(other, range);
+//  }
+//
+//  SelfType &InlineMultiply(Type const &scalar)
+//  {
+//    vector_register_type val(scalar);
+//
+//    this->data().in_parallel().Apply(
+//        [val](vector_register_type const &x, vector_register_type &z) { z = x * val; },
+//        this->data());
+//
+//    return *this;
+//  }
+//
+//  SelfType &InlineSubtract(SelfType const &other, memory::Range const &range)
+//  {
+//    assert(other.size() == this->size());
+//
+//    if (range.is_undefined())
+//    {
+//      InlineSubtract(other);
+//    }
+//    else if (range.is_trivial())
+//    {
+//      auto r = range.ToTrivialRange(this->data().size());
+//      this->data().in_parallel().Apply(
+//          r,
+//          [](vector_register_type const &x, vector_register_type const &y,
+//             vector_register_type &z) { z = x - y; },
+//          this->data(), other.data());
+//    }
+//    else
+//    {
+//      TODO_FAIL("Non-trivial ranges not implemented");
+//    }
+//
+//    return *this;
+//  }
+//
+//  SelfType &InlineSubtract(SelfType const &other)
+//  {
+//    memory::Range range{0, other.data().size(), 1};
+//    return InlineSubtract(other, range);
+//  }
+//
+//  SelfType &InlineReverseSubtract(SelfType const &other, memory::Range const &range)
+//  {
+//    assert(other.size() == this->size());
+//
+//    if (range.is_undefined())
+//    {
+//      InlineSubtract(other);
+//    }
+//    else if (range.is_trivial())
+//    {
+//      auto r = range.ToTrivialRange(this->data().size());
+//      this->data().in_parallel().Apply(
+//          r,
+//          [](vector_register_type const &x, vector_register_type const &y,
+//             vector_register_type &z) { z = y - x; },
+//          this->data(), other.data());
+//    }
+//    else
+//    {
+//      TODO_FAIL("Non-trivial ranges not implemented");
+//    }
+//
+//    return *this;
+//  }
+//
+//  SelfType &InlineReverseSubtract(SelfType const &other)
+//  {
+//    memory::Range range{0, other.data().size(), 1};
+//    return InlineReverseSubtract(other, range);
+//  }
+//
+//  SelfType &InlineSubtract(Type const &scalar)
+//  {
+//    vector_register_type val(scalar);
+//
+//    this->data().in_parallel().Apply(
+//        [val](vector_register_type const &y, vector_register_type &z) { z = y - val; },
+//        this->data());
+//
+//    return *this;
+//  }
+//
+//  SelfType &InlineDivide(SelfType const &other, memory::Range const &range)
+//  {
+//    assert(other.size() == this->size());
+//
+//    if (range.is_undefined())
+//    {
+//      InlineDivide(other);
+//    }
+//    else if (range.is_trivial())
+//    {
+//      auto r = range.ToTrivialRange(this->data().size());
+//      this->data().in_parallel().Apply(
+//          r,
+//          [](vector_register_type const &x, vector_register_type const &y,
+//             vector_register_type &z) { z = x / y; },
+//          this->data(), other.data());
+//    }
+//    else
+//    {
+//      TODO_FAIL("Non-trivial ranges not implemented");
+//    }
+//
+//    return *this;
+//  }
+//
+//  SelfType &InlineDivide(SelfType const &other)
+//  {
+//    memory::Range range{0, other.data().size(), 1};
+//    return InlineDivide(other, range);
+//  }
+//
+//  SelfType &InlineDivide(Type const &scalar)
+//  {
+//    vector_register_type val(scalar);
+//
+//    this->data().in_parallel().Apply(
+//        [val](vector_register_type const &y, vector_register_type &z) { z = y / val; },
+//        this->data());
+//
+//    return *this;
+//  }
+//
+//  SelfType &InlineReverseSubtract(Type const &scalar)
+//  {
+//    vector_register_type val(scalar);
+//
+//    this->data().in_parallel().Apply(
+//        [val](vector_register_type const &y, vector_register_type &z) { z = val - y; },
+//        this->data());
+//
+//    return *this;
+//  }
+//
+//  SelfType &InlineReverseDivide(SelfType const &other, memory::Range const &range)
+//  {
+//    assert(other.size() == this->size());
+//
+//    if (range.is_undefined())
+//    {
+//      InlineDivide(other);
+//    }
+//    else if (range.is_trivial())
+//    {
+//      auto r = range.ToTrivialRange(this->data().size());
+//      this->data().in_parallel().Apply(
+//          r,
+//          [](vector_register_type const &x, vector_register_type const &y,
+//             vector_register_type &z) { z = y / x; },
+//          this->data(), other.data());
+//    }
+//    else
+//    {
+//      TODO_FAIL("Non-trivial ranges not implemented");
+//    }
+//
+//    return *this;
+//  }
+//
+//  SelfType &InlineReverseDivide(SelfType const &other)
+//  {
+//    memory::Range range{0, other.data().size(), 1};
+//    return InlineReverseDivide(other, range);
+//  }
+//
+//  SelfType &InlineReverseDivide(Type const &scalar)
+//  {
+//    vector_register_type val(scalar);
+//
+//    this->data().in_parallel().Apply(
+//        [val](vector_register_type const &y, vector_register_type &z) { z = val / y; },
+//        this->data());
+//
+//    return *this;
+//  }
 
 
   */

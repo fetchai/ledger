@@ -119,8 +119,8 @@ public:
       LimitMin(gains, min_gain);
 
       // i_y = momentum * i_y - learning_rate * (gains * gradient)
-      i_y = fetch::math::Multiply(momentum, i_y);
-      i_y = i_y - fetch::math::Multiply(learning_rate, fetch::math::Multiply(gains, gradient));
+      i_y *= momentum;
+      i_y -= fetch::math::Multiply(learning_rate, fetch::math::Multiply(gains, gradient));
 
       // output_matrix = output_matrix + i_y
       output_matrix_ = fetch::math::Add(output_matrix_, i_y);
@@ -421,7 +421,7 @@ private:
         fetch::math::Multiply(num.At(i, j), tmp_val, tmp_val);
 
         // tmp_val*(yi-yj), where tmp_val=(Pij-Qij)/(1+||yi-yj||^2)
-        tmp_slice += Multiply(tmp_val, (output_matrix.Slice(j).Copy() - output_matrix.Slice(i).Copy()));
+        tmp_slice += Multiply(tmp_val, (output_matrix.Slice(j).Copy().Squeeze()) - (output_matrix.Slice(i).Copy().Squeeze()));
       }
 
       for (SizeType k = 0; k < output_matrix.shape().at(1); k++)

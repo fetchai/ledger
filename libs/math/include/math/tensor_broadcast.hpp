@@ -43,18 +43,24 @@ inline bool ShapeFromBroadcast(SizeVector const &a, SizeVector const &b,
   {
 
     assert(cit != c.rend());
+
+    // dimension is the same in both arrays (i.e. no broadcasting in this dimension)
     if ((*it1) == (*it2))
     {
       (*cit) = *it1;
     }
+
+    // broadcasting in this dimensions
     else
     {
+
+      // not possible to broadcast when dimension sizes differ and neither is 1
       if (((*it1) != 1) && ((*it2) != 1))
       {
         return false;
       }
 
-      (*cit) = std::max((*it1), (*it2));
+      *cit = std::max(*it1, *it2);
     }
 
     ++it1;
@@ -85,7 +91,7 @@ template <typename T, typename C>
 inline bool UpgradeIteratorFromBroadcast(SizeVector const &a,
                                   TensorIterator<T, C> &         iterator)
 {
-  assert(iterator.counter_ == 0);    // Only upgrade untouched iterators.
+  assert(iterator.counter() == 0);    // Only upgrade untouched iterators.
   iterator.counter_ = uint64_t(-1);  // Invalidating the iterator
 
   auto &b   = iterator.ranges_;
@@ -123,12 +129,11 @@ inline bool UpgradeIteratorFromBroadcast(SizeVector const &a,
 }
 
 template <typename F, typename T, typename C>
-inline bool Broadcast(F function, Tensor<T, C> const &a, Tensor<T, C> const &b, Tensor<T, C> &c)
+inline bool Broadcast(F function, Tensor<T, C> &a, Tensor<T, C> &b, Tensor<T, C> &c)
 {
   SizeVector cshape;
 
   ShapeFromBroadcast(a.shape(), b.shape(), cshape);
-
   c.ResizeFromShape(cshape);
 
   std::vector<SizeVector> rangeA, rangeB, rangeC;
@@ -147,8 +152,8 @@ inline bool Broadcast(F function, Tensor<T, C> const &a, Tensor<T, C> const &b, 
     rangeC.push_back({0, i});
   }
 
-  ConstTensorIterator<T, C> it_a(a, rangeA);
-  ConstTensorIterator<T, C> it_b(b, rangeB);
+  TensorIterator<T, C> it_a(a, rangeA);
+  TensorIterator<T, C> it_b(b, rangeB);
   TensorIterator<T, C> it_c(c, rangeC);
 
   if (!UpgradeIteratorFromBroadcast(cshape, it_a))
