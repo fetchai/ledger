@@ -28,9 +28,9 @@ template <class T>
 class Divide : public fetch::ml::Ops<T>
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using ConstSliceType    = typename ArrayType::ConstSliceType;
+  using ArrayType      = T;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   Divide()          = default;
   virtual ~Divide() = default;
@@ -69,8 +69,8 @@ public:
   /**
    * elementwise multiplication is not trainable - just pass the error signal back
    */
-  virtual std::vector<ArrayPtrType> Backward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  virtual std::vector<ArrayPtrType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs, ArrayPtrType errorSignal)
   {
     return std::vector<ArrayPtrType>(inputs.size(), errorSignal);
   }

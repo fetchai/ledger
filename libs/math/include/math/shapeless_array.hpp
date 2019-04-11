@@ -39,12 +39,12 @@
 //#include <algorithm>
 //#include <vector>
 //
-//namespace fetch {
-//namespace math {
+// namespace fetch {
+// namespace math {
 //
 //
-//template <typename T, typename C = fetch::memory::SharedArray<T>>
-//class ShapelessArray
+// template <typename T, typename C = fetch::memory::SharedArray<T>>
+// class ShapelessArray
 //{
 //
 //

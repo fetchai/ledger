@@ -201,7 +201,9 @@ bool CheckNoRounding(T n, std::size_t fractional_bits)
 
 }  // namespace details
 
-struct BaseFixedpointType {};
+struct BaseFixedpointType
+{
+};
 
 template <std::size_t I, std::size_t F>
 class FixedPoint : public BaseFixedpointType
@@ -209,20 +211,22 @@ class FixedPoint : public BaseFixedpointType
   static_assert(details::TypeFromSize<I + F>::is_valid, "invalid combination of sizes");
 
 public:
-  enum {
+  enum
+  {
     FRANCTIONAL_BITS = F,
     TOTAL_BITS       = I + F
   };
 
   using BaseTypeInfo = details::TypeFromSize<TOTAL_BITS>;
-  using Type         = typename BaseTypeInfo::ValueType;  
+  using Type         = typename BaseTypeInfo::ValueType;
   using NextType     = typename BaseTypeInfo::NextSize::ValueType;
   using UnsignedType = typename BaseTypeInfo::UnsignedType;
 
-  enum {
-    FRACTIONAL_MASK  = Type( ((1ull << FRANCTIONAL_BITS) - 1) ),
-    INTEGER_MASK     = Type( ~FRACTIONAL_MASK ),
-    CONST_ONE = Type(1) << FRANCTIONAL_BITS
+  enum
+  {
+    FRACTIONAL_MASK = Type(((1ull << FRANCTIONAL_BITS) - 1)),
+    INTEGER_MASK    = Type(~FRACTIONAL_MASK),
+    CONST_ONE       = Type(1) << FRANCTIONAL_BITS
   };
 
 private:

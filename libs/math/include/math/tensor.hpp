@@ -20,7 +20,6 @@
 //#include "math/free_functions/free_functions.hpp"
 //#include "math/shapeless_array.hpp"
 
-
 // https://github.com/uvue-git/fetch-ledger/tree/cf2fc8441f6ae33d6248559c52473a7f15c5aef2/libs/math/include/math
 #include "core/assert.hpp"
 #include "core/byte_array/const_byte_array.hpp"
@@ -29,23 +28,21 @@
 
 #include "vectorise/memory/array.hpp"
 
-#include "math/meta/math_type_traits.hpp"
-#include "math/tensor_iterator.hpp"
-#include "math/tensor_broadcast.hpp"
 #include "math/base_types.hpp"
+#include "math/matrix_operations.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include "math/ml/activation_functions/softmax.hpp"
 #include "math/standard_functions/abs.hpp"
 #include "math/standard_functions/fmod.hpp"
 #include "math/standard_functions/remainder.hpp"
-#include "math/matrix_operations.hpp"
+#include "math/tensor_broadcast.hpp"
+#include "math/tensor_iterator.hpp"
 
-
-
-#include <numeric>
-#include <utility>
 #include <iostream>
 #include <memory>
+#include <numeric>
 #include <random>
+#include <utility>
 
 namespace fetch {
 namespace math {
@@ -66,30 +63,33 @@ template <typename T, typename C = memory::SharedArray<T>>
 class Tensor
 {
 public:
-  using Type                 = T;
-  using ContainerType        = C;
+  using Type          = T;
+  using ContainerType = C;
 
-  using vector_slice_type    = typename ContainerType::vector_slice_type;
-  using vector_register_type = typename ContainerType::vector_register_type; // TODO: Legacy style, replace with new
+  using vector_slice_type = typename ContainerType::vector_slice_type;
+  using vector_register_type =
+      typename ContainerType::vector_register_type;  // TODO: Legacy style, replace with new
   using vector_register_iterator_type = typename ContainerType::vector_register_iterator_type;
 
-  using SelfType             = Tensor<T, C>;
-  using IteratorType         = TensorIterator<T, typename SelfType::ContainerType>;
-  using ConstIteratorType    = ConstTensorIterator<T, typename SelfType::ContainerType>; 
-  using SizeType             = fetch::math::SizeType;
-  using SizeVector           = fetch::math::SizeVector;
+  using SelfType          = Tensor<T, C>;
+  using IteratorType      = TensorIterator<T, typename SelfType::ContainerType>;
+  using ConstIteratorType = ConstTensorIterator<T, typename SelfType::ContainerType>;
+  using SizeType          = fetch::math::SizeType;
+  using SizeVector        = fetch::math::SizeVector;
 
   static constexpr char const *LOGGING_NAME = "Tensor";
 
-  template< typename STensor >
-  class TensorSliceImplementation {
+  template <typename STensor>
+  class TensorSliceImplementation
+  {
   public:
     using Type = typename STensor::Type;
 
-    TensorSliceImplementation(STensor &t, std::vector<std::vector<SizeType>> range, SizeType axis = 0)
-    : tensor_{t}
-    , range_{std::move(range)}
-    , axis_{std::move(axis)}
+    TensorSliceImplementation(STensor &t, std::vector<std::vector<SizeType>> range,
+                              SizeType axis = 0)
+      : tensor_{t}
+      , range_{std::move(range)}
+      , axis_{std::move(axis)}
     {}
 
     SelfType Copy() const
@@ -107,7 +107,7 @@ public:
     ConstIteratorType begin() const
     {
       auto ret = ConstIteratorType(tensor_, range_);
-      if(axis_ != 0)
+      if (axis_ != 0)
       {
         ret.MoveAxesToFront(axis_);
       }
@@ -140,26 +140,25 @@ public:
     }
 
   protected:
-    STensor &tensor_;
+    STensor &                          tensor_;
     std::vector<std::vector<SizeType>> range_;
-    SizeType axis_;
-
+    SizeType                           axis_;
   };
 
-  using ConstSliceType       = TensorSliceImplementation< SelfType const >;
+  using ConstSliceType = TensorSliceImplementation<SelfType const>;
 
-  class TensorSlice : public TensorSliceImplementation< Tensor >
+  class TensorSlice : public TensorSliceImplementation<Tensor>
   {
   public:
     using Type = T;
-    using TensorSliceImplementation< Tensor >::TensorSliceImplementation;
-    using TensorSliceImplementation< Tensor >::begin;
-    using TensorSliceImplementation< Tensor >::end;
+    using TensorSliceImplementation<Tensor>::TensorSliceImplementation;
+    using TensorSliceImplementation<Tensor>::begin;
+    using TensorSliceImplementation<Tensor>::end;
 
     IteratorType begin()
     {
       auto ret = IteratorType(this->tensor_, this->range_);
-      if(this->axis_ != 0)
+      if (this->axis_ != 0)
       {
         ret.MoveAxesToFront(this->axis_);
       }
@@ -171,13 +170,13 @@ public:
       return IteratorType::EndIterator(this->tensor_);
     }
 
-    template< typename G >
+    template <typename G>
     void Assign(TensorSliceImplementation<G> const &other)
     {
       auto it1 = begin();
       auto it2 = other.begin();
       assert(it1.size() == it2.size());
-      while(it1.is_valid())
+      while (it1.is_valid())
       {
         *it1 = *it2;
         ++it1;
@@ -190,7 +189,7 @@ public:
       auto it1 = begin();
       auto it2 = other.begin();
       assert(it1.size() == it2.size());
-      while(it1.is_valid())
+      while (it1.is_valid())
       {
         *it1 = *it2;
         ++it1;
@@ -201,16 +200,15 @@ public:
     void Fill(Type t)
     {
       auto it1 = begin();
-      while(!it1.is_valid())
+      while (!it1.is_valid())
       {
         *it1 = t;
         ++it1;
       }
     }
-
   };
 
-  using SliceType            = TensorSlice;
+  using SliceType = TensorSlice;
 
   enum MAJOR_ORDER
   {
@@ -218,14 +216,15 @@ public:
     ROW
   };
 
-  Tensor() : data_(), size_(0)
-  {
-  }
+  Tensor()
+    : data_()
+    , size_(0)
+  {}
 
   static Tensor FromString(byte_array::ConstByteArray const &c)
   {
-    Tensor ret;
-    SizeType       n = 1;
+    Tensor            ret;
+    SizeType          n = 1;
     std::vector<Type> elems;
     elems.reserve(1024);
     bool failed = false;
@@ -267,7 +266,7 @@ public:
 
     if (!failed)
     {
-      ret.ResizeFromShape({n,m});
+      ret.ResizeFromShape({n, m});
       ret.SetAllZero();
 
       SizeType k = 0;
@@ -283,13 +282,13 @@ public:
     return ret;
   }
 
-
   /**
    * Constructor builds an Tensor with n elements initialized to 0
    * @param n   number of elements in array (no shape specified, assume 1-D)
    */
   explicit Tensor(SizeType const &n)
-  : data_(n), size_(n)
+    : data_(n)
+    , size_(n)
   {
     assert(this->size() == n);
     this->LazyReshape({n});
@@ -324,7 +323,7 @@ public:
   IteratorType end()
   {
     return IteratorType::EndIterator(*this);
-  }  
+  }
 
   ConstIteratorType begin() const
   {
@@ -333,18 +332,18 @@ public:
 
   ConstIteratorType end() const
   {
-    return ConstIteratorType::EndIterator(*this); 
-  }  
+    return ConstIteratorType::EndIterator(*this);
+  }
 
-   ConstIteratorType cbegin() const
+  ConstIteratorType cbegin() const
   {
     return ConstIteratorType(*this);
   }
 
   ConstIteratorType cend() const
   {
-    return ConstIteratorType::EndIterator(*this); 
-  }  
+    return ConstIteratorType::EndIterator(*this);
+  }
 
   static SizeType SizeFromShape(SizeVector const &shape)
   {
@@ -352,8 +351,7 @@ public:
     {
       return SizeType{0};
     }
-    return std::accumulate(std::begin(shape), std::end(shape), SizeType(1),
-        std::multiplies<>());
+    return std::accumulate(std::begin(shape), std::end(shape), SizeType(1), std::multiplies<>());
   }
 
   /**
@@ -365,7 +363,7 @@ public:
   static SelfType Zeroes(SizeVector const &shape)
   {
     SizeType n = SizeFromShape(shape);
-    SelfType   output{n};
+    SelfType output{n};
     output.SetAllZero();
     output.LazyReshape(shape);
     return output;
@@ -380,8 +378,8 @@ public:
   static SelfType Ones(SizeVector const &shape)
   {
     SizeType n = std::accumulate(std::begin(shape), std::end(shape), SizeType(1),
-                                    std::multiplies<SizeType>());
-    SelfType   output{n};
+                                 std::multiplies<SizeType>());
+    SelfType output{n};
     output.SetAllOne();
     output.LazyReshape(shape);
     return output;
@@ -400,7 +398,6 @@ public:
     this->LazyReshape(x.shape());
   }
 
-
   /**
    * Provides an Tensor that is a copy of the current Tensor
    *
@@ -416,13 +413,13 @@ public:
     return copy;
   }
 
-  template< typename G >
+  template <typename G>
   void Assign(TensorSliceImplementation<G> const &other)
   {
     auto it1 = begin();
     auto it2 = other.begin();
     ASSERT(it1.size() == it2.size());
-    while(it1.is_valid())
+    while (it1.is_valid())
     {
       *it1 = *it2;
       ++it1;
@@ -435,7 +432,7 @@ public:
     auto it1 = begin();
     auto it2 = other.begin();
     assert(it1.size() == it2.size());
-    while(it1.is_valid())
+    while (it1.is_valid())
     {
       *it1 = *it2;
       ++it1;
@@ -451,7 +448,7 @@ public:
     auto it1 = begin();
     auto it2 = other.begin();
     ASSERT(it1.size() == it2.size());
-    while(it1.is_valid())
+    while (it1.is_valid())
     {
       *it1 = *it2;
       ++it1;
@@ -475,19 +472,19 @@ public:
   /// ASSIGNMENT AND ACCESSING ///
   ////////////////////////////////
 
-  template< typename ... Indices >
-  Type &At( Indices ... indices)
+  template <typename... Indices>
+  Type &At(Indices... indices)
   {
     ASSERT(sizeof...(indices) == stride_.size());
-    return this->data()[ UnrollComputeColIndex<0>(std::forward<Indices>(indices)...) ] ;
+    return this->data()[UnrollComputeColIndex<0>(std::forward<Indices>(indices)...)];
   }
 
-  template< typename ... Indices >
-  Type At( Indices ... indices) const
+  template <typename... Indices>
+  Type At(Indices... indices) const
   {
     ASSERT(sizeof...(indices) == stride_.size());
-    SizeType N = UnrollComputeColIndex<0>(std::forward<Indices>(indices)...) ;
-    return this->data()[ std::move(N) ] ;
+    SizeType N = UnrollComputeColIndex<0>(std::forward<Indices>(indices)...);
+    return this->data()[std::move(N)];
   }
 
   /* One-dimensional constant reference index operator.
@@ -505,7 +502,6 @@ public:
     return data_[i];
   }
 
-
   /**
    * Operator for accessing data in the array
    *
@@ -513,16 +509,16 @@ public:
    * @return        the accessed data.
    *
    **/
-  template< typename ... Indices >
-  Type operator()(Indices ... indices) const
+  template <typename... Indices>
+  Type operator()(Indices... indices) const
   {
-    return At( std::forward< Indices >(indices) ...);
+    return At(std::forward<Indices>(indices)...);
   }
 
-  template< typename ... Indices >
-  Type& operator()(Indices ... indices)
+  template <typename... Indices>
+  Type &operator()(Indices... indices)
   {
-    return At( std::forward< Indices >(indices) ...);
+    return At(std::forward<Indices>(indices)...);
   }
 
   Type operator()(SizeType const &index) const
@@ -554,13 +550,13 @@ public:
   template <typename S>
   fetch::meta::IfIsUnsignedInteger<S, void> Set(std::vector<S> const &indices, Type val)
   {
-    assert(indices.size() == shape_.size());               // dimensionality check not in parent
+    assert(indices.size() == shape_.size());  // dimensionality check not in parent
     data_[ComputeColIndex(indices)] = val;
   }
 
   void Set(SizeVector const &indices, Type val)
   {
-    assert(indices.size() == shape_.size());               // dimensionality check not in parent
+    assert(indices.size() == shape_.size());  // dimensionality check not in parent
     data_[ComputeColIndex(indices)] = val;
   }
 
@@ -615,38 +611,37 @@ public:
     this->data().in_parallel().Apply([val](vector_register_type &z) { z = val; });
   }
 
-// TODO - general Set implementation
-//  /**
-//   * assignment using n-dimensionally many indices
-//   * @tparam Indices
-//   * @param indices
-//   * @param val
-//   */
-//  template< typename ... Indices >
-//  void Set(Indices ... indices, Type &val)
-//  {
-//    ASSERT(sizeof...(indices) == stride_.size());
-//    this->data()[ UnrollComputeColIndex<0>(std::forward<Indices>(indices)...) ] = val ;
-//  }
+  // TODO - general Set implementation
+  //  /**
+  //   * assignment using n-dimensionally many indices
+  //   * @tparam Indices
+  //   * @param indices
+  //   * @param val
+  //   */
+  //  template< typename ... Indices >
+  //  void Set(Indices ... indices, Type &val)
+  //  {
+  //    ASSERT(sizeof...(indices) == stride_.size());
+  //    this->data()[ UnrollComputeColIndex<0>(std::forward<Indices>(indices)...) ] = val ;
+  //  }
 
   /**
    * Gets a value from the array by N-dim index
    * @param indices index to access
    */
   // TODO: Specialise for N = 0 as stride is always 1 for this coordinate
-  template< SizeType N, typename FirstIndex, typename ... Indices >
+  template <SizeType N, typename FirstIndex, typename... Indices>
   SizeType UnrollComputeColIndex(FirstIndex &&index, Indices &&... indices) const
   {
-    return static_cast<SizeType>(index) * stride_[N] + UnrollComputeColIndex<N + 1>(std::forward<Indices>(indices)...);
+    return static_cast<SizeType>(index) * stride_[N] +
+           UnrollComputeColIndex<N + 1>(std::forward<Indices>(indices)...);
   }
 
-  template< SizeType N, typename FirstIndex >
-  SizeType UnrollComputeColIndex(FirstIndex &&index ) const
+  template <SizeType N, typename FirstIndex>
+  SizeType UnrollComputeColIndex(FirstIndex &&index) const
   {
     return static_cast<SizeType>(index) * stride_[N];
   }
-
-
 
   bool AllClose(SelfType const &o, Type const &relative_tolerance = Type(1e-5),
                 Type const &absolute_tolerance = Type(1e-8)) const
@@ -654,11 +649,11 @@ public:
     // Only enforcing number of elements
     // we allow for different shapes as long as element are in same order
     ASSERT(o.size() == this->size());
-    auto it1 = this->cbegin();
+    auto it1  = this->cbegin();
     auto eit1 = this->cend();
-    auto it2 = o.cbegin();
+    auto it2  = o.cbegin();
 
-    while(it1 != eit1)
+    while (it1 != eit1)
     {
       T e1 = *it1;
       T e2 = *it2;
@@ -683,48 +678,48 @@ public:
 
   ConstSliceType Slice(SizeType i, SizeType axis = 0) const
   {
-    std::vector< std::vector< SizeType > > range;
+    std::vector<std::vector<SizeType>> range;
 
-    for (SizeType j=0; j < shape().size(); ++j)
+    for (SizeType j = 0; j < shape().size(); ++j)
     {
-      if(axis == j)
+      if (axis == j)
       {
-        range.push_back({i, i+1, 1});        
+        range.push_back({i, i + 1, 1});
       }
       else
       {
-        range.push_back({0, shape().at(j), 1});      
+        range.push_back({0, shape().at(j), 1});
       }
-    }    
+    }
 
     return ConstSliceType(*this, range, axis);
   }
 
   TensorSlice Slice(SizeType i, SizeType axis = 0)
   {
-    std::vector< std::vector< SizeType > > range;
+    std::vector<std::vector<SizeType>> range;
 
-    for (SizeType j=0; j < shape().size(); ++j)
+    for (SizeType j = 0; j < shape().size(); ++j)
     {
-      if(axis == j)
+      if (axis == j)
       {
-        range.push_back({i, i+1, 1});        
+        range.push_back({i, i + 1, 1});
       }
       else
       {
-        range.push_back({0, shape().at(j), 1});      
+        range.push_back({0, shape().at(j), 1});
       }
-    }    
+    }
 
     return TensorSlice(*this, range, axis);
   }
 
-  Tensor& operator=(ConstSliceType const &slice)
+  Tensor &operator=(ConstSliceType const &slice)
   {
     auto it1 = begin();
     auto it2 = slice.begin();
     assert(it1.size() == it2.size());
-    while(it1.is_valid())
+    while (it1.is_valid())
     {
       *it1 = *it2;
       ++it1;
@@ -733,20 +728,19 @@ public:
     return *this;
   }
 
-  Tensor& operator=(TensorSlice const & slice)
+  Tensor &operator=(TensorSlice const &slice)
   {
     auto it1 = begin();
     auto it2 = slice.begin();
     assert(it1.size() == it2.size());
-    while(it1.is_valid())
+    while (it1.is_valid())
     {
       *it1 = *it2;
       ++it1;
       ++it2;
-    }    
+    }
     return *this;
   }
-
 
   SelfType Transpose() const
   {
@@ -772,7 +766,7 @@ public:
   /**
    * Removes the leading dimension if is has size 1
    */
-  SelfType& Squeeze()
+  SelfType &Squeeze()
   {
     ASSERT(shape_.at(0) == 1);
     shape_.erase(shape_.begin());
@@ -781,14 +775,14 @@ public:
     return *this;
   }
 
-  SelfType& Unsqueeze()
+  SelfType &Unsqueeze()
   {
     shape_.insert(shape_.begin(), 1);
     UpdateStrides();
 
     return *this;
   }
-  
+
   void ResizeFromShape(SizeVector const &shape)
   {
     Resize(SelfType::SizeFromShape(shape));
@@ -804,7 +798,7 @@ public:
   void LazyReshape(SizeVector const &shape)
   {
     shape_ = shape;
-    UpdateStrides();    
+    UpdateStrides();
   }
 
   /**
@@ -842,7 +836,7 @@ public:
   void Reshape(SizeVector const &shape)
   {
     assert(CanReshape(shape));
-    this->ReshapeForce(shape); // TODO: This construct makes no sense.
+    this->ReshapeForce(shape);  // TODO: This construct makes no sense.
   }
 
   /**
@@ -890,16 +884,16 @@ public:
     }
     else
     {
-      SelfType self_copy = this->Copy();
+      SelfType self_copy  = this->Copy();
       SelfType other_copy = other.Copy();
-      if(!(Broadcast([](T x, T y) { return x + y; }, self_copy, other_copy, *this)))
+      if (!(Broadcast([](T x, T y) { return x + y; }, self_copy, other_copy, *this)))
       {
         throw std::runtime_error("arrays not broadcastable!");
       }
     }
     return *this;
   }
-  
+
   /**
    * adds a scalar to every element in the array and returns the new output
    * @param scalar to add
@@ -924,9 +918,9 @@ public:
     }
     else
     {
-      SelfType self_copy = this->Copy();
+      SelfType self_copy  = this->Copy();
       SelfType other_copy = other.Copy();
-      if(!(Broadcast([](T x, T y) { return x - y; }, self_copy, other_copy, *this)))
+      if (!(Broadcast([](T x, T y) { return x - y; }, self_copy, other_copy, *this)))
       {
         throw std::runtime_error("arrays not broadcastable!");
       }
@@ -957,9 +951,9 @@ public:
     }
     else
     {
-      SelfType self_copy = this->Copy();
+      SelfType self_copy  = this->Copy();
       SelfType other_copy = other.Copy();
-      if(!(Broadcast([](T x, T y) { return x - y; }, other_copy, self_copy, *this)))
+      if (!(Broadcast([](T x, T y) { return x - y; }, other_copy, self_copy, *this)))
       {
         throw std::runtime_error("arrays not broadcastable!");
       }
@@ -990,9 +984,9 @@ public:
     }
     else
     {
-      SelfType self_copy = this->Copy();
+      SelfType self_copy  = this->Copy();
       SelfType other_copy = other.Copy();
-      if(!(Broadcast([](T x, T y) { return x * y; }, other_copy, self_copy, *this)))
+      if (!(Broadcast([](T x, T y) { return x * y; }, other_copy, self_copy, *this)))
       {
         throw std::runtime_error("arrays not broadcastable!");
       }
@@ -1017,19 +1011,19 @@ public:
    */
   SelfType InlineDivide(Tensor const &other)
   {
-   if (other.shape() == shape_)
+    if (other.shape() == shape_)
     {
       Divide(*this, other, *this);
     }
     else
     {
-      SelfType self_copy = this->Copy();
+      SelfType self_copy  = this->Copy();
       SelfType other_copy = other.Copy();
-      if(!(Broadcast([](T x, T y) { return x / y; }, self_copy, other_copy, *this)))
+      if (!(Broadcast([](T x, T y) { return x / y; }, self_copy, other_copy, *this)))
       {
         throw std::runtime_error("arrays not broadcastable!");
       }
-//      throw std::runtime_error("broadcast divide not implemented");
+      //      throw std::runtime_error("broadcast divide not implemented");
     }
     return *this;
   }
@@ -1051,15 +1045,15 @@ public:
    */
   SelfType InlineReverseDivide(Tensor const &other)
   {
-   if (other.shape() == shape_)
+    if (other.shape() == shape_)
     {
       Divide(other, *this, *this);
     }
     else
     {
-      SelfType self_copy = this->Copy();
+      SelfType self_copy  = this->Copy();
       SelfType other_copy = other.Copy();
-      if(!(Broadcast([](T x, T y) { return x / y; }, other_copy, self_copy, *this)))
+      if (!(Broadcast([](T x, T y) { return x / y; }, other_copy, self_copy, *this)))
       {
         throw std::runtime_error("arrays not broadcastable!");
       }
@@ -1102,9 +1096,8 @@ public:
    * Copies data from a row major numpy array into the current column major array
    * @param new_array
    */
-  // TODO: Get rid of this 
-  void CopyFromNumpy(T *ptr, SizeVector &shape, SizeVector & /*stride*/,
-                     SizeVector & /*index*/)
+  // TODO: Get rid of this
+  void CopyFromNumpy(T *ptr, SizeVector &shape, SizeVector & /*stride*/, SizeVector & /*index*/)
   {
     SizeType total_size = SelfType::SizeFromShape(shape);
 
@@ -1127,8 +1120,7 @@ public:
     FlipMajorOrder(MAJOR_ORDER::COLUMN);
   }
 
-  void CopyToNumpy(T *ptr, SizeVector &shape, SizeVector &stride,
-                   SizeVector &index)
+  void CopyToNumpy(T *ptr, SizeVector &shape, SizeVector &stride, SizeVector &index)
   {
 
     // copy the data
@@ -1179,8 +1171,7 @@ public:
    * @param B
    * @return
    */
-  SelfType &DotTranspose(SelfType const &A, SelfType const &B, Type alpha = 1.0,
-                           Type beta = 0.0)
+  SelfType &DotTranspose(SelfType const &A, SelfType const &B, Type alpha = 1.0, Type beta = 0.0)
   {
     assert(this->shape().size() == 2);
     fetch::math::DotTranspose(A, B, *this, alpha, beta);
@@ -1194,8 +1185,7 @@ public:
    * @param B
    * @return
    */
-  SelfType &TransposeDot(SelfType const &A, SelfType const &B, Type alpha = 1.0,
-                           Type beta = 0.0)
+  SelfType &TransposeDot(SelfType const &A, SelfType const &B, Type alpha = 1.0, Type beta = 0.0)
   {
     assert(this->shape().size() == 2);
     fetch::math::TransposeDot(A, B, *this, alpha, beta);
@@ -1206,7 +1196,7 @@ public:
   Type Sum() const
   {
     Type ret{0};
-    for(auto const &v: *this)
+    for (auto const &v : *this)
     {
       ret += v;
     }
@@ -1214,22 +1204,21 @@ public:
   }
 
   template <typename S>
-  friend void Serialize(S &serializer, Tensor const &t) 
+  friend void Serialize(S &serializer, Tensor const &t)
   {
     serializer << t.size_;
     serializer << t.shape_;
     // TODO: serialize MAJOR_ORDER
-    for(std::size_t i=0; i < t.size(); ++i)
+    for (std::size_t i = 0; i < t.size(); ++i)
     {
       serializer << t.data()[i];
     }
-
   }
 
   template <typename S>
   friend void Deserialize(S &serializer, Tensor &t)
   {
-    SizeType size;
+    SizeType   size;
     SizeVector shape;
     serializer >> size;
     serializer >> shape;
@@ -1237,12 +1226,11 @@ public:
     t.Resize(size);
     t.Reshape(shape);
 
-    for(std::size_t i=0; i < t.size(); ++i)
+    for (std::size_t i = 0; i < t.size(); ++i)
     {
       serializer >> t.data()[i];
     }
-
-  } 
+  }
 
   /**
    * useful for printing tensor contents
@@ -1312,28 +1300,7 @@ public:
     return ret;
   }
 
-
-
-
-
-
-
-
-
   //////// shapeless implementations //////
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   virtual ~Tensor()
   {}
@@ -1380,7 +1347,6 @@ public:
     std::sort(data_.pointer() + range.from(), data_.pointer() + range.to());
   }
 
-
   /*
     void Exp(self_type const &x) {
       LazyResize( x.size() );
@@ -1408,26 +1374,25 @@ public:
     return sum * Type(0.5);
   }
 
-//
-//  /* One-dimensional constant reference access function.
-//   * @param i is the index which is being accessed.
-//   *
-//   * Note this accessor is "slow" as it takes care that the developer
-//   * does not accidently enter the padded area of the memory.
-//   */
-//  Type const &At(size_t const &i) const
-//  {
-//    return data_[i];
-//  }
-//
-//  /* One-dimensional reference access function.
-//   * @param i is the index which is being accessed.
-//   */
-//  Type &At(size_t const &i)
-//  {
-//    return data_[i];
-//  }
-
+  //
+  //  /* One-dimensional constant reference access function.
+  //   * @param i is the index which is being accessed.
+  //   *
+  //   * Note this accessor is "slow" as it takes care that the developer
+  //   * does not accidently enter the padded area of the memory.
+  //   */
+  //  Type const &At(size_t const &i) const
+  //  {
+  //    return data_[i];
+  //  }
+  //
+  //  /* One-dimensional reference access function.
+  //   * @param i is the index which is being accessed.
+  //   */
+  //  Type &At(size_t const &i)
+  //  {
+  //    return data_[i];
+  //  }
 
   /**
    * returns a range over this array defined using unsigned integers (only forward ranges)
@@ -1439,8 +1404,8 @@ public:
    */
   template <typename Unsigned>
   static fetch::meta::IfIsUnsignedInteger<Unsigned, SelfType> Arange(Unsigned const &from,
-                                                                           Unsigned const &to,
-                                                                           Unsigned const &delta)
+                                                                     Unsigned const &to,
+                                                                     Unsigned const &delta)
   {
     assert(delta != 0);
     assert(from < to);
@@ -1459,8 +1424,8 @@ public:
    */
   template <typename Signed>
   static fetch::meta::IfIsSignedInteger<Signed, SelfType> Arange(Signed const &from,
-                                                                       Signed const &to,
-                                                                       Signed const &delta)
+                                                                 Signed const &to,
+                                                                 Signed const &delta)
   {
     assert(delta != 0);
     assert(((from < to) && delta > 0) || ((from > to) && delta < 0));
@@ -1477,14 +1442,13 @@ public:
    * @return a reference to this
    */
   template <typename DataType>
-  fetch::meta::IfIsInteger<DataType, SelfType> FillArange(DataType const &from,
-                                                                DataType const &to)
+  fetch::meta::IfIsInteger<DataType, SelfType> FillArange(DataType const &from, DataType const &to)
   {
     SelfType ret;
 
     SizeType N     = this->size();
-    Type        d     = static_cast<Type>(from);
-    Type        delta = static_cast<Type>(to - from) / static_cast<Type>(N);
+    Type     d     = static_cast<Type>(from);
+    Type     delta = static_cast<Type>(to - from) / static_cast<Type>(N);
     for (SizeType i = 0; i < N; ++i)
     {
       this->data()[i] = Type(d);
@@ -1503,8 +1467,7 @@ public:
     return ret;
   }
 
-  static SelfType UniformRandomIntegers(SizeType const &N, int64_t const &min,
-                                              int64_t const &max)
+  static SelfType UniformRandomIntegers(SizeType const &N, int64_t const &min, int64_t const &max)
   {
     SelfType ret;
     ret.LazyResize(N);
@@ -1582,22 +1545,22 @@ public:
     data_.SetZeroAfter(oldsize);
   }
 
-//  iterator begin()
-//  {
-//    return data_.begin();
-//  }
-//  iterator end()
-//  {
-//    return data_.end();
-//  }
-//  reverse_iterator rbegin()
-//  {
-//    return data_.rbegin();
-//  }
-//  reverse_iterator rend()
-//  {
-//    return data_.rend();
-//  }
+  //  iterator begin()
+  //  {
+  //    return data_.begin();
+  //  }
+  //  iterator end()
+  //  {
+  //    return data_.end();
+  //  }
+  //  reverse_iterator rbegin()
+  //  {
+  //    return data_.rbegin();
+  //  }
+  //  reverse_iterator rend()
+  //  {
+  //    return data_.rend();
+  //  }
 
   // TODO(TFR): deduce D from parent
   template <typename S, typename D = memory::SharedArray<S>>
@@ -1605,18 +1568,18 @@ public:
   {
     ret.LazyResize(size_);
     auto this_it = cbegin();
-    auto ret_it = begin();
-    while(this_it.is_valid())
+    auto ret_it  = begin();
+    while (this_it.is_valid())
     {
       *ret_it = *this_it;
       ++ret_it;
       ++this_it;
     }
-//    // TODO(TFR): Vectorize
-//    for (SizeType i = 0; i < size_; ++i)
-//    {
-//      ret.data_[i] = data_[i];
-//    }
+    //    // TODO(TFR): Vectorize
+    //    for (SizeType i = 0; i < size_; ++i)
+    //    {
+    //      ret.data_[i] = data_[i];
+    //    }
   }
 
   template <typename S>
@@ -1670,10 +1633,10 @@ public:
       return false;
     }
 
-    bool ret = true;
-    auto it = cbegin();
+    bool ret      = true;
+    auto it       = cbegin();
     auto other_it = other.cbegin();
-    while(ret && it.is_valid())
+    while (ret && it.is_valid())
     {
       ret &= (*it == *other_it);
       ++it;
@@ -1763,7 +1726,6 @@ public:
     return InlineDivide(other);
   }
 
-
   Type PeakToPeak() const
   {
     return fetch::math::PeakToPeak(*this);
@@ -1807,15 +1769,14 @@ public:
   }
 
 private:
-
   ContainerType data_;
   SizeType      size_ = 0;
-  SizeVector shape_;
-  SizeVector stride_;
+  SizeVector    shape_;
+  SizeVector    stride_;
 
   MAJOR_ORDER major_order_ = COLUMN;
 
-  void UpdateStrides() 
+  void UpdateStrides()
   {
     stride_.resize(shape_.size());
     SizeType n_dims = shape_.size();
@@ -1881,7 +1842,7 @@ private:
       index.push_back(0);
     }
 
-    SizeType total_size = SelfType::SizeFromShape(new_array.shape());
+    SizeType     total_size = SelfType::SizeFromShape(new_array.shape());
     IteratorType it_this(*this);
 
     SizeType cur_dim;
@@ -1946,12 +1907,12 @@ private:
 
   void TransposeImplementation(SizeVector &new_axes, SelfType &ret) const
   {
-    auto it = this->begin();
-    auto eit = this->end();
+    auto it     = this->begin();
+    auto eit    = this->end();
     auto ret_it = ret.end();
     ret_it.Transpose(new_axes);
 
-    while(it != eit)
+    while (it != eit)
     {
       *ret_it = *it;
       ++it;
@@ -2278,26 +2239,7 @@ private:
 
 
   */
-
 };
 
-
-
-
-
-
-
-}
-}
-
-
-
-
-
-
-
-
-
-
-
-
+}  // namespace math
+}  // namespace fetch

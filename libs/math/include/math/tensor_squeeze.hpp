@@ -35,7 +35,7 @@ class Tensor;
  * @param axis is the axis to squeeze.
  */
 inline bool ShapeFromSqueeze(SizeVector const &a, SizeVector &b,
-                      SizeType const &axis = SizeType(-1))
+                             SizeType const &axis = SizeType(-1))
 {
   SizeType i = 0;
   b.clear();
@@ -70,8 +70,7 @@ inline bool ShapeFromSqueeze(SizeVector const &a, SizeVector &b,
  * @param b is the output shape.
  * @param axes are the axes to squeeze.
  */
-inline bool ShapeFromSqueeze(SizeVector const &a, SizeVector &b,
-                      SizeSet const &axes)
+inline bool ShapeFromSqueeze(SizeVector const &a, SizeVector &b, SizeSet const &axes)
 {
   SizeType i = 0;
   b.clear();
@@ -111,26 +110,26 @@ void Squeeze(Tensor<T, C> &arr, SizeSet const &axes)
   arr.Reshape(newshape);
 }
 
-namespace reduce_details
+namespace reduce_details {
+template <typename F, typename T, typename C>
+inline void Reduce(F fnc, ConstTensorIterator<T, C> &it_a, TensorIterator<T, C> &it_b,
+                   SizeType const &N)
 {
-  template <typename F, typename T, typename C>
-  inline void Reduce(F fnc, ConstTensorIterator<T, C> &it_a, TensorIterator<T, C> &it_b, SizeType const &N)
+  while (bool(it_a) && bool(it_b))
   {
-    while (bool(it_a) && bool(it_b))
+
+    *it_b = *it_a;
+    ++it_a;
+
+    for (SizeType i = 0; i < N - 1; ++i)
     {
-
-      *it_b = *it_a;
+      *it_b = fnc(*it_b, *it_a);
       ++it_a;
-
-      for (SizeType i = 0; i < N - 1; ++i)
-      {
-        *it_b = fnc(*it_b, *it_a);
-        ++it_a;
-      }
-      ++it_b;
     }
+    ++it_b;
   }
 }
+}  // namespace reduce_details
 
 /* Reduce an Tensor by one dimension.
  * @param fnc is the reduction function.
@@ -143,7 +142,7 @@ inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeT
 {
   SizeType N;
 
-  SizeType              k{1};
+  SizeType   k{1};
   SizeVector out_shape{1};
   for (SizeType i{0}; i < input.shape().size(); ++i)
   {
@@ -156,8 +155,8 @@ inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeT
   output.Resize(k);
   output.Reshape(out_shape);
 
-  fetch::math::ConstTensorIterator<T, C> it_a(input); 
-  fetch::math::TensorIterator<T, C> it_b(output);
+  fetch::math::ConstTensorIterator<T, C> it_a(input);
+  fetch::math::TensorIterator<T, C>      it_b(output);
 
   if (axis != 0)
   {
@@ -182,9 +181,9 @@ inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeV
 {
   SizeType N;
 
-  SizeType                  k = 1;
-  SizeVector     out_shape;
-  SizeSet axes_set(axes.begin(), axes.end());
+  SizeType   k = 1;
+  SizeVector out_shape;
+  SizeSet    axes_set(axes.begin(), axes.end());
 
   for (SizeType i = 0; i < input.shape().size(); ++i)
   {
@@ -197,8 +196,8 @@ inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeV
   output.Resize(k);
   output.Reshape(out_shape);
 
-  ConstTensorIterator<T, C> it_a(input); 
-  TensorIterator<T, C> it_b(output);
+  ConstTensorIterator<T, C> it_a(input);
+  TensorIterator<T, C>      it_b(output);
 
   // Move the axis we want to reduce to the front
   // to make it iterable in the inner most loop.
@@ -211,9 +210,7 @@ inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeV
   }
 
   reduce_details::Reduce(fnc, it_a, it_b, N);
-
 }
-
 
 }  // namespace math
 }  // namespace fetch

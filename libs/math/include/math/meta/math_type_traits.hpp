@@ -40,7 +40,7 @@ using EnableIf = typename std::enable_if<C, R>::type;
 ////////////////////////////
 
 template <typename T>
-constexpr bool IsFixedPoint =  std::is_base_of<fixed_point::BaseFixedpointType, T  >::value;
+constexpr bool IsFixedPoint = std::is_base_of<fixed_point::BaseFixedpointType, T>::value;
 
 template <typename T>
 constexpr bool IsNotFixedPoint = !IsFixedPoint<T>;

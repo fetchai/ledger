@@ -33,13 +33,13 @@ template <class T>
 class NodeInterface
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SliceType  = typename ArrayType::SliceType;
-  using ConstSliceType    = typename ArrayType::ConstSliceType;
+  using ArrayType      = T;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using SliceType      = typename ArrayType::SliceType;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   virtual ArrayType &Evaluate()                                           = 0;
-  virtual void             AddInput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
+  virtual void       AddInput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
       ArrayType const &errorSignal) = 0;
   virtual void ResetCache()         = 0;
@@ -50,10 +50,10 @@ template <class T, class O>
 class Node : public NodeInterface<T>, public O
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SliceType  = typename ArrayType::SliceType;
-  using ConstSliceType    = typename ArrayType::ConstSliceType;
+  using ArrayType      = T;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using SliceType      = typename ArrayType::SliceType;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   template <typename... Params>
   Node(std::string const name, Params... params)

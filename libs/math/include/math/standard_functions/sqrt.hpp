@@ -59,7 +59,7 @@ meta::IfIsMathArray<ArrayType, void> Sqrt(ArrayType const &array, ArrayType &ret
   auto arr_it = array.cbegin();
   auto rit    = ret.begin();
 
-  while(arr_it.is_valid())
+  while (arr_it.is_valid())
   {
     Sqrt(*arr_it, *rit);
     ++arr_it;
@@ -70,7 +70,7 @@ meta::IfIsMathArray<ArrayType, void> Sqrt(ArrayType const &array, ArrayType &ret
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Sqrt(ArrayType const &array)
 {
-  ArrayType                    ret{array.shape()};
+  ArrayType ret{array.shape()};
   Sqrt(array, ret);
   return ret;
 }

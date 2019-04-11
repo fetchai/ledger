@@ -27,11 +27,11 @@ template <class T>
 class Convolution : public BatchOps<T>
 {
 public:
-  using ArrayType    = T;
-  using SizeType     = typename ArrayType::SizeType;
-  using DataType     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using ConstSliceType    = typename ArrayType::ConstSliceType;
+  using ArrayType      = T;
+  using SizeType       = typename ArrayType::SizeType;
+  using DataType       = typename ArrayType::Type;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   Convolution()          = default;
   virtual ~Convolution() = default;

@@ -45,8 +45,8 @@
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
-using DataType  = float;
-using ArrayType = fetch::math::Tensor<DataType>;
+using DataType       = float;
+using ArrayType      = fetch::math::Tensor<DataType>;
 using ConstSliceType = typename ArrayType::ConstSliceType;
 
 class TrainingClient
@@ -83,7 +83,7 @@ public:
         gt.At(input.first) = DataType(1.0);
         {
           std::lock_guard<std::mutex> l(m_);
-          ArrayType const &results = g_.Evaluate("Softmax").Copy();
+          ArrayType const &           results = g_.Evaluate("Softmax").Copy();
           loss += criterion.Forward({results, gt});
           g_.BackPropagate("Softmax", criterion.Backward({results, gt}));
         }

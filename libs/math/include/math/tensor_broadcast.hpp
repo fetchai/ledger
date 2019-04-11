@@ -30,8 +30,7 @@ namespace math {
 template <typename T, typename C>
 class Tensor;
 
-inline bool ShapeFromBroadcast(SizeVector const &a, SizeVector const &b,
-                               SizeVector &c)
+inline bool ShapeFromBroadcast(SizeVector const &a, SizeVector const &b, SizeVector &c)
 {
   c.resize(std::max(a.size(), b.size()));
 
@@ -88,10 +87,9 @@ inline bool ShapeFromBroadcast(SizeVector const &a, SizeVector const &b,
 }
 
 template <typename T, typename C>
-inline bool UpgradeIteratorFromBroadcast(SizeVector const &a,
-                                  TensorIterator<T, C> &         iterator)
+inline bool UpgradeIteratorFromBroadcast(SizeVector const &a, TensorIterator<T, C> &iterator)
 {
-  assert(iterator.counter() == 0);    // Only upgrade untouched iterators.
+  assert(iterator.counter() == 0);   // Only upgrade untouched iterators.
   iterator.counter_ = uint64_t(-1);  // Invalidating the iterator
 
   auto &b   = iterator.ranges_;

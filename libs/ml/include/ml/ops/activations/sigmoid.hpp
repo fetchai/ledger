@@ -30,10 +30,10 @@ template <class T>
 class Sigmoid : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using ConstSliceType    = typename ArrayType::ConstSliceType;
+  using ArrayType      = T;
+  using DataType       = typename ArrayType::Type;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   Sigmoid()          = default;
   virtual ~Sigmoid() = default;

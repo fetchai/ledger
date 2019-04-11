@@ -29,11 +29,11 @@ template <class T>
 class Embeddings : public fetch::ml::ops::Weights<T>
 {
 public:
-  using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SizeType     = typename ArrayType::SizeType;
-  using ConstSliceType    = typename ArrayType::ConstSliceType;
+  using ArrayType      = T;
+  using DataType       = typename ArrayType::Type;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using SizeType       = typename ArrayType::SizeType;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   Embeddings(SizeType dataPoints, SizeType dimensions)
   {
@@ -67,7 +67,7 @@ public:
     uint64_t j(0);
     for (DataType const &i : inputs.front().get())
     {
-      auto tmp = this->embeddings_output_->Slice(j);
+      auto tmp  = this->embeddings_output_->Slice(j);
       auto tmp2 = this->output_->Slice(typename ArrayType::SizeType(i));
       tmp.Assign(tmp2);
       j++;

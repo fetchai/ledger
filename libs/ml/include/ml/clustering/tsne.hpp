@@ -250,7 +250,7 @@ private:
         fetch::math::Multiply(DataType(-2), fetch::math::DotTranspose(input_matrix, input_matrix));
 
     d = (d + sum_x).Transpose() + sum_x;
-//    d = fetch::math::Add(fetch::math::Add(d, sum_x).Transpose(), sum_x);
+    //    d = fetch::math::Add(fetch::math::Add(d, sum_x).Transpose(), sum_x);
 
     // beta = 1/(2*sigma^2)
     // Prefill beta array with 1.0
@@ -354,8 +354,7 @@ private:
 
     // num = 1 / (1 + (num+sum_y).T+sum_y)
     ArrayType tmp_val((num + sum_y).Transpose());
-    num = fetch::math::Divide(DataType(1),
-                              fetch::math::Add(DataType(1), (tmp_val + sum_y)));
+    num = fetch::math::Divide(DataType(1), fetch::math::Add(DataType(1), (tmp_val + sum_y)));
 
     // num[range(n), range(n)] = 0.
     for (SizeType i{0}; i < num.shape().at(0); i++)
@@ -421,7 +420,8 @@ private:
         fetch::math::Multiply(num.At(i, j), tmp_val, tmp_val);
 
         // tmp_val*(yi-yj), where tmp_val=(Pij-Qij)/(1+||yi-yj||^2)
-        tmp_slice += Multiply(tmp_val, (output_matrix.Slice(j).Copy().Squeeze()) - (output_matrix.Slice(i).Copy().Squeeze()));
+        tmp_slice += Multiply(tmp_val, (output_matrix.Slice(j).Copy().Squeeze()) -
+                                           (output_matrix.Slice(i).Copy().Squeeze()));
       }
 
       for (SizeType k = 0; k < output_matrix.shape().at(1); k++)

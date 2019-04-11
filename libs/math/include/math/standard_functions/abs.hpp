@@ -31,8 +31,8 @@ namespace math {
 /// IMPLEMENTATIONS ///
 ///////////////////////
 
-//template <typename Type>
-//meta::IfIsNonFixedPointArithmetic<Type, void> Abs(Type const &x, Type &ret)
+// template <typename Type>
+// meta::IfIsNonFixedPointArithmetic<Type, void> Abs(Type const &x, Type &ret)
 //{
 //  ret = std::abs(x);
 //}
@@ -41,7 +41,7 @@ namespace math {
 // permissible
 // this also handles case of passing uint to abs
 template <typename T>
-meta::IfIsArithmetic <T, void> Abs(T const &n, T &ret)
+meta::IfIsArithmetic<T, void> Abs(T const &n, T &ret)
 {
   ret = T(std::abs(double(n)));
 }
@@ -64,7 +64,7 @@ meta::IfIsMathArray<ArrayType, void> Abs(ArrayType const &array, ArrayType &ret)
   ASSERT(ret.shape() == array.shape());
   auto it1 = array.cbegin();
   auto rit = ret.begin();
-  while(it1.is_valid())
+  while (it1.is_valid())
   {
     Abs(*it1, *rit);
     ++it1;
@@ -75,7 +75,7 @@ meta::IfIsMathArray<ArrayType, void> Abs(ArrayType const &array, ArrayType &ret)
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Abs(ArrayType const &array)
 {
-  ArrayType                    ret{array.shape()};
+  ArrayType ret{array.shape()};
   Abs(array, ret);
   return ret;
 }

@@ -62,8 +62,8 @@ TYPED_TEST(EmbeddingsTest, forward)
 
   e.SetData(weights);
   TypeParam input(std::vector<uint64_t>({2}));
-  input.At(0)      = typename TypeParam::Type(3);
-  input.At(1)      = typename TypeParam::Type(5);
+  input.At(0) = typename TypeParam::Type(3);
+  input.At(1) = typename TypeParam::Type(5);
   std::cout << "FW!" << std::endl;
   TypeParam output = e.Forward({input});
 
@@ -75,10 +75,11 @@ TYPED_TEST(EmbeddingsTest, forward)
   {
     for (unsigned int j{0}; j < 6; ++j)
     {
-      EXPECT_EQ(output.At(i, j), typename TypeParam::Type(gt[(i*6) + j]));
-      if(output.At(i, j) != (typename TypeParam::Type(gt[(i*6) + j])))
+      EXPECT_EQ(output.At(i, j), typename TypeParam::Type(gt[(i * 6) + j]));
+      if (output.At(i, j) != (typename TypeParam::Type(gt[(i * 6) + j])))
       {
-        std::cerr << "ERROR: " << output.At(i) << " " << typename TypeParam::Type(gt[i]) << std::endl;
+        std::cerr << "ERROR: " << output.At(i) << " " << typename TypeParam::Type(gt[i])
+                  << std::endl;
         exit(-1);
       }
     }
@@ -106,9 +107,9 @@ TYPED_TEST(EmbeddingsTest, backward)
   TypeParam errorSignal(std::vector<uint64_t>({2, 6}));
   for (unsigned int j(0); j < 2; ++j)
   {
-    for (unsigned int k{0}; k < 6; ++ k)
+    for (unsigned int k{0}; k < 6; ++k)
     {
-      errorSignal.Set({j, k}, typename TypeParam::Type((j*6) + k));
+      errorSignal.Set({j, k}, typename TypeParam::Type((j * 6) + k));
     }
   }
   e.Backward({input}, errorSignal);
@@ -119,7 +120,7 @@ TYPED_TEST(EmbeddingsTest, backward)
 
   for (unsigned int j(0); j < 2; ++j)
   {
-    for (unsigned int k{0}; k < 6; ++ k)
+    for (unsigned int k{0}; k < 6; ++k)
     {
       EXPECT_EQ(output.At(j, k), typename TypeParam::Type(gt[(j * 6) + k]));
     }

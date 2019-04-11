@@ -37,7 +37,7 @@ TYPED_TEST(TensorOperationsTest, inline_add_test)
   std::vector<int> t1Input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<int> t2Input({-1, 2, 3, -5, -8, 13, -21, -34});
   std::vector<int> gtInput({0, 0, 6, -9, -3, 7, -14, -42});
-  std::uint64_t counter{0};
+  std::uint64_t    counter{0};
   for (std::uint64_t i(0); i < 2; ++i)
   {
     for (std::uint64_t j(0); j < 4; ++j)
@@ -93,7 +93,7 @@ TYPED_TEST(TensorOperationsTest, inline_mul_test)
   std::vector<int> t1Input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<int> t2Input({-1, 2, 3, -5, -8, 13, -11, -14});
   std::vector<int> gtInput({-1, -4, 9, 20, -40, -78, -77, 112});
-  std::uint64_t counter{0};
+  std::uint64_t    counter{0};
   for (std::uint64_t i(0); i < 2; ++i)
   {
     for (std::uint64_t j(0); j < 4; ++j)
@@ -123,7 +123,7 @@ TYPED_TEST(TensorOperationsTest, sum_test)
 
   std::vector<int> t1Input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<int> t2Input({-1, 2, 3, -5, -8, 13, -11, -14});
-  std::uint64_t counter{0};
+  std::uint64_t    counter{0};
   for (std::uint64_t i(0); i < 2; ++i)
   {
     for (std::uint64_t j(0); j < 4; ++j)
@@ -141,7 +141,7 @@ TYPED_TEST(TensorOperationsTest, sum_test)
 TYPED_TEST(TensorOperationsTest, transpose_test)
 {
   fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({3, 5}));
-  std::uint64_t counter{0};
+  std::uint64_t                  counter{0};
   for (std::uint64_t i(0); i < 3; ++i)
   {
     for (std::uint64_t j(0); j < 5; ++j)
@@ -190,7 +190,7 @@ TYPED_TEST(TensorOperationsTest, transpose_with_stride_test)
 TYPED_TEST(TensorOperationsTest, transpose_untranspose_test)
 {
   fetch::math::Tensor<TypeParam> t1(std::vector<std::uint64_t>({3, 5}));
-  std::uint64_t counter{0};
+  std::uint64_t                  counter{0};
   for (std::uint64_t i(0); i < 3; ++i)
   {
     for (std::uint64_t j(0); j < 5; ++j)
@@ -198,7 +198,8 @@ TYPED_TEST(TensorOperationsTest, transpose_untranspose_test)
       t1.At(i, j) = TypeParam(counter);
       counter++;
     }
-  }  fetch::math::Tensor<TypeParam> t2 = t1.Transpose();
+  }
+  fetch::math::Tensor<TypeParam> t2 = t1.Transpose();
   EXPECT_EQ(t1.shape(), std::vector<std::uint64_t>({3, 5}));
   EXPECT_EQ(t2.shape(), std::vector<std::uint64_t>({5, 3}));
   fetch::math::Tensor<TypeParam> t3 = t2.Transpose();

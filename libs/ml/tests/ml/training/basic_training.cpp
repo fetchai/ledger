@@ -204,13 +204,13 @@ void CategoricalPlusOneTest(bool add_softmax = false)
   /// ONE TRAINING STEP ///
   /////////////////////////
 
-  DataType  loss = DataType(0);
+  DataType loss = DataType(0);
 
   for (SizeType step{0}; step < n_data; ++step)
   {
     auto cur_input = data.Slice(step).Copy();
     g.SetInput(input_name, cur_input);
-    auto cur_gt       = gt.Slice(step).Copy();
+    auto cur_gt  = gt.Slice(step).Copy();
     auto results = g.Evaluate(output_name);
     loss += criterion.Forward({results, cur_gt, n_classes});
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
@@ -231,7 +231,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     {
       auto cur_input = data.Slice(step).Copy();
       g.SetInput(input_name, cur_input);
-      auto cur_gt       = gt.Slice(step).Copy();
+      auto cur_gt  = gt.Slice(step).Copy();
       auto results = g.Evaluate(output_name);
       loss += criterion.Forward({results, cur_gt, n_classes});
       g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));

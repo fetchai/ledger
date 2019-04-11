@@ -87,12 +87,12 @@ public:
   {
     assert(inputs.size() == 1);
 
-//    std::vector<const ArrayType> results;
-//    for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
-//    {
-//      results.push_back(this->Forward({inputs.front().get().Slice(b).Tensor()}));
-//    }
-//    return ArrayType::Stack(results);
+    //    std::vector<const ArrayType> results;
+    //    for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
+    //    {
+    //      results.push_back(this->Forward({inputs.front().get().Slice(b).Tensor()}));
+    //    }
+    //    return ArrayType::Stack(results);
 
     return inputs.front().get();
   }
@@ -107,7 +107,8 @@ public:
     std::vector<std::vector<ArrayType>> results;
     for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
     {
-      auto      ret        = this->Backward({inputs.front().get().Slice(b).Tensor()}, errorSignal.Slice(b).Tensor());
+      auto ret =
+          this->Backward({inputs.front().get().Slice(b).Tensor()}, errorSignal.Slice(b).Tensor());
       for (std::size_t i(0); i < ret.size(); ++i)
       {
         results[i].push_back(ret[i]);

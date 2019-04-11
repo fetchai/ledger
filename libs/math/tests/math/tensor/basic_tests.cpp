@@ -16,24 +16,24 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/fixed_point/fixed_point.hpp"
+#include "math/tensor.hpp"
+#include "meta/type_traits.hpp"
+#include <gtest/gtest.h>
 #include <iomanip>
 #include <iostream>
-#include "math/tensor.hpp"
-#include <gtest/gtest.h>
-#include "core/fixed_point/fixed_point.hpp"
-#include "meta/type_traits.hpp"
 
 using namespace fetch::math;
 
 /// template for producing a random array of FixedPoints
 template <std::size_t I, std::size_t F>
 Tensor<fetch::fixed_point::FixedPoint<I, F>,
-               fetch::memory::SharedArray<fetch::fixed_point::FixedPoint<I, F>>>
+       fetch::memory::SharedArray<fetch::fixed_point::FixedPoint<I, F>>>
 RandomArray(std::size_t n, fetch::fixed_point::FixedPoint<I, F> adj)
 {
   static fetch::random::LinearCongruentialGenerator gen;
   Tensor<fetch::fixed_point::FixedPoint<I, F>,
-                 fetch::memory::SharedArray<fetch::fixed_point::FixedPoint<I, F>>>
+         fetch::memory::SharedArray<fetch::fixed_point::FixedPoint<I, F>>>
       a1(n);
 
   fetch::fixed_point::FixedPoint<I, F> rn{0};
@@ -47,11 +47,11 @@ RandomArray(std::size_t n, fetch::fixed_point::FixedPoint<I, F> adj)
 
 /// template for producing a random array of integer types
 template <typename T>
-fetch::meta::IfIsInteger<T, Tensor<T, fetch::memory::SharedArray<T>>> RandomArray(
-    std::size_t n, T adj)
+fetch::meta::IfIsInteger<T, Tensor<T, fetch::memory::SharedArray<T>>> RandomArray(std::size_t n,
+                                                                                  T           adj)
 {
   static fetch::random::LinearCongruentialGenerator gen;
-  Tensor<T, fetch::memory::SharedArray<T>>  a1(n);
+  Tensor<T, fetch::memory::SharedArray<T>>          a1(n);
 
   // because random numbers are between 0 and 1 which doesn't work for integers
   double scale = 1000;
@@ -67,11 +67,11 @@ fetch::meta::IfIsInteger<T, Tensor<T, fetch::memory::SharedArray<T>>> RandomArra
 
 /// template for producing a random array of float types
 template <typename T>
-fetch::meta::IfIsFloat<T, Tensor<T, fetch::memory::SharedArray<T>>> RandomArray(
-    std::size_t n, T adj)
+fetch::meta::IfIsFloat<T, Tensor<T, fetch::memory::SharedArray<T>>> RandomArray(std::size_t n,
+                                                                                T           adj)
 {
   static fetch::random::LinearCongruentialGenerator gen;
-  Tensor<T, fetch::memory::SharedArray<T>>  a1(n);
+  Tensor<T, fetch::memory::SharedArray<T>>          a1(n);
 
   T rn{0};
   for (std::size_t i = 0; i < n; ++i)
@@ -89,9 +89,9 @@ fetch::meta::IfIsFloat<T, Tensor<T, fetch::memory::SharedArray<T>>> RandomArray(
 template <typename T>
 void equal_test()
 {
-  std::size_t       n            = 10000;
-  Tensor<T> test_array   = RandomArray(n, T(0));
-  Tensor<T> result_array = test_array;
+  std::size_t n            = 10000;
+  Tensor<T>   test_array   = RandomArray(n, T(0));
+  Tensor<T>   result_array = test_array;
 
   ASSERT_TRUE(result_array.AllClose(test_array));
 }
@@ -124,9 +124,9 @@ TEST(shapeless_array_tests, fp32_equals)
 template <typename T>
 void copy_test()
 {
-  std::size_t       n          = 10000;
-  Tensor<T> test_array = RandomArray(n, T(0));
-  Tensor<T> result_array(n);
+  std::size_t n          = 10000;
+  Tensor<T>   test_array = RandomArray(n, T(0));
+  Tensor<T>   result_array(n);
   result_array.Copy(test_array);
 
   ASSERT_TRUE(result_array.AllClose(test_array));
@@ -160,10 +160,10 @@ TEST(shapeless_array_tests, fp32_copy)
 template <typename T>
 void plus_test()
 {
-  std::size_t       n            = 10;
-  Tensor<T> test_array   = RandomArray(n, T(0));
-  Tensor<T> test_array_2 = RandomArray(n, T(0));
-  Tensor<T> result_array = RandomArray(n, T(0));
+  std::size_t n            = 10;
+  Tensor<T>   test_array   = RandomArray(n, T(0));
+  Tensor<T>   test_array_2 = RandomArray(n, T(0));
+  Tensor<T>   result_array = RandomArray(n, T(0));
 
   for (std::size_t j = 0; j < result_array.size(); ++j)
   {
@@ -201,10 +201,10 @@ TEST(shapeless_array_tests, fp32_plus)
 template <typename T>
 void sub_test()
 {
-  std::size_t       n            = 10000;
-  Tensor<T> test_array   = RandomArray(n, T(0));
-  Tensor<T> test_array_2 = RandomArray(n, T(0));
-  Tensor<T> result_array = RandomArray(n, T(0));
+  std::size_t n            = 10000;
+  Tensor<T>   test_array   = RandomArray(n, T(0));
+  Tensor<T>   test_array_2 = RandomArray(n, T(0));
+  Tensor<T>   result_array = RandomArray(n, T(0));
 
   for (std::size_t j = 0; j < result_array.size(); ++j)
   {
@@ -242,10 +242,10 @@ TEST(shapeless_array_tests, fp32_sub)
 template <typename T>
 void mult_test()
 {
-  std::size_t       n            = 10000;
-  Tensor<T> test_array   = RandomArray(n, T(0));
-  Tensor<T> test_array_2 = RandomArray(n, T(0));
-  Tensor<T> result_array = RandomArray(n, T(0));
+  std::size_t n            = 10000;
+  Tensor<T>   test_array   = RandomArray(n, T(0));
+  Tensor<T>   test_array_2 = RandomArray(n, T(0));
+  Tensor<T>   result_array = RandomArray(n, T(0));
 
   for (std::size_t j = 0; j < result_array.size(); ++j)
   {
@@ -283,10 +283,10 @@ TEST(shapeless_array_tests, fixed_mult_test_32)
 template <typename T>
 void div_test()
 {
-  std::size_t       n            = 12;
-  Tensor<T> test_array   = RandomArray(n, T(1));
-  Tensor<T> test_array_2 = RandomArray(n, T(1));
-  Tensor<T> result_array = RandomArray(n, T(1));
+  std::size_t n            = 12;
+  Tensor<T>   test_array   = RandomArray(n, T(1));
+  Tensor<T>   test_array_2 = RandomArray(n, T(1));
+  Tensor<T>   result_array = RandomArray(n, T(1));
 
   for (std::size_t j = 0; j < result_array.size(); ++j)
   {
@@ -327,9 +327,9 @@ TEST(shapeless_array_tests, fixed_div_test_32)
 template <typename T>
 void is_equal_test()
 {
-  std::size_t       n          = 10000;
-  Tensor<T> test_array = RandomArray(n, T(0));
-  Tensor<T> test_array_2(n);
+  std::size_t n          = 10000;
+  Tensor<T>   test_array = RandomArray(n, T(0));
+  Tensor<T>   test_array_2(n);
   test_array_2 = test_array.Copy();
 
   ASSERT_TRUE(test_array == test_array_2);
@@ -359,9 +359,9 @@ TEST(shapeless_array_tests, double_is_equal_test)
 template <typename T>
 void is_not_equal_test()
 {
-  std::size_t       n          = 10000;
-  Tensor<T> test_array = RandomArray(n, T(0));
-  Tensor<T> test_array_2(n);
+  std::size_t n          = 10000;
+  Tensor<T>   test_array = RandomArray(n, T(0));
+  Tensor<T>   test_array_2(n);
 
   for (std::size_t j = 0; j < test_array.size(); ++j)
   {
@@ -395,10 +395,10 @@ TEST(shapeless_array_tests, double_is_not_equal_test)
 template <typename T>
 void plus_equals_test()
 {
-  std::size_t       n            = 10000;
-  Tensor<T> test_array   = RandomArray(n, T(0));
-  Tensor<T> test_array_2 = test_array;
-  Tensor<T> result_array = test_array * T(2);
+  std::size_t n            = 10000;
+  Tensor<T>   test_array   = RandomArray(n, T(0));
+  Tensor<T>   test_array_2 = test_array;
+  Tensor<T>   result_array = test_array * T(2);
 
   for (std::size_t j = 0; j < result_array.size(); ++j)
   {
@@ -431,10 +431,10 @@ TEST(shapeless_array_tests, double_plus_equals_test)
 template <typename T>
 void minus_equals_test()
 {
-  std::size_t       n            = 10000;
-  Tensor<T> test_array   = RandomArray(n, T(0));
-  Tensor<T> test_array_2 = test_array * T(2);
-  Tensor<T> result_array = test_array;
+  std::size_t n            = 10000;
+  Tensor<T>   test_array   = RandomArray(n, T(0));
+  Tensor<T>   test_array_2 = test_array * T(2);
+  Tensor<T>   result_array = test_array;
 
   for (std::size_t j = 0; j < result_array.size(); ++j)
   {

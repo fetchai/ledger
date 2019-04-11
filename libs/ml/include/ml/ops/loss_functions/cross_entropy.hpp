@@ -50,7 +50,7 @@ public:
     SizeType n_classes{2};
     if (inputs.size() == 3)
     {
-      n_classes = SizeType(inputs.at(2).data()[0]); // TODO: This is wrong
+      n_classes = SizeType(inputs.at(2).data()[0]);  // TODO: This is wrong
     }
     DataType result = fetch::math::CrossEntropyLoss(inputs[0], inputs[1], n_classes);
 

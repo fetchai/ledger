@@ -35,7 +35,8 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
 TYPED_TEST_CASE(TsneTests, MyTypes);
 
 template <typename TypeParam>
-TypeParam RunTest(typename TypeParam::SizeType n_data_size, typename TypeParam::SizeType n_output_feature_size)
+TypeParam RunTest(typename TypeParam::SizeType n_data_size,
+                  typename TypeParam::SizeType n_output_feature_size)
 {
 
   using DataType  = typename TypeParam::Type;
@@ -109,7 +110,6 @@ TEST(TsneTests, tsne_test_2d_float)
   EXPECT_FLOAT_EQ(output_matrix.At(99, 1), 3.0463356971740722656);
 }
 
-
 TEST(TsneTests, tsne_test_2d_double)
 {
   SizeType N_DATA_SIZE{100};
@@ -130,7 +130,6 @@ TEST(TsneTests, tsne_test_2d_double)
   EXPECT_DOUBLE_EQ(output_matrix.At(99, 1), 3.0463283985051647917);
 }
 
-
 TEST(TsneTests, tsne_test_2d_fixed_point)
 {
   using DataType = typename fetch::fixed_point::FixedPoint<32, 32>;
@@ -141,7 +140,6 @@ TEST(TsneTests, tsne_test_2d_fixed_point)
 
   ASSERT_EQ(output_matrix.shape().at(0), N_DATA_SIZE);
   ASSERT_EQ(output_matrix.shape().at(1), N_OUTPUT_FEATURE_SIZE);
-
 
   EXPECT_NEAR(double(output_matrix.At(0, 0)), 0.25323880254290997982025146484375, 1e-12);
   EXPECT_NEAR(double(output_matrix.At(0, 1)), -3.17587922653183341026306152343750, 1e-12);
@@ -163,7 +161,6 @@ TYPED_TEST(TsneTests, tsne_test_2d_cross_type_consistency_test)
   ASSERT_EQ(output_matrix.shape().at(0), N_DATA_SIZE);
   ASSERT_EQ(output_matrix.shape().at(1), N_OUTPUT_FEATURE_SIZE);
 
-
   EXPECT_NEAR(double(output_matrix.At(0, 0)), 0.25323879718780517578, 1e-4);
   EXPECT_NEAR(double(output_matrix.At(0, 1)), -3.1758825778961181641, 1e-4);
   EXPECT_NEAR(double(output_matrix.At(25, 0)), -1.7577359676361083984, 1e-4);
@@ -172,5 +169,4 @@ TYPED_TEST(TsneTests, tsne_test_2d_cross_type_consistency_test)
   EXPECT_NEAR(double(output_matrix.At(50, 1)), 1.679751276969909668, 1e-4);
   EXPECT_NEAR(double(output_matrix.At(99, 0)), -0.87262111902236938477, 1e-4);
   EXPECT_NEAR(double(output_matrix.At(99, 1)), 3.0463356971740722656, 1e-4);
-
 }

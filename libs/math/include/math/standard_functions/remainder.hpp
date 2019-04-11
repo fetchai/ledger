@@ -65,7 +65,7 @@ meta::IfIsMathArray<ArrayType, void> Remainder(ArrayType const &array1, ArrayTyp
   auto it1 = array1.cbegin();
   auto it2 = array2.cbegin();
   auto rit = ret.begin();
-  while(it1.is_valid())
+  while (it1.is_valid())
   {
     Remainder(*it1, *it2, rit);
     ++it1;

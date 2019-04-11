@@ -30,7 +30,7 @@ using container_type = fetch::memory::SharedArray<data_type>;
 Tensor<data_type, container_type> RandomArray(std::size_t n, data_type adj)
 {
   static fetch::random::LinearCongruentialGenerator gen;
-  Tensor<data_type, container_type>         a1(n);
+  Tensor<data_type, container_type>                 a1(n);
   for (std::size_t i = 0; i < n; ++i)
   {
     a1.At(i) = data_type(gen.AsDouble()) + adj;
@@ -49,7 +49,7 @@ Tensor<data_type, container_type> ConstantArray(std::size_t n, data_type adj)
 
 TEST(ndarray, zeros_out)
 {
-  std::size_t                               n            = 1000;
+  std::size_t                       n            = 1000;
   Tensor<data_type, container_type> test_array   = ConstantArray(n, 0);
   Tensor<data_type, container_type> test_array_2 = RandomArray(n, -1.0);
 
@@ -60,7 +60,7 @@ TEST(ndarray, zeros_out)
   }
 
   // check that sign(0) = 0
-  /*    
+  /*
   // TODO
   test_array_2 = test_array;
   fetch::math::Sign(test_array_2);
@@ -74,7 +74,7 @@ TEST(ndarray, zeros_out)
 
 TEST(ndarray, negative_ones)
 {
-  std::size_t                               n            = 1000;
+  std::size_t                       n            = 1000;
   Tensor<data_type, container_type> test_array   = RandomArray(n, -1.0);
   Tensor<data_type, container_type> test_array_2 = RandomArray(n, 1.0);
 
@@ -99,7 +99,7 @@ TEST(ndarray, negative_ones)
 
 TEST(ndarray, positive_ones)
 {
-  std::size_t                               n            = 1000;
+  std::size_t                       n            = 1000;
   Tensor<data_type, container_type> test_array   = RandomArray(n, 1.0);
   Tensor<data_type, container_type> test_array_2 = RandomArray(n, -1.0);
 

@@ -26,5 +26,5 @@ using namespace fetch::math;
 
 TEST(numpy, arange)
 {
-  auto tensor = Tensor< double >::FromString(R"(1 3 4)");
+  auto tensor = Tensor<double>::FromString(R"(1 3 4)");
 }

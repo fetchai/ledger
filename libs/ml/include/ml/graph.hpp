@@ -37,10 +37,10 @@ template <class T>
 class Graph : public ops::Trainable<T>
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using Datatype     = typename ArrayType::Type;
-  using ConstSliceType    = typename ArrayType::ConstSliceType;
+  using ArrayType      = T;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using Datatype       = typename ArrayType::Type;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   Graph()
   {}

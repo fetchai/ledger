@@ -62,7 +62,7 @@ meta::IfIsMathArray<ArrayType, void> Pow(ArrayType const &               array1,
   auto arr_it = array1.cbegin();
   auto rit    = ret.begin();
 
-  while(arr_it.is_valid())
+  while (arr_it.is_valid())
   {
     *rit = 1;
     for (std::size_t i{0}; i < exponent; ++i)
@@ -78,7 +78,7 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Pow(ArrayType const &               array1,
                                               typename ArrayType::Type const &exponent)
 {
-  ArrayType                    ret{array1.shape()};
+  ArrayType ret{array1.shape()};
   Pow(array1, exponent, ret);
   return ret;
 }
@@ -95,7 +95,6 @@ meta::IfIsArithmetic<Type, void> Square(Type const &x, Type &ret)
   ret = x * x;
 }
 
-
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Square(ArrayType const &x, ArrayType &ret)
 {
@@ -103,14 +102,13 @@ meta::IfIsMathArray<ArrayType, void> Square(ArrayType const &x, ArrayType &ret)
   auto arr_it = x.cbegin();
   auto rit    = ret.begin();
 
-  while(arr_it.is_valid())
+  while (arr_it.is_valid())
   {
     *rit = (*arr_it) * (*arr_it);
     ++arr_it;
     ++rit;
   }
 }
-
 
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Square(ArrayType const &x)

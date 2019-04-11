@@ -16,10 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-
+#include "math/serializers/math_types.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "math/tensor.hpp"
-#include "math/serializers/math_types.hpp"
 #include <gtest/gtest.h>
 
 template <typename T>

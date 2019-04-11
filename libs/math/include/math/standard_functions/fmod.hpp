@@ -64,7 +64,7 @@ meta::IfIsMathArray<ArrayType, void> Fmod(ArrayType const &array1, ArrayType con
   auto it1 = array1.cbegin();
   auto it2 = array2.cbegin();
   auto rit = ret.begin();
-  while(it1.is_valid())
+  while (it1.is_valid())
   {
     Fmod(*it1, *it2, rit);
     ++it1;
@@ -77,7 +77,7 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Fmod(ArrayType const &array1, ArrayType const &array2)
 {
   ASSERT(array2.shape() == array1.shape());
-  ArrayType                    ret{array1.shape()};
+  ArrayType ret{array1.shape()};
   Fmod(array1, array2, ret);
   return ret;
 }

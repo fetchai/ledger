@@ -300,7 +300,7 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_test)
   for(std::size_t i=0 ; i< gt.size(); ++i)
   {
     ASSERT_EQ(gt[i], t.data()[i]);
-  }  
+  }
 
 }
 

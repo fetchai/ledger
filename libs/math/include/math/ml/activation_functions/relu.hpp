@@ -33,9 +33,9 @@ void Relu(ArrayType const &t, ArrayType &ret)
 {
   assert(t.size() == ret.size());
 
-  auto it = t.cbegin();
+  auto it  = t.cbegin();
   auto rit = ret.begin();
-  while(it.is_valid())
+  while (it.is_valid())
   {
     *rit = fetch::math::Max(*it, typename ArrayType::Type(0));
     ++it;

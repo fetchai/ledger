@@ -32,7 +32,7 @@ class Tensor;
 
 struct TensorIteratorRange
 {
-  using SizeType = uint64_t;  
+  using SizeType       = uint64_t;
   SizeType index       = 0;
   SizeType from        = 0;
   SizeType to          = 0;
@@ -53,7 +53,7 @@ template <typename T, typename C, typename TensorType = Tensor<T, C>>
 class TensorIterator
 {
 public:
-  using Type         = T;
+  using Type     = T;
   using SizeType = uint64_t;
   /**
    * default range assumes step 1 over whole array - useful for trivial cases
@@ -71,10 +71,9 @@ public:
   }
 
   TensorIterator(TensorIterator const &other) = default;
-  TensorIterator& operator=(TensorIterator const &other) = default;  
-  TensorIterator(TensorIterator &&other) = default;
-  TensorIterator& operator=(TensorIterator &&other) = default;    
-
+  TensorIterator &operator=(TensorIterator const &other) = default;
+  TensorIterator(TensorIterator &&other)                 = default;
+  TensorIterator &operator=(TensorIterator &&other) = default;
 
   /**
    * Iterator for more interesting ranges
@@ -89,7 +88,7 @@ public:
 
   static TensorIterator EndIterator(TensorType &array)
   {
-    auto ret = TensorIterator(array);
+    auto ret     = TensorIterator(array);
     ret.counter_ = ret.size_;
     return ret;
   }
@@ -127,13 +126,13 @@ public:
    */
   TensorIterator &operator++()
   {
-    bool        next;
+    bool     next;
     SizeType i = 0;
     ++counter_;
     do
     {
 
-      next               = false;
+      next                   = false;
       TensorIteratorRange &s = ranges_[i];
       s.index += s.step;
       position_ += s.step_volume;
@@ -243,7 +242,7 @@ public:
     return array_[position_];
   }
 
-  SizeType position() const 
+  SizeType position() const
   {
     return position_;
   }
@@ -256,7 +255,7 @@ public:
   SizeVector PositionVector() const
   {
     SizeVector ret;
-    for(auto const &r: ranges_)
+    for (auto const &r : ranges_)
     {
       ret.push_back(r.current_n_dim_position);
     }
@@ -274,8 +273,7 @@ public:
   }
 
   template <typename A, typename B>
-  friend bool UpgradeIteratorFromBroadcast(std::vector<SizeType> const &,
-                                           TensorIterator<A, B> &);
+  friend bool UpgradeIteratorFromBroadcast(std::vector<SizeType> const &, TensorIterator<A, B> &);
 
   /**
    * returns the n-dimensional index of the current position
@@ -297,44 +295,44 @@ public:
     return ranges_[i];
   }
 
-  bool operator==(TensorIterator const& other) const
+  bool operator==(TensorIterator const &other) const
   {
-    if( this->end_of_iterator() && other->end_of_iterator())
+    if (this->end_of_iterator() && other->end_of_iterator())
     {
       return true;
     }
     return other.counter_ == counter_;
   }
 
-  bool operator!=(TensorIterator const& other) const
+  bool operator!=(TensorIterator const &other) const
   {
-    return other.counter_ != counter_;    
-  }  
+    return other.counter_ != counter_;
+  }
+
 protected:
   std::vector<TensorIteratorRange> ranges_;
-  SizeType                  total_runs_ = 1;
-  SizeType                  size_       = 0;
+  SizeType                         total_runs_ = 1;
+  SizeType                         size_       = 0;
 
 private:
-  void Setup(std::vector<std::vector<SizeType>> const &step,
-             std::vector<SizeType> const &             shape)
+  void Setup(std::vector<std::vector<SizeType>> const &step, std::vector<SizeType> const &shape)
   {
     ASSERT(array_.shape().size() == step.size());
-    SizeType volume    = 1;
+    SizeType volume = 1;
 
     if (step.size() == 0)
     {
-      size_ = 0;
+      size_     = 0;
       position_ = 0;
     }
     else
     {
-      size_              = 1;
-      position_          = 0;
+      size_     = 1;
+      position_ = 0;
 
       for (SizeType i = 0; i < step.size(); ++i)
       {
-        auto const &    a = step[i];
+        auto const &        a = step[i];
         TensorIteratorRange s;
         s.index = s.from = s.current_n_dim_position = a[0];
         s.to                                        = a[1];
@@ -343,9 +341,9 @@ private:
         {
           s.step = a[2];
         }
-        s.volume         = volume;
+        s.volume      = volume;
         SizeType diff = (s.to - s.from);
-        s.total_steps    = diff / s.step;
+        s.total_steps = diff / s.step;
         if (s.total_steps * s.step < diff)
         {
           ++s.total_steps;
@@ -362,17 +360,16 @@ private:
         ranges_.push_back(s);
       }
     }
-
   }
 
   TensorType &array_;
-  SizeType   position_ = 0;
+  SizeType    position_ = 0;
 
   SizeType counter_ = 0;
 };
 
 template <typename T, typename C>
-using ConstTensorIterator = TensorIterator< T const, C, Tensor<T, C> const >;
+using ConstTensorIterator = TensorIterator<T const, C, Tensor<T, C> const>;
 
 }  // namespace math
 }  // namespace fetch

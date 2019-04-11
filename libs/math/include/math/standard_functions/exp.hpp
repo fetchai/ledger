@@ -65,7 +65,7 @@ meta::IfIsMathArray<ArrayType, void> Exp(ArrayType const &array, ArrayType &ret)
   ASSERT(ret.shape() == array.shape());
   auto it1 = array.cbegin();
   auto rit = ret.begin();
-  while(it1.is_valid())
+  while (it1.is_valid())
   {
     Exp(*it1, *rit);
     ++it1;
@@ -76,7 +76,7 @@ meta::IfIsMathArray<ArrayType, void> Exp(ArrayType const &array, ArrayType &ret)
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Exp(ArrayType const &array)
 {
-  ArrayType                    ret{array.shape()};
+  ArrayType ret{array.shape()};
   Exp(array, ret);
   return ret;
   return ret;

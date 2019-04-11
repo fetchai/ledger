@@ -63,7 +63,7 @@ TEST(clustering_test, kmeans_test_2d_4k)
     A.Set({i, 0}, static_cast<DataType>(i) + 50);
     A.Set({i, 1}, static_cast<DataType>(i) + 50);
   }
-  
+
   SizeType       random_seed = 123456;
   ClusteringType clusters    = fetch::math::clustering::KMeans(A, random_seed, K);
 

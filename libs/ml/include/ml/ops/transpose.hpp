@@ -27,9 +27,9 @@ template <class T>
 class Transpose : public fetch::ml::BatchOps<T>
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using ConstSliceType    = typename ArrayType::ConstSliceType;
+  using ArrayType      = T;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   Transpose()          = default;
   virtual ~Transpose() = default;

@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iomanip>
-#include <iostream>
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
+#include <iomanip>
+#include <iostream>
 
 using namespace fetch::math;
 using data_type      = double;
@@ -28,7 +28,7 @@ using container_type = fetch::memory::SharedArray<data_type>;
 Tensor<data_type, container_type> RandomArray(std::size_t n, data_type adj)
 {
   static fetch::random::LinearCongruentialGenerator gen;
-  Tensor<data_type, container_type>         a1(n);
+  Tensor<data_type, container_type>                 a1(n);
   for (std::size_t i = 0; i < n; ++i)
   {
     a1.At(i) = data_type(gen.AsDouble()) + adj;
@@ -40,10 +40,10 @@ TEST(ndarray, l2_basic)
 {
   double epsilon = 1e-12;
 
-  std::size_t                               n                = 10000;
+  std::size_t                       n                = 10000;
   Tensor<data_type, container_type> test_array       = RandomArray(n, -0.5);
-  double                                    test_loss        = 0;
-  double                                    manual_test_loss = 0;
+  double                            test_loss        = 0;
+  double                            manual_test_loss = 0;
 
   // check that sign(0) = 0
   test_loss = test_array.L2Loss();

@@ -29,10 +29,10 @@ template <class T>
 class Relu : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using ConstSliceType    = typename ArrayType::ConstSliceType;
+  using ArrayType      = T;
+  using DataType       = typename ArrayType::Type;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   Relu()          = default;
   virtual ~Relu() = default;
@@ -61,7 +61,7 @@ public:
     {
       if (inputs.front().get()[i] <= DataType(0))
       {
-        returnSignal.data().Set(i, DataType(0)); // TODO: 
+        returnSignal.data().Set(i, DataType(0));  // TODO:
       }
     }
     return {returnSignal};

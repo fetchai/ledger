@@ -28,9 +28,9 @@ template <class T>
 class PlaceHolder : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using ConstSliceType    = typename ArrayType::ConstSliceType;
+  using ArrayType      = T;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   PlaceHolder() = default;
 

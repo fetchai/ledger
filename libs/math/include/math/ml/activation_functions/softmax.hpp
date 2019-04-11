@@ -49,13 +49,13 @@ void Softmax1DImplementation(ArrayType1 const &array, ArrayType2 &ret)
   ASSERT(ret.size() == array.size());
 
   // subtract max for numerical stability
-  Type array_max = std::numeric_limits<Type>::lowest();  
+  Type array_max = std::numeric_limits<Type>::lowest();
   Max(array, array_max);
 
   auto it1 = array.begin();
   auto it2 = ret.begin();
   Type sum = Type(0);
-  while(it1.is_valid())
+  while (it1.is_valid())
   {
     *it2 = Exp(*it1 - array_max);
     sum += *it2;
@@ -63,8 +63,8 @@ void Softmax1DImplementation(ArrayType1 const &array, ArrayType2 &ret)
     ++it1;
   }
 
-  auto it3 = ret.begin(); // TODO: Fix implictly deleted copy const. for iterator 
-  while(it3.is_valid())
+  auto it3 = ret.begin();  // TODO: Fix implictly deleted copy const. for iterator
+  while (it3.is_valid())
   {
     *it3 /= sum;
     ++it3;
