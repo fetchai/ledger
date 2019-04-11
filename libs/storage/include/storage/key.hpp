@@ -84,12 +84,12 @@ struct Key
   {
     bool result = std::equal(std::begin(key_), std::end(key_), std::begin(rhs.key_));
 
+#ifndef NDEBUG
     // Assert that the corresponding compare would return the same
     int dummy          = 0;
     int compare_result = Compare(rhs, dummy, BITS);
-
-    FETCH_UNUSED(compare_result);
-    assert(result == (compare_result == 0));  // TODO(HUT): look into this
+    assert(result == (compare_result == 0));
+#endif
 
     return result;
   }
@@ -116,7 +116,7 @@ struct Key
       ++i;
     }
 
-    if (i == BYTES)
+    if (i == BLOCKS)
     {
       pos = int(BITS);
       return 0;

@@ -136,6 +136,26 @@ TEST(new_key_test, test_compare_for_keys_whis_shifted_single_zero_by_one_bit__mo
   }
 }
 
+TEST(new_key_test, equality_comparison_operator)
+{
+  auto const       start_bs_key{~DefaultBitset{0}};
+  DefaultKey const start_key{to_ByteArray(start_bs_key)};
+
+  for (std::size_t i = 1; i < start_key.size_in_bits(); ++i)
+  {
+    auto const shifted_key_ByteArray{to_ByteArray(start_bs_key >> i)};
+
+    DefaultKey const key{shifted_key_ByteArray};
+    DefaultKey const key_copy{shifted_key_ByteArray};
+
+    EXPECT_TRUE(key == key_copy);
+    EXPECT_TRUE(key_copy == key);
+
+    EXPECT_FALSE(start_key == key);
+    EXPECT_FALSE(key == start_key);
+  }
+}
+
 // Test that closely correlated keys are found to be unique
 TEST(new_key_test, correlated_keys_are_unique)
 {
