@@ -103,7 +103,7 @@ void PrintKNN(SkipGramLoader<ArrayType> const &dl, ArrayType const &embeddings,
   }
   else
   {
-    ArrayType one_vector = embeddings.Slice(dl.VocabLookup(word)).Unsqueeze();
+    ArrayType one_vector = embeddings.Slice(dl.VocabLookup(word)).Copy();
     std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
         fetch::math::clustering::KNNCosine(arr, one_vector, k);
 
