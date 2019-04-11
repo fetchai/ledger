@@ -89,7 +89,7 @@ TYPED_TEST(RandomizedReluTest, backward_test)
   ArrayType           gt(8);
   std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<double> errorInput({0, 0, 0, 0, 1, 1, 0, 0});
-  std::vector<double> gtInput({0, 0, 0, 0, 1, 0.031396768, 0, 0});
+  std::vector<double> gtInput({0, 0, 0, 0, 1, 0.079588953, 0, 0});
   for (std::uint64_t i(0); i < 8; ++i)
   {
     data.Set(i, DataType(dataInput[i]));
@@ -106,7 +106,7 @@ TYPED_TEST(RandomizedReluTest, backward_test)
   // Forward pass will update random value
   op.Forward({data});
 
-  gtInput = {0, 0, 0, 0, 1, 0.066261486, 0, 0};
+  gtInput = {0, 0, 0, 0, 1, 0.031396768, 0, 0};
   for (std::uint64_t i(0); i < 8; ++i)
   {
     gt.Set(i, DataType(gtInput[i]));

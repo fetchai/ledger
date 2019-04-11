@@ -38,7 +38,7 @@ public:
   using RNG          = fetch::random::LaggedFibonacciGenerator<>;
 
   RandomizedRelu(DataType const lower_bound, DataType const upper_bound,
-                 SizeType const &random_seed)
+                 SizeType const &random_seed = 25102015)
     : lower_bound_(lower_bound)
     , upper_bound_(upper_bound)
     , bounds_mean_((upper_bound_ + lower_bound_) / DataType(2))
@@ -76,13 +76,12 @@ public:
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape() == errorSignal.shape());
     ArrayType returnSignal{errorSignal.shape()};
-    ArrayType t{inputs.front().get().shape()};
+
+    DataType tmp_alpha = this->is_training_ ? random_value_ : bounds_mean_;
 
     // gradient of randomized-relu function is for x<0 = alpha, x>=0 = 1.0
-    t = this->Forward(inputs);
-
     typename ArrayType::SizeType idx(0);
-    for (auto const &val : t)
+    for (auto const &val : inputs.at(0).get())
     {
       if (val >= DataType(0))
       {
@@ -90,8 +89,6 @@ public:
       }
       else
       {
-
-        DataType tmp_alpha = this->is_training_ ? random_value_ : bounds_mean_;
         returnSignal.Set(idx, tmp_alpha);
       }
       ++idx;
