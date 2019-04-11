@@ -62,7 +62,6 @@ TYPED_TEST(EuclideanTest, matrix_euclidean_test)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
-  // using SizeType  = typename TypeParam::SizeType;
 
   ArrayType A = ArrayType({3, 4});
   A.Set({0, 0}, DataType(1));
