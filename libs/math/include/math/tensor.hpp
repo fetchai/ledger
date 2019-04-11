@@ -124,7 +124,7 @@ public:
       throw std::runtime_error("TODO: not supported.");
     }
 
-    STensor const &Tensor() const
+    STensor &Tensor() const
     {
       return tensor_;
     }
