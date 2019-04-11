@@ -216,8 +216,8 @@ class FixedPoint
   static_assert(details::TypeFromSize<I + F>::is_valid, "invalid combination of sizes");
 
 public:
-  static const std::size_t fractional_bits = F;
-  static const std::size_t total_bits      = I + F;
+  static constexpr std::size_t fractional_bits = F;
+  static constexpr std::size_t total_bits      = I + F;
 
   // this tag is used for matching templates - see math_type_traits.hpp
   FixedPointTag fixed_point_tag;
