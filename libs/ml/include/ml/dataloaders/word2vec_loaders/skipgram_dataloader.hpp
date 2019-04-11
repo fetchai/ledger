@@ -123,7 +123,7 @@ void SkipGramLoader<T>::GetData(SizeType idx, T &data_buffer)
   {
     SizeType sentence_idx = this->word_idx_sentence_idx.at(lookup_idxs.at(buffer_count));
     SizeType word_idx     = this->GetWordOffsetFromWordIdx(lookup_idxs.at(buffer_count));
-    data_buffer.At(j)     = DataType(this->data_.at(sentence_idx).at(word_idx));
+    data_buffer.At(0, j)  = DataType(this->data_.at(sentence_idx).at(word_idx));
     ++buffer_count;
   }
 

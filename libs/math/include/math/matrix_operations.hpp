@@ -554,7 +554,7 @@ meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &r
   if (axis == NO_AXIS)
   {  // Argmax over the full array
     ASSERT(ret.size() == SizeType(1));
-    SizeType position;
+    SizeType position = 0;
     auto     it    = array.begin();
     Type     value = std::numeric_limits<Type>::lowest();
     while (it.is_valid())
