@@ -695,7 +695,6 @@ TEST(FixedPointTest, Exponential_16_16)
 
   EXPECT_NEAR((double)e1/std::exp(1.0), 1.0, 2e-5);
   EXPECT_NEAR((double)e2/std::exp(2.0), 1.0, 2e-5);
->>>>>>> Multiple changes:
 }
 
 TEST(FixedPointTest, Exponential_32_32)
