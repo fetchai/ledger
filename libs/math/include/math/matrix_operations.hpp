@@ -27,12 +27,12 @@
 
 namespace fetch {
 namespace math {
-
-template <typename T, typename C>
-class Tensor;
-
-template <typename T, typename C, typename TensorType>
-class TensorIterator;
+//
+//template <typename T, typename C>
+//class Tensor;
+//
+//template <typename T, typename C, typename TensorType>
+//class TensorIterator;
 
 // TODO - vectorisation implementations not yet called
 namespace details_vectorisation {
@@ -222,8 +222,8 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Max(ArrayType const &ar
  * @param axis
  * @param ret
  */
-template <typename T, typename C>
-void Max(Tensor<T, C> const &array, typename Tensor<T, C>::SizeType const &axis, Tensor<T, C> &ret)
+template <typename ArrayType>
+void Max(ArrayType const &array, typename ArrayType::SizeType const &axis, ArrayType &ret)
 {
   ASSERT(array.shape().size() <= 2);
   ASSERT(axis < array.shape().size());
@@ -311,8 +311,8 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Min(ArrayType const &ar
  * @param axis
  * @param ret
  */
-template <typename T, typename C>
-void Min(Tensor<T, C> const &array, typename Tensor<T, C>::SizeType const &axis, Tensor<T, C> &ret)
+template <typename ArrayType>
+void Min(ArrayType const &array, typename ArrayType::SizeType const &axis, ArrayType &ret)
 {
   ASSERT(array.shape().size() <= 2);
   ASSERT(axis < array.shape().size());
