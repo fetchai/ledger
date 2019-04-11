@@ -25,25 +25,24 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Softmax : public fetch::ml::ElementWiseOps<T>
+class Softmax : public fetch::ml::BatchOps<T>
 {
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
+  using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   Softmax()          = default;
   virtual ~Softmax() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
+    ASSERT(output.shape() == ComputeOutputShape(inputs));
     assert(inputs.size() == 1);
-    if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
-    {
-      this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
-    }
-    fetch::math::Softmax(inputs[0].get(), *this->output_);
-    return *this->output_;
+    fetch::math::Softmax(inputs[0].get(), output);
+    return output;
   }
 
   virtual std::vector<ArrayType> Backward(
@@ -54,12 +53,20 @@ public:
     assert(inputs.front().get().shape() == errorSignal.shape());
 
     ArrayType returnSignal = errorSignal.Clone();
-    ArrayType t            = this->Forward(inputs);
+
+    ArrayType t(this->ComputeOutputShape(inputs));
+    t = this->Forward(inputs, t);
     returnSignal.InlineMultiply(t);
     typename ArrayType::Type sum = returnSignal.Sum();
     t.InlineMultiply(sum);
     returnSignal.InlineSubtract(t);
     return {returnSignal};
+  }
+
+  virtual std::vector<SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Softmax";
