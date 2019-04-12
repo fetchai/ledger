@@ -36,34 +36,17 @@ public:
   MatrixMultiply()          = default;
   virtual ~MatrixMultiply() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<const ArrayType>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
+    (void)output;
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().shape().size() == 2);
     assert(inputs.at(1).get().shape().size() == 2);
+    ASSERT(output.shape() == ComputeOutputShape(inputs));
 
-    // inner dimension check
-    assert(inputs.at(0).get().shape()[1] == inputs.at(1).get().shape()[0]);
-
-    std::vector<SizeType> outputShape(
-        {inputs.at(0).get().shape()[0], inputs.at(1).get().shape()[1]});
-    if (!this->output_ || this->output_->shape() != outputShape)
-    {
-      this->output_ = std::make_shared<ArrayType>(outputShape);
-    }
-
-    for (SizeType i(0); i < inputs.at(0).get().shape()[0]; ++i)
-    {
-      for (SizeType j(0); j < inputs.at(1).get().shape()[1]; ++j)
-      {
-        this->output_->At(i, j) = inputs.at(0).get().At(i, 0) * inputs.at(1).get().At(0, j);
-        for (SizeType k(1); k < inputs.at(0).get().shape()[1]; ++k)
-        {
-          this->output_->At(i, j) += inputs.at(0).get().At(i, k) * inputs.at(1).get().At(k, j);
-        }
-      }
-    }
-    return *this->output_;
+    fetch::math::Dot(inputs[0].get(), inputs[1].get(), output);
+    return output;
   }
 
   virtual std::vector<ArrayType> Backward(
@@ -79,6 +62,12 @@ public:
     fetch::math::TransposeDot(inputs.at(0).get(), errorSignal, errorSignal2);
 
     return {errorSignal1, errorSignal2};
+  }
+
+  virtual std::vector<SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    return {inputs.at(0).get().shape()[0], inputs.at(1).get().shape()[1]};
   }
 
   static constexpr char const *DESCRIPTOR = "MatrixMultiply";

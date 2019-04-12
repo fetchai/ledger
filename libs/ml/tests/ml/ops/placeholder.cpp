@@ -33,7 +33,7 @@ TEST(placeholder_test, setData)
   }
   fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>> op;
   op.SetData(data);
-  fetch::math::Tensor<int> prediction = op.Forward({});
+  fetch::math::Tensor<int> prediction = op.template Ops<fetch::math::Tensor<int>>::Forward({});
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -54,7 +54,7 @@ TEST(placeholder_test, resetData)
   }
   fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>> op;
   op.SetData(data);
-  fetch::math::Tensor<int> prediction = op.Forward({});
+  fetch::math::Tensor<int> prediction = op.template Ops<fetch::math::Tensor<int>>::Forward({});
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -71,7 +71,7 @@ TEST(placeholder_test, resetData)
   }
 
   op.SetData(data);
-  prediction = op.Forward({});
+  prediction = op.template Ops<fetch::math::Tensor<int>>::Forward({});
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));

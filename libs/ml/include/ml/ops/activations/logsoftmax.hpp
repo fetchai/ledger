@@ -38,8 +38,9 @@ public:
   LogSoftmax()          = default;
   virtual ~LogSoftmax() = default;
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs, ArrayType &output)
   {
+    (void)output;
     assert(inputs.size() == 1);
     if (!this->output_ || this->output_->shape() != inputs[0]->shape())
     {

@@ -49,8 +49,10 @@ public:
 
   virtual ~Embeddings() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<const ArrayType>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
+    (void)output;
     ASSERT(this->output_);
     ASSERT(inputs.size() == 1);
     ASSERT(

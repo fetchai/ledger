@@ -80,14 +80,14 @@ public:
     return {};
   }
 
-  virtual void SetData(ArrayType const &data)
+  virtual bool SetData(ArrayType const &data)
   {
-    PlaceHolder<T>::SetData(data);
-    if (this->output_ &&
-        (!gradient_accumulation_ || gradient_accumulation_->shape() != this->output_->shape()))
+    if (PlaceHolder<T>::SetData(data))  // if input_size_changed
     {
       gradient_accumulation_ = std::make_shared<ArrayType>(this->output_->shape());
+      return true;
     }
+    return false;
   }
 
   virtual void Step(typename T::Type learningRate)

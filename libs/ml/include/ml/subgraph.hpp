@@ -37,8 +37,10 @@ public:
   using ArrayPtrType   = std::shared_ptr<ArrayType>;
   using ConstSliceType = typename ArrayType::ConstSliceType;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<const ArrayType>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
+    (void)output;
     ASSERT(inputs.size() == this->input_nodes_.size());
     for (std::uint64_t i(0); i < inputs.size(); ++i)
     {

@@ -40,8 +40,9 @@ public:
    * @param inputs  left & right inputs to Divide
    * @return
    */
-  virtual ArrayPtrType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs, ArrayType &output)
   {
+    (void)output;
     assert(inputs.size() > 1);
     for (std::size_t i = 1; i < inputs.size(); ++i)
     {
