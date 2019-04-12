@@ -42,7 +42,7 @@ meta::IfIsNonFixedPointArithmetic<Type, void> Abs(Type const &x, Type &ret)
 template <typename T>
 meta::IfIsFixedPoint<T, void> Abs(T const &n, T &ret)
 {
-  ret = T(std::abs(double(n)));
+  ret = T::Abs(n);
 }
 
 //////////////////
