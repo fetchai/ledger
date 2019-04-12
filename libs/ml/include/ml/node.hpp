@@ -77,7 +77,7 @@ public:
   {
     std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
     FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
-    assert(cachedOutput_.shape() == ComputeOutputShape(inputs));
+    assert(cached_output_.shape() == this->ComputeOutputShape(inputs));
     if (!cached_output_present_)
     {
       std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
