@@ -37,9 +37,7 @@ meta::IfIsNonFixedPointArithmetic<Type, void> Pow(Type const &x, Type const &y, 
 template <typename T>
 meta::IfIsFixedPoint<T, void> Pow(T const &x, T const &y, T &ret)
 {
-  double tmp_ret;
-  Pow(double(x), double(y), tmp_ret);
-  ret = T(tmp_ret);
+  ret = T::Pow(x, y);
 }
 
 //////////////////

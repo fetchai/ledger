@@ -37,7 +37,7 @@ namespace math {
 template <typename T>
 meta::IfIsArithmetic<T, void> Abs(T const &n, T &ret)
 {
-  ret = T(std::abs(double(n)));
+  ret = T::Abs(n);
 }
 
 //////////////////
