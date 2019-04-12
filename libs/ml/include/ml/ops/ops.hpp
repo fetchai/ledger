@@ -40,14 +40,14 @@ public:
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     ArrayType output(ComputeOutputShape(inputs));
-    return Forward(inputs, output);
+    return this->Forward(inputs, output);
   }
 
   // Convenince method to call without having to allocate output buffer
   virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     ArrayType output(ComputeOutputShape(inputs, true));
-    return ForwardBatch(inputs, output);
+    return this->ForwardBatch(inputs, output);
   }
 
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,

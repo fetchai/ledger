@@ -51,28 +51,20 @@ public:
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                             ArrayType &                                                 output)
   {
-    (void)output;
     ASSERT(this->output_);
     ASSERT(inputs.size() == 1);
     ASSERT(
         (inputs.front().get().shape().size() == 1) ||
         ((inputs.front().get().shape().size() == 2) && (inputs.front().get().shape().at(1) == 1)));
+    ASSERT(output.shape() == ComputeOutputShape(inputs));
 
-    if (!this->embeddings_output_ ||
-        this->embeddings_output_->shape()[0] != inputs.front().get().size() ||
-        this->embeddings_output_->shape()[1] != this->output_->shape()[1])
-    {
-      this->embeddings_output_ = std::make_shared<ArrayType>(
-          std::vector<SizeType>({inputs.front().get().size(), this->output_->shape()[1]}));
-    }
     uint64_t j(0);
     for (DataType const &i : inputs.front().get())
     {
-      this->embeddings_output_->Slice(j).Copy(
-          this->output_->Slice(typename ArrayType::SizeType(i)));
+      output.Slice(j).Copy(this->output_->Slice(SizeType(i)));
       j++;
     }
-    return *this->embeddings_output_;
+    return output;
   }
 
   virtual std::vector<ArrayType> Backward(
@@ -89,7 +81,7 @@ public:
     {
       updated_rows_.insert(typename ArrayType::SizeType(double(i)));
       this->gradient_accumulation_->Slice(typename ArrayType::SizeType(double(i)))
-          .Copy(errorSignal.Slice(j));
+          .InlineAdd(errorSignal.Slice(j));
       j++;
     }
     return {ArrayType(errorSignal.shape())};
@@ -108,8 +100,13 @@ public:
     updated_rows_.clear();
   }
 
+  virtual std::vector<SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    return std::vector<SizeType>({inputs.front().get().size(), this->output_->shape()[1]});
+  }
+
 private:
-  ArrayPtrType                           embeddings_output_;
   std::set<typename ArrayType::SizeType> updated_rows_;
 };
 
