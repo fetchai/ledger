@@ -41,7 +41,7 @@ public:
     ASSERT(inputs.size() == 1);
     ASSERT(output.shape() == ComputeOutputShape(inputs));
     input_shape_ = inputs.front().get().shape();
-    output.Copy(inputs.front().get());
+    output.Assign(inputs.front().get());
     return output;
   }
 
