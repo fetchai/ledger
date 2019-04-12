@@ -27,7 +27,7 @@ TEST(node_test, node_placeholder)
   fetch::ml::Node<fetch::math::Tensor<int>, fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>>>
                            placeholder("PlaceHolder");
   fetch::math::Tensor<int> data(std::vector<std::uint64_t>({5, 5}));
-  bool input_shape_changed = placeholder.SetData(data);
+  bool                     input_shape_changed = placeholder.SetData(data);
   placeholder.ResetCache(input_shape_changed);
 
   EXPECT_EQ(placeholder.template Ops<fetch::math::Tensor<int>>::Forward({}), data);
@@ -55,7 +55,7 @@ TEST(node_test, node_relu)
   fetch::math::Tensor<int> gt(std::vector<std::uint64_t>({4, 4}));
   std::vector<int> dataValues({0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15, 16});
   std::vector<int> gtValues({0, 0, 2, 0, 4, 0, 6, 0, 8, 0, 10, 0, 12, 0, 14, 0, 16});
-  bool input_shape_changed = placeholder->SetData(data);
+  bool             input_shape_changed = placeholder->SetData(data);
   placeholder->ResetCache(input_shape_changed);
   relu->ResetCache(input_shape_changed);
 

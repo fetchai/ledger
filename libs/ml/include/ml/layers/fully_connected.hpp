@@ -50,9 +50,9 @@ public:
   {
 
     std::string weights =
-      this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
+        this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
     std::string bias =
-      this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Bias", {});
+        this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Bias", {});
 
     ArrayType weights_data(std::vector<std::uint64_t>({in, out}));
     this->Initialise(weights_data, init_mode);

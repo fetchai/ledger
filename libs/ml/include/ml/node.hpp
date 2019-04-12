@@ -86,7 +86,6 @@ public:
       std::cout << s << " ";
     std::cout << std::endl;
 
-    
     assert(cached_output_.shape() == this->ComputeOutputShape(inputs));
     if (!cached_output_present_)
     {
