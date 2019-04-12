@@ -17,46 +17,48 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/fundamental_operators.hpp"  // add, subtract etc.
+#include "core/assert.hpp"
+#include "math/comparison.hpp"
 #include "math/standard_functions/exp.hpp"
 
 namespace fetch {
 namespace math {
 
 /**
- * The sigmoid function - numerically stable
+ * Exponential linear unit
  * @tparam ArrayType
  * @param t
+ * @param a
  * @param ret
  */
 template <typename ArrayType>
-void Sigmoid(ArrayType const &t, ArrayType &ret)
+void LeakyRelu(ArrayType const &t, typename ArrayType::Type &a, ArrayType &ret)
 {
+  ASSERT(t.size() == ret.size());
+  using DataType = typename ArrayType::Type;
 
   typename ArrayType::SizeType idx(0);
-  for (auto &val : t)
+  for (auto const &val : t)
   {
-    if (val >= typename ArrayType::Type(0))
+    if (val >= DataType(0))
     {
-      Multiply(typename ArrayType::Type(-1.0), val, ret.At(idx));
-      Exp(ret.At(idx), ret.At(idx));
-      Add(ret.At(idx), typename ArrayType::Type(1.0), ret.At(idx));
-      Divide(typename ArrayType::Type(1.0), ret.At(idx), ret.At(idx));
+      // f(x)=x for x>=0
+      ret.Set(idx, val);
     }
     else
     {
-      Exp(val, ret.At(idx));
-      Divide(ret.At(idx), ret.At(idx) + typename ArrayType::Type(1.0), ret.At(idx));
+      // f(x)=a*x for x<0
+      Multiply(a, val, ret.At(idx));
     }
     ++idx;
   }
 }
 
 template <typename ArrayType>
-ArrayType Sigmoid(ArrayType const &t)
+ArrayType LeakyRelu(ArrayType const &t, typename ArrayType::Type &a)
 {
   ArrayType ret(t.shape());
-  Sigmoid(t, ret);
+  LeakyRelu(t, a, ret);
   return ret;
 }
 

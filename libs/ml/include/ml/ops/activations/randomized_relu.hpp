@@ -17,42 +17,51 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/random/lfg.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
-#include "math/ml/activation_functions/sigmoid.hpp"
-#include "math/standard_functions/exp.hpp"
+#include "math/ml/activation_functions/leaky_relu.hpp"
 #include "ml/ops/ops.hpp"
-#include <math/standard_functions/log.hpp>
 
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class LogSigmoid : public fetch::ml::ElementWiseOps<T>
+class RandomizedRelu : public fetch::ml::ElementWiseOps<T>
 {
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using SizeType     = typename ArrayType::SizeType;
+  using RNG          = fetch::random::LaggedFibonacciGenerator<>;
 
-  LogSigmoid()          = default;
-  virtual ~LogSigmoid() = default;
+  RandomizedRelu(DataType const lower_bound, DataType const upper_bound,
+                 SizeType const &random_seed = 25102015)
+    : lower_bound_(lower_bound)
+    , upper_bound_(upper_bound)
+    , bounds_mean_((upper_bound_ + lower_bound_) / DataType(2))
+  {
+    rng_.Seed(random_seed);
+    UpdateRandomValue();
+  }
+
+  virtual ~RandomizedRelu() = default;
 
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                             ArrayType &                                                 output)
   {
     assert(inputs.size() == 1);
-    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
+    assert(output.shape() == this->ComputeOutputShape(inputs));
 
-    fetch::math::Sigmoid(inputs.front().get(), output);
-    fetch::math::Log(output, output);
-
-    // ensures numerical stability
-    for (auto &val : output)
+    if (this->is_training_)
     {
-      fetch::math::Min(val, epsilon_, val);
+      UpdateRandomValue();
     }
+
+    DataType tmp_alpha = this->is_training_ ? random_value_ : bounds_mean_;
+    fetch::math::LeakyRelu(inputs.front().get(), tmp_alpha, output);
 
     return output;
   }
@@ -65,9 +74,22 @@ public:
     assert(inputs.front().get().shape() == errorSignal.shape());
     ArrayType returnSignal{errorSignal.shape()};
 
-    // gradient of log-sigmoid function is 1/(e^x + 1))
-    fetch::math::Add(fetch::math::Exp(inputs.front().get()), DataType(1), returnSignal);
-    fetch::math::Divide(DataType(1), returnSignal, returnSignal);
+    DataType tmp_alpha = this->is_training_ ? random_value_ : bounds_mean_;
+
+    // gradient of randomized-relu function is for x<0 = alpha, x>=0 = 1.0
+    typename ArrayType::SizeType idx(0);
+    for (auto const &val : inputs.at(0).get())
+    {
+      if (val >= DataType(0))
+      {
+        returnSignal.Set(idx, DataType(1));
+      }
+      else
+      {
+        returnSignal.Set(idx, tmp_alpha);
+      }
+      ++idx;
+    }
 
     // multiply by errorSignal (chain rule)
     fetch::math::Multiply(errorSignal, returnSignal, returnSignal);
@@ -75,11 +97,20 @@ public:
     return {returnSignal};
   }
 
-  static constexpr char const *DESCRIPTOR = "LogSigmoid";
+  static constexpr char const *DESCRIPTOR = "RandomizedRelu";
 
 private:
-  // maximum possible output value of the log-sigmoid should not be zero, but actually epsilon
-  DataType epsilon_ = DataType(1e-12);
+  void UpdateRandomValue()
+  {
+    random_value_ =
+        lower_bound_ + static_cast<DataType>(rng_.AsDouble()) * (upper_bound_ - lower_bound_);
+  }
+
+  DataType random_value_;
+  DataType lower_bound_;
+  DataType upper_bound_;
+  DataType bounds_mean_;
+  RNG      rng_;
 };
 
 }  // namespace ops

@@ -16,35 +16,37 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/activations/logsigmoid.hpp"
+#include "ml/ops/activations/leaky_relu.hpp"
 #include "core/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 
 template <typename T>
-class LogSigmoidTest : public ::testing::Test
+class LeakyReluTest : public ::testing::Test
 {
 };
 
 using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 
-TYPED_TEST_CASE(LogSigmoidTest, MyTypes);
+TYPED_TEST_CASE(LeakyReluTest, MyTypes);
 
-TYPED_TEST(LogSigmoidTest, forward_test)
+TYPED_TEST(LeakyReluTest, forward_test)
 {
-  TypeParam           data(8);
-  TypeParam           gt(8);
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+
+  ArrayType           data(8);
+  ArrayType           gt(8);
   std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8});
-  std::vector<double> gtInput(
-      {-0.31326, -2.126928, -0.048587, -4.01815, -0.006715, -6.002476, -0.000911466, -8.000335});
+  std::vector<double> gtInput({1, -0.02, 3, -0.04, 5, -0.06, 7, -0.08});
   for (std::uint64_t i(0); i < 8; ++i)
   {
-    data.Set(i, typename TypeParam::Type(dataInput[i]));
-    gt.Set(i, typename TypeParam::Type(gtInput[i]));
+    data.Set(i, DataType(dataInput[i]));
+    gt.Set(i, DataType(gtInput[i]));
   }
-  fetch::ml::ops::LogSigmoid<TypeParam> op;
-  TypeParam                             prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
+  fetch::ml::ops::LeakyRelu<ArrayType> op(DataType(0.01));
+  ArrayType                            prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({data}));
 
   // test correct values
@@ -52,24 +54,26 @@ TYPED_TEST(LogSigmoidTest, forward_test)
       prediction.AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }
 
-TYPED_TEST(LogSigmoidTest, backward_test)
+TYPED_TEST(LeakyReluTest, backward_test)
 {
-  TypeParam           data(8);
-  TypeParam           error(8);
-  TypeParam           gt(8);
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+
+  ArrayType           data(8);
+  ArrayType           error(8);
+  ArrayType           gt(8);
   std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8});
-  std::vector<double> errorInput({0, 0, 0, 0, 1, 0, 0, 0});
-  std::vector<double> gtInput({0, 0, 0, 0, 0.006692850, 0, 0, 0});
+  std::vector<double> errorInput({0, 0, 0, 0, 1, 1, 0, 0});
+  std::vector<double> gtInput({0, 0, 0, 0, 1, 0.01, 0, 0});
   for (std::uint64_t i(0); i < 8; ++i)
   {
-    data.Set(i, typename TypeParam::Type(dataInput[i]));
-    error.Set(i, typename TypeParam::Type(errorInput[i]));
-    gt.Set(i, typename TypeParam::Type(gtInput[i]));
+    data.Set(i, DataType(dataInput[i]));
+    error.Set(i, DataType(errorInput[i]));
+    gt.Set(i, DataType(gtInput[i]));
   }
-  fetch::ml::ops::LogSigmoid<TypeParam> op;
-  std::vector<TypeParam>                prediction = op.Backward({data}, error);
+  fetch::ml::ops::LeakyRelu<ArrayType> op(DataType(0.01));
+  std::vector<ArrayType>               prediction = op.Backward({data}, error);
 
   // test correct values
-  ASSERT_TRUE(
-      prediction[0].AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
+  ASSERT_TRUE(prediction[0].AllClose(gt, DataType(1e-5), DataType(1e-5)));
 }
