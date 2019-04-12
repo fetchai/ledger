@@ -717,23 +717,23 @@ public:
     return FixedPoint(n, NoScale());
   }
 
-  static FixedPoint Log10(const FixedPoint &x)
+  static constexpr FixedPoint Log10(const FixedPoint &x)
   {
     return Log2(x) / LOG210;
   }
 
-  static FixedPoint Sqrt(const FixedPoint &x)
+  static constexpr FixedPoint Sqrt(const FixedPoint &x)
   {
     // Dummy, WIP
     return x;
   }
 
-  static FixedPoint Pow(const FixedPoint &x, const FixedPoint &y)
+  static constexpr FixedPoint Pow(const FixedPoint &x, const FixedPoint &y)
   {
     return Exp(y*Log(x));
   }
 
-  static FixedPoint Abs(const FixedPoint &x)
+  static constexpr FixedPoint Abs(const FixedPoint &x)
   {
     return FixedPoint::FromBase(std::abs(x.Data()));
   }
@@ -763,30 +763,28 @@ std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
   return s;
 }
 
-template <std::size_t I, std::size_t F> constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::SMALLEST_FRACTION; /* smallest fraction */
-template <std::size_t I, std::size_t F> constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::LARGEST_FRACTION; /* largest fraction */
-template <std::size_t I, std::size_t F> constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::MAX_INT; /* largest int */
-template <std::size_t I, std::size_t F> constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::MIN_INT; /* smallest int */
-template <std::size_t I, std::size_t F> constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::MAX; /* largest fixed point */
-template <std::size_t I, std::size_t F> constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::MIN; /* smallest fixed point */
-template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::MAX_EXP; /* maximum exponent for Exp() */
-template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::MIN_EXP; /* minimum exponent for Exp() */
-template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_ZERO; /* 0 */
-template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_ONE; /* 1 */
-template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_E; /* e */
-template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_LOG2E; /* log_2 e */
-template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_LOG210; /* log_2 10 */
-template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_LOG10E; /* log_10 e */
-template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_LN2; /* log_e 2 */
-template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_LN10; /* log_e 10 */
-template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_PI; /* pi */
-template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_PI_2; /* pi/2 */
-template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_PI_4; /* pi/4 */
-template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_INV_PI; /* 1/pi */
-template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_2_INV_PI; /* 2/pi */
-template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_2_INV_SQRTPI; /* 2/sqrt(pi) */
-template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_SQRT2; /* sqrt(2) */
-template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_INV_SQRT2; /* 1/sqrt(2) */
+template <std::size_t I, std::size_t F> constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::smallest_fraction; /* smallest fraction */
+template <std::size_t I, std::size_t F> constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::largest_fraction; /* largest fraction */
+template <std::size_t I, std::size_t F> constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::smallest_int; /* smallest int */
+template <std::size_t I, std::size_t F> constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::largest_int; /* largest int */
+template <std::size_t I, std::size_t F> constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::max; /* largest fixed point */
+template <std::size_t I, std::size_t F> constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::min; /* smallest fixed point */
+template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::max_exp; /* maximum exponent for Exp() */
+template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::One; /* e */
+template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::E; /* e */
+template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::LOG2E; /* log_2 e */
+template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::LOG210; /* log_2 10 */
+template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::LOG10E; /* log_10 e */
+template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::LN2; /* log_e 2 */
+template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::LN10; /* log_e 10 */
+template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::PI; /* pi */
+template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::PI_2; /* pi/2 */
+template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::PI_4; /* pi/4 */
+template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::INV_PI; /* 1/pi */
+template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::INV2_PI; /* 2/pi */
+template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::INV2_SQRTPI; /* 2/sqrt(pi) */
+template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::SQRT2; /* sqrt(2) */
+template <std::size_t I, std::size_t F> constexpr FixedPoint<I, F> FixedPoint<I, F>::INV_SQRT2; /* 1/sqrt(2) */
 
 }  // namespace fixed_point
 }  // namespace fetch
