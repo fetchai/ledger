@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/macros.hpp"
 #include "core/random/lfg.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
@@ -39,7 +40,7 @@ public:
   Dropout(DataType const probability, SizeType const &random_seed = 25102015)
     : probability_(probability)
   {
-    assert(probability >= 0.0 && probability <= 1.0);
+    ASSERT(probability >= 0.0 && probability <= 1.0);
     rng_.Seed(random_seed);
     drop_values_ = ArrayType(0);
   }
@@ -49,8 +50,8 @@ public:
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                             ArrayType &                                                 output)
   {
-    assert(inputs.size() == 1);
-    assert(output.shape() == this->ComputeOutputShape(inputs));
+    ASSERT(inputs.size() == 1);
+    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
 
     if (!this->is_training_)
     {
@@ -73,9 +74,9 @@ public:
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
-    assert(inputs.size() == 1);
-    assert(errorSignal.shape() == inputs.front().get().shape());
-    assert(drop_values_.shape() == inputs.front().get().shape());
+    ASSERT(inputs.size() == 1);
+    ASSERT(errorSignal.shape() == inputs.front().get().shape());
+    ASSERT(drop_values_.shape() == inputs.front().get().shape());
 
     ArrayType returnSignal{errorSignal.shape()};
 
