@@ -715,8 +715,29 @@ public:
   static constexpr FixedPoint FromBase(Type n)
   {
     return FixedPoint(n, NoScale());
-
   }
+
+  static FixedPoint Log10(const FixedPoint &x)
+  {
+    return Log2(x) / LOG210;
+  }
+
+  static FixedPoint Sqrt(const FixedPoint &x)
+  {
+    // Dummy, WIP
+    return x;
+  }
+
+  static FixedPoint Pow(const FixedPoint &x, const FixedPoint &y)
+  {
+    return Exp(y*Log(x));
+  }
+
+  static FixedPoint Abs(const FixedPoint &x)
+  {
+    return FixedPoint::FromBase(std::abs(x.Data()));
+  }
+
 private:
   Type data_{0};  // the value to be stored
 
