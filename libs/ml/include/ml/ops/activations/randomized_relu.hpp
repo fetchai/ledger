@@ -20,6 +20,7 @@
 #include "core/random/lfg.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
+#include "math/ml/activation_functions/leaky_relu.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -27,7 +28,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Dropout : public fetch::ml::ElementWiseOps<T>
+class RandomizedRelu : public fetch::ml::ElementWiseOps<T>
 {
 public:
   using ArrayType    = T;
@@ -36,15 +37,17 @@ public:
   using SizeType     = typename ArrayType::SizeType;
   using RNG          = fetch::random::LaggedFibonacciGenerator<>;
 
-  Dropout(DataType const probability, SizeType const &random_seed = 25102015)
-    : probability_(probability)
+  RandomizedRelu(DataType const lower_bound, DataType const upper_bound,
+                 SizeType const &random_seed = 25102015)
+    : lower_bound_(lower_bound)
+    , upper_bound_(upper_bound)
+    , bounds_mean_((upper_bound_ + lower_bound_) / DataType(2))
   {
-    assert(probability >= 0.0 && probability <= 1.0);
     rng_.Seed(random_seed);
-    drop_values_ = ArrayType(0);
+    UpdateRandomValue();
   }
 
-  virtual ~Dropout() = default;
+  virtual ~RandomizedRelu() = default;
 
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                             ArrayType &                                                 output)
@@ -52,19 +55,13 @@ public:
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
-    if (!this->is_training_)
+    if (this->is_training_)
     {
-      output.Copy(inputs.front().get());
-      return output;
+      UpdateRandomValue();
     }
 
-    if (drop_values_.shape() != output.shape())
-    {
-      drop_values_ = ArrayType(inputs.front().get().shape());
-    }
-    UpdateRandomValues();
-
-    fetch::math::Multiply(inputs.front().get(), drop_values_, output);
+    DataType tmp_alpha = this->is_training_ ? random_value_ : bounds_mean_;
+    fetch::math::LeakyRelu(inputs.front().get(), tmp_alpha, output);
 
     return output;
   }
@@ -74,46 +71,46 @@ public:
       ArrayType const &                                           errorSignal)
   {
     assert(inputs.size() == 1);
-    assert(errorSignal.shape() == inputs.front().get().shape());
-    assert(drop_values_.shape() == inputs.front().get().shape());
-
+    assert(inputs.front().get().shape() == errorSignal.shape());
     ArrayType returnSignal{errorSignal.shape()};
 
-    // gradient of dropout is 1.0 for enabled neurons and 0.0 for disabled
+    DataType tmp_alpha = this->is_training_ ? random_value_ : bounds_mean_;
+
+    // gradient of randomized-relu function is for x<0 = alpha, x>=0 = 1.0
+    typename ArrayType::SizeType idx(0);
+    for (auto const &val : inputs.at(0).get())
+    {
+      if (val >= DataType(0))
+      {
+        returnSignal.Set(idx, DataType(1));
+      }
+      else
+      {
+        returnSignal.Set(idx, tmp_alpha);
+      }
+      ++idx;
+    }
+
     // multiply by errorSignal (chain rule)
-    if (this->is_training_)
-    {
-      fetch::math::Multiply(errorSignal, drop_values_, returnSignal);
-    }
-    else
-    {
-      returnSignal.Copy(errorSignal);
-    }
+    fetch::math::Multiply(errorSignal, returnSignal, returnSignal);
 
     return {returnSignal};
   }
 
-  static constexpr char const *DESCRIPTOR = "Dropout";
+  static constexpr char const *DESCRIPTOR = "RandomizedRelu";
 
 private:
-  void UpdateRandomValues()
+  void UpdateRandomValue()
   {
-    for (SizeType i(0); i < drop_values_.size(); i++)
-    {
-      if (DataType(rng_.AsDouble()) <= probability_)
-      {
-        drop_values_.Set(i, DataType(1.0));
-      }
-      else
-      {
-        drop_values_.Set(i, DataType(0.0));
-      }
-    }
+    random_value_ =
+        lower_bound_ + static_cast<DataType>(rng_.AsDouble()) * (upper_bound_ - lower_bound_);
   }
 
-  ArrayType drop_values_;
-  DataType  probability_;
-  RNG       rng_;
+  DataType random_value_;
+  DataType lower_bound_;
+  DataType upper_bound_;
+  DataType bounds_mean_;
+  RNG      rng_;
 };
 
 }  // namespace ops
