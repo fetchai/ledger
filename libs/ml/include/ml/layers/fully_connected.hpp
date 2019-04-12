@@ -48,28 +48,30 @@ public:
                  WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
     : Layer<T>(in, out)
   {
+
+    std::string weights =
+      this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
+    std::string bias =
+      this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Bias", {});
+
+    ArrayType weights_data(std::vector<std::uint64_t>({in, out}));
+    this->Initialise(weights_data, init_mode);
+    this->SetInput(weights, weights_data);
+
+    ArrayType bias_data(std::vector<std::uint64_t>({1, out}));
+    this->SetInput(bias, bias_data);
+
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
     std::string flat_input =
         this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_Flatten", {input});
-    std::string weights =
-        this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
     std::string weights_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
         name + "_MatrixMultiply", {flat_input, weights});
-    std::string bias =
-        this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Bias", {});
     std::string output = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
         name + "_Add", {weights_matmul, bias});
 
     this->AddInputNode(input);
     this->SetOutputNode(output);
-
-    ArrayType weights_data(std::vector<std::uint64_t>({in, out}));
-    this->Initialise(weights_data, init_mode);
-    this->SetInput(weights, weights_data, false, false);
-
-    ArrayType bias_data(std::vector<std::uint64_t>({1, out}));
-    this->SetInput(bias, bias_data, false, false);
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(

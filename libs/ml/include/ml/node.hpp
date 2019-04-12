@@ -77,6 +77,16 @@ public:
   {
     std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
     FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
+
+    for (auto s : cached_output_.shape())
+      std::cout << s << " ";
+    std::cout << std::endl;
+
+    for (auto s : this->ComputeOutputShape(inputs))
+      std::cout << s << " ";
+    std::cout << std::endl;
+
+    
     assert(cached_output_.shape() == this->ComputeOutputShape(inputs));
     if (!cached_output_present_)
     {
@@ -144,6 +154,7 @@ public:
     cached_output_present_ = false;
     if (input_size_changed)
     {
+      std::cout << "Reset Cache " << name_ << std::endl;
       std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
       auto output_size = this->ComputeOutputShape(inputs);
       if (cached_output_.shape() != output_size)

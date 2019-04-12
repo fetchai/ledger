@@ -79,12 +79,15 @@ TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
   TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10}));
   std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
       std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
-  placeholder->SetData(data);
 
   fetch::ml::Node<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>> fc(
       "FullyConnected", 50u, 42u, "FullyConnected");
   fc.AddInput(placeholder);
 
+  bool input_shape_changed = placeholder->SetData(data);
+  placeholder->ResetCache(input_shape_changed);
+  fc.ResetCache(input_shape_changed);
+  
   TypeParam prediction = fc.Evaluate();
 
   ASSERT_EQ(prediction.shape().size(), 2);
@@ -97,11 +100,16 @@ TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
   TypeParam                                                                           data({5, 10});
   std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
       std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
-  placeholder->SetData(data);
 
   fetch::ml::Node<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>> fc(
       "FullyConnected", 50u, 42u, "FullyConnected");
   fc.AddInput(placeholder);
+
+  bool input_shape_changed = placeholder->SetData(data);
+  placeholder->ResetCache(input_shape_changed);
+  fc.ResetCache(input_shape_changed);
+
+  
   TypeParam prediction = fc.Evaluate();
 
   TypeParam errorSignal(std::vector<typename TypeParam::SizeType>({1, 42}));
