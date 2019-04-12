@@ -55,8 +55,13 @@ public:
   virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
 
-  // protected:
-  //   ArrayPtrType output_;  // TODO(private, 736) -- Remove
+  void SetTraining(bool is_training)
+  {
+    is_training_ = is_training;
+  }
+
+protected:
+  bool is_training_ = true;
 };
 
 /*
