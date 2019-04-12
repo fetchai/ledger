@@ -39,7 +39,7 @@ public:
   {
     (void)output;
     ASSERT(inputs.size() == 1);
-    ASSERT(output.shape() == ComputeOutputSize(inputs));
+    ASSERT(output.shape() == ComputeOutputShape(inputs));
     input_shape_ = inputs.front().get().shape();
     output.Copy(inputs.front().get());
     return output;
@@ -55,7 +55,7 @@ public:
     return {ret};
   }
 
-  virtual std::vector<SizeType> ComputeOutputSize(
+  virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     return {1, inputs.front().get().size()};

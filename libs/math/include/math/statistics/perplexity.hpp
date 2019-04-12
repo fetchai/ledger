@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/standard_functions/pow.hpp"
 #include "math/statistics/entropy.hpp"
 
 #include <cmath>
@@ -34,16 +35,17 @@ namespace statistics {
  * @param ret return value
  */
 template <typename ArrayType>
-void Perplexity(ArrayType const &a, std::size_t index, typename ArrayType::Type &ret)
+void Perplexity(ArrayType const &a, typename ArrayType::Type &ret)
 {
-  ret = pow(2, Entropy(a, index));
+  using DataType = typename ArrayType::Type;
+  Pow(DataType(2), Entropy(a), ret);
 }
 
 template <typename ArrayType>
-typename ArrayType::Type Perplexity(ArrayType const &a, std::size_t index)
+typename ArrayType::Type Perplexity(ArrayType const &a)
 {
   typename ArrayType::Type ret;
-  Perplexity(a, index, ret);
+  Perplexity(a, ret);
   return ret;
 }
 

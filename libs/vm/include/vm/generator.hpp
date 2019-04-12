@@ -71,6 +71,10 @@ private:
   void HandleAssignment(ExpressionNodePtr const &lhs, Opcode opcode, ExpressionNodePtr const &rhs);
   void HandleExpression(ExpressionNodePtr const &node);
   void HandleIdentifier(ExpressionNodePtr const &node);
+  void HandleInteger8(ExpressionNodePtr const &node);
+  void HandleUnsignedInteger8(ExpressionNodePtr const &node);
+  void HandleInteger16(ExpressionNodePtr const &node);
+  void HandleUnsignedInteger16(ExpressionNodePtr const &node);
   void HandleInteger32(ExpressionNodePtr const &node);
   void HandleUnsignedInteger32(ExpressionNodePtr const &node);
   void HandleInteger64(ExpressionNodePtr const &node);

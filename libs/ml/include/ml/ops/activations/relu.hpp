@@ -40,7 +40,7 @@ public:
                             ArrayType &                                                 output)
   {
     assert(inputs.size() == 1);
-    ASSERT(output.shape() == this->ComputeOutputSize(inputs));
+    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
     fetch::math::Relu(inputs.front().get(), output);
     return output;
   }

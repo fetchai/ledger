@@ -51,9 +51,22 @@ public:
     return {errorSignal};
   }
 
-  virtual void SetData(ArrayType const &data)
+  virtual bool SetData(ArrayType const &data)
   {
+    std::vector<SizeType> old_shape;
+    if (this->output_)
+    {
+      old_shape = this->output_->shape();
+    }
     this->output_ = std::make_shared<ArrayType>(data);
+    return old_shape != this->output_->shape();
+  }
+
+  virtual std::vector<SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    (void)inputs;
+    return this->output_->shape();
   }
 
   virtual std::vector<SizeType> ComputeOutputSize(

@@ -39,14 +39,14 @@ public:
   // Convenince method to call without having to allocate output buffer
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
-    ArrayType output(ComputeOutputSize(inputs));
+    ArrayType output(ComputeOutputShape(inputs));
     return Forward(inputs, output);
   }
 
   // Convenince method to call without having to allocate output buffer
   virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
-    ArrayType output(ComputeOutputSize(inputs, true));
+    ArrayType output(ComputeOutputShape(inputs, true));
     return ForwardBatch(inputs, output);
   }
 
@@ -60,9 +60,9 @@ public:
   virtual std::vector<ArrayType> BackwardBatch(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal) = 0;
-  virtual std::vector<SizeType> ComputeOutputSize(
+  virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
-  virtual std::vector<SizeType> ComputeOutputSize(
+  virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs, bool batch)
   {
     if (batch)
@@ -70,12 +70,20 @@ public:
       auto      shape     = inputs.front().get().shape();
       SizeType  batchSize = shape.front();
       ArrayType slice     = inputs.front().get().Slice(0);
-      shape               = ComputeOutputSize({slice});
+      shape               = ComputeOutputShape({slice});
       shape.insert(shape.begin(), batchSize);
       return shape;
     }
-    return ComputeOutputSize(inputs);
+    return ComputeOutputShape(inputs);
   }
+
+  void SetTraining(bool is_training)
+  {
+    is_training_ = is_training;
+  }
+
+protected:
+  bool is_training_ = true;
 };
 
 /*
@@ -102,7 +110,7 @@ public:
     return this->Backward(inputs, errorSignal);
   }
 
-  virtual std::vector<SizeType> ComputeOutputSize(
+  virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     return inputs.front().get().shape();

@@ -16,13 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
-
 #include "fake_storage_unit.hpp"
+#include "core/byte_array/byte_array.hpp"
+#include "crypto/sha256.hpp"
 
 #include <algorithm>
-
-using fetch::byte_array::ByteArray;
 
 FakeStorageUnit::Document FakeStorageUnit::Get(ResourceAddress const &key)
 {
@@ -104,6 +102,26 @@ FakeStorageUnit::TxSummaries FakeStorageUnit::PollRecentTx(uint32_t)
   return {};
 }
 
+// We need to be able to set the 'hash' since it isn't calculated from any state changes
+void FakeStorageUnit::SetCurrentHash(FakeStorageUnit::Hash const &hash)
+{
+  current_hash_ = hash;
+}
+
+// We need to be able to set the 'hash' from the current state
+void FakeStorageUnit::UpdateHash()
+{
+  fetch::crypto::SHA256 sha256{};
+
+  for (auto const &kv : *state_)
+  {
+    auto state_value = kv.second;
+    sha256.Update(state_value);
+  }
+
+  current_hash_ = sha256.Final();
+}
+
 FakeStorageUnit::Hash FakeStorageUnit::CurrentHash()
 {
   return current_hash_;
@@ -111,11 +129,14 @@ FakeStorageUnit::Hash FakeStorageUnit::CurrentHash()
 
 FakeStorageUnit::Hash FakeStorageUnit::LastCommitHash()
 {
-  return current_hash_;
+  assert(state_history_stack_.size() != 0);
+  return state_history_stack_.back();
 }
 
-bool FakeStorageUnit::RevertToHash(Hash const &hash)
+bool FakeStorageUnit::RevertToHash(Hash const &hash, uint64_t index)
 {
+  FETCH_UNUSED(index);
+
   bool success{false};
 
   // attempt to locate the hash in the current stack
@@ -141,23 +162,24 @@ bool FakeStorageUnit::RevertToHash(Hash const &hash)
   return success;
 }
 
-FakeStorageUnit::Hash FakeStorageUnit::Commit()
+FakeStorageUnit::Hash FakeStorageUnit::Commit(uint64_t index)
 {
   // calculate the new "hash" for the state
-  Hash commit_hash = CreateHashFromCounter(++hash_counter_);
+  Hash commit_hash = current_hash_;
 
-  return EmulateCommit(commit_hash);
+  return EmulateCommit(commit_hash, index);
 }
 
-bool FakeStorageUnit::HashExists(Hash const &hash)
+bool FakeStorageUnit::HashExists(Hash const &hash, uint64_t /*index*/)
 {
-  auto const it = std::find(state_history_stack_.begin(), state_history_stack_.end(), hash);
-  return (state_history_stack_.end() != it);
+  auto const it  = std::find(state_history_stack_.begin(), state_history_stack_.end(), hash);
+  bool       res = (state_history_stack_.end() != it);
+  return res;
 }
 
-FakeStorageUnit::Hash FakeStorageUnit::EmulateCommit(Hash const &commit_hash)
+FakeStorageUnit::Hash FakeStorageUnit::EmulateCommit(Hash const &commit_hash, uint64_t index)
 {
-  if (state_history_.find(commit_hash) != state_history_.end())
+  if (state_history_.find(commit_hash) != state_history_.end() && index != 0)
   {
     throw std::runtime_error("Duplicate state hash request");
   }
@@ -170,25 +192,4 @@ FakeStorageUnit::Hash FakeStorageUnit::EmulateCommit(Hash const &commit_hash)
   state_history_stack_.push_back(commit_hash);
 
   return commit_hash;
-}
-
-FakeStorageUnit::Hash FakeStorageUnit::CreateHashFromCounter(uint64_t count)
-{
-  static constexpr std::size_t HASH_LENGTH = 32;
-  static_assert(HASH_LENGTH % sizeof(count) == 0, "");  // not 100% important
-
-  auto const *const count_bytes = reinterpret_cast<uint8_t *>(&count);
-
-  ByteArray hash;
-  hash.Resize(HASH_LENGTH);
-
-  for (std::size_t i = 0; i < sizeof(count); ++i)
-  {
-    for (std::size_t j = i; j < HASH_LENGTH; j += sizeof(count))
-    {
-      hash[j] = count_bytes[i];
-    }
-  }
-
-  return {hash};
 }

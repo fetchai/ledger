@@ -38,7 +38,7 @@ public:
                             ArrayType &                                                 output)
   {
     ASSERT(inputs.size() == 1);
-    ASSERT(output.shape() == this->ComputeOutputSize(inputs));
+    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
     output.Copy(inputs.front().get().Transpose());
     return output;
   }
@@ -51,7 +51,7 @@ public:
     return {errorSignal.Clone().Transpose()};
   }
 
-  virtual std::vector<SizeType> ComputeOutputSize(
+  virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     return {inputs.front().get().shape().at(1), inputs.front().get().shape().at(0)};

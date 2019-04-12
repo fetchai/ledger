@@ -42,26 +42,10 @@ public:
     assert(inputs.size() == 2);
     assert(inputs.at(0).get().shape().size() == 2);
     assert(inputs.at(1).get().shape().size() == 2);
-    ASSERT(output.shape() == ComputeOutputSize(inputs));
+    ASSERT(output.shape() == ComputeOutputShape(inputs));
 
-    // inner dimension check
-    assert(inputs.at(0).get().shape()[1] == inputs.at(1).get().shape()[0]);
+    fetch::math::Dot(inputs[0].get(), inputs[1].get(), output);
 
-    for (SizeType i(0); i < inputs.at(0).get().shape()[0]; ++i)
-    {
-      for (SizeType j(0); j < inputs.at(1).get().shape()[1]; ++j)
-      {
-        output.At(std::vector<SizeType>({i, j})) =
-            inputs.at(0).get().At(std::vector<SizeType>({i, 0})) *
-            inputs.at(1).get().At(std::vector<SizeType>({0, j}));
-        for (SizeType k(1); k < inputs.at(0).get().shape()[1]; ++k)
-        {
-          output.At(std::vector<SizeType>({i, j})) +=
-              inputs.at(0).get().At(std::vector<SizeType>({i, k})) *
-              inputs.at(1).get().At(std::vector<SizeType>({k, j}));
-        }
-      }
-    }
     return output;
   }
 
@@ -80,7 +64,7 @@ public:
     return {errorSignal1, errorSignal2};
   }
 
-  virtual std::vector<SizeType> ComputeOutputSize(
+  virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     return {inputs.at(0).get().shape()[0], inputs.at(1).get().shape()[1]};
