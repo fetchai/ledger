@@ -693,9 +693,14 @@ TEST(FixedPointTest, Exponential_16_16)
   fetch::fixed_point::FixedPoint<16, 16> two(2);
   fetch::fixed_point::FixedPoint<16, 16> e1 = fp32::Exp(one);
   fetch::fixed_point::FixedPoint<16, 16> e2 = fp32::Exp(two);
+  fetch::fixed_point::FixedPoint<16, 16> max{fp32::FromBase(fp32::max)};
+  fetch::fixed_point::FixedPoint<16, 16> max_log = fp32::Log(max);
+  fetch::fixed_point::FixedPoint<16, 16> max_exp = fp32::Exp(max_log);
 
-  EXPECT_NEAR((double)e1/std::exp(1.0), 1.0, 2e-5);
-  EXPECT_NEAR((double)e2/std::exp(2.0), 1.0, 2e-5);
+  EXPECT_NEAR((double)e1/std::exp(1.0), 1.0, 1e-4);
+  EXPECT_NEAR((double)e2/std::exp(2.0), 1.0, 1e-4);
+  EXPECT_NEAR((double)max_exp/double(max), 1.0, 2e-4);
+  EXPECT_THROW(fp32::Exp(max_log+1), std::overflow_error);
 }
 
 TEST(FixedPointTest, Exponential_32_32)
@@ -705,7 +710,8 @@ TEST(FixedPointTest, Exponential_32_32)
   fetch::fixed_point::FixedPoint<32, 32> ten(10);
   fetch::fixed_point::FixedPoint<32, 32> huge(21);
   fetch::fixed_point::FixedPoint<32, 32> small(0.0001);
-  fetch::fixed_point::FixedPoint<32, 32> tiny(0, one.smallest_fraction);
+  fetch::fixed_point::FixedPoint<32, 32> tiny(0, fp64::smallest_fraction);
+  fetch::fixed_point::FixedPoint<32, 32> max{fp64::FromBase(fp64::max)};
   fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Exp(one);
   fetch::fixed_point::FixedPoint<32, 32> e2 = fp64::Exp(two);
   fetch::fixed_point::FixedPoint<32, 32> e3 = fp64::Exp(ten);
@@ -713,12 +719,17 @@ TEST(FixedPointTest, Exponential_32_32)
   fetch::fixed_point::FixedPoint<32, 32> e5 = fp64::Exp(small);
   fetch::fixed_point::FixedPoint<32, 32> e6 = fp64::Exp(tiny);
 
+  fetch::fixed_point::FixedPoint<32, 32> max_log = fp64::Log(max);
+  fetch::fixed_point::FixedPoint<32, 32> max_exp = fp64::Exp(max_log);
+
   EXPECT_NEAR((double)e1/std::exp(1.0), 1.0, 1e-7);
   EXPECT_NEAR((double)e2/std::exp(2.0), 1.0, 1e-7);
   EXPECT_NEAR((double)e3/std::exp(10.0), 1.0, 1e-7);
   EXPECT_NEAR((double)e4/std::exp(21), 1.0, 1e-7);
   EXPECT_NEAR((double)e5/std::exp(0.0001), 1.0, 1e-7);
   EXPECT_NEAR((double)e6/std::exp(double(tiny)), 1.0, 1e-7);
+  EXPECT_NEAR((double)max_exp/double(max), 1.0, 1e-7);
+  EXPECT_THROW(fp64::Exp(max_log+1), std::overflow_error);
 }
 
 TEST(FixedPointTest, Logarithm_16_16)
