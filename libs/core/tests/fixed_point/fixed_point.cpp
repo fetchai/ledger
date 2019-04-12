@@ -464,6 +464,7 @@ TEST(FixedPointTest, Division_32_32)
   EXPECT_EQ(one / huge, infinitesimal * 4);
   EXPECT_EQ(huge / infinitesimal, zero);
 
+  // TODO(843): Add proper support for NaN/Infinity/etc in FixedPoint class
   EXPECT_THROW(two / zero, std::overflow_error);
   EXPECT_THROW(zero / zero, std::overflow_error);
 }
@@ -720,6 +721,29 @@ TEST(FixedPointTest, Exponential_32_32)
   EXPECT_NEAR((double)e6/std::exp(double(tiny)), 1.0, 1e-7);
 }
 
+TEST(FixedPointTest, Logarithm_16_16)
+{
+  fetch::fixed_point::FixedPoint<16, 16> one(1);
+  fetch::fixed_point::FixedPoint<16, 16> one_point_five(1.5);
+  fetch::fixed_point::FixedPoint<16, 16> ten(10);
+  fetch::fixed_point::FixedPoint<16, 16> huge(10000);
+  fetch::fixed_point::FixedPoint<16, 16> small(0.001);
+  fetch::fixed_point::FixedPoint<16, 16> tiny(0, one.smallest_fraction);
+  fetch::fixed_point::FixedPoint<16, 16> e1 = fp32::Log2(one);
+  fetch::fixed_point::FixedPoint<16, 16> e2 = fp32::Log2(one_point_five);
+  fetch::fixed_point::FixedPoint<16, 16> e3 = fp32::Log2(ten);
+  fetch::fixed_point::FixedPoint<16, 16> e4 = fp32::Log2(huge);
+  fetch::fixed_point::FixedPoint<16, 16> e5 = fp32::Log2(small);
+  fetch::fixed_point::FixedPoint<16, 16> e6 = fp32::Log2(tiny);
+
+  EXPECT_NEAR((double)e1, std::log2((double)one), 1e-4);
+  EXPECT_NEAR((double)e2, std::log2((double)one_point_five), 1e-4);
+  EXPECT_NEAR((double)e3, std::log2((double)ten), 1e-4);
+  EXPECT_NEAR((double)e4, std::log2((double)huge), 1e-4);
+  EXPECT_NEAR((double)e5, std::log2((double)small), 1e-4);
+  EXPECT_NEAR((double)e6, std::log2((double)tiny), 1e-4);
+}
+
 TEST(FixedPointTest, Logarithm_32_32)
 {
   fetch::fixed_point::FixedPoint<32, 32> one(1);
@@ -741,4 +765,27 @@ TEST(FixedPointTest, Logarithm_32_32)
   EXPECT_NEAR((double)e4, std::log2((double)huge), 1e-7);
   EXPECT_NEAR((double)e5, std::log2((double)small), 1e-7);
   EXPECT_NEAR((double)e6, std::log2((double)tiny), 1e-7);
+}
+
+TEST(FixedPointTest, Abs_32_32)
+{
+  fetch::fixed_point::FixedPoint<32, 32> one(1);
+  fetch::fixed_point::FixedPoint<32, 32> m_one(-1);
+  fetch::fixed_point::FixedPoint<32, 32> one_point_five(1.5);
+  fetch::fixed_point::FixedPoint<32, 32> m_one_point_five(-1.5);
+  fetch::fixed_point::FixedPoint<32, 32> ten(10);
+  fetch::fixed_point::FixedPoint<32, 32> m_ten(-10);
+  fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Abs(one);
+  fetch::fixed_point::FixedPoint<32, 32> e2 = fp64::Abs(m_one);
+  fetch::fixed_point::FixedPoint<32, 32> e3 = fp64::Abs(one_point_five);
+  fetch::fixed_point::FixedPoint<32, 32> e4 = fp64::Abs(m_one_point_five);
+  fetch::fixed_point::FixedPoint<32, 32> e5 = fp64::Abs(ten);
+  fetch::fixed_point::FixedPoint<32, 32> e6 = fp64::Abs(m_ten);
+
+  EXPECT_EQ(e1, one);
+  EXPECT_EQ(e2, one);
+  EXPECT_EQ(e3, one_point_five);
+  EXPECT_EQ(e4, one_point_five);
+  EXPECT_EQ(e5, ten);
+  EXPECT_EQ(e6, ten);
 }
