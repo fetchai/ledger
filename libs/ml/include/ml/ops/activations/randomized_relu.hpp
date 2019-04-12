@@ -53,6 +53,7 @@ public:
                             ArrayType &                                                 output)
   {
     assert(inputs.size() == 1);
+    assert(output.shape() == this->ComputeOutputShape(inputs));
 
     if (this->is_training_)
     {

@@ -62,7 +62,6 @@ public:
 
 protected:
   bool is_training_ = true;
-  //   ArrayPtrType output_;  // TODO(private, 736) -- Remove
 };
 
 /*
