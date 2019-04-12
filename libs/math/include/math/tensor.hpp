@@ -79,6 +79,11 @@ public:
 
   static constexpr char const *LOGGING_NAME = "Tensor";
 
+  /**
+   * The TensorSlice is a convenience method for efficiently manipulating
+   * SubTensors (e.g. such as a 1D Slice). It is built on top of TensorIterator
+   * @tparam STensor
+   */
   template <typename STensor>
   class TensorSliceImplementation
   {
@@ -1595,16 +1600,6 @@ public:
   SizeType size() const
   {
     return size_;
-  }
-
-  /* Returns the capacity of the array. */
-  SizeType capacity() const
-  {
-    return data_.padded_size();
-  }
-  SizeType padded_size() const
-  {
-    return data_.padded_size();
   }
 
   ////////////////////////////
