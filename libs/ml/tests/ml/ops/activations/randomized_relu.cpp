@@ -46,7 +46,8 @@ TYPED_TEST(RandomizedReluTest, forward_test)
     gt.Set(i, DataType(gtInput[i]));
   }
   fetch::ml::ops::RandomizedRelu<ArrayType> op(DataType(0.03), DataType(0.08), 12345);
-  ArrayType                                 prediction = op.Forward({data});
+  TypeParam prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
+      std::vector<std::reference_wrapper<TypeParam const>>({data}));
 
   // test correct values
   ASSERT_TRUE(
@@ -58,7 +59,8 @@ TYPED_TEST(RandomizedReluTest, forward_test)
   {
     gt.Set(i, DataType(gtInput[i]));
   }
-  prediction = op.Forward({data});
+  prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
+      std::vector<std::reference_wrapper<TypeParam const>>({data}));
 
   // test correct values
   ASSERT_TRUE(
@@ -72,7 +74,8 @@ TYPED_TEST(RandomizedReluTest, forward_test)
   {
     gt.Set(i, DataType(gtInput[i]));
   }
-  prediction = op.Forward({data});
+  prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
+      std::vector<std::reference_wrapper<TypeParam const>>({data}));
 
   // test correct values
   ASSERT_TRUE(
@@ -104,7 +107,8 @@ TYPED_TEST(RandomizedReluTest, backward_test)
 
   // Test after generating new random alpha value
   // Forward pass will update random value
-  op.Forward({data});
+  op.fetch::ml::template Ops<TypeParam>::Forward(
+      std::vector<std::reference_wrapper<TypeParam const>>({data}));
 
   gtInput = {0, 0, 0, 0, 1, 0.031396768, 0, 0};
   for (std::uint64_t i(0); i < 8; ++i)

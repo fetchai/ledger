@@ -49,7 +49,8 @@ public:
 
   virtual ~RandomizedRelu() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
     assert(inputs.size() == 1);
 
@@ -58,15 +59,10 @@ public:
       UpdateRandomValue();
     }
 
-    if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
-    {
-      this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
-    }
-
     DataType tmp_alpha = this->is_training_ ? random_value_ : bounds_mean_;
-    fetch::math::LeakyRelu(inputs.front().get(), tmp_alpha, *this->output_);
+    fetch::math::LeakyRelu(inputs.front().get(), tmp_alpha, output);
 
-    return *this->output_;
+    return output;
   }
 
   virtual std::vector<ArrayType> Backward(
