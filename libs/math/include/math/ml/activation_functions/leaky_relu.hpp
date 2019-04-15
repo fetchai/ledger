@@ -25,11 +25,11 @@ namespace fetch {
 namespace math {
 
 /**
- * Leaky rectifier unit
+ * Leaky rectifier unit - Alpha value as scalar
  * @tparam ArrayType
- * @param t
- * @param a
- * @param ret
+ * @param t input tensor
+ * @param a scalar alpha value
+ * @param ret return tensor
  */
 template <typename ArrayType>
 void LeakyRelu(ArrayType const &t, typename ArrayType::Type const &a, ArrayType &ret)
@@ -54,12 +54,20 @@ void LeakyRelu(ArrayType const &t, typename ArrayType::Type const &a, ArrayType 
   }
 }
 
+template <typename ArrayType>
+ArrayType LeakyRelu(ArrayType const &t, typename ArrayType::Type &a)
+{
+  ArrayType ret(t.shape());
+  LeakyRelu(t, a, ret);
+  return ret;
+}
+
 /**
- * Leaky rectifier unit
+ * Leaky rectifier unit - Alpha values as vector
  * @tparam ArrayType
- * @param t
- * @param a
- * @param ret
+ * @param t input tensor
+ * @param a vector of alpha values
+ * @param ret return tensor
  */
 template <typename ArrayType>
 void LeakyRelu(ArrayType const &t, ArrayType const &a, ArrayType &ret)
@@ -72,12 +80,12 @@ void LeakyRelu(ArrayType const &t, ArrayType const &a, ArrayType &ret)
   {
     if (val >= DataType(0))
     {
-      // f(x)=x for x>=0
+      // f'(x)=x for x>=0
       ret.Set(idx, val);
     }
     else
     {
-      // f(x)=a*x for x<0
+      // f'(x)=a*x for x<0
       Multiply(a.At(idx), val, ret.At(idx));
     }
     ++idx;
@@ -85,7 +93,7 @@ void LeakyRelu(ArrayType const &t, ArrayType const &a, ArrayType &ret)
 }
 
 template <typename ArrayType>
-ArrayType LeakyRelu(ArrayType const &t, typename ArrayType::Type &a)
+ArrayType LeakyRelu(ArrayType const &t, ArrayType &a)
 {
   ArrayType ret(t.shape());
   LeakyRelu(t, a, ret);

@@ -38,6 +38,7 @@ public:
   LeakyReluOp()          = default;
   virtual ~LeakyReluOp() = default;
 
+  // f(x)=LeakyRelu(x,alpha)=max(0,x)+alpha*min(0,x)
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                             ArrayType &                                                 output)
   {
@@ -50,6 +51,8 @@ public:
     return output;
   }
 
+  // input.at(0) - gradient for x: x>=0 f'(x)=1, x<0 f'(x)=alpha
+  // input.at(1) - gradient for alpha: f'(alpha)=1
   virtual std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal)
@@ -62,7 +65,6 @@ public:
     ArrayType returnSignal{errorSignal.shape()};
     ArrayType t{inputs.front().get().shape()};
 
-    // gradient of parametric relu function is for x<0 = a, x>=0 = 1.0
     t = this->Forward(inputs, t);
 
     typename ArrayType::SizeType idx(0);
