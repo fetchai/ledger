@@ -631,8 +631,6 @@ private:
       n_dims[i] = tensors[i].shape().size();
     }
 
-    bool xxx{(std::equal(n_dims.begin() + 1, n_dims.end(), n_dims.begin()))};
-
     if (!std::equal(n_dims.begin() + 1, n_dims.end(), n_dims.begin()))
     {
       return false;
