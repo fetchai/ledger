@@ -199,11 +199,11 @@ TYPED_TEST(TensorIndexingTest, range_based_iteration_2d)
     i += TypeParam(1);
   }
   TypeParam val{0};
-  for (std::uint64_t i(0); i < t.shape()[0]; ++i)
+  for (std::uint64_t i(0); i < t.shape()[1]; ++i)
   {
-    for (std::uint64_t j(0); j < t.shape()[1]; ++j)
+    for (std::uint64_t j(0); j < t.shape()[0]; ++j)
     {
-      EXPECT_EQ(t.At(i, j), val);
+      EXPECT_EQ(t.At(j, i), val);
       ++val;
     }
   }
@@ -219,13 +219,13 @@ TYPED_TEST(TensorIndexingTest, range_based_iteration_3d)
     i += TypeParam(1);
   }
   TypeParam val{0};
-  for (std::uint64_t i(0); i < t.shape()[0]; ++i)
+  for (std::uint64_t i(0); i < t.shape()[2]; ++i)
   {
     for (std::uint64_t j(0); j < t.shape()[1]; ++j)
     {
-      for (std::uint64_t k(0); k < t.shape()[2]; ++k)
+      for (std::uint64_t k(0); k < t.shape()[0]; ++k)
       {
-        EXPECT_EQ(t.At(i, j, k), val);
+        EXPECT_EQ(t.At(k, j, i), val);
         ++val;
       }
     }
@@ -242,15 +242,15 @@ TYPED_TEST(TensorIndexingTest, range_based_iteration_4d)
     i += TypeParam(1);
   }
   TypeParam val{0};
-  for (std::uint64_t i(0); i < t.shape()[0]; ++i)
+  for (std::uint64_t i(0); i < t.shape()[3]; ++i)
   {
-    for (std::uint64_t j(0); j < t.shape()[1]; ++j)
+    for (std::uint64_t j(0); j < t.shape()[2]; ++j)
     {
-      for (std::uint64_t k(0); k < t.shape()[2]; ++k)
+      for (std::uint64_t k(0); k < t.shape()[1]; ++k)
       {
-        for (std::uint64_t m(0); m < t.shape()[3]; ++m)
+        for (std::uint64_t m(0); m < t.shape()[0]; ++m)
         {
-          EXPECT_EQ(t.At(i, j, k, m), val);
+          EXPECT_EQ(t.At(m, k, j, i), val);
           ++val;
         }
       }

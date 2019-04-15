@@ -216,19 +216,19 @@ TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
   EXPECT_EQ(t2.shape(), std::vector<std::uint64_t>({1, 3, 5}));
 
   EXPECT_EQ(t2.At(0, 0, 0), TypeParam(15));
-  EXPECT_EQ(t2.At(0, 0, 1), TypeParam(20));
-  EXPECT_EQ(t2.At(0, 0, 2), TypeParam(25));
-  EXPECT_EQ(t2.At(0, 0, 3), TypeParam(16));
-  EXPECT_EQ(t2.At(0, 0, 4), TypeParam(21));
-  EXPECT_EQ(t2.At(0, 1, 0), TypeParam(26));
-  EXPECT_EQ(t2.At(0, 1, 1), TypeParam(17));
+  EXPECT_EQ(t2.At(0, 1, 0), TypeParam(20));
+  EXPECT_EQ(t2.At(0, 2, 0), TypeParam(25));
+  EXPECT_EQ(t2.At(0, 0, 1), TypeParam(16));
+  EXPECT_EQ(t2.At(0, 1, 1), TypeParam(21));
+  EXPECT_EQ(t2.At(0, 2, 1), TypeParam(26));
+  EXPECT_EQ(t2.At(0, 0, 2), TypeParam(17));
   EXPECT_EQ(t2.At(0, 1, 2), TypeParam(22));
-  EXPECT_EQ(t2.At(0, 1, 3), TypeParam(27));
-  EXPECT_EQ(t2.At(0, 1, 4), TypeParam(18));
-  EXPECT_EQ(t2.At(0, 2, 0), TypeParam(23));
-  EXPECT_EQ(t2.At(0, 2, 1), TypeParam(28));
-  EXPECT_EQ(t2.At(0, 2, 2), TypeParam(19));
-  EXPECT_EQ(t2.At(0, 2, 3), TypeParam(24));
+  EXPECT_EQ(t2.At(0, 2, 2), TypeParam(27));
+  EXPECT_EQ(t2.At(0, 0, 3), TypeParam(18));
+  EXPECT_EQ(t2.At(0, 1, 3), TypeParam(23));
+  EXPECT_EQ(t2.At(0, 2, 3), TypeParam(28));
+  EXPECT_EQ(t2.At(0, 0, 4), TypeParam(19));
+  EXPECT_EQ(t2.At(0, 1, 4), TypeParam(24));
   EXPECT_EQ(t2.At(0, 2, 4), TypeParam(29));
 
   fetch::math::Tensor<TypeParam> t3 = (t2.Squeeze()).Transpose();
@@ -236,19 +236,19 @@ TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
 
   // tensor is column major
   EXPECT_EQ(t3.At(0, 0), TypeParam(15));
-  EXPECT_EQ(t3.At(0, 1), TypeParam(16));
-  EXPECT_EQ(t3.At(0, 2), TypeParam(17));
-  EXPECT_EQ(t3.At(1, 0), TypeParam(18));
-  EXPECT_EQ(t3.At(1, 1), TypeParam(19));
-  EXPECT_EQ(t3.At(1, 2), TypeParam(20));
-  EXPECT_EQ(t3.At(2, 0), TypeParam(21));
+  EXPECT_EQ(t3.At(1, 0), TypeParam(16));
+  EXPECT_EQ(t3.At(2, 0), TypeParam(17));
+  EXPECT_EQ(t3.At(3, 0), TypeParam(18));
+  EXPECT_EQ(t3.At(4, 0), TypeParam(19));
+  EXPECT_EQ(t3.At(0, 1), TypeParam(20));
+  EXPECT_EQ(t3.At(1, 1), TypeParam(21));
   EXPECT_EQ(t3.At(2, 1), TypeParam(22));
-  EXPECT_EQ(t3.At(2, 2), TypeParam(23));
-  EXPECT_EQ(t3.At(3, 0), TypeParam(24));
-  EXPECT_EQ(t3.At(3, 1), TypeParam(25));
-  EXPECT_EQ(t3.At(3, 2), TypeParam(26));
-  EXPECT_EQ(t3.At(4, 0), TypeParam(27));
-  EXPECT_EQ(t3.At(4, 1), TypeParam(28));
+  EXPECT_EQ(t3.At(3, 1), TypeParam(23));
+  EXPECT_EQ(t3.At(4, 1), TypeParam(24));
+  EXPECT_EQ(t3.At(0, 2), TypeParam(25));
+  EXPECT_EQ(t3.At(1, 2), TypeParam(26));
+  EXPECT_EQ(t3.At(2, 2), TypeParam(27));
+  EXPECT_EQ(t3.At(3, 2), TypeParam(28));
   EXPECT_EQ(t3.At(4, 2), TypeParam(29));
 }
 
