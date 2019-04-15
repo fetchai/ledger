@@ -21,7 +21,6 @@
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/ml/activation_functions/leaky_relu.hpp"
-#include "math/ml/activation_functions/relu.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -39,7 +38,7 @@ public:
   LeakyReluOp()          = default;
   virtual ~LeakyReluOp() = default;
 
-  // f(x)=LeakyRelu(x,alpha)=max(0,x)+alpha*min(0,x)
+  // LeakyRelu(x,alpha)=max(0,x)+alpha*min(0,x)
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                             ArrayType &                                                 output)
   {
@@ -52,8 +51,10 @@ public:
     return output;
   }
 
-  // input.at(0) - gradient for x: x>=0 f'(x)=1, x<0 f'(x)=alpha
-  // input.at(1) - gradient for alpha: f'(alpha)=-Relu(-x)=min(0,x)
+  // Gradient of input.at(0)=x is:
+  //    x>=0 f'(x)=1, x<0 f'(x)=alpha
+  // Gradient of input.at(1)=alpha is:
+  //    f'(alpha)=-Relu(-x)=min(0,x); x>=0 f'(alpha)=0, x<0 f'(alpha)=x
   virtual std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal)
@@ -82,13 +83,11 @@ public:
       ++idx;
     }
 
-    // f'(alpha)=-Relu(-x)
     // multiply by errorSignal (chain rule)
     fetch::math::Multiply(errorSignal, returnSignal1, returnSignal1);
     fetch::math::Multiply(errorSignal, returnSignal2, returnSignal2);
 
-    // since PRelu is max(0,x)+alpha*min(0*x), signal for alpha is error*min(0*x)
-    return {returnSignal1, returnSignal1};
+    return {returnSignal1, returnSignal2};
   }
 
   static constexpr char const *DESCRIPTOR = "LeakyReluOp";
