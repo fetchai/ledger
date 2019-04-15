@@ -82,6 +82,8 @@ typename ArrayType::Type CrossEntropyLoss(
         }
         ret -= Log(tmp);
       }
+      ++x_it;
+      ++y_it;
     }
   }
   // if a one-hot, could be arbitrary n_classes
