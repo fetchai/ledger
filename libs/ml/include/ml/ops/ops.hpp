@@ -20,6 +20,7 @@
 #include "core/assert.hpp"
 #include "math/tensor_operations.hpp"
 #include <memory>
+#include <thread>
 #include <vector>
 
 namespace fetch {
@@ -134,12 +135,18 @@ public:
                                  ArrayType &                                                 output)
   {
     assert(inputs.size() == 1);
-
+    std::vector<std::thread> threads;
     for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
     {
-      ArrayType input_slice  = inputs.front().get().Slice(b);
-      ArrayType output_slice = output.Slice(b);
-      this->Forward({input_slice}, output_slice);
+      threads.emplace_back([b, &inputs, &output, this]() {
+        ArrayType input_slice  = inputs.front().get().Slice(b);
+        ArrayType output_slice = output.Slice(b);
+        this->Forward({input_slice}, output_slice);
+      });
+    }
+    for (auto &t : threads)
+    {
+      t.join();
     }
     return output;
   }
