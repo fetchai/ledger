@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor_operations.hpp"
 #include "core/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
@@ -39,7 +38,7 @@ template <typename T, typename R = void>
 using IfIsNotVector = fetch::meta::EnableIf<!IsVector<T>::value, R>;
 
 template <typename ScalarType, typename TensorType>
-IfIsNotVector<ScalarType, void> init_nd_tensor_recursion(
+IfIsNotVector<ScalarType, void> InitNDTensorRecursively(
     const ScalarType s, TensorType &t, std::vector<typename TensorType::SizeType> &counter,
     typename TensorType::SizeType)
 {
@@ -47,24 +46,24 @@ IfIsNotVector<ScalarType, void> init_nd_tensor_recursion(
 }
 
 template <typename VectorType, typename TensorType>
-IfIsVector<VectorType, void> init_nd_tensor_recursion(
+IfIsVector<VectorType, void> InitNDTensorRecursively(
     const VectorType &init_vector, TensorType &t,
     std::vector<typename TensorType::SizeType> counter, typename TensorType::SizeType dim)
 {
   for (u_int64_t i = 0; i < init_vector.size(); i++)
   {
 
-    init_nd_tensor_recursion(init_vector[i], t, counter, dim + 1);
+    InitNDTensorRecursively(init_vector[i], t, counter, dim + 1);
     counter[dim] += 1;
   }
 }
 
 template <typename VectorType, typename TensorType>
-void init_nd_tensor(const VectorType &init_vector, TensorType &t)
+void InitNDTensor(const VectorType &init_vector, TensorType &t)
 {
   std::vector<typename TensorType::SizeType> counter(t.shape().size(), 0);
   typename TensorType::SizeType              dim{0};
-  init_nd_tensor_recursion(init_vector, t, counter, dim);
+  InitNDTensorRecursively(init_vector, t, counter, dim);
 }
 
 template <typename T>
@@ -318,15 +317,15 @@ TYPED_TEST(TensorOperationsTest, concatenation_test_3D)
       {{{TypeParam(100), TypeParam(200)}, {TypeParam(300), TypeParam(400)}},
        {{TypeParam(500), TypeParam(600)}, {TypeParam(700), TypeParam(800)}}});
 
-  init_nd_tensor(values_1, tensor_1);
-  init_nd_tensor(values_2, tensor_2);
-  init_nd_tensor(values_3, tensor_3);
+  InitNDTensor(values_1, tensor_1);
+  InitNDTensor(values_2, tensor_2);
+  InitNDTensor(values_3, tensor_3);
 
   std::vector<fetch::math::Tensor<TypeParam>> all_tensors{tensor_1, tensor_2, tensor_3};
 
-  auto concat_0 = fetch::math::concatenate(all_tensors, 0);
-  auto concat_1 = fetch::math::concatenate(all_tensors, 1);
-  auto concat_2 = fetch::math::concatenate(all_tensors, 2);
+  auto concat_0 = fetch::math::Tensor<TypeParam>::Concat(all_tensors, 0);
+  auto concat_1 = fetch::math::Tensor<TypeParam>::Concat(all_tensors, 1);
+  auto concat_2 = fetch::math::Tensor<TypeParam>::Concat(all_tensors, 2);
 
   EXPECT_EQ(concat_0.At({0, 0, 0}), values_1[0][0][0]);
   EXPECT_EQ(concat_1.At({0, 0, 0}), values_1[0][0][0]);
