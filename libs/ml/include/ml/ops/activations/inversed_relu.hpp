@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/ml/activation_functions/inversed_relu.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -25,58 +26,46 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Multiply : public fetch::ml::ElementWiseOps<T>
+class InversedRelu : public fetch::ml::ElementWiseOps<T>
 {
 public:
   using ArrayType    = T;
+  using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  Multiply()          = default;
-  virtual ~Multiply() = default;
+  InversedRelu()          = default;
+  virtual ~InversedRelu() = default;
 
-  /**
-   * elementwise multiplication
-   * @param inputs  left & right inputs to multiply
-   * @return
-   */
+  // f(x)=min(0,x);
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                             ArrayType &                                                 output)
   {
-    (void)output;
-    ASSERT(inputs.size() == 2);
-    ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
+    ASSERT(inputs.size() == 1);
     ASSERT(output.shape() == this->ComputeOutputShape(inputs));
-
-    auto output_it  = output.begin();
-    auto output_end = output.end();
-    auto a_it       = inputs[0].get().begin();
-    auto b_it       = inputs[1].get().begin();
-
-    while (output_it != output_end)
-    {
-      *output_it = *a_it * *b_it;
-      ++output_it;
-      ++a_it;
-      ++b_it;
-    }
-
+    fetch::math::InversedRelu(inputs.front().get(), output);
     return output;
   }
 
-  /**
-   * elementwise multiplication is not trainable - just pass the error signal back
-   */
+  // x>0 f'(x)=0, x<=0 f'(x)=1
   virtual std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
-    ASSERT(inputs.size() == 2);
-    ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
-    ASSERT(errorSignal.size() == inputs.at(1).get().size());
-    return {errorSignal, errorSignal};
+    ASSERT(inputs.size() == 1);
+    ASSERT(inputs[0].get().shape() == errorSignal.shape());
+
+    ArrayType returnSignal = errorSignal.Clone();
+    for (std::size_t i = 0; i < inputs.front().get().size(); ++i)
+    {
+      if (inputs.front().get()[i] > DataType(0))
+      {
+        returnSignal.Set(i, DataType(0));
+      }
+    }
+    return {returnSignal};
   }
 
-  static constexpr char const *DESCRIPTOR = "Multiply";
+  static constexpr char const *DESCRIPTOR = "InversedRelu";
 };
 
 }  // namespace ops

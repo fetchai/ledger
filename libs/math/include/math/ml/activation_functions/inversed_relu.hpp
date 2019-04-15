@@ -19,76 +19,31 @@
 
 #include "core/assert.hpp"
 #include "math/comparison.hpp"
-#include "math/standard_functions/exp.hpp"
 
 namespace fetch {
 namespace math {
 
 /**
- * Leaky rectifier unit
+ * Inversed Rectified linear unit
  * @tparam ArrayType
  * @param t
- * @param a
  * @param ret
  */
 template <typename ArrayType>
-void LeakyRelu(ArrayType const &t, typename ArrayType::Type const &a, ArrayType &ret)
+void InversedRelu(ArrayType const &t, ArrayType &ret)
 {
   ASSERT(t.size() == ret.size());
-  using DataType = typename ArrayType::Type;
-
-  typename ArrayType::SizeType idx(0);
-  for (auto const &val : t)
+  for (typename ArrayType::SizeType j{0}; j < t.size(); ++j)
   {
-    if (val >= DataType(0))
-    {
-      // f(x)=x for x>=0
-      ret.Set(idx, val);
-    }
-    else
-    {
-      // f(x)=a*x for x<0
-      Multiply(a, val, ret.At(idx));
-    }
-    ++idx;
-  }
-}
-
-/**
- * Leaky rectifier unit
- * @tparam ArrayType
- * @param t
- * @param a
- * @param ret
- */
-template <typename ArrayType>
-void LeakyRelu(ArrayType const &t, ArrayType const &a, ArrayType &ret)
-{
-  ASSERT(t.size() == ret.size());
-  using DataType = typename ArrayType::Type;
-
-  typename ArrayType::SizeType idx(0);
-  for (auto const &val : t)
-  {
-    if (val >= DataType(0))
-    {
-      // f(x)=x for x>=0
-      ret.Set(idx, val);
-    }
-    else
-    {
-      // f(x)=a*x for x<0
-      Multiply(a.At(idx), val, ret.At(idx));
-    }
-    ++idx;
+    ret.Set(j, fetch::math::Min(t.At(j), typename ArrayType::Type(0)));
   }
 }
 
 template <typename ArrayType>
-ArrayType LeakyRelu(ArrayType const &t, typename ArrayType::Type &a)
+ArrayType InversedRelu(ArrayType const &t)
 {
   ArrayType ret(t.shape());
-  LeakyRelu(t, a, ret);
+  Relu(t, ret);
   return ret;
 }
 

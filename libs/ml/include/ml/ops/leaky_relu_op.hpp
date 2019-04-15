@@ -18,6 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
+#include "math/ml/activation_functions/leaky_relu.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -25,58 +28,65 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Multiply : public fetch::ml::ElementWiseOps<T>
+class LeakyReluOp : public fetch::ml::ElementWiseOps<T>
 {
 public:
   using ArrayType    = T;
+  using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  Multiply()          = default;
-  virtual ~Multiply() = default;
+  LeakyReluOp()          = default;
+  virtual ~LeakyReluOp() = default;
 
-  /**
-   * elementwise multiplication
-   * @param inputs  left & right inputs to multiply
-   * @return
-   */
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                             ArrayType &                                                 output)
   {
-    (void)output;
     ASSERT(inputs.size() == 2);
-    ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
-    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
+    ASSERT(inputs.at(0).get().shape() == output.shape());
+    ASSERT(inputs.at(1).get().size() == output.size());
 
-    auto output_it  = output.begin();
-    auto output_end = output.end();
-    auto a_it       = inputs[0].get().begin();
-    auto b_it       = inputs[1].get().begin();
-
-    while (output_it != output_end)
-    {
-      *output_it = *a_it * *b_it;
-      ++output_it;
-      ++a_it;
-      ++b_it;
-    }
+    fetch::math::LeakyRelu(inputs.at(0).get(), inputs.at(1).get(), output);
 
     return output;
   }
 
-  /**
-   * elementwise multiplication is not trainable - just pass the error signal back
-   */
   virtual std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 2);
-    ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
+    ASSERT(inputs.at(0).get().size() == errorSignal.size());
+    ASSERT(inputs.at(1).get().size() == errorSignal.size());
     ASSERT(errorSignal.size() == inputs.at(1).get().size());
-    return {errorSignal, errorSignal};
+
+    ArrayType returnSignal{errorSignal.shape()};
+    ArrayType t{inputs.front().get().shape()};
+
+    // gradient of parametric relu function is for x<0 = a, x>=0 = 1.0
+    t = this->Forward(inputs, t);
+
+    typename ArrayType::SizeType idx(0);
+    for (auto const &val : t)
+    {
+      if (val >= DataType(0))
+      {
+        returnSignal.Set(idx, DataType(1));
+      }
+      else
+      {
+        returnSignal.Set(idx, inputs.at(1).get().At(idx));
+      }
+      ++idx;
+    }
+
+    // multiply by errorSignal (chain rule)
+    fetch::math::Multiply(errorSignal, returnSignal, returnSignal);
+
+    // since PRelu is max(0,x)+alpha*min(0*x), signal for alpha is just errorSignal
+    return {returnSignal, errorSignal};
   }
 
-  static constexpr char const *DESCRIPTOR = "Multiply";
+  static constexpr char const *DESCRIPTOR = "LeakyReluOp";
 };
 
 }  // namespace ops
