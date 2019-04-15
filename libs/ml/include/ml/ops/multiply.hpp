@@ -64,7 +64,9 @@ public:
   }
 
   /**
-   * elementwise multiplication is not trainable - just pass the error signal back
+   * elementwise multiplication gradient is:
+   * f'(input0)=input0*errorSignal
+   * f'(input1)=input1*errorSignal
    */
   virtual std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
@@ -73,7 +75,14 @@ public:
     ASSERT(inputs.size() == 2);
     ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
     ASSERT(errorSignal.size() == inputs.at(1).get().size());
-    return {errorSignal, errorSignal};
+
+    ArrayType errorSignal1(inputs.at(0).get().shape());
+    ArrayType errorSignal2(inputs.at(1).get().shape());
+
+    fetch::math::Multiply(inputs.at(1).get(), errorSignal, errorSignal1);
+    fetch::math::Multiply(inputs.at(0).get(), errorSignal, errorSignal2);
+
+    return {errorSignal1, errorSignal2};
   }
 
   static constexpr char const *DESCRIPTOR = "Multiply";

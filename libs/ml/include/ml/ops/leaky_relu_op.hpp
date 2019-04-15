@@ -21,6 +21,7 @@
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/ml/activation_functions/leaky_relu.hpp"
+#include "math/ml/activation_functions/relu.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -52,7 +53,7 @@ public:
   }
 
   // input.at(0) - gradient for x: x>=0 f'(x)=1, x<0 f'(x)=alpha
-  // input.at(1) - gradient for alpha: f'(alpha)=1
+  // input.at(1) - gradient for alpha: f'(alpha)=-Relu(-x)=min(0,x)
   virtual std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal)
@@ -62,30 +63,32 @@ public:
     ASSERT(inputs.at(1).get().size() == errorSignal.size());
     ASSERT(errorSignal.size() == inputs.at(1).get().size());
 
-    ArrayType returnSignal{errorSignal.shape()};
-    ArrayType t{inputs.front().get().shape()};
-
-    t = this->Forward(inputs, t);
+    ArrayType returnSignal1{errorSignal.shape()};
+    ArrayType returnSignal2{errorSignal.shape()};
 
     typename ArrayType::SizeType idx(0);
-    for (auto const &val : t)
+    for (auto const &val : inputs.at(0).get())
     {
       if (val >= DataType(0))
       {
-        returnSignal.Set(idx, DataType(1));
+        returnSignal1.Set(idx, DataType(1));
+        returnSignal2.Set(idx, DataType(0));
       }
       else
       {
-        returnSignal.Set(idx, inputs.at(1).get().At(idx));
+        returnSignal1.Set(idx, inputs.at(1).get().At(idx));
+        returnSignal2.Set(idx, inputs.at(0).get().At(idx));
       }
       ++idx;
     }
 
+    // f'(alpha)=-Relu(-x)
     // multiply by errorSignal (chain rule)
-    fetch::math::Multiply(errorSignal, returnSignal, returnSignal);
+    fetch::math::Multiply(errorSignal, returnSignal1, returnSignal1);
+    fetch::math::Multiply(errorSignal, returnSignal2, returnSignal2);
 
-    // since PRelu is max(0,x)+alpha*min(0*x), signal for alpha is just errorSignal
-    return {returnSignal, errorSignal};
+    // since PRelu is max(0,x)+alpha*min(0*x), signal for alpha is error*min(0*x)
+    return {returnSignal1, returnSignal1};
   }
 
   static constexpr char const *DESCRIPTOR = "LeakyReluOp";
