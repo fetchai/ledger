@@ -30,6 +30,7 @@
 #endif
 
 #include <asio.hpp>
+#include <asio/ssl.hpp>
 
 #if defined(__clang__)
 #pragma clang diagnostic pop
