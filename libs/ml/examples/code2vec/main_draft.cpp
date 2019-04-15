@@ -28,6 +28,7 @@ using Tensor   = fetch::math::Tensor<DataType>;
 
 int main()
 {
+  /*
   int embedding_size;
 
   fetch::ml::Graph<Tensor> g;
@@ -112,4 +113,5 @@ int main()
   {
     g.BackPropagate("Result", ...);
   }
+  */
 }
