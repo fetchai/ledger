@@ -30,7 +30,7 @@ TYPED_TEST_CASE(TensorConstructorTest, MyTypes);
 TYPED_TEST(TensorConstructorTest, string_construction)
 {
   auto tensor = fetch::math::Tensor<TypeParam>::FromString(R"(1 3 4)");
-  ASSERT_EQ(tensor.At(0), TypeParam(1));
-  ASSERT_EQ(tensor.At(1), TypeParam(3));
-  ASSERT_EQ(tensor.At(2), TypeParam(4));
+  ASSERT_EQ(tensor.At(0, 0), TypeParam(1));
+  ASSERT_EQ(tensor.At(0, 1), TypeParam(3));
+  ASSERT_EQ(tensor.At(0, 2), TypeParam(4));
 }
