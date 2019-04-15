@@ -58,18 +58,6 @@ TEST(ndarray, zeros_out)
   {
     ASSERT_TRUE(test_array[i] == 0);
   }
-
-  // check that sign(0) = 0
-  /*
-  // TODO
-  test_array_2 = test_array;
-  fetch::math::Sign(test_array_2);
-
-  for (std::size_t i = 0; i < n; ++i)
-  {
-    ASSERT_TRUE(test_array_2[i] == 0);
-  }
-  */
 }
 
 TEST(ndarray, negative_ones)
@@ -83,18 +71,6 @@ TEST(ndarray, negative_ones)
   {
     ASSERT_TRUE(test_array[i] <= 0);
   }
-
-  // check that sign(-) = -1
-  /*
-  // TODO
-  test_array_2 = test_array;
-  fetch::math::Sign(test_array_2);
-
-  for (std::size_t i = 0; i < n; ++i)
-  {
-    ASSERT_TRUE(test_array_2[i] == -1);
-  }
-  */
 }
 
 TEST(ndarray, positive_ones)
@@ -108,15 +84,4 @@ TEST(ndarray, positive_ones)
   {
     ASSERT_TRUE(test_array[i] >= 0);
   }
-
-  /*
-  // TODO
-  test_array_2 = test_array;
-  fetch::math::Sign(test_array_2);
-
-  for (std::size_t i = 0; i < n; ++i)
-  {
-    ASSERT_TRUE(test_array_2[i] == 1);
-  }
-  */
 }

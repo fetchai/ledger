@@ -31,12 +31,6 @@ namespace math {
 /// IMPLEMENTATIONS ///
 ///////////////////////
 
-// template <typename Type>
-// meta::IfIsNonFixedPointArithmetic<Type, void> Abs(Type const &x, Type &ret)
-//{
-//  ret = std::abs(x);
-//}
-
 // TODO(800) - native implementations of fixed point are required; casting to double will not be
 // permissible
 // this also handles case of passing uint to abs

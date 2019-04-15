@@ -63,7 +63,7 @@ void Softmax1DImplementation(ArrayType1 const &array, ArrayType2 &ret)
     ++it1;
   }
 
-  auto it3 = ret.begin();  // TODO: Fix implictly deleted copy const. for iterator
+  auto it3 = ret.begin();  // TODO (private 855): Fix implictly deleted copy const. for iterator
   while (it3.is_valid())
   {
     *it3 /= sum;

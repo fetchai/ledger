@@ -27,104 +27,106 @@
 namespace fetch {
 namespace math {
 
-template <typename T, typename C>
+template <typename DataType, typename ContainerType>
 class Tensor;
 
 namespace meta {
 
-template <bool C, typename R = void>
-using EnableIf = typename std::enable_if<C, R>::type;
+template <bool C, typename ReturnType = void>
+using EnableIf = typename std::enable_if<C, ReturnType>::type;
 
 ////////////////////////////
 /// FIXED POINT CHECKING ///
 ////////////////////////////
 
-template <typename T>
-constexpr bool IsFixedPoint = std::is_base_of<fixed_point::BaseFixedpointType, T>::value;
+template <typename DataType>
+constexpr bool IsFixedPoint = std::is_base_of<fixed_point::BaseFixedpointType, DataType>::value;
 
-template <typename T>
-constexpr bool IsNotFixedPoint = !IsFixedPoint<T>;
+template <typename DataType>
+constexpr bool IsNotFixedPoint = !IsFixedPoint<DataType>;
 
-template <typename T>
-constexpr bool IsArithmetic = std::is_arithmetic<T>::value || IsFixedPoint<T>;
+template <typename DataType>
+constexpr bool IsArithmetic = std::is_arithmetic<DataType>::value || IsFixedPoint<DataType>;
 
-template <typename T>
-constexpr bool IsNonFixedPointArithmetic = std::is_arithmetic<T>::value;
+template <typename DataType>
+constexpr bool IsNonFixedPointArithmetic = std::is_arithmetic<DataType>::value;
 
-template <typename T, typename R>
-using IfIsFixedPoint = typename std::enable_if<IsFixedPoint<T>, R>::type;
+template <typename DataType, typename ReturnType>
+using IfIsFixedPoint = typename std::enable_if<IsFixedPoint<DataType>, ReturnType>::type;
 
-template <typename T, typename R>
-using IfIsNotFixedPoint = typename std::enable_if<IsNotFixedPoint<T>, R>::type;
+template <typename DataType, typename ReturnType>
+using IfIsNotFixedPoint = typename std::enable_if<IsNotFixedPoint<DataType>, ReturnType>::type;
 
 ////////////////////////////////////////////////
 /// TYPES INDIRECTED FROM META / TYPE_TRAITS ///
 ////////////////////////////////////////////////
 
-template <typename T, typename R>
-using IfIsArithmetic = EnableIf<IsArithmetic<T>, R>;
+template <typename DataType, typename ReturnType>
+using IfIsArithmetic = EnableIf<IsArithmetic<DataType>, ReturnType>;
 
-template <typename T, typename R>
-using IfIsNonFixedPointArithmetic = EnableIf<IsNonFixedPointArithmetic<T>, R>;
+template <typename DataType, typename ReturnType>
+using IfIsNonFixedPointArithmetic = EnableIf<IsNonFixedPointArithmetic<DataType>, ReturnType>;
 
-template <typename T, typename R>
-using IfIsNotImplemented = fetch::meta::IfIsNotImplemented<T, R>;
+template <typename DataType, typename ReturnType>
+using IfIsNotImplemented = fetch::meta::IfIsNotImplemented<DataType, ReturnType>;
 
-template <typename T>
-using IfIsUnsignedInteger = fetch::meta::IfIsUnsignedInteger<T>;
+template <typename DataType>
+using IfIsUnsignedInteger = fetch::meta::IfIsUnsignedInteger<DataType>;
 
 ////////////////////////////////////
 /// MATH LIKE SPECIALIZATIONS
 ////////////////////////////////////
 
-template <typename A, typename R>
+template <typename A, typename ReturnType>
 struct IsMathImpl
 {
 };
-template <typename R>
-struct IsMathImpl<double, R>
+template <typename ReturnType>
+struct IsMathImpl<double, ReturnType>
 {
-  using Type = R;
+  using Type = ReturnType;
 };
-template <typename R>
-struct IsMathImpl<float, R>
+template <typename ReturnType>
+struct IsMathImpl<float, ReturnType>
 {
-  using Type = R;
+  using Type = ReturnType;
 };
-template <typename R>
-struct IsMathImpl<int, R>
+template <typename ReturnType>
+struct IsMathImpl<int, ReturnType>
 {
-  using Type = R;
+  using Type = ReturnType;
 };
-template <typename R, typename T, typename C>
-struct IsMathImpl<Tensor<T, C>, R>
+template <typename DataType, typename ContainerType, typename ReturnType>
+struct IsMathImpl<Tensor<DataType, ContainerType>, ReturnType>
 {
-  using Type = R;
+  using Type = ReturnType;
 };
-template <typename A, typename R>
-using IfIsMath = typename IsMathImpl<A, R>::Type;
+template <typename DataType, typename ReturnType>
+using IfIsMath = typename IsMathImpl<DataType, ReturnType>::Type;
 
 ///////////////////////////////////
 /// MATH ARRAY - NO FIXED POINT ///
 ///////////////////////////////////
 
-template <typename A, typename R>
+template <typename DataType, typename ReturnType>
 struct IsMathArrayImpl
 {
 };
-template <typename R, typename T, typename C>
-struct IsMathArrayImpl<Tensor<T, C>, R>
+template <typename DataType, typename ContainerType, typename ReturnType>
+struct IsMathArrayImpl<Tensor<DataType, ContainerType>, ReturnType>
 {
-  using Type = R;
+  using Type = ReturnType;
 };
-template <typename T, typename R>
-using IfIsMathArray = typename IsMathArrayImpl<T, R>::Type;
+template <typename DataType, typename ReturnType>
+using IfIsMathArray = typename IsMathArrayImpl<DataType, ReturnType>::Type;
 
-template <typename T, typename R>
-using IfIsMathFixedPointArray = IfIsFixedPoint<typename T::Type, IfIsMathArray<T, R>>;
+template <typename DataType, typename ReturnType>
+using IfIsMathFixedPointArray =
+    IfIsFixedPoint<typename DataType::Type, IfIsMathArray<DataType, ReturnType>>;
 
-template <typename T, typename R>
-using IfIsMathNonFixedPointArray = IfIsNotFixedPoint<typename T::Type, IfIsMathArray<T, R>>;
+template <typename DataType, typename ReturnType>
+using IfIsMathNonFixedPointArray =
+    IfIsNotFixedPoint<typename DataType::Type, IfIsMathArray<DataType, ReturnType>>;
 
 }  // namespace meta
 }  // namespace math

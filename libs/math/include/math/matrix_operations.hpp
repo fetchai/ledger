@@ -27,14 +27,8 @@
 
 namespace fetch {
 namespace math {
-//
-// template <typename T, typename C>
-// class Tensor;
-//
-// template <typename T, typename C, typename TensorType>
-// class TensorIterator;
 
-// TODO - vectorisation implementations not yet called
+// TODO (private 854) - vectorisation implementations not yet called
 namespace details_vectorisation {
 
 /**
@@ -46,11 +40,11 @@ namespace details_vectorisation {
 template <typename ArrayType>
 inline void Min(ArrayType const &array, typename ArrayType::Type &ret)
 {
-  using vector_register_type = typename ArrayType::vector_register_type;
+  using VectorRegisterType = typename ArrayType::VectorRegisterType;
 
   ret = array.data().in_parallel().Reduce(
       memory::TrivialRange(0, array.size()),
-      [](vector_register_type const &a, vector_register_type const &b) { return min(a, b); });
+      [](VectorRegisterType const &a, VectorRegisterType const &b) { return min(a, b); });
 }
 
 /**
@@ -63,11 +57,10 @@ inline void Min(ArrayType const &array, typename ArrayType::Type &ret)
 template <typename ArrayType>
 void Product(ArrayType const &obj1, typename ArrayType::Type &ret)
 {
-  ret =
-      obj1.data().in_parallel().Reduce(memory::TrivialRange(0, obj1.size()),
-                                       [](typename ArrayType::vector_register_type const &a,
-                                          typename ArrayType::vector_register_type const &b) ->
-                                       typename ArrayType::vector_register_type { return a * b; });
+  ret = obj1.data().in_parallel().Reduce(memory::TrivialRange(0, obj1.size()),
+                                         [](typename ArrayType::VectorRegisterType const &a,
+                                            typename ArrayType::VectorRegisterType const &b) ->
+                                         typename ArrayType::VectorRegisterType { return a * b; });
 }
 
 /**
@@ -80,11 +73,10 @@ void Product(ArrayType const &obj1, typename ArrayType::Type &ret)
 template <typename ArrayType>
 void Sum(ArrayType const &obj1, typename ArrayType::Type &ret)
 {
-  ret =
-      obj1.data().in_parallel().Reduce(memory::TrivialRange(0, obj1.size()),
-                                       [](typename ArrayType::vector_register_type const &a,
-                                          typename ArrayType::vector_register_type const &b) ->
-                                       typename ArrayType::vector_register_type { return a + b; });
+  ret = obj1.data().in_parallel().Reduce(memory::TrivialRange(0, obj1.size()),
+                                         [](typename ArrayType::VectorRegisterType const &a,
+                                            typename ArrayType::VectorRegisterType const &b) ->
+                                         typename ArrayType::VectorRegisterType { return a + b; });
 }
 
 }  // namespace details_vectorisation
@@ -303,13 +295,12 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Min(ArrayType const &ar
 }
 
 /**
- * Implementation of Max that returns the n-1 dim array by finding the max of all 1-d vectors within
+ * Implementation of Min that returns the n-1 dim array by finding the min of all 1-d vectors within
  * the array
- * @tparam T
- * @tparam C
- * @param array
- * @param axis
- * @param ret
+ * @tparam ArrayType array or tensor type
+ * @param array the array or tensor
+ * @param axis the axis over which to iterate
+ * @param ret the return object with n-1 dims
  */
 template <typename ArrayType>
 void Min(ArrayType const &array, typename ArrayType::SizeType const &axis, ArrayType &ret)
@@ -392,7 +383,6 @@ meta::IfIsMathArray<ArrayType, ArrayType> Maximum(ArrayType const &array1, Array
  * @tparam T
  * @param array1
  * @param ret
- * @return
  */
 template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
 meta::IfIsMathArray<ArrayType, void> Product(ArrayType const &array1, T &ret)

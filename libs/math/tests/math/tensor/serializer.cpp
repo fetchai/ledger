@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,19 +16,45 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/byte_array_buffer.hpp"
 #include "math/tensor.hpp"
+#include <gtest/gtest.h>
 
-namespace fetch {
-namespace serializers {
+template <typename T>
+class SerializersTest : public ::testing::Test
+{
+};
 
-/*
-template <typename T, typename U>
-void Serialize(T &serializer, math::Tensor<U> const &t)
+using MyTypes = ::testing::Types<int, long, float, double>;
+TYPED_TEST_CASE(SerializersTest, MyTypes);
 
+TYPED_TEST(SerializersTest, serialize_empty_tensor)
+{
+  fetch::math::Tensor<TypeParam>      t1;
+  fetch::serializers::ByteArrayBuffer b;
+  b << t1;
+  b.seek(0);
+  fetch::math::Tensor<TypeParam> t2;
+  b >> t2;
+  EXPECT_EQ(t1, t2);
+}
 
-template <typename T, typename U>
-void Deserialize(T &serializer, math::Tensor<U> &t)
-*/
+TYPED_TEST(SerializersTest, serialize_tensor)
+{
+  fetch::math::Tensor<TypeParam> t1({2, 3, 4, 5, 6});
+  TypeParam                      i(0);
+  for (auto &e : t1)
+  {
+    e = i;
+    i++;
+  }
+  fetch::serializers::ByteArrayBuffer b;
 
-}  // namespace serializers
-}  // namespace fetch
+  b << t1;
+  b.seek(0);
+  fetch::math::Tensor<TypeParam> t2;
+
+  b >> t2;
+
+  EXPECT_EQ(t1, t2);
+}

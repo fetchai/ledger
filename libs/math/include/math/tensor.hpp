@@ -17,10 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "math/free_functions/free_functions.hpp"
-//#include "math/shapeless_array.hpp"
-
-// https://github.com/uvue-git/fetch-ledger/tree/cf2fc8441f6ae33d6248559c52473a7f15c5aef2/libs/math/include/math
 #include "core/assert.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
@@ -66,9 +62,11 @@ public:
   using Type          = T;
   using ContainerType = C;
 
-  using vector_slice_type = typename ContainerType::vector_slice_type;
-  using vector_register_type =
-      typename ContainerType::vector_register_type;  // TODO: Legacy style, replace with new
+  using VectorSliceType = typename ContainerType::vector_slice_type;  // TODO (private 856): Legacy
+                                                                      // style, replace with new
+  using VectorRegisterType =
+      typename ContainerType::vector_register_type;  // TODO (private 856): Legacy style, replace
+                                                     // with new
   using vector_register_iterator_type = typename ContainerType::vector_register_iterator_type;
 
   using SelfType          = Tensor<T, C>;
@@ -599,31 +597,19 @@ public:
 
   void Fill(Type const &value, memory::TrivialRange const &range)
   {
-    vector_register_type val(value);
+    VectorRegisterType val(value);
 
-    this->data().in_parallel().Apply(range, [val](vector_register_type &z) { z = val; });
+    this->data().in_parallel().Apply(range, [val](VectorRegisterType &z) { z = val; });
   }
 
   void Fill(Type const &value)
   {
-    vector_register_type val(value);
+    VectorRegisterType val(value);
 
-    this->data().in_parallel().Apply([val](vector_register_type &z) { z = val; });
+    this->data().in_parallel().Apply([val](VectorRegisterType &z) { z = val; });
   }
 
-  // TODO - general Set implementation
-  //  /**
-  //   * assignment using n-dimensionally many indices
-  //   * @tparam Indices
-  //   * @param indices
-  //   * @param val
-  //   */
-  //  template< typename ... Indices >
-  //  void Set(Indices ... indices, Type &val)
-  //  {
-  //    ASSERT(sizeof...(indices) == stride_.size());
-  //    this->data()[ UnrollComputeColIndex<0>(std::forward<Indices>(indices)...) ] = val ;
-  //  }
+  // TODO (private 857) - general Set implementation
 
   /**
    * Gets a value from the array by N-dim index
@@ -1347,19 +1333,20 @@ public:
     std::sort(data_.pointer() + range.from(), data_.pointer() + range.to());
   }
 
-  /*
-    void Exp(self_type const &x) {
-      LazyResize( x.size() );
+  /**
+   * Calculate the Exponentials of x and store in this
+   */
+  void Exp(SelfType const & /*x*/)
+  {
+    throw std::runtime_error("not yet implemented");
+  }
 
-      kernels::ApproxExp< vector_register_type > aexp;
-      data_.in_parallel().Apply(aexp, x.data_);
-    }
-  */
-
+  /**
+   * Calculate the ApproxSoftMax of X and store in this
+   */
   void ApproxSoftMax(SelfType const & /*x*/)
   {
-    //    kernels::ApproxSoftMax< Type, vector_register_type > kernel;
-    //    kernel( this->data_, x.data());
+    throw std::runtime_error("not yet implemented");
   }
 
   /**
@@ -1370,7 +1357,7 @@ public:
    **/
   Type L2Loss() const
   {
-    Type sum = data_.in_parallel().SumReduce([](vector_register_type const &v) { return v * v; });
+    Type sum = data_.in_parallel().SumReduce([](VectorRegisterType const &v) { return v * v; });
     return sum * Type(0.5);
   }
 
@@ -1545,41 +1532,20 @@ public:
     data_.SetZeroAfter(oldsize);
   }
 
-  //  iterator begin()
-  //  {
-  //    return data_.begin();
-  //  }
-  //  iterator end()
-  //  {
-  //    return data_.end();
-  //  }
-  //  reverse_iterator rbegin()
-  //  {
-  //    return data_.rbegin();
-  //  }
-  //  reverse_iterator rend()
-  //  {
-  //    return data_.rend();
-  //  }
-
-  // TODO(TFR): deduce D from parent
+  // TODO(private 858): Vectorize and deduce D from parent
   template <typename S, typename D = memory::SharedArray<S>>
   void As(Tensor<S, D> &ret) const
   {
     ret.LazyResize(size_);
     auto this_it = cbegin();
     auto ret_it  = begin();
+
     while (this_it.is_valid())
     {
       *ret_it = *this_it;
       ++ret_it;
       ++this_it;
     }
-    //    // TODO(TFR): Vectorize
-    //    for (SizeType i = 0; i < size_; ++i)
-    //    {
-    //      ret.data_[i] = data_[i];
-    //    }
   }
 
   template <typename S>
@@ -1919,8 +1885,8 @@ private:
     assert(a.size() == b.size());
     this->Resize(a.size());
 
-    this->data_.in_parallel().Apply([](vector_register_type const &a, vector_register_type const &b,
-                                       vector_register_type &c) { c = (a == b); },
+    this->data_.in_parallel().Apply([](VectorRegisterType const &a, VectorRegisterType const &b,
+                                       VectorRegisterType &c) { c = (a == b); },
                                     a.data(), b.data());
   }
 
@@ -1929,8 +1895,8 @@ private:
     assert(a.size() == b.size());
     this->Resize(a.size());
 
-    this->data_.in_parallel().Apply([](vector_register_type const &a, vector_register_type const &b,
-                                       vector_register_type &c) { c = (a != b); },
+    this->data_.in_parallel().Apply([](VectorRegisterType const &a, VectorRegisterType const &b,
+                                       VectorRegisterType &c) { c = (a != b); },
                                     a.data(), b.data());
   }
 
@@ -1939,8 +1905,8 @@ private:
     assert(a.size() == b.size());
     this->Resize(a.size());
 
-    this->data_.in_parallel().Apply([](vector_register_type const &a, vector_register_type const &b,
-                                       vector_register_type &c) { c = (a < b); },
+    this->data_.in_parallel().Apply([](VectorRegisterType const &a, VectorRegisterType const &b,
+                                       VectorRegisterType &c) { c = (a < b); },
                                     a.data(), b.data());
   }
 
@@ -1949,8 +1915,8 @@ private:
     assert(a.size() == b.size());
     this->Resize(a.size());
 
-    this->data_.in_parallel().Apply([](vector_register_type const &a, vector_register_type const &b,
-                                       vector_register_type &c) { c = (a <= b); },
+    this->data_.in_parallel().Apply([](VectorRegisterType const &a, VectorRegisterType const &b,
+                                       VectorRegisterType &c) { c = (a <= b); },
                                     a.data(), b.data());
   }
 
@@ -1959,8 +1925,8 @@ private:
     assert(a.size() == b.size());
     this->Resize(a.size());
 
-    this->data_.in_parallel().Apply([](vector_register_type const &a, vector_register_type const &b,
-                                       vector_register_type &c) { c = (a > b); },
+    this->data_.in_parallel().Apply([](VectorRegisterType const &a, VectorRegisterType const &b,
+                                       VectorRegisterType &c) { c = (a > b); },
                                     a.data(), b.data());
   }
 
@@ -1969,8 +1935,8 @@ private:
     assert(a.size() == b.size());
     this->Resize(a.size());
 
-    this->data_.in_parallel().Apply([](vector_register_type const &a, vector_register_type const &b,
-                                       vector_register_type &c) { c = (a >= b); },
+    this->data_.in_parallel().Apply([](VectorRegisterType const &a, VectorRegisterType const &b,
+                                       VectorRegisterType &c) { c = (a >= b); },
                                     a.data(), b.data());
   }
 
@@ -1989,8 +1955,8 @@ private:
 //      auto r = range.ToTrivialRange(this->data().size());
 //      this->data().in_parallel().Apply(
 //          r,
-//          [](vector_register_type const &x, vector_register_type const &y,
-//             vector_register_type &z) { z = x + y; },
+//          [](VectorRegisterType const &x, VectorRegisterType const &y,
+//             VectorRegisterType &z) { z = x + y; },
 //          this->data(), other.data());
 //    }
 //    else
@@ -2009,10 +1975,10 @@ private:
 //
 //  SelfType &InlineAdd(Type const &scalar)
 //  {
-//    vector_register_type val(scalar);
+//    VectorRegisterType val(scalar);
 //
 //    this->data().in_parallel().Apply(
-//        [val](vector_register_type const &x, vector_register_type &z) { z = x + val; },
+//        [val](VectorRegisterType const &x, VectorRegisterType &z) { z = x + val; },
 //        this->data());
 //
 //    return *this;
@@ -2030,8 +1996,8 @@ private:
 //      auto r = range.ToTrivialRange(this->data().size());
 //      this->data().in_parallel().Apply(
 //          r,
-//          [](vector_register_type const &x, vector_register_type const &y,
-//             vector_register_type &z) { z = x * y; },
+//          [](VectorRegisterType const &x, VectorRegisterType const &y,
+//             VectorRegisterType &z) { z = x * y; },
 //          this->data(), other.data());
 //    }
 //    else
@@ -2050,10 +2016,10 @@ private:
 //
 //  SelfType &InlineMultiply(Type const &scalar)
 //  {
-//    vector_register_type val(scalar);
+//    VectorRegisterType val(scalar);
 //
 //    this->data().in_parallel().Apply(
-//        [val](vector_register_type const &x, vector_register_type &z) { z = x * val; },
+//        [val](VectorRegisterType const &x, VectorRegisterType &z) { z = x * val; },
 //        this->data());
 //
 //    return *this;
@@ -2072,8 +2038,8 @@ private:
 //      auto r = range.ToTrivialRange(this->data().size());
 //      this->data().in_parallel().Apply(
 //          r,
-//          [](vector_register_type const &x, vector_register_type const &y,
-//             vector_register_type &z) { z = x - y; },
+//          [](VectorRegisterType const &x, VectorRegisterType const &y,
+//             VectorRegisterType &z) { z = x - y; },
 //          this->data(), other.data());
 //    }
 //    else
@@ -2103,8 +2069,8 @@ private:
 //      auto r = range.ToTrivialRange(this->data().size());
 //      this->data().in_parallel().Apply(
 //          r,
-//          [](vector_register_type const &x, vector_register_type const &y,
-//             vector_register_type &z) { z = y - x; },
+//          [](VectorRegisterType const &x, VectorRegisterType const &y,
+//             VectorRegisterType &z) { z = y - x; },
 //          this->data(), other.data());
 //    }
 //    else
@@ -2123,10 +2089,10 @@ private:
 //
 //  SelfType &InlineSubtract(Type const &scalar)
 //  {
-//    vector_register_type val(scalar);
+//    VectorRegisterType val(scalar);
 //
 //    this->data().in_parallel().Apply(
-//        [val](vector_register_type const &y, vector_register_type &z) { z = y - val; },
+//        [val](VectorRegisterType const &y, VectorRegisterType &z) { z = y - val; },
 //        this->data());
 //
 //    return *this;
@@ -2145,8 +2111,8 @@ private:
 //      auto r = range.ToTrivialRange(this->data().size());
 //      this->data().in_parallel().Apply(
 //          r,
-//          [](vector_register_type const &x, vector_register_type const &y,
-//             vector_register_type &z) { z = x / y; },
+//          [](VectorRegisterType const &x, VectorRegisterType const &y,
+//             VectorRegisterType &z) { z = x / y; },
 //          this->data(), other.data());
 //    }
 //    else
@@ -2165,10 +2131,10 @@ private:
 //
 //  SelfType &InlineDivide(Type const &scalar)
 //  {
-//    vector_register_type val(scalar);
+//    VectorRegisterType val(scalar);
 //
 //    this->data().in_parallel().Apply(
-//        [val](vector_register_type const &y, vector_register_type &z) { z = y / val; },
+//        [val](VectorRegisterType const &y, VectorRegisterType &z) { z = y / val; },
 //        this->data());
 //
 //    return *this;
@@ -2176,10 +2142,10 @@ private:
 //
 //  SelfType &InlineReverseSubtract(Type const &scalar)
 //  {
-//    vector_register_type val(scalar);
+//    VectorRegisterType val(scalar);
 //
 //    this->data().in_parallel().Apply(
-//        [val](vector_register_type const &y, vector_register_type &z) { z = val - y; },
+//        [val](VectorRegisterType const &y, VectorRegisterType &z) { z = val - y; },
 //        this->data());
 //
 //    return *this;
@@ -2198,8 +2164,8 @@ private:
 //      auto r = range.ToTrivialRange(this->data().size());
 //      this->data().in_parallel().Apply(
 //          r,
-//          [](vector_register_type const &x, vector_register_type const &y,
-//             vector_register_type &z) { z = y / x; },
+//          [](VectorRegisterType const &x, VectorRegisterType const &y,
+//             VectorRegisterType &z) { z = y / x; },
 //          this->data(), other.data());
 //    }
 //    else
@@ -2218,10 +2184,10 @@ private:
 //
 //  SelfType &InlineReverseDivide(Type const &scalar)
 //  {
-//    vector_register_type val(scalar);
+//    VectorRegisterType val(scalar);
 //
 //    this->data().in_parallel().Apply(
-//        [val](vector_register_type const &y, vector_register_type &z) { z = val / y; },
+//        [val](VectorRegisterType const &y, VectorRegisterType &z) { z = val / y; },
 //        this->data());
 //
 //    return *this;

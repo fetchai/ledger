@@ -16,15 +16,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iomanip>
-#include <iostream>
-
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 
-using namespace fetch::math;
-
-TEST(numpy, arange)
+template <typename T>
+class TensorConstructorTest : public ::testing::Test
 {
-  auto tensor = Tensor<double>::FromString(R"(1 3 4)");
+};
+
+using MyTypes = ::testing::Types<int, unsigned int, long, unsigned long, float, double>;
+TYPED_TEST_CASE(TensorConstructorTest, MyTypes);
+
+TYPED_TEST(TensorConstructorTest, string_construction)
+{
+  auto tensor = fetch::math::Tensor<TypeParam>::FromString(R"(1 3 4)");
+  ASSERT_EQ(tensor.At(0), TypeParam(1));
+  ASSERT_EQ(tensor.At(1), TypeParam(3));
+  ASSERT_EQ(tensor.At(2), TypeParam(4));
 }

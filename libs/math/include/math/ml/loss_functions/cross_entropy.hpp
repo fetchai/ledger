@@ -60,17 +60,22 @@ typename ArrayType::Type CrossEntropyLoss(
   {
     ASSERT(n_classes == SizeType(2));
 
-    // TODO: Use iterators instead to be correct
-    for (SizeType idx = 0; idx < n_examples; ++idx)
+    auto     x_it = x.cbegin();
+    auto     y_it = y.cbegin();
+    DataType one{1};
+    DataType zero{0};
+    DataType tmp;
+
+    while (x_it.is_valid())
     {
-      ASSERT((y.data()[idx] == DataType(1)) || (y.data()[idx] == DataType(0)));
-      if (y.data()[idx] == DataType(1))
+      ASSERT((*y_it == one) || (*y_it == zero));
+      if (*y_it == one)
       {
-        ret -= Log(x.data()[idx]);
+        ret -= Log(*x_it);
       }
       else
       {
-        DataType tmp = DataType(1) - x.data()[idx];
+        tmp = one - *x_it;
         if (tmp <= 0)
         {
           throw std::runtime_error("cannot take log of negative values");

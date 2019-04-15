@@ -58,7 +58,7 @@ public:
     {
       if (inputs.front().get()[i] <= DataType(0))
       {
-        returnSignal.data().Set(i, DataType(0));  // TODO:
+        returnSignal.data().Set(i, DataType(0));
       }
     }
     return {returnSignal};

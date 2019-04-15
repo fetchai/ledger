@@ -109,14 +109,18 @@ public:
    * identifies whether the iterator is still valid or has finished iterating
    * @return boolean indicating validity
    */
-  operator bool()
+  bool is_valid() const
   {
     return counter_ < size_;
   }
 
-  bool is_valid() const
+  /**
+   * same as is_valid
+   * @return
+   */
+  operator bool() const
   {
-    return counter_ < size_;
+    return is_valid();
   }
 
   /**
@@ -131,7 +135,6 @@ public:
     ++counter_;
     do
     {
-
       next                   = false;
       TensorIteratorRange &s = ranges_[i];
       s.index += s.step;
@@ -140,7 +143,6 @@ public:
 
       if (s.index >= s.to)
       {
-
         ++s.repetition;
         s.index                  = s.from;
         s.current_n_dim_position = s.from;
@@ -171,8 +173,6 @@ public:
     }
 
 #ifndef NDEBUG
-    // Test
-
     SizeType ref = 0;
     for (auto &s : ranges_)
     {

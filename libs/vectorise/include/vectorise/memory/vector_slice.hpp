@@ -89,7 +89,7 @@ public:
     return reverse_iterator(pointer_ - 1, pointer_ - 1);
   }
 
-  // TODO: ensure trivial type
+  // TODO(private 860): ensure trivial type
   void SetAllZero()
   {
     assert(pointer_ != nullptr);
