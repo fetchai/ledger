@@ -36,7 +36,7 @@ class FixedPoint;
 namespace {
 
 // struct for inferring what underlying types to use
-template <std::uint16_t T>
+template <int T>
 struct TypeFromSize
 {
   static const bool is_valid = false;  // for template matches specialisation
@@ -208,7 +208,7 @@ struct BaseFixedpointType
 template <std::uint16_t I, std::uint16_t F>
 class FixedPoint : public BaseFixedpointType
 {
-  static_assert(TypeFromSize<static_cast<int>(I + F)>::is_valid, "invalid combination of sizes");
+  static_assert(TypeFromSize<I + F>::is_valid, "invalid combination of sizes");
 
 public:
   enum
