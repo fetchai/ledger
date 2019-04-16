@@ -88,26 +88,26 @@ struct KeyValuePair
   using HashFunction = crypto::SHA256;
   static_assert(N == HashFunction::size_in_bytes(), "Hash size must match the hash function");
 
-  using key_type   = Key<S>;
-  using index_type = uint64_t;
+  using KeyType   = Key<S>;
+  using IndexType = uint64_t;
 
-  static constexpr index_type TREE_ROOT_VALUE{~index_type{0}};
+  static constexpr IndexType TREE_ROOT_VALUE{~IndexType{0}};
 
-  key_type key;
-  uint8_t  hash[N]{{}};
+  KeyType key;
+  uint8_t hash[N]{};
 
   // The location in bits of the distance down the key this node splits on
   uint16_t split = 0;
 
   // Ref to parent, left and right branches
-  index_type parent = TREE_ROOT_VALUE;
+  IndexType parent = TREE_ROOT_VALUE;
 
   union
   {
-    index_type value = 0;
-    index_type left;
+    IndexType value = 0;
+    IndexType left;
   };
-  index_type right = 0;
+  IndexType right = 0;
 
   bool operator==(KeyValuePair const &kv) const
   {
@@ -184,8 +184,8 @@ public:
   using self_type      = KeyValueIndex<KV, D>;
   using stack_type     = D;
   using key_value_pair = KeyValuePair<>;
-  using index_type     = key_value_pair::index_type;
-  using key_type       = typename key_value_pair::key_type;
+  using index_type     = key_value_pair::IndexType;
+  using key_type       = typename key_value_pair::KeyType;
 
   static constexpr char const *LOGGING_NAME = "KeyValueIndex";
 
