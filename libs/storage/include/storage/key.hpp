@@ -170,7 +170,7 @@ struct Key
   }
 
 private:
-  KeyArray key_{{}};
+  KeyArray key_{};
 };
 
 }  // namespace storage
