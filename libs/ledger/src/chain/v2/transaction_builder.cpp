@@ -276,7 +276,7 @@ TransactionBuilder &TransactionBuilder::TargetChainCode(byte_array::ConstByteArr
  * Set the contract / chain code action to be triggered
  *
  * @param action The action to be triggered
- * @return The current
+ * @return The current builder instance
  */
 TransactionBuilder &TransactionBuilder::Action(byte_array::ConstByteArray const &action)
 {
@@ -284,12 +284,27 @@ TransactionBuilder &TransactionBuilder::Action(byte_array::ConstByteArray const 
   return *this;
 }
 
+/**
+ * Set the data for the transaction
+ *
+ * @param data The data buffer for the transaction
+ * @return The current builder instance
+ */
 TransactionBuilder &TransactionBuilder::Data(byte_array::ConstByteArray const &data)
 {
   partial_transaction_->data_ = data;
   return *this;
 }
 
+/**
+ * Add a signer identity to the transaction
+ *
+ * This in turn will mean that this identity must sign the transaction in order for the transaction
+ * to be well formed.
+ *
+ * @param identity The identity that will be signining
+ * @return The current builder instance
+ */
 TransactionBuilder &TransactionBuilder::Signer(crypto::Identity const &identity)
 {
   using Signatory = Transaction::Signatory;
@@ -309,6 +324,13 @@ TransactionBuilder &TransactionBuilder::Signer(crypto::Identity const &identity)
   return *this;
 }
 
+/**
+ * Seal the transaction builder.
+ *
+ * This step effectively marks the end of the payload for the transaction. The sealed builder which
+ * is returned
+ * @return
+ */
 TransactionBuilder::Sealer TransactionBuilder::Seal()
 {
   // create the sealer

@@ -18,22 +18,19 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
+#include "ledger/chain/v2/transaction.hpp"
 
 #include <memory>
 
 namespace fetch {
 namespace crypto {
 
-class Identity;
 class Prover;
 
 }  // namespace crypto
 
 namespace ledger {
 namespace v2 {
-
-class Transaction;
-class Address;
 
 /**
  * Builder class to construct transactions. This class caches the serial version of the transactions

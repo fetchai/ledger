@@ -31,7 +31,6 @@
 
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromHex;
-using fetch::byte_array::ToHex;
 using fetch::crypto::ECDSASigner;
 using fetch::crypto::ECDSAVerifier;
 using fetch::ledger::v2::Address;

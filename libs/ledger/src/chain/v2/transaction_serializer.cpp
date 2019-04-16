@@ -127,9 +127,6 @@ meta::IfIsInteger<T, ConstByteArray> Encode(T value)
       // calculate the actual number of bytes that will be required
       std::size_t const bytes_required = 1u << log2_bytes_required;
 
-      //        std::cout << "Debug: " << value << " log2: " << int{log2_bytes_required} << " bytes:
-      //        " << bytes_required << std::endl;
-
       // resize the buffer and encode the value
       encoded.Resize(bytes_required + 1u);
 
@@ -148,10 +145,10 @@ meta::IfIsInteger<T, ConstByteArray> Encode(T value)
 
         // exit the loop once we have finished the zero'th index
         if (index == 0)
+        {
           break;
+        }
       }
-
-      //        std::cout << "Finished: " << encoded.ToHex() << std::endl;
     }
   }
 
