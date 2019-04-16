@@ -22,8 +22,8 @@
 #include "ledger/chain/v2/address.hpp"
 #include "miner/optimisation/bitvector.hpp"
 
-#include <vector>
 #include <cstdint>
+#include <vector>
 
 namespace fetch {
 namespace ledger {
@@ -35,11 +35,11 @@ namespace v2 {
 class Transaction
 {
 public:
-  using Identity = crypto::Identity;
+  using Identity       = crypto::Identity;
   using ConstByteArray = byte_array::ConstByteArray;
-  using BitVector = bitmanip::BitVector;
-  using TokenAmount = uint64_t;
-  using BlockIndex = uint64_t;
+  using BitVector      = bitmanip::BitVector;
+  using TokenAmount    = uint64_t;
+  using BlockIndex     = uint64_t;
 
   struct Transfer
   {
@@ -49,7 +49,7 @@ public:
 
   struct Signatory
   {
-    Identity identity;
+    Identity       identity;
     ConstByteArray signature;
   };
 
@@ -67,20 +67,20 @@ public:
     INVALID,
   };
 
-  using Transfers = std::vector<Transfer>;
+  using Transfers   = std::vector<Transfer>;
   using Signatories = std::vector<Signatory>;
 
   // Construction / Destruction
-  Transaction() = default;
+  Transaction()                    = default;
   Transaction(Transaction const &) = default;
-  Transaction(Transaction &&) = default;
-  ~Transaction() = default;
+  Transaction(Transaction &&)      = default;
+  ~Transaction()                   = default;
 
   ConstByteArray const &digest() const;
 
   /// @name Transfer Accessors
   /// @{
-  Address const &from() const;
+  Address const &  from() const;
   Transfers const &transfers() const;
   /// @}
 
@@ -88,7 +88,7 @@ public:
   /// @{
   BlockIndex valid_from() const;
   BlockIndex valid_until() const;
-  Validity GetValidity(BlockIndex block_index) const;
+  Validity   GetValidity(BlockIndex block_index) const;
   /// @}
 
   /// @name Charge Accessors
@@ -99,14 +99,14 @@ public:
 
   /// @name Contract Accessors
   /// @{
-  ContractMode contract_mode() const;
-  Address const &contract_digest() const;
-  Address const &contract_address() const;
+  ContractMode          contract_mode() const;
+  Address const &       contract_digest() const;
+  Address const &       contract_address() const;
   ConstByteArray const &chain_code() const;
   ConstByteArray const &action() const;
-  BitVector const &shard_mask() const;
+  BitVector const &     shard_mask() const;
   ConstByteArray const &data() const;
-  Signatories const &signatories() const;
+  Signatories const &   signatories() const;
   /// @}
 
   /// @name Validation / Verification
@@ -120,30 +120,29 @@ public:
   Transaction &operator=(Transaction &&) = default;
 
 private:
-
   /// @name Valid
   /// @{
-  Address         from_{};                                    ///< The sender of the TX
-  Transfers       transfers_{};                               ///< The list of the transfers
-  BlockIndex      valid_from_{0};                             ///< Min. block number before valid
-  BlockIndex      valid_until_{0};                            ///< Max. block number before invalid
-  TokenAmount     charge_{0};                                 ///< The charge rate for the TX
-  TokenAmount     charge_limit_{0};                           ///< The maximum charge to be used
-  ContractMode    contract_mode_{ContractMode::NOT_PRESENT};  ///< The payload being contained
-  Address         contract_digest_{};                         ///< The digest of the smart contract
-  Address         contract_address_{};                        ///< The address of the smart contract
-  ConstByteArray  chain_code_{};                              ///< The name of the chain code
-  BitVector       shard_mask_{};                              ///< Shard mask of addition depends
-  ConstByteArray  action_{};                                  ///< The name of the action invoked
-  ConstByteArray  data_{};                                    ///< The payload of the transaction
-  Signatories     signatories_{};                             ///< The signatories for this tx
+  Address        from_{};                                    ///< The sender of the TX
+  Transfers      transfers_{};                               ///< The list of the transfers
+  BlockIndex     valid_from_{0};                             ///< Min. block number before valid
+  BlockIndex     valid_until_{0};                            ///< Max. block number before invalid
+  TokenAmount    charge_{0};                                 ///< The charge rate for the TX
+  TokenAmount    charge_limit_{0};                           ///< The maximum charge to be used
+  ContractMode   contract_mode_{ContractMode::NOT_PRESENT};  ///< The payload being contained
+  Address        contract_digest_{};                         ///< The digest of the smart contract
+  Address        contract_address_{};                        ///< The address of the smart contract
+  ConstByteArray chain_code_{};                              ///< The name of the chain code
+  BitVector      shard_mask_{};                              ///< Shard mask of addition depends
+  ConstByteArray action_{};                                  ///< The name of the action invoked
+  ConstByteArray data_{};                                    ///< The payload of the transaction
+  Signatories    signatories_{};                             ///< The signatories for this tx
   /// @}
 
   /// @name Metadata
   /// @{
-  ConstByteArray digest_{};                      ///< The digest of the transaction
-  bool           verification_completed_{false}; ///< Signal that the verification has been done
-  bool           verified_{false};               ///< The cached result of the verification
+  ConstByteArray digest_{};                       ///< The digest of the transaction
+  bool           verification_completed_{false};  ///< Signal that the verification has been done
+  bool           verified_{false};                ///< The cached result of the verification
   /// @}
 
   // These are the only two ways to generate a transaction from one of the two companion classes
@@ -334,6 +333,6 @@ inline bool Transaction::IsVerified() const
   return verified_;
 }
 
-} // namespace v2
-} // namespace ledger
-} // namespace fetch
+}  // namespace v2
+}  // namespace ledger
+}  // namespace fetch

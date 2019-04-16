@@ -27,7 +27,7 @@ namespace crypto {
 class Identity;
 class Prover;
 
-}
+}  // namespace crypto
 
 namespace ledger {
 namespace v2 {
@@ -58,15 +58,13 @@ public:
   struct Sealer
   {
   public:
-
     // Construction / Destruction
     explicit Sealer(TransactionPtr tx);
 
-    Sealer &Sign(crypto::Prover &prover);
+    Sealer &       Sign(crypto::Prover &prover);
     TransactionPtr Build();
 
   private:
-
     TransactionPtr partial_transaction_;
     ConstByteArray serialized_payload_;
   };
@@ -74,8 +72,8 @@ public:
   // Construction / Destruction
   TransactionBuilder();
   TransactionBuilder(TransactionBuilder const &) = delete;
-  TransactionBuilder(TransactionBuilder &&) = delete;
-  ~TransactionBuilder() = default;
+  TransactionBuilder(TransactionBuilder &&)      = delete;
+  ~TransactionBuilder()                          = default;
 
   /// @name Basic Operations
   /// @{
@@ -89,8 +87,10 @@ public:
 
   /// @name Contract Operations
   /// @{
-  TransactionBuilder &TargetSmartContract(Address const &digest, Address const &address, BitVector const &shard_mask);
-  TransactionBuilder &TargetChainCode(byte_array::ConstByteArray const &ref, BitVector const &shard_mask);
+  TransactionBuilder &TargetSmartContract(Address const &digest, Address const &address,
+                                          BitVector const &shard_mask);
+  TransactionBuilder &TargetChainCode(byte_array::ConstByteArray const &ref,
+                                      BitVector const &                 shard_mask);
   TransactionBuilder &Action(byte_array::ConstByteArray const &action);
   TransactionBuilder &Data(byte_array::ConstByteArray const &data);
   /// @}
@@ -98,7 +98,7 @@ public:
   /// @name Signing Operations
   /// @{
   TransactionBuilder &Signer(crypto::Identity const &identity);
-  Sealer Seal();
+  Sealer              Seal();
   /// @}
 
   // Operators
@@ -106,10 +106,9 @@ public:
   TransactionBuilder &operator=(TransactionBuilder &&) = delete;
 
 private:
-
   TransactionPtr partial_transaction_;
 };
 
-} // namespace v2
-} // namespace ledger
-} // namespace fetch
+}  // namespace v2
+}  // namespace ledger
+}  // namespace fetch

@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/decoders.hpp"
-#include "ledger/chain/v2/transaction_serializer.hpp"
-#include "ledger/chain/v2/transaction.hpp"
 #include "ledger/chain/v2/json_transaction.hpp"
+#include "core/byte_array/decoders.hpp"
+#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/v2/transaction_serializer.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 
@@ -32,8 +32,8 @@ using variant::Extract;
 using byte_array::ConstByteArray;
 using byte_array::FromBase64;
 
-static constexpr char const *LOGGING_NAME = "JsonTx";
-static const ConstByteArray JSON_FORMAT_VERSION = "1.2";
+static constexpr char const *LOGGING_NAME        = "JsonTx";
+static const ConstByteArray  JSON_FORMAT_VERSION = "1.2";
 
 /**
  * Convert an input JSON object into a transaction
@@ -97,7 +97,7 @@ bool ToJsonTransaction(Transaction const &src, Variant &dst, bool include_metada
     dst = Variant::Object();
 
     // populate the mandatory field
-    dst["ver"] = JSON_FORMAT_VERSION;
+    dst["ver"]  = JSON_FORMAT_VERSION;
     dst["data"] = serializer.data().ToBase64();
 
     if (include_metadata)
@@ -115,6 +115,6 @@ bool ToJsonTransaction(Transaction const &src, Variant &dst, bool include_metada
   return success;
 }
 
-} // namespace v2
-} // namespace ledger
-} // namespace fetch
+}  // namespace v2
+}  // namespace ledger
+}  // namespace fetch

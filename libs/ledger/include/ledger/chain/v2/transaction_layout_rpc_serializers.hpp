@@ -41,7 +41,7 @@ void Serialize(T &s, TransactionLayout::ShardMask const &mask)
 template <typename T>
 void Deserialize(T &s, TransactionLayout::ShardMask &mask)
 {
-  uint64_t bit_size = 0;
+  uint64_t bit_size   = 0;
   uint64_t block_size = 0;
 
   s >> bit_size >> block_size;
@@ -68,6 +68,6 @@ void Deserialize(T &s, TransactionLayout &tx)
   s >> tx.digest_ >> tx.mask_ >> tx.charge_ >> tx.valid_from_ >> tx.valid_until_;
 }
 
-} // namespace v2
-} // namespace ledger
-} // namespace fetch
+}  // namespace v2
+}  // namespace ledger
+}  // namespace fetch

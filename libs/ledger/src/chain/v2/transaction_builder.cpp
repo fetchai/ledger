@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
+#include "ledger/chain/v2/transaction_builder.hpp"
 #include "core/logger.hpp"
+#include "core/macros.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/v2/transaction.hpp"
-#include "ledger/chain/v2/transaction_builder.hpp"
 #include "ledger/chain/v2/transaction_serializer.hpp"
 
 #include <algorithm>
@@ -47,7 +47,8 @@ TransactionBuilder::Sealer::Sealer(TransactionPtr tx)
   {
     if (partial_transaction_->action_.empty())
     {
-      throw std::runtime_error("Malformed transaction, must have an action when contract is specified");
+      throw std::runtime_error(
+          "Malformed transaction, must have an action when contract is specified");
     }
   }
 
@@ -69,10 +70,7 @@ TransactionBuilder::Sealer &TransactionBuilder::Sealer::Sign(crypto::Prover &pro
 
   // find the identity to which this prover is associated
   auto it = std::find_if(signatories.begin(), signatories.end(),
-    [&prover](Signatory const &s) {
-      return s.identity == prover.identity();
-    }
-  );
+                         [&prover](Signatory const &s) { return s.identity == prover.identity(); });
 
   // ensure that we have found the target signatory
   if (it != signatories.end())
@@ -83,7 +81,8 @@ TransactionBuilder::Sealer &TransactionBuilder::Sealer::Sign(crypto::Prover &pro
       // extract the signature from the prover
       it->signature = prover.signature();
 
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Signed: ", it->signature.ToHex(), " len: ", it->signature.size());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Signed: ", it->signature.ToHex(),
+                      " len: ", it->signature.size());
       FETCH_LOG_DEBUG(LOGGING_NAME, "- Payload: ", serialized_payload_.ToHex());
     }
     else
@@ -114,16 +113,16 @@ TransactionBuilder::TransactionPtr TransactionBuilder::Sealer::Build()
   if (!signatories.empty())
   {
     // ensure that none of the signatories have an empty signature field
-    valid = std::all_of(signatories.begin(), signatories.end(),
-                        [&hash_function](Signatory const &s) {
-                          bool success{false};
-                          if (!s.signature.empty())
-                          {
-                            hash_function.Update(s.signature);
-                            success = true;
-                          }
-                          return success;
-                        });
+    valid =
+        std::all_of(signatories.begin(), signatories.end(), [&hash_function](Signatory const &s) {
+          bool success{false};
+          if (!s.signature.empty())
+          {
+            hash_function.Update(s.signature);
+            success = true;
+          }
+          return success;
+        });
   }
 
   // if valid, extract the transaction
@@ -144,8 +143,7 @@ TransactionBuilder::TransactionPtr TransactionBuilder::Sealer::Build()
  */
 TransactionBuilder::TransactionBuilder()
   : partial_transaction_{std::make_unique<Transaction>()}
-{
-}
+{}
 
 /**
  * Set the from address for the transaction
@@ -173,9 +171,8 @@ TransactionBuilder &TransactionBuilder::Transfer(Address const &to, TokenAmount 
   auto &transfers = partial_transaction_->transfers_;
 
   // determine if the address has already been used
-  auto it = std::find_if(transfers.begin(), transfers.end(), [&to](Transfer const &t) {
-    return t.to == to;
-  });
+  auto it = std::find_if(transfers.begin(), transfers.end(),
+                         [&to](Transfer const &t) { return t.to == to; });
 
   if (it != transfers.end())
   {
@@ -184,12 +181,7 @@ TransactionBuilder &TransactionBuilder::Transfer(Address const &to, TokenAmount 
   }
   else
   {
-    transfers.emplace_back(
-      Transfer{
-        to,
-        amount
-      }
-    );
+    transfers.emplace_back(Transfer{to, amount});
   }
   return *this;
 }
@@ -250,7 +242,9 @@ TransactionBuilder &TransactionBuilder::ChargeLimit(TokenAmount amount)
  * @param shard_mask The resource shard mask
  * @return The current builder instance
  */
-TransactionBuilder &TransactionBuilder::TargetSmartContract(Address const &digest, Address const &address, BitVector const &shard_mask)
+TransactionBuilder &TransactionBuilder::TargetSmartContract(Address const &  digest,
+                                                            Address const &  address,
+                                                            BitVector const &shard_mask)
 {
   partial_transaction_->contract_mode_    = Transaction::ContractMode::PRESENT;
   partial_transaction_->contract_digest_  = digest;
@@ -267,7 +261,8 @@ TransactionBuilder &TransactionBuilder::TargetSmartContract(Address const &diges
  * @param shard_mask The resource shard mask
  * @return The current builder instance
  */
-TransactionBuilder &TransactionBuilder::TargetChainCode(byte_array::ConstByteArray const &ref, BitVector const &shard_mask)
+TransactionBuilder &TransactionBuilder::TargetChainCode(byte_array::ConstByteArray const &ref,
+                                                        BitVector const &shard_mask)
 {
   partial_transaction_->contract_mode_    = Transaction::ContractMode::CHAIN_CODE;
   partial_transaction_->contract_digest_  = Address{};
@@ -301,20 +296,14 @@ TransactionBuilder &TransactionBuilder::Signer(crypto::Identity const &identity)
 
   auto &signatories = partial_transaction_->signatories_;
 
-  auto it = std::find_if(signatories.begin(), signatories.end(), [&identity](Signatory const &s) {
-    return s.identity == identity;
-  });
+  auto it = std::find_if(signatories.begin(), signatories.end(),
+                         [&identity](Signatory const &s) { return s.identity == identity; });
 
   // restrict duplicates being added to the list
   if (it == signatories.end())
   {
     // the identity is unique great success!
-    signatories.emplace_back(
-      Signatory{
-        identity,
-        ConstByteArray{}
-      }
-    );
+    signatories.emplace_back(Signatory{identity, ConstByteArray{}});
   }
 
   return *this;
@@ -328,6 +317,6 @@ TransactionBuilder::Sealer TransactionBuilder::Seal()
   return sealer;
 }
 
-} // namespace v2
-} // namespace ledger
-} // namespace fetch
+}  // namespace v2
+}  // namespace ledger
+}  // namespace fetch

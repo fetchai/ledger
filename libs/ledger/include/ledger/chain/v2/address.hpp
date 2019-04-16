@@ -23,7 +23,7 @@
 
 namespace fetch {
 namespace crypto {
-  class Identity;
+class Identity;
 }
 
 namespace ledger {
@@ -64,7 +64,7 @@ namespace v2 {
 class Address
 {
 public:
-  using RawAddress = std::array<uint8_t, 32>;
+  using RawAddress     = std::array<uint8_t, 32>;
   using ConstByteArray = byte_array::ConstByteArray;
 
   // Construction / Destruction
@@ -72,8 +72,8 @@ public:
   explicit Address(crypto::Identity const &identity);
   explicit Address(RawAddress const &address);
   Address(Address const &) = default;
-  Address(Address &&) = default;
-  ~Address() = default;
+  Address(Address &&)      = default;
+  ~Address()               = default;
 
   /// @name Accessors
   /// @{
@@ -89,7 +89,6 @@ public:
   Address &operator=(Address &&) = default;
 
 private:
-
   ConstByteArray address_;  ///< The address representation
   ConstByteArray display_;  ///< The display representation
 };
@@ -136,6 +135,6 @@ inline bool Address::operator!=(Address const &other) const
   return !(*this == other);
 }
 
-} // namespace v2
-} // namespace ledger
-} // namespace fetch
+}  // namespace v2
+}  // namespace ledger
+}  // namespace fetch

@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/verifier.hpp"
 #include "ledger/chain/v2/transaction.hpp"
+#include "crypto/verifier.hpp"
 #include "ledger/chain/v2/transaction_serializer.hpp"
 
 namespace fetch {
@@ -67,6 +67,6 @@ bool Transaction::Verify()
   return verified_;
 }
 
-} // namespace v2
-} // namespace ledger
-} // namespace fetch
+}  // namespace v2
+}  // namespace ledger
+}  // namespace fetch

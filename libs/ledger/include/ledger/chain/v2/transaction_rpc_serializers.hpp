@@ -46,6 +46,6 @@ void Deserialize(T &s, Transaction &tx)
   serializer >> tx;
 }
 
-} // namespace v2
-} // namespace ledger
-} // namespace fetch
+}  // namespace v2
+}  // namespace ledger
+}  // namespace fetch

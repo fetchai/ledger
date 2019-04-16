@@ -34,9 +34,8 @@ TransactionLayout::TransactionLayout(Transaction const &tx)
   , charge_{tx.charge()}
   , valid_from_{tx.valid_from()}
   , valid_until_{tx.valid_until()}
-{
-}
+{}
 
-} // namespace v2
-} // namespace ledger
-} // namespace fetch
+}  // namespace v2
+}  // namespace ledger
+}  // namespace fetch

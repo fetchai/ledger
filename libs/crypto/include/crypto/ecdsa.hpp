@@ -72,8 +72,7 @@ public:
 
   explicit ECDSASigner(byte_array_type const &private_key)
     : private_key_{private_key}
-  {
-  }
+  {}
 
   void Load(byte_array_type const &private_key) override
   {

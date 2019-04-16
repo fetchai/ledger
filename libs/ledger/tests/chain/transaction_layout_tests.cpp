@@ -16,17 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/identity.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/v2/transaction.hpp"
-#include "ledger/chain/v2/transaction_layout.hpp"
-#include "ledger/chain/v2/transaction_builder.hpp"
+#include "crypto/identity.hpp"
 #include "ledger/chain/v2/address.hpp"
+#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/v2/transaction_builder.hpp"
+#include "ledger/chain/v2/transaction_layout.hpp"
 
 #include "gtest/gtest.h"
 
-#include <memory>
 #include <ledger/chain/v2/transaction.hpp>
+#include <memory>
 
 using fetch::ledger::v2::Transaction;
 using fetch::ledger::v2::TransactionLayout;
@@ -34,13 +34,12 @@ using fetch::ledger::v2::TransactionBuilder;
 using fetch::ledger::v2::Address;
 using fetch::crypto::ECDSASigner;
 
-using SignerPtr = std::unique_ptr<ECDSASigner>;
+using SignerPtr  = std::unique_ptr<ECDSASigner>;
 using AddressPtr = std::unique_ptr<Address>;
 
 class TransactionLayoutTests : public ::testing::Test
 {
 protected:
-
   void SetUp() override
   {
     signer_  = std::make_unique<ECDSASigner>();
@@ -65,16 +64,16 @@ TEST_F(TransactionLayoutTests, BasicTest)
 
   // build the complete transaction
   auto const tx = TransactionBuilder()
-    .From(*address_)
-    .TargetChainCode("foo.bar.baz", shard_mask)
-    .Action("action")
-    .ValidFrom(1000)
-    .ValidUntil(2000)
-    .ChargeLimit(500)
-    .Signer(signer_->identity())
-    .Seal()
-    .Sign(*signer_)
-    .Build();
+                      .From(*address_)
+                      .TargetChainCode("foo.bar.baz", shard_mask)
+                      .Action("action")
+                      .ValidFrom(1000)
+                      .ValidUntil(2000)
+                      .ChargeLimit(500)
+                      .Signer(signer_->identity())
+                      .Seal()
+                      .Sign(*signer_)
+                      .Build();
 
   // build the transaction layout from this transaction
   TransactionLayout const layout{*tx};

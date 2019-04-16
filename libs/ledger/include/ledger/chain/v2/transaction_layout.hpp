@@ -34,7 +34,6 @@ class Transaction;
 class TransactionLayout
 {
 public:
-
   using ConstByteArray = byte_array::ConstByteArray;
   using ShardMask      = bitmanip::BitVector;
   using TokenAmount    = uint64_t;
@@ -44,16 +43,16 @@ public:
   TransactionLayout() = default;
   explicit TransactionLayout(Transaction const &tx);
   TransactionLayout(TransactionLayout const &) = default;
-  TransactionLayout(TransactionLayout &&) = default;
-  ~TransactionLayout() = default;
+  TransactionLayout(TransactionLayout &&)      = default;
+  ~TransactionLayout()                         = default;
 
   /// @name Accessors
   /// @{
   ConstByteArray const &digest() const;
-  ShardMask const &mask() const;
-  TokenAmount charge() const;
-  BlockIndex valid_from() const;
-  BlockIndex valid_until() const;
+  ShardMask const &     mask() const;
+  TokenAmount           charge() const;
+  BlockIndex            valid_from() const;
+  BlockIndex            valid_until() const;
   /// @}
 
   // Operators
@@ -61,7 +60,6 @@ public:
   TransactionLayout &operator=(TransactionLayout &&) = default;
 
 private:
-
   ConstByteArray digest_{};
   ShardMask      mask_{};
   TokenAmount    charge_{0};
@@ -125,6 +123,6 @@ inline TransactionLayout::BlockIndex TransactionLayout::valid_until() const
   return valid_until_;
 }
 
-} // namespace v2
-} // namespace ledger
-} // namespace fetch
+}  // namespace v2
+}  // namespace ledger
+}  // namespace fetch

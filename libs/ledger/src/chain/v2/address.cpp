@@ -16,29 +16,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
-#include "crypto/identity.hpp"
-#include "crypto/hash.hpp"
-#include "crypto/sha256.hpp"
 #include "ledger/chain/v2/address.hpp"
+#include "core/macros.hpp"
+#include "crypto/hash.hpp"
+#include "crypto/identity.hpp"
+#include "crypto/sha256.hpp"
 
 namespace fetch {
 namespace ledger {
 namespace v2 {
 namespace {
 
-  /**
-   * Helper function to calculation the address checksum
-   *
-   * @param raw_address The input raw address
-   * @return The calculated checksum for the address
-   */
-  Address::ConstByteArray CalculateChecksum(Address::ConstByteArray const &raw_address)
-  {
-    return crypto::Hash<crypto::SHA256>(raw_address).SubArray(0, 4);
-  }
-
+/**
+ * Helper function to calculation the address checksum
+ *
+ * @param raw_address The input raw address
+ * @return The calculated checksum for the address
+ */
+Address::ConstByteArray CalculateChecksum(Address::ConstByteArray const &raw_address)
+{
+  return crypto::Hash<crypto::SHA256>(raw_address).SubArray(0, 4);
 }
+
+}  // namespace
 
 /**
  * Create an address from an identity
@@ -48,8 +48,7 @@ namespace {
 Address::Address(crypto::Identity const &identity)
   : address_(crypto::Hash<crypto::SHA256>(identity.identifier()))
   , display_(address_ + CalculateChecksum(address_))
-{
-}
+{}
 
 /**
  * Create an identity from a raw address (that is a fixed array of bytes)
@@ -59,9 +58,8 @@ Address::Address(crypto::Identity const &identity)
 Address::Address(RawAddress const &address)
   : address_(address.data(), address.size())
   , display_(address_ + CalculateChecksum(address_))
-{
-}
+{}
 
-} // namespace v2
-} // namespace ledger
-} // namespace fetch
+}  // namespace v2
+}  // namespace ledger
+}  // namespace fetch

@@ -16,298 +16,300 @@
 //
 //------------------------------------------------------------------------------
 
-#include "meta/type_traits.hpp"
-#include "vectorise/platform.hpp"
+#include "ledger/chain/v2/transaction_serializer.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/v2/transaction.hpp"
-#include "ledger/chain/v2/transaction_serializer.hpp"
+#include "meta/type_traits.hpp"
+#include "vectorise/platform.hpp"
 
 namespace fetch {
 namespace ledger {
 namespace v2 {
 namespace {
 
-  using byte_array::ByteArray;
-  using byte_array::ConstByteArray;
-  using crypto::Identity;
-  using serializers::ByteArrayBuffer;
+using byte_array::ByteArray;
+using byte_array::ConstByteArray;
+using crypto::Identity;
+using serializers::ByteArrayBuffer;
 
-  using TokenAmount  = Transaction::TokenAmount;
-  using ContractMode = Transaction::ContractMode;
-  using BitVector    = Transaction::BitVector;
+using TokenAmount  = Transaction::TokenAmount;
+using ContractMode = Transaction::ContractMode;
+using BitVector    = Transaction::BitVector;
 
-  const uint8_t MAGIC      = 0xA1;
-  const uint8_t VERSION    = 1u;
-  const int8_t  UNIT_MEGA  = -2;
-  const int8_t  UNIT_KILO  = -1;
-  const int8_t  UNIT_MILLI = 1;
-  const int8_t  UNIT_MICRO = 2;
-  const int8_t  UNIT_NANO  = 3;
+const uint8_t MAGIC      = 0xA1;
+const uint8_t VERSION    = 1u;
+const int8_t  UNIT_MEGA  = -2;
+const int8_t  UNIT_KILO  = -1;
+const int8_t  UNIT_MILLI = 1;
+const int8_t  UNIT_MICRO = 2;
+const int8_t  UNIT_NANO  = 3;
 
-  uint8_t Map(ContractMode mode)
+uint8_t Map(ContractMode mode)
+{
+  uint8_t value{0};
+
+  switch (mode)
   {
-    uint8_t value{0};
-
-    switch (mode)
-    {
-    case ContractMode::NOT_PRESENT:
-      value = 0;
-      break;
-    case ContractMode::PRESENT:
-      value = 1;
-      break;
-    case ContractMode::CHAIN_CODE:
-      value = 2;
-      break;
-    }
-
-    return value;
+  case ContractMode::NOT_PRESENT:
+    value = 0;
+    break;
+  case ContractMode::PRESENT:
+    value = 1;
+    break;
+  case ContractMode::CHAIN_CODE:
+    value = 2;
+    break;
   }
 
-  ConstByteArray Encode(Address const &address)
+  return value;
+}
+
+ConstByteArray Encode(Address const &address)
+{
+  return address.address();
+}
+
+template <typename T>
+meta::IfIsUnsignedInteger<T, T> ToUnsigned(T value)
+{
+  return value;
+}
+
+template <typename T>
+meta::IfIsSignedInteger<T, typename std::make_unsigned<T>::type> ToUnsigned(T value)
+{
+  using U = typename std::make_unsigned<T>::type;
+  return static_cast<U>(std::abs(value));
+}
+
+template <typename T>
+meta::IfIsInteger<T, ConstByteArray> Encode(T value)
+{
+  using U = typename std::make_unsigned<T>::type;
+
+  bool const is_signed = meta::IsSignedInteger<T> && (value < 0);
+
+  ByteArray encoded;
+  if (!is_signed && (value <= T{0x7f}))
   {
-    return address.address();
+    encoded.Resize(1);
+    encoded[0] = static_cast<uint8_t>(value & 0x7f);
   }
-
-  template <typename T>
-  meta::IfIsUnsignedInteger<T,T> ToUnsigned(T value)
+  else
   {
-    return value;
-  }
+    U const abs_value = ToUnsigned(value);
 
-  template <typename T>
-  meta::IfIsSignedInteger<T, typename std::make_unsigned<T>::type> ToUnsigned(T value)
-  {
-    using U = typename std::make_unsigned<T>::type;
-    return static_cast<U>(std::abs(value));
-  }
-
-  template <typename T>
-  meta::IfIsInteger<T, ConstByteArray> Encode(T value)
-  {
-    using U = typename std::make_unsigned<T>::type;
-
-    bool const is_signed = meta::IsSignedInteger<T> && (value < 0);
-
-    ByteArray encoded;
-    if (!is_signed && (value <= T{0x7f}))
+    if (is_signed && (abs_value <= 0x1F))
     {
       encoded.Resize(1);
-      encoded[0] = static_cast<uint8_t>(value & 0x7f);
+      encoded[0] = 0xE0 | static_cast<uint8_t>(abs_value);
     }
     else
     {
-      U const abs_value = ToUnsigned(value);
+      constexpr std::size_t MAX_BYTES = sizeof(U);
 
-      if (is_signed && (abs_value <= 0x1F))
+      // determine the corresponding number of bytes required to encode this value
+      uint8_t log2_bytes_required{0};
+
+      U limit{0x100};
+      for (std::size_t i = 1; i <= MAX_BYTES; i <<= 1u, limit <<= 8u)
       {
-        encoded.Resize(1);
-        encoded[0] = 0xE0 | static_cast<uint8_t>(abs_value);
-      }
-      else
-      {
-        constexpr std::size_t MAX_BYTES = sizeof(U);
-
-        // determine the corresponding number of bytes required to encode this value
-        uint8_t log2_bytes_required{0};
-
-        U limit{0x100};
-        for (std::size_t i = 1; i <= MAX_BYTES; i <<= 1u, limit <<= 8u)
+        if (abs_value < limit)
         {
-          if (abs_value < limit)
-          {
-            break;
-          }
-
-          ++log2_bytes_required;
+          break;
         }
 
-        // calculate the actual number of bytes that will be required
-        std::size_t const bytes_required = 1u << log2_bytes_required;
-
-//        std::cout << "Debug: " << value << " log2: " << int{log2_bytes_required} << " bytes: " << bytes_required << std::endl;
-
-        // resize the buffer and encode the value
-        encoded.Resize(bytes_required + 1u);
-
-        // write out the header
-        encoded[0] = ((is_signed) ? 0xD0 : 0xC0) | (log2_bytes_required & 0xF);
-
-        std::size_t i = 1;
-        for (std::size_t index = bytes_required - 1u; ;--index)
-        {
-          // configure the mask to
-          U const offset = index << 3u;
-          U const mask   = 0xFFu << offset;
-
-          // mask of the byte we are interested and store into place
-          encoded[i++] = static_cast<uint8_t>((abs_value & mask) >> offset);
-
-          // exit the loop once we have finished the zero'th index
-          if (index == 0)
-            break;
-        }
-
-//        std::cout << "Finished: " << encoded.ToHex() << std::endl;
+        ++log2_bytes_required;
       }
+
+      // calculate the actual number of bytes that will be required
+      std::size_t const bytes_required = 1u << log2_bytes_required;
+
+      //        std::cout << "Debug: " << value << " log2: " << int{log2_bytes_required} << " bytes:
+      //        " << bytes_required << std::endl;
+
+      // resize the buffer and encode the value
+      encoded.Resize(bytes_required + 1u);
+
+      // write out the header
+      encoded[0] = ((is_signed) ? 0xD0 : 0xC0) | (log2_bytes_required & 0xF);
+
+      std::size_t i = 1;
+      for (std::size_t index = bytes_required - 1u;; --index)
+      {
+        // configure the mask to
+        U const offset = index << 3u;
+        U const mask   = 0xFFu << offset;
+
+        // mask of the byte we are interested and store into place
+        encoded[i++] = static_cast<uint8_t>((abs_value & mask) >> offset);
+
+        // exit the loop once we have finished the zero'th index
+        if (index == 0)
+          break;
+      }
+
+      //        std::cout << "Finished: " << encoded.ToHex() << std::endl;
     }
-
-    return {encoded};
   }
 
-  ConstByteArray Encode(ConstByteArray const &value)
+  return {encoded};
+}
+
+ConstByteArray Encode(ConstByteArray const &value)
+{
+  auto const length = Encode(value.size());
+  return length + value;
+}
+
+ConstByteArray Encode(BitVector const &bits)
+{
+  using Block = BitVector::data_type;
+
+  auto const *      raw_data   = reinterpret_cast<uint8_t const *>(bits.data().pointer());
+  std::size_t const raw_length = bits.data().size() * sizeof(Block);
+  std::size_t const size_bytes = bits.size() >> 3u;
+  std::size_t const offset     = (raw_length - size_bytes) + 1;
+
+  // create and populate the array
+  ByteArray array;
+  array.Resize(size_bytes);
+
+  for (std::size_t i = 0, j = raw_length - offset; i < size_bytes; ++i, --j)
   {
-    auto const length = Encode(value.size());
-    return length + value;
+    array[i] = raw_data[j];
   }
 
-  ConstByteArray Encode(BitVector const &bits)
+  return {array};
+}
+
+ConstByteArray Encode(Identity const &identity)
+{
+  ByteArray buffer;
+  buffer.Append(uint8_t{0x04}, identity.identifier());
+
+  return {buffer};
+}
+
+void Decode(ByteArrayBuffer &buffer, Address &address)
+{
+  Address::RawAddress raw_address;
+  buffer.ReadBytes(raw_address.data(), raw_address.size());
+
+  address = Address{raw_address};
+}
+
+template <typename T>
+meta::IfIsInteger<T, T> Decode(ByteArrayBuffer &buffer)
+{
+  using U = typename std::make_unsigned<T>::type;
+
+  // determine the traits of the output type
+  constexpr bool        output_is_signed   = meta::IsSignedInteger<T>;
+  constexpr std::size_t output_length      = sizeof(T);
+  constexpr std::size_t output_log2_length = meta::Log2<output_length>::value;
+
+  T output_value{0};
+
+  uint8_t initial_byte{0};
+  buffer.ReadBytes(&initial_byte, 1);
+
+  if ((initial_byte & 0x80u) == 0)
   {
-    using Block = BitVector::data_type;
+    output_value = static_cast<T>(initial_byte & 0x7Fu);
+  }
+  else
+  {
+    uint8_t const type = (initial_byte >> 5u) & 0x3u;
 
-    auto const *raw_data         = reinterpret_cast<uint8_t const *>(bits.data().pointer());
-    std::size_t const raw_length = bits.data().size() * sizeof(Block);
-    std::size_t const size_bytes = bits.size() >> 3u;
-    std::size_t const offset     = (raw_length - size_bytes) + 1;
-
-    // create and populate the array
-    ByteArray array;
-    array.Resize(size_bytes);
-
-    for (std::size_t i = 0, j = raw_length - offset; i < size_bytes; ++i, --j)
+    if (type == 3u)
     {
-      array[i] = raw_data[j];
-    }
+      // ensure the output type is of the correct type
+      if (!output_is_signed)
+      {
+        throw std::runtime_error("Unable to extract signed value into unsigned value");
+      }
 
-    return {array};
-  }
-
-  ConstByteArray Encode(Identity const &identity)
-  {
-    ByteArray buffer;
-    buffer.Append(uint8_t{0x04}, identity.identifier());
-
-    return {buffer};
-  }
-
-  void Decode(ByteArrayBuffer &buffer, Address &address)
-  {
-    Address::RawAddress raw_address;
-    buffer.ReadBytes(raw_address.data(), raw_address.size());
-
-    address = Address{raw_address};
-  }
-
-  template <typename T>
-  meta::IfIsInteger<T, T> Decode(ByteArrayBuffer &buffer)
-  {
-    using U = typename std::make_unsigned<T>::type;
-
-    // determine the traits of the output type
-    constexpr bool output_is_signed = meta::IsSignedInteger<T>;
-    constexpr std::size_t output_length = sizeof(T);
-    constexpr std::size_t output_log2_length = meta::Log2<output_length>::value;
-
-    T output_value{0};
-
-    uint8_t initial_byte{0};
-    buffer.ReadBytes(&initial_byte, 1);
-
-    if ((initial_byte & 0x80u) == 0)
-    {
-      output_value = static_cast<T>(initial_byte & 0x7Fu);
+      output_value = -static_cast<T>(initial_byte & 0x1fu);
     }
     else
     {
-      uint8_t const type = (initial_byte >> 5u) & 0x3u;
+      uint8_t const signed_flag       = (initial_byte >> 4u) & 0x1u;
+      uint8_t const log2_value_length = (initial_byte & 0xfu);
 
-      if (type == 3u)
+      // size checks
+      bool const output_is_too_small = (log2_value_length > output_log2_length);
+
+      // in the case where U64::Max is (potentially) encoded but the output format is I64
+      bool const unsigned_value_too_large =
+          (!signed_flag) && output_is_signed && (log2_value_length == output_log2_length);
+
+      // ensure that the output is of the correct size for this value
+      if (output_is_too_small || unsigned_value_too_large)
       {
-        // ensure the output type is of the correct type
-        if (!output_is_signed)
-        {
-          throw std::runtime_error("Unable to extract signed value into unsigned value");
-        }
-
-        output_value = -static_cast<T>(initial_byte & 0x1fu);
+        throw std::runtime_error("Output is not large enough to extract the encoded value");
       }
-      else
+      else if (signed_flag && !output_is_signed)
       {
-        uint8_t const signed_flag = (initial_byte >> 4u) & 0x1u;
-        uint8_t const log2_value_length = (initial_byte & 0xfu);
+        throw std::runtime_error("Unable to extract signed value into unsigned value");
+      }
 
-        // size checks
-        bool const output_is_too_small = (log2_value_length > output_log2_length);
+      U partial_value{0};
+      for (std::size_t index = (1u << log2_value_length) - 1u;; --index)
+      {
+        // read the next byte
+        uint8_t encoded_byte{0};
+        buffer.ReadBytes(&encoded_byte, 1);
 
-        // in the case where U64::Max is (potentially) encoded but the output format is I64
-        bool const unsigned_value_too_large = (!signed_flag) && output_is_signed && (log2_value_length == output_log2_length);
+        // build up the partial value
+        partial_value |= U{encoded_byte} << (index * 8u);
 
-        // ensure that the output is of the correct size for this value
-        if (output_is_too_small || unsigned_value_too_large)
+        // exit the loop once we ahve finished
+        if (index == 0)
         {
-          throw std::runtime_error("Output is not large enough to extract the encoded value");
-        }
-        else if (signed_flag && !output_is_signed)
-        {
-          throw std::runtime_error("Unable to extract signed value into unsigned value");
-        }
-
-        U partial_value{0};
-        for (std::size_t index = (1u << log2_value_length) - 1u; ; --index)
-        {
-          // read the next byte
-          uint8_t encoded_byte{0};
-          buffer.ReadBytes(&encoded_byte, 1);
-
-          // build up the partial value
-          partial_value |= U{encoded_byte} << (index * 8u);
-
-          // exit the loop once we ahve finished
-          if (index == 0)
-          {
-            break;
-          }
-        }
-
-        output_value = static_cast<T>(partial_value);
-
-        if (output_is_signed && signed_flag)
-        {
-          output_value = -output_value;
+          break;
         }
       }
-    }
 
-    return output_value;
-  }
+      output_value = static_cast<T>(partial_value);
 
-  template <typename T>
-  meta::IfIsInteger<T> Decode(ByteArrayBuffer &buffer, T &value)
-  {
-    value = Decode<T>(buffer);
-  }
-
-  void Decode(ByteArrayBuffer &buffer, BitVector &bits)
-  {
-    using Block = BitVector::data_type;
-
-    auto *raw_data               = reinterpret_cast<uint8_t *>(bits.data().pointer());
-    std::size_t const raw_length = bits.data().size() * sizeof(Block);
-    std::size_t const size_bytes = bits.size() >> 3u;
-    std::size_t const offset     = (raw_length - size_bytes) + 1;
-
-    // read the expected number of bytes from the stream
-    ConstByteArray bytes;
-    buffer.ReadByteArray(bytes, size_bytes);
-
-    auto const &bytes_ref{bytes};
-    for (std::size_t i = 0, j = raw_length - offset; i < size_bytes; ++i, --j)
-    {
-      raw_data[j] = bytes_ref[i];
+      if (output_is_signed && signed_flag)
+      {
+        output_value = -output_value;
+      }
     }
   }
+
+  return output_value;
+}
+
+template <typename T>
+meta::IfIsInteger<T> Decode(ByteArrayBuffer &buffer, T &value)
+{
+  value = Decode<T>(buffer);
+}
+
+void Decode(ByteArrayBuffer &buffer, BitVector &bits)
+{
+  using Block = BitVector::data_type;
+
+  auto *            raw_data   = reinterpret_cast<uint8_t *>(bits.data().pointer());
+  std::size_t const raw_length = bits.data().size() * sizeof(Block);
+  std::size_t const size_bytes = bits.size() >> 3u;
+  std::size_t const offset     = (raw_length - size_bytes) + 1;
+
+  // read the expected number of bytes from the stream
+  ConstByteArray bytes;
+  buffer.ReadByteArray(bytes, size_bytes);
+
+  auto const &bytes_ref{bytes};
+  for (std::size_t i = 0, j = raw_length - offset; i < size_bytes; ++i, --j)
+  {
+    raw_data[j] = bytes_ref[i];
+  }
+}
 
 void Decode(ByteArrayBuffer &buffer, ConstByteArray &bytes)
 {
@@ -337,23 +339,23 @@ void Decode(ByteArrayBuffer &buffer, Identity &identity)
   identity = Identity{std::move(public_key)};
 }
 
-} // anon. namespace
+}  // namespace
 
 TransactionSerializer::TransactionSerializer(ConstByteArray data)
   : serial_data_{std::move(data)}
-{
-}
+{}
 
 ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
 {
-  std::size_t const num_transfers = tx.transfers().size();
+  std::size_t const num_transfers  = tx.transfers().size();
   std::size_t const num_signatures = tx.signatories().size();
 
   auto const contract_mode = tx.contract_mode();
 
   // make an estimate for the serial size of the transaction and reserve this amount of buffer
   // space
-  std::size_t const estimated_transaction_size = (num_transfers * 64u) + (num_signatures * 128u) + tx.data().size() + tx.action().size() + 256u;
+  std::size_t const estimated_transaction_size = (num_transfers * 64u) + (num_signatures * 128u) +
+                                                 tx.data().size() + tx.action().size() + 256u;
 
   ByteArray buffer;
   buffer.Reserve(estimated_transaction_size);
@@ -403,8 +405,8 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
   // handle the signalling of the contract mode
   if (ContractMode::NOT_PRESENT != contract_mode)
   {
-    auto const &shard_mask     = tx.shard_mask();
-    auto const shard_mask_size = static_cast<uint32_t>(shard_mask.size());
+    auto const &shard_mask      = tx.shard_mask();
+    auto const  shard_mask_size = static_cast<uint32_t>(shard_mask.size());
 
     if (shard_mask_size <= 1)
     {
@@ -419,8 +421,8 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
 
       if (shard_mask_size < 8u)
       {
-        // in this case the shard mask is small and therefore can be totally contained in the contract
-        // header
+        // in this case the shard mask is small and therefore can be totally contained in the
+        // contract header
         uint8_t contract_header = static_cast<uint8_t>(shard_mask(0) & 0xFu);
 
         // signal the bit to signal the the shard mask it 2 or 4 bits
@@ -433,13 +435,13 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
       }
       else
       {
-        // this format of transaction essentially places a limit on the number of individual resource
-        // lanes that can be signalled to 512
+        // this format of transaction essentially places a limit on the number of individual
+        // resource lanes that can be signalled to 512
         assert(shard_mask_size <= 512);
 
         // signal the size of the following shard bytes
         uint8_t const contract_header =
-                        uint8_t{0x40} | static_cast<uint8_t>((log2_shard_mask_size - 3) & 0x3Fu);
+            uint8_t{0x40} | static_cast<uint8_t>((log2_shard_mask_size - 3) & 0x3Fu);
 
         // write the header and the corresponding bytes
         buffer.Append(contract_header, Encode(shard_mask));
@@ -448,14 +450,14 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
 
     switch (tx.contract_mode())
     {
-      case ContractMode::PRESENT:
-        buffer.Append(Encode(tx.contract_digest()), Encode(tx.contract_address()));
-        break;
-      case ContractMode::CHAIN_CODE:
-        buffer.Append(Encode(tx.chain_code()));
-        break;
-      default:
-        break;
+    case ContractMode::PRESENT:
+      buffer.Append(Encode(tx.contract_digest()), Encode(tx.contract_address()));
+      break;
+    case ContractMode::CHAIN_CODE:
+      buffer.Append(Encode(tx.chain_code()));
+      break;
+    default:
+      break;
     }
 
     // add the action and data to the buffer
@@ -506,13 +508,13 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
     return false;
   }
 
-  uint8_t const version = (header[1] >> 5u) & 0x7u;
-  uint8_t const charge_unit_flag = (header[1] >> 3u) & 0x1u;
-  uint8_t const transfer_flag = (header[1] >> 2u) & 0x1u;
+  uint8_t const version                 = (header[1] >> 5u) & 0x7u;
+  uint8_t const charge_unit_flag        = (header[1] >> 3u) & 0x1u;
+  uint8_t const transfer_flag           = (header[1] >> 2u) & 0x1u;
   uint8_t const multiple_transfers_flag = (header[1] >> 1u) & 0x1u;
-  uint8_t const valid_from_flag = header[1] & 0x1u;
+  uint8_t const valid_from_flag         = header[1] & 0x1u;
 
-  uint8_t const contract_type = (header[2] >> 6u) & 0x3u;
+  uint8_t const contract_type          = (header[2] >> 6u) & 0x3u;
   uint8_t const signature_count_minus1 = header[2] & 0x3fu;
 
   if (version != VERSION)
@@ -530,7 +532,7 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
     if (multiple_transfers_flag)
     {
       std::size_t const transfer_count_minus2 = Decode<std::size_t>(buffer);
-      transfer_count = transfer_count_minus2 + 2u;
+      transfer_count                          = transfer_count_minus2 + 2u;
     }
 
     tx.transfers_.resize(transfer_count);
@@ -564,7 +566,7 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
     case UNIT_KILO:
       tx.charge_ *= 10000000000000ull;
       break;
-    case 0: // unit
+    case 0:  // unit
       tx.charge_ *= 10000000000ull;
       break;
     case UNIT_MILLI:
@@ -624,7 +626,8 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
       else
       {
         // calculate the
-        std::size_t const shard_mask_length_bits = 1u << (static_cast<std::size_t>(contract_header & 0x3fu) + 3u);
+        std::size_t const shard_mask_length_bits =
+            1u << (static_cast<std::size_t>(contract_header & 0x3fu) + 3u);
 
         // create the mask of the correct size and decode the value
         tx.shard_mask_.Resize(shard_mask_length_bits);
@@ -710,6 +713,6 @@ TransactionSerializer &TransactionSerializer::operator>>(Transaction &tx)
   return *this;
 }
 
-} // namespace v2
-} // namespace ledger
-} // namespace fetch
+}  // namespace v2
+}  // namespace ledger
+}  // namespace fetch

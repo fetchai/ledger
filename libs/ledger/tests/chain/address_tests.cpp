@@ -16,16 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/hash.hpp"
-#include "crypto/sha256.hpp"
-#include "crypto/identity.hpp"
 #include "crypto/ecdsa.hpp"
+#include "crypto/hash.hpp"
+#include "crypto/identity.hpp"
+#include "crypto/sha256.hpp"
 #include "ledger/chain/v2/address.hpp"
 
 #include "gtest/gtest.h"
 
-#include <memory>
 #include <algorithm>
+#include <memory>
 
 using fetch::byte_array::ConstByteArray;
 using fetch::crypto::Identity;
@@ -33,7 +33,6 @@ using fetch::crypto::ECDSASigner;
 using fetch::crypto::SHA256;
 using fetch::crypto::Hash;
 using fetch::ledger::v2::Address;
-
 
 class AddressTests : public ::testing::Test
 {

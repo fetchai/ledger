@@ -34,7 +34,7 @@ class TransactionSerializer
 {
 public:
   using ConstByteArray = byte_array::ConstByteArray;
-  using ByteArray = byte_array::ByteArray;
+  using ByteArray      = byte_array::ByteArray;
 
   static constexpr char const *LOGGING_NAME = "TxSerializer";
 
@@ -42,8 +42,8 @@ public:
   TransactionSerializer() = default;
   explicit TransactionSerializer(ConstByteArray data);
   TransactionSerializer(TransactionSerializer const &) = delete;
-  TransactionSerializer(TransactionSerializer &&) = delete;
-  ~TransactionSerializer() = default;
+  TransactionSerializer(TransactionSerializer &&)      = delete;
+  ~TransactionSerializer()                             = default;
 
   ConstByteArray const &data() const
   {
@@ -68,10 +68,9 @@ public:
   TransactionSerializer &operator=(TransactionSerializer &&) = delete;
 
 private:
-
   ConstByteArray serial_data_;
 };
 
-} // namespace v2
-} // namespace ledger
-} // namespace fetch
+}  // namespace v2
+}  // namespace ledger
+}  // namespace fetch

@@ -475,7 +475,6 @@ private:
     std::memcpy(pointer() + acc_size, &other, 1u);
   }
 
-
   template <typename T>
   friend void fetch::serializers::Deserialize(T &serializer, ConstByteArray &s);
 

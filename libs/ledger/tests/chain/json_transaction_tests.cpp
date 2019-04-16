@@ -18,9 +18,9 @@
 
 #include "crypto/ecdsa.hpp"
 #include "ledger/chain/v2/address.hpp"
+#include "ledger/chain/v2/json_transaction.hpp"
 #include "ledger/chain/v2/transaction.hpp"
 #include "ledger/chain/v2/transaction_builder.hpp"
-#include "ledger/chain/v2/json_transaction.hpp"
 #include "variant/variant.hpp"
 
 #include "gtest/gtest.h"
@@ -47,12 +47,12 @@ TEST(JsonTransactionTests, BasicTest)
 
   // build the single transfer transaction
   auto tx = TransactionBuilder()
-    .From(address1)
-    .Transfer(address2, 2000)
-    .Signer(identity1.identity())
-    .Seal()
-    .Sign(identity1)
-    .Build();
+                .From(address1)
+                .Transfer(address2, 2000)
+                .Signer(identity1.identity())
+                .Seal()
+                .Sign(identity1)
+                .Build();
 
   // ensure the transaction is valid
   ASSERT_TRUE(tx->Verify());
@@ -69,10 +69,10 @@ TEST(JsonTransactionTests, BasicTest)
   EXPECT_EQ(tx->from(), output.from());
 
   auto const &transfers_expected = tx->transfers();
-  auto const &transfers_actual = output.transfers();
+  auto const &transfers_actual   = output.transfers();
 
   ASSERT_EQ(transfers_expected.size(), transfers_actual.size());
-  ASSERT_FALSE(transfers_actual.empty()); // sanity
+  ASSERT_FALSE(transfers_actual.empty());  // sanity
 
   EXPECT_EQ(transfers_expected[0].to, transfers_actual[0].to);
   EXPECT_EQ(transfers_expected[0].amount, transfers_actual[0].amount);
