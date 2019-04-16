@@ -51,7 +51,7 @@ TEST(FixedPointTest, Conversion_16_16)
   EXPECT_EQ(double(m_one), -1.0);
   EXPECT_EQ(double(m_two), -2.0);
 
-  // Zero
+  // CONST_ZERO
   fetch::fixed_point::FixedPoint<16, 16> zero(0);
   fetch::fixed_point::FixedPoint<16, 16> m_zero(-0);
 
@@ -732,7 +732,6 @@ TEST(FixedPointTest, Exponential_32_32)
   fetch::fixed_point::FixedPoint<32, 32> one(1);
   fetch::fixed_point::FixedPoint<32, 32> two(2);
   fetch::fixed_point::FixedPoint<32, 32> ten(10);
-  fetch::fixed_point::FixedPoint<32, 32> huge(21);
   fetch::fixed_point::FixedPoint<32, 32> small(0.0001);
   fetch::fixed_point::FixedPoint<32, 32> tiny(0, fp64::SMALLEST_FRACTION);
   fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Exp(one);
@@ -782,29 +781,6 @@ TEST(FixedPointTest, Logarithm_16_16)
   fetch::fixed_point::FixedPoint<16, 16> huge(10000);
   fetch::fixed_point::FixedPoint<16, 16> small(0.001);
   fetch::fixed_point::FixedPoint<16, 16> tiny(0, fp64::SMALLEST_FRACTION);
-  fetch::fixed_point::FixedPoint<16, 16> e1 = fp32::Log2(one);
-  fetch::fixed_point::FixedPoint<16, 16> e2 = fp32::Log2(one_point_five);
-  fetch::fixed_point::FixedPoint<16, 16> e3 = fp32::Log2(ten);
-  fetch::fixed_point::FixedPoint<16, 16> e4 = fp32::Log2(huge);
-  fetch::fixed_point::FixedPoint<16, 16> e5 = fp32::Log2(small);
-  fetch::fixed_point::FixedPoint<16, 16> e6 = fp32::Log2(tiny);
-
-  EXPECT_NEAR((double)e1, std::log2((double)one), 1e-4);
-  EXPECT_NEAR((double)e2, std::log2((double)one_point_five), 1e-4);
-  EXPECT_NEAR((double)e3, std::log2((double)ten), 1e-4);
-  EXPECT_NEAR((double)e4, std::log2((double)huge), 1e-4);
-  EXPECT_NEAR((double)e5, std::log2((double)small), 1e-4);
-  EXPECT_NEAR((double)e6, std::log2((double)tiny), 1e-4);
-}
-
-TEST(FixedPointTest, Logarithm_16_16)
-{
-  fetch::fixed_point::FixedPoint<16, 16> one(1);
-  fetch::fixed_point::FixedPoint<16, 16> one_point_five(1.5);
-  fetch::fixed_point::FixedPoint<16, 16> ten(10);
-  fetch::fixed_point::FixedPoint<16, 16> huge(10000);
-  fetch::fixed_point::FixedPoint<16, 16> small(0.001);
-  fetch::fixed_point::FixedPoint<16, 16> tiny(0, one.smallest_fraction);
   fetch::fixed_point::FixedPoint<16, 16> e1 = fp32::Log2(one);
   fetch::fixed_point::FixedPoint<16, 16> e2 = fp32::Log2(one_point_five);
   fetch::fixed_point::FixedPoint<16, 16> e3 = fp32::Log2(ten);
