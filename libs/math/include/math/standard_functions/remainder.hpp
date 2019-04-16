@@ -41,7 +41,7 @@ meta::IfIsNonFixedPointArithmetic<Type, void> Remainder(Type const &x, Type cons
 template <typename T>
 meta::IfIsFixedPoint<T, void> Remainder(T const &x, T const &y, T &ret)
 {
-  ret = T(std::remainder(double(x), double(y)));
+  ret = T::Remainder(x, y);
 }
 
 //////////////////
