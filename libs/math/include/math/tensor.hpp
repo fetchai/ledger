@@ -509,32 +509,32 @@ public:
     return operator[](index);
   }
 
-   /**
-    * One-dimensional reference index operator.
-    *
-    * This operator acts as a one-dimensional array accessor that is
-    * meant for non-constant object instances.
-    *
-    * @tparam S an integral type
-    * @param i the index to access
-    * @return
-    */
+  /**
+   * One-dimensional reference index operator.
+   *
+   * This operator acts as a one-dimensional array accessor that is
+   * meant for non-constant object instances.
+   *
+   * @tparam S an integral type
+   * @param i the index to access
+   * @return
+   */
   template <typename S>
   typename std::enable_if<std::is_integral<S>::value, Type>::type &operator[](S const &i)
   {
     return data_[i];
   }
 
-   /**
-    * One-dimensional reference index operator.
-    *
-    * This operator acts as a one-dimensional array accessor that is
-    * meant for non-constant object instances.
-    *
-    * @tparam S an integral type
-    * @param i the index to access
-    * @return
-    */
+  /**
+   * One-dimensional reference index operator.
+   *
+   * This operator acts as a one-dimensional array accessor that is
+   * meant for non-constant object instances.
+   *
+   * @tparam S an integral type
+   * @param i the index to access
+   * @return
+   */
   template <typename S>
   typename std::enable_if<std::is_integral<S>::value, Type>::type const &operator[](
       S const &i) const

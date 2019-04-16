@@ -43,7 +43,6 @@ public:
   }
 
   // TODO(private 872): reimplement SetAt & ToString
-
 };
 
 inline void CreateTensor(std::shared_ptr<fetch::vm::Module> module)
@@ -51,7 +50,6 @@ inline void CreateTensor(std::shared_ptr<fetch::vm::Module> module)
   module->CreateClassType<TensorWrapper>("Tensor")
       .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm::Array<TensorWrapper::SizeType>>>();
   // TODO(private 872): reimplement SetAt & ToString
-
 }
 
 }  // namespace ml
