@@ -250,7 +250,6 @@ private:
         fetch::math::Multiply(DataType(-2), fetch::math::DotTranspose(input_matrix, input_matrix));
 
     d = (d + sum_x).Transpose() + sum_x;
-    //    d = fetch::math::Add(fetch::math::Add(d, sum_x).Transpose(), sum_x);
 
     // beta = 1/(2*sigma^2)
     // Prefill beta array with 1.0

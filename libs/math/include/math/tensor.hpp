@@ -460,7 +460,6 @@ public:
    **/
   void Flatten()
   {
-    // TODO: Copy according to new indices
     shape_.clear();
     shape_.push_back(size_);
     UpdateStrides();
@@ -483,21 +482,6 @@ public:
     ASSERT(sizeof...(indices) == stride_.size());
     SizeType N = UnrollComputeColIndex<0>(std::forward<Indices>(indices)...);
     return this->data()[std::move(N)];
-  }
-
-  /* One-dimensional constant reference index operator.
-   * @param n is the index which is being accessed.
-   *
-   * This operator acts as a one-dimensional array accessor that can be
-   * used for constant object instances. Note this accessor is "slow" as
-   * it takes care that the developer does not accidently enter the
-   * padded area of the memory.
-   */
-  template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type const &operator[](
-      S const &i) const
-  {
-    return data_[i];
   }
 
   /**
@@ -525,20 +509,38 @@ public:
     return operator[](index);
   }
 
-  /* One-dimensional reference index operator.
-   * @param n is the index which is being accessed.
-   *
-   * This operator acts as a one-dimensional array accessor that is
-   * meant for non-constant object instances. Note this accessor is "slow" as
-   * it takes care that the developer does not accidently enter the
-   * padded area of the memory.
-   */
+   /**
+    * One-dimensional reference index operator.
+    *
+    * This operator acts as a one-dimensional array accessor that is
+    * meant for non-constant object instances.
+    *
+    * @tparam S an integral type
+    * @param i the index to access
+    * @return
+    */
   template <typename S>
   typename std::enable_if<std::is_integral<S>::value, Type>::type &operator[](S const &i)
   {
     return data_[i];
   }
 
+   /**
+    * One-dimensional reference index operator.
+    *
+    * This operator acts as a one-dimensional array accessor that is
+    * meant for non-constant object instances.
+    *
+    * @tparam S an integral type
+    * @param i the index to access
+    * @return
+    */
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, Type>::type const &operator[](
+      S const &i) const
+  {
+    return data_[i];
+  }
   /**
    * Sets a single value in the array using an n-dimensional index
    * @param indices     index position in array
@@ -615,7 +617,7 @@ public:
    * Gets a value from the array by N-dim index
    * @param indices index to access
    */
-  // TODO: Specialise for N = 0 as stride is always 1 for this coordinate
+  // TODO (private 868):
   template <SizeType N, typename FirstIndex, typename... Indices>
   SizeType UnrollComputeColIndex(FirstIndex &&index, Indices &&... indices) const
   {
@@ -730,7 +732,7 @@ public:
 
   SelfType Transpose() const
   {
-    // TODO: Follow numpy implementation instead which is general and cover N-dimensional tensors
+    // TODO (private 867) -
     ASSERT(shape_.size() == 2);
     SizeVector new_axes{1, 0};
 
@@ -822,14 +824,14 @@ public:
   void Reshape(SizeVector const &shape)
   {
     assert(CanReshape(shape));
-    this->ReshapeForce(shape);  // TODO: This construct makes no sense.
+    this->ReshapeForce(shape);  // TODO (private 866)
   }
 
   /**
    * Executes a reshape (with no memory checks)
    * @param shape
    */
-  // TODO: Work out why this one is here. Seems wrong.
+  // TODO (private 866)
   void ReshapeForce(SizeVector const &shape)
   {
     shape_.clear();
@@ -1082,7 +1084,7 @@ public:
    * Copies data from a row major numpy array into the current column major array
    * @param new_array
    */
-  // TODO: Get rid of this
+  // TODO(private 869):
   void CopyFromNumpy(T *ptr, SizeVector &shape, SizeVector & /*stride*/, SizeVector & /*index*/)
   {
     SizeType total_size = SelfType::SizeFromShape(shape);
@@ -1194,7 +1196,7 @@ public:
   {
     serializer << t.size_;
     serializer << t.shape_;
-    // TODO: serialize MAJOR_ORDER
+    // TODO (private 870)
     for (std::size_t i = 0; i < t.size(); ++i)
     {
       serializer << t.data()[i];
@@ -1291,7 +1293,8 @@ public:
   virtual ~Tensor()
   {}
 
-  /* Set all elements to zero.
+  /**
+   * Set all elements to zero.
    *
    * This method will initialise all memory with zero.
    */
@@ -1312,7 +1315,8 @@ public:
     }
   }
 
-  /* Set all padded bytes to zero.
+  /**
+   * Set all padded bytes to zero.
    *
    * This method sets the padded bytes to zero. Padded bytes are those
    * which are added to ensure that the arrays true size is a multiple
@@ -1360,26 +1364,6 @@ public:
     Type sum = data_.in_parallel().SumReduce([](VectorRegisterType const &v) { return v * v; });
     return sum * Type(0.5);
   }
-
-  //
-  //  /* One-dimensional constant reference access function.
-  //   * @param i is the index which is being accessed.
-  //   *
-  //   * Note this accessor is "slow" as it takes care that the developer
-  //   * does not accidently enter the padded area of the memory.
-  //   */
-  //  Type const &At(size_t const &i) const
-  //  {
-  //    return data_[i];
-  //  }
-  //
-  //  /* One-dimensional reference access function.
-  //   * @param i is the index which is being accessed.
-  //   */
-  //  Type &At(size_t const &i)
-  //  {
-  //    return data_[i];
-  //  }
 
   /**
    * returns a range over this array defined using unsigned integers (only forward ranges)
@@ -1744,10 +1728,10 @@ private:
       base *= shape_[i];
     }
 
-    // TODO: Reverse order if row major.
+    // TODO (private 870): Reverse order if row major.
   }
 
-  // TODO(tfr): replace with strides
+  // TODO(private 871): replace with strides
   SizeType ComputeRowIndex(SizeVector const &indices) const
   {
     SizeType index  = 0;
