@@ -56,24 +56,22 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Sqrt(ArrayType const &array, ArrayType &ret)
 {
   ASSERT(ret.shape() == array.shape());
-  typename ArrayType::SizeType ret_count{0};
-  for (typename ArrayType::Type &e : array)
+  auto arr_it = array.cbegin();
+  auto rit    = ret.begin();
+
+  while (arr_it.is_valid())
   {
-    Sqrt(e, ret.At(ret_count));
-    ++ret_count;
+    Sqrt(*arr_it, *rit);
+    ++arr_it;
+    ++rit;
   }
 }
 
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Sqrt(ArrayType const &array)
 {
-  ArrayType                    ret{array.shape()};
-  typename ArrayType::SizeType ret_count{0};
-  for (typename ArrayType::Type &e : array)
-  {
-    Sqrt(e, ret.At(ret_count));
-    ++ret_count;
-  }
+  ArrayType ret{array.shape()};
+  Sqrt(array, ret);
   return ret;
 }
 

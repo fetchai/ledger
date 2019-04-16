@@ -42,7 +42,7 @@ std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> G
   similarities.reserve(array.shape().at(0));
   for (SizeType i(0); i < array.shape().at(0); ++i)
   {
-    typename ArrayType::Type d = Distance(one_vector, array.Slice(i).Unsqueeze());
+    typename ArrayType::Type d = Distance(one_vector, array.Slice(i).Copy());
     similarities.emplace_back(i, d);
   }
 

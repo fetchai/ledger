@@ -44,10 +44,12 @@ TYPED_TEST(PerplexityTest, entropy)
 
   ArrayType A(4);
 
-  A.Set(0, DataType(0.1));
-  A.Set(1, DataType(0.2));
-  A.Set(2, DataType(0.3));
-  A.Set(3, DataType(0.4));
+  A.Set({0}, DataType(0.1));
+  A.Set({1}, DataType(0.2));
+  A.Set({2}, DataType(0.3));
+  A.Set({3}, DataType(0.4));
+
+  std::cout << "Perplexity(A): " << Perplexity(A) << std::endl;
 
   EXPECT_NEAR(double(Perplexity(A)), 3.59611546662432, 1e-3);
 }

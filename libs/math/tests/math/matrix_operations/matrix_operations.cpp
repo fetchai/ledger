@@ -25,6 +25,8 @@
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 
+#include <chrono>
+
 template <typename T>
 class FreeFunctionsTest : public ::testing::Test
 {
@@ -73,10 +75,33 @@ TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension)
   array1.Set({3, 0}, typename TypeParam::Type(21));
   array1.Set({3, 1}, typename TypeParam::Type(-0.5));
 
-  TypeParam output{{n_data, 1}};
-  fetch::math::ArgMax(array1, output);
+  TypeParam output{n_data};
+  fetch::math::ArgMax(array1, output, SizeType(1));
   EXPECT_EQ(output.At(0), typename TypeParam::SizeType(1));
   EXPECT_EQ(output.At(1), typename TypeParam::SizeType(0));
   EXPECT_EQ(output.At(2), typename TypeParam::SizeType(1));
   EXPECT_EQ(output.At(3), typename TypeParam::SizeType(0));
+}
+
+TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension_off_axis)
+{
+  using SizeType = typename TypeParam::SizeType;
+
+  SizeType  n_data     = 4;
+  SizeType  n_features = 2;
+  TypeParam array1{{n_data, n_features}};
+
+  array1.Set({0, 0}, typename TypeParam::Type(-17));
+  array1.Set({0, 1}, typename TypeParam::Type(21));
+  array1.Set({1, 0}, typename TypeParam::Type(0));
+  array1.Set({1, 1}, typename TypeParam::Type(0));
+  array1.Set({2, 0}, typename TypeParam::Type(13));
+  array1.Set({2, 1}, typename TypeParam::Type(999));
+  array1.Set({3, 0}, typename TypeParam::Type(21));
+  array1.Set({3, 1}, typename TypeParam::Type(-0.5));
+
+  TypeParam output{n_features};
+  fetch::math::ArgMax(array1, output, SizeType(0));
+  EXPECT_EQ(output.At(0), typename TypeParam::SizeType(3));
+  EXPECT_EQ(output.At(1), typename TypeParam::SizeType(2));
 }
