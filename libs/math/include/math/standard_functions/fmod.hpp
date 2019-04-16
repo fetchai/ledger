@@ -40,7 +40,7 @@ meta::IfIsNonFixedPointArithmetic<Type, void> Fmod(Type const &x, Type const &y,
 template <typename T>
 meta::IfIsFixedPoint<T, void> Fmod(T const &x, T const &y, T &ret)
 {
-  ret = T(std::fmod(double(x), double(y)));
+  ret = T::Fmod(x, y);
 }
 
 //////////////////
