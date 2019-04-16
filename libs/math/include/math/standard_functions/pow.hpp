@@ -32,8 +32,6 @@ meta::IfIsNonFixedPointArithmetic<Type, void> Pow(Type const &x, Type const &y, 
   ret = Type(std::pow(x, std::uint64_t(y)));
 }
 
-// TODO(800) - native implementations of fixed point are required; casting to double will not be
-// permissible
 template <typename T>
 meta::IfIsFixedPoint<T, void> Pow(T const &x, T const &y, T &ret)
 {
