@@ -143,7 +143,7 @@ void PlusOneTest()
     }
 
     // This task is so easy the loss should fall on every training step
-    EXPECT_GT(current_loss, loss);
+    EXPECT_GE(current_loss, loss);
     current_loss = loss;
     g.Step(alpha);
   }
