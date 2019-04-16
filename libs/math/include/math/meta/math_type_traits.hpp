@@ -39,19 +39,8 @@ using EnableIf = typename std::enable_if<C, R>::type;
 /// FIXED POINT CHECKING ///
 ////////////////////////////
 
-template <typename T, typename = int>
-struct HasFixedPointTag : std::false_type
-{
-};
-
-// TODO (private 490)
 template <typename T>
-struct HasFixedPointTag<T, decltype((void)T::fixed_point_tag, 0)> : std::true_type
-{
-};
-
-template <typename T>
-constexpr bool IsFixedPoint = HasFixedPointTag<T>::value;
+constexpr bool IsFixedPoint =  std::is_base_of<fixed_point::BaseFixedpointType, T  >::value;
 
 template <typename T>
 constexpr bool IsNotFixedPoint = !IsFixedPoint<T>;
