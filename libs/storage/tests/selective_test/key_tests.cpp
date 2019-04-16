@@ -37,7 +37,28 @@ using DefaultBitset      = std::bitset<DefaultKey::BITS>;
 using DefaultArray       = ArrayB<uint64_t, DefaultKey::BITS>;
 using UnorderedSetBitset = std::unordered_set<DefaultBitset>;
 
-TEST(new_key_test, test_compare_keys_shifted_by_single_bit__triangular_formation)
+class NewKeyTest : public Test
+{
+protected:
+  template <typename CONTAINER_TYPE>
+  void test_correlated_keys_are_unique(CONTAINER_TYPE &&unique_hashes)
+  {
+    std::vector<DefaultKey> seen_keys;
+    seen_keys.reserve(unique_hashes.size());
+
+    for (auto const &hash : unique_hashes)
+    {
+      DefaultKey const key{hash};
+      auto const       itr = std::find(seen_keys.begin(), seen_keys.end(), key);
+
+      EXPECT_EQ(seen_keys.cend(), itr);  // Expected *NOT* to be found
+
+      seen_keys.emplace_back(std::move(key));
+    }
+  }
+};
+
+TEST_F(NewKeyTest, test_compare_keys_shifted_by_single_bit__triangular_formation)
 {
   std::vector<DefaultKey> keys;
 
@@ -87,7 +108,7 @@ TEST(new_key_test, test_compare_keys_shifted_by_single_bit__triangular_formation
   }
 }
 
-TEST(new_key_test, test_compare_for_keys_whis_shifted_single_zero_by_one_bit__moving_zero_formation)
+TEST_F(NewKeyTest, test_compare_for_keys_whis_shifted_single_zero_by_one_bit__moving_zero_formation)
 {
   std::vector<DefaultKey>    keys;
   std::vector<DefaultArray>  arr_keys;
@@ -136,7 +157,7 @@ TEST(new_key_test, test_compare_for_keys_whis_shifted_single_zero_by_one_bit__mo
   }
 }
 
-TEST(new_key_test, equality_comparison_operator)
+TEST_F(NewKeyTest, equality_comparison_operator)
 {
   auto const       start_bs_key{~DefaultBitset{0}};
   DefaultKey const start_key{to_ByteArray(start_bs_key)};
@@ -157,50 +178,36 @@ TEST(new_key_test, equality_comparison_operator)
 }
 
 // Test that closely correlated keys are found to be unique
-TEST(new_key_test, correlated_keys_are_unique)
+TEST_F(NewKeyTest, correlated_keys_are_unique)
 {
-  auto unique_hashes{GenerateUniqueHashes(1000)};
-
-  std::vector<DefaultKey> seen_keys;
-  seen_keys.reserve(unique_hashes.size());
-
-  for (auto const &hash : unique_hashes)
-  {
-    DefaultKey const key{hash};
-    auto const       itr = std::find(seen_keys.begin(), seen_keys.end(), key);
-
-    EXPECT_EQ(seen_keys.cend(), itr);  // Expected *NOT* to be found
-
-    seen_keys.emplace_back(std::move(key));
-  }
+  test_correlated_keys_are_unique(GenerateUniqueHashes(1000));
 }
 
-TEST(new_key_test, correlated_keys_are_unique_1)
+TEST_F(NewKeyTest, correlated_keys_are_unique_triang_form)
 {
-  auto const key_val{~DefaultBitset{0}};
+  auto const key_val{~DefaultBitset{0}};  //= 111...11 (bin) = 0xfff...ff (hex)
+  std::vector<byte_array::ConstByteArray> unique_hashes;
+  unique_hashes.reserve(key_val.size());
 
-  std::vector<DefaultKey> seen_keys;
-  seen_keys.reserve(key_val.size());
-
+  //`unique_hashes` container will contain (values *DISPLAYED* in *BIG* Endian encoding):
+  // unique_hashes[0]   = 111111...11
+  // unique_hashes[1]   = 011111...11
+  // unique_hashes[2]   = 001111...11
+  // unique_hashes[3]   = 000111...11
+  // unique_hashes[4]   = 000011...11
+  // unique_hashes[5]   = 000001...11
+  //             ...
+  // unique_hashes[255] = 000000...01
   for (std::size_t i = 0; i < key_val.size(); ++i)
   {
-    auto       bs_key = (key_val >> i);
-    auto const k_arr{to_array<DefaultArray::value_type>(bs_key)};
-
-    byte_array::ConstByteArray const cba_key{
-        reinterpret_cast<byte_array::ConstByteArray::container_type const *>(k_arr.data()),
-        k_arr.size() * sizeof(decltype(k_arr)::value_type)};
-
-    DefaultKey const key{cba_key};
-    auto const       itr = std::find(seen_keys.begin(), seen_keys.end(), key);
-
-    EXPECT_EQ(seen_keys.cend(), itr);  // Expected *NOT* to be found
-
-    seen_keys.emplace_back(std::move(key));
+    auto const hash = (key_val >> i);
+    unique_hashes.emplace_back(to_ByteArray(hash));
   }
+
+  test_correlated_keys_are_unique(std::move(unique_hashes));
 }
 
-TEST(new_key_test, test_comparison_using_last_bit_value__moving_zero_formation)
+TEST_F(NewKeyTest, test_comparison_using_last_bit_value__moving_zero_formation)
 {
   DefaultKey const ref_key{to_ByteArray(~DefaultBitset{0})};
 
@@ -253,7 +260,7 @@ TEST(new_key_test, test_comparison_using_last_bit_value__moving_zero_formation)
   }
 }
 
-TEST(new_key_test, test_comparison_using_last_bit_value__triangular_formation)
+TEST_F(NewKeyTest, test_comparison_using_last_bit_value__triangular_formation)
 {
   DefaultBitset const bs_key_val{~DefaultBitset{0}};
 

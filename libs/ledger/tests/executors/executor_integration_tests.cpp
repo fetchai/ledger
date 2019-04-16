@@ -132,7 +132,7 @@ protected:
     static const uint16_t    P2P_RPC_PORT        = 9130;
     static const uint16_t    LANE_RPC_PORT_START = 9141;
     static const std::size_t NUM_LANES           = 4;
-    static const std::size_t LOG2_NUM_LANES      = fetch::meta::log2(NUM_LANES);
+    static const std::size_t LOG2_NUM_LANES      = fetch::meta::Log2(NUM_LANES);
 
     using fetch::muddle::NetworkId;
 

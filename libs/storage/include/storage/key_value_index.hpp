@@ -650,8 +650,10 @@ public:
 
     FindNearest(key, kv, split, pos, left_right, depth, max_bits);
 
-    pos = 0;
-    kv.key.Compare(key_str, pos, key.size_in_bits());
+    // TODO(issue 874): Compare(...) call bellow seems to be unnecessary/redundant,
+    // thus it was commented out.
+    // pos = 0;
+    // kv.key.Compare(key_str, pos, key.size_in_bits());
 
     if (uint64_t(pos) < max_bits)
     {

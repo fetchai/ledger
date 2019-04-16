@@ -28,16 +28,16 @@ namespace fetch {
 namespace testing {
 
 template <typename T, std::size_t SIZE, std::size_t BITS = (SIZE * sizeof(T) * 8),
-          meta::EnableIf<std::is_integral<T>::value && meta::isLog2(BITS)> * = nullptr>
+          meta::EnableIf<std::is_integral<T>::value && meta::IsLog2(BITS)> * = nullptr>
 using Array = std::array<T, SIZE>;
 
 template <typename T, std::size_t BITS,
-          meta::EnableIf<std::is_integral<T>::value && meta::isLog2(BITS)> * = nullptr>
-using ArrayB = std::array<T, (BITS >> meta::log2(sizeof(T) * 8))>;
+          meta::EnableIf<std::is_integral<T>::value && meta::IsLog2(BITS)> * = nullptr>
+using ArrayB = std::array<T, (BITS >> meta::Log2(sizeof(T) * 8))>;
 
-template <typename T, std::size_t BITS, std::size_t T_BITS_LOG2 = meta::log2(sizeof(T) * 8),
+template <typename T, std::size_t BITS, std::size_t T_BITS_LOG2 = meta::Log2(sizeof(T) * 8),
           T T_BITS_MASK = ((1 << T_BITS_LOG2) - 1)>
-meta::EnableIf<std::is_integral<T>::value && meta::isLog2(BITS), ArrayB<T, BITS>> to_array(
+meta::EnableIf<std::is_integral<T>::value && meta::IsLog2(BITS), ArrayB<T, BITS>> to_array(
     std::bitset<BITS> const &bs)
 {
   ArrayB<T, BITS> to;
@@ -55,9 +55,9 @@ meta::EnableIf<std::is_integral<T>::value && meta::isLog2(BITS), ArrayB<T, BITS>
 }
 
 template <typename T, std::size_t SIZE, std::size_t BITS = (SIZE * sizeof(T) * 8),
-          std::size_t T_BITS_LOG2 = meta::log2(sizeof(T) * 8),
+          std::size_t T_BITS_LOG2 = meta::Log2(sizeof(T) * 8),
           T           T_BITS_MASK = ((1 << T_BITS_LOG2) - 1)>
-meta::EnableIf<std::is_integral<T>::value && meta::isLog2(BITS), std::bitset<BITS>> to_bitset(
+meta::EnableIf<std::is_integral<T>::value && meta::IsLog2(BITS), std::bitset<BITS>> to_bitset(
     Array<T, SIZE> const &from)
 {
   std::bitset<BITS> bs;
@@ -94,8 +94,8 @@ meta::EnableIf<std::is_integral<T>::value, std::ostream &> operator<<(std::ostre
   return ostream;
 }
 
-template <typename T, std::size_t BITS, std::size_t T_BITS_LOG2 = meta::log2(sizeof(T) * 8)>
-meta::EnableIf<std::is_integral<T>::value && meta::isLog2(BITS), byte_array::ByteArray>
+template <typename T, std::size_t BITS, std::size_t T_BITS_LOG2 = meta::Log2(sizeof(T) * 8)>
+meta::EnableIf<std::is_integral<T>::value && meta::IsLog2(BITS), byte_array::ByteArray>
 to_ByteArray(std::array<T, (BITS >> T_BITS_LOG2)> const &from)
 {
   return {reinterpret_cast<byte_array::ConstByteArray::container_type *>(from.data()),
@@ -103,7 +103,7 @@ to_ByteArray(std::array<T, (BITS >> T_BITS_LOG2)> const &from)
 }
 
 template <std::size_t BITS>
-meta::EnableIf<meta::isLog2(BITS), byte_array::ByteArray> to_ByteArray(
+meta::EnableIf<meta::IsLog2(BITS), byte_array::ByteArray> to_ByteArray(
     std::bitset<BITS> const &from)
 {
   using T = byte_array::ConstByteArray::container_type;

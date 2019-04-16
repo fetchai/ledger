@@ -70,7 +70,7 @@ private:
   UnderlyingCache  cache_;
   ChainCodeFactory factory_;
 
-  static_assert(meta::isLog2(CLEANUP_PERIOD), "Clean up period must be a valid power of 2");
+  static_assert(meta::IsLog2(CLEANUP_PERIOD), "Clean up period must be a valid power of 2");
 };
 
 }  // namespace ledger

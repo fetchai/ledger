@@ -47,20 +47,22 @@ template <std::size_t V_BITS = 256, typename BLOCK_TYPE = uint64_t>
 struct Key
 {
   static_assert(std::is_integral<BLOCK_TYPE>::value, "The BLOCK_TYPE must be integer type.");
-  static_assert(meta::isLog2(V_BITS) && (V_BITS >= 128),
+  static_assert(meta::IsLog2(V_BITS) && (V_BITS >= 128),
                 "Keys expected to be a cryptographic hash function output");
-  using block_type = BLOCK_TYPE;
+
+  using BlockType = BLOCK_TYPE;
 
   enum : size_t
   {
     BITS                 = V_BITS,
     BYTES                = BITS >> 3,
-    BLOCK_SIZE_BITS      = sizeof(block_type) << 3,
-    BLOCK_SIZE_BITS_LOG2 = meta::log2(BLOCK_SIZE_BITS),
+    BLOCK_SIZE_BITS      = sizeof(BlockType) << 3,
+    BLOCK_SIZE_BITS_LOG2 = meta::Log2(BLOCK_SIZE_BITS),
     BLOCKS               = BITS >> BLOCK_SIZE_BITS_LOG2
   };
 
-  using KeyArray = std::array<block_type, BLOCKS>;
+  using KeyArrayNative = BlockType[BLOCKS];
+  using KeyArray       = std::array<BlockType, BLOCKS>;
 
   Key() = default;
 
@@ -68,8 +70,7 @@ struct Key
   {
     assert(key.size() == BYTES);
 
-    block_type const(&key_reinterpret)[BLOCKS] =
-        *reinterpret_cast<block_type const(*)[BLOCKS]>(key.pointer());
+    KeyArrayNative const &key_reinterpret{*reinterpret_cast<KeyArrayNative const *>(key.pointer())};
     std::copy(std::begin(key_reinterpret), std::end(key_reinterpret), std::begin(key_));
   }
 
@@ -122,8 +123,8 @@ struct Key
       return 0;
     }
 
-    block_type diff = other.key_[i] ^ key_[i];
-    uint16_t   bit  = (diff == 0) ? static_cast<uint16_t>(BLOCK_SIZE_BITS)
+    BlockType diff = other.key_[i] ^ key_[i];
+    uint16_t  bit  = (diff == 0) ? static_cast<uint16_t>(BLOCK_SIZE_BITS)
                                : static_cast<uint16_t>(platform::CountTrailingZeroes64(diff));
     if (i == last_block)
     {
@@ -136,7 +137,7 @@ struct Key
       return 0;
     }
 
-    diff = key_[i] & (static_cast<block_type>(1) << bit);
+    diff = key_[i] & (static_cast<BlockType>(1) << bit);
 
     int result = 1 - int((diff == 0) << 1);  // -1 == left, so this puts 'smaller numbers' left
 
@@ -153,7 +154,7 @@ struct Key
     byte_array::ByteArray ret;
     ret.Resize(BYTES);
 
-    block_type(&ret_reinterpret)[BLOCKS] = *reinterpret_cast<block_type(*)[BLOCKS]>(ret.pointer());
+    KeyArrayNative &ret_reinterpret{*reinterpret_cast<KeyArrayNative *>(ret.pointer())};
     std::copy(std::begin(key_), std::end(key_), std::begin(ret_reinterpret));
     return ret;
   }

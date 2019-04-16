@@ -23,18 +23,15 @@ namespace fetch {
 namespace meta {
 
 template <typename T>
-constexpr EnableIf<std::is_integral<typename std::decay<T>::type>::value, bool> isLog2(
-    T &&val) noexcept
+constexpr EnableIf<IsInteger<Decay<T>>, bool> IsLog2(T &&val) noexcept
 {
   return static_cast<bool>(val && !(val & (val - 1)));
 }
 
 template <typename T>
-constexpr EnableIf<std::is_integral<typename std::decay<T>::type>::value,
-                   typename std::decay<T>::type>
-log2(T &&val) noexcept
+constexpr EnableIf<IsInteger<Decay<T>>, Decay<T>> Log2(T &&val) noexcept
 {
-  return ((val > 1) ? (1 + log2(val >> 1)) : 0);
+  return ((val > 1) ? (1 + Log2(val >> 1)) : 0);
 }
 
 }  // namespace meta

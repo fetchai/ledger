@@ -74,8 +74,7 @@ TEST(array_bitset_test, test_conversion_bitset_to_array_and_back)
 
 TEST(array_bitset_test, test_conversion_bitset_to_ByteArray)
 {
-  DefaultBitset starting_bitset{0};
-  starting_bitset.flip();  //= 111...1 (bin) = 0xff...f (hex)
+  auto const starting_bitset{~DefaultBitset{0}};  //= 111...1 (bin) = 0xff...f (hex)
 
   //`bs_key` container will contain (values *DISPLAYED* in *BIG* Endian encoding):
   // i=0:   bs_key = 111111...11
