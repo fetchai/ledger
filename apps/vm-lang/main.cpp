@@ -320,7 +320,7 @@ int main(int argc, char **argv)
   // display the error message if the script execution was not successful
   if (!success)
   {
-    std::cout << error << std::endl;
+    std::cerr << error << std::endl;
   }
 
   // save any specified data file
