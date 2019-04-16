@@ -212,7 +212,7 @@ private:
   {
     // p = -exp(d * beta)
     p = fetch::math::Exp(fetch::math::Multiply(DataType(-1), fetch::math::Multiply(d, beta)));
-    p.Set(k, DataType(0));
+    p.Set(0, k, DataType(0));
 
     DataType sum_p = fetch::math::Sum(p);
 
