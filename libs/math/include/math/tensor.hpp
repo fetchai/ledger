@@ -20,6 +20,7 @@
 #include "core/assert.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
+#include "core/macros.hpp"
 #include "core/random.hpp"
 
 #include "vectorise/memory/array.hpp"
@@ -267,7 +268,7 @@ public:
       {
         for (SizeType j = 0; j < m; ++j)
         {
-          ret.Set({i, j}, elems[k++]);
+          ret.Set(i, j, elems[k++]);
         }
       }
     }
@@ -536,43 +537,63 @@ public:
   {
     return data_[i];
   }
-  /**
-   * Sets a single value in the array using an n-dimensional index
-   * @param indices     index position in array
-   * @param val         value to write
-   */
-  // TODO(private issue 123)
-  template <typename S>
-  fetch::meta::IfIsUnsignedInteger<S, void> Set(std::vector<S> const &indices, Type val)
-  {
-    assert(indices.size() == shape_.size());  // dimensionality check not in parent
-    data_[ComputeColIndex(indices)] = val;
-  }
 
-  void Set(SizeVector const &indices, Type val)
+  template <SizeType N, typename TSType, typename... Args>
+  struct TensorSetter
   {
-    assert(indices.size() == shape_.size());  // dimensionality check not in parent
-    data_[ComputeColIndex(indices)] = val;
-  }
+    // Finding the return value
+    using Type = typename TensorSetter<N + 1, Args...>::Type;
 
-  /**
-   * Expensive convenience method
-   * @param index
-   * @param val
-   */
-  void Set(SizeType const &index, Type val)
+    // Computing index
+    static SizeType IndexOf(SizeVector const &stride, SizeVector const &shape, TSType const &index,
+                            Args &&... args)
+    {
+      ASSERT(SizeType(index) < shape[N]);
+      return stride[N] * SizeType(index) +
+             TensorSetter<N + 1, Args...>::IndexOf(stride, shape, std::forward<Args>(args)...);
+    }
+
+    // Ignoring all arguments but the last
+    static Type ValueOf(TSType const &index, Args &&... args)
+    {
+      FETCH_UNUSED(index);
+      return TensorSetter<N + 1, Args...>::ValueOf(std::forward<Args>(args)...);
+    }
+  };
+
+  template <SizeType N, typename TSType>
+  struct TensorSetter<N, TSType>
   {
-    ASSERT((shape_.size() == 1) || ((Product(shape_)) == Max(shape_)));
-    SizeVector indices(shape_.size(), 0);
-    if (shape_.size() != 1)
+    using Type = TSType;
+
+    // Ignore last argument (i.e. value)
+    static SizeType IndexOf(SizeVector const &stride, SizeVector const &shape, TSType const &index)
     {
-      indices[ArgMax(shape_)] = index;
+      ASSERT(shape.size() == N);
+      ASSERT(stride.size() == N);
+      FETCH_UNUSED(index);
+      FETCH_UNUSED(stride);
+      FETCH_UNUSED(shape);
+      return 0;
     }
-    else
+
+    // Extracting last argument
+    static TSType ValueOf(TSType const &value)
     {
-      indices[0] = index;
+      return value;
     }
-    data_[ComputeColIndex(indices)] = val;
+  };
+
+  template <typename... Args>
+  void Set(Args... args)
+  {
+    ASSERT(sizeof...(args) == stride_.size() + 1);  // Plus one as last arg is value
+
+    uint64_t index =
+        TensorSetter<0, Args...>::IndexOf(stride_, shape_, std::forward<Args>(args)...);
+    Type value = TensorSetter<0, Args...>::ValueOf(std::forward<Args>(args)...);
+
+    data_[std::move(index)] = std::move(value);
   }
 
   void Fill(Type const &value, memory::Range const &range)

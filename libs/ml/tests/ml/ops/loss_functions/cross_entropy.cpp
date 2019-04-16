@@ -45,13 +45,13 @@ TYPED_TEST(CrossEntropyTest, perfect_match_forward_test)
     {
       if (data[i] == j)
       {
-        data1.Set({i, j}, typename TypeParam::Type(1));
-        data2.Set({i, j}, typename TypeParam::Type(1));
+        data1.Set(i, j, typename TypeParam::Type(1));
+        data2.Set(i, j, typename TypeParam::Type(1));
       }
       else
       {
-        data1.Set({i, j}, typename TypeParam::Type(0));
-        data2.Set({i, j}, typename TypeParam::Type(0));
+        data1.Set(i, j, typename TypeParam::Type(0));
+        data2.Set(i, j, typename TypeParam::Type(0));
       }
     }
   }
@@ -76,11 +76,11 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_forward_test)
     {
       if (gt_data[i] == j)
       {
-        data2.Set({i, j}, typename TypeParam::Type(1));
+        data2.Set(i, j, typename TypeParam::Type(1));
       }
       else
       {
-        data2.Set({i, j}, typename TypeParam::Type(0));
+        data2.Set(i, j, typename TypeParam::Type(0));
       }
     }
   }
@@ -95,7 +95,7 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_forward_test)
   {
     for (std::uint64_t j{0}; j < n_classes; ++j)
     {
-      data1.Set({i, j}, typename TypeParam::Type(logits[counter]));
+      data1.Set(i, j, typename TypeParam::Type(logits[counter]));
       ++counter;
     }
   }
@@ -120,11 +120,11 @@ TYPED_TEST(CrossEntropyTest, non_one_hot_forward_test)
     {
       if (gt_data[i] == j)
       {
-        data2.Set({i, j}, typename TypeParam::Type(1));
+        data2.Set(i, j, typename TypeParam::Type(1));
       }
       else
       {
-        data2.Set({i, j}, typename TypeParam::Type(0));
+        data2.Set(i, j, typename TypeParam::Type(0));
       }
     }
   }
@@ -134,7 +134,7 @@ TYPED_TEST(CrossEntropyTest, non_one_hot_forward_test)
 
   for (std::uint64_t i = 0; i < n_data_points * n_classes; ++i)
   {
-    data1.Set({i, 0}, typename TypeParam::Type(logits[i]));
+    data1.Set(i, 0, typename TypeParam::Type(logits[i]));
   }
 
   fetch::ml::ops::CrossEntropy<TypeParam> op;
@@ -155,7 +155,7 @@ TYPED_TEST(CrossEntropyTest, trivial_one_dimensional_backward_test)
   std::vector<double> gt_data{-0., -9.3890561, -0.};
   for (std::uint64_t i = 0; i < gt.size(); ++i)
   {
-    gt.Set({i, 0}, typename TypeParam::Type(gt_data[i]));
+    gt.Set(i, 0, typename TypeParam::Type(gt_data[i]));
   }
 
   std::vector<double> unscaled_vals{-1.0, -1.0, 1.0};
@@ -163,8 +163,8 @@ TYPED_TEST(CrossEntropyTest, trivial_one_dimensional_backward_test)
 
   for (std::uint64_t i = 0; i < n_data_points * n_classes; ++i)
   {
-    data1.Set({i, 0}, typename TypeParam::Type(unscaled_vals[i]));
-    data2.Set({i, 0}, typename TypeParam::Type(targets[i]));
+    data1.Set(i, 0, typename TypeParam::Type(unscaled_vals[i]));
+    data2.Set(i, 0, typename TypeParam::Type(targets[i]));
   }
 
   fetch::ml::ops::CrossEntropy<TypeParam> op;
@@ -192,7 +192,7 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_backward_test)
   {
     for (std::uint64_t j = 0; j < n_classes; ++j)
     {
-      gt.Set({i, j}, typename TypeParam::Type(gt_data[counter]));
+      gt.Set(i, j, typename TypeParam::Type(gt_data[counter]));
       ++counter;
     }
   }
@@ -209,8 +209,8 @@ TYPED_TEST(CrossEntropyTest, one_dimensional_backward_test)
   {
     for (std::uint64_t j = 0; j < n_classes; ++j)
     {
-      data1.Set({i, j}, typename TypeParam::Type(unscaled_vals[counter]));
-      data2.Set({i, j}, typename TypeParam::Type(target[counter]));
+      data1.Set(i, j, typename TypeParam::Type(unscaled_vals[counter]));
+      data2.Set(i, j, typename TypeParam::Type(target[counter]));
       ++counter;
     }
   }
@@ -233,7 +233,7 @@ TYPED_TEST(CrossEntropyTest, non_one_hot_dimensional_backward_test)
   std::vector<double> gt_data{0.0524979, -0.24802, -0.0243751, 0., 0., 26, 1e+14, 0};
   for (std::uint64_t i = 0; i < gt.size(); ++i)
   {
-    gt.Set({i, 0}, typename TypeParam::Type(gt_data[i]));
+    gt.Set(i, 0, typename TypeParam::Type(gt_data[i]));
   }
 
   // theoretically these needn't lie between 0 and 1
@@ -241,8 +241,8 @@ TYPED_TEST(CrossEntropyTest, non_one_hot_dimensional_backward_test)
   std::vector<double> target{0.0, 1.0, 0., 1.0, 1.0, 1., 0.0, 1.0};
   for (std::uint64_t i = 0; i < n_data_points * n_classes; ++i)
   {
-    data1.Set({i, 0}, typename TypeParam::Type(unscaled_vals[i]));
-    data2.Set({i, 0}, typename TypeParam::Type(target[i]));
+    data1.Set(i, 0, typename TypeParam::Type(unscaled_vals[i]));
+    data2.Set(i, 0, typename TypeParam::Type(target[i]));
   }
 
   fetch::ml::ops::CrossEntropy<TypeParam> op;

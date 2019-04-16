@@ -34,6 +34,8 @@ TYPED_TEST_CASE(MatrixMultiplyTest, MyTypes);
 
 TYPED_TEST(MatrixMultiplyTest, forward_test)
 {
+  using SizeType = typename TypeParam::SizeType;
+
   TypeParam a(std::vector<std::uint64_t>({1, 5}));
   TypeParam b(std::vector<std::uint64_t>({5, 4}));
   TypeParam gt(std::vector<std::uint64_t>({1, 4}));
@@ -43,18 +45,18 @@ TYPED_TEST(MatrixMultiplyTest, forward_test)
       {-11, 12, 13, 14, 21, 22, 23, 24, 31, 32, 33, 34, 41, 42, 43, 44, 51, 52, 53, 54});
   std::vector<int> results({357, 388, 397, 406});
 
-  for (std::uint64_t i(0); i < data.size(); ++i)
+  for (SizeType i(0); i < data.size(); ++i)
   {
     a.Set(i, typename TypeParam::Type(data[i]));
   }
-  for (std::uint64_t i(0); i < 5; ++i)
+  for (SizeType i(0); i < 5; ++i)
   {
-    for (std::uint64_t j(0); j < 4; ++j)
+    for (SizeType j(0); j < 4; ++j)
     {
-      b.Set(std::vector<std::uint64_t>({i, j}), typename TypeParam::Type(weights[i * 4 + j]));
+      b.Set(i, j, typename TypeParam::Type(weights[i * 4 + j]));
     }
   }
-  for (std::uint64_t i(0); i < results.size(); ++i)
+  for (SizeType i{0}; i < results.size(); ++i)
   {
     gt.Set(i, typename TypeParam::Type(results[i]));
   }
@@ -70,6 +72,8 @@ TYPED_TEST(MatrixMultiplyTest, forward_test)
 
 TYPED_TEST(MatrixMultiplyTest, backward_test)
 {
+  using SizeType = typename TypeParam::SizeType;
+
   TypeParam a(std::vector<std::uint64_t>({1, 5}));
   TypeParam b(std::vector<std::uint64_t>({5, 4}));
   TypeParam error(std::vector<std::uint64_t>({1, 4}));
@@ -84,31 +88,30 @@ TYPED_TEST(MatrixMultiplyTest, backward_test)
   std::vector<int> weightsGrad(
       {1, 2, 3, -4, 2, 4, 6, -8, -3, -6, -9, 12, 4, 8, 12, -16, 5, 10, 15, -20});
 
-  for (std::uint64_t i(0); i < data.size(); ++i)
+  for (SizeType i(0); i < data.size(); ++i)
   {
     a.Set(i, typename TypeParam::Type(data[i]));
   }
-  for (std::uint64_t i(0); i < 5; ++i)
+  for (SizeType i(0); i < 5; ++i)
   {
-    for (std::uint64_t j(0); j < 4; ++j)
+    for (SizeType j(0); j < 4; ++j)
     {
-      b.Set(std::vector<std::uint64_t>({i, j}), typename TypeParam::Type(weights[i * 4 + j]));
+      b.Set(i, j, typename TypeParam::Type(weights[i * 4 + j]));
     }
   }
-  for (std::uint64_t i(0); i < errorSignal.size(); ++i)
+  for (SizeType i(0); i < errorSignal.size(); ++i)
   {
     error.Set(i, typename TypeParam::Type(errorSignal[i]));
   }
-  for (std::uint64_t i(0); i < inputGrad.size(); ++i)
+  for (SizeType i(0); i < inputGrad.size(); ++i)
   {
     gradient_a.Set(i, typename TypeParam::Type(inputGrad[i]));
   }
-  for (std::uint64_t i(0); i < 5; ++i)
+  for (SizeType i(0); i < 5; ++i)
   {
-    for (std::uint64_t j(0); j < 4; ++j)
+    for (SizeType j(0); j < 4; ++j)
     {
-      gradient_b.Set(std::vector<std::uint64_t>({i, j}),
-                     typename TypeParam::Type(weightsGrad[i * 4 + j]));
+      gradient_b.Set(i, j, typename TypeParam::Type(weightsGrad[i * 4 + j]));
     }
   }
 
