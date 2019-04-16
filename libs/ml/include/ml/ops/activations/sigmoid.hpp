@@ -82,7 +82,7 @@ public:
 private:
   // minimum possible output value of the sigmoid should not be zero, but actually epsilon
   // likewise maximum output should be 1 - epsilon
-  DataType epsilon_ = DataType(1e-12);
+  DataType epsilon_ = DataType(1e-7);
 };
 
 }  // namespace ops
