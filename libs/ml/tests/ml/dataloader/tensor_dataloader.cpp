@@ -57,7 +57,15 @@ TYPED_TEST(TensorDataloaderTest, loader_test)
   {
     EXPECT_EQ(loader.Size(), 20);
     EXPECT_FALSE(loader.IsDone());
-    EXPECT_EQ(loader.GetNext().first->At(5), typename TypeParam::Type(i));
+
+    auto cur_tensor = loader.GetNext();
+    for (int64_t j(0); j < 5; j++)
+    {
+      for (int64_t k(0); k < 5; ++k)
+      {
+        EXPECT_EQ(cur_tensor.first->At(j, k), typename TypeParam::Type(i));
+      }
+    }
   }
   EXPECT_TRUE(loader.IsDone());
   EXPECT_THROW(loader.GetNext(), std::out_of_range);

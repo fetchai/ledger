@@ -46,7 +46,8 @@ TYPED_TEST(LeakyReluTest, forward_test)
     gt.Set(i, DataType(gtInput[i]));
   }
   fetch::ml::ops::LeakyRelu<ArrayType> op(DataType(0.01));
-  ArrayType                            prediction = op.Forward({data});
+  ArrayType                            prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
+      std::vector<std::reference_wrapper<TypeParam const>>({data}));
 
   // test correct values
   ASSERT_TRUE(
