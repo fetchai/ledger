@@ -468,6 +468,14 @@ private:
     std::memcpy(pointer() + acc_size, other.pointer(), other.size());
   }
 
+  template <typename... Arg>
+  void AppendInternal(std::size_t const acc_size, uint8_t const &other, Arg const &... others)
+  {
+    AppendInternal(acc_size + 1, others...);
+    std::memcpy(pointer() + acc_size, &other, 1u);
+  }
+
+
   template <typename T>
   friend void fetch::serializers::Deserialize(T &serializer, ConstByteArray &s);
 
