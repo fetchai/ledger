@@ -273,39 +273,12 @@ TEST(storage_object_store_with_STL_gtest, iterator_over_basic_struct)
 
     std::sort(objects.begin(), objects.end());
 
-    // auto mmm = testStore.begin();
-    // while (mmm != testStore.end())
-    //{
-    //  ++mmm;
-    //}
-
-    // auto nnn = testStore.begin();
-    // while (nnn != testStore.end())
-    //{
-    //  ++nnn;
-    //}
-
-    // auto it = testStore.begin();
-
-    // while (it != testStore.end())
-    //{
-    //  ++it;
-    //}
-
     auto it = testStore.begin();
     while (it != testStore.end())
     {
       objectsCopy.push_back(*it);
       ++it;
     }
-
-    // for (auto i : testStore)
-    //{
-    //}
-
-    // for (auto i : testStore)
-    //{
-    //}
 
     std::sort(objectsCopy.begin(), objectsCopy.end());
 
@@ -457,56 +430,13 @@ TEST(storage_object_store_with_STL_gtest, subtree_iterator_over_basic_struc_spli
   }
 }
 
-TEST(storage_object_store, correlated_strings_work_correctly_working)
-{
-  ObjectStore<std::string> testStore;
-  testStore.New("testFile_01.db", "testIndex_01.db");
-
-  auto     unique_ids    = GenerateUniqueIDs(65);
-  uint64_t expected_size = 0;
-
-  // Set each key to itself as a string
-  for (auto const &id : unique_ids)
-  {
-    testStore.Set(id, id.ToString());
-    EXPECT_EQ(testStore.size(), ++expected_size);
-  }
-
-  ASSERT_EQ(testStore.size(), unique_ids.size()) << "ERROR: Failed to verify final size!";
-}
-
 TEST(storage_object_store, correlated_strings_work_correctly)
 {
   ObjectStore<std::string> testStore;
   testStore.New("testFile_01.db", "testIndex_01.db");
-  constexpr std::size_t num_of_ids{66};
 
-  auto     unique_ids    = GenerateUniqueIDs(num_of_ids);
+  auto     unique_ids    = GenerateUniqueIDs(256);
   uint64_t expected_size = 0;
-
-  ASSERT_EQ(num_of_ids, unique_ids.size());
-
-  // Set each key to itself as a string
-  for (auto const &id : unique_ids)
-  {
-    testStore.Set(id, id.ToString());
-    EXPECT_EQ(testStore.size(), ++expected_size);
-  }
-
-  ASSERT_EQ(testStore.size(), unique_ids.size()) << "ERROR: Failed to verify final size!";
-}
-
-TEST(storage_object_store, correlated_strings_work_correctly_failing_dedicated)
-{
-  ObjectStore<std::string> testStore;
-  testStore.New("testFile_01.db", "testIndex_01.db");
-
-  std::unordered_set<ResourceID> unique_ids;
-  unique_ids.emplace(FromBase64("X+zrZv/IbzjbUnhsbWlsecLbwjndTpG0ZynXOif7V+k="));
-  unique_ids.emplace(FromBase64("X+zrZv/IbzjYUnhsbWlsecLbwjndTpG0ZynXOif7V+k="));
-  uint64_t expected_size = 0;
-
-  ASSERT_EQ(2, unique_ids.size());
 
   // Set each key to itself as a string
   for (auto const &id : unique_ids)
