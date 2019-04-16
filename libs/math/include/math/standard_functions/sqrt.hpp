@@ -37,7 +37,7 @@ meta::IfIsNonFixedPointArithmetic<Type, void> Sqrt(Type const &x, Type &ret)
 template <typename T>
 meta::IfIsFixedPoint<T, void> Sqrt(T const &n, T &ret)
 {
-  ret = T(std::sqrt(double(n)));
+  ret = T::Sqrt(n);
 }
 
 //////////////////
