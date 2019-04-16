@@ -35,7 +35,7 @@ public:
 
   // Construction / Destruction
   TransactionSerializer() = default;
-  TransactionSerializer(ConstByteArray data);
+  explicit TransactionSerializer(ConstByteArray data);
   TransactionSerializer(TransactionSerializer const &) = delete;
   TransactionSerializer(TransactionSerializer &&) = delete;
   ~TransactionSerializer() = default;

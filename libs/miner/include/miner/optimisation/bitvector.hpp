@@ -85,7 +85,7 @@ public:
     data_.SetAllZero();
   }
 
-  bool operator==(BitVectorImplementation const &other)
+  bool operator==(BitVectorImplementation const &other) const
   {
     bool ret = this->size_ == other.size_;
     if (!ret)

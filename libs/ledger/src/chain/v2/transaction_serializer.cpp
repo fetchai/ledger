@@ -339,6 +339,11 @@ void Decode(ByteArrayBuffer &buffer, Identity &identity)
 
 } // anon. namespace
 
+TransactionSerializer::TransactionSerializer(ConstByteArray data)
+  : serial_data_{std::move(data)}
+{
+}
+
 ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
 {
   std::size_t const num_transfers = tx.transfers().size();
