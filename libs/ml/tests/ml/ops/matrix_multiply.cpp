@@ -47,7 +47,7 @@ TYPED_TEST(MatrixMultiplyTest, forward_test)
 
   for (SizeType i(0); i < data.size(); ++i)
   {
-    a.Set(i, typename TypeParam::Type(data[i]));
+    a.Set(0, i, typename TypeParam::Type(data[i]));
   }
   for (SizeType i(0); i < 5; ++i)
   {
@@ -58,7 +58,7 @@ TYPED_TEST(MatrixMultiplyTest, forward_test)
   }
   for (SizeType i{0}; i < results.size(); ++i)
   {
-    gt.Set(i, typename TypeParam::Type(results[i]));
+    gt.Set(0, i, typename TypeParam::Type(results[i]));
   }
 
   fetch::ml::ops::MatrixMultiply<TypeParam> op;
@@ -90,7 +90,7 @@ TYPED_TEST(MatrixMultiplyTest, backward_test)
 
   for (SizeType i(0); i < data.size(); ++i)
   {
-    a.Set(i, typename TypeParam::Type(data[i]));
+    a.Set(0, i, typename TypeParam::Type(data[i]));
   }
   for (SizeType i(0); i < 5; ++i)
   {
@@ -101,11 +101,11 @@ TYPED_TEST(MatrixMultiplyTest, backward_test)
   }
   for (SizeType i(0); i < errorSignal.size(); ++i)
   {
-    error.Set(i, typename TypeParam::Type(errorSignal[i]));
+    error.Set(0, i, typename TypeParam::Type(errorSignal[i]));
   }
   for (SizeType i(0); i < inputGrad.size(); ++i)
   {
-    gradient_a.Set(i, typename TypeParam::Type(inputGrad[i]));
+    gradient_a.Set(0, i, typename TypeParam::Type(inputGrad[i]));
   }
   for (SizeType i(0); i < 5; ++i)
   {

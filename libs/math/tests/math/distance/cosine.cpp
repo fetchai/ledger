@@ -44,25 +44,25 @@ TYPED_TEST(DistanceTest, cosine_distance)
   using ArrayType = TypeParam;
 
   ArrayType A = ArrayType({1, 4});
-  A.Set(SizeType{0}, DataType(1));
-  A.Set(SizeType{1}, DataType(2));
-  A.Set(SizeType{2}, DataType(3));
-  A.Set(SizeType{3}, DataType(4));
+  A.Set(SizeType{0}, SizeType{0}, DataType(1));
+  A.Set(SizeType{0}, SizeType{1}, DataType(2));
+  A.Set(SizeType{0}, SizeType{2}, DataType(3));
+  A.Set(SizeType{0}, SizeType{3}, DataType(4));
 
   ArrayType B = ArrayType({1, 4});
-  B.Set(SizeType{0}, DataType(-1));
-  B.Set(SizeType{1}, DataType(-2));
-  B.Set(SizeType{2}, DataType(-3));
-  B.Set(SizeType{3}, DataType(-4));
+  B.Set(SizeType{0}, SizeType{0}, DataType(-1));
+  B.Set(SizeType{0}, SizeType{1}, DataType(-2));
+  B.Set(SizeType{0}, SizeType{2}, DataType(-3));
+  B.Set(SizeType{0}, SizeType{3}, DataType(-4));
 
   EXPECT_EQ(double(Cosine(A, A)), 0);
   EXPECT_EQ(double(Cosine(A, B)), 2);
 
   ArrayType C = ArrayType({1, 4});
-  C.Set(SizeType{0}, DataType(1));
-  C.Set(SizeType{1}, DataType(2));
-  C.Set(SizeType{2}, DataType(3));
-  C.Set(SizeType{3}, DataType(2));
+  C.Set(SizeType{0}, SizeType{0}, DataType(1));
+  C.Set(SizeType{0}, SizeType{1}, DataType(2));
+  C.Set(SizeType{0}, SizeType{2}, DataType(3));
+  C.Set(SizeType{0}, SizeType{3}, DataType(2));
 
   EXPECT_NEAR(double(Cosine(A, C)), double(1.0) - double(0.94672926240625754), 1e-7);
 }

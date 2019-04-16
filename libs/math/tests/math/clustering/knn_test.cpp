@@ -66,10 +66,10 @@ TYPED_TEST(ClusteringTest, knn_euclidean_test)
 
   ArrayType v = ArrayType({1, 4});
 
-  v.Set(SizeType{0}, DataType(3));
-  v.Set(SizeType{1}, DataType(4));
-  v.Set(SizeType{2}, DataType(5));
-  v.Set(SizeType{3}, DataType(6));
+  v.Set(SizeType{0}, SizeType{0}, DataType(3));
+  v.Set(SizeType{0}, SizeType{1}, DataType(4));
+  v.Set(SizeType{0}, SizeType{2}, DataType(5));
+  v.Set(SizeType{0}, SizeType{3}, DataType(6));
 
   std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
       fetch::math::clustering::KNN<ArrayType, fetch::math::distance::Euclidean>(A, v, 4);
@@ -114,10 +114,10 @@ TYPED_TEST(ClusteringTest, knn_cosine_test)
 
   ArrayType v = ArrayType({1, 4});
 
-  v.Set(SizeType{0}, DataType(3));
-  v.Set(SizeType{1}, DataType(4));
-  v.Set(SizeType{2}, DataType(5));
-  v.Set(SizeType{3}, DataType(6));
+  v.Set(SizeType{0}, SizeType{0}, DataType(3));
+  v.Set(SizeType{0}, SizeType{1}, DataType(4));
+  v.Set(SizeType{0}, SizeType{2}, DataType(5));
+  v.Set(SizeType{0}, SizeType{3}, DataType(6));
 
   std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
       fetch::math::clustering::KNNCosine(A, v, 4);

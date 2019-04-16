@@ -93,10 +93,10 @@ void PlusOneTest()
   data.Set(3, 0, DataType(4));
 
   TypeParam gt{{4, 1}};
-  gt.Set(0, DataType(2));
-  gt.Set(1, DataType(3));
-  gt.Set(2, DataType(4));
-  gt.Set(3, DataType(5));
+  gt.Set(0, 0, DataType(2));
+  gt.Set(1, 0, DataType(3));
+  gt.Set(2, 0, DataType(4));
+  gt.Set(3, 0, DataType(5));
 
   /////////////////////////
   /// ONE TRAINING STEP ///

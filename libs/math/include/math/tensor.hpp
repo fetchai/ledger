@@ -627,8 +627,6 @@ public:
     this->data().in_parallel().Apply([val](VectorRegisterType &z) { z = val; });
   }
 
-  // TODO (private 857) - general Set implementation
-
   /**
    * Gets a value from the array by N-dim index
    * @param indices index to access
@@ -746,6 +744,10 @@ public:
     return *this;
   }
 
+  //////////////////////////
+  /// SHAPE MANIPULATION ///
+  //////////////////////////
+
   SelfType Transpose() const
   {
     // TODO (private 867) -
@@ -834,22 +836,12 @@ public:
 
   /**
    * Reshapes after checking the total size is the same
-   * @param[in]     shape specified for the new array as a vector of size_t.
-   *
-   **/
+   * @param shape  specified for the new array as a vector of size type.
+   */
   void Reshape(SizeVector const &shape)
   {
-    assert(CanReshape(shape));
-    this->ReshapeForce(shape);  // TODO (private 866)
-  }
+    ASSERT(CanReshape(shape));
 
-  /**
-   * Executes a reshape (with no memory checks)
-   * @param shape
-   */
-  // TODO (private 866)
-  void ReshapeForce(SizeVector const &shape)
-  {
     shape_.clear();
     shape_.reserve(shape.size());
     for (auto const &s : shape)
@@ -861,11 +853,9 @@ public:
   }
 
   /**
-   * Returns the array's current shape.
-   *
-   * @return        shape_ is theshape of the array as a vector of size_t.
-   *
-   **/
+   * returns the tensor's current shape
+   * @return  shape_ is the shape of the tensor as a vector of size_type
+   */
   SizeVector const &shape() const
   {
     return shape_;

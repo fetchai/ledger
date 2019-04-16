@@ -144,6 +144,8 @@ TYPED_TEST(CrossEntropyTest, non_one_hot_forward_test)
 
 TYPED_TEST(CrossEntropyTest, trivial_one_dimensional_backward_test)
 {
+  using SizeType = typename TypeParam::SizeType;
+
   std::uint64_t n_classes     = 3;
   std::uint64_t n_data_points = 1;
 
@@ -153,18 +155,18 @@ TYPED_TEST(CrossEntropyTest, trivial_one_dimensional_backward_test)
 
   // set gt data
   std::vector<double> gt_data{-0., -9.3890561, -0.};
-  for (std::uint64_t i = 0; i < gt.size(); ++i)
+  for (SizeType i = 0; i < gt.size(); ++i)
   {
-    gt.Set(i, 0, typename TypeParam::Type(gt_data[i]));
+    gt.Set(SizeType{0}, i, typename TypeParam::Type(gt_data[i]));
   }
 
   std::vector<double> unscaled_vals{-1.0, -1.0, 1.0};
   std::vector<double> targets{0.0, 1.0, 0.0};
 
-  for (std::uint64_t i = 0; i < n_data_points * n_classes; ++i)
+  for (SizeType i = 0; i < n_data_points * n_classes; ++i)
   {
-    data1.Set(i, 0, typename TypeParam::Type(unscaled_vals[i]));
-    data2.Set(i, 0, typename TypeParam::Type(targets[i]));
+    data1.Set(SizeType{0}, i, typename TypeParam::Type(unscaled_vals[i]));
+    data2.Set(SizeType{0}, i, typename TypeParam::Type(targets[i]));
   }
 
   fetch::ml::ops::CrossEntropy<TypeParam> op;
