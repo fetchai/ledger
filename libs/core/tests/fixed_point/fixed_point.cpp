@@ -429,8 +429,6 @@ TEST(FixedPointTest, Multiplication_32_32)
   EXPECT_EQ(almost_one * almost_one, almost_one - infinitesimal);
   EXPECT_EQ(almost_one * infinitesimal, zero);
   EXPECT_EQ(huge * infinitesimal, small);
-
-  // (One of) largest possible multiplications
 }
 
 TEST(FixedPointTest, Division_16_16)

@@ -117,7 +117,6 @@ struct TypeFromSize<8>
  * @return
  */
 template <std::uint16_t I, std::uint16_t F>
-FixedPoint<I, F> Divide(const FixedPoint<I, F> &numerator, const FixedPoint<I, F> &denominator,
 inline FixedPoint<I, F> Divide(const FixedPoint<I, F> &numerator, const FixedPoint<I, F> &denominator,
                         FixedPoint<I, F> & /*remainder*/)
 {
@@ -289,8 +288,8 @@ public:
   }
 
   template <typename T>
-  explicit FixedPoint(T n, meta::IfIsFloat<T> * = nullptr)
-    : data_(static_cast<Type>(n * CONST_ONE))
+  constexpr explicit FixedPoint(T n, meta::IfIsFloat<T> * = nullptr)
+    : data_(static_cast<Type>(n * one))
   {
     assert(CheckNoOverflow(n, FRACTIONAL_BITS, TOTAL_BITS));
     assert(CheckNoRounding(n, FRACTIONAL_BITS));
@@ -417,12 +416,12 @@ public:
 
   explicit operator double() const
   {
-    return (static_cast<double>(data_) / CONST_ONE);
+    return (static_cast<double>(data_) / one);
   }
 
   explicit operator float() const
   {
-    return (static_cast<float>(data_) / CONST_ONE);
+    return (static_cast<float>(data_) / one);
   }
 
   template <typename T>
