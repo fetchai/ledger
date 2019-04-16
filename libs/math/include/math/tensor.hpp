@@ -59,21 +59,16 @@ template <typename T, typename C = memory::SharedArray<T>>
 class Tensor
 {
 public:
-  using Type          = T;
-  using ContainerType = C;
-
-  using VectorSliceType = typename ContainerType::vector_slice_type;  // TODO (private 856): Legacy
-                                                                      // style, replace with new
-  using VectorRegisterType =
-      typename ContainerType::vector_register_type;  // TODO (private 856): Legacy style, replace
-                                                     // with new
-  using vector_register_iterator_type = typename ContainerType::vector_register_iterator_type;
-
-  using SelfType          = Tensor<T, C>;
-  using IteratorType      = TensorIterator<T, typename SelfType::ContainerType>;
-  using ConstIteratorType = ConstTensorIterator<T, typename SelfType::ContainerType>;
-  using SizeType          = fetch::math::SizeType;
-  using SizeVector        = fetch::math::SizeVector;
+  using Type                       = T;
+  using ContainerType              = C;
+  using VectorSliceType            = typename ContainerType::VectorSliceType;
+  using VectorRegisterType         = typename ContainerType::VectorRegisterType;
+  using VectorRegisterIteratorType = typename ContainerType::VectorRegisterIteratorType;
+  using SelfType                   = Tensor<T, C>;
+  using IteratorType               = TensorIterator<T, typename SelfType::ContainerType>;
+  using ConstIteratorType          = ConstTensorIterator<T, typename SelfType::ContainerType>;
+  using SizeType                   = fetch::math::SizeType;
+  using SizeVector                 = fetch::math::SizeVector;
 
   static constexpr char const *LOGGING_NAME = "Tensor";
 
