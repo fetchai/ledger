@@ -58,7 +58,7 @@ protected:
   }
 };
 
-TEST_F(NewKeyTest, test_compare_keys_shifted_by_single_bit__triangular_formation)
+TEST_F(NewKeyTest, test_compare_keys_triang_bit_shift)
 {
   std::vector<DefaultKey> keys;
 
@@ -109,7 +109,7 @@ TEST_F(NewKeyTest, test_compare_keys_shifted_by_single_bit__triangular_formation
   }
 }
 
-TEST_F(NewKeyTest, test_compare_for_keys_whis_shifted_single_zero_by_one_bit__moving_zero_formation)
+TEST_F(NewKeyTest, test_compare_for_keys_whis_moving_zero)
 {
   std::vector<DefaultKey>    keys;
   std::vector<DefaultArray>  arr_keys;
