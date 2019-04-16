@@ -23,13 +23,38 @@ namespace fetch {
 namespace crypto {
 
 /**
+ * Build the corresponding Verifier based from the provided identity
+ *
+ * @param identity
+ * @return
+ */
+std::unique_ptr<Verifier> Verifier::Build(Identity const &identity)
+{
+  std::unique_ptr<Verifier> verifier;
+
+  // only supported signature scheme currently
+  verifier = std::make_unique<ECDSAVerifier>(identity);
+
+  return verifier;
+}
+
+bool Verifier::Verify(Identity const &identity, ConstByteArray const &data,
+                      ConstByteArray const &signature)
+{
+  // build a compatible verifier
+  auto verifier = Build(identity);
+
+  // determine if the signature is valid
+  return verifier->Verify(data, signature);
+}
+
+/**
  * This function, given a key, a buffer and a signature, verifies authenticity of the three.
  *
  * @param identity The public key to construct a concrete (e.g. ECDSA) verifier from
  * @param data Message to be verified
  * @param signature
  */
-
 bool Verify(byte_array::ConstByteArray key, byte_array::ConstByteArray const &data,
             byte_array::ConstByteArray const &signature)
 {

@@ -37,7 +37,7 @@ public:
     , public_key_{identity_ ? PublicKey(identity_.identifier()) : PublicKey()}
   {}
 
-  bool Verify(byte_array_type const &data, byte_array_type const &signature) override
+  bool Verify(ConstByteArray const &data, ConstByteArray const &signature) override
   {
     if (!identity_)
     {
@@ -67,6 +67,13 @@ class ECDSASigner : public Prover
 public:
   using PrivateKey = openssl::ECDSAPrivateKey<>;
   using Signature  = openssl::ECDSASignature<>;
+
+  ECDSASigner() = default;
+
+  explicit ECDSASigner(byte_array_type const &private_key)
+    : private_key_{private_key}
+  {
+  }
 
   void Load(byte_array_type const &private_key) override
   {
