@@ -27,6 +27,12 @@ namespace ledger {
 namespace v2 {
 namespace {
 
+  /**
+   * Helper function to calculation the address checksum
+   *
+   * @param raw_address The input raw address
+   * @return The calculated checksum for the address
+   */
   Address::ConstByteArray CalculateChecksum(Address::ConstByteArray const &raw_address)
   {
     return crypto::Hash<crypto::SHA256>(raw_address).SubArray(0, 4);
@@ -34,12 +40,22 @@ namespace {
 
 }
 
+/**
+ * Create an address from an identity
+ *
+ * @param identity The input identity to use
+ */
 Address::Address(crypto::Identity const &identity)
   : address_(crypto::Hash<crypto::SHA256>(identity.identifier()))
   , display_(address_ + CalculateChecksum(address_))
 {
 }
 
+/**
+ * Create an identity from a raw address (that is a fixed array of bytes)
+ *
+ * @param address The input (raw) address to use.
+ */
 Address::Address(RawAddress const &address)
   : address_(address.data(), address.size())
   , display_(address_ + CalculateChecksum(address_))

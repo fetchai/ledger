@@ -35,6 +35,12 @@ namespace v2 {
 class Transaction;
 class Address;
 
+/**
+ * Builder class to construct transactions. This class caches the serial version of the transactions
+ * so that it can be used for signing.
+ *
+ * The builder also restricts the way the user can construct the transaction.
+ */
 class TransactionBuilder
 {
 public:
@@ -71,21 +77,29 @@ public:
   TransactionBuilder(TransactionBuilder &&) = delete;
   ~TransactionBuilder() = default;
 
+  /// @name Basic Operations
+  /// @{
   TransactionBuilder &From(Address const &address);
   TransactionBuilder &Transfer(Address const &to, TokenAmount amount);
   TransactionBuilder &ValidFrom(BlockIndex index);
   TransactionBuilder &ValidUntil(BlockIndex index);
   TransactionBuilder &ChargeRate(TokenAmount amount);
   TransactionBuilder &ChargeLimit(TokenAmount amount);
+  /// @}
 
+  /// @name Contract Operations
+  /// @{
   TransactionBuilder &TargetSmartContract(Address const &digest, Address const &address, BitVector const &shard_mask);
   TransactionBuilder &TargetChainCode(byte_array::ConstByteArray const &ref, BitVector const &shard_mask);
   TransactionBuilder &Action(byte_array::ConstByteArray const &action);
   TransactionBuilder &Data(byte_array::ConstByteArray const &data);
+  /// @}
 
+  /// @name Signing Operations
+  /// @{
   TransactionBuilder &Signer(crypto::Identity const &identity);
-
   Sealer Seal();
+  /// @}
 
   // Operators
   TransactionBuilder &operator=(TransactionBuilder const &) = delete;
@@ -95,7 +109,6 @@ private:
 
   TransactionPtr partial_transaction_;
 };
-
 
 } // namespace v2
 } // namespace ledger

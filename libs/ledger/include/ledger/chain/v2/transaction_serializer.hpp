@@ -25,6 +25,11 @@ namespace v2 {
 
 class Transaction;
 
+/**
+ * The transaction serializer is one of the two methods for constructing a transaction object. This
+ * is intended to the main way that transaction are built in the system. I.e. they are received
+ * over the wire on a HTTP or similar interface.
+ */
 class TransactionSerializer
 {
 public:
@@ -48,11 +53,15 @@ public:
   // Transaction Payload Serialisation
   static ByteArray SerializePayload(Transaction const &tx);
 
-  // Serialisation
+  /// @name  Serialisation / Deserialization
+  /// @{
   bool Serialize(Transaction const &tx);
   bool Deserialize(Transaction &tx) const;
+
+  // Operators (throw on error)
   TransactionSerializer &operator<<(Transaction const &tx);
   TransactionSerializer &operator>>(Transaction &tx);
+  /// @}
 
   // Operators
   TransactionSerializer &operator=(TransactionSerializer const &) = delete;

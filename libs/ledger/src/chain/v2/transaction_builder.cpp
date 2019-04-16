@@ -34,6 +34,11 @@ namespace v2 {
 
 using byte_array::ConstByteArray;
 
+/**
+ * Construct the sealed builder from a given transaction pointer
+ *
+ * @param tx The current partial transaction being built
+ */
 TransactionBuilder::Sealer::Sealer(TransactionPtr tx)
   : partial_transaction_{std::move(tx)}
 {
@@ -50,6 +55,12 @@ TransactionBuilder::Sealer::Sealer(TransactionPtr tx)
   serialized_payload_ = TransactionSerializer::SerializePayload(*partial_transaction_);
 }
 
+/**
+ * Sign the transaction with the given prover
+ *
+ * @param prover The prover to be used to generate a signature
+ * @return The sealed builder
+ */
 TransactionBuilder::Sealer &TransactionBuilder::Sealer::Sign(crypto::Prover &prover)
 {
   using Signatory = Transaction::Signatory;
@@ -84,6 +95,11 @@ TransactionBuilder::Sealer &TransactionBuilder::Sealer::Sign(crypto::Prover &pro
   return *this;
 }
 
+/**
+ * Finalise and complete the transaction being generated
+ *
+ * @return The finalised transaction
+ */
 TransactionBuilder::TransactionPtr TransactionBuilder::Sealer::Build()
 {
   using Signatory = Transaction::Signatory;
@@ -123,18 +139,33 @@ TransactionBuilder::TransactionPtr TransactionBuilder::Sealer::Build()
   return tx;
 }
 
-
+/**
+ * Create the transaction builder
+ */
 TransactionBuilder::TransactionBuilder()
   : partial_transaction_{std::make_unique<Transaction>()}
 {
 }
 
+/**
+ * Set the from address for the transaction
+ *
+ * @param address The from address
+ * @return The current builder instance
+ */
 TransactionBuilder &TransactionBuilder::From(Address const &address)
 {
   partial_transaction_->from_ = address;
   return *this;
 }
 
+/**
+ * Add a transfer to this transaction
+ *
+ * @param to The destination address
+ * @param amount The amount to be transferred
+ * @return The current builder instance
+ */
 TransactionBuilder &TransactionBuilder::Transfer(Address const &to, TokenAmount amount)
 {
   using Transfer = Transaction::Transfer;
@@ -163,30 +194,62 @@ TransactionBuilder &TransactionBuilder::Transfer(Address const &to, TokenAmount 
   return *this;
 }
 
+/**
+ * Set the valid from field
+ *
+ * @param index The block number from which this transaction becomes valid
+ * @return The current builder instance
+ */
 TransactionBuilder &TransactionBuilder::ValidFrom(BlockIndex index)
 {
   partial_transaction_->valid_from_ = index;
   return *this;
 }
 
+/**
+ * Set the valid until field
+ *
+ * @param index The block number from which this transaction becomes invalid
+ * @return THe current builder instance
+ */
 TransactionBuilder &TransactionBuilder::ValidUntil(BlockIndex index)
 {
   partial_transaction_->valid_until_ = index;
   return *this;
 }
 
+/**
+ * Set the charge (fee) for this transaction
+ *
+ * @param amount The charge / fee to be associated with this transaction
+ * @return The current builder instance
+ */
 TransactionBuilder &TransactionBuilder::ChargeRate(TokenAmount amount)
 {
   partial_transaction_->charge_ = amount;
   return *this;
 }
 
+/**
+ * Set the maximum charge (fee) for this transaction
+ *
+ * @param amount The maximum charge
+ * @return The current builder instance
+ */
 TransactionBuilder &TransactionBuilder::ChargeLimit(TokenAmount amount)
 {
   partial_transaction_->charge_limit_ = amount;
   return *this;
 }
 
+/**
+ * Set the target smart contract
+ *
+ * @param digest The target contract digest
+ * @param address The target contract address
+ * @param shard_mask The resource shard mask
+ * @return The current builder instance
+ */
 TransactionBuilder &TransactionBuilder::TargetSmartContract(Address const &digest, Address const &address, BitVector const &shard_mask)
 {
   partial_transaction_->contract_mode_    = Transaction::ContractMode::PRESENT;
@@ -197,6 +260,13 @@ TransactionBuilder &TransactionBuilder::TargetSmartContract(Address const &diges
   return *this;
 }
 
+/**
+ * Set the target chain code
+ *
+ * @param ref The target chain code name
+ * @param shard_mask The resource shard mask
+ * @return The current builder instance
+ */
 TransactionBuilder &TransactionBuilder::TargetChainCode(byte_array::ConstByteArray const &ref, BitVector const &shard_mask)
 {
   partial_transaction_->contract_mode_    = Transaction::ContractMode::CHAIN_CODE;
@@ -207,6 +277,12 @@ TransactionBuilder &TransactionBuilder::TargetChainCode(byte_array::ConstByteArr
   return *this;
 }
 
+/**
+ * Set the contract / chain code action to be triggered
+ *
+ * @param action The action to be triggered
+ * @return The current
+ */
 TransactionBuilder &TransactionBuilder::Action(byte_array::ConstByteArray const &action)
 {
   partial_transaction_->action_ = action;

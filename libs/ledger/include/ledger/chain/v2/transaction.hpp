@@ -29,6 +29,9 @@ namespace fetch {
 namespace ledger {
 namespace v2 {
 
+/**
+ * The transaction class
+ */
 class Transaction
 {
 public:
@@ -138,9 +141,9 @@ private:
 
   /// @name Metadata
   /// @{
-  ConstByteArray digest_{};
-  bool           verification_completed_{false};
-  bool           verified_{false};
+  ConstByteArray digest_{};                      ///< The digest of the transaction
+  bool           verification_completed_{false}; ///< Signal that the verification has been done
+  bool           verified_{false};               ///< The cached result of the verification
   /// @}
 
   // These are the only two ways to generate a transaction from one of the two companion classes
