@@ -77,12 +77,16 @@ BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, float, 3, 256, 256)->Unit(benchm
 BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
 
 BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, float, 128, 256, 256)
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, double, 128, 256, 256)
+    ->Unit(benchmark::kMillisecond);
 
 BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, float, 256, 256, 256)
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, double, 256, 256, 256)
+    ->Unit(benchmark::kMillisecond);
 
 template <class T, int C, int H, int W>
 void BM_tensorRangeIterator(benchmark::State &state)
