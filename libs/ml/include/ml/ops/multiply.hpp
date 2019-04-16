@@ -28,8 +28,9 @@ template <class T>
 class Multiply : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType      = T;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   Multiply()          = default;
   virtual ~Multiply() = default;
@@ -68,9 +69,8 @@ public:
    * f'(input0)=input0*errorSignal
    * f'(input1)=input1*errorSignal
    */
-  virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-      ArrayType const &                                           errorSignal)
+  virtual std::vector<ArrayPtrType> Backward(
+      std::vector<std::reference_wrapper<const ArrayType>> const &inputs, ArrayPtrType errorSignal)
   {
     ASSERT(inputs.size() == 2);
     ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());

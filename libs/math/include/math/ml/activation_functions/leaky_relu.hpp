@@ -37,20 +37,23 @@ void LeakyRelu(ArrayType const &t, typename ArrayType::Type const &a, ArrayType 
   ASSERT(t.size() == ret.size());
   using DataType = typename ArrayType::Type;
 
-  typename ArrayType::SizeType idx(0);
-  for (auto const &val : t)
+  auto it  = t.cbegin();
+  auto rit = ret.begin();
+  while (it.is_valid())
   {
-    if (val >= DataType(0))
+    *rit = fetch::math::Max(*it, typename ArrayType::Type(0));
+    if (*it >= DataType(0))
     {
       // f(x)=x for x>=0
-      ret.Set(idx, val);
+      *rit = *it;
     }
     else
     {
       // f(x)=a*x for x<0
-      Multiply(a, val, ret.At(idx));
+      *rit = Multiply(a, *it);
     }
-    ++idx;
+    ++it;
+    ++rit;
   }
 }
 
@@ -72,23 +75,32 @@ ArrayType LeakyRelu(ArrayType const &t, typename ArrayType::Type &a)
 template <typename ArrayType>
 void LeakyRelu(ArrayType const &t, ArrayType const &a, ArrayType &ret)
 {
-  ASSERT(t.size() == ret.size());
-  using DataType = typename ArrayType::Type;
-
-  typename ArrayType::SizeType idx(0);
-  for (auto const &val : t)
   {
-    if (val >= DataType(0))
+    ASSERT(t.size() == ret.size());
+    ASSERT(t.size() == a.size());
+    using DataType = typename ArrayType::Type;
+
+    auto it  = t.cbegin();
+    auto rit = ret.begin();
+    auto ait = a.begin();
+
+    while (it.is_valid())
     {
-      // f'(x)=x for x>=0
-      ret.Set(idx, val);
+      *rit = fetch::math::Max(*it, typename ArrayType::Type(0));
+      if (*it >= DataType(0))
+      {
+        // f(x)=x for x>=0
+        *rit = *it;
+      }
+      else
+      {
+        // f(x)=a*x for x<0
+        *rit = Multiply(*ait, *it);
+      }
+      ++it;
+      ++rit;
+      ++ait;
     }
-    else
-    {
-      // f'(x)=a*x for x<0
-      Multiply(a.At(idx), val, ret.At(idx));
-    }
-    ++idx;
   }
 }
 

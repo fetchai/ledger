@@ -32,10 +32,15 @@ namespace math {
 template <typename ArrayType>
 void Relu(ArrayType const &t, ArrayType &ret)
 {
-  ASSERT(t.size() == ret.size());
-  for (typename ArrayType::SizeType j{0}; j < t.size(); ++j)
+  assert(t.size() == ret.size());
+
+  auto it  = t.cbegin();
+  auto rit = ret.begin();
+  while (it.is_valid())
   {
-    ret.Set(j, fetch::math::Max(t.At(j), typename ArrayType::Type(0)));
+    *rit = fetch::math::Max(*it, typename ArrayType::Type(0));
+    ++it;
+    ++rit;
   }
 }
 

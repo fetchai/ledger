@@ -17,19 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor_operations.hpp"
-
-#include "ml/layers/layer.hpp"
-#include "ml/ops/activations/relu.hpp"
-#include "ml/ops/add.hpp"
-#include "ml/ops/flatten.hpp"
+#include "core/fixed_point/fixed_point.hpp"
+#include "math/tensor.hpp"
+#include "ml/layers/fully_connected.hpp"
 #include "ml/ops/leaky_relu_op.hpp"
-#include "ml/ops/matrix_multiply.hpp"
-#include "ml/ops/multiply.hpp"
-#include "ml/ops/weights.hpp"
-#include "ml/subgraph.hpp"
-
-#include "ml/meta/ml_type_traits.hpp"
 
 #include <cmath>
 #include <random>

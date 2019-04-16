@@ -51,7 +51,7 @@ template <typename Type>
 meta::IfIsArithmetic<Type, Type> Fmod(Type const &x)
 {
   Type ret;
-  Log(x, ret);
+  Fmod(x, ret);
   return ret;
 }
 
@@ -61,11 +61,15 @@ meta::IfIsMathArray<ArrayType, void> Fmod(ArrayType const &array1, ArrayType con
 {
   ASSERT(ret.shape() == array1.shape());
   ASSERT(ret.shape() == array2.shape());
-  typename ArrayType::SizeType ret_count{0};
-  for (typename ArrayType::Type &e : array1)
+  auto it1 = array1.cbegin();
+  auto it2 = array2.cbegin();
+  auto rit = ret.begin();
+  while (it1.is_valid())
   {
-    Fmod(e, array2.At(ret_count), ret.At(ret_count));
-    ++ret_count;
+    Fmod(*it1, *it2, rit);
+    ++it1;
+    ++it2;
+    ++rit;
   }
 }
 
@@ -73,13 +77,8 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Fmod(ArrayType const &array1, ArrayType const &array2)
 {
   ASSERT(array2.shape() == array1.shape());
-  ArrayType                    ret{array1.shape()};
-  typename ArrayType::SizeType ret_count{0};
-  for (typename ArrayType::Type &e : array1)
-  {
-    Fmod(e, array2.At(ret_count), ret.At(ret_count));
-    ++ret_count;
-  }
+  ArrayType ret{array1.shape()};
+  Fmod(array1, array2, ret);
   return ret;
 }
 
