@@ -82,7 +82,7 @@ TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
   placeholder->SetData(data);
 
   fetch::ml::Node<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>> fc(
-      "FullyConnected", 50u, 42u, "FullyConnected");
+      "FullyConnected", 50u, 42u, fetch::ml::details::ActivationType::NOTHING, "FullyConnected");
   fc.AddInput(placeholder);
 
   TypeParam prediction = fc.Evaluate();
@@ -100,7 +100,7 @@ TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
   placeholder->SetData(data);
 
   fetch::ml::Node<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>> fc(
-      "FullyConnected", 50u, 42u, "FullyConnected");
+      "FullyConnected", 50u, 42u, fetch::ml::details::ActivationType::NOTHING, "FullyConnected");
   fc.AddInput(placeholder);
   TypeParam prediction = fc.Evaluate();
 
@@ -132,8 +132,9 @@ TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
 
 TYPED_TEST(FullyConnectedTest, getStateDict)
 {
-  fetch::ml::layers::FullyConnected<TypeParam> fc(50, 10, "FCTest");
-  fetch::ml::StateDict<TypeParam>              sd = fc.StateDict();
+  fetch::ml::layers::FullyConnected<TypeParam> fc(
+      50, 10, fetch::ml::details::ActivationType::NOTHING, "FCTest");
+  fetch::ml::StateDict<TypeParam> sd = fc.StateDict();
 
   EXPECT_EQ(sd.weights_, nullptr);
   EXPECT_EQ(sd.dict_.size(), 2);

@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/macros.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/ml/activation_functions/softmax.hpp"
 #include "math/standard_functions/log.hpp"
@@ -27,49 +28,46 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class LogSoftmax : public fetch::ml::Ops<T>
+class LogSoftmax : public fetch::ml::BatchOps<T>
 {
 public:
-  using ArrayType      = T;
-  using DataType       = typename ArrayType::Type;
-  using ArrayPtrType   = std::shared_ptr<ArrayType>;
-  using ConstSliceType = typename ArrayType::ConstSliceType;
+  using ArrayType    = T;
+  using DataType     = typename ArrayType::Type;
+  using SizeType     = typename ArrayType::SizeType;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   LogSoftmax()          = default;
   virtual ~LogSoftmax() = default;
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs, ArrayType &output)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
-    (void)output;
+    ASSERT(output.shape() == ComputeOutputShape(inputs));
     assert(inputs.size() == 1);
-    if (!this->output_ || this->output_->shape() != inputs[0]->shape())
-    {
-      this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
-    }
-
-    fetch::math::Softmax(*inputs[0], *this->output_);
-    fetch::math::Log(*this->output_, *this->output_);
-
-    return this->output_;
+    fetch::math::Softmax(inputs.front().get(), output);
+    fetch::math::Log(output, output);
+    return output;
   }
 
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
+      ArrayType const &                                           errorSignal)
   {
     FETCH_UNUSED(inputs);
-
     assert(inputs.size() == 1);
-    assert(inputs[0]->shape() == errorSignal->shape());
+    assert(inputs.front().get().shape() == errorSignal.shape());
 
-    assert(errorSignal->size() == 1);
+    ArrayType returnSignal = fetch::math::Exp(errorSignal);
+    fetch::math::Add(DataType(1), returnSignal, returnSignal);
+    fetch::math::Divide(DataType(1), returnSignal, returnSignal);
 
-    fetch::math::Exp(*errorSignal, *errorSignal);
-    for (std::size_t j = 0; j < errorSignal->size(); ++j)
-    {
-      fetch::math::Add(DataType(1), errorSignal->At(j), errorSignal->At(j));
-    }
-    fetch::math::Divide(DataType(1), *errorSignal, *errorSignal);
-    return {errorSignal};
+    return {returnSignal};
+  }
+
+  virtual std::vector<SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "LogSoftmax";

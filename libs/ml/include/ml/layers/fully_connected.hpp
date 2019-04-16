@@ -29,6 +29,55 @@
 #include <cmath>
 #include <random>
 
+#include "ml/ops/activation.hpp"
+namespace fetch {
+namespace ml {
+namespace details {
+
+enum class ActivationType
+{
+  NOTHING,
+  RELU,
+  LEAKY_RELU,
+  SIGMOID,
+  LOG_SIGMOID,
+  SOFTMAX,
+  LOG_SOFTMAX
+};
+
+template <class T>
+std::string CreateActivationLayer(ActivationType type, Graph<T> *g, std::string name,
+                                  std::string input)
+{
+  switch (type)
+  {
+  case ActivationType::RELU:
+    return g->template AddNode<fetch::ml::ops::Relu<T>>(name, {input});
+
+  case ActivationType::LEAKY_RELU:
+    return g->template AddNode<fetch::ml::ops::LeakyRelu<T>>(name, {input});
+
+  case ActivationType::SIGMOID:
+    return g->template AddNode<fetch::ml::ops::Sigmoid<T>>(name, {input});
+
+  case ActivationType::LOG_SIGMOID:
+    return g->template AddNode<fetch::ml::ops::LogSigmoid<T>>(name, {input});
+
+  case ActivationType::SOFTMAX:
+    return g->template AddNode<fetch::ml::ops::Softmax<T>>(name, {input});
+
+  case ActivationType::LOG_SOFTMAX:
+    return g->template AddNode<fetch::ml::ops::LogSoftmax<T>>(name, {input});
+
+  default:
+    return input;
+  }
+}
+
+}  // namespace details
+}  // namespace ml
+}  // namespace fetch
+
 namespace fetch {
 namespace ml {
 namespace layers {
@@ -42,8 +91,9 @@ public:
   using SizeType     = typename ArrayType::SizeType;
   using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
 
-  FullyConnected(std::uint64_t in, std::uint64_t out, std::string const &name = "FC",
-                 WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
+  FullyConnected(std::uint64_t in, std::uint64_t out,
+                 details::ActivationType activation_type = details::ActivationType::NOTHING,
+                 std::string const &name = "FC", WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
     : Layer<T>(in, out)
   {
     std::string input =
@@ -58,6 +108,9 @@ public:
         this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Bias", {});
     std::string output = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
         name + "_Add", {weights_matmul, bias});
+
+    output = fetch::ml::details::CreateActivationLayer<T>(activation_type, this,
+                                                          name + "_Activation", output);
 
     this->AddInputNode(input);
     this->SetOutputNode(output);

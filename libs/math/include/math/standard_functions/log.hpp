@@ -35,7 +35,7 @@ namespace math {
 template <typename Type>
 meta::IfIsNonFixedPointArithmetic<Type, void> Log(Type const &x, Type &ret)
 {
-  ret = std::log(x);
+  ret = Type(std::log(double(x)));
 }
 
 // TODO(800) - native implementations of fixed point are required; casting to double will not be
