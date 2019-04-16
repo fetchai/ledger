@@ -31,13 +31,13 @@
 namespace fetch {
 namespace fixed_point {
 
-template <std::size_t I, std::size_t F>
+template <std::uint16_t I, std::uint16_t F>
 class FixedPoint;
 
-namespace details {
+namespace {
 
 // struct for inferring what underlying types to use
-template <std::size_t T>
+template <int T>
 struct TypeFromSize
 {
   static const bool is_valid = false;  // for template matches specialisation
@@ -63,48 +63,48 @@ struct TypeFromSize<128>
 template <>
 struct TypeFromSize<64>
 {
-  static constexpr bool        is_valid  = true;
-  static constexpr std::size_t size      = 64;
-  using ValueType                        = int64_t;
-  using UnsignedType                     = uint64_t;
-  using SignedType                       = int64_t;
-  using NextSize                         = TypeFromSize<128>;
+  static const bool          is_valid = true;
+  static const std::uint16_t size     = 64;
+  using ValueType                     = int64_t;
+  using UnsignedType                  = uint64_t;
+  using SignedType                    = int64_t;
+  using NextSize                      = TypeFromSize<128>;
 };
 
 // 32 bit implementation
 template <>
 struct TypeFromSize<32>
 {
-  static constexpr bool        is_valid = true;
-  static constexpr std::size_t size     = 32;
-  using ValueType                       = int32_t;
-  using UnsignedType                    = uint32_t;
-  using SignedType                      = int32_t;
-  using NextSize                        = TypeFromSize<64>;
+  static const bool          is_valid = true;
+  static const std::uint16_t size     = 32;
+  using ValueType                     = int32_t;
+  using UnsignedType                  = uint32_t;
+  using SignedType                    = int32_t;
+  using NextSize                      = TypeFromSize<64>;
 };
 
 // 16 bit implementation
 template <>
 struct TypeFromSize<16>
 {
-  static constexpr bool        is_valid = true;
-  static constexpr std::size_t size     = 16;
-  using ValueType                       = int16_t;
-  using UnsignedType                    = uint16_t;
-  using SignedType                      = int16_t;
-  using NextSize                        = TypeFromSize<32>;
+  static const bool          is_valid = true;
+  static const std::uint16_t size     = 16;
+  using ValueType                     = int16_t;
+  using UnsignedType                  = uint16_t;
+  using SignedType                    = int16_t;
+  using NextSize                      = TypeFromSize<32>;
 };
 
 // 8 bit implementation
 template <>
 struct TypeFromSize<8>
 {
-  static constexpr bool        is_valid = true;
-  static constexpr std::size_t size     = 8;
-  using ValueType                       = int8_t;
-  using UnsignedType                    = uint8_t;
-  using SignedType                      = int8_t;
-  using NextSize                        = TypeFromSize<16>;
+  static const bool          is_valid = true;
+  static const std::uint16_t size     = 8;
+  using ValueType                     = int8_t;
+  using UnsignedType                  = uint8_t;
+  using SignedType                    = int8_t;
+  using NextSize                      = TypeFromSize<16>;
 };
 
 /**
@@ -116,8 +116,8 @@ struct TypeFromSize<8>
  * @param remainder
  * @return
  */
-template <std::size_t I, std::size_t F>
-inline FixedPoint<I, F> Divide(const FixedPoint<I, F> &numerator, const FixedPoint<I, F> &denominator,
+template <std::uint16_t I, std::uint16_t F>
+FixedPoint<I, F> Divide(const FixedPoint<I, F> &numerator, const FixedPoint<I, F> &denominator,
                         FixedPoint<I, F> & /*remainder*/)
 {
   return numerator / denominator;
@@ -131,8 +131,8 @@ inline FixedPoint<I, F> Divide(const FixedPoint<I, F> &numerator, const FixedPoi
  * @param rhs
  * @param result
  */
-template <std::size_t I, std::size_t F>
-inline void Multiply(const FixedPoint<I, F> &lhs, const FixedPoint<I, F> &rhs, FixedPoint<I, F> &result)
+template <std::uint16_t I, std::uint16_t F>
+void Multiply(const FixedPoint<I, F> &lhs, const FixedPoint<I, F> &rhs, FixedPoint<I, F> &result)
 {
   result = rhs * lhs;
 }
@@ -160,14 +160,14 @@ constexpr inline int32_t HighestSetBit(T n_input)
  * helper function that checks no bit overflow when shifting
  * @tparam T the input original type
  * @param n the value of the datum
- * @param fractional_bits the number of fractional_bits to be set
+ * @param FRACTIONAL_BITS the number of FRACTIONAL_BITS to be set
  * @param total_bits the total number of bits
  * @return true if there is no overflow, false otherwise
  */
 template <typename T>
-inline bool CheckNoOverflow(T n, std::size_t fractional_bits, std::size_t total_bits)
+bool CheckNoOverflow(T n, std::uint16_t fractional_bits, std::uint16_t total_bits)
 {
-  std::size_t hsb = HighestSetBit(n);
+  std::uint16_t hsb = HighestSetBit(n);
   if (hsb + fractional_bits <= total_bits)
   {
     return true;
@@ -206,28 +206,28 @@ inline bool CheckNoRounding(T n, std::size_t fractional_bits)
   return false;
 }
 
-}  // namespace details
+}  // namespace
 
-template <std::size_t I, std::size_t F>
-class FixedPoint
+struct BaseFixedpointType
 {
-  static_assert(details::TypeFromSize<I + F>::is_valid, "invalid combination of sizes");
+};
+
+template <std::uint16_t I, std::uint16_t F>
+class FixedPoint : public BaseFixedpointType
+{
+  static_assert(TypeFromSize<I + F>::is_valid, "invalid combination of sizes");
 
 public:
-  static constexpr std::size_t fractional_bits = F;
-  static constexpr std::size_t total_bits      = I + F;
+  enum
+  {
+    FRACTIONAL_BITS = F,
+    TOTAL_BITS      = I + F
+  };
 
-  // this tag is used for matching templates - see math_type_traits.hpp
-  FixedPointTag fixed_point_tag;
-
-  using BaseTypeInfo = details::TypeFromSize<total_bits>;
-
+  using BaseTypeInfo = TypeFromSize<TOTAL_BITS>;
   using Type         = typename BaseTypeInfo::ValueType;
   using NextType     = typename BaseTypeInfo::NextSize::ValueType;
   using UnsignedType = typename BaseTypeInfo::UnsignedType;
-
-  static constexpr Type fractional_mask = Type((Type(1) << fractional_bits) - 1);
-  static constexpr Type integer_mask    = ~fractional_mask;
 
   // Constants/Limits
   static constexpr Type one = Type(1) << fractional_bits;
@@ -254,28 +254,36 @@ public:
   static constexpr Type min = -(smallest_int ^ largest_fraction);
   static constexpr FixedPoint max_exp = FixedPoint::Log(FixedPoint::FromBase(max));
 
+  enum
+  {
+    FRACTIONAL_MASK = Type(((1ull << FRACTIONAL_BITS) - 1)),
+    INTEGER_MASK    = Type(~FRACTIONAL_MASK),
+    CONST_ONE       = Type(1) << FRACTIONAL_BITS
+  };
+
   ////////////////////
   /// constructors ///
   ////////////////////
+  FixedPoint() = default;
 
-  constexpr FixedPoint()
-    : data_{0}
-  {}  // initialise to zero
-
+  /**
+   * Templated constructor existing only for T is an integer and assigns data
+   * @tparam T any integer type
+   * @param n integer value to set FixedPoint to
+   */
   template <typename T>
-  constexpr explicit FixedPoint(T n, meta::IfIsInteger<T> * = nullptr)
-    : data_{static_cast<Type>(n) << static_cast<Type>(fractional_bits)}
+  explicit FixedPoint(T n, meta::IfIsInteger<T> * = nullptr)
+    : data_(static_cast<Type>(n) << static_cast<Type>(FRACTIONAL_BITS))
   {
-    assert(details::CheckNoOverflow(n, fractional_bits, total_bits));
+    assert(CheckNoOverflow(n, FRACTIONAL_BITS, TOTAL_BITS));
   }
 
   template <typename T>
   constexpr explicit FixedPoint(T n, meta::IfIsFloat<T> * = nullptr)
     : data_{static_cast<Type>(n * one)}
   {
-    assert(details::CheckNoOverflow(n, fractional_bits, total_bits));
-    // TODO(private, 629)
-    assert(details::CheckNoRounding(n, fractional_bits));
+    //assert(CheckNoOverflow(n, FRACTIONAL_BITS, TOTAL_BITS));
+    // assert(CheckNoRounding(n, FRACTIONAL_BITS));
   }
 
   constexpr FixedPoint(const FixedPoint &o)
@@ -376,13 +384,13 @@ public:
 
   constexpr FixedPoint &operator++()
   {
-    data_ += one;
+    data_ += CONST_ONE;
     return *this;
   }
 
   constexpr FixedPoint &operator--()
   {
-    data_ -= one;
+    data_ -= CONST_ONE;
     return *this;
   }
 
@@ -392,17 +400,17 @@ public:
 
   explicit operator double() const
   {
-    return (static_cast<double>(data_) / one);
+    return (static_cast<double>(data_) / CONST_ONE);
   }
 
   explicit operator int() const
   {
-    return int((data_ & integer_mask) >> fractional_bits);
+    return int((data_ & INTEGER_MASK) >> FRACTIONAL_BITS);
   }
 
   explicit operator float() const
   {
-    return (static_cast<float>(data_) / one);
+    return (static_cast<float>(data_) / CONST_ONE);
   }
 
   explicit operator unsigned() const
@@ -507,14 +515,14 @@ public:
 
   constexpr FixedPoint &operator*=(const FixedPoint &n)
   {
-    details::Multiply(*this, n, *this);
+    Multiply(*this, n, *this);
     return *this;
   }
 
   constexpr FixedPoint &operator/=(const FixedPoint &n)
   {
     FixedPoint temp;
-    *this = details::Divide(*this, n, temp);
+    *this = Divide(*this, n, temp);
     return *this;
   }
 
@@ -671,6 +679,8 @@ public:
   }
 
 private:
+  Type data_{0};  // the value to be stored
+
   // this makes it simpler to create a fixed point object from
   // a native type without scaling
   // use "FixedPoint::from_base" in order to perform this.
@@ -681,12 +691,9 @@ private:
   constexpr FixedPoint(Type n, const NoScale &)
     : data_(n)
   {}
-
-private:
-  Type data_;  // the value to be stored
 };
 
-template <std::size_t I, std::size_t F>
+template <std::uint16_t I, std::uint16_t F>
 std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
 {
   std::ios_base::fmtflags f(s.flags());

@@ -46,14 +46,13 @@ public:
   }
 
   virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape() == errorSignal.shape());
 
-    ArrayType returnSignal = errorSignal.Clone();
-
+    ArrayType returnSignal = errorSignal.Copy();
     ArrayType t(this->ComputeOutputShape(inputs));
     t = this->Forward(inputs, t);
     returnSignal.InlineMultiply(t);

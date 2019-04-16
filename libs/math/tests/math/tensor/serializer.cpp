@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,32 +16,45 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
 #include "math/tensor.hpp"
-#include <memory>
-#include <vector>
+#include <gtest/gtest.h>
 
-namespace fetch {
-namespace math {
-
-/*
- * Concatenate tensor by creating a new leading dimention
- * Example [2, 5, 5] + [2, 5, 5] + [2, 5, 5] = [3, 2, 5, 5]
- * Returns newly allocated memory
- */
 template <typename T>
-fetch::math::Tensor<T> ConcatenateTensors(std::vector<fetch::math::Tensor<T>> const &tensors)
+class SerializersTest : public ::testing::Test
 {
-  std::vector<typename fetch::math::Tensor<T>::SizeType> retSize;
-  retSize.push_back(tensors.size());
-  retSize.insert(retSize.end(), tensors.front().shape().begin(), tensors.front().shape().end());
-  fetch::math::Tensor<T> ret(retSize);
-  for (typename fetch::math::Tensor<T>::SizeType i(0); i < tensors.size(); ++i)
-  {
-    ret.Slice(i).Copy(tensors[i]);
-  }
-  return ret;
+};
+
+using MyTypes = ::testing::Types<int, long, float, double>;
+TYPED_TEST_CASE(SerializersTest, MyTypes);
+
+TYPED_TEST(SerializersTest, serialize_empty_tensor)
+{
+  fetch::math::Tensor<TypeParam>      t1;
+  fetch::serializers::ByteArrayBuffer b;
+  b << t1;
+  b.seek(0);
+  fetch::math::Tensor<TypeParam> t2;
+  b >> t2;
+  EXPECT_EQ(t1, t2);
 }
 
-}  // namespace math
-}  // namespace fetch
+TYPED_TEST(SerializersTest, serialize_tensor)
+{
+  fetch::math::Tensor<TypeParam> t1({2, 3, 4, 5, 6});
+  TypeParam                      i(0);
+  for (auto &e : t1)
+  {
+    e = i;
+    i++;
+  }
+  fetch::serializers::ByteArrayBuffer b;
+
+  b << t1;
+  b.seek(0);
+  fetch::math::Tensor<TypeParam> t2;
+
+  b >> t2;
+
+  EXPECT_EQ(t1, t2);
+}

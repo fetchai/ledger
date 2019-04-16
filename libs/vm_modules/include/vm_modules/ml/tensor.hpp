@@ -42,23 +42,14 @@ public:
     return {new TensorWrapper(vm, type_id, shape->elements)};
   }
 
-  void SetAt(uint64_t index, float value)
-  {
-    (*this).At(index) = value;
-  }
-
-  fetch::vm::Ptr<fetch::vm::String> ToString()
-  {
-    return new fetch::vm::String(vm_, (*this).Tensor::ToString());
-  }
+  // TODO(private 872): reimplement SetAt & ToString
 };
 
 inline void CreateTensor(std::shared_ptr<fetch::vm::Module> module)
 {
   module->CreateClassType<TensorWrapper>("Tensor")
-      .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm::Array<TensorWrapper::SizeType>>>()
-      .CreateInstanceFunction("SetAt", &TensorWrapper::SetAt)
-      .CreateInstanceFunction("ToString", &TensorWrapper::ToString);
+      .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm::Array<TensorWrapper::SizeType>>>();
+  // TODO(private 872): reimplement SetAt & ToString
 }
 
 }  // namespace ml

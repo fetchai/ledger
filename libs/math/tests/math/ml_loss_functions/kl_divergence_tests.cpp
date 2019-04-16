@@ -59,7 +59,7 @@ TYPED_TEST(KlDivergenceTest, same_tensors_divergence_test)
   A.Set({3, 2}, typename TypeParam::Type(1.3));
   A.Set({3, 3}, typename TypeParam::Type(1.4));
 
-  TypeParam B = A.Clone();
+  TypeParam B = A.Copy();
 
   EXPECT_NEAR(double(KlDivergence(A, B)), 0.0, 1e-5);
   EXPECT_NEAR(double(KlDivergence(B, A)), 0.0, 1e-5);

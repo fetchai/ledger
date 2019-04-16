@@ -61,7 +61,7 @@ public:
 
     assert(inputs.front().get().shape() == error_signal.shape());
 
-    ArrayType return_signal = error_signal.Clone();
+    ArrayType return_signal = error_signal.Copy();
     ArrayType t             = this->Ops<T>::Forward(inputs);
 
     // gradient of tanh: 1 - tanh(x)^2

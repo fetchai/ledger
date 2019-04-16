@@ -41,17 +41,17 @@ public:
     ASSERT(inputs.size() == 1);
     ASSERT(output.shape() == ComputeOutputShape(inputs));
     input_shape_ = inputs.front().get().shape();
-    output.Copy(inputs.front().get());
+    output.Assign(inputs.front().get());
     return output;
   }
 
   virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 1);
     ArrayType ret(input_shape_);
-    ret.Copy(errorSignal);
+    ret.Assign(errorSignal);
     return {ret};
   }
 
