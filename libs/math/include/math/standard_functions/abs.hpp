@@ -31,14 +31,19 @@ namespace math {
 /// IMPLEMENTATIONS ///
 ///////////////////////
 
-// TODO(800) - native implementations of fixed point are required; casting to double will not be
-// permissible
 // this also handles case of passing uint to abs
 template <typename T>
 meta::IfIsArithmetic<T, void> Abs(T const &n, T &ret)
 {
-  ret = T::Abs(n);
+  ret = T(std::abs((double)n));
 }
+
+// TODO: this should be somehow reinstated, as current Abs does a cast to double
+// template <typename T>
+// meta::IsFixedPoint<T, void> Abs(T const &n, T &ret)
+// {
+//   ret = T::Abs(n);
+// }
 
 //////////////////
 /// INTERFACES ///
