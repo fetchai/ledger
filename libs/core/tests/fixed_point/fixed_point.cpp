@@ -18,11 +18,11 @@
 
 #include "core/fixed_point/fixed_point.hpp"
 #include <array>
-#include <gtest/gtest.h>
-#include <iostream>
-#include <iomanip>
-#include <limits>
 #include <cmath>
+#include <gtest/gtest.h>
+#include <iomanip>
+#include <iostream>
+#include <limits>
 
 using fp32 = fetch::fixed_point::FixedPoint<16, 16>;
 using fp64 = fetch::fixed_point::FixedPoint<32, 32>;
@@ -69,9 +69,9 @@ TEST(FixedPointTest, Conversion_16_16)
   fetch::fixed_point::FixedPoint<16, 16> m_one_point_five(-1.5);
 
   EXPECT_EQ(zero_point_five.Data(), 0x08000);
-  EXPECT_EQ(one.Data(),             0x10000);
-  EXPECT_EQ(one_point_five.Data(),  0x18000);
-  EXPECT_EQ(two_point_five.Data(),  0x28000);
+  EXPECT_EQ(one.Data(), 0x10000);
+  EXPECT_EQ(one_point_five.Data(), 0x18000);
+  EXPECT_EQ(two_point_five.Data(), 0x28000);
 
   // Convert from raw value
   fetch::fixed_point::FixedPoint<16, 16> two_point_five_raw(2, 0x08000);
@@ -96,11 +96,11 @@ TEST(FixedPointTest, Conversion_16_16)
   // Smallest possible Fixed Point number.
   fetch::fixed_point::FixedPoint<16, 16> smallest_fixed_point = smallest_int - almost_one;
 
-  EXPECT_EQ(infinitesimal.Data(),        fp32::SMALLEST_FRACTION);
-  EXPECT_EQ(almost_one.Data(),           fp32::LARGEST_FRACTION);
-  EXPECT_EQ(largest_int.Data(),          fp32::MAX_INT);
-  EXPECT_EQ(smallest_int.Data(),         fp32::MIN_INT);
-  EXPECT_EQ(largest_fixed_point.Data(),  fp32::MAX);
+  EXPECT_EQ(infinitesimal.Data(), fp32::SMALLEST_FRACTION);
+  EXPECT_EQ(almost_one.Data(), fp32::LARGEST_FRACTION);
+  EXPECT_EQ(largest_int.Data(), fp32::MAX_INT);
+  EXPECT_EQ(smallest_int.Data(), fp32::MIN_INT);
+  EXPECT_EQ(largest_fixed_point.Data(), fp32::MAX);
   EXPECT_EQ(smallest_fixed_point.Data(), fp32::MIN);
 
   // We cannot be smaller than the actual negative integer of the actual type
@@ -162,9 +162,9 @@ TEST(FixedPointTest, Conversion_32_32)
   fetch::fixed_point::FixedPoint<32, 32> m_one_point_five(-1.5);
 
   EXPECT_EQ(zero_point_five.Data(), 0x080000000);
-  EXPECT_EQ(one.Data(),             0x100000000);
-  EXPECT_EQ(one_point_five.Data(),  0x180000000);
-  EXPECT_EQ(two_point_five.Data(),  0x280000000);
+  EXPECT_EQ(one.Data(), 0x100000000);
+  EXPECT_EQ(one_point_five.Data(), 0x180000000);
+  EXPECT_EQ(two_point_five.Data(), 0x280000000);
 
   // Convert from raw value
   fetch::fixed_point::FixedPoint<32, 32> two_point_five_raw(2, 0x080000000);
@@ -189,11 +189,11 @@ TEST(FixedPointTest, Conversion_32_32)
   // Smallest possible Fixed Point number.
   fetch::fixed_point::FixedPoint<32, 32> smallest_fixed_point = smallest_int - almost_one;
 
-  EXPECT_EQ(infinitesimal.Data(),        fp64::SMALLEST_FRACTION);
-  EXPECT_EQ(almost_one.Data(),           fp64::LARGEST_FRACTION);
-  EXPECT_EQ(largest_int.Data(),          fp64::MAX_INT);
-  EXPECT_EQ(smallest_int.Data(),         fp64::MIN_INT);
-  EXPECT_EQ(largest_fixed_point.Data(),  fp64::MAX);
+  EXPECT_EQ(infinitesimal.Data(), fp64::SMALLEST_FRACTION);
+  EXPECT_EQ(almost_one.Data(), fp64::LARGEST_FRACTION);
+  EXPECT_EQ(largest_int.Data(), fp64::MAX_INT);
+  EXPECT_EQ(smallest_int.Data(), fp64::MIN_INT);
+  EXPECT_EQ(largest_fixed_point.Data(), fp64::MAX);
   EXPECT_EQ(smallest_fixed_point.Data(), fp64::MIN);
 
   // We cannot be smaller than the actual negative integer of the actual type
@@ -587,18 +587,18 @@ TEST(FixedPointTest, Comparison_16_16)
   EXPECT_TRUE(m_two < one);
   EXPECT_TRUE(m_one < two);
 
-  EXPECT_TRUE(fp32::CONST_E        == 2.718281828459045235360287471352662498);
-  EXPECT_TRUE(fp32::CONST_LOG2E    == 1.442695040888963407359924681001892137);
-  EXPECT_TRUE(fp32::CONST_LOG10E   == 0.434294481903251827651128918916605082);
-  EXPECT_TRUE(fp32::CONST_LN2      == 0.693147180559945309417232121458176568);
-  EXPECT_TRUE(fp32::CONST_LN10     == 2.302585092994045684017991454684364208);
-  EXPECT_TRUE(fp32::CONST_PI       == 3.141592653589793238462643383279502884);
-  EXPECT_TRUE(fp32::CONST_PI_2     == 1.570796326794896619231321691639751442);
-  EXPECT_TRUE(fp32::CONST_PI_4     == 0.785398163397448309615660845819875721);
-  EXPECT_TRUE(fp32::CONST_INV_PI   == 0.318309886183790671537767526745028724);
+  EXPECT_TRUE(fp32::CONST_E == 2.718281828459045235360287471352662498);
+  EXPECT_TRUE(fp32::CONST_LOG2E == 1.442695040888963407359924681001892137);
+  EXPECT_TRUE(fp32::CONST_LOG10E == 0.434294481903251827651128918916605082);
+  EXPECT_TRUE(fp32::CONST_LN2 == 0.693147180559945309417232121458176568);
+  EXPECT_TRUE(fp32::CONST_LN10 == 2.302585092994045684017991454684364208);
+  EXPECT_TRUE(fp32::CONST_PI == 3.141592653589793238462643383279502884);
+  EXPECT_TRUE(fp32::CONST_PI_2 == 1.570796326794896619231321691639751442);
+  EXPECT_TRUE(fp32::CONST_PI_4 == 0.785398163397448309615660845819875721);
+  EXPECT_TRUE(fp32::CONST_INV_PI == 0.318309886183790671537767526745028724);
   EXPECT_TRUE(fp32::CONST_2_INV_PI == 0.636619772367581343075535053490057448);
   EXPECT_TRUE(fp32::CONST_2_INV_SQRTPI == 1.128379167095512573896158903121545172);
-  EXPECT_TRUE(fp32::CONST_SQRT2    == 1.414213562373095048801688724209698079);
+  EXPECT_TRUE(fp32::CONST_SQRT2 == 1.414213562373095048801688724209698079);
   EXPECT_TRUE(fp32::CONST_INV_SQRT2 == 0.707106781186547524400844362104849039);
 }
 
@@ -696,18 +696,18 @@ TEST(FixedPointTest, Comparison_32_32)
   EXPECT_LT(m_two, one);
   EXPECT_LT(m_one, two);
 
-  EXPECT_TRUE(fp64::CONST_E       == 2.718281828459045235360287471352662498);
-  EXPECT_TRUE(fp64::CONST_LOG2E   == 1.442695040888963407359924681001892137);
-  EXPECT_TRUE(fp64::CONST_LOG10E  == 0.434294481903251827651128918916605082);
-  EXPECT_TRUE(fp64::CONST_LN2     == 0.693147180559945309417232121458176568);
-  EXPECT_TRUE(fp64::CONST_LN10    == 2.302585092994045684017991454684364208);
-  EXPECT_TRUE(fp64::CONST_PI      == 3.141592653589793238462643383279502884);
+  EXPECT_TRUE(fp64::CONST_E == 2.718281828459045235360287471352662498);
+  EXPECT_TRUE(fp64::CONST_LOG2E == 1.442695040888963407359924681001892137);
+  EXPECT_TRUE(fp64::CONST_LOG10E == 0.434294481903251827651128918916605082);
+  EXPECT_TRUE(fp64::CONST_LN2 == 0.693147180559945309417232121458176568);
+  EXPECT_TRUE(fp64::CONST_LN10 == 2.302585092994045684017991454684364208);
+  EXPECT_TRUE(fp64::CONST_PI == 3.141592653589793238462643383279502884);
   EXPECT_TRUE(fp64::CONST_PI / 2 == fp64::CONST_PI_2);
-  EXPECT_TRUE(fp64::CONST_PI_4    == 0.785398163397448309615660845819875721);
+  EXPECT_TRUE(fp64::CONST_PI_4 == 0.785398163397448309615660845819875721);
   EXPECT_TRUE(one / fp64::CONST_PI == fp64::CONST_INV_PI);
   EXPECT_TRUE(fp64::CONST_2_INV_PI == 0.636619772367581343075535053490057448);
   EXPECT_TRUE(fp64::CONST_2_INV_SQRTPI == 1.128379167095512573896158903121545172);
-  EXPECT_TRUE(fp64::CONST_SQRT2   == 1.414213562373095048801688724209698079);
+  EXPECT_TRUE(fp64::CONST_SQRT2 == 1.414213562373095048801688724209698079);
   EXPECT_TRUE(fp64::CONST_INV_SQRT2 == 0.707106781186547524400844362104849039);
 }
 
@@ -715,14 +715,14 @@ TEST(FixedPointTest, Exponential_16_16)
 {
   fetch::fixed_point::FixedPoint<16, 16> one(1);
   fetch::fixed_point::FixedPoint<16, 16> two(2);
-  fetch::fixed_point::FixedPoint<16, 16> e1 = fp32::Exp(one);
-  fetch::fixed_point::FixedPoint<16, 16> e2 = fp32::Exp(two);
+  fetch::fixed_point::FixedPoint<16, 16> e1    = fp32::Exp(one);
+  fetch::fixed_point::FixedPoint<16, 16> e2    = fp32::Exp(two);
   fetch::fixed_point::FixedPoint<16, 16> e_max = fp32::Exp(fp32::MAX_EXP);
 
-  EXPECT_NEAR((double)e1/std::exp(1.0), 1.0, 1e-4);
-  EXPECT_NEAR((double)e2/std::exp(2.0), 1.0, 1e-4);
-  EXPECT_NEAR((double)e_max/std::exp((double)fp32::MAX_EXP), 1.0, 3e-4);
-  EXPECT_THROW(fp32::Exp(fp32::MAX_EXP+1), std::overflow_error);
+  EXPECT_NEAR((double)e1 / std::exp(1.0), 1.0, 1e-4);
+  EXPECT_NEAR((double)e2 / std::exp(2.0), 1.0, 1e-4);
+  EXPECT_NEAR((double)e_max / std::exp((double)fp32::MAX_EXP), 1.0, 3e-4);
+  EXPECT_THROW(fp32::Exp(fp32::MAX_EXP + 1), std::overflow_error);
 }
 
 TEST(FixedPointTest, Exponential_32_32)
@@ -738,23 +738,28 @@ TEST(FixedPointTest, Exponential_32_32)
   fetch::fixed_point::FixedPoint<32, 32> e5 = fp64::Exp(small);
   fetch::fixed_point::FixedPoint<32, 32> e6 = fp64::Exp(tiny);
 
-  EXPECT_NEAR(((double)e1 - std::exp(1.0))/std::exp(1.0), 0, 1e-7);
-  EXPECT_NEAR(((double)e2 - std::exp(2.0))/std::exp(2.0), 0, 1e-7);
-  EXPECT_NEAR(((double)e3 - std::exp(10.0))/std::exp(10.0), 0, 1e-7);
-  EXPECT_NEAR(((double)e5 - std::exp(0.0001))/std::exp(0.0001), 0, 1e-7);
-  EXPECT_NEAR(((double)e6 - std::exp(double(tiny)))/std::exp(double(tiny)), 0, 1e-7);
-  EXPECT_NEAR(((double)fp64::Exp(fp64::MAX_EXP) - std::exp(double(fp64::MAX_EXP)))/std::exp(double(fp64::MAX_EXP)), 0, 1e-7);
+  EXPECT_NEAR(((double)e1 - std::exp(1.0)) / std::exp(1.0), 0, 1e-7);
+  EXPECT_NEAR(((double)e2 - std::exp(2.0)) / std::exp(2.0), 0, 1e-7);
+  EXPECT_NEAR(((double)e3 - std::exp(10.0)) / std::exp(10.0), 0, 1e-7);
+  EXPECT_NEAR(((double)e5 - std::exp(0.0001)) / std::exp(0.0001), 0, 1e-7);
+  EXPECT_NEAR(((double)e6 - std::exp(double(tiny))) / std::exp(double(tiny)), 0, 1e-7);
+  EXPECT_NEAR(((double)fp64::Exp(fp64::MAX_EXP) - std::exp(double(fp64::MAX_EXP))) /
+                  std::exp(double(fp64::MAX_EXP)),
+              0, 1e-7);
 
   // Out of range
-  EXPECT_THROW(fp64::Exp(fp64::MAX_EXP+1), std::overflow_error);
+  EXPECT_THROW(fp64::Exp(fp64::MAX_EXP + 1), std::overflow_error);
 
   // Negative values
-  EXPECT_NEAR(((double)fp64::Exp(-one) - std::exp(-1.0))/std::exp(-1.0), 0, 1e-7);
-  EXPECT_NEAR(((double)fp64::Exp(-two) - std::exp(-2.0))/std::exp(-2.0), 0, 1e-7);
-  EXPECT_NEAR(((double)fp64::Exp(-ten) - std::exp(-10.0))/std::exp(-10.0), 0, 2e-6);
-  EXPECT_NEAR(((double)fp64::Exp(-small) - std::exp(-0.0001))/std::exp(-0.0001), 0, 1e-7);
-  EXPECT_NEAR(((double)fp64::Exp(-tiny) - std::exp(-double(tiny)))/std::exp(-double(tiny)), 0, 1e-7);
-  EXPECT_NEAR(((double)fp64::Exp(fp64::MIN_EXP) - std::exp((double)fp64::MIN_EXP))/std::exp((double)fp64::MIN_EXP), 0, 1e-7);
+  EXPECT_NEAR(((double)fp64::Exp(-one) - std::exp(-1.0)) / std::exp(-1.0), 0, 1e-7);
+  EXPECT_NEAR(((double)fp64::Exp(-two) - std::exp(-2.0)) / std::exp(-2.0), 0, 1e-7);
+  EXPECT_NEAR(((double)fp64::Exp(-ten) - std::exp(-10.0)) / std::exp(-10.0), 0, 2e-6);
+  EXPECT_NEAR(((double)fp64::Exp(-small) - std::exp(-0.0001)) / std::exp(-0.0001), 0, 1e-7);
+  EXPECT_NEAR(((double)fp64::Exp(-tiny) - std::exp(-double(tiny))) / std::exp(-double(tiny)), 0,
+              1e-7);
+  EXPECT_NEAR(((double)fp64::Exp(fp64::MIN_EXP) - std::exp((double)fp64::MIN_EXP)) /
+                  std::exp((double)fp64::MIN_EXP),
+              0, 1e-7);
 }
 
 TEST(FixedPointTest, Pow_32_32)
@@ -765,8 +770,8 @@ TEST(FixedPointTest, Pow_32_32)
   fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Pow(x, two);
   fetch::fixed_point::FixedPoint<32, 32> e2 = fp64::Pow(x, three);
 
-  EXPECT_NEAR((double)e1/std::pow(-1.6519711627625, 2), 1.0, 1e-7);
-  EXPECT_NEAR((double)e2/std::pow(-1.6519711627625, 3), 1.0, 1e-7);
+  EXPECT_NEAR((double)e1 / std::pow(-1.6519711627625, 2), 1.0, 1e-7);
+  EXPECT_NEAR((double)e2 / std::pow(-1.6519711627625, 3), 1.0, 1e-7);
   EXPECT_THROW(fp64::Pow(fp64::CONST_ZERO, fp64::CONST_ZERO), std::runtime_error);
   EXPECT_THROW(fp64::Pow(x, x), std::runtime_error);
 }
