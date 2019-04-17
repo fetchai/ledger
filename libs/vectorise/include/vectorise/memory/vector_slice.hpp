@@ -95,7 +95,7 @@ public:
     assert(pointer_ != nullptr);
     if (pointer_)
     {
-      std::memset(pointer_, 0, padded_size() * sizeof(Type));
+      std::memset(static_cast<void*>(pointer_), 0, padded_size() * sizeof(Type));
     }
   }
 
@@ -104,7 +104,7 @@ public:
     assert(pointer_ != nullptr);
     if (pointer_)
     {
-      std::memset(pointer_ + size(), 0, (padded_size() - size()) * sizeof(Type));
+      std::memset(static_cast<void*>(pointer_ + size()), 0, (padded_size() - size()) * sizeof(Type));
     }
   }
 
@@ -112,7 +112,7 @@ public:
   {
     if (pointer_)
     {
-      std::memset(pointer_ + n, 0, (padded_size() - n) * sizeof(Type));
+      std::memset(static_cast<void*>(pointer_ + n), 0, (padded_size() - n) * sizeof(Type));
     }
   }
 
