@@ -21,18 +21,18 @@
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 
- template <typename T>
- class FullyConnectedTest : public ::testing::Test
+template <typename T>
+class FullyConnectedTest : public ::testing::Test
 {
 };
 
- using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
+using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
                                  fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
- TYPED_TEST_CASE(FullyConnectedTest, MyTypes);
+TYPED_TEST_CASE(FullyConnectedTest, MyTypes);
 
- TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as a subgraph
+TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
   fetch::ml::layers::FullyConnected<TypeParam> fc(100u, 10u);
   TypeParam inputData(std::vector<typename TypeParam::SizeType>({10, 10}));
@@ -45,7 +45,7 @@
   // No way to test actual values for now as weights are randomly initialised.
 }
 
- TYPED_TEST(FullyConnectedTest, ops_forward_test)  // Use the class as an Ops
+TYPED_TEST(FullyConnectedTest, ops_forward_test)  // Use the class as an Ops
 {
   fetch::ml::layers::FullyConnected<TypeParam> fc(50, 10);
   TypeParam inputData(std::vector<typename TypeParam::SizeType>({5, 10}));
@@ -58,7 +58,7 @@
   // No way to test actual values for now as weights are randomly initialised.
 }
 
- TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
+TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
 {
   fetch::ml::layers::FullyConnected<TypeParam> fc(50, 10);
   TypeParam inputData(std::vector<typename TypeParam::SizeType>({5, 10}));
@@ -74,13 +74,11 @@
   // No way to test actual values for now as weights are randomly initialised.
 }
 
- TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
+TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
 {
   TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10}));
-  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder
-  =
-      std::make_shared<fetch::ml::Node<TypeParam,
-      fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
+  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
+      std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
   placeholder->SetData(data);
 
   fetch::ml::Node<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>> fc(
@@ -94,13 +92,11 @@
   ASSERT_EQ(prediction.shape()[1], 42);
 }
 
- TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
+TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
 {
-  TypeParam                                                                           data({5,
-  10}); std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>
-  placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam,
-      fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
+  TypeParam                                                                           data({5, 10});
+  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
+      std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
   placeholder->SetData(data);
 
   fetch::ml::Node<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>> fc(
@@ -117,13 +113,12 @@
   ASSERT_EQ(backpropagatedErrorSignals[0].second.shape()[1], 10);
 }
 
- TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
+TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
 {
   fetch::ml::Graph<TypeParam> g;
 
   g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Input", {});
-  g.template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>("FullyConnected", {"Input"},
-  50u,
+  g.template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>("FullyConnected", {"Input"}, 50u,
                                                                    42u);
 
   TypeParam data({5, 10});
@@ -135,7 +130,7 @@
   ASSERT_EQ(prediction.shape()[1], 42);
 }
 
- TYPED_TEST(FullyConnectedTest, getStateDict)
+TYPED_TEST(FullyConnectedTest, getStateDict)
 {
   fetch::ml::layers::FullyConnected<TypeParam> fc(50, 10, "FCTest");
   fetch::ml::StateDict<TypeParam>              sd = fc.StateDict();

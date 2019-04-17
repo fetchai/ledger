@@ -21,16 +21,16 @@
 #include "ml/layers/fully_connected.hpp"
 #include <gtest/gtest.h>
 
- template <typename T>
- class SelfAttentionTest : public ::testing::Test
+template <typename T>
+class SelfAttentionTest : public ::testing::Test
 {
 };
 
 // TODO (private 507)
- using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
- TYPED_TEST_CASE(SelfAttentionTest, MyTypes);
+using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
+TYPED_TEST_CASE(SelfAttentionTest, MyTypes);
 
- TYPED_TEST(SelfAttentionTest, output_shape_test)  // Use the class as a Node
+TYPED_TEST(SelfAttentionTest, output_shape_test)  // Use the class as a Node
 {
   fetch::ml::Graph<TypeParam> g;
 
