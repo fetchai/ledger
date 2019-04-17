@@ -18,65 +18,15 @@
 //------------------------------------------------------------------------------
 
 #include "ml/layers/layer.hpp"
+#include "ml/meta/ml_type_traits.hpp"
+#include "ml/ops/activation.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/subgraph.hpp"
-
-#include "ml/meta/ml_type_traits.hpp"
-
 #include <cmath>
 #include <random>
-
-#include "ml/ops/activation.hpp"
-namespace fetch {
-namespace ml {
-namespace details {
-
-enum class ActivationType
-{
-  NOTHING,
-  RELU,
-  LEAKY_RELU,
-  SIGMOID,
-  LOG_SIGMOID,
-  SOFTMAX,
-  LOG_SOFTMAX
-};
-
-template <class T>
-std::string CreateActivationLayer(ActivationType type, Graph<T> *g, std::string name,
-                                  std::string input)
-{
-  switch (type)
-  {
-  case ActivationType::RELU:
-    return g->template AddNode<fetch::ml::ops::Relu<T>>(name, {input});
-
-  case ActivationType::LEAKY_RELU:
-    return g->template AddNode<fetch::ml::ops::LeakyRelu<T>>(name, {input});
-
-  case ActivationType::SIGMOID:
-    return g->template AddNode<fetch::ml::ops::Sigmoid<T>>(name, {input});
-
-  case ActivationType::LOG_SIGMOID:
-    return g->template AddNode<fetch::ml::ops::LogSigmoid<T>>(name, {input});
-
-  case ActivationType::SOFTMAX:
-    return g->template AddNode<fetch::ml::ops::Softmax<T>>(name, {input});
-
-  case ActivationType::LOG_SOFTMAX:
-    return g->template AddNode<fetch::ml::ops::LogSoftmax<T>>(name, {input});
-
-  default:
-    return input;
-  }
-}
-
-}  // namespace details
-}  // namespace ml
-}  // namespace fetch
 
 namespace fetch {
 namespace ml {
