@@ -73,134 +73,14 @@ public:
 
   static constexpr char const *LOGGING_NAME = "Tensor";
 
-  /**
-   * The TensorSlice is a convenience method for efficiently manipulating
-   * SubTensors (e.g. such as a 1D Slice). It is built on top of TensorIterator
-   * @tparam STensor
-   */
+private:
   template <typename STensor>
-  class TensorSliceImplementation
-  {
-  public:
-    using Type = typename STensor::Type;
+  class TensorSliceImplementation;
 
-    TensorSliceImplementation(STensor &t, std::vector<std::vector<SizeType>> range,
-                              SizeType axis = 0)
-      : tensor_{t}
-      , range_{std::move(range)}
-      , axis_{std::move(axis)}
-    {}
-
-    SelfType Copy() const
-    {
-      SizeVector shape;
-      for (SizeType i{0}; i < this->range_.size(); ++i)
-      {
-        shape.emplace_back(this->range_[i][1] - this->range_[i][0] / this->range_[i][2]);
-      }
-      SelfType ret{shape};
-      ret.Assign(*this);
-      return ret;
-    }
-
-    ConstIteratorType begin() const
-    {
-      auto ret = ConstIteratorType(tensor_, range_);
-      if (axis_ != 0)
-      {
-        ret.MoveAxesToFront(axis_);
-      }
-      return ret;
-    }
-
-    ConstIteratorType end() const
-    {
-      return ConstIteratorType::EndIterator(tensor_);
-    }
-
-    STensor &Tensor()
-    {
-      return tensor_;
-    }
-
-    SizeType size() const
-    {
-      return tensor_.size();
-    }
-
-    SizeVector shape() const
-    {
-      return tensor_.shape();
-    }
-
-  protected:
-    STensor &                          tensor_;
-    std::vector<std::vector<SizeType>> range_;
-    SizeType                           axis_;
-  };
-
+public:
   using ConstSliceType = TensorSliceImplementation<SelfType const>;
 
-  class TensorSlice : public TensorSliceImplementation<Tensor>
-  {
-  public:
-    using Type = T;
-    using TensorSliceImplementation<Tensor>::TensorSliceImplementation;
-    using TensorSliceImplementation<Tensor>::begin;
-    using TensorSliceImplementation<Tensor>::end;
-
-    IteratorType begin()
-    {
-      auto ret = IteratorType(this->tensor_, this->range_);
-      if (this->axis_ != 0)
-      {
-        ret.MoveAxesToFront(this->axis_);
-      }
-      return ret;
-    }
-
-    IteratorType end()
-    {
-      return IteratorType::EndIterator(this->tensor_);
-    }
-
-    template <typename G>
-    void Assign(TensorSliceImplementation<G> const &other)
-    {
-      auto it1 = begin();
-      auto it2 = other.begin();
-      assert(it1.size() == it2.size());
-      while (it1.is_valid())
-      {
-        *it1 = *it2;
-        ++it1;
-        ++it2;
-      }
-    }
-
-    void Assign(Tensor const &other)
-    {
-      auto it1 = begin();
-      auto it2 = other.begin();
-      assert(it1.size() == it2.size());
-      while (it1.is_valid())
-      {
-        *it1 = *it2;
-        ++it1;
-        ++it2;
-      }
-    }
-
-    void Fill(Type t)
-    {
-      auto it1 = begin();
-      while (!it1.is_valid())
-      {
-        *it1 = t;
-        ++it1;
-      }
-    }
-  };
+  class TensorSlice;
 
   using SliceType = TensorSlice;
 
@@ -215,138 +95,25 @@ public:
     , size_(0)
   {}
 
-  static Tensor FromString(byte_array::ConstByteArray const &c)
-  {
-    Tensor            ret;
-    SizeType          n = 1;
-    std::vector<Type> elems;
-    elems.reserve(1024);
-    bool failed = false;
-
-    for (SizeType i = 0; i < c.size();)
-    {
-      SizeType last = i;
-      switch (c[i])
-      {
-      case ';':
-        ++n;
-        ++i;
-        break;
-      case ',':
-      case ' ':
-      case '\n':
-      case '\t':
-      case '\r':
-        ++i;
-        break;
-      default:
-        if (byte_array::consumers::NumberConsumer<1, 2>(c, i) == -1)
-        {
-          failed = true;
-        }
-        else
-        {
-          elems.push_back(Type(atof(c.char_pointer() + last)));
-        }
-        break;
-      }
-    }
-    SizeType m = elems.size() / n;
-
-    if ((m * n) != elems.size())
-    {
-      failed = true;
-    }
-
-    if (!failed)
-    {
-      ret.ResizeFromShape({n, m});
-      ret.SetAllZero();
-
-      SizeType k = 0;
-      for (SizeType i = 0; i < n; ++i)
-      {
-        for (SizeType j = 0; j < m; ++j)
-        {
-          ret.Set(i, j, elems[k++]);
-        }
-      }
-    }
-
-    return ret;
-  }
-
-  /**
-   * Constructor builds an Tensor with n elements initialized to 0
-   * @param n   number of elements in array (no shape specified, assume 1-D)
-   */
-  explicit Tensor(SizeType const &n)
-    : data_(n)
-    , size_(n)
-  {
-    assert(this->size() == n);
-    this->LazyReshape({n});
-    Type zero{0};
-    for (SizeType idx = 0; idx < this->size(); ++idx)
-    {
-      operator[](idx) = zero;
-    }
-  }
-
+  static Tensor FromString(byte_array::ConstByteArray const &c);
+  explicit Tensor(SizeType const &n);
   Tensor(Tensor &&other)      = default;
   Tensor(Tensor const &other) = default;
+  Tensor(SizeVector const &dims);
+
   Tensor &operator=(Tensor const &other) = default;
   Tensor &operator=(Tensor &&other) = default;
 
-  /**
-   * Constructor builds an empty Tensor pre-initialiing with zeros from a vector of dimension
-   * lengths
-   * @param shape   vector of lengths for each dimension
-   */
-  Tensor(SizeVector const &dims)
-  {
-    ResizeFromShape(dims);
-    this->SetAllZero();
-  }
+  IteratorType begin();
+  IteratorType end();
+  ConstIteratorType begin() const;
+  ConstIteratorType end() const;
+  ConstIteratorType cbegin() const;
+  ConstIteratorType cend() const;
 
-  IteratorType begin()
-  {
-    return IteratorType(*this);
-  }
-
-  IteratorType end()
-  {
-    return IteratorType::EndIterator(*this);
-  }
-
-  ConstIteratorType begin() const
-  {
-    return ConstIteratorType(*this);
-  }
-
-  ConstIteratorType end() const
-  {
-    return ConstIteratorType::EndIterator(*this);
-  }
-
-  ConstIteratorType cbegin() const
-  {
-    return ConstIteratorType(*this);
-  }
-
-  ConstIteratorType cend() const
-  {
-    return ConstIteratorType::EndIterator(*this);
-  }
-
-  static SizeType SizeFromShape(SizeVector const &shape)
-  {
-    if (shape.size() == 0)
-    {
-      return SizeType{0};
-    }
-    return std::accumulate(std::begin(shape), std::end(shape), SizeType(1), std::multiplies<>());
-  }
+  ////////////////////////////////
+  /// ASSIGNMENT AND ACCESSING ///
+  ////////////////////////////////
 
   /**
    * Method returning an Tensor of zeroes
@@ -449,21 +216,6 @@ public:
       ++it2;
     }
   }
-
-  /**
-   * Flattens the array to 1 dimension efficiently
-   *
-   **/
-  void Flatten()
-  {
-    shape_.clear();
-    shape_.push_back(size_);
-    UpdateStrides();
-  }
-
-  ////////////////////////////////
-  /// ASSIGNMENT AND ACCESSING ///
-  ////////////////////////////////
 
   template <typename... Indices>
   Type &At(Indices... indices)
@@ -744,326 +496,57 @@ public:
     return *this;
   }
 
-  //////////////////////////
-  /// SHAPE MANIPULATION ///
-  //////////////////////////
+  ////////////////////
+  /// SHAPE & SIZE ///
+  ////////////////////
 
-  SelfType Transpose() const
-  {
-    // TODO (private 867) -
-    ASSERT(shape_.size() == 2);
-    SizeVector new_axes{1, 0};
+  static SizeType SizeFromShape(SizeVector const &shape);
 
-    SelfType ret({shape().at(1), shape().at(0)});
-    TransposeImplementation(new_axes, ret);
-    return ret;
-  }
+  void Flatten();
+  SelfType Transpose() const; // TODO (private 867)
+  SelfType Transpose(SizeVector &new_axes) const;
+  SelfType &Squeeze();
+  SelfType &Unsqueeze();
+  void ResizeFromShape(SizeVector const &shape);
+  void LazyReshape(SizeVector const &shape);
+  bool CanReshape(SizeVector const &shape);
+  void Reshape(SizeVector const &shape);
+  SizeVector const &shape() const;
+  SizeType const &shape(SizeType const &n) const;
 
-  SelfType Transpose(SizeVector &new_axes) const
-  {
-    ASSERT(shape_.size() > 1);
-    ASSERT(shape_.size() == new_axes.size());
+  /////////////////////////
+  /// INLINE OPERATIONS ///
+  /////////////////////////
 
-    SelfType ret(shape());
-    TransposeImplementation(new_axes, ret);
-    return ret;
-  }
+  SelfType InlineAdd(Tensor const &other);
+  SelfType InlineAdd(Type const &scalar);
+  SelfType InlineSubtract(Tensor const &other);
+  SelfType InlineSubtract(Type const &scalar);
+  SelfType InlineReverseSubtract(Tensor const &other);
+  SelfType InlineReverseSubtract(Type const &scalar);
+  SelfType InlineMultiply(Tensor const &other);
+  SelfType InlineMultiply(Type const &scalar);
+  SelfType InlineDivide(Tensor const &other);
+  SelfType InlineDivide(Type const &scalar);
+  SelfType InlineReverseDivide(Tensor const &other);
+  SelfType InlineReverseDivide(Type const &scalar);
 
-  /**
-   * Removes the leading dimension if is has size 1
-   */
-  SelfType &Squeeze()
-  {
-    ASSERT(shape_.at(0) == 1);
-    shape_.erase(shape_.begin());
-    UpdateStrides();
+  //////////////////////////////
+  /// MATRIX MATH OPERATIONS ///
+  //////////////////////////////
 
-    return *this;
-  }
+  SelfType &DotTranspose(SelfType const &A, SelfType const &B, Type alpha = 1.0, Type beta = 0.0);
+  SelfType &TransposeDot(SelfType const &A, SelfType const &B, Type alpha = 1.0, Type beta = 0.0);
+  Type Sum() const;
 
-  SelfType &Unsqueeze()
-  {
-    shape_.insert(shape_.begin(), 1);
-    UpdateStrides();
 
-    return *this;
-  }
 
-  void ResizeFromShape(SizeVector const &shape)
-  {
-    Resize(SelfType::SizeFromShape(shape));
-    Reshape(shape);
-  }
 
-  /**
-   * Directly copies shape variable without checking anything
-   *
-   * @param[in]     shape specifies the new shape.
-   *
-   **/
-  void LazyReshape(SizeVector const &shape)
-  {
-    shape_ = shape;
-    UpdateStrides();
-  }
 
-  /**
-   * Tests if it is possible to reshape the array to a newly proposed shape
-   *
-   * @param[in]     shape specified for the new array as a vector ot size_t.
-   * @return        success is a bool indicating where the proposed shape is acceptable.
-   *
-   **/
-  bool CanReshape(SizeVector const &shape)
-  {
-    if ((shape.size() == 0) && (size() == 0))
-    {
-      return true;
-    }
-    else
-    {
-      SizeType total = 1;
-      for (auto const &s : shape)
-      {
-        total *= s;
-      }
-      bool success                      = false;
-      (total == this->size()) ? success = true : success = false;
-      return success;
-    }
-    return false;
-  }
 
-  /**
-   * Reshapes after checking the total size is the same
-   * @param shape  specified for the new array as a vector of size type.
-   */
-  void Reshape(SizeVector const &shape)
-  {
-    ASSERT(CanReshape(shape));
-
-    shape_.clear();
-    shape_.reserve(shape.size());
-    for (auto const &s : shape)
-    {
-      shape_.push_back(s);
-    }
-    UpdateStrides();
-    size_ = SelfType::SizeFromShape(shape);
-  }
-
-  /**
-   * returns the tensor's current shape
-   * @return  shape_ is the shape of the tensor as a vector of size_type
-   */
-  SizeVector const &shape() const
-  {
-    return shape_;
-  }
-  SizeType const &shape(SizeType const &n) const
-  {
-    return shape_[n];
-  }
-
-  /**
-   * adds two Tensors together and supports broadcasting
-   * @param other
-   * @return
-   */
-  SelfType InlineAdd(Tensor const &other)
-  {
-    if (other.shape() == shape_)
-    {
-      Add(*this, other, *this);
-    }
-    else
-    {
-      SelfType self_copy  = this->Copy();
-      SelfType other_copy = other.Copy();
-      if (!(Broadcast([](T x, T y) { return x + y; }, self_copy, other_copy, *this)))
-      {
-        throw std::runtime_error("arrays not broadcastable!");
-      }
-    }
-    return *this;
-  }
-
-  /**
-   * adds a scalar to every element in the array and returns the new output
-   * @param scalar to add
-   * @return new array output
-   */
-  SelfType InlineAdd(Type const &scalar)
-  {
-    Add(*this, scalar, *this);
-    return *this;
-  }
-
-  /**
-   * Subtract one Tensor from another and support broadcasting
-   * @param other
-   * @return
-   */
-  SelfType InlineSubtract(Tensor const &other)
-  {
-    if (other.shape() == shape_)
-    {
-      Subtract(*this, other, *this);
-    }
-    else
-    {
-      SelfType self_copy  = this->Copy();
-      SelfType other_copy = other.Copy();
-      if (!(Broadcast([](T x, T y) { return x - y; }, self_copy, other_copy, *this)))
-      {
-        throw std::runtime_error("arrays not broadcastable!");
-      }
-    }
-    return *this;
-  }
-  /**
-   * subtract a scalar from every element in the array and return the new output
-   * @param scalar to subtract
-   * @return new array output
-   */
-  SelfType InlineSubtract(Type const &scalar)
-  {
-    Subtract(*this, scalar, *this);
-    return *this;
-  }
-
-  /**
-   * Subtract one Tensor from another and support broadcasting
-   * @param other
-   * @return
-   */
-  SelfType InlineReverseSubtract(Tensor const &other)
-  {
-    if (other.shape() == shape_)
-    {
-      Subtract(other, *this, *this);
-    }
-    else
-    {
-      SelfType self_copy  = this->Copy();
-      SelfType other_copy = other.Copy();
-      if (!(Broadcast([](T x, T y) { return x - y; }, other_copy, self_copy, *this)))
-      {
-        throw std::runtime_error("arrays not broadcastable!");
-      }
-    }
-    return *this;
-  }
-  /**
-   * subtract every element from the scalar and return the new output
-   * @param scalar to subtract
-   * @return new array output
-   */
-  SelfType InlineReverseSubtract(Type const &scalar)
-  {
-    Subtract(scalar, *this, *this);
-    return *this;
-  }
-
-  /**
-   * multiply other by this array and returns this
-   * @param other
-   * @return
-   */
-  SelfType InlineMultiply(Tensor const &other)
-  {
-    if (other.shape() == shape_)
-    {
-      Multiply(*this, other, *this);
-    }
-    else
-    {
-      SelfType self_copy  = this->Copy();
-      SelfType other_copy = other.Copy();
-      if (!(Broadcast([](T x, T y) { return x * y; }, other_copy, self_copy, *this)))
-      {
-        throw std::runtime_error("arrays not broadcastable!");
-      }
-    }
-    return *this;
-  }
-  /**
-   * multiplies array by a scalar element wise
-   * @param scalar to add
-   * @return new array output
-   */
-  SelfType InlineMultiply(Type const &scalar)
-  {
-    Multiply(*this, scalar, *this);
-    return *this;
-  }
-
-  /**
-   * Divide Tensor by another Tensor from another and support broadcasting
-   * @param other
-   * @return
-   */
-  SelfType InlineDivide(Tensor const &other)
-  {
-    if (other.shape() == shape_)
-    {
-      Divide(*this, other, *this);
-    }
-    else
-    {
-      SelfType self_copy  = this->Copy();
-      SelfType other_copy = other.Copy();
-      if (!(Broadcast([](T x, T y) { return x / y; }, self_copy, other_copy, *this)))
-      {
-        throw std::runtime_error("arrays not broadcastable!");
-      }
-      //      throw std::runtime_error("broadcast divide not implemented");
-    }
-    return *this;
-  }
-  /**
-   * Divide array by a scalar elementwise
-   * @param scalar to subtract
-   * @return new array output
-   */
-  SelfType InlineDivide(Type const &scalar)
-  {
-    Divide(*this, scalar, *this);
-    return *this;
-  }
-
-  /**
-   * Divide another Tensor by this Tensor from another and support broadcasting
-   * @param other
-   * @return
-   */
-  SelfType InlineReverseDivide(Tensor const &other)
-  {
-    if (other.shape() == shape_)
-    {
-      Divide(other, *this, *this);
-    }
-    else
-    {
-      SelfType self_copy  = this->Copy();
-      SelfType other_copy = other.Copy();
-      if (!(Broadcast([](T x, T y) { return x / y; }, other_copy, self_copy, *this)))
-      {
-        throw std::runtime_error("arrays not broadcastable!");
-      }
-    }
-    return *this;
-  }
-  /**
-   * Divide scalar by array elementwise
-   * @param scalar to subtract
-   * @return new array output
-   */
-  SelfType InlineReverseDivide(Type const &scalar)
-  {
-    Divide(scalar, *this, *this);
-    return *this;
-  }
+  /////////////
+  /// Order ///
+  /////////////
 
   void MajorOrderFlip()
   {
@@ -1159,43 +642,6 @@ public:
     return major_order_;
   }
 
-  /**
-   * Efficient vectorised and threaded routine for C = A.T(B)
-   * @param A
-   * @param B
-   * @return
-   */
-  SelfType &DotTranspose(SelfType const &A, SelfType const &B, Type alpha = 1.0, Type beta = 0.0)
-  {
-    assert(this->shape().size() == 2);
-    fetch::math::DotTranspose(A, B, *this, alpha, beta);
-
-    return *this;
-  }
-
-  /**
-   * Efficient vectorised and threaded routine for C = T(A).B
-   * @param A
-   * @param B
-   * @return
-   */
-  SelfType &TransposeDot(SelfType const &A, SelfType const &B, Type alpha = 1.0, Type beta = 0.0)
-  {
-    assert(this->shape().size() == 2);
-    fetch::math::TransposeDot(A, B, *this, alpha, beta);
-
-    return *this;
-  }
-
-  Type Sum() const
-  {
-    Type ret{0};
-    for (auto const &v : *this)
-    {
-      ret += v;
-    }
-    return ret;
-  }
 
   template <typename S>
   friend void Serialize(S &serializer, Tensor const &t)
@@ -1714,6 +1160,25 @@ public:
     return *this;
   }
 
+  /**
+   * TensorSlice class contains the non-const methods of tensor slicing
+   */
+  class TensorSlice : public TensorSliceImplementation<Tensor>
+  {
+  public:
+    using Type = T;
+    using TensorSliceImplementation<Tensor>::TensorSliceImplementation;
+    using TensorSliceImplementation<Tensor>::begin;
+    using TensorSliceImplementation<Tensor>::end;
+
+    IteratorType begin();
+    IteratorType end();
+    template <typename G>
+    void Assign(TensorSliceImplementation<G> const &other);
+    void Assign(Tensor const &other);
+    void Fill(Type t);
+  };
+
 private:
   ContainerType data_;
   SizeType      size_ = 0;
@@ -1865,7 +1330,768 @@ private:
       ++ret_it;
     }
   }
+
+  /**
+   * The TensorSlice is a convenience method for efficiently manipulating
+   * SubTensors (e.g. such as a 1D Slice). It is built on top of TensorIterator
+   * @tparam STensor
+   */
+  template <typename STensor>
+  class TensorSliceImplementation
+  {
+  public:
+    using Type = typename STensor::Type;
+
+    TensorSliceImplementation<STensor>(STensor &t, std::vector<std::vector<SizeType>> range,
+                                  SizeType axis = 0)
+          : tensor_{t}
+          , range_{std::move(range)}
+          , axis_{std::move(axis)}
+        {}
+
+    SelfType Copy() const;
+    ConstIteratorType begin() const;
+    ConstIteratorType end() const;
+    STensor &Tensor();
+    SizeType size() const;
+    SizeVector shape() const;
+
+  protected:
+    STensor &                          tensor_;
+    std::vector<std::vector<SizeType>> range_;
+    SizeType                           axis_;
+  };
+
+
 };
+
+template <typename T, typename C>
+Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
+{
+  Tensor            ret;
+  SizeType          n = 1;
+  std::vector<Type> elems;
+  elems.reserve(1024);
+  bool failed = false;
+
+  for (SizeType i = 0; i < c.size();)
+  {
+    SizeType last = i;
+    switch (c[i])
+    {
+    case ';':
+      ++n;
+      ++i;
+      break;
+    case ',':
+    case ' ':
+    case '\n':
+    case '\t':
+    case '\r':
+      ++i;
+      break;
+    default:
+      if (byte_array::consumers::NumberConsumer<1, 2>(c, i) == -1)
+      {
+        failed = true;
+      }
+      else
+      {
+        elems.push_back(Type(atof(c.char_pointer() + last)));
+      }
+      break;
+    }
+  }
+  SizeType m = elems.size() / n;
+
+  if ((m * n) != elems.size())
+  {
+    failed = true;
+  }
+
+  if (!failed)
+  {
+    ret.ResizeFromShape({n, m});
+    ret.SetAllZero();
+
+    SizeType k = 0;
+    for (SizeType i = 0; i < n; ++i)
+    {
+      for (SizeType j = 0; j < m; ++j)
+      {
+        ret.Set(i, j, elems[k++]);
+      }
+    }
+  }
+
+  return ret;
+}
+
+///////////////////////////
+/// Tensor Constructors ///
+///////////////////////////
+
+/**
+ * Constructor builds an Tensor with n elements initialized to 0
+ * @param n   number of elements in array (no shape specified, assume 1-D)
+ */
+template <typename T, typename C>
+Tensor<T, C>::Tensor(SizeType const &n)
+  : data_(n)
+  , size_(n)
+{
+  assert(this->size() == n);
+  this->LazyReshape({n});
+  Type zero{0};
+  for (SizeType idx = 0; idx < this->size(); ++idx)
+  {
+    operator[](idx) = zero;
+  }
+}
+
+/**
+ * Constructor builds an empty Tensor pre-initialiing with zeros from a vector of dimension
+ * lengths
+ * @param shape   vector of lengths for each dimension
+ */
+template <typename T, typename C>
+Tensor<T, C>::Tensor(SizeVector const &dims)
+{
+  ResizeFromShape(dims);
+  this->SetAllZero();
+}
+
+/////////////////////////////////
+/// Tensor methods: iterators ///
+/////////////////////////////////
+
+template <typename T, typename C>
+typename Tensor<T, C>::IteratorType Tensor<T, C>::begin()
+{
+  return IteratorType(*this);
+}
+
+template <typename T, typename C>
+typename Tensor<T, C>::IteratorType Tensor<T, C>::end()
+{
+  return IteratorType::EndIterator(*this);
+}
+
+template <typename T, typename C>
+typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::begin() const
+{
+  return ConstIteratorType(*this);
+}
+
+template <typename T, typename C>
+typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::end() const
+{
+  return ConstIteratorType::EndIterator(*this);
+}
+
+template <typename T, typename C>
+typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::cbegin() const
+{
+  return ConstIteratorType(*this);
+}
+
+template <typename T, typename C>
+typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::cend() const
+{
+  return ConstIteratorType::EndIterator(*this);
+}
+
+////////////////////////////////////
+/// Tensor methods: shape & size ///
+////////////////////////////////////
+
+/**
+ * compute tensor size based on the shape
+ * @tparam T
+ * @tparam C
+ * @param shape
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SizeType Tensor<T, C>::SizeFromShape(SizeVector const &shape)
+{
+  if (shape.size() == 0)
+  {
+    return SizeType{0};
+  }
+  return std::accumulate(std::begin(shape), std::end(shape), SizeType(1), std::multiplies<>());
+}
+
+/**
+ * Flattens the array to 1 dimension
+ * @tparam T
+ * @tparam C
+ */
+template <typename T, typename C>
+void Tensor<T, C>::Flatten()
+{
+  shape_.clear();
+  shape_.push_back(size_);
+  UpdateStrides();
+}
+
+/**
+ *
+ * @tparam T
+ * @tparam C
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SelfType Tensor<T, C>::Transpose() const
+{
+  // TODO (private 867) -
+  ASSERT(shape_.size() == 2);
+  SizeVector new_axes{1, 0};
+
+  SelfType ret({shape().at(1), shape().at(0)});
+  TransposeImplementation(new_axes, ret);
+  return ret;
+}
+
+/**
+ *
+ * @tparam T
+ * @tparam C
+ * @param new_axes
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SelfType Tensor<T, C>::Transpose(SizeVector &new_axes) const
+{
+  ASSERT(shape_.size() > 1);
+  ASSERT(shape_.size() == new_axes.size());
+
+  SelfType ret(shape());
+  TransposeImplementation(new_axes, ret);
+  return ret;
+}
+
+/**
+ * Removes the leading dimension if it has size 1
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SelfType & Tensor<T, C>::Squeeze()
+{
+  ASSERT(shape_.at(0) == 1);
+  shape_.erase(shape_.begin());
+  UpdateStrides();
+  return *this;
+}
+
+/**
+ * Adds a leading dimension of size 1
+ * @tparam T
+ * @tparam C
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SelfType & Tensor<T, C>::Unsqueeze()
+{
+  shape_.insert(shape_.begin(), 1);
+  UpdateStrides();
+  return *this;
+}
+
+/**
+ *
+ * @tparam T
+ * @tparam C
+ * @param shape
+ */
+template <typename T, typename C>
+void Tensor<T, C>::ResizeFromShape(SizeVector const &shape)
+{
+  Resize(SelfType::SizeFromShape(shape));
+  Reshape(shape);
+}
+
+/**
+ * Directly copies shape variable without checking anything
+ *
+ * @param[in]     shape specifies the new shape.
+ *
+ **/
+template <typename T, typename C>
+void Tensor<T, C>::LazyReshape(SizeVector const &shape)
+{
+  shape_ = shape;
+  UpdateStrides();
+}
+
+/**
+ * Tests if it is possible to reshape the array to a newly proposed shape
+ *
+ * @param[in]     shape specified for the new array as a vector ot size_t.
+ * @return        success is a bool indicating where the proposed shape is acceptable.
+ *
+ **/
+template <typename T, typename C>
+bool Tensor<T, C>::CanReshape(SizeVector const &shape)
+{
+  if ((shape.size() == 0) && (size() == 0))
+  {
+    return true;
+  }
+  else
+  {
+    SizeType total = 1;
+    for (auto const &s : shape)
+    {
+      total *= s;
+    }
+    bool success                      = false;
+    (total == this->size()) ? success = true : success = false;
+    return success;
+  }
+  return false;
+}
+
+/**
+ * Reshapes after checking the total size is the same
+ * @param shape  specified for the new array as a vector of size type.
+ */
+template <typename T, typename C>
+void Tensor<T, C>::Reshape(SizeVector const &shape)
+{
+  ASSERT(CanReshape(shape));
+
+  shape_.clear();
+  shape_.reserve(shape.size());
+  for (auto const &s : shape)
+  {
+    shape_.push_back(s);
+  }
+  UpdateStrides();
+  size_ = SelfType::SizeFromShape(shape);
+}
+
+/**
+ * returns the tensor's current shape
+ * @return  shape_ is the shape of the tensor as a vector of size_type
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SizeVector const& Tensor<T, C>::shape() const
+{
+  return shape_;
+}
+
+/**
+ * returns the size of a specified dimension
+ * @param n
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SizeType const& Tensor<T, C>::shape(SizeType const &n) const
+{
+  return shape_[n];
+}
+
+/////////////////////////////////////////
+/// Tensor methods: inline operations ///
+/////////////////////////////////////////
+
+
+/**
+ * adds two Tensors together and supports broadcasting
+ * @param other
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SelfType Tensor<T, C>::InlineAdd(Tensor const &other)
+{
+  if (other.shape() == shape_)
+  {
+    Add(*this, other, *this);
+  }
+  else
+  {
+    SelfType self_copy  = this->Copy();
+    SelfType other_copy = other.Copy();
+    if (!(Broadcast([](T x, T y) { return x + y; }, self_copy, other_copy, *this)))
+    {
+      throw std::runtime_error("arrays not broadcastable!");
+    }
+  }
+  return *this;
+}
+
+/**
+ * adds a scalar to every element in the array and returns the new output
+ * @param scalar to add
+ * @return new array output
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SelfType Tensor<T, C>::InlineAdd(Type const &scalar)
+{
+  Add(*this, scalar, *this);
+  return *this;
+}
+
+/**
+ * Subtract one Tensor from another and support broadcasting
+ * @param other
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SelfType Tensor<T, C>::InlineSubtract(Tensor const &other)
+{
+  if (other.shape() == shape_)
+  {
+    Subtract(*this, other, *this);
+  }
+  else
+  {
+    SelfType self_copy  = this->Copy();
+    SelfType other_copy = other.Copy();
+    if (!(Broadcast([](T x, T y) { return x - y; }, self_copy, other_copy, *this)))
+    {
+      throw std::runtime_error("arrays not broadcastable!");
+    }
+  }
+  return *this;
+}
+
+/**
+ * subtract a scalar from every element in the array and return the new output
+ * @param scalar to subtract
+ * @return new array output
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SelfType Tensor<T, C>::InlineSubtract(Type const &scalar)
+{
+  Subtract(*this, scalar, *this);
+  return *this;
+}
+
+/**
+ * Subtract one Tensor from another and support broadcasting
+ * @param other
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SelfType Tensor<T, C>::InlineReverseSubtract(Tensor const &other)
+{
+  if (other.shape() == shape_)
+  {
+    Subtract(other, *this, *this);
+  }
+  else
+  {
+    SelfType self_copy  = this->Copy();
+    SelfType other_copy = other.Copy();
+    if (!(Broadcast([](T x, T y) { return x - y; }, other_copy, self_copy, *this)))
+    {
+      throw std::runtime_error("arrays not broadcastable!");
+    }
+  }
+  return *this;
+}
+/**
+ * subtract every element from the scalar and return the new output
+ * @param scalar to subtract
+ * @return new array output
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SelfType Tensor<T, C>::InlineReverseSubtract(Type const &scalar)
+{
+  Subtract(scalar, *this, *this);
+  return *this;
+}
+
+/**
+ * multiply other by this array and returns this
+ * @param other
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SelfType Tensor<T, C>::InlineMultiply(Tensor const &other)
+{
+  if (other.shape() == shape_)
+  {
+    Multiply(*this, other, *this);
+  }
+  else
+  {
+    SelfType self_copy  = this->Copy();
+    SelfType other_copy = other.Copy();
+    if (!(Broadcast([](T x, T y) { return x * y; }, other_copy, self_copy, *this)))
+    {
+      throw std::runtime_error("arrays not broadcastable!");
+    }
+  }
+  return *this;
+}
+
+/**
+ * multiplies array by a scalar element wise
+ * @param scalar to add
+ * @return new array output
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SelfType Tensor<T, C>::InlineMultiply(Type const &scalar)
+{
+  Multiply(*this, scalar, *this);
+  return *this;
+}
+
+/**
+ * Divide Tensor by another Tensor from another and support broadcasting
+ * @param other
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SelfType Tensor<T, C>::InlineDivide(Tensor const &other)
+{
+  if (other.shape() == shape_)
+  {
+    Divide(*this, other, *this);
+  }
+  else
+  {
+    SelfType self_copy  = this->Copy();
+    SelfType other_copy = other.Copy();
+    if (!(Broadcast([](T x, T y) { return x / y; }, self_copy, other_copy, *this)))
+    {
+      throw std::runtime_error("arrays not broadcastable!");
+    }
+  }
+  return *this;
+}
+
+/**
+ * Divide array by a scalar elementwise
+ * @param scalar to subtract
+ * @return new array output
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SelfType Tensor<T, C>::InlineDivide(Type const &scalar)
+{
+  Divide(*this, scalar, *this);
+  return *this;
+}
+
+/**
+ * Divide another Tensor by this Tensor from another and support broadcasting
+ * @param other
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SelfType Tensor<T, C>::InlineReverseDivide(Tensor const &other)
+{
+  if (other.shape() == shape_)
+  {
+    Divide(other, *this, *this);
+  }
+  else
+  {
+    SelfType self_copy  = this->Copy();
+    SelfType other_copy = other.Copy();
+    if (!(Broadcast([](T x, T y) { return x / y; }, other_copy, self_copy, *this)))
+    {
+      throw std::runtime_error("arrays not broadcastable!");
+    }
+  }
+  return *this;
+}
+
+/**
+ * Divide scalar by array elementwise
+ * @param scalar to subtract
+ * @return new array output
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SelfType Tensor<T, C>::InlineReverseDivide(Type const &scalar)
+{
+  Divide(scalar, *this, *this);
+  return *this;
+}
+
+//////////////////////////////////////////////
+/// Tensor methods: matrix math operations ///
+//////////////////////////////////////////////
+
+/**
+ * Efficient vectorised and threaded routine for C = A.T(B)
+ * @param A
+ * @param B
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SelfType & Tensor<T, C>::DotTranspose(SelfType const &A, SelfType const &B, Type alpha, Type beta)
+{
+  ASSERT(this->shape().size() == 2);
+  fetch::math::DotTranspose(A, B, *this, alpha, beta);
+
+  return *this;
+}
+
+/**
+ * Efficient vectorised and threaded routine for C = T(A).B
+ * @param A
+ * @param B
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SelfType & Tensor<T, C>::TransposeDot(SelfType const &A, SelfType const &B, Type alpha, Type beta)
+{
+  assert(this->shape().size() == 2);
+  fetch::math::TransposeDot(A, B, *this, alpha, beta);
+
+  return *this;
+}
+
+/**
+ *
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::Type Tensor<T, C>::Sum() const
+{
+  Type ret{0};
+  for (auto const &v : *this)
+  {
+    ret += v;
+  }
+  return ret;
+}
+
+//////////////////////////////////////////////
+/// Tensor methods: matrix math operations ///
+//////////////////////////////////////////////
+//////////////////////////////////////////////
+/// Tensor methods: matrix math operations ///
+//////////////////////////////////////////////
+//////////////////////////////////////////////
+/// Tensor methods: matrix math operations ///
+//////////////////////////////////////////////
+
+
+
+///////////////////////////////////////////
+/// TENSOR SLICE METHOD IMPLEMENTATIONS ///
+///////////////////////////////////////////
+
+/// TensorSlice implementations
+
+template <typename T, typename C>
+typename Tensor<T, C>::IteratorType Tensor<T, C>::TensorSlice::begin()
+{
+  auto ret = IteratorType(this->tensor_, this->range_);
+  if (this->axis_ != 0)
+  {
+    ret.MoveAxesToFront(this->axis_);
+  }
+  return ret;
+}
+
+template <typename T, typename C>
+typename Tensor<T, C>::IteratorType Tensor<T, C>::TensorSlice::end()
+{
+  return IteratorType::EndIterator(this->tensor_);
+}
+
+template <typename T, typename C>
+template <typename G>
+void Tensor<T, C>::TensorSlice::Assign(TensorSliceImplementation<G> const &other)
+{
+  auto it1 = begin();
+  auto it2 = other.begin();
+  ASSERT(it1.size() == it2.size());
+  while (it1.is_valid())
+  {
+    *it1 = *it2;
+    ++it1;
+    ++it2;
+  }
+}
+
+template <typename T, typename C>
+void Tensor<T, C>::TensorSlice::Assign(Tensor const &other)
+{
+  auto it1 = begin();
+  auto it2 = other.begin();
+  ASSERT(it1.size() == it2.size());
+  while (it1.is_valid())
+  {
+    *it1 = *it2;
+    ++it1;
+    ++it2;
+  }
+}
+
+template <typename T, typename C>
+void Tensor<T, C>::TensorSlice::Fill(Type t)
+{
+  auto it1 = begin();
+  while (!it1.is_valid())
+  {
+    *it1 = t;
+    ++it1;
+  }
+}
+
+/// TensorSliceImplementation implementations
+
+template <typename T, typename C>
+template <typename STensor>
+typename Tensor<T, C>::SelfType Tensor<T, C>::TensorSliceImplementation<STensor>::Copy() const
+{
+  SizeVector shape;
+  for (SizeType i{0}; i < this->range_.size(); ++i)
+  {
+    shape.emplace_back(this->range_[i][1] - this->range_[i][0] / this->range_[i][2]);
+  }
+  SelfType ret{shape};
+  ret.Assign(*this);
+  return ret;
+}
+
+template <typename T, typename C>
+template <typename STensor>
+typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::TensorSliceImplementation<STensor>::begin() const
+{
+  auto ret = ConstIteratorType(tensor_, range_);
+  if (axis_ != 0)
+  {
+    ret.MoveAxesToFront(axis_);
+  }
+  return ret;
+}
+
+template <typename T, typename C>
+template <typename STensor>
+typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::TensorSliceImplementation<STensor>::end() const
+{
+  return ConstIteratorType::EndIterator(tensor_);
+}
+
+template <typename T, typename C>
+template <typename STensor>
+STensor & Tensor<T, C>::TensorSliceImplementation<STensor>::Tensor()
+{
+  return tensor_;
+}
+
+template <typename T, typename C>
+template <typename STensor>
+typename Tensor<T, C>::SizeType Tensor<T, C>::TensorSliceImplementation<STensor>::size() const
+{
+  return tensor_.size();
+}
+
+template <typename T, typename C>
+template <typename STensor>
+typename Tensor<T, C>::SizeVector Tensor<T, C>::TensorSliceImplementation<STensor>::shape() const
+{
+  return tensor_.shape();
+}
+
+
 
 }  // namespace math
 }  // namespace fetch
