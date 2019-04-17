@@ -124,9 +124,6 @@ public:
   /// ASSIGNMENT AND ACCESSING ///
   ////////////////////////////////
 
-  static SelfType Zeroes(SizeVector const &shape);
-  static SelfType Ones(SizeVector const &shape);
-
   void     Copy(SelfType const &x);
   SelfType Copy() const;
   template <typename G>
@@ -164,6 +161,19 @@ public:
   void SetAllOne();
   void SetPaddedZero();
 
+  ContainerType const &data() const;
+  ContainerType &      data();
+
+  template <typename DataType>
+  fetch::meta::IfIsInteger<DataType, SelfType> FillArange(DataType const &from, DataType const &to);
+
+  static SelfType UniformRandom(SizeType const &N);
+  static SelfType UniformRandomIntegers(SizeType const &N, int64_t const &min, int64_t const &max);
+  SelfType &      FillUniformRandom();
+  SelfType &      FillUniformRandomIntegers(int64_t const &min, int64_t const &max);
+  static SelfType Zeroes(SizeVector const &shape);
+  static SelfType Ones(SizeVector const &shape);
+
   ////////////////////
   /// SHAPE & SIZE ///
   ////////////////////
@@ -181,6 +191,7 @@ public:
   void              Reshape(SizeVector const &shape);
   SizeVector const &shape() const;
   SizeType const &  shape(SizeType const &n) const;
+  SizeType          size() const;
 
   ///////////////////////
   /// MATH OPERATIONS ///
@@ -232,6 +243,11 @@ public:
   Type L2Norm() const;
   Type L2Loss() const;
 
+  Type     PeakToPeak() const;
+  void     Fmod(SelfType const &x);
+  void     Remainder(SelfType const &x);
+  SelfType Softmax(SelfType const &x);
+
   /////////////
   /// Order ///
   /////////////
@@ -253,9 +269,9 @@ public:
   ConstSliceType Slice(SizeType i, SizeType axis = 0) const;
   TensorSlice    Slice(SizeType i, SizeType axis = 0);
 
-  /////////////////
-  /// general utilities
-  //////////////
+  /////////////////////////
+  /// general utilities ///
+  /////////////////////////
 
   std::string ToString() const;
   SizeType    Find(Type val) const;
@@ -264,312 +280,41 @@ public:
   void            Sort();
   void            Sort(memory::TrivialRange const &range);
 
-  /**
-   * returns a range over this array defined using unsigned integers (only forward ranges)
-   * @tparam Unsigned an unsigned integer type
-   * @param from starting point of range
-   * @param to end of range
-   * @param delta the increment to step through the range
-   * @return returns a shapeless array with the values in *this over the specified range
-   */
   template <typename Unsigned>
   static fetch::meta::IfIsUnsignedInteger<Unsigned, SelfType> Arange(Unsigned const &from,
                                                                      Unsigned const &to,
-                                                                     Unsigned const &delta)
-  {
-    assert(delta != 0);
-    assert(from < to);
-    SelfType ret;
-    details::ArangeImplementation(from, to, delta, ret);
-    return ret;
-  }
+                                                                     Unsigned const &delta);
 
-  /**
-   * returns a range over this array defined using signed integers (i.e. permitting backward ranges)
-   * @tparam Signed a signed integer type
-   * @param from starting point of range
-   * @param to end of range
-   * @param delta the increment to step through the range - may be negative
-   * @return returns a shapeless array with the values in *this over the specified range
-   */
   template <typename Signed>
   static fetch::meta::IfIsSignedInteger<Signed, SelfType> Arange(Signed const &from,
                                                                  Signed const &to,
-                                                                 Signed const &delta)
-  {
-    assert(delta != 0);
-    assert(((from < to) && delta > 0) || ((from > to) && delta < 0));
-    SelfType ret;
-    details::ArangeImplementation(from, to, delta, ret);
-    return ret;
-  }
+                                                                 Signed const &delta);
 
-  /**
-   * Fills the current array with a range
-   * @tparam Unsigned an unsigned integer type
-   * @param from starting point of range
-   * @param to end of range
-   * @return a reference to this
-   */
-  template <typename DataType>
-  fetch::meta::IfIsInteger<DataType, SelfType> FillArange(DataType const &from, DataType const &to)
-  {
-    SelfType ret;
+  /////////////////////////
+  /// memory management ///
+  /////////////////////////
 
-    SizeType N     = this->size();
-    Type     d     = static_cast<Type>(from);
-    Type     delta = static_cast<Type>(to - from) / static_cast<Type>(N);
-    for (SizeType i = 0; i < N; ++i)
-    {
-      this->data()[i] = Type(d);
-      d += delta;
-    }
-    return *this;
-  }
-
-  static SelfType UniformRandom(SizeType const &N)
-  {
-    SelfType ret;
-    ret.LazyResize(N);
-    ret.SetPaddedZero();
-    ret.FillUniformRandom();
-
-    return ret;
-  }
-
-  static SelfType UniformRandomIntegers(SizeType const &N, int64_t const &min, int64_t const &max)
-  {
-    SelfType ret;
-    ret.LazyResize(N);
-    ret.SetPaddedZero();
-    ret.FillUniformRandomIntegers(min, max);
-
-    return ret;
-  }
-
-  SelfType &FillUniformRandom()
-  {
-    for (SizeType i = 0; i < this->size(); ++i)
-    {
-      this->data()[i] = Type(random::Random::generator.AsDouble());
-    }
-    return *this;
-  }
-
-  SelfType &FillUniformRandomIntegers(int64_t const &min, int64_t const &max)
-  {
-    assert(min <= max);
-
-    uint64_t diff = uint64_t(max - min);
-
-    for (SizeType i = 0; i < this->size(); ++i)
-    {
-      this->data()[i] = Type(int64_t(random::Random::generator() % diff) + min);
-    }
-
-    return *this;
-  }
-
-  bool LazyReserve(SizeType const &n)
-  {
-    if (data_.size() < n)
-    {
-      data_ = ContainerType(n);
-      return true;
-    }
-    return false;
-  }
-
-  void Reserve(SizeType const &n)
-  {
-    ContainerType old_data = data_;
-
-    if (LazyReserve(n))
-    {
-      SizeType ns = std::min(old_data.size(), n);
-      memcpy(data_.pointer(), old_data.pointer(), ns);
-      data_.SetZeroAfter(ns);
-    }
-  }
-
-  void ReplaceData(SizeType const &n, ContainerType const &data)
-  {
-    assert(n <= data.size());
-    data_ = data;
-    size_ = n;
-  }
+  bool LazyReserve(SizeType const &n);
+  void Reserve(SizeType const &n);
 
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, void>::type LazyResize(S const &n)
-  {
-    LazyReserve(n);
-    size_ = n;
-    data_.SetZeroAfter(n);
-  }
+  typename std::enable_if<std::is_integral<S>::value, void>::type LazyResize(S const &n);
 
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, void>::type Resize(S const &n)
-  {
-    SizeType oldsize = size_;
-    LazyResize(n);
-    data_.SetZeroAfter(oldsize);
-  }
-
-  // TODO(private 858): Vectorize and deduce D from parent
-  template <typename S, typename D = memory::SharedArray<S>>
-  void As(Tensor<S, D> &ret) const
-  {
-    ret.LazyResize(size_);
-    auto this_it = cbegin();
-    auto ret_it  = begin();
-
-    while (this_it.is_valid())
-    {
-      *ret_it = *this_it;
-      ++ret_it;
-      ++this_it;
-    }
-  }
-
-  template <typename S>
-  fetch::meta::IfIsUnsignedInteger<S, Type> Get(S const &indices) const
-  {
-    return data_[indices];
-  }
-  //  T Get(SizeType const &idx) { return data_[idx]; } const
-
-  ContainerType const &data() const
-  {
-    return data_;
-  }
-  ContainerType &data()
-  {
-    return data_;
-  }
-  SizeType size() const
-  {
-    return size_;
-  }
+  typename std::enable_if<std::is_integral<S>::value, void>::type Resize(S const &n);
 
   ////////////////////////////
   /// COMPARISON OPERATORS ///
   ////////////////////////////
 
   bool AllClose(SelfType const &o, Type const &relative_tolerance = Type(1e-5),
-                Type const &absolute_tolerance = Type(1e-8)) const
-  {
-    // Only enforcing number of elements
-    // we allow for different shapes as long as element are in same order
-    ASSERT(o.size() == this->size());
-    auto it1  = this->cbegin();
-    auto eit1 = this->cend();
-    auto it2  = o.cbegin();
+                Type const &absolute_tolerance = Type(1e-8)) const;
+  bool operator==(Tensor const &other) const;
+  bool operator!=(Tensor const &other) const;
 
-    while (it1 != eit1)
-    {
-      T e1 = *it1;
-      T e2 = *it2;
-      ++it1;
-      ++it2;
-
-      T abs_e1 = e1;
-      fetch::math::Abs(abs_e1, abs_e1);
-      T abs_e2 = e2;
-      fetch::math::Abs(abs_e2, abs_e2);
-      T abs_diff = e1 - e2;
-      fetch::math::Abs(abs_diff, abs_diff);
-      T tolerance = std::max(absolute_tolerance, std::max(abs_e1, abs_e2) * relative_tolerance);
-      if (abs_diff > tolerance)
-      {
-        std::cout << "AllClose - " << e1 << " != " << e2 << std::endl;
-        return false;
-      }
-    }
-    return true;
-  }
-
-  /**
-   * Equality operator
-   * This method is sensitive to height and width
-   * @param other  the array which this instance is compared against
-   * @return
-   */
-  bool operator==(Tensor const &other) const
-  {
-    if (shape() != other.shape())
-    {
-      return false;
-    }
-    if (size() != other.size())
-    {
-      return false;
-    }
-
-    bool ret      = true;
-    auto it       = cbegin();
-    auto other_it = other.cbegin();
-    while (ret && it.is_valid())
-    {
-      ret &= (*it == *other_it);
-      ++it;
-      ++other_it;
-    }
-
-    return ret;
-  }
-
-  /**
-   * Not-equal operator
-   * This method is sensitive to height and width
-   * @param other the array which this instance is compared against
-   * @return
-   */
-  bool operator!=(Tensor const &other) const
-  {
-    return !(this->operator==(other));
-  }
-
-  Type PeakToPeak() const
-  {
-    return fetch::math::PeakToPeak(*this);
-  }
-
-  /**
-   * Divide this array by another shapeless array and store the floating point remainder in this
-   * array
-   * @param x
-   */
-  void Fmod(SelfType const &x)
-  {
-    LazyResize(x.size());
-    fetch::math::Fmod(data_, x.data(), data_);
-  }
-
-  /**
-   * Divide this array by another shapeless array and store the remainder in this array with
-   * quotient rounded to int
-   * @param x
-   */
-  void Remainder(SelfType const &x)
-  {
-    LazyResize(x.size());
-    fetch::math::Remainder(data_, x.data(), data_);
-  }
-
-  /**
-   * Apply softmax to this array
-   * @param x
-   * @return
-   */
-  SelfType Softmax(SelfType const &x)
-  {
-    LazyResize(x.size());
-
-    assert(x.size() == this->size());
-    fetch::math::Softmax(x, *this);
-
-    return *this;
-  }
+  //////////////////
+  /// TensorSlice///
+  //////////////////
 
   /**
    * TensorSlice class contains the non-const methods of tensor slicing
@@ -620,6 +365,22 @@ public:
     for (std::size_t i = 0; i < t.size(); ++i)
     {
       serializer >> t.data()[i];
+    }
+  }
+
+  // TODO(private 858): Vectorize and deduce D from parent
+  template <typename S, typename D = memory::SharedArray<S>>
+  void As(Tensor<S, D> &ret) const
+  {
+    ret.LazyResize(size_);
+    auto this_it = cbegin();
+    auto ret_it  = begin();
+
+    while (this_it.is_valid())
+    {
+      *ret_it = *this_it;
+      ++ret_it;
+      ++this_it;
     }
   }
 
@@ -966,39 +727,6 @@ typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::cend() const
 //////////////////////////////////////////////
 
 /**
- * Method returning an Tensor of zeroes
- *
- * @param shape : a vector representing the shape of the Tensor
- * @return Tensor with all zeroes
- */
-template <typename T, typename C>
-Tensor<T, C> Tensor<T, C>::Zeroes(SizeVector const &shape)
-{
-  SizeType n = SizeFromShape(shape);
-  SelfType output{n};
-  output.SetAllZero();
-  output.LazyReshape(shape);
-  return output;
-}
-
-/**
- * Method returning an Tensor of ones
- *
- * @param shape : a vector representing the shape of the Tensor
- * @return Tensor with all ones
- */
-template <typename T, typename C>
-Tensor<T, C> Tensor<T, C>::Ones(SizeVector const &shape)
-{
-  SizeType n =
-      std::accumulate(std::begin(shape), std::end(shape), SizeType(1), std::multiplies<SizeType>());
-  SelfType output{n};
-  output.SetAllOne();
-  output.LazyReshape(shape);
-  return output;
-}
-
-/**
  * Copies input data into current array
  *
  * @param[in]     x is another Tensor of which the data, size, and shape will be copied locally.
@@ -1313,6 +1041,160 @@ void Tensor<T, C>::SetPaddedZero()
   data().SetPaddedZero();
 }
 
+/**
+ * returns a const ref to the underlying data
+ * @tparam T
+ * @tparam C
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::ContainerType const &Tensor<T, C>::data() const
+{
+  return data_;
+}
+
+template <typename T, typename C>
+typename Tensor<T, C>::ContainerType &Tensor<T, C>::data()
+{
+  return data_;
+}
+
+/**
+ * Fills the current array with a range
+ * @tparam Unsigned an unsigned integer type
+ * @param from starting point of range
+ * @param to end of range
+ * @return a reference to this
+ */
+template <typename T, typename C>
+template <typename DataType>
+fetch::meta::IfIsInteger<DataType, Tensor<T, C>> Tensor<T, C>::FillArange(DataType const &from,
+                                                                          DataType const &to)
+{
+  SelfType ret;
+
+  SizeType N     = this->size();
+  Type     d     = static_cast<Type>(from);
+  Type     delta = static_cast<Type>(to - from) / static_cast<Type>(N);
+  for (SizeType i = 0; i < N; ++i)
+  {
+    this->data()[i] = Type(d);
+    d += delta;
+  }
+  return *this;
+}
+
+/**
+ * return a tensor filled with uniform random numbers
+ * @tparam T
+ * @tparam C
+ * @param N
+ * @return
+ */
+template <typename T, typename C>
+Tensor<T, C> Tensor<T, C>::UniformRandom(SizeType const &N)
+{
+  SelfType ret;
+  ret.LazyResize(N);
+  ret.SetPaddedZero();
+  ret.FillUniformRandom();
+
+  return ret;
+}
+
+/**
+ * returns a tensor filled with uniform random integers
+ * @tparam T
+ * @tparam C
+ * @param N
+ * @param min
+ * @param max
+ * @return
+ */
+template <typename T, typename C>
+Tensor<T, C> Tensor<T, C>::UniformRandomIntegers(SizeType const &N, int64_t const &min,
+                                                 int64_t const &max)
+{
+  SelfType ret;
+  ret.LazyResize(N);
+  ret.SetPaddedZero();
+  ret.FillUniformRandomIntegers(min, max);
+
+  return ret;
+}
+
+/**
+ * Fills tensor with uniform random data
+ * @tparam T
+ * @tparam C
+ * @return
+ */
+template <typename T, typename C>
+Tensor<T, C> &Tensor<T, C>::FillUniformRandom()
+{
+  for (SizeType i = 0; i < this->size(); ++i)
+  {
+    this->data()[i] = Type(random::Random::generator.AsDouble());
+  }
+  return *this;
+}
+
+/**
+ * Fills tensor with uniform random integers
+ * @tparam T
+ * @tparam C
+ * @param min
+ * @param max
+ * @return
+ */
+template <typename T, typename C>
+Tensor<T, C> &Tensor<T, C>::FillUniformRandomIntegers(int64_t const &min, int64_t const &max)
+{
+  ASSERT(min <= max);
+
+  uint64_t diff = uint64_t(max - min);
+
+  for (SizeType i = 0; i < this->size(); ++i)
+  {
+    this->data()[i] = Type(int64_t(random::Random::generator() % diff) + min);
+  }
+
+  return *this;
+}
+
+/**
+ * Method returning an Tensor of zeroes
+ *
+ * @param shape : a vector representing the shape of the Tensor
+ * @return Tensor with all zeroes
+ */
+template <typename T, typename C>
+Tensor<T, C> Tensor<T, C>::Zeroes(SizeVector const &shape)
+{
+  SizeType n = SizeFromShape(shape);
+  SelfType output{n};
+  output.SetAllZero();
+  output.LazyReshape(shape);
+  return output;
+}
+
+/**
+ * Method returning an Tensor of ones
+ *
+ * @param shape : a vector representing the shape of the Tensor
+ * @return Tensor with all ones
+ */
+template <typename T, typename C>
+Tensor<T, C> Tensor<T, C>::Ones(SizeVector const &shape)
+{
+  SizeType n =
+      std::accumulate(std::begin(shape), std::end(shape), SizeType(1), std::multiplies<SizeType>());
+  SelfType output{n};
+  output.SetAllOne();
+  output.LazyReshape(shape);
+  return output;
+}
+
 ////////////////////////////////////
 /// Tensor methods: shape & size ///
 ////////////////////////////////////
@@ -1501,6 +1383,18 @@ template <typename T, typename C>
 typename Tensor<T, C>::SizeType const &Tensor<T, C>::shape(SizeType const &n) const
 {
   return shape_[n];
+}
+
+/**
+ * returns the size of the tensor
+ * @tparam T
+ * @tparam C
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SizeType Tensor<T, C>::size() const
+{
+  return size_;
 }
 
 ///////////////////////////////////////
@@ -1885,6 +1779,55 @@ typename Tensor<T, C>::Type Tensor<T, C>::L2Loss() const
   return fetch::math::L2Loss(*this);
 }
 
+/**
+ * Calculates the distance between the max and min values
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::Type Tensor<T, C>::PeakToPeak() const
+{
+  return fetch::math::PeakToPeak(*this);
+}
+
+/**
+ * Divide this array by another shapeless array and store the floating point remainder in this
+ * array
+ * @param x
+ */
+template <typename T, typename C>
+void Tensor<T, C>::Fmod(SelfType const &x)
+{
+  LazyResize(x.size());
+  fetch::math::Fmod(data_, x.data(), data_);
+}
+
+/**
+ * Divide this array by another shapeless array and store the remainder in this array with
+ * quotient rounded to int
+ * @param x
+ */
+template <typename T, typename C>
+void Tensor<T, C>::Remainder(SelfType const &x)
+{
+  LazyResize(x.size());
+  fetch::math::Remainder(data_, x.data(), data_);
+}
+
+/**
+ * Apply softmax to this array
+ * @param x
+ * @return
+ */
+template <typename T, typename C>
+Tensor<T, C> Tensor<T, C>::Softmax(SelfType const &x)
+{
+  LazyResize(x.size());
+
+  ASSERT(x.size() == this->size());
+  fetch::math::Softmax(x, *this);
+
+  return *this;
+}
+
 //////////////////////////////////////////////
 /// Tensor methods: Array Order operations ///
 //////////////////////////////////////////////
@@ -2151,7 +2094,207 @@ void Tensor<T, C>::Sort(memory::TrivialRange const &range)
   std::sort(data_.pointer() + range.from(), data_.pointer() + range.to());
 }
 
-////////////////
+/**
+ * returns a range over this array defined using unsigned integers (only forward ranges)
+ * @tparam Unsigned an unsigned integer type
+ * @param from starting point of range
+ * @param to end of range
+ * @param delta the increment to step through the range
+ * @return returns a shapeless array with the values in *this over the specified range
+ */
+template <typename T, typename C>
+template <typename Unsigned>
+fetch::meta::IfIsUnsignedInteger<Unsigned, Tensor<T, C>> Tensor<T, C>::Arange(Unsigned const &from,
+                                                                              Unsigned const &to,
+                                                                              Unsigned const &delta)
+{
+  ASSERT(delta != 0);
+  ASSERT(from < to);
+  SelfType ret;
+  details::ArangeImplementation(from, to, delta, ret);
+  return ret;
+}
+
+/**
+ * returns a range over this array defined using signed integers (i.e. permitting backward ranges)
+ * @tparam Signed a signed integer type
+ * @param from starting point of range
+ * @param to end of range
+ * @param delta the increment to step through the range - may be negative
+ * @return returns a shapeless array with the values in *this over the specified range
+ */
+template <typename T, typename C>
+template <typename Signed>
+fetch::meta::IfIsSignedInteger<Signed, Tensor<T, C>> Tensor<T, C>::Arange(Signed const &from,
+                                                                          Signed const &to,
+                                                                          Signed const &delta)
+{
+  ASSERT(delta != 0);
+  ASSERT(((from < to) && delta > 0) || ((from > to) && delta < 0));
+  SelfType ret;
+  details::ArangeImplementation(from, to, delta, ret);
+  return ret;
+}
+
+/////////////////////////////////////////
+/// Tensor methods: memory management ///
+/////////////////////////////////////////
+
+/**
+ * reserve memory, but throw away exisiting data_. bool return indicates whether any change was made
+ * @tparam T
+ * @tparam C
+ * @param n
+ * @return
+ */
+template <typename T, typename C>
+bool Tensor<T, C>::LazyReserve(SizeType const &n)
+{
+  if (data_.size() < n)
+  {
+    data_ = ContainerType(n);
+    return true;
+  }
+  return false;
+}
+
+/**
+ * reserve memory but don't throw away existing data stored in the tensor
+ * @tparam T
+ * @tparam C
+ * @param n
+ */
+template <typename T, typename C>
+void Tensor<T, C>::Reserve(SizeType const &n)
+{
+  ContainerType old_data = data_;
+
+  if (LazyReserve(n))
+  {
+    SizeType ns = std::min(old_data.size(), n);
+    memcpy(data_.pointer(), old_data.pointer(), ns);
+    data_.SetZeroAfter(ns);
+  }
+}
+
+/**
+ * equivalent to lazyreserve but sets size and zeroes out data after that size
+ * @tparam T
+ * @tparam C
+ * @tparam S
+ * @param n
+ * @return
+ */
+template <typename T, typename C>
+template <typename S>
+typename std::enable_if<std::is_integral<S>::value, void>::type Tensor<T, C>::LazyResize(S const &n)
+{
+  LazyReserve(n);
+  size_ = n;
+  data_.SetZeroAfter(n);
+}
+
+/**
+ * equivalent to lazyresize but sets all value after previous size to 0
+ * @tparam T
+ * @tparam C
+ * @tparam S
+ * @param n
+ * @return
+ */
+template <typename T, typename C>
+template <typename S>
+typename std::enable_if<std::is_integral<S>::value, void>::type Tensor<T, C>::Resize(S const &n)
+{
+  SizeType oldsize = size_;
+  LazyResize(n);
+  data_.SetZeroAfter(oldsize);
+}
+
+//////////////////////////////////
+/// Tensor methods: comparison ///
+//////////////////////////////////
+
+template <typename T, typename C>
+bool Tensor<T, C>::AllClose(SelfType const &o, Type const &relative_tolerance,
+                            Type const &absolute_tolerance) const
+{
+  // Only enforcing number of elements
+  // we allow for different shapes as long as element are in same order
+  ASSERT(o.size() == this->size());
+  auto it1  = this->cbegin();
+  auto eit1 = this->cend();
+  auto it2  = o.cbegin();
+
+  while (it1 != eit1)
+  {
+    T e1 = *it1;
+    T e2 = *it2;
+    ++it1;
+    ++it2;
+
+    T abs_e1 = e1;
+    fetch::math::Abs(abs_e1, abs_e1);
+    T abs_e2 = e2;
+    fetch::math::Abs(abs_e2, abs_e2);
+    T abs_diff = e1 - e2;
+    fetch::math::Abs(abs_diff, abs_diff);
+    T tolerance = std::max(absolute_tolerance, std::max(abs_e1, abs_e2) * relative_tolerance);
+    if (abs_diff > tolerance)
+    {
+      std::cout << "AllClose - " << e1 << " != " << e2 << std::endl;
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Equality operator
+ * This method is sensitive to height and width
+ * @param other  the array which this instance is compared against
+ * @return
+ */
+template <typename T, typename C>
+bool Tensor<T, C>::operator==(Tensor<T, C> const &other) const
+{
+  if (shape() != other.shape())
+  {
+    return false;
+  }
+  if (size() != other.size())
+  {
+    return false;
+  }
+
+  bool ret      = true;
+  auto it       = cbegin();
+  auto other_it = other.cbegin();
+  while (ret && it.is_valid())
+  {
+    ret &= (*it == *other_it);
+    ++it;
+    ++other_it;
+  }
+
+  return ret;
+}
+
+/**
+ * Not-equal operator
+ * This method is sensitive to height and width
+ * @param other the array which this instance is compared against
+ * @return
+ */
+template <typename T, typename C>
+bool Tensor<T, C>::operator!=(Tensor<T, C> const &other) const
+{
+  return !(this->operator==(other));
+}
+
+/////////////////////
+/// Tensor Setter ///
+/////////////////////
 
 template <typename T, typename C>
 template <SizeType N, typename TSType, typename... Args>
