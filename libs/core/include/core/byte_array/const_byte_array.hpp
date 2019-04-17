@@ -22,11 +22,11 @@
 #include "vectorise/memory/shared_array.hpp"
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 #include <iostream>
 #include <ostream>
 #include <string.h>
 #include <type_traits>
-#include <cstring>
 
 namespace fetch {
 namespace byte_array {
@@ -466,7 +466,8 @@ private:
   void AppendInternal(std::size_t const acc_size, self_type const &other, Arg const &... others)
   {
     AppendInternal(acc_size + other.size(), others...);
-    memcpy(pointer() + acc_size, other.pointer(), static_cast<size_t>(other.size()) & 0x7FFFFFFFFFFFFFFFull);
+    memcpy(pointer() + acc_size, other.pointer(),
+           static_cast<size_t>(other.size()) & 0x7FFFFFFFFFFFFFFFull);
   }
 
   template <typename... Arg>

@@ -85,13 +85,13 @@ meta::IfIsSignedInteger<T, typename std::make_unsigned<T>::type> ToUnsigned(T va
 }
 
 template <typename T>
-meta::IfIsUnsignedInteger<T,T> Negate(T value)
+meta::IfIsUnsignedInteger<T, T> Negate(T value)
 {
   return value;
 }
 
 template <typename T>
-meta::IfIsSignedInteger<T,T> Negate(T value)
+meta::IfIsSignedInteger<T, T> Negate(T value)
 {
   return static_cast<T>(-value);
 }
