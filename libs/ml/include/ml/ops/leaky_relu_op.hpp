@@ -70,7 +70,7 @@ public:
     auto     rs1_it    = returnSignal1.begin();
     auto     rs2_it    = returnSignal2.begin();
     auto     input1_it = inputs.at(0).get().begin();
-    auto     input2_it = inputs.at(0).get().begin();
+    auto     input2_it = inputs.at(1).get().begin();
     DataType zero{0};
     DataType one{1};
 
