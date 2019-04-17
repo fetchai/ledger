@@ -30,7 +30,7 @@ namespace ml {
 namespace layers {
 
 template <class T>
-class PRelu : public Layer<T>
+class PRelu : public SubGraph<T>
 {
 public:
   using ArrayType    = T;
@@ -40,7 +40,6 @@ public:
 
   PRelu(std::uint64_t in, std::string const &name = "PRelu",
         WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
-    : Layer<T>(in, in)
   {
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
@@ -63,10 +62,18 @@ public:
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     (void)inputs;
-    return {1, this->out_size};
+    return {inputs.at(0).get().shape()};
   }
 
   static constexpr char const *DESCRIPTOR = "ParametricRelu";
+
+private:
+  SizeType in_size_;
+
+  void Initialise(ArrayType &weights, WeightsInit init_mode)
+  {
+    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, in_size_, in_size_, init_mode);
+  }
 };
 
 }  // namespace layers
