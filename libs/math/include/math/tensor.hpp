@@ -74,8 +74,10 @@ public:
   static constexpr char const *LOGGING_NAME = "Tensor";
 
 private:
-  template <typename STensor>
-  class TensorSliceImplementation;
+  template <typename STensor> class TensorSliceImplementation;
+  template <SizeType N, typename TSType, typename... Args> struct TensorSetter;
+  template <SizeType N, typename TSType> struct TensorSetter<N, TSType>;
+
 
 public:
   using ConstSliceType = TensorSliceImplementation<SelfType const>;
@@ -100,6 +102,8 @@ public:
   Tensor(Tensor &&other)      = default;
   Tensor(Tensor const &other) = default;
   Tensor(SizeVector const &dims);
+  virtual ~Tensor()
+  {}
 
   Tensor &operator=(Tensor const &other) = default;
   Tensor &operator=(Tensor &&other) = default;
@@ -115,386 +119,36 @@ public:
   /// ASSIGNMENT AND ACCESSING ///
   ////////////////////////////////
 
-  /**
-   * Method returning an Tensor of zeroes
-   *
-   * @param shape : a vector representing the shape of the Tensor
-   * @return Tensor with all zeroes
-   */
-  static SelfType Zeroes(SizeVector const &shape)
-  {
-    SizeType n = SizeFromShape(shape);
-    SelfType output{n};
-    output.SetAllZero();
-    output.LazyReshape(shape);
-    return output;
-  }
+  static SelfType Zeroes(SizeVector const &shape);
+  static SelfType Ones(SizeVector const &shape);
 
-  /**
-   * Method returning an Tensor of ones
-   *
-   * @param shape : a vector representing the shape of the Tensor
-   * @return Tensor with all ones
-   */
-  static SelfType Ones(SizeVector const &shape)
-  {
-    SizeType n = std::accumulate(std::begin(shape), std::end(shape), SizeType(1),
-                                 std::multiplies<SizeType>());
-    SelfType output{n};
-    output.SetAllOne();
-    output.LazyReshape(shape);
-    return output;
-  }
+  void Copy(SelfType const &x);
+  SelfType Copy() const;
+  template <typename G> void Assign(TensorSliceImplementation<G> const &other);
+  void Assign(TensorSlice const &other);
+  void Assign(SelfType const &other);
 
-  /**
-   * Copies input data into current array
-   *
-   * @param[in]     x is another Tensor of which the data, size, and shape will be copied locally.
-   *
-   **/
-  void Copy(SelfType const &x)
-  {
-    this->data_ = x.data_.Copy();
-    this->size_ = x.size_;
-    this->LazyReshape(x.shape());
-  }
+  template <typename... Indices> Type &At(Indices... indices);
+  template <typename... Indices> Type At(Indices... indices) const;
 
-  /**
-   * Provides an Tensor that is a copy of the current Tensor
-   *
-   * @return       copy is a Tensor with the same data, size, and shape of this array.
-   *
-   **/
-  SelfType Copy() const
-  {
-    SelfType copy;
-    copy.data_ = this->data_.Copy();
-    copy.size_ = this->size_;
-    copy.LazyReshape(this->shape());
-    return copy;
-  }
+  template <typename... Indices> Type operator()(Indices... indices) const;
+  template <typename... Indices> Type &operator()(Indices... indices);
 
-  template <typename G>
-  void Assign(TensorSliceImplementation<G> const &other)
-  {
-    auto it1 = begin();
-    auto it2 = other.begin();
-    ASSERT(it1.size() == it2.size());
-    while (it1.is_valid())
-    {
-      *it1 = *it2;
-      ++it1;
-      ++it2;
-    }
-  }
+  Type operator()(SizeType const &index) const;
+  template <typename S> typename std::enable_if<std::is_integral<S>::value, Type>::type &operator[](S const &i);
+  template <typename S> typename std::enable_if<std::is_integral<S>::value, Type>::type const &operator[](S const &i) const;
 
-  void Assign(TensorSlice const &other)
-  {
-    auto it1 = begin();
-    auto it2 = other.begin();
-    assert(it1.size() == it2.size());
-    while (it1.is_valid())
-    {
-      *it1 = *it2;
-      ++it1;
-      ++it2;
-    }
-  }
-  /**
-   * assign makes a deep copy of data from another tensor into this one
-   * @param other
-   */
-  void Assign(SelfType const &other)
-  {
-    auto it1 = begin();
-    auto it2 = other.begin();
-    ASSERT(it1.size() == it2.size());
-    while (it1.is_valid())
-    {
-      *it1 = *it2;
-      ++it1;
-      ++it2;
-    }
-  }
+  Tensor &operator=(ConstSliceType const &slice);
+  Tensor &operator=(TensorSlice const &slice);
 
-  template <typename... Indices>
-  Type &At(Indices... indices)
-  {
-    ASSERT(sizeof...(indices) == stride_.size());
-    return this->data()[UnrollComputeColIndex<0>(std::forward<Indices>(indices)...)];
-  }
+  template <typename... Args> void Set(Args... args);
 
-  template <typename... Indices>
-  Type At(Indices... indices) const
-  {
-    ASSERT(sizeof...(indices) == stride_.size());
-    SizeType N = UnrollComputeColIndex<0>(std::forward<Indices>(indices)...);
-    return this->data()[std::move(N)];
-  }
-
-  /**
-   * Operator for accessing data in the array
-   *
-   * @param[in]     indices specifies the data points to access.
-   * @return        the accessed data.
-   *
-   **/
-  template <typename... Indices>
-  Type operator()(Indices... indices) const
-  {
-    return At(std::forward<Indices>(indices)...);
-  }
-
-  template <typename... Indices>
-  Type &operator()(Indices... indices)
-  {
-    return At(std::forward<Indices>(indices)...);
-  }
-
-  Type operator()(SizeType const &index) const
-  {
-    assert(index < this->size_);
-    return operator[](index);
-  }
-
-  /**
-   * One-dimensional reference index operator.
-   *
-   * This operator acts as a one-dimensional array accessor that is
-   * meant for non-constant object instances.
-   *
-   * @tparam S an integral type
-   * @param i the index to access
-   * @return
-   */
-  template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type &operator[](S const &i)
-  {
-    return data_[i];
-  }
-
-  /**
-   * One-dimensional reference index operator.
-   *
-   * This operator acts as a one-dimensional array accessor that is
-   * meant for non-constant object instances.
-   *
-   * @tparam S an integral type
-   * @param i the index to access
-   * @return
-   */
-  template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type const &operator[](
-      S const &i) const
-  {
-    return data_[i];
-  }
-
-  template <SizeType N, typename TSType, typename... Args>
-  struct TensorSetter
-  {
-    // Finding the return value
-    using Type = typename TensorSetter<N + 1, Args...>::Type;
-
-    // Computing index
-    static SizeType IndexOf(SizeVector const &stride, SizeVector const &shape, TSType const &index,
-                            Args &&... args)
-    {
-      ASSERT(SizeType(index) < shape[N]);
-      return stride[N] * SizeType(index) +
-             TensorSetter<N + 1, Args...>::IndexOf(stride, shape, std::forward<Args>(args)...);
-    }
-
-    // Ignoring all arguments but the last
-    static Type ValueOf(TSType const &index, Args &&... args)
-    {
-      FETCH_UNUSED(index);
-      return TensorSetter<N + 1, Args...>::ValueOf(std::forward<Args>(args)...);
-    }
-  };
-
-  template <SizeType N, typename TSType>
-  struct TensorSetter<N, TSType>
-  {
-    using Type = TSType;
-
-    // Ignore last argument (i.e. value)
-    static SizeType IndexOf(SizeVector const &stride, SizeVector const &shape, TSType const &index)
-    {
-      ASSERT(shape.size() == N);
-      ASSERT(stride.size() == N);
-      FETCH_UNUSED(index);
-      FETCH_UNUSED(stride);
-      FETCH_UNUSED(shape);
-      return 0;
-    }
-
-    // Extracting last argument
-    static TSType ValueOf(TSType const &value)
-    {
-      return value;
-    }
-  };
-
-  template <typename... Args>
-  void Set(Args... args)
-  {
-    ASSERT(sizeof...(args) == stride_.size() + 1);  // Plus one as last arg is value
-
-    uint64_t index =
-        TensorSetter<0, Args...>::IndexOf(stride_, shape_, std::forward<Args>(args)...);
-    Type value = TensorSetter<0, Args...>::ValueOf(std::forward<Args>(args)...);
-
-    data_[std::move(index)] = std::move(value);
-  }
-
-  void Fill(Type const &value, memory::Range const &range)
-  {
-
-    if (range.is_undefined())
-    {
-      Fill(value);
-    }
-    else if (range.is_trivial())
-    {
-      Fill(value, range.ToTrivialRange(this->size()));
-    }
-    else
-    {
-      TODO_FAIL("Support for general range is not implmenented yet");
-    }
-  }
-
-  void Fill(Type const &value, memory::TrivialRange const &range)
-  {
-    VectorRegisterType val(value);
-
-    this->data().in_parallel().Apply(range, [val](VectorRegisterType &z) { z = val; });
-  }
-
-  void Fill(Type const &value)
-  {
-    VectorRegisterType val(value);
-
-    this->data().in_parallel().Apply([val](VectorRegisterType &z) { z = val; });
-  }
-
-  /**
-   * Gets a value from the array by N-dim index
-   * @param indices index to access
-   */
-  // TODO (private 868):
-  template <SizeType N, typename FirstIndex, typename... Indices>
-  SizeType UnrollComputeColIndex(FirstIndex &&index, Indices &&... indices) const
-  {
-    return static_cast<SizeType>(index) * stride_[N] +
-           UnrollComputeColIndex<N + 1>(std::forward<Indices>(indices)...);
-  }
-
-  template <SizeType N, typename FirstIndex>
-  SizeType UnrollComputeColIndex(FirstIndex &&index) const
-  {
-    return static_cast<SizeType>(index) * stride_[N];
-  }
-
-  bool AllClose(SelfType const &o, Type const &relative_tolerance = Type(1e-5),
-                Type const &absolute_tolerance = Type(1e-8)) const
-  {
-    // Only enforcing number of elements
-    // we allow for different shapes as long as element are in same order
-    ASSERT(o.size() == this->size());
-    auto it1  = this->cbegin();
-    auto eit1 = this->cend();
-    auto it2  = o.cbegin();
-
-    while (it1 != eit1)
-    {
-      T e1 = *it1;
-      T e2 = *it2;
-      ++it1;
-      ++it2;
-
-      T abs_e1 = e1;
-      fetch::math::Abs(abs_e1, abs_e1);
-      T abs_e2 = e2;
-      fetch::math::Abs(abs_e2, abs_e2);
-      T abs_diff = e1 - e2;
-      fetch::math::Abs(abs_diff, abs_diff);
-      T tolerance = std::max(absolute_tolerance, std::max(abs_e1, abs_e2) * relative_tolerance);
-      if (abs_diff > tolerance)
-      {
-        std::cout << "AllClose - " << e1 << " != " << e2 << std::endl;
-        return false;
-      }
-    }
-    return true;
-  }
-
-  ConstSliceType Slice(SizeType i, SizeType axis = 0) const
-  {
-    std::vector<std::vector<SizeType>> range;
-
-    for (SizeType j = 0; j < shape().size(); ++j)
-    {
-      if (axis == j)
-      {
-        range.push_back({i, i + 1, 1});
-      }
-      else
-      {
-        range.push_back({0, shape().at(j), 1});
-      }
-    }
-
-    return ConstSliceType(*this, range, axis);
-  }
-
-  TensorSlice Slice(SizeType i, SizeType axis = 0)
-  {
-    std::vector<std::vector<SizeType>> range;
-
-    for (SizeType j = 0; j < shape().size(); ++j)
-    {
-      if (axis == j)
-      {
-        range.push_back({i, i + 1, 1});
-      }
-      else
-      {
-        range.push_back({0, shape().at(j), 1});
-      }
-    }
-
-    return TensorSlice(*this, range, axis);
-  }
-
-  Tensor &operator=(ConstSliceType const &slice)
-  {
-    auto it1 = begin();
-    auto it2 = slice.begin();
-    assert(it1.size() == it2.size());
-    while (it1.is_valid())
-    {
-      *it1 = *it2;
-      ++it1;
-      ++it2;
-    }
-    return *this;
-  }
-
-  Tensor &operator=(TensorSlice const &slice)
-  {
-    auto it1 = begin();
-    auto it2 = slice.begin();
-    assert(it1.size() == it2.size());
-    while (it1.is_valid())
-    {
-      *it1 = *it2;
-      ++it1;
-      ++it2;
-    }
-    return *this;
-  }
+  void Fill(Type const &value, memory::Range const &range);
+  void Fill(Type const &value, memory::TrivialRange const &range);
+  void Fill(Type const &value);
+  void SetAllZero();
+  void SetAllOne();
+  void SetPaddedZero();
 
   ////////////////////
   /// SHAPE & SIZE ///
@@ -531,6 +185,31 @@ public:
   SelfType InlineReverseDivide(Tensor const &other);
   SelfType InlineReverseDivide(Type const &scalar);
 
+  template <typename OtherType>
+  SelfType operator+(OtherType const &other);
+
+  template <typename OtherType>
+  SelfType operator+=(OtherType const &other);
+
+  template <typename OtherType>
+  SelfType operator-(OtherType const &other);
+
+  template <typename OtherType>
+  SelfType operator-=(OtherType const &other);
+
+  template <typename OtherType>
+  SelfType operator*(OtherType const &other);
+
+  template <typename OtherType>
+  SelfType operator*=(OtherType const &other);
+
+  template <typename OtherType>
+  SelfType operator/(OtherType const &other);
+
+  template <typename OtherType>
+  SelfType operator/=(OtherType const &other);
+
+
   //////////////////////////////
   /// MATRIX MATH OPERATIONS ///
   //////////////////////////////
@@ -539,112 +218,33 @@ public:
   SelfType &TransposeDot(SelfType const &A, SelfType const &B, Type alpha = 1.0, Type beta = 0.0);
   Type Sum() const;
 
-
-
-
-
-
   /////////////
   /// Order ///
   /////////////
 
-  void MajorOrderFlip()
-  {
-    // it's rather strange to invoke ColumnToRow for a 1D array, but it's technically legal (all we
-    // do is changed the label)
-    if (this->shape().size() > 1)
-    {
-      if (MajorOrder() == MAJOR_ORDER::COLUMN)
-      {
-        FlipMajorOrder(MAJOR_ORDER::ROW);
-        major_order_ = MAJOR_ORDER::ROW;
-      }
-      else
-      {
-        FlipMajorOrder(MAJOR_ORDER::COLUMN);
-        major_order_ = MAJOR_ORDER::COLUMN;
-      }
-    }
-    //    if (MajorOrder() == MAJOR_ORDER::COLUMN) {major_order_ = row;}
-    //    else {{major_order_ = COLUMN;}}
-  }
+  void MajorOrderFlip();
+  MAJOR_ORDER MajorOrder() const;
 
-  /**
-   * Copies data from a row major numpy array into the current column major array
-   * @param new_array
-   */
-  // TODO(private 869):
-  void CopyFromNumpy(T *ptr, SizeVector &shape, SizeVector & /*stride*/, SizeVector & /*index*/)
-  {
-    SizeType total_size = SelfType::SizeFromShape(shape);
+  ////////////////////////
+  /// Numpy Operations ///
+  ////////////////////////
 
-    // get pointer to the data
-    Resize(total_size);
-    assert(this->CanReshape(shape));
-    this->Reshape(shape);
+  void CopyFromNumpy(T *ptr, SizeVector &shape, SizeVector & /*stride*/, SizeVector & /*index*/);
+  void CopyToNumpy(T *ptr, SizeVector &shape, SizeVector &stride, SizeVector &index);
 
-    // re-allocate all the data
-    TensorIterator<T, C> it(*this);
+  //////////////
+  /// Slices ///
+  //////////////
 
-    // copy all the data initially
-    for (SizeType i = 0; i < total_size; ++i)
-    {
-      *it = ptr[i];
-      ++it;
-    }
+  ConstSliceType Slice(SizeType i, SizeType axis = 0) const;
+  TensorSlice Slice(SizeType i, SizeType axis = 0);
 
-    // numpy arrays are row major - we should be column major by default
-    FlipMajorOrder(MAJOR_ORDER::COLUMN);
-  }
-
-  void CopyToNumpy(T *ptr, SizeVector &shape, SizeVector &stride, SizeVector &index)
-  {
-
-    // copy the data
-    TensorIterator<T, C> it(*this);
-
-    for (SizeType j = 0; j < this->size(); ++j)
-    {
-      // Computing numpy index
-      SizeType i   = 0;
-      SizeType pos = 0;
-      for (i = 0; i < shape.size(); ++i)
-      {
-        pos += stride[i] * index[i];
-      }
-
-      // Updating
-      ptr[pos] = *it;
-      ++it;
-
-      // Increamenting Numpy
-      i = 0;
-      ++index[i];
-      while (index[i] >= shape[i])
-      {
-        index[i] = 0;
-        ++i;
-        if (i >= shape.size())
-        {
-          break;
-        }
-        ++index[i];
-      }
-    }
-  }
-
-  /**
-   * returns the current major order of the array
-   * @return
-   */
-  MAJOR_ORDER MajorOrder() const
-  {
-    return major_order_;
-  }
-
+  ////////////////////////////////
+  /// Serialization operations ///
+  ////////////////////////////////
 
   template <typename S>
-  friend void Serialize(S &serializer, Tensor const &t)
+  friend void Serialize(S &serializer, SelfType const &t)
   {
     serializer << t.size_;
     serializer << t.shape_;
@@ -655,8 +255,9 @@ public:
     }
   }
 
+
   template <typename S>
-  friend void Deserialize(S &serializer, Tensor &t)
+  friend void Deserialize(S &serializer, SelfType &t)
   {
     SizeType   size;
     SizeVector shape;
@@ -672,112 +273,16 @@ public:
     }
   }
 
-  /**
-   * useful for printing tensor contents
-   * @return
-   */
-  std::string ToString() const
-  {
-    std::stringstream ss;
-    ss << std::setprecision(5) << std::fixed << std::showpos;
-    if (shape_.size() == 1)
-    {
-      for (SizeType i(0); i < shape_[0]; ++i)
-      {
-        ss << At(i) << "\t";
-      }
-    }
-    if (shape_.size() == 2)
-    {
-      for (SizeType i(0); i < shape_[0]; ++i)
-      {
-        for (SizeType j(0); j < shape_[1]; ++j)
-        {
-          ss << At(i, j) << "\t";
-        }
-        ss << "\n";
-      }
-    }
-    return ss.str();
-  }
+  /////////////////
+  /// general utilities
+  //////////////
 
-  /**
-   * find index of value in tensor. If it's not there return max_val
-   * @param val
-   * @return
-   */
-  SizeType Find(Type val) const
-  {
-    SizeType idx{0};
-    for (auto cur_val : *this)
-    {
-      if (cur_val == val)
-      {
-        return idx;
-      }
-      ++idx;
-    }
-    return std::numeric_limits<SizeType>::max();
-  }
-
-  /**
-   * Stack tensors resulting in a new leading dimension
-   * @tparam Tensor
-   * @param tensors
-   * @return
-   */
+  std::string ToString() const;
+  SizeType Find(Type val) const;
   template <typename TensorType>
-  static SelfType Stack(std::vector<TensorType> const &tensors)
-  {
-    SizeVector retSize;
-    retSize.push_back(tensors.size());
-    retSize.insert(retSize.end(), tensors.front().shape().begin(), tensors.front().shape().end());
-    TensorType ret(retSize);
-    for (SizeType i(0); i < tensors.size(); ++i)
-    {
-      ret.Slice(i).Assign(tensors[i]);
-    }
-    return ret;
-  }
+  static SelfType Stack(std::vector<TensorType> const &tensors);
 
-  //////// shapeless implementations //////
 
-  virtual ~Tensor()
-  {}
-
-  /**
-   * Set all elements to zero.
-   *
-   * This method will initialise all memory with zero.
-   */
-  void SetAllZero()
-  {
-    data().SetAllZero();
-  }
-
-  /**
-   * Inefficient implementation of set all one. A low level method in memory::SharedArray would be
-   * preferable
-   */
-  void SetAllOne()
-  {
-    for (SizeType i = 0; i < data().size(); i++)
-    {
-      data()[i] = 1;
-    }
-  }
-
-  /**
-   * Set all padded bytes to zero.
-   *
-   * This method sets the padded bytes to zero. Padded bytes are those
-   * which are added to ensure that the arrays true size is a multiple
-   * of the vector unit.
-   */
-  void SetPaddedZero()
-  {
-    data().SetPaddedZero();
-  }
 
   void Sort()
   {
@@ -1008,6 +513,39 @@ public:
   /// COMPARISON OPERATORS ///
   ////////////////////////////
 
+  bool AllClose(SelfType const &o, Type const &relative_tolerance = Type(1e-5),
+                Type const &absolute_tolerance = Type(1e-8)) const
+  {
+    // Only enforcing number of elements
+    // we allow for different shapes as long as element are in same order
+    ASSERT(o.size() == this->size());
+    auto it1  = this->cbegin();
+    auto eit1 = this->cend();
+    auto it2  = o.cbegin();
+
+    while (it1 != eit1)
+    {
+      T e1 = *it1;
+      T e2 = *it2;
+      ++it1;
+      ++it2;
+
+      T abs_e1 = e1;
+      fetch::math::Abs(abs_e1, abs_e1);
+      T abs_e2 = e2;
+      fetch::math::Abs(abs_e2, abs_e2);
+      T abs_diff = e1 - e2;
+      fetch::math::Abs(abs_diff, abs_diff);
+      T tolerance = std::max(absolute_tolerance, std::max(abs_e1, abs_e2) * relative_tolerance);
+      if (abs_diff > tolerance)
+      {
+        std::cout << "AllClose - " << e1 << " != " << e2 << std::endl;
+        return false;
+      }
+    }
+    return true;
+  }
+
   /**
    * Equality operator
    * This method is sensitive to height and width
@@ -1049,74 +587,6 @@ public:
     return !(this->operator==(other));
   }
 
-  ///////////////////////////////////////
-  /// MATH LIBRARY INTERFACE METHODS ////
-  ///////////////////////////////////////
-
-  /**
-   * + operator
-   * @tparam OtherType may be a scalar or array, but must be arithmetic
-   * @param other
-   * @return
-   */
-  template <typename OtherType>
-  SelfType operator+(OtherType const &other)
-  {
-    return InlineAdd(other);
-  }
-
-  template <typename OtherType>
-  SelfType operator+=(OtherType const &other)
-  {
-    return InlineAdd(other);
-  }
-
-  /**
-   * + operator
-   * @tparam OtherType may be a scalar or array, but must be arithmetic
-   * @param other
-   * @return
-   */
-  template <typename OtherType>
-  SelfType operator-(OtherType const &other)
-  {
-    return InlineSubtract(other);
-  }
-
-  template <typename OtherType>
-  SelfType operator-=(OtherType const &other)
-  {
-    return InlineSubtract(other);
-  }
-  /**
-   * * operator
-   * @tparam OtherType may be a scalar or array, but must be arithmetic
-   * @param other
-   * @return
-   */
-  template <typename OtherType>
-  SelfType operator*(OtherType const &other)
-  {
-    return InlineMultiply(other);
-  }
-
-  template <typename OtherType>
-  SelfType operator*=(OtherType const &other)
-  {
-    return InlineMultiply(other);
-  }
-
-  template <typename OtherType>
-  SelfType operator/(OtherType const &other)
-  {
-    return InlineDivide(other);
-  }
-
-  template <typename OtherType>
-  SelfType operator/=(OtherType const &other)
-  {
-    return InlineDivide(other);
-  }
 
   Type PeakToPeak() const
   {
@@ -1186,6 +656,25 @@ private:
   SizeVector    stride_;
 
   MAJOR_ORDER major_order_ = COLUMN;
+
+
+  /**
+   * Gets a value from the array by N-dim index
+   * @param indices index to access
+   */
+  // TODO (private 868):
+  template <SizeType N, typename FirstIndex, typename... Indices>
+  SizeType UnrollComputeColIndex(FirstIndex &&index, Indices &&... indices) const
+  {
+    return static_cast<SizeType>(index) * stride_[N] +
+           UnrollComputeColIndex<N + 1>(std::forward<Indices>(indices)...);
+  }
+
+  template <SizeType N, typename FirstIndex>
+  SizeType UnrollComputeColIndex(FirstIndex &&index) const
+  {
+    return static_cast<SizeType>(index) * stride_[N];
+  }
 
   void UpdateStrides()
   {
@@ -1501,6 +990,359 @@ typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::cend() const
   return ConstIteratorType::EndIterator(*this);
 }
 
+//////////////////////////////////////////////
+/// Tensor methods: assignment & accessing ///
+//////////////////////////////////////////////
+
+/**
+ * Method returning an Tensor of zeroes
+ *
+ * @param shape : a vector representing the shape of the Tensor
+ * @return Tensor with all zeroes
+ */
+template <typename T, typename C>
+Tensor<T, C> Tensor<T, C>::Zeroes(SizeVector const &shape)
+{
+  SizeType n = SizeFromShape(shape);
+  SelfType output{n};
+  output.SetAllZero();
+  output.LazyReshape(shape);
+  return output;
+}
+
+/**
+ * Method returning an Tensor of ones
+ *
+ * @param shape : a vector representing the shape of the Tensor
+ * @return Tensor with all ones
+ */
+template <typename T, typename C>
+Tensor<T, C> Tensor<T, C>::Ones(SizeVector const &shape)
+{
+  SizeType n = std::accumulate(std::begin(shape), std::end(shape), SizeType(1),
+                               std::multiplies<SizeType>());
+  SelfType output{n};
+  output.SetAllOne();
+  output.LazyReshape(shape);
+  return output;
+}
+
+/**
+ * Copies input data into current array
+ *
+ * @param[in]     x is another Tensor of which the data, size, and shape will be copied locally.
+ *
+ **/
+template <typename T, typename C>
+void Tensor<T, C>::Copy(SelfType const &x)
+{
+  this->data_ = x.data_.Copy();
+  this->size_ = x.size_;
+  this->LazyReshape(x.shape());
+}
+
+/**
+ * Provides an Tensor that is a copy of the current Tensor
+ *
+ * @return       copy is a Tensor with the same data, size, and shape of this array.
+ *
+ **/
+template <typename T, typename C>
+Tensor<T, C> Tensor<T, C>::Copy() const
+{
+  SelfType copy;
+  copy.data_ = this->data_.Copy();
+  copy.size_ = this->size_;
+  copy.LazyReshape(this->shape());
+  return copy;
+}
+
+/**
+ * Method assigns the data from the other tensor slice into this tensor
+ * @tparam G
+ */
+template <typename T, typename C>
+template <typename G>
+void Tensor<T, C>::Assign(TensorSliceImplementation<G> const &other)
+{
+  auto it1 = begin();
+  auto it2 = other.begin();
+  ASSERT(it1.size() == it2.size());
+  while (it1.is_valid())
+  {
+    *it1 = *it2;
+    ++it1;
+    ++it2;
+  }
+}
+
+/**
+ *
+ * @param other
+ */
+template <typename T, typename C>
+void Tensor<T, C>::Assign(TensorSlice const &other)
+{
+  auto it1 = begin();
+  auto it2 = other.begin();
+  assert(it1.size() == it2.size());
+  while (it1.is_valid())
+  {
+    *it1 = *it2;
+    ++it1;
+    ++it2;
+  }
+}
+
+/**
+ * assign makes a deep copy of data from another tensor into this one
+ * @param other
+ */
+template <typename T, typename C>
+void Tensor<T, C>::Assign(SelfType const &other)
+{
+  auto it1 = begin();
+  auto it2 = other.begin();
+  ASSERT(it1.size() == it2.size());
+  while (it1.is_valid())
+  {
+    *it1 = *it2;
+    ++it1;
+    ++it2;
+  }
+}
+
+/**
+ *
+ * @tparam Indices
+ * @param indices
+ * @return
+ */
+template <typename T, typename C>
+template <typename... Indices>
+typename Tensor<T, C>::Type & Tensor<T, C>::At(Indices... indices)
+{
+  ASSERT(sizeof...(indices) == stride_.size());
+  return this->data()[UnrollComputeColIndex<0>(std::forward<Indices>(indices)...)];
+}
+
+/**
+ *
+ * @tparam Indices
+ * @param indices
+ * @return
+ */
+template <typename T, typename C>
+template <typename... Indices>
+typename Tensor<T, C>::Type Tensor<T, C>::At(Indices... indices) const
+{
+  ASSERT(sizeof...(indices) == stride_.size());
+  SizeType N = UnrollComputeColIndex<0>(std::forward<Indices>(indices)...);
+  return this->data()[std::move(N)];
+}
+
+/**
+ * Operator for accessing data in the array
+ *
+ * @param[in]     indices specifies the data points to access.
+ * @return        the accessed data.
+ *
+ **/
+template <typename T, typename C>
+template <typename... Indices>
+typename Tensor<T, C>::Type Tensor<T, C>::operator()(Indices... indices) const
+{
+  return At(std::forward<Indices>(indices)...);
+}
+
+template <typename T, typename C>
+template <typename... Indices>
+typename Tensor<T, C>::Type & Tensor<T, C>::operator()(Indices... indices)
+{
+  return At(std::forward<Indices>(indices)...);
+}
+
+template <typename T, typename C>
+typename Tensor<T, C>::Type Tensor<T, C>::operator()(SizeType const &index) const
+{
+  assert(index < this->size_);
+  return operator[](index);
+}
+
+/**
+ * One-dimensional reference index operator.
+ *
+ * This operator acts as a one-dimensional array accessor that is
+ * meant for non-constant object instances.
+ *
+ * @tparam S an integral type
+ * @param i the index to access
+ * @return
+ */
+template <typename T, typename C>
+template <typename S>
+typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>::type & Tensor<T, C>::operator[](S const &i)
+{
+  return data_[i];
+}
+
+/**
+ * One-dimensional reference index operator.
+ *
+ * This operator acts as a one-dimensional array accessor that is
+ * meant for non-constant object instances.
+ *
+ * @tparam S an integral type
+ * @param i the index to access
+ * @return
+ */
+template <typename T, typename C>
+template <typename S>
+typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>::type const & Tensor<T, C>::operator[](S const &i) const
+{
+  return data_[i];
+}
+
+template <typename T, typename C>
+Tensor<T, C> & Tensor<T, C>::operator=(ConstSliceType const &slice)
+{
+  auto it1 = begin();
+  auto it2 = slice.begin();
+  assert(it1.size() == it2.size());
+  while (it1.is_valid())
+  {
+    *it1 = *it2;
+    ++it1;
+    ++it2;
+  }
+  return *this;
+}
+
+template <typename T, typename C>
+Tensor<T, C> & Tensor<T, C>::operator=(TensorSlice const &slice)
+{
+  auto it1 = begin();
+  auto it2 = slice.begin();
+  assert(it1.size() == it2.size());
+  while (it1.is_valid())
+  {
+    *it1 = *it2;
+    ++it1;
+    ++it2;
+  }
+  return *this;
+}
+
+/**
+ * Set operator takes variable number of indices followed by one value.
+ *
+ * @tparam T
+ * @tparam C
+ * @tparam Args
+ * @param args
+ */
+template <typename T, typename C>
+template <typename... Args>
+void Tensor<T, C>::Set(Args... args)
+{
+  ASSERT(sizeof...(args) == stride_.size() + 1);  // Plus one as last arg is value
+
+  uint64_t index =
+      TensorSetter<0, Args...>::IndexOf(stride_, shape_, std::forward<Args>(args)...);
+  Type value = TensorSetter<0, Args...>::ValueOf(std::forward<Args>(args)...);
+
+  data_[std::move(index)] = std::move(value);
+}
+
+/**
+ * Fill tensor with specified value over pre-specified range
+ * @tparam T
+ * @tparam C
+ * @param value
+ * @param range
+ */
+template <typename T, typename C>
+void Tensor<T, C>::Fill(Type const &value, memory::Range const &range)
+{
+
+  if (range.is_undefined())
+  {
+    Fill(value);
+  }
+  else if (range.is_trivial())
+  {
+    Fill(value, range.ToTrivialRange(this->size()));
+  }
+  else
+  {
+    TODO_FAIL("Support for general range is not implmenented yet");
+  }
+}
+
+/**
+ * Fills entire tensor with value
+ * @param value
+ * @param range
+ */
+template <typename T, typename C>
+void Tensor<T, C>::Fill(Type const &value, memory::TrivialRange const &range)
+{
+  VectorRegisterType val(value);
+
+  this->data().in_parallel().Apply(range, [val](VectorRegisterType &z) { z = val; });
+}
+
+/**
+ * Fill entire Tensor with value
+ * @param value
+ */
+template <typename T, typename C>
+void Tensor<T, C>::Fill(Type const &value)
+{
+  VectorRegisterType val(value);
+
+  this->data().in_parallel().Apply([val](VectorRegisterType &z) { z = val; });
+}
+
+/**
+ * Set all elements to zero.
+ * This method will initialise all memory with zero.
+ */
+template <typename T, typename C>
+void Tensor<T, C>::SetAllZero()
+{
+  data().SetAllZero();
+}
+
+/**
+ * Sets all value in tensor to 1
+ */
+template <typename T, typename C>
+void Tensor<T, C>::SetAllOne()
+{
+  auto it = this->begin();
+  while (it.is_valid())
+  {
+    *it = 1;
+    ++it;
+  }
+}
+
+/**
+ * Set all padded bytes to zero.
+ *
+ * This method sets the padded bytes to zero. Padded bytes are those
+ * which are added to ensure that the arrays true size is a multiple
+ * of the vector unit.
+ */
+template <typename T, typename C>
+void Tensor<T, C>::SetPaddedZero()
+{
+  data().SetPaddedZero();
+}
+
+
+
 ////////////////////////////////////
 /// Tensor methods: shape & size ///
 ////////////////////////////////////
@@ -1691,9 +1533,9 @@ typename Tensor<T, C>::SizeType const& Tensor<T, C>::shape(SizeType const &n) co
   return shape_[n];
 }
 
-/////////////////////////////////////////
-/// Tensor methods: inline operations ///
-/////////////////////////////////////////
+///////////////////////////////////////
+/// Tensor methods: math operations ///
+///////////////////////////////////////
 
 
 /**
@@ -1911,6 +1753,80 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::InlineReverseDivide(Type const &sc
   return *this;
 }
 
+/**
+ * + operator
+ * @tparam OtherType may be a scalar or array, but must be arithmetic
+ * @param other
+ * @return
+ */
+template <typename T, typename C>
+template <typename OtherType>
+typename Tensor<T, C>::SelfType Tensor<T, C>::operator+(OtherType const &other)
+{
+  return InlineAdd(other);
+}
+
+template <typename T, typename C>
+template <typename OtherType>
+typename Tensor<T, C>::SelfType Tensor<T, C>::operator+=(OtherType const &other)
+{
+  return InlineAdd(other);
+}
+
+/**
+ * + operator
+ * @tparam OtherType may be a scalar or array, but must be arithmetic
+ * @param other
+ * @return
+ */
+template <typename T, typename C>
+template <typename OtherType>
+typename Tensor<T, C>::SelfType Tensor<T, C>::operator-(OtherType const &other)
+{
+  return InlineSubtract(other);
+}
+
+template <typename T, typename C>
+template <typename OtherType>
+typename Tensor<T, C>::SelfType Tensor<T, C>::operator-=(OtherType const &other)
+{
+  return InlineSubtract(other);
+}
+
+/**
+ * * operator
+ * @tparam OtherType may be a scalar or array, but must be arithmetic
+ * @param other
+ * @return
+ */
+template <typename T, typename C>
+template <typename OtherType>
+typename Tensor<T, C>::SelfType Tensor<T, C>::operator*(OtherType const &other)
+{
+  return InlineMultiply(other);
+}
+
+template <typename T, typename C>
+template <typename OtherType>
+typename Tensor<T, C>::SelfType Tensor<T, C>::operator*=(OtherType const &other)
+{
+  return InlineMultiply(other);
+}
+
+template <typename T, typename C>
+template <typename OtherType>
+typename Tensor<T, C>::SelfType Tensor<T, C>::operator/(OtherType const &other)
+{
+  return InlineDivide(other);
+}
+
+template <typename T, typename C>
+template <typename OtherType>
+typename Tensor<T, C>::SelfType Tensor<T, C>::operator/=(OtherType const &other)
+{
+  return InlineDivide(other);
+}
+
 //////////////////////////////////////////////
 /// Tensor methods: matrix math operations ///
 //////////////////////////////////////////////
@@ -1961,16 +1877,306 @@ typename Tensor<T, C>::Type Tensor<T, C>::Sum() const
 }
 
 //////////////////////////////////////////////
-/// Tensor methods: matrix math operations ///
-//////////////////////////////////////////////
-//////////////////////////////////////////////
-/// Tensor methods: matrix math operations ///
-//////////////////////////////////////////////
-//////////////////////////////////////////////
-/// Tensor methods: matrix math operations ///
+/// Tensor methods: Array Order operations ///
 //////////////////////////////////////////////
 
+/**
+ * toggles the tensor major order; by default Tensors are column major order
+ * @tparam T
+ * @tparam C
+ */
+template <typename T, typename C>
+void Tensor<T, C>::MajorOrderFlip()
+{
+  // it's rather strange to invoke ColumnToRow for a 1D array, but it's technically legal (all we
+  // do is changed the label)
+  if (this->shape().size() > 1)
+  {
+    if (MajorOrder() == MAJOR_ORDER::COLUMN)
+    {
+      FlipMajorOrder(MAJOR_ORDER::ROW);
+      major_order_ = MAJOR_ORDER::ROW;
+    }
+    else
+    {
+      FlipMajorOrder(MAJOR_ORDER::COLUMN);
+      major_order_ = MAJOR_ORDER::COLUMN;
+    }
+  }
+  //    if (MajorOrder() == MAJOR_ORDER::COLUMN) {major_order_ = row;}
+  //    else {{major_order_ = COLUMN;}}
+}
 
+/**
+ * returns the current major order of the array
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::MAJOR_ORDER Tensor<T, C>::MajorOrder() const
+{
+  return major_order_;
+}
+
+
+
+////////////////////////////////////////
+/// Tensor methods: Numpy Operations ///
+////////////////////////////////////////
+
+/**
+ * Copies data from a row major numpy array into the current column major array
+ * @param new_array
+ */
+// TODO(private 869):
+template <typename T, typename C>
+void Tensor<T, C>::CopyFromNumpy(T *ptr, SizeVector &shape, SizeVector & /*stride*/, SizeVector & /*index*/)
+{
+  SizeType total_size = SelfType::SizeFromShape(shape);
+
+  // get pointer to the data
+  Resize(total_size);
+  assert(this->CanReshape(shape));
+  this->Reshape(shape);
+
+  // re-allocate all the data
+  TensorIterator<T, C> it(*this);
+
+  // copy all the data initially
+  for (SizeType i = 0; i < total_size; ++i)
+  {
+    *it = ptr[i];
+    ++it;
+  }
+
+  // numpy arrays are row major - we should be column major by default
+  FlipMajorOrder(MAJOR_ORDER::COLUMN);
+}
+
+template <typename T, typename C>
+void Tensor<T, C>::CopyToNumpy(T *ptr, SizeVector &shape, SizeVector & stride, SizeVector & index)
+{
+
+  // copy the data
+  TensorIterator<T, C> it(*this);
+
+  for (SizeType j = 0; j < this->size(); ++j)
+  {
+    // Computing numpy index
+    SizeType i   = 0;
+    SizeType pos = 0;
+    for (i = 0; i < shape.size(); ++i)
+    {
+      pos += stride[i] * index[i];
+    }
+
+    // Updating
+    ptr[pos] = *it;
+    ++it;
+
+    // Increamenting Numpy
+    i = 0;
+    ++index[i];
+    while (index[i] >= shape[i])
+    {
+      index[i] = 0;
+      ++i;
+      if (i >= shape.size())
+      {
+        break;
+      }
+      ++index[i];
+    }
+  }
+}
+
+//////////////////////////////
+/// Tensor methods: slices ///
+//////////////////////////////
+
+/**
+ * Returns a Slice that is not permitted to alter the original tensor
+ * @tparam T
+ * @tparam C
+ * @param i
+ * @param axis
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(SizeType i, SizeType axis) const
+{
+  std::vector<std::vector<SizeType>> range;
+
+  for (SizeType j = 0; j < shape().size(); ++j)
+  {
+    if (axis == j)
+    {
+      range.push_back({i, i + 1, 1});
+    }
+    else
+    {
+      range.push_back({0, shape().at(j), 1});
+    }
+  }
+
+  return ConstSliceType(*this, range, axis);
+}
+
+/**
+ * Returns a Slice of the tensor
+ * @tparam T
+ * @tparam C
+ * @param i
+ * @param axis
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(SizeType i, SizeType axis)
+  {
+    std::vector<std::vector<SizeType>> range;
+
+    for (SizeType j = 0; j < shape().size(); ++j)
+    {
+      if (axis == j)
+      {
+        range.push_back({i, i + 1, 1});
+      }
+      else
+      {
+        range.push_back({0, shape().at(j), 1});
+      }
+    }
+
+    return TensorSlice(*this, range, axis);
+  }
+
+
+
+////////////////////////////////////////
+/// Tensor methods: general utilites ///
+////////////////////////////////////////
+
+  /**
+   * useful for printing tensor contents
+   * @return
+   */
+  template <typename T, typename C>
+  std::string Tensor<T, C>::ToString() const
+  {
+    std::stringstream ss;
+    ss << std::setprecision(5) << std::fixed << std::showpos;
+    if (shape_.size() == 1)
+    {
+      for (SizeType i(0); i < shape_[0]; ++i)
+      {
+        ss << At(i) << "\t";
+      }
+    }
+    if (shape_.size() == 2)
+    {
+      for (SizeType i(0); i < shape_[0]; ++i)
+      {
+        for (SizeType j(0); j < shape_[1]; ++j)
+        {
+          ss << At(i, j) << "\t";
+        }
+        ss << "\n";
+      }
+    }
+    return ss.str();
+  }
+
+  /**
+   * find index of value in tensor. If it's not there return max_val
+   * @param val
+   * @return
+   */
+  template <typename T, typename C>
+  SizeType Tensor<T, C>::Find(Type val) const
+  {
+    SizeType idx{0};
+    for (auto cur_val : *this)
+    {
+      if (cur_val == val)
+      {
+        return idx;
+      }
+      ++idx;
+    }
+    return std::numeric_limits<SizeType>::max();
+  }
+
+
+  /**
+   * Stack tensors resulting in a new leading dimension
+   * @tparam Tensor
+   * @param tensors
+   * @return
+   */
+   template <typename T, typename C>
+  template <typename TensorType>
+  typename Tensor<T, C>::SelfType Tensor<T, C>::Stack(std::vector<TensorType> const &tensors)
+  {
+    SizeVector retSize;
+    retSize.push_back(tensors.size());
+    retSize.insert(retSize.end(), tensors.front().shape().begin(), tensors.front().shape().end());
+    TensorType ret(retSize);
+    for (SizeType i(0); i < tensors.size(); ++i)
+    {
+      ret.Slice(i).Assign(tensors[i]);
+    }
+    return ret;
+  }
+
+
+
+
+  ////////////////
+
+template <typename T, typename C>
+template <SizeType N, typename TSType, typename... Args> struct Tensor<T, C>::TensorSetter
+{
+    // Finding the return value
+    using Type = typename TensorSetter<N + 1, Args...>::Type;
+
+    // Computing index
+    static SizeType IndexOf(SizeVector const &stride, SizeVector const &shape, TSType const &index,
+                            Args &&... args)
+    {
+      ASSERT(SizeType(index) < shape[N]);
+      return stride[N] * SizeType(index) +
+             TensorSetter<N + 1, Args...>::IndexOf(stride, shape, std::forward<Args>(args)...);
+    }
+
+    // Ignoring all arguments but the last
+    static Type ValueOf(TSType const &index, Args &&... args)
+    {
+      FETCH_UNUSED(index);
+      return TensorSetter<N + 1, Args...>::ValueOf(std::forward<Args>(args)...);
+    }
+  };
+
+template <typename T, typename C>
+template <SizeType N, typename TSType> struct Tensor<T, C>::TensorSetter<N, TSType>
+{
+  using Type = TSType;
+
+  // Ignore last argument (i.e. value)
+  static SizeType IndexOf(SizeVector const &stride, SizeVector const &shape, TSType const &index)
+  {
+    ASSERT(shape.size() == N);
+    ASSERT(stride.size() == N);
+    FETCH_UNUSED(index);
+    FETCH_UNUSED(stride);
+    FETCH_UNUSED(shape);
+    return 0;
+  }
+
+  // Extracting last argument
+  static TSType ValueOf(TSType const &value)
+  {
+    return value;
+  }
+};
 
 ///////////////////////////////////////////
 /// TENSOR SLICE METHOD IMPLEMENTATIONS ///
@@ -2027,11 +2233,11 @@ void Tensor<T, C>::TensorSlice::Assign(Tensor const &other)
 template <typename T, typename C>
 void Tensor<T, C>::TensorSlice::Fill(Type t)
 {
-  auto it1 = begin();
-  while (!it1.is_valid())
+  auto it = begin();
+  while (it.is_valid())
   {
-    *it1 = t;
-    ++it1;
+    *it = t;
+    ++it;
   }
 }
 
