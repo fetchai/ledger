@@ -730,7 +730,7 @@ TEST_F(TransactionSerializerTests, SmartContract)
 
   // ensure the output transaction matches the input one
   EnsureAreSame(output, *tx);
-};
+}
 
 TEST_F(TransactionSerializerTests, CrazyNumOfSignatures)
 {

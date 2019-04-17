@@ -26,6 +26,7 @@
 #include <ostream>
 #include <string.h>
 #include <type_traits>
+#include <cstring>
 
 namespace fetch {
 namespace byte_array {
@@ -465,7 +466,7 @@ private:
   void AppendInternal(std::size_t const acc_size, self_type const &other, Arg const &... others)
   {
     AppendInternal(acc_size + other.size(), others...);
-    std::memcpy(pointer() + acc_size, other.pointer(), other.size());
+    memcpy(pointer() + acc_size, other.pointer(), static_cast<size_t>(other.size()) & 0x7FFFFFFFFFFFFFFFull);
   }
 
   template <typename... Arg>

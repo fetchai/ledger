@@ -56,10 +56,10 @@ uint8_t Map(ContractMode mode)
     value = 0;
     break;
   case ContractMode::PRESENT:
-    value = 1;
+    value = 1u;
     break;
   case ContractMode::CHAIN_CODE:
-    value = 2;
+    value = 2u;
     break;
   }
 
@@ -82,6 +82,18 @@ meta::IfIsSignedInteger<T, typename std::make_unsigned<T>::type> ToUnsigned(T va
 {
   using U = typename std::make_unsigned<T>::type;
   return static_cast<U>(std::abs(value));
+}
+
+template <typename T>
+meta::IfIsUnsignedInteger<T,T> Negate(T value)
+{
+  return value;
+}
+
+template <typename T>
+meta::IfIsSignedInteger<T,T> Negate(T value)
+{
+  return static_cast<T>(-value);
 }
 
 template <typename T>
@@ -230,7 +242,7 @@ meta::IfIsInteger<T, T> Decode(ByteArrayBuffer &buffer)
         throw std::runtime_error("Unable to extract signed value into unsigned value");
       }
 
-      output_value = -static_cast<T>(initial_byte & 0x1fu);
+      output_value = Negate(static_cast<T>(initial_byte & 0x1fu));
     }
     else
     {
@@ -262,7 +274,7 @@ meta::IfIsInteger<T, T> Decode(ByteArrayBuffer &buffer)
         buffer.ReadBytes(&encoded_byte, 1);
 
         // build up the partial value
-        partial_value |= U{encoded_byte} << (index * 8u);
+        partial_value |= static_cast<U>(encoded_byte << (index * 8u));
 
         // exit the loop once we ahve finished
         if (index == 0)
@@ -275,7 +287,7 @@ meta::IfIsInteger<T, T> Decode(ByteArrayBuffer &buffer)
 
       if (output_is_signed && signed_flag)
       {
-        output_value = -output_value;
+        output_value = Negate(output_value);
       }
     }
   }
@@ -374,7 +386,10 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
   buffer.Append(MAGIC, header0);
 
   uint8_t header1{0};
-  header1 |= static_cast<uint8_t>(Map(contract_mode) << 6u);
+
+  uint8_t const contract_mode_field = static_cast<uint8_t>(Map(contract_mode) << 6u);
+
+  header1 |= contract_mode_field;
   header1 |= static_cast<uint8_t>(signalled_signatures) & 0x3Fu;
   buffer.Append(header1);
 
