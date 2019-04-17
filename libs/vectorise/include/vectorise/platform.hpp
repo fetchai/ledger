@@ -221,5 +221,15 @@ inline bool IsLog2(uint64_t value)
   return value && !(value & (value - 1));
 }
 
+template <uint32_t DIVISOR, typename Value>
+meta::IfIsUnsignedInteger<Value, Value> DivCeil(Value value)
+{
+  static_assert(DIVISOR > 0, "Static asserts can only protect you so far");
+
+  static constexpr Value ADDITION = DIVISOR - 1u;
+
+  return (value + ADDITION) / DIVISOR;
+}
+
 }  // namespace platform
 }  // namespace fetch

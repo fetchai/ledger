@@ -85,6 +85,179 @@ public:
     data_.SetAllZero();
   }
 
+  void SetAllOne()
+  {
+    auto *buffer = reinterpret_cast<uint8_t *>(data_.pointer());
+    std::memset(buffer, 0xFF, data_.size() * sizeof(data_type));
+  }
+
+  bool RemapTo(BitVectorImplementation &dst) const
+  {
+    if (dst.size() >= size())
+    {
+      return Expand(*this, dst);
+    }
+    else
+    {
+      return Contract(*this, dst);
+    }
+  }
+
+  static bool Expand(BitVectorImplementation const &src, BitVectorImplementation &dst)
+  {
+    using BitVectorPtr = std::unique_ptr<BitVectorImplementation>;
+
+    auto const current_size = static_cast<uint32_t>(src.size());
+    auto const next_size    = static_cast<uint32_t>(dst.size());
+
+    // early exit in the case where the source bit vector is 1 or 0 (wildcard)
+    if (src.size() <= 1)
+    {
+      dst.SetAllOne();
+      return true;
+    }
+
+    if (next_size < current_size)
+    {
+      return false;
+    }
+
+    // ensure the bit vectors are compatible sizes
+    if (!(platform::IsLog2(next_size) && platform::IsLog2(current_size)))
+    {
+      return false;
+    }
+
+    BitVectorPtr intermediate_vector{};
+
+    // determine the number of loops that needs to be performed
+    auto const num_loops = platform::ToLog2(next_size) - platform::ToLog2(current_size);
+
+    // define the various pointers to the storage
+    uint8_t const *src_buffer = reinterpret_cast<uint8_t const *>(src.data().pointer());
+    uint16_t      *int_buffer = nullptr;
+    uint16_t      *dst_buffer = reinterpret_cast<uint16_t *>(dst.data().pointer());
+
+    // in cases larger than 1 and additional buffer is required
+    if (num_loops > 1)
+    {
+      // create the intermediate vector
+      intermediate_vector = std::make_unique<BitVectorImplementation>(dst.size());
+
+      // update the intermediate buffer pointer
+      int_buffer = reinterpret_cast<uint16_t *>(intermediate_vector->data().pointer());
+
+      // in the case of even number of loops we need to swap the intermediate and destination buffers
+      // to ensure the correct final destination
+      if ((num_loops & 0x1) == 0)
+      {
+        std::swap(int_buffer, dst_buffer);
+      }
+    }
+
+    uint32_t current_size_bytes = platform::DivCeil<8u>(current_size);
+    for (uint32_t i = 0; i < num_loops; ++i)
+    {
+      // loop over all the bytes of the current input and generate 16bit combinations
+      for (std::size_t j = 0; j < current_size_bytes; ++j)
+      {
+        uint64_t const m = ((src_buffer[j] * 0x0101010101010101ULL) & 0x8040201008040201ULL) * 0x0102040810204081ULL;
+        dst_buffer[j] = ((m >> 49u) & 0x5555) | ((m >> 48u) & 0xAAAA);
+      }
+
+      // adjust the size in the case of multiple loops
+      current_size_bytes *= 2u;
+
+      // the current destination buffer always becomes the next source buffer
+      src_buffer = reinterpret_cast<uint8_t *>(dst_buffer);
+
+      // swap the intermediate and destinations buffers ready for the next loop
+      std::swap(int_buffer, dst_buffer);
+    }
+
+    return true;
+  }
+
+  static bool Contract(BitVectorImplementation const &src, BitVectorImplementation &dst)
+  {
+    using BitVectorPtr = std::unique_ptr<BitVectorImplementation>;
+
+    auto const current_size = static_cast<uint32_t>(src.size());
+    auto const next_size    = static_cast<uint32_t>(dst.size());
+
+    // early exit in the case where the destination bit vector is 1 or 0 (wildcard)
+    if (dst.size() <= 1)
+    {
+      dst.SetAllOne();
+      return true;
+    }
+
+    if (next_size > current_size)
+    {
+      return false;
+    }
+
+    // ensure the bit vectors are compatible sizes
+    if (!(platform::IsLog2(next_size) && platform::IsLog2(current_size)))
+    {
+      return false;
+    }
+
+    BitVectorPtr intermediate_vector{};
+
+    // determine the number of loops that needs to be performed
+    auto const num_loops = platform::ToLog2(current_size) - platform::ToLog2(next_size);
+
+    // define the various pointers to the storage
+    uint16_t const *src_buffer = reinterpret_cast<uint16_t const *>(src.data().pointer());
+    uint8_t        *int_buffer = nullptr;
+    uint8_t        *dst_buffer = reinterpret_cast<uint8_t *>(dst.data().pointer());
+
+    // in cases larger than 1 and additional buffer is required
+    if (num_loops > 1)
+    {
+      // create the intermediate vector
+      intermediate_vector = std::make_unique<BitVectorImplementation>(dst.size());
+
+      // update the intermediate buffer pointer
+      int_buffer = reinterpret_cast<uint8_t *>(intermediate_vector->data().pointer());
+
+      // in the case of even number of loops we need to swap the intermediate and destination buffers
+      // to ensure the correct final destination
+      if ((num_loops & 0x1) == 0)
+      {
+        std::swap(int_buffer, dst_buffer);
+      }
+    }
+
+    uint32_t current_size_words = platform::DivCeil<16u>(current_size);
+    for (uint32_t i = 0; i < num_loops; ++i)
+    {
+      // loop over all the bytes of the current input and generate 16bit combinations
+      for (std::size_t j = 0; j < current_size_words; ++j)
+      {
+        uint16_t const a = (src_buffer[j] & 0x5555) | ((src_buffer[j] & 0xAAAA) >> 1u);
+        dst_buffer[j] = static_cast<uint8_t>((a & 0x1u) | ((a >> 1u) & 0x2u) | ((a >> 2u) & 0x4u) | ((a >> 3u) & 0x8u) | ((a >> 4u) & 0x10u) | ((a >> 5u) & 0x20u) | ((a >> 6u) & 0x40u) | ((a >> 7u) & 0x80u));
+      }
+
+      // adjust the size in the case of multiple loops
+      current_size_words /= 2;
+
+      if (current_size_words == 0)
+      {
+        current_size_words= 1;
+      }
+
+      // the current destination buffer always becomes the next source buffer
+      src_buffer = reinterpret_cast<uint16_t *>(dst_buffer);
+
+      // swap the intermediate and destinations buffers ready for the next loop
+      std::swap(int_buffer, dst_buffer);
+    }
+
+    return true;
+  }
+
   bool operator==(BitVectorImplementation const &other) const
   {
     bool ret = this->size_ == other.size_;
