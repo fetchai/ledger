@@ -67,20 +67,29 @@ public:
     ArrayType returnSignal1{errorSignal.shape()};
     ArrayType returnSignal2{errorSignal.shape()};
 
-    typename ArrayType::SizeType idx(0);
-    for (auto const &val : inputs.at(0).get())
+    auto     rs1_it    = returnSignal1.begin();
+    auto     rs2_it    = returnSignal2.begin();
+    auto     input1_it = inputs.at(0).get().begin();
+    auto     input2_it = inputs.at(0).get().begin();
+    DataType zero{0};
+    DataType one{1};
+
+    while (input1_it.is_valid())
     {
-      if (val >= DataType(0))
+      if (*input1_it >= zero)
       {
-        returnSignal1.Set(idx, DataType(1));
-        returnSignal2.Set(idx, DataType(0));
+        *rs1_it = one;
+        *rs2_it = zero;
       }
       else
       {
-        returnSignal1.Set(idx, inputs.at(1).get().At(idx));
-        returnSignal2.Set(idx, inputs.at(0).get().At(idx));
+        *rs1_it = *input2_it;
+        *rs2_it = *input1_it;
       }
-      ++idx;
+      ++rs1_it;
+      ++rs2_it;
+      ++input1_it;
+      ++input2_it;
     }
 
     // multiply by errorSignal (chain rule)
