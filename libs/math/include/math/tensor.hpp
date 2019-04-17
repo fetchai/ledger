@@ -29,7 +29,10 @@
 #include "math/matrix_operations.hpp"
 #include "math/meta/math_type_traits.hpp"
 #include "math/ml/activation_functions/softmax.hpp"
+#include "math/ml/loss_functions/l2_loss.hpp"
+#include "math/ml/loss_functions/l2_norm.hpp"
 #include "math/standard_functions/abs.hpp"
+#include "math/standard_functions/exp.hpp"
 #include "math/standard_functions/fmod.hpp"
 #include "math/standard_functions/remainder.hpp"
 #include "math/tensor_broadcast.hpp"
@@ -74,10 +77,12 @@ public:
   static constexpr char const *LOGGING_NAME = "Tensor";
 
 private:
-  template <typename STensor> class TensorSliceImplementation;
-  template <SizeType N, typename TSType, typename... Args> struct TensorSetter;
-  template <SizeType N, typename TSType> struct TensorSetter<N, TSType>;
-
+  template <typename STensor>
+  class TensorSliceImplementation;
+  template <SizeType N, typename TSType, typename... Args>
+  struct TensorSetter;
+  template <SizeType N, typename TSType>
+  struct TensorSetter<N, TSType>;
 
 public:
   using ConstSliceType = TensorSliceImplementation<SelfType const>;
@@ -108,8 +113,8 @@ public:
   Tensor &operator=(Tensor const &other) = default;
   Tensor &operator=(Tensor &&other) = default;
 
-  IteratorType begin();
-  IteratorType end();
+  IteratorType      begin();
+  IteratorType      end();
   ConstIteratorType begin() const;
   ConstIteratorType end() const;
   ConstIteratorType cbegin() const;
@@ -122,26 +127,35 @@ public:
   static SelfType Zeroes(SizeVector const &shape);
   static SelfType Ones(SizeVector const &shape);
 
-  void Copy(SelfType const &x);
+  void     Copy(SelfType const &x);
   SelfType Copy() const;
-  template <typename G> void Assign(TensorSliceImplementation<G> const &other);
+  template <typename G>
+  void Assign(TensorSliceImplementation<G> const &other);
   void Assign(TensorSlice const &other);
   void Assign(SelfType const &other);
 
-  template <typename... Indices> Type &At(Indices... indices);
-  template <typename... Indices> Type At(Indices... indices) const;
+  template <typename... Indices>
+  Type &At(Indices... indices);
+  template <typename... Indices>
+  Type At(Indices... indices) const;
 
-  template <typename... Indices> Type operator()(Indices... indices) const;
-  template <typename... Indices> Type &operator()(Indices... indices);
+  template <typename... Indices>
+  Type operator()(Indices... indices) const;
+  template <typename... Indices>
+  Type &operator()(Indices... indices);
 
   Type operator()(SizeType const &index) const;
-  template <typename S> typename std::enable_if<std::is_integral<S>::value, Type>::type &operator[](S const &i);
-  template <typename S> typename std::enable_if<std::is_integral<S>::value, Type>::type const &operator[](S const &i) const;
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, Type>::type &operator[](S const &i);
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, Type>::type const &operator[](
+      S const &i) const;
 
   Tensor &operator=(ConstSliceType const &slice);
   Tensor &operator=(TensorSlice const &slice);
 
-  template <typename... Args> void Set(Args... args);
+  template <typename... Args>
+  void Set(Args... args);
 
   void Fill(Type const &value, memory::Range const &range);
   void Fill(Type const &value, memory::TrivialRange const &range);
@@ -156,21 +170,21 @@ public:
 
   static SizeType SizeFromShape(SizeVector const &shape);
 
-  void Flatten();
-  SelfType Transpose() const; // TODO (private 867)
-  SelfType Transpose(SizeVector &new_axes) const;
-  SelfType &Squeeze();
-  SelfType &Unsqueeze();
-  void ResizeFromShape(SizeVector const &shape);
-  void LazyReshape(SizeVector const &shape);
-  bool CanReshape(SizeVector const &shape);
-  void Reshape(SizeVector const &shape);
+  void              Flatten();
+  SelfType          Transpose() const;  // TODO (private 867)
+  SelfType          Transpose(SizeVector &new_axes) const;
+  SelfType &        Squeeze();
+  SelfType &        Unsqueeze();
+  void              ResizeFromShape(SizeVector const &shape);
+  void              LazyReshape(SizeVector const &shape);
+  bool              CanReshape(SizeVector const &shape);
+  void              Reshape(SizeVector const &shape);
   SizeVector const &shape() const;
-  SizeType const &shape(SizeType const &n) const;
+  SizeType const &  shape(SizeType const &n) const;
 
-  /////////////////////////
-  /// INLINE OPERATIONS ///
-  /////////////////////////
+  ///////////////////////
+  /// MATH OPERATIONS ///
+  ///////////////////////
 
   SelfType InlineAdd(Tensor const &other);
   SelfType InlineAdd(Type const &scalar);
@@ -209,20 +223,20 @@ public:
   template <typename OtherType>
   SelfType operator/=(OtherType const &other);
 
-
-  //////////////////////////////
-  /// MATRIX MATH OPERATIONS ///
-  //////////////////////////////
-
   SelfType &DotTranspose(SelfType const &A, SelfType const &B, Type alpha = 1.0, Type beta = 0.0);
   SelfType &TransposeDot(SelfType const &A, SelfType const &B, Type alpha = 1.0, Type beta = 0.0);
-  Type Sum() const;
+  Type      Sum() const;
+
+  void Exp(SelfType const &x);
+  void ApproxSoftMax(SelfType const &x);
+  Type L2Norm() const;
+  Type L2Loss() const;
 
   /////////////
   /// Order ///
   /////////////
 
-  void MajorOrderFlip();
+  void        MajorOrderFlip();
   MAJOR_ORDER MajorOrder() const;
 
   ////////////////////////
@@ -237,90 +251,18 @@ public:
   //////////////
 
   ConstSliceType Slice(SizeType i, SizeType axis = 0) const;
-  TensorSlice Slice(SizeType i, SizeType axis = 0);
-
-  ////////////////////////////////
-  /// Serialization operations ///
-  ////////////////////////////////
-
-  template <typename S>
-  friend void Serialize(S &serializer, SelfType const &t)
-  {
-    serializer << t.size_;
-    serializer << t.shape_;
-    // TODO (private 870)
-    for (std::size_t i = 0; i < t.size(); ++i)
-    {
-      serializer << t.data()[i];
-    }
-  }
-
-
-  template <typename S>
-  friend void Deserialize(S &serializer, SelfType &t)
-  {
-    SizeType   size;
-    SizeVector shape;
-    serializer >> size;
-    serializer >> shape;
-
-    t.Resize(size);
-    t.Reshape(shape);
-
-    for (std::size_t i = 0; i < t.size(); ++i)
-    {
-      serializer >> t.data()[i];
-    }
-  }
+  TensorSlice    Slice(SizeType i, SizeType axis = 0);
 
   /////////////////
   /// general utilities
   //////////////
 
   std::string ToString() const;
-  SizeType Find(Type val) const;
+  SizeType    Find(Type val) const;
   template <typename TensorType>
   static SelfType Stack(std::vector<TensorType> const &tensors);
-
-
-
-  void Sort()
-  {
-    std::sort(data_.pointer(), data_.pointer() + data_.size());
-  }
-
-  void Sort(memory::TrivialRange const &range)
-  {
-    std::sort(data_.pointer() + range.from(), data_.pointer() + range.to());
-  }
-
-  /**
-   * Calculate the Exponentials of x and store in this
-   */
-  void Exp(SelfType const & /*x*/)
-  {
-    throw std::runtime_error("not yet implemented");
-  }
-
-  /**
-   * Calculate the ApproxSoftMax of X and store in this
-   */
-  void ApproxSoftMax(SelfType const & /*x*/)
-  {
-    throw std::runtime_error("not yet implemented");
-  }
-
-  /**
-   * calculates the l2loss of data in the array
-   *
-   * @return       returns single value as Type
-   *
-   **/
-  Type L2Loss() const
-  {
-    Type sum = data_.in_parallel().SumReduce([](VectorRegisterType const &v) { return v * v; });
-    return sum * Type(0.5);
-  }
+  void            Sort();
+  void            Sort(memory::TrivialRange const &range);
 
   /**
    * returns a range over this array defined using unsigned integers (only forward ranges)
@@ -587,7 +529,6 @@ public:
     return !(this->operator==(other));
   }
 
-
   Type PeakToPeak() const
   {
     return fetch::math::PeakToPeak(*this);
@@ -649,6 +590,39 @@ public:
     void Fill(Type t);
   };
 
+  ////////////////////////////////
+  /// Serialization operations ///
+  ////////////////////////////////
+
+  template <typename S>
+  friend void Serialize(S &serializer, SelfType const &t)
+  {
+    serializer << t.size_;
+    serializer << t.shape_;
+    // TODO (private 870)
+    for (std::size_t i = 0; i < t.size(); ++i)
+    {
+      serializer << t.data()[i];
+    }
+  }
+
+  template <typename S>
+  friend void Deserialize(S &serializer, SelfType &t)
+  {
+    SizeType   size;
+    SizeVector shape;
+    serializer >> size;
+    serializer >> shape;
+
+    t.Resize(size);
+    t.Reshape(shape);
+
+    for (std::size_t i = 0; i < t.size(); ++i)
+    {
+      serializer >> t.data()[i];
+    }
+  }
+
 private:
   ContainerType data_;
   SizeType      size_ = 0;
@@ -656,7 +630,6 @@ private:
   SizeVector    stride_;
 
   MAJOR_ORDER major_order_ = COLUMN;
-
 
   /**
    * Gets a value from the array by N-dim index
@@ -832,26 +805,24 @@ private:
     using Type = typename STensor::Type;
 
     TensorSliceImplementation<STensor>(STensor &t, std::vector<std::vector<SizeType>> range,
-                                  SizeType axis = 0)
-          : tensor_{t}
-          , range_{std::move(range)}
-          , axis_{std::move(axis)}
-        {}
+                                       SizeType axis = 0)
+      : tensor_{t}
+      , range_{std::move(range)}
+      , axis_{std::move(axis)}
+    {}
 
-    SelfType Copy() const;
+    SelfType          Copy() const;
     ConstIteratorType begin() const;
     ConstIteratorType end() const;
-    STensor &Tensor();
-    SizeType size() const;
-    SizeVector shape() const;
+    STensor &         Tensor();
+    SizeType          size() const;
+    SizeVector        shape() const;
 
   protected:
     STensor &                          tensor_;
     std::vector<std::vector<SizeType>> range_;
     SizeType                           axis_;
   };
-
-
 };
 
 template <typename T, typename C>
@@ -1019,8 +990,8 @@ Tensor<T, C> Tensor<T, C>::Zeroes(SizeVector const &shape)
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::Ones(SizeVector const &shape)
 {
-  SizeType n = std::accumulate(std::begin(shape), std::end(shape), SizeType(1),
-                               std::multiplies<SizeType>());
+  SizeType n =
+      std::accumulate(std::begin(shape), std::end(shape), SizeType(1), std::multiplies<SizeType>());
   SelfType output{n};
   output.SetAllOne();
   output.LazyReshape(shape);
@@ -1120,7 +1091,7 @@ void Tensor<T, C>::Assign(SelfType const &other)
  */
 template <typename T, typename C>
 template <typename... Indices>
-typename Tensor<T, C>::Type & Tensor<T, C>::At(Indices... indices)
+typename Tensor<T, C>::Type &Tensor<T, C>::At(Indices... indices)
 {
   ASSERT(sizeof...(indices) == stride_.size());
   return this->data()[UnrollComputeColIndex<0>(std::forward<Indices>(indices)...)];
@@ -1157,7 +1128,7 @@ typename Tensor<T, C>::Type Tensor<T, C>::operator()(Indices... indices) const
 
 template <typename T, typename C>
 template <typename... Indices>
-typename Tensor<T, C>::Type & Tensor<T, C>::operator()(Indices... indices)
+typename Tensor<T, C>::Type &Tensor<T, C>::operator()(Indices... indices)
 {
   return At(std::forward<Indices>(indices)...);
 }
@@ -1181,7 +1152,8 @@ typename Tensor<T, C>::Type Tensor<T, C>::operator()(SizeType const &index) cons
  */
 template <typename T, typename C>
 template <typename S>
-typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>::type & Tensor<T, C>::operator[](S const &i)
+typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>::type
+    &Tensor<T, C>::operator[](S const &i)
 {
   return data_[i];
 }
@@ -1198,13 +1170,14 @@ typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>
  */
 template <typename T, typename C>
 template <typename S>
-typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>::type const & Tensor<T, C>::operator[](S const &i) const
+typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>::type const
+    &Tensor<T, C>::operator[](S const &i) const
 {
   return data_[i];
 }
 
 template <typename T, typename C>
-Tensor<T, C> & Tensor<T, C>::operator=(ConstSliceType const &slice)
+Tensor<T, C> &Tensor<T, C>::operator=(ConstSliceType const &slice)
 {
   auto it1 = begin();
   auto it2 = slice.begin();
@@ -1219,7 +1192,7 @@ Tensor<T, C> & Tensor<T, C>::operator=(ConstSliceType const &slice)
 }
 
 template <typename T, typename C>
-Tensor<T, C> & Tensor<T, C>::operator=(TensorSlice const &slice)
+Tensor<T, C> &Tensor<T, C>::operator=(TensorSlice const &slice)
 {
   auto it1 = begin();
   auto it2 = slice.begin();
@@ -1247,9 +1220,8 @@ void Tensor<T, C>::Set(Args... args)
 {
   ASSERT(sizeof...(args) == stride_.size() + 1);  // Plus one as last arg is value
 
-  uint64_t index =
-      TensorSetter<0, Args...>::IndexOf(stride_, shape_, std::forward<Args>(args)...);
-  Type value = TensorSetter<0, Args...>::ValueOf(std::forward<Args>(args)...);
+  uint64_t index = TensorSetter<0, Args...>::IndexOf(stride_, shape_, std::forward<Args>(args)...);
+  Type     value = TensorSetter<0, Args...>::ValueOf(std::forward<Args>(args)...);
 
   data_[std::move(index)] = std::move(value);
 }
@@ -1341,8 +1313,6 @@ void Tensor<T, C>::SetPaddedZero()
   data().SetPaddedZero();
 }
 
-
-
 ////////////////////////////////////
 /// Tensor methods: shape & size ///
 ////////////////////////////////////
@@ -1417,7 +1387,7 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::Transpose(SizeVector &new_axes) co
  * Removes the leading dimension if it has size 1
  */
 template <typename T, typename C>
-typename Tensor<T, C>::SelfType & Tensor<T, C>::Squeeze()
+typename Tensor<T, C>::SelfType &Tensor<T, C>::Squeeze()
 {
   ASSERT(shape_.at(0) == 1);
   shape_.erase(shape_.begin());
@@ -1432,7 +1402,7 @@ typename Tensor<T, C>::SelfType & Tensor<T, C>::Squeeze()
  * @return
  */
 template <typename T, typename C>
-typename Tensor<T, C>::SelfType & Tensor<T, C>::Unsqueeze()
+typename Tensor<T, C>::SelfType &Tensor<T, C>::Unsqueeze()
 {
   shape_.insert(shape_.begin(), 1);
   UpdateStrides();
@@ -1517,7 +1487,7 @@ void Tensor<T, C>::Reshape(SizeVector const &shape)
  * @return  shape_ is the shape of the tensor as a vector of size_type
  */
 template <typename T, typename C>
-typename Tensor<T, C>::SizeVector const& Tensor<T, C>::shape() const
+typename Tensor<T, C>::SizeVector const &Tensor<T, C>::shape() const
 {
   return shape_;
 }
@@ -1528,7 +1498,7 @@ typename Tensor<T, C>::SizeVector const& Tensor<T, C>::shape() const
  * @return
  */
 template <typename T, typename C>
-typename Tensor<T, C>::SizeType const& Tensor<T, C>::shape(SizeType const &n) const
+typename Tensor<T, C>::SizeType const &Tensor<T, C>::shape(SizeType const &n) const
 {
   return shape_[n];
 }
@@ -1536,7 +1506,6 @@ typename Tensor<T, C>::SizeType const& Tensor<T, C>::shape(SizeType const &n) co
 ///////////////////////////////////////
 /// Tensor methods: math operations ///
 ///////////////////////////////////////
-
 
 /**
  * adds two Tensors together and supports broadcasting
@@ -1827,10 +1796,6 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::operator/=(OtherType const &other)
   return InlineDivide(other);
 }
 
-//////////////////////////////////////////////
-/// Tensor methods: matrix math operations ///
-//////////////////////////////////////////////
-
 /**
  * Efficient vectorised and threaded routine for C = A.T(B)
  * @param A
@@ -1838,7 +1803,8 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::operator/=(OtherType const &other)
  * @return
  */
 template <typename T, typename C>
-typename Tensor<T, C>::SelfType & Tensor<T, C>::DotTranspose(SelfType const &A, SelfType const &B, Type alpha, Type beta)
+typename Tensor<T, C>::SelfType &Tensor<T, C>::DotTranspose(SelfType const &A, SelfType const &B,
+                                                            Type alpha, Type beta)
 {
   ASSERT(this->shape().size() == 2);
   fetch::math::DotTranspose(A, B, *this, alpha, beta);
@@ -1853,7 +1819,8 @@ typename Tensor<T, C>::SelfType & Tensor<T, C>::DotTranspose(SelfType const &A, 
  * @return
  */
 template <typename T, typename C>
-typename Tensor<T, C>::SelfType & Tensor<T, C>::TransposeDot(SelfType const &A, SelfType const &B, Type alpha, Type beta)
+typename Tensor<T, C>::SelfType &Tensor<T, C>::TransposeDot(SelfType const &A, SelfType const &B,
+                                                            Type alpha, Type beta)
 {
   assert(this->shape().size() == 2);
   fetch::math::TransposeDot(A, B, *this, alpha, beta);
@@ -1874,6 +1841,48 @@ typename Tensor<T, C>::Type Tensor<T, C>::Sum() const
     ret += v;
   }
   return ret;
+}
+
+/**
+ * Calculate the Exponentials of tensor x and stores in this
+ */
+template <typename T, typename C>
+void Tensor<T, C>::Exp(SelfType const &x)
+{
+  Exp(x, *this);
+}
+
+/**
+ * Calculate the ApproxSoftMax of X and store in this
+ */
+template <typename T, typename C>
+void Tensor<T, C>::ApproxSoftMax(SelfType const &x)
+{
+  ApproxSoftMax(x, *this);
+}
+
+/**
+ * Calculates the L2Norm of the tensor (Sqrt(Sum(Square(this)))
+ * @tparam T
+ * @tparam C
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::Type Tensor<T, C>::L2Norm() const
+{
+  return fetch::math::L2Norm(*this);
+}
+
+/**
+ * Calculates half the sum of squared elements in tensor
+ * @tparam T
+ * @tparam C
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::Type Tensor<T, C>::L2Loss() const
+{
+  return fetch::math::L2Loss(*this);
 }
 
 //////////////////////////////////////////////
@@ -1917,8 +1926,6 @@ typename Tensor<T, C>::MAJOR_ORDER Tensor<T, C>::MajorOrder() const
   return major_order_;
 }
 
-
-
 ////////////////////////////////////////
 /// Tensor methods: Numpy Operations ///
 ////////////////////////////////////////
@@ -1929,7 +1936,8 @@ typename Tensor<T, C>::MAJOR_ORDER Tensor<T, C>::MajorOrder() const
  */
 // TODO(private 869):
 template <typename T, typename C>
-void Tensor<T, C>::CopyFromNumpy(T *ptr, SizeVector &shape, SizeVector & /*stride*/, SizeVector & /*index*/)
+void Tensor<T, C>::CopyFromNumpy(T *ptr, SizeVector &shape, SizeVector & /*stride*/,
+                                 SizeVector & /*index*/)
 {
   SizeType total_size = SelfType::SizeFromShape(shape);
 
@@ -1953,7 +1961,7 @@ void Tensor<T, C>::CopyFromNumpy(T *ptr, SizeVector &shape, SizeVector & /*strid
 }
 
 template <typename T, typename C>
-void Tensor<T, C>::CopyToNumpy(T *ptr, SizeVector &shape, SizeVector & stride, SizeVector & index)
+void Tensor<T, C>::CopyToNumpy(T *ptr, SizeVector &shape, SizeVector &stride, SizeVector &index)
 {
 
   // copy the data
@@ -2031,132 +2039,147 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(SizeType i, SizeType a
  */
 template <typename T, typename C>
 typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(SizeType i, SizeType axis)
+{
+  std::vector<std::vector<SizeType>> range;
+
+  for (SizeType j = 0; j < shape().size(); ++j)
   {
-    std::vector<std::vector<SizeType>> range;
-
-    for (SizeType j = 0; j < shape().size(); ++j)
+    if (axis == j)
     {
-      if (axis == j)
-      {
-        range.push_back({i, i + 1, 1});
-      }
-      else
-      {
-        range.push_back({0, shape().at(j), 1});
-      }
+      range.push_back({i, i + 1, 1});
     }
-
-    return TensorSlice(*this, range, axis);
+    else
+    {
+      range.push_back({0, shape().at(j), 1});
+    }
   }
 
-
+  return TensorSlice(*this, range, axis);
+}
 
 ////////////////////////////////////////
 /// Tensor methods: general utilites ///
 ////////////////////////////////////////
 
-  /**
-   * useful for printing tensor contents
-   * @return
-   */
-  template <typename T, typename C>
-  std::string Tensor<T, C>::ToString() const
-  {
-    std::stringstream ss;
-    ss << std::setprecision(5) << std::fixed << std::showpos;
-    if (shape_.size() == 1)
-    {
-      for (SizeType i(0); i < shape_[0]; ++i)
-      {
-        ss << At(i) << "\t";
-      }
-    }
-    if (shape_.size() == 2)
-    {
-      for (SizeType i(0); i < shape_[0]; ++i)
-      {
-        for (SizeType j(0); j < shape_[1]; ++j)
-        {
-          ss << At(i, j) << "\t";
-        }
-        ss << "\n";
-      }
-    }
-    return ss.str();
-  }
-
-  /**
-   * find index of value in tensor. If it's not there return max_val
-   * @param val
-   * @return
-   */
-  template <typename T, typename C>
-  SizeType Tensor<T, C>::Find(Type val) const
-  {
-    SizeType idx{0};
-    for (auto cur_val : *this)
-    {
-      if (cur_val == val)
-      {
-        return idx;
-      }
-      ++idx;
-    }
-    return std::numeric_limits<SizeType>::max();
-  }
-
-
-  /**
-   * Stack tensors resulting in a new leading dimension
-   * @tparam Tensor
-   * @param tensors
-   * @return
-   */
-   template <typename T, typename C>
-  template <typename TensorType>
-  typename Tensor<T, C>::SelfType Tensor<T, C>::Stack(std::vector<TensorType> const &tensors)
-  {
-    SizeVector retSize;
-    retSize.push_back(tensors.size());
-    retSize.insert(retSize.end(), tensors.front().shape().begin(), tensors.front().shape().end());
-    TensorType ret(retSize);
-    for (SizeType i(0); i < tensors.size(); ++i)
-    {
-      ret.Slice(i).Assign(tensors[i]);
-    }
-    return ret;
-  }
-
-
-
-
-  ////////////////
-
+/**
+ * useful for printing tensor contents
+ * @return
+ */
 template <typename T, typename C>
-template <SizeType N, typename TSType, typename... Args> struct Tensor<T, C>::TensorSetter
+std::string Tensor<T, C>::ToString() const
 {
-    // Finding the return value
-    using Type = typename TensorSetter<N + 1, Args...>::Type;
-
-    // Computing index
-    static SizeType IndexOf(SizeVector const &stride, SizeVector const &shape, TSType const &index,
-                            Args &&... args)
+  std::stringstream ss;
+  ss << std::setprecision(5) << std::fixed << std::showpos;
+  if (shape_.size() == 1)
+  {
+    for (SizeType i(0); i < shape_[0]; ++i)
     {
-      ASSERT(SizeType(index) < shape[N]);
-      return stride[N] * SizeType(index) +
-             TensorSetter<N + 1, Args...>::IndexOf(stride, shape, std::forward<Args>(args)...);
+      ss << At(i) << "\t";
     }
-
-    // Ignoring all arguments but the last
-    static Type ValueOf(TSType const &index, Args &&... args)
+  }
+  if (shape_.size() == 2)
+  {
+    for (SizeType i(0); i < shape_[0]; ++i)
     {
-      FETCH_UNUSED(index);
-      return TensorSetter<N + 1, Args...>::ValueOf(std::forward<Args>(args)...);
+      for (SizeType j(0); j < shape_[1]; ++j)
+      {
+        ss << At(i, j) << "\t";
+      }
+      ss << "\n";
     }
-  };
+  }
+  return ss.str();
+}
+
+/**
+ * find index of value in tensor. If it's not there return max_val
+ * @param val
+ * @return
+ */
+template <typename T, typename C>
+SizeType Tensor<T, C>::Find(Type val) const
+{
+  SizeType idx{0};
+  for (auto cur_val : *this)
+  {
+    if (cur_val == val)
+    {
+      return idx;
+    }
+    ++idx;
+  }
+  return std::numeric_limits<SizeType>::max();
+}
+
+/**
+ * Stack tensors resulting in a new leading dimension
+ * @tparam Tensor
+ * @param tensors
+ * @return
+ */
+template <typename T, typename C>
+template <typename TensorType>
+typename Tensor<T, C>::SelfType Tensor<T, C>::Stack(std::vector<TensorType> const &tensors)
+{
+  SizeVector retSize;
+  retSize.push_back(tensors.size());
+  retSize.insert(retSize.end(), tensors.front().shape().begin(), tensors.front().shape().end());
+  TensorType ret(retSize);
+  for (SizeType i(0); i < tensors.size(); ++i)
+  {
+    ret.Slice(i).Assign(tensors[i]);
+  }
+  return ret;
+}
+
+/**
+ * sorts the data into ascending order
+ */
+template <typename T, typename C>
+void Tensor<T, C>::Sort()
+{
+  std::sort(data_.pointer(), data_.pointer() + data_.size());
+}
+
+/**
+ * sorts the data into ascending order
+ * @param range
+ */
+template <typename T, typename C>
+void Tensor<T, C>::Sort(memory::TrivialRange const &range)
+{
+  std::sort(data_.pointer() + range.from(), data_.pointer() + range.to());
+}
+
+////////////////
 
 template <typename T, typename C>
-template <SizeType N, typename TSType> struct Tensor<T, C>::TensorSetter<N, TSType>
+template <SizeType N, typename TSType, typename... Args>
+struct Tensor<T, C>::TensorSetter
+{
+  // Finding the return value
+  using Type = typename TensorSetter<N + 1, Args...>::Type;
+
+  // Computing index
+  static SizeType IndexOf(SizeVector const &stride, SizeVector const &shape, TSType const &index,
+                          Args &&... args)
+  {
+    ASSERT(SizeType(index) < shape[N]);
+    return stride[N] * SizeType(index) +
+           TensorSetter<N + 1, Args...>::IndexOf(stride, shape, std::forward<Args>(args)...);
+  }
+
+  // Ignoring all arguments but the last
+  static Type ValueOf(TSType const &index, Args &&... args)
+  {
+    FETCH_UNUSED(index);
+    return TensorSetter<N + 1, Args...>::ValueOf(std::forward<Args>(args)...);
+  }
+};
+
+template <typename T, typename C>
+template <SizeType N, typename TSType>
+struct Tensor<T, C>::TensorSetter<N, TSType>
 {
   using Type = TSType;
 
@@ -2259,7 +2282,8 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::TensorSliceImplementation<STensor>
 
 template <typename T, typename C>
 template <typename STensor>
-typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::TensorSliceImplementation<STensor>::begin() const
+typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::TensorSliceImplementation<STensor>::begin()
+    const
 {
   auto ret = ConstIteratorType(tensor_, range_);
   if (axis_ != 0)
@@ -2271,14 +2295,15 @@ typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::TensorSliceImplementation
 
 template <typename T, typename C>
 template <typename STensor>
-typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::TensorSliceImplementation<STensor>::end() const
+typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::TensorSliceImplementation<STensor>::end()
+    const
 {
   return ConstIteratorType::EndIterator(tensor_);
 }
 
 template <typename T, typename C>
 template <typename STensor>
-STensor & Tensor<T, C>::TensorSliceImplementation<STensor>::Tensor()
+STensor &Tensor<T, C>::TensorSliceImplementation<STensor>::Tensor()
 {
   return tensor_;
 }
@@ -2296,8 +2321,6 @@ typename Tensor<T, C>::SizeVector Tensor<T, C>::TensorSliceImplementation<STenso
 {
   return tensor_.shape();
 }
-
-
 
 }  // namespace math
 }  // namespace fetch

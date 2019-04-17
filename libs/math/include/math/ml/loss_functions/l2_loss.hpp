@@ -17,19 +17,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/fundamental_operators.hpp"    // add, subtract etc.
-#include "math/standard_functions/pow.hpp"   // square
-#include "math/standard_functions/sqrt.hpp"  // sqrt
+#include "math/fundamental_operators.hpp"   // add, subtract etc.
+#include "math/standard_functions/pow.hpp"  // square
 #include <cassert>
 
 namespace fetch {
 namespace math {
 
 template <typename ArrayType>
-typename ArrayType::Type L2Norm(ArrayType const &A)
+typename ArrayType::Type L2Loss(ArrayType const &A)
 {
-  ArrayType ret{A.shape()};
-  return Sqrt(Sum(Square(A)));
+  auto tmp = Sum(Square(A));
+  tmp      = (tmp / 2);
+  return tmp;
 }
 
 }  // namespace math
