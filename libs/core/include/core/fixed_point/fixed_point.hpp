@@ -265,12 +265,6 @@ public:
   static constexpr FixedPoint MAX_EXP = FixedPoint::Log(FixedPoint::FromBase(FixedPoint::MAX));
   static constexpr FixedPoint MIN_EXP = -MAX_EXP;
 
-  enum
-  {
-    FRACTIONAL_MASK = Type(((1ull << FRACTIONAL_BITS) - 1)),
-    INTEGER_MASK    = Type(~FRACTIONAL_MASK),
-  };
-
   ////////////////////
   /// constructors ///
   ////////////////////
@@ -670,52 +664,6 @@ public:
   static constexpr FixedPoint Log(const FixedPoint &x)
   {
     return Log2(x) / CONST_LOG2E;
-  }
-
-  static constexpr FixedPoint Log10(const FixedPoint &x)
-  {
-    return Log2(x) / CONST_LOG210;
-  }
-
-  static constexpr FixedPoint Sqrt(const FixedPoint &x)
-  {
-    return FixedPoint(std::sqrt((double)x));
-  }
-
-  static constexpr FixedPoint Pow(const FixedPoint &x, const FixedPoint &y)
-  {
-    if (x == CONST_ZERO) {
-      if (y == CONST_ZERO) {
-        std::stringstream e;
-        e << "FixedPoint<" << I << "," << F << ">::Pow(0, 0): 0^0 mathematical operation not defined!";
-        throw std::runtime_error(e.str());
-      } else {
-        return CONST_ZERO;
-      }
-    }
-    if (x < CONST_ZERO && y.fraction() != 0) {
-      std::stringstream e;
-      e << "FixedPoint<" << I << "," << F << ">::Pow(x, y): x^y where x < 0 and y non-integer: mathematical operation not defined! ";
-      throw std::runtime_error(e.str());
-    }
-    FixedPoint s = Sign(x) * (2 * (y.integer() % 2)) + CONST_ONE;
-    FixedPoint pow = s*Exp(y*Log(Abs(x)));
-    return pow;
-  }
-
-  static constexpr FixedPoint Abs(const FixedPoint &x)
-  {
-    return x*Sign(x);
-  }
-
-  static constexpr FixedPoint Sign(const FixedPoint &x)
-  {
-    return FixedPoint{(x > 0) - (x < 0)};
-  }
-
-  static constexpr FixedPoint FromBase(Type n)
-  {
-    return FixedPoint(n, NoScale());
   }
 
   static constexpr FixedPoint Log10(const FixedPoint &x)
