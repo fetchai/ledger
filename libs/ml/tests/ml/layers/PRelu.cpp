@@ -28,7 +28,8 @@ class PReluTest : public ::testing::Test
 
 using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
                                  fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
 TYPED_TEST_CASE(PReluTest, MyTypes);
 
 TYPED_TEST(PReluTest, set_input_and_evaluate_test)  // Use the class as a subgraph

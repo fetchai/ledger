@@ -48,7 +48,8 @@ public:
         this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Alpha", {});
 
     ArrayType alpha_data(std::vector<std::uint64_t>({1, in}));
-    this->Initialise(alpha_data, init_mode);
+    fetch::ml::ops::Weights<ArrayType>::Initialise(alpha_data, in, in, init_mode);
+
     this->SetInput(alpha, alpha_data);
 
     std::string output = this->template AddNode<fetch::ml::ops::LeakyReluOp<ArrayType>>(
@@ -61,19 +62,10 @@ public:
   virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
-    (void)inputs;
     return {inputs.at(0).get().shape()};
   }
 
   static constexpr char const *DESCRIPTOR = "ParametricRelu";
-
-private:
-  SizeType in_size_;
-
-  void Initialise(ArrayType &weights, WeightsInit init_mode)
-  {
-    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, in_size_, in_size_, init_mode);
-  }
 };
 
 }  // namespace layers
