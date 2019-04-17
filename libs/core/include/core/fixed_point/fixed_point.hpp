@@ -147,7 +147,7 @@ inline void Multiply(const FixedPoint<I, F> &lhs, const FixedPoint<I, F> &rhs,
  * @return
  */
 template <typename T>
-constexpr inline std::uint32_t HighestSetBit(T n_input)
+constexpr inline int32_t HighestSetBit(T n_input)
 {
   uint64_t n = static_cast<uint64_t>(n_input);
 
@@ -243,32 +243,30 @@ public:
   /// Constants/Limits ///
   ////////////////////////
 
-  static constexpr FixedPoint CONST_ZERO{0};                                          /* 0 */
-  static constexpr FixedPoint CONST_ONE{1};                                           /* 1 */
-  static constexpr FixedPoint CONST_E{2.718281828459045235360287471352662498};        /* e */
-  static constexpr FixedPoint CONST_LOG2E{1.442695040888963407359924681001892137};    /* log_2 e */
-  static constexpr FixedPoint CONST_LOG210{3.3219280948874};                          /* log_2 10 */
-  static constexpr FixedPoint CONST_LOG10E{0.434294481903251827651128918916605082};   /* log_10 e */
-  static constexpr FixedPoint CONST_LN2{0.693147180559945309417232121458176568};      /* log_e 2 */
-  static constexpr FixedPoint CONST_LN10{2.302585092994045684017991454684364208};     /* log_e 10 */
-  static constexpr FixedPoint CONST_PI{3.141592653589793238462643383279502884};       /* pi */
-  static constexpr FixedPoint CONST_PI_2{1.570796326794896619231321691639751442};     /* pi/2 */
-  static constexpr FixedPoint CONST_PI_4{0.785398163397448309615660845819875721};     /* pi/4 */
-  static constexpr FixedPoint CONST_INV_PI{0.318309886183790671537767526745028724};   /* 1/pi */
-  static constexpr FixedPoint CONST_2_INV_PI{0.636619772367581343075535053490057448}; /* 2/pi */
-  static constexpr FixedPoint CONST_2_INV_SQRTPI{
-      1.128379167095512573896158903121545172};                                     /* 2/sqrt(pi) */
-  static constexpr FixedPoint CONST_SQRT2{1.414213562373095048801688724209698079}; /* sqrt(2) */
-  static constexpr FixedPoint CONST_INV_SQRT2{
-      0.707106781186547524400844362104849039}; /* 1/sqrt(2) */
-  static constexpr Type       SMALLEST_FRACTION{1};
-  static constexpr Type       LARGEST_FRACTION{FRACTIONAL_MASK};
-  static constexpr Type       MAX_INT = Type(FRACTIONAL_MASK >> 1) << FRACTIONAL_BITS;
-  static constexpr Type       MIN_INT = INTEGER_MASK & ((Type(1) << (TOTAL_BITS - 1)));
-  static constexpr Type       MAX     = MAX_INT | LARGEST_FRACTION;
-  static constexpr Type       MIN     = -(MIN_INT ^ LARGEST_FRACTION);
-  static constexpr FixedPoint MAX_EXP = FixedPoint::Log(FixedPoint::FromBase(FixedPoint::MAX));
-  static constexpr FixedPoint MIN_EXP = -MAX_EXP;
+  static const FixedPoint CONST_ZERO;         /* 0 */
+  static const FixedPoint CONST_ONE;          /* 1 */
+  static const FixedPoint CONST_E;            /* e */
+  static const FixedPoint CONST_LOG2E;        /* log_2 e */
+  static const FixedPoint CONST_LOG210;       /* log_2 10 */
+  static const FixedPoint CONST_LOG10E;       /* log_10 e */
+  static const FixedPoint CONST_LN2;          /* log_e 2 */
+  static const FixedPoint CONST_LN10;         /* log_e 10 */
+  static const FixedPoint CONST_PI;           /* pi */
+  static const FixedPoint CONST_PI_2;         /* pi/2 */
+  static const FixedPoint CONST_PI_4;         /* pi/4 */
+  static const FixedPoint CONST_INV_PI;       /* 1/pi */
+  static const FixedPoint CONST_2_INV_PI;     /* 2/pi */
+  static const FixedPoint CONST_2_INV_SQRTPI; /* 2/sqrt(pi) */
+  static const FixedPoint CONST_SQRT2;        /* sqrt(2) */
+  static const FixedPoint CONST_INV_SQRT2;    /* 1/sqrt(2) */
+  static const Type       SMALLEST_FRACTION;
+  static const Type       LARGEST_FRACTION;
+  static const Type       MAX_INT;
+  static const Type       MIN_INT;
+  static const Type       MAX;
+  static const Type       MIN;
+  static const FixedPoint MAX_EXP;
+  static const FixedPoint MIN_EXP;
 
   ////////////////////
   /// constructors ///
@@ -286,8 +284,8 @@ public:
     : data_{static_cast<Type>(n)}
   {
     // assert(CheckNoOverflow(n, FRACTIONAL_BITS, TOTAL_BITS));
-    Type         s    = (data_ < 0) - (data_ > 0);
-    UnsignedType abs_ = s * data_;
+    Type s    = (data_ < 0) - (data_ > 0);
+    Type abs_ = s * data_;
     abs_ <<= FRACTIONAL_BITS;
     data_ = s * abs_;
   }
@@ -577,10 +575,7 @@ public:
     }
     if (x > MAX_EXP)
     {
-      std::stringstream e;
-      e << "FixedPoint<" << I << "," << F << ">::Exp() does not support exponents larger than "
-        << MAX_EXP;
-      throw std::overflow_error(e.str());
+      throw std::overflow_error("Exp() does not support exponents larger than MAX_EXP");
     }
     if (x == CONST_ONE)
     {
@@ -704,10 +699,7 @@ public:
     {
       if (y == CONST_ZERO)
       {
-        std::stringstream e;
-        e << "FixedPoint<" << I << "," << F
-          << ">::Pow(0, 0): 0^0 mathematical operation not defined!";
-        throw std::runtime_error(e.str());
+        throw std::runtime_error("Pow(0, 0): 0^0 mathematical operation not defined!");
       }
       else
       {
@@ -716,10 +708,8 @@ public:
     }
     if (x < CONST_ZERO && y.fraction() != 0)
     {
-      std::stringstream e;
-      e << "FixedPoint<" << I << "," << F
-        << ">::Pow(x, y): x^y where x < 0 and y non-integer: mathematical operation not defined! ";
-      throw std::runtime_error(e.str());
+      throw std::runtime_error(
+          "Pow(x, y): x^y where x < 0 and y non-integer: mathematical operation not defined!");
     }
     FixedPoint s   = Sign(x) * (2 * (y.integer() % 2)) + CONST_ONE;
     FixedPoint pow = s * Exp(y * Log(Abs(x)));
@@ -767,54 +757,74 @@ std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
 }
 
 template <std::uint16_t I, std::uint16_t F>
-constexpr
-    typename FixedPoint<I, F>::Type FixedPoint<I, F>::SMALLEST_FRACTION; /* smallest fraction */
+const FixedPoint<I, F> FixedPoint<I, F>::CONST_ZERO{0}; /* 0 */
 template <std::uint16_t I, std::uint16_t F>
-constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::LARGEST_FRACTION; /* largest fraction */
+const FixedPoint<I, F> FixedPoint<I, F>::CONST_ONE{1}; /* 0 */
 template <std::uint16_t I, std::uint16_t F>
-constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::MAX_INT; /* largest int */
+const FixedPoint<I, F> FixedPoint<I, F>::CONST_E{
+    2.718281828459045235360287471352662498}; /* e */
 template <std::uint16_t I, std::uint16_t F>
-constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::MIN_INT; /* smallest int */
+const FixedPoint<I, F> FixedPoint<I, F>::CONST_LOG2E{
+    1.442695040888963407359924681001892137}; /* log_2 e */
 template <std::uint16_t I, std::uint16_t F>
-constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::MAX; /* largest fixed point */
+const FixedPoint<I, F> FixedPoint<I, F>::CONST_LOG210{3.3219280948874}; /* log_2 10 */
 template <std::uint16_t I, std::uint16_t F>
-constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::MIN; /* smallest fixed point */
+const FixedPoint<I, F> FixedPoint<I, F>::CONST_LOG10E{
+    0.434294481903251827651128918916605082}; /* log_10 e */
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::MAX_EXP; /* maximum exponent for Exp() */
+const FixedPoint<I, F> FixedPoint<I, F>::CONST_LN2{
+    0.693147180559945309417232121458176568}; /* log_e 2 */
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::MIN_EXP; /* minimum exponent for Exp() */
+const FixedPoint<I, F> FixedPoint<I, F>::CONST_LN10{
+    2.302585092994045684017991454684364208}; /* log_e 10 */
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_ZERO; /* 0 */
+const FixedPoint<I, F> FixedPoint<I, F>::CONST_PI{
+    3.141592653589793238462643383279502884}; /* pi */
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_ONE; /* 1 */
+const FixedPoint<I, F> FixedPoint<I, F>::CONST_PI_2{
+    1.570796326794896619231321691639751442}; /* pi/2 */
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_E; /* e */
+const FixedPoint<I, F> FixedPoint<I, F>::CONST_PI_4{
+    0.785398163397448309615660845819875721}; /* pi/4 */
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_LOG2E; /* log_2 e */
+const FixedPoint<I, F> FixedPoint<I, F>::CONST_INV_PI{
+    0.318309886183790671537767526745028724}; /* 1/pi */
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_LOG210; /* log_2 10 */
+const FixedPoint<I, F> FixedPoint<I, F>::CONST_2_INV_PI{
+    0.636619772367581343075535053490057448}; /* 2/pi */
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_LOG10E; /* log_10 e */
+const FixedPoint<I, F> FixedPoint<I, F>::CONST_2_INV_SQRTPI{
+    1.128379167095512573896158903121545172}; /* 2/sqrt(pi) */
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_LN2; /* log_e 2 */
+const FixedPoint<I, F> FixedPoint<I, F>::CONST_SQRT2{
+    1.414213562373095048801688724209698079}; /* sqrt(2) */
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_LN10; /* log_e 10 */
+const FixedPoint<I, F> FixedPoint<I, F>::CONST_INV_SQRT2{
+    0.707106781186547524400844362104849039}; /* 1/sqrt(2) */
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_PI; /* pi */
+const
+    typename FixedPoint<I, F>::Type FixedPoint<I, F>::SMALLEST_FRACTION{1}; /* smallest fraction */
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_PI_2; /* pi/2 */
+const typename FixedPoint<I, F>::Type FixedPoint<I, F>::LARGEST_FRACTION{
+    FRACTIONAL_MASK}; /* largest fraction */
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_PI_4; /* pi/4 */
+const typename FixedPoint<I, F>::Type FixedPoint<I, F>::MAX_INT =
+    Type(FRACTIONAL_MASK >> 1) << FRACTIONAL_BITS; /* largest int */
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_INV_PI; /* 1/pi */
+const typename FixedPoint<I, F>::Type FixedPoint<I, F>::MIN_INT =
+    INTEGER_MASK &((Type(1) << (TOTAL_BITS - 1))); /* smallest int */
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_2_INV_PI; /* 2/pi */
+const typename FixedPoint<I, F>::Type FixedPoint<I, F>::MAX =
+    MAX_INT | LARGEST_FRACTION; /* largest fixed point */
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_2_INV_SQRTPI; /* 2/sqrt(pi) */
+const typename FixedPoint<I, F>::Type FixedPoint<I, F>::MIN =
+    -(MIN_INT ^ LARGEST_FRACTION); /* smallest fixed point */
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_SQRT2; /* sqrt(2) */
+const FixedPoint<I, F> FixedPoint<I, F>::MAX_EXP =
+    FixedPoint::Log(FixedPoint::FromBase(FixedPoint::MAX)); /* maximum exponent for Exp() */
 template <std::uint16_t I, std::uint16_t F>
-constexpr FixedPoint<I, F> FixedPoint<I, F>::CONST_INV_SQRT2; /* 1/sqrt(2) */
+const FixedPoint<I, F> FixedPoint<I, F>::MIN_EXP =
+    -FixedPoint::Log(FixedPoint::FromBase(FixedPoint::MAX)); /* minimum exponent for Exp() */
 
 }  // namespace fixed_point
 }  // namespace fetch

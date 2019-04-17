@@ -447,7 +447,6 @@ TEST(FixedPointTest, Division_16_16)
   EXPECT_EQ(double(one / two), 0.5);
 
   // Extreme cases
-  fetch::fixed_point::FixedPoint<16, 16> almost_one(0, fp64::LARGEST_FRACTION);
   fetch::fixed_point::FixedPoint<16, 16> infinitesimal(0, fp64::SMALLEST_FRACTION);
   fetch::fixed_point::FixedPoint<16, 16> huge(0x4000, 0);
   fetch::fixed_point::FixedPoint<16, 16> small(0, 0x4000);
@@ -478,7 +477,6 @@ TEST(FixedPointTest, Division_32_32)
   EXPECT_EQ(double(one / two), 0.5);
 
   // Extreme cases
-  fetch::fixed_point::FixedPoint<32, 32> almost_one(0, fp64::LARGEST_FRACTION);
   fetch::fixed_point::FixedPoint<32, 32> infinitesimal(0, fp64::SMALLEST_FRACTION);
   fetch::fixed_point::FixedPoint<32, 32> huge(0x40000000, 0);
   fetch::fixed_point::FixedPoint<32, 32> small(0, 0x40000000);
