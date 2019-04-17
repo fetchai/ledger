@@ -271,7 +271,6 @@ public:
     INTEGER_MASK    = Type(~FRACTIONAL_MASK),
   };
 
-
   ////////////////////
   /// constructors ///
   ////////////////////
