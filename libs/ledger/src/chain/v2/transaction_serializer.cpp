@@ -131,7 +131,8 @@ meta::IfIsInteger<T, ConstByteArray> Encode(T value)
       encoded.Resize(bytes_required + 1u);
 
       // write out the header
-      encoded[0] = ((is_signed) ? 0xD0 : 0xC0) | (log2_bytes_required & 0xF);
+      encoded[0] = static_cast<uint8_t>((is_signed) ? 0xD0u : 0xC0u) |
+                   static_cast<uint8_t>(log2_bytes_required & 0xFu);
 
       std::size_t i = 1;
       for (std::size_t index = bytes_required - 1u;; --index)
@@ -366,14 +367,14 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
 
   // format the main transaction header. Note that the charge_unit_flag is always zero here
   uint8_t header0{0};
-  header0 |= VERSION << 5u;
-  header0 |= (num_transfers ? 1u : 0) << 2u;
-  header0 |= ((num_transfers > 1u) ? 1u : 0) << 1u;
-  header0 |= (has_valid_from ? 1u : 0);
+  header0 |= static_cast<uint8_t>(VERSION << 5u);
+  header0 |= static_cast<uint8_t>((num_transfers ? 1u : 0) << 2u);
+  header0 |= static_cast<uint8_t>(((num_transfers > 1u) ? 1u : 0) << 1u);
+  header0 |= static_cast<uint8_t>(has_valid_from ? 1u : 0);
   buffer.Append(MAGIC, header0);
 
   uint8_t header1{0};
-  header1 |= Map(contract_mode) << 6u;
+  header1 |= static_cast<uint8_t>(Map(contract_mode) << 6u);
   header1 |= static_cast<uint8_t>(signalled_signatures) & 0x3Fu;
   buffer.Append(header1);
 
@@ -425,7 +426,7 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
         // signal the bit to signal the the shard mask it 2 or 4 bits
         if (log2_shard_mask_size == 2)
         {
-          contract_header |= uint8_t{0x10};
+          contract_header |= static_cast<uint8_t>(0x10u);
         }
 
         buffer.Append(contract_header);
@@ -438,7 +439,7 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
 
         // signal the size of the following shard bytes
         uint8_t const contract_header =
-            uint8_t{0x40} | static_cast<uint8_t>((log2_shard_mask_size - 3) & 0x3Fu);
+            static_cast<uint8_t>(0x40u) | static_cast<uint8_t>((log2_shard_mask_size - 3) & 0x3Fu);
 
         // write the header and the corresponding bytes
         buffer.Append(contract_header, Encode(shard_mask));
