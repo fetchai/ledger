@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "math/ml/activation_functions/relu.hpp"
-
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -38,6 +38,7 @@ public:
   Relu()          = default;
   virtual ~Relu() = default;
 
+  // f(x)=max(0,x);
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                             ArrayType &                                                 output)
   {
@@ -47,6 +48,7 @@ public:
     return output;
   }
 
+  // x>0 f'(x)=1, x<=0 f'(x)=0
   virtual std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           errorSignal)
