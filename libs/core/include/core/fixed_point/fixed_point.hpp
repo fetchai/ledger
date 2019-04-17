@@ -761,8 +761,7 @@ const FixedPoint<I, F> FixedPoint<I, F>::CONST_ZERO{0}; /* 0 */
 template <std::uint16_t I, std::uint16_t F>
 const FixedPoint<I, F> FixedPoint<I, F>::CONST_ONE{1}; /* 0 */
 template <std::uint16_t I, std::uint16_t F>
-const FixedPoint<I, F> FixedPoint<I, F>::CONST_E{
-    2.718281828459045235360287471352662498}; /* e */
+const FixedPoint<I, F> FixedPoint<I, F>::CONST_E{2.718281828459045235360287471352662498}; /* e */
 template <std::uint16_t I, std::uint16_t F>
 const FixedPoint<I, F> FixedPoint<I, F>::CONST_LOG2E{
     1.442695040888963407359924681001892137}; /* log_2 e */
@@ -778,8 +777,7 @@ template <std::uint16_t I, std::uint16_t F>
 const FixedPoint<I, F> FixedPoint<I, F>::CONST_LN10{
     2.302585092994045684017991454684364208}; /* log_e 10 */
 template <std::uint16_t I, std::uint16_t F>
-const FixedPoint<I, F> FixedPoint<I, F>::CONST_PI{
-    3.141592653589793238462643383279502884}; /* pi */
+const FixedPoint<I, F> FixedPoint<I, F>::CONST_PI{3.141592653589793238462643383279502884}; /* pi */
 template <std::uint16_t I, std::uint16_t F>
 const FixedPoint<I, F> FixedPoint<I, F>::CONST_PI_2{
     1.570796326794896619231321691639751442}; /* pi/2 */
@@ -802,8 +800,8 @@ template <std::uint16_t I, std::uint16_t F>
 const FixedPoint<I, F> FixedPoint<I, F>::CONST_INV_SQRT2{
     0.707106781186547524400844362104849039}; /* 1/sqrt(2) */
 template <std::uint16_t I, std::uint16_t F>
-const
-    typename FixedPoint<I, F>::Type FixedPoint<I, F>::SMALLEST_FRACTION{1}; /* smallest fraction */
+const typename FixedPoint<I, F>::Type FixedPoint<I, F>::SMALLEST_FRACTION{
+    1}; /* smallest fraction */
 template <std::uint16_t I, std::uint16_t F>
 const typename FixedPoint<I, F>::Type FixedPoint<I, F>::LARGEST_FRACTION{
     FRACTIONAL_MASK}; /* largest fraction */
