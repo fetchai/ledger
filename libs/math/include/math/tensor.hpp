@@ -1309,9 +1309,9 @@ public:
    */
   void SetAllOne()
   {
-    for (SizeType i = 0; i < data().size(); i++)
+    for (auto &val : *this)
     {
-      data()[i] = 1;
+      val = Type(1);
     }
   }
 

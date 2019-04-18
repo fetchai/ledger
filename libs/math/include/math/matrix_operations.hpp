@@ -100,7 +100,7 @@ meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
   {
     // TODO(private issue 193): implement boolean only array
     ASSERT((*it2 == 1) || (*it2 == 0));
-    if (bool(*it2))
+    if (std::uint64_t(*it2))
     {
       *rit = *it1;
       ++counter;

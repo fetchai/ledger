@@ -36,6 +36,24 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(FreeFunctionsTest, MyTypes);
 
+
+TYPED_TEST(FreeFunctionsTest, BooleanMask_SetAll)
+{
+  using SizeType = typename TypeParam::SizeType;
+
+  TypeParam array1{4};
+  TypeParam mask{4};
+  mask.SetAllZero();
+  auto ret = fetch::math::BooleanMask(array1, mask);
+  EXPECT_EQ(ret.size(), SizeType(0));
+
+  mask.SetAllOne();
+  ret = fetch::math::BooleanMask(array1, mask);
+  EXPECT_EQ(ret.size(), array1.size());
+  EXPECT_EQ(ret.shape(), array1.shape());
+}
+
+
 TYPED_TEST(FreeFunctionsTest, ArgMax_OneDimension)
 {
   TypeParam array1{4};
