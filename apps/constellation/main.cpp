@@ -207,7 +207,7 @@ struct CommandLineArguments
     {
       // determine what the P2P port is. This is either specified with the port parameter or
       // explicitly given via the manifest
-      uint16_t p2p_port = static_cast<uint16_t>(args.port + P2P_PORT_OFFSET);
+      auto p2p_port = static_cast<uint16_t>(args.port + P2P_PORT_OFFSET);
 
       // if we have a valid manifest then we should respect the port configuration specified here
       // otherwise we default to the port specified
