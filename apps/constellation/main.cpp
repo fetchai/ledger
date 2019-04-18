@@ -58,7 +58,7 @@ std::atomic<std::size_t>            gInterruptCount{0};
 // REVIEW: Move to platform
 uint32_t Log2(uint32_t value)
 {
-  static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;
+  static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3u;
   return static_cast<uint32_t>(VALUE_SIZE_IN_BITS -
                                static_cast<uint32_t>(__builtin_clz(value) + 1));
 }
@@ -343,7 +343,7 @@ struct CommandLineArguments
     s << "port......................: " << args.port << '\n';
     s << "network id................: 0x" << std::hex << args.network_id << std::dec << '\n';
     s << "num executors.............: " << args.cfg.num_executors << '\n';
-    s << "num lanes.................: " << (1 << args.cfg.log2_num_lanes) << '\n';
+    s << "num lanes.................: " << (1u << args.cfg.log2_num_lanes) << '\n';
     s << "num slices................: " << args.cfg.num_slices << '\n';
     s << "bootstrap.................: " << args.bootstrap << '\n';
     s << "host name.................: " << args.host_name << '\n';
