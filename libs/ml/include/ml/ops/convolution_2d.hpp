@@ -24,7 +24,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Convolution : public BatchOps<T>
+class Convolution2d : public BatchOps<T>
 {
 public:
   using ArrayType    = T;
@@ -32,8 +32,8 @@ public:
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  Convolution()          = default;
-  virtual ~Convolution() = default;
+  Convolution2d()          = default;
+  virtual ~Convolution2d() = default;
 
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                             ArrayType &                                                 output)
@@ -92,7 +92,7 @@ public:
     return outputShape;
   }
 
-  static constexpr char const *DESCRIPTOR = "Convolution";
+  static constexpr char const *DESCRIPTOR = "Convolution2d";
 };
 
 }  // namespace ops
