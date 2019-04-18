@@ -38,13 +38,16 @@ using TokenAmount  = Transaction::TokenAmount;
 using ContractMode = Transaction::ContractMode;
 using BitVector    = Transaction::BitVector;
 
-const uint8_t MAGIC      = 0xA1;
-const uint8_t VERSION    = 1u;
-const int8_t  UNIT_MEGA  = -2;
-const int8_t  UNIT_KILO  = -1;
-const int8_t  UNIT_MILLI = 1;
-const int8_t  UNIT_MICRO = 2;
-const int8_t  UNIT_NANO  = 3;
+const uint8_t MAGIC              = 0xA1;
+const uint8_t VERSION            = 1u;
+const int8_t  UNIT_MEGA          = -2;
+const int8_t  UNIT_KILO          = -1;
+const int8_t  UNIT_DEFAULT       = 0;
+const int8_t  UNIT_MILLI         = 1;
+const int8_t  UNIT_MICRO         = 2;
+const int8_t  UNIT_NANO          = 3;
+const int8_t  CONTRACT_PRESENT   = 1;
+const int8_t  CHAIN_CODE_PRESENT = 2;
 
 uint8_t Map(ContractMode mode)
 {
@@ -412,7 +415,7 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
 
   buffer.Append(Encode(tx.valid_until()));
 
-  // TODO(EJF): Increase efficiency by signaling with the charge_unit_flag
+  // TODO(private issue 885): Increase efficiency by signaling with the charge_unit_flag
   buffer.Append(Encode(tx.charge()), Encode(tx.charge_limit()));
 
   // handle the signalling of the contract mode
@@ -579,7 +582,7 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
     case UNIT_KILO:
       tx.charge_ *= 10000000000000ull;
       break;
-    case 0:  // unit
+    case UNIT_DEFAULT:
       tx.charge_ *= 10000000000ull;
       break;
     case UNIT_MILLI:
@@ -648,7 +651,7 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
       }
     }
 
-    if (contract_type == 1)
+    if (CONTRACT_PRESENT == contract_type)
     {
       tx.contract_mode_ = Transaction::ContractMode::PRESENT;
       tx.chain_code_    = ConstByteArray{};
@@ -656,7 +659,7 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
       Decode(buffer, tx.contract_digest_);
       Decode(buffer, tx.contract_address_);
     }
-    else if (contract_type == 2)
+    else if (CHAIN_CODE_PRESENT == contract_type)
     {
       tx.contract_mode_    = Transaction::ContractMode::CHAIN_CODE;
       tx.contract_address_ = Address{};

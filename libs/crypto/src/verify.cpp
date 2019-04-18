@@ -25,8 +25,8 @@ namespace crypto {
 /**
  * Build the corresponding Verifier based from the provided identity
  *
- * @param identity
- * @return
+ * @param identity The identity to build the verifier from
+ * @return The generated verifier
  */
 std::unique_ptr<Verifier> Verifier::Build(Identity const &identity)
 {
@@ -38,6 +38,14 @@ std::unique_ptr<Verifier> Verifier::Build(Identity const &identity)
   return verifier;
 }
 
+/**
+ * Verify a specified signature from a data buffer and identity
+ *
+ * @param identity The identity of the signer
+ * @param data The payload of the message
+ * @param signature The signature to verify
+ * @return true if the signature is valid for the payload, otherwise false
+ */
 bool Verifier::Verify(Identity const &identity, ConstByteArray const &data,
                       ConstByteArray const &signature)
 {
@@ -53,12 +61,13 @@ bool Verifier::Verify(Identity const &identity, ConstByteArray const &data,
  *
  * @param identity The public key to construct a concrete (e.g. ECDSA) verifier from
  * @param data Message to be verified
- * @param signature
+ * @param signature The signature to be checked
+ * @return true if signature is valid, otherwise false
  */
 bool Verify(byte_array::ConstByteArray key, byte_array::ConstByteArray const &data,
             byte_array::ConstByteArray const &signature)
 {
-  return ECDSAVerifier(Identity(std::move(key))).Verify(data, signature);
+  return Verifier::Verify(Identity(std::move(key)), data, signature);
 }
 
 }  // namespace crypto

@@ -41,30 +41,44 @@ public:
   using TokenAmount    = uint64_t;
   using BlockIndex     = uint64_t;
 
+  /**
+   * Represents a single target and token about. The transaction format allows any number of
+   * transfers to be made in the course of a single transaction. This structure outlines one of them
+   */
   struct Transfer
   {
-    Address  to;
-    uint64_t amount;
+    Address     to;      ///< The destination address for fund transfers
+    TokenAmount amount;  ///< The amount of tokens being transferred
   };
 
+  /**
+   * A signatory is the combination of an identity (public key) and a corresponding signature. This
+   * is the primary mechanism for transaction authorization
+   */
   struct Signatory
   {
-    Identity       identity;
-    ConstByteArray signature;
+    Identity       identity;  ///< The identity of the signer (public key)
+    ConstByteArray signature; ///< The signature of the tx payload from the signer
   };
 
+  /**
+   * Internal enumeration specifying the contract (if any) referenced by this tranasction
+   */
   enum class ContractMode
   {
-    NOT_PRESENT,
-    PRESENT,
-    CHAIN_CODE,
+    NOT_PRESENT,  ///< The is no contract present, simple token transfer transaction
+    PRESENT,      ///< There is a smart contract reference present
+    CHAIN_CODE,   ///< There is a reference to chain code (hard coded smart contracts) present
   };
 
+  /**
+   * Internal enumeation for validity query responses
+   */
   enum class Validity
   {
-    PENDING,
-    VALID,
-    INVALID,
+    PENDING,  ///< The transaction is not currently, but is due to be so shortly
+    VALID,    ///< The transaction is valid to be included into a block
+    INVALID,  ///< The transaction is invalid and should be dropped
   };
 
   using Transfers   = std::vector<Transfer>;
@@ -76,7 +90,10 @@ public:
   Transaction(Transaction &&)      = default;
   ~Transaction()                   = default;
 
+  /// @name Identification
+  /// @{
   ConstByteArray const &digest() const;
+  /// @}
 
   /// @name Transfer Accessors
   /// @{
@@ -120,7 +137,7 @@ public:
   Transaction &operator=(Transaction &&) = default;
 
 private:
-  /// @name Valid
+  /// @name Payload
   /// @{
   Address        from_{};                                    ///< The sender of the TX
   Transfers      transfers_{};                               ///< The list of the transfers
@@ -145,7 +162,7 @@ private:
   bool           verified_{false};                ///< The cached result of the verification
   /// @}
 
-  // These are the only two ways to generate a transaction from one of the two companion classes
+  // There are only two ways to generate a transaction, each from one of the two companion classes:
   friend class TransactionBuilder;
   friend class TransactionSerializer;
 };
