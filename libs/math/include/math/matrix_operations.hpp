@@ -90,17 +90,17 @@ meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
                                                  ArrayType const &mask, ArrayType &ret)
 {
   ASSERT(input_array.size() == mask.size());
-  ASSERT(ret.size() == Sum(mask));
+  ASSERT(ret.size() == typename ArrayType::SizeType(Sum(mask)));
 
   auto     it1 = input_array.cbegin();
   auto     it2 = mask.cbegin();
   auto     rit = ret.begin();
   SizeType counter{0};
-  while (it1.is_valid())
+  while (rit.is_valid())
   {
     // TODO(private issue 193): implement boolean only array
     ASSERT((*it2 == 1) || (*it2 == 0));
-    if (*it2)
+    if (bool(*it2))
     {
       *rit = *it1;
       ++counter;
@@ -115,7 +115,7 @@ meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> BooleanMask(ArrayType &input_array, ArrayType const &mask)
 {
-  ArrayType ret{Sum(mask)};
+  ArrayType ret{typename ArrayType::SizeType(Sum(mask))};
   BooleanMask(input_array, mask, ret);
   return ret;
 }
