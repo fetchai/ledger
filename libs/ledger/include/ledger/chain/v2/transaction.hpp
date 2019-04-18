@@ -57,8 +57,8 @@ public:
    */
   struct Signatory
   {
-    Identity       identity;  ///< The identity of the signer (public key)
-    ConstByteArray signature; ///< The signature of the tx payload from the signer
+    Identity       identity;   ///< The identity of the signer (public key)
+    ConstByteArray signature;  ///< The signature of the tx payload from the signer
   };
 
   /**
