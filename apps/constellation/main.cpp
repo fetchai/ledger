@@ -44,7 +44,7 @@
 
 namespace {
 
-static constexpr char const *LOGGING_NAME = "main";
+constexpr char const *LOGGING_NAME = "main";
 
 using Prover         = fetch::crypto::Prover;
 using BootstrapPtr   = std::unique_ptr<fetch::BootstrapMonitor>;
