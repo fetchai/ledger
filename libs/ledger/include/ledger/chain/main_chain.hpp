@@ -52,11 +52,6 @@ namespace ledger {
  */
 struct Tip
 {
-  Tip() = default;
-  Tip(uint64_t weight)
-    : total_weight{weight}
-  {}
-
   uint64_t total_weight{0};
 };
 
@@ -68,7 +63,7 @@ enum class BlockStatus
   INVALID     ///< The block is invalid and has not been added to the chain
 };
 
-char const *ToString(BlockStatus status);
+constexpr char const *ToString(BlockStatus status) noexcept;
 
 class MainChain
 {
@@ -143,6 +138,7 @@ private:
   using BlockStorePtr = std::unique_ptr<BlockStore>;
   using RMutex        = std::recursive_mutex;
   using RLock         = std::unique_lock<RMutex>;
+  using Trails        = std::unordered_multimap<BlockHash, BlockHash>;
 
   struct HeaviestTip
   {
@@ -174,6 +170,7 @@ private:
   bool        LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block, bool add_to_cache) const;
   bool        IsBlockInCache(BlockHash hash) const;
   void        AddBlockToCache(IntBlockPtr const &) const;
+  bool        DeleteTrailsFrom(BlockHash const &hash);
   /// @}
 
   /// @name Tip Management
@@ -192,6 +189,7 @@ private:
   TipsMap          tips_;          ///< Keep track of the tips
   HeaviestTip      heaviest_;      ///< Heaviest block/tip
   LooseBlockMap    loose_blocks_;  ///< Waiting (loose) blocks
+  Trails           trails_;        ///< The tree of paths from genesis down to every bloc
 };
 
 /**
@@ -203,7 +201,7 @@ private:
  * @return: bool whether the starting hash referred to a valid block on a valid chain
  */
 template <typename T>
-bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container) const
+inline bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container) const
 {
   using namespace std::chrono;
   using Clock = high_resolution_clock;
@@ -239,9 +237,9 @@ bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container) const
       {
         auto it = transactions_to_check.find(tx);
 
-        // Found a TX in the blockchain that is in our container
         if (it != transactions_to_check.end())
         {
+          // Found a TX in the blockchain that is in our container
           transactions_duplicated.push_back(tx);
         }
       }

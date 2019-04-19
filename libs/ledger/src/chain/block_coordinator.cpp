@@ -306,7 +306,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
   FETCH_UNUSED(current);
   State next_state{State::SYNCHRONIZED};
 
-  // ensure the periodic print is not trigger once we have synced
+  // ensure the periodic print is not triggered once we have synced
   syncing_periodic_.Reset();
 
   // if we have detected a change in the chain then we need to re-evaluate the chain

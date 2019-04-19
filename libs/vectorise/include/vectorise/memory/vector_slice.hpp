@@ -22,6 +22,7 @@
 #include "vectorise/meta/log2.hpp"
 #include "vectorise/platform.hpp"
 
+#include <algorithm>
 #include <cstring>
 
 namespace fetch {
@@ -95,7 +96,7 @@ public:
     assert(pointer_ != nullptr);
     if (pointer_)
     {
-      std::memset(pointer_, 0, padded_size() * sizeof(Type));
+      std::fill(pointer_, pointer_ + padded_size(), T());
     }
   }
 
@@ -104,7 +105,7 @@ public:
     assert(pointer_ != nullptr);
     if (pointer_)
     {
-      std::memset(pointer_ + size(), 0, (padded_size() - size()) * sizeof(Type));
+      std::fill(pointer_ + size(), pointer_ + padded_size(), T());
     }
   }
 
@@ -112,7 +113,7 @@ public:
   {
     if (pointer_)
     {
-      std::memset(pointer_ + n, 0, (padded_size() - n) * sizeof(Type));
+      std::fill(pointer_ + n, pointer_ + padded_size(), T());
     }
   }
 
