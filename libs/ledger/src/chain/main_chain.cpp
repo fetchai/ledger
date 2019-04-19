@@ -30,29 +30,6 @@ namespace fetch {
 namespace ledger {
 
 /**
- * Converts a block status into a human readable string
- *
- * @param status The status enumeration
- * @return The output text
- */
-constexpr char const *ToString(BlockStatus status) noexcept
-{
-  switch (status)
-  {
-  case BlockStatus::ADDED:
-    return "Added";
-  case BlockStatus::LOOSE:
-    return "Loose";
-  case BlockStatus::DUPLICATE:
-    return "Duplicate";
-  case BlockStatus::INVALID:
-    return "Invalid";
-  default:
-    return "Unknown";
-  }
-}
-
-/**
  * Constructs the main chain
  *
  * @param mode Flag to signal which storage mode has been requested
