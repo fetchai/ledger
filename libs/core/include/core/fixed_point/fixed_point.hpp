@@ -243,8 +243,9 @@ public:
   /// Constants/Limits ///
   ////////////////////////
 
-  static const FixedPoint CONST_ZERO;         /* 0 */
-  static const FixedPoint CONST_ONE;          /* 1 */
+  static const FixedPoint CONST_ZERO; /* 0 */
+  static const FixedPoint CONST_ONE;  /* 1 */
+  static const FixedPoint CONST_SMALLEST_FRACTION;
   static const FixedPoint CONST_E;            /* e */
   static const FixedPoint CONST_LOG2E;        /* log_2 e */
   static const FixedPoint CONST_LOG210;       /* log_2 10 */
@@ -711,7 +712,7 @@ public:
       throw std::runtime_error(
           "Pow(x, y): x^y where x < 0 and y non-integer: mathematical operation not defined!");
     }
-    FixedPoint s   = Sign(x) * (2 * (y.integer() % 2)) + CONST_ONE;
+    FixedPoint s   = CONST_ONE * ((y.integer() + 1) % 2) + Sign(x) * (y.integer() % 2);
     FixedPoint pow = s * Exp(y * Log(Abs(x)));
     return pow;
   }
@@ -752,6 +753,7 @@ std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
   std::ios_base::fmtflags f(s.flags());
   s << std::dec << std::setprecision(14);
   s << (double)(n);
+  s << ": " << std::hex << n.Data() << std::dec;
   s.flags(f);
   return s;
 }
@@ -760,6 +762,9 @@ template <std::uint16_t I, std::uint16_t F>
 const FixedPoint<I, F> FixedPoint<I, F>::CONST_ZERO{0}; /* 0 */
 template <std::uint16_t I, std::uint16_t F>
 const FixedPoint<I, F> FixedPoint<I, F>::CONST_ONE{1}; /* 0 */
+template <std::uint16_t I, std::uint16_t F>
+const FixedPoint<I, F> FixedPoint<I, F>::CONST_SMALLEST_FRACTION(
+    0, FixedPoint::SMALLEST_FRACTION); /* 0 */
 template <std::uint16_t I, std::uint16_t F>
 const FixedPoint<I, F> FixedPoint<I, F>::CONST_E{2.718281828459045235360287471352662498}; /* e */
 template <std::uint16_t I, std::uint16_t F>

@@ -765,11 +765,14 @@ TEST(FixedPointTest, Pow_32_32)
   fetch::fixed_point::FixedPoint<32, 32> x{-1.6519711627625};
   fetch::fixed_point::FixedPoint<32, 32> two{2};
   fetch::fixed_point::FixedPoint<32, 32> three{3};
+  fetch::fixed_point::FixedPoint<32, 32> y{1.8464393615723};
   fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Pow(x, two);
   fetch::fixed_point::FixedPoint<32, 32> e2 = fp64::Pow(x, three);
+  fetch::fixed_point::FixedPoint<32, 32> e3 = fp64::Pow(two, y);
 
   EXPECT_NEAR((double)e1 / std::pow(-1.6519711627625, 2), 1.0, 1e-7);
   EXPECT_NEAR((double)e2 / std::pow(-1.6519711627625, 3), 1.0, 1e-7);
+  EXPECT_NEAR((double)e3 / std::pow(2, 1.8464393615723), 1.0, 1e-5);
   EXPECT_THROW(fp64::Pow(fp64::CONST_ZERO, fp64::CONST_ZERO), std::runtime_error);
   EXPECT_THROW(fp64::Pow(x, x), std::runtime_error);
 }
