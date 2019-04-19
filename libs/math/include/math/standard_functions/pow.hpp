@@ -61,10 +61,7 @@ meta::IfIsMathArray<ArrayType, void> Pow(ArrayType const &               array1,
   while (arr_it.is_valid())
   {
     *rit = 1;
-    for (std::size_t i{0}; i < exponent; ++i)
-    {
-      *rit *= (*arr_it);
-    }
+    Pow(*arr_it, exponent, *rit);
     ++arr_it;
     ++rit;
   }
