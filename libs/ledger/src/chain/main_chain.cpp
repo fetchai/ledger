@@ -100,13 +100,15 @@ MainChain::BlockPtr MainChain::GetHeaviestBlock() const
   return GetBlock(heaviest_.hash);
 }
 
-bool MainChain::CacheBlock(IntBlockPtr const &block) const {
-	auto const &body{block->body};
-	if(block_chain_.emplace(body.hash, block).second) {
-		trails_.emplace(body.hash, body.previous_hash);
-		return true;
-	}
-	return false;
+bool MainChain::CacheBlock(IntBlockPtr const &block) const
+{
+  auto const &body{block->body};
+  if (block_chain_.emplace(body.hash, block).second)
+  {
+    trails_.emplace(body.hash, body.previous_hash);
+    return true;
+  }
+  return false;
 }
 
 bool MainChain::UncacheBlock(BlockHash const &hash, bool root) const
@@ -114,29 +116,36 @@ bool MainChain::UncacheBlock(BlockHash const &hash, bool root) const
   auto chainLink{block_chain_.find(hash)};
   if (chainLink != block_chain_.end())
   {
-	  UncacheBlock(hash, chainLink, root);
-	  return true;
+    UncacheBlock(hash, chainLink, root);
+    return true;
   }
   return false;
 }
 
-MainChain::BlockMap::iterator MainChain::UncacheBlock(BlockHash const &hash, MainChain::BlockMap::iterator chainLink, bool root) const {
-	if(root) {
-		// take one step back and leave no trace
-		for (auto range{trails_.equal_range(chainLink->second->body.previous_hash)}; range.first != range.second; ++range.first)
-		{
-			if (range.first->second == hash) {
-				trails_.erase(range.first);
-				break;
-			}
-		}
-	}
-
-    for (auto range{trails_.equal_range(hash)}; range.first != range.second; range.first = trails_.erase(range.first))
+MainChain::BlockMap::iterator MainChain::UncacheBlock(BlockHash const &             hash,
+                                                      MainChain::BlockMap::iterator chainLink,
+                                                      bool                          root) const
+{
+  if (root)
+  {
+    // take one step back and leave no trace
+    for (auto range{trails_.equal_range(chainLink->second->body.previous_hash)};
+         range.first != range.second; ++range.first)
     {
-      UncacheBlock(range.first->second, false);
+      if (range.first->second == hash)
+      {
+        trails_.erase(range.first);
+        break;
+      }
     }
-    return block_chain_.erase(chainLink);
+  }
+
+  for (auto range{trails_.equal_range(hash)}; range.first != range.second;
+       range.first = trails_.erase(range.first))
+  {
+    UncacheBlock(range.first->second, false);
+  }
+  return block_chain_.erase(chainLink);
 }
 
 /**
@@ -160,9 +169,8 @@ bool MainChain::RemoveBlock(BlockHash hash)
   for (auto waiting_ones{loose_blocks_.begin()}; waiting_ones != loose_blocks_.end();)
   {
     auto &waiting_list{waiting_ones->second};
-    auto  cemetery{std::remove_if(
-        waiting_list.begin(), waiting_list.end(),
-        [this](BlockHash const &hash) { return IsBlockInCache(hash); })};
+    auto  cemetery{std::remove_if(waiting_list.begin(), waiting_list.end(),
+                                 [this](BlockHash const &hash) { return IsBlockInCache(hash); })};
     if (cemetery == waiting_list.begin())
     {
       waiting_ones = loose_blocks_.erase(waiting_ones);
@@ -510,7 +518,6 @@ void MainChain::RecoverFromFile(Mode mode)
       FETCH_LOG_INFO(LOGGING_NAME, "Heaviest block now: ", heaviest_block_num);
       FETCH_LOG_INFO(LOGGING_NAME, "Heaviest block weight: ", GetHeaviestBlock()->total_weight);
 
-
       // signal that the recovery was successful
       recovery_complete = true;
     }
@@ -668,7 +675,7 @@ void MainChain::TrimCache()
         }
 
         // remove the entry from the main block chain
-	trails_.erase(block.hash);
+        trails_.erase(block.hash);
         chain_it = block_chain_.erase(chain_it);
       }
       else
@@ -775,7 +782,7 @@ void MainChain::RecordLooseBlock(IntBlockPtr const &block)
   auto &waiting_blocks = loose_blocks_[block->body.previous_hash];
   waiting_blocks.push_back(block->body.hash);
 
-  block->is_loose                = true;
+  block->is_loose = true;
   CacheBlock(block);
 }
 

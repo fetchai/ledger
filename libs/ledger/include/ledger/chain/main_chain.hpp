@@ -193,8 +193,9 @@ private:
   void        AddBlockToCache(IntBlockPtr const &) const;
   bool        CacheBlock(IntBlockPtr const &block) const;
   bool        UncacheBlock(BlockHash const &hash, bool root = true) const;
-  BlockMap::iterator UncacheBlock(BlockHash const &hash, BlockMap::iterator chainLink, bool root = true) const;
-  
+  BlockMap::iterator UncacheBlock(BlockHash const &hash, BlockMap::iterator chainLink,
+                                  bool root = true) const;
+
   /// @}
 
   /// @name Tip Management
@@ -213,7 +214,7 @@ private:
   TipsMap          tips_;          ///< Keep track of the tips
   HeaviestTip      heaviest_;      ///< Heaviest block/tip
   LooseBlockMap    loose_blocks_;  ///< Waiting (loose) blocks
-  mutable Trails           trails_;        ///< The tree of paths from genesis down to every bloc
+  mutable Trails   trails_;        ///< The tree of paths from genesis down to every bloc
 };
 
 /**
