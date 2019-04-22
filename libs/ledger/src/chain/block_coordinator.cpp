@@ -344,14 +344,12 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
 BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 {
   bool const is_genesis = current_block_->body.previous_hash == GENESIS_DIGEST;
-  std::cerr << "Genesis: " << std::boolalpha << is_genesis << '\n';
 
   // Check: Ensure that we have a previous block
 
   if (!is_genesis)
   {
     BlockPtr previous = chain_.GetBlock(current_block_->body.previous_hash);
-  std::cerr << "Previous: " << byte_array::ToBase64(current_block_->body.previous_hash) << '\n';
     if (!previous)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: No previous block in chain (",
@@ -362,7 +360,6 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 
     // Check: Ensure the block number is continuous
     uint64_t const expected_block_number = previous->body.block_number + 1u;
-    std::cerr << "Exp. no: " << expected_block_number << '\n';
     if (expected_block_number != current_block_->body.block_number)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Block number mismatch (",
@@ -371,7 +368,6 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       return State::RESET;
     }
 
-    std::cerr << "miner size: " << current_block_->body.miner.size() << '\n';
     // Check: Ensure the identity is the correct size
     if (IDENTITY_LENGTH_BYTES != current_block_->body.miner.size())
     {

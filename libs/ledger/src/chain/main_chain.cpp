@@ -100,22 +100,43 @@ MainChain::BlockPtr MainChain::GetHeaviestBlock() const
   return GetBlock(heaviest_.hash);
 }
 
-bool MainChain::DeleteTrailsFrom(BlockPtr const &block)
+bool MainChain::CacheBlock(IntBlockPtr const &block) const {
+	auto const &body{block->body};
+	if(block_chain_.emplace(body.hash, block).second) {
+		trails_.emplace(body.hash, body.previous_hash);
+		return true;
+	}
+	return false;
+}
+
+bool MainChain::UncacheBlock(BlockHash const &hash, bool root) const
 {
-  if (block_chain_.erase(hash))
+  auto chainLink{block_chain_.find(hash)};
+  if (chainLink != block_chain_.end())
   {
-    // take one step back and leave no trace
-    auto range{trails_.
-    for (auto step: trails_.equal_range(block->previous_hash)
-    auto range{trails_.equal_range(hash)};
-    for (auto point{range.first}; point != range.second;)
-    {
-      DeleteTrailsFrom(point->second);
-      point = trails_.erase(point);
-    }
-    return true;
+	  UncacheBlock(hash, chainLink, root);
+	  return true;
   }
   return false;
+}
+
+MainChain::BlockMap::iterator MainChain::UncacheBlock(BlockHash const &hash, MainChain::BlockMap::iterator chainLink, bool root) const {
+	if(root) {
+		// take one step back and leave no trace
+		for (auto range{trails_.equal_range(chainLink->second->body.previous_hash)}; range.first != range.second; ++range.first)
+		{
+			if (range.first->second == hash) {
+				trails_.erase(range.first);
+				break;
+			}
+		}
+	}
+
+    for (auto range{trails_.equal_range(hash)}; range.first != range.second; range.first = trails_.erase(range.first))
+    {
+      UncacheBlock(range.first->second, false);
+    }
+    return block_chain_.erase(chainLink);
 }
 
 /**
@@ -130,7 +151,7 @@ bool MainChain::RemoveBlock(BlockHash hash)
 
   FETCH_LOCK(lock_);
 
-  if (!DeleteTrailsFrom(hash))
+  if (!UncacheBlock(hash))
   {
     return false;
   }
@@ -141,7 +162,7 @@ bool MainChain::RemoveBlock(BlockHash hash)
     auto &waiting_list{waiting_ones->second};
     auto  cemetery{std::remove_if(
         waiting_list.begin(), waiting_list.end(),
-        [this](BlockHash const &hash) { return block_chain_.find(hash) == block_chain_.end(); })};
+        [this](BlockHash const &hash) { return IsBlockInCache(hash); })};
     if (cemetery == waiting_list.begin())
     {
       waiting_ones = loose_blocks_.erase(waiting_ones);
@@ -434,9 +455,6 @@ void MainChain::RecoverFromFile(Mode mode)
   // load the head block, and attempt verify that this block forms a complete chain to genesis
   IntBlockPtr head = std::make_shared<Block>();
 
-  // rebuild paths
-  Trails trails;
-
   bool recovery_complete{false};
   if (block_store_->Get(storage::ResourceAddress("head"), *head))
   {
@@ -457,8 +475,6 @@ void MainChain::RecoverFromFile(Mode mode)
         break;
       }
 
-      // make one step back on the trail
-      trails.emplace(prev->body.hash, std::exchange(hash, prev->body.hash));
       block_index = prev->body.block_number;
     }
 
@@ -474,7 +490,7 @@ void MainChain::RecoverFromFile(Mode mode)
                      "Recovering main chain with heaviest block: ", head->body.block_number);
 
       // Add heaviest to cache
-      block_chain_[head->body.hash] = head;
+      CacheBlock(head);
 
       // Update this as our heaviest
       bool const result      = heaviest_.Update(*head);
@@ -494,7 +510,6 @@ void MainChain::RecoverFromFile(Mode mode)
       FETCH_LOG_INFO(LOGGING_NAME, "Heaviest block now: ", heaviest_block_num);
       FETCH_LOG_INFO(LOGGING_NAME, "Heaviest block weight: ", GetHeaviestBlock()->total_weight);
 
-      trails_ = std::move(trails);
 
       // signal that the recovery was successful
       recovery_complete = true;
@@ -653,6 +668,7 @@ void MainChain::TrimCache()
         }
 
         // remove the entry from the main block chain
+	trails_.erase(block.hash);
         chain_it = block_chain_.erase(chain_it);
       }
       else
@@ -688,7 +704,7 @@ void MainChain::TrimCache()
 void MainChain::FlushBlock(IntBlockPtr const &block)
 {
   // remove the block from the block map
-  block_chain_.erase(block->body.hash);
+  UncacheBlock(block->body.hash);
 
   // remove the block hash from the tips
   tips_.erase(block->body.hash);
@@ -760,7 +776,7 @@ void MainChain::RecordLooseBlock(IntBlockPtr const &block)
   waiting_blocks.push_back(block->body.hash);
 
   block->is_loose                = true;
-  block_chain_[block->body.hash] = block;
+  CacheBlock(block);
 }
 
 /**
@@ -1007,6 +1023,7 @@ void MainChain::AddBlockToCache(IntBlockPtr const &block) const
   if (block_chain_.emplace(block->body.hash, block).second)
   {
     block->is_loose = false;
+    trails_.emplace(block->body.previous_hash, block->body.hash);
   }
 }
 
