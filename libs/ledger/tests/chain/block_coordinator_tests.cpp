@@ -668,16 +668,19 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
 TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
 {
   auto genesis = block_generator_();
+  std::cerr << "0\n";
 
   // define the call expectations
   {
     InSequence s;
+  std::cerr << "1\n";
 
     // syncing
     EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
+  std::cerr << "2\n";
     // pre block validation
     // none
 
@@ -716,6 +719,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
 
   // processing of genesis block
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
+  std::cerr << "3\n";
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONIZING);
@@ -725,8 +729,10 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
+  std::cerr << "4\n";
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
+  std::cerr << "5\n";
 
   Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
   Tick(State::RESET, State::SYNCHRONIZING);
@@ -739,20 +745,32 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
   auto b1        = block_generator_(genesis);
   b1->body.miner = Block::Identity{};
   b1->UpdateDigest();
+  std::cerr << "6\n";
 
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
+  std::cerr << "7\n";
 
   Tick(State::SYNCHRONIZED, State::RESET);
+  std::cerr << "7.1\n";
   Tick(State::RESET, State::SYNCHRONIZING);
+  std::cerr << "7.2\n";
   Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
+  std::cerr << "7.3\n";
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::RESET);
+  std::cerr << "7.4\n";
   Tick(State::RESET, State::SYNCHRONIZING);
+  std::cerr << "7.5\n";
   Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
+  std::cerr << "7.6\n";
   Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+  std::cerr << "7.7\n";
   Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+  std::cerr << "7.8\n";
   Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+  std::cerr << "7.9\n";
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
+  std::cerr << "8\n";
 }
 
 TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)

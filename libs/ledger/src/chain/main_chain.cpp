@@ -100,10 +100,13 @@ MainChain::BlockPtr MainChain::GetHeaviestBlock() const
   return GetBlock(heaviest_.hash);
 }
 
-bool MainChain::DeleteTrailsFrom(BlockHash const &hash)
+bool MainChain::DeleteTrailsFrom(BlockPtr const &block)
 {
   if (block_chain_.erase(hash))
   {
+    // take one step back and leave no trace
+    auto range{trails_.
+    for (auto step: trails_.equal_range(block->previous_hash)
     auto range{trails_.equal_range(hash)};
     for (auto point{range.first}; point != range.second;)
     {
