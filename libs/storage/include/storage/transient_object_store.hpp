@@ -91,6 +91,7 @@ private:
   bool GetFromCache(ResourceID const &rid, Object &object);
   void SetInCache(ResourceID const &rid, Object const &object);
   bool IsInCache(ResourceID const &rid);
+
   void AddToWriteQueue(ResourceID const &rid);
   void ThreadLoop();
 
@@ -239,6 +240,8 @@ typename TransientObjectStore<O>::TxSummaries TransientObjectStore<O>::GetRecent
 template <typename O>
 bool TransientObjectStore<O>::Has(ResourceID const &rid)
 {
+  FETCH_LOCK(cache_mutex_);
+
   return IsInCache(rid) || archive_.Has(rid);
 }
 
@@ -256,8 +259,11 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Adding TX: ", byte_array::ToBase64(rid.id()));
 
-  // add the element into the cache
-  SetInCache(rid, object);
+  {
+    FETCH_LOCK(cache_mutex_);
+
+    SetInCache(rid, object);
+  }
 
   if (newly_seen)
   {
@@ -298,9 +304,12 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
 template <typename O>
 bool TransientObjectStore<O>::Confirm(ResourceID const &rid)
 {
-  if (!IsInCache(rid))
   {
-    return false;
+    FETCH_LOCK(cache_mutex_);
+
+    if (!IsInCache(rid)) {
+      return false;
+    }
   }
 
   // add the element into the queue of items to be pushed to disk
@@ -342,7 +351,6 @@ bool TransientObjectStore<O>::GetFromCache(ResourceID const &rid, O &object)
 template <typename O>
 void TransientObjectStore<O>::SetInCache(ResourceID const &rid, O const &object)
 {
-  FETCH_LOCK(cache_mutex_);
   typename Cache ::iterator it;
   bool                      inserted{false};
 
@@ -367,7 +375,6 @@ void TransientObjectStore<O>::SetInCache(ResourceID const &rid, O const &object)
 template <typename O>
 bool TransientObjectStore<O>::IsInCache(ResourceID const &rid)
 {
-  FETCH_LOCK(cache_mutex_);
   return cache_.find(rid) != cache_.end();
 }
 
