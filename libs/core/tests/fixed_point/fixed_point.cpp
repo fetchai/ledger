@@ -94,7 +94,7 @@ TEST(FixedPointTest, Conversion_16_16)
   fetch::fixed_point::FixedPoint<16, 16> largest_fixed_point = largest_int + almost_one;
 
   // Smallest possible Fixed Point number.
-  fetch::fixed_point::FixedPoint<16, 16> smallest_fixed_point = smallest_int - almost_one;
+  fetch::fixed_point::FixedPoint<16, 16> smallest_fixed_point = smallest_int + almost_one;
 
   EXPECT_EQ(infinitesimal.Data(), fp32::SMALLEST_FRACTION);
   EXPECT_EQ(almost_one.Data(), fp32::LARGEST_FRACTION);
@@ -102,6 +102,8 @@ TEST(FixedPointTest, Conversion_16_16)
   EXPECT_EQ(smallest_int.Data(), fp32::MIN_INT);
   EXPECT_EQ(largest_fixed_point.Data(), fp32::MAX);
   EXPECT_EQ(smallest_fixed_point.Data(), fp32::MIN);
+  EXPECT_EQ(fp32::MIN, 0x8000ffff);
+  EXPECT_EQ(fp32::MAX, 0x7fffffff);
 
   // We cannot be smaller than the actual negative integer of the actual type
   EXPECT_TRUE(smallest_fixed_point.Data() > std::numeric_limits<int32_t>::min());
@@ -187,7 +189,7 @@ TEST(FixedPointTest, Conversion_32_32)
   fetch::fixed_point::FixedPoint<32, 32> largest_fixed_point = largest_int + almost_one;
 
   // Smallest possible Fixed Point number.
-  fetch::fixed_point::FixedPoint<32, 32> smallest_fixed_point = smallest_int - almost_one;
+  fetch::fixed_point::FixedPoint<32, 32> smallest_fixed_point = smallest_int + almost_one;
 
   EXPECT_EQ(infinitesimal.Data(), fp64::SMALLEST_FRACTION);
   EXPECT_EQ(almost_one.Data(), fp64::LARGEST_FRACTION);
@@ -195,6 +197,8 @@ TEST(FixedPointTest, Conversion_32_32)
   EXPECT_EQ(smallest_int.Data(), fp64::MIN_INT);
   EXPECT_EQ(largest_fixed_point.Data(), fp64::MAX);
   EXPECT_EQ(smallest_fixed_point.Data(), fp64::MIN);
+  EXPECT_EQ(fp64::MIN, 0x80000000ffffffff);
+  EXPECT_EQ(fp64::MAX, 0x7fffffffffffffff);
 
   // We cannot be smaller than the actual negative integer of the actual type
   EXPECT_TRUE(smallest_fixed_point.Data() > std::numeric_limits<int64_t>::min());

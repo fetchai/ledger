@@ -821,7 +821,7 @@ const typename FixedPoint<I, F>::Type FixedPoint<I, F>::MAX =
     MAX_INT | LARGEST_FRACTION; /* largest fixed point */
 template <std::uint16_t I, std::uint16_t F>
 const typename FixedPoint<I, F>::Type FixedPoint<I, F>::MIN =
-    -(MIN_INT ^ LARGEST_FRACTION); /* smallest fixed point */
+    MIN_INT ^ LARGEST_FRACTION; /* smallest fixed point */
 template <std::uint16_t I, std::uint16_t F>
 const FixedPoint<I, F> FixedPoint<I, F>::MAX_EXP =
     FixedPoint::Log(FixedPoint::FromBase(FixedPoint::MAX)); /* maximum exponent for Exp() */
