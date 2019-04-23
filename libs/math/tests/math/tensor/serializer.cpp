@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/serializers/math_types.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
@@ -50,9 +49,12 @@ TYPED_TEST(SerializersTest, serialize_tensor)
     i++;
   }
   fetch::serializers::ByteArrayBuffer b;
+
   b << t1;
   b.seek(0);
   fetch::math::Tensor<TypeParam> t2;
+
   b >> t2;
+
   EXPECT_EQ(t1, t2);
 }

@@ -63,6 +63,5 @@ ArrayType Elu(ArrayType const &t, typename ArrayType::Type &a)
   Elu(t, a, ret);
   return ret;
 }
-
 }  // namespace math
 }  // namespace fetch

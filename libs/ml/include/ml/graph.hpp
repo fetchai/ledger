@@ -37,9 +37,10 @@ template <class T>
 class Graph : public ops::Trainable<T>
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using Datatype     = typename ArrayType::Type;
+  using ArrayType      = T;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using Datatype       = typename ArrayType::Type;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   Graph()
   {}
@@ -49,7 +50,7 @@ public:
    * @param node_name name of node to evaluate for output
    * @return pointer to array containing node output
    */
-  ArrayType const &Evaluate(std::string const &node_name)
+  ArrayType Evaluate(std::string const &node_name)
   {
     if (nodes_[node_name])
     {

@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor_operations.hpp"
-
 #include "ml/layers/layer.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/flatten.hpp"
