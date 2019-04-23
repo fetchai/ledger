@@ -121,15 +121,17 @@ meta::IfIsMathArray<ArrayType, ArrayType> BooleanMask(ArrayType &input_array, Ar
 }
 
 /**
- * Simple Scatter implementation. Updates data in the input array at locations specified by indices with values specified by updates
+ * Simple Scatter implementation. Updates data in the input array at locations specified by indices
+ * with values specified by updates
  * @tparam ArrayType
  * @tparam Indices
  * @param input_array
  * @param updates
  * @param indices
  */
-template <typename ArrayType, typename ... Indices>
-void Scatter(ArrayType &input_array, ArrayType const &updates, std::vector<Indices...> const &indices)
+template <typename ArrayType, typename... Indices>
+void Scatter(ArrayType &input_array, ArrayType const &updates,
+             std::vector<Indices...> const &indices)
 {
   ASSERT(indices.size() == updates.size());
 
@@ -184,7 +186,6 @@ T Product(std::vector<T> const &obj1)
   Product(obj1, ret);
   return ret;
 }
-
 
 /**
  * Finds the maximum value in an array

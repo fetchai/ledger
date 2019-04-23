@@ -36,7 +36,6 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(FreeFunctionsTest, MyTypes);
 
-
 TYPED_TEST(FreeFunctionsTest, BooleanMask_SetAll)
 {
   using SizeType = typename TypeParam::SizeType;
@@ -53,14 +52,13 @@ TYPED_TEST(FreeFunctionsTest, BooleanMask_SetAll)
   EXPECT_EQ(ret.shape(), array1.shape());
 }
 
-
 TYPED_TEST(FreeFunctionsTest, Scatter_SetAll)
 {
   using SizeType = typename TypeParam::SizeType;
-  using Type = typename TypeParam::Type;
+  using Type     = typename TypeParam::Type;
 
-  TypeParam array1{4};
-  TypeParam updates{4};
+  TypeParam             array1{4};
+  TypeParam             updates{4};
   std::vector<SizeType> indices{};
   updates.SetAllOne();
   indices.emplace_back(0);
@@ -101,7 +99,6 @@ TYPED_TEST(FreeFunctionsTest, Max_OneDimension)
   EXPECT_EQ(output, array1.At(2));
 }
 
-
 TYPED_TEST(FreeFunctionsTest, Max_TwoDimension)
 {
   using SizeType = typename TypeParam::SizeType;
@@ -125,7 +122,6 @@ TYPED_TEST(FreeFunctionsTest, Max_TwoDimension)
   EXPECT_EQ(output.At(1), typename TypeParam::Type(0));
   EXPECT_EQ(output.At(2), typename TypeParam::Type(999));
   EXPECT_EQ(output.At(3), typename TypeParam::Type(21));
-
 
   TypeParam output2{n_features};
   fetch::math::Max(array1, SizeType(0), output2);

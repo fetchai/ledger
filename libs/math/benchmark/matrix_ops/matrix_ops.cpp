@@ -19,8 +19,8 @@
 #include <iomanip>
 #include <iostream>
 
-#include "math/tensor.hpp"
 #include "math/matrix_operations.hpp"
+#include "math/tensor.hpp"
 
 #include "benchmark/benchmark.h"
 
@@ -38,7 +38,6 @@ void BM_BooleanMaskEmpty(benchmark::State &state)
     state.ResumeTiming();
 
     fetch::math::BooleanMask(t, mask);
-
   }
 }
 
@@ -88,8 +87,8 @@ void BM_ScatterFull(benchmark::State &state)
   for (auto _ : state)
   {
     state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
-    fetch::math::Tensor<T> updates(std::vector<SizeType>{C, H, W});
+    fetch::math::Tensor<T>             t(std::vector<std::uint64_t>{C, H, W});
+    fetch::math::Tensor<T>             updates(std::vector<SizeType>{C, H, W});
     std::vector<std::vector<SizeType>> indices{C * H * W};
 
     SizeType counter = 0;
@@ -126,7 +125,6 @@ BENCHMARK_TEMPLATE(BM_ScatterFull, int, 256, 256, 256)->Unit(benchmark::kMillise
 BENCHMARK_TEMPLATE(BM_ScatterFull, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_ScatterFull, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
 
-
 template <class T, int C, int H, int W>
 void BM_Max(benchmark::State &state)
 {
@@ -150,7 +148,6 @@ BENCHMARK_TEMPLATE(BM_Max, double, 128, 256, 256)->Unit(benchmark::kMillisecond)
 BENCHMARK_TEMPLATE(BM_Max, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_Max, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_Max, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
-
 
 template <class T, int C, int H, int W>
 void BM_MaxAxis(benchmark::State &state)
