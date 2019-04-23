@@ -25,3 +25,6 @@ tags
 
 *.DS_Store
 *.ipynb_checkpoints/
+
+/vendor/openssl/build/
+/vendor/openssl/dist/
