@@ -35,7 +35,7 @@ namespace math {
 template <typename T>
 meta::IfIsArithmetic<T, void> Abs(T const &n, T &ret)
 {
-  ret = T(std::abs(double(n));
+  ret = T(std::abs(double(n)));
 }
 
 // TODO: this should be somehow reinstated, as current Abs does a cast to double
