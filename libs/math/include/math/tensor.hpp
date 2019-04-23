@@ -2373,6 +2373,14 @@ bool Tensor<T, C>::operator!=(Tensor<T, C> const &other) const
 /// Tensor Setter ///
 /////////////////////
 
+/**
+ * The Tensor Setter handles template unrolling for the Args parameter pack which ends in one value
+ * @tparam T Type
+ * @tparam C Container
+ * @tparam N The index of the dimension currently being unrolled
+ * @tparam TSType Tensor SizeType
+ * @tparam Args The Parameter pack containing the indices and one value
+ */
 template <typename T, typename C>
 template <SizeType N, typename TSType, typename... Args>
 struct Tensor<T, C>::TensorSetter
@@ -2397,6 +2405,13 @@ struct Tensor<T, C>::TensorSetter
   }
 };
 
+/**
+ * The limit case of the template unrolling for Set
+ * @tparam T Type
+ * @tparam C Container
+ * @tparam N The index of the dimension currently being unrolled
+ * @tparam TSType Tensor SizeType
+ */
 template <typename T, typename C>
 template <SizeType N, typename TSType>
 struct Tensor<T, C>::TensorSetter<N, TSType>
