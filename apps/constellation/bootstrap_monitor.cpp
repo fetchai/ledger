@@ -30,7 +30,7 @@ namespace {
 using variant::Variant;
 using variant::Extract;
 using network::Uri;
-using http::JsonClient;
+using http::JsonHttpClient;
 
 const char *               BOOTSTRAP_HOST = "bootstrap.economicagents.com";
 const uint16_t             BOOTSTRAP_PORT = 80;
@@ -88,7 +88,7 @@ bool BootstrapMonitor::UpdateExternalAddress()
 {
   bool success = false;
 
-  JsonClient ipify_client{JsonClient::ConnectionMode::HTTP, "api.ipify.org"};
+  JsonHttpClient ipify_client("api.ipify.org");
 
   Variant response;
   if (ipify_client.Get("/?format=json", response))
@@ -121,14 +121,14 @@ bool BootstrapMonitor::RequestPeerList(UriList &peers)
   std::ostringstream oss;
   oss << "/api/networks/" << network_id_ << "/discovery/";
 
-  JsonClient client{JsonClient::ConnectionMode::HTTP, BOOTSTRAP_HOST, BOOTSTRAP_PORT};
+  JsonHttpClient client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
 
   Variant request       = Variant::Object();
   request["public_key"] = byte_array::ToBase64(identity_.identifier());
   request["host"]       = external_address_;
   request["port"]       = port_;
 
-  JsonClient::Headers headers;
+  JsonHttpClient::Headers headers;
   headers["Authorization"] = "Token " + token_;
 
   Variant response;
@@ -184,10 +184,9 @@ bool BootstrapMonitor::RegisterNode()
   request["client_version"] = fetch::version::FULL;
   request["host_name"]      = host_name_;
 
-  Variant    response;
-  JsonClient client{JsonClient::ConnectionMode::HTTP, BOOTSTRAP_HOST, BOOTSTRAP_PORT};
-
-  JsonClient::Headers headers;
+  Variant                 response;
+  JsonHttpClient          client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
+  JsonHttpClient::Headers headers;
   headers["Authorization"] = "Token " + token_;
 
   if (client.Post("/api/register/", headers, request, response))
@@ -209,10 +208,9 @@ bool BootstrapMonitor::NotifyNode()
   Variant request       = Variant::Object();
   request["public_key"] = byte_array::ToBase64(identity_.identifier());
 
-  Variant    response;
-  JsonClient client{JsonClient::ConnectionMode::HTTP, BOOTSTRAP_HOST, BOOTSTRAP_PORT};
-
-  JsonClient::Headers headers;
+  Variant                 response;
+  JsonHttpClient          client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
+  JsonHttpClient::Headers headers;
   headers["Authorization"] = "Token " + token_;
 
   if (client.Post("/api/notify/", headers, request, response))

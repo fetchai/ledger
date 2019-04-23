@@ -93,7 +93,7 @@ struct Key
 
     // Assert that the corresponding compare would return the same
     int dummy          = 0;
-    int compare_result = Compare(rhs, dummy, BYTES, 0);
+    int compare_result = Compare(rhs, dummy, 0, 64);
 
     FETCH_UNUSED(compare_result);
     /* assert(result == compare_result); */  // TODO(HUT): look into this
@@ -134,7 +134,7 @@ struct Key
       bit = std::min(bit, last_bit);
     }
 
-    pos = bit + (i << 6);
+    pos = bit + (i << 8);
     if (pos >= int(this->size_in_bits()))
     {
       return 0;

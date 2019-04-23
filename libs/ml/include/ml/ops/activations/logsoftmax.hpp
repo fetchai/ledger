@@ -30,17 +30,15 @@ template <class T>
 class LogSoftmax : public fetch::ml::Ops<T>
 {
 public:
-  using ArrayType      = T;
-  using DataType       = typename ArrayType::Type;
-  using ArrayPtrType   = std::shared_ptr<ArrayType>;
-  using ConstSliceType = typename ArrayType::ConstSliceType;
+  using ArrayType    = T;
+  using DataType     = typename ArrayType::Type;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   LogSoftmax()          = default;
   virtual ~LogSoftmax() = default;
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs, ArrayType &output)
+  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
-    (void)output;
     assert(inputs.size() == 1);
     if (!this->output_ || this->output_->shape() != inputs[0]->shape())
     {

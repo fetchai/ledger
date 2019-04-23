@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "math/comparison.hpp"
 
 namespace fetch {
@@ -33,19 +32,14 @@ template <typename ArrayType>
 void Relu(ArrayType const &t, ArrayType &ret)
 {
   assert(t.size() == ret.size());
-
-  auto it  = t.cbegin();
-  auto rit = ret.begin();
-  while (it.is_valid())
+  for (typename ArrayType::SizeType j = 0; j < t.size(); ++j)
   {
-    *rit = fetch::math::Max(*it, typename ArrayType::Type(0));
-    ++it;
-    ++rit;
+    ret[j] = fetch::math::Max(t[j], typename ArrayType::Type(0));
   }
 }
 
 template <typename ArrayType>
-ArrayType Relu(ArrayType const &t)
+ArrayType Relu(ArrayType &t)
 {
   ArrayType ret(t.shape());
   Relu(t, ret);

@@ -90,7 +90,7 @@ std::string GetTextString(std::string const &training_data)
   {
     for (std::uint64_t j = 0; j < file_names.size(); ++j)
     {
-      std::string   cur_file = training_data + file_names.at(j);
+      std::string   cur_file = training_data + "/" + file_names.at(j) + ".txt";
       std::ifstream t(cur_file);
 
       std::string cur_text((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());

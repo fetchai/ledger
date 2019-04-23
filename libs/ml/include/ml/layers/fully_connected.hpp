@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/tensor_operations.hpp"
+
 #include "ml/layers/layer.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/flatten.hpp"
@@ -39,7 +41,6 @@ class FullyConnected : public Layer<T>
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SizeType     = typename ArrayType::SizeType;
   using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
 
   FullyConnected(std::uint64_t in, std::uint64_t out, std::string const &name = "FC",
@@ -64,17 +65,10 @@ public:
 
     ArrayType weights_data(std::vector<std::uint64_t>({in, out}));
     this->Initialise(weights_data, init_mode);
-    this->SetInput(weights, weights_data, false, false);
+    this->SetInput(weights, weights_data);
 
     ArrayType bias_data(std::vector<std::uint64_t>({1, out}));
-    this->SetInput(bias, bias_data, false, false);
-  }
-
-  virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
-  {
-    (void)inputs;
-    return {1, this->out_size};
+    this->SetInput(bias, bias_data);
   }
 
   static constexpr char const *DESCRIPTOR = "FullyConnected";

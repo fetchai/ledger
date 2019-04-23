@@ -33,35 +33,29 @@ template <class T>
 class NodeInterface
 {
 public:
-  using ArrayType      = T;
-  using ArrayPtrType   = std::shared_ptr<ArrayType>;
-  using SliceType      = typename ArrayType::SliceType;
-  using ConstSliceType = typename ArrayType::ConstSliceType;
+  using ArrayType    = T;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual ArrayType &Evaluate()                                            = 0;
-  virtual void       AddInput(std::shared_ptr<NodeInterface<T>> const &i)  = 0;
-  virtual void       AddOutput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
+  virtual ArrayType const &Evaluate()                                           = 0;
+  virtual void             AddInput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
-      ArrayType const &errorSignal)                                                = 0;
-  virtual void ResetCache(bool input_size_changed)                                 = 0;
-  virtual void SetBatch(bool b)                                                    = 0;
-  virtual std::vector<std::shared_ptr<NodeInterface<T>>> const &GetOutputs() const = 0;
+      ArrayType const &errorSignal) = 0;
+  virtual void ResetCache()         = 0;
+  virtual void SetBatch(bool b)     = 0;
 };
 
 template <class T, class O>
 class Node : public NodeInterface<T>, public O
 {
 public:
-  using ArrayType      = T;
-  using ArrayPtrType   = std::shared_ptr<ArrayType>;
-  using SliceType      = typename ArrayType::SliceType;
-  using ConstSliceType = typename ArrayType::ConstSliceType;
+  using ArrayType    = T;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   template <typename... Params>
   Node(std::string const name, Params... params)
     : O(params...)
     , name_(std::move(name))
-    , cached_output_present_(false)
+    , cachedOutputPresent_(false)
     , batch_(false)
   {}
 
@@ -77,24 +71,24 @@ public:
     return inputs;
   }
 
-  virtual ArrayType &Evaluate()
+  virtual ArrayType const &Evaluate()
   {
-    std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
-    FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
-    if (!cached_output_present_)
+    if (!cachedOutputPresent_)
     {
+      std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
+      FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
       if (batch_)
       {
-        cached_output_ = this->ForwardBatch(inputs);
+        cachedOutput_ = this->ForwardBatch(inputs);
       }
       else
       {
-        cached_output_ = this->Forward(inputs, cached_output_);
+        cachedOutput_ = this->Forward(inputs);
       }
-      cached_output_present_ = true;
+      cachedOutputPresent_ = true;
     }
 
-    return cached_output_;
+    return cachedOutput_;
   }
 
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
@@ -131,28 +125,9 @@ public:
     inputs_.push_back(i);
   }
 
-  void AddOutput(std::shared_ptr<NodeInterface<T>> const &o)
+  virtual void ResetCache()
   {
-    outputs_.push_back(o);
-  }
-
-  virtual std::vector<std::shared_ptr<NodeInterface<T>>> const &GetOutputs() const
-  {
-    return outputs_;
-  }
-
-  virtual void ResetCache(bool input_size_changed)
-  {
-    cached_output_present_ = false;
-    if (input_size_changed)
-    {
-      std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
-      auto output_size = this->ComputeOutputShape(inputs);
-      if (cached_output_.shape() != output_size)
-      {
-        cached_output_ = ArrayType(output_size);
-      }
-    }
+    cachedOutputPresent_ = false;
   }
 
   virtual void SetBatch(bool b)
@@ -162,10 +137,9 @@ public:
 
 private:
   std::vector<std::shared_ptr<NodeInterface<T>>> inputs_;
-  std::vector<std::shared_ptr<NodeInterface<T>>> outputs_;
   std::string                                    name_;
-  ArrayType                                      cached_output_;
-  bool                                           cached_output_present_;
+  ArrayType                                      cachedOutput_;
+  bool                                           cachedOutputPresent_;
   bool                                           batch_;
 };
 

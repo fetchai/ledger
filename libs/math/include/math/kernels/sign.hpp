@@ -17,18 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdint>
-#include <unordered_set>
-#include <vector>
-
 namespace fetch {
-namespace math {
+namespace kernels {
 
-using SizeType   = uint64_t;
-using SizeVector = std::vector<SizeType>;
-using SizeSet    = std::unordered_set<SizeType>;
+template <typename vector_register_type>
+struct Sign
+{
+  void operator()(vector_register_type const &x, vector_register_type &y) const
+  {
+    const vector_register_type zero(typename vector_register_type::type(0));
+    const vector_register_type one(typename vector_register_type::type(1));
+    const vector_register_type min_one(typename vector_register_type::type(-1));
 
-constexpr SizeType NO_AXIS = SizeType(-1);
+    y = ((x == zero) * (zero)) + ((x > zero) * (one)) + ((x < zero) * (min_one));
+  }
+};
 
-}  // namespace math
+}  // namespace kernels
 }  // namespace fetch

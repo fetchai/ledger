@@ -262,7 +262,7 @@ template <typename T>
 std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetAtIndex(SizeType idx)
 {
   // pull data from multiple data buffers into single output buffer
-  T data_buffer(std::vector<SizeType>({p_.n_data_buffers}));
+  T data_buffer(std::vector<SizeType>({1, p_.n_data_buffers}));
   GetData(idx, data_buffer);
 
   SizeType label = GetLabel(idx);

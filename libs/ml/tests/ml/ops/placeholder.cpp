@@ -27,13 +27,13 @@ TEST(placeholder_test, setData)
   std::uint64_t            i(0);
   for (int e : {1, 2, 3, 4, 5, 6, 7, 8})
   {
-    data.Set({i}, e);
-    gt.Set({i}, e);
+    data.Set(i, e);
+    gt.Set(i, e);
     i++;
   }
   fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>> op;
   op.SetData(data);
-  fetch::math::Tensor<int> prediction = op.template Ops<fetch::math::Tensor<int>>::Forward({});
+  fetch::math::Tensor<int> prediction = op.Forward({});
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -47,14 +47,14 @@ TEST(placeholder_test, resetData)
     std::uint64_t i(0);
     for (int e : {1, 2, 3, 4, 5, 6, 7, 8})
     {
-      data.Set({i}, e);
-      gt.Set({i}, e);
+      data.Set(i, e);
+      gt.Set(i, e);
       i++;
     }
   }
   fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>> op;
   op.SetData(data);
-  fetch::math::Tensor<int> prediction = op.template Ops<fetch::math::Tensor<int>>::Forward({});
+  fetch::math::Tensor<int> prediction = op.Forward({});
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -64,14 +64,14 @@ TEST(placeholder_test, resetData)
     std::uint64_t i(0);
     for (int e : {12, 13, -14, 15, 16, -17, 18, 19})
     {
-      data.Set({i}, e);
-      gt.Set({i}, e);
+      data.Set(i, e);
+      gt.Set(i, e);
       i++;
     }
   }
 
   op.SetData(data);
-  prediction = op.template Ops<fetch::math::Tensor<int>>::Forward({});
+  prediction = op.Forward({});
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));

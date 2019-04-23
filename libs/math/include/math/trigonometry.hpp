@@ -34,13 +34,9 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Sin(ArrayType const &x, ArrayT
 {
   ASSERT(ret.size() == x.size());
 
-  auto x_it = x.cbegin();
-  auto rit  = ret.begin();
-  while (x_it.is_valid())
+  for (auto &val : ret)
   {
-    *rit = std::sin(*x_it);
-    ++x_it;
-    ++rit;
+    val = std::sin(x);
   }
 }
 
@@ -60,13 +56,10 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> Cos(ArrayType const &x, ArrayType &ret)
 {
   ASSERT(ret.size() == x.size());
-  auto x_it = x.cbegin();
-  auto rit  = ret.begin();
-  while (x_it.is_valid())
+
+  for (auto &val : ret)
   {
-    *rit = std::cos(*x_it);
-    ++x_it;
-    ++rit;
+    val = std::cos(x);
   }
 }
 
@@ -86,13 +79,10 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> Tan(ArrayType const &x, ArrayType &ret)
 {
   ASSERT(ret.size() == x.size());
-  auto x_it = x.cbegin();
-  auto rit  = ret.begin();
-  while (x_it.is_valid())
+
+  for (auto &val : ret)
   {
-    *rit = std::tan(*x_it);
-    ++x_it;
-    ++rit;
+    val = std::tan(x);
   }
 }
 
@@ -113,13 +103,10 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> ASin(ArrayType const &x, ArrayType &ret)
 {
   ASSERT(ret.size() == x.size());
-  auto x_it = x.cbegin();
-  auto rit  = ret.begin();
-  while (x_it.is_valid())
+
+  for (auto &val : ret)
   {
-    *rit = std::asin(*x_it);
-    ++x_it;
-    ++rit;
+    val = std::asin(x);
   }
 }
 
@@ -140,13 +127,10 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> ACos(ArrayType const &x, ArrayType &ret)
 {
   ASSERT(ret.size() == x.size());
-  auto x_it = x.cbegin();
-  auto rit  = ret.begin();
-  while (x_it.is_valid())
+
+  for (auto &val : ret)
   {
-    *rit = std::acos(*x_it);
-    ++x_it;
-    ++rit;
+    val = std::acos(x);
   }
 }
 
@@ -167,13 +151,10 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> ATan(ArrayType const &x, ArrayType &ret)
 {
   ASSERT(ret.size() == x.size());
-  auto x_it = x.cbegin();
-  auto rit  = ret.begin();
-  while (x_it.is_valid())
+
+  for (auto &val : ret)
   {
-    *rit = std::atan(*x_it);
-    ++x_it;
-    ++rit;
+    val = std::atan(x);
   }
 }
 
@@ -195,13 +176,10 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> ATan2(ArrayType const &x, ArrayType &ret)
 {
   ASSERT(ret.size() == x.size());
-  auto x_it = x.cbegin();
-  auto rit  = ret.begin();
-  while (x_it.is_valid())
+
+  for (auto &val : ret)
   {
-    *rit = std::atan2(*x_it);
-    ++x_it;
-    ++rit;
+    val = std::atan2(x);
   }
 }
 
@@ -222,13 +200,10 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> SinH(ArrayType const &x, ArrayType &ret)
 {
   ASSERT(ret.size() == x.size());
-  auto x_it = x.cbegin();
-  auto rit  = ret.begin();
-  while (x_it.is_valid())
+
+  for (auto &val : ret)
   {
-    *rit = std::sinh(*x_it);
-    ++x_it;
-    ++rit;
+    val = std::sinh(x);
   }
 }
 
@@ -249,13 +224,10 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> CosH(ArrayType const &x, ArrayType &ret)
 {
   ASSERT(ret.size() == x.size());
-  auto x_it = x.cbegin();
-  auto rit  = ret.begin();
-  while (x_it.is_valid())
+
+  for (auto &val : ret)
   {
-    *rit = std::cosh(*x_it);
-    ++x_it;
-    ++rit;
+    val = std::cosh(x);
   }
 }
 
@@ -277,27 +249,26 @@ fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> TanH(ArrayType co
                                                                     ArrayType &      ret)
 {
   ASSERT(ret.size() == x.size());
-  auto x_it = x.cbegin();
-  auto rit  = ret.begin();
-  while (x_it.is_valid())
+
+  typename ArrayType::SizeType idx(0);
+  for (auto &val : ret)
   {
-    *rit = std::tanh(*x_it);
-    ++x_it;
-    ++rit;
+    val = std::tanh(x.At(idx));
+    ++idx;
   }
 }
 template <typename ArrayType>
 fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> TanH(ArrayType const &x, ArrayType &ret)
 {
   ASSERT(ret.size() == x.size());
-  auto x_it = x.cbegin();
-  auto rit  = ret.begin();
-  while (x_it.is_valid())
+
+  typename ArrayType::SizeType idx(0);
+  for (auto &val : ret)
   {
     // TODO(800) - native fixed point implementation required - casting to double will not be
-    *rit = typename ArrayType::Type(std::tanh(double(*x_it)));
-    ++x_it;
-    ++rit;
+    // permitted in future
+    val = typename ArrayType::Type(std::tanh(double(x.At(idx))));
+    ++idx;
   }
 }
 template <typename ArrayType>
@@ -317,13 +288,10 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> ASinH(ArrayType const &x, ArrayType &ret)
 {
   ASSERT(ret.size() == x.size());
-  auto x_it = x.cbegin();
-  auto rit  = ret.begin();
-  while (x_it.is_valid())
+
+  for (auto &val : ret)
   {
-    *rit = std::asinh(*x_it);
-    ++x_it;
-    ++rit;
+    val = std::asinh(x);
   }
 }
 
@@ -344,13 +312,10 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> ACosH(ArrayType const &x, ArrayType &ret)
 {
   ASSERT(ret.size() == x.size());
-  auto x_it = x.cbegin();
-  auto rit  = ret.begin();
-  while (x_it.is_valid())
+
+  for (auto &val : ret)
   {
-    *rit = std::acosh(*x_it);
-    ++x_it;
-    ++rit;
+    val = std::acosh(x);
   }
 }
 
@@ -371,13 +336,10 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> ATanH(ArrayType const &x, ArrayType &ret)
 {
   ASSERT(ret.size() == x.size());
-  auto x_it = x.cbegin();
-  auto rit  = ret.begin();
-  while (x_it.is_valid())
+
+  for (auto &val : ret)
   {
-    *rit = std::atanh(*x_it);
-    ++x_it;
-    ++rit;
+    val = std::atanh(x);
   }
 }
 

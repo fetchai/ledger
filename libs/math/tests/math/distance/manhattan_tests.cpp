@@ -42,20 +42,20 @@ TYPED_TEST(ManhattenTest, simple_test)
 {
   Tensor<double> A = Tensor<double>(3);
   A.Fill(0);
-  A.Set({0}, 1);
+  A.Set(0, 1);
   EXPECT_EQ(0, Manhattan(A, A));
 
   Tensor<double> B = Tensor<double>(3);
   B.Fill(0);
-  B.Set({1}, 1);
+  B.Set(1, 1);
   EXPECT_EQ(Manhattan(A, B), 2);
 
   B.Fill(0);
-  B.Set({1}, 2);
+  B.Set(1, 2);
   EXPECT_EQ(Manhattan(A, B), 3);
 
   B.Fill(0);
-  B.Set({0}, 1);
-  B.Set({1}, 1);
+  B.Set(0, 1);
+  B.Set(1, 1);
   EXPECT_EQ(Manhattan(A, B), 1);
 }

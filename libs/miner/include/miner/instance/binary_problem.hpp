@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
+#include <memory/rectangular_array.hpp>
 #include <memory/shared_array.hpp>
 #include <unordered_set>
 #include <vector>
@@ -164,7 +164,7 @@ public:
   {
     return energy_offset_;
   }
-  math::Tensor<cost_type> const &couplings() const
+  memory::RectangularArray<cost_type> const &couplings() const
   {
     return couplings_;
   }
@@ -191,7 +191,7 @@ private:
   cost_type normalisation_constant_ = 1.0;
 
   std::vector<std::unordered_set<uint64_t>> couples_to_;
-  Tensor<cost_type>                         couplings_;
+  memory::RectangularArray<cost_type>       couplings_;
   memory::SharedArray<cost_type>            coupling_sum_;
 };
 }  // namespace optimisers

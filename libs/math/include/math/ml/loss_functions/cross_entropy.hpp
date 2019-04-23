@@ -46,9 +46,9 @@ typename ArrayType::Type CrossEntropyLoss(
 
   FETCH_UNUSED(n_classes);
 
-  ASSERT(x.shape() == y.shape());
-  ASSERT(x.shape().size() == 2);
-  ASSERT(n_classes > SizeType(1));
+  assert(x.shape() == y.shape());
+  assert(x.shape().size() == 2);
+  assert(n_classes > SizeType(1));
 
   auto n_examples = x.shape().at(0);
   auto n_dims     = x.shape().at(1);
@@ -58,42 +58,33 @@ typename ArrayType::Type CrossEntropyLoss(
   // if not a one-hot, must be binary logistic regression cost
   if (n_dims == 1)
   {
-    ASSERT(n_classes == SizeType(2));
-
-    auto     x_it = x.cbegin();
-    auto     y_it = y.cbegin();
-    DataType one{1};
-    DataType zero{0};
-    DataType tmp;
-
-    while (x_it.is_valid())
+    assert(n_classes == SizeType(2));
+    for (SizeType idx = 0; idx < n_examples; ++idx)
     {
-      ASSERT((*y_it == one) || (*y_it == zero));
-      if (*y_it == one)
+      assert((y.At(idx) == DataType(1)) || (y.At(idx) == DataType(0)));
+      if (y.At(idx) == DataType(1))
       {
-        ret -= Log(*x_it);
+        ret -= Log(x.At(idx));
       }
       else
       {
-        tmp = one - *x_it;
+        DataType tmp = DataType(1) - x.At(idx);
         if (tmp <= 0)
         {
           throw std::runtime_error("cannot take log of negative values");
         }
         ret -= Log(tmp);
       }
-      ++x_it;
-      ++y_it;
     }
   }
   // if a one-hot, could be arbitrary n_classes
   else
   {
-    ArrayType gt = ArgMax(y, 1);  // y must be one hot - and we can ignore the zero cases
+    ArrayType gt = ArgMax(y);  // y must be one hot - and we can ignore the zero cases
 
     for (SizeType idx = 0; idx < n_examples; ++idx)
     {
-      ret -= Log(x.At(idx, SizeType(gt[idx])));
+      ret -= Log(x.At({idx, SizeType(gt.At(idx))}));
     }
   }
   Divide(ret, static_cast<DataType>(n_examples), ret);

@@ -76,21 +76,24 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Log(ArrayType const &array, ArrayType &ret)
 {
   ASSERT(ret.shape() == array.shape());
-  auto it1 = array.cbegin();
-  auto rit = ret.begin();
-  while (it1.is_valid())
+  typename ArrayType::SizeType ret_count{0};
+  for (typename ArrayType::Type &e : array)
   {
-    Log(*it1, *rit);
-    ++it1;
-    ++rit;
+    Log(e, ret.At(ret_count));
+    ++ret_count;
   }
 }
 
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Log(ArrayType const &array)
 {
-  ArrayType ret{array.shape()};
-  Log(array, ret);
+  ArrayType                    ret{array.shape()};
+  typename ArrayType::SizeType ret_count{0};
+  for (typename ArrayType::Type &e : array)
+  {
+    Log(e, ret.At(ret_count));
+    ++ret_count;
+  }
   return ret;
 }
 
@@ -106,21 +109,24 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Log2(ArrayType const &array, ArrayType &ret)
 {
   ASSERT(ret.shape() == array.shape());
-  auto it1 = array.cbegin();
-  auto rit = ret.begin();
-  while (it1.is_valid())
+  typename ArrayType::SizeType ret_count{0};
+  for (typename ArrayType::Type &e : array)
   {
-    Log2(*it1, *rit);
-    ++it1;
-    ++rit;
+    Log2(e, ret.At(ret_count));
+    ++ret_count;
   }
 }
 
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Log2(ArrayType const &array)
 {
-  ArrayType ret{array.shape()};
-  Log2(array, ret);
+  ArrayType                    ret{array.shape()};
+  typename ArrayType::SizeType ret_count{0};
+  for (typename ArrayType::Type &e : array)
+  {
+    Log2(e, ret.At(ret_count));
+    ++ret_count;
+  }
   return ret;
 }
 

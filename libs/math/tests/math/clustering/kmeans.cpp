@@ -111,19 +111,19 @@ TEST(clustering_test, kmeans_test_previous_assignment)
 
   for (SizeType i = 0; i < 5; ++i)
   {
-    prev_k.Set({i}, 0);
+    prev_k.Set(i, 0);
   }
   for (SizeType i = 5; i < 25; ++i)
   {
-    prev_k.Set({i}, -1);
+    prev_k.Set(i, -1);
   }
   for (SizeType i = 25; i < 30; ++i)
   {
-    prev_k.Set({i}, 1);
+    prev_k.Set(i, 1);
   }
   for (SizeType i = 30; i < 50; ++i)
   {
-    prev_k.Set({i}, -1);
+    prev_k.Set(i, -1);
   }
 
   SizeType       random_seed = 123456;
@@ -164,19 +164,19 @@ TEST(clustering_test, kmeans_simple_previous_assignment_no_K)
   // initialise the previous assignments to be 5 data points assigned, 20 unassigned in each
   for (SizeType i = 0; i < 5; ++i)
   {
-    prev_k.Set({i}, 0);
+    prev_k.Set(i, 0);
   }
   for (SizeType i = 5; i < 25; ++i)
   {
-    prev_k.Set({i}, -1);
+    prev_k.Set(i, -1);
   }
   for (SizeType i = 25; i < 30; ++i)
   {
-    prev_k.Set({i}, 1);
+    prev_k.Set(i, 1);
   }
   for (SizeType i = 30; i < 50; ++i)
   {
-    prev_k.Set({i}, -1);
+    prev_k.Set(i, -1);
   }
 
   SizeType                                random_seed = 123456;
@@ -236,36 +236,36 @@ TEST(clustering_test, kmeans_remap_previous_assignment_no_K)
   // assign previous cluster groups with some gaps
   for (SizeType i = 0; i < 5; ++i)
   {
-    prev_k.Set({i}, group_0);
+    prev_k.Set(i, group_0);
   }
   for (SizeType i = 5; i < 25; ++i)
   {
-    prev_k.Set({i}, no_group);
+    prev_k.Set(i, no_group);
   }
   for (SizeType i = 25; i < 30; ++i)
   {
-    prev_k.Set({i}, group_1);
+    prev_k.Set(i, group_1);
   }
   for (SizeType i = 30; i < 50; ++i)
   {
-    prev_k.Set({i}, no_group);
+    prev_k.Set(i, no_group);
   }
 
   for (SizeType i = 50; i < 55; ++i)
   {
-    prev_k.Set({i}, group_2);
+    prev_k.Set(i, group_2);
   }
   for (SizeType i = 55; i < 75; ++i)
   {
-    prev_k.Set({i}, no_group);
+    prev_k.Set(i, no_group);
   }
   for (SizeType i = 75; i < 80; ++i)
   {
-    prev_k.Set({i}, group_3);
+    prev_k.Set(i, group_3);
   }
   for (SizeType i = 80; i < 100; ++i)
   {
-    prev_k.Set({i}, no_group);
+    prev_k.Set(i, no_group);
   }
 
   SizeType                                random_seed = 123456;

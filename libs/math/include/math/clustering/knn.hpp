@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/distance/cosine.hpp"
+#include "math/correlation/cosine.hpp"
 #include <utility>
 
 namespace fetch {
@@ -25,8 +25,7 @@ namespace math {
 namespace clustering {
 namespace details {
 
-template <typename ArrayType,
-          typename ArrayType::Type (*Distance)(ArrayType const &, ArrayType const &)>
+template <typename ArrayType>
 std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> GetKNNImplementation(
     ArrayType array, ArrayType one_vector, typename ArrayType::SizeType k)
 {
@@ -42,7 +41,8 @@ std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> G
   similarities.reserve(array.shape().at(0));
   for (SizeType i(0); i < array.shape().at(0); ++i)
   {
-    typename ArrayType::Type d = Distance(one_vector, array.Slice(i).Copy());
+    typename ArrayType::Type d =
+        fetch::math::correlation::Cosine(one_vector, array.Slice(i).Unsqueeze());
     similarities.emplace_back(i, d);
   }
 
@@ -59,7 +59,7 @@ std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> G
 
   std::sort(ret.begin(), ret.end(),
             [](std::pair<SizeType, DataType> const &a, std::pair<SizeType, DataType> const &b) {
-              return a.second < b.second;
+              return a.second > b.second;
             });
 
   return ret;
@@ -69,70 +69,29 @@ std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> G
 
 /**
  * Interface to get K nearest neighbours method comparing array with input vector
- * Uses cosine distance function
  * @tparam ArrayType  template for type of array
  * @param array   array of shape # data points X # feature dimensions
  * @param k  value of k - i.e. how many nearest data points to find
  */
 template <typename ArrayType>
-std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> KNNCosine(
+std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> KNN(
     ArrayType array, ArrayType one_vector, typename ArrayType::SizeType k)
 {
-  return details::GetKNNImplementation<ArrayType, fetch::math::distance::Cosine>(array, one_vector,
-                                                                                 k);
+  return details::GetKNNImplementation(array, one_vector, k);
 }
 
 /**
  * Interface to get K nearest neighbours method comparing array with input vector
- * Uses cosine distance function
  * @tparam ArrayType  template for type of array
  * @param array   array of shape # data points X # feature dimensions
  * @param k  value of k - i.e. how many nearest data points to find
  */
 template <typename ArrayType>
-std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> KNNCosine(
-    ArrayType array, typename ArrayType::SizeType idx, typename ArrayType::SizeType k)
-{
-  ArrayType one_vector = array.slice(idx);
-  return details::GetKNNImplementation<ArrayType, fetch::math::distance::Cosine>(array, one_vector,
-                                                                                 k);
-}
-
-/**
- * Interface to get K nearest neighbours method comparing array with input vector
- * Uses templated distance function Function
- * Can be called by: KNN<ArrayType,Function>(array,one_vector,k);
- * @tparam ArrayType  template for type of array
- * @tparam Distance   template for distance function in format ArrayType::Type(ArrayType const
- * &,ArrayType const &)
- * @param array   array of shape # data points X # feature dimensions
- * @param k  value of k - i.e. how many nearest data points to find
- */
-template <typename ArrayType,
-          typename ArrayType::Type (*Distance)(ArrayType const &, ArrayType const &)>
-std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> KNN(
-    ArrayType array, ArrayType one_vector, typename ArrayType::SizeType k)
-{
-  return details::GetKNNImplementation<ArrayType, Distance>(array, one_vector, k);
-}
-
-/**
- * Interface to get K nearest neighbours method comparing array with input vector
- * Uses templated distance function Function
- * Can be called by: KNN<ArrayType,Function>(array,one_vector,k);
- * @tparam ArrayType  template for type of array
- * @tparam Distance   template for distance function in format ArrayType::Type(ArrayType const
- * &,ArrayType const &)
- * @param array   array of shape # data points X # feature dimensions
- * @param k  value of k - i.e. how many nearest data points to find
- */
-template <typename ArrayType,
-          typename ArrayType::Type (*Distance)(ArrayType const &, ArrayType const &)>
 std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> KNN(
     ArrayType array, typename ArrayType::SizeType idx, typename ArrayType::SizeType k)
 {
   ArrayType one_vector = array.slice(idx);
-  return details::GetKNNImplementation<ArrayType, Distance>(array, one_vector, k);
+  return details::GetKNNImplementation(array, one_vector, k);
 }
 
 }  // namespace clustering

@@ -36,7 +36,7 @@ namespace math {
 template <typename Type>
 meta::IfIsNonFixedPointArithmetic<Type, void> Exp(Type const &x, Type &ret)
 {
-  ret = static_cast<Type>(std::exp(static_cast<double>(x)));
+  ret = std::exp(x);
 }
 
 // TODO(800) - native implementations of fixed point are required; casting to double will not be
@@ -63,22 +63,24 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Exp(ArrayType const &array, ArrayType &ret)
 {
   ASSERT(ret.shape() == array.shape());
-  auto it1 = array.cbegin();
-  auto rit = ret.begin();
-  while (it1.is_valid())
+  typename ArrayType::SizeType ret_count{0};
+  for (typename ArrayType::Type &e : array)
   {
-    Exp(*it1, *rit);
-    ++it1;
-    ++rit;
+    Exp(e, ret.At(ret_count));
+    ++ret_count;
   }
 }
 
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Exp(ArrayType const &array)
 {
-  ArrayType ret{array.shape()};
-  Exp(array, ret);
-  return ret;
+  ArrayType                    ret{array.shape()};
+  typename ArrayType::SizeType ret_count{0};
+  for (typename ArrayType::Type &e : array)
+  {
+    Exp(e, ret.At(ret_count));
+    ++ret_count;
+  }
   return ret;
 }
 

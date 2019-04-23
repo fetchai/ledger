@@ -35,19 +35,22 @@
 namespace fetch {
 namespace memory {
 
-template <typename T, uint64_t type_size = sizeof(T)>
+template <typename T, std::size_t type_size = sizeof(T)>
 class SharedArray : public VectorSlice<T, type_size>
 {
 public:
   static_assert(sizeof(T) >= type_size, "Invalid object size");
 
-  using size_type  = uint64_t;
+  // TODO(check IfIsPodOrFixedPoint memory safe)
+  //  static_assert(std::is_pod<T>::value, "Can only be used with POD types");
+  //  static_assert(meta::IfIsPodOrFixedPoint<T>::value, "can only be used with POD or FixedPoint");
+  using size_type  = std::size_t;
   using data_type  = std::shared_ptr<T>;
   using super_type = VectorSlice<T, type_size>;
   using self_type  = SharedArray<T, type_size>;
   using type       = T;
 
-  SharedArray(size_type const &n)
+  SharedArray(std::size_t const &n)
     : super_type()
   {
     this->size_ = n;
@@ -110,7 +113,7 @@ public:
   {
     // TODO(issue 2): Use memcopy
     self_type ret(this->size_);
-    for (size_type i = 0; i < this->size_; ++i)
+    for (std::size_t i = 0; i < this->size_; ++i)
     {
       ret[i] = this->At(i);
     }

@@ -145,19 +145,19 @@ TYPED_TEST(SigmoidTest, sigmoid_2x2)
 {
   TypeParam array1{{2, 2}};
 
-  array1.Set({0, 0}, typename TypeParam::Type(0.3));
-  array1.Set({0, 1}, typename TypeParam::Type(1.2));
-  array1.Set({1, 0}, typename TypeParam::Type(0.7));
-  array1.Set({1, 1}, typename TypeParam::Type(22));
+  array1.Set(0, typename TypeParam::Type(0.3));
+  array1.Set(1, typename TypeParam::Type(1.2));
+  array1.Set(2, typename TypeParam::Type(0.7));
+  array1.Set(3, typename TypeParam::Type(22));
 
   TypeParam output = fetch::math::Sigmoid(array1);
 
   TypeParam numpy_output{{2, 2}};
 
-  numpy_output.Set({0, 0}, typename TypeParam::Type(0.57444252));
-  numpy_output.Set({0, 1}, typename TypeParam::Type(0.76852478));
-  numpy_output.Set({1, 0}, typename TypeParam::Type(0.66818777));
-  numpy_output.Set({1, 1}, typename TypeParam::Type(1));
+  numpy_output.Set(0, typename TypeParam::Type(0.57444252));
+  numpy_output.Set(1, typename TypeParam::Type(0.76852478));
+  numpy_output.Set(2, typename TypeParam::Type(0.66818777));
+  numpy_output.Set(3, typename TypeParam::Type(1));
 
   ASSERT_TRUE(output.AllClose(numpy_output));
 }

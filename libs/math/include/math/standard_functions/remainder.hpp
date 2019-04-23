@@ -52,7 +52,7 @@ template <typename Type>
 meta::IfIsArithmetic<Type, Type> Remainder(Type const &x)
 {
   Type ret;
-  Remainder(x, ret);
+  Log(x, ret);
   return ret;
 }
 
@@ -62,15 +62,11 @@ meta::IfIsMathArray<ArrayType, void> Remainder(ArrayType const &array1, ArrayTyp
 {
   ASSERT(ret.shape() == array1.shape());
   ASSERT(ret.shape() == array2.shape());
-  auto it1 = array1.cbegin();
-  auto it2 = array2.cbegin();
-  auto rit = ret.begin();
-  while (it1.is_valid())
+  typename ArrayType::SizeType ret_count{0};
+  for (typename ArrayType::Type &e : array1)
   {
-    Remainder(*it1, *it2, rit);
-    ++it1;
-    ++it2;
-    ++rit;
+    Remainder(e, array2.At(ret_count), ret.At(ret_count));
+    ++ret_count;
   }
 }
 
@@ -79,8 +75,13 @@ meta::IfIsMathArray<ArrayType, ArrayType> Remainder(ArrayType const &array1,
                                                     ArrayType const &array2)
 {
   ASSERT(array2.shape() == array1.shape());
-  ArrayType ret{array1.shape()};
-  Remainder(array1, array2, ret);
+  ArrayType                    ret{array1.shape()};
+  typename ArrayType::SizeType ret_count{0};
+  for (typename ArrayType::Type &e : array1)
+  {
+    Remainder(e, array2.At(ret_count), ret.At(ret_count));
+    ++ret_count;
+  }
   return ret;
 }
 

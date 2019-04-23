@@ -18,49 +18,29 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/comparison.hpp"
-#include "math/standard_functions/exp.hpp"
+#include "math/tensor.hpp"
+#include <memory>
+#include <vector>
 
 namespace fetch {
 namespace math {
 
-/**
- * Exponential linear unit
- * @tparam ArrayType
- * @param t
- * @param a
- * @param ret
+/*
+ * Concatenate tensor by creating a new leading dimention
+ * Example [2, 5, 5] + [2, 5, 5] + [2, 5, 5] = [3, 2, 5, 5]
+ * Returns newly allocated memory
  */
-template <typename ArrayType>
-void Elu(ArrayType const &t, typename ArrayType::Type &a, ArrayType &ret)
+template <typename T>
+fetch::math::Tensor<T> ConcatenateTensors(std::vector<fetch::math::Tensor<T>> const &tensors)
 {
-  ASSERT(t.size() == ret.size());
-  using DataType = typename ArrayType::Type;
-
-  typename ArrayType::SizeType idx(0);
-  for (auto const &val : t)
+  std::vector<typename fetch::math::Tensor<T>::SizeType> retSize;
+  retSize.push_back(tensors.size());
+  retSize.insert(retSize.end(), tensors.front().shape().begin(), tensors.front().shape().end());
+  fetch::math::Tensor<T> ret(retSize);
+  for (typename fetch::math::Tensor<T>::SizeType i(0); i < tensors.size(); ++i)
   {
-    if (val >= DataType(0))
-    {
-      // f(x)=x for x>=0
-      ret.Set(idx, val);
-    }
-    else
-    {
-      // f(x)=a*(e^x-1) for x<0
-      DataType tmp_val = val;
-      Subtract(fetch::math::Exp(val), DataType(1.0), tmp_val);
-      Multiply(a, tmp_val, ret.At(idx));
-    }
-    ++idx;
+    ret.Slice(i).Copy(tensors[i]);
   }
-}
-
-template <typename ArrayType>
-ArrayType Elu(ArrayType const &t, typename ArrayType::Type &a)
-{
-  ArrayType ret(t.shape());
-  Elu(t, a, ret);
   return ret;
 }
 }  // namespace math

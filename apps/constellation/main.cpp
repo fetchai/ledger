@@ -532,7 +532,7 @@ int main(int argc, char **argv)
 
     exit_code = EXIT_SUCCESS;
   }
-  catch (std::exception const &ex)
+  catch (std::exception &ex)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Fatal Error: ", ex.what());
     std::cerr << "Fatal Error: " << ex.what() << std::endl;

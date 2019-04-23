@@ -44,8 +44,7 @@ TYPED_TEST(SigmoidTest, forward_test)
     gt.Set(i, typename TypeParam::Type(gtInput[i]));
   }
   fetch::ml::ops::Sigmoid<TypeParam> op;
-  TypeParam                          prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({data}));
+  TypeParam                          prediction = op.Forward({data});
 
   // test correct values
   ASSERT_TRUE(

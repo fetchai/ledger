@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,21 +17,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
-#include <gtest/gtest.h>
+namespace fetch {
+namespace kernels {
 
-template <typename T>
-class TensorConstructorTest : public ::testing::Test
+template <typename vector_register_type>
+struct ApproxLogistic
 {
+  void operator()(vector_register_type const &x, vector_register_type &y) const
+  {
+    static const vector_register_type one(1);
+    y = one + approx_exp(-x);
+    y = one / y;
+  }
 };
 
-using MyTypes = ::testing::Types<int, unsigned int, long, unsigned long, float, double>;
-TYPED_TEST_CASE(TensorConstructorTest, MyTypes);
-
-TYPED_TEST(TensorConstructorTest, string_construction)
-{
-  auto tensor = fetch::math::Tensor<TypeParam>::FromString(R"(1 3 4)");
-  ASSERT_EQ(tensor.At(0, 0), TypeParam(1));
-  ASSERT_EQ(tensor.At(0, 1), TypeParam(3));
-  ASSERT_EQ(tensor.At(0, 2), TypeParam(4));
-}
+}  // namespace kernels
+}  // namespace fetch

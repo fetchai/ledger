@@ -30,7 +30,7 @@ template <typename T>
 fetch::math::meta::IfIsMath<T, T> Abs(fetch::vm::VM *, T const &a)
 {
   T x = T(a);
-  fetch::math::Abs(x, x);
+  fetch::math::Abs(x);
   return x;
 }
 

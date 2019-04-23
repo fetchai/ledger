@@ -29,25 +29,25 @@ using namespace fetch::math::correlation;
 TEST(distance_tests, cosine_distance)
 {
   Tensor<double> A = Tensor<double>({1, 4});
-  A.Set({0, 0}, 1);
-  A.Set({0, 1}, 2);
-  A.Set({0, 2}, 3);
-  A.Set({0, 3}, 4);
+  A.Set(0, 1);
+  A.Set(1, 2);
+  A.Set(2, 3);
+  A.Set(3, 4);
 
   Tensor<double> B = Tensor<double>({1, 4});
-  B.Set({0, 0}, -1);
-  B.Set({0, 1}, -2);
-  B.Set({0, 2}, -3);
-  B.Set({0, 3}, -4);
+  B.Set(0, -1);
+  B.Set(1, -2);
+  B.Set(2, -3);
+  B.Set(3, -4);
 
   ASSERT_EQ(Cosine(A, A), 1);
   ASSERT_EQ(Cosine(A, B), -1);
 
   Tensor<double> C = Tensor<double>({1, 4});
-  C.Set({0, 0}, 1);
-  C.Set({0, 1}, 2);
-  C.Set({0, 2}, 3);
-  C.Set({0, 3}, 2);
+  C.Set(0, 1);
+  C.Set(1, 2);
+  C.Set(2, 3);
+  C.Set(3, 2);
 
   EXPECT_NEAR(Cosine(A, C), double(0.94672926240625754), 1e-7);
 }

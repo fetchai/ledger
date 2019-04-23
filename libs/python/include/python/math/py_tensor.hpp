@@ -29,17 +29,19 @@ template <typename T>
 void BuildTensor(std::string const &custom_name, pybind11::module &module)
 {
   using ArrayType = typename fetch::math::Tensor<T>;
+  using SizeType  = typename ArrayType::SizeType;
 
   py::class_<ArrayType, std::shared_ptr<ArrayType>>(module, custom_name.c_str())
       .def(py::init<std::vector<SizeType> const &>())
       .def("ToString", &ArrayType::ToString)
       .def("Size", &ArrayType::size)
-      .def("Fill", [](ArrayType &a, T val) { return a.Fill(val); })
+      .def("Fill", &ArrayType::Fill)
       .def("Slice", [](ArrayType &a, SizeType i) { return a.Slice(i); })
       .def("Slice", [](ArrayType const &a, SizeType i) { return a.Slice(i); })
       .def("At", [](ArrayType &a, SizeType i) { return a.At(i); })
       .def("Set", (void (ArrayType::*)(std::vector<SizeType> const &, T)) & ArrayType::Set)
-      .def("Set", [](ArrayType &a, std::vector<SizeType> const &i, float v) { a.Set(i, T(v)); });
+      .def("Set", [](ArrayType &a, std::vector<SizeType> const &i, float v) { a.Set(i, T(v)); })
+      .def("Set", (void (ArrayType::*)(SizeType, T)) & ArrayType::Set);
 }
 
 }  // namespace math

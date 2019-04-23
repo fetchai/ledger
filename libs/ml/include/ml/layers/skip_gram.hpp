@@ -85,16 +85,16 @@ public:
   }
 
   // Overload that method for optimisation purposes
-  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<const ArrayType>> const &inputs)
+  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     std::vector<ArrayType> results;
     for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
     {
-      ArrayType slice_input   = inputs.front().get().Slice(b).Tensor();
-      ArrayType slice_context = inputs.back().get().Slice(b).Tensor();
-      results.push_back(this->Ops<T>::Forward({slice_input, slice_context}));
+      ArrayType slice_input   = inputs.front().get().Slice(b);
+      ArrayType slice_context = inputs.back().get().Slice(b);
+      results.push_back(this->Forward({slice_input, slice_context}));
     }
-    return ArrayType::Stack(results);
+    return ConcatenateTensors(results);
     //    return this->fetch::ml::Ops<T>::ForwardBatch(inputs);
   }
 
@@ -106,13 +106,6 @@ public:
   std::string GetEmbedName()
   {
     return embed_in_;
-  }
-
-  virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
-  {
-    (void)inputs;
-    return {1, this->out_size};
   }
 
   static constexpr char const *DESCRIPTOR = "SkipGram";

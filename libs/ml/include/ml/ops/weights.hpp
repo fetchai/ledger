@@ -59,10 +59,9 @@ template <class T>
 class Weights : public fetch::ml::ops::PlaceHolder<T>, public Trainable<T>
 {
 public:
-  using ArrayType      = T;
-  using SizeType       = typename ArrayType::SizeType;
-  using ArrayPtrType   = std::shared_ptr<ArrayType>;
-  using ConstSliceType = typename ArrayType::ConstSliceType;
+  using ArrayType    = T;
+  using SizeType     = typename ArrayType::SizeType;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
 
 protected:
   ArrayPtrType gradient_accumulation_;
@@ -72,7 +71,7 @@ public:
   virtual ~Weights() = default;
 
   virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.empty());
@@ -80,14 +79,14 @@ public:
     return {};
   }
 
-  virtual bool SetData(ArrayType const &data)
+  virtual void SetData(ArrayType const &data)
   {
-    if (PlaceHolder<T>::SetData(data))  // if input_size_changed
+    PlaceHolder<T>::SetData(data);
+    if (this->output_ &&
+        (!gradient_accumulation_ || gradient_accumulation_->shape() != this->output_->shape()))
     {
       gradient_accumulation_ = std::make_shared<ArrayType>(this->output_->shape());
-      return true;
     }
-    return false;
   }
 
   virtual void Step(typename T::Type learningRate)
@@ -132,9 +131,9 @@ public:
     {
     case WeightsInitialisation::ZEROS:
     {
-      for (std::uint64_t j = 0; j < array.data().size(); ++j)
+      for (std::uint64_t j = 0; j < array.size(); ++j)
       {
-        array.data()[j] = typename ArrayType::Type(0);
+        array.At(j) = typename ArrayType::Type(0);
       }
       break;
     }

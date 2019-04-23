@@ -30,7 +30,7 @@ class ConstByteArray;
 }  // namespace byte_array
 
 namespace fixed_point {
-template <std::uint16_t I, std::uint16_t F>
+template <std::size_t I, std::size_t F>
 class FixedPoint;
 }  // namespace fixed_point
 
