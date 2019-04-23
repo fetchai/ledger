@@ -33,17 +33,16 @@ namespace math {
 
 // this also handles case of passing uint to abs
 template <typename T>
-meta::IfIsArithmetic<T, void> Abs(T const &n, T &ret)
+meta::IfIsNonFixedPointArithmetic<T, void> Abs(T const &n, T &ret)
 {
   ret = T(std::abs(double(n)));
 }
 
-// TODO: this should be somehow reinstated, as current Abs does a cast to double
-// template <typename T>
-// meta::IsFixedPoint<T, void> Abs(T const &n, T &ret)
-// {
-//   ret = T::Abs(n);
-// }
+template <typename T>
+meta::IfIsFixedPoint<T, void> Abs(T const &n, T &ret)
+{
+  ret = T::Abs(n);
+}
 
 //////////////////
 /// INTERFACES ///
