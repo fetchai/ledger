@@ -583,21 +583,26 @@ TEST_P(MainChainTests, CheckLongChainWrite)
   std::vector<BlockPtr> blocks{NUM_BLOCKS};
   for (std::size_t i = 0; i < NUM_BLOCKS; ++i)
   {
+	  std::cerr << "i: " << i << '\n';
     // generate the next block in the sequence
     auto next_block = generator_->Generate(previous_block);
 
+    std::cerr << "Adding\n";
     // add it to the chain
     ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*next_block));
 
+    std::cerr << "Updating\n";
     // update the previous block
     previous_block = next_block;
 
+    std::cerr << "Caching\n";
     // cache all the blocks
     blocks[i] = next_block;
   }
 
   for (auto const &block : blocks)
   {
+	  std::cerr << "Block\n";
     auto const retrived_block = chain_->GetBlock(block->body.hash);
     ASSERT_TRUE(retrived_block);
     ASSERT_EQ(retrived_block->body.hash, block->body.hash);

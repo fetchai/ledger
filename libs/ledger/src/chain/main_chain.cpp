@@ -71,6 +71,7 @@ MainChain::~MainChain()
 BlockStatus MainChain::AddBlock(Block const &blk)
 {
   // create a copy of the block
+	std::cerr << "Copy\n";
   auto block = std::make_shared<Block>(blk);
 
   // update the weight based on the proof and the number of transactions
@@ -80,9 +81,11 @@ BlockStatus MainChain::AddBlock(Block const &blk)
   {
     block->weight += slice.size();
   }
+  std::cerr << "Weight: " << block->weight << '\n';
 
   // pass the block to the cache
   auto const status = InsertBlock(block);
+  std::cerr << "Inserted\n";
   FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: ", ToBase64(block->body.hash), " -> ", ToString(status),
                   " (weight: ", block->weight, " total: ", block->total_weight, ")");
 
@@ -105,7 +108,7 @@ bool MainChain::CacheBlock(IntBlockPtr const &block) const
   auto const &body{block->body};
   if (block_chain_.emplace(body.hash, block).second)
   {
-    trails_.emplace(body.hash, body.previous_hash);
+    trails_.emplace(body.previous_hash, body.hash);
     return true;
   }
   return false;
@@ -116,9 +119,11 @@ bool MainChain::UncacheBlock(BlockHash const &hash, bool root) const
   auto chainLink{block_chain_.find(hash)};
   if (chainLink != block_chain_.end())
   {
+    std::cerr << "Removing chain link " << byte_array::ToBase64(chainLink->first) << " <-- " << byte_array::ToBase64(chainLink->second->body.previous_hash) << '\n';
     UncacheBlock(hash, chainLink, root);
     return true;
   }
+  std::cerr << "No chain link found.\n";
   return false;
 }
 
@@ -128,15 +133,25 @@ MainChain::BlockMap::iterator MainChain::UncacheBlock(BlockHash const &         
 {
   if (root)
   {
+    std::cerr << "Trails now:\n";
+    for (auto tr: trails_) {
+      std::cerr << "\t" << byte_array::ToBase64(tr.first) << " --> " << byte_array::ToBase64(tr.second) << '\n';
+    }
     // take one step back and leave no trace
     for (auto range{trails_.equal_range(chainLink->second->body.previous_hash)};
          range.first != range.second; ++range.first)
     {
+      std::cerr << "Previous: " << byte_array::ToBase64(range.first->first) << " --> " << byte_array::ToBase64(range.first->second) << '\n';
       if (range.first->second == hash)
       {
+	std::cerr << "Removing from trails\n";
         trails_.erase(range.first);
         break;
       }
+    }
+    std::cerr << "Trails once more:\n";
+    for (auto tr: trails_) {
+      std::cerr << "\t" << byte_array::ToBase64(tr.first) << " --> " << byte_array::ToBase64(tr.second) << '\n';
     }
   }
 
@@ -160,6 +175,7 @@ bool MainChain::RemoveBlock(BlockHash hash)
 
   FETCH_LOCK(lock_);
 
+  std::cerr << "Removing " << byte_array::ToBase64(hash) << '\n';
   if (!UncacheBlock(hash))
   {
     return false;
@@ -540,9 +556,11 @@ void MainChain::RecoverFromFile(Mode mode)
  */
 void MainChain::WriteToFile()
 {
+	std::cerr << "Heaviest\n";
   // lookup the heaviest block
   IntBlockPtr block = block_chain_.at(heaviest_.hash);
 
+  std::cerr << "FinP: " << FINALITY_PERIOD << '\n';
   // skip if the block store is not persistent
   if (block_store_ && (block->body.block_number >= FINALITY_PERIOD))
   {
@@ -568,18 +586,22 @@ void MainChain::WriteToFile()
                      block_chain_.at(heaviest_.hash)->body.block_number);
       return;
     }
+    std::cerr << "Unfailed\n";
 
     // This block will now become the head in our file
     // Corner case - block is genesis
     if (block->body.previous_hash == GENESIS_DIGEST)
     {
+	    std::cerr << "Writingen\n";
       FETCH_LOG_DEBUG(LOGGING_NAME, "Writing genesis. ");
 
       block_store_->Set(storage::ResourceAddress("head"), *block);
       block_store_->Set(storage::ResourceID(block->body.hash), *block);
+      std::cerr << "Writtengen\n";
     }
     else
     {
+	    std::cerr << "Non-gen: " << block->body.block_number << '\n';
       FETCH_LOG_DEBUG(LOGGING_NAME, "Writing block. ", block->body.block_number);
 
       // Recover the current head block from the file
@@ -610,17 +632,21 @@ void MainChain::WriteToFile()
         // Continue to push prevs into file
         LookupBlock(block->body.previous_hash, block);
       }
+      std::cerr << "Written everything\n";
 
       // Success - we kept a copy of the new head to write
       block_store_->Set(storage::ResourceAddress("head"), *block_head);
     }
 
+    std::cerr  << "Flushing\n";
     // Clear the block from ram
     FlushBlock(block);
+    std::cerr << "Flushed\n";
 
     // Force flush of the file object!
     block_store_->Flush(false);
 
+    std::cerr << "Trim\n";
     // as final step do some sanity checks
     TrimCache();
   }
@@ -713,6 +739,7 @@ void MainChain::FlushBlock(IntBlockPtr const &block)
   // remove the block from the block map
   UncacheBlock(block->body.hash);
 
+  std::cerr << "Bang\n";
   // remove the block hash from the tips
   tips_.erase(block->body.hash);
 }
@@ -890,11 +917,10 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
     }
   }
 
-  // path to this block — one last small step
-  trails_.emplace(block->body.previous_hash, block->body.hash);
-
+  std::cerr << "Resolving\n";
   if (block->is_loose)
   {
+	  std::cerr << "Loose\n";
     // record the block as loose
     RecordLooseBlock(block);
     return BlockStatus::LOOSE;
@@ -911,26 +937,32 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
 
   // At this point we can proceed knowing that the block is building upon existing tip
 
+  std::cerr << "Updating tips\n";
   // At this point we have a new block with a prev that's known and not loose. Update tips
   bool const heaviest_advanced = UpdateTips(block);
 
+  std::cerr << "Adding block\n";
   // Add block
   FETCH_LOG_DEBUG(LOGGING_NAME, "Adding block to chain: ", ToBase64(block->body.hash));
   AddBlockToCache(block);
 
+  std::cerr << "Added\n";
   // If the heaviest branch has been updated we should determine if any blocks should be flushed
   // to disk
   if (heaviest_advanced)
   {
+	  std::cerr << "Write to file\n";
     WriteToFile();
   }
 
+  std::cerr << "Evaluate?\n";
   // Now we're done, it's possible this added block completed some loose blocks.
   if (evaluate_loose_blocks)
   {
     CompleteLooseBlocks(block);
   }
 
+  std::cerr  << "Inserted\n";
   return BlockStatus::ADDED;
 }
 
@@ -1027,10 +1059,9 @@ bool MainChain::IsBlockInCache(BlockHash hash) const
 void MainChain::AddBlockToCache(IntBlockPtr const &block) const
 {
   // add the item to the block chain storage if it's not found in there
-  if (block_chain_.emplace(block->body.hash, block).second)
+  if (CacheBlock(block))
   {
     block->is_loose = false;
-    trails_.emplace(block->body.previous_hash, block->body.hash);
   }
 }
 
@@ -1107,6 +1138,15 @@ bool MainChain::ReindexTips()
     {
       BlockHash const &current{pathNode.second};
       auto             chainLink = block_chain_.find(current);
+      if (chainLink == block_chain_.end()) {
+	      std::cerr << "pathNode: [" << byte_array::ToBase64(pathNode.first) << ", " <<  byte_array::ToBase64(pathNode.second) << "]\n";
+	      std::cerr << "Trails:\n";
+	      for (auto const &pn: trails_) {
+		      std::cerr <<"\t" << byte_array::ToBase64(pn.first) << " -> " << byte_array::ToBase64(pn.second) << '\n';
+	      }
+	      std::cerr << "Chain:\n";
+	      for (auto const &b: block_chain_) std::cerr << '\t' << byte_array::ToBase64(b.first) << '\n';
+      }
       assert(chainLink != block_chain_.end());
       auto const &block{chainLink->second};
       if (!block->is_loose)
