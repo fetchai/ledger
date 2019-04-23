@@ -28,19 +28,16 @@ class Transpose : public fetch::ml::BatchOps<T>
 {
 public:
   using ArrayType    = T;
-  using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   Transpose()          = default;
   virtual ~Transpose() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     ASSERT(inputs.size() == 1);
-    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
-    output.Copy(inputs.front().get().Transpose());
-    return output;
+    this->output_ = std::make_shared<ArrayType>(inputs.front().get().Clone().Transpose());
+    return *this->output_;
   }
 
   virtual std::vector<ArrayType> Backward(
@@ -49,12 +46,6 @@ public:
   {
     ASSERT(inputs.size() == 1);
     return {errorSignal.Clone().Transpose()};
-  }
-
-  virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
-  {
-    return {inputs.front().get().shape().at(1), inputs.front().get().shape().at(0)};
   }
 
   static constexpr char const *DESCRIPTOR = "Transpose";

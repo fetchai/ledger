@@ -35,28 +35,19 @@ public:
   Add()          = default;
   virtual ~Add() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
-    (void)output;
     ASSERT(inputs.size() == 2);
     ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
-    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
-
-    auto output_it  = output.begin();
-    auto output_end = output.end();
-    auto a_it       = inputs[0].get().begin();
-    auto b_it       = inputs[1].get().begin();
-
-    while (output_it != output_end)
+    if (!this->output_ || this->output_->shape() != inputs.at(0).get().shape())
     {
-      *output_it = *a_it + *b_it;
-      ++output_it;
-      ++a_it;
-      ++b_it;
+      this->output_ = std::make_shared<ArrayType>(inputs.at(0).get().shape());
     }
 
-    return output;
+    this->output_->Fill(DataType(0));
+    this->output_->InlineAdd(inputs[0]);
+    this->output_->InlineAdd(inputs[1]);
+    return *this->output_;
   }
 
   virtual std::vector<ArrayType> Backward(

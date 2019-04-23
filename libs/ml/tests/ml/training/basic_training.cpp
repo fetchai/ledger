@@ -98,6 +98,8 @@ void PlusOneTest()
   gt.Set(2, DataType(4));
   gt.Set(3, DataType(5));
 
+  g.SetInput(input_name, data);
+
   /////////////////////////
   /// ONE TRAINING STEP ///
   /////////////////////////
@@ -196,6 +198,8 @@ void CategoricalPlusOneTest(bool add_softmax = false)
   gt.Set({2, 3}, DataType(1));
   gt.Set({3, 0}, DataType(1));
 
+  g.SetInput(input_name, data);
+
   /////////////////////////
   /// ONE TRAINING STEP ///
   /////////////////////////
@@ -279,6 +283,8 @@ void CategoricalXorTest(bool add_softmax = false)
 
   TypeParam data = GenerateXorData<TypeParam>();
   TypeParam gt   = GenerateXorGt<TypeParam>(SizeType(n_classes.At(0)));
+
+  g.SetInput(input_name, data);
 
   /////////////////////////
   /// ONE TRAINING STEP ///

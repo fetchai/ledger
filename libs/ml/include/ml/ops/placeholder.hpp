@@ -29,15 +29,12 @@ class PlaceHolder : public fetch::ml::ElementWiseOps<T>
 {
 public:
   using ArrayType    = T;
-  using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   PlaceHolder() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
-    (void)output;
     ASSERT(inputs.empty());
     ASSERT(this->output_);
     return *(this->output_);
@@ -51,28 +48,12 @@ public:
     return {errorSignal};
   }
 
-  virtual bool SetData(ArrayType const &data)
+  virtual void SetData(ArrayType const &data)
   {
-    std::vector<SizeType> old_shape;
-    if (this->output_)
-    {
-      old_shape = this->output_->shape();
-    }
     this->output_ = std::make_shared<ArrayType>(data);
-    return old_shape != this->output_->shape();
-  }
-
-  virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
-  {
-    (void)inputs;
-    return this->output_->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "PlaceHolder";
-
-protected:
-  ArrayPtrType output_;
 };
 
 }  // namespace ops

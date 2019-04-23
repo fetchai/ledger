@@ -43,6 +43,5 @@ fetch::math::Tensor<T> ConcatenateTensors(std::vector<fetch::math::Tensor<T>> co
   }
   return ret;
 }
-
 }  // namespace math
 }  // namespace fetch

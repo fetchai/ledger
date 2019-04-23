@@ -36,10 +36,8 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
-    (void)output;
     ASSERT(inputs.size() == this->input_nodes_.size());
     for (std::uint64_t i(0); i < inputs.size(); ++i)
     {

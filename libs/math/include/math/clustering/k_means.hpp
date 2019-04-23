@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/vector.hpp"
-#include "math/distance/euclidean.hpp"
 #include "math/meta/math_type_traits.hpp"
+#include "math/metrics.hpp"
 #include "math/standard_functions/pow.hpp"
 #include "random"
 
@@ -469,7 +469,7 @@ private:
           }
         }
 
-        cluster_distances.at(i) = fetch::math::distance::EuclideanMatrix(data, temp_k_, 1);
+        cluster_distances.at(i) = fetch::math::metrics::EuclideanDistance(data, temp_k_, 1);
       }
 
       // select smallest distance to cluster for each data point and square
@@ -528,7 +528,7 @@ private:
   void Assign(ArrayType const &data)
   {
     // replicate kmeans which is 1 x n_dims into n_data x n_dims
-    // allows for easy call to Euclidean
+    // allows for easy call to EuclideanDistance
     for (SizeType i = 0; i < n_clusters_; ++i)
     {
       for (SizeType j = 0; j < n_points_; ++j)
@@ -538,7 +538,7 @@ private:
           temp_k_.Set({j, k}, k_means_.At({i, k}));
         }
       }
-      k_euclids_[i] = fetch::math::distance::EuclideanMatrix(data, temp_k_, 1);
+      k_euclids_[i] = fetch::math::metrics::EuclideanDistance(data, temp_k_, 1);
     }
 
     // now we have a vector of n_data x 1 Arrays

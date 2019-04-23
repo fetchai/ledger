@@ -39,7 +39,7 @@ void Relu(ArrayType const &t, ArrayType &ret)
 }
 
 template <typename ArrayType>
-ArrayType Relu(ArrayType const &t)
+ArrayType Relu(ArrayType &t)
 {
   ArrayType ret(t.shape());
   Relu(t, ret);

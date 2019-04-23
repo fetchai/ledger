@@ -36,13 +36,16 @@ public:
   Relu()          = default;
   virtual ~Relu() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     assert(inputs.size() == 1);
-    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
-    fetch::math::Relu(inputs.front().get(), output);
-    return output;
+    if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
+    {
+      this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
+    }
+
+    fetch::math::Relu(inputs.front().get(), *this->output_);
+    return *(this->output_);
   }
 
   virtual std::vector<ArrayType> Backward(

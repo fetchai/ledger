@@ -32,25 +32,29 @@ class Sigmoid : public fetch::ml::ElementWiseOps<T>
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
-  using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   Sigmoid()          = default;
   virtual ~Sigmoid() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     assert(inputs.size() == 1);
-    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
-    fetch::math::Sigmoid(inputs.front().get(), output);
+    if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
+    {
+      this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
+    }
+
+    fetch::math::Sigmoid(inputs.front().get(), *this->output_);
+
     // ensures numerical stability
-    for (auto &val : output)
+    for (auto &val : *this->output_)
     {
       fetch::math::Max(val, epsilon_, val);
       fetch::math::Min(val, fetch::math::Subtract(DataType(1), epsilon_), val);
     }
-    return output;
+
+    return *this->output_;
   }
 
   virtual std::vector<ArrayType> Backward(
@@ -63,7 +67,7 @@ public:
     ArrayType t{inputs.front().get().shape()};
 
     // gradient of sigmoid function is s(x)(1 - s(x))
-    t = Ops<T>::Forward(inputs);
+    t = this->Forward(inputs);
     fetch::math::Subtract(DataType(1), t, returnSignal);
     fetch::math::Multiply(t, returnSignal, returnSignal);
 
