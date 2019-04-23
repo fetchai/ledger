@@ -586,6 +586,14 @@ private:
   };
 };
 
+/**
+ * This method allows Tensor instantiation from a string which is convenient for quickly writing
+ * tests.
+ * @tparam T Type
+ * @tparam C Container
+ * @param c bytearray indicating the values to fill the array with
+ * @return Return Tensor with the specified values
+ */
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
 {
@@ -595,6 +603,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
   elems.reserve(1024);
   bool failed = false;
 
+  // Text parsing loop
   for (SizeType i = 0; i < c.size();)
   {
     SizeType last = i;
@@ -743,7 +752,7 @@ void Tensor<T, C>::Copy(SelfType const &x)
 /**
  * Provides an Tensor that is a copy of the current Tensor
  *
- * @return       copy is a Tensor with the same data, size, and shape of this array.
+ * @return A Tensor with the same data, size, and shape of this array.
  *
  **/
 template <typename T, typename C>
@@ -776,8 +785,10 @@ void Tensor<T, C>::Assign(TensorSliceImplementation<G> const &other)
 }
 
 /**
- *
- * @param other
+ * Assign makes a deep copy from the data in the tensorslice into this tensor
+ * @tparam T Type
+ * @tparam C Container
+ * @param other TensorSlice of another Tensor to assign data into this
  */
 template <typename T, typename C>
 void Tensor<T, C>::Assign(TensorSlice const &other)
@@ -794,8 +805,10 @@ void Tensor<T, C>::Assign(TensorSlice const &other)
 }
 
 /**
- * assign makes a deep copy of data from another tensor into this one
- * @param other
+ * Assign makes a deep copy of data from another tensor into this one
+ * @tparam T Type
+ * @tparam C Container
+ * @param other Another Tensor to assign data from into this
  */
 template <typename T, typename C>
 void Tensor<T, C>::Assign(SelfType const &other)
@@ -812,10 +825,12 @@ void Tensor<T, C>::Assign(SelfType const &other)
 }
 
 /**
- *
- * @tparam Indices
- * @param indices
- * @return
+ * Tensor Accessor with shape().size() many indices
+ * @tparam T Type
+ * @tparam C Container
+ * @tparam Indices parameter pack of indices
+ * @param indices Indices for accessing the data
+ * @return Returns the value in the Tensor at the location specified
  */
 template <typename T, typename C>
 template <typename... Indices>
@@ -826,10 +841,12 @@ typename Tensor<T, C>::Type &Tensor<T, C>::At(Indices... indices)
 }
 
 /**
- *
- * @tparam Indices
- * @param indices
- * @return
+ * Tensor Accessor with shape().size() many indices
+ * @tparam T Type
+ * @tparam C Container
+ * @tparam Indices parameter pack of indices
+ * @param indices Indices for accessing the data
+ * @return Returns the value in the Tensor at the location specified
  */
 template <typename T, typename C>
 template <typename... Indices>
@@ -841,12 +858,13 @@ typename Tensor<T, C>::Type Tensor<T, C>::At(Indices... indices) const
 }
 
 /**
- * Operator for accessing data in the array
- *
- * @param[in]     indices specifies the data points to access.
- * @return        the accessed data.
- *
- **/
+ * Operator for accessing data in the tensor
+ * @tparam T Type
+ * @tparam C Container
+ * @tparam Indices parameter pack of indices
+ * @param indices Indices for accessing the data
+ * @return Returns the value in tensor at the location specified
+ */
 template <typename T, typename C>
 template <typename... Indices>
 typename Tensor<T, C>::Type Tensor<T, C>::operator()(Indices... indices) const
@@ -854,6 +872,14 @@ typename Tensor<T, C>::Type Tensor<T, C>::operator()(Indices... indices) const
   return At(std::forward<Indices>(indices)...);
 }
 
+/**
+ * Operator for accessing data in the tensor
+ * @tparam T Type
+ * @tparam C Container
+ * @tparam Indices parameter pack of indices
+ * @param indices Indices for accessing the data
+ * @return Returns the value in tensor at the location specified
+ */
 template <typename T, typename C>
 template <typename... Indices>
 typename Tensor<T, C>::Type &Tensor<T, C>::operator()(Indices... indices)
@@ -861,22 +887,31 @@ typename Tensor<T, C>::Type &Tensor<T, C>::operator()(Indices... indices)
   return At(std::forward<Indices>(indices)...);
 }
 
+/**
+ * Operator for accessing data in the tensor
+ * @tparam T Type
+ * @tparam C Container
+ * @tparam Indices parameter pack of indices
+ * @param indices Indices for accessing the data
+ * @return Returns the value in tensor at the location specified
+ */
 template <typename T, typename C>
 typename Tensor<T, C>::Type Tensor<T, C>::operator()(SizeType const &index) const
 {
-  assert(index < this->size_);
+  ASSERT(index < this->size_);
   return operator[](index);
 }
 
 /**
- * One-dimensional reference index operator.
- *
+ * One-dimensional reference index operator
  * This operator acts as a one-dimensional array accessor that is
  * meant for non-constant object instances.
- *
- * @tparam S an integral type
- * @param i the index to access
- * @return
+ * Method restricted to Integral types for indexing.
+ * @tparam T Type
+ * @tparam C Container
+ * @tparam S Integral type for accessing
+ * @param i index to access tensor
+ * @return data stored at indexed location
  */
 template <typename T, typename C>
 template <typename S>
@@ -887,14 +922,15 @@ typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>
 }
 
 /**
- * One-dimensional reference index operator.
- *
+ * One-dimensional reference index operator
  * This operator acts as a one-dimensional array accessor that is
  * meant for non-constant object instances.
- *
- * @tparam S an integral type
- * @param i the index to access
- * @return
+ * Method restricted to Integral types for indexing.
+ * @tparam T Type
+ * @tparam C Container
+ * @tparam S Integral type for accessing
+ * @param i index to access tensor
+ * @return data stored at indexed location
  */
 template <typename T, typename C>
 template <typename S>
@@ -904,6 +940,14 @@ typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>
   return data_[i];
 }
 
+/**
+ * Assignment operator uses iterators to assign every value in the
+ * const slice of a Tensor into this tensor
+ * @tparam T Type
+ * @tparam C Container
+ * @param slice Tensor slice of another tensor object
+ * @return This tensor after assignment
+ */
 template <typename T, typename C>
 Tensor<T, C> &Tensor<T, C>::operator=(ConstSliceType const &slice)
 {
@@ -919,6 +963,14 @@ Tensor<T, C> &Tensor<T, C>::operator=(ConstSliceType const &slice)
   return *this;
 }
 
+/**
+ * Assignment operator uses iterators to assign every value in the
+ * slice of a Tensor into this tensor
+ * @tparam T
+ * @tparam C
+ * @param slice
+ * @return
+ */
 template <typename T, typename C>
 Tensor<T, C> &Tensor<T, C>::operator=(TensorSlice const &slice)
 {
@@ -936,11 +988,13 @@ Tensor<T, C> &Tensor<T, C>::operator=(TensorSlice const &slice)
 
 /**
  * Set operator takes variable number of indices followed by one value.
+ * This is made possible using the TensorSetter class to manage
+ * template unrolling
  *
- * @tparam T
- * @tparam C
- * @tparam Args
- * @param args
+ * @tparam T Type
+ * @tparam C Container
+ * @tparam Args indices followed by one value to set
+ * @param args indices followed by one value to set
  */
 template <typename T, typename C>
 template <typename... Args>
@@ -956,10 +1010,10 @@ void Tensor<T, C>::Set(Args... args)
 
 /**
  * Fill tensor with specified value over pre-specified range
- * @tparam T
- * @tparam C
- * @param value
- * @param range
+ * @tparam T Type
+ * @tparam C Container
+ * @param value value to fill tensor with
+ * @param range memory range over which to fill
  */
 template <typename T, typename C>
 void Tensor<T, C>::Fill(Type const &value, memory::Range const &range)
@@ -1005,8 +1059,9 @@ void Tensor<T, C>::Fill(Type const &value)
 }
 
 /**
- * Set all elements to zero.
- * This method will initialise all memory with zero.
+ * Sets all elements to zero
+ * @tparam T Type
+ * @tparam C Container
  */
 template <typename T, typename C>
 void Tensor<T, C>::SetAllZero()
@@ -1015,7 +1070,9 @@ void Tensor<T, C>::SetAllZero()
 }
 
 /**
- * Sets all value in tensor to 1
+ * Sets all elements to one
+ * @tparam T Type
+ * @tparam C Container
  */
 template <typename T, typename C>
 void Tensor<T, C>::SetAllOne()
@@ -1086,10 +1143,10 @@ fetch::meta::IfIsInteger<DataType, Tensor<T, C>> Tensor<T, C>::FillArange(DataTy
 
 /**
  * return a tensor filled with uniform random numbers
- * @tparam T
- * @tparam C
- * @param N
- * @return
+ * @tparam T Type
+ * @tparam C Container
+ * @param N The new size of the tensor after filling with random
+ * @return The Tensor to return
  */
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::UniformRandom(SizeType const &N)
@@ -1103,13 +1160,13 @@ Tensor<T, C> Tensor<T, C>::UniformRandom(SizeType const &N)
 }
 
 /**
- * returns a tensor filled with uniform random integers
- * @tparam T
- * @tparam C
- * @param N
- * @param min
- * @param max
- * @return
+ * Returns a tensor filled with uniform random integers
+ * @tparam T Type
+ * @tparam C Container
+ * @param N The new size after assigning value
+ * @param min the minimum possible random value
+ * @param max the maximum possible random value
+ * @return The return Tensor filled with random values
  */
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::UniformRandomIntegers(SizeType const &N, int64_t const &min,
@@ -1125,9 +1182,9 @@ Tensor<T, C> Tensor<T, C>::UniformRandomIntegers(SizeType const &N, int64_t cons
 
 /**
  * Fills tensor with uniform random data
- * @tparam T
- * @tparam C
- * @return
+ * @tparam T Type
+ * @tparam C Container
+ * @return The return Tensor filled with random valuess
  */
 template <typename T, typename C>
 Tensor<T, C> &Tensor<T, C>::FillUniformRandom()
@@ -1145,7 +1202,7 @@ Tensor<T, C> &Tensor<T, C>::FillUniformRandom()
  * @tparam C
  * @param min
  * @param max
- * @return
+ * @return Fills tensor with random integers
  */
 template <typename T, typename C>
 Tensor<T, C> &Tensor<T, C>::FillUniformRandomIntegers(int64_t const &min, int64_t const &max)
@@ -1230,10 +1287,10 @@ void Tensor<T, C>::Flatten()
 }
 
 /**
- *
- * @tparam T
- * @tparam C
- * @return
+ * Instantiates a new tensor which is the transpose of this 2D tensor
+ * @tparam T Type
+ * @tparam C Container
+ * @return Returns new transposed Tensor
  */
 template <typename T, typename C>
 typename Tensor<T, C>::SelfType Tensor<T, C>::Transpose() const
@@ -1248,11 +1305,11 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::Transpose() const
 }
 
 /**
- *
- * @tparam T
- * @tparam C
- * @param new_axes
- * @return
+ * Instantiates a new tensor which is the transpose of this ND tensor by the specified axes
+ * @tparam T Type
+ * @tparam C Container
+ * @param new_axes the new order of the axes
+ * @return New tensor transposed as determined by new_axes
  */
 template <typename T, typename C>
 typename Tensor<T, C>::SelfType Tensor<T, C>::Transpose(SizeVector &new_axes) const
@@ -1266,7 +1323,10 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::Transpose(SizeVector &new_axes) co
 }
 
 /**
- * Removes the leading dimension if it has size 1
+ * Removes the leading dimension of the tensor if it has size 1
+ * @tparam T Type
+ * @tparam C Container
+ * @return This tensor after squeezing
  */
 template <typename T, typename C>
 typename Tensor<T, C>::SelfType &Tensor<T, C>::Squeeze()
@@ -1279,9 +1339,9 @@ typename Tensor<T, C>::SelfType &Tensor<T, C>::Squeeze()
 
 /**
  * Adds a leading dimension of size 1
- * @tparam T
- * @tparam C
- * @return
+ * @tparam T Type
+ * @tparam C Container
+ * @return This tensor after unsqueeze
  */
 template <typename T, typename C>
 typename Tensor<T, C>::SelfType &Tensor<T, C>::Unsqueeze()
@@ -1292,10 +1352,10 @@ typename Tensor<T, C>::SelfType &Tensor<T, C>::Unsqueeze()
 }
 
 /**
- *
- * @tparam T
- * @tparam C
- * @param shape
+ * Resizes and reshapes tensor according to newly specified shape
+ * @tparam T Type
+ * @tparam C Container
+ * @param shape the new shape to set
  */
 template <typename T, typename C>
 void Tensor<T, C>::ResizeFromShape(SizeVector const &shape)
@@ -1306,10 +1366,10 @@ void Tensor<T, C>::ResizeFromShape(SizeVector const &shape)
 
 /**
  * Directly copies shape variable without checking anything
- *
- * @param[in]     shape specifies the new shape.
- *
- **/
+ * @tparam T Type
+ * @tparam C Container
+ * @param shape the new shape to set
+ */
 template <typename T, typename C>
 void Tensor<T, C>::LazyReshape(SizeVector const &shape)
 {
@@ -1319,11 +1379,11 @@ void Tensor<T, C>::LazyReshape(SizeVector const &shape)
 
 /**
  * Tests if it is possible to reshape the array to a newly proposed shape
- *
- * @param[in]     shape specified for the new array as a vector ot size_t.
- * @return        success is a bool indicating where the proposed shape is acceptable.
- *
- **/
+ * @tparam T Type
+ * @tparam C Container
+ * @param shape shape specified for the new array as a vector ot size_t.
+ * @return success is a bool indicating where the proposed shape is acceptable.
+ */
 template <typename T, typename C>
 bool Tensor<T, C>::CanReshape(SizeVector const &shape)
 {
@@ -1346,7 +1406,12 @@ bool Tensor<T, C>::CanReshape(SizeVector const &shape)
 }
 
 /**
+ */
+
+/**
  * Reshapes after checking the total size is the same
+ * @tparam T Type
+ * @tparam C Container
  * @param shape  specified for the new array as a vector of size type.
  */
 template <typename T, typename C>
@@ -1376,8 +1441,10 @@ typename Tensor<T, C>::SizeVector const &Tensor<T, C>::shape() const
 
 /**
  * returns the size of a specified dimension
- * @param n
- * @return
+ * @tparam T Type
+ * @tparam C Container
+ * @param n the dimension to query
+ * @return SizeType value indicating the size of a dimension of the Tensor
  */
 template <typename T, typename C>
 typename Tensor<T, C>::SizeType const &Tensor<T, C>::shape(SizeType const &n) const
@@ -1387,9 +1454,9 @@ typename Tensor<T, C>::SizeType const &Tensor<T, C>::shape(SizeType const &n) co
 
 /**
  * returns the size of the tensor
- * @tparam T
- * @tparam C
- * @return
+ * @tparam T Type
+ * @tparam C Container
+ * @return SizeType value indicating total size of Tensor
  */
 template <typename T, typename C>
 typename Tensor<T, C>::SizeType Tensor<T, C>::size() const
@@ -1419,7 +1486,7 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::InlineAdd(Tensor const &other)
     SelfType other_copy = other.Copy();
     if (!(Broadcast([](T x, T y) { return x + y; }, self_copy, other_copy, *this)))
     {
-      throw std::runtime_error("arrays not broadcastable!");
+      throw std::runtime_error("arrays not broadcastable for InlineAdd!");
     }
   }
   return *this;
@@ -1455,7 +1522,7 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::InlineSubtract(Tensor const &other
     SelfType other_copy = other.Copy();
     if (!(Broadcast([](T x, T y) { return x - y; }, self_copy, other_copy, *this)))
     {
-      throw std::runtime_error("arrays not broadcastable!");
+      throw std::runtime_error("arrays not broadcastable for InlineSubtract!");
     }
   }
   return *this;
@@ -1491,11 +1558,12 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::InlineReverseSubtract(Tensor const
     SelfType other_copy = other.Copy();
     if (!(Broadcast([](T x, T y) { return x - y; }, other_copy, self_copy, *this)))
     {
-      throw std::runtime_error("arrays not broadcastable!");
+      throw std::runtime_error("arrays not broadcastable for InlineReverseSubtract!");
     }
   }
   return *this;
 }
+
 /**
  * subtract every element from the scalar and return the new output
  * @param scalar to subtract
@@ -1509,9 +1577,11 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::InlineReverseSubtract(Type const &
 }
 
 /**
- * multiply other by this array and returns this
- * @param other
- * @return
+ * multiply other tensor by this tensor and returns this
+ * @tparam T Type
+ * @tparam C Container
+ * @param other other tensor
+ * @return returns this tensor after multiplication
  */
 template <typename T, typename C>
 typename Tensor<T, C>::SelfType Tensor<T, C>::InlineMultiply(Tensor const &other)
@@ -1526,7 +1596,7 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::InlineMultiply(Tensor const &other
     SelfType other_copy = other.Copy();
     if (!(Broadcast([](T x, T y) { return x * y; }, other_copy, self_copy, *this)))
     {
-      throw std::runtime_error("arrays not broadcastable!");
+      throw std::runtime_error("arrays not broadcastable for InlineMultiply!");
     }
   }
   return *this;
@@ -1562,7 +1632,7 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::InlineDivide(Tensor const &other)
     SelfType other_copy = other.Copy();
     if (!(Broadcast([](T x, T y) { return x / y; }, self_copy, other_copy, *this)))
     {
-      throw std::runtime_error("arrays not broadcastable!");
+      throw std::runtime_error("arrays not broadcastable for InlineDivide!");
     }
   }
   return *this;
@@ -1583,7 +1653,7 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::InlineDivide(Type const &scalar)
 /**
  * Divide another Tensor by this Tensor from another and support broadcasting
  * @param other
- * @return
+ * @return this tensor after inline reverse divide
  */
 template <typename T, typename C>
 typename Tensor<T, C>::SelfType Tensor<T, C>::InlineReverseDivide(Tensor const &other)
@@ -1598,7 +1668,7 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::InlineReverseDivide(Tensor const &
     SelfType other_copy = other.Copy();
     if (!(Broadcast([](T x, T y) { return x / y; }, other_copy, self_copy, *this)))
     {
-      throw std::runtime_error("arrays not broadcastable!");
+      throw std::runtime_error("arrays not broadcastable for InlineReverseDivide!");
     }
   }
   return *this;
@@ -1620,7 +1690,7 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::InlineReverseDivide(Type const &sc
  * + operator
  * @tparam OtherType may be a scalar or array, but must be arithmetic
  * @param other
- * @return
+ * @return returns this Tensor after add operation
  */
 template <typename T, typename C>
 template <typename OtherType>
@@ -1640,7 +1710,7 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::operator+=(OtherType const &other)
  * + operator
  * @tparam OtherType may be a scalar or array, but must be arithmetic
  * @param other
- * @return
+ * @return returns this Tensor after subtract operation
  */
 template <typename T, typename C>
 template <typename OtherType>
@@ -1855,8 +1925,15 @@ void Tensor<T, C>::MajorOrderFlip()
       major_order_ = MAJOR_ORDER::COLUMN;
     }
   }
-  //    if (MajorOrder() == MAJOR_ORDER::COLUMN) {major_order_ = row;}
-  //    else {{major_order_ = COLUMN;}}
+
+  if (MajorOrder() == MAJOR_ORDER::COLUMN)
+  {
+    major_order_ = MAJOR_ORDER::ROW;
+  }
+  else
+  {
+    major_order_ = MAJOR_ORDER::COLUMN;
+  }
 }
 
 /**
@@ -2348,7 +2425,7 @@ struct Tensor<T, C>::TensorSetter<N, TSType>
 /// TENSOR SLICE METHOD IMPLEMENTATIONS ///
 ///////////////////////////////////////////
 
-/// TensorSlice implementations
+// TensorSlice implementations
 
 template <typename T, typename C>
 typename Tensor<T, C>::IteratorType Tensor<T, C>::TensorSlice::begin()
@@ -2407,7 +2484,7 @@ void Tensor<T, C>::TensorSlice::Fill(Type t)
   }
 }
 
-/// TensorSliceImplementation implementations
+// TensorSliceImplementation implementations
 
 template <typename T, typename C>
 template <typename STensor>
