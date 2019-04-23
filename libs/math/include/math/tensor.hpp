@@ -198,7 +198,7 @@ public:
     void Fill(Type t)
     {
       auto it1 = begin();
-      while (!it1.is_valid())
+      while (it1.is_valid())
       {
         *it1 = t;
         ++it1;
