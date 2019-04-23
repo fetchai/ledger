@@ -126,6 +126,8 @@ ledger::TxList TransientObjectStore<O>::PullSubtree(
 
   uint64_t counter = 0;
 
+  archive_.Flush(false);
+
   archive_.WithLock([this, &pull_limit, &ret, &counter, &rid, bit_count]() {
     // This is effectively saying get all objects whose ID begins rid & mask
     auto it = this->archive_.GetSubtree(ResourceID(rid), bit_count);
