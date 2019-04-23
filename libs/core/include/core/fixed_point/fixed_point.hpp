@@ -532,7 +532,6 @@ private:
   FixedPoint(Type n, const NoScale &)
     : data_(n)
   {}
-
 };
 
 template <std::uint16_t I, std::uint16_t F>
@@ -566,7 +565,7 @@ const typename FixedPoint<I, F>::Type FixedPoint<I, F>::MAX =
     MAX_INT | LARGEST_FRACTION; /* largest fixed point */
 template <std::uint16_t I, std::uint16_t F>
 const typename FixedPoint<I, F>::Type FixedPoint<I, F>::MIN =
-    -(MIN_INT ^ LARGEST_FRACTION); /* smallest fixed point */
+    MIN_INT ^ LARGEST_FRACTION; /* smallest fixed point */
 
 }  // namespace fixed_point
 }  // namespace fetch

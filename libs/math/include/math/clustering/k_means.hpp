@@ -733,7 +733,7 @@ private:
   SizeType max_no_change_convergence_ = INVALID;  // max no change k_assignment before convergence
   SizeType loop_counter_              = INVALID;
   SizeType max_loops_                 = INVALID;
-  DataType assigned_k_ = NumericMax<DataType>();  // current cluster to assign
+  DataType assigned_k_                = NumericMax<DataType>();  // current cluster to assign
 
   // used to find the smallest distance out of K comparisons
   typename ArrayType::Type running_mean_ = NumericMax<typename ArrayType::Type>();

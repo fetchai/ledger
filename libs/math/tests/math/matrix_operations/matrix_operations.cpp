@@ -102,7 +102,7 @@ TYPED_TEST(FreeFunctionsTest, Product_OneDimension)
 TYPED_TEST(FreeFunctionsTest, Product_TwoDimension)
 {
   using SizeType = typename TypeParam::SizeType;
-  using Type = typename TypeParam::Type;
+  using Type     = typename TypeParam::Type;
 
   SizeType  n_data     = 4;
   SizeType  n_features = 2;
@@ -123,7 +123,6 @@ TYPED_TEST(FreeFunctionsTest, Product_TwoDimension)
   array1.Set(1, 1, typename TypeParam::Type(0));
   output = fetch::math::Product(array1);
   EXPECT_NEAR(double(output), 0, 1e-6);
-
 }
 
 TYPED_TEST(FreeFunctionsTest, Max_OneDimension)
@@ -177,7 +176,6 @@ TYPED_TEST(FreeFunctionsTest, Max_TwoDimension)
   EXPECT_EQ(output2.At(0), typename TypeParam::Type(21));
   EXPECT_EQ(output2.At(1), typename TypeParam::Type(999));
 }
-
 
 TYPED_TEST(FreeFunctionsTest, Min_OneDimension)
 {

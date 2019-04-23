@@ -134,7 +134,7 @@ meta::IfIsMathArray<ArrayType, ArrayType> BooleanMask(ArrayType &input_array, Ar
  */
 template <typename ArrayType, typename... Indices>
 void Scatter1D(ArrayType &input_array, ArrayType const &updates,
-             std::vector<Indices...> const &indices)
+               std::vector<Indices...> const &indices)
 {
   ASSERT(input_array.shape().size() == 1);
   ASSERT(indices.size() == updates.size());
