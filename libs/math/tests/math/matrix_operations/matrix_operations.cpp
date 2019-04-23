@@ -79,13 +79,14 @@ TYPED_TEST(FreeFunctionsTest, Scatter1D_SetAll)
 
 TYPED_TEST(FreeFunctionsTest, Product_OneDimension)
 {
-  using Type = typename TypeParam::Type;
+  using SizeType = typename TypeParam::SizeType;
+  using Type     = typename TypeParam::Type;
   TypeParam array1{4};
 
-  array1.Set(0, typename TypeParam::Type(0.3));
-  array1.Set(1, typename TypeParam::Type(1.2));
-  array1.Set(2, typename TypeParam::Type(0.7));
-  array1.Set(3, typename TypeParam::Type(22));
+  array1.Set(SizeType{0}, typename TypeParam::Type(0.3));
+  array1.Set(SizeType{1}, typename TypeParam::Type(1.2));
+  array1.Set(SizeType{2}, typename TypeParam::Type(0.7));
+  array1.Set(SizeType{3}, typename TypeParam::Type(22));
 
   Type output = fetch::math::Product(array1);
   EXPECT_NEAR(double(output), 5.544, 1e-6);
