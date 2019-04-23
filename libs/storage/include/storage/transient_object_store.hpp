@@ -78,6 +78,8 @@ public:
   TransientObjectStore &operator=(TransientObjectStore const &) = delete;
   TransientObjectStore &operator=(TransientObjectStore &&) = delete;
 
+  std::size_t Size() const;
+
 private:
   using Mutex       = fetch::mutex::Mutex;
   using Queue       = fetch::core::MPMCQueue<ResourceID, 1 << 15>;
@@ -103,6 +105,14 @@ private:
   static constexpr core::Tickets::Count recent_queue_alarm_threshold{RecentQueue::QUEUE_LENGTH >>
                                                                      1};
 };
+
+template <typename O>
+std::size_t TransientObjectStore<O>::Size() const
+{
+  FETCH_LOCK(cache_mutex_);
+
+  return archive_.size() + cache_.size();
+}
 
 template <typename O>
 constexpr core::Tickets::Count TransientObjectStore<O>::recent_queue_alarm_threshold;
@@ -174,7 +184,12 @@ void TransientObjectStore<O>::Load(std::string const &doc_file, std::string cons
 template <typename O>
 bool TransientObjectStore<O>::Get(ResourceID const &rid, O &object)
 {
-  bool const success = GetFromCache(rid, object) || archive_.Get(rid, object);
+  bool success = false;
+
+  {
+    FETCH_LOCK(cache_mutex_);
+    success = GetFromCache(rid, object) || archive_.Get(rid, object);
+  }
 
   if (!success)
   {
@@ -305,7 +320,6 @@ bool TransientObjectStore<O>::Confirm(ResourceID const &rid)
 template <typename O>
 bool TransientObjectStore<O>::GetFromCache(ResourceID const &rid, O &object)
 {
-  FETCH_LOCK(cache_mutex_);
   bool success = false;
 
   auto it = cache_.find(rid);
@@ -441,6 +455,8 @@ void TransientObjectStore<O>::ThreadLoop()
       else
       {
         auto const &rid = rids[written_count];
+
+        FETCH_LOCK(cache_mutex_);
 
         // get the element from the cache
         if (GetFromCache(rid, obj))
