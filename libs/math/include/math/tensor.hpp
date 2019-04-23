@@ -587,7 +587,8 @@ private:
 };
 
 /**
- * This method allows Tensor instantiation from a string which is convenient for quickly writing tests.
+ * This method allows Tensor instantiation from a string which is convenient for quickly writing
+ * tests.
  * @tparam T Type
  * @tparam C Container
  * @param c bytearray indicating the values to fill the array with
