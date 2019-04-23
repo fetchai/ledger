@@ -39,7 +39,7 @@ TYPED_TEST(FlattenTest, forward_test)
   TypeParam                          prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({data}));
 
-  // test correct values
+  // test correct shape
   ASSERT_EQ(prediction.shape(), std::vector<typename TypeParam::SizeType>({1, 64}));
 }
 

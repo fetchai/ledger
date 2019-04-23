@@ -71,9 +71,19 @@ TYPED_TEST(EmbeddingsTest, forward)
   ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({2, 6}));
 
   std::vector<int> gt{30, 31, 32, 33, 34, 35, 50, 51, 52, 53, 54, 55};
-  for (unsigned int i(0); i < 12; ++i)
+  std::cout << " ---- " << std::endl;
+  for (unsigned int i{0}; i < 2; ++i)
   {
-    EXPECT_EQ(output.At(i), typename TypeParam::Type(gt[i]));
+    for (unsigned int j{0}; j < 6; ++j)
+    {
+      EXPECT_EQ(output.At(i, j), typename TypeParam::Type(gt[(i * 6) + j]));
+      if (output.At(i, j) != (typename TypeParam::Type(gt[(i * 6) + j])))
+      {
+        std::cerr << "ERROR: " << output.At(i, j) << " "
+                  << typename TypeParam::Type(gt[(i * 6) + j]) << std::endl;
+        exit(-1);
+      }
+    }
   }
 }
 
@@ -97,9 +107,12 @@ TYPED_TEST(EmbeddingsTest, backward)
       std::vector<std::reference_wrapper<TypeParam const>>({input}));
 
   TypeParam errorSignal(std::vector<uint64_t>({2, 6}));
-  for (unsigned int j(0); j < 12; ++j)
+  for (unsigned int j(0); j < 2; ++j)
   {
-    errorSignal.Set(j, typename TypeParam::Type(j));
+    for (unsigned int k{0}; k < 6; ++k)
+    {
+      errorSignal.Set({j, k}, typename TypeParam::Type((j * 6) + k));
+    }
   }
   e.Backward({input}, errorSignal);
   e.Step(typename TypeParam::Type(1));
@@ -108,8 +121,11 @@ TYPED_TEST(EmbeddingsTest, backward)
       std::vector<std::reference_wrapper<TypeParam const>>({input}));
   std::vector<int> gt{30, 30, 30, 30, 30, 30, 44, 44, 44, 44, 44, 44};
 
-  for (unsigned int j(0); j < 12; ++j)
+  for (unsigned int j(0); j < 2; ++j)
   {
-    EXPECT_EQ(output.At(j), typename TypeParam::Type(gt[j]));
+    for (unsigned int k{0}; k < 6; ++k)
+    {
+      EXPECT_EQ(output.At(j, k), typename TypeParam::Type(gt[(j * 6) + k]));
+    }
   }
 }

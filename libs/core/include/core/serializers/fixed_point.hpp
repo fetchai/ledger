@@ -22,13 +22,13 @@
 namespace fetch {
 namespace serializers {
 
-template <typename T, std::size_t I, std::size_t F>
+template <typename T, std::uint16_t I, std::uint16_t F>
 inline void Serialize(T &serializer, fixed_point::FixedPoint<I, F> const &n)
 {
   serializer << n.Data();
 }
 
-template <typename T, std::size_t I, std::size_t F>
+template <typename T, std::uint16_t I, std::uint16_t F>
 inline void Deserialize(T &serializer, fixed_point::FixedPoint<I, F> &n)
 {
   typename fixed_point::FixedPoint<I, F>::Type data;

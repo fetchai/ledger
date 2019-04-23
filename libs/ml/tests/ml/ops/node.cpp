@@ -68,5 +68,5 @@ TEST(node_test, node_relu)
 
   EXPECT_EQ(placeholder->template Ops<fetch::math::Tensor<int>>::Forward({}), data);
   EXPECT_EQ(placeholder->Evaluate(), data);
-  EXPECT_TRUE(relu->Evaluate().AllClose(gt));
+  EXPECT_TRUE(relu->Evaluate().Copy().AllClose(gt));
 }
