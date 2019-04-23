@@ -33,12 +33,14 @@ template <class T>
 class NodeInterface
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType      = T;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using SliceType      = typename ArrayType::SliceType;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
-  virtual ArrayType const &Evaluate()                                            = 0;
-  virtual void             AddInput(std::shared_ptr<NodeInterface<T>> const &i)  = 0;
-  virtual void             AddOutput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
+  virtual ArrayType &Evaluate()                                            = 0;
+  virtual void       AddInput(std::shared_ptr<NodeInterface<T>> const &i)  = 0;
+  virtual void       AddOutput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
       ArrayType const &errorSignal)                                                = 0;
   virtual void ResetCache(bool input_size_changed)                                 = 0;
@@ -50,8 +52,10 @@ template <class T, class O>
 class Node : public NodeInterface<T>, public O
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType      = T;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using SliceType      = typename ArrayType::SliceType;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   template <typename... Params>
   Node(std::string const name, Params... params)
@@ -73,7 +77,7 @@ public:
     return inputs;
   }
 
-  virtual ArrayType const &Evaluate()
+  virtual ArrayType &Evaluate()
   {
     std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
     FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
