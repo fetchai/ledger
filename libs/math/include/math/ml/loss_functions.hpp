@@ -18,5 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/ml/loss_functions/cross_entropy.hpp"
+#include "math/ml/loss_functions/kl_divergence.hpp"
+#include "math/ml/loss_functions/l2_loss.hpp"
 #include "math/ml/loss_functions/l2_norm.hpp"
 #include "math/ml/loss_functions/mean_square_error.hpp"

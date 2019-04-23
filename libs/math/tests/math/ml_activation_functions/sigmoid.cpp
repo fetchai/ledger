@@ -143,21 +143,22 @@ TYPED_TEST(SigmoidTest, exact_values)
 
 TYPED_TEST(SigmoidTest, sigmoid_2x2)
 {
+  using SizeType = typename TypeParam::SizeType;
   TypeParam array1{{2, 2}};
 
-  array1.Set({0, 0}, typename TypeParam::Type(0.3));
-  array1.Set({0, 1}, typename TypeParam::Type(1.2));
-  array1.Set({1, 0}, typename TypeParam::Type(0.7));
-  array1.Set({1, 1}, typename TypeParam::Type(22));
+  array1.Set(SizeType{0}, SizeType{0}, typename TypeParam::Type(0.3));
+  array1.Set(SizeType{0}, SizeType{1}, typename TypeParam::Type(1.2));
+  array1.Set(SizeType{1}, SizeType{0}, typename TypeParam::Type(0.7));
+  array1.Set(SizeType{1}, SizeType{1}, typename TypeParam::Type(22));
 
   TypeParam output = fetch::math::Sigmoid(array1);
 
   TypeParam numpy_output{{2, 2}};
 
-  numpy_output.Set({0, 0}, typename TypeParam::Type(0.57444252));
-  numpy_output.Set({0, 1}, typename TypeParam::Type(0.76852478));
-  numpy_output.Set({1, 0}, typename TypeParam::Type(0.66818777));
-  numpy_output.Set({1, 1}, typename TypeParam::Type(1));
+  numpy_output.Set(SizeType{0}, SizeType{0}, typename TypeParam::Type(0.57444252));
+  numpy_output.Set(SizeType{0}, SizeType{1}, typename TypeParam::Type(0.76852478));
+  numpy_output.Set(SizeType{1}, SizeType{0}, typename TypeParam::Type(0.66818777));
+  numpy_output.Set(SizeType{1}, SizeType{1}, typename TypeParam::Type(1));
 
   ASSERT_TRUE(output.AllClose(numpy_output));
 }
@@ -168,12 +169,14 @@ TYPED_TEST(SigmoidTest, sigmoid_2x2)
 // Test sigmoid function output against numpy output for 2x2 input matrix of random values
 TYPED_TEST(SigmoidTest, sigmoid_11)
 {
+  using SizeType = typename TypeParam::SizeType;
+
   TypeParam input{1};
   TypeParam output{1};
   TypeParam numpy_output{1};
 
-  input.Set(0, typename TypeParam::Type(0.3));
-  numpy_output.Set(0, typename TypeParam::Type(0));
+  input.Set(SizeType{0}, typename TypeParam::Type(0.3));
+  numpy_output.Set(SizeType{0}, typename TypeParam::Type(0));
 
   output = fetch::math::Sigmoid(input);
 

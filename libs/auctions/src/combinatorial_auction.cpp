@@ -237,7 +237,7 @@ void CombinatorialAuction::BuildGraph()
   {
 
     local_fields_[i] = static_cast<Value>(bids_[i].price);
-    couplings_.Set({i, i}, 0);
+    couplings_.Set(i, i, 0);
     for (auto &cur_item : items_)
     {
       for (std::size_t j = 0; j < bids_[i].item_ids().size(); ++j)

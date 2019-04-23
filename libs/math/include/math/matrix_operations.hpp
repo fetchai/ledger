@@ -124,7 +124,7 @@ meta::IfIsMathArray<ArrayType, ArrayType> BooleanMask(ArrayType &input_array, Ar
 }
 
 /**
- * Simple Scatter implementation. Updates data in the input array at locations specified by indices
+ * 1D Scatter implementation. Updates data in the input array at locations specified by indices
  * with values specified by updates
  * @tparam ArrayType
  * @tparam Indices
@@ -133,9 +133,10 @@ meta::IfIsMathArray<ArrayType, ArrayType> BooleanMask(ArrayType &input_array, Ar
  * @param indices
  */
 template <typename ArrayType, typename... Indices>
-void Scatter(ArrayType &input_array, ArrayType const &updates,
+void Scatter1D(ArrayType &input_array, ArrayType const &updates,
              std::vector<Indices...> const &indices)
 {
+  ASSERT(input_array.shape().size() == 1);
   ASSERT(indices.size() == updates.size());
 
   typename ArrayType::SizeType idx{0};
@@ -286,17 +287,31 @@ T Max(std::vector<T> const &obj1)
  * @param ret return value
  */
 template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, T &ret)
+meta::IfIsMathNonFixedPointArray<ArrayType, void> Min(ArrayType const &array, T &ret)
 {
   ret = std::numeric_limits<T>::max();
   for (T const &e : array)
   {
-    if (ret < e)
+    if (e < ret)
     {
       ret = e;
     }
   }
 }
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsMathFixedPointArray<ArrayType, void> Min(ArrayType const &array, T &ret)
+{
+  double tmp = std::numeric_limits<double>::max();
+  for (T const &e : array)
+  {
+    if (double(e) < tmp)
+    {
+      tmp = double(e);
+    }
+  }
+  ret = T(tmp);
+}
+
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Min(ArrayType const &array)
 {

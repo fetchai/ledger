@@ -17,23 +17,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdint>
-#include <unordered_set>
-#include <vector>
-
-#include "math/meta/math_type_traits.hpp"
+#include "math/fundamental_operators.hpp"   // add, subtract etc.
+#include "math/standard_functions/pow.hpp"  // square
+#include <cassert>
 
 namespace fetch {
 namespace math {
 
-using SizeType   = uint64_t;
-using SizeVector = std::vector<SizeType>;
-using SizeSet    = std::unordered_set<SizeType>;
-
-constexpr SizeType NO_AXIS = SizeType(-1);
-
-
-
+template <typename ArrayType>
+typename ArrayType::Type L2Loss(ArrayType const &A)
+{
+  auto tmp = Sum(Square(A));
+  tmp      = (tmp / 2);
+  return tmp;
+}
 
 }  // namespace math
 }  // namespace fetch

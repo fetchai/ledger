@@ -81,51 +81,6 @@ BENCHMARK_TEMPLATE(BM_BooleanMaskFull, float, 256, 256, 256)->Unit(benchmark::kM
 BENCHMARK_TEMPLATE(BM_BooleanMaskFull, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
 
 template <class T, int C, int H, int W>
-void BM_ScatterFull(benchmark::State &state)
-{
-  using SizeType = fetch::math::SizeType;
-  for (auto _ : state)
-  {
-    state.PauseTiming();
-    fetch::math::Tensor<T>             t(std::vector<std::uint64_t>{C, H, W});
-    fetch::math::Tensor<T>             updates(std::vector<SizeType>{C, H, W});
-    std::vector<std::vector<SizeType>> indices{C * H * W};
-
-    SizeType counter = 0;
-    for (std::size_t c_val = 0; c_val < C; ++c_val)
-    {
-      for (std::size_t h_val = 0; h_val < H; ++h_val)
-      {
-        for (std::size_t w_val = 0; w_val < W; ++w_val)
-        {
-          indices[counter].emplace_back(c_val);
-          indices[counter].emplace_back(h_val);
-          indices[counter].emplace_back(w_val);
-          ++counter;
-        }
-      }
-    }
-
-    updates.SetAllOne();
-    state.ResumeTiming();
-
-    fetch::math::Scatter(t, updates, indices);
-  }
-}
-
-BENCHMARK_TEMPLATE(BM_ScatterFull, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ScatterFull, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ScatterFull, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
-
-BENCHMARK_TEMPLATE(BM_ScatterFull, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ScatterFull, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ScatterFull, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
-
-BENCHMARK_TEMPLATE(BM_ScatterFull, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ScatterFull, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_ScatterFull, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
-
-template <class T, int C, int H, int W>
 void BM_Max(benchmark::State &state)
 {
   for (auto _ : state)
