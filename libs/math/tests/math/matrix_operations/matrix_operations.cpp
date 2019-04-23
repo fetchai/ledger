@@ -54,6 +54,31 @@ TYPED_TEST(FreeFunctionsTest, BooleanMask_SetAll)
 }
 
 
+TYPED_TEST(FreeFunctionsTest, Scatter_SetAll)
+{
+  using SizeType = typename TypeParam::SizeType;
+  using Type = typename TypeParam::Type;
+
+  TypeParam array1{4};
+  TypeParam updates{4};
+  std::vector<SizeType> indices{};
+  updates.SetAllOne();
+  indices.emplace_back(0);
+  indices.emplace_back(1);
+  indices.emplace_back(2);
+  indices.emplace_back(3);
+
+  for (std::size_t j = 0; j < array1.size(); ++j)
+  {
+    EXPECT_EQ(array1.At(j), Type(0));
+  }
+  fetch::math::Scatter(array1, updates, indices);
+  for (std::size_t j = 0; j < array1.size(); ++j)
+  {
+    EXPECT_EQ(array1.At(j), Type(1));
+  }
+}
+
 TYPED_TEST(FreeFunctionsTest, ArgMax_OneDimension)
 {
   TypeParam array1{4};

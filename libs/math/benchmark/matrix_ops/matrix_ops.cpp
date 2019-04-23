@@ -27,11 +27,13 @@
 template <class T, int C, int H, int W>
 void BM_BooleanMaskEmpty(benchmark::State &state)
 {
+  using SizeType = fetch::math::SizeType;
+
   for (auto _ : state)
   {
     state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
-    fetch::math::Tensor<T> mask(std::vector<std::uint64_t>{C, H, W});
+    fetch::math::Tensor<T> t(std::vector<SizeType>{C, H, W});
+    fetch::math::Tensor<T> mask(std::vector<SizeType>{C, H, W});
     mask.SetAllZero();
     state.ResumeTiming();
 
@@ -55,11 +57,12 @@ BENCHMARK_TEMPLATE(BM_BooleanMaskEmpty, double, 256, 256, 256)->Unit(benchmark::
 template <class T, int C, int H, int W>
 void BM_BooleanMaskFull(benchmark::State &state)
 {
+  using SizeType = fetch::math::SizeType;
   for (auto _ : state)
   {
     state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
-    fetch::math::Tensor<T> mask(std::vector<std::uint64_t>{C, H, W});
+    fetch::math::Tensor<T> t(std::vector<SizeType>{C, H, W});
+    fetch::math::Tensor<T> mask(std::vector<SizeType>{C, H, W});
     mask.SetAllOne();
     state.ResumeTiming();
     fetch::math::BooleanMask(t, mask);
@@ -78,100 +81,50 @@ BENCHMARK_TEMPLATE(BM_BooleanMaskFull, int, 256, 256, 256)->Unit(benchmark::kMil
 BENCHMARK_TEMPLATE(BM_BooleanMaskFull, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_BooleanMaskFull, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
 
+template <class T, int C, int H, int W>
+void BM_ScatterFull(benchmark::State &state)
+{
+  using SizeType = fetch::math::SizeType;
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
+    fetch::math::Tensor<T> updates(std::vector<SizeType>{C, H, W});
+    std::vector<std::vector<SizeType>> indices{C * H * W};
 
+    SizeType counter = 0;
+    for (std::size_t c_val = 0; c_val < C; ++c_val)
+    {
+      for (std::size_t h_val = 0; h_val < H; ++h_val)
+      {
+        for (std::size_t w_val = 0; w_val < W; ++w_val)
+        {
+          indices[counter].emplace_back(c_val);
+          indices[counter].emplace_back(h_val);
+          indices[counter].emplace_back(w_val);
+          ++counter;
+        }
+      }
+    }
 
+    updates.SetAllOne();
+    state.ResumeTiming();
 
-//
-//// Reference implementation of a vector to compare iteration time
-//template <class T, int C, int H, int W>
-//void VectorBaselineRangeIterator(benchmark::State &state)
-//{
-//  for (auto _ : state)
-//  {
-//    state.PauseTiming();
-//
-//    // Construct reference tensor
-//    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
-//
-//    // Baseline - iterate over vector of same number of elements
-//    std::vector<T> baseline;
-//    baseline.resize(t.size());
-//    state.ResumeTiming();
-//
-//    for (auto const &e : baseline)
-//    {
-//      benchmark::DoNotOptimize(e);
-//    }
-//  }
-//}
-//
-//BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
-//BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
-//BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
-//
-//BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
-//BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, float, 128, 256, 256)
-//    ->Unit(benchmark::kMillisecond);
-//BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, double, 128, 256, 256)
-//    ->Unit(benchmark::kMillisecond);
-//
-//BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
-//BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, float, 256, 256, 256)
-//    ->Unit(benchmark::kMillisecond);
-//BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, double, 256, 256, 256)
-//    ->Unit(benchmark::kMillisecond);
-//
-//template <class T, int C, int H, int W>
-//void BM_tensorRangeIterator(benchmark::State &state)
-//{
-//  for (auto _ : state)
-//  {
-//    state.PauseTiming();
-//    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
-//    state.ResumeTiming();
-//
-//    for (auto const &e : t)
-//    {
-//      benchmark::DoNotOptimize(e);
-//    }
-//  }
-//}
-//
-//BENCHMARK_TEMPLATE(BM_tensorRangeIterator, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
-//BENCHMARK_TEMPLATE(BM_tensorRangeIterator, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
-//BENCHMARK_TEMPLATE(BM_tensorRangeIterator, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
-//
-//BENCHMARK_TEMPLATE(BM_tensorRangeIterator, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
-//BENCHMARK_TEMPLATE(BM_tensorRangeIterator, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
-//BENCHMARK_TEMPLATE(BM_tensorRangeIterator, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
-//
-//BENCHMARK_TEMPLATE(BM_tensorRangeIterator, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
-//BENCHMARK_TEMPLATE(BM_tensorRangeIterator, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
-//BENCHMARK_TEMPLATE(BM_tensorRangeIterator, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
-//
-//template <class T, int C, int H, int W>
-//void BM_tensorSum(benchmark::State &state)
-//{
-//  for (auto _ : state)
-//  {
-//    state.PauseTiming();
-//    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
-//    state.ResumeTiming();
-//
-//    benchmark::DoNotOptimize(t.Sum());
-//  }
-//}
-//
-//BENCHMARK_TEMPLATE(BM_tensorSum, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
-//BENCHMARK_TEMPLATE(BM_tensorSum, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
-//BENCHMARK_TEMPLATE(BM_tensorSum, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
-//
-//BENCHMARK_TEMPLATE(BM_tensorSum, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
-//BENCHMARK_TEMPLATE(BM_tensorSum, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
-//BENCHMARK_TEMPLATE(BM_tensorSum, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
-//
-//BENCHMARK_TEMPLATE(BM_tensorSum, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
-//BENCHMARK_TEMPLATE(BM_tensorSum, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
-//BENCHMARK_TEMPLATE(BM_tensorSum, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+    fetch::math::Scatter(t, updates, indices);
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_ScatterFull, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_ScatterFull, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_ScatterFull, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_ScatterFull, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_ScatterFull, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_ScatterFull, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_ScatterFull, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_ScatterFull, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_ScatterFull, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+
 
 BENCHMARK_MAIN();

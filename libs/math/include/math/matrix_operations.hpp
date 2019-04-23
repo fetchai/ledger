@@ -120,61 +120,24 @@ meta::IfIsMathArray<ArrayType, ArrayType> BooleanMask(ArrayType &input_array, Ar
   return ret;
 }
 
-/*
- * Adds sparse updates to the variable referenced
- */
-namespace details {
-template <typename ArrayType>
-void ScatterImplementation(ArrayType &input_array, ArrayType &updates, ArrayType &indices)
-{
-  // sort indices and updates into ascending order
-  std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> AB;
-
-  // copy into pairs
-  // Note that A values are put in "first" this is very important
-  for (typename ArrayType::SizeType i = 0; i < updates.size(); ++i)
-  {
-    AB.push_back(std::make_pair(indices[i], updates[i]));
-  }
-
-  std::sort(AB.begin(), AB.end());
-
-  // Place back into arrays
-  for (size_t i = 0; i < updates.size(); ++i)
-  {
-    updates[i] = AB[i].second;
-    indices[i] = static_cast<typename ArrayType::type>(AB[i].first);
-  }
-
-  // scatter
-  typename ArrayType::SizeType arr_count = 0;
-  for (typename ArrayType::SizeType count = 0; count < indices.size(); ++count)
-  {
-    // TODO(private issue 282): Think about this code
-    while (arr_count < static_cast<typename ArrayType::SizeType>(indices[count]))
-    {
-      ++arr_count;
-    }
-
-    input_array[arr_count] = updates[count];
-  }
-}
-}  // namespace details
-
 /**
- * Copies the values of updates into the specified indices of the first dimension of data in this
- * object
+ * Simple Scatter implementation. Updates data in the input array at locations specified by indices with values specified by updates
+ * @tparam ArrayType
+ * @tparam Indices
+ * @param input_array
+ * @param updates
+ * @param indices
  */
-template <typename ArrayType>
-void Scatter(ArrayType &input_array, ArrayType const &updates, ArrayType const &indices)
+template <typename ArrayType, typename ... Indices>
+void Scatter(ArrayType &input_array, ArrayType const &updates, std::vector<Indices...> const &indices)
 {
-  ASSERT(updates.size() == indices.size());
-  ASSERT(input_array.size() >= Max(indices));
+  ASSERT(indices.size() == updates.size());
 
   typename ArrayType::SizeType idx{0};
   for (auto &update_val : updates)
   {
-    input_array.At(indices.At(idx)) = update_val;
+    input_array.Set(indices[idx], update_val);
+    ++idx;
   }
 }
 
