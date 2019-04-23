@@ -225,7 +225,6 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Max(ArrayType const &ar
 template <typename ArrayType>
 void Max(ArrayType const &array, typename ArrayType::SizeType const &axis, ArrayType &ret)
 {
-  ASSERT(array.shape().size() <= 2);
   ASSERT(axis < array.shape().size());
 
   if (array.shape().size() == 1)

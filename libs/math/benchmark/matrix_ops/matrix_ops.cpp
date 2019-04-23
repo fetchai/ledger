@@ -127,4 +127,55 @@ BENCHMARK_TEMPLATE(BM_ScatterFull, float, 256, 256, 256)->Unit(benchmark::kMilli
 BENCHMARK_TEMPLATE(BM_ScatterFull, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
 
 
+template <class T, int C, int H, int W>
+void BM_Max(benchmark::State &state)
+{
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
+    state.ResumeTiming();
+    fetch::math::Max(t);
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_Max, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Max, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Max, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_Max, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Max, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Max, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_Max, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Max, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Max, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+
+
+template <class T, int C, int H, int W>
+void BM_MaxAxis(benchmark::State &state)
+{
+  using SizeType = fetch::math::SizeType;
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
+    fetch::math::Tensor<T> ret(std::vector<std::uint64_t>{C, W});
+    state.ResumeTiming();
+    fetch::math::Max(t, SizeType(1), ret);
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_MaxAxis, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_MaxAxis, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_MaxAxis, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_MaxAxis, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_MaxAxis, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_MaxAxis, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_MaxAxis, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_MaxAxis, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_MaxAxis, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+
 BENCHMARK_MAIN();
