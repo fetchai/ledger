@@ -40,7 +40,7 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
                                          memory::Range const &range, ArrayType &ret)
 {
-  using VectorRegisterType = typename ArrayType::vector_register_type;
+  using VectorRegisterType = typename ArrayType::VectorRegisterType;
   ASSERT(array1.size() == array2.size());
   ASSERT(array1.size() == ret.size());
   //  ret.Reshape(array1.size());
@@ -93,7 +93,7 @@ template <typename T, typename ArrayType,
 meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array, T const &scalar,
                                               ArrayType &ret)
 {
-  using VectorRegisterType = typename ArrayType::vector_register_type;
+  using VectorRegisterType = typename ArrayType::VectorRegisterType;
   ASSERT(array.size() == ret.size());
   ASSERT(array.data().size() == ret.data().size());
 
@@ -115,7 +115,7 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &obj1, ArrayType const &obj2,
                                               memory::Range const &range, ArrayType &ret)
 {
-  using VectorRegisterType = typename ArrayType::vector_register_type;
+  using VectorRegisterType = typename ArrayType::VectorRegisterType;
   ASSERT(obj1.shape() == obj2.shape());
   ASSERT(obj1.shape() == ret.shape());
 
@@ -150,7 +150,7 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &obj1, ArrayType const &obj2,
                                               memory::Range const &range, ArrayType &ret)
 {
-  using VectorRegisterType = typename ArrayType::vector_register_type;
+  using VectorRegisterType = typename ArrayType::VectorRegisterType;
   assert(obj1.size() == obj2.size());
   assert(obj1.size() == ret.size());
 
@@ -185,7 +185,7 @@ template <typename ArrayType, typename T,
 meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &array, T const &scalar,
                                               ArrayType &ret)
 {
-  using VectorRegisterType = typename ArrayType::vector_register_type;
+  using VectorRegisterType = typename ArrayType::VectorRegisterType;
   assert(array.size() == ret.size());
   VectorRegisterType val(scalar);
 
@@ -204,7 +204,7 @@ meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &array, T const &s
 template <typename ArrayType, typename T>
 meta::IfIsMathArray<ArrayType, void> Divide(ArrayType const &array, T const &scalar, ArrayType &ret)
 {
-  using VectorRegisterType = typename ArrayType::vector_register_type;
+  using VectorRegisterType = typename ArrayType::VectorRegisterType;
 
   assert(array.size() == ret.size());
   VectorRegisterType val(scalar);
@@ -224,7 +224,7 @@ meta::IfIsMathArray<ArrayType, void> Divide(ArrayType const &array, T const &sca
 template <typename ArrayType, typename T>
 meta::IfIsMathArray<ArrayType, void> Divide(T const &scalar, ArrayType const &array, ArrayType &ret)
 {
-  using VectorRegisterType = typename ArrayType::vector_register_type;
+  using VectorRegisterType = typename ArrayType::VectorRegisterType;
 
   assert(array.size() == ret.size());
   VectorRegisterType val(scalar);
@@ -245,7 +245,7 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
                                             memory::Range const &range, ArrayType &ret)
 {
-  using VectorRegisterType = typename ArrayType::vector_register_type;
+  using VectorRegisterType = typename ArrayType::VectorRegisterType;
   assert(obj1.size() == obj2.size());
   assert(obj1.size() == ret.size());
 

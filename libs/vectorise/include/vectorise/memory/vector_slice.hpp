@@ -31,18 +31,17 @@ template <typename T, std::size_t type_size = sizeof(T)>
 class VectorSlice
 {
 public:
-  using size_type                      = std::size_t;
-  using pointer_type                   = T *;
-  using const_pointer_type             = T const *;
-  using Type                           = T;
-  using vector_slice_type              = VectorSlice;
-  using iterator                       = ForwardIterator<T>;
-  using reverse_iterator               = BackwardIterator<T>;
-  using const_parallel_dispatcher_type = ConstParallelDispatcher<Type>;
-  using parallel_dispatcher_type       = ParallelDispatcher<Type>;
-  using vector_register_type           = typename parallel_dispatcher_type::vector_register_type;
-  using vector_register_iterator_type =
-      typename parallel_dispatcher_type::vector_register_iterator_type;
+  using SizeType                    = std::size_t;
+  using PointerType                 = T *;
+  using ConstPointerType            = T const *;
+  using Type                        = T;
+  using VectorSliceType             = VectorSlice;
+  using Iterator                    = ForwardIterator<T>;
+  using ReverseIterator             = BackwardIterator<T>;
+  using ConstParallelDispatcherType = ConstParallelDispatcher<Type>;
+  using ParallelDispatcherType      = ParallelDispatcher<Type>;
+  using VectorRegisterType          = typename ParallelDispatcherType::VectorRegisterType;
+  using VectorRegisterIteratorType  = typename ParallelDispatcherType::VectorRegisterIteratorType;
 
   enum
   {
@@ -58,7 +57,7 @@ public:
 
   static_assert(E_SIMD_COUNT == (1ull << E_LOG_SIMD_COUNT), "type does not fit in SIMD");
 
-  VectorSlice(pointer_type ptr = nullptr, std::size_t const &n = 0)
+  VectorSlice(PointerType ptr = nullptr, std::size_t const &n = 0)
     : pointer_(ptr)
     , size_(n)
   {}
@@ -72,21 +71,21 @@ public:
     return ParallelDispatcher<Type>(pointer(), size());
   }
 
-  iterator begin()
+  Iterator begin()
   {
-    return iterator(pointer_, pointer_ + size());
+    return Iterator{pointer_, pointer_ + size()};
   }
-  iterator end()
+  Iterator end()
   {
-    return iterator(pointer_ + size(), pointer_ + size());
+    return Iterator{pointer_ + size(), pointer_ + size()};
   }
-  reverse_iterator rbegin()
+  ReverseIterator rbegin()
   {
-    return reverse_iterator(pointer_ + size() - 1, pointer_ - 1);
+    return ReverseIterator(pointer_ + size() - 1, pointer_ - 1);
   }
-  reverse_iterator rend()
+  ReverseIterator rend()
   {
-    return reverse_iterator(pointer_ - 1, pointer_ - 1);
+    return ReverseIterator(pointer_ - 1, pointer_ - 1);
   }
 
   // TODO(private 860): ensure trivial type
@@ -116,11 +115,11 @@ public:
     }
   }
 
-  vector_slice_type slice(std::size_t const &offset, std::size_t const &length) const
+  VectorSliceType slice(std::size_t const &offset, std::size_t const &length) const
   {
     assert(std::size_t(offset / E_SIMD_COUNT) * E_SIMD_COUNT == offset);
     assert((length + offset) <= padded_size());
-    return vector_slice_type(pointer_ + offset, length);
+    return VectorSliceType(pointer_ + offset, length);
   }
 
   template <typename S>
@@ -184,22 +183,22 @@ public:
     return padded;
   }
 
-  pointer_type pointer()
+  PointerType pointer()
   {
     return pointer_;
   }
-  const_pointer_type pointer() const
+  ConstPointerType pointer() const
   {
     return pointer_;
   }
-  size_type size()
+  SizeType size()
   {
     return size_;
   }
 
 protected:
-  pointer_type pointer_;
-  size_type    size_;
+  PointerType pointer_;
+  SizeType    size_;
 };
 
 }  // namespace memory

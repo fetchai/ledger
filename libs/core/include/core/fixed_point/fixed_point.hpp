@@ -434,7 +434,7 @@ public:
   template <typename T>
   FixedPoint operator/(const T &n) const
   {
-    return FixedPoint(T(data_) / n);
+    return *this / FixedPoint(n);
   }
 
   FixedPoint &operator+=(const FixedPoint &n)

@@ -38,22 +38,24 @@ TYPED_TEST_CASE(FreeFunctionsTest, MyTypes);
 
 TYPED_TEST(FreeFunctionsTest, ArgMax_OneDimension)
 {
+  using SizeType = typename TypeParam::SizeType;
+
   TypeParam array1{4};
 
-  array1.Set(0, typename TypeParam::Type(0.3));
-  array1.Set(1, typename TypeParam::Type(1.2));
-  array1.Set(2, typename TypeParam::Type(0.7));
-  array1.Set(3, typename TypeParam::Type(22));
+  array1.Set(SizeType{0}, typename TypeParam::Type(0.3));
+  array1.Set(SizeType{1}, typename TypeParam::Type(1.2));
+  array1.Set(SizeType{2}, typename TypeParam::Type(0.7));
+  array1.Set(SizeType{3}, typename TypeParam::Type(22));
 
   TypeParam output{1};
   fetch::math::ArgMax(array1, output);
   EXPECT_EQ(output.At(0), typename TypeParam::SizeType(3));
 
-  array1.Set(3, typename TypeParam::Type(0));
+  array1.Set(SizeType{3}, typename TypeParam::Type(0));
   fetch::math::ArgMax(array1, output);
   EXPECT_EQ(output.At(0), typename TypeParam::SizeType(1));
 
-  array1.Set(1, typename TypeParam::Type(0));
+  array1.Set(SizeType{1}, typename TypeParam::Type(0));
   fetch::math::ArgMax(array1, output);
   EXPECT_EQ(output.At(0), typename TypeParam::SizeType(2));
 }
@@ -66,14 +68,14 @@ TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension)
   SizeType  n_features = 2;
   TypeParam array1{{n_data, n_features}};
 
-  array1.Set({0, 0}, typename TypeParam::Type(-17));
-  array1.Set({0, 1}, typename TypeParam::Type(21));
-  array1.Set({1, 0}, typename TypeParam::Type(0));
-  array1.Set({1, 1}, typename TypeParam::Type(0));
-  array1.Set({2, 0}, typename TypeParam::Type(13));
-  array1.Set({2, 1}, typename TypeParam::Type(999));
-  array1.Set({3, 0}, typename TypeParam::Type(21));
-  array1.Set({3, 1}, typename TypeParam::Type(-0.5));
+  array1.Set(SizeType{0}, SizeType{0}, typename TypeParam::Type(-17));
+  array1.Set(SizeType{0}, SizeType{1}, typename TypeParam::Type(21));
+  array1.Set(SizeType{1}, SizeType{0}, typename TypeParam::Type(0));
+  array1.Set(SizeType{1}, SizeType{1}, typename TypeParam::Type(0));
+  array1.Set(SizeType{2}, SizeType{0}, typename TypeParam::Type(13));
+  array1.Set(SizeType{2}, SizeType{1}, typename TypeParam::Type(999));
+  array1.Set(SizeType{3}, SizeType{0}, typename TypeParam::Type(21));
+  array1.Set(SizeType{3}, SizeType{1}, typename TypeParam::Type(-0.5));
 
   TypeParam output{n_data};
   fetch::math::ArgMax(array1, output, SizeType(1));
@@ -91,14 +93,14 @@ TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension_off_axis)
   SizeType  n_features = 2;
   TypeParam array1{{n_data, n_features}};
 
-  array1.Set({0, 0}, typename TypeParam::Type(-17));
-  array1.Set({0, 1}, typename TypeParam::Type(21));
-  array1.Set({1, 0}, typename TypeParam::Type(0));
-  array1.Set({1, 1}, typename TypeParam::Type(0));
-  array1.Set({2, 0}, typename TypeParam::Type(13));
-  array1.Set({2, 1}, typename TypeParam::Type(999));
-  array1.Set({3, 0}, typename TypeParam::Type(21));
-  array1.Set({3, 1}, typename TypeParam::Type(-0.5));
+  array1.Set(SizeType{0}, SizeType{0}, typename TypeParam::Type(-17));
+  array1.Set(SizeType{0}, SizeType{1}, typename TypeParam::Type(21));
+  array1.Set(SizeType{1}, SizeType{0}, typename TypeParam::Type(0));
+  array1.Set(SizeType{1}, SizeType{1}, typename TypeParam::Type(0));
+  array1.Set(SizeType{2}, SizeType{0}, typename TypeParam::Type(13));
+  array1.Set(SizeType{2}, SizeType{1}, typename TypeParam::Type(999));
+  array1.Set(SizeType{3}, SizeType{0}, typename TypeParam::Type(21));
+  array1.Set(SizeType{3}, SizeType{1}, typename TypeParam::Type(-0.5));
 
   TypeParam output{n_features};
   fetch::math::ArgMax(array1, output, SizeType(0));

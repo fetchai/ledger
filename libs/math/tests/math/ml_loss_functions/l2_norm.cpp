@@ -16,41 +16,39 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
 #include <iomanip>
 #include <iostream>
 
-#include "math/statistics/perplexity.hpp"
+#include "math/ml/loss_functions/l2_norm.hpp"
 #include "math/tensor.hpp"
-
-using namespace fetch::math::statistics;
-using namespace fetch::math;
+#include <gtest/gtest.h>
 
 template <typename T>
-class PerplexityTest : public ::testing::Test
+class L2NormTest : public ::testing::Test
 {
 };
 
 using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+TYPED_TEST_CASE(L2NormTest, MyTypes);
 
-TYPED_TEST_CASE(PerplexityTest, MyTypes);
-
-TYPED_TEST(PerplexityTest, entropy)
+TYPED_TEST(L2NormTest, value_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
-  using ArrayType = TypeParam;
+  TypeParam test_array = TypeParam{8};
 
-  ArrayType A(4);
+  test_array[0] = typename TypeParam::Type(1);
+  test_array[1] = typename TypeParam::Type(-2);
+  test_array[2] = typename TypeParam::Type(3);
+  test_array[3] = typename TypeParam::Type(-4);
+  test_array[4] = typename TypeParam::Type(5);
+  test_array[5] = typename TypeParam::Type(-6);
+  test_array[6] = typename TypeParam::Type(7);
+  test_array[7] = typename TypeParam::Type(-8);
 
-  A.Set(SizeType{0}, DataType(0.1));
-  A.Set(SizeType{1}, DataType(0.2));
-  A.Set(SizeType{2}, DataType(0.3));
-  A.Set(SizeType{3}, DataType(0.4));
+  // initialise to non-zero just to avoid correct value at initialisation
+  typename TypeParam::Type score(0);
+  score = fetch::math::L2Norm(test_array);
 
-  std::cout << "Perplexity(A): " << Perplexity(A) << std::endl;
-
-  EXPECT_NEAR(double(Perplexity(A)), 3.59611546662432, 1e-3);
+  // test correct values
+  EXPECT_NEAR(double(score), double(14.282856857085700852), 1e-7);
 }

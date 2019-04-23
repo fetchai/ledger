@@ -51,6 +51,7 @@ TEST(graph_test, node_placeholder)
 
 TEST(graph_test, node_relu)
 {
+  using SizeType = fetch::math::SizeType;
   fetch::ml::Graph<ArrayType> g;
   g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
   g.AddNode<fetch::ml::ops::Relu<ArrayType>>("Relu", {"Input"});
@@ -59,14 +60,12 @@ TEST(graph_test, node_relu)
   ArrayType        gt(std::vector<typename ArrayType::SizeType>({4, 4}));
   std::vector<int> dataValues({0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15, 16});
   std::vector<int> gtValues({0, 0, 2, 0, 4, 0, 6, 0, 8, 0, 10, 0, 12, 0, 14, 0, 16});
-  for (int i(0); i < 4; ++i)
+  for (SizeType i(0); i < 4; ++i)
   {
-    for (int j(0); j < 4; ++j)
+    for (SizeType j(0); j < 4; ++j)
     {
-      data.Set(std::vector<std::uint64_t>({std::uint64_t(i), std::uint64_t(j)}),
-               dataValues[std::uint64_t(i * 4 + j)]);
-      gt.Set(std::vector<std::uint64_t>({std::uint64_t(i), std::uint64_t(j)}),
-             gtValues[std::uint64_t(i * 4 + j)]);
+      data.Set(i, j, dataValues[std::uint64_t(i * 4 + j)]);
+      gt.Set(i, j, gtValues[std::uint64_t(i * 4 + j)]);
     }
   }
 
