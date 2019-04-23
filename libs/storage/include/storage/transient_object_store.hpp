@@ -22,6 +22,7 @@
 #include "core/mutex.hpp"
 #include "core/threading.hpp"
 #include "storage/object_store.hpp"
+#include "ledger/storage_unit/tx_list.hpp"
 
 #include <map>
 #include <unordered_map>
@@ -52,11 +53,6 @@ public:
   TransientObjectStore(TransientObjectStore &&)      = delete;
   ~TransientObjectStore();
 
-  Archive &archive()
-  {
-    return archive_;
-  }
-
   void New(std::string const &doc_file, std::string const &index_file, bool const &create = true);
   void Load(std::string const &doc_file, std::string const &index_file, bool const &create = true);
 
@@ -79,6 +75,11 @@ public:
   TransientObjectStore &operator=(TransientObjectStore &&) = delete;
 
   std::size_t Size() const;
+
+  ledger::TxList PullSubtree(
+      byte_array::ConstByteArray const &rid,
+      uint64_t bit_count,
+      uint64_t pull_limit);
 
 private:
   using Mutex       = fetch::mutex::Mutex;
@@ -113,6 +114,30 @@ std::size_t TransientObjectStore<O>::Size() const
   FETCH_LOCK(cache_mutex_);
 
   return archive_.size() + cache_.size();
+}
+
+template <typename O>
+ledger::TxList TransientObjectStore<O>::PullSubtree(
+  byte_array::ConstByteArray const &rid,
+  uint64_t bit_count,
+  uint64_t pull_limit)
+{
+  ledger::TxList ret;
+
+  uint64_t counter = 0;
+
+  archive_.WithLock([this, &pull_limit, &ret, &counter, &rid, bit_count]() {
+    // This is effectively saying get all objects whose ID begins rid & mask
+    auto it = this->archive_.GetSubtree(ResourceID(rid), bit_count);
+
+    while ((it != this->archive_.end()) && (counter++ < pull_limit))
+    {
+      ret.push_back(*it);
+      ++it;
+    }
+  });
+
+  return ret;
 }
 
 template <typename O>

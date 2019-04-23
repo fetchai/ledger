@@ -29,6 +29,7 @@
 #include "network/muddle/rpc/client.hpp"
 #include "storage/resource_mapper.hpp"
 #include "transaction_store_sync_protocol.hpp"
+#include "ledger/storage_unit/tx_list.hpp"
 
 #include <algorithm>
 #include <unordered_map>
@@ -64,7 +65,6 @@ public:
   using FutureTimepoint       = network::FutureTimepoint;
   using RequestingObjectCount = network::RequestingQueueOf<Address, uint64_t>;
   using PromiseOfObjectCount  = network::PromiseOf<uint64_t>;
-  using TxList                = std::vector<UnverifiedTransaction>;
   using RequestingTxList      = network::RequestingQueueOf<Address, TxList>;
   using RequestingSubTreeList = network::RequestingQueueOf<uint64_t, TxList>;
   using PromiseOfTxList       = network::PromiseOf<TxList>;

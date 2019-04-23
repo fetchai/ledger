@@ -112,8 +112,7 @@ uint64_t TransactionStoreSyncProtocol::ObjectCount()
 {
   FETCH_LOCK(cache_mutex_);
 
-  // TODO(private issue 502): Improve transient object store interface
-  return store_->archive().size();
+  return store_->Size();
 }
 
 /**
@@ -123,30 +122,13 @@ uint64_t TransactionStoreSyncProtocol::ObjectCount()
  *
  * @return: the subtree the client is requesting as a vector (size limited)
  */
-TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullSubtree(
+TxList TransactionStoreSyncProtocol::PullSubtree(
     byte_array::ConstByteArray const &rid, uint64_t bit_count)
 {
-  TxList ret;
-
-  uint64_t counter = 0;
-
-  auto &archive = store_->archive();
-
-  archive.WithLock([&archive, &ret, &counter, &rid, bit_count]() {
-    // This is effectively saying get all objects whose ID begins rid & mask
-    auto it = archive.GetSubtree(ResourceID(rid), bit_count);
-
-    while ((it != archive.end()) && (counter++ < PULL_LIMIT_))
-    {
-      ret.push_back(*it);
-      ++it;
-    }
-  });
-
-  return ret;
+  return store_->PullSubtree(rid, bit_count, PULL_LIMIT_);
 }
 
-TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullObjects(
+TxList TransactionStoreSyncProtocol::PullObjects(
     service::CallContext const *call_context)
 {
   // Creating result
