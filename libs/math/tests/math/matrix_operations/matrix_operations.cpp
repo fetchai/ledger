@@ -77,6 +77,28 @@ TYPED_TEST(FreeFunctionsTest, Scatter_SetAll)
   }
 }
 
+TYPED_TEST(FreeFunctionsTest, Product_OneDimension)
+{
+  using Type = typename TypeParam::Type;
+  TypeParam array1{4};
+
+  array1.Set(0, typename TypeParam::Type(0.3));
+  array1.Set(1, typename TypeParam::Type(1.2));
+  array1.Set(2, typename TypeParam::Type(0.7));
+  array1.Set(3, typename TypeParam::Type(22));
+
+  Type output = fetch::math::Product(array1);
+  EXPECT_NEAR(double(output), 5.544, 1e-6);
+
+  array1.Set(3, typename TypeParam::Type(1));
+  fetch::math::Product(array1, output);
+  EXPECT_NEAR(double(output), 0.252, 1e-6);
+
+  array1.Set(1, typename TypeParam::Type(0));
+  fetch::math::Product(array1, output);
+  EXPECT_NEAR(double(output), 0.0, 1e-6);
+}
+
 TYPED_TEST(FreeFunctionsTest, Max_OneDimension)
 {
   TypeParam array1{4};

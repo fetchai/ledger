@@ -28,6 +28,9 @@
 namespace fetch {
 namespace math {
 
+template <typename T, typename C>
+class Tensor;
+
 // TODO (private 854) - vectorisation implementations not yet called
 namespace details_vectorisation {
 
@@ -144,7 +147,7 @@ void Scatter(ArrayType &input_array, ArrayType const &updates,
 }
 
 /**
- * returns the product of all values in one array
+ * returns the product of all values in one array - calls SIMD implementation
  * @tparam ArrayType
  * @tparam T
  * @param array1
@@ -160,8 +163,8 @@ meta::IfIsMathArray<ArrayType, void> Product(ArrayType const &array1, T &ret)
   }
 }
 
-template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, T> Product(ArrayType const &array1)
+template <typename T, typename C, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsMathArray<Tensor<T, C>, T> Product(Tensor<T, C> const &array1)
 {
   T ret;
   Product(array1, ret);
