@@ -79,6 +79,28 @@ TYPED_TEST(FreeFunctionsTest, Scatter_SetAll)
   }
 }
 
+TYPED_TEST(FreeFunctionsTest, Max_OneDimension)
+{
+  TypeParam array1{4};
+
+  array1.Set(0, typename TypeParam::Type(0.3));
+  array1.Set(1, typename TypeParam::Type(1.2));
+  array1.Set(2, typename TypeParam::Type(0.7));
+  array1.Set(3, typename TypeParam::Type(22));
+
+  typename TypeParam::Type output;
+  fetch::math::Max(array1, output);
+  EXPECT_EQ(output, array1.At(3));
+
+  array1.Set(3, typename TypeParam::Type(0));
+  fetch::math::Max(array1, output);
+  EXPECT_EQ(output, array1.At(1));
+
+  array1.Set(1, typename TypeParam::Type(0));
+  fetch::math::Max(array1, output);
+  EXPECT_EQ(output, array1.At(2));
+}
+
 TYPED_TEST(FreeFunctionsTest, ArgMax_OneDimension)
 {
   TypeParam array1{4};
