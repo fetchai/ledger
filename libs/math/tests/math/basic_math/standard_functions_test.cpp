@@ -44,21 +44,21 @@ TYPED_TEST(ClampTest, clamp_array_test)
 
   ArrayType A = ArrayType({6});
 
-  A.Set({0}, DataType(-10));
-  A.Set({1}, DataType(0));
-  A.Set({2}, DataType(1));
-  A.Set({3}, DataType(2));
-  A.Set({4}, DataType(3));
-  A.Set({5}, DataType(10));
+  A.Set(SizeType{0}, DataType(-10));
+  A.Set(SizeType{1}, DataType(0));
+  A.Set(SizeType{2}, DataType(1));
+  A.Set(SizeType{3}, DataType(2));
+  A.Set(SizeType{4}, DataType(3));
+  A.Set(SizeType{5}, DataType(10));
 
   // Expected results
   ArrayType A_clamp_expected = ArrayType({6});
-  A_clamp_expected.Set({0}, DataType(2));
-  A_clamp_expected.Set({1}, DataType(2));
-  A_clamp_expected.Set({2}, DataType(2));
-  A_clamp_expected.Set({3}, DataType(2));
-  A_clamp_expected.Set({4}, DataType(3));
-  A_clamp_expected.Set({5}, DataType(3));
+  A_clamp_expected.Set(SizeType{0}, DataType(2));
+  A_clamp_expected.Set(SizeType{1}, DataType(2));
+  A_clamp_expected.Set(SizeType{2}, DataType(2));
+  A_clamp_expected.Set(SizeType{3}, DataType(2));
+  A_clamp_expected.Set(SizeType{4}, DataType(3));
+  A_clamp_expected.Set(SizeType{5}, DataType(3));
 
   // Compare results with expected results
   ArrayType A_norm = Clamp(A, DataType(2), DataType(3));

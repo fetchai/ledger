@@ -31,6 +31,7 @@ class Relu : public fetch::ml::ElementWiseOps<T>
 public:
   using ArrayType      = T;
   using DataType       = typename ArrayType::Type;
+  using SizeType       = typename ArrayType::SizeType;
   using ArrayPtrType   = std::shared_ptr<ArrayType>;
   using ConstSliceType = typename ArrayType::ConstSliceType;
 
@@ -56,7 +57,7 @@ public:
     ASSERT(inputs[0].get().shape() == errorSignal.shape());
 
     ArrayType returnSignal = errorSignal.Copy();
-    for (std::size_t i = 0; i < inputs.front().get().size(); ++i)
+    for (SizeType i{0}; i < inputs.front().get().size(); ++i)
     {
       if (inputs.front().get()[i] <= DataType(0))
       {

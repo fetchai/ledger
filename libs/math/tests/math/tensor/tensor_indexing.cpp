@@ -89,6 +89,8 @@ TYPED_TEST(TensorIndexingTest, two_dimentional_tensor_test)
 
 TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_test)
 {
+  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+
   fetch::math::Tensor<TypeParam> t({2, 3, 5});
 
   ASSERT_EQ(t.size(), 30);
@@ -114,13 +116,13 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_test)
   EXPECT_LT(duration, 10);
 
   TypeParam s(0);
-  for (std::uint64_t i(0); i < 2; i++)
+  for (SizeType i{0}; i < 2; i++)
   {
-    for (std::uint64_t j(0); j < 3; j++)
+    for (SizeType j(0); j < 3; j++)
     {
-      for (std::uint64_t k(0); k < 5; k++)
+      for (SizeType k(0); k < 5; k++)
       {
-        t.Set({i, j, k}, s);
+        t.Set(i, j, k, s);
         ASSERT_EQ(t.At(i, j, k), s);
         s++;
       }
@@ -146,16 +148,18 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_test)
 
 TYPED_TEST(TensorIndexingTest, double_slicing_test)
 {
+  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+
   fetch::math::Tensor<TypeParam> t({2, 3, 5});
 
   TypeParam v(0);
-  for (std::uint64_t i(0); i < 2; ++i)
+  for (SizeType i(0); i < 2; ++i)
   {
-    for (std::uint64_t j(0); j < 3; ++j)
+    for (SizeType j(0); j < 3; ++j)
     {
-      for (std::uint64_t k(0); k < 5; ++k)
+      for (SizeType k(0); k < 5; ++k)
       {
-        t.Set(std::vector<std::uint64_t>({i, j, k}), v);
+        t.Set(i, j, k, v);
         v = v + TypeParam(1);
       }
     }
@@ -351,4 +355,45 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_squeeze_test)
     EXPECT_EQ(e, i);
     i += TypeParam(1);
   }
+}
+
+TYPED_TEST(TensorIndexingTest, major_order_flip_test)
+{
+  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  fetch::math::Tensor<TypeParam> t({3, 3});
+  t.FillArange(SizeType{0}, t.size());
+
+  EXPECT_EQ(t[0], 0);
+  EXPECT_EQ(t[1], 1);
+  EXPECT_EQ(t[2], 2);
+  EXPECT_EQ(t[3], 3);
+  EXPECT_EQ(t[4], 4);
+  EXPECT_EQ(t[5], 5);
+  EXPECT_EQ(t[6], 6);
+  EXPECT_EQ(t[7], 7);
+  EXPECT_EQ(t[8], 8);
+
+  t.MajorOrderFlip();
+
+  EXPECT_EQ(t[0], 0);
+  EXPECT_EQ(t[1], 3);
+  EXPECT_EQ(t[2], 6);
+  EXPECT_EQ(t[3], 1);
+  EXPECT_EQ(t[4], 4);
+  EXPECT_EQ(t[5], 7);
+  EXPECT_EQ(t[6], 2);
+  EXPECT_EQ(t[7], 5);
+  EXPECT_EQ(t[8], 8);
+
+  t.MajorOrderFlip();
+
+  EXPECT_EQ(t[0], 0);
+  EXPECT_EQ(t[1], 1);
+  EXPECT_EQ(t[2], 2);
+  EXPECT_EQ(t[3], 3);
+  EXPECT_EQ(t[4], 4);
+  EXPECT_EQ(t[5], 5);
+  EXPECT_EQ(t[6], 6);
+  EXPECT_EQ(t[7], 7);
+  EXPECT_EQ(t[8], 8);
 }
