@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "math/ml/activation_functions/relu.hpp"
-
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -29,38 +29,38 @@ template <class T>
 class Relu : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType      = T;
+  using DataType       = typename ArrayType::Type;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   Relu()          = default;
   virtual ~Relu() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  // f(x)=max(0,x);
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
-    assert(inputs.size() == 1);
-    if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
-    {
-      this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
-    }
-
-    fetch::math::Relu(inputs.front().get(), *this->output_);
-    return *(this->output_);
+    ASSERT(inputs.size() == 1);
+    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
+    fetch::math::Relu(inputs.front().get(), output);
+    return output;
   }
 
+  // x>0 f'(x)=1, x<=0 f'(x)=0
   virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
-    assert(inputs.size() == 1);
-    assert(inputs[0].get().shape() == errorSignal.shape());
+    ASSERT(inputs.size() == 1);
+    ASSERT(inputs[0].get().shape() == errorSignal.shape());
 
-    ArrayType returnSignal = errorSignal.Clone();
+    ArrayType returnSignal = errorSignal.Copy();
     for (std::size_t i = 0; i < inputs.front().get().size(); ++i)
     {
       if (inputs.front().get()[i] <= DataType(0))
       {
-        returnSignal.Set(i, DataType(0));
+        returnSignal.data().Set(i, DataType(0));
       }
     }
     return {returnSignal};

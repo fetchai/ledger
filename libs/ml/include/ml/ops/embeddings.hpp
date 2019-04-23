@@ -29,10 +29,11 @@ template <class T>
 class Embeddings : public fetch::ml::ops::Weights<T>
 {
 public:
-  using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SizeType     = typename ArrayType::SizeType;
+  using ArrayType      = T;
+  using DataType       = typename ArrayType::Type;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using SizeType       = typename ArrayType::SizeType;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   Embeddings(SizeType dataPoints, SizeType dimensions)
   {
@@ -48,8 +49,10 @@ public:
 
   virtual ~Embeddings() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
+    (void)output;
     ASSERT(this->output_);
     ASSERT(inputs.size() == 1);
     ASSERT(
@@ -66,15 +69,16 @@ public:
     uint64_t j(0);
     for (DataType const &i : inputs.front().get())
     {
-      this->embeddings_output_->Slice(j).Copy(
-          this->output_->Slice(typename ArrayType::SizeType(i)));
+      auto tmp  = this->embeddings_output_->Slice(j);
+      auto tmp2 = this->output_->Slice(typename ArrayType::SizeType(i));
+      tmp.Assign(tmp2);
       j++;
     }
     return *this->embeddings_output_;
   }
 
   virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 1);
@@ -87,7 +91,7 @@ public:
     {
       updated_rows_.insert(typename ArrayType::SizeType(double(i)));
       this->gradient_accumulation_->Slice(typename ArrayType::SizeType(double(i)))
-          .Copy(errorSignal.Slice(j));
+          .Assign(errorSignal.Slice(j));
       j++;
     }
     return {ArrayType(errorSignal.shape())};
@@ -97,8 +101,9 @@ public:
   {
     for (auto const &r : updated_rows_)
     {
-      ArrayType gradient_accumulation_slice = this->gradient_accumulation_->Slice(r);
-      ArrayType output_slice                = this->output_->Slice(r);
+      auto gradient_accumulation_slice = this->gradient_accumulation_->Slice(r).Tensor();
+      auto output_slice                = this->output_->Slice(r).Tensor();
+
       gradient_accumulation_slice.InlineMultiply(-learningRate);
       output_slice.InlineAdd(gradient_accumulation_slice);
       gradient_accumulation_slice.Fill(typename T::Type(0));

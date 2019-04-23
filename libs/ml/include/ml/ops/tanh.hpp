@@ -36,26 +36,21 @@ public:
   TanH()          = default;
   virtual ~TanH() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
     assert(inputs.size() == 1);
-    if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
-    {
-      this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
-    }
-
-    fetch::math::TanH(inputs.front().get(), *this->output_);
-
+    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
+    fetch::math::TanH(inputs.front().get(), output);
     // ensures numerical stability
-    for (auto &val : *this->output_)
+    for (auto &val : output)
     {
       // Minimum value of tanh is restricted to -1+epsilon
       fetch::math::Max(val, fetch::math::Add(DataType(-1), epsilon_), val);
       // Maximum value of tanh is restricted to 1-epsilon
       fetch::math::Min(val, fetch::math::Subtract(DataType(1), epsilon_), val);
     }
-
-    return *(this->output_);
+    return output;
   }
 
   virtual std::vector<ArrayType> Backward(
@@ -66,8 +61,8 @@ public:
 
     assert(inputs.front().get().shape() == error_signal.shape());
 
-    ArrayType return_signal = error_signal.Clone();
-    ArrayType t             = this->Forward(inputs);
+    ArrayType return_signal = error_signal.Copy();
+    ArrayType t             = this->Ops<T>::Forward(inputs);
 
     // gradient of tanh: 1 - tanh(x)^2
     fetch::math::Multiply(t, t, t);

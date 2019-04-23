@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/vector.hpp"
+#include "math/distance/euclidean.hpp"
 #include "math/meta/math_type_traits.hpp"
-#include "math/metrics.hpp"
 #include "math/standard_functions/pow.hpp"
 #include "random"
 
@@ -423,7 +423,7 @@ private:
     {
       for (SizeType j = 0; j < n_dimensions_; ++j)
       {
-        k_means_.Set({i, j}, data.At({data_idxs_[i], j}));
+        k_means_.Set({i, j}, data.At(data_idxs_[i], j));
       }
     }
   }
@@ -437,8 +437,7 @@ private:
     // assign first cluster centre
     for (SizeType j = 0; j < n_dimensions_; ++j)
     {
-      k_means_.Set(std::vector<SizeType>({0, j}),
-                   data.At(std::vector<SizeType>({data_idxs_[0], j})));
+      k_means_.Set(std::vector<SizeType>({0, j}), data.At(data_idxs_[0], j));
     }
 
     // assign remaining cluster centres
@@ -465,11 +464,11 @@ private:
         {
           for (SizeType k = 0; k < n_dimensions_; ++k)
           {
-            temp_k_.Set(std::vector<SizeType>({l, k}), k_means_.At({i, k}));
+            temp_k_.Set(std::vector<SizeType>({l, k}), k_means_.At(i, k));
           }
         }
 
-        cluster_distances.at(i) = fetch::math::metrics::EuclideanDistance(data, temp_k_, 1);
+        cluster_distances.at(i) = fetch::math::distance::EuclideanMatrix(data, temp_k_, 1);
       }
 
       // select smallest distance to cluster for each data point and square
@@ -512,7 +511,7 @@ private:
 
       for (SizeType j = 0; j < n_dimensions_; ++j)
       {
-        k_means_.Set({cur_cluster, j}, data.At({assigned_data_points.back(), j}));
+        k_means_.Set({cur_cluster, j}, data.At(assigned_data_points.back(), j));
       }
 
       // update count of remaining data points and clusters
@@ -528,17 +527,17 @@ private:
   void Assign(ArrayType const &data)
   {
     // replicate kmeans which is 1 x n_dims into n_data x n_dims
-    // allows for easy call to EuclideanDistance
+    // allows for easy call to Euclidean
     for (SizeType i = 0; i < n_clusters_; ++i)
     {
       for (SizeType j = 0; j < n_points_; ++j)
       {
         for (SizeType k = 0; k < n_dimensions_; ++k)
         {
-          temp_k_.Set({j, k}, k_means_.At({i, k}));
+          temp_k_.Set({j, k}, k_means_.At(i, k));
         }
       }
-      k_euclids_[i] = fetch::math::metrics::EuclideanDistance(data, temp_k_, 1);
+      k_euclids_[i] = fetch::math::distance::EuclideanMatrix(data, temp_k_, 1);
     }
 
     // now we have a vector of n_data x 1 Arrays
@@ -635,7 +634,7 @@ private:
       cur_k = static_cast<SizeType>(k_assignment_[i]);
       for (SizeType j = 0; j < n_dimensions_; ++j)
       {
-        k_means_.Set({cur_k, j}, k_means_.At({cur_k, j}) + data.At({i, j}));
+        k_means_.Set({cur_k, j}, k_means_.At(cur_k, j) + data.At(i, j));
       }
     }
 
@@ -645,7 +644,7 @@ private:
       for (SizeType i = 0; i < n_dimensions_; ++i)
       {
         k_means_.Set({m, i},
-                     k_means_.At({m, i}) / static_cast<typename ArrayType::Type>(k_count_[m]));
+                     k_means_.At(m, i) / static_cast<typename ArrayType::Type>(k_count_[m]));
       }
     }
   }
@@ -666,9 +665,7 @@ private:
         cur_k = static_cast<SizeType>(k_assignment_[i]);
         for (SizeType j = 0; j < n_dimensions_; ++j)
         {
-          k_means_.Set(std::vector<SizeType>({cur_k, j}),
-                       k_means_.At(std::vector<SizeType>({cur_k, j})) +
-                           data.At(std::vector<SizeType>({i, j})));
+          k_means_.Set(std::vector<SizeType>({cur_k, j}), k_means_.At(cur_k, j) + data.At(i, j));
         }
       }
     }
@@ -679,8 +676,7 @@ private:
       for (SizeType i = 0; i < n_dimensions_; ++i)
       {
         k_means_.Set(std::vector<SizeType>({m, i}),
-                     k_means_.At(std::vector<SizeType>({m, i})) /
-                         static_cast<typename ArrayType::Type>(k_count_[m]));
+                     k_means_.At(m, i) / static_cast<typename ArrayType::Type>(k_count_[m]));
       }
     }
   }

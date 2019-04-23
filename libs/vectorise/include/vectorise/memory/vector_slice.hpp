@@ -89,8 +89,8 @@ public:
     return reverse_iterator(pointer_ - 1, pointer_ - 1);
   }
 
-  template <typename R = T>
-  typename std::enable_if<std::is_pod<R>::value>::type SetAllZero()
+  // TODO(private 860): ensure trivial type
+  void SetAllZero()
   {
     assert(pointer_ != nullptr);
     if (pointer_)
@@ -99,18 +99,21 @@ public:
     }
   }
 
-  template <typename R = T>
-  typename std::enable_if<std::is_pod<R>::value>::type SetPaddedZero()
+  void SetPaddedZero()
   {
     assert(pointer_ != nullptr);
-
-    std::memset(pointer_ + size(), 0, (padded_size() - size()) * sizeof(Type));
+    if (pointer_)
+    {
+      std::memset(pointer_ + size(), 0, (padded_size() - size()) * sizeof(Type));
+    }
   }
 
-  template <typename R = T>
-  typename std::enable_if<std::is_pod<R>::value>::type SetZeroAfter(std::size_t const &n)
+  void SetZeroAfter(std::size_t const &n)
   {
-    std::memset(pointer_ + n, 0, (padded_size() - n) * sizeof(Type));
+    if (pointer_)
+    {
+      std::memset(pointer_ + n, 0, (padded_size() - n) * sizeof(Type));
+    }
   }
 
   vector_slice_type slice(std::size_t const &offset, std::size_t const &length) const

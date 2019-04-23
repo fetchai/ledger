@@ -18,16 +18,23 @@
 //------------------------------------------------------------------------------
 
 namespace fetch {
-namespace kernels {
+namespace http {
 
-template <typename vector_register_type>
-struct ApproxLog
+class HTTPRequest;
+class HTTPResponse;
+
+class HttpClientInterface
 {
-  void operator()(vector_register_type const &x, vector_register_type &y) const
-  {
-    y = approx_log(x);
-  }
+public:
+  // Construction / Destruction
+  HttpClientInterface()          = default;
+  virtual ~HttpClientInterface() = default;
+
+  /// @name HTTP Client Interface
+  /// @{
+  virtual bool Request(HTTPRequest const &request, HTTPResponse &response) = 0;
+  /// @}
 };
 
-}  // namespace kernels
+}  // namespace http
 }  // namespace fetch
