@@ -64,8 +64,9 @@ static TypeId const IArray      = 71;
 static TypeId const IMap        = 72;
 
 // ledger specific type ids
-static TypeId const Address = 80;
-static TypeId const IState  = 81;
+static TypeId const Address        = 80;
+static TypeId const IState         = 81;
+static TypeId const IPersistentMap = 82;
 
 static TypeId const String = 90;
 

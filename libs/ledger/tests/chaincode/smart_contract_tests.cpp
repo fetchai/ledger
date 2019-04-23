@@ -33,8 +33,8 @@
 
 namespace {
 
-using ::testing::InSequence;
-using fetch::crypto::SHA256;
+using namespace testing;
+
 using fetch::ledger::SmartContract;
 using fetch::byte_array::ConstByteArray;
 using fetch::ledger::TransactionSummary;
@@ -42,15 +42,7 @@ using fetch::storage::ResourceAddress;
 using fetch::variant::Variant;
 using fetch::byte_array::ToBase64;
 using fetch::serializers::ByteArrayBuffer;
-
 using ContractDigest = ConstByteArray;
-
-ConstByteArray DigestOf(ConstByteArray const &value)
-{
-  class SHA256 sha;
-  sha.Update(value);
-  return sha.Final();
-}
 
 template <typename T>
 ConstByteArray RawBytes(T value)
@@ -69,14 +61,11 @@ class SmartContractTests : public ContractTest
 protected:
   void CreateContract(std::string const &source)
   {
-    // calculate the digest of the contract
-    auto const contract_digest = ToBase64(DigestOf(source));
-
     // generate the smart contract instance for this contract
-    contract_ = std::make_unique<SmartContract>(source);
-
+    auto contract = std::make_shared<SmartContract>(source);
+    contract_     = contract;
     // populate the contract name too
-    contract_name_ = std::make_shared<Identifier>(contract_digest + "." +
+    contract_name_ = std::make_shared<Identifier>(ToBase64(contract->contract_digest()) + "." +
                                                   ToBase64(certificate_->identity().identifier()));
 
     ASSERT_TRUE(static_cast<bool>(contract_));
@@ -545,6 +534,98 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
     // check the response is as we expect
     ASSERT_TRUE(response.Has("result"));
     EXPECT_EQ(response["result"].As<uint64_t>(), 1000000000ull);
+
+    ASSERT_TRUE(response.Has("status"));
+    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
+  }
+}
+
+TEST_F(SmartContractTests, CheckPersistentMapSetAndQuery)
+{
+  std::string const contract_source = R"(
+    @action
+    function test_persistent_map()
+      var state = PersistentMap<String, Int32>("value");
+      state["foo"] = 20;
+      state["bar"] = 30;
+    endfunction
+
+    @query
+    function query_foo() : Int32
+      var state = PersistentMap<String, Int32>("value");
+      return state["foo"];
+    endfunction
+
+    @query
+    function query_bar() : Int32
+      var state = PersistentMap<String, Int32>("value");
+      return state["bar"];
+    endfunction
+  )";
+
+  // create the contract
+  CreateContract(contract_source);
+
+  // check the registered handlers
+  auto const transaction_handlers = contract_->transaction_handlers();
+  ASSERT_EQ(1u, transaction_handlers.size());
+  EXPECT_TRUE(IsIn(transaction_handlers, "test_persistent_map"));
+
+  // check the query handlers
+  auto const query_handlers = contract_->query_handlers();
+  ASSERT_EQ(2, query_handlers.size());
+
+  // define our what we expect the values to be in our storage requests
+  auto const expected_key1      = contract_name_->full_name() + ".state.value.foo";
+  auto const expected_key2      = contract_name_->full_name() + ".state.value.bar";
+  auto const expected_resource1 = ResourceAddress{expected_key1};
+  auto const expected_resource2 = ResourceAddress{expected_key2};
+  auto const expected_value1    = RawBytes<int32_t>(20);
+  auto const expected_value2    = RawBytes<int32_t>(30);
+
+  // for the action
+  EXPECT_CALL(*storage_, Lock(expected_resource1)).WillOnce(Return(true));
+  EXPECT_CALL(*storage_, Lock(expected_resource2)).WillOnce(Return(true));
+  EXPECT_CALL(*storage_, Set(expected_resource1, expected_value1)).WillOnce(Return());
+  EXPECT_CALL(*storage_, Set(expected_resource2, expected_value2)).WillOnce(Return());
+  EXPECT_CALL(*storage_, Unlock(expected_resource1)).WillOnce(Return(true));
+  EXPECT_CALL(*storage_, Unlock(expected_resource2)).WillOnce(Return(true));
+
+  // from the action & query
+  EXPECT_CALL(*storage_, Get(expected_resource1))
+      .Times(2)
+      .WillRepeatedly(Return(fetch::storage::Document{expected_value1}));
+  EXPECT_CALL(*storage_, Get(expected_resource2))
+      .Times(2)
+      .WillRepeatedly(Return(fetch::storage::Document{expected_value2}));
+
+  // send the smart contract an "increment" action
+  EXPECT_EQ(SmartContract::Status::OK,
+            SendActionWithParams("test_persistent_map", {"value.bar", "value.foo"}));
+
+  // query "foo"
+  {
+    Variant request = Variant::Object();
+    Variant response;
+    EXPECT_EQ(SmartContract::Status::OK, SendQuery("query_foo", request, response));
+
+    // check the response is as we expect
+    ASSERT_TRUE(response.Has("result"));
+    EXPECT_EQ(response["result"].As<int32_t>(), 20);
+
+    ASSERT_TRUE(response.Has("status"));
+    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
+  }
+
+  // query "bar"
+  {
+    Variant request = Variant::Object();
+    Variant response;
+    EXPECT_EQ(SmartContract::Status::OK, SendQuery("query_bar", request, response));
+
+    // check the response is as we expect
+    ASSERT_TRUE(response.Has("result"));
+    EXPECT_EQ(response["result"].As<int32_t>(), 30);
 
     ASSERT_TRUE(response.Has("status"));
     EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");

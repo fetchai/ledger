@@ -903,20 +903,23 @@ struct Variant
   }
 };
 
-struct TemplateParameter : public Variant
+template <std::size_t ID = 0>
+struct TemplateParameterT : public Variant
 {
   using Variant::Variant;
+  TemplateParameterT(TemplateParameterT const &) = default;
+  TemplateParameterT(TemplateParameterT &&)      = default;
+  TemplateParameterT(Variant const &other)
+    : Variant{other} {};
+  TemplateParameterT(Variant &&other)
+    : Variant{std::move(other)} {};
+
+  static constexpr std::size_t id{ID};
 };
 
-struct TemplateParameter1 : public Variant
-{
-  using Variant::Variant;
-};
-
-struct TemplateParameter2 : public Variant
-{
-  using Variant::Variant;
-};
+using TemplateParameter  = TemplateParameterT<0>;
+using TemplateParameter1 = TemplateParameterT<1>;
+using TemplateParameter2 = TemplateParameterT<2>;
 
 struct Script
 {

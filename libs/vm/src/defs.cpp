@@ -112,159 +112,159 @@ size_t Object::GetHashCode()
 
 bool Object::IsEqual(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("IsEqual operator not implemented");
   return false;
 }
 
 bool Object::IsNotEqual(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("IsNotEqual operator not implemented");
   return false;
 }
 
 bool Object::IsLessThan(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("IsLessThan operator not implemented");
   return false;
 }
 
 bool Object::IsLessThanOrEqual(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("IsLessThanOrEqual operator not implemented");
   return false;
 }
 
 bool Object::IsGreaterThan(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("IsGreaterThan operator not implemented");
   return false;
 }
 
 bool Object::IsGreaterThanOrEqual(Ptr<Object> const & /* lhso */, Ptr<Object> const & /* rhso */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("IsGreaterThanOrEqual operator not implemented");
   return false;
 }
 
 void Object::UnaryMinus(Ptr<Object> & /* object */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("UnaryMinus operator not implemented");
 }
 
 void Object::Add(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("Add operator not implemented");
 }
 
 void Object::LeftAdd(Variant & /* lhsv */, Variant & /* rhsv */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("LeftAdd operator not implemented");
 }
 
 void Object::RightAdd(Variant & /* lhsv */, Variant & /* rhsv */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("RightAdd operator not implemented");
 }
 
 void Object::AddAssign(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("AddAssign operator not implemented");
 }
 
 void Object::RightAddAssign(Ptr<Object> & /* lhso */, Variant & /* rhsv */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("RightAddAssign operator not implemented");
 }
 
 void Object::Subtract(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("Subtract operator not implemented");
 }
 
 void Object::LeftSubtract(Variant & /* lhsv */, Variant & /* rhsv */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("LeftSubtract operator not implemented");
 }
 
 void Object::RightSubtract(Variant & /* lhsv */, Variant & /* rhsv */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("RightSubtract operator not implemented");
 }
 
 void Object::SubtractAssign(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("SubtractAssign operator not implemented");
 }
 
 void Object::RightSubtractAssign(Ptr<Object> & /* lhso */, Variant & /* rhsv */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("RightSubtractAssign operator not implemented");
 }
 
 void Object::Multiply(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("Multiply operator not implemented");
 }
 
 void Object::LeftMultiply(Variant & /* lhsv */, Variant & /* rhsv */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("LeftMultiply operator not implemented");
 }
 
 void Object::RightMultiply(Variant & /* lhsv */, Variant & /* rhsv */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("RightMultiply operator not implemented");
 }
 
 void Object::MultiplyAssign(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("MultiplyAssign operator not implemented");
 }
 
 void Object::RightMultiplyAssign(Ptr<Object> & /* lhso */, Variant & /* rhsv */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("RightMultiplyAssign operator not implemented");
 }
 
 void Object::Divide(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("Divide operator not implemented");
 }
 
 void Object::LeftDivide(Variant & /* lhsv */, Variant & /* rhsv */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("LeftDivide operator not implemented");
 }
 
 void Object::RightDivide(Variant & /* lhsv */, Variant & /* rhsv */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("RightDivide operator not implemented");
 }
 
 void Object::DivideAssign(Ptr<Object> & /* lhso */, Ptr<Object> & /* rhso */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("DivideAssign operator not implemented");
 }
 
 void Object::RightDivideAssign(Ptr<Object> & /* lhso*/, Variant & /* rhsv */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("RightDivideAssign operator not implemented");
 }
 
 void *Object::FindElement()
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("FindElement operator not implemented");
   return nullptr;
 }
 
 void Object::PushElement(TypeId /* element_type_id */)
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("PushElement operator not implemented");
 }
 
 void Object::PopToElement()
 {
-  RuntimeError("operator not implemented");
+  RuntimeError("PopToElement operator not implemented");
 }
 
 }  // namespace vm

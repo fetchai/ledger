@@ -34,27 +34,28 @@
 class ContractTest : public ::testing::Test
 {
 protected:
-  using Identity             = fetch::crypto::Identity;
-  using Identifier           = fetch::ledger::Identifier;
-  using MutableTransaction   = fetch::ledger::MutableTransaction;
-  using VerifiedTransaction  = fetch::ledger::VerifiedTransaction;
-  using ConstByteArray       = fetch::byte_array::ConstByteArray;
-  using ByteArray            = fetch::byte_array::ByteArray;
-  using Contract             = fetch::ledger::Contract;
-  using ContractPtr          = std::shared_ptr<Contract>;
-  using MockStorageUnitPtr   = std::unique_ptr<MockStorageUnit>;
-  using Resources            = std::vector<ConstByteArray>;
-  using CertificatePtr       = std::unique_ptr<fetch::crypto::ECDSASigner>;
-  using StateAdapter         = fetch::ledger::StateAdapter;
-  using StateSentinelAdapter = fetch::ledger::StateSentinelAdapter;
-  using Query                = Contract::Query;
-  using IdentifierPtr        = std::shared_ptr<Identifier>;
-  using CachedStorageAdapter = fetch::ledger::CachedStorageAdapter;
+  using Identity              = fetch::crypto::Identity;
+  using Identifier            = fetch::ledger::Identifier;
+  using MutableTransaction    = fetch::ledger::MutableTransaction;
+  using VerifiedTransaction   = fetch::ledger::VerifiedTransaction;
+  using ConstByteArray        = fetch::byte_array::ConstByteArray;
+  using ByteArray             = fetch::byte_array::ByteArray;
+  using Contract              = fetch::ledger::Contract;
+  using ContractPtr           = std::shared_ptr<Contract>;
+  using StrictMockStorageUnit = testing::StrictMock<MockStorageUnit>;
+  using MockStorageUnitPtr    = std::unique_ptr<StrictMockStorageUnit>;
+  using Resources             = std::vector<ConstByteArray>;
+  using CertificatePtr        = std::unique_ptr<fetch::crypto::ECDSASigner>;
+  using StateAdapter          = fetch::ledger::StateAdapter;
+  using StateSentinelAdapter  = fetch::ledger::StateSentinelAdapter;
+  using Query                 = Contract::Query;
+  using IdentifierPtr         = std::shared_ptr<Identifier>;
+  using CachedStorageAdapter  = fetch::ledger::CachedStorageAdapter;
 
   void SetUp() override
   {
     certificate_ = std::make_unique<fetch::crypto::ECDSASigner>();
-    storage_     = std::make_unique<MockStorageUnit>();
+    storage_     = std::make_unique<StrictMockStorageUnit>();
   }
 
   void TearDown() override

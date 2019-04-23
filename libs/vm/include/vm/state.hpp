@@ -42,8 +42,14 @@ protected:
   IState(VM *vm, TypeId type_id)
     : Object(vm, type_id)
   {}
+
   template <typename... Args>
   static Ptr<IState> Construct(VM *vm, TypeId type_id, Args &&... args);
+
+public:
+  template <typename... Args>
+  static Ptr<IState> ConstructIntrinsic(VM *vm, TypeId type_id, TypeId value_type_id,
+                                        Args &&... args);
 };
 
 template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
@@ -61,7 +67,7 @@ inline IoObserverInterface::Status WriteHelper(std::string const &name, T const 
   return io.Write(name, &val, sizeof(T));
 }
 
-inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<Address> &val,
+inline IoObserverInterface::Status ReadHelper(std::string const &name, std::vector<uint8_t> &bytes,
                                               IoObserverInterface &io)
 {
   auto const exists_status = io.Exists(name);
@@ -69,9 +75,6 @@ inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<Addre
   {
     return exists_status;
   }
-
-  // create an initial buffer size
-  std::vector<uint8_t> bytes(256, 0);
 
   uint64_t buffer_size = bytes.size();
   auto     result      = io.Read(name, bytes.data(), buffer_size);
@@ -90,8 +93,31 @@ inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<Addre
     result = io.Read(name, bytes.data(), buffer_size);
   }
 
+  return result;
+}
+
+inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<Address> &val,
+                                              IoObserverInterface &io)
+{
+  // create an initial buffer size
+  std::vector<uint8_t> bytes(256, 0);
+  auto                 result = ReadHelper(name, bytes, io);
+
   // get the type to convert itself
   val->FromBytes(std::move(bytes));
+
+  return result;
+}
+
+inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<String> &val,
+                                              IoObserverInterface &io)
+{
+  // create an initial buffer size
+  std::vector<uint8_t> bytes(256, 0);
+  auto                 result = ReadHelper(name, bytes, io);
+
+  // get the type to convert itself
+  val->str.assign(reinterpret_cast<char const *>(bytes.data()), bytes.size());
 
   return result;
 }
@@ -103,6 +129,14 @@ inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr<Addr
   auto bytes = val->ToBytes();
 
   return io.Write(name, bytes.data(), bytes.size());
+}
+
+inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr<String> const &val,
+                                               IoObserverInterface &io)
+{
+  auto const &str = val->str;
+  // convert the object to bytes
+  return io.Write(name, str.c_str(), str.size());
 }
 
 template <typename T>
@@ -169,11 +203,9 @@ private:
 };
 
 template <typename... Args>
-inline Ptr<IState> IState::Construct(VM *vm, TypeId type_id, Args &&... args)
+inline Ptr<IState> IState::ConstructIntrinsic(VM *vm, TypeId type_id, TypeId value_type_id,
+                                              Args &&... args)
 {
-  TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
-  TypeId const    value_type_id = type_info.parameter_type_ids[0];
-
   switch (value_type_id)
   {
   case TypeIds::Bool:
@@ -224,11 +256,18 @@ inline Ptr<IState> IState::Construct(VM *vm, TypeId type_id, Args &&... args)
   {
     return new State<Address>(vm, type_id, value_type_id, std::forward<Args>(args)...);
   }
-  default:
-  {
-    throw std::runtime_error("Unsupported State type");
-  }
   }  // switch
+
+  vm->RuntimeError("Unsupported state type");
+  return nullptr;
+}
+
+template <typename... Args>
+inline Ptr<IState> IState::Construct(VM *vm, TypeId type_id, Args &&... args)
+{
+  TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
+  TypeId const    value_type_id = type_info.parameter_type_ids[0];
+  return ConstructIntrinsic(vm, type_id, value_type_id, std::forward<Args>(args)...);
 }
 
 inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<String> const &name,

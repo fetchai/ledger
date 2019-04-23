@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "vm/module.hpp"
+#include "vm/persistent_map.hpp"
 
 namespace fetch {
 namespace vm {
@@ -78,6 +79,10 @@ Module::Module()
   istate.CreateInstanceFunction("get", &IState::Get);
   istate.CreateInstanceFunction("set", &IState::Set);
   istate.CreateInstanceFunction("existed", &IState::Existed);
+
+  auto persistent_map = RegisterTemplateType<IPersistentMap>(TypeIds::IPersistentMap);
+  persistent_map.CreateTypeConstuctor<Ptr<String>>();
+  persistent_map.CreateTypeConstuctor<Ptr<Address>>();
 }
 
 }  // namespace vm

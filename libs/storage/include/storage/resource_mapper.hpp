@@ -157,9 +157,8 @@ class ResourceAddress : public ResourceID
 public:
   explicit ResourceAddress(byte_array::ConstByteArray const &address)
     : ResourceID(crypto::Hash<crypto::SHA256>(address))
-  {
-    address_ = address;
-  }
+    , address_{address}
+  {}
 
   ResourceAddress() = default;
 

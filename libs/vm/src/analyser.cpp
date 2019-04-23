@@ -130,6 +130,10 @@ void Analyser::Initialise()
   EnableOperator(address_type_, Operator::NotEqual);
 
   CreateTemplateType("State", TypeIds::IState, {any_type_}, state_type_);
+
+  CreateTemplateType("PersistentMap", TypeIds::IPersistentMap, {any_type_, any_type_},
+                     persistent_map_type_);
+  EnableIndexOperator(persistent_map_type_, {template_parameter1_type_}, template_parameter2_type_);
 }
 
 void Analyser::UnInitialise()
@@ -171,6 +175,8 @@ void Analyser::UnInitialise()
   map_type_                 = nullptr;
   state_type_               = nullptr;
   string_type_              = nullptr;
+  address_type_             = nullptr;
+  persistent_map_type_      = nullptr;
   op_table_.clear();
   left_op_table_.clear();
   right_op_table_.clear();

@@ -97,6 +97,7 @@ private:
   TypePtr           matrix_type_;
   TypePtr           array_type_;
   TypePtr           map_type_;
+  TypePtr           persistent_map_type_;
   TypePtr           state_type_;
   TypePtr           address_type_;
   TypePtr           string_type_;
