@@ -192,6 +192,7 @@ private:
   bool        IsBlockInCache(BlockHash hash) const;
   void        AddBlockToCache(IntBlockPtr const &) const;
   bool        CacheBlock(IntBlockPtr const &block) const;
+  void        RemoveStepBack(BlockHash const &hash, IntBlockPtr const &block) const;
   bool        UncacheBlock(BlockHash const &hash, bool root = true) const;
   BlockMap::iterator UncacheBlock(BlockHash const &hash, BlockMap::iterator chainLink,
                                   bool root = true) const;
