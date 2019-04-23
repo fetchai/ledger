@@ -32,8 +32,41 @@ using SizeSet    = std::unordered_set<SizeType>;
 
 constexpr SizeType NO_AXIS = SizeType(-1);
 
+template <typename T>
+static constexpr meta::IfIsNonFixedPointArithmetic<T, T> NumericMax()
+{
+  return std::numeric_limits<T>::max();
+}
 
+template <typename T>
+static constexpr meta::IfIsFixedPoint<T, T> NumericMax()
+{
+  return T::FromBase(T::MAX);
+}
 
+template <typename T>
+static constexpr meta::IfIsNonFixedPointArithmetic<T, T> NumericMin()
+{
+  return std::numeric_limits<T>::min();
+}
+
+template <typename T>
+static constexpr meta::IfIsFixedPoint<T, T> NumericMin()
+{
+  return T::FromBase(T::CONST_SMALLEST_FRACTION);
+}
+
+template <typename T>
+static constexpr meta::IfIsNonFixedPointArithmetic<T, T> NumericLowest()
+{
+  return std::numeric_limits<T>::lowest();
+}
+
+template <typename T>
+static constexpr meta::IfIsFixedPoint<T, T> NumericLowest()
+{
+  return T::FromBase(T::MIN);
+}
 
 }  // namespace math
 }  // namespace fetch

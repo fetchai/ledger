@@ -202,7 +202,7 @@ T Product(std::vector<T> const &obj1)
 template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
 meta::IfIsMathArray<ArrayType, void> Max(ArrayType const &array, T &ret)
 {
-  ret = std::numeric_limits<T>::lowest();
+  ret = NumericLowest<T>();
   for (T const &e : array)
   {
     if (e > ret)
@@ -287,9 +287,9 @@ T Max(std::vector<T> const &obj1)
  * @param ret return value
  */
 template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
-meta::IfIsMathNonFixedPointArray<ArrayType, void> Min(ArrayType const &array, T &ret)
+meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, T &ret)
 {
-  ret = std::numeric_limits<T>::max();
+  ret = NumericMax<T>();
   for (T const &e : array)
   {
     if (e < ret)
@@ -297,19 +297,6 @@ meta::IfIsMathNonFixedPointArray<ArrayType, void> Min(ArrayType const &array, T 
       ret = e;
     }
   }
-}
-template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
-meta::IfIsMathFixedPointArray<ArrayType, void> Min(ArrayType const &array, T &ret)
-{
-  double tmp = std::numeric_limits<double>::max();
-  for (T const &e : array)
-  {
-    if (double(e) < tmp)
-    {
-      tmp = double(e);
-    }
-  }
-  ret = T(tmp);
 }
 
 template <typename ArrayType>
@@ -528,7 +515,7 @@ meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &r
     ASSERT(ret.size() == SizeType(1));
     SizeType position = 0;
     auto     it       = array.begin();
-    Type     value    = std::numeric_limits<Type>::lowest();
+    Type     value    = NumericLowest<Type>();
     while (it.is_valid())
     {
       if (*it > value)

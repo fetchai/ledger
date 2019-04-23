@@ -222,6 +222,14 @@ public:
   using NextType     = typename BaseTypeInfo::NextSize::ValueType;
   using UnsignedType = typename BaseTypeInfo::UnsignedType;
 
+  static const FixedPoint CONST_SMALLEST_FRACTION;
+  static const Type       SMALLEST_FRACTION;
+  static const Type       LARGEST_FRACTION;
+  static const Type       MAX_INT;
+  static const Type       MIN_INT;
+  static const Type       MAX;
+  static const Type       MIN;
+
   enum
   {
     FRACTIONAL_MASK = Type(((1ull << FRACTIONAL_BITS) - 1)),
@@ -286,13 +294,13 @@ public:
   }
 
   template <typename OtherType>
-  bool operator<(const OtherType &o) const
+  constexpr bool operator<(const OtherType &o) const
   {
     return data_ < FixedPoint(o).data_;
   }
 
   template <typename OtherType>
-  bool operator>(const OtherType &o) const
+  constexpr bool operator>(const OtherType &o) const
   {
     return data_ > FixedPoint(o).data_;
   }
@@ -524,6 +532,7 @@ private:
   FixedPoint(Type n, const NoScale &)
     : data_(n)
   {}
+
 };
 
 template <std::uint16_t I, std::uint16_t F>
@@ -536,6 +545,28 @@ std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
   s.flags(f);
   return s;
 }
+
+template <std::uint16_t I, std::uint16_t F>
+const FixedPoint<I, F> FixedPoint<I, F>::CONST_SMALLEST_FRACTION(
+    0, FixedPoint::SMALLEST_FRACTION); /* 0 */
+template <std::uint16_t I, std::uint16_t F>
+const typename FixedPoint<I, F>::Type FixedPoint<I, F>::SMALLEST_FRACTION{
+    1}; /* smallest fraction */
+template <std::uint16_t I, std::uint16_t F>
+const typename FixedPoint<I, F>::Type FixedPoint<I, F>::LARGEST_FRACTION{
+    FRACTIONAL_MASK}; /* largest fraction */
+template <std::uint16_t I, std::uint16_t F>
+const typename FixedPoint<I, F>::Type FixedPoint<I, F>::MAX_INT =
+    Type(FRACTIONAL_MASK >> 1) << FRACTIONAL_BITS; /* largest int */
+template <std::uint16_t I, std::uint16_t F>
+const typename FixedPoint<I, F>::Type FixedPoint<I, F>::MIN_INT =
+    INTEGER_MASK &((Type(1) << (TOTAL_BITS - 1))); /* smallest int */
+template <std::uint16_t I, std::uint16_t F>
+const typename FixedPoint<I, F>::Type FixedPoint<I, F>::MAX =
+    MAX_INT | LARGEST_FRACTION; /* largest fixed point */
+template <std::uint16_t I, std::uint16_t F>
+const typename FixedPoint<I, F>::Type FixedPoint<I, F>::MIN =
+    -(MIN_INT ^ LARGEST_FRACTION); /* smallest fixed point */
 
 }  // namespace fixed_point
 }  // namespace fetch

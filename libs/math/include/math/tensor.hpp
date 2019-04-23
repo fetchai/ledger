@@ -2128,7 +2128,7 @@ SizeType Tensor<T, C>::Find(Type val) const
     }
     ++idx;
   }
-  return std::numeric_limits<SizeType>::max();
+  return NumericMax<SizeType>();
 }
 
 /**
