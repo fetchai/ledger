@@ -17,7 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
+#include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
+#include "math/ml/activation_functions/leaky_relu.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -25,54 +27,63 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class PlaceHolder : public fetch::ml::ElementWiseOps<T>
+class LeakyRelu : public fetch::ml::ElementWiseOps<T>
 {
 public:
   using ArrayType    = T;
-  using SizeType     = typename ArrayType::SizeType;
+  using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  PlaceHolder() = default;
+  LeakyRelu(DataType a = DataType(0.01))
+    : a_(a)
+  {}
+
+  virtual ~LeakyRelu() = default;
 
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                             ArrayType &                                                 output)
   {
-    (void)output;
-    ASSERT(inputs.empty());
-    ASSERT(this->output_);
-    return *(this->output_);
+    assert(inputs.size() == 1);
+    fetch::math::LeakyRelu(inputs.front().get(), a_, output);
+    return output;
   }
 
   virtual std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
-    ASSERT(inputs.empty());
-    return {errorSignal};
-  }
+    assert(inputs.size() == 1);
+    assert(inputs.front().get().shape() == errorSignal.shape());
+    ArrayType returnSignal{errorSignal.shape()};
+    ArrayType t{inputs.front().get().shape()};
 
-  virtual bool SetData(ArrayType const &data)
-  {
-    std::vector<SizeType> old_shape;
-    if (this->output_)
+    // gradient of parametric relu function is for x<0 = a, x>=0 = 1.0
+    t = this->Forward(inputs, t);
+
+    typename ArrayType::SizeType idx(0);
+    for (auto const &val : t)
     {
-      old_shape = this->output_->shape();
+      if (val >= DataType(0))
+      {
+        returnSignal.Set(idx, DataType(1));
+      }
+      else
+      {
+        returnSignal.Set(idx, a_);
+      }
+      ++idx;
     }
-    this->output_ = std::make_shared<ArrayType>(data);
-    return old_shape != this->output_->shape();
+
+    // multiply by errorSignal (chain rule)
+    fetch::math::Multiply(errorSignal, returnSignal, returnSignal);
+
+    return {returnSignal};
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
-  {
-    (void)inputs;
-    return this->output_->shape();
-  }
+  static constexpr char const *DESCRIPTOR = "LeakyRelu";
 
-  static constexpr char const *DESCRIPTOR = "PlaceHolder";
-
-protected:
-  ArrayPtrType output_;
+private:
+  DataType a_;
 };
 
 }  // namespace ops

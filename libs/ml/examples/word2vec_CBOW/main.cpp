@@ -70,7 +70,7 @@ void PrintKNN(fetch::ml::dataloaders::CBoWLoader<ArrayType> const &dl, ArrayType
   ArrayType arr        = embeddings;
   ArrayType one_vector = embeddings.Slice(dl.VocabLookup(word)).Unsqueeze();
   std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
-      fetch::math::clustering::KNN(arr, one_vector, k);
+      fetch::math::clustering::KNNCosine(arr, one_vector, k);
 
   for (std::size_t j = 0; j < output.size(); ++j)
   {

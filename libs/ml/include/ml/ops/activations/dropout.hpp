@@ -17,9 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/macros.hpp"
+#include "core/random/lfg.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
-#include "math/ml/activation_functions/sigmoid.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -27,29 +28,45 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Sigmoid : public fetch::ml::ElementWiseOps<T>
+class Dropout : public fetch::ml::ElementWiseOps<T>
 {
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
-  using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using SizeType     = typename ArrayType::SizeType;
+  using RNG          = fetch::random::LaggedFibonacciGenerator<>;
 
-  Sigmoid()          = default;
-  virtual ~Sigmoid() = default;
+  Dropout(DataType const probability, SizeType const &random_seed = 25102015)
+    : probability_(probability)
+  {
+    ASSERT(probability >= 0.0 && probability <= 1.0);
+    rng_.Seed(random_seed);
+    drop_values_ = ArrayType(0);
+  }
+
+  virtual ~Dropout() = default;
 
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                             ArrayType &                                                 output)
   {
-    assert(inputs.size() == 1);
+    ASSERT(inputs.size() == 1);
     ASSERT(output.shape() == this->ComputeOutputShape(inputs));
-    fetch::math::Sigmoid(inputs.front().get(), output);
-    // ensures numerical stability
-    for (auto &val : output)
+
+    if (!this->is_training_)
     {
-      fetch::math::Max(val, epsilon_, val);
-      fetch::math::Min(val, fetch::math::Subtract(DataType(1), epsilon_), val);
+      output.Copy(inputs.front().get());
+      return output;
     }
+
+    if (drop_values_.shape() != output.shape())
+    {
+      drop_values_ = ArrayType(inputs.front().get().shape());
+    }
+    UpdateRandomValues();
+
+    fetch::math::Multiply(inputs.front().get(), drop_values_, output);
+
     return output;
   }
 
@@ -57,28 +74,47 @@ public:
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
-    assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == errorSignal.shape());
+    ASSERT(inputs.size() == 1);
+    ASSERT(errorSignal.shape() == inputs.front().get().shape());
+    ASSERT(drop_values_.shape() == inputs.front().get().shape());
+
     ArrayType returnSignal{errorSignal.shape()};
-    ArrayType t{inputs.front().get().shape()};
 
-    // gradient of sigmoid function is s(x)(1 - s(x))
-    t = Ops<T>::Forward(inputs);
-    fetch::math::Subtract(DataType(1), t, returnSignal);
-    fetch::math::Multiply(t, returnSignal, returnSignal);
-
+    // gradient of dropout is 1.0 for enabled neurons and 0.0 for disabled
     // multiply by errorSignal (chain rule)
-    fetch::math::Multiply(errorSignal, returnSignal, returnSignal);
+    if (this->is_training_)
+    {
+      fetch::math::Multiply(errorSignal, drop_values_, returnSignal);
+    }
+    else
+    {
+      returnSignal.Copy(errorSignal);
+    }
 
     return {returnSignal};
   }
 
-  static constexpr char const *DESCRIPTOR = "Sigmoid";
+  static constexpr char const *DESCRIPTOR = "Dropout";
 
 private:
-  // minimum possible output value of the sigmoid should not be zero, but actually epsilon
-  // likewise maximum output should be 1 - epsilon
-  DataType epsilon_ = DataType(1e-12);
+  void UpdateRandomValues()
+  {
+    for (SizeType i(0); i < drop_values_.size(); i++)
+    {
+      if (DataType(rng_.AsDouble()) <= probability_)
+      {
+        drop_values_.Set(i, DataType(1.0));
+      }
+      else
+      {
+        drop_values_.Set(i, DataType(0.0));
+      }
+    }
+  }
+
+  ArrayType drop_values_;
+  DataType  probability_;
+  RNG       rng_;
 };
 
 }  // namespace ops

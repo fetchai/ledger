@@ -17,62 +17,69 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
+#include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
+#include "math/ml/activation_functions/sigmoid.hpp"
+#include "math/standard_functions/exp.hpp"
 #include "ml/ops/ops.hpp"
+#include <math/standard_functions/log.hpp>
 
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class PlaceHolder : public fetch::ml::ElementWiseOps<T>
+class LogSigmoid : public fetch::ml::ElementWiseOps<T>
 {
 public:
   using ArrayType    = T;
-  using SizeType     = typename ArrayType::SizeType;
+  using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  PlaceHolder() = default;
+  LogSigmoid()          = default;
+  virtual ~LogSigmoid() = default;
 
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                             ArrayType &                                                 output)
   {
-    (void)output;
-    ASSERT(inputs.empty());
-    ASSERT(this->output_);
-    return *(this->output_);
+    assert(inputs.size() == 1);
+    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
+
+    fetch::math::Sigmoid(inputs.front().get(), output);
+    fetch::math::Log(output, output);
+
+    // ensures numerical stability
+    for (auto &val : output)
+    {
+      fetch::math::Min(val, epsilon_, val);
+    }
+
+    return output;
   }
 
   virtual std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
-    ASSERT(inputs.empty());
-    return {errorSignal};
+    assert(inputs.size() == 1);
+    assert(inputs.front().get().shape() == errorSignal.shape());
+    ArrayType returnSignal{errorSignal.shape()};
+
+    // gradient of log-sigmoid function is 1/(e^x + 1))
+    fetch::math::Add(fetch::math::Exp(inputs.front().get()), DataType(1), returnSignal);
+    fetch::math::Divide(DataType(1), returnSignal, returnSignal);
+
+    // multiply by errorSignal (chain rule)
+    fetch::math::Multiply(errorSignal, returnSignal, returnSignal);
+
+    return {returnSignal};
   }
 
-  virtual bool SetData(ArrayType const &data)
-  {
-    std::vector<SizeType> old_shape;
-    if (this->output_)
-    {
-      old_shape = this->output_->shape();
-    }
-    this->output_ = std::make_shared<ArrayType>(data);
-    return old_shape != this->output_->shape();
-  }
+  static constexpr char const *DESCRIPTOR = "LogSigmoid";
 
-  virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
-  {
-    (void)inputs;
-    return this->output_->shape();
-  }
-
-  static constexpr char const *DESCRIPTOR = "PlaceHolder";
-
-protected:
-  ArrayPtrType output_;
+private:
+  // maximum possible output value of the log-sigmoid should not be zero, but actually epsilon
+  DataType epsilon_ = DataType(1e-12);
 };
 
 }  // namespace ops
