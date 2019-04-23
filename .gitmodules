@@ -16,3 +16,6 @@
 [submodule "vendor/msgpack"]
 	path = vendor/msgpack
 	url = https://github.com/msgpack/msgpack-c.git
+[submodule "vendor/openssl/src"]
+	path = vendor/openssl/src
+	url = https://github.com/openssl/openssl.git
