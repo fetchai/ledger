@@ -36,36 +36,36 @@ public:
   using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  LogSoftmax()          = default;
-  virtual ~LogSoftmax() = default;
+  LogSoftmax()  = default;
+  ~LogSoftmax() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                    ArrayType &                                                 output)
   {
     ASSERT(output.shape() == ComputeOutputShape(inputs));
-    assert(inputs.size() == 1);
+    ASSERT(inputs.size() == 1);
     fetch::math::Softmax(inputs.front().get(), output);
     fetch::math::Log(output, output);
     return output;
   }
 
-  virtual std::vector<ArrayType> Backward(
+  std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           errorSignal)
+      ArrayType const &                                           error_signal)
   {
     FETCH_UNUSED(inputs);
-    assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == errorSignal.shape());
+    ASSERT(inputs.size() == 1);
+    ASSERT(inputs.front().get().shape() == error_signal.shape());
 
-    ArrayType returnSignal = fetch::math::Exp(errorSignal);
-    fetch::math::Add(DataType(1), returnSignal, returnSignal);
-    fetch::math::Divide(DataType(1), returnSignal, returnSignal);
+    ArrayType ret = fetch::math::Exp(error_signal);
+    fetch::math::Add(DataType(1), ret, ret);
+    fetch::math::Divide(DataType(1), ret, ret);
 
-    return {returnSignal};
+    return {ret};
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
   {
     return inputs.front().get().shape();
   }
