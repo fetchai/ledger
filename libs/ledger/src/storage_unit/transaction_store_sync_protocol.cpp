@@ -20,7 +20,6 @@
 #include "ledger/chain/transaction_serialization.hpp"
 
 using fetch::byte_array::ConstByteArray;
-using fetch::storage::ResourceID;
 
 #ifdef FETCH_ENABLE_METRICS
 using fetch::metrics::Metrics;
@@ -122,14 +121,13 @@ uint64_t TransactionStoreSyncProtocol::ObjectCount()
  *
  * @return: the subtree the client is requesting as a vector (size limited)
  */
-TxList TransactionStoreSyncProtocol::PullSubtree(
-    byte_array::ConstByteArray const &rid, uint64_t bit_count)
+TxList TransactionStoreSyncProtocol::PullSubtree(byte_array::ConstByteArray const &rid,
+                                                 uint64_t                          bit_count)
 {
   return store_->PullSubtree(rid, bit_count, PULL_LIMIT_);
 }
 
-TxList TransactionStoreSyncProtocol::PullObjects(
-    service::CallContext const *call_context)
+TxList TransactionStoreSyncProtocol::PullObjects(service::CallContext const *call_context)
 {
   // Creating result
   TxList ret;

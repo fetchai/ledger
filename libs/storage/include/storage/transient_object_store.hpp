@@ -21,8 +21,8 @@
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
 #include "core/threading.hpp"
-#include "storage/object_store.hpp"
 #include "ledger/storage_unit/tx_list.hpp"
+#include "storage/object_store.hpp"
 
 #include <map>
 #include <unordered_map>
@@ -76,10 +76,8 @@ public:
 
   std::size_t Size() const;
 
-  ledger::TxList PullSubtree(
-      byte_array::ConstByteArray const &rid,
-      uint64_t bit_count,
-      uint64_t pull_limit);
+  ledger::TxList PullSubtree(byte_array::ConstByteArray const &rid, uint64_t bit_count,
+                             uint64_t pull_limit);
 
 private:
   using Mutex       = fetch::mutex::Mutex;
@@ -117,10 +115,8 @@ std::size_t TransientObjectStore<O>::Size() const
 }
 
 template <typename O>
-ledger::TxList TransientObjectStore<O>::PullSubtree(
-  byte_array::ConstByteArray const &rid,
-  uint64_t bit_count,
-  uint64_t pull_limit)
+ledger::TxList TransientObjectStore<O>::PullSubtree(byte_array::ConstByteArray const &rid,
+                                                    uint64_t bit_count, uint64_t pull_limit)
 {
   ledger::TxList ret;
 
@@ -334,7 +330,8 @@ bool TransientObjectStore<O>::Confirm(ResourceID const &rid)
   {
     FETCH_LOCK(cache_mutex_);
 
-    if (!IsInCache(rid)) {
+    if (!IsInCache(rid))
+    {
       return false;
     }
   }

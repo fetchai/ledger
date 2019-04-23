@@ -20,6 +20,7 @@
 #include "core/service_ids.hpp"
 #include "ledger/storage_unit/lane_controller.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
+#include "ledger/storage_unit/tx_list.hpp"
 #include "ledger/transaction_verifier.hpp"
 #include "network/generics/atomic_state_machine.hpp"
 #include "network/generics/future_timepoint.hpp"
@@ -29,7 +30,6 @@
 #include "network/muddle/rpc/client.hpp"
 #include "storage/resource_mapper.hpp"
 #include "transaction_store_sync_protocol.hpp"
-#include "ledger/storage_unit/tx_list.hpp"
 
 #include <algorithm>
 #include <unordered_map>
