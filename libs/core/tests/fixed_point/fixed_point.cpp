@@ -456,7 +456,7 @@ TEST(FixedPointTest, Division_16_16)
   EXPECT_EQ(one / huge, infinitesimal * 4);
   EXPECT_EQ(huge / infinitesimal, zero);
 
-  // TODO(843): Add proper support for NaN/Infinity/etc in FixedPoint class
+  // TODO(private 843): Add proper support for NaN/Infinity/etc in FixedPoint class
   EXPECT_THROW(two / zero, std::overflow_error);
   EXPECT_THROW(zero / zero, std::overflow_error);
 }
@@ -486,7 +486,7 @@ TEST(FixedPointTest, Division_32_32)
   EXPECT_EQ(one / huge, infinitesimal * 4);
   EXPECT_EQ(huge / infinitesimal, zero);
 
-  // TODO(843): Add proper support for NaN/Infinity/etc in FixedPoint class
+  // TODO(private 843): Add proper support for NaN/Infinity/etc in FixedPoint class
   EXPECT_THROW(two / zero, std::overflow_error);
   EXPECT_THROW(zero / zero, std::overflow_error);
 }

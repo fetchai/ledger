@@ -635,7 +635,7 @@ public:
     {
       throw std::runtime_error("Log2(): mathematical operation not defined: x < 0!");
     }
-    // TODO(843): Add proper support for NaN/Infinity/etc in FixedPoint class
+    // TODO(private 843): Add proper support for NaN/Infinity/etc in FixedPoint class
     /*If (x == NaN) {
       return NaN;
     }*/
