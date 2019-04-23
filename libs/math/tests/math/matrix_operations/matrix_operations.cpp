@@ -101,6 +101,38 @@ TYPED_TEST(FreeFunctionsTest, Max_OneDimension)
   EXPECT_EQ(output, array1.At(2));
 }
 
+
+TYPED_TEST(FreeFunctionsTest, Max_TwoDimension)
+{
+  using SizeType = typename TypeParam::SizeType;
+
+  SizeType  n_data     = 4;
+  SizeType  n_features = 2;
+  TypeParam array1{{n_data, n_features}};
+
+  array1.Set({0, 0}, typename TypeParam::Type(-17));
+  array1.Set({0, 1}, typename TypeParam::Type(21));
+  array1.Set({1, 0}, typename TypeParam::Type(0));
+  array1.Set({1, 1}, typename TypeParam::Type(0));
+  array1.Set({2, 0}, typename TypeParam::Type(13));
+  array1.Set({2, 1}, typename TypeParam::Type(999));
+  array1.Set({3, 0}, typename TypeParam::Type(21));
+  array1.Set({3, 1}, typename TypeParam::Type(-0.5));
+
+  TypeParam output{n_data};
+  fetch::math::Max(array1, SizeType(1), output);
+  EXPECT_EQ(output.At(0), typename TypeParam::Type(21));
+  EXPECT_EQ(output.At(1), typename TypeParam::Type(0));
+  EXPECT_EQ(output.At(2), typename TypeParam::Type(999));
+  EXPECT_EQ(output.At(3), typename TypeParam::Type(21));
+
+
+  TypeParam output2{n_features};
+  fetch::math::Max(array1, SizeType(0), output2);
+  EXPECT_EQ(output2.At(0), typename TypeParam::Type(21));
+  EXPECT_EQ(output2.At(1), typename TypeParam::Type(999));
+}
+
 TYPED_TEST(FreeFunctionsTest, ArgMax_OneDimension)
 {
   TypeParam array1{4};

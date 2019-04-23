@@ -142,6 +142,51 @@ void Scatter(ArrayType &input_array, ArrayType const &updates, std::vector<Indic
 }
 
 /**
+ * returns the product of all values in one array
+ * @tparam ArrayType
+ * @tparam T
+ * @param array1
+ * @param ret
+ */
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsMathArray<ArrayType, void> Product(ArrayType const &array1, T &ret)
+{
+  ret = typename ArrayType::Type(1);
+  for (auto &val : array1)
+  {
+    ret *= val;
+  }
+}
+
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsMathArray<ArrayType, T> Product(ArrayType const &array1)
+{
+  T ret;
+  Product(array1, ret);
+  return ret;
+}
+
+/**
+ * return the product of all elements in the vector
+ * @tparam T
+ * @param obj1
+ * @param ret
+ */
+template <typename T>
+void Product(std::vector<T> const &obj1, T &ret)
+{
+  ret = std::accumulate(std::begin(obj1), std::end(obj1), std::size_t(1), std::multiplies<>());
+}
+template <typename T>
+T Product(std::vector<T> const &obj1)
+{
+  T ret;
+  Product(obj1, ret);
+  return ret;
+}
+
+
+/**
  * Finds the maximum value in an array
  * @tparam ArrayType
  * @tparam T
@@ -337,50 +382,6 @@ meta::IfIsMathArray<ArrayType, ArrayType> Maximum(ArrayType const &array1, Array
 {
   ArrayType ret(array1.shape());
   Maximum(array1, array2, ret);
-  return ret;
-}
-
-/**
- * returns the product of all values in one array
- * @tparam ArrayType
- * @tparam T
- * @param array1
- * @param ret
- */
-template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, void> Product(ArrayType const &array1, T &ret)
-{
-  ret = typename ArrayType::Type(1);
-  for (auto &val : array1)
-  {
-    ret *= val;
-  }
-}
-
-template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, T> Product(ArrayType const &array1)
-{
-  T ret;
-  Product(array1, ret);
-  return ret;
-}
-
-/**
- * return the product of all elements in the vector
- * @tparam T
- * @param obj1
- * @param ret
- */
-template <typename T>
-void Product(std::vector<T> const &obj1, T &ret)
-{
-  ret = std::accumulate(std::begin(obj1), std::end(obj1), std::size_t(1), std::multiplies<>());
-}
-template <typename T>
-T Product(std::vector<T> const &obj1)
-{
-  T ret;
-  Product(obj1, ret);
   return ret;
 }
 
