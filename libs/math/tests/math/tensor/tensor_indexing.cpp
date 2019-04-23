@@ -356,3 +356,44 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_squeeze_test)
     i += TypeParam(1);
   }
 }
+
+TYPED_TEST(TensorIndexingTest, major_order_flip_test)
+{
+  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
+  fetch::math::Tensor<TypeParam> t({3, 3});
+  t.FillArange(SizeType{0}, t.size());
+
+  EXPECT_EQ(t[0], 0);
+  EXPECT_EQ(t[1], 1);
+  EXPECT_EQ(t[2], 2);
+  EXPECT_EQ(t[3], 3);
+  EXPECT_EQ(t[4], 4);
+  EXPECT_EQ(t[5], 5);
+  EXPECT_EQ(t[6], 6);
+  EXPECT_EQ(t[7], 7);
+  EXPECT_EQ(t[8], 8);
+
+  t.MajorOrderFlip();
+
+  EXPECT_EQ(t[0], 0);
+  EXPECT_EQ(t[1], 3);
+  EXPECT_EQ(t[2], 6);
+  EXPECT_EQ(t[3], 1);
+  EXPECT_EQ(t[4], 4);
+  EXPECT_EQ(t[5], 7);
+  EXPECT_EQ(t[6], 2);
+  EXPECT_EQ(t[7], 5);
+  EXPECT_EQ(t[8], 8);
+
+  t.MajorOrderFlip();
+
+  EXPECT_EQ(t[0], 0);
+  EXPECT_EQ(t[1], 1);
+  EXPECT_EQ(t[2], 2);
+  EXPECT_EQ(t[3], 3);
+  EXPECT_EQ(t[4], 4);
+  EXPECT_EQ(t[5], 5);
+  EXPECT_EQ(t[6], 6);
+  EXPECT_EQ(t[7], 7);
+  EXPECT_EQ(t[8], 8);
+}
