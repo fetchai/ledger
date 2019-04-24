@@ -52,7 +52,7 @@ public:
     ASSERT(output.shape() == this->ComputeOutputShape(inputs));
 
     auto shape = this->output_->shape();
-    shape[0] = 1;
+    shape[0]   = 1;
     if (!this->embeddings_output_ || this->embeddings_output_->shape() != shape)
     {
       this->embeddings_output_ = std::make_shared<ArrayType>(shape);
@@ -62,11 +62,12 @@ public:
     for (DataType const &i : inputs.front().get())
     {
       if (i >= 0)
-	{
-	  // this->embeddings_output_->InlineAdd(
-	  // 				      this->output_->Slice(typename ArrayType::SizeType(double(i))));
-	  j++;
-	}
+      {
+        // this->embeddings_output_->InlineAdd(
+        // 				      this->output_->Slice(typename
+        // ArrayType::SizeType(double(i))));
+        j++;
+      }
     }
     this->embeddings_output_->InlineDivide(DataType(j));
     return *this->embeddings_output_;
@@ -80,46 +81,46 @@ public:
     ASSERT(inputs.front().get().shape().size() == 1);
 
     for (DataType const &i : inputs.front().get())
+    {
+      if (i >= 0)
       {
-	if (i >= 0)
-	  {
-	    updated_rows_.insert(typename ArrayType::SizeType(double(i)));
-	    // this->gradientAccumulation_->Slice(typename ArrayType::SizeType(double(i)))
-	    //   .InlineAdd(errorSignal);
-	  }
+        updated_rows_.insert(typename ArrayType::SizeType(double(i)));
+        // this->gradientAccumulation_->Slice(typename ArrayType::SizeType(double(i)))
+        //   .InlineAdd(errorSignal);
       }
+    }
     return {ArrayType(errorSignal.shape())};
   }
 
   virtual void Step(typename T::Type learningRate)
   {
     for (auto const &r : updated_rows_)
+    {
+      auto gradientAccumulationSlice = this->gradient_accumulation_->Slice(r);
+      auto outputSlice               = this->output_->Slice(r);
+      auto it1                       = gradientAccumulationSlice.begin();
+      auto end                       = gradientAccumulationSlice.end();
+      auto it2                       = outputSlice.begin();
+      while (it1 != end)
       {
-	auto gradientAccumulationSlice = this->gradient_accumulation_->Slice(r);
-	auto outputSlice               = this->output_->Slice(r);
-	auto it1 = gradientAccumulationSlice.begin();
-	auto end = gradientAccumulationSlice.end();
-	auto it2 = outputSlice.begin();
-	while (it1 != end)
-	  {
-	    *it2 += (*it1 * learningRate);
-	    *it1 = 0;
-	    ++it1;
-	    ++it2;
-	  }
+        *it2 += (*it1 * learningRate);
+        *it1 = 0;
+        ++it1;
+        ++it2;
       }
+    }
     updated_rows_.clear();
   }
 
-    virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &/*inputs*/)
+  virtual std::vector<SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const & /*inputs*/)
   {
-    std::vector<typename ArrayType::SizeType> outputShape = this->output_->shape();;
-    outputShape[0] = 1;    
+    std::vector<typename ArrayType::SizeType> outputShape = this->output_->shape();
+    ;
+    outputShape[0] = 1;
     return outputShape;
   }
 
-  
 private:
   ArrayPtrType                           embeddings_output_;
   std::set<typename ArrayType::SizeType> updated_rows_;

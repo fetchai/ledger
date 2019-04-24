@@ -87,21 +87,21 @@ public:
   {
     offset = offset % Size();
     while (offset > data_[currentSentence_].size())
-      {
-	offset -= data_[currentSentence_].size();
-	currentSentence_++;
-      }
+    {
+      offset -= data_[currentSentence_].size();
+      currentSentence_++;
+    }
     if (offset < data_[currentSentence_].size() - window_size_)
-      {
-	currentWord_ = offset;
-      }
+    {
+      currentWord_ = offset;
+    }
     else
-      {
-	currentSentence_++;
-	currentWord_ = 0;
-      }
+    {
+      currentSentence_++;
+      currentWord_ = 0;
+    }
   }
-  
+
   /*
    * Remove words that appears less than MIN times
    * This is a destructive operation
@@ -110,39 +110,42 @@ public:
   {
     // Removing words while keeping indexes consecutive takes too long
     // So creating a new object, not the most efficient, but good enought for now
-    CBOWLoader new_loader(window_size_);
+    CBOWLoader                                           new_loader(window_size_);
     std::map<uint64_t, std::pair<std::string, uint64_t>> reverse_vocab;
     for (auto const &kvp : vocab_)
+    {
+      reverse_vocab[kvp.second.first] = std::make_pair(kvp.first, kvp.second.second);
+    }
+    for (auto const &sentence : data_)
+    {
+      std::string s;
+      for (auto const &word : sentence)
       {
-	reverse_vocab[kvp.second.first] = std::make_pair(kvp.first, kvp.second.second);
+        if (reverse_vocab[word].second >= min)
+        {
+          s += reverse_vocab[word].first + " ";
+        }
       }
-    for (auto const & sentence : data_)
-      {
-	std::string s;
-	for (auto const & word : sentence)
-	  {
-	    if (reverse_vocab[word].second >= min)
-	      {
-		s += reverse_vocab[word].first + " ";
-	      }
-	  }
-	new_loader.AddData(s);
-      }
-    data_ = std::move(new_loader.data_);
+      new_loader.AddData(s);
+    }
+    data_  = std::move(new_loader.data_);
     vocab_ = std::move(new_loader.vocab_);
   }
 
-  virtual std::pair<fetch::math::Tensor<T>, fetch::math::Tensor<T>> GetNext(std::pair<fetch::math::Tensor<T>, fetch::math::Tensor<T>> &t)
+  virtual std::pair<fetch::math::Tensor<T>, fetch::math::Tensor<T>> GetNext(
+      std::pair<fetch::math::Tensor<T>, fetch::math::Tensor<T>> &t)
   {
     // This seems to be one of the most important tricks to get word2vec to train
-    // The number of context words changes at each iteration with values in range [1 * 2, window_size_ * 2]
+    // The number of context words changes at each iteration with values in range [1 * 2,
+    // window_size_ * 2]
     uint64_t dynamic_size = (uint64_t)rand() % window_size_ + 1;
-    t.second.At(0) = T(data_[currentSentence_][currentWord_ + dynamic_size]);
+    t.second.At(0)        = T(data_[currentSentence_][currentWord_ + dynamic_size]);
     t.first.Fill(T(-1));
     for (uint64_t i(0); i < dynamic_size; ++i)
     {
-      t.first.At(i)                = T(data_[currentSentence_][currentWord_ + i]);
-      t.first.At(i + dynamic_size) = T(data_[currentSentence_][currentWord_ + dynamic_size + i + 1]);
+      t.first.At(i) = T(data_[currentSentence_][currentWord_ + i]);
+      t.first.At(i + dynamic_size) =
+          T(data_[currentSentence_][currentWord_ + dynamic_size + i + 1]);
     }
     currentWord_++;
     if (currentWord_ >= data_.at(currentSentence_).size() - (2 * window_size_))
@@ -152,12 +155,12 @@ public:
     }
     return t;
   }
-  
+
   virtual std::pair<fetch::math::Tensor<T>, fetch::math::Tensor<T>> GetNext()
   {
-    fetch::math::Tensor<T> t(window_size_ * 2);
-    fetch::math::Tensor<T> label(1); 
-    std::pair<fetch::math::Tensor<T>, fetch::math::Tensor<T>> p(t, label);   
+    fetch::math::Tensor<T>                                    t(window_size_ * 2);
+    fetch::math::Tensor<T>                                    label(1);
+    std::pair<fetch::math::Tensor<T>, fetch::math::Tensor<T>> p(t, label);
     return GetNext(p);
   }
 
@@ -185,12 +188,12 @@ public:
   std::string WordFromIndex(uint64_t index)
   {
     for (auto const &kvp : vocab_)
+    {
+      if (kvp.second.first == index)
       {
-	if (kvp.second.first == index)
-	  {
-	    return kvp.first;
-	  }
+        return kvp.first;
       }
+    }
     return "";
   }
 
@@ -205,7 +208,7 @@ private:
       {
         auto value = vocab_.insert(std::make_pair(s, std::make_pair((uint64_t)(vocab_.size()), 0)));
         indexes.push_back((*value.first).second.first);
-	value.first->second.second++;
+        value.first->second.second++;
       }
     }
     return indexes;
@@ -230,11 +233,11 @@ private:
   }
 
 private:
-  uint64_t                                                currentSentence_;
-  uint64_t                                                currentWord_;
-  uint64_t                                                window_size_;
-  std::map<std::string, std::pair<uint64_t, uint64_t>>    vocab_;
-  std::vector<std::vector<uint64_t>>                      data_;
+  uint64_t                                             currentSentence_;
+  uint64_t                                             currentWord_;
+  uint64_t                                             window_size_;
+  std::map<std::string, std::pair<uint64_t, uint64_t>> vocab_;
+  std::vector<std::vector<uint64_t>>                   data_;
 };
 }  // namespace ml
 }  // namespace fetch
