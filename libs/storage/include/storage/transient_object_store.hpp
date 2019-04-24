@@ -345,6 +345,9 @@ bool TransientObjectStore<O>::Confirm(ResourceID const &rid)
 /**
  * Internal: Lookup an element from the cache
  *
+ * Note: Not thread safe. Always lock cache_mutex_ before
+ * calling this function.
+ *
  * @tparam O The type of the object being stored
  * @param rid The resource id to be queried
  * @param object The reference to the output object that is to be populated
@@ -367,6 +370,9 @@ bool TransientObjectStore<O>::GetFromCache(ResourceID const &rid, O &object)
 
 /**
  * Internal: Set an element into the cache
+ *
+ * Note: Not thread safe. Always lock cache_mutex_ before
+ * calling this function.
  *
  * @tparam O The type of the object being stored
  * @param rid The resource id of the element to be set
@@ -391,6 +397,9 @@ void TransientObjectStore<O>::SetInCache(ResourceID const &rid, O const &object)
 
 /**
  * Internal: Check to see if an element is in the cache
+ *
+ * Note: Not thread safe. Always lock cache_mutex_ before
+ * calling this function.
  *
  * @tparam O The type of the object being stored
  * @param rid The resource id of the element
