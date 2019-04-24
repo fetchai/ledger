@@ -49,10 +49,17 @@ template <typename DataType>
 constexpr bool IsArithmetic = std::is_arithmetic<DataType>::value || IsFixedPoint<DataType>;
 
 template <typename DataType>
+constexpr bool IsIntegerOrFixedPoint = fetch::meta::IsInteger<DataType> || IsFixedPoint<DataType>;
+
+template <typename DataType>
 constexpr bool IsNonFixedPointArithmetic = std::is_arithmetic<DataType>::value;
 
 template <typename DataType, typename ReturnType>
 using IfIsFixedPoint = typename std::enable_if<IsFixedPoint<DataType>, ReturnType>::type;
+
+template <typename DataType, typename ReturnType>
+using IfIsIntegerOrFixedPoint =
+    typename std::enable_if<IsIntegerOrFixedPoint<DataType>, ReturnType>::type;
 
 template <typename DataType, typename ReturnType>
 using IfIsNotFixedPoint = typename std::enable_if<IsNotFixedPoint<DataType>, ReturnType>::type;
