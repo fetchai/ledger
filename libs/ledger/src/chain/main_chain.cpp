@@ -1102,8 +1102,6 @@ bool MainChain::ReindexTips()
   for (auto const &pathNode : trails_)
   {
     // Find path tree leaves, they will constitute the new tips
-    // TODO: this whole procedure only needs trails tree leaves. Perhaps it makes sense to cache
-    // them
     if (trails_.find(pathNode.second) == trails_.end())
     {
       BlockHash const &current{pathNode.second};
