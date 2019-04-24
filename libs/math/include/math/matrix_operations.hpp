@@ -417,7 +417,7 @@ void Min(ArrayType const &array, typename ArrayType::SizeType const &axis, Array
 }
 
 /**
- * Returns an array containing the elementwise maximum of two other ndarrays
+ * Returns an array containing the elementwise maximum of two other arrays
  * @param x array input 1
  * @param y array input 2
  * @return the combined array
@@ -440,7 +440,6 @@ meta::IfIsMathArray<ArrayType, void> Maximum(ArrayType const &array1, ArrayType 
     ++it2;
     ++rit;
   }
-  return ret;
 }
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Maximum(ArrayType const &array1, ArrayType const &array2)

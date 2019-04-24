@@ -201,6 +201,30 @@ BENCHMARK_TEMPLATE(BM_Scatter3D, float, 256, 256, 256)->Unit(benchmark::kMillise
 BENCHMARK_TEMPLATE(BM_Scatter3D, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
 
 template <class T, int C, int H, int W>
+void BM_Product(benchmark::State &state)
+{
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
+    state.ResumeTiming();
+    fetch::math::Product(t);
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_Product, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Product, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Product, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_Product, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Product, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Product, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_Product, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Product, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Product, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+
+template <class T, int C, int H, int W>
 void BM_Max(benchmark::State &state)
 {
   for (auto _ : state)
@@ -249,5 +273,80 @@ BENCHMARK_TEMPLATE(BM_MaxAxis, double, 128, 256, 256)->Unit(benchmark::kMillisec
 BENCHMARK_TEMPLATE(BM_MaxAxis, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_MaxAxis, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_MaxAxis, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+
+template <class T, int C, int H, int W>
+void BM_Min(benchmark::State &state)
+{
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
+    state.ResumeTiming();
+    fetch::math::Min(t);
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_Min, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Min, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Min, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_Min, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Min, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Min, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_Min, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Min, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Min, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+
+template <class T, int C, int H, int W>
+void BM_MinAxis(benchmark::State &state)
+{
+  using SizeType = fetch::math::SizeType;
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
+    fetch::math::Tensor<T> ret(std::vector<std::uint64_t>{C, W});
+    state.ResumeTiming();
+    fetch::math::Min(t, SizeType(1), ret);
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_MinAxis, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_MinAxis, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_MinAxis, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_MinAxis, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_MinAxis, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_MinAxis, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_MinAxis, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_MinAxis, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_MinAxis, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+
+template <class T, int C, int H, int W>
+void BM_Maximum(benchmark::State &state)
+{
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+    fetch::math::Tensor<T> t1(std::vector<std::uint64_t>{C, H, W});
+    fetch::math::Tensor<T> t2(std::vector<std::uint64_t>{C, H, W});
+    state.ResumeTiming();
+    fetch::math::Maximum(t1, t2);
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_Maximum, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Maximum, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Maximum, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_Maximum, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Maximum, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Maximum, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_Maximum, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Maximum, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Maximum, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();
