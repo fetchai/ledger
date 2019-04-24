@@ -140,7 +140,7 @@ void Scatter1D(ArrayType &input_array, ArrayType const &updates,
   ASSERT(indices.size() == updates.size());
 
   auto indices_it = indices.begin();
-  for (auto &update_val : updates)
+  for (auto const &update_val : updates)
   {
     input_array.Set(*indices_it, update_val);
     ++indices_it;
@@ -167,7 +167,7 @@ void Scatter2D(ArrayType &input_array, ArrayType const &updates,
 
   auto indices_it_0 = indices_0.begin();
   auto indices_it_1 = indices_1.begin();
-  for (auto &update_val : updates)
+  for (auto const &update_val : updates)
   {
     input_array.Set(*indices_it_0, *indices_it_1, update_val);
     ++indices_it_0;
@@ -198,7 +198,7 @@ void Scatter3D(ArrayType &input_array, ArrayType const &updates,
   auto indices_it_0 = indices_0.begin();
   auto indices_it_1 = indices_1.begin();
   auto indices_it_2 = indices_2.begin();
-  for (auto &update_val : updates)
+  for (auto const &update_val : updates)
   {
     input_array.Set(*indices_it_0, *indices_it_1, *indices_it_2, update_val);
     ++indices_it_0;
@@ -218,7 +218,7 @@ template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsAr
 meta::IfIsMathArray<ArrayType, void> Product(ArrayType const &array1, T &ret)
 {
   ret = typename ArrayType::Type(1);
-  for (auto &val : array1)
+  for (auto const &val : array1)
   {
     ret *= val;
   }
@@ -241,7 +241,7 @@ meta::IfIsMathArray<Tensor<T, C>, T> Product(Tensor<T, C> const &array1)
 template <typename T>
 void Product(std::vector<T> const &obj1, T &ret)
 {
-  ret = std::accumulate(std::begin(obj1), std::end(obj1), std::size_t(1), std::multiplies<>());
+  ret = std::accumulate(std::begin(obj1), std::end(obj1), T(1), std::multiplies<>());
 }
 template <typename T>
 T Product(std::vector<T> const &obj1)
