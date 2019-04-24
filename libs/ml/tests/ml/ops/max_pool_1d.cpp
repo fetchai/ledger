@@ -42,12 +42,12 @@ TYPED_TEST(MaxPool1dTest, forward_test_3_2)
   std::vector<double> gtInput({3, 5, 7, 9});
   for (std::uint64_t i(0); i < 10; ++i)
   {
-    data.Set(i, DataType(dataInput[i]));
+    data.Set(0, i, DataType(dataInput[i]));
   }
 
   for (std::uint64_t i(0); i < 4; ++i)
   {
-    gt.Set(i, DataType(gtInput[i]));
+    gt.Set(0, i, DataType(gtInput[i]));
   }
 
   fetch::ml::ops::MaxPool1d<ArrayType> op(3, 2);
@@ -72,9 +72,9 @@ TYPED_TEST(MaxPool1dTest, backward_test)
   std::vector<double> gtInput({0, 0, 2, 0, 4, 0, 0, 0, 2, 0});
   for (std::uint64_t i(0); i < 10; ++i)
   {
-    data.Set(i, DataType(dataInput[i]));
-    error.Set(i, DataType(errorInput[i]));
-    gt.Set(i, DataType(gtInput[i]));
+    data.Set(0, i, DataType(dataInput[i]));
+    error.Set(0, i, DataType(errorInput[i]));
+    gt.Set(0, i, DataType(gtInput[i]));
   }
   fetch::ml::ops::MaxPool1d<ArrayType> op(3, 2);
   std::vector<ArrayType>               prediction = op.Backward({data}, error);
@@ -94,12 +94,12 @@ TYPED_TEST(MaxPool1dTest, forward_test_4_2)
   std::vector<double> gtInput({3, 5, 7, 9});
   for (std::uint64_t i(0); i < 10; ++i)
   {
-    data.Set(i, DataType(dataInput[i]));
+    data.Set(0, i, DataType(dataInput[i]));
   }
 
   for (std::uint64_t i(0); i < 4; ++i)
   {
-    gt.Set(i, DataType(gtInput[i]));
+    gt.Set(0, i, DataType(gtInput[i]));
   }
 
   fetch::ml::ops::MaxPool1d<ArrayType> op(4, 2);
@@ -122,12 +122,12 @@ TYPED_TEST(MaxPool1dTest, forward_test_2_4)
   std::vector<double> gtInput({1, 5, 9});
   for (std::uint64_t i(0); i < 10; ++i)
   {
-    data.Set(i, DataType(dataInput[i]));
+    data.Set(0, i, DataType(dataInput[i]));
   }
 
   for (std::uint64_t i(0); i < 3; ++i)
   {
-    gt.Set(i, DataType(gtInput[i]));
+    gt.Set(0, i, DataType(gtInput[i]));
   }
 
   fetch::ml::ops::MaxPool1d<ArrayType> op(2, 4);

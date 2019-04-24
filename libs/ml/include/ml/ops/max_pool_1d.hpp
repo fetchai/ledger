@@ -65,7 +65,7 @@ public:
             max = val;
           }
         }
-        output.Set({c, i}, max);
+        output.Set(c, i, max);
       }
     }
     return output;
@@ -103,7 +103,7 @@ public:
           }
         }
         // Error needs to be added if same node occurs in multiple output nodes at once
-        returnSignal.Set({c, max_iter}, returnSignal.At(c, max_iter) + DataType(1));
+        returnSignal.Set(c, max_iter, returnSignal.At(c, max_iter) + DataType(1));
       }
     }
 

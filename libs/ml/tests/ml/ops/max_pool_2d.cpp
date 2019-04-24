@@ -50,7 +50,7 @@ TYPED_TEST(MaxPool2dTest, forward_test_3_2)
   {
     for (std::uint64_t j(0); j < input_height; ++j)
     {
-      data.Set({0, i, j}, DataType(i * j));
+      data.Set(0, i, j, DataType(i * j));
     }
   }
 
@@ -59,8 +59,8 @@ TYPED_TEST(MaxPool2dTest, forward_test_3_2)
     for (std::uint64_t j(0); j < output_height; ++j)
     {
 
-      data.Set({0, i, j}, DataType(i * j));
-      gt.Set({0, i, j}, DataType(gtInput[i + j * output_width]));
+      data.Set(0, i, j, DataType(i * j));
+      gt.Set(0, i, j, DataType(gtInput[i + j * output_width]));
     }
   }
 
@@ -90,16 +90,16 @@ TYPED_TEST(MaxPool2dTest, backward_test)
   {
     for (std::uint64_t j(0); j < input_height; ++j)
     {
-      data.Set({0, i, j}, DataType(i * j));
-      error.Set({0, i, j}, DataType(2));
-      gt.Set({0, i, j}, DataType(0));
+      data.Set(0, i, j, DataType(i * j));
+      error.Set(0, i, j, DataType(2));
+      gt.Set(0, i, j, DataType(0));
     }
   }
 
-  gt.Set({0, 2, 2}, DataType(2));
-  gt.Set({0, 4, 2}, DataType(2));
-  gt.Set({0, 2, 4}, DataType(2));
-  gt.Set({0, 4, 4}, DataType(2));
+  gt.Set(0, 2, 2, DataType(2));
+  gt.Set(0, 4, 2, DataType(2));
+  gt.Set(0, 2, 4, DataType(2));
+  gt.Set(0, 4, 4, DataType(2));
 
   fetch::ml::ops::MaxPool2d<ArrayType> op(3, 2);
   std::vector<ArrayType>               prediction = op.Backward({data}, error);

@@ -74,7 +74,7 @@ public:
             }
           }
 
-          output.Set({c, iw, ih}, max);
+          output.Set(c, iw, ih, max);
         }
       }
     }
@@ -124,7 +124,7 @@ public:
           }
 
           // Error needs to be added if same node occurs in multiple output nodes at once
-          returnSignal.Set({c, max_iterw, max_iterh},
+          returnSignal.Set(c, max_iterw, max_iterh,
                            returnSignal.At(c, max_iterw, max_iterh) + DataType(1));
         }
       }

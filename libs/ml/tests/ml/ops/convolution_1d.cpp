@@ -22,7 +22,7 @@
 #include <gtest/gtest.h>
 
 template <typename T>
-class Convolution1dTest : public ::testing::Test
+class Convolution1DTest : public ::testing::Test
 {
 };
 
@@ -30,18 +30,15 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<f
                                  fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(Convolution1dTest, MyTypes);
+TYPED_TEST_CASE(Convolution1DTest, MyTypes);
 
-TYPED_TEST(Convolution1dTest, forward_1x1_1x1x1)
+TYPED_TEST(Convolution1DTest, forward_1x1_1x1x1)
 {
-  TypeParam input(std::vector<uint64_t>({
-      1,
-      1,
-  }));
+  TypeParam input(std::vector<uint64_t>({1, 1}));
   TypeParam weigths(std::vector<uint64_t>({1, 1, 1}));
   input.At(0, 0)      = typename TypeParam::Type(5);
   weigths.At(0, 0, 0) = typename TypeParam::Type(-4);
-  fetch::ml::ops::Convolution1d<TypeParam> c;
+  fetch::ml::ops::Convolution1D<TypeParam> c;
   TypeParam                                output = c.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({input, weigths}));
 
@@ -49,7 +46,7 @@ TYPED_TEST(Convolution1dTest, forward_1x1_1x1x1)
   EXPECT_EQ(output.At(0, 0), typename TypeParam::Type(-20));
 }
 
-TYPED_TEST(Convolution1dTest, forward_1x3_1x1x3)
+TYPED_TEST(Convolution1DTest, forward_1x3_1x1x3)
 {
   using SizeType = typename TypeParam::SizeType;
   TypeParam input(std::vector<uint64_t>({1, 3}));
@@ -60,7 +57,7 @@ TYPED_TEST(Convolution1dTest, forward_1x3_1x1x3)
     input.At(0, i)      = typename TypeParam::Type(i);
     weigths.At(0, 0, i) = typename TypeParam::Type(i);
   }
-  fetch::ml::ops::Convolution1d<TypeParam> c;
+  fetch::ml::ops::Convolution1D<TypeParam> c;
   TypeParam                                output = c.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({input, weigths}));
 
@@ -68,7 +65,7 @@ TYPED_TEST(Convolution1dTest, forward_1x3_1x1x3)
   EXPECT_EQ(output.At(0, 0), typename TypeParam::Type(5));
 }
 
-TYPED_TEST(Convolution1dTest, forward_3x3_1x3x3)
+TYPED_TEST(Convolution1DTest, forward_3x3_1x3x3)
 {
   TypeParam     input(std::vector<uint64_t>({3, 3}));
   TypeParam     weigths(std::vector<uint64_t>({1, 3, 3}));
@@ -83,7 +80,7 @@ TYPED_TEST(Convolution1dTest, forward_3x3_1x3x3)
       ++counter;
     }
   }
-  fetch::ml::ops::Convolution1d<TypeParam> c;
+  fetch::ml::ops::Convolution1D<TypeParam> c;
   TypeParam                                output = c.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({input, weigths}));
 
@@ -91,22 +88,22 @@ TYPED_TEST(Convolution1dTest, forward_3x3_1x3x3)
   EXPECT_EQ(output.At(0, 0), typename TypeParam::Type(204));
 }
 
-TYPED_TEST(Convolution1dTest, forward_3x3_5x3x3)
+TYPED_TEST(Convolution1DTest, forward_3x3_5x3x3)
 {
   TypeParam                                input(std::vector<uint64_t>({3, 3}));
   TypeParam                                weigths(std::vector<uint64_t>({5, 3, 3}));
-  fetch::ml::ops::Convolution1d<TypeParam> c;
+  fetch::ml::ops::Convolution1D<TypeParam> c;
   TypeParam                                output = c.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({input, weigths}));
 
   ASSERT_EQ(output.shape(), std::vector<uint64_t>({5, 1}));
 }
 
-TYPED_TEST(Convolution1dTest, forward_1x5_1x1x3)
+TYPED_TEST(Convolution1DTest, forward_1x5_1x1x3)
 {
   TypeParam                                input(std::vector<uint64_t>({1, 5}));
   TypeParam                                weigths(std::vector<uint64_t>({1, 1, 3}));
-  fetch::ml::ops::Convolution1d<TypeParam> c;
+  fetch::ml::ops::Convolution1D<TypeParam> c;
   TypeParam                                output = c.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({input, weigths}));
 
