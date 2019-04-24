@@ -25,7 +25,7 @@
 
 using type        = double;
 using array_type  = fetch::memory::Array<type>;
-using vector_type = typename array_type::vector_register_type;
+using vector_type = typename array_type::VectorRegisterType;
 
 void Exponentials(array_type const &A, array_type &C)
 {

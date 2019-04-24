@@ -17,29 +17,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/exponentiation.hpp"
-#include "math/fundamental_operators.hpp"  // add, subtract etc.
-#include "math/kernels/standard_functions.hpp"
+#include "math/fundamental_operators.hpp"    // add, subtract etc.
+#include "math/standard_functions/pow.hpp"   // square
+#include "math/standard_functions/sqrt.hpp"  // sqrt
 #include <cassert>
 
 namespace fetch {
 namespace math {
 
 template <typename ArrayType>
-typename ArrayType::Type L2Norm(ArrayType const &A, ArrayType &ret)
-{
-  assert(A.size() == ret.size());
-  assert(A.shape() == ret.shape());
-
-  Square(A, ret);
-  return std::sqrt(Sum(ret));
-}
-
-template <typename ArrayType>
 typename ArrayType::Type L2Norm(ArrayType const &A)
 {
   ArrayType ret{A.shape()};
-  return L2Norm(A, ret);
+  return Sqrt(Sum(Square(A)));
 }
 
 }  // namespace math
