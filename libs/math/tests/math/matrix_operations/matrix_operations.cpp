@@ -77,6 +77,90 @@ TYPED_TEST(FreeFunctionsTest, Scatter1D_SetAll)
   }
 }
 
+TYPED_TEST(FreeFunctionsTest, Scatter2D_SetAll)
+{
+  using SizeType = typename TypeParam::SizeType;
+  using Type     = typename TypeParam::Type;
+
+  TypeParam array1{{4, 4}};
+  TypeParam updates{16};
+  updates.SetAllOne();
+  std::vector<SizeType> indices_0{};
+  std::vector<SizeType> indices_1{};
+  for (std::size_t j = 0; j < array1.shape()[0]; ++j)
+  {
+    for (std::size_t k = 0; k < array1.shape()[1]; ++k)
+    {
+      indices_0.emplace_back(j);
+      indices_1.emplace_back(k);
+    }
+  }
+
+  for (std::size_t j = 0; j < array1.shape()[0]; ++j)
+  {
+    for (std::size_t k = 0; k < array1.shape()[1]; ++k)
+    {
+      EXPECT_EQ(array1.At(j, k), Type(0));
+    }
+  }
+  fetch::math::Scatter2D(array1, updates, indices_0, indices_1);
+  for (std::size_t j = 0; j < array1.shape()[0]; ++j)
+  {
+    for (std::size_t k = 0; k < array1.shape()[1]; ++k)
+    {
+      EXPECT_EQ(array1.At(j, k), Type(1));
+    }
+  }
+}
+
+TYPED_TEST(FreeFunctionsTest, Scatter3D_SetAll)
+{
+  using SizeType = typename TypeParam::SizeType;
+  using Type     = typename TypeParam::Type;
+
+  TypeParam array1{{4, 4, 4}};
+  TypeParam updates{64};
+  updates.SetAllOne();
+  std::vector<SizeType> indices_0{};
+  std::vector<SizeType> indices_1{};
+  std::vector<SizeType> indices_2{};
+  for (std::size_t j = 0; j < array1.shape()[0]; ++j)
+  {
+    for (std::size_t k = 0; k < array1.shape()[1]; ++k)
+    {
+      for (std::size_t m = 0; m < array1.shape()[2]; ++m)
+      {
+        indices_0.emplace_back(j);
+        indices_1.emplace_back(k);
+        indices_2.emplace_back(m);
+      }
+    }
+  }
+
+  for (std::size_t j = 0; j < array1.shape()[0]; ++j)
+  {
+    for (std::size_t k = 0; k < array1.shape()[1]; ++k)
+    {
+      for (std::size_t m = 0; m < array1.shape()[2]; ++m)
+      {
+        EXPECT_EQ(array1.At(j, k, m), Type(0));
+      }
+    }
+  }
+  fetch::math::Scatter3D(array1, updates, indices_0, indices_1, indices_2);
+
+  for (std::size_t j = 0; j < array1.shape()[0]; ++j)
+  {
+    for (std::size_t k = 0; k < array1.shape()[1]; ++k)
+    {
+      for (std::size_t m = 0; m < array1.shape()[2]; ++m)
+      {
+        EXPECT_EQ(array1.At(j, k, m), Type(1));
+      }
+    }
+  }
+}
+
 TYPED_TEST(FreeFunctionsTest, Product_OneDimension)
 {
   using SizeType = typename TypeParam::SizeType;
