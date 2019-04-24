@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/service_ids.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/lane_controller.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
-#include "ledger/storage_unit/tx_list.hpp"
 #include "ledger/transaction_verifier.hpp"
 #include "network/generics/atomic_state_machine.hpp"
 #include "network/generics/future_timepoint.hpp"

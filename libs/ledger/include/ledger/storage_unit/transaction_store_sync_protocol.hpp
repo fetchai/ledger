@@ -21,7 +21,6 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
-#include "ledger/storage_unit/tx_list.hpp"
 #include "ledger/transaction_verifier.hpp"
 #include "metrics/metrics.hpp"
 #include "network/details/thread_pool.hpp"

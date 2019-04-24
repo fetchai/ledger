@@ -21,7 +21,7 @@
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
 #include "core/threading.hpp"
-#include "ledger/storage_unit/tx_list.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "storage/object_store.hpp"
 
 #include <map>
