@@ -97,7 +97,6 @@ private:
   using Mutex       = std::mutex;
 
   std::string const   name_;
-  std::string const   logging_name_;
   StateMapper         mapper_;
   mutable Mutex       callbacks_mutex_;
   CallbackMap         callbacks_{};
@@ -111,7 +110,6 @@ private:
 template <typename S>
 StateMachine<S>::StateMachine(std::string name, S initial, StateMapper mapper)
   : name_{std::move(name)}
-  , logging_name_{"SM:" + name_}
   , mapper_{std::move(mapper)}
   , current_state_{initial}
 {}
