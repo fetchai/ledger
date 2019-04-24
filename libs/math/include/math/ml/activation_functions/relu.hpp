@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "math/comparison.hpp"
 
 namespace fetch {

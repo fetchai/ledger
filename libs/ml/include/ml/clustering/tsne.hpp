@@ -120,12 +120,12 @@ public:
         {
           if ((gradient.At(i, j) > 0.0) != (i_y.At(i, j) > 0.0))
           {
-            gains.Set({i, j}, gains.At(i, j) + DataType(0.2));
+            gains.Set(i, j, gains.At(i, j) + DataType(0.2));
           }
 
           if ((gradient.At(i, j) > 0.0) == (i_y.At(i, j) > 0.0))
           {
-            gains.Set({i, j}, gains.At(i, j) * DataType(0.8));
+            gains.Set(i, j, gains.At(i, j) * DataType(0.8));
           }
         }
       }
@@ -225,7 +225,7 @@ private:
   {
     // p = -exp(d * beta)
     p = fetch::math::Exp(fetch::math::Multiply(DataType(-1), fetch::math::Multiply(d, beta)));
-    p.Set(k, DataType(0));
+    p.Set(0, k, DataType(0));
 
     DataType sum_p = fetch::math::Sum(p);
 
@@ -288,7 +288,7 @@ private:
       ArrayType this_P(input_data_size);
 
       DataType current_entropy;
-      d.Set({i, i}, DataType(0));
+      d.Set(i, i, DataType(0));
       Hbeta(d.Slice(i).Copy(), this_P, current_entropy, beta.At(i), i);
 
       // Evaluate whether the perplexity is within tolerance
@@ -335,10 +335,10 @@ private:
       {
         if (i == j)
         {
-          pairwise_affinities.Set({i, j}, DataType(0));
+          pairwise_affinities.Set(i, j, DataType(0));
           continue;
         }
-        pairwise_affinities.Set({i, j}, this_P.At(0, j));
+        pairwise_affinities.Set(i, j, this_P.At(0, j));
       }
     }
   }
@@ -371,7 +371,7 @@ private:
     // num[range(n), range(n)] = 0.
     for (SizeType i{0}; i < num.shape().at(0); i++)
     {
-      num.Set({i, i}, DataType(0));
+      num.Set(i, i, DataType(0));
     }
 
     // Q = num / sum(num)
@@ -438,7 +438,7 @@ private:
 
       for (SizeType k = 0; k < output_matrix.shape().at(1); k++)
       {
-        ret.Set({i, k}, fetch::math::Multiply(DataType(-1), tmp_slice.At(k)));
+        ret.Set(i, k, fetch::math::Multiply(DataType(-1), tmp_slice.At(k)));
       }
     }
 

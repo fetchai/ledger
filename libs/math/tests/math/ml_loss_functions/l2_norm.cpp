@@ -19,54 +19,36 @@
 #include <iomanip>
 #include <iostream>
 
-#include "core/random/lcg.hpp"
-#include "math/distance/hamming.hpp"
+#include "math/ml/loss_functions/l2_norm.hpp"
 #include "math/tensor.hpp"
-
 #include <gtest/gtest.h>
 
-using namespace fetch::math::distance;
-using namespace fetch::math;
-
 template <typename T>
-class HammingTest : public ::testing::Test
+class L2NormTest : public ::testing::Test
 {
 };
 
 using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+TYPED_TEST_CASE(L2NormTest, MyTypes);
 
-TYPED_TEST_CASE(HammingTest, MyTypes);
-
-TEST(HammingTest, simple_test)
+TYPED_TEST(L2NormTest, value_test)
 {
-  using SizeType = typename fetch::math::Tensor<float>::SizeType;
+  TypeParam test_array = TypeParam{8};
 
-  Tensor<double> A = Tensor<double>(4);
-  A.Set(SizeType{0}, 1);
-  A.Set(SizeType{1}, 2);
-  A.Set(SizeType{2}, 3);
-  A.Set(SizeType{3}, 4);
-  EXPECT_EQ(Hamming(A, A), 0);
+  test_array[0] = typename TypeParam::Type(1);
+  test_array[1] = typename TypeParam::Type(-2);
+  test_array[2] = typename TypeParam::Type(3);
+  test_array[3] = typename TypeParam::Type(-4);
+  test_array[4] = typename TypeParam::Type(5);
+  test_array[5] = typename TypeParam::Type(-6);
+  test_array[6] = typename TypeParam::Type(7);
+  test_array[7] = typename TypeParam::Type(-8);
 
-  Tensor<double> B = Tensor<double>(4);
-  B.Set(SizeType{0}, 1);
-  B.Set(SizeType{1}, 2);
-  B.Set(SizeType{2}, 3);
-  B.Set(SizeType{3}, 2);
+  // initialise to non-zero just to avoid correct value at initialisation
+  typename TypeParam::Type score(0);
+  score = fetch::math::L2Norm(test_array);
 
-  EXPECT_EQ(Hamming(A, B), 1);
-
-  Tensor<double> C = Tensor<double>(3);
-  C.Set(SizeType{0}, 1);
-  C.Set(SizeType{1}, 2);
-  C.Set(SizeType{2}, 3);
-
-  Tensor<double> D = Tensor<double>(3);
-  D.Set(SizeType{0}, 1);
-  D.Set(SizeType{1}, 2);
-  D.Set(SizeType{2}, 9);
-
-  EXPECT_EQ(Hamming(C, D), 1);
+  // test correct values
+  EXPECT_NEAR(double(score), double(14.282856857085700852), 1e-7);
 }

@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 
 #include <exception>
@@ -94,12 +95,12 @@ public:
     T ret_labels({subset_size});
     T ret_images({subset_size, figure_size_});
 
-    for (std::uint64_t i(0); i < subset_size; ++i)
+    for (fetch::math::SizeType i(0); i < subset_size; ++i)
     {
-      ret_labels.Set({i}, static_cast<typename T::Type>(labels_[i]));
-      for (std::uint64_t j(0); j < figure_size_; ++j)
+      ret_labels.Set(i, static_cast<typename T::Type>(labels_[i]));
+      for (fetch::math::SizeType j(0); j < figure_size_; ++j)
       {
-        ret_images.Set({i, j}, static_cast<typename T::Type>(data_[i][j]) / typename T::Type(256));
+        ret_images.Set(i, j, static_cast<typename T::Type>(data_[i][j]) / typename T::Type(256));
       }
     }
 

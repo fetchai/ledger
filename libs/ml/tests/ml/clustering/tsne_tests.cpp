@@ -60,27 +60,27 @@ TypeParam RunTest(typename TypeParam::SizeType n_data_size,
   // Generate easily separable clusters of data
   for (SizeType i = 0; i < 25; ++i)
   {
-    A.Set({i, 0}, -static_cast<DataType>(i) - static_cast<DataType>(50));
-    A.Set({i, 1}, -static_cast<DataType>(i) - static_cast<DataType>(50));
-    A.Set({i, 2}, -static_cast<DataType>(i) - static_cast<DataType>(50));
+    A.Set(i, SizeType{0}, -static_cast<DataType>(i) - static_cast<DataType>(50));
+    A.Set(i, SizeType{1}, -static_cast<DataType>(i) - static_cast<DataType>(50));
+    A.Set(i, SizeType{2}, -static_cast<DataType>(i) - static_cast<DataType>(50));
   }
   for (SizeType i = 25; i < 50; ++i)
   {
-    A.Set({i, 0}, -static_cast<DataType>(i) - static_cast<DataType>(50));
-    A.Set({i, 1}, static_cast<DataType>(i) + static_cast<DataType>(50));
-    A.Set({i, 2}, static_cast<DataType>(i) + static_cast<DataType>(50));
+    A.Set(i, SizeType{0}, -static_cast<DataType>(i) - static_cast<DataType>(50));
+    A.Set(i, SizeType{1}, static_cast<DataType>(i) + static_cast<DataType>(50));
+    A.Set(i, SizeType{2}, static_cast<DataType>(i) + static_cast<DataType>(50));
   }
   for (SizeType i = 50; i < 75; ++i)
   {
-    A.Set({i, 0}, static_cast<DataType>(i) + static_cast<DataType>(50));
-    A.Set({i, 1}, -static_cast<DataType>(i) - static_cast<DataType>(50));
-    A.Set({i, 2}, -static_cast<DataType>(i) - static_cast<DataType>(50));
+    A.Set(i, SizeType{0}, static_cast<DataType>(i) + static_cast<DataType>(50));
+    A.Set(i, SizeType{1}, -static_cast<DataType>(i) - static_cast<DataType>(50));
+    A.Set(i, SizeType{2}, -static_cast<DataType>(i) - static_cast<DataType>(50));
   }
   for (SizeType i = 75; i < 100; ++i)
   {
-    A.Set({i, 0}, static_cast<DataType>(i) + static_cast<DataType>(50));
-    A.Set({i, 1}, static_cast<DataType>(i) + static_cast<DataType>(50));
-    A.Set({i, 2}, static_cast<DataType>(i) + static_cast<DataType>(50));
+    A.Set(i, SizeType{0}, static_cast<DataType>(i) + static_cast<DataType>(50));
+    A.Set(i, SizeType{1}, static_cast<DataType>(i) + static_cast<DataType>(50));
+    A.Set(i, SizeType{2}, static_cast<DataType>(i) + static_cast<DataType>(50));
   }
 
   fetch::ml::TSNE<ArrayType> tsn(A, N_OUTPUT_FEATURE_SIZE, PERPLEXITY, RANDOM_SEED);
