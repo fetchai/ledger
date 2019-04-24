@@ -20,11 +20,14 @@
 #include "core/containers/queue.hpp"
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
+#include "core/runnable.hpp"
+#include "core/state_machine.hpp"
 #include "core/threading.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "storage/object_store.hpp"
 
 #include <map>
+#include <memory>
 #include <unordered_map>
 
 namespace fetch {
@@ -41,17 +44,16 @@ template <typename Object>
 class TransientObjectStore
 {
 public:
-  using Callback    = std::function<void(Object const &)>;
-  using Archive     = ObjectStore<Object>;
-  using TxSummaries = std::vector<ledger::TransactionSummary>;
+  using Callback     = std::function<void(Object const &)>;
+  using Archive      = ObjectStore<Object>;
+  using TxSummaries  = std::vector<ledger::TransactionSummary>;
+  using WeakRunnable = core::WeakRunnable;
 
   static constexpr char const *LOGGING_NAME = "TransientObjectStore";
 
-  // Construction / Destruction
   TransientObjectStore();
   TransientObjectStore(TransientObjectStore const &) = delete;
   TransientObjectStore(TransientObjectStore &&)      = delete;
-  ~TransientObjectStore();
 
   void New(std::string const &doc_file, std::string const &index_file, bool const &create = true);
   void Load(std::string const &doc_file, std::string const &index_file, bool const &create = true);
@@ -79,32 +81,68 @@ public:
   ledger::TxList PullSubtree(byte_array::ConstByteArray const &rid, uint64_t bit_count,
                              uint64_t pull_limit);
 
+  WeakRunnable getWeakRunnable() const;
+
 private:
-  using Mutex       = fetch::mutex::Mutex;
-  using Queue       = fetch::core::MPMCQueue<ResourceID, 1 << 15>;
-  using RecentQueue = fetch::core::MPMCQueue<ledger::TransactionSummary, 1 << 15>;
-  using Cache       = std::unordered_map<ResourceID, Object>;
-  using ThreadPtr   = std::shared_ptr<std::thread>;
-  using Flag        = std::atomic<bool>;
+  enum class Phase
+  {
+    Populating,
+    Writing,
+    Flushing
+  };
+
+  using Mutex           = fetch::mutex::Mutex;
+  using StateMachinePtr = std::shared_ptr<core::StateMachine<Phase>>;
+  using Queue           = fetch::core::MPMCQueue<ResourceID, 1 << 15>;
+  using RecentQueue     = fetch::core::MPMCQueue<ledger::TransactionSummary, 1 << 15>;
+  using Cache           = std::unordered_map<ResourceID, Object>;
+  using Flag            = std::atomic<bool>;
 
   bool GetFromCache(ResourceID const &rid, Object &object);
   void SetInCache(ResourceID const &rid, Object const &object);
   bool IsInCache(ResourceID const &rid);
 
   void AddToWriteQueue(ResourceID const &rid);
-  void ThreadLoop();
 
-  mutable Mutex cache_mutex_{__LINE__, __FILE__};  ///< The mutex for the cache
-  Cache         cache_;                            ///< The main object cache
-  Archive       archive_;                          ///< The persistent object store
-  Queue         confirm_queue_;                    ///< The queue of elements to be stored
-  RecentQueue   most_recent_seen_;                 ///< The queue of elements to be stored
-  ThreadPtr     thread_;                           ///< The background worker thread
-  Callback      set_callback_;                     ///< The completion handler
-  Flag          stop_{false};                      ///< Flag to signal the stop of the worker
+  Phase OnPopulating();
+  Phase OnWriting();
+  Phase OnFlushing();
+
+  const std::size_t               batch_size_ = 100;
+  const std::chrono::milliseconds max_wait_interval_{2000};
+
+  std::vector<ResourceID> rids;
+  std::size_t             extracted_count = 0;
+  std::size_t             written_count   = 0;
+
+  mutable Mutex   cache_mutex_{__LINE__, __FILE__};  ///< The mutex for the cache
+  StateMachinePtr state_machine_;     ///< The state machine controlling the worker writing to disk
+  Cache           cache_;             ///< The main object cache
+  Archive         archive_;           ///< The persistent object store
+  Queue           confirm_queue_;     ///< The queue of elements to be stored
+  RecentQueue     most_recent_seen_;  ///< The queue of elements to be stored
+  Callback        set_callback_;      ///< The completion handler
+  Flag            stop_{false};       ///< Flag to signal the stop of the worker
   static constexpr core::Tickets::Count recent_queue_alarm_threshold{RecentQueue::QUEUE_LENGTH >>
                                                                      1};
 };
+
+/**
+ * Construct a transient object store
+ *
+ * @tparam O The type of the object being stored
+ */
+template <typename O>
+inline TransientObjectStore<O>::TransientObjectStore()
+  : rids(batch_size_)
+  , state_machine_{
+        std::make_shared<core::StateMachine<Phase>>("TransientObjectStore", Phase::Populating)}
+
+{
+  state_machine_->RegisterHandler(Phase::Populating, this, &TransientObjectStore<O>::OnPopulating);
+  state_machine_->RegisterHandler(Phase::Writing, this, &TransientObjectStore<O>::OnWriting);
+  state_machine_->RegisterHandler(Phase::Flushing, this, &TransientObjectStore<O>::OnFlushing);
+}
 
 template <typename O>
 std::size_t TransientObjectStore<O>::Size() const
@@ -141,30 +179,98 @@ ledger::TxList TransientObjectStore<O>::PullSubtree(byte_array::ConstByteArray c
 template <typename O>
 constexpr core::Tickets::Count TransientObjectStore<O>::recent_queue_alarm_threshold;
 
-/**
- * Construct a transient object store
- *
- * @tparam O The type of the object being stored
- */
+// Populating: We are filling up our batch of objects from the queue that is being posted
 template <typename O>
-inline TransientObjectStore<O>::TransientObjectStore()
+typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnPopulating()
 {
-  thread_ = std::make_shared<std::thread>([this] { ThreadLoop(); });
+  assert(extracted_count < batch_size_);
+
+  // ensure the write count is reset
+  written_count = 0;
+
+  // attempt to extract an element in the confirmation queue
+  bool const extracted = confirm_queue_.Pop(rids[extracted_count], max_wait_interval_);
+
+  // update the index if needed
+  if (extracted)
+  {
+    ++extracted_count;
+  }
+
+  // determine if we have reached the end of the sequence of transactions or if we have a filled
+  // buffer.
+  bool const is_buffer_full     = (extracted_count == batch_size_);
+  bool const is_end_of_sequence = (extracted_count && (!extracted));
+
+  // trigger the next state if appropriate
+  if (is_buffer_full || is_end_of_sequence)
+  {
+    return Phase::Writing;
+  }
+
+  return Phase::Populating;
 }
 
-/**
- * Destructor
- *
- * @tparam O The type of the object being stored
- */
+// Writing: We are extracting the items from the cache and writing them to disk
 template <typename O>
-inline TransientObjectStore<O>::~TransientObjectStore()
+typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnWriting()
 {
-  if (thread_->joinable())
+  O obj;
+
+  // check if we need to transition from this state
+  if (written_count >= extracted_count)
   {
-    stop_ = true;
-    thread_->join();
+    return Phase::Flushing;
   }
+  else
+  {
+    auto const &rid = rids[written_count];
+
+    FETCH_LOCK(cache_mutex_);
+
+    // get the element from the cache
+    if (GetFromCache(rid, obj))
+    {
+      // write out the object
+      archive_.Set(rid, obj);
+
+      ++written_count;
+    }
+    else
+    {
+      // If this is the case then for some reason the RID that was added to the queue has been
+      // removed from the cache.
+      assert(false);
+    }
+  }
+
+  return Phase::Writing;
+}
+
+template <typename O>
+typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnFlushing()
+{
+  // Flushing: In this phase we are removing the elements from the cache. This is important to
+  // ensure a bound on the memory resources. This must happen after the writing to disk,
+  // otherwise the object store will be inconsistent
+  FETCH_LOCK(cache_mutex_);
+
+  assert(extracted_count <= batch_size_);
+
+  for (std::size_t i = 0; i < extracted_count; ++i)
+  {
+    cache_.erase(rids[i]);
+  }
+
+  extracted_count = 0;
+
+  return Phase::Populating;
+}
+
+template <typename O>
+core::WeakRunnable TransientObjectStore<O>::getWeakRunnable() const
+{
+  return state_machine_;
 }
 
 /**
@@ -236,11 +342,11 @@ typename TransientObjectStore<O>::TxSummaries TransientObjectStore<O>::GetRecent
 {
   TransientObjectStore<O>::TxSummaries   ret;
   ledger::TransactionSummary             summary;
-  static const std::chrono::milliseconds MAX_WAIT_INTERVAL{5};
+  static const std::chrono::milliseconds MAX_WAIT{5};
 
   for (std::size_t i = 0; i < max_to_poll; ++i)
   {
-    if (most_recent_seen_.Pop(summary, MAX_WAIT_INTERVAL))
+    if (most_recent_seen_.Pop(summary, MAX_WAIT))
     {
       ret.push_back(summary);
     }
@@ -421,121 +527,6 @@ template <typename O>
 void TransientObjectStore<O>::AddToWriteQueue(ResourceID const &rid)
 {
   confirm_queue_.Push(rid);
-}
-
-/**
- * Thread loop is executed by a thread and writes confirmed objects to the object store
- */
-template <typename O>
-void TransientObjectStore<O>::ThreadLoop()
-{
-  static const std::size_t               BATCH_SIZE = 100;
-  static const std::chrono::milliseconds MAX_WAIT_INTERVAL{2000};
-
-  SetThreadName("TxStore");
-
-  std::vector<ResourceID> rids(BATCH_SIZE);
-  std::size_t             extracted_count = 0;
-  std::size_t             written_count   = 0;
-
-  enum class Phase
-  {
-    Populating,
-    Writing,
-    Flushing
-  };
-
-  Phase phase = Phase::Populating;
-  O     obj;
-
-  // main processing loop
-  while (!stop_)
-  {
-    switch (phase)
-    {
-    // Populating: We are filling up our batch of objects from the queue that is being posted
-    case Phase::Populating:
-    {
-      assert(extracted_count < BATCH_SIZE);
-
-      // ensure the write count is reset
-      written_count = 0;
-
-      // attempt to extract an element in the confirmation queue
-      bool const extracted = confirm_queue_.Pop(rids[extracted_count], MAX_WAIT_INTERVAL);
-
-      // update the index if needed
-      if (extracted)
-      {
-        ++extracted_count;
-      }
-
-      // determine if we have reached the end of the sequence of transactions or if we have a filled
-      // buffer.
-      bool const is_buffer_full     = (extracted_count == BATCH_SIZE);
-      bool const is_end_of_sequence = (extracted_count && (!extracted));
-
-      // trigger the next state if appropriate
-      if (is_buffer_full || is_end_of_sequence)
-      {
-        phase = Phase::Writing;
-      }
-
-      break;
-    }
-
-    // Writing: We are extracting the items from the cache and writing them to disk
-    case Phase::Writing:
-    {
-      // check if we need to transition from this state
-      if (written_count >= extracted_count)
-      {
-        phase = Phase::Flushing;
-      }
-      else
-      {
-        auto const &rid = rids[written_count];
-
-        FETCH_LOCK(cache_mutex_);
-
-        // get the element from the cache
-        if (GetFromCache(rid, obj))
-        {
-          // write out the object
-          archive_.Set(rid, obj);
-
-          ++written_count;
-        }
-        else
-        {
-          // If this is the case then for some reason the RID that was added to the queue has been
-          // removed from the cache.
-          assert(false);
-        }
-      }
-
-      break;
-    }
-
-    // Flushing: In this phase we are removing the elements from the cache. This is important to
-    // ensure a bound on the memory resources. This must happen after the writing to disk,
-    // otherwise the object store will be inconsistent
-    case Phase::Flushing:
-    {
-      FETCH_LOCK(cache_mutex_);
-      assert(extracted_count <= BATCH_SIZE);
-      for (std::size_t i = 0; i < extracted_count; ++i)
-      {
-        cache_.erase(rids[i]);
-      }
-
-      phase           = Phase::Populating;
-      extracted_count = 0;
-
-      break;
-    }
-    }
-  }
 }
 
 }  // namespace storage
