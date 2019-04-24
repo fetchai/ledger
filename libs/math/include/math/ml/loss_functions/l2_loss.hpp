@@ -17,6 +17,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/ml/loss_functions/cross_entropy.hpp"
-#include "math/ml/loss_functions/l2_norm.hpp"
-#include "math/ml/loss_functions/mean_square_error.hpp"
+#include "math/fundamental_operators.hpp"   // add, subtract etc.
+#include "math/standard_functions/pow.hpp"  // square
+#include <cassert>
+
+namespace fetch {
+namespace math {
+
+template <typename ArrayType>
+typename ArrayType::Type L2Loss(ArrayType const &A)
+{
+  auto tmp = Sum(Square(A));
+  tmp      = (tmp / 2);
+  return tmp;
+}
+
+}  // namespace math
+}  // namespace fetch

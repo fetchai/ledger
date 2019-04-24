@@ -223,8 +223,8 @@ int main(int argc, char **argv)
       data = dataloader.GetRandom();
 
       // assign input and context vectors
-      input.At(0, 0)   = data.first.At(0, 0);
-      context.At(0, 0) = data.first.At(1, 0);
+      input.At(0, 0)   = data.first.At(0);
+      context.At(0, 0) = data.first.At(1);
 
       // assign label
       gt.At(0, 0) = DataType(data.second);

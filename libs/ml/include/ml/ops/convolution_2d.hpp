@@ -46,20 +46,20 @@ public:
 
     auto outputShape = ComputeOutputShape(inputs);
     ASSERT(output.shape() == outputShape);
-    for (uint64_t i(0); i < outputShape[0]; ++i)  // Iterate over output channels
+    for (SizeType i(0); i < outputShape[0]; ++i)  // Iterate over output channels
     {
       for (SizeType j{0}; j < outputShape[1]; ++j)  // Iterate over output height
       {
         for (SizeType k{0}; k < outputShape[2]; ++k)  // Iterate over output width
         {
           typename ArrayType::Type sum(0);
-          for (uint64_t ki(0); ki < inputs.at(1).get().shape()[1];
+          for (SizeType ki(0); ki < inputs.at(1).get().shape()[1];
                ki++)  // Iterate over Input channel
           {
-            for (uint64_t kj(0); kj < inputs.at(1).get().shape()[2];
+            for (SizeType kj(0); kj < inputs.at(1).get().shape()[2];
                  kj++)  // Iterate over kernel height
             {
-              for (uint64_t kk(0); kk < inputs.at(1).get().shape()[3];
+              for (SizeType kk(0); kk < inputs.at(1).get().shape()[3];
                    kk++)  // Iterate over kernel width
               {
                 typename ArrayType::Type w = inputs.at(1).get().At(i, ki, kj, kk);
@@ -68,7 +68,7 @@ public:
               }
             }
           }
-          output.Set(std::vector<typename ArrayType::SizeType>({i, j, k}), sum);
+          output.Set(i, j, k, sum);
         }
       }
     }

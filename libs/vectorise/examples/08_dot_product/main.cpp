@@ -19,7 +19,7 @@
 #include <iostream>
 
 using array_type  = fetch::memory::SharedArray<type>;
-using vector_type = typename array_type::vector_register_type;
+using vector_type = typename array_type::VectorRegisterType;
 
 template <typename D>
 using _S = fetch::memory::SharedArray<D>;
