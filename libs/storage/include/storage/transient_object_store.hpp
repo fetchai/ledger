@@ -215,8 +215,6 @@ typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnPopulating()
 template <typename O>
 typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnWriting()
 {
-  O obj;
-
   // check if we need to transition from this state
   if (written_count >= extracted_count)
   {
@@ -224,6 +222,7 @@ typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnWriting()
   }
   else
   {
+    O obj;
     auto const &rid = rids[written_count];
 
     FETCH_LOCK(cache_mutex_);
