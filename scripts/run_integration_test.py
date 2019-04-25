@@ -39,7 +39,7 @@ class TimerWatchdog():
     is stopped. This lets you dictate the length of tests
     docstring.
     """
-    def __init__(self, time, name, task = "unspecified", callback):
+    def __init__(self, time, name, task , callback):
 
         self._time     = time
         self._name     = name
