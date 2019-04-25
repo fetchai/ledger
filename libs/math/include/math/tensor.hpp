@@ -173,6 +173,7 @@ public:
   SelfType &      FillUniformRandomIntegers(int64_t const &min, int64_t const &max);
   static SelfType Zeroes(SizeVector const &shape);
   static SelfType Ones(SizeVector const &shape);
+  SizeType        ComputeIndex(SizeVector const &indices);
 
   ////////////////////
   /// SHAPE & SIZE ///
@@ -1250,6 +1251,30 @@ Tensor<T, C> Tensor<T, C>::Ones(SizeVector const &shape)
   output.SetAllOne();
   output.LazyReshape(shape);
   return output;
+}
+
+/**
+ * Copmutes the single value index of a datum in tensor from a n-dim vector of indices
+ * @param indices dimension indices
+ * @return index in the underlying data structure
+ */
+template <typename T, typename C>
+SizeType Tensor<T, C>::ComputeIndex(SizeVector const &indices)
+{
+  ASSERT(indices.size() == shape_.size());
+
+  SizeType index{0};
+  auto     indices_it = indices.begin();
+  auto     stride_it  = stride_.begin();
+
+  while (indices_it != indices.end())
+  {
+    index += (*indices_it) * (*stride_it);
+    ++indices_it;
+    ++stride_it;
+  }
+
+  return index;
 }
 
 ////////////////////////////////////

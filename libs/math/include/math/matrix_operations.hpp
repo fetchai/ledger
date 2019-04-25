@@ -123,8 +123,27 @@ meta::IfIsMathArray<ArrayType, ArrayType> BooleanMask(ArrayType &input_array, Ar
   return ret;
 }
 
+template <typename...>
+struct Tuple
+{
+};
+template <typename T1, typename T2>
+struct Pair
+{
+};
+
+template <class... Args1>
+struct UpdatesIndices
+{
+  template <class... Args2>
+  struct with
+  {
+    using type = Tuple<Pair<Args1, Args2>...>;
+  };
+};
+
 /**
- * 1D Scatter implementation. Updates data in the input array at locations specified by indices
+ * Scatter updates data in the input array at locations specified by indices
  * with values specified by updates
  * @tparam ArrayType Tensor of some data type
  * @tparam Indices indices which are to be updated
@@ -133,77 +152,18 @@ meta::IfIsMathArray<ArrayType, ArrayType> BooleanMask(ArrayType &input_array, Ar
  * @param indices vector of indices at which to apply the updates
  */
 template <typename ArrayType, typename... Indices>
-void Scatter1D(ArrayType &input_array, ArrayType const &updates,
-               std::vector<Indices...> const &indices)
+void Scatter(ArrayType &input_array, ArrayType const &updates,
+             std::vector<SizeVector> const &indices)
 {
-  ASSERT(input_array.shape().size() == 1);
   ASSERT(indices.size() == updates.size());
 
-  auto indices_it = indices.begin();
-  for (auto const &update_val : updates)
+  auto     indices_it = indices.begin();
+  SizeType update_idx{0};
+  while (indices_it != indices.end())
   {
-    input_array.Set(*indices_it, update_val);
+    input_array[input_array.ComputeIndex(*indices_it)] = updates[update_idx];
     ++indices_it;
-  }
-}
-
-/**
- * 2D Scatter implementation. Updates data in the input array at locations specified by indices
- * with values specified by updates
- * @tparam ArrayType Tensor of some data type
- * @tparam Indices indices which are to be updated
- * @param input_array the input tensor to update
- * @param updates the update values to apply
- * @param indices_0 the indices at which to apply the updates for the 0th dimension
- * @param indices_1 the indices at which to apply the updates for the 1st dimension
- */
-template <typename ArrayType, typename... Indices>
-void Scatter2D(ArrayType &input_array, ArrayType const &updates,
-               std::vector<Indices...> const &indices_0, std::vector<Indices...> const &indices_1)
-{
-  ASSERT(input_array.shape().size() == 2);
-  ASSERT(indices_0.size() == updates.size());
-  ASSERT(indices_1.size() == updates.size());
-
-  auto indices_it_0 = indices_0.begin();
-  auto indices_it_1 = indices_1.begin();
-  for (auto const &update_val : updates)
-  {
-    input_array.Set(*indices_it_0, *indices_it_1, update_val);
-    ++indices_it_0;
-    ++indices_it_1;
-  }
-}
-
-/**
- * 3D Scatter implementation. Updates data in the input array at locations specified by indices
- * with values specified by updates
- * @tparam ArrayType Tensor of some data type
- * @tparam Indices indices which are to be updated
- * @param input_array the input tensor to update
- * @param updates the update values to apply
- * @param indices_0 the indices at which to apply the updates for the 0th dimension
- * @param indices_1 the indices at which to apply the updates for the 1st dimension
- */
-template <typename ArrayType, typename... Indices>
-void Scatter3D(ArrayType &input_array, ArrayType const &updates,
-               std::vector<Indices...> const &indices_0, std::vector<Indices...> const &indices_1,
-               std::vector<Indices...> const &indices_2)
-{
-  ASSERT(input_array.shape().size() == 3);
-  ASSERT(indices_0.size() == updates.size());
-  ASSERT(indices_1.size() == updates.size());
-  ASSERT(indices_2.size() == updates.size());
-
-  auto indices_it_0 = indices_0.begin();
-  auto indices_it_1 = indices_1.begin();
-  auto indices_it_2 = indices_2.begin();
-  for (auto const &update_val : updates)
-  {
-    input_array.Set(*indices_it_0, *indices_it_1, *indices_it_2, update_val);
-    ++indices_it_0;
-    ++indices_it_1;
-    ++indices_it_2;
+    ++update_idx;
   }
 }
 

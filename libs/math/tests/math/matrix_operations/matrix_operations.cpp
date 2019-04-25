@@ -27,6 +27,8 @@
 
 #include <chrono>
 
+using namespace fetch::math;
+
 template <typename T>
 class FreeFunctionsTest : public ::testing::Test
 {
@@ -54,23 +56,22 @@ TYPED_TEST(FreeFunctionsTest, BooleanMask_SetAll)
 
 TYPED_TEST(FreeFunctionsTest, Scatter1D_SetAll)
 {
-  using SizeType = typename TypeParam::SizeType;
-  using Type     = typename TypeParam::Type;
+  using Type = typename TypeParam::Type;
 
-  TypeParam             array1{4};
-  TypeParam             updates{4};
-  std::vector<SizeType> indices{};
+  TypeParam               array1{4};
+  TypeParam               updates{4};
+  std::vector<SizeVector> indices{};
   updates.SetAllOne();
-  indices.emplace_back(0);
-  indices.emplace_back(1);
-  indices.emplace_back(2);
-  indices.emplace_back(3);
+  indices.emplace_back(SizeVector{0});
+  indices.emplace_back(SizeVector{1});
+  indices.emplace_back(SizeVector{2});
+  indices.emplace_back(SizeVector{3});
 
   for (std::size_t j = 0; j < array1.size(); ++j)
   {
     EXPECT_EQ(array1.At(j), Type(0));
   }
-  fetch::math::Scatter1D(array1, updates, indices);
+  fetch::math::Scatter(array1, updates, indices);
   for (std::size_t j = 0; j < array1.size(); ++j)
   {
     EXPECT_EQ(array1.At(j), Type(1));
@@ -79,20 +80,17 @@ TYPED_TEST(FreeFunctionsTest, Scatter1D_SetAll)
 
 TYPED_TEST(FreeFunctionsTest, Scatter2D_SetAll)
 {
-  using SizeType = typename TypeParam::SizeType;
-  using Type     = typename TypeParam::Type;
+  using Type = typename TypeParam::Type;
 
   TypeParam array1{{4, 4}};
   TypeParam updates{16};
   updates.SetAllOne();
-  std::vector<SizeType> indices_0{};
-  std::vector<SizeType> indices_1{};
+  std::vector<SizeVector> indices{};
   for (std::size_t j = 0; j < array1.shape()[0]; ++j)
   {
     for (std::size_t k = 0; k < array1.shape()[1]; ++k)
     {
-      indices_0.emplace_back(j);
-      indices_1.emplace_back(k);
+      indices.emplace_back(SizeVector{j, k});
     }
   }
 
@@ -103,7 +101,7 @@ TYPED_TEST(FreeFunctionsTest, Scatter2D_SetAll)
       EXPECT_EQ(array1.At(j, k), Type(0));
     }
   }
-  fetch::math::Scatter2D(array1, updates, indices_0, indices_1);
+  fetch::math::Scatter(array1, updates, indices);
   for (std::size_t j = 0; j < array1.shape()[0]; ++j)
   {
     for (std::size_t k = 0; k < array1.shape()[1]; ++k)
@@ -115,24 +113,19 @@ TYPED_TEST(FreeFunctionsTest, Scatter2D_SetAll)
 
 TYPED_TEST(FreeFunctionsTest, Scatter3D_SetAll)
 {
-  using SizeType = typename TypeParam::SizeType;
-  using Type     = typename TypeParam::Type;
+  using Type = typename TypeParam::Type;
 
   TypeParam array1{{4, 4, 4}};
   TypeParam updates{64};
   updates.SetAllOne();
-  std::vector<SizeType> indices_0{};
-  std::vector<SizeType> indices_1{};
-  std::vector<SizeType> indices_2{};
+  std::vector<SizeVector> indices{};
   for (std::size_t j = 0; j < array1.shape()[0]; ++j)
   {
     for (std::size_t k = 0; k < array1.shape()[1]; ++k)
     {
       for (std::size_t m = 0; m < array1.shape()[2]; ++m)
       {
-        indices_0.emplace_back(j);
-        indices_1.emplace_back(k);
-        indices_2.emplace_back(m);
+        indices.emplace_back(SizeVector{j, k, m});
       }
     }
   }
@@ -147,7 +140,7 @@ TYPED_TEST(FreeFunctionsTest, Scatter3D_SetAll)
       }
     }
   }
-  fetch::math::Scatter3D(array1, updates, indices_0, indices_1, indices_2);
+  fetch::math::Scatter(array1, updates, indices);
 
   for (std::size_t j = 0; j < array1.shape()[0]; ++j)
   {
