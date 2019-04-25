@@ -26,7 +26,7 @@
 using namespace fetch::math;
 
 template <typename T>
-class DistanceTest : public ::testing::Test
+class NormalizeArrayTest : public ::testing::Test
 {
 };
 
@@ -34,9 +34,9 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 
-TYPED_TEST_CASE(DistanceTest, MyTypes);
+TYPED_TEST_CASE(NormalizeArrayTest, MyTypes);
 
-TYPED_TEST(DistanceTest, conditional_distance)
+TYPED_TEST(NormalizeArrayTest, conditional_distance)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
