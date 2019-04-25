@@ -26,9 +26,13 @@
 #include "ledger/chain/transaction.hpp"
 #include "storage/object_store.hpp"
 
+#include <chrono>
+#include <functional>
 #include <map>
 #include <memory>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace fetch {
 namespace storage {
@@ -108,8 +112,7 @@ private:
   Phase OnWriting();
   Phase OnFlushing();
 
-  const std::size_t               batch_size_ = 100;
-  const std::chrono::milliseconds max_wait_interval_{2000};
+  const std::size_t batch_size_ = 100;
 
   std::vector<ResourceID> rids;
   std::size_t             extracted_count = 0;
@@ -188,25 +191,39 @@ typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnPopulating()
   // ensure the write count is reset
   written_count = 0;
 
-  // attempt to extract an element in the confirmation queue
-  bool const extracted = confirm_queue_.Pop(rids[extracted_count], max_wait_interval_);
-
-  // update the index if needed
-  if (extracted)
+  while (true)
   {
-    ++extracted_count;
+    // attempt to extract an element in the confirmation queue
+    bool const is_end_of_sequence =
+        confirm_queue_.Pop(rids[extracted_count], std::chrono::milliseconds::zero());
+
+    // update the index if needed
+    if (!is_end_of_sequence)
+    {
+      ++extracted_count;
+    }
+
+    bool const is_buffer_full = (extracted_count == batch_size_);
+
+    if (is_buffer_full)
+    {
+      return Phase::Writing;
+    }
+
+    if (is_end_of_sequence)
+    {
+      if (extracted_count > 0u)
+      {
+        return Phase::Writing;
+      }
+      else
+      {
+        break;
+      }
+    }
   }
 
-  // determine if we have reached the end of the sequence of transactions or if we have a filled
-  // buffer.
-  bool const is_buffer_full     = (extracted_count == batch_size_);
-  bool const is_end_of_sequence = (extracted_count && (!extracted));
-
-  // trigger the next state if appropriate
-  if (is_buffer_full || is_end_of_sequence)
-  {
-    return Phase::Writing;
-  }
+  state_machine_->Delay(std::chrono::milliseconds(1000u));
 
   return Phase::Populating;
 }
@@ -222,7 +239,7 @@ typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnWriting()
   }
   else
   {
-    O obj;
+    O           obj;
     auto const &rid = rids[written_count];
 
     FETCH_LOCK(cache_mutex_);
