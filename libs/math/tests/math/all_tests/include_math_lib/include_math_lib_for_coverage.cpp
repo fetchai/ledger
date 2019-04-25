@@ -17,3 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "include_math_lib.hpp"
+#include <gtest/gtest.h>
+
+// This dummy test includes everything in the math library to ensure
+// that coverage reports also show functionality that is completely
+// untested
+TEST(dummy_test, dummy_test)
+{
+}
