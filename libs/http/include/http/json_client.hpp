@@ -47,11 +47,18 @@ public:
     HTTPS,
   };
 
+  // Helpers
+  static JsonClient CreateFromUrl(std::string const &url);
+
   // Construction / Destruction
   JsonClient(ConnectionMode mode, std::string host);
   JsonClient(ConnectionMode mode, std::string host, uint16_t port);
+  JsonClient(JsonClient const &) = delete;
+  JsonClient(JsonClient &&) = default;
   ~JsonClient() = default;
 
+  /// @name Action Methods
+  /// @{
   bool Get(ConstByteArray const &endpoint, Variant &response);
   bool Get(ConstByteArray const &endpoint, Headers const &headers, Variant &response);
   bool Post(ConstByteArray const &endpoint, Variant const &request, Variant &response);
@@ -59,6 +66,16 @@ public:
   bool Post(ConstByteArray const &endpoint, Headers const &headers, Variant const &request,
             Variant &response);
   bool Post(ConstByteArray const &endpoint, Headers const &headers, Variant &response);
+  /// @}
+
+  /// @name Accessors
+  /// @{
+  HttpClientInterface const &underlying_client() const;
+  /// @}
+
+  // Operators
+  JsonClient &operator=(JsonClient const &) = delete;
+  JsonClient &operator=(JsonClient &&) = default;
 
 private:
   using ClientPtr = std::unique_ptr<HttpClientInterface>;
@@ -148,6 +165,16 @@ inline bool JsonClient::Post(ConstByteArray const &endpoint, Headers const &head
                              Variant &response)
 {
   return Request(Method::POST, endpoint, &headers, nullptr, response);
+}
+
+/**
+ * Access to the underlying client
+ *
+ * @return The reference to the underlying client
+ */
+inline HttpClientInterface const &JsonClient::underlying_client() const
+{
+  return *client_;
 }
 
 }  // namespace http
