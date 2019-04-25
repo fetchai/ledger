@@ -751,9 +751,9 @@ template <std::uint16_t I, std::uint16_t F>
 std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
 {
   std::ios_base::fmtflags f(s.flags());
-  s << std::dec << std::setprecision(14);
-  s << (double)(n);
-  s << ": " << std::hex << n.Data() << std::dec;
+  s << std::setprecision(F);
+  s << std::fixed;
+  s << double(n);
   s.flags(f);
   return s;
 }

@@ -478,7 +478,7 @@ private:
         if (std::find(assigned_data_points.begin(), assigned_data_points.end(), m) ==
             assigned_data_points.end())
         {
-          running_mean_ = std::numeric_limits<typename ArrayType::Type>::max();
+          running_mean_ = NumericMax<typename ArrayType::Type>();
           for (SizeType i = 0; i < (n_clusters_ - n_remaining_clusters); ++i)
           {
             if (cluster_distances[i][m] < running_mean_)
@@ -546,7 +546,7 @@ private:
 
     for (SizeType i = 0; i < n_points_; ++i)
     {
-      running_mean_ = std::numeric_limits<typename ArrayType::Type>::max();
+      running_mean_ = NumericMax<typename ArrayType::Type>();
       for (SizeType j = 0; j < n_clusters_; ++j)
       {
         if (k_euclids_[j][i] < running_mean_)
@@ -724,7 +724,7 @@ private:
     }
   }
 
-  static constexpr SizeType INVALID       = std::numeric_limits<SizeType>::max();
+  static constexpr SizeType INVALID       = NumericMax<SizeType>();
   SizeType                  n_points_     = INVALID;
   SizeType                  n_dimensions_ = INVALID;
   SizeType                  n_clusters_   = INVALID;
@@ -733,10 +733,10 @@ private:
   SizeType max_no_change_convergence_ = INVALID;  // max no change k_assignment before convergence
   SizeType loop_counter_              = INVALID;
   SizeType max_loops_                 = INVALID;
-  DataType assigned_k_ = std::numeric_limits<DataType>::max();  // current cluster to assign
+  DataType assigned_k_                = NumericMax<DataType>();  // current cluster to assign
 
   // used to find the smallest distance out of K comparisons
-  typename ArrayType::Type running_mean_ = std::numeric_limits<typename ArrayType::Type>::max();
+  typename ArrayType::Type running_mean_ = NumericMax<typename ArrayType::Type>();
 
   std::default_random_engine rng_;
 

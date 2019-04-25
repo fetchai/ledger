@@ -64,13 +64,13 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
   TypeParam inputData(std::vector<typename TypeParam::SizeType>({5, 10}));
   TypeParam output = fc.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({inputData}));
-  TypeParam errorSignal(std::vector<typename TypeParam::SizeType>({1, 10}));
+  TypeParam error_signal(std::vector<typename TypeParam::SizeType>({1, 10}));
 
-  std::vector<TypeParam> backpropagatedErrorSignals = fc.Backward({inputData}, errorSignal);
-  ASSERT_EQ(backpropagatedErrorSignals.size(), 1);
-  ASSERT_EQ(backpropagatedErrorSignals[0].shape().size(), 2);
-  ASSERT_EQ(backpropagatedErrorSignals[0].shape()[0], 5);
-  ASSERT_EQ(backpropagatedErrorSignals[0].shape()[1], 10);
+  std::vector<TypeParam> backprop_error = fc.Backward({inputData}, error_signal);
+  ASSERT_EQ(backprop_error.size(), 1);
+  ASSERT_EQ(backprop_error[0].shape().size(), 2);
+  ASSERT_EQ(backprop_error[0].shape()[0], 5);
+  ASSERT_EQ(backprop_error[0].shape()[1], 10);
   // No way to test actual values for now as weights are randomly initialised.
 }
 
@@ -81,8 +81,8 @@ TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
       std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
   placeholder->SetData(data);
 
-  fetch::ml::Node<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>> fc(
-      "FullyConnected", 50u, 42u, "FullyConnected");
+  fetch::ml::Node<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>> fc("FullyConnected", 50u,
+                                                                              42u);
   fc.AddInput(placeholder);
 
   TypeParam prediction = fc.Evaluate();
@@ -99,18 +99,18 @@ TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
       std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
   placeholder->SetData(data);
 
-  fetch::ml::Node<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>> fc(
-      "FullyConnected", 50u, 42u, "FullyConnected");
+  fetch::ml::Node<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>> fc("FullyConnected", 50u,
+                                                                              42u);
   fc.AddInput(placeholder);
   TypeParam prediction = fc.Evaluate();
 
-  TypeParam errorSignal(std::vector<typename TypeParam::SizeType>({1, 42}));
-  auto      backpropagatedErrorSignals = fc.BackPropagate(errorSignal);
+  TypeParam error_signal(std::vector<typename TypeParam::SizeType>({1, 42}));
+  auto      backprop_error = fc.BackPropagate(error_signal);
 
-  ASSERT_EQ(backpropagatedErrorSignals.size(), 1);
-  ASSERT_EQ(backpropagatedErrorSignals[0].second.shape().size(), 2);
-  ASSERT_EQ(backpropagatedErrorSignals[0].second.shape()[0], 5);
-  ASSERT_EQ(backpropagatedErrorSignals[0].second.shape()[1], 10);
+  ASSERT_EQ(backprop_error.size(), 1);
+  ASSERT_EQ(backprop_error[0].second.shape().size(), 2);
+  ASSERT_EQ(backprop_error[0].second.shape()[0], 5);
+  ASSERT_EQ(backprop_error[0].second.shape()[1], 10);
 }
 
 TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
@@ -132,8 +132,9 @@ TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
 
 TYPED_TEST(FullyConnectedTest, getStateDict)
 {
-  fetch::ml::layers::FullyConnected<TypeParam> fc(50, 10, "FCTest");
-  fetch::ml::StateDict<TypeParam>              sd = fc.StateDict();
+  fetch::ml::layers::FullyConnected<TypeParam> fc(
+      50, 10, fetch::ml::details::ActivationType::NOTHING, "FCTest");
+  fetch::ml::StateDict<TypeParam> sd = fc.StateDict();
 
   EXPECT_EQ(sd.weights_, nullptr);
   EXPECT_EQ(sd.dict_.size(), 2);

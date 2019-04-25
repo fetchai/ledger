@@ -173,6 +173,7 @@ public:
   SelfType &      FillUniformRandomIntegers(int64_t const &min, int64_t const &max);
   static SelfType Zeroes(SizeVector const &shape);
   static SelfType Ones(SizeVector const &shape);
+  SizeType        ComputeIndex(SizeVector const &indices) const;
 
   ////////////////////
   /// SHAPE & SIZE ///
@@ -1080,7 +1081,7 @@ void Tensor<T, C>::SetAllOne()
   auto it = this->begin();
   while (it.is_valid())
   {
-    *it = 1;
+    *it = Type(1);
     ++it;
   }
 }
@@ -1250,6 +1251,30 @@ Tensor<T, C> Tensor<T, C>::Ones(SizeVector const &shape)
   output.SetAllOne();
   output.LazyReshape(shape);
   return output;
+}
+
+/**
+ * Copmutes the single value index of a datum in tensor from a n-dim vector of indices
+ * @param indices dimension indices
+ * @return index in the underlying data structure
+ */
+template <typename T, typename C>
+SizeType Tensor<T, C>::ComputeIndex(SizeVector const &indices) const
+{
+  ASSERT(indices.size() == shape_.size());
+
+  SizeType index{0};
+  auto     indices_it = indices.begin();
+  auto     stride_it  = stride_.begin();
+
+  while (indices_it != indices.end())
+  {
+    index += (*indices_it) * (*stride_it);
+    ++indices_it;
+    ++stride_it;
+  }
+
+  return index;
 }
 
 ////////////////////////////////////
@@ -1891,7 +1916,6 @@ template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::Softmax(SelfType const &x)
 {
   LazyResize(x.size());
-
   ASSERT(x.size() == this->size());
   fetch::math::Softmax(x, *this);
 
@@ -2128,7 +2152,7 @@ SizeType Tensor<T, C>::Find(Type val) const
     }
     ++idx;
   }
-  return std::numeric_limits<SizeType>::max();
+  return NumericMax<SizeType>();
 }
 
 /**

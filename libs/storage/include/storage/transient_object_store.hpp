@@ -21,6 +21,7 @@
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
 #include "core/threading.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "storage/object_store.hpp"
 
 #include <map>
@@ -52,11 +53,6 @@ public:
   TransientObjectStore(TransientObjectStore &&)      = delete;
   ~TransientObjectStore();
 
-  Archive &archive()
-  {
-    return archive_;
-  }
-
   void New(std::string const &doc_file, std::string const &index_file, bool const &create = true);
   void Load(std::string const &doc_file, std::string const &index_file, bool const &create = true);
 
@@ -78,6 +74,11 @@ public:
   TransientObjectStore &operator=(TransientObjectStore const &) = delete;
   TransientObjectStore &operator=(TransientObjectStore &&) = delete;
 
+  std::size_t Size() const;
+
+  ledger::TxList PullSubtree(byte_array::ConstByteArray const &rid, uint64_t bit_count,
+                             uint64_t pull_limit);
+
 private:
   using Mutex       = fetch::mutex::Mutex;
   using Queue       = fetch::core::MPMCQueue<ResourceID, 1 << 15>;
@@ -89,6 +90,7 @@ private:
   bool GetFromCache(ResourceID const &rid, Object &object);
   void SetInCache(ResourceID const &rid, Object const &object);
   bool IsInCache(ResourceID const &rid);
+
   void AddToWriteQueue(ResourceID const &rid);
   void ThreadLoop();
 
@@ -103,6 +105,38 @@ private:
   static constexpr core::Tickets::Count recent_queue_alarm_threshold{RecentQueue::QUEUE_LENGTH >>
                                                                      1};
 };
+
+template <typename O>
+std::size_t TransientObjectStore<O>::Size() const
+{
+  FETCH_LOCK(cache_mutex_);
+
+  return archive_.size() + cache_.size();
+}
+
+template <typename O>
+ledger::TxList TransientObjectStore<O>::PullSubtree(byte_array::ConstByteArray const &rid,
+                                                    uint64_t bit_count, uint64_t pull_limit)
+{
+  ledger::TxList ret;
+
+  uint64_t counter = 0;
+
+  archive_.Flush(false);
+
+  archive_.WithLock([this, &pull_limit, &ret, &counter, &rid, bit_count]() {
+    // This is effectively saying get all objects whose ID begins rid & mask
+    auto it = this->archive_.GetSubtree(ResourceID(rid), bit_count);
+
+    while ((it != this->archive_.end()) && (counter++ < pull_limit))
+    {
+      ret.push_back(*it);
+      ++it;
+    }
+  });
+
+  return ret;
+}
 
 template <typename O>
 constexpr core::Tickets::Count TransientObjectStore<O>::recent_queue_alarm_threshold;
@@ -174,7 +208,12 @@ void TransientObjectStore<O>::Load(std::string const &doc_file, std::string cons
 template <typename O>
 bool TransientObjectStore<O>::Get(ResourceID const &rid, O &object)
 {
-  bool const success = GetFromCache(rid, object) || archive_.Get(rid, object);
+  bool success = false;
+
+  {
+    FETCH_LOCK(cache_mutex_);
+    success = GetFromCache(rid, object) || archive_.Get(rid, object);
+  }
 
   if (!success)
   {
@@ -224,6 +263,8 @@ typename TransientObjectStore<O>::TxSummaries TransientObjectStore<O>::GetRecent
 template <typename O>
 bool TransientObjectStore<O>::Has(ResourceID const &rid)
 {
+  FETCH_LOCK(cache_mutex_);
+
   return IsInCache(rid) || archive_.Has(rid);
 }
 
@@ -241,8 +282,11 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Adding TX: ", byte_array::ToBase64(rid.id()));
 
-  // add the element into the cache
-  SetInCache(rid, object);
+  {
+    FETCH_LOCK(cache_mutex_);
+
+    SetInCache(rid, object);
+  }
 
   if (newly_seen)
   {
@@ -283,9 +327,13 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
 template <typename O>
 bool TransientObjectStore<O>::Confirm(ResourceID const &rid)
 {
-  if (!IsInCache(rid))
   {
-    return false;
+    FETCH_LOCK(cache_mutex_);
+
+    if (!IsInCache(rid))
+    {
+      return false;
+    }
   }
 
   // add the element into the queue of items to be pushed to disk
@@ -297,6 +345,9 @@ bool TransientObjectStore<O>::Confirm(ResourceID const &rid)
 /**
  * Internal: Lookup an element from the cache
  *
+ * Note: Not thread safe. Always lock cache_mutex_ before
+ * calling this function.
+ *
  * @tparam O The type of the object being stored
  * @param rid The resource id to be queried
  * @param object The reference to the output object that is to be populated
@@ -305,7 +356,6 @@ bool TransientObjectStore<O>::Confirm(ResourceID const &rid)
 template <typename O>
 bool TransientObjectStore<O>::GetFromCache(ResourceID const &rid, O &object)
 {
-  FETCH_LOCK(cache_mutex_);
   bool success = false;
 
   auto it = cache_.find(rid);
@@ -321,6 +371,9 @@ bool TransientObjectStore<O>::GetFromCache(ResourceID const &rid, O &object)
 /**
  * Internal: Set an element into the cache
  *
+ * Note: Not thread safe. Always lock cache_mutex_ before
+ * calling this function.
+ *
  * @tparam O The type of the object being stored
  * @param rid The resource id of the element to be set
  * @param object The reference to the object to be stored
@@ -328,7 +381,6 @@ bool TransientObjectStore<O>::GetFromCache(ResourceID const &rid, O &object)
 template <typename O>
 void TransientObjectStore<O>::SetInCache(ResourceID const &rid, O const &object)
 {
-  FETCH_LOCK(cache_mutex_);
   typename Cache ::iterator it;
   bool                      inserted{false};
 
@@ -346,6 +398,9 @@ void TransientObjectStore<O>::SetInCache(ResourceID const &rid, O const &object)
 /**
  * Internal: Check to see if an element is in the cache
  *
+ * Note: Not thread safe. Always lock cache_mutex_ before
+ * calling this function.
+ *
  * @tparam O The type of the object being stored
  * @param rid The resource id of the element
  * @return
@@ -353,7 +408,6 @@ void TransientObjectStore<O>::SetInCache(ResourceID const &rid, O const &object)
 template <typename O>
 bool TransientObjectStore<O>::IsInCache(ResourceID const &rid)
 {
-  FETCH_LOCK(cache_mutex_);
   return cache_.find(rid) != cache_.end();
 }
 
@@ -441,6 +495,8 @@ void TransientObjectStore<O>::ThreadLoop()
       else
       {
         auto const &rid = rids[written_count];
+
+        FETCH_LOCK(cache_mutex_);
 
         // get the element from the cache
         if (GetFromCache(rid, obj))
