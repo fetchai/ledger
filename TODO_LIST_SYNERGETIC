@@ -9,18 +9,22 @@ DAG Syncronisation
 - (v) Make DAG bi-directional
 - (v) Add RemoveNode(hash)
 - (v) Write test for DAG
-- ( ) Rewrite the DAG RPC interface
-- ( ) Consider deleting GetAfter as it does not make sense
-      - ( ) Create DAG interface for testing purposes
-      - ( ) Get nodes following "list of hashes"
-      - ( ) Get nodes before "list of hashes"
+- (v) Consider deleting GetAfter as it does not make sense
+- (v) Create DAG interface for testing purposes
+- (v) Get nodes following "list of hashes"
+- (v) Get nodes before "list of hashes"
 
-- ( ) Make DAG implementation a state machine
+- ( ) Rewrite the DAG RPC interface
+    - ( ) Setup example
+    - ( ) Create sync cycle
+    - ( ) Make DAG service a state machine
+
 - ( ) Fix TODO on line 322 in constellation.cpp
 - ( ) Refactor DAG HTTP interface, line 73
-      - ( ) Updated serialiser would make life easy
-      - ( ) Wire format 117, dag_http_interface.hpp
-      - ( ) Add chunk parameters to HTTP Interface, 142 dag_http_interface.hpp
+    - ( ) Updated serialiser would make life easy
+    - ( ) Wire format 117, dag_http_interface.hpp
+    - ( ) Add chunk parameters to HTTP Interface, 142 dag_http_interface.hpp
+    
 - ( ) TODO on line 140 dag.cpp, possibly migrate to state return rather than bools
 - ( ) Add hook for updating trust system on 170 in dag.cpp
 - ( ) Check that uncertified nodes actaually are uncertified dag.cpp 211

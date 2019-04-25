@@ -55,7 +55,7 @@ private:
   NodeArray GetLatest()
   {
     auto latest = dag_.GetLatest();
-    
+
     NodeArray ret;
     for(auto &l: latest)
     {
@@ -65,10 +65,10 @@ private:
     return ret;
   }
 
-  NodeArray GetNodesBefore(DigestArray hashes, uint64_t const &block_number, uint64_t const &count) 
+  NodeArray GetNodesBefore(DigestArray hashes, uint64_t const &block_number, uint64_t const &count)
   {
     return dag_.GetBefore(hashes, block_number, count);
-  }  
+  }
   /// @}
 
   DAGInterface &dag_;

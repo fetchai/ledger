@@ -45,6 +45,7 @@ public:
   using CallbackFunction  = std::function< void(DAGNode) > ;
   
   static const uint64_t PARAMETER_REFERENCES_TO_BE_TIP = 2;
+  static const uint64_t LATEST_CACHE_SIZE              = 20;
 
   // Construction / Destruction
   DAG(ConstByteArray genesis_contents = "genesis");

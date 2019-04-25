@@ -488,6 +488,13 @@ bool DAG::PushInternal(DAGNode node, bool check_signature)
   nodes_[node.hash] = node;
   all_node_hashes_.push_back(node.hash);
 
+  // Updating sync cache
+  latest_.push_back(node);
+  while(latest_.size() > LATEST_CACHE_SIZE)
+  {
+    latest_.pop_front();
+  }
+
   SignalNewNode(node);
   return true;
 }
