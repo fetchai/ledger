@@ -60,7 +60,6 @@ public:
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(
-
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
   {
     return {inputs.at(0).get().shape()};
