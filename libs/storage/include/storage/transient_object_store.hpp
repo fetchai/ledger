@@ -106,8 +106,6 @@ private:
   void SetInCache(ResourceID const &rid, Object const &object);
   bool IsInCache(ResourceID const &rid);
 
-  void AddToWriteQueue(ResourceID const &rid);
-
   Phase OnPopulating();
   Phase OnWriting();
   Phase OnFlushing();
@@ -459,7 +457,7 @@ bool TransientObjectStore<O>::Confirm(ResourceID const &rid)
   }
 
   // add the element into the queue of items to be pushed to disk
-  AddToWriteQueue(rid);
+  confirm_queue_.Push(rid);
 
   return true;
 }
@@ -531,18 +529,6 @@ template <typename O>
 bool TransientObjectStore<O>::IsInCache(ResourceID const &rid)
 {
   return cache_.find(rid) != cache_.end();
-}
-
-/**
- * Internal: Signal that the item needs to be stored permanently
- *
- * @tparam O The type of the object being stored
- * @param rid the resource identifier to be put in the queue
- */
-template <typename O>
-void TransientObjectStore<O>::AddToWriteQueue(ResourceID const &rid)
-{
-  confirm_queue_.Push(rid);
 }
 
 }  // namespace storage
