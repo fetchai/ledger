@@ -53,7 +53,7 @@ public:
       std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           errorSignal) = 0;
   virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const = 0;
 
   void SetTraining(bool is_training)
   {
@@ -89,7 +89,7 @@ public:
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
   {
     return inputs.front().get().shape();
   }

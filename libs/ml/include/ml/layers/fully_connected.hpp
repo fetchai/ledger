@@ -18,14 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "ml/layers/layer.hpp"
+#include "ml/meta/ml_type_traits.hpp"
+#include "ml/ops/activation.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/subgraph.hpp"
-
-#include "ml/meta/ml_type_traits.hpp"
-
 #include <cmath>
 #include <random>
 
@@ -42,8 +41,9 @@ public:
   using SizeType     = typename ArrayType::SizeType;
   using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
 
-  FullyConnected(std::uint64_t in, std::uint64_t out, std::string const &name = "FC",
-                 WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
+  FullyConnected(SizeType in, SizeType out,
+                 details::ActivationType activation_type = details::ActivationType::NOTHING,
+                 std::string const &name = "FC", WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
     : Layer<T>(in, out)
   {
     std::string input =
@@ -59,19 +59,22 @@ public:
     std::string output = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
         name + "_Add", {weights_matmul, bias});
 
+    output = fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation",
+                                                      output);
+
     this->AddInputNode(input);
     this->SetOutputNode(output);
 
-    ArrayType weights_data(std::vector<std::uint64_t>({in, out}));
+    ArrayType weights_data(std::vector<SizeType>({in, out}));
     this->Initialise(weights_data, init_mode);
     this->SetInput(weights, weights_data, false, false);
 
-    ArrayType bias_data(std::vector<std::uint64_t>({1, out}));
+    ArrayType bias_data(std::vector<SizeType>({1, out}));
     this->SetInput(bias, bias_data, false, false);
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
   {
     (void)inputs;
     return {1, this->out_size};
