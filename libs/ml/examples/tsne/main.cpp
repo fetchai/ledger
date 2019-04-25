@@ -62,7 +62,7 @@ void ReadFile(Tensor<DataType> &matrix, std::string const &path)
     {
       DataType num;
       in >> num;
-      matrix.Set({i, j}, num);
+      matrix.Set(i, j, num);
     }
   }
 }

@@ -44,32 +44,32 @@ TYPED_TEST(ClusteringTest, knn_euclidean_test)
 
   ArrayType A = ArrayType({4, 4});
 
-  A.Set({0, 0}, DataType(1));
-  A.Set({0, 1}, DataType(2));
-  A.Set({0, 2}, DataType(3));
-  A.Set({0, 3}, DataType(4));
+  A.Set(SizeType{0}, SizeType{0}, DataType(1));
+  A.Set(SizeType{0}, SizeType{1}, DataType(2));
+  A.Set(SizeType{0}, SizeType{2}, DataType(3));
+  A.Set(SizeType{0}, SizeType{3}, DataType(4));
 
-  A.Set({1, 0}, DataType(2));
-  A.Set({1, 1}, DataType(3));
-  A.Set({1, 2}, DataType(4));
-  A.Set({1, 3}, DataType(5));
+  A.Set(SizeType{1}, SizeType{0}, DataType(2));
+  A.Set(SizeType{1}, SizeType{1}, DataType(3));
+  A.Set(SizeType{1}, SizeType{2}, DataType(4));
+  A.Set(SizeType{1}, SizeType{3}, DataType(5));
 
-  A.Set({2, 0}, DataType(-1));
-  A.Set({2, 1}, DataType(-2));
-  A.Set({2, 2}, DataType(-3));
-  A.Set({2, 3}, DataType(-4));
+  A.Set(SizeType{2}, SizeType{0}, DataType(-1));
+  A.Set(SizeType{2}, SizeType{1}, DataType(-2));
+  A.Set(SizeType{2}, SizeType{2}, DataType(-3));
+  A.Set(SizeType{2}, SizeType{3}, DataType(-4));
 
-  A.Set({3, 0}, DataType(-2));
-  A.Set({3, 1}, DataType(-3));
-  A.Set({3, 2}, DataType(-4));
-  A.Set({3, 3}, DataType(-5));
+  A.Set(SizeType{3}, SizeType{0}, DataType(-2));
+  A.Set(SizeType{3}, SizeType{1}, DataType(-3));
+  A.Set(SizeType{3}, SizeType{2}, DataType(-4));
+  A.Set(SizeType{3}, SizeType{3}, DataType(-5));
 
   ArrayType v = ArrayType({1, 4});
 
-  v.Set({0}, DataType(3));
-  v.Set({1}, DataType(4));
-  v.Set({2}, DataType(5));
-  v.Set({3}, DataType(6));
+  v.Set(SizeType{0}, SizeType{0}, DataType(3));
+  v.Set(SizeType{0}, SizeType{1}, DataType(4));
+  v.Set(SizeType{0}, SizeType{2}, DataType(5));
+  v.Set(SizeType{0}, SizeType{3}, DataType(6));
 
   std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
       fetch::math::clustering::KNN<ArrayType, fetch::math::distance::Euclidean>(A, v, 4);
@@ -92,32 +92,32 @@ TYPED_TEST(ClusteringTest, knn_cosine_test)
 
   ArrayType A = ArrayType({4, 4});
 
-  A.Set({0, 0}, DataType(1));
-  A.Set({0, 1}, DataType(2));
-  A.Set({0, 2}, DataType(3));
-  A.Set({0, 3}, DataType(4));
+  A.Set(SizeType{0}, SizeType{0}, DataType(1));
+  A.Set(SizeType{0}, SizeType{1}, DataType(2));
+  A.Set(SizeType{0}, SizeType{2}, DataType(3));
+  A.Set(SizeType{0}, SizeType{3}, DataType(4));
 
-  A.Set({1, 0}, DataType(2));
-  A.Set({1, 1}, DataType(3));
-  A.Set({1, 2}, DataType(4));
-  A.Set({1, 3}, DataType(5));
+  A.Set(SizeType{1}, SizeType{0}, DataType(2));
+  A.Set(SizeType{1}, SizeType{1}, DataType(3));
+  A.Set(SizeType{1}, SizeType{2}, DataType(4));
+  A.Set(SizeType{1}, SizeType{3}, DataType(5));
 
-  A.Set({2, 0}, DataType(-1));
-  A.Set({2, 1}, DataType(-2));
-  A.Set({2, 2}, DataType(-3));
-  A.Set({2, 3}, DataType(-4));
+  A.Set(SizeType{2}, SizeType{0}, DataType(-1));
+  A.Set(SizeType{2}, SizeType{1}, DataType(-2));
+  A.Set(SizeType{2}, SizeType{2}, DataType(-3));
+  A.Set(SizeType{2}, SizeType{3}, DataType(-4));
 
-  A.Set({3, 0}, DataType(-2));
-  A.Set({3, 1}, DataType(-3));
-  A.Set({3, 2}, DataType(-4));
-  A.Set({3, 3}, DataType(-5));
+  A.Set(SizeType{3}, SizeType{0}, DataType(-2));
+  A.Set(SizeType{3}, SizeType{1}, DataType(-3));
+  A.Set(SizeType{3}, SizeType{2}, DataType(-4));
+  A.Set(SizeType{3}, SizeType{3}, DataType(-5));
 
   ArrayType v = ArrayType({1, 4});
 
-  v.Set({0}, DataType(3));
-  v.Set({1}, DataType(4));
-  v.Set({2}, DataType(5));
-  v.Set({3}, DataType(6));
+  v.Set(SizeType{0}, SizeType{0}, DataType(3));
+  v.Set(SizeType{0}, SizeType{1}, DataType(4));
+  v.Set(SizeType{0}, SizeType{2}, DataType(5));
+  v.Set(SizeType{0}, SizeType{3}, DataType(6));
 
   std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
       fetch::math::clustering::KNNCosine(A, v, 4);

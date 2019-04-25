@@ -12,3 +12,4 @@ setup_compiler()
 
 add_fetch_gbench(benchmark_basic_math fetch-math basic_math)
 add_fetch_gbench(benchmark_tensor fetch-math tensor)
+add_fetch_gbench(benchmark_matrix_ops fetch-math matrix_ops)

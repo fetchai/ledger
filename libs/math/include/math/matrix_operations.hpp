@@ -28,6 +28,9 @@
 namespace fetch {
 namespace math {
 
+template <typename T, typename C>
+class Tensor;
+
 // TODO (private 854) - vectorisation implementations not yet called
 namespace details_vectorisation {
 
@@ -90,17 +93,17 @@ meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
                                                  ArrayType const &mask, ArrayType &ret)
 {
   ASSERT(input_array.size() == mask.size());
-  ASSERT(ret.size() == Sum(mask));
+  ASSERT(ret.size() == typename ArrayType::SizeType(Sum(mask)));
 
   auto     it1 = input_array.cbegin();
   auto     it2 = mask.cbegin();
   auto     rit = ret.begin();
   SizeType counter{0};
-  while (it1.is_valid())
+  while (rit.is_valid())
   {
     // TODO(private issue 193): implement boolean only array
     ASSERT((*it2 == 1) || (*it2 == 0));
-    if (*it2)
+    if (std::uint64_t(*it2))
     {
       *rit = *it1;
       ++counter;
@@ -115,67 +118,92 @@ meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> BooleanMask(ArrayType &input_array, ArrayType const &mask)
 {
-  ArrayType ret{Sum(mask)};
+  ArrayType ret{typename ArrayType::SizeType(Sum(mask))};
   BooleanMask(input_array, mask, ret);
   return ret;
 }
 
-/*
- * Adds sparse updates to the variable referenced
+/**
+ * Scatter updates data in the input array at locations specified by indices
+ * with values specified by updates
+ * @tparam ArrayType Tensor of some data type
+ * @tparam Indices indices which are to be updated
+ * @param input_array the input tensor to update
+ * @param updates the update values to apply
+ * @param indices vector of indices at which to apply the updates
  */
-namespace details {
 template <typename ArrayType>
-void ScatterImplementation(ArrayType &input_array, ArrayType &updates, ArrayType &indices)
+void Scatter(ArrayType &input_array, ArrayType const &updates,
+             std::vector<SizeVector> const &indices)
 {
-  // sort indices and updates into ascending order
-  std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> AB;
+  ASSERT(indices.size() == updates.size());
 
-  // copy into pairs
-  // Note that A values are put in "first" this is very important
-  for (typename ArrayType::SizeType i = 0; i < updates.size(); ++i)
+  auto     indices_it = indices.begin();
+  SizeType update_idx{0};
+  while (indices_it != indices.end())
   {
-    AB.push_back(std::make_pair(indices[i], updates[i]));
-  }
-
-  std::sort(AB.begin(), AB.end());
-
-  // Place back into arrays
-  for (size_t i = 0; i < updates.size(); ++i)
-  {
-    updates[i] = AB[i].second;
-    indices[i] = static_cast<typename ArrayType::type>(AB[i].first);
-  }
-
-  // scatter
-  typename ArrayType::SizeType arr_count = 0;
-  for (typename ArrayType::SizeType count = 0; count < indices.size(); ++count)
-  {
-    // TODO(private issue 282): Think about this code
-    while (arr_count < static_cast<typename ArrayType::SizeType>(indices[count]))
-    {
-      ++arr_count;
-    }
-
-    input_array[arr_count] = updates[count];
+    input_array[input_array.ComputeIndex(*indices_it)] = updates[update_idx];
+    ++indices_it;
+    ++update_idx;
   }
 }
-}  // namespace details
 
 /**
- * Copies the values of updates into the specified indices of the first dimension of data in this
- * object
+ * returns the product of all values in one array
+ * @tparam ArrayType
+ * @tparam T
+ * @param array1
+ * @param ret
  */
-template <typename ArrayType>
-void Scatter(ArrayType &input_array, ArrayType const &updates, ArrayType const &indices)
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsMathArray<ArrayType, void> Product(ArrayType const &array1, T &ret)
 {
-  ASSERT(updates.size() == indices.size());
-  ASSERT(input_array.size() >= Max(indices));
-
-  typename ArrayType::SizeType idx{0};
-  for (auto &update_val : updates)
+  if (array1.size() == 0)
   {
-    input_array.At(indices.At(idx)) = update_val;
+    ret = T{0};
   }
+  else
+  {
+    ret = typename ArrayType::Type(1);
+    for (auto const &val : array1)
+    {
+      ret *= val;
+    }
+  }
+}
+
+template <typename T, typename C, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsMathArray<Tensor<T, C>, T> Product(Tensor<T, C> const &array1)
+{
+  T ret;
+  Product(array1, ret);
+  return ret;
+}
+
+/**
+ * return the product of all elements in the vector
+ * @tparam T
+ * @param obj1
+ * @param ret
+ */
+template <typename T>
+void Product(std::vector<T> const &obj1, T &ret)
+{
+  if (obj1.size() == 0)
+  {
+    ret = 0;
+  }
+  else
+  {
+    ret = std::accumulate(std::begin(obj1), std::end(obj1), T(1), std::multiplies<>());
+  }
+}
+template <typename T>
+T Product(std::vector<T> const &obj1)
+{
+  T ret;
+  Product(obj1, ret);
+  return ret;
 }
 
 /**
@@ -189,7 +217,7 @@ void Scatter(ArrayType &input_array, ArrayType const &updates, ArrayType const &
 template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
 meta::IfIsMathArray<ArrayType, void> Max(ArrayType const &array, T &ret)
 {
-  ret = std::numeric_limits<T>::lowest();
+  ret = NumericLowest<T>();
   for (T const &e : array)
   {
     if (e > ret)
@@ -217,7 +245,6 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Max(ArrayType const &ar
 template <typename ArrayType>
 void Max(ArrayType const &array, typename ArrayType::SizeType const &axis, ArrayType &ret)
 {
-  ASSERT(array.shape().size() <= 2);
   ASSERT(axis < array.shape().size());
 
   if (array.shape().size() == 1)
@@ -277,15 +304,16 @@ T Max(std::vector<T> const &obj1)
 template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
 meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, T &ret)
 {
-  ret = std::numeric_limits<T>::max();
+  ret = NumericMax<T>();
   for (T const &e : array)
   {
-    if (ret < e)
+    if (e < ret)
     {
       ret = e;
     }
   }
 }
+
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Min(ArrayType const &array)
 {
@@ -344,7 +372,7 @@ void Min(ArrayType const &array, typename ArrayType::SizeType const &axis, Array
 }
 
 /**
- * Returns an array containing the elementwise maximum of two other ndarrays
+ * Returns an array containing the elementwise maximum of two other arrays
  * @param x array input 1
  * @param y array input 2
  * @return the combined array
@@ -367,57 +395,12 @@ meta::IfIsMathArray<ArrayType, void> Maximum(ArrayType const &array1, ArrayType 
     ++it2;
     ++rit;
   }
-  return ret;
 }
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Maximum(ArrayType const &array1, ArrayType const &array2)
 {
   ArrayType ret(array1.shape());
   Maximum(array1, array2, ret);
-  return ret;
-}
-
-/**
- * returns the product of all values in one array
- * @tparam ArrayType
- * @tparam T
- * @param array1
- * @param ret
- */
-template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, void> Product(ArrayType const &array1, T &ret)
-{
-  ret = typename ArrayType::Type(1);
-  for (auto &val : array1)
-  {
-    ret *= val;
-  }
-}
-
-template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, T> Product(ArrayType const &array1)
-{
-  T ret;
-  Product(array1, ret);
-  return ret;
-}
-
-/**
- * return the product of all elements in the vector
- * @tparam T
- * @param obj1
- * @param ret
- */
-template <typename T>
-void Product(std::vector<T> const &obj1, T &ret)
-{
-  ret = std::accumulate(std::begin(obj1), std::end(obj1), std::size_t(1), std::multiplies<>());
-}
-template <typename T>
-T Product(std::vector<T> const &obj1)
-{
-  T ret;
-  Product(obj1, ret);
   return ret;
 }
 
@@ -546,7 +529,7 @@ meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &r
     ASSERT(ret.size() == SizeType(1));
     SizeType position = 0;
     auto     it       = array.begin();
-    Type     value    = std::numeric_limits<Type>::lowest();
+    Type     value    = NumericLowest<Type>();
     while (it.is_valid())
     {
       if (*it > value)

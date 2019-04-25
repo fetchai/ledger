@@ -28,10 +28,10 @@ ArrayType GenerateXorData()
 {
   ArrayType data{{4, 2}};
   data.Fill(typename ArrayType::Type(0));
-  data.Set({1, 1}, typename ArrayType::Type(1));
-  data.Set({2, 0}, typename ArrayType::Type(1));
-  data.Set({3, 0}, typename ArrayType::Type(1));
-  data.Set({3, 1}, typename ArrayType::Type(1));
+  data.Set(1, 1, typename ArrayType::Type(1));
+  data.Set(2, 0, typename ArrayType::Type(1));
+  data.Set(3, 0, typename ArrayType::Type(1));
+  data.Set(3, 1, typename ArrayType::Type(1));
 
   return data;
 }
@@ -50,10 +50,10 @@ ArrayType GenerateXorGt(typename ArrayType::SizeType dims)
   }
   else
   {
-    gt.Set({0, 0}, typename ArrayType::Type(1));
-    gt.Set({1, 1}, typename ArrayType::Type(1));
-    gt.Set({2, 1}, typename ArrayType::Type(1));
-    gt.Set({3, 0}, typename ArrayType::Type(1));
+    gt.Set(0, 0, typename ArrayType::Type(1));
+    gt.Set(1, 1, typename ArrayType::Type(1));
+    gt.Set(2, 1, typename ArrayType::Type(1));
+    gt.Set(3, 0, typename ArrayType::Type(1));
   }
 
   return gt;
@@ -87,16 +87,16 @@ void PlusOneTest()
   ////////////////////////////////////////
 
   TypeParam data{{4, 1}};
-  data.Set({0, 0}, DataType(1));
-  data.Set({1, 0}, DataType(2));
-  data.Set({2, 0}, DataType(3));
-  data.Set({3, 0}, DataType(4));
+  data.Set(0, 0, DataType(1));
+  data.Set(1, 0, DataType(2));
+  data.Set(2, 0, DataType(3));
+  data.Set(3, 0, DataType(4));
 
   TypeParam gt{{4, 1}};
-  gt.Set(0, DataType(2));
-  gt.Set(1, DataType(3));
-  gt.Set(2, DataType(4));
-  gt.Set(3, DataType(5));
+  gt.Set(0, 0, DataType(2));
+  gt.Set(1, 0, DataType(3));
+  gt.Set(2, 0, DataType(4));
+  gt.Set(3, 0, DataType(5));
 
   /////////////////////////
   /// ONE TRAINING STEP ///
@@ -184,17 +184,17 @@ void CategoricalPlusOneTest(bool add_softmax = false)
 
   TypeParam data{{n_data, SizeType(n_classes.At(0))}};
   data.Fill(DataType(0));
-  data.Set({0, 0}, DataType(1));
-  data.Set({1, 1}, DataType(1));
-  data.Set({2, 2}, DataType(1));
-  data.Set({3, 3}, DataType(1));
+  data.Set(0, 0, DataType(1));
+  data.Set(1, 1, DataType(1));
+  data.Set(2, 2, DataType(1));
+  data.Set(3, 3, DataType(1));
 
   TypeParam gt{{n_data, SizeType(n_classes.At(0))}};
   gt.Fill(DataType(0));
-  gt.Set({0, 1}, DataType(1));
-  gt.Set({1, 2}, DataType(1));
-  gt.Set({2, 3}, DataType(1));
-  gt.Set({3, 0}, DataType(1));
+  gt.Set(0, 1, DataType(1));
+  gt.Set(1, 2, DataType(1));
+  gt.Set(2, 3, DataType(1));
+  gt.Set(3, 0, DataType(1));
 
   /////////////////////////
   /// ONE TRAINING STEP ///
