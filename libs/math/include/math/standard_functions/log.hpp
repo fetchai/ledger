@@ -33,7 +33,7 @@ namespace math {
 ///////////////////////
 
 template <typename Type>
-meta::IfIsNonFixedPointArithmetic<Type, void> Log(Type const &x, Type &ret)
+fetch::meta::IfIsFloat<Type, void> Log(Type const &x, Type &ret)
 {
   ret = Type(std::log(double(x)));
 }
@@ -41,13 +41,13 @@ meta::IfIsNonFixedPointArithmetic<Type, void> Log(Type const &x, Type &ret)
 // TODO(800) - native implementations of fixed point are required; casting to double will not be
 // permissible
 template <typename T>
-meta::IfIsFixedPoint<T, void> Log(T const &n, T &ret)
+meta::IfIsIntegerOrFixedPoint<T, void> Log(T const &n, T &ret)
 {
   ret = T(std::log(double(n)));
 }
 
 template <typename Type>
-meta::IfIsNonFixedPointArithmetic<Type, void> Log2(Type const &x, Type &ret)
+fetch::meta::IfIsFloat<Type, void> Log2(Type const &x, Type &ret)
 {
   ret = std::log2(x);
 }
@@ -55,7 +55,7 @@ meta::IfIsNonFixedPointArithmetic<Type, void> Log2(Type const &x, Type &ret)
 // TODO(800) - native implementations of fixed point are required; casting to double will not be
 // permissible
 template <typename T>
-meta::IfIsFixedPoint<T, void> Log2(T const &n, T &ret)
+meta::IfIsIntegerOrFixedPoint<T, void> Log2(T const &n, T &ret)
 {
   ret = T(std::log2(double(n)));
 }

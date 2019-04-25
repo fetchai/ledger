@@ -22,16 +22,16 @@
 #include <gtest/gtest.h>
 
 template <typename T>
-class MaxPool2dTest : public ::testing::Test
+class MaxPool2DTest : public ::testing::Test
 {
 };
 
 using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 
-TYPED_TEST_CASE(MaxPool2dTest, MyTypes);
+TYPED_TEST_CASE(MaxPool2DTest, MyTypes);
 
-TYPED_TEST(MaxPool2dTest, forward_test_3_2)
+TYPED_TEST(MaxPool2DTest, forward_test_3_2)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
@@ -64,7 +64,7 @@ TYPED_TEST(MaxPool2dTest, forward_test_3_2)
     }
   }
 
-  fetch::ml::ops::MaxPool2d<ArrayType> op(3, 2);
+  fetch::ml::ops::MaxPool2D<ArrayType> op(3, 2);
   ArrayType                            prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({data}));
 
@@ -73,7 +73,7 @@ TYPED_TEST(MaxPool2dTest, forward_test_3_2)
       prediction.AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }
 
-TYPED_TEST(MaxPool2dTest, backward_test)
+TYPED_TEST(MaxPool2DTest, backward_test)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
@@ -101,7 +101,7 @@ TYPED_TEST(MaxPool2dTest, backward_test)
   gt.Set(0, 2, 4, DataType(2));
   gt.Set(0, 4, 4, DataType(2));
 
-  fetch::ml::ops::MaxPool2d<ArrayType> op(3, 2);
+  fetch::ml::ops::MaxPool2D<ArrayType> op(3, 2);
   std::vector<ArrayType>               prediction = op.Backward({data}, error);
 
   // test correct values

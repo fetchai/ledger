@@ -22,16 +22,16 @@
 #include <gtest/gtest.h>
 
 template <typename T>
-class MaxPool1dTest : public ::testing::Test
+class MaxPool1DTest : public ::testing::Test
 {
 };
 
 using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 
-TYPED_TEST_CASE(MaxPool1dTest, MyTypes);
+TYPED_TEST_CASE(MaxPool1DTest, MyTypes);
 
-TYPED_TEST(MaxPool1dTest, forward_test_3_2)
+TYPED_TEST(MaxPool1DTest, forward_test_3_2)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
@@ -50,7 +50,7 @@ TYPED_TEST(MaxPool1dTest, forward_test_3_2)
     gt.Set(0, i, DataType(gtInput[i]));
   }
 
-  fetch::ml::ops::MaxPool1d<ArrayType> op(3, 2);
+  fetch::ml::ops::MaxPool1D<ArrayType> op(3, 2);
   ArrayType                            prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({data}));
 
@@ -59,7 +59,7 @@ TYPED_TEST(MaxPool1dTest, forward_test_3_2)
       prediction.AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }
 
-TYPED_TEST(MaxPool1dTest, backward_test)
+TYPED_TEST(MaxPool1DTest, backward_test)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
@@ -76,14 +76,14 @@ TYPED_TEST(MaxPool1dTest, backward_test)
     error.Set(0, i, DataType(errorInput[i]));
     gt.Set(0, i, DataType(gtInput[i]));
   }
-  fetch::ml::ops::MaxPool1d<ArrayType> op(3, 2);
+  fetch::ml::ops::MaxPool1D<ArrayType> op(3, 2);
   std::vector<ArrayType>               prediction = op.Backward({data}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType(1e-5), DataType(1e-5)));
 }
 
-TYPED_TEST(MaxPool1dTest, forward_test_4_2)
+TYPED_TEST(MaxPool1DTest, forward_test_4_2)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
@@ -102,7 +102,7 @@ TYPED_TEST(MaxPool1dTest, forward_test_4_2)
     gt.Set(0, i, DataType(gtInput[i]));
   }
 
-  fetch::ml::ops::MaxPool1d<ArrayType> op(4, 2);
+  fetch::ml::ops::MaxPool1D<ArrayType> op(4, 2);
   ArrayType                            prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({data}));
 
@@ -111,7 +111,7 @@ TYPED_TEST(MaxPool1dTest, forward_test_4_2)
       prediction.AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }
 
-TYPED_TEST(MaxPool1dTest, forward_test_2_4)
+TYPED_TEST(MaxPool1DTest, forward_test_2_4)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
@@ -130,7 +130,7 @@ TYPED_TEST(MaxPool1dTest, forward_test_2_4)
     gt.Set(0, i, DataType(gtInput[i]));
   }
 
-  fetch::ml::ops::MaxPool1d<ArrayType> op(2, 4);
+  fetch::ml::ops::MaxPool1D<ArrayType> op(2, 4);
   ArrayType                            prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({data}));
 

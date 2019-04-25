@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/service_ids.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/lane_controller.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
@@ -64,7 +65,6 @@ public:
   using FutureTimepoint       = network::FutureTimepoint;
   using RequestingObjectCount = network::RequestingQueueOf<Address, uint64_t>;
   using PromiseOfObjectCount  = network::PromiseOf<uint64_t>;
-  using TxList                = std::vector<UnverifiedTransaction>;
   using RequestingTxList      = network::RequestingQueueOf<Address, TxList>;
   using RequestingSubTreeList = network::RequestingQueueOf<uint64_t, TxList>;
   using PromiseOfTxList       = network::PromiseOf<TxList>;

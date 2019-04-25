@@ -24,7 +24,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class MaxPool1d : public BatchOps<T>
+class MaxPool1D : public BatchOps<T>
 {
 public:
   using ArrayType    = T;
@@ -32,15 +32,15 @@ public:
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  MaxPool1d(SizeType kernel_size, SizeType stride_size)
+  MaxPool1D(SizeType kernel_size, SizeType stride_size)
     : kernel_size_(kernel_size)
     , stride_size_(stride_size)
   {}
 
-  virtual ~MaxPool1d() = default;
+  ~MaxPool1D() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                    ArrayType &                                                 output)
   {
     ASSERT(inputs.size() == 1);
     // Input should be a 2D tensor [C x W]
@@ -72,7 +72,7 @@ public:
   }
 
   // Gradient of max pool is passed only to max node
-  virtual std::vector<ArrayType> Backward(
+  std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
@@ -113,8 +113,8 @@ public:
     return {returnSignal};
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
   {
     std::vector<typename ArrayType::SizeType> outputShape;
     outputShape.push_back(inputs.at(0).get().shape().at(0));
@@ -123,7 +123,7 @@ public:
     return outputShape;
   }
 
-  static constexpr char const *DESCRIPTOR = "MaxPool1d";
+  static constexpr char const *DESCRIPTOR = "MaxPool1D";
 
 private:
   SizeType kernel_size_;
