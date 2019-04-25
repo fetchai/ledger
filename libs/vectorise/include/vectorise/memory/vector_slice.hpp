@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/type_util.hpp"
 #include "vectorise/memory/iterator.hpp"
 #include "vectorise/memory/parallel_dispatcher.hpp"
 #include "vectorise/meta/log2.hpp"
@@ -24,9 +25,28 @@
 
 #include <algorithm>
 #include <cstring>
+#include <type_traits>
 
 namespace fetch {
 namespace memory {
+
+// std::is_pod is deprecated in C++20
+template <typename T>
+using IsPod = type_util::Conjunction<std::is_trivial<T>, std::is_standard_layout<T>>;
+template <typename T>
+static constexpr auto IsPodV = IsPod<T>::value;
+
+template <typename T>
+std::enable_if_t<IsPodV<T>> ZeroMem(T *address, std::size_t amount)
+{
+  std::memset(address, 0, amount * sizeof(T));
+}
+
+template <typename T>
+std::enable_if_t<!IsPodV<T>> ZeroMem(T *address, std::size_t amount)
+{
+  std::fill(address, address + amount, T());
+}
 
 template <typename T, std::size_t type_size = sizeof(T)>
 class VectorSlice
@@ -96,7 +116,7 @@ public:
     assert(pointer_ != nullptr);
     if (pointer_)
     {
-      std::fill(pointer_, pointer_ + padded_size(), T());
+      ZeroMem(pointer_, pointer_ + padded_size());
     }
   }
 
@@ -105,7 +125,7 @@ public:
     assert(pointer_ != nullptr);
     if (pointer_)
     {
-      std::fill(pointer_ + size(), pointer_ + padded_size(), T());
+      ZeroMem(pointer_ + size(), padded_size() - size());
     }
   }
 
@@ -113,7 +133,7 @@ public:
   {
     if (pointer_)
     {
-      std::fill(pointer_ + n, pointer_ + padded_size(), T());
+      ZeroMem(pointer_ + n, padded_size() - n);
     }
   }
 
