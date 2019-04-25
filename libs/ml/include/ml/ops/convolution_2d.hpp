@@ -66,7 +66,7 @@ public:
     SizeType i_s;  // stride width iterator
     SizeType j_s;  // stride height iterator
 
-    j_s=0;
+    j_s = 0;
     for (SizeType i_o{0}; i_o < output_height; ++i_o)  // Iterate over output height
     {
       for (SizeType j_o{0}; j_o < output_width; ++j_o)  // Iterate over output width
@@ -113,7 +113,7 @@ public:
 
     // Put values to output
     SizeType i_tmp = 0;
-      for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)  // Iterate over output channels
+    for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)  // Iterate over output channels
     {
       i_tmp = 0;
       for (SizeType i_o{0}; i_o < output_height; ++i_o)  // Iterate over output height
