@@ -254,8 +254,8 @@ typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnWriting()
     }
     else
     {
-      // If this is the case then for some reason the RID that was added to the queue has been
-      // removed from the cache.
+      // If this is the case then for some reason the RID that was added
+      // to the queue has been removed from the cache.
       assert(false);
     }
   }
@@ -263,12 +263,12 @@ typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnWriting()
   return Phase::Writing;
 }
 
+// Flushing: In this phase we are removing the elements from the cache. This is important to
+// ensure a bound on the memory resources. This must happen after the writing to disk,
+// otherwise the object store will be inconsistent
 template <typename O>
 typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnFlushing()
 {
-  // Flushing: In this phase we are removing the elements from the cache. This is important to
-  // ensure a bound on the memory resources. This must happen after the writing to disk,
-  // otherwise the object store will be inconsistent
   FETCH_LOCK(cache_mutex_);
 
   assert(extracted_count <= batch_size_);
