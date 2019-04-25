@@ -149,7 +149,7 @@ void Scatter(ArrayType &input_array, ArrayType const &updates,
 }
 
 /**
- * returns the product of all values in one array - calls SIMD implementation
+ * returns the product of all values in one array
  * @tparam ArrayType
  * @tparam T
  * @param array1
@@ -158,10 +158,17 @@ void Scatter(ArrayType &input_array, ArrayType const &updates,
 template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
 meta::IfIsMathArray<ArrayType, void> Product(ArrayType const &array1, T &ret)
 {
-  ret = typename ArrayType::Type(1);
-  for (auto const &val : array1)
+  if (array1.size() == 0)
   {
-    ret *= val;
+    ret = T{0};
+  }
+  else
+  {
+    ret = typename ArrayType::Type(1);
+    for (auto const &val : array1)
+    {
+      ret *= val;
+    }
   }
 }
 
@@ -182,7 +189,14 @@ meta::IfIsMathArray<Tensor<T, C>, T> Product(Tensor<T, C> const &array1)
 template <typename T>
 void Product(std::vector<T> const &obj1, T &ret)
 {
-  ret = std::accumulate(std::begin(obj1), std::end(obj1), T(1), std::multiplies<>());
+  if (obj1.size() == 0)
+  {
+    ret = 0;
+  }
+  else
+  {
+    ret = std::accumulate(std::begin(obj1), std::end(obj1), T(1), std::multiplies<>());
+  }
 }
 template <typename T>
 T Product(std::vector<T> const &obj1)

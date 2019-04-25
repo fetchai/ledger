@@ -173,7 +173,7 @@ public:
   SelfType &      FillUniformRandomIntegers(int64_t const &min, int64_t const &max);
   static SelfType Zeroes(SizeVector const &shape);
   static SelfType Ones(SizeVector const &shape);
-  SizeType        ComputeIndex(SizeVector const &indices);
+  SizeType        ComputeIndex(SizeVector const &indices) const;
 
   ////////////////////
   /// SHAPE & SIZE ///
@@ -1259,7 +1259,7 @@ Tensor<T, C> Tensor<T, C>::Ones(SizeVector const &shape)
  * @return index in the underlying data structure
  */
 template <typename T, typename C>
-SizeType Tensor<T, C>::ComputeIndex(SizeVector const &indices)
+SizeType Tensor<T, C>::ComputeIndex(SizeVector const &indices) const
 {
   ASSERT(indices.size() == shape_.size());
 

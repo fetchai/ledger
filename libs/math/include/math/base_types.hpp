@@ -21,7 +21,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "core/vector.hpp"
 #include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
