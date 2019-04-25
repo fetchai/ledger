@@ -33,7 +33,6 @@
 #include "constellation.hpp"
 #include "fetch_version.hpp"
 
-#include <array>
 #include <csignal>
 #include <fstream>
 #include <iomanip>
