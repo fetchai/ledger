@@ -123,25 +123,6 @@ meta::IfIsMathArray<ArrayType, ArrayType> BooleanMask(ArrayType &input_array, Ar
   return ret;
 }
 
-template <typename...>
-struct Tuple
-{
-};
-template <typename T1, typename T2>
-struct Pair
-{
-};
-
-template <class... Args1>
-struct UpdatesIndices
-{
-  template <class... Args2>
-  struct with
-  {
-    using type = Tuple<Pair<Args1, Args2>...>;
-  };
-};
-
 /**
  * Scatter updates data in the input array at locations specified by indices
  * with values specified by updates
@@ -151,7 +132,7 @@ struct UpdatesIndices
  * @param updates the update values to apply
  * @param indices vector of indices at which to apply the updates
  */
-template <typename ArrayType, typename... Indices>
+template <typename ArrayType>
 void Scatter(ArrayType &input_array, ArrayType const &updates,
              std::vector<SizeVector> const &indices)
 {
