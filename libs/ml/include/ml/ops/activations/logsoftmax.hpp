@@ -31,9 +31,9 @@ template <class T>
 class LogSoftmax : public fetch::ml::BatchOps<T>
 {
 public:
-  using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
-  using SizeType     = typename ArrayType::SizeType;
+  using ArrayType = T;
+  using DataType  = typename ArrayType::Type;
+  using SizeType  = typename ArrayType::SizeType;
 
   LogSoftmax()  = default;
   ~LogSoftmax() = default;
