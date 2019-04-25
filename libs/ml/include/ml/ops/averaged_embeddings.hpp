@@ -57,19 +57,24 @@ public:
     {
       this->embeddings_output_ = std::make_shared<ArrayType>(shape);
     }
-    uint64_t j(0);
+    uint64_t valid_samples(0);
     this->embeddings_output_->Fill(0);
     for (DataType const &i : inputs.front().get())
     {
       if (i >= 0)
       {
-        // this->embeddings_output_->InlineAdd(
-        // 				      this->output_->Slice(typename
-        // ArrayType::SizeType(double(i))));
-        j++;
+        auto it1 = this->embeddings_output_->begin();
+        auto it2 = this->output_->Slice(typename ArrayType::SizeType(i)).begin();
+        while (it1.is_valid())
+        {
+          *it1 += *it2;
+          ++it1;
+          ++it2;
+        }
+        valid_samples++;
       }
     }
-    this->embeddings_output_->InlineDivide(DataType(j));
+    this->embeddings_output_->InlineDivide(DataType(valid_samples));
     return *this->embeddings_output_;
   }
 
@@ -85,8 +90,15 @@ public:
       if (i >= 0)
       {
         updated_rows_.insert(typename ArrayType::SizeType(double(i)));
-        // this->gradientAccumulation_->Slice(typename ArrayType::SizeType(double(i)))
-        //   .InlineAdd(errorSignal);
+
+        auto it1 = this->gradient_accumulation_->Slice(typename ArrayType::SizeType(i)).begin();
+        auto it2 = errorSignal.begin();
+        while (it1.is_valid())
+        {
+          *it1 += *it2;
+          ++it1;
+          ++it2;
+        }
       }
     }
     return {ArrayType(errorSignal.shape())};
