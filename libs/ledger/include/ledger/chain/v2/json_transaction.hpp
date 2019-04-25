@@ -17,31 +17,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/identity.hpp"
-
-#include <memory>
-
 namespace fetch {
-namespace crypto {
+namespace variant {
+class Variant;
+}
+namespace ledger {
+namespace v2 {
 
-bool Verify(byte_array::ConstByteArray identity, byte_array::ConstByteArray const &data,
-            byte_array::ConstByteArray const &signature);
+class Transaction;
 
-class Verifier
-{
-public:
-  using ConstByteArray = byte_array::ConstByteArray;
+bool FromJsonTransaction(variant::Variant const &src, Transaction &dst);
+bool ToJsonTransaction(Transaction const &src, variant::Variant &dst,
+                       bool include_metadata = false);
 
-  static std::unique_ptr<Verifier> Build(Identity const &identity);
-  static bool                      Verify(Identity const &identity, ConstByteArray const &data,
-                                          ConstByteArray const &signature);
-
-  Verifier()          = default;
-  virtual ~Verifier() = default;
-
-  virtual Identity identity()                                                          = 0;
-  virtual bool     Verify(ConstByteArray const &data, ConstByteArray const &signature) = 0;
-};
-
-}  // namespace crypto
+}  // namespace v2
+}  // namespace ledger
 }  // namespace fetch
