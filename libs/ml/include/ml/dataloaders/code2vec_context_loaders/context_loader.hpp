@@ -47,10 +47,22 @@ public:
   void        AddData(std::string const &text);
   static void addValueToUnorderedMap(std::unordered_map<std::string, int> &umap, std::string word);
   static std::vector<std::string> splitStringByChar(std::stringstream input, const char *sep);
+  static void createIdxUMapsFromCounter(std::unordered_map<std::string, int> &counter,
+                                        std::unordered_map<std::string, int> &name_to_idx,
+                                        std::unordered_map<int, std::string> &idx_to_name);
+  void        createIdxUMaps();
 
   std::unordered_map<std::string, int> function_name_counter;
   std::unordered_map<std::string, int> path_counter;
   std::unordered_map<std::string, int> word_counter;
+
+  std::unordered_map<std::string, int> function_name_to_idx;
+  std::unordered_map<std::string, int> path_to_idx;
+  std::unordered_map<std::string, int> word_to_idx;
+
+  std::unordered_map<int, std::string> idx_to_function_name;
+  std::unordered_map<int, std::string> idx_to_path;
+  std::unordered_map<int, std::string> idx_to_word;
 
 private:
 };
@@ -109,6 +121,28 @@ std::vector<std::string> ContextLoader<T>::splitStringByChar(std::stringstream i
     splitted_string.push_back(segment);
   }
   return splitted_string;
+}
+
+template <typename T>
+void ContextLoader<T>::createIdxUMapsFromCounter(std::unordered_map<std::string, int> &counter,
+                                                 std::unordered_map<std::string, int> &name_to_idx,
+                                                 std::unordered_map<int, std::string> &idx_to_name)
+{
+  int idx = 0;
+  for (auto kv : counter)
+  {
+    name_to_idx[kv.first] = idx;
+    idx_to_name[idx]      = kv.first;
+    idx++;
+  }
+}
+
+template <typename T>
+void ContextLoader<T>::createIdxUMaps()
+{
+  createIdxUMapsFromCounter(function_name_counter, function_name_to_idx, idx_to_function_name);
+  createIdxUMapsFromCounter(path_counter, path_to_idx, idx_to_path);
+  createIdxUMapsFromCounter(word_counter, word_to_idx, idx_to_word);
 }
 
 }  // namespace dataloaders
