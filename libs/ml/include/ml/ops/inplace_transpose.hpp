@@ -52,7 +52,7 @@ public:
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
   {
     std::vector<typename ArrayType::SizeType> outputShape = inputs.front().get().shape();
     std::swap(outputShape[0], outputShape[1]);
