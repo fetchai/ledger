@@ -116,7 +116,7 @@ public:
     assert(pointer_ != nullptr);
     if (pointer_)
     {
-      ZeroMem(pointer_, pointer_ + padded_size());
+      ZeroMem(pointer_, padded_size());
     }
   }
 
