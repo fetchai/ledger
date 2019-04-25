@@ -20,7 +20,6 @@ import glob
 import shutil
 
 from fetch.cluster.instance import ConstellationInstance
-#from fetch.cluster.monitor import ConstellationMonitor
 
 from fetchai.ledger.api import TokenApi, TransactionApi
 from fetchai.ledger.crypto import Identity
@@ -32,12 +31,15 @@ def output(*args):
         sys.stdout.write('\n')
         sys.stdout.flush()
 
-class StepsInfo():
-    pass
 
 class TimerWatchdog():
-
-    def __init__(self, time, name, task = "unspecified", callback = None):
+    """
+    TimerWatchdog allows the user to specify a callback that will
+    be executed after a set amount of time, unless the watchdog
+    is stopped. This lets you dictate the length of tests
+    docstring.
+    """
+    def __init__(self, time, name, task = "unspecified", callback):
 
         self._time     = time
         self._name     = name
@@ -62,10 +64,12 @@ class TimerWatchdog():
         self._stopped = True
 
     def trigger(self):
-        if self._callback:
-            self._callback()
+        self._callback()
 
 class TestInstance():
+    """
+    Sets up an instance of a test, containing references to started nodes and other relevant data
+    """
 
     _number_of_nodes  = 0
     _node_connections = None
@@ -171,6 +175,9 @@ class TestInstance():
             self._watchdog.stop()
 
 def extract(test, key, expected = True, expect_type = None, default = None):
+    """
+    Convenience function to remove an item from a YAML string, specifying the type you expect to find
+    """
     try:
         result = test[key]
 
@@ -201,18 +208,19 @@ def setup_test(test_yaml, test_instance):
     test_instance._nodes_are_mining = mining_nodes
     test_instance._max_test_time    = max_test_time
 
+    # Watchdog will trigger this if the tests exceeds allowed bounds. Note stopping the test cleanly is
+    # necessary to preserve output logs etc.
     def clean_shutdown():
         output("Shutting down test due to failure!. YAML: {}".format(test_instance))
         test_instance.stop()
         os._exit(1) # REALLY ensure the program quits.
 
-    # Running/setting up the test could take too long - auto-kill if this happens (needs to cleanup constellation threads)
     watchdog = TimerWatchdog(time = max_test_time, name = test_name, task = "End test and cleanup", callback = clean_shutdown)
     watchdog.start()
 
     test_instance._watchdog = watchdog
 
-    # This shouldn't take a long time since nodes are async
+    # This shouldn't take a long time since nodes are started asynchronously
     test_instance.run()
 
 def send_txs(parameters, test_instance):
@@ -309,7 +317,7 @@ def verify_txs(parameters, test_instance):
         output("Verified balances for node: {}".format(node_index))
 
 def run_steps(test_yaml, test_instance):
-    output("Running test: {}".format(test_yaml))
+    output("Running step: {}".format(test_yaml))
 
     for step in test_yaml:
         command    = list(step.keys())[0]
@@ -324,7 +332,7 @@ def run_steps(test_yaml, test_instance):
             sys.exit(1)
 
 def verify_expectation(test_yaml, test_instance):
-    output("Running test: {}".format(test_yaml))
+    output("Verifying test expectation: {}".format(test_yaml))
 
     for step in test_yaml:
         command    = list(step.keys())[0]
@@ -389,52 +397,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
-#if args.interconnect == 'chain':
-
-#    # inter connect the nodes (single chain)
-#    for n in range(len(nodes)):
-#        for m in range(args.chain_length):
-#            o = n - (m + 1)
-#            if o >= 0:
-#                nodes[n].add_peer(nodes[o])
-
-
-#        elif args.interconnect == 'chaos':
-#            all_nodes = set(list(range(len(nodes))))
-#
-#            connections_pairs = set()
-#
-#            for n in all_nodes:
-#                possible_nodes = list()
-#                for m in all_nodes - {n}:
-#                    if (n, m) in connections_pairs or (m, n) in connections_pairs:
-#                        continue
-#                    possible_nodes.append(m)
-#
-#                if len(possible_nodes) == 0:
-#                    raise RuntimeError('Chaos size too large to support this network, please choose a lower number')
-#                elif len(possible_nodes) > args.chaos_size:
-#                    random.shuffle(possible_nodes)
-#                    possible_nodes = possible_nodes[:args.chaos_size]
-#
-#                for m in possible_nodes:
-#                    connections_pairs.add((n, m))
-#
-#            # build a debug map and print it
-#            connection_map = {}
-#            for n, m in connections_pairs:
-#                connections = connection_map.get(n, set())
-#                connections.add(m)
-#                connection_map[n] = connections
-#            for n, ms in connection_map.items():
-#                print('- {} -> {}'.format(n, ','.join(map(str, ms))))
-#
-#            # make the connections
-#            for n, m in connections_pairs:
-#                nodes[n].add_peer(nodes[m])
-#
-#        else:
-#            assert False
