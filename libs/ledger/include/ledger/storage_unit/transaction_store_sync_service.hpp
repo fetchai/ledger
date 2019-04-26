@@ -18,11 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "core/service_ids.hpp"
+#include "core/state_machine.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/lane_controller.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
-#include "network/generics/atomic_state_machine.hpp"
 #include "network/generics/future_timepoint.hpp"
 #include "network/generics/promise_of.hpp"
 #include "network/generics/requesting_queue.hpp"
@@ -51,8 +51,7 @@ enum class State
 };
 }
 
-class TransactionStoreSyncService : public network::AtomicStateMachine<tx_sync::State>,
-                                    public VerifiedTransactionSink
+class TransactionStoreSyncService : public VerifiedTransactionSink
 {
 public:
   using Muddle                = muddle::Muddle;
@@ -110,13 +109,19 @@ public:
     trim_cache_callback_ = callback;
   }
 
-  virtual bool PossibleNewState(State &current_state) override;
-
   // We need this for the testing.
   bool IsReady()
   {
     FETCH_LOCK(is_ready_mutex_);
     return is_ready_;
+  }
+
+  void Execute()
+  {
+    if (state_machine_->IsReadyToExecute())
+    {
+      state_machine_->Execute();
+    }
   }
 
 protected:
@@ -140,11 +145,21 @@ protected:
   }
 
 private:
-  Config const        cfg_;
-  MuddlePtr           muddle_;
-  ClientPtr           client_;
-  ObjectStorePtr      store_;  ///< The pointer to the object store
-  TransactionVerifier verifier_;
+  State OnInitial();
+  State OnQueryObjectCounts();
+  State OnResolvingObjectCounts();
+  State OnQuerySubtree();
+  State OnResolvingSubtree();
+  State OnQueryObjects();
+  State OnResolvingObjects();
+  State OnTrimCache();
+
+  std::shared_ptr<core::StateMachine<State>> state_machine_;
+  Config const                               cfg_;
+  MuddlePtr                                  muddle_;
+  ClientPtr                                  client_;
+  ObjectStorePtr                             store_;  ///< The pointer to the object store
+  TransactionVerifier                        verifier_;
 
   FutureTimepoint timeout_;
   FutureTimepoint promise_wait_timeout_;
