@@ -67,7 +67,12 @@ public:
     Parse(document);
   }
 
-  JSONDocument()                     = default;
+  JSONDocument()
+  {
+    // The default of a JSONDocument is to be an empty object
+    variant_ =  Variant::Object();
+  }
+  
   JSONDocument(JSONDocument const &) = delete;
   JSONDocument(JSONDocument &&)      = default;
   ~JSONDocument()                    = default;
@@ -107,6 +112,10 @@ public:
   JSONDocument &operator=(JSONDocument const &) = delete;
   JSONDocument &operator=(JSONDocument &&) = default;
 
+  bool Has(byte_array::ConstByteArray const &key)
+  {
+    return variant_.Has(key);
+  }
 private:
   struct JSONObject
   {

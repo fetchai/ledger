@@ -122,7 +122,7 @@ int main(int argc, char **argv)
   fetch::vm::Variant output;
 
   // Setting VM up and running
-  if (!vm->Execute(script, "main", error, console, output))
+  if (!vm->Execute(script, "main", error, output))
   {
     std::cout << "Runtime error: " << error << std::endl;
   }

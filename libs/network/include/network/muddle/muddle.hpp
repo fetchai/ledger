@@ -205,6 +205,10 @@ public:
     clients_.Debug(prefix);
   }
 
+  NetworkId            network_id()
+  {
+    return network_id_;
+  }
 private:
   using Server     = std::shared_ptr<network::AbstractNetworkServer>;
   using ServerList = std::vector<Server>;
@@ -233,6 +237,7 @@ private:
   ServerList           servers_;  ///< The list of listening servers
   PeerConnectionList   clients_;  ///< The list of active and possible inactive connections
   Timepoint            last_cleanup_ = Clock::now();
+  NetworkId            network_id_;
 };
 
 inline Muddle::Identity const &Muddle::identity() const

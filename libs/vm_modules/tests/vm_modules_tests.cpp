@@ -53,17 +53,18 @@ protected:
     vm_ = VMFactory::GetVM(module_);
 
     std::string        error;
-    std::string        console;
     fetch::vm::Variant output;
+    std::stringstream console;
+    vm_->AttachOutputDevice("stdout", console);
 
     // Execute our fn
-    if (!vm_->Execute(script_, function, error, console, output))
+    if (!vm_->Execute(script_, function, error, output))
     {
       std::cerr << "Runtime error: " << error << std::endl;
       return false;
     }
 
-    std::cerr << "output:\n" << console << std::endl;
+    std::cerr << "output:\n" << console.str() << std::endl;
 
     return true;
   }

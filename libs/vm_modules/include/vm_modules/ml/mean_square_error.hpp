@@ -58,9 +58,9 @@ public:
   }
 };
 
-inline void CreateMeanSquareError(std::shared_ptr<fetch::vm::Module> module)
+inline void CreateMeanSquareError(fetch::vm::Module& module)
 {
-  module->CreateClassType<MSEWrapper>("MeanSquareError")
+  module.CreateClassType<MSEWrapper>("MeanSquareError")
       .CreateTypeConstuctor<>()
       .CreateInstanceFunction("Forward", &MSEWrapper::ForwardWrapper)
       .CreateInstanceFunction("Backward", &MSEWrapper::BackwardWrapper);

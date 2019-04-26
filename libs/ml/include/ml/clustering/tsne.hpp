@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lfg.hpp"
 #include "math/distance/euclidean.hpp"
 #include <core/assert.hpp>
 #include <math/fundamental_operators.hpp>
@@ -29,6 +28,7 @@
 #include <math/tensor.hpp>
 
 #include <cmath>
+#include <random>
 
 namespace fetch {
 namespace ml {
@@ -45,7 +45,6 @@ public:
   using ArrayType = T;
   using DataType  = typename ArrayType::Type;
   using SizeType  = typename ArrayType::SizeType;
-  using RNG       = fetch::random::LaggedFibonacciGenerator<>;
 
   static constexpr char const *DESCRIPTOR = "TSNE";
 
@@ -58,7 +57,7 @@ public:
        SizeType const &random_seed)
   {
     ArrayType output_matrix({input_matrix.shape().at(0), output_dimensions});
-    rng_.Seed(random_seed);
+    rng_.seed(static_cast< uint32_t > (random_seed));
     RandomInitWeights(output_matrix);
     Init(input_matrix, output_matrix, perplexity);
   }
@@ -105,22 +104,23 @@ public:
       {
         for (SizeType j{0}; j < output_matrix_.shape().at(1); j++)
         {
-          if ((gradient.At(i, j) > 0.0) != (i_y.At(i, j) > 0.0))
+          if ((gradient.At({i, j}) > 0.0) != (i_y.At({i, j}) > 0.0))
           {
-            gains.Set(i, j, gains.At(i, j) + DataType(0.2));
+            gains.Set({i, j}, gains.At({i, j}) + DataType(0.2));
           }
 
-          if ((gradient.At(i, j) > 0.0) == (i_y.At(i, j) > 0.0))
+          if ((gradient.At({i, j}) > 0.0) == (i_y.At({i, j}) > 0.0))
           {
-            gains.Set(i, j, gains.At(i, j) * DataType(0.8));
+            gains.Set({i, j}, gains.At({i, j}) * DataType(0.8));
           }
         }
       }
       LimitMin(gains, min_gain);
 
       // i_y = momentum * i_y - learning_rate * (gains * gradient)
-      i_y *= momentum;
-      i_y -= fetch::math::Multiply(learning_rate, fetch::math::Multiply(gains, gradient));
+      i_y = fetch::math::Multiply(momentum, i_y);
+      i_y = fetch::math::Subtract(
+          i_y, fetch::math::Multiply(learning_rate, fetch::math::Multiply(gains, gradient)));
 
       // output_matrix = output_matrix + i_y
       output_matrix_ = fetch::math::Add(output_matrix_, i_y);
@@ -129,10 +129,10 @@ public:
       ArrayType y_mean = fetch::math::Divide(fetch::math::ReduceSum(output_matrix_, 0),
                                              static_cast<DataType>(output_matrix_.shape().at(0)));
 
-      output_matrix_ -= y_mean;
+      fetch::math::Subtract(output_matrix_, y_mean, output_matrix_);
 
       // Compute current value of cost function
-      std::cout << "Iteration " << iter << ", Loss: "
+      std::cout << "Loss: "
                 << static_cast<double>(
                        KlDivergence(input_symmetric_affinities_, output_symmetric_affinities_))
                 << std::endl;
@@ -193,9 +193,10 @@ private:
    */
   void RandomInitWeights(ArrayType &output_matrix)
   {
-    for (auto &val : output_matrix)
+
+    for (SizeType i{0}; i < output_matrix.size(); i++)
     {
-      val = GetRandom(DataType(0), DataType(1));
+      output_matrix.Set(i, GetRandom(DataType(0), DataType(1)));
     }
   }
 
@@ -212,7 +213,7 @@ private:
   {
     // p = -exp(d * beta)
     p = fetch::math::Exp(fetch::math::Multiply(DataType(-1), fetch::math::Multiply(d, beta)));
-    p.Set(0, k, DataType(0));
+    p.Set(k, DataType(0));
 
     DataType sum_p = fetch::math::Sum(p);
 
@@ -237,19 +238,19 @@ private:
                                     DataType const &target_perplexity, DataType const &tolerance,
                                     SizeType const &max_tries)
   {
+
     SizeType input_data_size = input_matrix.shape().at(0);
 
     /*
      * Initialize some variables
      */
     // sum_x = sum(square(x), 1)
-    ArrayType sum_x = fetch::math::ReduceSum(fetch::math::Square(input_matrix), 1);
+    ArrayType sum_x = fetch::math::ReduceSum(fetch::math::Multiply(input_matrix, input_matrix), 1);
 
     // d= ((-2 * dot(X, X.T))+sum_x).T+sum_x
     ArrayType d =
         fetch::math::Multiply(DataType(-2), fetch::math::DotTranspose(input_matrix, input_matrix));
-
-    d = (d + sum_x).Transpose() + sum_x;
+    d = fetch::math::Add(fetch::math::Add(d, sum_x).Transpose(), sum_x);
 
     // beta = 1/(2*sigma^2)
     // Prefill beta array with 1.0
@@ -265,6 +266,7 @@ private:
      */
     for (SizeType i{0}; i < input_data_size; i++)
     {
+
       // Compute the Gaussian kernel and entropy for the current precision
       DataType inf = std::numeric_limits<DataType>::max();
 
@@ -275,8 +277,8 @@ private:
       ArrayType this_P(input_data_size);
 
       DataType current_entropy;
-      d.Set(i, i, DataType(0));
-      Hbeta(d.Slice(i).Copy(), this_P, current_entropy, beta.At(i), i);
+      d.Set({i, i}, DataType(0));
+      Hbeta(d.Slice(i), this_P, current_entropy, beta.At(i), i);
 
       // Evaluate whether the perplexity is within tolerance
       DataType entropy_diff = current_entropy - target_entropy;
@@ -312,7 +314,7 @@ private:
         }
 
         // Recompute the values
-        Hbeta(d.Slice(i).Copy(), this_P, current_entropy, beta.At(i), i);
+        Hbeta(d.Slice(i), this_P, current_entropy, beta.At(i), i);
         entropy_diff = current_entropy - target_entropy;
         tries++;
       }
@@ -322,10 +324,10 @@ private:
       {
         if (i == j)
         {
-          pairwise_affinities.Set(i, j, DataType(0));
+          pairwise_affinities.Set({i, j}, DataType(0));
           continue;
         }
-        pairwise_affinities.Set(i, j, this_P.At(0, j));
+        pairwise_affinities.Set({i, j}, this_P.At(j));
       }
     }
   }
@@ -352,13 +354,14 @@ private:
                                 fetch::math::DotTranspose(output_matrix, output_matrix));
 
     // num = 1 / (1 + (num+sum_y).T+sum_y)
-    ArrayType tmp_val((num + sum_y).Transpose());
-    num = fetch::math::Divide(DataType(1), fetch::math::Add(DataType(1), (tmp_val + sum_y)));
+    ArrayType tmp_val(fetch::math::Add(num, sum_y).Transpose());
+    num = fetch::math::Divide(DataType(1),
+                              fetch::math::Add(DataType(1), fetch::math::Add(tmp_val, sum_y)));
 
     // num[range(n), range(n)] = 0.
     for (SizeType i{0}; i < num.shape().at(0); i++)
     {
-      num.Set(i, i, DataType(0));
+      num.Set({i, i}, DataType(0));
     }
 
     // Q = num / sum(num)
@@ -374,10 +377,11 @@ private:
    * @param standard_deviation input DataType standart deviation value of normal distribution
    * @return random DataType value
    */
-  DataType GetRandom(DataType /*mean*/, DataType /*standard_deviation*/)
+  DataType GetRandom(DataType mean, DataType standard_deviation)
   {
-    // TODO(issue 752): use normal distribution random instead
-    return DataType(rng_.AsDouble());
+    std::normal_distribution<double> distribution(static_cast<double>(mean),
+                                                  static_cast<double>(standard_deviation));
+    return DataType(distribution(rng_));
   }
 
   /**
@@ -408,24 +412,25 @@ private:
         }
 
         DataType tmp_p_i_j;
-        tmp_p_i_j = input_symmetric_affinities.At(i, j);
+        tmp_p_i_j = input_symmetric_affinities.At({i, j});
 
-        DataType tmp_q_i_j = output_symmetric_affinities.At(i, j);
+        DataType tmp_q_i_j = output_symmetric_affinities.At({i, j});
 
         // (Pij-Qij)
-        DataType tmp_val = tmp_p_i_j - tmp_q_i_j;
+        DataType tmp_val = fetch::math::Subtract(tmp_p_i_j, tmp_q_i_j);
 
         // /(1+||yi-yj||^2)
-        fetch::math::Multiply(num.At(i, j), tmp_val, tmp_val);
+        fetch::math::Multiply(num.At({i, j}), tmp_val, tmp_val);
 
         // tmp_val*(yi-yj), where tmp_val=(Pij-Qij)/(1+||yi-yj||^2)
-        tmp_slice += Multiply(tmp_val, (output_matrix.Slice(j).Copy().Squeeze()) -
-                                           (output_matrix.Slice(i).Copy().Squeeze()));
+        fetch::math::Add(
+            tmp_slice, Multiply(tmp_val, Subtract(output_matrix.Slice(j), output_matrix.Slice(i))),
+            tmp_slice);
       }
 
       for (SizeType k = 0; k < output_matrix.shape().at(1); k++)
       {
-        ret.Set(i, k, fetch::math::Multiply(DataType(-1), tmp_slice.At(k)));
+        ret.Set({i, k}, fetch::math::Multiply(DataType(-1), tmp_slice.At(k)));
       }
     }
 
@@ -446,10 +451,10 @@ private:
     }
   }
 
-  ArrayType input_matrix_, output_matrix_;
-  ArrayType input_pairwise_affinities_, input_symmetric_affinities_;
-  ArrayType output_symmetric_affinities_;
-  RNG       rng_;
+  ArrayType                  input_matrix_, output_matrix_;
+  ArrayType                  input_pairwise_affinities_, input_symmetric_affinities_;
+  ArrayType                  output_symmetric_affinities_;
+  std::default_random_engine rng_;
 };
 
 }  // namespace ml
