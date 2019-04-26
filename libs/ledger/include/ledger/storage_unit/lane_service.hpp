@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/reactor.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/shard_config.hpp"
 #include "network/generics/backgrounded_work.hpp"
@@ -95,6 +96,7 @@ public:
   LaneService &operator=(LaneService &&) = delete;
 
 private:
+  using Reactor                   = core::Reactor;
   using MuddlePtr                 = std::shared_ptr<Muddle>;
   using Server                    = fetch::muddle::rpc::Server;
   using ServerPtr                 = std::shared_ptr<Server>;
@@ -117,6 +119,10 @@ private:
   using LaneIdentityProtocolPtr   = std::shared_ptr<LaneIdentityProtocol>;
 
   static constexpr unsigned int SYNC_PERIOD_MS = 500;
+
+  TxStorePtr tx_store_;
+
+  Reactor reactor_;
 
   ShardConfig const         cfg_;
   BackgroundedWork          bg_work_;
@@ -154,7 +160,6 @@ private:
 
   /// @name Transaction Store
   /// @{
-  TxStorePtr       tx_store_;
   TxStoreProtoPtr  tx_store_protocol_;
   TxSyncProtoPtr   tx_sync_protocol_;
   TxSyncServicePtr tx_sync_service_;
