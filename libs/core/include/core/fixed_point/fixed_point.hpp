@@ -156,7 +156,7 @@ constexpr inline int32_t HighestSetBit(T n_input)
     return 0;
   }
 
-  return (int32_t)(sizeof(uint64_t) * 8) - __builtin_clzl(n);
+  return static_cast<int32_t>((sizeof(uint64_t) * 8) - __builtin_clzl(n));
 }
 
 /**
@@ -477,8 +477,9 @@ public:
 
   constexpr FixedPoint operator/(const FixedPoint &n) const
   {
-    if (n == CONST_ZERO)
+    if (n == CONST_ZERO) {
       throw std::overflow_error("Division by zero!");
+    }
     FixedPoint sign      = Sign(*this);
     FixedPoint abs_n     = Abs(*this);
     NextType   numerator = NextType(abs_n.Data()) << FRACTIONAL_BITS;
