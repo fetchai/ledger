@@ -192,11 +192,11 @@ typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnPopulating()
   while (true)
   {
     // attempt to extract an element in the confirmation queue
-    bool const is_end_of_sequence =
+    bool const extracted =
         confirm_queue_.Pop(rids[extracted_count], std::chrono::milliseconds::zero());
 
     // update the index if needed
-    if (!is_end_of_sequence)
+    if (extracted)
     {
       ++extracted_count;
     }
@@ -208,14 +208,16 @@ typename TransientObjectStore<O>::Phase TransientObjectStore<O>::OnPopulating()
       return Phase::Writing;
     }
 
-    if (is_end_of_sequence)
+    if (!extracted)
     {
       if (extracted_count > 0u)
       {
+        // Nothing more in queue, but buffer not empty - write contents to disk
         return Phase::Writing;
       }
       else
       {
+        // Queue is empty and nothing to write - trigger delay and do not change FSM state
         break;
       }
     }
