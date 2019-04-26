@@ -36,7 +36,6 @@ void test1(double max)
     double r  = fabs(y0 - y1) / y1 * 100;
     me        = std::max(r, me);
   }
-  std::cout << "Peak error: " << me << std::endl;
   ASSERT_LE(me, max) << "expected: " << max;
 }
 
