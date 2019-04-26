@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/json_client.hpp"
 #include "http/http_client.hpp"
 #include "http/https_client.hpp"
+#include "http/json_client.hpp"
 
 #include "gtest/gtest.h"
 
@@ -32,7 +32,7 @@ TEST(JsonClientTests, CheckBuildHttp)
 
   // try and access the
   auto const *http_client = dynamic_cast<HttpClient const *>(&client.underlying_client());
-  ASSERT_NE(http_client, nullptr); // check
+  ASSERT_NE(http_client, nullptr);  // check
   EXPECT_EQ(http_client->host(), "foo.bar.baz");
   EXPECT_EQ(http_client->port(), 80);
 }
@@ -43,7 +43,7 @@ TEST(JsonClientTests, CheckBuildHttpWithPort)
 
   // try and access the
   auto const *http_client = dynamic_cast<HttpClient const *>(&client.underlying_client());
-  ASSERT_NE(http_client, nullptr); // check
+  ASSERT_NE(http_client, nullptr);  // check
   EXPECT_EQ(http_client->host(), "baz.bar.foo");
   EXPECT_EQ(http_client->port(), 1234);
 }
@@ -54,10 +54,9 @@ TEST(JsonClientTests, CheckBuildHttps)
 
   // try and access the
   auto const *https_client = dynamic_cast<HttpsClient const *>(&client.underlying_client());
-  ASSERT_NE(https_client, nullptr); // check
+  ASSERT_NE(https_client, nullptr);  // check
   EXPECT_EQ(https_client->host(), "bar.bar.foo");
   EXPECT_EQ(https_client->port(), 443);
-
 }
 
 TEST(JsonClientTests, CheckBuildHttpsWithPort)
@@ -66,7 +65,7 @@ TEST(JsonClientTests, CheckBuildHttpsWithPort)
 
   // try and access the
   auto const *https_client = dynamic_cast<HttpsClient const *>(&client.underlying_client());
-  ASSERT_NE(https_client, nullptr); // check
+  ASSERT_NE(https_client, nullptr);  // check
   EXPECT_EQ(https_client->host(), "foo.baz.bar");
   EXPECT_EQ(https_client->port(), 6543);
 }

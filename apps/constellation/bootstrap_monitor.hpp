@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/state_machine.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/mutex.hpp"
+#include "core/state_machine.hpp"
 #include "crypto/identity.hpp"
 #include "http/json_client.hpp"
 #include "network/fetch_asio.hpp"
@@ -73,7 +73,6 @@ public:
   BootstrapMonitor &operator=(BootstrapMonitor &&) = delete;
 
 private:
-
   enum State
   {
     Notify,

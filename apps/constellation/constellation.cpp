@@ -360,7 +360,8 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
     std::this_thread::sleep_for(std::chrono::milliseconds{500});
 
     // detect the first time that we have fully synced
-    if (BlockCoordinator::State::SYNCHRONIZED == block_coordinator_.GetStateMachine().state() && (!ready))
+    if (BlockCoordinator::State::SYNCHRONIZED == block_coordinator_.GetStateMachine().state() &&
+        (!ready))
     {
       // attach the bootstrap monitor (if one exists) to the reactor
       reactor_.Attach(bootstrap_monitor);

@@ -110,18 +110,15 @@ public:
   ConstByteArray public_key() const
   {
     ConstByteArray public_key{};
-    private_key_.Apply([&public_key](PrivateKey const &key) {
-      public_key = key.publicKey().keyAsBin();
-    });
+    private_key_.Apply(
+        [&public_key](PrivateKey const &key) { public_key = key.publicKey().keyAsBin(); });
     return public_key;
   }
 
   ConstByteArray private_key()
   {
     ConstByteArray private_key{};
-    private_key_.Apply([&private_key](PrivateKey const &key) {
-      private_key = key.KeyAsBin();
-    });
+    private_key_.Apply([&private_key](PrivateKey const &key) { private_key = key.KeyAsBin(); });
     return private_key;
   }
 

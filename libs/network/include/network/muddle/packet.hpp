@@ -365,8 +365,8 @@ inline void Packet::Sign(crypto::Prover &prover)
 {
   SetStamped();
 
-  auto const signature = prover.Sign(
-    (serializers::ByteArrayBuffer() << StaticHeader() << payload_).data());
+  auto const signature =
+      prover.Sign((serializers::ByteArrayBuffer() << StaticHeader() << payload_).data());
 
   if (!signature.empty())
   {

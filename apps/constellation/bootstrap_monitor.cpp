@@ -21,10 +21,10 @@
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 
-#include <chrono>
-#include <sstream>
-#include <random>
 #include <array>
+#include <chrono>
+#include <random>
+#include <sstream>
 
 namespace fetch {
 namespace {
@@ -57,8 +57,7 @@ struct Attestation
     : public_key{entity->identity().identifier()}
     , challenge{public_key + nonce}
     , signature{entity->Sign(challenge)}
-  {
-  }
+  {}
 
   /**
    * Generate a random nonce that is used in combination of with the public key
@@ -73,14 +72,15 @@ struct Attestation
     using RngArray = std::array<RngWord, NUM_RANDOM_WORDS>;
 
     // generate the desired number of RNG words
-    Rng rng{};
+    Rng      rng{};
     RngArray rng_words{};
     for (auto &word : rng_words)
     {
       word = rng();
     }
 
-    return {reinterpret_cast<uint8_t const *>(rng_words.data()), rng_words.size() * sizeof(RngWord)};
+    return {reinterpret_cast<uint8_t const *>(rng_words.data()),
+            rng_words.size() * sizeof(RngWord)};
   }
 };
 
@@ -115,7 +115,8 @@ http::JsonClient::Headers BuildHeaders(std::string const &token)
  */
 BootstrapMonitor::BootstrapMonitor(ProverPtr entity, uint16_t p2p_port, std::string network_name,
                                    bool discoverable, std::string token, std::string host_name)
-  : state_machine_{std::make_shared<StateMachine>("bootstrap", State::Notify, BootstrapMonitor::ToString)}
+  : state_machine_{std::make_shared<StateMachine>("bootstrap", State::Notify,
+                                                  BootstrapMonitor::ToString)}
   , entity_(std::move(entity))
   , network_name_(std::move(network_name))
   , discoverable_(discoverable)
@@ -250,7 +251,7 @@ bool BootstrapMonitor::RunDiscovery(UriList &peers)
 
     auto const &error_obj = response["error"];
 
-    uint64_t error_code{0};
+    uint64_t    error_code{0};
     std::string message{};
     if (Extract(error_obj, "code", error_code) && Extract(error_obj, "message", message))
     {
@@ -294,7 +295,7 @@ bool BootstrapMonitor::RunDiscovery(UriList &peers)
 
       std::string host;
       uint16_t    port = 0;
-      Uri uri{};
+      Uri         uri{};
       if (!(Extract(peer_object, "host", host) && Extract(peer_object, "port", port)))
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server");

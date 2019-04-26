@@ -29,7 +29,7 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
 
   // Construction / Destruction
-  Prover() = default;
+  Prover()          = default;
   virtual ~Prover() = default;
 
   /// @name Prover Interface
