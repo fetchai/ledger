@@ -22,6 +22,7 @@
 #include "core/json/document.hpp"
 #include "core/macros.hpp"
 #include "crypto/ecdsa.hpp"
+#include "crypto/fetch_identity.hpp"
 #include "crypto/prover.hpp"
 #include "metrics/metrics.hpp"
 #include "network/adapters.hpp"
@@ -246,6 +247,18 @@ struct CommandLineArguments
     if (!manifest)
     {
       manifest = GenerateManifest(args.external_address, args.port, num_lanes);
+    }
+
+    // catch the invalid miner case
+    if (args.cfg.block_interval_ms > 0)
+    {
+      auto const identity = prover->identity();
+
+      if (!fetch::crypto::IsFetchIdentity(identity))
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Non mining address: ", identity.identifier().ToBase64());
+        std::exit(1);
+      }
     }
 
     // finally
