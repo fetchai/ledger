@@ -412,7 +412,7 @@ bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest,
 
     // make the request to the RPC server
     auto promise = rpc_client_.CallSpecificAddress(LookupAddress(resource), RPC_TX_STORE,
-                                                   TxStoreProtocol::GET, resource);
+TxStoreProtocol::GET, resource);
 
     // wait for the response to be delivered
     tx = promise->As<VerifiedTransaction>();
