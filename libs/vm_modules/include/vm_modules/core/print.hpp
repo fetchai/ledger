@@ -27,19 +27,21 @@ namespace vm_modules {
  * method for printing string to std::cout
  */
 
+/*
 inline void PrintByteArray(fetch::vm::VM *                                            vm,
-                           fetch::vm::Ptr<fetch::vm_modules::ByteArrayWrapper> const &s)
+                         fetch::vm::Ptr<fetch::vm_modules::ByteArrayWrapper> const &s)
 {
-  auto &out = vm->GetOutputDevice("stdout");
-  out << s->byte_array();
+auto &out = vm->GetOutputDevice("stdout");
+out << s->byte_array();
 }
 
 inline void PrintLnByteArray(fetch::vm::VM *                                            vm,
-                             fetch::vm::Ptr<fetch::vm_modules::ByteArrayWrapper> const &s)
+                           fetch::vm::Ptr<fetch::vm_modules::ByteArrayWrapper> const &s)
 {
-  auto &out = vm->GetOutputDevice("stdout");
-  out << byte_array::ToHex(s->byte_array()) << std::endl;
+auto &out = vm->GetOutputDevice("stdout");
+out << byte_array::ToHex(s->byte_array()) << std::endl;
 }
+*/
 
 inline void PrintString(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
@@ -123,8 +125,11 @@ inline void PrintArrayPrimitive(fetch::vm::VM *vm, vm::Ptr<vm::Array<T>> const &
 
 inline void CreatePrint(vm::Module &module)
 {
+  /*
   module.CreateFreeFunction("print", &PrintByteArray);
   module.CreateFreeFunction("printLn", &PrintLnByteArray);
+  */
+
   module.CreateFreeFunction("print", &PrintString);
   module.CreateFreeFunction("printLn", &PrintLnString);
   module.CreateFreeFunction("print", &PrintInt32);

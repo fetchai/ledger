@@ -79,7 +79,7 @@ TEST_F(VMTests, CheckCompileAndExecute)
 {
   const std::string source =
       " function main() "
-      "   Print(\"Hello, world\");"
+      "   print(\"Hello, world\");"
       " endfunction ";
 
   bool res = Compile(source);
@@ -95,7 +95,7 @@ TEST_F(VMTests, CheckCompileAndExecuteAltStrings)
 {
   const std::string source =
       " function main() "
-      "   Print('Hello, world');"
+      "   print('Hello, world');"
       " endfunction ";
 
   bool res = Compile(source);

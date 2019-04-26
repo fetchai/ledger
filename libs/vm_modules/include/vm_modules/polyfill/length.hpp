@@ -48,7 +48,6 @@ inline int32_t LenArrayObj(fetch::vm::VM * /*vm*/, vm::Ptr<vm::Array<vm::Ptr<T>>
 
 inline void BindLen(vm::Module &module)
 {
-
   module.CreateFreeFunction("lengthOf", &LenByteArray);
   module.CreateFreeFunction("lengthOf", &LenString);
   module.CreateFreeFunction("lengthOf", &LenArray<int32_t>);
