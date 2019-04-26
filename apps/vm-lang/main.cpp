@@ -306,7 +306,7 @@ int main(int argc, char **argv)
 
   vm->AttachOutputDevice("stdout", std::cout);
   vm->AttachOutputDevice("stderr", std::cerr);
-    
+
   // Execute the requested function
   std::string        error;
   std::string        console;
@@ -314,7 +314,7 @@ int main(int argc, char **argv)
   bool const         success =
       vm->Execute(*script, params.program().GetParam("func", "main"), error, output);
 
-  if(!success)
+  if (!success)
   {
     std::cerr << error << std::endl;
     return 1;

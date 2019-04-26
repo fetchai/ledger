@@ -40,11 +40,10 @@ fetch::math::meta::IfIsArithmetic<T, fetch::vm::Ptr<fetch::vm::String>> ToString
 }
 
 template <typename T>
-bool ToBool(fetch::vm::VM* /*vm*/, T const &a)
+bool ToBool(fetch::vm::VM * /*vm*/, T const &a)
 {
-  return static_cast< bool >(a);
+  return static_cast<bool>(a);
 }
-
 
 inline void CreateToString(fetch::vm::Module &module)
 {
@@ -59,16 +58,14 @@ inline void CreateToString(fetch::vm::Module &module)
 
 inline void CreateToBool(fetch::vm::Module &module)
 {
-  
+
   module.CreateFreeFunction("toBool", &ToBool<int32_t>);
   module.CreateFreeFunction("toBool", &ToBool<uint32_t>);
   module.CreateFreeFunction("toBool", &ToBool<int64_t>);
   module.CreateFreeFunction("toBool", &ToBool<uint64_t>);
   module.CreateFreeFunction("toBool", &ToBool<float_t>);
   module.CreateFreeFunction("toBool", &ToBool<double_t>);
-  
 }
-
 
 }  // namespace vm_modules
 }  // namespace fetch

@@ -58,7 +58,7 @@ public:
   }
 };
 
-inline void CreateMeanSquareError(fetch::vm::Module& module)
+inline void CreateMeanSquareError(fetch::vm::Module &module)
 {
   module.CreateClassType<MSEWrapper>("MeanSquareError")
       .CreateTypeConstuctor<>()

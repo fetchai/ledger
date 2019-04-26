@@ -72,13 +72,13 @@ public:
 
   void Connect(byte_array::ConstByteArray const &host, uint16_t port)
   {
-    LOG_STACK_TRACE_POINT;    
+    LOG_STACK_TRACE_POINT;
     Connect(host, byte_array::ConstByteArray(std::to_string(port)));
   }
 
   void Connect(byte_array::ConstByteArray const &host, byte_array::ConstByteArray const &port)
   {
-    LOG_STACK_TRACE_POINT;    
+    LOG_STACK_TRACE_POINT;
     self_type self = shared_from_this();
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Client posting connect");
@@ -177,15 +177,15 @@ public:
 
   bool is_alive() const override
   {
-    LOG_STACK_TRACE_POINT;    
+    LOG_STACK_TRACE_POINT;
     std::lock_guard<mutex_type> lock(io_creation_mutex_);
     return !socket_.expired() && connected_;
   }
 
   void Send(message_type const &omsg) override
   {
-    message_type msg = omsg.Copy();    
-    LOG_STACK_TRACE_POINT;    
+    message_type msg = omsg.Copy();
+    LOG_STACK_TRACE_POINT;
     if (!connected_)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Attempting to write to socket too early. Returning.");
@@ -220,7 +220,7 @@ public:
 
   void Close() override
   {
-    LOG_STACK_TRACE_POINT;        
+    LOG_STACK_TRACE_POINT;
     std::lock_guard<mutex_type> lock(io_creation_mutex_);
     posted_close_                         = true;
     std::weak_ptr<socket_type> socketWeak = socket_;
@@ -323,7 +323,7 @@ private:
 
   void ReadBody(byte_array::ByteArray const &header) noexcept
   {
-    LOG_STACK_TRACE_POINT;            
+    LOG_STACK_TRACE_POINT;
     auto strand = strand_.lock();
     assert(strand->running_in_this_thread());
 
@@ -335,7 +335,7 @@ private:
     {
       byte_array::ByteArray dummy;
       SetHeader(dummy, 0);
-      dummy.Resize(16); 
+      dummy.Resize(16);
 
       FETCH_LOG_ERROR(LOGGING_NAME,
                       "Magic incorrect during network read:\ngot:      ", ToHex(header),
@@ -428,7 +428,6 @@ private:
 
     byte_array::ByteArray header;
     SetHeader(header, buffer.size());
-
 
     std::vector<asio::const_buffer> buffers{asio::buffer(header.pointer(), header.size()),
                                             asio::buffer(buffer.pointer(), buffer.size())};

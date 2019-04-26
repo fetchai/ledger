@@ -26,20 +26,16 @@
 
 #include <cmath>
 
-namespace fetch
-{
-namespace vm_modules
-{
+namespace fetch {
+namespace vm_modules {
 
-
-template< typename T >
+template <typename T>
 T And(fetch::vm::VM * /*vm*/, T x, T s)
 {
   return T(x & s);
 }
 
-
-template< typename T >
+template <typename T>
 T Or(fetch::vm::VM * /*vm*/, T x, T s)
 {
   return T(x | s);
@@ -50,13 +46,13 @@ inline void BindBitwiseOps(vm::Module &module)
   module.CreateFreeFunction("and", &And<int32_t>);
   module.CreateFreeFunction("and", &And<int64_t>);
   module.CreateFreeFunction("and", &And<uint32_t>);
-  module.CreateFreeFunction("and", &And<uint64_t>);  
+  module.CreateFreeFunction("and", &And<uint64_t>);
 
   module.CreateFreeFunction("or", &Or<int32_t>);
   module.CreateFreeFunction("or", &Or<int64_t>);
   module.CreateFreeFunction("or", &Or<uint32_t>);
-  module.CreateFreeFunction("or", &Or<uint64_t>);    
+  module.CreateFreeFunction("or", &Or<uint64_t>);
 }
 
-}
-}
+}  // namespace vm_modules
+}  // namespace fetch

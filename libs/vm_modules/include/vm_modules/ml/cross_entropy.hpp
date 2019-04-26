@@ -57,7 +57,7 @@ public:
   }
 };
 
-inline void CreateCrossEntropy(fetch::vm::Module& module)
+inline void CreateCrossEntropy(fetch::vm::Module &module)
 {
   module.CreateClassType<CrossEntropyWrapper>("CrossEntropy")
       .CreateTypeConstuctor<>()
