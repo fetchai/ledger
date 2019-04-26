@@ -19,6 +19,7 @@
 
 #include "meta/tags.hpp"
 #include "meta/type_traits.hpp"
+#include "vectorise/platform.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -156,7 +157,7 @@ constexpr inline int32_t HighestSetBit(T n_input)
     return 0;
   }
 
-  return static_cast<int32_t>((sizeof(uint64_t) * 8) - __builtin_clzl(n));
+  return static_cast<int32_t>((sizeof(uint64_t) * 8)) - platform::CountLeadingZeroes64(n);
 }
 
 /**
@@ -477,7 +478,8 @@ public:
 
   constexpr FixedPoint operator/(const FixedPoint &n) const
   {
-    if (n == CONST_ZERO) {
+    if (n == CONST_ZERO)
+    {
       throw std::overflow_error("Division by zero!");
     }
     FixedPoint sign      = Sign(*this);
