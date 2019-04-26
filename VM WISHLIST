@@ -1,0 +1,10 @@
+VM WISHLIST
+-----------
+- Pair< S, T >
+- Array.push() / append()
+- dir
+- for(i in Array<>())
+- Bitwise operations >>, |, & etc.
+- Type alias
+- Array does not inialise members.
+- Move variant from one VM to another
