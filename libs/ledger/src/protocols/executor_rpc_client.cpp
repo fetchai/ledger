@@ -55,7 +55,6 @@ public:
                                     &ExecutorConnectorWorker::OnConnecting);
     state_machine_->RegisterHandler(State::SUCCESS, this, &ExecutorConnectorWorker::OnSuccess);
     state_machine_->RegisterHandler(State::TIMEDOUT, this, &ExecutorConnectorWorker::OnTimedOut);
-    state_machine_->RegisterHandler(State::FAILED, this, &ExecutorConnectorWorker::OnFailed);
 
     FETCH_LOG_WARN(LOGGING_NAME, "INIT: ", peer_.ToString());
   }
@@ -89,8 +88,6 @@ public:
       return PromiseState::TIMEDOUT;
     case State::SUCCESS:
       return PromiseState::SUCCESS;
-    case State::FAILED:
-      return PromiseState::FAILED;
     default:
       return PromiseState::WAITING;
     }
@@ -130,11 +127,6 @@ private:
   State OnTimedOut()
   {
     return State::TIMEDOUT;
-  }
-
-  State OnFailed()
-  {
-    return State::FAILED;
   }
 
   std::shared_ptr<core::StateMachine<State>> state_machine_;

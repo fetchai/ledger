@@ -95,8 +95,7 @@ private:
     INITIAL = 0,
     CONNECTING,
     SUCCESS,
-    TIMEDOUT,
-    FAILED,
+    TIMEDOUT
   };
 
   ClientPtr      client_;
