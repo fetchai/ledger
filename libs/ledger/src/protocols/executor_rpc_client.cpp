@@ -17,6 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/protocols/executor_rpc_client.hpp"
+#include "core/state_machine.hpp"
+
+#include <memory>
 
 namespace fetch {
 namespace ledger {
@@ -39,17 +42,20 @@ public:
 
   ExecutorConnectorWorker(Uri thepeer, Muddle &themuddle,
                           std::chrono::milliseconds thetimeout = std::chrono::milliseconds(10000))
-    : state_machine_()
+    : state_machine_{std::make_shared<core::StateMachine<State>>("ExecutorConnectorWorker",
+                                                                 State::INITIAL)}
     , peer_(std::move(thepeer))
     , timeduration_(std::move(thetimeout))
     , muddle_(themuddle)
     , client_(std::make_shared<Client>("R:ExecCW", muddle_.AsEndpoint(), Muddle::Address(),
                                        SERVICE_EXECUTOR, CHANNEL_RPC))
   {
-    state_machine_.Allow(State::CONNECTING, State::INITIAL)
-        .Allow(State::SUCCESS, State::CONNECTING)
-        .Allow(State::TIMEDOUT, State::CONNECTING)
-        .Allow(State::FAILED, State::CONNECTING);
+    state_machine_->RegisterHandler(State::INITIAL, this, &ExecutorConnectorWorker::OnInitial);
+    state_machine_->RegisterHandler(State::CONNECTING, this,
+                                    &ExecutorConnectorWorker::OnConnecting);
+    state_machine_->RegisterHandler(State::SUCCESS, this, &ExecutorConnectorWorker::OnSuccess);
+    state_machine_->RegisterHandler(State::TIMEDOUT, this, &ExecutorConnectorWorker::OnTimedOut);
+    state_machine_->RegisterHandler(State::FAILED, this, &ExecutorConnectorWorker::OnFailed);
 
     FETCH_LOG_WARN(LOGGING_NAME, "INIT: ", peer_.ToString());
   }
@@ -65,14 +71,17 @@ public:
   {
     try
     {
-      state_machine_.Work();
+      if (state_machine_->IsReadyToExecute())
+      {
+        state_machine_->Execute();
+      }
     }
     catch (...)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Work threw.");
       throw;
     }
-    auto r = state_machine_.Get();
+    auto r = state_machine_->state();
 
     switch (r)
     {
@@ -87,57 +96,54 @@ public:
     }
   }
 
-  bool PossibleNewState(State &currentstate)
+private:
+  State OnInitial()
   {
-    if (currentstate == State::TIMEDOUT || currentstate == State::SUCCESS ||
-        currentstate == State::FAILED)
-    {
-      return false;
-    }
+    timeout_.Set(timeduration_);
+    muddle_.AddPeer(peer_);
 
-    if (currentstate == State::INITIAL)
+    return State::CONNECTING;
+  }
+
+  State OnConnecting()
+  {
+    bool connected_ = muddle_.UriToDirectAddress(peer_, target_address);
+
+    if (connected_)
     {
-      timeout_.Set(timeduration_);
+      return State::SUCCESS;
     }
 
     if (timeout_.IsDue())
     {
-      currentstate = State::TIMEDOUT;
-      return true;
+      return State::TIMEDOUT;
     }
 
-    switch (currentstate)
-    {
-    case State::INITIAL:
-    {
-      muddle_.AddPeer(peer_);
-      currentstate = State::CONNECTING;
-      return true;
-    }
-    case State::CONNECTING:
-    {
-      bool connected_ = muddle_.UriToDirectAddress(peer_, target_address);
-      if (!connected_)
-      {
-        return false;
-      }
-      currentstate = State::SUCCESS;
-      return true;
-    }
-    default:
-      currentstate = State::FAILED;
-      return true;
-    }
+    return State::CONNECTING;
   }
 
-private:
-  network::AtomicStateMachine<ExecutorRpcClient::State> state_machine_;
-  Uri                       peer_;
-  std::chrono::milliseconds timeduration_;
-  FutureTimepoint           timeout_;
-  Muddle &                  muddle_;
-  std::shared_ptr<Client>   client_;
-  PendingConnectionCounter  counter_;
+  State OnSuccess()
+  {
+    return State::SUCCESS;
+  }
+
+  State OnTimedOut()
+  {
+    return State::TIMEDOUT;
+  }
+
+  State OnFailed()
+  {
+    return State::FAILED;
+  }
+
+  std::shared_ptr<core::StateMachine<State>> state_machine_;
+  Uri                                        peer_;
+  std::chrono::milliseconds                  timeduration_;
+  FutureTimepoint                            timeout_;
+  Muddle &                                   muddle_;
+  std::shared_ptr<Client>                    client_;
+  PendingConnectionCounter                   counter_;
 };
 
 void ExecutorRpcClient::Connect(Muddle &muddle, Uri uri, std::chrono::milliseconds timeout)

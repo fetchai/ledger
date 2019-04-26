@@ -23,7 +23,6 @@
 #include "core/service_ids.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/protocols/executor_rpc_protocol.hpp"
-#include "network/generics/atomic_state_machine.hpp"
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/future_timepoint.hpp"
 #include "network/generics/has_worker_thread.hpp"
