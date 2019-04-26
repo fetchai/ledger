@@ -23,25 +23,25 @@
 #include "math/combinatorics.hpp"
 //#include <math/tensor.hpp>
 //
-//using namespace fetch::math::combinatorics;
+// using namespace fetch::math::combinatorics;
 //
-//using DataType  = double;
-//using ArrayType = typename fetch::math::Tensor<DataType>;
-//using SizeType  = std::uint64_t;
+// using DataType  = double;
+// using ArrayType = typename fetch::math::Tensor<DataType>;
+// using SizeType  = std::uint64_t;
 //
-//template <typename T>
-//class CombinatoricsTest : public ::testing::Test
+// template <typename T>
+// class CombinatoricsTest : public ::testing::Test
 //{
 //};
 //
-//using MyTypes =
+// using MyTypes =
 //    ::testing::Types<fetch::math::Tensor<std::int32_t>, fetch::math::Tensor<std::int64_t>,
 //                     fetch::math::Tensor<std::uint32_t>, fetch::math::Tensor<std::uint64_t>,
 //                     fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
-//TYPED_TEST_CASE(CombinatoricsTest, MyTypes);
+// TYPED_TEST_CASE(CombinatoricsTest, MyTypes);
 //
 //// Factorial function - test edge case (0!)
-//TYPED_TEST(CombinatoricsTest, test_factorial_zero)
+// TYPED_TEST(CombinatoricsTest, test_factorial_zero)
 //{
 //  SizeType input  = 0;
 //  SizeType output = factorial(input);
@@ -49,7 +49,7 @@
 //}
 //
 //// Factorial function - test standard input (12!)
-//TYPED_TEST(CombinatoricsTest, test_factorial_standard_input)
+// TYPED_TEST(CombinatoricsTest, test_factorial_standard_input)
 //{
 //  SizeType input        = 12;
 //  SizeType output       = factorial(input);
@@ -58,7 +58,7 @@
 //}
 //
 //// calculateNumCombinations function - test standard input
-//TYPED_TEST(CombinatoricsTest, test_num_combinations_standard_input)
+// TYPED_TEST(CombinatoricsTest, test_num_combinations_standard_input)
 //{
 //  SizeType n = 5;
 //  SizeType r = 2;
@@ -89,7 +89,7 @@
 //}
 //
 //// Combinations function - edge case - n=r
-//TYPED_TEST(CombinatoricsTest, test_num_combinations_edge_case1)
+// TYPED_TEST(CombinatoricsTest, test_num_combinations_edge_case1)
 //{
 //  SizeType n = 5;
 //  SizeType r = 5;
@@ -101,7 +101,7 @@
 //}
 //
 //// Combinations function - edge case - n=r=1
-//TYPED_TEST(CombinatoricsTest, test_num_combinations_edge_case2)
+// TYPED_TEST(CombinatoricsTest, test_num_combinations_edge_case2)
 //{
 //  SizeType n = 1;
 //  SizeType r = 1;
@@ -113,7 +113,7 @@
 //}
 //
 //// Combinations function - edge case - r=0
-//TYPED_TEST(CombinatoricsTest, test_num_combinations_edge_case3)
+// TYPED_TEST(CombinatoricsTest, test_num_combinations_edge_case3)
 //{
 //  SizeType n = 12;
 //  SizeType r = 0;
@@ -125,7 +125,7 @@
 //}
 //
 //// Combinations function - test standard input
-//TYPED_TEST(CombinatoricsTest, test_combinations_standard_input)
+// TYPED_TEST(CombinatoricsTest, test_combinations_standard_input)
 //{
 //  SizeType n = 5;
 //  SizeType r = 2;
@@ -179,7 +179,7 @@
 //}
 //
 //// Combinations function - edge case - n=r
-//TYPED_TEST(CombinatoricsTest, test_combinations_edge_case1)
+// TYPED_TEST(CombinatoricsTest, test_combinations_edge_case1)
 //{
 //  SizeType n = 5;
 //  SizeType r = 5;
@@ -200,7 +200,7 @@
 //}
 //
 //// Combinations function - edge case - n=r=1
-//TYPED_TEST(CombinatoricsTest, test_combinations_edge_case2)
+// TYPED_TEST(CombinatoricsTest, test_combinations_edge_case2)
 //{
 //  SizeType n = 1;
 //  SizeType r = 1;
@@ -216,7 +216,7 @@
 //}
 //
 //// Combinations function - edge case - r=0
-//TYPED_TEST(CombinatoricsTest, test_combinations_edge_case3)
+// TYPED_TEST(CombinatoricsTest, test_combinations_edge_case3)
 //{
 //  SizeType n = 12;
 //  SizeType r = 0;

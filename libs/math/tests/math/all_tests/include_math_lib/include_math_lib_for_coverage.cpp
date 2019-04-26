@@ -23,5 +23,4 @@
 // that coverage reports also show functionality that is completely
 // untested
 TEST(dummy_test, dummy_test)
-{
-}
+{}

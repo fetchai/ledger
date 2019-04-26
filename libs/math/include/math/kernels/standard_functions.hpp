@@ -628,5 +628,5 @@ struct Isunordered
 };
 }  // namespace stdlib
 }  // namespace kernels
-}  // math
+}  // namespace math
 }  // namespace fetch

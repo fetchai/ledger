@@ -35,5 +35,5 @@ struct Sign
 };
 
 }  // namespace kernels
-} // math
+}  // namespace math
 }  // namespace fetch
