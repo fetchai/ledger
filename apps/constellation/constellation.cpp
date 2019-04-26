@@ -239,7 +239,7 @@ void Constellation::CreateInfoFile(std::string const &filename)
  *
  * @param initial_peers The peers that should be initially connected to
  */
-void Constellation::Run(UriList const &initial_peers)
+void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstrap_monitor)
 {
   //---------------------------------------------------------------
   // Step 1. Start all the components
@@ -344,6 +344,8 @@ void Constellation::Run(UriList const &initial_peers)
   // Step 2. Main monitor loop
   //---------------------------------------------------------------
 
+  bool ready{false};
+
   // monitor loop
   while (active_)
   {
@@ -356,6 +358,16 @@ void Constellation::Run(UriList const &initial_peers)
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Still alive...");
     std::this_thread::sleep_for(std::chrono::milliseconds{500});
+
+    // detect the first time that we have fully synced
+    if (BlockCoordinator::State::SYNCHRONIZED == block_coordinator_.GetStateMachine().state() && (!ready))
+    {
+      // attach the bootstrap monitor (if one exists) to the reactor
+      reactor_.Attach(bootstrap_monitor);
+      ready = true;
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Startup complete");
+    }
   }
 
   //---------------------------------------------------------------
