@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-
-
 #include "math/arithmetic/comparison.hpp"
 
 #include "math/clustering/k_means.hpp"
@@ -89,9 +87,6 @@
 #include "math/tensor_squeeze.hpp"
 #include "math/trigonometry.hpp"
 #include "math/type.hpp"
-
-
-
 
 #include <gtest/gtest.h>
 
