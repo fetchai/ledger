@@ -33,7 +33,6 @@
 #include "constellation.hpp"
 #include "fetch_version.hpp"
 
-#include <array>
 #include <csignal>
 #include <fstream>
 #include <iomanip>
@@ -45,7 +44,7 @@
 
 namespace {
 
-static constexpr char const *LOGGING_NAME = "main";
+constexpr char const *LOGGING_NAME = "main";
 
 using Prover         = fetch::crypto::Prover;
 using BootstrapPtr   = std::unique_ptr<fetch::BootstrapMonitor>;
@@ -59,7 +58,7 @@ std::atomic<std::size_t>            gInterruptCount{0};
 // REVIEW: Move to platform
 uint32_t Log2(uint32_t value)
 {
-  static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;
+  static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3u;
   return static_cast<uint32_t>(VALUE_SIZE_IN_BITS -
                                static_cast<uint32_t>(__builtin_clz(value) + 1));
 }
@@ -176,7 +175,7 @@ struct CommandLineArguments
     p.add(args.cfg.transient_peers,       "transient-peers",       "The number of the peers which will be random in answer sent to peer requests",  DEFAULT_TRANSIENT_PEERS);
     p.add(args.cfg.peers_update_cycle_ms, "peers-update-cycle-ms", "How fast to do peering changes",                                                uint32_t{0});
     p.add(args.cfg.disable_signing,       "disable-signing",       "Do not sign outbound packets or verify those inbound, in trusted network",      bool{});
-    p.add(args.cfg.sign_broadcasts,       "sign-broadcasts",       "Sign and verify broadcast packets",      bool{});
+    p.add(args.cfg.sign_broadcasts,       "sign-broadcasts",       "Sign and verify broadcast packets",                                             bool{});
     p.add(args.cfg.standalone,            "standalone",            "Expect the node to run in on its own (useful for testing and development)",     false);
     // clang-format on
 
@@ -208,7 +207,7 @@ struct CommandLineArguments
     {
       // determine what the P2P port is. This is either specified with the port parameter or
       // explicitly given via the manifest
-      uint16_t p2p_port = static_cast<uint16_t>(args.port + P2P_PORT_OFFSET);
+      auto p2p_port = static_cast<uint16_t>(args.port + P2P_PORT_OFFSET);
 
       // if we have a valid manifest then we should respect the port configuration specified here
       // otherwise we default to the port specified
@@ -344,7 +343,7 @@ struct CommandLineArguments
     s << "port......................: " << args.port << '\n';
     s << "network id................: 0x" << std::hex << args.network_id << std::dec << '\n';
     s << "num executors.............: " << args.cfg.num_executors << '\n';
-    s << "num lanes.................: " << (1 << args.cfg.log2_num_lanes) << '\n';
+    s << "num lanes.................: " << (1u << args.cfg.log2_num_lanes) << '\n';
     s << "num slices................: " << args.cfg.num_slices << '\n';
     s << "bootstrap.................: " << args.bootstrap << '\n';
     s << "host name.................: " << args.host_name << '\n';
