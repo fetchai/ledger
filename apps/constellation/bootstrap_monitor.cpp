@@ -35,8 +35,8 @@ using network::Uri;
 using http::JsonClient;
 using byte_array::ConstByteArray;
 
-const char *               BOOTSTRAP_HOST = "http://127.0.0.1:8000";
-const std::chrono::seconds UPDATE_INTERVAL{5};
+const char *               BOOTSTRAP_HOST = "https://bootstrap.economicagents.com";
+const std::chrono::seconds UPDATE_INTERVAL{30};
 constexpr char const *     LOGGING_NAME = "bootstrap";
 
 /**
