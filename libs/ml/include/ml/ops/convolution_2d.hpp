@@ -33,7 +33,9 @@ public:
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  Convolution2D() = default;
+  Convolution2D(SizeType stride_size = 1)
+    : stride_size_(stride_size)
+  {}
 
   ~Convolution2D() = default;
 
@@ -149,8 +151,12 @@ public:
   {
     std::vector<typename ArrayType::SizeType> outputShape;
     outputShape.push_back(inputs.at(1).get().shape()[0]);
-    outputShape.push_back(inputs.at(0).get().shape()[1] - inputs.at(1).get().shape()[2] + 1);
-    outputShape.push_back(inputs.at(0).get().shape()[2] - inputs.at(1).get().shape()[3] + 1);
+    outputShape.push_back(
+        (inputs.at(0).get().shape()[1] - inputs.at(1).get().shape()[2] + stride_size_) /
+        stride_size_);
+    outputShape.push_back(
+        (inputs.at(0).get().shape()[2] - inputs.at(1).get().shape()[3] + stride_size_) /
+        stride_size_);
     return outputShape;
   }
 
@@ -212,11 +218,13 @@ private:
 
               if (reverse)
               {
-                input.Set(i_ic, i_o + i_k, j_o + j_k, horizontal_stride.At(i_s, j_s));
+                input.Set(i_ic, i_o * stride_size_ + i_k, j_o * stride_size_ + j_k,
+                          horizontal_stride.At(i_s, j_s));
               }
               else
               {
-                horizontal_stride.Set(i_s, j_s, input.At(i_ic, i_o + i_k, j_o + j_k));
+                horizontal_stride.Set(
+                    i_s, j_s, input.At(i_ic, i_o * stride_size_ + i_k, j_o * stride_size_ + j_k));
               }
               ++i_s;
             }
@@ -265,6 +273,8 @@ private:
       }
     }
   }
+
+  SizeType stride_size_;
 };
 
 }  // namespace ops

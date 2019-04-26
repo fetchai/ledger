@@ -109,3 +109,79 @@ TYPED_TEST(Convolution1DTest, forward_1x5_1x1x3)
 
   ASSERT_EQ(output.shape(), std::vector<uint64_t>({1, 3}));
 }
+
+TYPED_TEST(Convolution1DTest, forward_1x5_1x1x3_stride_2)
+{
+  TypeParam                                input(std::vector<uint64_t>({1, 5}));
+  TypeParam                                weigths(std::vector<uint64_t>({1, 1, 3}));
+  fetch::ml::ops::Convolution1D<TypeParam> c(2);
+  TypeParam                                output = c.fetch::ml::template Ops<TypeParam>::Forward(
+      std::vector<std::reference_wrapper<TypeParam const>>({input, weigths}));
+
+  ASSERT_EQ(output.shape(), std::vector<uint64_t>({1, 2}));
+}
+
+TYPED_TEST(Convolution1DTest, backward_3x3_5x3x3)
+{
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
+
+  SizeType const input_channels  = 3;
+  SizeType const output_channels = 5;
+  SizeType const input_height    = 3;
+  SizeType const kernel_height   = 3;
+  SizeType const output_height   = 1;
+
+  ArrayType input({input_channels, input_height});
+  ArrayType kernels({output_channels, input_channels, kernel_height});
+  ArrayType error({output_channels, output_height});
+  ArrayType gt1(input.shape());
+  ArrayType gt2(kernels.shape());
+
+  // Generate input
+  for (SizeType i_ic(0); i_ic < input_channels; ++i_ic)
+  {
+    for (SizeType i_i(0); i_i < input_height; ++i_i)
+    {
+      input.Set(i_ic, i_i, DataType(i_i + 1));
+      gt1.Set(i_ic, i_i, DataType(10));
+    }
+  }
+
+  // Generate kernels
+  for (SizeType i_oc(0); i_oc < output_channels; ++i_oc)
+  {
+    for (SizeType i_ic(0); i_ic < input_channels; ++i_ic)
+    {
+      for (SizeType i_k(0); i_k < kernel_height; ++i_k)
+      {
+
+        kernels.Set(i_oc, i_ic, i_k, DataType(2));
+        gt2.Set(i_oc, i_ic, i_k, DataType(i_k + 1));
+      }
+    }
+  }
+
+  // Generate error signal
+  for (SizeType i_oc(0); i_oc < output_channels; ++i_oc)
+  {
+    for (SizeType i_o(0); i_o < output_height; ++i_o)
+    {
+
+      error.Set(i_oc, i_o, DataType(i_o + 1));
+    }
+  }
+
+  fetch::ml::ops::Convolution1D<ArrayType> op;
+  std::vector<ArrayType>                   prediction =
+      op.Backward(std::vector<std::reference_wrapper<TypeParam const>>({input, kernels}), error);
+
+  // Test correct gradient shape
+  ASSERT_TRUE(prediction.at(0).shape() == input.shape());
+  ASSERT_TRUE(prediction.at(1).shape() == kernels.shape());
+
+  // Test correct values
+  ASSERT_TRUE(prediction[0].AllClose(gt1, DataType(1e-5), DataType(1e-5)));
+  ASSERT_TRUE(prediction[1].AllClose(gt2, DataType(1e-5), DataType(1e-5)));
+}
