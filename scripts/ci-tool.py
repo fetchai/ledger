@@ -15,7 +15,7 @@ import fnmatch
 import shutil
 import multiprocessing
 import xml.etree.ElementTree as ET
-import run_integration_test
+#import run_integration_test
 
 BUILD_TYPES = ('Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel')
 MAX_CPUS = 7 # as defined by CI workflow
