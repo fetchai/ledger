@@ -21,7 +21,6 @@
 #include <set>
 
 namespace fetch {
-
 namespace network {
 
 /**

@@ -24,7 +24,7 @@ namespace ledger {
 using PendingConnectionCounter =
     network::AtomicInFlightCounter<network::AtomicCounterName::LOCAL_SERVICE_CONNECTIONS>;
 
-class ExecutorConnectorWorker : public network::AtomicStateMachine<ExecutorRpcClient::State>
+class ExecutorConnectorWorker
 {
 public:
   using Address         = ExecutorRpcClient::Address;
@@ -39,13 +39,14 @@ public:
 
   ExecutorConnectorWorker(Uri thepeer, Muddle &themuddle,
                           std::chrono::milliseconds thetimeout = std::chrono::milliseconds(10000))
-    : peer_(std::move(thepeer))
+    : state_machine_()
+    , peer_(std::move(thepeer))
     , timeduration_(std::move(thetimeout))
     , muddle_(themuddle)
+    , client_(std::make_shared<Client>("R:ExecCW", muddle_.AsEndpoint(), Muddle::Address(),
+                                       SERVICE_EXECUTOR, CHANNEL_RPC))
   {
-    client_ = std::make_shared<Client>("R:ExecCW", muddle_.AsEndpoint(), Muddle::Address(),
-                                       SERVICE_EXECUTOR, CHANNEL_RPC);
-    this->Allow(State::CONNECTING, State::INITIAL)
+    state_machine_.Allow(State::CONNECTING, State::INITIAL)
         .Allow(State::SUCCESS, State::CONNECTING)
         .Allow(State::TIMEDOUT, State::CONNECTING)
         .Allow(State::FAILED, State::CONNECTING);
@@ -64,14 +65,14 @@ public:
   {
     try
     {
-      this->AtomicStateMachine::Work();
+      state_machine_.Work();
     }
     catch (...)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Work threw.");
       throw;
     }
-    auto r = this->AtomicStateMachine::Get();
+    auto r = state_machine_.Get();
 
     switch (r)
     {
@@ -86,7 +87,7 @@ public:
     }
   }
 
-  virtual bool PossibleNewState(State &currentstate) override
+  bool PossibleNewState(State &currentstate)
   {
     if (currentstate == State::TIMEDOUT || currentstate == State::SUCCESS ||
         currentstate == State::FAILED)
@@ -130,11 +131,12 @@ public:
   }
 
 private:
+  network::AtomicStateMachine<ExecutorRpcClient::State> state_machine_;
   Uri                       peer_;
   std::chrono::milliseconds timeduration_;
   FutureTimepoint           timeout_;
-  std::shared_ptr<Client>   client_;
   Muddle &                  muddle_;
+  std::shared_ptr<Client>   client_;
   PendingConnectionCounter  counter_;
 };
 
