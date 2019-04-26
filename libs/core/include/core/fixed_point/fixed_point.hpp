@@ -261,6 +261,7 @@ public:
   static const FixedPoint CONST_2_INV_SQRTPI; /* 2/sqrt(pi) */
   static const FixedPoint CONST_SQRT2;        /* sqrt(2) */
   static const FixedPoint CONST_INV_SQRT2;    /* 1/sqrt(2) */
+  // Note: The primitive constants should be turned into constexpr
   static const Type       SMALLEST_FRACTION;
   static const Type       LARGEST_FRACTION;
   static const Type       MAX_INT;
