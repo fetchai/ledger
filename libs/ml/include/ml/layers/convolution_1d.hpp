@@ -17,14 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/layer.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/add.hpp"
+#include "ml/ops/convolution_1d.hpp"
 #include "ml/ops/flatten.hpp"
+#include "ml/ops/leaky_relu_op.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/subgraph.hpp"
+
 #include <cmath>
 #include <random>
 
@@ -33,7 +35,7 @@ namespace ml {
 namespace layers {
 
 template <class T>
-class FullyConnected : public Layer<T>
+class Convolution1D : public SubGraph<T>
 {
 public:
   using ArrayType    = T;
@@ -41,23 +43,25 @@ public:
   using SizeType     = typename ArrayType::SizeType;
   using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
 
-  FullyConnected(SizeType in, SizeType out,
-                 details::ActivationType activation_type = details::ActivationType::NOTHING,
-                 std::string const &name = "FC", WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
-    : Layer<T>(in, out)
+  Convolution1D(SizeType output_channels, SizeType input_channels, SizeType kernel_size,
+                SizeType                stride_size,
+                details::ActivationType activation_type = details::ActivationType::NOTHING,
+                std::string const &     name            = "Conv1D",
+                WeightsInit             init_mode       = WeightsInit::XAVIER_GLOROT)
+
+    : kernel_size_(kernel_size)
+    , input_channels_(input_channels)
+    , output_channels_(output_channels)
+    , stride_size_(stride_size)
   {
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
-    std::string flat_input =
-        this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_Flatten", {input});
+
     std::string weights =
         this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
-    std::string weights_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
-        name + "_MatrixMultiply", {flat_input, weights});
-    std::string bias =
-        this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Bias", {});
-    std::string output = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
-        name + "_Add", {weights_matmul, bias});
+
+    std::string output = this->template AddNode<fetch::ml::ops::Convolution1D<ArrayType>>(
+        name + "_Conv1D", {input, weights}, stride_size_);
 
     output = fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation",
                                                       output);
@@ -65,22 +69,35 @@ public:
     this->AddInputNode(input);
     this->SetOutputNode(output);
 
-    ArrayType weights_data(std::vector<SizeType>({in, out}));
+    ArrayType weights_data(
+        std::vector<SizeType>({output_channels_, input_channels_, kernel_size_}));
     this->Initialise(weights_data, init_mode);
     this->SetInput(weights, weights_data, false, false);
-
-    ArrayType bias_data(std::vector<SizeType>({1, out}));
-    this->SetInput(bias, bias_data, false, false);
   }
 
-  std::vector<SizeType> ComputeOutputShape(
+  virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
   {
-    (void)inputs;
-    return {1, this->out_size};
+    std::vector<typename ArrayType::SizeType> output_shape;
+    output_shape.push_back(output_channels_);
+    output_shape.push_back((inputs.at(0).get().shape()[1] - kernel_size_ + stride_size_) /
+                           stride_size_);
+    return output_shape;
   }
 
-  static constexpr char const *DESCRIPTOR = "FullyConnected";
+  static constexpr char const *DESCRIPTOR = "Convolution1D";
+
+private:
+  void Initialise(ArrayType &weights, WeightsInit init_mode)
+  {
+    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, input_channels_, output_channels_,
+                                                   init_mode);
+  }
+
+  SizeType kernel_size_;
+  SizeType input_channels_;
+  SizeType output_channels_;
+  SizeType stride_size_;
 };
 
 }  // namespace layers

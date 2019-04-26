@@ -48,8 +48,8 @@ public:
     // Kernels should be a 4D tensor [oC x iC x H x W]
     ASSERT(inputs.at(1).get().shape().size() == 4);
 
-    auto outputShape = ComputeOutputShape(inputs);
-    ASSERT(output.shape() == outputShape);
+    auto output_shape = ComputeOutputShape(inputs);
+    ASSERT(output.shape() == output_shape);
 
     ArrayType input   = inputs.at(0).get();
     ArrayType kernels = inputs.at(1).get();
@@ -58,8 +58,8 @@ public:
     SizeType output_channels = kernels.shape().at(0);
     SizeType kernel_height   = kernels.shape().at(2);
     SizeType kernel_width    = kernels.shape().at(3);
-    SizeType output_height   = outputShape.at(1);
-    SizeType output_width    = outputShape.at(2);
+    SizeType output_height   = output_shape.at(1);
+    SizeType output_width    = output_shape.at(2);
 
     SizeType horizontal_stride_width  = kernel_width * kernel_height * input_channels;
     SizeType horizontal_stride_height = output_height * output_width;
@@ -95,11 +95,11 @@ public:
     // Kernels should be a 4D tensor [oC x iC x H x W]
     ASSERT(inputs.at(1).get().shape().size() == 4);
 
-    auto outputShape = ComputeOutputShape(inputs);
-    ASSERT(errorSignal.shape() == outputShape);
+    auto output_shape = ComputeOutputShape(inputs);
+    ASSERT(errorSignal.shape() == output_shape);
 
-    SizeType output_height = outputShape.at(1);
-    SizeType output_width  = outputShape.at(2);
+    SizeType output_height = output_shape.at(1);
+    SizeType output_width  = output_shape.at(2);
 
     ArrayType input   = inputs.at(0).get();
     ArrayType kernels = inputs.at(1).get();
@@ -149,15 +149,15 @@ public:
   std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
   {
-    std::vector<typename ArrayType::SizeType> outputShape;
-    outputShape.push_back(inputs.at(1).get().shape()[0]);
-    outputShape.push_back(
+    std::vector<typename ArrayType::SizeType> output_shape;
+    output_shape.push_back(inputs.at(1).get().shape()[0]);
+    output_shape.push_back(
         (inputs.at(0).get().shape()[1] - inputs.at(1).get().shape()[2] + stride_size_) /
         stride_size_);
-    outputShape.push_back(
+    output_shape.push_back(
         (inputs.at(0).get().shape()[2] - inputs.at(1).get().shape()[3] + stride_size_) /
         stride_size_);
-    return outputShape;
+    return output_shape;
   }
 
   static constexpr char const *DESCRIPTOR = "Convolution2D";
