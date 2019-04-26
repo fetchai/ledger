@@ -35,7 +35,7 @@ TYPED_TEST(LeakyReluTest, forward_test)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType  = typename TypeParam::SizeType;
 
   ArrayType           data(8);
   ArrayType           gt(8);
@@ -59,7 +59,7 @@ TYPED_TEST(LeakyReluTest, forward_3d_tensor_test)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType  = typename TypeParam::SizeType;
 
   ArrayType           data({2, 2, 2});
   ArrayType           gt({2, 2, 2});
@@ -91,7 +91,7 @@ TYPED_TEST(LeakyReluTest, backward_test)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
-  using SizeType = typename TypeParam::SizeType;
+  using SizeType  = typename TypeParam::SizeType;
 
   ArrayType           data(8);
   ArrayType           error(8);
