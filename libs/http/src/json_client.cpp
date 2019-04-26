@@ -177,13 +177,11 @@ bool JsonClient::Request(Method method, ConstByteArray const &endpoint, Headers 
   }
 
   fetch::http::HTTPResponse http_response;
-  if (client_->Request(http_request, http_response))
-  {
-    success = true;
+  success = client_->Request(http_request, http_response);
 
-    json::JSONDocument doc(http_response.body());
-    response = doc.root();
-  }
+  // attempt to parse the body
+  json::JSONDocument doc(http_response.body());
+  response = doc.root();
 
   return success;
 }
