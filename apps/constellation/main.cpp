@@ -178,7 +178,6 @@ struct CommandLineArguments
     p.add(args.cfg.disable_signing,       "disable-signing",       "Do not sign outbound packets or verify those inbound, in trusted network",      bool{});
     p.add(args.cfg.sign_broadcasts,       "sign-broadcasts",       "Sign and verify broadcast packets",      bool{});
     p.add(args.cfg.standalone,            "standalone",            "Expect the node to run in on its own (useful for testing and development)",     false);
-    p.add(args.cfg.synergetic_mine,       "synergetic-mine",       "Mines solutions to synergetic contracts.",                                      true);
     // clang-format on
 
     // parse the args
