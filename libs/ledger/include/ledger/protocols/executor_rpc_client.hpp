@@ -54,10 +54,9 @@ public:
 
   std::shared_ptr<Client> client;
 
-  explicit ExecutorRpcClient(NetworkManager const &tm, Muddle &muddle)
+  explicit ExecutorRpcClient(Muddle &muddle)
     : client_(std::make_shared<Client>("R:Exec", muddle.AsEndpoint(), Muddle::Address(),
                                        SERVICE_EXECUTOR, CHANNEL_RPC))
-    , network_manager_(tm)
   {}
 
   void Connect(Muddle &muddle, Uri uri,
@@ -98,9 +97,8 @@ private:
     TIMEDOUT
   };
 
-  ClientPtr      client_;
-  NetworkManager network_manager_;
-  ServicePtr     service_;
+  ClientPtr  client_;
+  ServicePtr service_;
 
   using Worker                  = ExecutorConnectorWorker;
   using WorkerP                 = std::shared_ptr<Worker>;
