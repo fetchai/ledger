@@ -21,6 +21,7 @@
 #include "core/commandline/params.hpp"
 #include "core/json/document.hpp"
 #include "core/macros.hpp"
+#include "core/string/to_lower.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "metrics/metrics.hpp"
@@ -41,6 +42,8 @@
 #include <string>
 #include <system_error>
 #include <vector>
+#include <cstdlib>
+#include <sstream>
 
 namespace {
 
@@ -52,8 +55,50 @@ using ProverPtr      = std::shared_ptr<Prover>;
 using ConstByteArray = fetch::byte_array::ConstByteArray;
 using ByteArray      = fetch::byte_array::ByteArray;
 
+std::unordered_set<std::string> const BOOL_TRUE_STRINGS{"true", "enabled", "on", "yes", "1"};
+std::unordered_set<std::string> const BOOL_FALSE_STRINGS{"false", "disabled", "off", "no", "0"};
+
 std::atomic<fetch::Constellation *> gConstellationInstance{nullptr};
 std::atomic<std::size_t>            gInterruptCount{0};
+
+template <typename Value, typename Container>
+bool IsIn(Container const &container, Value const &value)
+{
+  return container.find(value) != container.end();
+}
+
+template <typename T>
+void UpdateConfigFromEnvironment(T &value, char const *name)
+{
+  char *environment_value = std::getenv(name);
+
+  if (environment_value != nullptr)
+  {
+    std::istringstream oss{std::string(environment_value)};
+    oss >> value;
+  }
+}
+
+void UpdateConfigFromEnvironment(bool &value, char const *name)
+{
+  char *environment_value = std::getenv(name);
+
+  if (environment_value != nullptr)
+  {
+    std::string string_value{environment_value};
+    fetch::string::ToLower(string_value);
+
+    if (IsIn(BOOL_TRUE_STRINGS, string_value))
+    {
+      value = true;
+    }
+    else if (IsIn(BOOL_FALSE_STRINGS, string_value))
+    {
+      value = false;
+    }
+  }
+}
+
 
 // REVIEW: Move to platform
 uint32_t Log2(uint32_t value)
@@ -182,6 +227,33 @@ struct CommandLineArguments
 
     // parse the args
     p.Parse(argc, argv);
+
+    // if the user has specified any environment variables these always take precedence
+    // clang-format off
+    UpdateConfigFromEnvironment(args.port,                      "CONSTELLATION_PORT");
+    UpdateConfigFromEnvironment(args.cfg.num_executors,         "CONSTELLATION_EXECUTORS");
+    UpdateConfigFromEnvironment(num_lanes,                      "CONSTELLATION_LANES");
+    UpdateConfigFromEnvironment(args.cfg.num_slices,            "CONSTELLATION_SLICES");
+    UpdateConfigFromEnvironment(raw_peers,                      "CONSTELLATION_PEERS");
+    UpdateConfigFromEnvironment(args.cfg.db_prefix,             "CONSTELLATION_DB_PREFIX");
+    UpdateConfigFromEnvironment(args.network_name,              "CONSTELLATION_NETWORK");
+    UpdateConfigFromEnvironment(args.cfg.interface_address,     "CONSTELLATION_INTERFACE");
+    UpdateConfigFromEnvironment(args.cfg.block_interval_ms,     "CONSTELLATION_BLOCK_INTERVAL");
+    UpdateConfigFromEnvironment(args.token,                     "CONSTELLATION_TOKEN");
+    UpdateConfigFromEnvironment(args.external_address,          "CONSTELLATION_EXTERNAL");
+    UpdateConfigFromEnvironment(bootstrap_address,              "CONSTELLATION_BOOTSTRAP");
+    UpdateConfigFromEnvironment(args.discoverable,              "CONSTELLATION_DISCOVERABLE");
+    UpdateConfigFromEnvironment(args.host_name,                 "CONSTELLATION_HOST_NAME");
+    UpdateConfigFromEnvironment(config_path,                    "CONSTELLATION_CONFIG");
+    UpdateConfigFromEnvironment(args.cfg.processor_threads,     "CONSTELLATION_PROCESSOR_THREADS");
+    UpdateConfigFromEnvironment(args.cfg.verification_threads,  "CONSTELLATION_VERIFIER_THREADS");
+    UpdateConfigFromEnvironment(args.cfg.max_peers,             "CONSTELLATION_MAX_PEERS");
+    UpdateConfigFromEnvironment(args.cfg.transient_peers,       "CONSTELLATION_TRANSIENT_PEERS");
+    UpdateConfigFromEnvironment(args.cfg.peers_update_cycle_ms, "CONSTELLATION_PEERS_UPDATE_CYCLE_MS");
+    UpdateConfigFromEnvironment(args.cfg.disable_signing,       "CONSTELLATION_DISABLE_SIGNING");
+    UpdateConfigFromEnvironment(args.cfg.sign_broadcasts,       "CONSTELLATION_SIGN_BROADCASTS");
+    UpdateConfigFromEnvironment(args.cfg.standalone,            "CONSTELLATION_STANDALONE");
+    // clang-format on
 
     // update the peers
     args.SetPeers(raw_peers);
