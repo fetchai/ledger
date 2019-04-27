@@ -42,7 +42,7 @@ Client::Client(std::string name, MuddleEndpoint &endpoint, Address address, uint
     {
       ProcessServerMessage(promise->value());
     }
-    catch (std::exception &ex)
+    catch (std::exception const &ex)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Client::ProcessServerMessage EX ", ex.what());
     }
@@ -118,7 +118,7 @@ bool Client::DeliverRequest(network::message_type const &data)
 
     return true;
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Erk! Exception in endpoint_.Exchange ", "@prom=", ident, " ",
                     e.what());

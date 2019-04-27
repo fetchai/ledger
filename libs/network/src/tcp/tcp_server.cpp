@@ -92,7 +92,7 @@ void TCPServer::Start()
           FETCH_LOG_DEBUG(LOGGING_NAME, "Accepting TCP server connections");
         }
       }
-      catch (std::exception &e)
+      catch (std::exception const &e)
       {
         FETCH_LOG_ERROR(LOGGING_NAME, "Failed to open socket: ", port_, " with error: ", e.what());
       }
