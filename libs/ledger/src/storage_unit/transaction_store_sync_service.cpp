@@ -93,7 +93,7 @@ TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, Mudd
                                   &TransactionStoreSyncService::OnTrimCache);
 
   state_machine_->OnStateChange([](State new_state, State /* old_state */) {
-    (void)new_state;
+    FETCH_UNUSED(new_state);
     FETCH_LOG_DEBUG(LOGGING_NAME, "Updating state to: ", ToString(new_state));
   });
 }
