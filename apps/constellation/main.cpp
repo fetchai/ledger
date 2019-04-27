@@ -168,7 +168,7 @@ struct CommandLineArguments
     p.add(args.token,                     "token",                 "The authentication token to be used with bootstrapping the client",             std::string{});
     p.add(args.external_address,          "external",              "This node's global IP address",                                                 std::string{});
     p.add(bootstrap_address,              "bootstrap",             "Src address for network bootstrap",                                             std::string{});
-    p.add(args.discoverable,              "discoverable",          "The client is will to be listed as accepting connections to bootstrap",         false);
+    p.add(args.discoverable,              "discoverable",          "Signal that the client is willing to be listed on the bootstrap server",        false);
     p.add(args.host_name,                 "host-name",             "The hostname / identifier for this node",                                       std::string{});
     p.add(config_path,                    "config",                "The path to the manifest configuration",                                        std::string{});
     p.add(args.cfg.processor_threads,     "processor-threads",     "The number of processor threads",                                               uint32_t{std::thread::hardware_concurrency()});

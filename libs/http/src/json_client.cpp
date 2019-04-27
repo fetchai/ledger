@@ -90,7 +90,7 @@ JsonClient JsonClient::CreateFromUrl(std::string const &url)
 
   if (port.matched)
   {
-    // convert the port from
+    // convert the port to a integer (from a string)
     uint16_t const port_value = static_cast<uint16_t>(std::atoi(port.first.base()));
     return JsonClient{mode, host, port_value};
   }

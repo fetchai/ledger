@@ -344,14 +344,13 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   // Step 2. Main monitor loop
   //---------------------------------------------------------------
 
-  bool ready{false};
+  bool start_up_in_progress{true};
 
   // monitor loop
   while (active_)
   {
     // determine the status of the main chain server
-    bool const is_in_sync =
-        ledger::MainChainRpcService::State::SYNCHRONISED == main_chain_service_->state();
+    bool const is_in_sync = main_chain_service_->IsSynced() && block_coordinator_.IsSynced();
 
     // control from the top level block production based on the chain sync state
     block_coordinator_.EnableMining(is_in_sync);
@@ -360,12 +359,19 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
     std::this_thread::sleep_for(std::chrono::milliseconds{500});
 
     // detect the first time that we have fully synced
-    if (BlockCoordinator::State::SYNCHRONIZED == block_coordinator_.GetStateMachine().state() &&
-        (!ready))
+    if (start_up_in_progress && is_in_sync)
     {
-      // attach the bootstrap monitor (if one exists) to the reactor
+      // Attach the bootstrap monitor (if one exists) to the reactor at this point. This starts the
+      // monitor state machine. If one doesn't exist (empty weak pointer) then the reactor will
+      // simply discard this piece of work.
+      //
+      // Starting this state machine begins period notify calls to the bootstrap server. This
+      // importantly triggers the bootstrap service to start listing this node as available for
+      // client connections. By delaying these notify() calls to the point when the node believes
+      // it has successfully
+      //
       reactor_.Attach(bootstrap_monitor);
-      ready = true;
+      start_up_in_progress = false;
 
       FETCH_LOG_INFO(LOGGING_NAME, "Startup complete");
     }

@@ -97,6 +97,11 @@ public:
     return state_machine_->state();
   }
 
+  bool IsSynced() const
+  {
+    return (State::SYNCHRONISED == state());
+  }
+
   // Operators
   MainChainRpcService &operator=(MainChainRpcService const &) = delete;
   MainChainRpcService &operator=(MainChainRpcService &&) = delete;

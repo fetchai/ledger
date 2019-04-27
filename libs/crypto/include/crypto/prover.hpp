@@ -54,6 +54,7 @@ public:
    * @return The generated signature if successful, otherwise return empty byte array
    */
   virtual ConstByteArray Sign(ConstByteArray const &message) = 0;
+
   /// @}
 };
 

@@ -40,23 +40,24 @@ const std::chrono::seconds UPDATE_INTERVAL{30};
 constexpr char const *     LOGGING_NAME = "bootstrap";
 
 /**
- * Helper object containing all the fields required to make the attenstation
+ * Helper object containing all the fields required to make the attestation
  */
 struct Attestation
 {
   ConstByteArray const public_key;
   ConstByteArray const nonce{GenerateNonce()};
-  ConstByteArray const challenge;
+  ConstByteArray const attestation;
   ConstByteArray const signature;
 
   /**
-   * Build an attenstation based on the
-   * @param entity
+   * Build an attestation based on the a specified private/public key pair
+   *
+   * @param entity The private/public key pair to be used to signed the attestation
    */
   explicit Attestation(BootstrapMonitor::ProverPtr const &entity)
     : public_key{entity->identity().identifier()}
-    , challenge{public_key + nonce}
-    , signature{entity->Sign(challenge)}
+    , attestation{public_key + nonce}
+    , signature{entity->Sign(attestation)}
   {}
 
   /**
@@ -107,7 +108,7 @@ http::JsonClient::Headers BuildHeaders(std::string const &token)
 /**
  * Build a bootstrap monitor client
  *
- * @param entity The private/public key pair used for identifiy this node
+ * @param entity The private/public key pair used to identify this node
  * @param p2p_port The listening p2p port
  * @param network_name The name of the network that the use wants to join
  * @param token The authorization token to join this network
@@ -138,7 +139,7 @@ bool BootstrapMonitor::DiscoverPeers(UriList &peers, std::string const &external
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Bootstrapping network node @ ", BOOTSTRAP_HOST);
 
-  // query our external address if non has been provided
+  // query our external address if one has not been provided
   if (!external_address.empty())
   {
     external_address_ = external_address;
