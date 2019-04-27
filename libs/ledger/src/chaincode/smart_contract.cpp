@@ -64,12 +64,19 @@ ConstByteArray GenerateDigest(std::string const &source)
  */
 void ValidateAddressesInParams(Transaction const &tx, vm::ParameterPack const &params)
 {
-  // TODO(issue 772): This doesn't work with a set
-  std::unordered_set<ConstByteArray> valid_addresses;
+  std::set<ConstByteArray> valid_addresses;
 
+  std::cerr << "Validating " << tx.signatures().size() << " addresses\n";
   for (auto const &sig : tx.signatures())
   {
+    std::cerr << byte_array::ToBase64(sig.second.signature_data) << ": "
+              << byte_array::ToBase64(sig.second.type) << '\n';
     valid_addresses.insert(sig.first.identifier());
+  }
+  assert(valid_addresses.size() == tx.signatures().size());
+  for (auto const &addr : valid_addresses)
+  {
+    std::cerr << byte_array::ToBase64(addr) << '\n';
   }
 
   for (std::size_t i = 0; i < params.size(); i++)
