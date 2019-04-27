@@ -72,6 +72,7 @@ public:
   using EventNewTransaction   = std::function<void(VerifiedTransaction const &)>;
   using TrimCacheCallback     = std::function<void()>;
   using State                 = tx_sync::State;
+  using StateMachine          = core::StateMachine<State>;
   using ObjectStorePtr        = std::shared_ptr<ObjectStore>;
   using LaneControllerPtr     = std::shared_ptr<LaneController>;
 
@@ -154,12 +155,12 @@ private:
   State OnResolvingObjects();
   State OnTrimCache();
 
-  std::shared_ptr<core::StateMachine<State>> state_machine_;
-  Config const                               cfg_;
-  MuddlePtr                                  muddle_;
-  ClientPtr                                  client_;
-  ObjectStorePtr                             store_;  ///< The pointer to the object store
-  TransactionVerifier                        verifier_;
+  std::shared_ptr<StateMachine> state_machine_;
+  Config const                  cfg_;
+  MuddlePtr                     muddle_;
+  ClientPtr                     client_;
+  ObjectStorePtr                store_;  ///< The pointer to the object store
+  TransactionVerifier           verifier_;
 
   FutureTimepoint timeout_;
   FutureTimepoint promise_wait_timeout_;
