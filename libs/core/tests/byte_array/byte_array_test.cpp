@@ -23,7 +23,6 @@
 
 #include <iostream>
 #include <set>
-#include <unordered_set>
 
 namespace fetch {
 namespace byte_array {
