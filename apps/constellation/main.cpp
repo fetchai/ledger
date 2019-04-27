@@ -470,6 +470,9 @@ ProverPtr GenerateP2PKey()
 {
   static constexpr char const *KEY_FILENAME = "p2p.key";
 
+  std::string key_path{KEY_FILENAME};
+  UpdateConfigFromEnvironment(key_path, "CONSTELLATION_KEY_PATH");
+
   using Signer    = fetch::crypto::ECDSASigner;
   using SignerPtr = std::shared_ptr<Signer>;
 
@@ -478,7 +481,7 @@ ProverPtr GenerateP2PKey()
 
   // Step 1. Attempt to load the existing key
   {
-    std::ifstream input_file(KEY_FILENAME, std::ios::in | std::ios::binary);
+    std::ifstream input_file(key_path.c_str(), std::ios::in | std::ios::binary);
 
     if (input_file.is_open())
     {
