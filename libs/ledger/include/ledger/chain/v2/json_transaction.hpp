@@ -17,6 +17,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/ml/activation_functions/relu.hpp"
-#include "math/ml/activation_functions/sigmoid.hpp"
-#include "math/ml/activation_functions/softmax.hpp"
+namespace fetch {
+namespace variant {
+class Variant;
+}
+namespace ledger {
+namespace v2 {
+
+class Transaction;
+
+bool FromJsonTransaction(variant::Variant const &src, Transaction &dst);
+bool ToJsonTransaction(Transaction const &src, variant::Variant &dst,
+                       bool include_metadata = false);
+
+}  // namespace v2
+}  // namespace ledger
+}  // namespace fetch

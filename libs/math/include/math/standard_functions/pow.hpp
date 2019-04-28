@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
@@ -32,14 +33,10 @@ meta::IfIsNonFixedPointArithmetic<Type, void> Pow(Type const &x, Type const &y, 
   ret = std::pow(x, y);
 }
 
-// TODO(800) - native implementations of fixed point are required; casting to double will not be
-// permissible
 template <typename T>
 meta::IfIsFixedPoint<T, void> Pow(T const &x, T const &y, T &ret)
 {
-  double tmp_ret;
-  Pow(double(x), double(y), tmp_ret);
-  ret = T(tmp_ret);
+  ret = T::Pow(x, y);
 }
 
 //////////////////
@@ -65,10 +62,7 @@ meta::IfIsMathArray<ArrayType, void> Pow(ArrayType const &               array1,
   while (arr_it.is_valid())
   {
     *rit = 1;
-    for (std::size_t i{0}; i < exponent; ++i)
-    {
-      *rit *= (*arr_it);
-    }
+    Pow(*arr_it, exponent, *rit);
     ++arr_it;
     ++rit;
   }

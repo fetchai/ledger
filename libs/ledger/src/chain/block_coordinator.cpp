@@ -607,7 +607,7 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
     // trigger the execution of the block
     next_state = State::EXECUTE_NEW_BLOCK;
   }
-  catch (std::exception &ex)
+  catch (std::exception const &ex)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Error generated performing block packing: ", ex.what());
   }

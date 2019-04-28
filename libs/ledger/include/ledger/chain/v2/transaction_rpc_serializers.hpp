@@ -17,6 +17,35 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/ml/loss_functions/cross_entropy.hpp"
-#include "math/ml/loss_functions/l2_norm.hpp"
-#include "math/ml/loss_functions/mean_square_error.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/v2/transaction_serializer.hpp"
+
+namespace fetch {
+namespace ledger {
+namespace v2 {
+
+template <typename T>
+void Serialize(T &s, Transaction const &tx)
+{
+  TransactionSerializer serializer{};
+  serializer << tx;
+
+  s << serializer.data();
+}
+
+template <typename T>
+void Deserialize(T &s, Transaction &tx)
+{
+  // extract the data from the stream
+  byte_array::ConstByteArray data;
+  s >> data;
+
+  // create and extract the serializer
+  TransactionSerializer serializer{data};
+  serializer >> tx;
+}
+
+}  // namespace v2
+}  // namespace ledger
+}  // namespace fetch

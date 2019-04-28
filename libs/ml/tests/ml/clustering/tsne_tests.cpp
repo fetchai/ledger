@@ -60,27 +60,27 @@ TypeParam RunTest(typename TypeParam::SizeType n_data_size,
   // Generate easily separable clusters of data
   for (SizeType i = 0; i < 25; ++i)
   {
-    A.Set({i, 0}, -static_cast<DataType>(i) - static_cast<DataType>(50));
-    A.Set({i, 1}, -static_cast<DataType>(i) - static_cast<DataType>(50));
-    A.Set({i, 2}, -static_cast<DataType>(i) - static_cast<DataType>(50));
+    A.Set(i, SizeType{0}, -static_cast<DataType>(i) - static_cast<DataType>(50));
+    A.Set(i, SizeType{1}, -static_cast<DataType>(i) - static_cast<DataType>(50));
+    A.Set(i, SizeType{2}, -static_cast<DataType>(i) - static_cast<DataType>(50));
   }
   for (SizeType i = 25; i < 50; ++i)
   {
-    A.Set({i, 0}, -static_cast<DataType>(i) - static_cast<DataType>(50));
-    A.Set({i, 1}, static_cast<DataType>(i) + static_cast<DataType>(50));
-    A.Set({i, 2}, static_cast<DataType>(i) + static_cast<DataType>(50));
+    A.Set(i, SizeType{0}, -static_cast<DataType>(i) - static_cast<DataType>(50));
+    A.Set(i, SizeType{1}, static_cast<DataType>(i) + static_cast<DataType>(50));
+    A.Set(i, SizeType{2}, static_cast<DataType>(i) + static_cast<DataType>(50));
   }
   for (SizeType i = 50; i < 75; ++i)
   {
-    A.Set({i, 0}, static_cast<DataType>(i) + static_cast<DataType>(50));
-    A.Set({i, 1}, -static_cast<DataType>(i) - static_cast<DataType>(50));
-    A.Set({i, 2}, -static_cast<DataType>(i) - static_cast<DataType>(50));
+    A.Set(i, SizeType{0}, static_cast<DataType>(i) + static_cast<DataType>(50));
+    A.Set(i, SizeType{1}, -static_cast<DataType>(i) - static_cast<DataType>(50));
+    A.Set(i, SizeType{2}, -static_cast<DataType>(i) - static_cast<DataType>(50));
   }
   for (SizeType i = 75; i < 100; ++i)
   {
-    A.Set({i, 0}, static_cast<DataType>(i) + static_cast<DataType>(50));
-    A.Set({i, 1}, static_cast<DataType>(i) + static_cast<DataType>(50));
-    A.Set({i, 2}, static_cast<DataType>(i) + static_cast<DataType>(50));
+    A.Set(i, SizeType{0}, static_cast<DataType>(i) + static_cast<DataType>(50));
+    A.Set(i, SizeType{1}, static_cast<DataType>(i) + static_cast<DataType>(50));
+    A.Set(i, SizeType{2}, static_cast<DataType>(i) + static_cast<DataType>(50));
   }
 
   fetch::ml::TSNE<ArrayType> tsn(A, N_OUTPUT_FEATURE_SIZE, PERPLEXITY, RANDOM_SEED);
@@ -141,14 +141,14 @@ TEST(TsneTests, tsne_test_2d_fixed_point)
   ASSERT_EQ(output_matrix.shape().at(0), N_DATA_SIZE);
   ASSERT_EQ(output_matrix.shape().at(1), N_OUTPUT_FEATURE_SIZE);
 
-  EXPECT_NEAR(double(output_matrix.At(0, 0)), 0.25323880254290997982025146484375, 1e-12);
-  EXPECT_NEAR(double(output_matrix.At(0, 1)), -3.17587922653183341026306152343750, 1e-12);
-  EXPECT_NEAR(double(output_matrix.At(25, 0)), -1.75773554784245789051055908203125, 1e-12);
-  EXPECT_NEAR(double(output_matrix.At(25, 1)), 2.62657403736375272274017333984375, 1e-12);
-  EXPECT_NEAR(double(output_matrix.At(50, 0)), 0.23583724093623459339141845703125, 1e-12);
-  EXPECT_NEAR(double(output_matrix.At(50, 1)), 1.67974892887286841869354248046875, 1e-12);
-  EXPECT_NEAR(double(output_matrix.At(99, 0)), -0.87261968106031417846679687500000, 1e-12);
-  EXPECT_NEAR(double(output_matrix.At(99, 1)), 3.04633120773360133171081542968750, 1e-12);
+  EXPECT_NEAR(double(output_matrix.At(0, 0)), 0.25323880254290997982025146484375, 2e-6);
+  EXPECT_NEAR(double(output_matrix.At(0, 1)), -3.17587922653183341026306152343750, 3e-6);
+  EXPECT_NEAR(double(output_matrix.At(25, 0)), -1.75773554784245789051055908203125, 2e-6);
+  EXPECT_NEAR(double(output_matrix.At(25, 1)), 2.62657403736375272274017333984375, 4e-6);
+  EXPECT_NEAR(double(output_matrix.At(50, 0)), 0.23583724093623459339141845703125, 2e-6);
+  EXPECT_NEAR(double(output_matrix.At(50, 1)), 1.67974892887286841869354248046875, 1e-6);
+  EXPECT_NEAR(double(output_matrix.At(99, 0)), -0.87261968106031417846679687500000, 1e-6);
+  EXPECT_NEAR(double(output_matrix.At(99, 1)), 3.04633120773360133171081542968750, 2e-6);
 }
 
 TYPED_TEST(TsneTests, tsne_test_2d_cross_type_consistency_test)

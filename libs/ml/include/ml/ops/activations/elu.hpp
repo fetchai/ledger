@@ -43,7 +43,7 @@ public:
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                             ArrayType &                                                 output)
   {
-    assert(inputs.size() == 1);
+    ASSERT(inputs.size() == 1);
     fetch::math::Elu(inputs.front().get(), a_, output);
     return output;
   }
@@ -52,8 +52,8 @@ public:
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
-    assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == errorSignal.shape());
+    ASSERT(inputs.size() == 1);
+    ASSERT(inputs.front().get().shape() == errorSignal.shape());
     ArrayType returnSignal{errorSignal.shape()};
     ArrayType t{inputs.front().get().shape()};
 

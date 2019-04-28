@@ -33,24 +33,24 @@ public:
   using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  Softmax()          = default;
-  virtual ~Softmax() = default;
+  Softmax()  = default;
+  ~Softmax() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                    ArrayType &                                                 output)
   {
     ASSERT(output.shape() == ComputeOutputShape(inputs));
-    assert(inputs.size() == 1);
+    ASSERT(inputs.size() == 1);
     fetch::math::Softmax(inputs[0].get(), output);
     return output;
   }
 
-  virtual std::vector<ArrayType> Backward(
+  std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
-    assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == errorSignal.shape());
+    ASSERT(inputs.size() == 1);
+    ASSERT(inputs.front().get().shape() == errorSignal.shape());
 
     ArrayType returnSignal = errorSignal.Copy();
     ArrayType t(this->ComputeOutputShape(inputs));
@@ -62,8 +62,8 @@ public:
     return {returnSignal};
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
   {
     return inputs.front().get().shape();
   }

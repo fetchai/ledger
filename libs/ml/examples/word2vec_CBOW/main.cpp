@@ -125,9 +125,9 @@ int main(int ac, char **av)
       g.SetInput("Input", data.first);
       ArrayType predictions = g.Evaluate("Softmax").Copy();
       ArrayType groundTruth(predictions.shape());
-      groundTruth.At(data.second) = DataType(1);
+      groundTruth.At(0, data.second) = DataType(1);
 
-      SizeType argmax(SizeType(ArgMax(predictions).At(0)));
+      SizeType argmax{SizeType(ArgMax(predictions, SizeType(1)).At(0))};
       if (iteration % 100 == 0 || argmax == data.second)
       {
         for (unsigned int i(0); i < p.n_data_buffers + 1; ++i)

@@ -40,20 +40,21 @@ TYPED_TEST_CASE(EuclideanTest, MyTypes);
 TYPED_TEST(EuclideanTest, simple_test)
 {
   using DataType  = typename TypeParam::Type;
+  using SizeType  = typename TypeParam::SizeType;
   using ArrayType = TypeParam;
 
   ArrayType A = ArrayType(4);
-  A.Set({0}, DataType(1));
-  A.Set({1}, DataType(2));
-  A.Set({2}, DataType(3));
-  A.Set({3}, DataType(4));
+  A.Set(SizeType{0}, DataType(1));
+  A.Set(SizeType{1}, DataType(2));
+  A.Set(SizeType{2}, DataType(3));
+  A.Set(SizeType{3}, DataType(4));
   EXPECT_EQ(double(Euclidean(A, A)), 0);
 
   ArrayType B = ArrayType(4);
-  B.Set({0}, DataType(1));
-  B.Set({1}, DataType(2));
-  B.Set({2}, DataType(3));
-  B.Set({3}, DataType(2));
+  B.Set(SizeType{0}, DataType(1));
+  B.Set(SizeType{1}, DataType(2));
+  B.Set(SizeType{2}, DataType(3));
+  B.Set(SizeType{3}, DataType(2));
 
   EXPECT_EQ(double(Euclidean(A, B)), 2);
 }
@@ -61,39 +62,40 @@ TYPED_TEST(EuclideanTest, simple_test)
 TYPED_TEST(EuclideanTest, matrix_euclidean_test)
 {
   using DataType  = typename TypeParam::Type;
+  using SizeType  = typename TypeParam::SizeType;
   using ArrayType = TypeParam;
 
   ArrayType A = ArrayType({3, 4});
-  A.Set({0, 0}, DataType(1));
-  A.Set({0, 1}, DataType(2));
-  A.Set({0, 2}, DataType(3));
-  A.Set({0, 3}, DataType(4));
+  A.Set(SizeType{0}, SizeType{0}, DataType(1));
+  A.Set(SizeType{0}, SizeType{1}, DataType(2));
+  A.Set(SizeType{0}, SizeType{2}, DataType(3));
+  A.Set(SizeType{0}, SizeType{3}, DataType(4));
 
-  A.Set({1, 0}, DataType(2));
-  A.Set({1, 1}, DataType(3));
-  A.Set({1, 2}, DataType(4));
-  A.Set({1, 3}, DataType(5));
+  A.Set(SizeType{1}, SizeType{0}, DataType(2));
+  A.Set(SizeType{1}, SizeType{1}, DataType(3));
+  A.Set(SizeType{1}, SizeType{2}, DataType(4));
+  A.Set(SizeType{1}, SizeType{3}, DataType(5));
 
-  A.Set({2, 0}, DataType(3));
-  A.Set({2, 1}, DataType(4));
-  A.Set({2, 2}, DataType(5));
-  A.Set({2, 3}, DataType(6));
+  A.Set(SizeType{2}, SizeType{0}, DataType(3));
+  A.Set(SizeType{2}, SizeType{1}, DataType(4));
+  A.Set(SizeType{2}, SizeType{2}, DataType(5));
+  A.Set(SizeType{2}, SizeType{3}, DataType(6));
 
   ArrayType B = ArrayType({3, 4});
-  B.Set({0, 0}, DataType(-1));
-  B.Set({0, 1}, DataType(-2));
-  B.Set({0, 2}, DataType(-3));
-  B.Set({0, 3}, DataType(-4));
+  B.Set(SizeType{0}, SizeType{0}, DataType(-1));
+  B.Set(SizeType{0}, SizeType{1}, DataType(-2));
+  B.Set(SizeType{0}, SizeType{2}, DataType(-3));
+  B.Set(SizeType{0}, SizeType{3}, DataType(-4));
 
-  B.Set({1, 0}, DataType(-2));
-  B.Set({1, 1}, DataType(-3));
-  B.Set({1, 2}, DataType(-4));
-  B.Set({1, 3}, DataType(-5));
+  B.Set(SizeType{1}, SizeType{0}, DataType(-2));
+  B.Set(SizeType{1}, SizeType{1}, DataType(-3));
+  B.Set(SizeType{1}, SizeType{2}, DataType(-4));
+  B.Set(SizeType{1}, SizeType{3}, DataType(-5));
 
-  B.Set({2, 0}, DataType(-3));
-  B.Set({2, 1}, DataType(-4));
-  B.Set({2, 2}, DataType(-5));
-  B.Set({2, 3}, DataType(-6));
+  B.Set(SizeType{2}, SizeType{0}, DataType(-3));
+  B.Set(SizeType{2}, SizeType{1}, DataType(-4));
+  B.Set(SizeType{2}, SizeType{2}, DataType(-5));
+  B.Set(SizeType{2}, SizeType{3}, DataType(-6));
 
   ArrayType ret = EuclideanMatrix(A, B, 0);
 

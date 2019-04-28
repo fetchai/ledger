@@ -24,7 +24,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Convolution : public BatchOps<T>
+class Convolution2D : public BatchOps<T>
 {
 public:
   using ArrayType    = T;
@@ -32,11 +32,11 @@ public:
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  Convolution()          = default;
-  virtual ~Convolution() = default;
+  Convolution2D()  = default;
+  ~Convolution2D() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                    ArrayType &                                                 output)
   {
     ASSERT(inputs.size() == 2);
     // Input should be a 3D tensor [C x H x W]
@@ -46,20 +46,20 @@ public:
 
     auto outputShape = ComputeOutputShape(inputs);
     ASSERT(output.shape() == outputShape);
-    for (uint64_t i(0); i < outputShape[0]; ++i)  // Iterate over output channels
+    for (SizeType i(0); i < outputShape[0]; ++i)  // Iterate over output channels
     {
       for (SizeType j{0}; j < outputShape[1]; ++j)  // Iterate over output height
       {
         for (SizeType k{0}; k < outputShape[2]; ++k)  // Iterate over output width
         {
           typename ArrayType::Type sum(0);
-          for (uint64_t ki(0); ki < inputs.at(1).get().shape()[1];
+          for (SizeType ki(0); ki < inputs.at(1).get().shape()[1];
                ki++)  // Iterate over Input channel
           {
-            for (uint64_t kj(0); kj < inputs.at(1).get().shape()[2];
+            for (SizeType kj(0); kj < inputs.at(1).get().shape()[2];
                  kj++)  // Iterate over kernel height
             {
-              for (uint64_t kk(0); kk < inputs.at(1).get().shape()[3];
+              for (SizeType kk(0); kk < inputs.at(1).get().shape()[3];
                    kk++)  // Iterate over kernel width
               {
                 typename ArrayType::Type w = inputs.at(1).get().At(i, ki, kj, kk);
@@ -68,22 +68,22 @@ public:
               }
             }
           }
-          output.Set(std::vector<typename ArrayType::SizeType>({i, j, k}), sum);
+          output.Set(i, j, k, sum);
         }
       }
     }
     return output;
   }
 
-  virtual std::vector<ArrayType> Backward(
+  std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<const ArrayType>> const & /*inputs*/,
       ArrayType const &errorSignal)
   {
     return {errorSignal};
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
   {
     std::vector<typename ArrayType::SizeType> outputShape;
     outputShape.push_back(inputs.at(1).get().shape()[0]);
@@ -92,7 +92,7 @@ public:
     return outputShape;
   }
 
-  static constexpr char const *DESCRIPTOR = "Convolution";
+  static constexpr char const *DESCRIPTOR = "Convolution2D";
 };
 
 }  // namespace ops

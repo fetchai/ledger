@@ -57,7 +57,7 @@ TYPED_TEST(EmbeddingsTest, forward)
   {
     for (unsigned int j(0); j < 6; ++j)
     {
-      weights.Set({i, j}, typename TypeParam::Type(i * 10 + j));
+      weights.Set(i, j, typename TypeParam::Type(i * 10 + j));
     }
   }
 
@@ -95,7 +95,7 @@ TYPED_TEST(EmbeddingsTest, backward)
   {
     for (unsigned int j(0); j < 6; ++j)
     {
-      weights.Set({i, j}, typename TypeParam::Type(i * 10 + j));
+      weights.Set(i, j, typename TypeParam::Type(i * 10 + j));
     }
   }
   e.SetData(weights);
@@ -111,7 +111,7 @@ TYPED_TEST(EmbeddingsTest, backward)
   {
     for (unsigned int k{0}; k < 6; ++k)
     {
-      errorSignal.Set({j, k}, typename TypeParam::Type((j * 6) + k));
+      errorSignal.Set(j, k, typename TypeParam::Type((j * 6) + k));
     }
   }
   e.Backward({input}, errorSignal);
