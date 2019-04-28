@@ -270,7 +270,10 @@ struct CommandLineArguments
     args.cfg.log2_num_lanes = Log2(num_lanes);
 
     // if the user has explicitly passed a configuration then we must parse it here
-    if (!config_path.empty())
+    bool const manifest_found = LoadManifestFromEnvironment(manifest);
+
+    // if we have not already found a manifest then use the command line version
+    if (!manifest_found && !config_path.empty())
     {
       // read the contents of the manifest from the path specified
       manifest = LoadManifestFromFile(config_path.c_str());
@@ -420,6 +423,29 @@ struct CommandLineArguments
     }
 
     return manifest;
+  }
+
+  static bool LoadManifestFromEnvironment(ManifestPtr &manifest)
+  {
+    bool present{false};
+
+    char const *manifest_data = std::getenv("CONSTELLATION_MANIFEST");
+    if (manifest_data != nullptr)
+    {
+      // decode the manifest data
+      ConstByteArray config = fetch::byte_array::FromBase64(manifest_data);
+
+      ManifestPtr local_manifest = std::make_unique<Manifest>();
+      if (!local_manifest->Parse(config))
+      {
+        throw std::runtime_error("Unable to parse the contents of the manifest file");
+      }
+
+      manifest = std::move(local_manifest);
+      present = true;
+    }
+
+    return present;
   }
 
   friend std::ostream &operator<<(std::ostream &              s,
