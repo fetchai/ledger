@@ -1,4 +1,4 @@
-function(_build_and_install_openssl openssl_vendor_dir)
+function(_build_and_install_openssl openssl_install_dir openssl_vendor_dir)
   set(FETCH_MINIMUM_PERL_VERSION 5.13.4)
 
   find_package(Perl REQUIRED)
@@ -20,11 +20,10 @@ function(_build_and_install_openssl openssl_vendor_dir)
     set(FETCH_OPENSSL_BUILD_CONF fetchai_linux64)
   endif()
 
-  set(OPENSSL_BUILD_STATUS 0)
   execute_process(
     COMMAND ${PERL_EXECUTABLE} ${openssl_vendor_dir}/src/Configure ${FETCH_OPENSSL_BUILD_CONF}
       --config=${FETCH_ROOT_VENDOR_AUX_DIR}/openssl/fetchai_openssl.conf
-      --prefix=${openssl_vendor_dir}/dist/openssl
+      --prefix=${openssl_install_dir}
       --openssldir=${openssl_vendor_dir}/dist/config
     WORKING_DIRECTORY ${FETCH_OPENSSL_BUILD_WORKDIR}
     RESULT_VARIABLE OPENSSL_BUILD_STATUS
@@ -75,7 +74,10 @@ function(configure_openssl)
   find_package(OpenSSL)
   if(NOT (OPENSSL_FOUND AND (OPENSSL_VERSION STREQUAL FETCH_OPENSSL_VERSION)))
     message("OpenSSL not found or unexpected version: building from source")
-    _build_and_install_openssl(${FETCH_ROOT_VENDOR_DIR}/openssl)
+    _build_and_install_openssl(
+      ${OPENSSL_ROOT_DIR}
+      ${FETCH_ROOT_VENDOR_DIR}/openssl
+    )
   endif()
 
   # Confirm successful installation and version correctness
