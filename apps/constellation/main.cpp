@@ -163,7 +163,7 @@ struct CommandLineArguments
   static constexpr uint16_t STORAGE_PORT_OFFSET = 10;
 
   static const uint32_t DEFAULT_NUM_LANES       = 1;
-  static const uint32_t DEFAULT_NUM_SLICES      = 100;
+  static const uint32_t DEFAULT_NUM_SLICES      = 500;
   static const uint32_t DEFAULT_NUM_EXECUTORS   = DEFAULT_NUM_LANES;
   static const uint16_t DEFAULT_PORT            = 8000;
   static const uint32_t DEFAULT_BLOCK_INTERVAL  = 0;  // milliseconds - zero means no mining
