@@ -14,9 +14,16 @@ function(_build_and_install_openssl openssl_vendor_dir)
   set(FETCH_OPENSSL_BUILD_WORKDIR ${openssl_vendor_dir}/build)
   file(MAKE_DIRECTORY ${FETCH_OPENSSL_BUILD_WORKDIR})
 
+  if(APPLE)
+    set(FETCH_OPENSSL_BUILD_CONF fetchai_mac64)
+  else()
+    set(FETCH_OPENSSL_BUILD_CONF fetchai_linux64)
+  endif()
+
   set(OPENSSL_BUILD_STATUS 0)
   execute_process(
-    COMMAND ${openssl_vendor_dir}/src/config
+    COMMAND ${PERL_EXECUTABLE} ${openssl_vendor_dir}/src/Configure ${FETCH_OPENSSL_BUILD_CONF}
+      --config=${FETCH_ROOT_VENDOR_AUX_DIR}/openssl/fetchai_openssl.conf
       --prefix=${openssl_vendor_dir}/dist/openssl
       --openssldir=${openssl_vendor_dir}/dist/config
     WORKING_DIRECTORY ${FETCH_OPENSSL_BUILD_WORKDIR}
