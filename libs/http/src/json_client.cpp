@@ -23,6 +23,7 @@
 #include "http/request.hpp"
 #include "http/response.hpp"
 
+#include <regex>
 #include <sstream>
 #include <utility>
 
@@ -54,6 +55,50 @@ uint16_t MapPort(JsonClient::ConnectionMode mode)
 }
 
 }  // namespace
+
+/**
+ * Create the JSON client from a specified URL
+ *
+ * @param url The URL to use for the client
+ * @return The constructed JSON Client
+ */
+JsonClient JsonClient::CreateFromUrl(std::string const &url)
+{
+  // define the URL pattern that we are matching against
+  std::regex const url_pattern{R"(^(https?)://([\w\.-]+)(?::(\d+))?$)"};
+
+  // perform the match
+  std::smatch match{};
+  bool const  matched = std::regex_match(url, match, url_pattern);
+  bool const  success = matched && (match.size() == 4);
+
+  if (!success)
+  {
+    throw std::runtime_error("Failed to match against URL");
+  }
+
+  // extract the matches
+  auto const &scheme = match[1];
+  auto const &host   = match[2];
+  auto const &port   = match[3];
+
+  ConnectionMode mode{ConnectionMode::HTTP};
+  if (scheme == "https")
+  {
+    mode = ConnectionMode::HTTPS;
+  }
+
+  if (port.matched)
+  {
+    // convert the port to a integer (from a string)
+    uint16_t const port_value = static_cast<uint16_t>(std::atoi(port.first.base()));
+    return JsonClient{mode, host, port_value};
+  }
+  else
+  {
+    return JsonClient{mode, host};
+  }
+}
 
 /**
  * Construct a JsonClient from a mode and host
@@ -130,13 +175,11 @@ bool JsonClient::Request(Method method, ConstByteArray const &endpoint, Headers 
   }
 
   fetch::http::HTTPResponse http_response;
-  if (client_->Request(http_request, http_response))
-  {
-    success = true;
+  success = client_->Request(http_request, http_response);
 
-    json::JSONDocument doc(http_response.body());
-    response = doc.root();
-  }
+  // attempt to parse the body
+  json::JSONDocument doc(http_response.body());
+  response = doc.root();
 
   return success;
 }
