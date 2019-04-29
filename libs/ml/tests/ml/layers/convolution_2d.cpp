@@ -34,7 +34,7 @@ TYPED_TEST_CASE(Convolution2DTest, MyTypes);
 
 TYPED_TEST(Convolution2DTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
-  fetch::ml::layers::Convolution2D<TypeParam> conv(5, 3, 3, 1);
+  fetch::ml::layers::Convolution2D<TypeParam> conv(5u, 3u, 3u, 1u);
   TypeParam inputData(std::vector<typename TypeParam::SizeType>({3, 3, 3}));
   conv.SetInput("Conv2D_Input", inputData);
   TypeParam output = conv.Evaluate("Conv2D_Conv2D");
@@ -49,7 +49,7 @@ TYPED_TEST(Convolution2DTest, set_input_and_evaluate_test)  // Use the class as 
 
 TYPED_TEST(Convolution2DTest, ops_forward_test)  // Use the class as an Ops
 {
-  fetch::ml::layers::Convolution2D<TypeParam> conv(5, 3, 3, 2);
+  fetch::ml::layers::Convolution2D<TypeParam> conv(5u, 3u, 3u, 2u);
   TypeParam inputData(std::vector<typename TypeParam::SizeType>({3, 5, 5}));
   TypeParam output = conv.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({inputData}));
@@ -63,7 +63,7 @@ TYPED_TEST(Convolution2DTest, ops_forward_test)  // Use the class as an Ops
 
 TYPED_TEST(Convolution2DTest, ops_backward_test)  // Use the class as an Ops
 {
-  fetch::ml::layers::Convolution2D<TypeParam> conv(5, 3, 3, 2);
+  fetch::ml::layers::Convolution2D<TypeParam> conv(5u, 3u, 3u, 2u);
   TypeParam inputData(std::vector<typename TypeParam::SizeType>({3, 5, 5}));
   TypeParam output = conv.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({inputData}));
@@ -85,8 +85,8 @@ TYPED_TEST(Convolution2DTest, node_forward_test)  // Use the class as a Node
       std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
   placeholder->SetData(data);
 
-  fetch::ml::Node<TypeParam, fetch::ml::layers::Convolution2D<TypeParam>> conv("Convolution2D", 5,
-                                                                               3, 3, 2);
+  fetch::ml::Node<TypeParam, fetch::ml::layers::Convolution2D<TypeParam>> conv("Convolution2D", 5u,
+                                                                               3u, 3u, 2u);
   conv.AddInput(placeholder);
 
   TypeParam prediction = conv.Evaluate();
@@ -104,8 +104,8 @@ TYPED_TEST(Convolution2DTest, node_backward_test)  // Use the class as a Node
       std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
   placeholder->SetData(data);
 
-  fetch::ml::Node<TypeParam, fetch::ml::layers::Convolution2D<TypeParam>> conv("Convolution2D", 5,
-                                                                               3, 3, 2);
+  fetch::ml::Node<TypeParam, fetch::ml::layers::Convolution2D<TypeParam>> conv("Convolution2D", 5u,
+                                                                               3u, 3u, 2u);
   conv.AddInput(placeholder);
   TypeParam prediction = conv.Evaluate();
 
@@ -124,8 +124,8 @@ TYPED_TEST(Convolution2DTest, graph_forward_test)  // Use the class as a Node
   fetch::ml::Graph<TypeParam> g;
 
   g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Input", {});
-  g.template AddNode<fetch::ml::layers::Convolution2D<TypeParam>>("Convolution2D", {"Input"}, 5, 3,
-                                                                  3, 2);
+  g.template AddNode<fetch::ml::layers::Convolution2D<TypeParam>>("Convolution2D", {"Input"}, 5u, 3u,
+                                                                  3u, 2u);
 
   TypeParam data({3, 5, 5});
   g.SetInput("Input", data);
@@ -148,5 +148,5 @@ TYPED_TEST(Convolution2DTest, getStateDict)
 
   ASSERT_NE(sd.dict_["ConvTest_Weights"].weights_, nullptr);
   EXPECT_EQ(sd.dict_["ConvTest_Weights"].weights_->shape(),
-            std::vector<typename TypeParam::SizeType>({5, 3, 3, 3}));
+            std::vector<typename TypeParam::SizeType>({5u, 3u, 3u, 3u}));
 }
