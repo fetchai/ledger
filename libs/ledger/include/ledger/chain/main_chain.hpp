@@ -33,6 +33,7 @@
 #include <memory>
 #include <set>
 #include <unordered_set>
+#include <fstream>
 
 namespace fetch {
 namespace ledger {
@@ -185,7 +186,11 @@ private:
 
   static IntBlockPtr CreateGenesisBlock();
 
+  BlockHash GetHeadHash();
+  void SetHeadHash(BlockHash const &hash);
+
   BlockStorePtr block_store_;  /// < Long term storage and backup
+  std::fstream head_store_;
 
   mutable RMutex   lock_;          ///< Mutex protecting block_chain_, tips_ & heaviest_
   mutable BlockMap block_chain_;   ///< All recent blocks are kept in memory
