@@ -238,7 +238,8 @@ bool BootstrapMonitor::RunDiscovery(UriList &peers)
   bool success_flag{false};
   if (!Extract(response, "success", success_flag))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server");
+    FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server (no success)");
+    FETCH_LOG_WARN(LOGGING_NAME, "Server Response: ", response);
     return false;
   }
 
@@ -246,7 +247,8 @@ bool BootstrapMonitor::RunDiscovery(UriList &peers)
   {
     if (!response.Has("error"))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server");
+      FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server (no error)");
+      FETCH_LOG_WARN(LOGGING_NAME, "Server Response: ", response);
       return false;
     }
 
@@ -260,7 +262,8 @@ bool BootstrapMonitor::RunDiscovery(UriList &peers)
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server");
+      FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server (no msg, no code)");
+      FETCH_LOG_WARN(LOGGING_NAME, "Server Response: ", response);
     }
 
     return false;
@@ -269,14 +272,16 @@ bool BootstrapMonitor::RunDiscovery(UriList &peers)
   {
     if (!response.Has("result"))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server");
+      FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server (no result)");
+      FETCH_LOG_WARN(LOGGING_NAME, "Server Response: ", response);
       return false;
     }
 
     auto const &result = response["result"];
     if (!result.IsArray())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server");
+      FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server (result not array)");
+      FETCH_LOG_WARN(LOGGING_NAME, "Server Response: ", response);
       return false;
     }
 
@@ -299,7 +304,8 @@ bool BootstrapMonitor::RunDiscovery(UriList &peers)
       Uri         uri{};
       if (!(Extract(peer_object, "host", host) && Extract(peer_object, "port", port)))
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server");
+        FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server (no host, no port)");
+        FETCH_LOG_WARN(LOGGING_NAME, "Server Response: ", response);
         return false;
       }
       else
@@ -309,7 +315,7 @@ bool BootstrapMonitor::RunDiscovery(UriList &peers)
         // attempt to parse the URL being given
         if (!uri.Parse(uri_string))
         {
-          FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse the URI");
+          FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse the URI: ", uri_string);
           return false;
         }
 
@@ -325,7 +331,7 @@ bool BootstrapMonitor::NotifyNode()
 {
   bool success = false;
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Notify bootstrap server...");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Notify bootstrap server...");
 
   Variant request = Variant::Object();
 
