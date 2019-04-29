@@ -29,6 +29,7 @@
 #include <deque>
 #include <thread>
 #include <unordered_set>
+#include <network/generics/future_timepoint.hpp>
 
 namespace fetch {
 namespace ledger {
@@ -217,6 +218,7 @@ private:
   using TxSet             = std::unordered_set<TransactionSummary::TxDigest>;
   using TxSetPtr          = std::unique_ptr<TxSet>;
   using LastExecutedBlock = SynchronisedState<ConstByteArray>;
+  using FutureTimepoint   = fetch::network::FutureTimepoint;
 
   /// @name Monitor State
   /// @{
@@ -224,7 +226,7 @@ private:
   State OnSynchronizing();
   State OnSynchronized(State current, State previous);
   State OnPreExecBlockValidation();
-  State OnWaitForTransactions();
+  State OnWaitForTransactions(State current, State previous);
   State OnScheduleBlockExecution();
   State OnWaitForExecution();
   State OnPostExecBlockValidation();
@@ -276,11 +278,12 @@ private:
   Timepoint       next_block_time_;        ///< The next point that a block should be generated
   BlockPtr        current_block_{};        ///< The pointer to the current block (read only)
   NextBlockPtr
-                 next_block_{};  ///< The next block being created (read / write) - only in mining mode
-  TxSetPtr       pending_txs_{};       ///< The list of pending txs that are being waited on
-  PeriodicAction tx_wait_periodic_;    ///< Periodic print for transaction waiting
-  PeriodicAction exec_wait_periodic_;  ///< Periodic print for execution
-  PeriodicAction syncing_periodic_;
+                  next_block_{};        ///< The next block being created (read / write) - only in mining mode
+  TxSetPtr        pending_txs_{};       ///< The list of pending txs that are being waited on
+  PeriodicAction  tx_wait_periodic_;    ///< Periodic print for transaction waiting
+  PeriodicAction  exec_wait_periodic_;  ///< Periodic print for execution
+  PeriodicAction  syncing_periodic_;    ///< Periodic print for synchronisation
+  FutureTimepoint wait_for_tx_timeout_; ///< Timeout when waiting for transactions
   /// @}
 };
 

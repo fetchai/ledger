@@ -47,6 +47,7 @@ using fetch::ledger::testing::BlockGenerator;
 using fetch::ledger::TransactionStatusCache;
 
 using ::testing::_;
+using ::testing::AnyNumber;
 using ::testing::InSequence;
 using ::testing::NiceMock;
 using ::testing::StrictMock;
@@ -108,10 +109,13 @@ protected:
    */
   void Advance(uint64_t max_iterations = 50)
   {
+//    auto const &state_machine = block_coordinator_->GetStateMachine();
     for(; max_iterations > 0; --max_iterations)
     {
       // run one step of the state machine
       block_coordinator_->GetRunnable().Execute();
+
+//      std::cout << block_coordinator_->ToString(state_machine.state()) << std::endl;
     }
   }
 
@@ -1091,13 +1095,20 @@ TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever) {
   EXPECT_CALL(*storage_unit_, RevertToHash(_, 0));
 
   // syncing - Genesis
-  EXPECT_CALL(*storage_unit_, LastCommitHash()).Times(::testing::AnyNumber());
-  EXPECT_CALL(*storage_unit_, CurrentHash()).Times(::testing::AnyNumber());
-  EXPECT_CALL(*execution_manager_, LastProcessedBlock()).Times(::testing::AnyNumber());
+  EXPECT_CALL(*storage_unit_, LastCommitHash())
+    .Times(AnyNumber());
+  EXPECT_CALL(*storage_unit_, CurrentHash())
+    .Times(AnyNumber());
+  EXPECT_CALL(*execution_manager_, LastProcessedBlock())
+    .Times(AnyNumber());
 
   Advance();
 
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
+
+  Advance();
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(350u));
 
   Advance();
 

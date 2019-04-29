@@ -372,6 +372,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Lane count mismatch (",
                      ToBase64(current_block_->body.hash), ")");
       chain_.RemoveBlock(current_block_->body.hash);
+
       return State::RESET;
     }
 
@@ -381,6 +382,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Slice count mismatch (",
                      ToBase64(current_block_->body.hash), ")");
       chain_.RemoveBlock(current_block_->body.hash);
+
       return State::RESET;
     }
   }
@@ -401,8 +403,25 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
   return State::WAIT_FOR_TRANSACTIONS;
 }
 
-BlockCoordinator::State BlockCoordinator::OnWaitForTransactions()
+BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, State previous)
 {
+  if (previous == current)
+  {
+    // FSM is stuck waiting for transactions - has timeout elapsed?
+    if (wait_for_tx_timeout_.IsDue())
+    {
+      // Assume block was invalid and discard it
+      chain_.RemoveBlock(current_block_->body.hash);
+
+      return State::RESET;
+    }
+  }
+  else if (previous != current)
+  {
+    // Only just started waiting for transactions - reset timeout
+    wait_for_tx_timeout_ = std::chrono::milliseconds(300u);
+  }
+
   // if the transaction digests have not been cached then do this now
   if (!pending_txs_)
   {
