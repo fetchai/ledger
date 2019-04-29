@@ -52,7 +52,7 @@ template <class T, class O>
 class Node : public NodeInterface<T>, public O
 {
 private:
-  enum class CachedOutputStatus
+  enum class CACHED_OUTPUT_STATE
   {
     ValidCache,
     ChangedContent,
@@ -69,7 +69,7 @@ public:
   Node(std::string const name, Params... params)
     : O(params...)
     , name_(std::move(name))
-    , cached_output_present_(CachedOutputStatus::ChangedSize)
+    , cached_output_status_(CACHED_OUTPUT_STATE::ChangedSize)
     , batch_(false)
   {}
 
@@ -87,17 +87,16 @@ public:
 
   virtual ArrayType &Evaluate()
   {
-    std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
     FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
-    if (cached_output_present_ != CachedOutputStatus::ValidCache)
+    if (cached_output_status_ != CACHED_OUTPUT_STATE::ValidCache)
     {
-      if (cached_output_present_ == CachedOutputStatus::ChangedSize)
+      std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
+      if (cached_output_status_ == CACHED_OUTPUT_STATE::ChangedSize)
       {
-        std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
-        auto output_size = this->ComputeOutputShape(inputs);
-        if (cached_output_.shape() != output_size)
+        auto output_shape = this->ComputeOutputShape(inputs);
+        if (cached_output_.shape() != output_shape)
         {
-          cached_output_ = ArrayType(output_size);
+          cached_output_ = ArrayType(output_shape);
         }
       }
       if (batch_)
@@ -108,7 +107,7 @@ public:
       {
         cached_output_ = this->Forward(inputs, cached_output_);
       }
-      cached_output_present_ = CachedOutputStatus::ValidCache;
+      cached_output_status_ = CACHED_OUTPUT_STATE::ValidCache;
     }
 
     return cached_output_;
@@ -160,8 +159,8 @@ public:
 
   virtual void ResetCache(bool input_size_changed)
   {
-    cached_output_present_ =
-        input_size_changed ? CachedOutputStatus::ChangedSize : CachedOutputStatus::ChangedContent;
+    cached_output_status_ =
+        input_size_changed ? CACHED_OUTPUT_STATE::ChangedSize : CACHED_OUTPUT_STATE::ChangedContent;
   }
 
   virtual void SetBatch(bool b)
@@ -174,7 +173,7 @@ private:
   std::vector<std::shared_ptr<NodeInterface<T>>> outputs_;
   std::string                                    name_;
   ArrayType                                      cached_output_;
-  CachedOutputStatus                             cached_output_present_;
+  CACHED_OUTPUT_STATE                            cached_output_status_;
   bool                                           batch_;
 };
 
