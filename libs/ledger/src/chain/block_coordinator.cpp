@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/block_coordinator.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/threading.hpp"
+#include "ledger/chain/block_coordinator.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/block_sink_interface.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
@@ -29,19 +29,20 @@
 
 #include <chrono>
 
+namespace fetch {
+namespace ledger {
+
+namespace {
+
 using fetch::byte_array::ToBase64;
 
 using ScheduleStatus = fetch::ledger::ExecutionManagerInterface::ScheduleStatus;
 using ExecutionState = fetch::ledger::ExecutionManagerInterface::State;
 
-static const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};
-static const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{500};
-static const std::chrono::seconds      NOTIFY_INTERVAL{10};
-static const std::size_t               DIGEST_LENGTH_BYTES{32};
-static const std::size_t               IDENTITY_LENGTH_BYTES{64};
+const std::size_t DIGEST_LENGTH_BYTES{32};
+const std::size_t IDENTITY_LENGTH_BYTES{64};
 
-namespace fetch {
-namespace ledger {
+}
 
 /**
  * Construct the Block Coordinator
@@ -61,7 +62,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   , block_packer_{packer}
   , block_sink_{block_sink}
   , status_cache_{status_cache}
-  , periodic_print_{NOTIFY_INTERVAL}
+  , periodic_print_{std::chrono::seconds{10}}
   , miner_{std::make_shared<consensus::DummyMiner>()}
   , last_executed_block_{GENESIS_DIGEST}
   , identity_{std::move(identity)}
@@ -70,9 +71,9 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   , block_difficulty_{block_difficulty}
   , num_lanes_{num_lanes}
   , num_slices_{num_slices}
-  , tx_wait_periodic_{TX_SYNC_NOTIFY_INTERVAL}
-  , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
-  , syncing_periodic_{NOTIFY_INTERVAL}
+  , tx_wait_periodic_{std::chrono::milliseconds{1000}}
+  , exec_wait_periodic_{std::chrono::milliseconds{500}}
+  , syncing_periodic_{std::chrono::seconds{10}}
 {
   // configure the state machine
   // clang-format off
