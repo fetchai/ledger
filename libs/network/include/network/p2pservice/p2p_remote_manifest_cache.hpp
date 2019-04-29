@@ -39,7 +39,7 @@ public:
   struct CacheEntry
   {
     core::FutureTimepoint timepoint;
-    network::Manifest        manifest;
+    network::Manifest     manifest;
   };
 
   using Clock      = core::FutureTimepoint::Clock;

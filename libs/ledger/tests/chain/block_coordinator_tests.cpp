@@ -26,11 +26,11 @@
 #include "ledger/transaction_status_cache.hpp"
 #include "testing/common_testing_functionality.hpp"
 
+#include "crypto/sha256.hpp"
 #include "fake_block_sink.hpp"
 #include "mock_block_packer.hpp"
 #include "mock_execution_manager.hpp"
 #include "mock_storage_unit.hpp"
-#include "crypto/sha256.hpp"
 
 #include "gmock/gmock.h"
 #include <iostream>
@@ -109,13 +109,10 @@ protected:
    */
   void Advance(uint64_t max_iterations = 50)
   {
-//    auto const &state_machine = block_coordinator_->GetStateMachine();
-    for(; max_iterations > 0; --max_iterations)
+    for (; max_iterations > 0; --max_iterations)
     {
       // run one step of the state machine
       block_coordinator_->GetRunnable().Execute();
-
-//      std::cout << block_coordinator_->ToString(state_machine.state()) << std::endl;
     }
   }
 
@@ -1082,7 +1079,8 @@ protected:
   }
 };
 
-TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever) {
+TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
+{
   fetch::ledger::TransactionSummary summary;
   summary.transaction_hash = fetch::testing::GenerateUniqueHashes(1u)[0];
 
@@ -1095,12 +1093,9 @@ TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever) {
   EXPECT_CALL(*storage_unit_, RevertToHash(_, 0));
 
   // syncing - Genesis
-  EXPECT_CALL(*storage_unit_, LastCommitHash())
-    .Times(AnyNumber());
-  EXPECT_CALL(*storage_unit_, CurrentHash())
-    .Times(AnyNumber());
-  EXPECT_CALL(*execution_manager_, LastProcessedBlock())
-    .Times(AnyNumber());
+  EXPECT_CALL(*storage_unit_, LastCommitHash()).Times(AnyNumber());
+  EXPECT_CALL(*storage_unit_, CurrentHash()).Times(AnyNumber());
+  EXPECT_CALL(*execution_manager_, LastProcessedBlock()).Times(AnyNumber());
 
   Advance();
 

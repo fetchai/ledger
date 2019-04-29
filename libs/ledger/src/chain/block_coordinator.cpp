@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chain/block_coordinator.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/threading.hpp"
-#include "ledger/chain/block_coordinator.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/block_sink_interface.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
@@ -42,7 +42,7 @@ using ExecutionState = fetch::ledger::ExecutionManagerInterface::State;
 const std::size_t DIGEST_LENGTH_BYTES{32};
 const std::size_t IDENTITY_LENGTH_BYTES{64};
 
-}
+}  // namespace
 
 /**
  * Construct the Block Coordinator
