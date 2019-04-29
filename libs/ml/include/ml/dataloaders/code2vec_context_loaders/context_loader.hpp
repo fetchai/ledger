@@ -41,30 +41,48 @@ public:
   using WordIdxType   = std::vector<std::vector<SizeType>>;
   using VocabType     = std::unordered_map<std::string, SizeType>;
   using SentencesType = std::vector<std::vector<std::string>>;
+  using umap_str_int = std::unordered_map<std::string, int>;
+  using umap_int_str = std::unordered_map<int, std::string>;
 
   ContextLoader() = default;
 
   void        AddData(std::string const &text);
-  static void addValueToUnorderedMap(std::unordered_map<std::string, int> &umap, std::string word);
+  static void addValueToUnorderedMap(umap_str_int &umap, std::string word);
   static std::vector<std::string> splitStringByChar(std::stringstream input, const char *sep);
-  static void createIdxUMapsFromCounter(std::unordered_map<std::string, int> &counter,
-                                        std::unordered_map<std::string, int> &name_to_idx,
-                                        std::unordered_map<int, std::string> &idx_to_name);
+
   void        createIdxUMaps();
 
-  std::unordered_map<std::string, int> function_name_counter;
-  std::unordered_map<std::string, int> path_counter;
-  std::unordered_map<std::string, int> word_counter;
+  umap_int_str GetUmapIdxToFunctionName();
+  umap_int_str GetUmapIdxToPath();
+  umap_int_str GetUmapIdxToWord();
 
-  std::unordered_map<std::string, int> function_name_to_idx;
-  std::unordered_map<std::string, int> path_to_idx;
-  std::unordered_map<std::string, int> word_to_idx;
+  umap_str_int GetUmapFunctioNameToIdx();
+  umap_str_int GetUmapPathToIdx();
+  umap_str_int GetUmapWordToIdx();
 
-  std::unordered_map<int, std::string> idx_to_function_name;
-  std::unordered_map<int, std::string> idx_to_path;
-  std::unordered_map<int, std::string> idx_to_word;
+  umap_str_int GetCounterFunctionNames();
+  umap_str_int GetCounterPaths();
+  umap_str_int GetCounterWords();
 
 private:
+
+  umap_str_int function_name_counter;
+  umap_str_int path_counter;
+  umap_str_int word_counter;
+
+  umap_str_int function_name_to_idx;
+  umap_str_int path_to_idx;
+  umap_str_int word_to_idx;
+
+  umap_int_str idx_to_function_name;
+  umap_int_str idx_to_path;
+  umap_int_str idx_to_word;
+
+
+  static void createIdxUMapsFromCounter(umap_str_int &counter,
+                                        umap_str_int &name_to_idx,
+                                        umap_int_str &idx_to_name);
+
 };
 
 template <typename T>
@@ -98,7 +116,7 @@ void ContextLoader<T>::AddData(std::string const &c2v_input)
 }
 
 template <typename T>
-void ContextLoader<T>::addValueToUnorderedMap(std::unordered_map<std::string, int> &umap,
+void ContextLoader<T>::addValueToUnorderedMap(typename ContextLoader<T>::umap_str_int &umap,
                                               std::string                           word)
 {
   if (umap.find(word) == umap.end())
@@ -124,9 +142,9 @@ std::vector<std::string> ContextLoader<T>::splitStringByChar(std::stringstream i
 }
 
 template <typename T>
-void ContextLoader<T>::createIdxUMapsFromCounter(std::unordered_map<std::string, int> &counter,
-                                                 std::unordered_map<std::string, int> &name_to_idx,
-                                                 std::unordered_map<int, std::string> &idx_to_name)
+void ContextLoader<T>::createIdxUMapsFromCounter(typename ContextLoader<T>::umap_str_int &counter,
+                                                 typename ContextLoader<T>::umap_str_int &name_to_idx,
+                                                 typename ContextLoader<T>::umap_int_str &idx_to_name)
 {
   int idx = 0;
   for (auto kv : counter)
@@ -144,6 +162,57 @@ void ContextLoader<T>::createIdxUMaps()
   createIdxUMapsFromCounter(path_counter, path_to_idx, idx_to_path);
   createIdxUMapsFromCounter(word_counter, word_to_idx, idx_to_word);
 }
+
+template <typename T>
+typename ContextLoader<T>::umap_int_str ContextLoader<T>::GetUmapIdxToFunctionName(){
+  return this->idx_to_function_name;
+};
+
+template <typename T>
+typename ContextLoader<T>::umap_int_str ContextLoader<T>::GetUmapIdxToPath(){
+  return this->idx_to_path;
+};
+
+template <typename T>
+typename ContextLoader<T>::umap_int_str ContextLoader<T>::GetUmapIdxToWord(){
+  return this->idx_to_word;
+};
+
+
+
+
+template <typename T>
+typename ContextLoader<T>::umap_str_int ContextLoader<T>::GetUmapFunctioNameToIdx(){
+  return this->function_name_to_idx;
+};
+
+template <typename T>
+typename ContextLoader<T>::umap_str_int ContextLoader<T>::GetUmapPathToIdx(){
+  return this->path_to_idx;
+};
+
+template <typename T>
+typename ContextLoader<T>::umap_str_int ContextLoader<T>::GetUmapWordToIdx(){
+  return this->word_to_idx;
+};
+
+
+template <typename T>
+typename ContextLoader<T>::umap_str_int ContextLoader<T>::GetCounterFunctionNames(){
+  return this->function_name_counter;
+};
+
+template <typename T>
+typename ContextLoader<T>::umap_str_int ContextLoader<T>::GetCounterPaths(){
+  return this->path_counter;
+};
+
+template <typename T>
+typename ContextLoader<T>::umap_str_int ContextLoader<T>::GetCounterWords(){
+  return this->word_counter;
+};
+
+
 
 }  // namespace dataloaders
 }  // namespace ml
