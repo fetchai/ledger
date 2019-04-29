@@ -421,3 +421,129 @@ TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension_off_axis)
   EXPECT_EQ(output.At(0), typename TypeParam::SizeType(3));
   EXPECT_EQ(output.At(1), typename TypeParam::SizeType(2));
 }
+
+TYPED_TEST(FreeFunctionsTest, Sum_OneDimension)
+{
+  using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
+
+  TypeParam array1{4};
+  array1.Set(SizeType{0}, typename TypeParam::Type(0.3));
+  array1.Set(SizeType{1}, typename TypeParam::Type(1.2));
+  array1.Set(SizeType{2}, typename TypeParam::Type(0.7));
+  array1.Set(SizeType{3}, typename TypeParam::Type(22));
+
+  DataType output;
+  fetch::math::Sum(array1, output);
+  EXPECT_NEAR(double(output), 24.2, 1e-5);
+
+  array1.Set(SizeType{3}, typename TypeParam::Type(0));
+  fetch::math::Sum(array1, output);
+  EXPECT_NEAR(double(output), 2.2, 1e-5);
+
+  array1.Set(SizeType{1}, typename TypeParam::Type(0));
+  fetch::math::Sum(array1, output);
+  EXPECT_NEAR(double(output), 1., 1e-5);
+}
+
+TYPED_TEST(FreeFunctionsTest, ReduceSum_axis_0)
+{
+  using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
+
+  SizeType  n_data     = 4;
+  SizeType  n_features = 2;
+  TypeParam array1{{n_data, n_features}};
+
+  array1.Set(SizeType{0}, SizeType{0}, DataType(-17));
+  array1.Set(SizeType{0}, SizeType{1}, DataType(21));
+  array1.Set(SizeType{1}, SizeType{0}, DataType(0));
+  array1.Set(SizeType{1}, SizeType{1}, DataType(0));
+  array1.Set(SizeType{2}, SizeType{0}, DataType(13));
+  array1.Set(SizeType{2}, SizeType{1}, DataType(999));
+  array1.Set(SizeType{3}, SizeType{0}, DataType(21));
+  array1.Set(SizeType{3}, SizeType{1}, DataType(-0.5));
+
+  TypeParam output({1, n_features});
+  fetch::math::ReduceSum(array1, SizeType(0), output);
+
+  EXPECT_NEAR(double(output.At(0, 0)), 17., 1e-5);
+  EXPECT_NEAR(double(output.At(1, 0)), 1019.5, 1e-5);
+}
+
+TYPED_TEST(FreeFunctionsTest, ReduceSum_axis_1)
+{
+  using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
+
+  SizeType  n_data     = 4;
+  SizeType  n_features = 2;
+  TypeParam array1{{n_data, n_features}};
+
+  array1.Set(SizeType{0}, SizeType{0}, DataType(-17));
+  array1.Set(SizeType{0}, SizeType{1}, DataType(21));
+  array1.Set(SizeType{1}, SizeType{0}, DataType(0));
+  array1.Set(SizeType{1}, SizeType{1}, DataType(0));
+  array1.Set(SizeType{2}, SizeType{0}, DataType(13));
+  array1.Set(SizeType{2}, SizeType{1}, DataType(999));
+  array1.Set(SizeType{3}, SizeType{0}, DataType(21));
+  array1.Set(SizeType{3}, SizeType{1}, DataType(-0.5));
+
+  TypeParam output({n_data, 1});
+  fetch::math::ReduceSum(array1, SizeType(1), output);
+  EXPECT_NEAR(double(output.At(0, 0)), 4., 1e-5);
+  EXPECT_NEAR(double(output.At(1, 0)), 0., 1e-5);
+  EXPECT_NEAR(double(output.At(2, 0)), 1012., 1e-5);
+  EXPECT_NEAR(double(output.At(3, 0)), 20.5, 1e-5);
+}
+
+TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_0)
+{
+  using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
+
+  SizeType  n_data     = 4;
+  SizeType  n_features = 2;
+  TypeParam array1{{n_data, n_features}};
+
+  array1.Set(SizeType{0}, SizeType{0}, DataType(-17));
+  array1.Set(SizeType{0}, SizeType{1}, DataType(21));
+  array1.Set(SizeType{1}, SizeType{0}, DataType(0));
+  array1.Set(SizeType{1}, SizeType{1}, DataType(0));
+  array1.Set(SizeType{2}, SizeType{0}, DataType(13));
+  array1.Set(SizeType{2}, SizeType{1}, DataType(999));
+  array1.Set(SizeType{3}, SizeType{0}, DataType(21));
+  array1.Set(SizeType{3}, SizeType{1}, DataType(-0.5));
+
+  TypeParam output({1, n_features});
+  fetch::math::ReduceMean(array1, SizeType(0), output);
+
+  EXPECT_NEAR(double(output.At(0, 0)), 8.5, 1e-5);
+  EXPECT_NEAR(double(output.At(1, 0)), 509.75, 1e-5);
+}
+
+TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_1)
+{
+  using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
+
+  SizeType  n_data     = 4;
+  SizeType  n_features = 2;
+  TypeParam array1{{n_data, n_features}};
+
+  array1.Set(SizeType{0}, SizeType{0}, DataType(-17));
+  array1.Set(SizeType{0}, SizeType{1}, DataType(21));
+  array1.Set(SizeType{1}, SizeType{0}, DataType(0));
+  array1.Set(SizeType{1}, SizeType{1}, DataType(0));
+  array1.Set(SizeType{2}, SizeType{0}, DataType(13));
+  array1.Set(SizeType{2}, SizeType{1}, DataType(999));
+  array1.Set(SizeType{3}, SizeType{0}, DataType(21));
+  array1.Set(SizeType{3}, SizeType{1}, DataType(-0.5));
+
+  TypeParam output({n_data, 1});
+  fetch::math::ReduceMean(array1, SizeType(1), output);
+  EXPECT_NEAR(double(output.At(0, 0)), 1., 1e-5);
+  EXPECT_NEAR(double(output.At(1, 0)), 0., 1e-5);
+  EXPECT_NEAR(double(output.At(2, 0)), 253., 1e-5);
+  EXPECT_NEAR(double(output.At(3, 0)), 5.125, 1e-5);
+}

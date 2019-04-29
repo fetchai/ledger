@@ -487,20 +487,45 @@ ArrayType ReduceSum(ArrayType const &obj1, SizeType axis)
 }
 
 template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &                   obj1,
-                                                     typename ArrayType::SizeType const &axis)
+meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &                   obj1,
+                                                typename ArrayType::SizeType const &axis,
+                                                ArrayType &                         ret)
 {
+  using Type = typename ArrayType::Type;
+
   ASSERT(axis == 0 || axis == 1);
-  typename ArrayType::DataType n;
+  Type n;
   if (axis == 0)
   {
-    n = obj1.shape()[1];
+    n =  static_cast<Type>(obj1.shape().at(1));
   }
   else
   {
-    n = obj1.shape()[0];
+    n =  static_cast<Type>(obj1.shape().at(0));
   }
-  return Divide(ReduceSum(obj1, axis), n);
+  ReduceSum(obj1, axis,ret);
+  Divide(ret, n, ret);
+}
+
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &                   obj1,
+                                                     typename ArrayType::SizeType const &axis)
+{
+  using Type = typename ArrayType::Type;
+
+  ASSERT(axis == 0 || axis == 1);
+  Type n;
+  if (axis == 0)
+  {
+    n = static_cast<Type>(obj1.shape().at(1));
+  }
+  else
+  {
+    n =  static_cast<Type>(obj1.shape().at(0));
+  }
+  Type ret=ReduceSum(obj1, axis);
+  Divide(ret, n,ret);
+  return ret;
 }
 /**
  * Distance between max and min values in an array
