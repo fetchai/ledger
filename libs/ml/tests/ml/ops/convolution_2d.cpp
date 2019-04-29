@@ -26,16 +26,15 @@ class Convolution2DTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-                                 fetch::math::Tensor<double>,
+using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(Convolution2DTest, MyTypes);
 
 TYPED_TEST(Convolution2DTest, forward_1x1x1_1x1x1x1)
 {
-  TypeParam input(std::vector<uint64_t>({1, 1, 1}));
-  TypeParam weigths(std::vector<uint64_t>({1, 1, 1, 1}));
+  TypeParam input({1, 1, 1});
+  TypeParam weigths({1, 1, 1, 1});
   input.At(0, 0, 0)      = typename TypeParam::Type(5);
   weigths.At(0, 0, 0, 0) = typename TypeParam::Type(-4);
   fetch::ml::ops::Convolution2D<TypeParam> c;
@@ -49,8 +48,8 @@ TYPED_TEST(Convolution2DTest, forward_1x1x1_1x1x1x1)
 TYPED_TEST(Convolution2DTest, forward_1x3x3_1x1x3x3)
 {
   using SizeType = typename TypeParam::SizeType;
-  TypeParam input(std::vector<uint64_t>({1, 3, 3}));
-  TypeParam weigths(std::vector<uint64_t>({1, 1, 3, 3}));
+  TypeParam input({1, 3, 3});
+  TypeParam weigths({1, 1, 3, 3});
   for (SizeType i(0); i < 3; ++i)
   {
     for (SizeType j{0}; j < 3; ++j)
@@ -69,8 +68,8 @@ TYPED_TEST(Convolution2DTest, forward_1x3x3_1x1x3x3)
 
 TYPED_TEST(Convolution2DTest, forward_3x3x3_1x3x3x3)
 {
-  TypeParam     input(std::vector<uint64_t>({3, 3, 3}));
-  TypeParam     weigths(std::vector<uint64_t>({1, 3, 3, 3}));
+  TypeParam     input({3, 3, 3});
+  TypeParam     weigths({1, 3, 3, 3});
   std::uint64_t counter = 0;
   for (std::uint64_t i(0); i < 3; ++i)
   {

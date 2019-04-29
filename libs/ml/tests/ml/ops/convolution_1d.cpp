@@ -26,16 +26,15 @@ class Convolution1DTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-                                 fetch::math::Tensor<double>,
+using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(Convolution1DTest, MyTypes);
 
 TYPED_TEST(Convolution1DTest, forward_1x1_1x1x1)
 {
-  TypeParam input(std::vector<uint64_t>({1, 1}));
-  TypeParam weigths(std::vector<uint64_t>({1, 1, 1}));
+  TypeParam input({1, 1});
+  TypeParam weigths({1, 1, 1});
   input.At(0, 0)      = typename TypeParam::Type(5);
   weigths.At(0, 0, 0) = typename TypeParam::Type(-4);
   fetch::ml::ops::Convolution1D<TypeParam> c;
@@ -49,8 +48,8 @@ TYPED_TEST(Convolution1DTest, forward_1x1_1x1x1)
 TYPED_TEST(Convolution1DTest, forward_1x3_1x1x3)
 {
   using SizeType = typename TypeParam::SizeType;
-  TypeParam input(std::vector<uint64_t>({1, 3}));
-  TypeParam weigths(std::vector<uint64_t>({1, 1, 3}));
+  TypeParam input({1, 3});
+  TypeParam weigths({1, 1, 3});
   for (SizeType i(0); i < 3; ++i)
   {
 
@@ -67,8 +66,8 @@ TYPED_TEST(Convolution1DTest, forward_1x3_1x1x3)
 
 TYPED_TEST(Convolution1DTest, forward_3x3_1x3x3)
 {
-  TypeParam     input(std::vector<uint64_t>({3, 3}));
-  TypeParam     weigths(std::vector<uint64_t>({1, 3, 3}));
+  TypeParam     input({3, 3});
+  TypeParam     weigths({1, 3, 3});
   std::uint64_t counter = 0;
   for (std::uint64_t i(0); i < 3; ++i)
   {
@@ -90,8 +89,8 @@ TYPED_TEST(Convolution1DTest, forward_3x3_1x3x3)
 
 TYPED_TEST(Convolution1DTest, forward_3x3_5x3x3)
 {
-  TypeParam                                input(std::vector<uint64_t>({3, 3}));
-  TypeParam                                weigths(std::vector<uint64_t>({5, 3, 3}));
+  TypeParam                                input({3, 3});
+  TypeParam                                weigths({5, 3, 3});
   fetch::ml::ops::Convolution1D<TypeParam> c;
   TypeParam                                output = c.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({input, weigths}));
@@ -101,8 +100,8 @@ TYPED_TEST(Convolution1DTest, forward_3x3_5x3x3)
 
 TYPED_TEST(Convolution1DTest, forward_1x5_1x1x3)
 {
-  TypeParam                                input(std::vector<uint64_t>({1, 5}));
-  TypeParam                                weigths(std::vector<uint64_t>({1, 1, 3}));
+  TypeParam                                input({1, 5});
+  TypeParam                                weigths({1, 1, 3});
   fetch::ml::ops::Convolution1D<TypeParam> c;
   TypeParam                                output = c.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({input, weigths}));
@@ -112,8 +111,8 @@ TYPED_TEST(Convolution1DTest, forward_1x5_1x1x3)
 
 TYPED_TEST(Convolution1DTest, forward_1x5_1x1x3_stride_2)
 {
-  TypeParam                                input(std::vector<uint64_t>({1, 5}));
-  TypeParam                                weigths(std::vector<uint64_t>({1, 1, 3}));
+  TypeParam                                input({1, 5});
+  TypeParam                                weigths({1, 1, 3});
   fetch::ml::ops::Convolution1D<TypeParam> c(2);
   TypeParam                                output = c.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({input, weigths}));
