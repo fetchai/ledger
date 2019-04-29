@@ -93,12 +93,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   state_machine_->RegisterHandler(State::RESET,                        this, &BlockCoordinator::OnReset);
   // clang-format on
 
-  // for debug purposes
-#if 0
-  state_machine_->OnStateChange([](State current, State previous) {
-    FETCH_LOG_INFO(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
-  });
-#else
   state_machine_->OnStateChange([this](State current, State previous) {
     if (periodic_print_.Poll())
     {
@@ -106,7 +100,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
                      " (previous: ", ToString(previous), ")");
     }
   });
-#endif  // FETCH_LOG_DEBUG_ENABLED
 
   // TODO(private issue 792): this shouldn't be here, but if it is, it locks the whole system on
   // startup. RecoverFromStartup();
