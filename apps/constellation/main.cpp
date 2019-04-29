@@ -36,15 +36,15 @@
 #include "fetch_version.hpp"
 
 #include <csignal>
+#include <cstdlib>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <system_error>
 #include <vector>
-#include <cstdlib>
-#include <sstream>
 
 namespace {
 
@@ -99,7 +99,6 @@ void UpdateConfigFromEnvironment(bool &value, char const *name)
     }
   }
 }
-
 
 // REVIEW: Move to platform
 uint32_t Log2(uint32_t value)
@@ -442,7 +441,7 @@ struct CommandLineArguments
       }
 
       manifest = std::move(local_manifest);
-      present = true;
+      present  = true;
     }
 
     return present;

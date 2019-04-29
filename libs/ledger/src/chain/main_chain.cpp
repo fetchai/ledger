@@ -489,7 +489,8 @@ void MainChain::RecoverFromFile(Mode mode)
   if (Mode::CREATE_PERSISTENT_DB == mode)
   {
     block_store_->New("chain.db", "chain.index.db");
-    head_store_.open("chain.head.db", std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
+    head_store_.open("chain.head.db",
+                     std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
     return;
   }
   else if (Mode::LOAD_PERSISTENT_DB == mode)
@@ -582,7 +583,8 @@ void MainChain::RecoverFromFile(Mode mode)
 
     // reopen the file and clear the contents
     head_store_.close();
-    head_store_.open("chain.head.db", std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
+    head_store_.open("chain.head.db",
+                     std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
   }
 }
 
@@ -625,7 +627,6 @@ void MainChain::WriteToFile()
     if (block->body.previous_hash == GENESIS_DIGEST)
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Writing genesis. ");
-
 
       block_store_->Set(storage::ResourceID(block->body.hash), *block);
       SetHeadHash(block->body.hash);
@@ -1283,7 +1284,6 @@ void MainChain::SetHeadHash(BlockHash const &hash)
   head_store_.write(reinterpret_cast<char const *>(hash.pointer()),
                     static_cast<std::streamsize>(hash.size()));
 }
-
 
 }  // namespace ledger
 }  // namespace fetch
