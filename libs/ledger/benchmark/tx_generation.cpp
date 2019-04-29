@@ -21,6 +21,7 @@
 #include "vectorise/threading/pool.hpp"
 
 #include <benchmark/benchmark.h>
+#include <memory>
 
 using fetch::ledger::MutableTransaction;
 using fetch::ledger::TxSigningAdapter;
@@ -69,7 +70,7 @@ void TxGeneration(benchmark::State &state)
       tx.tx.set_fee(1);
       tx.tx.set_data(oss.str());
       tx.tx.set_resources({public_key});
-      tx.tx.Sign(identity.underlying_private_key());
+      tx.tx.Sign(identity.private_key());
     }
 
     // convert to a serial stream
@@ -80,20 +81,22 @@ void TxGeneration(benchmark::State &state)
 
 void TxGenerationThreaded(benchmark::State &state)
 {
+  using SignerPtr = std::unique_ptr<ECDSASigner>;
+
   for (auto _ : state)
   {
     Pool pool;
 
     // generate a series of keys for all the nodes
-    std::mutex               signers_mtx;
-    std::vector<ECDSASigner> signers(0);
+    std::mutex             signers_mtx;
+    std::vector<SignerPtr> signers(0);
     for (std::size_t i = 0; i < NUM_TRANSACTIONS; ++i)
     {
       pool.Dispatch([&signers_mtx, &signers]() {
-        ECDSASigner identity;
+        auto identity = std::make_unique<ECDSASigner>();
 
         {
-          std::lock_guard<std::mutex> lock(signers_mtx);
+          FETCH_LOCK(signers_mtx);
           signers.emplace_back(std::move(identity));
         }
       });
@@ -106,7 +109,7 @@ void TxGenerationThreaded(benchmark::State &state)
     for (std::size_t i = 0; i < NUM_TRANSACTIONS; ++i)
     {
       pool.Dispatch([i, &transactions, &signers]() {
-        auto &identity = signers.at(i);
+        auto &identity = *signers.at(i);
         auto &tx       = transactions.at(i);
 
         auto const public_key = identity.public_key();
@@ -118,7 +121,7 @@ void TxGenerationThreaded(benchmark::State &state)
         tx.tx.set_fee(1);
         tx.tx.set_data(oss.str());
         tx.tx.set_resources({public_key});
-        tx.tx.Sign(identity.underlying_private_key());
+        tx.tx.Sign(identity.private_key());
       });
     }
 

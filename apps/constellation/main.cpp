@@ -33,7 +33,6 @@
 #include "constellation.hpp"
 #include "fetch_version.hpp"
 
-#include <array>
 #include <csignal>
 #include <fstream>
 #include <iomanip>
@@ -45,7 +44,7 @@
 
 namespace {
 
-static constexpr char const *LOGGING_NAME = "main";
+constexpr char const *LOGGING_NAME = "main";
 
 using Prover         = fetch::crypto::Prover;
 using BootstrapPtr   = std::unique_ptr<fetch::BootstrapMonitor>;
@@ -59,7 +58,7 @@ std::atomic<std::size_t>            gInterruptCount{0};
 // REVIEW: Move to platform
 uint32_t Log2(uint32_t value)
 {
-  static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;
+  static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3u;
   return static_cast<uint32_t>(VALUE_SIZE_IN_BITS -
                                static_cast<uint32_t>(__builtin_clz(value) + 1));
 }
@@ -121,29 +120,29 @@ struct CommandLineArguments
   static const uint32_t DEFAULT_NUM_SLICES      = 100;
   static const uint32_t DEFAULT_NUM_EXECUTORS   = DEFAULT_NUM_LANES;
   static const uint16_t DEFAULT_PORT            = 8000;
-  static const uint32_t DEFAULT_NETWORK_ID      = 0x10;
   static const uint32_t DEFAULT_BLOCK_INTERVAL  = 0;  // milliseconds - zero means no mining
   static const uint32_t DEFAULT_MAX_PEERS       = 3;
   static const uint32_t DEFAULT_TRANSIENT_PEERS = 1;
 
   /// @name Constellation Config
   /// @{
-  Config   cfg;
-  uint16_t port{0};
-  uint32_t network_id;
-  UriList  peers;
+  Config      cfg;
+  uint16_t    port{0};
+  std::string network_name;
+  UriList     peers;
   /// @}
 
   /// @name Bootstrap Config
   /// @{
   bool        bootstrap{false};
+  bool        discoverable{false};
   std::string host_name;
   std::string token;
   std::string external_address{};
   /// @}
 
   static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap,
-                                    Prover const &prover)
+                                    ProverPtr const &prover)
   {
     CommandLineArguments args;
 
@@ -162,12 +161,13 @@ struct CommandLineArguments
     p.add(args.cfg.num_slices,            "slices",                "The number of slices to be used",                                               DEFAULT_NUM_SLICES);
     p.add(raw_peers,                      "peers",                 "The comma separated list of addresses to initially connect to",                 std::string{});
     p.add(args.cfg.db_prefix,             "db-prefix",             "The directory or prefix added to the node storage",                             std::string{"node_storage"});
-    p.add(args.network_id,                "network-id",            "The network id",                                                                DEFAULT_NETWORK_ID);
-    p.add(args.cfg.interface_address,     "interface",             "The address of the network inferface to be used",                               std::string{"127.0.0.1"});
+    p.add(args.network_name,              "network",               "The network name to join",                                                      std::string{});
+    p.add(args.cfg.interface_address,     "interface",             "The address of the network interface to be used",                               std::string{"127.0.0.1"});
     p.add(args.cfg.block_interval_ms,     "block-interval",        "Block interval in milliseconds",                                                uint32_t{DEFAULT_BLOCK_INTERVAL});
     p.add(args.token,                     "token",                 "The authentication token to be used with bootstrapping the client",             std::string{});
     p.add(args.external_address,          "external",              "This node's global IP address",                                                 std::string{});
     p.add(bootstrap_address,              "bootstrap",             "Src address for network bootstrap",                                             std::string{});
+    p.add(args.discoverable,              "discoverable",          "Signal that the client is willing to be listed on the bootstrap server",        false);
     p.add(args.host_name,                 "host-name",             "The hostname / identifier for this node",                                       std::string{});
     p.add(config_path,                    "config",                "The path to the manifest configuration",                                        std::string{});
     p.add(args.cfg.processor_threads,     "processor-threads",     "The number of processor threads",                                               uint32_t{std::thread::hardware_concurrency()});
@@ -176,7 +176,7 @@ struct CommandLineArguments
     p.add(args.cfg.transient_peers,       "transient-peers",       "The number of the peers which will be random in answer sent to peer requests",  DEFAULT_TRANSIENT_PEERS);
     p.add(args.cfg.peers_update_cycle_ms, "peers-update-cycle-ms", "How fast to do peering changes",                                                uint32_t{0});
     p.add(args.cfg.disable_signing,       "disable-signing",       "Do not sign outbound packets or verify those inbound, in trusted network",      bool{});
-    p.add(args.cfg.sign_broadcasts,       "sign-broadcasts",       "Sign and verify broadcast packets",      bool{});
+    p.add(args.cfg.sign_broadcasts,       "sign-broadcasts",       "Sign and verify broadcast packets",                                             bool{});
     p.add(args.cfg.standalone,            "standalone",            "Expect the node to run in on its own (useful for testing and development)",     false);
     // clang-format on
 
@@ -204,11 +204,11 @@ struct CommandLineArguments
     }
 
     args.bootstrap = (!bootstrap_address.empty());
-    if (args.bootstrap && !args.token.empty())
+    if (args.bootstrap)
     {
       // determine what the P2P port is. This is either specified with the port parameter or
       // explicitly given via the manifest
-      uint16_t p2p_port = static_cast<uint16_t>(args.port + P2P_PORT_OFFSET);
+      auto p2p_port = static_cast<uint16_t>(args.port + P2P_PORT_OFFSET);
 
       // if we have a valid manifest then we should respect the port configuration specified here
       // otherwise we default to the port specified
@@ -224,17 +224,17 @@ struct CommandLineArguments
 
       // create the bootstrap node
       bootstrap = std::make_unique<fetch::BootstrapMonitor>(
-          prover.identity(), p2p_port, args.network_id, args.token, args.host_name);
+          prover, p2p_port, args.network_name, args.discoverable, args.token, args.host_name);
 
       // augment the peer list with the bootstrapped version
-      if (bootstrap->Start(args.peers))
+      if (bootstrap->DiscoverPeers(args.peers, args.external_address))
       {
-        args.cfg.interface_address = bootstrap->interface_address();
-
-        if (args.external_address.empty())
-        {
-          args.external_address = bootstrap->external_address();
-        }
+        args.external_address = args.cfg.interface_address = bootstrap->external_address();
+      }
+      else
+      {
+        // if we have enabled bootstrap and the process fails we must simply exit
+        std::exit(1);
       }
     }
 
@@ -342,11 +342,12 @@ struct CommandLineArguments
   {
     s << '\n';
     s << "port......................: " << args.port << '\n';
-    s << "network id................: 0x" << std::hex << args.network_id << std::dec << '\n';
+    s << "network name..............: " << args.network_name << '\n';
     s << "num executors.............: " << args.cfg.num_executors << '\n';
-    s << "num lanes.................: " << (1 << args.cfg.log2_num_lanes) << '\n';
+    s << "num lanes.................: " << (1u << args.cfg.log2_num_lanes) << '\n';
     s << "num slices................: " << args.cfg.num_slices << '\n';
     s << "bootstrap.................: " << args.bootstrap << '\n';
+    s << "discoverable..............: " << args.discoverable << '\n';
     s << "host name.................: " << args.host_name << '\n';
     s << "external address..........: " << args.external_address << '\n';
     s << "db-prefix.................: " << args.cfg.db_prefix << '\n';
@@ -507,7 +508,7 @@ int main(int argc, char **argv)
     ProverPtr p2p_key = GenerateP2PKey();
 
     BootstrapPtr bootstrap_monitor;
-    auto         args = CommandLineArguments::Parse(argc, argv, bootstrap_monitor, *p2p_key);
+    auto         args = CommandLineArguments::Parse(argc, argv, bootstrap_monitor, p2p_key);
 
     FETCH_LOG_INFO(LOGGING_NAME, "Configuration:\n", args);
 
@@ -521,14 +522,15 @@ int main(int argc, char **argv)
     std::signal(SIGINT, InterruptHandler);
     std::signal(SIGTERM, InterruptHandler);
 
-    // run the application
-    constellation->Run(args.peers);
-
-    // stop the bootstrapper if we have one
+    // extract the state machine runnable (if any)
+    fetch::core::WeakRunnable bootstrap_state_machine{};
     if (bootstrap_monitor)
     {
-      bootstrap_monitor->Stop();
+      bootstrap_state_machine = bootstrap_monitor->GetWeakRunnable();
     }
+
+    // run the application
+    constellation->Run(args.peers, bootstrap_state_machine);
 
     exit_code = EXIT_SUCCESS;
   }

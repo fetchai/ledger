@@ -50,7 +50,5 @@ TYPED_TEST(PerplexityTest, entropy)
   A.Set(SizeType{2}, DataType(0.3));
   A.Set(SizeType{3}, DataType(0.4));
 
-  std::cout << "Perplexity(A): " << Perplexity(A) << std::endl;
-
   EXPECT_NEAR(double(Perplexity(A)), 3.59611546662432, 1e-3);
 }

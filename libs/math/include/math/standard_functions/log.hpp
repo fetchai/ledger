@@ -44,7 +44,7 @@ fetch::meta::EnableIf<fetch::meta::IsInteger<Type> || fetch::meta::IsFloat<Type>
 template <typename T>
 meta::IfIsFixedPoint<T, void> Log(T const &n, T &ret)
 {
-  ret = T(std::log(double(n)));
+  ret = T::Log(n);
 }
 
 template <typename Type>
@@ -59,7 +59,7 @@ fetch::meta::EnableIf<fetch::meta::IsInteger<Type> || fetch::meta::IsFloat<Type>
 template <typename T>
 meta::IfIsFixedPoint<T, void> Log2(T const &n, T &ret)
 {
-  ret = T(std::log2(double(n)));
+  ret = T::Log2(n);
 }
 
 //////////////////

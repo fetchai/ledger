@@ -19,6 +19,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/mutex.hpp"
+#include "core/state_machine.hpp"
 #include "crypto/identity.hpp"
 #include "http/json_client.hpp"
 #include "network/fetch_asio.hpp"
@@ -43,37 +44,28 @@ namespace fetch {
 class BootstrapMonitor
 {
 public:
-  using UriList  = Constellation::UriList;
-  using Identity = crypto::Identity;
+  using UriList   = Constellation::UriList;
+  using Prover    = crypto::Prover;
+  using ProverPtr = std::shared_ptr<Prover>;
+  using Identity  = crypto::Identity;
 
   // Construction / Destruction
-  BootstrapMonitor(Identity const &identity, uint16_t p2p_port, uint32_t network_id,
-                   std::string token, std::string host_name)
-    : network_id_(network_id)
-    , port_(p2p_port)
-    , identity_(identity)
-    , token_(std::move(token))
-    , host_name_(std::move(host_name))
-  {}
-
+  BootstrapMonitor(ProverPtr entity, uint16_t p2p_port, std::string network_name, bool discoverable,
+                   std::string token = std::string{}, std::string host_name = std::string{});
   BootstrapMonitor(BootstrapMonitor const &) = delete;
   BootstrapMonitor(BootstrapMonitor &&)      = delete;
+  ~BootstrapMonitor();
 
-  ~BootstrapMonitor()
-  {
-    Stop();
-  }
-
-  bool Start(UriList &peers);
-  void Stop();
+  bool DiscoverPeers(UriList &peers, std::string const &external_address);
 
   std::string const &external_address() const
   {
     return external_address_;
   }
-  std::string const &interface_address() const
+
+  core::WeakRunnable GetWeakRunnable() const
   {
-    return external_address_;
+    return state_machine_;
   }
 
   // Operators
@@ -81,38 +73,51 @@ public:
   BootstrapMonitor &operator=(BootstrapMonitor &&) = delete;
 
 private:
-  using IoService      = asio::io_service;
-  using Resolver       = asio::ip::tcp::resolver;
-  using Socket         = asio::ip::tcp::socket;
-  using ThreadPtr      = std::unique_ptr<std::thread>;
-  using Buffer         = byte_array::ByteArray;
-  using Flag           = std::atomic<bool>;
-  using Mutex          = mutex::Mutex;
-  using LockGuard      = std::lock_guard<Mutex>;
-  using ConstByteArray = byte_array::ConstByteArray;
+  enum State
+  {
+    Notify,
+  };
 
-  uint32_t const network_id_;
-  uint16_t const port_;
-  Identity const identity_;
-  std::string    external_address_;
-  std::string    token_;
-  std::string    host_name_;
+  using ConstByteArray  = byte_array::ConstByteArray;
+  using StateMachine    = core::StateMachine<State>;
+  using StateMachinePtr = std::shared_ptr<StateMachine>;
 
-  Flag      running_{false};
-  ThreadPtr monitor_thread_;
-  Mutex     io_mutex_{__LINE__, __FILE__};
-  IoService io_service_;
-  Resolver  resolver_{io_service_};
-  Socket    socket_{io_service_};
-  Buffer    buffer_;
+  /// @name State Machine states
+  /// @{
+  State OnNotify();
+  /// @}
 
+  /// @name Actions
+  /// @{
   bool UpdateExternalAddress();
-
-  bool RequestPeerList(UriList &peers);
-  bool RegisterNode();
+  bool RunDiscovery(UriList &peers);
   bool NotifyNode();
+  /// @}
 
-  void ThreadEntryPoint();
+  static char const *ToString(State state);
+
+  StateMachinePtr   state_machine_;
+  ProverPtr const   entity_;
+  std::string const network_name_;
+  bool const        discoverable_;
+  uint16_t const    port_;
+  std::string const host_name_;
+  std::string const token_;
+  std::string       external_address_{};
 };
+
+inline char const *BootstrapMonitor::ToString(State state)
+{
+  char const *text = "Unknown";
+
+  switch (state)
+  {
+  case State::Notify:
+    text = "Notify";
+    break;
+  }
+
+  return text;
+}
 
 }  // namespace fetch
