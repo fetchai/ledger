@@ -106,7 +106,7 @@ public:
 
   explicit Constellation(CertificatePtr &&certificate, Config config);
 
-  void Run(UriList const &initial_peers);
+  void Run(UriList const &initial_peers, core::WeakRunnable bootstrap_monitor);
   void SignalStop();
 
 protected:

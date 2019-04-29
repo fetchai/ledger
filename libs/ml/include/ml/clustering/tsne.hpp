@@ -19,6 +19,7 @@
 
 #include "core/random/lfg.hpp"
 #include "math/distance/euclidean.hpp"
+#include "meta/type_traits.hpp"
 #include <core/assert.hpp>
 #include <math/fundamental_operators.hpp>
 #include <math/matrix_operations.hpp>
@@ -48,6 +49,18 @@ public:
   using RNG       = fetch::random::LaggedFibonacciGenerator<>;
 
   static constexpr char const *DESCRIPTOR = "TSNE";
+
+  template <typename DataType>
+  meta::IfIsFixedPoint<DataType, DataType> static minimum_tolerance()
+  {
+    return DataType::CONST_SMALLEST_FRACTION;
+  }
+
+  template <typename DataType>
+  meta::IfIsFloat<DataType, DataType> static minimum_tolerance()
+  {
+    return DataType(1e-12);
+  }
 
   TSNE(ArrayType const &input_matrix, ArrayType const &output_matrix, DataType const &perplexity)
   {
@@ -180,7 +193,7 @@ private:
     input_symmetric_affinities_ = fetch::math::Multiply(input_symmetric_affinities_, DataType(4));
 
     // Limit minimum value to 1e-12
-    LimitMin(input_symmetric_affinities_, DataType(1e-12));
+    LimitMin(input_symmetric_affinities_, minimum_tolerance<DataType>());
 
     // Initialize low dimensional values
     output_matrix_               = output_matrix;
@@ -365,7 +378,7 @@ private:
     output_symmetric_affinities = fetch::math::NormalizeArray(num);
 
     // Crop minimal value to 1e-12
-    LimitMin(output_symmetric_affinities, DataType(1e-12));
+    LimitMin(output_symmetric_affinities, minimum_tolerance<DataType>());
   }
 
   /**

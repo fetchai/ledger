@@ -30,8 +30,7 @@ class ConstByteArray;
 }  // namespace byte_array
 
 namespace fixed_point {
-template <std::uint16_t I, std::uint16_t F>
-class FixedPoint;
+struct BaseFixedpointType;
 }  // namespace fixed_point
 
 namespace meta {
@@ -51,12 +50,8 @@ constexpr bool IsInteger = std::is_integral<T>::value && (!IsBoolean<T>);
 template <typename T>
 constexpr bool IsFloat = std::is_floating_point<T>::value;
 
-// template <typename T, std::size_t I, std::size_t F>
-// constexpr bool IsFixedPoint = std::is_same<T, fetch::fixed_point::FixedPoint<I, F>>::value;
-
 template <typename T>
-constexpr bool IsFixedPoint =
-    std::is_same<typename T::math_tag, fetch::fixed_point::FixedPointTag>::value;
+constexpr bool IsFixedPoint = std::is_base_of<fixed_point::BaseFixedpointType, T>::value;
 
 template <typename T>
 constexpr bool IsNotFixedPoint = !IsFixedPoint<T>;

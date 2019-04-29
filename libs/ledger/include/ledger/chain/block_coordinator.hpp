@@ -184,6 +184,12 @@ public:
     return last_executed_block_.Get();
   }
 
+  bool IsSynced() const
+  {
+    return (state_machine_->state() == State::SYNCHRONIZED) &&
+           (last_executed_block_.Get() == chain_.GetHeaviestBlockHash());
+  }
+
   // Operators
   BlockCoordinator &operator=(BlockCoordinator const &) = delete;
   BlockCoordinator &operator=(BlockCoordinator &&) = delete;
