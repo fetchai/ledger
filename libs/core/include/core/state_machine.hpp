@@ -100,7 +100,6 @@ private:
   StateMapper         mapper_;
   mutable Mutex       callbacks_mutex_;
   CallbackMap         callbacks_{};
-  Duration            stall_duration_{};
   std::atomic<State>  current_state_;
   std::atomic<State>  previous_state_{current_state_.load()};
   Timepoint           next_execution_{};
@@ -153,6 +152,7 @@ void StateMachine<S>::Reset()
   callbacks_.clear();
   state_change_callback_ = StateChangeCallback{};
 }
+
 template <typename S>
 void StateMachine<S>::OnStateChange(StateChangeCallback cb)
 {
