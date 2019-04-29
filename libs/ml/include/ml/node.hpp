@@ -55,7 +55,7 @@ private:
   enum class CachedOutputState
   {
     VALID_CACHE,
-    CAHNGED_CONTENT,
+    CHANGED_CONTENT,
     CHANGED_SIZE
   };
 
@@ -96,7 +96,7 @@ public:
         auto output_shape = this->ComputeOutputShape(inputs);
         if (cached_output_.shape() != output_shape)
         {
-          cached_output_ = ArrayType(output_shape);
+          cached_output_.ResizeFromShape(output_shape);
         }
       }
       if (batch_)
@@ -160,7 +160,7 @@ public:
   virtual void ResetCache(bool input_size_changed)
   {
     cached_output_status_ =
-        input_size_changed ? CachedOutputState::CHANGED_SIZE : CachedOutputState::CAHNGED_CONTENT;
+        input_size_changed ? CachedOutputState::CHANGED_SIZE : CachedOutputState::CHANGED_CONTENT;
   }
 
   virtual void SetBatch(bool b)
