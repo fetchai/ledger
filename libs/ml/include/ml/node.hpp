@@ -52,11 +52,11 @@ template <class T, class O>
 class Node : public NodeInterface<T>, public O
 {
 private:
-  enum class CACHED_OUTPUT_STATE
+  enum class CachedOutputState
   {
-    ValidCache,
-    ChangedContent,
-    ChangedSize
+    VALID_CACHE,
+    CAHNGED_CONTENT,
+    CHANGED_SIZE
   };
 
 public:
@@ -69,7 +69,7 @@ public:
   Node(std::string const name, Params... params)
     : O(params...)
     , name_(std::move(name))
-    , cached_output_status_(CACHED_OUTPUT_STATE::ChangedSize)
+    , cached_output_status_(CachedOutputState::CHANGED_SIZE)
     , batch_(false)
   {}
 
@@ -88,10 +88,10 @@ public:
   virtual ArrayType &Evaluate()
   {
     FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
-    if (cached_output_status_ != CACHED_OUTPUT_STATE::ValidCache)
+    if (cached_output_status_ != CachedOutputState::VALID_CACHE)
     {
       std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
-      if (cached_output_status_ == CACHED_OUTPUT_STATE::ChangedSize)
+      if (cached_output_status_ == CachedOutputState::CHANGED_SIZE)
       {
         auto output_shape = this->ComputeOutputShape(inputs);
         if (cached_output_.shape() != output_shape)
@@ -107,7 +107,7 @@ public:
       {
         cached_output_ = this->Forward(inputs, cached_output_);
       }
-      cached_output_status_ = CACHED_OUTPUT_STATE::ValidCache;
+      cached_output_status_ = CachedOutputState::VALID_CACHE;
     }
 
     return cached_output_;
@@ -160,7 +160,7 @@ public:
   virtual void ResetCache(bool input_size_changed)
   {
     cached_output_status_ =
-        input_size_changed ? CACHED_OUTPUT_STATE::ChangedSize : CACHED_OUTPUT_STATE::ChangedContent;
+        input_size_changed ? CachedOutputState::CHANGED_SIZE : CachedOutputState::CAHNGED_CONTENT;
   }
 
   virtual void SetBatch(bool b)
@@ -173,7 +173,7 @@ private:
   std::vector<std::shared_ptr<NodeInterface<T>>> outputs_;
   std::string                                    name_;
   ArrayType                                      cached_output_;
-  CACHED_OUTPUT_STATE                            cached_output_status_;
+  CachedOutputState                              cached_output_status_;
   bool                                           batch_;
 };
 
