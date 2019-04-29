@@ -135,16 +135,6 @@ protected:
     return static_cast<uint8_t>(((c * 0x80200802ULL) & 0x0884422110ULL) * 0x0101010101ULL >> 32);
   }
 
-  void SetTimeOut()
-  {
-    if (timeout_set_)
-    {
-      return;
-    }
-    timeout_.Set(cfg_.main_timeout);
-    timeout_set_ = true;
-  }
-
 private:
   State OnInitial();
   State OnQueryObjectCounts();
@@ -162,9 +152,7 @@ private:
   ObjectStorePtr                store_;  ///< The pointer to the object store
   TransactionVerifier           verifier_;
 
-  FutureTimepoint timeout_;
   FutureTimepoint promise_wait_timeout_;
-  bool            timeout_set_ = false;
   FutureTimepoint fetch_object_wait_timeout_;
 
   RequestingObjectCount pending_object_count_;
