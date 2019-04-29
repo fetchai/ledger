@@ -82,6 +82,38 @@ TYPED_TEST(RandomizedReluTest, forward_test)
       prediction.AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }
 
+TYPED_TEST(RandomizedReluTest, forward_3d_tensor_test)
+{
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
+
+  ArrayType           data({2, 2, 2});
+  ArrayType           gt({2, 2, 2});
+  std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8});
+  std::vector<double> gtInput({1, -0.062793536, 3, -0.12558707, 5, -0.1883806, 7, -0.2511741});
+
+  for (SizeType i(0); i < 2; ++i)
+  {
+    for (SizeType j(0); j < 2; ++j)
+    {
+      for (SizeType k(0); k < 2; ++k)
+      {
+        data.Set(i, j, k, DataType(dataInput[i + 2 * (j + 2 * k)]));
+        gt.Set(i, j, k, DataType(gtInput[i + 2 * (j + 2 * k)]));
+      }
+    }
+  }
+
+  fetch::ml::ops::RandomizedRelu<ArrayType> op(DataType(0.03), DataType(0.08), 12345);
+  TypeParam prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
+      std::vector<std::reference_wrapper<TypeParam const>>({data}));
+
+  // test correct values
+  ASSERT_TRUE(
+      prediction.AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
+}
+
 TYPED_TEST(RandomizedReluTest, backward_test)
 {
   using DataType  = typename TypeParam::Type;
@@ -110,7 +142,7 @@ TYPED_TEST(RandomizedReluTest, backward_test)
   op.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({data}));
 
-  gtInput = {0, 0, 0, 0, 1, 0.031396768, 0, 0};
+  gtInput = {0, 0, 0, 0, 1, 0.0788452, 0, 0};
   for (std::uint64_t i(0); i < 8; ++i)
   {
     gt.Set(i, DataType(gtInput[i]));
@@ -129,6 +161,39 @@ TYPED_TEST(RandomizedReluTest, backward_test)
     gt.Set(i, DataType(gtInput[i]));
   }
   prediction = op.Backward({data}, error);
+
+  // test correct values
+  ASSERT_TRUE(prediction[0].AllClose(gt, DataType(1e-5), DataType(1e-5)));
+}
+
+TYPED_TEST(RandomizedReluTest, backward_3d_tensor_test)
+{
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
+
+  ArrayType           data({2, 2, 2});
+  ArrayType           error({2, 2, 2});
+  ArrayType           gt({2, 2, 2});
+  std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8});
+  std::vector<double> errorInput({0, 0, 0, 0, 1, 1, 0, 0});
+  std::vector<double> gtInput({0, 0, 0, 0, 1, 0.079588953, 0, 0});
+
+  for (SizeType i(0); i < 2; ++i)
+  {
+    for (SizeType j(0); j < 2; ++j)
+    {
+      for (SizeType k(0); k < 2; ++k)
+      {
+        data.Set(i, j, k, DataType(dataInput[i + 2 * (j + 2 * k)]));
+        error.Set(i, j, k, DataType(errorInput[i + 2 * (j + 2 * k)]));
+        gt.Set(i, j, k, DataType(gtInput[i + 2 * (j + 2 * k)]));
+      }
+    }
+  }
+
+  fetch::ml::ops::RandomizedRelu<ArrayType> op(DataType(0.03), DataType(0.08), 12345);
+  std::vector<ArrayType>                    prediction = op.Backward({data}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType(1e-5), DataType(1e-5)));

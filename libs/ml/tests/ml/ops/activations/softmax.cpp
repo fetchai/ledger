@@ -52,6 +52,34 @@ TYPED_TEST(SoftmaxTest, forward_test)
       prediction.AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }
 
+TYPED_TEST(SoftmaxTest, forward_2d_tensor_axis_0_test)
+{
+  using DataType = typename TypeParam::Type;
+  using SizeType = typename TypeParam::SizeType;
+
+  TypeParam           data({3, 3});
+  TypeParam           gt({3, 3});
+  std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8, 9});
+  std::vector<double> gtInput(
+      {0.00247, 0.00091, 0.00247, 0.00002, 0.99909, 0.00000, 0.99751, 0.00000, 0.99753});
+  for (SizeType i(0); i < 3; ++i)
+  {
+    for (SizeType j(0); j < 3; ++j)
+    {
+      data.Set(i, j, DataType(dataInput[i + 3 * j]));
+      gt.Set(i, j, DataType(gtInput[i + 3 * j]));
+    }
+  }
+
+  fetch::ml::ops::Softmax<TypeParam> op(0);
+  TypeParam                          prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
+      std::vector<std::reference_wrapper<TypeParam const>>({data}));
+
+  // test correct values
+  ASSERT_TRUE(
+      prediction.AllClose(gt, typename TypeParam::Type(1e-2), typename TypeParam::Type(1e-2)));
+}
+
 TYPED_TEST(SoftmaxTest, backward_test)
 {
   TypeParam           data(8);
@@ -68,6 +96,35 @@ TYPED_TEST(SoftmaxTest, backward_test)
     gt.Set(i, typename TypeParam::Type(gtInput[i]));
   }
   fetch::ml::ops::Softmax<TypeParam> op;
+  std::vector<TypeParam>             prediction = op.Backward({data}, error);
+
+  // test correct values
+  ASSERT_TRUE(
+      prediction[0].AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
+}
+
+TYPED_TEST(SoftmaxTest, backward_2d_tensor_axis_0_test)
+{
+  //    using DataType  = typename TypeParam::Type;
+  using SizeType = typename TypeParam::SizeType;
+
+  TypeParam           data({3, 3});
+  TypeParam           error({3, 3});
+  TypeParam           gt({3, 3});
+  std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8, 9});
+  std::vector<double> errorInput({0, 0, 0, 0, 1, 0, 0, 0, 0});
+  std::vector<double> gtInput({-2.4703e-03, -9.1021e-04, -2.47036e-03, -1.66446e-05, 9.124735e-04,
+                               -3.0430965e-07, -9.965997e-01, -2.2561289e-08, -9.96616e-01});
+  for (SizeType i(0); i < 3; ++i)
+  {
+    for (SizeType j(0); j < 3; ++j)
+    {
+      data.Set(i, j, typename TypeParam::Type(dataInput[i + 3 * j]));
+      error.Set(i, j, typename TypeParam::Type(errorInput[i + 3 * j]));
+      gt.Set(i, j, typename TypeParam::Type(gtInput[i + 3 * j]));
+    }
+  }
+  fetch::ml::ops::Softmax<TypeParam> op(0);
   std::vector<TypeParam>             prediction = op.Backward({data}, error);
 
   // test correct values

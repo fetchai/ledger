@@ -99,16 +99,18 @@ public:
 private:
   void UpdateRandomValues()
   {
-    for (SizeType i(0); i < drop_values_.size(); i++)
+    auto it = drop_values_.begin();
+    while (it.is_valid())
     {
       if (DataType(rng_.AsDouble()) <= probability_)
       {
-        drop_values_.Set(i, DataType(1.0));
+        *it = DataType(1.0);
       }
       else
       {
-        drop_values_.Set(i, DataType(0.0));
+        *it = DataType(0.0);
       }
+      ++it;
     }
   }
 

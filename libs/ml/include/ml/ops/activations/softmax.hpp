@@ -33,7 +33,10 @@ public:
   using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  Softmax()  = default;
+  Softmax(SizeType axis = 0)
+    : axis_(axis)
+  {}
+
   ~Softmax() = default;
 
   ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
@@ -41,7 +44,7 @@ public:
   {
     ASSERT(output.shape() == ComputeOutputShape(inputs));
     ASSERT(inputs.size() == 1);
-    fetch::math::Softmax(inputs[0].get(), output);
+    fetch::math::Softmax(inputs[0].get(), output, axis_);
     return output;
   }
 
@@ -69,6 +72,9 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "Softmax";
+
+private:
+  SizeType axis_;
 };
 
 }  // namespace ops

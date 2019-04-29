@@ -65,19 +65,19 @@ TYPED_TEST(LeakyReluTest, forward_3d_tensor_test)
   ArrayType           gt({2, 2, 2});
   std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<double> gtInput({1, -0.02, 3, -0.04, 5, -0.06, 7, -0.08});
+
   for (SizeType i(0); i < 2; ++i)
   {
     for (SizeType j(0); j < 2; ++j)
     {
-
       for (SizeType k(0); k < 2; ++k)
       {
-
         data.Set(i, j, k, DataType(dataInput[i + 2 * (j + 2 * k)]));
         gt.Set(i, j, k, DataType(gtInput[i + 2 * (j + 2 * k)]));
       }
     }
   }
+
   fetch::ml::ops::LeakyRelu<ArrayType> op(DataType(0.01));
   TypeParam                            prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({data}));
@@ -105,6 +105,39 @@ TYPED_TEST(LeakyReluTest, backward_test)
     error.Set(i, DataType(errorInput[i]));
     gt.Set(i, DataType(gtInput[i]));
   }
+  fetch::ml::ops::LeakyRelu<ArrayType> op(DataType(0.01));
+  std::vector<ArrayType>               prediction = op.Backward({data}, error);
+
+  // test correct values
+  ASSERT_TRUE(prediction[0].AllClose(gt, DataType(1e-5), DataType(1e-5)));
+}
+
+TYPED_TEST(LeakyReluTest, backward_3d_tensor_test)
+{
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
+
+  ArrayType           data({2, 2, 2});
+  ArrayType           error({2, 2, 2});
+  ArrayType           gt({2, 2, 2});
+  std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8});
+  std::vector<double> errorInput({0, 0, 0, 0, 1, 1, 0, 0});
+  std::vector<double> gtInput({0, 0, 0, 0, 1, 0.01, 0, 0});
+
+  for (SizeType i(0); i < 2; ++i)
+  {
+    for (SizeType j(0); j < 2; ++j)
+    {
+      for (SizeType k(0); k < 2; ++k)
+      {
+        data.Set(i, j, k, DataType(dataInput[i + 2 * (j + 2 * k)]));
+        error.Set(i, j, k, DataType(errorInput[i + 2 * (j + 2 * k)]));
+        gt.Set(i, j, k, DataType(gtInput[i + 2 * (j + 2 * k)]));
+      }
+    }
+  }
+
   fetch::ml::ops::LeakyRelu<ArrayType> op(DataType(0.01));
   std::vector<ArrayType>               prediction = op.Backward({data}, error);
 

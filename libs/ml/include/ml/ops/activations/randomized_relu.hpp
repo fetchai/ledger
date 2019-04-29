@@ -72,29 +72,37 @@ public:
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape() == errorSignal.shape());
-    ArrayType returnSignal{errorSignal.shape()};
+    ArrayType ret{errorSignal.shape()};
+    ArrayType t{inputs.front().get().shape()};
 
     DataType tmp_alpha = this->is_training_ ? random_value_ : bounds_mean_;
 
     // gradient of randomized-relu function is for x<0 = alpha, x>=0 = 1.0
-    typename ArrayType::SizeType idx(0);
-    for (auto const &val : inputs.at(0).get())
+    t = this->Forward(inputs, t);
+
+    auto it  = t.cbegin();
+    auto rit = ret.begin();
+    while (it.is_valid())
     {
-      if (val >= DataType(0))
+      *rit = fetch::math::Max(*it, typename ArrayType::Type(0));
+      if (*it >= DataType(0))
       {
-        returnSignal.Set(idx, DataType(1));
+        // f'(x)=1 for x>=0
+        *rit = DataType(1);
       }
       else
       {
-        returnSignal.Set(idx, tmp_alpha);
+        // f'(x)=a for x<0
+        *rit = tmp_alpha;
       }
-      ++idx;
+      ++it;
+      ++rit;
     }
 
     // multiply by errorSignal (chain rule)
-    fetch::math::Multiply(errorSignal, returnSignal, returnSignal);
+    fetch::math::Multiply(errorSignal, ret, ret);
 
-    return {returnSignal};
+    return {ret};
   }
 
   static constexpr char const *DESCRIPTOR = "RandomizedRelu";

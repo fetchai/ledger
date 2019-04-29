@@ -35,7 +35,10 @@ public:
   using DataType  = typename ArrayType::Type;
   using SizeType  = typename ArrayType::SizeType;
 
-  LogSoftmax()  = default;
+  LogSoftmax(SizeType axis = 0)
+    : axis_(axis)
+  {}
+
   ~LogSoftmax() = default;
 
   ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
@@ -43,7 +46,7 @@ public:
   {
     ASSERT(output.shape() == ComputeOutputShape(inputs));
     ASSERT(inputs.size() == 1);
-    fetch::math::Softmax(inputs.front().get(), output);
+    fetch::math::Softmax(inputs.front().get(), output, axis_);
     fetch::math::Log(output, output);
     return output;
   }
@@ -70,6 +73,9 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "LogSoftmax";
+
+private:
+  SizeType axis_;
 };
 
 }  // namespace ops

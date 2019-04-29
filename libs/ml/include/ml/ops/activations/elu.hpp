@@ -54,31 +54,35 @@ public:
   {
     ASSERT(inputs.size() == 1);
     ASSERT(inputs.front().get().shape() == errorSignal.shape());
-    ArrayType returnSignal{errorSignal.shape()};
+    ArrayType ret{errorSignal.shape()};
     ArrayType t{inputs.front().get().shape()};
 
     // gradient of elu function is for x<0 = a*e^x, x>=0 = 1.0
     t = this->Forward(inputs, t);
 
-    typename ArrayType::SizeType idx(0);
-    for (auto &val : t)
+    auto it  = t.cbegin();
+    auto rit = ret.begin();
+    while (it.is_valid())
     {
-      if (val >= DataType(0))
+      *rit = fetch::math::Max(*it, typename ArrayType::Type(0));
+      if (*it >= DataType(0))
       {
-        returnSignal.Set(idx, DataType(1));
+        // f(x)=x for x>=0
+        *rit = DataType(1);
       }
       else
       {
         // f(x)=a*e^x
-        fetch::math::Multiply(a_, fetch::math::Exp(val), returnSignal.At(idx));
+        fetch::math::Multiply(a_, fetch::math::Exp(*it), *rit);
       }
-      ++idx;
+      ++it;
+      ++rit;
     }
 
     // multiply by errorSignal (chain rule)
-    fetch::math::Multiply(errorSignal, returnSignal, returnSignal);
+    fetch::math::Multiply(errorSignal, ret, ret);
 
-    return {returnSignal};
+    return {ret};
   }
 
   static constexpr char const *DESCRIPTOR = "Elu";
