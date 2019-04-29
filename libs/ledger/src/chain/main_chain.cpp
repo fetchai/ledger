@@ -100,70 +100,79 @@ MainChain::BlockPtr MainChain::GetHeaviestBlock() const
   return GetBlock(heaviest_.hash);
 }
 
+/**
+ * Add a block to the cache, recording the path to it from its parent accordingly.
+ * This procedure should always be used in place of block_chain_.insert/operator[].
+ *
+ * @param block The block to be cached.
+ * @return True iff this is a new block on the cache.
+ */
 bool MainChain::CacheBlock(IntBlockPtr const &block) const
 {
   auto const &body{block->body};
   if (block_chain_.emplace(body.hash, block).second)
   {
-    trails_.emplace(body.previous_hash, body.hash);
+    forward_references_.emplace(body.previous_hash, body.hash);
     return true;
   }
   return false;
-}
-
-bool MainChain::UncacheBlock(BlockHash const &hash, bool root) const
-{
-  auto chainLink{block_chain_.find(hash)};
-  if (chainLink != block_chain_.end())
-  {
-    UncacheBlock(hash, chainLink, root);
-    return true;
-  }
-  return false;
-}
-
-void MainChain::RemoveStepBack(MainChain::BlockHash const &  hash,
-                               MainChain::IntBlockPtr const &block) const
-{
-  for (auto range{trails_.equal_range(block->body.previous_hash)}; range.first != range.second;
-       ++range.first)
-  {
-    if (range.first->second == hash)
-    {
-      trails_.erase(range.first);
-      break;
-    }
-  }
-}
-
-MainChain::BlockMap::iterator MainChain::UncacheBlock(BlockHash const &             hash,
-                                                      MainChain::BlockMap::iterator chainLink,
-                                                      bool                          root) const
-{
-  if (root)
-  {
-    // take one step back and leave no trace
-    RemoveStepBack(hash, chainLink->second);
-  }
-
-  for (auto range{trails_.equal_range(hash)}; range.first != range.second;
-       range.first = trails_.erase(range.first))
-  {
-    UncacheBlock(range.first->second, false);
-  }
-  return block_chain_.erase(chainLink);
 }
 
 /**
- * Removes the block (and all blocks ahead of it) from the chain
+ * Remove a step from a block's parent to the block itself from forward_references_.
+ *
+ * @param block The block being removed from trails.
+ */
+void MainChain::RemoveStepBack(MainChain::IntBlockPtr const &block) const
+{
+  // look for a link to this block from its parent in forward_references_ and remove it
+  auto const &hash{block->body.hash};
+  auto const  range{forward_references_.equal_range(block->body.previous_hash)};
+  auto        trail{std::find_if(range.first, range.second,
+                          [&hash](auto const &step) { return step.second == hash; })};
+  if (trail != range.second)
+  {
+    forward_references_.erase(trail);
+  }
+}
+
+/**
+ * Remove a block plus all its progeny from the cache and forward_references_.
+ * This procedure should always be used in place of block_chain_.erase().
+ *
+ * @param hash The hash to be removed
+ * @return True if successful, otherwise false
+ */
+bool MainChain::UncacheBlock(BlockHash const &hash, bool remove_step_back) const
+{
+  auto chain_link{block_chain_.find(hash)};
+  if (chain_link != block_chain_.end())
+  {
+    if (remove_step_back)
+    {
+      // take one step back and leave no trace
+      RemoveStepBack(chain_link->second);
+    }
+
+    auto const range{forward_references_.equal_range(hash)};
+    for (auto trail_it{range.first}; trail_it != range.second; trail_it = forward_references_.erase(trail_it))
+    {
+      UncacheBlock(trail_it->second, false);
+    }
+    block_chain_.erase(chain_link);
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Remove the block (and all blocks ahead of it) from the chain
  *
  * @param hash The hash to be removed
  * @return True if successful, otherwise false
  */
 bool MainChain::RemoveBlock(BlockHash hash)
 {
-  // TODO(private issue 666): Improve performance of block removal
-
   FETCH_LOCK(lock_);
 
   if (!UncacheBlock(hash))
@@ -681,7 +690,7 @@ void MainChain::TrimCache()
         }
 
         // remove the entry from the main block chain
-        trails_.erase(block.hash);
+        forward_references_.erase(block.hash);
         chain_it = block_chain_.erase(chain_it);
       }
       else
@@ -717,7 +726,7 @@ void MainChain::TrimCache()
 void MainChain::FlushBlock(IntBlockPtr const &block)
 {
   // remove the block from the block map
-  RemoveStepBack(block->body.hash, block);
+  RemoveStepBack(block);
   tips_.erase(block->body.hash);
   block_chain_.erase(block->body.hash);
 }
@@ -1096,42 +1105,41 @@ bool MainChain::ReindexTips()
   TipsMap tips{};
 
   // The heavies tip is search for in-place
-  BlockHash heaviestBlock;
-  uint64_t  largestWeight{};
+  BlockHash heaviest_block;
+  uint64_t  largest_weight{};
 
-  for (auto const &pathNode : trails_)
+  for (auto const &path_node : forward_references_)
   {
     // Find path tree leaves, they will constitute the new tips
-    if (trails_.find(pathNode.second) == trails_.end())
+    if (forward_references_.find(path_node.second) == forward_references_.end())
     {
-      BlockHash const &current{pathNode.second};
-      auto             chainLink = block_chain_.find(current);
-      assert(chainLink != block_chain_.end());
-      auto const &block{chainLink->second};
+      BlockHash const &current{path_node.second};
+      auto             chain_link = block_chain_.find(current);
+      assert(chain_link != block_chain_.end());
+      auto const &block{chain_link->second};
 
       if (!block->is_loose)
       {
-        uint64_t tipWeight{block->total_weight};
-        tips.emplace(current, Tip{tipWeight});
-        if ((largestWeight < tipWeight) ||
-            ((largestWeight == tipWeight) && (heaviestBlock < current)))
+        uint64_t tip_weight{block->total_weight};
+        tips.emplace(current, Tip{tip_weight});
+        if ((largest_weight < tip_weight) ||
+            ((largest_weight == tip_weight) && (heaviest_block < current)))
         {
-          heaviestBlock = current;
-          largestWeight = tipWeight;
+          heaviest_block = current;
+          largest_weight = tip_weight;
         }
       }
     }
   }
 
   tips_ = std::move(tips);
-  if (!tips_.empty())
+  if (tips_.empty())
   {
-    heaviest_.hash   = heaviestBlock;
-    heaviest_.weight = largestWeight;
-    return true;
+    return false;
   }
-
-  return false;
+  heaviest_.hash   = heaviest_block;
+  heaviest_.weight = largest_weight;
+  return true;
 }
 
 /**

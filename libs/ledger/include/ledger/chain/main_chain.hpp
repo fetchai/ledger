@@ -192,11 +192,8 @@ private:
   bool        IsBlockInCache(BlockHash hash) const;
   void        AddBlockToCache(IntBlockPtr const &) const;
   bool        CacheBlock(IntBlockPtr const &block) const;
-  void        RemoveStepBack(BlockHash const &hash, IntBlockPtr const &block) const;
-  bool        UncacheBlock(BlockHash const &hash, bool root = true) const;
-  BlockMap::iterator UncacheBlock(BlockHash const &hash, BlockMap::iterator chainLink,
-                                  bool root = true) const;
-
+  void        RemoveStepBack(IntBlockPtr const &block) const;
+  bool        UncacheBlock(BlockHash const &hash, bool remove_step_back = true) const;
   /// @}
 
   /// @name Tip Management
@@ -215,7 +212,7 @@ private:
   TipsMap          tips_;          ///< Keep track of the tips
   HeaviestTip      heaviest_;      ///< Heaviest block/tip
   LooseBlockMap    loose_blocks_;  ///< Waiting (loose) blocks
-  mutable Trails   trails_;        ///< The tree of paths from genesis down to every bloc
+  mutable Trails   forward_references_; ///< The tree of paths from genesis down to every bloc
 };
 
 /**
@@ -227,7 +224,7 @@ private:
  * @return: bool whether the starting hash referred to a valid block on a valid chain
  */
 template <typename T>
-inline bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container) const
+bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container) const
 {
   using namespace std::chrono;
   using Clock = high_resolution_clock;
