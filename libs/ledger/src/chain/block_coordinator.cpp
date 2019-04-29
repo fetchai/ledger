@@ -236,7 +236,6 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
     }
 
     assert(blocks.size() >= 2);
-    assert(!blocks.empty());
 
     auto     block_path_it = blocks.crbegin();
     BlockPtr common_parent = *block_path_it++;
