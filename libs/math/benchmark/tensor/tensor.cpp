@@ -23,6 +23,56 @@
 
 #include "benchmark/benchmark.h"
 
+// size access should be very fast
+template <class T, int C, int H, int W>
+void BM_TensorSize(benchmark::State &state)
+{
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
+    state.ResumeTiming();
+    t.size();
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_TensorSize, int, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_TensorSize, float, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_TensorSize, double, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+
+BENCHMARK_TEMPLATE(BM_TensorSize, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorSize, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorSize, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_TensorSize, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorSize, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorSize, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+
+// shape access should also be very fast
+template <class T, int C, int H, int W>
+void BM_TensorShape(benchmark::State &state)
+{
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
+    state.ResumeTiming();
+    t.shape();
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_TensorShape, int, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_TensorShape, float, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_TensorShape, double, 3, 256, 256)->Unit(benchmark::kMicrosecond);
+
+BENCHMARK_TEMPLATE(BM_TensorShape, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorShape, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorShape, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_TensorShape, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorShape, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorShape, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+
 template <class T, int C, int H, int W>
 void BM_tensorNaiveIteration(benchmark::State &state)
 {
