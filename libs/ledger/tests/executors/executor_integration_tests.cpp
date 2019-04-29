@@ -208,7 +208,7 @@ protected:
 
     // --- Schedule executor for connection ---------------------
 
-    executor_ = std::make_shared<ExecutorRpcClient>(*network_manager_, *muddle_);
+    executor_ = std::make_shared<ExecutorRpcClient>(*muddle_);
     executor_->Connect(*muddle_, Uri("tcp://127.0.0.1:" + std::to_string(EXECUTOR_RPC_PORT)));
 
     // --- Wait for connections to finish -----------------------

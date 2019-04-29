@@ -176,9 +176,10 @@ void LaneService::Start()
 
   tx_sync_service_->Start();
 
-  // TX Sync service
-  workthread_ = std::make_shared<BackgroundedWorkThread>(
-      &bg_work_, "BW:LS-" + std::to_string(cfg_.lane_id), [this]() { tx_sync_service_->Work(); });
+  // TX Sync service - attach to reactor once #892 is merged
+  workthread_ =
+      std::make_shared<BackgroundedWorkThread>(&bg_work_, "BW:LS-" + std::to_string(cfg_.lane_id),
+                                               [this]() { tx_sync_service_->Execute(); });
   workthread_->ChangeWaitTime(std::chrono::milliseconds{unsigned{SYNC_PERIOD_MS}});
 }
 
