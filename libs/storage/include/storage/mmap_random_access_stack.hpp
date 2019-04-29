@@ -570,7 +570,7 @@ private:
                   '\0');
       file_handle_.flush();
     }
-    catch (storage::StorageException &e)
+    catch (storage::StorageException const &e)
     {
       std::cerr << "error: " << e.what() << std::endl;
     }

@@ -29,28 +29,29 @@ protected:
   using PacketPtr = std::shared_ptr<Packet>;
   using Payload   = Packet::Payload;
   using Prover    = fetch::crypto::ECDSASigner;
+  using ProverPtr = std::unique_ptr<Prover>;
 
   void SetUp() override
   {
-    prover_ = Prover();
-    prover_.GenerateKeys();
+    prover_ = std::make_unique<Prover>();
+    prover_->GenerateKeys();
     response_ = "hello";
-    packet_   = CreatePacket(prover_.identity().identifier(), 1, 2, 3, response_);
+    packet_   = CreatePacket(prover_->identity().identifier(), 1, 2, 3, response_);
   }
 
-  PacketPtr CreatePacket(fetch::byte_array::ConstByteArray const &address, uint16_t service,
-                         uint16_t channel, uint16_t counter, Payload const &payload)
+  static PacketPtr CreatePacket(fetch::byte_array::ConstByteArray const &address, uint16_t service,
+                                uint16_t channel, uint16_t counter, Payload const &payload)
   {
-    PacketPtr packet_ = std::make_shared<Packet>(address, 0);
-    packet_->SetService(service);
-    packet_->SetProtocol(channel);
-    packet_->SetMessageNum(counter);
-    packet_->SetPayload(payload);
+    PacketPtr packet = std::make_shared<Packet>(address, 0);
+    packet->SetService(service);
+    packet->SetProtocol(channel);
+    packet->SetMessageNum(counter);
+    packet->SetPayload(payload);
 
-    return packet_;
+    return packet;
   }
 
-  Prover    prover_;
+  ProverPtr prover_;
   Payload   response_;
   PacketPtr packet_;
 };
@@ -59,77 +60,77 @@ TEST_F(PacketTests, CheckInvaldation)
 {
   EXPECT_FALSE(packet_->IsStamped());
   EXPECT_FALSE(packet_->Verify());
-  packet_->Sign(prover_);
+  packet_->Sign(*prover_);
   EXPECT_TRUE(packet_->IsStamped());
   EXPECT_TRUE(packet_->Verify());
 
   packet_->SetDirect();
   EXPECT_FALSE(packet_->IsStamped());
   EXPECT_FALSE(packet_->Verify());
-  packet_->Sign(prover_);
+  packet_->Sign(*prover_);
   EXPECT_TRUE(packet_->IsStamped());
   EXPECT_TRUE(packet_->Verify());
 
   packet_->SetBroadcast();
   EXPECT_FALSE(packet_->IsStamped());
   EXPECT_FALSE(packet_->Verify());
-  packet_->Sign(prover_);
+  packet_->Sign(*prover_);
   EXPECT_TRUE(packet_->IsStamped());
   EXPECT_TRUE(packet_->Verify());
 
   packet_->SetExchange();
   EXPECT_FALSE(packet_->IsStamped());
   EXPECT_FALSE(packet_->Verify());
-  packet_->Sign(prover_);
+  packet_->Sign(*prover_);
   EXPECT_TRUE(packet_->IsStamped());
   EXPECT_TRUE(packet_->Verify());
 
   packet_->SetService(42);
   EXPECT_FALSE(packet_->IsStamped());
   EXPECT_FALSE(packet_->Verify());
-  packet_->Sign(prover_);
+  packet_->Sign(*prover_);
   EXPECT_TRUE(packet_->IsStamped());
   EXPECT_TRUE(packet_->Verify());
 
   packet_->SetProtocol(42);
   EXPECT_FALSE(packet_->IsStamped());
   EXPECT_FALSE(packet_->Verify());
-  packet_->Sign(prover_);
+  packet_->Sign(*prover_);
   EXPECT_TRUE(packet_->IsStamped());
   EXPECT_TRUE(packet_->Verify());
 
   packet_->SetMessageNum(42);
   EXPECT_FALSE(packet_->IsStamped());
   EXPECT_FALSE(packet_->Verify());
-  packet_->Sign(prover_);
+  packet_->Sign(*prover_);
   EXPECT_TRUE(packet_->IsStamped());
   EXPECT_TRUE(packet_->Verify());
 
   packet_->SetTarget(Packet::RawAddress{});
   EXPECT_FALSE(packet_->IsStamped());
   EXPECT_FALSE(packet_->Verify());
-  packet_->Sign(prover_);
+  packet_->Sign(*prover_);
   EXPECT_TRUE(packet_->IsStamped());
   EXPECT_TRUE(packet_->Verify());
 
   packet_->SetPayload(Payload{"Bye!"});
   EXPECT_FALSE(packet_->IsStamped());
   EXPECT_FALSE(packet_->Verify());
-  packet_->Sign(prover_);
+  packet_->Sign(*prover_);
   EXPECT_TRUE(packet_->IsStamped());
   EXPECT_TRUE(packet_->Verify());
 
   packet_->SetNetworkId(42);
   EXPECT_FALSE(packet_->IsStamped());
   EXPECT_FALSE(packet_->Verify());
-  packet_->Sign(prover_);
+  packet_->Sign(*prover_);
   EXPECT_TRUE(packet_->IsStamped());
   EXPECT_TRUE(packet_->Verify());
 }
 
 TEST_F(PacketTests, CheckIndifference)
 {
-  packet_->Sign(prover_);
+  packet_->Sign(*prover_);
   EXPECT_TRUE(packet_->IsStamped());
   EXPECT_TRUE(packet_->Verify());
 

@@ -17,46 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
-#include "crypto/identity.hpp"
-
 namespace fetch {
+namespace byte_array {
+
+class ConstByteArray;
+}
+
 namespace crypto {
 
-class Prover
-{
-public:
-  using ConstByteArray = byte_array::ConstByteArray;
+class Identity;
 
-  // Construction / Destruction
-  Prover()          = default;
-  virtual ~Prover() = default;
-
-  /// @name Prover Interface
-  /// @{
-
-  /**
-   * Access the corresponding identity for this prover
-   *
-   * @return The prover
-   */
-  virtual Identity identity() const = 0;
-
-  /**
-   * Load the private key from a byte stream
-   */
-  virtual void Load(ConstByteArray const &) = 0;
-
-  /**
-   * Sign a given message with the
-   *
-   * @param message The message to be signed
-   * @return The generated signature if successful, otherwise return empty byte array
-   */
-  virtual ConstByteArray Sign(ConstByteArray const &message) = 0;
-
-  /// @}
-};
+bool IsFetchIdentity(Identity const &identity);
+bool IsFetchIdentity(byte_array::ConstByteArray const &identity);
 
 }  // namespace crypto
 }  // namespace fetch
