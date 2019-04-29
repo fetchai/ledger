@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/future_timepoint.hpp"
 #include "core/mutex.hpp"
 #include "core/periodic_action.hpp"
 #include "core/state_machine.hpp"
@@ -29,7 +30,6 @@
 #include <deque>
 #include <thread>
 #include <unordered_set>
-#include <network/generics/future_timepoint.hpp>
 
 namespace fetch {
 namespace ledger {
@@ -218,7 +218,7 @@ private:
   using TxSet             = std::unordered_set<TransactionSummary::TxDigest>;
   using TxSetPtr          = std::unique_ptr<TxSet>;
   using LastExecutedBlock = SynchronisedState<ConstByteArray>;
-  using FutureTimepoint   = fetch::network::FutureTimepoint;
+  using FutureTimepoint   = fetch::core::FutureTimepoint;
 
   /// @name Monitor State
   /// @{

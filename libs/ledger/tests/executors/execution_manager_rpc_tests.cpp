@@ -58,7 +58,7 @@ protected:
     using InFlightCounter =
         fetch::network::AtomicInFlightCounter<fetch::network::AtomicCounterName::TCP_PORT_STARTUP>;
 
-    fetch::network::FutureTimepoint const deadline(std::chrono::seconds(30));
+    fetch::core::FutureTimepoint const deadline(std::chrono::seconds(30));
 
     return InFlightCounter::Wait(deadline);
   }

@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/future_timepoint.hpp"
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
-#include "network/generics/future_timepoint.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/p2pservice/manifest.hpp"
 
@@ -38,11 +38,11 @@ class ManifestCache
 public:
   struct CacheEntry
   {
-    network::FutureTimepoint timepoint;
+    core::FutureTimepoint timepoint;
     network::Manifest        manifest;
   };
 
-  using Clock      = network::FutureTimepoint::Clock;
+  using Clock      = core::FutureTimepoint::Clock;
   using Timepoint  = Clock::time_point;
   using Manifest   = network::Manifest;
   using Address    = muddle::Packet::Address;

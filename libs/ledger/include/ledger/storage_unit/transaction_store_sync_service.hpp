@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/future_timepoint.hpp"
 #include "core/service_ids.hpp"
 #include "core/state_machine.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/lane_controller.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
-#include "network/generics/future_timepoint.hpp"
 #include "network/generics/promise_of.hpp"
 #include "network/generics/requesting_queue.hpp"
 #include "network/muddle/muddle.hpp"
@@ -61,7 +61,7 @@ public:
   using Client                = muddle::rpc::Client;
   using ClientPtr             = std::shared_ptr<Client>;
   using ObjectStore           = storage::TransientObjectStore<VerifiedTransaction>;
-  using FutureTimepoint       = network::FutureTimepoint;
+  using FutureTimepoint       = core::FutureTimepoint;
   using RequestingObjectCount = network::RequestingQueueOf<Address, uint64_t>;
   using PromiseOfObjectCount  = network::PromiseOf<uint64_t>;
   using RequestingTxList      = network::RequestingQueueOf<Address, TxList>;
