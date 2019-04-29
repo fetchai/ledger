@@ -119,8 +119,8 @@ TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
   fetch::ml::Graph<TypeParam> g;
 
   g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Input", {});
-  g.template AddNode<fetch::ml::layers::Convolution1D<TypeParam>>("Convolution1D", {"Input"}, 5u, 3u,
-                                                                  3u, 2u);
+  g.template AddNode<fetch::ml::layers::Convolution1D<TypeParam>>("Convolution1D", {"Input"}, 5u,
+                                                                  3u, 3u, 2u);
 
   TypeParam data({3, 5});
   g.SetInput("Input", data);
