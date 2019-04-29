@@ -29,27 +29,31 @@ namespace vm_modules {
 template <typename T>
 fetch::meta::IfIsInteger<T, T> Rand(fetch::vm::VM *, T const &a = T{0}, T const &b = T{100})
 {
-  if (a == b) {
+  if (a == b)
+  {
     return a;
   }
 
   std::random_device rd;
   std::mt19937_64    mt(rd());
 
-  return a < b ? std::uniform_int_distribution<T>{a, b}(mt) : std::uniform_int_distribution<T>{b, a}(mt);
+  return a < b ? std::uniform_int_distribution<T>{a, b}(mt)
+               : std::uniform_int_distribution<T>{b, a}(mt);
 }
 
 template <typename T>
 fetch::meta::IfIsFloat<T, T> Rand(fetch::vm::VM *, T const &a = T{.0}, T const &b = T{1.0})
 {
-  if (a == b) {
+  if (a == b)
+  {
     return a;
   }
 
   std::random_device rd;
   std::mt19937_64    mt(rd());
 
-  return a < b ? std::uniform_real_distribution<T>{a, b}(mt) : std::uniform_real_distribution<T>{b, a}(mt);
+  return a < b ? std::uniform_real_distribution<T>{a, b}(mt)
+               : std::uniform_real_distribution<T>{b, a}(mt);
 }
 
 static void CreateRand(std::shared_ptr<fetch::vm::Module> module)
