@@ -331,7 +331,7 @@ bool BootstrapMonitor::NotifyNode()
 {
   bool success = false;
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Notify bootstrap server...");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Notify bootstrap server...");
 
   Variant request = Variant::Object();
 
