@@ -203,7 +203,6 @@ private:
     ERROR
   };
 
-  //  using Super         = core::StateMachine<BlockCoordinatorState>;
   using Mutex             = fetch::mutex::Mutex;
   using BlockPtr          = MainChain::BlockPtr;
   using NextBlockPtr      = std::unique_ptr<Block>;
@@ -271,7 +270,6 @@ private:
   std::size_t     block_difficulty_;       ///< The number of leading zeros needed in the proof
   std::size_t     num_lanes_;              ///< The current number of lanes
   std::size_t     num_slices_;             ///< The current number of slices
-  std::size_t     stall_count_{0};         ///< The number of times the execution has been stalled
   Flag            mining_{false};          ///< Flag to signal if this node generating blocks
   Flag            mining_enabled_{false};  ///< Short term signal to toggle on and off
   BlockPeriod     block_period_;           ///< The desired period before a block is generated

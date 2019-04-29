@@ -696,7 +696,6 @@ BlockCoordinator::State BlockCoordinator::OnReset()
   current_block_.reset();
   next_block_.reset();
   pending_txs_.reset();
-  stall_count_ = 0;
 
   // we should update the next block time
   UpdateNextBlockTime();
