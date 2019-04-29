@@ -247,7 +247,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
       FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Common Parent: ", ToBase64(common_parent->body.hash));
       FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Next Block...: ", ToBase64(next_block->body.hash));
 
-      // calculate a percentage syncronisation
+      // calculate a percentage synchronisation
       std::size_t const current_block_num = next_block->body.block_number;
       std::size_t const total_block_num   = current_block_->body.block_number;
       double const      completion =
