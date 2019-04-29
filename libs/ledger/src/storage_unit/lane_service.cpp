@@ -46,7 +46,9 @@ std::string GeneratePrefix(std::string const &storage_path, uint32_t lane)
 }  // namespace
 
 LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packets, Mode mode)
-  : cfg_{std::move(config)}
+  : tx_store_(std::make_shared<TxStore>())
+  , reactor_("LaneServiceReactor")
+  , cfg_{std::move(config)}
 {
   // External Muddle network and RPC server
   external_muddle_ =
@@ -66,8 +68,7 @@ LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packet
   lane_identity_protocol_ = std::make_shared<LaneIdentityProtocol>(*lane_identity_);
   external_rpc_server_->Add(RPC_IDENTITY, lane_identity_protocol_.get());
 
-  // TX Store
-  tx_store_ = std::make_shared<TxStore>();
+  reactor_.Attach(tx_store_->getWeakRunnable());
 
   std::string const prefix = GeneratePrefix(cfg_.storage_path, cfg_.lane_id);
   switch (mode)
@@ -127,10 +128,14 @@ LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packet
   internal_rpc_server_->Add(RPC_STATE, state_db_protocol_.get());
 
   FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, " Initialised.");
+
+  reactor_.Start();
 }
 
 LaneService::~LaneService()
 {
+  reactor_.Stop();
+
   workthread_ = nullptr;
 
   FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, " Teardown.");
