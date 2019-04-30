@@ -24,8 +24,6 @@
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
 
-#include "vm/vm.hpp"
-
 namespace fetch {
 namespace vm_modules {
 
