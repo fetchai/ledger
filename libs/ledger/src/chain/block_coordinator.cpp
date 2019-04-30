@@ -773,29 +773,34 @@ bool BlockCoordinator::ScheduleBlock(Block const &block)
 
 BlockCoordinator::ExecutionStatus BlockCoordinator::QueryExecutorStatus()
 {
+  ExecutionStatus status{ExecutionStatus::ERROR};
+
   // based on the state of the execution manager determine
   auto const execution_state = execution_manager_.GetState();
 
   // map the raw executor status into our simplified version
   switch (execution_state)
   {
-  default:
-    return ExecutionStatus::ERROR;
   case ExecutionState::IDLE:
-    return ExecutionStatus::IDLE;
+    status = ExecutionStatus::IDLE;
+    break;
 
   case ExecutionState::ACTIVE:
-    return ExecutionStatus::RUNNING;
+    status = ExecutionStatus::RUNNING;
+    break;
 
   case ExecutionState::TRANSACTIONS_UNAVAILABLE:
-    return ExecutionStatus::STALLED;
+    status = ExecutionStatus::STALLED;
+    break;
 
   case ExecutionState::EXECUTION_ABORTED:
   case ExecutionState::EXECUTION_FAILED:
     FETCH_LOG_WARN(LOGGING_NAME, "Execution in error state: ", ledger::ToString(execution_state));
-
-    return ExecutionStatus::ERROR;
+    status = ExecutionStatus::ERROR;
+    break;
   }
+
+  return status;
 }
 
 void BlockCoordinator::UpdateNextBlockTime()
@@ -816,56 +821,78 @@ void BlockCoordinator::UpdateTxStatus(Block const &block)
 
 char const *BlockCoordinator::ToString(State state)
 {
+  char const *text = "Unknown";
+
   switch (state)
   {
-  default:
-    return "Unknown";
   case State::RELOAD_STATE:
-    return "Reloading State";
+    text = "Reloading State";
+    break;
   case State::SYNCHRONIZING:
-    return "Synchronizing";
+    text = "Synchronizing";
+    break;
   case State::SYNCHRONIZED:
-    return "Synchronized";
+    text = "Synchronized";
+    break;
   case State::PRE_EXEC_BLOCK_VALIDATION:
-    return "Pre Block Execution Validation";
+    text = "Pre Block Execution Validation";
+    break;
   case State::WAIT_FOR_TRANSACTIONS:
-    return "Waiting for Transactions";
+    text = "Waiting for Transactions";
+    break;
   case State::SCHEDULE_BLOCK_EXECUTION:
-    return "Schedule Block Execution";
+    text = "Schedule Block Execution";
+    break;
   case State::WAIT_FOR_EXECUTION:
-    return "Waiting for Block Execution";
+    text = "Waiting for Block Execution";
+    break;
   case State::POST_EXEC_BLOCK_VALIDATION:
-    return "Post Block Execution Validation";
+    text = "Post Block Execution Validation";
+    break;
   case State::PACK_NEW_BLOCK:
-    return "Pack New Block";
+    text = "Pack New Block";
+    break;
   case State::EXECUTE_NEW_BLOCK:
-    return "Execution New Block";
+    text = "Execution New Block";
+    break;
   case State::WAIT_FOR_NEW_BLOCK_EXECUTION:
-    return "Waiting for New Block Execution";
+    text = "Waiting for New Block Execution";
+    break;
   case State::PROOF_SEARCH:
-    return "Searching for Proof";
+    text = "Searching for Proof";
+    break;
   case State::TRANSMIT_BLOCK:
-    return "Transmitting Block";
+    text = "Transmitting Block";
+    break;
   case State::RESET:
-    return "Reset";
+    text = "Reset";
+    break;
   }
+
+  return text;
 }
 
 char const *BlockCoordinator::ToString(ExecutionStatus state)
 {
+  char const *text = "Unknown";
+
   switch (state)
   {
-  default:
-    return "Unknown";
   case ExecutionStatus::IDLE:
-    return "Idle";
+    text = "Idle";
+    break;
   case ExecutionStatus::RUNNING:
-    return "Running";
+    text = "Running";
+    break;
   case ExecutionStatus::STALLED:
-    return "Stalled";
+    text = "Stalled";
+    break;
   case ExecutionStatus::ERROR:
-    return "Error";
+    text = "Error";
+    break;
   }
+
+  return text;
 }
 
 }  // namespace ledger
