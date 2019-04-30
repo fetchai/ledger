@@ -29,7 +29,11 @@ namespace vm_modules {
 template <typename T>
 fetch::meta::IfIsInteger<T, T> Rand(fetch::vm::VM *, T const &a = T{0}, T const &b = T{100})
 {
-  if (a == b)
+  if (a >= b)
+  {
+    vm->RuntimeError("Invalid random range requested");
+    return T{0};
+  }
   {
     return a;
   }
