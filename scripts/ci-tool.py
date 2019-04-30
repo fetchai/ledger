@@ -15,7 +15,7 @@ import fnmatch
 import shutil
 import multiprocessing
 import xml.etree.ElementTree as ET
-#import run_integration_test
+import run_integration_test
 
 BUILD_TYPES = ('Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel')
 MAX_CPUS = 7 # as defined by CI workflow
@@ -235,8 +235,7 @@ def test_integration(project_root, build_root):
     # should be the location of constellation exe - if not the test will catch
     constellation_exe = os.path.join(build_root, "apps/constellation/constellation")
 
-    # TODO(HUT): enable this - currently jenkins will not have correct python libs installed
-    #run_integration_test.run_test(build_root, yaml_file, constellation_exe)
+    run_integration_test.run_test(build_root, yaml_file, constellation_exe)
 
 def main():
 
