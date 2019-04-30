@@ -93,7 +93,7 @@ investigating the implementation of the `example-vm-01-basic-vm`.
 
 Adding free functions
 ---------------------
-In this first example we will consider how to implement the `Print` function and the casting operation `toString` that we
+In this first example we will consider how to implement the `print` function and the casting operation `toString` that we
 used in the previous sections. The C++ implementations are given as
 
 .. literalinclude:: ../../../libs/vm/examples/01_basic_vm/main.cpp

@@ -3,12 +3,12 @@ function main()
   var hello = "Hello";
 
   // Start of program
-  Print(hello + " world");
+  print(hello + " world");
 
   // Additional (uninitialised) variables
   var world : String;
   world = "Fetch";  
 
   // More program code
-  Print(hello + " " + world);
+  print(hello + " " + world);
 endfunction

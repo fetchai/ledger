@@ -111,13 +111,13 @@ TEST_F(VMTests, CheckRandom)
 {
   const std::string source =
       " function main()"
-      "   Print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   Print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   Print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   Print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   Print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   Print('rnd = ' + toString(Rand(0.0f, 1000.0f)));"
-      "   Print('rnd = ' + toString(Rand(0.0, 1000.0)));"
+      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
+      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
+      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
+      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
+      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
+      "   print('rnd = ' + toString(Rand(0.0f, 1000.0f)));"
+      "   print('rnd = ' + toString(Rand(0.0, 1000.0)));"
       " endfunction ";
 
   bool res = Compile(source);

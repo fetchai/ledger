@@ -165,11 +165,11 @@ int main(int argc, char **argv)
 
   auto module = std::make_shared<fetch::vm::Module>();
 
-  module->CreateFreeFunction("Print", &PrintNumber<int>);
-  module->CreateFreeFunction("Print", &PrintNumber<uint64_t>);
-  module->CreateFreeFunction("Print", &PrintNumber<float>);
-  module->CreateFreeFunction("Print", &PrintNumber<double>);
-  module->CreateFreeFunction("Print", &Print);
+  module->CreateFreeFunction("print", &PrintNumber<int>);
+  module->CreateFreeFunction("print", &PrintNumber<uint64_t>);
+  module->CreateFreeFunction("print", &PrintNumber<float>);
+  module->CreateFreeFunction("print", &PrintNumber<double>);
+  module->CreateFreeFunction("print", &Print);
   module->CreateFreeFunction("toString", &toString);
 
   module->CreateClassType<System>("System")

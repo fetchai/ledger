@@ -89,7 +89,7 @@ int main(int argc, char **argv)
 
   fetch::vm::Module module;
 
-  module.CreateFreeFunction("Print", &Print);
+  module.CreateFreeFunction("print", &Print);
   module.CreateFreeFunction("toString", &toString);
 
   module.CreateClassType<IntPair>("IntPair")
