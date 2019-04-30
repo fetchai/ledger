@@ -23,7 +23,7 @@ There is no publicly available test net currently running at this point.
 
 1. [Website](https://fetch.ai/)
 2. [Blog](https://fetch.ai/blog)
-3. Developer Portal - Coming soon - [Signup Open](https://fetch.ai/#community)
+3. [Community Website](https://community.fetch.ai/)
 4. [Community Telegram Group](https://t.me/fetchai)
 5. [Whitepapers](https://fetch.ai/publications.html)
 6. [Roadmap](https://fetch.ai/#/roadmap)
