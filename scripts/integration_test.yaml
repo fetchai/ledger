@@ -12,7 +12,6 @@ setup_conditions:
 
 steps:
     - send_txs : { "name": "batch1", "amount": 10, "nodes" : [0] }
-    - sleep : 8
 
 expectation:
     - verify_txs : { "name": "batch1", "nodes" : [0] }
@@ -30,7 +29,6 @@ setup_conditions:
 
 steps:
     - send_txs : { "name": "batch1", "amount": 10, "nodes" : [1] }
-    - sleep : 15
 
 expectation:
     - verify_txs : { "name": "batch1", "nodes" : [0, 1] }

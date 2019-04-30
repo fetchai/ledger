@@ -18,6 +18,7 @@ import time
 import threading
 import glob
 import shutil
+from threading import Event
 
 from fetch.cluster.instance import ConstellationInstance
 
@@ -36,59 +37,61 @@ class TimerWatchdog():
     """
     TimerWatchdog allows the user to specify a callback that will
     be executed after a set amount of time, unless the watchdog
-    is stopped. This lets you dictate the length of tests
-    docstring.
+    is stopped. This lets you dictate the length of tests.
     """
     def __init__(self, time, name, task , callback):
 
-        self._time     = time
-        self._name     = name
-        self._task     = task
-        self._callback = callback
-        self._stopped  = False
+        self._time       = time
+        self._name       = name
+        self._task       = task
+        self._callback   = callback
+        self._stop_event = Event()
+        self._stop_event.clear()
 
     def start(self):
         self._thread = threading.Thread(target=self._sleep)
-        self._thread.daemon = True
         self._thread.start()
 
     def _sleep(self):
-        time.sleep(self._time)
-
-        if self._stopped == False:
+        # This will return false iff the stop event isn't set before the timeout
+        if not self._stop_event.wait(self._time):
             output("Watchdog {} awoke before being stopped. Time: {} . Task: {}".format(self._name, self._time, self._task))
+            self.trigger()
+        else:
+            output("Safely notified")
 
-        self.trigger()
-
+    # Notify the waiting thread - this causes it not to trigger.
     def stop(self):
-        self._stopped = True
+        self._stop_event.set()
 
     def trigger(self):
         self._callback()
+
+    def __del__(self):
+        self.stop()
 
 class TestInstance():
     """
     Sets up an instance of a test, containing references to started nodes and other relevant data
     """
 
-    _number_of_nodes  = 0
-    _node_connections = None
-    _nodes_are_mining = []
-    _port_start_range = 8000
-    _port_range       = 20
-    _monitor          = None
-    _nodes            = []
-    _workspace        = ""
-    _node_workspace   = ""
-    _lanes            = 1
-    _slices           = 16
-    _max_test_time    = 1000
-    _nodes            = None
-    _metadata         = None
-    _watchdog         = None
-
     def __init__(self, build_directory, constellation_exe):
-        print("Found build_dir: {}, const: {}".format(build_directory, constellation_exe));
+
+        self._number_of_nodes  = 0
+        self._node_connections = None
+        self._nodes_are_mining = []
+        self._port_start_range = 8000
+        self._port_range       = 20
+        self._monitor          = None
+        self._nodes            = []
+        self._workspace        = ""
+        self._node_workspace   = ""
+        self._lanes            = 1
+        self._slices           = 16
+        self._max_test_time    = 1000
+        self._nodes            = None
+        self._metadata         = None
+        self._watchdog         = None
 
         # Default to removing old tests
         for f in glob.glob(build_directory + "/integration_test_*"):
@@ -164,12 +167,14 @@ class TestInstance():
 
         self._nodes = nodes
 
+        time.sleep(2) # TODO(HUT): blocking http call to node for ready state
+
     def stop(self):
-        # stop all the nodes
-        for n, node in enumerate(self._nodes):
-            print('Stopping Node {}...'.format(n))
-            node.stop()
-            print('Stopping Node {}...complete'.format(n))
+        if self._nodes:
+            for n, node in enumerate(self._nodes):
+                print('Stopping Node {}...'.format(n))
+                node.stop()
+                print('Stopping Node {}...complete'.format(n))
 
         if self._watchdog:
             self._watchdog.stop()
@@ -178,7 +183,7 @@ def extract(test, key, expected = True, expect_type = None, default = None):
     """
     Convenience function to remove an item from a YAML string, specifying the type you expect to find
     """
-    try:
+    if key in test:
         result = test[key]
 
         if expect_type is not None and not isinstance(result, expect_type):
@@ -187,7 +192,7 @@ def extract(test, key, expected = True, expect_type = None, default = None):
             sys.exit(1)
 
         return result
-    except:
+    else:
         if expected:
             output("Failed to find key in YAML! \nKey: {} \nYAML: {}".format(key, test))
             sys.exit(1)
@@ -211,9 +216,9 @@ def setup_test(test_yaml, test_instance):
     # Watchdog will trigger this if the tests exceeds allowed bounds. Note stopping the test cleanly is
     # necessary to preserve output logs etc.
     def clean_shutdown():
-        output("Shutting down test due to failure!. YAML: {}".format(test_instance))
+        output("Shutting down test due to failure!. Debug YAML: {}".format(test_yaml))
         test_instance.stop()
-        os._exit(1) # REALLY ensure the program quits.
+        os._exit(1)
 
     watchdog = TimerWatchdog(time = max_test_time, name = test_name, task = "End test and cleanup", callback = clean_shutdown)
     watchdog.start()
@@ -233,12 +238,7 @@ def send_txs(parameters, test_instance):
         output("Only one node supported for sending TXs to at this time!")
         sys.exit(1)
 
-    # TODO(HUT): discuss best way to determine nodes are ready. Probably using http interface
-    time.sleep(2)
-
     for node_index in nodes:
-
-        # TODO(HUT): Refactor this as a getter, and ConstellationInstances to know their location
         node_host = "localhost"
         node_port = test_instance._nodes[node_index]._port_start
 
@@ -260,36 +260,9 @@ def send_txs(parameters, test_instance):
 
             output("Created wealth with balance: ", balance)
 
-        # Conditionally verify TXs get executed
-        # TODO(HUT): This won't work if the node isn't a miner, I suspect
-        if False:
-            for tx, identity, balance in tx_and_identity:
-
-                # wait while we poll to see when this transaction has been completed
-                prev_status = None
-                while True:
-                    status = txs.status(tx)
-
-                    # print the changes in tx status
-                    if status != prev_status:
-                        print('Current Status:', status)
-                        prev_status = status
-
-                    # exit the wait loop once the transaction has been executed
-                    if status == "Executed":
-                        break
-
-                # check the balance now
-                while True:
-                    seen_balance = tokens.balance(identity.public_key)
-                    if balance != seen_balance:
-                        output("Balance mismatch found after sending to node. Found {} expected {}".format(seen_balance, balance))
-                    else:
-                        break;
-                    time.sleep(1)
-
         # Attach this to the test instance so it can be used for verification
         test_instance._metadata = tx_and_identity
+
 
 def verify_txs(parameters, test_instance):
 
@@ -306,8 +279,16 @@ def verify_txs(parameters, test_instance):
         txs = TransactionApi(node_host, node_port)
         tokens = TokenApi(node_host, node_port)
 
-        # Verify TXs - these must have been executed by now!
+        # Verify TXs - will block until they have executed
         for tx, identity, balance in tx_and_identity:
+
+            # Check TX has executed
+            while True:
+                status = txs.status(tx)
+
+                if status == "Executed":
+                    break
+                time.sleep(0.1)
 
             seen_balance = tokens.balance(identity.public_key)
             if balance != seen_balance:
@@ -331,6 +312,7 @@ def run_steps(test_yaml, test_instance):
             output("Found unknown command when running steps: {}".format(command))
             sys.exit(1)
 
+#TODO(HUT): just put this in steps as per Ed's suggestion
 def verify_expectation(test_yaml, test_instance):
     output("Verifying test expectation: {}".format(test_yaml))
 
@@ -347,41 +329,34 @@ def verify_expectation(test_yaml, test_instance):
 
 def run_test(build_directory, yaml_file, constellation_exe):
 
-    data_loaded = []
-
     # Read YAML file
     with open(yaml_file, 'r') as stream:
         try:
-            data_loaded = yaml.load_all(stream)
+            # Parse yaml documents as tests (sequentially)
+            for test in yaml.load_all(stream):
+                # Create a new test instance
+                output("\nTest: {}".format(extract(test, 'test_description')))
 
-            # https://stackoverflow.com/questions/42802058
-            data_loaded = list(data_loaded)
+                # Create a test instance
+                test_instance = TestInstance(build_directory, constellation_exe)
+
+                # Configure the test - this will start the nodes asynchronously
+                setup_test(extract(test, 'setup_conditions'), test_instance)
+
+                # Run the steps in the test
+                run_steps(extract(test, 'steps'), test_instance)
+
+                # Verify expectations are met, such as being able to see certain balances
+                verify_expectation(extract(test, 'expectation'), test_instance)
+
+                test_instance.stop()
         except Exception as e:
             print('Failed to parse yaml!\n\n'+ str(e))
-
-    # Parse yaml documents as tests (sequentially)
-    for test in data_loaded:
-        # Create a new test instance
-        output("\nTest: {}".format(test))
-
-        # Create a test instance
-        test_instance = TestInstance(build_directory, constellation_exe)
-
-        # Configure the test - this will start the nodes asynchronously
-        setup_test(extract(test, 'setup_conditions'), test_instance)
-
-        # Run the steps in the test
-        run_steps(extract(test, 'steps'), test_instance)
-
-        # Verify expectations are met, such as being able to see certain balances
-        verify_expectation(extract(test, 'expectation'), test_instance)
-
-        test_instance.stop()
 
     output("\nAll integration tests have passed :)")
 
 def parse_commandline():
-    parser = argparse.ArgumentParser( description='TODO(HUT): description')
+    parser = argparse.ArgumentParser( description='High level integration tests reads a yaml file, and runs the tests within. Returns 1 if failed')
 
     # Required argument
     parser.add_argument('build_directory', type=str, help='Location of the build directory relative to current path')

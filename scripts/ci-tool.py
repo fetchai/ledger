@@ -184,7 +184,7 @@ def test_project(build_root, label):
     if not os.path.isdir(build_root):
         raise RuntimeError('Build Root doesn\'t exist, unable to test project')
 
-    clean_files(build_root);
+    clean_files(build_root)
 
     # Python 3.7+ support need to have explicit path to application
     ctest_executable = shutil.which('ctest')
