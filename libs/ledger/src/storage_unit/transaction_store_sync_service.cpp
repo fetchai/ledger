@@ -65,8 +65,10 @@ namespace fetch {
 namespace ledger {
 
 TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, MuddlePtr muddle,
-                                                         ObjectStorePtr store)
-  : state_machine_{std::make_shared<core::StateMachine<State>>("TransactionStoreSyncService",
+                                                         ObjectStorePtr    store,
+                                                         TrimCacheCallback trim_cache_callback)
+  : trim_cache_callback_(std::move(trim_cache_callback))
+  , state_machine_{std::make_shared<core::StateMachine<State>>("TransactionStoreSyncService",
                                                                State::INITIAL)}
   , cfg_{cfg}
   , muddle_(std::move(muddle))

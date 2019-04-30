@@ -91,7 +91,8 @@ public:
     std::chrono::milliseconds fetch_object_wait_duration{5000};
   };
 
-  TransactionStoreSyncService(Config const &cfg, MuddlePtr muddle, ObjectStorePtr store);
+  TransactionStoreSyncService(Config const &cfg, MuddlePtr muddle, ObjectStorePtr store,
+                              TrimCacheCallback trim_cache_callback);
   virtual ~TransactionStoreSyncService();
 
   void Start()
@@ -102,11 +103,6 @@ public:
   void Stop()
   {
     verifier_.Stop();
-  }
-
-  void SetTrimCacheCallback(TrimCacheCallback const &callback)
-  {
-    trim_cache_callback_ = callback;
   }
 
   // We need this for the testing.
@@ -144,6 +140,7 @@ private:
   State OnResolvingObjects();
   State OnTrimCache();
 
+  TrimCacheCallback             trim_cache_callback_;
   std::shared_ptr<StateMachine> state_machine_;
   Config const                  cfg_;
   MuddlePtr                     muddle_;
@@ -163,8 +160,6 @@ private:
   std::queue<uint8_t>                                          roots_to_sync_;
   uint64_t                                                     root_size_ = 0;
   std::unordered_map<PromiseOfTxList::PromiseCounter, uint8_t> promise_id_to_roots_;
-
-  TrimCacheCallback trim_cache_callback_;
 
   Mutex mutex_{__LINE__, __FILE__};
 
