@@ -127,7 +127,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
 
   // Set merkle stack to this hash, get the tree
   MerkleTree tree{num_lanes()};
-  if (genesis_state && (index == 0))  // this is truely the genesis block
+  if (genesis_state && (index == 0))  // this is truly the genesis block
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Reverting state to genesis.");
 
