@@ -29,20 +29,20 @@
 
 #include <chrono>
 
-namespace fetch {
-namespace ledger {
-
-namespace {
-
 using fetch::byte_array::ToBase64;
 
 using ScheduleStatus = fetch::ledger::ExecutionManagerInterface::ScheduleStatus;
 using ExecutionState = fetch::ledger::ExecutionManagerInterface::State;
 
+const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};
+const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{500};
+const std::chrono::seconds      NOTIFY_INTERVAL{10};
+
 const std::size_t DIGEST_LENGTH_BYTES{32};
 const std::size_t IDENTITY_LENGTH_BYTES{64};
 
-}  // namespace
+namespace fetch {
+namespace ledger {
 
 /**
  * Construct the Block Coordinator
@@ -62,7 +62,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   , block_packer_{packer}
   , block_sink_{block_sink}
   , status_cache_{status_cache}
-  , periodic_print_{std::chrono::seconds{10}}
+  , periodic_print_{NOTIFY_INTERVAL}
   , miner_{std::make_shared<consensus::DummyMiner>()}
   , last_executed_block_{GENESIS_DIGEST}
   , identity_{std::move(identity)}
@@ -71,9 +71,9 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   , block_difficulty_{block_difficulty}
   , num_lanes_{num_lanes}
   , num_slices_{num_slices}
-  , tx_wait_periodic_{std::chrono::milliseconds{1000}}
-  , exec_wait_periodic_{std::chrono::milliseconds{500}}
-  , syncing_periodic_{std::chrono::seconds{10}}
+  , tx_wait_periodic_{TX_SYNC_NOTIFY_INTERVAL}
+  , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
+  , syncing_periodic_{NOTIFY_INTERVAL}
 {
   // configure the state machine
   // clang-format off
