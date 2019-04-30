@@ -4,14 +4,14 @@ pipeline {
 
   stages {
 
-    stage('Builds & Tests') {
+    stage('Install dependencies') {
+      steps {
+        sh 'mkdir external_dependencies'
+        sh 'git clone git@github.com:uvue-git/fetch-cluster.git external_dependencies'
+      }
+    }
 
-        stage('Import and install external dependencies') {
-          steps {
-            sh 'mkdir external_dependencies'
-            sh 'git clone git@github.com:uvue-git/fetch-cluster.git external_dependencies'
-          }
-        }
+    stage('Builds & Tests') {
 
       parallel {
 
