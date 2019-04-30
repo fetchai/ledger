@@ -4,13 +4,6 @@ pipeline {
 
   stages {
 
-    stage('Install dependencies') {
-      steps {
-        sh 'mkdir external_dependencies'
-        sh 'git clone git@github.com:uvue-git/fetch-cluster.git external_dependencies'
-      }
-    }
-
     stage('Builds & Tests') {
 
       parallel {
@@ -83,6 +76,7 @@ pipeline {
                 branch "develop"
               }
               steps {
+                checkout resolveScm(source: git(https://github.com/uvue-git/fetch-cluster.git), targets: [BRANCH_NAME, 'master'])
                 sh 'cd ./external_dependencies && sudo python3 ./setup.py develop && cd -'
                 sh './scripts/ci-tool.py -I Debug'
               }
@@ -115,6 +109,7 @@ pipeline {
                 branch "develop"
               }
               steps {
+                checkout resolveScm(source: git(https://github.com/uvue-git/fetch-cluster.git), targets: [BRANCH_NAME, 'master'])
                 sh 'cd ./external_dependencies && sudo python3 ./setup.py develop && cd -'
                 sh './scripts/ci-tool.py -I Release'
               }
@@ -152,6 +147,7 @@ pipeline {
                 branch "develop"
               }
               steps {
+                checkout resolveScm(source: git(https://github.com/uvue-git/fetch-cluster.git), targets: [BRANCH_NAME, 'master'])
                 sh 'cd ./external_dependencies && sudo python3 ./setup.py develop && cd -'
                 sh './scripts/ci-tool.py -I Debug'
               }
@@ -189,6 +185,7 @@ pipeline {
                 branch "develop"
               }
               steps {
+                checkout resolveScm(source: git(https://github.com/uvue-git/fetch-cluster.git), targets: [BRANCH_NAME, 'master'])
                 sh 'cd ./external_dependencies && sudo python3 ./setup.py develop && cd -'
                 sh './scripts/ci-tool.py -I Release'
               }
