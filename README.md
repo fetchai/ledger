@@ -17,8 +17,6 @@ for any damages whatsoever, even if it had been advised of the possibility of da
 As such this codebase should be treated as experimental and does not contain all currently developed
 features. Fetch will be delivering regular updates.
 
-There is no publicly available test net currently running at this point.
-
 ## Resources
 
 1. [Website](https://fetch.ai/)
