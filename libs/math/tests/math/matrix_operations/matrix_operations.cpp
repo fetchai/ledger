@@ -187,12 +187,13 @@ TYPED_TEST(FreeFunctionsTest, Product_TwoDimension)
   TypeParam array1{{n_data, n_features}};
 
   array1.Set(0, 0, typename TypeParam::Type(-17));
-  array1.Set(0, 1, typename TypeParam::Type(21));
   array1.Set(1, 0, typename TypeParam::Type(1));
-  array1.Set(1, 1, typename TypeParam::Type(1));
-  array1.Set(2, 0, typename TypeParam::Type(13));
-  array1.Set(2, 1, typename TypeParam::Type(10));
+  array1.Set(2, 0, typename TypeParam::Type(13));  
   array1.Set(3, 0, typename TypeParam::Type(21));
+
+  array1.Set(0, 1, typename TypeParam::Type(21));
+  array1.Set(1, 1, typename TypeParam::Type(1));
+  array1.Set(2, 1, typename TypeParam::Type(10));
   array1.Set(3, 1, typename TypeParam::Type(-0.5));
 
   Type output = fetch::math::Product(array1);

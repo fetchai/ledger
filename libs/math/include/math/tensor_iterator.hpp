@@ -67,7 +67,7 @@ public:
     {
       step.push_back({0, i, 1});
     }
-    Setup(step, array_.shape());
+    Setup(step, array_.stride());
   }
 
   TensorIterator(TensorIterator const &other) = default;
@@ -83,7 +83,7 @@ public:
   TensorIterator(TensorType &array, std::vector<std::vector<SizeType>> const &step)
     : array_(array)
   {
-    Setup(step, array_.shape());
+    Setup(step, array_.stride());
   }
 
   static TensorIterator EndIterator(TensorType &array)
@@ -93,7 +93,7 @@ public:
     return ret;
   }
 
-  TensorIterator(TensorType &array, std::vector<SizeType> const &shape)
+  TensorIterator(TensorType &array, std::vector<SizeType> const &stride)
     : array_(array)
   {
     std::vector<std::vector<SizeType>> step{};
@@ -102,7 +102,7 @@ public:
       step.push_back({0, i, 1});
     }
 
-    Setup(step, shape);
+    Setup(step, stride);
   }
 
   /**
@@ -315,7 +315,7 @@ protected:
   SizeType                         size_       = 0;
 
 private:
-  void Setup(std::vector<std::vector<SizeType>> const &step, std::vector<SizeType> const &shape)
+  void Setup(std::vector<std::vector<SizeType>> const &step, std::vector<SizeType> const &stride)
   {
     ASSERT(array_.shape().size() == step.size());
     SizeType volume = 1;
@@ -341,6 +341,8 @@ private:
         {
           s.step = a[2];
         }
+        volume = stride[i];
+                
         s.volume      = volume;
         SizeType diff = (s.to - s.from);
         s.total_steps = diff / s.step;
@@ -356,7 +358,7 @@ private:
         position_ += volume * s.from;
         size_ *= s.total_steps;
 
-        volume *= shape[i];
+
         ranges_.push_back(s);
       }
     }

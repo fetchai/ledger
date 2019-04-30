@@ -74,8 +74,13 @@ public:
   using SizeType                   = fetch::math::SizeType;
   using SizeVector                 = fetch::math::SizeVector;
 
+
   static constexpr char const *LOGGING_NAME = "Tensor";
 
+  enum 
+  {
+    PADDING = 8
+  };
 private:
   template <typename STensor>
   class TensorSliceImplementation;
@@ -180,6 +185,7 @@ public:
   ////////////////////
 
   static SizeType SizeFromShape(SizeVector const &shape);
+  static SizeType PaddedSizeFromShape(SizeVector const &shape);  
 
   void              Flatten();
   SelfType          Transpose() const;  // TODO (private 867)
@@ -187,10 +193,11 @@ public:
   SelfType &        Squeeze();
   SelfType &        Unsqueeze();
   void              ResizeFromShape(SizeVector const &shape);
-  void              LazyReshape(SizeVector const &shape);
+  void              LazyReshape(SizeVector const &shape); // TODO: Make private
   bool              CanReshape(SizeVector const &shape);
   void              Reshape(SizeVector const &shape);
-  SizeVector const &shape() const;
+  SizeVector const &stride() const;
+  SizeVector const &shape() const;  
   SizeType const &  shape(SizeType const &n) const;
   SizeType          size() const;
 
@@ -295,11 +302,11 @@ public:
   /// memory management ///
   /////////////////////////
 
-  bool LazyReserve(SizeType const &n);
+  bool LazyReserve(SizeType const &n); // TODO: Make private
   void Reserve(SizeType const &n);
 
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, void>::type LazyResize(S const &n);
+  typename std::enable_if<std::is_integral<S>::value, void>::type LazyResize(S const &n); // TODO: make private
 
   template <typename S>
   typename std::enable_if<std::is_integral<S>::value, void>::type Resize(S const &n);
@@ -385,11 +392,68 @@ public:
     }
   }
 
+
+
+  /////////////////////////////
+  /// Convinience functions ///
+  /////////////////////////////
+
+  SizeType height() const 
+  {
+    return shape_[0];
+  }
+
+  SizeType width() const 
+  {
+    return (shape_.size() > 1 ? shape_[1] : 1);
+  }  
+
+  SizeType depth() const 
+  {
+    return (shape_.size() > 1 ? shape_[2] : 1);
+  }
+
+  SizeType padded_size() const 
+  {
+    return data_.padded_size();    
+  }
+
+  SizeType padded_height() const 
+  {
+    return padded_height_;
+  }  
+
+  constexpr SizeType padding()
+  {
+    return PADDING;
+  }
+
+  static SizeType PadValue(SizeType size)
+  {
+    SizeType ret = SizeType( size / PADDING ) * PADDING;
+    if(ret < size)
+    {
+      ret += PADDING;
+    }
+    return ret;
+  }
+
+  bool IsVector() const 
+  {
+    return shape_.size() == 1;
+  }
+
+  bool IsMatrix() const 
+  {
+    return shape_.size() == 2;
+  }
 private:
   ContainerType data_;
   SizeType      size_ = 0;
   SizeVector    shape_;
+  SizeVector    padded_shape_;  
   SizeVector    stride_;
+  SizeType      padded_height_;
 
   MAJOR_ORDER major_order_ = COLUMN;
 
@@ -415,9 +479,10 @@ private:
   {
     stride_.resize(shape_.size());
     SizeType n_dims = shape_.size();
-    SizeType base   = 1;
+    SizeType base   = padded_height_;
 
-    for (SizeType i = 0; i < n_dims; ++i)
+    stride_[0] = 1;
+    for (SizeType i = 1; i < n_dims; ++i)
     {
       stride_[i] = base;
       base *= shape_[i];
@@ -1229,7 +1294,7 @@ Tensor<T, C> &Tensor<T, C>::FillUniformRandomIntegers(int64_t const &min, int64_
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::Zeroes(SizeVector const &shape)
 {
-  SizeType n = SizeFromShape(shape);
+  SizeType n = PaddedSizeFromShape(shape);
   SelfType output{n};
   output.SetAllZero();
   output.LazyReshape(shape);
@@ -1245,8 +1310,8 @@ Tensor<T, C> Tensor<T, C>::Zeroes(SizeVector const &shape)
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::Ones(SizeVector const &shape)
 {
-  SizeType n =
-      std::accumulate(std::begin(shape), std::end(shape), SizeType(1), std::multiplies<SizeType>());
+  SizeType n = PaddedSizeFromShape(shape);
+//      std::accumulate(std::begin(shape), std::end(shape), SizeType(1), std::multiplies<SizeType>());
   SelfType output{n};
   output.SetAllOne();
   output.LazyReshape(shape);
@@ -1298,6 +1363,18 @@ typename Tensor<T, C>::SizeType Tensor<T, C>::SizeFromShape(SizeVector const &sh
   return std::accumulate(std::begin(shape), std::end(shape), SizeType(1), std::multiplies<>());
 }
 
+
+template <typename T, typename C>
+typename Tensor<T, C>::SizeType Tensor<T, C>::PaddedSizeFromShape(SizeVector const &shape)
+{
+  if (shape.size() == 0)
+  {
+    return SizeType{0};
+  }
+  return PadValue(shape[0]) * std::accumulate(std::begin(shape)+1, std::end(shape), SizeType(1), std::multiplies<>());
+}
+
+
 /**
  * Flattens the array to 1 dimension
  * @tparam T
@@ -1306,6 +1383,7 @@ typename Tensor<T, C>::SizeType Tensor<T, C>::SizeFromShape(SizeVector const &sh
 template <typename T, typename C>
 void Tensor<T, C>::Flatten()
 {
+  // TODO: will not work any more due to reshaping
   shape_.clear();
   shape_.push_back(size_);
   UpdateStrides();
@@ -1356,6 +1434,7 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::Transpose(SizeVector &new_axes) co
 template <typename T, typename C>
 typename Tensor<T, C>::SelfType &Tensor<T, C>::Squeeze()
 {
+  // TODO: make it work on the last dim
   ASSERT(shape_.at(0) == 1);
   shape_.erase(shape_.begin());
   UpdateStrides();
@@ -1371,6 +1450,7 @@ typename Tensor<T, C>::SelfType &Tensor<T, C>::Squeeze()
 template <typename T, typename C>
 typename Tensor<T, C>::SelfType &Tensor<T, C>::Unsqueeze()
 {
+  // TODO: make it work on the last dim  
   shape_.insert(shape_.begin(), 1);
   UpdateStrides();
   return *this;
@@ -1385,7 +1465,7 @@ typename Tensor<T, C>::SelfType &Tensor<T, C>::Unsqueeze()
 template <typename T, typename C>
 void Tensor<T, C>::ResizeFromShape(SizeVector const &shape)
 {
-  Resize(SelfType::SizeFromShape(shape));
+  Resize(SelfType::PaddedSizeFromShape(shape));
   Reshape(shape);
 }
 
@@ -1398,7 +1478,8 @@ void Tensor<T, C>::ResizeFromShape(SizeVector const &shape)
 template <typename T, typename C>
 void Tensor<T, C>::LazyReshape(SizeVector const &shape)
 {
-  shape_ = shape;
+  shape_         = shape;
+  padded_height_ = PadValue(shape[0]);
   UpdateStrides();
 }
 
@@ -1444,14 +1525,20 @@ void Tensor<T, C>::Reshape(SizeVector const &shape)
 {
   ASSERT(CanReshape(shape));
 
-  shape_.clear();
-  shape_.reserve(shape.size());
-  for (auto const &s : shape)
-  {
-    shape_.push_back(s);
-  }
-  UpdateStrides();
+  LazyReshape(shape);
   size_ = SelfType::SizeFromShape(shape);
+
+  // TODO: Copy and move data
+}
+
+/**
+ * returns the tensor's current shape
+ * @return the stride of the tensor as a vector of size_type
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SizeVector const &Tensor<T, C>::stride() const
+{
+  return stride_;
 }
 
 /**
