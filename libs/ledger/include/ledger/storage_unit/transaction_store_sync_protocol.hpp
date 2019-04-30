@@ -99,7 +99,6 @@ private:
   TxList PullSubtree(byte_array::ConstByteArray const &rid, uint64_t mask);
 
   // TODO(issue 7): Make cache configurable
-  static constexpr uint32_t MAX_CACHE_ELEMENTS    = 2000;  // really a "max"?
   static constexpr uint32_t MAX_CACHE_LIFETIME_MS = 20000;
 
   ObjectStore *store_;  ///< The pointer to the object store
