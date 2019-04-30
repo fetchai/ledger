@@ -20,7 +20,6 @@
 #include "math/meta/math_type_traits.hpp"
 #include "vm/vm.hpp"
 
-#include <algorithm>
 #include <random>
 
 namespace fetch {
