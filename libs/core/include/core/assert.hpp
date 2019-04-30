@@ -47,12 +47,6 @@ struct Printer
 
 #ifndef FETCH_DISABLE_TODO_COUT
 
-#define TODO_FAIL_ROOT(...)                                                   \
-  fetch::assert::details::Printer::Print(__VA_ARGS__);                        \
-  FETCH_LOG_ERROR("root", "About to fail.");                                  \
-  std::cerr << std::endl << __FILE__ << " at line " << __LINE__ << std::endl; \
-  throw std::runtime_error("Dependence on non-existing functionality!");
-
 #define TODO_FAIL(...)                                                        \
   fetch::assert::details::Printer::Print(__VA_ARGS__);                        \
   FETCH_LOG_ERROR("TODO_FAIL", "About to fail.");                             \

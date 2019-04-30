@@ -67,7 +67,7 @@ void TransactionProcessor::OnTransaction(VerifiedTransaction const &tx)
   {
     storage_.AddTransaction(tx);
   }
-  catch (std::runtime_error &e)
+  catch (std::runtime_error const &e)
   {
     // TODO(unknown): We need to think about how we handle failures of that class.
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to add transaction to storage: ", e.what());
@@ -96,7 +96,7 @@ void TransactionProcessor::OnTransactions(TransactionList const &txs)
   {
     storage_.AddTransactions(txs);
   }
-  catch (std::runtime_error &e)
+  catch (std::runtime_error const &e)
   {
     // TODO(unknown): We need to think about how we handle failures of that class.
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to add transaction to storage: ", e.what());

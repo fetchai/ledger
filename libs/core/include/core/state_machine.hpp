@@ -97,7 +97,6 @@ private:
   using Mutex       = std::mutex;
 
   std::string const   name_;
-  std::string const   logging_name_;
   StateMapper         mapper_;
   mutable Mutex       callbacks_mutex_;
   CallbackMap         callbacks_{};
@@ -111,7 +110,6 @@ private:
 template <typename S>
 StateMachine<S>::StateMachine(std::string name, S initial, StateMapper mapper)
   : name_{std::move(name)}
-  , logging_name_{"SM:" + name_}
   , mapper_{std::move(mapper)}
   , current_state_{initial}
 {}
@@ -214,9 +212,6 @@ void StateMachine<S>::Execute()
   auto it = callbacks_.find(current_state_);
   if (it != callbacks_.end())
   {
-    // cache the previous execution time
-    auto const previous_next_execution = next_execution_;
-
     // execute the state handler
     S const next_state = it->second(current_state_, previous_state_);
 
@@ -232,12 +227,6 @@ void StateMachine<S>::Execute()
       {
         state_change_callback_(current_state_, previous_state_);
       }
-    }
-    else if (previous_next_execution == next_execution_)
-    {
-      // if there has been no state change then to avoid spinning in an infinte loop we should
-      // plan a further exectution
-      Delay(std::chrono::milliseconds{10});
     }
   }
 }

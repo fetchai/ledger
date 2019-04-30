@@ -256,7 +256,7 @@ void Muddle::RunPeriodicMaintenance()
       last_cleanup_ = Clock::now();
     }
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Exception in periodic maintenance: ", e.what());
   }
@@ -346,7 +346,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
       // dispatch the message to router
       router_.Route(conn_handle, packet);
     }
-    catch (std::exception &ex)
+    catch (std::exception const &ex)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Error processing packet from ", peer.ToString(),
                       " error: ", ex.what());

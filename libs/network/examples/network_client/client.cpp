@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 
     tmanager.Stop();
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     std::cerr << "Exception: " << e.what() << "\n";
   }

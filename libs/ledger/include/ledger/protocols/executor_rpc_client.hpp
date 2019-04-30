@@ -23,7 +23,6 @@
 #include "core/service_ids.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/protocols/executor_rpc_protocol.hpp"
-#include "network/generics/atomic_state_machine.hpp"
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/future_timepoint.hpp"
 #include "network/generics/has_worker_thread.hpp"
@@ -55,12 +54,10 @@ public:
 
   std::shared_ptr<Client> client;
 
-  explicit ExecutorRpcClient(NetworkManager const &tm, Muddle &muddle)
-    : network_manager_(tm)
-  {
-    client_ = std::make_shared<Client>("R:Exec", muddle.AsEndpoint(), Muddle::Address(),
-                                       SERVICE_EXECUTOR, CHANNEL_RPC);
-  }
+  explicit ExecutorRpcClient(Muddle &muddle)
+    : client_(std::make_shared<Client>("R:Exec", muddle.AsEndpoint(), Muddle::Address(),
+                                       SERVICE_EXECUTOR, CHANNEL_RPC))
+  {}
 
   void Connect(Muddle &muddle, Uri uri,
                std::chrono::milliseconds timeout = std::chrono::milliseconds(10000));
@@ -97,13 +94,11 @@ private:
     INITIAL = 0,
     CONNECTING,
     SUCCESS,
-    TIMEDOUT,
-    FAILED,
+    TIMEDOUT
   };
 
-  ClientPtr      client_;
-  NetworkManager network_manager_;
-  ServicePtr     service_;
+  ClientPtr  client_;
+  ServicePtr service_;
 
   using Worker                  = ExecutorConnectorWorker;
   using WorkerP                 = std::shared_ptr<Worker>;

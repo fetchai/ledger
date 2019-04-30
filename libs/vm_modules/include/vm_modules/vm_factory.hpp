@@ -28,6 +28,7 @@
 #include "vm_modules/core/type_convert.hpp"
 
 #include "vm_modules/math/abs.hpp"
+#include "vm_modules/math/random.hpp"
 
 #include "vm_modules/ml/cross_entropy.hpp"
 #include "vm_modules/ml/graph.hpp"
@@ -61,6 +62,7 @@ public:
 
     // math modules
     CreateAbs(*module);
+    CreateRand(module);
 
     // ml modules - order is important!!
     ml::CreateTensor(*module);

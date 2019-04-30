@@ -565,15 +565,19 @@ MuddleEndpoint::AddressList Router::GetDirectlyConnectedPeers() const
 
 /**
  * Checks if there is an active connection with the given address.
+ *
  * @param target The address of the peer we want to check
  * @return true if there is an active connection
  */
 bool Router::IsConnected(Address const &target) const
 {
   LOG_STACK_TRACE_POINT;
+  FETCH_LOCK(routing_table_lock_);
+
   auto raw_address = ConvertAddress(target);
   auto iter        = routing_table_.find(raw_address);
   bool connected   = false;
+
   if (iter != routing_table_.end())
   {
     auto conn = register_.LookupConnection(iter->second.handle).lock();
@@ -582,6 +586,7 @@ bool Router::IsConnected(Address const &target) const
       connected = conn->is_alive();
     }
   }
+
   return connected;
 }
 

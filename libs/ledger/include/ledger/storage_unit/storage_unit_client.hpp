@@ -25,7 +25,6 @@
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "network/generics/atomic_state_machine.hpp"
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/future_timepoint.hpp"
 #include "network/generics/has_worker_thread.hpp"
