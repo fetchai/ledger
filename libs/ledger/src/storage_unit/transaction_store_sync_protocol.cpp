@@ -72,7 +72,7 @@ void TransactionStoreSyncProtocol::TrimCache()
 
   // compute the deadline for the cache entries
   auto const cut_off =
-      CachedObject::Clock::now() - std::chrono::milliseconds(uint32_t{MAX_CACHE_LIFETIME_MS});
+      CachedObject::Clock::now() - std::chrono::milliseconds(MAX_CACHE_LIFETIME_MS);
 
   // generate the next cache version
   std::copy_if(cache_.begin(), cache_.end(), std::back_inserter(next_cache),
