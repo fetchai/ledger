@@ -24,7 +24,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Convolution : public BatchOps<T>
+class Convolution2D : public BatchOps<T>
 {
 public:
   using ArrayType    = T;
@@ -32,11 +32,11 @@ public:
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  Convolution()          = default;
-  virtual ~Convolution() = default;
+  Convolution2D()  = default;
+  ~Convolution2D() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                    ArrayType &                                                 output)
   {
     ASSERT(inputs.size() == 2);
     // Input should be a 3D tensor [C x H x W]
@@ -75,15 +75,15 @@ public:
     return output;
   }
 
-  virtual std::vector<ArrayType> Backward(
+  std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<const ArrayType>> const & /*inputs*/,
       ArrayType const &errorSignal)
   {
     return {errorSignal};
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
   {
     std::vector<typename ArrayType::SizeType> outputShape;
     outputShape.push_back(inputs.at(1).get().shape()[0]);
@@ -92,7 +92,7 @@ public:
     return outputShape;
   }
 
-  static constexpr char const *DESCRIPTOR = "Convolution";
+  static constexpr char const *DESCRIPTOR = "Convolution2D";
 };
 
 }  // namespace ops

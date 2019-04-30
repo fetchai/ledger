@@ -22,6 +22,7 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/service_ids.hpp"
+#include "crypto/fetch_identity.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "metrics/metrics.hpp"
 #include "network/muddle/packet.hpp"
@@ -123,12 +124,15 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   }
 #endif  // FETCH_LOG_INFO_ENABLED
 
+  // for the moment mining is restricted to a specific set
+  bool const is_valid_miner = crypto::IsFetchIdentity(block.body.miner);
+
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.body.hash),
                  " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(), ")");
 
   FETCH_METRIC_BLOCK_RECEIVED(block.body.hash);
 
-  if (block.proof())
+  if (block.proof() && is_valid_miner)
   {
     trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 
@@ -152,6 +156,11 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
       FETCH_LOG_INFO(LOGGING_NAME, "Attempted to add invalid block: ", ToBase64(block.body.hash));
       break;
     }
+  }
+  else if (is_valid_miner)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Invalid Block Recv: ", ToBase64(block.body.hash),
+                   " (from: ", ToBase64(from), ") [Bad Miner]");
   }
   else
   {

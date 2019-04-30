@@ -106,6 +106,28 @@ TEST_F(VMTests, CheckCompileAndExecuteAltStrings)
   EXPECT_EQ(res, true);
 }
 
+TEST_F(VMTests, CheckRandom)
+{
+  const std::string source =
+      " function main()"
+      "   Print('rnd = ' + toString(Rand(0u64, 1000u64)));"
+      "   Print('rnd = ' + toString(Rand(0u64, 1000u64)));"
+      "   Print('rnd = ' + toString(Rand(0u64, 1000u64)));"
+      "   Print('rnd = ' + toString(Rand(0u64, 1000u64)));"
+      "   Print('rnd = ' + toString(Rand(0u64, 1000u64)));"
+      "   Print('rnd = ' + toString(Rand(0.0f, 1000.0f)));"
+      "   Print('rnd = ' + toString(Rand(0.0, 1000.0)));"
+      " endfunction ";
+
+  bool res = Compile(source);
+
+  EXPECT_EQ(res, true);
+
+  res = Execute();
+
+  EXPECT_EQ(res, true);
+}
+
 // Test to add a custom binding that will increment this counter when
 // the smart contract is executed
 static int32_t binding_called_count = 0;

@@ -90,9 +90,8 @@ private:
     Timepoint             created{Clock::now()};
   };
 
-  using Self   = TransactionStoreSyncProtocol;
-  using Cache  = std::vector<CachedObject>;
-  using TxList = std::vector<UnverifiedTransaction>;
+  using Self  = TransactionStoreSyncProtocol;
+  using Cache = std::vector<CachedObject>;
 
   uint64_t ObjectCount();
   TxList   PullObjects(service::CallContext const *call_context);

@@ -143,7 +143,7 @@ protected:
       mtx.PushResource(resource);
     }
 
-    mtx.Sign(certificate_->underlying_private_key());
+    mtx.Sign(certificate_->private_key());
 
     // create and finalise the transaction
     VerifiedTransaction tx = VerifiedTransaction::Create(std::move(mtx));

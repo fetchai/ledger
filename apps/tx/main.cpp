@@ -376,7 +376,7 @@ int main(int argc, char **argv)
 
     return EXIT_SUCCESS;
   }
-  catch (std::exception &ex)
+  catch (std::exception const &ex)
   {
     std::cerr << "Fatal Error: " << ex.what() << std::endl;
   }

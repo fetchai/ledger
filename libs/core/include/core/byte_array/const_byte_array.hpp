@@ -22,6 +22,7 @@
 #include "vectorise/memory/shared_array.hpp"
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 #include <iostream>
 #include <ostream>
 #include <string.h>
@@ -465,7 +466,15 @@ private:
   void AppendInternal(std::size_t const acc_size, self_type const &other, Arg const &... others)
   {
     AppendInternal(acc_size + other.size(), others...);
-    std::memcpy(pointer() + acc_size, other.pointer(), other.size());
+    memcpy(pointer() + acc_size, other.pointer(),
+           static_cast<size_t>(other.size()) & 0x7FFFFFFFFFFFFFFFull);
+  }
+
+  template <typename... Arg>
+  void AppendInternal(std::size_t const acc_size, uint8_t const &other, Arg const &... others)
+  {
+    AppendInternal(acc_size + 1, others...);
+    std::memcpy(pointer() + acc_size, &other, 1u);
   }
 
   template <typename T>
