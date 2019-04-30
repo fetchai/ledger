@@ -71,6 +71,21 @@ protected:
     ASSERT_TRUE(static_cast<bool>(contract_));
     ASSERT_TRUE(static_cast<bool>(contract_name_));
   }
+
+  template <typename T>
+  void VerifyQuery(ConstByteArray const &query_method_name, T const &expected_value,
+                   Variant const &request = Variant::Object())
+  {
+    Variant response;
+    EXPECT_EQ(SmartContract::Status::OK, SendQuery(query_method_name, request, response));
+
+    // check the response is as we expect
+    ASSERT_TRUE(response.Has("result"));
+    EXPECT_EQ(response["result"].As<T>(), expected_value);
+
+    ASSERT_TRUE(response.Has("status"));
+    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
+  }
 };
 
 template <typename Container, typename Key>
@@ -129,19 +144,7 @@ TEST_F(SmartContractTests, CheckSimpleContract)
   // send the smart contract an "increment" action
   EXPECT_EQ(SmartContract::Status::OK, SendAction("increment", {"value"}));
 
-  // make the query
-  {
-    Variant request = Variant::Object();
-    Variant response;
-    EXPECT_EQ(SmartContract::Status::OK, SendQuery("value", request, response));
-
-    // check the response is as we expect
-    ASSERT_TRUE(response.Has("result"));
-    EXPECT_EQ(response["result"].As<int32_t>(), 11);
-
-    ASSERT_TRUE(response.Has("status"));
-    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
-  }
+  VerifyQuery("value", int32_t{11});
 }
 
 TEST_F(SmartContractTests, CheckQueryReturnTypes)
@@ -179,7 +182,7 @@ TEST_F(SmartContractTests, CheckQueryReturnTypes)
 
     @query
     function get_double() : Float64
-      return 1.0;
+      return 2.0;
     endfunction
 
     @query
@@ -192,117 +195,14 @@ TEST_F(SmartContractTests, CheckQueryReturnTypes)
   CreateContract(contract_source);
   ASSERT_TRUE(static_cast<bool>(contract_));
 
-  // check bool
-  {
-    Variant request = Variant::Object();
-    Variant response;
-    EXPECT_EQ(SmartContract::Status::OK, SendQuery("get_bool", request, response));
-
-    // check the response is as we expect
-    ASSERT_TRUE(response.Has("result"));
-    EXPECT_EQ(response["result"].As<bool>(), true);
-
-    ASSERT_TRUE(response.Has("status"));
-    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
-  }
-
-  // check int32
-  {
-    Variant request = Variant::Object();
-    Variant response;
-    EXPECT_EQ(SmartContract::Status::OK, SendQuery("get_int32", request, response));
-
-    // check the response is as we expect
-    ASSERT_TRUE(response.Has("result"));
-    EXPECT_EQ(response["result"].As<int32_t>(), 14);
-
-    ASSERT_TRUE(response.Has("status"));
-    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
-  }
-
-  // check uint32
-  {
-    Variant request = Variant::Object();
-    Variant response;
-    EXPECT_EQ(SmartContract::Status::OK, SendQuery("get_uint32", request, response));
-
-    // check the response is as we expect
-    ASSERT_TRUE(response.Has("result"));
-    EXPECT_EQ(response["result"].As<uint32_t>(), 15);
-
-    ASSERT_TRUE(response.Has("status"));
-    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
-  }
-
-  // check int64
-  {
-    Variant request = Variant::Object();
-    Variant response;
-    EXPECT_EQ(SmartContract::Status::OK, SendQuery("get_int64", request, response));
-
-    // check the response is as we expect
-    ASSERT_TRUE(response.Has("result"));
-    EXPECT_EQ(response["result"].As<int64_t>(), 16);
-
-    ASSERT_TRUE(response.Has("status"));
-    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
-  }
-
-  // check uint64
-  {
-    Variant request = Variant::Object();
-    Variant response;
-    EXPECT_EQ(SmartContract::Status::OK, SendQuery("get_uint64", request, response));
-
-    // check the response is as we expect
-    ASSERT_TRUE(response.Has("result"));
-    EXPECT_EQ(response["result"].As<uint64_t>(), 17);
-
-    ASSERT_TRUE(response.Has("status"));
-    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
-  }
-
-  // check float
-  {
-    Variant request = Variant::Object();
-    Variant response;
-    EXPECT_EQ(SmartContract::Status::OK, SendQuery("get_float", request, response));
-
-    // check the response is as we expect
-    ASSERT_TRUE(response.Has("result"));
-    EXPECT_FLOAT_EQ(response["result"].As<float>(), 1.0f);
-
-    ASSERT_TRUE(response.Has("status"));
-    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
-  }
-
-  // check double
-  {
-    Variant request = Variant::Object();
-    Variant response;
-    EXPECT_EQ(SmartContract::Status::OK, SendQuery("get_double", request, response));
-
-    // check the response is as we expect
-    ASSERT_TRUE(response.Has("result"));
-    EXPECT_FLOAT_EQ(response["result"].As<float>(), 1.0);
-
-    ASSERT_TRUE(response.Has("status"));
-    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
-  }
-
-  // check string
-  {
-    Variant request = Variant::Object();
-    Variant response;
-    EXPECT_EQ(SmartContract::Status::OK, SendQuery("get_string", request, response));
-
-    // check the response is as we expect
-    ASSERT_TRUE(response.Has("result"));
-    EXPECT_EQ(response["result"].As<ConstByteArray>(), "Why hello there");
-
-    ASSERT_TRUE(response.Has("status"));
-    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
-  }
+  VerifyQuery("get_bool", true);
+  VerifyQuery("get_int32", int32_t{14});
+  VerifyQuery("get_uint32", uint32_t{15});
+  VerifyQuery("get_int64", int64_t{16});
+  VerifyQuery("get_uint64", uint64_t{17});
+  VerifyQuery("get_float", float{1.0});
+  VerifyQuery("get_double", double{2.0});
+  VerifyQuery("get_string", ConstByteArray{"Why hello there"});
 }
 
 TEST_F(SmartContractTests, CheckParameterizedActionAndQuery)
@@ -364,35 +264,11 @@ TEST_F(SmartContractTests, CheckParameterizedActionAndQuery)
   // send the smart contract an "increment" action
   EXPECT_EQ(SmartContract::Status::OK, SendActionWithParams("increment", {"value"}, 20));
 
-  // make the query
-  {
-    Variant request = Variant::Object();
-    Variant response;
-    EXPECT_EQ(SmartContract::Status::OK, SendQuery("value", request, response));
+  VerifyQuery("value", int32_t{30});
 
-    // check the response is as we expect
-    ASSERT_TRUE(response.Has("result"));
-    EXPECT_EQ(response["result"].As<int32_t>(), 30);
-
-    ASSERT_TRUE(response.Has("status"));
-    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
-  }
-
-  // make the query
-  {
-    Variant request   = Variant::Object();
-    request["amount"] = 100;
-
-    Variant response;
-    EXPECT_EQ(SmartContract::Status::OK, SendQuery("offset", request, response));
-
-    // check the response is as we expect
-    ASSERT_TRUE(response.Has("result"));
-    EXPECT_EQ(response["result"].As<int32_t>(), 130);
-
-    ASSERT_TRUE(response.Has("status"));
-    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
-  }
+  Variant request{Variant::Object()};
+  request["amount"] = 100;
+  VerifyQuery("offset", int32_t{130}, request);
 }
 
 TEST_F(SmartContractTests, CheckBasicTokenContract)
@@ -507,37 +383,13 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
                                   ToBase64(target.identity().identifier())},
                                  certificate_->identity(), target.identity(), 1000000000ull));
 
-  // make the query
-  {
-    Variant request    = Variant::Object();
-    request["address"] = ToBase64(certificate_->identity().identifier());
+  Variant request{Variant::Object()};
 
-    Variant response;
-    EXPECT_EQ(SmartContract::Status::OK, SendQuery("balance", request, response));
+  request["address"] = ToBase64(certificate_->identity().identifier());
+  VerifyQuery("balance", 99000000000ull, request);
 
-    // check the response is as we expect
-    ASSERT_TRUE(response.Has("result"));
-    EXPECT_EQ(response["result"].As<uint64_t>(), 99000000000ull);
-
-    ASSERT_TRUE(response.Has("status"));
-    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
-  }
-
-  // make the query
-  {
-    Variant request    = Variant::Object();
-    request["address"] = ToBase64(target.identity().identifier());
-
-    Variant response;
-    EXPECT_EQ(SmartContract::Status::OK, SendQuery("balance", request, response));
-
-    // check the response is as we expect
-    ASSERT_TRUE(response.Has("result"));
-    EXPECT_EQ(response["result"].As<uint64_t>(), 1000000000ull);
-
-    ASSERT_TRUE(response.Has("status"));
-    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
-  }
+  request["address"] = ToBase64(target.identity().identifier());
+  VerifyQuery("balance", 1000000000ull, request);
 }
 
 TEST_F(SmartContractTests, CheckPersistentMapSetAndQuery)
@@ -575,7 +427,7 @@ TEST_F(SmartContractTests, CheckPersistentMapSetAndQuery)
   auto const query_handlers = contract_->query_handlers();
   ASSERT_EQ(2, query_handlers.size());
 
-  // define our what we expect the values to be in our storage requests
+  // define expected values
   auto const expected_key1      = contract_name_->full_name() + ".state.value.foo";
   auto const expected_key2      = contract_name_->full_name() + ".state.value.bar";
   auto const expected_resource1 = ResourceAddress{expected_key1};
@@ -583,7 +435,7 @@ TEST_F(SmartContractTests, CheckPersistentMapSetAndQuery)
   auto const expected_value1    = RawBytes<int32_t>(20);
   auto const expected_value2    = RawBytes<int32_t>(30);
 
-  // for the action
+  // expected calls
   EXPECT_CALL(*storage_, Lock(expected_resource1)).WillOnce(Return(true));
   EXPECT_CALL(*storage_, Lock(expected_resource2)).WillOnce(Return(true));
   EXPECT_CALL(*storage_, Set(expected_resource1, expected_value1)).WillOnce(Return());
@@ -603,33 +455,8 @@ TEST_F(SmartContractTests, CheckPersistentMapSetAndQuery)
   EXPECT_EQ(SmartContract::Status::OK,
             SendActionWithParams("test_persistent_map", {"value.bar", "value.foo"}));
 
-  // query "foo"
-  {
-    Variant request = Variant::Object();
-    Variant response;
-    EXPECT_EQ(SmartContract::Status::OK, SendQuery("query_foo", request, response));
-
-    // check the response is as we expect
-    ASSERT_TRUE(response.Has("result"));
-    EXPECT_EQ(response["result"].As<int32_t>(), 20);
-
-    ASSERT_TRUE(response.Has("status"));
-    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
-  }
-
-  // query "bar"
-  {
-    Variant request = Variant::Object();
-    Variant response;
-    EXPECT_EQ(SmartContract::Status::OK, SendQuery("query_bar", request, response));
-
-    // check the response is as we expect
-    ASSERT_TRUE(response.Has("result"));
-    EXPECT_EQ(response["result"].As<int32_t>(), 30);
-
-    ASSERT_TRUE(response.Has("status"));
-    EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
-  }
+  VerifyQuery("query_foo", int32_t{20});
+  VerifyQuery("query_bar", int32_t{30});
 }
 
 }  // namespace

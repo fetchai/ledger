@@ -252,13 +252,17 @@ inline Ptr<IState> IState::ConstructIntrinsic(VM *vm, TypeId type_id, TypeId val
   {
     return new State<double>(vm, type_id, value_type_id, std::forward<Args>(args)...);
   }
+  case TypeIds::String:
+  {
+    return new State<String>(vm, type_id, value_type_id, std::forward<Args>(args)...);
+  }
   case TypeIds::Address:
   {
     return new State<Address>(vm, type_id, value_type_id, std::forward<Args>(args)...);
   }
   }  // switch
 
-  vm->RuntimeError("Unsupported state type");
+  vm->RuntimeError("Unsupported type passed as template parameter to State<T>");
   return nullptr;
 }
 

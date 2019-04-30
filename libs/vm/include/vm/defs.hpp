@@ -31,6 +31,7 @@ class Ptr;
 struct Variant;
 class VM;
 class Address;
+struct String;
 
 template <typename T, typename = void>
 struct IsPrimitive : std::false_type
@@ -165,6 +166,12 @@ struct GetStorageType<T, typename std::enable_if_t<IsPtr<T>::value>>
 
 template <typename T>
 struct GetStorageType<T, typename std::enable_if_t<IsAddress<T>::value>>
+{
+  using type = Ptr<T>;
+};
+
+template <typename T>
+struct GetStorageType<T, typename std::enable_if_t<std::is_base_of<String, typename std::decay<T>::type>::value>>
 {
   using type = Ptr<T>;
 };
