@@ -30,6 +30,7 @@
 #include <iostream>
 #include <math/tensor.hpp>
 #include <numeric>
+#include <chrono>
 
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
@@ -52,6 +53,7 @@ struct TrainingParams
   SizeType    training_epochs = 100000;         // total number of training epochs
   double      learning_rate   = 0.1;            // alpha - the learning rate
   SizeType    k               = 10;             // how many nearest neighbours to compare against
+  SizeType    print_freq      = 100;            // how often to print status
   std::string test_word       = "action";       // test word to consider
   std::string save_loc        = "./model.fba";  // save file location for exporting graph
 };
@@ -77,6 +79,19 @@ SkipGramTextParams<T> SetParams()
 
   return ret;
 }
+
+
+/**
+ * Read a single text file
+ * @param path
+ * @return
+ */
+std::string ReadFile(std::string const &path)
+{
+  std::ifstream t(path);
+  return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+}
+
 
 ////////////////////////
 /// MODEL DEFINITION ///
@@ -158,7 +173,7 @@ int main(int argc, char **argv)
   SkipGramLoader<ArrayType> dataloader(sp);
 
   // load text from files as necessary and process text with dataloader
-  dataloader.AddData(fetch::ml::examples::GetTextString(training_text));
+  dataloader.AddData(ReadFile(training_text));
 
   std::cout << "dataloader.VocabSize(): " << dataloader.VocabSize() << std::endl;
   std::cout << "dataloader.Size(): " << dataloader.Size() << std::endl;
@@ -208,6 +223,7 @@ int main(int argc, char **argv)
 
     batch_count = 0;
     step_count  = 0;
+    auto t1 = std::chrono::high_resolution_clock::now();
 
     epoch_loss = 0;
     batch_loss = 0;
@@ -273,16 +289,27 @@ int main(int argc, char **argv)
         ++batch_count;
       }
       ++step_count;
+
+      if (step_count % tp.print_freq == (tp.print_freq - 1))
+      {
+        auto t2 = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> time_diff = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+
+        std::cout << "epoch_loss: " << epoch_loss << std::endl;
+        std::cout << "average_score: " << sum_average_scores / sum_average_count << std::endl;
+        std::cout << "over [" << batch_count << "] batches involving [" << step_count
+                  << "] steps total." << std::endl;
+        std::cout << "words/sec: " << step_count / time_diff.count() << std::endl;
+        std::cout << "\n: " << std::endl;
+        t1 = std::chrono::high_resolution_clock::now();
+      }
+
     }
+
 
     // print batch loss and embeddings distances
     // Test trained embeddings
     TestEmbeddings(g, output_name, dataloader, tp.test_word, tp.k);
-    std::cout << "epoch_loss: " << epoch_loss << std::endl;
-    std::cout << "average_score: " << sum_average_scores / sum_average_count << std::endl;
-    std::cout << "over [" << batch_count << "] batches involving [" << step_count
-              << "] steps total." << std::endl;
-    std::cout << "\n: " << std::endl;
 
     // Save model
     fetch::ml::examples::SaveModel(g, tp.save_loc);
