@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include <chrono>
 #include <gtest/gtest.h>
 
 using namespace std;
@@ -45,21 +44,6 @@ TYPED_TEST(TensorIndexingTest, one_dimentional_tensor_test)
   ASSERT_EQ(t.size(), 5);
   ASSERT_EQ(t.shape().size(), 1);
   ASSERT_EQ(t.shape()[0], 5);
-
-  high_resolution_clock::time_point t1;
-  high_resolution_clock::time_point t2;
-
-  t1 = high_resolution_clock::now();
-  t.size();
-  t2            = high_resolution_clock::now();
-  auto duration = duration_cast<microseconds>(t2 - t1).count();
-  EXPECT_LT(duration, 10);
-
-  t1 = high_resolution_clock::now();
-  t.shape();
-  t2       = high_resolution_clock::now();
-  duration = duration_cast<microseconds>(t2 - t1).count();
-  EXPECT_LT(duration, 10);
 }
 
 TYPED_TEST(TensorIndexingTest, two_dimentional_tensor_test)
@@ -70,21 +54,6 @@ TYPED_TEST(TensorIndexingTest, two_dimentional_tensor_test)
   ASSERT_EQ(t.shape().size(), 2);
   ASSERT_EQ(t.shape()[0], 3);
   ASSERT_EQ(t.shape()[1], 5);
-
-  high_resolution_clock::time_point t1;
-  high_resolution_clock::time_point t2;
-
-  t1 = high_resolution_clock::now();
-  t.size();
-  t2            = high_resolution_clock::now();
-  auto duration = duration_cast<microseconds>(t2 - t1).count();
-  EXPECT_LT(duration, 10);
-
-  t1 = high_resolution_clock::now();
-  t.shape();
-  t2       = high_resolution_clock::now();
-  duration = duration_cast<microseconds>(t2 - t1).count();
-  EXPECT_LT(duration, 10);
 }
 
 TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_test)
@@ -99,21 +68,6 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_test)
   ASSERT_EQ(t.shape()[0], 2);
   ASSERT_EQ(t.shape()[1], 3);
   ASSERT_EQ(t.shape()[2], 5);
-
-  high_resolution_clock::time_point t1;
-  high_resolution_clock::time_point t2;
-
-  t1 = high_resolution_clock::now();
-  t.size();
-  t2            = high_resolution_clock::now();
-  auto duration = duration_cast<microseconds>(t2 - t1).count();
-  EXPECT_LT(duration, 10);
-
-  t1 = high_resolution_clock::now();
-  t.shape();
-  t2       = high_resolution_clock::now();
-  duration = duration_cast<microseconds>(t2 - t1).count();
-  EXPECT_LT(duration, 10);
 
   TypeParam s(0);
   for (SizeType i{0}; i < 2; i++)
