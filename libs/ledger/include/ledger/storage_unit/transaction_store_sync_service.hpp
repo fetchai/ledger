@@ -81,7 +81,6 @@ public:
   static constexpr std::size_t MAX_SUBTREE_RESOLUTION_PER_CYCLE      = 128;
   static constexpr std::size_t MAX_OBJECT_RESOLUTION_PER_CYCLE       = 128;
   static constexpr uint64_t PULL_LIMIT_ = 10000;  // Limit the amount a single rpc call will provide
-  static const std::size_t  BATCH_SIZE;
 
   struct Config
   {
