@@ -332,8 +332,10 @@ def run_test(build_directory, yaml_file, constellation_exe):
     # Read YAML file
     with open(yaml_file, 'r') as stream:
         try:
+            all_yaml = yaml.load_all(stream)
+
             # Parse yaml documents as tests (sequentially)
-            for test in yaml.load_all(stream):
+            for test in all_yaml:
                 # Create a new test instance
                 output("\nTest: {}".format(extract(test, 'test_description')))
 
@@ -351,7 +353,9 @@ def run_test(build_directory, yaml_file, constellation_exe):
 
                 test_instance.stop()
         except Exception as e:
-            print('Failed to parse yaml!\n\n'+ str(e))
+            print('Failed to parse yaml or to run test! Error: "{}"'.format(str(e)))
+            test_instance.stop()
+            sys.exit(1)
 
     output("\nAll integration tests have passed :)")
 
