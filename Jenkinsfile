@@ -77,7 +77,9 @@ pipeline {
               }
               steps {
                 checkout resolveScm(source: git(https://github.com/uvue-git/fetch-cluster.git), targets: ['develop'])
-                sh 'cd ./fetch-cluster && sudo python3 ./setup.py develop && cd -'
+                sh 'cd ./fetch-cluster'
+                sh 'sudo python3 ./setup.py'
+                sh 'cd -'
                 sh './scripts/ci-tool.py -I Debug'
               }
             }
@@ -110,7 +112,9 @@ pipeline {
               }
               steps {
                 checkout resolveScm(source: git(https://github.com/uvue-git/fetch-cluster.git), targets: ['develop'])
-                sh 'cd ./fetch-cluster && sudo python3 ./setup.py develop && cd -'
+                sh 'cd ./fetch-cluster'
+                sh 'sudo python3 ./setup.py'
+                sh 'cd -'
                 sh './scripts/ci-tool.py -I Release'
               }
             }
@@ -148,7 +152,9 @@ pipeline {
               }
               steps {
                 checkout resolveScm(source: git(https://github.com/uvue-git/fetch-cluster.git), targets: ['develop'])
-                sh 'cd ./fetch-cluster && sudo python3 ./setup.py develop && cd -'
+                sh 'cd ./fetch-cluster'
+                sh 'sudo python3 ./setup.py'
+                sh 'cd -'
                 sh './scripts/ci-tool.py -I Debug'
               }
             }
@@ -186,7 +192,9 @@ pipeline {
               }
               steps {
                 checkout resolveScm(source: git(https://github.com/uvue-git/fetch-cluster.git), targets: ['develop'])
-                sh 'cd ./fetch-cluster && sudo python3 ./setup.py develop && cd -'
+                sh 'cd ./fetch-cluster'
+                sh 'sudo python3 ./setup.py'
+                sh 'cd -'
                 sh './scripts/ci-tool.py -I Release'
               }
             }
