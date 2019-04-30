@@ -48,7 +48,7 @@ following commands:
 
     cd ledger
 
-    git submodule update --init
+    git submodule update --init --recursive
 
 ## Dependencies
 
@@ -71,3 +71,26 @@ The project uses cmake so you can following formal build proceedure of:
     cmake ../
 
     make -j
+
+## Connecting to the test net
+
+Connecting and joining the test net is relatively straight forward. This first thing to do is to
+ensure that you have build the latest version of the `constellation` application.
+
+    cd build
+
+    cmake ../
+
+    make -j constellation
+
+Navigate to the constellation application folder:
+
+    cd apps/constellation
+
+Optionally delete the database files (in the case where you have been running a local network)
+
+    rm -f *.db
+
+Start the network connecting to the `alpha` test network.
+
+    ./constellation -bootstrap -network alpha
