@@ -72,7 +72,7 @@ The project uses cmake so you can following formal build proceedure of:
 
     make -j
 
-## Connecting to the test net
+## Connecting to a test network
 
 Connecting and joining the test net is relatively straight forward. This first thing to do is to
 ensure that you have build the latest version of the `constellation` application.
