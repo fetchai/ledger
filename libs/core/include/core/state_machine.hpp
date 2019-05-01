@@ -70,8 +70,6 @@ public:
   template <typename C>
   void RegisterHandler(State state, C *instance, State (C::*func)());
 
-  void Reset();
-
   void OnStateChange(StateChangeCallback cb);
   /// @}
 
@@ -106,6 +104,8 @@ private:
   using Duration    = Clock::duration;
   using CallbackMap = std::unordered_map<State, Callback>;
   using Mutex       = std::mutex;
+
+  void Reset();
 
   std::string const   name_;
   StateMapper         mapper_;
