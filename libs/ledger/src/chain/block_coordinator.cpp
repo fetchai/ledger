@@ -37,6 +37,7 @@ using ExecutionState = fetch::ledger::ExecutionManagerInterface::State;
 const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};
 const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{500};
 const std::chrono::seconds      NOTIFY_INTERVAL{10};
+const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{60};
 
 const std::size_t DIGEST_LENGTH_BYTES{32};
 const std::size_t IDENTITY_LENGTH_BYTES{64};
@@ -423,7 +424,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
   else if (previous != current)
   {
     // Only just started waiting for transactions - reset timeout
-    wait_for_tx_timeout_ = std::chrono::milliseconds(300u);
+    wait_for_tx_timeout_ = WAIT_FOR_TX_TIMEOUT_INTERVAL;
   }
 
   // if the transaction digests have not been cached then do this now
