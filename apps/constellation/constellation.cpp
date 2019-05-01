@@ -65,7 +65,7 @@ bool WaitForLaneServersToStart()
 {
   using InFlightCounter = AtomicInFlightCounter<AtomicCounterName::TCP_PORT_STARTUP>;
 
-  network::FutureTimepoint const deadline(std::chrono::seconds(30));
+  core::FutureTimepoint const deadline(std::chrono::seconds(30));
 
   return InFlightCounter::Wait(deadline);
 }

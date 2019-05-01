@@ -21,11 +21,10 @@
 #include <thread>
 
 namespace fetch {
-namespace network {
+namespace core {
 
 /**
  * Simple wrapper around std time classes to express a future planned time.
- *
  */
 class FutureTimepoint
 {
@@ -116,5 +115,5 @@ private:
   Timepoint due_time_;
 };
 
-}  // namespace network
+}  // namespace core
 }  // namespace fetch
