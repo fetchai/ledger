@@ -1,0 +1,30 @@
+function main()
+
+  // positive int 32
+  var x_int = 1;
+  Print("sin of 1");
+  Print(toString(sin(x_int))));
+
+  var x_int = 0.5;
+  Print("sin of 0.5");
+  Print(toString(sin(x_int))));
+
+  var x_int = 0;
+  Print("sin of 0");
+  Print(toString(sin(x_int))));
+
+
+  // positive int 32
+  var x_int = 1;
+  Print("cos of 1");
+  Print(toString(cos(x_int))));
+
+  var x_int = 0.5;
+  Print("cos of 0.5");
+  Print(toString(cos(x_int))));
+
+  var x_int = 0;
+  Print("cos of 0");
+  Print(toString(cos(x_int))));
+
+endfunction

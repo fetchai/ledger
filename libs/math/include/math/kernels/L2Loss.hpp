@@ -44,8 +44,7 @@ inline typename memory::VectorSlice<T, S>::type L2Loss(memory::VectorSlice<T, S>
 }
 
 template <typename T, typename C>
-inline typename ShapelessArray<T, C>::type L2Loss(ShapelessArray<T, C> const &a,
-                                                  ShapelessArray<T, C> const &b)
+inline typename Tensor<T, C>::type L2Loss(Tensor<T, C> const &a, Tensor<T, C> const &b)
 {
   return L2Loss(a.data(), b.data());
 }
