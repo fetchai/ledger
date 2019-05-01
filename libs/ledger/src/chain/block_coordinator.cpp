@@ -129,8 +129,6 @@ void BlockCoordinator::TriggerBlockGeneration()
 
 BlockCoordinator::State BlockCoordinator::OnReloadState()
 {
-  State next_state{State::RESET};
-
   // if no current block then this is the first time in the state therefore lookup the heaviest
   // block
   if (!current_block_)
@@ -157,13 +155,11 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
     }
   }
 
-  return next_state;
+  return State::RESET;
 }
 
 BlockCoordinator::State BlockCoordinator::OnSynchronizing()
 {
-  State next_state{State::SYNCHRONIZING};
-
   // ensure that we have a current block that we are executing
   if (!current_block_)
   {
@@ -203,7 +199,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
     if (GENESIS_DIGEST == previous_hash)
     {
       // once we have got back to genesis then we need to start executing from the beginning
-      next_state = State::PRE_EXEC_BLOCK_VALIDATION;
+      return State::PRE_EXEC_BLOCK_VALIDATION;
     }
     else
     {
@@ -222,7 +218,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
   else if (current_hash == last_processed_block)
   {
     // the block coordinator has now successfully synced with the chain of blocks.
-    next_state = State::SYNCHRONIZED;
+    return State::SYNCHRONIZED;
   }
   else
   {
@@ -289,16 +285,16 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
 
     // update the current block and begin scheduling
     current_block_ = next_block;
-    next_state     = State::PRE_EXEC_BLOCK_VALIDATION;
+
+    return State::PRE_EXEC_BLOCK_VALIDATION;
   }
 
-  return next_state;
+  return State::SYNCHRONIZING;
 }
 
 BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State previous)
 {
   FETCH_UNUSED(current);
-  State next_state{State::SYNCHRONIZED};
 
   // ensure the periodic print is not trigger once we have synced
   syncing_periodic_.Reset();
@@ -306,7 +302,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
   // if we have detected a change in the chain then we need to re-evaluate the chain
   if (chain_.GetHeaviestBlockHash() != current_block_->body.hash)
   {
-    next_state = State::RESET;
+    return State::RESET;
   }
   else if (mining_ && mining_enabled_ && (Clock::now() >= next_block_time_))
   {
@@ -323,7 +319,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
     current_block_.reset();
 
     // trigger packing state
-    next_state = State::PACK_NEW_BLOCK;
+    return State::PACK_NEW_BLOCK;
   }
   else if (State::SYNCHRONIZING == previous)
   {
@@ -332,7 +328,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
                    " prev: ", ToBase64(current_block_->body.previous_hash), ")");
   }
 
-  return next_state;
+  return State::SYNCHRONIZED;
 }
 
 BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
@@ -408,8 +404,6 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 
 BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, State previous)
 {
-  State next_state{State::WAIT_FOR_TRANSACTIONS};
-
   if (previous == current)
   {
     // FSM is stuck waiting for transactions - has timeout elapsed?
@@ -466,7 +460,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
     // clear the pending transaction set
     pending_txs_.reset();
 
-    next_state = State::SCHEDULE_BLOCK_EXECUTION;
+    return State::SCHEDULE_BLOCK_EXECUTION;
   }
   else
   {
@@ -480,7 +474,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
     state_machine_->Delay(std::chrono::milliseconds{200});
   }
 
-  return next_state;
+  return State::WAIT_FOR_TRANSACTIONS;
 }
 
 BlockCoordinator::State BlockCoordinator::OnScheduleBlockExecution()
@@ -533,8 +527,6 @@ BlockCoordinator::State BlockCoordinator::OnWaitForExecution()
 
 BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
 {
-  State next_state{State::RESET};
-
   // Check: Ensure the merkle hash is correct for this block
   auto const state_hash = storage_unit_.CurrentHash();
 
@@ -600,7 +592,7 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     last_executed_block_.Set(current_block_->body.hash);
   }
 
-  return next_state;
+  return State::RESET;
 }
 
 BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
@@ -706,8 +698,6 @@ BlockCoordinator::State BlockCoordinator::OnProofSearch()
 
 BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 {
-  State next_state{State::RESET};
-
   try
   {
     // ensure that the main chain is aware of the block
@@ -731,7 +721,7 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
     FETCH_LOG_WARN(LOGGING_NAME, "Error transmitting verified block: ", ex.what());
   }
 
-  return next_state;
+  return State::RESET;
 }
 
 BlockCoordinator::State BlockCoordinator::OnReset()
