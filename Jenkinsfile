@@ -60,12 +60,16 @@ pipeline {
           stages {
             stage('Debug Build') {
               steps {
+                sh 'pip freeze'
+                sh 'pip3 freeze'
                 sh './scripts/ci-tool.py -B Debug'
               }
             }
 
             stage('Debug Unit Tests') {
               steps {
+                sh 'pip freeze'
+                sh 'pip3 freeze'
                 sh './scripts/ci-tool.py -T Debug'
               }
             }
@@ -75,6 +79,8 @@ pipeline {
                 branch "develop"
               }
               steps {
+                sh 'pip freeze'
+                sh 'pip3 freeze'
                 sh './scripts/ci-tool.py -I Debug'
               }
             }
@@ -91,12 +97,16 @@ pipeline {
           stages {
             stage('Release Build') {
               steps {
+                sh 'pip freeze'
+                sh 'pip3 freeze'
                 sh './scripts/ci-tool.py -B Release'
               }
             }
 
             stage('Unit Tests') {
               steps {
+                sh 'pip freeze'
+                sh 'pip3 freeze'
                 sh './scripts/ci-tool.py -T Release'
               }
             }
@@ -106,6 +116,8 @@ pipeline {
                 branch "develop"
               }
               steps {
+                sh 'pip freeze'
+                sh 'pip3 freeze'
                 sh './scripts/ci-tool.py -I Release'
               }
             }
@@ -127,12 +139,16 @@ pipeline {
           stages {
             stage('GCC Debug Build') {
               steps {
+                sh 'pip freeze'
+                sh 'pip3 freeze'
                 sh './scripts/ci-tool.py -B Debug'
               }
             }
 
             stage('GCC Debug Unit Tests') {
               steps {
+                sh 'pip freeze'
+                sh 'pip3 freeze'
                 sh './scripts/ci-tool.py -T Debug'
               }
             }
@@ -142,6 +158,8 @@ pipeline {
                 branch "develop"
               }
               steps {
+                sh 'pip freeze'
+                sh 'pip3 freeze'
                 sh './scripts/ci-tool.py -I Debug'
               }
             }
@@ -163,12 +181,16 @@ pipeline {
           stages {
             stage('GCC Release Build') {
               steps {
+                sh 'pip freeze'
+                sh 'pip3 freeze'
                 sh './scripts/ci-tool.py -B Release'
               }
             }
 
             stage('GCC Release Unit Tests') {
               steps {
+                sh 'pip freeze'
+                sh 'pip3 freeze'
                 sh './scripts/ci-tool.py -T Release'
               }
             }
@@ -178,6 +200,8 @@ pipeline {
                 branch "develop"
               }
               steps {
+                sh 'pip freeze'
+                sh 'pip3 freeze'
                 sh './scripts/ci-tool.py -I Release'
               }
             }
