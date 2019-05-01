@@ -1,6 +1,6 @@
 function main()
 
-  // positive int 32
+  // Sin, Cos, & Tan
   var x = 1.0;
   Print("sin of 1");
   Print(toString(sin(x)));
@@ -13,8 +13,6 @@ function main()
   Print("sin of 0");
   Print(toString(sin(x)));
 
-
-  // positive int 32
   x = 1.0;
   Print("cos of 1");
   Print(toString(cos(x)));
@@ -26,5 +24,140 @@ function main()
   x = 0.0;
   Print("cos of 0");
   Print(toString(cos(x)));
+
+  x = 1.0;
+  Print("tan of 1");
+  Print(toString(tan(x)));
+
+  x = 0.5;
+  Print("tan of 0.5");
+  Print(toString(tan(x)));
+
+  x = 0.0;
+  Print("tan of 0");
+  Print(toString(tan(x)));
+
+
+
+  // ArcSin, ArcCos, & ArcTan
+  x = 1.0;
+  Print("asin of 1");
+  Print(toString(asin(x)));
+
+  x = 0.5;
+  Print("asin of 0.5");
+  Print(toString(asin(x)));
+
+  x = 0.0;
+  Print("asin of 0");
+  Print(toString(asin(x)));
+
+  x = 1.0;
+  Print("acos of 1");
+  Print(toString(acos(x)));
+
+  x = 0.5;
+  Print("acos of 0.5");
+  Print(toString(acos(x)));
+
+  x = 0.0;
+  Print("acos of 0");
+  Print(toString(acos(x)));
+
+  x = 1.0;
+  Print("atan of 1");
+  Print(toString(atan(x)));
+
+  x = 0.5;
+  Print("atan of 0.5");
+  Print(toString(atan(x)));
+
+  x = 0.0;
+  Print("atan of 0");
+  Print(toString(atan(x)));
+
+
+
+  // Hyperbolic Sin, Cos, & Tan
+  x = 1.0;
+  Print("sinh of 1");
+  Print(toString(sinh(x)));
+
+  x = 0.5;
+  Print("sinh of 0.5");
+  Print(toString(sinh(x)));
+
+  x = 0.0;
+  Print("sinh of 0");
+  Print(toString(sinh(x)));
+
+  x = 1.0;
+  Print("cosh of 1");
+  Print(toString(cosh(x)));
+
+  x = 0.5;
+  Print("cosh of 0.5");
+  Print(toString(cosh(x)));
+
+  x = 0.0;
+  Print("cosh of 0");
+  Print(toString(cosh(x)));
+
+  x = 1.0;
+  Print("tanh of 1");
+  Print(toString(tanh(x)));
+
+  x = 0.5;
+  Print("tanh of 0.5");
+  Print(toString(tanh(x)));
+
+  x = 0.0;
+  Print("tanh of 0");
+  Print(toString(tanh(x)));
+
+
+
+  // Hyperbolic ArcSin, ArcCos, & ArcTan
+  x = 1.0;
+  Print("asinh of 1");
+  Print(toString(asinh(x)));
+
+  x = 0.5;
+  Print("asinh of 0.5");
+  Print(toString(asinh(x)));
+
+  x = 0.0;
+  Print("asinh of 0");
+  Print(toString(asinh(x)));
+
+  x = 1.0;
+  Print("acosh of 1");
+  Print(toString(acosh(x)));
+
+  x = 0.5;
+  Print("acosh of 0.5");
+  Print(toString(acosh(x)));
+
+  x = 0.0;
+  Print("acosh of 0");
+  Print(toString(acosh(x)));
+
+  x = 1.0;
+  Print("atanh of 1");
+  Print(toString(atanh(x)));
+
+  x = 0.5;
+  Print("atanh of 0.5");
+  Print(toString(atanh(x)));
+
+  x = 0.0;
+  Print("atanh of 0");
+  Print(toString(atanh(x)));
+
+
+
+
+
+
 
 endfunction

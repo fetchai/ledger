@@ -35,7 +35,7 @@ fetch::math::meta::IfIsMath<T, T> Sin(fetch::vm::VM *, T const &a)
 }
 
 /**
- * method for taking the sine of a value
+ * method for taking the cosine of a value
  */
 template <typename T>
 fetch::math::meta::IfIsMath<T, T> Cos(fetch::vm::VM *, T const &a)
@@ -45,12 +45,145 @@ fetch::math::meta::IfIsMath<T, T> Cos(fetch::vm::VM *, T const &a)
   return x;
 }
 
+/**
+ * method for taking the tangent of a value
+ */
+template <typename T>
+fetch::math::meta::IfIsMath<T, T> Tan(fetch::vm::VM *, T const &a)
+{
+  T x = T(a);
+  fetch::math::Tan(x, x);
+  return x;
+}
+
+/**
+ * method for taking the sine of a value
+ */
+template <typename T>
+fetch::math::meta::IfIsMath<T, T> ASin(fetch::vm::VM *, T const &a)
+{
+  T x = T(a);
+  fetch::math::ASin(x, x);
+  return x;
+}
+
+/**
+ * method for taking the cosine of a value
+ */
+template <typename T>
+fetch::math::meta::IfIsMath<T, T> ACos(fetch::vm::VM *, T const &a)
+{
+  T x = T(a);
+  fetch::math::ACos(x, x);
+  return x;
+}
+
+/**
+ * method for taking the tangent of a value
+ */
+template <typename T>
+fetch::math::meta::IfIsMath<T, T> ATan(fetch::vm::VM *, T const &a)
+{
+  T x = T(a);
+  fetch::math::ATan(x, x);
+  return x;
+}
+
+/**
+ * method for taking the sine of a value
+ */
+template <typename T>
+fetch::math::meta::IfIsMath<T, T> SinH(fetch::vm::VM *, T const &a)
+{
+  T x = T(a);
+  fetch::math::SinH(x, x);
+  return x;
+}
+
+/**
+ * method for taking the cosine of a value
+ */
+template <typename T>
+fetch::math::meta::IfIsMath<T, T> CosH(fetch::vm::VM *, T const &a)
+{
+  T x = T(a);
+  fetch::math::CosH(x, x);
+  return x;
+}
+
+/**
+ * method for taking the tangent of a value
+ */
+template <typename T>
+fetch::math::meta::IfIsMath<T, T> TanH(fetch::vm::VM *, T const &a)
+{
+  T x = T(a);
+  fetch::math::TanH(x, x);
+  return x;
+}
+
+/**
+ * method for taking the sine of a value
+ */
+template <typename T>
+fetch::math::meta::IfIsMath<T, T> ASinH(fetch::vm::VM *, T const &a)
+{
+  T x = T(a);
+  fetch::math::ASinH(x, x);
+  return x;
+}
+
+/**
+ * method for taking the cosine of a value
+ */
+template <typename T>
+fetch::math::meta::IfIsMath<T, T> ACosH(fetch::vm::VM *, T const &a)
+{
+  T x = T(a);
+  fetch::math::ACosH(x, x);
+  return x;
+}
+
+/**
+ * method for taking the tangent of a value
+ */
+template <typename T>
+fetch::math::meta::IfIsMath<T, T> ATanH(fetch::vm::VM *, T const &a)
+{
+  T x = T(a);
+  fetch::math::ATanH(x, x);
+  return x;
+}
+
 static void CreateTrigonometry(std::shared_ptr<fetch::vm::Module> module)
 {
   module->CreateFreeFunction<float_t>("sin", &Sin<float_t>);
   module->CreateFreeFunction<double_t>("sin", &Sin<double_t>);
   module->CreateFreeFunction<float_t>("cos", &Cos<float_t>);
   module->CreateFreeFunction<double_t>("cos", &Cos<double_t>);
+  module->CreateFreeFunction<float_t>("tan", &Tan<float_t>);
+  module->CreateFreeFunction<double_t>("tan", &Tan<double_t>);
+
+  module->CreateFreeFunction<float_t>("asin", &ASin<float_t>);
+  module->CreateFreeFunction<double_t>("asin", &ASin<double_t>);
+  module->CreateFreeFunction<float_t>("acos", &ACos<float_t>);
+  module->CreateFreeFunction<double_t>("acos", &ACos<double_t>);
+  module->CreateFreeFunction<float_t>("atan", &ATan<float_t>);
+  module->CreateFreeFunction<double_t>("atan", &ATan<double_t>);
+
+  module->CreateFreeFunction<float_t>("sinh", &SinH<float_t>);
+  module->CreateFreeFunction<double_t>("sinh", &SinH<double_t>);
+  module->CreateFreeFunction<float_t>("cosh", &CosH<float_t>);
+  module->CreateFreeFunction<double_t>("cosh", &CosH<double_t>);
+  module->CreateFreeFunction<float_t>("tanh", &TanH<float_t>);
+  module->CreateFreeFunction<double_t>("tanh", &TanH<double_t>);
+
+  module->CreateFreeFunction<float_t>("asinh", &ASinH<float_t>);
+  module->CreateFreeFunction<double_t>("asinh", &ASinH<double_t>);
+  module->CreateFreeFunction<float_t>("acosh", &ACosH<float_t>);
+  module->CreateFreeFunction<double_t>("acosh", &ACosH<double_t>);
+  module->CreateFreeFunction<float_t>("atanh", &ATanH<float_t>);
+  module->CreateFreeFunction<double_t>("atanh", &ATanH<double_t>);
 }
 
 }  // namespace vm_modules
