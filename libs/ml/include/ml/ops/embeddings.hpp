@@ -96,20 +96,7 @@ public:
     }
     return {ArrayType(errorSignal.shape())};
   }
-
-//  virtual void Step(typename T::Type learningRate)
-//  {
-//    for (auto const &r : updated_rows_)
-//    {
-//      auto gradient_accumulation_slice = this->gradient_accumulation_->Slice(r).Tensor();
-//      auto output_slice                = this->output_->Slice(r).Tensor();
-//
-//      gradient_accumulation_slice.InlineMultiply(-learningRate);
-//      output_slice.InlineAdd(gradient_accumulation_slice);
-//      gradient_accumulation_slice.Fill(typename T::Type(0));
-//    }
-//    updated_rows_.clear();
-//  }
+  
   virtual void Step(typename T::Type learningRate)
   {
     if (updated_rows_.size() > 0)
@@ -120,7 +107,7 @@ public:
       for (auto const &r : updated_rows_)
       {
         gradient_accumulation_slice = this->gradient_accumulation_->Slice(r).Copy();
-        output_slice = this->output_->Slice(r).Copy();
+        output_slice                = this->output_->Slice(r).Copy();
 
         gradient_accumulation_slice.InlineMultiply(-learningRate);
         output_slice.InlineAdd(gradient_accumulation_slice);
