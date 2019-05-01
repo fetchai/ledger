@@ -4,7 +4,6 @@
 # CI SCRIPT
 #
 # Helper script used to help make CI based build simpler.
-#
 
 import os
 import re
