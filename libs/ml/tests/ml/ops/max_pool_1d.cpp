@@ -35,19 +35,20 @@ TYPED_TEST(MaxPool1DTest, forward_test_3_2)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
 
   ArrayType           data({1, 10});
   ArrayType           gt({1, 4});
   std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
   std::vector<double> gtInput({3, 5, 7, 9});
-  for (std::uint64_t i(0); i < 10; ++i)
+  for (SizeType i{0}; i < 10; ++i)
   {
-    data.Set(0, i, DataType(dataInput[i]));
+    data.Set(0, i, static_cast<DataType>(dataInput[i]));
   }
 
-  for (std::uint64_t i(0); i < 4; ++i)
+  for (SizeType i{0}; i < 4; ++i)
   {
-    gt.Set(0, i, DataType(gtInput[i]));
+    gt.Set(0, i, static_cast<DataType>(gtInput[i]));
   }
 
   fetch::ml::ops::MaxPool1D<ArrayType> op(3, 2);
@@ -55,51 +56,56 @@ TYPED_TEST(MaxPool1DTest, forward_test_3_2)
       std::vector<std::reference_wrapper<TypeParam const>>({data}));
 
   // test correct values
-  ASSERT_TRUE(
-      prediction.AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
+  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
 }
 
 TYPED_TEST(MaxPool1DTest, backward_test)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
 
   ArrayType           data({1, 10});
-  ArrayType           error({1, 10});
+  ArrayType           error({1, 4});
   ArrayType           gt({1, 10});
   std::vector<double> dataInput({1, -2, 3, -4, 10, -6, 7, -8, 9, -10});
-  std::vector<double> errorInput({2, 2, 2, 2, 2, 2, 2, 2, 2, 2});
-  std::vector<double> gtInput({0, 0, 2, 0, 4, 0, 0, 0, 2, 0});
-  for (std::uint64_t i(0); i < 10; ++i)
+  std::vector<double> errorInput({2, 3, 4, 5});
+  std::vector<double> gtInput({0, 0, 2, 0, 7, 0, 0, 0, 5, 0});
+  for (SizeType i{0}; i < 10; ++i)
   {
-    data.Set(0, i, DataType(dataInput[i]));
-    error.Set(0, i, DataType(errorInput[i]));
-    gt.Set(0, i, DataType(gtInput[i]));
+    data.Set(0, i, static_cast<DataType>(dataInput[i]));
+    gt.Set(0, i, static_cast<DataType>(gtInput[i]));
   }
+  for (SizeType i{0}; i < 4; ++i)
+  {
+    error.Set(0, i, static_cast<DataType>(errorInput[i]));
+  }
+
   fetch::ml::ops::MaxPool1D<ArrayType> op(3, 2);
   std::vector<ArrayType>               prediction = op.Backward({data}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType(1e-5), DataType(1e-5)));
+  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
 }
 
 TYPED_TEST(MaxPool1DTest, forward_test_4_2)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
 
   ArrayType           data({1, 10});
   ArrayType           gt({1, 4});
   std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
   std::vector<double> gtInput({3, 5, 7, 9});
-  for (std::uint64_t i(0); i < 10; ++i)
+  for (SizeType i{0}; i < 10; ++i)
   {
-    data.Set(0, i, DataType(dataInput[i]));
+    data.Set(0, i, static_cast<DataType>(dataInput[i]));
   }
 
-  for (std::uint64_t i(0); i < 4; ++i)
+  for (SizeType i{0}; i < 4; ++i)
   {
-    gt.Set(0, i, DataType(gtInput[i]));
+    gt.Set(0, i, static_cast<DataType>(gtInput[i]));
   }
 
   fetch::ml::ops::MaxPool1D<ArrayType> op(4, 2);
@@ -107,27 +113,27 @@ TYPED_TEST(MaxPool1DTest, forward_test_4_2)
       std::vector<std::reference_wrapper<TypeParam const>>({data}));
 
   // test correct values
-  ASSERT_TRUE(
-      prediction.AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
+  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
 }
 
 TYPED_TEST(MaxPool1DTest, forward_test_2_4)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
 
   ArrayType           data({1, 10});
   ArrayType           gt({1, 3});
   std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
   std::vector<double> gtInput({1, 5, 9});
-  for (std::uint64_t i(0); i < 10; ++i)
+  for (SizeType i{0}; i < 10; ++i)
   {
-    data.Set(0, i, DataType(dataInput[i]));
+    data.Set(0, i, static_cast<DataType>(dataInput[i]));
   }
 
-  for (std::uint64_t i(0); i < 3; ++i)
+  for (SizeType i{0}; i < 3; ++i)
   {
-    gt.Set(0, i, DataType(gtInput[i]));
+    gt.Set(0, i, static_cast<DataType>(gtInput[i]));
   }
 
   fetch::ml::ops::MaxPool1D<ArrayType> op(2, 4);
@@ -135,6 +141,5 @@ TYPED_TEST(MaxPool1DTest, forward_test_2_4)
       std::vector<std::reference_wrapper<TypeParam const>>({data}));
 
   // test correct values
-  ASSERT_TRUE(
-      prediction.AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
+  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
 }

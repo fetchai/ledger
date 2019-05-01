@@ -77,9 +77,9 @@ public:
       ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 1);
-    ASSERT(errorSignal.shape() == inputs.front().get().shape());
+    ASSERT(errorSignal.shape() == ComputeOutputShape(inputs));
 
-    ArrayType returnSignal{errorSignal.shape()};
+    ArrayType returnSignal{inputs.at(0).get().shape()};
 
     auto outputShape = ComputeOutputShape(inputs);
     for (SizeType c(0); c < outputShape[0]; ++c)  // Iterate over output channels
@@ -103,12 +103,9 @@ public:
           }
         }
         // Error needs to be added if same node occurs in multiple output nodes at once
-        returnSignal.Set(c, max_iter, returnSignal.At(c, max_iter) + DataType(1));
+        returnSignal.Set(c, max_iter, returnSignal.At(c, max_iter) + errorSignal.At(c, i));
       }
     }
-
-    // multiply by errorSignal (chain rule)
-    fetch::math::Multiply(errorSignal, returnSignal, returnSignal);
 
     return {returnSignal};
   }

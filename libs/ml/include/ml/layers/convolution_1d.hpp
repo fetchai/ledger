@@ -19,11 +19,7 @@
 
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/activation.hpp"
-#include "ml/ops/add.hpp"
 #include "ml/ops/convolution_1d.hpp"
-#include "ml/ops/flatten.hpp"
-#include "ml/ops/leaky_relu_op.hpp"
-#include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/subgraph.hpp"
 
@@ -70,9 +66,9 @@ public:
     this->SetOutputNode(output);
 
     ArrayType weights_data(
-        std::vector<SizeType>({output_channels_, input_channels_, kernel_size_}));
+        std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_}});
     this->Initialise(weights_data, init_mode);
-    this->SetInput(weights, weights_data, false, false);
+    this->SetInput(weights, weights_data, false);
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(
