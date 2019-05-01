@@ -183,11 +183,10 @@ public:
   virtual ~Object() = default;
 
   Object(VM *vm, TypeId type_id)
-  {
-    vm_        = vm;
-    type_id_   = type_id;
-    ref_count_ = 1;
-  }
+    : vm_{vm}
+    , type_id_{type_id}
+    , ref_count_{1}
+  {}
 
   virtual size_t GetHashCode();
   virtual bool   IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
@@ -220,6 +219,11 @@ public:
   virtual void * FindElement();
   virtual void   PushElement(TypeId element_type_id);
   virtual void   PopToElement();
+
+  TypeId getTypeId() const
+  {
+    return type_id_;
+  }
 
 protected:
   Variant &       Push();
@@ -914,8 +918,6 @@ template <std::size_t ID = 0>
 struct TemplateParameterT : public Variant
 {
   using Variant::Variant;
-  TemplateParameterT(TemplateParameterT const &) = default;
-  TemplateParameterT(TemplateParameterT &&)      = default;
   TemplateParameterT(Variant const &other)
     : Variant{other} {};
   TemplateParameterT(Variant &&other)

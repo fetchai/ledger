@@ -28,11 +28,11 @@ public:
   IState()          = delete;
   virtual ~IState() = default;
 
-  static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<String> const &name,
+  static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<Object> &&name,
                                  TemplateParameter const &value);
 
-  static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<Address> const &address,
-                                 TemplateParameter const &value);
+//  static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<Object> const &address,
+//                                 TemplateParameter const &value);
 
   virtual TemplateParameter Get() const                         = 0;
   virtual void              Set(TemplateParameter const &value) = 0;
@@ -50,9 +50,13 @@ public:
   template <typename... Args>
   static Ptr<IState> ConstructIntrinsic(VM *vm, TypeId type_id, TypeId value_type_id,
                                         Args &&... args);
+
+  static std::string NameToString(VM *vm, Ptr <Object> &&name);
 };
 
-template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+
+
+template<typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
 inline IoObserverInterface::Status ReadHelper(std::string const &name, T &val,
                                               IoObserverInterface &io)
 {
@@ -60,7 +64,7 @@ inline IoObserverInterface::Status ReadHelper(std::string const &name, T &val,
   return io.Read(name, &val, buffer_size);
 }
 
-template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+template<typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
 inline IoObserverInterface::Status WriteHelper(std::string const &name, T const &val,
                                                IoObserverInterface &io)
 {
@@ -96,7 +100,7 @@ inline IoObserverInterface::Status ReadHelper(std::string const &name, std::vect
   return result;
 }
 
-inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<Address> &val,
+inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr <Address> &val,
                                               IoObserverInterface &io)
 {
   // create an initial buffer size
@@ -109,7 +113,7 @@ inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<Addre
   return result;
 }
 
-inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<String> &val,
+inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr <String> &val,
                                               IoObserverInterface &io)
 {
   // create an initial buffer size
@@ -122,16 +126,16 @@ inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<Strin
   return result;
 }
 
-inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr<Address> const &val,
+inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr <Address> const &val,
                                                IoObserverInterface &io)
 {
   // convert the object to bytes
-  auto bytes = val->ToBytes();
+  auto const bytes = val->ToBytes();
 
   return io.Write(name, bytes.data(), bytes.size());
 }
 
-inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr<String> const &val,
+inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr <String> const &val,
                                                IoObserverInterface &io)
 {
   auto const &str = val->str;
@@ -145,10 +149,10 @@ class State : public IState
 public:
   // Construct state object, default argument = get from state DB, initializing to value if not
   // found
-  State(VM *vm, TypeId type_id, TypeId value_type_id, Ptr<String> name,
+  State(VM *vm, TypeId type_id, TypeId value_type_id, Ptr<Object> &&name,
         TemplateParameter const &value)
     : IState(vm, type_id)
-    , name_{std::move(name)}
+    , name_{NameToString(vm, std::move(name))}
     , value_{value.Get<Value>()}
     , value_type_id_{value_type_id}
   {
@@ -156,7 +160,7 @@ public:
     if (vm_->HasIoObserver())
     {
       // attempt to read the value from the storage engine
-      auto const status = ReadHelper(name_->str, value_, vm_->GetIOObserver());
+      auto const status = ReadHelper(name_, value_, vm_->GetIOObserver());
 
       // mark the variable as existed if we get a positive result back
       existed_ = (Status::OK == status);
@@ -192,11 +196,11 @@ private:
     // if we have an IO observer then inform it of the changes
     if (vm_->HasIoObserver())
     {
-      WriteHelper(name_->str, value_, vm_->GetIOObserver());
+      WriteHelper(name_, value_, vm_->GetIOObserver());
     }
   }
 
-  Ptr<String> name_;
+  std::string name_;
   Value       value_;
   TypeId      value_type_id_;
   bool        existed_{false};
@@ -274,16 +278,25 @@ inline Ptr<IState> IState::Construct(VM *vm, TypeId type_id, Args &&... args)
   return ConstructIntrinsic(vm, type_id, value_type_id, std::forward<Args>(args)...);
 }
 
-inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<String> const &name,
+inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<Object> &&name,
                                        TemplateParameter const &value)
 {
-  return Construct(vm, type_id, name, value);
+  return Construct(vm, type_id, std::move(name), value);
 }
 
-inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<Address> const &address,
-                                       TemplateParameter const &value)
+inline std::string IState::NameToString(VM *vm, Ptr<Object> &&name)
 {
-  return Construct(vm, type_id, address->AsBase64String(), value);
+  switch (name->getTypeId())
+  {
+    case TypeIds::String:
+      return dynamic_cast<String const &>(*name).str;
+    case TypeIds::Address:
+      return dynamic_cast<Address &>(*name).AsBase64String()->str;
+  }
+
+  vm->RuntimeError(
+    "Unsupported type of `name` parameter for `State<...>(name)` constructor. It must be either `String` or `Address` type.");
+  return std::string{};
 }
 
 }  // namespace vm

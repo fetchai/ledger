@@ -98,7 +98,7 @@ public:
     return success;
   }
 
-  Ptr<String> AsBase64String()
+  Ptr<String> AsBase64String() const
   {
     return new String{vm_, static_cast<std::string>(byte_array::ToBase64(
                                byte_array::ConstByteArray{address_.data(), address_.size()}))};

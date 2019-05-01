@@ -28,23 +28,19 @@ class IPersistentMap : public Object
 {
 public:
   // Factory
-  static Ptr<IPersistentMap> Constructor(VM *vm, TypeId type_id, Ptr<Object> const &name);
+  static Ptr<IPersistentMap> Constructor(VM *vm, TypeId type_id, Ptr<Object> name);
 
   // Construction / Destruction
-  IPersistentMap(VM *vm, TypeId type_id, Ptr<String> name, TypeId value_type)
+  IPersistentMap(VM *vm, TypeId type_id, Ptr<Object> name, TypeId value_type)
     : Object(vm, type_id)
-    , name_{std::move(name)}
+    , name_{IState::NameToString(vm, std::move(name))}
     , value_type_{value_type}
-  {}
-
-  IPersistentMap(VM *vm, TypeId type_id, Ptr<Address> addr, TypeId value_type)
-    : IPersistentMap(vm, type_id, addr->AsBase64String(), value_type)
   {}
 
   ~IPersistentMap() override = default;
 
 protected:
-  Ptr<String> name_;
+  std::string name_;
   TypeId      value_type_;
 };
 
@@ -52,7 +48,7 @@ class PersistentMap : public IPersistentMap
 {
 public:
   // Construction / Destruction
-  PersistentMap(VM *vm, TypeId type_id, Ptr<String> name, TypeId value_type)
+  PersistentMap(VM *vm, TypeId type_id, Ptr<Object> name, TypeId value_type)
     : IPersistentMap(vm, type_id, std::move(name), value_type)
   {}
   ~PersistentMap() override = default;
@@ -79,7 +75,7 @@ protected:
       return nullptr;
     }
 
-    return new String{vm_, name_->str + "." + key->str};
+    return new String{vm_, name_ + "." + key->str};
   }
 
   void PushElement(TypeId /*element_type_id*/) override
@@ -98,7 +94,6 @@ protected:
       RuntimeError("Extraction of key value failed.");
       return;
     }
-    // std::cout << "Resource would be: " << key->str << std::endl;
 
     auto state{
         IState::ConstructIntrinsic(vm_, TypeIds::IState, value_type_, key, TemplateParameter{})};
@@ -132,7 +127,6 @@ protected:
     }
     else
     {
-      // std::cout << "Resource would be: " << key->str << std::endl;
       auto state{
           IState::ConstructIntrinsic(vm_, TypeIds::IState, value_type_, key, TemplateParameter{})};
       state->Set(TemplateParameter{value_v});
@@ -142,7 +136,7 @@ protected:
 };
 
 inline Ptr<IPersistentMap> IPersistentMap::Constructor(VM *vm, TypeId type_id,
-                                                       Ptr<Object> const &name)
+                                                       Ptr<Object> name)
 {
   TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
   TypeId const    key_type_id   = type_info.parameter_type_ids[0];
@@ -157,7 +151,7 @@ inline Ptr<IPersistentMap> IPersistentMap::Constructor(VM *vm, TypeId type_id,
     return nullptr;
   }
 
-  return new PersistentMap(vm, type_id, name, value_type_id);
+  return new PersistentMap(vm, type_id, std::move(name), value_type_id);
 }
 
 }  // namespace vm

@@ -459,4 +459,67 @@ TEST_F(SmartContractTests, CheckPersistentMapSetAndQuery)
   VerifyQuery("query_bar", int32_t{30});
 }
 
+TEST_F(SmartContractTests, CheckPersistentMapSetWithAddressAsName)
+{
+  std::string const contract_source = R"(
+    @action
+    function test_persistent_map(addr : Address)
+      var state = PersistentMap<String, Int32>(addr);
+      state["foo"] = 20;
+    endfunction
+
+    @query
+    function query_foo(address : Address) : Int32
+      var state = PersistentMap<String, Int32>(address);
+      return state["foo"];
+    endfunction
+  )";
+
+  // create the contract
+  CreateContract(contract_source);
+
+  // check the registered handlers
+  auto const transaction_handlers = contract_->transaction_handlers();
+  ASSERT_EQ(1u, transaction_handlers.size());
+  EXPECT_TRUE(IsIn(transaction_handlers, "test_persistent_map"));
+
+  // check the query handlers
+  auto const query_handlers = contract_->query_handlers();
+  ASSERT_EQ(1, query_handlers.size());
+
+  ByteArray address_raw;
+  address_raw.Resize(64);
+  for (uint8_t i=0; i<address_raw.size(); ++i)
+  {
+    address_raw[i] = i;
+  }
+
+  Identity identity{address_raw};
+
+  // define expected values
+
+  auto const address_str{address_raw.ToBase64()};
+  auto const expected_key1      = contract_name_->full_name() + ".state." + ToBase64(identity.identifier()) + ".foo";
+  auto const expected_resource1 = ResourceAddress{expected_key1};
+  auto const expected_value1    = RawBytes<int32_t>(20);
+
+  // expected calls
+  EXPECT_CALL(*storage_, Lock(expected_resource1)).WillOnce(Return(true));
+  EXPECT_CALL(*storage_, Set(expected_resource1, expected_value1)).WillOnce(Return());
+  EXPECT_CALL(*storage_, Unlock(expected_resource1)).WillOnce(Return(true));
+
+  // from the action & query
+  EXPECT_CALL(*storage_, Get(expected_resource1))
+      .Times(2)
+      .WillRepeatedly(Return(fetch::storage::Document{expected_value1}));
+
+  // send the smart contract an "increment" action
+  EXPECT_EQ(SmartContract::Status::OK,
+            SendActionWithParams("test_persistent_map", {address_str + ".foo"}, identity));
+
+  Variant request    = Variant::Object();
+  request["address"] = ToBase64(identity.identifier());
+  VerifyQuery("query_foo", int32_t{20}, request);
+}
+
 }  // namespace
