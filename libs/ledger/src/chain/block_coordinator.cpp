@@ -128,6 +128,8 @@ void BlockCoordinator::TriggerBlockGeneration()
 
 BlockCoordinator::State BlockCoordinator::OnReloadState()
 {
+  State next_state{State::RESET};
+
   // if no current block then this is the first time in the state therefore lookup the heaviest
   // block
   if (!current_block_)
@@ -154,11 +156,13 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
     }
   }
 
-  return State::RESET;
+  return next_state;
 }
 
 BlockCoordinator::State BlockCoordinator::OnSynchronizing()
 {
+  State next_state{State::SYNCHRONIZING};
+
   // ensure that we have a current block that we are executing
   if (!current_block_)
   {
@@ -198,7 +202,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
     if (GENESIS_DIGEST == previous_hash)
     {
       // once we have got back to genesis then we need to start executing from the beginning
-      return State::PRE_EXEC_BLOCK_VALIDATION;
+      next_state = State::PRE_EXEC_BLOCK_VALIDATION;
     }
     else
     {
@@ -217,7 +221,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
   else if (current_hash == last_processed_block)
   {
     // the block coordinator has now successfully synced with the chain of blocks.
-    return State::SYNCHRONIZED;
+    next_state = State::SYNCHRONIZED;
   }
   else
   {
@@ -284,16 +288,16 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
 
     // update the current block and begin scheduling
     current_block_ = next_block;
-
-    return State::PRE_EXEC_BLOCK_VALIDATION;
+    next_state     = State::PRE_EXEC_BLOCK_VALIDATION;
   }
 
-  return State::SYNCHRONIZING;
+  return next_state;
 }
 
 BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State previous)
 {
   FETCH_UNUSED(current);
+  State next_state{State::SYNCHRONIZED};
 
   // ensure the periodic print is not trigger once we have synced
   syncing_periodic_.Reset();
@@ -301,7 +305,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
   // if we have detected a change in the chain then we need to re-evaluate the chain
   if (chain_.GetHeaviestBlockHash() != current_block_->body.hash)
   {
-    return State::RESET;
+    next_state = State::RESET;
   }
   else if (mining_ && mining_enabled_ && (Clock::now() >= next_block_time_))
   {
@@ -318,7 +322,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
     current_block_.reset();
 
     // trigger packing state
-    return State::PACK_NEW_BLOCK;
+    next_state = State::PACK_NEW_BLOCK;
   }
   else if (State::SYNCHRONIZING == previous)
   {
@@ -327,7 +331,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
                    " prev: ", ToBase64(current_block_->body.previous_hash), ")");
   }
 
-  return State::SYNCHRONIZED;
+  return next_state;
 }
 
 BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
@@ -372,7 +376,6 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Lane count mismatch (",
                      ToBase64(current_block_->body.hash), ")");
       chain_.RemoveBlock(current_block_->body.hash);
-
       return State::RESET;
     }
 
@@ -382,7 +385,6 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Slice count mismatch (",
                      ToBase64(current_block_->body.hash), ")");
       chain_.RemoveBlock(current_block_->body.hash);
-
       return State::RESET;
     }
   }
@@ -405,6 +407,8 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 
 BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, State previous)
 {
+  State next_state{State::WAIT_FOR_TRANSACTIONS};
+
   if (previous == current)
   {
     // FSM is stuck waiting for transactions - has timeout elapsed?
@@ -461,7 +465,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
     // clear the pending transaction set
     pending_txs_.reset();
 
-    return State::SCHEDULE_BLOCK_EXECUTION;
+    next_state = State::SCHEDULE_BLOCK_EXECUTION;
   }
   else
   {
@@ -475,30 +479,35 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
     state_machine_->Delay(std::chrono::milliseconds{200});
   }
 
-  return State::WAIT_FOR_TRANSACTIONS;
+  return next_state;
 }
 
 BlockCoordinator::State BlockCoordinator::OnScheduleBlockExecution()
 {
+  State next_state{State::RESET};
+
   // schedule the current block for execution
   if (ScheduleCurrentBlock())
   {
     exec_wait_periodic_.Reset();
 
-    return State::WAIT_FOR_EXECUTION;
+    next_state = State::WAIT_FOR_EXECUTION;
   }
 
-  return State::RESET;
+  return next_state;
 }
 
 BlockCoordinator::State BlockCoordinator::OnWaitForExecution()
 {
+  State next_state{State::WAIT_FOR_EXECUTION};
+
   auto const status = QueryExecutorStatus();
 
   switch (status)
   {
   case ExecutionStatus::IDLE:
-    return State::POST_EXEC_BLOCK_VALIDATION;
+    next_state = State::POST_EXEC_BLOCK_VALIDATION;
+    break;
 
   case ExecutionStatus::RUNNING:
 
@@ -514,14 +523,17 @@ BlockCoordinator::State BlockCoordinator::OnWaitForExecution()
 
   case ExecutionStatus::STALLED:
   case ExecutionStatus::ERROR:
-    return State::RESET;
+    next_state = State::RESET;
+    break;
   }
 
-  return State::WAIT_FOR_EXECUTION;
+  return next_state;
 }
 
 BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
 {
+  State next_state{State::RESET};
+
   // Check: Ensure the merkle hash is correct for this block
   auto const state_hash = storage_unit_.CurrentHash();
 
@@ -587,11 +599,13 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     last_executed_block_.Set(current_block_->body.hash);
   }
 
-  return State::RESET;
+  return next_state;
 }
 
 BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
 {
+  State next_state{State::RESET};
+
   try
   {
     // call the block packer
@@ -601,31 +615,35 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
     UpdateNextBlockTime();
 
     // trigger the execution of the block
-    return State::EXECUTE_NEW_BLOCK;
+    next_state = State::EXECUTE_NEW_BLOCK;
   }
   catch (std::exception const &ex)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Error generated performing block packing: ", ex.what());
   }
 
-  return State::RESET;
+  return next_state;
 }
 
 BlockCoordinator::State BlockCoordinator::OnExecuteNewBlock()
 {
+  State next_state{State::RESET};
+
   // schedule the current block for execution
   if (ScheduleNextBlock())
   {
     exec_wait_periodic_.Reset();
 
-    return State::WAIT_FOR_NEW_BLOCK_EXECUTION;
+    next_state = State::WAIT_FOR_NEW_BLOCK_EXECUTION;
   }
 
-  return State::RESET;
+  return next_state;
 }
 
 BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
 {
+  State next_state{State::WAIT_FOR_NEW_BLOCK_EXECUTION};
+
   auto const status = QueryExecutorStatus();
   switch (status)
   {
@@ -639,7 +657,8 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
     // Commit the state generated by this block
     storage_unit_.Commit(next_block_->body.block_number);
 
-    return State::PROOF_SEARCH;
+    next_state = State::PROOF_SEARCH;
+    break;
   }
 
   case ExecutionStatus::RUNNING:
@@ -655,14 +674,17 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
 
   case ExecutionStatus::STALLED:
   case ExecutionStatus::ERROR:
-    return State::RESET;
+    next_state = State::RESET;
+    break;
   }
 
-  return State::WAIT_FOR_NEW_BLOCK_EXECUTION;
+  return next_state;
 }
 
 BlockCoordinator::State BlockCoordinator::OnProofSearch()
 {
+  State next_state{State::PROOF_SEARCH};
+
   if (miner_->Mine(*next_block_, 100))
   {
     // update the digest
@@ -675,14 +697,16 @@ BlockCoordinator::State BlockCoordinator::OnProofSearch()
     execution_manager_.SetLastProcessedBlock(next_block_->body.hash);
 
     // the block is now fully formed it can be sent across the network
-    return State::TRANSMIT_BLOCK;
+    next_state = State::TRANSMIT_BLOCK;
   }
 
-  return State::PROOF_SEARCH;
+  return next_state;
 }
 
 BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 {
+  State next_state{State::RESET};
+
   try
   {
     // ensure that the main chain is aware of the block
@@ -706,7 +730,7 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
     FETCH_LOG_WARN(LOGGING_NAME, "Error transmitting verified block: ", ex.what());
   }
 
-  return State::RESET;
+  return next_state;
 }
 
 BlockCoordinator::State BlockCoordinator::OnReset()
@@ -723,35 +747,41 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 
 bool BlockCoordinator::ScheduleCurrentBlock()
 {
+  bool success{false};
+
   // sanity check - ensure there is a block to execute
   if (current_block_)
   {
-    return ScheduleBlock(*current_block_);
+    success = ScheduleBlock(*current_block_);
   }
   else
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Unable to execute empty current block");
   }
 
-  return false;
+  return success;
 }
 
 bool BlockCoordinator::ScheduleNextBlock()
 {
+  bool success{false};
+
   if (next_block_)
   {
-    return ScheduleBlock(*next_block_);
+    success = ScheduleBlock(*next_block_);
   }
   else
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Unable to execute empty next block");
   }
 
-  return false;
+  return success;
 }
 
 bool BlockCoordinator::ScheduleBlock(Block const &block)
 {
+  bool success{false};
+
   FETCH_LOG_DEBUG(LOGGING_NAME, "Attempting exec on block: ", ToBase64(block.body.hash));
 
   // instruct the execution manager to execute the current block
@@ -760,7 +790,7 @@ bool BlockCoordinator::ScheduleBlock(Block const &block)
   if (execution_status == ScheduleStatus::SCHEDULED)
   {
     // signal success
-    return true;
+    success = true;
   }
   else
   {
@@ -768,7 +798,7 @@ bool BlockCoordinator::ScheduleBlock(Block const &block)
                     "Execution engine stalled. State: ", ledger::ToString(execution_status));
   }
 
-  return false;
+  return success;
 }
 
 BlockCoordinator::ExecutionStatus BlockCoordinator::QueryExecutorStatus()
