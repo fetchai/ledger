@@ -5,7 +5,6 @@ pipeline {
   stages {
 
     stage('Builds & Tests') {
-
       parallel {
 
         stage('Basic Checks') {
@@ -76,10 +75,6 @@ pipeline {
                 branch "develop"
               }
               steps {
-                checkout resolveScm(source: git(https://github.com/uvue-git/fetch-cluster.git), targets: ['develop'])
-                sh 'cd ./fetch-cluster'
-                sh 'sudo python3 ./setup.py'
-                sh 'cd -'
                 sh './scripts/ci-tool.py -I Debug'
               }
             }
@@ -111,10 +106,6 @@ pipeline {
                 branch "develop"
               }
               steps {
-                checkout resolveScm(source: git(https://github.com/uvue-git/fetch-cluster.git), targets: ['develop'])
-                sh 'cd ./fetch-cluster'
-                sh 'sudo python3 ./setup.py'
-                sh 'cd -'
                 sh './scripts/ci-tool.py -I Release'
               }
             }
@@ -151,10 +142,6 @@ pipeline {
                 branch "develop"
               }
               steps {
-                checkout resolveScm(source: git(https://github.com/uvue-git/fetch-cluster.git), targets: ['develop'])
-                sh 'cd ./fetch-cluster'
-                sh 'sudo python3 ./setup.py'
-                sh 'cd -'
                 sh './scripts/ci-tool.py -I Debug'
               }
             }
@@ -191,10 +178,6 @@ pipeline {
                 branch "develop"
               }
               steps {
-                checkout resolveScm(source: git(https://github.com/uvue-git/fetch-cluster.git), targets: ['develop'])
-                sh 'cd ./fetch-cluster'
-                sh 'sudo python3 ./setup.py'
-                sh 'cd -'
                 sh './scripts/ci-tool.py -I Release'
               }
             }
