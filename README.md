@@ -17,13 +17,11 @@ for any damages whatsoever, even if it had been advised of the possibility of da
 As such this codebase should be treated as experimental and does not contain all currently developed
 features. Fetch will be delivering regular updates.
 
-There is no publicly available test net currently running at this point.
-
 ## Resources
 
 1. [Website](https://fetch.ai/)
 2. [Blog](https://fetch.ai/blog)
-3. Developer Portal - Coming soon - [Signup Open](https://fetch.ai/#community)
+3. [Community Website](https://community.fetch.ai/)
 4. [Community Telegram Group](https://t.me/fetchai)
 5. [Whitepapers](https://fetch.ai/publications.html)
 6. [Roadmap](https://fetch.ai/#/roadmap)
@@ -48,7 +46,7 @@ following commands:
 
     cd ledger
 
-    git submodule update --init
+    git submodule update --init --recursive
 
 ## Dependencies
 
@@ -71,3 +69,26 @@ The project uses cmake so you can following formal build proceedure of:
     cmake ../
 
     make -j
+
+## Connecting to a test network
+
+Connecting and joining the test net is relatively straight forward. This first thing to do is to
+ensure that you have build the latest version of the `constellation` application.
+
+    cd build
+
+    cmake ../
+
+    make -j constellation
+
+Navigate to the constellation application folder:
+
+    cd apps/constellation
+
+Optionally delete the database files (in the case where you have been running a local network)
+
+    rm -f *.db
+
+Start the network connecting to the `alpha` test network.
+
+    ./constellation -bootstrap -network alpha

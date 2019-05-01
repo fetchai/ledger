@@ -138,8 +138,6 @@ bool MainChain::RemoveBlock(BlockHash hash)
 {
   // TODO(private issue 666): Improve performance of block removal
 
-  using BlockHashSet = std::unordered_set<BlockHash>;
-
   bool success{false};
 
   FETCH_LOCK(lock_);

@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/future_timepoint.hpp"
 #include "core/mutex.hpp"
 #include "core/random/lcg.hpp"
 #include "core/state_machine.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/protocols/main_chain_rpc_protocol.hpp"
 #include "network/generics/backgrounded_work.hpp"
-#include "network/generics/future_timepoint.hpp"
 #include "network/generics/has_worker_thread.hpp"
 #include "network/generics/requesting_queue.hpp"
 #include "network/muddle/rpc/client.hpp"
@@ -63,7 +63,7 @@ public:
   using Promise         = service::Promise;
   using RpcClient       = muddle::rpc::Client;
   using TrustSystem     = p2p::P2PTrustInterface<Address>;
-  using FutureTimepoint = network::FutureTimepoint;
+  using FutureTimepoint = core::FutureTimepoint;
 
   using Worker                    = MainChainSyncWorker;
   using WorkerPtr                 = std::shared_ptr<Worker>;

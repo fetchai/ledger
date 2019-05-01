@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/future_timepoint.hpp"
 #include "core/logger.hpp"
 #include "core/service_ids.hpp"
 #include "ledger/shard_config.hpp"
@@ -26,7 +27,6 @@
 #include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "network/generics/backgrounded_work.hpp"
-#include "network/generics/future_timepoint.hpp"
 #include "network/generics/has_worker_thread.hpp"
 #include "network/management/connection_register.hpp"
 #include "network/service/service_client.hpp"

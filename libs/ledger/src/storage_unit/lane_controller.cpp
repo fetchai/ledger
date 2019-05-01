@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/future_timepoint.hpp"
 #include "core/service_ids.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
-#include "network/generics/future_timepoint.hpp"
 #include "network/generics/requesting_queue.hpp"
 #include "network/management/connection_register.hpp"
 #include "network/muddle/muddle.hpp"

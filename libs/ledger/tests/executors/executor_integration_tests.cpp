@@ -189,7 +189,7 @@ protected:
 
     using InFlightCounter =
         fetch::network::AtomicInFlightCounter<fetch::network::AtomicCounterName::TCP_PORT_STARTUP>;
-    fetch::network::FutureTimepoint deadline(std::chrono::seconds(30));
+    fetch::core::FutureTimepoint deadline(std::chrono::seconds(30));
     if (!InFlightCounter::Wait(deadline))
     {
       throw std::runtime_error("Not all socket servers connected correctly. Aborting test");
@@ -216,7 +216,7 @@ protected:
     using LocalServiceConnectionsCounter = fetch::network::AtomicInFlightCounter<
         fetch::network::AtomicCounterName::LOCAL_SERVICE_CONNECTIONS>;
     if (!LocalServiceConnectionsCounter::Wait(
-            fetch::network::FutureTimepoint(std::chrono::seconds(30))))
+            fetch::core::FutureTimepoint(std::chrono::seconds(30))))
     {
       throw std::runtime_error("Not all local services connected correctly. Aborting test");
     }
