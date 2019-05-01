@@ -47,10 +47,8 @@ fetch::math::meta::IfIsMath<T, T> Cos(fetch::vm::VM *, T const &a)
 
 static void CreateTrigonometry(std::shared_ptr<fetch::vm::Module> module)
 {
-  module->CreateFreeFunction<int32_t>("sin", &Sin<int32_t>);
   module->CreateFreeFunction<float_t>("sin", &Sin<float_t>);
   module->CreateFreeFunction<double_t>("sin", &Sin<double_t>);
-  module->CreateFreeFunction<int32_t>("cos", &Cos<int32_t>);
   module->CreateFreeFunction<float_t>("cos", &Cos<float_t>);
   module->CreateFreeFunction<double_t>("cos", &Cos<double_t>);
 }
