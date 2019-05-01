@@ -96,7 +96,7 @@ public:
     }
     return {ArrayType(errorSignal.shape())};
   }
-  
+
   virtual void Step(typename T::Type learningRate)
   {
     if (updated_rows_.size() > 0)
