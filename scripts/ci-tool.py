@@ -260,8 +260,8 @@ def main():
         test_project(build_root, 'Normal')
 
     if args.integration_tests:
-        test_project(build_root, 'Slow')
-        test_project(build_root, 'Integration')
+        # test_project(build_root, 'Slow')
+        # test_project(build_root, 'Integration')
         test_integration(project_root, build_root)
 
 if __name__ == '__main__':
