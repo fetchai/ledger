@@ -54,7 +54,7 @@ public:
                    std::string token = std::string{}, std::string host_name = std::string{});
   BootstrapMonitor(BootstrapMonitor const &) = delete;
   BootstrapMonitor(BootstrapMonitor &&)      = delete;
-  ~BootstrapMonitor() = default;
+  ~BootstrapMonitor()                        = default;
 
   bool DiscoverPeers(UriList &peers, std::string const &external_address);
 
