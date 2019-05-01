@@ -445,11 +445,11 @@ TEST_F(SmartContractTests, CheckPersistentMapSetAndQuery)
 
   // from the action & query
   EXPECT_CALL(*storage_, Get(expected_resource1))
-      .Times(2)
-      .WillRepeatedly(Return(fetch::storage::Document{expected_value1}));
+      .WillOnce(Return(fetch::storage::Document{}))
+      .WillOnce(Return(fetch::storage::Document{expected_value1}));
   EXPECT_CALL(*storage_, Get(expected_resource2))
-      .Times(2)
-      .WillRepeatedly(Return(fetch::storage::Document{expected_value2}));
+      .WillOnce(Return(fetch::storage::Document{}))
+      .WillOnce(Return(fetch::storage::Document{expected_value2}));
 
   // send the smart contract an "increment" action
   EXPECT_EQ(SmartContract::Status::OK,
@@ -510,8 +510,8 @@ TEST_F(SmartContractTests, CheckPersistentMapSetWithAddressAsName)
 
   // from the action & query
   EXPECT_CALL(*storage_, Get(expected_resource1))
-      .Times(2)
-      .WillRepeatedly(Return(fetch::storage::Document{expected_value1}));
+      .WillOnce(Return(fetch::storage::Document{}))
+      .WillOnce(Return(fetch::storage::Document{expected_value1}));
 
   // send the smart contract an "increment" action
   EXPECT_EQ(SmartContract::Status::OK,
