@@ -73,9 +73,15 @@ public:
 
   static constexpr char const *LOGGING_NAME = "MainChainRpc";
 
+  enum class Mode
+  {
+    STANDALONE,         ///< Single instance network
+    PRIVATE_NETWORK,    ///< Network between a series of private peers
+    PUBLIC_NETWORK,     ///< Network restricted to public miners
+  };
+
   // Construction / Destruction
-  MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust,
-                      bool standalone);
+  MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust, Mode mode);
   MainChainRpcService(MainChainRpcService const &) = delete;
   MainChainRpcService(MainChainRpcService &&)      = delete;
   ~MainChainRpcService() override;
@@ -123,6 +129,7 @@ private:
   static char const *ToString(State state);
   Address            GetRandomTrustedPeer() const;
   void               HandleChainResponse(Address const &peer, BlockList block_list);
+  bool               IsBlockValid(Block &block) const;
   /// @}
 
   /// @name State Machine Handlers
@@ -136,6 +143,7 @@ private:
 
   /// @name System Components
   /// @{
+  Mode const      mode_;
   MuddleEndpoint &endpoint_;
   MainChain &     chain_;
   TrustSystem &   trust_;

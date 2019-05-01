@@ -173,7 +173,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
                        cfg_.num_slices,
                        cfg_.block_difficulty}
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
-                                                              cfg_.standalone)}
+                                                              cfg_.network_mode)}
   , tx_processor_{*storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
   , http_{http_network_manager_}
   , http_modules_{
