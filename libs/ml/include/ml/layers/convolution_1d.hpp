@@ -43,7 +43,7 @@ public:
                 SizeType                stride_size,
                 details::ActivationType activation_type = details::ActivationType::NOTHING,
                 std::string const &     name            = "Conv1D",
-                WeightsInit             init_mode       = WeightsInit::XAVIER_GLOROT)
+                WeightsInit init_mode = WeightsInit::XAVIER_GLOROT, SizeType seed = 123456789)
 
     : kernel_size_(kernel_size)
     , input_channels_(input_channels)
@@ -56,6 +56,11 @@ public:
     std::string weights =
         this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
 
+    ArrayType weights_data(
+        std::vector<SizeType>({output_channels_, input_channels_, kernel_size_}));
+    fetch::ml::ops::Weights<ArrayType>::Initialise(weights_data, 1, 1, init_mode, seed);
+    this->SetInput(weights, weights_data);
+
     std::string output = this->template AddNode<fetch::ml::ops::Convolution1D<ArrayType>>(
         name + "_Conv1D", {input, weights}, stride_size_);
 
@@ -64,11 +69,6 @@ public:
 
     this->AddInputNode(input);
     this->SetOutputNode(output);
-
-    ArrayType weights_data(
-        std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_}});
-    this->Initialise(weights_data, init_mode);
-    this->SetInput(weights, weights_data, false);
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(
@@ -82,13 +82,6 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "Convolution1D";
-
-private:
-  void Initialise(ArrayType &weights, WeightsInit init_mode)
-  {
-    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, input_channels_, output_channels_,
-                                                   init_mode);
-  }
 
   SizeType kernel_size_;
   SizeType input_channels_;

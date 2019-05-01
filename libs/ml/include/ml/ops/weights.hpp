@@ -126,7 +126,8 @@ public:
    * @param mode  An enum indicating which type of initialisation to perform
    */
   static void Initialise(ArrayType &array, std::uint64_t in_size, std::uint64_t out_size,
-                         WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT)
+                         WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT,
+                         SizeType              seed = 123456789)
   {
     switch (mode)
     {
@@ -140,17 +141,17 @@ public:
     }
     case WeightsInitialisation::XAVIER_GLOROT:
     {
-      XavierInitialisation(array, std::sqrt(2.0 / double(in_size + out_size)));
+      XavierInitialisation(array, std::sqrt(2.0 / double(in_size + out_size)), seed);
       break;
     }
     case WeightsInitialisation::XAVIER_FAN_IN:
     {
-      XavierInitialisation(array, std::sqrt(1.0 / double(in_size)));
+      XavierInitialisation(array, std::sqrt(1.0 / double(in_size)), seed);
       break;
     }
     case WeightsInitialisation::XAVIER_FAN_OUT:
     {
-      XavierInitialisation(array, std::sqrt(1.0 / double(out_size)));
+      XavierInitialisation(array, std::sqrt(1.0 / double(out_size)), seed);
       break;
     }
     default:
@@ -184,14 +185,16 @@ private:
     fetch::random::LaggedFibonacciGenerator<> lfg_(seed);
 
     // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
-    for (auto &e : array)
+    auto it = array.begin();
+    while (it.is_valid())
     {
       auto ran_val = lfg_.AsDouble();  // random value in range 0 <-> 1
       ran_val -= 0.5;
       ran_val *= 2.0;                 // random value in range -1 <-> +1
       ran_val *= normalising_factor;  // random value in range -sigma <-> +sigma
 
-      e = typename ArrayType::Type(ran_val);
+      *it = typename ArrayType::Type(ran_val);
+      ++it;
     }
   }
 };
