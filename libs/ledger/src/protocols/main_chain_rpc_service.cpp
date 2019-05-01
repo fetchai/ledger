@@ -89,12 +89,6 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   });
 }
 
-MainChainRpcService::~MainChainRpcService()
-{
-  state_machine_->Reset();
-  state_machine_.reset();
-}
-
 void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block)
 {
   // determine the serialised size of the block

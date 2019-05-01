@@ -78,7 +78,7 @@ public:
                       bool standalone);
   MainChainRpcService(MainChainRpcService const &) = delete;
   MainChainRpcService(MainChainRpcService &&)      = delete;
-  ~MainChainRpcService() override;
+  ~MainChainRpcService() override = default;
 
   core::WeakRunnable GetWeakRunnable()
   {
