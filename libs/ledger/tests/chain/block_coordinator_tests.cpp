@@ -1103,7 +1103,7 @@ TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
 
   Advance();
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(350u));
+  std::this_thread::sleep_for(std::chrono::seconds(61u));
 
   Advance();
 
