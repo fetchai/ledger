@@ -312,7 +312,9 @@ struct CommandLineArguments
     // configure the network mode
     if (standalone_flag && private_flag)
     {
-      std::cout << "Invalid configuration, unable to be in both the standalone and private network mode" << std::endl;
+      std::cout
+          << "Invalid configuration, unable to be in both the standalone and private network mode"
+          << std::endl;
       std::exit(1);
     }
     else if (standalone_flag)
@@ -330,7 +332,8 @@ struct CommandLineArguments
       // bootstrapping is not allowed in a non-public network
       if (NetworkMode::PUBLIC_NETWORK != args.cfg.network_mode)
       {
-        std::cout << "Unable to use bootstrapping servers with a private or standalone network" << std::endl;
+        std::cout << "Unable to use bootstrapping servers with a private or standalone network"
+                  << std::endl;
         std::exit(1);
       }
 

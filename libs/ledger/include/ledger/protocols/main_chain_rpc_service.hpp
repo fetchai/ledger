@@ -75,9 +75,9 @@ public:
 
   enum class Mode
   {
-    STANDALONE,         ///< Single instance network
-    PRIVATE_NETWORK,    ///< Network between a series of private peers
-    PUBLIC_NETWORK,     ///< Network restricted to public miners
+    STANDALONE,       ///< Single instance network
+    PRIVATE_NETWORK,  ///< Network between a series of private peers
+    PUBLIC_NETWORK,   ///< Network restricted to public miners
   };
 
   // Construction / Destruction

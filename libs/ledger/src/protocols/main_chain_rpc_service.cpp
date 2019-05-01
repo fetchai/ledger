@@ -27,7 +27,6 @@
 #include "metrics/metrics.hpp"
 #include "network/muddle/packet.hpp"
 
-
 static const uint32_t MAX_CHAIN_REQUEST_SIZE = 10000;
 static const uint64_t MAX_SUB_CHAIN_SIZE     = 1000;
 
@@ -67,7 +66,7 @@ State GetInitialState(Mode mode)
   return initial_state;
 }
 
-}
+}  // namespace
 
 MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain,
                                          TrustSystem &trust, Mode mode)
@@ -459,7 +458,8 @@ bool MainChainRpcService::IsBlockValid(Block &block) const
   bool block_valid{false};
 
   // evaluate if this mining node is correct
-  bool const is_valid_miner = (Mode::PUBLIC_NETWORK == mode_) ? crypto::IsFetchIdentity(block.body.miner) : true;
+  bool const is_valid_miner =
+      (Mode::PUBLIC_NETWORK == mode_) ? crypto::IsFetchIdentity(block.body.miner) : true;
   if (is_valid_miner && block.proof())
   {
     block_valid = true;
