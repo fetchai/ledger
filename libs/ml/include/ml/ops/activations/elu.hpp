@@ -50,37 +50,37 @@ public:
 
   virtual std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-      ArrayType const &                                           errorSignal)
+      ArrayType const &                                           error_signal)
   {
     ASSERT(inputs.size() == 1);
-    ASSERT(inputs.front().get().shape() == errorSignal.shape());
-    ArrayType ret{errorSignal.shape()};
-    ArrayType t{inputs.front().get().shape()};
+    ASSERT(inputs.front().get().shape() == error_signal.shape());
+    ArrayType ret{error_signal.shape()};
 
-    // gradient of elu function is for x<0 = a*e^x, x>=0 = 1.0
-    t = this->Forward(inputs, t);
+    DataType zero{0};
+    DataType one{1};
 
-    auto it  = t.cbegin();
+    // gradient of elu function is a*e^x where x<0; and 1.0 where x>=0
+    auto it  = inputs.front().get().cbegin();
     auto rit = ret.begin();
     while (it.is_valid())
     {
-      *rit = fetch::math::Max(*it, typename ArrayType::Type(0));
-      if (*it >= DataType(0))
+      if (*it >= zero)
       {
         // f(x)=x for x>=0
-        *rit = DataType(1);
+        *rit = one;
       }
       else
       {
         // f(x)=a*e^x
-        fetch::math::Multiply(a_, fetch::math::Exp(*it), *rit);
+        fetch::math::Exp(*it, *rit);
+        fetch::math::Multiply(a_, *rit, *rit);
       }
       ++it;
       ++rit;
     }
 
-    // multiply by errorSignal (chain rule)
-    fetch::math::Multiply(errorSignal, ret, ret);
+    // multiply by error_signal (chain rule)
+    fetch::math::Multiply(error_signal, ret, ret);
 
     return {ret};
   }

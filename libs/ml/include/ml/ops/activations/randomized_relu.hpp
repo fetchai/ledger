@@ -60,22 +60,24 @@ public:
       UpdateRandomValue();
     }
 
-    DataType tmp_alpha = this->is_training_ ? random_value_ : bounds_mean_;
-    fetch::math::LeakyRelu(inputs.front().get(), tmp_alpha, output);
+    DataType alpha = this->is_training_ ? random_value_ : bounds_mean_;
+    fetch::math::LeakyRelu(inputs.front().get(), alpha, output);
 
     return output;
   }
 
   virtual std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-      ArrayType const &                                           errorSignal)
+      ArrayType const &                                           error_signal)
   {
     assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == errorSignal.shape());
-    ArrayType ret{errorSignal.shape()};
+    assert(inputs.front().get().shape() == error_signal.shape());
+    DataType  zero{0};
+    DataType  one{1};
+    ArrayType ret{error_signal.shape()};
     ArrayType t{inputs.front().get().shape()};
 
-    DataType tmp_alpha = this->is_training_ ? random_value_ : bounds_mean_;
+    DataType alpha = this->is_training_ ? random_value_ : bounds_mean_;
 
     // gradient of randomized-relu function is for x<0 = alpha, x>=0 = 1.0
     t = this->Forward(inputs, t);
@@ -84,23 +86,22 @@ public:
     auto rit = ret.begin();
     while (it.is_valid())
     {
-      *rit = fetch::math::Max(*it, typename ArrayType::Type(0));
-      if (*it >= DataType(0))
+      if (*it >= zero)
       {
         // f'(x)=1 for x>=0
-        *rit = DataType(1);
+        *rit = one;
       }
       else
       {
         // f'(x)=a for x<0
-        *rit = tmp_alpha;
+        *rit = alpha;
       }
       ++it;
       ++rit;
     }
 
-    // multiply by errorSignal (chain rule)
-    fetch::math::Multiply(errorSignal, ret, ret);
+    // multiply by error_signal (chain rule)
+    fetch::math::Multiply(error_signal, ret, ret);
 
     return {ret};
   }

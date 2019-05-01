@@ -37,23 +37,21 @@ void Elu(ArrayType const &t, typename ArrayType::Type &a, ArrayType &ret)
   ASSERT(t.size() == ret.size());
   using DataType = typename ArrayType::Type;
 
+  DataType zero{0};
+  DataType one{1};
+
   auto it  = t.cbegin();
   auto rit = ret.begin();
   while (it.is_valid())
   {
-    *rit = fetch::math::Max(*it, typename ArrayType::Type(0));
-
-    if (*it >= DataType(0))
+    // f(x)=x for x>=0
+    // f(x)=a*(e^x-1) for x<0
+    *rit = *it;
+    if (*it < zero)
     {
-      // f(x)=x for x>=0
-      *rit = *it;
-    }
-    else
-    {
-      // f(x)=a*(e^x-1) for x<0
-      DataType tmp_val = *it;
-      Subtract(fetch::math::Exp(*it), DataType(1.0), tmp_val);
-      Multiply(a, tmp_val, *rit);
+      Exp(*rit, *rit);
+      Subtract(*rit, one, *rit);
+      Multiply(a, *rit, *rit);
     }
     ++it;
     ++rit;

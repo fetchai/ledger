@@ -21,6 +21,7 @@
 #include "math/fundamental_operators.hpp"
 #include "math/ml/activation_functions/softmax.hpp"
 #include "math/standard_functions/log.hpp"
+#include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -55,15 +56,39 @@ public:
       std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           error_signal)
   {
-    FETCH_UNUSED(inputs);
     ASSERT(inputs.size() == 1);
     ASSERT(inputs.front().get().shape() == error_signal.shape());
 
-    ArrayType ret = fetch::math::Exp(error_signal);
-    fetch::math::Add(DataType(1), ret, ret);
-    fetch::math::Divide(DataType(1), ret, ret);
+    ArrayType returnSignal = error_signal.Copy();
+    ArrayType t(this->ComputeOutputShape(inputs));
+    fetch::math::Softmax(inputs.front().get(), t, axis_);
 
-    return {ret};
+    // returnSignal.InlineMultiply(t);
+
+    // 1D softmax
+    if (inputs.front().get().shape().size() == 1)
+    {
+      typename ArrayType::Type sum = returnSignal.Sum();
+      t.InlineMultiply(sum);
+    }
+
+    // 2D softmax
+    if (inputs.front().get().shape().size() == 2)
+    {
+      ArrayType sum;
+      if (axis_ == 0)
+      {
+        sum = ReduceSum(returnSignal, 1);
+      }
+      else
+      {
+        sum = ReduceSum(returnSignal, 0);
+      }
+      t.InlineMultiply(sum);
+    }
+
+    returnSignal.InlineSubtract(t);
+    return {returnSignal};
   }
 
   std::vector<SizeType> ComputeOutputShape(

@@ -59,8 +59,29 @@ public:
     ArrayType t(this->ComputeOutputShape(inputs));
     t = this->Forward(inputs, t);
     returnSignal.InlineMultiply(t);
-    typename ArrayType::Type sum = returnSignal.Sum();
-    t.InlineMultiply(sum);
+
+    // 1D softmax
+    if (inputs.front().get().shape().size() == 1)
+    {
+      typename ArrayType::Type sum = returnSignal.Sum();
+      t.InlineMultiply(sum);
+    }
+
+    // 2D softmax
+    if (inputs.front().get().shape().size() == 2)
+    {
+      ArrayType sum;
+      if (axis_ == 0)
+      {
+        sum = ReduceSum(returnSignal, 1);
+      }
+      else
+      {
+        sum = ReduceSum(returnSignal, 0);
+      }
+      t.InlineMultiply(sum);
+    }
+
     returnSignal.InlineSubtract(t);
     return {returnSignal};
   }

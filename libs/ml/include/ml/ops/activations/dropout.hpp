@@ -42,7 +42,7 @@ public:
   {
     ASSERT(probability >= 0.0 && probability <= 1.0);
     rng_.Seed(random_seed);
-    drop_values_ = ArrayType(0);
+    drop_values_ = ArrayType{0};
   }
 
   virtual ~Dropout() = default;
@@ -99,16 +99,19 @@ public:
 private:
   void UpdateRandomValues()
   {
+    DataType zero{0};
+    DataType one{1};
+
     auto it = drop_values_.begin();
     while (it.is_valid())
     {
       if (DataType(rng_.AsDouble()) <= probability_)
       {
-        *it = DataType(1.0);
+        *it = one;
       }
       else
       {
-        *it = DataType(0.0);
+        *it = zero;
       }
       ++it;
     }
