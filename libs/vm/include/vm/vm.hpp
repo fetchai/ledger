@@ -271,9 +271,6 @@ public:
       error = "unable to find function '" + name + "'";
     }
 
-    // transfer the console output buffer
-    /* console_output = output_buffer_.str(); */
-
     return success;
   }
 
