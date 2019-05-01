@@ -106,15 +106,16 @@ TYPED_TEST(EmbeddingsTest, backward)
   TypeParam output = e.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({input}));
 
-  TypeParam errorSignal(std::vector<uint64_t>({2, 6}));
+  TypeParam error_signal(std::vector<uint64_t>({2, 6}));
   for (unsigned int j(0); j < 2; ++j)
   {
     for (unsigned int k{0}; k < 6; ++k)
     {
-      errorSignal.Set(j, k, typename TypeParam::Type((j * 6) + k));
+      error_signal.Set(j, k, typename TypeParam::Type((j * 6) + k));
     }
   }
-  e.Backward({input}, errorSignal);
+
+  e.Backward({input}, error_signal);
   e.Step(typename TypeParam::Type(1));
 
   output = e.fetch::ml::template Ops<TypeParam>::Forward(
