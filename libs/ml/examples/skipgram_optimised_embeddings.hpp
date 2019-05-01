@@ -102,24 +102,21 @@ public:
 
   virtual void Step(typename T::Type learningRate)
   {
-    std::cout << "updated_rows_.size(): " << updated_rows_.size() << std::endl;
     if (updated_rows_.size() > 0)
     {
-      ArrayType gradient_accumulation_slice{this->gradient_accumulation_.Slice(0).Copy()};
+      ArrayType gradient_accumulation_slice{this->gradient_accumulation_->Slice(0).Copy()};
       ArrayType output_slice{this->output_->Slice(0).Copy()};
 
       for (auto const &r : updated_rows_)
       {
-        // TODO: implement Tensor constructor that takes TensorSlice, allocates memory of slice size/shape, and assigns only that portion
         gradient_accumulation_slice = this->gradient_accumulation_->Slice(r).Copy();
         output_slice = this->output_->Slice(r).Copy();
 
         gradient_accumulation_slice.InlineMultiply(-learningRate);
         output_slice.InlineAdd(gradient_accumulation_slice);
       }
+      updated_rows_.clear();
     }
-
-    updated_rows_.clear();
   }
 
 private:
