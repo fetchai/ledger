@@ -5,7 +5,6 @@
 #
 # This is achieved by using available fetch APIs to spin up a network locally
 # and test it can handle certain conditions (such as single or multiple node failure)
-#
 
 import sys
 import os
