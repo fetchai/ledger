@@ -20,6 +20,8 @@
 #include "math/standard_functions/abs.hpp"
 #include "ml/dataloaders/word2vec_loaders/basic_textloader.hpp"
 
+#include <chrono>
+
 namespace fetch {
 namespace ml {
 namespace dataloaders {
@@ -76,12 +78,12 @@ public:
 private:
   virtual void     GetData(SizeType idx, ArrayType &ret) override;
   virtual SizeType GetLabel(SizeType idx) override;
+  std::vector<typename SkipGramLoader<T>::SizeType> lookup_idxs_{{0, 0, 0}};
+
 
   void                  BuildUnigramTable();
   bool                  SelectValence();
-  std::vector<SizeType> GeneratePositive(SizeType idx);
-  std::vector<SizeType> GenerateNegative(SizeType idx);
-  SizeType              SelectNegativeContextWord(SizeType idx);
+  void                  SelectNegativeContextWord(SizeType idx, SizeType &ret);
   SizeType              SelectContextPosition(SizeType idx);
   bool WindowPositionCheck(SizeType target_pos, SizeType context_pos, SizeType sentence_len) const;
 };
@@ -114,20 +116,32 @@ SkipGramLoader<T>::SkipGramLoader(SkipGramTextParams<T> p, SizeType seed)
 template <typename T>
 void SkipGramLoader<T>::GetData(SizeType idx, T &data_buffer)
 {
-  std::vector<typename SkipGramLoader<T>::SizeType> lookup_idxs;
 
-  lookup_idxs = SelectValence() ? GeneratePositive(idx) : GenerateNegative(idx);
+  lookup_idxs_[0] = idx;
+
+  if (SelectValence())
+  {
+    // positive example
+    lookup_idxs_[1] = SelectContextPosition(idx);
+    lookup_idxs_[2] = 1;
+  }
+  else
+  {
+    // negative example
+    SelectNegativeContextWord(idx, lookup_idxs_[1]);
+    lookup_idxs_[2] = 0;
+  }
 
   SizeType buffer_count = 0;
   for (SizeType j = 0; j < p_.n_data_buffers; ++j)
   {
-    SizeType sentence_idx = this->word_idx_sentence_idx.at(lookup_idxs.at(buffer_count));
-    SizeType word_idx     = this->GetWordOffsetFromWordIdx(lookup_idxs.at(buffer_count));
+    SizeType sentence_idx = this->word_idx_sentence_idx.at(lookup_idxs_.at(buffer_count));
+    SizeType word_idx     = this->GetWordOffsetFromWordIdx(lookup_idxs_.at(buffer_count));
     data_buffer.At(j)     = DataType(this->data_.at(sentence_idx).at(word_idx));
     ++buffer_count;
   }
 
-  cur_label_ = lookup_idxs.at(p_.n_data_buffers);
+  cur_label_ = lookup_idxs_.at(p_.n_data_buffers);
 }
 
 /**
@@ -147,53 +161,11 @@ typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::GetLabel(SizeType /*idx*
 template <typename T>
 bool SkipGramLoader<T>::SelectValence()
 {
+
   double cur_val = this->lfg_.AsDouble();
   return (cur_val <= positive_threshold_);
 }
 
-/**
- * given the index of the input word, return the positive training pair
- * @param idx
- * @return
- */
-template <typename T>
-std::vector<typename SkipGramLoader<T>::SizeType> SkipGramLoader<T>::GeneratePositive(SizeType idx)
-{
-  std::vector<SizeType> ret{};
-
-  // first index is the input word
-  ret.emplace_back(idx);
-
-  // second index is a context word
-  ret.emplace_back(SelectContextPosition(idx));
-
-  // finally the label
-  ret.emplace_back(SizeType(1));
-
-  return ret;
-}
-
-/**
- * given the index of the input word, return a negative training pair
- * @param idx
- * @return
- */
-template <typename T>
-std::vector<typename SkipGramLoader<T>::SizeType> SkipGramLoader<T>::GenerateNegative(SizeType idx)
-{
-  std::vector<SizeType> ret{};
-
-  // first index is the input word
-  ret.emplace_back(idx);
-
-  // second index is a non-context word
-  ret.emplace_back(SelectNegativeContextWord(idx));
-
-  // finally the label
-  ret.emplace_back(SizeType(0));
-
-  return ret;
-}
 
 /**
  * given a word idx randomly select a negative non-context word
@@ -201,23 +173,21 @@ std::vector<typename SkipGramLoader<T>::SizeType> SkipGramLoader<T>::GenerateNeg
  * @return
  */
 template <typename T>
-typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::SelectNegativeContextWord(SizeType idx)
+void SkipGramLoader<T>::SelectNegativeContextWord(SizeType idx, SizeType &ret)
 {
-  std::vector<SizeType> sentence     = this->data_.at(this->word_idx_sentence_idx.at(idx));
-  SizeType              sentence_len = sentence.size();
+  SizeType              sentence_len = this->data_.at(this->word_idx_sentence_idx.at(idx)).size();
   SizeType              word_offset  = this->GetWordOffsetFromWordIdx(idx);
 
   // randomly select a negative context word
   bool     ongoing = true;
-  SizeType negative_context_idx;
   while (ongoing)
   {
     // randomly select a word from the unigram_table
     SizeType ran_val     = SizeType(this->lcg_());
     SizeType max_val     = this->unigram_table_.size();
     SizeType idx         = ran_val % max_val;
-    negative_context_idx = this->unigram_table_.at(idx);
-    assert(negative_context_idx < this->vocab_.size());
+    ret = this->unigram_table_.at(idx);
+    assert(ret < this->vocab_.size());
     ongoing = false;
 
     // check if selected negative word actually within context window
@@ -225,15 +195,13 @@ typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::SelectNegativeContextWor
     {
       if (WindowPositionCheck(word_offset, j, sentence_len))
       {
-        if (this->data_[this->word_idx_sentence_idx[idx]][j] == negative_context_idx)
+        if (this->data_[this->word_idx_sentence_idx[idx]][j] == ret)
         {
           ongoing = true;
         }
       }
     }
   }
-
-  return negative_context_idx;
 }
 
 /**
@@ -244,6 +212,7 @@ typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::SelectNegativeContextWor
 template <typename T>
 typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::SelectContextPosition(SizeType idx)
 {
+
   std::vector<SizeType> sentence     = this->data_.at(this->word_idx_sentence_idx.at(idx));
   SizeType              sentence_len = sentence.size();
   SizeType              word_offset  = this->GetWordOffsetFromWordIdx(idx);

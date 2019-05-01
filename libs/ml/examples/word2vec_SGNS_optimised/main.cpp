@@ -27,6 +27,10 @@
 #include "ml/layers/skip_gram.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
 
+#include "skipgram_optimised_embeddings.hpp"
+#include "skipgram_optimised_Transpose.hpp"
+#include "skipgram_optimised_matrix_multiply.hpp"
+
 #include <iostream>
 #include <math/tensor.hpp>
 #include <numeric>
@@ -53,7 +57,7 @@ struct TrainingParams
   SizeType    training_epochs = 100000;         // total number of training epochs
   double      learning_rate   = 0.1;            // alpha - the learning rate
   SizeType    k               = 10;             // how many nearest neighbours to compare against
-  SizeType    print_freq      = 100;            // how often to print status
+  SizeType    print_freq      = 1000;           // how often to print status
   std::string test_word       = "action";       // test word to consider
   std::string save_loc        = "./model.fba";  // save file location for exporting graph
 };
@@ -107,12 +111,16 @@ std::string Model(fetch::ml::Graph<ArrayType> &g, SizeType embeddings_size, Size
   fetch::ml::ops::Weights<ArrayType>::Initialise(weights, vocab_size, embeddings_size);
 
   // embed both inputs
-  std::string embed_in_ = g.AddNode<fetch::ml::ops::Embeddings<ArrayType>>("_Embed_Inputs", {"Input"}, weights);
-  std::string embed_ctx = g.AddNode<fetch::ml::ops::Embeddings<ArrayType>>("_Embed_Context", {"Context"}, weights);
+  std::string embed_in_ = g.AddNode<fetch::ml::ops::SkipGramOptimisedEmbeddings<ArrayType>>("_Embed_Inputs", {"Input"}, weights);
+  std::string embed_ctx = g.AddNode<fetch::ml::ops::SkipGramOptimisedEmbeddings<ArrayType>>("_Embed_Context", {"Context"}, weights);
+//  std::string embed_in_ = g.AddNode<fetch::ml::ops::Embeddings<ArrayType>>("_Embed_Inputs", {"Input"}, weights);
+//  std::string embed_ctx = g.AddNode<fetch::ml::ops::Embeddings<ArrayType>>("_Embed_Context", {"Context"}, weights);
 
   // dot product input and context embeddings
-  std::string transpose_ctx = g.AddNode<fetch::ml::ops::Transpose<ArrayType>>("_TransposeCtx", {embed_ctx});
-  std::string in_ctx_matmul = g.AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>("_In_Ctx_MatMul", {embed_in_, transpose_ctx});
+//  std::string transpose_ctx = g.AddNode<fetch::ml::ops::Transpose<ArrayType>>("_TransposeCtx", {embed_ctx});
+  std::string transpose_ctx = g.AddNode<fetch::ml::ops::SkipGramOptimisedTranspose<ArrayType>>("_TransposeCtx", {embed_ctx});
+//  std::string in_ctx_matmul = g.AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>("_In_Ctx_MatMul", {embed_in_, transpose_ctx});
+  std::string in_ctx_matmul = g.AddNode<fetch::ml::ops::SkipGramOptimisedMatrixMultiply<ArrayType>>("_In_Ctx_MatMul", {embed_in_, transpose_ctx});
 
   // dense layer
   std::string fc_out = g.AddNode<fetch::ml::layers::FullyConnected<ArrayType>>("_Dense", {in_ctx_matmul}, SizeType{1}, SizeType{1});

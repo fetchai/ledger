@@ -88,7 +88,7 @@ protected:
   fetch::random::LinearCongruentialGenerator lcg_;
 
   // containers for the data and labels
-  std::vector<std::vector<SizeType>> data_buffers_;
+  ArrayType data_buffers_;
 
   // discard related containers and counts
   std::vector<std::vector<SizeType>> discards_;  // record of discarded words
@@ -142,7 +142,7 @@ BasicTextLoader<T>::BasicTextLoader(TextParams<T> const &p, SizeType seed)
   this->min_sent_len_ = p_.min_sentence_length;
   this->max_sent_     = p_.max_sentences;
 
-  data_buffers_.resize(p_.n_data_buffers);
+  data_buffers_ = T(p_.n_data_buffers);
 }
 
 /////////////////////////////////////
@@ -174,10 +174,12 @@ template <typename T>
 std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetRandom()
 {
   GetNextValidIndices();
+
   if (ran_cursor_set_)
   {
     return GetAtIndex(ran_cursor_);
   }
+
   throw std::runtime_error("no valid cursor position set");
 }
 
@@ -262,8 +264,7 @@ template <typename T>
 std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetAtIndex(SizeType idx)
 {
   // pull data from multiple data buffers into single output buffer
-  T data_buffer(std::vector<SizeType>({p_.n_data_buffers}));
-  GetData(idx, data_buffer);
+  GetData(idx, data_buffers_);
 
   SizeType label = GetLabel(idx);
 
@@ -274,7 +275,10 @@ std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetAtInd
     ran_cursor_ = ran_idx_.at(cursor_);
   }
 
-  return std::make_pair(data_buffer, label);
+  auto tmp = std::make_pair(data_buffers_, label);
+
+  return tmp;
+
 }
 
 /**
