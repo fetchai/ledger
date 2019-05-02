@@ -88,8 +88,8 @@ TYPED_TEST(FundamentalOperatorsUIntTypeTest, AdditionUIntTest)
   for (std::size_t i{0}; i < 100; ++i)
   {
     // values range from 0 - std::numeric_limits<Type>::max()
-    a = TypeParam(gen.AsDouble() * max_val);
-    b = TypeParam(gen.AsDouble() * max_val);
+    a = TypeParam(gen.AsDouble() * double(max_val));
+    b = TypeParam(gen.AsDouble() * double(max_val));
 
     fetch::math::Add(a, b, ret);
     EXPECT_EQ(ret, a + b);
@@ -131,8 +131,8 @@ TYPED_TEST(FundamentalOperatorsIntTypeTest, AdditionIntTest)
   for (int i{0}; i < 100; ++i)
   {
     // values range from - half max to max
-    a = TypeParam((gen.AsDouble() * max_val) - (max_val / 2));
-    b = TypeParam((gen.AsDouble() * max_val) - (max_val / 2));
+    a = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
+    b = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
 
     fetch::math::Add(a, b, ret);
     EXPECT_EQ(ret, a + b);
@@ -146,7 +146,6 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, AdditionNonIntTest)
   TypeParam a;
   TypeParam b;
   TypeParam ret;
-  TypeParam two     = TypeParam(2.0);
   TypeParam max_val = fetch::math::NumericMax<TypeParam>();
 
   // test a few small fixed values
@@ -176,8 +175,8 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, AdditionNonIntTest)
   for (int i{0}; i < 100; ++i)
   {
     // values range from - half max to max
-    a = (TypeParam(gen.AsDouble()) * max_val) - (max_val / two);
-    b = (TypeParam(gen.AsDouble()) * max_val) - (max_val / two);
+    a = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
+    b = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
 
     fetch::math::Add(a, b, ret);
     EXPECT_EQ(ret, a + b);
@@ -200,8 +199,8 @@ TYPED_TEST(FundamentalOperatorsUIntTypeTest, SubtractionUIntTest)
   EXPECT_EQ(ret, 5);
   EXPECT_EQ(fetch::math::Subtract(b, a), 5);
   fetch::math::Subtract(a, b, ret);
-  EXPECT_EQ(ret, max_val - 4);
-  EXPECT_EQ(fetch::math::Subtract(a, b), max_val - 4);
+  EXPECT_EQ(ret, max_val - TypeParam(4));
+  EXPECT_EQ(fetch::math::Subtract(a, b), max_val - TypeParam(4));
 
   a = TypeParam{123};
   b = TypeParam{321};
@@ -222,8 +221,8 @@ TYPED_TEST(FundamentalOperatorsUIntTypeTest, SubtractionUIntTest)
   for (std::size_t i{0}; i < 100; ++i)
   {
     // values range from 0 - std::numeric_limits<Type>::max()
-    a = TypeParam(gen.AsDouble() * max_val);
-    b = TypeParam(gen.AsDouble() * max_val);
+    a = TypeParam(gen.AsDouble() * double(max_val));
+    b = TypeParam(gen.AsDouble() * double(max_val));
 
     fetch::math::Subtract(a, b, ret);
     EXPECT_EQ(ret, a - b);
@@ -264,8 +263,8 @@ TYPED_TEST(FundamentalOperatorsIntTypeTest, SubtractionIntTest)
   for (int i{0}; i < 100; ++i)
   {
     // values range from - half max to max
-    a = TypeParam((gen.AsDouble() * max_val) - (max_val / 2));
-    b = TypeParam((gen.AsDouble() * max_val) - (max_val / 2));
+    a = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
+    b = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
 
     fetch::math::Subtract(a, b, ret);
     EXPECT_EQ(ret, a - b);
@@ -308,8 +307,8 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, SubtractionNonIntTest)
   for (int i{0}; i < 100; ++i)
   {
     // values range from - half max to max
-    a = (TypeParam(gen.AsDouble()) * max_val) - (max_val / two);
-    b = (TypeParam(gen.AsDouble()) * max_val) - (max_val / two);
+    a = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / two);
+    b = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / two);
 
     fetch::math::Subtract(a, b, ret);
     EXPECT_EQ(ret, a - b);
@@ -351,8 +350,8 @@ TYPED_TEST(FundamentalOperatorsUIntTypeTest, MultiplicationUIntTest)
   for (std::size_t i{0}; i < 100; ++i)
   {
     // values range from 0 - std::numeric_limits<Type>::max()
-    a = TypeParam(gen.AsDouble() * max_val);
-    b = TypeParam(gen.AsDouble() * max_val);
+    a = TypeParam(gen.AsDouble() * double(max_val));
+    b = TypeParam(gen.AsDouble() * double(max_val));
 
     fetch::math::Multiply(a, b, ret);
     EXPECT_EQ(ret, a * b);
@@ -393,8 +392,8 @@ TYPED_TEST(FundamentalOperatorsIntTypeTest, MultiplicationIntTest)
   for (int i{0}; i < 100; ++i)
   {
     // values range from - half max to max
-    a = TypeParam((gen.AsDouble() * max_val) - (max_val / 2));
-    b = TypeParam((gen.AsDouble() * max_val) - (max_val / 2));
+    a = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2));
+    b = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2));
 
     fetch::math::Multiply(a, b, ret);
     EXPECT_EQ(ret, a * b);
@@ -407,7 +406,6 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, MultiplicationNonIntTest)
   TypeParam a;
   TypeParam b;
   TypeParam ret;
-  TypeParam two     = TypeParam(2.0);
   TypeParam max_val = fetch::math::NumericMax<TypeParam>();
 
   // test a few small fixed values
@@ -437,8 +435,8 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, MultiplicationNonIntTest)
   for (int i{0}; i < 100; ++i)
   {
     // values range from - half max to max
-    a = (TypeParam(gen.AsDouble()) * max_val) - (max_val / two);
-    b = (TypeParam(gen.AsDouble()) * max_val) - (max_val / two);
+    a = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
+    b = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
 
     fetch::math::Multiply(a, b, ret);
     EXPECT_EQ(ret, a * b);
