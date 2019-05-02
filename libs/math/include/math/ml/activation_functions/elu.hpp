@@ -46,12 +46,15 @@ void Elu(ArrayType const &t, typename ArrayType::Type &a, ArrayType &ret)
   {
     // f(x)=x for x>=0
     // f(x)=a*(e^x-1) for x<0
-    *rit = *it;
     if (*it < zero)
     {
-      Exp(*rit, *rit);
+      Exp(*it, *rit);
       Subtract(*rit, one, *rit);
       Multiply(a, *rit, *rit);
+    }
+    else
+    {
+      *rit = *it;
     }
     ++it;
     ++rit;

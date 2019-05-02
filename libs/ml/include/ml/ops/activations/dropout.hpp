@@ -78,20 +78,20 @@ public:
     ASSERT(errorSignal.shape() == inputs.front().get().shape());
     ASSERT(drop_values_.shape() == inputs.front().get().shape());
 
-    ArrayType returnSignal{errorSignal.shape()};
+    ArrayType return_signal{errorSignal.shape()};
 
     // gradient of dropout is 1.0 for enabled neurons and 0.0 for disabled
     // multiply by errorSignal (chain rule)
     if (this->is_training_)
     {
-      fetch::math::Multiply(errorSignal, drop_values_, returnSignal);
+      fetch::math::Multiply(errorSignal, drop_values_, return_signal);
     }
     else
     {
-      returnSignal.Copy(errorSignal);
+      return_signal.Copy(errorSignal);
     }
 
-    return {returnSignal};
+    return {return_signal};
   }
 
   static constexpr char const *DESCRIPTOR = "Dropout";
@@ -102,10 +102,11 @@ private:
     DataType zero{0};
     DataType one{1};
 
-    auto it = drop_values_.begin();
+    double d_probability = static_cast<double>(probability_);
+    auto   it            = drop_values_.begin();
     while (it.is_valid())
     {
-      if (DataType(rng_.AsDouble()) <= probability_)
+      if (rng_.AsDouble() <= d_probability)
       {
         *it = one;
       }

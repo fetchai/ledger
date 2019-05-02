@@ -55,35 +55,32 @@ public:
     ASSERT(inputs.size() == 1);
     ASSERT(inputs.front().get().shape() == errorSignal.shape());
 
-    ArrayType returnSignal = errorSignal.Copy();
+    ArrayType return_signal = errorSignal.Copy();
     ArrayType t(this->ComputeOutputShape(inputs));
     t = this->Forward(inputs, t);
-    returnSignal.InlineMultiply(t);
+    return_signal.InlineMultiply(t);
 
     // 1D softmax
     if (inputs.front().get().shape().size() == 1)
     {
-      typename ArrayType::Type sum = returnSignal.Sum();
+      typename ArrayType::Type sum = return_signal.Sum();
       t.InlineMultiply(sum);
     }
-
     // 2D softmax
-    if (inputs.front().get().shape().size() == 2)
+    else if (inputs.front().get().shape().size() == 2)
     {
       ArrayType sum;
-      if (axis_ == 0)
-      {
-        sum = ReduceSum(returnSignal, 1);
-      }
-      else
-      {
-        sum = ReduceSum(returnSignal, 0);
-      }
+      sum = ReduceSum(return_signal, 1 - axis_);
+
       t.InlineMultiply(sum);
     }
+    else
+    {
+      throw std::runtime_error("Softmax over >= 3 dimensions not implemented");
+    }
 
-    returnSignal.InlineSubtract(t);
-    return {returnSignal};
+    return_signal.InlineSubtract(t);
+    return {return_signal};
   }
 
   std::vector<SizeType> ComputeOutputShape(
