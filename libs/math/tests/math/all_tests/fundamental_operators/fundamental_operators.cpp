@@ -534,8 +534,8 @@ TYPED_TEST(FundamentalOperatorsIntTypeTest, DivisionIntTest)
   for (int i{0}; i < 100; ++i)
   {
     // values range from - half max to max
-    a = TypeParam((gen.AsDouble() * max_val) - (max_val / 2));
-    b = TypeParam((gen.AsDouble() * max_val) - (max_val / 2));
+    a = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
+    b = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
 
     fetch::math::Divide(a, b, ret);
     EXPECT_EQ(ret, a / b);
