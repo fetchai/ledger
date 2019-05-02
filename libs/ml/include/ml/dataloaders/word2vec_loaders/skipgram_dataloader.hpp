@@ -76,16 +76,19 @@ public:
   virtual bool AddData(std::string const &training_data) override;
 
 private:
-  virtual void     GetData(SizeType idx, ArrayType &ret) override;
-  virtual SizeType GetLabel(SizeType idx) override;
+  std::vector<SizeType> unigram_selection_;
+  SizeType              max_window_size_;
+
+  virtual void                                      GetData(SizeType idx, ArrayType &ret) override;
+  virtual SizeType                                  GetLabel(SizeType idx) override;
   std::vector<typename SkipGramLoader<T>::SizeType> lookup_idxs_{{0, 0, 0}};
 
-
-  void                  BuildUnigramTable();
-  bool                  SelectValence();
-  void                  SelectNegativeContextWord(SizeType idx, SizeType &ret);
-  SizeType              SelectContextPosition(SizeType idx);
+  void     BuildUnigramTable();
+  bool     SelectValence();
+  void     SelectNegativeContextWord(SizeType idx, SizeType &ret);
+  SizeType SelectContextPosition(SizeType idx);
   bool WindowPositionCheck(SizeType target_pos, SizeType context_pos, SizeType sentence_len) const;
+  void PreCalcDynamicWindow();
 };
 template <typename T>
 SkipGramLoader<T>::SkipGramLoader(SkipGramTextParams<T> p, SizeType seed)
@@ -106,6 +109,11 @@ SkipGramLoader<T>::SkipGramLoader(SkipGramTextParams<T> p, SizeType seed)
   {
     positive_threshold_ = 1.0;
   }
+
+  max_window_size_ = (1 + (2 * p_.window_size));
+
+  // pre-calculate dynamic window position probabilities
+  PreCalcDynamicWindow();
 }
 
 /**
@@ -166,7 +174,6 @@ bool SkipGramLoader<T>::SelectValence()
   return (cur_val <= positive_threshold_);
 }
 
-
 /**
  * given a word idx randomly select a negative non-context word
  * @param idx
@@ -175,18 +182,18 @@ bool SkipGramLoader<T>::SelectValence()
 template <typename T>
 void SkipGramLoader<T>::SelectNegativeContextWord(SizeType idx, SizeType &ret)
 {
-  SizeType              sentence_len = this->data_.at(this->word_idx_sentence_idx.at(idx)).size();
-  SizeType              word_offset  = this->GetWordOffsetFromWordIdx(idx);
+  SizeType sentence_len = this->data_.at(this->word_idx_sentence_idx.at(idx)).size();
+  SizeType word_offset  = this->GetWordOffsetFromWordIdx(idx);
 
   // randomly select a negative context word
-  bool     ongoing = true;
+  bool ongoing = true;
   while (ongoing)
   {
     // randomly select a word from the unigram_table
-    SizeType ran_val     = SizeType(this->lcg_());
-    SizeType max_val     = this->unigram_table_.size();
-    SizeType idx         = ran_val % max_val;
-    ret = this->unigram_table_.at(idx);
+    SizeType ran_val = SizeType(this->lcg_());
+    SizeType max_val = this->unigram_table_.size();
+    SizeType idx     = ran_val % max_val;
+    ret              = this->unigram_table_.at(idx);
     assert(ret < this->vocab_.size());
     ongoing = false;
 
@@ -213,32 +220,59 @@ template <typename T>
 typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::SelectContextPosition(SizeType idx)
 {
 
-  std::vector<SizeType> sentence     = this->data_.at(this->word_idx_sentence_idx.at(idx));
-  SizeType              sentence_len = sentence.size();
-  SizeType              word_offset  = this->GetWordOffsetFromWordIdx(idx);
+  SizeType sentence_len = this->data_.at(this->word_idx_sentence_idx.at(idx)).size();
+  SizeType word_offset  = this->GetWordOffsetFromWordIdx(idx);
 
-  // check all potential context positions
-  double                current_probability;
-  int                   normalised_context_position;
-  std::vector<SizeType> unigram_selection;
+  /////// OLD WAY ///////
+//
+//  // check all potential context positions
+//  double                current_probability;
+//  int                   normalised_context_position;
+//  std::vector<SizeType> unigram_selection;
+//
+//  //
+//  for (SizeType j = 0; j < (1 + (2 * p_.window_size)); ++j)
+//  {
+//    normalised_context_position = int(j) - int(p_.window_size);
+//    int abs_dist_to_target      = fetch::math::Abs(normalised_context_position);
+//    if (WindowPositionCheck(word_offset, j, sentence_len))
+//    {
+//      current_probability = 1.0 / abs_dist_to_target;
+//
+//      for (int k = 0; k < int(current_probability * double(p_.unigram_precision)); ++k)
+//      {
+//        unigram_selection.emplace_back(j);
+//      }
+//    }
+//  }
+//
+//  SizeType context_offset = unigram_selection_.at(this->lcg_() % unigram_selection_.size());
 
-  for (SizeType j = 0; j < (1 + (2 * p_.window_size)); ++j)
+  //////// OLD WAY/////
+
+  ///// NEW WAY //////
+
+
+
+
+  bool not_found = true;
+  SizeType context_offset = unigram_selection_.at(this->lcg_() % unigram_selection_.size());
+  ASSERT(context_offset < max_window_size_);
+  while (not_found)
   {
-    normalised_context_position = int(j) - int(p_.window_size);
-    int abs_dist_to_target      = fetch::math::Abs(normalised_context_position);
-    if (WindowPositionCheck(word_offset, j, sentence_len))
+    if (WindowPositionCheck(word_offset, context_offset, sentence_len))
     {
-      current_probability = 1.0 / abs_dist_to_target;
-
-      for (int k = 0; k < int(current_probability * double(p_.unigram_precision)); ++k)
-      {
-        unigram_selection.push_back(j);
-      }
+      not_found = false;
+    }
+    else
+    {
+      context_offset = unigram_selection_.at(this->lcg_() % unigram_selection_.size());
     }
   }
 
-  SizeType context_offset = unigram_selection.at(this->lcg_() % unigram_selection.size());
-  SizeType context_idx    = idx + context_offset - p_.window_size;
+  ////// NEW WAY ////
+
+  SizeType context_idx = idx + context_offset - p_.window_size;
 
   return context_idx;
 }
@@ -273,6 +307,34 @@ bool SkipGramLoader<T>::WindowPositionCheck(SizeType target_pos, SizeType contex
   else
   {
     return true;
+  }
+}
+
+/**
+ * called once by the constructor to pre-calculate the probabilities
+ * for the dynamic context window selection.
+ * However, this assumes every context window position is valid, which
+ * is not true close to the start of end of the sentence, so this has
+ * to be checked at runtime
+ * @tparam T
+ */
+template <typename T>
+void SkipGramLoader<T>::PreCalcDynamicWindow()
+{
+  // check all potential context positions
+  double current_probability;
+  int    normalised_context_position;
+
+  for (int j = 0; j < int(max_window_size_); ++j)
+  {
+    normalised_context_position = j - int(p_.window_size);
+    int abs_dist_to_target      = fetch::math::Abs(normalised_context_position);
+    current_probability         = 1.0 / abs_dist_to_target;
+
+    for (int k = 0; k < int(current_probability * double(p_.unigram_precision)); ++k)
+    {
+      unigram_selection_.emplace_back(j);
+    }
   }
 }
 

@@ -278,7 +278,6 @@ std::pair<T, typename BasicTextLoader<T>::SizeType> BasicTextLoader<T>::GetAtInd
   auto tmp = std::make_pair(data_buffers_, label);
 
   return tmp;
-
 }
 
 /**

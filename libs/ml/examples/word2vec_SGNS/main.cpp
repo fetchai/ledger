@@ -27,10 +27,10 @@
 #include "ml/layers/skip_gram.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
 
+#include <chrono>
 #include <iostream>
 #include <math/tensor.hpp>
 #include <numeric>
-#include <chrono>
 
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
@@ -49,9 +49,9 @@ struct TrainingParams
 {
   SizeType    output_size     = 1;
   SizeType    batch_size      = 128;            // training data batch size
-  SizeType    embedding_size  = 32;             // dimension of embedding vec
-  SizeType    training_epochs = 100000;         // total number of training epochs
-  double      learning_rate   = 0.1;            // alpha - the learning rate
+  SizeType    embedding_size  = 200;            // dimension of embedding vec
+  SizeType    training_epochs = 15;             // total number of training epochs
+  double      learning_rate   = 0.2;            // alpha - the learning rate
   SizeType    k               = 10;             // how many nearest neighbours to compare against
   SizeType    print_freq      = 10000;          // how often to print status
   std::string test_word       = "action";       // test word to consider
@@ -80,7 +80,6 @@ SkipGramTextParams<T> SetParams()
   return ret;
 }
 
-
 /**
  * Read a single text file
  * @param path
@@ -91,7 +90,6 @@ std::string ReadFile(std::string const &path)
   std::ifstream t(path);
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 }
-
 
 ////////////////////////
 /// MODEL DEFINITION ///
@@ -209,9 +207,9 @@ int main(int argc, char **argv)
   DataType batch_loss         = 0;
   DataType epoch_loss         = 0;
 
-  SizeType batch_count = 0;
-  SizeType step_count  = 0;
-  SizeType last_step_count  = 0;
+  SizeType batch_count     = 0;
+  SizeType step_count      = 0;
+  SizeType last_step_count = 0;
 
   ArrayType results;  // store predictions
 
@@ -238,7 +236,8 @@ int main(int argc, char **argv)
       gt.Fill(DataType(0));
 
       // get random data point
-      data = dataloader.GetRandom();
+      //      data = dataloader.GetRandom();
+      data = dataloader.GetNext();
 
       // assign input and context vectors
       input.At(0, 0)   = data.first.At(0);
@@ -295,8 +294,9 @@ int main(int argc, char **argv)
 
       if (step_count % tp.print_freq == (tp.print_freq - 1))
       {
-        auto t2 = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> time_diff = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+        auto                          t2 = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> time_diff =
+            std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
 
         std::cout << "epoch_loss: " << epoch_loss << std::endl;
         std::cout << "average_score: " << sum_average_scores / sum_average_count << std::endl;
@@ -304,12 +304,10 @@ int main(int argc, char **argv)
                   << "] steps total." << std::endl;
         std::cout << "words/sec: " << last_step_count / time_diff.count() << std::endl;
         std::cout << "\n: " << std::endl;
-        t1 = std::chrono::high_resolution_clock::now();
+        t1              = std::chrono::high_resolution_clock::now();
         last_step_count = 0;
       }
-
     }
-
 
     // print batch loss and embeddings distances
     // Test trained embeddings

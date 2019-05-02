@@ -69,10 +69,10 @@ std::vector<std::string> GetAllTextFiles(std::string const &dir_name)
   return ret;
 }
 
-
 /**
  * returns the full training text as one string
- * @param training_data a string representing either the training data, or a text file with the training data, or a directory of text files
+ * @param training_data a string representing either the training data, or a text file with the
+ * training data, or a directory of text files
  * @param full_training_text
  */
 std::string GetTextString(std::string const &training_data)
