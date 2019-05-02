@@ -97,26 +97,26 @@ public:
     return {ArrayType(errorSignal.shape())};
   }
 
-  virtual void Step(typename T::Type learningRate)
+  virtual void Step(typename T::Type learning_rate)
   {
-    if (updated_rows_.size() > 0)
+    ArrayType embedding_slice;
+
+    for (auto const &r : updated_rows_)
     {
-      ArrayType gradient_accumulation_slice{this->gradient_accumulation_->Slice(0).Copy()};
-      ArrayType output_slice{this->output_->Slice(0).Copy()};
+      // get the relevant slice from gradients and embeddings
+      auto grad_slice = this->gradient_accumulation_->Slice(r);
+      auto out_slice = this->output_->Slice(r);
 
-      for (auto const &r : updated_rows_)
-      {
-        gradient_accumulation_slice = this->gradient_accumulation_->Slice(r).Copy();
-        output_slice                = this->output_->Slice(r).Copy();
+      embedding_slice = out_slice.Copy();
 
-        gradient_accumulation_slice.InlineMultiply(-learningRate);
-        output_slice.InlineAdd(gradient_accumulation_slice);
+      // multiply accumulated gradients by learning rate, then subtract from current embeddings
+      embedding_slice.InlineSubtract(grad_slice.Copy().InlineMultiply(learning_rate));
 
-        this->gradient_accumulation_->Slice(r).Assign(ArrayType::Zeroes(gradient_accumulation_slice.shape()));
-        this->output_->Slice(r).Assign(output_slice);
-      }
-      updated_rows_.clear();
+      // zero out gradients and assign new embeddings values
+      grad_slice.Assign(ArrayType::Zeroes(embedding_slice.shape()));
+      out_slice.Assign(embedding_slice);
     }
+    updated_rows_.clear();
   }
 
 private:
