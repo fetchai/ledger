@@ -48,12 +48,12 @@ using SizeType     = typename ArrayType::SizeType;
 struct TrainingParams
 {
   SizeType    output_size     = 1;
-  SizeType    batch_size      = 128;            // training data batch size
+  SizeType    batch_size      = 500;            // training data batch size
   SizeType    embedding_size  = 200;            // dimension of embedding vec
   SizeType    training_epochs = 15;             // total number of training epochs
-  double      learning_rate   = 0.2;            // alpha - the learning rate
+  double      learning_rate   = 0.025;            // alpha - the learning rate
   SizeType    k               = 10;             // how many nearest neighbours to compare against
-  SizeType    print_freq      = 10000;          // how often to print status
+  SizeType    print_freq      = 100000;          // how often to print status
   std::string test_word       = "action";       // test word to consider
   std::string save_loc        = "./model.fba";  // save file location for exporting graph
 };
