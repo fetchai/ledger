@@ -53,7 +53,7 @@ struct TrainingParams
   SizeType    training_epochs = 100000;         // total number of training epochs
   double      learning_rate   = 0.1;            // alpha - the learning rate
   SizeType    k               = 10;             // how many nearest neighbours to compare against
-  SizeType    print_freq      = 100;            // how often to print status
+  SizeType    print_freq      = 10000;          // how often to print status
   std::string test_word       = "action";       // test word to consider
   std::string save_loc        = "./model.fba";  // save file location for exporting graph
 };
@@ -75,7 +75,7 @@ SkipGramTextParams<T> SetParams()
 
   ret.window_size         = SizeType(5);   // max size of context window one way
   ret.min_sentence_length = SizeType(4);   //
-  ret.k_negative_samples  = SizeType(10);  // number of negative examples to sample
+  ret.k_negative_samples  = SizeType(25);  // number of negative examples to sample
 
   return ret;
 }
@@ -211,6 +211,7 @@ int main(int argc, char **argv)
 
   SizeType batch_count = 0;
   SizeType step_count  = 0;
+  SizeType last_step_count  = 0;
 
   ArrayType results;  // store predictions
 
@@ -223,6 +224,7 @@ int main(int argc, char **argv)
 
     batch_count = 0;
     step_count  = 0;
+
     auto t1 = std::chrono::high_resolution_clock::now();
 
     epoch_loss = 0;
@@ -289,6 +291,7 @@ int main(int argc, char **argv)
         ++batch_count;
       }
       ++step_count;
+      ++last_step_count;
 
       if (step_count % tp.print_freq == (tp.print_freq - 1))
       {
@@ -299,9 +302,10 @@ int main(int argc, char **argv)
         std::cout << "average_score: " << sum_average_scores / sum_average_count << std::endl;
         std::cout << "over [" << batch_count << "] batches involving [" << step_count
                   << "] steps total." << std::endl;
-        std::cout << "words/sec: " << step_count / time_diff.count() << std::endl;
+        std::cout << "words/sec: " << last_step_count / time_diff.count() << std::endl;
         std::cout << "\n: " << std::endl;
         t1 = std::chrono::high_resolution_clock::now();
+        last_step_count = 0;
       }
 
     }
