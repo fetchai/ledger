@@ -2,7 +2,7 @@ pipeline {
 
   agent {
     docker {
-      image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+      image "gcr.io/organic-storm-201412/fetch-ledger-develop:edtest1"
     }
   }
 
