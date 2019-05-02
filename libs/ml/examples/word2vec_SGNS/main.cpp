@@ -226,7 +226,7 @@ int main(int argc, char **argv)
     auto t1 = std::chrono::high_resolution_clock::now();
 
     sub_epoch_loss = 0;
-    batch_loss = 0;
+    batch_loss     = 0;
 
     // effectively clears any leftover gradients
     g.Step(0);
@@ -306,7 +306,7 @@ int main(int argc, char **argv)
         std::cout << "\n: " << std::endl;
         t1              = std::chrono::high_resolution_clock::now();
         last_step_count = 0;
-        sub_epoch_loss = 0;
+        sub_epoch_loss  = 0;
       }
     }
 
