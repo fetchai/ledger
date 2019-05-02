@@ -153,7 +153,7 @@ public:
                    std::size_t block_difficulty);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
-  ~BlockCoordinator();
+  ~BlockCoordinator()                        = default;
 
   template <typename R, typename P>
   void SetBlockPeriod(std::chrono::duration<R, P> const &period);

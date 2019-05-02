@@ -56,15 +56,15 @@ public:
     ASSERT(inputs.size() == 1);
     ASSERT(inputs[0].get().shape() == errorSignal.shape());
 
-    ArrayType returnSignal = errorSignal.Copy();
+    ArrayType return_signal = errorSignal.Copy();
     for (SizeType i{0}; i < inputs.front().get().size(); ++i)
     {
       if (inputs.front().get()[i] <= DataType(0))
       {
-        returnSignal.data().Set(i, DataType(0));
+        return_signal.data().Set(i, DataType(0));
       }
     }
-    return {returnSignal};
+    return {return_signal};
   }
 
   static constexpr char const *DESCRIPTOR = "Relu";

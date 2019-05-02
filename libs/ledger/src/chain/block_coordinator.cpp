@@ -107,15 +107,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
 }
 
 /**
- * Destruct the Block Coordinator
- */
-BlockCoordinator::~BlockCoordinator()
-{
-  state_machine_->Reset();
-  state_machine_.reset();
-}
-
-/**
  * Force the block interval to expire causing the state machine to be able to generate a block if
  * needed
  */

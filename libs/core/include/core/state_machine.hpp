@@ -33,6 +33,17 @@
 namespace fetch {
 namespace core {
 
+/**
+ * Finite State Machine
+ *
+ * This class is used as a simple helper around a series of callbacks to functions that handle the
+ * currently assigned state.
+ *
+ * It is expected that this class is created by the parent class using std::make_shared() or
+ * similar. In general, these state machines should be executed by a reactor.
+ *
+ * @tparam State the enum state type
+ */
 template <typename State>
 class StateMachine : public StateMachineInterface, public Runnable
 {
@@ -47,7 +58,7 @@ public:
   explicit StateMachine(std::string name, State initial, StateMapper mapper = StateMapper{});
   StateMachine(StateMachine const &)     = delete;
   StateMachine(StateMachine &&) noexcept = delete;
-  ~StateMachine() override               = default;
+  ~StateMachine() override;
 
   /// @name State Control
   /// @{
@@ -58,8 +69,6 @@ public:
   void RegisterHandler(State state, C *instance, State (C::*func)(State /*current*/));
   template <typename C>
   void RegisterHandler(State state, C *instance, State (C::*func)());
-
-  void Reset();
 
   void OnStateChange(StateChangeCallback cb);
   /// @}
@@ -96,6 +105,8 @@ private:
   using CallbackMap = std::unordered_map<State, Callback>;
   using Mutex       = std::mutex;
 
+  void Reset();
+
   std::string const   name_;
   StateMapper         mapper_;
   mutable Mutex       callbacks_mutex_;
@@ -106,6 +117,14 @@ private:
   StateChangeCallback state_change_callback_{};
 };
 
+/**
+ * Construct instance of the state machine
+ *
+ * @tparam S The state enum type
+ * @param name The name of the state machine
+ * @param initial The initial state for the state machine
+ * @param mapper An optional mapper to generate a string representation for the state
+ */
 template <typename S>
 StateMachine<S>::StateMachine(std::string name, S initial, StateMapper mapper)
   : name_{std::move(name)}
@@ -113,6 +132,26 @@ StateMachine<S>::StateMachine(std::string name, S initial, StateMapper mapper)
   , current_state_{initial}
 {}
 
+/**
+ * Destruct and tear down the state handlers for this object
+ *
+ * @tparam S The state enum type
+ */
+template <typename S>
+StateMachine<S>::~StateMachine()
+{
+  Reset();
+}
+
+/**
+ * Register a class member handler for a specified state
+ *
+ * @tparam S The state enum type
+ * @tparam C The class type
+ * @param state The state to be trigger on
+ * @param instance The instance of the class
+ * @param func The member function pointer
+ */
 template <typename S>
 template <typename C>
 void StateMachine<S>::RegisterHandler(S state, C *instance,
@@ -122,6 +161,15 @@ void StateMachine<S>::RegisterHandler(S state, C *instance,
   callbacks_[state] = [instance, func](S state, S prev) { return (instance->*func)(state, prev); };
 }
 
+/**
+ * Register a class member handler for a specified state
+ *
+ * @tparam S The state enum type
+ * @tparam C The class type
+ * @param state The state to be trigger on
+ * @param instance The instance of the class
+ * @param func The member function pointer
+ */
 template <typename S>
 template <typename C>
 void StateMachine<S>::RegisterHandler(S state, C *instance, S (C::*func)(S /*current*/))
@@ -133,6 +181,15 @@ void StateMachine<S>::RegisterHandler(S state, C *instance, S (C::*func)(S /*cur
   };
 }
 
+/**
+ * Register a class member handler for a specified state
+ *
+ * @tparam S The state enum type
+ * @tparam C The class type
+ * @param state The state to be trigger on
+ * @param instance The instance of the class
+ * @param func The member function pointer
+ */
 template <typename S>
 template <typename C>
 void StateMachine<S>::RegisterHandler(S state, C *instance, S (C::*func)())
@@ -145,6 +202,11 @@ void StateMachine<S>::RegisterHandler(S state, C *instance, S (C::*func)())
   };
 }
 
+/**
+ * Clear all the callbacks associated with this state machine
+ *
+ * @tparam S The state enum type
+ */
 template <typename S>
 void StateMachine<S>::Reset()
 {
@@ -153,6 +215,12 @@ void StateMachine<S>::Reset()
   state_change_callback_ = StateChangeCallback{};
 }
 
+/**
+ * Register or update the state change callback for this state machine
+ *
+ * @tparam S The state enum type
+ * @param cb The callback function to be registered
+ */
 template <typename S>
 void StateMachine<S>::OnStateChange(StateChangeCallback cb)
 {
@@ -160,18 +228,36 @@ void StateMachine<S>::OnStateChange(StateChangeCallback cb)
   state_change_callback_ = std::move(cb);
 }
 
+/**
+ * Get the name of the state machine instance
+ *
+ * @tparam S The state enum type
+ * @return The string name of the state machine
+ */
 template <typename S>
 char const *StateMachine<S>::GetName() const
 {
   return name_.c_str();
 }
 
+/**
+ * Get the current value of the enum state type for the current state
+ *
+ * @tparam S The state enum type
+ * @return The numeric value associated with the state
+ */
 template <typename S>
 uint64_t StateMachine<S>::GetStateCode() const
 {
   return static_cast<uint64_t>(state());
 }
 
+/**
+ * Get the current string representation for the current state
+ *
+ * @tparam S The state enum type
+ * @return The string representation of the current state if successful otherwise "Unknown"
+ */
 template <typename S>
 char const *StateMachine<S>::GetStateName() const
 {
@@ -187,8 +273,9 @@ char const *StateMachine<S>::GetStateName() const
 
 /**
  * Determine if the runnable is ready to the run again
- * @tparam S
- * @return
+ *
+ * @tparam S The state enum type
+ * @return true if the state machine should be executed again, otherwise false
  */
 template <typename S>
 bool StateMachine<S>::IsReadyToExecute() const
@@ -203,6 +290,11 @@ bool StateMachine<S>::IsReadyToExecute() const
   return ready;
 }
 
+/**
+ * Execute the state machine (called from the reactor)
+ *
+ * @tparam S The state enum type
+ */
 template <typename S>
 void StateMachine<S>::Execute()
 {
