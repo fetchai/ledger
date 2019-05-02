@@ -156,6 +156,8 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
     FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Still waiting for object counts...");
     if (!promise_wait_timeout_.IsDue())
     {
+      state_machine_->Delay(std::chrono::milliseconds{20});
+
       return State::RESOLVING_OBJECT_COUNTS;
     }
     else
@@ -169,7 +171,8 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
   // parallel. So if we decided to split the sync into 4 roots, the mask would be 2 (bits) and
   // the roots to sync 00, 10, 01 and 11...
   // where roots to sync are all objects with the key starting with those bits
-  if (max_object_count_ == 0) {
+  if (max_object_count_ == 0)
+  {
     FETCH_LOG_WARN(LOGGING_NAME, "Network appears to have no transactions! Number of peers: ",
                    muddle_->AsEndpoint().GetDirectlyConnectedPeers().size());
   }
