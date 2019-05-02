@@ -37,22 +37,27 @@ void Elu(ArrayType const &t, typename ArrayType::Type &a, ArrayType &ret)
   ASSERT(t.size() == ret.size());
   using DataType = typename ArrayType::Type;
 
-  typename ArrayType::SizeType idx(0);
-  for (auto const &val : t)
+  DataType zero{0};
+  DataType one{1};
+
+  auto it  = t.cbegin();
+  auto rit = ret.begin();
+  while (it.is_valid())
   {
-    if (val >= DataType(0))
+    // f(x)=x for x>=0
+    // f(x)=a*(e^x-1) for x<0
+    if (*it < zero)
     {
-      // f(x)=x for x>=0
-      ret.Set(idx, val);
+      Exp(*it, *rit);
+      Subtract(*rit, one, *rit);
+      Multiply(a, *rit, *rit);
     }
     else
     {
-      // f(x)=a*(e^x-1) for x<0
-      DataType tmp_val = val;
-      Subtract(fetch::math::Exp(val), DataType(1.0), tmp_val);
-      Multiply(a, tmp_val, ret.At(idx));
+      *rit = *it;
     }
-    ++idx;
+    ++it;
+    ++rit;
   }
 }
 
