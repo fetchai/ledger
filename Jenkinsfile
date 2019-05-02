@@ -12,7 +12,7 @@ pipeline {
       steps {
         sh 'pip3 freeze'
         sh'echo ---'
-        sh './scripts/ci/install-test/dependencies.sh'
+        sh './scripts/ci/install-test-dependencies.sh'
         sh 'pip3 freeze'
         sh './scripts/ci-tool -B Release'
         sh './scripts/ci-tool.py -I Release'
