@@ -229,30 +229,30 @@ struct CommandLineArguments
     bool private_flag{false};
 
     // clang-format off
-    p.add(args.port,                      "port",                  "The starting port for ledger services",                                         DEFAULT_PORT);
-    p.add(args.cfg.num_executors,         "executors",             "The number of executors to configure",                                          DEFAULT_NUM_EXECUTORS);
-    p.add(num_lanes,                      "lanes",                 "The number of lanes to be used",                                                DEFAULT_NUM_LANES);
-    p.add(args.cfg.num_slices,            "slices",                "The number of slices to be used",                                               DEFAULT_NUM_SLICES);
-    p.add(raw_peers,                      "peers",                 "The comma separated list of addresses to initially connect to",                 std::string{});
-    p.add(args.cfg.db_prefix,             "db-prefix",             "The directory or prefix added to the node storage",                             std::string{"node_storage"});
-    p.add(args.network_name,              "network",               "The network name to join",                                                      std::string{});
-    p.add(args.cfg.interface_address,     "interface",             "The address of the network interface to be used",                               std::string{"127.0.0.1"});
-    p.add(args.cfg.block_interval_ms,     "block-interval",        "Block interval in milliseconds",                                                uint32_t{DEFAULT_BLOCK_INTERVAL});
-    p.add(args.token,                     "token",                 "The authentication token to be used with bootstrapping the client",             std::string{});
-    p.add(args.external_address,          "external",              "This node's global IP address",                                                 std::string{});
-    p.add(bootstrap_address,              "bootstrap",             "Src address for network bootstrap",                                             std::string{});
-    p.add(args.discoverable,              "discoverable",          "Signal that the client is willing to be listed on the bootstrap server",        false);
-    p.add(args.host_name,                 "host-name",             "The hostname / identifier for this node",                                       std::string{});
-    p.add(config_path,                    "config",                "The path to the manifest configuration",                                        std::string{});
-    p.add(args.cfg.processor_threads,     "processor-threads",     "The number of processor threads",                                               uint32_t{std::thread::hardware_concurrency()});
-    p.add(args.cfg.verification_threads,  "verifier-threads",      "The number of processor threads",                                               uint32_t{std::thread::hardware_concurrency()});
-    p.add(args.cfg.max_peers,             "max-peers",             "The number of maximal peers to send to peer requests",                          DEFAULT_MAX_PEERS);
-    p.add(args.cfg.transient_peers,       "transient-peers",       "The number of the peers which will be random in answer sent to peer requests",  DEFAULT_TRANSIENT_PEERS);
-    p.add(args.cfg.peers_update_cycle_ms, "peers-update-cycle-ms", "How fast to do peering changes",                                                uint32_t{0});
-    p.add(args.cfg.disable_signing,       "disable-signing",       "Do not sign outbound packets or verify those inbound, in trusted network",      false);
-    p.add(args.cfg.sign_broadcasts,       "sign-broadcasts",       "Sign and verify broadcast packets",                                             false);
-    p.add(standalone_flag,                "standalone",            "Expect the node to run in on its own (useful for testing and development)",     false);
-    p.add(private_flag,                   "private-network",       "Expect the node is to be run as part of a private network (disables bootsrap)", false);
+    p.add(args.port,                      "port",                  "The starting port for ledger services",                                                        DEFAULT_PORT);
+    p.add(args.cfg.num_executors,         "executors",             "The number of executors to configure",                                                         DEFAULT_NUM_EXECUTORS);
+    p.add(num_lanes,                      "lanes",                 "The number of lanes to be used",                                                               DEFAULT_NUM_LANES);
+    p.add(args.cfg.num_slices,            "slices",                "The number of slices to be used",                                                              DEFAULT_NUM_SLICES);
+    p.add(raw_peers,                      "peers",                 "The comma separated list of addresses to initially connect to",                                std::string{});
+    p.add(args.cfg.db_prefix,             "db-prefix",             "The directory or prefix added to the node storage",                                            std::string{"node_storage"});
+    p.add(args.network_name,              "network",               "The network name to join",                                                                     std::string{});
+    p.add(args.cfg.interface_address,     "interface",             "The address of the network interface to be used",                                              std::string{"127.0.0.1"});
+    p.add(args.cfg.block_interval_ms,     "block-interval",        "Block interval in milliseconds",                                                               uint32_t{DEFAULT_BLOCK_INTERVAL});
+    p.add(args.token,                     "token",                 "The authentication token to be used with bootstrapping the client",                            std::string{});
+    p.add(args.external_address,          "external",              "This node's global IP address",                                                                std::string{});
+    p.add(bootstrap_address,              "bootstrap",             "Src address for network bootstrap",                                                            std::string{});
+    p.add(args.discoverable,              "discoverable",          "Signal that the client is willing to be listed on the bootstrap server",                       false);
+    p.add(args.host_name,                 "host-name",             "The hostname / identifier for this node",                                                      std::string{});
+    p.add(config_path,                    "config",                "The path to the manifest configuration",                                                       std::string{});
+    p.add(args.cfg.processor_threads,     "processor-threads",     "The number of processor threads",                                                              uint32_t{std::thread::hardware_concurrency()});
+    p.add(args.cfg.verification_threads,  "verifier-threads",      "The number of processor threads",                                                              uint32_t{std::thread::hardware_concurrency()});
+    p.add(args.cfg.max_peers,             "max-peers",             "The number of maximal peers to send to peer requests",                                         DEFAULT_MAX_PEERS);
+    p.add(args.cfg.transient_peers,       "transient-peers",       "The number of the peers which will be random in answer sent to peer requests",                 DEFAULT_TRANSIENT_PEERS);
+    p.add(args.cfg.peers_update_cycle_ms, "peers-update-cycle-ms", "How fast to do peering changes",                                                               uint32_t{0});
+    p.add(args.cfg.disable_signing,       "disable-signing",       "Do not sign outbound packets or verify those inbound, in trusted network",                     false);
+    p.add(args.cfg.sign_broadcasts,       "sign-broadcasts",       "Sign and verify broadcast packets",                                                            false);
+    p.add(standalone_flag,                "standalone",            "Run node on its own (useful for testing and development). Incompatible with -private-network", false);
+    p.add(private_flag,                   "private-network",       "Run node as part of a private network (disables bootstrap). Incompatible with -standalone",    false);
     // clang-format on
 
     // parse the args
