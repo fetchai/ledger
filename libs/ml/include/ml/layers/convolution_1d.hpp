@@ -44,7 +44,6 @@ public:
                 details::ActivationType activation_type = details::ActivationType::NOTHING,
                 std::string const &     name            = "Conv1D",
                 WeightsInit init_mode = WeightsInit::XAVIER_GLOROT, SizeType seed = 123456789)
-
     : kernel_size_(kernel_size)
     , input_channels_(input_channels)
     , output_channels_(output_channels)
