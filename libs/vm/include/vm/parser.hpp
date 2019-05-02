@@ -19,6 +19,8 @@
 
 #include "vm/node.hpp"
 
+#include <unordered_set>
+
 namespace fetch {
 namespace vm {
 
@@ -69,7 +71,9 @@ private:
     int               num_members;
   };
 
-  Strings                 template_names_;
+  using StringSet = std::unordered_set<std::string>;
+
+  StringSet               template_names_;
   std::vector<Token>      tokens_;
   int                     index_;
   Token *                 token_;

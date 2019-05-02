@@ -25,45 +25,51 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Add : public fetch::ml::Ops<T>
+class Add : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType      = T;
+  using DataType       = typename ArrayType::Type;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
+  Add()                = default;
+  virtual ~Add()       = default;
 
-  Add()          = default;
-  virtual ~Add() = default;
-
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
+    (void)output;
     ASSERT(inputs.size() == 2);
-    ASSERT(inputs[0]->size() == inputs[1]->size());
-    if (!this->output_ || this->output_->shape() != inputs[0]->shape())
+    ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
+    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
+
+    auto output_it  = output.begin();
+    auto output_end = output.end();
+    auto a_it       = inputs[0].get().begin();
+    auto b_it       = inputs[1].get().begin();
+
+    while (output_it != output_end)
     {
-      this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
+      *output_it = *a_it + *b_it;
+      ++output_it;
+      ++a_it;
+      ++b_it;
     }
 
-    for (std::uint64_t i = 0; i < inputs[0]->size(); ++i)
-    {
-      this->output_->Set(i, inputs[0]->At(i) + inputs[1]->At(i));
-    }
-    return this->output_;
+    return output;
   }
 
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
+      ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 2);
-    ASSERT(inputs[0]->size() == inputs[1]->size());
-    ASSERT(errorSignal->size() == inputs[1]->size());
+    ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
+    ASSERT(errorSignal.size() == inputs.at(1).get().size());
     return {errorSignal, errorSignal};
   }
 
-private:
-  // Relu is done in a strange way, comparing input against an array of zeroes
-  // using a parrallel Maximum function -- May need improvement (TODO private 469)
-  ArrayPtrType zeroes_;
+  static constexpr char const *DESCRIPTOR = "Add";
 };
 
 }  // namespace ops

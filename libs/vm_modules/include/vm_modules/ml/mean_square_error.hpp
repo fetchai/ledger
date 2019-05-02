@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/mean_square_error.hpp"
+#include "ml/ops/loss_functions/mean_square_error.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/ml/tensor.hpp"
 
@@ -25,7 +25,7 @@ namespace fetch {
 namespace vm_modules {
 namespace ml {
 class MSEWrapper : public fetch::vm::Object,
-                   public fetch::ml::ops::MeanSquareErrorLayer<fetch::math::Tensor<float>>
+                   public fetch::ml::ops::MeanSquareError<fetch::math::Tensor<float>>
 {
 public:
   MSEWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
@@ -40,7 +40,7 @@ public:
   float ForwardWrapper(fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &pred,
                        fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &groundTruth)
   {
-    return fetch::ml::ops::MeanSquareErrorLayer<fetch::math::Tensor<float>>::Forward(
+    return fetch::ml::ops::MeanSquareError<fetch::math::Tensor<float>>::Forward(
         {*pred, *groundTruth});
   }
 
@@ -48,19 +48,19 @@ public:
       fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &pred,
       fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &groundTruth)
   {
-    std::shared_ptr<fetch::math::Tensor<float>> dt =
-        fetch::ml::ops::MeanSquareErrorLayer<fetch::math::Tensor<float>>::Backward(
+    fetch::math::Tensor<float> dt =
+        fetch::ml::ops::MeanSquareError<fetch::math::Tensor<float>>::Backward(
             {*pred, *groundTruth});
     fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> ret =
-        this->vm_->CreateNewObject<fetch::vm_modules::ml::TensorWrapper>(dt->shape());
-    (*ret)->Copy(*dt);
+        this->vm_->CreateNewObject<fetch::vm_modules::ml::TensorWrapper>(dt.shape());
+    (*ret).Copy(dt);
     return ret;
   }
 };
 
-inline void CreateMeanSquareError(std::shared_ptr<fetch::vm::Module> module)
+inline void CreateMeanSquareError(fetch::vm::Module &module)
 {
-  module->CreateClassType<MSEWrapper>("MeanSquareError")
+  module.CreateClassType<MSEWrapper>("MeanSquareError")
       .CreateTypeConstuctor<>()
       .CreateInstanceFunction("Forward", &MSEWrapper::ForwardWrapper)
       .CreateInstanceFunction("Backward", &MSEWrapper::BackwardWrapper);

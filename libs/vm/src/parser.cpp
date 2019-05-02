@@ -28,9 +28,8 @@ namespace fetch {
 namespace vm {
 
 Parser::Parser()
-{
-  template_names_ = {"Matrix", "Array", "Map", "State"};
-}
+  : template_names_{"Matrix", "Array", "Map", "State", "StateMap"}
+{}
 
 BlockNodePtr Parser::Parse(std::string const &source, Strings &errors)
 {
@@ -57,7 +56,7 @@ BlockNodePtr Parser::Parse(std::string const &source, Strings &errors)
   rpn_.clear();
   infix_stack_.clear();
 
-  if (ok == false)
+  if (!ok)
   {
     root = nullptr;
     return nullptr;
@@ -362,12 +361,12 @@ BlockNodePtr Parser::ParseFunctionDefinition()
     function_definition_node->children.push_back(return_type_node);
     ok = true;
   } while (false);
-  if (ok == false)
+  if (!ok)
   {
     SkipFunctionDefinition();
     return nullptr;
   }
-  if (ParseBlock(*function_definition_node) == false)
+  if (!ParseBlock(*function_definition_node))
   {
     return nullptr;
   }
@@ -537,7 +536,7 @@ BlockNodePtr Parser::ParseWhileStatement()
     return nullptr;
   }
   while_statement_node->children.push_back(std::move(expression));
-  if (ParseBlock(*while_statement_node) == false)
+  if (!ParseBlock(*while_statement_node))
   {
     return nullptr;
   }
@@ -611,7 +610,7 @@ BlockNodePtr Parser::ParseForStatement()
     AddError("expected ')'");
     return nullptr;
   }
-  if (ParseBlock(*for_statement_node) == false)
+  if (!ParseBlock(*for_statement_node))
   {
     return nullptr;
   }
@@ -640,7 +639,7 @@ NodePtr Parser::ParseIfStatement()
         return nullptr;
       }
       if_node->children.push_back(std::move(expression_node));
-      if (ParseBlock(*if_node) == false)
+      if (!ParseBlock(*if_node))
       {
         return nullptr;
       }
@@ -656,7 +655,7 @@ NodePtr Parser::ParseIfStatement()
         return nullptr;
       }
       elseif_node->children.push_back(std::move(expression_node));
-      if (ParseBlock(*elseif_node) == false)
+      if (!ParseBlock(*elseif_node))
       {
         return nullptr;
       }
@@ -666,7 +665,7 @@ NodePtr Parser::ParseIfStatement()
     else if (token_->kind == Token::Kind::Else)
     {
       BlockNodePtr else_node = std::make_shared<BlockNode>(BlockNode(Node::Kind::Else, token_));
-      if (ParseBlock(*else_node) == false)
+      if (!ParseBlock(*else_node))
       {
         return nullptr;
       }
@@ -739,12 +738,12 @@ NodePtr Parser::ParseVarStatement()
     }
     return nullptr;
   }
-  if ((type == false) && (assign == false))
+  if (!type && !assign)
   {
     AddError("expected ':' or '='");
     return nullptr;
   }
-  if (type == false)
+  if (!type)
   {
     var_statement_node->kind = Node::Kind::VarDeclarationTypelessAssignmentStatement;
   }
@@ -937,14 +936,8 @@ void Parser::SkipFunctionDefinition()
 
 bool Parser::IsTemplateName(std::string const &name) const
 {
-  for (size_t i = 0; i < template_names_.size(); ++i)
-  {
-    if (name == template_names_[i])
-    {
-      return true;
-    }
-  }
-  return false;
+  auto const it = template_names_.find(name);
+  return template_names_.end() != it;
 }
 
 ExpressionNodePtr Parser::ParseType()
@@ -958,7 +951,7 @@ ExpressionNodePtr Parser::ParseType()
   std::string       name = token_->text;
   ExpressionNodePtr identifier_node =
       std::make_shared<ExpressionNode>(ExpressionNode(Node::Kind::Identifier, token_));
-  if (IsTemplateName(name) == false)
+  if (!IsTemplateName(name))
   {
     return identifier_node;
   }
@@ -1026,7 +1019,39 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     {
     case Token::Kind::Identifier:
     {
-      if (HandleIdentifier() == false)
+      if (!HandleIdentifier())
+      {
+        return nullptr;
+      }
+      break;
+    }
+    case Token::Kind::Integer8:
+    {
+      if (!HandleLiteral(Node::Kind::Integer8))
+      {
+        return nullptr;
+      }
+      break;
+    }
+    case Token::Kind::UnsignedInteger8:
+    {
+      if (!HandleLiteral(Node::Kind::UnsignedInteger8))
+      {
+        return nullptr;
+      }
+      break;
+    }
+    case Token::Kind::Integer16:
+    {
+      if (!HandleLiteral(Node::Kind::Integer16))
+      {
+        return nullptr;
+      }
+      break;
+    }
+    case Token::Kind::UnsignedInteger16:
+    {
+      if (!HandleLiteral(Node::Kind::UnsignedInteger16))
       {
         return nullptr;
       }
@@ -1034,7 +1059,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::Integer32:
     {
-      if (HandleLiteral(Node::Kind::Integer32) == false)
+      if (!HandleLiteral(Node::Kind::Integer32))
       {
         return nullptr;
       }
@@ -1042,7 +1067,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::UnsignedInteger32:
     {
-      if (HandleLiteral(Node::Kind::UnsignedInteger32) == false)
+      if (!HandleLiteral(Node::Kind::UnsignedInteger32))
       {
         return nullptr;
       }
@@ -1050,7 +1075,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::Integer64:
     {
-      if (HandleLiteral(Node::Kind::Integer64) == false)
+      if (!HandleLiteral(Node::Kind::Integer64))
       {
         return nullptr;
       }
@@ -1058,7 +1083,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::UnsignedInteger64:
     {
-      if (HandleLiteral(Node::Kind::UnsignedInteger64) == false)
+      if (!HandleLiteral(Node::Kind::UnsignedInteger64))
       {
         return nullptr;
       }
@@ -1066,7 +1091,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::Float32:
     {
-      if (HandleLiteral(Node::Kind::Float32) == false)
+      if (!HandleLiteral(Node::Kind::Float32))
       {
         return nullptr;
       }
@@ -1074,7 +1099,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::Float64:
     {
-      if (HandleLiteral(Node::Kind::Float64) == false)
+      if (!HandleLiteral(Node::Kind::Float64))
       {
         return nullptr;
       }
@@ -1082,7 +1107,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::String:
     {
-      if (HandleLiteral(Node::Kind::String) == false)
+      if (!HandleLiteral(Node::Kind::String))
       {
         return nullptr;
       }
@@ -1090,7 +1115,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::True:
     {
-      if (HandleLiteral(Node::Kind::True) == false)
+      if (!HandleLiteral(Node::Kind::True))
       {
         return nullptr;
       }
@@ -1098,7 +1123,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::False:
     {
-      if (HandleLiteral(Node::Kind::False) == false)
+      if (!HandleLiteral(Node::Kind::False))
       {
         return nullptr;
       }
@@ -1106,7 +1131,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::Null:
     {
-      if (HandleLiteral(Node::Kind::Null) == false)
+      if (!HandleLiteral(Node::Kind::Null))
       {
         return nullptr;
       }
@@ -1114,7 +1139,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::Modulo:
     {
-      if (HandleBinaryOp(Node::Kind::ModuloOp, OpInfo(6, Association::Left, 2)) == false)
+      if (!HandleBinaryOp(Node::Kind::ModuloOp, OpInfo(6, Association::Left, 2)))
       {
         return nullptr;
       }
@@ -1132,7 +1157,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::Multiply:
     {
-      if (HandleBinaryOp(Node::Kind::MultiplyOp, OpInfo(6, Association::Left, 2)) == false)
+      if (!HandleBinaryOp(Node::Kind::MultiplyOp, OpInfo(6, Association::Left, 2)))
       {
         return nullptr;
       }
@@ -1140,7 +1165,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::Divide:
     {
-      if (HandleBinaryOp(Node::Kind::DivideOp, OpInfo(6, Association::Left, 2)) == false)
+      if (!HandleBinaryOp(Node::Kind::DivideOp, OpInfo(6, Association::Left, 2)))
       {
         return nullptr;
       }
@@ -1148,7 +1173,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::Equal:
     {
-      if (HandleBinaryOp(Node::Kind::EqualOp, OpInfo(3, Association::Left, 2)) == false)
+      if (!HandleBinaryOp(Node::Kind::EqualOp, OpInfo(3, Association::Left, 2)))
       {
         return nullptr;
       }
@@ -1156,7 +1181,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::NotEqual:
     {
-      if (HandleBinaryOp(Node::Kind::NotEqualOp, OpInfo(3, Association::Left, 2)) == false)
+      if (!HandleBinaryOp(Node::Kind::NotEqualOp, OpInfo(3, Association::Left, 2)))
       {
         return nullptr;
       }
@@ -1164,7 +1189,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::LessThan:
     {
-      if (HandleBinaryOp(Node::Kind::LessThanOp, OpInfo(4, Association::Left, 2)) == false)
+      if (!HandleBinaryOp(Node::Kind::LessThanOp, OpInfo(4, Association::Left, 2)))
       {
         return nullptr;
       }
@@ -1172,7 +1197,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::LessThanOrEqual:
     {
-      if (HandleBinaryOp(Node::Kind::LessThanOrEqualOp, OpInfo(4, Association::Left, 2)) == false)
+      if (!HandleBinaryOp(Node::Kind::LessThanOrEqualOp, OpInfo(4, Association::Left, 2)))
       {
         return nullptr;
       }
@@ -1180,7 +1205,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::GreaterThan:
     {
-      if (HandleBinaryOp(Node::Kind::GreaterThanOp, OpInfo(4, Association::Left, 2)) == false)
+      if (!HandleBinaryOp(Node::Kind::GreaterThanOp, OpInfo(4, Association::Left, 2)))
       {
         return nullptr;
       }
@@ -1197,7 +1222,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::And:
     {
-      if (HandleBinaryOp(Node::Kind::AndOp, OpInfo(2, Association::Left, 2)) == false)
+      if (!HandleBinaryOp(Node::Kind::AndOp, OpInfo(2, Association::Left, 2)))
       {
         return nullptr;
       }
@@ -1205,7 +1230,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::Or:
     {
-      if (HandleBinaryOp(Node::Kind::OrOp, OpInfo(1, Association::Left, 2)) == false)
+      if (!HandleBinaryOp(Node::Kind::OrOp, OpInfo(1, Association::Left, 2)))
       {
         return nullptr;
       }
@@ -1230,8 +1255,8 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::LeftParenthesis:
     {
-      if (HandleOpener(Node::Kind::ParenthesisGroup, Node::Kind::InvokeOp,
-                       Token::Kind::RightParenthesis, ")") == false)
+      if (!HandleOpener(Node::Kind::ParenthesisGroup, Node::Kind::InvokeOp,
+                        Token::Kind::RightParenthesis, ")"))
       {
         return nullptr;
       }
@@ -1239,8 +1264,8 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::LeftSquareBracket:
     {
-      if (HandleOpener(Node::Kind::Unknown, Node::Kind::IndexOp, Token::Kind::RightSquareBracket,
-                       "]") == false)
+      if (!HandleOpener(Node::Kind::Unknown, Node::Kind::IndexOp, Token::Kind::RightSquareBracket,
+                        "]"))
       {
         return nullptr;
       }
@@ -1249,7 +1274,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     case Token::Kind::RightParenthesis:
     case Token::Kind::RightSquareBracket:
     {
-      if (HandleCloser(is_conditional_expression) == false)
+      if (!HandleCloser(is_conditional_expression))
       {
         return nullptr;
       }
@@ -1257,7 +1282,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::Dot:
     {
-      if (HandleDot() == false)
+      if (!HandleDot())
       {
         return nullptr;
       }
@@ -1265,7 +1290,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     case Token::Kind::Comma:
     {
-      if (HandleComma() == false)
+      if (!HandleComma())
       {
         return nullptr;
       }
@@ -1289,7 +1314,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
       break;
     }
     }  // switch
-  } while (found_expression_terminator_ == false);
+  } while (!found_expression_terminator_);
   if (groups_.size())
   {
     Expr const &groupop = operators_[groups_.back()];
@@ -1347,7 +1372,7 @@ bool Parser::HandleIdentifier()
     return true;
   }
   std::string name;
-  if (ParseExpressionIdentifier(name) == false)
+  if (!ParseExpressionIdentifier(name))
   {
     return false;
   }
@@ -1359,7 +1384,7 @@ bool Parser::ParseExpressionIdentifier(std::string &name)
 {
   AddOperand(Node::Kind::Identifier);
   name = token_->text;
-  if (IsTemplateName(name) == false)
+  if (!IsTemplateName(name))
   {
     return true;
   }
@@ -1380,7 +1405,7 @@ bool Parser::ParseExpressionIdentifier(std::string &name)
       return false;
     }
     std::string subtypename;
-    if (ParseExpressionIdentifier(subtypename) == false)
+    if (!ParseExpressionIdentifier(subtypename))
     {
       return false;
     }

@@ -24,39 +24,44 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Flatten : public fetch::ml::Ops<T>
+class Flatten : public fetch::ml::BatchOps<T>
 {
 public:
   using ArrayType    = T;
+  using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   Flatten()          = default;
   virtual ~Flatten() = default;
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
+    (void)output;
     ASSERT(inputs.size() == 1);
-    input_shape_  = inputs[0]->shape();
-    this->output_ = std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, inputs[0]->size()}));
-    // TODO(private, 521) remove useless copy and replace with lightweight view
-    for (std::uint64_t i(0); i < inputs[0]->size(); ++i)
-    {
-      this->output_->At(i) = inputs[0]->At(i);
-    }
-    return this->output_;
+    ASSERT(output.shape() == ComputeOutputShape(inputs));
+    input_shape_ = inputs.front().get().shape();
+    output.Assign(inputs.front().get());
+    return output;
   }
 
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
+      ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 1);
-    std::shared_ptr<ArrayType> ret = std::make_shared<ArrayType>(input_shape_);
-    for (std::uint64_t i(0); i < ret->size(); ++i)
-    {
-      ret->At(i) = errorSignal->At(i);
-    }
+    ArrayType ret(input_shape_);
+    ret.Assign(errorSignal);
     return {ret};
   }
+
+  virtual std::vector<SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
+  {
+    return {1, inputs.front().get().size()};
+  }
+
+  static constexpr char const *DESCRIPTOR = "Flatten";
 
 private:
   std::vector<std::uint64_t> input_shape_;

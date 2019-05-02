@@ -22,6 +22,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
+#include "core/state_machine_interface.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"
 #include "ledger/block_packer_interface.hpp"
@@ -31,6 +32,8 @@
 #include "miner/resource_mapper.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
+
+#include "fetch_version.hpp"
 
 #include <random>
 #include <sstream>
@@ -45,17 +48,21 @@ public:
   using Muddle               = muddle::Muddle;
   using TrustSystem          = P2PTrustInterface<Muddle::Address>;
   using BlockPackerInterface = ledger::BlockPackerInterface;
+  using WeakStateMachine     = std::weak_ptr<core::StateMachineInterface>;
+  using WeakStateMachines    = std::vector<WeakStateMachine>;
 
   static constexpr char const *LOGGING_NAME = "P2PHttpInterface";
 
   P2PHttpInterface(uint32_t log2_num_lanes, MainChain &chain, Muddle &muddle,
-                   P2PService &p2p_service, TrustSystem &trust, BlockPackerInterface &packer)
+                   P2PService &p2p_service, TrustSystem &trust, BlockPackerInterface &packer,
+                   WeakStateMachines state_machines)
     : log2_num_lanes_(log2_num_lanes)
     , chain_(chain)
     , muddle_(muddle)
     , p2p_(p2p_service)
     , trust_(trust)
     , packer_(packer)
+    , state_machines_(std::move(state_machines))
   {
     Get("/api/status/chain",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
@@ -77,10 +84,29 @@ public:
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
           return GetBacklogStatus(params, request);
         });
+    Get("/api/status/states",
+        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+          return GetStateMachineStatus(params, request);
+        });
+    Get("/api/status",
+        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+          return GetGeneralStatus(params, request);
+        });
   }
 
 private:
   using Variant = variant::Variant;
+
+  http::HTTPResponse GetGeneralStatus(http::ViewParameters const &, http::HTTPRequest const &)
+  {
+    // create the system response
+    Variant response    = Variant::Object();
+    response["version"] = fetch::version::FULL;
+    response["valid"]   = fetch::version::VALID;
+    response["lanes"]   = 1u << log2_num_lanes_;
+
+    return http::CreateJsonResponse(response);
+  }
 
   http::HTTPResponse GetChainStatus(http::ViewParameters const & /*params*/,
                                     http::HTTPRequest const &request)
@@ -101,12 +127,7 @@ private:
     Variant response     = Variant::Object();
     response["chain"]    = GenerateBlockList(include_transactions, chain_length);
     response["identity"] = fetch::byte_array::ToBase64(muddle_.identity().identifier());
-    response["block"]    = fetch::byte_array::ToBase64(chain_.HeaviestBlock().body.hash);
-
-    // TODO(private issue 532): Remove legacy API
-    response["i_am"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());
-    response["block_hex"] = fetch::byte_array::ToHex(chain_.HeaviestBlock().body.hash);
-    response["i_am_hex"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
+    response["block"]    = fetch::byte_array::ToBase64(chain_.GetHeaviestBlockHash());
 
     return http::CreateJsonResponse(response);
   }
@@ -137,9 +158,6 @@ private:
   {
     Variant response          = Variant::Object();
     response["identityCache"] = GenerateIdentityCache();
-
-    // TODO(private issue 532): Remove legacy API
-    response["identity_cache"] = GenerateIdentityCache();
 
     return http::CreateJsonResponse(response);
   }
@@ -174,12 +192,6 @@ private:
     response["identity"] = fetch::byte_array::ToBase64(muddle_.identity().identifier());
     response["trusts"]   = trust_list;
 
-    // TODO(private issue 532): Remove legacy API
-    response["i_am"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());
-    response["block"]     = fetch::byte_array::ToBase64(chain_.HeaviestBlock().body.hash);
-    response["block_hex"] = fetch::byte_array::ToHex(chain_.HeaviestBlock().body.hash);
-    response["i_am_hex"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
-
     return http::CreateJsonResponse(response);
   }
 
@@ -192,12 +204,29 @@ private:
     return http::CreateJsonResponse(data);
   }
 
+  http::HTTPResponse GetStateMachineStatus(http::ViewParameters const & /*params*/,
+                                           http::HTTPRequest const & /*request*/)
+  {
+    variant::Variant data = variant::Variant::Object();
+
+    for (auto const &sm : state_machines_)
+    {
+      auto instance = sm.lock();
+      if (instance)
+      {
+        data[instance->GetName()] = instance->GetStateName();
+      }
+    }
+
+    return http::CreateJsonResponse(data);
+  }
+
   Variant GenerateBlockList(bool include_transactions, std::size_t length)
   {
     using byte_array::ToBase64;
 
     // lookup the blocks from the heaviest chain
-    auto blocks = chain_.HeaviestChain(length);
+    auto blocks = chain_.GetHeaviestChain(length);
 
     Variant block_list = Variant::Array(blocks.size());
 
@@ -205,63 +234,42 @@ private:
     std::size_t block_idx{0};
     for (auto &b : blocks)
     {
+      Variant &block = block_list[block_idx++];
+
       // format the block number
-      auto block = Variant::Object();
-
-      block["hash"]         = byte_array::ToBase64(b.body.hash);
-      block["previousHash"] = byte_array::ToBase64(b.body.previous_hash);
-      block["merkleHash"]   = byte_array::ToBase64(b.body.merkle_hash);
-      block["proof"]        = byte_array::ToBase64(b.proof.header());
-      block["miner"]        = byte_array::ToBase64(b.body.miner);
-      block["blockNumber"]  = b.body.block_number;
-
-      // TODO(private issue 532): Remove legacy API
-      block["currentHash"] = byte_array::ToBase64(b.body.hash);
+      block                 = Variant::Object();
+      block["hash"]         = byte_array::ToBase64(b->body.hash);
+      block["previousHash"] = byte_array::ToBase64(b->body.previous_hash);
+      block["merkleHash"]   = byte_array::ToBase64(b->body.merkle_hash);
+      block["proof"]        = byte_array::ToBase64(b->proof.header());
+      block["miner"]        = byte_array::ToBase64(b->body.miner);
+      block["blockNumber"]  = b->body.block_number;
 
       if (include_transactions)
       {
-        auto const &slices = b.body.slices;
+        // create and allocate the variant array
+        block["txs"] = Variant::Array(b->GetTransactionCount());
 
-        Variant slice_list = Variant::Array(slices.size());
+        Variant &tx_list = block["txs"];
 
+        std::size_t tx_idx{0};
         std::size_t slice_idx{0};
-        for (auto const &slice : slices)
+        for (auto const &slice : b->body.slices)
         {
-          Variant transaction_list = Variant::Array(slice.size());
-
-          std::size_t tx_idx{0};
           for (auto const &transaction : slice)
           {
-            Variant tx_obj         = Variant::Object();
-            tx_obj["digest"]       = ToBase64(transaction.transaction_hash);
-            tx_obj["fee"]          = transaction.fee;
-            tx_obj["contractName"] = transaction.contract_name;
+            auto &tx = tx_list[tx_idx];
 
-            Variant resources_array = Variant::Array(transaction.resources.size());
+            tx          = Variant::Object();
+            tx["hash"]  = ToBase64(transaction.transaction_hash);
+            tx["slice"] = slice_idx;
 
-            std::size_t res_idx{0};
-            for (auto const &resource : transaction.resources)
-            {
-              Variant res_obj     = Variant::Object();
-              res_obj["resource"] = ToBase64(resource);
-              res_obj["lane"] =
-                  miner::MapResourceToLane(resource, transaction.contract_name, log2_num_lanes_);
-
-              resources_array[res_idx++] = res_obj;
-            }
-
-            tx_obj["resources"]        = resources_array;
-            transaction_list[tx_idx++] = tx_obj;
+            ++tx_idx;
           }
 
-          slice_list[slice_idx++] = transaction_list;
+          ++slice_idx;
         }
-
-        block["slices"] = slice_list;
       }
-
-      // store the block in the array
-      block_list[block_idx++] = block;
     }
 
     return block_list;
@@ -297,6 +305,7 @@ private:
   P2PService &          p2p_;
   TrustSystem &         trust_;
   BlockPackerInterface &packer_;
+  WeakStateMachines     state_machines_;
 };
 
 }  // namespace p2p

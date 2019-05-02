@@ -60,6 +60,7 @@ public:
   /// @{
   virtual void AddTransaction(Transaction const &tx)                         = 0;
   virtual bool GetTransaction(ConstByteArray const &digest, Transaction &tx) = 0;
+  virtual bool HasTransaction(ConstByteArray const &digest)                  = 0;
 
   virtual void AddTransactions(TransactionList const &txs)
   {
@@ -74,11 +75,11 @@ public:
 
   /// @name Revertible Document Store Interface
   /// @{
-  virtual Hash CurrentHash()                  = 0;
-  virtual Hash LastCommitHash()               = 0;
-  virtual bool RevertToHash(Hash const &hash) = 0;
-  virtual Hash Commit()                       = 0;
-  virtual bool HashExists(Hash const &hash)   = 0;
+  virtual Hash CurrentHash()                                  = 0;
+  virtual Hash LastCommitHash()                               = 0;
+  virtual bool RevertToHash(Hash const &hash, uint64_t index) = 0;
+  virtual Hash Commit(uint64_t index)                         = 0;
+  virtual bool HashExists(Hash const &hash, uint64_t index)   = 0;
   /// @}
 };
 

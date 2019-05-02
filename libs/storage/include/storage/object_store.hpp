@@ -151,6 +151,7 @@ public:
    */
   bool LocklessGet(ResourceID const &rid, type &object)
   {
+    // assert(object != nullptr);
     Document doc = store_.Get(rid);
     if (doc.failed)
     {
@@ -158,7 +159,9 @@ public:
     }
 
     serializer_type ser(doc.document);
+
     ser >> object;
+
     return true;
   }
 
@@ -196,7 +199,13 @@ public:
   {
     serializer_type ser;
     ser << object;
-    store_.Set(rid, ser.data());
+
+    store_.Set(rid, ser.data());  // temporarily disable disk writes
+
+    if (set_callback_)
+    {
+      set_callback_(object);
+    }
   }
 
   std::size_t size()
@@ -227,12 +236,12 @@ public:
       ++wrapped_iterator_;
     }
 
-    bool operator==(Iterator const &rhs)
+    bool operator==(Iterator const &rhs) const
     {
       return wrapped_iterator_ == rhs.wrapped_iterator_;
     }
 
-    bool operator!=(Iterator const &rhs)
+    bool operator!=(Iterator const &rhs) const
     {
       return !(wrapped_iterator_ == rhs.wrapped_iterator_);
     }

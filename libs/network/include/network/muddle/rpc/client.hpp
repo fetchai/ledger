@@ -45,13 +45,13 @@ public:
   using Handler       = std::function<void(Promise)>;
   using SharedHandler = std::shared_ptr<Handler>;
   using WeakHandler   = std::weak_ptr<Handler>;
-  using NetworkId     = MuddleEndpoint::NetworkId;
 
   static constexpr char const *LOGGING_NAME = "MuddleRpcClient";
 
   // Construction / Destruction
   Client(std::string name, MuddleEndpoint &endpoint, Address address, uint16_t service,
          uint16_t channel);
+  Client(std::string name, MuddleEndpoint &endpoint, uint16_t service, uint16_t channel);
   Client(Client const &) = delete;
   Client(Client &&)      = delete;
   ~Client() override;
@@ -60,11 +60,12 @@ public:
   Promise CallSpecificAddress(Address const &address, ProtocolId const &protocol,
                               FunctionId const &function, Args &&... args)
   {
+    LOG_STACK_TRACE_POINT;
     // update the target address
     address_ = address;
 
     // execute the call
-    return Call(network_id_, protocol, function, std::forward<Args>(args)...);
+    return Call(network_id_.value(), protocol, function, std::forward<Args>(args)...);
   }
 
   // Operators
@@ -84,8 +85,8 @@ private:
   std::string const name_;
   MuddleEndpoint &  endpoint_;
   Address           address_;
+  NetworkId const   network_id_;
   uint16_t const    service_;
-  NetworkId         network_id_;
   uint16_t const    channel_;
 
   SharedHandler handler_;

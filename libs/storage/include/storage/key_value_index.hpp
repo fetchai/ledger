@@ -693,12 +693,12 @@ public:
     Iterator &operator=(Iterator const &rhs) = default;
     Iterator &operator=(Iterator &&rhs) = default;
 
-    bool operator==(Iterator const &rhs)
+    bool operator==(Iterator const &rhs) const
     {
       return kv_ == rhs.kv_;
     }
 
-    bool operator!=(Iterator const &rhs)
+    bool operator!=(Iterator const &rhs) const
     {
       return !(kv_ == rhs.kv_);
     }
@@ -875,7 +875,7 @@ private:
 
       stack_.Get(next, kv);
 
-      left_right = key.Compare(kv.key, pos, kv.split >> 8, kv.split & 63);
+      left_right = key.Compare(kv.key, pos, kv.split >> 6, kv.split & 63);
 
       switch (left_right)
       {

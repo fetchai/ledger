@@ -40,7 +40,7 @@ public:
       Address const & /*from*/, uint16_t /*service*/, uint16_t /*channel*/, uint16_t /*counter*/,
       Packet::Payload const & /*payload*/, Address const & /*transmitter*/
       )>;
-  using Mutex           = mutex::Mutex;
+  using Mutex           = std::mutex;
 
   static constexpr char const *LOGGING_NAME = "Subscription";
 
@@ -59,7 +59,7 @@ public:
                 Payload const &payload, Address const &transmitter) const;
 
 private:
-  mutable Mutex   callback_lock_{__LINE__, __FILE__};
+  mutable Mutex   callback_lock_;
   MessageCallback callback_;
 };
 

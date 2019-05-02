@@ -47,12 +47,6 @@ struct Printer
 
 #ifndef FETCH_DISABLE_TODO_COUT
 
-#define TODO_FAIL_ROOT(...)                                                   \
-  fetch::assert::details::Printer::Print(__VA_ARGS__);                        \
-  FETCH_LOG_ERROR("root", "About to fail.");                                  \
-  std::cerr << std::endl << __FILE__ << " at line " << __LINE__ << std::endl; \
-  throw std::runtime_error("Dependence on non-existing functionality!");
-
 #define TODO_FAIL(...)                                                        \
   fetch::assert::details::Printer::Print(__VA_ARGS__);                        \
   FETCH_LOG_ERROR("TODO_FAIL", "About to fail.");                             \
@@ -82,7 +76,7 @@ struct Printer
  * This is to avoid error due to misc-unused-parameters,-warnings-as-errors
  * when the only place you use a named parameter is in an assert
  */
-#ifdef DEBUG
+#ifndef NDEBUG
 #define ASSERT assert
 #else
 #define ASSERT(...) (void)(__VA_ARGS__)

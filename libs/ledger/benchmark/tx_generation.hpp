@@ -73,7 +73,7 @@ inline TransactionList GenerateTransactions(std::size_t count, bool large_packet
     // if a signature has been defined then sign the transactions
     if (signer)
     {
-      mtx.Sign(signer->underlying_private_key());
+      mtx.Sign(signer->private_key());
     }
 
     list.emplace_back(VerifiedTransaction::Create(std::move(mtx)));

@@ -26,6 +26,8 @@
 using namespace fetch::service;
 using namespace fetch::byte_array;
 
+using fetch::muddle::NetworkId;
+
 #include "network/test-helpers/muddle_test_definitions.hpp"
 
 class MuddleTestClient
@@ -40,7 +42,7 @@ public:
     auto tc = std::make_shared<MuddleTestClient>();
     tc->tm.Start();
 
-    tc->muddle = Muddle::CreateMuddle(Muddle::NetworkId("Test"), tc->tm);
+    tc->muddle = Muddle::CreateMuddle(NetworkId{"Test"}, tc->tm);
     tc->muddle->Start({});
 
     tc->client = std::make_shared<Client>("Client", tc->muddle->AsEndpoint(), Address(),

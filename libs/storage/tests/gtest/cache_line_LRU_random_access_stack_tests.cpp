@@ -30,7 +30,7 @@ public:
   uint64_t value1 = 0;
   uint8_t  value2 = 0;
 
-  bool operator==(TestClass const &rhs)
+  bool operator==(TestClass const &rhs) const
   {
     return value1 == rhs.value1 && value2 == rhs.value2;
   }
@@ -62,19 +62,18 @@ TEST(DISABLED_cache_line_LRU_random_access_stack, basic_functionality)
       reference.push_back(temp);
     }
 
-    ASSERT_TRUE(stack.Top() == reference[i])
-        << "Stack did not match reference stack at index " << i;
+    ASSERT_EQ(stack.Top(), reference[i]) << "Stack did not match reference stack at index " << i;
   }
 
   // Test index
   {
-    ASSERT_TRUE(stack.size() == reference.size());
+    ASSERT_EQ(stack.size(), reference.size());
 
     for (uint64_t i = 0; i < testSize; ++i)
     {
       TestClass temp;
       stack.Get(i, temp);
-      ASSERT_TRUE(temp == reference[i]);
+      ASSERT_EQ(temp, reference[i]);
     }
   }
 
@@ -108,15 +107,15 @@ TEST(DISABLED_cache_line_LRU_random_access_stack, basic_functionality)
       TestClass c;
       stack.Get(pos1, c);
 
-      ASSERT_TRUE(c == b) << "Stack swap test failed, iteration " << i;
+      ASSERT_EQ(c, b) << "Stack swap test failed, iteration " << i;
     }
 
     {
       TestClass d;
       stack.Get(pos2, d);
 
-      ASSERT_TRUE(d == a) << "Stack swap test failed, iteration " << i << " pos1: " << pos1
-                          << " pos2: " << pos2;
+      ASSERT_EQ(d, a) << "Stack swap test failed, iteration " << i << " pos1: " << pos1
+                      << " pos2: " << pos2;
     }
   }
 
@@ -126,8 +125,8 @@ TEST(DISABLED_cache_line_LRU_random_access_stack, basic_functionality)
     stack.Pop();
   }
 
-  ASSERT_TRUE(stack.size() == 0);
-  ASSERT_TRUE(stack.empty() == true);
+  ASSERT_EQ(stack.size(), 0);
+  ASSERT_TRUE(stack.empty());
 }
 
 TEST(cache_line_LRU_random_access_stack, file_writing_and_recovery)
@@ -142,7 +141,7 @@ TEST(cache_line_LRU_random_access_stack, file_writing_and_recovery)
     stack.New("CRAS_test_2.db");
 
     stack.SetExtraHeader(0x00deadbeefcafe00);
-    EXPECT_TRUE(stack.header_extra() == 0x00deadbeefcafe00);
+    EXPECT_EQ(stack.header_extra(), 0x00deadbeefcafe00);
 
     // Fill with random numbers
     for (uint64_t i = 0; i < testSize; ++i)
@@ -163,10 +162,10 @@ TEST(cache_line_LRU_random_access_stack, file_writing_and_recovery)
     stack.SetMemoryLimit(std::size_t(1ULL << 13));
     stack.Load("CRAS_test_2.db");
 
-    EXPECT_TRUE(stack.header_extra() == 0x00deadbeefcafe00);
+    EXPECT_EQ(stack.header_extra(), 0x00deadbeefcafe00);
 
     {
-      ASSERT_TRUE(stack.size() == reference.size());
+      ASSERT_EQ(stack.size(), reference.size());
 
       for (uint64_t i = 0; i < testSize; ++i)
       {
@@ -174,7 +173,7 @@ TEST(cache_line_LRU_random_access_stack, file_writing_and_recovery)
 
         stack.Get(i, temp);
 
-        ASSERT_TRUE(temp == reference[i]);
+        ASSERT_EQ(temp, reference[i]);
       }
     }
 
@@ -187,10 +186,10 @@ TEST(cache_line_LRU_random_access_stack, file_writing_and_recovery)
     stack.SetMemoryLimit(std::size_t(1ULL << 13));
     stack.Load("CRAS_test_2.db");
 
-    EXPECT_TRUE(stack.header_extra() == 0x00deadbeefcafe00);
+    EXPECT_EQ(stack.header_extra(), 0x00deadbeefcafe00);
 
     {
-      ASSERT_TRUE(stack.size() == reference.size());
+      ASSERT_EQ(stack.size(), reference.size());
 
       for (uint64_t i = 0; i < testSize; ++i)
       {
@@ -213,13 +212,13 @@ TEST(cache_line_LRU_random_access_stack, file_writing_and_recovery)
     stack.Load("CRAS_test_2.db");
 
     {
-      ASSERT_TRUE(stack.size() == reference.size());
+      ASSERT_EQ(stack.size(), reference.size());
 
       for (uint64_t i = 0; i < testSize; ++i)
       {
         TestClass temp;
         stack.Get(i, temp);
-        EXPECT_TRUE(temp == reference[i]);
+        EXPECT_EQ(temp, reference[i]);
       }
     }
 

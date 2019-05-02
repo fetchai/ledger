@@ -168,6 +168,7 @@ public:
 
   void Load(std::string const &filename, bool const &create_if_not_exist = false)
   {
+
     filename_    = filename;
     file_handle_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
 

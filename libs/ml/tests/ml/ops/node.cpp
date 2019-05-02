@@ -18,24 +18,25 @@
 
 #include "ml/node.hpp"
 #include "math/tensor.hpp"
+#include "ml/ops/activations/relu.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "ml/ops/relu.hpp"
 #include <gtest/gtest.h>
 
 TEST(node_test, node_placeholder)
 {
   fetch::ml::Node<fetch::math::Tensor<int>, fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>>>
-                                            placeholder("PlaceHolder");
-  std::shared_ptr<fetch::math::Tensor<int>> data =
-      std::make_shared<fetch::math::Tensor<int>>(std::vector<std::uint64_t>({5, 5}));
+                           placeholder("PlaceHolder");
+  fetch::math::Tensor<int> data(std::vector<std::uint64_t>({5, 5}));
   placeholder.SetData(data);
 
-  EXPECT_EQ(placeholder.Forward({}), data);  // Testing pointer value
-  EXPECT_EQ(placeholder.Evaluate(), data);   // Testing pointer value
+  EXPECT_EQ(placeholder.template Ops<fetch::math::Tensor<int>>::Forward({}), data);
+  EXPECT_EQ(placeholder.Evaluate(), data);
 }
 
 TEST(node_test, node_relu)
 {
+  using SizeType = fetch::math::SizeType;
+
   std::shared_ptr<fetch::ml::Node<fetch::math::Tensor<int>,
                                   fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>>>>
       placeholder =
@@ -43,32 +44,31 @@ TEST(node_test, node_relu)
                                            fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>>>>(
               "PlaceHolder");
 
-  std::shared_ptr<fetch::ml::Node<fetch::math::Tensor<int>,
-                                  fetch::ml::ops::ReluLayer<fetch::math::Tensor<int>>>>
-      relu = std::make_shared<fetch::ml::Node<fetch::math::Tensor<int>,
-                                              fetch::ml::ops::ReluLayer<fetch::math::Tensor<int>>>>(
-          "Relu");
+  std::shared_ptr<
+      fetch::ml::Node<fetch::math::Tensor<int>, fetch::ml::ops::Relu<fetch::math::Tensor<int>>>>
+      relu =
+          std::make_shared<fetch::ml::Node<fetch::math::Tensor<int>,
+                                           fetch::ml::ops::Relu<fetch::math::Tensor<int>>>>("Relu");
 
   relu->AddInput(placeholder);
 
-  std::shared_ptr<fetch::math::Tensor<int>> data =
-      std::make_shared<fetch::math::Tensor<int>>(std::vector<std::uint64_t>({4, 4}));
-  std::shared_ptr<fetch::math::Tensor<int>> gt =
-      std::make_shared<fetch::math::Tensor<int>>(std::vector<std::uint64_t>({4, 4}));
+  fetch::math::Tensor<int> data(std::vector<std::uint64_t>({4, 4}));
+  fetch::math::Tensor<int> gt(std::vector<std::uint64_t>({4, 4}));
   std::vector<int> dataValues({0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15, 16});
   std::vector<int> gtValues({0, 0, 2, 0, 4, 0, 6, 0, 8, 0, 10, 0, 12, 0, 14, 0, 16});
   placeholder->SetData(data);
+  relu->ResetCache(true);
 
-  for (std::uint64_t i(0); i < 4; ++i)
+  for (SizeType i(0); i < 4; ++i)
   {
-    for (std::uint64_t j(0); j < 4; ++j)
+    for (SizeType j(0); j < 4; ++j)
     {
-      data->Set(std::vector<std::uint64_t>({i, j}), dataValues[i * 4 + j]);
-      gt->Set(std::vector<std::uint64_t>({i, j}), gtValues[i * 4 + j]);
+      data.Set(i, j, dataValues[i * 4 + j]);
+      gt.Set(i, j, gtValues[i * 4 + j]);
     }
   }
 
-  EXPECT_EQ(placeholder->Forward({}), data);  // Testing pointer value
-  EXPECT_EQ(placeholder->Evaluate(), data);   // Testing pointer value
-  EXPECT_TRUE(relu->Evaluate()->AllClose(*gt));
+  EXPECT_EQ(placeholder->template Ops<fetch::math::Tensor<int>>::Forward({}), data);
+  EXPECT_EQ(placeholder->Evaluate(), data);
+  EXPECT_TRUE(relu->Evaluate().Copy().AllClose(gt));
 }

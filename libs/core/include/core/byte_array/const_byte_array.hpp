@@ -22,6 +22,7 @@
 #include "vectorise/memory/shared_array.hpp"
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 #include <iostream>
 #include <ostream>
 #include <string.h>
@@ -84,8 +85,9 @@ public:
   }
 
   ConstByteArray(std::string const &s)
-    : ConstByteArray(s.c_str())
+    : ConstByteArray(reinterpret_cast<uint8_t const *>(s.data()), s.size())
   {}
+
   ConstByteArray(self_type const &other) = default;
   ConstByteArray(self_type &&other)      = default;
   // TODO(pbukva): (private issue #229: confusion what method does without analysing implementation
@@ -285,12 +287,8 @@ public:
     return atof(value.c_str());
   }
 
-  std::string ToBase64() const;
-
-  static std::string ToBase64(self_type const &convert)
-  {
-    return convert.ToBase64();
-  }
+  ConstByteArray ToBase64() const;
+  ConstByteArray ToHex() const;
 
   // Non-const functions go here
   void FromByteArray(self_type const &other, std::size_t const &start, std::size_t length)
@@ -468,7 +466,15 @@ private:
   void AppendInternal(std::size_t const acc_size, self_type const &other, Arg const &... others)
   {
     AppendInternal(acc_size + other.size(), others...);
-    std::memcpy(pointer() + acc_size, other.pointer(), other.size());
+    memcpy(pointer() + acc_size, other.pointer(),
+           static_cast<size_t>(other.size()) & 0x7FFFFFFFFFFFFFFFull);
+  }
+
+  template <typename... Arg>
+  void AppendInternal(std::size_t const acc_size, uint8_t const &other, Arg const &... others)
+  {
+    AppendInternal(acc_size + 1, others...);
+    std::memcpy(pointer() + acc_size, &other, 1u);
   }
 
   template <typename T>
@@ -494,13 +500,6 @@ inline ConstByteArray operator+(char const *a, ConstByteArray const &b)
   ConstByteArray s(a);
   s = s + b;
   return s;
-}
-
-ConstByteArray ToBase64(ConstByteArray const &str);
-
-inline std::string ConstByteArray::ToBase64() const
-{
-  return static_cast<std::string>(fetch::byte_array::ToBase64(*this));
 }
 
 }  // namespace byte_array

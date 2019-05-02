@@ -16,7 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/io_observer_interface.hpp"
 #include "vm_modules/vm_factory.hpp"
+
 #include <gtest/gtest.h>
 
 using namespace fetch;
@@ -27,15 +29,6 @@ class VMTests : public ::testing::Test
 protected:
   using Module = std::shared_ptr<fetch::vm::Module>;
   using VM     = std::unique_ptr<fetch::vm::VM>;
-
-  VMTests()
-  {}
-
-  void SetUp() override
-  {
-    // storage_.reset(new underlying_storage_type);
-    // executor_ = std::make_unique<underlying_executor_type>(storage_);
-  }
 
   template <typename T>
   void AddBinding(std::string const &name, T function)
@@ -52,14 +45,17 @@ protected:
       std::cerr << error << std::endl;
     }
 
-    return errors.size() == 0;
+    return errors.empty();
   }
 
   bool Execute(std::string const &function = "main")
   {
     vm_ = VMFactory::GetVM(module_);
+
     std::string        error;
     fetch::vm::Variant output;
+    std::stringstream  console;
+    vm_->AttachOutputDevice("stdout", console);
 
     // Execute our fn
     if (!vm_->Execute(script_, function, error, output))
@@ -67,6 +63,8 @@ protected:
       std::cerr << "Runtime error: " << error << std::endl;
       return false;
     }
+
+    std::cerr << "output:\n" << console.str() << std::endl;
 
     return true;
   }
@@ -81,7 +79,7 @@ TEST_F(VMTests, CheckCompileAndExecute)
 {
   const std::string source =
       " function main() "
-      "   Print(\"Hello, world\");"
+      "   print(\"Hello, world\");"
       " endfunction ";
 
   bool res = Compile(source);
@@ -97,7 +95,29 @@ TEST_F(VMTests, CheckCompileAndExecuteAltStrings)
 {
   const std::string source =
       " function main() "
-      "   Print('Hello, world');"
+      "   print('Hello, world');"
+      " endfunction ";
+
+  bool res = Compile(source);
+
+  EXPECT_EQ(res, true);
+
+  res = Execute();
+
+  EXPECT_EQ(res, true);
+}
+
+TEST_F(VMTests, CheckRandom)
+{
+  const std::string source =
+      " function main()"
+      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
+      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
+      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
+      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
+      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
+      "   print('rnd = ' + toString(Rand(0.0f, 1000.0f)));"
+      "   print('rnd = ' + toString(Rand(0.0, 1000.0)));"
       " endfunction ";
 
   bool res = Compile(source);
@@ -133,7 +153,7 @@ TEST_F(VMTests, CheckCustomBinding)
 
   EXPECT_EQ(res, true);
 
-  for (std::size_t i = 0; i < 3; ++i)
+  for (uint64_t i = 0; i < 3; ++i)
   {
     res = Execute();
     EXPECT_EQ(res, true);

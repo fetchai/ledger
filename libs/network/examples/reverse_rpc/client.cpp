@@ -27,9 +27,10 @@
 #include "network/muddle/rpc/server.hpp"
 #include "service_ids.hpp"
 
-using Muddle = fetch::muddle::Muddle;
-using Server = fetch::muddle::rpc::Server;
-using Client = fetch::muddle::rpc::Client;
+using fetch::muddle::Muddle;
+using fetch::muddle::rpc::Server;
+using fetch::muddle::rpc::Client;
+using fetch::muddle::NetworkId;
 
 #include <iostream>
 
@@ -93,7 +94,7 @@ int main(int argc, char **argv)
   // Client setup
   fetch::network::NetworkManager tm{"NetMgr", 1};
 
-  auto                client_muddle = Muddle::CreateMuddle(Muddle::NetworkId("TEST"), tm);
+  auto                client_muddle = Muddle::CreateMuddle(NetworkId{"TEST"}, tm);
   fetch::network::Uri peer("tcp://127.0.0.1:8080");
   client_muddle->AddPeer(peer);
   auto client = std::make_shared<Client>("Client", client_muddle->AsEndpoint(), Muddle::Address(),

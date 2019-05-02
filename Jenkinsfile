@@ -4,29 +4,34 @@ pipeline {
 
   stages {
 
+    stage('Basic Checks') {
+      agent {
+        docker {
+          image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+        }
+      }
+
+      stages {
+        stage('License Checks') {
+          steps {
+            sh './scripts/check_license_header.py'
+          }
+        }
+        stage('Style check') {
+          steps {
+            sh './scripts/apply_style.py -w -a'
+          }
+        }
+        stage('CMake Version Check') {
+          steps {
+            sh './scripts/check-cmake-versions.py'
+          }
+        }
+      }
+    } // basic checks
+
     stage('Builds & Tests') {
       parallel {
-
-        stage('Basic Checks') {
-          agent {
-            docker {
-              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
-            }
-          }
-
-          stages {
-            stage('License Checks') {
-              steps {
-                sh './scripts/check_license_header.py'
-              }
-            }
-            stage('Style check') {
-              steps {
-                sh './scripts/apply_style.py -w -a'
-              }
-            }
-          }
-        } // basic checks
 
         stage('Static Analysis') {
           agent {
@@ -43,7 +48,7 @@ pipeline {
               }
             }
           }
-        } // basic checks
+        } // static analysis
 
         stage('Clang 6 Debug') {
           agent {
@@ -180,9 +185,9 @@ pipeline {
         } // gcc 7 release
 
       } // parallel
+
     } // build & test
 
   } // stages
 
 } // pipeline
-

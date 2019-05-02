@@ -126,11 +126,16 @@ public:
       }
       else
       {
-        request->ParseHeader(*buffer_ptr, len);
-
-        if (is_open_)
+        // only parse the header if there is data to be parsed
+        if (len)
         {
-          ReadBody(buffer_ptr, request);
+          if (request->ParseHeader(*buffer_ptr, len))
+          {
+            if (is_open_)
+            {
+              ReadBody(buffer_ptr, request);
+            }
+          }
         }
       }
     };
@@ -148,6 +153,12 @@ public:
     {
       request->ParseBody(*buffer_ptr);
 
+      // at this point if the read has been successful populate the remote address information
+      // inside the request
+      auto const &remote_endpoint = socket_.remote_endpoint();
+      request->SetOriginatingAddress(remote_endpoint.address().to_string(), remote_endpoint.port());
+
+      // push the request to the main server
       manager_.PushRequest(handle_, *request);
 
       if (is_open_)

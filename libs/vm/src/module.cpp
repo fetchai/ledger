@@ -67,11 +67,17 @@ Module::Module()
   imap.CreateTypeConstuctor<>();
   imap.CreateInstanceFunction("count", &IMap::Count);
 
+  auto address = RegisterClassType<Address>(TypeIds::Address);
+  address.CreateTypeConstuctor<>();
+  address.CreateTypeConstuctor<Ptr<String>>();
+  address.CreateInstanceFunction("signed_tx", &Address::HasSignedTx);
+
   auto istate = RegisterTemplateType<IState>(TypeIds::IState);
-  istate.CreateTypeConstuctor<Ptr<String>>();
   istate.CreateTypeConstuctor<Ptr<String>, TemplateParameter>();
+  istate.CreateTypeConstuctor<Ptr<Address>, TemplateParameter>();
   istate.CreateInstanceFunction("get", &IState::Get);
   istate.CreateInstanceFunction("set", &IState::Set);
+  istate.CreateInstanceFunction("existed", &IState::Existed);
 }
 
 }  // namespace vm

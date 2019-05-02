@@ -60,7 +60,7 @@ void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
   case NUMBER_INT:
     // TODO(private issue #566): the `std::strtoll(...)` should be used here instead (converting to
     // `long long`)
-    variant = std::atoi(document.char_pointer() + token.first);
+    variant = std::atoll(document.char_pointer() + token.first);
     success = true;
     break;
 
@@ -363,6 +363,11 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
         ++objects_;
         tokens_.push_back({pos, pos + 5, KEYWORD_FALSE});
         pos += 4;
+        if ((document.size() <= pos) || (document[pos] != 'e'))
+        {
+          throw JSONParseException(
+              "Unrecognised token. Expected false, but last letter did not match.");
+        }
         ++pos;
         ++element_counter;
         continue;

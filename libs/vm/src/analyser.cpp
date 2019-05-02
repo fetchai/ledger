@@ -29,6 +29,22 @@ void Analyser::Initialise()
   global_symbol_table_        = CreateSymbolTable();
   next_instantiation_type_id_ = 2000;
 
+  operator_table_ = {{Operator::Equal, Node::Kind::EqualOp},
+                     {Operator::NotEqual, Node::Kind::NotEqualOp},
+                     {Operator::LessThan, Node::Kind::LessThanOp},
+                     {Operator::LessThanOrEqual, Node::Kind::LessThanOrEqualOp},
+                     {Operator::GreaterThan, Node::Kind::GreaterThanOp},
+                     {Operator::GreaterThanOrEqual, Node::Kind::GreaterThanOrEqualOp},
+                     {Operator::UnaryMinus, Node::Kind::UnaryMinusOp},
+                     {Operator::Add, Node::Kind::AddOp},
+                     {Operator::Subtract, Node::Kind::SubtractOp},
+                     {Operator::Multiply, Node::Kind::MultiplyOp},
+                     {Operator::Divide, Node::Kind::DivideOp},
+                     {Operator::AddAssign, Node::Kind::AddAssignOp},
+                     {Operator::SubtractAssign, Node::Kind::SubtractAssignOp},
+                     {Operator::MultiplyAssign, Node::Kind::MultiplyAssignOp},
+                     {Operator::DivideAssign, Node::Kind::DivideAssignOp}};
+
   CreateMetaType("Any", TypeIds::Any, any_type_);
   CreateMetaType("TemplateParameter1", TypeIds::TemplateParameter1, template_parameter1_type_);
   CreateMetaType("TemplateParameter2", TypeIds::TemplateParameter2, template_parameter2_type_);
@@ -74,38 +90,44 @@ void Analyser::Initialise()
   CreateOpcodeFreeFunction("toFloat64", Opcodes::ToFloat64, {cast_variant_type_}, float64_type_);
 
   CreateClassType("String", TypeIds::String, string_type_);
-  EnableOp(string_type_, Node::Kind::AddOp);
+  EnableOperator(string_type_, Operator::Equal);
+  EnableOperator(string_type_, Operator::NotEqual);
+  EnableOperator(string_type_, Operator::LessThan);
+  EnableOperator(string_type_, Operator::LessThanOrEqual);
+  EnableOperator(string_type_, Operator::GreaterThan);
+  EnableOperator(string_type_, Operator::GreaterThanOrEqual);
+  EnableOperator(string_type_, Operator::Add);
 
   CreateTemplateType("Matrix", TypeIds::IMatrix, {real_variant_type_}, matrix_type_);
   EnableIndexOperator(matrix_type_, {integer_variant_type_, integer_variant_type_},
                       template_parameter1_type_);
-  EnableOp(matrix_type_, Node::Kind::UnaryMinusOp);
-  EnableOp(matrix_type_, Node::Kind::AddOp);
-  EnableOp(matrix_type_, Node::Kind::SubtractOp);
-  EnableOp(matrix_type_, Node::Kind::MultiplyOp);
-  // EnableOp(matrix_type_, Node::Kind::DivideOp);
-  EnableOp(matrix_type_, Node::Kind::AddAssignOp);
-  EnableOp(matrix_type_, Node::Kind::SubtractAssignOp);
-  EnableOp(matrix_type_, Node::Kind::MultiplyAssignOp);
-  // EnableOp(matrix_type_, Node::Kind::DivideAssignOp);
-  // EnableLeftOp(matrix_type_, Node::Kind::AddOp);
-  // EnableLeftOp(matrix_type_, Node::Kind::SubtractOp);
-  EnableLeftOp(matrix_type_, Node::Kind::MultiplyOp);
-  // EnableLeftOp(matrix_type_, Node::Kind::DivideOp);
-  EnableRightOp(matrix_type_, Node::Kind::AddOp);
-  EnableRightOp(matrix_type_, Node::Kind::SubtractOp);
-  EnableRightOp(matrix_type_, Node::Kind::MultiplyOp);
-  EnableRightOp(matrix_type_, Node::Kind::DivideOp);
-  EnableRightOp(matrix_type_, Node::Kind::AddAssignOp);
-  EnableRightOp(matrix_type_, Node::Kind::SubtractAssignOp);
-  EnableRightOp(matrix_type_, Node::Kind::MultiplyAssignOp);
-  EnableRightOp(matrix_type_, Node::Kind::DivideAssignOp);
+  EnableOperator(matrix_type_, Operator::UnaryMinus);
+  EnableOperator(matrix_type_, Operator::Add);
+  EnableOperator(matrix_type_, Operator::Subtract);
+  EnableOperator(matrix_type_, Operator::Multiply);
+  EnableOperator(matrix_type_, Operator::AddAssign);
+  EnableOperator(matrix_type_, Operator::SubtractAssign);
+  EnableOperator(matrix_type_, Operator::MultiplyAssign);
+  EnableLeftOperator(matrix_type_, Operator::Multiply);
+  EnableRightOperator(matrix_type_, Operator::Add);
+  EnableRightOperator(matrix_type_, Operator::Subtract);
+  EnableRightOperator(matrix_type_, Operator::Multiply);
+  EnableRightOperator(matrix_type_, Operator::Divide);
+  EnableRightOperator(matrix_type_, Operator::AddAssign);
+  EnableRightOperator(matrix_type_, Operator::SubtractAssign);
+  EnableRightOperator(matrix_type_, Operator::MultiplyAssign);
+  EnableRightOperator(matrix_type_, Operator::DivideAssign);
 
   CreateTemplateType("Array", TypeIds::IArray, {any_type_}, array_type_);
   EnableIndexOperator(array_type_, {integer_variant_type_}, template_parameter1_type_);
 
   CreateTemplateType("Map", TypeIds::IMap, {any_type_, any_type_}, map_type_);
   EnableIndexOperator(map_type_, {template_parameter1_type_}, template_parameter2_type_);
+
+  // ledger specific
+  CreateClassType("Address", TypeIds::Address, address_type_);
+  EnableOperator(address_type_, Operator::Equal);
+  EnableOperator(address_type_, Operator::NotEqual);
 
   CreateTemplateType("State", TypeIds::IState, {any_type_}, state_type_);
 }
@@ -196,6 +218,17 @@ void Analyser::CreateOpcodeInstanceFunction(TypeId type_id, std::string const &n
 {
   CreateOpcodeInstanceFunction(GetTypePtr(type_id), name, opcode, GetTypePtrs(parameter_type_ids),
                                GetTypePtr(return_type_id));
+}
+
+void Analyser::EnableOperator(TypeId type_id, Operator op)
+{
+  EnableOperator(GetTypePtr(type_id), op);
+}
+
+void Analyser::EnableIndexOperator(TypeId type_id, TypeIdArray const &input_type_ids,
+                                   TypeId const &output_type_id)
+{
+  EnableIndexOperator(GetTypePtr(type_id), GetTypePtrs(input_type_ids), GetTypePtr(output_type_id));
 }
 
 bool Analyser::Analyse(BlockNodePtr const &root, TypeInfoTable &type_info_table, Strings &errors)
@@ -529,12 +562,12 @@ void Analyser::AnnotateForStatement(BlockNodePtr const &for_statement_node)
   {
     NodePtr const &   child      = for_statement_node->children[i];
     ExpressionNodePtr child_node = ConvertToExpressionNodePtr(child);
-    if (AnnotateExpression(child_node) == false)
+    if (!AnnotateExpression(child_node))
     {
       ++problems;
       continue;
     }
-    if (IsIntegerType(child_node->type) == false)
+    if (!IsIntegerType(child_node->type))
     {
       ++problems;
       AddError(child_node->token, "integral type expected");
@@ -600,7 +633,7 @@ void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
   if (var_statement_node->kind == Node::Kind::VarDeclarationStatement)
   {
     ExpressionNodePtr type_node = ConvertToExpressionNodePtr(var_statement_node->children[1]);
-    if (AnnotateTypeExpression(type_node) == false)
+    if (!AnnotateTypeExpression(type_node))
     {
       return;
     }
@@ -609,12 +642,12 @@ void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
   else if (var_statement_node->kind == Node::Kind::VarDeclarationTypedAssignmentStatement)
   {
     ExpressionNodePtr type_node = ConvertToExpressionNodePtr(var_statement_node->children[1]);
-    if (AnnotateTypeExpression(type_node) == false)
+    if (!AnnotateTypeExpression(type_node))
     {
       return;
     }
     ExpressionNodePtr expression_node = ConvertToExpressionNodePtr(var_statement_node->children[2]);
-    if (AnnotateExpression(expression_node) == false)
+    if (!AnnotateExpression(expression_node))
     {
       return;
     }
@@ -642,7 +675,7 @@ void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
   else
   {
     ExpressionNodePtr expression_node = ConvertToExpressionNodePtr(var_statement_node->children[1]);
-    if (AnnotateExpression(expression_node) == false)
+    if (!AnnotateExpression(expression_node))
     {
       return;
     }
@@ -662,7 +695,7 @@ void Analyser::AnnotateReturnStatement(NodePtr const &return_statement_node)
   {
     ExpressionNodePtr expression_node =
         ConvertToExpressionNodePtr(return_statement_node->children[0]);
-    if (AnnotateExpression(expression_node) == false)
+    if (!AnnotateExpression(expression_node))
     {
       return;
     }
@@ -726,14 +759,14 @@ bool Analyser::AnnotateAssignOp(ExpressionNodePtr const &node)
 {
   for (NodePtr const &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    if (!AnnotateExpression(ConvertToExpressionNodePtr(child)))
     {
       return false;
     }
   }
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  if (IsWriteable(lhs) == false)
+  if (!IsWriteable(lhs))
   {
     return false;
   }
@@ -770,25 +803,23 @@ bool Analyser::AnnotateModuloAssignOp(ExpressionNodePtr const &node)
 {
   for (NodePtr const &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    if (!AnnotateExpression(ConvertToExpressionNodePtr(child)))
     {
       return false;
     }
   }
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  if (IsWriteable(lhs) == false)
+  if (!IsWriteable(lhs))
   {
     return false;
   }
   if ((lhs->type == rhs->type) && IsIntegerType(lhs->type))
   {
-    AddError(node->token, "modulo not implemented yet");
-    return false;
-    // SetRV(node, lhs->type);
-    // return true;
+    SetRV(node, lhs->type);
+    return true;
   }
-  AddError(node->token, "integer type expected");
+  AddError(node->token, "integral type expected");
   return false;
 }
 
@@ -796,14 +827,14 @@ bool Analyser::AnnotateArithmeticAssignOp(ExpressionNodePtr const &node)
 {
   for (NodePtr const &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    if (!AnnotateExpression(ConvertToExpressionNodePtr(child)))
     {
       return false;
     }
   }
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  if (IsWriteable(lhs) == false)
+  if (!IsWriteable(lhs))
   {
     return false;
   }
@@ -829,7 +860,7 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
       AddError(node->token, "unknown symbol '" + node->token.text + "'");
       return false;
     }
-    if (symbol->IsVariable() == false)
+    if (!symbol->IsVariable())
     {
       // type or a function name by itself
       AddError(node->token, "symbol '" + node->token.text + "' is not a variable");
@@ -893,7 +924,7 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
   case Node::Kind::EqualOp:
   case Node::Kind::NotEqualOp:
   {
-    if (AnnotateEqualityOp(node) == false)
+    if (!AnnotateEqualityOp(node))
     {
       return false;
     }
@@ -904,7 +935,7 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
   case Node::Kind::GreaterThanOp:
   case Node::Kind::GreaterThanOrEqualOp:
   {
-    if (AnnotateRelationalOp(node) == false)
+    if (!AnnotateRelationalOp(node))
     {
       return false;
     }
@@ -913,7 +944,7 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
   case Node::Kind::AndOp:
   case Node::Kind::OrOp:
   {
-    if (AnnotateBinaryLogicalOp(node) == false)
+    if (!AnnotateBinaryLogicalOp(node))
     {
       return false;
     }
@@ -921,7 +952,7 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
   }
   case Node::Kind::NotOp:
   {
-    if (AnnotateUnaryLogicalOp(node) == false)
+    if (!AnnotateUnaryLogicalOp(node))
     {
       return false;
     }
@@ -932,7 +963,7 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
   case Node::Kind::PostfixIncOp:
   case Node::Kind::PostfixDecOp:
   {
-    if (AnnotateIncDecOp(node) == false)
+    if (!AnnotateIncDecOp(node))
     {
       return false;
     }
@@ -940,7 +971,7 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
   }
   case Node::Kind::UnaryMinusOp:
   {
-    if (AnnotateUnaryMinusOp(node) == false)
+    if (!AnnotateUnaryMinusOp(node))
     {
       return false;
     }
@@ -948,7 +979,7 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
   }
   case Node::Kind::ModuloOp:
   {
-    if (AnnotateModuloOp(node) == false)
+    if (!AnnotateModuloOp(node))
     {
       return false;
     }
@@ -959,7 +990,7 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
   case Node::Kind::MultiplyOp:
   case Node::Kind::DivideOp:
   {
-    if (AnnotateArithmeticOp(node) == false)
+    if (!AnnotateArithmeticOp(node))
     {
       return false;
     }
@@ -967,7 +998,7 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
   }
   case Node::Kind::IndexOp:
   {
-    if (AnnotateIndexOp(node) == false)
+    if (!AnnotateIndexOp(node))
     {
       return false;
     }
@@ -975,7 +1006,7 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
   }
   case Node::Kind::DotOp:
   {
-    if (AnnotateDotOp(node) == false)
+    if (!AnnotateDotOp(node))
     {
       return false;
     }
@@ -983,7 +1014,7 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
   }
   case Node::Kind::InvokeOp:
   {
-    if (AnnotateInvokeOp(node) == false)
+    if (!AnnotateInvokeOp(node))
     {
       return false;
     }
@@ -1002,7 +1033,7 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
 {
   for (NodePtr const &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    if (!AnnotateExpression(ConvertToExpressionNodePtr(child)))
     {
       return false;
     }
@@ -1016,6 +1047,8 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
   }
   bool const lhs_is_concrete_type = lhs->type->id != TypeIds::Null;
   bool const rhs_is_concrete_type = rhs->type->id != TypeIds::Null;
+  bool const lhs_is_primitive     = lhs->type->category == TypeCategory::Primitive;
+  bool const rhs_is_primitive     = rhs->type->category == TypeCategory::Primitive;
   if (lhs_is_concrete_type)
   {
     if (rhs_is_concrete_type)
@@ -1025,10 +1058,17 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
         AddError(node->token, "incompatible types");
         return false;
       }
+      Node::Kind const op      = node->kind;
+      bool const       enabled = lhs_is_primitive || IsOpEnabled(lhs->type, op);
+      if (!enabled)
+      {
+        AddError(node->token, "operator not supported");
+        return false;
+      }
     }
     else
     {
-      if (lhs->type->category == TypeCategory::Primitive)
+      if (lhs_is_primitive)
       {
         // unable to compare LHS primitive type to RHS null
         AddError(node->token, "incompatible types");
@@ -1042,7 +1082,7 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
   {
     if (rhs_is_concrete_type)
     {
-      if (rhs->type->category == TypeCategory::Primitive)
+      if (rhs_is_primitive)
       {
         // unable to compare LHS null to RHS primitive type
         AddError(node->token, "incompatible types");
@@ -1064,21 +1104,23 @@ bool Analyser::AnnotateRelationalOp(ExpressionNodePtr const &node)
 {
   for (NodePtr const &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    if (!AnnotateExpression(ConvertToExpressionNodePtr(child)))
     {
       return false;
     }
   }
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  if ((IsRelationalType(lhs->type) == false) || (IsRelationalType(rhs->type) == false))
+  if (lhs->type != rhs->type)
   {
     AddError(node->token, "incompatible types");
     return false;
   }
-  if (lhs->type != rhs->type)
+  Node::Kind const op      = node->kind;
+  bool const       enabled = IsNumberType(lhs->type) || IsOpEnabled(lhs->type, op);
+  if (!enabled)
   {
-    AddError(node->token, "incompatible types");
+    AddError(node->token, "operator not supported");
     return false;
   }
   SetRV(node, bool_type_);
@@ -1089,7 +1131,7 @@ bool Analyser::AnnotateBinaryLogicalOp(ExpressionNodePtr const &node)
 {
   for (NodePtr const &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    if (!AnnotateExpression(ConvertToExpressionNodePtr(child)))
     {
       return false;
     }
@@ -1108,7 +1150,7 @@ bool Analyser::AnnotateBinaryLogicalOp(ExpressionNodePtr const &node)
 bool Analyser::AnnotateUnaryLogicalOp(ExpressionNodePtr const &node)
 {
   ExpressionNodePtr operand = ConvertToExpressionNodePtr(node->children[0]);
-  if (AnnotateExpression(operand) == false)
+  if (!AnnotateExpression(operand))
   {
     return false;
   }
@@ -1124,17 +1166,17 @@ bool Analyser::AnnotateUnaryLogicalOp(ExpressionNodePtr const &node)
 bool Analyser::AnnotateIncDecOp(ExpressionNodePtr const &node)
 {
   ExpressionNodePtr operand = ConvertToExpressionNodePtr(node->children[0]);
-  if (AnnotateExpression(operand) == false)
+  if (!AnnotateExpression(operand))
   {
     return false;
   }
-  if (IsWriteable(operand) == false)
+  if (!IsWriteable(operand))
   {
     return false;
   }
-  if (IsIntegerType(operand->type) == false)
+  if (!IsIntegerType(operand->type))
   {
-    AddError(node->token, "integer type expected");
+    AddError(node->token, "integral type expected");
     return false;
   }
   SetRV(node, operand->type);
@@ -1145,7 +1187,7 @@ bool Analyser::AnnotateUnaryMinusOp(ExpressionNodePtr const &node)
 {
   Node::Kind const  op      = node->kind;
   ExpressionNodePtr operand = ConvertToExpressionNodePtr(node->children[0]);
-  if (AnnotateExpression(operand) == false)
+  if (!AnnotateExpression(operand))
   {
     return false;
   }
@@ -1162,7 +1204,7 @@ bool Analyser::AnnotateModuloOp(ExpressionNodePtr const &node)
 {
   for (NodePtr const &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    if (!AnnotateExpression(ConvertToExpressionNodePtr(child)))
     {
       return false;
     }
@@ -1171,12 +1213,10 @@ bool Analyser::AnnotateModuloOp(ExpressionNodePtr const &node)
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
   if ((lhs->type == rhs->type) && IsIntegerType(lhs->type))
   {
-    AddError(node->token, "modulo not implemented yet");
-    return false;
-    // SetRV(node, lhs->type);
-    // return true;
+    SetRV(node, lhs->type);
+    return true;
   }
-  AddError(node->token, "integer type expected");
+  AddError(node->token, "integral type expected");
   return false;
 }
 
@@ -1184,7 +1224,7 @@ bool Analyser::AnnotateArithmeticOp(ExpressionNodePtr const &node)
 {
   for (NodePtr const &child : node->children)
   {
-    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    if (!AnnotateExpression(ConvertToExpressionNodePtr(child)))
     {
       return false;
     }
@@ -1211,9 +1251,9 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
       AddError(lhs->token, "unknown symbol '" + lhs->token.text + "'");
       return false;
     }
-    if (symbol->IsVariable() == false)
+    if (!symbol->IsVariable())
     {
-      AddError(lhs->token, "operand does not support index operator");
+      AddError(lhs->token, "operand does not support index operator (1)");
       return false;
     }
     VariablePtr variable = ConvertToVariablePtr(symbol);
@@ -1226,7 +1266,7 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
   }
   else
   {
-    if (AnnotateExpression(lhs) == false)
+    if (!AnnotateExpression(lhs))
     {
       return false;
     }
@@ -1235,7 +1275,7 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
   if ((lhs->category == ExpressionNode::Category::Type) ||
       (lhs->category == ExpressionNode::Category::Function))
   {
-    AddError(lhs->token, "operand does not support index operator");
+    AddError(lhs->token, "operand does not support index operator (2)");
     return false;
   }
 
@@ -1252,7 +1292,7 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
   size_t const num_expected_indexes = type->index_input_types.size();
   if (num_expected_indexes == 0)
   {
-    AddError(lhs->token, "operand does not support index operator");
+    AddError(lhs->token, "operand does not support index operator (3)");
     return false;
   }
 
@@ -1268,7 +1308,7 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
   {
     NodePtr const &   supplied_index      = node->children[i];
     ExpressionNodePtr supplied_index_node = ConvertToExpressionNodePtr(supplied_index);
-    if (AnnotateExpression(supplied_index_node) == false)
+    if (!AnnotateExpression(supplied_index_node))
     {
       return false;
     }
@@ -1278,7 +1318,7 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
   TypePtrArray actual_index_types;
   bool const   match =
       MatchTypes(lhs->type, supplied_index_types, type->index_input_types, actual_index_types);
-  if (match == false)
+  if (!match)
   {
     AddError(lhs->token, "incorrect operands for index operator");
     return false;
@@ -1333,7 +1373,7 @@ bool Analyser::AnnotateDotOp(ExpressionNodePtr const &node)
   }
   else
   {
-    if (AnnotateExpression(lhs) == false)
+    if (!AnnotateExpression(lhs))
     {
       return false;
     }
@@ -1424,7 +1464,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
   }
   else
   {
-    if (AnnotateExpression(lhs) == false)
+    if (!AnnotateExpression(lhs))
     {
       return false;
     }
@@ -1435,7 +1475,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
   {
     NodePtr const &   supplied_parameter      = node->children[i];
     ExpressionNodePtr supplied_parameter_node = ConvertToExpressionNodePtr(supplied_parameter);
-    if (AnnotateExpression(supplied_parameter_node) == false)
+    if (!AnnotateExpression(supplied_parameter_node))
     {
       return false;
     }
@@ -1469,7 +1509,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
     }
     else if (f->kind == Function::Kind::OpcodeInstanceFunction)
     {
-      if (lhs->function_invoked_on_instance == false)
+      if (!lhs->function_invoked_on_instance)
       {
         AddError(lhs->token,
                  "function '" + lhs->fg->name + "' is an instance function, not a type function");
@@ -1512,6 +1552,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
                "unable to find matching constructor for type '" + lhs->type->name + "'");
       return false;
     }
+
     FunctionGroupPtr fg = ConvertToFunctionGroupPtr(symbol);
     TypePtrArray     actual_parameter_types;
     FunctionPtr f = FindFunction(lhs->type, fg, supplied_parameter_types, actual_parameter_types);
@@ -1519,7 +1560,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
     {
       // No matching constructor, or ambiguous
       AddError(lhs->token,
-               "unable to find matching constructor for type '" + lhs->type->name + "'");
+               "unable to find matching constructor for type/function '" + lhs->type->name + "'");
       return false;
     }
 
@@ -1569,7 +1610,7 @@ bool Analyser::TestBlock(BlockNodePtr const &block_node)
           bool const   able_to_reach_reach_end_of_block = TestBlock(node);
           able_to_reach_end_of_if_statement |= able_to_reach_reach_end_of_block;
         }
-        if (able_to_reach_end_of_if_statement == false)
+        if (!able_to_reach_end_of_if_statement)
         {
           return false;
         }
@@ -1751,7 +1792,7 @@ bool Analyser::MatchTypes(TypePtr const &type, TypePtrArray const &supplied_type
     }
     else
     {
-      if (MatchType(supplied_type, expected_type) == false)
+      if (!MatchType(supplied_type, expected_type))
       {
         // Not a match
         return false;
@@ -1794,7 +1835,7 @@ TypePtr Analyser::FindType(ExpressionNodePtr const &node)
   {
     return nullptr;
   }
-  if (symbol->IsType() == false)
+  if (!symbol->IsType())
   {
     return nullptr;
   }
@@ -1839,11 +1880,13 @@ SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const &node)
       TypePtr const &expected_parameter_type = template_type->types[i - 1];
       if (expected_parameter_type->id != TypeIds::Any)
       {
-        if (MatchType(parameter_type, expected_parameter_type) == false)
+        if (!MatchType(parameter_type, expected_parameter_type))
         {
           return nullptr;
         }
       }
+      // Need to check here that parameter_type does in fact support any operator(s)
+      // required by the template_type's i'th type parameter...
       parameter_types.push_back(parameter_type);
     }
     TypePtr type;

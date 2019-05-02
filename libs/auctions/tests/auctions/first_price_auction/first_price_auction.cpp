@@ -52,7 +52,7 @@ TEST(first_price_auction, one_item_many_bid_first_price_auction)
   Value   min_price = 7;
   Item    item(item_id, seller_id, min_price);
   err = a.AddItem(item);
-  ASSERT_TRUE(err == ErrorCode::SUCCESS);
+  ASSERT_EQ(err, ErrorCode::SUCCESS);
 
   // set up bidders
   std::size_t         n_bidders = 10;
@@ -69,12 +69,12 @@ TEST(first_price_auction, one_item_many_bid_first_price_auction)
     bid_id = static_cast<BidId>(j);
     Bid cur_bid(bid_id, {item.id}, bidders[j].funds, bidders[j].id);
     err = a.PlaceBid(cur_bid);
-    ASSERT_TRUE(err == ErrorCode::SUCCESS);
+    ASSERT_EQ(err, ErrorCode::SUCCESS);
   }
 
   err = a.Execute();
-  ASSERT_TRUE(err == ErrorCode::SUCCESS);
+  ASSERT_EQ(err, ErrorCode::SUCCESS);
 
-  ASSERT_TRUE(a.Winner(item.id) == bidders[bidders.size() - 1].id);
-  ASSERT_TRUE(a.items()[0].sell_price == bidders[bidders.size() - 1].funds);
+  ASSERT_EQ(a.Winner(item.id), bidders[bidders.size() - 1].id);
+  ASSERT_EQ(a.items()[0].sell_price, bidders[bidders.size() - 1].funds);
 }

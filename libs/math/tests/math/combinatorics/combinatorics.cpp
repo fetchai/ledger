@@ -20,195 +20,210 @@
 #include <iomanip>
 #include <iostream>
 
-#include "math/free_functions/combinatorics/combinatorics.hpp"
+#include "math/combinatorics.hpp"
 #include <math/tensor.hpp>
 
 using namespace fetch::math::combinatorics;
 
-// Factorial function - test edge case (0!)
-TEST(combinatorics, test_factorial_zero)
+using DataType  = double;
+using ArrayType = typename fetch::math::Tensor<DataType>;
+using SizeType  = std::uint64_t;
+
+template <typename T>
+class CombinatoricsTest : public ::testing::Test
 {
-  std::size_t input  = 0;
-  std::size_t output = factorial(input);
-  ASSERT_TRUE(output == 1);
+};
+
+using MyTypes =
+    ::testing::Types<fetch::math::Tensor<std::int32_t>, fetch::math::Tensor<std::int64_t>,
+                     fetch::math::Tensor<std::uint32_t>, fetch::math::Tensor<std::uint64_t>,
+                     fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
+TYPED_TEST_CASE(CombinatoricsTest, MyTypes);
+
+// Factorial function - test edge case (0!)
+TYPED_TEST(CombinatoricsTest, test_factorial_zero)
+{
+  SizeType input  = 0;
+  SizeType output = factorial(input);
+  ASSERT_EQ(output, 1);
 }
 
 // Factorial function - test standard input (12!)
-TEST(combinatorics, test_factorial_standard_input)
+TYPED_TEST(CombinatoricsTest, test_factorial_standard_input)
 {
-  std::size_t input        = 12;
-  std::size_t output       = factorial(input);
-  std::size_t numpy_output = 479001600;
-  ASSERT_TRUE(output == numpy_output);
+  SizeType input        = 12;
+  SizeType output       = factorial(input);
+  SizeType numpy_output = 479001600;
+  ASSERT_EQ(output, numpy_output);
 }
 
 // calculateNumCombinations function - test standard input
-TEST(combinatorics, test_num_combinations_standard_input)
+TYPED_TEST(CombinatoricsTest, test_num_combinations_standard_input)
 {
-  std::size_t n = 5;
-  std::size_t r = 2;
+  SizeType n = 5;
+  SizeType r = 2;
 
-  std::size_t fetch_output  = calculateNumCombinations(n, r);
-  std::size_t python_output = 10;
+  SizeType fetch_output  = calculateNumCombinations(n, r);
+  SizeType python_output = 10;
 
   ASSERT_EQ(fetch_output, python_output);
 
-  fetch_output = calculateNumCombinations(9, 4);
+  fetch_output = calculateNumCombinations(SizeType(9), SizeType(4));
 
   ASSERT_EQ(fetch_output, 126);
 
-  n                        = (1 << 24) + 1;
-  std::size_t matrixHeight = static_cast<std::size_t>(calculateNumCombinations(n, 1));
+  n                     = (1 << 24) + 1;
+  SizeType matrixHeight = static_cast<SizeType>(calculateNumCombinations(n, SizeType(1)));
   EXPECT_EQ(matrixHeight, n);
 
   if (sizeof(n) > 7)
   {
     n            = (1llu << 63) - 1;
-    matrixHeight = static_cast<std::size_t>(calculateNumCombinations(n, 1));
+    matrixHeight = static_cast<SizeType>(calculateNumCombinations(n, SizeType(1)));
     EXPECT_EQ(matrixHeight, n);
 
     n            = (1llu << 30) - 1;
-    matrixHeight = static_cast<std::size_t>(calculateNumCombinations(n, 2));
+    matrixHeight = static_cast<SizeType>(calculateNumCombinations(n, SizeType(2)));
     EXPECT_EQ(matrixHeight, n * (n - 1) / 2);
   }
 }
 
 // Combinations function - edge case - n=r
-TEST(combinatorics, test_num_combinations_edge_case1)
+TYPED_TEST(CombinatoricsTest, test_num_combinations_edge_case1)
 {
-  std::size_t n = 5;
-  std::size_t r = 5;
+  SizeType n = 5;
+  SizeType r = 5;
 
-  std::size_t fetch_output  = calculateNumCombinations(n, r);
-  std::size_t python_output = 1;
+  SizeType fetch_output  = calculateNumCombinations(n, r);
+  SizeType python_output = 1;
 
-  ASSERT_TRUE(fetch_output == python_output);
+  ASSERT_EQ(fetch_output, python_output);
 }
 
 // Combinations function - edge case - n=r=1
-TEST(combinatorics, test_num_combinations_edge_case2)
+TYPED_TEST(CombinatoricsTest, test_num_combinations_edge_case2)
 {
-  std::size_t n = 1;
-  std::size_t r = 1;
+  SizeType n = 1;
+  SizeType r = 1;
 
-  std::size_t fetch_output  = calculateNumCombinations(n, r);
-  std::size_t python_output = 1;
+  SizeType fetch_output  = calculateNumCombinations(n, r);
+  SizeType python_output = 1;
 
-  ASSERT_TRUE(fetch_output == python_output);
+  ASSERT_EQ(fetch_output, python_output);
 }
 
 // Combinations function - edge case - r=0
-TEST(combinatorics, test_num_combinations_edge_case3)
+TYPED_TEST(CombinatoricsTest, test_num_combinations_edge_case3)
 {
-  std::size_t n = 12;
-  std::size_t r = 0;
+  SizeType n = 12;
+  SizeType r = 0;
 
-  std::size_t fetch_output  = calculateNumCombinations(n, r);
-  std::size_t python_output = 1;
+  SizeType fetch_output  = calculateNumCombinations(n, r);
+  SizeType python_output = 1;
 
-  ASSERT_TRUE(fetch_output == python_output);
+  ASSERT_EQ(fetch_output, python_output);
 }
 
 // Combinations function - test standard input
-TEST(combinatorics, test_combinations_standard_input)
+TYPED_TEST(CombinatoricsTest, test_combinations_standard_input)
 {
-  std::size_t n = 5;
-  std::size_t r = 2;
+  SizeType n = 5;
+  SizeType r = 2;
 
-  fetch::math::Tensor<double> python_output({2, 10});
-  fetch::math::Tensor<double> fetch_output({2, 10});
+  ArrayType python_output({2, 10});
+  ArrayType fetch_output({2, 10});
 
   // Row 1
-  python_output.Set({0, 0}, 4);
-  python_output.Set({1, 0}, 5);
+  python_output.Set(SizeType{0}, SizeType{0}, 4);
+  python_output.Set(SizeType{1}, SizeType{0}, 5);
 
   // Row 2
-  python_output.Set({0, 1}, 3);
-  python_output.Set({1, 1}, 5);
+  python_output.Set(SizeType{0}, SizeType{1}, 3);
+  python_output.Set(SizeType{1}, SizeType{1}, 5);
 
   // Row 3
-  python_output.Set({0, 2}, 3);
-  python_output.Set({1, 2}, 4);
+  python_output.Set(SizeType{0}, SizeType{2}, 3);
+  python_output.Set(SizeType{1}, SizeType{2}, 4);
 
   // Row 4
-  python_output.Set({0, 3}, 2);
-  python_output.Set({1, 3}, 5);
+  python_output.Set(SizeType{0}, SizeType{3}, 2);
+  python_output.Set(SizeType{1}, SizeType{3}, 5);
 
   // Row 5
-  python_output.Set({0, 4}, 2);
-  python_output.Set({1, 4}, 4);
+  python_output.Set(SizeType{0}, SizeType{4}, 2);
+  python_output.Set(SizeType{1}, SizeType{4}, 4);
 
   // Row 6
-  python_output.Set({0, 5}, 2);
-  python_output.Set({1, 5}, 3);
+  python_output.Set(SizeType{0}, SizeType{5}, 2);
+  python_output.Set(SizeType{1}, SizeType{5}, 3);
 
   // Row 7
-  python_output.Set({0, 6}, 1);
-  python_output.Set({1, 6}, 5);
+  python_output.Set(SizeType{0}, SizeType{6}, 1);
+  python_output.Set(SizeType{1}, SizeType{6}, 5);
 
   // Row 8
-  python_output.Set({0, 7}, 1);
-  python_output.Set({1, 7}, 4);
+  python_output.Set(SizeType{0}, SizeType{7}, 1);
+  python_output.Set(SizeType{1}, SizeType{7}, 4);
 
   // Row 9
-  python_output.Set({0, 8}, 1);
-  python_output.Set({1, 8}, 3);
+  python_output.Set(SizeType{0}, SizeType{8}, 1);
+  python_output.Set(SizeType{1}, SizeType{8}, 3);
 
   // Row 10
-  python_output.Set({0, 9}, 1);
-  python_output.Set({1, 9}, 2);
+  python_output.Set(SizeType{0}, SizeType{9}, 1);
+  python_output.Set(SizeType{1}, SizeType{9}, 2);
 
-  fetch_output = combinations(n, r);
+  fetch_output = combinations<ArrayType>(n, r);
 
   ASSERT_TRUE(fetch_output.AllClose(python_output));
 }
 
 // Combinations function - edge case - n=r
-TEST(combinatorics, test_combinations_edge_case1)
+TYPED_TEST(CombinatoricsTest, test_combinations_edge_case1)
 {
-  std::size_t n = 5;
-  std::size_t r = 5;
+  SizeType n = 5;
+  SizeType r = 5;
 
-  fetch::math::Tensor<double> python_output({5, 1});
-  fetch::math::Tensor<double> fetch_output({5, 1});
+  ArrayType python_output({5, 1});
+  ArrayType fetch_output({5, 1});
 
   // Row 1
-  python_output.Set({0, 0}, 1);
-  python_output.Set({1, 0}, 2);
-  python_output.Set({2, 0}, 3);
-  python_output.Set({3, 0}, 4);
-  python_output.Set({4, 0}, 5);
+  python_output.Set(SizeType{0}, SizeType{0}, 1);
+  python_output.Set(SizeType{1}, SizeType{0}, 2);
+  python_output.Set(SizeType{2}, SizeType{0}, 3);
+  python_output.Set(SizeType{3}, SizeType{0}, 4);
+  python_output.Set(SizeType{4}, SizeType{0}, 5);
 
-  fetch_output = combinations(n, r);
+  fetch_output = combinations<ArrayType>(n, r);
 
   ASSERT_TRUE(fetch_output.AllClose(python_output));
 }
 
 // Combinations function - edge case - n=r=1
-TEST(combinatorics, test_combinations_edge_case2)
+TYPED_TEST(CombinatoricsTest, test_combinations_edge_case2)
 {
-  std::size_t n = 1;
-  std::size_t r = 1;
+  SizeType n = 1;
+  SizeType r = 1;
 
-  fetch::math::Tensor<double> python_output({1, 1});
-  fetch::math::Tensor<double> fetch_output({1, 1});
+  ArrayType python_output({1, 1});
+  ArrayType fetch_output({1, 1});
 
   // Row 1
-  python_output.Set({0, 0}, 1);
+  python_output.Set(SizeType{0}, SizeType{0}, 1);
 
-  fetch_output = combinations(n, r);
+  fetch_output = combinations<ArrayType>(n, r);
   ASSERT_TRUE(fetch_output.AllClose(python_output));
 }
 
 // Combinations function - edge case - r=0
-TEST(combinatorics, test_combinations_edge_case3)
+TYPED_TEST(CombinatoricsTest, test_combinations_edge_case3)
 {
-  std::size_t n = 12;
-  std::size_t r = 0;
+  SizeType n = 12;
+  SizeType r = 0;
 
-  fetch::math::Tensor<double> python_output{};
-  fetch::math::Tensor<double> fetch_output{};
+  ArrayType python_output{};
+  ArrayType fetch_output{};
 
-  fetch_output = combinations(n, r);
+  fetch_output = combinations<ArrayType>(n, r);
   ASSERT_TRUE(fetch_output.AllClose(python_output));
 }

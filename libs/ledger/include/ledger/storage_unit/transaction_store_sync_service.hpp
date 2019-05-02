@@ -17,12 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/future_timepoint.hpp"
 #include "core/service_ids.hpp"
+#include "core/state_machine.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/lane_controller.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
-#include "network/generics/atomic_state_machine.hpp"
-#include "network/generics/future_timepoint.hpp"
 #include "network/generics/promise_of.hpp"
 #include "network/generics/requesting_queue.hpp"
 #include "network/muddle/muddle.hpp"
@@ -50,8 +51,7 @@ enum class State
 };
 }
 
-class TransactionStoreSyncService : public network::AtomicStateMachine<tx_sync::State>,
-                                    public VerifiedTransactionSink
+class TransactionStoreSyncService : public VerifiedTransactionSink
 {
 public:
   using Muddle                = muddle::Muddle;
@@ -61,10 +61,9 @@ public:
   using Client                = muddle::rpc::Client;
   using ClientPtr             = std::shared_ptr<Client>;
   using ObjectStore           = storage::TransientObjectStore<VerifiedTransaction>;
-  using FutureTimepoint       = network::FutureTimepoint;
+  using FutureTimepoint       = core::FutureTimepoint;
   using RequestingObjectCount = network::RequestingQueueOf<Address, uint64_t>;
   using PromiseOfObjectCount  = network::PromiseOf<uint64_t>;
-  using TxList                = std::vector<UnverifiedTransaction>;
   using RequestingTxList      = network::RequestingQueueOf<Address, TxList>;
   using RequestingSubTreeList = network::RequestingQueueOf<uint64_t, TxList>;
   using PromiseOfTxList       = network::PromiseOf<TxList>;
@@ -73,6 +72,7 @@ public:
   using EventNewTransaction   = std::function<void(VerifiedTransaction const &)>;
   using TrimCacheCallback     = std::function<void()>;
   using State                 = tx_sync::State;
+  using StateMachine          = core::StateMachine<State>;
   using ObjectStorePtr        = std::shared_ptr<ObjectStore>;
   using LaneControllerPtr     = std::shared_ptr<LaneController>;
 
@@ -83,12 +83,16 @@ public:
   static constexpr uint64_t PULL_LIMIT_ = 10000;  // Limit the amount a single rpc call will provide
   static const std::size_t  BATCH_SIZE;
 
-  TransactionStoreSyncService(
-      uint32_t lane_id, MuddlePtr muddle, ObjectStorePtr store, LaneControllerPtr controller_ptr,
-      std::size_t               verification_threads,
-      std::chrono::milliseconds the_timeout                = std::chrono::milliseconds(5000),
-      std::chrono::milliseconds promise_wait_timeout       = std::chrono::milliseconds(2000),
-      std::chrono::milliseconds fetch_object_wait_duration = std::chrono::milliseconds(5000));
+  struct Config
+  {
+    uint32_t                  lane_id{0};
+    std::size_t               verification_threads{1};
+    std::chrono::milliseconds main_timeout{5000};
+    std::chrono::milliseconds promise_wait_timeout{2000};
+    std::chrono::milliseconds fetch_object_wait_duration{5000};
+  };
+
+  TransactionStoreSyncService(Config const &cfg, MuddlePtr muddle, ObjectStorePtr store);
   virtual ~TransactionStoreSyncService();
 
   void Start()
@@ -106,13 +110,19 @@ public:
     trim_cache_callback_ = callback;
   }
 
-  virtual bool PossibleNewState(State &current_state) override;
-
   // We need this for the testing.
   bool IsReady()
   {
     FETCH_LOCK(is_ready_mutex_);
     return is_ready_;
+  }
+
+  void Execute()
+  {
+    if (state_machine_->IsReadyToExecute())
+    {
+      state_machine_->Execute();
+    }
   }
 
 protected:
@@ -131,26 +141,31 @@ protected:
     {
       return;
     }
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", id_, ": ", "Timeout set ", time_duration_.count());
-    timeout_.Set(time_duration_);
+    timeout_.Set(cfg_.main_timeout);
     timeout_set_ = true;
   }
 
 private:
-  MuddlePtr           muddle_;
-  ClientPtr           client_;
-  ObjectStorePtr      store_;  ///< The pointer to the object store
-  TransactionVerifier verifier_;
+  State OnInitial();
+  State OnQueryObjectCounts();
+  State OnResolvingObjectCounts();
+  State OnQuerySubtree();
+  State OnResolvingSubtree();
+  State OnQueryObjects();
+  State OnResolvingObjects();
+  State OnTrimCache();
 
-  LaneControllerPtr lane_controller_;
+  std::shared_ptr<StateMachine> state_machine_;
+  Config const                  cfg_;
+  MuddlePtr                     muddle_;
+  ClientPtr                     client_;
+  ObjectStorePtr                store_;  ///< The pointer to the object store
+  TransactionVerifier           verifier_;
 
-  std::chrono::milliseconds time_duration_;
-  std::chrono::milliseconds promise_wait_time_duration_;
-  FutureTimepoint           timeout_;
-  FutureTimepoint           promise_wait_timeout_;
-  bool                      timeout_set_ = false;
-  std::chrono::milliseconds fetch_object_wait_duration_;
-  FutureTimepoint           fetch_object_wait_timeout_;
+  FutureTimepoint timeout_;
+  FutureTimepoint promise_wait_timeout_;
+  bool            timeout_set_ = false;
+  FutureTimepoint fetch_object_wait_timeout_;
 
   RequestingObjectCount pending_object_count_;
   uint64_t              max_object_count_;
@@ -165,8 +180,6 @@ private:
   TrimCacheCallback trim_cache_callback_;
 
   Mutex mutex_{__LINE__, __FILE__};
-
-  uint32_t id_;
 
   Mutex is_ready_mutex_{__LINE__, __FILE__};
   bool  is_ready_ = false;

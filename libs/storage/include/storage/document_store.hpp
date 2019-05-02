@@ -60,6 +60,8 @@ public:
 
   using index_type = typename key_value_index_type::index_type;
 
+  static constexpr char const *LOGGING_NAME = "DocumentStore";
+
   DocumentStore(){};
   DocumentStore(DocumentStore const &rhs) = delete;
   DocumentStore(DocumentStore &&rhs)      = delete;
@@ -211,12 +213,12 @@ public:
       ++wrapped_iterator_;
     }
 
-    bool operator==(Iterator const &rhs)
+    bool operator==(Iterator const &rhs) const
     {
       return wrapped_iterator_ == rhs.wrapped_iterator_;
     }
 
-    bool operator!=(Iterator const &rhs)
+    bool operator!=(Iterator const &rhs) const
     {
       return !(wrapped_iterator_ == rhs.wrapped_iterator_);
     }
@@ -270,6 +272,48 @@ public:
   self_type::Iterator end()
   {
     return Iterator(this, key_index_.end());
+  }
+
+  // Hash based functionality - note this will only work if both underlying files
+  // have commit functionality
+  byte_array_type Commit()
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    byte_array_type               hash = key_index_.Hash();
+
+    key_index_.underlying_stack().Commit(hash);
+    file_store_.Commit(hash);
+
+    return hash;
+  }
+
+  bool RevertToHash(byte_array_type const &hash)
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+
+    // TODO(private issue 615): HashExists implement
+    if (!(key_index_.underlying_stack().HashExists(hash) && file_store_.HashExists(hash)))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Attempted to revert to a hash that doesn't exist");
+      return false;
+    }
+
+    key_index_.underlying_stack().RevertToHash(hash);
+    file_store_.RevertToHash(hash);
+
+    return true;
+  }
+
+  bool HashExists(byte_array_type const &hash)
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    return key_index_.underlying_stack().HashExists(hash) && file_store_.HashExists(hash);
+  }
+
+  hash_type CurrentHash()
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    return key_index_.Hash();
   }
 
 protected:

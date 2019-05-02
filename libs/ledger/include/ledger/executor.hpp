@@ -19,7 +19,7 @@
 
 #include "crypto/fnv.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/chaincode/cache.hpp"
+#include "ledger/chaincode/chain_code_cache.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 

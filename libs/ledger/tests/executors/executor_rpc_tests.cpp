@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
+#include "core/future_timepoint.hpp"
 #include "crypto/prover.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -25,7 +26,6 @@
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "network/generics/atomic_inflight_counter.hpp"
-#include "network/generics/future_timepoint.hpp"
 #include "storage/resource_mapper.hpp"
 
 #include "mock_storage_unit.hpp"
@@ -39,6 +39,7 @@
 using ::testing::_;
 using fetch::network::AtomicInFlightCounter;
 using fetch::network::AtomicCounterName;
+using fetch::muddle::NetworkId;
 
 class ExecutorRpcTests : public ::testing::Test
 {
@@ -139,13 +140,12 @@ protected:
     // --- Start the MUDDLE on top of the NETWORK MANAGER -----------
 
     ProverPtr p2p_key = GenerateP2PKey();
-    muddle_ =
-        Muddle::CreateMuddle(Muddle::NetworkId("Test"), std::move(p2p_key), *network_manager_);
+    muddle_ = Muddle::CreateMuddle(NetworkId{"Test"}, std::move(p2p_key), *network_manager_);
     muddle_->Start({P2P_RPC_PORT});
 
     // --- Start the EXECUTOR SERVICE -------------------------------
 
-    auto executor_muddle = Muddle::CreateMuddle(Muddle::NetworkId("Test"), *network_manager_);
+    auto executor_muddle = Muddle::CreateMuddle(NetworkId{"Test"}, *network_manager_);
     executor_service_ =
         std::make_unique<ExecutorRpcService>(EXECUTOR_RPC_PORT, storage_, executor_muddle);
     executor_service_->Start();
@@ -154,7 +154,7 @@ protected:
 
     using InFlightCounter =
         fetch::network::AtomicInFlightCounter<fetch::network::AtomicCounterName::TCP_PORT_STARTUP>;
-    fetch::network::FutureTimepoint deadline(std::chrono::seconds(30));
+    fetch::core::FutureTimepoint deadline(std::chrono::seconds(30));
     if (!InFlightCounter::Wait(deadline))
     {
       throw std::runtime_error("Not all socket servers connected correctly. Aborting test");
@@ -162,7 +162,7 @@ protected:
 
     // --- Schedule executor for connection ---------------------
 
-    executor_ = std::make_unique<ExecutorRpcClient>(*network_manager_, *muddle_);
+    executor_ = std::make_unique<ExecutorRpcClient>(*muddle_);
     executor_->Connect(*muddle_, Uri("tcp://127.0.0.1:" + std::to_string(EXECUTOR_RPC_PORT)));
 
     // --- Wait for connections to finish -----------------------
@@ -170,7 +170,7 @@ protected:
     using LocalServiceConnectionsCounter = fetch::network::AtomicInFlightCounter<
         fetch::network::AtomicCounterName::LOCAL_SERVICE_CONNECTIONS>;
     if (!LocalServiceConnectionsCounter::Wait(
-            fetch::network::FutureTimepoint(std::chrono::seconds(30))))
+            fetch::core::FutureTimepoint(std::chrono::seconds(30))))
     {
       throw std::runtime_error("Not all local services connected correctly. Aborting test");
     }
@@ -211,7 +211,6 @@ protected:
 
   fetch::ledger::Transaction CreateWalletTransaction()
   {
-
     // generate an address
     auto address = CreateAddress();
 
@@ -225,6 +224,7 @@ protected:
     // create the transaction
     fetch::ledger::MutableTransaction tx;
     tx.set_contract_name("fetch.token.wealth");
+    tx.PushResource(address);
     tx.set_data(oss.str());
 
     return fetch::ledger::VerifiedTransaction::Create(std::move(tx));
@@ -241,7 +241,6 @@ protected:
 
 TEST_F(ExecutorRpcTests, CheckDummyContract)
 {
-
   EXPECT_CALL(*storage_, AddTransaction(_)).Times(1);
   EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(1);
 
@@ -257,11 +256,14 @@ TEST_F(ExecutorRpcTests, CheckDummyContract)
 
 TEST_F(ExecutorRpcTests, CheckTokenContract)
 {
+  ::testing::InSequence seq;
 
   EXPECT_CALL(*storage_, AddTransaction(_)).Times(1);
   EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(1);
-  EXPECT_CALL(*storage_, GetOrCreate(_)).Times(1);
+  EXPECT_CALL(*storage_, Lock(_)).Times(1);
+  EXPECT_CALL(*storage_, Get(_)).Times(1);
   EXPECT_CALL(*storage_, Set(_, _)).Times(1);
+  EXPECT_CALL(*storage_, Unlock(_)).Times(1);
 
   // create the dummy contract
   auto tx = CreateWalletTransaction();

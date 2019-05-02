@@ -24,6 +24,7 @@
 
 #include "auctions/combinatorial_auction.hpp"
 #include "auctions/type_def.hpp"
+#include "math/tensor.hpp"
 
 namespace fetch {
 namespace auctions {
@@ -176,7 +177,7 @@ private:
         variant::Extract(doc.root(), "exclude_all", exclude_all);
 
         fetch::auctions::ErrorCode ec;
-        if (exclude_all == false)
+        if (!exclude_all)
         {
           ec = auction_.PlaceBid(Bid{bid_id, item_ids, bid_price, bidder_id, excludes});
         }

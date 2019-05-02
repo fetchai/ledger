@@ -95,7 +95,9 @@ void NewRevertibleDocumentStore::Set(ResourceID const &rid, ByteArray const &val
 // State-based operations
 Hash NewRevertibleDocumentStore::Commit()
 {
-  return storage_.Commit();
+  Hash ret{std::move(storage_.Commit())};
+  storage_.Flush(false);
+  return ret;
 }
 
 bool NewRevertibleDocumentStore::RevertToHash(Hash const &state)
@@ -104,7 +106,7 @@ bool NewRevertibleDocumentStore::RevertToHash(Hash const &state)
 
   if (IsAllZeros(state))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Reverting database back to initial state");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Reverting database back to initial state");
 
     // we are requesting to revert to a blank slate. The simplest way to handle this is to clear
     // out the database

@@ -20,7 +20,6 @@
 #include "ledger/chain/transaction_serialization.hpp"
 
 using fetch::byte_array::ConstByteArray;
-using fetch::storage::ResourceID;
 
 #ifdef FETCH_ENABLE_METRICS
 using fetch::metrics::Metrics;
@@ -64,31 +63,36 @@ TransactionStoreSyncProtocol::TransactionStoreSyncProtocol(ObjectStore *store, i
 
 void TransactionStoreSyncProtocol::TrimCache()
 {
+  generics::MilliTimer timer("ObjectSync:TrimCache", 500);
+  FETCH_LOCK(cache_mutex_);
+
+  // reserve the space for the next cache
+  Cache next_cache;
+  next_cache.reserve(cache_.size());  // worst case
+
+  // compute the deadline for the cache entries
+  auto const cut_off =
+      CachedObject::Clock::now() - std::chrono::milliseconds(uint32_t{MAX_CACHE_LIFETIME_MS});
+
+  // generate the next cache version
+  std::copy_if(cache_.begin(), cache_.end(), std::back_inserter(next_cache),
+               [&cut_off](CachedObject const &object) {
+                 // we only copy objects which are young that we want to keep
+                 return object.created > cut_off;
+               });
+
+  auto const next_cache_size = next_cache.size();
+  auto const curr_cache_size = cache_.size();
+
+  if (curr_cache_size && (next_cache_size != curr_cache_size))
   {
-    generics::MilliTimer timer("ObjectSync:TrimCache", 500);
-    FETCH_LOCK(cache_mutex_);
-
-    // reserve the space for the next cache
-    Cache next_cache;
-    next_cache.reserve(cache_.size());  // worst case
-
-    // compute the deadline for the cache entries
-    auto const cut_off =
-        CachedObject::Clock::now() - std::chrono::milliseconds(uint32_t{MAX_CACHE_LIFETIME_MS});
-
-    // generate the next cache version
-    std::copy_if(cache_.begin(), cache_.end(), std::back_inserter(next_cache),
-                 [&cut_off](CachedObject const &object) {
-                   // we only copy objects which are young that we want to keep
-                   return object.created > cut_off;
-                 });
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, ": New cache size: ", next_cache.size(),
-                   " Old cache size: ", cache_.size());
-
-    // replace the old cache
-    cache_ = std::move(next_cache);
+    FETCH_UNUSED(id_);  // logging only
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", id_, ": New cache size: ", next_cache_size,
+                    " Old cache size: ", curr_cache_size);
   }
+
+  // replace the old cache
+  cache_ = std::move(next_cache);
 }
 
 /// @}
@@ -107,8 +111,7 @@ uint64_t TransactionStoreSyncProtocol::ObjectCount()
 {
   FETCH_LOCK(cache_mutex_);
 
-  // TODO(private issue 502): Improve transient object store interface
-  return store_->archive().size();
+  return store_->Size();
 }
 
 /**
@@ -118,31 +121,13 @@ uint64_t TransactionStoreSyncProtocol::ObjectCount()
  *
  * @return: the subtree the client is requesting as a vector (size limited)
  */
-TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullSubtree(
-    byte_array::ConstByteArray const &rid, uint64_t bit_count)
+TxList TransactionStoreSyncProtocol::PullSubtree(byte_array::ConstByteArray const &rid,
+                                                 uint64_t                          bit_count)
 {
-  TxList ret;
-
-  uint64_t counter = 0;
-
-  auto &archive = store_->archive();
-
-  archive.WithLock([&archive, &ret, &counter, &rid, bit_count]() {
-    // This is effectively saying get all objects whose ID begins rid & mask
-    auto it = archive.GetSubtree(ResourceID(rid), bit_count);
-
-    while ((it != archive.end()) && (counter++ < PULL_LIMIT_))
-    {
-      ret.push_back(*it);
-      ++it;
-    }
-  });
-
-  return ret;
+  return store_->PullSubtree(rid, bit_count, PULL_LIMIT_);
 }
 
-TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullObjects(
-    service::CallContext const *call_context)
+TxList TransactionStoreSyncProtocol::PullObjects(service::CallContext const *call_context)
 {
   // Creating result
   TxList ret;

@@ -17,15 +17,38 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/contract.hpp"
+#include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
 
 namespace fetch {
 namespace ledger {
 
-Contract::Contract(byte_array::ConstByteArray const &identifier)
-  : contract_identifier_{identifier}
-{}
+/**
+ * Dispatch the initialisation handler
+ *
+ * @param tx The reference to the originating transaction
+ * @return The corresponding status result for the operation
+ */
+Contract::Status Contract::DispatchInitialise(Identity const &owner)
+{
+  Status status{Status::OK};
 
+  if (init_handler_)
+  {
+    status = init_handler_(owner);
+  }
+
+  return status;
+}
+
+/**
+ * Dispatch the specified contract query
+ *
+ * @param name The name of the query
+ * @param query The input query parameters
+ * @param response The output query parameters
+ * @return The corresponding status result for the operation
+ */
 Contract::Status Contract::DispatchQuery(ContractName const &name, Query const &query,
                                          Query &response)
 {
@@ -41,6 +64,13 @@ Contract::Status Contract::DispatchQuery(ContractName const &name, Query const &
   return status;
 }
 
+/**
+ * Dispatch the specified a contract action
+ *
+ * @param name The name of the action
+ * @param tx The input transaction
+ * @return The corresponding status result for the operation
+ */
 Contract::Status Contract::DispatchTransaction(byte_array::ConstByteArray const &name,
                                                Transaction const &               tx)
 {
@@ -49,69 +79,83 @@ Contract::Status Contract::DispatchTransaction(byte_array::ConstByteArray const 
   auto it = transaction_handlers_.find(name);
   if (it != transaction_handlers_.end())
   {
-
-    // lock the contract resources
-    if (!LockResources(tx.summary().resources))
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "LockResources failed.");
-      return Status::FAILED;
-    }
-
     // dispatch the contract
     status = it->second(tx);
-
-    // unlock the contract resources
-    if (!UnlockResources(tx.summary().resources))
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "UnlockResources failed.");
-      return Status::FAILED;
-    }
-
     ++transaction_counters_[name];
   }
 
   return status;
 }
 
-void Contract::Attach(StorageInterface &state)
+/**
+ * Register the init. handler
+ *
+ * @param handler The init handler
+ */
+void Contract::OnInitialise(InitialiseHandler &&handler)
 {
-  state_ = &state;
+  // detect if a handler has already been set
+  if (init_handler_)
+  {
+    throw std::runtime_error("Duplicate initialise handler");
+  }
+
+  // register the handler
+  init_handler_ = std::move(handler);
 }
 
-void Contract::Detach()
+/**
+ * Register a transaction handler
+ *
+ * @param name The name of the transaction
+ * @param handler The transaction handler to be registered
+ */
+void Contract::OnTransaction(std::string const &name, TransactionHandler &&handler)
 {
-  state_ = nullptr;
+  // detect duplicates
+  if (transaction_handlers_.find(name) != transaction_handlers_.end())
+  {
+    throw std::logic_error("Duplicate transaction handler registered");
+  }
+
+  // register the handler
+  transaction_handlers_[name] = std::move(handler);
+
+  // reset the counters
+  transaction_counters_[name] = 0;
 }
 
-std::size_t Contract::GetQueryCounter(std::string const &name)
+/**
+ * Register a query handler
+ *
+ * @param name The name of the query
+ * @param handler The query handler to be registered
+ */
+void Contract::OnQuery(std::string const &name, QueryHandler &&handler)
 {
-  auto it = query_counters_.find(name);
-  if (it != query_counters_.end())
+  // detect duplicates
+  if (query_handlers_.find(name) != query_handlers_.end())
   {
-    return it->second;
+    throw std::logic_error("Duplicate query handler registered");
   }
-  else
-  {
-    return 0;
-  }
+
+  // register the handler
+  query_handlers_[name] = std::move(handler);
+
+  // reset the counters
+  query_counters_[name] = 0;
 }
 
-std::size_t Contract::GetTransactionCounter(std::string const &name)
-{
-  auto it = transaction_counters_.find(name);
-  if (it != transaction_counters_.end())
-  {
-    return it->second;
-  }
-  else
-  {
-    return 0;
-  }
-}
-
+/**
+ * Utility: Parse the contents of the transaction payload as a JSON object
+ *
+ * @param tx The input transaction to be processed
+ * @param output THe output JSON object to be populated
+ * @return true if successful, otherwise falses
+ */
 bool Contract::ParseAsJson(Transaction const &tx, variant::Variant &output)
 {
-  bool success = false;
+  bool success{false};
 
   json::JSONDocument document;
 
@@ -121,75 +165,27 @@ bool Contract::ParseAsJson(Transaction const &tx, variant::Variant &output)
     document.Parse(tx.data());
     success = true;
   }
-  catch (json::JSONParseException &ex)
+  catch (json::JSONParseException const &)
   {
-    // expected
   }
 
   if (success)
   {
-    output = std::move(document.root());
+    output = document.root();
   }
 
   return success;
 }
 
-Identifier const &Contract::identifier() const
-{
-  return contract_identifier_;
-}
-
-Contract::QueryHandlerMap const &Contract::query_handlers() const
-{
-  return query_handlers_;
-}
-
-Contract::TransactionHandlerMap const &Contract::transaction_handlers() const
-{
-  return transaction_handlers_;
-}
-
-storage::ResourceAddress Contract::CreateStateIndex(byte_array::ByteArray const &suffix) const
-{
-  byte_array::ByteArray index;
-  index.Append(contract_identifier_.name_space(), ".state.", suffix);
-  return storage::ResourceAddress{index};
-}
-
-StorageInterface &Contract::state()
+/**
+ * State Accessor
+ *
+ * @return The reference to the state instance
+ */
+ledger::StateAdapter &Contract::state()
 {
   detailed_assert(state_ != nullptr);
   return *state_;
-}
-
-bool Contract::LockResources(ResourceSet const &resources)
-{
-  bool success = true;
-
-  for (auto const &group : resources)
-  {
-    if (!state().Lock(CreateStateIndex(group)))
-    {
-      success = false;
-    }
-  }
-
-  return success;
-}
-
-bool Contract::UnlockResources(ResourceSet const &resources)
-{
-  bool success = true;
-
-  for (auto const &group : resources)
-  {
-    if (!state().Unlock(CreateStateIndex(group)))
-    {
-      success = false;
-    }
-  }
-
-  return success;
 }
 
 }  // namespace ledger

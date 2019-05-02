@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/address.hpp"
 #include "vm/array.hpp"
 #include "vm/compiler.hpp"
 #include "vm/map.hpp"
@@ -103,6 +104,32 @@ public:
     {
       using InstanceFunction = ReturnType (ObjectType::*)(Ts...) const;
       return InternalCreateInstanceFunction<ReturnType, InstanceFunction, Ts...>(name, f);
+    }
+
+    ClassInterface &EnableOperator(Operator op)
+    {
+      TypeId type_id__               = type_id_;
+      auto   compiler_setup_function = [type_id__, op](Compiler *compiler) {
+        compiler->EnableOperator(type_id__, op);
+      };
+      module_->AddCompilerSetupFunction(compiler_setup_function);
+      return *this;
+    }
+
+    template <typename OutputType, typename InputType, typename... InputTypes>
+    ClassInterface &EnableIndexOperator()
+    {
+      TypeId         type_id__ = type_id_;
+      TypeIndexArray type_index_array;
+      UnrollTypes<InputType, InputTypes...>::Unroll(type_index_array);
+      TypeIdArray input_type_ids = module_->GetTypeIds(type_index_array);
+      TypeId      output_type_id = module_->GetTypeId(TypeGetter<OutputType>::GetTypeIndex());
+      auto        compiler_setup_function = [type_id__, input_type_ids,
+                                      output_type_id](Compiler *compiler) {
+        compiler->EnableIndexOperator(type_id__, input_type_ids, output_type_id);
+      };
+      module_->AddCompilerSetupFunction(compiler_setup_function);
+      return *this;
     }
 
   private:

@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "core/runnable.hpp"
 
 #include <atomic>
 #include <map>
@@ -27,17 +28,13 @@
 namespace fetch {
 namespace core {
 
-class Runnable;
-
 class Reactor
 {
 public:
   static constexpr char const *LOGGING_NAME = "Reactor";
 
-  using WeakRunnable = std::weak_ptr<Runnable>;
-
   // Construction / Destruction
-  Reactor()                = default;
+  explicit Reactor(std::string name);
   Reactor(Reactor const &) = delete;
   Reactor(Reactor &&)      = delete;
   ~Reactor()               = default;
@@ -62,7 +59,8 @@ private:
   void StopWorker();
   void Monitor();
 
-  Flag running_{false};
+  std::string const name_;
+  Flag              running_{false};
 
   Mutex       work_map_mutex_{__LINE__, __FILE__};
   RunnableMap work_map_{};

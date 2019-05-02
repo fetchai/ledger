@@ -111,7 +111,7 @@ public:
       return;
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Created strand");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Created strand");
 
     strand_ = strong_strand;
 

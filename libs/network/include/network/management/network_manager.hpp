@@ -35,15 +35,14 @@ public:
   using event_function_type = std::function<void()>;
 
   using implementation_type = details::NetworkManagerImplementation;
-  using pointer_type        = std::shared_ptr<implementation_type>;
+  using PointerType         = std::shared_ptr<implementation_type>;
   using weak_ref_type       = std::weak_ptr<implementation_type>;
 
   static constexpr char const *LOGGING_NAME = "NetworkManager";
 
   NetworkManager(std::string name, std::size_t threads)
-  {
-    pointer_ = std::make_shared<implementation_type>(std::move(name), threads);
-  }
+    : pointer_{std::make_shared<implementation_type>(std::move(name), threads)}
+  {}
 
   NetworkManager(NetworkManager const &other)
     : is_copy_(true)
@@ -58,41 +57,23 @@ public:
     }
   }
 
-  ~NetworkManager()
-  {
-    if (!is_copy_)
-    {
-      Stop();
-    }
-  }
-
   NetworkManager(NetworkManager &&rhs) = delete;
   NetworkManager &operator=(NetworkManager const &rhs) = delete;
   NetworkManager &operator=(NetworkManager &&rhs) = delete;
 
   void Start()
   {
-    if (is_copy_)
+    if (is_primary())
     {
-      return;
-    }
-    auto ptr = lock();
-    if (ptr)
-    {
-      ptr->Start();
+      pointer_->Start();
     }
   }
 
   void Stop()
   {
-    if (is_copy_)
+    if (is_primary())
     {
-      return;
-    }
-    auto ptr = lock();
-    if (ptr)
-    {
-      ptr->Stop();
+      pointer_->Stop();
     }
   }
 
@@ -122,17 +103,13 @@ public:
 
   bool is_valid()
   {
-    return (!is_copy_) || bool(weak_pointer_.lock());
+    return is_primary() || bool(weak_pointer_.lock());
   }
 
   bool Running()
   {
     auto ptr = lock();
-    if (ptr)
-    {
-      return ptr->Running();
-    }
-    return false;
+    return ptr && ptr->Running();
   }
 
   bool is_primary()
@@ -140,29 +117,29 @@ public:
     return (!is_copy_);
   }
 
-  pointer_type lock()
+  PointerType lock()
   {
-    if (is_copy_)
+    if (is_primary())
     {
-      return weak_pointer_.lock();
+      return pointer_;
     }
-    return pointer_;
+    return weak_pointer_.lock();
   }
 
-  template <typename IO, typename... arguments>
-  std::shared_ptr<IO> CreateIO(arguments &&... args)
+  template <typename IO, typename... Args>
+  std::shared_ptr<IO> CreateIO(Args &&... args)
   {
     auto ptr = lock();
     if (ptr)
     {
-      return ptr->CreateIO<IO>(std::forward<arguments>(args)...);
+      return ptr->CreateIO<IO>(std::forward<Args>(args)...);
     }
     TODO_FAIL("Attempted to get IO from dead TM");
-    return std::shared_ptr<IO>(nullptr);
+    return std::shared_ptr<IO>{};
   }
 
 private:
-  pointer_type  pointer_;
+  PointerType   pointer_;
   weak_ref_type weak_pointer_;
   bool          is_copy_ = false;
 };

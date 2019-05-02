@@ -171,7 +171,7 @@ public:
   }
 
   // FIXME: Incorrect naming
-  void seek(std::size_t const &p)
+  void seek(std::size_t p)
   {
     pos_ = p;
   }

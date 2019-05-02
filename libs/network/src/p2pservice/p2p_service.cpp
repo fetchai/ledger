@@ -65,8 +65,7 @@ void P2PService::Start(UriList const &initial_peer_list)
     muddle_.AddPeer(uri);
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Establishing CORE Service on tcp://127.0.0.1:", "??",
-                 " ID: ", byte_array::ToBase64(muddle_.identity().identifier()));
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting P2PService...");
 
   thread_pool_->SetIdleInterval(1000);
   thread_pool_->Start();
@@ -118,38 +117,20 @@ void P2PService::WorkCycle()
     // in the case of exceptions.
     process_future_timepoint_.Set(manifest_update_cycle_ms_);
 
-    AddressSet    active_addresses;
-    ConnectionMap active_connections;
+    AddressSet active_addresses;
 
-    GetConnectionStatus(active_connections, active_addresses);
+    // get a list of the direct connections for this node
+    auto const connections = muddle_.GetConnections(true);
 
-    // Now we have the list of active addresses from the networking,
-    // make all the subsystems try to match it. We work off the
-    // network's ACTUAL connections instead of the trust system's
-    // ideally desired peer list because this means that we know we've
-    // got one connection to the target and hence the subsystem
-    // connections can be more expected to work.
-    UpdateManifests(active_addresses);
-
-    // At this point, if we aren't doing the peer-churning section
-    // above, we'll "fake" the trust system's contents by adding the
-    // connected peers into it.  This will have the effect of making
-    // the HTTP requests for SwarmEye work for static network geometry
-    // as well as dynamic.
-    if (!peer_update_cycle_ms_.count())
+    for (auto const &connection : connections)
     {
-      for (const auto &c : active_connections)
+      if (Uri::Scheme::Tcp == connection.second.scheme())
       {
-        if (muddle_.IsConnected(c.first))
-        {
-          if (desired_peers_.find(c.first) == desired_peers_.end())
-          {
-            desired_peers_.insert(c.first);
-            trust_system_.AddFeedback(c.first, TrustSubject::PEER, TrustQuality::NEW_PEER);
-          }
-        }
+        active_addresses.insert(connection.first);
       }
     }
+
+    UpdateManifests(active_addresses);
   }
 }
 

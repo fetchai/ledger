@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "network/service/protocol.hpp"
+#include "storage/object_store_protocol.hpp"
 #include "storage/transient_object_store.hpp"
-#include <functional>
 
 namespace fetch {
 namespace storage {
@@ -28,8 +28,7 @@ template <typename T>
 class ObjectStoreProtocol : public fetch::service::Protocol
 {
 public:
-  using event_set_object_type = std::function<void(T const &)>;
-  using self_type             = ObjectStoreProtocol<T>;
+  using self_type = ObjectStoreProtocol<T>;
 
   static constexpr char const *LOGGING_NAME = "ObjectStoreProto";
 
@@ -73,27 +72,17 @@ public:
     this->Expose(GET_RECENT, obj_store, &TransientObjectStore<T>::GetRecent);
   }
 
-  void OnSetObject(event_set_object_type const &f)
-  {
-    on_set_ = f;
-  }
-
 private:
   void Set(ResourceID const &rid, T const &object)
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Setting object in object store protocol");
-
-    if (on_set_)
-    {
-      on_set_(object);
-    }
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Setting object across object store protocol");
 
     obj_store_->Set(rid, object, false);
   }
 
   void SetBulk(ElementList const &elements)
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Setting multiple objects in object store protocol");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Setting multiple objects across object store protocol");
 
     // loop through and set all the values
     for (Element const &element : elements)
@@ -108,7 +97,7 @@ private:
 
     if (!obj_store_->Get(rid, ret))
     {
-      throw std::runtime_error("Unable to lookup element in from storage unit");
+      throw std::runtime_error("Unable to lookup element across object store protocol");
     }
 
     // once we have retrieved a transaction from the core it is important that we persist it to disk
@@ -118,7 +107,6 @@ private:
   }
 
   TransientObjectStore<T> *obj_store_;
-  event_set_object_type    on_set_;
 };
 
 }  // namespace storage

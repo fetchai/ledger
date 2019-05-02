@@ -17,7 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/logger.hpp"
 #include "ops/ops.hpp"
+
 #include <iostream>
 #include <memory>
 #include <unordered_map>
@@ -31,34 +33,51 @@ template <class T>
 class NodeInterface
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType      = T;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using SliceType      = typename ArrayType::SliceType;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
-  virtual ArrayPtrType Evaluate()                                           = 0;
-  virtual void         AddInput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
-  virtual std::vector<std::pair<NodeInterface<T> *, ArrayPtrType>> BackPropagate(
-      ArrayPtrType errorSignal) = 0;
-  virtual void ResetCache()     = 0;
+  virtual ArrayType &Evaluate()                                            = 0;
+  virtual void       AddInput(std::shared_ptr<NodeInterface<T>> const &i)  = 0;
+  virtual void       AddOutput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
+  virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
+      ArrayType const &errorSignal)                                                = 0;
+  virtual void ResetCache(bool input_size_changed)                                 = 0;
+  virtual void SetBatch(bool b)                                                    = 0;
+  virtual std::vector<std::shared_ptr<NodeInterface<T>>> const &GetOutputs() const = 0;
 };
 
 template <class T, class O>
 class Node : public NodeInterface<T>, public O
 {
+private:
+  enum class CachedOutputState
+  {
+    VALID_CACHE,
+    CHANGED_CONTENT,
+    CHANGED_SIZE
+  };
+
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType      = T;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using SliceType      = typename ArrayType::SliceType;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   template <typename... Params>
   Node(std::string const name, Params... params)
     : O(params...)
     , name_(std::move(name))
+    , cached_output_status_(CachedOutputState::CHANGED_SIZE)
+    , batch_(false)
   {}
 
   virtual ~Node() = default;
 
-  std::vector<ArrayPtrType> GatherInputs() const
+  std::vector<std::reference_wrapper<const ArrayType>> GatherInputs() const
   {
-    std::vector<ArrayPtrType> inputs;
+    std::vector<std::reference_wrapper<const ArrayType>> inputs;
     for (auto const &i : inputs_)
     {
       inputs.push_back(i->Evaluate());
@@ -66,43 +85,61 @@ public:
     return inputs;
   }
 
-  virtual ArrayPtrType Evaluate()
+  virtual ArrayType &Evaluate()
   {
-    if (!cachedOutput_)
+    FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
+    if (cached_output_status_ != CachedOutputState::VALID_CACHE)
     {
-      std::vector<ArrayPtrType> inputs = GatherInputs();
-      FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
-      cachedOutput_ = this->Forward(inputs);
+      std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
+      if (cached_output_status_ == CachedOutputState::CHANGED_SIZE)
+      {
+        auto output_shape = this->ComputeOutputShape(inputs);
+        if (cached_output_.shape() != output_shape)
+        {
+          cached_output_.ResizeFromShape(output_shape);
+        }
+      }
+      if (batch_)
+      {
+        cached_output_ = this->ForwardBatch(inputs);
+      }
+      else
+      {
+        cached_output_ = this->Forward(inputs, cached_output_);
+      }
+      cached_output_status_ = CachedOutputState::VALID_CACHE;
     }
-    return cachedOutput_;
+
+    return cached_output_;
   }
 
-  virtual std::vector<std::pair<NodeInterface<T> *, ArrayPtrType>> BackPropagate(
-      ArrayPtrType errorSignal)
+  virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
+      ArrayType const &errorSignal)
   {
-    //    FETCH_LOG_INFO("ML_LIB", "Backpropagating node [", name_, "]");
-    std::vector<ArrayPtrType> inputs                     = GatherInputs();
-    std::vector<ArrayPtrType> backpropagatedErrorSignals = this->Backward(inputs, errorSignal);
-    std::vector<std::pair<NodeInterface<T> *, ArrayPtrType>> nonBackpropagatedErrorSignals;
-    assert(backpropagatedErrorSignals.size() == inputs.size() || inputs.empty());
+    FETCH_LOG_INFO("ML_LIB", "Backpropagating node [", name_, "]");
+    std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
+    std::vector<ArrayType> back_propagated_error_signals = this->Backward(inputs, errorSignal);
+    std::vector<std::pair<NodeInterface<T> *, ArrayType>> non_back_propagated_error_signals;
+    assert(back_propagated_error_signals.size() == inputs.size() || inputs.empty());
+
     for (std::uint64_t i(0); i < inputs_.size(); ++i)
     {
-      auto ret = inputs_[i]->BackPropagate(backpropagatedErrorSignals[i]);
-      nonBackpropagatedErrorSignals.insert(nonBackpropagatedErrorSignals.end(), ret.begin(),
-                                           ret.end());
+      auto ret = inputs_[i]->BackPropagate(back_propagated_error_signals[i]);
+      non_back_propagated_error_signals.insert(non_back_propagated_error_signals.end(), ret.begin(),
+                                               ret.end());
     }
     // If no input to backprop to, return gradient to caller
     // This is used to propagate outside of a SubGraph
     // The SubGraph has no knowledge of the rest of the network,
-    // so it sens its unpropagated gradient to its wrapper node that will forward them out
+    // so it sends its unpropagated gradient to its wrapper node that will forward them out
     if (inputs_.empty())
     {
-      for (auto g : backpropagatedErrorSignals)
+      for (auto g : back_propagated_error_signals)
       {
-        nonBackpropagatedErrorSignals.push_back(std::make_pair(this, g));
+        non_back_propagated_error_signals.push_back(std::make_pair(this, g));
       }
     }
-    return nonBackpropagatedErrorSignals;
+    return non_back_propagated_error_signals;
   }
 
   void AddInput(std::shared_ptr<NodeInterface<T>> const &i)
@@ -110,15 +147,34 @@ public:
     inputs_.push_back(i);
   }
 
-  virtual void ResetCache()
+  void AddOutput(std::shared_ptr<NodeInterface<T>> const &o)
   {
-    cachedOutput_ = nullptr;
+    outputs_.push_back(o);
+  }
+
+  virtual std::vector<std::shared_ptr<NodeInterface<T>>> const &GetOutputs() const
+  {
+    return outputs_;
+  }
+
+  virtual void ResetCache(bool input_size_changed)
+  {
+    cached_output_status_ =
+        input_size_changed ? CachedOutputState::CHANGED_SIZE : CachedOutputState::CHANGED_CONTENT;
+  }
+
+  virtual void SetBatch(bool b)
+  {
+    batch_ = b;
   }
 
 private:
   std::vector<std::shared_ptr<NodeInterface<T>>> inputs_;
+  std::vector<std::shared_ptr<NodeInterface<T>>> outputs_;
   std::string                                    name_;
-  ArrayPtrType                                   cachedOutput_;
+  ArrayType                                      cached_output_;
+  CachedOutputState                              cached_output_status_;
+  bool                                           batch_;
 };
 
 }  // namespace ml

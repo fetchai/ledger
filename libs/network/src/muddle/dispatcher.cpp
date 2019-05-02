@@ -34,6 +34,7 @@ const std::chrono::seconds PROMISE_TIMEOUT{30};
  */
 uint64_t Combine(uint16_t service, uint16_t channel, uint16_t counter)
 {
+  LOG_STACK_TRACE_POINT;
   uint64_t id = 0;
 
   id |= static_cast<uint64_t>(service) << 32u;
@@ -54,8 +55,9 @@ uint64_t Combine(uint16_t service, uint16_t channel, uint16_t counter)
  * @return The created promise for this exchange
  */
 Dispatcher::Promise Dispatcher::RegisterExchange(uint16_t service, uint16_t channel,
-                                                 uint16_t counter)
+                                                 uint16_t counter, Packet::Address const &address)
 {
+  LOG_STACK_TRACE_POINT;
   FETCH_LOCK(promises_lock_);
 
   uint64_t const id = Combine(service, channel, counter);
@@ -68,7 +70,9 @@ Dispatcher::Promise Dispatcher::RegisterExchange(uint16_t service, uint16_t chan
     promises_.erase(it);
   }
 
-  return promises_[id].promise;
+  PromiseEntry &entry = promises_[id];
+  entry.address       = address;
+  return entry.promise;
 }
 
 /**
@@ -79,6 +83,7 @@ Dispatcher::Promise Dispatcher::RegisterExchange(uint16_t service, uint16_t chan
  */
 bool Dispatcher::Dispatch(PacketPtr packet)
 {
+  LOG_STACK_TRACE_POINT;
   bool success = false;
 
   FETCH_LOCK(promises_lock_);
@@ -88,11 +93,19 @@ bool Dispatcher::Dispatch(PacketPtr packet)
   if (it != promises_.end())
   {
     assert(it->second.promise);
-    it->second.promise->Fulfill(packet->GetPayload());
-    // finally remove the promise from the map (since it has been completed)
-    promises_.erase(it);
-
-    success = true;
+    if (packet->GetSender() == it->second.address)
+    {
+      it->second.promise->Fulfill(packet->GetPayload());
+      // finally remove the promise from the map (since it has been completed)
+      promises_.erase(it);
+      success = true;
+    }
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Recieved response from wrong address");
+      FETCH_LOG_INFO(LOGGING_NAME, "Expected : " + ToBase64(it->second.address));
+      FETCH_LOG_INFO(LOGGING_NAME, "Recieved : " + ToBase64(packet->GetSender()));
+    }
   }
 
   return success;
@@ -108,6 +121,7 @@ bool Dispatcher::Dispatch(PacketPtr packet)
  */
 void Dispatcher::NotifyMessage(Handle handle, uint16_t service, uint16_t channel, uint16_t counter)
 {
+  LOG_STACK_TRACE_POINT;
   FETCH_LOCK(handles_lock_);
   uint64_t const id = Combine(service, channel, counter);
 
@@ -122,6 +136,7 @@ void Dispatcher::NotifyMessage(Handle handle, uint16_t service, uint16_t channel
  */
 void Dispatcher::NotifyConnectionFailure(Handle handle)
 {
+  LOG_STACK_TRACE_POINT;
   PromiseSet affected_promises{};
 
   // lookup all the affected promises
@@ -158,6 +173,7 @@ void Dispatcher::NotifyConnectionFailure(Handle handle)
  */
 void Dispatcher::Cleanup(Timepoint const &now)
 {
+  LOG_STACK_TRACE_POINT;
   FETCH_LOCK(promises_lock_);
   FETCH_LOCK(handles_lock_);
 
@@ -210,6 +226,7 @@ void Dispatcher::Cleanup(Timepoint const &now)
 
 void Dispatcher::FailAllPendingPromises()
 {
+  LOG_STACK_TRACE_POINT;
   FETCH_LOCK(promises_lock_);
   FETCH_LOCK(handles_lock_);
   for (auto promise_it = promises_.begin(); promise_it != promises_.end();)

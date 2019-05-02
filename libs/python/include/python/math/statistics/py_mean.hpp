@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/statistics/mean.hpp"
+#include "math/statistics/mean.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -36,12 +36,8 @@ inline void BuildMeanStatistics(std::string const &custom_name, pybind11::module
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperMean<RectangularArray<double>>)
-      .def(custom_name.c_str(), &WrapperMean<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperMean<ShapelessArray<double>>)
-      .def(custom_name.c_str(), &WrapperMean<ShapelessArray<float>>)
-      .def(custom_name.c_str(), &WrapperMean<NDArray<double>>)
-      .def(custom_name.c_str(), &WrapperMean<NDArray<float>>);
+  module.def(custom_name.c_str(), &WrapperMean<Tensor<double>>)
+      .def(custom_name.c_str(), &WrapperMean<Tensor<float>>);
 }
 
 }  // namespace statistics

@@ -30,10 +30,11 @@ Client::Client(std::string name, MuddleEndpoint &endpoint, Address address, uint
   : name_(std::move(name))
   , endpoint_(endpoint)
   , address_(std::move(address))
-  , service_(service)
   , network_id_(endpoint.network_id())
+  , service_(service)
   , channel_(channel)
 {
+  LOG_STACK_TRACE_POINT;
   handler_ = std::make_shared<Handler>([this](Promise promise) {
     LOG_STACK_TRACE_POINT;
 
@@ -42,7 +43,7 @@ Client::Client(std::string name, MuddleEndpoint &endpoint, Address address, uint
     {
       ProcessServerMessage(promise->value());
     }
-    catch (std::exception &ex)
+    catch (std::exception const &ex)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Client::ProcessServerMessage EX ", ex.what());
     }
@@ -53,9 +54,13 @@ Client::Client(std::string name, MuddleEndpoint &endpoint, Address address, uint
   background_thread_ = std::thread{&Client::BackgroundWorker, this};
 }
 
+Client::Client(std::string name, MuddleEndpoint &endpoint, uint16_t service, uint16_t channel)
+  : Client(std::move(name), endpoint, Address{}, service, channel)
+{}
+
 Client::~Client()
 {
-
+  LOG_STACK_TRACE_POINT;
   FETCH_LOG_WARN(LOGGING_NAME, "Client teardown...");
   // clear that handler
   handler_.reset();
@@ -70,6 +75,7 @@ Client::~Client()
 
 bool Client::DeliverRequest(network::message_type const &data)
 {
+  LOG_STACK_TRACE_POINT;
   FETCH_LOG_DEBUG(LOGGING_NAME, "Please send this packet to the server  ", service_, ",", channel_);
 
   unsigned long long int ident = 0;
@@ -114,7 +120,7 @@ bool Client::DeliverRequest(network::message_type const &data)
 
     return true;
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Erk! Exception in endpoint_.Exchange ", "@prom=", ident, " ",
                     e.what());
@@ -124,6 +130,7 @@ bool Client::DeliverRequest(network::message_type const &data)
 
 void Client::BackgroundWorker()
 {
+  LOG_STACK_TRACE_POINT;
   using PromiseState = service::PromiseState;
 
   SetThreadName(name_);

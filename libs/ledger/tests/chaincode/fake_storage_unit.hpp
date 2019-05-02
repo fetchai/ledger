@@ -136,6 +136,12 @@ public:
     return success;
   }
 
+  bool HasTransaction(ConstByteArray const &digest) override
+  {
+    lock_guard_type lock(mutex_);
+    return transactions_.find(digest) != transactions_.end();
+  }
+
   Hash CurrentHash() override
   {
     return "";
@@ -144,15 +150,15 @@ public:
   {
     return "";
   };
-  bool RevertToHash(Hash const &) override
+  bool RevertToHash(Hash const &, uint64_t) override
   {
     return true;
   };
-  Hash Commit() override
+  Hash Commit(uint64_t) override
   {
     return "";
   };
-  bool HashExists(Hash const &) override
+  bool HashExists(Hash const &, uint64_t) override
   {
     return true;
   };

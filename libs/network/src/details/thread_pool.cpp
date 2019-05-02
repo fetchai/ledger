@@ -250,6 +250,14 @@ void ThreadPoolImplementation::ProcessLoop(std::size_t index)
       {
         std::unique_lock<std::mutex> lock(idle_mutex_);
 
+        // double check the emptiness of the queue because there is a race here
+        if (!work_.IsEmpty())
+        {
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Restarting the inactive thread (thread: ", index,
+                          " queue: ", name_, ')');
+          continue;
+        }
+
         FETCH_LOG_DEBUG(LOGGING_NAME, "Entering idle state (thread: ", index, ')');
 
         // snooze for a while or until more work arrives
@@ -282,7 +290,7 @@ void ThreadPoolImplementation::ProcessLoop(std::size_t index)
       }
     }
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     FETCH_LOG_ERROR(LOGGING_NAME,
                     name_ + ": Thread_pool ProcessLoop is exiting, because: ", e.what());
@@ -360,7 +368,7 @@ bool ThreadPoolImplementation::ExecuteWorkload(WorkItem const &workload)
       // signal successful execution
       success = true;
     }
-    catch (std::exception &ex)
+    catch (std::exception const &ex)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Caught exception in ThreadPool::ExecuteWorkload - ",
                       ex.what());

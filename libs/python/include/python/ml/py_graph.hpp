@@ -17,14 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-
 #include "ml/graph.hpp"
-#include "ml/ops/fully_connected.hpp"
+#include "ml/layers/fully_connected.hpp"
+#include "ml/ops/activation.hpp"
+#include "ml/ops/embeddings.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "ml/ops/relu.hpp"
-#include "ml/ops/softmax.hpp"
+#include "python/fetch_pybind.hpp"
 
 namespace py = pybind11;
 
@@ -41,6 +39,8 @@ void BuildGraph(std::string const &custom_name, pybind11::module &module)
       .def("Evaluate", &fetch::ml::Graph<ArrayType>::Evaluate)
       .def("Backpropagate", &fetch::ml::Graph<ArrayType>::BackPropagate)
       .def("Step", &fetch::ml::Graph<ArrayType>::Step)
+      .def("StateDict", &fetch::ml::Graph<ArrayType>::StateDict)
+      .def("LoadStateDict", &fetch::ml::Graph<ArrayType>::LoadStateDict)
       .def("Step",  // Convenience method to allow step without explicitly defining a FixedPoint
            [](fetch::ml::Graph<ArrayType> &g, float lr) { g.Step(T(lr)); })
       .def("AddInput",
@@ -50,15 +50,22 @@ void BuildGraph(std::string const &custom_name, pybind11::module &module)
       .def("AddFullyConnected",
            [](fetch::ml::Graph<ArrayType> &g, std::string const &name, std::string const &input,
               size_t in, size_t out) {
-             g.template AddNode<fetch::ml::ops::FullyConnected<ArrayType>>(name, {input}, in, out);
+             g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(name, {input}, in,
+                                                                              out);
            })
       .def("AddRelu",
            [](fetch::ml::Graph<ArrayType> &g, std::string const &name, std::string const &input) {
-             g.template AddNode<fetch::ml::ops::ReluLayer<ArrayType>>(name, {input});
+             g.template AddNode<fetch::ml::ops::Relu<ArrayType>>(name, {input});
            })
       .def("AddSoftmax",
            [](fetch::ml::Graph<ArrayType> &g, std::string const &name, std::string const &input) {
-             g.template AddNode<fetch::ml::ops::SoftmaxLayer<ArrayType>>(name, {input});
+             g.template AddNode<fetch::ml::ops::Softmax<ArrayType>>(name, {input});
+           })
+      .def("AddEmbeddings",
+           [](fetch::ml::Graph<ArrayType> &g, std::string const &name, std::string const &input,
+              uint64_t vocabSize, uint64_t embeddingsDimension) {
+             g.template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(name, {input}, vocabSize,
+                                                                       embeddingsDimension);
            });
 }
 }  // namespace ml
