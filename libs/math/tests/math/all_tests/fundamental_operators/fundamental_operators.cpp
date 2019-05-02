@@ -23,7 +23,7 @@
 
 #include "core/fixed_point/fixed_point.hpp"
 #include "core/random/lcg.hpp"
-#include "math/base_types.hpp"                    // wraps NumericMax
+#include "math/base_types.hpp"  // wraps NumericMax
 #include "math/fundamental_operators.hpp"
 #include "math/tensor.hpp"
 
@@ -69,7 +69,6 @@ TYPED_TEST(FundamentalOperatorsUIntTypeTest, AdditionUIntTest)
   EXPECT_EQ(ret, 9);
   EXPECT_EQ(fetch::math::Add(a, b), 9);
 
-
   a = TypeParam{123};
   b = TypeParam{321};
   fetch::math::Add(a, b, ret);
@@ -113,7 +112,6 @@ TYPED_TEST(FundamentalOperatorsIntTypeTest, AdditionIntTest)
   EXPECT_EQ(ret, 9);
   EXPECT_EQ(fetch::math::Add(a, b), 9);
 
-
   a = TypeParam{123};
   b = TypeParam{321};
   fetch::math::Add(a, b, ret);
@@ -148,7 +146,7 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, AdditionNonIntTest)
   TypeParam a;
   TypeParam b;
   TypeParam ret;
-  TypeParam two = TypeParam(2.0);
+  TypeParam two     = TypeParam(2.0);
   TypeParam max_val = fetch::math::NumericMax<TypeParam>();
 
   // test a few small fixed values
@@ -187,7 +185,6 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, AdditionNonIntTest)
   }
 }
 
-
 /// SUBTRACTION TESTS
 TYPED_TEST(FundamentalOperatorsUIntTypeTest, SubtractionUIntTest)
 {
@@ -205,7 +202,6 @@ TYPED_TEST(FundamentalOperatorsUIntTypeTest, SubtractionUIntTest)
   fetch::math::Subtract(a, b, ret);
   EXPECT_EQ(ret, max_val - 4);
   EXPECT_EQ(fetch::math::Subtract(a, b), max_val - 4);
-
 
   a = TypeParam{123};
   b = TypeParam{321};
@@ -249,7 +245,6 @@ TYPED_TEST(FundamentalOperatorsIntTypeTest, SubtractionIntTest)
   EXPECT_EQ(ret, -5);
   EXPECT_EQ(fetch::math::Subtract(a, b), -5);
 
-
   a = TypeParam{123};
   b = TypeParam{321};
   fetch::math::Subtract(a, b, ret);
@@ -283,7 +278,7 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, SubtractionNonIntTest)
   TypeParam a;
   TypeParam b;
   TypeParam ret;
-  TypeParam two = TypeParam(2.0);
+  TypeParam two     = TypeParam(2.0);
   TypeParam max_val = fetch::math::NumericMax<TypeParam>();
 
   // test a few small fixed values
@@ -321,7 +316,6 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, SubtractionNonIntTest)
     EXPECT_EQ(fetch::math::Subtract(a, b), a - b);
   }
 }
-
 
 /// Multiplication tests
 TYPED_TEST(FundamentalOperatorsUIntTypeTest, MultiplicationUIntTest)
@@ -366,7 +360,6 @@ TYPED_TEST(FundamentalOperatorsUIntTypeTest, MultiplicationUIntTest)
   }
 }
 
-
 TYPED_TEST(FundamentalOperatorsIntTypeTest, MultiplicationIntTest)
 {
   TypeParam a;
@@ -380,7 +373,6 @@ TYPED_TEST(FundamentalOperatorsIntTypeTest, MultiplicationIntTest)
   fetch::math::Multiply(a, b, ret);
   EXPECT_EQ(ret, 14);
   EXPECT_EQ(fetch::math::Multiply(a, b), 14);
-
 
   a = TypeParam{123};
   b = TypeParam{321};
@@ -410,13 +402,12 @@ TYPED_TEST(FundamentalOperatorsIntTypeTest, MultiplicationIntTest)
   }
 }
 
-
 TYPED_TEST(FundamentalOperatorsNonIntTypeTest, MultiplicationNonIntTest)
 {
   TypeParam a;
   TypeParam b;
   TypeParam ret;
-  TypeParam two = TypeParam(2.0);
+  TypeParam two     = TypeParam(2.0);
   TypeParam max_val = fetch::math::NumericMax<TypeParam>();
 
   // test a few small fixed values
@@ -454,7 +445,6 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, MultiplicationNonIntTest)
     EXPECT_EQ(fetch::math::Multiply(a, b), a * b);
   }
 }
-
 
 // DIVISION TESTS
 TYPED_TEST(FundamentalOperatorsUIntTypeTest, DivisionUIntTest)
@@ -505,14 +495,12 @@ TYPED_TEST(FundamentalOperatorsUIntTypeTest, DivisionUIntTest)
   }
 }
 
-
 TYPED_TEST(FundamentalOperatorsIntTypeTest, DivisionIntTest)
 {
   TypeParam a;
   TypeParam b;
   TypeParam ret;
   TypeParam max_val = fetch::math::NumericMax<TypeParam>();
-
 
   // test a few small fixed values
   a = TypeParam{2};
@@ -555,13 +543,12 @@ TYPED_TEST(FundamentalOperatorsIntTypeTest, DivisionIntTest)
   }
 }
 
-
 TYPED_TEST(FundamentalOperatorsNonIntTypeTest, DivisionNonIntTest)
 {
   TypeParam a;
   TypeParam b;
   TypeParam ret;
-  TypeParam two = TypeParam(2.0);
+  TypeParam two     = TypeParam(2.0);
   TypeParam max_val = fetch::math::NumericMax<TypeParam>();
 
   // test a few small fixed values
@@ -599,4 +586,3 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, DivisionNonIntTest)
     EXPECT_EQ(fetch::math::Divide(a, b), a / b);
   }
 }
-
