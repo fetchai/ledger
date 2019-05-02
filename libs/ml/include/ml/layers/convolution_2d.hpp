@@ -39,15 +39,16 @@ public:
   using SizeType     = typename ArrayType::SizeType;
   using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
 
-  Convolution2D(SizeType output_channels, SizeType input_channels, SizeType kernel_size,
-                SizeType                stride_size,
-                details::ActivationType activation_type = details::ActivationType::NOTHING,
-                std::string const &     name            = "Conv2D",
-                WeightsInit init_mode = WeightsInit::XAVIER_GLOROT, SizeType seed = 123456789)
-    : kernel_size_(kernel_size)
-    , input_channels_(input_channels)
-    , output_channels_(output_channels)
-    , stride_size_(stride_size)
+  Convolution2D(SizeType const output_channels, SizeType const input_channels,
+                SizeType const kernel_size, SizeType const stride_size,
+                details::ActivationType const activation_type = details::ActivationType::NOTHING,
+                std::string const &           name            = "Conv2D",
+                WeightsInit const             init_mode       = WeightsInit::XAVIER_GLOROT,
+                SizeType const                seed            = 123456789)
+    : kernel_size_{kernel_size}
+    , input_channels_{input_channels}
+    , output_channels_{output_channels}
+    , stride_size_{stride_size}
   {
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
@@ -56,7 +57,7 @@ public:
         this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
 
     ArrayType weights_data(
-        std::vector<SizeType>({output_channels_, input_channels_, kernel_size_, kernel_size_}));
+        std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, kernel_size_}});
     fetch::ml::ops::Weights<ArrayType>::Initialise(weights_data, 1, 1, init_mode, seed);
     this->SetInput(weights, weights_data);
 
@@ -71,15 +72,15 @@ public:
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
 
     std::vector<typename ArrayType::SizeType> output_shape;
-    output_shape.push_back(output_channels_);
-    output_shape.push_back((inputs.at(0).get().shape()[1] - kernel_size_ + stride_size_) /
-                           stride_size_);
-    output_shape.push_back((inputs.at(0).get().shape()[2] - kernel_size_ + stride_size_) /
-                           stride_size_);
+    output_shape.emplace_back(output_channels_);
+    output_shape.emplace_back((inputs.at(0).get().shape()[1] - kernel_size_ + stride_size_) /
+                              stride_size_);
+    output_shape.emplace_back((inputs.at(0).get().shape()[2] - kernel_size_ + stride_size_) /
+                              stride_size_);
     return output_shape;
   }
 

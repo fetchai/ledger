@@ -32,9 +32,9 @@ public:
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  MaxPool1D(SizeType kernel_size, SizeType stride_size)
-    : kernel_size_(kernel_size)
-    , stride_size_(stride_size)
+  MaxPool1D(SizeType const kernel_size, SizeType const stride_size)
+    : kernel_size_{kernel_size}
+    , stride_size_{stride_size}
   {}
 
   ~MaxPool1D() = default;
@@ -48,16 +48,16 @@ public:
 
     auto outputShape = ComputeOutputShape(inputs);
     ASSERT(output.shape() == outputShape);
-    for (uint64_t c(0); c < outputShape[0]; ++c)  // Iterate over output channels
+    for (SizeType c{0}; c < outputShape[0]; ++c)  // Iterate over output channels
     {
 
-      for (uint64_t i(0); i < outputShape.at(1); i++)  // Iterate over kernel stride
+      for (SizeType i{0}; i < outputShape.at(1); i++)  // Iterate over kernel stride
       {
         SizeType iter = i * stride_size_;
 
         DataType max(inputs.at(0).get().At(c, iter));
 
-        for (uint64_t j(0); j < kernel_size_; j++)  // Iterate over kernel width
+        for (SizeType j{0}; j < kernel_size_; j++)  // Iterate over kernel width
         {
           DataType val = inputs.at(0).get().At(c, iter + j);
           if (val > max)
@@ -74,28 +74,31 @@ public:
   // Gradient of max pool is passed only to max node
   std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           errorSignal)
+      ArrayType const &                                           error_signal)
   {
     ASSERT(inputs.size() == 1);
-    ASSERT(errorSignal.shape() == ComputeOutputShape(inputs));
+    ASSERT(error_signal.shape() == ComputeOutputShape(inputs));
 
     ArrayType returnSignal{inputs.at(0).get().shape()};
 
     auto outputShape = ComputeOutputShape(inputs);
-    for (SizeType c(0); c < outputShape[0]; ++c)  // Iterate over output channels
-    {
 
-      for (SizeType i(0); i * stride_size_ < inputs.at(0).get().shape()[1] - kernel_size_;
+    SizeType iter;
+    DataType max;
+    DataType val;
+    SizeType max_iter;
+    for (SizeType c{0}; c < outputShape[0]; ++c)  // Iterate over output channels
+    {
+      for (SizeType i{0}; i * stride_size_ < inputs.at(0).get().shape()[1] - kernel_size_;
            i++)  // Iterate over kernel stride
       {
-        SizeType iter = i * stride_size_;
+        iter     = i * stride_size_;
+        max      = inputs.at(0).get().At(c, iter);
+        max_iter = iter;
 
-        DataType max(inputs.at(0).get().At(c, iter));
-        SizeType max_iter(iter);
-
-        for (uint64_t j(0); j < kernel_size_; j++)  // Iterate over kernel width
+        for (SizeType j{0}; j < kernel_size_; j++)  // Iterate over kernel width
         {
-          DataType val = inputs.at(0).get().At(c, iter + j);
+          val = inputs.at(0).get().At(c, iter + j);
           if (val > max)
           {
             max      = val;
@@ -103,7 +106,7 @@ public:
           }
         }
         // Error needs to be added if same node occurs in multiple output nodes at once
-        returnSignal.Set(c, max_iter, returnSignal.At(c, max_iter) + errorSignal.At(c, i));
+        returnSignal.Set(c, max_iter, returnSignal.At(c, max_iter) + error_signal.At(c, i));
       }
     }
 
@@ -111,20 +114,22 @@ public:
   }
 
   std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
-    std::vector<typename ArrayType::SizeType> outputShape;
-    outputShape.push_back(inputs.at(0).get().shape().at(0));
-    outputShape.push_back((inputs.at(0).get().shape().at(1) - (kernel_size_ - stride_size_)) /
-                          stride_size_);
-    return outputShape;
+    if (output_shape_.size() != 0)
+      return output_shape_;
+    output_shape_.emplace_back(inputs.at(0).get().shape().at(0));
+    output_shape_.emplace_back((inputs.at(0).get().shape().at(1) - (kernel_size_ - stride_size_)) /
+                               stride_size_);
+    return output_shape_;
   }
 
   static constexpr char const *DESCRIPTOR = "MaxPool1D";
 
 private:
-  SizeType kernel_size_;
-  SizeType stride_size_;
+  SizeType              kernel_size_;
+  SizeType              stride_size_;
+  std::vector<SizeType> output_shape_;
 };
 
 }  // namespace ops

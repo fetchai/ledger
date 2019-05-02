@@ -70,24 +70,24 @@ public:
 
     // Fill horizontal stride
     FillHorizontalStride(input, horizontal_stride, output_height, output_width, input_channels,
-                         kernel_height, kernel_width, false);
+                         kernel_height, kernel_width);
 
     // Fill vertical stride
     FillVerticalStride(kernels, vertical_stride, output_channels, input_channels, kernel_height,
-                       kernel_width, false);
+                       kernel_width);
 
     // Do matmul
-    ArrayType tmp_output = fetch::math::Dot(vertical_stride, horizontal_stride);
+    ArrayType reshaped_output = fetch::math::Dot(vertical_stride, horizontal_stride);
 
     // Put values to output
-    FillOutput(tmp_output, output, output_channels, output_height, output_width);
+    FillOutput(reshaped_output, output, output_channels, output_height, output_width);
 
     return output;
   }
 
   std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           errorSignal)
+      ArrayType const &                                           error_signal_signal)
   {
     ASSERT(inputs.size() == 2);
     // Input should be a 3D tensor [C x H x W]
@@ -96,7 +96,7 @@ public:
     ASSERT(inputs.at(1).get().shape().size() == 4);
 
     auto output_shape = ComputeOutputShape(inputs);
-    ASSERT(errorSignal.shape() == output_shape);
+    ASSERT(error_signal_signal.shape() == output_shape);
 
     SizeType output_height = output_shape.at(1);
     SizeType output_width  = output_shape.at(2);
@@ -108,8 +108,8 @@ public:
     SizeType  output_channels = kernels.shape().at(0);
     SizeType  kernel_height   = kernels.shape().at(2);
     SizeType  kernel_width    = kernels.shape().at(3);
-    ArrayType error1(input.shape());
-    ArrayType error2(kernels.shape());
+    ArrayType error_signal1(input.shape());
+    ArrayType error_signal2(kernels.shape());
 
     SizeType horizontal_stride_width  = kernel_width * kernel_height * input_channels;
     SizeType horizontal_stride_height = output_height * output_width;
@@ -120,44 +120,45 @@ public:
 
     // Fill horizontal stride
     FillHorizontalStride(input, horizontal_stride, output_height, output_width, input_channels,
-                         kernel_height, kernel_width, false);
+                         kernel_height, kernel_width);
 
     // Fill vertical stride
     FillVerticalStride(kernels, vertical_stride, output_channels, input_channels, kernel_height,
-                       kernel_width, false);
+                       kernel_width);
 
-    ArrayType tmp_error({vertical_stride_width, horizontal_stride_height});
+    ArrayType error{{vertical_stride_width, horizontal_stride_height}};
 
     // Reverse put values to output
-    ReverseFillOutput(tmp_error, errorSignal, output_channels, output_height, output_width);
+    ReverseFillOutput(error, error_signal_signal, output_channels, output_height, output_width);
 
     // Backwards matmul
-    ArrayType tmp_error2 = fetch::math::DotTranspose(tmp_error, horizontal_stride);
-    ArrayType tmp_error1 = fetch::math::TransposeDot(vertical_stride, tmp_error);
+    ArrayType error2 = fetch::math::DotTranspose(error, horizontal_stride);
+    ArrayType error1 = fetch::math::TransposeDot(vertical_stride, error);
 
     // Reverse fill horizontal stride
-    FillHorizontalStride(error1, tmp_error1, output_height, output_width, input_channels,
-                         kernel_height, kernel_width, true);
+    ReverseFillHorizontalStride(error_signal1, error1, output_height, output_width, input_channels,
+                                kernel_height, kernel_width);
 
     // Reverse fill vertical stride
-    FillVerticalStride(error2, tmp_error2, output_channels, input_channels, kernel_height,
-                       kernel_width, true);
+    ReverseFillVerticalStride(error_signal2, error2, output_channels, input_channels, kernel_height,
+                              kernel_width);
 
-    return {error1, error2};
+    return {error_signal1, error_signal2};
   }
 
   std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
-    std::vector<typename ArrayType::SizeType> output_shape;
-    output_shape.push_back(inputs.at(1).get().shape()[0]);
-    output_shape.push_back(
+    if (output_shape_.size() != 0)
+      return output_shape_;
+    output_shape_.emplace_back(inputs.at(1).get().shape()[0]);
+    output_shape_.emplace_back(
         (inputs.at(0).get().shape()[1] - inputs.at(1).get().shape()[2] + stride_size_) /
         stride_size_);
-    output_shape.push_back(
+    output_shape_.emplace_back(
         (inputs.at(0).get().shape()[2] - inputs.at(1).get().shape()[3] + stride_size_) /
         stride_size_);
-    return output_shape;
+    return output_shape_;
   }
 
   static constexpr char const *DESCRIPTOR = "Convolution2D";
@@ -165,8 +166,7 @@ public:
 private:
   void FillVerticalStride(ArrayType &input, ArrayType &vertical_stride,
                           SizeType const output_channels, SizeType const input_channels,
-                          SizeType const kernel_height, SizeType const kernel_width,
-                          bool const reverse)
+                          SizeType const kernel_height, SizeType const kernel_width)
   {
     SizeType j_s;                                           // stride height iterator
     for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)  // Iterate over output channels
@@ -179,14 +179,30 @@ private:
         {
           for (SizeType j_k(0); j_k < kernel_width; j_k++)  // Iterate over kernel width
           {
-            if (reverse)
-            {
-              input.Set(i_oc, i_ic, i_k, j_k, vertical_stride.At(i_oc, j_s));
-            }
-            else
-            {
-              vertical_stride.Set(i_oc, j_s, input.At(i_oc, i_ic, i_k, j_k));
-            }
+            vertical_stride.Set(i_oc, j_s, input.At(i_oc, i_ic, i_k, j_k));
+            ++j_s;
+          }
+        }
+      }
+    }
+  }
+
+  void ReverseFillVerticalStride(ArrayType &input, ArrayType &vertical_stride,
+                                 SizeType const output_channels, SizeType const input_channels,
+                                 SizeType const kernel_height, SizeType const kernel_width)
+  {
+    SizeType j_s;                                           // stride height iterator
+    for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)  // Iterate over output channels
+    {
+      j_s = 0;
+      for (SizeType i_ic{0}; i_ic < input_channels; ++i_ic)  // Iterate over input channels
+      {
+
+        for (SizeType i_k(0); i_k < kernel_height; i_k++)  // Iterate over kernel height
+        {
+          for (SizeType j_k(0); j_k < kernel_width; j_k++)  // Iterate over kernel width
+          {
+            input.Set(i_oc, i_ic, i_k, j_k, vertical_stride.At(i_oc, j_s));
             ++j_s;
           }
         }
@@ -197,7 +213,7 @@ private:
   void FillHorizontalStride(ArrayType &input, ArrayType &horizontal_stride,
                             SizeType const output_height, SizeType const output_width,
                             SizeType const input_channels, SizeType const kernel_height,
-                            SizeType const kernel_width, bool const reverse)
+                            SizeType const kernel_width)
   {
     SizeType i_s;  // stride width iterator
     SizeType j_s;  // stride height iterator
@@ -215,17 +231,40 @@ private:
           {
             for (SizeType j_k(0); j_k < kernel_width; j_k++)  // Iterate over kernel width
             {
+              horizontal_stride.Set(
+                  i_s, j_s, input.At(i_ic, i_o * stride_size_ + i_k, j_o * stride_size_ + j_k));
+              ++i_s;
+            }
+          }
+        }
+        ++j_s;
+      }
+    }
+  }
 
-              if (reverse)
-              {
-                input.Set(i_ic, i_o * stride_size_ + i_k, j_o * stride_size_ + j_k,
-                          horizontal_stride.At(i_s, j_s));
-              }
-              else
-              {
-                horizontal_stride.Set(
-                    i_s, j_s, input.At(i_ic, i_o * stride_size_ + i_k, j_o * stride_size_ + j_k));
-              }
+  void ReverseFillHorizontalStride(ArrayType &input, ArrayType &horizontal_stride,
+                                   SizeType const output_height, SizeType const output_width,
+                                   SizeType const input_channels, SizeType const kernel_height,
+                                   SizeType const kernel_width)
+  {
+    SizeType i_s;  // stride width iterator
+    SizeType j_s;  // stride height iterator
+
+    j_s = 0;
+    for (SizeType i_o{0}; i_o < output_height; ++i_o)  // Iterate over output height
+    {
+      for (SizeType j_o{0}; j_o < output_width; ++j_o)  // Iterate over output width
+      {
+        i_s = 0;
+        for (SizeType i_ic(0); i_ic < input_channels; ++i_ic)  // Iterate over input channels
+        {
+
+          for (SizeType i_k(0); i_k < kernel_height; i_k++)  // Iterate over kernel height
+          {
+            for (SizeType j_k(0); j_k < kernel_width; j_k++)  // Iterate over kernel width
+            {
+              input.Set(i_ic, i_o * stride_size_ + i_k, j_o * stride_size_ + j_k,
+                        horizontal_stride.At(i_s, j_s));
               ++i_s;
             }
           }
@@ -239,16 +278,16 @@ private:
                   SizeType const output_height, SizeType const output_width)
   {
 
-    SizeType i_tmp;
+    SizeType it;
     for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)  // Iterate over output channels
     {
-      i_tmp = 0;
+      it = 0;
       for (SizeType i_o{0}; i_o < output_height; ++i_o)  // Iterate over output height
       {
         for (SizeType j_o{0}; j_o < output_width; ++j_o)  // Iterate over output width
         {
-          output.Set(i_oc, i_o, j_o, gemm_output.At(i_oc, i_tmp));
-          ++i_tmp;
+          output.Set(i_oc, i_o, j_o, gemm_output.At(i_oc, it));
+          ++it;
         }
       }
     }
@@ -259,22 +298,23 @@ private:
                          SizeType const output_width)
   {
 
-    SizeType i_tmp;
+    SizeType it;
     for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)  // Iterate over output channels
     {
-      i_tmp = 0;
+      it = 0;
       for (SizeType i_o{0}; i_o < output_height; ++i_o)  // Iterate over output height
       {
         for (SizeType j_o{0}; j_o < output_width; ++j_o)  // Iterate over output width
         {
-          gemm_output.Set(i_oc, i_tmp, output.At(i_oc, i_o, j_o));
-          ++i_tmp;
+          gemm_output.Set(i_oc, it, output.At(i_oc, i_o, j_o));
+          ++it;
         }
       }
     }
   }
 
-  SizeType stride_size_;
+  SizeType              stride_size_;
+  std::vector<SizeType> output_shape_;
 };
 
 }  // namespace ops
