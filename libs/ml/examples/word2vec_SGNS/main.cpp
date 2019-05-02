@@ -205,7 +205,7 @@ int main(int argc, char **argv)
   DataType sum_average_count  = 0;
   DataType loss               = 0;
   DataType batch_loss         = 0;
-  DataType epoch_loss         = 0;
+  DataType sub_epoch_loss     = 0;
 
   SizeType batch_count     = 0;
   SizeType step_count      = 0;
@@ -225,7 +225,7 @@ int main(int argc, char **argv)
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    epoch_loss = 0;
+    sub_epoch_loss = 0;
     batch_loss = 0;
 
     // effectively clears any leftover gradients
@@ -284,7 +284,7 @@ int main(int argc, char **argv)
         correct_score = 0;
 
         // sum epoch losses
-        epoch_loss += batch_loss;
+        sub_epoch_loss += batch_loss;
         batch_loss = 0;
 
         ++batch_count;
@@ -298,7 +298,7 @@ int main(int argc, char **argv)
         std::chrono::duration<double> time_diff =
             std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
 
-        std::cout << "epoch_loss: " << epoch_loss << std::endl;
+        std::cout << "loss: " << sub_epoch_loss / last_step_count << std::endl;
         std::cout << "average_score: " << sum_average_scores / sum_average_count << std::endl;
         std::cout << "over [" << batch_count << "] batches involving [" << step_count
                   << "] steps total." << std::endl;
@@ -306,6 +306,7 @@ int main(int argc, char **argv)
         std::cout << "\n: " << std::endl;
         t1              = std::chrono::high_resolution_clock::now();
         last_step_count = 0;
+        sub_epoch_loss = 0;
       }
     }
 
