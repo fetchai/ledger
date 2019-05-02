@@ -28,7 +28,7 @@ class TensorBasicTests : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<int, unsigned int, long, unsigned long, float, double,
+using MyTypes = ::testing::Types<std::int32_t, std::uint32_t, std::int64_t, std::uint64_t, float, double,
                                  fetch::fixed_point::FixedPoint<32, 32>>;
 TYPED_TEST_CASE(TensorBasicTests, MyTypes);
 
