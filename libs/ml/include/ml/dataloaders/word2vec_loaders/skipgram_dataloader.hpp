@@ -223,38 +223,6 @@ typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::SelectContextPosition(Si
   SizeType sentence_len = this->data_.at(this->word_idx_sentence_idx.at(idx)).size();
   SizeType word_offset  = this->GetWordOffsetFromWordIdx(idx);
 
-  /////// OLD WAY ///////
-//
-//  // check all potential context positions
-//  double                current_probability;
-//  int                   normalised_context_position;
-//  std::vector<SizeType> unigram_selection;
-//
-//  //
-//  for (SizeType j = 0; j < (1 + (2 * p_.window_size)); ++j)
-//  {
-//    normalised_context_position = int(j) - int(p_.window_size);
-//    int abs_dist_to_target      = fetch::math::Abs(normalised_context_position);
-//    if (WindowPositionCheck(word_offset, j, sentence_len))
-//    {
-//      current_probability = 1.0 / abs_dist_to_target;
-//
-//      for (int k = 0; k < int(current_probability * double(p_.unigram_precision)); ++k)
-//      {
-//        unigram_selection.emplace_back(j);
-//      }
-//    }
-//  }
-//
-//  SizeType context_offset = unigram_selection_.at(this->lcg_() % unigram_selection_.size());
-
-  //////// OLD WAY/////
-
-  ///// NEW WAY //////
-
-
-
-
   bool not_found = true;
   SizeType context_offset = unigram_selection_.at(this->lcg_() % unigram_selection_.size());
   ASSERT(context_offset < max_window_size_);
@@ -269,8 +237,6 @@ typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::SelectContextPosition(Si
       context_offset = unigram_selection_.at(this->lcg_() % unigram_selection_.size());
     }
   }
-
-  ////// NEW WAY ////
 
   SizeType context_idx = idx + context_offset - p_.window_size;
 
