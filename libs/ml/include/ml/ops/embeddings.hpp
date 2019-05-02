@@ -112,7 +112,7 @@ public:
         gradient_accumulation_slice.InlineMultiply(-learningRate);
         output_slice.InlineAdd(gradient_accumulation_slice);
 
-        this->gradient_accumulation_->Slice(r).Assign(gradient_accumulation_slice);
+        this->gradient_accumulation_->Slice(r).Assign(ArrayType::Zeroes(gradient_accumulation_slice.shape()));
         this->output_->Slice(r).Assign(output_slice);
       }
       updated_rows_.clear();
