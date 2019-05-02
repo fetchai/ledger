@@ -223,7 +223,7 @@ typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::SelectContextPosition(Si
   SizeType sentence_len = this->data_.at(this->word_idx_sentence_idx.at(idx)).size();
   SizeType word_offset  = this->GetWordOffsetFromWordIdx(idx);
 
-  bool not_found = true;
+  bool     not_found      = true;
   SizeType context_offset = unigram_selection_.at(this->lcg_() % unigram_selection_.size());
   ASSERT(context_offset < max_window_size_);
   while (not_found)
