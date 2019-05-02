@@ -298,11 +298,11 @@ int main(int argc, char **argv)
         std::chrono::duration<double> time_diff =
             std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
 
-        std::cout << "loss: " << sub_epoch_loss / last_step_count << std::endl;
+        std::cout << "loss: " << sub_epoch_loss / double(last_step_count) << std::endl;
         std::cout << "average_score: " << sum_average_scores / sum_average_count << std::endl;
         std::cout << "over [" << batch_count << "] batches involving [" << step_count
                   << "] steps total." << std::endl;
-        std::cout << "words/sec: " << last_step_count / time_diff.count() << std::endl;
+        std::cout << "words/sec: " << double(last_step_count) / time_diff.count() << std::endl;
         std::cout << "\n: " << std::endl;
         t1              = std::chrono::high_resolution_clock::now();
         last_step_count = 0;
