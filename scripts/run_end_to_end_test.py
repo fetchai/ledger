@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 #
-# Integration tests of fetch-ledger
+# end to end tests of fetch-ledger
 #
 # This is achieved by using available fetch APIs to spin up a network locally
 # and test it can handle certain conditions (such as single or multiple node failure)
@@ -93,12 +93,12 @@ class TestInstance():
         self._watchdog         = None
 
         # Default to removing old tests
-        for f in glob.glob(build_directory + "/integration_test_*"):
+        for f in glob.glob(build_directory + "/end_to_end_test_*"):
             shutil.rmtree(f)
 
         # To avoid possible collisions, prepend output files with the date
         self._random_identifer  = '{0:%Y_%m_%d_%H_%M_%S}'.format(datetime.datetime.now())
-        self._workspace         = os.path.join(build_directory, 'integration_test_{}'.format(self._random_identifer))
+        self._workspace         = os.path.join(build_directory, 'end_to_end_test_{}'.format(self._random_identifer))
         self._build_directory   = build_directory
         self._constellation_exe = os.path.abspath(constellation_exe)
 
@@ -107,13 +107,13 @@ class TestInstance():
             output("Couldn't find supposed constellation exe: {}".format(constellation_exe))
             sys.exit(1)
 
-        # Ensure that build/integration_output_XXX/ exists for the test output
+        # Ensure that build/end_to_end_output_XXX/ exists for the test output
         os.makedirs(self._workspace, exist_ok=True)
 
     def run(self):
 
         if(self._number_of_nodes == 0):
-            output("Attempted to run integration test with 0 nodes - that's not right.")
+            output("Attempted to run end to end test with 0 nodes - that's not right.")
             sys.exit(1)
 
         nodes = []
@@ -356,10 +356,10 @@ def run_test(build_directory, yaml_file, constellation_exe):
             test_instance.stop()
             sys.exit(1)
 
-    output("\nAll integration tests have passed :)")
+    output("\nAll end to end tests have passed :)")
 
 def parse_commandline():
-    parser = argparse.ArgumentParser( description='High level integration tests reads a yaml file, and runs the tests within. Returns 1 if failed')
+    parser = argparse.ArgumentParser( description='High level end to end tests reads a yaml file, and runs the tests within. Returns 1 if failed')
 
     # Required argument
     parser.add_argument('build_directory', type=str, help='Location of the build directory relative to current path')

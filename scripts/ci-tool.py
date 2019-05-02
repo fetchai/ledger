@@ -13,7 +13,7 @@ import fnmatch
 import shutil
 import multiprocessing
 import xml.etree.ElementTree as ET
-import run_integration_test
+import run_end_to_end_test
 
 BUILD_TYPES = ('Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel')
 MAX_CPUS = 7 # as defined by CI workflow
@@ -222,19 +222,19 @@ def test_project(build_root, label):
         output('Test unsuccessful')
         sys.exit(exit_code)
 
-def test_integration(project_root, build_root):
-    yaml_file = os.path.join(project_root, "scripts/integration_test.yaml")
+def test_end_to_end(project_root, build_root):
+    yaml_file = os.path.join(project_root, "scripts/end_to_end_test.yaml")
 
     # Check that the YAML file does exist
     if not os.path.exists(yaml_file):
-        output('Failed to find yaml file for integration testing:')
+        output('Failed to find yaml file for end_to_end testing:')
         output(yaml_file)
         sys.exit(1)
 
     # should be the location of constellation exe - if not the test will catch
     constellation_exe = os.path.join(build_root, "apps/constellation/constellation")
 
-    run_integration_test.run_test(build_root, yaml_file, constellation_exe)
+    run_end_to_end_test.run_test(build_root, yaml_file, constellation_exe)
 
 def main():
 
@@ -262,9 +262,7 @@ def main():
     if args.integration_tests:
         test_project(build_root, 'Slow')
         test_project(build_root, 'Integration')
-
-    if args.end_to_end_tests:
-        test_integration(project_root, build_root)
+        test_end_to_end(project_root, build_root)
 
 if __name__ == '__main__':
     main()
