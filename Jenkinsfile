@@ -8,6 +8,7 @@ pipeline {
       agent {
         docker {
           image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+
         }
       }
 
@@ -37,6 +38,7 @@ pipeline {
           agent {
             docker {
               image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+              label "ledger"
             }
           }
 
@@ -54,6 +56,7 @@ pipeline {
           agent {
             docker {
               image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+              label "ledger"
             }
           }
 
@@ -85,6 +88,7 @@ pipeline {
           agent {
             docker {
               image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+              label "ledger"
             }
           }
 
@@ -116,6 +120,7 @@ pipeline {
           agent {
             docker {
               image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+              label "ledger"
             }
           }
 
@@ -152,6 +157,7 @@ pipeline {
           agent {
             docker {
               image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+              label "ledger"
             }
           }
 
