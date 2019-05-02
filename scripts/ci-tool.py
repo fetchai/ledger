@@ -117,6 +117,7 @@ def parse_commandline():
     parser.add_argument('-B', '--build', action='store_true', help='Build the project')
     parser.add_argument('-T', '--test', action='store_true', help='Test the project')
     parser.add_argument('-I', '--integration-tests', action='store_true', help='Run the integration tests for the project')
+    parser.add_argument('-E', '--end-to-end-tests', action='store_true', help='Run the end to end tests for the project')
     parser.add_argument('-f', '--force-build-folder', help='Specify the folder directly that should be used for the build / test')
     parser.add_argument('-m', '--metrics', action='store_true', help='Store the metrics.')
     return parser.parse_args()
@@ -260,8 +261,10 @@ def main():
         test_project(build_root, 'Normal')
 
     if args.integration_tests:
-        # test_project(build_root, 'Slow')
-        # test_project(build_root, 'Integration')
+        test_project(build_root, 'Slow')
+        test_project(build_root, 'Integration')
+
+    if args.end_to_end_tests:
         test_integration(project_root, build_root)
 
 if __name__ == '__main__':
