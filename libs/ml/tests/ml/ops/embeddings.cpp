@@ -89,20 +89,23 @@ TYPED_TEST(EmbeddingsTest, forward)
 
 TYPED_TEST(EmbeddingsTest, backward)
 {
+  using Type     = typename TypeParam::Type;
+  using SizeType = typename TypeParam::SizeType;
+
   fetch::ml::ops::Embeddings<TypeParam> e(10, 6);
   TypeParam                             weights(std::vector<uint64_t>({10, 6}));
   for (unsigned int i(0); i < 10; ++i)
   {
     for (unsigned int j(0); j < 6; ++j)
     {
-      weights.Set(i, j, typename TypeParam::Type(i * 10 + j));
+      weights.Set(i, j, Type(i * 10 + j));
     }
   }
   e.SetData(weights);
 
   TypeParam input(std::vector<uint64_t>({2}));
-  input.At(0)      = typename TypeParam::Type(3);
-  input.At(1)      = typename TypeParam::Type(5);
+  input.At(0)      = Type(3);
+  input.At(1)      = Type(5);
   TypeParam output = e.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({input}));
 
@@ -111,12 +114,17 @@ TYPED_TEST(EmbeddingsTest, backward)
   {
     for (unsigned int k{0}; k < 6; ++k)
     {
-      error_signal.Set(j, k, typename TypeParam::Type((j * 6) + k));
+      error_signal.Set(j, k, Type((j * 6) + k));
     }
   }
 
   e.Backward({input}, error_signal);
-  e.Step(typename TypeParam::Type(1));
+  e.Step(Type(1));
+
+  // Get a copy of the gradients and check that they were zeroed out after Step
+  TypeParam grads_copy = e.Gradients();
+  EXPECT_TRUE(TypeParam::Zeroes({1, 6}).AllClose(grads_copy.Slice(SizeType(input.At(0))).Copy()));
+  EXPECT_TRUE(TypeParam::Zeroes({1, 6}).AllClose(grads_copy.Slice(SizeType(input.At(1))).Copy()));
 
   output = e.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({input}));
@@ -126,7 +134,7 @@ TYPED_TEST(EmbeddingsTest, backward)
   {
     for (unsigned int k{0}; k < 6; ++k)
     {
-      EXPECT_EQ(output.At(j, k), typename TypeParam::Type(gt[(j * 6) + k]));
+      EXPECT_EQ(output.At(j, k), Type(gt[(j * 6) + k]));
     }
   }
 }
