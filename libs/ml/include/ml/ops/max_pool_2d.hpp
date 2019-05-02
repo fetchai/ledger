@@ -48,32 +48,32 @@ public:
 
     auto outputShape = ComputeOutputShape(inputs);
     ASSERT(output.shape() == outputShape);
+
+    SizeType iterw;
+    SizeType iterh;
+    DataType val;
+    DataType max;
     for (SizeType c{0}; c < outputShape[0]; ++c)  // Iterate over output channels
     {
 
       for (SizeType iw{0}; iw < outputShape.at(1); iw++)  // Iterate width over kernel stride
       {
-        SizeType iterw = iw * stride_size_;
-
+        iterw = iw * stride_size_;
         for (SizeType ih{0}; ih < outputShape.at(2); ih++)  // Iterate height over kernel stride
         {
-          SizeType iterh = ih * stride_size_;
-
-          DataType max(inputs.at(0).get().At(c, iterw, iterh));
-
+          iterh = ih * stride_size_;
+          max   = inputs.at(0).get().At(c, iterw, iterh);
           for (SizeType jw{0}; jw < kernel_size_; jw++)  // Iterate over kernel width
           {
             for (SizeType jh{0}; jh < kernel_size_; jh++)  // Iterate over kernel width
             {
-
-              DataType val = inputs.at(0).get().At(c, iterw + jw, iterh + jh);
+              val = inputs.at(0).get().At(c, iterw + jw, iterh + jh);
               if (val > max)
               {
                 max = val;
               }
             }
           }
-
           output.Set(c, iw, ih, max);
         }
       }
@@ -139,11 +139,15 @@ public:
   std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
+    // Return pre-computed value if exist
     if (output_shape_.size() != 0)
       return output_shape_;
+    // output_shape_[0]=number of output channels
     output_shape_.emplace_back(inputs.at(0).get().shape().at(0));
+    // output_shape_[1]=number of stride_size steps on input height
     output_shape_.emplace_back((inputs.at(0).get().shape().at(1) - (kernel_size_ - stride_size_)) /
                                stride_size_);
+    // output_shape_[2]=number of stride_size steps on input width
     output_shape_.emplace_back((inputs.at(0).get().shape().at(2) - (kernel_size_ - stride_size_)) /
                                stride_size_);
     return output_shape_;

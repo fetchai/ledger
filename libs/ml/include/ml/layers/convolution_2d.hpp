@@ -74,14 +74,20 @@ public:
   virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
-
-    std::vector<typename ArrayType::SizeType> output_shape;
-    output_shape.emplace_back(output_channels_);
-    output_shape.emplace_back((inputs.at(0).get().shape()[1] - kernel_size_ + stride_size_) /
-                              stride_size_);
-    output_shape.emplace_back((inputs.at(0).get().shape()[2] - kernel_size_ + stride_size_) /
-                              stride_size_);
-    return output_shape;
+    // Return pre-computed value if exist
+    if (output_shape_.size() != 0)
+      return output_shape_;
+    // output_shape_[0]=number of output channels
+    output_shape_.emplace_back(inputs.at(1).get().shape()[0]);
+    // output_shape_[1]=number of stride_size steps on input height
+    output_shape_.emplace_back(
+        (inputs.at(0).get().shape()[1] - inputs.at(1).get().shape()[2] + stride_size_) /
+        stride_size_);
+    // output_shape_[2]=number of stride_size steps on input width
+    output_shape_.emplace_back(
+        (inputs.at(0).get().shape()[2] - inputs.at(1).get().shape()[3] + stride_size_) /
+        stride_size_);
+    return output_shape_;
   }
 
   static constexpr char const *DESCRIPTOR = "Convolution2D";
@@ -93,10 +99,11 @@ private:
                                                    init_mode);
   }
 
-  SizeType kernel_size_;
-  SizeType input_channels_;
-  SizeType output_channels_;
-  SizeType stride_size_;
+  SizeType              kernel_size_;
+  SizeType              input_channels_;
+  SizeType              output_channels_;
+  SizeType              stride_size_;
+  std::vector<SizeType> output_shape_;
 };
 
 }  // namespace layers

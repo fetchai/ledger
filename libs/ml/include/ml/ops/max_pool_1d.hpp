@@ -48,18 +48,21 @@ public:
 
     auto outputShape = ComputeOutputShape(inputs);
     ASSERT(output.shape() == outputShape);
+    SizeType iter;
+    DataType max;
+    DataType val;
     for (SizeType c{0}; c < outputShape[0]; ++c)  // Iterate over output channels
     {
 
       for (SizeType i{0}; i < outputShape.at(1); i++)  // Iterate over kernel stride
       {
-        SizeType iter = i * stride_size_;
+        iter = i * stride_size_;
 
-        DataType max(inputs.at(0).get().At(c, iter));
+        max = inputs.at(0).get().At(c, iter);
 
         for (SizeType j{0}; j < kernel_size_; j++)  // Iterate over kernel width
         {
-          DataType val = inputs.at(0).get().At(c, iter + j);
+          val = inputs.at(0).get().At(c, iter + j);
           if (val > max)
           {
             max = val;
@@ -116,9 +119,12 @@ public:
   std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
+    // Return pre-computed value if exist
     if (output_shape_.size() != 0)
       return output_shape_;
+    // output_shape_[0]=number of output channels
     output_shape_.emplace_back(inputs.at(0).get().shape().at(0));
+    // output_shape_[1]=number of stride_size steps on input size
     output_shape_.emplace_back((inputs.at(0).get().shape().at(1) - (kernel_size_ - stride_size_)) /
                                stride_size_);
     return output_shape_;
