@@ -63,6 +63,7 @@ pipeline {
           stages {
             stage('Debug Build') {
               steps {
+                sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -B Debug'
               }
             }
@@ -78,7 +79,6 @@ pipeline {
                 branch "develop"
               }
               steps {
-                sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -I Debug'
                 sh './scripts/ci-tool.py -E Debug'
               }
@@ -97,6 +97,7 @@ pipeline {
           stages {
             stage('Release Build') {
               steps {
+                sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -B Release'
               }
             }
@@ -136,6 +137,7 @@ pipeline {
           stages {
             stage('GCC Debug Build') {
               steps {
+                sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -B Debug'
               }
             }
@@ -175,6 +177,7 @@ pipeline {
           stages {
             stage('GCC Release Build') {
               steps {
+                sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -B Release'
               }
             }
