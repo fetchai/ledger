@@ -26,31 +26,36 @@ namespace math {
 /**
  * The sigmoid function - numerically stable
  * @tparam ArrayType
- * @tparam T
- * @param y
- * @param y_hat
+ * @param t
  * @param ret
  */
 template <typename ArrayType>
 void Sigmoid(ArrayType const &t, ArrayType &ret)
 {
+  using Type = typename ArrayType::Type;
 
-  typename ArrayType::SizeType idx(0);
-  for (auto &val : t)
+  auto array_it = t.cbegin();
+  auto rit      = ret.begin();
+  Type zero{0};
+  Type one{1};
+  Type min_one{-1};
+
+  while (array_it.is_valid())
   {
-    if (val >= typename ArrayType::Type(0))
+    if (*array_it >= zero)
     {
-      Multiply(typename ArrayType::Type(-1.0), val, ret.At(idx));
-      Exp(ret.At(idx), ret.At(idx));
-      Add(ret.At(idx), typename ArrayType::Type(1.0), ret.At(idx));
-      Divide(typename ArrayType::Type(1.0), ret.At(idx), ret.At(idx));
+      Multiply(min_one, *array_it, *rit);
+      Exp(*rit, *rit);
+      Add(*rit, one, *rit);
+      Divide(one, *rit, *rit);
     }
     else
     {
-      Exp(val, ret.At(idx));
-      Divide(ret.At(idx), ret.At(idx) + typename ArrayType::Type(1.0), ret.At(idx));
+      Exp(*array_it, *rit);
+      Divide(*rit, *rit + one, *rit);
     }
-    ++idx;
+    ++array_it;
+    ++rit;
   }
 }
 

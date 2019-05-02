@@ -42,23 +42,33 @@ namespace details {
  * TODO(private, 520) -- Clean up once we get unified ArrayType + operations
  */
 
-template <typename ArrayType>
-void Softmax1DImplementation(ArrayType const &array, ArrayType &ret)
+template <typename ArrayType1, typename ArrayType2>
+void Softmax1DImplementation(ArrayType1 const &array, ArrayType2 &ret)
 {
-  assert(ret.size() == array.size());
-  assert(array.shape().size() == 1);
-  assert(ret.shape().size() == 1);
+  using Type = typename ArrayType1::Type;
+  ASSERT(ret.size() == array.size());
 
   // subtract max for numerical stability
-  typename ArrayType::Type array_max = std::numeric_limits<typename ArrayType::Type>::lowest();
+  Type array_max = NumericLowest<Type>();
   Max(array, array_max);
-  Subtract(array, array_max, ret);
 
-  // softmax (Exp(x) / Sum(Exp(x)))
-  Exp(ret, ret);
-  typename ArrayType::Type array_sum = typename ArrayType::Type(0);
-  Sum(ret, array_sum);
-  Divide(ret, array_sum, ret);
+  auto it1 = array.begin();
+  auto it2 = ret.begin();
+  Type sum = Type(0);
+  while (it1.is_valid())
+  {
+    *it2 = Exp(*it1 - array_max);
+    sum += *it2;
+    ++it2;
+    ++it1;
+  }
+
+  auto it3 = ret.begin();  // TODO (private 855): Fix implictly deleted copy const. for iterator
+  while (it3.is_valid())
+  {
+    *it3 /= sum;
+    ++it3;
+  }
 }
 
 template <typename ArrayType>
@@ -73,10 +83,10 @@ void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
 
   for (std::size_t i = 0; i < array.shape()[axis]; ++i)
   {
-    ArrayType cur_slice = array.Slice(i);
-    ArrayType ret_slice = ret.Slice(i);
+    auto cur_slice = array.Slice(i).Copy();
+    auto ret_slice = ret.Slice(i).Copy();
     Softmax1DImplementation(cur_slice, ret_slice);
-    ret.Slice(i).Copy(ret_slice);
+    ret.Slice(i).Assign(ret_slice);
   }
 }
 }  // namespace details
@@ -100,12 +110,14 @@ void Softmax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeTyp
     throw std::runtime_error("softmax for nDimensions not yet handled");
   }
 }
+
 template <typename ArrayType>
 void Softmax(ArrayType const &array, ArrayType &ret)
 {
   assert(ret.size() == array.size());
   Softmax(array, ret, typename ArrayType::SizeType(0));
 }
+
 template <typename ArrayType>
 ArrayType Softmax(ArrayType const &array, typename ArrayType::SizeType axis)
 {

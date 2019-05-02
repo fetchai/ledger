@@ -33,9 +33,10 @@ namespace math {
 ///////////////////////
 
 template <typename Type>
-meta::IfIsNonFixedPointArithmetic<Type, void> Log(Type const &x, Type &ret)
+fetch::meta::EnableIf<fetch::meta::IsInteger<Type> || fetch::meta::IsFloat<Type>, void> Log(
+    Type const &x, Type &ret)
 {
-  ret = std::log(x);
+  ret = static_cast<Type>(std::log(x));
 }
 
 // TODO(800) - native implementations of fixed point are required; casting to double will not be
@@ -43,11 +44,12 @@ meta::IfIsNonFixedPointArithmetic<Type, void> Log(Type const &x, Type &ret)
 template <typename T>
 meta::IfIsFixedPoint<T, void> Log(T const &n, T &ret)
 {
-  ret = T(std::log(double(n)));
+  ret = T::Log(n);
 }
 
 template <typename Type>
-meta::IfIsNonFixedPointArithmetic<Type, void> Log2(Type const &x, Type &ret)
+fetch::meta::EnableIf<fetch::meta::IsInteger<Type> || fetch::meta::IsFloat<Type>, void> Log2(
+    Type const &x, Type &ret)
 {
   ret = std::log2(x);
 }
@@ -57,7 +59,7 @@ meta::IfIsNonFixedPointArithmetic<Type, void> Log2(Type const &x, Type &ret)
 template <typename T>
 meta::IfIsFixedPoint<T, void> Log2(T const &n, T &ret)
 {
-  ret = T(std::log2(double(n)));
+  ret = T::Log2(n);
 }
 
 //////////////////
@@ -76,24 +78,21 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Log(ArrayType const &array, ArrayType &ret)
 {
   ASSERT(ret.shape() == array.shape());
-  typename ArrayType::SizeType ret_count{0};
-  for (typename ArrayType::Type &e : array)
+  auto it1 = array.cbegin();
+  auto rit = ret.begin();
+  while (it1.is_valid())
   {
-    Log(e, ret.At(ret_count));
-    ++ret_count;
+    Log(*it1, *rit);
+    ++it1;
+    ++rit;
   }
 }
 
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Log(ArrayType const &array)
 {
-  ArrayType                    ret{array.shape()};
-  typename ArrayType::SizeType ret_count{0};
-  for (typename ArrayType::Type &e : array)
-  {
-    Log(e, ret.At(ret_count));
-    ++ret_count;
-  }
+  ArrayType ret{array.shape()};
+  Log(array, ret);
   return ret;
 }
 
@@ -109,24 +108,21 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Log2(ArrayType const &array, ArrayType &ret)
 {
   ASSERT(ret.shape() == array.shape());
-  typename ArrayType::SizeType ret_count{0};
-  for (typename ArrayType::Type &e : array)
+  auto it1 = array.cbegin();
+  auto rit = ret.begin();
+  while (it1.is_valid())
   {
-    Log2(e, ret.At(ret_count));
-    ++ret_count;
+    Log2(*it1, *rit);
+    ++it1;
+    ++rit;
   }
 }
 
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Log2(ArrayType const &array)
 {
-  ArrayType                    ret{array.shape()};
-  typename ArrayType::SizeType ret_count{0};
-  for (typename ArrayType::Type &e : array)
-  {
-    Log2(e, ret.At(ret_count));
-    ++ret_count;
-  }
+  ArrayType ret{array.shape()};
+  Log2(array, ret);
   return ret;
 }
 

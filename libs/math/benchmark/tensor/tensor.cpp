@@ -23,6 +23,52 @@
 
 #include "benchmark/benchmark.h"
 
+// size access should be very fast
+template <class T, int C, int H, int W>
+void BM_TensorSize(benchmark::State &state)
+{
+  fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
+  for (auto _ : state)
+  {
+    benchmark::DoNotOptimize(t.size());
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_TensorSize, int, 3, 256, 256)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_TensorSize, float, 3, 256, 256)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_TensorSize, double, 3, 256, 256)->Unit(benchmark::kNanosecond);
+
+BENCHMARK_TEMPLATE(BM_TensorSize, int, 128, 256, 256)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_TensorSize, float, 128, 256, 256)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_TensorSize, double, 128, 256, 256)->Unit(benchmark::kNanosecond);
+
+BENCHMARK_TEMPLATE(BM_TensorSize, int, 256, 256, 256)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_TensorSize, float, 256, 256, 256)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_TensorSize, double, 256, 256, 256)->Unit(benchmark::kNanosecond);
+
+// shape access should also be very fast
+template <class T, int C, int H, int W>
+void BM_TensorShape(benchmark::State &state)
+{
+  fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
+  for (auto _ : state)
+  {
+    benchmark::DoNotOptimize(t.shape());
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_TensorShape, int, 3, 256, 256)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_TensorShape, float, 3, 256, 256)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_TensorShape, double, 3, 256, 256)->Unit(benchmark::kNanosecond);
+
+BENCHMARK_TEMPLATE(BM_TensorShape, int, 128, 256, 256)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_TensorShape, float, 128, 256, 256)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_TensorShape, double, 128, 256, 256)->Unit(benchmark::kNanosecond);
+
+BENCHMARK_TEMPLATE(BM_TensorShape, int, 256, 256, 256)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_TensorShape, float, 256, 256, 256)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_TensorShape, double, 256, 256, 256)->Unit(benchmark::kNanosecond);
+
 template <class T, int C, int H, int W>
 void BM_tensorNaiveIteration(benchmark::State &state)
 {
@@ -49,16 +95,57 @@ BENCHMARK_TEMPLATE(BM_tensorNaiveIteration, int, 256, 256, 256)->Unit(benchmark:
 BENCHMARK_TEMPLATE(BM_tensorNaiveIteration, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_tensorNaiveIteration, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
 
+// Reference implementation of a vector to compare iteration time
+template <class T, int C, int H, int W>
+void VectorBaselineRangeIterator(benchmark::State &state)
+{
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+
+    // Construct reference tensor
+    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
+
+    // Baseline - iterate over vector of same number of elements
+    std::vector<T> baseline;
+    baseline.resize(t.size());
+    state.ResumeTiming();
+
+    for (auto const &e : baseline)
+    {
+      benchmark::DoNotOptimize(e);
+    }
+  }
+}
+
+BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, float, 128, 256, 256)
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, double, 128, 256, 256)
+    ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, float, 256, 256, 256)
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, double, 256, 256, 256)
+    ->Unit(benchmark::kMillisecond);
+
 template <class T, int C, int H, int W>
 void BM_tensorRangeIterator(benchmark::State &state)
 {
   for (auto _ : state)
   {
-    T                      sum(0);
+    state.PauseTiming();
     fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
+    state.ResumeTiming();
+
     for (auto const &e : t)
     {
-      sum += e;
+      benchmark::DoNotOptimize(e);
     }
   }
 }
@@ -80,9 +167,11 @@ void BM_tensorSum(benchmark::State &state)
 {
   for (auto _ : state)
   {
+    state.PauseTiming();
     fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
-    T                      sum = t.Sum();
-    (void)sum;
+    state.ResumeTiming();
+
+    benchmark::DoNotOptimize(t.Sum());
   }
 }
 

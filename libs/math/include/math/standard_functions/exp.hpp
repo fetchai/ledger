@@ -44,7 +44,7 @@ meta::IfIsNonFixedPointArithmetic<Type, void> Exp(Type const &x, Type &ret)
 template <typename T>
 meta::IfIsFixedPoint<T, void> Exp(T const &n, T &ret)
 {
-  ret = T(std::exp(double(n)));
+  ret = T::Exp(n);
 }
 
 //////////////////
@@ -63,24 +63,22 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Exp(ArrayType const &array, ArrayType &ret)
 {
   ASSERT(ret.shape() == array.shape());
-  typename ArrayType::SizeType ret_count{0};
-  for (typename ArrayType::Type &e : array)
+  auto it1 = array.cbegin();
+  auto rit = ret.begin();
+  while (it1.is_valid())
   {
-    Exp(e, ret.At(ret_count));
-    ++ret_count;
+    Exp(*it1, *rit);
+    ++it1;
+    ++rit;
   }
 }
 
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Exp(ArrayType const &array)
 {
-  ArrayType                    ret{array.shape()};
-  typename ArrayType::SizeType ret_count{0};
-  for (typename ArrayType::Type &e : array)
-  {
-    Exp(e, ret.At(ret_count));
-    ++ret_count;
-  }
+  ArrayType ret{array.shape()};
+  Exp(array, ret);
+  return ret;
   return ret;
 }
 

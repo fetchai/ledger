@@ -37,9 +37,10 @@ template <class T>
 class Graph : public ops::Trainable<T>
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using Datatype     = typename ArrayType::Type;
+  using ArrayType      = T;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using Datatype       = typename ArrayType::Type;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   Graph()
   {}
@@ -49,7 +50,7 @@ public:
    * @param node_name name of node to evaluate for output
    * @return pointer to array containing node output
    */
-  ArrayType const &Evaluate(std::string const &node_name)
+  ArrayType Evaluate(std::string const &node_name)
   {
     if (nodes_[node_name])
     {
@@ -127,6 +128,7 @@ public:
    * Also resets the graph cache to avoid erroneous leftover outputs
    * @param node_name name of the placeholder node in the graph (must be unique)
    * @param data the pointer to a tensor to assign to the placeholder
+   * @param batch flag to indicate if input should be treated as batch
    */
   void SetInput(std::string const &node_name, ArrayType data, bool batch = false)
   {
@@ -135,8 +137,8 @@ public:
 
     if (placeholder)
     {
-      placeholder->SetData(data);
-      ResetGraphCache();
+      bool input_size_changed = placeholder->SetData(data);
+      ResetGraphCache(nodes_[node_name], input_size_changed);
     }
     else
     {
@@ -162,12 +164,14 @@ public:
 
   /**
    * Resets graph cache, clearing stored evaluation outputs
+   * and recursively updating the input size for all downstream nodes
    */
-  void ResetGraphCache()
+  void ResetGraphCache(std::shared_ptr<NodeInterface<T>> const &n, bool input_size_changed)
   {
-    for (auto &node : nodes_)
+    n->ResetCache(input_size_changed);
+    for (auto &node : n->GetOutputs())
     {
-      node.second->ResetCache();
+      ResetGraphCache(node, input_size_changed);
     }
   }
 
@@ -223,6 +227,7 @@ private:
     for (auto const &i : inputs)
     {
       nodes_[node_name]->AddInput(nodes_[i]);
+      nodes_[i]->AddOutput(nodes_[node_name]);
     }
   }
 

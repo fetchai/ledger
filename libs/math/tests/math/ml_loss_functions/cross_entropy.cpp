@@ -34,28 +34,29 @@ TYPED_TEST_CASE(CrossEntropyTest, MyTypes);
 
 TYPED_TEST(CrossEntropyTest, perfect_match_test)
 {
-  typename TypeParam::SizeType n_classes = 4;
-  typename TypeParam::SizeType n_data    = 8;
+  using SizeType     = fetch::math::SizeType;
+  SizeType n_classes = 4;
+  SizeType n_data    = 8;
 
   TypeParam gt_array = TypeParam{{n_data, n_classes}};
 
   // set gt data
   std::vector<std::uint64_t> gt_data = {1, 2, 3, 0, 3, 1, 0, 2};
-  for (typename TypeParam::SizeType i = 0; i < n_data; ++i)
+  for (SizeType i = 0; i < n_data; ++i)
   {
-    for (typename TypeParam::SizeType j = 0; j < n_classes; ++j)
+    for (SizeType j = 0; j < n_classes; ++j)
     {
       if (gt_data[i] == j)
       {
-        gt_array.Set({i, j}, typename TypeParam::Type(1));
+        gt_array.Set(SizeType{i}, SizeType{j}, typename TypeParam::Type(1));
       }
       else
       {
-        gt_array.Set({i, j}, typename TypeParam::Type(0));
+        gt_array.Set(SizeType{i}, SizeType{j}, typename TypeParam::Type(0));
       }
     }
   }
-  TypeParam test_array = gt_array.Clone();
+  TypeParam test_array = gt_array.Copy();
 
   // initialise to non-zero just to avoid correct value at initialisation
   typename TypeParam::Type score(100);
@@ -67,6 +68,7 @@ TYPED_TEST(CrossEntropyTest, perfect_match_test)
 
 TYPED_TEST(CrossEntropyTest, value_test)
 {
+  using SizeType                         = fetch::math::SizeType;
   typename TypeParam::SizeType n_classes = 4;
   typename TypeParam::SizeType n_data    = 8;
 
@@ -81,11 +83,11 @@ TYPED_TEST(CrossEntropyTest, value_test)
     {
       if (gt_data[i] == j)
       {
-        gt_array.Set({i, j}, typename TypeParam::Type(1));
+        gt_array.Set(SizeType{i}, SizeType{j}, typename TypeParam::Type(1));
       }
       else
       {
-        gt_array.Set({i, j}, typename TypeParam::Type(0));
+        gt_array.Set(SizeType{i}, SizeType{j}, typename TypeParam::Type(0));
       }
     }
   }
@@ -95,9 +97,14 @@ TYPED_TEST(CrossEntropyTest, value_test)
                              0.1, 0.5, 0.1,  0.1,  0.3, 0.2, 0.3, 0.1, 0.4,  0.1,  0.7,
                              0.1, 0.1, 0.7,  0.1,  0.1, 0.1, 0.1, 0.1, 0.5,  0.3};
 
-  for (std::uint64_t i = 0; i < n_data * n_classes; ++i)
+  SizeType idx{0};
+  for (SizeType i{0}; i < n_data; ++i)
   {
-    test_array.Set(i, typename TypeParam::Type(logits[i]));
+    for (SizeType j{0}; j < n_classes; ++j)
+    {
+      test_array.Set(SizeType{i}, SizeType{j}, typename TypeParam::Type(logits.at(idx)));
+      idx++;
+    }
   }
 
   // initialise to non-zero just to avoid correct value at initialisation
