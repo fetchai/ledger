@@ -17,28 +17,41 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/meta/math_type_traits.hpp"
-#include "math/standard_functions/abs.hpp"
+#include "vm/analyser.hpp"
+#include "vm/typeids.hpp"
+
+#include "vm/compiler.hpp"
+#include "vm/module.hpp"
+#include "vm/vm.hpp"
+
+#include <cmath>
 
 namespace fetch {
 namespace vm_modules {
 
-/**
- * method for taking the absolute of a value
- */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Abs(fetch::vm::VM *, T const &a)
+T And(fetch::vm::VM * /*vm*/, T x, T s)
 {
-  T x = T(a);
-  fetch::math::Abs(x);
-  return x;
+  return T(x & s);
 }
 
-static void CreateAbs(fetch::vm::Module &module)
+template <typename T>
+T Or(fetch::vm::VM * /*vm*/, T x, T s)
 {
-  module.CreateFreeFunction<int32_t>("Abs", &Abs<int32_t>);
-  module.CreateFreeFunction<float_t>("Abs", &Abs<float_t>);
-  module.CreateFreeFunction<double_t>("Abs", &Abs<double_t>);
+  return T(x | s);
+}
+
+inline void BindBitwiseOps(vm::Module &module)
+{
+  module.CreateFreeFunction("and", &And<int32_t>);
+  module.CreateFreeFunction("and", &And<int64_t>);
+  module.CreateFreeFunction("and", &And<uint32_t>);
+  module.CreateFreeFunction("and", &And<uint64_t>);
+
+  module.CreateFreeFunction("or", &Or<int32_t>);
+  module.CreateFreeFunction("or", &Or<int64_t>);
+  module.CreateFreeFunction("or", &Or<uint32_t>);
+  module.CreateFreeFunction("or", &Or<uint64_t>);
 }
 
 }  // namespace vm_modules

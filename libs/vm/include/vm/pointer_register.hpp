@@ -17,29 +17,34 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/meta/math_type_traits.hpp"
-#include "math/standard_functions/abs.hpp"
+#include <unordered_map>
 
 namespace fetch {
-namespace vm_modules {
+namespace vm {
 
-/**
- * method for taking the absolute of a value
- */
-template <typename T>
-fetch::math::meta::IfIsMath<T, T> Abs(fetch::vm::VM *, T const &a)
+class PointerRegister
 {
-  T x = T(a);
-  fetch::math::Abs(x);
-  return x;
-}
+public:
+  template <typename T>
+  void Set(T *val)
+  {
+    pointers_[std::type_index(typeid(T))] = static_cast<void *>(val);
+  }
 
-static void CreateAbs(fetch::vm::Module &module)
-{
-  module.CreateFreeFunction<int32_t>("Abs", &Abs<int32_t>);
-  module.CreateFreeFunction<float_t>("Abs", &Abs<float_t>);
-  module.CreateFreeFunction<double_t>("Abs", &Abs<double_t>);
-}
+  template <typename T>
+  T *Get()
+  {
+    if (pointers_.find(std::type_index(typeid(T))) == pointers_.end())
+    {
+      return nullptr;
+    }
 
-}  // namespace vm_modules
+    return static_cast<T *>(pointers_[std::type_index(typeid(T))]);
+  }
+
+private:
+  std::unordered_map<std::type_index, void *> pointers_;
+};
+
+}  // namespace vm
 }  // namespace fetch
