@@ -486,8 +486,8 @@ TYPED_TEST(FundamentalOperatorsUIntTypeTest, DivisionUIntTest)
   for (std::size_t i{0}; i < 100; ++i)
   {
     // values range from 0 - std::numeric_limits<Type>::max()
-    a = TypeParam(gen.AsDouble() * max_val);
-    b = TypeParam(gen.AsDouble() * max_val);
+    a = TypeParam(gen.AsDouble() * double(max_val));
+    b = TypeParam(gen.AsDouble() * double(max_val));
 
     fetch::math::Divide(a, b, ret);
     EXPECT_EQ(ret, a / b);
@@ -548,7 +548,6 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, DivisionNonIntTest)
   TypeParam a;
   TypeParam b;
   TypeParam ret;
-  TypeParam two     = TypeParam(2.0);
   TypeParam max_val = fetch::math::NumericMax<TypeParam>();
 
   // test a few small fixed values
@@ -578,8 +577,8 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, DivisionNonIntTest)
   for (int i{0}; i < 100; ++i)
   {
     // values range from - half max to max
-    a = (TypeParam(gen.AsDouble()) * max_val) - (max_val / two);
-    b = (TypeParam(gen.AsDouble()) * max_val) - (max_val / two);
+    a = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
+    b = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
 
     fetch::math::Divide(a, b, ret);
     EXPECT_EQ(ret, a / b);
