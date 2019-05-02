@@ -241,17 +241,40 @@ TYPED_TEST(FundamentalOperatorsIntTypeTest, SubtractionIntTest)
   TypeParam a;
   TypeParam b;
   TypeParam ret;
+  TypeParam max_val = fetch::math::NumericMax<TypeParam>();
 
-  for (std::size_t i{0}; i < 1000; ++i)
+  // test a few small fixed values
+  a = TypeParam{2};
+  b = TypeParam{7};
+  fetch::math::Subtract(a, b, ret);
+  EXPECT_EQ(ret, -5);
+  EXPECT_EQ(fetch::math::Subtract(a, b), -5);
+
+
+  a = TypeParam{123};
+  b = TypeParam{321};
+  fetch::math::Subtract(a, b, ret);
+  EXPECT_EQ(ret, -198);
+  EXPECT_EQ(fetch::math::Subtract(a, b), -198);
+
+  for (int i{-100}; i < 100; ++i)
   {
-    auto tmp_val_1 = gen.AsDouble();
-    auto tmp_val_2 = gen.AsDouble();
+    a = TypeParam{i};
+    b = TypeParam{100 + i};
+    fetch::math::Subtract(b, a, ret);
+    EXPECT_EQ(ret, 100);
+    EXPECT_EQ(fetch::math::Subtract(b, a), 100);
+  }
 
-    a = TypeParam(tmp_val_1);
-    b = TypeParam(tmp_val_2);
+  // test a few big numbers
+  for (int i{0}; i < 100; ++i)
+  {
+    // values range from - half max to max
+    a = TypeParam((gen.AsDouble() * max_val) - (max_val / 2));
+    b = TypeParam((gen.AsDouble() * max_val) - (max_val / 2));
+
     fetch::math::Subtract(a, b, ret);
     EXPECT_EQ(ret, a - b);
-
     EXPECT_EQ(fetch::math::Subtract(a, b), a - b);
   }
 }
@@ -261,20 +284,54 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, SubtractionNonIntTest)
   TypeParam a;
   TypeParam b;
   TypeParam ret;
+  TypeParam two = TypeParam(2.0);
+  TypeParam max_val = fetch::math::NumericMax<TypeParam>();
 
-  for (std::size_t i{0}; i < 1000; ++i)
+  // test a few small fixed values
+  a = TypeParam(2.156);
+  b = TypeParam(7.421);
+  fetch::math::Subtract(a, b, ret);
+  EXPECT_NEAR(double(ret), -5.265, 1e-9);
+  EXPECT_NEAR(double(fetch::math::Subtract(a, b)), -5.265, 1e-9);
+
+  a = TypeParam(123.456);
+  b = TypeParam(321.123);
+  fetch::math::Subtract(a, b, ret);
+  EXPECT_NEAR(double(ret), -197.667, 1e-9);
+  EXPECT_NEAR(double(fetch::math::Subtract(a, b)), -197.667, 1e-9);
+
+  for (int i{-100}; i < 100; ++i)
   {
-    auto tmp_val_1 = gen.AsDouble();
-    auto tmp_val_2 = gen.AsDouble();
+    a = TypeParam(i);
+    b = TypeParam(100 + i);
 
-    a = TypeParam(tmp_val_1);
-    b = TypeParam(tmp_val_2);
+    fetch::math::Subtract(b, a, ret);
+    EXPECT_EQ(ret, TypeParam(100.0));
+    EXPECT_EQ(fetch::math::Subtract(b, a), TypeParam(100.0));
+  }
+
+  // test a few big numbers
+  for (int i{0}; i < 100; ++i)
+  {
+    // values range from - half max to max
+    a = (TypeParam(gen.AsDouble()) * max_val) - (max_val / two);
+    b = (TypeParam(gen.AsDouble()) * max_val) - (max_val / two);
+
     fetch::math::Subtract(a, b, ret);
     EXPECT_EQ(ret, a - b);
-
     EXPECT_EQ(fetch::math::Subtract(a, b), a - b);
   }
 }
+
+
+
+
+
+
+
+
+
+
 
 
 /// Multiplication tests
