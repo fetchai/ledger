@@ -141,9 +141,12 @@ public:
   std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
+    // Return pre-computed value if exist
     if (output_shape_.size() != 0)
       return output_shape_;
+    // output_shape_[0]=number of output channels
     output_shape_.emplace_back(inputs.at(1).get().shape()[0]);
+    // output_shape_[1]=number of stride_size steps on input size
     output_shape_.emplace_back(
         (inputs.at(0).get().shape()[1] - inputs.at(1).get().shape()[2] + stride_size_) /
         stride_size_);
