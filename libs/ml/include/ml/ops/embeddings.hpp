@@ -105,7 +105,7 @@ public:
     {
       // get the relevant slice from gradients and embeddings
       auto grad_slice = this->gradient_accumulation_->Slice(r);
-      auto out_slice = this->output_->Slice(r);
+      auto out_slice  = this->output_->Slice(r);
 
       embedding_slice = out_slice.Copy();
 
