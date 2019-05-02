@@ -73,12 +73,14 @@ pipeline {
               }
             }
 
-            stage('Debug Integration Tests') {
+            stage('Debug Integration and end-to-end Tests') {
               when {
                 branch "develop"
               }
               steps {
+                sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -I Debug'
+                sh './scripts/ci-tool.py -E Debug'
               }
             }
           }
@@ -105,12 +107,14 @@ pipeline {
               }
             }
 
-            stage('Integration Tests') {
+            stage('Integration and end-to-end Tests') {
               when {
                 branch "develop"
               }
               steps {
+                sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -I Release'
+                sh './scripts/ci-tool.py -E Release'
               }
             }
           }
@@ -142,12 +146,14 @@ pipeline {
               }
             }
 
-            stage('GCC Debug Integration Tests') {
+            stage('GCC Debug Integration and end-to-end Tests') {
               when {
                 branch "develop"
               }
               steps {
+                sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -I Debug'
+                sh './scripts/ci-tool.py -E Debug'
               }
             }
           }
@@ -179,12 +185,14 @@ pipeline {
               }
             }
 
-            stage('GCC Release Integration Tests') {
+            stage('GCC Release Integration and end-to-end Tests') {
               when {
                 branch "develop"
               }
               steps {
+                sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -I Release'
+                sh './scripts/ci-tool.py -E Release'
               }
             }
           }

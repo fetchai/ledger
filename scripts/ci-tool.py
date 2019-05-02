@@ -262,6 +262,8 @@ def main():
     if args.integration_tests:
         test_project(build_root, 'Slow')
         test_project(build_root, 'Integration')
+
+    if args.end_to_end_tests:
         test_end_to_end(project_root, build_root)
 
 if __name__ == '__main__':
