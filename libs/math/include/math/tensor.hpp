@@ -276,8 +276,11 @@ public:
 
   std::string ToString() const;
   SizeType    Find(Type val) const;
+
   template <typename TensorType>
   static SelfType Stack(std::vector<TensorType> const &tensors);
+  static SelfType Concat(std::vector<SelfType> const &tensors, SizeType axis);
+
   void            Sort();
   void            Sort(memory::TrivialRange const &range);
 
@@ -2165,15 +2168,93 @@ template <typename T, typename C>
 template <typename TensorType>
 typename Tensor<T, C>::SelfType Tensor<T, C>::Stack(std::vector<TensorType> const &tensors)
 {
-  SizeVector retSize;
-  retSize.push_back(tensors.size());
-  retSize.insert(retSize.end(), tensors.front().shape().begin(), tensors.front().shape().end());
-  TensorType ret(retSize);
+  SizeVector ret_size;
+  ret_size.push_back(tensors.size());
+  ret_size.insert(ret_size.end(), tensors.front().shape().begin(), tensors.front().shape().end());
+  TensorType ret(ret_size);
   for (SizeType i(0); i < tensors.size(); ++i)
   {
     ret.Slice(i).Assign(tensors[i]);
   }
   return ret;
+}
+
+/**
+ * Concatenate tensors on the specified axis and return a new Tensor. The shape of the new tensor
+ * will be identical to all tensors input except on the axis specified where the shape will be the
+ * sum of tensor sizes at that axis
+ * @param tensors
+ * @param axis
+ * @returnf
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SelfType Tensor<T, C>::Concat(std::vector<SelfType> const &tensors, SizeType const axis)
+{
+  // cant concatenate a single tensor
+  ASSERT(tensors.size() > 1);
+  SizeVector tensor0_shape = tensors[0].shape();
+  // specified axis must be within range of tensor axes
+  ASSERT(axis < tensor0_shape.size());
+
+  // all tensors must have same shape except on the axis dimension
+  // also we need to know the sum of axis dimensions
+  SizeType sum_axis_size = 0;
+  for (std::size_t i = 0; i < tensors.size(); ++i)
+  {
+    for (std::size_t j = 0; j < tensors[i].shape().size(); ++j)
+    {
+      if (j != axis)
+      {
+        ASSERT(tensors[i].shape()[j] == tensor0_shape[j]);
+      }
+      else
+      {
+        sum_axis_size += tensors[i].shape()[j];
+      }
+    }
+  }
+
+  // set new tensor shape
+  SizeVector ret_tensor_shape{tensor0_shape};
+  ret_tensor_shape[axis] = sum_axis_size;
+
+  // set up return tensor
+  SelfType ret_tensor{ret_tensor_shape};
+  SelfType ret_tensor2{ret_tensor_shape};
+
+  // in order to copy tensors into ret tensor we should swap the leading axis with axis, just to make sure
+  // we iterate through them correctly
+  auto rt = ret_tensor.begin();
+
+  rt.PermuteAxes(0, axis);
+  SizeType cur_tensor_idx = 0;
+  while (rt.is_valid())
+  {
+    auto other_it = tensors[cur_tensor_idx].begin();
+//    other_it.PermuteAxes(0, axis);
+    while(other_it.is_valid())
+    {
+      *rt = *other_it;
+      std::cout << "*rt: " << *rt << std::endl;
+      std::cout << "*other_it: " << *other_it << std::endl;
+      ++rt;
+      ++other_it;
+    }
+    ++cur_tensor_idx;
+  }
+
+  auto rt_3 = ret_tensor.begin();
+  rt_3.PermuteAxes(0, axis);
+  auto rt_2 = ret_tensor2.begin();
+  while(rt_2.is_valid())
+  {
+    *rt_2 = *rt_3;
+    ++rt_3;
+    ++rt_2;
+  }
+
+  return ret_tensor2;
+//  return ret_tensor;
 }
 
 /**
