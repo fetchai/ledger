@@ -90,6 +90,8 @@ pipeline {
               steps {
                 sh './scripts/ci-tool.py -I Debug'
               }
+            }
+
             stage('Debug End-to-end Tests') {
               when {
                 expression {
@@ -126,7 +128,7 @@ pipeline {
               }
             }
 
-            stage('Integration and end-to-end Tests') {
+            stage('Integration Tests') {
               when {
                 expression {
                   branch_name_filter()
@@ -136,6 +138,8 @@ pipeline {
                 sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -I Release'
               }
+            }
+
             stage('End-to-end Tests') {
               when {
                 expression {
@@ -187,6 +191,8 @@ pipeline {
                 sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -I Debug'
               }
+            }
+
             stage('GCC Debug End-to-end Tests') {
               when {
                 expression {
@@ -239,6 +245,7 @@ pipeline {
                 sh './scripts/ci-tool.py -I Release'
               }
             }
+
             stage('GCC Release End-to-end Tests') {
               when {
                 expression {
