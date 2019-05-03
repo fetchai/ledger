@@ -29,14 +29,16 @@ static void BM_ApproxExpImplementation(benchmark::State &state)
 {
 
   fetch::math::ApproxExpImplementation<N, C> fexp;
-  double                                     x = (double)state.range(0);
-  double                                     result;
+  double                                     x = 0.1 ; //(double)state.range(0);
+  double                                     result = 0;
   for (auto _ : state)
   {
     // Single iteration is too small to get accurate benchmarks.
+    x += 0.1;
     for (int i = 0; i < 1000; i++)
     {
-      benchmark::DoNotOptimize(result = fexp(x));
+      x += 0.0001;
+      result += fexp(x);
     }
   }
 }
@@ -46,14 +48,16 @@ BENCHMARK_TEMPLATE(BM_ApproxExpImplementation, 12, 60801)->RangeMultiplier(10)->
 
 static void BM_exp(benchmark::State &state)
 {
-  double x = (double)state.range(0);
-  double result;
+  double x = 0.1; // (double)state.range(0);
+  double result = 0.0;
   for (auto _ : state)
   {
     // Single iteration is too small to get accurate benchmarks.
+    x += 0.1;
     for (int i = 0; i < 1000; i++)
     {
-      benchmark::DoNotOptimize(result = exp(x));
+      x += 0.0001;
+      result += exp(x);
     }
   }
 }
