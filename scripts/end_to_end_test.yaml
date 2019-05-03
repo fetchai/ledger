@@ -18,10 +18,10 @@ expectation:
 ...
 ---
 test_description: >
-        Transactions sync and are executed across nodes
+        DISABLED - Transactions sync and are executed across nodes
 
 setup_conditions:
-    test_name : "basic_multinode"
+    test_name : "basic_multinode_DISABLED"
     number_of_nodes: 2
     node_connections: [[1, 0]]
     mining_nodes: [0]
