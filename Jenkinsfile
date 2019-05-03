@@ -1,3 +1,8 @@
+def branch_name_filter()
+{
+   return BRANCH_NAME == "develop" || BRANCH_NAME ==~ /^PR-\d+-merge$/
+}
+
 pipeline {
 
   agent none
@@ -38,6 +43,7 @@ pipeline {
           agent {
             docker {
               image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+              label "ledger"
               alwaysPull true
             }
           }
@@ -56,6 +62,7 @@ pipeline {
           agent {
             docker {
               image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+              label "ledger"
               alwaysPull true
             }
           }
@@ -75,9 +82,14 @@ pipeline {
             }
 
             stage('Debug Integration and end-to-end Tests') {
+              when {
+                expression {
+                  branch_name_filter()
+                }
+              }
               steps {
                 sh './scripts/ci-tool.py -I Debug'
-                sh './scripts/ci-tool.py -E Debug'
+                //sh './scripts/ci-tool.py -E Debug'
               }
             }
           }
@@ -87,6 +99,7 @@ pipeline {
           agent {
             docker {
               image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+              label "ledger"
               alwaysPull true
             }
           }
@@ -106,10 +119,15 @@ pipeline {
             }
 
             stage('Integration and end-to-end Tests') {
+              when {
+                expression {
+                  branch_name_filter()
+                }
+              }
               steps {
                 sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -I Release'
-                sh './scripts/ci-tool.py -E Release'
+                //sh './scripts/ci-tool.py -E Release'
               }
             }
           }
@@ -119,6 +137,7 @@ pipeline {
           agent {
             docker {
               image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+              label "ledger"
               alwaysPull true
             }
           }
@@ -143,10 +162,15 @@ pipeline {
             }
 
             stage('GCC Debug Integration and end-to-end Tests') {
+              when {
+                expression {
+                  branch_name_filter()
+                }
+              }
               steps {
                 sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -I Debug'
-                sh './scripts/ci-tool.py -E Debug'
+                //sh './scripts/ci-tool.py -E Debug'
               }
             }
           }
@@ -156,6 +180,7 @@ pipeline {
           agent {
             docker {
               image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+              label "ledger"
               alwaysPull true
             }
           }
@@ -180,10 +205,15 @@ pipeline {
             }
 
             stage('GCC Release Integration and end-to-end Tests') {
+              when {
+                expression {
+                  branch_name_filter()
+                }
+              }
               steps {
                 sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -I Release'
-                sh './scripts/ci-tool.py -E Release'
+                //sh './scripts/ci-tool.py -E Release'
               }
             }
           }
