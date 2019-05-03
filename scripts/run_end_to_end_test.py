@@ -57,7 +57,7 @@ class TimerWatchdog():
             output("Watchdog '{}' awoke before being stopped! Awoke after: {}s . Watchdog will now: {}".format(self._name, self._time, self._task))
             self.trigger()
         else:
-            output("Safely notified")
+            output("Watchdog safely stopped")
 
     # Notify the waiting thread - this causes it not to trigger.
     def stop(self):
@@ -302,9 +302,9 @@ def verify_txs(parameters, test_instance):
 
                 if status == "Executed":
                     break
-                time.sleep(0.5)
 
-                output("Waiting for TX to get executed")
+                time.sleep(0.5)
+                output("Waiting for TX to get executed. Found: {}".format(status))
 
             seen_balance = tokens.balance(identity.public_key)
             if balance != seen_balance:

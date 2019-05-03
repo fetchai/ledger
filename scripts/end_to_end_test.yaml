@@ -8,7 +8,7 @@ setup_conditions:
     test_name : "basic_standalone"
     number_of_nodes: 1
     mining_nodes: [0]
-    max_test_time: 60
+    max_test_time: 120
 
 steps:
     - send_txs : { "name": "batch1", "amount": 10, "nodes" : [0] }
@@ -25,7 +25,7 @@ setup_conditions:
     number_of_nodes: 2
     node_connections: [[1, 0]]
     mining_nodes: [0]
-    max_test_time: 60
+    max_test_time: 120
 
 steps:
     - send_txs : { "name": "batch1", "amount": 10, "nodes" : [1] }
