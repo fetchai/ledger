@@ -79,7 +79,7 @@ public:
       return output_shape_;
     // output_shape_[0]=number of output channels
     output_shape_.emplace_back(output_channels_);
-    // output_shape_[1]=number of stride_size steps on input size
+    // output_shape_[1]=number of stride_size steps over input size
     output_shape_.emplace_back((inputs.at(0).get().shape()[1] - kernel_size_ + stride_size_) /
                                stride_size_);
     return output_shape_;

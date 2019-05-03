@@ -81,6 +81,16 @@ private:
   std::vector<SizeType> output_shape_;
 };
 
+/**
+ * Applies 2D convolution using im2col with General Matrix Multiplication described here:
+ * https://petewarden.com/2015/04/20/why-gemm-is-at-the-heart-of-deep-learning/
+ * @param inputs vector of tensor references where at:
+ * inputs[0] = input_data[input_channels x input_height x input_width], inputs[1] =
+ * kernel_data[kernel_channels x kernel_height x kernel_width]
+ * @param output tensor of size [output_channels x number_of_stride_sized_steps_over_input_height x
+ * number_of_stride_sized_steps_over_input_width]
+ * @return: output tensor parameter
+ */
 template <class ArrayType>
 ArrayType Convolution2D<ArrayType>::Forward(
     std::vector<std::reference_wrapper<ArrayType const>> const &inputs, ArrayType &output)
@@ -108,26 +118,39 @@ ArrayType Convolution2D<ArrayType>::Forward(
   SizeType horizontal_stride_height = output_height * output_width;
   SizeType vertical_stride_width    = output_channels;
 
+  // Horizontal stride contains input data
   ArrayType horizontal_stride{{horizontal_stride_width, horizontal_stride_height}};
+  // Vertical stride contains kernel data
   ArrayType vertical_stride{{vertical_stride_width, horizontal_stride_width}};
 
-  // Fill horizontal stride
+  // Reshape input data to horizontal stride - im2col
   FillHorizontalStride(input, horizontal_stride, output_height, output_width, input_channels,
                        kernel_height, kernel_width);
 
-  // Fill vertical stride
+  // Reshape kernel data to vertical stride - im2col
   FillVerticalStride(kernels, vertical_stride, output_channels, input_channels, kernel_height,
                      kernel_width);
 
   // Do matmul
   ArrayType reshaped_output = fetch::math::Dot(vertical_stride, horizontal_stride);
 
-  // Put values to output
+  // Reshape values after matmul to output
   FillOutput(reshaped_output, output, output_channels, output_height, output_width);
 
   return output;
 }
 
+/**
+ * Computes gradient of 2D convolution using reversed im2col and General Matrix Multiplication
+ * described here: https://petewarden.com/2015/04/20/why-gemm-is-at-the-heart-of-deep-learning/
+ * @param inputs vector of tensor references where at:
+ * inputs[0] = input_data[input_channels x input_height x input_width], inputs[1] =
+ * kernel_data[kernel_channels x kernel_height x kernel_width]
+ * @param error_signal tensor of size [output_channels x
+ * number_of_stride_sized_steps_over_input_height x number_of_stride_sized_steps_over_input_width]
+ * @return: output vector of tensors with back propagated error signal
+ * output[0]=input_error[inputs[0].shape], output[1]=kernel_error[inputs[1].shape]
+ */
 template <class ArrayType>
 std::vector<ArrayType> Convolution2D<ArrayType>::Backward(
     std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
@@ -152,42 +175,43 @@ std::vector<ArrayType> Convolution2D<ArrayType>::Backward(
   SizeType  output_channels = kernels.shape().at(0);
   SizeType  kernel_height   = kernels.shape().at(2);
   SizeType  kernel_width    = kernels.shape().at(3);
-  ArrayType error_signal1(input.shape());
-  ArrayType error_signal2(kernels.shape());
+  ArrayType input_error(input.shape());
+  ArrayType kernel_error(kernels.shape());
 
   SizeType horizontal_stride_width  = kernel_width * kernel_height * input_channels;
   SizeType horizontal_stride_height = output_height * output_width;
   SizeType vertical_stride_width    = output_channels;
 
+  // Horizontal stride contains input data
   ArrayType horizontal_stride{{horizontal_stride_width, horizontal_stride_height}};
+  // Vertical stride contains kernel data
   ArrayType vertical_stride{{vertical_stride_width, horizontal_stride_width}};
 
-  // Fill horizontal stride
+  // Reshape input data to horizontal stride - im2col
   FillHorizontalStride(input, horizontal_stride, output_height, output_width, input_channels,
                        kernel_height, kernel_width);
 
-  // Fill vertical stride
+  // Reshape kernel data to vertical stride - im2col
   FillVerticalStride(kernels, vertical_stride, output_channels, input_channels, kernel_height,
                      kernel_width);
 
+  // Reshape error_signal to error for matmul
   ArrayType error{{vertical_stride_width, horizontal_stride_height}};
-
-  // Reverse put values to output
   ReverseFillOutput(error, error_signal_signal, output_channels, output_height, output_width);
 
   // Backwards matmul
   ArrayType error2 = fetch::math::DotTranspose(error, horizontal_stride);
   ArrayType error1 = fetch::math::TransposeDot(vertical_stride, error);
 
-  // Reverse fill horizontal stride
-  ReverseFillHorizontalStride(error_signal1, error1, output_height, output_width, input_channels,
+  // Reshape horizontal stride to input data error_signal - reversed im2col
+  ReverseFillHorizontalStride(input_error, error1, output_height, output_width, input_channels,
                               kernel_height, kernel_width);
 
-  // Reverse fill vertical stride
-  ReverseFillVerticalStride(error_signal2, error2, output_channels, input_channels, kernel_height,
+  // Reshape vertical stride to kernel data error_signal - reversed im2col
+  ReverseFillVerticalStride(kernel_error, error2, output_channels, input_channels, kernel_height,
                             kernel_width);
 
-  return {error_signal1, error_signal2};
+  return {input_error, kernel_error};
 }
 
 template <class ArrayType>
@@ -199,17 +223,18 @@ std::vector<typename ArrayType::SizeType> Convolution2D<ArrayType>::ComputeOutpu
     return output_shape_;
   // output_shape_[0]=number of output channels
   output_shape_.emplace_back(inputs.at(1).get().shape()[0]);
-  // output_shape_[1]=number of stride_size steps on input height
+  // output_shape_[1]=number of stride_size steps over input height
   output_shape_.emplace_back(
       (inputs.at(0).get().shape()[1] - inputs.at(1).get().shape()[2] + stride_size_) /
       stride_size_);
-  // output_shape_[2]=number of stride_size steps on input width
+  // output_shape_[2]=number of stride_size steps over input width
   output_shape_.emplace_back(
       (inputs.at(0).get().shape()[2] - inputs.at(1).get().shape()[3] + stride_size_) /
       stride_size_);
   return output_shape_;
 }
 
+// TODO(issue 943): Make im2col effective using iterators
 template <class ArrayType>
 void Convolution2D<ArrayType>::FillVerticalStride(ArrayType &input, ArrayType &vertical_stride,
                                                   SizeType const output_channels,
@@ -236,6 +261,7 @@ void Convolution2D<ArrayType>::FillVerticalStride(ArrayType &input, ArrayType &v
   }
 }
 
+// TODO(issue 943): Make im2col effective using iterators
 template <class ArrayType>
 void Convolution2D<ArrayType>::ReverseFillVerticalStride(
     ArrayType &input, ArrayType &vertical_stride, SizeType const output_channels,
@@ -260,6 +286,7 @@ void Convolution2D<ArrayType>::ReverseFillVerticalStride(
   }
 }
 
+// TODO(issue 943): Make im2col effective using iterators
 template <class ArrayType>
 void Convolution2D<ArrayType>::FillHorizontalStride(ArrayType &input, ArrayType &horizontal_stride,
                                                     SizeType const output_height,
@@ -295,6 +322,7 @@ void Convolution2D<ArrayType>::FillHorizontalStride(ArrayType &input, ArrayType 
   }
 }
 
+// TODO(issue 943): Make im2col effective using iterators
 template <class ArrayType>
 void Convolution2D<ArrayType>::ReverseFillHorizontalStride(
     ArrayType &input, ArrayType &horizontal_stride, SizeType const output_height,
@@ -328,6 +356,7 @@ void Convolution2D<ArrayType>::ReverseFillHorizontalStride(
   }
 }
 
+// TODO(issue 943): Make im2col effective using iterators
 template <class ArrayType>
 void Convolution2D<ArrayType>::FillOutput(ArrayType const &gemm_output, ArrayType &output,
                                           SizeType const output_channels,
@@ -349,6 +378,7 @@ void Convolution2D<ArrayType>::FillOutput(ArrayType const &gemm_output, ArrayTyp
   }
 }
 
+// TODO(issue 943): Make im2col effective using iterators
 template <class ArrayType>
 void Convolution2D<ArrayType>::ReverseFillOutput(ArrayType &gemm_output, ArrayType const &output,
                                                  SizeType const output_channels,

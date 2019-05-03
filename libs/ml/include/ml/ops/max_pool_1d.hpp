@@ -39,6 +39,14 @@ public:
 
   ~MaxPool1D() = default;
 
+  /**
+   * Applies 1D max pooling of kernel_size_ for each channel described here:
+   * https://www.quora.com/What-is-max-pooling-in-convolutional-neural-networks
+   * @param inputs vector of tensor references where at:
+   * inputs[0] = input_data[input_channels x input_height]
+   * @param output tensor of size [input_channels=output_channels x number_of_stride_sized_steps]
+   * @return: output tensor parameter
+   */
   ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                     ArrayType &                                                 output)
   {
@@ -51,16 +59,17 @@ public:
     SizeType iter;
     DataType max;
     DataType val;
-    for (SizeType c{0}; c < outputShape[0]; ++c)  // Iterate over output channels
+    auto     oit = output.begin();
+    // output_channels = input_channels
+    for (SizeType i{0}; i < outputShape.at(1); i++)  // Iterate over kernel stride
     {
-
-      for (SizeType i{0}; i < outputShape.at(1); i++)  // Iterate over kernel stride
+      iter = i * stride_size_;
+      for (SizeType c{0}; c < outputShape[0]; ++c)  // Iterate over output channels
       {
-        iter = i * stride_size_;
-
         max = inputs.at(0).get().At(c, iter);
 
-        for (SizeType j{0}; j < kernel_size_; j++)  // Iterate over kernel width
+        // Get maximum value on kernel_size_ window
+        for (SizeType j{1}; j < kernel_size_; j++)  // Iterate over kernel width
         {
           val = inputs.at(0).get().At(c, iter + j);
           if (val > max)
@@ -68,13 +77,26 @@ public:
             max = val;
           }
         }
-        output.Set(c, i, max);
+
+        // Set maximum value for each [kernel_size_] window to output
+        *oit = max;
+        ++oit;
       }
     }
     return output;
   }
 
-  // Gradient of max pool is passed only to max node
+  /**
+   * Computes gradient of 1D max pooling of kernel_size_ for each channel described here:
+   * https://www.quora.com/What-is-max-pooling-in-convolutional-neural-networks
+   * Error signal of max pool is passed only to max node
+   * @param inputs vector of tensor references where at:
+   * inputs[0] = input_data[input_channels x input_height]
+   * @param error_signal tensor of size [output_channels=input_channels x
+   * number_of_stride_sized_steps]
+   * @return: output vector of tensors with back propagated error signal
+   * output[0]=input_error[inputs[0].shape]
+   */
   std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           error_signal)
@@ -90,15 +112,16 @@ public:
     DataType max;
     DataType val;
     SizeType max_iter;
-    for (SizeType c{0}; c < outputShape[0]; ++c)  // Iterate over output channels
+    auto     erit = error_signal.cbegin();
+    for (SizeType i{0}; i < outputShape.at(1); i++)  // Iterate over kernel stride
     {
-      for (SizeType i{0}; i * stride_size_ < inputs.at(0).get().shape()[1] - kernel_size_;
-           i++)  // Iterate over kernel stride
+      iter = i * stride_size_;
+      for (SizeType c{0}; c < outputShape.at(0); ++c)  // Iterate over output channels
       {
-        iter     = i * stride_size_;
         max      = inputs.at(0).get().At(c, iter);
         max_iter = iter;
 
+        // Find max node
         for (SizeType j{0}; j < kernel_size_; j++)  // Iterate over kernel width
         {
           val = inputs.at(0).get().At(c, iter + j);
@@ -108,8 +131,10 @@ public:
             max_iter = iter + j;
           }
         }
-        // Error needs to be added if same node occurs in multiple output nodes at once
-        returnSignal.Set(c, max_iter, returnSignal.At(c, max_iter) + error_signal.At(c, i));
+
+        // Add error to max node
+        returnSignal.Set(c, max_iter, returnSignal.At(c, max_iter) + *erit);
+        ++erit;
       }
     }
 
@@ -124,7 +149,7 @@ public:
       return output_shape_;
     // output_shape_[0]=number of output channels
     output_shape_.emplace_back(inputs.at(0).get().shape().at(0));
-    // output_shape_[1]=number of stride_size steps on input size
+    // output_shape_[1]=number of stride_size steps over input size
     output_shape_.emplace_back((inputs.at(0).get().shape().at(1) - (kernel_size_ - stride_size_)) /
                                stride_size_);
     return output_shape_;

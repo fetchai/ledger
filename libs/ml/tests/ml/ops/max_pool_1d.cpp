@@ -88,6 +88,43 @@ TYPED_TEST(MaxPool1DTest, backward_test)
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
 }
 
+TYPED_TEST(MaxPool1DTest, backward_test_2_channels)
+{
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
+
+  ArrayType           data({2, 5});
+  ArrayType           error({2, 2});
+  ArrayType           gt({2, 5});
+  std::vector<double> dataInput({1, -2, 3, -4, 10, -6, 7, -8, 9, -10});
+  std::vector<double> errorInput({2, 3, 4, 5});
+  std::vector<double> gtInput({0, 0, 2, 0, 3, 0, 0, 0, 9, 0});
+
+  for (SizeType i{0}; i < 2; ++i)
+  {
+    for (SizeType j{0}; j < 5; ++j)
+    {
+      data.Set(i, j, static_cast<DataType>(dataInput[i * 5 + j]));
+      gt.Set(i, j, static_cast<DataType>(gtInput[i * 5 + j]));
+    }
+  }
+
+  for (SizeType i{0}; i < 2; ++i)
+  {
+    for (SizeType j{0}; j < 2; ++j)
+    {
+      error.Set(i, j, static_cast<DataType>(errorInput[i * 2 + j]));
+    }
+  }
+
+  fetch::ml::ops::MaxPool1D<ArrayType> op(4, 1);
+  std::vector<ArrayType>               prediction = op.Backward({data}, error);
+
+  // test correct values
+  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+}
+
 TYPED_TEST(MaxPool1DTest, forward_test_4_2)
 {
   using DataType  = typename TypeParam::Type;
@@ -109,6 +146,41 @@ TYPED_TEST(MaxPool1DTest, forward_test_4_2)
   }
 
   fetch::ml::ops::MaxPool1D<ArrayType> op(4, 2);
+  ArrayType                            prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
+      std::vector<std::reference_wrapper<TypeParam const>>({data}));
+
+  // test correct values
+  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+}
+
+TYPED_TEST(MaxPool1DTest, forward_test_2_channels_4_1)
+{
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
+
+  ArrayType           data({2, 5});
+  ArrayType           gt({2, 2});
+  std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
+  std::vector<double> gtInput({3, 5, 9, 9});
+
+  for (SizeType i{0}; i < 2; ++i)
+  {
+    for (SizeType j{0}; j < 5; ++j)
+    {
+      data.Set(i, j, static_cast<DataType>(dataInput[i * 5 + j]));
+    }
+  }
+
+  for (SizeType i{0}; i < 2; ++i)
+  {
+    for (SizeType j{0}; j < 2; ++j)
+    {
+      gt.Set(i, j, static_cast<DataType>(gtInput[i * 2 + j]));
+    }
+  }
+
+  fetch::ml::ops::MaxPool1D<ArrayType> op(4, 1);
   ArrayType                            prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({data}));
 

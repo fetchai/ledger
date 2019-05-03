@@ -58,9 +58,56 @@ TYPED_TEST(MaxPool2DTest, forward_test_3_2)
   {
     for (SizeType j{0}; j < output_height; ++j)
     {
-
-      data.Set(0, i, j, static_cast<DataType>(i * j));
       gt.Set(0, i, j, static_cast<DataType>(gtInput[i + j * output_width]));
+    }
+  }
+
+  fetch::ml::ops::MaxPool2D<ArrayType> op(3, 2);
+  ArrayType                            prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
+      std::vector<std::reference_wrapper<ArrayType const>>({data}));
+
+  // test correct values
+  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+}
+
+TYPED_TEST(MaxPool2DTest, forward_2_channels_test_3_2)
+{
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
+
+  SizeType const channels_size = 2;
+  SizeType const input_width   = 10;
+  SizeType const input_height  = 5;
+
+  SizeType const output_width  = 4;
+  SizeType const output_height = 2;
+
+  ArrayType           data({channels_size, input_width, input_height});
+  ArrayType           gt({channels_size, output_width, output_height});
+  std::vector<double> gtInput({4, 8, 12, 16, 8, 16, 24, 32, 8, 16, 24, 32, 16, 32, 48, 64});
+
+  for (SizeType c{0}; c < channels_size; ++c)
+  {
+    for (SizeType i{0}; i < input_width; ++i)
+    {
+      for (SizeType j{0}; j < input_height; ++j)
+      {
+        data.Set(c, i, j, static_cast<DataType>((c + 1) * i * j));
+      }
+    }
+  }
+
+  for (SizeType c{0}; c < channels_size; ++c)
+  {
+    for (SizeType i{0}; i < output_width; ++i)
+    {
+      for (SizeType j{0}; j < output_height; ++j)
+      {
+        gt.Set(c, i, j,
+               static_cast<DataType>(
+                   gtInput[c * output_width * output_height + (i + j * output_width)]));
+      }
     }
   }
 
@@ -108,6 +155,61 @@ TYPED_TEST(MaxPool2DTest, backward_test)
   gt.Set(0, 4, 2, DataType{2});
   gt.Set(0, 2, 4, DataType{2});
   gt.Set(0, 4, 4, DataType{3});
+
+  fetch::ml::ops::MaxPool2D<ArrayType> op(3, 2);
+  std::vector<ArrayType>               prediction = op.Backward({data}, error);
+
+  // test correct values
+  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+}
+
+TYPED_TEST(MaxPool2DTest, backward_2_channels_test)
+{
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
+
+  SizeType const channels_size = 2;
+  SizeType const input_width   = 5;
+  SizeType const input_height  = 5;
+  SizeType const output_width  = 2;
+  SizeType const output_height = 2;
+
+  ArrayType data({channels_size, input_width, input_height});
+  ArrayType error({channels_size, output_width, output_height});
+  ArrayType gt({channels_size, input_width, input_height});
+
+  for (SizeType c{0}; c < channels_size; ++c)
+  {
+    for (SizeType i{0}; i < input_width; ++i)
+    {
+      for (SizeType j{0}; j < input_height; ++j)
+      {
+        data.Set(c, i, j, static_cast<DataType>((c + 1) * i * j));
+        gt.Set(c, i, j, DataType{0});
+      }
+    }
+  }
+
+  for (SizeType c{0}; c < channels_size; ++c)
+  {
+    for (SizeType i{0}; i < output_width; ++i)
+    {
+      for (SizeType j{0}; j < output_height; ++j)
+      {
+        error.Set(c, i, j, static_cast<DataType>((c + 1) * (1 + i + j)));
+      }
+    }
+  }
+
+  gt.Set(0, 2, 2, DataType{1});
+  gt.Set(0, 4, 2, DataType{2});
+  gt.Set(0, 2, 4, DataType{2});
+  gt.Set(0, 4, 4, DataType{3});
+  gt.Set(1, 2, 2, DataType{2});
+  gt.Set(1, 4, 2, DataType{4});
+  gt.Set(1, 2, 4, DataType{4});
+  gt.Set(1, 4, 4, DataType{6});
 
   fetch::ml::ops::MaxPool2D<ArrayType> op(3, 2);
   std::vector<ArrayType>               prediction = op.Backward({data}, error);
