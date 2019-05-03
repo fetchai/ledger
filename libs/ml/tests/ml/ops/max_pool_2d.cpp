@@ -45,7 +45,7 @@ TYPED_TEST(MaxPool2DTest, forward_test_3_2)
 
   ArrayType           data({1, input_width, input_height});
   ArrayType           gt({1, output_width, output_height});
-  std::vector<double> gtInput({4, 8, 12, 16, 8, 16, 24, 32});
+  std::vector<double> gt_input({4, 8, 12, 16, 8, 16, 24, 32});
   for (SizeType i{0}; i < input_width; ++i)
   {
     for (SizeType j{0}; j < input_height; ++j)
@@ -58,7 +58,7 @@ TYPED_TEST(MaxPool2DTest, forward_test_3_2)
   {
     for (SizeType j{0}; j < output_height; ++j)
     {
-      gt.Set(0, i, j, static_cast<DataType>(gtInput[i + j * output_width]));
+      gt.Set(0, i, j, static_cast<DataType>(gt_input[i + j * output_width]));
     }
   }
 
@@ -85,7 +85,7 @@ TYPED_TEST(MaxPool2DTest, forward_2_channels_test_3_2)
 
   ArrayType           data({channels_size, input_width, input_height});
   ArrayType           gt({channels_size, output_width, output_height});
-  std::vector<double> gtInput({4, 8, 12, 16, 8, 16, 24, 32, 8, 16, 24, 32, 16, 32, 48, 64});
+  std::vector<double> gt_input({4, 8, 12, 16, 8, 16, 24, 32, 8, 16, 24, 32, 16, 32, 48, 64});
 
   for (SizeType c{0}; c < channels_size; ++c)
   {
@@ -106,7 +106,7 @@ TYPED_TEST(MaxPool2DTest, forward_2_channels_test_3_2)
       {
         gt.Set(c, i, j,
                static_cast<DataType>(
-                   gtInput[c * output_width * output_height + (i + j * output_width)]));
+                   gt_input[c * output_width * output_height + (i + j * output_width)]));
       }
     }
   }

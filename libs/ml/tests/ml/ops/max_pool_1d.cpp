@@ -39,16 +39,16 @@ TYPED_TEST(MaxPool1DTest, forward_test_3_2)
 
   ArrayType           data({1, 10});
   ArrayType           gt({1, 4});
-  std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
-  std::vector<double> gtInput({3, 5, 7, 9});
+  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
+  std::vector<double> gt_input({3, 5, 7, 9});
   for (SizeType i{0}; i < 10; ++i)
   {
-    data.Set(0, i, static_cast<DataType>(dataInput[i]));
+    data.Set(0, i, static_cast<DataType>(data_input[i]));
   }
 
   for (SizeType i{0}; i < 4; ++i)
   {
-    gt.Set(0, i, static_cast<DataType>(gtInput[i]));
+    gt.Set(0, i, static_cast<DataType>(gt_input[i]));
   }
 
   fetch::ml::ops::MaxPool1D<ArrayType> op(3, 2);
@@ -68,13 +68,13 @@ TYPED_TEST(MaxPool1DTest, backward_test)
   ArrayType           data({1, 10});
   ArrayType           error({1, 4});
   ArrayType           gt({1, 10});
-  std::vector<double> dataInput({1, -2, 3, -4, 10, -6, 7, -8, 9, -10});
+  std::vector<double> data_input({1, -2, 3, -4, 10, -6, 7, -8, 9, -10});
   std::vector<double> errorInput({2, 3, 4, 5});
-  std::vector<double> gtInput({0, 0, 2, 0, 7, 0, 0, 0, 5, 0});
+  std::vector<double> gt_input({0, 0, 2, 0, 7, 0, 0, 0, 5, 0});
   for (SizeType i{0}; i < 10; ++i)
   {
-    data.Set(0, i, static_cast<DataType>(dataInput[i]));
-    gt.Set(0, i, static_cast<DataType>(gtInput[i]));
+    data.Set(0, i, static_cast<DataType>(data_input[i]));
+    gt.Set(0, i, static_cast<DataType>(gt_input[i]));
   }
   for (SizeType i{0}; i < 4; ++i)
   {
@@ -97,16 +97,16 @@ TYPED_TEST(MaxPool1DTest, backward_test_2_channels)
   ArrayType           data({2, 5});
   ArrayType           error({2, 2});
   ArrayType           gt({2, 5});
-  std::vector<double> dataInput({1, -2, 3, -4, 10, -6, 7, -8, 9, -10});
+  std::vector<double> data_input({1, -2, 3, -4, 10, -6, 7, -8, 9, -10});
   std::vector<double> errorInput({2, 3, 4, 5});
-  std::vector<double> gtInput({0, 0, 2, 0, 3, 0, 0, 0, 9, 0});
+  std::vector<double> gt_input({0, 0, 2, 0, 3, 0, 0, 0, 9, 0});
 
   for (SizeType i{0}; i < 2; ++i)
   {
     for (SizeType j{0}; j < 5; ++j)
     {
-      data.Set(i, j, static_cast<DataType>(dataInput[i * 5 + j]));
-      gt.Set(i, j, static_cast<DataType>(gtInput[i * 5 + j]));
+      data.Set(i, j, static_cast<DataType>(data_input[i * 5 + j]));
+      gt.Set(i, j, static_cast<DataType>(gt_input[i * 5 + j]));
     }
   }
 
@@ -133,16 +133,16 @@ TYPED_TEST(MaxPool1DTest, forward_test_4_2)
 
   ArrayType           data({1, 10});
   ArrayType           gt({1, 4});
-  std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
-  std::vector<double> gtInput({3, 5, 7, 9});
+  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
+  std::vector<double> gt_input({3, 5, 7, 9});
   for (SizeType i{0}; i < 10; ++i)
   {
-    data.Set(0, i, static_cast<DataType>(dataInput[i]));
+    data.Set(0, i, static_cast<DataType>(data_input[i]));
   }
 
   for (SizeType i{0}; i < 4; ++i)
   {
-    gt.Set(0, i, static_cast<DataType>(gtInput[i]));
+    gt.Set(0, i, static_cast<DataType>(gt_input[i]));
   }
 
   fetch::ml::ops::MaxPool1D<ArrayType> op(4, 2);
@@ -161,14 +161,14 @@ TYPED_TEST(MaxPool1DTest, forward_test_2_channels_4_1)
 
   ArrayType           data({2, 5});
   ArrayType           gt({2, 2});
-  std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
-  std::vector<double> gtInput({3, 5, 9, 9});
+  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
+  std::vector<double> gt_input({3, 5, 9, 9});
 
   for (SizeType i{0}; i < 2; ++i)
   {
     for (SizeType j{0}; j < 5; ++j)
     {
-      data.Set(i, j, static_cast<DataType>(dataInput[i * 5 + j]));
+      data.Set(i, j, static_cast<DataType>(data_input[i * 5 + j]));
     }
   }
 
@@ -176,7 +176,7 @@ TYPED_TEST(MaxPool1DTest, forward_test_2_channels_4_1)
   {
     for (SizeType j{0}; j < 2; ++j)
     {
-      gt.Set(i, j, static_cast<DataType>(gtInput[i * 2 + j]));
+      gt.Set(i, j, static_cast<DataType>(gt_input[i * 2 + j]));
     }
   }
 
@@ -196,16 +196,16 @@ TYPED_TEST(MaxPool1DTest, forward_test_2_4)
 
   ArrayType           data({1, 10});
   ArrayType           gt({1, 3});
-  std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
-  std::vector<double> gtInput({1, 5, 9});
+  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
+  std::vector<double> gt_input({1, 5, 9});
   for (SizeType i{0}; i < 10; ++i)
   {
-    data.Set(0, i, static_cast<DataType>(dataInput[i]));
+    data.Set(0, i, static_cast<DataType>(data_input[i]));
   }
 
   for (SizeType i{0}; i < 3; ++i)
   {
-    gt.Set(0, i, static_cast<DataType>(gtInput[i]));
+    gt.Set(0, i, static_cast<DataType>(gt_input[i]));
   }
 
   fetch::ml::ops::MaxPool1D<ArrayType> op(2, 4);

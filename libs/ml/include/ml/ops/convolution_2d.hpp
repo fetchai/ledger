@@ -40,14 +40,14 @@ public:
   ~Convolution2D() = default;
 
   ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                    ArrayType &                                                 output);
+                    ArrayType &                                                 output) override;
 
   std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           error_signal_signal);
+      ArrayType const &                                           error_signal_signal) override;
 
   std::vector<typename ArrayType::SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs);
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) override;
 
   static constexpr char const *DESCRIPTOR = "Convolution2D";
 
@@ -83,7 +83,7 @@ private:
 
 /**
  * Applies 2D convolution using im2col with General Matrix Multiplication described here:
- * https://petewarden.com/2015/04/20/why-gemm-is-at-the-heart-of-deep-learning/
+ * https://www.scss.tcd.ie/~andersan/static/papers/asap-2017.pdf
  * @param inputs vector of tensor references where at:
  * inputs[0] = input_data[input_channels x input_height x input_width], inputs[1] =
  * kernel_data[kernel_channels x kernel_height x kernel_width]
@@ -142,7 +142,7 @@ ArrayType Convolution2D<ArrayType>::Forward(
 
 /**
  * Computes gradient of 2D convolution using reversed im2col and General Matrix Multiplication
- * described here: https://petewarden.com/2015/04/20/why-gemm-is-at-the-heart-of-deep-learning/
+ * described here: https://www.scss.tcd.ie/~andersan/static/papers/asap-2017.pdf
  * @param inputs vector of tensor references where at:
  * inputs[0] = input_data[input_channels x input_height x input_width], inputs[1] =
  * kernel_data[kernel_channels x kernel_height x kernel_width]
@@ -234,7 +234,17 @@ std::vector<typename ArrayType::SizeType> Convolution2D<ArrayType>::ComputeOutpu
   return output_shape_;
 }
 
-// TODO(issue 943): Make im2col effective using iterators
+// TODO(issue 943): Make im2col efficient using iterators
+/**
+ * Reshapes input tensor to vertical_stride tensor using im2col
+ * @tparam ArrayType
+ * @param input
+ * @param vertical_stride
+ * @param output_channels
+ * @param input_channels
+ * @param kernel_height
+ * @param kernel_width
+ */
 template <class ArrayType>
 void Convolution2D<ArrayType>::FillVerticalStride(ArrayType &input, ArrayType &vertical_stride,
                                                   SizeType const output_channels,
@@ -261,7 +271,17 @@ void Convolution2D<ArrayType>::FillVerticalStride(ArrayType &input, ArrayType &v
   }
 }
 
-// TODO(issue 943): Make im2col effective using iterators
+// TODO(issue 943): Make im2col efficient using iterators
+/**
+ * Reshapes vertical_stride tensor to input tensor using reversed im2col
+ * @tparam ArrayType
+ * @param input
+ * @param vertical_stride
+ * @param output_channels
+ * @param input_channels
+ * @param kernel_height
+ * @param kernel_width
+ */
 template <class ArrayType>
 void Convolution2D<ArrayType>::ReverseFillVerticalStride(
     ArrayType &input, ArrayType &vertical_stride, SizeType const output_channels,
@@ -286,7 +306,18 @@ void Convolution2D<ArrayType>::ReverseFillVerticalStride(
   }
 }
 
-// TODO(issue 943): Make im2col effective using iterators
+// TODO(issue 943): Make im2col efficient using iterators
+/**
+ * Reshapes kernel(input) tensor to horizontal_stride tensor using im2col
+ * @tparam ArrayType
+ * @param input
+ * @param horizontal_stride
+ * @param output_height
+ * @param output_width
+ * @param input_channels
+ * @param kernel_height
+ * @param kernel_width
+ */
 template <class ArrayType>
 void Convolution2D<ArrayType>::FillHorizontalStride(ArrayType &input, ArrayType &horizontal_stride,
                                                     SizeType const output_height,
@@ -295,8 +326,8 @@ void Convolution2D<ArrayType>::FillHorizontalStride(ArrayType &input, ArrayType 
                                                     SizeType const kernel_height,
                                                     SizeType const kernel_width)
 {
-  SizeType i_s;  // stride width iterator
-  SizeType j_s;  // stride height iterator
+  SizeType i_s;  // stride width index
+  SizeType j_s;  // stride height index
 
   j_s = 0;
   for (SizeType i_o{0}; i_o < output_height; ++i_o)  // Iterate over output height
@@ -322,15 +353,26 @@ void Convolution2D<ArrayType>::FillHorizontalStride(ArrayType &input, ArrayType 
   }
 }
 
-// TODO(issue 943): Make im2col effective using iterators
+// TODO(issue 943): Make im2col efficient using iterators
+/**
+ * Reshapes horizontal_stride tensor to kernel(input) tensor using reversed im2col
+ * @tparam ArrayType
+ * @param input
+ * @param horizontal_stride
+ * @param output_height
+ * @param output_width
+ * @param input_channels
+ * @param kernel_height
+ * @param kernel_width
+ */
 template <class ArrayType>
 void Convolution2D<ArrayType>::ReverseFillHorizontalStride(
     ArrayType &input, ArrayType &horizontal_stride, SizeType const output_height,
     SizeType const output_width, SizeType const input_channels, SizeType const kernel_height,
     SizeType const kernel_width)
 {
-  SizeType i_s;  // stride width iterator
-  SizeType j_s;  // stride height iterator
+  SizeType i_s;  // stride width index
+  SizeType j_s;  // stride height index
 
   j_s = 0;
   for (SizeType i_o{0}; i_o < output_height; ++i_o)  // Iterate over output height
@@ -356,7 +398,16 @@ void Convolution2D<ArrayType>::ReverseFillHorizontalStride(
   }
 }
 
-// TODO(issue 943): Make im2col effective using iterators
+// TODO(issue 943): Make im2col efficient using iterators
+/**
+ * Reshape gemm_output tensor (result of matmul on vertical and horizontal stride) to output tensor
+ * @tparam ArrayType
+ * @param gemm_output
+ * @param output
+ * @param output_channels
+ * @param output_height
+ * @param output_width
+ */
 template <class ArrayType>
 void Convolution2D<ArrayType>::FillOutput(ArrayType const &gemm_output, ArrayType &output,
                                           SizeType const output_channels,
@@ -378,7 +429,16 @@ void Convolution2D<ArrayType>::FillOutput(ArrayType const &gemm_output, ArrayTyp
   }
 }
 
-// TODO(issue 943): Make im2col effective using iterators
+// TODO(issue 943): Make im2col efficient using iterators
+/**
+ * Reshape output tensor to gemm_output tensor (result of matmul on vertical and horizontal stride)
+ * @tparam ArrayType
+ * @param gemm_output
+ * @param output
+ * @param output_channels
+ * @param output_height
+ * @param output_width
+ */
 template <class ArrayType>
 void Convolution2D<ArrayType>::ReverseFillOutput(ArrayType &gemm_output, ArrayType const &output,
                                                  SizeType const output_channels,

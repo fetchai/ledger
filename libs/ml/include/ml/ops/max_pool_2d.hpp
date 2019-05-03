@@ -41,7 +41,7 @@ public:
 
   /**
    * Applies 2D max pooling of kernel_size_ x kernel_size_ for each channel described here:
-   * https://www.quora.com/What-is-max-pooling-in-convolutional-neural-networks
+   * http://ais.uni-bonn.de/papers/icann2010_maxpool.pdf
    * @param inputs vector of tensor references where at:
    * inputs[0] = input_data[input_channels x input_height x input_width]
    * @param output tensor of size [input_channels=output_channels x
@@ -49,29 +49,29 @@ public:
    * @return: output tensor parameter
    */
   ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                    ArrayType &                                                 output)
+                    ArrayType &                                                 output) override
   {
     ASSERT(inputs.size() == 1);
     // Input should be a 3D tensor [C x W x H]
     ASSERT(inputs.at(0).get().shape().size() == 3);
 
-    auto outputShape = ComputeOutputShape(inputs);
-    ASSERT(output.shape() == outputShape);
+    auto output_shape = ComputeOutputShape(inputs);
+    ASSERT(output.shape() == output_shape);
 
     SizeType iterw;
     SizeType iterh;
     DataType val;
     DataType max;
     auto     oit = output.begin();
-    for (SizeType ih{0}; ih < outputShape.at(2); ih++)  // Iterate height over kernel stride
+    for (SizeType ih{0}; ih < output_shape.at(2); ih++)  // Iterate height over kernel stride
     {
       iterh = ih * stride_size_;
 
-      for (SizeType iw{0}; iw < outputShape.at(1); iw++)  // Iterate width over kernel stride
+      for (SizeType iw{0}; iw < output_shape.at(1); iw++)  // Iterate width over kernel stride
       {
         iterw = iw * stride_size_;
 
-        for (SizeType c{0}; c < outputShape.at(0); ++c)  // Iterate over output channels
+        for (SizeType c{0}; c < output_shape.at(0); ++c)  // Iterate over output channels
         {
           max = inputs.at(0).get().At(c, iterw, iterh);
 
@@ -99,7 +99,7 @@ public:
 
   /**
    * Computes gradient of 2D max pooling of kernel_size_ x kernel_size for each channel described
-   * here: https://www.quora.com/What-is-max-pooling-in-convolutional-neural-networks Error signal
+   * here: http://ais.uni-bonn.de/papers/icann2010_maxpool.pdf Error signal
    * of max pool is passed only to max node
    * @param inputs vector of tensor references where at:
    * inputs[0] = input_data[input_channels x input_height x input_width]
@@ -110,13 +110,13 @@ public:
    */
   std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           error_signal)
+      ArrayType const &                                           error_signal) override
   {
     ASSERT(inputs.size() == 1);
     ASSERT(error_signal.shape() == ComputeOutputShape(inputs));
-    ArrayType returnSignal{inputs.at(0).get().shape()};
+    ArrayType return_signal{inputs.at(0).get().shape()};
 
-    auto outputShape = ComputeOutputShape(inputs);
+    auto output_shape = ComputeOutputShape(inputs);
 
     SizeType iterh;
     SizeType iterw;
@@ -125,13 +125,13 @@ public:
     SizeType max_iterw;
     SizeType max_iterh;
     auto     erit = error_signal.cbegin();
-    for (SizeType iw{0}; iw < outputShape.at(1); iw++)  // Iterate width over kernel stride
+    for (SizeType iw{0}; iw < output_shape.at(1); iw++)  // Iterate width over kernel stride
     {
       iterw = iw * stride_size_;
-      for (SizeType ih{0}; ih < outputShape.at(2); ih++)  // Iterate height over kernel stride
+      for (SizeType ih{0}; ih < output_shape.at(2); ih++)  // Iterate height over kernel stride
       {
         iterh = ih * stride_size_;
-        for (SizeType c{0}; c < outputShape[0]; ++c)  // Iterate over output channels
+        for (SizeType c{0}; c < output_shape[0]; ++c)  // Iterate over output channels
         {
           max       = inputs.at(0).get().At(c, iterw, iterh);
           max_iterw = iterw;
@@ -154,18 +154,18 @@ public:
           }
 
           // Add error to max node
-          returnSignal.Set(c, max_iterw, max_iterh,
-                           returnSignal.At(c, max_iterw, max_iterh) + *erit);
+          return_signal.Set(c, max_iterw, max_iterh,
+                            return_signal.At(c, max_iterw, max_iterh) + *erit);
           ++erit;
         }
       }
     }
 
-    return {returnSignal};
+    return {return_signal};
   }
 
   std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) override
   {
     // Return pre-computed value if exist
     if (output_shape_.size() != 0)

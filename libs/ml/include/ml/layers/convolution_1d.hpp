@@ -39,6 +39,17 @@ public:
   using SizeType     = typename ArrayType::SizeType;
   using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
 
+  /**
+   * Creates 1D convolution layer with trainable kernel
+   * @param output_channels number of output channels
+   * @param input_channels number of input channels
+   * @param kernel_size size of kernel
+   * @param stride_size step size
+   * @param activation_type type of activation function applied after convolution
+   * @param name name of graph ops
+   * @param init_mode mode in which wights(kernel) will be initialized
+   * @param seed random seed for weights(kernel) initialization
+   */
   Convolution1D(SizeType const output_channels, SizeType const input_channels,
                 SizeType const kernel_size, SizeType const stride_size,
                 details::ActivationType const activation_type = details::ActivationType::NOTHING,
@@ -72,7 +83,7 @@ public:
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) override
   {
     // Return pre-computed value if exist
     if (output_shape_.size() != 0)

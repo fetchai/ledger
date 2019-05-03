@@ -41,30 +41,30 @@ public:
 
   /**
    * Applies 1D max pooling of kernel_size_ for each channel described here:
-   * https://www.quora.com/What-is-max-pooling-in-convolutional-neural-networks
+   * http://ais.uni-bonn.de/papers/icann2010_maxpool.pdf
    * @param inputs vector of tensor references where at:
    * inputs[0] = input_data[input_channels x input_height]
    * @param output tensor of size [input_channels=output_channels x number_of_stride_sized_steps]
    * @return: output tensor parameter
    */
   ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                    ArrayType &                                                 output)
+                    ArrayType &                                                 output) override
   {
     ASSERT(inputs.size() == 1);
     // Input should be a 2D tensor [C x W]
     ASSERT(inputs.at(0).get().shape().size() == 2);
 
-    auto outputShape = ComputeOutputShape(inputs);
-    ASSERT(output.shape() == outputShape);
+    auto output_shape = ComputeOutputShape(inputs);
+    ASSERT(output.shape() == output_shape);
     SizeType iter;
     DataType max;
     DataType val;
     auto     oit = output.begin();
     // output_channels = input_channels
-    for (SizeType i{0}; i < outputShape.at(1); i++)  // Iterate over kernel stride
+    for (SizeType i{0}; i < output_shape.at(1); i++)  // Iterate over kernel stride
     {
       iter = i * stride_size_;
-      for (SizeType c{0}; c < outputShape[0]; ++c)  // Iterate over output channels
+      for (SizeType c{0}; c < output_shape[0]; ++c)  // Iterate over output channels
       {
         max = inputs.at(0).get().At(c, iter);
 
@@ -88,7 +88,7 @@ public:
 
   /**
    * Computes gradient of 1D max pooling of kernel_size_ for each channel described here:
-   * https://www.quora.com/What-is-max-pooling-in-convolutional-neural-networks
+   * http://ais.uni-bonn.de/papers/icann2010_maxpool.pdf
    * Error signal of max pool is passed only to max node
    * @param inputs vector of tensor references where at:
    * inputs[0] = input_data[input_channels x input_height]
@@ -99,24 +99,24 @@ public:
    */
   std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           error_signal)
+      ArrayType const &                                           error_signal) override
   {
     ASSERT(inputs.size() == 1);
     ASSERT(error_signal.shape() == ComputeOutputShape(inputs));
 
-    ArrayType returnSignal{inputs.at(0).get().shape()};
+    ArrayType return_signal{inputs.at(0).get().shape()};
 
-    auto outputShape = ComputeOutputShape(inputs);
+    auto output_shape = ComputeOutputShape(inputs);
 
     SizeType iter;
     DataType max;
     DataType val;
     SizeType max_iter;
     auto     erit = error_signal.cbegin();
-    for (SizeType i{0}; i < outputShape.at(1); i++)  // Iterate over kernel stride
+    for (SizeType i{0}; i < output_shape.at(1); i++)  // Iterate over kernel stride
     {
       iter = i * stride_size_;
-      for (SizeType c{0}; c < outputShape.at(0); ++c)  // Iterate over output channels
+      for (SizeType c{0}; c < output_shape.at(0); ++c)  // Iterate over output channels
       {
         max      = inputs.at(0).get().At(c, iter);
         max_iter = iter;
@@ -133,16 +133,16 @@ public:
         }
 
         // Add error to max node
-        returnSignal.Set(c, max_iter, returnSignal.At(c, max_iter) + *erit);
+        return_signal.Set(c, max_iter, return_signal.At(c, max_iter) + *erit);
         ++erit;
       }
     }
 
-    return {returnSignal};
+    return {return_signal};
   }
 
   std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) override
   {
     // Return pre-computed value if exist
     if (output_shape_.size() != 0)
