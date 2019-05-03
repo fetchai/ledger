@@ -1,3 +1,8 @@
+def branch_name_filter()
+{
+   return BRANCH_NAME == "develop" && BRANCH_NAME ==~ /^PR-\d+-merge$/
+}
+
 pipeline {
 
   agent none
@@ -78,9 +83,8 @@ pipeline {
 
             stage('Debug Integration and end-to-end Tests') {
               when {
-                branch "develop"
                 expression {
-                  BRANCH_NAME ==~ /^PR-\d+-merge$/
+                  branch_name_filter()
                 }
               }
               steps {
@@ -116,9 +120,8 @@ pipeline {
 
             stage('Integration and end-to-end Tests') {
               when {
-                branch "develop"
                 expression {
-                  BRANCH_NAME ==~ /^PR-\d+-merge$/
+                  branch_name_filter()
                 }
               }
               steps {
@@ -160,9 +163,8 @@ pipeline {
 
             stage('GCC Debug Integration and end-to-end Tests') {
               when {
-                branch "develop"
                 expression {
-                  BRANCH_NAME ==~ /^PR-\d+-merge$/
+                  branch_name_filter()
                 }
               }
               steps {
@@ -204,9 +206,8 @@ pipeline {
 
             stage('GCC Release Integration and end-to-end Tests') {
               when {
-                branch "develop"
                 expression {
-                  BRANCH_NAME ==~ /^PR-\d+-merge$/
+                  branch_name_filter()
                 }
               }
               steps {
