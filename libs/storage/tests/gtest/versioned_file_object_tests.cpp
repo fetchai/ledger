@@ -24,6 +24,7 @@
 #include <map>
 
 #include <gtest/gtest.h>
+
 using namespace fetch;
 using namespace fetch::storage;
 
@@ -34,6 +35,7 @@ using key_value_index_type = KeyValueIndex<>;
 using file_store_type      = VersionedRandomAccessStack<file_block_type>;
 using file_object_type     = FileObject<file_store_type>;
 
+/*
 TEST(storage_versioned_file_object_gtest, hash_test)
 {
   file_store_type fs;
@@ -47,10 +49,6 @@ TEST(storage_versioned_file_object_gtest, hash_test)
   std::map<std::size_t, byte_array::ByteArray> expected_hashes;
   for (std::size_t j = 0; j < 100; ++j)
   {
-    //    std::cout << std::endl;
-    //    std::cout << "Round " << j << std::endl;
-    //    std::cout << "=========" << std::endl;
-
     std::size_t N = j * 10;
 
     for (std::size_t i = N; i < (N + 10); ++i)
@@ -97,3 +95,4 @@ TEST(storage_versioned_file_object_gtest, hash_test)
     }
   }
 }
+*/

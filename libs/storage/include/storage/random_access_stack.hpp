@@ -24,6 +24,7 @@
 //  │      │           │           │           │           │
 //  └──────┴───────────┴───────────┴───────────┴───────────┘
 
+#include <algorithm>
 #include <cassert>
 #include <fstream>
 #include <functional>
@@ -51,7 +52,7 @@ namespace storage {
  * The header for the stack optionally allows arbitrary data to be stored, which can be useful to
  * the user
  */
-template <typename T, typename D = uint64_t>
+template <typename T, typename D = uint64_t, typename STREAM = std::fstream>
 class RandomAccessStack
 {
 private:
@@ -68,11 +69,10 @@ private:
     uint64_t objects = 0;
     D        extra;
 
-    bool Write(std::fstream &stream) const
+    bool Write(STREAM &stream) const
     {
       if ((!stream) || (!stream.is_open()))
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Tried to write to closed stream!");
         return false;
       }
       stream.seekg(0, stream.beg);
@@ -82,7 +82,7 @@ private:
       return bool(stream);
     }
 
-    bool Read(std::fstream &stream)
+    bool Read(STREAM &stream)
     {
       if ((!stream) || (!stream.is_open()))
       {
@@ -170,14 +170,14 @@ public:
   {
 
     filename_    = filename;
-    file_handle_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
+    file_handle_ = STREAM(filename_, std::ios::in | std::ios::out | std::ios::binary);
 
     if (!file_handle_)
     {
       if (create_if_not_exist)
       {
         Clear();
-        file_handle_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
+        file_handle_ = STREAM(filename_, std::ios::in | std::ios::out | std::ios::binary);
       }
       else
       {
@@ -210,7 +210,7 @@ public:
   {
     filename_ = filename;
     Clear();
-    file_handle_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
+    file_handle_ = STREAM(filename_, std::ios::in | std::ios::out | std::ios::binary);
 
     SignalFileLoaded();
   }
@@ -245,10 +245,88 @@ public:
   {
     assert(filename_ != "");
     assert(i < size());
-    int64_t n = int64_t(i * sizeof(type) + header_.size());
+    int64_t start = int64_t(i * sizeof(type) + header_.size());
 
-    file_handle_.seekg(n, file_handle_.beg);
+    file_handle_.seekg(start, file_handle_.beg);
     file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(type));
+  }
+
+  /**
+   * Copy array of objects onto the stack, don't respect current stack size, just
+   * update it if neccessary.
+   *
+   * @param: i Location of first object to be written
+   * @param: elements Number of elements to copy
+   * @param: objects Pointer to array of elements
+   *
+   */
+  void SetBulk(std::size_t const &i, std::size_t elements, type const *objects)
+  {
+    auto ret = LazySetBulk(i, elements, objects);
+
+    if (ret)
+    {
+      StoreHeader();
+    }
+  }
+
+  /**
+   * Lazy implementation of SetBulk - updates the header without flushing it
+   *
+   * @param: i Location of first object to be written
+   * @param: elements Number of elements to copy
+   * @param: objects Pointer to array of elements
+   *
+   * @return bool Whether the bulk set updated the header (number of elements)
+   */
+  bool LazySetBulk(std::size_t const &i, std::size_t elements, type const *objects)
+  {
+    assert(filename_ != "");
+
+    int64_t start = int64_t((i * sizeof(type)) + header_.size());
+
+    file_handle_.seekg(start, file_handle_.beg);
+    file_handle_.write(reinterpret_cast<char const *>(objects),
+                       std::streamsize(sizeof(type)) * std::streamsize(elements));
+
+    // Catch case where a set extends the underlying stack
+    if ((i + elements) > header_.objects)
+    {
+      header_.objects = i + elements;
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Get bulk elements, will fill the pointer with as many elements as are valid, otherwise
+   * nothing.
+   *
+   * @param: i Location of first object to be read
+   * @param: elements Number of elements to copy
+   * @param: objects Pointer to array of elements
+   */
+  void GetBulk(std::size_t const &i, std::size_t elements, type *objects)
+  {
+    assert(filename_ != "");
+
+    int64_t start = int64_t((i * sizeof(type)) + header_.size());
+
+    // Figure out how many elements are valid to get, only get those
+    if (i >= header_.objects)
+    {
+      return;
+    }
+
+    assert(header_.objects >= i);
+
+    // i is valid location, elements are 1 or more at this point
+    elements = std::min(elements, std::size_t(header_.objects - i));
+
+    file_handle_.seekg(start, file_handle_.beg);
+    file_handle_.read(reinterpret_cast<char *>(objects),
+                      std::streamsize(sizeof(type)) * std::streamsize(elements));
   }
 
   void SetExtraHeader(header_extra_type const &he)
@@ -286,6 +364,7 @@ public:
    */
   void Pop()
   {
+    assert(header_.objects > 0);
     --header_.objects;
     StoreHeader();
   }
@@ -354,7 +433,7 @@ public:
   void Clear()
   {
     assert(filename_ != "");
-    std::fstream fin(filename_, std::ios::out | std::ios::binary);
+    STREAM fin(filename_, std::ios::out | std::ios::binary);
     header_ = Header();
 
     if (!header_.Write(fin))
@@ -404,15 +483,24 @@ public:
     return ret;
   }
 
+  STREAM &underlying_stream()
+  {
+    return file_handle_;
+  }
+
 private:
-  event_handler_type   on_file_loaded_;
-  event_handler_type   on_before_flush_;
-  mutable std::fstream file_handle_;
-  std::string          filename_ = "";
-  Header               header_;
+  event_handler_type on_file_loaded_;
+  event_handler_type on_before_flush_;
+  mutable STREAM     file_handle_;
+  std::string        filename_ = "";
+  Header             header_;
 
   /**
    * Write the header to disk. Not usually necessary since we can just refer to our local one
+   *
+   * @param:
+   *
+   * @return:
    */
   void StoreHeader()
   {
@@ -420,7 +508,7 @@ private:
 
     if (!header_.Write(file_handle_))
     {
-      throw StorageException("Error: could not write header in random access stack.");
+      throw StorageException("Error could not write header");
     }
   }
 };

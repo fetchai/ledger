@@ -138,7 +138,7 @@ public:
     Initalise();
   }
 
-  void Flush()
+  void Flush(bool /*lazy*/ = true)
   {
     block_type first;
     stack_.Get(id_, first);
@@ -529,11 +529,6 @@ public:
     return ret;
   }
 
-  stack_type *stack()
-  {
-    return &stack_;
-  }
-
   void Erase()
   {
     if (deletion_enabled)
@@ -541,6 +536,17 @@ public:
       FreeBlocks(block_index_);
     }
     Flush();
+  }
+
+  // TODO(HUT): figure out what to do about this abstraction breaking
+  stack_type *stack()
+  {
+    return &stack_;
+  }
+
+  stack_type &underlying_stack()
+  {
+    return stack_;
   }
 
   bool deletion_enabled = false;

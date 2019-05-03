@@ -96,7 +96,7 @@ void NewRevertibleDocumentStore::Set(ResourceID const &rid, ByteArray const &val
 Hash NewRevertibleDocumentStore::Commit()
 {
   Hash ret{std::move(storage_.Commit())};
-  storage_.Flush(false);
+  /* storage_.Flush(false); */ // TODO(HUT): look into this for PR
   return ret;
 }
 

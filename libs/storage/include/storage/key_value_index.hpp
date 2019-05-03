@@ -111,12 +111,12 @@ struct KeyValuePair
   };
   uint64_t right;
 
-  bool operator==(KeyValuePair const &kv)
+  bool operator==(KeyValuePair const &kv) const
   {
     return Hash() == kv.Hash();
   }
 
-  bool operator!=(KeyValuePair const &kv)
+  bool operator!=(KeyValuePair const &kv) const
   {
     return Hash() != kv.Hash();
   }
@@ -369,7 +369,7 @@ public:
     {
       kv.key        = key;
       kv.parent     = uint64_t(-1);
-      kv.split      = uint16_t(key.size());
+      kv.split      = uint16_t(key.size_in_bits());
       update_parent = kv.UpdateLeaf(args...);
 
       index = stack_.Push(kv);
@@ -391,7 +391,7 @@ public:
         pid = right.parent;
 
         left.key   = key;
-        left.split = uint16_t(key.size());
+        left.split = uint16_t(key.size_in_bits());
 
         left.parent  = stack_.size() + 1;
         right.parent = stack_.size() + 1;
@@ -408,7 +408,7 @@ public:
         pid = left.parent;
 
         right.key   = key;
-        right.split = uint16_t(key.size());
+        right.split = uint16_t(key.size_in_bits());
 
         right.parent = stack_.size() + 1;
         left.parent  = stack_.size() + 1;
@@ -613,6 +613,11 @@ public:
     return kv.Hash();
   }
 
+  stack_type &underlying_stack()
+  {
+    return stack_;
+  }
+
   /**
    * Calculate number of leaves from stack size (contains all nodes). The tree is complete so is
    * calculable. Leaves + (Leaves - 1) = Nodes
@@ -622,14 +627,14 @@ public:
    *
    * @return: The number of elements in the key value index
    */
-  std::size_t size()
+  std::size_t size() const
   {
     assert(stack_.size() + 1 != 0);
     assert((stack_.size() + 1) % 2 == 0);
     return (stack_.size() + 1) / 2;
   }
 
-  void Flush()
+  void Flush(bool /*lazy*/ = true)
   {
     stack_.Flush();
   }
@@ -871,7 +876,7 @@ private:
       ++depth;
       index = next;
 
-      pos = int(key.size());
+      pos = int(key.size_in_bits());
 
       stack_.Get(next, kv);
 
@@ -1072,7 +1077,7 @@ private:
     stack_.Pop();
   }
 
-  void Verify(bool stack_size_correct)
+  void Verify()
   {
     if (stack_.size() == 0)
     {
@@ -1085,14 +1090,10 @@ private:
       stack_.Get(i, kv);
     }
 
-    // VerifyHash();
-
     if (root_ >= stack_.size())
     {
       throw StorageException("Root out of bounds of stack");
     }
-
-    // index_type     depth      = 0;
 
     key_value_pair kv;
     stack_.Get(root_, kv);

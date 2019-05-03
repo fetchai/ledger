@@ -65,7 +65,7 @@ public:
    *
    * If these arguments correspond to existing files, it will overwrite them
    */
-  void New(std::string const &doc_file, std::string const &index_file, bool const &create = true)
+  void New(std::string const &doc_file, std::string const &index_file, bool const &/*create*/ = true)
   {
     store_.New(doc_file, index_file);
   }
@@ -77,7 +77,7 @@ public:
    */
   void Load(std::string const &doc_file, std::string const &index_file, bool const &create = true)
   {
-    store_.New(doc_file, index_file);
+    store_.Load(doc_file, index_file, create);
   }
 
   /**
@@ -201,16 +201,17 @@ public:
     ser << object;
 
     store_.Set(rid, ser.data());  // temporarily disable disk writes
-
-    if (set_callback_)
-    {
-      set_callback_(object);
-    }
   }
 
-  std::size_t size()
+  std::size_t size() const
   {
     return store_.size();
+  }
+
+  void Flush(bool lazy = true)
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    store_.Flush(lazy);
   }
 
   /**

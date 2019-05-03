@@ -53,7 +53,6 @@ public:
 
   using file_block_type      = A;
   using key_value_index_type = B;
-  using file_store_type      = C;
   using file_object_type     = D;
 
   using hash_type = byte_array::ConstByteArray;
@@ -183,7 +182,14 @@ public:
     file_object_.Flush();
   }
 
-  std::size_t size()
+  void Flush(bool lazy = true)
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    file_object_.Flush(lazy);
+    key_index_.Flush(lazy);
+  }
+
+  std::size_t size() const
   {
     return key_index_.size();
   }
@@ -282,7 +288,7 @@ public:
     byte_array_type               hash = key_index_.Hash();
 
     key_index_.underlying_stack().Commit(hash);
-    file_store_.Commit(hash);
+    file_object_.underlying_stack().Commit(hash);
 
     return hash;
   }
@@ -292,14 +298,14 @@ public:
     std::lock_guard<mutex::Mutex> lock(mutex_);
 
     // TODO(private issue 615): HashExists implement
-    if (!(key_index_.underlying_stack().HashExists(hash) && file_store_.HashExists(hash)))
+    if (!(key_index_.underlying_stack().HashExists(hash) && file_object_.underlying_stack().HashExists(hash)))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Attempted to revert to a hash that doesn't exist");
       return false;
     }
 
     key_index_.underlying_stack().RevertToHash(hash);
-    file_store_.RevertToHash(hash);
+    file_object_.underlying_stack().RevertToHash(hash);
 
     return true;
   }
@@ -307,7 +313,7 @@ public:
   bool HashExists(byte_array_type const &hash)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
-    return key_index_.underlying_stack().HashExists(hash) && file_store_.HashExists(hash);
+    return key_index_.underlying_stack().HashExists(hash) && file_object_.underlying_stack().HashExists(hash);
   }
 
   hash_type CurrentHash()
