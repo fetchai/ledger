@@ -80,9 +80,14 @@ pipeline {
               when {
                 branch "develop"
               }
+              when {
+                expression {
+                  BRANCH_NAME ==~ /^PR-\d+-merge$/
+                }
+              }
               steps {
                 sh './scripts/ci-tool.py -I Debug'
-                sh './scripts/ci-tool.py -E Debug'
+                //sh './scripts/ci-tool.py -E Debug'
               }
             }
           }
@@ -115,10 +120,15 @@ pipeline {
               when {
                 branch "develop"
               }
+              when {
+                expression {
+                  BRANCH_NAME ==~ /^PR-\d+-merge$/
+                }
+              }
               steps {
                 sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -I Release'
-                sh './scripts/ci-tool.py -E Release'
+                //sh './scripts/ci-tool.py -E Release'
               }
             }
           }
@@ -156,10 +166,15 @@ pipeline {
               when {
                 branch "develop"
               }
+              when {
+                expression {
+                  BRANCH_NAME ==~ /^PR-\d+-merge$/
+                }
+              }
               steps {
                 sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -I Debug'
-                sh './scripts/ci-tool.py -E Debug'
+                //sh './scripts/ci-tool.py -E Debug'
               }
             }
           }
@@ -197,10 +212,15 @@ pipeline {
               when {
                 branch "develop"
               }
+              when {
+                expression {
+                  BRANCH_NAME ==~ /^PR-\d+-merge$/
+                }
+              }
               steps {
                 sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -I Release'
-                sh './scripts/ci-tool.py -E Release'
+                //sh './scripts/ci-tool.py -E Release'
               }
             }
           }
