@@ -1,6 +1,6 @@
 def branch_name_filter()
 {
-   return BRANCH_NAME == "develop" && BRANCH_NAME ==~ /^PR-\d+-merge$/
+   return BRANCH_NAME == "develop" || BRANCH_NAME ==~ /^PR-\d+-merge$/
 }
 
 pipeline {
