@@ -47,14 +47,9 @@ pipeline {
               alwaysPull true
             }
           }
-
-          stages {
-            stage('Static Analysis') {
-              steps {
-                sh 'mkdir -p build-analysis && cd build-analysis && cmake ../'
-                sh './scripts/run_static_analysis.py build-analysis/'
-              }
-            }
+          steps {
+            sh 'mkdir -p build-analysis && cd build-analysis && cmake ../'
+            sh './scripts/run_static_analysis.py build-analysis/'
           }
         } // static analysis
 
@@ -68,20 +63,20 @@ pipeline {
           }
 
           stages {
-            stage('Debug Build') {
+            stage('Clang 6 Debug Build') {
               steps {
                 sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -B Debug'
               }
             }
 
-            stage('Debug Unit Tests') {
+            stage('Clang 6 Debug Unit Tests') {
               steps {
                 sh './scripts/ci-tool.py -T Debug'
               }
             }
 
-            stage('Debug Integration Tests') {
+            stage('Clang 6 Debug Integration Tests') {
               when {
                 expression {
                   branch_name_filter()
@@ -92,7 +87,7 @@ pipeline {
               }
             }
 
-            stage('Debug End-to-end Tests') {
+            stage('Clang 6 Debug End-to-end Tests') {
               when {
                 expression {
                   branch_name_filter()
@@ -115,20 +110,20 @@ pipeline {
           }
 
           stages {
-            stage('Release Build') {
+            stage('Clang 6 Release Build') {
               steps {
                 sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -B Release'
               }
             }
 
-            stage('Unit Tests') {
+            stage('Clang 6 Release Unit Tests') {
               steps {
                 sh './scripts/ci-tool.py -T Release'
               }
             }
 
-            stage('Integration Tests') {
+            stage('Clang 6 Release Integration Tests') {
               when {
                 expression {
                   branch_name_filter()
@@ -140,7 +135,7 @@ pipeline {
               }
             }
 
-            stage('End-to-end Tests') {
+            stage('Clang 6 Release End-to-end Tests') {
               when {
                 expression {
                   branch_name_filter()
@@ -168,20 +163,20 @@ pipeline {
           }
 
           stages {
-            stage('GCC Debug Build') {
+            stage('GCC 7 Debug Build') {
               steps {
                 sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -B Debug'
               }
             }
 
-            stage('GCC Debug Unit Tests') {
+            stage('GCC 7 Debug Unit Tests') {
               steps {
                 sh './scripts/ci-tool.py -T Debug'
               }
             }
 
-            stage('GCC Debug Integration Tests') {
+            stage('GCC 7 Debug Integration Tests') {
               when {
                 expression {
                   branch_name_filter()
@@ -193,7 +188,7 @@ pipeline {
               }
             }
 
-            stage('GCC Debug End-to-end Tests') {
+            stage('GCC 7 Debug End-to-end Tests') {
               when {
                 expression {
                   branch_name_filter()
@@ -221,20 +216,20 @@ pipeline {
           }
 
           stages {
-            stage('GCC Release Build') {
+            stage('GCC 7 Release Build') {
               steps {
                 sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -B Release'
               }
             }
 
-            stage('GCC Release Unit Tests') {
+            stage('GCC 7 Release Unit Tests') {
               steps {
                 sh './scripts/ci-tool.py -T Release'
               }
             }
 
-            stage('GCC Release Integration Tests') {
+            stage('GCC 7 Release Integration Tests') {
               when {
                 expression {
                   branch_name_filter()
@@ -246,7 +241,7 @@ pipeline {
               }
             }
 
-            stage('GCC Release End-to-end Tests') {
+            stage('GCC 7 Release End-to-end Tests') {
               when {
                 expression {
                   branch_name_filter()
