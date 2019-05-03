@@ -79,8 +79,6 @@ pipeline {
             stage('Debug Integration and end-to-end Tests') {
               when {
                 branch "develop"
-              }
-              when {
                 expression {
                   BRANCH_NAME ==~ /^PR-\d+-merge$/
                 }
@@ -119,8 +117,6 @@ pipeline {
             stage('Integration and end-to-end Tests') {
               when {
                 branch "develop"
-              }
-              when {
                 expression {
                   BRANCH_NAME ==~ /^PR-\d+-merge$/
                 }
@@ -165,8 +161,6 @@ pipeline {
             stage('GCC Debug Integration and end-to-end Tests') {
               when {
                 branch "develop"
-              }
-              when {
                 expression {
                   BRANCH_NAME ==~ /^PR-\d+-merge$/
                 }
@@ -211,8 +205,6 @@ pipeline {
             stage('GCC Release Integration and end-to-end Tests') {
               when {
                 branch "develop"
-              }
-              when {
                 expression {
                   BRANCH_NAME ==~ /^PR-\d+-merge$/
                 }
