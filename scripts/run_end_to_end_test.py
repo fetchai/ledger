@@ -54,7 +54,7 @@ class TimerWatchdog():
     def _sleep(self):
         # This will return false iff the stop event isn't set before the timeout
         if not self._stop_event.wait(self._time):
-            output("Watchdog {} awoke before being stopped. Time: {} . Task: {}".format(self._name, self._time, self._task))
+            output("Watchdog '{}' awoke before being stopped! Awoke after: {}s . Watchdog will now: {}".format(self._name, self._time, self._task))
             self.trigger()
         else:
             output("Safely notified")
@@ -178,6 +178,20 @@ class TestInstance():
         if self._watchdog:
             self._watchdog.stop()
 
+    # If something goes wrong, print out debug state (mainly node log files)
+    def dump_debug(self):
+        if self._nodes:
+            for n, node in enumerate(self._nodes):
+                print('\nNode debug. Node:{}'.format(n))
+                node_log_path = node.log_path
+
+                if not os.path.isfile(node_log_path):
+                    output("Couldn't find supposed node log file: {}".format(node_log_path))
+                else:
+                    with open(node_log_path, 'r') as stream:
+                        for line in stream:
+                            output(stream.readline().strip('\n'))
+
 def extract(test, key, expected = True, expect_type = None, default = None):
     """
     Convenience function to remove an item from a YAML string, specifying the type you expect to find
@@ -215,8 +229,9 @@ def setup_test(test_yaml, test_instance):
     # Watchdog will trigger this if the tests exceeds allowed bounds. Note stopping the test cleanly is
     # necessary to preserve output logs etc.
     def clean_shutdown():
-        output("Shutting down test due to failure!. Debug YAML: {}".format(test_yaml))
+        output("***** Shutting down test due to failure!. Debug YAML: {} *****\n".format(test_yaml))
         test_instance.stop()
+        test_instance.dump_debug()
         os._exit(1)
 
     watchdog = TimerWatchdog(time = max_test_time, name = test_name, task = "End test and cleanup", callback = clean_shutdown)
@@ -287,12 +302,16 @@ def verify_txs(parameters, test_instance):
 
                 if status == "Executed":
                     break
-                time.sleep(0.1)
+                time.sleep(0.5)
+
+                output("Waiting for TX to get executed")
 
             seen_balance = tokens.balance(identity.public_key)
             if balance != seen_balance:
                 output("Balance mismatch found after sending to node. Found {} expected {}".format(seen_balance, balance))
                 test_instance._watchdog.trigger()
+
+            output("Verified a wealth of {}".format(seen_balance))
 
         output("Verified balances for node: {}".format(node_index))
 
@@ -363,8 +382,8 @@ def parse_commandline():
 
     # Required argument
     parser.add_argument('build_directory', type=str, help='Location of the build directory relative to current path')
-    parser.add_argument('yaml_file', type=str, help='Location of the build directory relative to current path')
     parser.add_argument('constellation_exe', type=str, help='Location of the build directory relative to current path')
+    parser.add_argument('yaml_file', type=str, help='Location of the build directory relative to current path')
 
     return parser.parse_args()
 
