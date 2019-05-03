@@ -18,100 +18,95 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
+#include "ml/dataloaders/code2vec_context_loaders/context_loader.hpp"
 #include "ml/graph.hpp"
+#include "ml/layers/fully_connected.hpp"
+#include "ml/ops/embeddings.hpp"
+#include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/tanh.hpp"
+#include <fstream>
 #include <iostream>
 
-using DataType = float;
-using Tensor   = fetch::math::Tensor<DataType>;
+using DataType  = int;
+using ArrayType = fetch::math::Tensor<DataType>;
+using SizeType  = fetch::math::Tensor<DataType>::SizeType;
+
+#define EMBEDDING_SIZE 64u
+#define BATCHSIZE 12u
+#define N_EPOCHS 3
+
+std::string readFile(std::string const &path)
+{
+  std::ifstream t(path);
+  return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+}
 
 int main()
 {
-  /*
-  int embedding_size;
-
-  fetch::ml::Graph<Tensor> g;
-
-  // Define Graph
-
-  // Create trainable tensors
-
-  // For embedding the nodes in the graph and the paths (with shape (path_vocab + 1or words_vocab +
-  // 1, embedding_size)
-  Tensor SourceWordEmbedding(...);
-  Tensor PathEmbedding(...);
-  Tensor TargetWordEmbedding(...);
-
-  // For the target (shape (targetinput_vocab_length + 1, 3*embedding_size))
-  Tensor TargetInputEmbedding(...);
-
-  // For the attention parameters (shape (3*embedding_size))
-  Tensor AttentionParameters(...);
-
-  // For FC without bias (shape (3*embedding_size, 3*embedding_size))
-  Tensor FC(...);
-
-  // Input (of size (batch_size))
-  g.AddNode<PlaceHolder<Tensor>>("SourceWordInput", {});
-  g.AddNode<PlaceHolder<Tensor>>("PathInput", {});
-  g.AddNode<PlaceHolder<Tensor>>("TargetWordInput", {});
-  g.AddNode<PlaceHolder<Tensor>>("TargetInput", {});
-
-  // Make embedding (creating matrices of dim (vocab_size, embedding_size)) and retrieve rows
-  // according to the inputs (output has then shape (vocab_size + 1, embedding_size)) In the
-  // Background, the embedding matrix of SourceWordEmbedding and TargetWordEmbedding should be
-  // shared!
-  g.AddNode<RetrieveRows<Tensor>>("SourceWordEmbedding",
-                                  {"SourceWordInput", "SourceWordEmbedding"});
-  g.AddNode<RetrieveRows<Tensor>>("PathEmbedding", {"PathInput", "PathEmbedding"});
-  g.AddNode<RetrieveRows<Tensor>>("TargetWordEmbedding",
-                                  {"TargetWordInput", "TargetWordEmbedding"});
-
-  // Embedding of the code target of shape (vocab_size, 3*embedding_size)
-  g.AddNode<RetrieveRows<Tensor>>("TargetWordEmbedding", {"TargetInput", "TargetInputEmbedding"});
-
-  // Concatenate the matrices, s.t. we have an object of dim (batch_size, 3*embedding_size)
-  g.AddNode<Concatenate<Tensor>>("ContextVectors",
-                                 {"SourceWordEmbedding", "PathEmbedding", "TargetWordEmbedding"});
-
-  // Add FullyConnected of shape (3*embedding_size, 3*embedding_size) without bias vector; output
-  // has shape of (batch_size, 3*embedding_size)
-  g.AddNode<Multiply<Tensor>>("FC1", {"ContextVectors", "FC"});
-
-  // Apply elementwise Tanh
-  g.AddNode<TanH<Tensor>>("TanH", {"FC1"});
-
-  // Calculate the contexts_weights, i.e. \sum_{i} TanH_{i,j} * attention_param_{j} yielding a
-  // vector of size (batch_size, 1)
-  // The attention_param is of size (embedding_size * 3)
-  g.AddNode<Multiply<Tensor>>("ContextWeights", {"TanH", "AttentionParameters"});
-
-  // Apply Softmax on it to get the attention_weights (the sum in the denominator runs over the
-  // batch)
-  g.AddNode<SoftMax<Tensor>>("AttentionWeights", {"ContextWeights"});
-
-  // Make the codevectors, i.e. reduce_sum(multiply(attentionweights, tanh))
-  // Result has shape (embedding_size*3)
-  g.AddNode<Multiplay<Tensor>>("CV1_1", {"AttentionWeights", "TanH"});
-  g.AddNode<ReduceSum<Tensor>>("CV1_2", {"CV1_1"});
-
-  // Multiplying the embedding of the target, with the code vectors (gives an object of shape
-  // (3*embedding_size, 3*embedding_size) )
-  g.AddNode<Multiply<Tensor>>("Logits", {"TargetWordEmbedding", "CV1"});
-
-  // Applying softmax_cross_entropy_with_logits
-  g.AddNode<SoftMax<Tensor>>("Probabilities", {"Logits"});
-  g.AddNode<Log<Tensor>>("LogProbabilities", {"Probabilities"});
-  g.AddNode<RetrieveRows<Tensor>>("CrossEntropy", {"LogProbabilities", "TargetInput"});
-
-  // Sum over values
-  g.AddNode<ReduceSum<ArrayType>>("Result", {"CrossEntropy"});
-
-  // Batch Loop
-  for (auto &batch : ...)
+  if (ac < 2)
   {
-    g.BackPropagate("Result", ...);
+    std::cerr << "Usage: " << av[0] << " INPUT_FILES_TXT" << std::endl;
+    return 1;
   }
-  */
+
+  fetch::ml::dataloaders::C2VLoader<std::tuple<ArrayType, ArrayType, ArrayType>, SizeType> cloader;
+
+  for (int i(1); i < ac; ++i)
+  {
+    cloader.AddData(readFile(av[i]));
+  }
+
+  std::cout << "Number of different function names: " << cloader.GetCounterFunctionNames().size()
+            << std::endl;
+  std::cout << "Number of different paths: " << cloader.GetCounterPaths().size() << std::endl;
+  std::cout << "Number of different words: " << cloader.GetCounterWords().size() << std::endl;
+
+  fetch::ml::Graph<ArrayType> g;
+  g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputPaths", {});
+  g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputSourceWords", {});
+  g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputTargetWords", {});
+  g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputFunctionNames", {});
+
+  g.AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
+      "EmbeddingPaths", {"InputPaths"}, cloader.GetCounterPaths().size(), EMBEDDING_SIZE);
+  g.AddNode<fetch::ml::ops::Embeddings<ArrayType>>("EmbeddingTargetwords", {"InputTargetWords"},
+                                                   cloader.GetCounterWords().size(),
+                                                   EMBEDDING_SIZE);
+  g.AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
+      "EmbeddingSourcewords", {"InputSourceWords"},
+      std::dynamic_pointer_cast<fetch::ml::ops::Embeddings<ArrayType>>(
+          g.GetNode("EmbeddingTargetwords"))
+          ->GetWeights());
+  g.AddNode<fetch::ml::ops::Embeddings<ArrayType>>("EmbeddingFunctionnames", {"InputFunctionNames"},
+                                                   cloader.GetCounterFunctionNames().size(),
+                                                   EMBEDDING_SIZE);
+
+  // Concatenate along axis = 1
+  // g.AddNode<Concatenate<ArrayType>>("ContextVectors", {"EmbeddingSourcewords",
+  //"EmbeddingPaths", "EmbeddingTargetwords"}, 1);
+
+  // In the original implementation its without bias
+  // g.AddNode<fetch::ml::layers::FullyConnected<ArrayType>>("FC1", {"ContextVectors", "FC"},
+  // BATCHSIZE, 3*EMBEDDING_SIZE); g.AddNode<fetch::ml::ops::TanH<ArrayType>>("TanH", {"FC1"});
+  // g.AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>("ContextWeights", {"TanH",
+  //"AttentionParameters"});
+
+  int n_epochs{0};
+  while (n_epochs < N_EPOCHS)
+  {
+    if (cloader.IsDone())
+    {
+      cloader.Reset();
+      n_epochs++;
+    }
+
+    auto input = cloader.GetNext();
+
+    g.SetInput("InputSourceWords", std::get<0>(input.first));
+    g.SetInput("InputPaths", std::get<1>(input.first));
+    g.SetInput("InputTargetWords", std::get<2>(input.first));
+  }
+
+  return 0;
 }
