@@ -21,6 +21,9 @@
 
 using fetch::byte_array::ConstByteArray;
 
+// TODO(issue 7): Make cache configurable
+constexpr uint32_t MAX_CACHE_LIFETIME_MS = 20000;
+
 #ifdef FETCH_ENABLE_METRICS
 using fetch::metrics::Metrics;
 using fetch::metrics::MetricHandler;
