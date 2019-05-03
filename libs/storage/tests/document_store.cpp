@@ -19,12 +19,12 @@
 //#include "core/byte_array/encoders.hpp"
 //#include "storage/revertible_document_store.hpp"
 //#include <iostream>
-//using namespace fetch;
+// using namespace fetch;
 //
-//using namespace fetch::storage;
-//class TestStore : public RevertibleDocumentStore
+// using namespace fetch::storage;
+// class TestStore : public RevertibleDocumentStore
 //{
-//public:
+// public:
 //  typename RevertibleDocumentStore::DocumentFile GetDocumentFile(ResourceID const &rid,
 //                                                                 bool const &      create = true)
 //  {
@@ -32,11 +32,11 @@
 //  }
 //};
 //
-//TestStore store;
+// TestStore store;
 //
-//uint64_t book = 1;
+// uint64_t book = 1;
 //
-//void Add()
+// void Add()
 //{
 //  std::cout << "=============  ADD  ==================" << std::endl;
 //  ;
@@ -49,7 +49,7 @@
 //  store.Commit(book);
 //}
 //
-//void Remove()
+// void Remove()
 //{
 //  std::cout << "=============  REMOVE  ==================" << std::endl;
 //  ;
@@ -57,7 +57,7 @@
 //  store.Revert(book);
 //}
 //
-//void Print()
+// void Print()
 //{
 //
 //  std::cout << std::endl;
@@ -70,7 +70,7 @@
 //  std::cout << "VALUE: " << x << std::endl;
 //}
 //
-//int main()
+// int main()
 //{
 //
 //  store.New("a.db", "b.db", "c.db", "d.db");

@@ -22,17 +22,17 @@
 //#include "storage/key_value_index.hpp"
 //#include <iostream>
 //#include <map>
-//using namespace fetch;
-//using namespace fetch::storage;
+// using namespace fetch;
+// using namespace fetch::storage;
 //
 //#define BLOCK_SIZE 2048
 //
-//using file_block_type      = FileBlockType<BLOCK_SIZE>;
-//using key_value_index_type = KeyValueIndex<>;
-//using file_store_type      = VersionedRandomAccessStack<file_block_type>;
-//using file_object_type     = FileObject<file_store_type>;
+// using file_block_type      = FileBlockType<BLOCK_SIZE>;
+// using key_value_index_type = KeyValueIndex<>;
+// using file_store_type      = VersionedRandomAccessStack<file_block_type>;
+// using file_object_type     = FileObject<file_store_type>;
 //
-//int main()
+// int main()
 //{
 //  file_store_type fs;
 //  fs.New("a.db", "b.db");

@@ -298,7 +298,8 @@ public:
     std::lock_guard<mutex::Mutex> lock(mutex_);
 
     // TODO(private issue 615): HashExists implement
-    if (!(key_index_.underlying_stack().HashExists(hash) && file_object_.underlying_stack().HashExists(hash)))
+    if (!(key_index_.underlying_stack().HashExists(hash) &&
+          file_object_.underlying_stack().HashExists(hash)))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Attempted to revert to a hash that doesn't exist");
       return false;
@@ -313,7 +314,8 @@ public:
   bool HashExists(byte_array_type const &hash)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
-    return key_index_.underlying_stack().HashExists(hash) && file_object_.underlying_stack().HashExists(hash);
+    return key_index_.underlying_stack().HashExists(hash) &&
+           file_object_.underlying_stack().HashExists(hash);
   }
 
   hash_type CurrentHash()

@@ -34,15 +34,15 @@
 //// A service, TestService here, owns an object store, and the protocols ensure that new objects
 //// (Using transactions here) will be synchronized with connected peers.
 //
-//using namespace fetch::storage;
-//using namespace fetch::byte_array;
-//using namespace fetch::network;
-//using namespace fetch::chain;
-//using namespace fetch::service;
-//using namespace fetch::ledger;
+// using namespace fetch::storage;
+// using namespace fetch::byte_array;
+// using namespace fetch::network;
+// using namespace fetch::chain;
+// using namespace fetch::service;
+// using namespace fetch::ledger;
 //
-//template <typename... Args>
-//fetch::service::Promise CallPeer(NetworkManager nm, std::string address, uint16_t port,
+// template <typename... Args>
+// fetch::service::Promise CallPeer(NetworkManager nm, std::string address, uint16_t port,
 //                                 Args &&... args)
 //{
 //  TCPClient client(nm);
@@ -67,7 +67,7 @@
 //  return prom;
 //}
 //
-//void BlockUntilConnect(std::string host, uint16_t port)
+// void BlockUntilConnect(std::string host, uint16_t port)
 //{
 //  NetworkManager nm{1};
 //  nm.Start();
@@ -90,12 +90,12 @@
 //  }
 //}
 //
-//void BlockUntilConnect(uint16_t port)
+// void BlockUntilConnect(uint16_t port)
 //{
 //  BlockUntilConnect("localhost", port);
 //}
 //
-//VerifiedTransaction GetRandomTx(uint64_t seed)
+// VerifiedTransaction GetRandomTx(uint64_t seed)
 //{
 //  MutableTransaction tx;
 //  // Fill the body of the TX with incrementing sequence so we can see it in wireshark etc.
@@ -112,18 +112,19 @@
 //  return VerifiedTransaction::Create(tx);
 //}
 //
-//class ControllerProtocol : public Protocol
+// class ControllerProtocol : public Protocol
 //{
 //
 //  using connectivity_details_type  = LaneConnectivityDetails;
 //  using service_client_type        = fetch::service::ServiceClient;
 //  using shared_service_client_type = std::shared_ptr<service_client_type>;
-//  using client_register_type       = fetch::network::ConnectionRegister<connectivity_details_type>;
-//  using mutex_type                 = fetch::mutex::Mutex;
-//  using connection_handle_type     = client_register_type::connection_handle_type;
-//  using ClientRegister             = ConnectionRegister<LaneConnectivityDetails>;
+//  using client_register_type       =
+//  fetch::network::ConnectionRegister<connectivity_details_type>; using mutex_type =
+//  fetch::mutex::Mutex; using connection_handle_type     =
+//  client_register_type::connection_handle_type; using ClientRegister             =
+//  ConnectionRegister<LaneConnectivityDetails>;
 //
-//public:
+// public:
 //  enum
 //  {
 //    CONNECT = 1
@@ -154,7 +155,7 @@
 //    }
 //  }
 //
-//private:
+// private:
 //  ClientRegister register_;
 //  NetworkManager nm_;
 //
@@ -162,9 +163,9 @@
 //  std::unordered_map<connection_handle_type, shared_service_client_type> services_;
 //};
 //
-//class TestService : public ServiceServer<TCPServer>
+// class TestService : public ServiceServer<TCPServer>
 //{
-//public:
+// public:
 //  using ClientRegister   = ConnectionRegister<LaneConnectivityDetails>;
 //  using TransactionStore = ObjectStore<VerifiedTransaction>;
 //  using TxSyncProtocol   = ObjectStoreSyncronisationProtocol<ClientRegister, VerifiedTransaction>;
@@ -213,7 +214,7 @@
 //    thread_pool_->Stop();
 //  }
 //
-//private:
+// private:
 //  ThreadPool     thread_pool_;
 //  ClientRegister register_;
 //
@@ -224,7 +225,7 @@
 //  std::unique_ptr<ControllerProtocol> controller_protocol_;
 //};
 //
-//int main(int argc, char const **argv)
+// int main(int argc, char const **argv)
 //{
 //  SCENARIO("Testing object store sync")
 //  {
@@ -553,7 +554,8 @@
 //        std::this_thread::sleep_for(std::chrono::milliseconds(100));
 //
 //        auto promise = CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
-//                            TestService::TX_STORE_SYNC, TestService::TxSyncProtocol::FINISHED_SYNC);
+//                            TestService::TX_STORE_SYNC,
+//                            TestService::TxSyncProtocol::FINISHED_SYNC);
 //
 //        if(promise.As<bool>())
 //        {

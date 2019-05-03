@@ -65,7 +65,8 @@ public:
    *
    * If these arguments correspond to existing files, it will overwrite them
    */
-  void New(std::string const &doc_file, std::string const &index_file, bool const &/*create*/ = true)
+  void New(std::string const &doc_file, std::string const &index_file,
+           bool const & /*create*/ = true)
   {
     store_.New(doc_file, index_file);
   }

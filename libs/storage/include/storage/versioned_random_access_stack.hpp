@@ -149,7 +149,7 @@ private:
     {
       value = 2
     };
-    T data;
+    T data{};
   };
 
   /**
@@ -223,7 +223,7 @@ private:
     {
       value = 5
     };
-    B data;
+    B data = 0;
   };
 
 public:
