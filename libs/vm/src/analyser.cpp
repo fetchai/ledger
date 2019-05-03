@@ -875,26 +875,6 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
     SetVariable(node, variable);
     break;
   }
-  case Node::Kind::Integer8:
-  {
-    SetRV(node, int8_type_);
-    break;
-  }
-  case Node::Kind::UnsignedInteger8:
-  {
-    SetRV(node, byte_type_);
-    break;
-  }
-  case Node::Kind::Integer16:
-  {
-    SetRV(node, int16_type_);
-    break;
-  }
-  case Node::Kind::UnsignedInteger16:
-  {
-    SetRV(node, uint16_type_);
-    break;
-  }
   case Node::Kind::Integer32:
   {
     SetRV(node, int32_type_);
@@ -1273,7 +1253,7 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
     }
     if (!symbol->IsVariable())
     {
-      AddError(lhs->token, "operand does not support index operator");
+      AddError(lhs->token, "operand does not support index operator (1)");
       return false;
     }
     VariablePtr variable = ConvertToVariablePtr(symbol);
@@ -1295,7 +1275,7 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
   if ((lhs->category == ExpressionNode::Category::Type) ||
       (lhs->category == ExpressionNode::Category::Function))
   {
-    AddError(lhs->token, "operand does not support index operator");
+    AddError(lhs->token, "operand does not support index operator (2)");
     return false;
   }
 
@@ -1312,7 +1292,7 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
   size_t const num_expected_indexes = type->index_input_types.size();
   if (num_expected_indexes == 0)
   {
-    AddError(lhs->token, "operand does not support index operator");
+    AddError(lhs->token, "operand does not support index operator (3)");
     return false;
   }
 
