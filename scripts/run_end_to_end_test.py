@@ -18,6 +18,7 @@ import threading
 import glob
 import shutil
 from threading import Event
+from pathlib import Path
 
 from fetch.cluster.instance import ConstellationInstance
 
@@ -188,9 +189,9 @@ class TestInstance():
                 if not os.path.isfile(node_log_path):
                     output("Couldn't find supposed node log file: {}".format(node_log_path))
                 else:
-                    with open(node_log_path, 'r') as stream:
-                        for line in stream:
-                            output(stream.readline().strip('\n'))
+                    # Send raw bytes directly to stdout since it contains non-ascii
+                    data = Path(node_log_path).read_bytes()
+                    sys.stdout.buffer.write(data)
 
 def extract(test, key, expected = True, expect_type = None, default = None):
     """
@@ -373,6 +374,7 @@ def run_test(build_directory, yaml_file, constellation_exe):
         except Exception as e:
             print('Failed to parse yaml or to run test! Error: "{}"'.format(str(e)))
             test_instance.stop()
+            test_instance.dump_debug()
             sys.exit(1)
 
     output("\nAll end to end tests have passed :)")
