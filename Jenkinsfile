@@ -200,7 +200,7 @@ pipeline {
                 }
               }
               steps {
-                sh './scripts/ci-tool.py -E Release'
+                sh './scripts/ci-tool.py -E Debug'
               }
             }
           }
