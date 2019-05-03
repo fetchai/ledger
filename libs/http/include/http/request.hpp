@@ -137,7 +137,7 @@ public:
   }
 
 private:
-  void ParseStartLine(byte_array::ByteArray &line);
+  bool ParseStartLine(byte_array::ByteArray &line);
 
   std::string originating_address_{};
   uint16_t    originating_port_{0};

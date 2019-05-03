@@ -34,10 +34,10 @@ namespace math {
  * The implementation subclasses a <byte_array::ConstByteArray> such
  * one easily use this in combination with hashes etc.
  */
-class BigUnsigned : public byte_array::ConstByteArray
+class BigUnsigned : public byte_array::ByteArray
 {
 public:
-  using super_type = byte_array::ConstByteArray;
+  using super_type = byte_array::ByteArray;
 
   static constexpr char const *LOGGING_NAME = "BigUnsigned";
 
@@ -105,7 +105,7 @@ public:
 
     if (sizeof(T) > super_type::size())
     {
-      TODO_FAIL("BIg number too small");
+      throw std::runtime_error("BIg number too small");
     }
 
     // FIXME: Assumes little endian
@@ -135,7 +135,7 @@ public:
       ++i;
       if (i == super_type::size())
       {
-        TODO_FAIL("Throw error, size too little");
+        throw std::runtime_error("Throw error, size too little");
         val = super_type::operator[](i) = 1;
       }
       else
