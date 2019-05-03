@@ -81,7 +81,6 @@ public:
   static constexpr std::size_t MAX_SUBTREE_RESOLUTION_PER_CYCLE      = 128;
   static constexpr std::size_t MAX_OBJECT_RESOLUTION_PER_CYCLE       = 128;
   static constexpr uint64_t PULL_LIMIT_ = 10000;  // Limit the amount a single rpc call will provide
-  static const std::size_t  BATCH_SIZE;
 
   struct Config
   {
@@ -92,7 +91,8 @@ public:
     std::chrono::milliseconds fetch_object_wait_duration{5000};
   };
 
-  TransactionStoreSyncService(Config const &cfg, MuddlePtr muddle, ObjectStorePtr store);
+  TransactionStoreSyncService(Config const &cfg, MuddlePtr muddle, ObjectStorePtr store,
+                              TrimCacheCallback trim_cache_callback);
   virtual ~TransactionStoreSyncService();
 
   void Start()
@@ -103,11 +103,6 @@ public:
   void Stop()
   {
     verifier_.Stop();
-  }
-
-  void SetTrimCacheCallback(TrimCacheCallback const &callback)
-  {
-    trim_cache_callback_ = callback;
   }
 
   // We need this for the testing.
@@ -135,16 +130,6 @@ protected:
     return static_cast<uint8_t>(((c * 0x80200802ULL) & 0x0884422110ULL) * 0x0101010101ULL >> 32);
   }
 
-  void SetTimeOut()
-  {
-    if (timeout_set_)
-    {
-      return;
-    }
-    timeout_.Set(cfg_.main_timeout);
-    timeout_set_ = true;
-  }
-
 private:
   State OnInitial();
   State OnQueryObjectCounts();
@@ -155,6 +140,7 @@ private:
   State OnResolvingObjects();
   State OnTrimCache();
 
+  TrimCacheCallback             trim_cache_callback_;
   std::shared_ptr<StateMachine> state_machine_;
   Config const                  cfg_;
   MuddlePtr                     muddle_;
@@ -162,9 +148,7 @@ private:
   ObjectStorePtr                store_;  ///< The pointer to the object store
   TransactionVerifier           verifier_;
 
-  FutureTimepoint timeout_;
   FutureTimepoint promise_wait_timeout_;
-  bool            timeout_set_ = false;
   FutureTimepoint fetch_object_wait_timeout_;
 
   RequestingObjectCount pending_object_count_;
@@ -176,8 +160,6 @@ private:
   std::queue<uint8_t>                                          roots_to_sync_;
   uint64_t                                                     root_size_ = 0;
   std::unordered_map<PromiseOfTxList::PromiseCounter, uint8_t> promise_id_to_roots_;
-
-  TrimCacheCallback trim_cache_callback_;
 
   Mutex mutex_{__LINE__, __FILE__};
 

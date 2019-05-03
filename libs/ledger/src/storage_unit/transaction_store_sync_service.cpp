@@ -64,11 +64,11 @@ static char const *FETCH_MAYBE_UNUSED ToString(fetch::ledger::tx_sync::State sta
 namespace fetch {
 namespace ledger {
 
-const std::size_t TransactionStoreSyncService::BATCH_SIZE = 30;
-
 TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, MuddlePtr muddle,
-                                                         ObjectStorePtr store)
-  : state_machine_{std::make_shared<core::StateMachine<State>>("TransactionStoreSyncService",
+                                                         ObjectStorePtr    store,
+                                                         TrimCacheCallback trim_cache_callback)
+  : trim_cache_callback_(std::move(trim_cache_callback))
+  , state_machine_{std::make_shared<core::StateMachine<State>>("TransactionStoreSyncService",
                                                                State::INITIAL)}
   , cfg_{cfg}
   , muddle_(std::move(muddle))

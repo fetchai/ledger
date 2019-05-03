@@ -99,12 +99,10 @@ LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packet
   sync_cfg.promise_wait_timeout       = cfg_.sync_service_promise_timeout;
   sync_cfg.fetch_object_wait_duration = cfg_.sync_service_fetch_period;
 
-  tx_sync_service_ =
-      std::make_shared<TransactionStoreSyncService>(sync_cfg, external_muddle_, tx_store_);
+  tx_sync_service_ = std::make_shared<TransactionStoreSyncService>(
+      sync_cfg, external_muddle_, tx_store_, [this]() { tx_sync_protocol_->TrimCache(); });
 
   tx_store_->SetCallback([this](VerifiedTransaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
-
-  tx_sync_service_->SetTrimCacheCallback([this]() { tx_sync_protocol_->TrimCache(); });
 
   // TX Sync protocol
   external_rpc_server_->Add(RPC_TX_STORE_SYNC, tx_sync_protocol_.get());

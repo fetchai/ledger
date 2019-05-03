@@ -19,9 +19,6 @@
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 
-using namespace std;
-using namespace std::chrono;
-
 template <typename T>
 class TensorIndexingTest : public ::testing::Test
 {
