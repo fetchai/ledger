@@ -130,7 +130,7 @@ TYPED_TEST(FundamentalOperatorsIntTypeTest, AdditionIntTest)
   // test a few big numbers
   for (int i{0}; i < 100; ++i)
   {
-    // values range from - half max to max
+    // values range from - half max to + half max
     a = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
     b = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
 
@@ -174,7 +174,7 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, AdditionNonIntTest)
   // test a few big numbers
   for (int i{0}; i < 100; ++i)
   {
-    // values range from - half max to max
+    // values range from - half max to + half max
     a = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
     b = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
 
@@ -225,6 +225,7 @@ TYPED_TEST(FundamentalOperatorsUIntTypeTest, SubtractionUIntTest)
     b = TypeParam(gen.AsDouble() * double(max_val));
 
     fetch::math::Subtract(a, b, ret);
+
     EXPECT_EQ(ret, a - b);
     EXPECT_EQ(fetch::math::Subtract(a, b), a - b);
   }
@@ -262,7 +263,7 @@ TYPED_TEST(FundamentalOperatorsIntTypeTest, SubtractionIntTest)
   // test a few big numbers
   for (int i{0}; i < 100; ++i)
   {
-    // values range from - half max to max
+    // values range from - half max to + half max
     a = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
     b = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
 
@@ -277,7 +278,6 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, SubtractionNonIntTest)
   TypeParam a;
   TypeParam b;
   TypeParam ret;
-  TypeParam two     = TypeParam(2.0);
   TypeParam max_val = fetch::math::NumericMax<TypeParam>();
 
   // test a few small fixed values
@@ -306,9 +306,9 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, SubtractionNonIntTest)
   // test a few big numbers
   for (int i{0}; i < 100; ++i)
   {
-    // values range from - half max to max
-    a = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / two);
-    b = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / two);
+    // values range from - half max to + half max
+    a = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
+    b = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
 
     fetch::math::Subtract(a, b, ret);
     EXPECT_EQ(ret, a - b);
@@ -391,9 +391,9 @@ TYPED_TEST(FundamentalOperatorsIntTypeTest, MultiplicationIntTest)
   // test a few big numbers
   for (int i{0}; i < 100; ++i)
   {
-    // values range from - half max to max
-    a = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2));
-    b = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2));
+    // values range from - half max to + half max
+    a = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
+    b = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
 
     fetch::math::Multiply(a, b, ret);
     EXPECT_EQ(ret, a * b);
@@ -434,7 +434,7 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, MultiplicationNonIntTest)
   // test a few big numbers
   for (int i{0}; i < 100; ++i)
   {
-    // values range from - half max to max
+    // values range from - half max to + half max
     a = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
     b = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
 
@@ -531,7 +531,7 @@ TYPED_TEST(FundamentalOperatorsIntTypeTest, DivisionIntTest)
   // test a few big numbers
   for (int i{0}; i < 100; ++i)
   {
-    // values range from - half max to max
+    // values range from - half max to + half max
     a = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
     b = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
 
@@ -574,7 +574,7 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, DivisionNonIntTest)
   // test a few big numbers
   for (int i{0}; i < 100; ++i)
   {
-    // values range from - half max to max
+    // values range from - half max to + half max
     a = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
     b = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
 
