@@ -155,6 +155,7 @@ class TestInstance():
         # In the case only one miner node, it runs in standalone mode
         if(len(nodes) == 1 and len(self._nodes_are_mining) > 0):
             nodes[0].standalone = True
+            print("\n\n\nstandalone!")
 
         # start all the nodes
         for n, node in enumerate(nodes):
@@ -192,6 +193,7 @@ class TestInstance():
                     # Send raw bytes directly to stdout since it contains non-ascii
                     data = Path(node_log_path).read_bytes()
                     sys.stdout.buffer.write(data)
+                    sys.stdout.flush()
 
 def extract(test, key, expected = True, expect_type = None, default = None):
     """
@@ -356,7 +358,12 @@ def run_test(build_directory, yaml_file, constellation_exe):
             # Parse yaml documents as tests (sequentially)
             for test in all_yaml:
                 # Create a new test instance
-                output("\nTest: {}".format(extract(test, 'test_description')))
+                description = extract(test, 'test_description')
+                output("\nTest: {}".format(description))
+
+                if "DISABLED" in description:
+                    output("Skipping disabled test")
+                    continue
 
                 # Create a test instance
                 test_instance = TestInstance(build_directory, constellation_exe)
