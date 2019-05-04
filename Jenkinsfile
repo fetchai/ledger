@@ -53,7 +53,7 @@ def static_analysis()
 {
   return {
     stage('Static Analysis') {
-      node(HIGH_LOAD_NODE_LABEL) {
+      node {
         stage('SCM Static Analysis') {
           checkout scm
         }
