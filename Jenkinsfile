@@ -95,27 +95,29 @@ def create_build(Platform platform, Configuration config)
   return {
     stage(suffix) {
       node(HIGH_LOAD_NODE_LABEL) {
-        stage("SCM ${suffix}") {
-          checkout scm
-        }
+        timeout(120) {
+          stage("SCM ${suffix}") {
+            checkout scm
+          }
 
-        withEnv(environment()) {
-          DOCKER_IMAGE.inside {
-            stage("Build ${suffix}") {
-              sh "./scripts/ci-tool.py -B ${config.label}"
-            }
+          withEnv(environment()) {
+            DOCKER_IMAGE.inside {
+              stage("Build ${suffix}") {
+                sh "./scripts/ci-tool.py -B ${config.label}"
+              }
 
-            stage("Unit Tests ${suffix}") {
-              sh "./scripts/ci-tool.py -T ${config.label}"
-            }
+              stage("Unit Tests ${suffix}") {
+                sh "./scripts/ci-tool.py -T ${config.label}"
+              }
 
-            SLOW_stage("Integration Tests ${suffix}") {
-              sh "./scripts/ci-tool.py -I ${config.label}"
-            }
+              SLOW_stage("Integration Tests ${suffix}") {
+                sh "./scripts/ci-tool.py -I ${config.label}"
+              }
 
-            SLOW_stage("End-to-End Tests ${suffix}") {
-              sh './scripts/ci/install-test-dependencies.sh'
-              sh "./scripts/ci-tool.py -E ${config.label}"
+              SLOW_stage("End-to-End Tests ${suffix}") {
+                sh './scripts/ci/install-test-dependencies.sh'
+                sh "./scripts/ci-tool.py -E ${config.label}"
+              }
             }
           }
         }
@@ -167,9 +169,11 @@ def run_basic_checks()
 
 def main()
 {
-  DOCKER_IMAGE = update_docker_image()
-  run_basic_checks()
-  run_builds_in_parallel()
+  timeout(180) {
+    DOCKER_IMAGE = update_docker_image()
+    run_basic_checks()
+    run_builds_in_parallel()
+  }
 }
 
 // Entry point
