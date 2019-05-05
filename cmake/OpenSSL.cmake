@@ -40,7 +40,7 @@ function(_build_and_install_openssl openssl_install_dir openssl_vendor_dir)
     RESULT_VARIABLE OPENSSL_BUILD_STATUS
   )
   if(NOT OPENSSL_BUILD_STATUS EQUAL 0)
-    message(FATAL_ERROR "OpenSSL build failure: make")
+    message(FATAL_ERROR "OpenSSL build failure: make -j")
   endif()
 
   execute_process(
