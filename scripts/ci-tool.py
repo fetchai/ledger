@@ -190,7 +190,7 @@ def test_project(build_root, label):
 
     cmd = [
         ctest_executable,
-        '--no-compress-output',
+        '--output-on-failure',
         '-T', TEST_NAME,
         '-L', str(label),
     ]
