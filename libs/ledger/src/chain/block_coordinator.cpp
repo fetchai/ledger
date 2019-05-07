@@ -37,7 +37,8 @@ using ExecutionState = fetch::ledger::ExecutionManagerInterface::State;
 const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};
 const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{500};
 const std::chrono::seconds      NOTIFY_INTERVAL{10};
-const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{60};
+const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{30};
+const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{30};
 
 const std::size_t DIGEST_LENGTH_BYTES{32};
 const std::size_t IDENTITY_LENGTH_BYTES{64};
@@ -397,25 +398,38 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
 {
   if (previous == current)
   {
-    // FSM is stuck waiting for transactions - has timeout elapsed?
-    if (wait_for_tx_timeout_.IsDue())
+    if (have_asked_for_missing_txs_)
     {
-      // Assume block was invalid and discard it
-      chain_.RemoveBlock(current_block_->body.hash);
+      // FSM is stuck waiting for transactions - has timeout elapsed?
+      if (wait_for_tx_timeout_.IsDue())
+      {
+        // Assume block was invalid and discard it
+        chain_.RemoveBlock(current_block_->body.hash);
 
-      return State::RESET;
+        return State::RESET;
+      }
+    }
+    else
+    {
+      if (wait_before_asking_for_missing_tx_.IsDue())
+      {
+        storage_unit_.IssueCallForMissingTxs(*pending_txs_);
+        have_asked_for_missing_txs_ = true;
+        wait_for_tx_timeout_        = WAIT_FOR_TX_TIMEOUT_INTERVAL;
+      }
     }
   }
-  else if (previous != current)
+  else
   {
-    // Only just started waiting for transactions - reset timeout
-    wait_for_tx_timeout_ = WAIT_FOR_TX_TIMEOUT_INTERVAL;
+    // Only just started waiting for transactions - reset countdown to issuing request to peers
+    wait_before_asking_for_missing_tx_ = WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL;
+    have_asked_for_missing_txs_        = false;
   }
 
   // if the transaction digests have not been cached then do this now
   if (!pending_txs_)
   {
-    pending_txs_ = std::make_unique<TxSet>();
+    pending_txs_ = std::make_unique<TxDigestSet>();
 
     for (auto const &slice : current_block_->body.slices)
     {

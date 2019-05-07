@@ -62,6 +62,7 @@ public:
   MOCK_METHOD1(AddTransaction, void(Transaction const &));
   MOCK_METHOD2(GetTransaction, bool(ConstByteArray const &, Transaction &));
   MOCK_METHOD1(HasTransaction, bool(ConstByteArray const &));
+  MOCK_METHOD1(IssueCallForMissingTxs, void(fetch::ledger::TxDigestSet const &));
 
   MOCK_METHOD1(PollRecentTx, TxSummaries(uint32_t));
 

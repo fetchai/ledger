@@ -62,6 +62,7 @@ TransactionStoreSyncProtocol::TransactionStoreSyncProtocol(ObjectStore *store, i
   this->Expose(OBJECT_COUNT, this, &Self::ObjectCount);
   this->ExposeWithClientContext(PULL_OBJECTS, this, &Self::PullObjects);
   this->Expose(PULL_SUBTREE, this, &Self::PullSubtree);
+  this->Expose(PULL_SPECIFIC_OBJECTS, this, &Self::PullSpecificObjects);
 }
 
 void TransactionStoreSyncProtocol::TrimCache()
@@ -149,6 +150,23 @@ TxList TransactionStoreSyncProtocol::PullObjects(service::CallContext const *cal
           ret.push_back(c.data);
         }
       }
+    }
+  }
+
+  return ret;
+}
+
+TxList TransactionStoreSyncProtocol::PullSpecificObjects(
+    std::vector<storage::ResourceID> const &rids)
+{
+  TxList              ret;
+  VerifiedTransaction tx;
+
+  for (auto const &rid : rids)
+  {
+    if (store_->Get(rid, tx))
+    {
+      ret.push_back(tx);
     }
   }
 
