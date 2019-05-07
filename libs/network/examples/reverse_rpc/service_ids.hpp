@@ -16,6 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <string>
+#include <vector>
+
 struct AEAToNode
 {
   enum
@@ -44,3 +47,5 @@ struct FetchProtocols
 
 static const int SERVICE_TEST = 1;
 static const int CHANNEL_RPC  = 1;
+
+using Strings = std::vector<std::string>;

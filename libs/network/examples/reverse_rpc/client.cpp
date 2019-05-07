@@ -45,13 +45,12 @@ static char const *LOGGING_NAME = "RPC-Client";
 class AEA
 {
 public:
-  using StringList = std::vector<std::string>;
 
-  StringList SearchFor(std::string const &val)
+  Strings SearchFor(std::string const &val)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Searching for ", val);
 
-    StringList ret{};
+    Strings ret{};
     {
       FETCH_LOCK(mutex_);
 
@@ -74,8 +73,8 @@ public:
   }
 
 private:
-  Mutex      mutex_{__LINE__, __FILE__};
-  StringList strings_;
+  Mutex   mutex_{__LINE__, __FILE__};
+  Strings strings_;
 };
 
 class AEAProtocol : public Protocol
@@ -110,12 +109,12 @@ int main(int argc, char **argv)
 
   // create the muddle and attach all the RPC services
   auto muddle = Muddle::CreateMuddle(NetworkId{"TEST"}, tm);
-  auto client = std::make_shared<Client>("Client", muddle->AsEndpoint(), Muddle::Address(),
-                                         SERVICE_TEST, CHANNEL_RPC);
+
+  Client client{"Client", muddle->AsEndpoint(), Muddle::Address(), SERVICE_TEST, CHANNEL_RPC};
 
   // register the RPC server
-  auto server = std::make_shared<Server>(muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC);
-  server->Add(FetchProtocols::NODE_TO_AEA, &aea_protocol);
+  Server server{muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC};
+  server.Add(FetchProtocols::NODE_TO_AEA, &aea_protocol);
 
   // start the muddle and wait for the connection to establish
   muddle->Start({}, {Uri{"tcp://127.0.0.1:8080"}});
@@ -131,8 +130,7 @@ int main(int argc, char **argv)
 
   // register this node as an AEA
   FETCH_LOG_INFO(LOGGING_NAME, "Registering node...");
-  auto p =
-      client->CallSpecificAddress(target_address, FetchProtocols::AEA_TO_NODE, AEAToNode::REGISTER);
+  auto p = client.CallSpecificAddress(target_address, FetchProtocols::AEA_TO_NODE, AEAToNode::REGISTER);
   if (!p->Wait(1000, false))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Registering node...FAILED");

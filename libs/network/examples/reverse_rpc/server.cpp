@@ -34,7 +34,6 @@ using fetch::service::CallContext;
 using fetch::service::Protocol;
 
 using MuddlePtr  = std::shared_ptr<Muddle>;
-using StringList = std::vector<std::string>;
 
 static char const *LOGGING_NAME = "RPC-Server";
 
@@ -53,7 +52,7 @@ public:
         [context](AddressSet &addresses) { addresses.insert(context->sender_address); });
   }
 
-  StringList SearchFor(std::string const &val)
+  Strings SearchFor(std::string const &val)
   {
     auto const connected_peers = muddle_->AsEndpoint().GetDirectlyConnectedPeers();
 
@@ -70,13 +69,14 @@ public:
     });
 
     // query all the connected addresses
-    StringList strings{};
+    Strings strings{};
     for (auto const &address : addresses)
     {
       // query this specific address
-      StringList response =
-          client_->CallSpecificAddress(address, FetchProtocols::NODE_TO_AEA, NodeToAEA::SEARCH, val)
-              ->As<StringList>();
+      Strings response = client_->CallSpecificAddress(address,
+                                                      FetchProtocols::NODE_TO_AEA,
+                                                      NodeToAEA::SEARCH,
+                                                      val)->As<Strings>();
 
       // if the node responded positively then add it to the response
       if (!response.empty())
@@ -121,7 +121,7 @@ public:
     rpc_server_->Add(FetchProtocols::AEA_TO_NODE, &aea_to_node_protocol_);
   }
 
-  StringList SearchFor(std::string const &val)
+  Strings SearchFor(std::string const &val)
   {
     return client_register_.SearchFor(val);
   }
@@ -136,7 +136,7 @@ private:
 
 int main()
 {
-  // create and start the
+  // create and start the network manager
   fetch::network::NetworkManager tm{"NetMgr", 8};
   tm.Start();
 
