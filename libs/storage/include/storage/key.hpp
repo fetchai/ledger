@@ -59,8 +59,8 @@ struct Key
     memset(key_, 0, BYTES);
   }
 
-  // TODO(EJF): There are a number of implicit conversions for this key, in many places it might be
-  //            a bug.
+  // TODO(private issue 957): There are a number of implicit conversions for this key, in many
+  //                          places it might be a bug.
   /*explicit*/ Key(byte_array::ConstByteArray const &key)
   {
     static_assert(BITS == 128 || BITS == 256 || BITS >= 1024,
