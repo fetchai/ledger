@@ -1,17 +1,5 @@
-DOCKER_IMAGE = null
-DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:latest'
-
+DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.1.0'
 HIGH_LOAD_NODE_LABEL = 'ledger'
-
-def update_docker_image()
-{
-  def image = docker.image(DOCKER_IMAGE_NAME)
-
-  // Pull to ensure we have latest version
-  image.pull()
-
-  return image
-}
 
 enum Platform
 {
@@ -59,7 +47,7 @@ def static_analysis()
         }
                         
         stage('Run Static Analysis') {
-          DOCKER_IMAGE.inside {
+          docker.image(DOCKER_IMAGE_NAME).inside {
             sh '''\
               mkdir -p build-analysis
               cd build-analysis
@@ -101,7 +89,7 @@ def create_build(Platform platform, Configuration config)
           }
 
           withEnv(environment()) {
-            DOCKER_IMAGE.inside {
+            docker.image(DOCKER_IMAGE_NAME).inside {
               stage("Build ${suffix}") {
                 sh "./scripts/ci-tool.py -B ${config.label}"
               }
@@ -152,7 +140,7 @@ def run_basic_checks()
         checkout scm
       }
 
-      DOCKER_IMAGE.inside {
+      docker.image(DOCKER_IMAGE_NAME).inside {
         stage('License Check') {
           sh './scripts/check_license_header.py'
         }
@@ -170,7 +158,6 @@ def run_basic_checks()
 def main()
 {
   timeout(180) {
-    DOCKER_IMAGE = update_docker_image()
     run_basic_checks()
     run_builds_in_parallel()
   }
