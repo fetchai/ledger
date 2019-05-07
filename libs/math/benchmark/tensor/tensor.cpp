@@ -70,30 +70,35 @@ BENCHMARK_TEMPLATE(BM_TensorShape, float, 256, 256, 256)->Unit(benchmark::kNanos
 BENCHMARK_TEMPLATE(BM_TensorShape, double, 256, 256, 256)->Unit(benchmark::kNanosecond);
 
 template <class T, int C, int H, int W>
-void BM_tensorNaiveIteration(benchmark::State &state)
+void BM_TensorNaiveIteration(benchmark::State &state)
 {
   for (auto _ : state)
   {
-    T                      sum(0);
+    state.PauseTiming();
+
+    // Construct reference tensor
     fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
-    for (std::uint64_t i(0); i < t.size(); ++i)
+
+    state.ResumeTiming();
+
+    for (auto const &e : t)
     {
-      sum += t.At(i);
+      benchmark::DoNotOptimize(e);
     }
   }
 }
 
-BENCHMARK_TEMPLATE(BM_tensorNaiveIteration, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_tensorNaiveIteration, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_tensorNaiveIteration, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorNaiveIteration, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorNaiveIteration, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorNaiveIteration, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
 
-BENCHMARK_TEMPLATE(BM_tensorNaiveIteration, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_tensorNaiveIteration, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_tensorNaiveIteration, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorNaiveIteration, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorNaiveIteration, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorNaiveIteration, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
 
-BENCHMARK_TEMPLATE(BM_tensorNaiveIteration, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_tensorNaiveIteration, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_tensorNaiveIteration, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorNaiveIteration, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorNaiveIteration, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorNaiveIteration, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
 
 // Reference implementation of a vector to compare iteration time
 template <class T, int C, int H, int W>
@@ -135,7 +140,7 @@ BENCHMARK_TEMPLATE(VectorBaselineRangeIterator, double, 256, 256, 256)
     ->Unit(benchmark::kMillisecond);
 
 template <class T, int C, int H, int W>
-void BM_tensorRangeIterator(benchmark::State &state)
+void BM_TensorRangeIterator(benchmark::State &state)
 {
   for (auto _ : state)
   {
@@ -150,20 +155,45 @@ void BM_tensorRangeIterator(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_tensorRangeIterator, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_tensorRangeIterator, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_tensorRangeIterator, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorRangeIterator, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorRangeIterator, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorRangeIterator, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
 
-BENCHMARK_TEMPLATE(BM_tensorRangeIterator, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_tensorRangeIterator, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_tensorRangeIterator, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorRangeIterator, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorRangeIterator, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorRangeIterator, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
 
-BENCHMARK_TEMPLATE(BM_tensorRangeIterator, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_tensorRangeIterator, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_tensorRangeIterator, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorRangeIterator, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorRangeIterator, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorRangeIterator, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
 
 template <class T, int C, int H, int W>
-void BM_tensorSum(benchmark::State &state)
+void BM_TensorConcat(benchmark::State &state)
+{
+  fetch::math::Tensor<T>              t1(std::vector<std::uint64_t>{C, H, W});
+  fetch::math::Tensor<T>              t2(std::vector<std::uint64_t>{C, H, W});
+  std::vector<fetch::math::Tensor<T>> vt{t1, t2};
+
+  for (auto _ : state)
+  {
+    benchmark::DoNotOptimize(fetch::math::Tensor<T>::Concat(vt, 0));
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_TensorConcat, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorConcat, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorConcat, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_TensorConcat, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorConcat, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorConcat, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_TensorConcat, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorConcat, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorConcat, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+
+template <class T, int C, int H, int W>
+void BM_TensorSum(benchmark::State &state)
 {
   for (auto _ : state)
   {
@@ -175,16 +205,16 @@ void BM_tensorSum(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_tensorSum, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_tensorSum, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_tensorSum, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorSum, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorSum, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorSum, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
 
-BENCHMARK_TEMPLATE(BM_tensorSum, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_tensorSum, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_tensorSum, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorSum, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorSum, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorSum, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
 
-BENCHMARK_TEMPLATE(BM_tensorSum, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_tensorSum, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_tensorSum, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorSum, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorSum, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_TensorSum, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();

@@ -2252,6 +2252,7 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::Concat(std::vector<SelfType> &tens
     // copy the data across
     TensorIterator<T, C> ret_it{ret, step};
     TensorIterator<T, C> t_it{tensors[i]};
+
     while (t_it.is_valid())
     {
       *ret_it = *t_it;

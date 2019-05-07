@@ -34,10 +34,11 @@ TYPED_TEST_CASE(TensorConcatenationTest, MyTypes);
 TYPED_TEST(TensorConcatenationTest, tensor_concat_2d_axis_0)
 {
   using Tensor = fetch::math::Tensor<TypeParam>;
-  Tensor t1    = Tensor::FromString("0 1 2 3; 4 5 6 7");
-  Tensor t2    = Tensor::FromString("0 1 2 3; 4 5 6 7");
-  Tensor t3    = Tensor::FromString("0 1 2 3; 4 5 6 7");
-  Tensor gt    = Tensor::FromString("0 1 2 3; 4 5 6 7; 0 1 2 3; 4 5 6 7; 0 1 2 3; 4 5 6 7");
+  Tensor t1    = Tensor::FromString("0, 1, 2, 3; 4, 5, 6, 0");
+  Tensor t2    = Tensor::FromString("0, 1, 2, 3; 4, 5, 6, 0");
+  Tensor t3    = Tensor::FromString("0, 1, 2, 3; 4, 5, 6, 0");
+  Tensor gt =
+      Tensor::FromString("0, 1, 2, 3; 4, 5, 6, 0; 0, 1, 2, 3; 4, 5, 6, 0; 0, 1, 2, 3; 4, 5, 6, 0");
 
   std::vector<Tensor> vt{t1, t2, t3};
   Tensor              ret = Tensor::Concat(vt, 0);
@@ -49,10 +50,11 @@ TYPED_TEST(TensorConcatenationTest, tensor_concat_2d_axis_0)
 TYPED_TEST(TensorConcatenationTest, tensor_concat_2d_axis_1)
 {
   using Tensor = fetch::math::Tensor<TypeParam>;
-  Tensor t1    = Tensor::FromString("0 1 2 3; 4 5 6 0");
-  Tensor t2    = Tensor::FromString("0 1 2 3; 4 5 6 0");
-  Tensor t3    = Tensor::FromString("0 1 2 3; 4 5 6 0");
-  Tensor gt    = Tensor::FromString("0 1 2 3 0 1 2 3 0 1 2 3; 4 5 6 0 4 5 6 0 4 5 6 0");
+  Tensor t1    = Tensor::FromString("0, 1, 2, 3; 4, 5, 6, 0");
+  Tensor t2    = Tensor::FromString("0, 1, 2, 3; 4, 5, 6, 0");
+  Tensor t3    = Tensor::FromString("0, 1, 2, 3; 4, 5, 6, 0");
+  Tensor gt =
+      Tensor::FromString("0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3; 4, 5, 6, 0, 4, 5, 6, 0, 4, 5, 6, 0");
 
   std::vector<Tensor> vt{t1, t2, t3};
   Tensor              ret = Tensor::Concat(vt, 1);
@@ -214,23 +216,35 @@ TYPED_TEST(TensorConcatenationTest, tensor_concat_3d_axis_1_different_sizes)
   using Tensor   = fetch::math::Tensor<TypeParam>;
   using SizeType = fetch::math::SizeType;
 
-  Tensor t1{{3, 2, 2}};
-  Tensor t2{{3, 5, 2}};
-  Tensor t3{{3, 1, 2}};
-  Tensor gt{{3, 8, 2}};
+  Tensor t1{{3, 2, 4}};
+  Tensor t2{{3, 3, 4}};
+  Tensor t3{{3, 1, 4}};
+  Tensor gt{{3, 6, 4}};
 
   TypeParam counter{0};
   auto      t1_it = t1.begin();
-  auto      t2_it = t2.begin();
-  auto      t3_it = t3.begin();
   while (t1_it.is_valid())
   {
     *t1_it = counter;
-    *t2_it = counter;
-    *t3_it = counter;
     ++counter;
     ++t1_it;
+  }
+
+  counter    = TypeParam{0};
+  auto t2_it = t2.begin();
+  while (t2_it.is_valid())
+  {
+    *t2_it = counter;
+    ++counter;
     ++t2_it;
+  }
+
+  counter    = TypeParam{0};
+  auto t3_it = t3.begin();
+  while (t3_it.is_valid())
+  {
+    *t3_it = counter;
+    ++counter;
     ++t3_it;
   }
 
