@@ -223,7 +223,7 @@ def test_project(build_root, label):
         sys.exit(exit_code)
 
 def test_end_to_end(project_root, build_root):
-    yaml_file = os.path.join(project_root, "scripts/end_to_end_test.yaml")
+    yaml_file = os.path.join(project_root, "scripts/end_to_end_test/end_to_end_test.yaml")
 
     # Check that the YAML file does exist
     if not os.path.exists(yaml_file):
