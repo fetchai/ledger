@@ -2222,21 +2222,29 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::Concat(std::vector<SelfType> &tens
   // copy the data across for each tensor
   SizeType cur_from{0};
   SizeType cur_to{0};
+  std::vector<std::vector<SizeType>> step{ret_tensor_shape.size()};
+  std::vector<SizeType> cur_step(3);
+
+  cur_step[2] = 1; // stepsize always 1 for now
+
   for (SizeType i{0}; i < tensors.size(); ++i)
   {
    cur_to += tensors[i].shape()[axis];
 
     // identify the relevant subview to fill
-    std::vector<std::vector<SizeType>> step{};
     for (SizeType j{0}; j < ret.shape().size(); ++j)
     {
       if (j == axis)
       {
-        step.push_back({cur_from, cur_to, 1});
+        cur_step[0] = cur_from;
+        cur_step[1] = cur_to;
+        step[j] = cur_step;
       }
       else
       {
-        step.push_back({0, ret.shape()[j], 1});
+        cur_step[0] = 0;
+        cur_step[1] = ret.shape()[j];
+        step[j] = cur_step;
       }
     }
 
