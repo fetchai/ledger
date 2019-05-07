@@ -74,7 +74,6 @@ public:
   }
 
 private:
-
   Mutex      mutex_{__LINE__, __FILE__};
   StringList strings_;
 };
@@ -132,7 +131,8 @@ int main(int argc, char **argv)
 
   // register this node as an AEA
   FETCH_LOG_INFO(LOGGING_NAME, "Registering node...");
-  auto p = client->CallSpecificAddress(target_address, FetchProtocols::AEA_TO_NODE, AEAToNode::REGISTER);
+  auto p =
+      client->CallSpecificAddress(target_address, FetchProtocols::AEA_TO_NODE, AEAToNode::REGISTER);
   if (!p->Wait(1000, false))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Registering node...FAILED");

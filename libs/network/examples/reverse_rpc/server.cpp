@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading/synchronised_state.hpp"
 #include "network/service/server.hpp"
+#include "core/threading/synchronised_state.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
@@ -33,28 +33,24 @@ using fetch::muddle::rpc::Client;
 using fetch::service::CallContext;
 using fetch::service::Protocol;
 
-using MuddlePtr = std::shared_ptr<Muddle>;
+using MuddlePtr  = std::shared_ptr<Muddle>;
 using StringList = std::vector<std::string>;
 
 static char const *LOGGING_NAME = "RPC-Server";
 
-
 class ClientRegister
 {
 public:
-
   explicit ClientRegister(MuddlePtr muddle)
     : muddle_{std::move(muddle)}
-  {
-  }
+  {}
 
   void Register(CallContext const *context)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Registering: ", context->sender_address.ToBase64());
 
-    node_set_.Apply([context](AddressSet &addresses) {
-      addresses.insert(context->sender_address);
-    });
+    node_set_.Apply(
+        [context](AddressSet &addresses) { addresses.insert(context->sender_address); });
   }
 
   StringList SearchFor(std::string const &val)
@@ -78,10 +74,9 @@ public:
     for (auto const &address : addresses)
     {
       // query this specific address
-      StringList response = client_->CallSpecificAddress(address,
-                                                         FetchProtocols::NODE_TO_AEA,
-                                                         NodeToAEA::SEARCH,
-                                                         val)->As<StringList>();
+      StringList response =
+          client_->CallSpecificAddress(address, FetchProtocols::NODE_TO_AEA, NodeToAEA::SEARCH, val)
+              ->As<StringList>();
 
       // if the node responded positively then add it to the response
       if (!response.empty())
@@ -94,14 +89,13 @@ public:
   }
 
 private:
-  using RpcClientPtr = std::shared_ptr<Client>;
-  using AddressSet   = std::unordered_set<Muddle::Address>;
+  using RpcClientPtr   = std::shared_ptr<Client>;
+  using AddressSet     = std::unordered_set<Muddle::Address>;
   using SyncAddressSet = fetch::SynchronisedState<AddressSet>;
 
   MuddlePtr      muddle_;
-  RpcClientPtr   client_{
-    std::make_shared<Client>("RRPClient", muddle_->AsEndpoint(), Muddle::Address(),
-                             SERVICE_TEST, CHANNEL_RPC)};
+  RpcClientPtr   client_{std::make_shared<Client>("RRPClient", muddle_->AsEndpoint(),
+                                                Muddle::Address(), SERVICE_TEST, CHANNEL_RPC)};
   SyncAddressSet node_set_{};
 };
 
