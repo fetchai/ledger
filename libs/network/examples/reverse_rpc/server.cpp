@@ -33,7 +33,7 @@ using fetch::muddle::rpc::Client;
 using fetch::service::CallContext;
 using fetch::service::Protocol;
 
-using MuddlePtr  = std::shared_ptr<Muddle>;
+using MuddlePtr = std::shared_ptr<Muddle>;
 
 static char const *LOGGING_NAME = "RPC-Server";
 
@@ -73,10 +73,9 @@ public:
     for (auto const &address : addresses)
     {
       // query this specific address
-      Strings response = client_->CallSpecificAddress(address,
-                                                      FetchProtocols::NODE_TO_AEA,
-                                                      NodeToAEA::SEARCH,
-                                                      val)->As<Strings>();
+      Strings response =
+          client_->CallSpecificAddress(address, FetchProtocols::NODE_TO_AEA, NodeToAEA::SEARCH, val)
+              ->As<Strings>();
 
       // if the node responded positively then add it to the response
       if (!response.empty())

@@ -45,7 +45,6 @@ static char const *LOGGING_NAME = "RPC-Client";
 class AEA
 {
 public:
-
   Strings SearchFor(std::string const &val)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Searching for ", val);
@@ -130,7 +129,8 @@ int main(int argc, char **argv)
 
   // register this node as an AEA
   FETCH_LOG_INFO(LOGGING_NAME, "Registering node...");
-  auto p = client.CallSpecificAddress(target_address, FetchProtocols::AEA_TO_NODE, AEAToNode::REGISTER);
+  auto p =
+      client.CallSpecificAddress(target_address, FetchProtocols::AEA_TO_NODE, AEAToNode::REGISTER);
   if (!p->Wait(1000, false))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Registering node...FAILED");
