@@ -29,6 +29,7 @@
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "storage/resource_mapper.hpp"
+#include "transaction_finder_protocol.hpp"
 #include "transaction_store_sync_protocol.hpp"
 
 #include <algorithm>
@@ -75,6 +76,7 @@ public:
   using StateMachine          = core::StateMachine<State>;
   using ObjectStorePtr        = std::shared_ptr<ObjectStore>;
   using LaneControllerPtr     = std::shared_ptr<LaneController>;
+  using TxFinderProtocolPtr   = std::shared_ptr<TxFinderProtocol>;
 
   static constexpr char const *LOGGING_NAME = "TransactionStoreSyncService";
   static constexpr std::size_t MAX_OBJECT_COUNT_RESOLUTION_PER_CYCLE = 128;
@@ -92,6 +94,7 @@ public:
   };
 
   TransactionStoreSyncService(Config const &cfg, MuddlePtr muddle, ObjectStorePtr store,
+                              TxFinderProtocol *tx_finder_protocol,
                               TrimCacheCallback trim_cache_callback);
   virtual ~TransactionStoreSyncService();
 
@@ -142,6 +145,7 @@ private:
 
   TrimCacheCallback             trim_cache_callback_;
   std::shared_ptr<StateMachine> state_machine_;
+  TxFinderProtocol *            tx_finder_protocol_;
   Config const                  cfg_;
   MuddlePtr                     muddle_;
   ClientPtr                     client_;
