@@ -279,7 +279,7 @@ public:
 
   template <typename TensorType>
   static SelfType Stack(std::vector<TensorType> const &tensors);
-  static SelfType Concat(std::vector<SelfType> const &tensors, SizeType axis);
+  static SelfType Concat(std::vector<SelfType> &tensors, SizeType axis);
 
   void            Sort();
   void            Sort(memory::TrivialRange const &range);
@@ -2188,7 +2188,7 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::Stack(std::vector<TensorType> cons
  * @returnf
  */
 template <typename T, typename C>
-typename Tensor<T, C>::SelfType Tensor<T, C>::Concat(std::vector<SelfType> const &tensors, SizeType const axis)
+typename Tensor<T, C>::SelfType Tensor<T, C>::Concat(std::vector<SelfType> &tensors, SizeType const axis)
 {
   // cant concatenate a single tensor
   ASSERT(tensors.size() > 1);
@@ -2214,47 +2214,46 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::Concat(std::vector<SelfType> const
     }
   }
 
-  // set new tensor shape
+  // set up the return tensor shape
   SizeVector ret_tensor_shape{tensor0_shape};
   ret_tensor_shape[axis] = sum_axis_size;
+  SelfType ret{ret_tensor_shape};
 
-  // set up return tensor
-  SelfType ret_tensor{ret_tensor_shape};
-  SelfType ret_tensor2{ret_tensor_shape};
-
-  // in order to copy tensors into ret tensor we should swap the leading axis with axis, just to make sure
-  // we iterate through them correctly
-  auto rt = ret_tensor.begin();
-
-  rt.PermuteAxes(0, axis);
-  SizeType cur_tensor_idx = 0;
-  while (rt.is_valid())
+  // copy the data across for each tensor
+  SizeType cur_from{0};
+  SizeType cur_to{0};
+  for (SizeType i{0}; i < tensors.size(); ++i)
   {
-    auto other_it = tensors[cur_tensor_idx].begin();
-//    other_it.PermuteAxes(0, axis);
-    while(other_it.is_valid())
+   cur_to += tensors[i].shape()[axis];
+
+    // identify the relevant subview to fill
+    std::vector<std::vector<SizeType>> step{};
+    for (SizeType j{0}; j < ret.shape().size(); ++j)
     {
-      *rt = *other_it;
-      std::cout << "*rt: " << *rt << std::endl;
-      std::cout << "*other_it: " << *other_it << std::endl;
-      ++rt;
-      ++other_it;
+      if (j == axis)
+      {
+        step.push_back({cur_from, cur_to, 1});
+      }
+      else
+      {
+        step.push_back({0, ret.shape()[j], 1});
+      }
     }
-    ++cur_tensor_idx;
+
+    // copy the data across
+    TensorIterator<T, C> ret_it{ret, step};
+    TensorIterator<T, C> t_it{tensors[i]};
+    while (t_it.is_valid())
+    {
+      *ret_it = *t_it;
+      ++ret_it;
+      ++t_it;
+    }
+
+    cur_from = cur_to;
   }
 
-  auto rt_3 = ret_tensor.begin();
-  rt_3.PermuteAxes(0, axis);
-  auto rt_2 = ret_tensor2.begin();
-  while(rt_2.is_valid())
-  {
-    *rt_2 = *rt_3;
-    ++rt_3;
-    ++rt_2;
-  }
-
-  return ret_tensor2;
-//  return ret_tensor;
+  return ret;
 }
 
 /**
