@@ -3,5 +3,5 @@ function main()
   var b : Int32 = 3;
 
   b = a + b;
-  Print("The result is: " + toString(b));
+  print("The result is: " + toString(b));
 endfunction

@@ -82,12 +82,6 @@ public:
     return promise_->name();
   }
 
-  // TODO(EJF): This seems a little scary, is this a copy or move?
-  void Adopt(Promise &promise)
-  {
-    promise_ = promise;
-  }
-
   // Operators
   explicit operator bool() const;
 

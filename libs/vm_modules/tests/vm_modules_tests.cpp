@@ -53,17 +53,18 @@ protected:
     vm_ = VMFactory::GetVM(module_);
 
     std::string        error;
-    std::string        console;
     fetch::vm::Variant output;
+    std::stringstream  console;
+    vm_->AttachOutputDevice("stdout", console);
 
     // Execute our fn
-    if (!vm_->Execute(script_, function, error, console, output))
+    if (!vm_->Execute(script_, function, error, output))
     {
       std::cerr << "Runtime error: " << error << std::endl;
       return false;
     }
 
-    std::cerr << "output:\n" << console << std::endl;
+    std::cerr << "output:\n" << console.str() << std::endl;
 
     return true;
   }
@@ -78,7 +79,7 @@ TEST_F(VMTests, CheckCompileAndExecute)
 {
   const std::string source =
       " function main() "
-      "   Print(\"Hello, world\");"
+      "   print(\"Hello, world\");"
       " endfunction ";
 
   bool res = Compile(source);
@@ -94,7 +95,7 @@ TEST_F(VMTests, CheckCompileAndExecuteAltStrings)
 {
   const std::string source =
       " function main() "
-      "   Print('Hello, world');"
+      "   print('Hello, world');"
       " endfunction ";
 
   bool res = Compile(source);
@@ -110,13 +111,13 @@ TEST_F(VMTests, CheckRandom)
 {
   const std::string source =
       " function main()"
-      "   Print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   Print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   Print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   Print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   Print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   Print('rnd = ' + toString(Rand(0.0f, 1000.0f)));"
-      "   Print('rnd = ' + toString(Rand(0.0, 1000.0)));"
+      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
+      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
+      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
+      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
+      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
+      "   print('rnd = ' + toString(Rand(0.0f, 1000.0f)));"
+      "   print('rnd = ' + toString(Rand(0.0, 1000.0)));"
       " endfunction ";
 
   bool res = Compile(source);

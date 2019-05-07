@@ -26,21 +26,33 @@ namespace fetch {
 namespace vm_modules {
 
 template <typename T>
-fetch::meta::IfIsInteger<T, T> Rand(fetch::vm::VM *, T const &a = T{0}, T const &b = T{100})
+fetch::meta::IfIsInteger<T, T> Rand(fetch::vm::VM *vm, T const &a = T{0}, T const &b = T{100})
 {
-  std::random_device               rd;
-  std::mt19937_64                  mt(rd());
-  std::uniform_int_distribution<T> dist{a, b};
-  return dist(mt);
+  if (a >= b)
+  {
+    vm->RuntimeError("Invalid argument: Rand(a, b) must satisfy a < b");
+    return T{0};
+  }
+
+  std::random_device rd;
+  std::mt19937_64    mt(rd());
+
+  return std::uniform_int_distribution<T>{a, b}(mt);
 }
 
 template <typename T>
-fetch::meta::IfIsFloat<T, T> Rand(fetch::vm::VM *, T const &a = T{.0}, T const &b = T{1.0})
+fetch::meta::IfIsFloat<T, T> Rand(fetch::vm::VM *vm, T const &a = T{.0}, T const &b = T{1.0})
 {
-  std::random_device                rd;
-  std::mt19937_64                   mt(rd());
-  std::uniform_real_distribution<T> dist{a, b};
-  return dist(mt);
+  if (a >= b)
+  {
+    vm->RuntimeError("Invalid argument: Rand(a, b) must satisfy a < b");
+    return T{.0};
+  }
+
+  std::random_device rd;
+  std::mt19937_64    mt(rd());
+
+  return std::uniform_real_distribution<T>{a, b}(mt);
 }
 
 static void CreateRand(std::shared_ptr<fetch::vm::Module> module)

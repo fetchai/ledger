@@ -17,50 +17,34 @@
 //
 //------------------------------------------------------------------------------
 
-namespace fetch {
-namespace generics {
+#include <unordered_map>
 
-template <class TYPE, class MUTEXTYPE>
-class Locked
+namespace fetch {
+namespace vm {
+
+class PointerRegister
 {
 public:
-  Locked(MUTEXTYPE &m, TYPE object)
-    : lock(m)
-    , target(object)
-  {}
-
-  Locked(Locked &&other)
-    : lock(std::move(other.lock))
-    , target(std::move(other.target))
-  {}
-
-  ~Locked()
-  {}
-
-  operator TYPE()
+  template <typename T>
+  void Set(T *val)
   {
-    return target;
+    pointers_[std::type_index(typeid(T))] = static_cast<void *>(val);
   }
 
-  operator const TYPE() const
+  template <typename T>
+  T *Get()
   {
-    return target;
-  }
+    if (pointers_.find(std::type_index(typeid(T))) == pointers_.end())
+    {
+      return nullptr;
+    }
 
-  const TYPE operator->() const
-  {
-    return target;
-  }
-
-  TYPE operator->()
-  {
-    return target;
+    return static_cast<T *>(pointers_[std::type_index(typeid(T))]);
   }
 
 private:
-  std::unique_lock<MUTEXTYPE> lock;
-  TYPE                        target;
+  std::unordered_map<std::type_index, void *> pointers_;
 };
 
-}  // namespace generics
+}  // namespace vm
 }  // namespace fetch

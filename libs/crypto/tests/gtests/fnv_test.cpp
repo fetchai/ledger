@@ -20,8 +20,8 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "gtest/gtest.h"
+
 #include <iostream>
-//#include "gmock/gmock.h"
 
 namespace fetch {
 namespace crypto {

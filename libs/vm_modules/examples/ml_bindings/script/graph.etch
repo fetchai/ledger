@@ -2,7 +2,7 @@
 function main()
 
 if (System.Argc() != 2)
-  Print("Usage: VM SCRIPT_FILE PATH/TO/train-images-idx3-ubyte PATH/TO/train-labels-idx1-ubyte");
+  print("Usage: VM SCRIPT_FILE PATH/TO/train-images-idx3-ubyte PATH/TO/train-labels-idx1-ubyte");
   return;
 endif
   
@@ -41,11 +41,11 @@ for(i in 0:trainingIterations)
     average += loss;
     var remainder = i - (i / 100 * 100);
     if (remainder == 0) // No % operator :(
-      Print(average);
+      print(average);
       average = 0.0f;
       d.Display(p.Data());
-      Print("Expected  : " + gt.ToString());
-      Print("Predicted : " + pred.ToString());
+      print("Expected  : " + gt.ToString());
+      print("Predicted : " + pred.ToString());
     endif
     var dt = c.Backward(pred, gt);
     g.Backpropagate("Softmax", dt);

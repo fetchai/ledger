@@ -59,18 +59,18 @@ public:
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape() == errorSignal.shape());
-    ArrayType returnSignal{errorSignal.shape()};
+    ArrayType return_signal{errorSignal.shape()};
     ArrayType t{inputs.front().get().shape()};
 
     // gradient of sigmoid function is s(x)(1 - s(x))
     t = Ops<T>::Forward(inputs);
-    fetch::math::Subtract(DataType(1), t, returnSignal);
-    fetch::math::Multiply(t, returnSignal, returnSignal);
+    fetch::math::Subtract(DataType(1), t, return_signal);
+    fetch::math::Multiply(t, return_signal, return_signal);
 
     // multiply by errorSignal (chain rule)
-    fetch::math::Multiply(errorSignal, returnSignal, returnSignal);
+    fetch::math::Multiply(errorSignal, return_signal, return_signal);
 
-    return {returnSignal};
+    return {return_signal};
   }
 
   static constexpr char const *DESCRIPTOR = "Sigmoid";

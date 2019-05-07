@@ -20,6 +20,8 @@
 #include "core/macros.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
 
+#include <cassert>
+#include <chrono>
 #include <memory>
 
 static char const *FETCH_MAYBE_UNUSED ToString(fetch::ledger::tx_sync::State state)
@@ -62,11 +64,11 @@ static char const *FETCH_MAYBE_UNUSED ToString(fetch::ledger::tx_sync::State sta
 namespace fetch {
 namespace ledger {
 
-const std::size_t TransactionStoreSyncService::BATCH_SIZE = 30;
-
 TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, MuddlePtr muddle,
-                                                         ObjectStorePtr store)
-  : state_machine_{std::make_shared<core::StateMachine<State>>("TransactionStoreSyncService",
+                                                         ObjectStorePtr    store,
+                                                         TrimCacheCallback trim_cache_callback)
+  : trim_cache_callback_(std::move(trim_cache_callback))
+  , state_machine_{std::make_shared<core::StateMachine<State>>("TransactionStoreSyncService",
                                                                State::INITIAL)}
   , cfg_{cfg}
   , muddle_(std::move(muddle))
@@ -154,6 +156,8 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
     FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Still waiting for object counts...");
     if (!promise_wait_timeout_.IsDue())
     {
+      state_machine_->Delay(std::chrono::milliseconds{20});
+
       return State::RESOLVING_OBJECT_COUNTS;
     }
     else
@@ -167,17 +171,29 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
   // parallel. So if we decided to split the sync into 4 roots, the mask would be 2 (bits) and
   // the roots to sync 00, 10, 01 and 11...
   // where roots to sync are all objects with the key starting with those bits
-  if (max_object_count_ != 0)
+  if (max_object_count_ == 0)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Network appears to have no transactions! Number of peers: ",
+                   muddle_->AsEndpoint().GetDirectlyConnectedPeers().size());
+  }
+  else
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ",
                    "Expected tx size: ", max_object_count_);
 
     root_size_ = platform::Log2Ceil(((max_object_count_ / (PULL_LIMIT_ / 2)) + 1)) + 1;
 
-    for (uint64_t i = 0, end = (1 << (root_size_)); i < end; ++i)
+    for (uint64_t i = 0, end = (1u << root_size_); i < end; ++i)
     {
       roots_to_sync_.push(Reverse(static_cast<uint8_t>(i)));
     }
+  }
+
+  if (roots_to_sync_.empty())
+  {
+    state_machine_->Delay(std::chrono::milliseconds{20});
+
+    return State::QUERY_OBJECT_COUNTS;
   }
 
   return State::QUERY_SUBTREE;
@@ -185,14 +201,11 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
 
 TransactionStoreSyncService::State TransactionStoreSyncService::OnQuerySubtree()
 {
+  assert(!roots_to_sync_.empty());
+
   FETCH_LOCK(mutex_);
   for (auto const &connection : muddle_->AsEndpoint().GetDirectlyConnectedPeers())
   {
-    if (roots_to_sync_.empty())
-    {
-      return State::QUERY_SUBTREE;
-    }
-
     auto root = roots_to_sync_.front();
     roots_to_sync_.pop();
 
@@ -257,7 +270,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
   {
     if (!promise_wait_timeout_.IsDue())
     {
-      if (roots_to_sync_.size() > 0)
+      if (!roots_to_sync_.empty())
       {
         return State::QUERY_SUBTREE;
       }
