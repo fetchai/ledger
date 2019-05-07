@@ -21,14 +21,6 @@
 namespace fetch {
 namespace ledger {
 
-/**
- * Create a transaction store sync protocol
- *
- * @param p The protocol id for this service
- * @param r The register instance
- * @param tp The thread pool instance to be used
- * @param store The object store to be used
- */
 TxFinderProtocol::TxFinderProtocol()
   : fetch::service::Protocol()
   , resource_queue_()
@@ -38,7 +30,7 @@ TxFinderProtocol::TxFinderProtocol()
 
 bool TxFinderProtocol::Pop(storage::ResourceID &rid)
 {
-  FETCH_LOG_WARN("FinderProto", "Popping resource ", rid.ToString());
+  FETCH_LOG_DEBUG("FinderProto", "Popping resource ", rid.ToString());
   return resource_queue_.Pop(rid, std::chrono::milliseconds::zero());
 }
 
@@ -46,7 +38,7 @@ void TxFinderProtocol::IssueCallForMissingTxs(ResourceIDs const &rids)
 {
   for (auto const &rid : rids)
   {
-    FETCH_LOG_WARN("FinderProto", "Stashing resource ", rid.ToString());
+    FETCH_LOG_DEBUG("FinderProto", "Stashing resource ", rid.ToString());
     resource_queue_.Push(rid);
   }
 }

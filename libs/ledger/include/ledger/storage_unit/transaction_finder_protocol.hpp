@@ -26,6 +26,9 @@
 namespace fetch {
 namespace ledger {
 
+/**
+ * Create a transaction finder protocol
+ */
 class TxFinderProtocol : public fetch::service::Protocol
 {
 public:
@@ -46,8 +49,20 @@ public:
   TxFinderProtocol &operator=(TxFinderProtocol const &) = delete;
   TxFinderProtocol &operator=(TxFinderProtocol &&) = delete;
 
+  /**
+   * Retrieve Resource ID required by peer
+   *
+   * @param rid the Resource ID output
+   * @return true if a Resource ID had been retrieved from the queue, false if the queue was empty
+   */
   bool Pop(storage::ResourceID &rid);
-  void IssueCallForMissingTxs(ResourceIDs const &rid);
+
+  /**
+   * Store missing Tx IDs required by peer in a queue,
+   *
+   * @param rids The collection of resource IDs
+   */
+  void IssueCallForMissingTxs(ResourceIDs const &rids);
 
 private:
   using Self = TxFinderProtocol;

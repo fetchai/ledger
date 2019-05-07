@@ -82,6 +82,7 @@ public:
   static constexpr std::size_t MAX_OBJECT_COUNT_RESOLUTION_PER_CYCLE = 128;
   static constexpr std::size_t MAX_SUBTREE_RESOLUTION_PER_CYCLE      = 128;
   static constexpr std::size_t MAX_OBJECT_RESOLUTION_PER_CYCLE       = 128;
+  static constexpr uint64_t TX_FINDER_PROTO_LIMIT_ = 1000;  // Limit the amount to be retrieved at once from the TxFinderProtocol
   static constexpr uint64_t PULL_LIMIT_ = 10000;  // Limit the amount a single rpc call will provide
 
   struct Config

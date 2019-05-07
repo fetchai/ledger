@@ -305,8 +305,10 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjects()
   }
 
   std::vector<ResourceID> rids;
+  rids.reserve(TX_FINDER_PROTO_LIMIT_);
+
   ResourceID              rid;
-  while (tx_finder_protocol_->Pop(rid))
+  while (rids.size() < TX_FINDER_PROTO_LIMIT_ && tx_finder_protocol_->Pop(rid))
   {
     rids.push_back(rid);
   }

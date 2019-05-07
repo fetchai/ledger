@@ -460,7 +460,7 @@ void StorageUnitClient::IssueCallForMissingTxs(TxDigestSet const &tx_set)
   for (auto const &hash : tx_set)
   {
     ResourceID resource{hash};
-    lanes_of_interest[LookupAddress(resource)].insert(resource);
+    lanes_of_interest[LookupAddress(resource)].insert(std::move(resource));
   }
 
   for (auto const &lane_resources : lanes_of_interest)
