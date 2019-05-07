@@ -32,6 +32,7 @@ SOURCE_EXT = ('*.cpp', '*.hpp')
 
 output_lock = threading.Lock()
 
+
 def find_clang_format():
     name = 'clang-format'
 
@@ -64,12 +65,35 @@ def output(text=None):
 def parse_commandline():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-w', '--warn-only', dest='fix', action='store_false', help='Only display warnings')
-    parser.add_argument('-j', dest='jobs', type=int, default=multiprocessing.cpu_count(), help='The number of jobs to do in parallel')
-    parser.add_argument('-a', '--all', dest='all', action='store_true', help='Evaluate all files, do not stop on first failure')
-    parser.add_argument('-b', '--embrace', dest='dont_goto_fail', action='store_true', help='Put single-statement then/else clauses and loop bodies in braces')
-    parser.add_argument('-n', '--names-only', dest='names_only', action='store_true', help='In warn-only mode, only list names of files to be formatted')
-    parser.add_argument('filename', metavar='<filename>', action='store', nargs='*', help='process only <filename>s (default: the whole project tree)')
+    parser.add_argument('-w', '--warn-only', dest='fix',
+                        action='store_false', help='Only display warnings')
+    parser.add_argument(
+        '-j',
+        dest='jobs',
+        type=int,
+        default=multiprocessing.cpu_count(),
+        help='The number of jobs to do in parallel')
+    parser.add_argument(
+        '-a', '--all', dest='all', action='store_true',
+        help='Evaluate all files, do not stop on first failure')
+    parser.add_argument(
+        '-b',
+        '--embrace',
+        dest='dont_goto_fail',
+        action='store_true',
+        help='Put single-statement then/else clauses and loop bodies in braces')
+    parser.add_argument(
+        '-n',
+        '--names-only',
+        dest='names_only',
+        action='store_true',
+        help='In warn-only mode, only list names of files to be formatted')
+    parser.add_argument(
+        'filename',
+        metavar='<filename>',
+        action='store',
+        nargs='*',
+        help='process only <filename>s (default: the whole project tree)')
 
     return parser.parse_args()
 
@@ -79,17 +103,25 @@ indentation = re.compile(r' *')
 is_long = re.compile(r'(.*)\\$')
 is_empty = re.compile(r'\s*(?://.*)?$')
 
+
 def opening(level):
     return ' ' * level + '{'
+
+
 def closing(level):
     return ' ' * level + '}'
+
+
 def block_entry(level):
     return re.compile(opening(level) + '.*')
+
+
 def extra_line(line_text, padding):
     if padding:
         return line_text + ' ' * (padding - len(line_text)) + '\\'
     else:
         return line_text
+
 
 def postprocess(lines):
     """ Scans an array of clang-formatted strings and tries to turn any single statement
@@ -128,14 +160,16 @@ def postprocess(lines):
                 levels.append(len(match[1]))
                 unbraced.append(True)
             if empties:
-                for e in empties: yield e
+                for e in empties:
+                    yield e
                 empties.clear()
             yield line
             match = is_long.match(line)
             in_long = match and len(match[1])
 
     if empties:
-        for e in empties: yield e
+        for e in empties:
+            yield e
         empties.clear()
 
 
@@ -166,7 +200,6 @@ def project_sources(project_root):
 
 
 def compare_against_original(reformatted, source_path, rel_path, names_only):
-
     # read the contents of the original file
     original = None
     with codecs.open(source_path, 'r', encoding='utf8') as source_file:
@@ -181,7 +214,8 @@ def compare_against_original(reformatted, source_path, rel_path, names_only):
     if original is None:
         return False
 
-    out = list(difflib.context_diff(original.splitlines(), reformatted.splitlines()))
+    out = list(difflib.context_diff(
+        original.splitlines(), reformatted.splitlines()))
 
     success = True
     if len(out) != 0:
@@ -190,7 +224,7 @@ def compare_against_original(reformatted, source_path, rel_path, names_only):
         else:
             output('Style mismatch in: {}'.format(rel_path))
             output()
-            output('\n'.join(out[3:])) # first 3 elements are garbage
+            output('\n'.join(out[3:]))  # first 3 elements are garbage
             success = False
 
     return success
@@ -226,13 +260,15 @@ def main():
         return True
 
     def diff_style_to_file(source_path):
-        formatted_output = subprocess.check_output(cmd_prefix + [source_path], cwd=project_root).decode()
+        formatted_output = subprocess.check_output(
+            cmd_prefix + [source_path], cwd=project_root).decode()
 
         if args.dont_goto_fail:
             formatted_output = postprocess_contents(formatted_output)
 
         rel_path = os.path.relpath(source_path, project_root)
-        return compare_against_original(formatted_output, source_path, rel_path, args.names_only)
+        return compare_against_original(
+            formatted_output, source_path, rel_path, args.names_only)
 
     if args.fix:
         handler = apply_style_to_file

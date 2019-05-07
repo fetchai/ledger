@@ -2,9 +2,12 @@ import os
 import gzip
 import numpy as np
 
+
 class NumpyMnist:
 
-    def __init__(self, num_epochs = 30, batch_size = 50, learn_rate = 0.2, hidden_size=10, load_fixed_weights = True, training_size = 2000, validation_size = 50):
+    def __init__(self, num_epochs=30, batch_size=50, learn_rate=0.2,
+                 hidden_size=10, load_fixed_weights=True, training_size=2000,
+                 validation_size=50):
 
         self.activation_fn = 'sigmoid'
         # self.activation_fn = 'relu'
@@ -22,13 +25,26 @@ class NumpyMnist:
         else:
             self.h_lay_size = hidden_size
             self.weights = [
-                np.random.randn(28*28, self.h_lay_size) / np.sqrt(28*28),
-                np.random.randn(self.h_lay_size, 10) / np.sqrt(self.h_lay_size)]
+                np.random.randn(
+                    28 *
+                    28,
+                    self.h_lay_size) /
+                np.sqrt(
+                    28 *
+                    28),
+                np.random.randn(
+                    self.h_lay_size,
+                    10) /
+                np.sqrt(
+                    self.h_lay_size)]
 
         # load mnist data
-        self.trX, self.trY, self.teX, self.teY = self.load_data(one_hot=True, training_size=training_size, validation_size=validation_size)
+        self.trX, self.trY, self.teX, self.teY = self.load_data(
+            one_hot=True, training_size=training_size,
+            validation_size=validation_size)
 
-    def load_data(self, one_hot=True, reshape=None, training_size=10000, validation_size=50):
+    def load_data(self, one_hot=True, reshape=None,
+                  training_size=10000, validation_size=50):
         x_tr = self.load_images('train-images-idx3-ubyte.gz')
         y_tr = self.load_labels('train-labels-idx1-ubyte.gz')
         x_te = self.load_images('t10k-images-idx3-ubyte.gz')
@@ -104,19 +120,19 @@ class NumpyMnist:
         grads = np.empty_like(weights)
         a = self.feed_forward(X, weights)
         print("output: " + str(a[-1][0]))
-        delta = a[-1] - Y # cross-entropy
+        delta = a[-1] - Y  # cross-entropy
         delta *= self.d_sigmoid(a[2])
         grads[-1] = np.dot(a[-2].T, delta)
 
         if self.activation_fn == 'sigmoid':
-            for i in range(len(a)-2, 0, -1):
+            for i in range(len(a) - 2, 0, -1):
                 delta = np.dot(delta, weights[i].T)
                 delta *= self.d_sigmoid(a[i])
-                grads[i-1] = np.dot(a[i-1].T, delta)
+                grads[i - 1] = np.dot(a[i - 1].T, delta)
         elif self.activation_fn == 'relu':
-            for i in range(len(a)-2, 0, -1):
+            for i in range(len(a) - 2, 0, -1):
                 delta = (a[i] > 0) * delta.dot(weights[i].T)
-                grads[i-1] = a[i-1].T.dot(delta)
+                grads[i - 1] = a[i - 1].T.dot(delta)
 
         else:
             raise ValueError()
@@ -136,20 +152,23 @@ class NumpyMnist:
     def d_sigmoid(self, y):
         return y * (1 - y)
 
-    def train(self, train_epochs = None):
+    def train(self, train_epochs=None):
 
         if not train_epochs:
             train_epochs = self.num_epochs
 
-
         for i in range(train_epochs):
             for j in range(0, len(self.trX), self.batch_size):
-                X, Y = self.trX[j:j+self.batch_size], self.trY[j:j+self.batch_size]
-                self.weights -= self.learn_rate * self.grads(X, Y, self.weights)
+                X, Y = self.trX[j:j +
+                                self.batch_size], self.trY[j:j +
+                                                           self.batch_size]
+                self.weights -= self.learn_rate * \
+                    self.grads(X, Y, self.weights)
 
+            prediction = np.argmax(self.feed_forward(
+                self.teX, self.weights)[-1], axis=1)
+            print(i, np.mean(prediction == np.argmax(self.teY, axis=1)))
 
-            prediction = np.argmax(self.feed_forward(self.teX, self.weights)[-1], axis=1)
-            print (i, np.mean(prediction == np.argmax(self.teY, axis=1)))
 
 np_mnist = NumpyMnist()
 np_mnist.train()
