@@ -27,20 +27,20 @@ class TensorConcatenationTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<std::int32_t, std::int64_t, std::uint32_t, std::uint64_t, float, double>;
+using MyTypes =
+    ::testing::Types<std::int32_t, std::int64_t, std::uint32_t, std::uint64_t, float, double>;
 TYPED_TEST_CASE(TensorConcatenationTest, MyTypes);
 
 TYPED_TEST(TensorConcatenationTest, tensor_concat_2d_axis_0)
 {
   using Tensor = fetch::math::Tensor<TypeParam>;
-  Tensor t1 = Tensor::FromString("0 1 2 3; 4 5 6 7");
-  Tensor t2 = Tensor::FromString("0 1 2 3; 4 5 6 7");
-  Tensor t3 = Tensor::FromString("0 1 2 3; 4 5 6 7");
-  Tensor gt = Tensor::FromString("0 1 2 3; 4 5 6 7; 0 1 2 3; 4 5 6 7; 0 1 2 3; 4 5 6 7");
+  Tensor t1    = Tensor::FromString("0 1 2 3; 4 5 6 7");
+  Tensor t2    = Tensor::FromString("0 1 2 3; 4 5 6 7");
+  Tensor t3    = Tensor::FromString("0 1 2 3; 4 5 6 7");
+  Tensor gt    = Tensor::FromString("0 1 2 3; 4 5 6 7; 0 1 2 3; 4 5 6 7; 0 1 2 3; 4 5 6 7");
 
   std::vector<Tensor> vt{t1, t2, t3};
-  Tensor ret = Tensor::Concat(vt,
-          0);
+  Tensor              ret = Tensor::Concat(vt, 0);
 
   EXPECT_TRUE(ret.shape() == gt.shape());
   EXPECT_TRUE(ret.AllClose(gt));
@@ -49,22 +49,21 @@ TYPED_TEST(TensorConcatenationTest, tensor_concat_2d_axis_0)
 TYPED_TEST(TensorConcatenationTest, tensor_concat_2d_axis_1)
 {
   using Tensor = fetch::math::Tensor<TypeParam>;
-  Tensor t1 = Tensor::FromString("0 1 2 3; 4 5 6 0");
-  Tensor t2 = Tensor::FromString("0 1 2 3; 4 5 6 0");
-  Tensor t3 = Tensor::FromString("0 1 2 3; 4 5 6 0");
-  Tensor gt = Tensor::FromString("0 1 2 3 0 1 2 3 0 1 2 3; 4 5 6 0 4 5 6 0 4 5 6 0");
+  Tensor t1    = Tensor::FromString("0 1 2 3; 4 5 6 0");
+  Tensor t2    = Tensor::FromString("0 1 2 3; 4 5 6 0");
+  Tensor t3    = Tensor::FromString("0 1 2 3; 4 5 6 0");
+  Tensor gt    = Tensor::FromString("0 1 2 3 0 1 2 3 0 1 2 3; 4 5 6 0 4 5 6 0 4 5 6 0");
 
   std::vector<Tensor> vt{t1, t2, t3};
-  Tensor ret = Tensor::Concat(vt, 1);
+  Tensor              ret = Tensor::Concat(vt, 1);
 
   EXPECT_TRUE(ret.shape() == gt.shape());
   EXPECT_TRUE(ret.AllClose(gt));
 }
 
-
 TYPED_TEST(TensorConcatenationTest, tensor_concat_3d_axis_0)
 {
-  using Tensor = fetch::math::Tensor<TypeParam>;
+  using Tensor   = fetch::math::Tensor<TypeParam>;
   using SizeType = fetch::math::SizeType;
 
   Tensor t1{{3, 2, 2}};
@@ -73,9 +72,9 @@ TYPED_TEST(TensorConcatenationTest, tensor_concat_3d_axis_0)
   Tensor gt{{9, 2, 2}};
 
   TypeParam counter{0};
-  auto t1_it = t1.begin();
-  auto t2_it = t2.begin();
-  auto t3_it = t3.begin();
+  auto      t1_it = t1.begin();
+  auto      t2_it = t2.begin();
+  auto      t3_it = t3.begin();
   while (t1_it.is_valid())
   {
     *t1_it = counter;
@@ -88,7 +87,7 @@ TYPED_TEST(TensorConcatenationTest, tensor_concat_3d_axis_0)
   }
 
   std::vector<Tensor> vt{t1, t2, t3};
-  SizeType cur_axis_pos{0};
+  SizeType            cur_axis_pos{0};
   for (SizeType m{0}; m < 3; ++m)
   {
     counter = TypeParam{0};
@@ -111,10 +110,9 @@ TYPED_TEST(TensorConcatenationTest, tensor_concat_3d_axis_0)
   EXPECT_TRUE(ret.AllClose(gt));
 }
 
-
 TYPED_TEST(TensorConcatenationTest, tensor_concat_3d_axis_1)
 {
-  using Tensor = fetch::math::Tensor<TypeParam>;
+  using Tensor   = fetch::math::Tensor<TypeParam>;
   using SizeType = fetch::math::SizeType;
 
   Tensor t1{{3, 2, 2}};
@@ -123,9 +121,9 @@ TYPED_TEST(TensorConcatenationTest, tensor_concat_3d_axis_1)
   Tensor gt{{3, 6, 2}};
 
   TypeParam counter{0};
-  auto t1_it = t1.begin();
-  auto t2_it = t2.begin();
-  auto t3_it = t3.begin();
+  auto      t1_it = t1.begin();
+  auto      t2_it = t2.begin();
+  auto      t3_it = t3.begin();
   while (t1_it.is_valid())
   {
     *t1_it = counter;
@@ -138,7 +136,7 @@ TYPED_TEST(TensorConcatenationTest, tensor_concat_3d_axis_1)
   }
 
   std::vector<Tensor> vt{t1, t2, t3};
-  SizeType cur_axis_pos{0};
+  SizeType            cur_axis_pos{0};
   for (SizeType m{0}; m < 3; ++m)
   {
     counter = TypeParam{0};
@@ -161,10 +159,9 @@ TYPED_TEST(TensorConcatenationTest, tensor_concat_3d_axis_1)
   EXPECT_TRUE(ret.AllClose(gt));
 }
 
-
 TYPED_TEST(TensorConcatenationTest, tensor_concat_3d_axis_2)
 {
-  using Tensor = fetch::math::Tensor<TypeParam>;
+  using Tensor   = fetch::math::Tensor<TypeParam>;
   using SizeType = fetch::math::SizeType;
 
   Tensor t1{{3, 2, 6}};
@@ -173,9 +170,9 @@ TYPED_TEST(TensorConcatenationTest, tensor_concat_3d_axis_2)
   Tensor gt{{3, 2, 18}};
 
   TypeParam counter{0};
-  auto t1_it = t1.begin();
-  auto t2_it = t2.begin();
-  auto t3_it = t3.begin();
+  auto      t1_it = t1.begin();
+  auto      t2_it = t2.begin();
+  auto      t3_it = t3.begin();
   while (t1_it.is_valid())
   {
     *t1_it = counter;
@@ -188,7 +185,7 @@ TYPED_TEST(TensorConcatenationTest, tensor_concat_3d_axis_2)
   }
 
   std::vector<Tensor> vt{t1, t2, t3};
-  SizeType cur_axis_pos{0};
+  SizeType            cur_axis_pos{0};
   for (SizeType m{0}; m < 3; ++m)
   {
     counter = TypeParam{0};
@@ -212,10 +209,9 @@ TYPED_TEST(TensorConcatenationTest, tensor_concat_3d_axis_2)
   EXPECT_TRUE(ret.AllClose(gt));
 }
 
-
 TYPED_TEST(TensorConcatenationTest, tensor_concat_3d_axis_1_different_sizes)
 {
-  using Tensor = fetch::math::Tensor<TypeParam>;
+  using Tensor   = fetch::math::Tensor<TypeParam>;
   using SizeType = fetch::math::SizeType;
 
   Tensor t1{{3, 2, 2}};
@@ -224,9 +220,9 @@ TYPED_TEST(TensorConcatenationTest, tensor_concat_3d_axis_1_different_sizes)
   Tensor gt{{3, 8, 2}};
 
   TypeParam counter{0};
-  auto t1_it = t1.begin();
-  auto t2_it = t2.begin();
-  auto t3_it = t3.begin();
+  auto      t1_it = t1.begin();
+  auto      t2_it = t2.begin();
+  auto      t3_it = t3.begin();
   while (t1_it.is_valid())
   {
     *t1_it = counter;
@@ -239,7 +235,7 @@ TYPED_TEST(TensorConcatenationTest, tensor_concat_3d_axis_1_different_sizes)
   }
 
   std::vector<Tensor> vt{t1, t2, t3};
-  SizeType cur_axis_pos{0};
+  SizeType            cur_axis_pos{0};
   for (SizeType m{0}; m < 3; ++m)
   {
     counter = TypeParam{0};
