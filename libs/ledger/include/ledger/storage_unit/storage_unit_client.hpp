@@ -147,7 +147,7 @@ private:
   using LaneIndex            = LaneIdentity::lane_type;
   using AddressList          = std::vector<MuddleEndpoint::Address>;
   using MerkleTree           = crypto::MerkleTree;
-  using PermanentMerkleStack = storage::RandomAccessStack<MerkleTreeBlock>;
+  using PermanentMerkleStack = storage::CacheLineRandomAccessStack<MerkleTreeBlock>;
   using Mutex                = fetch::mutex::Mutex;
 
   static constexpr char const *MERKLE_FILENAME = "merkle_stack.db";
