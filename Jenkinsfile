@@ -1,3 +1,8 @@
+def branch_name_filter()
+{
+   return BRANCH_NAME == "develop" || BRANCH_NAME ==~ /^PR-\d+-merge$/
+}
+
 pipeline {
 
   agent none
@@ -8,6 +13,7 @@ pipeline {
       agent {
         docker {
           image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+          alwaysPull true
         }
       }
 
@@ -37,16 +43,13 @@ pipeline {
           agent {
             docker {
               image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+              label "ledger"
+              alwaysPull true
             }
           }
-
-          stages {
-            stage('Static Analysis') {
-              steps {
-                sh 'mkdir -p build-analysis && cd build-analysis && cmake ../'
-                sh './scripts/run_static_analysis.py build-analysis/'
-              }
-            }
+          steps {
+            sh 'mkdir -p build-analysis && cd build-analysis && cmake ../'
+            sh './scripts/run_static_analysis.py build-analysis/'
           }
         } // static analysis
 
@@ -54,28 +57,44 @@ pipeline {
           agent {
             docker {
               image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+              label "ledger"
+              alwaysPull true
             }
           }
 
           stages {
-            stage('Debug Build') {
+            stage('Clang 6 Debug Build') {
               steps {
+                sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -B Debug'
               }
             }
 
-            stage('Debug Unit Tests') {
+            stage('Clang 6 Debug Unit Tests') {
               steps {
                 sh './scripts/ci-tool.py -T Debug'
               }
             }
 
-            stage('Debug Integration Tests') {
+            stage('Clang 6 Debug Integration Tests') {
               when {
-                branch "develop"
+                expression {
+                  branch_name_filter()
+                }
               }
               steps {
                 sh './scripts/ci-tool.py -I Debug'
+              }
+            }
+
+            stage('Clang 6 Debug End-to-end Tests') {
+              when {
+                expression {
+                  branch_name_filter()
+                }
+              }
+              steps {
+                sh './scripts/ci-tool.py -E Debug'
               }
             }
           }
@@ -85,28 +104,45 @@ pipeline {
           agent {
             docker {
               image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+              label "ledger"
+              alwaysPull true
             }
           }
 
           stages {
-            stage('Release Build') {
+            stage('Clang 6 Release Build') {
               steps {
+                sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -B Release'
               }
             }
 
-            stage('Unit Tests') {
+            stage('Clang 6 Release Unit Tests') {
               steps {
                 sh './scripts/ci-tool.py -T Release'
               }
             }
 
-            stage('Integration Tests') {
+            stage('Clang 6 Release Integration Tests') {
               when {
-                branch "develop"
+                expression {
+                  branch_name_filter()
+                }
               }
               steps {
+                sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -I Release'
+              }
+            }
+
+            stage('Clang 6 Release End-to-end Tests') {
+              when {
+                expression {
+                  branch_name_filter()
+                }
+              }
+              steps {
+                sh './scripts/ci-tool.py -E Release'
               }
             }
           }
@@ -116,6 +152,8 @@ pipeline {
           agent {
             docker {
               image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+              label "ledger"
+              alwaysPull true
             }
           }
 
@@ -125,24 +163,39 @@ pipeline {
           }
 
           stages {
-            stage('GCC Debug Build') {
+            stage('GCC 7 Debug Build') {
               steps {
+                sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -B Debug'
               }
             }
 
-            stage('GCC Debug Unit Tests') {
+            stage('GCC 7 Debug Unit Tests') {
               steps {
                 sh './scripts/ci-tool.py -T Debug'
               }
             }
 
-            stage('GCC Debug Integration Tests') {
+            stage('GCC 7 Debug Integration Tests') {
               when {
-                branch "develop"
+                expression {
+                  branch_name_filter()
+                }
               }
               steps {
+                sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -I Debug'
+              }
+            }
+
+            stage('GCC 7 Debug End-to-end Tests') {
+              when {
+                expression {
+                  branch_name_filter()
+                }
+              }
+              steps {
+                sh './scripts/ci-tool.py -E Debug'
               }
             }
           }
@@ -152,6 +205,8 @@ pipeline {
           agent {
             docker {
               image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+              label "ledger"
+              alwaysPull true
             }
           }
 
@@ -161,24 +216,39 @@ pipeline {
           }
 
           stages {
-            stage('GCC Release Build') {
+            stage('GCC 7 Release Build') {
               steps {
+                sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -B Release'
               }
             }
 
-            stage('GCC Release Unit Tests') {
+            stage('GCC 7 Release Unit Tests') {
               steps {
                 sh './scripts/ci-tool.py -T Release'
               }
             }
 
-            stage('GCC Release Integration Tests') {
+            stage('GCC 7 Release Integration Tests') {
               when {
-                branch "develop"
+                expression {
+                  branch_name_filter()
+                }
               }
               steps {
+                sh './scripts/ci/install-test-dependencies.sh'
                 sh './scripts/ci-tool.py -I Release'
+              }
+            }
+
+            stage('GCC 7 Release End-to-end Tests') {
+              when {
+                expression {
+                  branch_name_filter()
+                }
+              }
+              steps {
+                sh './scripts/ci-tool.py -E Release'
               }
             }
           }

@@ -407,9 +407,12 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
 
   // Execute the requested function
   std::string        error;
-  std::string        console;
+  std::stringstream  console;
   fetch::vm::Variant output;
-  if (!vm->Execute(*script_, name, error, console, output, params))
+
+  vm->AttachOutputDevice("stdout", console);
+
+  if (!vm->Execute(*script_, name, error, output, params))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
     return Status::FAILED;
@@ -465,9 +468,12 @@ Contract::Status SmartContract::InvokeInit(Identity const &owner)
 
   // Execute the requested function
   std::string        error;
-  std::string        console;
+  std::stringstream  console;
   fetch::vm::Variant output;
-  if (!vm->Execute(*script_, init_fn_name_, error, console, output, params))
+
+  vm->AttachOutputDevice("stdout", console);
+
+  if (!vm->Execute(*script_, init_fn_name_, error, output, params))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
     return Status::FAILED;
@@ -528,14 +534,17 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   // create the initial query response
   response = Query::Object();
 
-  vm::Variant output;
-  std::string error;
-  std::string console;
-  if (!vm->Execute(*script_, name, error, console, output, params))
+  vm::Variant       output;
+  std::string       error;
+  std::stringstream console;
+
+  vm->AttachOutputDevice("stdout", console);
+
+  if (!vm->Execute(*script_, name, error, output, params))
   {
     response["status"]  = "failed";
     response["msg"]     = error;
-    response["console"] = console;
+    response["console"] = console.str();
     return Status::FAILED;
   }
 
@@ -579,6 +588,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
     response["result"] = output.Get<vm::Ptr<vm::String>>()->str;
     break;
   default:
+    // TODO(private 900): Deal with general data structures
     break;
   }
 

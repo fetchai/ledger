@@ -31,7 +31,6 @@ class FeedSubscriptionManager;
 #include "network/service/abstract_publication_feed.hpp"
 #include "network/service/message_types.hpp"
 #include "network/service/types.hpp"
-//#include "network/service/server_interface.hpp"
 
 #include <condition_variable>
 #include <iterator>

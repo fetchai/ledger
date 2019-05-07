@@ -17,28 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/threading/pool.hpp"
+#include "vm/analyser.hpp"
+#include "vm/typeids.hpp"
+
+#include "vm/compiler.hpp"
+#include "vm/module.hpp"
+#include "vm/vm.hpp"
+
+#include <cmath>
 
 namespace fetch {
-namespace threading {
+namespace vm_modules {
 
-class SingletonPool : public Pool
+inline double Sqrt(fetch::vm::VM * /*vm*/, double x)
 {
-public:
-  static SingletonPool &GetInstance()
-  {
-    static SingletonPool instance;
-    return instance;
-  }
+  return std::sqrt(x);
+}
 
-  void operator=(SingletonPool const &) = delete;
+inline void BindSqrt(vm::Module &module)
+{
+  module.CreateFreeFunction("sqrt", &Sqrt);
+}
 
-private:
-  SingletonPool(SingletonPool const &)  = delete;
-  SingletonPool(SingletonPool const &&) = delete;
-  SingletonPool()
-    : Pool(){};
-};
-
-}  // namespace threading
+}  // namespace vm_modules
 }  // namespace fetch

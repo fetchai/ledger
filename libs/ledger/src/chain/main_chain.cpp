@@ -138,8 +138,6 @@ bool MainChain::RemoveBlock(BlockHash hash)
 {
   // TODO(private issue 666): Improve performance of block removal
 
-  using BlockHashSet = std::unordered_set<BlockHash>;
-
   bool success{false};
 
   FETCH_LOCK(lock_);
@@ -489,11 +487,14 @@ void MainChain::RecoverFromFile(Mode mode)
   if (Mode::CREATE_PERSISTENT_DB == mode)
   {
     block_store_->New("chain.db", "chain.index.db");
+    head_store_.open("chain.head.db",
+                     std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
     return;
   }
   else if (Mode::LOAD_PERSISTENT_DB == mode)
   {
     block_store_->Load("chain.db", "chain.index.db");
+    head_store_.open("chain.head.db", std::ios::binary | std::ios::in | std::ios::out);
   }
   else
   {
@@ -504,8 +505,11 @@ void MainChain::RecoverFromFile(Mode mode)
   IntBlockPtr block = std::make_shared<Block>();
   IntBlockPtr head  = std::make_shared<Block>();
 
+  // retrieve the starting hash
+  BlockHash head_block_hash = GetHeadHash();
+
   bool recovery_complete{false};
-  if (block_store_->Get(storage::ResourceAddress("head"), *block))
+  if (!head_block_hash.empty() && block_store_->Get(storage::ResourceID{head_block_hash}, *block))
   {
     auto block_index = block->body.block_number;
 
@@ -574,6 +578,11 @@ void MainChain::RecoverFromFile(Mode mode)
   if (!recovery_complete)
   {
     block_store_->New("chain.db", "chain.index.db");
+
+    // reopen the file and clear the contents
+    head_store_.close();
+    head_store_.open("chain.head.db",
+                     std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
   }
 }
 
@@ -617,8 +626,8 @@ void MainChain::WriteToFile()
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Writing genesis. ");
 
-      block_store_->Set(storage::ResourceAddress("head"), *block);
       block_store_->Set(storage::ResourceID(block->body.hash), *block);
+      SetHeadHash(block->body.hash);
     }
     else
     {
@@ -627,7 +636,8 @@ void MainChain::WriteToFile()
       // Recover the current head block from the file
       IntBlockPtr current_file_head = std::make_shared<Block>();
       IntBlockPtr block_head        = block;
-      block_store_->Get(storage::ResourceAddress("head"), *current_file_head);
+
+      block_store_->Get(storage::ResourceID(GetHeadHash()), *current_file_head);
 
       // Now keep adding the block and its prev to the file until we are certain the file contains
       // an unbroken chain. Assuming that the current_file_head is unbroken we can write until we
@@ -654,7 +664,7 @@ void MainChain::WriteToFile()
       }
 
       // Success - we kept a copy of the new head to write
-      block_store_->Set(storage::ResourceAddress("head"), *block_head);
+      SetHeadHash(block_head->body.hash);
     }
 
     // Clear the block from ram
@@ -1240,6 +1250,37 @@ bool MainChain::HeaviestTip::Update(Block const &block)
   }
 
   return updated;
+}
+
+MainChain::BlockHash MainChain::GetHeadHash()
+{
+  byte_array::ByteArray buffer;
+
+  // determine is the hash has already been stored once
+  head_store_.seekg(0, std::ios::end);
+  auto const file_size = head_store_.tellg();
+
+  if (file_size == 32)
+  {
+    buffer.Resize(32);
+
+    // return to the begining and overwrite the hash
+    head_store_.seekg(0);
+    head_store_.read(reinterpret_cast<char *>(buffer.pointer()),
+                     static_cast<std::streamsize>(buffer.size()));
+  }
+
+  return {buffer};
+}
+
+void MainChain::SetHeadHash(BlockHash const &hash)
+{
+  assert(hash.size() == 32);
+
+  // move to the beginning of the file and write out the hash
+  head_store_.seekp(0);
+  head_store_.write(reinterpret_cast<char const *>(hash.pointer()),
+                    static_cast<std::streamsize>(hash.size()));
 }
 
 }  // namespace ledger
