@@ -13,7 +13,7 @@ import fnmatch
 import shutil
 import multiprocessing
 import xml.etree.ElementTree as ET
-import run_end_to_end_test
+from end_to_end_test import *
 
 BUILD_TYPES = ('Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel')
 MAX_CPUS = 7 # as defined by CI workflow
