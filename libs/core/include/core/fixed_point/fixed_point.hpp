@@ -71,6 +71,9 @@ struct TypeFromSize<64>
   using UnsignedType                      = uint64_t;
   using SignedType                        = int64_t;
   using NextSize                          = TypeFromSize<128>;
+  static constexpr std::uint16_t decimals = 9;
+  static constexpr ValueType tolerance    = 0x200; // 0.00000012
+  static constexpr ValueType max_exp      = 0x000000157cd0e714LL;  // 21.48756260
 };
 
 // 32 bit implementation
@@ -83,6 +86,9 @@ struct TypeFromSize<32>
   using UnsignedType                      = uint32_t;
   using SignedType                        = int32_t;
   using NextSize                          = TypeFromSize<64>;
+  static constexpr std::uint16_t decimals = 4;
+  static constexpr ValueType tolerance    = 0x15; // 0.0003
+  static constexpr ValueType max_exp      = 0x000a65b9L;  // 10.3974
 };
 
 // 16 bit implementation
@@ -119,8 +125,8 @@ struct TypeFromSize<8>
  * @return
  */
 template <std::uint16_t I, std::uint16_t F>
-inline FixedPoint<I, F> Divide(const FixedPoint<I, F> &numerator,
-                               const FixedPoint<I, F> &denominator,
+inline FixedPoint<I, F> Divide(FixedPoint<I, F> const &numerator,
+                               FixedPoint<I, F> const &denominator,
                                FixedPoint<I, F> & /*remainder*/)
 {
   return numerator / denominator;
@@ -135,7 +141,7 @@ inline FixedPoint<I, F> Divide(const FixedPoint<I, F> &numerator,
  * @param result
  */
 template <std::uint16_t I, std::uint16_t F>
-inline void Multiply(const FixedPoint<I, F> &lhs, const FixedPoint<I, F> &rhs,
+inline void Multiply(FixedPoint<I, F> const &lhs, FixedPoint<I, F> const &rhs,
                      FixedPoint<I, F> &result)
 {
   result = rhs * lhs;
@@ -158,56 +164,6 @@ constexpr inline int32_t HighestSetBit(T n_input)
   }
 
   return static_cast<int32_t>((sizeof(uint64_t) * 8)) - platform::CountLeadingZeroes64(n);
-}
-
-/**
- * helper function that checks no bit overflow when shifting
- * @tparam T the input original type
- * @param n the value of the datum
- * @param FRACTIONAL_BITS the number of FRACTIONAL_BITS to be set
- * @param total_bits the total number of bits
- * @return true if there is no overflow, false otherwise
- */
-template <typename T>
-inline bool CheckNoOverflow(T n, std::uint16_t fractional_bits, std::uint16_t total_bits)
-{
-  std::uint16_t hsb = HighestSetBit(n);
-  if (hsb + fractional_bits <= total_bits)
-  {
-    return true;
-  }
-  std::cout << "OVERFLOW ERROR! " << std::endl;
-  std::cout << "n: " << n << std::endl;
-  std::cout << "HighestSetBit(n): " << hsb << std::endl;
-  std::cout << "fractional_bits: " << fractional_bits << std::endl;
-  std::cout << "hsb + fractional_bits: " << hsb + fractional_bits << std::endl;
-  std::cout << "total_bits: " << total_bits << std::endl;
-  return false;
-}
-
-/**
- * helper function that checks no rounding error when casting
- * @tparam T
- * @param n
- * @param fractional_bits
- * @param total_bits
- * @return
- */
-template <typename T>
-inline bool CheckNoRounding(T n, std::uint16_t fractional_bits)
-{
-  T original_n = n;
-
-  // sufficient bits to guarantee no rounding
-  if (std::numeric_limits<T>::max_digits10 < fractional_bits)
-  {
-    return true;
-  }
-
-  std::cout << "ROUNDING ERROR! " << std::endl;
-  std::cout << "n: " << original_n << std::endl;
-  std::cout << "fractional_bits: " << fractional_bits << std::endl;
-  return false;
 }
 
 }  // namespace
@@ -244,32 +200,37 @@ public:
   /// Constants/Limits ///
   ////////////////////////
 
-  static const FixedPoint CONST_ZERO; /* 0 */
-  static const FixedPoint CONST_ONE;  /* 1 */
-  static const FixedPoint CONST_SMALLEST_FRACTION;
-  static const FixedPoint CONST_E;            /* e */
-  static const FixedPoint CONST_LOG2E;        /* log_2 e */
-  static const FixedPoint CONST_LOG210;       /* log_2 10 */
-  static const FixedPoint CONST_LOG10E;       /* log_10 e */
-  static const FixedPoint CONST_LN2;          /* log_e 2 */
-  static const FixedPoint CONST_LN10;         /* log_e 10 */
-  static const FixedPoint CONST_PI;           /* pi */
-  static const FixedPoint CONST_PI_2;         /* pi/2 */
-  static const FixedPoint CONST_PI_4;         /* pi/4 */
-  static const FixedPoint CONST_INV_PI;       /* 1/pi */
-  static const FixedPoint CONST_2_INV_PI;     /* 2/pi */
-  static const FixedPoint CONST_2_INV_SQRTPI; /* 2/sqrt(pi) */
-  static const FixedPoint CONST_SQRT2;        /* sqrt(2) */
-  static const FixedPoint CONST_INV_SQRT2;    /* 1/sqrt(2) */
-  // Note: The primitive constants should be turned into constexpr
-  static const Type       SMALLEST_FRACTION;
-  static const Type       LARGEST_FRACTION;
-  static const Type       MAX_INT;
-  static const Type       MIN_INT;
-  static const Type       MAX;
-  static const Type       MIN;
-  static const FixedPoint MAX_EXP;
-  static const FixedPoint MIN_EXP;
+  static constexpr Type SMALLEST_FRACTION{1};
+  static constexpr Type LARGEST_FRACTION{FRACTIONAL_MASK};
+  static constexpr Type MAX_INT{Type(FRACTIONAL_MASK >> 1) << FRACTIONAL_BITS};
+  static constexpr Type MIN_INT{INTEGER_MASK & ((Type(1) << (TOTAL_BITS - 1)))};
+  static constexpr Type MAX{MAX_INT | LARGEST_FRACTION};
+  static constexpr Type MIN{MIN_INT | LARGEST_FRACTION};
+  static constexpr std::uint16_t DECIMAL_DIGITS{BaseTypeInfo::decimals};
+
+  static FixedPoint const TOLERANCE;
+  static FixedPoint const CONST_ZERO; /* 0 */
+  static FixedPoint const CONST_ONE;  /* 1 */
+  static FixedPoint const CONST_SMALLEST_FRACTION;
+  static FixedPoint const CONST_E;            /* e */
+  static FixedPoint const CONST_LOG2E;        /* log_2 e */
+  static FixedPoint const CONST_LOG210;       /* log_2 10 */
+  static FixedPoint const CONST_LOG10E;       /* log_10 e */
+  static FixedPoint const CONST_LN2;          /* log_e 2 */
+  static FixedPoint const CONST_LN10;         /* log_e 10 */
+  static FixedPoint const CONST_PI;           /* pi */
+  static FixedPoint const CONST_PI_2;         /* pi/2 */
+  static FixedPoint const CONST_PI_4;         /* pi/4 */
+  static FixedPoint const CONST_INV_PI;       /* 1/pi */
+  static FixedPoint const CONST_2_INV_PI;     /* 2/pi */
+  static FixedPoint const CONST_2_INV_SQRTPI; /* 2/sqrt(pi) */
+  static FixedPoint const CONST_SQRT2;        /* sqrt(2) */
+  static FixedPoint const CONST_INV_SQRT2;    /* 1/sqrt(2) */
+  static FixedPoint const MAX_EXP;
+  static FixedPoint const MIN_EXP;
+  static FixedPoint const CONST_MAX;
+  static FixedPoint const CONST_MIN;
+  static FixedPoint const NaN;
 
   ////////////////////
   /// constructors ///
@@ -286,7 +247,7 @@ public:
   constexpr explicit FixedPoint(T n, meta::IfIsInteger<T> * = nullptr)
     : data_{static_cast<Type>(n)}
   {
-    // assert(CheckNoOverflow(n, FRACTIONAL_BITS, TOTAL_BITS));
+    assert(CheckNoOverflow(n));
     Type s    = (data_ < 0) - (data_ > 0);
     Type abs_ = s * data_;
     abs_ <<= FRACTIONAL_BITS;
@@ -297,11 +258,11 @@ public:
   constexpr explicit FixedPoint(T n, meta::IfIsFloat<T> * = nullptr)
     : data_(static_cast<Type>(n * ONE_MASK))
   {
-    // assert(CheckNoOverflow(n, FRACTIONAL_BITS, TOTAL_BITS));
-    // assert(CheckNoRounding(n, FRACTIONAL_BITS));
+    assert(CheckNoOverflow(n * ONE_MASK));
+//    assert(CheckNoRounding<T>());
   }
 
-  constexpr FixedPoint(const FixedPoint &o)
+  constexpr FixedPoint(FixedPoint const &o)
     : data_{o.data_}
   {}
 
@@ -311,16 +272,25 @@ public:
 
   constexpr Type integer() const
   {
+    if (isNaN(*this)) {
+      throw std::overflow_error("Cannot get the integer part of a NaN value!");
+    }
     return Type((data_ & INTEGER_MASK) >> FRACTIONAL_BITS);
   }
 
   constexpr Type fraction() const
   {
+    if (isNaN(*this)) {
+      throw std::overflow_error("Cannot get the fraction part of a NaN value!");
+    }
     return (data_ & FRACTIONAL_MASK);
   }
 
   constexpr FixedPoint floor() const
   {
+    if (isNaN(*this)) {
+      throw std::overflow_error("Cannot use floor() on a NaN value!");
+    }
     return FixedPoint(Type((data_ & INTEGER_MASK) >> FRACTIONAL_BITS));
   }
 
@@ -328,57 +298,101 @@ public:
   /// operators ///
   /////////////////
 
-  constexpr FixedPoint &operator=(const FixedPoint &o)
+  constexpr FixedPoint &operator=(FixedPoint const &o)
   {
+    if (isNaN(o)) {
+      throw std::overflow_error("Cannot assing NaN value!");
+    }
     data_ = o.data_;
     return *this;
   }
 
   template <typename T>
-  constexpr FixedPoint &operator=(const T &n)
+  constexpr FixedPoint &operator=(T const &n)
   {
     data_ = {static_cast<Type>(n) << static_cast<Type>(FRACTIONAL_BITS)};
-    // assert(CheckNoOverflow(n, FRACTIONAL_BITS, TOTAL_BITS));
+    assert(CheckNoOverflow(n));
   }
 
-  ////////////////////////////
-  /// comparison operators ///
-  ////////////////////////////
+  ///////////////////////////////////////////////////
+  /// comparison operators for FixedPoint objects ///
+  ///////////////////////////////////////////////////
 
-  template <typename OtherType>
-  constexpr bool operator==(const OtherType &o) const
+  constexpr bool operator==(FixedPoint const &o) const
   {
-    return (data_ == FixedPoint(o).data_);
+    if (isNaN(*this) || isNaN(o)) {
+      return false;
+    } else {
+      return (data_ == o.Data());
+    }
   }
 
-  template <typename OtherType>
-  constexpr bool operator!=(const OtherType &o) const
+  constexpr bool operator!=(FixedPoint const &o) const
   {
-    return data_ != FixedPoint(o).data_;
+    if (isNaN(*this) || isNaN(o)) {
+      return true;
+    } else {
+      return (data_ != o.Data());
+    }
   }
 
-  template <typename OtherType>
-  constexpr bool operator<(const OtherType &o) const
+  constexpr bool operator<(FixedPoint const &o) const
   {
-    return data_ < FixedPoint(o).data_;
-  }
-
-  template <typename OtherType>
-  constexpr bool operator>(const OtherType &o) const
-  {
-    return data_ > FixedPoint(o).data_;
-  }
-
-  template <typename OtherType>
-  constexpr bool operator<=(const OtherType &o) const
-  {
-    return data_ <= FixedPoint(o).data_;
+    if (isNaN(*this) || isNaN(o)) {
+      return false;
+    } else {
+      return (data_ < o.Data());
+    }
   }
 
   template <typename OtherType>
-  constexpr bool operator>=(const OtherType &o) const
+  constexpr bool operator>(FixedPoint const &o) const
   {
-    return data_ >= FixedPoint(o).data_;
+    if (isNaN(*this) || isNaN(o)) {
+      return false;
+    } else {
+      return (data_ > o.Data());
+    }
+  }
+
+  ////////////////////////////////////////////////
+  /// comparison operators against other types ///
+  ////////////////////////////////////////////////
+
+  template <typename OtherType>
+  constexpr bool operator==(OtherType const &o) const
+  {
+    return data_ == FixedPoint(o).Data();
+  }
+
+  template <typename OtherType>
+  constexpr bool operator!=(OtherType const &o) const
+  {
+      return data_ != FixedPoint(o).Data();
+  }
+
+  template <typename OtherType>
+  constexpr bool operator<(OtherType const &o) const
+  {
+    return data_ < FixedPoint(o).Data();
+  }
+
+  template <typename OtherType>
+  constexpr bool operator>(OtherType const &o) const
+  {
+    return data_ > FixedPoint(o).Data();
+  }
+
+  template <typename OtherType>
+  constexpr bool operator<=(OtherType const &o) const
+  {
+    return data_ <= FixedPoint(o).Data();
+  }
+
+  template <typename OtherType>
+  constexpr bool operator>=(OtherType const &o) const
+  {
+    return data_ >= FixedPoint(o).Data();
   }
 
   ///////////////////////
@@ -406,13 +420,15 @@ public:
 
   constexpr FixedPoint &operator++()
   {
+    assert(CheckNoOverflow(data_ + CONST_ONE.Data()));
     data_ += ONE_MASK;
     return *this;
   }
 
   constexpr FixedPoint &operator--()
   {
-    data_ -= CONST_ONE;
+    assert(CheckNoOverflow(data_ - CONST_ONE.Data()));
+    data_ -= ONE_MASK;
     return *this;
   }
 
@@ -440,44 +456,50 @@ public:
   /// math operators ///
   //////////////////////
 
-  constexpr FixedPoint operator+(const FixedPoint &n) const
+  constexpr FixedPoint operator+(FixedPoint const &n) const
   {
+    assert(CheckNoOverflow(data_ + n.Data()));
     Type fp = data_ + n.Data();
     return FromBase(fp);
   }
 
   template <typename T>
-  constexpr FixedPoint operator+(const T &n) const
+  constexpr FixedPoint operator+(T const &n) const
   {
     return FixedPoint(T(data_) + n);
   }
 
-  constexpr FixedPoint operator-(const FixedPoint &n) const
+  constexpr FixedPoint operator-(FixedPoint const &n) const
   {
+    assert(CheckNoOverflow(data_ - n.Data()));
     Type fp = data_ - n.Data();
     return FromBase(fp);
   }
 
   template <typename T>
-  constexpr FixedPoint operator-(const T &n) const
+  constexpr FixedPoint operator-(T const &n) const
   {
     return FixedPoint(T(data_) - n);
   }
 
-  constexpr FixedPoint operator*(const FixedPoint &n) const
+  constexpr FixedPoint operator*(FixedPoint const &n) const
   {
+    if (isNaN(n)) {
+      return NaN;
+    }
     NextType prod = NextType(data_) * NextType(n.Data());
-    Type     fp   = Type(prod >> FRACTIONAL_BITS);
+    assert(CheckNoOverflow(Type(prod >> FRACTIONAL_BITS)));
+    Type fp = Type(prod >> FRACTIONAL_BITS);
     return FromBase(fp);
   }
 
   template <typename T>
-  constexpr FixedPoint operator*(const T &n) const
+  constexpr FixedPoint operator*(T const &n) const
   {
     return *this * FixedPoint(n);
   }
 
-  constexpr FixedPoint operator/(const FixedPoint &n) const
+  constexpr FixedPoint operator/(FixedPoint const &n) const
   {
     if (n == CONST_ZERO)
     {
@@ -491,63 +513,80 @@ public:
   }
 
   template <typename T>
-  constexpr FixedPoint operator/(const T &n) const
+  constexpr FixedPoint operator/(T const &n) const
   {
     return *this / FixedPoint(n);
   }
 
-  constexpr FixedPoint &operator+=(const FixedPoint &n)
+  constexpr FixedPoint &operator+=(FixedPoint const &n)
   {
+    assert(CheckNoOverflow(data_ + n.Data()));
     data_ += n.Data();
     return *this;
   }
 
-  constexpr FixedPoint &operator-=(const FixedPoint &n)
+  constexpr FixedPoint &operator-=(FixedPoint const &n)
   {
+    assert(CheckNoOverflow(data_ - n.Data()));
     data_ -= n.Data();
     return *this;
   }
 
-  constexpr FixedPoint &operator&=(const FixedPoint &n)
+  constexpr FixedPoint &operator&=(FixedPoint const &n)
   {
+    assert(CheckNoOverflow(data_ & n.Data()));
     data_ &= n.Data();
     return *this;
   }
 
-  constexpr FixedPoint &operator|=(const FixedPoint &n)
+  constexpr FixedPoint &operator|=(FixedPoint const &n)
   {
+    assert(CheckNoOverflow(data_ | n.Data()));
     data_ |= n.Data();
     return *this;
   }
 
-  constexpr FixedPoint &operator^=(const FixedPoint &n)
+  constexpr FixedPoint &operator^=(FixedPoint const &n)
   {
+    assert(CheckNoOverflow(data_ ^ n.Data()));
     data_ ^= n.Data();
     return *this;
   }
 
-  constexpr FixedPoint &operator*=(const FixedPoint &n)
+  constexpr FixedPoint &operator*=(FixedPoint const &n)
   {
     Multiply(*this, n, *this);
     return *this;
   }
 
-  constexpr FixedPoint &operator/=(const FixedPoint &n)
+  constexpr FixedPoint &operator/=(FixedPoint const &n)
   {
     FixedPoint temp;
     *this = Divide(*this, n, temp);
     return *this;
   }
 
-  constexpr FixedPoint &operator>>=(const FixedPoint &n)
+  constexpr FixedPoint &operator>>=(FixedPoint const &n)
   {
     data_ >>= n.integer();
     return *this;
   }
 
-  constexpr FixedPoint &operator<<=(const FixedPoint &n)
+  constexpr FixedPoint &operator>>=(const int &n)
+  {
+    data_ >>= n;
+    return *this;
+  }
+
+  constexpr FixedPoint &operator<<=(FixedPoint const &n)
   {
     data_ <<= n.integer();
+    return *this;
+  }
+
+  constexpr FixedPoint &operator<<=(const int &n)
+  {
+    data_ <<= n;
     return *this;
   }
 
@@ -562,35 +601,39 @@ public:
     rhs.SetData(tmp);
   }
 
+  /////////////////////
+  /// Getter/Setter ///
+  /////////////////////
+
   constexpr Type Data() const
   {
     return data_;
   }
 
-  constexpr void SetData(const Type n) const
+  constexpr void SetData(Type const n) const
   {
     data_ = n;
   }
 
-  static constexpr FixedPoint Exp(const FixedPoint &x)
+  static constexpr FixedPoint Exp(FixedPoint const &x)
   {
     if (x < MIN_EXP)
     {
       return CONST_ZERO;
     }
-    if (x > MAX_EXP)
+    else if (x > MAX_EXP)
     {
       throw std::overflow_error("Exp() does not support exponents larger than MAX_EXP");
     }
-    if (x == CONST_ONE)
+    else if (x == CONST_ONE)
     {
       return CONST_E;
     }
-    if (x == CONST_ZERO)
+    else if (x == CONST_ZERO)
     {
       return CONST_ONE;
     }
-    if (x < CONST_ZERO)
+    else if (x < CONST_ZERO)
     {
       return CONST_ONE / Exp(-x);
     }
@@ -621,28 +664,27 @@ public:
     return e1 * e2;
   }
 
-  static constexpr FixedPoint Log2(const FixedPoint &x)
+  static constexpr FixedPoint Log2(FixedPoint const &x)
   {
     if (x == CONST_ONE)
     {
       return CONST_ZERO;
     }
-    if (x == CONST_ZERO)
+    else if (x == CONST_ZERO)
     {
       return CONST_ONE;
     }
-    if (x.Data() == SMALLEST_FRACTION)
+    else if (x == CONST_SMALLEST_FRACTION)
     {
       return FixedPoint{-FRACTIONAL_BITS};
     }
-    if (x < CONST_ZERO)
+    else if (isNaN(x)) {
+      return NaN;
+    }
+    else if (x < CONST_ZERO)
     {
       throw std::runtime_error("Log2(): mathematical operation not defined: x < 0!");
     }
-    // TODO(private 843): Add proper support for NaN/Infinity/etc in FixedPoint class
-    /*If (x == NaN) {
-      return NaN;
-    }*/
 
     /* Argument Reduction: find k and f such that
         x = 2^k * f,
@@ -683,22 +725,101 @@ public:
     }
   }
 
-  static constexpr FixedPoint Log(const FixedPoint &x)
+  static constexpr FixedPoint Log(FixedPoint const &x)
   {
     return Log2(x) / CONST_LOG2E;
   }
 
-  static constexpr FixedPoint Log10(const FixedPoint &x)
+  static constexpr FixedPoint Log10(FixedPoint const &x)
   {
     return Log2(x) / CONST_LOG210;
   }
 
-  static constexpr FixedPoint Sqrt(const FixedPoint &x)
+  static constexpr int Reduce_Sqrt(FixedPoint &x)
   {
-    return FixedPoint(std::sqrt((double)x));
+    /* Given x, find k such as x = 2^{2*k} * y, where 1 < y < 4
+     */
+    int        k = 0;
+    FixedPoint four{4};
+    while (x > four)
+    {
+      k++;
+      x >>= 2;
+    }
+    if (x < CONST_ONE)
+    {
+      while (x < CONST_ONE)
+      {
+        k++;
+        x <<= 2;
+      }
+      k = -k;
+    }
+    return k;
   }
 
-  static constexpr FixedPoint Pow(const FixedPoint &x, const FixedPoint &y)
+  static constexpr FixedPoint Sqrt(FixedPoint const &x)
+  {
+    if (x == CONST_ONE)
+    {
+      return CONST_ONE;
+    }
+    if (x == CONST_ZERO)
+    {
+      return CONST_ZERO;
+    }
+    if (x < CONST_ZERO)
+    {
+      throw std::runtime_error("Sqrt(): mathematical operation not defined: x < 0!");
+    }
+
+    FixedPoint x0 = x;
+    int        k  = Reduce_Sqrt(x0);
+
+    if (x0 != CONST_ONE)
+    {
+      // Do a Pade Approximation, 4th order around 1.
+      FixedPoint P01{3};
+      FixedPoint P02{11};
+      FixedPoint P03{9};
+      FixedPoint Q01{3};
+      FixedPoint Q02{27};
+      FixedPoint Q03{33};
+      FixedPoint P = (CONST_ONE + P01 * x0) * (CONST_ONE + P01 * x0 * (P02 + x0 * (P03 + x0)));
+      FixedPoint Q = (Q01 + x0) * (Q01 + x0 * (Q02 + x0 * (Q03 + x0)));
+      FixedPoint R = P / Q;
+
+      // Tune the approximation with 2 iterations of Goldsmith's algorithm (converges faster than NR)
+      FixedPoint half{0.5};
+      FixedPoint y_n = CONST_ONE / R;
+      FixedPoint x_n = x0 * y_n;
+      FixedPoint h_n = half * y_n;
+      FixedPoint r_n;
+      r_n = half - x_n * h_n;
+      x_n = x_n + x_n * r_n;
+      h_n = h_n + h_n * r_n;
+      r_n = half - x_n * h_n;
+      x_n = x_n + x_n * r_n;
+      h_n = h_n + h_n * r_n;
+
+      // Final result should be accurate within ~1e-7.
+      x0 = x_n;
+    }
+
+    FixedPoint twok{CONST_ONE};
+    if (k < 0)
+    {
+      twok >>= -k;
+    }
+    else
+    {
+      twok <<= k;
+    }
+
+    return twok * x0;
+  }
+
+  static constexpr FixedPoint Pow(FixedPoint const &x, FixedPoint const &y)
   {
     if (x == CONST_ZERO)
     {
@@ -716,24 +837,33 @@ public:
       throw std::runtime_error(
           "Pow(x, y): x^y where x < 0 and y non-integer: mathematical operation not defined!");
     }
-    FixedPoint s   = CONST_ONE * ((y.integer() + 1) % 2) + Sign(x) * (y.integer() % 2);
+    FixedPoint s   = CONST_ONE * ((y.integer() + 1) & 1) + Sign(x) * (y.integer() & 1);
     FixedPoint pow = s * Exp(y * Log(Abs(x)));
     return pow;
   }
 
-  static constexpr FixedPoint Abs(const FixedPoint &x)
+  static constexpr FixedPoint Abs(FixedPoint const &x)
   {
     return x * Sign(x);
   }
 
-  static constexpr FixedPoint Sign(const FixedPoint &x)
+  static constexpr FixedPoint Sign(FixedPoint const &x)
   {
-    return FixedPoint{(x > 0) - (x < 0)};
+    return FixedPoint{Type((x > CONST_ZERO) - (x < CONST_ZERO))};
   }
 
   static constexpr FixedPoint FromBase(Type n)
   {
     return FixedPoint(n, NoScale());
+  }
+
+  static constexpr bool isNaN(FixedPoint const &x)
+  {
+    if (x.Data() == NaN.Data()) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
 private:
@@ -749,89 +879,137 @@ private:
   constexpr FixedPoint(Type n, const NoScale &)
     : data_(n)
   {}
+
+  /**
+   * helper function that checks no bit overflow when shifting
+   * @tparam T the input original type
+   * @param n the value of the datum
+   * @return true if there is no overflow, false otherwise
+   */
+  template <typename T>
+  static constexpr bool CheckNoOverflow(T n)
+  {
+    if (Type(n) <= MAX && Type(n) >= MIN)
+    {
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+
+  /**
+   * helper function that checks no rounding error when casting
+   * @tparam T
+   * @param n
+   * @return true if there is no overflow, false otherwise
+   */
+  template <typename T>
+  static constexpr bool CheckNoRounding()
+  {
+    // sufficient bits to guarantee no rounding
+    if (std::numeric_limits<T>::max_digits10 < DECIMAL_DIGITS)
+    {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
 };
 
 template <std::uint16_t I, std::uint16_t F>
 std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
 {
   std::ios_base::fmtflags f(s.flags());
-  s << std::setprecision(F);
+  s << std::setprecision(F / 4);
   s << std::fixed;
-  s << double(n);
+  if (!FixedPoint<I, F>::isNaN(n)) {
+    s << double(n);
+  } else {
+    s << "NaN";
+  }
+  s << " : " << std::hex << n.Data();
   s.flags(f);
   return s;
 }
 
 template <std::uint16_t I, std::uint16_t F>
-const FixedPoint<I, F> FixedPoint<I, F>::CONST_ZERO{0}; /* 0 */
+constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::SMALLEST_FRACTION;
 template <std::uint16_t I, std::uint16_t F>
-const FixedPoint<I, F> FixedPoint<I, F>::CONST_ONE{1}; /* 0 */
+constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::LARGEST_FRACTION;
 template <std::uint16_t I, std::uint16_t F>
-const FixedPoint<I, F> FixedPoint<I, F>::CONST_SMALLEST_FRACTION(
-    0, FixedPoint::SMALLEST_FRACTION); /* 0 */
+constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::MAX_INT;
 template <std::uint16_t I, std::uint16_t F>
-const FixedPoint<I, F> FixedPoint<I, F>::CONST_E{2.718281828459045235360287471352662498}; /* e */
+constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::MIN_INT;
+template <std::uint16_t I, std::uint16_t F>
+constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::MAX;
+template <std::uint16_t I, std::uint16_t F>
+constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::MIN;
+template <std::uint16_t I, std::uint16_t F>
+constexpr std::uint16_t FixedPoint<I, F>::DECIMAL_DIGITS;
+
+template <std::uint16_t I, std::uint16_t F>
+FixedPoint<I, F> const FixedPoint<I, F>::TOLERANCE(
+    0, FixedPoint<I, F>::BaseTypeInfo::tolerance); /* 0 */
+template <std::uint16_t I, std::uint16_t F>
+FixedPoint<I, F> const FixedPoint<I, F>::CONST_ZERO{0}; /* 0 */
+template <std::uint16_t I, std::uint16_t F>
+FixedPoint<I, F> const FixedPoint<I, F>::CONST_ONE{1}; /* 1 */
+template <std::uint16_t I, std::uint16_t F>
+const FixedPoint<I, F> FixedPoint<I, F>::CONST_SMALLEST_FRACTION(0, FixedPoint::SMALLEST_FRACTION);
+template <std::uint16_t I, std::uint16_t F>
+FixedPoint<I, F> const FixedPoint<I, F>::CONST_E{2.718281828459045235360287471352662498}; /* e */
 template <std::uint16_t I, std::uint16_t F>
 const FixedPoint<I, F> FixedPoint<I, F>::CONST_LOG2E{
     1.442695040888963407359924681001892137}; /* log_2 e */
 template <std::uint16_t I, std::uint16_t F>
-const FixedPoint<I, F> FixedPoint<I, F>::CONST_LOG210{3.3219280948874}; /* log_2 10 */
+FixedPoint<I, F> const FixedPoint<I, F>::CONST_LOG210{3.3219280948874}; /* log_2 10 */
 template <std::uint16_t I, std::uint16_t F>
-const FixedPoint<I, F> FixedPoint<I, F>::CONST_LOG10E{
+FixedPoint<I, F> const FixedPoint<I, F>::CONST_LOG10E{
     0.434294481903251827651128918916605082}; /* log_10 e */
 template <std::uint16_t I, std::uint16_t F>
-const FixedPoint<I, F> FixedPoint<I, F>::CONST_LN2{
+FixedPoint<I, F> const FixedPoint<I, F>::CONST_LN2{
     0.693147180559945309417232121458176568}; /* log_e 2 */
 template <std::uint16_t I, std::uint16_t F>
-const FixedPoint<I, F> FixedPoint<I, F>::CONST_LN10{
+FixedPoint<I, F> const FixedPoint<I, F>::CONST_LN10{
     2.302585092994045684017991454684364208}; /* log_e 10 */
 template <std::uint16_t I, std::uint16_t F>
-const FixedPoint<I, F> FixedPoint<I, F>::CONST_PI{3.141592653589793238462643383279502884}; /* pi */
+FixedPoint<I, F> const FixedPoint<I, F>::CONST_PI{3.141592653589793238462643383279502884}; /* pi */
 template <std::uint16_t I, std::uint16_t F>
-const FixedPoint<I, F> FixedPoint<I, F>::CONST_PI_2{
+FixedPoint<I, F> const FixedPoint<I, F>::CONST_PI_2{
     1.570796326794896619231321691639751442}; /* pi/2 */
 template <std::uint16_t I, std::uint16_t F>
-const FixedPoint<I, F> FixedPoint<I, F>::CONST_PI_4{
+FixedPoint<I, F> const FixedPoint<I, F>::CONST_PI_4{
     0.785398163397448309615660845819875721}; /* pi/4 */
 template <std::uint16_t I, std::uint16_t F>
-const FixedPoint<I, F> FixedPoint<I, F>::CONST_INV_PI{
+FixedPoint<I, F> const FixedPoint<I, F>::CONST_INV_PI{
     0.318309886183790671537767526745028724}; /* 1/pi */
 template <std::uint16_t I, std::uint16_t F>
-const FixedPoint<I, F> FixedPoint<I, F>::CONST_2_INV_PI{
+FixedPoint<I, F> const FixedPoint<I, F>::CONST_2_INV_PI{
     0.636619772367581343075535053490057448}; /* 2/pi */
 template <std::uint16_t I, std::uint16_t F>
-const FixedPoint<I, F> FixedPoint<I, F>::CONST_2_INV_SQRTPI{
+FixedPoint<I, F> const FixedPoint<I, F>::CONST_2_INV_SQRTPI{
     1.128379167095512573896158903121545172}; /* 2/sqrt(pi) */
 template <std::uint16_t I, std::uint16_t F>
-const FixedPoint<I, F> FixedPoint<I, F>::CONST_SQRT2{
+FixedPoint<I, F> const FixedPoint<I, F>::CONST_SQRT2{
     1.414213562373095048801688724209698079}; /* sqrt(2) */
 template <std::uint16_t I, std::uint16_t F>
-const FixedPoint<I, F> FixedPoint<I, F>::CONST_INV_SQRT2{
+FixedPoint<I, F> const FixedPoint<I, F>::CONST_INV_SQRT2{
     0.707106781186547524400844362104849039}; /* 1/sqrt(2) */
 template <std::uint16_t I, std::uint16_t F>
-const typename FixedPoint<I, F>::Type FixedPoint<I, F>::SMALLEST_FRACTION{
-    1}; /* smallest fraction */
+FixedPoint<I, F> const FixedPoint<I, F>::MAX_EXP =
+    FixedPoint::FromBase(FixedPoint<I, F>::BaseTypeInfo::max_exp); /* maximum exponent for Exp() */
 template <std::uint16_t I, std::uint16_t F>
-const typename FixedPoint<I, F>::Type FixedPoint<I, F>::LARGEST_FRACTION{
-    FRACTIONAL_MASK}; /* largest fraction */
+FixedPoint<I, F> const FixedPoint<I, F>::MIN_EXP =
+    -FixedPoint<I, F>::MAX_EXP; /* minimum exponent for Exp() */
 template <std::uint16_t I, std::uint16_t F>
-const typename FixedPoint<I, F>::Type FixedPoint<I, F>::MAX_INT =
-    Type(FRACTIONAL_MASK >> 1) << FRACTIONAL_BITS; /* largest int */
+FixedPoint<I, F> const FixedPoint<I, F>::CONST_MAX{FixedPoint::FromBase(FixedPoint::MAX)};
 template <std::uint16_t I, std::uint16_t F>
-const typename FixedPoint<I, F>::Type FixedPoint<I, F>::MIN_INT =
-    INTEGER_MASK &((Type(1) << (TOTAL_BITS - 1))); /* smallest int */
+FixedPoint<I, F> const FixedPoint<I, F>::CONST_MIN{FixedPoint::FromBase(FixedPoint::MIN)};
 template <std::uint16_t I, std::uint16_t F>
-const typename FixedPoint<I, F>::Type FixedPoint<I, F>::MAX =
-    MAX_INT | LARGEST_FRACTION; /* largest fixed point */
-template <std::uint16_t I, std::uint16_t F>
-const typename FixedPoint<I, F>::Type FixedPoint<I, F>::MIN =
-    MIN_INT ^ LARGEST_FRACTION; /* smallest fixed point */
-template <std::uint16_t I, std::uint16_t F>
-const FixedPoint<I, F> FixedPoint<I, F>::MAX_EXP =
-    FixedPoint::Log(FixedPoint::FromBase(FixedPoint::MAX)); /* maximum exponent for Exp() */
-template <std::uint16_t I, std::uint16_t F>
-const FixedPoint<I, F> FixedPoint<I, F>::MIN_EXP =
-    -FixedPoint::Log(FixedPoint::FromBase(FixedPoint::MAX)); /* minimum exponent for Exp() */
+FixedPoint<I, F> const FixedPoint<I, F>::NaN{FixedPoint::FromBase(FixedPoint::Type(1) << (FixedPoint::TOTAL_BITS - 1))};
 
 }  // namespace fixed_point
 }  // namespace fetch
