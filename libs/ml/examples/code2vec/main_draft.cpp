@@ -59,17 +59,17 @@ int main(int ac, char** av)
     return 1;
   }
 
-  // fetch::ml::dataloaders::C2VLoader<std::tuple<ArrayType, ArrayType, ArrayType>, SizeType> cloader;
+  fetch::ml::dataloaders::C2VLoader<std::tuple<ArrayType, ArrayType, ArrayType>, SizeType> cloader;
 
-  // for (int i(1); i < ac; ++i)
-  // {
-  //   cloader.AddData(readFile(av[i]));
-  // }
+  for (int i(1); i < ac; ++i)
+  {
+    cloader.AddData(readFile(av[i]));
+  }
 
-  // std::cout << "Number of different function names: " << cloader.GetCounterFunctionNames().size()
-  //           << std::endl;
-  // std::cout << "Number of different paths: " << cloader.GetCounterPaths().size() << std::endl;
-  // std::cout << "Number of different words: " << cloader.GetCounterWords().size() << std::endl;
+  std::cout << "Number of different function names: " << cloader.GetCounterFunctionNames().size()
+            << std::endl;
+  std::cout << "Number of different paths: " << cloader.GetCounterPaths().size() << std::endl;
+  std::cout << "Number of different words: " << cloader.GetCounterWords().size() << std::endl;
 
   ArrayType AttentionVector({EMBEDDING_SIZE, SizeType{1}});
 
