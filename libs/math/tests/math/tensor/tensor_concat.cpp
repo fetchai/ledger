@@ -247,7 +247,7 @@ TYPED_TEST(TensorConcatenationTest, tensor_concat_various_sizes)
 TYPED_TEST(TensorConcatenationTest, tensor_Split_2d)
 {
   using Tensor   = fetch::math::Tensor<TypeParam>;
-  using SizeType = typename fetch::math::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   SizeType axis = 0;
 
@@ -312,7 +312,7 @@ TYPED_TEST(TensorConcatenationTest, tensor_Split_2d)
 TYPED_TEST(TensorConcatenationTest, tensor_Split_3d)
 {
   using Tensor   = fetch::math::Tensor<TypeParam>;
-  using SizeType = typename fetch::math::SizeType;
+  using SizeType = fetch::math::SizeType;
 
   SizeType axis = 0;
 
