@@ -19,6 +19,7 @@
 
 #include "core/random/lfg.hpp"
 #include "math/distance/euclidean.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include "meta/type_traits.hpp"
 #include <core/assert.hpp>
 #include <math/fundamental_operators.hpp>
@@ -28,7 +29,6 @@
 #include <math/standard_functions/exp.hpp>
 #include <math/standard_functions/log.hpp>
 #include <math/tensor.hpp>
-#include "math/meta/math_type_traits.hpp"
 
 #include <cmath>
 

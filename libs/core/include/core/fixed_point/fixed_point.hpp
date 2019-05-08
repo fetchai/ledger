@@ -65,30 +65,30 @@ struct TypeFromSize<128>
 template <>
 struct TypeFromSize<64>
 {
-  static constexpr bool          is_valid = true;
-  static constexpr std::uint16_t size     = 64;
-  using ValueType                         = int64_t;
-  using UnsignedType                      = uint64_t;
-  using SignedType                        = int64_t;
-  using NextSize                          = TypeFromSize<128>;
-  static constexpr std::uint16_t decimals = 9;
-  static constexpr ValueType tolerance    = 0x200; // 0.00000012
-  static constexpr ValueType max_exp      = 0x000000157cd0e714LL;  // 21.48756260
+  static constexpr bool          is_valid  = true;
+  static constexpr std::uint16_t size      = 64;
+  using ValueType                          = int64_t;
+  using UnsignedType                       = uint64_t;
+  using SignedType                         = int64_t;
+  using NextSize                           = TypeFromSize<128>;
+  static constexpr std::uint16_t decimals  = 9;
+  static constexpr ValueType     tolerance = 0x200;                 // 0.00000012
+  static constexpr ValueType     max_exp   = 0x000000157cd0e714LL;  // 21.48756260
 };
 
 // 32 bit implementation
 template <>
 struct TypeFromSize<32>
 {
-  static constexpr bool          is_valid = true;
-  static constexpr std::uint16_t size     = 32;
-  using ValueType                         = int32_t;
-  using UnsignedType                      = uint32_t;
-  using SignedType                        = int32_t;
-  using NextSize                          = TypeFromSize<64>;
-  static constexpr std::uint16_t decimals = 4;
-  static constexpr ValueType tolerance    = 0x15; // 0.0003
-  static constexpr ValueType max_exp      = 0x000a65b9L;  // 10.3974
+  static constexpr bool          is_valid  = true;
+  static constexpr std::uint16_t size      = 32;
+  using ValueType                          = int32_t;
+  using UnsignedType                       = uint32_t;
+  using SignedType                         = int32_t;
+  using NextSize                           = TypeFromSize<64>;
+  static constexpr std::uint16_t decimals  = 4;
+  static constexpr ValueType     tolerance = 0x15;         // 0.0003
+  static constexpr ValueType     max_exp   = 0x000a65b9L;  // 10.3974
 };
 
 // 16 bit implementation
@@ -200,12 +200,12 @@ public:
   /// Constants/Limits ///
   ////////////////////////
 
-  static constexpr Type SMALLEST_FRACTION{1};
-  static constexpr Type LARGEST_FRACTION{FRACTIONAL_MASK};
-  static constexpr Type MAX_INT{Type(FRACTIONAL_MASK >> 1) << FRACTIONAL_BITS};
-  static constexpr Type MIN_INT{INTEGER_MASK & ((Type(1) << (TOTAL_BITS - 1)))};
-  static constexpr Type MAX{MAX_INT | LARGEST_FRACTION};
-  static constexpr Type MIN{MIN_INT | LARGEST_FRACTION};
+  static constexpr Type          SMALLEST_FRACTION{1};
+  static constexpr Type          LARGEST_FRACTION{FRACTIONAL_MASK};
+  static constexpr Type          MAX_INT{Type(FRACTIONAL_MASK >> 1) << FRACTIONAL_BITS};
+  static constexpr Type          MIN_INT{INTEGER_MASK & ((Type(1) << (TOTAL_BITS - 1)))};
+  static constexpr Type          MAX{MAX_INT | LARGEST_FRACTION};
+  static constexpr Type          MIN{MIN_INT | LARGEST_FRACTION};
   static constexpr std::uint16_t DECIMAL_DIGITS{BaseTypeInfo::decimals};
 
   static FixedPoint const TOLERANCE;
@@ -259,7 +259,7 @@ public:
     : data_(static_cast<Type>(n * ONE_MASK))
   {
     assert(CheckNoOverflow(n * ONE_MASK));
-//    assert(CheckNoRounding<T>());
+    //    assert(CheckNoRounding<T>());
   }
 
   constexpr FixedPoint(FixedPoint const &o)
@@ -272,7 +272,8 @@ public:
 
   constexpr Type integer() const
   {
-    if (isNaN(*this)) {
+    if (isNaN(*this))
+    {
       throw std::overflow_error("Cannot get the integer part of a NaN value!");
     }
     return Type((data_ & INTEGER_MASK) >> FRACTIONAL_BITS);
@@ -280,7 +281,8 @@ public:
 
   constexpr Type fraction() const
   {
-    if (isNaN(*this)) {
+    if (isNaN(*this))
+    {
       throw std::overflow_error("Cannot get the fraction part of a NaN value!");
     }
     return (data_ & FRACTIONAL_MASK);
@@ -288,7 +290,8 @@ public:
 
   constexpr FixedPoint floor() const
   {
-    if (isNaN(*this)) {
+    if (isNaN(*this))
+    {
       throw std::overflow_error("Cannot use floor() on a NaN value!");
     }
     return FixedPoint(Type((data_ & INTEGER_MASK) >> FRACTIONAL_BITS));
@@ -300,7 +303,8 @@ public:
 
   constexpr FixedPoint &operator=(FixedPoint const &o)
   {
-    if (isNaN(o)) {
+    if (isNaN(o))
+    {
       throw std::overflow_error("Cannot assing NaN value!");
     }
     data_ = o.data_;
@@ -320,27 +324,36 @@ public:
 
   constexpr bool operator==(FixedPoint const &o) const
   {
-    if (isNaN(*this) || isNaN(o)) {
+    if (isNaN(*this) || isNaN(o))
+    {
       return false;
-    } else {
+    }
+    else
+    {
       return (data_ == o.Data());
     }
   }
 
   constexpr bool operator!=(FixedPoint const &o) const
   {
-    if (isNaN(*this) || isNaN(o)) {
+    if (isNaN(*this) || isNaN(o))
+    {
       return true;
-    } else {
+    }
+    else
+    {
       return (data_ != o.Data());
     }
   }
 
   constexpr bool operator<(FixedPoint const &o) const
   {
-    if (isNaN(*this) || isNaN(o)) {
+    if (isNaN(*this) || isNaN(o))
+    {
       return false;
-    } else {
+    }
+    else
+    {
       return (data_ < o.Data());
     }
   }
@@ -348,9 +361,12 @@ public:
   template <typename OtherType>
   constexpr bool operator>(FixedPoint const &o) const
   {
-    if (isNaN(*this) || isNaN(o)) {
+    if (isNaN(*this) || isNaN(o))
+    {
       return false;
-    } else {
+    }
+    else
+    {
       return (data_ > o.Data());
     }
   }
@@ -368,7 +384,7 @@ public:
   template <typename OtherType>
   constexpr bool operator!=(OtherType const &o) const
   {
-      return data_ != FixedPoint(o).Data();
+    return data_ != FixedPoint(o).Data();
   }
 
   template <typename OtherType>
@@ -484,7 +500,8 @@ public:
 
   constexpr FixedPoint operator*(FixedPoint const &n) const
   {
-    if (isNaN(n)) {
+    if (isNaN(n))
+    {
       return NaN;
     }
     NextType prod = NextType(data_) * NextType(n.Data());
@@ -678,7 +695,8 @@ public:
     {
       return FixedPoint{-FRACTIONAL_BITS};
     }
-    else if (isNaN(x)) {
+    else if (isNaN(x))
+    {
       return NaN;
     }
     else if (x < CONST_ZERO)
@@ -789,7 +807,8 @@ public:
       FixedPoint Q = (Q01 + x0) * (Q01 + x0 * (Q02 + x0 * (Q03 + x0)));
       FixedPoint R = P / Q;
 
-      // Tune the approximation with 2 iterations of Goldsmith's algorithm (converges faster than NR)
+      // Tune the approximation with 2 iterations of Goldsmith's algorithm (converges faster than
+      // NR)
       FixedPoint half{0.5};
       FixedPoint y_n = CONST_ONE / R;
       FixedPoint x_n = x0 * y_n;
@@ -859,9 +878,12 @@ public:
 
   static constexpr bool isNaN(FixedPoint const &x)
   {
-    if (x.Data() == NaN.Data()) {
+    if (x.Data() == NaN.Data())
+    {
       return true;
-    } else {
+    }
+    else
+    {
       return false;
     }
   }
@@ -912,11 +934,12 @@ private:
     if (std::numeric_limits<T>::max_digits10 < DECIMAL_DIGITS)
     {
       return true;
-    } else {
+    }
+    else
+    {
       return false;
     }
   }
-
 };
 
 template <std::uint16_t I, std::uint16_t F>
@@ -925,9 +948,12 @@ std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
   std::ios_base::fmtflags f(s.flags());
   s << std::setprecision(F / 4);
   s << std::fixed;
-  if (!FixedPoint<I, F>::isNaN(n)) {
+  if (!FixedPoint<I, F>::isNaN(n))
+  {
     s << double(n);
-  } else {
+  }
+  else
+  {
     s << "NaN";
   }
   s << " : " << std::hex << n.Data();
@@ -1009,7 +1035,8 @@ FixedPoint<I, F> const FixedPoint<I, F>::CONST_MAX{FixedPoint::FromBase(FixedPoi
 template <std::uint16_t I, std::uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::CONST_MIN{FixedPoint::FromBase(FixedPoint::MIN)};
 template <std::uint16_t I, std::uint16_t F>
-FixedPoint<I, F> const FixedPoint<I, F>::NaN{FixedPoint::FromBase(FixedPoint::Type(1) << (FixedPoint::TOTAL_BITS - 1))};
+FixedPoint<I, F> const FixedPoint<I, F>::NaN{
+    FixedPoint::FromBase(FixedPoint::Type(1) << (FixedPoint::TOTAL_BITS - 1))};
 
 }  // namespace fixed_point
 }  // namespace fetch

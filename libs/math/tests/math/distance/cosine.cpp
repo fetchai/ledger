@@ -64,5 +64,6 @@ TYPED_TEST(DistanceTest, cosine_distance)
   C.Set(SizeType{0}, SizeType{2}, DataType(3));
   C.Set(SizeType{0}, SizeType{3}, DataType(2));
 
-  EXPECT_NEAR(double(Cosine(A, C)), double(1.0) - double(0.94672926240625754), (double)fetch::math::meta::tolerance<DataType>());
+  EXPECT_NEAR(double(Cosine(A, C)), double(1.0) - double(0.94672926240625754),
+              (double)fetch::math::meta::tolerance<DataType>());
 }

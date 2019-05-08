@@ -21,8 +21,8 @@
 #include <iostream>
 
 #include "math/distance/euclidean.hpp"
-#include "math/tensor.hpp"
 #include "math/meta/math_type_traits.hpp"
+#include "math/tensor.hpp"
 
 using namespace fetch::math::distance;
 using namespace fetch::math;
@@ -104,10 +104,14 @@ TYPED_TEST(EuclideanTest, matrix_euclidean_test)
   ASSERT_EQ(ret.shape().at(0), 1);
   ASSERT_EQ(ret.shape().at(1), 4);
 
-  EXPECT_NEAR(double(ret.At(0, 0)), 7.48331477, 5.0*(double)fetch::math::meta::tolerance<DataType>());
-  EXPECT_NEAR(double(ret.At(0, 1)), 10.7703296, 5.0*(double)fetch::math::meta::tolerance<DataType>());
-  EXPECT_NEAR(double(ret.At(0, 2)), 14.1421356, 5.0*(double)fetch::math::meta::tolerance<DataType>());
-  EXPECT_NEAR(double(ret.At(0, 3)), 17.5499287, 5.0*(double)fetch::math::meta::tolerance<DataType>());
+  EXPECT_NEAR(double(ret.At(0, 0)), 7.48331477,
+              5.0 * (double)fetch::math::meta::tolerance<DataType>());
+  EXPECT_NEAR(double(ret.At(0, 1)), 10.7703296,
+              5.0 * (double)fetch::math::meta::tolerance<DataType>());
+  EXPECT_NEAR(double(ret.At(0, 2)), 14.1421356,
+              5.0 * (double)fetch::math::meta::tolerance<DataType>());
+  EXPECT_NEAR(double(ret.At(0, 3)), 17.5499287,
+              5.0 * (double)fetch::math::meta::tolerance<DataType>());
 
   ret = EuclideanMatrix(A, B, 1);
 
@@ -115,7 +119,10 @@ TYPED_TEST(EuclideanTest, matrix_euclidean_test)
   ASSERT_EQ(ret.shape().at(0), 3);
   ASSERT_EQ(ret.shape().at(1), 1);
 
-  EXPECT_NEAR(double(ret.At(0, 0)), 10.95445156, 5.0*(double)fetch::math::meta::tolerance<DataType>());
-  EXPECT_NEAR(double(ret.At(1, 0)), 14.69693851, 5.0*(double)fetch::math::meta::tolerance<DataType>());
-  EXPECT_NEAR(double(ret.At(2, 0)), 18.54723699, 5.0*(double)fetch::math::meta::tolerance<DataType>());
+  EXPECT_NEAR(double(ret.At(0, 0)), 10.95445156,
+              5.0 * (double)fetch::math::meta::tolerance<DataType>());
+  EXPECT_NEAR(double(ret.At(1, 0)), 14.69693851,
+              5.0 * (double)fetch::math::meta::tolerance<DataType>());
+  EXPECT_NEAR(double(ret.At(2, 0)), 18.54723699,
+              5.0 * (double)fetch::math::meta::tolerance<DataType>());
 }
