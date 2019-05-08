@@ -15,12 +15,6 @@ import multiprocessing
 import xml.etree.ElementTree as ET
 
 BUILD_TYPES = ('Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel')
-BUILD_CFG = {
-    'Debug': {
-        'FETCH_DEBUG_SANITIZER': 'address'
-    }
-}
-
 MAX_CPUS = 7 # as defined by CI workflow
 AVAILABLE_CPUS = multiprocessing.cpu_count()
 CONCURRENCY = min(MAX_CPUS, AVAILABLE_CPUS)
@@ -257,9 +251,6 @@ def main():
     options = {
         'CMAKE_BUILD_TYPE': args.build_type
     }
-
-    # update the cmake cptions based on any hard coded defaults
-    options.update(BUILD_CFG.get(args.build_type, {}))
 
     if args.metrics:
         options['FETCH_ENABLE_METRICS'] = 1
