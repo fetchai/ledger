@@ -96,7 +96,7 @@ public:
   void SetMethod(Method method)
   {
     method_ = method;
-  };
+  }
 
   void SetURI(byte_array_type const &uri)
   {
