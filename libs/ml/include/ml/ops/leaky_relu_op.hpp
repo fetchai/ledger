@@ -64,11 +64,11 @@ public:
     ASSERT(inputs.at(1).get().size() == errorSignal.size());
     ASSERT(errorSignal.size() == inputs.at(1).get().size());
 
-    ArrayType returnSignal1{errorSignal.shape()};
-    ArrayType returnSignal2{errorSignal.shape()};
+    ArrayType return_signal1{errorSignal.shape()};
+    ArrayType return_signal2{errorSignal.shape()};
 
-    auto     rs1_it    = returnSignal1.begin();
-    auto     rs2_it    = returnSignal2.begin();
+    auto     rs1_it    = return_signal1.begin();
+    auto     rs2_it    = return_signal2.begin();
     auto     input1_it = inputs.at(0).get().begin();
     auto     input2_it = inputs.at(1).get().begin();
     DataType zero{0};
@@ -93,10 +93,10 @@ public:
     }
 
     // multiply by errorSignal (chain rule)
-    fetch::math::Multiply(errorSignal, returnSignal1, returnSignal1);
-    fetch::math::Multiply(errorSignal, returnSignal2, returnSignal2);
+    fetch::math::Multiply(errorSignal, return_signal1, return_signal1);
+    fetch::math::Multiply(errorSignal, return_signal2, return_signal2);
 
-    return {returnSignal1, returnSignal2};
+    return {return_signal1, return_signal2};
   }
 
   static constexpr char const *DESCRIPTOR = "LeakyReluOp";

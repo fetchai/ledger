@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 
-#
 # CI SCRIPT
 #
 # Helper script used to help make CI based build simpler.
-#
 
 import os
 import re
@@ -16,12 +14,10 @@ import shutil
 import multiprocessing
 import xml.etree.ElementTree as ET
 
-
 BUILD_TYPES = ('Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel')
 MAX_CPUS = 7 # as defined by CI workflow
 AVAILABLE_CPUS = multiprocessing.cpu_count()
 CONCURRENCY = min(MAX_CPUS, AVAILABLE_CPUS)
-
 
 def output(*args):
     text = ' '.join(map(str, args))
@@ -119,6 +115,7 @@ def parse_commandline():
     parser.add_argument('-B', '--build', action='store_true', help='Build the project')
     parser.add_argument('-T', '--test', action='store_true', help='Test the project')
     parser.add_argument('-I', '--integration-tests', action='store_true', help='Run the integration tests for the project')
+    parser.add_argument('-E', '--end-to-end-tests', action='store_true', help='Run the end to end tests for the project')
     parser.add_argument('-f', '--force-build-folder', help='Specify the folder directly that should be used for the build / test')
     parser.add_argument('-m', '--metrics', action='store_true', help='Store the metrics.')
     return parser.parse_args()
@@ -170,13 +167,8 @@ def build_project(project_root, build_root, options):
         output('Failed to make the project')
         sys.exit(exit_code)
 
-
-def test_project(build_root, label):
-    TEST_NAME = 'Test'
-
-    if not os.path.isdir(build_root):
-        raise RuntimeError('Build Root doesn\'t exist, unable to test project')
-
+# Clean files that are likely to interfere with testing
+def clean_files(build_root):
     # clear all the data files which might be hanging around
     for root, _, files in os.walk(build_root):
         for path in fnmatch.filter(files, '*.db'):
@@ -184,12 +176,20 @@ def test_project(build_root, label):
             print('Removing file:', data_path)
             os.remove(data_path)
 
+def test_project(build_root, label):
+    TEST_NAME = 'Test'
+
+    if not os.path.isdir(build_root):
+        raise RuntimeError('Build Root doesn\'t exist, unable to test project')
+
+    clean_files(build_root)
+
     # Python 3.7+ support need to have explicit path to application
     ctest_executable = shutil.which('ctest')
 
     cmd = [
         ctest_executable,
-        '--no-compress-output',
+        '--output-on-failure',
         '-T', TEST_NAME,
         '-L', str(label),
     ]
@@ -221,6 +221,21 @@ def test_project(build_root, label):
         output('Test unsuccessful')
         sys.exit(exit_code)
 
+def test_end_to_end(project_root, build_root):
+    import run_end_to_end_test
+
+    yaml_file = os.path.join(project_root, "scripts/end_to_end_test.yaml")
+
+    # Check that the YAML file does exist
+    if not os.path.exists(yaml_file):
+        output('Failed to find yaml file for end_to_end testing:')
+        output(yaml_file)
+        sys.exit(1)
+
+    # should be the location of constellation exe - if not the test will catch
+    constellation_exe = os.path.join(build_root, "apps/constellation/constellation")
+
+    run_end_to_end_test.run_test(build_root, yaml_file, constellation_exe)
 
 def main():
 
@@ -236,6 +251,7 @@ def main():
     options = {
         'CMAKE_BUILD_TYPE': args.build_type
     }
+
     if args.metrics:
         options['FETCH_ENABLE_METRICS'] = 1
 
@@ -249,6 +265,8 @@ def main():
         test_project(build_root, 'Slow')
         test_project(build_root, 'Integration')
 
+    if args.end_to_end_tests:
+        test_end_to_end(project_root, build_root)
 
 if __name__ == '__main__':
     main()

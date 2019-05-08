@@ -1,5 +1,5 @@
 function fibonacci(n: Int32) : Int32
-  Print(toString(n));
+  print(toString(n));
   if(n <= 1)
     return 1;
   endif
@@ -10,5 +10,5 @@ endfunction
 function main()
   var n = 3;
   var fib = fibonacci(n);
-  Print("Fibonacci number " + toString(n) + " is " + toString(fib));
+  print("Fibonacci number " + toString(n) + " is " + toString(fib));
 endfunction
