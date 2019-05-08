@@ -19,9 +19,6 @@
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 
-using namespace std;
-using namespace std::chrono;
-
 template <typename T>
 class TensorConcatenationTest : public ::testing::Test
 {
@@ -31,242 +28,217 @@ using MyTypes =
     ::testing::Types<std::int32_t, std::int64_t, std::uint32_t, std::uint64_t, float, double>;
 TYPED_TEST_CASE(TensorConcatenationTest, MyTypes);
 
-TYPED_TEST(TensorConcatenationTest, tensor_concat_2d_axis_0)
+template <typename T>
+fetch::math::Tensor<T> PrepareTensor(std::vector<fetch::math::SizeType> const &shape)
 {
-  using Tensor = fetch::math::Tensor<TypeParam>;
-  Tensor t1    = Tensor::FromString("0, 1, 2, 3; 4, 5, 6, 0");
-  Tensor t2    = Tensor::FromString("0, 1, 2, 3; 4, 5, 6, 0");
-  Tensor t3    = Tensor::FromString("0, 1, 2, 3; 4, 5, 6, 0");
-  Tensor gt =
-      Tensor::FromString("0, 1, 2, 3; 4, 5, 6, 0; 0, 1, 2, 3; 4, 5, 6, 0; 0, 1, 2, 3; 4, 5, 6, 0");
-
-  std::vector<Tensor> vt{t1, t2, t3};
-  Tensor              ret = Tensor::Concat(vt, 0);
-
-  EXPECT_TRUE(ret.shape() == gt.shape());
-  EXPECT_TRUE(ret.AllClose(gt));
+  fetch::math::Tensor<T> t{shape};
+  t.FillArange(fetch::math::SizeType(0), t.size());
+  return t;
 }
 
-TYPED_TEST(TensorConcatenationTest, tensor_concat_2d_axis_1)
+template <typename T>
+fetch::math::Tensor<T> PrepareGroundTruth2D(std::vector<fetch::math::SizeType> const & shape,
+                                            std::vector<fetch::math::Tensor<T>> const &vt,
+                                            typename fetch::math::SizeType const &     axis)
 {
-  using Tensor = fetch::math::Tensor<TypeParam>;
-  Tensor t1    = Tensor::FromString("0, 1, 2, 3; 4, 5, 6, 0");
-  Tensor t2    = Tensor::FromString("0, 1, 2, 3; 4, 5, 6, 0");
-  Tensor t3    = Tensor::FromString("0, 1, 2, 3; 4, 5, 6, 0");
-  Tensor gt =
-      Tensor::FromString("0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3; 4, 5, 6, 0, 4, 5, 6, 0, 4, 5, 6, 0");
-
-  std::vector<Tensor> vt{t1, t2, t3};
-  Tensor              ret = Tensor::Concat(vt, 1);
-
-  EXPECT_TRUE(ret.shape() == gt.shape());
-  EXPECT_TRUE(ret.AllClose(gt));
-}
-
-TYPED_TEST(TensorConcatenationTest, tensor_concat_3d_axis_0)
-{
-  using Tensor   = fetch::math::Tensor<TypeParam>;
   using SizeType = fetch::math::SizeType;
 
-  Tensor t1{{3, 2, 2}};
-  Tensor t2{{3, 2, 2}};
-  Tensor t3{{3, 2, 2}};
-  Tensor gt{{9, 2, 2}};
+  fetch::math::Tensor<T> gt{shape};
 
-  TypeParam counter{0};
-  auto      t1_it = t1.begin();
-  auto      t2_it = t2.begin();
-  auto      t3_it = t3.begin();
-  while (t1_it.is_valid())
-  {
-    *t1_it = counter;
-    *t2_it = counter;
-    *t3_it = counter;
-    ++counter;
-    ++t1_it;
-    ++t2_it;
-    ++t3_it;
-  }
+  SizeType cur_axis_pos{0};
+  T        counter{0};
 
-  std::vector<Tensor> vt{t1, t2, t3};
-  SizeType            cur_axis_pos{0};
-  for (SizeType m{0}; m < 3; ++m)
+  for (SizeType m{0}; m < vt.size(); ++m)
   {
-    counter = TypeParam{0};
-    for (SizeType i{0}; i < t1.shape()[2]; ++i)
+    counter = T{0};
+    for (SizeType j{0}; j < vt[m].shape()[1]; ++j)
     {
-      for (SizeType j{0}; j < t1.shape()[1]; ++j)
+      for (SizeType k{0}; k < vt[m].shape()[0]; ++k)
       {
-        for (SizeType k{0}; k < t1.shape()[0]; ++k)
+        if (axis == 0)
         {
-          gt.Set(cur_axis_pos + k, j, i, counter);
+          gt.Set(cur_axis_pos + k, j, counter);
+        }
+        else
+        {
+          gt.Set(k, cur_axis_pos + j, counter);
+        }
+        ++counter;
+      }
+    }
+    cur_axis_pos += vt[m].shape()[axis];
+  }
+  return gt;
+}
+
+template <typename T>
+fetch::math::Tensor<T> PrepareGroundTruth3D(std::vector<fetch::math::SizeType> const & shape,
+                                            std::vector<fetch::math::Tensor<T>> const &vt,
+                                            typename fetch::math::SizeType const &     axis)
+{
+  using SizeType = fetch::math::SizeType;
+
+  fetch::math::Tensor<T> gt{shape};
+
+  SizeType cur_axis_pos{0};
+  T        counter{0};
+
+  for (SizeType m{0}; m < vt.size(); ++m)
+  {
+    counter = T{0};
+    for (SizeType i{0}; i < vt[m].shape()[2]; ++i)
+    {
+      for (SizeType j{0}; j < vt[m].shape()[1]; ++j)
+      {
+        for (SizeType k{0}; k < vt[m].shape()[0]; ++k)
+        {
+          if (axis == 0)
+          {
+            gt.Set(cur_axis_pos + k, j, i, counter);
+          }
+          else if (axis == 1)
+          {
+            gt.Set(k, cur_axis_pos + j, i, counter);
+          }
+          else
+          {
+            gt.Set(k, j, cur_axis_pos + i, counter);
+          }
           ++counter;
         }
       }
     }
-    cur_axis_pos += vt[m].shape()[0];
+    cur_axis_pos += vt[m].shape()[axis];
   }
+  return gt;
+}
+
+TYPED_TEST(TensorConcatenationTest, tensor_concat_2d)
+{
+  using Tensor = fetch::math::Tensor<TypeParam>;
+
+  // axis 0 concat
+  Tensor t1 = PrepareTensor<TypeParam>({2, 4});
+  Tensor t2 = PrepareTensor<TypeParam>({2, 4});
+  Tensor t3 = PrepareTensor<TypeParam>({2, 4});
+
+  std::vector<Tensor> vt{t1, t2, t3};
+  Tensor              gt = PrepareGroundTruth2D<TypeParam>({6, 4}, vt, 0);
+
   Tensor ret = Tensor::Concat(vt, 0);
 
   EXPECT_TRUE(ret.shape() == gt.shape());
   EXPECT_TRUE(ret.AllClose(gt));
-}
 
-TYPED_TEST(TensorConcatenationTest, tensor_concat_3d_axis_1)
-{
-  using Tensor   = fetch::math::Tensor<TypeParam>;
-  using SizeType = fetch::math::SizeType;
+  // axis 1 concat
+  t1 = PrepareTensor<TypeParam>({2, 4});
+  t2 = PrepareTensor<TypeParam>({2, 4});
+  t3 = PrepareTensor<TypeParam>({2, 4});
 
-  Tensor t1{{3, 2, 2}};
-  Tensor t2{{3, 2, 2}};
-  Tensor t3{{3, 2, 2}};
-  Tensor gt{{3, 6, 2}};
+  vt = {t1, t2, t3};
+  gt = PrepareGroundTruth2D<TypeParam>({2, 12}, vt, 1);
 
-  TypeParam counter{0};
-  auto      t1_it = t1.begin();
-  auto      t2_it = t2.begin();
-  auto      t3_it = t3.begin();
-  while (t1_it.is_valid())
-  {
-    *t1_it = counter;
-    *t2_it = counter;
-    *t3_it = counter;
-    ++counter;
-    ++t1_it;
-    ++t2_it;
-    ++t3_it;
-  }
-
-  std::vector<Tensor> vt{t1, t2, t3};
-  SizeType            cur_axis_pos{0};
-  for (SizeType m{0}; m < 3; ++m)
-  {
-    counter = TypeParam{0};
-    for (SizeType i{0}; i < vt[m].shape()[2]; ++i)
-    {
-      for (SizeType j{0}; j < vt[m].shape()[1]; ++j)
-      {
-        for (SizeType k{0}; k < vt[m].shape()[0]; ++k)
-        {
-          gt.Set(k, cur_axis_pos + j, i, counter);
-          ++counter;
-        }
-      }
-    }
-    cur_axis_pos += vt[m].shape()[1];
-  }
-  Tensor ret = Tensor::Concat(vt, 1);
+  ret = Tensor::Concat(vt, 1);
 
   EXPECT_TRUE(ret.shape() == gt.shape());
   EXPECT_TRUE(ret.AllClose(gt));
 }
 
-TYPED_TEST(TensorConcatenationTest, tensor_concat_3d_axis_2)
+TYPED_TEST(TensorConcatenationTest, tensor_concat_3d)
 {
-  using Tensor   = fetch::math::Tensor<TypeParam>;
-  using SizeType = fetch::math::SizeType;
+  using Tensor = fetch::math::Tensor<TypeParam>;
 
-  Tensor t1{{3, 2, 6}};
-  Tensor t2{{3, 2, 6}};
-  Tensor t3{{3, 2, 6}};
-  Tensor gt{{3, 2, 18}};
-
-  TypeParam counter{0};
-  auto      t1_it = t1.begin();
-  auto      t2_it = t2.begin();
-  auto      t3_it = t3.begin();
-  while (t1_it.is_valid())
-  {
-    *t1_it = counter;
-    *t2_it = counter;
-    *t3_it = counter;
-    ++counter;
-    ++t1_it;
-    ++t2_it;
-    ++t3_it;
-  }
-
+  // axis 0 concatenation
+  Tensor              t1 = PrepareTensor<TypeParam>({3, 2, 2});
+  Tensor              t2 = PrepareTensor<TypeParam>({3, 2, 2});
+  Tensor              t3 = PrepareTensor<TypeParam>({3, 2, 2});
   std::vector<Tensor> vt{t1, t2, t3};
-  SizeType            cur_axis_pos{0};
-  for (SizeType m{0}; m < 3; ++m)
-  {
-    counter = TypeParam{0};
-    for (SizeType i{0}; i < vt[m].shape()[2]; ++i)
-    {
-      for (SizeType j{0}; j < vt[m].shape()[1]; ++j)
-      {
-        for (SizeType k{0}; k < vt[m].shape()[0]; ++k)
-        {
-          gt.Set(k, j, cur_axis_pos + i, counter);
-          ++counter;
-        }
-      }
-    }
-    cur_axis_pos += vt[m].shape()[2];
-  }
+  Tensor              gt  = PrepareGroundTruth3D({9, 2, 2}, vt, 0);
+  Tensor              ret = Tensor::Concat(vt, 0);
 
-  Tensor ret = Tensor::Concat(vt, 2);
+  EXPECT_TRUE(ret.shape() == gt.shape());
+  EXPECT_TRUE(ret.AllClose(gt));
+
+  // axis 1 concatenation
+  t1  = PrepareTensor<TypeParam>({3, 2, 2});
+  t2  = PrepareTensor<TypeParam>({3, 2, 2});
+  t3  = PrepareTensor<TypeParam>({3, 2, 2});
+  vt  = {t1, t2, t3};
+  gt  = PrepareGroundTruth3D({3, 6, 2}, vt, 1);
+  ret = Tensor::Concat(vt, 1);
+
+  EXPECT_TRUE(ret.shape() == gt.shape());
+  EXPECT_TRUE(ret.AllClose(gt));
+
+  // axis 2 concatenation
+  t1  = PrepareTensor<TypeParam>({3, 2, 6});
+  t2  = PrepareTensor<TypeParam>({3, 2, 6});
+  t3  = PrepareTensor<TypeParam>({3, 2, 6});
+  vt  = {t1, t2, t3};
+  gt  = PrepareGroundTruth3D({3, 2, 18}, vt, 2);
+  ret = Tensor::Concat(vt, 2);
 
   EXPECT_TRUE(ret.shape() == gt.shape());
   EXPECT_TRUE(ret.AllClose(gt));
 }
 
-TYPED_TEST(TensorConcatenationTest, tensor_concat_3d_axis_1_different_sizes)
+TYPED_TEST(TensorConcatenationTest, tensor_concat_various_sizes)
 {
-  using Tensor   = fetch::math::Tensor<TypeParam>;
-  using SizeType = fetch::math::SizeType;
+  using Tensor = fetch::math::Tensor<TypeParam>;
 
-  Tensor t1{{3, 2, 4}};
-  Tensor t2{{3, 3, 4}};
-  Tensor t3{{3, 1, 4}};
-  Tensor gt{{3, 6, 4}};
-
-  TypeParam counter{0};
-  auto      t1_it = t1.begin();
-  while (t1_it.is_valid())
-  {
-    *t1_it = counter;
-    ++counter;
-    ++t1_it;
-  }
-
-  counter    = TypeParam{0};
-  auto t2_it = t2.begin();
-  while (t2_it.is_valid())
-  {
-    *t2_it = counter;
-    ++counter;
-    ++t2_it;
-  }
-
-  counter    = TypeParam{0};
-  auto t3_it = t3.begin();
-  while (t3_it.is_valid())
-  {
-    *t3_it = counter;
-    ++counter;
-    ++t3_it;
-  }
-
+  /// 2D Tensors ///
+  // axis 0 concatenation
+  Tensor              t1 = PrepareTensor<TypeParam>({1, 2});
+  Tensor              t2 = PrepareTensor<TypeParam>({3, 2});
+  Tensor              t3 = PrepareTensor<TypeParam>({18, 2});
   std::vector<Tensor> vt{t1, t2, t3};
-  SizeType            cur_axis_pos{0};
-  for (SizeType m{0}; m < 3; ++m)
-  {
-    counter = TypeParam{0};
-    for (SizeType i{0}; i < vt[m].shape()[2]; ++i)
-    {
-      for (SizeType j{0}; j < vt[m].shape()[1]; ++j)
-      {
-        for (SizeType k{0}; k < vt[m].shape()[0]; ++k)
-        {
-          gt.Set(k, cur_axis_pos + j, i, counter);
-          ++counter;
-        }
-      }
-    }
-    cur_axis_pos += vt[m].shape()[1];
-  }
-  Tensor ret = Tensor::Concat(vt, 1);
+  Tensor              gt  = PrepareGroundTruth2D({22, 2}, vt, 0);
+  Tensor              ret = Tensor::Concat(vt, 0);
+
+  EXPECT_TRUE(ret.shape() == gt.shape());
+  EXPECT_TRUE(ret.AllClose(gt));
+
+  // axis 1 concatenation
+  t1  = PrepareTensor<TypeParam>({2, 2});
+  t2  = PrepareTensor<TypeParam>({2, 1});
+  t3  = PrepareTensor<TypeParam>({2, 50});
+  vt  = {t1, t2, t3};
+  gt  = PrepareGroundTruth2D({2, 53}, vt, 1);
+  ret = Tensor::Concat(vt, 1);
+
+  EXPECT_TRUE(ret.shape() == gt.shape());
+  EXPECT_TRUE(ret.AllClose(gt));
+
+  /// 3D Tensors ///
+  // axis 0 concatenation
+  t1  = PrepareTensor<TypeParam>({1, 2, 2});
+  t2  = PrepareTensor<TypeParam>({9, 2, 2});
+  t3  = PrepareTensor<TypeParam>({10, 2, 2});
+  vt  = {t1, t2, t3};
+  gt  = PrepareGroundTruth3D({20, 2, 2}, vt, 0);
+  ret = Tensor::Concat(vt, 0);
+
+  EXPECT_TRUE(ret.shape() == gt.shape());
+  EXPECT_TRUE(ret.AllClose(gt));
+
+  // axis 1 concatenation
+  t1  = PrepareTensor<TypeParam>({2, 7, 2});
+  t2  = PrepareTensor<TypeParam>({2, 2, 2});
+  t3  = PrepareTensor<TypeParam>({2, 9, 2});
+  vt  = {t1, t2, t3};
+  gt  = PrepareGroundTruth3D({2, 18, 2}, vt, 1);
+  ret = Tensor::Concat(vt, 1);
+
+  EXPECT_TRUE(ret.shape() == gt.shape());
+  EXPECT_TRUE(ret.AllClose(gt));
+
+  // axis 2 concatenation
+  t1  = PrepareTensor<TypeParam>({3, 2, 9});
+  t2  = PrepareTensor<TypeParam>({3, 2, 2});
+  t3  = PrepareTensor<TypeParam>({3, 2, 1});
+  vt  = {t1, t2, t3};
+  gt  = PrepareGroundTruth3D({3, 2, 12}, vt, 2);
+  ret = Tensor::Concat(vt, 2);
 
   EXPECT_TRUE(ret.shape() == gt.shape());
   EXPECT_TRUE(ret.AllClose(gt));
