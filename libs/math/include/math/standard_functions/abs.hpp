@@ -31,18 +31,17 @@ namespace math {
 /// IMPLEMENTATIONS ///
 ///////////////////////
 
-template <typename Type>
-meta::IfIsNonFixedPointArithmetic<Type, void> Abs(Type const &x, Type &ret)
+// this also handles case of passing uint to abs
+template <typename T>
+meta::IfIsNonFixedPointArithmetic<T, void> Abs(T const &n, T &ret)
 {
-  ret = std::abs(x);
+  ret = T(std::abs(double(n)));
 }
 
-// TODO(800) - native implementations of fixed point are required; casting to double will not be
-// permissible
 template <typename T>
 meta::IfIsFixedPoint<T, void> Abs(T const &n, T &ret)
 {
-  ret = T(std::abs(double(n)));
+  ret = T::Abs(n);
 }
 
 //////////////////
@@ -61,24 +60,21 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Abs(ArrayType const &array, ArrayType &ret)
 {
   ASSERT(ret.shape() == array.shape());
-  typename ArrayType::SizeType ret_count{0};
-  for (typename ArrayType::Type &e : array)
+  auto it1 = array.cbegin();
+  auto rit = ret.begin();
+  while (it1.is_valid())
   {
-    Abs(e, ret.At(ret_count));
-    ++ret_count;
+    Abs(*it1, *rit);
+    ++it1;
+    ++rit;
   }
 }
 
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Abs(ArrayType const &array)
 {
-  ArrayType                    ret{array.shape()};
-  typename ArrayType::SizeType ret_count{0};
-  for (typename ArrayType::Type &e : array)
-  {
-    Abs(e, ret.At(ret_count));
-    ++ret_count;
-  }
+  ArrayType ret{array.shape()};
+  Abs(array, ret);
   return ret;
 }
 

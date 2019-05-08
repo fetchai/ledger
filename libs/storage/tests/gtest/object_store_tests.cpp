@@ -462,31 +462,12 @@ TEST(storage_object_store_with_STL_gtest, subtree_iterator_over_basic_struc_spli
   }
 }
 
-TEST(storage_object_store, correlated_strings_work_correctly_working)
+TEST(storage_object_store, correlated_strings)
 {
   ObjectStore<std::string> testStore;
   testStore.New("testFile_01.db", "testIndex_01.db");
 
-  auto     unique_ids    = GenerateUniqueIDs(65);
-  uint64_t expected_size = 0;
-
-  // Set each key to itself as a string
-  for (auto const &id : unique_ids)
-  {
-    testStore.Set(id, id.ToString());
-    EXPECT_EQ(testStore.size(), ++expected_size);
-  }
-
-  ASSERT_EQ(testStore.size(), unique_ids.size()) << "ERROR: Failed to verify final size!";
-}
-
-// Disabled test - needs immediate attention!
-TEST(storage_object_store, DISABLED_correlated_strings_work_correctly_failing)
-{
-  ObjectStore<std::string> testStore;
-  testStore.New("testFile_01.db", "testIndex_01.db");
-
-  auto     unique_ids    = GenerateUniqueIDs(66);
+  auto     unique_ids    = GenerateUniqueIDs(100);
   uint64_t expected_size = 0;
 
   // Set each key to itself as a string

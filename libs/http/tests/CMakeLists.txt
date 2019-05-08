@@ -13,4 +13,4 @@ setup_compiler()
 #-------------------------------------------------------------------------------
 # Test Targets
 #-------------------------------------------------------------------------------
-add_fetch_test(http_gtest fetch-http .)
+add_fetch_test(fetch-http-tests fetch-http .)

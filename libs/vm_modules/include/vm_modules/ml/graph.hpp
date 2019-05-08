@@ -96,9 +96,9 @@ public:
   }
 };
 
-inline void CreateGraph(std::shared_ptr<fetch::vm::Module> module)
+inline void CreateGraph(fetch::vm::Module &module)
 {
-  module->CreateClassType<GraphWrapper>("Graph")
+  module.CreateClassType<GraphWrapper>("Graph")
       .CreateTypeConstuctor<>()
       .CreateInstanceFunction("SetInput", &GraphWrapper::SetInput)
       .CreateInstanceFunction("Evaluate", &GraphWrapper::Evaluate)

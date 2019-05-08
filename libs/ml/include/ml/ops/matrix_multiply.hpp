@@ -28,32 +28,32 @@ template <class T>
 class MatrixMultiply : public fetch::ml::BatchOps<T>
 {
 public:
-  using ArrayType    = T;
-  using SizeType     = typename ArrayType::SizeType;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType      = T;
+  using SizeType       = typename ArrayType::SizeType;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
-  MatrixMultiply()          = default;
-  virtual ~MatrixMultiply() = default;
+  MatrixMultiply()  = default;
+  ~MatrixMultiply() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                    ArrayType &                                                 output)
   {
     (void)output;
-    assert(inputs.size() == 2);
-    assert(inputs.at(0).get().shape().size() == 2);
-    assert(inputs.at(1).get().shape().size() == 2);
+    ASSERT(inputs.size() == 2);
+    ASSERT(inputs.at(0).get().shape().size() == 2);
+    ASSERT(inputs.at(1).get().shape().size() == 2);
     ASSERT(output.shape() == ComputeOutputShape(inputs));
 
     fetch::math::Dot(inputs[0].get(), inputs[1].get(), output);
-
     return output;
   }
 
-  virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+  std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
-    assert(inputs.size() == 2);
+    ASSERT(inputs.size() == 2);
 
     ArrayType errorSignal1(inputs.at(0).get().shape());
     ArrayType errorSignal2(inputs.at(1).get().shape());
@@ -64,7 +64,7 @@ public:
     return {errorSignal1, errorSignal2};
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(
+  std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     return {inputs.at(0).get().shape()[0], inputs.at(1).get().shape()[1]};

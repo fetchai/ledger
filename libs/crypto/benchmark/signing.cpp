@@ -66,13 +66,11 @@ void VerifySignature(benchmark::State &state)
   ECDSAVerifier verifier(signer.identity());
 
   // create the signed data
-  if (!signer.Sign(msg))
+  auto const signature = signer.Sign(msg);
+  if (signature.empty())
   {
     throw std::runtime_error("Unable to sign the message");
   }
-
-  // extract the signature
-  ConstByteArray signature = signer.signature();
 
   for (auto _ : state)
   {

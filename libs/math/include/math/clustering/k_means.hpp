@@ -423,7 +423,7 @@ private:
     {
       for (SizeType j = 0; j < n_dimensions_; ++j)
       {
-        k_means_.Set({i, j}, data.At({data_idxs_[i], j}));
+        k_means_.Set(i, j, data.At(data_idxs_[i], j));
       }
     }
   }
@@ -437,8 +437,7 @@ private:
     // assign first cluster centre
     for (SizeType j = 0; j < n_dimensions_; ++j)
     {
-      k_means_.Set(std::vector<SizeType>({0, j}),
-                   data.At(std::vector<SizeType>({data_idxs_[0], j})));
+      k_means_.Set(0, j, data.At(data_idxs_[0], j));
     }
 
     // assign remaining cluster centres
@@ -465,7 +464,7 @@ private:
         {
           for (SizeType k = 0; k < n_dimensions_; ++k)
           {
-            temp_k_.Set(std::vector<SizeType>({l, k}), k_means_.At({i, k}));
+            temp_k_.Set(l, k, k_means_.At(i, k));
           }
         }
 
@@ -479,7 +478,7 @@ private:
         if (std::find(assigned_data_points.begin(), assigned_data_points.end(), m) ==
             assigned_data_points.end())
         {
-          running_mean_ = std::numeric_limits<typename ArrayType::Type>::max();
+          running_mean_ = NumericMax<typename ArrayType::Type>();
           for (SizeType i = 0; i < (n_clusters_ - n_remaining_clusters); ++i)
           {
             if (cluster_distances[i][m] < running_mean_)
@@ -512,7 +511,7 @@ private:
 
       for (SizeType j = 0; j < n_dimensions_; ++j)
       {
-        k_means_.Set({cur_cluster, j}, data.At({assigned_data_points.back(), j}));
+        k_means_.Set(cur_cluster, j, data.At(assigned_data_points.back(), j));
       }
 
       // update count of remaining data points and clusters
@@ -535,7 +534,7 @@ private:
       {
         for (SizeType k = 0; k < n_dimensions_; ++k)
         {
-          temp_k_.Set({j, k}, k_means_.At({i, k}));
+          temp_k_.Set(j, k, k_means_.At(i, k));
         }
       }
       k_euclids_[i] = fetch::math::distance::EuclideanMatrix(data, temp_k_, 1);
@@ -547,7 +546,7 @@ private:
 
     for (SizeType i = 0; i < n_points_; ++i)
     {
-      running_mean_ = std::numeric_limits<typename ArrayType::Type>::max();
+      running_mean_ = NumericMax<typename ArrayType::Type>();
       for (SizeType j = 0; j < n_clusters_; ++j)
       {
         if (k_euclids_[j][i] < running_mean_)
@@ -635,7 +634,7 @@ private:
       cur_k = static_cast<SizeType>(k_assignment_[i]);
       for (SizeType j = 0; j < n_dimensions_; ++j)
       {
-        k_means_.Set({cur_k, j}, k_means_.At({cur_k, j}) + data.At({i, j}));
+        k_means_.Set(cur_k, j, k_means_.At(cur_k, j) + data.At(i, j));
       }
     }
 
@@ -644,8 +643,7 @@ private:
     {
       for (SizeType i = 0; i < n_dimensions_; ++i)
       {
-        k_means_.Set({m, i},
-                     k_means_.At({m, i}) / static_cast<typename ArrayType::Type>(k_count_[m]));
+        k_means_.Set(m, i, k_means_.At(m, i) / static_cast<typename ArrayType::Type>(k_count_[m]));
       }
     }
   }
@@ -666,9 +664,7 @@ private:
         cur_k = static_cast<SizeType>(k_assignment_[i]);
         for (SizeType j = 0; j < n_dimensions_; ++j)
         {
-          k_means_.Set(std::vector<SizeType>({cur_k, j}),
-                       k_means_.At(std::vector<SizeType>({cur_k, j})) +
-                           data.At(std::vector<SizeType>({i, j})));
+          k_means_.Set(cur_k, j, k_means_.At(cur_k, j) + data.At(i, j));
         }
       }
     }
@@ -678,9 +674,7 @@ private:
     {
       for (SizeType i = 0; i < n_dimensions_; ++i)
       {
-        k_means_.Set(std::vector<SizeType>({m, i}),
-                     k_means_.At(std::vector<SizeType>({m, i})) /
-                         static_cast<typename ArrayType::Type>(k_count_[m]));
+        k_means_.Set(m, i, k_means_.At(m, i) / static_cast<typename ArrayType::Type>(k_count_[m]));
       }
     }
   }
@@ -730,7 +724,7 @@ private:
     }
   }
 
-  static constexpr SizeType INVALID       = std::numeric_limits<SizeType>::max();
+  static constexpr SizeType INVALID       = NumericMax<SizeType>();
   SizeType                  n_points_     = INVALID;
   SizeType                  n_dimensions_ = INVALID;
   SizeType                  n_clusters_   = INVALID;
@@ -739,10 +733,10 @@ private:
   SizeType max_no_change_convergence_ = INVALID;  // max no change k_assignment before convergence
   SizeType loop_counter_              = INVALID;
   SizeType max_loops_                 = INVALID;
-  DataType assigned_k_ = std::numeric_limits<DataType>::max();  // current cluster to assign
+  DataType assigned_k_                = NumericMax<DataType>();  // current cluster to assign
 
   // used to find the smallest distance out of K comparisons
-  typename ArrayType::Type running_mean_ = std::numeric_limits<typename ArrayType::Type>::max();
+  typename ArrayType::Type running_mean_ = NumericMax<typename ArrayType::Type>();
 
   std::default_random_engine rng_;
 

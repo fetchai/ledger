@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "core/uri.hpp"
-
 #include "core/byte_array/byte_array.hpp"
 #include <gtest/gtest.h>
 #include <iostream>

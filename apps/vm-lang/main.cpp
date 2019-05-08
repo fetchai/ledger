@@ -304,13 +304,21 @@ int main(int argc, char **argv)
     state_map.LoadFromFile(data_path.c_str());
   }
 
+  vm->AttachOutputDevice("stdout", std::cout);
+  vm->AttachOutputDevice("stderr", std::cerr);
+
   // Execute the requested function
   std::string        error;
   std::string        console;
   fetch::vm::Variant output;
   bool const         success =
-      vm->Execute(*script, params.program().GetParam("func", "main"), error, console, output);
+      vm->Execute(*script, params.program().GetParam("func", "main"), error, output);
 
+  if (!success)
+  {
+    std::cerr << error << std::endl;
+    return 1;
+  }
   // if there is any console output print it
   if (!console.empty())
   {
@@ -320,7 +328,7 @@ int main(int argc, char **argv)
   // display the error message if the script execution was not successful
   if (!success)
   {
-    std::cout << error << std::endl;
+    std::cerr << error << std::endl;
   }
 
   // save any specified data file

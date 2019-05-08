@@ -41,30 +41,32 @@ TYPED_TEST_CASE(HammingTest, MyTypes);
 
 TEST(HammingTest, simple_test)
 {
+  using SizeType = typename fetch::math::Tensor<float>::SizeType;
+
   Tensor<double> A = Tensor<double>(4);
-  A.Set(0, 1);
-  A.Set(1, 2);
-  A.Set(2, 3);
-  A.Set(3, 4);
+  A.Set(SizeType{0}, 1);
+  A.Set(SizeType{1}, 2);
+  A.Set(SizeType{2}, 3);
+  A.Set(SizeType{3}, 4);
   EXPECT_EQ(Hamming(A, A), 0);
 
   Tensor<double> B = Tensor<double>(4);
-  B.Set(0, 1);
-  B.Set(1, 2);
-  B.Set(2, 3);
-  B.Set(3, 2);
+  B.Set(SizeType{0}, 1);
+  B.Set(SizeType{1}, 2);
+  B.Set(SizeType{2}, 3);
+  B.Set(SizeType{3}, 2);
 
   EXPECT_EQ(Hamming(A, B), 1);
 
   Tensor<double> C = Tensor<double>(3);
-  C.Set(0, 1);
-  C.Set(1, 2);
-  C.Set(2, 3);
+  C.Set(SizeType{0}, 1);
+  C.Set(SizeType{1}, 2);
+  C.Set(SizeType{2}, 3);
 
   Tensor<double> D = Tensor<double>(3);
-  D.Set(0, 1);
-  D.Set(1, 2);
-  D.Set(2, 9);
+  D.Set(SizeType{0}, 1);
+  D.Set(SizeType{1}, 2);
+  D.Set(SizeType{2}, 9);
 
   EXPECT_EQ(Hamming(C, D), 1);
 }

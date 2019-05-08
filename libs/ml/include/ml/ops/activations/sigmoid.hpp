@@ -54,23 +54,23 @@ public:
   }
 
   virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape() == errorSignal.shape());
-    ArrayType returnSignal{errorSignal.shape()};
+    ArrayType return_signal{errorSignal.shape()};
     ArrayType t{inputs.front().get().shape()};
 
     // gradient of sigmoid function is s(x)(1 - s(x))
     t = Ops<T>::Forward(inputs);
-    fetch::math::Subtract(DataType(1), t, returnSignal);
-    fetch::math::Multiply(t, returnSignal, returnSignal);
+    fetch::math::Subtract(DataType(1), t, return_signal);
+    fetch::math::Multiply(t, return_signal, return_signal);
 
     // multiply by errorSignal (chain rule)
-    fetch::math::Multiply(errorSignal, returnSignal, returnSignal);
+    fetch::math::Multiply(errorSignal, return_signal, return_signal);
 
-    return {returnSignal};
+    return {return_signal};
   }
 
   static constexpr char const *DESCRIPTOR = "Sigmoid";
@@ -78,7 +78,7 @@ public:
 private:
   // minimum possible output value of the sigmoid should not be zero, but actually epsilon
   // likewise maximum output should be 1 - epsilon
-  DataType epsilon_ = DataType(1e-12);
+  DataType epsilon_ = DataType(1e-7);
 };
 
 }  // namespace ops

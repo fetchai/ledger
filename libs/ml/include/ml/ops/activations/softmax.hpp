@@ -33,43 +33,66 @@ public:
   using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  Softmax()          = default;
-  virtual ~Softmax() = default;
+  Softmax(SizeType axis = 0)
+    : axis_(axis)
+  {}
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  ~Softmax() = default;
+
+  ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                    ArrayType &                                                 output)
   {
     ASSERT(output.shape() == ComputeOutputShape(inputs));
-    assert(inputs.size() == 1);
-    fetch::math::Softmax(inputs[0].get(), output);
+    ASSERT(inputs.size() == 1);
+    fetch::math::Softmax(inputs[0].get(), output, axis_);
     return output;
   }
 
-  virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+  std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
-    assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == errorSignal.shape());
+    ASSERT(inputs.size() == 1);
+    ASSERT(inputs.front().get().shape() == errorSignal.shape());
 
-    ArrayType returnSignal = errorSignal.Clone();
-
+    ArrayType return_signal = errorSignal.Copy();
     ArrayType t(this->ComputeOutputShape(inputs));
     t = this->Forward(inputs, t);
-    returnSignal.InlineMultiply(t);
-    typename ArrayType::Type sum = returnSignal.Sum();
-    t.InlineMultiply(sum);
-    returnSignal.InlineSubtract(t);
-    return {returnSignal};
+    return_signal.InlineMultiply(t);
+
+    // 1D softmax
+    if (inputs.front().get().shape().size() == 1)
+    {
+      typename ArrayType::Type sum = return_signal.Sum();
+      t.InlineMultiply(sum);
+    }
+    // 2D softmax
+    else if (inputs.front().get().shape().size() == 2)
+    {
+      ArrayType sum;
+      sum = ReduceSum(return_signal, 1 - axis_);
+
+      t.InlineMultiply(sum);
+    }
+    else
+    {
+      throw std::runtime_error("Softmax over >= 3 dimensions not implemented");
+    }
+
+    return_signal.InlineSubtract(t);
+    return {return_signal};
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(
+  std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Softmax";
+
+private:
+  SizeType axis_;
 };
 
 }  // namespace ops

@@ -165,11 +165,11 @@ int main(int argc, char **argv)
 
   auto module = std::make_shared<fetch::vm::Module>();
 
-  module->CreateFreeFunction("Print", &PrintNumber<int>);
-  module->CreateFreeFunction("Print", &PrintNumber<uint64_t>);
-  module->CreateFreeFunction("Print", &PrintNumber<float>);
-  module->CreateFreeFunction("Print", &PrintNumber<double>);
-  module->CreateFreeFunction("Print", &Print);
+  module->CreateFreeFunction("print", &PrintNumber<int>);
+  module->CreateFreeFunction("print", &PrintNumber<uint64_t>);
+  module->CreateFreeFunction("print", &PrintNumber<float>);
+  module->CreateFreeFunction("print", &PrintNumber<double>);
+  module->CreateFreeFunction("print", &Print);
   module->CreateFreeFunction("toString", &toString);
 
   module->CreateClassType<System>("System")
@@ -178,9 +178,9 @@ int main(int argc, char **argv)
 
   module->CreateTemplateInstantiationType<fetch::vm::Array, uint64_t>(fetch::vm::TypeIds::IArray);
 
-  fetch::vm_modules::ml::CreateTensor(module);
-  fetch::vm_modules::ml::CreateGraph(module);
-  fetch::vm_modules::ml::CreateCrossEntropy(module);
+  fetch::vm_modules::ml::CreateTensor(*module);
+  fetch::vm_modules::ml::CreateGraph(*module);
+  fetch::vm_modules::ml::CreateCrossEntropy(*module);
 
   module->CreateClassType<TrainingPairWrapper>("TrainingPair")
       .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>()
@@ -219,10 +219,9 @@ int main(int argc, char **argv)
   // Setting VM up and running
   std::string        error;
   fetch::vm::Variant output;
-  std::string        console;
 
   fetch::vm::VM vm(module.get());
-  if (!vm.Execute(script, "main", error, console, output))
+  if (!vm.Execute(script, "main", error, output))
   {
     std::cout << "Runtime error on line " << error << std::endl;
   }

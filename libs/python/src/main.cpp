@@ -33,11 +33,7 @@
 #include "python/math/distance/py_manhattan.hpp"
 #include "python/math/distance/py_pearson.hpp"
 
-// #include "python/math/clustering/py_kmeans.hpp"
-
 #include "python/math/py_bignumber.hpp"
-#include "python/math/py_exp.hpp"
-#include "python/math/py_log.hpp"
 #include "python/math/py_tensor.hpp"
 #include "python/math/spline/py_linear.hpp"
 
@@ -74,10 +70,7 @@
 
 #include "python/serializers/py_byte_array_buffer.hpp"
 
-// !!!!
 namespace py = pybind11;
-
-//#include "python/network/swarm/py_swarm_agent_api.hpp"
 
 PYBIND11_MODULE(fetch, module)
 {
@@ -136,51 +129,14 @@ PYBIND11_MODULE(fetch, module)
 
   fetch::memory::BuildRange("Range", ns_fetch_memory);
 
-  //  fetch::math::BuildExp< 0, 60801, false>("Exp0", ns_fetch_math);
-  //  fetch::math::BuildLog(ns_fetch_math);
-
-  //  fetch::math::BuildSpline(ns_fetch_math_spline);
-
   ///////////
   // Comparisons
-
-  fetch::math::correlation::BuildPearsonCorrelation("Pearson", ns_fetch_math_correlation);
-  fetch::math::correlation::BuildEisenCorrelation("Eisen", ns_fetch_math_correlation);
-  fetch::math::correlation::BuildJaccardCorrelation("Jaccard", ns_fetch_math_correlation);
-  fetch::math::correlation::BuildGeneralisedJaccardCorrelation("GeneralisedJaccard",
-                                                               ns_fetch_math_correlation);
-
-  fetch::math::distance::BuildPearsonDistance("Pearson", ns_fetch_math_distance);
-  fetch::math::distance::BuildEisenDistance("Eisen", ns_fetch_math_distance);
-  fetch::math::distance::BuildEisenDistance("Cosine", ns_fetch_math_distance);
-  fetch::math::distance::BuildManhattanDistance("Manhattan", ns_fetch_math_distance);
-  fetch::math::distance::BuildEuclideanDistance("Euclidean", ns_fetch_math_distance);
-  fetch::math::distance::BuildJaccardDistance("Jaccard", ns_fetch_math_distance);
-  fetch::math::distance::BuildGeneralisedJaccardDistance("GeneralisedJaccard",
-                                                         ns_fetch_math_distance);
-
-  fetch::math::distance::BuildHammingDistance("Hamming", ns_fetch_math_distance);
-  fetch::math::distance::BuildChebyshevDistance("Chebyshev", ns_fetch_math_distance);
-  fetch::math::distance::BuildBraycurtisDistance("Braycurtis", ns_fetch_math_distance);
 
   ////////////
 
   // fetch::math::clustering::BuildKMeansClustering("KMeans", ns_fetch_math_clustering);
 
   ////////////
-
-  fetch::math::BuildExpStatistics("Exp", ns_fetch_math_statistics);
-  fetch::math::BuildLogStatistics("Log", ns_fetch_math_statistics);
-
-  // Statisticsfetch_math_statistics);
-  fetch::math::BuildMinStatistics("Min", ns_fetch_math_statistics);
-  fetch::math::BuildMaxStatistics("Max", ns_fetch_math_statistics);
-  fetch::math::statistics::BuildMeanStatistics("Mean", ns_fetch_math_statistics);
-  fetch::math::statistics::BuildGeometricMeanStatistics("GeometricMean", ns_fetch_math_statistics);
-  fetch::math::statistics::BuildVarianceStatistics("Variance", ns_fetch_math_statistics);
-  fetch::math::statistics::BuildStandardDeviationStatistics("StandardDeviation",
-                                                            ns_fetch_math_statistics);
-
   fetch::byte_array::BuildConstByteArray(ns_fetch_byte_array);
   fetch::byte_array::BuildByteArray(ns_fetch_byte_array);
 

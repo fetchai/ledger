@@ -33,12 +33,14 @@ template <class T>
 class NodeInterface
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType      = T;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using SliceType      = typename ArrayType::SliceType;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
-  virtual ArrayType const &Evaluate()                                            = 0;
-  virtual void             AddInput(std::shared_ptr<NodeInterface<T>> const &i)  = 0;
-  virtual void             AddOutput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
+  virtual ArrayType &Evaluate()                                            = 0;
+  virtual void       AddInput(std::shared_ptr<NodeInterface<T>> const &i)  = 0;
+  virtual void       AddOutput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
       ArrayType const &errorSignal)                                                = 0;
   virtual void ResetCache(bool input_size_changed)                                 = 0;
@@ -49,15 +51,25 @@ public:
 template <class T, class O>
 class Node : public NodeInterface<T>, public O
 {
+private:
+  enum class CachedOutputState
+  {
+    VALID_CACHE,
+    CHANGED_CONTENT,
+    CHANGED_SIZE
+  };
+
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType      = T;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using SliceType      = typename ArrayType::SliceType;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   template <typename... Params>
   Node(std::string const name, Params... params)
     : O(params...)
     , name_(std::move(name))
-    , cached_output_present_(false)
+    , cached_output_status_(CachedOutputState::CHANGED_SIZE)
     , batch_(false)
   {}
 
@@ -73,12 +85,20 @@ public:
     return inputs;
   }
 
-  virtual ArrayType const &Evaluate()
+  virtual ArrayType &Evaluate()
   {
-    std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
     FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
-    if (!cached_output_present_)
+    if (cached_output_status_ != CachedOutputState::VALID_CACHE)
     {
+      std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
+      if (cached_output_status_ == CachedOutputState::CHANGED_SIZE)
+      {
+        auto output_shape = this->ComputeOutputShape(inputs);
+        if (cached_output_.shape() != output_shape)
+        {
+          cached_output_.ResizeFromShape(output_shape);
+        }
+      }
       if (batch_)
       {
         cached_output_ = this->ForwardBatch(inputs);
@@ -87,7 +107,7 @@ public:
       {
         cached_output_ = this->Forward(inputs, cached_output_);
       }
-      cached_output_present_ = true;
+      cached_output_status_ = CachedOutputState::VALID_CACHE;
     }
 
     return cached_output_;
@@ -139,16 +159,8 @@ public:
 
   virtual void ResetCache(bool input_size_changed)
   {
-    cached_output_present_ = false;
-    if (input_size_changed)
-    {
-      std::vector<std::reference_wrapper<const ArrayType>> inputs = GatherInputs();
-      auto output_size = this->ComputeOutputShape(inputs);
-      if (cached_output_.shape() != output_size)
-      {
-        cached_output_ = ArrayType(output_size);
-      }
-    }
+    cached_output_status_ =
+        input_size_changed ? CachedOutputState::CHANGED_SIZE : CachedOutputState::CHANGED_CONTENT;
   }
 
   virtual void SetBatch(bool b)
@@ -161,7 +173,7 @@ private:
   std::vector<std::shared_ptr<NodeInterface<T>>> outputs_;
   std::string                                    name_;
   ArrayType                                      cached_output_;
-  bool                                           cached_output_present_;
+  CachedOutputState                              cached_output_status_;
   bool                                           batch_;
 };
 

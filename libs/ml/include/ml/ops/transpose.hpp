@@ -44,11 +44,11 @@ public:
   }
 
   virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 1);
-    return {errorSignal.Clone().Transpose()};
+    return {errorSignal.Transpose()};
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(

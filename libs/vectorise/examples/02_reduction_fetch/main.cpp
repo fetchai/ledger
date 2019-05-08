@@ -24,7 +24,7 @@
 
 using type        = float;
 using array_type  = fetch::memory::SharedArray<type>;
-using vector_type = typename array_type::vector_register_type;
+using vector_type = typename array_type::VectorRegisterType;
 
 type Reduction(array_type const &A)
 {

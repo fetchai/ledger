@@ -34,11 +34,11 @@ fetch::math::meta::IfIsMath<T, T> Abs(fetch::vm::VM *, T const &a)
   return x;
 }
 
-static void CreateAbs(std::shared_ptr<fetch::vm::Module> module)
+static void CreateAbs(fetch::vm::Module &module)
 {
-  module->CreateFreeFunction<int32_t>("Abs", &Abs<int32_t>);
-  module->CreateFreeFunction<float_t>("Abs", &Abs<float_t>);
-  module->CreateFreeFunction<double_t>("Abs", &Abs<double_t>);
+  module.CreateFreeFunction<int32_t>("Abs", &Abs<int32_t>);
+  module.CreateFreeFunction<float_t>("Abs", &Abs<float_t>);
+  module.CreateFreeFunction<double_t>("Abs", &Abs<double_t>);
 }
 
 }  // namespace vm_modules

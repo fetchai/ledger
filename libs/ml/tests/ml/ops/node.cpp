@@ -35,6 +35,8 @@ TEST(node_test, node_placeholder)
 
 TEST(node_test, node_relu)
 {
+  using SizeType = fetch::math::SizeType;
+
   std::shared_ptr<fetch::ml::Node<fetch::math::Tensor<int>,
                                   fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>>>>
       placeholder =
@@ -57,16 +59,16 @@ TEST(node_test, node_relu)
   placeholder->SetData(data);
   relu->ResetCache(true);
 
-  for (std::uint64_t i(0); i < 4; ++i)
+  for (SizeType i(0); i < 4; ++i)
   {
-    for (std::uint64_t j(0); j < 4; ++j)
+    for (SizeType j(0); j < 4; ++j)
     {
-      data.Set(std::vector<std::uint64_t>({i, j}), dataValues[i * 4 + j]);
-      gt.Set(std::vector<std::uint64_t>({i, j}), gtValues[i * 4 + j]);
+      data.Set(i, j, dataValues[i * 4 + j]);
+      gt.Set(i, j, gtValues[i * 4 + j]);
     }
   }
 
   EXPECT_EQ(placeholder->template Ops<fetch::math::Tensor<int>>::Forward({}), data);
   EXPECT_EQ(placeholder->Evaluate(), data);
-  EXPECT_TRUE(relu->Evaluate().AllClose(gt));
+  EXPECT_TRUE(relu->Evaluate().Copy().AllClose(gt));
 }
