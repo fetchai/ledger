@@ -23,6 +23,8 @@
 #include <unordered_map>
 #include <vector>
 
+#define EMPTY_CONTEXT_STRING "EMPTY_CONTEXT_STRING"
+
 namespace fetch {
 namespace ml {
 namespace dataloaders {
@@ -39,7 +41,7 @@ namespace dataloaders {
  * @tparam LabelType the type of the "target", i.e. a (hashed) function name
  */
 template <typename DataType, typename LabelType>
-class C2VLoader  // : public DataLoader<DataType, LabelType>
+class C2VLoader : public DataLoader<DataType, LabelType>
 {
 public:
   using ArrayType               = typename std::tuple_element<0, DataType>::type;
@@ -55,10 +57,11 @@ public:
   using umap_str_int  = std::unordered_map<std::string, SizeType>;
   using umap_int_str  = std::unordered_map<SizeType, std::string>;
 
-  C2VLoader()
+  C2VLoader(SizeType max_contexts)
     : iterator_position_get_next_context(0)
     , iterator_position_get_next(0)
-    , current_function_index(0){};
+    , current_function_index(0)
+    , max_contexts(max_contexts){};
 
   /**
    * @brief Gets the next pair of feature and target
@@ -113,6 +116,8 @@ public:
   std::vector<std::pair<std::tuple<SizeType, SizeType, SizeType>, LabelType>> data;
 
 private:
+  SizeType max_contexts;
+
   umap_str_int function_name_counter;
   umap_str_int path_counter;
   umap_str_int word_counter;
@@ -175,6 +180,10 @@ void C2VLoader<DataType, LabelType>::AddData(std::string const &c2v_input)
   std::string       c2v_input_line;
   std::string       function_name;
   std::string       context;
+
+  addToIdxUMaps(EMPTY_CONTEXT_STRING, function_name_to_idx, idx_to_function_name);
+  addToIdxUMaps(EMPTY_CONTEXT_STRING, word_to_idx, idx_to_word);
+  addToIdxUMaps(EMPTY_CONTEXT_STRING, path_to_idx, idx_to_path);
 
   while (std::getline(c2v_input_ss, c2v_input_line, '\n'))
   {
@@ -247,16 +256,28 @@ C2VLoader<DataType, LabelType>::GetNext()
         context_positions.push_back(current_context_position);
       }
 
-      ArrayType source_word_tensor({context_positions.size()});
-      ArrayType path_tensor({context_positions.size()});
-      ArrayType target_word_tensor({context_positions.size()});
+      ArrayType source_word_tensor({this->max_contexts});
+      ArrayType path_tensor({this->max_contexts});
+      ArrayType target_word_tensor({this->max_contexts});
 
-      for(u_int i{0}; i<context_positions.size(); i++){
-            source_word_tensor.Set(i, std::get<0>(this->data[context_positions[i]].first));
-            path_tensor.Set(i, std::get<1>(this->data[context_positions[i]].first));
-            target_word_tensor.Set(i, std::get<2>(this->data[context_positions[i]].first));
+      if(context_positions.size() <= this->max_contexts){ 
+        for(u_int64_t i{0}; i<context_positions.size(); i++){
+              source_word_tensor.Set(i, std::get<0>(this->data[context_positions[i]].first));
+              path_tensor.Set(i, std::get<1>(this->data[context_positions[i]].first));
+              target_word_tensor.Set(i, std::get<2>(this->data[context_positions[i]].first));
+        }
+        for(u_int64_t i{context_positions.size()}; i<this->max_contexts; i++){
+              source_word_tensor.Set(i, this->word_to_idx[EMPTY_CONTEXT_STRING]);
+              path_tensor.Set(i, this->path_to_idx[EMPTY_CONTEXT_STRING]);
+              target_word_tensor.Set(i, this->word_to_idx[EMPTY_CONTEXT_STRING]);
+        }        
+      } else{
+        for(u_int64_t i{0}; i<this->max_contexts; i++){
+              source_word_tensor.Set(i, std::get<0>(this->data[context_positions[i]].first));
+              path_tensor.Set(i, std::get<1>(this->data[context_positions[i]].first));
+              target_word_tensor.Set(i, std::get<2>(this->data[context_positions[i]].first));
+        }
       }
-
       ContextTensorTuple context_tensor_tuple = std::make_tuple(source_word_tensor, path_tensor, target_word_tensor);
 
       ContextTensorsLabelPair return_pair{context_tensor_tuple, old_function_index};
@@ -320,9 +341,11 @@ typename C2VLoader<DataType, LabelType>::SizeType C2VLoader<DataType, LabelType>
 {
   if (name_to_idx.find(input) == name_to_idx.end())
   {
-    name_to_idx[input]              = name_to_idx.size();
-    idx_to_name[name_to_idx.size()] = input;
-    return name_to_idx.size();
+    auto index_of_new_word{name_to_idx.size()};
+    std::cout << "Not found, added " << input << " to " << index_of_new_word << std::endl;
+    name_to_idx[input]              = index_of_new_word;
+    idx_to_name[index_of_new_word] = input;
+    return index_of_new_word;
   }
   else
   {
