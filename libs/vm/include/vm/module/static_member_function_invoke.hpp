@@ -20,31 +20,31 @@
 namespace fetch {
 namespace vm {
 
-template <typename ReturnType, typename FreeFunction, typename... Ts>
-struct FreeFunctionInvokerHelper
+template <typename ReturnType, typename StaticMemberFunction, typename... Ts>
+struct StaticMemberFunctionInvokerHelper
 {
-  static void Invoke(VM *vm, int sp_offset, TypeId return_type_id, FreeFunction f,
+  static void Invoke(VM *vm, int sp_offset, TypeId type_id, TypeId return_type_id, StaticMemberFunction f,
                      Ts const &... parameters)
   {
-    ReturnType result((*f)(vm, parameters...));
+    ReturnType result((*f)(vm, type_id, parameters...));
     StackSetter<ReturnType>::Set(vm, sp_offset, std::move(result), return_type_id);
     vm->sp_ -= sp_offset;
   };
 };
 
-template <typename FreeFunction, typename... Ts>
-struct FreeFunctionInvokerHelper<void, FreeFunction, Ts...>
+template <typename StaticMemberFunction, typename... Ts>
+struct StaticMemberFunctionInvokerHelper<void, StaticMemberFunction, Ts...>
 {
-  static void Invoke(VM *vm, int sp_offset, TypeId /* return_type_id */, FreeFunction f,
-                     Ts const &... parameters)
+  static void Invoke(VM *vm, int sp_offset, TypeId type_id, TypeId /* return_type_id */,
+                     StaticMemberFunction f, Ts const &... parameters)
   {
-    (*f)(vm, parameters...);
+    (*f)(vm, type_id, parameters...);
     vm->sp_ -= sp_offset;
   };
 };
 
-template <typename ReturnType, typename FreeFunction, typename... Used>
-struct FreeFunctionInvoker
+template <typename ReturnType, typename StaticMemberFunction, typename... Used>
+struct StaticMemberFunctionInvoker
 {
   template <int PARAMETER_OFFSET, typename... Ts>
   struct Invoker;
@@ -52,52 +52,53 @@ struct FreeFunctionInvoker
   struct Invoker<PARAMETER_OFFSET, T, Ts...>
   {
     // Invoked on non-final parameter
-    static void Invoke(VM *vm, int sp_offset, TypeId return_type_id, FreeFunction f,
+    static void Invoke(VM *vm, int sp_offset, TypeId type_id, TypeId return_type_id, StaticMemberFunction f,
                        Used const &... used)
     {
       using P = std::decay_t<T>;
       P parameter(StackGetter<P>::Get(vm, PARAMETER_OFFSET));
-      using InvokerType = typename FreeFunctionInvoker<ReturnType, FreeFunction, Used...,
+      using InvokerType = typename StaticMemberFunctionInvoker<ReturnType, StaticMemberFunction, Used...,
                                                 T>::template Invoker<PARAMETER_OFFSET - 1, Ts...>;
-      InvokerType::Invoke(vm, sp_offset, return_type_id, f, used..., parameter);
+      InvokerType::Invoke(vm, sp_offset, type_id, return_type_id, f, used..., parameter);
     }
   };
   template <int PARAMETER_OFFSET, typename T>
   struct Invoker<PARAMETER_OFFSET, T>
   {
     // Invoked on final parameter
-    static void Invoke(VM *vm, int sp_offset, TypeId return_type_id, FreeFunction f,
+    static void Invoke(VM *vm, int sp_offset, TypeId type_id, TypeId return_type_id, StaticMemberFunction f,
                        Used const &... used)
     {
       using P = std::decay_t<T>;
       P parameter(StackGetter<P>::Get(vm, PARAMETER_OFFSET));
-      using InvokerType = FreeFunctionInvokerHelper<ReturnType, FreeFunction, Used..., T>;
-      InvokerType::Invoke(vm, sp_offset, return_type_id, f, used..., parameter);
+      using InvokerType = StaticMemberFunctionInvokerHelper<ReturnType, StaticMemberFunction, Used..., T>;
+      InvokerType::Invoke(vm, sp_offset, type_id, return_type_id, f, used..., parameter);
     }
   };
   template <int PARAMETER_OFFSET>
   struct Invoker<PARAMETER_OFFSET>
   {
     // Invoked on no parameters
-    static void Invoke(VM *vm, int sp_offset, TypeId return_type_id, FreeFunction f)
+    static void Invoke(VM *vm, int sp_offset, TypeId type_id, TypeId return_type_id, StaticMemberFunction f)
     {
-      using InvokerType = FreeFunctionInvokerHelper<ReturnType, FreeFunction>;
-      InvokerType::Invoke(vm, sp_offset, return_type_id, f);
+      using InvokerType = StaticMemberFunctionInvokerHelper<ReturnType, StaticMemberFunction>;
+      InvokerType::Invoke(vm, sp_offset, type_id, return_type_id, f);
     }
   };
 };
 
 template <typename ReturnType, typename... Ts>
-void InvokeFreeFunction(VM *vm, TypeId return_type_id, ReturnType (*f)(VM *, Ts...))
+void InvokeStaticMemberFunction(VM *vm, TypeId type_id, TypeId return_type_id,
+                        ReturnType (*f)(VM *, TypeId, Ts...))
 {
   constexpr int num_parameters         = int(sizeof...(Ts));
   constexpr int first_parameter_offset = num_parameters - 1;
   constexpr int sp_offset              = num_parameters - IsResult<ReturnType>::value;
-  using FreeFunction                   = ReturnType (*)(VM *, Ts...);
-  using FreeFunctionInvoker =
-      typename FreeFunctionInvoker<ReturnType,
-                                   FreeFunction>::template Invoker<first_parameter_offset, Ts...>;
-  FreeFunctionInvoker::Invoke(vm, sp_offset, return_type_id, f);
+  using StaticMemberFunction           = ReturnType (*)(VM *, TypeId, Ts...);
+  using StaticMemberFunctionInvoker =
+      typename StaticMemberFunctionInvoker<ReturnType,
+                                   StaticMemberFunction>::template Invoker<first_parameter_offset, Ts...>;
+  StaticMemberFunctionInvoker::Invoke(vm, sp_offset, type_id, return_type_id, f);
 }
 
 }  // namespace vm

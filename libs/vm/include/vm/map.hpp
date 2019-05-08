@@ -29,6 +29,8 @@ public:
   virtual ~IMap() = default;
   static Ptr<IMap> Constructor(VM *vm, TypeId type_id);
   virtual int32_t  Count() const = 0;
+  virtual TemplateParameter2 GetIndexedValue(TemplateParameter1 const &key) = 0;
+  virtual void SetIndexedValue(TemplateParameter1 const &key, TemplateParameter2 const &value) = 0;
 
 protected:
   IMap(VM *vm, TypeId type_id)
@@ -41,17 +43,17 @@ struct H;
 template <typename T>
 struct H<T, typename std::enable_if_t<IsPrimitive<T>::value>>
 {
-  size_t operator()(Variant const &v) const
+  size_t operator()(TemplateParameter1 const &key) const
   {
-    return std::hash<T>()(v.primitive.Get<T>());
+    return std::hash<T>()(key.primitive.Get<T>());
   }
 };
 template <typename T>
 struct H<T, typename std::enable_if_t<IsPtr<T>::value>>
 {
-  size_t operator()(Variant const &v) const
+  size_t operator()(TemplateParameter1 const &key) const
   {
-    return v.object->GetHashCode();
+    return key.object->GetHashCode();
   }
 };
 
@@ -60,25 +62,23 @@ struct E;
 template <typename T>
 struct E<T, typename std::enable_if_t<IsPrimitive<T>::value>>
 {
-  bool operator()(Variant const &lhsv, Variant const &rhsv) const
+  bool operator()(TemplateParameter1 const &lhs, TemplateParameter1 const &rhs) const
   {
-    return lhsv.primitive.Get<T>() == rhsv.primitive.Get<T>();
+    return math::IsEqual(lhs.primitive.Get<T>(), rhs.primitive.Get<T>());
   }
 };
 template <typename T>
 struct E<T, typename std::enable_if_t<IsPtr<T>::value>>
 {
-  bool operator()(Variant const &lhsv, Variant const &rhsv) const
+  bool operator()(TemplateParameter1 const &lhs, TemplateParameter1 const &rhs) const
   {
-    return lhsv.object->IsEqual(lhsv.object, rhsv.object);
+    return lhs.object->IsEqual(lhs.object, rhs.object);
   }
 };
 
 template <typename Key, typename Value>
 struct Map : public IMap
 {
-  using Pair = std::pair<Variant, Variant>;
-
   Map()          = delete;
   virtual ~Map() = default;
 
@@ -91,80 +91,71 @@ struct Map : public IMap
     return int32_t(map.size());
   }
 
-  Value *Find(Variant &keyv)
+  TemplateParameter2 *Find(TemplateParameter1 const &key)
   {
-    auto it = map.find(keyv);
+    auto it = map.find(key);
     if (it != map.end())
     {
-      keyv.Reset();
-      void *ptr = &(it->second);
-      return static_cast<Value *>(ptr);
+      TemplateParameter2 &value = it->second;
+      return &value;
     }
     RuntimeError("map key does not exist");
     return nullptr;
   }
 
   template <typename U>
-  typename std::enable_if_t<IsPrimitive<U>::value, Value *> Find()
+  typename std::enable_if_t<IsPrimitive<U>::value, TemplateParameter2 *> Get(TemplateParameter1 const &key)
   {
-    Variant &keyv = Pop();
-    return Find(keyv);
+    return Find(key);
   }
 
   template <typename U>
-  typename std::enable_if_t<IsPtr<U>::value, Value *> Find()
+  typename std::enable_if_t<IsPtr<U>::value, TemplateParameter2 *> Get(TemplateParameter1 const &key)
   {
-    Variant &keyv = Pop();
-    if (keyv.object)
+    if (key.object)
     {
-      return Find(keyv);
+      return Find(key);
     }
     RuntimeError("map key is null reference");
     return nullptr;
   }
 
-  virtual void *FindElement() override
+  virtual TemplateParameter2 GetIndexedValue(TemplateParameter1 const &key) override
   {
-    return Find<Key>();
-  }
-
-  virtual void PushElement(TypeId element_type_id) override
-  {
-    Value *ptr = Find<Key>();
+    TemplateParameter2 *ptr = Get<Key>(key);
     if (ptr)
     {
-      Variant &top = Push();
-      top.Construct(*ptr, element_type_id);
+      return *ptr;
     }
+    // Not found
+    return TemplateParameter2();
   }
 
   template <typename U>
-  typename std::enable_if_t<IsPrimitive<U>::value, void> Store(Variant &keyv, Variant &valuev)
+  typename std::enable_if_t<IsPrimitive<U>::value, void> Store(TemplateParameter1 const &key,
+      TemplateParameter2 const &value)
   {
-    map.insert(Pair(keyv, valuev));
+    map[key] = value;
   }
 
   template <typename U>
-  typename std::enable_if_t<IsPtr<U>::value, void> Store(Variant &keyv, Variant &valuev)
+  typename std::enable_if_t<IsPtr<U>::value, void> Store(TemplateParameter1 const &key,
+      TemplateParameter2 const &value)
   {
-    if (keyv.object)
+    if (key.object)
     {
-      map.insert(Pair(keyv, valuev));
+      map[key] = value;
       return;
     }
     RuntimeError("map key is null reference");
   }
 
-  virtual void PopToElement() override
+  virtual void SetIndexedValue(TemplateParameter1 const &key, TemplateParameter2 const &value) override
   {
-    Variant &keyv   = Pop();
-    Variant &valuev = Pop();
-    Store<Key>(keyv, valuev);
-    valuev.Reset();
-    keyv.Reset();
+    Store<Key>(key, value);
   }
 
-  std::unordered_map<Variant, Variant, H<Key>, E<Key>> map;
+  std::unordered_map<TemplateParameter1, TemplateParameter2, H<Key>, E<Key>> map;
 };
 
 template <typename Key>

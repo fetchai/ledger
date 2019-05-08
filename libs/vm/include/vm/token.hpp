@@ -28,6 +28,7 @@ struct Token
   enum class Kind : uint16_t
   {
     EndOfInput = 0,
+    Unknown,
     Integer32,
     UnsignedInteger32,
     Integer64,
@@ -64,17 +65,17 @@ struct Token
     RightParenthesis,
     LeftSquareBracket,
     RightSquareBracket,
-    Modulo,
     Plus,
     Minus,
     Multiply,
     Divide,
-    ModuloAssign,
-    AddAssign,
-    SubtractAssign,
-    MultiplyAssign,
-    DivideAssign,
+    Modulo,
     Assign,
+    InplaceAdd,
+    InplaceSubtract,
+    InplaceMultiply,
+    InplaceDivide,
+    InplaceModulo,
     Equal,
     NotEqual,
     LessThan,
@@ -85,8 +86,7 @@ struct Token
     Or,
     Not,
     Inc,
-    Dec,
-    Unknown
+    Dec
   };
   Kind        kind;
   uint32_t    offset;

@@ -1247,27 +1247,27 @@ YY_RULE_SETUP
 case 54:
 YY_RULE_SETUP
 #line 172 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::ModuloAssign, yytext, yyleng, yyextra);}
+{return Set(yylval, fetch::vm::Token::Kind::InplaceModulo, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
 #line 173 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::AddAssign, yytext, yyleng, yyextra);}
+{return Set(yylval, fetch::vm::Token::Kind::InplaceAdd, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
 #line 174 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::SubtractAssign, yytext, yyleng, yyextra);}
+{return Set(yylval, fetch::vm::Token::Kind::InplaceSubtract, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
 #line 175 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::MultiplyAssign, yytext, yyleng, yyextra);}
+{return Set(yylval, fetch::vm::Token::Kind::InplaceMultiply, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
 #line 176 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::DivideAssign, yytext, yyleng, yyextra);}
+{return Set(yylval, fetch::vm::Token::Kind::InplaceDivide, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
@@ -2525,5 +2525,6 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 #define YYTABLES_NAME "yytables"
 
 #line 195 "tokeniser.l"
+
 
 // clang-format on

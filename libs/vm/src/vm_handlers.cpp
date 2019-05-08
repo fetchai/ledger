@@ -21,20 +21,16 @@
 namespace fetch {
 namespace vm {
 
-//
-// Opcode Handlers
-//
-
-void VM::VarDeclare()
+void VM::Handler__VariableDeclare()
 {
   Variant &variable = GetVariable(instruction_->index);
-  if (instruction_->data.i32 != -1)
+  if (instruction_->type_id > TypeIds::PrimitiveMaxId)
   {
     variable.Construct(Ptr<Object>(), instruction_->type_id);
     LiveObjectInfo &info = live_object_stack_[++live_object_sp_];
     info.frame_sp        = frame_sp_;
     info.variable_index  = instruction_->index;
-    info.scope_number    = instruction_->data.i32;
+    info.scope_number    = instruction_->data;
   }
   else
   {
@@ -44,102 +40,124 @@ void VM::VarDeclare()
   }
 }
 
-void VM::VarDeclareAssign()
+void VM::Handler__VariableDeclareAssign()
 {
   Variant &variable = GetVariable(instruction_->index);
   variable          = std::move(Pop());
-  if (instruction_->data.i32 != -1)
+  if (instruction_->type_id > TypeIds::PrimitiveMaxId)
   {
     LiveObjectInfo &info = live_object_stack_[++live_object_sp_];
     info.frame_sp        = frame_sp_;
     info.variable_index  = instruction_->index;
-    info.scope_number    = instruction_->data.i32;
+    info.scope_number    = instruction_->data;
   }
 }
 
-void VM::PushConstant()
-{
-  Variant &top = Push();
-  top.Construct(instruction_->data, instruction_->type_id);
-}
-
-void VM::PushString()
-{
-  Variant &top = Push();
-  top.Construct(strings_[instruction_->index], TypeIds::String);
-}
-
-void VM::PushNull()
+void VM::Handler__PushNull()
 {
   Variant &top = Push();
   top.Construct(Ptr<Object>(), instruction_->type_id);
 }
 
-void VM::PushVariable()
+void VM::Handler__PushFalse()
+{
+  Variant &top = Push();
+  top.Construct(false, TypeIds::Bool);
+}
+
+void VM::Handler__PushTrue()
+{
+  Variant &top = Push();
+  top.Construct(true, TypeIds::Bool);
+}
+
+void VM::Handler__PushString()
+{
+  Variant &top = Push();
+  top.Construct(strings_[instruction_->index], TypeIds::String);
+}
+
+void VM::Handler__PushConstant()
+{
+  Variant &      top      = Push();
+  Variant const &constant = executable_->constants[instruction_->index];
+  top.Construct(constant);
+}
+
+void VM::Handler__PushVariable()
 {
   Variant const &variable = GetVariable(instruction_->index);
   Variant &      top      = Push();
   top.Construct(variable);
 }
 
-void VM::PushElement()
-{
-  Variant &container = Pop();
-  if (container.object)
-  {
-    container.object->PushElement(instruction_->type_id);
-    container.Reset();
-    return;
-  }
-  RuntimeError("null reference");
-}
-
-void VM::PopToVariable()
+void VM::Handler__PopToVariable()
 {
   Variant &variable = GetVariable(instruction_->index);
   variable          = std::move(Pop());
 }
 
-void VM::PopToElement()
+void VM::Handler__Inc()
 {
-  Variant &container = Pop();
-  if (container.object)
-  {
-    container.object->PopToElement();
-    container.Reset();
-    return;
-  }
-  RuntimeError("null reference");
+  Variant &top = Top();
+  ExecuteIntegralOp<Inc>(instruction_->type_id, top, top);
 }
 
-void VM::Discard()
+void VM::Handler__Dec()
+{
+  Variant &top = Top();
+  ExecuteIntegralOp<Dec>(instruction_->type_id, top, top);
+}
+
+void VM::Handler__Duplicate()
+{
+  int end = sp_;
+  int p = sp_ - instruction_->data;
+  do
+  {
+    stack_[++sp_].Construct(stack_[++p]);
+  }
+  while (p < end);
+}
+
+void VM::Handler__DuplicateInsert()
+{
+  int end = sp_ - instruction_->data;
+  for (int p = sp_; p >= end; --p)
+  {
+    stack_[p + 1] = std::move(stack_[p]);
+  }
+  stack_[end] = stack_[++sp_];
+}
+
+void VM::Handler__Discard()
 {
   Pop().Reset();
 }
 
-void VM::Destruct()
+void VM::Handler__Destruct()
 {
-  Destruct(instruction_->data.i32);
+  Destruct(instruction_->data);
 }
 
-void VM::Break()
+void VM::Handler__Break()
 {
-  Destruct(instruction_->data.i32);
+  Destruct(instruction_->data);
   pc_ = instruction_->index;
 }
 
-void VM::Continue()
+void VM::Handler__Continue()
 {
-  Destruct(instruction_->data.i32);
+  Destruct(instruction_->data);
   pc_ = instruction_->index;
 }
 
-void VM::Jump()
+void VM::Handler__Jump()
 {
   pc_ = instruction_->index;
 }
 
-void VM::JumpIfFalse()
+void VM::Handler__JumpIfFalse()
 {
   Variant &v = Pop();
   if (v.primitive.ui8 == 0)
@@ -149,7 +167,7 @@ void VM::JumpIfFalse()
   v.Reset();
 }
 
-void VM::JumpIfTrue()
+void VM::Handler__JumpIfTrue()
 {
   Variant &v = Pop();
   if (v.primitive.ui8 != 0)
@@ -160,9 +178,9 @@ void VM::JumpIfTrue()
 }
 
 // NOTE: Opcodes::Return and Opcodes::ReturnValue both route through here
-void VM::Return()
+void VM::Handler__Return()
 {
-  Destruct(instruction_->data.i32);
+  Destruct(0);
   if (instruction_->opcode == Opcodes::ReturnValue)
   {
     for (int i = bsp_ + 1; i < bsp_ + function_->num_parameters; ++i)
@@ -199,73 +217,13 @@ void VM::Return()
   }
 }
 
-void VM::ToInt8()
-{
-  Variant &top = Top();
-  Cast(top, instruction_->type_id, top.primitive.i8);
-}
-
-void VM::ToByte()
-{
-  Variant &top = Top();
-  Cast(top, instruction_->type_id, top.primitive.ui8);
-}
-
-void VM::ToInt16()
-{
-  Variant &top = Top();
-  Cast(top, instruction_->type_id, top.primitive.i16);
-}
-
-void VM::ToUInt16()
-{
-  Variant &top = Top();
-  Cast(top, instruction_->type_id, top.primitive.ui16);
-}
-
-void VM::ToInt32()
-{
-  Variant &top = Top();
-  Cast(top, instruction_->type_id, top.primitive.i32);
-}
-
-void VM::ToUInt32()
-{
-  Variant &top = Top();
-  Cast(top, instruction_->type_id, top.primitive.ui32);
-}
-
-void VM::ToInt64()
-{
-  Variant &top = Top();
-  Cast(top, instruction_->type_id, top.primitive.i64);
-}
-
-void VM::ToUInt64()
-{
-  Variant &top = Top();
-  Cast(top, instruction_->type_id, top.primitive.ui64);
-}
-
-void VM::ToFloat32()
-{
-  Variant &top = Top();
-  Cast(top, instruction_->type_id, top.primitive.f32);
-}
-
-void VM::ToFloat64()
-{
-  Variant &top = Top();
-  Cast(top, instruction_->type_id, top.primitive.f64);
-}
-
-void VM::ForRangeInit()
+void VM::Handler__ForRangeInit()
 {
   ForRangeLoop loop;
   loop.variable_index = instruction_->index;
   Variant &variable   = GetVariable(loop.variable_index);
   variable.type_id    = instruction_->type_id;
-  if (instruction_->data.i32 == 2)
+  if (instruction_->data == 2)
   {
     Variant &targetv = Pop();
     Variant &startv  = Pop();
@@ -289,12 +247,12 @@ void VM::ForRangeInit()
   range_loop_stack_[++range_loop_sp_] = loop;
 }
 
-void VM::ForRangeIterate()
+void VM::Handler__ForRangeIterate()
 {
   ForRangeLoop &loop     = range_loop_stack_[range_loop_sp_];
   Variant &     variable = GetVariable(loop.variable_index);
   bool          finished = true;
-  if (instruction_->data.i32 == 2)
+  if (instruction_->data == 2)
   {
     switch (variable.type_id)
     {
@@ -429,14 +387,14 @@ void VM::ForRangeIterate()
   }
 }
 
-void VM::ForRangeTerminate()
+void VM::Handler__ForRangeTerminate()
 {
   --range_loop_sp_;
 }
 
-void VM::InvokeUserFunction()
+void VM::Handler__InvokeUserDefinedFreeFunction()
 {
-  Index const index = instruction_->index;
+  uint16_t const index = instruction_->index;
 
   // Note: the parameters are already on the stack
   Frame frame;
@@ -449,80 +407,34 @@ void VM::InvokeUserFunction()
     return;
   }
   frame_stack_[++frame_sp_] = frame;
-  function_                 = &(script_->functions[index]);
+  function_                 = &(executable_->functions[index]);
   bsp_                      = sp_ - function_->num_parameters + 1;  // first parameter
   pc_                       = 0;
   int const num_locals      = function_->num_variables - function_->num_parameters;
   sp_ += num_locals;
 }
 
-void VM::Equal()
+void VM::Handler__VariablePrefixInc()
 {
-  DoRelationalOp<EqualOp>();
+  DoVariablePrefixPostfixOp<PrefixInc>();
 }
 
-void VM::ObjectEqual()
+void VM::Handler__VariablePrefixDec()
 {
-  Variant &rhsv = Pop();
-  Variant &lhsv = Top();
-  lhsv.Assign(IsEqual(lhsv.object, rhsv.object), TypeIds::Bool);
-  rhsv.Reset();
+  DoVariablePrefixPostfixOp<PrefixDec>();
 }
 
-void VM::NotEqual()
+void VM::Handler__VariablePostfixInc()
 {
-  DoRelationalOp<NotEqualOp>();
+  DoVariablePrefixPostfixOp<PostfixInc>();
 }
 
-void VM::ObjectNotEqual()
+void VM::Handler__VariablePostfixDec()
 {
-  Variant &rhsv = Pop();
-  Variant &lhsv = Top();
-  lhsv.Assign(IsNotEqual(lhsv.object, rhsv.object), TypeIds::Bool);
-  rhsv.Reset();
+  DoVariablePrefixPostfixOp<PostfixDec>();
 }
 
-void VM::LessThan()
-{
-  DoRelationalOp<LessThanOp>();
-}
-
-void VM::ObjectLessThan()
-{
-  DoObjectRelationalOp<ObjectLessThanOp>();
-}
-
-void VM::LessThanOrEqual()
-{
-  DoRelationalOp<LessThanOrEqualOp>();
-}
-
-void VM::ObjectLessThanOrEqual()
-{
-  DoObjectRelationalOp<ObjectLessThanOrEqualOp>();
-}
-
-void VM::GreaterThan()
-{
-  DoRelationalOp<GreaterThanOp>();
-}
-
-void VM::ObjectGreaterThan()
-{
-  DoObjectRelationalOp<ObjectGreaterThanOp>();
-}
-
-void VM::GreaterThanOrEqual()
-{
-  DoRelationalOp<GreaterThanOrEqualOp>();
-}
-
-void VM::ObjectGreaterThanOrEqual()
-{
-  DoObjectRelationalOp<ObjectGreaterThanOrEqualOp>();
-}
-
-void VM::And()
+void VM::Handler__And()
 {
   Variant &rhsv = Pop();
   Variant &lhsv = Top();
@@ -530,7 +442,7 @@ void VM::And()
   rhsv.Reset();
 }
 
-void VM::Or()
+void VM::Handler__Or()
 {
   Variant &rhsv = Pop();
   Variant &lhsv = Top();
@@ -538,282 +450,243 @@ void VM::Or()
   rhsv.Reset();
 }
 
-void VM::Not()
+void VM::Handler__Not()
 {
   Variant &top      = Top();
   top.primitive.ui8 = top.primitive.ui8 == 0 ? 1 : 0;
 }
 
-void VM::VariablePrefixInc()
+void VM::Handler__PrimitiveEqual()
 {
-  DoVariableIncDecOp<PrefixIncOp>();
+  DoPrimitiveRelationalOp<PrimitiveEqual>();
 }
 
-void VM::VariablePrefixDec()
+void VM::Handler__ObjectEqual()
 {
-  DoVariableIncDecOp<PrefixDecOp>();
+  Variant &rhsv = Pop();
+  Variant &lhsv = Top();
+  lhsv.Assign(IsEqual(lhsv.object, rhsv.object), TypeIds::Bool);
+  rhsv.Reset();
 }
 
-void VM::VariablePostfixInc()
+void VM::Handler__PrimitiveNotEqual()
 {
-  DoVariableIncDecOp<PostfixIncOp>();
+  DoPrimitiveRelationalOp<PrimitiveNotEqual>();
 }
 
-void VM::VariablePostfixDec()
+void VM::Handler__ObjectNotEqual()
 {
-  DoVariableIncDecOp<PostfixDecOp>();
+  Variant &rhsv = Pop();
+  Variant &lhsv = Top();
+  lhsv.Assign(IsNotEqual(lhsv.object, rhsv.object), TypeIds::Bool);
+  rhsv.Reset();
 }
 
-void VM::ElementPrefixInc()
+void VM::Handler__PrimitiveLessThan()
 {
-  DoElementIncDecOp<PrefixIncOp>();
+  DoPrimitiveRelationalOp<PrimitiveLessThan>();
 }
 
-void VM::ElementPrefixDec()
+void VM::Handler__ObjectLessThan()
 {
-  DoElementIncDecOp<PrefixDecOp>();
+  DoObjectRelationalOp<ObjectLessThan>();
 }
 
-void VM::ElementPostfixInc()
+void VM::Handler__PrimitiveLessThanOrEqual()
 {
-  DoElementIncDecOp<PostfixIncOp>();
+  DoPrimitiveRelationalOp<PrimitiveLessThanOrEqual>();
 }
 
-void VM::ElementPostfixDec()
+void VM::Handler__ObjectLessThanOrEqual()
 {
-  DoElementIncDecOp<PostfixDecOp>();
+  DoObjectRelationalOp<ObjectLessThanOrEqual>();
 }
 
-void VM::Modulo()
+void VM::Handler__PrimitiveGreaterThan()
 {
-  DoIntegerOp<ModuloOp>();
+  DoPrimitiveRelationalOp<PrimitiveGreaterThan>();
 }
 
-void VM::VariableModuloAssign()
+void VM::Handler__ObjectGreaterThan()
 {
-  DoVariableIntegerAssignOp<ModuloOp>();
+  DoObjectRelationalOp<ObjectGreaterThan>();
 }
 
-void VM::ElementModuloAssign()
+void VM::Handler__PrimitiveGreaterThanOrEqual()
 {
-  DoElementIntegerAssignOp<ModuloOp>();
+  DoPrimitiveRelationalOp<PrimitiveGreaterThanOrEqual>();
 }
 
-void VM::UnaryMinus()
+void VM::Handler__ObjectGreaterThanOrEqual()
+{
+  DoObjectRelationalOp<ObjectGreaterThanOrEqual>();
+}
+
+void VM::Handler__PrimitiveNegate()
 {
   Variant &top = Top();
-  ExecuteNumberOp<UnaryMinusOp>(instruction_->type_id, top, top);
+  ExecuteNumericOp<PrimitiveNegate>(instruction_->type_id, top, top);
 }
 
-void VM::ObjectUnaryMinus()
+void VM::Handler__ObjectNegate()
 {
   Variant &top = Top();
   if (top.object)
   {
-    top.object->UnaryMinus(top.object);
+    top.object->Negate(top.object);
     return;
   }
   RuntimeError("null reference");
 }
 
-void VM::Add()
+void VM::Handler__PrimitiveAdd()
 {
-  DoNumberOp<AddOp>();
+  DoNumericOp<PrimitiveAdd>();
 }
 
-void VM::LeftAdd()
+void VM::Handler__ObjectAdd()
 {
-  DoLeftOp<LeftAddOp>();
+  DoObjectOp<ObjectAdd>();
 }
 
-void VM::RightAdd()
+void VM::Handler__ObjectLeftAdd()
 {
-  DoRightOp<RightAddOp>();
+  DoObjectLeftOp<ObjectLeftAdd>();
 }
 
-void VM::ObjectAdd()
+void VM::Handler__ObjectRightAdd()
 {
-  DoObjectOp<ObjectAddOp>();
+  DoObjectRightOp<ObjectRightAdd>();
 }
 
-void VM::VariableAddAssign()
+void VM::Handler__VariablePrimitiveInplaceAdd()
 {
-  DoVariableNumberAssignOp<AddOp>();
+  DoVariableNumericInplaceOp<PrimitiveAdd>();
 }
 
-void VM::VariableRightAddAssign()
+void VM::Handler__VariableObjectInplaceAdd()
 {
-  DoVariableRightAssignOp<RightAddAssignOp>();
+  DoVariableObjectInplaceOp<ObjectInplaceAdd>();
 }
 
-void VM::VariableObjectAddAssign()
+void VM::Handler__VariableObjectInplaceRightAdd()
 {
-  DoVariableObjectAssignOp<ObjectAddAssignOp>();
+  DoVariableObjectInplaceRightOp<ObjectInplaceRightAdd>();
 }
 
-void VM::ElementAddAssign()
+void VM::Handler__PrimitiveSubtract()
 {
-  DoElementNumberAssignOp<AddOp>();
+  DoNumericOp<PrimitiveSubtract>();
 }
 
-void VM::ElementRightAddAssign()
+void VM::Handler__ObjectSubtract()
 {
-  DoElementRightAssignOp<RightAddAssignOp>();
+  DoObjectOp<ObjectSubtract>();
 }
 
-void VM::ElementObjectAddAssign()
+void VM::Handler__ObjectLeftSubtract()
 {
-  DoElementObjectAssignOp<ObjectAddAssignOp>();
+  DoObjectLeftOp<ObjectLeftSubtract>();
 }
 
-void VM::Subtract()
+void VM::Handler__ObjectRightSubtract()
 {
-  DoNumberOp<SubtractOp>();
+  DoObjectRightOp<ObjectRightSubtract>();
 }
 
-void VM::LeftSubtract()
+void VM::Handler__VariablePrimitiveInplaceSubtract()
 {
-  DoLeftOp<LeftSubtractOp>();
+  DoVariableNumericInplaceOp<PrimitiveSubtract>();
 }
 
-void VM::RightSubtract()
+void VM::Handler__VariableObjectInplaceSubtract()
 {
-  DoRightOp<RightSubtractOp>();
+  DoVariableObjectInplaceOp<ObjectInplaceSubtract>();
 }
 
-void VM::ObjectSubtract()
+void VM::Handler__VariableObjectInplaceRightSubtract()
 {
-  DoObjectOp<ObjectSubtractOp>();
+  DoVariableObjectInplaceRightOp<ObjectInplaceRightSubtract>();
 }
 
-void VM::VariableSubtractAssign()
+void VM::Handler__PrimitiveMultiply()
 {
-  DoVariableNumberAssignOp<SubtractOp>();
+  DoNumericOp<PrimitiveMultiply>();
 }
 
-void VM::VariableRightSubtractAssign()
+void VM::Handler__ObjectMultiply()
 {
-  DoVariableRightAssignOp<RightSubtractAssignOp>();
+  DoObjectOp<ObjectMultiply>();
 }
 
-void VM::VariableObjectSubtractAssign()
+void VM::Handler__ObjectLeftMultiply()
 {
-  DoVariableObjectAssignOp<ObjectSubtractAssignOp>();
+  DoObjectLeftOp<ObjectLeftMultiply>();
 }
 
-void VM::ElementSubtractAssign()
+void VM::Handler__ObjectRightMultiply()
 {
-  DoElementNumberAssignOp<SubtractOp>();
+  DoObjectRightOp<ObjectRightMultiply>();
 }
 
-void VM::ElementRightSubtractAssign()
+void VM::Handler__VariablePrimitiveInplaceMultiply()
 {
-  DoElementRightAssignOp<RightSubtractAssignOp>();
+  DoVariableNumericInplaceOp<PrimitiveMultiply>();
 }
 
-void VM::ElementObjectSubtractAssign()
+void VM::Handler__VariableObjectInplaceMultiply()
 {
-  DoElementObjectAssignOp<ObjectSubtractAssignOp>();
+  DoVariableObjectInplaceOp<ObjectInplaceMultiply>();
 }
 
-void VM::Multiply()
+void VM::Handler__VariableObjectInplaceRightMultiply()
 {
-  DoNumberOp<MultiplyOp>();
+  DoVariableObjectInplaceRightOp<ObjectInplaceRightMultiply>();
 }
 
-void VM::LeftMultiply()
+void VM::Handler__PrimitiveDivide()
 {
-  DoLeftOp<LeftMultiplyOp>();
+  DoNumericOp<PrimitiveDivide>();
 }
 
-void VM::RightMultiply()
+void VM::Handler__ObjectDivide()
 {
-  DoRightOp<RightMultiplyOp>();
+  DoObjectOp<ObjectDivide>();
 }
 
-void VM::ObjectMultiply()
+void VM::Handler__ObjectLeftDivide()
 {
-  DoObjectOp<ObjectMultiplyOp>();
+  DoObjectLeftOp<ObjectLeftDivide>();
 }
 
-void VM::VariableMultiplyAssign()
+void VM::Handler__ObjectRightDivide()
 {
-  DoVariableNumberAssignOp<MultiplyOp>();
+  DoObjectRightOp<ObjectRightDivide>();
 }
 
-void VM::VariableRightMultiplyAssign()
+void VM::Handler__VariablePrimitiveInplaceDivide()
 {
-  DoVariableRightAssignOp<RightMultiplyAssignOp>();
+  DoVariableNumericInplaceOp<PrimitiveDivide>();
 }
 
-void VM::VariableObjectMultiplyAssign()
+void VM::Handler__VariableObjectInplaceDivide()
 {
-  DoVariableObjectAssignOp<ObjectMultiplyAssignOp>();
+  DoVariableObjectInplaceOp<ObjectInplaceDivide>();
 }
 
-void VM::ElementMultiplyAssign()
+void VM::Handler__VariableObjectInplaceRightDivide()
 {
-  DoElementNumberAssignOp<MultiplyOp>();
+  DoVariableObjectInplaceRightOp<ObjectInplaceRightDivide>();
 }
 
-void VM::ElementRightMultiplyAssign()
+void VM::Handler__PrimitiveModulo()
 {
-  DoElementRightAssignOp<RightMultiplyAssignOp>();
+  DoIntegralOp<PrimitiveModulo>();
 }
 
-void VM::ElementObjectMultiplyAssign()
+void VM::Handler__VariablePrimitiveInplaceModulo()
 {
-  DoElementObjectAssignOp<ObjectMultiplyAssignOp>();
-}
-
-void VM::Divide()
-{
-  DoNumberOp<DivideOp>();
-}
-
-void VM::LeftDivide()
-{
-  DoLeftOp<LeftDivideOp>();
-}
-
-void VM::RightDivide()
-{
-  DoRightOp<RightDivideOp>();
-}
-
-void VM::ObjectDivide()
-{
-  DoObjectOp<ObjectDivideOp>();
-}
-
-void VM::VariableDivideAssign()
-{
-  DoVariableNumberAssignOp<DivideOp>();
-}
-
-void VM::VariableRightDivideAssign()
-{
-  DoVariableRightAssignOp<RightDivideAssignOp>();
-}
-
-void VM::VariableObjectDivideAssign()
-{
-  DoVariableObjectAssignOp<ObjectDivideAssignOp>();
-}
-
-void VM::ElementDivideAssign()
-{
-  DoElementNumberAssignOp<DivideOp>();
-}
-
-void VM::ElementRightDivideAssign()
-{
-  DoElementRightAssignOp<RightDivideAssignOp>();
-}
-
-void VM::ElementObjectDivideAssign()
-{
-  DoElementObjectAssignOp<ObjectDivideAssignOp>();
+  DoVariableIntegralInplaceOp<PrimitiveModulo>();
 }
 
 }  // namespace vm
