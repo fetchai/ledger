@@ -270,7 +270,7 @@ TEST(DISABLED_mmap_random_access_stack, set_bulk)
   }
 }
 
-TEST(mmap_random_access_stack, file_writing_and_recovery)
+TEST(mmap_random_access_stack, DISABLED_file_writing_and_recovery)
 {
   constexpr uint64_t                        testSize = 100;
   fetch::random::LaggedFibonacciGenerator<> lfg;
