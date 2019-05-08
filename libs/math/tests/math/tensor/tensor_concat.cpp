@@ -243,3 +243,162 @@ TYPED_TEST(TensorConcatenationTest, tensor_concat_various_sizes)
   EXPECT_TRUE(ret.shape() == gt.shape());
   EXPECT_TRUE(ret.AllClose(gt));
 }
+
+TYPED_TEST(TensorConcatenationTest, tensor_Split_2d)
+{
+  using Tensor   = fetch::math::Tensor<TypeParam>;
+  using SizeType = typename fetch::math::SizeType;
+
+  SizeType axis = 0;
+
+  // axis 0 concat & Split
+  Tensor t1 = PrepareTensor<TypeParam>({2, 4});
+  Tensor t2 = PrepareTensor<TypeParam>({2, 4});
+  Tensor t3 = PrepareTensor<TypeParam>({2, 4});
+
+  std::vector<Tensor> vt{t1, t2, t3};
+  Tensor              gt = PrepareGroundTruth2D<TypeParam>({6, 4}, vt, axis);
+
+  Tensor ret = Tensor::Concat(vt, axis);
+
+  EXPECT_TRUE(ret.shape() == gt.shape());
+  EXPECT_TRUE(ret.AllClose(gt));
+
+  std::vector<SizeType> concat_points(3);
+  for (SizeType i{0}; i < concat_points.size(); ++i)
+  {
+    concat_points[i] = vt[i].shape()[axis];
+  }
+  std::vector<Tensor> ret_tensors = Tensor::Split(ret, concat_points, axis);
+
+  EXPECT_EQ(ret_tensors.size(), vt.size());
+  EXPECT_EQ(ret_tensors[0].shape(), t1.shape());
+  EXPECT_EQ(ret_tensors[1].shape(), t2.shape());
+  EXPECT_EQ(ret_tensors[2].shape(), t3.shape());
+  EXPECT_TRUE(ret_tensors[0].AllClose(t1));
+  EXPECT_TRUE(ret_tensors[1].AllClose(t2));
+  EXPECT_TRUE(ret_tensors[2].AllClose(t3));
+
+  // axis 1 concat & Split
+  axis = 1;
+
+  t1 = PrepareTensor<TypeParam>({2, 4});
+  t2 = PrepareTensor<TypeParam>({2, 4});
+  t3 = PrepareTensor<TypeParam>({2, 4});
+
+  vt = {t1, t2, t3};
+  gt = PrepareGroundTruth2D<TypeParam>({2, 12}, vt, axis);
+
+  ret = Tensor::Concat(vt, axis);
+
+  EXPECT_TRUE(ret.shape() == gt.shape());
+  EXPECT_TRUE(ret.AllClose(gt));
+
+  for (SizeType i{0}; i < concat_points.size(); ++i)
+  {
+    concat_points[i] = vt[i].shape()[axis];
+  }
+  ret_tensors = Tensor::Split(ret, concat_points, axis);
+
+  EXPECT_EQ(ret_tensors.size(), vt.size());
+  EXPECT_EQ(ret_tensors[0].shape(), t1.shape());
+  EXPECT_EQ(ret_tensors[1].shape(), t2.shape());
+  EXPECT_EQ(ret_tensors[2].shape(), t3.shape());
+  EXPECT_TRUE(ret_tensors[0].AllClose(t1));
+  EXPECT_TRUE(ret_tensors[1].AllClose(t2));
+  EXPECT_TRUE(ret_tensors[2].AllClose(t3));
+}
+
+TYPED_TEST(TensorConcatenationTest, tensor_Split_3d)
+{
+  using Tensor   = fetch::math::Tensor<TypeParam>;
+  using SizeType = typename fetch::math::SizeType;
+
+  SizeType axis = 0;
+
+  // axis 0 concat & Split
+  Tensor t1 = PrepareTensor<TypeParam>({2, 4, 2});
+  Tensor t2 = PrepareTensor<TypeParam>({2, 4, 2});
+  Tensor t3 = PrepareTensor<TypeParam>({2, 4, 2});
+
+  std::vector<Tensor> vt{t1, t2, t3};
+  Tensor              gt = PrepareGroundTruth3D<TypeParam>({6, 4, 2}, vt, axis);
+
+  Tensor ret = Tensor::Concat(vt, axis);
+
+  EXPECT_TRUE(ret.shape() == gt.shape());
+  EXPECT_TRUE(ret.AllClose(gt));
+
+  std::vector<SizeType> concat_points(3);
+  for (SizeType i{0}; i < concat_points.size(); ++i)
+  {
+    concat_points[i] = vt[i].shape()[axis];
+  }
+  std::vector<Tensor> ret_tensors = Tensor::Split(ret, concat_points, axis);
+
+  EXPECT_EQ(ret_tensors.size(), vt.size());
+  EXPECT_EQ(ret_tensors[0].shape(), t1.shape());
+  EXPECT_EQ(ret_tensors[1].shape(), t2.shape());
+  EXPECT_EQ(ret_tensors[2].shape(), t3.shape());
+  EXPECT_TRUE(ret_tensors[0].AllClose(t1));
+  EXPECT_TRUE(ret_tensors[1].AllClose(t2));
+  EXPECT_TRUE(ret_tensors[2].AllClose(t3));
+
+  // axis 1 concat & Split
+  axis = 1;
+
+  t1 = PrepareTensor<TypeParam>({2, 4, 2});
+  t2 = PrepareTensor<TypeParam>({2, 4, 2});
+  t3 = PrepareTensor<TypeParam>({2, 4, 2});
+
+  vt = {t1, t2, t3};
+  gt = PrepareGroundTruth3D<TypeParam>({2, 12, 2}, vt, axis);
+
+  ret = Tensor::Concat(vt, axis);
+
+  EXPECT_TRUE(ret.shape() == gt.shape());
+  EXPECT_TRUE(ret.AllClose(gt));
+
+  for (SizeType i{0}; i < concat_points.size(); ++i)
+  {
+    concat_points[i] = vt[i].shape()[axis];
+  }
+  ret_tensors = Tensor::Split(ret, concat_points, axis);
+
+  EXPECT_EQ(ret_tensors.size(), vt.size());
+  EXPECT_EQ(ret_tensors[0].shape(), t1.shape());
+  EXPECT_EQ(ret_tensors[1].shape(), t2.shape());
+  EXPECT_EQ(ret_tensors[2].shape(), t3.shape());
+  EXPECT_TRUE(ret_tensors[0].AllClose(t1));
+  EXPECT_TRUE(ret_tensors[1].AllClose(t2));
+  EXPECT_TRUE(ret_tensors[2].AllClose(t3));
+
+  // axis 2 concat & Split
+  axis = 2;
+
+  t1 = PrepareTensor<TypeParam>({2, 4, 2});
+  t2 = PrepareTensor<TypeParam>({2, 4, 2});
+  t3 = PrepareTensor<TypeParam>({2, 4, 2});
+
+  vt = {t1, t2, t3};
+  gt = PrepareGroundTruth3D<TypeParam>({2, 4, 6}, vt, axis);
+
+  ret = Tensor::Concat(vt, axis);
+
+  EXPECT_TRUE(ret.shape() == gt.shape());
+  EXPECT_TRUE(ret.AllClose(gt));
+
+  for (SizeType i{0}; i < concat_points.size(); ++i)
+  {
+    concat_points[i] = vt[i].shape()[axis];
+  }
+  ret_tensors = Tensor::Split(ret, concat_points, axis);
+
+  EXPECT_EQ(ret_tensors.size(), vt.size());
+  EXPECT_EQ(ret_tensors[0].shape(), t1.shape());
+  EXPECT_EQ(ret_tensors[1].shape(), t2.shape());
+  EXPECT_EQ(ret_tensors[2].shape(), t3.shape());
+  EXPECT_TRUE(ret_tensors[0].AllClose(t1));
+  EXPECT_TRUE(ret_tensors[1].AllClose(t2));
+  EXPECT_TRUE(ret_tensors[2].AllClose(t3));
+}

@@ -278,8 +278,10 @@ public:
   SizeType    Find(Type val) const;
 
   template <typename TensorType>
-  static SelfType Stack(std::vector<TensorType> const &tensors);
-  static SelfType Concat(std::vector<SelfType> &tensors, SizeType axis);
+  static SelfType              Stack(std::vector<TensorType> const &tensors);
+  static SelfType              Concat(std::vector<SelfType> &tensors, SizeType axis);
+  static std::vector<SelfType> Split(SelfType const &tensor, SizeVector const &concat_points,
+                                     SizeType const axis);
 
   void Sort();
   void Sort(memory::TrivialRange const &range);
@@ -2261,6 +2263,72 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::Concat(std::vector<SelfType> &tens
     }
 
     cur_from = cur_to;
+  }
+
+  return ret;
+}
+
+/**
+ * Splits a Tensor up into a vector of tensors (effectively an UnConcatenate function)
+ * @param tensors
+ * @param axis
+ * @returnf
+ */
+template <typename T, typename C>
+typename std::vector<typename Tensor<T, C>::SelfType> Tensor<T, C>::Split(
+    SelfType const &tensor, SizeVector const &concat_points, SizeType const axis)
+{
+  std::vector<SelfType> ret{concat_points.size()};
+
+  // Move implementation to Tensor::UnConcatenate
+  SizeType                           cur_from{0};
+  SizeType                           cur_to{0};
+  std::vector<std::vector<SizeType>> step{tensor.shape().size()};
+  std::vector<SizeType>              cur_step(3);
+  cur_step[2] = 1;  // stepsize always 1 for now
+
+  for (SizeType i{0}; i < ret.size(); ++i)
+  {
+    // extract the relevant portion of the error_signal
+    cur_to += concat_points[i];
+
+    // identify the relevant subview to fill
+    for (SizeType j{0}; j < tensor.shape().size(); ++j)
+    {
+      if (j == axis)
+      {
+        cur_step[0] = cur_from;
+        cur_step[1] = cur_to;
+        step[j]     = cur_step;
+      }
+      else
+      {
+        cur_step[0] = 0;
+        cur_step[1] = tensor.shape()[j];
+        step[j]     = cur_step;
+      }
+    }
+
+    // copy the data across
+    ConstIteratorType err_it{tensor, step};
+
+    SizeVector cur_error_tensor_shape = tensor.shape();
+    cur_error_tensor_shape[axis]      = concat_points[i];
+    SelfType cur_error_tensor{cur_error_tensor_shape};
+
+    TensorIterator<T, C> t_it{cur_error_tensor};
+
+    while (t_it.is_valid())
+    {
+      *t_it = *err_it;
+      ++err_it;
+      ++t_it;
+    }
+
+    cur_from = cur_to;
+
+    // and assign it to the relevant return error tensor
+    ret[i] = cur_error_tensor;
   }
 
   return ret;
