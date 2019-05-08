@@ -64,12 +64,14 @@ static char const *FETCH_MAYBE_UNUSED ToString(fetch::ledger::tx_sync::State sta
 namespace fetch {
 namespace ledger {
 
-const std::size_t TransactionStoreSyncService::BATCH_SIZE = 30;
-
 TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, MuddlePtr muddle,
-                                                         ObjectStorePtr store)
-  : state_machine_{std::make_shared<core::StateMachine<State>>("TransactionStoreSyncService",
+                                                         ObjectStorePtr    store,
+                                                         TxFinderProtocol *tx_finder_protocol,
+                                                         TrimCacheCallback trim_cache_callback)
+  : trim_cache_callback_(std::move(trim_cache_callback))
+  , state_machine_{std::make_shared<core::StateMachine<State>>("TransactionStoreSyncService",
                                                                State::INITIAL)}
+  , tx_finder_protocol_(tx_finder_protocol)
   , cfg_{cfg}
   , muddle_(std::move(muddle))
   , client_(std::make_shared<Client>("R:TxSync-L" + std::to_string(cfg_.lane_id),
@@ -302,8 +304,27 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjects()
     return State::QUERY_OBJECTS;
   }
 
+  std::vector<ResourceID> rids;
+  rids.reserve(TX_FINDER_PROTO_LIMIT_);
+
+  ResourceID rid;
+  while (rids.size() < TX_FINDER_PROTO_LIMIT_ && tx_finder_protocol_->Pop(rid))
+  {
+    rids.push_back(rid);
+  }
+
   for (auto const &connection : muddle_->AsEndpoint().GetDirectlyConnectedPeers())
   {
+    if (!rids.empty())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Request for ", rids.size(), " txs");
+
+      auto promise = PromiseOfTxList(
+          client_->CallSpecificAddress(connection, RPC_TX_STORE_SYNC,
+                                       TransactionStoreSyncProtocol::PULL_SPECIFIC_OBJECTS, rids));
+      pending_objects_.Add(connection, promise);
+    }
+
     auto promise = PromiseOfTxList(client_->CallSpecificAddress(
         connection, RPC_TX_STORE_SYNC, TransactionStoreSyncProtocol::PULL_OBJECTS));
     pending_objects_.Add(connection, promise);

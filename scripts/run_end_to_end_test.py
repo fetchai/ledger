@@ -18,6 +18,7 @@ import threading
 import glob
 import shutil
 from threading import Event
+from pathlib import Path
 
 from fetch.cluster.instance import ConstellationInstance
 
@@ -54,10 +55,10 @@ class TimerWatchdog():
     def _sleep(self):
         # This will return false iff the stop event isn't set before the timeout
         if not self._stop_event.wait(self._time):
-            output("Watchdog {} awoke before being stopped. Time: {} . Task: {}".format(self._name, self._time, self._task))
+            output("Watchdog '{}' awoke before being stopped! Awoke after: {}s . Watchdog will now: {}".format(self._name, self._time, self._task))
             self.trigger()
         else:
-            output("Safely notified")
+            output("Watchdog safely stopped")
 
     # Notify the waiting thread - this causes it not to trigger.
     def stop(self):
@@ -154,6 +155,7 @@ class TestInstance():
         # In the case only one miner node, it runs in standalone mode
         if(len(nodes) == 1 and len(self._nodes_are_mining) > 0):
             nodes[0].standalone = True
+            print("\n\n\nstandalone!")
 
         # start all the nodes
         for n, node in enumerate(nodes):
@@ -177,6 +179,21 @@ class TestInstance():
 
         if self._watchdog:
             self._watchdog.stop()
+
+    # If something goes wrong, print out debug state (mainly node log files)
+    def dump_debug(self):
+        if self._nodes:
+            for n, node in enumerate(self._nodes):
+                print('\nNode debug. Node:{}'.format(n))
+                node_log_path = node.log_path
+
+                if not os.path.isfile(node_log_path):
+                    output("Couldn't find supposed node log file: {}".format(node_log_path))
+                else:
+                    # Send raw bytes directly to stdout since it contains non-ascii
+                    data = Path(node_log_path).read_bytes()
+                    sys.stdout.buffer.write(data)
+                    sys.stdout.flush()
 
 def extract(test, key, expected = True, expect_type = None, default = None):
     """
@@ -215,8 +232,9 @@ def setup_test(test_yaml, test_instance):
     # Watchdog will trigger this if the tests exceeds allowed bounds. Note stopping the test cleanly is
     # necessary to preserve output logs etc.
     def clean_shutdown():
-        output("Shutting down test due to failure!. Debug YAML: {}".format(test_yaml))
+        output("***** Shutting down test due to failure!. Debug YAML: {} *****\n".format(test_yaml))
         test_instance.stop()
+        test_instance.dump_debug()
         os._exit(1)
 
     watchdog = TimerWatchdog(time = max_test_time, name = test_name, task = "End test and cleanup", callback = clean_shutdown)
@@ -287,12 +305,16 @@ def verify_txs(parameters, test_instance):
 
                 if status == "Executed":
                     break
-                time.sleep(0.1)
+
+                time.sleep(0.5)
+                output("Waiting for TX to get executed. Found: {}".format(status))
 
             seen_balance = tokens.balance(identity.public_key)
             if balance != seen_balance:
                 output("Balance mismatch found after sending to node. Found {} expected {}".format(seen_balance, balance))
                 test_instance._watchdog.trigger()
+
+            output("Verified a wealth of {}".format(seen_balance))
 
         output("Verified balances for node: {}".format(node_index))
 
@@ -336,7 +358,12 @@ def run_test(build_directory, yaml_file, constellation_exe):
             # Parse yaml documents as tests (sequentially)
             for test in all_yaml:
                 # Create a new test instance
-                output("\nTest: {}".format(extract(test, 'test_description')))
+                description = extract(test, 'test_description')
+                output("\nTest: {}".format(description))
+
+                if "DISABLED" in description:
+                    output("Skipping disabled test")
+                    continue
 
                 # Create a test instance
                 test_instance = TestInstance(build_directory, constellation_exe)
@@ -354,6 +381,7 @@ def run_test(build_directory, yaml_file, constellation_exe):
         except Exception as e:
             print('Failed to parse yaml or to run test! Error: "{}"'.format(str(e)))
             test_instance.stop()
+            test_instance.dump_debug()
             sys.exit(1)
 
     output("\nAll end to end tests have passed :)")
@@ -363,8 +391,8 @@ def parse_commandline():
 
     # Required argument
     parser.add_argument('build_directory', type=str, help='Location of the build directory relative to current path')
-    parser.add_argument('yaml_file', type=str, help='Location of the build directory relative to current path')
     parser.add_argument('constellation_exe', type=str, help='Location of the build directory relative to current path')
+    parser.add_argument('yaml_file', type=str, help='Location of the build directory relative to current path')
 
     return parser.parse_args()
 
