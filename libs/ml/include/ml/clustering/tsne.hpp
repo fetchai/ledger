@@ -28,6 +28,7 @@
 #include <math/standard_functions/exp.hpp>
 #include <math/standard_functions/log.hpp>
 #include <math/tensor.hpp>
+#include "math/meta/math_type_traits.hpp"
 
 #include <cmath>
 
@@ -49,18 +50,6 @@ public:
   using RNG       = fetch::random::LaggedFibonacciGenerator<>;
 
   static constexpr char const *DESCRIPTOR = "TSNE";
-
-  template <typename DataType>
-  meta::IfIsFixedPoint<DataType, DataType> static minimum_tolerance()
-  {
-    return DataType::CONST_SMALLEST_FRACTION;
-  }
-
-  template <typename DataType>
-  meta::IfIsFloat<DataType, DataType> static minimum_tolerance()
-  {
-    return DataType(1e-12);
-  }
 
   TSNE(ArrayType const &input_matrix, ArrayType const &output_matrix, DataType const &perplexity)
   {
@@ -193,7 +182,7 @@ private:
     input_symmetric_affinities_ = fetch::math::Multiply(input_symmetric_affinities_, DataType(4));
 
     // Limit minimum value to 1e-12
-    LimitMin(input_symmetric_affinities_, minimum_tolerance<DataType>());
+    LimitMin(input_symmetric_affinities_, fetch::math::meta::minimum_tolerance<DataType>());
 
     // Initialize low dimensional values
     output_matrix_               = output_matrix;
@@ -378,7 +367,7 @@ private:
     output_symmetric_affinities = fetch::math::NormalizeArray(num);
 
     // Crop minimal value to 1e-12
-    LimitMin(output_symmetric_affinities, minimum_tolerance<DataType>());
+    LimitMin(output_symmetric_affinities, fetch::math::meta::minimum_tolerance<DataType>());
   }
 
   /**
