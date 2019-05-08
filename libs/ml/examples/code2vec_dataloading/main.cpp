@@ -40,14 +40,22 @@ int main(int ac, char **av)
     return 1;
   }
 
-  fetch::ml::dataloaders::ContextLoader<ArrayType> p;
+  fetch::ml::dataloaders::C2VLoader<std::tuple<ArrayType, ArrayType, ArrayType>, SizeType> cloader(20);
 
-  p.AddData(readFile(av[1]));
 
-  std::cout << "Number of different function names: " << p.function_name_counter.size()
+  cloader.AddData(readFile(av[1]));
+  std::cout << "Number of different function names: " << cloader.GetCounterFunctionNames().size()
             << std::endl;
-  std::cout << "Number of different paths: " << p.path_counter.size() << std::endl;
-  std::cout << "Number of different words: " << p.word_counter.size() << std::endl;
+  std::cout << "Number of different paths: " << cloader.GetCounterPaths().size() << std::endl;
+  std::cout << "Number of different words: " << cloader.GetCounterWords().size() << std::endl;
+
+  std::cout << cloader.GetUmapIdxToFunctionName()[0] << std::endl;
+  std::cout << cloader.GetUmapIdxToFunctionName()[1] << std::endl;
+  std::cout << cloader.GetUmapIdxToFunctionName()[2] << std::endl;
+
+  auto input = cloader.GetNext();
+
+  std::cout << std::get<2>(input.first).ToString() << std::endl;
 
   return 0;
 }
