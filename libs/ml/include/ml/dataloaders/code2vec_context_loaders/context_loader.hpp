@@ -116,12 +116,11 @@ public:
   std::vector<std::pair<std::tuple<SizeType, SizeType, SizeType>, LabelType>> data;
 
 private:
-
   SizeType iterator_position_get_next_context;
   SizeType iterator_position_get_next;
   SizeType current_function_index;
   SizeType max_contexts;
-  
+
   umap_str_int function_name_counter;
   umap_str_int path_counter;
   umap_str_int word_counter;
@@ -133,7 +132,6 @@ private:
   umap_int_str idx_to_function_name;
   umap_int_str idx_to_path;
   umap_int_str idx_to_word;
-
 
   /**
    * @brief Creates an unordered map for hashing strings from a counter (unordered map counting the
