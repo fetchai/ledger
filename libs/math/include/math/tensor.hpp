@@ -279,7 +279,7 @@ public:
 
   template <typename TensorType>
   static SelfType              Stack(std::vector<TensorType> const &tensors);
-  static SelfType              Concat(std::vector<SelfType> &tensors, SizeType axis);
+  static SelfType              Concat(std::vector<SelfType> const &tensors, SizeType axis);
   static std::vector<SelfType> Split(SelfType const &tensor, SizeVector const &concat_points,
                                      SizeType const axis);
 
@@ -2190,7 +2190,7 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::Stack(std::vector<TensorType> cons
  * @returnf
  */
 template <typename T, typename C>
-typename Tensor<T, C>::SelfType Tensor<T, C>::Concat(std::vector<SelfType> &tensors,
+typename Tensor<T, C>::SelfType Tensor<T, C>::Concat(std::vector<SelfType> const &tensors,
                                                      SizeType const         axis)
 {
   // cant concatenate a single tensor
