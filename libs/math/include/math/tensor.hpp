@@ -2191,7 +2191,7 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::Stack(std::vector<TensorType> cons
  */
 template <typename T, typename C>
 typename Tensor<T, C>::SelfType Tensor<T, C>::Concat(std::vector<SelfType> const &tensors,
-                                                     SizeType const         axis)
+                                                     SizeType const               axis)
 {
   // cant concatenate a single tensor
   ASSERT(tensors.size() > 1);
@@ -2253,7 +2253,7 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::Concat(std::vector<SelfType> const
 
     // copy the data across
     TensorIterator<T, C> ret_it{ret, step};
-    TensorIterator<T, C> t_it{tensors[i]};
+    auto                 t_it = tensors[i].cbegin();
 
     while (t_it.is_valid())
     {
