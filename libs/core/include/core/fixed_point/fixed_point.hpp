@@ -358,7 +358,6 @@ public:
     }
   }
 
-  template <typename OtherType>
   constexpr bool operator>(FixedPoint const &o) const
   {
     if (isNaN(*this) || isNaN(o))
@@ -753,29 +752,6 @@ public:
     return Log2(x) / CONST_LOG210;
   }
 
-  static constexpr int Reduce_Sqrt(FixedPoint &x)
-  {
-    /* Given x, find k such as x = 2^{2*k} * y, where 1 < y < 4
-     */
-    int        k = 0;
-    FixedPoint four{4};
-    while (x > four)
-    {
-      k++;
-      x >>= 2;
-    }
-    if (x < CONST_ONE)
-    {
-      while (x < CONST_ONE)
-      {
-        k++;
-        x <<= 2;
-      }
-      k = -k;
-    }
-    return k;
-  }
-
   static constexpr FixedPoint Sqrt(FixedPoint const &x)
   {
     if (x == CONST_ONE)
@@ -939,6 +915,29 @@ private:
     {
       return false;
     }
+  }
+
+  static constexpr int Reduce_Sqrt(FixedPoint &x)
+  {
+    /* Given x, find k such as x = 2^{2*k} * y, where 1 < y < 4
+     */
+    int        k = 0;
+    FixedPoint four{4};
+    while (x > four)
+    {
+      k++;
+      x >>= 2;
+    }
+    if (x < CONST_ONE)
+    {
+      while (x < CONST_ONE)
+      {
+        k++;
+        x <<= 2;
+      }
+      k = -k;
+    }
+    return k;
   }
 };
 
