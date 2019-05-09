@@ -27,10 +27,8 @@ template <class T>
 class Concatenate : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SizeType     = fetch::math::SizeType;
+  using ArrayType = T;
+  using SizeType  = fetch::math::SizeType;
 
   Concatenate(SizeType axis)
     : axis_(axis)
@@ -45,9 +43,9 @@ public:
                             ArrayType &                                                 output)
   {
     std::vector<ArrayType> tensors;
-    for (std::size_t i = 0; i < inputs.size(); ++i)
+    for (auto const &e : inputs)
     {
-      tensors.emplace_back(inputs[i].get());
+      tensors.emplace_back(e.get());
     }
 
     output = ArrayType::Concat(tensors, axis_);
