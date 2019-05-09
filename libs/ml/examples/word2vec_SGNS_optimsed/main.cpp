@@ -17,8 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "file_loader.hpp"
+#include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
 
 //#include "math/ml/activation_functions/sigmoid.hpp"
+//#include "ml/ops/loss_functions/cross_entropy.hpp"
 
 
 
@@ -26,18 +29,29 @@
 //
 //#include "math/clustering/knn.hpp"
 
-#include "math/fundamental_operators.hpp"
-#include "math/matrix_operations.hpp"
 //
 //#include "ml/dataloaders/word2vec_loaders/skipgram_dataloader.hpp"
 //#include "ml/graph.hpp"
 //#include "ml/layers/skip_gram.hpp"
-#include "ml/ops/loss_functions/cross_entropy.hpp"
 
 #include <chrono>
 #include <iostream>
 #include <math/tensor.hpp>
 #include <numeric>
+
+
+// TODO: DataLoader needs dynamic context window (rather than fixed offset)
+// TODO: negative examples
+// TODO: batch training
+// TODO: unigram distribution
+
+
+
+
+
+
+
+
 
 using namespace fetch::ml;
 //using namespace fetch::ml::dataloaders;
@@ -58,6 +72,7 @@ struct TrainingParams
   SizeType    batch_size      = 500;            // training data batch size
   SizeType    embedding_size  = 200;            // dimension of embedding vec
   SizeType    training_epochs = 15;             // total number of training epochs
+  SizeType    neg_examples    = 25;             // how many negative examples for every positive example
   double      learning_rate   = 0.025;          // alpha - the learning rate
   SizeType    k               = 10;             // how many nearest neighbours to compare against
   SizeType    print_freq      = 10000;          // how often to print status
@@ -67,8 +82,8 @@ struct TrainingParams
 
 struct DataParams
 {
-  SizeType max_sentences      = 100000;
-  SizeType max_sentence_len   = 500;
+  SizeType max_sentences      = 20000;
+  SizeType max_sentence_len   = 1000;
 };
 
 
@@ -78,7 +93,8 @@ class DataLoader
 public:
     ArrayType data_;
     typename ArrayType::IteratorType *cursor_;
-    typename ArrayType::IteratorType *context_cursor_;
+    typename ArrayType::IteratorType *pos_context_cursor_;
+    typename ArrayType::IteratorType *neg_context_cursor_;
 
     SizeType max_sentence_len_ = 0;
 
@@ -134,23 +150,37 @@ public:
     void next_positive(SizeType &input_idx, SizeType &context_idx)
     {
       input_idx = SizeType(*(*cursor_));
+      context_idx = SizeType(*(*pos_context_cursor_));
+
       ++(*cursor_);
-      context_idx = SizeType(*(*cursor_));
+      ++(*pos_context_cursor_);
+      ++(*neg_context_cursor_);
     }
 
     bool done()
     {
-      return ( (!((*cursor_).is_valid())) || (!((*context_cursor_).is_valid())) );
+      // we could check that all the cursors are valid
+//      return ( (!((*cursor_).is_valid())) || (!((*neg_context_cursor_).is_valid())) );
+
+      // but we dont have to if we have a fixed negative context up front
+    return (!(*neg_context_cursor_).is_valid());
     }
 
     void reset_cursor()
     {
+      // the data cursor is on the current index
       cursor_ = new typename ArrayType::IteratorType(data_.begin());
-      context_cursor_ = new typename ArrayType::IteratorType(data_.begin());
+
+      // the positive data cursor sits one word in front
+      pos_context_cursor_ = new typename ArrayType::IteratorType(data_.begin());
+      ++(*pos_context_cursor_);
+
+      // the negative curosr sits on max_len sentence in front
+      neg_context_cursor_ = new typename ArrayType::IteratorType(data_.begin());
 
       for (std::size_t i = 0; i < max_sentence_len_; ++i)
       {
-        ++(*context_cursor_);
+        ++(*neg_context_cursor_);
       }
     }
 };
@@ -184,19 +214,28 @@ public:
 
   ArrayType input_vector_;
   ArrayType context_vector_;
-  ArrayType dot_result_;
+  ArrayType result_{{1, 1}};
 
   Type alpha_ = 0.2; // learning rate
 
-  SkipgramModel(SizeType vocab_size, SizeType embeddings_size) : input_embeddings_({vocab_size, embeddings_size}), input_grads_({1, embeddings_size}), context_grads_({embeddings_size, 1})
+  SkipgramModel(SizeType vocab_size, SizeType embeddings_size, Type learning_rate) : input_embeddings_({vocab_size, embeddings_size}), input_grads_({1, embeddings_size}), context_grads_({embeddings_size, 1}), alpha_(learning_rate)
   {
     // initialise embeddings to values from 0 - 0.1
     input_embeddings_.FillUniformRandom();
     fetch::math::Multiply(input_embeddings_, 0.1, input_embeddings_);
   }
 
-  ArrayType Forward(SizeType input_word_idx, SizeType context_word_idx)
+  void ForwardAndLoss(SizeType const &input_word_idx, SizeType const &context_word_idx, Type const &gt, Type &loss)
   {
+    // positive case:
+    // x = v_in' * v_out
+    // l = log(sigmoid(x))
+    //
+    // negative case:
+    // x = v_in' * v_sample
+    // l = log(sigmoid(-x))
+    //
+
     // embeddings input layer lookup
     input_vector_ = input_embeddings_.Slice(input_word_idx).Copy();
 
@@ -205,61 +244,128 @@ public:
 
     // context vector transpose
     // mat mul
-    dot_result_ = fetch::math::DotTranspose(input_vector_, context_vector_);
+    fetch::math::DotTranspose(input_vector_, context_vector_, result_);
 
-    // sigmoid
-    return Sigmoid(dot_result_);
+    ASSERT(result_.shape()[0] == 1);
+    ASSERT(result_.shape()[1] == 1);
+
+    // sigmoid_cross_entropy_loss
+    if (gt == 1)
+    {
+      result_[0] = (1 / (1 + std::exp(result_[0])));
+      loss = std::log(result_[0]);
+    }
+    else
+    {
+      result_[0] = -(1 / (1 + std::exp(-result_[0])));
+      loss = std::log(result_[0]);
+    }
   }
 
-  void Backward(SizeType input_word_idx, SizeType context_word_idx, ArrayType& result, ArrayType &error)
+  void Backward(SizeType const &input_word_idx, Type const &gt)
   {
-    // Sigmoid backprop
-    Type tmp = fetch::math::Sigmoid(result);
-    tmp*= (1 - tmp);
-    error[0] *= tmp;
+    // positive case:
+    // dl/dx = g = sigmoid(-x)
+    // dl/d(v_in) = g * v_out'
+    // dl/d(v_out) = v_in' * g
+    //
+    // negative case:
+    // dl/dx = g = -sigmoid(x)
+    // dl/d(v_in) = g * v_out'
+    // dl/d(v_out) = v_in' * g
 
-//    fetch::math::Multiply(fetch::math::Sigmoid(result), fetch::math::Subtract(1, fetch::math::Sigmoid(result), result), result);
-//    error *= (result;
 
-    // matmul backprop
-    fetch::math::Dot(error, context_vector_, input_grads_); // no need to DotTranspose since we use DotTranspose instead of Dot in forward
-    fetch::math::TransposeDot(input_vector_, error, context_grads_);
+    // calculate g and store it in result_[0]
+    if (gt == 1)
+    {
+      result_[0] = (1 / (1 + std::exp(-result_[0])));
+    }
+    else
+    {
+      result_[0] = -(1 / (1 + std::exp(result_[0])));
+    }
+
+    // multiply by learning rate
+    result_[0] *= alpha_;
+
+    // calculate dl/d(v_in)
+    fetch::math::Multiply(context_vector_ , result_[0], input_grads_);
+
+    // calculate dl/d(v_out)
+    fetch::math::Multiply(input_vector_ , result_[0], context_grads_);
 
     // apply gradient updates
     auto input_slice_it = input_embeddings_.Slice(input_word_idx).begin();
+    auto input_grads_it = input_grads_.begin();
     while (input_slice_it.is_valid())
     {
-      *input_slice_it -= (input_grads_ * alpha_)[0];
+      *input_slice_it -= (*input_grads_it);
       ++input_slice_it;
+      ++input_grads_it;
     }
-
-    auto context_slice_it = input_embeddings_.Slice(context_word_idx).begin();
-    while (context_slice_it.is_valid())
-    {
-      *context_slice_it -= (input_grads_ * alpha_)[0];
-      ++context_slice_it;
-    }
+//
+//    auto context_slice_it = input_embeddings_.Slice(context_word_idx).begin();
+//    auto context_grads_it = context_grads_.begin();
+//    while (context_slice_it.is_valid())
+//    {
+//      *context_slice_it -= (*context_grads_it);
+//      ++context_slice_it;
+//      ++context_grads_it;
+//    }
   }
 
 private:
 
-  Type Sigmoid(Type val)
+  void SigmoidCrossEntropyLoss(Type &val, Type gt, Type &loss)
   {
-    if (val >= 0)
+
+//    if (val >= 0)
+//    {
+//      val *= -1;
+//      val = std::exp(val);
+//      val += 1;
+//      val = (1 / val);
+//    }
+//    else
+//    {
+//      val = std::exp(val);
+//      val = val / (val + 1);
+//    }
+//    return val;
+//
+    if (gt == 1)
     {
-      val *= -1;
-      val = std::exp(val);
-      val += 1;
-      val = (1 / val);
+      val = (1 / (1 + std::exp(val)));
+      loss = std::log(val);
     }
     else
     {
-      val = std::exp(val);
-      val = val / (val + 1);
+      val = (1 / (1 + std::exp(-val)));
+      loss = std::log(val);
     }
-    return val
+
   }
+
+//  void CrossEntropyLoss(DataType pred, DataType gt, DataType & loss)
+//  {
+//    // binary logistic regression
+//    if (gt == 1)
+//    {
+//      loss = std::log(pred);
+//    }
+//    else
+//    {
+//      loss = std::log(1 - pred);
+//    }
+//
+//    // then divide by number of examples (1) so do nothing
+//  }
+
 };
+
+///////////////
+///////////////
+///////////////
 
 int main(int argc, char **argv)
 {
@@ -278,7 +384,6 @@ int main(int argc, char **argv)
 
   TrainingParams  tp;
   DataParams      dp;
-//  SkipGramTextParams<ArrayType> sp = SetParams<ArrayType>();
 
   ///////////////////////////////////////
   /// CONVERT TEXT INTO TRAINING DATA ///
@@ -302,7 +407,7 @@ int main(int argc, char **argv)
 
   // set up model architecture
   std::cout << "building model architecture...: " << std::endl;
-  SkipgramModel<ArrayType> model(vocab_size, tp.embedding_size);
+  SkipgramModel<ArrayType> model(vocab_size, tp.embedding_size, tp.learning_rate);
 
 
   std::cout << "begin training: " << std::endl;
@@ -313,9 +418,9 @@ int main(int argc, char **argv)
   SizeType step_count{0};
   std::chrono::duration<double> time_diff;
 
-  ArrayType gt({1, 1});
-  ArrayType pred({1, 1});
-  ArrayType loss({1, 1});
+  DataType gt;
+//  DataType pred;
+  DataType loss = 0;
 
   auto t1 = std::chrono::high_resolution_clock::now();
   while (1)
@@ -340,23 +445,43 @@ int main(int argc, char **argv)
     // get next data pair
     dataloader.next_positive(input_word_idx, context_word_idx);
 
-    // forward pass on the model
-    pred = model.Forward(input_word_idx, context_word_idx);
-
-    // loss function
-    loss[0] = fetch::math::CrossEntropyLoss(pred, gt);
+    // forward pass on the model & loss calculation bundled together
+    gt = 1;
+    model.ForwardAndLoss(input_word_idx, context_word_idx, gt, loss);
 
     // backward pass
-    model.Backward(input_word_idx, context_word_idx, pred, loss);
+    model.Backward(input_word_idx, gt);
+    ++step_count;
 
     ///////////////////////////////
     /// run k negative examples ///
     ///////////////////////////////
-    
+//
+//    for (std::size_t i = 0; i < tp.neg_examples; ++i)
+//    {
+//      // get next data pair
+//      dataloader.next_negative(input_word_idx, context_word_idx);
+//
+//      // forward pass on the model
+//      pred = model.Forward(input_word_idx, context_word_idx);
+//
+//      // loss function
+//      gt = 0;
+//      CrossEntropyLoss(pred, gt, loss);
+//
+//      // backward pass
+//      model.Backward(input_word_idx, context_word_idx, pred, loss);
+//      ++step_count;
+//    }
+
+    /////////////////////////
+    /// print performance ///
+    /////////////////////////
+
+
     ++step_count;
 
-
-    if (step_count % 100 == 0)
+    if (step_count % 10000 == 0)
     {
 
       auto t2 = std::chrono::high_resolution_clock::now();
@@ -365,6 +490,9 @@ int main(int argc, char **argv)
       std::cout << "words/sec: " << double(step_count) / time_diff.count() << std::endl;
       t1 = std::chrono::high_resolution_clock::now();
       step_count = 0;
+
+      std::cout << "loss: " << loss << std::endl;
+
     }
 
   }
