@@ -37,7 +37,7 @@
 
 // Test of the object sync protocol in the style of the transaction sync in the lane service.
 // A service, TestService here, owns an object store, and the protocols ensure that new objects
-// (Using transactions here) will be synchronized with connected peers.
+// (Using transactions here) will be synchronised with connected peers.
 
 using namespace fetch::storage;
 using namespace fetch::byte_array;

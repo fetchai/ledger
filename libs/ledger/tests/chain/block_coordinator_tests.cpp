@@ -276,8 +276,8 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
 
   Tick(State::RELOAD_STATE, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
   Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
@@ -287,14 +287,14 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 
   Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 
@@ -304,7 +304,7 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
                                  // will not provoke a new block being generated
   block_coordinator_->TriggerBlockGeneration();
 
-  Tick(State::SYNCHRONIZED, State::PACK_NEW_BLOCK);
+  Tick(State::SYNCHRONISED, State::PACK_NEW_BLOCK);
   Tick(State::PACK_NEW_BLOCK, State::EXECUTE_NEW_BLOCK);
   Tick(State::EXECUTE_NEW_BLOCK, State::WAIT_FOR_NEW_BLOCK_EXECUTION);
   Tick(State::WAIT_FOR_NEW_BLOCK_EXECUTION, State::WAIT_FOR_NEW_BLOCK_EXECUTION);
@@ -315,11 +315,11 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
   ASSERT_NE(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 
   // the state machine should exit from the main loop
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 }
 
 TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
@@ -500,8 +500,8 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   }
 
   Tick(State::RELOAD_STATE, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tock(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tock(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
   Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
@@ -510,10 +510,10 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 
   Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
+  Tick(State::RESET, State::SYNCHRONISING);
 
   // processing of B1 block
-  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
   Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
@@ -522,10 +522,10 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b1->body.hash);
 
   Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
+  Tick(State::RESET, State::SYNCHRONISING);
 
   // processing of B2 block
-  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
   Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
@@ -534,10 +534,10 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b2->body.hash);
 
   Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
+  Tick(State::RESET, State::SYNCHRONISING);
 
   // processing of B3 block
-  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
   Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
@@ -546,23 +546,23 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b3->body.hash);
 
   Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
+  Tick(State::RESET, State::SYNCHRONISING);
 
   // transition to synchronised state
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
+  Tick(State::SYNCHRONISING, State::SYNCHRONISED);
 
   // the state machine should rest in the state for a number of ticks
   for (std::size_t i = 0; i < 10; ++i)
   {
-    Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+    Tick(State::SYNCHRONISED, State::SYNCHRONISED);
   }
 
   // simulate B4 being recv'ed over the wire
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b4));
 
-  Tick(State::SYNCHRONIZED, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::SYNCHRONISED, State::RESET);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
   Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
@@ -571,23 +571,23 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b4->body.hash);
 
   Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
+  Tick(State::RESET, State::SYNCHRONISING);
 
   // transition to synchronised state
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
+  Tick(State::SYNCHRONISING, State::SYNCHRONISED);
 
   // the state machine should rest in the state for a number of ticks
   for (std::size_t i = 0; i < 10; ++i)
   {
-    Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+    Tick(State::SYNCHRONISED, State::SYNCHRONISED);
   }
 
   // simulate B5 being recv'ed over the wire
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b5));
 
-  Tick(State::SYNCHRONIZED, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::SYNCHRONISED, State::RESET);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
   Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
@@ -596,15 +596,15 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b5->body.hash);
 
   Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
+  Tick(State::RESET, State::SYNCHRONISING);
 
   // transition to synchronised state
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
+  Tick(State::SYNCHRONISING, State::SYNCHRONISED);
 
   // the state machine should rest in the state for a number of ticks
   for (std::size_t i = 0; i < 10; ++i)
   {
-    Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+    Tick(State::SYNCHRONISED, State::SYNCHRONISED);
   }
 }
 
@@ -648,8 +648,8 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
 
   Tick(State::RELOAD_STATE, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
   Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
@@ -659,11 +659,11 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 
   Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 
   // create the bad block
   auto b1               = block_generator_(genesis);
@@ -673,10 +673,10 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
   // main chain now rejects outright any blocks with invalid block numbers
   ASSERT_EQ(BlockStatus::INVALID, main_chain_->AddBlock(*b1));
 
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 }
@@ -734,8 +734,8 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
 
   Tick(State::RELOAD_STATE, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
   Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
@@ -745,11 +745,11 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 
   Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 
   // create the bad block
   auto b1        = block_generator_(genesis);
@@ -758,15 +758,15 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
 
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
 
-  Tick(State::SYNCHRONIZED, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::SYNCHRONISED, State::RESET);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 }
@@ -825,8 +825,8 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
 
   Tick(State::RELOAD_STATE, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
   Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
@@ -836,11 +836,11 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 
   Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 
   // create the bad block
   auto b1                 = block_generator_(genesis);
@@ -849,15 +849,15 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
 
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
 
-  Tick(State::SYNCHRONIZED, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::SYNCHRONISED, State::RESET);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 }
@@ -915,8 +915,8 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
 
   Tick(State::RELOAD_STATE, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
   Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
@@ -926,11 +926,11 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 
   Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 
   // create the bad block
   auto b1 = block_generator_(genesis);
@@ -939,15 +939,15 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
 
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
 
-  Tick(State::SYNCHRONIZED, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::SYNCHRONISED, State::RESET);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 }
@@ -1011,8 +1011,8 @@ TEST_F(BlockCoordinatorTests, CheckBlockMining)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
 
   Tick(State::RELOAD_STATE, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
   Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
@@ -1022,16 +1022,16 @@ TEST_F(BlockCoordinatorTests, CheckBlockMining)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 
   Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 
   // trigger the coordinator to try and make a block
   block_coordinator_->TriggerBlockGeneration();
 
-  Tick(State::SYNCHRONIZED, State::PACK_NEW_BLOCK);
+  Tick(State::SYNCHRONISED, State::PACK_NEW_BLOCK);
   Tick(State::PACK_NEW_BLOCK, State::EXECUTE_NEW_BLOCK);
   Tick(State::EXECUTE_NEW_BLOCK, State::WAIT_FOR_NEW_BLOCK_EXECUTION);
   Tick(State::WAIT_FOR_NEW_BLOCK_EXECUTION, State::WAIT_FOR_NEW_BLOCK_EXECUTION);
@@ -1043,12 +1043,12 @@ TEST_F(BlockCoordinatorTests, CheckBlockMining)
   ASSERT_EQ(1u, block_sink_->queue().size());
 
   // ensure that the system goes back into the sync'ed state
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::SYNCHRONISED);
 
   for (std::size_t i = 0; i < 20; ++i)
   {
-    Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+    Tick(State::SYNCHRONISED, State::SYNCHRONISED);
   }
 }
 
@@ -1113,5 +1113,5 @@ TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
 
   Advance();
 
-  ASSERT_EQ(State::SYNCHRONIZED, block_coordinator_->GetStateMachine().state());
+  ASSERT_EQ(State::SYNCHRONISED, block_coordinator_->GetStateMachine().state());
 }
