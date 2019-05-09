@@ -60,7 +60,7 @@ following commands:
 
 ## Building the code
 
-The project uses cmake so you can following formal build proceedure of:
+The project uses cmake so you can following formal build procedure of:
 
     mkdir build
 
