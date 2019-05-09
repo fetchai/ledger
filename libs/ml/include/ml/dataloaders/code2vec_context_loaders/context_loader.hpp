@@ -116,8 +116,12 @@ public:
   std::vector<std::pair<std::tuple<SizeType, SizeType, SizeType>, LabelType>> data;
 
 private:
-  SizeType max_contexts;
 
+  SizeType iterator_position_get_next_context;
+  SizeType iterator_position_get_next;
+  SizeType current_function_index;
+  SizeType max_contexts;
+  
   umap_str_int function_name_counter;
   umap_str_int path_counter;
   umap_str_int word_counter;
@@ -130,9 +134,7 @@ private:
   umap_int_str idx_to_path;
   umap_int_str idx_to_word;
 
-  SizeType iterator_position_get_next_context;
-  SizeType iterator_position_get_next;
-  SizeType current_function_index;
+
   /**
    * @brief Creates an unordered map for hashing strings from a counter (unordered map counting the
    * occurences of words in the input)
@@ -227,7 +229,7 @@ C2VLoader<DataType, LabelType>::GetNextContext()
   auto return_value = this->data[this->iterator_position_get_next_context];
   this->iterator_position_get_next_context += 1;
   return return_value;
-};
+}
 
 template <typename DataType, typename LabelType>
 typename C2VLoader<DataType, LabelType>::ContextTensorsLabelPair
@@ -294,25 +296,25 @@ C2VLoader<DataType, LabelType>::GetNext()
     }
     iteration_start = false;
   }
-};
+}
 
 template <typename DataType, typename LabelType>
 std::uint64_t C2VLoader<DataType, LabelType>::Size() const
 {
   return this->data.size();
-};
+}
 
 template <typename DataType, typename LabelType>
 bool C2VLoader<DataType, LabelType>::IsDone() const
 {
   return ((this->data).size() == (this->iterator_position_get_next_context));
-};
+}
 
 template <typename DataType, typename LabelType>
 void C2VLoader<DataType, LabelType>::Reset()
 {
   this->iterator_position_get_next_context = SizeType{0};
-};
+}
 
 template <typename DataType, typename LabelType>
 void C2VLoader<DataType, LabelType>::addValueToCounter(
@@ -388,63 +390,63 @@ typename C2VLoader<DataType, LabelType>::umap_int_str
 C2VLoader<DataType, LabelType>::GetUmapIdxToFunctionName()
 {
   return this->idx_to_function_name;
-};
+}
 
 template <typename DataType, typename LabelType>
 typename C2VLoader<DataType, LabelType>::umap_int_str
 C2VLoader<DataType, LabelType>::GetUmapIdxToPath()
 {
   return this->idx_to_path;
-};
+}
 
 template <typename DataType, typename LabelType>
 typename C2VLoader<DataType, LabelType>::umap_int_str
 C2VLoader<DataType, LabelType>::GetUmapIdxToWord()
 {
   return this->idx_to_word;
-};
+}
 
 template <typename DataType, typename LabelType>
 typename C2VLoader<DataType, LabelType>::umap_str_int
 C2VLoader<DataType, LabelType>::GetUmapFunctioNameToIdx()
 {
   return this->function_name_to_idx;
-};
+}
 
 template <typename DataType, typename LabelType>
 typename C2VLoader<DataType, LabelType>::umap_str_int
 C2VLoader<DataType, LabelType>::GetUmapPathToIdx()
 {
   return this->path_to_idx;
-};
+}
 
 template <typename DataType, typename LabelType>
 typename C2VLoader<DataType, LabelType>::umap_str_int
 C2VLoader<DataType, LabelType>::GetUmapWordToIdx()
 {
   return this->word_to_idx;
-};
+}
 
 template <typename DataType, typename LabelType>
 typename C2VLoader<DataType, LabelType>::umap_str_int
 C2VLoader<DataType, LabelType>::GetCounterFunctionNames()
 {
   return this->function_name_counter;
-};
+}
 
 template <typename DataType, typename LabelType>
 typename C2VLoader<DataType, LabelType>::umap_str_int
 C2VLoader<DataType, LabelType>::GetCounterPaths()
 {
   return this->path_counter;
-};
+}
 
 template <typename DataType, typename LabelType>
 typename C2VLoader<DataType, LabelType>::umap_str_int
 C2VLoader<DataType, LabelType>::GetCounterWords()
 {
   return this->word_counter;
-};
+}
 
 }  // namespace dataloaders
 }  // namespace ml

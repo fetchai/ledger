@@ -21,7 +21,7 @@
 #include <fstream>
 #include <iostream>
 
-using DataType  = double;
+using DataType  = uint64_t;
 using ArrayType = fetch::math::Tensor<DataType>;
 using SizeType  = fetch::math::Tensor<DataType>::SizeType;
 
