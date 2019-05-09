@@ -22,7 +22,6 @@
 #include "math/tensor.hpp"
 #include "ml/ops/activations/sigmoid.hpp"
 
-// size access should be very fast
 template <class T, int N>
 void BM_SigmoidForward(benchmark::State &state)
 {
