@@ -129,12 +129,6 @@ BootstrapMonitor::BootstrapMonitor(ProverPtr entity, uint16_t p2p_port, std::str
   state_machine_->RegisterHandler(State::Notify, this, &BootstrapMonitor::OnNotify);
 }
 
-BootstrapMonitor::~BootstrapMonitor()
-{
-  state_machine_->Reset();
-  state_machine_.reset();
-}
-
 bool BootstrapMonitor::DiscoverPeers(UriList &peers, std::string const &external_address)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Bootstrapping network node @ ", BOOTSTRAP_HOST);

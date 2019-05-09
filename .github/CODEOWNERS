@@ -10,7 +10,7 @@ cmake/              @ejfitzgerald @n-hutton
 .clang-tidy         @ejfitzgerald @n-hutton
 .clang-format       @ejfitzgerald @n-hutton
 .gitmodules         @ejfitzgerald @n-hutton
-Jenkinsfile         @ejfitzgerald @n-hutton
+Jenkinsfile         @ejfitzgerald @n-hutton @wkaluza
 
 # Core Libraries
 apps/               @uvue-git/ledger-core
