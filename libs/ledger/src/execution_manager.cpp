@@ -163,7 +163,10 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
         return false;
       }
 
-      auto item = std::make_unique<ExecutionItem>(tx.transaction_hash, slice_index);
+      uint32_t log2_num_lanes{0};
+      ExecutionItem::LaneSet lane_set{};
+
+      auto item = std::make_unique<ExecutionItem>(tx.transaction_hash, log2_num_lanes, lane_set);
 
       // transform the resources into lane allocation
       for (auto const &resource : tx.resources)

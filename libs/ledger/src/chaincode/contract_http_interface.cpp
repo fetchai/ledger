@@ -29,9 +29,13 @@
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/transaction_processor.hpp"
+
+#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/v2/json_transaction.hpp"
 #include "variant/variant.hpp"
 
 #include <string>
+#include <memory>
 
 namespace fetch {
 namespace ledger {
@@ -42,6 +46,7 @@ using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromHex;
 using fetch::byte_array::ToBase64;
+using fetch::ledger::v2::FromJsonTransaction;
 
 struct AdaptedTx
 {
@@ -333,6 +338,8 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
   FETCH_LOG_DEBUG(LOGGING_NAME, "NEW TRANSACTION RECEIVED");
   FETCH_LOG_DEBUG(LOGGING_NAME, request.body());
 
+  FETCH_UNUSED(expected_contract);
+
   if (doc.root().IsArray())
   {
     expected_count = doc.root().size();
@@ -340,6 +347,18 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
     {
       auto const &tx_obj = doc[i];
 
+#if 1
+      // create the transaction
+      auto tx = std::make_shared<v2::Transaction>();
+      if (FromJsonTransaction(tx_obj, *tx))
+      {
+        processor_.AddTransaction(std::move(tx));
+
+        txs.emplace_back(tx->digest());
+
+        ++submitted;
+      }
+#else
       MutableTransaction tx{FromWireTransaction(tx_obj)};
 
       if (!expected_contract.empty() && (tx.contract_name() != expected_contract))
@@ -350,14 +369,26 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
       tx.UpdateDigest();
 
       // add the transaction to the processor
-      txs.emplace_back(tx.digest());
       processor_.AddTransaction(std::move(tx));
-      ++submitted;
+#endif
+
     }
   }
   else
   {
     expected_count = 1;
+
+#if 1
+    auto tx = std::make_shared<v2::Transaction>();
+    if (FromJsonTransaction(doc.root(), *tx))
+    {
+      processor_.AddTransaction(std::move(tx));
+
+      txs.emplace_back(tx->digest());
+
+      ++submitted;
+    }
+#else
     MutableTransaction tx{FromWireTransaction(doc.root())};
 
     if (expected_contract.empty() || (tx.contract_name() == expected_contract))
@@ -374,6 +405,7 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to match expected_contract_name: ", expected_contract,
                      " with ", tx.contract_name());
     }
+#endif
   }
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Submitted ", submitted, " transactions from ",
@@ -404,6 +436,15 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
 ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitNativeTx(
     http::HTTPRequest const &request, ConstByteArray expected_contract, TxHashes &txs)
 {
+#if 1
+
+  FETCH_UNUSED(request);
+  FETCH_UNUSED(expected_contract);
+  FETCH_UNUSED(txs);
+
+  return SubmitTxStatus{0, 0};
+
+#else
   std::vector<AdaptedTx> transactions;
 
   serializers::ByteArrayBuffer buffer(request.body());
@@ -426,6 +467,7 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitNativeTx(
                   request.originating_address(), ':', request.originating_port());
 
   return SubmitTxStatus{submitted, transactions.size()};
+#endif
 }
 
 /**

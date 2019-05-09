@@ -39,15 +39,10 @@ public:
 
   static constexpr char const *LOGGING_NAME = "ExecutionItem";
 
-  ExecutionItem(TxDigest hash, std::size_t slice)
+  ExecutionItem(TxDigest hash, uint32_t log2_num_lanes, LaneSet lanes)
     : hash_(std::move(hash))
-    , slice_(slice)
-  {}
-
-  ExecutionItem(TxDigest hash, LaneIndex lane, std::size_t slice)
-    : hash_(std::move(hash))
-    , lanes_{lane}
-    , slice_(slice)
+    , log2_num_lanes_(log2_num_lanes)
+    , lanes_(std::move(lanes))
   {}
 
   TxDigest hash() const
@@ -74,7 +69,10 @@ public:
   {
     try
     {
-      status_ = executor.Execute(hash_, slice_, lanes_);
+      auto const result = executor.Execute(hash_, log2_num_lanes_, lanes_);
+
+      status_ = result.status;
+      fee_ += result.fee;
     }
     catch (std::exception const &ex)
     {
@@ -91,11 +89,14 @@ public:
 
 private:
   using AtomicStatus = std::atomic<Status>;
+  using AtomicFee    = std::atomic<uint64_t>;
 
   TxDigest     hash_;
+  uint32_t     log2_num_lanes_;
   LaneSet      lanes_;
   std::size_t  slice_;
   AtomicStatus status_{Status::NOT_RUN};
+  AtomicFee    fee_{0};
 };
 
 }  // namespace ledger

@@ -22,6 +22,7 @@
 #include "ledger/chaincode/chain_code_cache.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+//#include "ledger/chaincode/contract.hpp"
 
 #include <unordered_set>
 #include <vector>
@@ -29,28 +30,60 @@
 namespace fetch {
 namespace ledger {
 
+namespace v2 {
+class Address;
+}
+
+class TokenContract;
+class CachedStorageAdapter;
+class StateSentinelAdapter;
+
 /**
  * The executor object is designed to process incoming transactions
  */
 class Executor : public ExecutorInterface
 {
 public:
-  using Resources = std::shared_ptr<StorageUnitInterface>;
+  using StorageUnitPtr = std::shared_ptr<StorageUnitInterface>;
+  using ConstByteArray = byte_array::ConstByteArray;
 
   // Construction / Destruction
-  explicit Executor(Resources resources)
-    : resources_{std::move(resources)}
-  {}
+  explicit Executor(StorageUnitPtr storage);
   ~Executor() override = default;
 
   /// @name Executor Interface
   /// @{
-  Status Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes) override;
+  Result Execute(TxDigest const &hash, LaneIndex log2_num_lanes, LaneSet lanes) override;
   /// @}
 
 private:
-  Resources      resources_;         ///< The collection of resources
-  ChainCodeCache chain_code_cache_;  //< The factory to create new chain code instances
+
+  using TokenContractPtr        = std::shared_ptr<TokenContract>;
+  using TransactionPtr          = std::shared_ptr<v2::Transaction>;
+  using CachedStorageAdapterPtr = std::shared_ptr<CachedStorageAdapter>;
+//  using StateSentinelAdapter    = std::shared_ptr<StateSentinelAdapter>;
+
+//  Contract::Status ExecuteContract(ConstByteArray const &name, LaneIndex log2_num_lanes, LaneSet const &lanes, v2::Transaction const &tx);
+
+  bool RetrieveTransaction(TxDigest const &hash);
+  bool ExecuteTransactionContract(Result &result);
+  bool HandleTokenUpdates(uint64_t &fee);
+  bool Cleanup();
+
+  /// @name Resources
+  /// @{
+  StorageUnitPtr    storage_;         ///< The collection of resources
+  ChainCodeCache    chain_code_cache_{};  //< The factory to create new chain code instances
+  TokenContractPtr  token_contract_;
+  /// @}
+
+  /// @name Per Execution State
+  /// @{
+  LaneSet                 allowed_lanes_{};
+  LaneIndex               log2_num_lanes_{0};
+  TransactionPtr          current_tx_{};
+  CachedStorageAdapterPtr storage_cache_;
+  /// @}
 };
 
 }  // namespace ledger

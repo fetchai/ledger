@@ -51,7 +51,7 @@ enum class State
 }
 
 class TransactionStoreSyncService : public network::AtomicStateMachine<tx_sync::State>,
-                                    public VerifiedTransactionSink
+                                    public TransactionSink
 {
 public:
   using Muddle                = muddle::Muddle;
@@ -60,17 +60,17 @@ public:
   using Uri                   = Muddle::Uri;
   using Client                = muddle::rpc::Client;
   using ClientPtr             = std::shared_ptr<Client>;
-  using ObjectStore           = storage::TransientObjectStore<VerifiedTransaction>;
+  using ObjectStore           = storage::TransientObjectStore<v2::Transaction>;
   using FutureTimepoint       = network::FutureTimepoint;
   using RequestingObjectCount = network::RequestingQueueOf<Address, uint64_t>;
   using PromiseOfObjectCount  = network::PromiseOf<uint64_t>;
-  using TxList                = std::vector<UnverifiedTransaction>;
+  using TxList                = std::vector<v2::Transaction>;
   using RequestingTxList      = network::RequestingQueueOf<Address, TxList>;
   using RequestingSubTreeList = network::RequestingQueueOf<uint64_t, TxList>;
   using PromiseOfTxList       = network::PromiseOf<TxList>;
   using ResourceID            = storage::ResourceID;
   using Mutex                 = mutex::Mutex;
-  using EventNewTransaction   = std::function<void(VerifiedTransaction const &)>;
+  using EventNewTransaction   = std::function<void(v2::Transaction const &)>;
   using TrimCacheCallback     = std::function<void()>;
   using State                 = tx_sync::State;
   using ObjectStorePtr        = std::shared_ptr<ObjectStore>;
@@ -120,7 +120,7 @@ public:
   }
 
 protected:
-  void OnTransaction(VerifiedTransaction const &tx) override;
+  void OnTransaction(TransactionPtr const &tx) override;
 
   // Reverse bits in byte
   uint8_t Reverse(uint8_t c)

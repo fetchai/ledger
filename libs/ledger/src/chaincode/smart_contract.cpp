@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chain/v2/transaction.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
@@ -62,14 +63,14 @@ ConstByteArray GenerateDigest(std::string const &source)
  * @param: tx the transaction triggering the smart contract
  * @param: params the parameters
  */
-void ValidateAddressesInParams(Transaction const &tx, vm::ParameterPack const &params)
+void ValidateAddressesInParams(v2::Transaction const &tx, vm::ParameterPack const &params)
 {
   // This doesn't work with a set (???)
   std::unordered_set<ConstByteArray> valid_addresses;
 
-  for (auto const &sig : tx.signatures())
+  for (auto const &sig : tx.signatories())
   {
-    valid_addresses.insert(sig.first.identifier());
+    valid_addresses.insert(sig.identity.identifier());
   }
 
   for (std::size_t i = 0; i < params.size(); i++)
@@ -332,12 +333,12 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
  * @param tx The input transaction
  * @return The corresponding status result for the operation
  */
-Contract::Status SmartContract::InvokeAction(std::string const &name, Transaction const &tx)
+Contract::Status SmartContract::InvokeAction(std::string const &name, v2::Transaction const &tx)
 {
   // Important to keep the handle alive as long as the msgpack::object is needed to avoid segfault!
   msgpack::object_handle       h;
   std::vector<msgpack::object> input_params;
-  auto                         parameter_data = byte_array::ByteArray{tx.data()};
+  auto const                   parameter_data = tx.data();
 
   // if the tx has a payload parse it
   if (!parameter_data.empty() && parameter_data != "{}")

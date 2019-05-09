@@ -65,7 +65,7 @@ public:
   void Connect(Muddle &muddle, Uri uri,
                std::chrono::milliseconds timeout = std::chrono::milliseconds(10000));
 
-  Status Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes) override;
+  Result Execute(TxDigest const &hash, uint32_t log2_num_lanes, LaneSet lanes) override;
 
   bool GetAddress(Address &address) const
   {

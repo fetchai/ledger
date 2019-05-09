@@ -58,6 +58,7 @@ public:
   struct Signatory
   {
     Identity       identity;   ///< The identity of the signer (public key)
+    Address        address;    ///< The address corresponding to the address
     ConstByteArray signature;  ///< The signature of the tx payload from the signer
   };
 
@@ -130,6 +131,7 @@ public:
   /// @{
   bool Verify();
   bool IsVerified() const;
+  bool IsSignedByFromAddress() const;
   /// @}
 
   // Operators

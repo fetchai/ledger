@@ -67,6 +67,16 @@ bool Transaction::Verify()
   return verified_;
 }
 
+bool Transaction::IsSignedByFromAddress() const
+{
+  auto const it = std::find_if(signatories_.begin(), signatories_.end(),
+                               [this](v2::Transaction::Signatory const &signatory) {
+                                 return signatory.address == from_;
+                               });
+
+  return it != signatories_.end();
+}
+
 }  // namespace v2
 }  // namespace ledger
 }  // namespace fetch

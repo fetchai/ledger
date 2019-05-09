@@ -318,7 +318,7 @@ TransactionBuilder &TransactionBuilder::Signer(crypto::Identity const &identity)
   if (it == signatories.end())
   {
     // the identity is unique great success!
-    signatories.emplace_back(Signatory{identity, ConstByteArray{}});
+    signatories.emplace_back(Signatory{identity, Address{identity}, ConstByteArray{}});
   }
 
   return *this;

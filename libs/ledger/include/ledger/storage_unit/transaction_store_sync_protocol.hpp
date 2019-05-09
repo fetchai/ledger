@@ -33,6 +33,7 @@
 #include "storage/resource_mapper.hpp"
 #include "storage/transient_object_store.hpp"
 #include "vectorise/platform.hpp"
+#include "ledger/chain/v2/transaction.hpp"
 
 #include <set>
 #include <utility>
@@ -51,7 +52,7 @@ public:
     PULL_SUBTREE = 3
   };
 
-  using ObjectStore = storage::TransientObjectStore<VerifiedTransaction>;
+  using ObjectStore = storage::TransientObjectStore<v2::Transaction>;
 
   static constexpr char const *LOGGING_NAME = "ObjectStoreSyncProtocol";
 
@@ -61,7 +62,7 @@ public:
   TransactionStoreSyncProtocol(TransactionStoreSyncProtocol &&)      = delete;
   ~TransactionStoreSyncProtocol() override                           = default;
 
-  void OnNewTx(VerifiedTransaction const &o);
+  void OnNewTx(v2::Transaction const &o);
   void TrimCache();
 
   // Operators
@@ -77,22 +78,18 @@ private:
     using Timepoint  = Clock::time_point;
     using AddressSet = std::unordered_set<muddle::Muddle::Address>;
 
-    CachedObject(UnverifiedTransaction value)
+    CachedObject(v2::Transaction value)
       : data(std::move(value))
     {}
 
-    CachedObject(UnverifiedTransaction &&value)
-      : data(std::move(value))
-    {}
-
-    UnverifiedTransaction data;
-    AddressSet            delivered_to;
-    Timepoint             created{Clock::now()};
+    v2::Transaction data;
+    AddressSet      delivered_to;
+    Timepoint       created{Clock::now()};
   };
 
   using Self   = TransactionStoreSyncProtocol;
   using Cache  = std::vector<CachedObject>;
-  using TxList = std::vector<UnverifiedTransaction>;
+  using TxList = std::vector<v2::Transaction>;
 
   uint64_t ObjectCount();
   TxList   PullObjects(service::CallContext const *call_context);

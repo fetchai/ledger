@@ -29,6 +29,7 @@
 #include "network/muddle/rpc/server.hpp"
 #include "storage/document_store_protocol.hpp"
 #include "storage/new_revertible_document_store.hpp"
+#include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
 
 using fetch::byte_array::ToBase64;
 
@@ -101,7 +102,7 @@ LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packet
   tx_sync_service_ =
       std::make_shared<TransactionStoreSyncService>(sync_cfg, external_muddle_, tx_store_);
 
-  tx_store_->SetCallback([this](VerifiedTransaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
+  tx_store_->SetCallback([this](v2::Transaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
 
   tx_sync_service_->SetTrimCacheCallback([this]() { tx_sync_protocol_->TrimCache(); });
 

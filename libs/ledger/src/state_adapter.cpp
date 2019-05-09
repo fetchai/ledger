@@ -29,11 +29,18 @@ namespace ledger {
  *
  * @param storage The reference to the storage engine
  * @param scope The reference to the scope
+ * @param allow_writes Enables write functionality
  */
 StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope)
+  : StateAdapter(storage, std::move(scope), false)
+{}
+
+StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope, bool allow_writes = false)
   : storage_{storage}
   , scope_{std::move(scope)}
-{}
+  , enable_writes_{allow_writes}
+{
+}
 
 /**
  * Read a value from the state store

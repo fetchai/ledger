@@ -22,6 +22,8 @@
 #include "core/mutex.hpp"
 #include "core/threading.hpp"
 #include "storage/object_store.hpp"
+#include "ledger/chain/v2/transaction_layout.hpp"
+#include "ledger/chain/v2/transaction_rpc_serializers.hpp"
 
 #include <map>
 #include <unordered_map>
@@ -40,9 +42,9 @@ template <typename Object>
 class TransientObjectStore
 {
 public:
-  using Callback    = std::function<void(Object const &)>;
-  using Archive     = ObjectStore<Object>;
-  using TxSummaries = std::vector<ledger::TransactionSummary>;
+  using Callback  = std::function<void(Object const &)>;
+  using Archive   = ObjectStore<Object>;
+  using TxLayouts = std::vector<ledger::v2::TransactionLayout>;
 
   static constexpr char const *LOGGING_NAME = "TransientObjectStore";
 
@@ -62,11 +64,11 @@ public:
 
   /// @name Accessors
   /// @{
-  bool        Get(ResourceID const &rid, Object &object);
-  bool        Has(ResourceID const &rid);
-  void        Set(ResourceID const &rid, Object const &object, bool newly_seen);
-  bool        Confirm(ResourceID const &rid);
-  TxSummaries GetRecent(uint32_t max_to_poll);
+  bool      Get(ResourceID const &rid, Object &object);
+  bool      Has(ResourceID const &rid);
+  void      Set(ResourceID const &rid, Object const &object, bool newly_seen);
+  bool      Confirm(ResourceID const &rid);
+  TxLayouts GetRecent(uint32_t max_to_poll);
   /// @}
 
   void SetCallback(Callback cb)
@@ -79,12 +81,13 @@ public:
   TransientObjectStore &operator=(TransientObjectStore &&) = delete;
 
 private:
-  using Mutex       = fetch::mutex::Mutex;
-  using Queue       = fetch::core::MPMCQueue<ResourceID, 1 << 15>;
-  using RecentQueue = fetch::core::MPMCQueue<ledger::TransactionSummary, 1 << 15>;
-  using Cache       = std::unordered_map<ResourceID, Object>;
-  using ThreadPtr   = std::shared_ptr<std::thread>;
-  using Flag        = std::atomic<bool>;
+  using Mutex             = fetch::mutex::Mutex;
+  using TransactionLayout = fetch::ledger::v2::TransactionLayout;
+  using Queue             = fetch::core::MPMCQueue<ResourceID, 1 << 15>;
+  using RecentQueue       = fetch::core::MPMCQueue<TransactionLayout, 1 << 15>;
+  using Cache             = std::unordered_map<ResourceID, Object>;
+  using ThreadPtr         = std::shared_ptr<std::thread>;
+  using Flag              = std::atomic<bool>;
 
   bool GetFromCache(ResourceID const &rid, Object &object);
   void SetInCache(ResourceID const &rid, Object const &object);
@@ -192,18 +195,18 @@ bool TransientObjectStore<O>::Get(ResourceID const &rid, O &object)
  * @return a vector of the tx summaries
  */
 template <typename O>
-typename TransientObjectStore<O>::TxSummaries TransientObjectStore<O>::GetRecent(
-    uint32_t max_to_poll)
+typename TransientObjectStore<O>::TxLayouts TransientObjectStore<O>::GetRecent(uint32_t max_to_poll)
 {
-  TransientObjectStore<O>::TxSummaries   ret;
-  ledger::TransactionSummary             summary;
+  TxLayouts layouts{};
+
   static const std::chrono::milliseconds MAX_WAIT_INTERVAL{5};
 
-  for (std::size_t i = 0; i < max_to_poll; ++i)
+  TransactionLayout layout;
+  for (uint32_t i = 0; i < max_to_poll; ++i)
   {
-    if (most_recent_seen_.Pop(summary, MAX_WAIT_INTERVAL))
+    if (most_recent_seen_.Pop(layout, MAX_WAIT_INTERVAL))
     {
-      ret.push_back(summary);
+      layouts.push_back(layout);
     }
     else
     {
@@ -211,7 +214,7 @@ typename TransientObjectStore<O>::TxSummaries TransientObjectStore<O>::GetRecent
     }
   }
 
-  return ret;
+  return layouts;
 }
 
 /**
@@ -248,7 +251,7 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
   {
     std::size_t count{most_recent_seen_.QUEUE_LENGTH};
     bool const  inserted =
-        most_recent_seen_.Push(object.summary(), count, std::chrono::milliseconds{100});
+        most_recent_seen_.Push(ledger::v2::TransactionLayout{object}, count, std::chrono::milliseconds{100});
     if (inserted && prev_count != count)
     {
       if (prev_count < recent_queue_alarm_threshold && count >= recent_queue_alarm_threshold)

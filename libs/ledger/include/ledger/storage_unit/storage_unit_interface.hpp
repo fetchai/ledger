@@ -17,15 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "storage/document.hpp"
 #include "storage/resource_mapper.hpp"
+#include "ledger/chain/v2/transaction_layout.hpp"
 
 #include <vector>
 
 namespace fetch {
 namespace ledger {
+namespace v2 {
+class Transaction;
+}
 
 class StorageInterface
 {
@@ -33,14 +36,15 @@ public:
   using Document        = storage::Document;
   using ResourceAddress = storage::ResourceAddress;
   using StateValue      = byte_array::ConstByteArray;
+  using ShardIndex      = uint32_t;
 
   /// @name State Interface
   /// @{
   virtual Document Get(ResourceAddress const &key)                          = 0;
   virtual Document GetOrCreate(ResourceAddress const &key)                  = 0;
   virtual void     Set(ResourceAddress const &key, StateValue const &value) = 0;
-  virtual bool     Lock(ResourceAddress const &key)                         = 0;
-  virtual bool     Unlock(ResourceAddress const &key)                       = 0;
+  virtual bool     Lock(ShardIndex shard)                                   = 0;
+  virtual bool     Unlock(ShardIndex shard)                                 = 0;
   /// @}
 };
 
@@ -48,9 +52,8 @@ class StorageUnitInterface : public StorageInterface
 {
 public:
   using Hash            = byte_array::ConstByteArray;
-  using TransactionList = std::vector<Transaction>;
   using ConstByteArray  = byte_array::ConstByteArray;
-  using TxSummaries     = std::vector<TransactionSummary>;
+  using TxLayouts       = std::vector<v2::TransactionLayout>;
 
   // Construction / Destruction
   StorageUnitInterface()          = default;
@@ -58,20 +61,12 @@ public:
 
   /// @name Transaction Interface
   /// @{
-  virtual void AddTransaction(Transaction const &tx)                         = 0;
-  virtual bool GetTransaction(ConstByteArray const &digest, Transaction &tx) = 0;
-  virtual bool HasTransaction(ConstByteArray const &digest)                  = 0;
-
-  virtual void AddTransactions(TransactionList const &txs)
-  {
-    for (auto const &tx : txs)
-    {
-      AddTransaction(tx);
-    }
-  }
+  virtual void AddTransaction(v2::Transaction const &tx)                         = 0;
+  virtual bool GetTransaction(ConstByteArray const &digest, v2::Transaction &tx) = 0;
+  virtual bool HasTransaction(ConstByteArray const &digest)                      = 0;
   /// @}
 
-  virtual TxSummaries PollRecentTx(uint32_t) = 0;
+  virtual TxLayouts PollRecentTx(uint32_t) = 0;
 
   /// @name Revertible Document Store Interface
   /// @{

@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/threading/synchronised_state.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
 #include "network/service/protocol.hpp"
@@ -86,80 +87,77 @@ public:
     assert(maxlanes == (1u << log2_lanes_));
   }
 
-  bool HasLock(CallContext const *context, ResourceID const &rid)
+  bool HasLock(CallContext const *context)
   {
-    Identifier  identifier           = context->sender_address;
-    std::string printable_identifier = static_cast<std::string>(ToBase64(identifier));
-
     if (!context)
     {
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
           0, byte_array_type(std::string("No context for HasLock.")));
     }
 
-    std::lock_guard<mutex::Mutex> lock(lock_mutex_);
-    auto                          it = locks_.find(rid.id());
-    if (it == locks_.end())
-    {
-      return false;
-    }
+    bool has_lock = false;
+    lock_status_.Apply([&context, &has_lock](LockStatus const &status) {
+      has_lock = (status.is_locked && (status.client == context->sender_address));
+    });
 
-    return (it->second == identifier);
+    return has_lock;
   }
 
-  bool LockResource(CallContext const *context, ResourceID const &rid)
+  bool LockResource(CallContext const *context)
   {
     if (!context)
     {
-      throw serializers::SerializableException(  // TODO(issue 11): set exception number
-          0, byte_array_type(std::string("No context for HasLock.")));
+      // TODO(issue 11): set exception number
+      throw serializers::SerializableException(0, byte_array_type{"No context for HasLock."});
     }
 
-    Identifier  identifier           = context->sender_address;
-    std::string printable_identifier = static_cast<std::string>(ToBase64(identifier));
+    // attempt to lock this shard
+    bool success = false;
+    lock_status_.Apply([&context, &success](LockStatus &status) {
+      if (!status.is_locked)
+      {
+        status.is_locked = true;
+        status.client    = context->sender_address;
+        success          = true;
+      }
+    });
 
-    std::lock_guard<mutex::Mutex> lock(lock_mutex_);
-    auto                          it = locks_.find(rid.id());
-    if (it == locks_.end())
+    // print an error message on failure
+    if (!success)
     {
-      locks_[rid.id()] = identifier;
-      return true;
+      FETCH_LOG_WARN(LOGGING_NAME, "Resource lock failed for: ", context->sender_address.ToBase64());
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource failed ", printable_identifier, " => ",
-                    rid.ToString());
-    return (it->second == identifier);
+    return success;
   }
 
   bool UnlockResource(CallContext const *context, ResourceID const &rid)
   {
+    FETCH_UNUSED(rid);
+
     if (!context)
     {
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
           0, byte_array_type(std::string("No context for HasLock.")));
     }
 
-    Identifier  identifier           = context->sender_address;
-    std::string printable_identifier = static_cast<std::string>(ToBase64(identifier));
+    // attempt to unlock this shard
+    bool success = false;
+    lock_status_.Apply([&context, &success](LockStatus &status) {
+      if (status.is_locked && (status.client == context->sender_address))
+      {
+        status.is_locked = false;
+        status.client    = Identifier{};
+        success          = true;
+      }
+    });
 
-    std::lock_guard<mutex::Mutex> lock(lock_mutex_);
-    auto                          it = locks_.find(rid.id());
-    if (it == locks_.end())
+    if (!success)
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "UnlockResource not locked ", printable_identifier, " => ",
-                      rid.ToString());
-      return false;
+      FETCH_LOG_WARN(LOGGING_NAME, "Resource unlock failed for: ", context->sender_address.ToBase64());
     }
 
-    if (it->second == identifier)
-    {
-      locks_.erase(it);
-      return true;
-    }
-
-    FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource denied ", printable_identifier, " => ",
-                    rid.ToString());
-    return false;
+    return success;
   }
 
 private:
@@ -211,25 +209,15 @@ private:
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
           0, byte_array_type(std::string("Set: Resource located on other lane:") + rid.ToString()));
     }
-    {
-      std::lock_guard<mutex::Mutex> lock(lock_mutex_);
-      auto                          it = locks_.find(rid.id());
 
-      if (it == locks_.end())
-      {
-        throw serializers::SerializableException(  // TODO(issue 11): set exception number
-            0, byte_array_type(std::string("There is no lock for the resource:") + rid.ToString()));
-      }
-      if (it->second != identifier)
-      {
-        throw serializers::SerializableException(  // TODO(issue 11): set exception number
-            0, byte_array_type(std::string("Client ") + printable_identifier +
-                               " does not have a lock for the resource:" + rid.ToString() +
-                               " because it is held for " +
-                               static_cast<std::string>(ToBase64(it->second))));
-      }
+    // determine if this client has the lock on this resource
+    if (!HasLock(context))
+    {
+      // TODO(issue 11): set exception number
+      throw serializers::SerializableException(0, byte_array_type("This shard is locked by another client"));
     }
 
+    // finally once all checks has passed we can set the value on the document store
     doc_store_->Set(rid, value);
   }
 
@@ -244,8 +232,16 @@ private:
 
   uint32_t lane_assignment_ = 0;
 
-  mutex::Mutex                                     lock_mutex_{__LINE__, __FILE__};
-  std::map<byte_array::ConstByteArray, Identifier> locks_;
+
+  struct LockStatus
+  {
+    bool       is_locked{false}; ///< Flag to signal which client has locked the resource
+    Identifier client;           ///< The identifier of the locking client
+  };
+
+  using SyncLockStatus = SynchronisedState<LockStatus>;
+
+  SyncLockStatus lock_status_;
 };
 
 }  // namespace storage

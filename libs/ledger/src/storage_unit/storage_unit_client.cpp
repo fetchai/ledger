@@ -19,6 +19,9 @@
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
+#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/v2/transaction_rpc_serializers.hpp"
+#include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
 
 using fetch::storage::ResourceID;
 using fetch::storage::RevertibleDocumentStoreProtocol;
@@ -47,7 +50,7 @@ AddressList GenerateAddressList(ShardConfigs const &shards)
 
 }  // namespace
 
-using TxStoreProtocol = fetch::storage::ObjectStoreProtocol<Transaction>;
+using TxStoreProtocol = fetch::storage::ObjectStoreProtocol<v2::Transaction>;
 
 StorageUnitClient::StorageUnitClient(MuddleEndpoint &muddle, ShardConfigs const &shards,
                                      uint32_t log2_num_lanes)
@@ -174,7 +177,8 @@ bool StorageUnitClient::RevertToHash(Hash const &hash)
   if (!genesis_state)
   {
     // Due diligence: check all lanes can revert to this state before trying this operation
-    StorageUnitClient::LaneIndex lane_index{0};
+//    StorageUnitClient::LaneIndex lane_index{0};
+    uint32_t lane_index{0};
     for (auto const &hash : *tree)
     {
       assert(hash.size() > 0);
@@ -212,7 +216,8 @@ bool StorageUnitClient::RevertToHash(Hash const &hash)
   }
 
   // Now perform the revert
-  StorageUnitClient::LaneIndex lane_index{0};
+//  StorageUnitClient::LaneIndex lane_index{0};
+  uint32_t lane_index{0};
   for (auto const &hash : *tree)
   {
     assert(hash.size() > 0);
@@ -310,18 +315,17 @@ bool StorageUnitClient::HashInStack(Hash const &hash)
   return state_merkle_stack_.rend() != it;
 }
 
-StorageUnitClient::Address const &StorageUnitClient::LookupAddress(LaneIndex lane) const
+StorageUnitClient::Address const &StorageUnitClient::LookupAddress(ShardIndex shard) const
 {
-  return addresses_.at(lane);
+  return addresses_.at(shard);
 }
 
-StorageUnitClient::Address const &StorageUnitClient::LookupAddress(
-    storage::ResourceID const &resource) const
+StorageUnitClient::Address const &StorageUnitClient::LookupAddress(storage::ResourceID const &resource) const
 {
   return LookupAddress(resource.lane(log2_num_lanes_));
 }
 
-void StorageUnitClient::AddTransaction(VerifiedTransaction const &tx)
+void StorageUnitClient::AddTransaction(v2::Transaction const &tx)
 {
   try
   {
@@ -341,6 +345,7 @@ void StorageUnitClient::AddTransaction(VerifiedTransaction const &tx)
   }
 }
 
+#if 0
 void StorageUnitClient::AddTransactions(TransactionList const &txs)
 {
   std::vector<TxStoreProtocol::ElementList> transaction_lists(num_lanes());
@@ -379,11 +384,12 @@ void StorageUnitClient::AddTransactions(TransactionList const &txs)
     promise->Wait();
   }
 }
+#endif
 
-StorageUnitClient::TxSummaries StorageUnitClient::PollRecentTx(uint32_t max_to_poll)
+StorageUnitClient::TxLayouts StorageUnitClient::PollRecentTx(uint32_t max_to_poll)
 {
   std::vector<service::Promise> promises;
-  TxSummaries                   new_txs;
+  TxLayouts                     layouts;
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Polling recent transactions from lanes");
 
@@ -399,16 +405,16 @@ StorageUnitClient::TxSummaries StorageUnitClient::PollRecentTx(uint32_t max_to_p
 
   for (auto const &promise : promises)
   {
-    auto txs = promise->As<TxSummaries>();
+    auto txs = promise->As<TxLayouts>();
 
-    new_txs.insert(new_txs.end(), std::make_move_iterator(txs.begin()),
+    layouts.insert(layouts.end(), std::make_move_iterator(txs.begin()),
                    std::make_move_iterator(txs.end()));
   }
 
-  return new_txs;
+  return layouts;
 }
 
-bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest, Transaction &tx)
+bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest, v2::Transaction &tx)
 {
   bool success{false};
 
@@ -421,7 +427,7 @@ bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest,
                                                    TxStoreProtocol::GET, resource);
 
     // wait for the response to be delivered
-    tx = promise->As<VerifiedTransaction>();
+    tx = promise->As<v2::Transaction>();
 
     success = true;
   }
@@ -528,7 +534,7 @@ void StorageUnitClient::Set(ResourceAddress const &key, StateValue const &value)
   }
 }
 
-bool StorageUnitClient::Lock(ResourceAddress const &key)
+bool StorageUnitClient::Lock(ShardIndex index)
 {
   bool success{false};
 
@@ -536,7 +542,7 @@ bool StorageUnitClient::Lock(ResourceAddress const &key)
   {
     // make the request to the RPC server
     auto promise = rpc_client_.CallSpecificAddress(
-        LookupAddress(key), RPC_STATE, RevertibleDocumentStoreProtocol::LOCK, key.as_resource_id());
+        LookupAddress(index), RPC_STATE, RevertibleDocumentStoreProtocol::LOCK);
 
     // wait for the promise
     success = promise->As<bool>();
@@ -549,16 +555,15 @@ bool StorageUnitClient::Lock(ResourceAddress const &key)
   return success;
 }
 
-bool StorageUnitClient::Unlock(ResourceAddress const &key)
+bool StorageUnitClient::Unlock(ShardIndex index)
 {
   bool success{false};
 
   try
   {
     // make the request to the RPC server
-    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(key), RPC_STATE,
-                                                   RevertibleDocumentStoreProtocol::UNLOCK,
-                                                   key.as_resource_id());
+    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(index), RPC_STATE,
+                                                   RevertibleDocumentStoreProtocol::UNLOCK);
 
     // wait for the result
     success = promise->As<bool>();

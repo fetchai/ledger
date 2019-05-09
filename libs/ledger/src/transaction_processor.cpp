@@ -21,6 +21,7 @@
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_status_cache.hpp"
+#include "ledger/chain/v2/transaction.hpp"
 #include "metrics/metrics.hpp"
 
 namespace fetch {
@@ -48,16 +49,9 @@ TransactionProcessor::~TransactionProcessor()
   Stop();
 }
 
-void TransactionProcessor::OnTransaction(UnverifiedTransaction const &tx)
+void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
 {
-  // submit the transaction to the verifier - it will call back this::OnTransaction(verified) or
-  // this::OnTransactions(verified)
-  verifier_.AddTransaction(tx.AsMutable());
-}
-
-void TransactionProcessor::OnTransaction(VerifiedTransaction const &tx)
-{
-  FETCH_METRIC_TX_SUBMITTED(tx.digest());
+  FETCH_METRIC_TX_SUBMITTED(tx->digest());
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Verified Input Transaction: ", byte_array::ToBase64(tx.digest()),
                   " (", tx.contract_name(), ')');
@@ -65,7 +59,7 @@ void TransactionProcessor::OnTransaction(VerifiedTransaction const &tx)
   // dispatch the transaction to the storage engine
   try
   {
-    storage_.AddTransaction(tx);
+    storage_.AddTransaction(*tx);
   }
   catch (std::runtime_error &e)
   {
@@ -74,17 +68,18 @@ void TransactionProcessor::OnTransaction(VerifiedTransaction const &tx)
     return;
   }
 
-  FETCH_METRIC_TX_STORED(tx.digest());
+  FETCH_METRIC_TX_STORED(tx->digest());
 
   // dispatch the summary to the miner
-  packer_.EnqueueTransaction(tx.summary());
+//  packer_.EnqueueTransaction(tx.summary());
 
   // update the status cache with the state of this transaction
-  status_cache_.Update(tx.digest(), TransactionStatus::PENDING);
+  status_cache_.Update(tx->digest(), TransactionStatus::PENDING);
 
-  FETCH_METRIC_TX_QUEUED(tx.digest());
+  FETCH_METRIC_TX_QUEUED(tx->digest());
 }
 
+#if 0
 void TransactionProcessor::OnTransactions(TransactionList const &txs)
 {
 #ifdef FETCH_ENABLE_METRICS
@@ -124,12 +119,13 @@ void TransactionProcessor::OnTransactions(TransactionList const &txs)
   }
 #endif  // FETCH_ENABLE_METRICS
 }
+#endif
 
 void TransactionProcessor::ThreadEntryPoint()
 {
   SetThreadName("TxProc");
 
-  std::vector<TransactionSummary> new_txs;
+  std::vector<v2::TransactionLayout> new_txs;
   while (running_)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -143,10 +139,7 @@ void TransactionProcessor::ThreadEntryPoint()
 
     for (auto const &summary : new_txs)
     {
-      // Note: metric for TX stored will not fire this way
-      // dispatch the summary to the miner
-      assert(summary.IsWellFormed());
-      packer_.EnqueueTransaction(summary);
+//      packer_.EnqueueTransaction(summary);
 
       FETCH_METRIC_TX_QUEUED(summary.transaction_hash);
     }

@@ -25,6 +25,8 @@
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "metrics/metrics.hpp"
+#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chaincode/token_contract.hpp"
 
 #include "ledger/state_sentinel_adapter.hpp"
 
@@ -35,12 +37,60 @@
 
 static constexpr char const *LOGGING_NAME = "Executor";
 
+using fetch::byte_array::ConstByteArray;
+
 #ifdef FETCH_ENABLE_METRICS
 using fetch::metrics::Metrics;
 #endif  // FETCH_ENABLE_METRICS
 
 namespace fetch {
 namespace ledger {
+namespace {
+
+  bool GenerateContractName(v2::Transaction const &tx, Identifier &identifier)
+  {
+    // Step 1 - Translate the tx into a common name
+    using ContractMode = v2::Transaction::ContractMode;
+
+    ConstByteArray contract_name{};
+    switch (tx.contract_mode())
+    {
+      case ContractMode::NOT_PRESENT:
+        break;
+      case ContractMode::PRESENT:
+        contract_name = tx.contract_digest().address().ToHex() + "." + tx.contract_address().address().ToHex() + "." + tx.action();
+        break;
+      case ContractMode::CHAIN_CODE:
+        contract_name = tx.chain_code() + "." + tx.action();
+        break;
+    }
+
+    // if there is a contract present simply parse the name
+    if (!contract_name.empty())
+    {
+      if (!identifier.Parse(contract_name))
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+//  ExecutorStatus ExecuteContract(ContractStatus &contract_status,
+//                                 ConstByteArray const &name,
+//                                 StorageUnitPtr const &storage,
+//                                 ChainCodeCache &chain_code_cache,
+//                                 LaneIndex log2_num_lanes, LaneSet const &lanes)
+//  {
+//
+
+}
+
+Executor::Executor(StorageUnitPtr storage)
+  : storage_{std::move(storage)}
+  , token_contract_{std::make_shared<TokenContract>()}
+{}
 
 /**
  * Executes a given transaction across a series of lanes
@@ -50,87 +100,140 @@ namespace ledger {
  * @param lanes The affected lanes for the transaction
  * @return The status code for the operation
  */
-Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes)
+Executor::Result Executor::Execute(TxDigest const &digest, LaneIndex log2_num_lanes, LaneSet lanes)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash));
 
+  Result result{Status::INEXPLICABLE_FAILURE, 0u};
+
+  // cache the state for the current transaction
+  allowed_lanes_ = std::move(lanes);
+  log2_num_lanes_ = log2_num_lanes;
+
+  // attempt to retrieve the transaction from the storage
+  if (!RetrieveTransaction(digest))
+  {
+    // signal that the contract failed to be executed
+    result.status = Status::TX_LOOKUP_FAILURE;
+  }
+  else
+  {
+    // create the storage cache
+    storage_cache_ = std::make_shared<CachedStorageAdapter>(*storage_);
+
+    // execute the transaction
+    if (!ExecuteTransactionContract(result))
+    {
+      // in the case of transaction execution failure the maximum fees will be removed
+      result.fee = current_tx_->charge_limit();
+
+      // in addition to avoid indeterminate data being partially flushed. In the case of the when
+      // the transaction execution fails then we also clear ally the cached version.
+      storage_cache_->Clear();
+    }
+
+#if 0
+    // process the fees
+    if (!ProcessFees(result.fee))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to process the fees");
+      result.status = Status::CHAIN_CODE_EXEC_FAILURE;
+    }
+#endif
+
+    // force the flushing of the cache *** only if the contract was successful ***
+    if (Executor::Status::SUCCESS == result.status)
+    {
+      storage_cache_->Flush();
+    }
+  }
+
+  // clean up any used resources
+  Cleanup();
+
+  return result;
+}
+
+bool Executor::RetrieveTransaction(TxDigest const &hash)
+{
+  bool success{false};
+
   try
   {
-    // TODO(issue 33): Add code to validate / check lane resources
-    FETCH_UNUSED(slice);
-    FETCH_UNUSED(lanes);
+    // create a new transaction
+    current_tx_ = std::make_unique<v2::Transaction>();
 
-#ifdef FETCH_ENABLE_METRICS
-    Metrics::Timestamp const started = Metrics::Clock::now();
-#endif  // FETCH_ENABLE_METRICS
+    // load the transaction from the store
+    success = storage_->GetTransaction(hash, *current_tx_);
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Exception caught when retrieving tx from store: ", ex.what());
+  }
 
-    // Get the transaction from the store
-    Transaction tx;
-    if (!resources_->GetTransaction(hash, tx))
+  return success;
+}
+
+bool Executor::ExecuteTransactionContract(Result &result)
+{
+  bool success{false};
+
+  try
+  {
+    Identifier contract{};
+
+    // generate the contract name (identifier)
+    if (!GenerateContractName(*current_tx_, contract))
     {
-      return Status::TX_LOOKUP_FAILURE;
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to generate the contract name");
+      result.status = Status::CONTRACT_NAME_PARSE_FAILURE;
+      return false;
     }
 
-    // This is a failure case that appears too often
-    if (tx.contract_name().size() == 0)
+    // when there is no contract signalled in the transaction the identifier will be empty. This is
+    // a normal use case
+    if (contract.empty())
     {
-      FETCH_LOG_ERROR(LOGGING_NAME,
-                      "Unable to do full retrieve of TX: ", byte_array::ToBase64(hash));
-      return Status::TX_LOOKUP_FAILURE;
+      result.status = Status::SUCCESS;
+      return true;
     }
 
-    // attempt to parse the full contract name from from the transaction
-    Identifier contract;
-    if (!contract.Parse(tx.contract_name()))
+    // create the cache and state sentinel (lock and unlock resources as well as sandbox)
+    StateSentinelAdapter storage_adapter{*storage_cache_, contract.GetParent(), log2_num_lanes_,
+                                         allowed_lanes_};
+
+    // lookup or create the instance of the contract as is needed
+    auto chain_code = chain_code_cache_.Lookup(contract.GetParent(), *storage_);
+    if (!chain_code)
     {
-      return Status::CONTRACT_NAME_PARSE_FAILURE;
+      FETCH_LOG_WARN(LOGGING_NAME, "Chain code lookup failure!");
+      result.status = Status::CONTRACT_LOOKUP_FAILURE;
     }
 
-    Contract::Status result{Contract::Status::FAILED};
+    // attach the chain code to the current working context
+    chain_code->Attach(storage_adapter);
+
+    // Dispatch the transaction to the contract
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatch: ", contract.name());
+    auto const contract_status = chain_code->DispatchTransaction(contract.name(), *current_tx_);
+
+    // detach the chain code from the current context
+    chain_code->Detach();
+
+    // map the contract execution status
+    result.status = Status::CHAIN_CODE_EXEC_FAILURE;
+    switch (contract_status)
     {
-      // create the cache and state sentinel (lock and unlock resources as well as sandbox)
-      CachedStorageAdapter storage_cache{*resources_};
-      StateSentinelAdapter storage_adapter{storage_cache, contract.GetParent(), tx.resources(),
-                                           tx.raw_resources()};
-
-      // lookup or create the instance of the contract as is needed
-      auto chain_code = chain_code_cache_.Lookup(contract.GetParent(), *resources_);
-      if (!chain_code)
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Chain code lookup failure!");
-        return Status::CHAIN_CODE_LOOKUP_FAILURE;
-      }
-
-      // attach the chain code to the current working context
-      chain_code->Attach(storage_adapter);
-
-      // Dispatch the transaction to the contract
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatch: ", contract.name());
-      result = chain_code->DispatchTransaction(contract.name(), tx);
-
-      // detach the chain code from the current context
-      chain_code->Detach();
-
-      // force the flushing of the cache *** only if the contract was successful ***
-      if (result == Contract::Status::OK)
-      {
-        storage_cache.Flush();
-      }
-    }
-
-    // map the dispatch the result
-    Status status{Status::CHAIN_CODE_EXEC_FAILURE};
-    switch (result)
-    {
-    case Contract::Status::OK:
-      status = Status::SUCCESS;
-      break;
-    case Contract::Status::FAILED:
-      FETCH_LOG_WARN(LOGGING_NAME, "Transaction execution failed!");
-      break;
-    case Contract::Status::NOT_FOUND:
-      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup transaction handler");
-      break;
+      case Contract::Status::OK:
+        success = true;
+        result.status  = Status::SUCCESS;
+        break;
+      case Contract::Status::FAILED:
+        FETCH_LOG_WARN(LOGGING_NAME, "Transaction execution failed!");
+        break;
+      case Contract::Status::NOT_FOUND:
+        FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup transaction handler");
+        break;
     }
 
 #ifdef FETCH_ENABLE_METRICS
@@ -140,17 +243,127 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
     FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash), " (success)");
 
     FETCH_METRIC_TX_EXEC_STARTED_EX(hash, started);
-    FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, completed)
+    FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, completed);
 
-    return status;
+    // attempt to generate a fee for this transaction
+    if (success)
+    {
+      // simple linear scale fee
+      uint64_t const compute_fee = chain_code->CalculateFee();
+      uint64_t const storage_fee = (storage_adapter.num_bytes_written() * 2u);
+      uint64_t const base_fee    = compute_fee + storage_fee;
+      uint64_t const scaled_fee  = allowed_lanes_.size() * base_fee;
+
+      result.fee = scaled_fee;
+    }
   }
   catch (std::exception const &ex)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Execution Error: ", ex.what());
+    FETCH_LOG_WARN(LOGGING_NAME, "Exception during execution of tx 0x", current_tx_->digest().ToHex(), " : ", ex.what());
+
+    result.status = Status::CHAIN_CODE_EXEC_FAILURE;
   }
 
-  return Status::INEXPLICABLE_FAILURE;
+  return success;
 }
+
+bool Executor::HandleTokenUpdates(uint64_t &fee)
+{
+  // create the token state adapter
+  StateSentinelAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"}, log2_num_lanes_,
+                                       allowed_lanes_};
+
+#if 0
+  // attach the token contract
+  token_contract_->Attach(storage_adapter);
+
+//  token_contract_->Transfer()
+
+  // detach the token contract
+  token_contract_->Detach();
+#endif
+
+  return false;
+}
+
+bool Executor::Cleanup()
+{
+  return false;
+}
+
+#if 0
+Contract::Status Executor::ExecuteContract(ConstByteArray const &name, LaneIndex log2_num_lanes, LaneSet const &lanes, v2::Transaction const &tx)
+{
+  uint64_t current_fee{tx.charge_limit()};
+  Status status{Status::INEXPLICABLE_FAILURE};
+
+  // attempt to execute the first part of the contract
+  // if there is no contract then exit immediately
+  if (name.empty())
+  {
+    return Contract::Status::OK;
+  }
+
+  // attempt to parse the full contract name from from the transaction
+  Identifier contract;
+  if (!contract.Parse(name))
+  {
+    return Contract::Status::FAILED;
+  }
+
+  // create the cache and state sentinel (lock and unlock resources as well as sandbox)
+  CachedStorageAdapter storage_cache{*storage_};
+  StateSentinelAdapter storage_adapter{storage_cache, contract.GetParent(), log2_num_lanes, lanes};
+
+  // lookup or create the instance of the contract as is needed
+  auto chain_code = chain_code_cache_.Lookup(contract.GetParent(), *storage_);
+  if (!chain_code)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Chain code lookup failure!");
+    return Contract::Status::FAILED;
+  }
+
+  // attach the chain code to the current working context
+  chain_code->Attach(storage_adapter);
+
+  // Dispatch the transaction to the contract
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatch: ", contract.name());
+  auto const contract_status = chain_code->DispatchTransaction(contract.name(), tx);
+
+  // detach the chain code from the current context
+  chain_code->Detach();
+
+  // force the flushing of the cache *** only if the contract was successful ***
+  if (Contract::Status::OK == contract_status)
+  {
+    storage_cache.Flush();
+  }
+
+  switch (contract_status)
+  {
+    case Contract::Status::OK:
+      status = Status::SUCCESS;
+      break;
+    case Contract::Status::FAILED:
+      FETCH_LOG_WARN(LOGGING_NAME, "Transaction execution failed!");
+      break;
+    case Contract::Status::NOT_FOUND:
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup transaction handler");
+      break;
+  }
+
+#ifdef FETCH_ENABLE_METRICS
+  Metrics::Timestamp const completed = Metrics::Clock::now();
+#endif  // FETCH_ENABLE_METRICS
+
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash), " (success)");
+
+  FETCH_METRIC_TX_EXEC_STARTED_EX(hash, started);
+  FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, completed)
+
+  return status;
+}
+#endif
 
 }  // namespace ledger
 }  // namespace fetch

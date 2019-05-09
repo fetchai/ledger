@@ -59,13 +59,17 @@ void Deserialize(T &s, TransactionLayout::ShardMask &mask)
 template <typename T>
 void Serialize(T &s, TransactionLayout const &tx)
 {
-  s << tx.digest_ << tx.mask_ << tx.charge_ << tx.valid_from_ << tx.valid_until_;
+  s << tx.digest_;
+  Serialize(s, tx.mask_);
+  s << tx.charge_ << tx.valid_from_ << tx.valid_until_;
 }
 
 template <typename T>
 void Deserialize(T &s, TransactionLayout &tx)
 {
-  s >> tx.digest_ >> tx.mask_ >> tx.charge_ >> tx.valid_from_ >> tx.valid_until_;
+  s >> tx.digest_;
+  Deserialize(s, tx.mask_);
+  s >> tx.charge_ >> tx.valid_from_ >> tx.valid_until_;
 }
 
 }  // namespace v2

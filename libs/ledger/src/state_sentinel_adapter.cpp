@@ -29,42 +29,24 @@ namespace ledger {
  * @param scope The reference to the scope
  */
 StateSentinelAdapter::StateSentinelAdapter(StorageInterface &storage, Identifier scope,
-                                           ResourceSet const &resources,
-                                           ResourceSet const &raw_resources)
-  : StateAdapter(storage, scope)
+                                           ShardIndex log2_num_shards, ShardIndexSet shards)
+  : StateAdapter(storage, std::move(scope), true)
+  , log2_num_shards_{log2_num_shards}
+  , shards_{std::move(shards)}
 {
-  enable_writes_ = true;
-
-  // Populate the allowed resources
-  for (auto const &hash : raw_resources)
-  {
-    allowed_accesses_.insert(std::string{hash});
-#ifndef NDEBUG
-    FETCH_LOG_INFO(LOGGING_NAME, "Pushing allowed (raw): ", std::string{hash});
-#endif
-  }
-
-  for (auto const &key : resources)
-  {
-    std::string full = std::string{scope.full_name()} + ".state." + std::string{key};
-    allowed_accesses_.insert(full);
-#ifndef NDEBUG
-    FETCH_LOG_INFO(LOGGING_NAME, "Pushing allowed: ", full);
-#endif
-  }
-
   // Lock resources
-  for (auto const &full_resource : allowed_accesses_)
+  for (auto const &index : shards_)
   {
-    storage_.Lock(CreateAddress(full_resource));
+    storage_.Lock(index);
   }
 }
 
 StateSentinelAdapter::~StateSentinelAdapter()
 {
-  for (auto const &full_resource : allowed_accesses_)
+  // Unlock resources
+  for (auto const &index : shards_)
   {
-    storage_.Unlock(CreateAddress(full_resource));
+    storage_.Unlock(index);
   }
 }
 
@@ -85,7 +67,18 @@ StateSentinelAdapter::Status StateSentinelAdapter::Read(std::string const &key, 
     return Status::PERMISSION_DENIED;
   }
 
-  return StateAdapter::Read(key, data, size);
+  // proxy the call the the state adapter
+  auto const status = StateAdapter::Read(key, data, size);
+
+  // update the counters
+  if (Status::OK == status)
+  {
+    bytes_read_ += size;
+  }
+
+  ++lookups_;
+
+  return status;
 }
 
 /**
@@ -100,13 +93,25 @@ StateSentinelAdapter::Status StateSentinelAdapter::Read(std::string const &key, 
 StateSentinelAdapter::Status StateSentinelAdapter::Write(std::string const &key, void const *data,
                                                          uint64_t size)
 {
+
   if (!IsAllowedResource(WrapKeyWithScope(key)))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unable to write to resource: ", WrapKeyWithScope(key));
     return Status::PERMISSION_DENIED;
   }
 
-  return StateAdapter::Write(key, data, size);
+  // proxy call to the state adapter
+  auto const status = StateAdapter::Write(key, data, size);
+
+  // update the counters
+  if (Status::OK == status)
+  {
+    bytes_written_ += size;
+  }
+
+  ++lookups_;
+
+  return status;
 }
 
 /**
@@ -123,6 +128,8 @@ StateSentinelAdapter::Status StateSentinelAdapter::Exists(std::string const &key
     return Status::PERMISSION_DENIED;
   }
 
+  ++lookups_;
+
   return StateAdapter::Exists(key);
 }
 
@@ -135,25 +142,23 @@ StateSentinelAdapter::Status StateSentinelAdapter::Exists(std::string const &key
  */
 bool StateSentinelAdapter::IsAllowedResource(std::string const &key) const
 {
-  bool result = allowed_accesses_.find(key) != allowed_accesses_.end();
+  // build the associated resources address
+  ResourceAddress const address{key};
+
+  // determine which shard this resource is mapped to
+  auto const mapped_shard = address.lane(log2_num_shards_);
+
+  // calculate if this shard is in the allowed shard list
+  bool const is_allowed = shards_.find(mapped_shard) != shards_.end();
 
 #ifndef NDEBUG
-  if (!result)
+  if (!is_allowed)
   {
-    std::ostringstream all_resources;
-
-    for (auto const &access : allowed_accesses_)
-    {
-      all_resources << access << std::endl;
-    }
-
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to access resource \n", key, "\nAll resources: \n",
-                   all_resources.str());
-    // exit(1);
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to access resource: ", key);
   }
 #endif
 
-  return result;
+  return is_allowed;
 }
 
 }  // namespace ledger

@@ -18,6 +18,7 @@
 
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
+#include "ledger/chain/v2/transaction.hpp"
 
 #include "core/byte_array/decoders.hpp"
 #include "crypto/fnv.hpp"
@@ -51,7 +52,7 @@ SmartContractManager::SmartContractManager()
   OnTransaction("create", this, &SmartContractManager::OnCreate);
 }
 
-Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
+Contract::Status SmartContractManager::OnCreate(v2::Transaction const &tx)
 {
   // attempt to parse the transaction
   variant::Variant data;
@@ -91,7 +92,7 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
   }
 
   // Set the scope for the smart contract to execute its on_init if it exists
-  auto tx_signatures = tx.signatures();
+  auto tx_signatures = tx.signatories();
 
   if (tx_signatures.size() != 1)
   {
@@ -101,7 +102,7 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
 
   Identifier scope;
 
-  auto pub_key_b64 = tx_signatures.begin()->first.identifier().ToBase64();
+  auto pub_key_b64 = tx_signatures.begin()->identity.identifier();
 
   if (!scope.Parse(calculated_hash + "." + pub_key_b64))
   {
@@ -149,7 +150,7 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx)
     smart_contract.Attach(state());
 
     // Dispatch to the init. method
-    auto const status = smart_contract.DispatchInitialise(tx.signatures().begin()->first);
+    auto const status = smart_contract.DispatchInitialise(tx.signatories().begin()->identity);
     if (status != Status::OK)
     {
       return status;

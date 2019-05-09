@@ -60,9 +60,13 @@ public:
   std::string WrapKeyWithScope(std::string const &key);
 
 protected:
+
+  // Protected construction
+  StateAdapter(StorageInterface &storage, Identifier scope, bool allow_writes);
+
   StorageInterface &      storage_;
   std::vector<Identifier> scope_;
-  bool                    enable_writes_ = false;
+  bool const              enable_writes_;
 };
 
 }  // namespace ledger

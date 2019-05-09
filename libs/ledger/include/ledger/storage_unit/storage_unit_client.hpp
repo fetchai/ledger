@@ -68,13 +68,11 @@ public:
 
   /// @name Storage Unit Interface
   /// @{
-  void AddTransaction(VerifiedTransaction const &tx) override;
-  void AddTransactions(TransactionList const &txs) override;
-
-  TxSummaries PollRecentTx(uint32_t max_to_poll) override;
-
-  bool GetTransaction(ConstByteArray const &digest, Transaction &tx) override;
+  void AddTransaction(v2::Transaction const &tx) override;
+  bool GetTransaction(ConstByteArray const &digest, v2::Transaction &tx) override;
   bool HasTransaction(ConstByteArray const &digest) override;
+
+  TxLayouts PollRecentTx(uint32_t max_to_poll) override;
 
   Document GetOrCreate(ResourceAddress const &key) override;
   Document Get(ResourceAddress const &key) override;
@@ -86,8 +84,8 @@ public:
   bool                       RevertToHash(Hash const &hash) override;
   byte_array::ConstByteArray Commit() override;
   bool                       HashExists(Hash const &hash) override;
-  bool                       Lock(ResourceAddress const &key) override;
-  bool                       Unlock(ResourceAddress const &key) override;
+  bool                       Lock(ShardIndex index) override;
+  bool                       Unlock(ShardIndex index) override;
   /// @}
 
   StorageUnitClient &operator=(StorageUnitClient const &) = delete;
@@ -96,14 +94,13 @@ public:
 private:
   using Client        = muddle::rpc::Client;
   using ClientPtr     = std::shared_ptr<Client>;
-  using LaneIndex     = LaneIdentity::lane_type;
   using AddressList   = std::vector<MuddleEndpoint::Address>;
   using MerkleTree    = crypto::MerkleTree;
   using MerkleTreePtr = std::shared_ptr<MerkleTree>;
   using MerkleStack   = std::deque<MerkleTreePtr>;
   using Mutex         = fetch::mutex::Mutex;
 
-  Address const &LookupAddress(LaneIndex lane) const;
+  Address const &LookupAddress(ShardIndex shard) const;
   Address const &LookupAddress(storage::ResourceID const &resource) const;
 
   bool HashInStack(Hash const &hash);

@@ -17,34 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
+#include "ledger/chain/v2/address.hpp"
 
 namespace fetch {
-namespace storage {
-
-struct Document
-{
-  explicit operator byte_array::ConstByteArray()
-  {
-    return document;
-  }
-
-  byte_array::ByteArray document;
-  bool                  was_created = false;
-  bool                  failed      = false;
-};
+namespace ledger {
+namespace v2 {
 
 template <typename T>
-void Serialize(T &serializer, Document const &b)
+void Serialize(T &s, Address const &address)
 {
-  serializer << b.document << b.was_created << b.failed;
+  s << address.address();
 }
 
 template <typename T>
-void Deserialize(T &serializer, Document &b)
+void Deserialize(T &s, Address &address)
 {
-  serializer >> b.document >> b.was_created >> b.failed;
+  // extract the data from the stream
+  byte_array::ConstByteArray data;
+  s >> data;
+
+  // create the address
+  address = Address{data};
 }
 
-}  // namespace storage
-}  // namespace fetch
+} // namespace v2
+} // namespace ledger
+} // namespace fetch

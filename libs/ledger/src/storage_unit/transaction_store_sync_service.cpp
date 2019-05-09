@@ -19,6 +19,7 @@
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
 #include "core/macros.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
+#include "ledger/chain/v2/transaction_rpc_serializers.hpp"
 
 static char const *FETCH_MAYBE_UNUSED ToString(fetch::ledger::tx_sync::State state)
 {
@@ -224,7 +225,7 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
       for (auto &tx : result.promised)
       {
         // add the transaction to the verifier
-        verifier_.AddTransaction(tx.AsMutable());
+        verifier_.AddTransaction(std::make_shared<v2::Transaction>(tx));
 
         ++synced_tx;
       }
@@ -312,7 +313,7 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
 
       for (auto &tx : result.promised)
       {
-        verifier_.AddTransaction(tx.AsMutable());
+        verifier_.AddTransaction(std::make_shared<v2::Transaction>(tx));
         ++synced_tx;
       }
     }
@@ -363,16 +364,16 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
   return result;
 }
 
-void TransactionStoreSyncService::OnTransaction(VerifiedTransaction const &tx)
+void TransactionStoreSyncService::OnTransaction(TransactionPtr const &tx)
 {
-  ResourceID const rid(tx.digest());
+  ResourceID const rid(tx->digest());
 
   if (!store_->Has(rid))
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Verified Sync TX: ", tx.digest().ToBase64(), " (",
                     tx.contract_name(), ')');
 
-    store_->Set(rid, tx, true);
+    store_->Set(rid, *tx, true);
   }
 }
 

@@ -18,22 +18,28 @@
 //------------------------------------------------------------------------------
 
 #include "core/containers/queue.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/storage_unit/transaction_sinks.hpp"
 
 #include <cstddef>
 #include <thread>
+#include <memory>
 
 namespace fetch {
 namespace ledger {
+namespace v2 {
+class Transaction;
+}
+
+class TransactionSink;
 
 class TransactionVerifier
 {
 public:
   static constexpr char const *LOGGING_NAME = "TxVerifier";
 
+  using TransactionPtr = std::shared_ptr<v2::Transaction>;
+
   // Construction / Destruction
-  explicit TransactionVerifier(VerifiedTransactionSink &sink, std::size_t verifying_threads,
+  explicit TransactionVerifier(TransactionSink &sink, std::size_t verifying_threads,
                                std::string name)
     : verifying_threads_(verifying_threads)
     , name_(std::move(name))
@@ -51,8 +57,8 @@ public:
 
   /// @name Transaction Processing
   /// @{
-  void AddTransaction(MutableTransaction const &mtx);
-  void AddTransaction(MutableTransaction &&mtx);
+  void AddTransaction(TransactionPtr const &tx);
+  void AddTransaction(TransactionPtr &&tx);
   /// @}
 
   // Operators
@@ -64,11 +70,11 @@ private:
   static constexpr std::size_t DEFAULT_BATCH_SIZE = 1000;
 
   using Flag            = std::atomic<bool>;
-  using VerifiedQueue   = core::MPSCQueue<VerifiedTransaction, QUEUE_SIZE>;
-  using UnverifiedQueue = core::MPMCQueue<MutableTransaction, QUEUE_SIZE>;
+  using VerifiedQueue   = core::MPSCQueue<TransactionPtr, QUEUE_SIZE>;
+  using UnverifiedQueue = core::MPMCQueue<TransactionPtr, QUEUE_SIZE>;
   using ThreadPtr       = std::unique_ptr<std::thread>;
   using Threads         = std::vector<ThreadPtr>;
-  using Sink            = VerifiedTransactionSink;
+  using Sink            = TransactionSink;
 
   void Verifier();
   void Dispatcher();
@@ -85,14 +91,14 @@ private:
   UnverifiedQueue   unverified_queue_;
 };
 
-inline void TransactionVerifier::AddTransaction(MutableTransaction const &mtx)
+inline void TransactionVerifier::AddTransaction(TransactionPtr const &tx)
 {
-  unverified_queue_.Push(mtx);
+  unverified_queue_.Push(tx);
 }
 
-inline void TransactionVerifier::AddTransaction(MutableTransaction &&mtx)
+inline void TransactionVerifier::AddTransaction(TransactionPtr &&tx)
 {
-  unverified_queue_.Push(std::move(mtx));
+  unverified_queue_.Push(std::move(tx));
 }
 
 }  // namespace ledger

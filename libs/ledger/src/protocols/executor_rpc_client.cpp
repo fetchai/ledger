@@ -150,12 +150,12 @@ void ExecutorRpcClient::Connect(Muddle &muddle, Uri uri, std::chrono::millisecon
   bg_work_.Add(worker);
 }
 
-ExecutorInterface::Status ExecutorRpcClient::Execute(TxDigest const &hash, std::size_t slice,
-                                                     LaneSet const &lanes)
+ExecutorInterface::Result ExecutorRpcClient::Execute(TxDigest const &hash, uint32_t log2_num_lanes,
+                                                     LaneSet lanes)
 {
   auto result = client_->CallSpecificAddress(address_, RPC_EXECUTOR, ExecutorRpcProtocol::EXECUTE,
-                                             hash, slice, lanes);
-  return result->As<ExecutorInterface::Status>();
+                                             hash, log2_num_lanes, lanes);
+  return result->As<ExecutorInterface::Result>();
 }
 
 void ExecutorRpcClient::WorkCycle()

@@ -25,9 +25,10 @@ namespace ledger {
 class ExecutorInterface
 {
 public:
-  using TxDigest  = Transaction::TxDigest;
-  using LaneIndex = uint32_t;
-  using LaneSet   = std::unordered_set<LaneIndex>;
+  using TxDigest    = Transaction::TxDigest;
+  using LaneIndex   = uint32_t;
+  using LaneSet     = std::unordered_set<LaneIndex>;
+  using TokenAmount = uint64_t;
 
   enum class Status
   {
@@ -37,6 +38,7 @@ public:
     CHAIN_CODE_LOOKUP_FAILURE,
     CHAIN_CODE_EXEC_FAILURE,
     CONTRACT_NAME_PARSE_FAILURE,
+    CONTRACT_LOOKUP_FAILURE,
 
     // Fatal Errors
     NOT_RUN,
@@ -45,9 +47,15 @@ public:
     INEXPLICABLE_FAILURE,
   };
 
+  struct Result
+  {
+    Status      status;
+    TokenAmount fee;
+  };
+
   /// @name Executor Interface
   /// @{
-  virtual Status Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes) = 0;
+  virtual Result Execute(TxDigest const &hash, LaneIndex log2_num_lanes, LaneSet lanes) = 0;
   /// @}
 
   virtual ~ExecutorInterface() = default;
@@ -83,6 +91,9 @@ inline char const *ToString(ExecutorInterface::Status status)
   case ExecutorInterface::Status::CONTRACT_NAME_PARSE_FAILURE:
     text = "Contract Name Parse Failure";
     break;
+  case ExecutorInterface::Status::CONTRACT_LOOKUP_FAILURE:
+    text = "Contract Lookup Failure";
+    break;
   }
 
   return text;
@@ -100,6 +111,18 @@ void Deserialize(T &stream, ExecutorInterface::Status &status)
   int raw_status{0};
   stream >> raw_status;
   status = static_cast<ExecutorInterface::Status>(raw_status);
+}
+
+template <typename T>
+void Serialize(T &stream, ExecutorInterface::Result const &result)
+{
+  stream << result.status << result.fee;
+}
+
+template <typename T>
+void Deserialize(T &stream, ExecutorInterface::Result &result)
+{
+  stream >> result.status >> result.fee;
 }
 
 }  // namespace ledger

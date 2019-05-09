@@ -94,7 +94,7 @@ bool DeedFromVariant(Variant const &variant_deed, DeedShrdPtr &deed)
   Deed::Signees signees;
   v_signees.IterateObject([&signees](byte_array::ConstByteArray const &address,
                                      variant::Variant const &          v_weight) -> bool {
-    signees[FromBase64(address)] = v_weight.As<Deed::Weight>();
+    signees[v2::Address(address)] = v_weight.As<Deed::Weight>();
     return true;
   });
 

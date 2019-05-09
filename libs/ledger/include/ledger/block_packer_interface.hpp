@@ -23,6 +23,12 @@
 namespace fetch {
 namespace ledger {
 
+namespace v2 {
+
+class TransactionLayout;
+
+}
+
 // forward declarations
 class Block;
 class MainChain;

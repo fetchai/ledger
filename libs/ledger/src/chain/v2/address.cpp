@@ -60,6 +60,16 @@ Address::Address(RawAddress const &address)
   , display_(address_ + CalculateChecksum(address_))
 {}
 
+Address::Address(ConstByteArray address)
+  : address_(std::move(address))
+  , display_(address_ + CalculateChecksum(address_))
+{
+  if (address_.size() != 32)
+  {
+    throw std::runtime_error("Incorrect address size");
+  }
+}
+
 }  // namespace v2
 }  // namespace ledger
 }  // namespace fetch

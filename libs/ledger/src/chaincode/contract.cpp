@@ -19,6 +19,7 @@
 #include "ledger/chaincode/contract.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
+#include "ledger/chain/v2/transaction.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -72,7 +73,7 @@ Contract::Status Contract::DispatchQuery(ContractName const &name, Query const &
  * @return The corresponding status result for the operation
  */
 Contract::Status Contract::DispatchTransaction(byte_array::ConstByteArray const &name,
-                                               Transaction const &               tx)
+                                               v2::Transaction const &           tx)
 {
   Status status{Status::NOT_FOUND};
 
@@ -153,7 +154,7 @@ void Contract::OnQuery(std::string const &name, QueryHandler &&handler)
  * @param output THe output JSON object to be populated
  * @return true if successful, otherwise falses
  */
-bool Contract::ParseAsJson(Transaction const &tx, variant::Variant &output)
+bool Contract::ParseAsJson(v2::Transaction const &tx, variant::Variant &output)
 {
   bool success{false};
 

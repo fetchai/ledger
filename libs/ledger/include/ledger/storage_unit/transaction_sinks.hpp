@@ -21,6 +21,9 @@
 
 namespace fetch {
 namespace ledger {
+namespace v2 {
+class Transaction;
+}
 
 class UnverifiedTransactionSink
 {
@@ -60,6 +63,23 @@ inline void VerifiedTransactionSink::OnTransactions(TransactionList const &txs)
     OnTransaction(tx);
   }
 }
+
+class TransactionSink
+{
+public:
+
+  using TransactionPtr  = std::shared_ptr<v2::Transaction>;
+  using TransactionList = std::vector<TransactionPtr>;
+
+  // Construction / Destruction
+  TransactionSink() = default;
+  virtual ~TransactionSink() = default;
+
+  /// @name Transaction Sink
+  /// @{
+  virtual void OnTransaction(TransactionPtr const &tx) = 0;
+  /// @}
+};
 
 }  // namespace ledger
 }  // namespace fetch
