@@ -18,22 +18,21 @@
 
 #include <vector>
 
+#include "benchmark/benchmark.h"
 #include "math/tensor.hpp"
 #include "ml/ops/activations/sigmoid.hpp"
-#include "benchmark/benchmark.h"
-
 
 // size access should be very fast
 template <class T, int N>
 void BM_SigmoidForward(benchmark::State &state)
 {
-  fetch::math::Tensor<T> input({1, N});
-  fetch::math::Tensor<T> output({1, N});
+  fetch::math::Tensor<T>                                            input({1, N});
+  fetch::math::Tensor<T>                                            output({1, N});
   std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
   inputs.push_back(input);
   fetch::ml::ops::Sigmoid<fetch::math::Tensor<T>> sigmoid_module;
   for (auto _ : state)
-  {    
+  {
     benchmark::DoNotOptimize(sigmoid_module.Forward(inputs, output));
   }
 }
