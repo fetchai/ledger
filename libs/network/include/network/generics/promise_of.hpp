@@ -53,6 +53,7 @@ public:
   {
     return promise_;
   }
+
   PromiseBuilder WithHandlers()
   {
     return promise_->WithHandlers();
@@ -77,6 +78,7 @@ public:
   {
     return promise_->name();
   }
+
   const std::string &name() const
   {
     return promise_->name();

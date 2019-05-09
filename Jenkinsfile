@@ -1,263 +1,167 @@
-def branch_name_filter()
+DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.1.0'
+HIGH_LOAD_NODE_LABEL = 'ledger'
+
+enum Platform
 {
-   return BRANCH_NAME == "develop" || BRANCH_NAME ==~ /^PR-\d+-merge$/
+  CLANG6('Clang 6', 'clang-6.0', 'clang++-6.0'),
+  GCC7  ('GCC 7',   'gcc',       'g++')
+
+  public Platform(label, cc, cxx)
+  {
+    this.label = label
+    this.env_cc = cc
+    this.env_cxx = cxx
+  }
+
+  public final String label
+  public final String env_cc
+  public final String env_cxx
 }
 
-pipeline {
+enum Configuration
+{
+  DEBUG  ('Debug'),
+  RELEASE('Release')
 
-  agent none
+  public Configuration(label)
+  {
+    this.label = label
+  }
 
-  stages {
+  public final String label
+}
 
-    stage('Basic Checks') {
-      agent {
-        docker {
-          image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
-          alwaysPull true
+// Only execute long-running tests on develop and merge branches
+def should_run_slow_tests()
+{
+  return BRANCH_NAME == 'develop' || BRANCH_NAME ==~ /^PR-\d+-merge$/
+}
+
+def static_analysis()
+{
+  return {
+    stage('Static Analysis') {
+      node {
+        stage('SCM Static Analysis') {
+          checkout scm
+        }
+                        
+        stage('Run Static Analysis') {
+          docker.image(DOCKER_IMAGE_NAME).inside {
+            sh '''\
+              mkdir -p build-analysis
+              cd build-analysis
+              cmake ..
+            '''
+            sh './scripts/run_static_analysis.py build-analysis'
+          }
         }
       }
+    }
+  }
+}
 
-      stages {
-        stage('License Checks') {
-          steps {
-            sh './scripts/check_license_header.py'
+def SLOW_stage(name, steps)
+{
+  if (should_run_slow_tests())
+  {
+    stage(name) { steps() }
+  }
+}
+
+def create_build(Platform platform, Configuration config)
+{
+  def suffix = "${platform.label} ${config.label}"
+
+  def environment = {
+    return [
+      "CC=${platform.env_cc}",
+      "CXX=${platform.env_cxx}"
+    ]
+  }
+
+  return {
+    stage(suffix) {
+      node(HIGH_LOAD_NODE_LABEL) {
+        timeout(120) {
+          stage("SCM ${suffix}") {
+            checkout scm
+          }
+
+          withEnv(environment()) {
+            docker.image(DOCKER_IMAGE_NAME).inside {
+              stage("Build ${suffix}") {
+                sh "./scripts/ci-tool.py -B ${config.label}"
+              }
+
+              stage("Unit Tests ${suffix}") {
+                sh "./scripts/ci-tool.py -T ${config.label}"
+              }
+
+              SLOW_stage("Integration Tests ${suffix}") {
+                sh "./scripts/ci-tool.py -I ${config.label}"
+              }
+
+              SLOW_stage("End-to-End Tests ${suffix}") {
+                sh './scripts/ci/install-test-dependencies.sh'
+                sh "./scripts/ci-tool.py -E ${config.label}"
+              }
+            }
           }
         }
-        stage('Style check') {
-          steps {
-            sh './scripts/apply_style.py -w -a'
-          }
+      }
+    }
+  }
+}
+
+def run_builds_in_parallel()
+{
+  def stages = [:]
+
+  for (config in Configuration.values()) {
+    for (platform in Platform.values()) {
+      stages["${platform.label} ${config.label}"] = create_build(platform, config)
+    }
+  }
+
+  stages['Static Analysis'] = static_analysis()
+
+  stage('Build and Test') {
+    // Execute stages
+    parallel stages
+  }
+}
+
+def run_basic_checks()
+{
+  stage('Basic Checks') {
+    node {
+      stage('SCM Basic Checks') {
+        checkout scm
+      }
+
+      docker.image(DOCKER_IMAGE_NAME).inside {
+        stage('License Check') {
+          sh './scripts/check_license_header.py'
+        }
+        stage('Style Check') {
+          sh './scripts/apply_style.py -w -a'
         }
         stage('CMake Version Check') {
-          steps {
-            sh './scripts/check-cmake-versions.py'
-          }
+          sh './scripts/check-cmake-versions.py'
         }
       }
-    } // basic checks
+    }
+  }
+}
 
-    stage('Builds & Tests') {
-      parallel {
+def main()
+{
+  timeout(180) {
+    run_basic_checks()
+    run_builds_in_parallel()
+  }
+}
 
-        stage('Static Analysis') {
-          agent {
-            docker {
-              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
-              label "ledger"
-              alwaysPull true
-            }
-          }
-          steps {
-            sh 'mkdir -p build-analysis && cd build-analysis && cmake ../'
-            sh './scripts/run_static_analysis.py build-analysis/'
-          }
-        } // static analysis
-
-        stage('Clang 6 Debug') {
-          agent {
-            docker {
-              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
-              label "ledger"
-              alwaysPull true
-            }
-          }
-
-          stages {
-            stage('Clang 6 Debug Build') {
-              steps {
-                sh './scripts/ci/install-test-dependencies.sh'
-                sh './scripts/ci-tool.py -B Debug'
-              }
-            }
-
-            stage('Clang 6 Debug Unit Tests') {
-              steps {
-                sh './scripts/ci-tool.py -T Debug'
-              }
-            }
-
-            stage('Clang 6 Debug Integration Tests') {
-              when {
-                expression {
-                  branch_name_filter()
-                }
-              }
-              steps {
-                sh './scripts/ci-tool.py -I Debug'
-              }
-            }
-
-            stage('Clang 6 Debug End-to-end Tests') {
-              when {
-                expression {
-                  branch_name_filter()
-                }
-              }
-              steps {
-                sh './scripts/ci-tool.py -E Debug'
-              }
-            }
-          }
-        } // clang 6 debug
-
-        stage('Clang 6 Release') {
-          agent {
-            docker {
-              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
-              label "ledger"
-              alwaysPull true
-            }
-          }
-
-          stages {
-            stage('Clang 6 Release Build') {
-              steps {
-                sh './scripts/ci/install-test-dependencies.sh'
-                sh './scripts/ci-tool.py -B Release'
-              }
-            }
-
-            stage('Clang 6 Release Unit Tests') {
-              steps {
-                sh './scripts/ci-tool.py -T Release'
-              }
-            }
-
-            stage('Clang 6 Release Integration Tests') {
-              when {
-                expression {
-                  branch_name_filter()
-                }
-              }
-              steps {
-                sh './scripts/ci/install-test-dependencies.sh'
-                sh './scripts/ci-tool.py -I Release'
-              }
-            }
-
-            stage('Clang 6 Release End-to-end Tests') {
-              when {
-                expression {
-                  branch_name_filter()
-                }
-              }
-              steps {
-                sh './scripts/ci-tool.py -E Release'
-              }
-            }
-          }
-        } // clang 6 release
-
-        stage('GCC 7 Debug') {
-          agent {
-            docker {
-              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
-              label "ledger"
-              alwaysPull true
-            }
-          }
-
-          environment {
-            CC  = 'gcc'
-            CXX = 'g++'
-          }
-
-          stages {
-            stage('GCC 7 Debug Build') {
-              steps {
-                sh './scripts/ci/install-test-dependencies.sh'
-                sh './scripts/ci-tool.py -B Debug'
-              }
-            }
-
-            stage('GCC 7 Debug Unit Tests') {
-              steps {
-                sh './scripts/ci-tool.py -T Debug'
-              }
-            }
-
-            stage('GCC 7 Debug Integration Tests') {
-              when {
-                expression {
-                  branch_name_filter()
-                }
-              }
-              steps {
-                sh './scripts/ci/install-test-dependencies.sh'
-                sh './scripts/ci-tool.py -I Debug'
-              }
-            }
-
-            stage('GCC 7 Debug End-to-end Tests') {
-              when {
-                expression {
-                  branch_name_filter()
-                }
-              }
-              steps {
-                sh './scripts/ci-tool.py -E Debug'
-              }
-            }
-          }
-        } // gcc 7 debug
-
-        stage('GCC 7 Release') {
-          agent {
-            docker {
-              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
-              label "ledger"
-              alwaysPull true
-            }
-          }
-
-          environment {
-            CC  = 'gcc'
-            CXX = 'g++'
-          }
-
-          stages {
-            stage('GCC 7 Release Build') {
-              steps {
-                sh './scripts/ci/install-test-dependencies.sh'
-                sh './scripts/ci-tool.py -B Release'
-              }
-            }
-
-            stage('GCC 7 Release Unit Tests') {
-              steps {
-                sh './scripts/ci-tool.py -T Release'
-              }
-            }
-
-            stage('GCC 7 Release Integration Tests') {
-              when {
-                expression {
-                  branch_name_filter()
-                }
-              }
-              steps {
-                sh './scripts/ci/install-test-dependencies.sh'
-                sh './scripts/ci-tool.py -I Release'
-              }
-            }
-
-            stage('GCC 7 Release End-to-end Tests') {
-              when {
-                expression {
-                  branch_name_filter()
-                }
-              }
-              steps {
-                sh './scripts/ci-tool.py -E Release'
-              }
-            }
-          }
-        } // gcc 7 release
-
-      } // parallel
-
-    } // build & test
-
-  } // stages
-
-} // pipeline
+// Entry point
+main()

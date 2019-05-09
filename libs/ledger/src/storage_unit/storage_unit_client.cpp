@@ -19,6 +19,7 @@
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
+#include "ledger/storage_unit/transaction_finder_protocol.hpp"
 
 using fetch::storage::ResourceID;
 using fetch::storage::RevertibleDocumentStoreProtocol;
@@ -451,6 +452,24 @@ bool StorageUnitClient::HasTransaction(ConstByteArray const &digest)
   }
 
   return present;
+}
+
+void StorageUnitClient::IssueCallForMissingTxs(TxDigestSet const &tx_set)
+{
+  std::map<Address, std::unordered_set<ResourceID>> lanes_of_interest;
+  for (auto const &hash : tx_set)
+  {
+    ResourceID resource{hash};
+    lanes_of_interest[LookupAddress(resource)].insert(std::move(resource));
+  }
+
+  for (auto const &lane_resources : lanes_of_interest)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Request sent ", lane_resources.second.size(), " resources");
+    rpc_client_.CallSpecificAddress(lane_resources.first, RPC_MISSING_TX_FINDER,
+                                    TxFinderProtocol::ISSUE_CALL_FOR_MISSING_TXS,
+                                    lane_resources.second);
+  }
 }
 
 StorageUnitClient::Document StorageUnitClient::GetOrCreate(ResourceAddress const &key)

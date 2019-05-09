@@ -1103,7 +1103,13 @@ TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
 
   Advance();
 
-  std::this_thread::sleep_for(std::chrono::seconds(61u));
+  // Time out wait to request Tx from peers
+  std::this_thread::sleep_for(std::chrono::seconds(31u));
+
+  Advance();
+
+  // Time out wait for Tx - block should be invalidated at this point
+  std::this_thread::sleep_for(std::chrono::seconds(31u));
 
   Advance();
 
