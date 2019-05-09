@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,50 +16,32 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/storage_unit/transaction_finder_protocol.hpp"
+
 namespace fetch {
-namespace generics {
+namespace ledger {
 
-template <class TYPE, class MUTEXTYPE>
-class Locked
+TxFinderProtocol::TxFinderProtocol()
+  : fetch::service::Protocol()
+  , resource_queue_()
 {
-public:
-  Locked(MUTEXTYPE &m, TYPE object)
-    : lock(m)
-    , target(object)
-  {}
+  this->Expose(ISSUE_CALL_FOR_MISSING_TXS, this, &Self::IssueCallForMissingTxs);
+}
 
-  Locked(Locked &&other)
-    : lock(std::move(other.lock))
-    , target(std::move(other.target))
-  {}
+bool TxFinderProtocol::Pop(storage::ResourceID &rid)
+{
+  FETCH_LOG_DEBUG("FinderProto", "Popping resource ", rid.ToString());
+  return resource_queue_.Pop(rid, std::chrono::milliseconds::zero());
+}
 
-  ~Locked()
-  {}
-
-  operator TYPE()
+void TxFinderProtocol::IssueCallForMissingTxs(ResourceIDs const &rids)
+{
+  for (auto const &rid : rids)
   {
-    return target;
+    FETCH_LOG_DEBUG("FinderProto", "Stashing resource ", rid.ToString());
+    resource_queue_.Push(rid);
   }
+}
 
-  operator const TYPE() const
-  {
-    return target;
-  }
-
-  const TYPE operator->() const
-  {
-    return target;
-  }
-
-  TYPE operator->()
-  {
-    return target;
-  }
-
-private:
-  std::unique_lock<MUTEXTYPE> lock;
-  TYPE                        target;
-};
-
-}  // namespace generics
+}  // namespace ledger
 }  // namespace fetch
