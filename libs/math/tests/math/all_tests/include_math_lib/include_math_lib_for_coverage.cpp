@@ -63,7 +63,6 @@
 #include "math/standard_functions/remainder.hpp"
 #include "math/standard_functions/sqrt.hpp"
 
-#include "math/statistics/distributions.hpp"
 #include "math/statistics/entropy.hpp"
 #include "math/statistics/geometric_mean.hpp"
 #include "math/statistics/mean.hpp"
