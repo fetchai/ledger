@@ -80,11 +80,10 @@ int main(int argc, char **argv)
   // Setting VM up and running
   std::string        error;
   fetch::vm::Variant output;
-  std::string        console;
 
   fetch::vm::VM vm(module.get());
 
-  if (!vm.Execute(script, "main", error, console, output))
+  if (!vm.Execute(script, "main", error, output))
   {
     std::cout << "Runtime error on line " << error << std::endl;
   }
