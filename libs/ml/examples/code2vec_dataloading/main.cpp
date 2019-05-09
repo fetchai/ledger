@@ -40,8 +40,8 @@ int main(int ac, char **av)
     return 1;
   }
 
-  fetch::ml::dataloaders::C2VLoader<std::tuple<ArrayType, ArrayType, ArrayType>, SizeType> cloader(20);
-
+  fetch::ml::dataloaders::C2VLoader<std::tuple<ArrayType, ArrayType, ArrayType>, SizeType> cloader(
+      20);
 
   cloader.AddData(readFile(av[1]));
   std::cout << "Number of different function names: " << cloader.GetCounterFunctionNames().size()

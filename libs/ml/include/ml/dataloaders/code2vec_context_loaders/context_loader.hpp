@@ -235,12 +235,12 @@ C2VLoader<DataType, LabelType>::GetNext()
 {
   std::vector<SizeType> context_positions;
   SizeType              old_function_index{0};
-  bool iteration_start = true;
+  bool                  iteration_start = true;
 
   while (true)
   {
-    auto current_context_position = this->iterator_position_get_next_context;
-    ContextLabelPair input = this->GetNextContext();
+    auto             current_context_position = this->iterator_position_get_next_context;
+    ContextLabelPair input                    = this->GetNextContext();
     if ((iteration_start || (input.second == old_function_index)) && !this->IsDone())
     {
       old_function_index = input.second;
@@ -252,7 +252,8 @@ C2VLoader<DataType, LabelType>::GetNext()
       {
         this->iterator_position_get_next_context--;
       }
-      else{
+      else
+      {
         context_positions.push_back(current_context_position);
       }
 
@@ -260,25 +261,32 @@ C2VLoader<DataType, LabelType>::GetNext()
       ArrayType path_tensor({this->max_contexts});
       ArrayType target_word_tensor({this->max_contexts});
 
-      if(context_positions.size() <= this->max_contexts){ 
-        for(u_int64_t i{0}; i<context_positions.size(); i++){
-              source_word_tensor.Set(i, std::get<0>(this->data[context_positions[i]].first));
-              path_tensor.Set(i, std::get<1>(this->data[context_positions[i]].first));
-              target_word_tensor.Set(i, std::get<2>(this->data[context_positions[i]].first));
+      if (context_positions.size() <= this->max_contexts)
+      {
+        for (u_int64_t i{0}; i < context_positions.size(); i++)
+        {
+          source_word_tensor.Set(i, std::get<0>(this->data[context_positions[i]].first));
+          path_tensor.Set(i, std::get<1>(this->data[context_positions[i]].first));
+          target_word_tensor.Set(i, std::get<2>(this->data[context_positions[i]].first));
         }
-        for(u_int64_t i{context_positions.size()}; i<this->max_contexts; i++){
-              source_word_tensor.Set(i, this->word_to_idx[EMPTY_CONTEXT_STRING]);
-              path_tensor.Set(i, this->path_to_idx[EMPTY_CONTEXT_STRING]);
-              target_word_tensor.Set(i, this->word_to_idx[EMPTY_CONTEXT_STRING]);
-        }        
-      } else{
-        for(u_int64_t i{0}; i<this->max_contexts; i++){
-              source_word_tensor.Set(i, std::get<0>(this->data[context_positions[i]].first));
-              path_tensor.Set(i, std::get<1>(this->data[context_positions[i]].first));
-              target_word_tensor.Set(i, std::get<2>(this->data[context_positions[i]].first));
+        for (u_int64_t i{context_positions.size()}; i < this->max_contexts; i++)
+        {
+          source_word_tensor.Set(i, this->word_to_idx[EMPTY_CONTEXT_STRING]);
+          path_tensor.Set(i, this->path_to_idx[EMPTY_CONTEXT_STRING]);
+          target_word_tensor.Set(i, this->word_to_idx[EMPTY_CONTEXT_STRING]);
         }
       }
-      ContextTensorTuple context_tensor_tuple = std::make_tuple(source_word_tensor, path_tensor, target_word_tensor);
+      else
+      {
+        for (u_int64_t i{0}; i < this->max_contexts; i++)
+        {
+          source_word_tensor.Set(i, std::get<0>(this->data[context_positions[i]].first));
+          path_tensor.Set(i, std::get<1>(this->data[context_positions[i]].first));
+          target_word_tensor.Set(i, std::get<2>(this->data[context_positions[i]].first));
+        }
+      }
+      ContextTensorTuple context_tensor_tuple =
+          std::make_tuple(source_word_tensor, path_tensor, target_word_tensor);
 
       ContextTensorsLabelPair return_pair{context_tensor_tuple, old_function_index};
 
@@ -286,7 +294,6 @@ C2VLoader<DataType, LabelType>::GetNext()
     }
     iteration_start = false;
   }
-
 };
 
 template <typename DataType, typename LabelType>
@@ -343,7 +350,7 @@ typename C2VLoader<DataType, LabelType>::SizeType C2VLoader<DataType, LabelType>
   {
     auto index_of_new_word{name_to_idx.size()};
     std::cout << "Not found, added " << input << " to " << index_of_new_word << std::endl;
-    name_to_idx[input]              = index_of_new_word;
+    name_to_idx[input]             = index_of_new_word;
     idx_to_name[index_of_new_word] = input;
     return index_of_new_word;
   }
