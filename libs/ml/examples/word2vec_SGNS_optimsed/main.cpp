@@ -82,7 +82,7 @@ struct TrainingParams
 
 struct DataParams
 {
-  SizeType max_sentences      = 20000;
+  SizeType max_sentences      = 100000;
   SizeType max_sentence_len   = 1000;
 };
 
@@ -157,13 +157,23 @@ public:
       ++(*neg_context_cursor_);
     }
 
+    void next_negative(SizeType &input_idx, SizeType &context_idx)
+    {
+      input_idx = SizeType(*(*cursor_));
+      context_idx = SizeType(*(*neg_context_cursor_));
+
+      ++(*cursor_);
+      ++(*pos_context_cursor_);
+      ++(*neg_context_cursor_);
+    }
+
     bool done()
     {
       // we could check that all the cursors are valid
 //      return ( (!((*cursor_).is_valid())) || (!((*neg_context_cursor_).is_valid())) );
 
       // but we dont have to if we have a fixed negative context up front
-    return (!(*neg_context_cursor_).is_valid());
+      return (!((*neg_context_cursor_).is_valid()));
     }
 
     void reset_cursor()
@@ -253,12 +263,21 @@ public:
     if (gt == 1)
     {
       result_[0] = (1 / (1 + std::exp(result_[0])));
+      if (result_[0] < 0)
+      {
+        std::cout << "how?: " << std::endl;
+      }
       loss = std::log(result_[0]);
     }
     else
     {
       result_[0] = -(1 / (1 + std::exp(-result_[0])));
-      loss = std::log(result_[0]);
+      if (result_[0] < 0)
+      {
+        std::cout << "how?: " << std::endl;
+      }
+      loss = result_[0];
+//      loss = std::log(result_[0]);
     }
   }
 
@@ -274,6 +293,7 @@ public:
     // dl/d(v_in) = g * v_out'
     // dl/d(v_out) = v_in' * g
 
+//    std::cout << "result_[0]: " << result_[0] << std::endl;
 
     // calculate g and store it in result_[0]
     if (gt == 1)
@@ -294,6 +314,9 @@ public:
     // calculate dl/d(v_out)
     fetch::math::Multiply(input_vector_ , result_[0], context_grads_);
 
+//    std::cout << "input_word_idx: " << input_word_idx << std::endl;
+//    std::cout << "input_embeddings_.ToString(): " << input_embeddings_.ToString() << std::endl;
+    
     // apply gradient updates
     auto input_slice_it = input_embeddings_.Slice(input_word_idx).begin();
     auto input_grads_it = input_grads_.begin();
@@ -312,54 +335,9 @@ public:
 //      ++context_slice_it;
 //      ++context_grads_it;
 //    }
+
+//    std::cout << "input_embeddings_.ToString(): " << input_embeddings_.ToString() << std::endl;
   }
-
-private:
-
-  void SigmoidCrossEntropyLoss(Type &val, Type gt, Type &loss)
-  {
-
-//    if (val >= 0)
-//    {
-//      val *= -1;
-//      val = std::exp(val);
-//      val += 1;
-//      val = (1 / val);
-//    }
-//    else
-//    {
-//      val = std::exp(val);
-//      val = val / (val + 1);
-//    }
-//    return val;
-//
-    if (gt == 1)
-    {
-      val = (1 / (1 + std::exp(val)));
-      loss = std::log(val);
-    }
-    else
-    {
-      val = (1 / (1 + std::exp(-val)));
-      loss = std::log(val);
-    }
-
-  }
-
-//  void CrossEntropyLoss(DataType pred, DataType gt, DataType & loss)
-//  {
-//    // binary logistic regression
-//    if (gt == 1)
-//    {
-//      loss = std::log(pred);
-//    }
-//    else
-//    {
-//      loss = std::log(1 - pred);
-//    }
-//
-//    // then divide by number of examples (1) so do nothing
-//  }
 
 };
 
@@ -399,8 +377,7 @@ int main(int argc, char **argv)
 
   SizeType vocab_size = dataloader.vocab_size();
   std::cout << "vocab_size: " << vocab_size << std::endl;
-//  std::cout << "dataloader.Size(): " << dataloader.Size() << std::endl;
-//
+
   ////////////////////////////////
   /// SETUP MODEL ARCHITECTURE ///
   ////////////////////////////////
@@ -419,23 +396,19 @@ int main(int argc, char **argv)
   std::chrono::duration<double> time_diff;
 
   DataType gt;
-//  DataType pred;
   DataType loss = 0;
+  DataType sum_loss = 0;
+
+  SizeType epoch_count = 0;
 
   auto t1 = std::chrono::high_resolution_clock::now();
-  while (1)
+  while (epoch_count < tp.training_epochs)
   {
 
     if (dataloader.done())
     {
       dataloader.reset_cursor();
-//
-//      auto t2 = std::chrono::high_resolution_clock::now();
-//      time_diff = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-//
-//      std::cout << "words/sec: " << double(step_count) / time_diff.count() << std::endl;
-//      t1 = std::chrono::high_resolution_clock::now();
-//      step_count = 0;
+      ++epoch_count;
     }
 
     ////////////////////////////////
@@ -453,33 +426,30 @@ int main(int argc, char **argv)
     model.Backward(input_word_idx, gt);
     ++step_count;
 
+    sum_loss += loss;
+
+
     ///////////////////////////////
     /// run k negative examples ///
     ///////////////////////////////
 //
+//    gt = 0;
 //    for (std::size_t i = 0; i < tp.neg_examples; ++i)
 //    {
 //      // get next data pair
 //      dataloader.next_negative(input_word_idx, context_word_idx);
 //
 //      // forward pass on the model
-//      pred = model.Forward(input_word_idx, context_word_idx);
-//
-//      // loss function
-//      gt = 0;
-//      CrossEntropyLoss(pred, gt, loss);
+//      model.ForwardAndLoss(input_word_idx, context_word_idx, gt, loss);
 //
 //      // backward pass
-//      model.Backward(input_word_idx, context_word_idx, pred, loss);
+//      model.Backward(input_word_idx, gt);
 //      ++step_count;
 //    }
 
     /////////////////////////
     /// print performance ///
     /////////////////////////
-
-
-    ++step_count;
 
     if (step_count % 10000 == 0)
     {
@@ -491,8 +461,8 @@ int main(int argc, char **argv)
       t1 = std::chrono::high_resolution_clock::now();
       step_count = 0;
 
-      std::cout << "loss: " << loss << std::endl;
-
+      std::cout << "loss: " << sum_loss << std::endl;
+      sum_loss = 0;
     }
 
   }
