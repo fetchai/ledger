@@ -116,7 +116,7 @@ int main(int ac, char** av)
   // REMARK: In the original implementation its without bias
   // Dimensions: (N_CONTEXTS, EMBEDDING_SIZE) = (EMBEDDING_SIZE, 3*EMBEDDING_SIZE) @ (N_CONTEXTS, 3*EMBEDDING_SIZE)
   g.AddNode<fetch::ml::layers::FullyConnected<ArrayType>>("FC1", {"ContextVectors", "FC"},
-  3*EMBEDDING_SIZE, EMBEDDING_SIZE);
+  3*EMBEDDING_SIZE, EMBEDDING_SIZE, fetch::ml::ops::TanH<ArrayType>);
   
   // (Elementwise) TanH Layer
   // Dimensions: (N_CONTEXTS, EMBEDDING_SIZE) 
@@ -156,13 +156,13 @@ int main(int ac, char** av)
   DataType     loss = 0;
 
   // (One hot encoded) \y_{true} vector
-  fetch::math::Tensor<DataType> y_true_vec({1, cloader.GetCounterFunctionNames().size()});
+  ArrayType y_true_vec({1, cloader.GetCounterFunctionNames().size()});
 
-  for(u_int64_t i{0}; i < y_true_vec.shape()[1]; i++){
-    y_true_vec.Set(0, i, 0);
-  }
+  y_true_vec.Fill(0);
 
   int n_epochs{0};
+  int n_iter{0};
+
   while (n_epochs < N_EPOCHS)
   {
     if (cloader.IsDone())
@@ -183,20 +183,27 @@ int main(int ac, char** av)
     g.SetInput("InputTargetWords", std::get<2>(input.first));
 
     // Preparing the y_true vector (one-hot-encoded)
-    SizeType y_true_i{input.second};
-    y_true_vec.Set(0, y_true_i, 1);
+    y_true_vec.Set(0, input.second, 1);
 
     // Making the forward pass
     // dimension:  (1, vocab_size_functions)
     ArrayType results = g.Evaluate(result);
     // dimension:  (1, vocab_size_functions), (1, vocab_size_functions)
-    loss = criterion.Forward({results, y_true_vec});
+    loss += criterion.Forward({results, y_true_vec});
 
     // Making the backward pass
     g.BackPropagate(result, criterion.Backward({results, y_true_vec}));
 
     // Resetting the y_true vector for reusing it
-    y_true_vec.Set(0, y_true_i, 1);
+    y_true_vec.Set(0, input.second, 0);
+
+
+    n_iter++;
+    if (n_iter % 5 == 0)
+    {
+      std::cout << "MiniBatch: " << n_iter / 5 << " -- Loss : " << loss << std::endl;
+      loss       = 0;
+    }
   }
 
   return 0;
