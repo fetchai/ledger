@@ -79,19 +79,19 @@ inline void PrintLnInt64(fetch::vm::VM * /*vm*/, int64_t const &s)
 inline void PrintFloat(fetch::vm::VM * /*vm*/, float const &s)
 {
 
-std::cout << s;
+  std::cout << s;
 }
 
 inline void PrintLnFloat(fetch::vm::VM * /*vm*/, float const &s)
 {
 
-std::cout << s;
+  std::cout << s;
 }
 
 inline void PrintDouble(fetch::vm::VM * /*vm*/, double const &s)
 {
 
-std::cout << s;
+  std::cout << s;
 }
 
 inline void PrintLnDouble(fetch::vm::VM * /*vm*/, double const &s)

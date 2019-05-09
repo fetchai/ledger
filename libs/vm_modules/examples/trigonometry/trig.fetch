@@ -2,156 +2,156 @@ function main()
 
   // Sin, Cos, & Tan
   var x = 1.0;
-  print("sin of 1");
-  print(toString(sin(x)));
+  printLn("sin of 1");
+  printLn(toString(sin(x)));
 
   x = 0.5;
-  print("sin of 0.5");
-  print(toString(sin(x)));
+  printLn("sin of 0.5");
+  printLn(toString(sin(x)));
 
   x = 0.0;
-  print("sin of 0");
-  print(toString(sin(x)));
+  printLn("sin of 0");
+  printLn(toString(sin(x)));
 
   x = 1.0;
-  print("cos of 1");
-  print(toString(cos(x)));
+  printLn("cos of 1");
+  printLn(toString(cos(x)));
 
   x = 0.5;
-  print("cos of 0.5");
-  print(toString(cos(x)));
+  printLn("cos of 0.5");
+  printLn(toString(cos(x)));
 
   x = 0.0;
-  print("cos of 0");
-  print(toString(cos(x)));
+  printLn("cos of 0");
+  printLn(toString(cos(x)));
 
   x = 1.0;
-  print("tan of 1");
-  print(toString(tan(x)));
+  printLn("tan of 1");
+  printLn(toString(tan(x)));
 
   x = 0.5;
-  print("tan of 0.5");
-  print(toString(tan(x)));
+  printLn("tan of 0.5");
+  printLn(toString(tan(x)));
 
   x = 0.0;
-  print("tan of 0");
-  print(toString(tan(x)));
+  printLn("tan of 0");
+  printLn(toString(tan(x)));
 
 
 
   // ArcSin, ArcCos, & ArcTan
   x = 1.0;
-  print("asin of 1");
-  print(toString(asin(x)));
+  printLn("asin of 1");
+  printLn(toString(asin(x)));
 
   x = 0.5;
-  print("asin of 0.5");
-  print(toString(asin(x)));
+  printLn("asin of 0.5");
+  printLn(toString(asin(x)));
 
   x = 0.0;
-  print("asin of 0");
-  print(toString(asin(x)));
+  printLn("asin of 0");
+  printLn(toString(asin(x)));
 
   x = 1.0;
-  print("acos of 1");
-  print(toString(acos(x)));
+  printLn("acos of 1");
+  printLn(toString(acos(x)));
 
   x = 0.5;
-  print("acos of 0.5");
-  print(toString(acos(x)));
+  printLn("acos of 0.5");
+  printLn(toString(acos(x)));
 
   x = 0.0;
-  print("acos of 0");
-  print(toString(acos(x)));
+  printLn("acos of 0");
+  printLn(toString(acos(x)));
 
   x = 1.0;
-  print("atan of 1");
-  print(toString(atan(x)));
+  printLn("atan of 1");
+  printLn(toString(atan(x)));
 
   x = 0.5;
-  print("atan of 0.5");
-  print(toString(atan(x)));
+  printLn("atan of 0.5");
+  printLn(toString(atan(x)));
 
   x = 0.0;
-  print("atan of 0");
-  print(toString(atan(x)));
+  printLn("atan of 0");
+  printLn(toString(atan(x)));
 
 
 
   // Hyperbolic Sin, Cos, & Tan
   x = 1.0;
-  print("sinh of 1");
-  print(toString(sinh(x)));
+  printLn("sinh of 1");
+  printLn(toString(sinh(x)));
 
   x = 0.5;
-  print("sinh of 0.5");
-  print(toString(sinh(x)));
+  printLn("sinh of 0.5");
+  printLn(toString(sinh(x)));
 
   x = 0.0;
-  print("sinh of 0");
-  print(toString(sinh(x)));
+  printLn("sinh of 0");
+  printLn(toString(sinh(x)));
 
   x = 1.0;
-  print("cosh of 1");
-  print(toString(cosh(x)));
+  printLn("cosh of 1");
+  printLn(toString(cosh(x)));
 
   x = 0.5;
-  print("cosh of 0.5");
-  print(toString(cosh(x)));
+  printLn("cosh of 0.5");
+  printLn(toString(cosh(x)));
 
   x = 0.0;
-  print("cosh of 0");
-  print(toString(cosh(x)));
+  printLn("cosh of 0");
+  printLn(toString(cosh(x)));
 
   x = 1.0;
-  print("tanh of 1");
-  print(toString(tanh(x)));
+  printLn("tanh of 1");
+  printLn(toString(tanh(x)));
 
   x = 0.5;
-  print("tanh of 0.5");
-  print(toString(tanh(x)));
+  printLn("tanh of 0.5");
+  printLn(toString(tanh(x)));
 
   x = 0.0;
-  print("tanh of 0");
-  print(toString(tanh(x)));
+  printLn("tanh of 0");
+  printLn(toString(tanh(x)));
 
 
 
   // Hyperbolic ArcSin, ArcCos, & ArcTan
   x = 1.0;
-  print("asinh of 1");
-  print(toString(asinh(x)));
+  printLn("asinh of 1");
+  printLn(toString(asinh(x)));
 
   x = 0.5;
-  print("asinh of 0.5");
-  print(toString(asinh(x)));
+  printLn("asinh of 0.5");
+  printLn(toString(asinh(x)));
 
   x = 0.0;
-  print("asinh of 0");
-  print(toString(asinh(x)));
+  printLn("asinh of 0");
+  printLn(toString(asinh(x)));
 
   x = 1.0;
-  print("acosh of 1");
-  print(toString(acosh(x)));
+  printLn("acosh of 1");
+  printLn(toString(acosh(x)));
 
   x = 0.5;
-  print("acosh of 0.5");
-  print(toString(acosh(x)));
+  printLn("acosh of 0.5");
+  printLn(toString(acosh(x)));
 
   x = 0.0;
-  print("acosh of 0");
-  print(toString(acosh(x)));
+  printLn("acosh of 0");
+  printLn(toString(acosh(x)));
 
   x = 1.0;
-  print("atanh of 1");
-  print(toString(atanh(x)));
+  printLn("atanh of 1");
+  printLn(toString(atanh(x)));
 
   x = 0.5;
-  print("atanh of 0.5");
-  print(toString(atanh(x)));
+  printLn("atanh of 0.5");
+  printLn(toString(atanh(x)));
 
   x = 0.0;
-  print("atanh of 0");
-  print(toString(atanh(x)));
+  printLn("atanh of 0");
+  printLn(toString(atanh(x)));
 
 endfunction
