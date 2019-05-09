@@ -41,7 +41,7 @@ public:
 
     Get("/api/health/ready", [this](http::ViewParameters const &, http::HTTPRequest const &) {
       // determine the state of the machine system state machines
-      bool const chain_synced = chain_service_.state() == MainChainRpcService::State::SYNCHRONISED;
+      bool const chain_synced = chain_service_.IsSynced();
       bool const chain_executed_finished =
           block_coordinator_.GetStateMachine().state() == BlockCoordinator::State::SYNCHRONIZED;
       bool const chain_execution_complete =
