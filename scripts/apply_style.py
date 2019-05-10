@@ -190,10 +190,10 @@ def postprocess_file(filename):
         destination.writelines(postprocess_contents(contents))
 
 
-def project_sources(PROJECT_ROOT):
+def project_sources(project_root):
     # process all the files
     for path in SOURCE_FOLDERS:
-        for root, _, files in os.walk(os.path.join(PROJECT_ROOT, path)):
+        for root, _, files in os.walk(os.path.join(project_root, path)):
             for ext in SOURCE_EXT:
                 for file in fnmatch.filter(files, ext):
                     source_path = os.path.join(root, file)
