@@ -77,8 +77,10 @@ def GetMethods(n, classname, known_types=None):
             opname = x.spelling.replace("operator", "")
             is_operator = opname in operators
             opargs = ["py::self", "py::self"]
-            def updateType(
-                x): return x if not x in known_types else known_types[x]
+
+            def updateType(x):
+                return x if not x in known_types else known_types[x]
+
             arguments = [updateType(q.type.spelling)
                          for q in x.get_arguments()]
             rettype = updateType(x.result_type.spelling)
