@@ -136,6 +136,7 @@ public:
 private:
   using IntBlockPtr   = std::shared_ptr<Block>;
   using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;
+  using Referencecs   = std::unordered_multimap<BlockHash, BlockHash>;
   using Proof         = Block::Proof;
   using TipsMap       = std::unordered_map<BlockHash, Tip>;
   using BlockHashList = std::list<BlockHash>;
@@ -177,6 +178,14 @@ private:
   void        AddBlockToCache(IntBlockPtr const &) const;
   /// @}
 
+  /// @name Low-level storage interface
+  /// @{
+  BlockMap::iterator CacheBlock(IntBlockPtr const &block) const;
+  BlockMap::size_type UncacheBlock(BlockHash hash) const;
+  void KeepBlock(IntBlockPtr const &block) const;
+  /// @}
+
+
   /// @name Tip Management
   /// @{
   bool AddTip(IntBlockPtr const &block);
@@ -197,6 +206,7 @@ private:
   TipsMap          tips_;          ///< Keep track of the tips
   HeaviestTip      heaviest_;      ///< Heaviest block/tip
   LooseBlockMap    loose_blocks_;  ///< Waiting (loose) blocks
+  References       references_;    ///< The whole tree of previous-next relations
 };
 
 /**

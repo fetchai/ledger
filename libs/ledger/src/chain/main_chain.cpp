@@ -118,6 +118,71 @@ BlockStatus MainChain::AddBlock(Block const &blk)
 }
 
 /**
+ * Inserts a block into the cache maintaining references.
+ *
+ * @param block The bock that will be cached.
+ * @return Iterator to the newly inserted block.
+ */
+BlockMap::iterator CacheBlock(IntBlockPtr const &block) const {
+	assert(static_cast<bool>(block));
+
+	auto hash{block->body.hash};
+	auto retVal{block_chain_.emplace(hash, block)};
+	// under all circumstances, it _should_ be a fresh block
+	assert(retVal.second);
+	// keep parent-child reference
+	references_.emplace(block->body.previous_hash, std::move(hash));
+
+	return retVal.first;
+}
+
+/**
+ * Erases a block from the cache.
+ *
+ * @param block The bock that will be erased.
+ * @return Iterator to the newly inserted block.
+ */
+BlockMap::size_type UncacheBlock(BlockHash const &hash) const {
+	return block_chain_.erase(hash);
+	// references are kept intact while this cache is alive
+}
+
+/**
+ * Inserts a block into the permanent store maintaining references.
+ *
+ * @param block The bock that will be cached.
+ * @return Iterator to the newly inserted block.
+ */
+void KeepBlock(IntBlockPtr const &block) const {
+	assert(static_cast<bool>(block));
+	assert(static_cast<bool>(block_store_));
+
+	auto const &hash{block->body.hash};
+
+	if (block->body.previous_hash != GENESIS_DIGEST) {
+		// notify stored parent
+		Block parent;
+		if(block_store_->Get(storage::ResourceID(block->body.previous_hash), parent)) {
+			parent.body.progeny.push_back(hash);
+			block_store_->Set(storage::ResourceID(parent.body.hash), parent);
+		}
+	}
+
+	// collect all this block's children that are found in the store
+	auto forward_refs{block_chain_.equal_range(hash)};
+	for (auto ref_it{forward_refs.first}; it != forward_refs.second; ++it) {
+		auto const &child{ref_it->second};
+		if (block_store_->Has(storage::ResourceID(child))) {
+			block->body.progeny.push_back(child);
+		}
+	}
+	// now write the block itself
+	block_store_->Set(storage::ResourceID(hash), *block);
+	// block has been stored, progeny is but a temporary array to be reused later
+	block->body.progeny.clear();
+}
+
+/**
  * Get the current heaviest block on the chain
  *
  * @return The reference to the heaviest block
@@ -626,7 +691,7 @@ void MainChain::WriteToFile()
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Writing genesis. ");
 
-      block_store_->Set(storage::ResourceID(block->body.hash), *block);
+      KeepBlock(block);
       SetHeadHash(block->body.hash);
     }
     else
@@ -644,7 +709,7 @@ void MainChain::WriteToFile()
       // touch it or it's root.
       for (;;)
       {
-        block_store_->Set(storage::ResourceID(block->body.hash), *block);
+        KeepBlock(block);
 
         // Keep the current_file_head one block behind
         while (current_file_head->body.block_number != block->body.block_number - 1)
