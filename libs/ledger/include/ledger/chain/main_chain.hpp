@@ -81,7 +81,7 @@ public:
   using BlockHashSet = std::unordered_set<BlockHash>;
 
   static constexpr char const *LOGGING_NAME = "MainChain";
-  static constexpr uint64_t    ALL          = std::numeric_limits<uint64_t>::max();
+  static constexpr uint64_t    UPPER_BOUND  = 100000ull;
 
   enum class Mode
   {
@@ -107,10 +107,10 @@ public:
   /// @{
   BlockPtr  GetHeaviestBlock() const;
   BlockHash GetHeaviestBlockHash() const;
-  Blocks    GetHeaviestChain(uint64_t limit = ALL) const;
-  Blocks    GetChainPreceding(BlockHash at, uint64_t limit = ALL) const;
+  Blocks    GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
+  Blocks    GetChainPreceding(BlockHash at, uint64_t limit = UPPER_BOUND) const;
   bool      GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
-                                    uint64_t limit = ALL) const;
+                                    uint64_t limit = UPPER_BOUND, bool at_head = true) const;
   /// @}
 
   /// @name Tips
@@ -122,7 +122,7 @@ public:
   /// @name Missing / Loose Management
   /// @{
   BlockHashSet GetMissingTips() const;
-  BlockHashs   GetMissingBlockHashes(std::size_t limit = ALL) const;
+  BlockHashs   GetMissingBlockHashes(std::size_t limit = UPPER_BOUND) const;
   bool         HasMissingBlocks() const;
   /// @}
 
@@ -237,6 +237,11 @@ bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container) const
   for (;;)
   {
     ++blocks_checked;
+
+    if(transactions_to_check.size() == transactions_duplicated.size())
+    {
+      break;
+    }
 
     for (auto const &slice : block->body.slices)
     {

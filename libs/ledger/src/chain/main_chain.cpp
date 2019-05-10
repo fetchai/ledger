@@ -294,7 +294,7 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
  * @return true if successful, otherwise false
  */
 bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
-                                        uint64_t limit) const
+                                        uint64_t limit, bool at_head) const
 {
   MilliTimer myTimer("MainChain::GetPathToCommonAncestor", 500);
 
@@ -311,9 +311,11 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
   BlockHash left_hash  = std::move(tip);
   BlockHash right_hash = std::move(node);
 
+  std::deque<BlockPtr> res;
+
   // The algorithm implemented here is effectively a coordinated parallel walk about from the two
   // input tips until the a common ancestor is located.
-  while (blocks.size() < limit)
+  for(;;)
   {
     // load up the left side
     if (!left || left->body.hash != left_hash)
@@ -327,7 +329,23 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
       }
 
       // left side always loaded into output queue as we traverse
-      blocks.push_back(left);
+      //blocks.push_back(left);
+      res.push_back(left);
+
+      if(at_head)
+      {
+        if(res.size() > limit)
+        {
+          res.pop_front();
+        }
+      }
+      else
+      {
+        if(res.size() >= limit)
+        {
+          break;
+        }
+      }
     }
 
     // load up the right side
@@ -360,6 +378,10 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
       left_hash = left->body.previous_hash;
     }
   }
+
+  blocks.resize(res.size());
+  std::copy(res.begin(), res.end(), blocks.begin());
+
 
   // If an lookup error has occured then we do not return anything
   if (!success)
