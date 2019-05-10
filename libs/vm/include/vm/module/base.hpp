@@ -71,6 +71,16 @@ struct TypeGetter<T, typename std::enable_if_t<IsPtr<T>::value>>
   }
 };
 
+template <typename T>
+struct TypeGetter<T, typename std::enable_if_t<IsAddress<T>::value>>
+{
+  static TypeIndex GetTypeIndex()
+  {
+    using ManagedType = typename GetManagedType<Ptr<T>>::type;
+    return TypeIndex(typeid(ManagedType));
+  }
+};
+
 template <typename T, typename = void>
 struct ParameterTypeGetter;
 template <typename T>

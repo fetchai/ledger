@@ -22,26 +22,35 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/testing/block_generator.hpp"
+#include "ledger/transaction_status_cache.hpp"
+#include "testing/common_testing_functionality.hpp"
 
-#include "block_generator.hpp"
+#include "crypto/sha256.hpp"
 #include "fake_block_sink.hpp"
 #include "mock_block_packer.hpp"
 #include "mock_execution_manager.hpp"
 #include "mock_storage_unit.hpp"
 
-#include <gtest/gtest.h>
+#include "gmock/gmock.h"
 #include <iostream>
 #include <memory>
 
 using fetch::ledger::BlockCoordinator;
 using fetch::ledger::MainChain;
+using fetch::ledger::BlockStatus;
 using fetch::ledger::Block;
 using fetch::byte_array::ToBase64;
 using fetch::ledger::GENESIS_DIGEST;
 using fetch::crypto::ECDSASigner;
+using fetch::ledger::testing::BlockGenerator;
+using fetch::ledger::TransactionStatusCache;
 
 using ::testing::_;
+using ::testing::AnyNumber;
 using ::testing::InSequence;
+using ::testing::NiceMock;
+using ::testing::StrictMock;
 
 using BlockCoordinatorPtr = std::unique_ptr<BlockCoordinator>;
 using MainChainPtr        = std::unique_ptr<MainChain>;
@@ -51,8 +60,8 @@ using BlockPackerPtr      = std::unique_ptr<MockBlockPacker>;
 using BlockPtr            = std::shared_ptr<Block>;
 using ScheduleStatus      = fetch::ledger::ExecutionManagerInterface::ScheduleStatus;
 using BlockSinkPtr        = std::unique_ptr<FakeBlockSink>;
-// using ExecState           = fetch::ledger::ExecutionManagerInterface::State;
-using State = fetch::ledger::BlockCoordinator::State;
+using TxCachePtr          = std::unique_ptr<TransactionStatusCache>;
+using State               = fetch::ledger::BlockCoordinator::State;
 
 static constexpr char const *LOGGING_NAME = "BlockCoordinatorTests";
 static constexpr std::size_t NUM_LANES    = 1;
@@ -63,29 +72,48 @@ class BlockCoordinatorTests : public ::testing::Test
 protected:
   void SetUp() override
   {
+    FETCH_UNUSED(LOGGING_NAME);
+
     block_generator_.Reset();
 
     // generate a public/private key pair
     ECDSASigner const signer{};
 
-    main_chain_        = std::make_unique<MainChain>(true);
-    storage_unit_      = std::make_unique<MockStorageUnit>();
-    execution_manager_ = std::make_unique<MockExecutionManager>(storage_unit_->fake);
-    packer_            = std::make_unique<MockBlockPacker>();
+    main_chain_        = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
+    storage_unit_      = std::make_unique<StrictMock<MockStorageUnit>>();
+    execution_manager_ = std::make_unique<StrictMock<MockExecutionManager>>(storage_unit_->fake);
+    packer_            = std::make_unique<StrictMock<MockBlockPacker>>();
     block_sink_        = std::make_unique<FakeBlockSink>();
+    tx_status_         = std::make_unique<TransactionStatusCache>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
-        *main_chain_, *execution_manager_, *storage_unit_, *packer_, *block_sink_,
+        *main_chain_, *execution_manager_, *storage_unit_, *packer_, *block_sink_, *tx_status_,
         signer.identity().identifier(), NUM_LANES, NUM_SLICES, 1u);
+
+    block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
+    block_coordinator_->EnableMining(true);
   }
 
   void TearDown() override
   {
     block_coordinator_.reset();
+    tx_status_.reset();
     block_sink_.reset();
     packer_.reset();
     execution_manager_.reset();
     storage_unit_.reset();
     main_chain_.reset();
+  }
+
+  /**
+   * Run the state machine
+   */
+  void Advance(uint64_t max_iterations = 50)
+  {
+    for (; max_iterations > 0; --max_iterations)
+    {
+      // run one step of the state machine
+      block_coordinator_->GetRunnable().Execute();
+    }
   }
 
   /**
@@ -101,8 +129,39 @@ protected:
     // match the current state of the machine
     ASSERT_EQ(starting_state, state_machine.state());
 
-    // run one step of the state machine¦
+    // run one step of the state machine
     block_coordinator_->GetRunnable().Execute();
+
+    ASSERT_EQ(final_state, state_machine.state());
+  }
+
+  /**
+   * Run the state machine until it reaches the next state, or times out
+   *
+   * @param starting_state The expected state before the state machine is run
+   * @param final_state The expected state after the state machine has run
+   */
+  void Tock(State starting_state, State final_state, uint64_t max_iterations = 50)
+  {
+    auto const &state_machine = block_coordinator_->GetStateMachine();
+
+    // match the current state of the machine
+    ASSERT_EQ(starting_state, state_machine.state());
+
+    while (final_state != state_machine.state())
+    {
+      // run one step of the state machine
+      block_coordinator_->GetRunnable().Execute();
+
+      max_iterations--;
+
+      if (max_iterations == 0)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "Failed to advance state machine after ", max_iterations,
+                        " iterations!");
+        throw std::runtime_error("Failed test.");
+      }
+    }
 
     ASSERT_EQ(final_state, state_machine.state());
   }
@@ -112,6 +171,7 @@ protected:
   StorageUnitPtr      storage_unit_;
   BlockPackerPtr      packer_;
   BlockSinkPtr        block_sink_;
+  TxCachePtr          tx_status_;
   BlockCoordinatorPtr block_coordinator_;
   BlockGenerator      block_generator_{NUM_LANES, NUM_SLICES};
 };
@@ -154,6 +214,11 @@ MATCHER_P(IsBlockFollowing, block, "")
   return arg.body.previous_hash == block->body.hash;
 }
 
+MATCHER_P(IsBlockBodyFollowing, block, "")
+{
+  return arg.previous_hash == block->body.hash;
+}
+
 TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
 {
   auto const genesis = block_generator_();
@@ -163,6 +228,7 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
     InSequence s;
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
@@ -178,11 +244,13 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
 
     // post block validation
     EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*storage_unit_, Commit(0));
 
     // reset
     // none
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
@@ -196,18 +264,22 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
     EXPECT_CALL(*execution_manager_, GetState());
     EXPECT_CALL(*execution_manager_, GetState());
     EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*storage_unit_, Commit(1));
     EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(_));
 
     // syncing back up
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
   }
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
 
+  Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONIZING);
   Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
@@ -260,9 +332,9 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   auto b5      = block_generator_(b4);
 
   // add all the blocks to the chain
-  main_chain_->AddBlock(*b1);
-  main_chain_->AddBlock(*b2);
-  main_chain_->AddBlock(*b3);
+  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
+  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b2));
+  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b3));
 
   FETCH_LOG_INFO(LOGGING_NAME, "Genesis: ", ToBase64(genesis->body.hash), " <- ",
                  ToBase64(genesis->body.previous_hash));
@@ -277,23 +349,29 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   FETCH_LOG_INFO(LOGGING_NAME, "B5     : ", ToBase64(b5->body.hash), " <- ",
                  ToBase64(b5->body.previous_hash));
 
-  // define the call expectations
+  // processing of genesis block
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
+
   {
     InSequence s;
 
-    // syncing
+    // reloading state
+    EXPECT_CALL(*storage_unit_, RevertToHash(_, b3->body.block_number));
+
+    // syncing - Genesis
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
-    // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
-    // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
-    // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
@@ -309,20 +387,16 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
 
     // post block validation
     EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*storage_unit_, Commit(0));
 
-    // reset
-    // none
-
-    // syncing
+    // syncing - B1
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-    EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash));
-    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash));
+    EXPECT_CALL(*storage_unit_, HashExists(_, 0));
+    EXPECT_CALL(*storage_unit_, RevertToHash(_, 0));
 
-    // pre block validation
-    // none
-
-    // schedule of the genesis block
+    // schedule of the next block
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(b1)));
 
     // wait for the execution to complete
@@ -331,20 +405,16 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
 
     // post block validation
     EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*storage_unit_, Commit(1));
 
-    // reset
-    // none
-
-    // syncing
+    // syncing - B2
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-    EXPECT_CALL(*storage_unit_, HashExists(b1->body.merkle_hash));
-    EXPECT_CALL(*storage_unit_, RevertToHash(b1->body.merkle_hash));
+    EXPECT_CALL(*storage_unit_, HashExists(_, 1));
+    EXPECT_CALL(*storage_unit_, RevertToHash(_, 1));
 
-    // pre block validation
-    // none
-
-    // schedule of the genesis block
+    // schedule of the next block
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(b2)));
 
     // wait for the execution to complete
@@ -353,20 +423,16 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
 
     // post block validation
     EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*storage_unit_, Commit(2));
 
-    // reset
-    // none
-
-    // syncing
+    // syncing - B3
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-    EXPECT_CALL(*storage_unit_, HashExists(b2->body.merkle_hash));
-    EXPECT_CALL(*storage_unit_, RevertToHash(b2->body.merkle_hash));
+    EXPECT_CALL(*storage_unit_, HashExists(_, 2));
+    EXPECT_CALL(*storage_unit_, RevertToHash(_, 2));
 
-    // pre block validation
-    // none
-
-    // schedule of the genesis block
+    // schedule of the next block
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(b3)));
 
     // wait for the execution to complete
@@ -375,27 +441,71 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
 
     // post block validation
     EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*storage_unit_, Commit(3));
 
-    // reset
-    // none
+    // syncing - moving to sync'ed state
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
-    // syncing
+    // --- Event: B4 added ---
+
+    // syncing - B4
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
+    EXPECT_CALL(*storage_unit_, HashExists(_, 3));
+    EXPECT_CALL(*storage_unit_, RevertToHash(_, 3));
+
+    // schedule of the next block
+    EXPECT_CALL(*execution_manager_, Execute(IsBlock(b4)));
+
+    // wait for the execution to complete
+    EXPECT_CALL(*execution_manager_, GetState());
+    EXPECT_CALL(*execution_manager_, GetState());
+
+    // post block validation
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*storage_unit_, Commit(4));
+
+    // syncing - moving to sync'ed state
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
+
+    // --- Event: B5 added ---
+
+    // syncing - B5
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
+    EXPECT_CALL(*storage_unit_, HashExists(_, 4));
+    EXPECT_CALL(*storage_unit_, RevertToHash(_, 4));
+
+    // schedule of the next block
+    EXPECT_CALL(*execution_manager_, Execute(IsBlock(b5)));
+
+    // wait for the execution to complete
+    EXPECT_CALL(*execution_manager_, GetState());
+    EXPECT_CALL(*execution_manager_, GetState());
+
+    // post block validation
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*storage_unit_, Commit(5));
+
+    // syncing - moving to sync'ed state
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
   }
 
-  // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
-
+  Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tock(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
+  Tock(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 
@@ -404,10 +514,10 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
 
   // processing of B1 block
   Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
+  Tock(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b1->body.hash);
 
@@ -416,10 +526,10 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
 
   // processing of B2 block
   Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
+  Tock(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b2->body.hash);
 
@@ -428,27 +538,74 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
 
   // processing of B3 block
   Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
+  Tock(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b3->body.hash);
 
   Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
   Tick(State::RESET, State::SYNCHRONIZING);
 
-  // synchronised loop
+  // transition to synchronised state
   Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
 
-  // simulate new blocks being added  (from the network or similar)
-  main_chain_->AddBlock(*b4);
-  main_chain_->AddBlock(*b5);
+  // the state machine should rest in the state for a number of ticks
+  for (std::size_t i = 0; i < 10; ++i)
+  {
+    Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+  }
+
+  // simulate B4 being recv'ed over the wire
+  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b4));
+
+  Tick(State::SYNCHRONIZED, State::RESET);
+  Tick(State::RESET, State::SYNCHRONIZING);
+  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
+  Tock(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
+
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b4->body.hash);
+
+  Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
+  Tick(State::RESET, State::SYNCHRONIZING);
+
+  // transition to synchronised state
+  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
+
+  // the state machine should rest in the state for a number of ticks
+  for (std::size_t i = 0; i < 10; ++i)
+  {
+    Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+  }
+
+  // simulate B5 being recv'ed over the wire
+  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b5));
+
+  Tick(State::SYNCHRONIZED, State::RESET);
+  Tick(State::RESET, State::SYNCHRONIZING);
+  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
+  Tock(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
+
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b5->body.hash);
+
+  Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
+  Tick(State::RESET, State::SYNCHRONIZING);
+
+  // transition to synchronised state
+  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
+
+  // the state machine should rest in the state for a number of ticks
+  for (std::size_t i = 0; i < 10; ++i)
+  {
+    Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+  }
 }
 
 TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
@@ -460,6 +617,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
     InSequence s;
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
@@ -475,23 +633,13 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
 
     // post block validation
     EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*storage_unit_, Commit(0));
 
     // reset
     // none
 
     // syncing
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-
-    // -- TEST CONFIG --
-
-    // syncing
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-    EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash));
-    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash));
-
-    // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
   }
@@ -499,9 +647,11 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
   // processing of genesis block
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
 
+  Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONIZING);
   Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
@@ -520,14 +670,10 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
   b1->body.block_number = 100;  // invalid block number
   b1->UpdateDigest();
 
-  main_chain_->AddBlock(*b1);
+  // main chain now rejects outright any blocks with invalid block numbers
+  ASSERT_EQ(BlockStatus::INVALID, main_chain_->AddBlock(*b1));
 
-  Tick(State::SYNCHRONIZED, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
+  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
   Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
   Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
   Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
@@ -544,6 +690,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
     InSequence s;
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
@@ -559,23 +706,26 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
 
     // post block validation
     EXPECT_CALL(*storage_unit_, CurrentHash());
-
+    EXPECT_CALL(*storage_unit_, Commit(0));
     // reset
     // none
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
     // -- TEST CONFIG --
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-    EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash));
-    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash));
+    EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash, ::testing::_));
+    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash, ::testing::_));
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
   }
@@ -583,9 +733,11 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
   // processing of genesis block
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
 
+  Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONIZING);
   Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
@@ -604,7 +756,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
   b1->body.miner = Block::Identity{};
   b1->UpdateDigest();
 
-  main_chain_->AddBlock(*b1);
+  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
 
   Tick(State::SYNCHRONIZED, State::RESET);
   Tick(State::RESET, State::SYNCHRONIZING);
@@ -628,6 +780,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
     InSequence s;
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
@@ -643,23 +796,27 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
 
     // post block validation
     EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*storage_unit_, Commit(0));
 
     // reset
     // none
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
     // -- TEST CONFIG --
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-    EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash));
-    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash));
+    EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash, ::testing::_));
+    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash, ::testing::_));
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
   }
@@ -667,9 +824,11 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
   // processing of genesis block
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
 
+  Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONIZING);
   Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
@@ -688,7 +847,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
   b1->body.log2_num_lanes = 10;
   b1->UpdateDigest();
 
-  main_chain_->AddBlock(*b1);
+  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
 
   Tick(State::SYNCHRONIZED, State::RESET);
   Tick(State::RESET, State::SYNCHRONIZING);
@@ -712,6 +871,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
     InSequence s;
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
@@ -727,23 +887,26 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
 
     // post block validation
     EXPECT_CALL(*storage_unit_, CurrentHash());
-
+    EXPECT_CALL(*storage_unit_, Commit(0));
     // reset
     // none
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
     // -- TEST CONFIG --
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-    EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash));
-    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash));
+    EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash, ::testing::_));
+    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash, ::testing::_));
 
     // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
   }
@@ -751,9 +914,11 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
   // processing of genesis block
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
 
+  Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONIZING);
   Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
   Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
   Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
@@ -772,7 +937,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
   b1->body.slices.resize(100);  // zero slices is always invalid
   b1->UpdateDigest();
 
-  main_chain_->AddBlock(*b1);
+  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
 
   Tick(State::SYNCHRONIZED, State::RESET);
   Tick(State::RESET, State::SYNCHRONIZING);
@@ -785,4 +950,168 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
   Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
+}
+
+TEST_F(BlockCoordinatorTests, CheckBlockMining)
+{
+  auto genesis = block_generator_();
+
+  // define the call expectations
+  {
+    InSequence s;
+
+    // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
+
+    // pre block validation
+    // none
+
+    // schedule of the genesis block
+    EXPECT_CALL(*execution_manager_, Execute(IsBlock(genesis)));
+
+    // wait for the execution to complete
+    EXPECT_CALL(*execution_manager_, GetState());
+    EXPECT_CALL(*execution_manager_, GetState());
+
+    // post block validation
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*storage_unit_, Commit(0));
+
+    // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
+
+    // -- Event: Generate a block
+
+    // block packing
+    EXPECT_CALL(*packer_, GenerateBlock(IsBlockFollowing(genesis), _, _, _));
+
+    // new block execution
+    EXPECT_CALL(*execution_manager_, Execute(IsBlockBodyFollowing(genesis)));
+
+    // waiting for block execution
+    EXPECT_CALL(*execution_manager_, GetState());
+    EXPECT_CALL(*execution_manager_, GetState());
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*storage_unit_, Commit(1));
+
+    // proof search
+    EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(_));
+
+    // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
+  }
+
+  // processing of genesis block
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
+
+  Tick(State::RELOAD_STATE, State::RESET);
+  Tick(State::RESET, State::SYNCHRONIZING);
+  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
+  Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
+  Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
+
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
+
+  Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
+  Tick(State::RESET, State::SYNCHRONIZING);
+  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
+  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+
+  // trigger the coordinator to try and make a block
+  block_coordinator_->TriggerBlockGeneration();
+
+  Tick(State::SYNCHRONIZED, State::PACK_NEW_BLOCK);
+  Tick(State::PACK_NEW_BLOCK, State::EXECUTE_NEW_BLOCK);
+  Tick(State::EXECUTE_NEW_BLOCK, State::WAIT_FOR_NEW_BLOCK_EXECUTION);
+  Tick(State::WAIT_FOR_NEW_BLOCK_EXECUTION, State::WAIT_FOR_NEW_BLOCK_EXECUTION);
+  Tick(State::WAIT_FOR_NEW_BLOCK_EXECUTION, State::PROOF_SEARCH);
+  Tick(State::PROOF_SEARCH, State::TRANSMIT_BLOCK);
+  Tick(State::TRANSMIT_BLOCK, State::RESET);
+
+  // ensure that the coordinator has actually made a block
+  ASSERT_EQ(1u, block_sink_->queue().size());
+
+  // ensure that the system goes back into the sync'ed state
+  Tick(State::RESET, State::SYNCHRONIZING);
+  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
+
+  for (std::size_t i = 0; i < 20; ++i)
+  {
+    Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
+  }
+}
+
+class NiceMockBlockCoordinatorTests : public BlockCoordinatorTests
+{
+protected:
+  void SetUp() override
+  {
+    FETCH_UNUSED(LOGGING_NAME);
+
+    block_generator_.Reset();
+
+    // generate a public/private key pair
+    ECDSASigner const signer{};
+
+    main_chain_        = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
+    storage_unit_      = std::make_unique<NiceMock<MockStorageUnit>>();
+    execution_manager_ = std::make_unique<NiceMock<MockExecutionManager>>(storage_unit_->fake);
+    packer_            = std::make_unique<NiceMock<MockBlockPacker>>();
+    block_sink_        = std::make_unique<FakeBlockSink>();
+    tx_status_         = std::make_unique<TransactionStatusCache>();
+    block_coordinator_ = std::make_unique<BlockCoordinator>(
+        *main_chain_, *execution_manager_, *storage_unit_, *packer_, *block_sink_, *tx_status_,
+        signer.identity().identifier(), NUM_LANES, NUM_SLICES, 1u);
+
+    block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
+    block_coordinator_->EnableMining(true);
+  }
+};
+
+TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
+{
+  fetch::ledger::TransactionSummary summary;
+  summary.transaction_hash = fetch::testing::GenerateUniqueHashes(1u)[0];
+
+  auto genesis = block_generator_();
+  auto b1      = block_generator_(genesis);
+
+  // Fabricate unknown transaction
+  b1->body.slices.begin()->push_back(summary);
+
+  EXPECT_CALL(*storage_unit_, RevertToHash(_, 0));
+
+  // syncing - Genesis
+  EXPECT_CALL(*storage_unit_, LastCommitHash()).Times(AnyNumber());
+  EXPECT_CALL(*storage_unit_, CurrentHash()).Times(AnyNumber());
+  EXPECT_CALL(*execution_manager_, LastProcessedBlock()).Times(AnyNumber());
+
+  Advance();
+
+  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
+
+  Advance();
+
+  // Time out wait to request Tx from peers
+  std::this_thread::sleep_for(std::chrono::seconds(31u));
+
+  Advance();
+
+  // Time out wait for Tx - block should be invalidated at this point
+  std::this_thread::sleep_for(std::chrono::seconds(31u));
+
+  Advance();
+
+  ASSERT_EQ(State::SYNCHRONIZED, block_coordinator_->GetStateMachine().state());
 }

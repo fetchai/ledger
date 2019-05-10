@@ -36,10 +36,11 @@ PeerConnectionList::PeerConnectionList(Router &router)
   : router_(router)
 {}
 
-void PeerConnectionList::AddPersistentPeer(Uri const &peer)
+bool PeerConnectionList::AddPersistentPeer(Uri const &peer)
 {
   FETCH_LOCK(lock_);
-  persistent_peers_.emplace(peer);
+  auto const result = persistent_peers_.emplace(peer);
+  return result.second;
 }
 
 void PeerConnectionList::RemovePersistentPeer(Uri const &peer)
@@ -245,9 +246,7 @@ void PeerConnectionList::Disconnect(Uri const &peer)
     peer_connections_.erase(peer);
   }
 
-  persistent_peers_.erase(peer);
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.uri(), " shut down");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Connection to ", peer.uri(), " shut down");
 }
 
 bool PeerConnectionList::ReadyForRetry(const PeerMetadata &metadata) const

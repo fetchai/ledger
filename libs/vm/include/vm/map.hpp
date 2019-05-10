@@ -79,14 +79,12 @@ struct E<T, typename std::enable_if_t<IsPtr<T>::value>>
 template <typename Key, typename Value>
 struct Map : public IMap
 {
-  Map()          = delete;
-  virtual ~Map() = default;
-
   Map(VM *vm, TypeId type_id)
     : IMap(vm, type_id)
   {}
+  ~Map() override = default;
 
-  virtual int32_t Count() const override
+  int32_t Count() const override
   {
     return int32_t(map.size());
   }
@@ -158,58 +156,58 @@ struct Map : public IMap
   std::unordered_map<TemplateParameter1, TemplateParameter2, H<Key>, E<Key>> map;
 };
 
-template <typename Key>
+template <typename Key, template <typename, typename> class Container = Map>
 inline Ptr<IMap> inner(TypeId value_type_id, VM *vm, TypeId type_id)
 {
   switch (value_type_id)
   {
   case TypeIds::Bool:
   {
-    return Ptr<IMap>(new Map<Key, uint8_t>(vm, type_id));
+    return Ptr<IMap>(new Container<Key, uint8_t>(vm, type_id));
   }
   case TypeIds::Int8:
   {
-    return Ptr<IMap>(new Map<Key, int8_t>(vm, type_id));
+    return Ptr<IMap>(new Container<Key, int8_t>(vm, type_id));
   }
   case TypeIds::Byte:
   {
-    return Ptr<IMap>(new Map<Key, uint8_t>(vm, type_id));
+    return Ptr<IMap>(new Container<Key, uint8_t>(vm, type_id));
   }
   case TypeIds::Int16:
   {
-    return Ptr<IMap>(new Map<Key, int16_t>(vm, type_id));
+    return Ptr<IMap>(new Container<Key, int16_t>(vm, type_id));
   }
   case TypeIds::UInt16:
   {
-    return Ptr<IMap>(new Map<Key, uint16_t>(vm, type_id));
+    return Ptr<IMap>(new Container<Key, uint16_t>(vm, type_id));
   }
   case TypeIds::Int32:
   {
-    return Ptr<IMap>(new Map<Key, int32_t>(vm, type_id));
+    return Ptr<IMap>(new Container<Key, int32_t>(vm, type_id));
   }
   case TypeIds::UInt32:
   {
-    return Ptr<IMap>(new Map<Key, uint32_t>(vm, type_id));
+    return Ptr<IMap>(new Container<Key, uint32_t>(vm, type_id));
   }
   case TypeIds::Int64:
   {
-    return Ptr<IMap>(new Map<Key, int64_t>(vm, type_id));
+    return Ptr<IMap>(new Container<Key, int64_t>(vm, type_id));
   }
   case TypeIds::UInt64:
   {
-    return Ptr<IMap>(new Map<Key, uint64_t>(vm, type_id));
+    return Ptr<IMap>(new Container<Key, uint64_t>(vm, type_id));
   }
   case TypeIds::Float32:
   {
-    return Ptr<IMap>(new Map<Key, float>(vm, type_id));
+    return Ptr<IMap>(new Container<Key, float>(vm, type_id));
   }
   case TypeIds::Float64:
   {
-    return Ptr<IMap>(new Map<Key, double>(vm, type_id));
+    return Ptr<IMap>(new Container<Key, double>(vm, type_id));
   }
   default:
   {
-    return Ptr<IMap>(new Map<Key, Ptr<Object>>(vm, type_id));
+    return Ptr<IMap>(new Container<Key, Ptr<Object>>(vm, type_id));
   }
   }  // switch
 }

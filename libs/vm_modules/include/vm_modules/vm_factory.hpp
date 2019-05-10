@@ -28,6 +28,7 @@
 #include "vm_modules/core/type_convert.hpp"
 
 #include "vm_modules/math/abs.hpp"
+#include "vm_modules/math/random.hpp"
 
 #include "vm_modules/ml/cross_entropy.hpp"
 #include "vm_modules/ml/graph.hpp"
@@ -56,17 +57,18 @@ public:
     auto module = std::make_shared<fetch::vm::Module>();
 
     // core modules
-    CreatePrint(module);
-    CreateToString(module);
+    CreatePrint(*module);
+    CreateToString(*module);
 
     // math modules
-    CreateAbs(module);
+    CreateAbs(*module);
+    CreateRand(module);
 
     // ml modules - order is important!!
-    ml::CreateTensor(module);
-    ml::CreateGraph(module);
-    ml::CreateCrossEntropy(module);
-    ml::CreateMeanSquareError(module);
+    ml::CreateTensor(*module);
+    ml::CreateGraph(*module);
+    ml::CreateCrossEntropy(*module);
+    ml::CreateMeanSquareError(*module);
 
     return module;
   }
@@ -80,23 +82,34 @@ public:
    *
    * @return: Vector of strings which represent errors found during compilation
    */
-  static std::vector<std::string> Compile(std::shared_ptr<fetch::vm::Module> module,
+  static std::vector<std::string> Compile(std::shared_ptr<fetch::vm::Module> const &module,
                                           std::string const &source, fetch::vm::Script &script)
   {
     std::vector<std::string> errors;
-    auto                     compiler = std::make_shared<fetch::vm::Compiler>(module.get());
 
-    bool compiled = compiler->Compile(source, "myscript", script, errors);
+    // generate the compiler from the module
+    auto compiler = std::make_shared<fetch::vm::Compiler>(module.get());
 
-    if (!script.FindFunction("main"))
-    {
-      errors.push_back("Function 'main' not found");
-    }
+    // compile the source
+    bool const compiled = compiler->Compile(source, "default", script, errors);
 
     if (!compiled)
     {
       errors.push_back("Failed to compile.");
     }
+
+#ifndef NDEBUG
+    std::ostringstream all_errors;
+    for (auto const &error : errors)
+    {
+      all_errors << error << std::endl;
+    }
+
+    if (errors.size() > 0)
+    {
+      FETCH_LOG_WARN("VM_FACTORY", "Found badly constructed SC. Debug:\n", all_errors.str());
+    }
+#endif
 
     return errors;
   }
@@ -108,7 +121,7 @@ public:
    *
    * @return: An instance of the VM
    */
-  static std::unique_ptr<fetch::vm::VM> GetVM(std::shared_ptr<fetch::vm::Module> module)
+  static std::unique_ptr<fetch::vm::VM> GetVM(std::shared_ptr<fetch::vm::Module> const &module)
   {
     return std::make_unique<fetch::vm::VM>(module.get());
   }

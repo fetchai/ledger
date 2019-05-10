@@ -17,9 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "serializers/byte_array_buffer.hpp"
-
-#include "fetch_pybind.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
+#include "pybind11/pybind11.h"
 
 namespace fetch {
 namespace serializers {
@@ -42,5 +41,5 @@ void BuildByteArrayBuffer(pybind11::module &module)
       .def("tell", &ByteArrayBuffer::tell)
       .def("Reserve", &ByteArrayBuffer::Reserve);
 }
-};  // namespace serializers
-};  // namespace fetch
+}  // namespace serializers
+}  // namespace fetch

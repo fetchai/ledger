@@ -809,9 +809,6 @@ extern log::details::LogWrapper logger;
     FETCH_LOG_INFO(LOGGING_NAME, "Trace: \n", trace.str());     \
   }
 
-//#define LOG_STACK_TRACE_POINT
-//#define LOG_LAMBDA_STACK_TRACE_POINT
-
 #if 1
 #define FETCH_LOG_PROMISE()
 #else
@@ -822,6 +819,7 @@ extern log::details::LogWrapper logger;
 
 // Debug
 #if FETCH_COMPILE_LOGGING_LEVEL >= 4
+#define FETCH_LOG_DEBUG_ENABLED
 #define FETCH_LOG_DEBUG(name, ...) fetch::logger.DebugWithName(name, __VA_ARGS__)
 #else
 #define FETCH_LOG_DEBUG(name, ...) (void)name
@@ -829,6 +827,7 @@ extern log::details::LogWrapper logger;
 
 // Info
 #if FETCH_COMPILE_LOGGING_LEVEL >= 3
+#define FETCH_LOG_INFO_ENABLED
 #define FETCH_LOG_INFO(name, ...) fetch::logger.InfoWithName(name, __VA_ARGS__)
 #else
 #define FETCH_LOG_INFO(name, ...) (void)name
@@ -836,6 +835,7 @@ extern log::details::LogWrapper logger;
 
 // Warn
 #if FETCH_COMPILE_LOGGING_LEVEL >= 2
+#define FETCH_LOG_WARN_ENABLED
 #define FETCH_LOG_WARN(name, ...) fetch::logger.WarnWithName(name, __VA_ARGS__)
 #else
 #define FETCH_LOG_WARN(name, ...) (void)name
@@ -843,6 +843,7 @@ extern log::details::LogWrapper logger;
 
 // Error
 #if FETCH_COMPILE_LOGGING_LEVEL >= 1
+#define FETCH_LOG_ERROR_ENABLED
 #define FETCH_LOG_ERROR(name, ...) fetch::logger.ErrorWithName(name, __VA_ARGS__)
 #else
 #define FETCH_LOG_ERROR(name, ...) (void)name

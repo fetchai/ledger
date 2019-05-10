@@ -171,7 +171,7 @@ bool VM::Execute(std::string &error, Variant &output)
       RuntimeError("unknown opcode");
       break;
     }
-  } while (stop_ == false);
+  } while (!stop_);
 
   bool const ok = error_.empty();
 

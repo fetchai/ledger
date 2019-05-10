@@ -25,10 +25,11 @@ static constexpr uint16_t SERVICE_MUDDLE     = 0;  // reserved
 static constexpr uint16_t SERVICE_P2P        = 1001;
 static constexpr uint16_t SERVICE_MAIN_CHAIN = 2002;
 static constexpr uint16_t SERVICE_LANE       = 3003;
+static constexpr uint16_t SERVICE_LANE_CTRL  = 3004;
 static constexpr uint16_t SERVICE_EXECUTOR   = 4004;
 
 // Common Service Channels
-static constexpr uint16_t CHANNEL_RPC = 1;  // for convience we essentially
+static constexpr uint16_t CHANNEL_RPC = 1;  // for convenience we essentially
                                             // reserve channel 1 of any service
                                             // to be allocated to any
                                             // potential RPC interface
@@ -54,5 +55,6 @@ static constexpr uint64_t RPC_CONTROLLER        = 206;
 static constexpr uint64_t RPC_EXECUTION_MANAGER = 207;
 static constexpr uint64_t RPC_EXECUTOR          = 208;
 static constexpr uint64_t RPC_P2P_RESOLVER      = 209;
+static constexpr uint64_t RPC_MISSING_TX_FINDER = 210;
 
 }  // namespace fetch

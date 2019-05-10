@@ -132,6 +132,7 @@ private:
   TypePtr           float32_type_;
   TypePtr           float64_type_;
   TypePtr           string_type_;
+  TypePtr           address_type_;
   TypePtr           template_parameter1_type_;
   TypePtr           template_parameter2_type_;
   TypePtr           any_type_;

@@ -74,6 +74,11 @@ void Analyser::Initialise()
   EnableOperator(string_type_, Operator::GreaterThan);
   EnableOperator(string_type_, Operator::GreaterThanOrEqual);
   EnableOperator(string_type_, Operator::Add);
+
+  CreateClassType("Address", TypeIndex(typeid(Address)), TypeIds::Address, address_type_);
+  EnableOperator(address_type_, Operator::Equal);
+  EnableOperator(address_type_, Operator::NotEqual);
+
   CreateMetaType("[TemplateParameter1]", TypeIndex(typeid(TemplateParameter1)), TypeIds::Unknown, template_parameter1_type_);
   CreateMetaType("[TemplateParameter2]", TypeIndex(typeid(TemplateParameter2)), TypeIds::Unknown, template_parameter2_type_);
   CreateMetaType("[Any]", TypeIndex(typeid(Any)), TypeIds::Unknown, any_type_);
@@ -156,6 +161,7 @@ void Analyser::UnInitialise()
   float32_type_             = nullptr;
   float64_type_             = nullptr;
   string_type_              = nullptr;
+  address_type_             = nullptr;
   template_parameter1_type_ = nullptr;
   template_parameter2_type_ = nullptr;
   any_type_                 = nullptr;
@@ -940,6 +946,26 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
       return false;
     }
     SetVariableExpression(node, variable);
+    break;
+  }
+  case NodeKind::Integer8:
+  {
+    SetRVExpression(node, int8_type_);
+    break;
+  }
+  case NodeKind::UnsignedInteger8:
+  {
+    SetRVExpression(node, byte_type_);
+    break;
+  }
+  case NodeKind::Integer16:
+  {
+    SetRVExpression(node, int16_type_);
+    break;
+  }
+  case NodeKind::UnsignedInteger16:
+  {
+    SetRVExpression(node, uint16_type_);
     break;
   }
   case NodeKind::Integer32:

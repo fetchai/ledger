@@ -20,12 +20,11 @@
 #include <iomanip>
 #include <iostream>
 
-#include "math/free_functions/clustering_algorithms/k_means.hpp"
-#include "math/free_functions/combinatorics/combinatorics.hpp"
+#include "math/clustering/k_means.hpp"
+#include "math/combinatorics.hpp"
 #include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <math/shapeless_array.hpp>
 #include <math/tensor.hpp>
 #include <string>
 #include <vector>
@@ -46,23 +45,23 @@ TEST(clustering_test, kmeans_test_2d_4k)
 
   for (SizeType i = 0; i < 25; ++i)
   {
-    A.Set({i, 0}, -static_cast<DataType>(i) - 50);
-    A.Set({i, 1}, -static_cast<DataType>(i) - 50);
+    A.Set(SizeType{i}, SizeType{0}, -static_cast<DataType>(i) - 50);
+    A.Set(SizeType{i}, SizeType{1}, -static_cast<DataType>(i) - 50);
   }
   for (SizeType i = 25; i < 50; ++i)
   {
-    A.Set({i, 0}, -static_cast<DataType>(i) - 50);
-    A.Set({i, 1}, static_cast<DataType>(i) + 50);
+    A.Set(SizeType{i}, SizeType{0}, -static_cast<DataType>(i) - 50);
+    A.Set(SizeType{i}, SizeType{1}, static_cast<DataType>(i) + 50);
   }
   for (SizeType i = 50; i < 75; ++i)
   {
-    A.Set({i, 0}, static_cast<DataType>(i) + 50);
-    A.Set({i, 1}, -static_cast<DataType>(i) - 50);
+    A.Set(SizeType{i}, SizeType{0}, static_cast<DataType>(i) + 50);
+    A.Set(SizeType{i}, SizeType{1}, -static_cast<DataType>(i) - 50);
   }
   for (SizeType i = 75; i < 100; ++i)
   {
-    A.Set({i, 0}, static_cast<DataType>(i) + 50);
-    A.Set({i, 1}, static_cast<DataType>(i) + 50);
+    A.Set(SizeType{i}, SizeType{0}, static_cast<DataType>(i) + 50);
+    A.Set(SizeType{i}, SizeType{1}, static_cast<DataType>(i) + 50);
   }
 
   SizeType       random_seed = 123456;
@@ -71,22 +70,22 @@ TEST(clustering_test, kmeans_test_2d_4k)
   SizeType group_0 = static_cast<SizeType>(clusters[0]);
   for (SizeType j = 0; j < 25; ++j)
   {
-    ASSERT_TRUE(group_0 == static_cast<SizeType>(clusters[j]));
+    ASSERT_EQ(group_0, static_cast<SizeType>(clusters[j]));
   }
   SizeType group_1 = static_cast<SizeType>(clusters[25]);
   for (SizeType j = 25; j < 50; ++j)
   {
-    ASSERT_TRUE(group_1 == static_cast<SizeType>(clusters[j]));
+    ASSERT_EQ(group_1, static_cast<SizeType>(clusters[j]));
   }
   SizeType group_2 = static_cast<SizeType>(clusters[50]);
   for (SizeType j = 50; j < 75; ++j)
   {
-    ASSERT_TRUE(group_2 == static_cast<SizeType>(clusters[j]));
+    ASSERT_EQ(group_2, static_cast<SizeType>(clusters[j]));
   }
   SizeType group_3 = static_cast<SizeType>(clusters[75]);
   for (SizeType j = 75; j < 100; ++j)
   {
-    ASSERT_TRUE(group_3 == static_cast<SizeType>(clusters[j]));
+    ASSERT_EQ(group_3, static_cast<SizeType>(clusters[j]));
   }
 }
 
@@ -101,13 +100,13 @@ TEST(clustering_test, kmeans_test_previous_assignment)
 
   for (SizeType i = 0; i < 25; ++i)
   {
-    A.Set({i, 0}, static_cast<DataType>(-i - 50));
-    A.Set({i, 1}, static_cast<DataType>(-i - 50));
+    A.Set(SizeType{i}, SizeType{0}, static_cast<DataType>(-i - 50));
+    A.Set(SizeType{i}, SizeType{1}, static_cast<DataType>(-i - 50));
   }
   for (SizeType i = 25; i < 50; ++i)
   {
-    A.Set({i, 0}, static_cast<DataType>(i + 50));
-    A.Set({i, 1}, static_cast<DataType>(i + 50));
+    A.Set(SizeType{i}, SizeType{0}, static_cast<DataType>(i + 50));
+    A.Set(SizeType{i}, SizeType{1}, static_cast<DataType>(i + 50));
   }
 
   for (SizeType i = 0; i < 5; ++i)
@@ -133,12 +132,12 @@ TEST(clustering_test, kmeans_test_previous_assignment)
   SizeType group_0 = static_cast<SizeType>(clusters[0]);
   for (SizeType j = 0; j < 25; ++j)
   {
-    ASSERT_TRUE(group_0 == static_cast<SizeType>(clusters[j]));
+    ASSERT_EQ(group_0, static_cast<SizeType>(clusters[j]));
   }
   SizeType group_1 = static_cast<SizeType>(clusters[25]);
   for (SizeType j = 25; j < 50; ++j)
   {
-    ASSERT_TRUE(group_1 == static_cast<SizeType>(clusters[j]));
+    ASSERT_EQ(group_1, static_cast<SizeType>(clusters[j]));
   }
 }
 
@@ -153,13 +152,13 @@ TEST(clustering_test, kmeans_simple_previous_assignment_no_K)
   // initialise the data to be first half negative, second half positive
   for (SizeType i = 0; i < 25; ++i)
   {
-    A.Set({i, 0}, static_cast<DataType>(-i - 50));
-    A.Set({i, 1}, static_cast<DataType>(-i - 50));
+    A.Set(SizeType{i}, SizeType{0}, static_cast<DataType>(-i - 50));
+    A.Set(SizeType{i}, SizeType{1}, static_cast<DataType>(-i - 50));
   }
   for (SizeType i = 25; i < 50; ++i)
   {
-    A.Set({i, 0}, static_cast<DataType>(i + 50));
-    A.Set({i, 1}, static_cast<DataType>(i + 50));
+    A.Set(SizeType{i}, SizeType{0}, static_cast<DataType>(i + 50));
+    A.Set(SizeType{i}, SizeType{1}, static_cast<DataType>(i + 50));
   }
 
   // initialise the previous assignments to be 5 data points assigned, 20 unassigned in each
@@ -189,12 +188,12 @@ TEST(clustering_test, kmeans_simple_previous_assignment_no_K)
   SizeType group_0 = 0;
   for (SizeType j = 0; j < 25; ++j)
   {
-    ASSERT_TRUE(group_0 == static_cast<SizeType>(clusters[j]));
+    ASSERT_EQ(group_0, static_cast<SizeType>(clusters[j]));
   }
   SizeType group_1 = 1;
   for (SizeType j = 25; j < 50; ++j)
   {
-    ASSERT_TRUE(group_1 == static_cast<SizeType>(clusters[j]));
+    ASSERT_EQ(group_1, static_cast<SizeType>(clusters[j]));
   }
 }
 
@@ -215,23 +214,23 @@ TEST(clustering_test, kmeans_remap_previous_assignment_no_K)
   // assign data to 4 quadrants
   for (SizeType i = 0; i < 25; ++i)
   {
-    A.Set({i, 0}, -static_cast<DataType>(i) - 50);
-    A.Set({i, 1}, -static_cast<DataType>(i) - 50);
+    A.Set(SizeType{i}, SizeType{0}, -static_cast<DataType>(i) - 50);
+    A.Set(SizeType{i}, SizeType{1}, -static_cast<DataType>(i) - 50);
   }
   for (SizeType i = 25; i < 50; ++i)
   {
-    A.Set({i, 0}, -static_cast<DataType>(i) - 50);
-    A.Set({i, 1}, static_cast<DataType>(i) + 50);
+    A.Set(SizeType{i}, SizeType{0}, -static_cast<DataType>(i) - 50);
+    A.Set(SizeType{i}, SizeType{1}, static_cast<DataType>(i) + 50);
   }
   for (SizeType i = 50; i < 75; ++i)
   {
-    A.Set({i, 0}, static_cast<DataType>(i) + 50);
-    A.Set({i, 1}, -static_cast<DataType>(i) - 50);
+    A.Set(SizeType{i}, SizeType{0}, static_cast<DataType>(i) + 50);
+    A.Set(SizeType{i}, SizeType{1}, -static_cast<DataType>(i) - 50);
   }
   for (SizeType i = 75; i < 100; ++i)
   {
-    A.Set({i, 0}, static_cast<DataType>(i) + 50);
-    A.Set({i, 1}, static_cast<DataType>(i) + 50);
+    A.Set(SizeType{i}, SizeType{0}, static_cast<DataType>(i) + 50);
+    A.Set(SizeType{i}, SizeType{1}, static_cast<DataType>(i) + 50);
   }
 
   // assign previous cluster groups with some gaps
@@ -277,18 +276,18 @@ TEST(clustering_test, kmeans_remap_previous_assignment_no_K)
 
   for (SizeType j = 0; j < 25; ++j)
   {
-    ASSERT_TRUE(group_0 == static_cast<int>(clusters[j]));
+    ASSERT_EQ(group_0, static_cast<int>(clusters[j]));
   }
   for (SizeType j = 25; j < 50; ++j)
   {
-    ASSERT_TRUE(group_1 == static_cast<int>(clusters[j]));
+    ASSERT_EQ(group_1, static_cast<int>(clusters[j]));
   }
   for (SizeType j = 50; j < 75; ++j)
   {
-    ASSERT_TRUE(group_2 == static_cast<int>(clusters[j]));
+    ASSERT_EQ(group_2, static_cast<int>(clusters[j]));
   }
   for (SizeType j = 75; j < 100; ++j)
   {
-    ASSERT_TRUE(group_3 == static_cast<int>(clusters[j]));
+    ASSERT_EQ(group_3, static_cast<int>(clusters[j]));
   }
 }

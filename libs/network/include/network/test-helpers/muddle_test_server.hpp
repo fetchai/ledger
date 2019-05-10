@@ -33,11 +33,13 @@ class MuddleTestServer
 public:
   static std::shared_ptr<MuddleTestServer> CreateTestServer(uint16_t port)
   {
+    using fetch::muddle::NetworkId;
+
     auto ts = std::make_shared<MuddleTestServer>();
     ts->tm.Start();
 
     ts->port   = port;
-    ts->muddle = Muddle::CreateMuddle(Muddle::NetworkId("Test"), ts->tm);
+    ts->muddle = Muddle::CreateMuddle(NetworkId{"Test"}, ts->tm);
     ts->muddle->Start({port});
 
     ts->server = std::make_shared<Server>(ts->muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC);

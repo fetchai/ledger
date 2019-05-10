@@ -24,18 +24,47 @@ namespace vm_modules {
  * method for type converting from arithmetic to string
  */
 template <typename T>
-fetch::math::meta::IfIsArithmetic<T, fetch::vm::Ptr<fetch::vm::String>> toString(fetch::vm::VM *vm,
+fetch::math::meta::IfIsArithmetic<T, fetch::vm::Ptr<fetch::vm::String>> ToString(fetch::vm::VM *vm,
                                                                                  T const &      a)
 {
-  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
-  return ret;
+  if (std::is_same<T, bool>::value)
+  {
+    fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, a ? "True" : "False"));
+    return ret;
+  }
+  else
+  {
+    fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
+    return ret;
+  }
 }
 
-void CreateToString(std::shared_ptr<fetch::vm::Module> module)
+template <typename T>
+bool ToBool(fetch::vm::VM * /*vm*/, T const &a)
 {
-  module->CreateFreeFunction("toString", &toString<int32_t>);
-  module->CreateFreeFunction("toString", &toString<float_t>);
-  module->CreateFreeFunction("toString", &toString<double_t>);
+  return static_cast<bool>(a);
+}
+
+inline void CreateToString(fetch::vm::Module &module)
+{
+  module.CreateFreeFunction("toString", &ToString<int32_t>);
+  module.CreateFreeFunction("toString", &ToString<uint32_t>);
+  module.CreateFreeFunction("toString", &ToString<int64_t>);
+  module.CreateFreeFunction("toString", &ToString<uint64_t>);
+  module.CreateFreeFunction("toString", &ToString<float_t>);
+  module.CreateFreeFunction("toString", &ToString<double_t>);
+  module.CreateFreeFunction("toString", &ToString<bool>);
+}
+
+inline void CreateToBool(fetch::vm::Module &module)
+{
+
+  module.CreateFreeFunction("toBool", &ToBool<int32_t>);
+  module.CreateFreeFunction("toBool", &ToBool<uint32_t>);
+  module.CreateFreeFunction("toBool", &ToBool<int64_t>);
+  module.CreateFreeFunction("toBool", &ToBool<uint64_t>);
+  module.CreateFreeFunction("toBool", &ToBool<float_t>);
+  module.CreateFreeFunction("toBool", &ToBool<double_t>);
 }
 
 }  // namespace vm_modules

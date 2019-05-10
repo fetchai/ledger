@@ -46,8 +46,6 @@ public:
 
   explicit Server(MuddleEndpoint &endpoint, uint16_t service, uint16_t channel)
     : endpoint_(endpoint)
-    //, service_(service)
-    //, channel_(channel)
     , subscription_(endpoint_.Subscribe(service, channel))
   {
     if (subscription_)
@@ -129,7 +127,7 @@ private:
     {
       PushProtocolRequest(index, payload, &context);
     }
-    catch (std::exception &ex)
+    catch (std::exception const &ex)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Recv message from: ", byte_array::ToBase64(from),
                       " on: ", service, ':', channel, ':', counter, " -- ", ex.what());

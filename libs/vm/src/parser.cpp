@@ -932,14 +932,8 @@ void Parser::SkipFunctionDefinition()
 
 bool Parser::IsTemplateName(std::string const &name) const
 {
-  for (size_t i = 0; i < template_names_.size(); ++i)
-  {
-    if (name == template_names_[i])
-    {
-      return true;
-    }
-  }
-  return false;
+  auto const it = template_names_.find(name);
+  return template_names_.end() != it;
 }
 
 ExpressionNodePtr Parser::ParseType()
@@ -1020,6 +1014,38 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     case Token::Kind::Identifier:
     {
       if (HandleIdentifier() == false)
+      {
+        return nullptr;
+      }
+      break;
+    }
+    case Token::Kind::Integer8:
+    {
+      if (HandleLiteral(NodeKind::Integer8) == false)
+      {
+        return nullptr;
+      }
+      break;
+    }
+    case Token::Kind::UnsignedInteger8:
+    {
+      if (HandleLiteral(NodeKind::UnsignedInteger8) == false)
+      {
+        return nullptr;
+      }
+      break;
+    }
+    case Token::Kind::Integer16:
+    {
+      if (HandleLiteral(NodeKind::Integer16) == false)
+      {
+        return nullptr;
+      }
+      break;
+    }
+    case Token::Kind::UnsignedInteger16:
+    {
+      if (HandleLiteral(NodeKind::UnsignedInteger16) == false)
       {
         return nullptr;
       }

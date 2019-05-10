@@ -283,6 +283,10 @@ private:
     IRExpressionNodePtr const &lhs, IRExpressionNodePtr const &rhs);
   void HandleExpression(IRExpressionNodePtr const &node);
   void HandleIdentifier(IRExpressionNodePtr const &node);
+  void HandleInteger8(IRExpressionNodePtr const &node);
+  void HandleUnsignedInteger8(IRExpressionNodePtr const &node);
+  void HandleInteger16(IRExpressionNodePtr const &node);
+  void HandleUnsignedInteger16(IRExpressionNodePtr const &node);
   void HandleInteger32(IRExpressionNodePtr const &node);
   void HandleUnsignedInteger32(IRExpressionNodePtr const &node);
   void HandleInteger64(IRExpressionNodePtr const &node);

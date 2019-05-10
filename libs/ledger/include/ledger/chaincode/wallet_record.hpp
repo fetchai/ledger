@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-// TODO(HUT): these includes are broken/not iwyu
 #include "ledger/chaincode/deed.hpp"
 
 // TODO(HUT): doesn't putting this here pollute the namespace?

@@ -29,6 +29,10 @@ struct Token
   {
     EndOfInput = 0,
     Unknown,
+    Integer8,
+    UnsignedInteger8,
+    Integer16,
+    UnsignedInteger16,
     Integer32,
     UnsignedInteger32,
     Integer64,

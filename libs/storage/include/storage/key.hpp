@@ -43,18 +43,25 @@ namespace storage {
 template <std::size_t BITS = 256>
 struct Key
 {
+  using Block = uint64_t;
+
   enum
   {
-    BLOCKS = BITS / 64,
-    BYTES  = BITS / 8
+    BLOCK_BIT_SIZE = sizeof(Block) * 8,
+    BLOCKS         = BITS / BLOCK_BIT_SIZE,
+    BYTES          = BITS / 8
   };
+
+  static_assert((BITS % BLOCK_BIT_SIZE) == 0, "Key must be multiple of block size");
 
   Key()
   {
     memset(key_, 0, BYTES);
   }
 
-  Key(byte_array::ConstByteArray const &key)
+  // TODO(private issue 957): There are a number of implicit conversions for this key, in many
+  //                          places it might be a bug.
+  /*explicit*/ Key(byte_array::ConstByteArray const &key)
   {
     static_assert(BITS == 128 || BITS == 256 || BITS >= 1024,
                   "Keys expected to be a cryptographic hash function output");
@@ -80,7 +87,7 @@ struct Key
    */
   bool operator==(Key const &rhs) const
   {
-    bool result = true;
+    bool result{true};
 
     for (std::size_t i = 0; i < BLOCKS; ++i)
     {
@@ -90,13 +97,6 @@ struct Key
         break;
       }
     }
-
-    // Assert that the corresponding compare would return the same
-    int dummy          = 0;
-    int compare_result = Compare(rhs, dummy, 0, 64);
-
-    FETCH_UNUSED(compare_result);
-    /* assert(result == compare_result); */  // TODO(HUT): look into this
 
     return result;
   }
@@ -115,11 +115,18 @@ struct Key
    */
   int Compare(Key const &other, int &pos, int last_block, int last_bit) const
   {
+    assert(last_block <= BLOCKS);
+
     int i = 0;
 
     while ((i < last_block) && (other.key_[i] == key_[i]))
     {
       ++i;
+    }
+
+    if (i == BLOCKS)
+    {
+      return 0;
     }
 
     uint64_t diff = other.key_[i] ^ key_[i];
@@ -134,13 +141,13 @@ struct Key
       bit = std::min(bit, last_bit);
     }
 
-    pos = bit + (i << 8);
+    pos = bit + (i * BLOCK_BIT_SIZE);
     if (pos >= int(this->size_in_bits()))
     {
       return 0;
     }
 
-    diff = key_[i] & (1ull << 63) >> bit;
+    diff = key_[i] & ((1ull << 63) >> bit);
 
     int result = 1 - int((diff == 0) << 1);  // -1 == left, so this puts 'smaller numbers' left
 
@@ -173,13 +180,13 @@ struct Key
    *
    * @return: the number of bits
    */
-  std::size_t size_in_bits() const
+  constexpr std::size_t size_in_bits() const
   {
     return BITS;
   }
 
 private:
-  uint64_t key_[BLOCKS];
+  Block key_[BLOCKS];
 };
 
 }  // namespace storage

@@ -17,8 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/free_functions.hpp"
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
+#include "math/matrix_operations.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -26,59 +25,52 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class MatrixMultiply : public fetch::ml::Ops<T>
+class MatrixMultiply : public fetch::ml::BatchOps<T>
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType      = T;
+  using SizeType       = typename ArrayType::SizeType;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
-  MatrixMultiply()          = default;
-  virtual ~MatrixMultiply() = default;
+  MatrixMultiply()  = default;
+  ~MatrixMultiply() = default;
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                    ArrayType &                                                 output)
   {
-    assert(inputs.size() == 2);
-    assert(inputs[0]->shape().size() == 2);
-    assert(inputs[1]->shape().size() == 2);
-    assert(inputs[0]->shape()[1] == inputs[1]->shape()[0]);
+    (void)output;
+    ASSERT(inputs.size() == 2);
+    ASSERT(inputs.at(0).get().shape().size() == 2);
+    ASSERT(inputs.at(1).get().shape().size() == 2);
+    ASSERT(output.shape() == ComputeOutputShape(inputs));
 
-    std::vector<std::uint64_t> outputShape({inputs[0]->shape()[0], inputs[1]->shape()[1]});
-    if (!this->output_ || this->output_->shape() != outputShape)
-    {
-      this->output_ = std::make_shared<ArrayType>(outputShape);
-    }
-
-    for (std::uint64_t i(0); i < inputs[0]->shape()[0]; ++i)
-    {
-      for (std::uint64_t j(0); j < inputs[1]->shape()[1]; ++j)
-      {
-        this->output_->At(std::vector<std::uint64_t>({i, j})) =
-            inputs[0]->At(std::vector<std::uint64_t>({i, 0})) *
-            inputs[1]->At(std::vector<std::uint64_t>({0, j}));
-        for (std::uint64_t k(1); k < inputs[0]->shape()[1]; ++k)
-        {
-          this->output_->At(std::vector<std::uint64_t>({i, j})) +=
-              inputs[0]->At(std::vector<std::uint64_t>({i, k})) *
-              inputs[1]->At(std::vector<std::uint64_t>({k, j}));
-        }
-      }
-    }
-    return this->output_;
+    fetch::math::Dot(inputs[0].get(), inputs[1].get(), output);
+    return output;
   }
 
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
+      ArrayType const &                                           errorSignal)
   {
-    assert(inputs.size() == 2);
+    ASSERT(inputs.size() == 2);
 
-    ArrayPtrType errorSignal1 = std::make_shared<ArrayType>(inputs[0]->shape());
-    ArrayPtrType errorSignal2 = std::make_shared<ArrayType>(inputs[1]->shape());
+    ArrayType errorSignal1(inputs.at(0).get().shape());
+    ArrayType errorSignal2(inputs.at(1).get().shape());
 
-    fetch::math::DotTranspose(*errorSignal, *inputs[1], *errorSignal1);
-    fetch::math::TransposeDot(*inputs[0], *errorSignal, *errorSignal2);
+    fetch::math::DotTranspose(errorSignal, inputs.at(1).get(), errorSignal1);
+    fetch::math::TransposeDot(inputs.at(0).get(), errorSignal, errorSignal2);
 
     return {errorSignal1, errorSignal2};
   }
+
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    return {inputs.at(0).get().shape()[0], inputs.at(1).get().shape()[1]};
+  }
+
+  static constexpr char const *DESCRIPTOR = "MatrixMultiply";
 };
 
 }  // namespace ops

@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/free_functions.hpp"
+#include "math/fundamental_operators.hpp"
 #include "math/tensor.hpp"
 #include "vm/vm.hpp"
 
@@ -318,12 +318,12 @@ struct Matrix : public IMatrix
   {
     size_t r;
     size_t c;
-    if (GetNonNegativeInteger(column, c) == false)
+    if (!GetNonNegativeInteger(column, c))
     {
       RuntimeError("negative index");
       return nullptr;
     }
-    if (GetNonNegativeInteger(row, r) == false)
+    if (!GetNonNegativeInteger(row, r))
     {
       RuntimeError("negative index");
       return nullptr;
@@ -335,7 +335,7 @@ struct Matrix : public IMatrix
       RuntimeError("index out of bounds");
       return nullptr;
     }
-    return &matrix.At(std::vector<typename fetch::math::Tensor<T>::SizeType>(c, r));
+    return &matrix.At(c, r);
   }
 
   virtual TemplateParameter GetIndexedValue(AnyInteger const &row, AnyInteger const &column) override

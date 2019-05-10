@@ -31,7 +31,7 @@ public:
   uint64_t value1 = 0;
   uint8_t  value2 = 0;
 
-  bool operator==(TestClass const &rhs)
+  bool operator==(TestClass const &rhs) const
   {
     return value1 == rhs.value1 && value2 == rhs.value2;
   }
@@ -123,7 +123,8 @@ TEST(versioned_random_access_stack_gtest, storage_of_large_objects)
     uint8_t  b;
     uint64_t c;
     uint16_t d;
-    bool     operator==(Element const &o) const
+
+    bool operator==(Element const &o) const
     {
       return ((a == o.a) && (b == o.b) && (c == o.c) && (d == o.d));
     }

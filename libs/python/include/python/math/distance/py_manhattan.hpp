@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/distance/manhattan.hpp"
+#include "math/tensor.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -41,10 +42,8 @@ inline void BuildManhattanDistance(std::string const &custom_name, pybind11::mod
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperManhattan<RectangularArray<double>>)
-      .def(custom_name.c_str(), &WrapperManhattan<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperManhattan<ShapelessArray<double>>)
-      .def(custom_name.c_str(), &WrapperManhattan<ShapelessArray<float>>);
+  module.def(custom_name.c_str(), &WrapperManhattan<Tensor<double>>)
+      .def(custom_name.c_str(), &WrapperManhattan<Tensor<float>>);
 }
 
 }  // namespace distance

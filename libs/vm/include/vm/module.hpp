@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/address.hpp"
 #include "vm/compiler.hpp"
 #include "vm/vm.hpp"
 #include "vm/module/base.hpp"
@@ -107,7 +108,7 @@ public:
 
     // input type 1, input type 2 ... input type N, output type
     template <typename... Types>
-    ClassInterface &EnableIndexOperator()
+    ClassInterface &__EnableIndexOperator__() // order changed!
     {
       static_assert(sizeof...(Types) >= 2, "2 or more types expected");
       using Tuple = std::tuple<Types...>;

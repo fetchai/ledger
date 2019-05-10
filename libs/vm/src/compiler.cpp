@@ -42,9 +42,8 @@ bool Compiler::Compile(std::string const &filename, std::string const &source,
   {
     return false;
   }
-
   bool          analysed = analyser_.Analyse(root, errors);
-  if (analysed == false)
+  if (!analysed)
   {
     root->Reset();
     root = nullptr;

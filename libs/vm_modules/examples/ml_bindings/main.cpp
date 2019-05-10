@@ -17,11 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
+#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 #include "ml/graph.hpp"
-#include "ml/ops/fully_connected.hpp"
-#include "ml/ops/mean_square_error.hpp"
-#include "ml/ops/relu.hpp"
-#include "ml/ops/softmax.hpp"
+#include "ml/layers/fully_connected.hpp"
+#include "ml/ops/activation.hpp"
+#include "ml/ops/loss_functions/mean_square_error.hpp"
 
 #include "vm/analyser.hpp"
 #include "vm/typeids.hpp"
@@ -33,11 +33,31 @@
 #include "vm_modules/ml/cross_entropy.hpp"
 #include "vm_modules/ml/graph.hpp"
 
-#include "mnist_loader.hpp"
-
 #include <fstream>
 #include <sstream>
 #include <vector>
+
+struct System : public fetch::vm::Object
+{
+  System()          = delete;
+  virtual ~System() = default;
+
+  static int32_t Argc(fetch::vm::VM * /*vm*/, fetch::vm::TypeId /*type_id*/)
+  {
+    return int32_t(System::args.size());
+  }
+
+  static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId /*type_id*/,
+                                                int32_t const &a)
+  {
+    return fetch::vm::Ptr<fetch::vm::String>(
+        new fetch::vm::String(vm, System::args[std::size_t(a)]));
+  }
+
+  static std::vector<std::string> args;
+};
+
+std::vector<std::string> System::args;
 
 class TrainingPairWrapper
   : public fetch::vm::Object,
@@ -72,23 +92,27 @@ public:
 class DataLoaderWrapper : public fetch::vm::Object
 {
 public:
-  DataLoaderWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
+  DataLoaderWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string const &images_file,
+                    std::string const &labels_file)
     : fetch::vm::Object(vm, type_id)
+    , loader_(images_file, labels_file)
   {}
 
-  static fetch::vm::Ptr<DataLoaderWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
+  static fetch::vm::Ptr<DataLoaderWrapper> Constructor(
+      fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+      fetch::vm::Ptr<fetch::vm::String> const &images_file,
+      fetch::vm::Ptr<fetch::vm::String> const &labels_file)
   {
-    return new DataLoaderWrapper(vm, type_id);
+    return new DataLoaderWrapper(vm, type_id, images_file->str, labels_file->str);
   }
 
   // Wont compile if parameter is not const &
   // The actual fetch::vm::Ptr is const, but the pointed to memory is modified
   fetch::vm::Ptr<TrainingPairWrapper> GetData(fetch::vm::Ptr<TrainingPairWrapper> const &dataHolder)
   {
-    std::pair<unsigned int, std::shared_ptr<fetch::math::Tensor<float>>> d =
-        loader_.GetNext(nullptr);
-    std::shared_ptr<fetch::math::Tensor<float>> a = *(dataHolder->second);
-    a->Copy(*(d.second));
+    std::pair<uint64_t, fetch::math::Tensor<float>> d = loader_.GetNext();
+    fetch::math::Tensor<float>                      a = *(dataHolder->second);
+    a.Copy(d.second);
     dataHolder->first = d.first;
     return dataHolder;
   }
@@ -99,7 +123,7 @@ public:
   }
 
 private:
-  MNISTLoader loader_;
+  fetch::ml::MNISTLoader<fetch::math::Tensor<float>> loader_;
 };
 
 template <typename T>
@@ -127,6 +151,11 @@ int main(int argc, char **argv)
     exit(-9);
   }
 
+  for (int i = 2; i < argc; ++i)
+  {
+    System::args.push_back(std::string(argv[i]));
+  }
+
   // Reading file
   std::ifstream      file(argv[1], std::ios::binary);
   std::ostringstream ss;
@@ -136,18 +165,22 @@ int main(int argc, char **argv)
 
   auto module = std::make_shared<fetch::vm::Module>();
 
-  module->CreateFreeFunction("Print", &PrintNumber<int>);
-  module->CreateFreeFunction("Print", &PrintNumber<uint64_t>);
-  module->CreateFreeFunction("Print", &PrintNumber<float>);
-  module->CreateFreeFunction("Print", &PrintNumber<double>);
-  module->CreateFreeFunction("Print", &Print);
+  module->CreateFreeFunction("print", &PrintNumber<int>);
+  module->CreateFreeFunction("print", &PrintNumber<uint64_t>);
+  module->CreateFreeFunction("print", &PrintNumber<float>);
+  module->CreateFreeFunction("print", &PrintNumber<double>);
+  module->CreateFreeFunction("print", &Print);
   module->CreateFreeFunction("toString", &toString);
+
+  module->CreateClassType<System>("System")
+      .CreateTypeFunction("Argc", &System::Argc)
+      .CreateTypeFunction("Argv", &System::Argv);
 
   module->CreateTemplateInstantiationType<fetch::vm::Array, uint64_t>(fetch::vm::TypeIds::IArray);
 
-  fetch::vm_modules::ml::CreateTensor(module);
-  fetch::vm_modules::ml::CreateGraph(module);
-  fetch::vm_modules::ml::CreateCrossEntropy(module);
+  fetch::vm_modules::ml::CreateTensor(*module);
+  fetch::vm_modules::ml::CreateGraph(*module);
+  fetch::vm_modules::ml::CreateCrossEntropy(*module);
 
   module->CreateClassType<TrainingPairWrapper>("TrainingPair")
       .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>()
@@ -155,7 +188,7 @@ int main(int argc, char **argv)
       .CreateInstanceFunction("Label", &TrainingPairWrapper::label);
 
   module->CreateClassType<DataLoaderWrapper>("MNISTLoader")
-      .CreateTypeConstuctor<>()
+      .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>>()
       .CreateInstanceFunction("GetData", &DataLoaderWrapper::GetData)
       .CreateInstanceFunction("Display", &DataLoaderWrapper::Display);
 

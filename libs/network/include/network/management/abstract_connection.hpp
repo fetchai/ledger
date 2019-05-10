@@ -54,7 +54,7 @@ public:
   {
     auto h = handle_.load();
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection destruction in progress for handle ", h);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection destruction in progress for handle ");
     FETCH_LOG_VARIABLE(h);
 
     {
@@ -65,7 +65,7 @@ public:
     auto ptr = connection_register_.lock();
     if (ptr)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "~AbstractConnection calling Leave");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "~AbstractConnection calling Leave");
       ptr->Leave(handle_);
     }
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connection destroyed for handle ", h);
@@ -105,30 +105,35 @@ public:
 
   void OnMessage(std::function<void(network::message_type const &msg)> const &f)
   {
+    LOG_STACK_TRACE_POINT;
     std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
     on_message_ = f;
   }
 
   void OnConnectionSuccess(std::function<void()> const &fnc)
   {
+    LOG_STACK_TRACE_POINT;
     std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
     on_connection_success_ = fnc;
   }
 
   void OnConnectionFailed(std::function<void()> const &fnc)
   {
+    LOG_STACK_TRACE_POINT;
     std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
     on_connection_failed_ = fnc;
   }
 
   void OnLeave(std::function<void()> const &fnc)
   {
+    LOG_STACK_TRACE_POINT;
     std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
     on_leave_ = fnc;
   }
 
   void ClearClosures() noexcept
   {
+    LOG_STACK_TRACE_POINT;
     std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
     on_connection_failed_  = nullptr;
     on_connection_success_ = nullptr;
@@ -159,8 +164,8 @@ protected:
 
   void SignalLeave()
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Connection terminated for handle ", handle_.load(),
-                   ", SignalLeave called.");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection terminated for handle ", handle_.load(),
+                    ", SignalLeave called.");
     std::function<void(void)> cb;
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
@@ -172,11 +177,12 @@ protected:
       cb();
     }
     DeactivateSelfManage();
-    FETCH_LOG_WARN(LOGGING_NAME, "SignalLeave is done");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "SignalLeave is done");
   }
 
   void SignalMessage(network::message_type const &msg)
   {
+    LOG_STACK_TRACE_POINT;
     std::function<void(network::message_type const &)> cb;
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
@@ -190,6 +196,7 @@ protected:
 
   void SignalConnectionFailed()
   {
+    LOG_STACK_TRACE_POINT;
     std::function<void()> cb;
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
@@ -205,6 +212,7 @@ protected:
 
   void SignalConnectionSuccess()
   {
+    LOG_STACK_TRACE_POINT;
     std::function<void()> cb;
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);

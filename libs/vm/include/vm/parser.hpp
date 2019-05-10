@@ -70,7 +70,9 @@ private:
     int               num_members;
   };
 
-  std::vector<std::string> template_names_;
+  using StringSet = std::unordered_set<std::string>;
+
+  StringSet                template_names_;
   std::vector<Token>       tokens_;
   int                      index_;
   Token *                  token_;

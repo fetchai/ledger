@@ -18,39 +18,90 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shapeless_array.hpp"
-#include "vectorise/memory/range.hpp"
-
+#include "math/matrix_operations.hpp"
+#include "math/standard_functions/pow.hpp"
+#include "math/standard_functions/sqrt.hpp"
 #include <cmath>
 
 namespace fetch {
 namespace math {
 namespace distance {
 
-template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::Type Euclidean(memory::VectorSlice<T, S> const &a,
-                                                          memory::VectorSlice<T, S> const &b)
+template <typename ArrayType>
+typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
 {
-  detailed_assert(a.size() == b.size());
-  using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
-  using Type                 = typename memory::VectorSlice<T, S>::Type;
+  using Type = typename ArrayType::Type;
+  auto it1   = A.begin();
+  auto it2   = B.begin();
+  assert(it1.size() == it2.size());
+  Type ret = Type(0);
 
-  Type dist =
-      a.in_parallel().SumReduce(memory::TrivialRange(0, a.size()),
-                                [](vector_register_type const &x, vector_register_type const &y) {
-                                  vector_register_type d = x - y;
-                                  return d * d;
-                                },
-                                b);
+  while (it1.is_valid())
+  {
+    Type d = (*it1) - (*it2);
 
-  return std::sqrt(dist);
+    ret += d * d;
+    ++it1;
+    ++it2;
+  }
+  return ret;
 }
 
-template <typename T, typename C>
-inline typename ShapelessArray<T, C>::Type Euclidean(ShapelessArray<T, C> const &a,
-                                                     ShapelessArray<T, C> const &b)
+template <typename ArrayType>
+typename ArrayType::Type Euclidean(ArrayType const &A, ArrayType const &B)
 {
-  return Euclidean(a.data(), b.data());
+  return Sqrt(SquareDistance(A, B));
+}
+
+template <typename ArrayType>
+typename ArrayType::Type NegativeSquareEuclidean(ArrayType const &A, ArrayType const &B)
+{
+  using DataType = typename ArrayType::Type;
+  return Multiply(DataType(-1), SquareDistance(A, B));
+}
+
+/**
+ * calculate the euclidean distance between two points in N-dimensions
+ * If the array has shape Kx1 or 1xK, the array is treated as 1 data point with K dimensions
+ * If the array has shape MxN, axis determines whether M represents dimensions or data points
+ * @tparam ArrayType
+ * @param A
+ * @param B
+ * @param axis the axis across which to calculate euclidean distances (i.e. the dimension axis)
+ * @return
+ */
+template <typename ArrayType>
+ArrayType EuclideanMatrix(ArrayType const &A, ArrayType const &B,
+                          typename ArrayType::SizeType const &axis = 1)
+{
+  assert(A.shape() == B.shape());
+  assert(A.shape().size() == 2);
+  assert(axis == 0 || axis == 1);
+
+  ArrayType                                 temp(A.shape());
+  std::vector<typename ArrayType::SizeType> retSize;
+  if ((A.shape()[0] == 1) || (A.shape()[1] == 1))  // case where one dimension = size 1
+  {
+    retSize = A.shape();
+  }
+  else  // case where two dimensions, neither size 1, euclid across axis
+  {
+    if (axis == 0)
+    {
+      retSize = std::vector<typename ArrayType::SizeType>({1, A.shape()[1]});
+    }
+    else
+    {
+      retSize = std::vector<typename ArrayType::SizeType>({A.shape()[0], 1});
+    }
+  }
+  ArrayType ret(retSize);
+  Subtract(A, B, temp);
+  Square(temp, temp);
+  ret = ReduceSum(temp, axis);
+  Sqrt(ret, ret);
+
+  return ret;
 }
 
 }  // namespace distance

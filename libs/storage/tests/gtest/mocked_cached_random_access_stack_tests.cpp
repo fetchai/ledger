@@ -32,7 +32,7 @@ public:
   uint64_t value1 = 0;
   uint8_t  value2 = 0;
 
-  bool operator==(TestClass const &rhs)
+  bool operator==(TestClass const &rhs) const
   {
     return value1 == rhs.value1 && value2 == rhs.value2;
   }
@@ -82,8 +82,7 @@ TEST(mocked_cached_random_access_stack, new_stack)
   cached_stack.New("testFile.db");
 
   /* EXPECT_TRUE(cached_stack.is_open()); */
-  EXPECT_TRUE(cached_stack.DirectWrite() == false)
-      << "Expected cached random access stack to be caching";
+  EXPECT_FALSE(cached_stack.DirectWrite()) << "Expected cached random access stack to be caching";
 }
 
 TEST(mocked_cached_random_access_stack, file_writing_and_closing)
@@ -124,7 +123,7 @@ TEST(mocked_cached_random_access_stack, file_writing_and_closing)
   }
 
   cached_stack.Flush();
-  EXPECT_TRUE(file_flushed == true);
+  EXPECT_TRUE(file_flushed);
   cached_stack.Close();
 }
 
@@ -149,12 +148,12 @@ TEST(mocked_cached_random_access_stack, push_top_pop_elements)
   temp.value2 = random & 0xFF;
 
   obj_index = cached_stack.Push(temp);
-  EXPECT_TRUE(cached_stack.Top() == temp);
+  EXPECT_EQ(cached_stack.Top(), temp);
 
   // Testing Get when object is in cache
   TestClass temp_obj;
   cached_stack.Get(obj_index, temp_obj);
-  EXPECT_TRUE(temp == temp_obj);
+  EXPECT_EQ(temp, temp_obj);
 
   // Testing get when index is greater than stack-size .It should return with no object
   /* uint64_t index = cached_stack.size(); */
@@ -190,8 +189,8 @@ TEST(mocked_cached_random_access_stack, get_set_swap_elements)
   cached_stack.Get(0, read_obj1);
   cached_stack.Get(1, read_obj2);
 
-  EXPECT_TRUE(write_obj2 == read_obj1);
-  EXPECT_TRUE(write_obj1 == read_obj2); */
+  EXPECT_EQ(write_obj2, read_obj1);
+  EXPECT_EQ(write_obj1, read_obj2); */
 }
 
 TEST(mocked_cached_random_access_stack, file_loading_and_closing)

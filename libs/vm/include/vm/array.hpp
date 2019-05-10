@@ -83,7 +83,7 @@ struct Array : public IArray
   ElementType *Find(Variant const &index)
   {
     size_t   i;
-    if (GetNonNegativeInteger(index, i) == false)
+    if (!GetNonNegativeInteger(index, i))
     {
       RuntimeError("negative index");
       return nullptr;

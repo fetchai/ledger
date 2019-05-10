@@ -27,6 +27,7 @@ class Object;
 template <typename T>
 class Ptr;
 struct Variant;
+class Address;
 
 template <typename T, typename = void>
 struct IsPrimitive : std::false_type
@@ -39,6 +40,9 @@ struct IsPrimitive<T, typename std::enable_if_t<
   : std::true_type
 {
 };
+
+template <typename T, typename R = void>
+using IfIsPrimitive = typename std::enable_if<IsPrimitive<std::decay_t<T>>::value, R>::type;
 
 template <typename T, typename = void>
 struct IsObject : std::false_type
@@ -58,12 +62,24 @@ struct IsPtr<Ptr<T>> : std::true_type
 {
 };
 
+template <typename T, typename R = void>
+using IfIsPtr = typename std::enable_if<IsPtr<std::decay_t<T>>::value, R>::type;
+
 template <typename T, typename = void>
 struct IsVariant : std::false_type
 {
 };
 template <typename T>
 struct IsVariant<T, typename std::enable_if_t<std::is_base_of<Variant, T>::value>> : std::true_type
+{
+};
+
+template <typename T, typename = void>
+struct IsAddress : std::false_type
+{
+};
+template <typename T>
+struct IsAddress<T, typename std::enable_if_t<std::is_base_of<Address, T>::value>> : std::true_type
 {
 };
 
@@ -142,6 +158,12 @@ template <typename T>
 struct GetStorageType<T, typename std::enable_if_t<IsPtr<T>::value>>
 {
   using type = Ptr<Object>;
+};
+
+template <typename T>
+struct GetStorageType<T, typename std::enable_if_t<IsAddress<T>::value>>
+{
+  using type = Ptr<T>;
 };
 
 class Object

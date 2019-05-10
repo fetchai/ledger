@@ -27,6 +27,8 @@
 #include "network/tcp/tcp_server.hpp"
 
 #include <chrono>
+#include <iomanip>
+#include <sstream>
 #include <thread>
 
 using fetch::byte_array::ByteArray;
@@ -37,10 +39,19 @@ namespace muddle {
 
 static ConstByteArray ConvertAddress(Packet::RawAddress const &address)
 {
+  LOG_STACK_TRACE_POINT;
   ByteArray output(address.size());
   std::copy(address.begin(), address.end(), output.pointer());
 
   return ConstByteArray{output};
+}
+
+static std::string GenerateThreadPoolName(NetworkId const &identity)
+{
+  std::ostringstream oss;
+  oss << "Mdl-" << identity.ToString();
+
+  return oss.str();
 }
 
 static const auto        CLEANUP_INTERVAL        = std::chrono::seconds{10};
@@ -52,17 +63,18 @@ static std::size_t const NUM_THREADS             = 1;
  *
  * @param certificate The certificate/identity of this node
  */
-Muddle::Muddle(NetworkId network_id, Muddle::CertificatePtr &&certificate, NetworkManager const &nm)
+Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager const &nm,
+               bool sign_packets, bool sign_broadcasts)
   : certificate_(std::move(certificate))
   , identity_(certificate_->identity())
   , network_manager_(nm)
   , dispatcher_()
   , register_(std::make_shared<MuddleRegister>(dispatcher_))
-  , router_(network_id, identity_.identifier(), *register_, dispatcher_)
-  , thread_pool_(
-        network::MakeThreadPool(NUM_THREADS, "Muddle " + static_cast<std::string>(network_id)))
+  , router_(network_id, identity_.identifier(), *register_, dispatcher_,
+            sign_packets ? certificate_.get() : nullptr, sign_packets && sign_broadcasts)
+  , thread_pool_(network::MakeThreadPool(NUM_THREADS, GenerateThreadPoolName(network_id)))
   , clients_(router_)
-  , network_id_{network_id}
+  , network_id_(network_id)
 {}
 
 /**
@@ -72,11 +84,10 @@ Muddle::Muddle(NetworkId network_id, Muddle::CertificatePtr &&certificate, Netwo
  */
 void Muddle::Start(PortList const &ports, UriList const &initial_peer_list)
 {
+  LOG_STACK_TRACE_POINT;
   // start the thread pool
   thread_pool_->Start();
   router_.Start();
-
-  FETCH_LOG_WARN(LOGGING_NAME, "MUDDLE START ");
 
   // create all the muddle servers
   for (uint16_t port : ports)
@@ -100,6 +111,7 @@ void Muddle::Start(PortList const &ports, UriList const &initial_peer_list)
  */
 void Muddle::Stop()
 {
+  LOG_STACK_TRACE_POINT;
   thread_pool_->Stop();
   router_.Stop();
 
@@ -116,6 +128,7 @@ void Muddle::Stop()
  */
 void Muddle::Shutdown()
 {
+  LOG_STACK_TRACE_POINT;
   dispatcher_.FailAllPendingPromises();
 }
 
@@ -127,6 +140,7 @@ void Muddle::Shutdown()
  */
 bool Muddle::UriToDirectAddress(const Uri &uri, Address &address) const
 {
+  LOG_STACK_TRACE_POINT;
   PeerConnectionList::Handle handle = clients_.UriToHandle(uri);
   if (handle == 0)
   {
@@ -142,6 +156,7 @@ bool Muddle::UriToDirectAddress(const Uri &uri, Address &address) const
  */
 Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
 {
+  LOG_STACK_TRACE_POINT;
   ConnectionMap connection_map;
 
   auto const routing_table = router_.GetRoutingTable();
@@ -149,18 +164,26 @@ Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
 
   for (auto const &entry : routing_table)
   {
-    if (!entry.second.direct)
+    if (direct_only && !entry.second.direct)
     {
+      continue;
+    }
+
+    auto connection = register_->LookupConnection(entry.second.handle).lock();
+    if (!connection)
+    {
+      // do not care about connections that we are not connected too
+      continue;
+    }
+
+    if (!connection->is_alive())
+    {
+      // do not care about connections to whom we have not yet fully connected
       continue;
     }
 
     // convert the address to a byte array
     ConstByteArray address = ConvertAddress(entry.first);
-
-    if (direct_only && !entry.second.direct)
-    {
-      continue;
-    }
 
     // based on the handle lookup the uri
     auto it = uri_map.find(entry.second.handle);
@@ -181,6 +204,7 @@ Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
 
 void Muddle::DropPeer(Address const &peer)
 {
+  LOG_STACK_TRACE_POINT;
   FETCH_LOG_INFO(LOGGING_NAME, "Drop address peer: ", ToBase64(peer));
   Handle h = router_.LookupHandle(Router::ConvertAddress(peer));
   if (h)
@@ -200,6 +224,7 @@ void Muddle::DropPeer(Address const &peer)
  */
 void Muddle::RunPeriodicMaintenance()
 {
+  LOG_STACK_TRACE_POINT;
   FETCH_LOG_DEBUG(LOGGING_NAME, "Running periodic maintenance");
 
   try
@@ -231,7 +256,7 @@ void Muddle::RunPeriodicMaintenance()
       last_cleanup_ = Clock::now();
     }
   }
-  catch (std::exception &e)
+  catch (std::exception const &e)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Exception in periodic maintenance: ", e.what());
   }
@@ -247,6 +272,7 @@ void Muddle::RunPeriodicMaintenance()
  */
 void Muddle::CreateTcpServer(uint16_t port)
 {
+  LOG_STACK_TRACE_POINT;
   using ServerImpl = MuddleServer<network::TCPServer>;
 
   // create the server
@@ -271,8 +297,11 @@ void Muddle::CreateTcpServer(uint16_t port)
  */
 void Muddle::CreateTcpClient(Uri const &peer)
 {
+  LOG_STACK_TRACE_POINT;
   using ClientImpl       = network::TCPClient;
   using ConnectionRegPtr = std::shared_ptr<network::AbstractConnectionRegister>;
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Creating TCP Client connection to ", peer.ToString());
 
   ClientImpl client(network_manager_);
   auto       conn = client.connection_pointer();
@@ -296,16 +325,16 @@ void Muddle::CreateTcpClient(Uri const &peer)
   strong_conn->OnConnectionSuccess([this, peer]() { clients_.OnConnectionEstablished(peer); });
 
   strong_conn->OnConnectionFailed([this, peer]() {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection failed...");
+    FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.ToString(), " failed");
     clients_.RemoveConnection(peer);
   });
 
   strong_conn->OnLeave([this, peer]() {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection left...to go where?");
+    FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.ToString(), " left");
     clients_.Disconnect(peer);
   });
 
-  strong_conn->OnMessage([this, conn_handle](network::message_type const &msg) {
+  strong_conn->OnMessage([this, peer, conn_handle](network::message_type const &msg) {
     try
     {
       // un-marshall the data
@@ -317,9 +346,9 @@ void Muddle::CreateTcpClient(Uri const &peer)
       // dispatch the message to router
       router_.Route(conn_handle, packet);
     }
-    catch (std::exception &ex)
+    catch (std::exception const &ex)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Error processing packet from ", conn_handle,
+      FETCH_LOG_ERROR(LOGGING_NAME, "Error processing packet from ", peer.ToString(),
                       " error: ", ex.what());
     }
   });
@@ -331,17 +360,20 @@ void Muddle::CreateTcpClient(Uri const &peer)
 
 void Muddle::Blacklist(Address const &target)
 {
+  LOG_STACK_TRACE_POINT;
   DropPeer(target);
   router_.Blacklist(target);
 }
 
 void Muddle::Whitelist(Address const &target)
 {
+  LOG_STACK_TRACE_POINT;
   router_.Whitelist(target);
 }
 
 bool Muddle::IsBlacklisted(Address const &target) const
 {
+  LOG_STACK_TRACE_POINT;
   return router_.IsBlacklisted(target);
 }
 

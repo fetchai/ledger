@@ -24,13 +24,15 @@ g.AddFullyConnected("FC3", "Relu2", 100, 10)
 g.AddSoftmax("Softmax", "FC3")
 
 criterion = ml.MeanSquareError()
+dataloader = ml.MNISTLoader("/PATH/TO/train-images-idx3-ubyte", "/PATH/TO/train-labels-idx1-ubyte")
 
-gt = fetch.math.tensor.TensorFixed32_32([10])
-gt.Set([4], 1) # Overfitting the network to always output 1 in  pos 4
 for i in range(0, training_iteration):
-    t = fetch.math.tensor.TensorFixed32_32([28, 28])
-    g.SetInput("Input", t)
+    sample = dataloader.GetNext()
+    g.SetInput("Input", sample[1])
     res = g.Evaluate("Softmax")
+
+    gt = fetch.math.tensor.TensorFixed32_32([1, 10])
+    gt.Set([0, sample[0]], 1)
     
     loss = criterion.Forward([res, gt])
     grad = criterion.Backward([res, gt])

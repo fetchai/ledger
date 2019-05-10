@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/cross_entropy.hpp"
+#include "ml/ops/loss_functions/cross_entropy.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/ml/tensor.hpp"
 
@@ -25,7 +25,7 @@ namespace fetch {
 namespace vm_modules {
 namespace ml {
 class CrossEntropyWrapper : public fetch::vm::Object,
-                            public fetch::ml::ops::CrossEntropyLayer<fetch::math::Tensor<float>>
+                            public fetch::ml::ops::CrossEntropy<fetch::math::Tensor<float>>
 {
 public:
   CrossEntropyWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
@@ -41,27 +41,25 @@ public:
   float ForwardWrapper(fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &pred,
                        fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &groundTruth)
   {
-    return fetch::ml::ops::CrossEntropyLayer<fetch::math::Tensor<float>>::Forward(
-        {*pred, *groundTruth});
+    return fetch::ml::ops::CrossEntropy<fetch::math::Tensor<float>>::Forward({*pred, *groundTruth});
   }
 
   fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> BackwardWrapper(
       fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &pred,
       fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &groundTruth)
   {
-    std::shared_ptr<fetch::math::Tensor<float>> dt =
-        fetch::ml::ops::CrossEntropyLayer<fetch::math::Tensor<float>>::Backward(
-            {*pred, *groundTruth});
+    fetch::math::Tensor<float> dt =
+        fetch::ml::ops::CrossEntropy<fetch::math::Tensor<float>>::Backward({*pred, *groundTruth});
     fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> ret =
-        this->vm_->CreateNewObject<fetch::vm_modules::ml::TensorWrapper>(dt->shape());
-    (*ret)->Copy(*dt);
+        this->vm_->CreateNewObject<fetch::vm_modules::ml::TensorWrapper>(dt.shape());
+    (*ret).Copy(dt);
     return ret;
   }
 };
 
-inline void CreateCrossEntropy(std::shared_ptr<fetch::vm::Module> module)
+inline void CreateCrossEntropy(fetch::vm::Module &module)
 {
-  module->CreateClassType<CrossEntropyWrapper>("CrossEntropy")
+  module.CreateClassType<CrossEntropyWrapper>("CrossEntropy")
       .CreateTypeConstuctor<>()
       .CreateInstanceFunction("Forward", &CrossEntropyWrapper::ForwardWrapper)
       .CreateInstanceFunction("Backward", &CrossEntropyWrapper::BackwardWrapper);

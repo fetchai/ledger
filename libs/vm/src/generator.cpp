@@ -232,7 +232,7 @@ void Generator::SetAnnotationLiteral(IRNodePtr const &node, AnnotationLiteral &l
   }
   case NodeKind::Integer64:
   {
-    int64_t i = atol(text.c_str());
+    int64_t i = static_cast<int64_t>(atoll(text.c_str()));
     literal.SetInteger(i);
     break;
   }
@@ -874,6 +874,26 @@ void Generator::HandleExpression(IRExpressionNodePtr const &node)
     HandleIdentifier(node);
     break;
   }
+  case NodeKind::Integer8:
+  {
+    HandleInteger8(node);
+    break;
+  }
+  case NodeKind::UnsignedInteger8:
+  {
+    HandleUnsignedInteger8(node);
+    break;
+  }
+  case NodeKind::Integer16:
+  {
+    HandleInteger16(node);
+    break;
+  }
+  case NodeKind::UnsignedInteger16:
+  {
+    HandleUnsignedInteger16(node);
+    break;
+  }
   case NodeKind::Integer32:
   {
     HandleInteger32(node);
@@ -987,10 +1007,47 @@ void Generator::HandleIdentifier(IRExpressionNodePtr const &node)
   AddLineNumber(node->line, pc);
 }
 
+void Generator::HandleInteger8(IRExpressionNodePtr const &node)
+{
+  Executable::Instruction instruction(Opcodes::PushConstant);
+  int8_t value = static_cast<int8_t>(atoi(node->text.c_str()));
+  instruction.index = AddConstant(Variant(value, TypeIds::Int8));
+  uint16_t pc = function_->AddInstruction(instruction);
+  AddLineNumber(node->line, pc);
+}
+
+void Generator::HandleUnsignedInteger8(IRExpressionNodePtr const &node)
+{
+  Executable::Instruction instruction(Opcodes::PushConstant);
+  uint8_t value = static_cast<uint8_t>(atoi(node->text.c_str()));
+  instruction.index = AddConstant(Variant(value, TypeIds::Byte));
+  uint16_t pc = function_->AddInstruction(instruction);
+  AddLineNumber(node->line, pc);
+}
+
+void Generator::HandleInteger16(IRExpressionNodePtr const &node)
+{
+  Executable::Instruction instruction(Opcodes::PushConstant);
+  int16_t value = static_cast<int16_t>(atoi(node->text.c_str()));
+  instruction.index = AddConstant(Variant(value, TypeIds::Int16));
+  uint16_t pc = function_->AddInstruction(instruction);
+  AddLineNumber(node->line, pc);
+}
+
+void Generator::HandleUnsignedInteger16(IRExpressionNodePtr const &node)
+{
+  Executable::Instruction instruction(Opcodes::PushConstant);
+  uint16_t value = static_cast<uint16_t>(atoi(node->text.c_str()));
+  instruction.index = AddConstant(Variant(value, TypeIds::UInt16));
+  uint16_t pc = function_->AddInstruction(instruction);
+  AddLineNumber(node->line, pc);
+}
+
+
 void Generator::HandleInteger32(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  int32_t value = atoi(node->text.c_str());
+  int32_t value = static_cast<int32_t>(atoi(node->text.c_str()));
   instruction.index = AddConstant(Variant(value, TypeIds::Int32));
   uint16_t pc = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
@@ -999,7 +1056,7 @@ void Generator::HandleInteger32(IRExpressionNodePtr const &node)
 void Generator::HandleUnsignedInteger32(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  uint32_t value = uint32_t(atoi(node->text.c_str()));
+  uint32_t value = static_cast<uint32_t>(atoll(node->text.c_str()));
   instruction.index = AddConstant(Variant(value, TypeIds::UInt32));
   uint16_t pc = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
@@ -1008,7 +1065,7 @@ void Generator::HandleUnsignedInteger32(IRExpressionNodePtr const &node)
 void Generator::HandleInteger64(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  int64_t value = atol(node->text.c_str());
+  int64_t value = static_cast<int64_t>(atoll(node->text.c_str()));
   instruction.index = AddConstant(Variant(value, TypeIds::Int64));
   uint16_t pc = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
@@ -1017,7 +1074,7 @@ void Generator::HandleInteger64(IRExpressionNodePtr const &node)
 void Generator::HandleUnsignedInteger64(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  uint64_t value = uint64_t(atol(node->text.c_str()));
+  uint64_t value = static_cast<uint64_t>(atoll(node->text.c_str()));
   instruction.index = AddConstant(Variant(value, TypeIds::UInt64));
   uint16_t pc = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
@@ -1560,6 +1617,22 @@ bool Generator::ConstantComparator::operator()(Variant const &lhs, Variant const
   }
   switch (lhs.type_id)
   {
+  case TypeIds::Int8:
+  {
+    return lhs.primitive.i8 < rhs.primitive.i8;
+  }
+  case TypeIds::Byte:
+  {
+    return lhs.primitive.ui8 < rhs.primitive.ui8;
+  }
+  case TypeIds::Int16:
+  {
+    return lhs.primitive.i16 < rhs.primitive.i16;
+  }
+  case TypeIds::UInt16:
+  {
+    return lhs.primitive.ui16 < rhs.primitive.ui16;
+  }
   case TypeIds::Int32:
   {
     return lhs.primitive.i32 < rhs.primitive.i32;
