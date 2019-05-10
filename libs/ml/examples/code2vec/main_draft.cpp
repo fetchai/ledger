@@ -17,19 +17,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/graph.hpp"
-#include "math/tensor.hpp"
-//#include "ml/dataloaders/code2vec_context_loaders/context_loader.hpp"
-#include "ml/ops/activations/softmax.hpp"
 
-#include "ml/layers/fully_connected.hpp"
+#include "math/tensor.hpp"
+#include "ml/graph.hpp"
+#include "ml/dataloaders/code2vec_context_loaders/context_loader.hpp"
+#include "ml/ops/activations/softmax.hpp"
+#include "ml/ops/concatenate.hpp"
 #include "ml/ops/embeddings.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "ml/activation_functions/softmax.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
 #include "ml/ops/tanh.hpp"
 #include "ml/ops/transpose.hpp"
+#include "ml/ops/weights.hpp"
+#include "ml/layers/fully_connected.hpp"
 #include <fstream>
 #include <iostream>
 
@@ -59,7 +60,7 @@ int main(int ac, char** av)
     return 1;
   }
 
-  fetch::ml::dataloaders::C2VLoader<std::tuple<ArrayType, ArrayType, ArrayType>, SizeType> cloader;
+  fetch::ml::dataloaders::C2VLoader<std::tuple<ArrayType, ArrayType, ArrayType>, SizeType> cloader(20);
 
   for (int i(1); i < ac; ++i)
   {
@@ -71,12 +72,22 @@ int main(int ac, char** av)
   std::cout << "Number of different paths: " << cloader.GetCounterPaths().size() << std::endl;
   std::cout << "Number of different words: " << cloader.GetCounterWords().size() << std::endl;
 
-  ArrayType AttentionVector({EMBEDDING_SIZE, SizeType{1}});
-
+  
   //Defining the graph
   fetch::ml::Graph<ArrayType> g;
   
-    
+  //Setting up the attention vector
+  std::string attention_vector = g.AddNode<fetch::ml::ops::Weights<ArrayType>>("AttentionVector", {});
+  ArrayType attention_vector_data(std::vector<SizeType>({EMBEDDING_SIZE, SizeType{1}}));
+  fetch::ml::ops::Weights<ArrayType>::Initialise(attention_vector_data, EMBEDDING_SIZE, SizeType{1});
+  g.SetInput(attention_vector, attention_vector_data, false);
+
+  //Setting up the function name embedding matrix
+  std::string function_name_embedding = g.AddNode<fetch::ml::ops::Weights<ArrayType>>("EmbeddingFunctionNames", {});
+  ArrayType function_name_embedding_matrix(std::vector<SizeType>({cloader.GetCounterFunctionNames().size(), EMBEDDING_SIZE}));
+  fetch::ml::ops::Weights<ArrayType>::Initialise(function_name_embedding_matrix, cloader.GetCounterFunctionNames().size(), EMBEDDING_SIZE);
+  g.SetInput(function_name_embedding, function_name_embedding_matrix, false);
+
 
   //Defining the input nodes
 
@@ -85,38 +96,34 @@ int main(int ac, char** av)
   g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputSourceWords", {});
   g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputTargetWords", {});
 
-  // Dimension ()
-  g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputFunctionNames", {});
-
   // Retrieving the rows of the embedding tensors according to the input
   // Path embedding
   g.AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
       "EmbeddingPaths", {"InputPaths"}, cloader.GetCounterPaths().size(), EMBEDDING_SIZE);
   // Target word embedding
+  // TODO Refactor: take an embedding matrix which is initialsed outside an embeddign layer
   g.AddNode<fetch::ml::ops::Embeddings<ArrayType>>("EmbeddingTargetwords", {"InputTargetWords"},
                                                    cloader.GetCounterWords().size(),
                                                    EMBEDDING_SIZE);
   // Source word embedding, sharing the embedding tensor with the target word (c.f. paper and tf implementation)
+  // TODO Refactor: take an embedding matrix which is initialsed outside an embeddign layer
   g.AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
       "EmbeddingSourcewords", {"InputSourceWords"},
       std::dynamic_pointer_cast<fetch::ml::ops::Embeddings<ArrayType>>(
           g.GetNode("EmbeddingTargetwords"))
           ->GetWeights());
-
-  g.AddNode<fetch::ml::ops::Embeddings<ArrayType>>("EmbeddingFunctionnames", {"InputFunctionNames"},
-                                                   cloader.GetCounterFunctionNames().size(),
-                                                   EMBEDDING_SIZE);
+ 
 
   // Concatenate along axis = 1
   // Dimension: (N_CONTEXTS, 3*EMBEDDING_SIZE) = Concatenate ((N_CONTEXTS, EMBEDDING_SIZE), (N_CONTEXTS, EMBEDDING_SIZE), (N_CONTEXTS, EMBEDDING_SIZE))
-  g.AddNode<Concatenate<ArrayType>>("ContextVectors", {"EmbeddingSourcewords",
+  g.AddNode<fetch::ml::ops::Concatenate<ArrayType>>("ContextVectors", {"EmbeddingSourcewords",
   "EmbeddingPaths", "EmbeddingTargetwords"}, 1);
 
   // Fully connected layer
   // REMARK: In the original implementation its without bias
   // Dimensions: (N_CONTEXTS, EMBEDDING_SIZE) = (EMBEDDING_SIZE, 3*EMBEDDING_SIZE) @ (N_CONTEXTS, 3*EMBEDDING_SIZE)
   g.AddNode<fetch::ml::layers::FullyConnected<ArrayType>>("FC1", {"ContextVectors", "FC"},
-  3*EMBEDDING_SIZE, EMBEDDING_SIZE, fetch::ml::ops::TanH<ArrayType>);
+  3*EMBEDDING_SIZE, EMBEDDING_SIZE);
   
   // (Elementwise) TanH Layer
   // Dimensions: (N_CONTEXTS, EMBEDDING_SIZE) 
@@ -140,9 +147,10 @@ int main(int ac, char** av)
   // (Unnormalised) predictions for each function name in the vocab, by
   // matrix multiplication with the embedding tensor
   // Dimensions: (vocab_size_functions, 1) = (vocab_size_functions, EMBEDDING_SIZE) @ (EMBEDDING_SIZE, 1)
-  g.AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>("PredictionSoftMaxKernel", {std::dynamic_pointer_cast<fetch::ml::ops::Embeddings<ArrayType>>(
-          g.GetNode("InputFunctionNames"))
-          ->GetWeights(),"CodeVector"})
+  // TODO Refactor: take an embedding matrix which is initialsed outside an embeddign layer
+  g.AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>("PredictionSoftMaxKernel",
+  {"EmbeddingFunctionNames","CodeVector"});
+
 
   // (Softmax) Normalisation of the prediction
   // Dimensions: (vocab_size_functions, 1)
