@@ -247,6 +247,7 @@ bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container) const
   {
     ++blocks_checked;
 
+    // Traversing the chain fully is costly: break out early if we know the transactions are all duplicated (or empty)
     if(transactions_to_check.size() == transactions_duplicated.size())
     {
       break;
