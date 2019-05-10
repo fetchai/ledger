@@ -276,10 +276,15 @@ public:
 
   std::string ToString() const;
   SizeType    Find(Type val) const;
+
   template <typename TensorType>
-  static SelfType Stack(std::vector<TensorType> const &tensors);
-  void            Sort();
-  void            Sort(memory::TrivialRange const &range);
+  static SelfType              Stack(std::vector<TensorType> const &tensors);
+  static SelfType              Concat(std::vector<SelfType> const &tensors, SizeType axis);
+  static std::vector<SelfType> Split(SelfType const &tensor, SizeVector const &concat_points,
+                                     SizeType const axis);
+
+  void Sort();
+  void Sort(memory::TrivialRange const &range);
 
   template <typename Unsigned>
   static fetch::meta::IfIsUnsignedInteger<Unsigned, SelfType> Arange(Unsigned const &from,
@@ -2165,14 +2170,167 @@ template <typename T, typename C>
 template <typename TensorType>
 typename Tensor<T, C>::SelfType Tensor<T, C>::Stack(std::vector<TensorType> const &tensors)
 {
-  SizeVector retSize;
-  retSize.push_back(tensors.size());
-  retSize.insert(retSize.end(), tensors.front().shape().begin(), tensors.front().shape().end());
-  TensorType ret(retSize);
+  SizeVector ret_size;
+  ret_size.push_back(tensors.size());
+  ret_size.insert(ret_size.end(), tensors.front().shape().begin(), tensors.front().shape().end());
+  TensorType ret(ret_size);
   for (SizeType i(0); i < tensors.size(); ++i)
   {
     ret.Slice(i).Assign(tensors[i]);
   }
+  return ret;
+}
+
+/**
+ * Concatenate tensors on the specified axis and return a new Tensor. The shape of the new tensor
+ * will be identical to all tensors input except on the axis specified where the shape will be the
+ * sum of tensor sizes at that axis
+ * @param tensors
+ * @param axis
+ * @returnf
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::SelfType Tensor<T, C>::Concat(std::vector<SelfType> const &tensors,
+                                                     SizeType const               axis)
+{
+  // cant concatenate a single tensor
+  ASSERT(tensors.size() > 1);
+  SizeVector tensor0_shape = tensors[0].shape();
+  // specified axis must be within range of tensor axes
+  ASSERT(axis < tensor0_shape.size());
+
+  // all tensors must have same shape except on the axis dimension
+  // also we need to know the sum of axis dimensions
+  SizeType sum_axis_size = 0;
+  for (std::size_t i = 0; i < tensors.size(); ++i)
+  {
+    for (std::size_t j = 0; j < tensors[i].shape().size(); ++j)
+    {
+      if (j != axis)
+      {
+        ASSERT(tensors[i].shape()[j] == tensor0_shape[j]);
+      }
+      else
+      {
+        sum_axis_size += tensors[i].shape()[j];
+      }
+    }
+  }
+
+  // set up the return tensor shape
+  SizeVector ret_tensor_shape{tensor0_shape};
+  ret_tensor_shape[axis] = sum_axis_size;
+  SelfType ret{ret_tensor_shape};
+
+  // copy the data across for each tensor
+  SizeType                           cur_from{0};
+  SizeType                           cur_to{0};
+  std::vector<std::vector<SizeType>> step{ret_tensor_shape.size()};
+  std::vector<SizeType>              cur_step(3);
+
+  cur_step[2] = 1;  // stepsize always 1 for now
+
+  for (SizeType i{0}; i < tensors.size(); ++i)
+  {
+    cur_to += tensors[i].shape()[axis];
+
+    // identify the relevant subview to fill
+    for (SizeType j{0}; j < ret.shape().size(); ++j)
+    {
+      if (j == axis)
+      {
+        cur_step[0] = cur_from;
+        cur_step[1] = cur_to;
+        step[j]     = cur_step;
+      }
+      else
+      {
+        cur_step[0] = 0;
+        cur_step[1] = ret.shape()[j];
+        step[j]     = cur_step;
+      }
+    }
+
+    // copy the data across
+    TensorIterator<T, C> ret_it{ret, step};
+    auto                 t_it = tensors[i].cbegin();
+
+    while (t_it.is_valid())
+    {
+      *ret_it = *t_it;
+      ++ret_it;
+      ++t_it;
+    }
+
+    cur_from = cur_to;
+  }
+
+  return ret;
+}
+
+/**
+ * Splits a Tensor up into a vector of tensors (effectively an UnConcatenate function)
+ * @param tensors
+ * @param axis
+ * @returnf
+ */
+template <typename T, typename C>
+typename std::vector<typename Tensor<T, C>::SelfType> Tensor<T, C>::Split(
+    SelfType const &tensor, SizeVector const &concat_points, SizeType const axis)
+{
+  std::vector<SelfType> ret{concat_points.size()};
+
+  // Move implementation to Tensor::UnConcatenate
+  SizeType                           cur_from{0};
+  SizeType                           cur_to{0};
+  std::vector<std::vector<SizeType>> step{tensor.shape().size()};
+  std::vector<SizeType>              cur_step(3);
+  cur_step[2] = 1;  // stepsize always 1 for now
+
+  for (SizeType i{0}; i < ret.size(); ++i)
+  {
+    // extract the relevant portion of the error_signal
+    cur_to += concat_points[i];
+
+    // identify the relevant subview to fill
+    for (SizeType j{0}; j < tensor.shape().size(); ++j)
+    {
+      if (j == axis)
+      {
+        cur_step[0] = cur_from;
+        cur_step[1] = cur_to;
+        step[j]     = cur_step;
+      }
+      else
+      {
+        cur_step[0] = 0;
+        cur_step[1] = tensor.shape()[j];
+        step[j]     = cur_step;
+      }
+    }
+
+    // copy the data across
+    ConstIteratorType err_it{tensor, step};
+
+    SizeVector cur_error_tensor_shape = tensor.shape();
+    cur_error_tensor_shape[axis]      = concat_points[i];
+    SelfType cur_error_tensor{cur_error_tensor_shape};
+
+    TensorIterator<T, C> t_it{cur_error_tensor};
+
+    while (t_it.is_valid())
+    {
+      *t_it = *err_it;
+      ++err_it;
+      ++t_it;
+    }
+
+    cur_from = cur_to;
+
+    // and assign it to the relevant return error tensor
+    ret[i] = cur_error_tensor;
+  }
+
   return ret;
 }
 
