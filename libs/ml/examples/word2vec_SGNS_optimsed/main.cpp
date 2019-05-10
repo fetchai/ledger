@@ -19,6 +19,7 @@
 #include "file_loader.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
+#include "math/clustering/knn.hpp"
 
 //#include "math/ml/activation_functions/sigmoid.hpp"
 //#include "ml/ops/loss_functions/cross_entropy.hpp"
@@ -73,7 +74,8 @@ struct TrainingParams
   SizeType    embedding_size  = 200;            // dimension of embedding vec
   SizeType    training_epochs = 15;             // total number of training epochs
   SizeType    neg_examples    = 25;             // how many negative examples for every positive example
-  double      learning_rate   = 0.025;          // alpha - the learning rate
+  double      learning_rate   = 0.00025;        // alpha - the learning rate
+  double      negative_learning_rate;           // alpha - the learning rate
   SizeType    k               = 10;             // how many nearest neighbours to compare against
   SizeType    print_freq      = 10000;          // how often to print status
   std::string test_word       = "action";       // test word to consider
@@ -147,6 +149,11 @@ public:
       return vocab_.size();
     }
 
+    SizeType vocab_lookup(std::string &word)
+    {
+      return vocab_[word];
+    }
+
     void next_positive(SizeType &input_idx, SizeType &context_idx)
     {
       input_idx = SizeType(*(*cursor_));
@@ -206,6 +213,7 @@ std::string ReadFile(std::string const &path)
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 }
 
+
 ////////////////////////
 /// MODEL DEFINITION ///
 ////////////////////////
@@ -225,6 +233,7 @@ public:
   ArrayType input_vector_;
   ArrayType context_vector_;
   ArrayType result_{{1, 1}};
+  ArrayType dot_result_{{1, 1}};
 
   Type alpha_ = 0.2; // learning rate
 
@@ -246,42 +255,52 @@ public:
     // l = log(sigmoid(-x))
     //
 
-    // embeddings input layer lookup
+    // TODO - remove these copies when math library SFINAE checks for IsIterable instead of taking arrays.
+    // embeddings input & context lookup
     input_vector_ = input_embeddings_.Slice(input_word_idx).Copy();
-
-    // embeddings context layer lookup
     context_vector_ = input_embeddings_.Slice(context_word_idx).Copy();
 
     // context vector transpose
     // mat mul
-    fetch::math::DotTranspose(input_vector_, context_vector_, result_);
+    fetch::math::DotTranspose(input_vector_, context_vector_, dot_result_);
 
     ASSERT(result_.shape()[0] == 1);
     ASSERT(result_.shape()[1] == 1);
 
+
+    ///////
+    /// 1 - sigmoid(x) == sigmoid(-x)
+    ///////
+
+
     // sigmoid_cross_entropy_loss
+    Sigmoid(dot_result_[0], result_[0]);
+
     if (gt == 1)
     {
-      result_[0] = (1 / (1 + std::exp(result_[0])));
-      if (result_[0] < 0)
+      if (result_[0] <= 0)
       {
-        std::cout << "how?: " << std::endl;
+        throw std::runtime_error("cant take log of negative values");
       }
-      loss = std::log(result_[0]);
+      loss = -std::log(result_[0]);
     }
     else
     {
-      result_[0] = -(1 / (1 + std::exp(-result_[0])));
-      if (result_[0] < 0)
+      if ((1 - result_[0]) <= 0)
       {
-        std::cout << "how?: " << std::endl;
+        throw std::runtime_error("cant take log of negative values");
       }
-      loss = result_[0];
-//      loss = std::log(result_[0]);
+      loss = -std::log(1 - result_[0]);
     }
+
+    if (std::isnan(loss))
+    {
+      throw std::runtime_error("loss is nan");
+    }
+
   }
 
-  void Backward(SizeType const &input_word_idx, Type const &gt)
+  void Backward(SizeType const &input_word_idx, SizeType const &context_word_idx, Type const &gt)
   {
     // positive case:
     // dl/dx = g = sigmoid(-x)
@@ -293,20 +312,26 @@ public:
     // dl/d(v_in) = g * v_out'
     // dl/d(v_out) = v_in' * g
 
-//    std::cout << "result_[0]: " << result_[0] << std::endl;
-
     // calculate g and store it in result_[0]
-    if (gt == 1)
-    {
-      result_[0] = (1 / (1 + std::exp(-result_[0])));
-    }
-    else
-    {
-      result_[0] = -(1 / (1 + std::exp(result_[0])));
-    }
+
+
+    // grad = result_[0] - gt;
+
+//
+//    if (gt == 1)
+//    {
+////      result_[0] = dot_result_[0] * (result_[0] - 1);
+//      result_[0] = (1 / (1 + std::exp(-dot_result_[0])));
+//    }
+//    else
+//    {
+////      result_[0] = dot_result_[0] * (result_[0]);
+////      result_[0] = -(1 / (1 + std::exp(dot_result_[0])));
+//      result_[0] = -result_[0];
+//    }
 
     // multiply by learning rate
-    result_[0] *= alpha_;
+    result_[0] = (gt - result_[0]) * alpha_;
 
     // calculate dl/d(v_in)
     fetch::math::Multiply(context_vector_ , result_[0], input_grads_);
@@ -326,20 +351,67 @@ public:
       ++input_slice_it;
       ++input_grads_it;
     }
-//
-//    auto context_slice_it = input_embeddings_.Slice(context_word_idx).begin();
-//    auto context_grads_it = context_grads_.begin();
-//    while (context_slice_it.is_valid())
-//    {
-//      *context_slice_it -= (*context_grads_it);
-//      ++context_slice_it;
-//      ++context_grads_it;
-//    }
 
-//    std::cout << "input_embeddings_.ToString(): " << input_embeddings_.ToString() << std::endl;
+    // apply gradient updates
+    auto context_slice_it = input_embeddings_.Slice(context_word_idx).begin();
+    auto context_grads_it = context_grads_.begin();
+    while (context_slice_it.is_valid())
+    {
+      *context_slice_it -= (*context_grads_it);
+      ++context_slice_it;
+      ++context_grads_it;
+    }
+
   }
 
+  void Sigmoid(Type x, Type &ret)
+  {
+    // sigmoid
+    ret = (1 / (1 + std::exp(-x)));
+
+    // clamping function ensures numerical stability so we don't take log(0)
+    fetch::math::Max(ret, epsilon_, ret);
+    fetch::math::Min(ret, 1 - epsilon_, ret);
+
+    if (std::isnan(ret))
+    {
+      throw std::runtime_error("ret is nan");
+    }
+  }
+
+  Type epsilon_ = 1e-7;
+
 };
+
+
+
+////////////////////
+/// EVAL ANALOGY ///
+////////////////////
+
+
+void EvalAnalogy(DataLoader<ArrayType> &dl, SkipgramModel<ArrayType> &model)
+{
+  std::string word1 = "italy";
+  std::string word2 = "rome";
+  std::string word3 = "france";
+  std::string word4 = "paris";
+
+  // vector math - hopefully target_vector is close to the location of the embedding value for word4
+  SizeType word1_idx = dl.vocab_lookup(word1);
+  SizeType word2_idx = dl.vocab_lookup(word2);
+  SizeType word3_idx = dl.vocab_lookup(word3);
+  auto target_vector = model.input_embeddings_.Slice(word3_idx).Copy() + (model.input_embeddings_.Slice(word2_idx).Copy() - model.input_embeddings_.Slice(word1_idx).Copy());
+
+  // cosine distance between every word in vocab and the target vector
+  std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output = fetch::math::clustering::KNNCosine(model.input_embeddings_, target_vector, 4);
+
+  for (std::size_t j = 0; j < output.size(); ++j)
+  {
+//    std::cout << "output.at(j).first: " << dl.vocab_lookup(output.at(j).first) << std::endl;
+    std::cout << "output.at(j).second: " << output.at(j).second << "\n" << std::endl;
+  }
+}
 
 ///////////////
 ///////////////
@@ -385,6 +457,7 @@ int main(int argc, char **argv)
   // set up model architecture
   std::cout << "building model architecture...: " << std::endl;
   SkipgramModel<ArrayType> model(vocab_size, tp.embedding_size, tp.learning_rate);
+  tp.negative_learning_rate = tp.learning_rate / tp.neg_examples;
 
 
   std::cout << "begin training: " << std::endl;
@@ -414,44 +487,47 @@ int main(int argc, char **argv)
     ////////////////////////////////
     /// run one positive example ///
     ////////////////////////////////
+    gt = 1;
+    model.alpha_ = tp.learning_rate;
 
     // get next data pair
     dataloader.next_positive(input_word_idx, context_word_idx);
 
     // forward pass on the model & loss calculation bundled together
-    gt = 1;
     model.ForwardAndLoss(input_word_idx, context_word_idx, gt, loss);
+    std::cout << "positive loss: " << loss << std::endl;
 
     // backward pass
-    model.Backward(input_word_idx, gt);
+    model.Backward(input_word_idx, context_word_idx, gt);
     ++step_count;
 
     sum_loss += loss;
 
-
     ///////////////////////////////
     /// run k negative examples ///
     ///////////////////////////////
-//
-//    gt = 0;
-//    for (std::size_t i = 0; i < tp.neg_examples; ++i)
-//    {
-//      // get next data pair
-//      dataloader.next_negative(input_word_idx, context_word_idx);
-//
-//      // forward pass on the model
-//      model.ForwardAndLoss(input_word_idx, context_word_idx, gt, loss);
-//
-//      // backward pass
-//      model.Backward(input_word_idx, gt);
-//      ++step_count;
-//    }
+    gt = 0;
+    model.alpha_ = tp.negative_learning_rate;
+
+    for (std::size_t i = 0; i < tp.neg_examples; ++i)
+    {
+      // get next data pair
+      dataloader.next_negative(input_word_idx, context_word_idx);
+
+      // forward pass on the model
+      model.ForwardAndLoss(input_word_idx, context_word_idx, gt, loss);
+      std::cout << "negative loss: " << loss << std::endl;
+
+      // backward pass
+      model.Backward(input_word_idx, context_word_idx, gt);
+      ++step_count;
+    }
 
     /////////////////////////
     /// print performance ///
     /////////////////////////
 
-    if (step_count % 10000 == 0)
+    if (step_count % 100000 == 0)
     {
 
       auto t2 = std::chrono::high_resolution_clock::now();
@@ -463,6 +539,9 @@ int main(int argc, char **argv)
 
       std::cout << "loss: " << sum_loss << std::endl;
       sum_loss = 0;
+
+
+      EvalAnalogy(dataloader, model);
     }
 
   }
