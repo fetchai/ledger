@@ -98,6 +98,11 @@ public:
 
   void BroadcastBlock(Block const &block);
 
+  State state() const
+  {
+    return state_machine_->state();
+  }
+
   bool IsSynced() const
   {
     return State::SYNCHRONISED == state_machine_->state();
