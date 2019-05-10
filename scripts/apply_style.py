@@ -27,6 +27,8 @@ import shutil
 import re
 from concurrent.futures import ThreadPoolExecutor
 
+PROJECT_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+
 SOURCE_FOLDERS = ('apps', 'libs')
 SOURCE_EXT = ('*.cpp', '*.hpp')
 
@@ -188,11 +190,10 @@ def postprocess_file(filename):
         destination.writelines(postprocess_contents(contents))
 
 
-def project_sources(project_root):
-
+def project_sources(PROJECT_ROOT):
     # process all the files
     for path in SOURCE_FOLDERS:
-        for root, _, files in os.walk(os.path.join(project_root, path)):
+        for root, _, files in os.walk(os.path.join(PROJECT_ROOT, path)):
             for ext in SOURCE_EXT:
                 for file in fnmatch.filter(files, ext):
                     source_path = os.path.join(root, file)
@@ -230,11 +231,7 @@ def compare_against_original(reformatted, source_path, rel_path, names_only):
     return success
 
 
-def main():
-    project_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-
-    args = parse_commandline()
-
+def format_cpp(args):
     clang_format = find_clang_format()
     if clang_format is None:
         output('Unable to locate clang-format tool')
@@ -251,8 +248,8 @@ def main():
 
     def apply_style_to_file(source_path):
         # apply twice to allow the changes to "settle"
-        subprocess.check_call(cmd_prefix + [source_path], cwd=project_root)
-        subprocess.check_call(cmd_prefix + [source_path], cwd=project_root)
+        subprocess.check_call(cmd_prefix + [source_path], cwd=PROJECT_ROOT)
+        subprocess.check_call(cmd_prefix + [source_path], cwd=PROJECT_ROOT)
 
         if args.dont_goto_fail:
             postprocess_file(source_path)
@@ -261,12 +258,12 @@ def main():
 
     def diff_style_to_file(source_path):
         formatted_output = subprocess.check_output(
-            cmd_prefix + [source_path], cwd=project_root).decode()
+            cmd_prefix + [source_path], cwd=PROJECT_ROOT).decode()
 
         if args.dont_goto_fail:
             formatted_output = postprocess_contents(formatted_output)
 
-        rel_path = os.path.relpath(source_path, project_root)
+        rel_path = os.path.relpath(source_path, PROJECT_ROOT)
         return compare_against_original(
             formatted_output, source_path, rel_path, args.names_only)
 
@@ -283,7 +280,7 @@ def main():
     # process all the files
     success = False
 
-    processed_files = args.filename or project_sources(project_root)
+    processed_files = args.filename or project_sources(PROJECT_ROOT)
 
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
         result = pool.map(handler, processed_files)
@@ -300,6 +297,27 @@ def main():
 
     if not success:
         sys.exit(1)
+
+
+def format_python(args):
+    fix_or_diff_arg = ['--in-place' if args.fix else '--diff']
+    # Parallel jobs requires '--in-place' arg
+    jobs_arg = ['-j {}'.format(args.jobs)] if args.fix else []
+
+    autopep8_cmd = ['autopep8', '.', '--exit-code', '--recursive',
+                    '--exclude', 'vendor'] + fix_or_diff_arg + jobs_arg
+
+    exit_code = subprocess.call(autopep8_cmd, cwd=PROJECT_ROOT)
+    if exit_code != 0:
+        sys.exit(1)
+
+
+def main():
+    args = parse_commandline()
+
+    # TODO(WK) Make multilanguage reformatting concurrent
+    format_cpp(args)
+    format_python(args)
 
 
 if __name__ == '__main__':
