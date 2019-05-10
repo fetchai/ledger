@@ -59,6 +59,19 @@ protected:
 
   BlockGenerator block_generator_{NUM_LANES, NUM_SLICES};
   MainChainPtr   chain_;
+
+public:
+
+MainChain::Blocks GetAncestorInLimit(MainChain::BehaviourWhenLimit behaviour, MainChain::BlockPtr b1, MainChain::BlockPtr b3)
+{
+  constexpr uint64_t subchain_length_limit = 2;
+
+  MainChain::Blocks blocks;
+  EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, b3->body.hash, b1->body.hash, subchain_length_limit, behaviour));
+  EXPECT_EQ(subchain_length_limit, blocks.size());
+
+  return blocks;
+}
 };
 
 static Blocks Extract(Blocks const &input, std::initializer_list<std::size_t> const &indexes)
@@ -341,6 +354,7 @@ TEST_F(MainChainSubTreeTests, ComplicatedSubTrees)
   }
 }
 
+
 TEST_F(MainChainSubTreeTests, Check_Common_Ancestor_With_Limit_Exceeded_Yields_Path_Including_Ancestor)
 {
   // Simple tree structure
@@ -358,17 +372,14 @@ TEST_F(MainChainSubTreeTests, Check_Common_Ancestor_With_Limit_Exceeded_Yields_P
   auto b2      = block_generator_(genesis);
   auto b3      = block_generator_(b2);
 
-  constexpr uint64_t subchain_length_limit = 2;
-
   // add the blocks to the main chain
   for (auto const &block : Blocks{b1, b2, b3})
   {
     ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*block));
   }
 
-  MainChain::Blocks blocks;
-  EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, b3->body.hash, b1->body.hash, subchain_length_limit, MainChain::BehaviourWhenLimit::RETURN_LEAST_RECENT));
-  ASSERT_EQ(subchain_length_limit, blocks.size());
+  auto blocks = GetAncestorInLimit(MainChain::BehaviourWhenLimit::RETURN_LEAST_RECENT, b1, b3);
+
   EXPECT_EQ(b2->body.hash,      blocks[0]->body.hash);
   EXPECT_EQ(genesis->body.hash, blocks[1]->body.hash);
 }
@@ -390,18 +401,15 @@ TEST_F(MainChainSubTreeTests, Check_Common_Ancestor_With_Limit_Exceeded_Yields_P
   auto b2      = block_generator_(genesis);
   auto b3      = block_generator_(b2);
 
-  constexpr uint64_t subchain_length_limit = 2;
-
   // add the blocks to the main chain
   for (auto const &block : Blocks{b1, b2, b3})
   {
     ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*block));
   }
 
-  MainChain::Blocks blocks;
-  EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, b3->body.hash, b1->body.hash, subchain_length_limit, MainChain::BehaviourWhenLimit::RETURN_MOST_RECENT));
-  ASSERT_EQ(subchain_length_limit, blocks.size());
-  EXPECT_EQ(b3->body.hash,      blocks[0]->body.hash);
+  auto blocks = GetAncestorInLimit(MainChain::BehaviourWhenLimit::RETURN_MOST_RECENT, b1, b3);
+
+  EXPECT_EQ(b3->body.hash, blocks[0]->body.hash);
   EXPECT_EQ(b2->body.hash, blocks[1]->body.hash);
 }
 

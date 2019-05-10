@@ -348,7 +348,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
       }
       else
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Behaviour specified when traversing ancestor undefined when limit hit");
+        assert(!"Behaviour specified when traversing ancestor undefined when limit hit");
       }
     }
 
@@ -384,8 +384,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
   }
 
   blocks.resize(res.size());
-  std::copy(res.begin(), res.end(), blocks.begin());
-
+  std::move(res.begin(), res.end(), blocks.begin());
 
   // If an lookup error has occured then we do not return anything
   if (!success)
