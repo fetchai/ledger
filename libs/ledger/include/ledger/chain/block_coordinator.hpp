@@ -250,15 +250,16 @@ private:
 
   /// @name External Components
   /// @{
-  MainChain &                chain_;                            ///< Ref to system chain
-  ExecutionManagerInterface &execution_manager_;                ///< Ref to system execution manager
-  StorageUnitInterface &     storage_unit_;                     ///< Ref to the storage unit
-  BlockPackerInterface &     block_packer_;                     ///< Ref to the block packer
-  BlockSinkInterface &       block_sink_;                       ///< Ref to the output sink interface
-  TransactionStatusCache &   status_cache_;                     ///< Ref to the tx status cache
+  MainChain &                chain_;              ///< Ref to system chain
+  ExecutionManagerInterface &execution_manager_;  ///< Ref to system execution manager
+  StorageUnitInterface &     storage_unit_;       ///< Ref to the storage unit
+  BlockPackerInterface &     block_packer_;       ///< Ref to the block packer
+  BlockSinkInterface &       block_sink_;         ///< Ref to the output sink interface
+  TransactionStatusCache &   status_cache_;       ///< Ref to the tx status cache
   PeriodicAction             periodic_print_;
   MinerPtr                   miner_;
-  MainChain::Blocks          blocks_to_common_ancestor_;        ///< Partial vector of blocks from main chain HEAD to block coord. last executed block.
+  MainChain::Blocks blocks_to_common_ancestor_;  ///< Partial vector of blocks from main chain HEAD
+                                                 ///< to block coord. last executed block.
   /// @}
 
   /// @name Status

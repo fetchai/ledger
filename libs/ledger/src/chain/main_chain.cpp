@@ -315,7 +315,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
 
   // The algorithm implemented here is effectively a coordinated parallel walk about from the two
   // input tips until the a common ancestor is located.
-  for(;;)
+  for (;;)
   {
     // load up the left side
     if (!left || left->body.hash != left_hash)
@@ -329,19 +329,19 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
       }
 
       // left side always loaded into output queue as we traverse
-      //blocks.push_back(left);
+      // blocks.push_back(left);
       res.push_back(left);
 
-      if(behaviour == BehaviourWhenLimit::RETURN_LEAST_RECENT)
+      if (behaviour == BehaviourWhenLimit::RETURN_LEAST_RECENT)
       {
-        if(res.size() > limit)
+        if (res.size() > limit)
         {
           res.pop_front();
         }
       }
-      else if(behaviour == BehaviourWhenLimit::RETURN_MOST_RECENT)
+      else if (behaviour == BehaviourWhenLimit::RETURN_MOST_RECENT)
       {
-        if(res.size() >= limit)
+        if (res.size() >= limit)
         {
           break;
         }

@@ -220,9 +220,11 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
     // find the path to ancestor - retain this path if it is long for efficiency reasons.
     bool lookup_success = false;
 
-    if(blocks_to_common_ancestor_.empty())
+    if (blocks_to_common_ancestor_.empty())
     {
-      lookup_success = chain_.GetPathToCommonAncestor(blocks_to_common_ancestor_, current_hash, last_processed_block, COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT, MainChain::BehaviourWhenLimit::RETURN_LEAST_RECENT);
+      lookup_success = chain_.GetPathToCommonAncestor(
+          blocks_to_common_ancestor_, current_hash, last_processed_block,
+          COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT, MainChain::BehaviourWhenLimit::RETURN_LEAST_RECENT);
     }
     else
     {
@@ -236,7 +238,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
       return State::RESET;
     }
 
-    assert(blocks_to_common_ancestor_.size() >= 2 && "Expected at least two blocks from common ancestor: HEAD and current");
+    assert(blocks_to_common_ancestor_.size() >= 2 &&
+           "Expected at least two blocks from common ancestor: HEAD and current");
 
     auto     block_path_it = blocks_to_common_ancestor_.crbegin();
     BlockPtr common_parent = *block_path_it++;
@@ -288,7 +291,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
 
     blocks_to_common_ancestor_.pop_back();
 
-    if(blocks_to_common_ancestor_.size() < THRESHOLD_FOR_FAST_SYNCING)
+    if (blocks_to_common_ancestor_.size() < THRESHOLD_FOR_FAST_SYNCING)
     {
       blocks_to_common_ancestor_.clear();
     }
