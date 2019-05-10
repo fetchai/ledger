@@ -39,47 +39,28 @@ public:
   // Singleton instance
   static Metrics &Instance();
 
-  // Construction / Destruction
   Metrics(Metrics const &) = delete;
   Metrics(Metrics &&)      = delete;
-  ~Metrics()
-  {
-    RemoveMetricHandler();
-  }
 
   // Configuration
   void ConfigureFileHandler(std::string filename);
 
   void RecordMetric(ConstByteArray const &identifier, Instrument instrument, Event event,
-                    Timestamp const &timestamp = Clock::now())
-  {
-    auto handler = handler_.load();
-    if (handler)
-    {
-      handler->RecordMetric(identifier, instrument, event, timestamp);
-    }
-  }
+                    Timestamp const &timestamp = Clock::now());
 
   void RecordTransactionMetric(ConstByteArray const &hash, Event event,
-                               Timestamp const &timestamp = Clock::now())
-  {
-    RecordMetric(hash, Instrument::TRANSACTION, event, timestamp);
-  }
+                               Timestamp const &timestamp = Clock::now());
 
   void RecordBlockMetric(ConstByteArray const &hash, Event event,
-                         Timestamp const &timestamp = Clock::now())
-  {
-    RecordMetric(hash, Instrument::BLOCK, event, timestamp);
-  }
+                         Timestamp const &timestamp = Clock::now());
 
   // Operators
   Metrics &operator=(Metrics const &) = delete;
   Metrics &operator=(Metrics &&) = delete;
 
 private:
-  // Hidden construction
-  Metrics() = default;
-  void RemoveMetricHandler();
+  Metrics();
+  ~Metrics();
 
   std::unique_ptr<MetricHandler> handler_object_;
   std::atomic<MetricHandler *>   handler_{nullptr};

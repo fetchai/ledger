@@ -22,6 +22,14 @@
 namespace fetch {
 namespace metrics {
 
+Metrics::Metrics() = default;
+
+Metrics::~Metrics()
+{
+  handler_.store(nullptr);
+  handler_object_.reset();
+}
+
 Metrics &Metrics::Instance()
 {
   static Metrics instance;
@@ -36,10 +44,25 @@ void Metrics::ConfigureFileHandler(std::string filename)
   handler_object_ = std::move(new_handler);
 }
 
-void Metrics::RemoveMetricHandler()
+void Metrics::RecordMetric(ConstByteArray const &identifier, Instrument instrument, Event event,
+                           Timestamp const &timestamp)
 {
-  handler_.store(nullptr);
-  handler_object_.reset();
+  auto handler = handler_.load();
+  if (handler)
+  {
+    handler->RecordMetric(identifier, instrument, event, timestamp);
+  }
+}
+
+void Metrics::RecordTransactionMetric(ConstByteArray const &hash, Event event,
+                                      Timestamp const &timestamp)
+{
+  RecordMetric(hash, Instrument::TRANSACTION, event, timestamp);
+}
+
+void Metrics::RecordBlockMetric(ConstByteArray const &hash, Event event, Timestamp const &timestamp)
+{
+  RecordMetric(hash, Instrument::BLOCK, event, timestamp);
 }
 
 }  // namespace metrics
