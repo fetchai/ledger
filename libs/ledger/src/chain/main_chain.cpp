@@ -348,7 +348,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
       }
       else
       {
-        assert(!"Behaviour specified when traversing ancestor undefined when limit hit");
+        assert(false && "Behaviour specified when traversing ancestor undefined when limit hit");
       }
     }
 
