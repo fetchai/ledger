@@ -33,10 +33,11 @@ Compiler::~Compiler()
   analyser_.UnInitialise();
 }
 
-bool Compiler::Compile(std::string const &filename, std::string const &source,
+bool Compiler::Compile(std::string const &source,
     std::string const &name, IR &ir,
     std::vector<std::string> &errors)
 {
+  std::string filename = "";
   BlockNodePtr root = parser_.Parse(filename, source, errors);
   if (root == nullptr)
   {

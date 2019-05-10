@@ -18,6 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "vm/address.hpp"
+#include "vm/array.hpp"
+#include "vm/map.hpp"
+#include "vm/matrix.hpp"
+#include "vm/state.hpp"
 #include "vm/compiler.hpp"
 #include "vm/vm.hpp"
 #include "vm/module/base.hpp"
@@ -108,7 +112,7 @@ public:
 
     // input type 1, input type 2 ... input type N, output type
     template <typename... Types>
-    ClassInterface &__EnableIndexOperator__() // order changed!
+    ClassInterface &EnableIndexOperator() // order changed!
     {
       static_assert(sizeof...(Types) >= 2, "2 or more types expected");
       using Tuple = std::tuple<Types...>;

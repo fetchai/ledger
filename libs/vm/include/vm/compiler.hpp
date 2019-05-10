@@ -31,7 +31,7 @@ class Compiler
 public:
   Compiler(Module *module);
   ~Compiler();
-  bool Compile(std::string const &filename, std::string const &source,
+  bool Compile(std::string const &source,
       std::string const &name, IR &ir, std::vector<std::string> &errors);
 
 private:

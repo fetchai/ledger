@@ -37,7 +37,7 @@ public:
     module.CreateClassType<ByteArrayWrapper>("Buffer")
         .CreateConstuctor<int32_t>()
         .CreateMemberFunction("copy", &ByteArrayWrapper::Copy)
-        .__EnableIndexOperator__<int32_t, uint8_t>();
+        .EnableIndexOperator<int32_t, uint8_t>();
   }
 
   ByteArrayWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id,

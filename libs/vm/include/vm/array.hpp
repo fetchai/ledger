@@ -48,16 +48,16 @@ struct Array : public IArray
   Array()          = delete;
   virtual ~Array() = default;
 
-  Array(VM *vm, TypeId type_id, TypeId element_type_id, int32_t size)
+  Array(VM *vm, TypeId type_id, TypeId element_type_id__, int32_t size)
     : IArray(vm, type_id)
   {
-    element_type_id_ = element_type_id;
-    elements_ = std::vector<ElementType>(size_t(size), 0);
+    element_type_id = element_type_id__;
+    elements = std::vector<ElementType>(size_t(size), 0);
   }
 
   virtual int32_t Count() const override
   {
-    return int32_t(elements_.size());
+    return int32_t(elements.size());
   }
 
   virtual TemplateParameter GetIndexedValue(AnyInteger const &index) override
@@ -65,7 +65,7 @@ struct Array : public IArray
     ElementType *ptr = Find(index);
     if (ptr)
     {
-      return TemplateParameter(*ptr, element_type_id_);
+      return TemplateParameter(*ptr, element_type_id);
     }
     // Not found
     return TemplateParameter();
@@ -88,17 +88,17 @@ struct Array : public IArray
       RuntimeError("negative index");
       return nullptr;
     }
-    if (i >= elements_.size())
+    if (i >= elements.size())
     {
       RuntimeError("index out of bounds");
       return nullptr;
     }
-    ElementType &element = elements_[i];
+    ElementType &element = elements[i];
     return &element;
   }
 
-  TypeId element_type_id_;
-  std::vector<ElementType> elements_;
+  TypeId element_type_id;
+  std::vector<ElementType> elements;
 };
 
 template <typename... Args>

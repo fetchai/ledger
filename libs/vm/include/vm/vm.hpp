@@ -210,7 +210,7 @@ public:
   VM(Module *module);
   ~VM() = default;
 
-  RegisteredTypes const &GetRegisteredTypes() const
+  RegisteredTypes const &registered_types() const
   {
     return registered_types_;
   }

@@ -17,10 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "vm/module.hpp"
-#include "vm/array.hpp"
-#include "vm/map.hpp"
-#include "vm/matrix.hpp"
-#include "vm/state.hpp"
 
 namespace fetch {
 namespace vm {
@@ -160,14 +156,14 @@ Module::Module()
 
   auto imatrix = GetClassInterface<IMatrix>();
   imatrix.CreateConstuctor<int32_t, int32_t>();
-  imatrix.__EnableIndexOperator__<AnyInteger, AnyInteger, TemplateParameter>();
+  imatrix.EnableIndexOperator<AnyInteger, AnyInteger, TemplateParameter>();
   imatrix.CreateInstantiationType<Matrix<double>>();
   imatrix.CreateInstantiationType<Matrix<float>>();
 
   auto iarray = GetClassInterface<IArray>();
   iarray.CreateConstuctor<int32_t>();
   iarray.CreateMemberFunction("count", &IArray::Count);
-  iarray.__EnableIndexOperator__<AnyInteger, TemplateParameter>();
+  iarray.EnableIndexOperator<AnyInteger, TemplateParameter>();
   iarray.CreateInstantiationType<Array<bool>>();
   iarray.CreateInstantiationType<Array<int8_t>>();
   iarray.CreateInstantiationType<Array<uint8_t>>();
@@ -184,7 +180,7 @@ Module::Module()
   auto imap = GetClassInterface<IMap>();
   imap.CreateConstuctor<>();
   imap.CreateMemberFunction("count", &IMap::Count);
-  imap.__EnableIndexOperator__<TemplateParameter1, TemplateParameter2>();
+  imap.EnableIndexOperator<TemplateParameter1, TemplateParameter2>();
 
   auto address = GetClassInterface<Address>();
   address.CreateConstuctor<>();
