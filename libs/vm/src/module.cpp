@@ -88,6 +88,7 @@ To Cast(Variant const &from)
   }
   default:
   {
+    to = 0;
     break;
   }
   }  // switch
