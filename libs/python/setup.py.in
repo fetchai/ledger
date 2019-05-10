@@ -18,7 +18,8 @@ def amend_system_paths():
 
     PYTHONPATH_PREFIX = DIR + ":" + CORE_DIR
     if 'PYTHONPATH' in os.environ:
-        os.environ['PYTHONPATH'] = PYTHONPATH_PREFIX + ":" + os.environ['PYTHONPATH']
+        os.environ['PYTHONPATH'] = PYTHONPATH_PREFIX + \
+            ":" + os.environ['PYTHONPATH']
     else:
         os.environ['PYTHONPATH'] = PYTHONPATH_PREFIX
 
