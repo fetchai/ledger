@@ -41,7 +41,6 @@ public:
   using Proof    = consensus::ProofOfWork;
   using Slice    = std::vector<TransactionSummary>;
   using Slices   = std::vector<Slice>;
-  using Progeny  = std::vector<Digest>;
 
   struct Body
   {
@@ -53,7 +52,7 @@ public:
     Identity miner;              ///< The identity of the generated miner
     uint32_t log2_num_lanes{0};  ///< The log2(number of lanes)
     Slices   slices;             ///< The slice lists
-    Progeny  progeny;            ///< Blocks that stem from this one
+    Digest   next_hash = GENESIS_DIGEST; ///< The hash of the next block
   };
 
   /// @name Block Contents
@@ -80,40 +79,6 @@ public:
 };
 
 /**
- * Serializer for the block's progeny
- *
- * @tparam T The serializer type
- * @param serializer The reference to the serializer
- * @param progeny The reference to the progeny to be serialised
- */
-template<typename T>
-void SerializeProgeny(T &serializer, Block::Progeny const &progeny)
-{
-	serializer << static_cast<uint32_t>(progeny.size());	// 32 bits should be enough for everyone
-	for(auto const &hash: progeny) {
-		serializer << hash;
-	}
-}
-
-/**
- * Deserializer for the block's progeny
- *
- * @tparam T The serializer type
- * @param serializer The reference to the serializer
- * @param progeny The reference to the output progeny to be populated
- */
-template<typename T>
-void DeserializeProgeny(T &serializer, Block::Progeny &progeny) {
-	progeny.clear();
-	uint32_t sz;
-	Digest hash;
-	while(sz--) {
-		serializer >> hash;
-		progeny.push_back(hash);
-	}
-}
-
-/**
  * Serializer for the block body
  *
  * @tparam T The serializer type
@@ -123,7 +88,7 @@ void DeserializeProgeny(T &serializer, Block::Progeny &progeny) {
 template <typename T>
 void Serialize(T &serializer, Block::Body const &body)
 {
-  serializer << body.hash << body.previous_hash << body.merkle_hash << body.block_number
+  serializer << body.hash << body.previous_hash << body.next_hash << body.merkle_hash << body.block_number
              << body.miner << body.log2_num_lanes << body.slices;
   SerializeProgeny(serializer, body.progeny);
 }
@@ -138,7 +103,7 @@ void Serialize(T &serializer, Block::Body const &body)
 template <typename T>
 void Deserialize(T &serializer, Block::Body &body)
 {
-  serializer >> body.hash >> body.previous_hash >> body.merkle_hash >> body.block_number >>
+  serializer >> body.hash >> body.previous_hash >> body.next_hash >> body.merkle_hash >> body.block_number >>
       body.miner >> body.log2_num_lanes >> body.slices;
   DeserializeProgeny(serializer, body.progeny);
 }

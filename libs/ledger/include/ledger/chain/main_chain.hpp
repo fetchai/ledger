@@ -101,6 +101,7 @@ public:
   BlockStatus AddBlock(Block const &block);
   BlockPtr    GetBlock(BlockHash hash) const;
   bool        RemoveBlock(BlockHash hash);
+  bool        RemoveTree(BlockHash const &hash);
   /// @}
 
   /// @name Chain Queries

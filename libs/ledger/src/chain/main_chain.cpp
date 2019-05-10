@@ -163,23 +163,22 @@ void KeepBlock(IntBlockPtr const &block) const {
 		// notify stored parent
 		Block parent;
 		if(block_store_->Get(storage::ResourceID(block->body.previous_hash), parent)) {
-			parent.body.progeny.push_back(hash);
+			parent.body.next_hash = hash;
 			block_store_->Set(storage::ResourceID(parent.body.hash), parent);
 		}
 	}
 
-	// collect all this block's children that are found in the store
-	auto forward_refs{block_chain_.equal_range(hash)};
-	for (auto ref_it{forward_refs.first}; it != forward_refs.second; ++it) {
+	// detect if any of this block's children has somehow made it to the store already
+	auto forward_refs{references_.equal_range(hash)};
+	for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it) {
 		auto const &child{ref_it->second};
 		if (block_store_->Has(storage::ResourceID(child))) {
-			block->body.progeny.push_back(child);
+			block->body.next_hash = child;
+			break;
 		}
 	}
 	// now write the block itself
 	block_store_->Set(storage::ResourceID(hash), *block);
-	// block has been stored, progeny is but a temporary array to be reused later
-	block->body.progeny.clear();
 }
 
 /**
@@ -191,6 +190,22 @@ MainChain::BlockPtr MainChain::GetHeaviestBlock() const
 {
   FETCH_LOCK(lock_);
   return GetBlock(heaviest_.hash);
+}
+
+/**
+ * Removes the block, and all blocks ahead of it, and references between them, from the chain.
+ *
+ * @param hash The hash to be removed
+ * @return True if successful, otherwise false
+ */
+bool RemoveTree(BlockHash const &hash) {
+	auto children{references_.equal_range(hash)};
+	for(auto child{children.first}; child != children.second; child = references_.erase(child)) {
+		RemoveTree(hash);
+	}
+
+	auto
+	auto siblings{refere
 }
 
 /**
