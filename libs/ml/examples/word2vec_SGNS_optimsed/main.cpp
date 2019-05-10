@@ -375,8 +375,7 @@ void EvalAnalogy(DataLoader<ArrayType> &dl, SkipgramModel<ArrayType> &model)
   std::string word1 = "italy";
   std::string word2 = "rome";
   std::string word3 = "france";
-  std::string
-  = "paris";
+  std::string word4 = "paris";
 
   // vector math - hopefully target_vector is close to the location of the embedding value for word4
   SizeType word1_idx     = dl.vocab_lookup(word1);
