@@ -118,10 +118,10 @@ BlockStatus MainChain::AddBlock(Block const &blk)
 }
 
 /**
- * Inserts a block into the cache maintaining references.
+ * Inserts a block into the cache maintaining references
  *
- * @param block The bock that will be cached.
- * @return Iterator to the newly inserted block.
+ * @param block The bock that will be cached
+ * @return Iterator to the newly inserted block
  */
 BlockMap::iterator CacheBlock(IntBlockPtr const &block) const {
 	assert(static_cast<bool>(block));
@@ -137,10 +137,10 @@ BlockMap::iterator CacheBlock(IntBlockPtr const &block) const {
 }
 
 /**
- * Erases a block from the cache.
+ * Erases a block from the cache
  *
- * @param block The bock that will be erased.
- * @return Iterator to the newly inserted block.
+ * @param block The bock that will be erased
+ * @return Iterator to the newly inserted block
  */
 BlockMap::size_type UncacheBlock(BlockHash const &hash) const {
 	return block_chain_.erase(hash);
@@ -148,10 +148,10 @@ BlockMap::size_type UncacheBlock(BlockHash const &hash) const {
 }
 
 /**
- * Inserts a block into the permanent store maintaining references.
+ * Inserts a block into the permanent store maintaining references
  *
- * @param block The bock that will be cached.
- * @return Iterator to the newly inserted block.
+ * @param block The bock that will be cached
+ * @return Iterator to the newly inserted block
  */
 void KeepBlock(IntBlockPtr const &block) const {
 	assert(static_cast<bool>(block));
@@ -194,9 +194,9 @@ MainChain::BlockPtr MainChain::GetHeaviestBlock() const
 }
 
 /**
- * Removes the block (and all blocks ahead of it) from the chain
+ * Removes the block (and all blocks ahead of it) from the chain.
  *
- * @param hash The has to be removed
+ * @param hash The hash to be removed
  * @return True if successful, otherwise false
  */
 bool MainChain::RemoveBlock(BlockHash hash)
