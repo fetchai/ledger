@@ -17,12 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/analyser.hpp"
-#include "vm/typeids.hpp"
-
-#include "vm/compiler.hpp"
 #include "vm/module.hpp"
-#include "vm/vm.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -31,6 +26,8 @@ class ByteArrayWrapper : public fetch::vm::Object
 {
 public:
   using ElementType = uint8_t;
+  using TemplateParameter = vm::TemplateParameter;
+  using AnyInteger = vm::AnyInteger;
 
   ByteArrayWrapper()          = delete;
   virtual ~ByteArrayWrapper() = default;
@@ -38,9 +35,9 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<ByteArrayWrapper>("Buffer")
-        .CreateTypeConstuctor<int32_t>()
-        .CreateInstanceFunction("copy", &ByteArrayWrapper::Copy)
-        .EnableIndexOperator<uint8_t, int32_t>();
+        .CreateConstuctor<int32_t>()
+        .CreateMemberFunction("copy", &ByteArrayWrapper::Copy)
+        .__EnableIndexOperator__<int32_t, uint8_t>();
   }
 
   ByteArrayWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
@@ -67,24 +64,43 @@ public:
     return vm_->CreateNewObject<ByteArrayWrapper>(byte_array_.Copy());
   }
 
-  ElementType *Find()
+  TemplateParameter GetIndexedValue(AnyInteger const &index)
   {
-    vm::Variant &positionv = Pop();
-    size_t       position;
-    if (GetNonNegativeInteger(positionv, position) == false)
+    ElementType *ptr = Find(index);
+    if (ptr)
+    {
+      return TemplateParameter(*ptr, element_type_id_);
+    }
+    // Not found
+    return TemplateParameter();
+  }
+
+  void SetIndexedValue(AnyInteger const &index, TemplateParameter const &value)
+  {
+    ElementType *ptr = Find(index);
+    if (ptr)
+    {
+      *ptr         = value.Get<ElementType>();
+    }
+  }
+
+  ElementType *Find(AnyInteger const &index)
+  {
+    size_t i;
+    if (GetNonNegativeInteger(index, i) == false)
     {
       RuntimeError("negative index");
       return nullptr;
     }
-    positionv.Reset();
-    if (position >= byte_array_.size())
+
+    if (i >= byte_array_.size())
     {
       RuntimeError("index out of bounds");
       return nullptr;
     }
-    return &byte_array_[position];
+    return &byte_array_[i];
   }
-
+/*
   void *FindElement() override
   {
     return Find();
@@ -109,7 +125,7 @@ public:
       *ptr             = top.Move<ElementType>();
     }
   }
-
+*/
   byte_array::ByteArray byte_array()
   {
     return byte_array_;

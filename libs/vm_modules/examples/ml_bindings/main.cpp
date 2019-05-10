@@ -23,12 +23,12 @@
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error.hpp"
 
-#include "vm/analyser.hpp"
-#include "vm/typeids.hpp"
 
-#include "vm/compiler.hpp"
+
+
+
 #include "vm/module.hpp"
-#include "vm/vm.hpp"
+
 
 #include "vm_modules/ml/cross_entropy.hpp"
 #include "vm_modules/ml/graph.hpp"
@@ -183,14 +183,14 @@ int main(int argc, char **argv)
   fetch::vm_modules::ml::CreateCrossEntropy(*module);
 
   module->CreateClassType<TrainingPairWrapper>("TrainingPair")
-      .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>()
-      .CreateInstanceFunction("Data", &TrainingPairWrapper::data)
-      .CreateInstanceFunction("Label", &TrainingPairWrapper::label);
+      .CreateConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>()
+      .CreateMemberFunction("Data", &TrainingPairWrapper::data)
+      .CreateMemberFunction("Label", &TrainingPairWrapper::label);
 
   module->CreateClassType<DataLoaderWrapper>("MNISTLoader")
-      .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>>()
-      .CreateInstanceFunction("GetData", &DataLoaderWrapper::GetData)
-      .CreateInstanceFunction("Display", &DataLoaderWrapper::Display);
+      .CreateConstuctor<fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>>()
+      .CreateMemberFunction("GetData", &DataLoaderWrapper::GetData)
+      .CreateMemberFunction("Display", &DataLoaderWrapper::Display);
 
   // Setting compiler up
   fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(module.get());

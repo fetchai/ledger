@@ -17,8 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/module.hpp"
 #include "math/meta/math_type_traits.hpp"
-#include "vm/vm.hpp"
+
 
 #include <random>
 

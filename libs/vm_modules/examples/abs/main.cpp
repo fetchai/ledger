@@ -16,17 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/analyser.hpp"
-#include "vm/defs.hpp"
-#include "vm/typeids.hpp"
-
-#include "vm/compiler.hpp"
 #include "vm/module.hpp"
-#include "vm/vm.hpp"
 #include <fstream>
 #include <sstream>
-
-#include "vm/vm.hpp"
 
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/type_convert.hpp"
