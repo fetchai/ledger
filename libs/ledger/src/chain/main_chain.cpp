@@ -294,7 +294,7 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
  * @return true if successful, otherwise false
  */
 bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
-                                        uint64_t limit, bool at_head) const
+                                        uint64_t limit, BehaviourWhenLimit behaviour) const
 {
   MilliTimer myTimer("MainChain::GetPathToCommonAncestor", 500);
 
@@ -332,19 +332,23 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
       //blocks.push_back(left);
       res.push_back(left);
 
-      if(at_head)
+      if(behaviour == BehaviourWhenLimit::RETURN_LEAST_RECENT)
       {
         if(res.size() > limit)
         {
           res.pop_front();
         }
       }
-      else
+      else if(behaviour == BehaviourWhenLimit::RETURN_MOST_RECENT)
       {
         if(res.size() >= limit)
         {
           break;
         }
+      }
+      else
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Behaviour specified when traversing ancestor undefined when limit hit");
       }
     }
 

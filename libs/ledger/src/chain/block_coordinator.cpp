@@ -217,12 +217,12 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
   {
     // normal case - we have processed at least one block
 
-    // find the path
+    // find the path to ancestor - retain this path if it is long for efficiency reasons.
     bool lookup_success = false;
 
     if(blocks_to_common_ancestor_.empty())
     {
-      lookup_success = chain_.GetPathToCommonAncestor(blocks_to_common_ancestor_, current_hash, last_processed_block, COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT);
+      lookup_success = chain_.GetPathToCommonAncestor(blocks_to_common_ancestor_, current_hash, last_processed_block, COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT, MainChain::BehaviourWhenLimit::RETURN_LEAST_RECENT);
     }
     else
     {

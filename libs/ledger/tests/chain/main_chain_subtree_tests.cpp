@@ -367,10 +367,42 @@ TEST_F(MainChainSubTreeTests, Check_Common_Ancestor_With_Limit_Exceeded_Yields_P
   }
 
   MainChain::Blocks blocks;
-  EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, b3->body.hash, b1->body.hash, subchain_length_limit));
+  EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, b3->body.hash, b1->body.hash, subchain_length_limit, MainChain::BehaviourWhenLimit::RETURN_LEAST_RECENT));
   ASSERT_EQ(subchain_length_limit, blocks.size());
   EXPECT_EQ(b2->body.hash,      blocks[0]->body.hash);
   EXPECT_EQ(genesis->body.hash, blocks[1]->body.hash);
+}
+
+TEST_F(MainChainSubTreeTests, Check_Common_Ancestor_With_Limit_Exceeded_Yields_Path_Not_Including_Ancestor)
+{
+  // Simple tree structure
+  //
+  //             ┌────┐
+  //         ┌──▶│ B1 │
+  // ┌────┐  │   └────┘
+  // │ GN │──┤
+  // └────┘  │   ┌────┐     ┌────┐
+  //         └──▶│ B2 │────▶│ B3 │
+  //             └────┘     └────┘
+  //
+  auto genesis = block_generator_();
+  auto b1      = block_generator_(genesis);
+  auto b2      = block_generator_(genesis);
+  auto b3      = block_generator_(b2);
+
+  constexpr uint64_t subchain_length_limit = 2;
+
+  // add the blocks to the main chain
+  for (auto const &block : Blocks{b1, b2, b3})
+  {
+    ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*block));
+  }
+
+  MainChain::Blocks blocks;
+  EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, b3->body.hash, b1->body.hash, subchain_length_limit, MainChain::BehaviourWhenLimit::RETURN_MOST_RECENT));
+  ASSERT_EQ(subchain_length_limit, blocks.size());
+  EXPECT_EQ(b3->body.hash,      blocks[0]->body.hash);
+  EXPECT_EQ(b2->body.hash, blocks[1]->body.hash);
 }
 
 }  // namespace
