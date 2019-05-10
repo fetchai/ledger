@@ -27,7 +27,6 @@ class ByteArrayWrapper : public fetch::vm::Object
 public:
   using ElementType = uint8_t;
   using TemplateParameter = vm::TemplateParameter;
-  using AnyInteger = vm::AnyInteger;
 
   ByteArrayWrapper()          = delete;
   virtual ~ByteArrayWrapper() = default;
@@ -36,8 +35,7 @@ public:
   {
     module.CreateClassType<ByteArrayWrapper>("Buffer")
         .CreateConstuctor<int32_t>()
-        .CreateMemberFunction("copy", &ByteArrayWrapper::Copy)
-        .EnableIndexOperator<int32_t, uint8_t>();
+        .CreateMemberFunction("copy", &ByteArrayWrapper::Copy);
   }
 
   ByteArrayWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
@@ -64,68 +62,6 @@ public:
     return vm_->CreateNewObject<ByteArrayWrapper>(byte_array_.Copy());
   }
 
-  TemplateParameter GetIndexedValue(AnyInteger const &index)
-  {
-    ElementType *ptr = Find(index);
-    if (ptr)
-    {
-      return TemplateParameter(*ptr, element_type_id_);
-    }
-    // Not found
-    return TemplateParameter();
-  }
-
-  void SetIndexedValue(AnyInteger const &index, TemplateParameter const &value)
-  {
-    ElementType *ptr = Find(index);
-    if (ptr)
-    {
-      *ptr         = value.Get<ElementType>();
-    }
-  }
-
-  ElementType *Find(AnyInteger const &index)
-  {
-    size_t i;
-    if (GetNonNegativeInteger(index, i) == false)
-    {
-      RuntimeError("negative index");
-      return nullptr;
-    }
-
-    if (i >= byte_array_.size())
-    {
-      RuntimeError("index out of bounds");
-      return nullptr;
-    }
-    return &byte_array_[i];
-  }
-/*
-  void *FindElement() override
-  {
-    return Find();
-  }
-
-  void PushElement(fetch::vm::TypeId element_type_id) override
-  {
-    ElementType *ptr = Find();
-    if (ptr)
-    {
-      vm::Variant &top = Push();
-      top.Construct(*ptr, element_type_id);
-    }
-  }
-
-  void PopToElement() override
-  {
-    ElementType *ptr = Find();
-    if (ptr)
-    {
-      vm::Variant &top = Pop();
-      *ptr             = top.Move<ElementType>();
-    }
-  }
-*/
   byte_array::ByteArray byte_array()
   {
     return byte_array_;

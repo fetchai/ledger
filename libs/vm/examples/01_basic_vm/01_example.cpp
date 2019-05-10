@@ -85,17 +85,29 @@ int main(int argc, char **argv)
   module.CreateFreeFunction("print", &Print);
   module.CreateFreeFunction("toString", &toString);
   module.CreateClassType<System>("System")
-      .CreateTypeFunction("Argc", &System::Argc)
-      .CreateTypeFunction("Argv", &System::Argv);
+      .CreateStaticMemberFunction("Argc", &System::Argc)
+      .CreateStaticMemberFunction("Argv", &System::Argv);
 
   // Setting compiler up
 
   fetch::vm::Compiler *compiler = new fetch::vm::Compiler(&module);
   fetch::vm::VM *      vm       = new fetch::vm::VM(&module);
 
-  fetch::vm::Script  script;
-  fetch::vm::Strings errors;
-  bool               compiled = compiler->Compile(source, "myscript", script, errors);
+  fetch::vm::Executable  executable;
+  fetch::vm::IR ir;
+  std::vector< std::string > errors;
+  bool               compiled = compiler->Compile(source, "myexecutable", ir, errors);
+
+
+  if(!vm->GenerateExecutable(ir, "main_ir", executable, errors))
+  {
+    std::cout << "Failed to generate executable" << std::endl;
+    for (auto &s : errors)
+    {
+      std::cout << s << std::endl;
+    }
+    return -1;
+  }
 
   if (!compiled)
   {
@@ -107,7 +119,7 @@ int main(int argc, char **argv)
     return -1;
   }
 
-  if (!script.FindFunction("main"))
+  if (!executable.FindFunction("main"))
   {
     std::cout << "Function 'main' not found" << std::endl;
     return -2;
@@ -118,7 +130,7 @@ int main(int argc, char **argv)
   fetch::vm::Variant output;
 
   // Setting VM up and running
-  if (!vm->Execute(script, "main", error, output))
+  if (!vm->Execute(executable, "main", error, output))
   {
     std::cout << "Runtime error: " << error << std::endl;
   }

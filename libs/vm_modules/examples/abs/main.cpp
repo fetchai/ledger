@@ -47,11 +47,12 @@ int main(int argc, char **argv)
 
   // Setting compiler up
   fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(module.get());
-  fetch::vm::Script        script;
+  fetch::vm::IR ir;
+  fetch::vm::Executable    exec;
   std::vector<std::string> errors;
 
   // Compiling
-  bool compiled = compiler->Compile(source, "myscript", script, errors);
+  bool compiled = compiler->Compile(source, "myexec", ir, errors);
 
   if (!compiled)
   {
@@ -63,19 +64,31 @@ int main(int argc, char **argv)
     return -1;
   }
 
-  if (!script.FindFunction("main"))
-  {
-    std::cout << "Function 'main' not found" << std::endl;
-    return -2;
-  }
-
   // Setting VM up and running
   std::string        error;
   fetch::vm::Variant output;
 
   fetch::vm::VM vm(module.get());
 
-  if (!vm.Execute(script, "main", error, output))
+  if(!vm.GenerateExecutable(ir, "main_ir", exec, errors))
+  {
+    std::cout << "Failed to generate executable" << std::endl;
+    for (auto &s : errors)
+    {
+      std::cout << s << std::endl;
+    }
+    return -1;
+  }
+
+  if (!exec.FindFunction("main"))
+  {
+    std::cout << "Function 'main' not found" << std::endl;
+    return -2;
+  }
+
+
+
+  if (!vm.Execute(exec, "main", error, output))
   {
     std::cout << "Runtime error on line " << error << std::endl;
   }

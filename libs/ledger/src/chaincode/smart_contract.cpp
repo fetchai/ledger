@@ -92,12 +92,12 @@ void ValidateAddressesInParams(Transaction const &tx, vm::ParameterPack const &p
 /**
  * Construct a smart contract from the specified source
  *
- * @param source Reference to the script text
+ * @param source Reference to the executable text
  */
 SmartContract::SmartContract(std::string const &source)
   : source_{source}
   , digest_{GenerateDigest(source)}
-  , script_{std::make_shared<Script>()}
+  , executable_{std::make_shared<Executable>()}
   , module_{vm_modules::VMFactory::GetModule()}
 {
   if (source_.empty())
@@ -108,8 +108,8 @@ SmartContract::SmartContract(std::string const &source)
 
   FETCH_LOG_INFO(LOGGING_NAME, "Constructing contract: ", contract_digest().ToBase64());
 
-  // create and compile the script
-  auto errors = vm_modules::VMFactory::Compile(module_, source_, *script_);
+  // create and compile the executable
+  auto errors = vm_modules::VMFactory::Compile(module_, source_, *executable_);
 
   // if there are any compilation errors
   if (!errors.empty())
@@ -117,19 +117,19 @@ SmartContract::SmartContract(std::string const &source)
     throw SmartContractException(SmartContractException::Category::COMPILATION, std::move(errors));
   }
 
-  // since we now have a fully compiled script we can evaluate the functions and assign the mapping
+  // since we now have a fully compiled executable we can evaluate the functions and assign the mapping
 
-  // evaluate all the visible functions in this script and register the associated handle
-  for (auto const &fn : script_->functions)
+  // evaluate all the visible functions in this executable and register the associated handle
+  for (auto const &fn : executable_->functions)
   {
     // determine the kind of function
     auto const kind = DetermineKind(fn);
 
     switch (kind)
     {
-    case vm::Kind::NORMAL:
+    case vm::FunctionDecoratorKind::NORMAL:
       break;
-    case vm::Kind::ON_INIT:
+    case vm::FunctionDecoratorKind::ON_INIT:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Registering on_init: ", fn.name,
                       " (Contract: ", contract_digest().ToBase64(), ')');
 
@@ -139,7 +139,7 @@ SmartContract::SmartContract(std::string const &source)
       // register the initialiser (on duplicate this will throw)
       OnInitialise(this, &SmartContract::InvokeInit);
       break;
-    case vm::Kind::ACTION:
+    case vm::FunctionDecoratorKind::ACTION:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Registering Action: ", fn.name,
                       " (Contract: ", contract_digest().ToBase64(), ')');
 
@@ -147,7 +147,7 @@ SmartContract::SmartContract(std::string const &source)
       OnTransaction(fn.name,
                     [this, name = fn.name](auto const &tx) { return InvokeAction(name, tx); });
       break;
-    case vm::Kind::QUERY:
+    case vm::FunctionDecoratorKind::QUERY:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Registering Query: ", fn.name,
                       " (Contract: ", contract_digest().ToBase64(), ')');
 
@@ -157,7 +157,7 @@ SmartContract::SmartContract(std::string const &source)
       });
       break;
 
-    case vm::Kind::INVALID:
+    case vm::FunctionDecoratorKind::INVALID:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Invalid function decorator found");
       throw SmartContractException(SmartContractException::Category::COMPILATION,
                                    {"Invalid decorator found in contract"});
@@ -372,7 +372,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
   vm->SetIOObserver(state());
 
   // lookup the function / entry point which will be executed
-  Script::Function const *target_function = script_->FindFunction(name);
+  Executable::Function const *target_function = executable_->FindFunction(name);
   if (!target_function ||
       (input_params.size() != static_cast<std::size_t>(target_function->num_parameters)))
   {
@@ -412,7 +412,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
 
   vm->AttachOutputDevice("stdout", console);
 
-  if (!vm->Execute(*script_, name, error, output, params))
+  if (!vm->Execute(*executable_, name, error, output, params))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
     return Status::FAILED;
@@ -438,7 +438,7 @@ Contract::Status SmartContract::InvokeInit(Identity const &owner)
   vm::ParameterPack params{vm->registered_types()};
 
   // lookup the function / entry point which will be executed
-  Script::Function const *target_function = script_->FindFunction(init_fn_name_);
+  Executable::Function const *target_function = executable_->FindFunction(init_fn_name_);
   if (target_function->num_parameters == 1)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "One argument for init - defaulting to address population");
@@ -473,7 +473,7 @@ Contract::Status SmartContract::InvokeInit(Identity const &owner)
 
   vm->AttachOutputDevice("stdout", console);
 
-  if (!vm->Execute(*script_, init_fn_name_, error, output, params))
+  if (!vm->Execute(*executable_, init_fn_name_, error, output, params))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
     return Status::FAILED;
@@ -497,8 +497,8 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   auto vm = vm_modules::VMFactory::GetVM(module_);
   vm->SetIOObserver(state());
 
-  // lookup the script
-  Script::Function const *target_function = script_->FindFunction(name);
+  // lookup the executable
+  Executable::Function const *target_function = executable_->FindFunction(name);
   if (!target_function)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup target function");
@@ -540,7 +540,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
 
   vm->AttachOutputDevice("stdout", console);
 
-  if (!vm->Execute(*script_, name, error, output, params))
+  if (!vm->Execute(*executable_, name, error, output, params))
   {
     response["status"]  = "failed";
     response["msg"]     = error;

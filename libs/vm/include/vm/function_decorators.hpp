@@ -35,7 +35,7 @@ enum class FunctionDecoratorKind
  * @param fn The reference to function entry
  * @return The type of the function
  */
-inline FunctionDecoratorKind DetermineKiXXXnd(vm::Executable::Function const &fn)
+inline FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn)
 {
   FunctionDecoratorKind kind{FunctionDecoratorKind::NORMAL};
 

@@ -93,17 +93,18 @@ int main(int argc, char **argv)
   module.CreateFreeFunction("toString", &toString);
 
   module.CreateClassType<IntPair>("IntPair")
-      .CreateTypeConstuctor<int, int>()
-      .CreateInstanceFunction("first", &IntPair::first)
-      .CreateInstanceFunction("second", &IntPair::second);
+      .CreateConstuctor<int, int>()
+      .CreateMemberFunction("first", &IntPair::first)
+      .CreateMemberFunction("second", &IntPair::second);
 
   // Setting compiler up
   fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(&module);
-  fetch::vm::Script        script;
+  fetch::vm::Executable        executable;
+  fetch::vm::IR ir;
   std::vector<std::string> errors;
 
   // Compiling
-  bool compiled = compiler->Compile(source, "myscript", script, errors);
+  bool compiled = compiler->Compile(source, "myexecutable", ir, errors);
 
   if (!compiled)
   {
@@ -115,7 +116,7 @@ int main(int argc, char **argv)
     return -1;
   }
 
-  if (!script.FindFunction("main"))
+  if (!executable.FindFunction("main"))
   {
     std::cout << "Function 'main' not found" << std::endl;
     return -2;
@@ -127,7 +128,19 @@ int main(int argc, char **argv)
   fetch::vm::Variant output;
 
   fetch::vm::VM vm(&module);
-  if (!vm.Execute(script, "main", error, output))
+
+
+  if(!vm.GenerateExecutable(ir, "main_ir", executable, errors))
+  {
+    std::cout << "Failed to generate executable" << std::endl;
+    for (auto &s : errors)
+    {
+      std::cout << s << std::endl;
+    }
+    return -1;
+  }
+
+  if (!vm.Execute(executable, "main", error, output))
   {
     std::cout << "Runtime error on line " << error << std::endl;
   }

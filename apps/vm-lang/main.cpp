@@ -22,11 +22,7 @@
 #include "core/commandline/params.hpp"
 #include "core/json/document.hpp"
 #include "variant/variant.hpp"
-#include "vm/analyser.hpp"
-#include "vm/compiler.hpp"
 #include "vm/module.hpp"
-#include "vm/typeids.hpp"
-#include "vm/vm.hpp"
 #include "vm_modules/vm_factory.hpp"
 
 #include <fstream>
@@ -37,7 +33,7 @@
 
 namespace {
 
-using fetch::vm::Script;
+using fetch::vm::Executable;
 using fetch::vm::Ptr;
 using fetch::vm::VM;
 using fetch::vm::String;
@@ -266,16 +262,16 @@ int main(int argc, char **argv)
   // load the contents of the script file
   auto const source = ReadFileContents(params.program().GetArg(1));
 
-  auto script = std::make_unique<Script>();
+  auto executable = std::make_unique<Executable>();
   auto module = VMFactory::GetModule();
 
   // additional module bindings
   module->CreateClassType<System>("System")
-      .CreateTypeFunction("Argc", &Argc)
-      .CreateTypeFunction("Argv", &Argv);
+      .CreateStaticMemberFunction("Argc", &Argc)
+      .CreateStaticMemberFunction("Argv", &Argv);
 
   // attempt to compile the program
-  auto errors = VMFactory::Compile(module, source, *script);
+  auto errors = VMFactory::Compile(module, source, *executable);
 
   // detect compilation errors
   if (!errors.empty())
@@ -312,7 +308,7 @@ int main(int argc, char **argv)
   std::string        console;
   fetch::vm::Variant output;
   bool const         success =
-      vm->Execute(*script, params.program().GetParam("func", "main"), error, output);
+      vm->Execute(*executable, params.program().GetParam("func", "main"), error, output);
 
   if (!success)
   {
