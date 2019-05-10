@@ -122,7 +122,7 @@ int main(int ac, char** av)
   // Fully connected layer
   // REMARK: In the original implementation its without bias
   // Dimensions: (N_CONTEXTS, EMBEDDING_SIZE) = (EMBEDDING_SIZE, 3*EMBEDDING_SIZE) @ (N_CONTEXTS, 3*EMBEDDING_SIZE)
-  g.AddNode<fetch::ml::layers::FullyConnected<ArrayType>>("FC1", {"ContextVectors", "FC"},
+  g.AddNode<fetch::ml::layers::FullyConnected<ArrayType>>("FC1", {"ContextVectors"},
   3*EMBEDDING_SIZE, EMBEDDING_SIZE);
   
   // (Elementwise) TanH Layer
