@@ -21,18 +21,6 @@
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
 
-//#include "math/ml/activation_functions/sigmoid.hpp"
-//#include "ml/ops/loss_functions/cross_entropy.hpp"
-
-//#include "model_saver.hpp"
-//
-//#include "math/clustering/knn.hpp"
-
-//
-//#include "ml/dataloaders/word2vec_loaders/skipgram_dataloader.hpp"
-//#include "ml/graph.hpp"
-//#include "ml/layers/skip_gram.hpp"
-
 #include <chrono>
 #include <iostream>
 #include <math/tensor.hpp>
@@ -62,12 +50,12 @@ struct TrainingParams
   SizeType training_epochs   = 15;         // total number of training epochs
   SizeType neg_examples      = 25;         // how many negative examples for every positive example
   double   learning_rate     = 0.2;        // alpha - the learning rate
-  double   min_learning_rate = 0.0001;     // alpha - the learning rate
-  double   negative_learning_rate;         // alpha - the learning rate
-  double   min_negative_learning_rate = ;  // alpha - the learning rate
+  double   min_learning_rate = 0.0001;     // alpha - the minimum learning rate
+  double   negative_learning_rate;         // alpha - the learning rate for negative examples
+  double   min_negative_learning_rate;     // alpha - the minimum learning rate for negative examples
 
   SizeType    k          = 10;             // how many nearest neighbours to compare against
-  SizeType    print_freq = 10000;          // how often to print status
+  SizeType    print_freq = 100000;          // how often to print status
   std::string test_word  = "action";       // test word to consider
   std::string save_loc   = "./model.fba";  // save file location for exporting graph
 
@@ -383,10 +371,12 @@ public:
 
 void EvalAnalogy(DataLoader<ArrayType> &dl, SkipgramModel<ArrayType> &model)
 {
+  SizeType k = 5;
   std::string word1 = "italy";
   std::string word2 = "rome";
   std::string word3 = "france";
-  std::string word4 = "paris";
+  std::string
+  = "paris";
 
   // vector math - hopefully target_vector is close to the location of the embedding value for word4
   SizeType word1_idx     = dl.vocab_lookup(word1);
@@ -398,14 +388,13 @@ void EvalAnalogy(DataLoader<ArrayType> &dl, SkipgramModel<ArrayType> &model)
 
   // cosine distance between every word in vocab and the target vector
   std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
-      fetch::math::clustering::KNNCosine(model.input_embeddings_, target_vector, 4);
+      fetch::math::clustering::KNNCosine(model.input_embeddings_, target_vector, k);
 
   for (std::size_t j = 0; j < output.size(); ++j)
   {
-    std::cout << "rank: : " << j << std::endl;
-    std::cout << "word: " << dl.VocabLookup(output.at(j).first) << std::endl;
-    std::cout << "distance: " << output.at(j).second << "\n" << std::endl;
+    std::cout << "rank: " << j << ", " << "distance, " << output.at(j).second << ": " << dl.VocabLookup(output.at(j).first) << std::endl;
   }
+  std::cout << std::endl;
 }
 
 ///////////////
@@ -489,7 +478,7 @@ int main(int argc, char **argv)
     ////////////////////////////////
     gt           = 1;
     model.alpha_ = (tp.learning_rate * fetch::math::Max(tp.min_learning_rate,
-                                                        1.0 - (total_step_count / tp.total_words)));
+                                                        1.0 - (double(total_step_count) / tp.total_words)));
 
     // get next data pair
     dataloader.next_positive(input_word_idx, context_word_idx);
@@ -510,7 +499,7 @@ int main(int argc, char **argv)
     gt = 0;
     model.alpha_ =
         (tp.negative_learning_rate * fetch::math::Max(tp.min_negative_learning_rate,
-                                                      1.0 - (total_step_count / tp.total_words)));
+                                                      1.0 - (double(total_step_count) / tp.total_words)));
 
     for (std::size_t i = 0; i < tp.neg_examples; ++i)
     {
@@ -530,7 +519,7 @@ int main(int argc, char **argv)
     /// print performance ///
     /////////////////////////
 
-    if (step_count % 100000 == 0)
+    if (step_count % tp.print_freq == 0)
     {
       auto t2   = std::chrono::high_resolution_clock::now();
       time_diff = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
@@ -539,8 +528,14 @@ int main(int argc, char **argv)
       t1         = std::chrono::high_resolution_clock::now();
       step_count = 0;
 
+      std::cout << "total_step_count: " << total_step_count << std::endl;
+      std::cout << "current learning rate: " <<  (tp.learning_rate * fetch::math::Max(tp.min_learning_rate,
+                                                        1.0 - (double(total_step_count) / tp.total_words))) << std::endl;
       std::cout << "loss: " << sum_loss << std::endl;
       sum_loss = 0;
+
+      EvalAnalogy(dataloader, model);
+
     }
   }
 
