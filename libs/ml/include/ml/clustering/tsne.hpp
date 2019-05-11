@@ -182,7 +182,7 @@ private:
     input_symmetric_affinities_ = fetch::math::Multiply(input_symmetric_affinities_, DataType(4));
 
     // Limit minimum value to 1e-12
-    LimitMin(input_symmetric_affinities_, fetch::math::meta::minimum_tolerance<DataType>());
+    LimitMin(input_symmetric_affinities_, math::tolerance<DataType>());
 
     // Initialize low dimensional values
     output_matrix_               = output_matrix;
@@ -367,7 +367,7 @@ private:
     output_symmetric_affinities = fetch::math::NormalizeArray(num);
 
     // Crop minimal value to 1e-12
-    LimitMin(output_symmetric_affinities, fetch::math::meta::minimum_tolerance<DataType>());
+    LimitMin(output_symmetric_affinities, math::tolerance<DataType>());
   }
 
   /**

@@ -20,6 +20,7 @@
 #include <iomanip>
 #include <iostream>
 
+#include "math/base_types.hpp"
 #include "math/distance/cosine.hpp"
 #include "math/tensor.hpp"
 
@@ -55,8 +56,8 @@ TYPED_TEST(DistanceTest, cosine_distance)
   B.Set(SizeType{0}, SizeType{2}, DataType(-3));
   B.Set(SizeType{0}, SizeType{3}, DataType(-4));
 
-  EXPECT_NEAR(double(Cosine(A, A)), 0, (double)fetch::math::meta::tolerance<DataType>());
-  EXPECT_NEAR(double(Cosine(A, B)), 2, (double)fetch::math::meta::tolerance<DataType>());
+  EXPECT_NEAR(double(Cosine(A, A)), 0, (double)function_tolerance<DataType>());
+  EXPECT_NEAR(double(Cosine(A, B)), 2, (double)function_tolerance<DataType>());
 
   ArrayType C = ArrayType({1, 4});
   C.Set(SizeType{0}, SizeType{0}, DataType(1));
@@ -65,5 +66,5 @@ TYPED_TEST(DistanceTest, cosine_distance)
   C.Set(SizeType{0}, SizeType{3}, DataType(2));
 
   EXPECT_NEAR(double(Cosine(A, C)), double(1.0) - double(0.94672926240625754),
-              (double)fetch::math::meta::tolerance<DataType>());
+              (double)function_tolerance<DataType>());
 }

@@ -27,7 +27,6 @@
 
 #include "math/base_types.hpp"
 #include "math/matrix_operations.hpp"
-#include "math/meta/math_type_traits.hpp"
 #include "math/ml/activation_functions/softmax.hpp"
 #include "math/ml/loss_functions/l2_loss.hpp"
 #include "math/ml/loss_functions/l2_norm.hpp"
@@ -2152,7 +2151,7 @@ SizeType Tensor<T, C>::Find(Type val) const
     }
     ++idx;
   }
-  return NumericMax<SizeType>();
+  return numeric_max<SizeType>();
 }
 
 /**

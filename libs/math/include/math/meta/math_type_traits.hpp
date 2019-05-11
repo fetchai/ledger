@@ -131,30 +131,6 @@ template <typename DataType, typename ReturnType>
 using IfIsMathNonFixedPointArray =
     IfIsNotFixedPoint<typename DataType::Type, IfIsMathArray<DataType, ReturnType>>;
 
-template <typename DataType>
-fetch::meta::IfIsFixedPoint<DataType, DataType> static tolerance()
-{
-  return DataType::TOLERANCE;
-}
-
-template <typename DataType>
-fetch::meta::IfIsFloat<DataType, DataType> static tolerance()
-{
-  return DataType(1e-7);
-}
-
-template <typename DataType>
-fetch::meta::IfIsFixedPoint<DataType, DataType> static minimum_tolerance()
-{
-  return DataType::CONST_SMALLEST_FRACTION;
-}
-
-template <typename DataType>
-fetch::meta::IfIsFloat<DataType, DataType> static minimum_tolerance()
-{
-  return DataType(1e-12);
-}
-
 }  // namespace meta
 }  // namespace math
 }  // namespace fetch
