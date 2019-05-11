@@ -25,9 +25,6 @@ namespace vm_modules {
 class ByteArrayWrapper : public fetch::vm::Object
 {
 public:
-  using ElementType = uint8_t;
-  using TemplateParameter = vm::TemplateParameter;
-
   ByteArrayWrapper()          = delete;
   virtual ~ByteArrayWrapper() = default;
 
@@ -42,7 +39,6 @@ public:
                    byte_array::ByteArray const &bytearray)
     : fetch::vm::Object(vm, type_id)
     , byte_array_(bytearray)
-    , vm_(vm)
   {}
 
   static fetch::vm::Ptr<ByteArrayWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
@@ -69,7 +65,6 @@ public:
 
 private:
   byte_array::ByteArray byte_array_;
-  fetch::vm::VM *       vm_;
 };
 
 }  // namespace vm_modules
