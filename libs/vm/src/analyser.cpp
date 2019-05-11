@@ -2197,7 +2197,8 @@ void Analyser::CreateFreeFunction(std::string const &name,
                                         TypePtr const &     return_type,
                                         Handler const &handler)
 {
-  FunctionPtr f = CreateFunction(FunctionKind::FreeFunction, name, name,
+  std::string unique_id = BuildUniqueId(nullptr, name, parameter_types, return_type);
+  FunctionPtr f = CreateFunction(FunctionKind::FreeFunction, name, unique_id,
       parameter_types, VariablePtrArray(), return_type);
   AddFunctionToSymbolTable(symbols_, f);
   AddFunctionInfo(f, handler);
@@ -2294,7 +2295,11 @@ std::string Analyser::BuildUniqueId(TypePtr const &type,
     TypePtrArray const &parameter_types, TypePtr const &return_type)
 {
   std::stringstream stream;
-  stream << type->name << "::" << function_name << "^";
+  if (type)
+  {
+    stream << type->name;
+  }
+  stream << "::" << function_name << "^";
   size_t const count = parameter_types.size();
   for (size_t i = 0; i < count; ++i)
   {
