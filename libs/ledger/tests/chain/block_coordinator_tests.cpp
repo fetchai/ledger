@@ -24,15 +24,13 @@
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/testing/block_generator.hpp"
 #include "ledger/transaction_status_cache.hpp"
-#include "testing/common_testing_functionality.hpp"
 
-#include "crypto/sha256.hpp"
 #include "fake_block_sink.hpp"
 #include "mock_block_packer.hpp"
 #include "mock_execution_manager.hpp"
 #include "mock_storage_unit.hpp"
 
-#include "gmock/gmock.h"
+#include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
 
@@ -47,9 +45,7 @@ using fetch::ledger::testing::BlockGenerator;
 using fetch::ledger::TransactionStatusCache;
 
 using ::testing::_;
-using ::testing::AnyNumber;
 using ::testing::InSequence;
-using ::testing::NiceMock;
 using ::testing::StrictMock;
 
 using BlockCoordinatorPtr = std::unique_ptr<BlockCoordinator>;
@@ -62,6 +58,8 @@ using ScheduleStatus      = fetch::ledger::ExecutionManagerInterface::ScheduleSt
 using BlockSinkPtr        = std::unique_ptr<FakeBlockSink>;
 using TxCachePtr          = std::unique_ptr<TransactionStatusCache>;
 using State               = fetch::ledger::BlockCoordinator::State;
+using DAG                 = fetch::ledger::DAG;
+using DAGPtr              = std::shared_ptr< DAG >;
 
 static constexpr char const *LOGGING_NAME = "BlockCoordinatorTests";
 static constexpr std::size_t NUM_LANES    = 1;
@@ -80,13 +78,14 @@ protected:
     ECDSASigner const signer{};
 
     main_chain_        = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
+    dag_               = std::make_unique<DAG>();
     storage_unit_      = std::make_unique<StrictMock<MockStorageUnit>>();
     execution_manager_ = std::make_unique<StrictMock<MockExecutionManager>>(storage_unit_->fake);
     packer_            = std::make_unique<StrictMock<MockBlockPacker>>();
     block_sink_        = std::make_unique<FakeBlockSink>();
     tx_status_         = std::make_unique<TransactionStatusCache>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
-        *main_chain_, *execution_manager_, *storage_unit_, *packer_, *block_sink_, *tx_status_,
+        *main_chain_, *dag_, *execution_manager_, *storage_unit_, *packer_, *block_sink_, *tx_status_,
         signer.identity().identifier(), NUM_LANES, NUM_SLICES, 1u);
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
@@ -101,19 +100,8 @@ protected:
     packer_.reset();
     execution_manager_.reset();
     storage_unit_.reset();
+    dag_.reset();
     main_chain_.reset();
-  }
-
-  /**
-   * Run the state machine
-   */
-  void Advance(uint64_t max_iterations = 50)
-  {
-    for (; max_iterations > 0; --max_iterations)
-    {
-      // run one step of the state machine
-      block_coordinator_->GetRunnable().Execute();
-    }
   }
 
   /**
@@ -167,6 +155,7 @@ protected:
   }
 
   MainChainPtr        main_chain_;
+  DAGPtr              dag_;
   ExecutionMgrPtr     execution_manager_;
   StorageUnitPtr      storage_unit_;
   BlockPackerPtr      packer_;
@@ -1039,7 +1028,7 @@ TEST_F(BlockCoordinatorTests, CheckBlockMining)
   Tick(State::PROOF_SEARCH, State::TRANSMIT_BLOCK);
   Tick(State::TRANSMIT_BLOCK, State::RESET);
 
-  // ensure that the coordinator has actually made a block
+  // ensure that the co-ordinator has actually made a block
   ASSERT_EQ(1u, block_sink_->queue().size());
 
   // ensure that the system goes back into the sync'ed state
@@ -1050,68 +1039,4 @@ TEST_F(BlockCoordinatorTests, CheckBlockMining)
   {
     Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
   }
-}
-
-class NiceMockBlockCoordinatorTests : public BlockCoordinatorTests
-{
-protected:
-  void SetUp() override
-  {
-    FETCH_UNUSED(LOGGING_NAME);
-
-    block_generator_.Reset();
-
-    // generate a public/private key pair
-    ECDSASigner const signer{};
-
-    main_chain_        = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
-    storage_unit_      = std::make_unique<NiceMock<MockStorageUnit>>();
-    execution_manager_ = std::make_unique<NiceMock<MockExecutionManager>>(storage_unit_->fake);
-    packer_            = std::make_unique<NiceMock<MockBlockPacker>>();
-    block_sink_        = std::make_unique<FakeBlockSink>();
-    tx_status_         = std::make_unique<TransactionStatusCache>();
-    block_coordinator_ = std::make_unique<BlockCoordinator>(
-        *main_chain_, *execution_manager_, *storage_unit_, *packer_, *block_sink_, *tx_status_,
-        signer.identity().identifier(), NUM_LANES, NUM_SLICES, 1u);
-
-    block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
-    block_coordinator_->EnableMining(true);
-  }
-};
-
-TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
-{
-  fetch::ledger::TransactionSummary summary;
-  summary.transaction_hash = fetch::testing::GenerateUniqueHashes(1u)[0];
-
-  auto genesis = block_generator_();
-  auto b1      = block_generator_(genesis);
-
-  // Fabricate unknown transaction
-  b1->body.slices.begin()->push_back(summary);
-
-  EXPECT_CALL(*storage_unit_, RevertToHash(_, 0));
-
-  // syncing - Genesis
-  EXPECT_CALL(*storage_unit_, LastCommitHash()).Times(AnyNumber());
-  EXPECT_CALL(*storage_unit_, CurrentHash()).Times(AnyNumber());
-  EXPECT_CALL(*execution_manager_, LastProcessedBlock()).Times(AnyNumber());
-
-  Advance();
-
-  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
-
-  Advance();
-
-  // Time out wait to request Tx from peers
-  std::this_thread::sleep_for(std::chrono::seconds(31u));
-
-  Advance();
-
-  // Time out wait for Tx - block should be invalidated at this point
-  std::this_thread::sleep_for(std::chrono::seconds(31u));
-
-  Advance();
-
-  ASSERT_EQ(State::SYNCHRONIZED, block_coordinator_->GetStateMachine().state());
 }

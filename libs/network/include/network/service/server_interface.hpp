@@ -266,7 +266,7 @@ private:
 
       throw serializers::SerializableException(e.error_code(), new_explanation);
     }
-    catch (std::exception const &ex)
+    catch (std::exception &ex)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "ServerInterface::ExecuteCall - ", ex.what(), " - ",
                       identifier);

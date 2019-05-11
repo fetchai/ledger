@@ -27,6 +27,7 @@
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_status_cache.hpp"
 
+
 #include <chrono>
 
 using fetch::byte_array::ToBase64;
@@ -34,14 +35,11 @@ using fetch::byte_array::ToBase64;
 using ScheduleStatus = fetch::ledger::ExecutionManagerInterface::ScheduleStatus;
 using ExecutionState = fetch::ledger::ExecutionManagerInterface::State;
 
-const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};
-const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{500};
-const std::chrono::seconds      NOTIFY_INTERVAL{10};
-const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{30};
-const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{30};
-
-const std::size_t DIGEST_LENGTH_BYTES{32};
-const std::size_t IDENTITY_LENGTH_BYTES{64};
+static const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};
+static const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{500};
+static const std::chrono::seconds      NOTIFY_INTERVAL{10};
+static const std::size_t               DIGEST_LENGTH_BYTES{32};
+static const std::size_t               IDENTITY_LENGTH_BYTES{64};
 
 namespace fetch {
 namespace ledger {
@@ -52,13 +50,14 @@ namespace ledger {
  * @param chain The reference to the main change
  * @param execution_manager  The reference to the execution manager
  */
-BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &execution_manager,
+BlockCoordinator::BlockCoordinator(MainChain &chain, DAG &dag, ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                                    BlockSinkInterface &    block_sink,
                                    TransactionStatusCache &status_cache, Identity identity,
                                    std::size_t num_lanes, std::size_t num_slices,
                                    std::size_t block_difficulty)
   : chain_{chain}
+  , dag_{dag}
   , execution_manager_{execution_manager}
   , storage_unit_{storage_unit}
   , block_packer_{packer}
@@ -76,25 +75,39 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   , tx_wait_periodic_{TX_SYNC_NOTIFY_INTERVAL}
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
   , syncing_periodic_{NOTIFY_INTERVAL}
+  , synergetic_executor_{dag, storage_unit_}
 {
   // configure the state machine
   // clang-format off
   state_machine_->RegisterHandler(State::RELOAD_STATE,                 this, &BlockCoordinator::OnReloadState);
   state_machine_->RegisterHandler(State::SYNCHRONIZING,                this, &BlockCoordinator::OnSynchronizing);
   state_machine_->RegisterHandler(State::SYNCHRONIZED,                 this, &BlockCoordinator::OnSynchronized);
+
+  // Pipe 1
   state_machine_->RegisterHandler(State::PRE_EXEC_BLOCK_VALIDATION,    this, &BlockCoordinator::OnPreExecBlockValidation);
+  state_machine_->RegisterHandler(State::SYNERGETIC_EXECUTION,         this, &BlockCoordinator::OnSynergeticExecution);
   state_machine_->RegisterHandler(State::WAIT_FOR_TRANSACTIONS,        this, &BlockCoordinator::OnWaitForTransactions);
   state_machine_->RegisterHandler(State::SCHEDULE_BLOCK_EXECUTION,     this, &BlockCoordinator::OnScheduleBlockExecution);
-  state_machine_->RegisterHandler(State::WAIT_FOR_EXECUTION,           this, &BlockCoordinator::OnWaitForExecution);
+  state_machine_->RegisterHandler(State::WAIT_FOR_EXECUTION,           this, &BlockCoordinator::OnWaitForExecution);  
   state_machine_->RegisterHandler(State::POST_EXEC_BLOCK_VALIDATION,   this, &BlockCoordinator::OnPostExecBlockValidation);
+
+  // Pipe 2
   state_machine_->RegisterHandler(State::PACK_NEW_BLOCK,               this, &BlockCoordinator::OnPackNewBlock);
+  state_machine_->RegisterHandler(State::NEW_SYNERGETIC_EXECUTION,     this, &BlockCoordinator::OnNewSynergeticExecution);
   state_machine_->RegisterHandler(State::EXECUTE_NEW_BLOCK,            this, &BlockCoordinator::OnExecuteNewBlock);
   state_machine_->RegisterHandler(State::WAIT_FOR_NEW_BLOCK_EXECUTION, this, &BlockCoordinator::OnWaitForNewBlockExecution);
   state_machine_->RegisterHandler(State::PROOF_SEARCH,                 this, &BlockCoordinator::OnProofSearch);
+
   state_machine_->RegisterHandler(State::TRANSMIT_BLOCK,               this, &BlockCoordinator::OnTransmitBlock);
   state_machine_->RegisterHandler(State::RESET,                        this, &BlockCoordinator::OnReset);
   // clang-format on
 
+  // for debug purposes
+#if 0
+  state_machine_->OnStateChange([](State current, State previous) {
+    FETCH_LOG_INFO(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
+  });
+#else
   state_machine_->OnStateChange([this](State current, State previous) {
     if (periodic_print_.Poll())
     {
@@ -102,9 +115,19 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
                      " (previous: ", ToString(previous), ")");
     }
   });
+#endif  // FETCH_LOG_DEBUG_ENABLED
 
   // TODO(private issue 792): this shouldn't be here, but if it is, it locks the whole system on
   // startup. RecoverFromStartup();
+}
+
+/**
+ * Destruct the Block Coordinator
+ */
+BlockCoordinator::~BlockCoordinator()
+{
+  state_machine_->Reset();
+  state_machine_.reset();
 }
 
 /**
@@ -121,6 +144,8 @@ void BlockCoordinator::TriggerBlockGeneration()
 
 BlockCoordinator::State BlockCoordinator::OnReloadState()
 {
+  State next_state{State::RESET};
+
   // if no current block then this is the first time in the state therefore lookup the heaviest
   // block
   if (!current_block_)
@@ -147,11 +172,13 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
     }
   }
 
-  return State::RESET;
+  return next_state;
 }
 
 BlockCoordinator::State BlockCoordinator::OnSynchronizing()
 {
+  State next_state{State::SYNCHRONIZING};
+
   // ensure that we have a current block that we are executing
   if (!current_block_)
   {
@@ -191,7 +218,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
     if (GENESIS_DIGEST == previous_hash)
     {
       // once we have got back to genesis then we need to start executing from the beginning
-      return State::PRE_EXEC_BLOCK_VALIDATION;
+      next_state = State::PRE_EXEC_BLOCK_VALIDATION;
     }
     else
     {
@@ -210,7 +237,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
   else if (current_hash == last_processed_block)
   {
     // the block coordinator has now successfully synced with the chain of blocks.
-    return State::SYNCHRONIZED;
+    next_state = State::SYNCHRONIZED;
   }
   else
   {
@@ -229,6 +256,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
     }
 
     assert(blocks.size() >= 2);
+    assert(!blocks.empty());
 
     auto     block_path_it = blocks.crbegin();
     BlockPtr common_parent = *block_path_it++;
@@ -239,7 +267,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
       FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Common Parent: ", ToBase64(common_parent->body.hash));
       FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Next Block...: ", ToBase64(next_block->body.hash));
 
-      // calculate a percentage synchronisation
+      // calculate a percentage syncronisation
       std::size_t const current_block_num = next_block->body.block_number;
       std::size_t const total_block_num   = current_block_->body.block_number;
       double const      completion =
@@ -277,16 +305,16 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
 
     // update the current block and begin scheduling
     current_block_ = next_block;
-
-    return State::PRE_EXEC_BLOCK_VALIDATION;
+    next_state     = State::PRE_EXEC_BLOCK_VALIDATION;
   }
 
-  return State::SYNCHRONIZING;
+  return next_state;
 }
 
 BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State previous)
 {
   FETCH_UNUSED(current);
+  State next_state{State::SYNCHRONIZED};
 
   // ensure the periodic print is not trigger once we have synced
   syncing_periodic_.Reset();
@@ -294,7 +322,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
   // if we have detected a change in the chain then we need to re-evaluate the chain
   if (chain_.GetHeaviestBlockHash() != current_block_->body.hash)
   {
-    return State::RESET;
+    next_state = State::RESET;
   }
   else if (mining_ && mining_enabled_ && (Clock::now() >= next_block_time_))
   {
@@ -303,6 +331,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
     next_block_->body.previous_hash = current_block_->body.hash;
     next_block_->body.block_number  = current_block_->body.block_number + 1;
     next_block_->body.miner         = identity_;
+    next_block_->body.dag_nodes     = dag_.UncertifiedTipsAsVector();
 
     // ensure the difficulty is correctly set
     next_block_->proof.SetTarget(block_difficulty_);
@@ -311,7 +340,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
     current_block_.reset();
 
     // trigger packing state
-    return State::PACK_NEW_BLOCK;
+    next_state = State::PACK_NEW_BLOCK;
   }
   else if (State::SYNCHRONIZING == previous)
   {
@@ -320,7 +349,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
                    " prev: ", ToBase64(current_block_->body.previous_hash), ")");
   }
 
-  return State::SYNCHRONIZED;
+  return next_state;
 }
 
 BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
@@ -387,49 +416,62 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     return State::RESET;
   }
 
+  // Validating DAG hashes
+  if( (!is_genesis) && synergetic_contracts_enabled_)
+  {
+    BlockPtr previous_block = chain_.GetBlock(current_block_->body.previous_hash);    
+
+    // All work is identified on the latest DAG segment and prepared in a queue
+    auto result = synergetic_executor_.PrepareWorkQueue(*previous_block, *current_block_);
+    if( SynergeticExecutor::PreparationStatusType::SUCCESS != result)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Block certifies work that possibly is malicious (",
+                     ToBase64(current_block_->body.hash), ")");
+      chain_.RemoveBlock(current_block_->body.hash);
+
+      // TODO: Remove malicious DAG nodes
+
+      return State::RESET;      
+    }
+  }
+
   // reset the tx wait period
   tx_wait_periodic_.Reset();
 
   // All the checks pass
+  return State::SYNERGETIC_EXECUTION;
+}
+
+BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
+{
+  bool const is_genesis = current_block_->body.previous_hash == GENESIS_DIGEST;
+
+  // Executing synergetic work
+  if( (!is_genesis) && synergetic_contracts_enabled_)
+  {
+    if(!synergetic_executor_.ValidateWorkAndUpdateState())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (",
+                     ToBase64(current_block_->body.hash), ")");
+      chain_.RemoveBlock(current_block_->body.hash);
+
+      // TODO: Remove malicious DAG nodes
+
+      return State::RESET;      
+    }
+  }
+
   return State::WAIT_FOR_TRANSACTIONS;
 }
 
-BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, State previous)
+BlockCoordinator::State BlockCoordinator::OnWaitForTransactions()
 {
-  if (previous == current)
-  {
-    if (have_asked_for_missing_txs_)
-    {
-      // FSM is stuck waiting for transactions - has timeout elapsed?
-      if (wait_for_tx_timeout_.IsDue())
-      {
-        // Assume block was invalid and discard it
-        chain_.RemoveBlock(current_block_->body.hash);
-
-        return State::RESET;
-      }
-    }
-    else
-    {
-      if (wait_before_asking_for_missing_tx_.IsDue())
-      {
-        storage_unit_.IssueCallForMissingTxs(*pending_txs_);
-        have_asked_for_missing_txs_ = true;
-        wait_for_tx_timeout_        = WAIT_FOR_TX_TIMEOUT_INTERVAL;
-      }
-    }
-  }
-  else
-  {
-    // Only just started waiting for transactions - reset countdown to issuing request to peers
-    wait_before_asking_for_missing_tx_ = WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL;
-    have_asked_for_missing_txs_        = false;
-  }
+  State next_state{State::WAIT_FOR_TRANSACTIONS};
 
   // if the transaction digests have not been cached then do this now
   if (!pending_txs_)
   {
-    pending_txs_ = std::make_unique<TxDigestSet>();
+    pending_txs_ = std::make_unique<TxSet>();
 
     for (auto const &slice : current_block_->body.slices)
     {
@@ -465,7 +507,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
     // clear the pending transaction set
     pending_txs_.reset();
 
-    return State::SCHEDULE_BLOCK_EXECUTION;
+    next_state = State::SCHEDULE_BLOCK_EXECUTION;
   }
   else
   {
@@ -479,7 +521,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
     state_machine_->Delay(std::chrono::milliseconds{200});
   }
 
-  return State::WAIT_FOR_TRANSACTIONS;
+  return next_state;
 }
 
 BlockCoordinator::State BlockCoordinator::OnScheduleBlockExecution()
@@ -532,6 +574,8 @@ BlockCoordinator::State BlockCoordinator::OnWaitForExecution()
 
 BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
 {
+  State next_state{State::RESET};
+
   // Check: Ensure the merkle hash is correct for this block
   auto const state_hash = storage_unit_.CurrentHash();
 
@@ -597,12 +641,14 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     last_executed_block_.Set(current_block_->body.hash);
   }
 
-  return State::RESET;
+  return next_state;
 }
 
 BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
 {
   State next_state{State::RESET};
+
+  // TODO: Pull the generated block off the DAG
 
   try
   {
@@ -615,7 +661,7 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
     // trigger the execution of the block
     next_state = State::EXECUTE_NEW_BLOCK;
   }
-  catch (std::exception const &ex)
+  catch (std::exception &ex)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Error generated performing block packing: ", ex.what());
   }
@@ -623,9 +669,49 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
   return next_state;
 }
 
+BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
+{
+  if(synergetic_contracts_enabled_)
+  {
+    BlockPtr previous_block = chain_.GetBlock(next_block_->body.previous_hash);    
+
+    // All work is identified on the latest DAG segment and prepared in a queue
+    auto result = synergetic_executor_.PrepareWorkQueue(*previous_block, *next_block_);
+    if(SynergeticExecutor::PreparationStatusType::SUCCESS != result)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Block certifies work that possibly is malicious (",
+                     ToBase64(next_block_->body.hash), ")");
+      chain_.RemoveBlock(next_block_->body.hash);
+
+      // TODO: Remove malicious DAG nodes
+
+      return State::RESET;      
+    }
+  }
+
+
+  return State::EXECUTE_NEW_BLOCK;
+}
+
+
 BlockCoordinator::State BlockCoordinator::OnExecuteNewBlock()
 {
   State next_state{State::RESET};
+
+  // Executing synergetic work
+  if(synergetic_contracts_enabled_)
+  {
+    if(!synergetic_executor_.ValidateWorkAndUpdateState())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (",
+                     ToBase64(next_block_->body.hash), ")");
+      chain_.RemoveBlock(next_block_->body.hash);
+
+      // TODO: Remove malicious DAG nodes
+
+      return State::RESET;      
+    }
+  }
 
   // schedule the current block for execution
   if (ScheduleNextBlock())
@@ -683,7 +769,7 @@ BlockCoordinator::State BlockCoordinator::OnProofSearch()
 {
   State next_state{State::PROOF_SEARCH};
 
-  if (miner_->Mine(*next_block_, 100))
+  if (miner_->Mine(*next_block_, 100)) // TODO: what is this hard-coded number?
   {
     // update the digest
     next_block_->UpdateDigest();
@@ -703,6 +789,8 @@ BlockCoordinator::State BlockCoordinator::OnProofSearch()
 
 BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 {
+  State next_state{State::RESET};
+
   try
   {
     // ensure that the main chain is aware of the block
@@ -726,7 +814,7 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
     FETCH_LOG_WARN(LOGGING_NAME, "Error transmitting verified block: ", ex.what());
   }
 
-  return State::RESET;
+  return next_state;
 }
 
 BlockCoordinator::State BlockCoordinator::OnReset()
@@ -734,6 +822,7 @@ BlockCoordinator::State BlockCoordinator::OnReset()
   current_block_.reset();
   next_block_.reset();
   pending_txs_.reset();
+  stall_count_ = 0;
 
   // we should update the next block time
   UpdateNextBlockTime();
@@ -821,9 +910,13 @@ BlockCoordinator::ExecutionStatus BlockCoordinator::QueryExecutorStatus()
 
   case ExecutionState::EXECUTION_ABORTED:
   case ExecutionState::EXECUTION_FAILED:
-    FETCH_LOG_WARN(LOGGING_NAME, "Execution in error state: ", ledger::ToString(execution_state));
     status = ExecutionStatus::ERROR;
     break;
+  }
+
+  if (ExecutionStatus::ERROR == status)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Execution in error state: ", ledger::ToString(execution_state));
   }
 
   return status;
@@ -866,6 +959,9 @@ char const *BlockCoordinator::ToString(State state)
   case State::WAIT_FOR_TRANSACTIONS:
     text = "Waiting for Transactions";
     break;
+  case State::SYNERGETIC_EXECUTION:
+    text = "Synergetic Execution";
+    break;
   case State::SCHEDULE_BLOCK_EXECUTION:
     text = "Schedule Block Execution";
     break;
@@ -878,6 +974,9 @@ char const *BlockCoordinator::ToString(State state)
   case State::PACK_NEW_BLOCK:
     text = "Pack New Block";
     break;
+  case State::NEW_SYNERGETIC_EXECUTION:
+    text = "New Synergetic Execution";
+    break;    
   case State::EXECUTE_NEW_BLOCK:
     text = "Execution New Block";
     break;

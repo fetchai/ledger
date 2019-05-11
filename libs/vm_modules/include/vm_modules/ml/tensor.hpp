@@ -53,7 +53,7 @@ public:
   }
 };
 
-inline void CreateTensor(fetch::vm::Module &module)
+inline void CreateTensor(fetch::vm::Module& module)
 {
   module.CreateClassType<TensorWrapper>("Tensor")
       .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm::Array<TensorWrapper::SizeType>>>()

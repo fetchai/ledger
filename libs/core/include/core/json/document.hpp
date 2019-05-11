@@ -70,9 +70,9 @@ public:
   JSONDocument()
   {
     // The default of a JSONDocument is to be an empty object
-    variant_ = Variant::Object();
+    variant_ =  Variant::Object();
   }
-
+  
   JSONDocument(JSONDocument const &) = delete;
   JSONDocument(JSONDocument &&)      = default;
   ~JSONDocument()                    = default;
@@ -116,7 +116,6 @@ public:
   {
     return variant_.Has(key);
   }
-
 private:
   struct JSONObject
   {

@@ -54,7 +54,7 @@ fetch::math::meta::IfIsNotImplemented<ArrayType, void> Signbit(ArrayType &x)
 template <typename ArrayType>
 void Sign(ArrayType &x)
 {
-  kernels::Sign<typename ArrayType::VectorRegisterType> kernel;
+  kernels::Sign<typename ArrayType::vector_register_type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 

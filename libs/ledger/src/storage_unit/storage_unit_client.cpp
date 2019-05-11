@@ -19,7 +19,6 @@
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
-#include "ledger/storage_unit/transaction_finder_protocol.hpp"
 
 using fetch::storage::ResourceID;
 using fetch::storage::RevertibleDocumentStoreProtocol;
@@ -128,7 +127,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
 
   // Set merkle stack to this hash, get the tree
   MerkleTree tree{num_lanes()};
-  if (genesis_state && (index == 0))  // this is truly the genesis block
+  if (genesis_state && (index == 0))  // this is truely the genesis block
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Reverting state to genesis.");
 
@@ -454,24 +453,6 @@ bool StorageUnitClient::HasTransaction(ConstByteArray const &digest)
   return present;
 }
 
-void StorageUnitClient::IssueCallForMissingTxs(TxDigestSet const &tx_set)
-{
-  std::map<Address, std::unordered_set<ResourceID>> lanes_of_interest;
-  for (auto const &hash : tx_set)
-  {
-    ResourceID resource{hash};
-    lanes_of_interest[LookupAddress(resource)].insert(std::move(resource));
-  }
-
-  for (auto const &lane_resources : lanes_of_interest)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Request sent ", lane_resources.second.size(), " resources");
-    rpc_client_.CallSpecificAddress(lane_resources.first, RPC_MISSING_TX_FINDER,
-                                    TxFinderProtocol::ISSUE_CALL_FOR_MISSING_TXS,
-                                    lane_resources.second);
-  }
-}
-
 StorageUnitClient::Document StorageUnitClient::GetOrCreate(ResourceAddress const &key)
 {
   Document doc;
@@ -486,7 +467,7 @@ StorageUnitClient::Document StorageUnitClient::GetOrCreate(ResourceAddress const
     // wait for the document to be returned
     doc = promise->As<Document>();
   }
-  catch (std::runtime_error const &e)
+  catch (std::runtime_error &e)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unable to get or create document, because: ", e.what());
     doc.failed = true;
@@ -509,7 +490,7 @@ StorageUnitClient::Document StorageUnitClient::Get(ResourceAddress const &key)
     // wait for the document response
     doc = promise->As<Document>();
   }
-  catch (std::runtime_error const &e)
+  catch (std::runtime_error &e)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unable to get document, because: ", e.what());
 
@@ -535,7 +516,7 @@ void StorageUnitClient::Set(ResourceAddress const &key, StateValue const &value)
     // wait for the response
     promise->Wait();
   }
-  catch (std::runtime_error const &e)
+  catch (std::runtime_error &e)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to call SET (store document), because: ", e.what());
   }
@@ -554,7 +535,7 @@ bool StorageUnitClient::Lock(ResourceAddress const &key)
     // wait for the promise
     success = promise->As<bool>();
   }
-  catch (std::runtime_error const &e)
+  catch (std::runtime_error &e)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to call Lock, because: ", e.what());
   }
@@ -576,7 +557,7 @@ bool StorageUnitClient::Unlock(ResourceAddress const &key)
     // wait for the result
     success = promise->As<bool>();
   }
-  catch (std::runtime_error const &e)
+  catch (std::runtime_error &e)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to call Unlock, because: ", e.what());
   }

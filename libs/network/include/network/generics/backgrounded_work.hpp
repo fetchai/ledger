@@ -83,7 +83,7 @@ public:
         {
           result = workitem->Work();
         }
-        catch (std::exception const &ex)
+        catch (std::exception &ex)
         {
           FETCH_LOG_WARN(LOGGING_NAME, "WorkCycle threw:", ex.what());
           result = PromiseState::FAILED;

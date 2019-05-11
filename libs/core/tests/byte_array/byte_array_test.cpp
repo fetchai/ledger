@@ -19,16 +19,26 @@
 #include "core/byte_array/byte_array.hpp"
 
 #include "gtest/gtest.h"
+//#include "gmock/gmock.h"
 
 #include <iostream>
-#include <set>
 
 namespace fetch {
 namespace byte_array {
 
 namespace {
 
-TEST(ByteArrayTest, test_replace)
+class ByteArrayTest : public testing::Test
+{
+protected:
+  void SetUp()
+  {}
+
+  void TearDown()
+  {}
+};
+
+TEST_F(ByteArrayTest, test_replace)
 {
   ByteArray arr("hello kitty, how are you?");
 
@@ -39,70 +49,6 @@ TEST(ByteArrayTest, test_replace)
   ConstByteArray const expected_result("hello-kitty,-how-are-you?");
   EXPECT_EQ(expected_result, arr);
   EXPECT_EQ(4, num_of_replacements);
-}
-
-TEST(ByteArrayTest, std_set)
-{
-  {
-    ConstByteArray           req{"hello kitty, how are you?"};
-    std::set<ConstByteArray> set{req};
-    EXPECT_EQ(set.size(), 1);
-    ConstByteArray resp{"i'm great, thank you sunshine!"};
-    EXPECT_TRUE(set.insert(resp).second);
-    EXPECT_EQ(set.size(), 2);
-    std::set<ConstByteArray>::const_iterator i{set.find(req)};
-    EXPECT_NE(i, set.cend());
-    i = set.find(resp);
-    EXPECT_NE(i, set.cend());
-    EXPECT_FALSE(set.insert(req).second);
-    EXPECT_EQ(set.size(), 2);
-    i = set.cbegin();
-    EXPECT_NE(i, set.cend());
-    EXPECT_EQ(*i, req);
-    ++i;
-    EXPECT_NE(i, set.cend());
-    EXPECT_EQ(*i, resp);
-    ++i;
-    EXPECT_EQ(i, set.cend());
-    for (auto const &cba : set)
-    {
-      std::cout << cba << std::endl;
-    }
-    EXPECT_EQ(set.erase(req), 1);
-    EXPECT_EQ(set.size(), 1);
-    EXPECT_EQ(set.erase(req), 0);
-    EXPECT_EQ(set.size(), 1);
-  }
-  {
-    ByteArray           req{"hello kitty, how are you?"};
-    std::set<ByteArray> set{req};
-    EXPECT_EQ(set.size(), 1);
-    ByteArray resp{"i'm great, thank you sunshine!"};
-    EXPECT_TRUE(set.insert(resp).second);
-    EXPECT_EQ(set.size(), 2);
-    std::set<ByteArray>::const_iterator i{set.find(req)};
-    EXPECT_NE(i, set.cend());
-    i = set.find(resp);
-    EXPECT_NE(i, set.cend());
-    EXPECT_FALSE(set.insert(req).second);
-    EXPECT_EQ(set.size(), 2);
-    i = set.cbegin();
-    EXPECT_NE(i, set.cend());
-    EXPECT_EQ(*i, req);
-    ++i;
-    EXPECT_NE(i, set.cend());
-    EXPECT_EQ(*i, resp);
-    ++i;
-    EXPECT_EQ(i, set.cend());
-    for (auto const &cba : set)
-    {
-      std::cout << cba << std::endl;
-    }
-    EXPECT_EQ(set.erase(req), 1);
-    EXPECT_EQ(set.size(), 1);
-    EXPECT_EQ(set.erase(req), 0);
-    EXPECT_EQ(set.size(), 1);
-  }
 }
 
 }  // namespace

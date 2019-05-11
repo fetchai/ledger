@@ -28,8 +28,8 @@ template <typename type, unsigned long N = 100000>
 class ParallelDispatcherSSEBench : public ::benchmark::Fixture
 {
 public:
-  using ndarray_type       = SharedArray<type>;
-  using VectorRegisterType = typename ndarray_type::VectorRegisterType;
+  using ndarray_type         = SharedArray<type>;
+  using vector_register_type = typename ndarray_type::vector_register_type;
 
 protected:
   void SetUp(const ::benchmark::State & /*st*/) override

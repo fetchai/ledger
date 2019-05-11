@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/future_timepoint.hpp"
 #include "core/mutex.hpp"
 #include "core/random/lcg.hpp"
 #include "core/state_machine.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/protocols/main_chain_rpc_protocol.hpp"
 #include "network/generics/backgrounded_work.hpp"
+#include "network/generics/future_timepoint.hpp"
 #include "network/generics/has_worker_thread.hpp"
 #include "network/generics/requesting_queue.hpp"
 #include "network/muddle/rpc/client.hpp"
@@ -63,7 +63,7 @@ public:
   using Promise         = service::Promise;
   using RpcClient       = muddle::rpc::Client;
   using TrustSystem     = p2p::P2PTrustInterface<Address>;
-  using FutureTimepoint = core::FutureTimepoint;
+  using FutureTimepoint = network::FutureTimepoint;
 
   using Worker                    = MainChainSyncWorker;
   using WorkerPtr                 = std::shared_ptr<Worker>;
@@ -73,18 +73,12 @@ public:
 
   static constexpr char const *LOGGING_NAME = "MainChainRpc";
 
-  enum class Mode
-  {
-    STANDALONE,       ///< Single instance network
-    PRIVATE_NETWORK,  ///< Network between a series of private peers
-    PUBLIC_NETWORK,   ///< Network restricted to public miners
-  };
-
   // Construction / Destruction
-  MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust, Mode mode);
+  MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust,
+                      bool standalone);
   MainChainRpcService(MainChainRpcService const &) = delete;
   MainChainRpcService(MainChainRpcService &&)      = delete;
-  ~MainChainRpcService() override                  = default;
+  ~MainChainRpcService() override;
 
   core::WeakRunnable GetWeakRunnable()
   {
@@ -101,11 +95,6 @@ public:
   State state() const
   {
     return state_machine_->state();
-  }
-
-  bool IsSynced() const
-  {
-    return (State::SYNCHRONISED == state());
   }
 
   // Operators
@@ -129,7 +118,6 @@ private:
   static char const *ToString(State state);
   Address            GetRandomTrustedPeer() const;
   void               HandleChainResponse(Address const &peer, BlockList block_list);
-  bool               IsBlockValid(Block &block) const;
   /// @}
 
   /// @name State Machine Handlers
@@ -143,7 +131,6 @@ private:
 
   /// @name System Components
   /// @{
-  Mode const      mode_;
   MuddleEndpoint &endpoint_;
   MainChain &     chain_;
   TrustSystem &   trust_;

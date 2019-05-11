@@ -42,14 +42,14 @@ TYPED_TEST(SoftmaxCrossEntropyTest, perfect_match_forward_test)
   TypeParam gt({n_data_points, n_classes});
 
   // these are not logits - a softmax will get called on this
-  data1.At(0, 0) = DataType(0);
-  data1.At(0, 1) = DataType(0);
-  data1.At(0, 2) = DataType(999999.);
+  data1.At(0) = DataType(0);
+  data1.At(1) = DataType(0);
+  data1.At(2) = DataType(999999.);
 
   //
-  gt.At(0, 0) = DataType(0);
-  gt.At(0, 1) = DataType(0);
-  gt.At(0, 2) = DataType(1);
+  gt.At(0) = DataType(0);
+  gt.At(1) = DataType(0);
+  gt.At(2) = DataType(1);
 
   fetch::ml::ops::SoftmaxCrossEntropy<TypeParam> op;
   EXPECT_EQ(op.Forward({data1, gt}), DataType(0));
@@ -67,10 +67,10 @@ TYPED_TEST(SoftmaxCrossEntropyTest, simple_forward_test)
 
   TypeParam gt(std::vector<SizeType>{n_data_points, n_classes});
   gt.Fill(DataType(0));
-  gt.At(0, 1) = DataType(1);
-  gt.At(1, 2) = DataType(1);
-  gt.At(2, 3) = DataType(1);
-  gt.At(3, 0) = DataType(1);
+  gt.At({0, 1}) = DataType(1);
+  gt.At({1, 2}) = DataType(1);
+  gt.At({2, 3}) = DataType(1);
+  gt.At({3, 0}) = DataType(1);
 
   std::vector<double> vals{0.1,  0.8,  0.05, 0.05, 0.2, 0.5, 0.2, 0.1,
                            0.05, 0.05, 0.8,  0.1,  0.5, 0.1, 0.1, 0.3};
@@ -79,7 +79,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, simple_forward_test)
   {
     for (SizeType j = 0; j < n_classes; ++j)
     {
-      data1.Set(i, j, DataType(vals[idx_count]));
+      data1.Set({i, j}, DataType(vals[idx_count]));
       ++idx_count;
     }
   }
@@ -107,7 +107,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, trivial_one_dimensional_backward_test)
 
   for (SizeType i = 0; i < gt.size(); ++i)
   {
-    gt.Set(SizeType{0}, i, DataType(gt_data[i]));
+    gt.Set(i, DataType(gt_data[i]));
   }
 
   std::vector<double> unscaled_vals{-1.0, -1.0, 1.0};
@@ -115,8 +115,8 @@ TYPED_TEST(SoftmaxCrossEntropyTest, trivial_one_dimensional_backward_test)
 
   for (SizeType i = 0; i < n_data_points * n_classes; ++i)
   {
-    data1.Set(SizeType{0}, i, DataType(unscaled_vals[i]));
-    data2.Set(SizeType{0}, i, DataType(targets[i]));
+    data1.Set(i, DataType(unscaled_vals[i]));
+    data2.Set(i, DataType(targets[i]));
   }
 
   fetch::ml::ops::SoftmaxCrossEntropy<TypeParam> op;
@@ -151,7 +151,7 @@ TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
   {
     for (SizeType j = 0; j < n_classes; ++j)
     {
-      gt.Set(i, j, DataType(gt_vals[idx_count]));
+      gt.Set({i, j}, DataType(gt_vals[idx_count]));
       ++idx_count;
     }
   }
@@ -165,8 +165,8 @@ TYPED_TEST(SoftmaxCrossEntropyTest, backward_test)
   {
     for (SizeType j = 0; j < n_classes; ++j)
     {
-      data1.Set(i, j, DataType(vals[idx_count]));
-      err_sig.Set(i, j, DataType(err[idx_count]));
+      data1.Set({i, j}, DataType(vals[idx_count]));
+      err_sig.Set({i, j}, DataType(err[idx_count]));
       ++idx_count;
     }
   }

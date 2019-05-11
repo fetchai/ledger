@@ -16,11 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include <string>
-#include <vector>
-
 struct AEAToNode
 {
+
   enum
   {
     REGISTER = 1
@@ -29,6 +27,7 @@ struct AEAToNode
 
 struct NodeToAEA
 {
+
   enum
   {
     SEARCH = 1
@@ -44,8 +43,3 @@ struct FetchProtocols
     NODE_TO_AEA = 2
   };
 };
-
-static const int SERVICE_TEST = 1;
-static const int CHANNEL_RPC  = 1;
-
-using Strings = std::vector<std::string>;

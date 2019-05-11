@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <chrono>
 #include <random>
+#include <thread>
 
 static constexpr char const *LOGGING_NAME = "Executor";
 

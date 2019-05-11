@@ -18,11 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "http/http_client_interface.hpp"
+#include "http/client.hpp"
 #include "http/method.hpp"
 #include "variant/variant.hpp"
 
-#include <memory>
 #include <string>
 #include <unordered_map>
 
@@ -34,31 +33,17 @@ namespace http {
  * with Json based APIs. Requests and response objects are converted from and to json before/after
  * the underlying HTTP calls
  */
-class JsonClient
+class JsonHttpClient
 {
 public:
   using Variant        = variant::Variant;
   using ConstByteArray = byte_array::ConstByteArray;
   using Headers        = std::unordered_map<std::string, std::string>;
 
-  enum class ConnectionMode
-  {
-    HTTP,
-    HTTPS,
-  };
-
-  // Helpers
-  static JsonClient CreateFromUrl(std::string const &url);
-
   // Construction / Destruction
-  JsonClient(ConnectionMode mode, std::string host);
-  JsonClient(ConnectionMode mode, std::string host, uint16_t port);
-  JsonClient(JsonClient const &) = delete;
-  JsonClient(JsonClient &&)      = default;
-  ~JsonClient()                  = default;
+  explicit JsonHttpClient(std::string host, uint16_t port = 80);
+  ~JsonHttpClient() = default;
 
-  /// @name Action Methods
-  /// @{
   bool Get(ConstByteArray const &endpoint, Variant &response);
   bool Get(ConstByteArray const &endpoint, Headers const &headers, Variant &response);
   bool Post(ConstByteArray const &endpoint, Variant const &request, Variant &response);
@@ -66,24 +51,12 @@ public:
   bool Post(ConstByteArray const &endpoint, Headers const &headers, Variant const &request,
             Variant &response);
   bool Post(ConstByteArray const &endpoint, Headers const &headers, Variant &response);
-  /// @}
-
-  /// @name Accessors
-  /// @{
-  HttpClientInterface const &underlying_client() const;
-  /// @}
-
-  // Operators
-  JsonClient &operator=(JsonClient const &) = delete;
-  JsonClient &operator=(JsonClient &&) = default;
 
 private:
-  using ClientPtr = std::unique_ptr<HttpClientInterface>;
-
   bool Request(Method method, ConstByteArray const &endpoint, Headers const *headers,
                Variant const *request, Variant &response);
 
-  ClientPtr client_;
+  HTTPClient client_;
 };
 
 /**
@@ -93,7 +66,8 @@ private:
  * @param response The output response
  * @return true if successful, otherwise false
  */
-inline bool JsonClient::Get(ConstByteArray const &endpoint, Variant &response)
+inline bool JsonHttpClient::Get(JsonHttpClient::ConstByteArray const &endpoint,
+                                JsonHttpClient::Variant &             response)
 {
   return Request(Method::GET, endpoint, nullptr, nullptr, response);
 }
@@ -106,8 +80,8 @@ inline bool JsonClient::Get(ConstByteArray const &endpoint, Variant &response)
  * @param response The output response
  * @return true if successful, otherwise false
  */
-inline bool JsonClient::Get(ConstByteArray const &endpoint, Headers const &headers,
-                            Variant &response)
+inline bool JsonHttpClient::Get(ConstByteArray const &endpoint, Headers const &headers,
+                                Variant &response)
 {
   return Request(Method::GET, endpoint, &headers, nullptr, response);
 }
@@ -120,8 +94,8 @@ inline bool JsonClient::Get(ConstByteArray const &endpoint, Headers const &heade
  * @param response The output response
  * @return true if successful, otherwise false
  */
-inline bool JsonClient::Post(ConstByteArray const &endpoint, Variant const &request,
-                             Variant &response)
+inline bool JsonHttpClient::Post(ConstByteArray const &endpoint, Variant const &request,
+                                 Variant &response)
 {
   return Request(Method::POST, endpoint, nullptr, &request, response);
 }
@@ -133,7 +107,8 @@ inline bool JsonClient::Post(ConstByteArray const &endpoint, Variant const &requ
  * @param response The output response
  * @return true if successful, otherwise false
  */
-inline bool JsonClient::Post(ConstByteArray const &endpoint, Variant &response)
+inline bool JsonHttpClient::Post(JsonHttpClient::ConstByteArray const &endpoint,
+                                 JsonHttpClient::Variant &             response)
 {
   return Request(Method::POST, endpoint, nullptr, nullptr, response);
 }
@@ -147,8 +122,8 @@ inline bool JsonClient::Post(ConstByteArray const &endpoint, Variant &response)
  * @param response The output response
  * @return true if successful, otherwise false
  */
-inline bool JsonClient::Post(ConstByteArray const &endpoint, Headers const &headers,
-                             Variant const &request, Variant &response)
+inline bool JsonHttpClient::Post(ConstByteArray const &endpoint, Headers const &headers,
+                                 Variant const &request, Variant &response)
 {
   return Request(Method::POST, endpoint, &headers, &request, response);
 }
@@ -161,20 +136,10 @@ inline bool JsonClient::Post(ConstByteArray const &endpoint, Headers const &head
  * @param response The output response
  * @return true if successful, otherwise false
  */
-inline bool JsonClient::Post(ConstByteArray const &endpoint, Headers const &headers,
-                             Variant &response)
+inline bool JsonHttpClient::Post(ConstByteArray const &endpoint, Headers const &headers,
+                                 Variant &response)
 {
   return Request(Method::POST, endpoint, &headers, nullptr, response);
-}
-
-/**
- * Access to the underlying client
- *
- * @return The reference to the underlying client
- */
-inline HttpClientInterface const &JsonClient::underlying_client() const
-{
-  return *client_;
 }
 
 }  // namespace http

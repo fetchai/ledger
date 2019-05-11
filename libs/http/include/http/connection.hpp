@@ -129,12 +129,11 @@ public:
         // only parse the header if there is data to be parsed
         if (len)
         {
-          if (request->ParseHeader(*buffer_ptr, len))
+          request->ParseHeader(*buffer_ptr, len);
+
+          if (is_open_)
           {
-            if (is_open_)
-            {
-              ReadBody(buffer_ptr, request);
-            }
+            ReadBody(buffer_ptr, request);
           }
         }
       }

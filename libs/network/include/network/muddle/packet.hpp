@@ -364,13 +364,9 @@ inline Packet::BinaryHeader Packet::StaticHeader() const noexcept
 inline void Packet::Sign(crypto::Prover &prover)
 {
   SetStamped();
-
-  auto const signature =
-      prover.Sign((serializers::ByteArrayBuffer() << StaticHeader() << payload_).data());
-
-  if (!signature.empty())
+  if (prover.Sign((serializers::ByteArrayBuffer() << StaticHeader() << payload_).data()))
   {
-    stamp_ = signature;
+    stamp_ = prover.signature();
   }
   else
   {

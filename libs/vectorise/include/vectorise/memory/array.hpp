@@ -42,7 +42,7 @@ public:
   static_assert(sizeof(T) >= type_size, "Invalid object size");
   static_assert(std::is_pod<T>::value, "Can only be used with POD types");
 
-  using SizeType   = std::size_t;
+  using size_type  = std::size_t;
   using data_type  = std::shared_ptr<T>;
   using super_type = VectorSlice<T, type_size>;
   using self_type  = Array<T, type_size>;

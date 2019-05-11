@@ -68,9 +68,9 @@ void PrintKNN(fetch::ml::dataloaders::CBoWLoader<ArrayType> const &dl, ArrayType
               std::string const &word, unsigned int k)
 {
   ArrayType arr        = embeddings;
-  ArrayType one_vector = embeddings.Slice(dl.VocabLookup(word)).Copy().Unsqueeze();
+  ArrayType one_vector = embeddings.Slice(dl.VocabLookup(word)).Unsqueeze();
   std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
-      fetch::math::clustering::KNNCosine(arr, one_vector, k);
+      fetch::math::clustering::KNN(arr, one_vector, k);
 
   for (std::size_t j = 0; j < output.size(); ++j)
   {
@@ -123,11 +123,11 @@ int main(int ac, char **av)
       auto data = dl.GetRandom();
 
       g.SetInput("Input", data.first);
-      ArrayType predictions = g.Evaluate("Softmax").Copy();
+      ArrayType predictions = g.Evaluate("Softmax");
       ArrayType groundTruth(predictions.shape());
-      groundTruth.At(0, data.second) = DataType(1);
+      groundTruth.At(data.second) = DataType(1);
 
-      SizeType argmax{SizeType(ArgMax(predictions, SizeType(1)).At(0))};
+      SizeType argmax(SizeType(ArgMax(predictions).At(0)));
       if (iteration % 100 == 0 || argmax == data.second)
       {
         for (unsigned int i(0); i < p.n_data_buffers + 1; ++i)
@@ -152,7 +152,7 @@ int main(int ac, char **av)
       }
 
       loss += criterion.Forward({predictions, groundTruth});
-      g.BackPropagate("Softmax", criterion.Backward({predictions.Copy(), groundTruth}));
+      g.BackPropagate("Softmax", criterion.Backward({predictions.Clone(), groundTruth}));
       g.Step(LEARNING_RATE);
 
       iteration++;

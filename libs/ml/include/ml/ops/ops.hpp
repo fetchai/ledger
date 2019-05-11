@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor_operations.hpp"
 #include <memory>
 #include <vector>
 
@@ -33,37 +33,21 @@ class Ops
 {
 public:
   using ArrayType    = T;
-  using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual ~Ops() = default;
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
-  {
-    ArrayType output(ComputeOutputShape(inputs));
-    return Forward(inputs, output);
-  }
-
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output) = 0;
   virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal) = 0;
   virtual ArrayType ForwardBatch(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs) = 0;
-  virtual std::vector<ArrayType> BackwardBatch(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           errorSignal) = 0;
-  virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
-
-  void SetTraining(bool is_training)
-  {
-    is_training_ = is_training;
-  }
+  virtual std::vector<ArrayType> BackwardBatch(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      ArrayType const &                                           errorSignal) = 0;
 
 protected:
-  bool is_training_ = true;
+  ArrayPtrType output_;  // TODO(private, 736) -- Remove
 };
 
 /*
@@ -73,27 +57,18 @@ template <class T>
 class ElementWiseOps : public Ops<T>
 {
 public:
-  using ArrayType    = T;
-  using SizeType     = typename ArrayType::SizeType;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType = T;
 
-  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<const ArrayType>> const &inputs)
+  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
-    ArrayType output;  // Temporary Dummy
-    return this->Forward(inputs, output);
+    return this->Forward(inputs);
   }
 
   virtual std::vector<ArrayType> BackwardBatch(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
     return this->Backward(inputs, errorSignal);
-  }
-
-  virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
-  {
-    return inputs.front().get().shape();
   }
 };
 
@@ -105,26 +80,23 @@ template <class T>
 class BatchOps : public Ops<T>
 {
 public:
-  using ArrayType    = T;
-  using SizeType     = typename ArrayType::SizeType;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType = T;
 
   // Overload that method for optimisation purposes
-  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<const ArrayType>> const &inputs)
+  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     assert(inputs.size() == 1);
     std::vector<ArrayType> results;
     for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
     {
-      ArrayType slice = inputs.front().get().Slice(b).Copy();
-      ArrayType output;  // Temporary Dummy
-      results.push_back(this->Forward({slice}, output));
+      ArrayType slice = inputs.front().get().Slice(b);
+      results.push_back(this->Forward({slice}));
     }
-    return ArrayType::Stack(results);
+    return ConcatenateTensors(results);
   }
 
   virtual std::vector<ArrayType> BackwardBatch(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
     return this->Backward(inputs, errorSignal);
@@ -133,8 +105,9 @@ public:
     std::vector<std::vector<ArrayType>> results;
     for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
     {
-      auto ret =
-          this->Backward({inputs.front().get().Slice(b).Tensor()}, errorSignal.Slice(b).Tensor());
+      ArrayType inputSlice = inputs.front().get().Slice(b);
+      ArrayType errorSlice = errorSignal.Slice(b);
+      auto      ret        = this->Backward({inputSlice}, errorSlice);
       for (std::size_t i(0); i < ret.size(); ++i)
       {
         results[i].push_back(ret[i]);
@@ -143,7 +116,7 @@ public:
     std::vector<ArrayType> concatenatedResults;
     for (auto const &tensorList : results)
     {
-      concatenatedResults.push_back(ArrayType::Stack(tensorList));
+      concatenatedResults.push_back(ConcatenateTensors(tensorList));
     }
     return concatenatedResults;
   }

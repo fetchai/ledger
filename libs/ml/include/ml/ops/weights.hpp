@@ -59,10 +59,9 @@ template <class T>
 class Weights : public fetch::ml::ops::PlaceHolder<T>, public Trainable<T>
 {
 public:
-  using ArrayType      = T;
-  using SizeType       = typename ArrayType::SizeType;
-  using ArrayPtrType   = std::shared_ptr<ArrayType>;
-  using ConstSliceType = typename ArrayType::ConstSliceType;
+  using ArrayType    = T;
+  using SizeType     = typename ArrayType::SizeType;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
 
 protected:
   ArrayPtrType gradient_accumulation_;
@@ -72,7 +71,7 @@ public:
   virtual ~Weights() = default;
 
   virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.empty());
@@ -80,14 +79,14 @@ public:
     return {};
   }
 
-  virtual bool SetData(ArrayType const &data)
+  virtual void SetData(ArrayType const &data)
   {
-    if (PlaceHolder<T>::SetData(data))  // if input_size_changed
+    PlaceHolder<T>::SetData(data);
+    if (this->output_ &&
+        (!gradient_accumulation_ || gradient_accumulation_->shape() != this->output_->shape()))
     {
       gradient_accumulation_ = std::make_shared<ArrayType>(this->output_->shape());
-      return true;
     }
-    return false;
   }
 
   virtual void Step(typename T::Type learningRate)
@@ -126,32 +125,31 @@ public:
    * @param mode  An enum indicating which type of initialisation to perform
    */
   static void Initialise(ArrayType &array, std::uint64_t in_size, std::uint64_t out_size,
-                         WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT,
-                         SizeType              seed = 123456789)
+                         WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT)
   {
     switch (mode)
     {
     case WeightsInitialisation::ZEROS:
     {
-      for (std::uint64_t j = 0; j < array.data().size(); ++j)
+      for (std::uint64_t j = 0; j < array.size(); ++j)
       {
-        array.data()[j] = typename ArrayType::Type(0);
+        array.At(j) = typename ArrayType::Type(0);
       }
       break;
     }
     case WeightsInitialisation::XAVIER_GLOROT:
     {
-      XavierInitialisation(array, std::sqrt(2.0 / double(in_size + out_size)), seed);
+      XavierInitialisation(array, std::sqrt(2.0 / double(in_size + out_size)));
       break;
     }
     case WeightsInitialisation::XAVIER_FAN_IN:
     {
-      XavierInitialisation(array, std::sqrt(1.0 / double(in_size)), seed);
+      XavierInitialisation(array, std::sqrt(1.0 / double(in_size)));
       break;
     }
     case WeightsInitialisation::XAVIER_FAN_OUT:
     {
-      XavierInitialisation(array, std::sqrt(1.0 / double(out_size)), seed);
+      XavierInitialisation(array, std::sqrt(1.0 / double(out_size)));
       break;
     }
     default:
@@ -185,16 +183,14 @@ private:
     fetch::random::LaggedFibonacciGenerator<> lfg_(seed);
 
     // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
-    auto it = array.begin();
-    while (it.is_valid())
+    for (auto &e : array)
     {
       auto ran_val = lfg_.AsDouble();  // random value in range 0 <-> 1
       ran_val -= 0.5;
       ran_val *= 2.0;                 // random value in range -1 <-> +1
       ran_val *= normalising_factor;  // random value in range -sigma <-> +sigma
 
-      *it = typename ArrayType::Type(ran_val);
-      ++it;
+      e = typename ArrayType::Type(ran_val);
     }
   }
 };

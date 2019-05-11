@@ -21,6 +21,8 @@
 #include "storage/object_store_protocol.hpp"
 #include "storage/transient_object_store.hpp"
 
+#include <functional>
+
 namespace fetch {
 namespace storage {
 
@@ -28,7 +30,8 @@ template <typename T>
 class ObjectStoreProtocol : public fetch::service::Protocol
 {
 public:
-  using self_type = ObjectStoreProtocol<T>;
+  using event_set_object_type = std::function<void(T const &)>;
+  using self_type             = ObjectStoreProtocol<T>;
 
   static constexpr char const *LOGGING_NAME = "ObjectStoreProto";
 
@@ -72,10 +75,20 @@ public:
     this->Expose(GET_RECENT, obj_store, &TransientObjectStore<T>::GetRecent);
   }
 
+  void OnSetObject(event_set_object_type const &f)
+  {
+    on_set_ = f;
+  }
+
 private:
   void Set(ResourceID const &rid, T const &object)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Setting object across object store protocol");
+
+    if (on_set_)
+    {
+      on_set_(object);
+    }
 
     obj_store_->Set(rid, object, false);
   }
@@ -107,6 +120,7 @@ private:
   }
 
   TransientObjectStore<T> *obj_store_;
+  event_set_object_type    on_set_;
 };
 
 }  // namespace storage

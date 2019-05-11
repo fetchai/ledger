@@ -363,10 +363,9 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
         ++objects_;
         tokens_.push_back({pos, pos + 5, KEYWORD_FALSE});
         pos += 4;
-        if ((document.size() <= pos) || (document[pos] != 'e'))
+        if((document.size() <= pos) || (document[pos] != 'e') )
         {
-          throw JSONParseException(
-              "Unrecognised token. Expected false, but last letter did not match.");
+          throw JSONParseException("Unrecognised token. Expected false, but last letter did not match.");
         }
         ++pos;
         ++element_counter;
@@ -399,7 +398,7 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
       ++pos;
       break;
     case '}':
-      if (brace_stack_.empty() || brace_stack_.back() != '}')
+      if (brace_stack_.back() != '}')
       {
         throw JSONParseException("Expected '}', but found ']'");
       }
@@ -422,7 +421,7 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
       ++pos;
       break;
     case ']':
-      if (brace_stack_.empty() || brace_stack_.back() != ']')
+      if (brace_stack_.back() != ']')
       {
         throw JSONParseException("Expected ']', but found '}'.");
       }

@@ -23,7 +23,6 @@
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
-#include "ledger/storage_unit/transaction_finder_protocol.hpp"
 #include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
 #include "network/muddle/muddle.hpp"
@@ -47,9 +46,7 @@ std::string GeneratePrefix(std::string const &storage_path, uint32_t lane)
 }  // namespace
 
 LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packets, Mode mode)
-  : tx_store_(std::make_shared<TxStore>())
-  , reactor_("LaneServiceReactor")
-  , cfg_{std::move(config)}
+  : cfg_{std::move(config)}
 {
   // External Muddle network and RPC server
   external_muddle_ =
@@ -69,7 +66,8 @@ LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packet
   lane_identity_protocol_ = std::make_shared<LaneIdentityProtocol>(*lane_identity_);
   external_rpc_server_->Add(RPC_IDENTITY, lane_identity_protocol_.get());
 
-  reactor_.Attach(tx_store_->getWeakRunnable());
+  // TX Store
+  tx_store_ = std::make_shared<TxStore>();
 
   std::string const prefix = GeneratePrefix(cfg_.storage_path, cfg_.lane_id);
   switch (mode)
@@ -90,9 +88,6 @@ LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packet
   controller_protocol_ = std::make_shared<LaneControllerProtocol>(controller_.get());
   internal_rpc_server_->Add(RPC_CONTROLLER, controller_protocol_.get());
 
-  tx_finder_protocol_ = std::make_unique<TxFinderProtocol>();
-  internal_rpc_server_->Add(RPC_MISSING_TX_FINDER, tx_finder_protocol_.get());
-
   tx_sync_protocol_ = std::make_shared<TransactionStoreSyncProtocol>(tx_store_.get(), cfg_.lane_id);
 
   // prepare the sync config
@@ -103,11 +98,12 @@ LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packet
   sync_cfg.promise_wait_timeout       = cfg_.sync_service_promise_timeout;
   sync_cfg.fetch_object_wait_duration = cfg_.sync_service_fetch_period;
 
-  tx_sync_service_ = std::make_shared<TransactionStoreSyncService>(
-      sync_cfg, external_muddle_, tx_store_, tx_finder_protocol_.get(),
-      [this]() { tx_sync_protocol_->TrimCache(); });
+  tx_sync_service_ =
+      std::make_shared<TransactionStoreSyncService>(sync_cfg, external_muddle_, tx_store_);
 
   tx_store_->SetCallback([this](VerifiedTransaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
+
+  tx_sync_service_->SetTrimCacheCallback([this]() { tx_sync_protocol_->TrimCache(); });
 
   // TX Sync protocol
   external_rpc_server_->Add(RPC_TX_STORE_SYNC, tx_sync_protocol_.get());
@@ -131,14 +127,10 @@ LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packet
   internal_rpc_server_->Add(RPC_STATE, state_db_protocol_.get());
 
   FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, " Initialised.");
-
-  reactor_.Start();
 }
 
 LaneService::~LaneService()
 {
-  reactor_.Stop();
-
   workthread_ = nullptr;
 
   FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, " Teardown.");
@@ -179,10 +171,9 @@ void LaneService::Start()
 
   tx_sync_service_->Start();
 
-  // TX Sync service - attach to reactor once #892 is merged
-  workthread_ =
-      std::make_shared<BackgroundedWorkThread>(&bg_work_, "BW:LS-" + std::to_string(cfg_.lane_id),
-                                               [this]() { tx_sync_service_->Execute(); });
+  // TX Sync service
+  workthread_ = std::make_shared<BackgroundedWorkThread>(
+      &bg_work_, "BW:LS-" + std::to_string(cfg_.lane_id), [this]() { tx_sync_service_->Work(); });
   workthread_->ChangeWaitTime(std::chrono::milliseconds{unsigned{SYNC_PERIOD_MS}});
 }
 

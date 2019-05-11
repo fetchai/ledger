@@ -1025,38 +1025,6 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
       }
       break;
     }
-    case Token::Kind::Integer8:
-    {
-      if (!HandleLiteral(Node::Kind::Integer8))
-      {
-        return nullptr;
-      }
-      break;
-    }
-    case Token::Kind::UnsignedInteger8:
-    {
-      if (!HandleLiteral(Node::Kind::UnsignedInteger8))
-      {
-        return nullptr;
-      }
-      break;
-    }
-    case Token::Kind::Integer16:
-    {
-      if (!HandleLiteral(Node::Kind::Integer16))
-      {
-        return nullptr;
-      }
-      break;
-    }
-    case Token::Kind::UnsignedInteger16:
-    {
-      if (!HandleLiteral(Node::Kind::UnsignedInteger16))
-      {
-        return nullptr;
-      }
-      break;
-    }
     case Token::Kind::Integer32:
     {
       if (!HandleLiteral(Node::Kind::Integer32))

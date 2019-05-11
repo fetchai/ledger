@@ -23,6 +23,8 @@
 
 #include <gmock/gmock.h>
 
+// using ::testing::_;
+
 namespace fetch {
 namespace ledger {
 namespace {

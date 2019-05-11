@@ -19,7 +19,6 @@
 
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/constants.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <map>
@@ -31,7 +30,7 @@ class FakeStorageUnit : public fetch::ledger::StorageUnitInterface
 {
 public:
   using Transaction = fetch::ledger::Transaction;
-  using TxDigestSet = fetch::ledger::TxDigestSet;
+  using Block       = fetch::ledger::Block;
 
   /// @name State Interface
   /// @{
@@ -47,7 +46,6 @@ public:
   void AddTransaction(Transaction const &tx);
   bool GetTransaction(ConstByteArray const &digest, Transaction &tx);
   bool HasTransaction(ConstByteArray const &digest);
-  void IssueCallForMissingTxs(TxDigestSet const &tx_set);
   /// @}
 
   /// @name Transaction History Poll

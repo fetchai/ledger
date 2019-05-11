@@ -117,20 +117,49 @@ void P2PService::WorkCycle()
     // in the case of exceptions.
     process_future_timepoint_.Set(manifest_update_cycle_ms_);
 
-    AddressSet active_addresses;
+    AddressSet    active_addresses;
+    ConnectionMap active_connections;
 
-    // get a list of the direct connections for this node
-    auto const connections = muddle_.GetConnections(true);
+    GetConnectionStatus(active_connections, active_addresses);
 
-    for (auto const &connection : connections)
+    // Now we have the list of active addresses from the networking,
+    // make all the subsystems try to match it. We work off the
+    // network's ACTUAL connections instead of the trust system's
+    // ideally desired peer list because this means that we know we've
+    // got one connection to the target and hence the subsystem
+    // connections can be more expected to work.
+
+    // Peter fix to ensure that the reverse connections
+    AddressSet non_muddle_addresses{};
+    for (auto const &active_connection : active_connections)
     {
-      if (Uri::Scheme::Tcp == connection.second.scheme())
+      if (Uri::Scheme::Tcp == active_connection.second.scheme())
       {
-        active_addresses.insert(connection.first);
+        non_muddle_addresses.insert(active_connection.first);
       }
     }
 
-    UpdateManifests(active_addresses);
+    UpdateManifests(non_muddle_addresses);
+
+    // At this point, if we aren't doing the peer-churning section
+    // above, we'll "fake" the trust system's contents by adding the
+    // connected peers into it.  This will have the effect of making
+    // the HTTP requests for SwarmEye work for static network geometry
+    // as well as dynamic.
+    if (!peer_update_cycle_ms_.count())
+    {
+      for (const auto &c : active_connections)
+      {
+        if (muddle_.IsConnected(c.first))
+        {
+          if (desired_peers_.find(c.first) == desired_peers_.end())
+          {
+            desired_peers_.insert(c.first);
+            trust_system_.AddFeedback(c.first, TrustSubject::PEER, TrustQuality::NEW_PEER);
+          }
+        }
+      }
+    }
   }
 }
 

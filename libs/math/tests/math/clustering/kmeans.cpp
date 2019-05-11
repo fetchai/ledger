@@ -45,23 +45,23 @@ TEST(clustering_test, kmeans_test_2d_4k)
 
   for (SizeType i = 0; i < 25; ++i)
   {
-    A.Set(SizeType{i}, SizeType{0}, -static_cast<DataType>(i) - 50);
-    A.Set(SizeType{i}, SizeType{1}, -static_cast<DataType>(i) - 50);
+    A.Set({i, 0}, -static_cast<DataType>(i) - 50);
+    A.Set({i, 1}, -static_cast<DataType>(i) - 50);
   }
   for (SizeType i = 25; i < 50; ++i)
   {
-    A.Set(SizeType{i}, SizeType{0}, -static_cast<DataType>(i) - 50);
-    A.Set(SizeType{i}, SizeType{1}, static_cast<DataType>(i) + 50);
+    A.Set({i, 0}, -static_cast<DataType>(i) - 50);
+    A.Set({i, 1}, static_cast<DataType>(i) + 50);
   }
   for (SizeType i = 50; i < 75; ++i)
   {
-    A.Set(SizeType{i}, SizeType{0}, static_cast<DataType>(i) + 50);
-    A.Set(SizeType{i}, SizeType{1}, -static_cast<DataType>(i) - 50);
+    A.Set({i, 0}, static_cast<DataType>(i) + 50);
+    A.Set({i, 1}, -static_cast<DataType>(i) - 50);
   }
   for (SizeType i = 75; i < 100; ++i)
   {
-    A.Set(SizeType{i}, SizeType{0}, static_cast<DataType>(i) + 50);
-    A.Set(SizeType{i}, SizeType{1}, static_cast<DataType>(i) + 50);
+    A.Set({i, 0}, static_cast<DataType>(i) + 50);
+    A.Set({i, 1}, static_cast<DataType>(i) + 50);
   }
 
   SizeType       random_seed = 123456;
@@ -100,13 +100,13 @@ TEST(clustering_test, kmeans_test_previous_assignment)
 
   for (SizeType i = 0; i < 25; ++i)
   {
-    A.Set(SizeType{i}, SizeType{0}, static_cast<DataType>(-i - 50));
-    A.Set(SizeType{i}, SizeType{1}, static_cast<DataType>(-i - 50));
+    A.Set({i, 0}, static_cast<DataType>(-i - 50));
+    A.Set({i, 1}, static_cast<DataType>(-i - 50));
   }
   for (SizeType i = 25; i < 50; ++i)
   {
-    A.Set(SizeType{i}, SizeType{0}, static_cast<DataType>(i + 50));
-    A.Set(SizeType{i}, SizeType{1}, static_cast<DataType>(i + 50));
+    A.Set({i, 0}, static_cast<DataType>(i + 50));
+    A.Set({i, 1}, static_cast<DataType>(i + 50));
   }
 
   for (SizeType i = 0; i < 5; ++i)
@@ -152,13 +152,13 @@ TEST(clustering_test, kmeans_simple_previous_assignment_no_K)
   // initialise the data to be first half negative, second half positive
   for (SizeType i = 0; i < 25; ++i)
   {
-    A.Set(SizeType{i}, SizeType{0}, static_cast<DataType>(-i - 50));
-    A.Set(SizeType{i}, SizeType{1}, static_cast<DataType>(-i - 50));
+    A.Set({i, 0}, static_cast<DataType>(-i - 50));
+    A.Set({i, 1}, static_cast<DataType>(-i - 50));
   }
   for (SizeType i = 25; i < 50; ++i)
   {
-    A.Set(SizeType{i}, SizeType{0}, static_cast<DataType>(i + 50));
-    A.Set(SizeType{i}, SizeType{1}, static_cast<DataType>(i + 50));
+    A.Set({i, 0}, static_cast<DataType>(i + 50));
+    A.Set({i, 1}, static_cast<DataType>(i + 50));
   }
 
   // initialise the previous assignments to be 5 data points assigned, 20 unassigned in each
@@ -214,23 +214,23 @@ TEST(clustering_test, kmeans_remap_previous_assignment_no_K)
   // assign data to 4 quadrants
   for (SizeType i = 0; i < 25; ++i)
   {
-    A.Set(SizeType{i}, SizeType{0}, -static_cast<DataType>(i) - 50);
-    A.Set(SizeType{i}, SizeType{1}, -static_cast<DataType>(i) - 50);
+    A.Set({i, 0}, -static_cast<DataType>(i) - 50);
+    A.Set({i, 1}, -static_cast<DataType>(i) - 50);
   }
   for (SizeType i = 25; i < 50; ++i)
   {
-    A.Set(SizeType{i}, SizeType{0}, -static_cast<DataType>(i) - 50);
-    A.Set(SizeType{i}, SizeType{1}, static_cast<DataType>(i) + 50);
+    A.Set({i, 0}, -static_cast<DataType>(i) - 50);
+    A.Set({i, 1}, static_cast<DataType>(i) + 50);
   }
   for (SizeType i = 50; i < 75; ++i)
   {
-    A.Set(SizeType{i}, SizeType{0}, static_cast<DataType>(i) + 50);
-    A.Set(SizeType{i}, SizeType{1}, -static_cast<DataType>(i) - 50);
+    A.Set({i, 0}, static_cast<DataType>(i) + 50);
+    A.Set({i, 1}, -static_cast<DataType>(i) - 50);
   }
   for (SizeType i = 75; i < 100; ++i)
   {
-    A.Set(SizeType{i}, SizeType{0}, static_cast<DataType>(i) + 50);
-    A.Set(SizeType{i}, SizeType{1}, static_cast<DataType>(i) + 50);
+    A.Set({i, 0}, static_cast<DataType>(i) + 50);
+    A.Set({i, 1}, static_cast<DataType>(i) + 50);
   }
 
   // assign previous cluster groups with some gaps

@@ -1,6 +1,4 @@
 #!/bin/bash
-cd $(dirname "${BASH_SOURCE[0]}")
-
 flex tokeniser.l
 
 
@@ -28,7 +26,8 @@ prepend_this="//----------------------------------------------------------------
 
 append_this="// clang-format on"
 
-echo -e "$prepend_pragma\\n$prepend_this" | cat - ../include/vm/tokeniser.hpp > temp && mv temp ../include/vm/tokeniser.hpp
+echo -e "$prepend_this" | cat - ../include/vm/tokeniser.hpp > temp && mv temp ../include/vm/tokeniser.hpp
+echo -e "$prepend_pragma" | cat - ../include/vm/tokeniser.hpp > temp && mv temp ../include/vm/tokeniser.hpp
 echo -e "$prepend_this" | cat - ../src/tokeniser.cpp > temp && mv temp ../src/tokeniser.cpp
 
 echo -e "$append_this" >> ../include/vm/tokeniser.hpp

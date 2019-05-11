@@ -18,11 +18,15 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+//#include "ledger/storage_unit/lane_controller_protocol.hpp"
+//#include "ledger/storage_unit/lane_service.hpp"
+//#include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/shard_config.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/p2pservice/p2p_lane_management.hpp"
+//#include "network/service/service_client.hpp"
 
-#include <unordered_map>
+//#include <unordered_map>
 
 namespace fetch {
 namespace ledger {
@@ -63,7 +67,11 @@ private:
   Address const &LookupAddress(LaneIndex lane) const;
 
   AddressList const addresses_;
-  RpcClient         rpc_client_;  ///< The RPC client
+  //  ShardConfigs const  shards_;      ///< The shard configurations
+  RpcClient rpc_client_;  ///< The RPC client
+
+  //  StorageUnitClientPtr storage_unit_;
+  //  mutable Mutex        mutex_{__LINE__, __FILE__};
 };
 
 }  // namespace ledger

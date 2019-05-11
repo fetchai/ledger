@@ -32,7 +32,7 @@ void VerifyTx(benchmark::State &state)
   ECDSASigner        signer;
   MutableTransaction mtx;
   mtx.set_contract_name("foo.bar.is.a.baz");
-  mtx.Sign(signer.private_key());
+  mtx.Sign(signer.underlying_private_key());
 
   for (auto _ : state)
   {

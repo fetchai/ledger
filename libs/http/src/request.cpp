@@ -150,14 +150,9 @@ bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t const &end)
   }
 
   // since the start line if different this must be parse differently
-  bool success{false};
-  if (!start_line.empty())
-  {
-    // attempt to parse the start line
-    success = ParseStartLine(start_line);
-  }
+  ParseStartLine(start_line);
 
-  return success;
+  return true;
 }
 
 bool HTTPRequest::ToStream(asio::streambuf &buffer, std::string const &host, uint16_t port) const
@@ -192,7 +187,7 @@ bool HTTPRequest::ToStream(asio::streambuf &buffer, std::string const &host, uin
   return true;
 }
 
-bool HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
+void HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
 {
   LOG_STACK_TRACE_POINT;
 
@@ -202,7 +197,7 @@ bool HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
     if (i >= line.size())
     {
       is_valid_ = false;
-      return false;
+      return;
     }
 
     char &cc = reinterpret_cast<char &>(line[i]);
@@ -224,7 +219,7 @@ bool HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
     if (i >= line.size())
     {
       is_valid_ = false;
-      return false;
+      return;
     }
 
     ++i;
@@ -280,7 +275,7 @@ bool HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
     if (i >= line.size())
     {
       is_valid_ = false;
-      return false;
+      return;
     }
     ++i;
   }
@@ -293,8 +288,6 @@ bool HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
       cc = char(cc + 'a' - 'A');
     }
   }
-
-  return true;
 }
 
 }  // namespace http

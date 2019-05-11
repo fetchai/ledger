@@ -20,9 +20,7 @@
 #include "ledger/chain/transaction_serialization.hpp"
 
 using fetch::byte_array::ConstByteArray;
-
-// TODO(issue 7): Make cache configurable
-constexpr uint32_t MAX_CACHE_LIFETIME_MS = 20000;
+using fetch::storage::ResourceID;
 
 #ifdef FETCH_ENABLE_METRICS
 using fetch::metrics::Metrics;
@@ -62,7 +60,6 @@ TransactionStoreSyncProtocol::TransactionStoreSyncProtocol(ObjectStore *store, i
   this->Expose(OBJECT_COUNT, this, &Self::ObjectCount);
   this->ExposeWithClientContext(PULL_OBJECTS, this, &Self::PullObjects);
   this->Expose(PULL_SUBTREE, this, &Self::PullSubtree);
-  this->Expose(PULL_SPECIFIC_OBJECTS, this, &Self::PullSpecificObjects);
 }
 
 void TransactionStoreSyncProtocol::TrimCache()
@@ -76,7 +73,7 @@ void TransactionStoreSyncProtocol::TrimCache()
 
   // compute the deadline for the cache entries
   auto const cut_off =
-      CachedObject::Clock::now() - std::chrono::milliseconds(MAX_CACHE_LIFETIME_MS);
+      CachedObject::Clock::now() - std::chrono::milliseconds(uint32_t{MAX_CACHE_LIFETIME_MS});
 
   // generate the next cache version
   std::copy_if(cache_.begin(), cache_.end(), std::back_inserter(next_cache),
@@ -115,7 +112,8 @@ uint64_t TransactionStoreSyncProtocol::ObjectCount()
 {
   FETCH_LOCK(cache_mutex_);
 
-  return store_->Size();
+  // TODO(private issue 502): Improve transient object store interface
+  return store_->archive().size();
 }
 
 /**
@@ -125,13 +123,31 @@ uint64_t TransactionStoreSyncProtocol::ObjectCount()
  *
  * @return: the subtree the client is requesting as a vector (size limited)
  */
-TxList TransactionStoreSyncProtocol::PullSubtree(byte_array::ConstByteArray const &rid,
-                                                 uint64_t                          bit_count)
+TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullSubtree(
+    byte_array::ConstByteArray const &rid, uint64_t bit_count)
 {
-  return store_->PullSubtree(rid, bit_count, PULL_LIMIT_);
+  TxList ret;
+
+  uint64_t counter = 0;
+
+  auto &archive = store_->archive();
+
+  archive.WithLock([&archive, &ret, &counter, &rid, bit_count]() {
+    // This is effectively saying get all objects whose ID begins rid & mask
+    auto it = archive.GetSubtree(ResourceID(rid), bit_count);
+
+    while ((it != archive.end()) && (counter++ < PULL_LIMIT_))
+    {
+      ret.push_back(*it);
+      ++it;
+    }
+  });
+
+  return ret;
 }
 
-TxList TransactionStoreSyncProtocol::PullObjects(service::CallContext const *call_context)
+TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullObjects(
+    service::CallContext const *call_context)
 {
   // Creating result
   TxList ret;
@@ -150,23 +166,6 @@ TxList TransactionStoreSyncProtocol::PullObjects(service::CallContext const *cal
           ret.push_back(c.data);
         }
       }
-    }
-  }
-
-  return ret;
-}
-
-TxList TransactionStoreSyncProtocol::PullSpecificObjects(
-    std::vector<storage::ResourceID> const &rids)
-{
-  TxList              ret;
-  VerifiedTransaction tx;
-
-  for (auto const &rid : rids)
-  {
-    if (store_->Get(rid, tx))
-    {
-      ret.push_back(tx);
     }
   }
 

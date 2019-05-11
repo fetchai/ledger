@@ -26,36 +26,16 @@ namespace crypto {
 class Prover
 {
 public:
-  using ConstByteArray = byte_array::ConstByteArray;
+  using byte_array_type = byte_array::ConstByteArray;
 
-  // Construction / Destruction
-  Prover()          = default;
-  virtual ~Prover() = default;
-
-  /// @name Prover Interface
-  /// @{
-
-  /**
-   * Access the corresponding identity for this prover
-   *
-   * @return The prover
-   */
   virtual Identity identity() const = 0;
+  virtual ~Prover()
+  {}
 
-  /**
-   * Load the private key from a byte stream
-   */
-  virtual void Load(ConstByteArray const &) = 0;
-
-  /**
-   * Sign a given message with the
-   *
-   * @param message The message to be signed
-   * @return The generated signature if successful, otherwise return empty byte array
-   */
-  virtual ConstByteArray Sign(ConstByteArray const &message) = 0;
-
-  /// @}
+  virtual void            Load(byte_array_type const &)     = 0;
+  virtual bool            Sign(byte_array_type const &text) = 0;
+  virtual byte_array_type document_hash()                   = 0;
+  virtual byte_array_type signature()                       = 0;
 };
 
 }  // namespace crypto

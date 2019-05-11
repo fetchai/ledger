@@ -26,8 +26,10 @@
 
 #include <cmath>
 
-namespace fetch {
-namespace vm_modules {
+namespace fetch
+{
+namespace vm_modules
+{
 
 inline double Exp(fetch::vm::VM * /*vm*/, double x)
 {
@@ -39,5 +41,5 @@ inline void BindExp(vm::Module &module)
   module.CreateFreeFunction("exp", &Exp);
 }
 
-}  // namespace vm_modules
-}  // namespace fetch
+}
+}

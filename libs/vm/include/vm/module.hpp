@@ -36,6 +36,8 @@ namespace vm {
 class Module
 {
 public:
+
+
   Module();
   ~Module() = default;
 
@@ -296,6 +298,7 @@ private:
   RegisteredTypes                    registered_types_;
   std::vector<CompilerSetupFunction> compiler_setup_functions_;
   std::vector<OpcodeHandlerInfo>     opcode_handler_info_array_;
+
 
   friend class Compiler;
   friend class VM;

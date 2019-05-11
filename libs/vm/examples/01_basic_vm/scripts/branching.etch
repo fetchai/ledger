@@ -2,11 +2,11 @@ function main()
   var message : String;
 
   if( System.Argc() <= 1)
-    print("Please supply some more command line arguments.");
+    Print("Please supply some more command line arguments.");
   elseif( System.Argc() <= 3)
-    print("Com'on supply a few more.");
+    Print("Com'on supply a few more.");
   else 
-    print("Thank you.");
+    Print("Thank you.");
   endif
 
 endfunction

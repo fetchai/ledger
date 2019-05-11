@@ -34,60 +34,35 @@ TYPED_TEST_CASE(ReluTest, MyTypes);
 
 TYPED_TEST(ReluTest, forward_all_positive_test)
 {
-  using ArrayType = TypeParam;
-
-  ArrayType data = ArrayType::FromString("1, 2, 3, 4, 5, 6, 7, 8");
-  ArrayType gt   = ArrayType::FromString("1, 2, 3, 4, 5, 6, 7, 8");
-
-  fetch::ml::ops::Relu<ArrayType> op;
-  ArrayType                       prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
+  TypeParam     data(8);
+  TypeParam     gt(8);
+  std::uint64_t i(0);
+  for (int e : {1, 2, 3, 4, 5, 6, 7, 8})
+  {
+    data.Set(i, typename TypeParam::Type(e));
+    gt.Set(i, typename TypeParam::Type(e));
+    i++;
+  }
+  fetch::ml::ops::Relu<TypeParam> op;
+  TypeParam                       prediction = op.Forward({data});
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
 }
 
-TYPED_TEST(ReluTest, forward_3d_tensor_test)
-{
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
-
-  ArrayType           data({2, 2, 2});
-  ArrayType           gt({2, 2, 2});
-  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8});
-  std::vector<double> gt_input({1, 0, 3, 0, 5, 0, 7, 0});
-
-  for (SizeType i{0}; i < 2; ++i)
-  {
-    for (SizeType j{0}; j < 2; ++j)
-    {
-      for (SizeType k{0}; k < 2; ++k)
-      {
-        data.Set(i, j, k, static_cast<DataType>(data_input[i + 2 * (j + 2 * k)]));
-        gt.Set(i, j, k, static_cast<DataType>(gt_input[i + 2 * (j + 2 * k)]));
-      }
-    }
-  }
-
-  fetch::ml::ops::Relu<ArrayType> op;
-  ArrayType                       prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
-
-  // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-5), static_cast<DataType>(1e-5)));
-}
-
 TYPED_TEST(ReluTest, forward_all_negative_integer_test)
 {
-  using ArrayType = TypeParam;
-
-  ArrayType data = ArrayType::FromString("-1, -2, -3, -4, -5, -6, -7, -8");
-  ArrayType gt   = ArrayType::FromString("0, 0, 0, 0, 0, 0, 0, 0");
-
-  fetch::ml::ops::Relu<ArrayType> op;
-  ArrayType                       prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
+  TypeParam     data(8);
+  TypeParam     gt(8);
+  std::uint64_t i(0);
+  for (int e : {-1, -2, -3, -4, -5, -6, -7, -8})
+  {
+    data.Set(i, typename TypeParam::Type(e));
+    gt.Set(i, typename TypeParam::Type(0));
+    i++;
+  }
+  fetch::ml::ops::Relu<TypeParam> op;
+  TypeParam                       prediction = op.Forward({data});
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -95,14 +70,17 @@ TYPED_TEST(ReluTest, forward_all_negative_integer_test)
 
 TYPED_TEST(ReluTest, forward_mixed_test)
 {
-  using ArrayType = TypeParam;
-
-  ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  ArrayType gt   = ArrayType::FromString("1, 0, 3, 0, 5, 0, 7, 0");
-
-  fetch::ml::ops::Relu<ArrayType> op;
-  ArrayType                       prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
+  TypeParam        data(8);
+  TypeParam        gt(8);
+  std::vector<int> dataInput({1, -2, 3, -4, 5, -6, 7, -8});
+  std::vector<int> gtInput({1, 0, 3, 0, 5, 0, 7, 0});
+  for (std::uint64_t i(0); i < 8; ++i)
+  {
+    data.Set(i, typename TypeParam::Type(dataInput[i]));
+    gt.Set(i, typename TypeParam::Type(gtInput[i]));
+  }
+  fetch::ml::ops::Relu<TypeParam> op;
+  TypeParam                       prediction = op.Forward({data});
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -110,48 +88,21 @@ TYPED_TEST(ReluTest, forward_mixed_test)
 
 TYPED_TEST(ReluTest, backward_mixed_test)
 {
-  using ArrayType = TypeParam;
-
-  ArrayType data  = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  ArrayType error = ArrayType::FromString("-1, 2, 3, -5, -8, 13, -21, -34");
-  ArrayType gt    = ArrayType::FromString("-1, 0, 3, 0, -8, 0, -21, 0");
-
-  fetch::ml::ops::Relu<ArrayType> op;
-  std::vector<ArrayType>          prediction = op.Backward({data}, error);
+  TypeParam        data(8);
+  TypeParam        error(8);
+  TypeParam        gt(8);
+  std::vector<int> dataInput({1, -2, 3, -4, 5, -6, 7, -8});
+  std::vector<int> errorInput({-1, 2, 3, -5, -8, 13, -21, -34});
+  std::vector<int> gtInput({-1, 0, 3, 0, -8, 0, -21, 0});
+  for (std::uint64_t i(0); i < 8; ++i)
+  {
+    data.Set(i, typename TypeParam::Type(dataInput[i]));
+    error.Set(i, typename TypeParam::Type(errorInput[i]));
+    gt.Set(i, typename TypeParam::Type(gtInput[i]));
+  }
+  fetch::ml::ops::Relu<TypeParam> op;
+  std::vector<TypeParam>          prediction = op.Backward({data}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt));
-}
-
-TYPED_TEST(ReluTest, backward_3d_tensor_test)
-{
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
-
-  ArrayType        data({2, 2, 2});
-  ArrayType        error({2, 2, 2});
-  ArrayType        gt({2, 2, 2});
-  std::vector<int> data_input({1, -2, 3, -4, 5, -6, 7, -8});
-  std::vector<int> errorInput({-1, 2, 3, -5, -8, 13, -21, -34});
-  std::vector<int> gt_input({-1, 0, 3, 0, -8, 0, -21, 0});
-
-  for (SizeType i{0}; i < 2; ++i)
-  {
-    for (SizeType j{0}; j < 2; ++j)
-    {
-      for (SizeType k{0}; k < 2; ++k)
-      {
-        data.Set(i, j, k, static_cast<DataType>(data_input[i + 2 * (j + 2 * k)]));
-        error.Set(i, j, k, static_cast<DataType>(errorInput[i + 2 * (j + 2 * k)]));
-        gt.Set(i, j, k, static_cast<DataType>(gt_input[i + 2 * (j + 2 * k)]));
-      }
-    }
-  }
-
-  fetch::ml::ops::Relu<ArrayType> op;
-  std::vector<ArrayType>          prediction = op.Backward({data}, error);
-
-  // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, static_cast<DataType>(1e-5), static_cast<DataType>(1e-5)));
 }

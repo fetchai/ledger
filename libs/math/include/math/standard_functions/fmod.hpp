@@ -40,7 +40,7 @@ meta::IfIsNonFixedPointArithmetic<Type, void> Fmod(Type const &x, Type const &y,
 template <typename T>
 meta::IfIsFixedPoint<T, void> Fmod(T const &x, T const &y, T &ret)
 {
-  ret = T::Fmod(x, y);
+  ret = T(std::fmod(double(x), double(y)));
 }
 
 //////////////////
@@ -51,7 +51,7 @@ template <typename Type>
 meta::IfIsArithmetic<Type, Type> Fmod(Type const &x)
 {
   Type ret;
-  Fmod(x, ret);
+  Log(x, ret);
   return ret;
 }
 
@@ -61,15 +61,11 @@ meta::IfIsMathArray<ArrayType, void> Fmod(ArrayType const &array1, ArrayType con
 {
   ASSERT(ret.shape() == array1.shape());
   ASSERT(ret.shape() == array2.shape());
-  auto it1 = array1.cbegin();
-  auto it2 = array2.cbegin();
-  auto rit = ret.begin();
-  while (it1.is_valid())
+  typename ArrayType::SizeType ret_count{0};
+  for (typename ArrayType::Type &e : array1)
   {
-    Fmod(*it1, *it2, rit);
-    ++it1;
-    ++it2;
-    ++rit;
+    Fmod(e, array2.At(ret_count), ret.At(ret_count));
+    ++ret_count;
   }
 }
 
@@ -77,8 +73,13 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Fmod(ArrayType const &array1, ArrayType const &array2)
 {
   ASSERT(array2.shape() == array1.shape());
-  ArrayType ret{array1.shape()};
-  Fmod(array1, array2, ret);
+  ArrayType                    ret{array1.shape()};
+  typename ArrayType::SizeType ret_count{0};
+  for (typename ArrayType::Type &e : array1)
+  {
+    Fmod(e, array2.At(ret_count), ret.At(ret_count));
+    ++ret_count;
+  }
   return ret;
 }
 

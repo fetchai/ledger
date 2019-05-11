@@ -75,7 +75,7 @@ int main(int ac, char **av)
     g.SetInput("Input", input.second);
     gt.Fill(0);
     gt.At(input.first) = DataType(1.0);
-    ArrayType results  = g.Evaluate("Softmax").Copy();
+    ArrayType results  = g.Evaluate("Softmax");
 
     loss += criterion.Forward({results, gt});
     if (results.At(input.first) < .5)

@@ -103,9 +103,9 @@ void PrintKNN(SkipGramLoader<ArrayType> const &dl, ArrayType const &embeddings,
   }
   else
   {
-    ArrayType one_vector = embeddings.Slice(dl.VocabLookup(word)).Copy();
+    ArrayType one_vector = embeddings.Slice(dl.VocabLookup(word)).Unsqueeze();
     std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
-        fetch::math::clustering::KNNCosine(arr, one_vector, k);
+        fetch::math::clustering::KNN(arr, one_vector, k);
 
     for (std::size_t j = 0; j < output.size(); ++j)
     {
@@ -223,11 +223,11 @@ int main(int argc, char **argv)
       data = dataloader.GetRandom();
 
       // assign input and context vectors
-      input.At(0, 0)   = data.first.At(0);
-      context.At(0, 0) = data.first.At(1);
+      input.At(0)   = data.first.At(0);
+      context.At(0) = data.first.At(1);
 
       // assign label
-      gt.At(0, 0) = DataType(data.second);
+      gt.At(0) = DataType(data.second);
 
       g.SetInput("Input", input, false);
       g.SetInput("Context", context, false);
@@ -235,11 +235,11 @@ int main(int argc, char **argv)
       // forward pass
       results = g.Evaluate(output_name);
 
-      scale_factor.At(0, 0) =
-          (gt.At(0, 0) == DataType(0)) ? DataType(sp.k_negative_samples) : DataType(1);
+      scale_factor.At(0) =
+          (gt.At(0) == DataType(0)) ? DataType(sp.k_negative_samples) : DataType(1);
 
-      if (((results.At(0, 0) >= DataType(0.5)) && (gt.At(0, 0) == DataType(1))) ||
-          ((results.At(0, 0) < DataType(0.5)) && (gt.At(0, 0) == DataType(0))))
+      if (((results.At(0) >= DataType(0.5)) && (gt.At(0) == DataType(1))) ||
+          ((results.At(0) < DataType(0.5)) && (gt.At(0) == DataType(0))))
       {
         ++correct_score;
       }

@@ -28,10 +28,6 @@ struct Token
   enum class Kind : uint16_t
   {
     EndOfInput = 0,
-    Integer8,
-    UnsignedInteger8,
-    Integer16,
-    UnsignedInteger16,
     Integer32,
     UnsignedInteger32,
     Integer64,

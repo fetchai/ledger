@@ -33,93 +33,43 @@ TYPED_TEST_CASE(SoftmaxTest, MyTypes);
 
 TYPED_TEST(SoftmaxTest, forward_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-
-  ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  ArrayType gt   = ArrayType::FromString(
-      "2.1437e-03, 1.0673e-04, 1.5840e-02, 1.4444e-05, 1.1704e-01, 1.9548e-06, 8.6485e-01, "
-      "2.6456e-07");
-
-  fetch::ml::ops::Softmax<ArrayType> op;
-  ArrayType                          prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
-
-  // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
-}
-
-TYPED_TEST(SoftmaxTest, forward_2d_tensor_axis_0_test)
-{
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
-
-  ArrayType           data({3, 3});
-  ArrayType           gt({3, 3});
-  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9});
-  std::vector<double> gt_input({1.1850e-01, 5.8998e-03, 8.7560e-01, 1.2339e-04, 9.9986e-01,
-                                1.6699e-05, 1.1920e-01, 3.6464e-08, 8.8080e-01});
-  for (SizeType i{0}; i < 3; ++i)
+  TypeParam           data(8);
+  TypeParam           gt(8);
+  std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8});
+  std::vector<double> gtInput({2.1437e-03, 1.0673e-04, 1.5840e-02, 1.4444e-05, 1.1704e-01,
+                               1.9548e-06, 8.6485e-01, 2.6456e-07});
+  for (std::uint64_t i(0); i < 8; ++i)
   {
-    for (SizeType j{0}; j < 3; ++j)
-    {
-      data.Set(i, j, static_cast<DataType>(data_input[j + 3 * i]));
-      gt.Set(i, j, static_cast<DataType>(gt_input[j + 3 * i]));
-    }
+    data.Set(i, typename TypeParam::Type(dataInput[i]));
+    gt.Set(i, typename TypeParam::Type(gtInput[i]));
   }
-
-  fetch::ml::ops::Softmax<ArrayType> op{0};
-  ArrayType                          prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
+  fetch::ml::ops::Softmax<TypeParam> op;
+  TypeParam                          prediction = op.Forward({data});
 
   // test correct values
-  ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-4), static_cast<DataType>(1e-4)));
+  ASSERT_TRUE(
+      prediction.AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }
 
 TYPED_TEST(SoftmaxTest, backward_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-
-  ArrayType data  = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  ArrayType error = ArrayType::FromString("0, 0, 0, 0, 1, 0, 0, 0");
-  ArrayType gt    = ArrayType::FromString(
-      "-2.5091e-04, -1.2492e-05, -1.8540e-03, -1.6906e-06, 1.0335e-01, -2.2880e-07, -1.0123e-01, "
-      "-3.0965e-08");
-
-  fetch::ml::ops::Softmax<ArrayType> op;
-  std::vector<ArrayType>             prediction = op.Backward({data}, error);
-
-  // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
-}
-
-TYPED_TEST(SoftmaxTest, backward_2d_tensor_axis_0_test)
-{
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
-
-  ArrayType           data({3, 3});
-  ArrayType           error({3, 3});
-  ArrayType           gt({3, 3});
-  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9});
-  std::vector<double> errorInput({0, 0, 0, 0, 1, 0, 0, 0, 0});
-  std::vector<double> gt_input({0, 0, 0, -1.2338e-04, 1.4005e-04, -1.6697e-05, 0, 0, 0});
-  for (SizeType i{0}; i < 3; ++i)
+  TypeParam           data(8);
+  TypeParam           error(8);
+  TypeParam           gt(8);
+  std::vector<double> dataInput({1, -2, 3, -4, 5, -6, 7, -8});
+  std::vector<double> errorInput({0, 0, 0, 0, 1, 0, 0, 0});
+  std::vector<double> gtInput({-2.5091e-04, -1.2492e-05, -1.8540e-03, -1.6906e-06, 1.0335e-01,
+                               -2.2880e-07, -1.0123e-01, -3.0965e-08});
+  for (std::uint64_t i(0); i < 8; ++i)
   {
-    for (SizeType j{0}; j < 3; ++j)
-    {
-      data.Set(i, j, static_cast<DataType>(data_input[j + 3 * i]));
-      error.Set(i, j, static_cast<DataType>(errorInput[j + 3 * i]));
-      gt.Set(i, j, static_cast<DataType>(gt_input[j + 3 * i]));
-    }
+    data.Set(i, typename TypeParam::Type(dataInput[i]));
+    error.Set(i, typename TypeParam::Type(errorInput[i]));
+    gt.Set(i, typename TypeParam::Type(gtInput[i]));
   }
-
-  fetch::ml::ops::Softmax<ArrayType> op{0};
-  std::vector<ArrayType>             prediction = op.Backward({data}, error);
+  fetch::ml::ops::Softmax<TypeParam> op;
+  std::vector<TypeParam>             prediction = op.Backward({data}, error);
 
   // test correct values
-  ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
+  ASSERT_TRUE(
+      prediction[0].AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }

@@ -40,7 +40,7 @@ public:
   using NetworkManager  = network::NetworkManager;
   using PromiseState    = fetch::service::PromiseState;
   using Promise         = service::Promise;
-  using FutureTimepoint = core::FutureTimepoint;
+  using FutureTimepoint = network::FutureTimepoint;
   using MuddleEp        = muddle::MuddleEndpoint;
   using Muddle          = muddle::Muddle;
   using MuddlePtr       = std::shared_ptr<Muddle>;

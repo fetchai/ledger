@@ -116,7 +116,7 @@ ArrayType combinations(std::size_t n, std::size_t r)
       if (v[i])
       {
         std::size_t dim = (i + 1);
-        output_array.Set(current_dim, current_row, static_cast<float>(dim));
+        output_array.Set({current_dim, current_row}, static_cast<float>(dim));
         if (current_dim == r - 1)
         {
           ++current_row;

@@ -282,10 +282,6 @@ struct Node
     DivideAssignOp,
     Identifier,
     Template,
-    Integer8,
-    UnsignedInteger8,
-    Integer16,
-    UnsignedInteger16,
     Integer32,
     UnsignedInteger32,
     Integer64,
@@ -322,9 +318,10 @@ struct Node
     ParenthesisGroup
   };
   Node(Kind kind__, Token *token__)
-    : kind(kind__)
-    , token(*token__)
-  {}
+  {
+    kind  = kind__;
+    token = *token__;
+  }
   virtual ~Node() = default;
   virtual void Reset()
   {
@@ -379,7 +376,10 @@ struct ExpressionNode : public Node
   };
   ExpressionNode(Kind kind__, Token *token__)
     : Node(kind__, token__)
-  {}
+  {
+    category                     = Category::Unknown;
+    function_invoked_on_instance = false;
+  }
   virtual ~ExpressionNode() = default;
   virtual void Reset() override
   {
@@ -389,11 +389,11 @@ struct ExpressionNode : public Node
     fg       = nullptr;
     function = nullptr;
   }
-  Category         category = Category::Unknown;
+  Category         category;
   VariablePtr      variable;
   TypePtr          type;
   FunctionGroupPtr fg;
-  bool             function_invoked_on_instance = false;
+  bool             function_invoked_on_instance;
   FunctionPtr      function;
 };
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;

@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
-
 #include <chrono>
 #include <condition_variable>
 #include <mutex>

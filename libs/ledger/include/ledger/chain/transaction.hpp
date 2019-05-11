@@ -19,8 +19,6 @@
 
 #include "ledger/chain/mutable_transaction.hpp"
 
-#include <vector>
-
 namespace fetch {
 namespace ledger {
 
@@ -139,8 +137,6 @@ protected:
 };
 
 using Transaction = VerifiedTransaction;
-
-using TxList = std::vector<UnverifiedTransaction>;
 
 }  // namespace ledger
 }  // namespace fetch

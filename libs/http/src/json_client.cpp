@@ -18,123 +18,25 @@
 
 #include "http/json_client.hpp"
 #include "core/json/document.hpp"
-#include "http/http_client.hpp"
-#include "http/https_client.hpp"
-#include "http/request.hpp"
-#include "http/response.hpp"
 
-#include <regex>
 #include <sstream>
 #include <utility>
 
+using fetch::http::HTTPRequest;
+using fetch::http::HTTPResponse;
+
 namespace fetch {
 namespace http {
-namespace {
 
 /**
- * Select the connect default port based on the target connection mode
+ * Construct a JsonHttpClient to a host and a port
  *
- * @param mode The connection mode
- * @return The default port for that connection type
- */
-uint16_t MapPort(JsonClient::ConnectionMode mode)
-{
-  uint16_t port{0};
-
-  switch (mode)
-  {
-  case JsonClient::ConnectionMode::HTTP:
-    port = HttpClient::DEFAULT_PORT;
-    break;
-  case JsonClient::ConnectionMode::HTTPS:
-    port = HttpsClient::DEFAULT_PORT;
-    break;
-  }
-
-  return port;
-}
-
-}  // namespace
-
-/**
- * Create the JSON client from a specified URL
- *
- * @param url The URL to use for the client
- * @return The constructed JSON Client
- */
-JsonClient JsonClient::CreateFromUrl(std::string const &url)
-{
-  // define the URL pattern that we are matching against
-  std::regex const url_pattern{R"(^(https?)://([\w\.-]+)(?::(\d+))?$)"};
-
-  // perform the match
-  std::smatch match{};
-  bool const  matched = std::regex_match(url, match, url_pattern);
-  bool const  success = matched && (match.size() == 4);
-
-  if (!success)
-  {
-    throw std::runtime_error("Failed to match against URL");
-  }
-
-  // extract the matches
-  auto const &scheme = match[1];
-  auto const &host   = match[2];
-  auto const &port   = match[3];
-
-  ConnectionMode mode{ConnectionMode::HTTP};
-  if (scheme == "https")
-  {
-    mode = ConnectionMode::HTTPS;
-  }
-
-  if (port.matched)
-  {
-    // convert the port to a integer (from a string)
-    uint16_t const port_value = static_cast<uint16_t>(std::atoi(port.first.base()));
-    return JsonClient{mode, host, port_value};
-  }
-  else
-  {
-    return JsonClient{mode, host};
-  }
-}
-
-/**
- * Construct a JsonClient from a mode and host
- *
- * @param mode The connection to be used
- * @param host The hostname or IP address to connect to
- */
-JsonClient::JsonClient(ConnectionMode mode, std::string host)
-  : JsonClient{mode, std::move(host), MapPort(mode)}
-{}
-
-/**
- * Construct a JsonClient from a mode, host and port
- *
- * @param mode The connection mode to be used
  * @param host The hostname or IP address to connect to
  * @param port The port number to connect on
  */
-JsonClient::JsonClient(ConnectionMode mode, std::string host, uint16_t port)
-{
-  // based on the connection mode choose the corresponding client implementation
-  switch (mode)
-  {
-  case ConnectionMode::HTTP:
-    client_ = std::make_unique<HttpClient>(std::move(host), port);
-    break;
-  case ConnectionMode::HTTPS:
-    client_ = std::make_unique<HttpsClient>(std::move(host), port);
-    break;
-  }
-
-  if (!client_)
-  {
-    throw std::runtime_error("Unable to create target HTTP(S) client");
-  }
-}
+JsonHttpClient::JsonHttpClient(std::string host, uint16_t port)
+  : client_(std::move(host), port)
+{}
 
 /**
  * Internal: Make the underlying HTTP request
@@ -146,8 +48,8 @@ JsonClient::JsonClient(ConnectionMode mode, std::string host, uint16_t port)
  * @param response The output response from the server
  * @return true if successful, otherwise false
  */
-bool JsonClient::Request(Method method, ConstByteArray const &endpoint, Headers const *headers,
-                         Variant const *request, Variant &response)
+bool JsonHttpClient::Request(Method method, ConstByteArray const &endpoint, Headers const *headers,
+                             Variant const *request, Variant &response)
 {
   bool success = false;
 
@@ -175,11 +77,13 @@ bool JsonClient::Request(Method method, ConstByteArray const &endpoint, Headers 
   }
 
   fetch::http::HTTPResponse http_response;
-  success = client_->Request(http_request, http_response);
+  if (client_.Request(http_request, http_response))
+  {
+    success = true;
 
-  // attempt to parse the body
-  json::JSONDocument doc(http_response.body());
-  response = doc.root();
+    json::JSONDocument doc(http_response.body());
+    response = doc.root();
+  }
 
   return success;
 }

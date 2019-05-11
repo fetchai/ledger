@@ -40,6 +40,25 @@ static constexpr char const *LOGGING_NAME              = "ExecutionManager";
 static constexpr std::size_t MAX_STARTUP_ITERATIONS    = 20;
 static constexpr std::size_t STARTUP_ITERATION_TIME_MS = 100;
 
+namespace {
+
+struct FilePaths
+{
+  std::string data_path;
+  std::string index_path;
+
+  static FilePaths Create(std::string const &prefix, std::string const &basename)
+  {
+    FilePaths f;
+    f.data_path  = prefix + basename + ".db";
+    f.index_path = prefix + basename + ".index.db";
+
+    return f;
+  }
+};
+
+}  // namespace
+
 namespace fetch {
 namespace ledger {
 

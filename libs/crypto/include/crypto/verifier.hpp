@@ -19,8 +19,6 @@
 
 #include "crypto/identity.hpp"
 
-#include <memory>
-
 namespace fetch {
 namespace crypto {
 
@@ -30,17 +28,13 @@ bool Verify(byte_array::ConstByteArray identity, byte_array::ConstByteArray cons
 class Verifier
 {
 public:
-  using ConstByteArray = byte_array::ConstByteArray;
+  using byte_array_type = byte_array::ConstByteArray;
 
-  static std::unique_ptr<Verifier> Build(Identity const &identity);
-  static bool                      Verify(Identity const &identity, ConstByteArray const &data,
-                                          ConstByteArray const &signature);
+  virtual ~Verifier()
+  {}
 
-  Verifier()          = default;
-  virtual ~Verifier() = default;
-
-  virtual Identity identity()                                                          = 0;
-  virtual bool     Verify(ConstByteArray const &data, ConstByteArray const &signature) = 0;
+  virtual Identity identity()                                                            = 0;
+  virtual bool     Verify(byte_array_type const &data, byte_array_type const &signature) = 0;
 };
 
 }  // namespace crypto

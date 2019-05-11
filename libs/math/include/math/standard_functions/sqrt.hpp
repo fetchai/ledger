@@ -37,7 +37,7 @@ meta::IfIsNonFixedPointArithmetic<Type, void> Sqrt(Type const &x, Type &ret)
 template <typename T>
 meta::IfIsFixedPoint<T, void> Sqrt(T const &n, T &ret)
 {
-  ret = T::Sqrt(n);
+  ret = T(std::sqrt(double(n)));
 }
 
 //////////////////
@@ -56,22 +56,24 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Sqrt(ArrayType const &array, ArrayType &ret)
 {
   ASSERT(ret.shape() == array.shape());
-  auto arr_it = array.cbegin();
-  auto rit    = ret.begin();
-
-  while (arr_it.is_valid())
+  typename ArrayType::SizeType ret_count{0};
+  for (typename ArrayType::Type &e : array)
   {
-    Sqrt(*arr_it, *rit);
-    ++arr_it;
-    ++rit;
+    Sqrt(e, ret.At(ret_count));
+    ++ret_count;
   }
 }
 
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Sqrt(ArrayType const &array)
 {
-  ArrayType ret{array.shape()};
-  Sqrt(array, ret);
+  ArrayType                    ret{array.shape()};
+  typename ArrayType::SizeType ret_count{0};
+  for (typename ArrayType::Type &e : array)
+  {
+    Sqrt(e, ret.At(ret_count));
+    ++ret_count;
+  }
   return ret;
 }
 

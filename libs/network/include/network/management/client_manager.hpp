@@ -119,7 +119,7 @@ public:
     {
       server_.PushRequest(client, msg);
     }
-    catch (std::exception const &ex)
+    catch (std::exception &ex)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Error processing packet from ", client, " error: ", ex.what());
       throw;

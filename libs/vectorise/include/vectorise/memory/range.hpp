@@ -23,37 +23,37 @@ namespace memory {
 class TrivialRange
 {
 public:
-  using SizeType = std::size_t;
+  using size_type = std::size_t;
 
-  TrivialRange(SizeType const &from, SizeType const &to)
+  TrivialRange(size_type const &from, size_type const &to)
     : from_(from)
     , to_(to)
   {}
 
-  SizeType const &from() const
+  size_type const &from() const
   {
     return from_;
   }
-  SizeType const &to() const
+  size_type const &to() const
   {
     return to_;
   }
-  SizeType step() const
+  size_type step() const
   {
     return 1;
   }
 
   template <std::size_t S>
-  SizeType SIMDFromLower() const
+  size_type SIMDFromLower() const
   {
-    SizeType G = from_ / S;
+    size_type G = from_ / S;
     return G * S;
   }
 
   template <std::size_t S>
-  SizeType SIMDFromUpper() const
+  size_type SIMDFromUpper() const
   {
-    SizeType G = from_ / S;
+    size_type G = from_ / S;
     if (G * S < from_)
     {
       ++G;
@@ -62,16 +62,16 @@ public:
   }
 
   template <std::size_t S>
-  SizeType SIMDToLower() const
+  size_type SIMDToLower() const
   {
-    SizeType G = to_ / S;
+    size_type G = to_ / S;
     return G * S;
   }
 
   template <std::size_t S>
-  SizeType SIMDToUpper() const
+  size_type SIMDToUpper() const
   {
-    SizeType G = to_ / S;
+    size_type G = to_ / S;
     if (G * S < to_)
     {
       ++G;
@@ -80,29 +80,29 @@ public:
   }
 
 private:
-  SizeType from_ = 0, to_ = 0;
+  size_type from_ = 0, to_ = 0;
 };
 
 class Range
 {
 public:
-  using SizeType = std::size_t;
+  using size_type = std::size_t;
 
-  Range(SizeType const &from = 0, SizeType const &to = SizeType(-1), SizeType const &step = 1)
+  Range(size_type const &from = 0, size_type const &to = size_type(-1), size_type const &step = 1)
     : from_(from)
     , to_(to)
     , step_(step)
   {}
 
-  SizeType const &from() const
+  size_type const &from() const
   {
     return from_;
   }
-  SizeType const &to() const
+  size_type const &to() const
   {
     return to_;
   }
-  SizeType const &step() const
+  size_type const &step() const
   {
     return step_;
   }
@@ -114,16 +114,16 @@ public:
 
   bool is_undefined() const
   {
-    return ((from_ == 0) && (to_ == SizeType(-1)));
+    return ((from_ == 0) && (to_ == size_type(-1)));
   }
 
-  TrivialRange ToTrivialRange(SizeType const &size) const
+  TrivialRange ToTrivialRange(size_type const &size) const
   {
     return TrivialRange(from_, std::min(size, to_));
   }
 
 private:
-  SizeType from_ = 0, to_ = 0, step_ = 1;
+  size_type from_ = 0, to_ = 0, step_ = 1;
 };
 
 }  // namespace memory

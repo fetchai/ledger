@@ -151,7 +151,7 @@ VerifiedTransaction GetRandomTx(crypto::ECDSASigner &certificate, uint64_t seed)
 
   tx.set_fee(seed);  // easiest way to create random tx.
   tx.set_data(marker);
-  tx.Sign(certificate.private_key());
+  tx.Sign(certificate.underlying_private_key());
   return VerifiedTransaction::Create(tx);
 }
 

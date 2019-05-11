@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/reactor.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/shard_config.hpp"
 #include "network/generics/backgrounded_work.hpp"
@@ -51,7 +50,6 @@ class RevertibleDocumentStoreProtocol;
 
 namespace ledger {
 
-class TxFinderProtocol;
 class TransactionStoreSyncProtocol;
 class TransactionStoreSyncService;
 class LaneIdentityProtocol;
@@ -97,7 +95,6 @@ public:
   LaneService &operator=(LaneService &&) = delete;
 
 private:
-  using Reactor                   = core::Reactor;
   using MuddlePtr                 = std::shared_ptr<Muddle>;
   using Server                    = fetch::muddle::rpc::Server;
   using ServerPtr                 = std::shared_ptr<Server>;
@@ -118,13 +115,8 @@ private:
   using TxSyncServicePtr          = std::shared_ptr<TransactionStoreSyncService>;
   using LaneIdentityPtr           = std::shared_ptr<LaneIdentity>;
   using LaneIdentityProtocolPtr   = std::shared_ptr<LaneIdentityProtocol>;
-  using TxFinderProtocolPtr       = std::unique_ptr<TxFinderProtocol>;
 
   static constexpr unsigned int SYNC_PERIOD_MS = 500;
-
-  TxStorePtr tx_store_;
-
-  Reactor reactor_;
 
   ShardConfig const         cfg_;
   BackgroundedWork          bg_work_;
@@ -162,10 +154,10 @@ private:
 
   /// @name Transaction Store
   /// @{
-  TxStoreProtoPtr     tx_store_protocol_;
-  TxSyncProtoPtr      tx_sync_protocol_;
-  TxSyncServicePtr    tx_sync_service_;
-  TxFinderProtocolPtr tx_finder_protocol_;
+  TxStorePtr       tx_store_;
+  TxStoreProtoPtr  tx_store_protocol_;
+  TxSyncProtoPtr   tx_sync_protocol_;
+  TxSyncServicePtr tx_sync_service_;
   /// @}
 };
 

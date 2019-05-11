@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+//#include "storage/file_object.hpp"
+
 #include "fetch_pybind.hpp"
 
 namespace fetch {

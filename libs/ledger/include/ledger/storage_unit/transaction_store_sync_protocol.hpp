@@ -46,10 +46,9 @@ class TransactionStoreSyncProtocol : public fetch::service::Protocol
 public:
   enum
   {
-    OBJECT_COUNT          = 1,
-    PULL_OBJECTS          = 2,
-    PULL_SUBTREE          = 3,
-    PULL_SPECIFIC_OBJECTS = 4
+    OBJECT_COUNT = 1,
+    PULL_OBJECTS = 2,
+    PULL_SUBTREE = 3
   };
 
   using ObjectStore = storage::TransientObjectStore<VerifiedTransaction>;
@@ -91,14 +90,18 @@ private:
     Timepoint             created{Clock::now()};
   };
 
-  using Self  = TransactionStoreSyncProtocol;
-  using Cache = std::vector<CachedObject>;
+  using Self   = TransactionStoreSyncProtocol;
+  using Cache  = std::vector<CachedObject>;
+  using TxList = std::vector<UnverifiedTransaction>;
 
   uint64_t ObjectCount();
   TxList   PullObjects(service::CallContext const *call_context);
 
   TxList PullSubtree(byte_array::ConstByteArray const &rid, uint64_t mask);
-  TxList PullSpecificObjects(std::vector<storage::ResourceID> const &rids);
+
+  // TODO(issue 7): Make cache configurable
+  static constexpr uint32_t MAX_CACHE_ELEMENTS    = 2000;  // really a "max"?
+  static constexpr uint32_t MAX_CACHE_LIFETIME_MS = 20000;
 
   ObjectStore *store_;  ///< The pointer to the object store
 

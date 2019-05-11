@@ -28,9 +28,9 @@ template <typename T, std::size_t N = sizeof(T)>
 class VectorRegisterIterator
 {
 public:
-  using type               = T;
-  using VectorRegisterType = VectorRegister<T, N>;
-  using mm_register_type   = typename VectorRegisterType::mm_register_type;
+  using type                 = T;
+  using vector_register_type = VectorRegister<T, N>;
+  using mm_register_type     = typename vector_register_type::mm_register_type;
 
   VectorRegisterIterator()
     : ptr_(nullptr)
@@ -41,7 +41,7 @@ public:
     , end_((mm_register_type *)(d + size))
   {}
 
-  void Next(VectorRegisterType &m)
+  void Next(vector_register_type &m)
   {
     assert((end_ == nullptr) || (ptr_ < end_));
 

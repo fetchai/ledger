@@ -106,7 +106,7 @@ void TransactionVerifier::Verifier()
         }
       }
     }
-    catch (std::exception const &e)
+    catch (std::exception &e)
     {
       FETCH_LOG_WARN(LOGGING_NAME, name_ + " Exception caught: ", e.what());
     }
@@ -160,7 +160,7 @@ void TransactionVerifier::Dispatcher()
         break;
       }
     }
-    catch (std::exception const &e)
+    catch (std::exception &e)
     {
       FETCH_LOG_WARN(LOGGING_NAME, name_ + " Exception caught: ", e.what());
     }

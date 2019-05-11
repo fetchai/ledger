@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
@@ -30,13 +29,15 @@ namespace math {
 template <typename Type>
 meta::IfIsNonFixedPointArithmetic<Type, void> Pow(Type const &x, Type const &y, Type &ret)
 {
-  ret = std::pow(x, y);
+  ret = Type(std::pow(x, y));
 }
 
+// TODO(800) - native implementations of fixed point are required; casting to double will not be
+// permissible
 template <typename T>
 meta::IfIsFixedPoint<T, void> Pow(T const &x, T const &y, T &ret)
 {
-  ret = T::Pow(x, y);
+  ret = T(std::pow(double(x), double(y)));
 }
 
 //////////////////
@@ -56,15 +57,11 @@ meta::IfIsMathArray<ArrayType, void> Pow(ArrayType const &               array1,
                                          typename ArrayType::Type const &exponent, ArrayType &ret)
 {
   ASSERT(ret.shape() == array1.shape());
-  auto arr_it = array1.cbegin();
-  auto rit    = ret.begin();
-
-  while (arr_it.is_valid())
+  typename ArrayType::SizeType ret_count{0};
+  for (typename ArrayType::Type &e : array1)
   {
-    *rit = 1;
-    Pow(*arr_it, exponent, *rit);
-    ++arr_it;
-    ++rit;
+    Pow(e, exponent, ret.At(ret_count));
+    ++ret_count;
   }
 }
 
@@ -72,44 +69,42 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Pow(ArrayType const &               array1,
                                               typename ArrayType::Type const &exponent)
 {
-  ArrayType ret{array1.shape()};
-  Pow(array1, exponent, ret);
+  ArrayType                    ret{array1.shape()};
+  typename ArrayType::SizeType ret_count{0};
+  for (typename ArrayType::Type &e : array1)
+  {
+    Pow(e, exponent, ret.At(ret_count));
+    ++ret_count;
+  }
   return ret;
 }
 
 template <typename Type>
 meta::IfIsArithmetic<Type, Type> Square(Type const &x)
 {
-  return x * x;
+  Type ret;
+  Pow(x, Type(2), ret);
+  return ret;
 }
 
 template <typename Type>
 meta::IfIsArithmetic<Type, void> Square(Type const &x, Type &ret)
 {
-  ret = x * x;
-}
-
-template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, void> Square(ArrayType const &x, ArrayType &ret)
-{
-  ASSERT(ret.shape() == x.shape());
-  auto arr_it = x.cbegin();
-  auto rit    = ret.begin();
-
-  while (arr_it.is_valid())
-  {
-    *rit = (*arr_it) * (*arr_it);
-    ++arr_it;
-    ++rit;
-  }
+  Pow(x, Type(2), ret);
 }
 
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Square(ArrayType const &x)
 {
   ArrayType ret{x.shape()};
-  Square(x, ret);
+  Pow(x, typename ArrayType::Type(2), ret);
   return ret;
+}
+
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> Square(ArrayType const &x, ArrayType &ret)
+{
+  Pow(x, typename ArrayType::Type(2), ret);
 }
 
 }  // namespace math

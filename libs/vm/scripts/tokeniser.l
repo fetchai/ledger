@@ -85,40 +85,20 @@ IDENT		[_a-zA-Z][_a-zA-Z0-9]*
 	
 	/* numbers */
 		
-{INTEGER}i8 {
-	return Set(yylval, fetch::vm::Token::Kind::Integer8, yytext, yyleng, yyextra);
-}
-
-{INTEGER}u8 {
-	return Set(yylval, fetch::vm::Token::Kind::UnsignedInteger8, yytext, yyleng, yyextra);
-}
-
-{INTEGER}i16 {
-	return Set(yylval, fetch::vm::Token::Kind::Integer16, yytext, yyleng, yyextra);
-}
-
-{INTEGER}u16 {
-	return Set(yylval, fetch::vm::Token::Kind::UnsignedInteger16, yytext, yyleng, yyextra);
-}
-
-{INTEGER}i32 {
+{INTEGER} {
 	return Set(yylval, fetch::vm::Token::Kind::Integer32, yytext, yyleng, yyextra);
 }
 
-{INTEGER}u32 {
+{INTEGER}u {
 	return Set(yylval, fetch::vm::Token::Kind::UnsignedInteger32, yytext, yyleng, yyextra);
 }
 
-{INTEGER}i64 {
+{INTEGER}l {
 	return Set(yylval, fetch::vm::Token::Kind::Integer64, yytext, yyleng, yyextra);
 }
 
-{INTEGER}u64 {
+{INTEGER}ul {
 	return Set(yylval, fetch::vm::Token::Kind::UnsignedInteger64, yytext, yyleng, yyextra);
-}
-
-{INTEGER} {
-	return Set(yylval, fetch::vm::Token::Kind::Integer32, yytext, yyleng, yyextra);
 }
 
 {REAL1}f |

@@ -20,7 +20,6 @@
 #include "core/assert.hpp"
 #include <numeric>
 
-#include "math/base_types.hpp"
 #include "math/comparison.hpp"
 #include "math/fundamental_operators.hpp"  // add, subtract etc.
 #include "math/meta/math_type_traits.hpp"
@@ -28,182 +27,99 @@
 namespace fetch {
 namespace math {
 
-template <typename T, typename C>
+template <typename T>
 class Tensor;
 
-// TODO (private 854) - vectorisation implementations not yet called
-namespace details_vectorisation {
-
-/**
- * Min function for returning the smallest value in an array
- * @tparam ArrayType
- * @param array
- * @return
- */
-template <typename ArrayType>
-inline void Min(ArrayType const &array, typename ArrayType::Type &ret)
-{
-  using VectorRegisterType = typename ArrayType::VectorRegisterType;
-
-  ret = array.data().in_parallel().Reduce(
-      memory::TrivialRange(0, array.size()),
-      [](VectorRegisterType const &a, VectorRegisterType const &b) { return min(a, b); });
-}
-
-/**
- * return the product of all elements in the array
- * @tparam T
- * @tparam C
- * @param obj1
- * @param ret
- */
-template <typename ArrayType>
-void Product(ArrayType const &obj1, typename ArrayType::Type &ret)
-{
-  ret = obj1.data().in_parallel().Reduce(memory::TrivialRange(0, obj1.size()),
-                                         [](typename ArrayType::VectorRegisterType const &a,
-                                            typename ArrayType::VectorRegisterType const &b) ->
-                                         typename ArrayType::VectorRegisterType { return a * b; });
-}
-
-/**
- * return the product of all elements in the array
- * @tparam T
- * @tparam C
- * @param obj1
- * @param ret
- */
-template <typename ArrayType>
-void Sum(ArrayType const &obj1, typename ArrayType::Type &ret)
-{
-  ret = obj1.data().in_parallel().Reduce(memory::TrivialRange(0, obj1.size()),
-                                         [](typename ArrayType::VectorRegisterType const &a,
-                                            typename ArrayType::VectorRegisterType const &b) ->
-                                         typename ArrayType::VectorRegisterType { return a + b; });
-}
-
-}  // namespace details_vectorisation
+template <typename T, typename SizeType>
+class TensorIterator;
 
 /**
  * applies bit mask to one array storing result in new array
  * @param x
  */
 template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
-                                                 ArrayType const &mask, ArrayType &ret)
+meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType &input_array, ArrayType const &mask,
+                                                 ArrayType &ret)
 {
   ASSERT(input_array.size() == mask.size());
-  ASSERT(ret.size() == typename ArrayType::SizeType(Sum(mask)));
+  ASSERT(ret.size() == Sum(mask));
 
-  auto     it1 = input_array.cbegin();
-  auto     it2 = mask.cbegin();
-  auto     rit = ret.begin();
-  SizeType counter{0};
-  while (rit.is_valid())
+  typename ArrayType::SizeType counter = 0;
+  for (typename ArrayType::SizeType i = 0; i < input_array.size(); ++i)
   {
     // TODO(private issue 193): implement boolean only array
-    ASSERT((*it2 == 1) || (*it2 == 0));
-    if (std::uint64_t(*it2))
+    ASSERT((mask.At(i) == 1) || (mask.At(i) == 0));
+    if (bool(mask.At(i)))
     {
-      *rit = *it1;
+      ret.At(counter) = input_array.At(i);
       ++counter;
     }
-    ++it1;
-    ++it2;
-    ++rit;
   }
-
-  ret.LazyResize(counter);
 }
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> BooleanMask(ArrayType &input_array, ArrayType const &mask)
 {
-  ArrayType ret{typename ArrayType::SizeType(Sum(mask))};
+  ArrayType ret{Sum(mask)};
   BooleanMask(input_array, mask, ret);
   return ret;
 }
 
+/*
+ * Adds sparse updates to the variable referenced
+ */
+namespace details {
+template <typename ArrayType>
+void ScatterImplementation(ArrayType &input_array, ArrayType &updates, ArrayType &indices)
+{
+  // sort indices and updates into ascending order
+  std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> AB;
+
+  // copy into pairs
+  // Note that A values are put in "first" this is very important
+  for (typename ArrayType::SizeType i = 0; i < updates.size(); ++i)
+  {
+    AB.push_back(std::make_pair(indices[i], updates[i]));
+  }
+
+  std::sort(AB.begin(), AB.end());
+
+  // Place back into arrays
+  for (size_t i = 0; i < updates.size(); ++i)
+  {
+    updates[i] = AB[i].second;
+    indices[i] = static_cast<typename ArrayType::type>(AB[i].first);
+  }
+
+  // scatter
+  typename ArrayType::SizeType arr_count = 0;
+  for (typename ArrayType::SizeType count = 0; count < indices.size(); ++count)
+  {
+    // TODO(private issue 282): Think about this code
+    while (arr_count < static_cast<typename ArrayType::SizeType>(indices[count]))
+    {
+      ++arr_count;
+    }
+
+    input_array[arr_count] = updates[count];
+  }
+}
+}  // namespace details
+
 /**
- * Scatter updates data in the input array at locations specified by indices
- * with values specified by updates
- * @tparam ArrayType Tensor of some data type
- * @tparam Indices indices which are to be updated
- * @param input_array the input tensor to update
- * @param updates the update values to apply
- * @param indices vector of indices at which to apply the updates
+ * Copies the values of updates into the specified indices of the first dimension of data in this
+ * object
  */
 template <typename ArrayType>
-void Scatter(ArrayType &input_array, ArrayType const &updates,
-             std::vector<SizeVector> const &indices)
+void Scatter(ArrayType &input_array, ArrayType const &updates, ArrayType const &indices)
 {
-  ASSERT(indices.size() == updates.size());
+  ASSERT(updates.size() == indices.size());
+  ASSERT(input_array.size() >= Max(indices));
 
-  auto     indices_it = indices.begin();
-  SizeType update_idx{0};
-  while (indices_it != indices.end())
+  typename ArrayType::SizeType idx{0};
+  for (auto &update_val : updates)
   {
-    input_array[input_array.ComputeIndex(*indices_it)] = updates[update_idx];
-    ++indices_it;
-    ++update_idx;
+    input_array.At(indices.At(idx)) = update_val;
   }
-}
-
-/**
- * returns the product of all values in one array
- * @tparam ArrayType
- * @tparam T
- * @param array1
- * @param ret
- */
-template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, void> Product(ArrayType const &array1, T &ret)
-{
-  if (array1.size() == 0)
-  {
-    ret = T{0};
-  }
-  else
-  {
-    ret = typename ArrayType::Type(1);
-    for (auto const &val : array1)
-    {
-      ret *= val;
-    }
-  }
-}
-
-template <typename T, typename C, typename = std::enable_if_t<meta::IsArithmetic<T>>>
-meta::IfIsMathArray<Tensor<T, C>, T> Product(Tensor<T, C> const &array1)
-{
-  T ret;
-  Product(array1, ret);
-  return ret;
-}
-
-/**
- * return the product of all elements in the vector
- * @tparam T
- * @param obj1
- * @param ret
- */
-template <typename T>
-void Product(std::vector<T> const &obj1, T &ret)
-{
-  if (obj1.size() == 0)
-  {
-    ret = 0;
-  }
-  else
-  {
-    ret = std::accumulate(std::begin(obj1), std::end(obj1), T(1), std::multiplies<>());
-  }
-}
-template <typename T>
-T Product(std::vector<T> const &obj1)
-{
-  T ret;
-  Product(obj1, ret);
-  return ret;
 }
 
 /**
@@ -217,8 +133,8 @@ T Product(std::vector<T> const &obj1)
 template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
 meta::IfIsMathArray<ArrayType, void> Max(ArrayType const &array, T &ret)
 {
-  ret = NumericLowest<T>();
-  for (T const &e : array)
+  ret = std::numeric_limits<T>::lowest();
+  for (T &e : array)
   {
     if (e > ret)
     {
@@ -242,56 +158,51 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Max(ArrayType const &ar
  * @param axis
  * @param ret
  */
-template <typename ArrayType>
-void Max(ArrayType const &array, typename ArrayType::SizeType const &axis, ArrayType &ret)
+template <typename T>
+void Max(Tensor<T> const &array, typename Tensor<T>::SizeType const &axis, Tensor<T> &ret)
 {
+  ASSERT(array.shape().size() <= 2);
   ASSERT(axis < array.shape().size());
 
   if (array.shape().size() == 1)
   {
     ASSERT(axis == 0);
-    ret[0] = Max(array);
-  }
-  else
-  {  // Argmax along a single axis
-    SizeType axis_length = array.shape()[axis];
-    ASSERT(axis_length > 1);
-    ASSERT(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
 
-    // fill the return with the first index values
-    ret.Assign(array.Slice(0, axis));
-
-    //
-    for (SizeType n{1}; n < axis_length; ++n)
+    T cur_max = std::numeric_limits<T>::lowest();
+    for (T &e : array)
     {
-      auto cur_slice    = array.Slice(n, axis);
-      auto cur_slice_it = cur_slice.begin();
-      auto rit          = ret.begin();
-
-      // check every element in the n-1 dimensional return
-      while (cur_slice_it.is_valid())
+      if (e > cur_max)
       {
-        if (*cur_slice_it > *rit)
-        {
-          *rit = *cur_slice_it;
-        }
-        ++rit;
-        ++cur_slice_it;
+        cur_max = e;
       }
     }
+    ret[0] = cur_max;
   }
-}
-template <typename T>
-void Max(std::vector<T> const &obj1, T &ret)
-{
-  ret = *std::max_element(std::begin(obj1), std::end(obj1));
-}
-template <typename T>
-T Max(std::vector<T> const &obj1)
-{
-  T ret;
-  Max(obj1, ret);
-  return ret;
+  else
+  {
+    typename Tensor<T>::SizeType off_axis = 0;
+    if (axis == 0)
+    {
+      off_axis = 1;
+    }
+    else
+    {
+      off_axis = 0;
+    }
+
+    for (std::size_t j = 0; j < array.shape()[off_axis]; ++j)
+    {
+      T cur_max = std::numeric_limits<T>::lowest();
+      for (T &e : array.Slice(j))
+      {
+        if (e > cur_max)
+        {
+          cur_max = e;
+        }
+      }
+      ret[j] = cur_max;
+    }
+  }
 }
 
 /**
@@ -304,16 +215,15 @@ T Max(std::vector<T> const &obj1)
 template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
 meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, T &ret)
 {
-  ret = NumericMax<T>();
-  for (T const &e : array)
+  ret = std::numeric_limits<T>::max();
+  for (T &e : array)
   {
-    if (e < ret)
+    if (ret < e)
     {
       ret = e;
     }
   }
 }
-
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Min(ArrayType const &array)
 {
@@ -323,56 +233,7 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Min(ArrayType const &ar
 }
 
 /**
- * Implementation of Min that returns the n-1 dim array by finding the min of all 1-d vectors within
- * the array
- * @tparam ArrayType array or tensor type
- * @param array the array or tensor
- * @param axis the axis over which to iterate
- * @param ret the return object with n-1 dims
- */
-template <typename ArrayType>
-void Min(ArrayType const &array, typename ArrayType::SizeType const &axis, ArrayType &ret)
-{
-  ASSERT(array.shape().size() <= 2);
-  ASSERT(axis < array.shape().size());
-
-  if (array.shape().size() == 1)
-  {
-    ASSERT(axis == 0);
-    ret[0] = Min(array);
-  }
-  else
-  {  // Argmax along a single axis
-    SizeType axis_length = array.shape()[axis];
-    ASSERT(axis_length > 1);
-    ASSERT(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
-
-    // fill the return with the first index values
-    ret.Assign(array.Slice(0, axis));
-
-    //
-    for (SizeType n{1}; n < axis_length; ++n)
-    {
-      auto cur_slice    = array.Slice(n, axis);
-      auto cur_slice_it = cur_slice.begin();
-      auto rit          = ret.begin();
-
-      // check every element in the n-1 dimensional return
-      while (cur_slice_it.is_valid())
-      {
-        if (*cur_slice_it < *rit)
-        {
-          *rit = *cur_slice_it;
-        }
-        ++rit;
-        ++cur_slice_it;
-      }
-    }
-  }
-}
-
-/**
- * Returns an array containing the elementwise maximum of two other arrays
+ * Returns an array containing the elementwise maximum of two other ndarrays
  * @param x array input 1
  * @param y array input 2
  * @return the combined array
@@ -384,23 +245,45 @@ meta::IfIsMathArray<ArrayType, void> Maximum(ArrayType const &array1, ArrayType 
   ASSERT(array1.shape() == array2.shape());
   ASSERT(ret.shape() == array2.shape());
 
-  auto it1 = array1.cbegin();
-  auto it2 = array2.cbegin();
-  auto rit = ret.begin();
-
-  while (it1.is_valid())
+  typename ArrayType::SizeType idx{0};
+  for (auto &ret_val : ret)
   {
-    *rit = (*it1 > *it2) ? *it1 : *it2;
-    ++it1;
-    ++it2;
-    ++rit;
+    ret_val = Max(array1.at(idx), array2.at(idx));
+    ++idx;
   }
+  return ret;
 }
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> Maximum(ArrayType const &array1, ArrayType const &array2)
 {
   ArrayType ret(array1.shape());
   Maximum(array1, array2, ret);
+  return ret;
+}
+
+/**
+ * returns the product of all values in one array
+ * @tparam ArrayType
+ * @tparam T
+ * @param array1
+ * @param ret
+ * @return
+ */
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsMathArray<ArrayType, void> Product(ArrayType const &array1, T &ret)
+{
+  ret = typename ArrayType::Type(1);
+  for (auto &val : array1)
+  {
+    ret *= val;
+  }
+}
+
+template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+meta::IfIsMathArray<ArrayType, T> Product(ArrayType const &array1)
+{
+  T ret;
+  Product(array1, ret);
   return ret;
 }
 
@@ -430,23 +313,24 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Sum(ArrayType const &ar
 }
 
 template <typename ArrayType>
-void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
+meta::IfIsMathArray<ArrayType, void> ReduceSum(ArrayType const &            obj1,
+                                               typename ArrayType::SizeType axis, ArrayType &ret)
 {
   ASSERT((axis == 0) || (axis == 1));
   ASSERT(obj1.shape().size() == 2);
 
-  SizeVector access_idx{0, 0};
+  std::vector<typename ArrayType::SizeType> access_idx{0, 0};
   if (axis == 0)
   {
     ASSERT(ret.shape()[0] == 1);
     ASSERT(ret.shape()[1] == obj1.shape()[1]);
 
-    for (SizeType i = 0; i < ret.size(); ++i)
+    for (typename ArrayType::SizeType i = 0; i < ret.size(); ++i)
     {
       ret[i] = typename ArrayType::Type(0);
-      for (SizeType j = 0; j < obj1.shape()[0]; ++j)
+      for (typename ArrayType::SizeType j = 0; j < obj1.shape()[0]; ++j)
       {
-        ret[i] += obj1(j, i);
+        ret[i] += obj1({j, i});
       }
     }
   }
@@ -455,32 +339,32 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
     ASSERT(ret.shape()[0] == obj1.shape()[0]);
     ASSERT(ret.shape()[1] == 1);
 
-    for (SizeType i = 0; i < ret.size(); ++i)
+    for (typename ArrayType::SizeType i = 0; i < ret.size(); ++i)
     {
       ret[i] = typename ArrayType::Type(0);
-      for (SizeType j = 0; j < obj1.shape()[1]; ++j)
+      for (typename ArrayType::SizeType j = 0; j < obj1.shape()[1]; ++j)
       {
-        ret[i] += obj1(i, j);
+        ret[i] += obj1({i, j});
       }
     }
   }
 }
-
 template <typename ArrayType>
-ArrayType ReduceSum(ArrayType const &obj1, SizeType axis)
+meta::IfIsMathArray<ArrayType, ArrayType> ReduceSum(ArrayType const &            obj1,
+                                                    typename ArrayType::SizeType axis)
 {
   ASSERT((axis == 0) || (axis == 1));
   if (axis == 0)
   {
-    SizeVector new_shape{1, obj1.shape()[1]};
-    ArrayType  ret{new_shape};
+    std::vector<typename ArrayType::SizeType> new_shape{1, obj1.shape()[1]};
+    ArrayType                                 ret{new_shape};
     ReduceSum(obj1, axis, ret);
     return ret;
   }
   else
   {
-    SizeVector new_shape{obj1.shape()[0], 1};
-    ArrayType  ret{new_shape};
+    std::vector<typename ArrayType::SizeType> new_shape{obj1.shape()[0], 1};
+    ArrayType                                 ret{new_shape};
     ReduceSum(obj1, axis, ret);
     return ret;
   }
@@ -490,18 +374,14 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &                   obj1,
                                                      typename ArrayType::SizeType const &axis)
 {
-  ASSERT(axis == 0 || axis == 1);
-  typename ArrayType::DataType n;
-  if (axis == 0)
-  {
-    n = obj1.shape()[1];
-  }
-  else
-  {
-    n = obj1.shape()[0];
-  }
+  assert(axis == 0 || axis == 1);
+  typename ArrayType::Type n;
+
+  n = static_cast<typename ArrayType::Type>(obj1.shape().at(axis));
+
   return Divide(ReduceSum(obj1, axis), n);
 }
+
 /**
  * Distance between max and min values in an array
  */
@@ -519,66 +399,48 @@ void PeakToPeak(ArrayType arr)
  * @return
  */
 template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &ret,
-                                            SizeType axis = NO_AXIS)
+void ArgMax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeType axis = 0)
 {
-  using Type = typename ArrayType::Type;
+  ASSERT((array.shape().size() == 1) || (array.shape().size() == 2));
+  ASSERT((axis == 0) || (axis == 1));
 
-  if (axis == NO_AXIS)
-  {  // Argmax over the full array
-    ASSERT(ret.size() == SizeType(1));
-    SizeType position = 0;
-    auto     it       = array.begin();
-    Type     value    = NumericLowest<Type>();
-    while (it.is_valid())
+  typename ArrayType::Type cur_maxval = std::numeric_limits<typename ArrayType::Type>::lowest();
+
+  if (array.shape().size() == 1)
+  {
+    // just using ret as a free variable to store the current maxval for the loop here
+    for (typename ArrayType::SizeType i(0); i < array.size(); ++i)
     {
-      if (*it > value)
+      if (cur_maxval < array[i])
       {
-        value    = *it;
-        position = it.counter();
+        cur_maxval = array.At(i);
+        ret.At(0)  = typename ArrayType::Type(i);
       }
-      ++it;
     }
-
-    ret[0] = static_cast<Type>(position);
   }
   else
-  {  // Argmax along a single axis
-    SizeType axis_length = array.shape()[axis];
-    ASSERT(axis_length > 1);
-    ASSERT(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
-
-    ret.Fill(Type(0));
-    auto max_slice = (array.Slice(0, axis)).Copy();
-
-    for (SizeType n{1}; n < axis_length; ++n)
+  {
+    if (axis == 0)
     {
-      auto cur_slice = array.Slice(n, axis);
-
-      auto max_slice_it = max_slice.begin();
-      auto cur_slice_it = cur_slice.begin();
-      auto ret_it       = ret.begin();
-
-      // check every element in the n-1 dimensional return
-      while (max_slice_it.is_valid())
+      // get arg max for each row indexing by axis 0
+      for (std::size_t j = 0; j < array.shape().at(axis); ++j)
       {
-        if (*cur_slice_it > *max_slice_it)
-        {
-          *ret_it       = static_cast<Type>(n);
-          *max_slice_it = *cur_slice_it;
-        }
-        ++ret_it;
-        ++cur_slice_it;
-        ++max_slice_it;
+        ret.At(j) = ArgMax(array.Slice(j), axis).At(0);
       }
+    }
+    else
+    {
+      throw std::runtime_error(
+          "Argmax for axis == 1 not yet implemented; depends upon arbitrary dimension slicing for "
+          "tensor");
     }
   }
 }
 template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, ArrayType> ArgMax(ArrayType const &array, SizeType axis = 0)
+ArrayType ArgMax(ArrayType const &array, typename ArrayType::SizeType axis = 0)
 {
-  assert((array.shape().size() == 1) || (array.shape().size() == 2));
-  assert((axis == 0) || (axis == 1));
+  ASSERT((array.shape().size() == 1) || (array.shape().size() == 2));
+  ASSERT((axis == 0) || (axis == 1));
 
   ArrayType ret;
   if (array.shape().size() == 1)
@@ -588,25 +450,18 @@ meta::IfIsMathArray<ArrayType, ArrayType> ArgMax(ArrayType const &array, SizeTyp
   }
   else
   {
-    SizeVector ret_shape = array.shape();
-    ret_shape.erase(ret_shape.begin() + int(axis));
-    ret = ArrayType{ret_shape};
+    // 2D argmax result has size
+    if (axis == 0)
+    {
+      ret = ArrayType{{array.shape().at(axis), typename ArrayType::SizeType(1)}};
+    }
+    else
+    {
+      ret = ArrayType{{typename ArrayType::SizeType(1), array.shape().at(axis)}};
+    }
   }
 
   ArgMax(array, ret, axis);
-  return ret;
-}
-
-template <typename T>
-void ArgMax(std::vector<T> const &obj1, T &ret)
-{
-  ret = T(std::distance(std::begin(obj1), std::max_element(std::begin(obj1), std::end(obj1))));
-}
-template <typename T>
-T ArgMax(std::vector<T> const &obj1)
-{
-  T ret;
-  ArgMax(obj1, ret);
   return ret;
 }
 
@@ -618,14 +473,18 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Dot(ArrayType const &A, ArrayT
   ASSERT(B.shape().size() == 2);
   ASSERT(A.shape()[1] == B.shape()[0]);
 
-  for (SizeType i(0); i < A.shape()[0]; ++i)
+  for (typename ArrayType::SizeType i(0); i < A.shape()[0]; ++i)
   {
-    for (SizeType j(0); j < B.shape()[1]; ++j)
+    for (typename ArrayType::SizeType j(0); j < B.shape()[1]; ++j)
     {
-      ret.At(i, j) = A.At(i, 0) * B.At(0, j);
-      for (SizeType k(1); k < A.shape()[1]; ++k)
+      ret.At(std::vector<typename ArrayType::SizeType>({i, j})) =
+          A.At(std::vector<typename ArrayType::SizeType>({i, 0})) *
+          B.At(std::vector<typename ArrayType::SizeType>({0, j}));
+      for (typename ArrayType::SizeType k(1); k < A.shape()[1]; ++k)
       {
-        ret.At(i, j) += A.At(i, k) * B.At(k, j);
+        ret.At(std::vector<typename ArrayType::SizeType>({i, j})) +=
+            A.At(std::vector<typename ArrayType::SizeType>({i, k})) *
+            B.At(std::vector<typename ArrayType::SizeType>({k, j}));
       }
     }
   }
@@ -663,7 +522,9 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DotTranspose(ArrayType const &
     {
       for (size_t k(0); k < A.shape()[1]; ++k)
       {
-        ret.At(i, j) += A.At(i, k) * B.At(j, k);
+        ret.At(std::vector<typename ArrayType::SizeType>({i, j})) +=
+            A.At(std::vector<typename ArrayType::SizeType>({i, k})) *
+            B.At(std::vector<typename ArrayType::SizeType>({j, k}));
       }
     }
   }
@@ -700,7 +561,9 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> TransposeDot(ArrayType const &
     {
       for (size_t k(0); k < A.shape()[0]; ++k)
       {
-        ret.At(i, j) += A.At(k, i) * B.At(k, j);
+        ret.At(std::vector<typename ArrayType::SizeType>({i, j})) +=
+            A.At(std::vector<typename ArrayType::SizeType>({k, i})) *
+            B.At(std::vector<typename ArrayType::SizeType>({k, j}));
       }
     }
   }
@@ -724,55 +587,11 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DynamicStitch(ArrayType &     
   ASSERT(data.size() <= input_array.size());
   ASSERT(input_array.size() >= Max(indices));
   ASSERT(Min(indices) >= 0);
-  input_array.LazyResize(indices.size());
-
-  auto ind_it  = indices.cbegin();
-  auto data_it = data.cbegin();
-
-  while (data_it.is_valid())
+  for (typename ArrayType::SizeType i = 0; i < indices.size();
+       ++i)  // iterate through lists of indices
   {
-    // loop through all output data locations identifying the next data point to copy into it
-    for (SizeType i = 0; i < indices.size(); ++i)  // iterate through lists of indices
-    {
-      input_array.Set(SizeType(*ind_it), *data_it);
-    }
+    input_array.Set(typename ArrayType::SizeType(indices.At(i)), data.At(i));
   }
-}
-
-template <typename ArrayType>
-void Concat(ArrayType &ret, std::vector<ArrayType> const &input_arrays)
-{
-  ASSERT(input_arrays.size() > 0);
-
-  SizeType new_size = 0;
-  for (SizeType i = 0; i < input_arrays.size(); ++i)
-  {
-    new_size += input_arrays[i].size();
-  }
-  ret.Resize(new_size);
-
-  if (input_arrays.size() == 1)
-  {
-    ret.Copy(input_arrays[0]);
-  }
-  else
-  {
-    SizeType count = 0;
-    for (SizeType j = 0; j < input_arrays.size(); ++j)
-    {
-      for (SizeType i = 0; i < input_arrays[j].size(); ++i, ++count)
-      {
-        ret[count] = input_arrays[j][i];
-      }
-    }
-  }
-}
-template <typename ArrayType>
-ArrayType Concat(std::vector<ArrayType> const &input_arrays)
-{
-  ArrayType ret;
-  Concat(ret, input_arrays);
-  return ret;
 }
 
 }  // namespace math

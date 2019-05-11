@@ -26,8 +26,10 @@
 
 #include <cmath>
 
-namespace fetch {
-namespace vm_modules {
+namespace fetch
+{
+namespace vm_modules
+{
 
 inline double Sqrt(fetch::vm::VM * /*vm*/, double x)
 {
@@ -39,5 +41,5 @@ inline void BindSqrt(vm::Module &module)
   module.CreateFreeFunction("sqrt", &Sqrt);
 }
 
-}  // namespace vm_modules
-}  // namespace fetch
+}
+}

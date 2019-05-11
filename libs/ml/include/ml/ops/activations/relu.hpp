@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "math/ml/activation_functions/relu.hpp"
+
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -29,42 +29,41 @@ template <class T>
 class Relu : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType      = T;
-  using DataType       = typename ArrayType::Type;
-  using SizeType       = typename ArrayType::SizeType;
-  using ArrayPtrType   = std::shared_ptr<ArrayType>;
-  using ConstSliceType = typename ArrayType::ConstSliceType;
+  using ArrayType    = T;
+  using DataType     = typename ArrayType::Type;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   Relu()          = default;
   virtual ~Relu() = default;
 
-  // f(x)=max(0,x);
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
-    ASSERT(inputs.size() == 1);
-    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
-    fetch::math::Relu(inputs.front().get(), output);
-    return output;
+    assert(inputs.size() == 1);
+    if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
+    {
+      this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
+    }
+
+    fetch::math::Relu(inputs.front().get(), *this->output_);
+    return *(this->output_);
   }
 
-  // x>0 f'(x)=1, x<=0 f'(x)=0
   virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
-    ASSERT(inputs.size() == 1);
-    ASSERT(inputs[0].get().shape() == errorSignal.shape());
+    assert(inputs.size() == 1);
+    assert(inputs[0].get().shape() == errorSignal.shape());
 
-    ArrayType return_signal = errorSignal.Copy();
-    for (SizeType i{0}; i < inputs.front().get().size(); ++i)
+    ArrayType returnSignal = errorSignal.Clone();
+    for (std::size_t i = 0; i < inputs.front().get().size(); ++i)
     {
       if (inputs.front().get()[i] <= DataType(0))
       {
-        return_signal.data().Set(i, DataType(0));
+        returnSignal.Set(i, DataType(0));
       }
     }
-    return {return_signal};
+    return {returnSignal};
   }
 
   static constexpr char const *DESCRIPTOR = "Relu";

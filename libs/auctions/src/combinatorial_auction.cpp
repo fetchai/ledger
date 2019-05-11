@@ -83,7 +83,7 @@ void CombinatorialAuction::Mine(std::size_t random_seed, std::size_t run_time)
     std::cout << "mining run: " << i << std::endl;
     for (std::size_t j = 0; j < bids_.size(); ++j)
     {
-      prev_active_ = active_.Copy();
+      prev_active_ = active_.Clone();
       prev_reward  = TotalBenefit();
 
       RandomInt nn = 1 + ((rng() >> 17) % max_flips_);
@@ -106,7 +106,7 @@ void CombinatorialAuction::Mine(std::size_t random_seed, std::size_t run_time)
       // record best iteration
       if (new_reward > best_value_)
       {
-        best_active_ = active_.Copy();
+        best_active_ = active_.Clone();
         best_value_  = new_reward;
       }
 
@@ -173,7 +173,7 @@ Value CombinatorialAuction::TotalBenefit()
     for (std::size_t j = 0; j < bids_.size(); ++j)
     {
       a2 = active_[j];
-      reward += a1 * a2 * couplings_.At(j, i);
+      reward += a1 * a2 * couplings_.At({j, i});
     }
   }
 
@@ -189,7 +189,7 @@ void CombinatorialAuction::SelectBid(std::size_t const &bid)
 
   for (std::size_t j = 0; j < bids_.size(); ++j)
   {
-    if (couplings_.At(j, bid) != 0)
+    if (couplings_.At({j, bid}) != 0)
     {
       active_[j] = 0;
     }
@@ -237,7 +237,7 @@ void CombinatorialAuction::BuildGraph()
   {
 
     local_fields_[i] = static_cast<Value>(bids_[i].price);
-    couplings_.Set(i, i, 0);
+    couplings_.Set({i, i}, 0);
     for (auto &cur_item : items_)
     {
       for (std::size_t j = 0; j < bids_[i].item_ids().size(); ++j)
@@ -286,7 +286,7 @@ void CombinatorialAuction::BuildGraph()
         }
       }
 
-      couplings_.At(j, i) = couplings_.At(i, j) = -coupling;
+      couplings_.At({j, i}) = couplings_.At({i, j}) = -coupling;
     }
   }
 

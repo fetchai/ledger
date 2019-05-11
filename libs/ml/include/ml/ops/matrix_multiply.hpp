@@ -28,32 +28,52 @@ template <class T>
 class MatrixMultiply : public fetch::ml::BatchOps<T>
 {
 public:
-  using ArrayType      = T;
-  using SizeType       = typename ArrayType::SizeType;
-  using ArrayPtrType   = std::shared_ptr<ArrayType>;
-  using ConstSliceType = typename ArrayType::ConstSliceType;
+  using ArrayType    = T;
+  using SizeType     = typename ArrayType::SizeType;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  MatrixMultiply()  = default;
-  ~MatrixMultiply() = default;
+  MatrixMultiply()          = default;
+  virtual ~MatrixMultiply() = default;
 
-  ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                    ArrayType &                                                 output)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
-    (void)output;
-    ASSERT(inputs.size() == 2);
-    ASSERT(inputs.at(0).get().shape().size() == 2);
-    ASSERT(inputs.at(1).get().shape().size() == 2);
-    ASSERT(output.shape() == ComputeOutputShape(inputs));
+    assert(inputs.size() == 2);
+    assert(inputs.at(0).get().shape().size() == 2);
+    assert(inputs.at(1).get().shape().size() == 2);
 
-    fetch::math::Dot(inputs[0].get(), inputs[1].get(), output);
-    return output;
+    // inner dimension check
+    assert(inputs.at(0).get().shape()[1] == inputs.at(1).get().shape()[0]);
+
+    std::vector<SizeType> outputShape(
+        {inputs.at(0).get().shape()[0], inputs.at(1).get().shape()[1]});
+    if (!this->output_ || this->output_->shape() != outputShape)
+    {
+      this->output_ = std::make_shared<ArrayType>(outputShape);
+    }
+
+    for (SizeType i(0); i < inputs.at(0).get().shape()[0]; ++i)
+    {
+      for (SizeType j(0); j < inputs.at(1).get().shape()[1]; ++j)
+      {
+        this->output_->At(std::vector<SizeType>({i, j})) =
+            inputs.at(0).get().At(std::vector<SizeType>({i, 0})) *
+            inputs.at(1).get().At(std::vector<SizeType>({0, j}));
+        for (SizeType k(1); k < inputs.at(0).get().shape()[1]; ++k)
+        {
+          this->output_->At(std::vector<SizeType>({i, j})) +=
+              inputs.at(0).get().At(std::vector<SizeType>({i, k})) *
+              inputs.at(1).get().At(std::vector<SizeType>({k, j}));
+        }
+      }
+    }
+    return *this->output_;
   }
 
-  std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
-    ASSERT(inputs.size() == 2);
+    assert(inputs.size() == 2);
 
     ArrayType errorSignal1(inputs.at(0).get().shape());
     ArrayType errorSignal2(inputs.at(1).get().shape());
@@ -62,12 +82,6 @@ public:
     fetch::math::TransposeDot(inputs.at(0).get(), errorSignal, errorSignal2);
 
     return {errorSignal1, errorSignal2};
-  }
-
-  std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
-  {
-    return {inputs.at(0).get().shape()[0], inputs.at(1).get().shape()[1]};
   }
 
   static constexpr char const *DESCRIPTOR = "MatrixMultiply";

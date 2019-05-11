@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "storage/document.hpp"
 #include "storage/resource_mapper.hpp"
@@ -62,7 +61,6 @@ public:
   virtual void AddTransaction(Transaction const &tx)                         = 0;
   virtual bool GetTransaction(ConstByteArray const &digest, Transaction &tx) = 0;
   virtual bool HasTransaction(ConstByteArray const &digest)                  = 0;
-  virtual void IssueCallForMissingTxs(TxDigestSet const &tx_set)             = 0;
 
   virtual void AddTransactions(TransactionList const &txs)
   {

@@ -26,43 +26,28 @@
 using namespace fetch::math::distance;
 using namespace fetch::math;
 
-template <typename T>
-class DistanceTest : public ::testing::Test
+TEST(distance_tests, cosine_distance)
 {
-};
+  Tensor<double> A = Tensor<double>({1, 4});
+  A.Set(0, 1);
+  A.Set(1, 2);
+  A.Set(2, 3);
+  A.Set(3, 4);
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+  Tensor<double> B = Tensor<double>({1, 4});
+  B.Set(0, -1);
+  B.Set(1, -2);
+  B.Set(2, -3);
+  B.Set(3, -4);
 
-TYPED_TEST_CASE(DistanceTest, MyTypes);
+  EXPECT_EQ(Cosine(A, A), 0);
+  EXPECT_EQ(Cosine(A, B), 2);
 
-TYPED_TEST(DistanceTest, cosine_distance)
-{
+  Tensor<double> C = Tensor<double>({1, 4});
+  C.Set(0, 1);
+  C.Set(1, 2);
+  C.Set(2, 3);
+  C.Set(3, 2);
 
-  using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
-  using ArrayType = TypeParam;
-
-  ArrayType A = ArrayType({1, 4});
-  A.Set(SizeType{0}, SizeType{0}, DataType(1));
-  A.Set(SizeType{0}, SizeType{1}, DataType(2));
-  A.Set(SizeType{0}, SizeType{2}, DataType(3));
-  A.Set(SizeType{0}, SizeType{3}, DataType(4));
-
-  ArrayType B = ArrayType({1, 4});
-  B.Set(SizeType{0}, SizeType{0}, DataType(-1));
-  B.Set(SizeType{0}, SizeType{1}, DataType(-2));
-  B.Set(SizeType{0}, SizeType{2}, DataType(-3));
-  B.Set(SizeType{0}, SizeType{3}, DataType(-4));
-
-  EXPECT_EQ(double(Cosine(A, A)), 0);
-  EXPECT_EQ(double(Cosine(A, B)), 2);
-
-  ArrayType C = ArrayType({1, 4});
-  C.Set(SizeType{0}, SizeType{0}, DataType(1));
-  C.Set(SizeType{0}, SizeType{1}, DataType(2));
-  C.Set(SizeType{0}, SizeType{2}, DataType(3));
-  C.Set(SizeType{0}, SizeType{3}, DataType(2));
-
-  EXPECT_NEAR(double(Cosine(A, C)), double(1.0) - double(0.94672926240625754), 1e-7);
+  EXPECT_NEAR(Cosine(A, C), double(1.0) - double(0.94672926240625754), 1e-7);
 }

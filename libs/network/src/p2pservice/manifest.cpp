@@ -129,7 +129,7 @@ bool Manifest::Parse(ConstByteArray const &text)
       }
     }
   }
-  catch (json::JSONParseException const &ex)
+  catch (json::JSONParseException &ex)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Error when parsing manifest: ", ex.what());
   }

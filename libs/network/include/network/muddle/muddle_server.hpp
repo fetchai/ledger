@@ -99,7 +99,7 @@ private:
       // dispatch the message to router
       router_.Route(client, packet);
     }
-    catch (std::exception const &ex)
+    catch (std::exception &ex)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "port = ", this->port());
       FETCH_LOG_WARN(LOGGING_NAME, "byte array size = ", msg.size());

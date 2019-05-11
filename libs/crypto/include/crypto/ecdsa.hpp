@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading/synchronised_state.hpp"
 #include "crypto/ecdsa_signature.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/verifier.hpp"
@@ -38,7 +37,7 @@ public:
     , public_key_{identity_ ? PublicKey(identity_.identifier()) : PublicKey()}
   {}
 
-  bool Verify(ConstByteArray const &data, ConstByteArray const &signature) override
+  bool Verify(byte_array_type const &data, byte_array_type const &signature) override
   {
     if (!identity_)
     {
@@ -69,63 +68,59 @@ public:
   using PrivateKey = openssl::ECDSAPrivateKey<>;
   using Signature  = openssl::ECDSASignature<>;
 
-  ECDSASigner() = default;
-
-  explicit ECDSASigner(ConstByteArray const &private_key)
-    : private_key_{private_key}
-  {}
-
-  void Load(ConstByteArray const &private_key) override
+  void Load(byte_array_type const &private_key) override
   {
     SetPrivateKey(private_key);
   }
 
-  void SetPrivateKey(ConstByteArray const &private_key)
+  void SetPrivateKey(byte_array_type const &private_key)
   {
-    private_key_.Set(PrivateKey{private_key});
+    private_key_ = PrivateKey(private_key);
   }
 
   void GenerateKeys()
   {
-    private_key_.Set(PrivateKey{});
+    private_key_ = PrivateKey();
   }
 
-  ConstByteArray Sign(ConstByteArray const &text) final
+  bool Sign(byte_array_type const &text) final override
   {
-    ConstByteArray signature{};
-
-    // sign the message in a thread safe way
-    private_key_.Apply([&signature, &text](PrivateKey const &key) {
-      signature = Signature::Sign(key, text).signature();
-    });
-
-    return signature;
+    signature_ = Signature::Sign(private_key_, text);
+    return true;
   }
 
-  Identity identity() const final
+  Identity identity() const final override
   {
     return Identity(PrivateKey::ecdsa_curve_type::sn, public_key());
   }
 
-  ConstByteArray public_key() const
+  byte_array_type document_hash() final override
   {
-    ConstByteArray public_key{};
-    private_key_.Apply(
-        [&public_key](PrivateKey const &key) { public_key = key.publicKey().keyAsBin(); });
-    return public_key;
+    return signature_.hash();
   }
 
-  ConstByteArray private_key()
+  byte_array_type signature() final override
   {
-    ConstByteArray private_key{};
-    private_key_.Apply([&private_key](PrivateKey const &key) { private_key = key.KeyAsBin(); });
-    return private_key;
+    return signature_.signature();
+  }
+  byte_array_type public_key() const
+  {
+    return private_key_.publicKey().keyAsBin();
+  }
+
+  byte_array_type private_key()
+  {
+    return private_key_.KeyAsBin();
+  }
+
+  PrivateKey const &underlying_private_key() const
+  {
+    return private_key_;
   }
 
 private:
-  using ThreadSafePrivateKey = SynchronisedState<PrivateKey>;
-
-  ThreadSafePrivateKey private_key_;
+  PrivateKey private_key_;
+  Signature  signature_;
 };
 
 }  // namespace crypto

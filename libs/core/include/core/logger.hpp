@@ -401,7 +401,6 @@ public:
       StackTrace();
     }
 
-    //    exit(-1);
   }
 
   template <typename... Args>
@@ -417,7 +416,6 @@ public:
       StackTrace();
     }
 
-    //    exit(-1);
   }
 
   template <typename... Args>
@@ -433,7 +431,7 @@ public:
   }
 
   template <typename... Args>
-  void DebugWithName(char const *name, Args const &... args)
+  void DebugWithName(char const *name, Args &&... args)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
@@ -559,6 +557,15 @@ public:
   {
     shared_context_type ctx = TopContextImpl();
     StackTrace(ctx, max, show_locks);
+
+    /*
+    std::cout << "All traces:" << std::endl;
+    for(auto &c : context_)
+    {
+      StackTrace(c.second);
+      std::cout << std::endl;
+    }
+    */
   }
 
   void UpdateContextTime(shared_context_type const &ctx, double spent_time)
@@ -753,6 +760,7 @@ extern log::details::LogWrapper logger;
 #endif
 #endif
 
+
 #ifndef NDEBUG
 #define FETCH_HAS_STACK_TRACE
 #endif
@@ -775,6 +783,7 @@ extern log::details::LogWrapper logger;
 
 #define LOG_PRINT_STACK_TRACE(name, custom_name) \
   fetch::logger.StackTrace(name, uint32_t(-1), false, custom_name);
+
 
 #else
 
@@ -808,6 +817,9 @@ extern log::details::LogWrapper logger;
                                                                 \
     FETCH_LOG_INFO(LOGGING_NAME, "Trace: \n", trace.str());     \
   }
+
+//#define LOG_STACK_TRACE_POINT
+//#define LOG_LAMBDA_STACK_TRACE_POINT
 
 #if 1
 #define FETCH_LOG_PROMISE()

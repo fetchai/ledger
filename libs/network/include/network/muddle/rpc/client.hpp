@@ -60,7 +60,7 @@ public:
   Promise CallSpecificAddress(Address const &address, ProtocolId const &protocol,
                               FunctionId const &function, Args &&... args)
   {
-    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT;  
     // update the target address
     address_ = address;
 

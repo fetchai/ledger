@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#define FETCH_DISABLE_LOGGING
 #include "core/commandline/parameter_parser.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"
@@ -26,39 +27,36 @@
 #include "network/muddle/rpc/server.hpp"
 #include "service_ids.hpp"
 
-#include <iostream>
-
 using fetch::muddle::Muddle;
 using fetch::muddle::rpc::Server;
 using fetch::muddle::rpc::Client;
 using fetch::muddle::NetworkId;
-using fetch::network::NetworkManager;
-using fetch::network::Uri;
-using fetch::service::Protocol;
-using fetch::mutex::Mutex;
-using fetch::commandline::ParamsParser;
-using std::chrono::milliseconds;
-using std::this_thread::sleep_for;
 
-static char const *LOGGING_NAME = "RPC-Client";
+#include <iostream>
+
+using namespace fetch::commandline;
+using namespace fetch::service;
+using namespace fetch::byte_array;
+
+const int SERVICE_TEST = 1;
+const int CHANNEL_RPC  = 1;
 
 class AEA
 {
 public:
-  Strings SearchFor(std::string const &val)
+  std::string SearchFor(std::string val)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Searching for ", val);
+    std::cout << "Searching for " << val << std::endl;
 
-    Strings ret{};
+    std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+    std::string                          ret = "";
+
+    for (auto &s : strings_)
     {
-      FETCH_LOCK(mutex_);
-
-      for (auto const &s : strings_)
+      if (s.find(val) != std::string::npos)
       {
-        if (s.find(val) != std::string::npos)
-        {
-          ret.push_back(s);
-        }
+        ret = s;
+        break;
       }
     }
 
@@ -67,23 +65,25 @@ public:
 
   void AddString(std::string const &s)
   {
-    FETCH_LOCK(mutex_);
     strings_.push_back(s);
   }
 
 private:
-  Mutex   mutex_{__LINE__, __FILE__};
-  Strings strings_;
+  std::vector<std::string> strings_;
+
+  fetch::mutex::Mutex mutex_{__LINE__, __FILE__};
 };
 
 class AEAProtocol : public Protocol
 {
 public:
-  explicit AEAProtocol(AEA *aea)
+  AEAProtocol(AEA *aea)
     : Protocol()
   {
     this->Expose(NodeToAEA::SEARCH, aea, &AEA::SearchFor);
   }
+
+private:
 };
 
 int main(int argc, char **argv)
@@ -91,58 +91,52 @@ int main(int argc, char **argv)
   ParamsParser params;
   params.Parse(argc, argv);
 
-  // create the AEA and associated protocol
+  // Client setup
+  fetch::network::NetworkManager tm{"NetMgr", 1};
+
+  auto                client_muddle = Muddle::CreateMuddle(NetworkId{"TEST"}, tm);
+  fetch::network::Uri peer("tcp://127.0.0.1:8080");
+  client_muddle->AddPeer(peer);
+  auto client = std::make_shared<Client>("Client", client_muddle->AsEndpoint(), Muddle::Address(),
+                                         SERVICE_TEST, CHANNEL_RPC);
+  auto server = std::make_shared<Server>(client_muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC);
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+  Muddle::Address target_address;
+  if (!client_muddle->UriToDirectAddress(peer, target_address))
+  {
+    std::cout << "Can't connect" << std::endl;
+    exit(1);
+  }
+
   AEA         aea;
   AEAProtocol aea_protocol(&aea);
-  for (std::size_t i = 1; i < params.arg_size(); ++i)
+  for (std::size_t i = 0; i < params.arg_size(); ++i)
   {
-    auto const item = params.GetArg(i);
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Registering item: ", item);
-    aea.AddString(item);
+    aea.AddString(params.GetArg(i));
   }
 
-  // create and start the network manager
-  NetworkManager tm{"NetMgr", 1};
   tm.Start();
+  client_muddle->Start({});
 
-  // create the muddle and attach all the RPC services
-  auto muddle = Muddle::CreateMuddle(NetworkId{"TEST"}, tm);
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  server->Add(FetchProtocols::NODE_TO_AEA, &aea_protocol);
 
-  Client client{"Client", muddle->AsEndpoint(), Muddle::Address(), SERVICE_TEST, CHANNEL_RPC};
-
-  // register the RPC server
-  Server server{muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC};
-  server.Add(FetchProtocols::NODE_TO_AEA, &aea_protocol);
-
-  // start the muddle and wait for the connection to establish
-  muddle->Start({}, {Uri{"tcp://127.0.0.1:8080"}});
-  while (muddle->AsEndpoint().GetDirectlyConnectedPeers().empty())
-  {
-    sleep_for(milliseconds{100});
-  }
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Client Established Connection");
-
-  // get the current target
-  auto const target_address = muddle->AsEndpoint().GetDirectlyConnectedPeers()[0];
-
-  // register this node as an AEA
-  FETCH_LOG_INFO(LOGGING_NAME, "Registering node...");
   auto p =
-      client.CallSpecificAddress(target_address, FetchProtocols::AEA_TO_NODE, AEAToNode::REGISTER);
-  if (!p->Wait(1000, false))
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Registering node...FAILED");
-    return EXIT_FAILURE;
-  }
-  FETCH_LOG_INFO(LOGGING_NAME, "Registering node...complete");
+      client->CallSpecificAddress(target_address, FetchProtocols::AEA_TO_NODE, AEAToNode::REGISTER);
 
-  // run the main server loop while we have directly connected peers
-  while (!muddle->AsEndpoint().GetDirectlyConnectedPeers().empty())
+  FETCH_LOG_PROMISE();
+  if (p->Wait())
   {
-    sleep_for(milliseconds{100});
+    std::cout << "Node registered" << std::endl;
+
+    for (;;)
+    {
+    }
   }
+
+  tm.Stop();
 
   return 0;
 }

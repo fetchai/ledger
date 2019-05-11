@@ -747,7 +747,7 @@ private:
 
       stack_.Get(next, kv);
 
-      left_right = key.Compare(kv.key, pos, kv.split >> 6, kv.split & 63);
+      left_right = key.Compare(kv.key, pos, kv.split >> 8, kv.split & 63);
 
       switch (left_right)
       {

@@ -22,17 +22,9 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/service_ids.hpp"
-#include "crypto/fetch_identity.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "metrics/metrics.hpp"
 #include "network/muddle/packet.hpp"
-
-static const uint32_t MAX_CHAIN_REQUEST_SIZE = 10000;
-static const uint64_t MAX_SUB_CHAIN_SIZE     = 1000;
-
-namespace fetch {
-namespace ledger {
-namespace {
 
 using fetch::muddle::Packet;
 using fetch::byte_array::ToBase64;
@@ -40,46 +32,25 @@ using fetch::byte_array::ToBase64;
 using BlockSerializer        = fetch::serializers::ByteArrayBuffer;
 using BlockSerializerCounter = fetch::serializers::SizeCounter<BlockSerializer>;
 using PromiseState           = fetch::service::PromiseState;
-using State                  = MainChainRpcService::State;
-using Mode                   = MainChainRpcService::Mode;
 
-/**
- * Map the initial state of the state machine to the particular mode that is being configured.
- *
- * @param mode The mode for the main chain
- * @return The initial state for the state machine
- */
-State GetInitialState(Mode mode)
-{
-  State initial_state = State::REQUEST_HEAVIEST_CHAIN;
+static const uint32_t MAX_CHAIN_REQUEST_SIZE = 10000;
+static const uint64_t MAX_SUB_CHAIN_SIZE     = 1000;
 
-  switch (mode)
-  {
-  case Mode::STANDALONE:
-    initial_state = State::SYNCHRONISED;
-    break;
-  case Mode::PRIVATE_NETWORK:
-  case Mode::PUBLIC_NETWORK:
-    break;
-  }
-
-  return initial_state;
-}
-
-}  // namespace
+namespace fetch {
+namespace ledger {
 
 MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain,
-                                         TrustSystem &trust, Mode mode)
+                                         TrustSystem &trust, bool standalone)
   : muddle::rpc::Server(endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
-  , mode_(mode)
   , endpoint_(endpoint)
   , chain_(chain)
   , trust_(trust)
   , block_subscription_(endpoint.Subscribe(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS))
   , main_chain_protocol_(chain_)
   , rpc_client_("R:MChain", endpoint, Address{}, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
-  , state_machine_{std::make_shared<StateMachine>("MainChain", GetInitialState(mode_),
-                                                  [](State state) { return ToString(state); })}
+  , state_machine_{std::make_shared<StateMachine>(
+        "MainChain", standalone ? State::SYNCHRONISED : State::REQUEST_HEAVIEST_CHAIN,
+        [](State state) { return ToString(state); })}
 {
   // register the main chain protocol
   Add(RPC_MAIN_CHAIN, &main_chain_protocol_);
@@ -117,6 +88,12 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   });
 }
 
+MainChainRpcService::~MainChainRpcService()
+{
+  state_machine_->Reset();
+  state_machine_.reset();
+}
+
 void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block)
 {
   // determine the serialised size of the block
@@ -146,13 +123,13 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   }
 #endif  // FETCH_LOG_INFO_ENABLED
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.body.hash),
+                 " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(), ")");
+
   FETCH_METRIC_BLOCK_RECEIVED(block.body.hash);
 
-  if (IsBlockValid(block))
+  if (block.proof())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.body.hash),
-                   " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(), ")");
-
     trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 
     FETCH_METRIC_BLOCK_RECEIVED(block.body.hash);
@@ -445,21 +422,6 @@ MainChainRpcService::State MainChainRpcService::OnSynchronised(State current, St
   }
 
   return next_state;
-}
-
-bool MainChainRpcService::IsBlockValid(Block &block) const
-{
-  bool block_valid{false};
-
-  // evaluate if this mining node is correct
-  bool const is_valid_miner =
-      (Mode::PUBLIC_NETWORK == mode_) ? crypto::IsFetchIdentity(block.body.miner) : true;
-  if (is_valid_miner && block.proof())
-  {
-    block_valid = true;
-  }
-
-  return block_valid;
 }
 
 }  // namespace ledger

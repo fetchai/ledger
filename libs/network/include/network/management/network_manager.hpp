@@ -35,7 +35,7 @@ public:
   using event_function_type = std::function<void()>;
 
   using implementation_type = details::NetworkManagerImplementation;
-  using PointerType         = std::shared_ptr<implementation_type>;
+  using pointer_type        = std::shared_ptr<implementation_type>;
   using weak_ref_type       = std::weak_ptr<implementation_type>;
 
   static constexpr char const *LOGGING_NAME = "NetworkManager";
@@ -117,7 +117,7 @@ public:
     return (!is_copy_);
   }
 
-  PointerType lock()
+  pointer_type lock()
   {
     if (is_primary())
     {
@@ -139,7 +139,7 @@ public:
   }
 
 private:
-  PointerType   pointer_;
+  pointer_type  pointer_;
   weak_ref_type weak_pointer_;
   bool          is_copy_ = false;
 };

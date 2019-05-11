@@ -28,8 +28,8 @@ template <typename type, unsigned long N = 100000>
 class ParallelDispatcherKernelBench : public ::benchmark::Fixture
 {
 public:
-  using ndarray_type       = SharedArray<type>;
-  using VectorRegisterType = typename ndarray_type::VectorRegisterType;
+  using ndarray_type         = SharedArray<type>;
+  using vector_register_type = typename ndarray_type::vector_register_type;
 
 protected:
   void SetUp(const ::benchmark::State & /*st*/) override
@@ -55,8 +55,8 @@ BENCHMARK_TEMPLATE_F(ParallelDispatcherKernelBench, kernel_implementation, float
   {
     // Here we use a kernel to compute the same, using an approximation
     a_.in_parallel().Apply(
-        [](VectorRegisterType const &x, VectorRegisterType &y) {
-          static VectorRegisterType one(1);
+        [](vector_register_type const &x, vector_register_type &y) {
+          static vector_register_type one(1);
 
           // We approximate the exponential function by a clever first order
           // Taylor expansion
