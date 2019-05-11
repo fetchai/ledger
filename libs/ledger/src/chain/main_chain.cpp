@@ -17,9 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/main_chain.hpp"
+#include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 
+#include <algorithm>
 #include <utility>
 
 using fetch::byte_array::ToBase64;
@@ -123,17 +125,16 @@ BlockStatus MainChain::AddBlock(Block const &blk)
  * @param block The bock that will be cached
  * @return Iterator to the newly inserted block
  */
-BlockMap::iterator CacheBlock(IntBlockPtr const &block) const {
-	assert(static_cast<bool>(block));
+void MainChain::CacheBlock(IntBlockPtr const &block) const
+{
+  ASSERT(static_cast<bool>(block));
 
-	auto hash{block->body.hash};
-	auto retVal{block_chain_.emplace(hash, block)};
-	// under all circumstances, it _should_ be a fresh block
-	assert(retVal.second);
-	// keep parent-child reference
-	references_.emplace(block->body.previous_hash, std::move(hash));
-
-	return retVal.first;
+  auto hash{block->body.hash};
+  auto retVal{block_chain_.emplace(hash, block)};
+  // under all circumstances, it _should_ be a fresh block
+  ASSERT(retVal.second);
+  // keep parent-child reference
+  references_.emplace(block->body.previous_hash, std::move(hash));
 }
 
 /**
@@ -142,9 +143,10 @@ BlockMap::iterator CacheBlock(IntBlockPtr const &block) const {
  * @param block The bock that will be erased
  * @return Iterator to the newly inserted block
  */
-BlockMap::size_type UncacheBlock(BlockHash const &hash) const {
-	return block_chain_.erase(hash);
-	// references are kept intact while this cache is alive
+MainChain::BlockMap::size_type MainChain::UncacheBlock(BlockHash hash) const
+{
+  return block_chain_.erase(hash);
+  // references are kept intact while this cache is alive
 }
 
 /**
@@ -153,32 +155,39 @@ BlockMap::size_type UncacheBlock(BlockHash const &hash) const {
  * @param block The bock that will be cached
  * @return Iterator to the newly inserted block
  */
-void KeepBlock(IntBlockPtr const &block) const {
-	assert(static_cast<bool>(block));
-	assert(static_cast<bool>(block_store_));
+void MainChain::KeepBlock(IntBlockPtr const &block) const
+{
+  ASSERT(static_cast<bool>(block));
+  ASSERT(static_cast<bool>(block_store_));
 
-	auto const &hash{block->body.hash};
+  auto const &hash{block->body.hash};
 
-	if (block->body.previous_hash != GENESIS_DIGEST) {
-		// notify stored parent
-		Block parent;
-		if(block_store_->Get(storage::ResourceID(block->body.previous_hash), parent)) {
-			parent.body.next_hash = hash;
-			block_store_->Set(storage::ResourceID(parent.body.hash), parent);
-		}
-	}
+  if (block->body.previous_hash != GENESIS_DIGEST)
+  {
+    // notify stored parent
+    Block parent;
+    if (block_store_->Get(storage::ResourceID(block->body.previous_hash), parent) &&
+        // assuming one hash comparison is much cheaper than storage set
+        parent.body.next_hash != hash)
+    {
+      parent.body.next_hash = hash;
+      block_store_->Set(storage::ResourceID(parent.body.hash), parent);
+    }
+  }
 
-	// detect if any of this block's children has somehow made it to the store already
-	auto forward_refs{references_.equal_range(hash)};
-	for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it) {
-		auto const &child{ref_it->second};
-		if (block_store_->Has(storage::ResourceID(child))) {
-			block->body.next_hash = child;
-			break;
-		}
-	}
-	// now write the block itself
-	block_store_->Set(storage::ResourceID(hash), *block);
+  // detect if any of this block's children has somehow made it to the store already
+  auto forward_refs{references_.equal_range(hash)};
+  for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it)
+  {
+    auto const &child{ref_it->second};
+    if (block_store_->Has(storage::ResourceID(child)))
+    {
+      block->body.next_hash = child;
+      break;
+    }
+  }
+  // now write the block itself
+  block_store_->Set(storage::ResourceID(hash), *block);
 }
 
 /**
@@ -193,19 +202,40 @@ MainChain::BlockPtr MainChain::GetHeaviestBlock() const
 }
 
 /**
- * Removes the block, and all blocks ahead of it, and references between them, from the chain.
+ * Removes the block, and all blocks ahead of it, and references between them, from the cache.
  *
  * @param hash The hash to be removed
- * @return True if successful, otherwise false
+ * @param invalidated_blocks The set of hashes of all the blocks removed by this operation
  */
-bool RemoveTree(BlockHash const &hash) {
-	auto children{references_.equal_range(hash)};
-	for(auto child{children.first}; child != children.second; child = references_.erase(child)) {
-		RemoveTree(hash);
-	}
+void MainChain::RemoveTree(BlockHash const &hash, BlockHashSet &invalidated_blocks)
+{
+  auto block_entry{block_chain_.find(hash)};
+  // check if the block is in the cache
+  if (block_entry == block_chain_.end())
+  {
+    return;
+  }
 
-	auto
-	auto siblings{refere
+  // first remove all the progeny recursively
+  auto children{references_.equal_range(hash)};
+  for (auto child{children.first}; child != children.second; child = references_.erase(child))
+  {
+    RemoveTree(hash, invalidated_blocks);
+  }
+
+  // remove the reference from previous block to this one
+  auto const &block{*block_entry->second};
+  auto        siblings{references_.equal_range(block.body.previous_hash)};
+  auto        back_ref{std::find_if(siblings.first, siblings.second,
+                             [&hash](auto const &ref) { return ref.second == hash; })};
+  if (back_ref != siblings.second)
+  {
+    references_.erase(back_ref);
+  }
+  // finally remove the block itself from the cache
+  block_chain_.erase(block_entry);
+  // mark hash as successfully invalidated
+  invalidated_blocks.insert(hash);
 }
 
 /**
@@ -216,87 +246,41 @@ bool RemoveTree(BlockHash const &hash) {
  */
 bool MainChain::RemoveBlock(BlockHash hash)
 {
-  // TODO(private issue 666): Improve performance of block removal
-
-  bool success{false};
-
   FETCH_LOCK(lock_);
 
-  // Check that the input block hash is actually in the cache
-  auto invalid_block_it = block_chain_.find(hash);
-  if (block_chain_.end() != invalid_block_it)
+  BlockHashSet invalidated_blocks;
+  // Step 1. Remove this block and the whole its progeny
+  RemoveTree(hash, invalidated_blocks);
+  // Check that the input block hash was actually in the cache
+  if (!invalidated_blocks.empty())
   {
-    BlockHashSet invalidated_blocks{};
-
-    // add the original element into the invalidated block set
-    invalidated_blocks.insert(hash);
-    block_chain_.erase(hash);
-
-    // Step 1. Evaluate all the blocks which have been now been made invalid from this change
-    for (;;)
-    {
-      // find the next element to remove
-      auto it = std::find_if(block_chain_.begin(), block_chain_.end(),
-                             [&invalidated_blocks, hash](BlockMap::value_type const &e) {
-                               return (invalidated_blocks.find(e.second->body.previous_hash) !=
-                                       invalidated_blocks.end());
-                             });
-
-      // once we have done a complete sweep where we haven't found anything, the fallout has been
-      // calculated and collected
-      if (it == block_chain_.end())
-      {
-        break;
-      }
-
-      // update our removed blocks and hashes
-      invalidated_blocks.insert(it->first);
-
-      // remove the element from the map
-      block_chain_.erase(it);
-    }
-
     // Step 2. Loop through all the loose blocks and remove any references to invalidated blocks
-    auto waiting_blocks_it = loose_blocks_.begin();
-    while (waiting_blocks_it != loose_blocks_.end())
+    for (auto waiting_blocks_it{loose_blocks_.begin()}; waiting_blocks_it != loose_blocks_.end();)
     {
-      auto &hash_array = waiting_blocks_it->second;
-
-      // iterate over the hash arrays removing entries that match
-      auto hash_it = hash_array.begin();
-      while (hash_it != hash_array.end())
+      auto &hash_array{waiting_blocks_it->second};
+      // remove entries from the hash array that have been invalidated
+      auto cemetery{std::remove_if(
+          hash_array.begin(), hash_array.end(), [&invalidated_blocks](auto const &hash) {
+            return invalidated_blocks.find(hash) != invalidated_blocks.end();
+          })};
+      if (cemetery == hash_array.begin())
       {
-        if (invalidated_blocks.find(*hash_it) != invalidated_blocks.end())
-        {
-          // remove the entry from the hash array
-          hash_it = hash_array.erase(hash_it);
-        }
-        else
-        {
-          // advance to next hash
-          ++hash_it;
-        }
-      }
-
-      // finally, if our actions have emptied the hash array we must remove the entry from the map
-      if (hash_array.empty())
-      {
-        // remove the empty array
+        // all hashes in this array are invalidated
         waiting_blocks_it = loose_blocks_.erase(waiting_blocks_it);
       }
       else
       {
-        // advance to the next one
+        // some hashes of this array are still alive
+        hash_array.erase(cemetery, hash_array.end());
         ++waiting_blocks_it;
       }
     }
-
     // Step 3. Since we might have removed a whole series of blocks the tips datastructure has been
     // invalidated. We need to evaluate the changes here
-    success = ReindexTips();
+    return ReindexTips();
   }
 
-  return success;
+  return false;
 }
 
 /**
@@ -559,7 +543,7 @@ void MainChain::RecoverFromFile(Mode mode)
 {
   // TODO(private issue 667): Complete loading of chain on startup ill-advised
 
-  assert(static_cast<bool>(block_store_));
+  ASSERT(static_cast<bool>(block_store_));
 
   FETCH_LOCK(lock_);
 
@@ -578,7 +562,7 @@ void MainChain::RecoverFromFile(Mode mode)
   }
   else
   {
-    assert(false);
+    ASSERT(false);
   }
 
   // load the head block, and attempt verify that this block forms a complete chain to genesis
@@ -624,7 +608,7 @@ void MainChain::RecoverFromFile(Mode mode)
                      "Recovering main chain with heaviest block: ", head->body.block_number);
 
       // Add heaviest to cache
-      block_chain_[head->body.hash] = head;
+      CacheBlock(head);
 
       // Update this as our heaviest
       bool const result      = heaviest_.Update(*head);
@@ -696,7 +680,7 @@ void MainChain::WriteToFile()
     {
       FETCH_LOG_WARN(LOGGING_NAME,
                      "Failed to walk back the chain when writing to file! Block head: ",
-                     block_chain_.at(heaviest_.hash)->body.block_number);
+                     block->body.block_number);
       return;
     }
 
@@ -766,7 +750,7 @@ void MainChain::WriteToFile()
 void MainChain::TrimCache()
 {
   static const uint64_t CACHE_TRIM_THRESHOLD = 2 * FINALITY_PERIOD;
-  assert(static_cast<bool>(block_store_));
+  ASSERT(static_cast<bool>(block_store_));
 
   MilliTimer myTimer("MainChain::TrimCache");
 
@@ -842,7 +826,7 @@ void MainChain::TrimCache()
 void MainChain::FlushBlock(IntBlockPtr const &block)
 {
   // remove the block from the block map
-  block_chain_.erase(block->body.hash);
+  UncacheBlock(block->body.hash);
 
   // remove the block hash from the tips
   tips_.erase(block->body.hash);
@@ -913,8 +897,8 @@ void MainChain::RecordLooseBlock(IntBlockPtr const &block)
   auto &waiting_blocks = loose_blocks_[block->body.previous_hash];
   waiting_blocks.push_back(block->body.hash);
 
-  block->is_loose                = true;
-  block_chain_[block->body.hash] = block;
+  ASSERT(block->is_loose);
+  CacheBlock(block);
 }
 
 /**
@@ -926,9 +910,9 @@ void MainChain::RecordLooseBlock(IntBlockPtr const &block)
  */
 bool MainChain::UpdateTips(IntBlockPtr const &block)
 {
-  assert(!block->is_loose);
-  assert(block->weight != 0);
-  assert(block->total_weight != 0);
+  ASSERT(!block->is_loose);
+  ASSERT(block->weight != 0);
+  ASSERT(block->total_weight != 0);
 
   // remove the tip if exists and add the new one
   tips_.erase(block->body.previous_hash);
@@ -947,7 +931,7 @@ bool MainChain::UpdateTips(IntBlockPtr const &block)
  */
 BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose_blocks)
 {
-  assert(block->body.previous_hash.size() > 0);
+  ASSERT(block->body.previous_hash.size() > 0);
 
   MilliTimer myTimer("MainChain::InsertBlock", 500);
 
@@ -1029,10 +1013,10 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
   }
 
   // we exepect only non-loose blocks here
-  assert(!block->is_loose);
+  ASSERT(!block->is_loose);
 
   // by definition this also means we expect blocks to have a valid parent block too
-  assert(static_cast<bool>(prev_block));
+  ASSERT(static_cast<bool>(prev_block));
 
   // update the final (total) weight for this block
   block->total_weight = prev_block->total_weight + block->weight;
@@ -1164,7 +1148,7 @@ void MainChain::AddBlockToCache(IntBlockPtr const &block) const
   if (!IsBlockInCache(block->body.hash))
   {
     // add the item to the block chain storage
-    block_chain_.emplace(block->body.hash, block);
+    CacheBlock(block);
   }
 }
 
@@ -1225,63 +1209,41 @@ bool MainChain::DetermineHeaviestTip()
  */
 bool MainChain::ReindexTips()
 {
-  // TODO(private issue 666): Improve performance of block removal
   FETCH_LOCK(lock_);
 
-  // Step 1. Generate a new set of blocks (so that we can order them)
-  std::vector<IntBlockPtr> block_list{};
-  block_list.reserve(block_chain_.size());
+  // Tips are hashes of cached blocks that don't have any forward references
+  TipsMap   new_tips;
+  uint64_t  max_weight{};
+  BlockHash max_hash;
 
-  for (auto const &block : block_chain_)
+  for (auto const &block_entry : block_chain_)
   {
-    block_list.push_back(block.second);
-  }
-
-  // Step 2. Order the blocks so that we have a good order for them to be evaluated
-  std::sort(block_list.begin(), block_list.end(), [](IntBlockPtr const &a, IntBlockPtr const &b) {
-    if (a->body.block_number == b->body.block_number)
+    auto const &hash{block_entry.first};
+    if (references_.find(hash) == references_.end())
     {
-      return (a->body.hash < b->body.hash);
-    }
-    else
-    {
-      return (a->body.block_number < b->body.block_number);
-    }
-  });
-
-  // Step 3. Loop through ordered blocks and generate the new list of tips
-  BlockHashSet tips{};
-  for (auto const &block : block_list)
-  {
-    tips.erase(block->body.previous_hash);
-
-    // only non-loose blocks are considered tips
-    if (!block->is_loose)
-    {
-      tips.insert(block->body.hash);
+      // this hash has no next blocks
+      auto const &   block{*block_entry.second};
+      const uint64_t weight{block.total_weight};
+      new_tips[hash] = Tip{weight};
+      // check if this tip is current heaviest
+      if (weight > max_weight || (weight == max_weight && hash > max_hash))
+      {
+        max_weight = weight;
+        max_hash   = hash;
+      }
     }
   }
-  block_list.clear();  // free some memory
-
-  // Step 4. Recreate the tips map index
-  TipsMap     new_tips{};
-  IntBlockPtr block;
-  for (auto const &tip : tips)
-  {
-    if (!LookupBlockFromCache(tip, block))
-    {
-      return false;
-    }
-
-    // add update the new tip
-    new_tips[tip] = Tip{block->total_weight};
-  }
-
-  // clear the existing tips
   tips_ = std::move(new_tips);
 
-  // finally update the heaviest tip
-  return DetermineHeaviestTip();
+  if (!tips_.empty())
+  {
+    // finally update the heaviest tip
+    heaviest_.weight = max_weight;
+    heaviest_.hash   = max_hash;
+    return true;
+  }
+
+  return false;
 }
 
 /**
@@ -1355,7 +1317,7 @@ MainChain::BlockHash MainChain::GetHeadHash()
 
 void MainChain::SetHeadHash(BlockHash const &hash)
 {
-  assert(hash.size() == 32);
+  ASSERT(hash.size() == 32);
 
   // move to the beginning of the file and write out the hash
   head_store_.seekp(0);

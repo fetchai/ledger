@@ -101,7 +101,7 @@ public:
   BlockStatus AddBlock(Block const &block);
   BlockPtr    GetBlock(BlockHash hash) const;
   bool        RemoveBlock(BlockHash hash);
-  bool        RemoveTree(BlockHash const &hash);
+  void        RemoveTree(BlockHash const &hash, BlockHashSet &invalidated_blocks);
   /// @}
 
   /// @name Chain Queries
@@ -137,7 +137,7 @@ public:
 private:
   using IntBlockPtr   = std::shared_ptr<Block>;
   using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;
-  using Referencecs   = std::unordered_multimap<BlockHash, BlockHash>;
+  using References    = std::unordered_multimap<BlockHash, BlockHash>;
   using Proof         = Block::Proof;
   using TipsMap       = std::unordered_map<BlockHash, Tip>;
   using BlockHashList = std::list<BlockHash>;
@@ -181,11 +181,10 @@ private:
 
   /// @name Low-level storage interface
   /// @{
-  BlockMap::iterator CacheBlock(IntBlockPtr const &block) const;
+  void                CacheBlock(IntBlockPtr const &block) const;
   BlockMap::size_type UncacheBlock(BlockHash hash) const;
-  void KeepBlock(IntBlockPtr const &block) const;
+  void                KeepBlock(IntBlockPtr const &block) const;
   /// @}
-
 
   /// @name Tip Management
   /// @{
@@ -202,12 +201,13 @@ private:
   BlockStorePtr block_store_;  /// < Long term storage and backup
   std::fstream  head_store_;
 
-  mutable RMutex   lock_;          ///< Mutex protecting block_chain_, tips_ & heaviest_
-  mutable BlockMap block_chain_;   ///< All recent blocks are kept in memory
-  TipsMap          tips_;          ///< Keep track of the tips
-  HeaviestTip      heaviest_;      ///< Heaviest block/tip
-  LooseBlockMap    loose_blocks_;  ///< Waiting (loose) blocks
-  References       references_;    ///< The whole tree of previous-next relations
+  mutable RMutex   lock_;         ///< Mutex protecting block_chain_, tips_ & heaviest_
+  mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
+  mutable References
+                references_;    ///< The whole tree of previous-next relations among cached blocks
+  TipsMap       tips_;          ///< Keep track of the tips
+  HeaviestTip   heaviest_;      ///< Heaviest block/tip
+  LooseBlockMap loose_blocks_;  ///< Waiting (loose) blocks
 };
 
 /**
