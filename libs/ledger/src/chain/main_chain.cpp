@@ -122,14 +122,14 @@ BlockStatus MainChain::AddBlock(Block const &blk)
 /**
  * Inserts a block into the cache maintaining references
  *
- * @param block The bock that will be cached
+ * @param block The block to be cached
  */
-void MainChain::CacheBlock(IntBlockPtr const &block) const
+void MainChain::CacheBlock(IntBlockPtr block) const
 {
   ASSERT(static_cast<bool>(block));
 
   auto hash{block->body.hash};
-  auto retVal{block_chain_.emplace(hash, block)};
+  auto retVal{block_chain_.emplace(hash, std::move(block))};
   // under all circumstances, it _should_ be a fresh block
   ASSERT(retVal.second);
   // keep parent-child reference
@@ -139,7 +139,7 @@ void MainChain::CacheBlock(IntBlockPtr const &block) const
 /**
  * Erases a block from the cache
  *
- * @param hash The hash of the bock to be erased
+ * @param hash The hash of the block to be erased
  * @return amount of blocks erased (1 or 0, if not found)
  */
 MainChain::BlockMap::size_type MainChain::UncacheBlock(BlockHash hash) const
@@ -151,7 +151,7 @@ MainChain::BlockMap::size_type MainChain::UncacheBlock(BlockHash hash) const
 /**
  * Inserts a block into the permanent store maintaining references
  *
- * @param block The block to be cached
+ * @param block The block to be kept
  */
 void MainChain::KeepBlock(IntBlockPtr const &block) const
 {

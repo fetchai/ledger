@@ -181,7 +181,7 @@ private:
 
   /// @name Low-level storage interface
   /// @{
-  void                CacheBlock(IntBlockPtr const &block) const;
+  void                CacheBlock(IntBlockPtr block) const;
   BlockMap::size_type UncacheBlock(BlockHash hash) const;
   void                KeepBlock(IntBlockPtr const &block) const;
   /// @}
@@ -203,11 +203,11 @@ private:
 
   mutable RMutex   lock_;         ///< Mutex protecting block_chain_, tips_ & heaviest_
   mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
-  mutable References
-                references_;    ///< The whole tree of previous-next relations among cached blocks
-  TipsMap       tips_;          ///< Keep track of the tips
-  HeaviestTip   heaviest_;      ///< Heaviest block/tip
-  LooseBlockMap loose_blocks_;  ///< Waiting (loose) blocks
+  // The whole tree of previous-next relations among cached blocks
+  mutable References references_;
+  TipsMap            tips_;          ///< Keep track of the tips
+  HeaviestTip        heaviest_;      ///< Heaviest block/tip
+  LooseBlockMap      loose_blocks_;  ///< Waiting (loose) blocks
 };
 
 /**
