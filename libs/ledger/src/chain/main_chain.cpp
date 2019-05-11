@@ -123,7 +123,6 @@ BlockStatus MainChain::AddBlock(Block const &blk)
  * Inserts a block into the cache maintaining references
  *
  * @param block The bock that will be cached
- * @return Iterator to the newly inserted block
  */
 void MainChain::CacheBlock(IntBlockPtr const &block) const
 {
@@ -140,8 +139,8 @@ void MainChain::CacheBlock(IntBlockPtr const &block) const
 /**
  * Erases a block from the cache
  *
- * @param block The bock that will be erased
- * @return Iterator to the newly inserted block
+ * @param hash The hash of the bock to be erased
+ * @return amount of blocks erased (1 or 0, if not found)
  */
 MainChain::BlockMap::size_type MainChain::UncacheBlock(BlockHash hash) const
 {
@@ -152,8 +151,7 @@ MainChain::BlockMap::size_type MainChain::UncacheBlock(BlockHash hash) const
 /**
  * Inserts a block into the permanent store maintaining references
  *
- * @param block The bock that will be cached
- * @return Iterator to the newly inserted block
+ * @param block The block to be cached
  */
 void MainChain::KeepBlock(IntBlockPtr const &block) const
 {
@@ -176,6 +174,7 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
   }
 
   // detect if any of this block's children has somehow made it to the store already
+  // TODO: is this needed?
   auto forward_refs{references_.equal_range(hash)};
   for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it)
   {
@@ -204,8 +203,8 @@ MainChain::BlockPtr MainChain::GetHeaviestBlock() const
 /**
  * Removes the block, and all blocks ahead of it, and references between them, from the cache.
  *
- * @param hash The hash to be removed
- * @param invalidated_blocks The set of hashes of all the blocks removed by this operation
+ * @param[in]  hash The hash to be removed
+ * @param[out] invalidated_blocks The set of hashes of all the blocks removed by this operation
  */
 void MainChain::RemoveTree(BlockHash const &hash, BlockHashSet &invalidated_blocks)
 {
