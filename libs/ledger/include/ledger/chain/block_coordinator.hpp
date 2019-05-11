@@ -29,7 +29,6 @@
 #include <chrono>
 #include <deque>
 #include <thread>
-#include <unordered_set>
 
 namespace fetch {
 namespace ledger {
@@ -215,8 +214,7 @@ private:
   using Timepoint         = Clock::time_point;
   using StateMachinePtr   = std::shared_ptr<StateMachine>;
   using MinerPtr          = std::shared_ptr<consensus::ConsensusMinerInterface>;
-  using TxSet             = std::unordered_set<TransactionSummary::TxDigest>;
-  using TxSetPtr          = std::unique_ptr<TxSet>;
+  using TxDigestSetPtr    = std::unique_ptr<TxDigestSet>;
   using LastExecutedBlock = SynchronisedState<ConstByteArray>;
   using FutureTimepoint   = fetch::core::FutureTimepoint;
 
@@ -279,11 +277,15 @@ private:
   BlockPtr        current_block_{};        ///< The pointer to the current block (read only)
   NextBlockPtr
                   next_block_{};  ///< The next block being created (read / write) - only in mining mode
-  TxSetPtr        pending_txs_{};        ///< The list of pending txs that are being waited on
+  TxDigestSetPtr  pending_txs_{};        ///< The list of pending txs that are being waited on
   PeriodicAction  tx_wait_periodic_;     ///< Periodic print for transaction waiting
   PeriodicAction  exec_wait_periodic_;   ///< Periodic print for execution
   PeriodicAction  syncing_periodic_;     ///< Periodic print for synchronisation
   FutureTimepoint wait_for_tx_timeout_;  ///< Timeout when waiting for transactions
+  FutureTimepoint
+       wait_before_asking_for_missing_tx_;  ///< Time to wait before asking peers for any missing txs
+  bool have_asked_for_missing_txs_;  ///< true if a request for missing Txs has been issued for the
+                                     ///< current block
   /// @}
 };
 

@@ -110,8 +110,8 @@ ledger::ShardConfigs GenerateShardsConfig(uint32_t num_lanes, uint16_t start_por
     cfg.internal_port       = start_port++;
     cfg.internal_network_id = muddle::NetworkId{"ISRD"};
 
-    auto const &ext_identity = cfg.external_identity->identity().identifier();
-    auto const &int_identity = cfg.internal_identity->identity().identifier();
+    auto const ext_identity = cfg.external_identity->identity().identifier();
+    auto const int_identity = cfg.internal_identity->identity().identifier();
 
     FETCH_LOG_INFO(Constellation::LOGGING_NAME, "Shard ", i + 1);
     FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - Internal ", ToBase64(int_identity), " - ",

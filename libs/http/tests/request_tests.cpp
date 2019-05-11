@@ -16,36 +16,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include <string>
-#include <vector>
+#include "http/request.hpp"
 
-struct AEAToNode
+#include "gmock/gmock.h"
+
+namespace {
+
+using namespace ::testing;
+
+class RequestTests : public Test
 {
-  enum
-  {
-    REGISTER = 1
-  };
+public:
+  using Request = fetch::http::HTTPRequest;
 };
 
-struct NodeToAEA
+TEST_F(RequestTests, no_error_when_reading_zero_bytes_from_empty_buffer)
 {
-  enum
-  {
-    SEARCH = 1
-  };
-};
+  auto BYTES_REQUESTED = 0u;
 
-struct FetchProtocols
-{
+  asio::streambuf buffer;
+  Request         req;
 
-  enum
-  {
-    AEA_TO_NODE = 1,
-    NODE_TO_AEA = 2
-  };
-};
+  ASSERT_NO_THROW(req.ParseHeader(buffer, BYTES_REQUESTED));
+}
 
-static const int SERVICE_TEST = 1;
-static const int CHANNEL_RPC  = 1;
-
-using Strings = std::vector<std::string>;
+}  // namespace

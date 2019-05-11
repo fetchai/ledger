@@ -17,6 +17,9 @@ import time
 import threading
 import glob
 import shutil
+import traceback
+import time
+import pickle
 from threading import Event
 from pathlib import Path
 
@@ -75,23 +78,22 @@ class TestInstance():
     Sets up an instance of a test, containing references to started nodes and other relevant data
     """
 
-    def __init__(self, build_directory, constellation_exe):
+    def __init__(self, build_directory, constellation_exe, yaml_file):
 
-        self._number_of_nodes  = 0
-        self._node_connections = None
-        self._nodes_are_mining = []
-        self._port_start_range = 8000
-        self._port_range       = 20
-        self._monitor          = None
-        self._nodes            = []
-        self._workspace        = ""
-        self._node_workspace   = ""
-        self._lanes            = 1
-        self._slices           = 16
-        self._max_test_time    = 1000
-        self._nodes            = None
-        self._metadata         = None
-        self._watchdog         = None
+        self._number_of_nodes     = 0
+        self._node_load_directory = []
+        self._node_connections    = None
+        self._nodes_are_mining    = []
+        self._port_start_range    = 8000
+        self._port_range          = 20
+        self._workspace           = ""
+        self._lanes               = 1
+        self._slices              = 16
+        self._max_test_time       = 1000
+        self._nodes               = []
+        self._metadata            = None
+        self._watchdog            = None
+        self._creation_time       = time.perf_counter()
 
         # Default to removing old tests
         for f in glob.glob(build_directory + "/end_to_end_test_*"):
@@ -102,71 +104,87 @@ class TestInstance():
         self._workspace         = os.path.join(build_directory, 'end_to_end_test_{}'.format(self._random_identifer))
         self._build_directory   = build_directory
         self._constellation_exe = os.path.abspath(constellation_exe)
+        self._yaml_file         = os.path.abspath(yaml_file)
+        self._test_files_dir    = os.path.dirname(self._yaml_file)
 
-        # Ensure that the constellation exe exists
-        if not os.path.isfile(self._constellation_exe):
-            output("Couldn't find supposed constellation exe: {}".format(constellation_exe))
-            sys.exit(1)
+        verify_file(constellation_exe)
+        verify_file(self._yaml_file)
 
         # Ensure that build/end_to_end_output_XXX/ exists for the test output
         os.makedirs(self._workspace, exist_ok=True)
 
+    def append_node(self, index, load_directory = None):
+        # Create a folder for the node to write logs to etc.
+        root = os.path.abspath(os.path.join(self._workspace, 'node{}'.format(index)))
+
+        # ensure the workspace folder exits
+        os.makedirs(root, exist_ok=True)
+
+        if load_directory and index in load_directory:
+            load_from = self._test_files_dir+"/nodes_saved/"+load_directory[index]
+            files = os.listdir(load_from)
+
+            for f in files:
+                    shutil.copy(load_from+f, root)
+
+        port = self._port_start_range + (self._port_range * index)
+
+        # Create an instance of the constellation - note we don't clear path since
+        # it should be clear unless load_directory is used
+        instance = ConstellationInstance(
+            self._constellation_exe,
+            port,
+            root,
+            clear_path = False
+        )
+
+        # configure the lanes and slices
+        instance.lanes  = self._lanes
+        instance.slices = self._slices
+
+        assert len(self._nodes) == index, "Attempt to add node with an index mismatch. Current len: {}, index: {}".format(len(self._nodes), index)
+
+        self._nodes.append(instance)
+
+    def connect_nodes(self, node_connections):
+        for connect_from, connect_to in node_connections:
+            self._nodes[connect_from].add_peer(self._nodes[connect_to])
+            output("Connect node {} to {}".format(connect_from, connect_to))
+
+    def start_node(self, index):
+        print('Starting Node {}...'.format(index))
+
+        self._nodes[index].start()
+        print('Starting Node {}...complete'.format(index))
+
+        time.sleep(0.5)
+
+    def print_time_elapsed(self):
+        output("Elapsed time: {}".format(time.perf_counter() - self._creation_time))
+
     def run(self):
 
-        if(self._number_of_nodes == 0):
-            output("Attempted to run end to end test with 0 nodes - that's not right.")
-            sys.exit(1)
-
-        nodes = []
-
-        # build up all the instances
+        # build up all the node instances
         for index in range(self._number_of_nodes):
+            output("Adding!")
+            self.append_node(index, self._node_load_directory)
 
-            # Create a folder for the node to write logs to etc.
-            root = os.path.abspath(os.path.join(self._workspace, 'node{}'.format(index)))
-
-            # ensure the workspace folder exits
-            os.makedirs(root, exist_ok=True)
-
-            port = self._port_start_range + (self._port_range * index)
-
-            # Create an instance of the constellation
-            instance = ConstellationInstance(
-                self._constellation_exe,
-                port,
-                root
-            )
-
-            # configure the lanes and slices
-            instance.lanes  = self._lanes
-            instance.slices = self._slices
-
-            nodes.append(instance)
-
+        output("Added!")
         # Now connect the nodes as specified
         if self._node_connections:
-            for connect_from, connect_to in self._node_connections:
-                nodes[connect_from].add_peer(nodes[connect_to])
+            self.connect_nodes(self._node_connections)
 
         # Enable mining node(s)
         for miner_index in self._nodes_are_mining:
-            nodes[miner_index].mining = True
+            self._nodes[miner_index].mining = True
 
         # In the case only one miner node, it runs in standalone mode
-        if(len(nodes) == 1 and len(self._nodes_are_mining) > 0):
-            nodes[0].standalone = True
-            print("\n\n\nstandalone!")
+        if(len(self._nodes) == 1 and len(self._nodes_are_mining) > 0):
+            self._nodes[0].standalone = True
 
         # start all the nodes
-        for n, node in enumerate(nodes):
-            print('Starting Node {}...'.format(n))
-
-            node.start()
-            print('Starting Node {}...complete'.format(n))
-
-            time.sleep(0.5)
-
-        self._nodes = nodes
+        for index in range(self._number_of_nodes):
+            self.start_node(index)
 
         time.sleep(2) # TODO(HUT): blocking http call to node for ready state
 
@@ -195,6 +213,11 @@ class TestInstance():
                     sys.stdout.buffer.write(data)
                     sys.stdout.flush()
 
+def verify_file(filename):
+    if not os.path.isfile(filename):
+        output("Couldn't find expected file: {}".format(filename))
+        sys.exit(1)
+
 def extract(test, key, expected = True, expect_type = None, default = None):
     """
     Convenience function to remove an item from a YAML string, specifying the type you expect to find
@@ -218,16 +241,18 @@ def extract(test, key, expected = True, expect_type = None, default = None):
 def setup_test(test_yaml, test_instance):
     output("Setting up test: {}".format(test_yaml))
 
-    test_name        = extract(test_yaml, 'test_name', expected = True, expect_type = str)
-    number_of_nodes  = extract(test_yaml, 'number_of_nodes', expected = True, expect_type = int)
-    node_connections = extract(test_yaml, 'node_connections', expected = False, expect_type = list)
-    mining_nodes     = extract(test_yaml, 'mining_nodes', expected = False, expect_type = list, default = [])
-    max_test_time    = extract(test_yaml, 'max_test_time', expected = False, expect_type = int, default = 10)
+    test_name           = extract(test_yaml, 'test_name', expected = True, expect_type = str)
+    number_of_nodes     = extract(test_yaml, 'number_of_nodes', expected = True, expect_type = int)
+    node_load_directory = extract(test_yaml, 'node_load_directory', expected = False, expect_type = dict)
+    node_connections    = extract(test_yaml, 'node_connections', expected = False, expect_type = list)
+    mining_nodes        = extract(test_yaml, 'mining_nodes', expected = False, expect_type = list, default = [])
+    max_test_time       = extract(test_yaml, 'max_test_time', expected = False, expect_type = int, default = 10)
 
-    test_instance._number_of_nodes  = number_of_nodes
-    test_instance._node_connections = node_connections
-    test_instance._nodes_are_mining = mining_nodes
-    test_instance._max_test_time    = max_test_time
+    test_instance._number_of_nodes     = number_of_nodes
+    test_instance._node_load_directory = node_load_directory
+    test_instance._node_connections    = node_connections
+    test_instance._nodes_are_mining    = mining_nodes
+    test_instance._max_test_time       = max_test_time
 
     # Watchdog will trigger this if the tests exceeds allowed bounds. Note stopping the test cleanly is
     # necessary to preserve output logs etc.
@@ -255,31 +280,51 @@ def send_txs(parameters, test_instance):
         output("Only one node supported for sending TXs to at this time!")
         sys.exit(1)
 
+    # Create or load the identities up front
+    identities = []
+
+    if "load_from_file" in parameters and parameters["load_from_file"] == True:
+
+        filename = "{}/identities_pickled/{}.pickle".format(test_instance._test_files_dir, name)
+
+        verify_file(filename)
+
+        with open(filename, 'rb') as handle:
+            identities = pickle.load(handle)
+    else:
+        identities = [Identity() for i in range(amount)]
+
+    # If pickling, save this to the workspace
+    with open('{}/{}.pickle'.format(test_instance._workspace, name), 'wb') as handle:
+        pickle.dump(identities, handle)
+
     for node_index in nodes:
         node_host = "localhost"
         node_port = test_instance._nodes[node_index]._port_start
 
         # create the API objects we use to interface with the nodes
-        txs = TransactionApi(node_host, node_port)
         tokens = TokenApi(node_host, node_port)
 
         tx_and_identity = []
 
-        for balance in range(amount):
+        for index in range(amount):
 
-            # generate a random identity
-            identity = Identity()
+            # get next identity
+            identity = identities[index]
 
             # create and send the transaction to the ledger, capturing the tx hash
-            tx = tokens.wealth(identity.private_key_bytes, balance)
+            tx = tokens.wealth(identity.private_key_bytes, index)
 
-            tx_and_identity.append((tx, identity, balance))
+            tx_and_identity.append((tx, identity, index))
 
-            output("Created wealth with balance: ", balance)
+            output("Created wealth with balance: ", index)
 
         # Attach this to the test instance so it can be used for verification
         test_instance._metadata = tx_and_identity
 
+        # Save the metatada too
+        with open('{}/{}_meta.pickle'.format(test_instance._workspace, name), 'wb') as handle:
+            pickle.dump(test_instance._metadata, handle)
 
 def verify_txs(parameters, test_instance):
 
@@ -288,6 +333,16 @@ def verify_txs(parameters, test_instance):
 
     # Currently assume there only one set of TXs
     tx_and_identity = test_instance._metadata
+
+    # Load these from file if specified
+    if "load_from_file" in parameters and parameters["load_from_file"] == True:
+
+        filename = "{}/identities_pickled/{}_meta.pickle".format(test_instance._test_files_dir, name)
+
+        verify_file(filename)
+
+        with open(filename, 'rb') as handle:
+            tx_and_identity = pickle.load(handle)
 
     for node_index in nodes:
         node_host = "localhost"
@@ -318,34 +373,44 @@ def verify_txs(parameters, test_instance):
 
         output("Verified balances for node: {}".format(node_index))
 
+def add_node(parameters, test_instance):
+
+    index             = parameters["index"]
+    node_connections  = parameters["node_connections"]
+
+    test_instance.append_node(index)
+    test_instance.connect_nodes(node_connections)
+    test_instance.start_node(index)
+
 def run_steps(test_yaml, test_instance):
-    output("Running step: {}".format(test_yaml))
+    output("Running steps: {}".format(test_yaml))
 
     for step in test_yaml:
-        command    = list(step.keys())[0]
-        parameters = step[command]
+        output("Running step: {}".format(step))
+
+        command    = ""
+        parameters = ""
+
+        if type(step) is dict:
+            command    = list(step.keys())[0]
+            parameters = step[command]
+        elif type(step) is str:
+            command = step
+        else:
+            raise RuntimeError("Failed to parse command from step: {}".format(step))
 
         if command == 'send_txs':
             send_txs(parameters, test_instance)
+        elif command == 'verify_txs':
+            verify_txs(parameters, test_instance)
+        elif command == 'add_node':
+            add_node(parameters, test_instance)
         elif command == 'sleep':
             time.sleep(parameters)
+        elif command == 'print_time_elapsed':
+            test_instance.print_time_elapsed()
         else:
-            output("Found unknown command when running steps: {}".format(command))
-            sys.exit(1)
-
-#TODO(HUT): just put this in steps as per Ed's suggestion
-def verify_expectation(test_yaml, test_instance):
-    output("Verifying test expectation: {}".format(test_yaml))
-
-    for step in test_yaml:
-        command    = list(step.keys())[0]
-        parameters = step[command]
-
-        if command == 'verify_txs':
-            print("verifying txs")
-            verify_txs(parameters, test_instance)
-        else:
-            output("Found unknown command when verifying expectations: {}".format(command))
+            output("Found unknown command when running steps: '{}'".format(command))
             sys.exit(1)
 
 def run_test(build_directory, yaml_file, constellation_exe):
@@ -366,7 +431,7 @@ def run_test(build_directory, yaml_file, constellation_exe):
                     continue
 
                 # Create a test instance
-                test_instance = TestInstance(build_directory, constellation_exe)
+                test_instance = TestInstance(build_directory, constellation_exe, yaml_file)
 
                 # Configure the test - this will start the nodes asynchronously
                 setup_test(extract(test, 'setup_conditions'), test_instance)
@@ -374,12 +439,10 @@ def run_test(build_directory, yaml_file, constellation_exe):
                 # Run the steps in the test
                 run_steps(extract(test, 'steps'), test_instance)
 
-                # Verify expectations are met, such as being able to see certain balances
-                verify_expectation(extract(test, 'expectation'), test_instance)
-
                 test_instance.stop()
         except Exception as e:
             print('Failed to parse yaml or to run test! Error: "{}"'.format(str(e)))
+            traceback.print_exc()
             test_instance.stop()
             test_instance.dump_debug()
             sys.exit(1)
@@ -391,8 +454,8 @@ def parse_commandline():
 
     # Required argument
     parser.add_argument('build_directory', type=str, help='Location of the build directory relative to current path')
-    parser.add_argument('constellation_exe', type=str, help='Location of the build directory relative to current path')
-    parser.add_argument('yaml_file', type=str, help='Location of the build directory relative to current path')
+    parser.add_argument('constellation_exe', type=str, help='Location of the constellation binary relative to current path')
+    parser.add_argument('yaml_file', type=str, help='Location of the yaml file dictating the tests')
 
     return parser.parse_args()
 

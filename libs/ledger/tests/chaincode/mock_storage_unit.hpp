@@ -66,6 +66,7 @@ public:
   MOCK_METHOD2(GetTransaction,
                bool(fetch::byte_array::ConstByteArray const &, fetch::ledger::Transaction &));
   MOCK_METHOD1(HasTransaction, bool(fetch::byte_array::ConstByteArray const &));
+  MOCK_METHOD1(IssueCallForMissingTxs, void(fetch::ledger::TxDigestSet const &));
 
   MOCK_METHOD1(PollRecentTx, std::vector<fetch::ledger::TransactionSummary>(uint32_t));
 

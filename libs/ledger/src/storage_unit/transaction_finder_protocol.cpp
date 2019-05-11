@@ -16,36 +16,32 @@
 //
 //------------------------------------------------------------------------------
 
-#include <string>
-#include <vector>
+#include "ledger/storage_unit/transaction_finder_protocol.hpp"
 
-struct AEAToNode
+namespace fetch {
+namespace ledger {
+
+TxFinderProtocol::TxFinderProtocol()
+  : fetch::service::Protocol()
+  , resource_queue_()
 {
-  enum
-  {
-    REGISTER = 1
-  };
-};
+  this->Expose(ISSUE_CALL_FOR_MISSING_TXS, this, &Self::IssueCallForMissingTxs);
+}
 
-struct NodeToAEA
+bool TxFinderProtocol::Pop(storage::ResourceID &rid)
 {
-  enum
-  {
-    SEARCH = 1
-  };
-};
+  FETCH_LOG_DEBUG("FinderProto", "Popping resource ", rid.ToString());
+  return resource_queue_.Pop(rid, std::chrono::milliseconds::zero());
+}
 
-struct FetchProtocols
+void TxFinderProtocol::IssueCallForMissingTxs(ResourceIDs const &rids)
 {
-
-  enum
+  for (auto const &rid : rids)
   {
-    AEA_TO_NODE = 1,
-    NODE_TO_AEA = 2
-  };
-};
+    FETCH_LOG_DEBUG("FinderProto", "Stashing resource ", rid.ToString());
+    resource_queue_.Push(rid);
+  }
+}
 
-static const int SERVICE_TEST = 1;
-static const int CHANNEL_RPC  = 1;
-
-using Strings = std::vector<std::string>;
+}  // namespace ledger
+}  // namespace fetch
