@@ -42,7 +42,7 @@ namespace linalg
 template<typename S, uint64_t V>
 class Blas< S, 
             Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ),
-            Computes( _y = _alpha * _A * _x + _beta * _y ), 
+            Computes( _y <= _alpha * _A * _x + _beta * _y ), 
             V>
 {
 public:

@@ -10,17 +10,17 @@ namespace linalg
 {
 
 template< typename S, uint64_t V >
-void Blas< S, Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), Computes( _y = _alpha * _A * _x + _beta * _y ),V >::operator()(type const &alpha, Tensor< type > const &a, Tensor< type > const &x, int const &incx, type const &beta, Tensor< type > &y, int const &incy ) const
+void Blas< S, Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), Computes( _y <= _alpha * _A * _x + _beta * _y ),V >::operator()(type const &alpha, Tensor< type > const &a, Tensor< type > const &x, int const &incx, type const &beta, Tensor< type > &y, int const &incy ) const
 {
-  int j;
-  int kx;
-  int lenx;
-  int iy;
-  int jx;
-  int ky;
-  int leny;
   type temp;
   int i;
+  int iy;
+  int j;
+  int jx;
+  int kx;
+  int ky;
+  int lenx;
+  int leny;
   if( (int(a.height()) == 0) || ((int(a.width()) == 0) || ((alpha == 0.0) && (beta == 1.0))) ) 
   {
     return;
@@ -128,13 +128,13 @@ void Blas< S, Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), Computes( _y
 
 
 template class
-Blas< double , Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), Computes( _y = _alpha * _A * _x + _beta * _y ), platform::Parallelisation::NOT_PARALLEL >;
+Blas< double , Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), Computes( _y <= _alpha * _A * _x + _beta * _y ), platform::Parallelisation::NOT_PARALLEL >;
 template class
-Blas< float , Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), Computes( _y = _alpha * _A * _x + _beta * _y ), platform::Parallelisation::NOT_PARALLEL >;
+Blas< float , Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), Computes( _y <= _alpha * _A * _x + _beta * _y ), platform::Parallelisation::NOT_PARALLEL >;
 template class
-Blas< double , Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), Computes( _y = _alpha * _A * _x + _beta * _y ), platform::Parallelisation::THREADING >;
+Blas< double , Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), Computes( _y <= _alpha * _A * _x + _beta * _y ), platform::Parallelisation::THREADING >;
 template class
-Blas< float , Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), Computes( _y = _alpha * _A * _x + _beta * _y ), platform::Parallelisation::THREADING >;
+Blas< float , Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), Computes( _y <= _alpha * _A * _x + _beta * _y ), platform::Parallelisation::THREADING >;
 
 } // namespace linalg
 } // namespace math

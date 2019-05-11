@@ -10,12 +10,12 @@ namespace linalg
 {
 
 template< typename S, uint64_t V >
-void Blas< S, Signature( _x <= _A, _x, _n ), Computes( _x = _A * _x ),V >::operator()(Tensor< type > const &a, Tensor< type > &x, int const &incx ) const
+void Blas< S, Signature( _x <= _A, _x, _n ), Computes( _x <= _A * _x ),V >::operator()(Tensor< type > const &a, Tensor< type > &x, int const &incx ) const
 {
+  type temp;
   int i;
   int j;
   int kx;
-  type temp;
   if( incx <= 0 ) 
   {
     kx = 1 + (-(-1 + int(a.width())) * incx);
@@ -72,13 +72,13 @@ void Blas< S, Signature( _x <= _A, _x, _n ), Computes( _x = _A * _x ),V >::opera
 
 
 template class
-Blas< double , Signature( _x <= _A, _x, _n ), Computes( _x = _A * _x ), platform::Parallelisation::NOT_PARALLEL >;
+Blas< double , Signature( _x <= _A, _x, _n ), Computes( _x <= _A * _x ), platform::Parallelisation::NOT_PARALLEL >;
 template class
-Blas< float , Signature( _x <= _A, _x, _n ), Computes( _x = _A * _x ), platform::Parallelisation::NOT_PARALLEL >;
+Blas< float , Signature( _x <= _A, _x, _n ), Computes( _x <= _A * _x ), platform::Parallelisation::NOT_PARALLEL >;
 template class
-Blas< double , Signature( _x <= _A, _x, _n ), Computes( _x = _A * _x ), platform::Parallelisation::THREADING >;
+Blas< double , Signature( _x <= _A, _x, _n ), Computes( _x <= _A * _x ), platform::Parallelisation::THREADING >;
 template class
-Blas< float , Signature( _x <= _A, _x, _n ), Computes( _x = _A * _x ), platform::Parallelisation::THREADING >;
+Blas< float , Signature( _x <= _A, _x, _n ), Computes( _x <= _A * _x ), platform::Parallelisation::THREADING >;
 
 } // namespace linalg
 } // namespace math

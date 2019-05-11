@@ -28,7 +28,7 @@ namespace linalg
 template<typename S>
 class Blas< S, 
             Signature( _C <= _alpha, _A, _B, _beta, _C ),
-            Computes( _C =  _alpha * T(_A) * _B + _beta * _C ), 
+            Computes( _C <=  _alpha * T(_A) * _B + _beta * _C ), 
             platform::Parallelisation::VECTORISE>
 {
 public:

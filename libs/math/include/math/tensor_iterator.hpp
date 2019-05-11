@@ -232,9 +232,8 @@ public:
    */
   Type &operator*()
   {
-    assert(position_ < array_.size());
-
-    return array_[position_];
+    assert(position_ < array_.padded_size());
+    return array_.data()[position_];
   }
 
   Type const &operator*() const
@@ -279,7 +278,7 @@ public:
    * returns the n-dimensional index of the current position
    * @return
    */
-  std::vector<SizeType> GetNDimIndex()
+  std::vector<SizeType> GetIndex()
   {
     std::vector<SizeType> cur_index;
     for (SizeType j = 0; j < ranges_.size(); ++j)

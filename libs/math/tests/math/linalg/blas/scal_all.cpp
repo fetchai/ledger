@@ -3,7 +3,7 @@
 #include "math/linalg/prototype.hpp"
 #include "math/tensor.hpp"
 #include "math/linalg/blas/base.hpp"
-#include"math/linalg/blas/scal_all.hpp"
+#include "math/linalg/blas/scal_all.hpp"
 
 
 using namespace fetch;
@@ -14,10 +14,10 @@ TEST(blas_A_withA, blas_scal_all1) {
 
 	Blas< double, 
         Signature( _x <= _n, _alpha, _x, _m ), 
-        Computes( _x = _alpha * _x ), 
+        Computes( _x <= _alpha * _x ), 
         platform::Parallelisation::NOT_PARALLEL> scal_all;
-	// Compuing _x = _alpha * _x
-  using type = double;type alpha = type(-1.2124211254775865);
+	// Compuing _x <= _alpha * _x
+  using type = double;type alpha = type(7.9173563896782895);
   
   int n = 20;
   int m = 1;
@@ -31,12 +31,13 @@ TEST(blas_A_withA, blas_scal_all1) {
   scal_all(n, alpha, x, m);
 
   Tensor< type > refx = Tensor< type >::FromString(R"(
-  -0.45410035242942826; -1.1526661093851536; -0.8874849187737587; -0.725826193186877; -0.18916029564070178; -0.18913105191435506; -0.07042179843677203; -1.0501702575222849; -0.7288045390791739; -0.8584821516912974; -0.024957075741503763; -1.1759391945700448; -1.0092710434547816; -0.2574444235514654; -0.2204484313811582; -0.22236350225416535; -0.36886972262682804; -0.63622578344116; -0.523699265646511; -0.3530923619307798
+  2.9653676031470315; 7.527143988613113; 5.795456912406326; 4.739792575092527; 1.2352551798158444; 1.235064212338634; 0.45986865793548964; 6.857825242338096; 4.759241779156635; 5.606062948169498; 0.1629747774411678; 7.679121965426691; 6.590745061181888; 1.6811644147072553; 1.4395730659201835; 1.452078867983899; 2.4087942663057507; 4.154683687008276; 3.419862653335863; 2.3057648940074817
   )");
 
 
 
   ASSERT_TRUE( refx.AllClose(x) );
+
  
 }
 
@@ -44,10 +45,10 @@ TEST(blas_A_withA, blas_scal_all2) {
 
 	Blas< double, 
         Signature( _x <= _n, _alpha, _x, _m ), 
-        Computes( _x = _alpha * _x ), 
+        Computes( _x <= _alpha * _x ), 
         platform::Parallelisation::NOT_PARALLEL> scal_all;
-	// Compuing _x = _alpha * _x
-  using type = double;type alpha = type(-0.685979064219584);
+	// Compuing _x <= _alpha * _x
+  using type = double;type alpha = type(9.201437796741295);
   
   int n = 10;
   int m = 2;
@@ -61,12 +62,13 @@ TEST(blas_A_withA, blas_scal_all2) {
   scal_all(n, alpha, x, m);
 
   Tensor< type > refx = Tensor< type >::FromString(R"(
-  -0.4197182761617015; 0.13949386065204183; -0.2004051126189482; 0.3663618432936917; -0.3128544609918427; 0.7851759613930136; -0.13697203423417667; 0.5142344384136116; -0.4063839915780322; 0.046450412719997725; -0.4167630489787744; 0.17052412368729153; -0.044624030882035294; 0.9488855372533332; -0.6624033584289406; 0.8083973481164611; -0.20895866832594917; 0.09767211400638387; -0.4693695312349432; 0.4401524937396013
+  5.629926351544075; 0.13949386065204183; 2.6881508111476577; 0.3663618432936917; 4.196499590733841; 0.7851759613930136; 1.837285886170219; 0.5142344384136116; 5.451065805267397; 0.046450412719997725; 5.590286163501488; 0.17052412368729153; 0.5985681864329818; 0.9488855372533332; 8.885203086876391; 0.8083973481164611; 2.8028846490796817; 0.09767211400638387; 6.29592763192765; 0.4401524937396013
   )");
 
 
 
   ASSERT_TRUE( refx.AllClose(x) );
+
  
 }
 
@@ -74,10 +76,10 @@ TEST(blas_A_withA, blas_scal_all3) {
 
 	Blas< double, 
         Signature( _x <= _n, _alpha, _x, _m ), 
-        Computes( _x = _alpha * _x ), 
+        Computes( _x <= _alpha * _x ), 
         platform::Parallelisation::NOT_PARALLEL> scal_all;
-	// Compuing _x = _alpha * _x
-  using type = double;type alpha = type(-4.727289697550772);
+	// Compuing _x <= _alpha * _x
+  using type = double;type alpha = type(-5.982413835480475);
   
   int n = 6;
   int m = 3;
@@ -91,12 +93,13 @@ TEST(blas_A_withA, blas_scal_all3) {
   scal_all(n, alpha, x, m);
 
   Tensor< type > refx = Tensor< type >::FromString(R"(
-  -0.5769100902890045; 0.4951769101112702; 0.034388521115218396; -4.298620968519752; 0.2587799816000169; 0.662522284353982; -1.473548558609937; 0.5200680211778108; 0.5467102793432796; -0.8738605631521813; 0.9695846277645586; 0.7751328233611146; -4.441283667316245; 0.8948273504276488; 0.5978999788110851; -4.357966573662279; 0.0884925020519195; 0.1959828624191452; 0.045227288910538066; 0.32533033076326434
+  -0.7300832245930202; 0.4951769101112702; 0.034388521115218396; -5.439930954280775; 0.2587799816000169; 0.662522284353982; -1.8647846542697992; 0.5200680211778108; 0.5467102793432796; -1.1058758522861232; 0.9695846277645586; 0.7751328233611146; -5.620471466432868; 0.8948273504276488; 0.5978999788110851; -5.5150331781752735; 0.0884925020519195; 0.1959828624191452; 0.045227288910538066; 0.32533033076326434
   )");
 
 
 
   ASSERT_TRUE( refx.AllClose(x) );
+
  
 }
 
@@ -104,10 +107,10 @@ TEST(blas_A_withA, blas_scal_all4) {
 
 	Blas< double, 
         Signature( _x <= _n, _alpha, _x, _m ), 
-        Computes( _x = _alpha * _x ), 
+        Computes( _x <= _alpha * _x ), 
         platform::Parallelisation::NOT_PARALLEL> scal_all;
-	// Compuing _x = _alpha * _x
-  using type = double;type alpha = type(7.195391271823471);
+	// Compuing _x <= _alpha * _x
+  using type = double;type alpha = type(9.26898493304478);
   
   int n = 10;
   int m = -2;
@@ -127,5 +130,6 @@ TEST(blas_A_withA, blas_scal_all4) {
 
 
   ASSERT_TRUE( refx.AllClose(x) );
+
  
 }

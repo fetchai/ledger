@@ -53,8 +53,7 @@ static void ArangeImplementation(DataType const &from, DataType const &to, DataT
                                  ArrayType &ret)
 {
   SizeType N = SizeType((to - from) / delta);
-  ret.LazyResize(N);
-  ret.SetPaddedZero();
+  ret.Resize({N});
   ret.FillArange(from, to);
 }
 }  // namespace details
@@ -79,7 +78,8 @@ public:
 
   enum 
   {
-    PADDING = 8
+    LOG_PADDING = 3,
+    PADDING     = 1ull << LOG_PADDING
   };
 private:
   template <typename STensor>
@@ -192,14 +192,82 @@ public:
   SelfType          Transpose(SizeVector &new_axes) const;
   SelfType &        Squeeze();
   SelfType &        Unsqueeze();
-  void              ResizeFromShape(SizeVector const &shape);
-  void              LazyReshape(SizeVector const &shape); // TODO: Make private
-  bool              CanReshape(SizeVector const &shape);
-  void              Reshape(SizeVector const &shape);
+
+
+  /////////////////////////
+  /// memory management ///
+  /////////////////////////
+
+  // New interface
+  bool Resize(SizeVector const &shape, bool copy = false)
+  {
+    Tensor old_tensor = *this;
+
+    SizeType newsize = SelfType::PaddedSizeFromShape(shape);
+    data_ = ContainerType(newsize);
+
+    data_.SetAllZero();
+    shape_         = shape;
+    size_          = SelfType::SizeFromShape(shape); // Note: differs from newsize
+    padded_height_ = PadValue(shape[0]);
+    UpdateStrides();
+
+    // Effectively a reshape
+    if(copy && (size_ == old_tensor.size()))
+    {
+      auto it = begin();
+      auto oit = old_tensor.begin();
+      while(it.is_valid())
+      {
+        *it = *oit;
+        ++it;
+        ++oit;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  bool Reshape(SizeVector shape)  
+  {
+    return Resize(std::move(shape), true);
+  }
+
+  bool ResizeFromShape(SizeVector shape)  // TODO: Get rid of this
+  {
+    return Resize(std::move(shape), true);
+  }
+
+
   SizeVector const &stride() const;
   SizeVector const &shape() const;  
   SizeType const &  shape(SizeType const &n) const;
   SizeType          size() const;
+
+
+ /**
+   * Sets a single value in the array using an n-dimensional index
+   * @param indices     index position in array
+   * @param val         value to write
+   */
+  // TODO(private issue 123)
+  template <typename S>
+  fetch::meta::IfIsUnsignedInteger<S, void> Set(std::vector<S> const &indices, Type const &val)
+  {
+    assert(indices.size() == shape_.size());
+    this->operator[](ComputeColIndex(indices)) = val;     
+  }
+
+  /**
+   * Gets a value from the array by N-dim index
+   * @param indices index to access
+   */
+  template <typename S>
+  fetch::meta::IfIsUnsignedInteger<S, Type> Get(std::vector<S> const &indices) const
+  {
+    assert(indices.size() == shape_.size());
+    return this->operator[](ComputeColIndex(indices));
+  }
 
   ///////////////////////
   /// MATH OPERATIONS ///
@@ -298,18 +366,6 @@ public:
                                                                  Signed const &to,
                                                                  Signed const &delta);
 
-  /////////////////////////
-  /// memory management ///
-  /////////////////////////
-
-  bool LazyReserve(SizeType const &n); // TODO: Make private
-  void Reserve(SizeType const &n);
-
-  template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, void>::type LazyResize(S const &n); // TODO: make private
-
-  template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, void>::type Resize(S const &n);
 
   ////////////////////////////
   /// COMPARISON OPERATORS ///
@@ -367,7 +423,6 @@ public:
     serializer >> size;
     serializer >> shape;
 
-    t.Resize(size);
     t.Reshape(shape);
 
     for (std::size_t i = 0; i < t.size(); ++i)
@@ -380,7 +435,7 @@ public:
   template <typename S, typename D = memory::SharedArray<S>>
   void As(Tensor<S, D> &ret) const
   {
-    ret.LazyResize(size_);
+    ret.Resize({size_});
     auto this_it = cbegin();
     auto ret_it  = begin();
 
@@ -492,6 +547,7 @@ private:
   }
 
   // TODO(private 871): replace with strides
+  /*
   SizeType ComputeRowIndex(SizeVector const &indices) const
   {
     SizeType index  = 0;
@@ -506,15 +562,18 @@ private:
     }
     return index;
   }
+  */
 
-  SizeType ComputeColIndex(SizeVector const &indices) const
+  template<typename S>
+  fetch::meta::IfIsUnsignedInteger<S, SizeType> ComputeColIndex(std::vector<S> const &indices) const
   {
-    SizeType index  = 0;
+    assert(indices.size() > 0);
+    SizeType index  = indices[0];
     SizeType n_dims = indices.size();
-    SizeType base   = 1;
+    SizeType base   = padded_height_;
 
     // loop through all dimensions
-    for (SizeType i = 0; i < n_dims; ++i)
+    for (SizeType i = 1; i < n_dims; ++i)
     {
       index += indices[i] * base;
       base *= shape_[i];
@@ -652,6 +711,11 @@ private:
   };
 };
 
+
+/////////////////////////////////////////
+/// Tensor methods: memory management ///
+/////////////////////////////////////////
+
 /**
  * This method allows Tensor instantiation from a string which is convenient for quickly writing
  * tests.
@@ -707,8 +771,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
 
   if (!failed)
   {
-    ret.ResizeFromShape({n, m});
-    ret.SetAllZero();
+    ret.Resize({n, m});
 
     SizeType k = 0;
     for (SizeType i = 0; i < n; ++i)
@@ -737,7 +800,7 @@ Tensor<T, C>::Tensor(SizeType const &n)
   , size_(n)
 {
   assert(this->size() == n);
-  this->LazyReshape({n});
+  this->Reshape({n});
   Type zero{0};
   for (SizeType idx = 0; idx < this->size(); ++idx)
   {
@@ -753,8 +816,7 @@ Tensor<T, C>::Tensor(SizeType const &n)
 template <typename T, typename C>
 Tensor<T, C>::Tensor(SizeVector const &dims)
 {
-  ResizeFromShape(dims);
-  this->SetAllZero();
+  Resize(dims);
 }
 
 /////////////////////////////////
@@ -810,9 +872,11 @@ typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::cend() const
 template <typename T, typename C>
 void Tensor<T, C>::Copy(SelfType const &x)
 {
-  this->data_ = x.data_.Copy();
-  this->size_ = x.size_;
-  this->LazyReshape(x.shape());
+  this->data_  = x.data_.Copy();
+  this->size_  = x.size_;
+  this->padded_height_  = x.padded_height_;  
+  this->shape_ = x.shape();
+  this->stride_ = x.stride();  
 }
 
 /**
@@ -825,9 +889,7 @@ template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::Copy() const
 {
   SelfType copy;
-  copy.data_ = this->data_.Copy();
-  copy.size_ = this->size_;
-  copy.LazyReshape(this->shape());
+  copy.Copy(*this);
   return copy;
 }
 
@@ -982,9 +1044,19 @@ typename Tensor<T, C>::Type Tensor<T, C>::operator()(SizeType const &index) cons
 template <typename T, typename C>
 template <typename S>
 typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>::type
-    &Tensor<T, C>::operator[](S const &i)
+    &Tensor<T, C>::operator[](S const &n)
 {
-  return data_[i];
+  assert(static_cast<SizeType>(n) < size());
+  if(shape_.size() == 1)
+  {
+    return data_[n];
+  }
+
+  SizeType j = static_cast<SizeType>(n) / height();
+  SizeType i = static_cast<SizeType>(n) - j * height();
+
+  assert( i + padded_height_ * j < padded_size());
+  return data_[i + padded_height_ * j];
 }
 
 /**
@@ -1218,8 +1290,7 @@ template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::UniformRandom(SizeType const &N)
 {
   SelfType ret;
-  ret.LazyResize(N);
-  ret.SetPaddedZero();
+  ret.Resize({N});
   ret.FillUniformRandom();
 
   return ret;
@@ -1239,8 +1310,7 @@ Tensor<T, C> Tensor<T, C>::UniformRandomIntegers(SizeType const &N, int64_t cons
                                                  int64_t const &max)
 {
   SelfType ret;
-  ret.LazyResize(N);
-  ret.SetPaddedZero();
+  ret.Resize({N});
   ret.FillUniformRandomIntegers(min, max);
 
   return ret;
@@ -1297,7 +1367,7 @@ Tensor<T, C> Tensor<T, C>::Zeroes(SizeVector const &shape)
   SizeType n = PaddedSizeFromShape(shape);
   SelfType output{n};
   output.SetAllZero();
-  output.LazyReshape(shape);
+  output.Reshape(shape);
   return output;
 }
 
@@ -1310,11 +1380,9 @@ Tensor<T, C> Tensor<T, C>::Zeroes(SizeVector const &shape)
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::Ones(SizeVector const &shape)
 {
-  SizeType n = PaddedSizeFromShape(shape);
-//      std::accumulate(std::begin(shape), std::end(shape), SizeType(1), std::multiplies<SizeType>());
-  SelfType output{n};
-  output.SetAllOne();
-  output.LazyReshape(shape);
+
+  SelfType output{shape};
+  output.SetAllOne();  
   return output;
 }
 
@@ -1456,80 +1524,10 @@ typename Tensor<T, C>::SelfType &Tensor<T, C>::Unsqueeze()
   return *this;
 }
 
-/**
- * Resizes and reshapes tensor according to newly specified shape
- * @tparam T Type
- * @tparam C Container
- * @param shape the new shape to set
- */
-template <typename T, typename C>
-void Tensor<T, C>::ResizeFromShape(SizeVector const &shape)
-{
-  Resize(SelfType::PaddedSizeFromShape(shape));
-  Reshape(shape);
-}
-
-/**
- * Directly copies shape variable without checking anything
- * @tparam T Type
- * @tparam C Container
- * @param shape the new shape to set
- */
-template <typename T, typename C>
-void Tensor<T, C>::LazyReshape(SizeVector const &shape)
-{
-  shape_         = shape;
-  padded_height_ = PadValue(shape[0]);
-  UpdateStrides();
-}
-
-/**
- * Tests if it is possible to reshape the array to a newly proposed shape
- * @tparam T Type
- * @tparam C Container
- * @param shape shape specified for the new array as a vector ot size_t.
- * @return success is a bool indicating where the proposed shape is acceptable.
- */
-template <typename T, typename C>
-bool Tensor<T, C>::CanReshape(SizeVector const &shape)
-{
-  if ((shape.size() == 0) && (size() == 0))
-  {
-    return true;
-  }
-  else
-  {
-    SizeType total = 1;
-    for (auto const &s : shape)
-    {
-      total *= s;
-    }
-    bool success                      = false;
-    (total == this->size()) ? success = true : success = false;
-    return success;
-  }
-  return false;
-}
 
 /**
  */
 
-/**
- * Reshapes after checking the total size is the same
- * @tparam T Type
- * @tparam C Container
- * @param shape  specified for the new array as a vector of size type.
- */
-template <typename T, typename C>
-void Tensor<T, C>::Reshape(SizeVector const &shape)
-{
-  ASSERT(CanReshape(shape));
-
-  LazyReshape(shape);
-  size_ = SelfType::SizeFromShape(shape);
-
-  // TODO: Copy and move data
-}
 
 /**
  * returns the tensor's current shape
@@ -1978,7 +1976,7 @@ typename Tensor<T, C>::Type Tensor<T, C>::PeakToPeak() const
 template <typename T, typename C>
 void Tensor<T, C>::Fmod(SelfType const &x)
 {
-  LazyResize(x.size());
+  Resize({x.size()});
   fetch::math::Fmod(data_, x.data(), data_);
 }
 
@@ -1990,7 +1988,7 @@ void Tensor<T, C>::Fmod(SelfType const &x)
 template <typename T, typename C>
 void Tensor<T, C>::Remainder(SelfType const &x)
 {
-  LazyResize(x.size());
+  Resize({x.size()});
   fetch::math::Remainder(data_, x.data(), data_);
 }
 
@@ -2002,7 +2000,7 @@ void Tensor<T, C>::Remainder(SelfType const &x)
 template <typename T, typename C>
 Tensor<T, C> Tensor<T, C>::Softmax(SelfType const &x)
 {
-  LazyResize(x.size());
+  Resize({x.size()});
   ASSERT(x.size() == this->size());
   fetch::math::Softmax(x, *this);
 
@@ -2073,8 +2071,6 @@ void Tensor<T, C>::CopyFromNumpy(T *ptr, SizeVector &shape, SizeVector & /*strid
   SizeType total_size = SelfType::SizeFromShape(shape);
 
   // get pointer to the data
-  Resize(total_size);
-  assert(this->CanReshape(shape));
   this->Reshape(shape);
 
   // re-allocate all the data
@@ -2324,80 +2320,8 @@ fetch::meta::IfIsSignedInteger<Signed, Tensor<T, C>> Tensor<T, C>::Arange(Signed
   return ret;
 }
 
-/////////////////////////////////////////
-/// Tensor methods: memory management ///
-/////////////////////////////////////////
 
-/**
- * reserve memory, but throw away exisiting data_. bool return indicates whether any change was made
- * @tparam T
- * @tparam C
- * @param n
- * @return
- */
-template <typename T, typename C>
-bool Tensor<T, C>::LazyReserve(SizeType const &n)
-{
-  if (data_.size() < n)
-  {
-    data_ = ContainerType(n);
-    return true;
-  }
-  return false;
-}
 
-/**
- * reserve memory but don't throw away existing data stored in the tensor
- * @tparam T
- * @tparam C
- * @param n
- */
-template <typename T, typename C>
-void Tensor<T, C>::Reserve(SizeType const &n)
-{
-  ContainerType old_data = data_;
-
-  if (LazyReserve(n))
-  {
-    SizeType ns = std::min(old_data.size(), n);
-    memcpy(data_.pointer(), old_data.pointer(), ns);
-    data_.SetZeroAfter(ns);
-  }
-}
-
-/**
- * equivalent to lazyreserve but sets size and zeroes out data after that size
- * @tparam T
- * @tparam C
- * @tparam S
- * @param n
- * @return
- */
-template <typename T, typename C>
-template <typename S>
-typename std::enable_if<std::is_integral<S>::value, void>::type Tensor<T, C>::LazyResize(S const &n)
-{
-  LazyReserve(n);
-  size_ = n;
-  data_.SetZeroAfter(n);
-}
-
-/**
- * equivalent to lazyresize but sets all value after previous size to 0
- * @tparam T
- * @tparam C
- * @tparam S
- * @param n
- * @return
- */
-template <typename T, typename C>
-template <typename S>
-typename std::enable_if<std::is_integral<S>::value, void>::type Tensor<T, C>::Resize(S const &n)
-{
-  SizeType oldsize = size_;
-  LazyResize(n);
-  data_.SetZeroAfter(oldsize);
-}
 
 //////////////////////////////////
 /// Tensor methods: comparison ///
@@ -2430,7 +2354,6 @@ bool Tensor<T, C>::AllClose(SelfType const &o, Type const &relative_tolerance,
     T tolerance = std::max(absolute_tolerance, std::max(abs_e1, abs_e2) * relative_tolerance);
     if (abs_diff > tolerance)
     {
-      std::cout << "AllClose - " << e1 << " != " << e2 << std::endl;
       return false;
     }
   }

@@ -3,7 +3,7 @@
 #include "math/linalg/prototype.hpp"
 #include "math/tensor.hpp"
 #include "math/linalg/blas/base.hpp"
-#include"math/linalg/blas/gemv_t.hpp"
+#include "math/linalg/blas/gemv_t.hpp"
 
 
 using namespace fetch;
@@ -14,9 +14,9 @@ TEST(blas_gemv, blas_gemv_t_vector1) {
 
 	Blas< double, 
         Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), 
-        Computes( _y = _alpha * T(_A) * _x + _beta * _y ), 
+        Computes( _y <= _alpha * T(_A) * _x + _beta * _y ), 
         platform::Parallelisation::VECTORISE> gemv_t_vector;
-	// Compuing _y = _alpha * T(_A) * _x + _beta * _y
+	// Compuing _y <= _alpha * T(_A) * _x + _beta * _y
   using type = double;type alpha = type(1);
   type beta = type(1);
   int n = 1;
@@ -46,6 +46,7 @@ TEST(blas_gemv, blas_gemv_t_vector1) {
 
 
   ASSERT_TRUE( refy.AllClose(y) );
+
  
 }
 
@@ -53,9 +54,9 @@ TEST(blas_gemv, blas_gemv_t_vector2) {
 
 	Blas< double, 
         Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), 
-        Computes( _y = _alpha * T(_A) * _x + _beta * _y ), 
+        Computes( _y <= _alpha * T(_A) * _x + _beta * _y ), 
         platform::Parallelisation::VECTORISE> gemv_t_vector;
-	// Compuing _y = _alpha * T(_A) * _x + _beta * _y
+	// Compuing _y <= _alpha * T(_A) * _x + _beta * _y
   using type = double;type alpha = type(0);
   type beta = type(1);
   int n = 1;
@@ -85,6 +86,7 @@ TEST(blas_gemv, blas_gemv_t_vector2) {
 
 
   ASSERT_TRUE( refy.AllClose(y) );
+
  
 }
 
@@ -92,11 +94,11 @@ TEST(blas_gemv, blas_gemv_t_vector3) {
 
 	Blas< double, 
         Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), 
-        Computes( _y = _alpha * T(_A) * _x + _beta * _y ), 
+        Computes( _y <= _alpha * T(_A) * _x + _beta * _y ), 
         platform::Parallelisation::VECTORISE> gemv_t_vector;
-	// Compuing _y = _alpha * T(_A) * _x + _beta * _y
-  using type = double;type alpha = type(0.17266884431687102);
-  type beta = type(0.04657924607655284);
+	// Compuing _y <= _alpha * T(_A) * _x + _beta * _y
+  using type = double;type alpha = type(0.06564054651962903);
+  type beta = type(0.7260608666277865);
   int n = 1;
   int m = 1;
   
@@ -120,12 +122,13 @@ TEST(blas_gemv, blas_gemv_t_vector3) {
   gemv_t_vector(alpha, A, x, n, beta, y, m);
 
   Tensor< type > refy = Tensor< type >::FromString(R"(
-  0.22421577358868308; 0.11299888400368363; 0.2014646254617947
+  0.5699152082990123; 0.35474046240910745; 0.16303357096178778
   )");
 
 
 
   ASSERT_TRUE( refy.AllClose(y) );
+
  
 }
 
@@ -133,9 +136,9 @@ TEST(blas_gemv, blas_gemv_t_vector4) {
 
 	Blas< double, 
         Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), 
-        Computes( _y = _alpha * T(_A) * _x + _beta * _y ), 
+        Computes( _y <= _alpha * T(_A) * _x + _beta * _y ), 
         platform::Parallelisation::VECTORISE> gemv_t_vector;
-	// Compuing _y = _alpha * T(_A) * _x + _beta * _y
+	// Compuing _y <= _alpha * T(_A) * _x + _beta * _y
   using type = double;type alpha = type(0);
   type beta = type(1);
   int n = 2;
@@ -167,6 +170,7 @@ TEST(blas_gemv, blas_gemv_t_vector4) {
 
 
   ASSERT_TRUE( refy.AllClose(y) );
+
  
 }
 
@@ -174,11 +178,11 @@ TEST(blas_gemv, blas_gemv_t_vector5) {
 
 	Blas< double, 
         Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), 
-        Computes( _y = _alpha * T(_A) * _x + _beta * _y ), 
+        Computes( _y <= _alpha * T(_A) * _x + _beta * _y ), 
         platform::Parallelisation::VECTORISE> gemv_t_vector;
-	// Compuing _y = _alpha * T(_A) * _x + _beta * _y
-  using type = double;type alpha = type(0.4523626506454276);
-  type beta = type(0.35613705219294667);
+	// Compuing _y <= _alpha * T(_A) * _x + _beta * _y
+  using type = double;type alpha = type(0.9726787927780377);
+  type beta = type(0.2764597426617881);
   int n = 2;
   int m = 3;
   
@@ -202,12 +206,13 @@ TEST(blas_gemv, blas_gemv_t_vector5) {
   gemv_t_vector(alpha, A, x, n, beta, y, m);
 
   Tensor< type > refy = Tensor< type >::FromString(R"(
-  0.5739608486375031; 0.713244787222995; 0.7607850486168974; 0.6999127241005881; 0.770967179954561; 0.49379559636439074; 0.6580115472955564; 0.42754101835854963; 0.02541912674409519
+  1.175622544163414; 0.713244787222995; 0.7607850486168974; 1.2303254860997228; 0.770967179954561; 0.49379559636439074; 1.1590890350620289; 0.42754101835854963; 0.02541912674409519
   )");
 
 
 
   ASSERT_TRUE( refy.AllClose(y) );
+
  
 }
 
@@ -215,11 +220,11 @@ TEST(blas_gemv, blas_gemv_t_vector6) {
 
 	Blas< double, 
         Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), 
-        Computes( _y = _alpha * T(_A) * _x + _beta * _y ), 
+        Computes( _y <= _alpha * T(_A) * _x + _beta * _y ), 
         platform::Parallelisation::VECTORISE> gemv_t_vector;
-	// Compuing _y = _alpha * T(_A) * _x + _beta * _y
-  using type = double;type alpha = type(0.2540117347890668);
-  type beta = type(0.7682585993378894);
+	// Compuing _y <= _alpha * T(_A) * _x + _beta * _y
+  using type = double;type alpha = type(0.6471556090988758);
+  type beta = type(0.5567223762783087);
   int n = -2;
   int m = -3;
   
@@ -243,11 +248,12 @@ TEST(blas_gemv, blas_gemv_t_vector6) {
   gemv_t_vector(alpha, A, x, n, beta, y, m);
 
   Tensor< type > refy = Tensor< type >::FromString(R"(
-  0.8123739181462426; 0.8074401551640625; 0.8960912999234932; 0.44576882777593585; 0.11005192452767676; 0.22793516254194168; 0.463371029102401; 0.8180147659224931; 0.8607305832563434
+  1.3143139686607992; 0.8074401551640625; 0.8960912999234932; 0.6903069590077135; 0.11005192452767676; 0.22793516254194168; 0.5823412684555095; 0.8180147659224931; 0.8607305832563434
   )");
 
 
 
   ASSERT_TRUE( refy.AllClose(y) );
+
  
 }

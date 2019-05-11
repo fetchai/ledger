@@ -10,10 +10,10 @@ namespace linalg
 {
 
 template< typename S >
-void Blas< S, Signature( _C <= _alpha, _A, _B, _beta, _C ), Computes( _C = _alpha * _A * T(_B) + _beta * _C ),platform::Parallelisation::NOT_PARALLEL >::operator()(type const &alpha, Tensor< type > const &a, Tensor< type > const &b, type const &beta, Tensor< type > &c ) const
+void Blas< S, Signature( _C <= _alpha, _A, _B, _beta, _C ), Computes( _C <= _alpha * _A * T(_B) + _beta * _C ),platform::Parallelisation::NOT_PARALLEL >::operator()(type const &alpha, Tensor< type > const &a, Tensor< type > const &b, type const &beta, Tensor< type > &c ) const
 {
-  std::size_t j;
   std::size_t i;
+  std::size_t j;
   if( (c.height() == 0) || ((c.width() == 0) || (((alpha == 0.0) || (a.width() == 0)) && (beta == 1.0))) ) 
   {
     return;
@@ -79,10 +79,10 @@ void Blas< S, Signature( _C <= _alpha, _A, _B, _beta, _C ), Computes( _C = _alph
 
 
 template class
-Blas< double , Signature( _C <= _alpha, _A, _B, _beta, _C ), Computes( _C = _alpha * _A * T(_B) + _beta * _C ), platform::Parallelisation::NOT_PARALLEL>;
+Blas< double , Signature( _C <= _alpha, _A, _B, _beta, _C ), Computes( _C <= _alpha * _A * T(_B) + _beta * _C ), platform::Parallelisation::NOT_PARALLEL>;
 
 template class
-Blas< float , Signature( _C <= _alpha, _A, _B, _beta, _C ), Computes( _C = _alpha * _A * T(_B) + _beta * _C ), platform::Parallelisation::NOT_PARALLEL>;
+Blas< float , Signature( _C <= _alpha, _A, _B, _beta, _C ), Computes( _C <= _alpha * _A * T(_B) + _beta * _C ), platform::Parallelisation::NOT_PARALLEL>;
 
 
 } // namespace linalg

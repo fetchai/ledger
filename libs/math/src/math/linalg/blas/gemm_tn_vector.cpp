@@ -10,10 +10,10 @@ namespace linalg
 {
 
 template< typename S >
-void Blas< S, Signature( _C <= _alpha, _A, _B, _beta, _C ), Computes( _C =  _alpha * T(_A) * _B + _beta * _C ),platform::Parallelisation::VECTORISE >::operator()(type const &alpha, Tensor< type > const &a, Tensor< type > const &b, type const &beta, Tensor< type > &c ) const
+void Blas< S, Signature( _C <= _alpha, _A, _B, _beta, _C ), Computes( _C <=  _alpha * T(_A) * _B + _beta * _C ),platform::Parallelisation::VECTORISE >::operator()(type const &alpha, Tensor< type > const &a, Tensor< type > const &b, type const &beta, Tensor< type > &c ) const
 {
-  std::size_t j;
   std::size_t i;
+  std::size_t j;
   if( (c.height() == 0) || ((c.width() == 0) || (((alpha == 0.0) || (a.height() == 0)) && (beta == 1.0))) ) 
   {
     return;
@@ -87,10 +87,10 @@ void Blas< S, Signature( _C <= _alpha, _A, _B, _beta, _C ), Computes( _C =  _alp
 
 
 template class
-Blas< double , Signature( _C <= _alpha, _A, _B, _beta, _C ), Computes( _C =  _alpha * T(_A) * _B + _beta * _C ), platform::Parallelisation::VECTORISE>;
+Blas< double , Signature( _C <= _alpha, _A, _B, _beta, _C ), Computes( _C <=  _alpha * T(_A) * _B + _beta * _C ), platform::Parallelisation::VECTORISE>;
 
 template class
-Blas< float , Signature( _C <= _alpha, _A, _B, _beta, _C ), Computes( _C =  _alpha * T(_A) * _B + _beta * _C ), platform::Parallelisation::VECTORISE>;
+Blas< float , Signature( _C <= _alpha, _A, _B, _beta, _C ), Computes( _C <=  _alpha * T(_A) * _B + _beta * _C ), platform::Parallelisation::VECTORISE>;
 
 
 } // namespace linalg

@@ -14,9 +14,9 @@ TEST(blas_gemm_vectorised, blas_gemm_tn_vector1) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C =  _alpha * T(_A) * _B + _beta * _C ), 
+        Computes( _C <=  _alpha * T(_A) * _B + _beta * _C ), 
         platform::Parallelisation::VECTORISE> gemm_tn_vector;
-	// Compuing _C =  _alpha * T(_A) * _B + _beta * _C
+	// Compuing _C <=  _alpha * T(_A) * _B + _beta * _C
   using type = double;type alpha = type(1);
   type beta = type(0);
   
@@ -58,9 +58,9 @@ TEST(blas_gemm_vectorised, blas_gemm_tn_vector2) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C =  _alpha * T(_A) * _B + _beta * _C ), 
+        Computes( _C <=  _alpha * T(_A) * _B + _beta * _C ), 
         platform::Parallelisation::VECTORISE> gemm_tn_vector;
-	// Compuing _C =  _alpha * T(_A) * _B + _beta * _C
+	// Compuing _C <=  _alpha * T(_A) * _B + _beta * _C
   using type = double;type alpha = type(0);
   type beta = type(1);
   
@@ -102,9 +102,9 @@ TEST(blas_gemm_vectorised, blas_gemm_tn_vector3) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C =  _alpha * T(_A) * _B + _beta * _C ), 
+        Computes( _C <=  _alpha * T(_A) * _B + _beta * _C ), 
         platform::Parallelisation::VECTORISE> gemm_tn_vector;
-	// Compuing _C =  _alpha * T(_A) * _B + _beta * _C
+	// Compuing _C <=  _alpha * T(_A) * _B + _beta * _C
   using type = double;type alpha = type(1);
   type beta = type(1);
   
@@ -146,11 +146,11 @@ TEST(blas_gemm_vectorised, blas_gemm_tn_vector4) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C =  _alpha * T(_A) * _B + _beta * _C ), 
+        Computes( _C <=  _alpha * T(_A) * _B + _beta * _C ), 
         platform::Parallelisation::VECTORISE> gemm_tn_vector;
-	// Compuing _C =  _alpha * T(_A) * _B + _beta * _C
-  using type = double;type alpha = type(0.6171088726238035);
-  type beta = type(0.4187080182375391);
+	// Compuing _C <=  _alpha * T(_A) * _B + _beta * _C
+  using type = double;type alpha = type(0.4197483494252847);
+  type beta = type(0.3865369868043651);
   
   
   
@@ -175,9 +175,9 @@ TEST(blas_gemm_vectorised, blas_gemm_tn_vector4) {
   gemm_tn_vector(alpha, A, B, beta, C);
 
   Tensor< type > refC = Tensor< type >::FromString(R"(
-  0.5229901091159979 0.5638682062312756 0.1362237337493203;
- 0.323919963289103 0.5860855706122167 0.7457637933243947;
- 0.5917449426703048 0.4346924199387584 0.12568236554777504
+  0.42989786539999375 0.4620023139269305 0.10019052628399133;
+ 0.25679515534427844 0.4104350401822239 0.5950679194627824;
+ 0.46590926530051247 0.3293362636177038 0.09195358814319757
   )");
 
 
@@ -190,11 +190,11 @@ TEST(blas_gemm_vectorised, blas_gemm_tn_vector5) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C =  _alpha * T(_A) * _B + _beta * _C ), 
+        Computes( _C <=  _alpha * T(_A) * _B + _beta * _C ), 
         platform::Parallelisation::VECTORISE> gemm_tn_vector;
-	// Compuing _C =  _alpha * T(_A) * _B + _beta * _C
-  using type = double;type alpha = type(-0.42719482957445587);
-  type beta = type(0.6868803402828685);
+	// Compuing _C <=  _alpha * T(_A) * _B + _beta * _C
+  using type = double;type alpha = type(-1.0517957682754402);
+  type beta = type(1.5691523890277521);
   
   
   
@@ -219,9 +219,9 @@ TEST(blas_gemm_vectorised, blas_gemm_tn_vector5) {
   gemm_tn_vector(alpha, A, B, beta, C);
 
   Tensor< type > refC = Tensor< type >::FromString(R"(
-  0.1902966412628632 -0.01106666722714289 -0.21810121415322647;
- -0.15523631404172109 -0.36969982486166714 0.1442973013942358;
- 0.06542413192354349 -0.02850526299889722 0.286652764526782
+  0.4047479956086174 -0.07941351321036816 -0.5400881890582131;
+ -0.3953714427193164 -0.9140722234118401 0.27762275211076004;
+ 0.12272461013689101 -0.13223586548364008 0.595030905841208
   )");
 
 
@@ -234,9 +234,9 @@ TEST(blas_gemm_vectorised, blas_gemm_tn_vector6) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C =  _alpha * T(_A) * _B + _beta * _C ), 
+        Computes( _C <=  _alpha * T(_A) * _B + _beta * _C ), 
         platform::Parallelisation::VECTORISE> gemm_tn_vector;
-	// Compuing _C =  _alpha * T(_A) * _B + _beta * _C
+	// Compuing _C <=  _alpha * T(_A) * _B + _beta * _C
   using type = double;type alpha = type(3);
   type beta = type(3);
   
@@ -278,11 +278,11 @@ TEST(blas_gemm_vectorised, blas_gemm_tn_vector7) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C =  _alpha * T(_A) * _B + _beta * _C ), 
+        Computes( _C <=  _alpha * T(_A) * _B + _beta * _C ), 
         platform::Parallelisation::VECTORISE> gemm_tn_vector;
-	// Compuing _C =  _alpha * T(_A) * _B + _beta * _C
-  using type = double;type alpha = type(2.5901522959615706);
-  type beta = type(2.015040210416686);
+	// Compuing _C <=  _alpha * T(_A) * _B + _beta * _C
+  using type = double;type alpha = type(1.316884176667758);
+  type beta = type(1.8350677899209331);
   
   
   
@@ -309,11 +309,11 @@ TEST(blas_gemm_vectorised, blas_gemm_tn_vector7) {
   gemm_tn_vector(alpha, A, B, beta, C);
 
   Tensor< type > refC = Tensor< type >::FromString(R"(
-  3.102490142729031 2.136138095957331 1.0836419540390931 3.3959403067427747 4.314529847137644 1.0508384771290111 2.568245124202792;
- 2.7847116033922026 2.134610353374971 2.2895218053324653 3.0968625837809896 3.5758906282091534 1.8538997426823838 2.2746961794288545;
- 0.45438989297970667 1.9449132420037134 0.6851893384566187 0.926389848108709 0.5390745059753724 1.2402237698686158 1.6179427127057566;
- 1.4545691535050156 2.657581400692856 1.027536775193366 4.074359175483783 2.85227248268304 1.8510789835606423 2.117636547340986;
- 2.7003219774349443 1.2756375950903274 1.1112832069944862 1.7895973698246999 3.3246676198843463 2.083185705561938 1.2906344289687681
+  2.3135906328306595 1.2802389861097176 0.6683939572289908 2.1233041209883012 2.992541893934963 0.7304724846899854 1.8505670274252033;
+ 2.033156989458093 1.2779024113294712 1.7543167115058478 1.8726239530196724 2.330588498503719 1.4560866480404406 1.590789349309623;
+ 0.3042079748246811 1.665913054743348 0.6083821883187622 0.6221832719033886 0.3071276313597283 1.109521168966708 1.3718151604794289;
+ 0.752977250645057 1.7662598013441015 0.7060131973174095 2.5944493988328436 1.591489480735277 1.5011864247517552 1.3901285705575137;
+ 2.1321929433620985 0.7600311306781868 0.841460355250985 1.0018459453483133 2.439866037295503 1.7702877990406714 0.8652666372309457
   )");
 
 

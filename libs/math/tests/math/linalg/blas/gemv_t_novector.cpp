@@ -3,7 +3,7 @@
 #include "math/linalg/prototype.hpp"
 #include "math/tensor.hpp"
 #include "math/linalg/blas/base.hpp"
-#include"math/linalg/blas/gemv_t.hpp"
+#include "math/linalg/blas/gemv_t.hpp"
 
 
 using namespace fetch;
@@ -14,9 +14,9 @@ TEST(blas_gemv, blas_gemv_t_novector1) {
 
 	Blas< double, 
         Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), 
-        Computes( _y = _alpha * T(_A) * _x + _beta * _y ), 
+        Computes( _y <= _alpha * T(_A) * _x + _beta * _y ), 
         platform::Parallelisation::NOT_PARALLEL> gemv_t_novector;
-	// Compuing _y = _alpha * T(_A) * _x + _beta * _y
+	// Compuing _y <= _alpha * T(_A) * _x + _beta * _y
   using type = double;type alpha = type(1);
   type beta = type(1);
   int n = 1;
@@ -46,6 +46,7 @@ TEST(blas_gemv, blas_gemv_t_novector1) {
 
 
   ASSERT_TRUE( refy.AllClose(y) );
+
  
 }
 
@@ -53,9 +54,9 @@ TEST(blas_gemv, blas_gemv_t_novector2) {
 
 	Blas< double, 
         Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), 
-        Computes( _y = _alpha * T(_A) * _x + _beta * _y ), 
+        Computes( _y <= _alpha * T(_A) * _x + _beta * _y ), 
         platform::Parallelisation::NOT_PARALLEL> gemv_t_novector;
-	// Compuing _y = _alpha * T(_A) * _x + _beta * _y
+	// Compuing _y <= _alpha * T(_A) * _x + _beta * _y
   using type = double;type alpha = type(0);
   type beta = type(1);
   int n = 1;
@@ -85,6 +86,7 @@ TEST(blas_gemv, blas_gemv_t_novector2) {
 
 
   ASSERT_TRUE( refy.AllClose(y) );
+
  
 }
 
@@ -92,11 +94,11 @@ TEST(blas_gemv, blas_gemv_t_novector3) {
 
 	Blas< double, 
         Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), 
-        Computes( _y = _alpha * T(_A) * _x + _beta * _y ), 
+        Computes( _y <= _alpha * T(_A) * _x + _beta * _y ), 
         platform::Parallelisation::NOT_PARALLEL> gemv_t_novector;
-	// Compuing _y = _alpha * T(_A) * _x + _beta * _y
-  using type = double;type alpha = type(0.6975872888883387);
-  type beta = type(0.5443853616074563);
+	// Compuing _y <= _alpha * T(_A) * _x + _beta * _y
+  using type = double;type alpha = type(0.3067358073509603);
+  type beta = type(0.6817438597635755);
   int n = 1;
   int m = 1;
   
@@ -120,12 +122,13 @@ TEST(blas_gemv, blas_gemv_t_novector3) {
   gemv_t_novector(alpha, A, x, n, beta, y, m);
 
   Tensor< type > refy = Tensor< type >::FromString(R"(
-  1.1495648380494081; 0.6133028647265166; 0.8573935898407954
+  0.8081604717438899; 0.46438645708648096; 0.4309905149280896
   )");
 
 
 
   ASSERT_TRUE( refy.AllClose(y) );
+
  
 }
 
@@ -133,9 +136,9 @@ TEST(blas_gemv, blas_gemv_t_novector4) {
 
 	Blas< double, 
         Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), 
-        Computes( _y = _alpha * T(_A) * _x + _beta * _y ), 
+        Computes( _y <= _alpha * T(_A) * _x + _beta * _y ), 
         platform::Parallelisation::NOT_PARALLEL> gemv_t_novector;
-	// Compuing _y = _alpha * T(_A) * _x + _beta * _y
+	// Compuing _y <= _alpha * T(_A) * _x + _beta * _y
   using type = double;type alpha = type(0);
   type beta = type(1);
   int n = 2;
@@ -167,6 +170,7 @@ TEST(blas_gemv, blas_gemv_t_novector4) {
 
 
   ASSERT_TRUE( refy.AllClose(y) );
+
  
 }
 
@@ -174,11 +178,11 @@ TEST(blas_gemv, blas_gemv_t_novector5) {
 
 	Blas< double, 
         Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), 
-        Computes( _y = _alpha * T(_A) * _x + _beta * _y ), 
+        Computes( _y <= _alpha * T(_A) * _x + _beta * _y ), 
         platform::Parallelisation::NOT_PARALLEL> gemv_t_novector;
-	// Compuing _y = _alpha * T(_A) * _x + _beta * _y
-  using type = double;type alpha = type(0.4939481883651937);
-  type beta = type(0.5030269979436369);
+	// Compuing _y <= _alpha * T(_A) * _x + _beta * _y
+  using type = double;type alpha = type(0.0625182024500377);
+  type beta = type(0.19728096838492604);
   int n = 2;
   int m = 3;
   
@@ -202,12 +206,13 @@ TEST(blas_gemv, blas_gemv_t_novector5) {
   gemv_t_novector(alpha, A, x, n, beta, y, m);
 
   Tensor< type > refy = Tensor< type >::FromString(R"(
-  0.6403765956734028; 0.713244787222995; 0.7607850486168974; 0.8283254648437508; 0.770967179954561; 0.49379559636439074; 0.7781724729648156; 0.42754101835854963; 0.02541912674409519
+  0.09703082978902744; 0.713244787222995; 0.7607850486168974; 0.17983408906840515; 0.770967179954561; 0.49379559636439074; 0.16833625339421077; 0.42754101835854963; 0.02541912674409519
   )");
 
 
 
   ASSERT_TRUE( refy.AllClose(y) );
+
  
 }
 
@@ -215,11 +220,11 @@ TEST(blas_gemv, blas_gemv_t_novector6) {
 
 	Blas< double, 
         Signature( _y <= _alpha, _A, _x, _n, _beta, _y, _m ), 
-        Computes( _y = _alpha * T(_A) * _x + _beta * _y ), 
+        Computes( _y <= _alpha * T(_A) * _x + _beta * _y ), 
         platform::Parallelisation::NOT_PARALLEL> gemv_t_novector;
-	// Compuing _y = _alpha * T(_A) * _x + _beta * _y
-  using type = double;type alpha = type(0.44255581907931674);
-  type beta = type(0.7285553990352117);
+	// Compuing _y <= _alpha * T(_A) * _x + _beta * _y
+  using type = double;type alpha = type(0.7130160811123092);
+  type beta = type(0.24666204872381758);
   int n = -2;
   int m = -3;
   
@@ -243,11 +248,12 @@ TEST(blas_gemv, blas_gemv_t_novector6) {
   gemv_t_novector(alpha, A, x, n, beta, y, m);
 
   Tensor< type > refy = Tensor< type >::FromString(R"(
-  1.0863964257944532; 0.8074401551640625; 0.8960912999234932; 0.5826797729690093; 0.11005192452767676; 0.22793516254194168; 0.5467987700070663; 0.8180147659224931; 0.8607305832563434
+  1.2502843439211127; 0.8074401551640625; 0.8960912999234932; 0.6439414717648044; 0.11005192452767676; 0.22793516254194168; 0.48497774564768764; 0.8180147659224931; 0.8607305832563434
   )");
 
 
 
   ASSERT_TRUE( refy.AllClose(y) );
+
  
 }

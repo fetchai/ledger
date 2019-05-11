@@ -14,9 +14,9 @@ TEST(blas_gemm_vectorised, blas_gemm_tt_vector1) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * T(_A) * T(_B) + _beta * _C ), 
+        Computes( _C <= _alpha * T(_A) * T(_B) + _beta * _C ), 
         platform::Parallelisation::VECTORISE> gemm_tt_vector;
-	// Compuing _C = _alpha * T(_A) * T(_B) + _beta * _C
+	// Compuing _C <= _alpha * T(_A) * T(_B) + _beta * _C
   using type = double;type alpha = type(1);
   type beta = type(0);
   
@@ -59,9 +59,9 @@ TEST(blas_gemm_vectorised, blas_gemm_tt_vector2) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * T(_A) * T(_B) + _beta * _C ), 
+        Computes( _C <= _alpha * T(_A) * T(_B) + _beta * _C ), 
         platform::Parallelisation::VECTORISE> gemm_tt_vector;
-	// Compuing _C = _alpha * T(_A) * T(_B) + _beta * _C
+	// Compuing _C <= _alpha * T(_A) * T(_B) + _beta * _C
   using type = double;type alpha = type(0);
   type beta = type(1);
   
@@ -104,11 +104,11 @@ TEST(blas_gemm_vectorised, blas_gemm_tt_vector3) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * T(_A) * T(_B) + _beta * _C ), 
+        Computes( _C <= _alpha * T(_A) * T(_B) + _beta * _C ), 
         platform::Parallelisation::VECTORISE> gemm_tt_vector;
-	// Compuing _C = _alpha * T(_A) * T(_B) + _beta * _C
-  using type = double;type alpha = type(0.08429356117442133);
-  type beta = type(0.3398372832353006);
+	// Compuing _C <= _alpha * T(_A) * T(_B) + _beta * _C
+  using type = double;type alpha = type(0.9337693867276888);
+  type beta = type(0.45678808658553793);
   
   
   
@@ -134,9 +134,9 @@ TEST(blas_gemm_vectorised, blas_gemm_tt_vector3) {
   gemm_tt_vector(alpha, A, B, beta, C);
 
   Tensor< type > refC = Tensor< type >::FromString(R"(
-  0.2150969194012601 0.3593861492420617 0.08276925887515017;
- 0.11336464169773715 0.11005523843903678 0.20608363375089914;
- 0.15211641221594288 0.1473451102426405 0.3413574372271372
+  0.40502789273987333 0.9317659660074598 0.6241692234531764;
+ 0.6075367994273035 1.0695442957819783 1.2067854442976071;
+ 0.39942036388701785 0.734663024087997 1.0401279969269617
   )");
 
 

@@ -95,7 +95,7 @@ inline void Squeeze(Tensor<T, C> &arr, SizeType const &axis = SizeType(-1))
 {
   SizeVector newshape;
   ShapeFromSqueeze(arr.shape(), newshape, axis);
-  arr.LazyReshape(newshape);
+  arr.Reshape(newshape);
 }
 
 /* Squeeze an Tensor.
@@ -143,8 +143,8 @@ inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeT
   SizeType N;
 
   SizeType   k{1};
-  SizeVector out_shape{1};
-  for (SizeType i{0}; i < input.shape().size(); ++i)
+  SizeVector out_shape{};
+  for (SizeType i = 0; i < input.shape().size(); ++i)
   {
     if (i != axis)
     {
@@ -152,7 +152,6 @@ inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeT
       k *= input.shape(i);
     }
   }
-  output.Resize(k);
   output.Reshape(out_shape);
 
   fetch::math::ConstTensorIterator<T, C> it_a(input);
@@ -193,7 +192,6 @@ inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeV
       k *= input.shape(i);
     }
   }
-  output.Resize(k);
   output.Reshape(out_shape);
 
   ConstTensorIterator<T, C> it_a(input);

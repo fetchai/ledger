@@ -45,7 +45,7 @@ namespace linalg
 template<typename S, uint64_t V>
 class Blas< S, 
             Signature( _x, _y <= _n, _x, _m, _y, _p ),
-            Computes( _x, _y = _y, _x ), 
+            Computes( _x, _y <= _y, _x ), 
             V>
 {
 public:

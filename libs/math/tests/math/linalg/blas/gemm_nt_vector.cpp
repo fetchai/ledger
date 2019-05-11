@@ -14,9 +14,9 @@ TEST(blas_gemm_vectorised, blas_gemm_nt_vector1) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * _A * T(_B) + _beta * _C ), 
+        Computes( _C <= _alpha * _A * T(_B) + _beta * _C ), 
         platform::Parallelisation::VECTORISE> gemm_nt_vector;
-	// Compuing _C = _alpha * _A * T(_B) + _beta * _C
+	// Compuing _C <= _alpha * _A * T(_B) + _beta * _C
   using type = double;type alpha = type(1);
   type beta = type(0);
   
@@ -60,9 +60,9 @@ TEST(blas_gemm_vectorised, blas_gemm_nt_vector2) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * _A * T(_B) + _beta * _C ), 
+        Computes( _C <= _alpha * _A * T(_B) + _beta * _C ), 
         platform::Parallelisation::VECTORISE> gemm_nt_vector;
-	// Compuing _C = _alpha * _A * T(_B) + _beta * _C
+	// Compuing _C <= _alpha * _A * T(_B) + _beta * _C
   using type = double;type alpha = type(0);
   type beta = type(1);
   
@@ -106,9 +106,9 @@ TEST(blas_gemm_vectorised, blas_gemm_nt_vector3) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * _A * T(_B) + _beta * _C ), 
+        Computes( _C <= _alpha * _A * T(_B) + _beta * _C ), 
         platform::Parallelisation::VECTORISE> gemm_nt_vector;
-	// Compuing _C = _alpha * _A * T(_B) + _beta * _C
+	// Compuing _C <= _alpha * _A * T(_B) + _beta * _C
   using type = double;type alpha = type(1);
   type beta = type(1);
   
@@ -152,11 +152,11 @@ TEST(blas_gemm_vectorised, blas_gemm_nt_vector4) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * _A * T(_B) + _beta * _C ), 
+        Computes( _C <= _alpha * _A * T(_B) + _beta * _C ), 
         platform::Parallelisation::VECTORISE> gemm_nt_vector;
-	// Compuing _C = _alpha * _A * T(_B) + _beta * _C
-  using type = double;type alpha = type(0.6424486184901972);
-  type beta = type(0.32888315290072123);
+	// Compuing _C <= _alpha * _A * T(_B) + _beta * _C
+  using type = double;type alpha = type(0.580190079316804);
+  type beta = type(0.6652625207274128);
   
   
   
@@ -183,9 +183,9 @@ TEST(blas_gemm_vectorised, blas_gemm_nt_vector4) {
   gemm_nt_vector(alpha, A, B, beta, C);
 
   Tensor< type > refC = Tensor< type >::FromString(R"(
-  0.6053277601636717 0.3001992642484893 0.33883012247739436;
- 0.5318921567429294 0.10789042174246091 0.6321707913292467;
- 0.7505911420429676 0.2115034360315483 0.4750228087640021
+  0.8151240401269425 0.5551284486306501 0.3332617105807776;
+ 0.6123527516934372 0.14010383393144427 0.8887468213401246;
+ 0.9073827656993909 0.3128604950870429 0.4523946194545706
   )");
 
 
@@ -198,11 +198,11 @@ TEST(blas_gemm_vectorised, blas_gemm_nt_vector5) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * _A * T(_B) + _beta * _C ), 
+        Computes( _C <= _alpha * _A * T(_B) + _beta * _C ), 
         platform::Parallelisation::VECTORISE> gemm_nt_vector;
-	// Compuing _C = _alpha * _A * T(_B) + _beta * _C
-  using type = double;type alpha = type(0.6457022526563014);
-  type beta = type(0.7567296425980042);
+	// Compuing _C <= _alpha * _A * T(_B) + _beta * _C
+  using type = double;type alpha = type(0.4483279582556551);
+  type beta = type(0.398722260448384);
   
   
   
@@ -240,15 +240,15 @@ TEST(blas_gemm_vectorised, blas_gemm_nt_vector5) {
   gemm_nt_vector(alpha, A, B, beta, C);
 
   Tensor< type > refC = Tensor< type >::FromString(R"(
-  2.693394684716308 2.2542274283585595;
- 2.690712348115688 2.0251450523063697;
- 3.2168577130576312 2.1672809770451007;
- 2.460384903730463 1.690071401155327;
- 2.6748817973044443 1.7878882833299803;
- 2.320171595628567 1.7446785522763155;
- 2.989249635895524 1.938616542214843;
- 2.3323848136187566 1.581722275354312;
- 3.095388050907578 1.988610206926558
+  1.8288678701794803 1.470592381239068;
+ 1.7859267549845037 1.2985188743705882;
+ 2.1502322152602247 1.432798041996348;
+ 1.6964414573661264 1.126873043428316;
+ 1.8236405842027692 1.210465338138442;
+ 1.4876803158685303 1.1615724558812601;
+ 1.9624964219830867 1.266070101069264;
+ 1.5187372119728864 1.0345495704424816;
+ 2.0761180736606066 1.3183445773608995
   )");
 
 
@@ -261,11 +261,11 @@ TEST(blas_gemm_vectorised, blas_gemm_nt_vector6) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * _A * T(_B) + _beta * _C ), 
+        Computes( _C <= _alpha * _A * T(_B) + _beta * _C ), 
         platform::Parallelisation::VECTORISE> gemm_nt_vector;
-	// Compuing _C = _alpha * _A * T(_B) + _beta * _C
-  using type = double;type alpha = type(0.8186008655205892);
-  type beta = type(0.4543435194774915);
+	// Compuing _C <= _alpha * _A * T(_B) + _beta * _C
+  using type = double;type alpha = type(0.4697434178141531);
+  type beta = type(0.8614227701455575);
   
   
   
@@ -304,13 +304,13 @@ TEST(blas_gemm_vectorised, blas_gemm_nt_vector6) {
   gemm_nt_vector(alpha, A, B, beta, C);
 
   Tensor< type > refC = Tensor< type >::FromString(R"(
-  1.4159219977040938 1.8921657257493767 1.6464307566787018 2.026795363995425 1.631905181087039 2.1381173226469943 1.4974557176565029;
- 1.6081905439362483 2.876922182767689 1.9004108855837851 2.1709478077130506 2.600558669720076 2.2263076243438222 2.160641882155142;
- 1.8307825570170255 2.1211707731150766 1.7233443745256318 1.9625051498506125 2.350296048110192 1.6217130672062623 1.9252703403376517;
- 2.0546553723424528 2.288782956263377 1.603547814136743 1.7895070757575997 2.1921005243426492 1.4342872513584737 2.034216069849078;
- 1.5382529221959016 2.718131798164859 2.243784769578835 2.243431145163013 2.62203631956868 1.9898261588143236 1.7846813120608358;
- 2.1077797043048294 2.422926912853136 1.9992921010691225 2.1798496604792192 2.864218840031158 1.5303472405572647 1.735328797275273;
- 1.318696752320159 1.7362551743998045 1.6917057248062435 1.3419591146895788 1.568522462584686 1.1073491572305718 1.204876014287371
+  1.1940114394665495 1.1130088799246163 1.1698139654435564 1.5390064056136752 1.238683278686151 1.741427301585511 1.2549750951816883;
+ 1.020714453702279 1.6932751350642552 1.47642959282935 1.2616954939943696 1.8441741797291664 1.8423373207617528 1.585545584520845;
+ 1.2837457657743825 1.6036317473135955 1.2641928617597353 1.4539119648481642 1.9142280679076384 1.1625321412265566 1.6821819487981275;
+ 1.7228846137454694 1.4310006677321763 0.9618405631223961 1.087422984663116 1.2688541802014244 0.8797792445308585 1.5775930081555796;
+ 0.9254696363770821 1.7513742734818247 1.7950862952815911 1.3013432063927177 1.993875514705879 1.311146957881312 1.0950981135834568;
+ 1.6280544361218205 1.7681732504637535 1.674368328904624 1.6924381410407419 2.126248528801648 1.0475889854743063 1.1023843571691665;
+ 1.2076139515873874 1.4809959529604741 1.5657633187555806 1.017926669868649 1.1235487651608462 1.1018319728039392 0.8961243069215188
   )");
 
 
@@ -323,11 +323,11 @@ TEST(blas_gemm_vectorised, blas_gemm_nt_vector7) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * _A * T(_B) + _beta * _C ), 
+        Computes( _C <= _alpha * _A * T(_B) + _beta * _C ), 
         platform::Parallelisation::VECTORISE> gemm_nt_vector;
-	// Compuing _C = _alpha * _A * T(_B) + _beta * _C
-  using type = double;type alpha = type(0.616320716245561);
-  type beta = type(0.7550766883483377);
+	// Compuing _C <= _alpha * _A * T(_B) + _beta * _C
+  using type = double;type alpha = type(0.7498961526569015);
+  type beta = type(0.8952242514403763);
   
   
   
@@ -348,7 +348,7 @@ TEST(blas_gemm_vectorised, blas_gemm_nt_vector7) {
   gemm_nt_vector(alpha, A, B, beta, C);
 
   Tensor< type > refC = Tensor< type >::FromString(R"(
-  1.2130820392060722
+  1.4582616538339255
   )");
 
 

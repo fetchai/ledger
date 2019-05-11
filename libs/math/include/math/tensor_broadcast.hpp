@@ -156,12 +156,11 @@ inline bool Broadcast(F function, Tensor<T, C> &a, Tensor<T, C> &b, Tensor<T, C>
 
   if (!UpgradeIteratorFromBroadcast(cshape, it_a))
   {
-    std::cout << "Could not promote iterator A" << std::endl;
     return false;
   }
+  
   if (!UpgradeIteratorFromBroadcast(cshape, it_b))
   {
-    std::cout << "Could not promote iterator B" << std::endl;
     return false;
   }
 

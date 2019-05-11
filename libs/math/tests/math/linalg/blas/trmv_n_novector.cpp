@@ -14,9 +14,9 @@ TEST(blas_trmv, blas_trmv_n_novector1) {
 
 	Blas< double, 
         Signature( _x <= _A, _x, _n ), 
-        Computes( _x = _A * _x ), 
+        Computes( _x <= _A * _x ), 
         platform::Parallelisation::NOT_PARALLEL> trmv_n_novector;
-	// Compuing _x = _A * _x
+	// Compuing _x <= _A * _x
   using type = double;
   
   int n = 1;

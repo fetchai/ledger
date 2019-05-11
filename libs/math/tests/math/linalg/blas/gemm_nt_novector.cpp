@@ -14,9 +14,9 @@ TEST(blas_DGEMM, blas_gemm_nt_novector1) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * _A * T(_B) + _beta * _C ), 
+        Computes( _C <= _alpha * _A * T(_B) + _beta * _C ), 
         platform::Parallelisation::NOT_PARALLEL> gemm_nt_novector;
-	// Compuing _C = _alpha * _A * T(_B) + _beta * _C
+	// Compuing _C <= _alpha * _A * T(_B) + _beta * _C
   using type = double;type alpha = type(1);
   type beta = type(0);
   
@@ -60,9 +60,9 @@ TEST(blas_DGEMM, blas_gemm_nt_novector2) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * _A * T(_B) + _beta * _C ), 
+        Computes( _C <= _alpha * _A * T(_B) + _beta * _C ), 
         platform::Parallelisation::NOT_PARALLEL> gemm_nt_novector;
-	// Compuing _C = _alpha * _A * T(_B) + _beta * _C
+	// Compuing _C <= _alpha * _A * T(_B) + _beta * _C
   using type = double;type alpha = type(0);
   type beta = type(1);
   
@@ -106,9 +106,9 @@ TEST(blas_DGEMM, blas_gemm_nt_novector3) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * _A * T(_B) + _beta * _C ), 
+        Computes( _C <= _alpha * _A * T(_B) + _beta * _C ), 
         platform::Parallelisation::NOT_PARALLEL> gemm_nt_novector;
-	// Compuing _C = _alpha * _A * T(_B) + _beta * _C
+	// Compuing _C <= _alpha * _A * T(_B) + _beta * _C
   using type = double;type alpha = type(1);
   type beta = type(1);
   
@@ -152,11 +152,11 @@ TEST(blas_DGEMM, blas_gemm_nt_novector4) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * _A * T(_B) + _beta * _C ), 
+        Computes( _C <= _alpha * _A * T(_B) + _beta * _C ), 
         platform::Parallelisation::NOT_PARALLEL> gemm_nt_novector;
-	// Compuing _C = _alpha * _A * T(_B) + _beta * _C
-  using type = double;type alpha = type(0.6496622239208812);
-  type beta = type(0.5715961661573006);
+	// Compuing _C <= _alpha * _A * T(_B) + _beta * _C
+  using type = double;type alpha = type(0.1539397300265879);
+  type beta = type(0.7903363833218108);
   
   
   
@@ -183,9 +183,9 @@ TEST(blas_DGEMM, blas_gemm_nt_novector4) {
   gemm_nt_novector(alpha, A, B, beta, C);
 
   Tensor< type > refC = Tensor< type >::FromString(R"(
-  0.7863720113441582 0.4879191953604244 0.36033277709339845;
- 0.6235449565394628 0.13679689518980231 0.8455681604452041;
- 0.907999856233475 0.2929695768943796 0.4955482376122045
+  0.6637565055711071 0.6207150005680858 0.1338735567526186;
+ 0.38250845028435554 0.10829653189845169 0.7656021651742524;
+ 0.6233483591590073 0.28612351857492907 0.1590459087537381
   )");
 
 
@@ -198,11 +198,11 @@ TEST(blas_DGEMM, blas_gemm_nt_novector5) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * _A * T(_B) + _beta * _C ), 
+        Computes( _C <= _alpha * _A * T(_B) + _beta * _C ), 
         platform::Parallelisation::NOT_PARALLEL> gemm_nt_novector;
-	// Compuing _C = _alpha * _A * T(_B) + _beta * _C
-  using type = double;type alpha = type(0.6668552626447791);
-  type beta = type(0.33322936726792296);
+	// Compuing _C <= _alpha * _A * T(_B) + _beta * _C
+  using type = double;type alpha = type(0.9119087237497633);
+  type beta = type(0.6649377566530129);
   
   
   
@@ -232,10 +232,10 @@ TEST(blas_DGEMM, blas_gemm_nt_novector5) {
   gemm_nt_novector(alpha, A, B, beta, C);
 
   Tensor< type > refC = Tensor< type >::FromString(R"(
-  0.4375062744463597 0.28496207000427326 0.2817103839420795 0.3124600392085618;
- 0.3665821991884354 0.24486912853474813 0.03440443682224719 0.19061987356875615;
- 0.4421391411577897 0.441822900416367 0.16294023475395047 0.5164940349581524;
- 0.6796338894817097 0.2838377070209124 0.18759815857156847 0.5550139509406304
+  0.7574771401528204 0.5071286469733269 0.5465606193678534 0.5306106365568286;
+ 0.6106766508020554 0.42431760285463127 0.05236631679580402 0.283244915348307;
+ 0.6111914670733948 0.7373540690195248 0.28859730744890233 0.8127140321590516;
+ 1.1192955756484544 0.44030684369792694 0.3424105035482754 0.9170708758507584
   )");
 
 
@@ -248,11 +248,11 @@ TEST(blas_DGEMM, blas_gemm_nt_novector6) {
 
 	Blas< double, 
         Signature( _C <= _alpha, _A, _B, _beta, _C ), 
-        Computes( _C = _alpha * _A * T(_B) + _beta * _C ), 
+        Computes( _C <= _alpha * _A * T(_B) + _beta * _C ), 
         platform::Parallelisation::NOT_PARALLEL> gemm_nt_novector;
-	// Compuing _C = _alpha * _A * T(_B) + _beta * _C
-  using type = double;type alpha = type(0.8650729891801093);
-  type beta = type(0.023326679825275476);
+	// Compuing _C <= _alpha * _A * T(_B) + _beta * _C
+  using type = double;type alpha = type(0.844158755686547);
+  type beta = type(0.2016749342501909);
   
   
   
@@ -281,9 +281,9 @@ TEST(blas_DGEMM, blas_gemm_nt_novector6) {
   gemm_nt_novector(alpha, A, B, beta, C);
 
   Tensor< type > refC = Tensor< type >::FromString(R"(
-  0.33699689249506254 0.4045152504734203 0.18259109946965163 0.33464863281511487 0.3828221011923816;
- 1.5339041922008165 1.5932296603546596 0.770530301123639 1.0939380324485872 1.847060776310774;
- 1.0240602585332694 1.2661945624331923 0.5165701578411886 1.0280864368406393 1.2313119120555502
+  0.5010431355396052 0.43978250881991154 0.2671405560561146 0.3803888811866157 0.42452833409897855;
+ 1.503419643702348 1.6637698184415766 0.8418371698348108 1.0767008740782473 1.852258999956144;
+ 1.1618021604103526 1.2784432540745039 0.5300048822786516 1.0908002203755738 1.377888286944805
   )");
 
 

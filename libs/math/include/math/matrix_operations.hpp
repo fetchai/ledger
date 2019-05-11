@@ -127,7 +127,8 @@ meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
     ++rit;
   }
 
-  ret.LazyResize(counter);
+  // TODO(tfr): Is this correct - that does not look right!
+  ret.Resize({counter});
 }
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> BooleanMask(ArrayType &input_array, ArrayType const &mask)
@@ -738,7 +739,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DynamicStitch(ArrayType &     
   ASSERT(data.size() <= input_array.size());
   ASSERT(input_array.size() >= Max(indices));
   ASSERT(Min(indices) >= 0);
-  input_array.LazyResize(indices.size());
+  input_array.Resize({indices.size()});
 
   auto ind_it  = indices.cbegin();
   auto data_it = data.cbegin();

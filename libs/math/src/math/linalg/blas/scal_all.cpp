@@ -10,7 +10,7 @@ namespace linalg
 {
 
 template< typename S, uint64_t V >
-void Blas< S, Signature( _x <= _n, _alpha, _x, _m ), Computes( _x = _alpha * _x ),V >::operator()(int const &n, type const &da, Tensor< type > &dx, int const &incx ) const
+void Blas< S, Signature( _x <= _n, _alpha, _x, _m ), Computes( _x <= _alpha * _x ),V >::operator()(int const &n, type const &da, Tensor< type > &dx, int const &incx ) const
 {
   int i;
   if( (n <= 0) || (incx <= 0) ) 
@@ -62,21 +62,21 @@ void Blas< S, Signature( _x <= _n, _alpha, _x, _m ), Computes( _x = _alpha * _x 
 
 
 template class
-Blas< double , Signature( _x <= _n, _alpha, _x, _m ), Computes( _x = _alpha * _x ), platform::Parallelisation::NOT_PARALLEL >;
+Blas< double , Signature( _x <= _n, _alpha, _x, _m ), Computes( _x <= _alpha * _x ), platform::Parallelisation::NOT_PARALLEL >;
 template class
-Blas< float , Signature( _x <= _n, _alpha, _x, _m ), Computes( _x = _alpha * _x ), platform::Parallelisation::NOT_PARALLEL >;
+Blas< float , Signature( _x <= _n, _alpha, _x, _m ), Computes( _x <= _alpha * _x ), platform::Parallelisation::NOT_PARALLEL >;
 template class
-Blas< double , Signature( _x <= _n, _alpha, _x, _m ), Computes( _x = _alpha * _x ), platform::Parallelisation::THREADING >;
+Blas< double , Signature( _x <= _n, _alpha, _x, _m ), Computes( _x <= _alpha * _x ), platform::Parallelisation::THREADING >;
 template class
-Blas< float , Signature( _x <= _n, _alpha, _x, _m ), Computes( _x = _alpha * _x ), platform::Parallelisation::THREADING >;
+Blas< float , Signature( _x <= _n, _alpha, _x, _m ), Computes( _x <= _alpha * _x ), platform::Parallelisation::THREADING >;
 template class
-Blas< double , Signature( _x <= _n, _alpha, _x, _m ), Computes( _x = _alpha * _x ), platform::Parallelisation::VECTORISE >;
+Blas< double , Signature( _x <= _n, _alpha, _x, _m ), Computes( _x <= _alpha * _x ), platform::Parallelisation::VECTORISE >;
 template class
-Blas< float , Signature( _x <= _n, _alpha, _x, _m ), Computes( _x = _alpha * _x ), platform::Parallelisation::VECTORISE >;
+Blas< float , Signature( _x <= _n, _alpha, _x, _m ), Computes( _x <= _alpha * _x ), platform::Parallelisation::VECTORISE >;
 template class
-Blas< double , Signature( _x <= _n, _alpha, _x, _m ), Computes( _x = _alpha * _x ), platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING >;
+Blas< double , Signature( _x <= _n, _alpha, _x, _m ), Computes( _x <= _alpha * _x ), platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING >;
 template class
-Blas< float , Signature( _x <= _n, _alpha, _x, _m ), Computes( _x = _alpha * _x ), platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING >;
+Blas< float , Signature( _x <= _n, _alpha, _x, _m ), Computes( _x <= _alpha * _x ), platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING >;
 
 } // namespace linalg
 } // namespace math
