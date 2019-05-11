@@ -14,16 +14,16 @@ setup_compiler()
 # Test Targets
 #-------------------------------------------------------------------------------
 
-add_fetch_test(p2ptrust_gtest fetch-network p2ptrust)
-add_fetch_test(muddle_gtest fetch-network muddle SLOW)
-add_fetch_test(p2p_gtest fetch-network p2p)
-add_fetch_test(thread_pool_gtest fetch-network thread_pool SLOW)
-target_include_directories(muddle_gtest PRIVATE include)
-target_link_libraries(muddle_gtest PRIVATE fetch-ledger)
+add_fetch_test(fetch_p2ptrust_tests fetch-network p2ptrust)
+add_fetch_test(fetch_muddle_tests fetch-network muddle SLOW)
+add_fetch_test(fetch_p2p_tests fetch-network p2p)
+add_fetch_test(fetch_thread_pool_tests fetch-network thread_pool SLOW)
+target_include_directories(fetch_muddle_tests PRIVATE include)
+target_link_libraries(fetch_muddle_tests PRIVATE fetch-ledger)
 
-add_fetch_test(network_peer_gtest fetch-network gtest)
-add_fetch_test(network_gtest fetch-network network SLOW)
-target_include_directories(network_gtest PRIVATE include)	
-target_link_libraries(network_gtest PRIVATE fetch-ledger)
+add_fetch_test(fetch_network_peer_tests fetch-network tests)
+add_fetch_test(fetch_network_tests fetch-network network SLOW)
+target_include_directories(fetch_network_tests PRIVATE include)
+target_link_libraries(fetch_network_tests PRIVATE fetch-ledger)
 
-add_fetch_test(packet_gtest fetch-network packet)
+add_fetch_test(fetch_packet_tests fetch-network packet)

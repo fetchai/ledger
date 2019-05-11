@@ -42,7 +42,7 @@
 namespace fetch {
 namespace storage {
 
-template <std::size_t BS = 2>
+template <std::size_t BS = 128>
 struct FileBlockType
 {
   enum
@@ -108,22 +108,15 @@ public:
     HEADER_SIZE = 2 * sizeof(uint64_t)
   };
 
-  FileObject(FileObject const &other) = delete;
+  FileObject(FileObject const &other)           = delete;
   FileObject operator=(FileObject const &other) = delete;
   FileObject(FileObject &&other)                = default;
-  FileObject &operator=(FileObject &&other) = default;
+  FileObject &operator=(FileObject &&other)     = default;
 
-  FileObject()
-    : block_number_(0)
-    , byte_index_(HEADER_SIZE)
-    , length_(HEADER_SIZE)
-  {}
+  FileObject();
+  virtual ~FileObject();
 
-  ~FileObject()
-  {
-    Flush();
-  }
-
+  // TODO(HUT): unify this new/load methodology in constructor (?) etc.
   template <typename... Args>
   void Load(Args &&... args)
   {
@@ -138,130 +131,15 @@ public:
     Initalise();
   }
 
-  void Flush(bool /*lazy*/ = true)
-  {
-    block_type first;
-    stack_.Get(id_, first);
-    memcpy(first.data, reinterpret_cast<uint8_t const *>(&last_position_), sizeof(uint64_t));
-    memcpy(first.data + sizeof(uint64_t), reinterpret_cast<uint8_t const *>(&length_),
-           sizeof(uint64_t));
-    stack_.Set(id_, first);
+  void Flush(bool /*lazy*/ = true);
 
-    stack_.Set(free_block_index_, free_block_);
+  void Seek(uint64_t n);
 
-    stack_.Flush();
-  }
+  uint64_t Tell();
 
-  void Seek(uint64_t n)
-  {
-    n += HEADER_SIZE;
-    uint64_t   next_bn = n / block_type::BYTES;
-    block_type block;
+  void Resize(uint64_t size);
 
-    while (block_number_ < next_bn)
-    {
-      stack_.Get(block_index_, block);
-      block_index_ = block.next;
-      ++block_number_;
-      assert(block_index_ != block_type::UNDEFINED);
-
-      if (block_number_ >= block_count_)
-      {
-        throw StorageException("Seek is out of bounds");
-      }
-    }
-
-    while (block_number_ > next_bn)
-    {
-      stack_.Get(block_index_, block);
-      block_index_ = block.previous;
-      --block_number_;
-      assert(block_index_ != block_type::UNDEFINED);
-
-      if (block_number_ >= block_count_)
-      {
-        throw StorageException("Seek is out of bounds");
-      }
-    }
-
-    byte_index_ = n % block_type::BYTES;
-    assert((block_number_ != 0) || (block_index_ == id_));
-  }
-
-  uint64_t Tell()
-  {
-    if ((block_index_ == 0) && (byte_index_ < HEADER_SIZE))
-    {
-      return 0;
-    }
-    return block_index_ * block_type::BYTES + byte_index_ - HEADER_SIZE;
-  }
-
-  void Resize(uint64_t size)
-  {
-    Seek(0);
-
-    length_            = HEADER_SIZE + size;
-    uint64_t   last_bn = length_ / block_type::BYTES;
-    block_type block;
-    block_type prev_block;
-    uint64_t   prev_block_index;
-
-    // Expect these after a seek(0);
-    assert(block_index_ == id_);
-    assert(block_number_ == 0);
-
-    // Traverse the doubly LL making sure each block number is valid.
-    // First block must be valid.
-    while (block_number_ < last_bn)
-    {
-      // Get the block at block_number
-      if (block_index_ != block_type::UNDEFINED)
-      {
-        stack_.Get(block_index_, block);
-      }
-      else
-      {
-        if (block_number_ == 0)
-        {
-          throw StorageException("Resize failed: index invalid");
-        }
-
-        // Write new block
-        block.previous = prev_block_index;
-        assert(block.next == block_type::UNDEFINED);
-        block_index_ = GetFreeBlock(block, prev_block_index);
-
-        // Update prev block
-        prev_block.next = block_index_;
-        stack_.Set(prev_block_index, prev_block);
-      }
-
-      prev_block       = block;
-      prev_block_index = block_index_;
-
-      block_index_ = block.next;
-      ++block_number_;
-    }
-
-    // Take care of extra blocks
-    if (block.next != block_type::UNDEFINED)
-    {
-      FreeBlocks(block.next);
-      block.next = block_type::UNDEFINED;
-      stack_.Set(block_index_, block);
-    }
-
-    // Update state
-    last_position_ = block_index_;
-    block_count_   = block_number_;
-    Seek(0);
-  }
-
-  void Write(byte_array::ConstByteArray const &arr)
-  {
-    Write(arr.pointer(), arr.size());
-  }
+  void Write(byte_array::ConstByteArray const &arr);
 
   /**
    * Write bytes to file object, ensuring that the size of the file object is extended if
@@ -271,285 +149,32 @@ public:
    * @param: num The number of bytes to write
    *
    */
-  void Write(uint8_t const *bytes, uint64_t const &num)
-  {
-    uint64_t n = num + byte_index_ + block_number_ * block_type::BYTES;
+  void Write(uint8_t const *bytes, uint64_t const &num);
 
-    uint64_t last_block = platform::DivideCeil<uint64_t>(n, block_type::BYTES);
+  void Read(byte_array::ByteArray &arr);
 
-    --last_block;
+  void Read(uint8_t *bytes, uint64_t const &m);
 
-    uint64_t first_bytes = block_type::BYTES - byte_index_;
-    if (first_bytes > num)
-    {
-      first_bytes = num;
-    }
+  uint64_t const &id() const;
 
-    uint64_t last_bytes = n - (block_type::BYTES * last_block);
+  uint64_t size() const;
 
-    // Writing first
-    block_type block;
-    stack_.Get(block_index_, block);
+  byte_array::ConstByteArray Hash();
 
-    if (((last_block != 0) && (block.next == block_type::UNDEFINED)) ||
-        ((last_block == 0) && (((byte_index_ + first_bytes) % block_type::BYTES) == 0)))
-    {
-      block_type empty;
-      empty.previous = block_index_;
-      block.next     = GetFreeBlock(empty, block_index_);
-    }
+  void UpdateHash(crypto::StreamHasher &hasher);
 
-    memcpy(block.data + byte_index_, bytes, first_bytes);
-    stack_.Set(block_index_, block);
-    byte_index_ = (byte_index_ + first_bytes) % block_type::BYTES;
+  bool SeekFile(std::size_t const &position);
 
-    if (last_block == 0)
-    {
-      if (byte_index_ == 0)
-      {
-        block_index_ = block.next;
-        ++block_number_;
-      }
-    }
-    else
-    {
-      uint64_t offset = first_bytes;
+  void CreateNewFile();
 
-      // Middle last_block
-      --last_block;
-      while (block_number_ < last_block)
-      {
-        assert(byte_index_ == 0);
-        ++block_number_;
-        block_index_ = block.next;
+  Document AsDocument();
 
-        stack_.Get(block_index_, block);
-
-        if (block.next == block_type::UNDEFINED)
-        {
-          block_type empty;
-          empty.previous = block_index_;
-          block.next     = GetFreeBlock(empty, block_index_);
-        }
-
-        memcpy(block.data, bytes + offset, block_type::BYTES);
-        stack_.Set(block_index_, block);
-
-        offset += block_type::BYTES;
-      }
-
-      // Last block
-      if (block_number_ == last_block)
-      {
-        ++block_number_;
-        block_index_ = block.next;
-        stack_.Get(block_index_, block);
-        memcpy(block.data, bytes + offset, last_bytes);
-        stack_.Set(block_index_, block);
-        byte_index_ = last_bytes;
-      }
-    }
-
-    uint64_t position = byte_index_ + block_number_ * block_type::BYTES;
-    if (position > length_)
-    {
-      length_ = position;
-    }
-
-    if (block_number_ > block_count_)
-    {
-      last_position_ = block_index_;
-      block_count_   = block_number_;
-    }
-
-    Flush();
-  }
-
-  void Read(byte_array::ByteArray &arr)
-  {
-    Read(arr.pointer(), arr.size());
-  }
-
-  void Read(uint8_t *bytes, uint64_t const &m)
-  {
-    uint64_t n = m + byte_index_ + block_number_ * block_type::BYTES;
-
-    uint64_t last_block = platform::DivideCeil<uint64_t>(n, block_type::BYTES);
-    --last_block;
-
-    uint64_t first_bytes = block_type::BYTES - byte_index_;
-    if (first_bytes > m)
-    {
-      first_bytes = m;
-    }
-
-    uint64_t last_bytes = n - (block_type::BYTES * last_block);
-
-    // Writing first
-    assert(block_index_ < stack_.size());
-
-    block_type block;
-    stack_.Get(block_index_, block);
-
-    if ((last_block != 0) && (block.next == block_type::UNDEFINED))
-    {
-      throw StorageException("Could not read block");
-    }
-
-    memcpy(bytes, block.data + byte_index_, first_bytes);
-    byte_index_ = (byte_index_ + first_bytes) % block_type::BYTES;
-
-    if (last_block != 0)
-    {
-      uint64_t offset = first_bytes;
-
-      // Middle last block
-      --last_block;
-      while (block_number_ < last_block)
-      {
-        assert(byte_index_ == 0);
-        ++block_number_;
-        block_index_ = block.next;
-
-        stack_.Get(block_index_, block);
-
-        if (block.next == block_type::UNDEFINED)
-        {
-          throw StorageException("Could not read block");
-        }
-
-        memcpy(bytes + offset, block.data, block_type::BYTES);
-
-        offset += block_type::BYTES;
-      }
-
-      // Last block
-      if (block_number_ == last_block)
-      {
-        ++block_number_;
-        block_index_ = block.next;
-        stack_.Get(block_index_, block);
-        memcpy(bytes + offset, block.data, last_bytes);
-
-        byte_index_ = last_bytes;
-      }
-    }
-  }
-
-  uint64_t const &id() const
-  {
-    return id_;
-  }
-
-  uint64_t size() const
-  {
-    return length_ - HEADER_SIZE;
-  }
-
-  byte_array::ConstByteArray Hash()
-  {
-    hasher_type hasher;
-    hasher.Reset();
-    UpdateHash(hasher);
-    return hasher.Final();
-  }
-
-  void UpdateHash(crypto::StreamHasher &hasher)
-  {
-    uint64_t bi        = id_;
-    uint64_t remaining = length_ - HEADER_SIZE;
-
-    block_type block;
-
-    stack_.Get(bi, block);
-    uint64_t n = std::min(remaining, uint64_t(block_type::BYTES - HEADER_SIZE));
-    hasher.Update(block.data + HEADER_SIZE, n);
-
-    remaining -= n;
-    while (remaining != 0)
-    {
-
-      bi = block.next;
-      if (bi == block_type::UNDEFINED)
-      {
-        throw StorageException("File corrupted");
-      }
-
-      stack_.Get(bi, block);
-      n = std::min(remaining, uint64_t(block_type::BYTES));
-      hasher.Update(block.data, n);
-
-      remaining -= n;
-    }
-  }
-
-  bool SeekFile(std::size_t const &position)
-  {
-    block_number_ = 0;
-    byte_index_   = HEADER_SIZE;
-
-    block_type first;
-    assert(position < stack_.size());
-
-    block_index_ = id_ = position;
-    stack_.Get(id_, first);
-
-    memcpy(reinterpret_cast<uint8_t *>(&last_position_), first.data, sizeof(uint64_t));
-    memcpy(reinterpret_cast<uint8_t *>(&length_), first.data + sizeof(uint64_t), sizeof(uint64_t));
-
-    block_count_ = platform::DivideCeil<uint64_t>(length_, block_type::BYTES);
-
-    return true;
-  }
-
-  void CreateNewFile()
-  {
-    block_number_ = 0;
-    byte_index_   = HEADER_SIZE;
-    length_       = HEADER_SIZE;
-
-    block_type block;
-    last_position_ = stack_.size();
-
-    memcpy(block.data, reinterpret_cast<uint8_t const *>(&last_position_), sizeof(uint64_t));
-    memcpy(block.data + sizeof(uint64_t), reinterpret_cast<uint8_t const *>(&length_),
-           sizeof(uint64_t));
-
-    block_index_ = id_ = GetFreeBlock(block, 1);
-    block_count_       = platform::DivideCeil<uint64_t>(length_, block_type::BYTES);
-  }
-
-  Document AsDocument()
-  {
-    Document ret;
-
-    ret.document.Resize(this->size());
-    this->Read(ret.document);
-
-    return ret;
-  }
-
-  void Erase()
-  {
-    if (deletion_enabled)
-    {
-      FreeBlocks(block_index_);
-    }
-    Flush();
-  }
+  void Erase();
 
   // TODO(HUT): figure out what to do about this abstraction breaking
-  stack_type *stack()
-  {
-    return &stack_;
-  }
+  stack_type *stack();
 
-  stack_type &underlying_stack()
-  {
-    return stack_;
-  }
-
-  bool deletion_enabled = false;
+  stack_type &underlying_stack();
 
 protected:
   stack_type stack_;
@@ -557,6 +182,7 @@ protected:
 
   uint64_t block_number_;  // Nth block in file
   uint64_t block_count_;   // Number of blocks in file
+  bool     is_initialized_{false};
 
   // Used while seeking within a file
   uint64_t block_index_;  // index of current block
@@ -568,28 +194,17 @@ protected:
   uint64_t   free_block_index_ = 0;
   block_type free_block_;
 
-  uint64_t FreeBlocks()
-  {
-    return free_block_.free;
-  }
+  uint64_t FreeBlocks();
+
+  // TODO(HUT): remove this once tested
+  bool deletion_enabled_ = true;
 
 private:
   /**
    * Initialise by looking for the block that's the beginning of our free blocks linked list. If
    * the stack is empty this means we set our own.
    */
-  void Initalise()
-  {
-    if (stack_.size() == 0)
-    {
-      free_block_.free = 0;
-      block_index_ = id_ = stack_.Push(free_block_);
-    }
-    else
-    {
-      stack_.Get(free_block_index_, free_block_);
-    }
-  }
+  void Initalise();
 
   /**
    * Get free block from stack, write block to that location
@@ -599,53 +214,7 @@ private:
    *
    * @return: Location on the stack of the free block
    */
-  uint64_t GetFreeBlock(block_type const &write_block, uint64_t min_index)
-  {
-    // End of the stack is the default
-    if (free_block_.free == 0)
-    {
-      return stack_.Push(write_block);
-    }
-
-    // Traverse the free block linked list to find first valid block
-    block_type block;
-    uint64_t   block_index = free_block_.next;
-    assert(block_index != block_type::UNDEFINED);  // first block should be valid if free > 0
-
-    do
-    {
-      // Reached end of free LL, default to end of stack
-      if (block_index == block_type::UNDEFINED)
-      {
-        return stack_.Push(write_block);
-      }
-
-      stack_.Get(block_index, block);
-    } while (block_index < min_index);
-
-    // We now have the location of the point in the LL we want to remove
-    // fix prev
-    block_type mod_block;
-    stack_.Get(block.previous, mod_block);
-    mod_block.next = block.next;
-    stack_.Set(block.previous, mod_block);
-
-    // fix next
-    if (block.next != block_type::UNDEFINED)
-    {
-      stack_.Get(block.next, mod_block);
-      mod_block.previous = block.previous;
-      stack_.Set(block.next, mod_block);
-    }
-
-    // Note there is no flush at this point
-    assert(free_block_.free != 0);
-    free_block_.free--;
-
-    // Write and return
-    stack_.Set(block_index, write_block);
-    return block_index;
-  }
+  uint64_t GetFreeBlock(block_type const &write_block, uint64_t min_index);
 
   /**
    * Free blocks starting at index. We can't just append to the end of the free LL as we want to
@@ -654,80 +223,594 @@ private:
    *
    * @param: remove_index Index of starting block to free
    */
-  void FreeBlocks(uint64_t remove_index)
+  void FreeBlocks(uint64_t remove_index);
+};
+
+template <typename S>
+FileObject<S>::FileObject()
+    : block_number_(0)
+    , byte_index_(HEADER_SIZE)
+    , length_(HEADER_SIZE)
+{}
+
+template <typename S>
+FileObject<S>::~FileObject()
+{
+  // TODO(HUT): don't flush in destructors, except the highest level storage code (?)
+  if(is_initialized_)
   {
-    block_type remove_block;
-    block_type prev_block;
-    block_type next_block;
-    uint64_t   free_index_p = free_block_index_;  // Starts at 0
-    uint64_t   free_index_n = free_block_.next;
+    //Flush();
+  }
+}
 
-    // If no free blocks, safe to point the admin block to the beginning of this LL
-    if (free_block_.free == 0)
+template <typename S>
+void FileObject<S>::Flush(bool /*lazy*/)
+{
+  block_type first;
+  stack_.Get(id_, first);
+  memcpy(first.data, reinterpret_cast<uint8_t const *>(&last_position_), sizeof(uint64_t));
+  memcpy(first.data + sizeof(uint64_t), reinterpret_cast<uint8_t const *>(&length_),
+         sizeof(uint64_t));
+  stack_.Set(id_, first);
+
+  stack_.Set(free_block_index_, free_block_);
+
+  stack_.Flush();
+}
+
+template <typename S>
+void FileObject<S>::Seek(uint64_t n)
+{
+  n += HEADER_SIZE;
+  uint64_t   next_bn = n / block_type::BYTES;
+  block_type block;
+
+  while (block_number_ < next_bn)
+  {
+    stack_.Get(block_index_, block);
+    block_index_ = block.next;
+    ++block_number_;
+    assert(block_index_ != block_type::UNDEFINED);
+
+    if (block_number_ >= block_count_)
     {
-      assert(remove_index != block_type::UNDEFINED);
-      free_block_.next = remove_index;
-
-      // Count new free blocks
-      while (remove_index != block_type::UNDEFINED)
-      {
-        stack_.Get(remove_index, remove_block);
-        remove_index = remove_block.next;
-        free_block_.free++;
-      }
-      return;
-    }
-
-    // We want to insert the blocks into the free blocks LL, do this by finding the block in the
-    // free LL that we can insert before, so we have prev and next in the free LL, we then put the
-    // remove_block in-between those.
-    assert(free_index_n != block_type::UNDEFINED);
-    stack_.Get(free_index_p, prev_block);    // <- pointing to free block LL-1
-    stack_.Get(free_index_n, next_block);    // <- pointing to free block LL
-    stack_.Get(remove_index, remove_block);  // Crawling the blocks to free
-
-    while (remove_index != block_type::UNDEFINED)
-    {
-      // We want to insert when we're between prev and next or at the end
-      if (free_index_n > remove_index || free_index_n == block_type::UNDEFINED)
-      {
-        // Save the next index
-        uint64_t next_remove_index = remove_block.next;
-
-        // Do the join and write back
-        prev_block.next       = remove_index;
-        next_block.previous   = remove_index;
-        remove_block.previous = free_index_p;
-        remove_block.next     = free_index_n;
-
-        stack_.Set(free_index_p, prev_block);
-
-        if (free_index_n != block_type::UNDEFINED)
-        {
-          stack_.Set(free_index_n, next_block);
-        }
-
-        stack_.Set(remove_index, remove_block);
-
-        // Now we have inserted between prev and next, our removed block becomes prev. Free index
-        // does not advance.
-        prev_block   = remove_block;
-        free_index_p = remove_index;
-
-        remove_index = next_remove_index;
-        stack_.Get(remove_index, remove_block);
-        free_block_.free++;
-      }
-      else
-      {
-        prev_block   = next_block;
-        free_index_p = free_index_n;
-        free_index_n = next_block.next;
-
-        stack_.Get(free_index_n, next_block);
-      }
+      throw StorageException("Seek is out of bounds");
     }
   }
-};
+
+  while (block_number_ > next_bn)
+  {
+    stack_.Get(block_index_, block);
+    block_index_ = block.previous;
+    --block_number_;
+    assert(block_index_ != block_type::UNDEFINED);
+
+    if (block_number_ >= block_count_)
+    {
+      throw StorageException("Seek is out of bounds");
+    }
+  }
+
+  byte_index_ = n % block_type::BYTES;
+  assert((block_number_ != 0) || (block_index_ == id_));
+}
+
+template <typename S>
+uint64_t FileObject<S>::Tell()
+{
+  if ((block_index_ == 0) && (byte_index_ < HEADER_SIZE))
+  {
+    return 0;
+  }
+  return block_index_ * block_type::BYTES + byte_index_ - HEADER_SIZE;
+}
+
+template <typename S>
+void FileObject<S>::Resize(uint64_t size)
+{
+  Seek(0);
+
+  length_            = HEADER_SIZE + size;
+  uint64_t   last_bn = length_ / block_type::BYTES;
+  block_type block;
+  block_type prev_block;
+  uint64_t   prev_block_index;
+
+  // Expect these after a seek(0);
+  assert(block_index_ == id_);
+  assert(block_number_ == 0);
+
+  // Traverse the doubly LL making sure each block number is valid.
+  // First block must be valid.
+  while (block_number_ < last_bn)
+  {
+    // Get the block at block_number
+    if (block_index_ != block_type::UNDEFINED)
+    {
+      stack_.Get(block_index_, block);
+    }
+    else
+    {
+      if (block_number_ == 0)
+      {
+        throw StorageException("Resize failed: index invalid");
+      }
+
+      // Write new block
+      block.previous = prev_block_index;
+      assert(block.next == block_type::UNDEFINED);
+      block_index_ = GetFreeBlock(block, prev_block_index);
+
+      // Update prev block
+      prev_block.next = block_index_;
+      stack_.Set(prev_block_index, prev_block);
+    }
+
+    prev_block       = block;
+    prev_block_index = block_index_;
+
+    block_index_ = block.next;
+    ++block_number_;
+  }
+
+  // Take care of extra blocks
+  if (block.next != block_type::UNDEFINED)
+  {
+    FreeBlocks(block.next);
+    block.next = block_type::UNDEFINED;
+    stack_.Set(block_index_, block);
+  }
+
+  // Update state
+  last_position_ = block_index_;
+  block_count_   = block_number_;
+  Seek(0);
+}
+
+template <typename S>
+void FileObject<S>::Write(byte_array::ConstByteArray const &arr)
+{
+  Write(arr.pointer(), arr.size());
+}
+
+template <typename S>
+void FileObject<S>::Write(uint8_t const *bytes, uint64_t const &num)
+{
+  uint64_t n = num + byte_index_ + block_number_ * block_type::BYTES;
+
+  uint64_t last_block = platform::DivideCeil<uint64_t>(n, block_type::BYTES);
+
+  --last_block;
+
+  uint64_t first_bytes = block_type::BYTES - byte_index_;
+  if (first_bytes > num)
+  {
+    first_bytes = num;
+  }
+
+  uint64_t last_bytes = n - (block_type::BYTES * last_block);
+
+  // Writing first
+  block_type block;
+  stack_.Get(block_index_, block);
+
+  if (((last_block != 0) && (block.next == block_type::UNDEFINED)) ||
+      ((last_block == 0) && (((byte_index_ + first_bytes) % block_type::BYTES) == 0)))
+  {
+    block_type empty;
+    empty.previous = block_index_;
+    block.next     = GetFreeBlock(empty, block_index_);
+  }
+
+  memcpy(block.data + byte_index_, bytes, first_bytes);
+  stack_.Set(block_index_, block);
+  byte_index_ = (byte_index_ + first_bytes) % block_type::BYTES;
+
+  if (last_block == 0)
+  {
+    if (byte_index_ == 0)
+    {
+      block_index_ = block.next;
+      ++block_number_;
+    }
+  }
+  else
+  {
+    uint64_t offset = first_bytes;
+
+    // Middle last_block
+    --last_block;
+    while (block_number_ < last_block)
+    {
+      assert(byte_index_ == 0);
+      ++block_number_;
+      block_index_ = block.next;
+
+      stack_.Get(block_index_, block);
+
+      if (block.next == block_type::UNDEFINED)
+      {
+        block_type empty;
+        empty.previous = block_index_;
+        block.next     = GetFreeBlock(empty, block_index_);
+      }
+
+      memcpy(block.data, bytes + offset, block_type::BYTES);
+      stack_.Set(block_index_, block);
+
+      offset += block_type::BYTES;
+    }
+
+    // Last block
+    if (block_number_ == last_block)
+    {
+      ++block_number_;
+      block_index_ = block.next;
+      stack_.Get(block_index_, block);
+      memcpy(block.data, bytes + offset, last_bytes);
+      stack_.Set(block_index_, block);
+      byte_index_ = last_bytes;
+    }
+  }
+
+  uint64_t position = byte_index_ + block_number_ * block_type::BYTES;
+  if (position > length_)
+  {
+    length_ = position;
+  }
+
+  if (block_number_ > block_count_)
+  {
+    last_position_ = block_index_;
+    block_count_   = block_number_;
+  }
+
+  Flush();
+}
+
+template <typename S>
+void FileObject<S>::Read(byte_array::ByteArray &arr)
+{
+  Read(arr.pointer(), arr.size());
+}
+
+template <typename S>
+void FileObject<S>::Read(uint8_t *bytes, uint64_t const &m)
+{
+  uint64_t n = m + byte_index_ + block_number_ * block_type::BYTES;
+
+  uint64_t last_block = platform::DivideCeil<uint64_t>(n, block_type::BYTES);
+  --last_block;
+
+  uint64_t first_bytes = block_type::BYTES - byte_index_;
+  if (first_bytes > m)
+  {
+    first_bytes = m;
+  }
+
+  uint64_t last_bytes = n - (block_type::BYTES * last_block);
+
+  // Writing first
+  assert(block_index_ < stack_.size());
+
+  block_type block;
+  stack_.Get(block_index_, block);
+
+  if ((last_block != 0) && (block.next == block_type::UNDEFINED))
+  {
+    throw StorageException("Could not read block");
+  }
+
+  memcpy(bytes, block.data + byte_index_, first_bytes);
+  byte_index_ = (byte_index_ + first_bytes) % block_type::BYTES;
+
+  if (last_block != 0)
+  {
+    uint64_t offset = first_bytes;
+
+    // Middle last block
+    --last_block;
+    while (block_number_ < last_block)
+    {
+      assert(byte_index_ == 0);
+      ++block_number_;
+      block_index_ = block.next;
+
+      stack_.Get(block_index_, block);
+
+      if (block.next == block_type::UNDEFINED)
+      {
+        throw StorageException("Could not read block");
+      }
+
+      memcpy(bytes + offset, block.data, block_type::BYTES);
+
+      offset += block_type::BYTES;
+    }
+
+    // Last block
+    if (block_number_ == last_block)
+    {
+      ++block_number_;
+      block_index_ = block.next;
+      stack_.Get(block_index_, block);
+      memcpy(bytes + offset, block.data, last_bytes);
+
+      byte_index_ = last_bytes;
+    }
+  }
+}
+
+template <typename S>
+uint64_t const &FileObject<S>::id() const
+{
+  return id_;
+}
+
+template <typename S>
+uint64_t FileObject<S>::size() const
+{
+  return length_ - HEADER_SIZE;
+}
+
+template <typename S>
+byte_array::ConstByteArray FileObject<S>::Hash()
+{
+  hasher_type hasher;
+  hasher.Reset();
+  UpdateHash(hasher);
+  return hasher.Final();
+}
+
+template <typename S>
+void FileObject<S>::UpdateHash(crypto::StreamHasher &hasher)
+{
+  uint64_t bi        = id_;
+  uint64_t remaining = length_ - HEADER_SIZE;
+
+  block_type block;
+
+  stack_.Get(bi, block);
+  uint64_t n = std::min(remaining, uint64_t(block_type::BYTES - HEADER_SIZE));
+  hasher.Update(block.data + HEADER_SIZE, n);
+
+  remaining -= n;
+  while (remaining != 0)
+  {
+
+    bi = block.next;
+    if (bi == block_type::UNDEFINED)
+    {
+      throw StorageException("File corrupted");
+    }
+
+    stack_.Get(bi, block);
+    n = std::min(remaining, uint64_t(block_type::BYTES));
+    hasher.Update(block.data, n);
+
+    remaining -= n;
+  }
+}
+
+template <typename S>
+bool FileObject<S>::SeekFile(std::size_t const &position)
+{
+  block_number_ = 0;
+  byte_index_   = HEADER_SIZE;
+
+  block_type first;
+  assert(position < stack_.size());
+
+  block_index_ = id_ = position;
+  stack_.Get(id_, first);
+
+  memcpy(reinterpret_cast<uint8_t *>(&last_position_), first.data, sizeof(uint64_t));
+  memcpy(reinterpret_cast<uint8_t *>(&length_), first.data + sizeof(uint64_t), sizeof(uint64_t));
+
+  block_count_ = platform::DivideCeil<uint64_t>(length_, block_type::BYTES);
+
+  return true;
+}
+
+template <typename S>
+void FileObject<S>::CreateNewFile()
+{
+  block_number_ = 0;
+  byte_index_   = HEADER_SIZE;
+  length_       = HEADER_SIZE;
+
+  block_type block;
+  last_position_ = stack_.size();
+
+  memcpy(block.data, reinterpret_cast<uint8_t const *>(&last_position_), sizeof(uint64_t));
+  memcpy(block.data + sizeof(uint64_t), reinterpret_cast<uint8_t const *>(&length_),
+         sizeof(uint64_t));
+
+  block_index_ = id_ = GetFreeBlock(block, 1);
+  block_count_       = platform::DivideCeil<uint64_t>(length_, block_type::BYTES);
+}
+
+template <typename S>
+Document FileObject<S>::AsDocument()
+{
+  Document ret;
+
+  ret.document.Resize(this->size());
+  this->Read(ret.document);
+
+  return ret;
+}
+
+template <typename S>
+void FileObject<S>::Erase()
+{
+  if (deletion_enabled_)
+  {
+    FreeBlocks(block_index_);
+  }
+  Flush();
+}
+
+// TODO(HUT): figure out what to do about this abstraction breaking
+template <typename S>
+S *FileObject<S>::stack()
+{
+  return &stack_;
+}
+
+template <typename S>
+S &FileObject<S>::underlying_stack()
+{
+  return stack_;
+}
+
+template <typename S>
+uint64_t FileObject<S>::FreeBlocks()
+{
+  return free_block_.free;
+}
+
+template <typename S>
+void FileObject<S>::Initalise()
+{
+  if (stack_.size() == 0)
+  {
+    free_block_.free = 0;
+    block_index_ = id_ = 0;
+    stack_.Push(free_block_);
+  }
+  else
+  {
+    stack_.Get(free_block_index_, free_block_);
+  }
+
+  is_initialized_ = true;
+}
+
+template <typename S>
+uint64_t FileObject<S>::GetFreeBlock(block_type const &write_block, uint64_t min_index)
+{
+  // End of the stack is the default
+  if (free_block_.free == 0)
+  {
+    return stack_.Push(write_block);
+  }
+
+  // Traverse the free block linked list to find first valid block
+  block_type block;
+  uint64_t   block_index = free_block_.next;
+  assert(block_index != block_type::UNDEFINED);  // first block should be valid if free > 0
+
+  do
+  {
+    // Reached end of free LL, default to end of stack
+    if (block_index == block_type::UNDEFINED)
+    {
+      return stack_.Push(write_block);
+    }
+
+    stack_.Get(block_index, block);
+  } while (block_index < min_index);
+
+  // We now have the location of the point in the LL we want to remove
+  // fix prev
+  block_type mod_block;
+  stack_.Get(block.previous, mod_block);
+  mod_block.next = block.next;
+  stack_.Set(block.previous, mod_block);
+
+  // fix next
+  if (block.next != block_type::UNDEFINED)
+  {
+    stack_.Get(block.next, mod_block);
+    mod_block.previous = block.previous;
+    stack_.Set(block.next, mod_block);
+  }
+
+  // Note there is no flush at this point
+  assert(free_block_.free != 0);
+  free_block_.free--;
+
+  // Write and return
+  stack_.Set(block_index, write_block);
+  return block_index;
+}
+
+template <typename S>
+void FileObject<S>::FreeBlocks(uint64_t remove_index)
+{
+  block_type remove_block;
+  block_type prev_block;
+  block_type next_block;
+  uint64_t   free_index_p = free_block_index_;  // Starts at 0
+  uint64_t   free_index_n = free_block_.next;
+
+  // If no free blocks, safe to point the admin block to the beginning of this LL
+  if (free_block_.free == 0)
+  {
+    assert(remove_index != block_type::UNDEFINED);
+    free_block_.next = remove_index;
+
+    // Count new free blocks
+    while (remove_index != block_type::UNDEFINED)
+    {
+      stack_.Get(remove_index, remove_block);
+      remove_index = remove_block.next;
+      free_block_.free++;
+    }
+    return;
+  }
+
+  // We want to insert the blocks into the free blocks LL, do this by finding the block in the
+  // free LL that we can insert before, so we have prev and next in the free LL, we then put the
+  // remove_block in-between those.
+  assert(free_index_n != block_type::UNDEFINED);
+  stack_.Get(free_index_p, prev_block);    // <- pointing to free block LL-1
+  stack_.Get(free_index_n, next_block);    // <- pointing to free block LL
+  stack_.Get(remove_index, remove_block);  // Crawling the blocks to free
+
+  while (remove_index != block_type::UNDEFINED)
+  {
+    // We want to insert when we're between prev and next or at the end
+    if (free_index_n > remove_index || free_index_n == block_type::UNDEFINED)
+    {
+      // Save the next index
+      uint64_t next_remove_index = remove_block.next;
+
+      // Do the join and write back
+      prev_block.next       = remove_index;
+      next_block.previous   = remove_index;
+      remove_block.previous = free_index_p;
+      remove_block.next     = free_index_n;
+
+      stack_.Set(free_index_p, prev_block);
+
+      if (free_index_n != block_type::UNDEFINED)
+      {
+        stack_.Set(free_index_n, next_block);
+      }
+
+      stack_.Set(remove_index, remove_block);
+
+      // Now we have inserted between prev and next, our removed block becomes prev. Free index
+      // does not advance.
+      prev_block   = remove_block;
+      free_index_p = remove_index;
+
+      remove_index = next_remove_index;
+      stack_.Get(remove_index, remove_block);
+      free_block_.free++;
+    }
+    else
+    {
+      prev_block   = next_block;
+      free_index_p = free_index_n;
+      free_index_n = next_block.next;
+
+      stack_.Get(free_index_n, next_block);
+    }
+  }
+}
+
 }  // namespace storage
 }  // namespace fetch

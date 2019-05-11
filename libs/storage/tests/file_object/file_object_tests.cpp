@@ -16,21 +16,77 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lfg.hpp"
-#include <core/byte_array/byte_array.hpp>
-#include <core/byte_array/encoders.hpp>
-#include <crypto/hash.hpp>
 #include <gtest/gtest.h>
-#include <iostream>
-#include <storage/file_object.hpp>
-
 #include <vector>
+
+#include "storage/storage_exception.hpp"
+#include "mock_file_object.hpp"
 
 using namespace fetch;
 using namespace fetch::byte_array;
 using namespace fetch::storage;
 
-fetch::random::LaggedFibonacciGenerator<> lfg1;
+using ::testing::_;
+using ::testing::AnyNumber;
+using ::testing::InSequence;
+using ::testing::NiceMock;
+using ::testing::StrictMock;
+
+using FileObjectM   = StrictMock<MockFileObject>;
+using FileObjectPtr = std::unique_ptr<FileObjectM>;
+
+class FileObjectTests : public ::testing::Test
+{
+protected:
+  void SetUp() override
+  {
+    file_object_ = std::make_unique<FileObjectM>();
+  }
+
+  void TearDown() override
+  {
+  }
+
+  FileObjectPtr file_object_;
+};
+
+TEST_F(FileObjectTests, InvalidOperationsThrow)
+{
+  // Invalid to try to use the file object before new or load
+  EXPECT_THROW(file_object_->CreateNewFile(), StorageException);
+  //EXPECT_THROW(file_object_->CreateNewFile(), StorageException);
+  //
+  std::cerr << "now do this" << std::endl; // DELETEME_NH
+  file_object_->CreateNewFile();
+}
+
+TEST_F(FileObjectTests, CreateNewFile)
+{
+  file_object_->New("test");
+}
+
+TEST_F(FileObjectTests, CreateAndRetrieveFile)
+{
+  file_object_->New("test");
+
+  file_object_->CreateNewFile();
+
+  file_object_->Write("whoooo, hoo");
+
+  file_object_->CreateNewFile();
+
+  file_object_->Write("Second, here we comeeee!");
+
+  auto argh = file_object_->AsDocument();
+
+  file_object_->SeekFile(1);
+  argh = file_object_->AsDocument();
+
+  file_object_->SeekFile(0);
+  argh = file_object_->AsDocument();
+
+  FETCH_UNUSED(argh);
+}
 
 // TODO(HUT): rewrite this to be less bad
 /*
