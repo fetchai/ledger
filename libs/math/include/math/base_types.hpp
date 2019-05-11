@@ -69,18 +69,6 @@ static constexpr meta::IfIsFixedPoint<T, T> numeric_lowest()
 }
 
 template <typename T>
-static constexpr meta::IfIsFixedPoint<T, T> tolerance()
-{
-  return T::CONST_SMALLEST_FRACTION;
-}
-
-template <typename T>
-static constexpr meta::IfIsNonFixedPointArithmetic<T, T> tolerance()
-{
-  return T(1e-12);
-}
-
-template <typename T>
 fetch::meta::IfIsFixedPoint<T, T> static function_tolerance()
 {
   return T::TOLERANCE;

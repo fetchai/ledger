@@ -51,6 +51,18 @@ public:
 
   static constexpr char const *DESCRIPTOR = "TSNE";
 
+  template <typename DataType>
+  static constexpr math::meta::IfIsFixedPoint<DataType, DataType> tsne_tolerance()
+  {
+    return DataType::CONST_SMALLEST_FRACTION;
+  }
+
+  template <typename DataType>
+  static constexpr math::meta::IfIsNonFixedPointArithmetic<DataType, DataType> tsne_tolerance()
+  {
+    return DataType(1e-12);
+  }
+
   TSNE(ArrayType const &input_matrix, ArrayType const &output_matrix, DataType const &perplexity)
   {
     Init(input_matrix, output_matrix, perplexity);
@@ -182,7 +194,7 @@ private:
     input_symmetric_affinities_ = fetch::math::Multiply(input_symmetric_affinities_, DataType(4));
 
     // Limit minimum value to 1e-12
-    LimitMin(input_symmetric_affinities_, math::tolerance<DataType>());
+    LimitMin(input_symmetric_affinities_, tsne_tolerance<DataType>());
 
     // Initialize low dimensional values
     output_matrix_               = output_matrix;
@@ -367,7 +379,7 @@ private:
     output_symmetric_affinities = fetch::math::NormalizeArray(num);
 
     // Crop minimal value to 1e-12
-    LimitMin(output_symmetric_affinities, math::tolerance<DataType>());
+    LimitMin(output_symmetric_affinities, tsne_tolerance<DataType>());
   }
 
   /**
