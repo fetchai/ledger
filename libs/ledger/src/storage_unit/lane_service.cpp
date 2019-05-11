@@ -23,6 +23,7 @@
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
+#include "ledger/storage_unit/transaction_finder_protocol.hpp"
 #include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
 #include "network/muddle/muddle.hpp"
@@ -89,6 +90,9 @@ LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packet
   controller_protocol_ = std::make_shared<LaneControllerProtocol>(controller_.get());
   internal_rpc_server_->Add(RPC_CONTROLLER, controller_protocol_.get());
 
+  tx_finder_protocol_ = std::make_unique<TxFinderProtocol>();
+  internal_rpc_server_->Add(RPC_MISSING_TX_FINDER, tx_finder_protocol_.get());
+
   tx_sync_protocol_ = std::make_shared<TransactionStoreSyncProtocol>(tx_store_.get(), cfg_.lane_id);
 
   // prepare the sync config
@@ -100,7 +104,8 @@ LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packet
   sync_cfg.fetch_object_wait_duration = cfg_.sync_service_fetch_period;
 
   tx_sync_service_ = std::make_shared<TransactionStoreSyncService>(
-      sync_cfg, external_muddle_, tx_store_, [this]() { tx_sync_protocol_->TrimCache(); });
+      sync_cfg, external_muddle_, tx_store_, tx_finder_protocol_.get(),
+      [this]() { tx_sync_protocol_->TrimCache(); });
 
   tx_store_->SetCallback([this](VerifiedTransaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
 

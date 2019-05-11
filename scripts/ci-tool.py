@@ -13,7 +13,6 @@ import fnmatch
 import shutil
 import multiprocessing
 import xml.etree.ElementTree as ET
-import run_end_to_end_test
 
 BUILD_TYPES = ('Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel')
 MAX_CPUS = 7 # as defined by CI workflow
@@ -190,7 +189,7 @@ def test_project(build_root, label):
 
     cmd = [
         ctest_executable,
-        '--no-compress-output',
+        '--output-on-failure',
         '-T', TEST_NAME,
         '-L', str(label),
     ]
@@ -223,7 +222,8 @@ def test_project(build_root, label):
         sys.exit(exit_code)
 
 def test_end_to_end(project_root, build_root):
-    yaml_file = os.path.join(project_root, "scripts/end_to_end_test.yaml")
+    from end_to_end_test import run_end_to_end_test
+    yaml_file = os.path.join(project_root, "scripts/end_to_end_test/end_to_end_test.yaml")
 
     # Check that the YAML file does exist
     if not os.path.exists(yaml_file):
@@ -250,6 +250,7 @@ def main():
     options = {
         'CMAKE_BUILD_TYPE': args.build_type
     }
+
     if args.metrics:
         options['FETCH_ENABLE_METRICS'] = 1
 

@@ -97,6 +97,9 @@ bool FakeStorageUnit::HasTransaction(ConstByteArray const &digest)
   return transaction_store_.find(digest) != transaction_store_.end();
 }
 
+void FakeStorageUnit::IssueCallForMissingTxs(TxDigestSet const &)
+{}
+
 FakeStorageUnit::TxSummaries FakeStorageUnit::PollRecentTx(uint32_t)
 {
   return {};
@@ -129,7 +132,8 @@ FakeStorageUnit::Hash FakeStorageUnit::CurrentHash()
 
 FakeStorageUnit::Hash FakeStorageUnit::LastCommitHash()
 {
-  assert(state_history_stack_.size() != 0);
+  assert(!state_history_stack_.empty());
+
   return state_history_stack_.back();
 }
 
