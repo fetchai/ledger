@@ -22,7 +22,7 @@
 #include <gtest/gtest.h>
 
 #include "math/tensor.hpp"
-#include "math/tensor_iterator.hpp"
+#include "math/tensor_slice_iterator.hpp"
 
 using namespace fetch::math;
 
@@ -58,8 +58,8 @@ TEST(tensor_iterator, simple_iterator_permute_test)
 
   ASSERT_TRUE(ret.size() == array.size());
   ASSERT_TRUE(ret.shape() == array.shape());
-  TensorIterator<double, Tensor<double>::ContainerType> it(array);
-  TensorIterator<double, Tensor<double>::ContainerType> it2(ret);
+  TensorSliceIterator<double, Tensor<double>::ContainerType> it(array);
+  TensorSliceIterator<double, Tensor<double>::ContainerType> it2(ret);
 
   it2.PermuteAxes(0, 1);
   while (it2)
@@ -96,9 +96,9 @@ TEST(tensor_iterator, iterator_4dim_copy_test)
   array.Reshape({4, 6, 7, 6});
   Tensor<double> ret = array.Copy();
 
-  TensorIterator<double, Tensor<double>::ContainerType> it(
+  TensorSliceIterator<double, Tensor<double>::ContainerType> it(
       array, {{1, 2, 1}, {2, 3, 1}, {1, 4, 1}, {2, 6, 1}});
-  TensorIterator<double, Tensor<double>::ContainerType> it2(
+  TensorSliceIterator<double, Tensor<double>::ContainerType> it2(
       ret, {{1, 2, 1}, {2, 3, 1}, {1, 4, 1}, {2, 6, 1}});
 
   while (it2)
@@ -136,9 +136,9 @@ TEST(Tensor, iterator_4dim_permute_test)
   array.Reshape({4, 6, 7, 6});
   Tensor<double> ret = array.Copy();
 
-  TensorIterator<double, Tensor<double>::ContainerType> it(
+  TensorSliceIterator<double, Tensor<double>::ContainerType> it(
       array, {{1, 2, 1}, {0, 6, 1}, {1, 4, 1}, {0, 6, 1}});
-  TensorIterator<double, Tensor<double>::ContainerType> it2(
+  TensorSliceIterator<double, Tensor<double>::ContainerType> it2(
       ret, {{1, 2, 1}, {0, 6, 1}, {1, 4, 1}, {0, 6, 1}});
 
   it.PermuteAxes(1, 3);
@@ -194,8 +194,8 @@ TEST(Tensor, simple_iterator_transpose_test)
 
   ASSERT_TRUE(ret.size() == array.size());
 
-  TensorIterator<double, Tensor<double>::ContainerType> it_arr(array);
-  TensorIterator<double, Tensor<double>::ContainerType> it_ret(ret);
+  TensorSliceIterator<double, Tensor<double>::ContainerType> it_arr(array);
+  TensorSliceIterator<double, Tensor<double>::ContainerType> it_ret(ret);
 
   it_ret.Transpose(perm);
   while (it_ret)
@@ -218,8 +218,8 @@ TEST(Tensor, simple_iterator_transpose_test)
     }    
   }
 
-  TensorIterator<double, Tensor<double>::ContainerType> it_arr2(test_array);
-  TensorIterator<double, Tensor<double>::ContainerType> it_ret2(ret);
+  TensorSliceIterator<double, Tensor<double>::ContainerType> it_arr2(test_array);
+  TensorSliceIterator<double, Tensor<double>::ContainerType> it_ret2(ret);
   it_ret2.Transpose(perm);
   
   while (it_ret2)

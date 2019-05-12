@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-#include "math/tensor_iterator.hpp"
+#include "math/tensor_slice_iterator.hpp"
 #include <cassert>
 #include <unordered_set>
 
@@ -112,7 +112,7 @@ void Squeeze(Tensor<T, C> &arr, SizeSet const &axes)
 
 namespace reduce_details {
 template <typename F, typename T, typename C>
-inline void Reduce(F fnc, ConstTensorIterator<T, C> &it_a, TensorIterator<T, C> &it_b,
+inline void Reduce(F fnc, ConstTensorSliceIterator<T, C> &it_a, TensorSliceIterator<T, C> &it_b,
                    SizeType const &N)
 {
   while (bool(it_a) && bool(it_b))
@@ -154,8 +154,8 @@ inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeT
   }
   output.Reshape(out_shape);
 
-  fetch::math::ConstTensorIterator<T, C> it_a(input);
-  fetch::math::TensorIterator<T, C>      it_b(output);
+  fetch::math::ConstTensorSliceIterator<T, C> it_a(input);
+  fetch::math::TensorSliceIterator<T, C>      it_b(output);
 
   if (axis != 0)
   {
@@ -194,8 +194,8 @@ inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeV
   }
   output.Reshape(out_shape);
 
-  ConstTensorIterator<T, C> it_a(input);
-  TensorIterator<T, C>      it_b(output);
+  ConstTensorSliceIterator<T, C> it_a(input);
+  TensorSliceIterator<T, C>      it_b(output);
 
   // Move the axis we want to reduce to the front
   // to make it iterable in the inner most loop.

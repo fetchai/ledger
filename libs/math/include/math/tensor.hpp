@@ -36,7 +36,7 @@
 #include "math/standard_functions/fmod.hpp"
 #include "math/standard_functions/remainder.hpp"
 #include "math/tensor_broadcast.hpp"
-#include "math/tensor_iterator.hpp"
+#include "math/tensor_slice_iterator.hpp"
 
 #include <iostream>
 #include <memory>
@@ -68,8 +68,8 @@ public:
   using VectorRegisterType         = typename ContainerType::VectorRegisterType;
   using VectorRegisterIteratorType = typename ContainerType::VectorRegisterIteratorType;
   using SelfType                   = Tensor<T, C>;
-  using IteratorType               = TensorIterator<T, typename SelfType::ContainerType>;
-  using ConstIteratorType          = ConstTensorIterator<T, typename SelfType::ContainerType>;
+  using IteratorType               = TensorSliceIterator<T, typename SelfType::ContainerType>;
+  using ConstIteratorType          = ConstTensorSliceIterator<T, typename SelfType::ContainerType>;
   using SizeType                   = fetch::math::SizeType;
   using SizeVector                 = fetch::math::SizeVector;
 
@@ -681,7 +681,7 @@ private:
 
   /**
    * The TensorSlice is a convenience method for efficiently manipulating
-   * SubTensors (e.g. such as a 1D Slice). It is built on top of TensorIterator
+   * SubTensors (e.g. such as a 1D Slice). It is built on top of TensorSliceIterator
    * @tparam STensor
    */
   template <typename STensor>
@@ -2053,7 +2053,7 @@ void Tensor<T, C>::CopyFromNumpy(T *ptr, SizeVector &shape, SizeVector & /*strid
   this->Reshape(shape);
 
   // re-allocate all the data
-  TensorIterator<T, C> it(*this);
+  TensorSliceIterator<T, C> it(*this);
 
   // copy all the data initially
   for (SizeType i = 0; i < total_size; ++i)
@@ -2071,7 +2071,7 @@ void Tensor<T, C>::CopyToNumpy(T *ptr, SizeVector &shape, SizeVector &stride, Si
 {
 
   // copy the data
-  TensorIterator<T, C> it(*this);
+  TensorSliceIterator<T, C> it(*this);
 
   for (SizeType j = 0; j < this->size(); ++j)
   {

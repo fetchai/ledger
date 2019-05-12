@@ -30,7 +30,7 @@ namespace math {
 template <typename T, typename C>
 class Tensor;
 
-struct TensorIteratorRange
+struct TensorSliceIteratorRange
 {
   using SizeType       = uint64_t;
   SizeType index       = 0;
@@ -50,7 +50,7 @@ struct TensorIteratorRange
 };
 
 template <typename T, typename C, typename TensorType = Tensor<T, C>>
-class TensorIterator
+class TensorSliceIterator
 {
 public:
   using Type     = T;
@@ -59,7 +59,7 @@ public:
    * default range assumes step 1 over whole array - useful for trivial cases
    * @param array
    */
-  TensorIterator(TensorType &array)
+  TensorSliceIterator(TensorType &array)
     : array_(array)
   {
     std::vector<std::vector<SizeType>> step{};
@@ -70,30 +70,30 @@ public:
     Setup(step, array_.stride());
   }
 
-  TensorIterator(TensorIterator const &other) = default;
-  TensorIterator &operator=(TensorIterator const &other) = default;
-  TensorIterator(TensorIterator &&other)                 = default;
-  TensorIterator &operator=(TensorIterator &&other) = default;
+  TensorSliceIterator(TensorSliceIterator const &other) = default;
+  TensorSliceIterator &operator=(TensorSliceIterator const &other) = default;
+  TensorSliceIterator(TensorSliceIterator &&other)                 = default;
+  TensorSliceIterator &operator=(TensorSliceIterator &&other) = default;
 
   /**
    * Iterator for more interesting ranges
    * @param array the Tensor to operate upon
    * @param step the from,to,and step range objects
    */
-  TensorIterator(TensorType &array, std::vector<std::vector<SizeType>> const &step)
+  TensorSliceIterator(TensorType &array, std::vector<std::vector<SizeType>> const &step)
     : array_(array)
   {
     Setup(step, array_.stride());
   }
 
-  static TensorIterator EndIterator(TensorType &array)
+  static TensorSliceIterator EndIterator(TensorType &array)
   {
-    auto ret     = TensorIterator(array);
+    auto ret     = TensorSliceIterator(array);
     ret.counter_ = ret.size_;
     return ret;
   }
 
-  TensorIterator(TensorType &array, std::vector<SizeType> const &stride)
+  TensorSliceIterator(TensorType &array, std::vector<SizeType> const &stride)
     : array_(array)
   {
     std::vector<std::vector<SizeType>> step{};
@@ -128,7 +128,7 @@ public:
    * necessary
    * @return
    */
-  TensorIterator &operator++()
+  TensorSliceIterator &operator++()
   {
     bool     next;
     SizeType i = 0;
@@ -141,7 +141,7 @@ public:
     {
       next                   = false;
       assert(i < ranges_.size());
-      TensorIteratorRange &s = ranges_[i];
+      TensorSliceIteratorRange &s = ranges_[i];
       s.index += s.step;
       position_ += s.step_volume;
       ++s.current_n_dim_position;
@@ -196,7 +196,7 @@ public:
    */
   void Transpose(std::vector<SizeType> const &perm)
   {
-    std::vector<TensorIteratorRange> new_ranges;
+    std::vector<TensorSliceIteratorRange> new_ranges;
     new_ranges.reserve(ranges_.size());
     for (SizeType i = 0; i < ranges_.size(); ++i)
     {
@@ -213,7 +213,7 @@ public:
   // TODO: Name correctly
   void MoveAxesToFront(SizeType const &a)
   {
-    std::vector<TensorIteratorRange> new_ranges;
+    std::vector<TensorSliceIteratorRange> new_ranges;
     new_ranges.reserve(ranges_.size());
     new_ranges.push_back(ranges_[a]);
     for (SizeType i = 0; i < ranges_.size(); ++i)
@@ -277,7 +277,7 @@ public:
   }
 
   template <typename A, typename B>
-  friend bool UpgradeIteratorFromBroadcast(std::vector<SizeType> const &, TensorIterator<A, B> &);
+  friend bool UpgradeIteratorFromBroadcast(std::vector<SizeType> const &, TensorSliceIterator<A, B> &);
 
   /**
    * returns the n-dimensional index of the current position
@@ -294,12 +294,12 @@ public:
     return cur_index;
   }
 
-  TensorIteratorRange const &range(SizeType const &i)
+  TensorSliceIteratorRange const &range(SizeType const &i)
   {
     return ranges_[i];
   }
 
-  bool operator==(TensorIterator const &other) const
+  bool operator==(TensorSliceIterator const &other) const
   {
     if (this->end_of_iterator() && other->end_of_iterator())
     {
@@ -308,13 +308,13 @@ public:
     return other.counter_ == counter_;
   }
 
-  bool operator!=(TensorIterator const &other) const
+  bool operator!=(TensorSliceIterator const &other) const
   {
     return other.counter_ != counter_;
   }
 
 protected:
-  std::vector<TensorIteratorRange> ranges_;
+  std::vector<TensorSliceIteratorRange> ranges_;
   SizeType                         total_runs_ = 1;
   SizeType                         size_       = 0;
 
@@ -337,7 +337,7 @@ private:
       for (SizeType i = 0; i < step.size(); ++i)
       {
         auto const &        a = step[i];
-        TensorIteratorRange s;
+        TensorSliceIteratorRange s;
         s.index = s.from = s.current_n_dim_position = a[0];
         s.to                                        = a[1];
 
@@ -375,7 +375,7 @@ private:
 };
 
 template <typename T, typename C>
-using ConstTensorIterator = TensorIterator<T const, C, Tensor<T, C> const>;
+using ConstTensorSliceIterator = TensorSliceIterator<T const, C, Tensor<T, C> const>;
 
 }  // namespace math
 }  // namespace fetch
