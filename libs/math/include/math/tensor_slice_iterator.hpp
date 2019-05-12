@@ -132,14 +132,14 @@ public:
   {
     bool     next;
     SizeType i = 0;
-    if(!is_valid())
+    if (!is_valid())
     {
-//      throw std::runtime_error("increasing position of invalid iterator.");
+      //      throw std::runtime_error("increasing position of invalid iterator.");
     }
     ++counter_;
     do
     {
-      next                   = false;
+      next = false;
       assert(i < ranges_.size());
       TensorSliceIteratorRange &s = ranges_[i];
       s.index += s.step;
@@ -277,7 +277,8 @@ public:
   }
 
   template <typename A, typename B>
-  friend bool UpgradeIteratorFromBroadcast(std::vector<SizeType> const &, TensorSliceIterator<A, B> &);
+  friend bool UpgradeIteratorFromBroadcast(std::vector<SizeType> const &,
+                                           TensorSliceIterator<A, B> &);
 
   /**
    * returns the n-dimensional index of the current position
@@ -315,8 +316,8 @@ public:
 
 protected:
   std::vector<TensorSliceIteratorRange> ranges_;
-  SizeType                         total_runs_ = 1;
-  SizeType                         size_       = 0;
+  SizeType                              total_runs_ = 1;
+  SizeType                              size_       = 0;
 
 private:
   void Setup(std::vector<std::vector<SizeType>> const &step, std::vector<SizeType> const &stride)
@@ -336,7 +337,7 @@ private:
 
       for (SizeType i = 0; i < step.size(); ++i)
       {
-        auto const &        a = step[i];
+        auto const &             a = step[i];
         TensorSliceIteratorRange s;
         s.index = s.from = s.current_n_dim_position = a[0];
         s.to                                        = a[1];
@@ -346,7 +347,7 @@ private:
           s.step = a[2];
         }
         volume = stride[i];
-                
+
         s.volume      = volume;
         SizeType diff = (s.to - s.from);
         s.total_steps = diff / s.step;
@@ -361,7 +362,6 @@ private:
 
         position_ += volume * s.from;
         size_ *= s.total_steps;
-
 
         ranges_.push_back(s);
       }

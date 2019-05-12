@@ -36,14 +36,13 @@ TEST(tensor_iterator, reshape_iterator_test)
 
   auto it1 = a.begin();
   auto it2 = b.begin();
-  while(it1.is_valid())
+  while (it1.is_valid())
   {
     EXPECT_EQ((*it1), (*it2));
     ++it1;
     ++it2;
   }
 }
-
 
 TEST(tensor_iterator, simple_iterator_permute_test)
 {
@@ -78,7 +77,7 @@ TEST(tensor_iterator, simple_iterator_permute_test)
   SizeType test_val, cur_row;
 
   for (SizeType i = 0; i < array.size(); ++i)
-  { 
+  {
     ASSERT_TRUE(array[i] == double(i));
 
     cur_row  = i / 7;
@@ -207,21 +206,21 @@ TEST(Tensor, simple_iterator_transpose_test)
     ++it_arr;
     ++it_ret;
   }
-  for(SizeType i=0; i < array.shape()[0]; ++i)
+  for (SizeType i = 0; i < array.shape()[0]; ++i)
   {
-    for(SizeType j=0; j < array.shape()[1]; ++j)
+    for (SizeType j = 0; j < array.shape()[1]; ++j)
     {
-      for(SizeType k=0; k < array.shape()[2]; ++k)
+      for (SizeType k = 0; k < array.shape()[2]; ++k)
       {
-        EXPECT_EQ(array(i,j,k), ret(k,j,i));
+        EXPECT_EQ(array(i, j, k), ret(k, j, i));
       }
-    }    
+    }
   }
 
   TensorSliceIterator<double, Tensor<double>::ContainerType> it_arr2(test_array);
   TensorSliceIterator<double, Tensor<double>::ContainerType> it_ret2(ret);
   it_ret2.Transpose(perm);
-  
+
   while (it_ret2)
   {
     ASSERT_TRUE(bool(it_arr2));

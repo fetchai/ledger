@@ -158,7 +158,7 @@ inline bool Broadcast(F function, Tensor<T, C> &a, Tensor<T, C> &b, Tensor<T, C>
   {
     return false;
   }
-  
+
   if (!UpgradeIteratorFromBroadcast(cshape, it_b))
   {
     return false;

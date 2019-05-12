@@ -73,14 +73,14 @@ public:
   using SizeType                   = fetch::math::SizeType;
   using SizeVector                 = fetch::math::SizeVector;
 
-
   static constexpr char const *LOGGING_NAME = "Tensor";
 
-  enum 
+  enum
   {
     LOG_PADDING = 3,
     PADDING     = 1ull << LOG_PADDING
   };
+
 private:
   template <typename STensor>
   class TensorSliceImplementation;
@@ -185,14 +185,13 @@ public:
   ////////////////////
 
   static SizeType SizeFromShape(SizeVector const &shape);
-  static SizeType PaddedSizeFromShape(SizeVector const &shape);  
+  static SizeType PaddedSizeFromShape(SizeVector const &shape);
 
-  void              Flatten();
-  SelfType          Transpose() const;  // TODO (private 867)
-  SelfType          Transpose(SizeVector &new_axes) const;
-  SelfType &        Squeeze();
-  SelfType &        Unsqueeze();
-
+  void      Flatten();
+  SelfType  Transpose() const;  // TODO (private 867)
+  SelfType  Transpose(SizeVector &new_axes) const;
+  SelfType &Squeeze();
+  SelfType &Unsqueeze();
 
   /////////////////////////
   /// memory management ///
@@ -204,21 +203,21 @@ public:
     Tensor old_tensor = *this;
 
     SizeType newsize = SelfType::PaddedSizeFromShape(shape);
-    data_ = ContainerType(newsize);
+    data_            = ContainerType(newsize);
 
     data_.SetAllZero();
     shape_         = shape;
-    size_          = SelfType::SizeFromShape(shape); // Note: differs from newsize
+    size_          = SelfType::SizeFromShape(shape);  // Note: differs from newsize
     padded_height_ = PadValue(shape[0]);
     UpdateStrides();
 
     // Effectively a reshape
-    if(copy && (size_ == old_tensor.size()))
+    if (copy && (size_ == old_tensor.size()))
     {
-      auto it = begin();
+      auto it  = begin();
       auto oit = old_tensor.begin();
       assert(it.size() == oit.size());
-      while(it.is_valid())
+      while (it.is_valid())
       {
         *it = *oit;
         ++it;
@@ -229,7 +228,7 @@ public:
     return false;
   }
 
-  bool Reshape(SizeVector shape)  
+  bool Reshape(SizeVector shape)
   {
     return Resize(std::move(shape), true);
   }
@@ -239,14 +238,12 @@ public:
     return Resize(std::move(shape), true);
   }
 
-
   SizeVector const &stride() const;
-  SizeVector const &shape() const;  
+  SizeVector const &shape() const;
   SizeType const &  shape(SizeType const &n) const;
   SizeType          size() const;
 
-
- /**
+  /**
    * Sets a single value in the array using an n-dimensional index
    * @param indices     index position in array
    * @param val         value to write
@@ -256,7 +253,7 @@ public:
   fetch::meta::IfIsUnsignedInteger<S, void> Set(std::vector<S> const &indices, Type const &val)
   {
     assert(indices.size() == shape_.size());
-    this->operator[](ComputeColIndex(indices)) = val;     
+    this->operator[](ComputeColIndex(indices)) = val;
   }
 
   /**
@@ -367,7 +364,6 @@ public:
                                                                  Signed const &to,
                                                                  Signed const &delta);
 
-
   ////////////////////////////
   /// COMPARISON OPERATORS ///
   ////////////////////////////
@@ -448,36 +444,34 @@ public:
     }
   }
 
-
-
   /////////////////////////////
   /// Convinience functions ///
   /////////////////////////////
 
-  SizeType height() const 
+  SizeType height() const
   {
     return shape_[0];
   }
 
-  SizeType width() const 
+  SizeType width() const
   {
     return (shape_.size() > 1 ? shape_[1] : 1);
-  }  
+  }
 
-  SizeType depth() const 
+  SizeType depth() const
   {
     return (shape_.size() > 1 ? shape_[2] : 1);
   }
 
-  SizeType padded_size() const 
+  SizeType padded_size() const
   {
-    return data_.padded_size();    
+    return data_.padded_size();
   }
 
-  SizeType padded_height() const 
+  SizeType padded_height() const
   {
     return padded_height_;
-  }  
+  }
 
   constexpr SizeType padding()
   {
@@ -486,26 +480,27 @@ public:
 
   static SizeType PadValue(SizeType size)
   {
-    SizeType ret = SizeType( size / PADDING ) * PADDING;
-    if(ret < size)
+    SizeType ret = SizeType(size / PADDING) * PADDING;
+    if (ret < size)
     {
       ret += PADDING;
     }
     return ret;
   }
 
-  bool IsVector() const 
+  bool IsVector() const
   {
     return shape_.size() == 1;
   }
 
-  bool IsMatrix() const 
+  bool IsMatrix() const
   {
     return shape_.size() == 2;
   }
+
 private:
   ContainerType data_;
-  SizeType      size_{0}; 
+  SizeType      size_{0};
   SizeVector    shape_;
   SizeVector    stride_;
   SizeType      padded_height_;
@@ -564,7 +559,7 @@ private:
   }
   */
 
-  template<typename S>
+  template <typename S>
   fetch::meta::IfIsUnsignedInteger<S, SizeType> ComputeColIndex(std::vector<S> const &indices) const
   {
     assert(indices.size() > 0);
@@ -710,7 +705,6 @@ private:
     SizeType                           axis_;
   };
 };
-
 
 /////////////////////////////////////////
 /// Tensor methods: memory management ///
@@ -864,11 +858,11 @@ typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::cend() const
 template <typename T, typename C>
 void Tensor<T, C>::Copy(SelfType const &x)
 {
-  this->data_  = x.data_.Copy();
-  this->size_  = x.size_;
-  this->padded_height_  = x.padded_height_;  
-  this->shape_ = x.shape();
-  this->stride_ = x.stride();  
+  this->data_          = x.data_.Copy();
+  this->size_          = x.size_;
+  this->padded_height_ = x.padded_height_;
+  this->shape_         = x.shape();
+  this->stride_        = x.stride();
 }
 
 /**
@@ -1039,7 +1033,7 @@ typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>
     &Tensor<T, C>::operator[](S const &n)
 {
   assert(static_cast<SizeType>(n) < size());
-  if(shape_.size() == 1)
+  if (shape_.size() == 1)
   {
     return data_[n];
   }
@@ -1047,7 +1041,7 @@ typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>
   SizeType j = static_cast<SizeType>(n) / height();
   SizeType i = static_cast<SizeType>(n) - j * height();
 
-  assert( i + padded_height_ * j < padded_size());
+  assert(i + padded_height_ * j < padded_size());
   return data_[i + padded_height_ * j];
 }
 
@@ -1374,7 +1368,7 @@ Tensor<T, C> Tensor<T, C>::Ones(SizeVector const &shape)
 {
 
   SelfType output{shape};
-  output.SetAllOne();  
+  output.SetAllOne();
   return output;
 }
 
@@ -1410,7 +1404,6 @@ typename Tensor<T, C>::SizeType Tensor<T, C>::SizeFromShape(SizeVector const &sh
   return std::accumulate(std::begin(shape), std::end(shape), SizeType(1), std::multiplies<>());
 }
 
-
 template <typename T, typename C>
 typename Tensor<T, C>::SizeType Tensor<T, C>::PaddedSizeFromShape(SizeVector const &shape)
 {
@@ -1418,9 +1411,9 @@ typename Tensor<T, C>::SizeType Tensor<T, C>::PaddedSizeFromShape(SizeVector con
   {
     return SizeType{0};
   }
-  return PadValue(shape[0]) * std::accumulate(std::begin(shape)+1, std::end(shape), SizeType(1), std::multiplies<>());
+  return PadValue(shape[0]) *
+         std::accumulate(std::begin(shape) + 1, std::end(shape), SizeType(1), std::multiplies<>());
 }
-
 
 /**
  * Flattens the array to 1 dimension
@@ -1478,7 +1471,7 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::Transpose(SizeVector &new_axes) co
 template <typename T, typename C>
 typename Tensor<T, C>::SelfType &Tensor<T, C>::Squeeze()
 {
-  auto shape = shape_; // TODO: Make last dimension for efficiency
+  auto shape = shape_;  // TODO: Make last dimension for efficiency
   shape.erase(shape.begin());
   Reshape(shape);
 
@@ -1494,7 +1487,7 @@ typename Tensor<T, C>::SelfType &Tensor<T, C>::Squeeze()
 template <typename T, typename C>
 typename Tensor<T, C>::SelfType &Tensor<T, C>::Unsqueeze()
 {
-  auto shape = shape_; // TODO: Make last dimension for efficiency
+  auto shape = shape_;  // TODO: Make last dimension for efficiency
   shape.insert(shape.begin(), 1);
 
   Reshape(shape);
@@ -1502,10 +1495,8 @@ typename Tensor<T, C>::SelfType &Tensor<T, C>::Unsqueeze()
   return *this;
 }
 
-
 /**
  */
-
 
 /**
  * returns the tensor's current shape
@@ -2298,9 +2289,6 @@ fetch::meta::IfIsSignedInteger<Signed, Tensor<T, C>> Tensor<T, C>::Arange(Signed
   details::ArangeImplementation(from, to, delta, ret);
   return ret;
 }
-
-
-
 
 //////////////////////////////////
 /// Tensor methods: comparison ///

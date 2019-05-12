@@ -1,135 +1,132 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include <gtest/gtest.h>
 
-#include "math/linalg/prototype.hpp"
-#include "math/tensor.hpp"
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/blas/scal_all.hpp"
-
+#include "math/linalg/prototype.hpp"
+#include "math/tensor.hpp"
 
 using namespace fetch;
 using namespace fetch::math;
 using namespace fetch::math::linalg;
 
-TEST(blas_A_withA, blas_scal_all1) {
+TEST(blas_A_withA, blas_scal_all1)
+{
 
-	Blas< double, 
-        Signature( _x <= _n, _alpha, _x, _m ), 
-        Computes( _x <= _alpha * _x ), 
-        platform::Parallelisation::NOT_PARALLEL> scal_all;
-	// Compuing _x <= _alpha * _x
-  using type = double;type alpha = type(7.9173563896782895);
-  
+  Blas<double, Signature(_x <= _n, _alpha, _x, _m), Computes(_x <= _alpha * _x),
+       platform::Parallelisation::NOT_PARALLEL>
+      scal_all;
+  // Compuing _x <= _alpha * _x
+  using type = double;
+  type alpha = type(2.837114369314527);
+
   int n = 20;
   int m = 1;
-  
 
-
-  Tensor< type > x = Tensor< type >::FromString(R"(
+  Tensor<type> x = Tensor<type>::FromString(R"(
     0.3745401188473625; 0.9507143064099162; 0.7319939418114051; 0.5986584841970366; 0.15601864044243652; 0.15599452033620265; 0.05808361216819946; 0.8661761457749352; 0.6011150117432088; 0.7080725777960455; 0.020584494295802447; 0.9699098521619943; 0.8324426408004217; 0.21233911067827616; 0.18182496720710062; 0.18340450985343382; 0.3042422429595377; 0.5247564316322378; 0.43194501864211576; 0.2912291401980419
     )");
 
   scal_all(n, alpha, x, m);
 
-  Tensor< type > refx = Tensor< type >::FromString(R"(
-  2.9653676031470315; 7.527143988613113; 5.795456912406326; 4.739792575092527; 1.2352551798158444; 1.235064212338634; 0.45986865793548964; 6.857825242338096; 4.759241779156635; 5.606062948169498; 0.1629747774411678; 7.679121965426691; 6.590745061181888; 1.6811644147072553; 1.4395730659201835; 1.452078867983899; 2.4087942663057507; 4.154683687008276; 3.419862653335863; 2.3057648940074817
+  Tensor<type> refx = Tensor<type>::FromString(R"(
+  1.062613153066623; 2.6972852198284674; 2.0767505305643192; 1.6984625878274662; 0.44264272668015325; 0.4425742951801677; 0.1647898507040908; 2.4574407895355432; 1.7054320374273284; 2.008882884982739; 0.05840056455169404; 2.7517451785085227; 2.361734977845008; 0.602430342072805; 0.5158582271634078; 0.5203395703022649; 0.863170039252986; 1.4887940125740382; 1.225477419143378; 0.8262503784189796
   )");
 
-
-
-  ASSERT_TRUE( refx.AllClose(x) );
-
- 
+  ASSERT_TRUE(refx.AllClose(x));
 }
 
-TEST(blas_A_withA, blas_scal_all2) {
+TEST(blas_A_withA, blas_scal_all2)
+{
 
-	Blas< double, 
-        Signature( _x <= _n, _alpha, _x, _m ), 
-        Computes( _x <= _alpha * _x ), 
-        platform::Parallelisation::NOT_PARALLEL> scal_all;
-	// Compuing _x <= _alpha * _x
-  using type = double;type alpha = type(9.201437796741295);
-  
+  Blas<double, Signature(_x <= _n, _alpha, _x, _m), Computes(_x <= _alpha * _x),
+       platform::Parallelisation::NOT_PARALLEL>
+      scal_all;
+  // Compuing _x <= _alpha * _x
+  using type = double;
+  type alpha = type(4.171723078275997);
+
   int n = 10;
   int m = 2;
-  
 
-
-  Tensor< type > x = Tensor< type >::FromString(R"(
+  Tensor<type> x = Tensor<type>::FromString(R"(
     0.6118528947223795; 0.13949386065204183; 0.29214464853521815; 0.3663618432936917; 0.45606998421703593; 0.7851759613930136; 0.19967378215835974; 0.5142344384136116; 0.5924145688620425; 0.046450412719997725; 0.6075448519014384; 0.17052412368729153; 0.06505159298527952; 0.9488855372533332; 0.9656320330745594; 0.8083973481164611; 0.3046137691733707; 0.09767211400638387; 0.6842330265121569; 0.4401524937396013
     )");
 
   scal_all(n, alpha, x, m);
 
-  Tensor< type > refx = Tensor< type >::FromString(R"(
-  5.629926351544075; 0.13949386065204183; 2.6881508111476577; 0.3663618432936917; 4.196499590733841; 0.7851759613930136; 1.837285886170219; 0.5142344384136116; 5.451065805267397; 0.046450412719997725; 5.590286163501488; 0.17052412368729153; 0.5985681864329818; 0.9488855372533332; 8.885203086876391; 0.8083973481164611; 2.8028846490796817; 0.09767211400638387; 6.29592763192765; 0.4401524937396013
+  Tensor<type> refx = Tensor<type>::FromString(R"(
+  2.5524808414233244; 0.13949386065204183; 1.2187465724891997; 0.3663618432936917; 1.9025976784671785; 0.7851759613930136; 0.8329837251566834; 0.5142344384136116; 2.4713895288287078; 0.046450412719997725; 2.5345088797650033; 0.17052412368729153; 0.27137723173530753; 0.9488855372533332; 4.028349437499711; 0.8083973481164611; 1.270764290821188; 0.09767211400638387; 2.854430707619397; 0.4401524937396013
   )");
 
-
-
-  ASSERT_TRUE( refx.AllClose(x) );
-
- 
+  ASSERT_TRUE(refx.AllClose(x));
 }
 
-TEST(blas_A_withA, blas_scal_all3) {
+TEST(blas_A_withA, blas_scal_all3)
+{
 
-	Blas< double, 
-        Signature( _x <= _n, _alpha, _x, _m ), 
-        Computes( _x <= _alpha * _x ), 
-        platform::Parallelisation::NOT_PARALLEL> scal_all;
-	// Compuing _x <= _alpha * _x
-  using type = double;type alpha = type(-5.982413835480475);
-  
+  Blas<double, Signature(_x <= _n, _alpha, _x, _m), Computes(_x <= _alpha * _x),
+       platform::Parallelisation::NOT_PARALLEL>
+      scal_all;
+  // Compuing _x <= _alpha * _x
+  using type = double;
+  type alpha = type(-3.0691962524318654);
+
   int n = 6;
   int m = 3;
-  
 
-
-  Tensor< type > x = Tensor< type >::FromString(R"(
+  Tensor<type> x = Tensor<type>::FromString(R"(
     0.12203823484477883; 0.4951769101112702; 0.034388521115218396; 0.9093204020787821; 0.2587799816000169; 0.662522284353982; 0.31171107608941095; 0.5200680211778108; 0.5467102793432796; 0.18485445552552704; 0.9695846277645586; 0.7751328233611146; 0.9394989415641891; 0.8948273504276488; 0.5978999788110851; 0.9218742350231168; 0.0884925020519195; 0.1959828624191452; 0.045227288910538066; 0.32533033076326434
     )");
 
   scal_all(n, alpha, x, m);
 
-  Tensor< type > refx = Tensor< type >::FromString(R"(
-  -0.7300832245930202; 0.4951769101112702; 0.034388521115218396; -5.439930954280775; 0.2587799816000169; 0.662522284353982; -1.8647846542697992; 0.5200680211778108; 0.5467102793432796; -1.1058758522861232; 0.9695846277645586; 0.7751328233611146; -5.620471466432868; 0.8948273504276488; 0.5978999788110851; -5.5150331781752735; 0.0884925020519195; 0.1959828624191452; 0.045227288910538066; 0.32533033076326434
+  Tensor<type> refx = Tensor<type>::FromString(R"(
+  -0.37455929303899504; 0.4951769101112702; 0.034388521115218396; -2.790882770320035; 0.2587799816000169; 0.662522284353982; -0.9567024665751241; 0.5200680211778108; 0.5467102793432796; -0.5673546021442806; 0.9695846277645586; 0.7751328233611146; -2.8835066306125134; 0.8948273504276488; 0.5978999788110851; -2.829412947346443; 0.0884925020519195; 0.1959828624191452; 0.045227288910538066; 0.32533033076326434
   )");
 
-
-
-  ASSERT_TRUE( refx.AllClose(x) );
-
- 
+  ASSERT_TRUE(refx.AllClose(x));
 }
 
-TEST(blas_A_withA, blas_scal_all4) {
+TEST(blas_A_withA, blas_scal_all4)
+{
 
-	Blas< double, 
-        Signature( _x <= _n, _alpha, _x, _m ), 
-        Computes( _x <= _alpha * _x ), 
-        platform::Parallelisation::NOT_PARALLEL> scal_all;
-	// Compuing _x <= _alpha * _x
-  using type = double;type alpha = type(9.26898493304478);
-  
+  Blas<double, Signature(_x <= _n, _alpha, _x, _m), Computes(_x <= _alpha * _x),
+       platform::Parallelisation::NOT_PARALLEL>
+      scal_all;
+  // Compuing _x <= _alpha * _x
+  using type = double;
+  type alpha = type(7.405689729330874);
+
   int n = 10;
   int m = -2;
-  
 
-
-  Tensor< type > x = Tensor< type >::FromString(R"(
+  Tensor<type> x = Tensor<type>::FromString(R"(
     0.388677289689482; 0.2713490317738959; 0.8287375091519293; 0.3567533266935893; 0.28093450968738076; 0.5426960831582485; 0.14092422497476265; 0.8021969807540397; 0.07455064367977082; 0.9868869366005173; 0.7722447692966574; 0.1987156815341724; 0.005522117123602399; 0.8154614284548342; 0.7068573438476171; 0.7290071680409873; 0.7712703466859457; 0.07404465173409036; 0.3584657285442726; 0.11586905952512971
     )");
 
   scal_all(n, alpha, x, m);
 
-  Tensor< type > refx = Tensor< type >::FromString(R"(
+  Tensor<type> refx = Tensor<type>::FromString(R"(
   0.388677289689482; 0.2713490317738959; 0.8287375091519293; 0.3567533266935893; 0.28093450968738076; 0.5426960831582485; 0.14092422497476265; 0.8021969807540397; 0.07455064367977082; 0.9868869366005173; 0.7722447692966574; 0.1987156815341724; 0.005522117123602399; 0.8154614284548342; 0.7068573438476171; 0.7290071680409873; 0.7712703466859457; 0.07404465173409036; 0.3584657285442726; 0.11586905952512971
   )");
 
-
-
-  ASSERT_TRUE( refx.AllClose(x) );
-
- 
+  ASSERT_TRUE(refx.AllClose(x));
 }

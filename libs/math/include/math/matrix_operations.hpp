@@ -60,23 +60,24 @@ inline void Min(ArrayType const &array, typename ArrayType::Type &ret)
 template <typename ArrayType>
 void Product(ArrayType const &obj1, typename ArrayType::Type &ret)
 {
-  if(obj1.padding() == 1)
+  if (obj1.padding() == 1)
   {
-    ret = obj1.data().in_parallel().Reduce(memory::TrivialRange(0, obj1.size()),
-                                           [](typename ArrayType::VectorRegisterType const &a,
-                                              typename ArrayType::VectorRegisterType const &b) ->
-                                           typename ArrayType::VectorRegisterType { return a * b; });
+    ret =
+        obj1.data().in_parallel().Reduce(memory::TrivialRange(0, obj1.size()),
+                                         [](typename ArrayType::VectorRegisterType const &a,
+                                            typename ArrayType::VectorRegisterType const &b) ->
+                                         typename ArrayType::VectorRegisterType { return a * b; });
   }
   else
   {
-    std::cout  << "WAS HERE??" << std::endl;
+    std::cout << "WAS HERE??" << std::endl;
     // TODO: Vectorise in the general case
-    auto     it1 = obj1.cbegin();
-    ret = 1;
+    auto it1 = obj1.cbegin();
+    ret      = 1;
     while (it1.is_valid())
     {
       ret *= (*it1);
-    }        
+    }
   }
 }
 
