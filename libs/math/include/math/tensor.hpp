@@ -2306,7 +2306,7 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::Concat(std::vector<SelfType> const
 
     // copy the data across
     TensorSliceIterator<T, C> ret_it{ret, step};
-    auto                 t_it = tensors[i].cbegin();
+    auto                      t_it = tensors[i].cbegin();
 
     while (t_it.is_valid())
     {
