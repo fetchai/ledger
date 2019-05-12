@@ -37,6 +37,10 @@
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
 
+#include "ledger/dag/dag.hpp"
+#include "ledger/protocols/dag_rpc_service.hpp"
+#include "ledger/dag/dag_muddle_configuration.hpp" //< TODO(tfr): Move to where it belongs
+
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -74,7 +78,6 @@ public:
   using CertificatePtr   = Peer2PeerService::CertificatePtr;
   using UriList          = std::vector<network::Uri>;
   using Manifest         = network::Manifest;
-  using NetworkMode      = ledger::MainChainRpcService::Mode;
 
   static constexpr uint32_t DEFAULT_BLOCK_DIFFICULTY = 6;
 
@@ -95,7 +98,8 @@ public:
     uint32_t    peers_update_cycle_ms{0};
     bool        disable_signing{false};
     bool        sign_broadcasts{false};
-    NetworkMode network_mode{NetworkMode::PUBLIC_NETWORK};
+    bool        standalone{false};
+    bool        synergetic_mine{true};
 
     uint32_t num_lanes() const
     {
@@ -107,7 +111,7 @@ public:
 
   explicit Constellation(CertificatePtr &&certificate, Config config);
 
-  void Run(UriList const &initial_peers, core::WeakRunnable bootstrap_monitor);
+  void Run(UriList const &initial_peers);
   void SignalStop();
 
 protected:
@@ -137,6 +141,8 @@ private:
   using HttpModules            = std::vector<HttpModulePtr>;
   using TransactionProcessor   = ledger::TransactionProcessor;
   using TrustSystem            = p2p::P2PTrustBayRank<Muddle::Address>;
+  using DAGRpcService          = fetch::ledger::DAGRpcService;
+  using DAG                    = fetch::ledger::DAG;
   using ShardConfigs           = ledger::ShardConfigs;
   using TxStatusCache          = ledger::TransactionStatusCache;
 
@@ -174,6 +180,13 @@ private:
   /// @{
   ExecutionManagerPtr execution_manager_;  ///< The transaction execution manager
   /// @}
+
+  /// @name DAG and useful work
+  /// @{
+  DAG dag_;
+  DAGRpcService dag_rpc_service_;
+ /// @}
+
 
   /// @name Blockchain and Mining
   /// @[

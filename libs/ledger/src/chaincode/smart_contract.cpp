@@ -64,13 +64,13 @@ ConstByteArray GenerateDigest(std::string const &source)
  */
 void ValidateAddressesInParams(Transaction const &tx, vm::ParameterPack const &params)
 {
-  std::set<ConstByteArray> valid_addresses;
+  // TODO(issue 772): This doesn't work with a set
+  std::unordered_set<ConstByteArray> valid_addresses;
 
   for (auto const &sig : tx.signatures())
   {
     valid_addresses.insert(sig.first.identifier());
   }
-  assert(valid_addresses.size() == tx.signatures().size());
 
   for (std::size_t i = 0; i < params.size(); i++)
   {
@@ -534,10 +534,10 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   // create the initial query response
   response = Query::Object();
 
-  vm::Variant       output;
-  std::string       error;
+  vm::Variant output;
+  std::string error;
   std::stringstream console;
-
+  
   vm->AttachOutputDevice("stdout", console);
 
   if (!vm->Execute(*script_, name, error, output, params))
@@ -588,7 +588,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
     response["result"] = output.Get<vm::Ptr<vm::String>>()->str;
     break;
   default:
-    // TODO(private 900): Deal with general data structures
+    // TODO: Deal with general data structures
     break;
   }
 

@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 
       fetch::byte_array::ByteArray msg0("Testing rapid string pushing");
       client.Send(msg0.Copy());
-      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));      
     }
 
     Client                       client(argv[1], argv[2], tmanager);
@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 
     tmanager.Stop();
   }
-  catch (std::exception const &e)
+  catch (std::exception &e)
   {
     std::cerr << "Exception: " << e.what() << "\n";
   }

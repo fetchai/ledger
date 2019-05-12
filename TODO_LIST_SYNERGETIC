@@ -1,0 +1,82 @@
+- ( ) Tidy code up
+- ( ) Tidy test up
+
+DAG Syncronisation
+==================
+- (v) DAG RPC protocol, mode numbers to correct place, dag_rpc_protocol.hpp 35
+- (v) Make genesis text configurable
+- (v) Check whether already in queue, line 127 DAG.hpp
+- (v) Make DAG bi-directional
+- (v) Add RemoveNode(hash)
+- (v) Write test for DAG
+- (v) Consider deleting GetAfter as it does not make sense
+- (v) Create DAG interface for testing purposes
+- (v) Get nodes following "list of hashes"
+- (v) Get nodes before "list of hashes"
+
+- ( ) Rewrite the DAG RPC interface
+    - ( ) Setup example
+    - ( ) Create sync cycle
+    - ( ) Make DAG service a state machine
+
+- ( ) Fix TODO on line 322 in constellation.cpp
+- ( ) Refactor DAG HTTP interface, line 73
+    - ( ) Updated serialiser would make life easy
+    - ( ) Wire format 117, dag_http_interface.hpp
+    - ( ) Add chunk parameters to HTTP Interface, 142 dag_http_interface.hpp
+    
+- ( ) TODO on line 140 dag.cpp, possibly migrate to state return rather than bools
+- ( ) Add hook for updating trust system on 170 in dag.cpp
+- ( ) Check that uncertified nodes actaually are uncertified dag.cpp 211
+- ( ) Make it possible to extract a bigger segment
+
+- ( ) Fix and test tips selection
+- ( ) Move DAG muddle configuration
+- ( ) Write test for RemoveNode
+- ( ) Certify transactions? Maybe not for this PR - if not, create ticket.
+
+
+Synergetic Contracts
+====================
+- ( ) Implement revert, line 163 dag.hpp
+- ( ) Add logic to block coordinator
+        - (v) DAG cerification added to coordinator
+        - (v) block_coordinator.cpp, 408
+        - (v) Create disable functionality        
+        - ( ) Streams to implement:
+          - (v) Block generation
+          - (v) Block validation
+          - ( ) Roll back
+- (v) Get rid of address in synergetic_contract.hpp, 32
+- (v) Move error messages to member function
+- (v) Test that a contract has one, objective functions etc.
+- (v) Change to unique ptr synergetic_contract_register.hpp 26
+- (v) Make stream attachable to miner synergetic_miner.hpp, 42
+- (v) Change the VM to unique ptr in synergetic_miner.hpp
+- (v) Migrate to fixedpoint
+- (v) Change to fixedpoint, work.hpp 19
+- (v) Update test contract to int64
+- ( ) Make contract signature validator
+- ( ) Add revert test 
+- ( ) Sort things out in cpp files
+- ( ) Change namespaces to ledger instead of upow and consensus
+- ( ) Make tests path independent
+- ( ) Fix all headers with license and copyright
+- ( ) Not understood what is meant by "// TODO: Lock full contract resource" in synergetic_state_adapter.hpp, 35
+- ( ) Add support for removing malicious DAG nodes
+
+
+
+
+VM
+==
+- ( ) Add single: Workout if deep copy is needed - possibly user responsibility, 105 vm.hpp
+- ( ) Remove TODO on line 320 vm.hpp
+- ( ) Upgrade cryptoRNG to fixedpoint
+- ( ) Upgrade cryptoRNG with entropy hook
+
+Create tickets for
+==================
+- ( ) smart_contract.cpp, 591
+- ( ) Reimplement big number
+- ( ) Create ticket for next generation Synergetic Contracts

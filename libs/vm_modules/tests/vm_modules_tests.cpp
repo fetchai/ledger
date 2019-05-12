@@ -54,7 +54,7 @@ protected:
 
     std::string        error;
     fetch::vm::Variant output;
-    std::stringstream  console;
+    std::stringstream console;
     vm_->AttachOutputDevice("stdout", console);
 
     // Execute our fn
@@ -79,7 +79,7 @@ TEST_F(VMTests, CheckCompileAndExecute)
 {
   const std::string source =
       " function main() "
-      "   print(\"Hello, world\");"
+      "   Print(\"Hello, world\");"
       " endfunction ";
 
   bool res = Compile(source);
@@ -95,29 +95,7 @@ TEST_F(VMTests, CheckCompileAndExecuteAltStrings)
 {
   const std::string source =
       " function main() "
-      "   print('Hello, world');"
-      " endfunction ";
-
-  bool res = Compile(source);
-
-  EXPECT_EQ(res, true);
-
-  res = Execute();
-
-  EXPECT_EQ(res, true);
-}
-
-TEST_F(VMTests, CheckRandom)
-{
-  const std::string source =
-      " function main()"
-      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   print('rnd = ' + toString(Rand(0.0f, 1000.0f)));"
-      "   print('rnd = ' + toString(Rand(0.0, 1000.0)));"
+      "   Print('Hello, world');"
       " endfunction ";
 
   bool res = Compile(source);

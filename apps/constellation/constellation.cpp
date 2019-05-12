@@ -20,6 +20,9 @@
 #include "http/middleware/allow_origin.hpp"
 #include "ledger/chain/consensus/bad_miner.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
+#include "ledger/chain/main_chain_http_interface.hpp"
+#include "ledger/dag/dag.hpp"
+#include "ledger/dag/dag_http_interface.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/chaincode/wallet_http_interface.hpp"
 #include "ledger/execution_manager.hpp"
@@ -65,7 +68,7 @@ bool WaitForLaneServersToStart()
 {
   using InFlightCounter = AtomicInFlightCounter<AtomicCounterName::TCP_PORT_STARTUP>;
 
-  core::FutureTimepoint const deadline(std::chrono::seconds(30));
+  network::FutureTimepoint const deadline(std::chrono::seconds(30));
 
   return InFlightCounter::Wait(deadline);
 }
@@ -110,8 +113,8 @@ ledger::ShardConfigs GenerateShardsConfig(uint32_t num_lanes, uint16_t start_por
     cfg.internal_port       = start_port++;
     cfg.internal_network_id = muddle::NetworkId{"ISRD"};
 
-    auto const ext_identity = cfg.external_identity->identity().identifier();
-    auto const int_identity = cfg.internal_identity->identity().identifier();
+    auto const &ext_identity = cfg.external_identity->identity().identifier();
+    auto const &int_identity = cfg.internal_identity->identity().identifier();
 
     FETCH_LOG_INFO(Constellation::LOGGING_NAME, "Shard ", i + 1);
     FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - Internal ", ToBase64(int_identity), " - ",
@@ -152,17 +155,27 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
   , internal_muddle_{muddle::NetworkId{"ISRD"}, internal_identity_, network_manager_}
   , trust_{}
-  , p2p_{muddle_,        lane_control_,        trust_,
-         cfg_.max_peers, cfg_.transient_peers, cfg_.peers_update_cycle_ms}
+  , p2p_{muddle_
+        , lane_control_
+        , trust_
+        , cfg_.max_peers
+        , cfg_.transient_peers
+        , cfg_.peers_update_cycle_ms}
   , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(internal_muddle_.AsEndpoint(), shard_cfgs_,
                                                  cfg_.log2_num_lanes))
   , lane_control_(internal_muddle_.AsEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
   , execution_manager_{std::make_shared<ExecutionManager>(
-        cfg_.num_executors, storage_, [this] { return std::make_shared<Executor>(storage_); })}
+      cfg_.num_executors
+    , storage_
+    , [this] { return std::make_shared<Executor>(storage_); })
+  }
+  , dag_{}
+  , dag_rpc_service_{muddle_, muddle_.AsEndpoint(), dag_}
   , chain_{ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes, cfg_.num_slices}
   , block_coordinator_{chain_,
+                       dag_,
                        *execution_manager_,
                        *storage_,
                        block_packer_,
@@ -173,7 +186,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
                        cfg_.num_slices,
                        cfg_.block_difficulty}
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
-                                                              cfg_.network_mode)}
+                                                              cfg_.standalone)}
   , tx_processor_{*storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
   , http_{http_network_manager_}
   , http_modules_{
@@ -185,8 +198,12 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
         std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
         std::make_shared<ledger::TxQueryHttpInterface>(*storage_, cfg_.log2_num_lanes),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
-        std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_)}
+        std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_),
+        std::make_shared<ledger::DAGHTTPInterface>(dag_, dag_rpc_service_)
+  }
 {
+
+
   // print the start up log banner
   FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.interface_address, " E ",
                  cfg_.num_executors, " S ", cfg_.num_lanes(), "x", cfg_.num_slices);
@@ -239,7 +256,7 @@ void Constellation::CreateInfoFile(std::string const &filename)
  *
  * @param initial_peers The peers that should be initially connected to
  */
-void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstrap_monitor)
+void Constellation::Run(UriList const &initial_peers)
 {
   //---------------------------------------------------------------
   // Step 1. Start all the components
@@ -255,15 +272,14 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
 
   // start all the services
   network_manager_.Start();
+
   http_network_manager_.Start();
   muddle_.Start({p2p_port_});
-
   /// LANE / SHARD SERVERS
 
   // start all the lane services and wait for them to start accepting
   // connections
   lane_services_.Start();
-
   FETCH_LOG_INFO(LOGGING_NAME, "Starting shard services...");
   if (!WaitForLaneServersToStart())
   {
@@ -325,6 +341,25 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   execution_manager_->Start();
   tx_processor_.Start();
 
+
+  /////////////////////////////////
+  //// TODO
+  
+//  dag_.OnNewNode([this](fetch::ledger::DAGNode /*node*/)
+//  {
+//    // TODO: Replace with a way of updating the contents of the next block being mined.
+//    mock_chain_.SetTips(dag_.tips_unsafe());
+//  });
+
+//  // TODO: Replace
+//  mock_chain_.OnBlock([this](fetch::ledger::Block block)
+//  {
+//    //dag_.SetNodeTime(block.body.block_number, block.body.dag_nodes);
+//  });
+  //// TODO
+  /////////////////////////////////
+
+
   /// P2P (TRUST) HIGH LEVEL MANAGEMENT
 
   // P2P configuration
@@ -343,38 +378,18 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   //---------------------------------------------------------------
   // Step 2. Main monitor loop
   //---------------------------------------------------------------
-
-  bool start_up_in_progress{true};
-
   // monitor loop
   while (active_)
   {
     // determine the status of the main chain server
-    bool const is_in_sync = main_chain_service_->IsSynced() && block_coordinator_.IsSynced();
+    bool const is_in_sync =
+        ledger::MainChainRpcService::State::SYNCHRONISED == main_chain_service_->state();
 
     // control from the top level block production based on the chain sync state
     block_coordinator_.EnableMining(is_in_sync);
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Still alive...");
     std::this_thread::sleep_for(std::chrono::milliseconds{500});
-
-    // detect the first time that we have fully synced
-    if (start_up_in_progress && is_in_sync)
-    {
-      // Attach the bootstrap monitor (if one exists) to the reactor at this point. This starts the
-      // monitor state machine. If one doesn't exist (empty weak pointer) then the reactor will
-      // simply discard this piece of work.
-      //
-      // Starting this state machine begins period notify calls to the bootstrap server. This
-      // importantly triggers the bootstrap service to start listing this node as available for
-      // client connections. By delaying these notify() calls to the point when the node believes
-      // it has successfully
-      //
-      reactor_.Attach(bootstrap_monitor);
-      start_up_in_progress = false;
-
-      FETCH_LOG_INFO(LOGGING_NAME, "Startup complete");
-    }
   }
 
   //---------------------------------------------------------------
@@ -385,6 +400,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
 
   http_.Stop();
   p2p_.Stop();
+
 
   tx_processor_.Stop();
   reactor_.Stop();
