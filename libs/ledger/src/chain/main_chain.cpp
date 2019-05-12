@@ -1237,21 +1237,28 @@ bool MainChain::ReindexTips()
   for (auto const &block_entry : block_chain_)
   {
     auto const &hash{block_entry.first};
-    if (references_.find(hash) == references_.end())
+    // check if this has has any live forward reference
+    auto children{references_.equal_range(hash)};
+    auto child{std::find_if(children.first, children.second, [this](auto const &ref){ return block_chain_.find(ref.second) != block_chain_.end(); })};
+    if (child != children.second)
     {
-      // this hash has no next blocks
-      auto const &   block{*block_entry.second};
-      const uint64_t weight{block.total_weight};
-      new_tips[hash] = Tip{weight};
-      // check if this tip is current heaviest
-      if (weight > max_weight || (weight == max_weight && hash > max_hash))
-      {
-        max_weight = weight;
-        max_hash   = hash;
-      }
+      // then it's not a tip
+      continue;
+    }
+    // this hash has no next blocks
+    auto const &   block{*block_entry.second};
+    const uint64_t weight{block.total_weight};
+    new_tips[hash] = Tip{weight};
+    // check if this tip is the current heaviest
+    if (weight > max_weight || (weight == max_weight && hash > max_hash))
+    {
+	    max_weight = weight;
+	    max_hash   = hash;
     }
   }
   tips_ = std::move(new_tips);
+  std::cerr << "tips_:\n";
+  for (auto const &tip: tips_) print(std::cerr << '\t', tip.first) << ": " << tip.second.total_weight << '\n';
 
   if (!tips_.empty())
   {
