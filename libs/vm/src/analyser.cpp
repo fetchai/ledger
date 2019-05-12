@@ -875,6 +875,26 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
     SetVariable(node, variable);
     break;
   }
+  case Node::Kind::Integer8:
+  {
+    SetRV(node, int8_type_);
+    break;
+  }
+  case Node::Kind::UnsignedInteger8:
+  {
+    SetRV(node, byte_type_);
+    break;
+  }
+  case Node::Kind::Integer16:
+  {
+    SetRV(node, int16_type_);
+    break;
+  }
+  case Node::Kind::UnsignedInteger16:
+  {
+    SetRV(node, uint16_type_);
+    break;
+  }
   case Node::Kind::Integer32:
   {
     SetRV(node, int32_type_);

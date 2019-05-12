@@ -45,6 +45,7 @@ public:
   using ArrayType = T;
   using DataType  = typename ArrayType::Type;
   using SizeType  = typename ArrayType::SizeType;
+  using RNG       = std::default_random_engine;
 
   static constexpr char const *DESCRIPTOR = "TSNE";
 
@@ -57,7 +58,7 @@ public:
        SizeType const &random_seed)
   {
     ArrayType output_matrix({input_matrix.shape().at(0), output_dimensions});
-    rng_.seed(static_cast<uint32_t>(random_seed));
+    rng_.seed(static_cast<RNG::result_type>(random_seed));
     RandomInitWeights(output_matrix);
     Init(input_matrix, output_matrix, perplexity);
   }
@@ -451,10 +452,10 @@ private:
     }
   }
 
-  ArrayType                  input_matrix_, output_matrix_;
-  ArrayType                  input_pairwise_affinities_, input_symmetric_affinities_;
-  ArrayType                  output_symmetric_affinities_;
-  std::default_random_engine rng_;
+  ArrayType input_matrix_, output_matrix_;
+  ArrayType input_pairwise_affinities_, input_symmetric_affinities_;
+  ArrayType output_symmetric_affinities_;
+  RNG       rng_;
 };
 
 }  // namespace ml
