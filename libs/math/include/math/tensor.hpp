@@ -499,13 +499,13 @@ public:
   }
 
 private:
-  ContainerType data_;
+  ContainerType data_{};
   SizeType      size_{0};
-  SizeVector    shape_;
-  SizeVector    stride_;
-  SizeType      padded_height_;
+  SizeVector    shape_{};
+  SizeVector    stride_{};
+  SizeType      padded_height_{};
 
-  MAJOR_ORDER major_order_ = COLUMN;
+  MAJOR_ORDER major_order_{COLUMN};
 
   /**
    * Gets a value from the array by N-dim index
