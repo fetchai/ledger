@@ -2305,7 +2305,7 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::Concat(std::vector<SelfType> const
     }
 
     // copy the data across
-    TensorIterator<T, C> ret_it{ret, step};
+    TensorSliceIterator<T, C> ret_it{ret, step};
     auto                 t_it = tensors[i].cbegin();
 
     while (t_it.is_valid())
@@ -2369,7 +2369,7 @@ typename std::vector<typename Tensor<T, C>::SelfType> Tensor<T, C>::Split(
     cur_error_tensor_shape[axis]      = concat_points[i];
     SelfType cur_error_tensor{cur_error_tensor_shape};
 
-    TensorIterator<T, C> t_it{cur_error_tensor};
+    TensorSliceIterator<T, C> t_it{cur_error_tensor};
 
     while (t_it.is_valid())
     {
