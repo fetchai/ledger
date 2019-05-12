@@ -17,12 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-
-
-
-
 #include "vm/module.hpp"
-
 
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/type_convert.hpp"
@@ -83,12 +78,13 @@ public:
    * @return: Vector of strings which represent errors found during compilation
    */
   static std::vector<std::string> Compile(std::shared_ptr<fetch::vm::Module> const &module,
-                                          std::string const &source, fetch::vm::Executable &executable)
+                                          std::string const &                       source,
+                                          fetch::vm::Executable &                   executable)
   {
     std::vector<std::string> errors;
 
     // generate the compiler from the module
-    auto compiler = std::make_shared<fetch::vm::Compiler>(module.get());
+    auto   compiler = std::make_shared<fetch::vm::Compiler>(module.get());
     vm::IR ir;
 
     // compile the source
@@ -100,12 +96,11 @@ public:
       return errors;
     }
 
-    fetch::vm::VM vm(module.get()); // TODO(tfr): refactor such that IR is first made exectuable
-    if(!vm.GenerateExecutable(ir, "default_ir", executable, errors))
+    fetch::vm::VM vm(module.get());  // TODO(tfr): refactor such that IR is first made exectuable
+    if (!vm.GenerateExecutable(ir, "default_ir", executable, errors))
     {
       return errors;
     }
-
 
 #ifndef NDEBUG
     std::ostringstream all_errors;

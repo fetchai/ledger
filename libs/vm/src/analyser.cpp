@@ -17,11 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "vm/analyser.hpp"
-#include "vm/string.hpp"
-#include "vm/matrix.hpp"
 #include "vm/array.hpp"
 #include "vm/map.hpp"
+#include "vm/matrix.hpp"
 #include "vm/state.hpp"
+#include "vm/string.hpp"
 
 namespace fetch {
 namespace vm {
@@ -32,21 +32,21 @@ std::string Analyser::SET_INDEXED_VALUE = "[SetIndexedValue]";
 
 void Analyser::Initialise()
 {
-  operator_map_ = {{NodeKind::Equal, Operator::Equal},
-                     {NodeKind::NotEqual, Operator::NotEqual},
-                     {NodeKind::LessThan, Operator::LessThan},
-                     {NodeKind::LessThanOrEqual, Operator::LessThanOrEqual},
-                     {NodeKind::GreaterThan, Operator::GreaterThan},
-                     {NodeKind::GreaterThanOrEqual, Operator::GreaterThanOrEqual},
-                     {NodeKind::Negate, Operator::Negate},
-                     {NodeKind::Add, Operator::Add},
-                     {NodeKind::Subtract, Operator::Subtract},
-                     {NodeKind::Multiply, Operator::Multiply},
-                     {NodeKind::Divide, Operator::Divide},
-                     {NodeKind::InplaceAdd, Operator::InplaceAdd},
-                     {NodeKind::InplaceSubtract, Operator::InplaceSubtract},
-                     {NodeKind::InplaceMultiply, Operator::InplaceMultiply},
-                     {NodeKind::InplaceDivide, Operator::InplaceDivide}};
+  operator_map_        = {{NodeKind::Equal, Operator::Equal},
+                   {NodeKind::NotEqual, Operator::NotEqual},
+                   {NodeKind::LessThan, Operator::LessThan},
+                   {NodeKind::LessThanOrEqual, Operator::LessThanOrEqual},
+                   {NodeKind::GreaterThan, Operator::GreaterThan},
+                   {NodeKind::GreaterThanOrEqual, Operator::GreaterThanOrEqual},
+                   {NodeKind::Negate, Operator::Negate},
+                   {NodeKind::Add, Operator::Add},
+                   {NodeKind::Subtract, Operator::Subtract},
+                   {NodeKind::Multiply, Operator::Multiply},
+                   {NodeKind::Divide, Operator::Divide},
+                   {NodeKind::InplaceAdd, Operator::InplaceAdd},
+                   {NodeKind::InplaceSubtract, Operator::InplaceSubtract},
+                   {NodeKind::InplaceMultiply, Operator::InplaceMultiply},
+                   {NodeKind::InplaceDivide, Operator::InplaceDivide}};
   type_map_            = TypeMap();
   type_info_array_     = TypeInfoArray(TypeIds::NumReserved);
   type_info_map_       = TypeInfoMap();
@@ -79,40 +79,42 @@ void Analyser::Initialise()
   EnableOperator(address_type_, Operator::Equal);
   EnableOperator(address_type_, Operator::NotEqual);
 
-  CreateMetaType("[TemplateParameter1]", TypeIndex(typeid(TemplateParameter1)), TypeIds::Unknown, template_parameter1_type_);
-  CreateMetaType("[TemplateParameter2]", TypeIndex(typeid(TemplateParameter2)), TypeIds::Unknown, template_parameter2_type_);
+  CreateMetaType("[TemplateParameter1]", TypeIndex(typeid(TemplateParameter1)), TypeIds::Unknown,
+                 template_parameter1_type_);
+  CreateMetaType("[TemplateParameter2]", TypeIndex(typeid(TemplateParameter2)), TypeIds::Unknown,
+                 template_parameter2_type_);
   CreateMetaType("[Any]", TypeIndex(typeid(Any)), TypeIds::Unknown, any_type_);
-  CreateMetaType("[AnyPrimitive]", TypeIndex(typeid(AnyPrimitive)), TypeIds::Unknown, any_primitive_type_);
-  TypePtrArray const integer_types = {int8_type_, byte_type_, int16_type_, uint16_type_, int32_type_, uint32_type_,
-                     int64_type_, uint64_type_};
-  TypePtrArray const number_types = {int8_type_, byte_type_, int16_type_, uint16_type_,
-      int32_type_, uint32_type_,
-                     int64_type_, uint64_type_,
-                    float32_type_, float64_type_};
+  CreateMetaType("[AnyPrimitive]", TypeIndex(typeid(AnyPrimitive)), TypeIds::Unknown,
+                 any_primitive_type_);
+  TypePtrArray const integer_types = {int8_type_,  byte_type_,   int16_type_, uint16_type_,
+                                      int32_type_, uint32_type_, int64_type_, uint64_type_};
+  TypePtrArray const number_types  = {int8_type_,    byte_type_,   int16_type_, uint16_type_,
+                                     int32_type_,   uint32_type_, int64_type_, uint64_type_,
+                                     float32_type_, float64_type_};
   for (auto const &type : number_types)
   {
-      EnableOperator(type, Operator::Equal);
-      EnableOperator(type, Operator::NotEqual);
-      EnableOperator(type, Operator::LessThan);
-      EnableOperator(type, Operator::LessThanOrEqual);
-      EnableOperator(type, Operator::GreaterThan);
-      EnableOperator(type, Operator::GreaterThanOrEqual);
-      EnableOperator(type, Operator::Negate);
-      EnableOperator(type, Operator::Add);
-      EnableOperator(type, Operator::Subtract);
-      EnableOperator(type, Operator::Multiply);
-      EnableOperator(type, Operator::Divide);
-      EnableOperator(type, Operator::InplaceAdd);
-      EnableOperator(type, Operator::InplaceSubtract);
-      EnableOperator(type, Operator::InplaceMultiply);
-      EnableOperator(type, Operator::InplaceDivide);
+    EnableOperator(type, Operator::Equal);
+    EnableOperator(type, Operator::NotEqual);
+    EnableOperator(type, Operator::LessThan);
+    EnableOperator(type, Operator::LessThanOrEqual);
+    EnableOperator(type, Operator::GreaterThan);
+    EnableOperator(type, Operator::GreaterThanOrEqual);
+    EnableOperator(type, Operator::Negate);
+    EnableOperator(type, Operator::Add);
+    EnableOperator(type, Operator::Subtract);
+    EnableOperator(type, Operator::Multiply);
+    EnableOperator(type, Operator::Divide);
+    EnableOperator(type, Operator::InplaceAdd);
+    EnableOperator(type, Operator::InplaceSubtract);
+    EnableOperator(type, Operator::InplaceMultiply);
+    EnableOperator(type, Operator::InplaceDivide);
   }
-  CreateGroupType("[AnyInteger]", TypeIndex(typeid(AnyInteger)),
-                    integer_types, TypeIds::Unknown,
-                    any_integer_type_);
-  CreateGroupType("[AnyFloatingPoint]", TypeIndex(typeid(AnyFloatingPoint)), {float32_type_, float64_type_},
-                    TypeIds::Unknown, any_floating_point_type_);
-  CreateTemplateType("Matrix", TypeIndex(typeid(IMatrix)), {any_floating_point_type_}, TypeIds::Unknown, matrix_type_);
+  CreateGroupType("[AnyInteger]", TypeIndex(typeid(AnyInteger)), integer_types, TypeIds::Unknown,
+                  any_integer_type_);
+  CreateGroupType("[AnyFloatingPoint]", TypeIndex(typeid(AnyFloatingPoint)),
+                  {float32_type_, float64_type_}, TypeIds::Unknown, any_floating_point_type_);
+  CreateTemplateType("Matrix", TypeIndex(typeid(IMatrix)), {any_floating_point_type_},
+                     TypeIds::Unknown, matrix_type_);
   EnableOperator(matrix_type_, Operator::Negate);
   EnableOperator(matrix_type_, Operator::Add);
   EnableOperator(matrix_type_, Operator::Subtract);
@@ -128,19 +130,22 @@ void Analyser::Initialise()
   EnableRightOperator(matrix_type_, Operator::InplaceSubtract);
   EnableRightOperator(matrix_type_, Operator::InplaceMultiply);
   EnableRightOperator(matrix_type_, Operator::InplaceDivide);
-  CreateTemplateType("Array", TypeIndex(typeid(IArray)), {any_type_}, TypeIds::Unknown, array_type_);
-  CreateTemplateType("Map", TypeIndex(typeid(IMap)), {any_type_, any_type_}, TypeIds::Unknown, map_type_);
-  CreateTemplateType("State", TypeIndex(typeid(IState)), {any_type_}, TypeIds::Unknown, state_type_);
+  CreateTemplateType("Array", TypeIndex(typeid(IArray)), {any_type_}, TypeIds::Unknown,
+                     array_type_);
+  CreateTemplateType("Map", TypeIndex(typeid(IMap)), {any_type_, any_type_}, TypeIds::Unknown,
+                     map_type_);
+  CreateTemplateType("State", TypeIndex(typeid(IState)), {any_type_}, TypeIds::Unknown,
+                     state_type_);
 }
 
 void Analyser::UnInitialise()
 {
   operator_map_ = OperatorMap();
   type_map_.Reset();
-  type_map_ = TypeMap();
-  type_info_array_ = TypeInfoArray();
-  type_info_map_ = TypeInfoMap();
-  registered_types_ = RegisteredTypes();
+  type_map_            = TypeMap();
+  type_info_array_     = TypeInfoArray();
+  type_info_map_       = TypeInfoMap();
+  registered_types_    = RegisteredTypes();
   function_info_array_ = FunctionInfoArray();
   if (symbols_)
   {
@@ -181,48 +186,43 @@ void Analyser::CreateClassType(std::string const &name, TypeIndex type_index)
 }
 
 void Analyser::CreateInstantiationType(TypeIndex type_index, TypeIndex template_type_index,
-                               TypeIndexArray const &parameter_type_index_array)
+                                       TypeIndexArray const &parameter_type_index_array)
 {
   TypePtr type;
   CreateInstantiationType(type_index, GetType(template_type_index),
-       GetTypes(parameter_type_index_array), TypeIds::Unknown, type);
+                          GetTypes(parameter_type_index_array), TypeIds::Unknown, type);
 }
 
-void Analyser::CreateFreeFunction(std::string const &name,
-                                TypeIndexArray const &parameter_type_index_array,
-                                TypeIndex return_type_index,
-                                Handler const &handler)
+void Analyser::CreateFreeFunction(std::string const &   name,
+                                  TypeIndexArray const &parameter_type_index_array,
+                                  TypeIndex return_type_index, Handler const &handler)
 {
-  CreateFreeFunction(name, GetTypes(parameter_type_index_array),
-                           GetType(return_type_index), handler);
+  CreateFreeFunction(name, GetTypes(parameter_type_index_array), GetType(return_type_index),
+                     handler);
 }
 
-void Analyser::CreateConstructor(TypeIndex type_index,
-                                   TypeIndexArray const &parameter_type_index_array,
-                                   Handler const &handler)
+void Analyser::CreateConstructor(TypeIndex             type_index,
+                                 TypeIndexArray const &parameter_type_index_array,
+                                 Handler const &       handler)
 {
   CreateConstructor(GetType(type_index), GetTypes(parameter_type_index_array), handler);
 }
 
-void Analyser::CreateStaticMemberFunction(TypeIndex type_index,
-                                std::string const &function_name,
-                                TypeIndexArray const &parameter_type_index_array,
-                                TypeIndex return_type_index,
-                                Handler const &handler)
+void Analyser::CreateStaticMemberFunction(TypeIndex type_index, std::string const &function_name,
+                                          TypeIndexArray const &parameter_type_index_array,
+                                          TypeIndex return_type_index, Handler const &handler)
 {
-  CreateStaticMemberFunction(GetType(type_index), function_name, GetTypes(parameter_type_index_array),
-                           GetType(return_type_index), handler);
+  CreateStaticMemberFunction(GetType(type_index), function_name,
+                             GetTypes(parameter_type_index_array), GetType(return_type_index),
+                             handler);
 }
 
-void Analyser::CreateMemberFunction(TypeIndex type_index,
-                                std::string const &function_name,
-                                TypeIndexArray const &parameter_type_index_array,
-                                TypeIndex return_type_index,
-                                Handler const &handler)
+void Analyser::CreateMemberFunction(TypeIndex type_index, std::string const &function_name,
+                                    TypeIndexArray const &parameter_type_index_array,
+                                    TypeIndex return_type_index, Handler const &handler)
 {
-  CreateMemberFunction(GetType(type_index), function_name,
-                               GetTypes(parameter_type_index_array),
-                               GetType(return_type_index), handler);
+  CreateMemberFunction(GetType(type_index), function_name, GetTypes(parameter_type_index_array),
+                       GetType(return_type_index), handler);
 }
 
 void Analyser::EnableOperator(TypeIndex type_index, Operator op)
@@ -230,14 +230,13 @@ void Analyser::EnableOperator(TypeIndex type_index, Operator op)
   EnableOperator(GetType(type_index), op);
 }
 
-void Analyser::EnableIndexOperator(TypeIndex type_index,
-      TypeIndexArray const &input_type_index_array,
-                           TypeIndex output_type_index,
-                           Handler const &get_handler,
-                           Handler const &set_handler)
+void Analyser::EnableIndexOperator(TypeIndex             type_index,
+                                   TypeIndexArray const &input_type_index_array,
+                                   TypeIndex output_type_index, Handler const &get_handler,
+                                   Handler const &set_handler)
 {
   EnableIndexOperator(GetType(type_index), GetTypes(input_type_index_array),
-      GetType(output_type_index), get_handler, set_handler);
+                      GetType(output_type_index), get_handler, set_handler);
 }
 
 bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &errors)
@@ -285,7 +284,8 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
 void Analyser::AddError(uint16_t line, std::string const &message)
 {
   std::stringstream stream;
-  stream << "line " << line << ": " << "error: " << message;
+  stream << "line " << line << ": "
+         << "error: " << message;
   errors_.push_back(stream.str());
 }
 
@@ -339,7 +339,7 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
 {
   function_definition_node->symbols = CreateSymbolTable();
   ExpressionNodePtr identifier_node =
-    ConvertToExpressionNodePtr(function_definition_node->children[1]);
+      ConvertToExpressionNodePtr(function_definition_node->children[1]);
   std::string const &name  = identifier_node->text;
   int const          count = static_cast<int>(function_definition_node->children.size());
   VariablePtrArray   parameter_variables;
@@ -351,7 +351,7 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
     ExpressionNodePtr parameter_node =
         ConvertToExpressionNodePtr(function_definition_node->children[size_t(2 + i * 2)]);
     std::string const &parameter_name = parameter_node->text;
-    SymbolPtr          symbol = function_definition_node->symbols->Find(parameter_name);
+    SymbolPtr          symbol         = function_definition_node->symbols->Find(parameter_name);
     if (symbol)
     {
       std::stringstream stream;
@@ -364,8 +364,7 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
     TypePtr parameter_type = FindType(parameter_type_node);
     if (parameter_type == nullptr)
     {
-      AddError(parameter_type_node->line,
-               "unknown type '" + parameter_type_node->text + "'");
+      AddError(parameter_type_node->line, "unknown type '" + parameter_type_node->text + "'");
       ++problems;
       continue;
     }
@@ -438,8 +437,8 @@ void Analyser::BuildIfStatement(NodePtr const &if_statement_node)
 {
   for (NodePtr const &child : if_statement_node->children)
   {
-    BlockNodePtr block_node  = ConvertToBlockNodePtr(child);
-    block_node->symbols = CreateSymbolTable();
+    BlockNodePtr block_node = ConvertToBlockNodePtr(child);
+    block_node->symbols     = CreateSymbolTable();
     BuildBlock(block_node);
   }
 }
@@ -876,7 +875,7 @@ bool Analyser::AnnotateLHSExpression(ExpressionNodePtr const &parent, Expression
   // Assigning to an indexed value...
 
   ExpressionNodePtr container_node = ConvertToExpressionNodePtr(lhs->children[0]);
-  TypePtr type;
+  TypePtr           type;
   if (container_node->type->IsInstantiation())
   {
     type = container_node->type->template_type;
@@ -898,8 +897,8 @@ bool Analyser::AnnotateLHSExpression(ExpressionNodePtr const &parent, Expression
   SymbolPtr setter_symbol = type->symbols->Find(SET_INDEXED_VALUE);
   if (setter_symbol == nullptr)
   {
-    AddError(container_node->line,
-             "unable to find matching index operator for type '" + container_node->type->name + "'");
+    AddError(container_node->line, "unable to find matching index operator for type '" +
+                                       container_node->type->name + "'");
     return false;
   }
 
@@ -908,11 +907,12 @@ bool Analyser::AnnotateLHSExpression(ExpressionNodePtr const &parent, Expression
   TypePtrArray dummy;
   TypePtrArray setter_supplied_types = supplied_index_types;
   setter_supplied_types.push_back(lhs->type);
-  FunctionPtr setter_f = FindFunction(container_node->type, setter_fg, setter_supplied_types, dummy);
+  FunctionPtr setter_f =
+      FindFunction(container_node->type, setter_fg, setter_supplied_types, dummy);
   if (setter_f == nullptr)
   {
-    AddError(container_node->line,
-             "unable to find matching index operator for type '" + container_node->type->name + "'");
+    AddError(container_node->line, "unable to find matching index operator for type '" +
+                                       container_node->type->name + "'");
     return false;
   }
 
@@ -1213,7 +1213,7 @@ bool Analyser::AnnotateRelationalOp(ExpressionNodePtr const &node)
     AddError(node->line, "incompatible types");
     return false;
   }
-  bool const       enabled = IsOperatorEnabled(lhs->type, op);
+  bool const enabled = IsOperatorEnabled(lhs->type, op);
   if (enabled == false)
   {
     AddError(node->line, "operator not supported");
@@ -1277,7 +1277,7 @@ bool Analyser::AnnotatePrefixPostfixOp(ExpressionNodePtr const &node)
 
 bool Analyser::AnnotateNegateOp(ExpressionNodePtr const &node)
 {
-  Operator const op = GetOperator(node->node_kind);
+  Operator const    op      = GetOperator(node->node_kind);
   ExpressionNodePtr operand = ConvertToExpressionNodePtr(node->children[0]);
   if (AnnotateExpression(operand) == false)
   {
@@ -1398,8 +1398,8 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
 
   FunctionGroupPtr fg = ConvertToFunctionGroupPtr(symbol);
 
-  TypePtrArray     actual_index_types;
-  FunctionPtr f = FindFunction(lhs->type, fg, supplied_index_types, actual_index_types);
+  TypePtrArray actual_index_types;
+  FunctionPtr  f = FindFunction(lhs->type, fg, supplied_index_types, actual_index_types);
   if (f == nullptr)
   {
     AddError(lhs->line,
@@ -1471,9 +1471,8 @@ bool Analyser::AnnotateDotOp(ExpressionNodePtr const &node)
     return false;
   }
 
-  bool const lhs_is_instance = (lhs->IsVariableExpression()) ||
-                               (lhs->IsLVExpression()) ||
-                               (lhs->IsRVExpression());
+  bool const lhs_is_instance =
+      (lhs->IsVariableExpression()) || (lhs->IsLVExpression()) || (lhs->IsRVExpression());
 
   if (lhs->type->IsPrimitive())
   {
@@ -1492,8 +1491,7 @@ bool Analyser::AnnotateDotOp(ExpressionNodePtr const &node)
   }
   if (member_symbol == nullptr)
   {
-    AddError(lhs->line,
-             "type '" + lhs->type->name + "' has no member named '" + member_name + "'");
+    AddError(lhs->line, "type '" + lhs->type->name + "' has no member named '" + member_name + "'");
     return false;
   }
   if (member_symbol->IsFunctionGroup())
@@ -1591,8 +1589,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
     {
       if (lhs->function_invoked_on_instance)
       {
-        AddError(lhs->line,
-                 "function '" + lhs->fg->name + "' is a static member function");
+        AddError(lhs->line, "function '" + lhs->fg->name + "' is a static member function");
         return false;
       }
     }
@@ -1600,8 +1597,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
     {
       if (lhs->function_invoked_on_instance == false)
       {
-        AddError(lhs->line,
-                 "function '" + lhs->fg->name + "' is a non-static member function");
+        AddError(lhs->line, "function '" + lhs->fg->name + "' is a non-static member function");
         return false;
       }
     }
@@ -1637,8 +1633,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
     }
     if (symbol == nullptr)
     {
-      AddError(lhs->line,
-               "unable to find matching constructor for type '" + lhs->type->name + "'");
+      AddError(lhs->line, "unable to find matching constructor for type '" + lhs->type->name + "'");
       return false;
     }
     FunctionGroupPtr fg = ConvertToFunctionGroupPtr(symbol);
@@ -1647,8 +1642,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
     if (f == nullptr)
     {
       // No matching constructor, or ambiguous
-      AddError(lhs->line,
-               "unable to find matching constructor for type '" + lhs->type->name + "'");
+      AddError(lhs->line, "unable to find matching constructor for type '" + lhs->type->name + "'");
       return false;
     }
 
@@ -1724,7 +1718,7 @@ bool Analyser::TestBlock(BlockNodePtr const &block_node)
 bool Analyser::IsWriteable(ExpressionNodePtr const &lhs)
 {
   bool const is_variable_expression = lhs->IsVariableExpression();
-  bool const is_lv_expression = lhs->IsLVExpression();
+  bool const is_lv_expression       = lhs->IsLVExpression();
   if ((is_variable_expression == false) && (is_lv_expression == false))
   {
     AddError(lhs->line, "assignment operand is not writeable");
@@ -1743,7 +1737,7 @@ bool Analyser::IsWriteable(ExpressionNodePtr const &lhs)
 }
 
 bool Analyser::AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodePtr const &lhs,
-                               ExpressionNodePtr const &rhs)
+                                  ExpressionNodePtr const &rhs)
 {
   Operator const op = GetOperator(node->node_kind);
   if (lhs->type->IsVoid() || lhs->type->IsNull())
@@ -1988,7 +1982,7 @@ SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const &node)
       parameter_types.push_back(parameter_type);
     }
     TypePtr type = InternalCreateInstantiationType(TypeKind::UserDefinedInstantiation,
-        template_type, parameter_types);
+                                                   template_type, parameter_types);
     root_->symbols->Add(type);
     return type;
   }
@@ -2030,30 +2024,31 @@ SymbolPtr Analyser::SearchSymbols(std::string const &name)
 void Analyser::SetVariableExpression(ExpressionNodePtr const &node, VariablePtr const &variable)
 {
   node->expression_kind = ExpressionKind::Variable;
-  node->variable = variable;
-  node->type     = variable->type;
+  node->variable        = variable;
+  node->type            = variable->type;
 }
 
 void Analyser::SetLVExpression(ExpressionNodePtr const &node, TypePtr const &type)
 {
   node->expression_kind = ExpressionKind::LV;
-  node->type     = type;
+  node->type            = type;
 }
 
 void Analyser::SetRVExpression(ExpressionNodePtr const &node, TypePtr const &type)
 {
   node->expression_kind = ExpressionKind::RV;
-  node->type     = type;
+  node->type            = type;
 }
 
 void Analyser::SetTypeExpression(ExpressionNodePtr const &node, TypePtr const &type)
 {
   node->expression_kind = ExpressionKind::Type;
-  node->type     = type;
+  node->type            = type;
 }
 
 void Analyser::SetFunctionGroupExpression(ExpressionNodePtr const &node, FunctionGroupPtr const &fg,
-                           TypePtr const &fg_owner, bool function_invoked_on_instance)
+                                          TypePtr const &fg_owner,
+                                          bool           function_invoked_on_instance)
 {
   node->expression_kind              = ExpressionKind::FunctionGroup;
   node->type                         = fg_owner;
@@ -2061,11 +2056,8 @@ void Analyser::SetFunctionGroupExpression(ExpressionNodePtr const &node, Functio
   node->function_invoked_on_instance = function_invoked_on_instance;
 }
 
-void Analyser::CreatePrimitiveType(std::string const &type_name,
-                                   TypeIndex type_index,
-                                   bool add_to_symbol_table,
-                                   TypeId type_id,
-                                   TypePtr &type)
+void Analyser::CreatePrimitiveType(std::string const &type_name, TypeIndex type_index,
+                                   bool add_to_symbol_table, TypeId type_id, TypePtr &type)
 {
   if (type_map_.Find(type_index))
   {
@@ -2082,9 +2074,8 @@ void Analyser::CreatePrimitiveType(std::string const &type_name,
   }
 }
 
-void Analyser::CreateMetaType(std::string const &type_name,
-                                    TypeIndex type_index,
-                                    TypeId type_id, TypePtr &type)
+void Analyser::CreateMetaType(std::string const &type_name, TypeIndex type_index, TypeId type_id,
+                              TypePtr &type)
 {
   if (type_map_.Find(type_index))
   {
@@ -2097,15 +2088,15 @@ void Analyser::CreateMetaType(std::string const &type_name,
   registered_types_.Add(type_index, type->id);
 }
 
-void Analyser::CreateClassType(std::string const &type_name,
-                                    TypeIndex type_index, TypeId type_id, TypePtr &type)
+void Analyser::CreateClassType(std::string const &type_name, TypeIndex type_index, TypeId type_id,
+                               TypePtr &type)
 {
   if (type_map_.Find(type_index))
   {
     // Already created
     return;
   }
-  type = CreateType(TypeKind::Class, type_name);
+  type          = CreateType(TypeKind::Class, type_name);
   type->symbols = CreateSymbolTable();
   type_map_.Add(type_index, type);
   AddTypeInfo(TypeInfo(TypeKind::Class, type_name, {}), type_id, type);
@@ -2113,8 +2104,7 @@ void Analyser::CreateClassType(std::string const &type_name,
   symbols_->Add(type);
 }
 
-void Analyser::CreateTemplateType(std::string const &type_name,
-                                  TypeIndex type_index,
+void Analyser::CreateTemplateType(std::string const &type_name, TypeIndex type_index,
                                   TypePtrArray const &allowed_types, TypeId type_id, TypePtr &type)
 {
   if (type_map_.Find(type_index))
@@ -2122,9 +2112,9 @@ void Analyser::CreateTemplateType(std::string const &type_name,
     // Already created
     return;
   }
-  type = CreateType(TypeKind::Template, type_name);
+  type          = CreateType(TypeKind::Template, type_name);
   type->symbols = CreateSymbolTable();
-  type->types        = allowed_types;
+  type->types   = allowed_types;
   type_map_.Add(type_index, type);
   AddTypeInfo(TypeInfo(TypeKind::Template, type_name, {}), type_id, type);
   registered_types_.Add(type_index, type->id);
@@ -2132,8 +2122,8 @@ void Analyser::CreateTemplateType(std::string const &type_name,
 }
 
 void Analyser::CreateInstantiationType(TypeIndex type_index, TypePtr const &template_type,
-                                       TypePtrArray const &parameter_types,
-                                       TypeId type_id, TypePtr &type)
+                                       TypePtrArray const &parameter_types, TypeId type_id,
+                                       TypePtr &type)
 {
   if (type_map_.Find(type_index))
   {
@@ -2147,31 +2137,28 @@ void Analyser::CreateInstantiationType(TypeIndex type_index, TypePtr const &temp
     parameter_type_ids.push_back(parameter_type->id);
   }
   type_map_.Add(type_index, type);
-  AddTypeInfo(TypeInfo(TypeKind::Instantiation, type->name, parameter_type_ids),
-      type_id, type);
+  AddTypeInfo(TypeInfo(TypeKind::Instantiation, type->name, parameter_type_ids), type_id, type);
   registered_types_.Add(type_index, type->id);
   symbols_->Add(type);
 }
 
-void Analyser::CreateGroupType(std::string const &type_name,
-                                    TypeIndex type_index,
-                                 TypePtrArray const &allowed_types, TypeId type_id, TypePtr &type)
+void Analyser::CreateGroupType(std::string const &type_name, TypeIndex type_index,
+                               TypePtrArray const &allowed_types, TypeId type_id, TypePtr &type)
 {
   if (type_map_.Find(type_index))
   {
     // Already created
     return;
   }
-  type = CreateType(TypeKind::Group, type_name);
+  type        = CreateType(TypeKind::Group, type_name);
   type->types = allowed_types;
   type_map_.Add(type_index, type);
   AddTypeInfo(TypeInfo(TypeKind::Group, type_name, {}), type_id, type);
   registered_types_.Add(type_index, type->id);
 }
 
-TypePtr Analyser::InternalCreateInstantiationType(TypeKind type_kind,
-                                          TypePtr const &template_type,
-                                       TypePtrArray const &parameter_types)
+TypePtr Analyser::InternalCreateInstantiationType(TypeKind type_kind, TypePtr const &template_type,
+                                                  TypePtrArray const &parameter_types)
 {
   std::stringstream stream;
   stream << template_type->name + "<";
@@ -2179,82 +2166,77 @@ TypePtr Analyser::InternalCreateInstantiationType(TypeKind type_kind,
   for (size_t i = 0; i < count; ++i)
   {
     stream << parameter_types[i]->name;
-    if (i+1 < count)
+    if (i + 1 < count)
     {
       stream << ",";
     }
   }
   stream << ">";
   std::string name    = stream.str();
-  TypePtr type        = CreateType(type_kind, name);
+  TypePtr     type    = CreateType(type_kind, name);
   type->template_type = template_type;
   type->types         = parameter_types;
   return type;
 }
 
-void Analyser::CreateFreeFunction(std::string const &name,
-                                        TypePtrArray const &parameter_types,
-                                        TypePtr const &     return_type,
-                                        Handler const &handler)
+void Analyser::CreateFreeFunction(std::string const &name, TypePtrArray const &parameter_types,
+                                  TypePtr const &return_type, Handler const &handler)
 {
   std::string unique_id = BuildUniqueId(nullptr, name, parameter_types, return_type);
-  FunctionPtr f = CreateFunction(FunctionKind::FreeFunction, name, unique_id,
-      parameter_types, VariablePtrArray(), return_type);
+  FunctionPtr f = CreateFunction(FunctionKind::FreeFunction, name, unique_id, parameter_types,
+                                 VariablePtrArray(), return_type);
   AddFunctionToSymbolTable(symbols_, f);
   AddFunctionInfo(f, handler);
 }
 
-void Analyser::CreateConstructor(TypePtr const &type,
-                                           TypePtrArray const &parameter_types,
-                                           Handler const &handler)
+void Analyser::CreateConstructor(TypePtr const &type, TypePtrArray const &parameter_types,
+                                 Handler const &handler)
 {
   std::string unique_id = BuildUniqueId(type, CONSTRUCTOR, parameter_types, type);
-  FunctionPtr f = CreateFunction(FunctionKind::Constructor, CONSTRUCTOR, unique_id,
-      parameter_types, VariablePtrArray(), type);
+  FunctionPtr f = CreateFunction(FunctionKind::Constructor, CONSTRUCTOR, unique_id, parameter_types,
+                                 VariablePtrArray(), type);
   AddFunctionToSymbolTable(type->symbols, f);
   AddFunctionInfo(f, handler);
 }
 
 void Analyser::CreateStaticMemberFunction(TypePtr const &type, std::string const &name,
-                                        TypePtrArray const &parameter_types,
-                                        TypePtr const &     return_type,
-                                        Handler const &handler)
+                                          TypePtrArray const &parameter_types,
+                                          TypePtr const &return_type, Handler const &handler)
 {
   std::string unique_id = BuildUniqueId(type, name, parameter_types, return_type);
-  FunctionPtr f = CreateFunction(FunctionKind::StaticMemberFunction, name, unique_id,
-      parameter_types, VariablePtrArray(), return_type);
+  FunctionPtr f         = CreateFunction(FunctionKind::StaticMemberFunction, name, unique_id,
+                                 parameter_types, VariablePtrArray(), return_type);
   AddFunctionToSymbolTable(type->symbols, f);
   AddFunctionInfo(f, handler);
 }
 
 void Analyser::CreateMemberFunction(TypePtr const &type, std::string const &name,
-                                            TypePtrArray const &parameter_types,
-                                            TypePtr const &return_type,
-                                            Handler const &handler)
+                                    TypePtrArray const &parameter_types, TypePtr const &return_type,
+                                    Handler const &handler)
 {
   std::string unique_id = BuildUniqueId(type, name, parameter_types, return_type);
-  FunctionPtr f = CreateFunction(FunctionKind::MemberFunction, name, unique_id,
-      parameter_types, VariablePtrArray(), return_type);
+  FunctionPtr f = CreateFunction(FunctionKind::MemberFunction, name, unique_id, parameter_types,
+                                 VariablePtrArray(), return_type);
   AddFunctionToSymbolTable(type->symbols, f);
   AddFunctionInfo(f, handler);
 }
 
 FunctionPtr Analyser::CreateUserDefinedFreeFunction(std::string const &     name,
-                                         TypePtrArray const &    parameter_types,
-                                         VariablePtrArray const &parameter_variables,
-                                         TypePtr const &         return_type)
+                                                    TypePtrArray const &    parameter_types,
+                                                    VariablePtrArray const &parameter_variables,
+                                                    TypePtr const &         return_type)
 {
   return CreateFunction(FunctionKind::UserDefinedFreeFunction, name, name, parameter_types,
-      parameter_variables, return_type);
+                        parameter_variables, return_type);
 }
 
 void Analyser::EnableIndexOperator(TypePtr const &type, TypePtrArray const &input_types,
-                         TypePtr const &output_type,
-                         Handler const &get_handler, Handler const &set_handler)
+                                   TypePtr const &output_type, Handler const &get_handler,
+                                   Handler const &set_handler)
 {
   std::string g_unique_id = BuildUniqueId(type, GET_INDEXED_VALUE, input_types, output_type);
   FunctionPtr gf = CreateFunction(FunctionKind::MemberFunction, GET_INDEXED_VALUE, g_unique_id,
-      input_types, VariablePtrArray(), output_type);
+                                  input_types, VariablePtrArray(), output_type);
   AddFunctionInfo(gf, get_handler);
   AddFunctionToSymbolTable(type->symbols, gf);
 
@@ -2262,7 +2244,7 @@ void Analyser::EnableIndexOperator(TypePtr const &type, TypePtrArray const &inpu
   s_input_types.push_back(output_type);
   std::string s_unique_id = BuildUniqueId(type, SET_INDEXED_VALUE, s_input_types, void_type_);
   FunctionPtr sf = CreateFunction(FunctionKind::MemberFunction, SET_INDEXED_VALUE, s_unique_id,
-      s_input_types, VariablePtrArray(), void_type_);
+                                  s_input_types, VariablePtrArray(), void_type_);
   AddFunctionInfo(sf, set_handler);
   AddFunctionToSymbolTable(type->symbols, sf);
 }
@@ -2277,10 +2259,10 @@ void Analyser::AddTypeInfo(TypeInfo const &info, TypeId type_id, TypePtr const &
   }
   else
   {
-    id = type_id;
+    id                   = type_id;
     type_info_array_[id] = info;
   }
-  type->id = id;
+  type->id                   = id;
   type_info_map_[type->name] = id;
 }
 
@@ -2290,9 +2272,8 @@ void Analyser::AddFunctionInfo(FunctionPtr const &function, Handler const &handl
   function_info_array_.push_back(info);
 }
 
-std::string Analyser::BuildUniqueId(TypePtr const &type,
-    std::string const &function_name,
-    TypePtrArray const &parameter_types, TypePtr const &return_type)
+std::string Analyser::BuildUniqueId(TypePtr const &type, std::string const &function_name,
+                                    TypePtrArray const &parameter_types, TypePtr const &return_type)
 {
   std::stringstream stream;
   if (type)
@@ -2304,7 +2285,7 @@ std::string Analyser::BuildUniqueId(TypePtr const &type,
   for (size_t i = 0; i < count; ++i)
   {
     stream << parameter_types[i]->name;
-    if (i+1 < count)
+    if (i + 1 < count)
     {
       stream << ",";
     }

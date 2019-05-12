@@ -33,17 +33,16 @@ Compiler::~Compiler()
   analyser_.UnInitialise();
 }
 
-bool Compiler::Compile(std::string const &source,
-    std::string const &name, IR &ir,
-    std::vector<std::string> &errors)
+bool Compiler::Compile(std::string const &source, std::string const &name, IR &ir,
+                       std::vector<std::string> &errors)
 {
-  std::string filename = "";
-  BlockNodePtr root = parser_.Parse(filename, source, errors);
+  std::string  filename = "";
+  BlockNodePtr root     = parser_.Parse(filename, source, errors);
   if (root == nullptr)
   {
     return false;
   }
-  bool          analysed = analyser_.Analyse(root, errors);
+  bool analysed = analyser_.Analyse(root, errors);
   if (!analysed)
   {
     root->Reset();

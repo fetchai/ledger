@@ -57,8 +57,9 @@ struct FreeFunctionInvoker
     {
       using P = std::decay_t<T>;
       P parameter(StackGetter<P>::Get(vm, PARAMETER_OFFSET));
-      using InvokerType = typename FreeFunctionInvoker<ReturnType, FreeFunction, Used...,
-                                                T>::template Invoker<PARAMETER_OFFSET - 1, Ts...>;
+      using InvokerType =
+          typename FreeFunctionInvoker<ReturnType, FreeFunction, Used...,
+                                       T>::template Invoker<PARAMETER_OFFSET - 1, Ts...>;
       InvokerType::Invoke(vm, sp_offset, return_type_id, f, used..., parameter);
     }
   };

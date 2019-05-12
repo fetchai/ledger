@@ -112,12 +112,11 @@ void VM::Handler__Dec()
 void VM::Handler__Duplicate()
 {
   int end = sp_;
-  int p = sp_ - instruction_->data;
+  int p   = sp_ - instruction_->data;
   do
   {
     stack_[++sp_].Construct(stack_[++p]);
-  }
-  while (p < end);
+  } while (p < end);
 }
 
 void VM::Handler__DuplicateInsert()

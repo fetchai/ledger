@@ -187,8 +187,8 @@ int main(int argc, char **argv)
 
   // Setting compiler up
   fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(module.get());
-  fetch::vm::Executable        executable;
-  fetch::vm::IR ir;
+  fetch::vm::Executable    executable;
+  fetch::vm::IR            ir;
   std::vector<std::string> errors;
 
   // Compiling
@@ -205,7 +205,7 @@ int main(int argc, char **argv)
   }
 
   fetch::vm::VM vm(module.get());
-  if(!vm.GenerateExecutable(ir, "main_ir", executable, errors))
+  if (!vm.GenerateExecutable(ir, "main_ir", executable, errors))
   {
     std::cout << "Failed to generate executable" << std::endl;
     for (auto &s : errors)
@@ -224,7 +224,6 @@ int main(int argc, char **argv)
   // Setting VM up and running
   std::string        error;
   fetch::vm::Variant output;
-
 
   if (!vm.Execute(executable, "main", error, output))
   {

@@ -17,21 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdint>
+#include "meta/type_util.hpp"
 #include <cmath>
-#include <string>
-#include <vector>
-#include <map>
-#include <unordered_map>
-#include <unordered_set>
-#include <memory>
+#include <cstdint>
 #include <functional>
-#include <utility>
+#include <map>
+#include <memory>
+#include <sstream>
+#include <string>
 #include <type_traits>
 #include <typeindex>
 #include <typeinfo>
-#include <sstream>
-#include "meta/type_util.hpp"
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 namespace fetch {
 namespace vm {
@@ -41,27 +41,26 @@ using TypeIdArray    = std::vector<TypeId>;
 using TypeIndex      = std::type_index;
 using TypeIndexArray = std::vector<TypeIndex>;
 
-namespace TypeIds
-{
-  static TypeId const Unknown        = 0;
-  static TypeId const Null           = 1;
-  static TypeId const Void           = 2;
-  static TypeId const Bool           = 3;
-  static TypeId const Int8           = 4;
-  static TypeId const Byte           = 5;
-  static TypeId const Int16          = 6;
-  static TypeId const UInt16         = 7;
-  static TypeId const Int32          = 8;
-  static TypeId const UInt32         = 9;
-  static TypeId const Int64          = 10;
-  static TypeId const UInt64         = 11;
-  static TypeId const Float32        = 12;
-  static TypeId const Float64        = 13;
-  static TypeId const PrimitiveMaxId = 13;
-  static TypeId const String         = 14;
-  static TypeId const Address        = 15;
-  static TypeId const NumReserved    = 16;
-}
+namespace TypeIds {
+static TypeId const Unknown        = 0;
+static TypeId const Null           = 1;
+static TypeId const Void           = 2;
+static TypeId const Bool           = 3;
+static TypeId const Int8           = 4;
+static TypeId const Byte           = 5;
+static TypeId const Int16          = 6;
+static TypeId const UInt16         = 7;
+static TypeId const Int32          = 8;
+static TypeId const UInt32         = 9;
+static TypeId const Int64          = 10;
+static TypeId const UInt64         = 11;
+static TypeId const Float32        = 12;
+static TypeId const Float64        = 13;
+static TypeId const PrimitiveMaxId = 13;
+static TypeId const String         = 14;
+static TypeId const Address        = 15;
+static TypeId const NumReserved    = 16;
+}  // namespace TypeIds
 
 enum class NodeCategory : uint8_t
 {
@@ -186,8 +185,7 @@ struct TypeInfo
   {
     type_kind = TypeKind::Unknown;
   }
-  TypeInfo(TypeKind type_kind__, std::string const &name__,
-           TypeIdArray const &parameter_type_ids__)
+  TypeInfo(TypeKind type_kind__, std::string const &name__, TypeIdArray const &parameter_type_ids__)
   {
     type_kind          = type_kind__;
     name               = name__;
@@ -198,7 +196,7 @@ struct TypeInfo
   TypeIdArray parameter_type_ids;
 };
 using TypeInfoArray = std::vector<TypeInfo>;
-using TypeInfoMap = std::unordered_map<std::string, TypeId>;
+using TypeInfoMap   = std::unordered_map<std::string, TypeId>;
 
 class VM;
 using Handler = std::function<void(VM *)>;
@@ -210,7 +208,7 @@ struct FunctionInfo
     function_kind = FunctionKind::Unknown;
   }
   FunctionInfo(FunctionKind function_kind__, std::string const &unique_id__,
-           Handler const &handler__)
+               Handler const &handler__)
   {
     function_kind = function_kind__;
     unique_id     = unique_id__;
@@ -234,8 +232,9 @@ public:
     }
     return TypeIds::Unknown;
   }
+
 private:
-   void Add(TypeIndex type_index, TypeId type_id)
+  void Add(TypeIndex type_index, TypeId type_id)
   {
     map[type_index] = type_id;
   }

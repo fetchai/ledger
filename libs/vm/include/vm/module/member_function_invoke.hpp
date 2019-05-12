@@ -26,7 +26,7 @@ struct MemberFunctionInvokerHelper
   static void Invoke(VM *vm, int sp_offset, TypeId return_type_id, MemberFunction f,
                      Ts const &... parameters)
   {
-    Variant &       v      = vm->stack_[vm->sp_ - sp_offset];
+    Variant & v      = vm->stack_[vm->sp_ - sp_offset];
     Ptr<Type> object = v.object;
     if (object)
     {
@@ -45,7 +45,7 @@ struct MemberFunctionInvokerHelper<Type, void, MemberFunction, Ts...>
   static void Invoke(VM *vm, int sp_offset, TypeId /* return_type_id */, MemberFunction f,
                      Ts const &... parameters)
   {
-    Variant &       v      = vm->stack_[vm->sp_ - sp_offset];
+    Variant & v      = vm->stack_[vm->sp_ - sp_offset];
     Ptr<Type> object = v.object;
     if (object)
     {
@@ -74,7 +74,7 @@ struct MemberFunctionInvoker
       P parameter(StackGetter<P>::Get(vm, PARAMETER_OFFSET));
       using InvokerType =
           typename MemberFunctionInvoker<Type, ReturnType, MemberFunction, Used...,
-                                           T>::template Invoker<PARAMETER_OFFSET - 1, Ts...>;
+                                         T>::template Invoker<PARAMETER_OFFSET - 1, Ts...>;
       InvokerType::Invoke(vm, sp_offset, return_type_id, f, used..., parameter);
     }
   };
@@ -87,8 +87,7 @@ struct MemberFunctionInvoker
     {
       using P = std::decay_t<T>;
       P parameter(StackGetter<P>::Get(vm, PARAMETER_OFFSET));
-      using InvokerType =
-          MemberFunctionInvokerHelper<Type, ReturnType, MemberFunction, Used..., T>;
+      using InvokerType = MemberFunctionInvokerHelper<Type, ReturnType, MemberFunction, Used..., T>;
       InvokerType::Invoke(vm, sp_offset, return_type_id, f, used..., parameter);
     }
   };

@@ -18,10 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "math/arithmetic/comparison.hpp"
+#include "vm/generator.hpp"
 #include "vm/io_observer_interface.hpp"
 #include "vm/string.hpp"
 #include "vm/variant.hpp"
-#include "vm/generator.hpp"
 #include <cassert>
 #include <iostream>
 #include <sstream>
@@ -103,102 +103,100 @@ class Module;
 class ParameterPack
 {
 public:
- // Construction / Destruction
- explicit ParameterPack(RegisteredTypes const &registered_types)
-   : registered_types_{registered_types}
- {}
+  // Construction / Destruction
+  explicit ParameterPack(RegisteredTypes const &registered_types)
+    : registered_types_{registered_types}
+  {}
 
- ParameterPack(ParameterPack const &) = delete;
- ParameterPack(ParameterPack &&)      = delete;
- ~ParameterPack()                     = default;
+  ParameterPack(ParameterPack const &) = delete;
+  ParameterPack(ParameterPack &&)      = delete;
+  ~ParameterPack()                     = default;
 
- Variant const &operator[](std::size_t index) const
- {
+  Variant const &operator[](std::size_t index) const
+  {
 #ifndef NDEBUG
-   return params_.at(index);
+    return params_.at(index);
 #else
-   return params_[index];
+    return params_[index];
 #endif
- }
+  }
 
- std::size_t size() const
- {
-   return params_.size();
- }
+  std::size_t size() const
+  {
+    return params_.size();
+  }
 
- template <typename T, typename... Args>
- bool Add(T &&parameter, Args &&... args)
- {
-   bool success{true};
+  template <typename T, typename... Args>
+  bool Add(T &&parameter, Args &&... args)
+  {
+    bool success{true};
 
-   success &= AddSingle(std::forward<T>(parameter));
-   success &= Add(std::forward<Args>(args)...);
+    success &= AddSingle(std::forward<T>(parameter));
+    success &= Add(std::forward<Args>(args)...);
 
-   return success;
- }
+    return success;
+  }
 
+  bool AddSingle(Variant parameter)
+  {
+    // TODO: Probably should make a deep copy
 
- bool AddSingle(Variant parameter)
- {
-   // TODO: Probably should make a deep copy
+    params_.push_back(std::move(parameter));
+    return true;
+  }
 
-   params_.push_back(std::move(parameter));
-   return true;
- }
+  template <typename T>
+  IfIsPrimitive<T, bool> AddSingle(T &&parameter)
+  {
+    return AddInternal(std::forward<T>(parameter));
+  }
 
- template <typename T>
- IfIsPrimitive<T, bool> AddSingle(T &&parameter)
- {
-   return AddInternal(std::forward<T>(parameter));
- }
+  template <typename T>
+  IfIsPtr<T, bool> AddSingle(T &&obj)
+  {
+    bool success{false};
 
- template <typename T>
- IfIsPtr<T, bool> AddSingle(T &&obj)
- {
-   bool success{false};
+    if (obj)
+    {
+      success = AddInternal(std::forward<T>(obj));
+    }
 
-   if (obj)
-   {
-     success = AddInternal(std::forward<T>(obj));
-   }
+    return success;
+  }
 
-   return success;
- }
+  bool Add()
+  {
+    return true;
+  }
 
-
- bool Add()
- {
-   return true;
- }
-
- // Operators
- ParameterPack &operator=(ParameterPack const &) = delete;
- ParameterPack &operator=(ParameterPack &&) = delete;
+  // Operators
+  ParameterPack &operator=(ParameterPack const &) = delete;
+  ParameterPack &operator=(ParameterPack &&) = delete;
 
 private:
- template <typename T>
- bool AddInternal(T &&value)
- {
-   bool success{false};
+  template <typename T>
+  bool AddInternal(T &&value)
+  {
+    bool success{false};
 
-   TypeId const type_id = Getter<T>::GetTypeId(registered_types_, value);
+    TypeId const type_id = Getter<T>::GetTypeId(registered_types_, value);
 
-   if (TypeIds::Unknown != type_id)
-   {
-     // add the value to the map
-     params_.emplace_back(std::forward<T>(value), type_id);
+    if (TypeIds::Unknown != type_id)
+    {
+      // add the value to the map
+      params_.emplace_back(std::forward<T>(value), type_id);
 
-     // signal great success
-     success = true;
-   }
+      // signal great success
+      success = true;
+    }
 
-   return success;
- }
+    return success;
+  }
 
- using VariantArray = std::vector<Variant>;
+  using VariantArray = std::vector<Variant>;
 
- RegisteredTypes const &registered_types_;
- VariantArray           params_{};
+  RegisteredTypes const &registered_types_;
+  VariantArray           params_{};
 };
 
 class VM
@@ -216,11 +214,11 @@ public:
   }
 
   bool GenerateExecutable(IR const &ir, std::string const &name, Executable &executable,
-      std::vector<std::string> &errors);
+                          std::vector<std::string> &errors);
 
   template <typename... Ts>
-  bool Execute(Executable const &executable, std::string const &name, std::string &error, Variant &output,
-               Ts const &... parameters)
+  bool Execute(Executable const &executable, std::string const &name, std::string &error,
+               Variant &output, Ts const &... parameters)
 
   {
     ParameterPack parameter_pack{registered_types_};
@@ -234,8 +232,8 @@ public:
     return Execute(executable, name, error, output, parameter_pack);
   }
 
-  bool Execute(Executable const &executable, std::string const &name, std::string &error, Variant &output,
-               ParameterPack const &parameters)
+  bool Execute(Executable const &executable, std::string const &name, std::string &error,
+               Variant &output, ParameterPack const &parameters)
   {
     bool success{false};
 
@@ -269,8 +267,8 @@ public:
           stack_[i].Assign(parameter, parameter.type_id);
         }
 
-        executable_   = &executable;
-        function_ = f;
+        executable_ = &executable;
+        function_   = f;
 
         // execute the function
         success = Execute(error, output);
@@ -413,7 +411,7 @@ private:
     Handler     handler;
   };
   using OpcodeInfoArray = std::vector<OpcodeInfo>;
-  using OpcodeMap = std::unordered_map<std::string, uint16_t>;
+  using OpcodeMap       = std::unordered_map<std::string, uint16_t>;
 
   struct Frame
   {
@@ -478,7 +476,7 @@ private:
   bool                           stop_;
   std::string                    error_;
   std::ostringstream             output_buffer_;
-  IoObserverInterface           *io_observer_{nullptr};
+  IoObserverInterface *          io_observer_{nullptr};
   OutputDeviceMap                output_devices_;
   InputDeviceMap                 input_devices_;
 

@@ -69,8 +69,8 @@ protected:
     return true;
   }
 
-  Module            module_ = VMFactory::GetModule();
-  VM                vm_;
+  Module                module_ = VMFactory::GetModule();
+  VM                    vm_;
   fetch::vm::Executable executable_;
 };
 

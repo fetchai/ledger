@@ -41,8 +41,8 @@ class SmartContract : public Contract
 {
 public:
   using ConstByteArray = byte_array::ConstByteArray;
-  using Executable         = fetch::vm::Executable;
-  using ExecutablePtr      = std::shared_ptr<Executable>;
+  using Executable     = fetch::vm::Executable;
+  using ExecutablePtr  = std::shared_ptr<Executable>;
 
   static constexpr char const *LOGGING_NAME = "SmartContract";
 
@@ -68,10 +68,10 @@ private:
   Status InvokeQuery(std::string const &name, Query const &request, Query &response);
   Status InvokeInit(Identity const &owner);
 
-  std::string    source_;  ///< The source of the current contract
-  ConstByteArray digest_;  ///< The digest of the current contract
+  std::string    source_;      ///< The source of the current contract
+  ConstByteArray digest_;      ///< The digest of the current contract
   ExecutablePtr  executable_;  ///< The internal script object of the parsed source
-  ModulePtr      module_;  ///< The internal module instance for the contract
+  ModulePtr      module_;      ///< The internal module instance for the contract
   std::string    init_fn_name_;
 };
 

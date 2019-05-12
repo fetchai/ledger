@@ -117,7 +117,8 @@ SmartContract::SmartContract(std::string const &source)
     throw SmartContractException(SmartContractException::Category::COMPILATION, std::move(errors));
   }
 
-  // since we now have a fully compiled executable we can evaluate the functions and assign the mapping
+  // since we now have a fully compiled executable we can evaluate the functions and assign the
+  // mapping
 
   // evaluate all the visible functions in this executable and register the associated handle
   for (auto const &fn : executable_->functions)

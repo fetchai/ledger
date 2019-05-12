@@ -238,7 +238,6 @@ private:
   friend class Ptr;
 };
 
-
 template <typename T>
 class Ptr
 {

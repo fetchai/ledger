@@ -28,14 +28,14 @@ IR::IR(IR const &other)
 
 IR::IR(IR &&other)
 {
-  name_ = std::move(other.name_);
-  root_ = std::move(other.root_);
-  types_ = std::move(other.types_);
+  name_      = std::move(other.name_);
+  root_      = std::move(other.root_);
+  types_     = std::move(other.types_);
   variables_ = std::move(other.variables_);
   functions_ = std::move(other.functions_);
 }
 
-IR& IR::operator=(IR const &other)
+IR &IR::operator=(IR const &other)
 {
   if (&other != this)
   {
@@ -45,14 +45,14 @@ IR& IR::operator=(IR const &other)
   return *this;
 }
 
-IR& IR::operator=(IR &&other)
+IR &IR::operator=(IR &&other)
 {
   if (&other != this)
   {
     Reset();
-    name_ = std::move(other.name_);
-    root_ = std::move(other.root_);
-    types_ = std::move(other.types_);
+    name_      = std::move(other.name_);
+    root_      = std::move(other.root_);
+    types_     = std::move(other.types_);
     variables_ = std::move(other.variables_);
     functions_ = std::move(other.functions_);
   }
@@ -78,9 +78,9 @@ void IR::Reset()
 
 void IR::Clone(IR const &other)
 {
-  name_ = other.name_;
+  name_                = other.name_;
   IRNodePtr clone_root = CloneNode(other.root_);
-  root_ = ConvertToIRBlockNodePtr(clone_root);
+  root_                = ConvertToIRBlockNodePtr(clone_root);
   type_map_.Clear();
   variable_map_.Clear();
   function_map_.Clear();
@@ -94,16 +94,17 @@ IRNodePtr IR::CloneNode(IRNodePtr const &node)
   }
   if (node->IsBasicNode())
   {
-    IRNodePtr clone_node = CreateIRBasicNode(node->node_kind, node->text,
-      node->line, CloneChildren(node->children));
+    IRNodePtr clone_node =
+        CreateIRBasicNode(node->node_kind, node->text, node->line, CloneChildren(node->children));
     return clone_node;
   }
   else if (node->IsBlockNode())
   {
     IRBlockNodePtr block_node = ConvertToIRBlockNodePtr(node);
-    IRBlockNodePtr clone_block_node = CreateIRBlockNode(block_node->node_kind,
-      block_node->text, block_node->line, CloneChildren(block_node->children));
-    clone_block_node->block_children = CloneChildren(block_node->block_children);
+    IRBlockNodePtr clone_block_node =
+        CreateIRBlockNode(block_node->node_kind, block_node->text, block_node->line,
+                          CloneChildren(block_node->children));
+    clone_block_node->block_children        = CloneChildren(block_node->block_children);
     clone_block_node->block_terminator_text = block_node->block_terminator_text;
     clone_block_node->block_terminator_line = block_node->block_terminator_line;
     return clone_block_node;
@@ -111,13 +112,13 @@ IRNodePtr IR::CloneNode(IRNodePtr const &node)
   else
   {
     IRExpressionNodePtr expression_node = ConvertToIRExpressionNodePtr(node);
-    IRExpressionNodePtr clone_expression_node = CreateIRExpressionNode(expression_node->node_kind,
-        expression_node->text, expression_node->line,
-      CloneChildren(expression_node->children));
+    IRExpressionNodePtr clone_expression_node =
+        CreateIRExpressionNode(expression_node->node_kind, expression_node->text,
+                               expression_node->line, CloneChildren(expression_node->children));
     clone_expression_node->expression_kind = expression_node->expression_kind;
-    clone_expression_node->type = CloneType(expression_node->type);
-    clone_expression_node->variable = CloneVariable(expression_node->variable);
-    clone_expression_node->function = CloneFunction(expression_node->function);
+    clone_expression_node->type            = CloneType(expression_node->type);
+    clone_expression_node->variable        = CloneVariable(expression_node->variable);
+    clone_expression_node->function        = CloneFunction(expression_node->function);
     return clone_expression_node;
   }
 }
@@ -166,7 +167,7 @@ IRVariablePtr IR::CloneVariable(IRVariablePtr const &variable)
     return clone_variable;
   }
   IRTypePtr clone_type = CloneType(variable->type);
-  clone_variable = CreateIRVariable(variable->variable_kind, variable->name, clone_type);
+  clone_variable       = CreateIRVariable(variable->variable_kind, variable->name, clone_type);
   variable_map_.AddPair(variable, clone_variable);
   AddVariable(clone_variable);
   return clone_variable;
@@ -183,11 +184,12 @@ IRFunctionPtr IR::CloneFunction(IRFunctionPtr const &function)
   {
     return clone_function;
   }
-  IRTypePtrArray clone_parameter_types = CloneTypes(function->parameter_types);
+  IRTypePtrArray     clone_parameter_types     = CloneTypes(function->parameter_types);
   IRVariablePtrArray clone_parameter_variables = CloneVariables(function->parameter_variables);
-  IRTypePtr clone_return_type = CloneType(function->return_type);
-  clone_function = CreateIRFunction(function->function_kind, function->name, function->unique_id,
-      clone_parameter_types, clone_parameter_variables, clone_return_type);
+  IRTypePtr          clone_return_type         = CloneType(function->return_type);
+  clone_function =
+      CreateIRFunction(function->function_kind, function->name, function->unique_id,
+                       clone_parameter_types, clone_parameter_variables, clone_return_type);
   function_map_.AddPair(function, clone_function);
   AddFunction(clone_function);
   return clone_function;
@@ -196,7 +198,7 @@ IRFunctionPtr IR::CloneFunction(IRFunctionPtr const &function)
 IRTypePtrArray IR::CloneTypes(const IRTypePtrArray &types)
 {
   IRTypePtrArray array;
-  for (auto const &type: types)
+  for (auto const &type : types)
   {
     array.push_back(CloneType(type));
   }
@@ -206,7 +208,7 @@ IRTypePtrArray IR::CloneTypes(const IRTypePtrArray &types)
 IRVariablePtrArray IR::CloneVariables(const IRVariablePtrArray &variables)
 {
   IRVariablePtrArray array;
-  for (auto const &variable: variables)
+  for (auto const &variable : variables)
   {
     array.push_back(CloneVariable(variable));
   }

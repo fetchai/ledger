@@ -175,7 +175,6 @@ struct UnrollParameterTypes<>
   {}
 };
 
-
 template <typename T, typename = void>
 struct MakeParameterType;
 template <typename T>
@@ -199,9 +198,9 @@ struct RemoveLastType;
 template <typename... Ts>
 struct RemoveLastType<std::tuple<Ts...>>
 {
-    template <size_t... Is>
-    static std::tuple<std::tuple_element_t<Is, std::tuple<Ts...>>...> f(std::index_sequence<Is...>);
-    using type = decltype(f(std::make_index_sequence<sizeof...(Ts) - 1>()));
+  template <size_t... Is>
+  static std::tuple<std::tuple_element_t<Is, std::tuple<Ts...>>...> f(std::index_sequence<Is...>);
+  using type = decltype(f(std::make_index_sequence<sizeof...(Ts) - 1>()));
 };
 
 template <typename... Ts>
@@ -217,7 +216,7 @@ struct IndexedValueGetter;
 template <typename Type, typename OutputType, typename... InputTypes>
 struct IndexedValueGetter<Type, std::tuple<InputTypes...>, OutputType>
 {
-   using type = OutputType (Type::*)(typename fetch::vm::MakeParameterType<InputTypes>::type...);
+  using type = OutputType (Type::*)(typename fetch::vm::MakeParameterType<InputTypes>::type...);
 };
 
 template <typename Type, typename OutputType, typename... InputTypes>
@@ -226,7 +225,7 @@ template <typename Type, typename OutputType, typename... InputTypes>
 struct IndexedValueSetter<Type, std::tuple<InputTypes...>, OutputType>
 {
   using type = void (Type::*)(typename fetch::vm::MakeParameterType<InputTypes>::type...,
-       typename fetch::vm::MakeParameterType<OutputType>::type);
+                              typename fetch::vm::MakeParameterType<OutputType>::type);
 };
 
 }  // namespace vm

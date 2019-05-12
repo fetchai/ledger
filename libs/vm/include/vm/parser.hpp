@@ -28,7 +28,7 @@ public:
   Parser();
   ~Parser() = default;
   BlockNodePtr Parse(std::string const &filename, std::string const &source,
-    std::vector<std::string> &errors);
+                     std::vector<std::string> &errors);
 
 private:
   enum class State
@@ -112,9 +112,9 @@ private:
   void              HandleMinus();
   bool              HandleBinaryOp(NodeKind kind, OpInfo const &op_info);
   void              HandleNot();
-  void HandlePrefixPostfix(NodeKind prefix_kind, OpInfo const &prefix_op_info, NodeKind postfix_kind,
-                    OpInfo const &postfix_op_info);
-  bool HandleDot();
+  void              HandlePrefixPostfix(NodeKind prefix_kind, OpInfo const &prefix_op_info,
+                                        NodeKind postfix_kind, OpInfo const &postfix_op_info);
+  bool              HandleDot();
   bool HandleOpener(NodeKind prefix_kind, NodeKind postfix_kind, Token::Kind closer_token_kind,
                     std::string const &closer_token_text);
   bool HandleCloser(bool is_conditional_expression);

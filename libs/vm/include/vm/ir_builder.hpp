@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/node.hpp"
 #include "vm/ir.hpp"
+#include "vm/node.hpp"
 
 namespace fetch {
 namespace vm {
@@ -32,17 +32,17 @@ struct IRBuilder
 
   ~IRBuilder() = default;
 
-  void Build(std::string const &name, BlockNodePtr const &root, IR &ir);
-  IRNodePtr BuildNode(NodePtr const &node);
-  IRNodePtrArray BuildChildren(NodePtrArray const &children);
-  IRTypePtr BuildType(TypePtr const &type);
-  IRVariablePtr BuildVariable(VariablePtr const &variable);
-  IRFunctionPtr BuildFunction(FunctionPtr const &function);
-  IRTypePtrArray BuildTypes(const TypePtrArray &types);
+  void               Build(std::string const &name, BlockNodePtr const &root, IR &ir);
+  IRNodePtr          BuildNode(NodePtr const &node);
+  IRNodePtrArray     BuildChildren(NodePtrArray const &children);
+  IRTypePtr          BuildType(TypePtr const &type);
+  IRVariablePtr      BuildVariable(VariablePtr const &variable);
+  IRFunctionPtr      BuildFunction(FunctionPtr const &function);
+  IRTypePtrArray     BuildTypes(const TypePtrArray &types);
   IRVariablePtrArray BuildVariables(const VariablePtrArray &variables);
 
-  IR *ir_;
-  IR::Map<TypePtr, IRTypePtr> type_map_;
+  IR *                                ir_;
+  IR::Map<TypePtr, IRTypePtr>         type_map_;
   IR::Map<VariablePtr, IRVariablePtr> variable_map_;
   IR::Map<FunctionPtr, IRFunctionPtr> function_map_;
 };

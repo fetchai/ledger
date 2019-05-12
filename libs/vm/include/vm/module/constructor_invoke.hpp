@@ -46,7 +46,7 @@ struct ConstructorInvoker
       P parameter(StackGetter<P>::Get(vm, PARAMETER_OFFSET));
       using InvokerType =
           typename ConstructorInvoker<Type, ReturnType, Constructor, Used...,
-                                          T>::template Invoker<PARAMETER_OFFSET - 1, Ts...>;
+                                      T>::template Invoker<PARAMETER_OFFSET - 1, Ts...>;
       InvokerType::Invoke(vm, sp_offset, type_id, used..., parameter);
     }
   };
@@ -58,8 +58,7 @@ struct ConstructorInvoker
     {
       using P = std::decay_t<T>;
       P parameter(StackGetter<P>::Get(vm, PARAMETER_OFFSET));
-      using InvokerType =
-          ConstructorInvokerHelper<Type, ReturnType, Constructor, Used..., T>;
+      using InvokerType = ConstructorInvokerHelper<Type, ReturnType, Constructor, Used..., T>;
       InvokerType::Invoke(vm, sp_offset, type_id, used..., parameter);
     }
   };
@@ -83,8 +82,9 @@ void InvokeConstructor(VM *vm, TypeId type_id)
   constexpr int sp_offset              = first_parameter_offset;
   using ReturnType                     = Ptr<Type>;
   using Constructor                    = ReturnType (*)(VM *, TypeId, Ts...);
-  using ConstructorInvoker             = typename ConstructorInvoker<
-      Type, ReturnType, Constructor>::template Invoker<first_parameter_offset, Ts...>;
+  using ConstructorInvoker =
+      typename ConstructorInvoker<Type, ReturnType,
+                                  Constructor>::template Invoker<first_parameter_offset, Ts...>;
   ConstructorInvoker::Invoke(vm, sp_offset, type_id);
 }
 

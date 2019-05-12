@@ -48,7 +48,7 @@ int main(int argc, char **argv)
   // module->state
 
   // Compile source, get runnable script
-  fetch::vm::Executable        executable;
+  fetch::vm::Executable    executable;
   std::vector<std::string> errors = VMFactory::Compile(module, source, executable);
 
   for (auto const &error : errors)

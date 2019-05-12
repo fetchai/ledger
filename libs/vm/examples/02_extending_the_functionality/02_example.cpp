@@ -18,7 +18,6 @@
 
 #include "vm/analyser.hpp"
 
-
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
@@ -99,8 +98,8 @@ int main(int argc, char **argv)
 
   // Setting compiler up
   fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(&module);
-  fetch::vm::Executable        executable;
-  fetch::vm::IR ir;
+  fetch::vm::Executable    executable;
+  fetch::vm::IR            ir;
   std::vector<std::string> errors;
 
   // Compiling
@@ -129,8 +128,7 @@ int main(int argc, char **argv)
 
   fetch::vm::VM vm(&module);
 
-
-  if(!vm.GenerateExecutable(ir, "main_ir", executable, errors))
+  if (!vm.GenerateExecutable(ir, "main_ir", executable, errors))
   {
     std::cout << "Failed to generate executable" << std::endl;
     for (auto &s : errors)

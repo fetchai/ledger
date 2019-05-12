@@ -112,14 +112,14 @@ inline SymbolTablePtr CreateSymbolTable()
 struct Type;
 using TypePtr      = std::shared_ptr<Type>;
 using TypePtrArray = std::vector<TypePtr>;
-using Operators = std::unordered_set<Operator>;
+using Operators    = std::unordered_set<Operator>;
 struct Type : public Symbol
 {
   Type(TypeKind type_kind__, std::string const &name)
     : Symbol(SymbolKind::Type, name)
   {
     type_kind = type_kind__;
-    id = TypeIds::Unknown;
+    id        = TypeIds::Unknown;
   }
   virtual ~Type() = default;
   virtual void Reset() override
@@ -150,7 +150,7 @@ struct Type : public Symbol
   bool IsInstantiation() const
   {
     return ((type_kind == TypeKind::Instantiation) ||
-        (type_kind == TypeKind::UserDefinedInstantiation));
+            (type_kind == TypeKind::UserDefinedInstantiation));
   }
   TypeKind       type_kind;
   SymbolTablePtr symbols;
@@ -200,19 +200,16 @@ inline VariablePtr ConvertToVariablePtr(SymbolPtr const &symbol)
 
 struct Function
 {
-  Function(FunctionKind function_kind__,
-      std::string const &name__,
-      std::string const &unique_id__,
-       TypePtrArray const &parameter_types__,
-       VariablePtrArray const &parameter_variables__,
-       TypePtr const &return_type__)
+  Function(FunctionKind function_kind__, std::string const &name__, std::string const &unique_id__,
+           TypePtrArray const &parameter_types__, VariablePtrArray const &parameter_variables__,
+           TypePtr const &return_type__)
   {
-    function_kind   = function_kind__;
-    name   = name__;
-    unique_id = unique_id__;
-    parameter_types = parameter_types__;
+    function_kind       = function_kind__;
+    name                = name__;
+    unique_id           = unique_id__;
+    parameter_types     = parameter_types__;
     parameter_variables = parameter_variables__;
-    return_type = return_type__;
+    return_type         = return_type__;
   }
   void Reset()
   {
@@ -230,15 +227,13 @@ struct Function
 using FunctionPtr      = std::shared_ptr<Function>;
 using FunctionPtrArray = std::vector<FunctionPtr>;
 
-inline FunctionPtr CreateFunction(FunctionKind function_kind,
-      std::string const &name,
-      std::string const &unique_id,
-       TypePtrArray const &parameter_types,
-       VariablePtrArray const &parameter_variables,
-       TypePtr const &return_type)
+inline FunctionPtr CreateFunction(FunctionKind function_kind, std::string const &name,
+                                  std::string const &unique_id, TypePtrArray const &parameter_types,
+                                  VariablePtrArray const &parameter_variables,
+                                  TypePtr const &         return_type)
 {
-  return std::make_shared<Function>(Function(function_kind, name, unique_id, parameter_types,
-      parameter_variables, return_type));
+  return std::make_shared<Function>(
+      Function(function_kind, name, unique_id, parameter_types, parameter_variables, return_type));
 }
 
 struct FunctionGroup : public Symbol
@@ -273,7 +268,8 @@ using NodePtr      = std::shared_ptr<Node>;
 using NodePtrArray = std::vector<NodePtr>;
 struct Node
 {
-  Node(NodeCategory node_category__, NodeKind node_kind__, std::string const &text__, uint16_t line__)
+  Node(NodeCategory node_category__, NodeKind node_kind__, std::string const &text__,
+       uint16_t line__)
   {
     node_category = node_category__;
     node_kind     = node_kind__;
@@ -394,7 +390,8 @@ struct ExpressionNode : public Node
 };
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
-inline ExpressionNodePtr CreateExpressionNode(NodeKind node_kind, std::string const &text, uint16_t line)
+inline ExpressionNodePtr CreateExpressionNode(NodeKind node_kind, std::string const &text,
+                                              uint16_t line)
 {
   return std::make_shared<ExpressionNode>(ExpressionNode(node_kind, text, line));
 }

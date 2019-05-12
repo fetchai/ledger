@@ -27,9 +27,9 @@ class IArray : public Object
 public:
   IArray()          = delete;
   virtual ~IArray() = default;
-  static Ptr<IArray> Constructor(VM *vm, TypeId type_id, int32_t size);
-  virtual int32_t    Count() const = 0;
-  virtual TemplateParameter GetIndexedValue(AnyInteger const &index) = 0;
+  static Ptr<IArray>        Constructor(VM *vm, TypeId type_id, int32_t size);
+  virtual int32_t           Count() const                                               = 0;
+  virtual TemplateParameter GetIndexedValue(AnyInteger const &index)                    = 0;
   virtual void SetIndexedValue(AnyInteger const &index, TemplateParameter const &value) = 0;
 
 protected:
@@ -52,7 +52,7 @@ struct Array : public IArray
     : IArray(vm, type_id)
   {
     element_type_id = element_type_id__;
-    elements = std::vector<ElementType>(size_t(size), 0);
+    elements        = std::vector<ElementType>(size_t(size), 0);
   }
 
   virtual int32_t Count() const override
@@ -76,13 +76,13 @@ struct Array : public IArray
     ElementType *ptr = Find(index);
     if (ptr)
     {
-      *ptr         = value.Get<ElementType>();
+      *ptr = value.Get<ElementType>();
     }
   }
 
   ElementType *Find(Variant const &index)
   {
-    size_t   i;
+    size_t i;
     if (!GetNonNegativeInteger(index, i))
     {
       RuntimeError("negative index");
@@ -97,7 +97,7 @@ struct Array : public IArray
     return &element;
   }
 
-  TypeId element_type_id;
+  TypeId                   element_type_id;
   std::vector<ElementType> elements;
 };
 

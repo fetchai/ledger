@@ -44,7 +44,8 @@ public:
   }
 
   // Construction / Destruction
-  Address(VM *vm, TypeId type_id, Ptr<String> const &address = Ptr<String>{}, bool signed_tx = false)
+  Address(VM *vm, TypeId type_id, Ptr<String> const &address = Ptr<String>{},
+          bool signed_tx = false)
     : Object(vm, type_id)
     , signed_tx_{signed_tx}
   {

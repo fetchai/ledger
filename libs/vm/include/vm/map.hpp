@@ -27,9 +27,9 @@ class IMap : public Object
 public:
   IMap()          = delete;
   virtual ~IMap() = default;
-  static Ptr<IMap> Constructor(VM *vm, TypeId type_id);
-  virtual int32_t  Count() const = 0;
-  virtual TemplateParameter2 GetIndexedValue(TemplateParameter1 const &key) = 0;
+  static Ptr<IMap>           Constructor(VM *vm, TypeId type_id);
+  virtual int32_t            Count() const                                                     = 0;
+  virtual TemplateParameter2 GetIndexedValue(TemplateParameter1 const &key)                    = 0;
   virtual void SetIndexedValue(TemplateParameter1 const &key, TemplateParameter2 const &value) = 0;
 
 protected:
@@ -102,13 +102,15 @@ struct Map : public IMap
   }
 
   template <typename U>
-  typename std::enable_if_t<IsPrimitive<U>::value, TemplateParameter2 *> Get(TemplateParameter1 const &key)
+  typename std::enable_if_t<IsPrimitive<U>::value, TemplateParameter2 *> Get(
+      TemplateParameter1 const &key)
   {
     return Find(key);
   }
 
   template <typename U>
-  typename std::enable_if_t<IsPtr<U>::value, TemplateParameter2 *> Get(TemplateParameter1 const &key)
+  typename std::enable_if_t<IsPtr<U>::value, TemplateParameter2 *> Get(
+      TemplateParameter1 const &key)
   {
     if (key.object)
     {
@@ -131,14 +133,14 @@ struct Map : public IMap
 
   template <typename U>
   typename std::enable_if_t<IsPrimitive<U>::value, void> Store(TemplateParameter1 const &key,
-      TemplateParameter2 const &value)
+                                                               TemplateParameter2 const &value)
   {
     map[key] = value;
   }
 
   template <typename U>
   typename std::enable_if_t<IsPtr<U>::value, void> Store(TemplateParameter1 const &key,
-      TemplateParameter2 const &value)
+                                                         TemplateParameter2 const &value)
   {
     if (key.object)
     {
@@ -148,7 +150,8 @@ struct Map : public IMap
     RuntimeError("map key is null reference");
   }
 
-  virtual void SetIndexedValue(TemplateParameter1 const &key, TemplateParameter2 const &value) override
+  virtual void SetIndexedValue(TemplateParameter1 const &key,
+                               TemplateParameter2 const &value) override
   {
     Store<Key>(key, value);
   }

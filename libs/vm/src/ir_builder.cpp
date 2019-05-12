@@ -25,10 +25,10 @@ void IRBuilder::Build(std::string const &name, BlockNodePtr const &root, IR &ir)
 {
   ir_ = &ir;
   ir_->Reset();
-  ir_->name_ = name;
+  ir_->name_        = name;
   IRNodePtr ir_root = BuildNode(root);
-  ir_->root_ = ConvertToIRBlockNodePtr(ir_root);
-  ir_ = nullptr;
+  ir_->root_        = ConvertToIRBlockNodePtr(ir_root);
+  ir_               = nullptr;
   type_map_.Clear();
   variable_map_.Clear();
   function_map_.Clear();
@@ -42,30 +42,31 @@ IRNodePtr IRBuilder::BuildNode(NodePtr const &node)
   }
   if (node->IsBasicNode())
   {
-    IRNodePtr ir_node = CreateIRBasicNode(node->node_kind, node->text,
-      node->line, BuildChildren(node->children));
+    IRNodePtr ir_node =
+        CreateIRBasicNode(node->node_kind, node->text, node->line, BuildChildren(node->children));
     return ir_node;
   }
   else if (node->IsBlockNode())
   {
-    BlockNodePtr block_node = ConvertToBlockNodePtr(node);
-    IRBlockNodePtr ir_block_node = CreateIRBlockNode(block_node->node_kind,
-      block_node->text, block_node->line, BuildChildren(block_node->children));
-    ir_block_node->block_children = BuildChildren(block_node->block_children);
+    BlockNodePtr   block_node = ConvertToBlockNodePtr(node);
+    IRBlockNodePtr ir_block_node =
+        CreateIRBlockNode(block_node->node_kind, block_node->text, block_node->line,
+                          BuildChildren(block_node->children));
+    ir_block_node->block_children        = BuildChildren(block_node->block_children);
     ir_block_node->block_terminator_text = block_node->block_terminator_text;
     ir_block_node->block_terminator_line = block_node->block_terminator_line;
     return ir_block_node;
   }
   else
   {
-    ExpressionNodePtr expression_node = ConvertToExpressionNodePtr(node);
-    IRExpressionNodePtr ir_expression_node = CreateIRExpressionNode(expression_node->node_kind,
-        expression_node->text, expression_node->line,
-      BuildChildren(expression_node->children));
+    ExpressionNodePtr   expression_node = ConvertToExpressionNodePtr(node);
+    IRExpressionNodePtr ir_expression_node =
+        CreateIRExpressionNode(expression_node->node_kind, expression_node->text,
+                               expression_node->line, BuildChildren(expression_node->children));
     ir_expression_node->expression_kind = expression_node->expression_kind;
-    ir_expression_node->type = BuildType(expression_node->type);
-    ir_expression_node->variable = BuildVariable(expression_node->variable);
-    ir_expression_node->function = BuildFunction(expression_node->function);
+    ir_expression_node->type            = BuildType(expression_node->type);
+    ir_expression_node->variable        = BuildVariable(expression_node->variable);
+    ir_expression_node->function        = BuildFunction(expression_node->function);
     return ir_expression_node;
   }
 }
@@ -114,7 +115,7 @@ IRVariablePtr IRBuilder::BuildVariable(VariablePtr const &variable)
     return ir_variable;
   }
   IRTypePtr ir_type = BuildType(variable->type);
-  ir_variable = CreateIRVariable(variable->variable_kind, variable->name, ir_type);
+  ir_variable       = CreateIRVariable(variable->variable_kind, variable->name, ir_type);
   variable_map_.AddPair(variable, ir_variable);
   ir_->AddVariable(ir_variable);
   return ir_variable;
@@ -131,11 +132,11 @@ IRFunctionPtr IRBuilder::BuildFunction(FunctionPtr const &function)
   {
     return ir_function;
   }
-  IRTypePtrArray ir_parameter_types = BuildTypes(function->parameter_types);
+  IRTypePtrArray     ir_parameter_types     = BuildTypes(function->parameter_types);
   IRVariablePtrArray ir_parameter_variables = BuildVariables(function->parameter_variables);
-  IRTypePtr ir_return_type = BuildType(function->return_type);
+  IRTypePtr          ir_return_type         = BuildType(function->return_type);
   ir_function = CreateIRFunction(function->function_kind, function->name, function->unique_id,
-      ir_parameter_types, ir_parameter_variables, ir_return_type);
+                                 ir_parameter_types, ir_parameter_variables, ir_return_type);
   function_map_.AddPair(function, ir_function);
   ir_->AddFunction(ir_function);
   return ir_function;
@@ -144,7 +145,7 @@ IRFunctionPtr IRBuilder::BuildFunction(FunctionPtr const &function)
 IRTypePtrArray IRBuilder::BuildTypes(const TypePtrArray &types)
 {
   IRTypePtrArray array;
-  for (auto const &type: types)
+  for (auto const &type : types)
   {
     array.push_back(BuildType(type));
   }
@@ -154,7 +155,7 @@ IRTypePtrArray IRBuilder::BuildTypes(const TypePtrArray &types)
 IRVariablePtrArray IRBuilder::BuildVariables(const VariablePtrArray &variables)
 {
   IRVariablePtrArray array;
-  for (auto const &variable: variables)
+  for (auto const &variable : variables)
   {
     array.push_back(BuildVariable(variable));
   }

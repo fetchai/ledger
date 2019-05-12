@@ -36,7 +36,7 @@ void Generator::Initialise(VM *vm, uint16_t num_system_types)
 }
 
 bool Generator::GenerateExecutable(IR const &ir, std::string const &name, Executable &executable,
-    std::vector<std::string> &errors)
+                                   std::vector<std::string> &errors)
 {
   executable_ = Executable(name);
   scopes_.clear();
@@ -112,7 +112,8 @@ void Generator::ResolveTypes(IR const &ir)
       {
         parameter_type_ids.push_back(parameter_type->resolved_id);
       }
-      uint16_t index = executable_.AddType(TypeInfo(type->type_kind, type->name, parameter_type_ids));
+      uint16_t index =
+          executable_.AddType(TypeInfo(type->type_kind, type->name, parameter_type_ids));
       type->resolved_id = uint16_t(num_system_types_ + index);
       continue;
     }
@@ -157,21 +158,21 @@ void Generator::CreateFunctions(IRBlockNodePtr const &block_node)
     }
     case NodeKind::FunctionDefinitionStatement:
     {
-      IRBlockNodePtr        function_definition_node = ConvertToIRBlockNodePtr(child);
-      IRNodePtr             annotations_node         = function_definition_node->children[0];
+      IRBlockNodePtr  function_definition_node = ConvertToIRBlockNodePtr(child);
+      IRNodePtr       annotations_node         = function_definition_node->children[0];
       AnnotationArray annotations;
       CreateAnnotations(annotations_node, annotations);
       IRExpressionNodePtr identifier_node =
           ConvertToIRExpressionNodePtr(function_definition_node->children[1]);
       IRFunctionPtr        f              = identifier_node->function;
-      std::string const &name           = f->name;
-      int const          num_parameters = (int)f->parameter_variables.size();
-      uint16_t const     return_type_id = f->return_type->resolved_id;
-      Executable::Function   function(name, annotations, num_parameters, return_type_id);
+      std::string const &  name           = f->name;
+      int const            num_parameters = (int)f->parameter_variables.size();
+      uint16_t const       return_type_id = f->return_type->resolved_id;
+      Executable::Function function(name, annotations, num_parameters, return_type_id);
       for (IRVariablePtr const &variable : f->parameter_variables)
       {
         uint16_t variable_type_id = variable->type->resolved_id;
-        variable->index = function.AddVariable(variable->name, variable_type_id, 0);
+        variable->index           = function.AddVariable(variable->name, variable_type_id, 0);
       }
       f->index = executable_.AddFunction(function);
       break;
@@ -337,7 +338,7 @@ void Generator::HandleBlock(IRBlockNodePtr const &block_node)
         // instruction that will pop it and throw it away
         Executable::Instruction instruction(Opcodes::Discard);
         instruction.type_id = expression->type->resolved_id;
-        uint16_t pc = function_->AddInstruction(instruction);
+        uint16_t pc         = function_->AddInstruction(instruction);
         AddLineNumber(expression->line, pc);
       }
       break;
@@ -365,14 +366,14 @@ void Generator::HandleFunctionDefinitionStatement(IRBlockNodePtr const &block_no
   if (f->return_type->IsVoid())
   {
     Executable::Instruction instruction(Opcodes::Return);
-    uint16_t pc = function_->AddInstruction(instruction);
+    uint16_t                pc = function_->AddInstruction(instruction);
     AddLineNumber(block_node->block_terminator_line, pc);
   }
 
   for (auto const &it : line_to_pc_map_)
   {
-    uint16_t line = it.first;
-    uint16_t pc = it.second;
+    uint16_t line                  = it.first;
+    uint16_t pc                    = it.second;
     function_->pc_to_line_map_[pc] = line;
   }
 
@@ -382,12 +383,12 @@ void Generator::HandleFunctionDefinitionStatement(IRBlockNodePtr const &block_no
 
 void Generator::HandleWhileStatement(IRBlockNodePtr const &block_node)
 {
-  uint16_t const       continue_pc = uint16_t(function_->instructions.size());
+  uint16_t const      continue_pc = uint16_t(function_->instructions.size());
   IRExpressionNodePtr condition   = ConvertToIRExpressionNodePtr(block_node->children[0]);
 
   HandleExpression(condition);
 
-  uint16_t const         jf_pc = uint16_t(function_->instructions.size());
+  uint16_t const          jf_pc = uint16_t(function_->instructions.size());
   Executable::Instruction jf_instruction(Opcodes::JumpIfFalse);
   jf_instruction.index = 0;  // pc placeholder
 
@@ -407,10 +408,10 @@ void Generator::HandleWhileStatement(IRBlockNodePtr const &block_node)
   Executable::Instruction jump_instruction(Opcodes::Jump);
 
   jump_instruction.index = continue_pc;
-  uint16_t jump_pc = function_->AddInstruction(jump_instruction);
+  uint16_t jump_pc       = function_->AddInstruction(jump_instruction);
   AddLineNumber(block_node->block_terminator_line, jump_pc);
 
-  uint16_t const endwhile_pc              = uint16_t(function_->instructions.size());
+  uint16_t const endwhile_pc           = uint16_t(function_->instructions.size());
   function_->instructions[jf_pc].index = endwhile_pc;
   Loop &loop                           = loops_.back();
 
@@ -431,8 +432,8 @@ void Generator::HandleForStatement(IRBlockNodePtr const &block_node)
 {
   IRExpressionNodePtr identifier_node = ConvertToIRExpressionNodePtr(block_node->children[0]);
   IRVariablePtr       v               = identifier_node->variable;
-  uint16_t const         arity           = uint16_t(block_node->children.size() - 1);
-  uint16_t type_id = v->type->resolved_id;
+  uint16_t const      arity           = uint16_t(block_node->children.size() - 1);
+  uint16_t            type_id         = v->type->resolved_id;
 
   for (uint16_t i = 1; i <= arity; ++i)
   {
@@ -445,25 +446,25 @@ void Generator::HandleForStatement(IRBlockNodePtr const &block_node)
 
   // Add the for-loop variable
   uint16_t variable_index = function_->AddVariable(v->name, type_id, scope_number);
-  v->index = variable_index;
+  v->index                = variable_index;
 
   Executable::Instruction init_instruction(Opcodes::ForRangeInit);
   init_instruction.type_id = type_id;
-  init_instruction.index    = variable_index;  // frame-relative index of the for-loop variable
-  init_instruction.data = arity;  // 2 or 3 range elements
+  init_instruction.index   = variable_index;  // frame-relative index of the for-loop variable
+  init_instruction.data    = arity;           // 2 or 3 range elements
 
   uint16_t init_pc = function_->AddInstruction(init_instruction);
   AddLineNumber(block_node->line, init_pc);
 
   Executable::Instruction iterate_instruction(Opcodes::ForRangeIterate);
-  iterate_instruction.index    = 0;      // pc placeholder
-  iterate_instruction.data = arity;  // 2 or 3 range elements
+  iterate_instruction.index = 0;      // pc placeholder
+  iterate_instruction.data  = arity;  // 2 or 3 range elements
 
   uint16_t const iterate_pc = function_->AddInstruction(iterate_instruction);
   AddLineNumber(block_node->line, iterate_pc);
 
-  // for future non-primitive for-loop variables, will need to think about destruction at end of for block
-  // break/continue/return inside for loop? continue requires loop variable to retain value?
+  // for future non-primitive for-loop variables, will need to think about destruction at end of for
+  // block break/continue/return inside for loop? continue requires loop variable to retain value?
   // maybe use an extra scope for just the for-loop variable
 
   loops_.push_back(Loop());
@@ -474,17 +475,17 @@ void Generator::HandleForStatement(IRBlockNodePtr const &block_node)
 
   Executable::Instruction jump_instruction(Opcodes::Jump);
   jump_instruction.index = iterate_pc;
-  uint16_t jump_pc = function_->AddInstruction(jump_instruction);
+  uint16_t jump_pc       = function_->AddInstruction(jump_instruction);
   AddLineNumber(block_node->block_terminator_line, jump_pc);
 
   Executable::Instruction terminate_instruction(Opcodes::ForRangeTerminate);
   terminate_instruction.type_id = type_id;
   terminate_instruction.index   = variable_index;
 
-  uint16_t const terminate_pc   = function_->AddInstruction(terminate_instruction);
+  uint16_t const terminate_pc = function_->AddInstruction(terminate_instruction);
   AddLineNumber(block_node->block_terminator_line, terminate_pc);
 
-  Loop &      loop              = loops_.back();
+  Loop &loop = loops_.back();
 
   for (auto jump_pc : loop.continue_pcs)
   {
@@ -505,7 +506,7 @@ void Generator::HandleIfStatement(IRNodePtr const &node)
 {
   uint16_t              jf_pc = uint16_t(-1);
   std::vector<uint16_t> jump_pcs;
-  int const          last_index = static_cast<int>(node->children.size()) - 1;
+  int const             last_index = static_cast<int>(node->children.size()) - 1;
 
   for (int i = 0; i <= last_index; ++i)
   {
@@ -521,7 +522,8 @@ void Generator::HandleIfStatement(IRNodePtr const &node)
         function_->instructions[jf_pc].index = condition_pc;
       }
 
-      IRExpressionNodePtr condition_expression = ConvertToIRExpressionNodePtr(block_node->children[0]);
+      IRExpressionNodePtr condition_expression =
+          ConvertToIRExpressionNodePtr(block_node->children[0]);
       HandleExpression(condition_expression);
 
       Executable::Instruction jf_instruction(Opcodes::JumpIfFalse);
@@ -538,7 +540,7 @@ void Generator::HandleIfStatement(IRNodePtr const &node)
         // Only arrange jump to the endif if not the last block
         Executable::Instruction jump_instruction(Opcodes::Jump);
         jump_instruction.index = 0;  // pc placeholder
-        uint16_t const jump_pc    = function_->AddInstruction(jump_instruction);
+        uint16_t const jump_pc = function_->AddInstruction(jump_instruction);
         AddLineNumber(block_node->block_terminator_line, jump_pc);
         jump_pcs.push_back(jump_pc);
       }
@@ -574,11 +576,11 @@ void Generator::HandleVarStatement(IRNodePtr const &node)
 {
   IRExpressionNodePtr identifier_node = ConvertToIRExpressionNodePtr(node->children[0]);
   IRVariablePtr       v               = identifier_node->variable;
-  uint16_t type_id = v->type->resolved_id;
+  uint16_t            type_id         = v->type->resolved_id;
 
-  uint16_t const scope_number = uint16_t(scopes_.size() - 1);
-  uint16_t variable_index = function_->AddVariable(v->name, type_id, scope_number);
-  v->index = variable_index;
+  uint16_t const scope_number   = uint16_t(scopes_.size() - 1);
+  uint16_t       variable_index = function_->AddVariable(v->name, type_id, scope_number);
+  v->index                      = variable_index;
 
   if (v->type->IsPrimitive() == false)
   {
@@ -590,8 +592,8 @@ void Generator::HandleVarStatement(IRNodePtr const &node)
   {
     Executable::Instruction instruction(Opcodes::VariableDeclare);
     instruction.type_id = type_id;
-    instruction.index    = variable_index;
-    uint16_t pc = function_->AddInstruction(instruction);
+    instruction.index   = variable_index;
+    uint16_t pc         = function_->AddInstruction(instruction);
     AddLineNumber(node->line, pc);
   }
   else
@@ -609,8 +611,8 @@ void Generator::HandleVarStatement(IRNodePtr const &node)
     HandleExpression(rhs);
     Executable::Instruction instruction(Opcodes::VariableDeclareAssign);
     instruction.type_id = type_id;
-    instruction.index    = variable_index;
-    uint16_t pc = function_->AddInstruction(instruction);
+    instruction.index   = variable_index;
+    uint16_t pc         = function_->AddInstruction(instruction);
     AddLineNumber(node->line, pc);
   }
 }
@@ -620,7 +622,7 @@ void Generator::HandleReturnStatement(IRNodePtr const &node)
   if (node->children.size() == 0)
   {
     Executable::Instruction instruction(Opcodes::Return);
-    uint16_t pc = function_->AddInstruction(instruction);
+    uint16_t                pc = function_->AddInstruction(instruction);
     AddLineNumber(node->line, pc);
     return;
   }
@@ -629,8 +631,8 @@ void Generator::HandleReturnStatement(IRNodePtr const &node)
   HandleExpression(expression);
 
   Executable::Instruction instruction(Opcodes::ReturnValue);
-  instruction.type_id  = expression->type->resolved_id;
-  uint16_t pc = function_->AddInstruction(instruction);
+  instruction.type_id = expression->type->resolved_id;
+  uint16_t pc         = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 
@@ -639,8 +641,8 @@ void Generator::HandleBreakStatement(IRNodePtr const &node)
   Loop &loop = loops_.back();
 
   Executable::Instruction instruction(Opcodes::Break);
-  instruction.index    = 0;  // pc placeholder
-  instruction.data = loop.scope_number;
+  instruction.index       = 0;  // pc placeholder
+  instruction.data        = loop.scope_number;
   uint16_t const break_pc = function_->AddInstruction(instruction);
   AddLineNumber(node->line, break_pc);
   loop.break_pcs.push_back(break_pc);
@@ -648,10 +650,10 @@ void Generator::HandleBreakStatement(IRNodePtr const &node)
 
 void Generator::HandleContinueStatement(IRNodePtr const &node)
 {
-  Loop &              loop = loops_.back();
+  Loop &                  loop = loops_.back();
   Executable::Instruction instruction(Opcodes::Continue);
-  instruction.index       = 0;  // pc placeholder
-  instruction.data   = loop.scope_number;
+  instruction.index          = 0;  // pc placeholder
+  instruction.data           = loop.scope_number;
   uint16_t const continue_pc = function_->AddInstruction(instruction);
   AddLineNumber(node->line, continue_pc);
   loop.continue_pcs.push_back(continue_pc);
@@ -661,7 +663,7 @@ void Generator::HandleAssignmentStatement(IRExpressionNodePtr const &node)
 {
   IRExpressionNodePtr lhs                   = ConvertToIRExpressionNodePtr(node->children[0]);
   IRExpressionNodePtr rhs                   = ConvertToIRExpressionNodePtr(node->children[1]);
-  bool const        assigning_to_variable = lhs->IsVariableExpression();
+  bool const          assigning_to_variable = lhs->IsVariableExpression();
   if (assigning_to_variable)
   {
     HandleVariableAssignmentStatement(lhs, rhs);
@@ -677,7 +679,7 @@ void Generator::HandleInplaceAssignmentStatement(IRExpressionNodePtr const &node
 {
   IRExpressionNodePtr lhs                   = ConvertToIRExpressionNodePtr(node->children[0]);
   IRExpressionNodePtr rhs                   = ConvertToIRExpressionNodePtr(node->children[1]);
-  bool const        assigning_to_variable = lhs->IsVariableExpression();
+  bool const          assigning_to_variable = lhs->IsVariableExpression();
   if (assigning_to_variable)
   {
     HandleVariableInplaceAssignmentStatement(node, lhs, rhs);
@@ -690,49 +692,54 @@ void Generator::HandleInplaceAssignmentStatement(IRExpressionNodePtr const &node
 }
 
 void Generator::HandleVariableAssignmentStatement(IRExpressionNodePtr const &lhs,
-    IRExpressionNodePtr const &rhs)
+                                                  IRExpressionNodePtr const &rhs)
 {
   IRVariablePtr const &v = lhs->variable;
   HandleExpression(rhs);
   Executable::Instruction instruction(Opcodes::PopToVariable);
   instruction.type_id = v->type->resolved_id;
   instruction.index   = v->index;
-  uint16_t pc = function_->AddInstruction(instruction);
+  uint16_t pc         = function_->AddInstruction(instruction);
   AddLineNumber(lhs->line, pc);
 }
 
 void Generator::HandleVariableInplaceAssignmentStatement(IRExpressionNodePtr const &node,
-    IRExpressionNodePtr const &lhs, IRExpressionNodePtr const &rhs)
+                                                         IRExpressionNodePtr const &lhs,
+                                                         IRExpressionNodePtr const &rhs)
 {
-  IRVariablePtr const &v = lhs->variable;
-  bool lhs_is_primitive = v->type->IsPrimitive();
-  TypeId lhs_type_id = v->type->resolved_id;
-  TypeId rhs_type_id = rhs->type->resolved_id;
-  uint16_t opcode = Opcodes::Unknown;
+  IRVariablePtr const &v                = lhs->variable;
+  bool                 lhs_is_primitive = v->type->IsPrimitive();
+  TypeId               lhs_type_id      = v->type->resolved_id;
+  TypeId               rhs_type_id      = rhs->type->resolved_id;
+  uint16_t             opcode           = Opcodes::Unknown;
 
   switch (node->node_kind)
   {
   case NodeKind::InplaceAdd:
   {
-    opcode = GetInplaceArithmeticOpcode(lhs_is_primitive, lhs_type_id, rhs_type_id, Opcodes::VariablePrimitiveInplaceAdd,
+    opcode = GetInplaceArithmeticOpcode(
+        lhs_is_primitive, lhs_type_id, rhs_type_id, Opcodes::VariablePrimitiveInplaceAdd,
         Opcodes::VariableObjectInplaceAdd, Opcodes::VariableObjectInplaceRightAdd);
     break;
   }
   case NodeKind::InplaceSubtract:
   {
-    opcode = GetInplaceArithmeticOpcode(lhs_is_primitive, lhs_type_id, rhs_type_id, Opcodes::VariablePrimitiveInplaceSubtract,
+    opcode = GetInplaceArithmeticOpcode(
+        lhs_is_primitive, lhs_type_id, rhs_type_id, Opcodes::VariablePrimitiveInplaceSubtract,
         Opcodes::VariableObjectInplaceSubtract, Opcodes::VariableObjectInplaceRightSubtract);
     break;
   }
   case NodeKind::InplaceMultiply:
   {
-    opcode = GetInplaceArithmeticOpcode(lhs_is_primitive, lhs_type_id, rhs_type_id, Opcodes::VariablePrimitiveInplaceMultiply,
+    opcode = GetInplaceArithmeticOpcode(
+        lhs_is_primitive, lhs_type_id, rhs_type_id, Opcodes::VariablePrimitiveInplaceMultiply,
         Opcodes::VariableObjectInplaceMultiply, Opcodes::VariableObjectInplaceRightMultiply);
     break;
   }
   case NodeKind::InplaceDivide:
   {
-    opcode = GetInplaceArithmeticOpcode(lhs_is_primitive, lhs_type_id, rhs_type_id, Opcodes::VariablePrimitiveInplaceDivide,
+    opcode = GetInplaceArithmeticOpcode(
+        lhs_is_primitive, lhs_type_id, rhs_type_id, Opcodes::VariablePrimitiveInplaceDivide,
         Opcodes::VariableObjectInplaceDivide, Opcodes::VariableObjectInplaceRightDivide);
     break;
   }
@@ -751,62 +758,63 @@ void Generator::HandleVariableInplaceAssignmentStatement(IRExpressionNodePtr con
   Executable::Instruction instruction(opcode);
   instruction.type_id = lhs_type_id;
   instruction.index   = v->index;
-  instruction.data = rhs_type_id;
-  uint16_t pc = function_->AddInstruction(instruction);
+  instruction.data    = rhs_type_id;
+  uint16_t pc         = function_->AddInstruction(instruction);
   AddLineNumber(lhs->line, pc);
 }
 
 void Generator::HandleIndexedAssignmentStatement(IRExpressionNodePtr const &node,
-    IRExpressionNodePtr const &lhs,
-    IRExpressionNodePtr const &rhs)
+                                                 IRExpressionNodePtr const &lhs,
+                                                 IRExpressionNodePtr const &rhs)
 {
   // Arrange for the container object to be pushed on to the stack
   IRExpressionNodePtr container_node = ConvertToIRExpressionNodePtr(lhs->children[0]);
   HandleExpression(container_node);
   // Arrange for the indices to be pushed on to the stack
-  size_t const num_indices     = lhs->children.size() - 1;
+  size_t const num_indices = lhs->children.size() - 1;
   for (size_t i = 1; i <= num_indices; ++i)
   {
     HandleExpression(ConvertToIRExpressionNodePtr(lhs->children[i]));
   }
   HandleExpression(rhs);
-  uint16_t container_type_id = container_node->type->resolved_id;
-  uint16_t type_id = lhs->type->resolved_id;
-  uint16_t opcode = node->function->resolved_opcode;
+  uint16_t                container_type_id = container_node->type->resolved_id;
+  uint16_t                type_id           = lhs->type->resolved_id;
+  uint16_t                opcode            = node->function->resolved_opcode;
   Executable::Instruction instruction(opcode);
   instruction.type_id = type_id;
-  instruction.data = container_type_id;
-  uint16_t pc = function_->AddInstruction(instruction);
+  instruction.data    = container_type_id;
+  uint16_t pc         = function_->AddInstruction(instruction);
   AddLineNumber(lhs->line, pc);
 }
 
 void Generator::HandleIndexedInplaceAssignmentStatement(IRExpressionNodePtr const &node,
-    IRExpressionNodePtr const &lhs, IRExpressionNodePtr const &rhs)
+                                                        IRExpressionNodePtr const &lhs,
+                                                        IRExpressionNodePtr const &rhs)
 {
   // Arrange for the container object to be pushed on to the stack
   IRExpressionNodePtr container_node = ConvertToIRExpressionNodePtr(lhs->children[0]);
   HandleExpression(container_node);
   // Arrange for the indices to be pushed on to the stack
-  size_t const num_indices     = lhs->children.size() - 1;
+  size_t const num_indices = lhs->children.size() - 1;
   for (size_t i = 1; i <= num_indices; ++i)
   {
     HandleExpression(ConvertToIRExpressionNodePtr(lhs->children[i]));
   }
 
   uint16_t container_type_id = container_node->type->resolved_id;
-  uint16_t type_id = lhs->type->resolved_id;
-  uint16_t rhs_type_id = rhs->type->resolved_id;
+  uint16_t type_id           = lhs->type->resolved_id;
+  uint16_t rhs_type_id       = rhs->type->resolved_id;
 
   Executable::Instruction duplicate_instruction(Opcodes::Duplicate);
   duplicate_instruction.data = uint16_t(1 + num_indices);
-  uint16_t duplicate_pc = function_->AddInstruction(duplicate_instruction);
+  uint16_t duplicate_pc      = function_->AddInstruction(duplicate_instruction);
   AddLineNumber(lhs->line, duplicate_pc);
 
-  uint16_t get_indexed_value_opcode = lhs->function->resolved_opcode;
+  uint16_t                get_indexed_value_opcode = lhs->function->resolved_opcode;
   Executable::Instruction get_indexed_value_instruction(get_indexed_value_opcode);
   get_indexed_value_instruction.type_id = type_id;
-  get_indexed_value_instruction.data = container_type_id;
-  uint16_t get_indexed_value_pc = function_->AddInstruction(get_indexed_value_instruction);
+  get_indexed_value_instruction.data    = container_type_id;
+  uint16_t get_indexed_value_pc         = function_->AddInstruction(get_indexed_value_instruction);
   AddLineNumber(lhs->line, get_indexed_value_pc);
 
   HandleExpression(rhs);
@@ -818,26 +826,30 @@ void Generator::HandleIndexedInplaceAssignmentStatement(IRExpressionNodePtr cons
   {
   case NodeKind::InplaceAdd:
   {
-    opcode = GetInplaceArithmeticOpcode(lhs_is_primitive, type_id, rhs_type_id, Opcodes::PrimitiveAdd,
-        Opcodes::ObjectAdd, Opcodes::ObjectRightAdd);
+    opcode =
+        GetInplaceArithmeticOpcode(lhs_is_primitive, type_id, rhs_type_id, Opcodes::PrimitiveAdd,
+                                   Opcodes::ObjectAdd, Opcodes::ObjectRightAdd);
     break;
   }
   case NodeKind::InplaceSubtract:
   {
-    opcode = GetInplaceArithmeticOpcode(lhs_is_primitive, type_id, rhs_type_id, Opcodes::PrimitiveSubtract,
-        Opcodes::ObjectSubtract, Opcodes::ObjectRightSubtract);
+    opcode = GetInplaceArithmeticOpcode(lhs_is_primitive, type_id, rhs_type_id,
+                                        Opcodes::PrimitiveSubtract, Opcodes::ObjectSubtract,
+                                        Opcodes::ObjectRightSubtract);
     break;
   }
   case NodeKind::InplaceMultiply:
   {
-    opcode = GetInplaceArithmeticOpcode(lhs_is_primitive, type_id, rhs_type_id, Opcodes::PrimitiveMultiply,
-        Opcodes::ObjectMultiply, Opcodes::ObjectRightMultiply);
+    opcode = GetInplaceArithmeticOpcode(lhs_is_primitive, type_id, rhs_type_id,
+                                        Opcodes::PrimitiveMultiply, Opcodes::ObjectMultiply,
+                                        Opcodes::ObjectRightMultiply);
     break;
   }
   case NodeKind::InplaceDivide:
   {
-    opcode = GetInplaceArithmeticOpcode(lhs_is_primitive, type_id, rhs_type_id, Opcodes::PrimitiveDivide,
-        Opcodes::ObjectDivide, Opcodes::ObjectRightDivide);
+    opcode =
+        GetInplaceArithmeticOpcode(lhs_is_primitive, type_id, rhs_type_id, Opcodes::PrimitiveDivide,
+                                   Opcodes::ObjectDivide, Opcodes::ObjectRightDivide);
     break;
   }
   case NodeKind::InplaceModulo:
@@ -853,15 +865,15 @@ void Generator::HandleIndexedInplaceAssignmentStatement(IRExpressionNodePtr cons
 
   Executable::Instruction instruction(opcode);
   instruction.type_id = type_id;
-  instruction.data = rhs_type_id;
-  uint16_t pc = function_->AddInstruction(instruction);
+  instruction.data    = rhs_type_id;
+  uint16_t pc         = function_->AddInstruction(instruction);
   AddLineNumber(lhs->line, pc);
 
-  uint16_t set_indexed_value_opcode = node->function->resolved_opcode;
+  uint16_t                set_indexed_value_opcode = node->function->resolved_opcode;
   Executable::Instruction set_indexed_value_instruction(set_indexed_value_opcode);
   set_indexed_value_instruction.type_id = type_id;
-  set_indexed_value_instruction.data = container_type_id;
-  uint16_t set_indexed_value_pc = function_->AddInstruction(set_indexed_value_instruction);
+  set_indexed_value_instruction.data    = container_type_id;
+  uint16_t set_indexed_value_pc         = function_->AddInstruction(set_indexed_value_instruction);
   AddLineNumber(lhs->line, set_indexed_value_pc);
 }
 
@@ -999,109 +1011,108 @@ void Generator::HandleExpression(IRExpressionNodePtr const &node)
 
 void Generator::HandleIdentifier(IRExpressionNodePtr const &node)
 {
-  IRVariablePtr         v = node->variable;
+  IRVariablePtr           v = node->variable;
   Executable::Instruction instruction(Opcodes::PushVariable);
   instruction.type_id = v->type->resolved_id;
   instruction.index   = v->index;
-  uint16_t pc = function_->AddInstruction(instruction);
+  uint16_t pc         = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 
 void Generator::HandleInteger8(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  int8_t value = static_cast<int8_t>(atoi(node->text.c_str()));
-  instruction.index = AddConstant(Variant(value, TypeIds::Int8));
-  uint16_t pc = function_->AddInstruction(instruction);
+  int8_t                  value = static_cast<int8_t>(atoi(node->text.c_str()));
+  instruction.index             = AddConstant(Variant(value, TypeIds::Int8));
+  uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 
 void Generator::HandleUnsignedInteger8(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  uint8_t value = static_cast<uint8_t>(atoi(node->text.c_str()));
-  instruction.index = AddConstant(Variant(value, TypeIds::Byte));
-  uint16_t pc = function_->AddInstruction(instruction);
+  uint8_t                 value = static_cast<uint8_t>(atoi(node->text.c_str()));
+  instruction.index             = AddConstant(Variant(value, TypeIds::Byte));
+  uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 
 void Generator::HandleInteger16(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  int16_t value = static_cast<int16_t>(atoi(node->text.c_str()));
-  instruction.index = AddConstant(Variant(value, TypeIds::Int16));
-  uint16_t pc = function_->AddInstruction(instruction);
+  int16_t                 value = static_cast<int16_t>(atoi(node->text.c_str()));
+  instruction.index             = AddConstant(Variant(value, TypeIds::Int16));
+  uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 
 void Generator::HandleUnsignedInteger16(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  uint16_t value = static_cast<uint16_t>(atoi(node->text.c_str()));
-  instruction.index = AddConstant(Variant(value, TypeIds::UInt16));
-  uint16_t pc = function_->AddInstruction(instruction);
+  uint16_t                value = static_cast<uint16_t>(atoi(node->text.c_str()));
+  instruction.index             = AddConstant(Variant(value, TypeIds::UInt16));
+  uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
-
 
 void Generator::HandleInteger32(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  int32_t value = static_cast<int32_t>(atoi(node->text.c_str()));
-  instruction.index = AddConstant(Variant(value, TypeIds::Int32));
-  uint16_t pc = function_->AddInstruction(instruction);
+  int32_t                 value = static_cast<int32_t>(atoi(node->text.c_str()));
+  instruction.index             = AddConstant(Variant(value, TypeIds::Int32));
+  uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 
 void Generator::HandleUnsignedInteger32(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  uint32_t value = static_cast<uint32_t>(atoll(node->text.c_str()));
-  instruction.index = AddConstant(Variant(value, TypeIds::UInt32));
-  uint16_t pc = function_->AddInstruction(instruction);
+  uint32_t                value = static_cast<uint32_t>(atoll(node->text.c_str()));
+  instruction.index             = AddConstant(Variant(value, TypeIds::UInt32));
+  uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 
 void Generator::HandleInteger64(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  int64_t value = static_cast<int64_t>(atoll(node->text.c_str()));
-  instruction.index = AddConstant(Variant(value, TypeIds::Int64));
-  uint16_t pc = function_->AddInstruction(instruction);
+  int64_t                 value = static_cast<int64_t>(atoll(node->text.c_str()));
+  instruction.index             = AddConstant(Variant(value, TypeIds::Int64));
+  uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 
 void Generator::HandleUnsignedInteger64(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  uint64_t value = static_cast<uint64_t>(atoll(node->text.c_str()));
-  instruction.index = AddConstant(Variant(value, TypeIds::UInt64));
-  uint16_t pc = function_->AddInstruction(instruction);
+  uint64_t                value = static_cast<uint64_t>(atoll(node->text.c_str()));
+  instruction.index             = AddConstant(Variant(value, TypeIds::UInt64));
+  uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 
 void Generator::HandleFloat32(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  float value = float(atof(node->text.c_str()));
-  instruction.index = AddConstant(Variant(value, TypeIds::Float32));
-  uint16_t pc = function_->AddInstruction(instruction);
+  float                   value = float(atof(node->text.c_str()));
+  instruction.index             = AddConstant(Variant(value, TypeIds::Float32));
+  uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 
 void Generator::HandleFloat64(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushConstant);
-  double value = atof(node->text.c_str());
-  instruction.index = AddConstant(Variant(value, TypeIds::Float64));
-  uint16_t pc = function_->AddInstruction(instruction);
+  double                  value = atof(node->text.c_str());
+  instruction.index             = AddConstant(Variant(value, TypeIds::Float64));
+  uint16_t pc                   = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 
 void Generator::HandleString(IRExpressionNodePtr const &node)
 {
   std::string s = node->text.substr(1, node->text.size() - 2);
-  uint16_t       index;
+  uint16_t    index;
   auto        it = strings_map_.find(s);
   if (it != strings_map_.end())
   {
@@ -1115,22 +1126,22 @@ void Generator::HandleString(IRExpressionNodePtr const &node)
   }
 
   Executable::Instruction instruction(Opcodes::PushString);
-  instruction.index   = index;
-  uint16_t pc = function_->AddInstruction(instruction);
+  instruction.index = index;
+  uint16_t pc       = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 
 void Generator::HandleTrue(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushTrue);
-  uint16_t pc = function_->AddInstruction(instruction);
+  uint16_t                pc = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 
 void Generator::HandleFalse(IRExpressionNodePtr const &node)
 {
   Executable::Instruction instruction(Opcodes::PushFalse);
-  uint16_t pc = function_->AddInstruction(instruction);
+  uint16_t                pc = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 
@@ -1140,14 +1151,14 @@ void Generator::HandleNull(IRExpressionNodePtr const &node)
   {
     Executable::Instruction instruction(Opcodes::PushNull);
     instruction.type_id = node->type->resolved_id;
-    uint16_t pc = function_->AddInstruction(instruction);
+    uint16_t pc         = function_->AddInstruction(instruction);
     AddLineNumber(node->line, pc);
   }
   else
   {
     // Type-uninferable nulls (e.g. in "null == null") are transformed to boolean true
     Executable::Instruction instruction(Opcodes::PushTrue);
-    uint16_t pc = function_->AddInstruction(instruction);
+    uint16_t                pc = function_->AddInstruction(instruction);
     AddLineNumber(node->line, pc);
   }
 }
@@ -1155,7 +1166,7 @@ void Generator::HandleNull(IRExpressionNodePtr const &node)
 void Generator::HandlePrefixPostfixOp(IRExpressionNodePtr const &node)
 {
   IRExpressionNodePtr operand               = ConvertToIRExpressionNodePtr(node->children[0]);
-  bool const        assigning_to_variable = operand->IsVariableExpression();
+  bool const          assigning_to_variable = operand->IsVariableExpression();
   if (assigning_to_variable)
   {
     HandleVariablePrefixPostfixOp(node, operand);
@@ -1169,50 +1180,53 @@ void Generator::HandlePrefixPostfixOp(IRExpressionNodePtr const &node)
 
 void Generator::HandleBinaryOp(IRExpressionNodePtr const &node)
 {
-  IRExpressionNodePtr lhs              = ConvertToIRExpressionNodePtr(node->children[0]);
-  IRExpressionNodePtr rhs              = ConvertToIRExpressionNodePtr(node->children[1]);
+  IRExpressionNodePtr lhs = ConvertToIRExpressionNodePtr(node->children[0]);
+  IRExpressionNodePtr rhs = ConvertToIRExpressionNodePtr(node->children[1]);
   for (size_t i = 0; i < node->children.size(); ++i)
   {
     HandleExpression(ConvertToIRExpressionNodePtr(node->children[i]));
   }
 
-  bool lhs_is_primitive = lhs->type->IsPrimitive();
-  TypeId node_type_id = node->type->resolved_id;
-  TypeId lhs_type_id = lhs->type->resolved_id;
-  TypeId rhs_type_id = rhs->type->resolved_id;
-  TypeId type_id = lhs_type_id;
-  TypeId other_type_id = lhs_type_id;
-  uint16_t opcode = Opcodes::Unknown;
+  bool     lhs_is_primitive = lhs->type->IsPrimitive();
+  TypeId   node_type_id     = node->type->resolved_id;
+  TypeId   lhs_type_id      = lhs->type->resolved_id;
+  TypeId   rhs_type_id      = rhs->type->resolved_id;
+  TypeId   type_id          = lhs_type_id;
+  TypeId   other_type_id    = lhs_type_id;
+  uint16_t opcode           = Opcodes::Unknown;
 
   switch (node->node_kind)
   {
   case NodeKind::Add:
   {
-     opcode = GetArithmeticOpcode(lhs_is_primitive, node_type_id, lhs_type_id, rhs_type_id,
-         Opcodes::PrimitiveAdd, Opcodes::ObjectAdd, Opcodes::ObjectLeftAdd, Opcodes::ObjectRightAdd,
-         type_id, other_type_id);
+    opcode = GetArithmeticOpcode(lhs_is_primitive, node_type_id, lhs_type_id, rhs_type_id,
+                                 Opcodes::PrimitiveAdd, Opcodes::ObjectAdd, Opcodes::ObjectLeftAdd,
+                                 Opcodes::ObjectRightAdd, type_id, other_type_id);
 
     break;
   }
   case NodeKind::Subtract:
   {
     opcode = GetArithmeticOpcode(lhs_is_primitive, node_type_id, lhs_type_id, rhs_type_id,
-         Opcodes::PrimitiveSubtract, Opcodes::ObjectSubtract, Opcodes::ObjectLeftSubtract, Opcodes::ObjectRightSubtract,
-         type_id, other_type_id);
+                                 Opcodes::PrimitiveSubtract, Opcodes::ObjectSubtract,
+                                 Opcodes::ObjectLeftSubtract, Opcodes::ObjectRightSubtract, type_id,
+                                 other_type_id);
     break;
   }
   case NodeKind::Multiply:
   {
     opcode = GetArithmeticOpcode(lhs_is_primitive, node_type_id, lhs_type_id, rhs_type_id,
-         Opcodes::PrimitiveMultiply, Opcodes::ObjectMultiply, Opcodes::ObjectLeftMultiply, Opcodes::ObjectRightMultiply,
-         type_id, other_type_id);
+                                 Opcodes::PrimitiveMultiply, Opcodes::ObjectMultiply,
+                                 Opcodes::ObjectLeftMultiply, Opcodes::ObjectRightMultiply, type_id,
+                                 other_type_id);
     break;
   }
   case NodeKind::Divide:
   {
     opcode = GetArithmeticOpcode(lhs_is_primitive, node_type_id, lhs_type_id, rhs_type_id,
-         Opcodes::PrimitiveDivide, Opcodes::ObjectDivide, Opcodes::ObjectLeftDivide, Opcodes::ObjectRightDivide,
-         type_id, other_type_id);
+                                 Opcodes::PrimitiveDivide, Opcodes::ObjectDivide,
+                                 Opcodes::ObjectLeftDivide, Opcodes::ObjectRightDivide, type_id,
+                                 other_type_id);
     break;
   }
   case NodeKind::Modulo:
@@ -1247,7 +1261,8 @@ void Generator::HandleBinaryOp(IRExpressionNodePtr const &node)
   }
   case NodeKind::GreaterThanOrEqual:
   {
-    opcode = lhs_is_primitive ? Opcodes::PrimitiveGreaterThanOrEqual : Opcodes::ObjectGreaterThanOrEqual;
+    opcode =
+        lhs_is_primitive ? Opcodes::PrimitiveGreaterThanOrEqual : Opcodes::ObjectGreaterThanOrEqual;
     break;
   }
   case NodeKind::And:
@@ -1268,28 +1283,28 @@ void Generator::HandleBinaryOp(IRExpressionNodePtr const &node)
 
   Executable::Instruction instruction(opcode);
   instruction.type_id = type_id;
-  instruction.data = other_type_id;
-  uint16_t pc = function_->AddInstruction(instruction);
+  instruction.data    = other_type_id;
+  uint16_t pc         = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 
 void Generator::HandleUnaryOp(IRExpressionNodePtr const &node)
 {
   IRExpressionNodePtr operand      = ConvertToIRExpressionNodePtr(node->children[0]);
-  uint16_t            type_id = TypeIds::Unknown;
-  bool is_primitive = operand->type->IsPrimitive();
-  uint16_t opcode = Opcodes::Unknown;
+  uint16_t            type_id      = TypeIds::Unknown;
+  bool                is_primitive = operand->type->IsPrimitive();
+  uint16_t            opcode       = Opcodes::Unknown;
   switch (node->node_kind)
   {
   case NodeKind::Negate:
   {
-    opcode = is_primitive ? Opcodes::PrimitiveNegate : Opcodes::ObjectNegate;
+    opcode  = is_primitive ? Opcodes::PrimitiveNegate : Opcodes::ObjectNegate;
     type_id = node->type->resolved_id;
     break;
   }
   case NodeKind::Not:
   {
-    opcode = Opcodes::Not;
+    opcode  = Opcodes::Not;
     type_id = node->type->resolved_id;
     break;
   }
@@ -1301,7 +1316,7 @@ void Generator::HandleUnaryOp(IRExpressionNodePtr const &node)
   HandleExpression(operand);
   Executable::Instruction instruction(opcode);
   instruction.type_id = type_id;
-  uint16_t pc = function_->AddInstruction(instruction);
+  uint16_t pc         = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 
@@ -1316,22 +1331,20 @@ void Generator::HandleIndexOp(IRExpressionNodePtr const &node)
   {
     HandleExpression(ConvertToIRExpressionNodePtr(node->children[i]));
   }
-  uint16_t container_type_id = container_node->type->resolved_id;
-  uint16_t type_id = node->type->resolved_id;
-  uint16_t get_indexed_value_opcode = node->function->resolved_opcode;
+  uint16_t                container_type_id        = container_node->type->resolved_id;
+  uint16_t                type_id                  = node->type->resolved_id;
+  uint16_t                get_indexed_value_opcode = node->function->resolved_opcode;
   Executable::Instruction instruction(get_indexed_value_opcode);
   instruction.type_id = type_id;
-  instruction.data = container_type_id;
-  uint16_t pc = function_->AddInstruction(instruction);
+  instruction.data    = container_type_id;
+  uint16_t pc         = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
 
 void Generator::HandleDotOp(IRExpressionNodePtr const &node)
 {
   IRExpressionNodePtr lhs = ConvertToIRExpressionNodePtr(node->children[0]);
-  if ((lhs->IsVariableExpression()) ||
-      (lhs->IsLVExpression()) ||
-      (lhs->IsRVExpression()))
+  if ((lhs->IsVariableExpression()) || (lhs->IsLVExpression()) || (lhs->IsRVExpression()))
   {
     // Arrange for the instance object to be pushed on to the stack
     HandleExpression(ConvertToIRExpressionNodePtr(lhs));
@@ -1356,8 +1369,8 @@ void Generator::HandleInvokeOp(IRExpressionNodePtr const &node)
   {
     // User-defined free function
     Executable::Instruction instruction(Opcodes::InvokeUserDefinedFreeFunction);
-    instruction.index   = f->index;
-    uint16_t pc = function_->AddInstruction(instruction);
+    instruction.index = f->index;
+    uint16_t pc       = function_->AddInstruction(instruction);
     AddLineNumber(node->line, pc);
   }
   else
@@ -1366,7 +1379,7 @@ void Generator::HandleInvokeOp(IRExpressionNodePtr const &node)
     // Opcode-invoked constructor
     // Opcode-invoked static member function
     // Opcode-invoked member function
-    uint16_t opcode = f->resolved_opcode;
+    uint16_t                opcode = f->resolved_opcode;
     Executable::Instruction instruction(opcode);
     instruction.type_id = node->type->resolved_id;
     if (lhs->type)
@@ -1379,8 +1392,8 @@ void Generator::HandleInvokeOp(IRExpressionNodePtr const &node)
   }
 }
 
-void Generator::HandleVariablePrefixPostfixOp(IRExpressionNodePtr const & node,
-    IRExpressionNodePtr const &operand)
+void Generator::HandleVariablePrefixPostfixOp(IRExpressionNodePtr const &node,
+                                              IRExpressionNodePtr const &operand)
 {
   uint16_t opcode = Opcodes::Unknown;
   switch (node->node_kind)
@@ -1410,40 +1423,40 @@ void Generator::HandleVariablePrefixPostfixOp(IRExpressionNodePtr const & node,
     break;
   }
   }  // switch
-  IRVariablePtr const &v = operand->variable;
+  IRVariablePtr const &   v = operand->variable;
   Executable::Instruction instruction(opcode);
   instruction.type_id = v->type->resolved_id;
   instruction.index   = v->index;
-  uint16_t pc = function_->AddInstruction(instruction);
+  uint16_t pc         = function_->AddInstruction(instruction);
   AddLineNumber(operand->line, pc);
 }
 
 void Generator::HandleIndexedPrefixPostfixOp(IRExpressionNodePtr const &node,
-    IRExpressionNodePtr const &operand)
+                                             IRExpressionNodePtr const &operand)
 {
   // Arrange for the container object to be pushed on to the stack
   IRExpressionNodePtr container_node = ConvertToIRExpressionNodePtr(operand->children[0]);
   HandleExpression(container_node);
   // Arrange for the indices to be pushed on to the stack
-  size_t const num_indices     = operand->children.size() - 1;
+  size_t const num_indices = operand->children.size() - 1;
   for (size_t i = 1; i <= num_indices; ++i)
   {
     HandleExpression(ConvertToIRExpressionNodePtr(operand->children[i]));
   }
-  uint16_t container_type_id = container_node->type->resolved_id;
-  uint16_t type_id = operand->type->resolved_id;
+  uint16_t                container_type_id = container_node->type->resolved_id;
+  uint16_t                type_id           = operand->type->resolved_id;
   Executable::Instruction duplicate_instruction(Opcodes::Duplicate);
   duplicate_instruction.data = uint16_t(1 + num_indices);
-  uint16_t duplicate_pc = function_->AddInstruction(duplicate_instruction);
+  uint16_t duplicate_pc      = function_->AddInstruction(duplicate_instruction);
   AddLineNumber(operand->line, duplicate_pc);
-  uint16_t get_indexed_value_opcode = operand->function->resolved_opcode;
+  uint16_t                get_indexed_value_opcode = operand->function->resolved_opcode;
   Executable::Instruction get_indexed_value_instruction(get_indexed_value_opcode);
   get_indexed_value_instruction.type_id = type_id;
-  get_indexed_value_instruction.data = container_type_id;
-  uint16_t get_indexed_value_pc = function_->AddInstruction(get_indexed_value_instruction);
+  get_indexed_value_instruction.data    = container_type_id;
+  uint16_t get_indexed_value_pc         = function_->AddInstruction(get_indexed_value_instruction);
   AddLineNumber(operand->line, get_indexed_value_pc);
 
-  bool prefix = true;
+  bool     prefix = true;
   uint16_t opcode = Opcodes::Unknown;
   switch (node->node_kind)
   {
@@ -1496,11 +1509,12 @@ void Generator::HandleIndexedPrefixPostfixOp(IRExpressionNodePtr const &node,
     AddLineNumber(operand->line, pc);
   }
 
-  uint16_t set_indexed_value_opcode = node->function->resolved_opcode;
+  uint16_t                set_indexed_value_opcode = node->function->resolved_opcode;
   Executable::Instruction set_indexed_value_instruction(set_indexed_value_opcode);
   set_indexed_value_instruction.type_id = type_id;
-  set_indexed_value_instruction.data = container_type_id;
-  uint16_t set_indexed_value_instruction_pc = function_->AddInstruction(set_indexed_value_instruction);
+  set_indexed_value_instruction.data    = container_type_id;
+  uint16_t set_indexed_value_instruction_pc =
+      function_->AddInstruction(set_indexed_value_instruction);
   AddLineNumber(operand->line, set_indexed_value_instruction_pc);
 }
 
@@ -1512,7 +1526,7 @@ void Generator::ScopeEnter()
 void Generator::ScopeLeave(IRBlockNodePtr const &block_node)
 {
   uint16_t const scope_number = uint16_t(scopes_.size() - 1);
-  Scope &   scope        = scopes_[scope_number];
+  Scope &        scope        = scopes_[scope_number];
   if (scope.objects.size() > 0)
   {
     // Note: the function definition block does not require a Destruct instruction
@@ -1523,7 +1537,7 @@ void Generator::ScopeLeave(IRBlockNodePtr const &block_node)
       // Arrange for all live objects with scope >= scope_number to be destructed
       Executable::Instruction instruction(Opcodes::Destruct);
       instruction.data = scope_number;
-      uint16_t pc = function_->AddInstruction(instruction);
+      uint16_t pc      = function_->AddInstruction(instruction);
       AddLineNumber(block_node->block_terminator_line, pc);
     }
   }
@@ -1532,8 +1546,8 @@ void Generator::ScopeLeave(IRBlockNodePtr const &block_node)
 
 uint16_t Generator::AddConstant(Variant const &c)
 {
-  uint16_t       index;
-  auto        it = constants_map_.find(c);
+  uint16_t index;
+  auto     it = constants_map_.find(c);
   if (it != constants_map_.end())
   {
     index = it->second;
@@ -1547,9 +1561,9 @@ uint16_t Generator::AddConstant(Variant const &c)
   return index;
 }
 
-uint16_t Generator::GetInplaceArithmeticOpcode(bool is_primitive,
-    TypeId lhs_type_id, TypeId rhs_type_id,
-    uint16_t opcode1, uint16_t opcode2, uint16_t opcode3)
+uint16_t Generator::GetInplaceArithmeticOpcode(bool is_primitive, TypeId lhs_type_id,
+                                               TypeId rhs_type_id, uint16_t opcode1,
+                                               uint16_t opcode2, uint16_t opcode3)
 {
   uint16_t opcode;
   if (is_primitive)
@@ -1568,37 +1582,37 @@ uint16_t Generator::GetInplaceArithmeticOpcode(bool is_primitive,
 }
 
 uint16_t Generator::GetArithmeticOpcode(bool lhs_is_primitive, TypeId node_type_id,
-    TypeId lhs_type_id, TypeId rhs_type_id,
-    uint16_t opcode1, uint16_t opcode2, uint16_t opcode3, uint16_t opcode4,
-    TypeId &type_id, TypeId &other_type_id)
+                                        TypeId lhs_type_id, TypeId rhs_type_id, uint16_t opcode1,
+                                        uint16_t opcode2, uint16_t opcode3, uint16_t opcode4,
+                                        TypeId &type_id, TypeId &other_type_id)
 {
   uint16_t opcode;
   if (lhs_type_id != node_type_id)
   {
     // left op
-    opcode = opcode3;
-    type_id = lhs_type_id;
+    opcode        = opcode3;
+    type_id       = lhs_type_id;
     other_type_id = rhs_type_id;
   }
   else if (rhs_type_id != node_type_id)
   {
     // right op
-    opcode = opcode4;
-    type_id = rhs_type_id;
+    opcode        = opcode4;
+    type_id       = rhs_type_id;
     other_type_id = lhs_type_id;
   }
   else
   {
     if (lhs_is_primitive)
     {
-       opcode = opcode1;
-       type_id = lhs_type_id;
-       other_type_id = lhs_type_id;
+      opcode        = opcode1;
+      type_id       = lhs_type_id;
+      other_type_id = lhs_type_id;
     }
     else
     {
-      opcode = opcode2;
-      type_id = lhs_type_id;
+      opcode        = opcode2;
+      type_id       = lhs_type_id;
       other_type_id = lhs_type_id;
     }
   }
@@ -1661,7 +1675,7 @@ bool Generator::ConstantComparator::operator()(Variant const &lhs, Variant const
   {
     return false;
   }
-  } // switch
+  }  // switch
 }
 
 }  // namespace vm

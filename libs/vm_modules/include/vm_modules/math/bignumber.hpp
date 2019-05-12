@@ -19,12 +19,9 @@
 
 #include "math/bignumber.hpp"
 
-
 #include "vm_modules/core/byte_array_wrapper.hpp"
 
-
 #include "vm/module.hpp"
-
 
 namespace fetch {
 namespace vm_modules {

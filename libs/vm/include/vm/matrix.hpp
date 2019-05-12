@@ -31,8 +31,8 @@ public:
   virtual ~IMatrix() = default;
   static Ptr<IMatrix> Constructor(VM *vm, TypeId type_id, int32_t num_rows, int32_t num_columns);
   virtual TemplateParameter GetIndexedValue(AnyInteger const &row, AnyInteger const &column) = 0;
-  virtual void SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
-      TemplateParameter const &value) = 0;
+  virtual void              SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
+                                            TemplateParameter const &value)                  = 0;
 
 protected:
   IMatrix(VM *vm, TypeId type_id)
@@ -53,8 +53,8 @@ struct Matrix : public IMatrix
     element_type_id_ = element_type_id__;
   }
 
-  static Ptr<Matrix> AcquireMatrix(VM *vm, TypeId type_id, TypeId element_type_id,
-      size_t num_rows, size_t num_columns)
+  static Ptr<Matrix> AcquireMatrix(VM *vm, TypeId type_id, TypeId element_type_id, size_t num_rows,
+                                   size_t num_columns)
   {
     return Ptr<Matrix>(new Matrix(vm, type_id, element_type_id, num_rows, num_columns));
   }
@@ -338,7 +338,8 @@ struct Matrix : public IMatrix
     return &matrix.At(c, r);
   }
 
-  virtual TemplateParameter GetIndexedValue(AnyInteger const &row, AnyInteger const &column) override
+  virtual TemplateParameter GetIndexedValue(AnyInteger const &row,
+                                            AnyInteger const &column) override
   {
     T *ptr = Find(row, column);
     if (ptr)
@@ -350,12 +351,12 @@ struct Matrix : public IMatrix
   }
 
   virtual void SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
-      TemplateParameter const &value) override
+                               TemplateParameter const &value) override
   {
     T *ptr = Find(row, column);
     if (ptr)
     {
-      *ptr         = value.Get<T>();
+      *ptr = value.Get<T>();
     }
   }
 
@@ -363,7 +364,8 @@ struct Matrix : public IMatrix
   TypeId                 element_type_id_;
 };
 
-inline Ptr<IMatrix> IMatrix::Constructor(VM *vm, TypeId type_id, int32_t num_rows, int32_t num_columns)
+inline Ptr<IMatrix> IMatrix::Constructor(VM *vm, TypeId type_id, int32_t num_rows,
+                                         int32_t num_columns)
 {
   TypeInfo const &type_info       = vm->GetTypeInfo(type_id);
   TypeId const    element_type_id = type_info.parameter_type_ids[0];
@@ -374,11 +376,13 @@ inline Ptr<IMatrix> IMatrix::Constructor(VM *vm, TypeId type_id, int32_t num_row
   }
   if (element_type_id == TypeIds::Float32)
   {
-    return Ptr<IMatrix>(new Matrix<float>(vm, type_id, element_type_id, size_t(num_rows), size_t(num_columns)));
+    return Ptr<IMatrix>(
+        new Matrix<float>(vm, type_id, element_type_id, size_t(num_rows), size_t(num_columns)));
   }
   else
   {
-    return Ptr<IMatrix>(new Matrix<double>(vm, type_id, element_type_id, size_t(num_rows), size_t(num_columns)));
+    return Ptr<IMatrix>(
+        new Matrix<double>(vm, type_id, element_type_id, size_t(num_rows), size_t(num_columns)));
   }
 }
 
