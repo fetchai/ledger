@@ -103,9 +103,9 @@ public:
   };
 
   Tensor()
-    : data_()
-    , size_(0)
-  {}
+  {
+    Resize({0});
+  }
 
   static Tensor FromString(byte_array::ConstByteArray const &c);
   explicit Tensor(SizeType const &n);
@@ -217,6 +217,7 @@ public:
     {
       auto it = begin();
       auto oit = old_tensor.begin();
+      assert(it.size() == oit.size());
       while(it.is_valid())
       {
         *it = *oit;
@@ -504,9 +505,8 @@ public:
   }
 private:
   ContainerType data_;
-  SizeType      size_ = 0;
+  SizeType      size_{0}; 
   SizeVector    shape_;
-  SizeVector    padded_shape_;  
   SizeVector    stride_;
   SizeType      padded_height_;
 
@@ -796,16 +796,8 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
  */
 template <typename T, typename C>
 Tensor<T, C>::Tensor(SizeType const &n)
-  : data_(n)
-  , size_(n)
 {
-  assert(this->size() == n);
-  this->Reshape({n});
-  Type zero{0};
-  for (SizeType idx = 0; idx < this->size(); ++idx)
-  {
-    operator[](idx) = zero;
-  }
+  this->Resize({n});
 }
 
 /**
@@ -1451,10 +1443,7 @@ typename Tensor<T, C>::SizeType Tensor<T, C>::PaddedSizeFromShape(SizeVector con
 template <typename T, typename C>
 void Tensor<T, C>::Flatten()
 {
-  // TODO: will not work any more due to reshaping
-  shape_.clear();
-  shape_.push_back(size_);
-  UpdateStrides();
+  Reshape({size()});
 }
 
 /**
@@ -1502,10 +1491,10 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::Transpose(SizeVector &new_axes) co
 template <typename T, typename C>
 typename Tensor<T, C>::SelfType &Tensor<T, C>::Squeeze()
 {
-  // TODO: make it work on the last dim
-  ASSERT(shape_.at(0) == 1);
-  shape_.erase(shape_.begin());
-  UpdateStrides();
+  auto shape = shape_; // TODO: Make last dimension for efficiency
+  shape.erase(shape.begin());
+  Reshape(shape);
+
   return *this;
 }
 
@@ -1518,9 +1507,10 @@ typename Tensor<T, C>::SelfType &Tensor<T, C>::Squeeze()
 template <typename T, typename C>
 typename Tensor<T, C>::SelfType &Tensor<T, C>::Unsqueeze()
 {
-  // TODO: make it work on the last dim  
-  shape_.insert(shape_.begin(), 1);
-  UpdateStrides();
+  auto shape = shape_; // TODO: Make last dimension for efficiency
+  shape.insert(shape_.begin(), 1);
+  Reshape(shape);
+
   return *this;
 }
 

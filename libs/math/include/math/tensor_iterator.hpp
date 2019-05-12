@@ -132,10 +132,15 @@ public:
   {
     bool     next;
     SizeType i = 0;
+    if(!is_valid())
+    {
+//      throw std::runtime_error("increasing position of invalid iterator.");
+    }
     ++counter_;
     do
     {
       next                   = false;
+      assert(i < ranges_.size());
       TensorIteratorRange &s = ranges_[i];
       s.index += s.step;
       position_ += s.step_volume;
