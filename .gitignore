@@ -9,6 +9,7 @@ CMakeCache.txt
 
 nodes/
 .ipynb_checkpoints/
+docker-images/
 
 # Legacy Editors
 \#*#
