@@ -35,13 +35,13 @@ namespace ledger {
 class Block
 {
 public:
-  using Identity = byte_array::ConstByteArray;
-  using Digest   = byte_array::ConstByteArray;
-  using Proof    = consensus::ProofOfWork;
-  using Slice    = std::vector<TransactionSummary>;
-  using Slices   = std::vector<Slice>;
-  using DAGDigest   = byte_array::ConstByteArray;  
-  using DAGNodes     = std::vector<DAGDigest>;
+  using Identity  = byte_array::ConstByteArray;
+  using Digest    = byte_array::ConstByteArray;
+  using Proof     = consensus::ProofOfWork;
+  using Slice     = std::vector<TransactionSummary>;
+  using Slices    = std::vector<Slice>;
+  using DAGDigest = byte_array::ConstByteArray;
+  using DAGNodes  = std::vector<DAGDigest>;
 
   struct Body
   {

@@ -17,34 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include <unordered_map>
+#include "vm/analyser.hpp"
+#include "vm/typeids.hpp"
 
-namespace fetch {
-namespace vm {
+#include "vm/compiler.hpp"
+#include "vm/module.hpp"
+#include "vm/vm.hpp"
 
-class PointerRegister
+#include <cmath>
+
+namespace fetch
 {
-public:
-  template <typename T>
-  void Set(T *val)
-  {
-    pointers_[std::type_index(typeid(T))] = static_cast<void *>(val);
-  }
+namespace vm_modules
+{
 
-  template <typename T>
-  T *Get()
-  {
-    if (pointers_.find(std::type_index(typeid(T))) == pointers_.end())
-    {
-      return nullptr;
-    }
+inline double Exp(fetch::vm::VM * /*vm*/, double x)
+{
+  return std::exp(x);
+}
 
-    return static_cast<T *>(pointers_[std::type_index(typeid(T))]);
-  }
+inline void BindExp(vm::Module &module)
+{
+  module.CreateFreeFunction("exp", &Exp);
+}
 
-private:
-  std::unordered_map<std::type_index, void *> pointers_;
-};
-
-}  // namespace vm
-}  // namespace fetch
+}
+}

@@ -21,10 +21,10 @@
 #include "ledger/chain/consensus/bad_miner.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chain/main_chain_http_interface.hpp"
-#include "ledger/dag/dag.hpp"
-#include "ledger/dag/dag_http_interface.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/chaincode/wallet_http_interface.hpp"
+#include "ledger/dag/dag.hpp"
+#include "ledger/dag/dag_http_interface.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/tx_query_http_interface.hpp"
@@ -155,21 +155,14 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
   , internal_muddle_{muddle::NetworkId{"ISRD"}, internal_identity_, network_manager_}
   , trust_{}
-  , p2p_{muddle_
-        , lane_control_
-        , trust_
-        , cfg_.max_peers
-        , cfg_.transient_peers
-        , cfg_.peers_update_cycle_ms}
+  , p2p_{muddle_,        lane_control_,        trust_,
+         cfg_.max_peers, cfg_.transient_peers, cfg_.peers_update_cycle_ms}
   , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(internal_muddle_.AsEndpoint(), shard_cfgs_,
                                                  cfg_.log2_num_lanes))
   , lane_control_(internal_muddle_.AsEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
   , execution_manager_{std::make_shared<ExecutionManager>(
-      cfg_.num_executors
-    , storage_
-    , [this] { return std::make_shared<Executor>(storage_); })
-  }
+        cfg_.num_executors, storage_, [this] { return std::make_shared<Executor>(storage_); })}
   , dag_{}
   , dag_rpc_service_{muddle_, muddle_.AsEndpoint(), dag_}
   , chain_{ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
@@ -199,10 +192,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
         std::make_shared<ledger::TxQueryHttpInterface>(*storage_, cfg_.log2_num_lanes),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
         std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_),
-        std::make_shared<ledger::DAGHTTPInterface>(dag_, dag_rpc_service_)
-  }
+        std::make_shared<ledger::DAGHTTPInterface>(dag_, dag_rpc_service_)}
 {
-
 
   // print the start up log banner
   FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.interface_address, " E ",
@@ -341,24 +332,22 @@ void Constellation::Run(UriList const &initial_peers)
   execution_manager_->Start();
   tx_processor_.Start();
 
-
   /////////////////////////////////
   //// TODO
-  
-//  dag_.OnNewNode([this](fetch::ledger::DAGNode /*node*/)
-//  {
-//    // TODO: Replace with a way of updating the contents of the next block being mined.
-//    mock_chain_.SetTips(dag_.tips_unsafe());
-//  });
 
-//  // TODO: Replace
-//  mock_chain_.OnBlock([this](fetch::ledger::Block block)
-//  {
-//    //dag_.SetNodeTime(block.body.block_number, block.body.dag_nodes);
-//  });
+  //  dag_.OnNewNode([this](fetch::ledger::DAGNode /*node*/)
+  //  {
+  //    // TODO: Replace with a way of updating the contents of the next block being mined.
+  //    mock_chain_.SetTips(dag_.tips_unsafe());
+  //  });
+
+  //  // TODO: Replace
+  //  mock_chain_.OnBlock([this](fetch::ledger::Block block)
+  //  {
+  //    //dag_.SetNodeTime(block.body.block_number, block.body.dag_nodes);
+  //  });
   //// TODO
   /////////////////////////////////
-
 
   /// P2P (TRUST) HIGH LEVEL MANAGEMENT
 
@@ -400,7 +389,6 @@ void Constellation::Run(UriList const &initial_peers)
 
   http_.Stop();
   p2p_.Stop();
-
 
   tx_processor_.Stop();
   reactor_.Stop();

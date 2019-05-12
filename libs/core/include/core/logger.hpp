@@ -400,7 +400,6 @@ public:
 
       StackTrace();
     }
-
   }
 
   template <typename... Args>
@@ -415,7 +414,6 @@ public:
 
       StackTrace();
     }
-
   }
 
   template <typename... Args>
@@ -760,7 +758,6 @@ extern log::details::LogWrapper logger;
 #endif
 #endif
 
-
 #ifndef NDEBUG
 #define FETCH_HAS_STACK_TRACE
 #endif
@@ -783,7 +780,6 @@ extern log::details::LogWrapper logger;
 
 #define LOG_PRINT_STACK_TRACE(name, custom_name) \
   fetch::logger.StackTrace(name, uint32_t(-1), false, custom_name);
-
 
 #else
 

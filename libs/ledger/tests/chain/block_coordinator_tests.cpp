@@ -59,7 +59,7 @@ using BlockSinkPtr        = std::unique_ptr<FakeBlockSink>;
 using TxCachePtr          = std::unique_ptr<TransactionStatusCache>;
 using State               = fetch::ledger::BlockCoordinator::State;
 using DAG                 = fetch::ledger::DAG;
-using DAGPtr              = std::shared_ptr< DAG >;
+using DAGPtr              = std::shared_ptr<DAG>;
 
 static constexpr char const *LOGGING_NAME = "BlockCoordinatorTests";
 static constexpr std::size_t NUM_LANES    = 1;
@@ -85,8 +85,8 @@ protected:
     block_sink_        = std::make_unique<FakeBlockSink>();
     tx_status_         = std::make_unique<TransactionStatusCache>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
-        *main_chain_, *dag_, *execution_manager_, *storage_unit_, *packer_, *block_sink_, *tx_status_,
-        signer.identity().identifier(), NUM_LANES, NUM_SLICES, 1u);
+        *main_chain_, *dag_, *execution_manager_, *storage_unit_, *packer_, *block_sink_,
+        *tx_status_, signer.identity().identifier(), NUM_LANES, NUM_SLICES, 1u);
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);

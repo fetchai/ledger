@@ -20,12 +20,12 @@
 #include "math/arithmetic/comparison.hpp"
 #include "vm/defs.hpp"
 #include "vm/io_observer_interface.hpp"
-#include "vm/string.hpp"
 #include "vm/pointer_register.hpp"
+#include "vm/string.hpp"
 #include <cassert>
 
-#include <sstream>
 #include <iostream>
+#include <sstream>
 
 namespace fetch {
 namespace vm {
@@ -57,7 +57,6 @@ struct Getter<T, typename std::enable_if_t<IsVariant<T>::value>>
     return parameter.type_id;
   }
 };
-
 
 // Forward declarations
 class Module;
@@ -99,7 +98,6 @@ public:
     return success;
   }
 
-
   bool AddSingle(Variant parameter)
   {
     // TODO: Probably should make a deep copy
@@ -126,7 +124,6 @@ public:
 
     return success;
   }
-
 
   bool Add()
   {
@@ -166,8 +163,8 @@ private:
 class VM
 {
 public:
-  using InputDeviceMap = std::unordered_map< std::string, std::istream* >;
-  using OutputDeviceMap = std::unordered_map< std::string, std::ostream* >;
+  using InputDeviceMap  = std::unordered_map<std::string, std::istream *>;
+  using OutputDeviceMap = std::unordered_map<std::string, std::ostream *>;
 
   VM(Module *module);
   ~VM() = default;
@@ -177,10 +174,9 @@ public:
     return registered_types_;
   }
 
-
   template <typename... Ts>
-  bool Execute(Script const &script, std::string const &name, std::string &error,
-               Variant &output, Ts const &... parameters)
+  bool Execute(Script const &script, std::string const &name, std::string &error, Variant &output,
+               Ts const &... parameters)
 
   {
     ParameterPack parameter_pack{registered_types_};
@@ -192,8 +188,8 @@ public:
     return Execute(script, name, error, output, parameter_pack);
   }
 
-  bool Execute(Script const &script, std::string const &name, std::string &error,
-               Variant &output, ParameterPack const &parameters)
+  bool Execute(Script const &script, std::string const &name, std::string &error, Variant &output,
+               ParameterPack const &parameters)
   {
     bool success{false};
 
@@ -258,17 +254,17 @@ public:
     return new T(this, GetTypeId<T>(), std::forward<Args>(args)...);
   }
 
-  template< typename T >
-  void RegisterGlobalPointer(T* ptr)
+  template <typename T>
+  void RegisterGlobalPointer(T *ptr)
   {
     pointer_register_.Set(ptr);
   }
-    
-  template< typename T >
-  T* GetGlobalPointer()
+
+  template <typename T>
+  T *GetGlobalPointer()
   {
-    T* ptr = pointer_register_.Get<T>();
-    if(ptr == nullptr)
+    T *ptr = pointer_register_.Get<T>();
+    if (ptr == nullptr)
     {
       RuntimeError("could not find pointer.");
     }
@@ -285,7 +281,6 @@ public:
     io_observer_ = nullptr;
   }
 
-
   bool HasIoObserver() const
   {
     return io_observer_ != nullptr;
@@ -297,42 +292,42 @@ public:
     return *io_observer_;
   }
 
-  std::ostream& GetOutputDevice(std::string name)
+  std::ostream &GetOutputDevice(std::string name)
   {
-    if(output_devices_.find(name) == output_devices_.end())
+    if (output_devices_.find(name) == output_devices_.end())
     {
-      RuntimeError("output device "+name+" does not exist.");
+      RuntimeError("output device " + name + " does not exist.");
       return std::cout;
     }
     return *output_devices_[name];
   }
 
-  std::istream& GetInputDevice(std::string name)
+  std::istream &GetInputDevice(std::string name)
   {
-    if(input_devices_.find(name) == input_devices_.end())
+    if (input_devices_.find(name) == input_devices_.end())
     {
-      RuntimeError("input device "+name+" does not exist.");
+      RuntimeError("input device " + name + " does not exist.");
       return std::cin;
     }
     return *input_devices_[name];
-  }  
+  }
 
   void DetachInputDevice(std::string name)
   {
     auto it = input_devices_.find(name);
-    if(it != input_devices_.end())
+    if (it != input_devices_.end())
     {
       input_devices_.erase(it);
     }
     else
     {
-      throw std::runtime_error("Input device does not exists.");      
+      throw std::runtime_error("Input device does not exists.");
     }
   }
 
-  void AttachInputDevice(std::string name, std::istream& device)
+  void AttachInputDevice(std::string name, std::istream &device)
   {
-    if(input_devices_.find(name)!=input_devices_.end())
+    if (input_devices_.find(name) != input_devices_.end())
     {
       throw std::runtime_error("Input device already exists.");
     }
@@ -343,25 +338,26 @@ public:
   void DetachOutputDevice(std::string name)
   {
     auto it = output_devices_.find(name);
-    if(it != output_devices_.end())
+    if (it != output_devices_.end())
     {
       output_devices_.erase(it);
     }
     else
     {
-      throw std::runtime_error("Output device does not exists.");      
+      throw std::runtime_error("Output device does not exists.");
     }
   }
 
-  void AttachOutputDevice(std::string name, std::ostream& device)
+  void AttachOutputDevice(std::string name, std::ostream &device)
   {
-    if(output_devices_.find(name)!=output_devices_.end())
+    if (output_devices_.find(name) != output_devices_.end())
     {
       throw std::runtime_error("output device already exists.");
     }
-    
+
     output_devices_.insert({std::move(name), &device});
-  }  
+  }
+
 private:
   static const int FRAME_STACK_SIZE = 50;
   static const int STACK_SIZE       = 5000;
@@ -428,10 +424,10 @@ private:
   bool                       stop_;
   std::string                error_;
 
-  IoObserverInterface       *io_observer_{nullptr};
-  OutputDeviceMap            output_devices_;
-  InputDeviceMap             input_devices_;  
-  PointerRegister            pointer_register_;
+  IoObserverInterface *io_observer_{nullptr};
+  OutputDeviceMap      output_devices_;
+  InputDeviceMap       input_devices_;
+  PointerRegister      pointer_register_;
 
   bool Execute(std::string &error, Variant &output);
   void Destruct(int scope_number);

@@ -38,8 +38,8 @@
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
 
 #include "ledger/dag/dag.hpp"
+#include "ledger/dag/dag_muddle_configuration.hpp"  //< TODO(tfr): Move to where it belongs
 #include "ledger/protocols/dag_rpc_service.hpp"
-#include "ledger/dag/dag_muddle_configuration.hpp" //< TODO(tfr): Move to where it belongs
 
 #include <algorithm>
 #include <atomic>
@@ -183,10 +183,9 @@ private:
 
   /// @name DAG and useful work
   /// @{
-  DAG dag_;
+  DAG           dag_;
   DAGRpcService dag_rpc_service_;
- /// @}
-
+  /// @}
 
   /// @name Blockchain and Mining
   /// @[

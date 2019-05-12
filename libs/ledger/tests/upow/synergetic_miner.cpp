@@ -21,27 +21,27 @@
 #include "ledger/upow/work.hpp"
 #include "ledger/upow/work_register.hpp"
 
+#include <fstream>
 #include <gtest/gtest.h>
 #include <memory>
 #include <random>
-#include <fstream>
 
-//using ::testing::_;
+// using ::testing::_;
 
 class SynergeticMinerTest : public ::testing::Test
 {
 public:
-  using DAG = fetch::ledger::DAG;
+  using DAG             = fetch::ledger::DAG;
   using SynergeticMiner = fetch::consensus::SynergeticMiner;
-  using UniqueMiner = std::unique_ptr< SynergeticMiner >;
-  using UniqueDAG = std::unique_ptr< DAG >;
+  using UniqueMiner     = std::unique_ptr<SynergeticMiner>;
+  using UniqueDAG       = std::unique_ptr<DAG>;
 
   SynergeticMinerTest() = default;
 
   void SetUp() override
   {
-    std::ifstream      file("./synergetic_test_contract.etch", std::ios::binary);
-    if(!file)
+    std::ifstream file("./synergetic_test_contract.etch", std::ios::binary);
+    if (!file)
     {
       throw std::runtime_error("Could not open contract code.");
     }
@@ -51,10 +51,10 @@ public:
 
     file.close();
 
-    dag_ = UniqueDAG( new DAG() );
-    miner_ = UniqueMiner( new SynergeticMiner(*dag_.get()) );
+    dag_   = UniqueDAG(new DAG());
+    miner_ = UniqueMiner(new SynergeticMiner(*dag_.get()));
     miner_->AttachStandardOutputDevice(std::cout);
-    
+
     LoadDAG("./synergetic_test_dag.dag");
   }
 
@@ -64,9 +64,9 @@ public:
     dag_.reset();
   }
 
-  bool Mine() 
+  bool Mine()
   {
-    if(!cregister_.CreateContract("fetch.synergetic", source_))
+    if (!cregister_.CreateContract("fetch.synergetic", source_))
     {
       std::cout << "Could not create contract." << std::endl;
       return false;
@@ -74,21 +74,21 @@ public:
 
     fetch::consensus::Work work;
     work.contract_name = "fetch.synergetic";
-    work.miner = "miner9";
+    work.miner         = "miner9";
 
     auto contract = cregister_.GetContract(work.contract_name);
-    if(contract == nullptr)
+    if (contract == nullptr)
     {
       std::cout << "Could not contract is null.";
       exit(-1);
     }
 
-    if(!miner_->AttachContract(contract))
+    if (!miner_->AttachContract(contract))
     {
       std::cout << "Could not attach contract";
       exit(-1);
     }
-    if(!miner_->DefineProblem())
+    if (!miner_->DefineProblem())
     {
       std::cout << "Could not define problem!" << std::endl;
       return false;
@@ -96,35 +96,36 @@ public:
 
     // Let's mine
     fetch::consensus::WorkRegister wreg;
-    fetch::math::BigUnsigned nonce(29188);
+    fetch::math::BigUnsigned       nonce(29188);
 
-    fetch::consensus::Work::ScoreType best_score = std::numeric_limits< fetch::consensus::Work::ScoreType >::max();
-    for(int64_t i = 0; i < 10; ++i) {
+    fetch::consensus::Work::ScoreType best_score =
+        std::numeric_limits<fetch::consensus::Work::ScoreType>::max();
+    for (int64_t i = 0; i < 10; ++i)
+    {
       work.nonce = nonce;
       ++nonce;
-      
+
       work.score = miner_->ExecuteWork(work);
 
-      if(work.score < best_score)
+      if (work.score < best_score)
       {
         best_score = work.score;
       }
       wreg.RegisterWork(work);
     }
 
-    auto best_work = wreg.ClearWorkPool( cregister_.GetContract(work.contract_name) );
+    auto best_work = wreg.ClearWorkPool(cregister_.GetContract(work.contract_name));
 
     miner_->DetachContract();
 
-    return  best_work.score == best_score;
+    return best_work.score == best_score;
   }
 
 private:
-
   void LoadDAG(std::string const &filename)
   {
     std::fstream data_file(filename, std::ios::in);
-    if(!data_file)
+    if (!data_file)
     {
       throw std::runtime_error("file could not be opened.");
     }
@@ -136,46 +137,46 @@ private:
     data_file >> std::ws;
 
     uint32_t i = 0;
-    int j = 0;
-    for(; i < item_count; ++i)
+    int      j = 0;
+    for (; i < item_count; ++i)
     {
-      double price;
-      std::string id;
+      double                  price;
+      std::string             id;
       fetch::variant::Variant doc = fetch::variant::Variant::Object();
       data_file >> id >> price >> std::ws;
 
-      doc["type"] = 2;
-      doc["id"] = j++;
+      doc["type"]  = 2;
+      doc["id"]    = j++;
       doc["agent"] = id;
       doc["price"] = price;
 
       // Saving to DAG.
       fetch::ledger::DAGNode node;
-      for(auto const &n: dag_->nodes())
+      for (auto const &n : dag_->nodes())
       {
         node.previous.push_back(n.second.hash);
       }
 
       std::stringstream body;
       body << doc;
-      node.contents  = body.str();
+      node.contents = body.str();
       dag_->Push(node);
-    }  
+    }
 
     // #agent_id, #items item0 ... itemN price #exludes exclude0 ... exludeM
     j = 0;
 
-    for(; i < bid_count; ++i)  
+    for (; i < bid_count; ++i)
     {
       fetch::variant::Variant doc = fetch::variant::Variant::Object();
 
       uint32_t agent_id, no_items, no_excludes;
-      double price;
+      double   price;
 
       data_file >> agent_id >> no_items;
-      fetch::variant::Variant bid_on = fetch::variant::Variant::Array(no_items);     
+      fetch::variant::Variant bid_on = fetch::variant::Variant::Array(no_items);
 
-      for(uint32_t j=0; j < no_items; ++j)
+      for (uint32_t j = 0; j < no_items; ++j)
       {
         uint32_t item;
         data_file >> item;
@@ -186,43 +187,40 @@ private:
       data_file >> no_excludes;
       fetch::variant::Variant excludes = fetch::variant::Variant::Array(no_excludes);
 
-      for(uint32_t j=0; j < no_excludes; ++j)
+      for (uint32_t j = 0; j < no_excludes; ++j)
       {
-        uint32_t exclude;      
+        uint32_t exclude;
         data_file >> exclude;
         excludes[j] = exclude;
       }
-      doc["id"] = j++;
-      doc["type"] = 3;
-      doc["agent"] = agent_id;
-      doc["price"] = price;
-      doc["bid_on"] = bid_on;
+      doc["id"]       = j++;
+      doc["type"]     = 3;
+      doc["agent"]    = agent_id;
+      doc["price"]    = price;
+      doc["bid_on"]   = bid_on;
       doc["excludes"] = excludes;
-      
+
       // Saving to DAG.
       fetch::ledger::DAGNode node;
-      for(auto const &n: dag_->nodes())
+      for (auto const &n : dag_->nodes())
       {
         node.previous.push_back(n.second.hash);
       }
 
       std::stringstream body;
       body << doc;
-      node.contents  = body.str();
+      node.contents = body.str();
       dag_->Push(node);
     }
   }
 
-
-  UniqueMiner miner_;
-  UniqueDAG dag_;
-  std::string source_;
-  fetch::consensus::SynergeticContractRegister cregister_;  
+  UniqueMiner                                  miner_;
+  UniqueDAG                                    dag_;
+  std::string                                  source_;
+  fetch::consensus::SynergeticContractRegister cregister_;
 };
-
 
 TEST_F(SynergeticMinerTest, CheckMinerExecution)
 {
   EXPECT_TRUE(Mine());
-
 }

@@ -58,19 +58,15 @@ public:
     auto module = std::make_shared<fetch::vm::Module>();
 
     ByteArrayWrapper::Bind(*module);
-    BigNumberWrapper::Bind(*module);    
+    BigNumberWrapper::Bind(*module);
     SHA256Wrapper::Bind(*module);
-    
+
     // core modules
     CreatePrint(*module);
     CreateToString(*module);
 
     // math modules
     CreateAbs(*module);
-
-
-
-
 
     // ml modules - order is important!!
     ml::CreateTensor(*module);

@@ -205,10 +205,11 @@ public:
     clients_.Debug(prefix);
   }
 
-  NetworkId            network_id()
+  NetworkId network_id()
   {
     return network_id_;
   }
+
 private:
   using Server     = std::shared_ptr<network::AbstractNetworkServer>;
   using ServerList = std::vector<Server>;

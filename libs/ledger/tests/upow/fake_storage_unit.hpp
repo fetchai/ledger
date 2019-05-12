@@ -151,17 +151,17 @@ public:
     return "";
   };
 
-  bool RevertToHash(Hash const &, uint64_t ) override
+  bool RevertToHash(Hash const &, uint64_t) override
   {
     return true;
-  }  
+  }
 
-  Hash Commit(uint64_t ) override
+  Hash Commit(uint64_t) override
   {
     return "";
   };
 
-  bool HashExists(Hash const &, uint64_t ) override
+  bool HashExists(Hash const &, uint64_t) override
   {
     return true;
   };

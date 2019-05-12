@@ -28,28 +28,25 @@
 #include "ledger/chain/block.hpp"
 
 #include "dag_node_wrapper.hpp"
-namespace fetch
-{
-namespace vm_modules
-{
+namespace fetch {
+namespace vm_modules {
 
 struct ChainState
-{  
-  ledger::DAG  *dag{nullptr};
+{
+  ledger::DAG * dag{nullptr};
   ledger::Block block;
 };
 
-inline uint64_t GetBlockNumber(fetch::vm::VM * vm)
+inline uint64_t GetBlockNumber(fetch::vm::VM *vm)
 {
-  auto state = vm->GetGlobalPointer<ChainState> ();
+  auto state = vm->GetGlobalPointer<ChainState>();
   return state->block.body.block_number;
 }
 
-inline void CreateChainFunctions(vm::Module& module)
+inline void CreateChainFunctions(vm::Module &module)
 {
   module.CreateFreeFunction("getBlockNumber", &GetBlockNumber);
-
 }
 
-}
-}
+}  // namespace vm_modules
+}  // namespace fetch

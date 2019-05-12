@@ -25,21 +25,20 @@
 #include "vm/vm.hpp"
 
 #include "core/json/document.hpp"
-#include "ledger/dag/dag.hpp"
 #include "ledger/chain/block.hpp"
-#include "vm_modules/ledger/dag_node_wrapper.hpp"
+#include "ledger/dag/dag.hpp"
 #include "vm_modules/ledger/chain_state.hpp"
-namespace fetch
-{
-namespace vm_modules
-{
+#include "vm_modules/ledger/dag_node_wrapper.hpp"
+namespace fetch {
+namespace vm_modules {
 
-template<typename T>
-vm::Ptr< vm::Array< vm::Ptr< T > > > CreateNewArray(vm::VM *vm, std::vector< vm::Ptr< T > > items)
+template <typename T>
+vm::Ptr<vm::Array<vm::Ptr<T>>> CreateNewArray(vm::VM *vm, std::vector<vm::Ptr<T>> items)
 {
-  vm::Ptr< vm::Array< fetch::vm::Ptr<T> > > array = new vm::Array< fetch::vm::Ptr<T> > (vm, vm->GetTypeId< vm::IArray >(), int32_t(items.size()));
+  vm::Ptr<vm::Array<fetch::vm::Ptr<T>>> array =
+      new vm::Array<fetch::vm::Ptr<T>>(vm, vm->GetTypeId<vm::IArray>(), int32_t(items.size()));
   std::size_t idx = 0;
-  for(auto const &e: items)
+  for (auto const &e : items)
   {
     array->elements[idx++] = e;
   }
@@ -49,65 +48,62 @@ vm::Ptr< vm::Array< vm::Ptr< T > > > CreateNewArray(vm::VM *vm, std::vector< vm:
 class DAGWrapper : public fetch::vm::Object
 {
 public:
-
   DAGWrapper()          = delete;
   virtual ~DAGWrapper() = default;
 
   static void Bind(vm::Module &module)
   {
-    module.CreateClassType<DAGWrapper>("DAG")
-      .CreateTypeConstuctor<>()
-      .CreateInstanceFunction("getNodes", &DAGWrapper::GetNodes);
+    module.CreateClassType<DAGWrapper>("DAG").CreateTypeConstuctor<>().CreateInstanceFunction(
+        "getNodes", &DAGWrapper::GetNodes);
   }
 
   DAGWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, ChainState *chain_state)
     : fetch::vm::Object(vm, type_id)
     , chain_state_(chain_state)
     , vm_(vm)
-  { }
+  {}
 
   static fetch::vm::Ptr<DAGWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
   {
-    auto dag = vm->GetGlobalPointer<ChainState> ();
+    auto dag = vm->GetGlobalPointer<ChainState>();
     return new DAGWrapper(vm, type_id, dag);
   }
 
-  vm::Ptr< vm::Array< vm::Ptr< DAGNodeWrapper > > > GetNodes()
+  vm::Ptr<vm::Array<vm::Ptr<DAGNodeWrapper>>> GetNodes()
   {
-    std::vector< vm::Ptr< DAGNodeWrapper > > items;
+    std::vector<vm::Ptr<DAGNodeWrapper>> items;
 
-    if(chain_state_->dag == nullptr)
+    if (chain_state_->dag == nullptr)
     {
       RuntimeError("DAG pointer is null.");
       return nullptr;
     }
 
     // TODO: Make it such that multiple block times can be extracted
-    auto nodes = chain_state_->dag->ExtractSegment(chain_state_->block); 
+    auto nodes = chain_state_->dag->ExtractSegment(chain_state_->block);
 
-    for(auto &n : nodes )
+    for (auto &n : nodes)
     {
       // We ignore anything that does not reference the past
-      if(n.previous.size() == 0)
+      if (n.previous.size() == 0)
       {
         continue;
       }
 
       // Only data is available inside the contract
-      if(n.type == ledger::DAGNode::DATA)
+      if (n.type == ledger::DAGNode::DATA)
       {
-        items.push_back( vm_->CreateNewObject< DAGNodeWrapper >( n ) );
+        items.push_back(vm_->CreateNewObject<DAGNodeWrapper>(n));
       }
     }
 
     return CreateNewArray(vm_, items);
-  }  
-    
+  }
+
 private:
-  ChainState* chain_state_;
+  ChainState *   chain_state_;
   fetch::vm::VM *vm_;
 };
 
-
-}
-}
+}  // namespace vm_modules
+}  // namespace fetch

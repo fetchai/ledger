@@ -534,10 +534,10 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   // create the initial query response
   response = Query::Object();
 
-  vm::Variant output;
-  std::string error;
+  vm::Variant       output;
+  std::string       error;
   std::stringstream console;
-  
+
   vm->AttachOutputDevice("stdout", console);
 
   if (!vm->Execute(*script_, name, error, output, params))
@@ -588,7 +588,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
     response["result"] = output.Get<vm::Ptr<vm::String>>()->str;
     break;
   default:
-    // TODO: Deal with general data structures
+    // TODO(unknown): Deal with general data structures
     break;
   }
 

@@ -20,25 +20,24 @@
 #include "vm/analyser.hpp"
 #include "vm/typeids.hpp"
 
+#include "core/byte_array/decoders.hpp"
+#include "core/byte_array/encoders.hpp"
+#include "core/json/document.hpp"
+#include "ledger/dag/dag.hpp"
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
-#include "ledger/dag/dag.hpp"
-#include "core/json/document.hpp"
-#include "core/byte_array/encoders.hpp"
-#include "core/byte_array/decoders.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
-namespace fetch
+namespace fetch {
+namespace vm_modules {
+template <typename T>
+vm::Ptr<vm::Array<T>> CreateNewPrimitiveArray(vm::VM *vm, std::vector<T> items)
 {
-namespace vm_modules
-{
-template<typename T>
-vm::Ptr< vm::Array< T > > CreateNewPrimitiveArray(vm::VM *vm, std::vector< T > items)
-{
-  vm::Ptr< vm::Array< T > > array = new vm::Array< T > (vm, vm->GetTypeId< vm::IArray >(), int32_t(items.size()));
+  vm::Ptr<vm::Array<T>> array =
+      new vm::Array<T>(vm, vm->GetTypeId<vm::IArray>(), int32_t(items.size()));
   std::size_t idx = 0;
 
-  for(auto const &e: items)
+  for (auto const &e : items)
   {
     array->elements[idx++] = e;
   }
@@ -58,53 +57,53 @@ public:
   {
     auto interface = module.CreateClassType<DAGNodeWrapper>("DAGNode");
 
-    interface
-      .CreateTypeConstuctor<>()
-      .CreateInstanceFunction("owner", &DAGNodeWrapper::owner)
-      .CreateInstanceFunction("has", &DAGNodeWrapper::Has)
-      // Getters
-      .CreateInstanceFunction("getNumber", &DAGNodeWrapper::GetNumber)      
-      .CreateInstanceFunction("getArrayFloat32", &DAGNodeWrapper::GetArray<float>)
-      .CreateInstanceFunction("getArrayFloat64", &DAGNodeWrapper::GetArray<double>)      
-      .CreateInstanceFunction("getArrayInt32", &DAGNodeWrapper::GetArray<int32_t>)
-      .CreateInstanceFunction("getArrayInt64", &DAGNodeWrapper::GetArray<int64_t>)
-      .CreateInstanceFunction("getArrayUInt32", &DAGNodeWrapper::GetArray<uint32_t>)
-      .CreateInstanceFunction("getArrayUInt64", &DAGNodeWrapper::GetArray<uint64_t>)
-      .CreateInstanceFunction("getFloat32", &DAGNodeWrapper::GetPrimitive<float>)
-      .CreateInstanceFunction("getFloat64", &DAGNodeWrapper::GetPrimitive<double>)      
-      .CreateInstanceFunction("getInt32", &DAGNodeWrapper::GetPrimitive<int32_t>)
-      .CreateInstanceFunction("getInt64", &DAGNodeWrapper::GetPrimitive<int64_t>)
-      .CreateInstanceFunction("getUInt32", &DAGNodeWrapper::GetPrimitive<uint32_t>)
-      .CreateInstanceFunction("getUInt64", &DAGNodeWrapper::GetPrimitive<uint64_t>)
-      .CreateInstanceFunction("getString", &DAGNodeWrapper::GetString)
-      .CreateInstanceFunction("getBuffer", &DAGNodeWrapper::GetBuffer)      
-//      .CreateInstanceFunction("GetStringArray", &DAGNodeWrapper::GetArrayString)      
-      // Setters
-//      .CreateInstanceFunction("set", &DAGNodeWrapper::SetStringArray)
-      .CreateInstanceFunction("set", &DAGNodeWrapper::SetBuffer)      
-      .CreateInstanceFunction("set", &DAGNodeWrapper::SetString)
-      .CreateInstanceFunction("set", &DAGNodeWrapper::SetArray<float>)
-      .CreateInstanceFunction("set", &DAGNodeWrapper::SetArray<double>)      
-      .CreateInstanceFunction("set", &DAGNodeWrapper::SetArray<int32_t>)
-      .CreateInstanceFunction("set", &DAGNodeWrapper::SetArray<int64_t>)
-      .CreateInstanceFunction("set", &DAGNodeWrapper::SetArray<uint32_t>)
-      .CreateInstanceFunction("set", &DAGNodeWrapper::SetArray<uint64_t>)
-      .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<float>)
-      .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<double>)      
-      .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<int32_t>)
-      .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<int64_t>)
-      .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<uint32_t>)
-      .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<uint64_t>);      
+    interface.CreateTypeConstuctor<>()
+        .CreateInstanceFunction("owner", &DAGNodeWrapper::owner)
+        .CreateInstanceFunction("has", &DAGNodeWrapper::Has)
+        // Getters
+        .CreateInstanceFunction("getNumber", &DAGNodeWrapper::GetNumber)
+        .CreateInstanceFunction("getArrayFloat32", &DAGNodeWrapper::GetArray<float>)
+        .CreateInstanceFunction("getArrayFloat64", &DAGNodeWrapper::GetArray<double>)
+        .CreateInstanceFunction("getArrayInt32", &DAGNodeWrapper::GetArray<int32_t>)
+        .CreateInstanceFunction("getArrayInt64", &DAGNodeWrapper::GetArray<int64_t>)
+        .CreateInstanceFunction("getArrayUInt32", &DAGNodeWrapper::GetArray<uint32_t>)
+        .CreateInstanceFunction("getArrayUInt64", &DAGNodeWrapper::GetArray<uint64_t>)
+        .CreateInstanceFunction("getFloat32", &DAGNodeWrapper::GetPrimitive<float>)
+        .CreateInstanceFunction("getFloat64", &DAGNodeWrapper::GetPrimitive<double>)
+        .CreateInstanceFunction("getInt32", &DAGNodeWrapper::GetPrimitive<int32_t>)
+        .CreateInstanceFunction("getInt64", &DAGNodeWrapper::GetPrimitive<int64_t>)
+        .CreateInstanceFunction("getUInt32", &DAGNodeWrapper::GetPrimitive<uint32_t>)
+        .CreateInstanceFunction("getUInt64", &DAGNodeWrapper::GetPrimitive<uint64_t>)
+        .CreateInstanceFunction("getString", &DAGNodeWrapper::GetString)
+        .CreateInstanceFunction("getBuffer", &DAGNodeWrapper::GetBuffer)
+        //      .CreateInstanceFunction("GetStringArray", &DAGNodeWrapper::GetArrayString)
+        // Setters
+        //      .CreateInstanceFunction("set", &DAGNodeWrapper::SetStringArray)
+        .CreateInstanceFunction("set", &DAGNodeWrapper::SetBuffer)
+        .CreateInstanceFunction("set", &DAGNodeWrapper::SetString)
+        .CreateInstanceFunction("set", &DAGNodeWrapper::SetArray<float>)
+        .CreateInstanceFunction("set", &DAGNodeWrapper::SetArray<double>)
+        .CreateInstanceFunction("set", &DAGNodeWrapper::SetArray<int32_t>)
+        .CreateInstanceFunction("set", &DAGNodeWrapper::SetArray<int64_t>)
+        .CreateInstanceFunction("set", &DAGNodeWrapper::SetArray<uint32_t>)
+        .CreateInstanceFunction("set", &DAGNodeWrapper::SetArray<uint64_t>)
+        .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<float>)
+        .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<double>)
+        .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<int32_t>)
+        .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<int64_t>)
+        .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<uint32_t>)
+        .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<uint64_t>);
   }
 
   DAGNodeWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, Node const &node)
     : fetch::vm::Object(vm, type_id)
     , node_(node)
   {
-    try {
+    try
+    {
       contents_.Parse(node_.contents);
-    } 
-    catch(std::exception const &e)
+    }
+    catch (std::exception const &e)
     {
       vm->RuntimeError(e.what());
     }
@@ -115,65 +114,66 @@ public:
   {
     // VM can by default only produce DATA
     node_.type = Node::DATA;
-  }  
+  }
 
   static fetch::vm::Ptr<DAGNodeWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
   {
     return new DAGNodeWrapper(vm, type_id);
   }
 
-  fetch::vm::Ptr< ByteArrayWrapper > owner()
+  fetch::vm::Ptr<ByteArrayWrapper> owner()
   {
     return vm_->CreateNewObject<ByteArrayWrapper>(node_.identity.identifier());
   }
 
-  bool Has(vm::Ptr< vm::String > const& s)
+  bool Has(vm::Ptr<vm::String> const &s)
   {
     return contents_.Has(s->str);
   }
 
-  vm::Ptr< vm::String > GetString(vm::Ptr< vm::String > const& s)
+  vm::Ptr<vm::String> GetString(vm::Ptr<vm::String> const &s)
   {
     std::string ret;
-    try 
+    try
     {
-      ret = static_cast<std::string>(byte_array::FromBase64(contents_[s->str].As<byte_array::ConstByteArray>()));
+      ret = static_cast<std::string>(
+          byte_array::FromBase64(contents_[s->str].As<byte_array::ConstByteArray>()));
     }
-    catch(std::runtime_error const& e)
-    {    
+    catch (std::runtime_error const &e)
+    {
       vm_->RuntimeError(e.what());
     }
-    return  new fetch::vm::String(vm_, ret);
+    return new fetch::vm::String(vm_, ret);
   }
 
-  vm::Ptr< ByteArrayWrapper > GetBuffer(vm::Ptr< vm::String > const& s)
+  vm::Ptr<ByteArrayWrapper> GetBuffer(vm::Ptr<vm::String> const &s)
   {
     byte_array::ByteArray ret;
-    try 
+    try
     {
       ret = byte_array::FromBase64(contents_[s->str].As<byte_array::ConstByteArray>());
     }
-    catch(std::runtime_error const& e)
-    {    
+    catch (std::runtime_error const &e)
+    {
       vm_->RuntimeError(e.what());
     }
-    return vm_->CreateNewObject< ByteArrayWrapper >(ret);
+    return vm_->CreateNewObject<ByteArrayWrapper>(ret);
   }
 
-  double GetNumber(vm::Ptr< vm::String > const& s)
+  double GetNumber(vm::Ptr<vm::String> const &s)
   {
     double ret = 0;
-    try 
+    try
     {
       ret = contents_[s->str].As<double>();
     }
-    catch(std::runtime_error const& e)
-    {    
-      try 
+    catch (std::runtime_error const &e)
+    {
+      try
       {
         ret = static_cast<double>(contents_[s->str].As<int64_t>());
       }
-      catch(std::runtime_error const& e)
+      catch (std::runtime_error const &e)
       {
         vm_->RuntimeError(e.what());
       }
@@ -181,91 +181,87 @@ public:
     return ret;
   }
 
-  template< typename T > 
-  T GetPrimitive(vm::Ptr< vm::String > const& s)
+  template <typename T>
+  T GetPrimitive(vm::Ptr<vm::String> const &s)
   {
     T ret = 0;
 
-    try 
+    try
     {
       ret = contents_[s->str].As<T>();
     }
-    catch(std::runtime_error const& e)
+    catch (std::runtime_error const &e)
     {
       vm_->RuntimeError(e.what());
-    } 
+    }
     return ret;
   }
 
-
-
-  template< typename T > 
-  vm::Ptr< vm::Array< T > > GetArray(vm::Ptr< vm::String > const& s)
+  template <typename T>
+  vm::Ptr<vm::Array<T>> GetArray(vm::Ptr<vm::String> const &s)
   {
-    auto arr = contents_[s->str];
-    std::vector< T > elements;
+    auto           arr = contents_[s->str];
+    std::vector<T> elements;
     elements.resize(arr.size());
 
     try
     {
-      for(std::size_t i =0; i < arr.size(); ++i)
+      for (std::size_t i = 0; i < arr.size(); ++i)
       {
-        elements[i] = arr[i].As< T >();
+        elements[i] = arr[i].As<T>();
       }
     }
-    catch(std::runtime_error const& e)
+    catch (std::runtime_error const &e)
     {
       vm_->RuntimeError(e.what());
-    }    
+    }
     return CreateNewPrimitiveArray(this->vm_, elements);
   }
 
-  template< typename T > 
-  void SetPrimitive(vm::Ptr< vm::String > const& s, T value)
-  {    
+  template <typename T>
+  void SetPrimitive(vm::Ptr<vm::String> const &s, T value)
+  {
     contents_[s->str] = value;
   }
 
-
-  template< typename T > 
-  void SetArray(vm::Ptr< vm::String > const& s, vm::Ptr< vm::Array< T > > const &arr)
+  template <typename T>
+  void SetArray(vm::Ptr<vm::String> const &s, vm::Ptr<vm::Array<T>> const &arr)
   {
-    auto variant_array = variant::Variant::Array( arr->elements.size() );
+    auto variant_array = variant::Variant::Array(arr->elements.size());
 
-    for(std::size_t i =0; i < arr->elements.size(); ++i)
+    for (std::size_t i = 0; i < arr->elements.size(); ++i)
     {
-      variant_array[i] =  arr->elements[i];
+      variant_array[i] = arr->elements[i];
     }
 
     contents_[s->str] = variant_array;
-  }  
+  }
 
-  void SetString(vm::Ptr< vm::String > const& s, vm::Ptr< vm::String > const &value)
-  {    
+  void SetString(vm::Ptr<vm::String> const &s, vm::Ptr<vm::String> const &value)
+  {
     contents_[s->str] = byte_array::ToBase64(value->str);
   }
 
-  void SetBuffer(vm::Ptr< vm::String > const& s, vm::Ptr< ByteArrayWrapper > const &value)
-  {    
+  void SetBuffer(vm::Ptr<vm::String> const &s, vm::Ptr<ByteArrayWrapper> const &value)
+  {
     contents_[s->str] = byte_array::ToBase64(value->byte_array());
   }
 
-
-  Node ToDAGNode() 
+  Node ToDAGNode()
   {
     std::stringstream body;
     body << contents_.root();
 
-    node_.type = Node::DATA;    
-    node_.contents  = body.str();        
+    node_.type     = Node::DATA;
+    node_.contents = body.str();
 
     return node_;
   }
+
 private:
-  Node node_;
+  Node               node_;
   json::JSONDocument contents_{};
 };
 
-
-}
-}
+}  // namespace vm_modules
+}  // namespace fetch

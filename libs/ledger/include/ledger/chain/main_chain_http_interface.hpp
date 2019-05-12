@@ -21,10 +21,10 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
-#include "miner/resource_mapper.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "miner/resource_mapper.hpp"
 
 #include <random>
 #include <sstream>
@@ -35,7 +35,7 @@ namespace ledger {
 class MainChainHTTPInterface : public http::HTTPModule
 {
 public:
-  using MainChain   = ledger::MainChain;
+  using MainChain = ledger::MainChain;
 
   static constexpr char const *LOGGING_NAME = "MainChainHTTPInterface";
 
@@ -48,14 +48,13 @@ public:
           std::cout << "WAS HERE! 222" << std::endl;
           return GetChain(params, request);
         });
-
   }
 
 private:
   using Variant = variant::Variant;
 
   http::HTTPResponse GetChain(http::ViewParameters const & /*params*/,
-                                    http::HTTPRequest const &request)
+                              http::HTTPRequest const &request)
   {
     std::size_t chain_length         = 20;
     bool        include_transactions = false;
@@ -70,7 +69,7 @@ private:
       include_transactions = true;
     }
 
-    Variant response     =  GenerateBlockList(include_transactions, chain_length);
+    Variant response = GenerateBlockList(include_transactions, chain_length);
 
     return http::CreateJsonResponse(response);
   }
@@ -151,11 +150,9 @@ private:
     return block_list;
   }
 
-  uint32_t     log2_num_lanes_;
-  MainChain &  chain_;
+  uint32_t   log2_num_lanes_;
+  MainChain &chain_;
 };
 
-
-
-}
-}
+}  // namespace ledger
+}  // namespace fetch

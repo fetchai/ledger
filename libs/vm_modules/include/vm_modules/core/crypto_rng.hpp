@@ -20,15 +20,13 @@
 #include "vm/analyser.hpp"
 #include "vm/typeids.hpp"
 
+#include "core/random/lfg.hpp"
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
-#include "core/random/lfg.hpp"
 
-namespace fetch
-{
-namespace vm_modules
-{
+namespace fetch {
+namespace vm_modules {
 
 class CryptoRNG : public fetch::vm::Object
 {
@@ -39,9 +37,9 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<CryptoRNG>("CryptoRNG")
-      .CreateTypeConstuctor<uint64_t>()
-      .CreateInstanceFunction("next", &CryptoRNG::Next)
-      .CreateInstanceFunction("nextAsFloat", &CryptoRNG::NextAsFloat);
+        .CreateTypeConstuctor<uint64_t>()
+        .CreateInstanceFunction("next", &CryptoRNG::Next)
+        .CreateInstanceFunction("nextAsFloat", &CryptoRNG::NextAsFloat);
   }
 
   CryptoRNG(fetch::vm::VM *vm, fetch::vm::TypeId type_id, uint64_t seed)
@@ -50,7 +48,7 @@ public:
   {}
 
   static fetch::vm::Ptr<CryptoRNG> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                             uint64_t seed)
+                                               uint64_t seed)
   {
     return new CryptoRNG(vm, type_id, seed);
   }
@@ -60,7 +58,7 @@ public:
     return rng_();
   }
 
-  double NextAsFloat() // TODO: Replace with fixed point
+  double NextAsFloat()  // TODO: Replace with fixed point
   {
     return rng_.AsDouble();
   }
@@ -68,9 +66,7 @@ public:
 private:
   // TODO(tfr): Replace with "real" ledger based crypto rng
   random::LaggedFibonacciGenerator<> rng_;
-
 };
 
-
-}
-}
+}  // namespace vm_modules
+}  // namespace fetch

@@ -25,10 +25,9 @@ class Variant;
 }
 namespace ledger {
 
-byte_array::ByteArray ToWireDAGNode(DAGNode const &tx,
-                                        bool const                add_metadata = false);
-DAGNode    FromWireDAGNode(byte_array::ConstByteArray const &transaction);
-DAGNode    FromWireDAGNode(variant::Variant const &transaction);
+byte_array::ByteArray ToWireDAGNode(DAGNode const &tx, bool const add_metadata = false);
+DAGNode               FromWireDAGNode(byte_array::ConstByteArray const &transaction);
+DAGNode               FromWireDAGNode(variant::Variant const &transaction);
 
 }  // namespace ledger
 }  // namespace fetch

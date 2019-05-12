@@ -35,7 +35,7 @@ namespace ledger {
 class DAGHTTPInterface : public http::HTTPModule
 {
 public:
-  using DAG   = ledger::DAG;
+  using DAG                                 = ledger::DAG;
   static constexpr char const *LOGGING_NAME = "DAGHTTPInterface";
 
   DAGHTTPInterface(DAG &dag, DAGRpcService &rpc)
@@ -45,9 +45,9 @@ public:
   {
 
     Post("/api/dag/add-data",
-        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
-          return AddData(params, request);
-        }); 
+         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+           return AddData(params, request);
+         });
 
     Get("/api/dag/status",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
@@ -63,19 +63,17 @@ public:
   }
 
 private:
-  using Variant = variant::Variant;
+  using Variant        = variant::Variant;
   using ConstByteArray = byte_array::ConstByteArray;
-  using ECDSASigner = crypto::ECDSASigner;
-  using Rng = std::mt19937_64;
-  using RngWord = Rng::result_type;
-
+  using ECDSASigner    = crypto::ECDSASigner;
+  using Rng            = std::mt19937_64;
+  using RngWord        = Rng::result_type;
 
   // TODO (tfr): Temporary helper function that will be removed once wire format exists
-  ECDSASigner certificate_;
+  ECDSASigner         certificate_;
   fetch::mutex::Mutex generate_mutex_{__LINE__, __FILE__};
-  std::random_device random_dev_;
-  Rng rng_;
-
+  std::random_device  random_dev_;
+  Rng                 rng_;
 
   DAGNode GenerateNode(ConstByteArray const &data, uint64_t type)
   {
@@ -84,12 +82,12 @@ private:
     DAGNode node;
     node.contents = data;
     node.identity = certificate_.identity();
-    node.type = type;
+    node.type     = type;
 
     dag_.SetNodeReferences(node);
     node.Finalise();
 
-    if(!certificate_.Sign(node.hash))
+    if (!certificate_.Sign(node.hash))
     {
       throw std::runtime_error("Signing failed");
     }
@@ -101,22 +99,22 @@ private:
   // TODO(tfr): end of temporary function
 
   http::HTTPResponse AddData(http::ViewParameters const & /*params*/,
-                            http::HTTPRequest const &request)
+                             http::HTTPRequest const &request)
   {
-    Variant response     = Variant::Object();
+    Variant response = Variant::Object();
 
     json::JSONDocument doc;
     doc.Parse(request.body());
 
-    if(!doc.Has("payload"))
+    if (!doc.Has("payload"))
     {
       response["error"] = "Data request did not have a payload.";
       return http::CreateJsonResponse(response);
     }
 
     // TODO(tfr): Use wire format.
-    auto payload = doc["payload"].As<ConstByteArray>();
-    DAGNode node = GenerateNode(payload, DAGNode::DATA);    
+    auto    payload = doc["payload"].As<ConstByteArray>();
+    DAGNode node    = GenerateNode(payload, DAGNode::DATA);
 
     dag_rpc_.BroadcastDAGNode(node);
     dag_.Push(node);
@@ -124,32 +122,31 @@ private:
     return http::CreateJsonResponse(response);
   }
 
-
   http::HTTPResponse Status(http::ViewParameters const & /*params*/,
-                            http::HTTPRequest const &/*request*/)
+                            http::HTTPRequest const & /*request*/)
   {
-    Variant response     = Variant::Object();
+    Variant response = Variant::Object();
 
     return http::CreateJsonResponse(response);
   }
 
   http::HTTPResponse List(http::ViewParameters const & /*params*/,
-                          http::HTTPRequest const &/*request*/)
+                          http::HTTPRequest const & /*request*/)
   {
     uint64_t from = 0;
-    uint64_t to = dag_.node_count();
+    uint64_t to   = dag_.node_count();
 
     // TODO(tfr): add parameter to get chunk
 
-    auto list = dag_.GetChunk(from, to);
-    Variant response     = Variant::Array(list.size());
+    auto    list     = dag_.GetChunk(from, to);
+    Variant response = Variant::Array(list.size());
 
     std::size_t index = 0;
     for (auto const &obj : list)
     {
-      Variant previous = Variant::Array(obj.previous.size());
-      std::size_t j = 0;
-      for(auto const& h : obj.previous)
+      Variant     previous = Variant::Array(obj.previous.size());
+      std::size_t j        = 0;
+      for (auto const &h : obj.previous)
       {
         previous[j++] = byte_array::ToBase64(h);
       }
@@ -162,21 +159,17 @@ private:
       object["previous"]  = previous;
       object["contents"]  = obj.contents;
       object["hash"]      = byte_array::ToBase64(obj.hash);
-      object["signature"] = byte_array::ToBase64(obj.signature); 
+      object["signature"] = byte_array::ToBase64(obj.signature);
 
       response[index++] = object;
     }
 
-
     return http::CreateJsonResponse(response);
   }
 
-
-  DAG &  dag_;
-  DAGRpcService & dag_rpc_;
+  DAG &          dag_;
+  DAGRpcService &dag_rpc_;
 };
 
-
-
-}
-}
+}  // namespace ledger
+}  // namespace fetch

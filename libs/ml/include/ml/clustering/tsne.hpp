@@ -57,7 +57,7 @@ public:
        SizeType const &random_seed)
   {
     ArrayType output_matrix({input_matrix.shape().at(0), output_dimensions});
-    rng_.seed(static_cast< uint32_t > (random_seed));
+    rng_.seed(static_cast<uint32_t>(random_seed));
     RandomInitWeights(output_matrix);
     Init(input_matrix, output_matrix, perplexity);
   }

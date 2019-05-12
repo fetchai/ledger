@@ -54,7 +54,7 @@ protected:
 
     std::string        error;
     fetch::vm::Variant output;
-    std::stringstream console;
+    std::stringstream  console;
     vm_->AttachOutputDevice("stdout", console);
 
     // Execute our fn

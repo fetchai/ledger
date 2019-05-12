@@ -67,30 +67,24 @@ class BlockSinkInterface;
  *           │                                                  │                │
  *           │                                                  ▼                │
  *  Pipe 1   │                Pipe 2                  ┌──────────────────┐       │
- *           │                                        │   Synchronised   │       │ < (v) Add DAG hashes to block here.
- *           │                         ┌──────────────│Reverts as needed │◀ ┐    │ < ( ) Add revert here
- *           │                         │              └──────────────────┘       │
- *           │                         │                        │           │    │
+ *           │                                        │   Synchronised   │       │ < (v) Add DAG
+ * hashes to block here. │                         ┌──────────────│Reverts as needed │◀ ┐    │ < ( )
+ * Add revert here │                         │              └──────────────────┘       │ │ │ │ │ │
  *           │                         │                        │                │
  *           │                         │                        ├ ─ ─ ─ ─ ─ ┘    │
  *           ▼                         ▼                        │                │
- * ┌──────────────────┐      ┌──────────────────┐               │                │ < 1: Add synergetic validation here
- * │ Pre Exec. Block  │      │  Pack New Block  │               │                │ 
- * │    Validation    │      │                  │               │                │ 
- * └──────────────────┘      └──────────────────┘               │                │
- *           │                         │                        │                │
- *           │                         │                        │                │
- *           │                         │                        │                │
- *           ▼                         ▼                        │                │
- * ┌──────────────────┐      ┌──────────────────┐               │                │ < 1 & 2: Add synergetic execution here
- * │ Synergetic       │      │  Synergetic new  │               │                │ < // TODO: Move one down below wait for transactions
- * │ execution        │      │  execution       │               │                │ 
- * └──────────────────┘      └──────────────────┘               │                │
- *           │                         │                        │                │
- *           ▼                         ▼                        │                │ 
+ * ┌──────────────────┐      ┌──────────────────┐               │                │ < 1: Add
+ * synergetic validation here │ Pre Exec. Block  │      │  Pack New Block  │               │ │ │
+ * Validation    │      │                  │               │                │ └──────────────────┘
+ * └──────────────────┘               │                │ │                         │ │ │ │ │ │ │ │
+ * │                        │                │ ▼                         ▼                        │
+ * │ ┌──────────────────┐      ┌──────────────────┐               │                │ < 1 & 2: Add
+ * synergetic execution here │ Synergetic       │      │  Synergetic new  │               │ │ < //
+ * TODO: Move one down below wait for transactions │ execution        │      │  execution       │ │
+ * │ └──────────────────┘      └──────────────────┘               │                │ │ │ │ │ ▼ ▼ │ │
  * ┌──────────────────┐      ┌──────────────────┐               │                │
  * │  Schedule Block  │      │Execute New Block │               │                │
- * │    Execution     │      │                  │               │                │ 
+ * │    Execution     │      │                  │               │                │
  * └──────────────────┘      └──────────────────┘               │                │
  *           │                         │                        │                │
  *           │                         │                        │                │
@@ -137,29 +131,29 @@ public:
   enum class State
   {
     // Main loop
-    RELOAD_STATE,                  ///< Recovering previous state
-    SYNCHRONIZING,                 ///< Catch up with the outstanding blocks
-    SYNCHRONIZED,                  ///< Caught up waiting to generate a new block
+    RELOAD_STATE,   ///< Recovering previous state
+    SYNCHRONIZING,  ///< Catch up with the outstanding blocks
+    SYNCHRONIZED,   ///< Caught up waiting to generate a new block
 
     // Pipe 1
-    PRE_EXEC_BLOCK_VALIDATION,     ///< Validation stage before block execution
-    SYNERGETIC_EXECUTION,    
-    WAIT_FOR_TRANSACTIONS,         ///< Halts the state machine until all the block transactions are
-                                   ///< present
-    SCHEDULE_BLOCK_EXECUTION,      ///< Schedule the block to be executed
-    WAIT_FOR_EXECUTION,            ///< Wait for the execution to be completed
-    POST_EXEC_BLOCK_VALIDATION,    ///< Perform final block validation
+    PRE_EXEC_BLOCK_VALIDATION,  ///< Validation stage before block execution
+    SYNERGETIC_EXECUTION,
+    WAIT_FOR_TRANSACTIONS,       ///< Halts the state machine until all the block transactions are
+                                 ///< present
+    SCHEDULE_BLOCK_EXECUTION,    ///< Schedule the block to be executed
+    WAIT_FOR_EXECUTION,          ///< Wait for the execution to be completed
+    POST_EXEC_BLOCK_VALIDATION,  ///< Perform final block validation
 
     // Pipe 2
-    PACK_NEW_BLOCK,                ///< Mine a new block from the head of the chain
-    NEW_SYNERGETIC_EXECUTION,   
+    PACK_NEW_BLOCK,  ///< Mine a new block from the head of the chain
+    NEW_SYNERGETIC_EXECUTION,
     EXECUTE_NEW_BLOCK,             ///< Schedule the execution of the new block
     WAIT_FOR_NEW_BLOCK_EXECUTION,  ///< Wait for the new block to be executed
     PROOF_SEARCH,                  ///< New Block: Waiting until a hash can be found
     TRANSMIT_BLOCK,                ///< Transmit the new block to
 
     // Main loop
-    RESET                          ///< Cycle complete
+    RESET  ///< Cycle complete
   };
   using StateMachine = core::StateMachine<State>;
 
@@ -217,20 +211,20 @@ private:
   };
 
   //  using Super         = core::StateMachine<BlockCoordinatorState>;
-  using Mutex             = fetch::mutex::Mutex;
-  using BlockPtr          = MainChain::BlockPtr;
-  using NextBlockPtr      = std::unique_ptr<Block>;
-  using PendingBlocks     = std::deque<BlockPtr>;
-  using PendingStack      = std::vector<BlockPtr>;
-  using Flag              = std::atomic<bool>;
-  using BlockPeriod       = std::chrono::milliseconds;
-  using Clock             = std::chrono::system_clock;
-  using Timepoint         = Clock::time_point;
-  using StateMachinePtr   = std::shared_ptr<StateMachine>;
-  using MinerPtr          = std::shared_ptr<consensus::ConsensusMinerInterface>;
-  using TxSet             = std::unordered_set<TransactionSummary::TxDigest>;
-  using TxSetPtr          = std::unique_ptr<TxSet>;
-  using LastExecutedBlock = SynchronisedState<ConstByteArray>;
+  using Mutex              = fetch::mutex::Mutex;
+  using BlockPtr           = MainChain::BlockPtr;
+  using NextBlockPtr       = std::unique_ptr<Block>;
+  using PendingBlocks      = std::deque<BlockPtr>;
+  using PendingStack       = std::vector<BlockPtr>;
+  using Flag               = std::atomic<bool>;
+  using BlockPeriod        = std::chrono::milliseconds;
+  using Clock              = std::chrono::system_clock;
+  using Timepoint          = Clock::time_point;
+  using StateMachinePtr    = std::shared_ptr<StateMachine>;
+  using MinerPtr           = std::shared_ptr<consensus::ConsensusMinerInterface>;
+  using TxSet              = std::unordered_set<TransactionSummary::TxDigest>;
+  using TxSetPtr           = std::unique_ptr<TxSet>;
+  using LastExecutedBlock  = SynchronisedState<ConstByteArray>;
   using SynergeticExecutor = fetch::consensus::SynergeticExecutor;
 
   /// @name Monitor State
@@ -249,7 +243,7 @@ private:
 
   // Phase 2
   State OnPackNewBlock();
-  State OnNewSynergeticExecution();  
+  State OnNewSynergeticExecution();
   State OnExecuteNewBlock();
   State OnWaitForNewBlockExecution();
   State OnProofSearch();
@@ -306,11 +300,10 @@ private:
   PeriodicAction syncing_periodic_;
   /// @}
 
-
   /// @name Synergetic Contracts
   /// @{
-  bool                       synergetic_contracts_enabled_{true}; //< Variable to disable synergetic contracts
-  SynergeticExecutor         synergetic_executor_;
+  bool synergetic_contracts_enabled_{true};  //< Variable to disable synergetic contracts
+  SynergeticExecutor synergetic_executor_;
   /// }
 };
 

@@ -26,22 +26,21 @@ class SynergeticStateAdapter : public ledger::StateAdapter
 {
 public:
   using StorageInterface = ledger::StorageInterface;
-  using Identifier = ledger::Identifier;
-//  using ResourceSet = TransactionSummary::ResourceSet;
+  using Identifier       = ledger::Identifier;
+  //  using ResourceSet = TransactionSummary::ResourceSet;
 
   static constexpr char const *LOGGING_NAME = "SynergeticStateAdapter";
 
   // Construction / Destruction
   SynergeticStateAdapter(StorageInterface &storage, Identifier scope, bool can_write = false)
-  : StateAdapter(storage, scope)
+    : StateAdapter(storage, scope)
   {
     enable_writes_ = std::move(can_write);
     // TODO: Lock full contract resource
   }
 
   ~SynergeticStateAdapter() override
-  {
-  }
+  {}
 
   /// @name IO Observer Interface
   /// @{
@@ -55,5 +54,5 @@ public:
 private:
 };
 
-}  // namespace ledger
+}  // namespace consensus
 }  // namespace fetch
