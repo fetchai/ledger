@@ -766,19 +766,19 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
 
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
 
-  std::cerr << "Tick 3\n";
+  std::cerr << "Tick 3\n" << main_chain_->GetHeaviestBlockHash() << "; " << bool(main_chain_->GetHeaviestBlock()) << '\n';;
   Tick(State::SYNCHRONIZED, State::RESET);
   Tick(State::RESET, State::SYNCHRONIZING);
-  std::cerr << "Tick 3.3\n";
+  std::cerr << "Tick 3.3\n" << main_chain_->GetHeaviestBlockHash() << "; " << bool(main_chain_->GetHeaviestBlock()) << '\n';;
   Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::RESET);
-  std::cerr << "Tick 3.5\n";
+  std::cerr << "Tick 3.5\n" << main_chain_->GetHeaviestBlockHash() << "; " << bool(main_chain_->GetHeaviestBlock()) << '\n';;
   Tick(State::RESET, State::SYNCHRONIZING);
-  std::cerr << "Tick 3.57\n";
+  std::cerr << "Tick 3.57\n" << main_chain_->GetHeaviestBlockHash() << "; " << bool(main_chain_->GetHeaviestBlock()) << '\n';;
   Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
-  std::cerr << "Tick 3.63\n";
+  std::cerr << "Tick 3.63\n" << main_chain_->GetHeaviestBlockHash() << "; " << bool(main_chain_->GetHeaviestBlock()) << '\n';;
   Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  std::cerr << "Tick 3.7\n";
+  std::cerr << "Tick 3.7\n" << main_chain_->GetHeaviestBlockHash() << "; " << bool(main_chain_->GetHeaviestBlock()) << '\n';;
   Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
   Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
 
