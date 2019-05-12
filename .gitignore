@@ -2,6 +2,7 @@
 *build*/
 *.pyc
 *.db
+docker-images
 CMakeCache.txt
 
 # Merge Outputs
