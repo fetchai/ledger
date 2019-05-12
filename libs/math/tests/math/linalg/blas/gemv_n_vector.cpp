@@ -107,8 +107,8 @@ TEST(blas_gemv, blas_gemv_n_vector3)
       gemv_n_vector;
   // Compuing _y <= _alpha * _A * _x + _beta * _y
   using type = double;
-  type alpha = type(0.32285232473031367);
-  type beta  = type(0.8948126571343804);
+  type alpha = type(0.8801653786373919);
+  type beta  = type(0.5358407562290327);
   int  n     = 1;
   int  m     = 1;
 
@@ -129,7 +129,7 @@ TEST(blas_gemv, blas_gemv_n_vector3)
   gemv_n_vector(alpha, A, x, n, beta, y, m);
 
   Tensor<type> refy = Tensor<type>::FromString(R"(
-  0.8685680440942511; 0.6500411199270887; 0.37943239709401344
+  1.0653901804440105; 0.9342731721136833; 0.8021014165771525
   )");
 
   ASSERT_TRUE(refy.AllClose(y));
@@ -179,8 +179,8 @@ TEST(blas_gemv, blas_gemv_n_vector5)
       gemv_n_vector;
   // Compuing _y <= _alpha * _A * _x + _beta * _y
   using type = double;
-  type alpha = type(0.3920268154371046);
-  type beta  = type(0.5649447401221036);
+  type alpha = type(0.279655613206086);
+  type beta  = type(0.3714481782883031);
   int  n     = 2;
   int  m     = 3;
 
@@ -201,7 +201,7 @@ TEST(blas_gemv, blas_gemv_n_vector5)
   gemv_n_vector(alpha, A, x, n, beta, y, m);
 
   Tensor<type> refy = Tensor<type>::FromString(R"(
-  0.47717260327452715; 0.713244787222995; 0.7607850486168974; 0.7440168227696586; 0.770967179954561; 0.49379559636439074; 0.819601030292315; 0.42754101835854963; 0.02541912674409519
+  0.33662069364134206; 0.713244787222995; 0.7607850486168974; 0.5130367899980772; 0.770967179954561; 0.49379559636439074; 0.5681718735166941; 0.42754101835854963; 0.02541912674409519
   )");
 
   ASSERT_TRUE(refy.AllClose(y));
@@ -215,8 +215,8 @@ TEST(blas_gemv, blas_gemv_n_vector6)
       gemv_n_vector;
   // Compuing _y <= _alpha * _A * _x + _beta * _y
   using type = double;
-  type alpha = type(0.3988332059589076);
-  type beta  = type(0.8059827496006798);
+  type alpha = type(0.09563498934326742);
+  type beta  = type(0.235608342577308);
   int  n     = -2;
   int  m     = -3;
 
@@ -237,7 +237,7 @@ TEST(blas_gemv, blas_gemv_n_vector6)
   gemv_n_vector(alpha, A, x, n, beta, y, m);
 
   Tensor<type> refy = Tensor<type>::FromString(R"(
-  0.6138863081569953; 0.8074401551640625; 0.8960912999234932; 0.7163247487448348; 0.11005192452767676; 0.22793516254194168; 0.5885251357651223; 0.8180147659224931; 0.8607305832563434
+  0.17003993588625413; 0.8074401551640625; 0.8960912999234932; 0.18523091859389035; 0.11005192452767676; 0.22793516254194168; 0.15920617846076324; 0.8180147659224931; 0.8607305832563434
   )");
 
   ASSERT_TRUE(refy.AllClose(y));

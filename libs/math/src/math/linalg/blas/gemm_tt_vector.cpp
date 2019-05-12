@@ -100,7 +100,7 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
     }
   }
   return;
-};
+}
 
 template class Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
                     Computes(_C <= _alpha * T(_A) * T(_B) + _beta * _C),

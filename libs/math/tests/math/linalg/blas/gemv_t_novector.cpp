@@ -105,8 +105,8 @@ TEST(blas_gemv, blas_gemv_t_novector3)
       gemv_t_novector;
   // Compuing _y <= _alpha * T(_A) * _x + _beta * _y
   using type = double;
-  type alpha = type(0.2608082269507159);
-  type beta  = type(0.3498543794517244);
+  type alpha = type(0.736214447421336);
+  type beta  = type(0.12803256405782726);
   int  n     = 1;
   int  m     = 1;
 
@@ -128,7 +128,7 @@ TEST(blas_gemv, blas_gemv_t_novector3)
   gemv_t_novector(alpha, A, x, n, beta, y, m);
 
   Tensor<type> refy = Tensor<type>::FromString(R"(
-  0.5299096318974567; 0.2937015452356449; 0.3384124259869936
+  0.9077112837899266; 0.45073631162417016; 0.8503799452219779
   )");
 
   ASSERT_TRUE(refy.AllClose(y));
@@ -179,8 +179,8 @@ TEST(blas_gemv, blas_gemv_t_novector5)
       gemv_t_novector;
   // Compuing _y <= _alpha * T(_A) * _x + _beta * _y
   using type = double;
-  type alpha = type(0.5124707557917202);
-  type beta  = type(0.43463740585413846);
+  type alpha = type(0.9823648978692584);
+  type beta  = type(0.968261502003783);
   int  n     = 2;
   int  m     = 3;
 
@@ -202,7 +202,7 @@ TEST(blas_gemv, blas_gemv_t_novector5)
   gemv_t_novector(alpha, A, x, n, beta, y, m);
 
   Tensor<type> refy = Tensor<type>::FromString(R"(
-  0.65395517361771; 0.713244787222995; 0.7607850486168974; 0.8104139505727663; 0.770967179954561; 0.49379559636439074; 0.7617433677798335; 0.42754101835854963; 0.02541912674409519
+  1.2697358612131977; 0.713244787222995; 0.7607850486168974; 1.6293246192630224; 0.770967179954561; 0.49379559636439074; 1.5308198354640048; 0.42754101835854963; 0.02541912674409519
   )");
 
   ASSERT_TRUE(refy.AllClose(y));
@@ -216,8 +216,8 @@ TEST(blas_gemv, blas_gemv_t_novector6)
       gemv_t_novector;
   // Compuing _y <= _alpha * T(_A) * _x + _beta * _y
   using type = double;
-  type alpha = type(0.8490998867783613);
-  type beta  = type(0.6266813716044558);
+  type alpha = type(0.9045052572822763);
+  type beta  = type(0.042854792860727686);
   int  n     = -2;
   int  m     = -3;
 
@@ -239,7 +239,7 @@ TEST(blas_gemv, blas_gemv_t_novector6)
   gemv_t_novector(alpha, A, x, n, beta, y, m);
 
   Tensor<type> refy = Tensor<type>::FromString(R"(
-  1.668479148282066; 0.8074401551640625; 0.8960912999234932; 0.8727187265526015; 0.11005192452767676; 0.22793516254194168; 0.7197411640815392; 0.8180147659224931; 0.8607305832563434
+  1.4404133666938446; 0.8074401551640625; 0.8960912999234932; 0.7310025466973256; 0.11005192452767676; 0.22793516254194168; 0.49988340218079086; 0.8180147659224931; 0.8607305832563434
   )");
 
   ASSERT_TRUE(refy.AllClose(y));

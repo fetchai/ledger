@@ -73,7 +73,7 @@ void Blas<S, Signature(_x <= _n, _alpha, _x, _m), Computes(_x <= _alpha * _x), V
   }
 
   return;
-};
+}
 
 template class Blas<double, Signature(_x <= _n, _alpha, _x, _m), Computes(_x <= _alpha * _x),
                     platform::Parallelisation::NOT_PARALLEL>;
