@@ -146,6 +146,9 @@ public:
   template <typename... Indices>
   Type &operator()(Indices... indices);
 
+  template <typename... Args>
+  void Set(Args... args);
+
   Type operator()(SizeType const &index) const;
   template <typename S>
   typename std::enable_if<std::is_integral<S>::value, Type>::type &operator[](S const &i);
@@ -155,9 +158,6 @@ public:
 
   Tensor &operator=(ConstSliceType const &slice);
   Tensor &operator=(TensorSlice const &slice);
-
-  template <typename... Args>
-  void Set(Args... args);
 
   void Fill(Type const &value, memory::Range const &range);
   void Fill(Type const &value, memory::TrivialRange const &range);
@@ -169,8 +169,7 @@ public:
   ContainerType const &data() const;
   ContainerType &      data();
 
-  template <typename DataType>
-  fetch::meta::IfIsInteger<DataType, SelfType> FillArange(DataType const &from, DataType const &to);
+  Tensor FillArange(Type const &from, Type const &to);
 
   static SelfType UniformRandom(SizeType const &N);
   static SelfType UniformRandomIntegers(SizeType const &N, int64_t const &min, int64_t const &max);
@@ -777,7 +776,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     {
       for (SizeType j = 0; j < m; ++j)
       {
-        ret.Set(i, j, elems[k++]);
+        ret(i, j) = elems[k++];
       }
     }
   }
@@ -1129,7 +1128,11 @@ template <typename T, typename C>
 template <typename... Args>
 void Tensor<T, C>::Set(Args... args)
 {
-  ASSERT(sizeof...(args) == stride_.size() + 1);  // Plus one as last arg is value
+  assert(sizeof...(args) == stride_.size() + 1);  // Plus one as last arg is value
+  if (sizeof...(args) != (stride_.size() + 1))
+  {
+    throw std::runtime_error("too many or not enough indices given to Tensor::Set");
+  }
 
   uint64_t index = TensorSetter<0, Args...>::IndexOf(stride_, shape_, std::forward<Args>(args)...);
   Type     value = TensorSetter<0, Args...>::ValueOf(std::forward<Args>(args)...);
@@ -1253,9 +1256,7 @@ typename Tensor<T, C>::ContainerType &Tensor<T, C>::data()
  * @return a reference to this
  */
 template <typename T, typename C>
-template <typename DataType>
-fetch::meta::IfIsInteger<DataType, Tensor<T, C>> Tensor<T, C>::FillArange(DataType const &from,
-                                                                          DataType const &to)
+Tensor<T, C> Tensor<T, C>::FillArange(Type const &from, Type const &to)
 {
   SelfType ret;
 

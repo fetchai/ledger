@@ -56,14 +56,22 @@ public:
     ASSERT(inputs.size() == 1);
     ASSERT(inputs[0].get().shape() == errorSignal.shape());
 
-    ArrayType return_signal = errorSignal.Copy();
-    for (SizeType i{0}; i < inputs.front().get().size(); ++i)
+    ArrayType const &input         = inputs.front().get();
+    ArrayType        return_signal = errorSignal.Copy();
+
+    auto it1 = input.begin();
+    auto it2 = return_signal.begin();
+
+    while (it1.is_valid())
     {
-      if (inputs.front().get()[i] <= DataType(0))
+      if (*it1 <= DataType(0))
       {
-        return_signal.data().Set(i, DataType(0));
+        *it2 = DataType(0);
       }
+      ++it1;
+      ++it2;
     }
+
     return {return_signal};
   }
 
