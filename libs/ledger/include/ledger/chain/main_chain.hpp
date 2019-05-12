@@ -101,7 +101,6 @@ public:
   BlockStatus AddBlock(Block const &block);
   BlockPtr    GetBlock(BlockHash hash) const;
   bool        RemoveBlock(BlockHash hash);
-  void        RemoveTree(BlockHash const &hash, BlockHashSet &invalidated_blocks);
   /// @}
 
   /// @name Chain Queries
@@ -181,7 +180,7 @@ private:
 
   /// @name Low-level storage interface
   /// @{
-  void                CacheBlock(IntBlockPtr block) const;
+  void                CacheBlock(IntBlockPtr const &block) const;
   BlockMap::size_type UncacheBlock(BlockHash hash) const;
   void                KeepBlock(IntBlockPtr const &block) const;
   /// @}
@@ -197,6 +196,8 @@ private:
 
   BlockHash GetHeadHash();
   void      SetHeadHash(BlockHash const &hash);
+
+  IntBlockPtr RemoveTree(BlockHash const &hash, BlockHashSet &invalidated_blocks);
 
   BlockStorePtr block_store_;  /// < Long term storage and backup
   std::fstream  head_store_;

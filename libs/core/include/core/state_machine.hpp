@@ -300,23 +300,29 @@ void StateMachine<S>::Execute()
 {
   FETCH_LOCK(callbacks_mutex_);
 
+  std::cerr << "Current state: " << static_cast<int>(current_state_.load()) << '\n';
   // loop up the current state event callback map
   auto it = callbacks_.find(current_state_);
   if (it != callbacks_.end())
   {
+	  std::cerr << "Next state\n";
     // execute the state handler
     S const next_state = it->second(current_state_, previous_state_);
 
+    std::cerr << "Load\n";
     // perform the state updates
     previous_state_ = current_state_.load();
+    std::cerr << "next -> curr\n";
     current_state_  = next_state;
 
+    std::cerr << "Check for state\n";
     // detect a state change
     if (current_state_ != previous_state_)
     {
       // trigger the state change callback if configured
       if (state_change_callback_)
       {
+	      std::cerr << "State change callback\n";
         state_change_callback_(current_state_, previous_state_);
       }
     }

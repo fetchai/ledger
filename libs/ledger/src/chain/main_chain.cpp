@@ -124,12 +124,12 @@ BlockStatus MainChain::AddBlock(Block const &blk)
  *
  * @param block The block to be cached
  */
-void MainChain::CacheBlock(IntBlockPtr block) const
+void MainChain::CacheBlock(IntBlockPtr const &block) const
 {
   ASSERT(static_cast<bool>(block));
 
   auto hash{block->body.hash};
-  auto retVal{block_chain_.emplace(hash, std::move(block))};
+  auto retVal{block_chain_.emplace(hash, block)};
   // under all circumstances, it _should_ be a fresh block
   ASSERT(retVal.second);
   // keep parent-child reference
@@ -205,36 +205,46 @@ MainChain::BlockPtr MainChain::GetHeaviestBlock() const
  *
  * @param[in]  hash The hash to be removed
  * @param[out] invalidated_blocks The set of hashes of all the blocks removed by this operation
+ * @return The block object itself, already not in the cache
  */
-void MainChain::RemoveTree(BlockHash const &hash, BlockHashSet &invalidated_blocks)
+std::ostream &print(std::ostream &s, MainChain::BlockHash const &hash)
 {
-  auto block_entry{block_chain_.find(hash)};
+  for (std::size_t i{}; i < hash.size(); ++i)
+  {
+    s << std::hex << int(hash[i]);
+  }
+  return s;
+}
+
+MainChain::IntBlockPtr MainChain::RemoveTree(BlockHash const &hash,
+                                             BlockHashSet &   invalidated_blocks)
+{
+  // mark hash as being invalidated
+  invalidated_blocks.insert(hash);
+
+  // first remove all the progeny recursively;
+  // this way any hash that could potentially stem from this one, reference tree-wise, is completely
+  // wiped out
+  auto children{references_.equal_range(hash)};
+  for (auto child{children.first}; child != children.second; ++child)
+  {
+    RemoveTree(child->second, invalidated_blocks);
+  }
+
   // check if the block is in the cache
+  auto block_entry{block_chain_.find(hash)};
   if (block_entry == block_chain_.end())
   {
-    return;
+    return {};
   }
 
-  // first remove all the progeny recursively
-  auto children{references_.equal_range(hash)};
-  for (auto child{children.first}; child != children.second; child = references_.erase(child))
-  {
-    RemoveTree(hash, invalidated_blocks);
-  }
+  // as the block is removed from the cache, we can safely move it
+  IntBlockPtr retVal{std::move(block_entry->second)};
 
-  // remove the reference from previous block to this one
-  auto const &block{*block_entry->second};
-  auto        siblings{references_.equal_range(block.body.previous_hash)};
-  auto        back_ref{std::find_if(siblings.first, siblings.second,
-                             [&hash](auto const &ref) { return ref.second == hash; })};
-  if (back_ref != siblings.second)
-  {
-    references_.erase(back_ref);
-  }
-  // finally remove the block itself from the cache
+  // finally remove the block record from the cache
   block_chain_.erase(block_entry);
-  // mark hash as successfully invalidated
-  invalidated_blocks.insert(hash);
+
+  return retVal;
 }
 
 /**
@@ -247,39 +257,48 @@ bool MainChain::RemoveBlock(BlockHash hash)
 {
   FETCH_LOCK(lock_);
 
-  BlockHashSet invalidated_blocks;
   // Step 1. Remove this block and the whole its progeny
-  RemoveTree(hash, invalidated_blocks);
-  // Check that the input block hash was actually in the cache
-  if (!invalidated_blocks.empty())
+  BlockHashSet invalidated_blocks;
+  auto detached_block{RemoveTree(hash, invalidated_blocks)};
+
+  // Step 2. Erase the forward ref from this block's parent
+  auto siblings{references_.equal_range(hash)};
+  auto sibling{std::find_if(siblings.first, siblings.second,
+			    [&hash](auto const &sibling) { return sibling.second == hash; })};
+  if (sibling != siblings.second)
   {
-    // Step 2. Loop through all the loose blocks and remove any references to invalidated blocks
-    for (auto waiting_blocks_it{loose_blocks_.begin()}; waiting_blocks_it != loose_blocks_.end();)
-    {
-      auto &hash_array{waiting_blocks_it->second};
-      // remove entries from the hash array that have been invalidated
-      auto cemetery{std::remove_if(
-          hash_array.begin(), hash_array.end(), [&invalidated_blocks](auto const &hash) {
-            return invalidated_blocks.find(hash) != invalidated_blocks.end();
-          })};
-      if (cemetery == hash_array.begin())
-      {
-        // all hashes in this array are invalidated
-        waiting_blocks_it = loose_blocks_.erase(waiting_blocks_it);
-      }
-      else
-      {
-        // some hashes of this array are still alive
-        hash_array.erase(cemetery, hash_array.end());
-        ++waiting_blocks_it;
-      }
-    }
-    // Step 3. Since we might have removed a whole series of blocks the tips datastructure has been
-    // invalidated. We need to evaluate the changes here
-    return ReindexTips();
+    references_.erase(sibling);
   }
 
-  return false;
+  // Step 3. Loop through all the loose blocks and remove any references to invalidated blocks
+  for (auto const &hash : invalidated_blocks)
+  {
+	  references_.erase(hash);
+  }
+  for (auto waiting_blocks_it{loose_blocks_.begin()}; waiting_blocks_it != loose_blocks_.end();)
+  {
+	  auto &hash_array{waiting_blocks_it->second};
+	  // remove entries from the hash array that have been invalidated
+	  auto cemetery{std::remove_if(
+			  hash_array.begin(), hash_array.end(), [&invalidated_blocks](auto const &hash) {
+				  return invalidated_blocks.find(hash) != invalidated_blocks.end();
+			  })};
+	  if (cemetery == hash_array.begin())
+	  {
+		  // all hashes in this array are invalidated
+		  waiting_blocks_it = loose_blocks_.erase(waiting_blocks_it);
+	  }
+	  else
+	  {
+		  // some hashes of this array are still alive
+		  hash_array.erase(cemetery, hash_array.end());
+		  ++waiting_blocks_it;
+	  }
+  }
+
+  // Step 4. Since we might have removed a whole series of blocks the tips datastructure
+  // is likely to have been invalidated. We need to evaluate the changes here
+  return ReindexTips();
 }
 
 /**
