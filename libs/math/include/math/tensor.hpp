@@ -178,7 +178,7 @@ public:
   SelfType &      FillUniformRandomIntegers(int64_t const &min, int64_t const &max);
   static SelfType Zeroes(SizeVector const &shape);
   static SelfType Ones(SizeVector const &shape);
-  SizeType        ComputeIndex(SizeVector const &indices) const;
+  SizeType        ComputeIndex(SizeVector indices) const;
 
   ////////////////////
   /// SHAPE & SIZE ///
@@ -410,7 +410,7 @@ public:
     serializer << t.size_;
     serializer << t.shape_;
     // TODO (private 870)
-    for (std::size_t i = 0; i < t.size(); ++i)
+    for (std::size_t i = 0; i < t.data().padded_size(); ++i)
     {
       serializer << t.data()[i];
     }
@@ -426,7 +426,7 @@ public:
 
     t.Reshape(shape);
 
-    for (std::size_t i = 0; i < t.size(); ++i)
+    for (std::size_t i = 0; i < t.data().padded_size(); ++i)
     {
       serializer >> t.data()[i];
     }
@@ -1265,7 +1265,7 @@ fetch::meta::IfIsInteger<DataType, Tensor<T, C>> Tensor<T, C>::FillArange(DataTy
   Type     delta = static_cast<Type>(to - from) / static_cast<Type>(N);
   for (SizeType i = 0; i < N; ++i)
   {
-    this->data()[i] = Type(d);
+    this->operator[](i) = Type(d);
     d += delta;
   }
   return *this;
@@ -1319,7 +1319,7 @@ Tensor<T, C> &Tensor<T, C>::FillUniformRandom()
 {
   for (SizeType i = 0; i < this->size(); ++i)
   {
-    this->data()[i] = Type(random::Random::generator.AsDouble());
+    this->operator[](i) = Type(random::Random::generator.AsDouble());
   }
   return *this;
 }
@@ -1341,7 +1341,7 @@ Tensor<T, C> &Tensor<T, C>::FillUniformRandomIntegers(int64_t const &min, int64_
 
   for (SizeType i = 0; i < this->size(); ++i)
   {
-    this->data()[i] = Type(int64_t(random::Random::generator() % diff) + min);
+    this->operator[](i) = Type(int64_t(random::Random::generator() % diff) + min);
   }
 
   return *this;
@@ -1384,22 +1384,9 @@ Tensor<T, C> Tensor<T, C>::Ones(SizeVector const &shape)
  * @return index in the underlying data structure
  */
 template <typename T, typename C>
-SizeType Tensor<T, C>::ComputeIndex(SizeVector const &indices) const
+SizeType Tensor<T, C>::ComputeIndex(SizeVector indices) const
 {
-  ASSERT(indices.size() == shape_.size());
-
-  SizeType index{0};
-  auto     indices_it = indices.begin();
-  auto     stride_it  = stride_.begin();
-
-  while (indices_it != indices.end())
-  {
-    index += (*indices_it) * (*stride_it);
-    ++indices_it;
-    ++stride_it;
-  }
-
-  return index;
+  return ComputeColIndex(std::move(indices));
 }
 
 ////////////////////////////////////
@@ -1508,7 +1495,8 @@ template <typename T, typename C>
 typename Tensor<T, C>::SelfType &Tensor<T, C>::Unsqueeze()
 {
   auto shape = shape_; // TODO: Make last dimension for efficiency
-  shape.insert(shape_.begin(), 1);
+  shape.insert(shape.begin(), 1);
+
   Reshape(shape);
 
   return *this;
@@ -1967,6 +1955,7 @@ template <typename T, typename C>
 void Tensor<T, C>::Fmod(SelfType const &x)
 {
   Resize({x.size()});
+  // TODO: Should use iterators
   fetch::math::Fmod(data_, x.data(), data_);
 }
 

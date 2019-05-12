@@ -35,7 +35,7 @@ TYPED_TEST(TensorIndexingTest, empty_tensor_test)
 {
   fetch::math::Tensor<TypeParam> t;
   ASSERT_EQ(t.size(), 0);
-  ASSERT_TRUE(t.shape().empty());
+  ASSERT_EQ(t.shape().size(), 1);
 }
 
 TYPED_TEST(TensorIndexingTest, one_dimentional_tensor_test)

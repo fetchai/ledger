@@ -155,9 +155,10 @@ void Scatter(ArrayType &input_array, ArrayType const &updates,
 
   auto     indices_it = indices.begin();
   SizeType update_idx{0};
+
   while (indices_it != indices.end())
   {
-    input_array[input_array.ComputeIndex(*indices_it)] = updates[update_idx];
+    input_array.data()[input_array.ComputeIndex(*indices_it)] = updates[update_idx];
     ++indices_it;
     ++update_idx;
   }
