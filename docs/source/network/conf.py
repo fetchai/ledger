@@ -36,7 +36,8 @@ release = u''
 # needs_sphinx = '1.0'
 
 # Issue:
-# Could not import extension sphinx.ext.imgmath (exception: No module named 'sphinx.ext.imgmath')
+# Could not import extension sphinx.ext.imgmath (exception: No module
+# named 'sphinx.ext.imgmath')
 needs_sphinx = '1.4.3'
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -135,8 +136,11 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'fetch-vectorisation.tex', u'fetch-vectorisation Documentation',
-     u'Fetch AI Ltd.', 'manual'),
+    (master_doc,
+     'fetch-vectorisation.tex',
+     u'fetch-vectorisation Documentation',
+     u'Fetch AI Ltd.',
+     'manual'),
 ]
 
 
