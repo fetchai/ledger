@@ -33,39 +33,51 @@ using SizeSet    = std::unordered_set<SizeType>;
 constexpr SizeType NO_AXIS = SizeType(-1);
 
 template <typename T>
-static constexpr meta::IfIsNonFixedPointArithmetic<T, T> NumericMax()
+static constexpr meta::IfIsNonFixedPointArithmetic<T, T> numeric_max()
 {
   return std::numeric_limits<T>::max();
 }
 
 template <typename T>
-static constexpr meta::IfIsFixedPoint<T, T> NumericMax()
+static constexpr meta::IfIsFixedPoint<T, T> numeric_max()
 {
-  return T::FromBase(T::MAX);
+  return T::CONST_MAX;
 }
 
 template <typename T>
-static constexpr meta::IfIsNonFixedPointArithmetic<T, T> NumericMin()
+static constexpr meta::IfIsNonFixedPointArithmetic<T, T> numeric_min()
 {
   return std::numeric_limits<T>::min();
 }
 
 template <typename T>
-static constexpr meta::IfIsFixedPoint<T, T> NumericMin()
+static constexpr meta::IfIsFixedPoint<T, T> numeric_min()
 {
-  return T::FromBase(T::CONST_SMALLEST_FRACTION);
+  return T::CONST_SMALLEST_FRACTION;
 }
 
 template <typename T>
-static constexpr meta::IfIsNonFixedPointArithmetic<T, T> NumericLowest()
+static constexpr meta::IfIsNonFixedPointArithmetic<T, T> numeric_lowest()
 {
   return std::numeric_limits<T>::lowest();
 }
 
 template <typename T>
-static constexpr meta::IfIsFixedPoint<T, T> NumericLowest()
+static constexpr meta::IfIsFixedPoint<T, T> numeric_lowest()
 {
-  return T::FromBase(T::MIN);
+  return T::CONST_MIN;
+}
+
+template <typename T>
+fetch::meta::IfIsFixedPoint<T, T> static function_tolerance()
+{
+  return T::TOLERANCE;
+}
+
+template <typename T>
+fetch::meta::IfIsFloat<T, T> static function_tolerance()
+{
+  return T(1e-7);
 }
 
 }  // namespace math
