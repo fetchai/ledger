@@ -116,12 +116,13 @@ def parse_commandline():
     parser.add_argument('-T', '--test', action='store_true', help='Test the project')
     parser.add_argument('-I', '--integration-tests', action='store_true', help='Run the integration tests for the project')
     parser.add_argument('-E', '--end-to-end-tests', action='store_true', help='Run the end to end tests for the project')
+    parser.add_argument('-j', dest='jobs', type=int, default=CONCURRENCY, help='The number of jobs to do in parallel. If the switch is provided with `0` value, then number of available CPU cores will be used, if the switch is omited, then concurency defaults to {}'.format(CONCURRENCY))
     parser.add_argument('-f', '--force-build-folder', help='Specify the folder directly that should be used for the build / test')
     parser.add_argument('-m', '--metrics', action='store_true', help='Store the metrics.')
     return parser.parse_args()
 
 
-def build_project(project_root, build_root, options):
+def build_project(project_root, build_root, options, concurrency=CONCURRENCY):
     output('Source.:', project_root)
     output('Build..:', build_root)
     output('Options:')
@@ -157,9 +158,7 @@ def build_project(project_root, build_root, options):
         cmd = ["ninja"]
 
     else:
-        # manually specifying the number of cores is required because make automatic detection is
-        # flakey inside docker.
-        cmd = ['make', '-j', str(CONCURRENCY)]
+        cmd = ['make', '-j', str(concurrency)]
 
     output('Building project with command: {} (detected cpus: {})'.format(' '.join(cmd), AVAILABLE_CPUS))
     exit_code = subprocess.call(cmd, cwd=build_root)
@@ -241,6 +240,10 @@ def main():
     # parse the options from the command line
     args = parse_commandline()
 
+    # manually specifying the number of cores is required because make automatic detection is
+    # flakey inside docker.
+    concurrency = AVAILABLE_CPUS if args.jobs == 0 else args.jobs
+
     # define all the build roots
     project_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     build_root = os.path.join(project_root, '{}{}'.format(args.build_path_prefix, args.build_type.lower()))
@@ -248,14 +251,14 @@ def main():
         build_root = os.path.abspath(args.force_build_folder)
 
     options = {
-        'CMAKE_BUILD_TYPE': args.build_type
+        'CMAKE_BUILD_TYPE': args.build_type,
     }
 
     if args.metrics:
         options['FETCH_ENABLE_METRICS'] = 1
 
     if args.build:
-        build_project(project_root, build_root, options)
+        build_project(project_root, build_root, options, concurrency=concurrency)
 
     if args.test:
         test_project(build_root, 'Normal')
