@@ -109,7 +109,7 @@ TEST_F(NewKeyTest, test_compare_keys_triang_bit_shift)
   }
 }
 
-TEST_F(NewKeyTest, test_compare_for_keys_whis_moving_zero)
+TEST_F(NewKeyTest, test_compare_for_keys_with_moving_zero)
 {
   std::vector<DefaultKey>    keys;
   std::vector<DefaultArray>  arr_keys;
@@ -219,7 +219,7 @@ TEST_F(NewKeyTest, correlated_keys_are_unique_triang_form)
   test_correlated_keys_are_unique(std::move(unique_hashes));
 }
 
-TEST_F(NewKeyTest, test_comparison_using_last_bit_value__moving_zero_formation)
+TEST_F(NewKeyTest, test_comparison_using_last_bit_value_moving_zero_formation)
 {
   DefaultKey const ref_key{to_ByteArray(~DefaultBitset{0})};  //=111...11 (bin) = 0xfff..ff (hex)
 
@@ -282,7 +282,7 @@ TEST_F(NewKeyTest, test_comparison_using_last_bit_value__moving_zero_formation)
   }
 }
 
-TEST_F(NewKeyTest, test_comparison_using_last_bit_value__triangular_formation)
+TEST_F(NewKeyTest, test_comparison_using_last_bit_value_triangular_formation)
 {
   DefaultBitset const bs_key_val{~DefaultBitset{0}};
 
