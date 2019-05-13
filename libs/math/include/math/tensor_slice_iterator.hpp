@@ -132,10 +132,7 @@ public:
   {
     bool     next;
     SizeType i = 0;
-    if (!is_valid())
-    {
-      //      throw std::runtime_error("increasing position of invalid iterator.");
-    }
+
     ++counter_;
     do
     {
@@ -243,7 +240,8 @@ public:
 
   Type const &operator*() const
   {
-    return array_[position_];
+    assert(position_ < array_.padded_size());    
+    return array_.data()[position_];
   }
 
   SizeType position() const

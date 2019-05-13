@@ -36,6 +36,7 @@
 #include "math/standard_functions/fmod.hpp"
 #include "math/standard_functions/remainder.hpp"
 #include "math/tensor_broadcast.hpp"
+#include "math/tensor_iterator.hpp"
 #include "math/tensor_slice_iterator.hpp"
 
 #include <iostream>
@@ -68,8 +69,12 @@ public:
   using VectorRegisterType         = typename ContainerType::VectorRegisterType;
   using VectorRegisterIteratorType = typename ContainerType::VectorRegisterIteratorType;
   using SelfType                   = Tensor<T, C>;
-  using IteratorType               = TensorSliceIterator<T, typename SelfType::ContainerType>;
-  using ConstIteratorType          = ConstTensorSliceIterator<T, typename SelfType::ContainerType>;
+
+  using IteratorType               = TensorIterator<T, typename SelfType::ContainerType>;
+  using ConstIteratorType          = ConstTensorIterator<T, typename SelfType::ContainerType>;
+
+  using SliceIteratorType               = TensorSliceIterator<T, typename SelfType::ContainerType>;
+  using ConstSliceIteratorType          = ConstTensorSliceIterator<T, typename SelfType::ContainerType>;
   using SizeType                   = fetch::math::SizeType;
   using SizeVector                 = fetch::math::SizeVector;
 
@@ -392,8 +397,8 @@ public:
     using TensorSliceImplementation<Tensor>::begin;
     using TensorSliceImplementation<Tensor>::end;
 
-    IteratorType begin();
-    IteratorType end();
+    SliceIteratorType begin();
+    SliceIteratorType end();
     template <typename G>
     void Assign(TensorSliceImplementation<G> const &other);
     void Assign(Tensor const &other);
@@ -601,7 +606,7 @@ private:
     }
 
     SizeType     total_size = SelfType::SizeFromShape(new_array.shape());
-    IteratorType it_this(*this);
+    SliceIteratorType it_this(*this);
 
     SizeType cur_dim;
     SizeType pos;
@@ -665,12 +670,12 @@ private:
 
   void TransposeImplementation(SizeVector &new_axes, SelfType &ret) const
   {
-    auto it     = this->begin();
-    auto eit    = this->end();
-    auto ret_it = ret.end();
+    ConstSliceIteratorType it(*this);
+    SliceIteratorType ret_it(ret);    
+
     ret_it.Transpose(new_axes);
 
-    while (it != eit)
+    while (it.is_valid())
     {
       *ret_it = *it;
       ++it;
@@ -697,8 +702,8 @@ private:
     {}
 
     SelfType          Copy() const;
-    ConstIteratorType begin() const;
-    ConstIteratorType end() const;
+    ConstSliceIteratorType begin() const;
+    ConstSliceIteratorType end() const;
     STensor &         Tensor();
     SizeType          size() const;
     SizeVector        shape() const;
@@ -2364,7 +2369,7 @@ typename std::vector<typename Tensor<T, C>::SelfType> Tensor<T, C>::Split(
     }
 
     // copy the data across
-    ConstIteratorType err_it{tensor, step};
+    ConstSliceIteratorType err_it{tensor, step};
 
     SizeVector cur_error_tensor_shape = tensor.shape();
     cur_error_tensor_shape[axis]      = concat_points[i];
@@ -2603,9 +2608,9 @@ struct Tensor<T, C>::TensorSetter<N, TSType>
 // TensorSlice implementations
 
 template <typename T, typename C>
-typename Tensor<T, C>::IteratorType Tensor<T, C>::TensorSlice::begin()
+typename Tensor<T, C>::SliceIteratorType Tensor<T, C>::TensorSlice::begin()
 {
-  auto ret = IteratorType(this->tensor_, this->range_);
+  auto ret = SliceIteratorType(this->tensor_, this->range_);
   if (this->axis_ != 0)
   {
     ret.MoveAxesToFront(this->axis_);
@@ -2614,9 +2619,9 @@ typename Tensor<T, C>::IteratorType Tensor<T, C>::TensorSlice::begin()
 }
 
 template <typename T, typename C>
-typename Tensor<T, C>::IteratorType Tensor<T, C>::TensorSlice::end()
+typename Tensor<T, C>::SliceIteratorType Tensor<T, C>::TensorSlice::end()
 {
-  return IteratorType::EndIterator(this->tensor_);
+  return SliceIteratorType::EndIterator(this->tensor_);
 }
 
 template <typename T, typename C>
@@ -2677,10 +2682,10 @@ typename Tensor<T, C>::SelfType Tensor<T, C>::TensorSliceImplementation<STensor>
 
 template <typename T, typename C>
 template <typename STensor>
-typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::TensorSliceImplementation<STensor>::begin()
+typename Tensor<T, C>::ConstSliceIteratorType Tensor<T, C>::TensorSliceImplementation<STensor>::begin()
     const
 {
-  auto ret = ConstIteratorType(tensor_, range_);
+  auto ret = ConstSliceIteratorType(tensor_, range_);
   if (axis_ != 0)
   {
     ret.MoveAxesToFront(axis_);
@@ -2690,10 +2695,10 @@ typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::TensorSliceImplementation
 
 template <typename T, typename C>
 template <typename STensor>
-typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::TensorSliceImplementation<STensor>::end()
+typename Tensor<T, C>::ConstSliceIteratorType Tensor<T, C>::TensorSliceImplementation<STensor>::end()
     const
 {
-  return ConstIteratorType::EndIterator(tensor_);
+  return ConstSliceIteratorType::EndIterator(tensor_);
 }
 
 template <typename T, typename C>
