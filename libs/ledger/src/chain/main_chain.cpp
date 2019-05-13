@@ -228,7 +228,7 @@ bool MainChain::RemoveBlock(BlockHash hash)
  */
 MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
 {
-  limit = std::min(limit, UPPER_BOUND);
+  limit = std::min(limit, MainChain::UPPER_BOUND);
   MilliTimer myTimer("MainChain::HeaviestChain");
 
   FETCH_LOCK(lock_);
@@ -298,7 +298,7 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
 bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
                                         uint64_t limit, BehaviourWhenLimit behaviour) const
 {
-  limit = std::min(limit, UPPER_BOUND);
+  limit = std::min(limit, MainChain::UPPER_BOUND);
   MilliTimer myTimer("MainChain::GetPathToCommonAncestor", 500);
 
   FETCH_LOCK(lock_);
@@ -456,7 +456,7 @@ MainChain::BlockHashSet MainChain::GetMissingTips() const
  */
 MainChain::BlockHashs MainChain::GetMissingBlockHashes(std::size_t limit) const
 {
-  limit = std::min(limit, UPPER_BOUND);
+  limit = std::min(limit, MainChain::UPPER_BOUND);
   FETCH_LOCK(lock_);
 
   BlockHashs results;
