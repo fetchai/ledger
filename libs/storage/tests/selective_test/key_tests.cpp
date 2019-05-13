@@ -34,7 +34,7 @@ using ByteArray          = fetch::byte_array::ByteArray;
 using ConstByteArray     = fetch::byte_array::ConstByteArray;
 using DefaultKey         = fetch::storage::Key<256>;
 using DefaultBitset      = std::bitset<DefaultKey::BITS>;
-using DefaultArray       = ArrayB<uint64_t, DefaultKey::BITS>;
+using DefaultArray       = ArrayBites<uint64_t, DefaultKey::BITS>;
 using UnorderedSetBitset = std::unordered_set<DefaultBitset>;
 
 class NewKeyTest : public Test

@@ -28,7 +28,7 @@ using namespace testing;
 
 constexpr std::size_t BITS{256};
 
-using DefaultArray  = ArrayB<uint64_t, BITS>;
+using DefaultArray  = ArrayBites<uint64_t, BITS>;
 using DefaultBitset = std::bitset<BITS>;
 
 TEST(array_bitset_test, test_conversion_bitset_to_array_and_back)
