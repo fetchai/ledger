@@ -231,7 +231,6 @@ MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
 {
   // Note: min needs a reference to something, so this is a workaround since UPPER_BOUND is a
   // constexpr
-  uint64_t limit_here = MainChain::UPPER_BOUND;
   limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   MilliTimer myTimer("MainChain::HeaviestChain");
 
@@ -250,8 +249,7 @@ MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
  */
 MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
 {
-  uint64_t limit_here = MainChain::UPPER_BOUND;
-  limit               = std::min(limit, limit_here);
+  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   MilliTimer myTimer("MainChain::ChainPreceding");
 
   FETCH_LOCK(lock_);
@@ -303,7 +301,6 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
 bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
                                         uint64_t limit, BehaviourWhenLimit behaviour) const
 {
-  uint64_t limit_here = MainChain::UPPER_BOUND;
   limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   MilliTimer myTimer("MainChain::GetPathToCommonAncestor", 500);
 
@@ -462,8 +459,7 @@ MainChain::BlockHashSet MainChain::GetMissingTips() const
  */
 MainChain::BlockHashs MainChain::GetMissingBlockHashes(uint64_t limit) const
 {
-  uint64_t limit_here = MainChain::UPPER_BOUND;
-  limit  = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
+  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   FETCH_LOCK(lock_);
 
   BlockHashs results;
