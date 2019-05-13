@@ -33,8 +33,8 @@ template <class T>
 class SubGraph : public Graph<T>, public BatchOps<T>
 {
 public:
-  using ArrayType      = T;
-  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using ArrayType    = T;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                             ArrayType &                                                 output)

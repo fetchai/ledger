@@ -90,7 +90,7 @@ public:
     DataType min_gain{0.01f};
     DataType momentum = initial_momentum;
     assert(output_matrix_.shape().size() == 2);
-    
+
     // i_y is output_matrix value from last iteration
     ArrayType i_y(output_matrix_.shape());
 
