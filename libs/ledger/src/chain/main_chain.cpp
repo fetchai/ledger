@@ -21,6 +21,7 @@
 #include "core/byte_array/encoders.hpp"
 
 #include <utility>
+#include <algorithm>
 
 using fetch::byte_array::ToBase64;
 using fetch::generics::MilliTimer;
@@ -454,7 +455,7 @@ MainChain::BlockHashSet MainChain::GetMissingTips() const
  * @param maximum The specified maximum number of blocks to be returned
  * @return The generated array of missing hashes
  */
-MainChain::BlockHashs MainChain::GetMissingBlockHashes(std::size_t limit) const
+MainChain::BlockHashs MainChain::GetMissingBlockHashes(uint64_t limit) const
 {
   limit = std::min(limit, MainChain::UPPER_BOUND);
   FETCH_LOCK(lock_);

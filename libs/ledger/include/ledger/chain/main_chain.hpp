@@ -132,7 +132,7 @@ public:
   /// @name Missing / Loose Management
   /// @{
   BlockHashSet GetMissingTips() const;
-  BlockHashs   GetMissingBlockHashes(std::size_t limit = UPPER_BOUND) const;
+  BlockHashs   GetMissingBlockHashes(uint64_t limit = UPPER_BOUND) const;
   bool         HasMissingBlocks() const;
   /// @}
 
