@@ -232,7 +232,7 @@ MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
   // Note: min needs a reference to something, so this is a workaround since UPPER_BOUND is a
   // constexpr
   uint64_t limit_here = MainChain::UPPER_BOUND;
-  limit               = std::min(limit, limit_here);
+  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   MilliTimer myTimer("MainChain::HeaviestChain");
 
   FETCH_LOCK(lock_);
