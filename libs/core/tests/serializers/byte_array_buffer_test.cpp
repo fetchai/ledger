@@ -20,7 +20,6 @@
 #include "core/serializers/typed_byte_array_buffer.hpp"
 
 #include "gtest/gtest.h"
-//#include "gmock/gmock.h"
 
 #include <iostream>
 

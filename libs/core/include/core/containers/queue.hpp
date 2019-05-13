@@ -115,9 +115,9 @@ private:
 };
 
 /**
- * Single Producer, Single Consumer fixed length queue
+ * Single Producer, Single Consumer fixed-length queue
  *
- * @tparam T The type of element to be store in the queue
+ * @tparam T The type of element to be stored in the queue
  * @tparam SIZE The max size of the queue
  * @tparam Producer The thread safety model for the producer size of the queue
  * @tparam Consumer The thread safety model for the consumer size of the queue
@@ -175,7 +175,7 @@ protected:
  * If no element is available then the function will block until an element
  * is available.
  *
- * @tparam T The type of element to be store in the queue
+ * @tparam T The type of element to be stored in the queue
  * @tparam N The max size of the queue
  * @tparam P The producer index type
  * @tparam C The consumer index type
@@ -197,7 +197,7 @@ T Queue<T, N, P, C>::Pop()
 /**
  * Pop an element from the queue with a specified maximum wait duration
  *
- * @tparam T The type of element to be store in the queue
+ * @tparam T The type of element to be stored in the queue
  * @tparam N The max size of the queue
  * @tparam P The producer index type
  * @tparam C The consumer index type
@@ -228,10 +228,10 @@ bool Queue<T, N, P, C>::Pop(T &value, std::chrono::duration<Rep, Per> const &dur
  *
  * If the queue is full this function will block until an element can be added
  *
- * @tparam T The type of element to be store in the queue
+ * @tparam T The type of element to be stored in the queue
  * @tparam U Has the same meaning as @refitem(T), but is inferred from method
  * call, rather than provided at object construction time to leverage universal
- * reference feature, and so eliminate necessity to implement number of method overloads.
+ * reference feature, and so eliminate necessity to implement multiple method overloads.
  * @tparam N The max size of the queue
  * @tparam P The producer index type
  * @tparam C The consumer index type
@@ -254,10 +254,10 @@ meta::EnableIfSame<T, meta::Decay<U>> Queue<T, N, P, C>::Push(U &&element)
  *
  * If the queue is full this function will block until an element can be added
  *
- * @tparam T The type of element to be store in the queue
+ * @tparam T The type of element to be stored in the queue
  * @tparam U Has the same meaning as @refitem(T), but is inferred from method
  * call, rather than provided at object construction time to leverage universal
- * reference feature, and so eliminate necessity to implement number of method overloads.
+ * reference feature, and so eliminate necessity to implement multiple method overloads.
  * @tparam N The max size of the queue
  * @tparam P The producer index type
  * @tparam C The consumer index type
@@ -281,10 +281,10 @@ meta::EnableIfSame<T, meta::Decay<U>> Queue<T, N, P, C>::Push(U &&element, std::
  *
  * If the queue is full this function will block until an element can be added
  *
- * @tparam T The type of element to be store in the queue
+ * @tparam T The type of element to be stored in the queue
  * @tparam U Has the same meaning as @refitem(T), but is inferred from method
  * call, rather than provided at object construction time to leverage universal
- * reference feature, and so eliminate necessity to implement number of method overloads.
+ * reference feature, and so eliminate necessity to implement multiple method overloads.
  * @tparam N The max size of the queue
  * @tparam P The producer index type
  * @tparam C The consumer index type

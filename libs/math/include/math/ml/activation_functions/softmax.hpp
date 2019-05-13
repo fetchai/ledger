@@ -49,7 +49,7 @@ void Softmax1DImplementation(ArrayType1 const &array, ArrayType2 &ret)
   ASSERT(ret.size() == array.size());
 
   // subtract max for numerical stability
-  Type array_max = std::numeric_limits<Type>::lowest();
+  Type array_max = NumericLowest<Type>();
   Max(array, array_max);
 
   auto it1 = array.begin();

@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/macros.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/ml/activation_functions/softmax.hpp"
 #include "math/standard_functions/log.hpp"
@@ -27,52 +28,74 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class LogSoftmax : public fetch::ml::Ops<T>
+class LogSoftmax : public fetch::ml::BatchOps<T>
 {
 public:
-  using ArrayType      = T;
-  using DataType       = typename ArrayType::Type;
-  using ArrayPtrType   = std::shared_ptr<ArrayType>;
-  using ConstSliceType = typename ArrayType::ConstSliceType;
+  using ArrayType = T;
+  using DataType  = typename ArrayType::Type;
+  using SizeType  = typename ArrayType::SizeType;
 
-  LogSoftmax()          = default;
-  virtual ~LogSoftmax() = default;
+  LogSoftmax(SizeType axis = 0)
+    : axis_(axis)
+  {}
 
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs, ArrayType &output)
+  ~LogSoftmax() = default;
+
+  ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                    ArrayType &                                                 output)
   {
-    (void)output;
-    assert(inputs.size() == 1);
-    if (!this->output_ || this->output_->shape() != inputs[0]->shape())
-    {
-      this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
-    }
-
-    fetch::math::Softmax(*inputs[0], *this->output_);
-    fetch::math::Log(*this->output_, *this->output_);
-
-    return this->output_;
+    ASSERT(output.shape() == ComputeOutputShape(inputs));
+    ASSERT(inputs.size() == 1);
+    fetch::math::Softmax(inputs.front().get(), output, axis_);
+    fetch::math::Log(output, output);
+    return output;
   }
 
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
+      ArrayType const &                                           error_signal)
   {
-    FETCH_UNUSED(inputs);
+    ASSERT(inputs.size() == 1);
+    ASSERT(inputs.front().get().shape() == error_signal.shape());
 
-    assert(inputs.size() == 1);
-    assert(inputs[0]->shape() == errorSignal->shape());
+    ArrayType return_signal = error_signal.Copy();
+    ArrayType t(this->ComputeOutputShape(inputs));
+    fetch::math::Softmax(inputs.front().get(), t, axis_);
 
-    assert(errorSignal->size() == 1);
+    // return_signal.InlineMultiply(t);
 
-    fetch::math::Exp(*errorSignal, *errorSignal);
-    for (std::size_t j = 0; j < errorSignal->size(); ++j)
+    // 1D softmax
+    if (inputs.front().get().shape().size() == 1)
     {
-      fetch::math::Add(DataType(1), errorSignal->At(j), errorSignal->At(j));
+      typename ArrayType::Type sum = return_signal.Sum();
+      t.InlineMultiply(sum);
     }
-    fetch::math::Divide(DataType(1), *errorSignal, *errorSignal);
-    return {errorSignal};
+    // 2D softmax
+    else if (inputs.front().get().shape().size() == 2)
+    {
+      ArrayType sum;
+      sum = ReduceSum(return_signal, 1 - axis_);
+      t.InlineMultiply(sum);
+    }
+    else
+    {
+      throw std::runtime_error("Softmax over >= 3 dimensions not implemented");
+    }
+
+    return_signal.InlineSubtract(t);
+    return {return_signal};
+  }
+
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "LogSoftmax";
+
+private:
+  SizeType axis_;
 };
 
 }  // namespace ops

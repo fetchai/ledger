@@ -100,7 +100,7 @@ TEST(array_bitset_test, test_conversion_bitset_to_ByteArray)
     ASSERT_EQ(k_arr.size() * sizeof(decltype(k_arr)::value_type), result.size());
 
     auto const expected_bytes{
-        reinterpret_cast<byte_array::ByteArray::container_type const *const>(k_arr.data())};
+        reinterpret_cast<byte_array::ByteArray::container_type const *>(k_arr.data())};
     auto const compare_result = std::memcmp(result.pointer(), expected_bytes, result.size());
     // PRIMARY expectation
     EXPECT_EQ(0, compare_result);

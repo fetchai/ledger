@@ -36,6 +36,8 @@ public:
   using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
+  virtual ~Ops() = default;
+
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     ArrayType output(ComputeOutputShape(inputs));

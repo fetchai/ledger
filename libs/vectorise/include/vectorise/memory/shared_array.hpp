@@ -21,6 +21,7 @@
 #include "vectorise/memory/iterator.hpp"
 #include "vectorise/memory/parallel_dispatcher.hpp"
 #include "vectorise/memory/vector_slice.hpp"
+//#include "meta/type_traits.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -34,27 +35,30 @@
 namespace fetch {
 namespace memory {
 
-template <typename T, uint64_t TypeSize = sizeof(T)>
-class SharedArray : public VectorSlice<T, TypeSize>
+template <typename T, std::size_t type_size = sizeof(T)>
+class SharedArray : public VectorSlice<T, type_size>
 {
 public:
-  static_assert(sizeof(T) >= TypeSize, "Invalid object size");
+  static_assert(sizeof(T) >= type_size, "Invalid object size");
 
-  using SizeType  = uint64_t;
-  using DataType  = std::shared_ptr<T>;
-  using SuperType = VectorSlice<T, TypeSize>;
-  using SelfType  = SharedArray<T, TypeSize>;
-  using Type      = T;
+  // TODO(check IfIsPodOrFixedPoint memory safe)
+  //  static_assert(std::is_pod<T>::value, "Can only be used with POD types");
+  //  static_assert(meta::IfIsPodOrFixedPoint<T>::value, "can only be used with POD or FixedPoint");
+  using size_type  = std::size_t;
+  using data_type  = std::shared_ptr<T>;
+  using super_type = VectorSlice<T, type_size>;
+  using self_type  = SharedArray<T, type_size>;
+  using type       = T;
 
-  SharedArray(SizeType const &n)
-    : SuperType()
+  SharedArray(std::size_t const &n)
+    : super_type()
   {
     this->size_ = n;
 
     if (n > 0)
     {
       data_ = std::shared_ptr<T>(
-          reinterpret_cast<Type *>(_mm_malloc(this->padded_size() * sizeof(Type), 16)), _mm_free);
+          reinterpret_cast<type *>(_mm_malloc(this->padded_size() * sizeof(type), 64)), _mm_free);
 
       this->pointer_ = data_.get();
     }
@@ -62,7 +66,7 @@ public:
 
   SharedArray() = default;
   SharedArray(SharedArray const &other)
-    : SuperType(other.data_.get(), other.size())
+    : super_type(other.data_.get(), other.size())
     , data_(other.data_)
   {}
 
@@ -81,7 +85,7 @@ public:
     return *this;
   }
 
-  SelfType &operator=(SharedArray const &other)
+  self_type &operator=(SharedArray const &other)
   {
     if (&other == this)
     {
@@ -105,11 +109,11 @@ public:
 
   ~SharedArray() = default;
 
-  SelfType Copy() const
+  self_type Copy() const
   {
     // TODO(issue 2): Use memcopy
-    SelfType ret(this->size_);
-    for (SizeType i = 0; i < this->size_; ++i)
+    self_type ret(this->size_);
+    for (std::size_t i = 0; i < this->size_; ++i)
     {
       ret[i] = this->At(i);
     }
@@ -129,7 +133,7 @@ public:
   }
 
 private:
-  DataType data_ = nullptr;
+  data_type data_ = nullptr;
 };
 
 }  // namespace memory

@@ -86,7 +86,7 @@ int main(int argc, char **argv)
   // Creating new VM module
   fetch::vm::Module module;
 
-  module.CreateFreeFunction("Print", &Print);
+  module.CreateFreeFunction("print", &Print);
   module.CreateFreeFunction("toString", &toString);
   module.CreateClassType<System>("System")
       .CreateTypeFunction("Argc", &System::Argc)
@@ -122,7 +122,7 @@ int main(int argc, char **argv)
   fetch::vm::Variant output;
 
   // Setting VM up and running
-  if (!vm->Execute(script, "main", error, console, output))
+  if (!vm->Execute(script, "main", error, output))
   {
     std::cout << "Runtime error: " << error << std::endl;
   }

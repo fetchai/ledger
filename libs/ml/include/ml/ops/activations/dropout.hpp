@@ -42,7 +42,7 @@ public:
   {
     ASSERT(probability >= 0.0 && probability <= 1.0);
     rng_.Seed(random_seed);
-    drop_values_ = ArrayType(0);
+    drop_values_ = ArrayType{0};
   }
 
   virtual ~Dropout() = default;
@@ -78,20 +78,20 @@ public:
     ASSERT(errorSignal.shape() == inputs.front().get().shape());
     ASSERT(drop_values_.shape() == inputs.front().get().shape());
 
-    ArrayType returnSignal{errorSignal.shape()};
+    ArrayType return_signal{errorSignal.shape()};
 
     // gradient of dropout is 1.0 for enabled neurons and 0.0 for disabled
     // multiply by errorSignal (chain rule)
     if (this->is_training_)
     {
-      fetch::math::Multiply(errorSignal, drop_values_, returnSignal);
+      fetch::math::Multiply(errorSignal, drop_values_, return_signal);
     }
     else
     {
-      returnSignal.Copy(errorSignal);
+      return_signal.Copy(errorSignal);
     }
 
-    return {returnSignal};
+    return {return_signal};
   }
 
   static constexpr char const *DESCRIPTOR = "Dropout";
@@ -99,16 +99,22 @@ public:
 private:
   void UpdateRandomValues()
   {
-    for (SizeType i(0); i < drop_values_.size(); i++)
+    DataType zero{0};
+    DataType one{1};
+
+    double d_probability = static_cast<double>(probability_);
+    auto   it            = drop_values_.begin();
+    while (it.is_valid())
     {
-      if (DataType(rng_.AsDouble()) <= probability_)
+      if (rng_.AsDouble() <= d_probability)
       {
-        drop_values_.Set(i, DataType(1.0));
+        *it = one;
       }
       else
       {
-        drop_values_.Set(i, DataType(0.0));
+        *it = zero;
       }
+      ++it;
     }
   }
 

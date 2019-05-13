@@ -127,7 +127,7 @@ private:
     {
       PushProtocolRequest(index, payload, &context);
     }
-    catch (std::exception &ex)
+    catch (std::exception const &ex)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Recv message from: ", byte_array::ToBase64(from),
                       " on: ", service, ':', channel, ':', counter, " -- ", ex.what());
