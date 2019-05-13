@@ -35,7 +35,6 @@ class SubGraph : public Graph<T>, public BatchOps<T>
 public:
   using ArrayType      = T;
   using ArrayPtrType   = std::shared_ptr<ArrayType>;
-  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                             ArrayType &                                                 output)
@@ -54,22 +53,22 @@ public:
       ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == this->input_nodes_.size());
-    std::vector<std::pair<NodeInterface<T> *, ArrayType>> nonBackpropagatedErrorSignals =
+    std::vector<std::pair<NodeInterface<T> *, ArrayType>> non_back_prop_err_signal =
         this->output_node_->BackPropagate(errorSignal);
-    std::vector<ArrayType> backpropagatedErrorSignals;
+    std::vector<ArrayType> back_prop_err_signal;
 
     for (std::string const &s : input_nodes_)
     {
       std::shared_ptr<NodeInterface<T>> node = this->nodes_[s];
-      for (auto const &grad : nonBackpropagatedErrorSignals)
+      for (auto const &grad : non_back_prop_err_signal)
       {
         if (grad.first == node.get())
         {
-          backpropagatedErrorSignals.push_back(grad.second);
+          back_prop_err_signal.push_back(grad.second);
         }
       }
     }
-    return backpropagatedErrorSignals;
+    return back_prop_err_signal;
   }
 
 protected:
