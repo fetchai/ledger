@@ -46,7 +46,8 @@ namespace storage {
 template <std::size_t V_BITS = 256, typename BLOCK_TYPE = uint64_t>
 struct Key
 {
-  static_assert(std::is_integral<BLOCK_TYPE>::value, "The BLOCK_TYPE must be integer type.");
+  static_assert(std::is_unsigned<BLOCK_TYPE>::value,
+                "The BLOCK_TYPE must be of unsigned integer type.");
   static_assert(meta::IsLog2(V_BITS) && (V_BITS >= 128),
                 "Keys expected to be a cryptographic hash function output");
 
@@ -61,6 +62,8 @@ struct Key
     BLOCKS               = BITS >> BLOCK_SIZE_BITS_LOG2
   };
 
+  static_assert(meta::IsLog2(static_cast<std::size_t>(BLOCK_SIZE_BITS)),
+                "Size of BLOCK_TYPE [in bits] must be power of 2");
   static_assert((BITS % BLOCK_SIZE_BITS) == 0, "Key must be multiple of block size");
 
   using KeyArrayNative = BlockType[BLOCKS];
