@@ -463,7 +463,7 @@ MainChain::BlockHashSet MainChain::GetMissingTips() const
 MainChain::BlockHashs MainChain::GetMissingBlockHashes(uint64_t limit) const
 {
   uint64_t limit_here = MainChain::UPPER_BOUND;
-  limit               = std::min(limit, limit_here);
+  limit  = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   FETCH_LOCK(lock_);
 
   BlockHashs results;
