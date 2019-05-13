@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,47 +17,35 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/compiler.hpp"
-#include "vm/module.hpp"
+#include "vm/ir.hpp"
+#include "vm/node.hpp"
 
 namespace fetch {
 namespace vm {
 
-Compiler::Compiler(Module *module)
+struct IRBuilder
 {
-  analyser_.Initialise();
-  module->CompilerSetup(this);
-}
-
-Compiler::~Compiler()
-{
-  analyser_.UnInitialise();
-}
-
-bool Compiler::Compile(std::string const &source, std::string const &name, IR &ir,
-                       std::vector<std::string> &errors)
-{
-  std::string  filename = "";
-  BlockNodePtr root     = parser_.Parse(filename, source, errors);
-  if (root == nullptr)
+  IRBuilder()
   {
-    return false;
-  }
-  bool analysed = analyser_.Analyse(root, errors);
-  if (!analysed)
-  {
-    root->Reset();
-    root = nullptr;
-    return false;
+    ir_ = nullptr;
   }
 
-  builder_.Build(name, root, ir);
+  ~IRBuilder() = default;
 
-  root->Reset();
-  root = nullptr;
+  void               Build(std::string const &name, BlockNodePtr const &root, IR &ir);
+  IRNodePtr          BuildNode(NodePtr const &node);
+  IRNodePtrArray     BuildChildren(NodePtrArray const &children);
+  IRTypePtr          BuildType(TypePtr const &type);
+  IRVariablePtr      BuildVariable(VariablePtr const &variable);
+  IRFunctionPtr      BuildFunction(FunctionPtr const &function);
+  IRTypePtrArray     BuildTypes(const TypePtrArray &types);
+  IRVariablePtrArray BuildVariables(const VariablePtrArray &variables);
 
-  return true;
-}
+  IR *                                ir_;
+  IR::Map<TypePtr, IRTypePtr>         type_map_;
+  IR::Map<VariablePtr, IRVariablePtr> variable_map_;
+  IR::Map<FunctionPtr, IRFunctionPtr> function_map_;
+};
 
 }  // namespace vm
 }  // namespace fetch

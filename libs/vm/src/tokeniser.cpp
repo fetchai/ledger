@@ -18,9 +18,9 @@
 
 // clang-format off
 
-#line 1 "../src/tokeniser.cpp"
+#line 2 "../src/tokeniser.cpp"
 
-#line 3 "../src/tokeniser.cpp"
+#line 4 "../src/tokeniser.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -618,8 +618,8 @@ int Set(fetch::vm::Token* token, const fetch::vm::Token::Kind kind, const char* 
 	return 1;
 }
 
-#line 601 "../src/tokeniser.cpp"
 #line 602 "../src/tokeniser.cpp"
+#line 603 "../src/tokeniser.cpp"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -899,7 +899,7 @@ YY_DECL
 
 #line 54 "tokeniser.l"
 	/* whitespace */
-#line 882 "../src/tokeniser.cpp"
+#line 883 "../src/tokeniser.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1302,27 +1302,27 @@ YY_RULE_SETUP
 case 59:
 YY_RULE_SETUP
 #line 192 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::ModuloAssign, yytext, yyleng, yyextra);}
+{return Set(yylval, fetch::vm::Token::Kind::InplaceModulo, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
 #line 193 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::AddAssign, yytext, yyleng, yyextra);}
+{return Set(yylval, fetch::vm::Token::Kind::InplaceAdd, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
 #line 194 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::SubtractAssign, yytext, yyleng, yyextra);}
+{return Set(yylval, fetch::vm::Token::Kind::InplaceSubtract, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
 #line 195 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::MultiplyAssign, yytext, yyleng, yyextra);}
+{return Set(yylval, fetch::vm::Token::Kind::InplaceMultiply, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
 #line 196 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::DivideAssign, yytext, yyleng, yyextra);}
+{return Set(yylval, fetch::vm::Token::Kind::InplaceDivide, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
@@ -1400,7 +1400,7 @@ YY_RULE_SETUP
 #line 215 "tokeniser.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1383 "../src/tokeniser.cpp"
+#line 1384 "../src/tokeniser.cpp"
 
 	case YY_END_OF_BUFFER:
 		{

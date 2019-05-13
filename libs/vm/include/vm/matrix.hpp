@@ -29,7 +29,10 @@ class IMatrix : public Object
 public:
   IMatrix()          = delete;
   virtual ~IMatrix() = default;
-  static Ptr<IMatrix> Constructor(VM *vm, TypeId type_id, int32_t rows, int32_t columns);
+  static Ptr<IMatrix> Constructor(VM *vm, TypeId type_id, int32_t num_rows, int32_t num_columns);
+  virtual TemplateParameter GetIndexedValue(AnyInteger const &row, AnyInteger const &column) = 0;
+  virtual void              SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
+                                            TemplateParameter const &value)                  = 0;
 
 protected:
   IMatrix(VM *vm, TypeId type_id)
@@ -43,31 +46,35 @@ struct Matrix : public IMatrix
   Matrix()          = delete;
   virtual ~Matrix() = default;
 
-  Matrix(VM *vm, TypeId type_id, size_t rows, size_t columns)
+  Matrix(VM *vm, TypeId type_id, TypeId element_type_id__, size_t num_rows, size_t num_columns)
     : IMatrix(vm, type_id)
-    , matrix(std::vector<typename fetch::math::Tensor<T>::SizeType>(columns, rows))
-  {}
-
-  static Ptr<Matrix> AcquireMatrix(VM *vm, TypeId type_id, size_t rows, size_t columns)
+    , matrix(std::vector<typename fetch::math::Tensor<T>::SizeType>(num_columns, num_rows))
   {
-    return Ptr<Matrix>(new Matrix(vm, type_id, rows, columns));
+    element_type_id_ = element_type_id__;
   }
 
-  virtual void RightAdd(Variant &lhsv, Variant &rhsv) override
+  static Ptr<Matrix> AcquireMatrix(VM *vm, TypeId type_id, TypeId element_type_id, size_t num_rows,
+                                   size_t num_columns)
   {
-    bool const   lhs_matrix_is_modifiable = lhsv.object.RefCount() == 1;
-    Ptr<Matrix>  lhs                      = lhsv.object;
-    T            rhs                      = rhsv.primitive.Get<T>();
-    size_t const lhs_rows                 = lhs->matrix.shape()[0];
-    size_t const lhs_columns              = lhs->matrix.shape()[1];
-    if (lhs_matrix_is_modifiable)
+    return Ptr<Matrix>(new Matrix(vm, type_id, element_type_id, num_rows, num_columns));
+  }
+
+  virtual void Negate(Ptr<Object> &object) override
+  {
+    bool const   matrix_is_modifiable = object.RefCount() == 1;
+    Ptr<Matrix>  operand              = object;
+    size_t const rows                 = operand->matrix.shape()[0];
+    size_t const columns              = operand->matrix.shape()[1];
+
+    // TODO(tfr): implement negate
+    if (matrix_is_modifiable)
     {
-      lhs->matrix.InlineAdd(rhs);
+      operand->matrix.InlineMultiply(T(-1));
       return;
     }
-    Ptr<Matrix> m = AcquireMatrix(vm_, type_id_, lhs_rows, lhs_columns);
-    fetch::math::Add(lhs->matrix, rhs, m->matrix);
-    lhsv.Assign(std::move(m), lhsv.type_id);
+    Ptr<Matrix> m = AcquireMatrix(vm_, type_id_, element_type_id_, rows, columns);
+    fetch::math::Multiply(operand->matrix, T(-1), m->matrix);
+    object = std::move(m);
   }
 
   virtual void Add(Ptr<Object> &lhso, Ptr<Object> &rhso) override
@@ -96,19 +103,29 @@ struct Matrix : public IMatrix
       lhso = std::move(rhs);
       return;
     }
-    Ptr<Matrix> m = AcquireMatrix(vm_, type_id_, lhs_rows, lhs_columns);
+    Ptr<Matrix> m = AcquireMatrix(vm_, type_id_, element_type_id_, lhs_rows, lhs_columns);
     fetch::math::Add(lhs->matrix, rhs->matrix, m->matrix);
     lhso = std::move(m);
   }
 
-  virtual void RightAddAssign(Ptr<Object> &lhso, Variant &rhsv) override
+  virtual void RightAdd(Variant &objectv, Variant &rhsv) override
   {
-    Ptr<Matrix> lhs = lhso;
-    T           rhs = rhsv.primitive.Get<T>();
-    lhs->matrix.InlineAdd(rhs);
+    bool const   lhs_matrix_is_modifiable = objectv.object.RefCount() == 1;
+    Ptr<Matrix>  lhs                      = objectv.object;
+    T            rhs                      = rhsv.primitive.Get<T>();
+    size_t const lhs_rows                 = lhs->matrix.shape()[0];
+    size_t const lhs_columns              = lhs->matrix.shape()[1];
+    if (lhs_matrix_is_modifiable)
+    {
+      lhs->matrix.InlineAdd(rhs);
+      return;
+    }
+    Ptr<Matrix> m = AcquireMatrix(vm_, type_id_, element_type_id_, lhs_rows, lhs_columns);
+    fetch::math::Add(lhs->matrix, rhs, m->matrix);
+    objectv.Assign(std::move(m), objectv.type_id);
   }
 
-  virtual void AddAssign(Ptr<Object> &lhso, Ptr<Object> &rhso) override
+  virtual void InplaceAdd(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
   {
     Ptr<Matrix>  lhs         = lhso;
     Ptr<Matrix>  rhs         = rhso;
@@ -124,21 +141,11 @@ struct Matrix : public IMatrix
     lhs->matrix.InlineAdd(rhs->matrix);
   }
 
-  virtual void RightSubtract(Variant &lhsv, Variant &rhsv) override
+  virtual void InplaceRightAdd(Ptr<Object> const &lhso, Variant const &rhsv) override
   {
-    bool const   lhs_matrix_is_modifiable = lhsv.object.RefCount() == 1;
-    Ptr<Matrix>  lhs                      = lhsv.object;
-    T            rhs                      = rhsv.primitive.Get<T>();
-    size_t const lhs_rows                 = lhs->matrix.shape()[0];
-    size_t const lhs_columns              = lhs->matrix.shape()[1];
-    if (lhs_matrix_is_modifiable)
-    {
-      lhs->matrix.InlineSubtract(rhs);
-      return;
-    }
-    Ptr<Matrix> m = AcquireMatrix(vm_, type_id_, lhs_rows, lhs_columns);
-    fetch::math::Subtract(lhs->matrix, rhs, m->matrix);
-    lhsv.Assign(std::move(m), lhsv.type_id);
+    Ptr<Matrix> lhs = lhso;
+    T           rhs = rhsv.primitive.Get<T>();
+    lhs->matrix.InlineAdd(rhs);
   }
 
   virtual void Subtract(Ptr<Object> &lhso, Ptr<Object> &rhso) override
@@ -167,19 +174,29 @@ struct Matrix : public IMatrix
       lhso = std::move(rhs);
       return;
     }
-    Ptr<Matrix> m = AcquireMatrix(vm_, type_id_, lhs_rows, lhs_columns);
+    Ptr<Matrix> m = AcquireMatrix(vm_, type_id_, element_type_id_, lhs_rows, lhs_columns);
     fetch::math::Subtract(lhs->matrix, rhs->matrix, m->matrix);
     lhso = std::move(m);
   }
 
-  virtual void RightSubtractAssign(Ptr<Object> &lhso, Variant &rhsv) override
+  virtual void RightSubtract(Variant &objectv, Variant &rhsv) override
   {
-    Ptr<Matrix> lhs = lhso;
-    T           rhs = rhsv.primitive.Get<T>();
-    lhs->matrix.InlineSubtract(rhs);
+    bool const   lhs_matrix_is_modifiable = objectv.object.RefCount() == 1;
+    Ptr<Matrix>  lhs                      = objectv.object;
+    T            rhs                      = rhsv.primitive.Get<T>();
+    size_t const lhs_rows                 = lhs->matrix.shape()[0];
+    size_t const lhs_columns              = lhs->matrix.shape()[1];
+    if (lhs_matrix_is_modifiable)
+    {
+      lhs->matrix.InlineSubtract(rhs);
+      return;
+    }
+    Ptr<Matrix> m = AcquireMatrix(vm_, type_id_, element_type_id_, lhs_rows, lhs_columns);
+    fetch::math::Subtract(lhs->matrix, rhs, m->matrix);
+    objectv.Assign(std::move(m), objectv.type_id);
   }
 
-  virtual void SubtractAssign(Ptr<Object> &lhso, Ptr<Object> &rhso) override
+  virtual void InplaceSubtract(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
   {
     Ptr<Matrix>  lhs         = lhso;
     Ptr<Matrix>  rhs         = rhso;
@@ -195,39 +212,11 @@ struct Matrix : public IMatrix
     lhs->matrix.InlineSubtract(rhs->matrix);
   }
 
-  virtual void LeftMultiply(Variant &lhsv, Variant &rhsv) override
+  virtual void InplaceRightSubtract(Ptr<Object> const &lhso, Variant const &rhsv) override
   {
-    bool const   rhs_matrix_is_modifiable = rhsv.object.RefCount() == 1;
-    T            lhs                      = lhsv.primitive.Get<T>();
-    Ptr<Matrix>  rhs                      = rhsv.object;
-    size_t const rhs_rows                 = rhs->matrix.shape()[0];
-    size_t const rhs_columns              = rhs->matrix.shape()[1];
-    if (rhs_matrix_is_modifiable)
-    {
-      rhs->matrix.InlineMultiply(lhs);
-      lhsv = std::move(rhsv);
-      return;
-    }
-    Ptr<Matrix> m = AcquireMatrix(vm_, type_id_, rhs_rows, rhs_columns);
-    fetch::math::Multiply(rhs->matrix, lhs, m->matrix);
-    lhsv.Assign(std::move(m), rhsv.type_id);
-  }
-
-  virtual void RightMultiply(Variant &lhsv, Variant &rhsv) override
-  {
-    bool const   lhs_matrix_is_modifiable = lhsv.object.RefCount() == 1;
-    Ptr<Matrix>  lhs                      = lhsv.object;
-    T            rhs                      = rhsv.primitive.Get<T>();
-    size_t const lhs_rows                 = lhs->matrix.shape()[0];
-    size_t const lhs_columns              = lhs->matrix.shape()[1];
-    if (lhs_matrix_is_modifiable)
-    {
-      lhs->matrix.InlineMultiply(rhs);
-      return;
-    }
-    Ptr<Matrix> m = AcquireMatrix(vm_, type_id_, lhs_rows, lhs_columns);
-    fetch::math::Multiply(lhs->matrix, rhs, m->matrix);
-    lhsv.Assign(std::move(m), lhsv.type_id);
+    Ptr<Matrix> lhs = lhso;
+    T           rhs = rhsv.primitive.Get<T>();
+    lhs->matrix.InlineSubtract(rhs);
   }
 
   virtual void Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso) override
@@ -243,42 +232,58 @@ struct Matrix : public IMatrix
       RuntimeError("invalid operation");
       return;
     }
-    Ptr<Matrix> m = AcquireMatrix(vm_, type_id_, lhs_rows, rhs_columns);
+    Ptr<Matrix> m = AcquireMatrix(vm_, type_id_, element_type_id_, lhs_rows, rhs_columns);
     // TODO(tfr): use blas
     TODO_FAIL("Use BLAS TODO");
     lhso = std::move(m);
   }
 
-  virtual void RightMultiplyAssign(Ptr<Object> &lhso, Variant &rhsv) override
+  virtual void LeftMultiply(Variant &lhsv, Variant &objectv) override
+  {
+    bool const   rhs_matrix_is_modifiable = objectv.object.RefCount() == 1;
+    T            lhs                      = lhsv.primitive.Get<T>();
+    Ptr<Matrix>  rhs                      = objectv.object;
+    size_t const rhs_rows                 = rhs->matrix.shape()[0];
+    size_t const rhs_columns              = rhs->matrix.shape()[1];
+    if (rhs_matrix_is_modifiable)
+    {
+      rhs->matrix.InlineMultiply(lhs);
+      lhsv = std::move(objectv);
+      return;
+    }
+    Ptr<Matrix> m = AcquireMatrix(vm_, type_id_, element_type_id_, rhs_rows, rhs_columns);
+    fetch::math::Multiply(rhs->matrix, lhs, m->matrix);
+    lhsv.Assign(std::move(m), objectv.type_id);
+  }
+
+  virtual void RightMultiply(Variant &objectv, Variant &rhsv) override
+  {
+    bool const   lhs_matrix_is_modifiable = objectv.object.RefCount() == 1;
+    Ptr<Matrix>  lhs                      = objectv.object;
+    T            rhs                      = rhsv.primitive.Get<T>();
+    size_t const lhs_rows                 = lhs->matrix.shape()[0];
+    size_t const lhs_columns              = lhs->matrix.shape()[1];
+    if (lhs_matrix_is_modifiable)
+    {
+      lhs->matrix.InlineMultiply(rhs);
+      return;
+    }
+    Ptr<Matrix> m = AcquireMatrix(vm_, type_id_, element_type_id_, lhs_rows, lhs_columns);
+    fetch::math::Multiply(lhs->matrix, rhs, m->matrix);
+    objectv.Assign(std::move(m), objectv.type_id);
+  }
+
+  virtual void InplaceRightMultiply(Ptr<Object> const &lhso, Variant const &rhsv) override
   {
     Ptr<Matrix> lhs = lhso;
     T           rhs = rhsv.primitive.Get<T>();
     lhs->matrix.InlineMultiply(rhs);
   }
 
-  virtual void MultiplyAssign(Ptr<Object> &lhso, Ptr<Object> &rhso) override
+  virtual void RightDivide(Variant &objectv, Variant &rhsv) override
   {
-    Ptr<Matrix>  lhs         = lhso;
-    Ptr<Matrix>  rhs         = rhso;
-    size_t const lhs_rows    = lhs->matrix.shape()[0];
-    size_t const lhs_columns = lhs->matrix.shape()[1];
-    size_t const rhs_rows    = rhs->matrix.shape()[0];
-    size_t const rhs_columns = rhs->matrix.shape()[1];
-    if (lhs_columns != rhs_rows)
-    {
-      RuntimeError("invalid operation");
-      return;
-    }
-    Ptr<Matrix> m = AcquireMatrix(vm_, type_id_, lhs_rows, rhs_columns);
-    // TODO(tfr): Use blas
-    TODO_FAIL("Use BLAS");
-    lhso = std::move(m);
-  }
-
-  virtual void RightDivide(Variant &lhsv, Variant &rhsv) override
-  {
-    bool const  lhs_matrix_is_modifiable = lhsv.object.RefCount() == 1;
-    Ptr<Matrix> lhs                      = lhsv.object;
+    bool const  lhs_matrix_is_modifiable = objectv.object.RefCount() == 1;
+    Ptr<Matrix> lhs                      = objectv.object;
     T           rhs                      = rhsv.primitive.Get<T>();
     if (math::IsZero(rhs))
     {
@@ -292,12 +297,12 @@ struct Matrix : public IMatrix
       lhs->matrix.InlineDivide(rhs);
       return;
     }
-    Ptr<Matrix> m = AcquireMatrix(vm_, type_id_, lhs_rows, lhs_columns);
+    Ptr<Matrix> m = AcquireMatrix(vm_, type_id_, element_type_id_, lhs_rows, lhs_columns);
     fetch::math::Divide(lhs->matrix, rhs, m->matrix);
-    lhsv.Assign(std::move(m), lhsv.type_id);
+    objectv.Assign(std::move(m), objectv.type_id);
   }
 
-  virtual void RightDivideAssign(Ptr<Object> &lhso, Variant &rhsv) override
+  virtual void InplaceRightDivide(Ptr<Object> const &lhso, Variant const &rhsv) override
   {
     Ptr<Matrix> lhs = lhso;
     T           rhs = rhsv.primitive.Get<T>();
@@ -309,96 +314,75 @@ struct Matrix : public IMatrix
     RuntimeError("division by zero");
   }
 
-  virtual void UnaryMinus(Ptr<Object> &object) override
+  T *Find(AnyInteger const &row, AnyInteger const &column)
   {
-    bool const   matrix_is_modifiable = object.RefCount() == 1;
-    Ptr<Matrix>  operand              = object;
-    size_t const rows                 = operand->matrix.shape()[0];
-    size_t const columns              = operand->matrix.shape()[1];
-
-    // TODO(tfr): implement unary minus
-    if (matrix_is_modifiable)
-    {
-      operand->matrix.InlineMultiply(T(-1));
-      return;
-    }
-    Ptr<Matrix> m = AcquireMatrix(vm_, type_id_, rows, columns);
-    fetch::math::Multiply(operand->matrix, T(-1), m->matrix);
-    object = std::move(m);
-  }
-
-  T *Find()
-  {
-    Variant &columnv = Pop();
-    size_t   column;
-    if (!GetNonNegativeInteger(columnv, column))
+    size_t r;
+    size_t c;
+    if (!GetNonNegativeInteger(column, c))
     {
       RuntimeError("negative index");
       return nullptr;
     }
-    columnv.Reset();
-    Variant &rowv = Pop();
-    size_t   row;
-    if (!GetNonNegativeInteger(rowv, row))
+    if (!GetNonNegativeInteger(row, r))
     {
       RuntimeError("negative index");
       return nullptr;
     }
-    rowv.Reset();
-    size_t const rows    = matrix.shape()[0];
-    size_t const columns = matrix.shape()[1];
-    if ((row >= rows) || (column >= columns))
+    size_t const num_rows    = matrix.shape()[0];
+    size_t const num_columns = matrix.shape()[1];
+    if ((r >= num_rows) || (c >= num_columns))
     {
       RuntimeError("index out of bounds");
       return nullptr;
     }
-    return &matrix.At(column, row);
+    return &matrix.At(c, r);
   }
 
-  virtual void *FindElement() override
+  virtual TemplateParameter GetIndexedValue(AnyInteger const &row,
+                                            AnyInteger const &column) override
   {
-    return Find();
-  }
-
-  virtual void PushElement(TypeId element_type_id) override
-  {
-    T *ptr = Find();
+    T *ptr = Find(row, column);
     if (ptr)
     {
-      Variant &top = Push();
-      top.Construct(*ptr, element_type_id);
+      return TemplateParameter(*ptr, element_type_id_);
     }
+    // Not found
+    return TemplateParameter();
   }
 
-  virtual void PopToElement() override
+  virtual void SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
+                               TemplateParameter const &value) override
   {
-    T *ptr = Find();
+    T *ptr = Find(row, column);
     if (ptr)
     {
-      Variant &top = Pop();
-      *ptr         = top.Move<T>();
+      *ptr = value.Get<T>();
     }
   }
 
   fetch::math::Tensor<T> matrix;
+  TypeId                 element_type_id_;
 };
 
-inline Ptr<IMatrix> IMatrix::Constructor(VM *vm, TypeId type_id, int32_t rows, int32_t columns)
+inline Ptr<IMatrix> IMatrix::Constructor(VM *vm, TypeId type_id, int32_t num_rows,
+                                         int32_t num_columns)
 {
   TypeInfo const &type_info       = vm->GetTypeInfo(type_id);
   TypeId const    element_type_id = type_info.parameter_type_ids[0];
-  if ((rows < 0) || (columns < 0))
+  if ((num_rows < 0) || (num_columns < 0))
   {
     vm->RuntimeError("negative size");
     return Ptr<IMatrix>();
   }
   if (element_type_id == TypeIds::Float32)
   {
-    return Ptr<IMatrix>(new Matrix<float>(vm, type_id, size_t(rows), size_t(columns)));
+    return Ptr<IMatrix>(
+        new Matrix<float>(vm, type_id, element_type_id, size_t(num_rows), size_t(num_columns)));
   }
   else
   {
-    return Ptr<IMatrix>(new Matrix<double>(vm, type_id, size_t(rows), size_t(columns)));
+    return Ptr<IMatrix>(
+        new Matrix<double>(vm, type_id, element_type_id, size_t(num_rows), size_t(num_columns)));
   }
 }
 

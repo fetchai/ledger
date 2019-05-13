@@ -18,13 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "vm/analyser.hpp"
-#include "vm/generator.hpp"
+#include "vm/ir_builder.hpp"
 #include "vm/parser.hpp"
 
 namespace fetch {
 namespace vm {
 
-// Forward declarations
 class Module;
 
 class Compiler
@@ -32,59 +31,71 @@ class Compiler
 public:
   Compiler(Module *module);
   ~Compiler();
-  bool Compile(std::string const &source, std::string const &name, Script &script, Strings &errors);
+  bool Compile(std::string const &source, std::string const &name, IR &ir,
+               std::vector<std::string> &errors);
 
 private:
-  void CreateClassType(std::string const &name, TypeId id)
+  void CreateClassType(std::string const &name, TypeIndex type_index)
   {
-    analyser_.CreateClassType(name, id);
+    analyser_.CreateClassType(name, type_index);
   }
 
-  void CreateTemplateInstantiationType(TypeId id, TypeId template_type_id,
-                                       TypeIdArray const &parameter_type_ids)
+  void CreateInstantiationType(TypeIndex type_index, TypeIndex template_type_index,
+                               TypeIndexArray const &parameter_type_index_array)
   {
-    analyser_.CreateTemplateInstantiationType(id, template_type_id, parameter_type_ids);
+    analyser_.CreateInstantiationType(type_index, template_type_index, parameter_type_index_array);
   }
 
-  void CreateOpcodeFreeFunction(std::string const &name, Opcode opcode,
-                                TypeIdArray const &parameter_type_ids, TypeId return_type_id)
+  void CreateFreeFunction(std::string const &name, TypeIndexArray const &parameter_type_index_array,
+                          TypeIndex return_type_index, Handler const &handler)
   {
-    analyser_.CreateOpcodeFreeFunction(name, opcode, parameter_type_ids, return_type_id);
+    analyser_.CreateFreeFunction(name, parameter_type_index_array, return_type_index, handler);
   }
 
-  void CreateOpcodeTypeConstructor(TypeId type_id, Opcode opcode,
-                                   TypeIdArray const &parameter_type_ids)
+  void CreateConstructor(TypeIndex type_index, TypeIndexArray const &parameter_type_index_array,
+                         Handler const &handler)
   {
-    analyser_.CreateOpcodeTypeConstructor(type_id, opcode, parameter_type_ids);
+    analyser_.CreateConstructor(type_index, parameter_type_index_array, handler);
   }
 
-  void CreateOpcodeTypeFunction(TypeId type_id, std::string const &name, Opcode opcode,
-                                TypeIdArray const &parameter_type_ids, TypeId return_type_id)
+  void CreateStaticMemberFunction(TypeIndex type_index, std::string const &function_name,
+                                  TypeIndexArray const &parameter_type_index_array,
+                                  TypeIndex return_type_index, Handler const &handler)
   {
-    analyser_.CreateOpcodeTypeFunction(type_id, name, opcode, parameter_type_ids, return_type_id);
+    analyser_.CreateStaticMemberFunction(type_index, function_name, parameter_type_index_array,
+                                         return_type_index, handler);
   }
 
-  void CreateOpcodeInstanceFunction(TypeId type_id, std::string const &name, Opcode opcode,
-                                    TypeIdArray const &parameter_type_ids, TypeId return_type_id)
+  void CreateMemberFunction(TypeIndex type_index, std::string const &function_name,
+                            TypeIndexArray const &parameter_type_index_array,
+                            TypeIndex return_type_index, Handler const &handler)
   {
-    analyser_.CreateOpcodeInstanceFunction(type_id, name, opcode, parameter_type_ids,
-                                           return_type_id);
+    analyser_.CreateMemberFunction(type_index, function_name, parameter_type_index_array,
+                                   return_type_index, handler);
   }
 
-  void EnableOperator(TypeId type_id, Operator op)
+  void EnableOperator(TypeIndex type_index, Operator op)
   {
-    analyser_.EnableOperator(type_id, op);
+    analyser_.EnableOperator(type_index, op);
   }
 
-  void EnableIndexOperator(TypeId type_id, TypeIdArray const &input_type_ids,
-                           TypeId const &output_type_id)
+  void EnableIndexOperator(TypeIndex type_index, TypeIndexArray const &input_type_index_array,
+                           TypeIndex output_type_index, Handler const &get_handler,
+                           Handler const &set_handler)
   {
-    analyser_.EnableIndexOperator(type_id, input_type_ids, output_type_id);
+    analyser_.EnableIndexOperator(type_index, input_type_index_array, output_type_index,
+                                  get_handler, set_handler);
+  }
+
+  void GetDetails(TypeInfoArray &type_info_array, TypeInfoMap &type_info_map,
+                  RegisteredTypes &registered_types, FunctionInfoArray &function_info_array)
+  {
+    analyser_.GetDetails(type_info_array, type_info_map, registered_types, function_info_array);
   }
 
   Parser    parser_;
   Analyser  analyser_;
-  Generator generator_;
+  IRBuilder builder_;
 
   friend class Module;
 };
