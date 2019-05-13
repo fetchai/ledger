@@ -115,6 +115,9 @@ struct Key
    */
   int Compare(Key const &other, int &pos, uint16_t const bits_to_compare) const
   {
+    // This bit-shift operators `>>` resp. `<<` with `BOCK_SIZE_BITS_LOG2` value
+    // give the same result as `/` resp. '*' operators with `BOCK_SIZE_BITS` value.
+
     auto const     last_block = bits_to_compare >> BLOCK_SIZE_BITS_LOG2;
     uint16_t const last_bit   = bits_to_compare & ((1 << BLOCK_SIZE_BITS_LOG2) - 1);
 
@@ -126,7 +129,7 @@ struct Key
 
     if (i == BLOCKS)
     {
-      pos = int(BITS);
+      pos = static_cast<int>(BITS);
       return 0;
     }
 
