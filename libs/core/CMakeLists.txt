@@ -11,7 +11,7 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 setup_library(fetch-core)
-target_link_libraries(fetch-core PUBLIC fetch-vectorise fetch-variant)
+target_link_libraries(fetch-core PUBLIC fetch-vectorise fetch-variant fetch-math)
 
 add_test_target()
 

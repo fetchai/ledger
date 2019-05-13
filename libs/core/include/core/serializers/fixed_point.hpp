@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/fixed_point/fixed_point.hpp"
+#include "math/fixed_point/fixed_point.hpp"
 
 namespace fetch {
 namespace serializers {
