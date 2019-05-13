@@ -221,7 +221,7 @@ def compare_against_original(reformatted, source_path, rel_path, names_only):
             output(rel_path)
         else:
             output('Style mismatch in: {}\n'.format(rel_path))
-            output('\n'.join(out[3:])) # first 3 elements are garbage
+            output('\n'.join(out[3:]))  # first 3 elements are garbage
             success = False
 
     return success
