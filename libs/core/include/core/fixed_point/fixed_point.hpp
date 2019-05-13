@@ -339,6 +339,7 @@ public:
   {
     data_ = {static_cast<Type>(n) << static_cast<Type>(FRACTIONAL_BITS)};
     // assert(CheckNoOverflow(n, FRACTIONAL_BITS, TOTAL_BITS));
+    return *this;
   }
 
   ////////////////////////////
