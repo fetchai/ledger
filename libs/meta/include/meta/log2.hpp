@@ -23,13 +23,13 @@ namespace fetch {
 namespace meta {
 
 template <typename T>
-constexpr EnableIf<IsInteger<T>, bool> IsLog2(T val) noexcept
+constexpr IfIsInteger<T, bool> IsLog2(T val) noexcept
 {
   return static_cast<bool>(val && !(val & (val - 1)));
 }
 
 template <typename T>
-constexpr EnableIf<IsInteger<T>, T> Log2(T val) noexcept
+constexpr IfIsInteger<T, T> Log2(T val) noexcept
 {
   return ((val > 1) ? (1 + Log2(val >> 1)) : 0);
 }
