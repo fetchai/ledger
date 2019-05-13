@@ -156,37 +156,37 @@ TEST_F(ByteArrayBufferTest, test_seek_position_is_zero_after_stream_construction
 
 TEST_F(ByteArrayBufferTest, test_basic_allocate_size)
 {
-  constexpr std::size_t preallocated_ammount = 100;
+  constexpr std::size_t preallocated_amount = 100;
 
   ByteArrayBuffer stream;
-  stream.Allocate(preallocated_ammount);
+  stream.Allocate(preallocated_amount);
 
-  EXPECT_EQ(preallocated_ammount, stream.size());
+  EXPECT_EQ(preallocated_amount, stream.size());
   EXPECT_EQ(0, stream.tell());
 
-  constexpr std::size_t delta_ammount = 10;
-  stream.Allocate(delta_ammount);
+  constexpr std::size_t delta_amount = 10;
+  stream.Allocate(delta_amount);
 
-  EXPECT_EQ(preallocated_ammount + delta_ammount, stream.size());
+  EXPECT_EQ(preallocated_amount + delta_amount, stream.size());
   EXPECT_EQ(0, stream.tell());
 }
 
 TEST_F(ByteArrayBufferTest, test_allocate_with_offset)
 {
   constexpr std::size_t offset               = 50;
-  constexpr std::size_t preallocated_ammount = offset + 50;
+  constexpr std::size_t preallocated_amount = offset + 50;
 
   ByteArrayBuffer stream;
-  stream.Allocate(preallocated_ammount);
+  stream.Allocate(preallocated_amount);
   stream.seek(offset);
 
-  EXPECT_EQ(preallocated_ammount, stream.size());
+  EXPECT_EQ(preallocated_amount, stream.size());
   EXPECT_EQ(offset, stream.tell());
 
-  constexpr std::size_t delta_ammount = 10;
-  stream.Allocate(delta_ammount);
+  constexpr std::size_t delta_amount = 10;
+  stream.Allocate(delta_amount);
 
-  EXPECT_EQ(preallocated_ammount + delta_ammount, stream.size());
+  EXPECT_EQ(preallocated_amount + delta_amount, stream.size());
   EXPECT_EQ(offset, stream.tell());
 }
 
@@ -218,34 +218,34 @@ TEST_F(ByteArrayBufferTest, test_basic)
 
 TEST_F(ByteArrayBufferTest, test_stream_with_preexisting_offset)
 {
-  constexpr std::size_t preallocated_ammount = 10;
+  constexpr std::size_t preallocated_amount = 10;
 
   ByteArrayBuffer stream;
-  stream.Allocate(preallocated_ammount);
-  stream.seek(preallocated_ammount);
+  stream.Allocate(preallocated_amount);
+  stream.seek(preallocated_amount);
   test_nested_append_serialisation(stream);
 }
 
 TEST_F(ByteArrayBufferTest, test_stream_relative_resize_with_preexisting_offset)
 {
-  constexpr std::size_t preallocated_ammount = 100;
+  constexpr std::size_t preallocated_amount = 100;
   ByteArrayBuffer       stream;
 
   //* Production code under test
-  stream.Resize(preallocated_ammount, ResizeParadigm::RELATIVE);
-  stream.seek(preallocated_ammount);
+  stream.Resize(preallocated_amount, ResizeParadigm::RELATIVE);
+  stream.seek(preallocated_amount);
 
-  EXPECT_EQ(preallocated_ammount, stream.size());
-  EXPECT_EQ(preallocated_ammount, stream.data().capacity());
-  EXPECT_EQ(preallocated_ammount, stream.tell());
+  EXPECT_EQ(preallocated_amount, stream.size());
+  EXPECT_EQ(preallocated_amount, stream.data().capacity());
+  EXPECT_EQ(preallocated_amount, stream.tell());
 
   constexpr std::size_t delta_size = 10;
   //* Production code under test
   stream.Resize(delta_size, ResizeParadigm::RELATIVE);
 
-  EXPECT_EQ(preallocated_ammount + delta_size, stream.size());
-  EXPECT_EQ(preallocated_ammount + delta_size, stream.data().capacity());
-  EXPECT_EQ(preallocated_ammount, stream.tell());
+  EXPECT_EQ(preallocated_amount + delta_size, stream.size());
+  EXPECT_EQ(preallocated_amount + delta_size, stream.data().capacity());
+  EXPECT_EQ(preallocated_amount, stream.tell());
 }
 
 TEST_F(ByteArrayBufferTest, test_that_default_resize_paradigm_is_relative)
@@ -271,11 +271,11 @@ TEST_F(ByteArrayBufferTest, test_stream_absolute_resize_with_preexisting_offset)
 {
   constexpr std::size_t small_size           = 30;
   constexpr std::size_t offset               = small_size + 20;
-  constexpr std::size_t preallocated_ammount = offset + 50;
+  constexpr std::size_t preallocated_amount = offset + 50;
 
   //* Setup
   ByteArrayBuffer stream;
-  stream.Resize(preallocated_ammount);
+  stream.Resize(preallocated_amount);
   stream.seek(offset);
 
   //* Production code under test
@@ -283,7 +283,7 @@ TEST_F(ByteArrayBufferTest, test_stream_absolute_resize_with_preexisting_offset)
 
   //* Expectations
   EXPECT_EQ(small_size, stream.size());
-  EXPECT_EQ(preallocated_ammount, stream.data().capacity());
+  EXPECT_EQ(preallocated_amount, stream.data().capacity());
   EXPECT_EQ(small_size, stream.tell());
 }
 
