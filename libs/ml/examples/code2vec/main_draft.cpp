@@ -17,29 +17,48 @@
 //
 //------------------------------------------------------------------------------
 
+<<<<<<< HEAD
 #include "ml/graph.hpp"
 #include "math/tensor.hpp"
 //#include "ml/dataloaders/code2vec_context_loaders/context_loader.hpp"
+=======
+#include "math/tensor.hpp"
+#include "ml/dataloaders/code2vec_context_loaders/context_loader.hpp"
+#include "ml/graph.hpp"
+#include "ml/layers/fully_connected.hpp"
+>>>>>>> d71c13d6... some refactoring and implemented shared embeddings for source & target (#13)
 #include "ml/ops/activations/softmax.hpp"
 
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/embeddings.hpp"
+#include "ml/ops/loss_functions/cross_entropy.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
+<<<<<<< HEAD
 #include "ml/activation_functions/softmax.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
 #include "ml/ops/tanh.hpp"
 #include "ml/ops/transpose.hpp"
+=======
+#include "ml/ops/tanh.hpp"
+#include "ml/ops/transpose.hpp"
+#include "ml/ops/weights.hpp"
+>>>>>>> d71c13d6... some refactoring and implemented shared embeddings for source & target (#13)
 #include <fstream>
 #include <iostream>
 
-using DataType  = int;
-using ArrayType = fetch::math::Tensor<DataType>;
-using SizeType  = fetch::math::Tensor<DataType>::SizeType;
+using DataType   = double;
+using ArrayType  = fetch::math::Tensor<DataType>;
+using SizeType   = fetch::math::Tensor<DataType>::SizeType;
+using SizeVector = fetch::math::SizeVector;
+
+using Weights        = fetch::ml::ops::Weights<ArrayType>;
+using Embeddings     = fetch::ml::ops::Embeddings<ArrayType>;
+using Transpose      = fetch::ml::ops::Transpose<ArrayType>;
+using MatrixMultiply = fetch::ml::ops::MatrixMultiply<ArrayType>;
 
 using ContextTensorTuple      = typename std::tuple<ArrayType, ArrayType, ArrayType>;
 using ContextTensorsLabelPair = typename std::pair<ContextTensorTuple, SizeType>;
-
 
 #define EMBEDDING_SIZE 64u
 #define BATCHSIZE 12u
@@ -51,7 +70,7 @@ std::string readFile(std::string const &path)
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 }
 
-int main(int ac, char** av)
+int main(int ac, char **av)
 {
   if (ac < 2)
   {
@@ -59,7 +78,12 @@ int main(int ac, char** av)
     return 1;
   }
 
+<<<<<<< HEAD
   fetch::ml::dataloaders::C2VLoader<std::tuple<ArrayType, ArrayType, ArrayType>, SizeType> cloader;
+=======
+  fetch::ml::dataloaders::C2VLoader<std::tuple<ArrayType, ArrayType, ArrayType>, SizeType> cloader(
+      20);
+>>>>>>> d71c13d6... some refactoring and implemented shared embeddings for source & target (#13)
 
   for (int i(1); i < ac; ++i)
   {
@@ -71,28 +95,61 @@ int main(int ac, char** av)
   std::cout << "Number of different paths: " << cloader.GetCounterPaths().size() << std::endl;
   std::cout << "Number of different words: " << cloader.GetCounterWords().size() << std::endl;
 
+<<<<<<< HEAD
   ArrayType AttentionVector({EMBEDDING_SIZE, SizeType{1}});
 
   //Defining the graph
   fetch::ml::Graph<ArrayType> g;
   
     
+=======
+  // Defining the graph
+  fetch::ml::Graph<ArrayType> g;
 
-  //Defining the input nodes
+  // Setting up the attention vector
+  std::string attention_vector = g.AddNode<Weights>("AttentionVector", {});
+  ArrayType   attention_vector_data(SizeVector({EMBEDDING_SIZE, SizeType{1}}));
+  Weights::Initialise(attention_vector_data, EMBEDDING_SIZE, SizeType{1});
+  g.SetInput(attention_vector, attention_vector_data, false);
+
+  // Setting up the function name embedding matrix
+  std::string function_name_embedding = g.AddNode<Weights>("EmbeddingFunctionNames", {});
+  ArrayType   function_name_embedding_matrix(
+      SizeVector({cloader.GetCounterFunctionNames().size(), EMBEDDING_SIZE}));
+  Weights::Initialise(function_name_embedding_matrix, cloader.GetCounterFunctionNames().size(),
+                      EMBEDDING_SIZE);
+  g.SetInput(function_name_embedding, function_name_embedding_matrix, false);
+
+  // TODO: Jurgen please check this is correct
+  // set up shared embeddings
+  std::string shared_embedding = g.AddNode<Weights>("SharedEmbedding", {});
+  ArrayType shared_embedding_tensor(SizeVector({cloader.GetCounterWords().size(), EMBEDDING_SIZE}));
+  Weights::Initialise(shared_embedding_tensor, cloader.GetCounterWords().size(), EMBEDDING_SIZE);
+  g.SetInput(shared_embedding, shared_embedding_tensor, false);
+>>>>>>> d71c13d6... some refactoring and implemented shared embeddings for source & target (#13)
+
+  //
+
+  // Defining the input nodes
 
   // Inputs have dimensions (N_CONTEXTS, )
-  g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputPaths", {});
-  g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputSourceWords", {});
-  g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputTargetWords", {});
+  std::string input_paths = g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputPaths", {});
+  std::string input_source_words =
+      g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputSourceWords", {});
+  std::string input_target_words =
+      g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputTargetWords", {});
 
   // Dimension ()
   g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputFunctionNames", {});
 
   // Retrieving the rows of the embedding tensors according to the input
   // Path embedding
-  g.AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
-      "EmbeddingPaths", {"InputPaths"}, cloader.GetCounterPaths().size(), EMBEDDING_SIZE);
+  std::string embeddings_paths = g.AddNode<Embeddings>(
+      "EmbeddingPaths", {input_paths}, cloader.GetCounterPaths().size(), EMBEDDING_SIZE);
+
+  // TODO: Jurgen please also check these next two lines are also correct
   // Target word embedding
+<<<<<<< HEAD
   g.AddNode<fetch::ml::ops::Embeddings<ArrayType>>("EmbeddingTargetwords", {"InputTargetWords"},
                                                    cloader.GetCounterWords().size(),
                                                    EMBEDDING_SIZE);
@@ -118,42 +175,81 @@ int main(int ac, char** av)
   g.AddNode<fetch::ml::layers::FullyConnected<ArrayType>>("FC1", {"ContextVectors", "FC"},
   3*EMBEDDING_SIZE, EMBEDDING_SIZE, fetch::ml::ops::TanH<ArrayType>);
   
+=======
+  std::string embedding_target_words =
+      g.AddNode<Embeddings>("EmbeddingTargetwords", {input_target_words}, shared_embedding_tensor);
+
+  // Source word embedding, sharing the embedding tensor with the target word (c.f. paper and tf
+  // implementation)
+  std::string embedding_source_words =
+      g.AddNode<Embeddings>("EmbeddingSourcewords", {input_source_words}, shared_embedding_tensor);
+
+  // Concatenate along axis = 1
+  // Dimension: (N_CONTEXTS, 3*EMBEDDING_SIZE) = Concatenate ((N_CONTEXTS, EMBEDDING_SIZE),
+  // (N_CONTEXTS, EMBEDDING_SIZE), (N_CONTEXTS, EMBEDDING_SIZE))
+  std::string context_vectors = g.AddNode<fetch::ml::ops::Concatenate<ArrayType>>(
+      "ContextVectors", {embedding_source_words, embeddings_paths, embedding_target_words},
+      SizeType(1));
+
+  // Fully connected layer
+  // REMARK: In the original implementation its without bias
+  // Dimensions: (N_CONTEXTS, EMBEDDING_SIZE) = (EMBEDDING_SIZE, 3*EMBEDDING_SIZE) @ (N_CONTEXTS,
+  // 3*EMBEDDING_SIZE)
+  std::string fc1 = g.AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+      "FC1", {context_vectors}, 3 * EMBEDDING_SIZE, EMBEDDING_SIZE);
+
+>>>>>>> d71c13d6... some refactoring and implemented shared embeddings for source & target (#13)
   // (Elementwise) TanH Layer
-  // Dimensions: (N_CONTEXTS, EMBEDDING_SIZE) 
-  g.AddNode<fetch::ml::ops::TanH<ArrayType>>("CombinedContextVector", {"FC1"});
+  // Dimensions: (N_CONTEXTS, EMBEDDING_SIZE)
+  std::string combined_context_vector =
+      g.AddNode<fetch::ml::ops::TanH<ArrayType>>("CombinedContextVector", {fc1});
+
   // Dimensions: (EMBEDDING_SIZE, N_CONTEXTS) = Transposed (N_CONTEXTS, EMBEDDING_SIZE)
-  g.AddNode<fetch::ml::ops::Transpose<ArrayType>>("CombinedContextVectorTransposed", {"CombinedContextVector"});
+  std::string combined_context_vector_transpose =
+      g.AddNode<Transpose>("CombinedContextVectorTransposed", {combined_context_vector});
 
   // (Dot) Multiplication with the Attention vector
   // Dimensions: (N_CONTEXTS, 1) = (N_CONTEXTS, EMBEDDING_SIZE) @ (EMBEDDING_SIZE, 1)
-  g.AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>("ScalarProductContextsWithAttention", {"CombinedContextVector",
-  "AttentionVector"});
+  std::string scalar_product_contexts_with_attention = g.AddNode<MatrixMultiply>(
+      "ScalarProductContextsWithAttention", {combined_context_vector, attention_vector});
 
   // (Softmax) normalisation along axis 0
   // Dimensions: (N_CONTEXTS, 1)
-  g.AddNode<fetch::ml::ops::Softmax<ArrayType>>("AttentionWeight", {"ScalarProductContextsWithAttention"});
+  std::string attention_weight = g.AddNode<fetch::ml::ops::Softmax<ArrayType>>(
+      "AttentionWeight", {scalar_product_contexts_with_attention});
 
   // (Dot) Multiplication with attention weights; i.e. calculating the code vectors
-  // Dimensions: (EMBEDDING_SIZE, 1) = (EMBEDDING_SIZE, N_CONTEXTS) @ (N_CONTEXTS, 1) 
-  g.AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>("CodeVector", {"CombinedContextVectorTransposed", "AttentionWeight"});
+  // Dimensions: (EMBEDDING_SIZE, 1) = (EMBEDDING_SIZE, N_CONTEXTS) @ (N_CONTEXTS, 1)
+  std::string code_vector = g.AddNode<MatrixMultiply>(
+      "CodeVector", {combined_context_vector_transpose, attention_weight});
 
   // (Unnormalised) predictions for each function name in the vocab, by
   // matrix multiplication with the embedding tensor
+<<<<<<< HEAD
   // Dimensions: (vocab_size_functions, 1) = (vocab_size_functions, EMBEDDING_SIZE) @ (EMBEDDING_SIZE, 1)
   g.AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>("PredictionSoftMaxKernel", {std::dynamic_pointer_cast<fetch::ml::ops::Embeddings<ArrayType>>(
           g.GetNode("InputFunctionNames"))
           ->GetWeights(),"CodeVector"})
+=======
+  // Dimensions: (vocab_size_functions, 1) = (vocab_size_functions, EMBEDDING_SIZE) @
+  // (EMBEDDING_SIZE, 1)
+  // TODO Refactor: take an embedding matrix which is initialsed outside an embeddign layer
+  std::string prediction_softmax_kernel =
+      g.AddNode<MatrixMultiply>("PredictionSoftMaxKernel", {function_name_embedding, code_vector});
+>>>>>>> d71c13d6... some refactoring and implemented shared embeddings for source & target (#13)
 
   // (Softmax) Normalisation of the prediction
   // Dimensions: (vocab_size_functions, 1)
-  g.AddNode<fetch::ml::ops::Softmax<ArrayType>>("PredictionSoftMax", {"PredictionSoftMaxKernel"});
+  std::string prediction_softmax = g.AddNode<fetch::ml::ops::Softmax<ArrayType>>(
+      "PredictionSoftMax", {prediction_softmax_kernel});
   // Dimensions: (1, vocab_size_functions) = Transpose (vocab_size_functions, 1)
-  std::string result = g.AddNode<fetch::ml::ops::Transpose<ArrayType>>("PredictionSoftMaxTransposed", {"PredictionSoftMax"});
+  std::string result = g.AddNode<Transpose>("PredictionSoftMaxTransposed", {prediction_softmax});
 
   // Criterion: Cross Entropy Loss
-  // Here, the CrossEntropy eats two tensors of size (1, function_name_vocab_size); i.e. it has 1 example, and as many categories as vocab_size
+  // Here, the CrossEntropy eats two tensors of size (1, function_name_vocab_size); i.e. it has 1
+  // example, and as many categories as vocab_size
   fetch::ml::ops::CrossEntropy<ArrayType> criterion;
-  DataType     loss = 0;
+  DataType                                loss = 0;
 
   // (One hot encoded) \y_{true} vector
   ArrayType y_true_vec({1, cloader.GetCounterFunctionNames().size()});
@@ -172,15 +268,15 @@ int main(int ac, char** av)
     }
 
     // Loading the tuple of ((InputSourceWords, InputPaths, InputTargetWords), function_name_idx)
-    // first: 3 tensors with shape (n_contexts) holding 
+    // first: 3 tensors with shape (n_contexts) holding
     //        the indices of the source words/paths/target words in the vocabulary
     // second: function_name_idx is the index of the function name in the vocabulary
     ContextTensorsLabelPair input = cloader.GetNext();
 
     // Feeding the tensors to the graph
-    g.SetInput("InputSourceWords", std::get<0>(input.first));
-    g.SetInput("InputPaths", std::get<1>(input.first));
-    g.SetInput("InputTargetWords", std::get<2>(input.first));
+    g.SetInput(input_source_words, std::get<0>(input.first));
+    g.SetInput(input_paths, std::get<1>(input.first));
+    g.SetInput(input_target_words, std::get<2>(input.first));
 
     // Preparing the y_true vector (one-hot-encoded)
     y_true_vec.Set(0, input.second, 1);
@@ -197,12 +293,11 @@ int main(int ac, char** av)
     // Resetting the y_true vector for reusing it
     y_true_vec.Set(0, input.second, 0);
 
-
     n_iter++;
     if (n_iter % 5 == 0)
     {
       std::cout << "MiniBatch: " << n_iter / 5 << " -- Loss : " << loss << std::endl;
-      loss       = 0;
+      loss = 0;
     }
   }
 
