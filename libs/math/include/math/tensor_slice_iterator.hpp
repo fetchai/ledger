@@ -240,7 +240,7 @@ public:
 
   Type const &operator*() const
   {
-    assert(position_ < array_.padded_size());    
+    assert(position_ < array_.padded_size());
     return array_.data()[position_];
   }
 

@@ -41,20 +41,17 @@ public:
    */
   TensorIterator(TensorType &array)
     : array_(array)
-  {
-
-  }
+  {}
 
   TensorIterator(TensorIterator const &other) = default;
   TensorIterator &operator=(TensorIterator const &other) = default;
   TensorIterator(TensorIterator &&other)                 = default;
   TensorIterator &operator=(TensorIterator &&other) = default;
 
-
   TensorIterator(TensorType &array, SizeType position)
-    : array_(array), position_{std::move(position)}
-  {
-  }
+    : array_(array)
+    , position_{std::move(position)}
+  {}
 
   static TensorIterator EndIterator(TensorType &array)
   {
@@ -88,13 +85,13 @@ public:
     ++i_;
     ++position_;
 
-    if(i_ >= array_.height())
+    if (i_ >= array_.height())
     {
       i_ = 0;
       ++j_;
       position_ = j_ * array_.padded_height();
     }
-    
+
     return *this;
   }
 
@@ -110,7 +107,7 @@ public:
 
   Type const &operator*() const
   {
-    assert(position_ < array_.data().size());    
+    assert(position_ < array_.data().size());
     return array_.data()[position_];
   }
 
@@ -124,12 +121,16 @@ public:
     return other.position_ != position_;
   }
 
-  SizeType size() const { return array_.size(); }
+  SizeType size() const
+  {
+    return array_.size();
+  }
+
 private:
   TensorType &array_;
   SizeType    position_{0};
-  SizeType  i_{0};
-  SizeType  j_{0};  
+  SizeType    i_{0};
+  SizeType    j_{0};
 };
 
 template <typename T, typename C>
