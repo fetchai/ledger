@@ -60,6 +60,7 @@ inline void Min(ArrayType const &array, typename ArrayType::Type &ret)
 template <typename ArrayType>
 void Product(ArrayType const &obj1, typename ArrayType::Type &ret)
 {
+  // TODO(private issue 994): Create test for this function
   if (obj1.padding() == 1)
   {
     ret =
@@ -70,13 +71,12 @@ void Product(ArrayType const &obj1, typename ArrayType::Type &ret)
   }
   else
   {
-    std::cout << "WAS HERE??" << std::endl;
-    // TODO: Vectorise in the general case
     auto it1 = obj1.cbegin();
-    ret      = 1;
+    ret      = static_cast<typename ArrayType::Type>(1);
     while (it1.is_valid())
     {
       ret *= (*it1);
+      ++it1;
     }
   }
 }

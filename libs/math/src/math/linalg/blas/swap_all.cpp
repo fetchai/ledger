@@ -26,9 +26,9 @@ namespace linalg {
 
 template <typename S, uint64_t V>
 void Blas<S, Signature(_x, _y <= _n, _x, _m, _y, _p), Computes(_x, _y <= _y, _x), V>::operator()(
-    int const &n, Tensor<type> &dx, int const &incx, Tensor<type> &dy, int const &incy) const
+    int const &n, Tensor<Type> &dx, int const &incx, Tensor<Type> &dy, int const &incy) const
 {
-  type dtemp;
+  Type dtemp;
   int  i;
   if ((incx == 1) && (incy == 1))
   {

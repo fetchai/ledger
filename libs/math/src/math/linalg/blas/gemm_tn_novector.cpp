@@ -27,11 +27,11 @@ namespace linalg {
 template <typename S>
 void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
           Computes(_C <= _alpha * T(_A) * _B + _beta * _C),
-          platform::Parallelisation::NOT_PARALLEL>::operator()(type const &        alpha,
-                                                               Tensor<type> const &a,
-                                                               Tensor<type> const &b,
-                                                               type const &        beta,
-                                                               Tensor<type> &      c) const
+          platform::Parallelisation::NOT_PARALLEL>::operator()(Type const &        alpha,
+                                                               Tensor<Type> const &a,
+                                                               Tensor<Type> const &b,
+                                                               Type const &        beta,
+                                                               Tensor<Type> &      c) const
 {
   std::size_t i;
   std::size_t j;
@@ -71,7 +71,7 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
   {
     for (i = 0; i < c.height(); ++i)
     {
-      type        temp;
+      Type        temp;
       std::size_t l;
       temp = 0.0;
       for (l = 0; l < a.height(); ++l)

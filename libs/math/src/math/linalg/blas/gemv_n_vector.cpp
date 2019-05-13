@@ -26,15 +26,15 @@ namespace linalg {
 
 template <typename S, uint64_t V>
 void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
-          Computes(_y <= _alpha * _A * _x + _beta * _y), V>::operator()(type const &        alpha,
-                                                                        Tensor<type> const &a,
-                                                                        Tensor<type> const &x,
+          Computes(_y <= _alpha * _A * _x + _beta * _y), V>::operator()(Type const &        alpha,
+                                                                        Tensor<Type> const &a,
+                                                                        Tensor<Type> const &x,
                                                                         int const &         incx,
-                                                                        type const &        beta,
-                                                                        Tensor<type> &      y,
+                                                                        Type const &        beta,
+                                                                        Tensor<Type> &      y,
                                                                         int const &incy) const
 {
-  type temp;
+  Type temp;
   int  i;
   int  iy;
   int  j;

@@ -19,10 +19,6 @@
 
 #include "math/base_types.hpp"
 
-#include <algorithm>
-#include <cassert>
-#include <vector>
-
 namespace fetch {
 namespace math {
 

@@ -60,10 +60,10 @@ template <typename S, uint64_t V>
 class Blas<S, Signature(_x, _y <= _n, _x, _m, _y, _p), Computes(_x, _y <= _y, _x), V>
 {
 public:
-  using type               = S;
-  using VectorRegisterType = typename Tensor<type>::VectorRegisterType;
+  using Type               = S;
+  using VectorRegisterType = typename Tensor<Type>::VectorRegisterType;
 
-  void operator()(int const &n, Tensor<type> &dx, int const &incx, Tensor<type> &dy,
+  void operator()(int const &n, Tensor<Type> &dx, int const &incx, Tensor<Type> &dy,
                   int const &incy) const;
 };
 

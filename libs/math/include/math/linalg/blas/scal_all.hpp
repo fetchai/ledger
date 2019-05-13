@@ -52,10 +52,10 @@ template <typename S, uint64_t V>
 class Blas<S, Signature(_x <= _n, _alpha, _x, _m), Computes(_x <= _alpha * _x), V>
 {
 public:
-  using type               = S;
-  using VectorRegisterType = typename Tensor<type>::VectorRegisterType;
+  using Type               = S;
+  using VectorRegisterType = typename Tensor<Type>::VectorRegisterType;
 
-  void operator()(int const &n, type const &da, Tensor<type> &dx, int const &incx) const;
+  void operator()(int const &n, Type const &da, Tensor<Type> &dx, int const &incx) const;
 };
 
 }  // namespace linalg

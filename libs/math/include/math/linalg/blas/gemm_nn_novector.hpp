@@ -44,11 +44,11 @@ class Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
            Computes(_C <= _alpha * _A * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
 {
 public:
-  using type               = S;
-  using VectorRegisterType = typename Tensor<type>::VectorRegisterType;
+  using Type               = S;
+  using VectorRegisterType = typename Tensor<Type>::VectorRegisterType;
 
-  void operator()(type const &alpha, Tensor<type> const &a, Tensor<type> const &b, type const &beta,
-                  Tensor<type> &c) const;
+  void operator()(Type const &alpha, Tensor<Type> const &a, Tensor<Type> const &b, Type const &beta,
+                  Tensor<Type> &c) const;
 };
 
 }  // namespace linalg
