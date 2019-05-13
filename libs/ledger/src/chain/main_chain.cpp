@@ -352,7 +352,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
         break;
       }
 
-      if(break_loop)
+      if (break_loop)
       {
         break;
       }
