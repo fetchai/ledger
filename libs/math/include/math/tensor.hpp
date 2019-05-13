@@ -55,7 +55,8 @@ static void ArangeImplementation(DataType const &from, DataType const &to, DataT
 {
   SizeType N = SizeType((to - from) / delta);
   ret.Resize({N});
-  ret.FillArange(from, to);
+  ret.FillArange(static_cast<typename ArrayType::Type>(from),
+                 static_cast<typename ArrayType::Type>(to));
 }
 }  // namespace details
 
