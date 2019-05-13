@@ -31,35 +31,6 @@ namespace fetch {
 namespace ledger {
 
 /**
- * Converts a block status into a human readable string
- *
- * @param status The status enumeration
- * @return The output text
- */
-char const *ToString(BlockStatus status)
-{
-  char const *text = "Unknown";
-
-  switch (status)
-  {
-  case BlockStatus::ADDED:
-    text = "Added";
-    break;
-  case BlockStatus ::LOOSE:
-    text = "Loose";
-    break;
-  case BlockStatus::DUPLICATE:
-    text = "Duplicate";
-    break;
-  case BlockStatus ::INVALID:
-    text = "Invalid";
-    break;
-  }
-
-  return text;
-}
-
-/**
  * Constructs the main chain
  *
  * @param mode Flag to signal which storage mode has been requested
@@ -120,7 +91,7 @@ BlockStatus MainChain::AddBlock(Block const &blk)
 }
 
 /**
- * Inserts a block into the cache maintaining references
+ * Internal: insert a block into the cache maintaining references
  *
  * @param block The block to be cached
  */
@@ -137,7 +108,7 @@ void MainChain::CacheBlock(IntBlockPtr const &block) const
 }
 
 /**
- * Erases a block from the cache
+ * Internal: erase a block from the cache
  *
  * @param hash The hash of the block to be erased
  * @return amount of blocks erased (1 or 0, if not found)
@@ -149,7 +120,7 @@ MainChain::BlockMap::size_type MainChain::UncacheBlock(BlockHash hash) const
 }
 
 /**
- * Inserts a block into the permanent store maintaining references
+ * Internal: insert a block into the permanent store maintaining references
  *
  * @param block The block to be kept
  */
@@ -165,7 +136,6 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
     // notify stored parent
     Block parent;
     if (block_store_->Get(storage::ResourceID(block->body.previous_hash), parent) &&
-        // assuming one hash comparison is much cheaper than storage set
         parent.body.next_hash != hash)
     {
       parent.body.next_hash = hash;
@@ -201,21 +171,13 @@ MainChain::BlockPtr MainChain::GetHeaviestBlock() const
 }
 
 /**
- * Removes the block, and all blocks ahead of it, and references between them, from the cache.
+ * Internal: remove the block, and all blocks ahead of it, and references between them, from the
+ * cache.
  *
  * @param[in]  hash The hash to be removed
  * @param[out] invalidated_blocks The set of hashes of all the blocks removed by this operation
  * @return The block object itself, already not in the cache
  */
-std::ostream &print(std::ostream &s, MainChain::BlockHash const &hash)
-{
-  for (std::size_t i{}; i < hash.size(); ++i)
-  {
-    s << std::hex << int(hash[i]);
-  }
-  return s;
-}
-
 MainChain::IntBlockPtr MainChain::RemoveTree(BlockHash const &hash,
                                              BlockHashSet &   invalidated_blocks)
 {
@@ -729,7 +691,7 @@ void MainChain::WriteToFile()
         KeepBlock(block);
 
         // Keep the current_file_head one block behind
-        while (current_file_head->body.block_number != block->body.block_number - 1)
+        while (current_file_head->body.block_number > block->body.block_number - 1)
         {
           block_store_->Get(storage::ResourceID(current_file_head->body.previous_hash),
                             *current_file_head);
@@ -943,7 +905,7 @@ bool MainChain::UpdateTips(IntBlockPtr const &block)
 /**
  * Internal: Insert the block into the cache
  *
- * @param block The block be
+ * @param block The block to be inserted
  * @param evaluate_loose_blocks Flag to signal if the loose blocks should be evaluated
  * @return
  */

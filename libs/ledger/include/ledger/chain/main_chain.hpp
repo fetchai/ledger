@@ -69,7 +69,28 @@ enum class BlockStatus
   INVALID     ///< The block is invalid and has not been added to the chain
 };
 
-char const *ToString(BlockStatus status);
+/**
+ * Converts a block status into a human readable string
+ *
+ * @param status The status enumeration
+ * @return The output text
+ */
+inline constexpr char const *ToString(BlockStatus status)
+{
+  switch (status)
+  {
+  case BlockStatus::ADDED:
+    return "Added";
+  case BlockStatus::LOOSE:
+    return "Loose";
+  case BlockStatus::DUPLICATE:
+    return "Duplicate";
+  case BlockStatus::INVALID:
+    return "Invalid";
+  }
+
+  return "Unknown";
+}
 
 class MainChain
 {
