@@ -68,12 +68,22 @@ public:
         }
         else
         {
-          output.InlineAdd(this->output_->Slice(typename ArrayType::SizeType(i)).Tensor());
+          auto slice = this->output_->Slice(typename ArrayType::SizeType(i));
+          auto it1   = slice.begin();
+          auto end   = slice.end();
+          auto it2   = output.begin();
+          while (it1 != end)
+          {
+            *it2 += *it1;
+            ++it1;
+            ++it2;
+          }
         }
         valid_samples++;
       }
     }
     output.InlineDivide(DataType(valid_samples));
+
     return output;
   }
 
@@ -126,8 +136,9 @@ public:
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const & /*inputs*/)
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
+    (void)inputs;
     auto outputShape = this->output_->shape();
     outputShape[0]   = 1;
     return outputShape;

@@ -50,7 +50,7 @@ std::vector<fetch::math::Tensor<real>> syn1neg;  // Weights
 real *                                 expTable;
 clock_t                                start;
 
-int       hs = 0, negative = 5;
+int       hs = 0, negative = 25;
 const int table_size = 1e8;
 int *     table;
 

@@ -57,7 +57,7 @@ public:
     ASSERT(inputs.size() == 1);
     ASSERT(
         (inputs.front().get().shape().size() == 1) ||
-        ((inputs.front().get().shape().size() == 2) && (inputs.front().get().shape().at(1) == 1)));
+        ((inputs.front().get().shape().size() == 2) && (inputs.front().get().shape().at(0) == 1)));
 
     if (!this->embeddings_output_ ||
         this->embeddings_output_->shape()[0] != inputs.front().get().size() ||
@@ -84,13 +84,13 @@ public:
     ASSERT(inputs.size() == 1);
     ASSERT(
         (inputs.front().get().shape().size() == 1) ||
-        ((inputs.front().get().shape().size() == 2) && (inputs.front().get().shape().at(1) == 1)));
+        ((inputs.front().get().shape().size() == 2) && (inputs.front().get().shape().at(0) == 1)));
 
     uint64_t j(0);
     for (DataType const &i : inputs.front().get())
     {
-      updated_rows_.insert(typename ArrayType::SizeType(double(i)));
-      this->gradient_accumulation_->Slice(typename ArrayType::SizeType(double(i)))
+      updated_rows_.insert(typename ArrayType::SizeType(i));
+      this->gradient_accumulation_->Slice(typename ArrayType::SizeType(i))
           .Assign(errorSignal.Slice(j));
       j++;
     }
