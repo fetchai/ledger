@@ -163,16 +163,22 @@ TYPED_TEST(Convolution1DTest, ops_backward_test)  // Use the class as an Ops
       std::vector<std::reference_wrapper<TypeParam const>>({input}));
   std::vector<TypeParam> backprop_error = conv.Backward({input}, error_signal);
 
+
   // test correct values
   ASSERT_EQ(backprop_error.size(), 1);
   ASSERT_EQ(backprop_error[0].shape().size(), 2);
   ASSERT_EQ(backprop_error[0].shape()[0], input_channels);
   ASSERT_EQ(backprop_error[0].shape()[1], input_height);
 
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 0)), -4.30774927f);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 0)), 9.1627159f);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 0)), 0.80360967f);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(3, 0)), 1.2491617f);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 0)), -4.3077492713928222656);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 0)), 9.162715911865234375);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 0)), 0.80360949039459228516);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 1)), 1.2491617202758789062);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 1)), 2.8053097724914550781);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 1)), -4.166011810302734375);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 2)), 2.4086174964904785156);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 2)), -0.86411559581756591797);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 2)), -3.5623354911804199219);
 }
 
 TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
