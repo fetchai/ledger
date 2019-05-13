@@ -1,4 +1,4 @@
-DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.1.0'
+DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.2.0'
 HIGH_LOAD_NODE_LABEL = 'ledger'
 
 enum Platform
