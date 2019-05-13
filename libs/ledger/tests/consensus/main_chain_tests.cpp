@@ -28,7 +28,6 @@ using fetch::ledger::Block;
 
 using Blocks    = std::vector<Block>;
 using Body      = Block::Body;
-using BlockHash = Block::Digest;
 
 // TODO(issue 33): get these from helper_functions when it's sorted
 // Time related functionality

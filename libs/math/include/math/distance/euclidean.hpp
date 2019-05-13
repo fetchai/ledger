@@ -18,8 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/free_functions/exponentiation/exponentiation.hpp"
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
+#include "math/matrix_operations.hpp"
+#include "math/standard_functions/pow.hpp"
+#include "math/standard_functions/sqrt.hpp"
 #include <cmath>
 
 namespace fetch {
@@ -29,14 +30,21 @@ namespace distance {
 template <typename ArrayType>
 typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
 {
-  assert(A.shape() == B.shape());
-  ArrayType tmp_array(A.shape());
+  using Type = typename ArrayType::Type;
+  auto it1   = A.begin();
+  auto it2   = B.begin();
+  assert(it1.size() == it2.size());
+  Type ret = Type(0);
 
-  fetch::math::Subtract(A, B, tmp_array);
+  while (it1.is_valid())
+  {
+    Type d = (*it1) - (*it2);
 
-  Square(tmp_array, tmp_array);
-
-  return fetch::math::Sum(tmp_array);
+    ret += d * d;
+    ++it1;
+    ++it2;
+  }
+  return ret;
 }
 
 template <typename ArrayType>
@@ -48,7 +56,52 @@ typename ArrayType::Type Euclidean(ArrayType const &A, ArrayType const &B)
 template <typename ArrayType>
 typename ArrayType::Type NegativeSquareEuclidean(ArrayType const &A, ArrayType const &B)
 {
-  return -SquareDistance(A, B);
+  using DataType = typename ArrayType::Type;
+  return Multiply(DataType(-1), SquareDistance(A, B));
+}
+
+/**
+ * calculate the euclidean distance between two points in N-dimensions
+ * If the array has shape Kx1 or 1xK, the array is treated as 1 data point with K dimensions
+ * If the array has shape MxN, axis determines whether M represents dimensions or data points
+ * @tparam ArrayType
+ * @param A
+ * @param B
+ * @param axis the axis across which to calculate euclidean distances (i.e. the dimension axis)
+ * @return
+ */
+template <typename ArrayType>
+ArrayType EuclideanMatrix(ArrayType const &A, ArrayType const &B,
+                          typename ArrayType::SizeType const &axis = 1)
+{
+  assert(A.shape() == B.shape());
+  assert(A.shape().size() == 2);
+  assert(axis == 0 || axis == 1);
+
+  ArrayType                                 temp(A.shape());
+  std::vector<typename ArrayType::SizeType> retSize;
+  if ((A.shape()[0] == 1) || (A.shape()[1] == 1))  // case where one dimension = size 1
+  {
+    retSize = A.shape();
+  }
+  else  // case where two dimensions, neither size 1, euclid across axis
+  {
+    if (axis == 0)
+    {
+      retSize = std::vector<typename ArrayType::SizeType>({1, A.shape()[1]});
+    }
+    else
+    {
+      retSize = std::vector<typename ArrayType::SizeType>({A.shape()[0], 1});
+    }
+  }
+  ArrayType ret(retSize);
+  Subtract(A, B, temp);
+  Square(temp, temp);
+  ret = ReduceSum(temp, axis);
+  Sqrt(ret, ret);
+
+  return ret;
 }
 
 }  // namespace distance

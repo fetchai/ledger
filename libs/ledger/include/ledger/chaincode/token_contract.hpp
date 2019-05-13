@@ -40,8 +40,9 @@ public:
 
   // library functions
   uint64_t GetBalance(v2::Address const &address);
-  void SubtractFee(v2::Address const &address, uint64_t fee);
-  void AddFee(v2::Address const &address, uint64_t fee);
+  bool AddTokens(v2::Address const &address, uint64_t amount);
+  bool SubtractTokens(v2::Address const &address, uint64_t amount);
+  bool TransferTokens(v2::Transaction const &tx, v2::Address const &to, uint64_t amount);
 
   // transaction handlers
   Status CreateWealth(v2::Transaction const &tx);

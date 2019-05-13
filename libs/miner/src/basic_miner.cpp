@@ -21,12 +21,19 @@
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "miner/resource_mapper.hpp"
+#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/v2/address.hpp"
 
 #include <algorithm>
 
 namespace fetch {
 namespace miner {
 namespace {
+
+using ledger::v2::Transaction;
+using ledger::v2::Address;
+using byte_array::ConstByteArray;
+using storage::ResourceAddress;
 
 /**
  * Clip the specified to the bounds: [min_value, max_value]
@@ -43,30 +50,19 @@ T Clip3(T value, T min_value, T max_value)
   return std::min(std::max(value, min_value), max_value);
 }
 
-}  // namespace
-
-/**
- * Construct a transaction entry for the queue
- *
- * @param summary The reference to the transaction
- * @param log2_num_lanes The log2 of the number of lanes
- */
-BasicMiner::TransactionEntry::TransactionEntry(ledger::TransactionSummary const &summary,
-                                               uint32_t                          log2_num_lanes)
-  : resources{1u << log2_num_lanes}
-  , transaction{summary}
-
+void UpdateMaskWithTokenAddress(BitVector &shards, Address const &address, uint32_t log2_num_lanes)
 {
-  // update the resources array with the correct bits flags for the lanes
-  for (auto const &resource : summary.resources)
-  {
-    // map the resource to a lane
-    uint32_t const lane = MapResourceToLane(resource, summary.contract_name, log2_num_lanes);
+  // compute the canonical resource for the address
+  ConstByteArray const resource = "fetch.token.state." + address.address().ToHex();
 
-    // update the bit flag
-    resources.set(lane, 1);
-  }
+  // compute the resource address
+  ResourceAddress const resource_address{resource};
+
+  // update the shard mask
+  shards.set(resource_address.lane(log2_num_lanes), 1);
 }
+
+}  // namespace
 
 /**
  * Construct the BasicMiner
@@ -74,7 +70,7 @@ BasicMiner::TransactionEntry::TransactionEntry(ledger::TransactionSummary const 
  * @param log2_num_lanes Log2 of the number of lanes
  * @param num_slices The number of slices
  */
-BasicMiner::BasicMiner(uint32_t log2_num_lanes, uint32_t /*num_slices*/)
+BasicMiner::BasicMiner(uint32_t log2_num_lanes)
   : log2_num_lanes_{log2_num_lanes}
   , max_num_threads_{std::thread::hardware_concurrency()}
   , thread_pool_{max_num_threads_, "Miner"}
@@ -85,31 +81,73 @@ BasicMiner::BasicMiner(uint32_t log2_num_lanes, uint32_t /*num_slices*/)
  *
  * @param tx The reference to the transaction
  */
-void BasicMiner::EnqueueTransaction(ledger::TransactionSummary const &tx)
+void BasicMiner::EnqueueTransaction(ledger::v2::Transaction const &tx)
+{
+  // create the bit vector matching the number of configured lanes
+  BitVector shard_mask{1u << log2_num_lanes_};
+
+  FETCH_LOG_INFO(LOGGING_NAME, "PopCount before: ", shard_mask.PopCount());
+
+  // in the case where the transaction contains a contract call, ensure that the shard
+  // mask is correctly mapped to the current number of lanes
+  if (Transaction::ContractMode::NOT_PRESENT != tx.contract_mode())
+  {
+    if (!tx.shard_mask().RemapTo(shard_mask))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to remap shard mask");
+      return;
+    }
+  }
+
+  // Every shard mask needs to be updated with the from address so that fees can be removed
+  UpdateMaskWithTokenAddress(shard_mask, tx.from(), log2_num_lanes_);
+
+  // since the initial shard mask DOES NOT contain the shard information for the transfers these
+  // must now be added.
+  for (auto const &transfer : tx.transfers())
+  {
+    UpdateMaskWithTokenAddress(shard_mask, transfer.to, log2_num_lanes_);
+  }
+
+  // Now that the complete shard mask has been computed we can build the final scheduling layout
+  // for the transaction
+  TransactionLayout const layout{
+    tx.digest(),
+    shard_mask,
+    tx.charge(),
+    tx.valid_from(),
+    tx.valid_until()
+  };
+
+  FETCH_LOG_INFO(LOGGING_NAME, "PopCount after: ", shard_mask.PopCount());
+
+  assert(layout.mask().size() == (1u << log2_num_lanes_));
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Enqueued Transaction: 0x", layout.digest().ToHex());
+
+  // Add the layout to the pending queue
+  EnqueueTransaction(layout);
+}
+
+/**
+ * Add the specified transaction layout to the internal queue
+ *
+ * This method is distinct from the case above since it allows the miner to pack the transaction
+ * into a block before actually receiving the complete transaction payload.
+ *
+ * @param layout The layout to be added to the queue
+ */
+void BasicMiner::EnqueueTransaction(ledger::v2::TransactionLayout const &layout)
 {
   FETCH_LOCK(pending_lock_);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction: ", tx.transaction_hash.ToBase64());
-
-  if (filtering_input_duplicates_)
+  if (pending_.Add(layout))
   {
-    if (txs_seen_.find(tx) == txs_seen_.end())
-    {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (added) ",
-                      tx.transaction_hash.ToBase64());
-
-      pending_.emplace_back(tx, log2_num_lanes_);
-      txs_seen_.insert(tx);
-    }
-    else
-    {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (duplicate) ",
-                      tx.transaction_hash.ToBase64());
-    }
+    FETCH_LOG_INFO(LOGGING_NAME, "Enqueued Transaction (added) 0x", layout.digest().ToHex());
   }
   else
   {
-    pending_.emplace_back(tx, log2_num_lanes_);
+    FETCH_LOG_INFO(LOGGING_NAME, "Enqueued Transaction (duplicate) ", layout.digest().ToHex());
   }
 }
 
@@ -123,38 +161,29 @@ void BasicMiner::EnqueueTransaction(ledger::TransactionSummary const &tx)
 void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t num_slices,
                                MainChain const &chain)
 {
+  FETCH_LOCK(mining_pool_lock_);
   assert(num_lanes == (1u << log2_num_lanes_));
-  std::size_t pending_size = 0;
 
-  // add the most relevant transactions of the pending queue into the main queue
+  // splice the contents of the pending queue into the main mining pool
   {
-    std::size_t max_block_capacity = (num_lanes * num_slices) + ((num_lanes * num_slices) / 8);
     FETCH_LOCK(pending_lock_);
-
-    // sort the pending list by fees (pending fees high -> low)
-    pending_.sort(SortByFee);
-
-    pending_size = pending_.size();
-    auto start   = pending_.begin();
-    auto end     = start;
-    std::advance(end, static_cast<int32_t>(std::min(max_block_capacity, pending_size)));
-
-    // Take as many transactions as we need from the front of the pending queue
-    main_queue_.splice(main_queue_.end(), pending_, start, end);
+    mining_pool_.Splice(pending_);
   }
 
-  std::size_t const num_transactions  = main_queue_.size() + pending_size;
-  std::size_t const main_transactions = main_queue_.size();
+  // detect the transactions which have already been incorporated into previous blocks
+  auto const duplicates = chain.DetectDuplicateTransactions(block.body.previous_hash, mining_pool_.digests());
 
-  // Before packing transactions, we must be sure they're unique
-  chain.StripAlreadySeenTx(block.body.previous_hash, main_queue_);
+  // remove the duplicates
+  mining_pool_.Remove(duplicates);
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Starting block packing. Backlog: ", num_transactions,
-                 ", main queue: ", main_queue_.size(), " pending: ", pending_.size());
+  // cache the size of the mining pool
+  std::size_t const pool_size_before = mining_pool_.size();
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting block packing. Pool Size: ", pool_size_before);
 
   // determine how many of the threads should be used in this block generation
   std::size_t const num_threads =
-      Clip3<std::size_t>(main_queue_.size() / 1000u, 1u, max_num_threads_);
+      Clip3<std::size_t>(mining_pool_.size() / 1000u, 1u, max_num_threads_);
 
   // prepare the basic formatting for the block
   block.body.slices.resize(num_slices);
@@ -162,25 +191,29 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   // skip thread generation in the simple case
   if (num_threads == 1)
   {
-    GenerateSlices(main_queue_, block.body, 0, 1, num_lanes);
+    GenerateSlices(mining_pool_, block.body, 0, 1, num_lanes);
   }
   else
   {
-    // split the main queue into a series of smaller lists
-    std::vector<TransactionList> transaction_lists(num_threads);
+    // split the main queue into a series of smaller queues that can be executed in parallel
+    std::vector<Queue> transaction_lists(num_threads);
 
-    std::size_t const num_tx_per_thread = main_queue_.size() / num_threads;
+    std::size_t const num_tx_per_thread = mining_pool_.size() / num_threads;
 
     for (std::size_t i = 0; i < num_threads; ++i)
     {
-      TransactionList &txs = transaction_lists[i];
+      Queue &txs = transaction_lists[i];
 
-      auto start = main_queue_.begin();
+      auto start = mining_pool_.begin();
       auto end   = start;
-      std::advance(end, static_cast<int32_t>(std::min(num_tx_per_thread, main_queue_.size())));
+      std::advance(end, static_cast<int32_t>(std::min(num_tx_per_thread, mining_pool_.size())));
+
+      // TODO(private issue XXX): While this efficiently breaks up the transaction queue into even
+      //  chunks it assumes that the fees of the transactions are roughly the same. This algorithm
+      //  should be updated to maximise collected fees for the miner.
 
       // splice in the contents of the array
-      txs.splice(txs.end(), main_queue_, start, end);
+      txs.Splice(mining_pool_, start, end);
 
       thread_pool_.Dispatch([&txs, &block, i, num_threads, num_lanes]() {
         GenerateSlices(txs, block.body, i, num_threads, num_lanes);
@@ -193,67 +226,67 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
     // return all the transactions to the main queue
     for (std::size_t i = 0; i < num_threads; ++i)
     {
-      main_queue_.splice(main_queue_.begin(), transaction_lists[i]);
+      mining_pool_.Splice(transaction_lists[i]);
     }
   }
 
-  std::size_t const packed_transactions    = main_transactions - main_queue_.size();
-  std::size_t const remaining_transactions = num_transactions - packed_transactions;
+  std::size_t const remaining_transactions = mining_pool_.size();
+  std::size_t const packed_transactions = pool_size_before - remaining_transactions;
 
-  FETCH_UNUSED(packed_transactions);
-  FETCH_UNUSED(remaining_transactions);
   FETCH_LOG_INFO(LOGGING_NAME, "Finished block packing (packed: ", packed_transactions,
                  " remaining: ", remaining_transactions, ")");
-
-  main_queue_size_ = main_queue_.size();
 }
 
+/**
+ * Get the number of transactions that make up the mining pool
+ *
+ * @return The number of pending transactions
+ */
 uint64_t BasicMiner::GetBacklog() const
 {
-  FETCH_LOCK(pending_lock_);
-  return main_queue_size_ + pending_.size();
+  FETCH_LOCK(mining_pool_lock_);
+  return mining_pool_.size();
 }
 
 /**
  * Internal: Generate a selection of slices
  *
- * @param tx The reference to the transaction list to be used when generating the selection of
- * slices
+ * @param transactions The transaction queue to be used when generating the selection of slices
  * @param block The reference to the block to populate
  * @param offset The slice index offset to start from
  * @param interval The slice index interval to be used when selecting the next slice to populate
  * @param num_lanes The number of lanes of the block
  */
-void BasicMiner::GenerateSlices(TransactionList &tx, Block::Body &block, std::size_t offset,
+void BasicMiner::GenerateSlices(Queue &transactions, Block::Body &block, std::size_t offset,
                                 std::size_t interval, std::size_t num_lanes)
 {
   // sort by fees
-  tx.sort(SortByFee);
+  transactions.Sort(SortByFee);
 
   for (std::size_t slice_idx = offset; slice_idx < block.slices.size(); slice_idx += interval)
   {
     auto &slice = block.slices[slice_idx];
 
     // generate the slice
-    GenerateSlice(tx, slice, slice_idx, num_lanes);
+    GenerateSlice(transactions, slice, slice_idx, num_lanes);
   }
 }
 
 /**
  * Internal: Generate a slice
  *
- * @param tx The reference to the transaction list to be used when generating the slice
+ * @param transactions The transaction queue to be used when generating the slice
  * @param slice The slice to be populated
  * @param slice_index The slice number
  * @param num_lanes The number of lanes for the block
  */
-void BasicMiner::GenerateSlice(TransactionList &tx, Block::Slice &      slice,
+void BasicMiner::GenerateSlice(Queue &transactions, Block::Slice &      slice,
                                std::size_t /*slice_index*/, std::size_t num_lanes)
 {
   BitVector slice_state{num_lanes};
 
-  auto it = tx.begin();
-  while (it != tx.end())
+  auto it = transactions.begin();
+  while (it != transactions.end())
   {
     // exit the search loop once the slice is full
     if (slice_state.PopCount() == num_lanes)
@@ -271,10 +304,10 @@ void BasicMiner::GenerateSlice(TransactionList &tx, Block::Slice &      slice,
       slice_state |= it->resources;
 
       // insert the transaction into the slice
-      slice.push_back(it->transaction);
+      slice.push_back(it->layout);
 
       // remove the transaction from the main queue
-      it = tx.erase(it);
+      it = transactions.Erase(it);
     }
     else
     {
@@ -288,12 +321,13 @@ void BasicMiner::GenerateSlice(TransactionList &tx, Block::Slice &      slice,
  * Sorting method for transactions
  *
  * @param a The reference to a transaction entry
- * @param b The refernece to the other transaction entry
+ * @param b The reference to the other transaction entry
  * @return true if a is preferable to b, otherwise false
  */
-bool BasicMiner::SortByFee(TransactionEntry const &a, TransactionEntry const &b)
+bool BasicMiner::SortByFee(TransactionLayoutQueue::Entry const &a, TransactionLayoutQueue::Entry const &b)
 {
-  return a.transaction.fee > b.transaction.fee;
+  // this doesn't seem to the a good metric
+  return a.layout.charge() > b.layout.charge();
 }
 
 }  // namespace miner

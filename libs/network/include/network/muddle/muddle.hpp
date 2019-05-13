@@ -137,25 +137,28 @@ public:
 
   static std::shared_ptr<Muddle> CreateMuddle(NetworkId                      network_id,
                                               fetch::network::NetworkManager tm,
-                                              bool                           sign_packets = false)
+                                              bool                           sign_packets = false,
+                                              bool sign_broadcasts                        = false)
   {
     auto certificate{std::make_unique<crypto::ECDSASigner>()};
     certificate->GenerateKeys();
 
-    return CreateMuddle(network_id, std::move(certificate), tm, sign_packets);
+    return CreateMuddle(network_id, std::move(certificate), tm, sign_packets, sign_broadcasts);
   }
 
   static std::shared_ptr<Muddle> CreateMuddle(NetworkId                             network_id,
                                               std::unique_ptr<crypto::Prover>       prover,
                                               fetch::network::NetworkManager const &tm,
-                                              bool sign_packets = false)
+                                              bool sign_packets    = false,
+                                              bool sign_broadcasts = false)
   {
-    return std::make_shared<Muddle>(network_id, std::move(prover), tm, sign_packets);
+    return std::make_shared<Muddle>(network_id, std::move(prover), tm, sign_packets,
+                                    sign_broadcasts);
   }
 
   // Construction / Destruction
   Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager const &nm,
-         bool sign_packets = false);
+         bool sign_packets = false, bool sign_broadcasts = false);
   Muddle(Muddle const &) = delete;
   Muddle(Muddle &&)      = delete;
   /// @{
@@ -202,6 +205,11 @@ public:
     clients_.Debug(prefix);
   }
 
+  NetworkId network_id()
+  {
+    return network_id_;
+  }
+
 private:
   using Server     = std::shared_ptr<network::AbstractNetworkServer>;
   using ServerList = std::vector<Server>;
@@ -230,6 +238,7 @@ private:
   ServerList           servers_;  ///< The list of listening servers
   PeerConnectionList   clients_;  ///< The list of active and possible inactive connections
   Timepoint            last_cleanup_ = Clock::now();
+  NetworkId            network_id_;
 };
 
 inline Muddle::Identity const &Muddle::identity() const

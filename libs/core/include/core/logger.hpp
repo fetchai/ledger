@@ -754,7 +754,7 @@ extern log::details::LogWrapper logger;
 #endif
 
 #ifndef NDEBUG
-#define FETCH_HAS_STACK_TRACE
+//#define FETCH_HAS_STACK_TRACE
 #endif
 
 #ifdef FETCH_HAS_STACK_TRACE
@@ -808,9 +808,6 @@ extern log::details::LogWrapper logger;
                                                                 \
     FETCH_LOG_INFO(LOGGING_NAME, "Trace: \n", trace.str());     \
   }
-
-//#define LOG_STACK_TRACE_POINT
-//#define LOG_LAMBDA_STACK_TRACE_POINT
 
 #if 1
 #define FETCH_LOG_PROMISE()

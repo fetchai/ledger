@@ -71,7 +71,7 @@ public:
   using UriSet               = std::unordered_set<Uri>;
   using AddressSet           = std::unordered_set<Address>;
   using ConnectionMap        = muddle::Muddle::ConnectionMap;
-  using FutureTimepoint      = network::FutureTimepoint;
+  using FutureTimepoint      = core::FutureTimepoint;
   using PeerTrust            = TrustInterface::PeerTrust;
 
   static constexpr char const *LOGGING_NAME = "P2PService";

@@ -16,17 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
+#include "ledger/chain/v2/digest.hpp"
 #include "core/byte_array/decoders.hpp"
 
 namespace fetch {
 namespace ledger {
 
-extern const byte_array::ConstByteArray GENESIS_DIGEST =
-    byte_array::FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
+using byte_array::FromBase64;
 
-extern const byte_array::ConstByteArray GENESIS_MERKLE_ROOT =
-    byte_array::FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+extern const v2::Digest GENESIS_DIGEST = FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
+extern const v2::Digest GENESIS_MERKLE_ROOT = FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
 
 }  // namespace ledger
 }  // namespace fetch

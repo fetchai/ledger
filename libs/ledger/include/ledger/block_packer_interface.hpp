@@ -25,6 +25,7 @@ namespace ledger {
 
 namespace v2 {
 
+class Transaction;
 class TransactionLayout;
 
 }
@@ -48,11 +49,21 @@ public:
   /// @{
 
   /**
-   * Add the specified transaction (summary) to the internal queue
+   * Add the specified transaction to the internal queue
    *
    * @param tx The reference to the transaction
    */
-  virtual void EnqueueTransaction(TransactionSummary const &tx) = 0;
+  virtual void EnqueueTransaction(v2::Transaction const &tx) = 0;
+
+  /**
+   * Add the specified transaction layout to the internal queue
+   *
+   * This method is distinct from the case above since it allows the miner to pack the transaction
+   * into a block before actually receiving the complete transaction payload.
+   *
+   * @param layout The layout to be added to the queue
+   */
+  virtual void EnqueueTransaction(v2::TransactionLayout const &layout) = 0;
 
   /**
    * Generate a new block based on the current queue of transactions

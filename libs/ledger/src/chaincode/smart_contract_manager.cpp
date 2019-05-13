@@ -80,7 +80,7 @@ Contract::Status SmartContractManager::OnCreate(v2::Transaction const &tx)
   contract_source = FromBase64(contract_source);
 
   // calculate a hash to compare against the one submitted
-  auto const calculated_hash = ToBase64(crypto::Hash<crypto::SHA256>(contract_source));
+  auto const calculated_hash = crypto::Hash<crypto::SHA256>(contract_source).ToHex();
 
   if (calculated_hash != contract_hash)
   {
@@ -92,8 +92,7 @@ Contract::Status SmartContractManager::OnCreate(v2::Transaction const &tx)
   }
 
   // Set the scope for the smart contract to execute its on_init if it exists
-  auto tx_signatures = tx.signatories();
-
+  auto const &tx_signatures = tx.signatories();
   if (tx_signatures.size() != 1)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Only one signature allowed when setting up smart contract");
@@ -101,10 +100,7 @@ Contract::Status SmartContractManager::OnCreate(v2::Transaction const &tx)
   }
 
   Identifier scope;
-
-  auto pub_key_b64 = tx_signatures.begin()->identity.identifier();
-
-  if (!scope.Parse(calculated_hash + "." + pub_key_b64))
+  if (!scope.Parse(calculated_hash + "." + tx.from().display()))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse scope for smart contract");
     return Status::FAILED;

@@ -229,7 +229,7 @@ http::HTTPResponse ContractHttpInterface::OnQuery(ConstByteArray const &   contr
       FETCH_LOG_WARN(LOGGING_NAME, "Error running query. status = ", static_cast<int>(status));
     }
   }
-  catch (std::exception &ex)
+  catch (std::exception const &ex)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Query error: ", ex.what());
   }
@@ -332,6 +332,8 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
   std::size_t submitted{0};
   std::size_t expected_count{0};
 
+
+
   // parse the JSON request
   json::JSONDocument doc{request.body()};
 
@@ -352,10 +354,9 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
       auto tx = std::make_shared<v2::Transaction>();
       if (FromJsonTransaction(tx_obj, *tx))
       {
-        processor_.AddTransaction(std::move(tx));
-
         txs.emplace_back(tx->digest());
 
+        processor_.AddTransaction(std::move(tx));
         ++submitted;
       }
 #else
@@ -382,9 +383,9 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
     auto tx = std::make_shared<v2::Transaction>();
     if (FromJsonTransaction(doc.root(), *tx))
     {
-      processor_.AddTransaction(std::move(tx));
-
       txs.emplace_back(tx->digest());
+
+      processor_.AddTransaction(std::move(tx));
 
       ++submitted;
     }

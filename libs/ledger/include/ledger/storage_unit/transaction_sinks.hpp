@@ -25,6 +25,7 @@ namespace v2 {
 class Transaction;
 }
 
+#if 0
 class UnverifiedTransactionSink
 {
 public:
@@ -63,6 +64,8 @@ inline void VerifiedTransactionSink::OnTransactions(TransactionList const &txs)
     OnTransaction(tx);
   }
 }
+#endif
+
 
 class TransactionSink
 {

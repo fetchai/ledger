@@ -21,6 +21,7 @@
 #include "storage/document.hpp"
 #include "storage/resource_mapper.hpp"
 #include "ledger/chain/v2/transaction_layout.hpp"
+#include "ledger/chain/v2/digest.hpp"
 
 #include <vector>
 
@@ -37,6 +38,10 @@ public:
   using ResourceAddress = storage::ResourceAddress;
   using StateValue      = byte_array::ConstByteArray;
   using ShardIndex      = uint32_t;
+
+  // Construction / Destruction
+  StorageInterface()          = default;
+  virtual ~StorageInterface() = default;
 
   /// @name State Interface
   /// @{
@@ -56,25 +61,26 @@ public:
   using TxLayouts       = std::vector<v2::TransactionLayout>;
 
   // Construction / Destruction
-  StorageUnitInterface()          = default;
-  virtual ~StorageUnitInterface() = default;
+  StorageUnitInterface()           = default;
+  ~StorageUnitInterface() override = default;
 
   /// @name Transaction Interface
   /// @{
   virtual void AddTransaction(v2::Transaction const &tx)                         = 0;
-  virtual bool GetTransaction(ConstByteArray const &digest, v2::Transaction &tx) = 0;
-  virtual bool HasTransaction(ConstByteArray const &digest)                      = 0;
+  virtual bool GetTransaction(v2::Digest const &digest, v2::Transaction &tx) = 0;
+  virtual bool HasTransaction(v2::Digest const &digest)                      = 0;
+  virtual void IssueCallForMissingTxs(v2::DigestSet const &tx_set)               = 0;
   /// @}
 
   virtual TxLayouts PollRecentTx(uint32_t) = 0;
 
   /// @name Revertible Document Store Interface
   /// @{
-  virtual Hash CurrentHash()                  = 0;
-  virtual Hash LastCommitHash()               = 0;
-  virtual bool RevertToHash(Hash const &hash) = 0;
-  virtual Hash Commit()                       = 0;
-  virtual bool HashExists(Hash const &hash)   = 0;
+  virtual Hash CurrentHash()                                  = 0;
+  virtual Hash LastCommitHash()                               = 0;
+  virtual bool RevertToHash(Hash const &hash, uint64_t index) = 0;
+  virtual Hash Commit(uint64_t index)                         = 0;
+  virtual bool HashExists(Hash const &hash, uint64_t index)   = 0;
   /// @}
 };
 

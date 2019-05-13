@@ -26,6 +26,7 @@ namespace v2 {
 template <typename T>
 void Serialize(T &s, Address const &address)
 {
+  assert(!address.address().empty());
   s << address.address();
 }
 

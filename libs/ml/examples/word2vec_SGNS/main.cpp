@@ -19,8 +19,8 @@
 #include "file_loader.hpp"
 #include "model_saver.hpp"
 
-#include "math/free_functions/clustering_algorithms/knn.hpp"
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
+#include "math/clustering/knn.hpp"
+#include "math/matrix_operations.hpp"
 
 #include "ml/dataloaders/word2vec_loaders/skipgram_dataloader.hpp"
 #include "ml/graph.hpp"
@@ -61,8 +61,8 @@ SkipGramTextParams<T> SetParams()
 {
   SkipGramTextParams<T> ret;
 
-  ret.n_data_buffers = SizeType(2);     // input and context buffers
-  ret.max_sentences  = SizeType(1000);  // maximum number of sentences to use
+  ret.n_data_buffers = SizeType(2);       // input and context buffers
+  ret.max_sentences  = SizeType(100000);  // maximum number of sentences to use
 
   ret.unigram_table      = true;  // unigram table for sampling negative training pairs
   ret.unigram_table_size = SizeType(10000000);  // size of unigram table for negative sampling
@@ -103,9 +103,9 @@ void PrintKNN(SkipGramLoader<ArrayType> const &dl, ArrayType const &embeddings,
   }
   else
   {
-    ArrayType one_vector = embeddings.Slice(dl.VocabLookup(word)).Unsqueeze();
+    ArrayType one_vector = embeddings.Slice(dl.VocabLookup(word)).Copy();
     std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
-        fetch::math::clustering::KNN(arr, one_vector, k);
+        fetch::math::clustering::KNNCosine(arr, one_vector, k);
 
     for (std::size_t j = 0; j < output.size(); ++j)
     {
@@ -223,11 +223,11 @@ int main(int argc, char **argv)
       data = dataloader.GetRandom();
 
       // assign input and context vectors
-      input.At(0)   = data.first.At(0);
-      context.At(0) = data.first.At(1);
+      input.At(0, 0)   = data.first.At(0);
+      context.At(0, 0) = data.first.At(1);
 
       // assign label
-      gt.At(0) = DataType(data.second);
+      gt.At(0, 0) = DataType(data.second);
 
       g.SetInput("Input", input, false);
       g.SetInput("Context", context, false);
@@ -235,11 +235,11 @@ int main(int argc, char **argv)
       // forward pass
       results = g.Evaluate(output_name);
 
-      scale_factor.At(0) =
-          (gt.At(0) == DataType(0)) ? DataType(sp.k_negative_samples) : DataType(1);
+      scale_factor.At(0, 0) =
+          (gt.At(0, 0) == DataType(0)) ? DataType(sp.k_negative_samples) : DataType(1);
 
-      if (((results.At(0) >= DataType(0.5)) && (gt.At(0) == DataType(1))) ||
-          ((results.At(0) < DataType(0.5)) && (gt.At(0) == DataType(0))))
+      if (((results.At(0, 0) >= DataType(0.5)) && (gt.At(0, 0) == DataType(1))) ||
+          ((results.At(0, 0) < DataType(0.5)) && (gt.At(0, 0) == DataType(0))))
       {
         ++correct_score;
       }

@@ -37,7 +37,7 @@ using fetch::ledger::v2::Address;
 using fetch::ledger::v2::Transaction;
 using fetch::ledger::v2::TransactionBuilder;
 using fetch::ledger::v2::TransactionSerializer;
-using fetch::bitmanip::BitVector;
+using fetch::BitVector;
 
 struct Identities
 {
@@ -441,15 +441,16 @@ protected:
       EXPECTED_SIGNATURE_BYTE_LEN + EXPECTED_SIGN_LEN_FIELD;
 
   using RNG       = std::mt19937_64;
-  using Signers   = std::vector<ECDSASigner>;
+  using SignerPtr = std::unique_ptr<ECDSASigner>;
+  using Signers   = std::vector<SignerPtr>;
   using Addresses = std::vector<Address>;
 
   static void SetUpTestCase()
   {
     for (auto const &identity : IDENTITIES)
     {
-      signers_.emplace_back(ECDSASigner{FromHex(identity.private_key)});
-      addresses_.emplace_back(Address{signers_.back().identity().identifier()});
+      signers_.emplace_back(std::make_unique<ECDSASigner>(FromHex(identity.private_key)));
+      addresses_.emplace_back(Address{signers_.back()->identity().identifier()});
     }
   }
 
@@ -573,9 +574,9 @@ TEST_F(TransactionSerializerTests, SimpleTransfer)
   auto tx = TransactionBuilder()
                 .From(addresses_[0])
                 .Transfer(addresses_[1], 256u)
-                .Signer(signers_[0].identity())
+                .Signer(signers_[0]->identity())
                 .Seal()
-                .Sign(signers_[0])
+                .Sign(*signers_[0])
                 .Build();
 
   ASSERT_TRUE(static_cast<bool>(tx));
@@ -616,9 +617,9 @@ TEST_F(TransactionSerializerTests, MultipleTransfers)
                 .Transfer(addresses_[1], 256u)
                 .Transfer(addresses_[2], 512u)
                 .Transfer(addresses_[3], 100000u)
-                .Signer(signers_[0].identity())
+                .Signer(signers_[0]->identity())
                 .Seal()
-                .Sign(signers_[0])
+                .Sign(*signers_[0])
                 .Build();
 
   ASSERT_TRUE(static_cast<bool>(tx));
@@ -654,14 +655,14 @@ TEST_F(TransactionSerializerTests, ChainCodeExecute)
   // build the transaction
   auto tx = TransactionBuilder()
                 .From(addresses_[0])
-                .Signer(signers_[0].identity())
+                .Signer(signers_[0]->identity())
                 .ChargeRate(1000)
                 .ChargeLimit(1000000)
                 .TargetChainCode("foo.bar.baz", BitVector{})
                 .Action("launch")
                 .Data("go")
                 .Seal()
-                .Sign(signers_[0])
+                .Sign(*signers_[0])
                 .Build();
 
   ASSERT_TRUE(static_cast<bool>(tx));
@@ -699,14 +700,14 @@ TEST_F(TransactionSerializerTests, SmartContract)
   // build the transaction
   auto tx = TransactionBuilder()
                 .From(addresses_[0])
-                .Signer(signers_[0].identity())
+                .Signer(signers_[0]->identity())
                 .ChargeRate(1000)
                 .ChargeLimit(1000000)
                 .TargetSmartContract(addresses_[3], addresses_[4], BitVector{})
                 .Action("launch")
                 .Data("go")
                 .Seal()
-                .Sign(signers_[0])
+                .Sign(*signers_[0])
                 .Build();
 
   ASSERT_TRUE(static_cast<bool>(tx));
@@ -843,14 +844,14 @@ TEST_F(TransactionSerializerTests, CrazyNumOfSignatures)
 
   for (std::size_t i = 10; i < 80; ++i)
   {
-    builder.Signer(signers_[i].identity());
+    builder.Signer(signers_[i]->identity());
   }
 
   auto sealed_builder = builder.Seal();
 
   for (std::size_t i = 10; i < 80; ++i)
   {
-    sealed_builder.Sign(signers_.at(i));
+    sealed_builder.Sign(*signers_.at(i));
   }
 
   auto tx = sealed_builder.Build();
@@ -895,13 +896,13 @@ TEST_F(TransactionSerializerTests, ValidityRanges)
                 .Transfer(addresses_[2], 1000u)
                 .Transfer(addresses_[3], 1000u)
                 .Transfer(addresses_[4], 1000u)
-                .Signer(signers_[0].identity())
+                .Signer(signers_[0]->identity())
                 .ChargeRate(1000)
                 .ChargeLimit(1000000)
                 .ValidFrom(100)
                 .ValidUntil(200)
                 .Seal()
-                .Sign(signers_[0])
+                .Sign(*signers_[0])
                 .Build();
 
   ASSERT_TRUE(static_cast<bool>(tx));
@@ -942,7 +943,7 @@ TEST_F(TransactionSerializerTests, ContractWithSmallShardMask)
   // build the transaction
   auto tx = TransactionBuilder()
                 .From(addresses_[0])
-                .Signer(signers_[0].identity())
+                .Signer(signers_[0]->identity())
                 .ChargeRate(1000)
                 .ChargeLimit(1000000)
                 .ValidFrom(100)
@@ -950,7 +951,7 @@ TEST_F(TransactionSerializerTests, ContractWithSmallShardMask)
                 .TargetChainCode("foo.bar.baz", shard_mask)
                 .Action("launch")
                 .Seal()
-                .Sign(signers_[0])
+                .Sign(*signers_[0])
                 .Build();
 
   ASSERT_TRUE(static_cast<bool>(tx));
@@ -999,7 +1000,7 @@ TEST_F(TransactionSerializerTests, ContractWithLargeShardMask)
   // build the transaction
   auto tx = TransactionBuilder()
                 .From(addresses_[0])
-                .Signer(signers_[0].identity())
+                .Signer(signers_[0]->identity())
                 .ChargeRate(1000)
                 .ChargeLimit(1000000)
                 .ValidFrom(100)
@@ -1007,7 +1008,7 @@ TEST_F(TransactionSerializerTests, ContractWithLargeShardMask)
                 .TargetChainCode("foo.bar.baz", shard_mask)
                 .Action("launch")
                 .Seal()
-                .Sign(signers_[0])
+                .Sign(*signers_[0])
                 .Build();
 
   ASSERT_TRUE(static_cast<bool>(tx));

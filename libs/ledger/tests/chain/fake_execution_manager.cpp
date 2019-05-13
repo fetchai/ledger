@@ -22,10 +22,13 @@
 #include "fake_storage_unit.hpp"
 
 using fetch::byte_array::ToBase64;
+using fetch::ledger::v2::Digest;
 
 FakeExecutionManager::FakeExecutionManager(FakeStorageUnit &storage)
   : storage_{storage}
-{}
+{
+  FETCH_UNUSED(storage_);
+}
 
 FakeExecutionManager::ScheduleStatus FakeExecutionManager::Execute(Block::Body const &block)
 {
@@ -42,10 +45,14 @@ FakeExecutionManager::ScheduleStatus FakeExecutionManager::Execute(Block::Body c
   current_merkle_root_ = block.merkle_hash.Copy();
   current_polls_       = 2;
 
+  // For the purposes of testing, after execution, we will set the state here to be in line with the
+  // block state
+  storage_.SetCurrentHash(current_merkle_root_);
+
   return ScheduleStatus::SCHEDULED;
 }
 
-FakeExecutionManager::BlockHash FakeExecutionManager::LastProcessedBlock()
+Digest FakeExecutionManager::LastProcessedBlock()
 {
   FETCH_LOG_INFO(LOGGING_NAME, "LastProcessedBlock called");
 
@@ -73,17 +80,7 @@ FakeExecutionManager::State FakeExecutionManager::GetState()
   {
     last_processed_ = current_hash_.Copy();
 
-    // trigger a commit on the "state"
-    if (current_merkle_root_.empty())
-    {
-      storage_.Commit();
-    }
-    else
-    {
-      storage_.EmulateCommit(current_merkle_root_);
-    }
-
-    current_hash_ = BlockHash{};
+    current_hash_ = Digest{};
   }
 
   // evaluate the state
@@ -97,7 +94,7 @@ bool FakeExecutionManager::Abort()
   return false;
 }
 
-void FakeExecutionManager::SetLastProcessedBlock(BlockHash hash)
+void FakeExecutionManager::SetLastProcessedBlock(Digest hash)
 {
   last_processed_ = hash;
 }

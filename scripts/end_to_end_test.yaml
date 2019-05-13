@@ -1,0 +1,36 @@
+# YAML file to dictate integration tests
+
+---
+test_description: >
+        Single standalone node can mine transactions which are then queried
+
+setup_conditions:
+    test_name : "basic_standalone"
+    number_of_nodes: 1
+    mining_nodes: [0]
+    max_test_time: 60
+
+steps:
+    - send_txs : { "name": "batch1", "amount": 10, "nodes" : [0] }
+
+expectation:
+    - verify_txs : { "name": "batch1", "nodes" : [0] }
+...
+---
+test_description: >
+        DISABLED - Transactions sync and are executed across nodes
+
+setup_conditions:
+    test_name : "basic_multinode_DISABLED"
+    number_of_nodes: 2
+    node_connections: [[1, 0]]
+    mining_nodes: [0]
+    max_test_time: 60
+
+steps:
+    - send_txs : { "name": "batch1", "amount": 10, "nodes" : [1] }
+
+expectation:
+    - verify_txs : { "name": "batch1", "nodes" : [0, 1] }
+...
+

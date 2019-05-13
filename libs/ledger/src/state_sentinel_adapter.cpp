@@ -29,24 +29,29 @@ namespace ledger {
  * @param scope The reference to the scope
  */
 StateSentinelAdapter::StateSentinelAdapter(StorageInterface &storage, Identifier scope,
-                                           ShardIndex log2_num_shards, ShardIndexSet shards)
-  : StateAdapter(storage, std::move(scope), true)
-  , log2_num_shards_{log2_num_shards}
-  , shards_{std::move(shards)}
+                                           BitVector const &shards)
+  : StateAdapter(storage, std::move(scope), Mode::READ_WRITE)
+  , shards_{shards}
 {
-  // Lock resources
-  for (auto const &index : shards_)
+  auto const num_shards = static_cast<uint32_t>(shards_.size());
+  for (uint32_t i = 0; i < num_shards; ++i)
   {
-    storage_.Lock(index);
+    if (shards_.bit(i))
+    {
+      storage_.Lock(i);
+    }
   }
 }
 
 StateSentinelAdapter::~StateSentinelAdapter()
 {
-  // Unlock resources
-  for (auto const &index : shards_)
+  auto const num_shards = static_cast<uint32_t>(shards_.size());
+  for (uint32_t i = 0; i < num_shards; ++i)
   {
-    storage_.Unlock(index);
+    if (shards_.bit(i))
+    {
+      storage_.Unlock(i);
+    }
   }
 }
 
@@ -93,7 +98,6 @@ StateSentinelAdapter::Status StateSentinelAdapter::Read(std::string const &key, 
 StateSentinelAdapter::Status StateSentinelAdapter::Write(std::string const &key, void const *data,
                                                          uint64_t size)
 {
-
   if (!IsAllowedResource(WrapKeyWithScope(key)))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unable to write to resource: ", WrapKeyWithScope(key));
@@ -146,10 +150,10 @@ bool StateSentinelAdapter::IsAllowedResource(std::string const &key) const
   ResourceAddress const address{key};
 
   // determine which shard this resource is mapped to
-  auto const mapped_shard = address.lane(log2_num_shards_);
+  auto const mapped_shard = address.lane(shards_.log2_size());
 
   // calculate if this shard is in the allowed shard list
-  bool const is_allowed = shards_.find(mapped_shard) != shards_.end();
+  bool const is_allowed = shards_.bit(mapped_shard) != 0;
 
 #ifndef NDEBUG
   if (!is_allowed)

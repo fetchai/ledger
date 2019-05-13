@@ -33,6 +33,7 @@ using fetch::ledger::v2::TransactionLayout;
 using fetch::ledger::v2::TransactionBuilder;
 using fetch::ledger::v2::Address;
 using fetch::crypto::ECDSASigner;
+using fetch::BitVector;
 
 using SignerPtr  = std::unique_ptr<ECDSASigner>;
 using AddressPtr = std::unique_ptr<Address>;
@@ -58,7 +59,7 @@ protected:
 
 TEST_F(TransactionLayoutTests, BasicTest)
 {
-  Transaction::BitVector shard_mask{4};
+  BitVector shard_mask{4};
   shard_mask.set(1, 1);
   shard_mask.set(2, 1);
 

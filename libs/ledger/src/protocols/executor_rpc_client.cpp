@@ -17,6 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/protocols/executor_rpc_client.hpp"
+#include "core/state_machine.hpp"
+#include "ledger/chain/v2/address_rpc_serializer.hpp"
+
+#include <memory>
 
 namespace fetch {
 namespace ledger {
@@ -24,7 +28,7 @@ namespace ledger {
 using PendingConnectionCounter =
     network::AtomicInFlightCounter<network::AtomicCounterName::LOCAL_SERVICE_CONNECTIONS>;
 
-class ExecutorConnectorWorker : public network::AtomicStateMachine<ExecutorRpcClient::State>
+class ExecutorConnectorWorker
 {
 public:
   using Address         = ExecutorRpcClient::Address;
@@ -39,16 +43,19 @@ public:
 
   ExecutorConnectorWorker(Uri thepeer, Muddle &themuddle,
                           std::chrono::milliseconds thetimeout = std::chrono::milliseconds(10000))
-    : peer_(std::move(thepeer))
+    : state_machine_{std::make_shared<core::StateMachine<State>>("ExecutorConnectorWorker",
+                                                                 State::INITIAL)}
+    , peer_(std::move(thepeer))
     , timeduration_(std::move(thetimeout))
     , muddle_(themuddle)
+    , client_(std::make_shared<Client>("R:ExecCW", muddle_.AsEndpoint(), Muddle::Address(),
+                                       SERVICE_EXECUTOR, CHANNEL_RPC))
   {
-    client_ = std::make_shared<Client>("R:ExecCW", muddle_.AsEndpoint(), Muddle::Address(),
-                                       SERVICE_EXECUTOR, CHANNEL_RPC);
-    this->Allow(State::CONNECTING, State::INITIAL)
-        .Allow(State::SUCCESS, State::CONNECTING)
-        .Allow(State::TIMEDOUT, State::CONNECTING)
-        .Allow(State::FAILED, State::CONNECTING);
+    state_machine_->RegisterHandler(State::INITIAL, this, &ExecutorConnectorWorker::OnInitial);
+    state_machine_->RegisterHandler(State::CONNECTING, this,
+                                    &ExecutorConnectorWorker::OnConnecting);
+    state_machine_->RegisterHandler(State::SUCCESS, this, &ExecutorConnectorWorker::OnSuccess);
+    state_machine_->RegisterHandler(State::TIMEDOUT, this, &ExecutorConnectorWorker::OnTimedOut);
 
     FETCH_LOG_WARN(LOGGING_NAME, "INIT: ", peer_.ToString());
   }
@@ -64,14 +71,17 @@ public:
   {
     try
     {
-      this->AtomicStateMachine::Work();
+      if (state_machine_->IsReadyToExecute())
+      {
+        state_machine_->Execute();
+      }
     }
     catch (...)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Work threw.");
       throw;
     }
-    auto r = this->AtomicStateMachine::Get();
+    auto r = state_machine_->state();
 
     switch (r)
     {
@@ -79,63 +89,54 @@ public:
       return PromiseState::TIMEDOUT;
     case State::SUCCESS:
       return PromiseState::SUCCESS;
-    case State::FAILED:
-      return PromiseState::FAILED;
     default:
       return PromiseState::WAITING;
     }
   }
 
-  virtual bool PossibleNewState(State &currentstate) override
+private:
+  State OnInitial()
   {
-    if (currentstate == State::TIMEDOUT || currentstate == State::SUCCESS ||
-        currentstate == State::FAILED)
-    {
-      return false;
-    }
+    timeout_.Set(timeduration_);
+    muddle_.AddPeer(peer_);
 
-    if (currentstate == State::INITIAL)
+    return State::CONNECTING;
+  }
+
+  State OnConnecting()
+  {
+    bool connected_ = muddle_.UriToDirectAddress(peer_, target_address);
+
+    if (connected_)
     {
-      timeout_.Set(timeduration_);
+      return State::SUCCESS;
     }
 
     if (timeout_.IsDue())
     {
-      currentstate = State::TIMEDOUT;
-      return true;
+      return State::TIMEDOUT;
     }
 
-    switch (currentstate)
-    {
-    case State::INITIAL:
-    {
-      muddle_.AddPeer(peer_);
-      currentstate = State::CONNECTING;
-      return true;
-    }
-    case State::CONNECTING:
-    {
-      bool connected_ = muddle_.UriToDirectAddress(peer_, target_address);
-      if (!connected_)
-      {
-        return false;
-      }
-      currentstate = State::SUCCESS;
-      return true;
-    }
-    default:
-      currentstate = State::FAILED;
-      return true;
-    }
+    return State::CONNECTING;
   }
 
-private:
-  Uri                       peer_;
-  std::chrono::milliseconds timeduration_;
-  FutureTimepoint           timeout_;
-  std::shared_ptr<Client>   client_;
-  Muddle &                  muddle_;
-  PendingConnectionCounter  counter_;
+  State OnSuccess()
+  {
+    return State::SUCCESS;
+  }
+
+  State OnTimedOut()
+  {
+    return State::TIMEDOUT;
+  }
+
+  std::shared_ptr<core::StateMachine<State>> state_machine_;
+  Uri                                        peer_;
+  std::chrono::milliseconds                  timeduration_;
+  FutureTimepoint                            timeout_;
+  Muddle &                                   muddle_;
+  std::shared_ptr<Client>                    client_;
+  PendingConnectionCounter                   counter_;
 };
 
 void ExecutorRpcClient::Connect(Muddle &muddle, Uri uri, std::chrono::milliseconds timeout)
@@ -150,12 +151,18 @@ void ExecutorRpcClient::Connect(Muddle &muddle, Uri uri, std::chrono::millisecon
   bg_work_.Add(worker);
 }
 
-ExecutorInterface::Result ExecutorRpcClient::Execute(TxDigest const &hash, uint32_t log2_num_lanes,
-                                                     LaneSet lanes)
+ExecutorInterface::Result ExecutorRpcClient::Execute(v2::Digest const &digest, BlockIndex block, SliceIndex slice, BitVector const &shards)
 {
   auto result = client_->CallSpecificAddress(address_, RPC_EXECUTOR, ExecutorRpcProtocol::EXECUTE,
-                                             hash, log2_num_lanes, lanes);
+                                             digest, block, slice, shards);
   return result->As<ExecutorInterface::Result>();
+}
+
+void ExecutorRpcClient::SettleFees(v2::Address const &miner, TokenAmount amount, uint32_t log2_num_lanes)
+{
+  auto result = client_->CallSpecificAddress(address_, RPC_EXECUTOR, ExecutorRpcProtocol::EXECUTE,
+                                             miner, amount, log2_num_lanes);
+  result->Wait();
 }
 
 void ExecutorRpcClient::WorkCycle()

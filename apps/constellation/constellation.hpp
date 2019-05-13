@@ -74,6 +74,7 @@ public:
   using CertificatePtr   = Peer2PeerService::CertificatePtr;
   using UriList          = std::vector<network::Uri>;
   using Manifest         = network::Manifest;
+  using NetworkMode      = ledger::MainChainRpcService::Mode;
 
   static constexpr uint32_t DEFAULT_BLOCK_DIFFICULTY = 6;
 
@@ -93,7 +94,8 @@ public:
     uint32_t    block_difficulty{DEFAULT_BLOCK_DIFFICULTY};
     uint32_t    peers_update_cycle_ms{0};
     bool        disable_signing{false};
-    bool        standalone{false};
+    bool        sign_broadcasts{false};
+    NetworkMode network_mode{NetworkMode::PUBLIC_NETWORK};
 
     uint32_t num_lanes() const
     {
@@ -105,7 +107,7 @@ public:
 
   explicit Constellation(CertificatePtr &&certificate, Config config);
 
-  void Run(UriList const &initial_peers);
+  void Run(UriList const &initial_peers, core::WeakRunnable bootstrap_monitor);
   void SignalStop();
 
 protected:

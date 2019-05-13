@@ -29,12 +29,27 @@ namespace v2 {
  * @param tx The input transaction
  */
 TransactionLayout::TransactionLayout(Transaction const &tx)
-  : digest_{tx.digest()}
-  , mask_{tx.shard_mask()}
-  , charge_{tx.charge()}
-  , valid_from_{tx.valid_from()}
-  , valid_until_{tx.valid_until()}
+  : TransactionLayout(tx.digest(), tx.shard_mask(), tx.charge(), tx.valid_from(), tx.valid_until())
 {}
+
+/**
+ * Construct a transaction layout from its constituent parts
+ *
+ * @param digest The digest to be set
+ * @param mask The mask to be set
+ * @param charge The charge to be set
+ * @param valid_from The block index from which point the transaction is valid
+ * @param valid_until The block index from which point the transaction is no longer valid
+ */
+TransactionLayout::TransactionLayout(Digest digest, BitVector const &mask, TokenAmount charge,
+                                     BlockIndex valid_from, BlockIndex valid_until)
+  : digest_{std::move(digest)}
+  , mask_{mask}
+  , charge_{charge}
+  , valid_from_{valid_from}
+  , valid_until_{valid_until}
+{
+}
 
 }  // namespace v2
 }  // namespace ledger

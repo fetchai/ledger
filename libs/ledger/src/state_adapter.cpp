@@ -32,13 +32,13 @@ namespace ledger {
  * @param allow_writes Enables write functionality
  */
 StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope)
-  : StateAdapter(storage, std::move(scope), false)
+  : StateAdapter(storage, std::move(scope), Mode::READ_ONLY)
 {}
 
-StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope, bool allow_writes = false)
+StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope, Mode mode)
   : storage_{storage}
   , scope_{std::move(scope)}
-  , enable_writes_{allow_writes}
+  , mode_{mode}
 {
 }
 
@@ -99,9 +99,10 @@ StateAdapter::Status StateAdapter::Write(std::string const &key, void const *dat
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Write: ", key, " size: ", size);
 
-  if (!enable_writes_)
+  // early exit if we do not have permission to write to the storage interface
+  if (Mode::READ_WRITE != mode_)
   {
-    return Status::OK;
+    return Status::PERMISSION_DENIED;
   }
 
   auto new_key = WrapKeyWithScope(key);

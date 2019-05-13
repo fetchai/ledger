@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/standard_functions/abs.hpp"
+#include "math/standard_functions/abs.hpp"
 #include "ml/dataloaders/word2vec_loaders/basic_textloader.hpp"
 
 namespace fetch {

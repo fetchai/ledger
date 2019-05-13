@@ -38,6 +38,7 @@ class SelfAttention : public Layer<T>
 {
 public:
   using ArrayType    = T;
+  using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   SelfAttention(std::uint64_t in, std::uint64_t out, std::uint64_t hidden,
@@ -84,6 +85,12 @@ public:
 
     this->AddInputNode(input);
     this->SetOutputNode(output);
+  }
+
+  virtual std::vector<SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "SelfAttention";

@@ -45,7 +45,6 @@ public:
   using BlockIndex     = uint64_t;
   using TransactionPtr = std::shared_ptr<Transaction>;
   using ConstByteArray = byte_array::ConstByteArray;
-  using BitVector      = Transaction::BitVector;
 
   /**
    * Special version of builder only allowing signing. This pattern ensures that the user can not

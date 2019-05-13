@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/ml/activation_functions/softmax.hpp"
+#include "math/ml/activation_functions/softmax.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -25,44 +25,74 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Softmax : public fetch::ml::ElementWiseOps<T>
+class Softmax : public fetch::ml::BatchOps<T>
 {
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
+  using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  Softmax()          = default;
-  virtual ~Softmax() = default;
+  Softmax(SizeType axis = 0)
+    : axis_(axis)
+  {}
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  ~Softmax() = default;
+
+  ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                    ArrayType &                                                 output)
   {
-    assert(inputs.size() == 1);
-    if (!this->output_ || this->output_->shape() != inputs.front().get().shape())
-    {
-      this->output_ = std::make_shared<ArrayType>(inputs.front().get().shape());
-    }
-    fetch::math::Softmax(inputs[0].get(), *this->output_);
-    return *this->output_;
+    ASSERT(output.shape() == ComputeOutputShape(inputs));
+    ASSERT(inputs.size() == 1);
+    fetch::math::Softmax(inputs[0].get(), output, axis_);
+    return output;
   }
 
-  virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+  std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
-    assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == errorSignal.shape());
+    ASSERT(inputs.size() == 1);
+    ASSERT(inputs.front().get().shape() == errorSignal.shape());
 
-    ArrayType returnSignal = errorSignal.Clone();
-    ArrayType t            = this->Forward(inputs);
-    returnSignal.InlineMultiply(t);
-    typename ArrayType::Type sum = returnSignal.Sum();
-    t.InlineMultiply(sum);
-    returnSignal.InlineSubtract(t);
-    return {returnSignal};
+    ArrayType return_signal = errorSignal.Copy();
+    ArrayType t(this->ComputeOutputShape(inputs));
+    t = this->Forward(inputs, t);
+    return_signal.InlineMultiply(t);
+
+    // 1D softmax
+    if (inputs.front().get().shape().size() == 1)
+    {
+      typename ArrayType::Type sum = return_signal.Sum();
+      t.InlineMultiply(sum);
+    }
+    // 2D softmax
+    else if (inputs.front().get().shape().size() == 2)
+    {
+      ArrayType sum;
+      sum = ReduceSum(return_signal, 1 - axis_);
+
+      t.InlineMultiply(sum);
+    }
+    else
+    {
+      throw std::runtime_error("Softmax over >= 3 dimensions not implemented");
+    }
+
+    return_signal.InlineSubtract(t);
+    return {return_signal};
+  }
+
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    return inputs.front().get().shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Softmax";
+
+private:
+  SizeType axis_;
 };
 
 }  // namespace ops

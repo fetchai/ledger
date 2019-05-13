@@ -22,6 +22,7 @@
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_status_cache.hpp"
 #include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/v2/transaction_layout.hpp"
 #include "metrics/metrics.hpp"
 
 namespace fetch {
@@ -53,15 +54,14 @@ void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
 {
   FETCH_METRIC_TX_SUBMITTED(tx->digest());
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Verified Input Transaction: ", byte_array::ToBase64(tx.digest()),
-                  " (", tx.contract_name(), ')');
+  FETCH_LOG_INFO(LOGGING_NAME, "Verified Input Transaction: 0x", tx->digest().ToHex());
 
   // dispatch the transaction to the storage engine
   try
   {
     storage_.AddTransaction(*tx);
   }
-  catch (std::runtime_error &e)
+  catch (std::runtime_error const &e)
   {
     // TODO(unknown): We need to think about how we handle failures of that class.
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to add transaction to storage: ", e.what());
@@ -71,7 +71,7 @@ void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
   FETCH_METRIC_TX_STORED(tx->digest());
 
   // dispatch the summary to the miner
-//  packer_.EnqueueTransaction(tx.summary());
+  packer_.EnqueueTransaction(*tx);
 
   // update the status cache with the state of this transaction
   status_cache_.Update(tx->digest(), TransactionStatus::PENDING);
@@ -91,7 +91,7 @@ void TransactionProcessor::OnTransactions(TransactionList const &txs)
   {
     storage_.AddTransactions(txs);
   }
-  catch (std::runtime_error &e)
+  catch (std::runtime_error const &e)
   {
     // TODO(unknown): We need to think about how we handle failures of that class.
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to add transaction to storage: ", e.what());
@@ -139,7 +139,7 @@ void TransactionProcessor::ThreadEntryPoint()
 
     for (auto const &summary : new_txs)
     {
-//      packer_.EnqueueTransaction(summary);
+      packer_.EnqueueTransaction(summary);
 
       FETCH_METRIC_TX_QUEUED(summary.transaction_hash);
     }

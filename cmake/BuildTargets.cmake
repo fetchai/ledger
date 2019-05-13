@@ -256,8 +256,8 @@ macro(detect_environment)
 
   if (FETCH_ENABLE_CLANG_TIDY)
 
-    if (VERSION LESSER_EQUAL 3.6)
-      message( FATAL_ERROR "You need CMake 3.6 to use Clang tidy" )
+    if (CMAKE_VERSION VERSION_LESS_EQUAL 3.6)
+      message( FATAL_ERROR "You need CMake 3.6 to use clang-tidy" )
     endif()
 
     find_program(
@@ -265,7 +265,7 @@ macro(detect_environment)
       NAMES "clang-tidy"
       DOC "Path to clang-tidy executable"
     )
-    if(NOT CLANG_TIDY_EXE)
+    if(${CLANG_TIDY_EXE} STREQUAL CLANG_TIDY_EXE-NOTFOUND)
       message(STATUS "clang-tidy: not found.")
     elseif(FETCH_IS_JETBRAINS_IDE)
       message(STATUS "clang-tidy: disabled")

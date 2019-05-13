@@ -24,33 +24,41 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Flatten : public fetch::ml::ElementWiseOps<T>
+class Flatten : public fetch::ml::BatchOps<T>
 {
 public:
   using ArrayType    = T;
+  using SizeType     = typename ArrayType::SizeType;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   Flatten()          = default;
   virtual ~Flatten() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
+    (void)output;
     ASSERT(inputs.size() == 1);
+    ASSERT(output.shape() == ComputeOutputShape(inputs));
     input_shape_ = inputs.front().get().shape();
-    this->output_ =
-        std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, inputs.front().get().size()}));
-    this->output_->Copy(inputs.front().get());
-    return *this->output_;
+    output.Assign(inputs.front().get());
+    return output;
   }
 
   virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 1);
     ArrayType ret(input_shape_);
-    ret.Copy(errorSignal);
+    ret.Assign(errorSignal);
     return {ret};
+  }
+
+  virtual std::vector<SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+  {
+    return {1, inputs.front().get().size()};
   }
 
   static constexpr char const *DESCRIPTOR = "Flatten";

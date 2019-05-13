@@ -65,22 +65,7 @@ public:
 
 protected:
 
-#if 1
-
   void OnTransaction(TransactionPtr const &tx) override;
-
-#else
-  /// @name Unverified Transaction Sink
-  /// @{
-  void OnTransaction(UnverifiedTransaction const &tx) override;
-  /// @}
-
-  /// @name Transaction Handlers
-  /// @{
-  void OnTransaction(VerifiedTransaction const &tx) override;
-  void OnTransactions(TransactionList const &txs) override;
-  /// @}
-#endif
 
 private:
   using Flag      = std::atomic<bool>;

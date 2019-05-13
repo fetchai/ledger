@@ -17,8 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "miner/optimisation/bitvector.hpp"
+#include "core/bitvector.hpp"
 #include "ledger/state_adapter.hpp"
+#include "vectorise/platform.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -31,13 +32,11 @@ class StateSentinelAdapter : public StateAdapter
 {
 public:
   using ResourceSet   = TransactionSummary::ResourceSet;
-  using ShardIndex    = uint32_t;
-  using ShardIndexSet = std::unordered_set<ShardIndex>;
 
   static constexpr char const *LOGGING_NAME = "StateSentinelAdapter";
 
   // Construction / Destruction
-  StateSentinelAdapter(StorageInterface &storage, Identifier scope, ShardIndex log2_num_shards, ShardIndexSet shards);
+  StateSentinelAdapter(StorageInterface &storage, Identifier scope, BitVector const &shards);
   ~StateSentinelAdapter() override;
 
   /// @name IO Observer Interface
@@ -60,8 +59,7 @@ private:
 
   /// @name Shard Limits
   /// @{
-  ShardIndex const log2_num_shards_;
-  ShardIndexSet const shards_; /// < The vector of shards which are allowed to be accessed in this instance
+  BitVector shards_;
   /// @}
 
   /// @name Counters

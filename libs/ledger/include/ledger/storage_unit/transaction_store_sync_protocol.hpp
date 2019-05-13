@@ -47,9 +47,10 @@ class TransactionStoreSyncProtocol : public fetch::service::Protocol
 public:
   enum
   {
-    OBJECT_COUNT = 1,
-    PULL_OBJECTS = 2,
-    PULL_SUBTREE = 3
+    OBJECT_COUNT          = 1,
+    PULL_OBJECTS          = 2,
+    PULL_SUBTREE          = 3,
+    PULL_SPECIFIC_OBJECTS = 4
   };
 
   using ObjectStore = storage::TransientObjectStore<v2::Transaction>;
@@ -78,7 +79,7 @@ private:
     using Timepoint  = Clock::time_point;
     using AddressSet = std::unordered_set<muddle::Muddle::Address>;
 
-    CachedObject(v2::Transaction value)
+    explicit CachedObject(v2::Transaction value)
       : data(std::move(value))
     {}
 
@@ -89,16 +90,13 @@ private:
 
   using Self   = TransactionStoreSyncProtocol;
   using Cache  = std::vector<CachedObject>;
-  using TxList = std::vector<v2::Transaction>;
+  using TxArray = std::vector<v2::Transaction>;
 
   uint64_t ObjectCount();
-  TxList   PullObjects(service::CallContext const *call_context);
+  TxArray   PullObjects(service::CallContext const *call_context);
 
-  TxList PullSubtree(byte_array::ConstByteArray const &rid, uint64_t mask);
-
-  // TODO(issue 7): Make cache configurable
-  static constexpr uint32_t MAX_CACHE_ELEMENTS    = 2000;  // really a "max"?
-  static constexpr uint32_t MAX_CACHE_LIFETIME_MS = 20000;
+  TxArray PullSubtree(byte_array::ConstByteArray const &rid, uint64_t mask);
+  TxArray PullSpecificObjects(std::vector<storage::ResourceID> const &rids);
 
   ObjectStore *store_;  ///< The pointer to the object store
 

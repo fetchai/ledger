@@ -27,8 +27,6 @@
 #include <chrono>
 
 static const std::chrono::milliseconds POP_TIMEOUT{300};
-static const std::chrono::milliseconds WAITTIME_FOR_NEW_VERIFIED_TRANSACTIONS{1000};
-static const std::chrono::milliseconds WAITTIME_FOR_NEW_VERIFIED_TRANSACTIONS_IF_FLUSH_NEEDED{1};
 
 namespace fetch {
 namespace ledger {
@@ -91,9 +89,13 @@ void TransactionVerifier::Verifier()
       // wait for a mutable transaction to be available
       if (unverified_queue_.Pop(tx, POP_TIMEOUT))
       {
+        FETCH_LOG_INFO(LOGGING_NAME, "Verifying TX: 0x", tx->digest().ToHex());
+
         // check the status
         if (tx->Verify())
         {
+          FETCH_LOG_INFO(LOGGING_NAME, "TX Verify Complete: 0x", tx->digest().ToHex());
+
           verified_queue_.Push(std::move(tx));
         }
         else
@@ -102,7 +104,7 @@ void TransactionVerifier::Verifier()
         }
       }
     }
-    catch (std::exception &e)
+    catch (std::exception const &e)
     {
       FETCH_LOG_WARN(LOGGING_NAME, name_ + " Exception caught: ", e.what());
     }
@@ -117,39 +119,19 @@ void TransactionVerifier::Dispatcher()
 {
   SetThreadName(name_ + "-D");
 
-  std::vector<TransactionPtr> txs;
-
   while (active_)
   {
     try
     {
-      while (txs.size() < batch_size_ && active_)
+      TransactionPtr tx;
+      if (verified_queue_.Pop(tx, POP_TIMEOUT))
       {
-        std::chrono::milliseconds wait_time{WAITTIME_FOR_NEW_VERIFIED_TRANSACTIONS_IF_FLUSH_NEEDED};
+        FETCH_LOG_INFO(LOGGING_NAME, "TX Dispatch: 0x", tx->digest().ToHex());
 
-        TransactionPtr tx;
-        if (txs.empty())
-        {
-          wait_time = WAITTIME_FOR_NEW_VERIFIED_TRANSACTIONS;
-        }
-
-        if (verified_queue_.Pop(tx, wait_time))
-        {
-          txs.emplace_back(std::move(tx));
-        }
-        else
-        {
-          break;
-        }
-      }
-
-      for (auto const &tx : txs)
-      {
         sink_.OnTransaction(tx);
       }
-      txs.clear();
     }
-    catch (std::exception &e)
+    catch (std::exception const &e)
     {
       FETCH_LOG_WARN(LOGGING_NAME, name_ + " Exception caught: ", e.what());
     }

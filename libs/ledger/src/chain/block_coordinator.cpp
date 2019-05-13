@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/block_coordinator.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "core/threading.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/block_sink_interface.hpp"
@@ -25,6 +26,7 @@
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_status_cache.hpp"
+#include "ledger/chain/v2/transaction.hpp"
 
 #include <chrono>
 
@@ -36,8 +38,9 @@ using ExecutionState = fetch::ledger::ExecutionManagerInterface::State;
 static const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};
 static const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{500};
 static const std::chrono::seconds      NOTIFY_INTERVAL{10};
+static const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{30};
+static const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{30};
 static const std::size_t               DIGEST_LENGTH_BYTES{32};
-static const std::size_t               IDENTITY_LENGTH_BYTES{64};
 
 namespace fetch {
 namespace ledger {
@@ -51,7 +54,8 @@ namespace ledger {
 BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                                    BlockSinkInterface &    block_sink,
-                                   TransactionStatusCache &status_cache, Identity identity,
+                                   TransactionStatusCache &status_cache,
+                                   crypto::Identity const &identity,
                                    std::size_t num_lanes, std::size_t num_slices,
                                    std::size_t block_difficulty)
   : chain_{chain}
@@ -63,17 +67,19 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   , periodic_print_{NOTIFY_INTERVAL}
   , miner_{std::make_shared<consensus::DummyMiner>()}
   , last_executed_block_{GENESIS_DIGEST}
-  , identity_{std::move(identity)}
-  , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RESET,
+  , mining_address_{identity}
+  , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RELOAD_STATE,
                                                   [](State state) { return ToString(state); })}
   , block_difficulty_{block_difficulty}
   , num_lanes_{num_lanes}
   , num_slices_{num_slices}
   , tx_wait_periodic_{TX_SYNC_NOTIFY_INTERVAL}
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
+  , syncing_periodic_{NOTIFY_INTERVAL}
 {
   // configure the state machine
   // clang-format off
+  state_machine_->RegisterHandler(State::RELOAD_STATE,                 this, &BlockCoordinator::OnReloadState);
   state_machine_->RegisterHandler(State::SYNCHRONIZING,                this, &BlockCoordinator::OnSynchronizing);
   state_machine_->RegisterHandler(State::SYNCHRONIZED,                 this, &BlockCoordinator::OnSynchronized);
   state_machine_->RegisterHandler(State::PRE_EXEC_BLOCK_VALIDATION,    this, &BlockCoordinator::OnPreExecBlockValidation);
@@ -89,12 +95,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   state_machine_->RegisterHandler(State::RESET,                        this, &BlockCoordinator::OnReset);
   // clang-format on
 
-  // for debug purposes
-#ifdef FETCH_LOG_DEBUG_ENABLED
-  state_machine_->OnStateChange([](State current, State previous) {
-    FETCH_LOG_INFO(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
-  });
-#else
   state_machine_->OnStateChange([this](State current, State previous) {
     if (periodic_print_.Poll())
     {
@@ -102,16 +102,9 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
                      " (previous: ", ToString(previous), ")");
     }
   });
-#endif  // FETCH_LOG_DEBUG_ENABLED
-}
 
-/**
- * Destruct the Block Coordinator
- */
-BlockCoordinator::~BlockCoordinator()
-{
-  state_machine_->Reset();
-  state_machine_.reset();
+  // TODO(private issue 792): this shouldn't be here, but if it is, it locks the whole system on
+  // startup. RecoverFromStartup();
 }
 
 /**
@@ -126,15 +119,47 @@ void BlockCoordinator::TriggerBlockGeneration()
   }
 }
 
+BlockCoordinator::State BlockCoordinator::OnReloadState()
+{
+  // if no current block then this is the first time in the state therefore lookup the heaviest
+  // block
+  if (!current_block_)
+  {
+    current_block_ = chain_.GetHeaviestBlock();
+  }
+
+  // if we have reached genesis then this is either because we have no state to reload in the case
+  // of a fresh node, or a long series of errors prevents us from reloading previous state. In
+  // either case we transition to the restarting the coordination
+  assert(static_cast<bool>(current_block_));
+  if (GENESIS_DIGEST != current_block_->body.previous_hash)
+  {
+    // normal case we have found a block from which point we want to revert. Attempt to revert to it
+    bool const revert_success = storage_unit_.RevertToHash(current_block_->body.merkle_hash,
+                                                           current_block_->body.block_number);
+
+    if (revert_success)
+    {
+      // we need to update the execution manager state and also our locally cached state about the
+      // last block that has been executed
+      execution_manager_.SetLastProcessedBlock(current_block_->body.hash);
+      last_executed_block_.Set(current_block_->body.hash);
+    }
+  }
+
+  return State::RESET;
+}
+
 BlockCoordinator::State BlockCoordinator::OnSynchronizing()
 {
-  State next_state{State::SYNCHRONIZING};
-
   // ensure that we have a current block that we are executing
   if (!current_block_)
   {
     current_block_ = chain_.GetHeaviestBlock();
   }
+
+  // determine if extra debug is wanted or needed
+  bool const extra_debug = syncing_periodic_.Poll();
 
   // cache some useful variables
   auto const current_hash         = current_block_->body.hash;
@@ -144,12 +169,19 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
   auto const current_state        = storage_unit_.CurrentHash();
   auto const last_processed_block = execution_manager_.LastProcessedBlock();
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Current......: ", ToBase64(current_hash));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Previous.....: ", ToBase64(previous_hash));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Desired State: ", ToBase64(desired_state));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Current State: ", ToBase64(current_state));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: LCommit State: ", ToBase64(last_committed_state));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Last Block...: ", ToBase64(last_processed_block));
+#ifdef FETCH_LOG_DEBUG_ENABLED
+  if (extra_debug)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Heaviest.....: ", ToBase64(chain_.GetHeaviestBlockHash()));
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Current......: ", ToBase64(current_hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Previous.....: ", ToBase64(previous_hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Desired State: ", ToBase64(desired_state));
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Current State: ", ToBase64(current_state));
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: LCommit State: ", ToBase64(last_committed_state));
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last Block...: ", ToBase64(last_processed_block));
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last BlockInt: ", ToBase64(last_executed_block_.Get()));
+  }
+#endif  // FETCH_LOG_DEBUG_ENABLED
 
   // initial condition, the last processed block is empty
   if (GENESIS_DIGEST == last_processed_block)
@@ -159,7 +191,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
     if (GENESIS_DIGEST == previous_hash)
     {
       // once we have got back to genesis then we need to start executing from the beginning
-      next_state = State::PRE_EXEC_BLOCK_VALIDATION;
+      return State::PRE_EXEC_BLOCK_VALIDATION;
     }
     else
     {
@@ -178,7 +210,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
   else if (current_hash == last_processed_block)
   {
     // the block coordinator has now successfully synced with the chain of blocks.
-    next_state = State::SYNCHRONIZED;
+    return State::SYNCHRONIZED;
   }
   else
   {
@@ -197,25 +229,37 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
     }
 
     assert(blocks.size() >= 2);
-    assert(!blocks.empty());
 
     auto     block_path_it = blocks.crbegin();
     BlockPtr common_parent = *block_path_it++;
     BlockPtr next_block    = *block_path_it++;
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Common Parent: ", ToBase64(common_parent->body.hash));
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Next Block...: ", ToBase64(next_block->body.hash));
+    if (extra_debug)
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Common Parent: ", ToBase64(common_parent->body.hash));
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Next Block...: ", ToBase64(next_block->body.hash));
+
+      // calculate a percentage synchronisation
+      std::size_t const current_block_num = next_block->body.block_number;
+      std::size_t const total_block_num   = current_block_->body.block_number;
+      double const      completion =
+          static_cast<double>(current_block_num * 100) / static_cast<double>(total_block_num);
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Synchronising of chain in progress. ", completion, "% (block ",
+                     next_block->body.block_number, " of ", current_block_->body.block_number, ")");
+    }
 
     // we expect that the common parent in this case will always have been processed, but this
     // should be checked
-    if (!storage_unit_.HashExists(common_parent->body.merkle_hash))
+    if (!storage_unit_.HashExists(common_parent->body.merkle_hash,
+                                  common_parent->body.block_number))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's state hash cannot be retrieved for block: ",
-                      ToBase64(current_hash));
+                      ToBase64(current_hash), " number; ", common_parent->body.block_number);
 
       // this is a bad situation so the easiest solution is to revert back to genesis
       execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
-      if (!storage_unit_.RevertToHash(GENESIS_MERKLE_ROOT))
+      if (!storage_unit_.RevertToHash(GENESIS_MERKLE_ROOT, 0))
       {
         FETCH_LOG_ERROR(LOGGING_NAME, "Unable to revert back to genesis");
       }
@@ -224,7 +268,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
     }
 
     // revert the storage back to the known state
-    if (!storage_unit_.RevertToHash(common_parent->body.merkle_hash))
+    if (!storage_unit_.RevertToHash(common_parent->body.merkle_hash,
+                                    common_parent->body.block_number))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Unable to restore state for block", ToBase64(current_hash));
       return State::RESET;
@@ -232,21 +277,24 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
 
     // update the current block and begin scheduling
     current_block_ = next_block;
-    next_state     = State::PRE_EXEC_BLOCK_VALIDATION;
+
+    return State::PRE_EXEC_BLOCK_VALIDATION;
   }
 
-  return next_state;
+  return State::SYNCHRONIZING;
 }
 
 BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State previous)
 {
   FETCH_UNUSED(current);
-  State next_state{State::SYNCHRONIZED};
+
+  // ensure the periodic print is not trigger once we have synced
+  syncing_periodic_.Reset();
 
   // if we have detected a change in the chain then we need to re-evaluate the chain
   if (chain_.GetHeaviestBlockHash() != current_block_->body.hash)
   {
-    next_state = State::RESET;
+    return State::RESET;
   }
   else if (mining_ && mining_enabled_ && (Clock::now() >= next_block_time_))
   {
@@ -254,7 +302,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
     next_block_                     = std::make_unique<Block>();
     next_block_->body.previous_hash = current_block_->body.hash;
     next_block_->body.block_number  = current_block_->body.block_number + 1;
-    next_block_->body.miner         = identity_;
+    next_block_->body.miner         = mining_address_;
 
     // ensure the difficulty is correctly set
     next_block_->proof.SetTarget(block_difficulty_);
@@ -263,7 +311,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
     current_block_.reset();
 
     // trigger packing state
-    next_state = State::PACK_NEW_BLOCK;
+    return State::PACK_NEW_BLOCK;
   }
   else if (State::SYNCHRONIZING == previous)
   {
@@ -272,7 +320,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
                    " prev: ", ToBase64(current_block_->body.previous_hash), ")");
   }
 
-  return next_state;
+  return State::SYNCHRONIZED;
 }
 
 BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
@@ -297,15 +345,6 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     if (expected_block_number != current_block_->body.block_number)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Block number mismatch (",
-                     ToBase64(current_block_->body.hash), ")");
-      chain_.RemoveBlock(current_block_->body.hash);
-      return State::RESET;
-    }
-
-    // Check: Ensure the identity is the correct size
-    if (IDENTITY_LENGTH_BYTES != current_block_->body.miner.size())
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Miner identity size mismatch (",
                      ToBase64(current_block_->body.hash), ")");
       chain_.RemoveBlock(current_block_->body.hash);
       return State::RESET;
@@ -346,20 +385,48 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
   return State::WAIT_FOR_TRANSACTIONS;
 }
 
-BlockCoordinator::State BlockCoordinator::OnWaitForTransactions()
+BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, State previous)
 {
-  State next_state{State::WAIT_FOR_TRANSACTIONS};
+  if (previous == current)
+  {
+    if (have_asked_for_missing_txs_)
+    {
+      // FSM is stuck waiting for transactions - has timeout elapsed?
+      if (wait_for_tx_timeout_.IsDue())
+      {
+        // Assume block was invalid and discard it
+        chain_.RemoveBlock(current_block_->body.hash);
+
+        return State::RESET;
+      }
+    }
+    else
+    {
+      if (wait_before_asking_for_missing_tx_.IsDue())
+      {
+        storage_unit_.IssueCallForMissingTxs(*pending_txs_);
+        have_asked_for_missing_txs_ = true;
+        wait_for_tx_timeout_        = WAIT_FOR_TX_TIMEOUT_INTERVAL;
+      }
+    }
+  }
+  else
+  {
+    // Only just started waiting for transactions - reset countdown to issuing request to peers
+    wait_before_asking_for_missing_tx_ = WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL;
+    have_asked_for_missing_txs_        = false;
+  }
 
   // if the transaction digests have not been cached then do this now
   if (!pending_txs_)
   {
-    pending_txs_ = std::make_unique<TxSet>();
+    pending_txs_ = std::make_unique<v2::DigestSet>();
 
     for (auto const &slice : current_block_->body.slices)
     {
       for (auto const &tx : slice)
       {
-        pending_txs_->insert(tx.transaction_hash);
+        pending_txs_->insert(tx.digest());
       }
     }
   }
@@ -389,7 +456,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions()
     // clear the pending transaction set
     pending_txs_.reset();
 
-    next_state = State::SCHEDULE_BLOCK_EXECUTION;
+    return State::SCHEDULE_BLOCK_EXECUTION;
   }
   else
   {
@@ -403,7 +470,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions()
     state_machine_->Delay(std::chrono::milliseconds{200});
   }
 
-  return next_state;
+  return State::WAIT_FOR_TRANSACTIONS;
 }
 
 BlockCoordinator::State BlockCoordinator::OnScheduleBlockExecution()
@@ -426,6 +493,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForExecution()
   State next_state{State::WAIT_FOR_EXECUTION};
 
   auto const status = QueryExecutorStatus();
+
   switch (status)
   {
   case ExecutionStatus::IDLE:
@@ -455,8 +523,6 @@ BlockCoordinator::State BlockCoordinator::OnWaitForExecution()
 
 BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
 {
-  State next_state{State::RESET};
-
   // Check: Ensure the merkle hash is correct for this block
   auto const state_hash = storage_unit_.CurrentHash();
 
@@ -492,7 +558,8 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     if (previous_block)
     {
       // signal the storage engine to make these changes
-      if (storage_unit_.RevertToHash(previous_block->body.merkle_hash))
+      if (storage_unit_.RevertToHash(previous_block->body.merkle_hash,
+                                     previous_block->body.block_number))
       {
         execution_manager_.SetLastProcessedBlock(previous_block->body.hash);
         revert_successful = true;
@@ -502,7 +569,7 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     // if the revert has gone wrong, we need to initiate a complete re-sync
     if (!revert_successful)
     {
-      storage_unit_.RevertToHash(GENESIS_MERKLE_ROOT);
+      storage_unit_.RevertToHash(GENESIS_MERKLE_ROOT, 0);
       execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
     }
 
@@ -514,11 +581,14 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     // mark all the transactions as been executed
     UpdateTxStatus(*current_block_);
 
+    // Commit this state
+    storage_unit_.Commit(current_block_->body.block_number);
+
     // signal the last block that has been executed
     last_executed_block_.Set(current_block_->body.hash);
   }
 
-  return next_state;
+  return State::RESET;
 }
 
 BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
@@ -536,7 +606,7 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
     // trigger the execution of the block
     next_state = State::EXECUTE_NEW_BLOCK;
   }
-  catch (std::exception &ex)
+  catch (std::exception const &ex)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Error generated performing block packing: ", ex.what());
   }
@@ -572,6 +642,9 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
     next_block_->body.merkle_hash = storage_unit_.CurrentHash();
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Merkle Hash: ", ToBase64(next_block_->body.merkle_hash));
+
+    // Commit the state generated by this block
+    storage_unit_.Commit(next_block_->body.block_number);
 
     next_state = State::PROOF_SEARCH;
     break;
@@ -621,8 +694,6 @@ BlockCoordinator::State BlockCoordinator::OnProofSearch()
 
 BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 {
-  State next_state{State::RESET};
-
   try
   {
     // ensure that the main chain is aware of the block
@@ -646,7 +717,7 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
     FETCH_LOG_WARN(LOGGING_NAME, "Error transmitting verified block: ", ex.what());
   }
 
-  return next_state;
+  return State::RESET;
 }
 
 BlockCoordinator::State BlockCoordinator::OnReset()
@@ -654,7 +725,6 @@ BlockCoordinator::State BlockCoordinator::OnReset()
   current_block_.reset();
   next_block_.reset();
   pending_txs_.reset();
-  stall_count_ = 0;
 
   // we should update the next block time
   UpdateNextBlockTime();
@@ -742,13 +812,9 @@ BlockCoordinator::ExecutionStatus BlockCoordinator::QueryExecutorStatus()
 
   case ExecutionState::EXECUTION_ABORTED:
   case ExecutionState::EXECUTION_FAILED:
+    FETCH_LOG_WARN(LOGGING_NAME, "Execution in error state: ", ledger::ToString(execution_state));
     status = ExecutionStatus::ERROR;
     break;
-  }
-
-  if (ExecutionStatus::ERROR == status)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Execution in error state: ", ledger::ToString(execution_state));
   }
 
   return status;
@@ -765,7 +831,7 @@ void BlockCoordinator::UpdateTxStatus(Block const &block)
   {
     for (auto const &tx : slice)
     {
-      status_cache_.Update(tx.transaction_hash, TransactionStatus::EXECUTED);
+      status_cache_.Update(tx.digest(), TransactionStatus::EXECUTED);
     }
   }
 }
@@ -776,6 +842,9 @@ char const *BlockCoordinator::ToString(State state)
 
   switch (state)
   {
+  case State::RELOAD_STATE:
+    text = "Reloading State";
+    break;
   case State::SYNCHRONIZING:
     text = "Synchronizing";
     break;

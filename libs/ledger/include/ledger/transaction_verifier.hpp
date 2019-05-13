@@ -66,8 +66,7 @@ public:
   TransactionVerifier &operator=(TransactionVerifier &&) = delete;
 
 private:
-  static constexpr std::size_t QUEUE_SIZE         = 1u << 16u;  // 65K
-  static constexpr std::size_t DEFAULT_BATCH_SIZE = 1000;
+  static constexpr std::size_t QUEUE_SIZE = 1u << 16u;  // 65K
 
   using Flag            = std::atomic<bool>;
   using VerifiedQueue   = core::MPSCQueue<TransactionPtr, QUEUE_SIZE>;
@@ -79,11 +78,8 @@ private:
   void Verifier();
   void Dispatcher();
 
-  std::size_t batch_size_{DEFAULT_BATCH_SIZE};
-  std::size_t verifying_threads_;
-
+  std::size_t const verifying_threads_;
   std::string const name_;
-  std::string const logging_name_;
   Sink &            sink_;
   Flag              active_{true};
   Threads           threads_;

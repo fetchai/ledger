@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/encoders.hpp"
+#include "core/byte_array/decoders.hpp"
 #include "ledger/chain/v2/address.hpp"
 #include "core/macros.hpp"
 #include "crypto/hash.hpp"
@@ -27,6 +29,9 @@ namespace ledger {
 namespace v2 {
 namespace {
 
+using byte_array::ToBase58;
+using byte_array::FromBase58;
+
 /**
  * Helper function to calculation the address checksum
  *
@@ -35,10 +40,44 @@ namespace {
  */
 Address::ConstByteArray CalculateChecksum(Address::ConstByteArray const &raw_address)
 {
-  return crypto::Hash<crypto::SHA256>(raw_address).SubArray(0, 4);
+  return crypto::Hash<crypto::SHA256>(raw_address).SubArray(0, Address::CHECKSUM_LENGTH);
 }
 
 }  // namespace
+
+/**
+ * Parse an address from a string of characters (not a series of bytes)
+ *
+ * @param input The input characters to be decoded
+ * @param output The output address to be populated
+ * @return true if successful, otherwise false
+ */
+bool Address::Parse(ConstByteArray const &input, Address &output)
+{
+  bool success{false};
+
+  // decode the whole buffer
+  auto const decoded = FromBase58(input);
+
+  // ensure that the decode completed successfully (failure would result in 0 length byte array)
+  // and that the buffer is the correct size for an address
+  if (TOTAL_LENGTH == decoded.size())
+  {
+    // split the decoded into address and checksum
+    auto const address  = decoded.SubArray(0, RAW_LENGTH);
+    auto const checksum = decoded.SubArray(RAW_LENGTH, CHECKSUM_LENGTH);
+
+    // compute the expected checksum and compare
+    if (CalculateChecksum(address) == checksum)
+    {
+      output.address_ = address;
+      output.display_ = input;
+      success         = true;
+    }
+  }
+
+  return success;
+}
 
 /**
  * Create an address from an identity
@@ -47,24 +86,29 @@ Address::ConstByteArray CalculateChecksum(Address::ConstByteArray const &raw_add
  */
 Address::Address(crypto::Identity const &identity)
   : address_(crypto::Hash<crypto::SHA256>(identity.identifier()))
-  , display_(address_ + CalculateChecksum(address_))
+  , display_(ToBase58(address_ + CalculateChecksum(address_)))
 {}
 
 /**
- * Create an identity from a raw address (that is a fixed array of bytes)
+ * Create an address from a raw address (that is a fixed array of bytes)
  *
  * @param address The input (raw) address to use.
  */
 Address::Address(RawAddress const &address)
   : address_(address.data(), address.size())
-  , display_(address_ + CalculateChecksum(address_))
+  , display_(ToBase58(address_ + CalculateChecksum(address_)))
 {}
 
+/**
+ * Create an address from the const byte array of raw bytes
+ *
+ * @param address The raw address
+ */
 Address::Address(ConstByteArray address)
   : address_(std::move(address))
-  , display_(address_ + CalculateChecksum(address_))
+  , display_(ToBase58(address_ + CalculateChecksum(address_)))
 {
-  if (address_.size() != 32)
+  if (address_.size() != std::size_t{RAW_LENGTH})
   {
     throw std::runtime_error("Incorrect address size");
   }

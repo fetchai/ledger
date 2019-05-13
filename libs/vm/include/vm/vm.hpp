@@ -18,11 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "math/arithmetic/comparison.hpp"
-#include "math/free_functions/free_functions.hpp"
 #include "vm/defs.hpp"
 #include "vm/io_observer_interface.hpp"
 #include "vm/string.hpp"
-
+#include <cassert>
+#include <iostream>
 #include <sstream>
 
 namespace fetch {
@@ -193,6 +193,9 @@ private:
 class VM
 {
 public:
+  using InputDeviceMap  = std::unordered_map<std::string, std::istream *>;
+  using OutputDeviceMap = std::unordered_map<std::string, std::ostream *>;
+
   VM(Module *module);
   ~VM() = default;
 
@@ -202,8 +205,8 @@ public:
   }
 
   template <typename... Ts>
-  bool Execute(Script const &script, std::string const &name, std::string &error,
-               std::string &console_output, Variant &output, Ts const &... parameters)
+  bool Execute(Script const &script, std::string const &name, std::string &error, Variant &output,
+               Ts const &... parameters)
 
   {
     ParameterPack parameter_pack{registered_types_};
@@ -214,11 +217,11 @@ public:
       return false;
     }
 
-    return Execute(script, name, error, console_output, output, parameter_pack);
+    return Execute(script, name, error, output, parameter_pack);
   }
 
-  bool Execute(Script const &script, std::string const &name, std::string &error,
-               std::string &console_output, Variant &output, ParameterPack const &parameters)
+  bool Execute(Script const &script, std::string const &name, std::string &error, Variant &output,
+               ParameterPack const &parameters)
   {
     bool success{false};
 
@@ -268,9 +271,6 @@ public:
       error = "unable to find function '" + name + "'";
     }
 
-    // transfer the console output buffer
-    console_output = output_buffer_.str();
-
     return success;
   }
 
@@ -300,6 +300,72 @@ public:
   {
     assert(io_observer_ != nullptr);
     return *io_observer_;
+  }
+
+  std::ostream &GetOutputDevice(std::string name)
+  {
+    if (output_devices_.find(name) == output_devices_.end())
+    {
+      RuntimeError("output device " + name + " does not exist.");
+      return std::cout;
+    }
+    return *output_devices_[name];
+  }
+
+  std::istream &GetInputDevice(std::string name)
+  {
+    if (input_devices_.find(name) == input_devices_.end())
+    {
+      RuntimeError("input device " + name + " does not exist.");
+      return std::cin;
+    }
+    return *input_devices_[name];
+  }
+
+  void DetachInputDevice(std::string name)
+  {
+    auto it = input_devices_.find(name);
+    if (it != input_devices_.end())
+    {
+      input_devices_.erase(it);
+    }
+    else
+    {
+      throw std::runtime_error("Input device does not exists.");
+    }
+  }
+
+  void AttachInputDevice(std::string name, std::istream &device)
+  {
+    if (input_devices_.find(name) != input_devices_.end())
+    {
+      throw std::runtime_error("Input device already exists.");
+    }
+
+    input_devices_.insert({std::move(name), &device});
+  }
+
+  void DetachOutputDevice(std::string name)
+  {
+    auto it = output_devices_.find(name);
+    if (it != output_devices_.end())
+    {
+      output_devices_.erase(it);
+    }
+    else
+    {
+      throw std::runtime_error("Output device does not exists.");
+    }
+  }
+
+  void AttachOutputDevice(std::string name, std::ostream &device)
+  {
+    if (output_devices_.find(name) != output_devices_.end())
+    {
+      throw std::runtime_error("output device already exists.");
+    }
+
+    output_devices_.insert({std::move(name), &device});
   }
 
   void AddOutputLine(std::string const &line)
@@ -375,6 +441,8 @@ private:
   std::ostringstream         output_buffer_;
 
   IoObserverInterface *io_observer_{nullptr};
+  OutputDeviceMap      output_devices_;
+  InputDeviceMap       input_devices_;
 
   bool Execute(std::string &error, Variant &output);
   void Destruct(int scope_number);

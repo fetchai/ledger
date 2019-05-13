@@ -29,8 +29,6 @@ public:
     using ::testing::_;
     using ::testing::Invoke;
 
-    ON_CALL(*this, EnqueueTransaction(_))
-        .WillByDefault(Invoke(&fake, &FakeBlockPacker::EnqueueTransaction));
     ON_CALL(*this, GenerateBlock(_, _, _, _))
         .WillByDefault(Invoke(&fake, &FakeBlockPacker::GenerateBlock));
     ON_CALL(*this, GetBacklog()).WillByDefault(Invoke(&fake, &FakeBlockPacker::GetBacklog));
@@ -38,7 +36,8 @@ public:
 
   /// @name Block Packer Interface
   /// @{
-  MOCK_METHOD1(EnqueueTransaction, void(fetch::ledger::TransactionSummary const &));
+  MOCK_METHOD1(EnqueueTransaction, void(fetch::ledger::v2::TransactionLayout const &));
+  MOCK_METHOD1(EnqueueTransaction, void(fetch::ledger::v2::Transaction const &));
   MOCK_METHOD4(GenerateBlock, void(fetch::ledger::Block &, std::size_t, std::size_t,
                                    fetch::ledger::MainChain const &));
   MOCK_CONST_METHOD0(GetBacklog, uint64_t());

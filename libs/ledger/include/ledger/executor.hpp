@@ -53,7 +53,8 @@ public:
 
   /// @name Executor Interface
   /// @{
-  Result Execute(TxDigest const &hash, LaneIndex log2_num_lanes, LaneSet lanes) override;
+  Result Execute(v2::Digest const &digest, BlockIndex block, SliceIndex slice, BitVector const &shards) override;
+  void SettleFees(v2::Address const &miner, TokenAmount amount, uint32_t log2_num_lanes) override;
   /// @}
 
 private:
@@ -65,9 +66,11 @@ private:
 
 //  Contract::Status ExecuteContract(ConstByteArray const &name, LaneIndex log2_num_lanes, LaneSet const &lanes, v2::Transaction const &tx);
 
-  bool RetrieveTransaction(TxDigest const &hash);
+  bool RetrieveTransaction(v2::Digest const &digest);
+  bool ValidationChecks(Result &result);
   bool ExecuteTransactionContract(Result &result);
-  bool HandleTokenUpdates(uint64_t &fee);
+  bool ProcessTransfers(Result &result);
+  void DeductFees(Result &result);
   bool Cleanup();
 
   /// @name Resources
@@ -79,7 +82,9 @@ private:
 
   /// @name Per Execution State
   /// @{
-  LaneSet                 allowed_lanes_{};
+  BlockIndex              block_;
+  SliceIndex              slice_;
+  BitVector               allowed_shards_{};
   LaneIndex               log2_num_lanes_{0};
   TransactionPtr          current_tx_{};
   CachedStorageAdapterPtr storage_cache_;

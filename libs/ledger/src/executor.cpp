@@ -33,11 +33,13 @@
 #include <algorithm>
 #include <chrono>
 #include <random>
-#include <thread>
 
 static constexpr char const *LOGGING_NAME = "Executor";
+static constexpr uint64_t TRANSFER_CHARGE = 1;
 
 using fetch::byte_array::ConstByteArray;
+using fetch::storage::ResourceAddress;
+
 
 #ifdef FETCH_ENABLE_METRICS
 using fetch::metrics::Metrics;
@@ -77,13 +79,12 @@ namespace {
     return true;
   }
 
-//  ExecutorStatus ExecuteContract(ContractStatus &contract_status,
-//                                 ConstByteArray const &name,
-//                                 StorageUnitPtr const &storage,
-//                                 ChainCodeCache &chain_code_cache,
-//                                 LaneIndex log2_num_lanes, LaneSet const &lanes)
-//  {
-//
+  bool IsCreateWealth(v2::Transaction const &tx)
+  {
+    return (tx.contract_mode() == v2::Transaction::ContractMode::CHAIN_CODE) &&
+           (tx.chain_code() == "fetch.token") &&
+           (tx.action() == "wealth");
+  }
 
 }
 
@@ -100,15 +101,17 @@ Executor::Executor(StorageUnitPtr storage)
  * @param lanes The affected lanes for the transaction
  * @return The status code for the operation
  */
-Executor::Result Executor::Execute(TxDigest const &digest, LaneIndex log2_num_lanes, LaneSet lanes)
+Executor::Result Executor::Execute(v2::Digest const &digest, BlockIndex block, SliceIndex slice, BitVector const &shards)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash));
 
-  Result result{Status::INEXPLICABLE_FAILURE, 0u};
+  Result result{Status::INEXPLICABLE_FAILURE, 0, 0, 0};
 
   // cache the state for the current transaction
-  allowed_lanes_ = std::move(lanes);
-  log2_num_lanes_ = log2_num_lanes;
+  block_          = block;
+  slice_          = slice;
+  allowed_shards_ = shards;
+  log2_num_lanes_ = shards.log2_size();
 
   // attempt to retrieve the transaction from the storage
   if (!RetrieveTransaction(digest))
@@ -118,34 +121,35 @@ Executor::Result Executor::Execute(TxDigest const &digest, LaneIndex log2_num_la
   }
   else
   {
+    // update the charge rate
+    result.charge_rate = current_tx_->charge();
+
     // create the storage cache
     storage_cache_ = std::make_shared<CachedStorageAdapter>(*storage_);
 
-    // execute the transaction
-    if (!ExecuteTransactionContract(result))
-    {
-      // in the case of transaction execution failure the maximum fees will be removed
-      result.fee = current_tx_->charge_limit();
+    // follow the three step process for executing a transaction
+    //
+    // 0. Validation checks (does the originator have correct funds)
+    // 1. Execute the containing transaction
+    // 2. Execute any token transfers
+    // 3. Process the fees
+    //
+    bool const success = ValidationChecks(result) &&
+                         ExecuteTransactionContract(result) &&
+                         ProcessTransfers(result);
 
+    if (!success)
+    {
       // in addition to avoid indeterminate data being partially flushed. In the case of the when
-      // the transaction execution fails then we also clear ally the cached version.
+      // the transaction execution fails then we also clear all the cached data.
       storage_cache_->Clear();
     }
 
-#if 0
-    // process the fees
-    if (!ProcessFees(result.fee))
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to process the fees");
-      result.status = Status::CHAIN_CODE_EXEC_FAILURE;
-    }
-#endif
+    // deduct the fees from the originator
+    DeductFees(result);
 
-    // force the flushing of the cache *** only if the contract was successful ***
-    if (Executor::Status::SUCCESS == result.status)
-    {
-      storage_cache_->Flush();
-    }
+    // flush the storage so that all changes are now persistent
+    storage_cache_->Flush();
   }
 
   // clean up any used resources
@@ -154,7 +158,23 @@ Executor::Result Executor::Execute(TxDigest const &digest, LaneIndex log2_num_la
   return result;
 }
 
-bool Executor::RetrieveTransaction(TxDigest const &hash)
+void Executor::SettleFees(v2::Address const &miner, TokenAmount amount, uint32_t log2_num_lanes)
+{
+  // compute the resource address
+  ResourceAddress resource_address{"fetch.token.state." + miner.display()};
+
+  // create the complete shard mask
+  BitVector shard{1u << log2_num_lanes};
+  shard.set(resource_address.lane(log2_num_lanes), 1);
+
+  // attach the token contract to the storage engine
+  StateSentinelAdapter storage_adapter{*storage_, Identifier{"fetch.token"}, shard};
+  token_contract_->Attach(storage_adapter);
+  token_contract_->AddTokens(miner, amount);
+  token_contract_->Detach();
+}
+
+bool Executor::RetrieveTransaction(v2::Digest const &digest)
 {
   bool success{false};
 
@@ -164,7 +184,7 @@ bool Executor::RetrieveTransaction(TxDigest const &hash)
     current_tx_ = std::make_unique<v2::Transaction>();
 
     // load the transaction from the store
-    success = storage_->GetTransaction(hash, *current_tx_);
+    success = storage_->GetTransaction(digest, *current_tx_);
   }
   catch (std::exception const &ex)
   {
@@ -172,6 +192,48 @@ bool Executor::RetrieveTransaction(TxDigest const &hash)
   }
 
   return success;
+}
+
+bool Executor::ValidationChecks(Result &result)
+{
+  // SHORT TERM EXEMPTION - While no state file exists (and the wealth endpoint is still present)
+  // this and only this contract is exempt from the pre-validation checks
+  if (IsCreateWealth(*current_tx_))
+  {
+    result.status = Status::SUCCESS;
+    return true;
+  }
+
+  // CHECK: Determine if the transaction is valid for the given block
+  auto const tx_validity = current_tx_->GetValidity(block_);
+  if (v2::Transaction::Validity::VALID != tx_validity)
+  {
+    result.status = Status::TX_NOT_VALID_FOR_BLOCK;
+    return false;
+  }
+
+  // attach the token contract to the storage engine
+  StateAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"}};
+  token_contract_->Attach(storage_adapter);
+
+  // lookup the balance from the transaction originator
+  uint64_t const balance = token_contract_->GetBalance(current_tx_->from());
+
+  // detach the token transfers
+  token_contract_->Detach();
+
+  // CHECK: Ensure that the originator has funds available to make both all the transfers in the
+  //        contract as well as the maximum fees
+  uint64_t const max_tokens_required = current_tx_->GetTotalTransferAmount() + current_tx_->charge_limit();
+  if (balance < max_tokens_required)
+  {
+    result.status = Status::INSUFFICIENT_AVAILABLE_FUNDS;
+    return false;
+  }
+
+  // All checks passed
+  result.status = Status::SUCCESS;
+  return true;
 }
 
 bool Executor::ExecuteTransactionContract(Result &result)
@@ -199,8 +261,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
     }
 
     // create the cache and state sentinel (lock and unlock resources as well as sandbox)
-    StateSentinelAdapter storage_adapter{*storage_cache_, contract.GetParent(), log2_num_lanes_,
-                                         allowed_lanes_};
+    StateSentinelAdapter storage_adapter{*storage_cache_, contract.GetParent(), allowed_shards_};
 
     // lookup or create the instance of the contract as is needed
     auto chain_code = chain_code_cache_.Lookup(contract.GetParent(), *storage_);
@@ -249,12 +310,25 @@ bool Executor::ExecuteTransactionContract(Result &result)
     if (success)
     {
       // simple linear scale fee
-      uint64_t const compute_fee = chain_code->CalculateFee();
-      uint64_t const storage_fee = (storage_adapter.num_bytes_written() * 2u);
-      uint64_t const base_fee    = compute_fee + storage_fee;
-      uint64_t const scaled_fee  = allowed_lanes_.size() * base_fee;
+      uint64_t const compute_charge = chain_code->CalculateFee();
+      uint64_t const storage_charge = (storage_adapter.num_bytes_written() * 2u);
+      uint64_t const base_charge    = compute_charge + storage_charge;
+      uint64_t const scaled_charge  = std::max<uint64_t>(allowed_shards_.PopCount(), 1) * base_charge;
 
-      result.fee = scaled_fee;
+      FETCH_LOG_INFO(LOGGING_NAME, "Calculated charge: ", scaled_charge, " (base: ", base_charge, " storage: ", storage_charge, " compute: ", compute_charge, " shards: ", allowed_shards_.PopCount(), ")");
+
+      // create wealth transactions are always free
+      if (!IsCreateWealth(*current_tx_))
+      {
+        result.charge += scaled_charge;
+      }
+
+      // determine if the chain code ran out of charge
+      if (result.charge > current_tx_->charge_limit())
+      {
+        result.status = Status::INSUFFICIENT_CHARGE;
+        success = false;
+      }
     }
   }
   catch (std::exception const &ex)
@@ -267,103 +341,72 @@ bool Executor::ExecuteTransactionContract(Result &result)
   return success;
 }
 
-bool Executor::HandleTokenUpdates(uint64_t &fee)
+bool Executor::ProcessTransfers(Result &result)
 {
-  // create the token state adapter
-  StateSentinelAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"}, log2_num_lanes_,
-                                       allowed_lanes_};
+  bool success{true};
 
-#if 0
-  // attach the token contract
+  // attach the token contract to the storage engine
+  StateSentinelAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"}, allowed_shards_};
   token_contract_->Attach(storage_adapter);
 
-//  token_contract_->Transfer()
+  // only process transfers if the previous steps have been successful
+  if (Status::SUCCESS == result.status)
+  {
+    // make all the transfers that are necessary
+    for (auto const &transfer : current_tx_->transfers())
+    {
+      // make the individual transfers
+      if (!token_contract_->TransferTokens(*current_tx_, transfer.to, transfer.amount))
+      {
+        result.status = Status::TRANSFER_FAILURE;
+        success = false;
+        break;
+      }
+      else
+      {
+        // the cost in charge units to make a transfer
+        result.charge += TRANSFER_CHARGE;
+      }
+    }
+  }
 
-  // detach the token contract
+  // detach the contract
   token_contract_->Detach();
-#endif
 
-  return false;
+  return success;
+}
+
+void Executor::DeductFees(Result &result)
+{
+  // attach the token contract to the storage engine
+  StateSentinelAdapter storage_adapter{*storage_cache_, Identifier{"fetch.token"}, allowed_shards_};
+  token_contract_->Attach(storage_adapter);
+
+  auto const &from = current_tx_->from();
+
+  // lookup the account balance
+  uint64_t const balance = token_contract_->GetBalance(from);
+
+  // calculate the fee to deduct
+  TokenAmount tx_fee = result.charge * current_tx_->charge();
+  if (Status::SUCCESS != result.status)
+  {
+    tx_fee = current_tx_->charge_limit() * current_tx_->charge();
+  }
+
+  // on failed transactions
+  result.fee = std::min(balance, tx_fee);
+
+  // deduct the fee from the originator
+  token_contract_->SubtractTokens(from, result.fee);
+
+  token_contract_->Detach();
 }
 
 bool Executor::Cleanup()
 {
   return false;
 }
-
-#if 0
-Contract::Status Executor::ExecuteContract(ConstByteArray const &name, LaneIndex log2_num_lanes, LaneSet const &lanes, v2::Transaction const &tx)
-{
-  uint64_t current_fee{tx.charge_limit()};
-  Status status{Status::INEXPLICABLE_FAILURE};
-
-  // attempt to execute the first part of the contract
-  // if there is no contract then exit immediately
-  if (name.empty())
-  {
-    return Contract::Status::OK;
-  }
-
-  // attempt to parse the full contract name from from the transaction
-  Identifier contract;
-  if (!contract.Parse(name))
-  {
-    return Contract::Status::FAILED;
-  }
-
-  // create the cache and state sentinel (lock and unlock resources as well as sandbox)
-  CachedStorageAdapter storage_cache{*storage_};
-  StateSentinelAdapter storage_adapter{storage_cache, contract.GetParent(), log2_num_lanes, lanes};
-
-  // lookup or create the instance of the contract as is needed
-  auto chain_code = chain_code_cache_.Lookup(contract.GetParent(), *storage_);
-  if (!chain_code)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Chain code lookup failure!");
-    return Contract::Status::FAILED;
-  }
-
-  // attach the chain code to the current working context
-  chain_code->Attach(storage_adapter);
-
-  // Dispatch the transaction to the contract
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatch: ", contract.name());
-  auto const contract_status = chain_code->DispatchTransaction(contract.name(), tx);
-
-  // detach the chain code from the current context
-  chain_code->Detach();
-
-  // force the flushing of the cache *** only if the contract was successful ***
-  if (Contract::Status::OK == contract_status)
-  {
-    storage_cache.Flush();
-  }
-
-  switch (contract_status)
-  {
-    case Contract::Status::OK:
-      status = Status::SUCCESS;
-      break;
-    case Contract::Status::FAILED:
-      FETCH_LOG_WARN(LOGGING_NAME, "Transaction execution failed!");
-      break;
-    case Contract::Status::NOT_FOUND:
-      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup transaction handler");
-      break;
-  }
-
-#ifdef FETCH_ENABLE_METRICS
-  Metrics::Timestamp const completed = Metrics::Clock::now();
-#endif  // FETCH_ENABLE_METRICS
-
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash), " (success)");
-
-  FETCH_METRIC_TX_EXEC_STARTED_EX(hash, started);
-  FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, completed)
-
-  return status;
-}
-#endif
 
 }  // namespace ledger
 }  // namespace fetch

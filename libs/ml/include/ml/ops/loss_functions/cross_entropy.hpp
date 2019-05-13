@@ -21,10 +21,10 @@
 #include <memory>
 #include <vector>
 
-#include "math/free_functions/fundamental_operators.hpp"
-#include "math/free_functions/ml/activation_functions/sigmoid.hpp"
-#include "math/free_functions/ml/activation_functions/softmax.hpp"
-#include "math/free_functions/ml/loss_functions/cross_entropy.hpp"
+#include "math/fundamental_operators.hpp"
+#include "math/ml/activation_functions/sigmoid.hpp"
+#include "math/ml/activation_functions/softmax.hpp"
+#include "math/ml/loss_functions/cross_entropy.hpp"
 
 namespace fetch {
 namespace ml {
@@ -50,7 +50,7 @@ public:
     SizeType n_classes{2};
     if (inputs.size() == 3)
     {
-      n_classes = SizeType(inputs.at(2).At(0));
+      n_classes = SizeType(inputs.at(2).data()[0]);
     }
     DataType result = fetch::math::CrossEntropyLoss(inputs[0], inputs[1], n_classes);
 

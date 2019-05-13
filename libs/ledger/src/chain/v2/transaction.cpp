@@ -25,6 +25,23 @@ namespace ledger {
 namespace v2 {
 
 /**
+ * Compute the total amount being transfered in this transaction
+ *
+ * @return The total amount being transfered
+ */
+uint64_t Transaction::GetTotalTransferAmount() const
+{
+  uint64_t amount{0};
+
+  for (auto const &transfer : transfers_)
+  {
+    amount += transfer.amount;
+  }
+
+  return amount;
+}
+
+/**
  * Verify the contents of the transaction
  *
  * @return
@@ -53,6 +70,9 @@ bool Transaction::Verify()
           all_verified = false;
           break;
         }
+
+        // ensure is well formed
+        assert(!signatory.address.address().empty());
       }
 
       // only valid when there are more that 1 signature present and that they matched the computed

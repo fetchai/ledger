@@ -64,8 +64,15 @@ namespace v2 {
 class Address
 {
 public:
-  using RawAddress     = std::array<uint8_t, 32>;
+  static constexpr std::size_t RAW_LENGTH      = 32;
+  static constexpr std::size_t CHECKSUM_LENGTH = 4;
+  static constexpr std::size_t TOTAL_LENGTH    = RAW_LENGTH + CHECKSUM_LENGTH;
+
+  using RawAddress     = std::array<uint8_t, RAW_LENGTH>;
   using ConstByteArray = byte_array::ConstByteArray;
+
+  // Helpers
+  static bool Parse(ConstByteArray const &input, Address &output);
 
   // Construction / Destruction
   Address() = default;

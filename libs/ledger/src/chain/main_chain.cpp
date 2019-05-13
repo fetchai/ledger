@@ -19,6 +19,7 @@
 #include "ledger/chain/main_chain.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "network/generics/milli_timer.hpp"
 
 #include <utility>
 
@@ -64,7 +65,13 @@ char const *ToString(BlockStatus status)
  */
 MainChain::MainChain(Mode mode)
 {
-  FETCH_LOCK(lock_);
+  if (Mode::IN_MEMORY_DB != mode)
+  {
+    // create the block store
+    block_store_ = std::make_unique<BlockStore>();
+
+    RecoverFromFile(mode);
+  }
 
   // create the genesis block and add it to the cache
   auto genesis = CreateGenesisBlock();
@@ -74,13 +81,13 @@ MainChain::MainChain(Mode mode)
 
   // add the tip for this block
   AddTip(genesis);
+}
 
-  if (Mode::IN_MEMORY_DB != mode)
+MainChain::~MainChain()
+{
+  if (block_store_)
   {
-    // create the block store
-    block_store_ = std::make_unique<BlockStore>();
-
-    RecoverFromFile(mode);
+    block_store_->Flush(false);
   }
 }
 
@@ -131,8 +138,6 @@ MainChain::BlockPtr MainChain::GetHeaviestBlock() const
 bool MainChain::RemoveBlock(BlockHash hash)
 {
   // TODO(private issue 666): Improve performance of block removal
-
-  using BlockHashSet = std::unordered_set<BlockHash>;
 
   bool success{false};
 
@@ -292,7 +297,7 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
 bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
                                         uint64_t limit) const
 {
-  MilliTimer myTimer("MainChain::GetPathToCommonAncestor");
+  MilliTimer myTimer("MainChain::GetPathToCommonAncestor", 500);
 
   FETCH_LOCK(lock_);
 
@@ -483,33 +488,102 @@ void MainChain::RecoverFromFile(Mode mode)
   if (Mode::CREATE_PERSISTENT_DB == mode)
   {
     block_store_->New("chain.db", "chain.index.db");
+    head_store_.open("chain.head.db",
+                     std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
+    return;
   }
   else if (Mode::LOAD_PERSISTENT_DB == mode)
   {
     block_store_->Load("chain.db", "chain.index.db");
+    head_store_.open("chain.head.db", std::ios::binary | std::ios::in | std::ios::out);
   }
   else
   {
     assert(false);
   }
 
-  // load the head block
+  // load the head block, and attempt verify that this block forms a complete chain to genesis
   IntBlockPtr block = std::make_shared<Block>();
-  if (block_store_->Get(storage::ResourceAddress("head"), *block))
+  IntBlockPtr head  = std::make_shared<Block>();
+
+  // retrieve the starting hash
+  BlockHash head_block_hash = GetHeadHash();
+
+  bool recovery_complete{false};
+  if (!head_block_hash.empty() && block_store_->Get(storage::ResourceID{head_block_hash}, *block))
   {
-    block->UpdateDigest();
-    InsertBlock(block);
+    auto block_index = block->body.block_number;
 
-    IntBlockPtr next = std::make_shared<Block>();
-    while (block_store_->Get(storage::ResourceID(block->body.previous_hash), *next))
+    // Save the head
+    head = block;
+
+    // Copy head block so as to walk down the chain
+    IntBlockPtr next = std::make_shared<Block>(*block);
+
+    while (block_store_->Get(storage::ResourceID(next->body.previous_hash), *next))
     {
-      block->UpdateDigest();
+      if (next->body.block_number != block_index - 1)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME,
+                       "Discontinuity found when walking main chain during recovery. Current: ",
+                       block_index, " prev: ", next->body.block_number, " Resetting");
+        break;
+      }
 
-      InsertBlock(block);
-
-      // swap the pointers
-      std::swap(block, next);
+      block_index = next->body.block_number;
     }
+
+    if (block_index != 0)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Failed to walk main chain when recovering from disk. Got as far back as: ",
+                     block_index, ". Resetting.");
+    }
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME,
+                     "Recovering main chain with heaviest block: ", head->body.block_number);
+
+      // Add heaviest to cache
+      block_chain_[head->body.hash] = head;
+
+      // Update this as our heaviest
+      bool const result      = heaviest_.Update(*head);
+      tips_[head->body.hash] = Tip{head->total_weight};
+
+      if (!result)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to update heaviest when loading from file.");
+      }
+
+      // Sanity check
+      uint64_t heaviest_block_num = GetHeaviestBlock()->body.block_number;
+      FETCH_LOG_INFO(LOGGING_NAME, "Heaviest block: ", heaviest_block_num);
+
+      DetermineHeaviestTip();
+      heaviest_block_num = GetHeaviestBlock()->body.block_number;
+      FETCH_LOG_INFO(LOGGING_NAME, "Heaviest block now: ", heaviest_block_num);
+      FETCH_LOG_INFO(LOGGING_NAME, "Heaviest block weight: ", GetHeaviestBlock()->total_weight);
+
+      // signal that the recovery was successful
+      recovery_complete = true;
+    }
+  }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "No head block found in chain data store! Resetting chain data store.");
+  }
+
+  // Recovering the chain has failed in some way, reset the storage.
+  if (!recovery_complete)
+  {
+    block_store_->New("chain.db", "chain.index.db");
+
+    // reopen the file and clear the contents
+    head_store_.close();
+    head_store_.open("chain.head.db",
+                     std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
   }
 }
 
@@ -518,16 +592,18 @@ void MainChain::RecoverFromFile(Mode mode)
  */
 void MainChain::WriteToFile()
 {
+  // lookup the heaviest block
+  IntBlockPtr block = block_chain_.at(heaviest_.hash);
+
   // skip if the block store is not persistent
-  if (block_store_)
+  if (block_store_ && (block->body.block_number >= FINALITY_PERIOD))
   {
     MilliTimer myTimer("MainChain::WriteToFile", 500);
 
-    // Add confirmed blocks to file
-    IntBlockPtr block  = block_chain_.at(heaviest_.hash);
-    bool        failed = false;
+    // Add confirmed blocks to file, minus finality
 
     // Find the block N back from our heaviest
+    bool failed = false;
     for (std::size_t i = 0; i < FINALITY_PERIOD; ++i)
     {
       if (!LookupBlock(block->body.previous_hash, block))
@@ -537,30 +613,66 @@ void MainChain::WriteToFile()
       }
     }
 
-    // This block is now the head in our file
-    if (!failed)
+    if (failed)
     {
-      // store both the HEAD block as both its has and the "HEAD" entry
-      block_store_->Set(storage::ResourceAddress("head"), *block);
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Failed to walk back the chain when writing to file! Block head: ",
+                     block_chain_.at(heaviest_.hash)->body.block_number);
+      return;
+    }
+
+    // This block will now become the head in our file
+    // Corner case - block is genesis
+    if (block->body.previous_hash == GENESIS_DIGEST)
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Writing genesis. ");
+
       block_store_->Set(storage::ResourceID(block->body.hash), *block);
+      SetHeadHash(block->body.hash);
+    }
+    else
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Writing block. ", block->body.block_number);
 
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Updating HEAD to ", ToBase64(block->body.hash));
+      // Recover the current head block from the file
+      IntBlockPtr current_file_head = std::make_shared<Block>();
+      IntBlockPtr block_head        = block;
 
-      // Walk down the file to check we have an unbroken chain
-      while (LookupBlockFromCache(block->body.previous_hash, block))
+      block_store_->Get(storage::ResourceID(GetHeadHash()), *current_file_head);
+
+      // Now keep adding the block and its prev to the file until we are certain the file contains
+      // an unbroken chain. Assuming that the current_file_head is unbroken we can write until we
+      // touch it or it's root.
+      for (;;)
       {
-        storage::ResourceID block_storage_key{block->body.hash};
+        block_store_->Set(storage::ResourceID(block->body.hash), *block);
 
-        // add the block to the file storage if it
-        if (!block_store_->Has(block_storage_key))
+        // Keep the current_file_head one block behind
+        while (current_file_head->body.block_number != block->body.block_number - 1)
         {
-          block_store_->Set(block_storage_key, *block);
+          block_store_->Get(storage::ResourceID(current_file_head->body.previous_hash),
+                            *current_file_head);
         }
 
-        // Clear the block from ram
-        FlushBlock(block);
+        // Successful case
+        if (current_file_head->body.hash == block->body.previous_hash)
+        {
+          break;
+        }
+
+        // Continue to push prevs into file
+        LookupBlock(block->body.previous_hash, block);
       }
+
+      // Success - we kept a copy of the new head to write
+      SetHeadHash(block_head->body.hash);
     }
+
+    // Clear the block from ram
+    FlushBlock(block);
+
+    // Force flush of the file object!
+    block_store_->Flush(false);
 
     // as final step do some sanity checks
     TrimCache();
@@ -879,6 +991,8 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
  *
  * @param hash The hash of the block to search for
  * @param block The output block to be populated
+ * @param add_to_cache Whether to add to the cache as it is recent
+ *
  * @return true if successful, otherwise false
  */
 bool MainChain::LookupBlock(BlockHash hash, IntBlockPtr &block, bool add_to_cache) const
@@ -1100,6 +1214,7 @@ MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
   auto genesis                = std::make_shared<Block>();
   genesis->body.previous_hash = GENESIS_DIGEST;
   genesis->body.merkle_hash   = GENESIS_MERKLE_ROOT;
+  genesis->body.miner         = v2::Address{GENESIS_DIGEST};
   genesis->is_loose           = false;
   genesis->UpdateDigest();
 
@@ -1137,6 +1252,83 @@ bool MainChain::HeaviestTip::Update(Block const &block)
   }
 
   return updated;
+}
+
+MainChain::BlockHash MainChain::GetHeadHash()
+{
+  byte_array::ByteArray buffer;
+
+  // determine is the hash has already been stored once
+  head_store_.seekg(0, std::ios::end);
+  auto const file_size = head_store_.tellg();
+
+  if (file_size == 32)
+  {
+    buffer.Resize(32);
+
+    // return to the begining and overwrite the hash
+    head_store_.seekg(0);
+    head_store_.read(reinterpret_cast<char *>(buffer.pointer()),
+                     static_cast<std::streamsize>(buffer.size()));
+  }
+
+  return {buffer};
+}
+
+void MainChain::SetHeadHash(BlockHash const &hash)
+{
+  assert(hash.size() == 32);
+
+  // move to the beginning of the file and write out the hash
+  head_store_.seekp(0);
+  head_store_.write(reinterpret_cast<char const *>(hash.pointer()),
+                    static_cast<std::streamsize>(hash.size()));
+}
+
+/**
+ * Strip transactions in container that already exist in the blockchain
+ *
+ * @param: starting_hash Block to start looking downwards from
+ * @tparam: transaction The set of transaction to be filtered
+ *
+ * @return: bool whether the starting hash referred to a valid block on a valid chain
+ */
+v2::DigestSet MainChain::DetectDuplicateTransactions(BlockHash starting_hash, v2::DigestSet const &transactions) const
+{
+  MilliTimer const timer{"DuplicateTransactionsCheck", 100};
+
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TX uniqueness verify");
+
+  IntBlockPtr block;
+  if (!LookupBlock(std::move(starting_hash), block, false) || block->is_loose)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "TX uniqueness verify on bad block hash");
+    return {};
+  }
+
+  // Need a set for quickly checking whether transactions are in our container
+  v2::DigestSet duplicates{};
+  for (;;)
+  {
+    for (auto const &slice : block->body.slices)
+    {
+      for (auto const &tx : slice)
+      {
+        if (transactions.find(tx.digest()) != transactions.end())
+        {
+          duplicates.insert(tx.digest());
+        }
+      }
+    }
+
+    // exit the loop once we can no longer find the block
+    if (!LookupBlock(block->body.previous_hash, block, false))
+    {
+      break;
+    }
+  }
+
+  return duplicates;
 }
 
 }  // namespace ledger

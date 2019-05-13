@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/fundamental_operators.hpp"
+#include "core/assert.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -25,11 +25,12 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Multiply : public fetch::ml::Ops<T>
+class Multiply : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType      = T;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using ConstSliceType = typename ArrayType::ConstSliceType;
 
   Multiply()          = default;
   virtual ~Multiply() = default;
@@ -39,39 +40,49 @@ public:
    * @param inputs  left & right inputs to multiply
    * @return
    */
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
+                            ArrayType &                                                 output)
   {
-    assert(inputs.size() > 1);
-    for (std::size_t i = 1; i < inputs.size(); ++i)
+    (void)output;
+    ASSERT(inputs.size() == 2);
+    ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
+    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
+
+    auto output_it  = output.begin();
+    auto output_end = output.end();
+    auto a_it       = inputs[0].get().begin();
+    auto b_it       = inputs[1].get().begin();
+
+    while (output_it != output_end)
     {
-      assert(inputs[i]->shape() == inputs[i - 1]->shape());
+      *output_it = *a_it * *b_it;
+      ++output_it;
+      ++a_it;
+      ++b_it;
     }
 
-    std::vector<std::uint64_t> outputShape(inputs[0]->shape());
-    if (!this->output_ || this->output_->shape() != outputShape)
-    {
-      this->output_ = std::make_shared<ArrayType>(outputShape);
-    }
-
-    fetch::math::Multiply(inputs[0], inputs[1], this->output_);
-    if (inputs.size() > 2)
-    {
-      for (std::size_t i = 2; i < inputs.size(); ++i)
-      {
-        fetch::math::Multiply(this->output_, inputs[i], this->output_);
-      }
-    }
-
-    return this->output_;
+    return output;
   }
 
   /**
-   * elementwise multiplication is not trainable - just pass the error signal back
+   * elementwise multiplication gradient is:
+   * f'(input0)=input0*errorSignal
+   * f'(input1)=input1*errorSignal
    */
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
+  virtual std::vector<ArrayPtrType> Backward(
+      std::vector<std::reference_wrapper<const ArrayType>> const &inputs, ArrayPtrType errorSignal)
   {
-    return std::vector<ArrayPtrType>(inputs.size(), errorSignal);
+    ASSERT(inputs.size() == 2);
+    ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
+    ASSERT(errorSignal.size() == inputs.at(1).get().size());
+
+    ArrayType errorSignal1(inputs.at(0).get().shape());
+    ArrayType errorSignal2(inputs.at(1).get().shape());
+
+    fetch::math::Multiply(inputs.at(1).get(), errorSignal, errorSignal1);
+    fetch::math::Multiply(inputs.at(0).get(), errorSignal, errorSignal2);
+
+    return {errorSignal1, errorSignal2};
   }
 
   static constexpr char const *DESCRIPTOR = "Multiply";

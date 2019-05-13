@@ -17,30 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/future_timepoint.hpp"
 #include "core/logger.hpp"
+#include "core/serializers/typed_byte_array_buffer.hpp"
 #include "core/service_ids.hpp"
+#include "crypto/merkle_tree.hpp"
+#include "ledger/chain/mutable_transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/shard_config.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "network/generics/atomic_state_machine.hpp"
 #include "network/generics/backgrounded_work.hpp"
-#include "network/generics/future_timepoint.hpp"
 #include "network/generics/has_worker_thread.hpp"
 #include "network/management/connection_register.hpp"
-#include "network/service/service_client.hpp"
-
-#include "ledger/chain/transaction.hpp"
-#include "storage/document_store_protocol.hpp"
-#include "storage/object_store_protocol.hpp"
-
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
-
-#include "crypto/merkle_tree.hpp"
+#include "network/service/service_client.hpp"
+#include "storage/document_store_protocol.hpp"
+#include "storage/object_store_protocol.hpp"
 
 #include <chrono>
 #include <thread>
@@ -71,7 +69,7 @@ public:
   void AddTransaction(v2::Transaction const &tx) override;
   bool GetTransaction(ConstByteArray const &digest, v2::Transaction &tx) override;
   bool HasTransaction(ConstByteArray const &digest) override;
-
+  void IssueCallForMissingTxs(v2::DigestSet const &tx_set) override;
   TxLayouts PollRecentTx(uint32_t max_to_poll) override;
 
   Document GetOrCreate(ResourceAddress const &key) override;
@@ -81,9 +79,9 @@ public:
   // state hash functions
   byte_array::ConstByteArray CurrentHash() override;
   byte_array::ConstByteArray LastCommitHash() override;
-  bool                       RevertToHash(Hash const &hash) override;
-  byte_array::ConstByteArray Commit() override;
-  bool                       HashExists(Hash const &hash) override;
+  bool                       RevertToHash(Hash const &hash, uint64_t index) override;
+  byte_array::ConstByteArray Commit(uint64_t index) override;
+  bool                       HashExists(Hash const &hash, uint64_t index) override;
   bool                       Lock(ShardIndex index) override;
   bool                       Unlock(ShardIndex index) override;
   /// @}
@@ -92,18 +90,68 @@ public:
   StorageUnitClient &operator=(StorageUnitClient &&) = delete;
 
 private:
-  using Client        = muddle::rpc::Client;
-  using ClientPtr     = std::shared_ptr<Client>;
-  using AddressList   = std::vector<MuddleEndpoint::Address>;
-  using MerkleTree    = crypto::MerkleTree;
-  using MerkleTreePtr = std::shared_ptr<MerkleTree>;
-  using MerkleStack   = std::deque<MerkleTreePtr>;
-  using Mutex         = fetch::mutex::Mutex;
+  /**
+   * On Disk representation of a merkle tree
+   */
+  struct MerkleTreeBlock
+  {
+    MerkleTreeBlock()
+    {
+      std::memset(this, -1, sizeof(*this));
+    }
+
+    explicit MerkleTreeBlock(crypto::MerkleTree const &tree)
+    {
+      serializers::TypedByteArrayBuffer buff;
+      buff << tree;
+
+      assert(buff.data().size() == 92 || buff.data().size() == 60);
+
+      size_ = buff.data().size();
+      std::memcpy((uint8_t *)data_, (uint8_t *)buff.data().pointer(), size_);
+    }
+
+    crypto::MerkleTree Extract(uint64_t num_lanes)
+    {
+      crypto::MerkleTree ret{num_lanes};
+
+      serializers::TypedByteArrayBuffer buff;
+
+      buff.Allocate(size_);
+
+      std::memcpy((uint8_t *)buff.data().pointer(), (uint8_t *)data_, size_);
+
+      try
+      {
+        buff >> ret;
+      }
+      catch (std::exception const &)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "FAILED TO DESERIALIZE MERKLE TREE PROXY! ", size_);
+        return ret;
+      }
+
+      return ret;
+    }
+
+    uint64_t size_{0};
+    uint8_t  data_[92];
+  };
+
+  using Client               = muddle::rpc::Client;
+  using ClientPtr            = std::shared_ptr<Client>;
+  using LaneIndex            = LaneIdentity::lane_type;
+  using AddressList          = std::vector<MuddleEndpoint::Address>;
+  using MerkleTree           = crypto::MerkleTree;
+  using PermanentMerkleStack = storage::RandomAccessStack<MerkleTreeBlock>;
+  using Mutex                = fetch::mutex::Mutex;
+
+  static constexpr char const *MERKLE_FILENAME = "merkle_stack.db";
 
   Address const &LookupAddress(ShardIndex shard) const;
   Address const &LookupAddress(storage::ResourceID const &resource) const;
 
-  bool HashInStack(Hash const &hash);
+  bool HashInStack(Hash const &hash, uint64_t index);
 
   /// @name Client Information
   /// @{
@@ -114,9 +162,9 @@ private:
 
   /// @name State Hash Support
   /// @{
-  mutable Mutex merkle_mutex_{__LINE__, __FILE__};
-  MerkleTreePtr current_merkle_{};
-  MerkleStack   state_merkle_stack_{};
+  mutable Mutex        merkle_mutex_{__LINE__, __FILE__};
+  MerkleTree           current_merkle_;
+  PermanentMerkleStack permanent_state_merkle_stack_{};
   /// @}
 };
 

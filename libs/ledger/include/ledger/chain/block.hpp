@@ -21,6 +21,10 @@
 #include "core/serializers/stl_types.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
+#include "ledger/chain/v2/transaction_layout.hpp"
+#include "ledger/chain/v2/digest.hpp"
+#include "ledger/chain/v2/address.hpp"
+#include "ledger/chain/v2/address_rpc_serializer.hpp"
 
 #include <memory>
 
@@ -35,22 +39,20 @@ namespace ledger {
 class Block
 {
 public:
-  using Identity = byte_array::ConstByteArray;
-  using Digest   = byte_array::ConstByteArray;
   using Proof    = consensus::ProofOfWork;
-  using Slice    = std::vector<TransactionSummary>;
+  using Slice    = std::vector<v2::TransactionLayout>;
   using Slices   = std::vector<Slice>;
 
   struct Body
   {
     // TODO(private issue 496): Populate the state hash
-    Digest   hash;               ///< The hash of the block
-    Digest   previous_hash;      ///< The hash of the previous block
-    Digest   merkle_hash;        ///< The merkle state hash across all shards
-    uint64_t block_number{0};    ///< The height of the block from genesis
-    Identity miner;              ///< The identity of the generated miner
-    uint32_t log2_num_lanes{0};  ///< The log2(number of lanes)
-    Slices   slices;             ///< The slice lists
+    v2::Digest  hash;               ///< The hash of the block
+    v2::Digest  previous_hash;      ///< The hash of the previous block
+    v2::Digest  merkle_hash;        ///< The merkle state hash across all shards
+    uint64_t    block_number{0};    ///< The height of the block from genesis
+    v2::Address miner;              ///< The identity of the generated miner
+    uint32_t    log2_num_lanes{0};  ///< The log2(number of lanes)
+    Slices      slices;             ///< The slice lists
   };
 
   /// @name Block Contents
@@ -86,8 +88,8 @@ public:
 template <typename T>
 void Serialize(T &serializer, Block::Body const &body)
 {
-  serializer << body.previous_hash << body.merkle_hash << body.block_number << body.miner
-             << body.log2_num_lanes << body.slices;
+  serializer << body.hash << body.previous_hash << body.merkle_hash << body.block_number
+             << body.miner << body.log2_num_lanes << body.slices;
 }
 
 /**
@@ -100,8 +102,8 @@ void Serialize(T &serializer, Block::Body const &body)
 template <typename T>
 void Deserialize(T &serializer, Block::Body &body)
 {
-  serializer >> body.previous_hash >> body.merkle_hash >> body.block_number >> body.miner >>
-      body.log2_num_lanes >> body.slices;
+  serializer >> body.hash >> body.previous_hash >> body.merkle_hash >> body.block_number >>
+      body.miner >> body.log2_num_lanes >> body.slices;
 }
 
 /**

@@ -65,13 +65,13 @@ ConstByteArray GenerateDigest(std::string const &source)
  */
 void ValidateAddressesInParams(v2::Transaction const &tx, vm::ParameterPack const &params)
 {
-  // This doesn't work with a set (???)
-  std::unordered_set<ConstByteArray> valid_addresses;
+  std::set<ConstByteArray> valid_addresses;
 
   for (auto const &sig : tx.signatories())
   {
     valid_addresses.insert(sig.identity.identifier());
   }
+  assert(valid_addresses.size() == tx.signatories().size());
 
   for (std::size_t i = 0; i < params.size(); i++)
   {
@@ -81,8 +81,7 @@ void ValidateAddressesInParams(v2::Transaction const &tx, vm::ParameterPack cons
 
       ConstByteArray address_data{var.GetBytes().data(), var.GetBytes().size()};
 
-      if (std::find(valid_addresses.begin(), valid_addresses.end(), address_data) !=
-          valid_addresses.end())
+      if (valid_addresses.find(address_data) != valid_addresses.end())
       {
         var.SetSignedTx(true);
       }
@@ -408,9 +407,12 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, v2::Transa
 
   // Execute the requested function
   std::string        error;
-  std::string        console;
+  std::stringstream  console;
   fetch::vm::Variant output;
-  if (!vm->Execute(*script_, name, error, console, output, params))
+
+  vm->AttachOutputDevice("stdout", console);
+
+  if (!vm->Execute(*script_, name, error, output, params))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
     return Status::FAILED;
@@ -466,9 +468,12 @@ Contract::Status SmartContract::InvokeInit(Identity const &owner)
 
   // Execute the requested function
   std::string        error;
-  std::string        console;
+  std::stringstream  console;
   fetch::vm::Variant output;
-  if (!vm->Execute(*script_, init_fn_name_, error, console, output, params))
+
+  vm->AttachOutputDevice("stdout", console);
+
+  if (!vm->Execute(*script_, init_fn_name_, error, output, params))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
     return Status::FAILED;
@@ -529,14 +534,17 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   // create the initial query response
   response = Query::Object();
 
-  vm::Variant output;
-  std::string error;
-  std::string console;
-  if (!vm->Execute(*script_, name, error, console, output, params))
+  vm::Variant       output;
+  std::string       error;
+  std::stringstream console;
+
+  vm->AttachOutputDevice("stdout", console);
+
+  if (!vm->Execute(*script_, name, error, output, params))
   {
     response["status"]  = "failed";
     response["msg"]     = error;
-    response["console"] = console;
+    response["console"] = console.str();
     return Status::FAILED;
   }
 
@@ -580,6 +588,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
     response["result"] = output.Get<vm::Ptr<vm::String>>()->str;
     break;
   default:
+    // TODO(private 900): Deal with general data structures
     break;
   }
 

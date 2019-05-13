@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/free_functions.hpp"
+#include "math/fundamental_operators.hpp"
 #include "math/tensor.hpp"
 #include "vm/vm.hpp"
 
@@ -331,7 +331,7 @@ struct Matrix : public IMatrix
   {
     Variant &columnv = Pop();
     size_t   column;
-    if (GetNonNegativeInteger(columnv, column) == false)
+    if (!GetNonNegativeInteger(columnv, column))
     {
       RuntimeError("negative index");
       return nullptr;
@@ -339,7 +339,7 @@ struct Matrix : public IMatrix
     columnv.Reset();
     Variant &rowv = Pop();
     size_t   row;
-    if (GetNonNegativeInteger(rowv, row) == false)
+    if (!GetNonNegativeInteger(rowv, row))
     {
       RuntimeError("negative index");
       return nullptr;
@@ -352,7 +352,7 @@ struct Matrix : public IMatrix
       RuntimeError("index out of bounds");
       return nullptr;
     }
-    return &matrix.At(std::vector<typename fetch::math::Tensor<T>::SizeType>(column, row));
+    return &matrix.At(column, row);
   }
 
   virtual void *FindElement() override

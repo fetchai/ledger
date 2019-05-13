@@ -55,10 +55,14 @@ TYPED_TEST(WeightsTest, gradient_step_test)
 
   fetch::ml::ops::Weights<TypeParam> w;
   w.SetData(data);
-  ASSERT_EQ(w.Forward({}), data);
+  ASSERT_EQ(w.fetch::ml::template Ops<TypeParam>::Forward(
+                std::vector<std::reference_wrapper<TypeParam const>>({})),
+            data);
   std::vector<TypeParam> errorSignal = w.Backward({}, error);
   w.Step(typename TypeParam::Type(1));
-  ASSERT_TRUE(w.Forward({}).AllClose(gt));  // whit new values
+  ASSERT_TRUE(w.fetch::ml::template Ops<TypeParam>::Forward(
+                   std::vector<std::reference_wrapper<TypeParam const>>({}))
+                  .AllClose(gt));  // with new values
 }
 
 TYPED_TEST(WeightsTest, stateDict)
@@ -66,7 +70,7 @@ TYPED_TEST(WeightsTest, stateDict)
   fetch::ml::ops::Weights<TypeParam> w;
   fetch::ml::StateDict<TypeParam>    sd = w.StateDict();
 
-  EXPECT_TRUE(sd.weights_ == nullptr);
+  EXPECT_EQ(sd.weights_, nullptr);
   EXPECT_TRUE(sd.dict_.empty());
 
   TypeParam data(8);
@@ -84,5 +88,7 @@ TYPED_TEST(WeightsTest, loadStateDict)
   fetch::ml::StateDict<TypeParam> sd;
   sd.weights_ = data;
   w.LoadStateDict(sd);
-  EXPECT_EQ(w.Forward({}), *data);
+  EXPECT_EQ(w.fetch::ml::template Ops<TypeParam>::Forward(
+                std::vector<std::reference_wrapper<TypeParam const>>({})),
+            *data);
 }

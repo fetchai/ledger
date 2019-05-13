@@ -131,10 +131,8 @@ public:
     return success;
   }
 
-  bool UnlockResource(CallContext const *context, ResourceID const &rid)
+  bool UnlockResource(CallContext const *context)
   {
-    FETCH_UNUSED(rid);
-
     if (!context)
     {
       throw serializers::SerializableException(  // TODO(issue 11): set exception number

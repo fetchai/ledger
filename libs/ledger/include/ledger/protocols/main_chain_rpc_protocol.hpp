@@ -31,7 +31,7 @@ class MainChainProtocol : public service::Protocol
 {
 public:
   using Blocks    = std::vector<Block>;
-  using BlockHash = Block::Digest;
+
 
   enum
   {
@@ -55,13 +55,13 @@ private:
     return Copy(chain_.GetHeaviestChain(maxsize));
   }
 
-  Blocks GetChainPreceding(BlockHash const &at, uint32_t maxsize)
+  Blocks GetChainPreceding(v2::Digest const &at, uint32_t maxsize)
   {
     LOG_STACK_TRACE_POINT;
     return Copy(chain_.GetChainPreceding(at, maxsize));
   }
 
-  Blocks GetCommonSubChain(BlockHash const &start, BlockHash const &last_seen, uint64_t limit)
+  Blocks GetCommonSubChain(v2::Digest const &start, v2::Digest const &last_seen, uint64_t limit)
   {
     LOG_STACK_TRACE_POINT;
 
