@@ -545,8 +545,9 @@ meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &r
     ASSERT(ret.size() == SizeType(1));
     SizeType position = 0;
     auto     it       = array.begin();
-    Type     value    = NumericLowest<Type>();
-    SizeType counter  = SizeType{0};
+    Type     value    = numeric_lowest<Type>();
+
+    SizeType counter = SizeType{0};
     while (it.is_valid())
     {
       if (*it > value)
