@@ -152,13 +152,11 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
 
 BlockCoordinator::State BlockCoordinator::OnSynchronizing()
 {
-	std::cerr << "Getting heaviest\n";
   // ensure that we have a current block that we are executing
   if (!current_block_)
   {
     current_block_ = chain_.GetHeaviestBlock();
   }
-  std::cerr << "Heaviest: " << bool(current_block_) << '\n';
 
   // determine if extra debug is wanted or needed
   bool const extra_debug = syncing_periodic_.Poll();

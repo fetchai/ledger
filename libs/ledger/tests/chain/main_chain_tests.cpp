@@ -67,10 +67,8 @@ protected:
     static constexpr std::size_t NUM_SLICES = 2;
 
     auto const main_chain_mode = GetParam();
-    std::cerr << "-2\n";
 
-    chain_ = std::make_unique<MainChain>(main_chain_mode);
-    std::cerr << "-1\n";
+    chain_     = std::make_unique<MainChain>(main_chain_mode);
     generator_ = std::make_unique<BlockGenerator>(NUM_LANES, NUM_SLICES);
   }
 
@@ -149,23 +147,16 @@ TEST_P(MainChainTests, CheckSideChainSwitching)
 
 TEST_P(MainChainTests, CheckChainBlockInvalidation)
 {
-  std::cerr << "0\n";
   auto const genesis = generator_->Generate();
 
-  std::cerr << "1\n";
   // build a small side chain
   auto const side1 = generator_->Generate(genesis);
-  std::cerr << "2\n";
   auto const side2 = generator_->Generate(side1);
 
-  std::cerr << "3\n";
   // build a larger main chain
   auto const main1 = generator_->Generate(genesis);
-  std::cerr << "4\n";
   auto const main2 = generator_->Generate(main1);
-  std::cerr << "5\n";
   auto const main3 = generator_->Generate(main2);
-  std::cerr << "6\n";
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Genesis : ", ToBase64(genesis->body.hash));
   FETCH_LOG_DEBUG(LOGGING_NAME, "Side 1  : ", ToBase64(side1->body.hash));
@@ -174,32 +165,24 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
   FETCH_LOG_DEBUG(LOGGING_NAME, "Main 2  : ", ToBase64(main2->body.hash));
   FETCH_LOG_DEBUG(LOGGING_NAME, "Main 3  : ", ToBase64(main3->body.hash));
 
-  std::cerr << "7\n";
   // add the side chain blocks
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*side1));
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), side1->body.hash);
-  std::cerr << "8\n";
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*side2));
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), side2->body.hash);
-  std::cerr << "9\n";
 
   // add the main chain blocks
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main1));
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), side2->body.hash);
-  std::cerr << "10\n";
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main2));
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), side2->body.hash);  // because of hash values
-  std::cerr << "11\n";
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main3));
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), main3->body.hash);
-  std::cerr << "12\n";
 
   // invalidate the middle of the side chain this will cause the blocks to be
   ASSERT_TRUE(chain_->RemoveBlock(main2->body.hash));
-  std::cerr << "13\n";
 
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), side2->body.hash);
-  std::cerr << "14\n";
 }
 
 TEST_P(MainChainTests, CheckReindexingOfTips)

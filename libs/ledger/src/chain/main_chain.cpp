@@ -259,12 +259,12 @@ bool MainChain::RemoveBlock(BlockHash hash)
 
   // Step 1. Remove this block and the whole its progeny
   BlockHashSet invalidated_blocks;
-  auto detached_block{RemoveTree(hash, invalidated_blocks)};
+  auto         detached_block{RemoveTree(hash, invalidated_blocks)};
 
   // Step 2. Erase the forward ref from this block's parent
   auto siblings{references_.equal_range(hash)};
   auto sibling{std::find_if(siblings.first, siblings.second,
-			    [&hash](auto const &sibling) { return sibling.second == hash; })};
+                            [&hash](auto const &sibling) { return sibling.second == hash; })};
   if (sibling != siblings.second)
   {
     references_.erase(sibling);
@@ -273,27 +273,27 @@ bool MainChain::RemoveBlock(BlockHash hash)
   // Step 3. Loop through all the loose blocks and remove any references to invalidated blocks
   for (auto const &hash : invalidated_blocks)
   {
-	  references_.erase(hash);
+    references_.erase(hash);
   }
   for (auto waiting_blocks_it{loose_blocks_.begin()}; waiting_blocks_it != loose_blocks_.end();)
   {
-	  auto &hash_array{waiting_blocks_it->second};
-	  // remove entries from the hash array that have been invalidated
-	  auto cemetery{std::remove_if(
-			  hash_array.begin(), hash_array.end(), [&invalidated_blocks](auto const &hash) {
-				  return invalidated_blocks.find(hash) != invalidated_blocks.end();
-			  })};
-	  if (cemetery == hash_array.begin())
-	  {
-		  // all hashes in this array are invalidated
-		  waiting_blocks_it = loose_blocks_.erase(waiting_blocks_it);
-	  }
-	  else
-	  {
-		  // some hashes of this array are still alive
-		  hash_array.erase(cemetery, hash_array.end());
-		  ++waiting_blocks_it;
-	  }
+    auto &hash_array{waiting_blocks_it->second};
+    // remove entries from the hash array that have been invalidated
+    auto cemetery{std::remove_if(hash_array.begin(), hash_array.end(),
+                                 [&invalidated_blocks](auto const &hash) {
+                                   return invalidated_blocks.find(hash) != invalidated_blocks.end();
+                                 })};
+    if (cemetery == hash_array.begin())
+    {
+      // all hashes in this array are invalidated
+      waiting_blocks_it = loose_blocks_.erase(waiting_blocks_it);
+    }
+    else
+    {
+      // some hashes of this array are still alive
+      hash_array.erase(cemetery, hash_array.end());
+      ++waiting_blocks_it;
+    }
   }
 
   // Step 4. Since we might have removed a whole series of blocks the tips datastructure
@@ -876,7 +876,7 @@ void MainChain::CompleteLooseBlocks(IntBlockPtr const &block)
   {
     BlockHashList next_blocks_to_add{};
 
-    // This is the breadth search, for each block to add, add it, next_blocks_to_add will
+    // This is the breadth-first search, for each block to add, add it, next_blocks_to_add will
     // get pushed with the next layer of blocks
     for (auto const &hash : blocks_to_add)
     {
@@ -1229,17 +1229,23 @@ bool MainChain::ReindexTips()
 {
   FETCH_LOCK(lock_);
 
-  // Tips are hashes of cached blocks that don't have any forward references
+  // Tips are hashes of cached non-loose blocks that don't have any forward references
   TipsMap   new_tips;
   uint64_t  max_weight{};
   BlockHash max_hash;
 
   for (auto const &block_entry : block_chain_)
   {
+    if (block_entry.second->is_loose)
+    {
+      continue;
+    }
     auto const &hash{block_entry.first};
     // check if this has has any live forward reference
     auto children{references_.equal_range(hash)};
-    auto child{std::find_if(children.first, children.second, [this](auto const &ref){ return block_chain_.find(ref.second) != block_chain_.end(); })};
+    auto child{std::find_if(children.first, children.second, [this](auto const &ref) {
+      return block_chain_.find(ref.second) != block_chain_.end();
+    })};
     if (child != children.second)
     {
       // then it's not a tip
@@ -1252,13 +1258,11 @@ bool MainChain::ReindexTips()
     // check if this tip is the current heaviest
     if (weight > max_weight || (weight == max_weight && hash > max_hash))
     {
-	    max_weight = weight;
-	    max_hash   = hash;
+      max_weight = weight;
+      max_hash   = hash;
     }
   }
   tips_ = std::move(new_tips);
-  std::cerr << "tips_:\n";
-  for (auto const &tip: tips_) print(std::cerr << '\t', tip.first) << ": " << tip.second.total_weight << '\n';
 
   if (!tips_.empty())
   {

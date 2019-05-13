@@ -124,18 +124,14 @@ protected:
    */
   void Tick(State starting_state, State final_state)
   {
-	  std::cerr << "Machine\n";
     auto const &state_machine = block_coordinator_->GetStateMachine();
 
-    std::cerr << "Eq\n";
     // match the current state of the machine
     ASSERT_EQ(starting_state, state_machine.state());
 
-    std::cerr << "Execute\n";
     // run one step of the state machine
     block_coordinator_->GetRunnable().Execute();
 
-    std::cerr << "StateEq\n";
     ASSERT_EQ(final_state, state_machine.state());
   }
 
@@ -688,7 +684,6 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
 TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
 {
   auto genesis = block_generator_();
-  std::cerr << "Genesed\n";
 
   // define the call expectations
   {
@@ -737,7 +732,6 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
 
   // processing of genesis block
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
-  std::cerr << "Tick 1\n";
 
   Tick(State::RELOAD_STATE, State::RESET);
   Tick(State::RESET, State::SYNCHRONIZING);
@@ -750,7 +744,6 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
 
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 
-  std::cerr << "Tick 2\n";
   Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
   Tick(State::RESET, State::SYNCHRONIZING);
   Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
@@ -758,7 +751,6 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
   Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
   Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
 
-  std::cerr << "Bad\n";
   // create the bad block
   auto b1        = block_generator_(genesis);
   b1->body.miner = Block::Identity{};
@@ -766,23 +758,16 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
 
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
 
-  std::cerr << "Tick 3\n" << main_chain_->GetHeaviestBlockHash() << "; " << bool(main_chain_->GetHeaviestBlock()) << '\n';;
   Tick(State::SYNCHRONIZED, State::RESET);
   Tick(State::RESET, State::SYNCHRONIZING);
-  std::cerr << "Tick 3.3\n" << main_chain_->GetHeaviestBlockHash() << "; " << bool(main_chain_->GetHeaviestBlock()) << '\n';;
   Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
   Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::RESET);
-  std::cerr << "Tick 3.5\n" << main_chain_->GetHeaviestBlockHash() << "; " << bool(main_chain_->GetHeaviestBlock()) << '\n';;
   Tick(State::RESET, State::SYNCHRONIZING);
-  std::cerr << "Tick 3.57\n" << main_chain_->GetHeaviestBlockHash() << "; " << bool(main_chain_->GetHeaviestBlock()) << '\n';;
   Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
-  std::cerr << "Tick 3.63\n" << main_chain_->GetHeaviestBlockHash() << "; " << bool(main_chain_->GetHeaviestBlock()) << '\n';;
   Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  std::cerr << "Tick 3.7\n" << main_chain_->GetHeaviestBlockHash() << "; " << bool(main_chain_->GetHeaviestBlock()) << '\n';;
   Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
   Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
 
-  std::cerr << "Tick 4\n";
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 }
 
