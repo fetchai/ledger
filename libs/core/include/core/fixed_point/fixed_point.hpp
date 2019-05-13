@@ -316,6 +316,7 @@ public:
   {
     data_ = {static_cast<Type>(n) << static_cast<Type>(FRACTIONAL_BITS)};
     assert(CheckNoOverflow(n));
+    return *this;
   }
 
   ///////////////////////////////////////////////////
@@ -377,37 +378,37 @@ public:
   template <typename OtherType>
   constexpr bool operator==(OtherType const &o) const
   {
-    return data_ == FixedPoint(o).Data();
+    return (data_ == FixedPoint(o).Data());
   }
 
   template <typename OtherType>
   constexpr bool operator!=(OtherType const &o) const
   {
-    return data_ != FixedPoint(o).Data();
+    return (data_ != FixedPoint(o).Data());
   }
 
   template <typename OtherType>
   constexpr bool operator<(OtherType const &o) const
   {
-    return data_ < FixedPoint(o).Data();
+    return (data_ < FixedPoint(o).Data());
   }
 
   template <typename OtherType>
   constexpr bool operator>(OtherType const &o) const
   {
-    return data_ > FixedPoint(o).Data();
+    return (data_ > FixedPoint(o).Data());
   }
 
   template <typename OtherType>
   constexpr bool operator<=(OtherType const &o) const
   {
-    return data_ <= FixedPoint(o).Data();
+    return (data_ <= FixedPoint(o).Data());
   }
 
   template <typename OtherType>
   constexpr bool operator>=(OtherType const &o) const
   {
-    return data_ >= FixedPoint(o).Data();
+    return (data_ >= FixedPoint(o).Data());
   }
 
   ///////////////////////

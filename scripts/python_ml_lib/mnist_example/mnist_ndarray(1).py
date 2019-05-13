@@ -4,15 +4,15 @@ from fetch.math import NDArrayDouble
 from tqdm import tqdm
 
 
-
 import random
 import numpy as np
 
 
 DATA_URL = 'http://yann.lecun.com/exdb/mnist/'
 
-def load_data(one_hot=True, reshape=None, training_size=50000, validation_size=10000):
-    
+
+def load_data(one_hot=True, reshape=None, training_size=50000,
+              validation_size=10000):
     print("loading training image data")
     x_tr = load_images('train-images-idx3-ubyte.gz', training_size)
     print("loading training labels")
@@ -26,7 +26,7 @@ def load_data(one_hot=True, reshape=None, training_size=50000, validation_size=1
     if one_hot:
         y_tr_onehot = NDArrayDouble.Zeros([y_tr.shape()[0], 10])
         y_te_onehot = NDArrayDouble.Zeros([y_te.shape()[0], 10])
-        
+
         for i in range(len(y_tr)):
             y_tr_onehot[i, int(y_tr[i])] = 1
         for i in range(len(y_te)):
@@ -34,17 +34,19 @@ def load_data(one_hot=True, reshape=None, training_size=50000, validation_size=1
 
     if reshape:
         x_tr, x_te = [x.reshape(*reshape) for x in (x_tr, x_te)]
-    
+
     return x_tr, y_tr_onehot, x_te, y_te_onehot
-    
+
+
 def load_images(filename, data_size):
     download(filename)
     with gzip.open(filename, 'rb') as f:
         data = np.frombuffer(f.read(), np.uint8, offset=16)
         data = data.reshape(-1, 28 * 28) / 256
-        nd_data = NDArrayDouble([data_size, 28*28])
+        nd_data = NDArrayDouble([data_size, 28 * 28])
         nd_data.FromNumpy(data[:data_size, :])
     return nd_data
+
 
 def load_labels(filename, data_size):
     download(filename)
@@ -54,16 +56,19 @@ def load_labels(filename, data_size):
         nd_data.FromNumpy(data[:data_size])
     return nd_data
 
+
 def download(filename):
     if not os.path.exists(filename):
         from urllib.request import urlretrieve
         print("Downloading %s" % filename)
         urlretrieve(DATA_URL + filename, filename)
 
+
 def sigmoid(x):
     z = x * -1.0
     z.Exp()
     return NDArrayDouble.__truediv__(float(1.0), (z + 1))
+
 
 def d_sigmoid(y):
     for i in range(y.size()):
@@ -83,8 +88,9 @@ def feed_forward(X, weights):
         a.append(temp2)
     return a
 
-# get the gradients of the network
+
 def grads(X, Y, weights):
+    """get the gradients of the network"""
 
     # define container
     grads = []
@@ -94,16 +100,18 @@ def grads(X, Y, weights):
 
     # run a forward pass to get delta
     a = feed_forward(X, weights)
-    delta = a[-1] - Y # cross-entropy
+    delta = a[-1] - Y  # cross-entropy
 
     # calculate grads
     grads[-1] = NDArrayDouble.dot((a[-2].Copy()).transpose([1, 0]), delta)
 
     # grads[-1] = np.dot(a[-2].transpose([1, 0]), delta)
-    for i in range(len(a)-2, 0, -1):
-        delta = NDArrayDouble.dot(delta, (weights[i].Copy()).transpose([1, 0])) * d_sigmoid(a[i])
+    for i in range(len(a) - 2, 0, -1):
+        delta = NDArrayDouble.dot(
+            delta, (weights[i].Copy()).transpose([1, 0])) * d_sigmoid(a[i])
         # delta = np.dot(delta, weights[i].transpose([1, 0])) * d_sigmoid(a[i])
-        grads[i-1] = NDArrayDouble.dot((a[i-1].Copy()).transpose([1, 0]), delta)
+        grads[i - 1] = NDArrayDouble.dot((a[i - 1].Copy()
+                                          ).transpose([1, 0]), delta)
         # grads[i-1] = np.dot(a[i-1].transpose([1, 0]), delta)
 
     # divide grads by batch size
@@ -112,24 +120,25 @@ def grads(X, Y, weights):
 
     return grads
 
+
 def make_new_layer(in_size, out_size):
-    
     layer = NDArrayDouble([in_size, out_size])
 
     for i in range(layer.size()):
         layer[i] = random.uniform(-0.1, 0.1) / np.sqrt(out_size)
-    
+
     return layer
 
+
 def get_initial_weights(net):
-    
-    weights = [make_new_layer(28*28, net[0])]
+    weights = [make_new_layer(28 * 28, net[0])]
     if len(net) > 2:
         for i in range(len(net) - 2):
-            weights.append(make_new_layer(net[i], net[i+1]))
+            weights.append(make_new_layer(net[i], net[i + 1]))
     weights.append(make_new_layer(net[-2], net[-1]))
 
     return weights
+
 
 def get_accuracy(cur_epoch, cur_pred, Y_te):
     sum_acc = 0
@@ -149,8 +158,8 @@ def get_accuracy(cur_epoch, cur_pred, Y_te):
     print("epoch: ", cur_epoch, "acc: ", mean_acc)
     return
 
+
 def train(n_epochs, batch_size, alpha, weights, X_tr, Y_tr, X_te, Y_te):
-    
     # epochs
     for i in range(n_epochs):
 
@@ -158,7 +167,7 @@ def train(n_epochs, batch_size, alpha, weights, X_tr, Y_tr, X_te, Y_te):
         for j in tqdm(range(0, X_tr.shape()[0] - batch_size, batch_size)):
 
             # get current batch
-            X, Y = X_tr[j:j+batch_size, :], Y_tr[j:j+batch_size, :]
+            X, Y = X_tr[j:j + batch_size, :], Y_tr[j:j + batch_size, :]
 
             # update weights
             temp_grads = grads(X, Y, weights)
@@ -182,8 +191,10 @@ def train(n_epochs, batch_size, alpha, weights, X_tr, Y_tr, X_te, Y_te):
 
     return
 
+
 # load the data
-X_tr, Y_tr, X_te, Y_te = load_data(one_hot=True, reshape=None, training_size=100, validation_size=10000)
+X_tr, Y_tr, X_te, Y_te = load_data(
+    one_hot=True, reshape=None, training_size=100, validation_size=10000)
 # X_tr, Y_tr, X_te, Y_te = load_data(one_hot=True, reshape=None, training_size=50000, validation_size=10000)
 
 # initialise network
