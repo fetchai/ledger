@@ -174,7 +174,7 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
   }
 
   // detect if any of this block's children has somehow made it to the store already
-  // TODO: is this needed?
+  // TODO(bipll): is this needed?
   auto forward_refs{references_.equal_range(hash)};
   for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it)
   {
