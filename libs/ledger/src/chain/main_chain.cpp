@@ -20,8 +20,8 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 
-#include <utility>
 #include <algorithm>
+#include <utility>
 
 using fetch::byte_array::ToBase64;
 using fetch::generics::MilliTimer;
