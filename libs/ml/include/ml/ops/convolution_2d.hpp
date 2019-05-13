@@ -211,6 +211,11 @@ std::vector<ArrayType> Convolution2D<ArrayType>::Backward(
   ReverseFillVerticalStride(kernel_error, error2, output_channels, input_channels, kernel_height,
                             kernel_width);
 
+  for (auto const &e : input_error)
+  {
+    std::cout << std::setprecision(20) << e << std::endl;
+  }
+
   return {input_error, kernel_error};
 }
 
