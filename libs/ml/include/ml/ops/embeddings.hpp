@@ -101,12 +101,18 @@ public:
   {
     for (auto const &r : updated_rows_)
     {
-      auto gradient_accumulation_slice = this->gradient_accumulation_->Slice(r).Tensor();
-      auto output_slice                = this->output_->Slice(r).Tensor();
-
-      gradient_accumulation_slice.InlineMultiply(-learningRate);
-      output_slice.InlineAdd(gradient_accumulation_slice);
-      gradient_accumulation_slice.Fill(typename T::Type(0));
+      auto gradientAccumulationSlice = this->gradient_accumulation_->Slice(r);
+      auto outputSlice               = this->output_->Slice(r);
+      auto it1                       = gradientAccumulationSlice.begin();
+      auto end                       = gradientAccumulationSlice.end();
+      auto it2                       = outputSlice.begin();
+      while (it1 != end)
+      {
+        *it2 += (*it1 * learningRate);
+        *it1 = 0;
+        ++it1;
+        ++it2;
+      }
     }
     updated_rows_.clear();
   }
