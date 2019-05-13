@@ -304,7 +304,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
                                         uint64_t limit, BehaviourWhenLimit behaviour) const
 {
   uint64_t limit_here = MainChain::UPPER_BOUND;
-  limit               = std::min(limit, limit_here);
+  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   MilliTimer myTimer("MainChain::GetPathToCommonAncestor", 500);
 
   FETCH_LOCK(lock_);
