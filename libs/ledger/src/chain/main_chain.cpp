@@ -228,6 +228,7 @@ bool MainChain::RemoveBlock(BlockHash hash)
  */
 MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
 {
+  limit = std::min(limit, UPPER_BOUND);
   MilliTimer myTimer("MainChain::HeaviestChain");
 
   FETCH_LOCK(lock_);
@@ -245,6 +246,7 @@ MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
  */
 MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
 {
+  limit = std::min(limit, UPPER_BOUND);
   MilliTimer myTimer("MainChain::ChainPreceding");
 
   FETCH_LOCK(lock_);
@@ -296,6 +298,7 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
 bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
                                         uint64_t limit, BehaviourWhenLimit behaviour) const
 {
+  limit = std::min(limit, UPPER_BOUND);
   MilliTimer myTimer("MainChain::GetPathToCommonAncestor", 500);
 
   FETCH_LOCK(lock_);
@@ -331,24 +334,27 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
       // left side always loaded into output queue as we traverse
       // blocks.push_back(left);
       res.push_back(left);
+      bool break_loop = false;
 
-      if (behaviour == BehaviourWhenLimit::RETURN_LEAST_RECENT)
+      switch (behaviour)
       {
+      case BehaviourWhenLimit::RETURN_LEAST_RECENT:
         if (res.size() > limit)
         {
           res.pop_front();
         }
-      }
-      else if (behaviour == BehaviourWhenLimit::RETURN_MOST_RECENT)
-      {
+        break;
+      case BehaviourWhenLimit::RETURN_MOST_RECENT:
         if (res.size() >= limit)
         {
-          break;
+          break_loop = true;
         }
+        break;
       }
-      else
+
+      if(break_loop)
       {
-        assert(false && "Behaviour specified when traversing ancestor undefined when limit hit");
+        break;
       }
     }
 
@@ -448,15 +454,16 @@ MainChain::BlockHashSet MainChain::GetMissingTips() const
  * @param maximum The specified maximum number of blocks to be returned
  * @return The generated array of missing hashes
  */
-MainChain::BlockHashs MainChain::GetMissingBlockHashes(std::size_t maximum) const
+MainChain::BlockHashs MainChain::GetMissingBlockHashes(std::size_t limit) const
 {
+  limit = std::min(limit, UPPER_BOUND);
   FETCH_LOCK(lock_);
 
   BlockHashs results;
 
   for (auto const &loose_block : loose_blocks_)
   {
-    if (maximum <= results.size())
+    if (limit <= results.size())
     {
       break;
     }
