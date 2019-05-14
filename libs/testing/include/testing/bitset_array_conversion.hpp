@@ -27,21 +27,20 @@
 namespace fetch {
 namespace testing {
 
-template <typename T, std::size_t BITS,
+template <typename T, std::size_t SIZE, std::size_t BITS = (SIZE * sizeof(T) * 8),
           meta::EnableIf<meta::IsInteger<T> && meta::IsLog2(BITS)> * = nullptr>
-using ArrayBites = std::array<T, (BITS >> meta::Log2(sizeof(T) * 8))>;
-
-template <typename T, std::size_t SIZE>
-using Array = ArrayBites<T, (SIZE * sizeof(T) * 8)>;
-
+using Array = std::array<T, SIZE>;
 
 template <typename T, std::size_t BITS>
-ArrayBites<T, BITS> to_array(std::bitset<BITS> const &bs)
+using ArraySizeInBits = Array<T, (BITS >> meta::Log2(sizeof(T) * 8))>;
+
+template <typename T, std::size_t BITS>
+ArraySizeInBits<T, BITS> to_array(std::bitset<BITS> const &bs)
 {
   constexpr std::size_t T_BITS_LOG2{meta::Log2(sizeof(T) * 8)};
   constexpr T           T_BITS_MASK{(1 << T_BITS_LOG2) - 1};
 
-  ArrayBites<T, BITS> to;
+  ArraySizeInBits<T, BITS> to;
   to.fill(static_cast<T>(0));
   for (std::size_t i = 0; i < bs.size(); ++i)
   {
@@ -76,28 +75,9 @@ std::bitset<BITS> to_bitset(Array<T, SIZE> const &from)
   return bs;
 }
 
-template <typename T, std::size_t SIZE>
-meta::EnableIf<meta::IsInteger<T>, std::ostream &> operator<<(std::ostream &      ostream,
-                                                              std::array<T, SIZE> arr)
-{
-  std::ios orig_state(nullptr);
-  orig_state.copyfmt(ostream);
-
-  auto       bytes      = reinterpret_cast<unsigned char const *>(arr.data());
-  auto const size_bytes = arr.size() * sizeof(T);
-  for (std::size_t i = 0; i < size_bytes; ++i)
-  {
-    ostream << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(bytes[i]);
-  }
-
-  ostream.copyfmt(orig_state);
-
-  return ostream;
-}
-
 template <typename T, std::size_t BITS>
 meta::EnableIf<meta::IsInteger<T> && meta::IsLog2(BITS), byte_array::ByteArray> to_ByteArray(
-    ArrayBites<T, BITS> const &from)
+    ArraySizeInBits<T, BITS> const &from)
 {
   return {reinterpret_cast<byte_array::ConstByteArray::container_type *>(from.data()),
           from.size() * sizeof(decltype(from)::value_type)};
@@ -110,6 +90,15 @@ meta::EnableIf<meta::IsLog2(BITS), byte_array::ByteArray> to_ByteArray(
   using T = byte_array::ConstByteArray::container_type;
   auto const arr{to_array<T>(from)};
   return {reinterpret_cast<T const *const>(arr.data()), arr.size() * sizeof(T)};
+}
+
+
+template <typename T, std::size_t SIZE>
+meta::EnableIf<meta::IsInteger<T>, std::ostream &> operator<<(std::ostream &      ostream,
+                                                              std::array<T, SIZE> arr)
+{
+  ostream << to_ByteArray(arr).ToHex();
+  return ostream;
 }
 
 }  // namespace testing
