@@ -90,9 +90,9 @@ public:
 
   fetch::random::LinearCongruentialGenerator gen;
   SizeType                                   ran_val_;
-//  SizeType const                             N_RANDOM_ROWS = 1000000;
-  std::vector<SizeType>                      ran_positive_cursor_{1000000};
-  std::vector<SizeType>                      rows_{};
+  //  SizeType const                             N_RANDOM_ROWS = 1000000;
+  std::vector<SizeType> ran_positive_cursor_{1000000};
+  std::vector<SizeType> rows_{};
 
   SizeType max_sentence_len_ = 0;
 
@@ -109,11 +109,11 @@ public:
     {
       positive_cursors_.emplace_back(IteratorType(data_));
     }
-//    for (std::size_t j = 0; j < N_RANDOM_ROWS; ++j)
-//    {
-//      ran_positive_cursor_.emplace_back
-//
-//    }
+    //    for (std::size_t j = 0; j < N_RANDOM_ROWS; ++j)
+    //    {
+    //      ran_positive_cursor_.emplace_back
+    //
+    //    }
 
     PrepareDynamicWindowProbs();
   }
@@ -194,7 +194,8 @@ public:
     input_idx = static_cast<SizeType>(*cursor_);
 
     // randomly select a negative cursor
-    context_idx = static_cast<SizeType>(data_.At(gen() % data_.shape()[0], gen() % data_.shape()[1]));
+    context_idx =
+        static_cast<SizeType>(data_.At(gen() % data_.shape()[0], gen() % data_.shape()[1]));
   }
 
   void IncrementCursors()
@@ -258,7 +259,8 @@ public:
     {
       if (i < cursor_offset_)
       {
-        for (std::size_t j = 0; j < (double(i + 1) / double(sum_freqs)) * ran_positive_cursor_.size(); ++j)
+        for (std::size_t j = 0;
+             j < (double(i + 1) / double(sum_freqs)) * ran_positive_cursor_.size(); ++j)
         {
           rows_.emplace_back(i);
         }
@@ -266,8 +268,8 @@ public:
       else
       {
         for (std::size_t j = 0;
-             j <
-             (double((cursor_offset_ - (i - cursor_offset_))) / double(sum_freqs)) * ran_positive_cursor_.size();
+             j < (double((cursor_offset_ - (i - cursor_offset_))) / double(sum_freqs)) *
+                     ran_positive_cursor_.size();
              ++j)
         {
           rows_.emplace_back(i);
