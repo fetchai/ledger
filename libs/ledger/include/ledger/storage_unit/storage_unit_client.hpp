@@ -17,8 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/future_timepoint.hpp"
 #include "core/logger.hpp"
+#include "core/serializers/typed_byte_array_buffer.hpp"
 #include "core/service_ids.hpp"
+#include "crypto/merkle_tree.hpp"
+#include "ledger/chain/mutable_transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/shard_config.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"
@@ -26,21 +31,14 @@
 #include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "network/generics/backgrounded_work.hpp"
-#include "network/generics/future_timepoint.hpp"
 #include "network/generics/has_worker_thread.hpp"
 #include "network/management/connection_register.hpp"
-#include "network/service/service_client.hpp"
-
-#include "ledger/chain/transaction.hpp"
-#include "storage/document_store_protocol.hpp"
-#include "storage/object_store_protocol.hpp"
-
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
-
-#include "core/serializers/typed_byte_array_buffer.hpp"
-#include "crypto/merkle_tree.hpp"
+#include "network/service/service_client.hpp"
+#include "storage/document_store_protocol.hpp"
+#include "storage/object_store_protocol.hpp"
 
 #include <chrono>
 #include <thread>
@@ -75,6 +73,7 @@ public:
 
   bool GetTransaction(ConstByteArray const &digest, Transaction &tx) override;
   bool HasTransaction(ConstByteArray const &digest) override;
+  void IssueCallForMissingTxs(TxDigestSet const &tx_set) override;
 
   Document GetOrCreate(ResourceAddress const &key) override;
   Document Get(ResourceAddress const &key) override;

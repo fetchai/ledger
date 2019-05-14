@@ -67,14 +67,14 @@ public:
 
     ArrayType weights_data(std::vector<SizeType>({in, out}));
     this->Initialise(weights_data, init_mode);
-    this->SetInput(weights, weights_data, false, false);
+    this->SetInput(weights, weights_data, false);
 
     ArrayType bias_data(std::vector<SizeType>({1, out}));
-    this->SetInput(bias, bias_data, false, false);
+    this->SetInput(bias, bias_data, false);
   }
 
   std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     (void)inputs;
     return {1, this->out_size};

@@ -129,12 +129,8 @@ public:
    * @param node_name name of the placeholder node in the graph (must be unique)
    * @param data the pointer to a tensor to assign to the placeholder
    * @param batch flag to indicate if input should be treated as batch
-   * @param data flag to indicate is the grapg should reallocate it's output buffers
-   * This is a workaround to delay computation untill all inputs are available, call SetInput with
-   * recompute_cache = false if some Placeholder are still empty
    */
-  void SetInput(std::string const &node_name, ArrayType data, bool batch = false,
-                bool recompute_cache = true)
+  void SetInput(std::string const &node_name, ArrayType data, bool batch = false)
   {
     std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>> placeholder =
         std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<ArrayType>>(nodes_[node_name]);
@@ -142,7 +138,7 @@ public:
     if (placeholder)
     {
       bool input_size_changed = placeholder->SetData(data);
-      ResetGraphCache(nodes_[node_name], input_size_changed & recompute_cache);
+      ResetGraphCache(nodes_[node_name], input_size_changed);
     }
     else
     {

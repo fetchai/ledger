@@ -44,9 +44,8 @@ public:
   static constexpr char const *LOGGING_NAME = "AbstractConnectionRegister";
 
   AbstractConnectionRegister()
-  {
-    number_of_services_ = 0;
-  }
+    : number_of_services_{0}
+  {}
 
   AbstractConnectionRegister(AbstractConnectionRegister const &other) = delete;
   AbstractConnectionRegister(AbstractConnectionRegister &&other)      = default;

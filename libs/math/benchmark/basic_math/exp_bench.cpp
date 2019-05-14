@@ -29,7 +29,7 @@ static void BM_ApproxExpImplementation(benchmark::State &state)
 {
 
   fetch::math::ApproxExpImplementation<N, C> fexp;
-  double                                     x = 0.1 ; //(double)state.range(0);
+  double                                     x      = 0.1;  //(double)state.range(0);
   double                                     result = 0;
   for (auto _ : state)
   {
@@ -48,7 +48,7 @@ BENCHMARK_TEMPLATE(BM_ApproxExpImplementation, 12, 60801)->RangeMultiplier(10)->
 
 static void BM_exp(benchmark::State &state)
 {
-  double x = 0.1; // (double)state.range(0);
+  double x      = 0.1;  // (double)state.range(0);
   double result = 0.0;
   for (auto _ : state)
   {

@@ -188,7 +188,7 @@ TYPED_TEST(FreeFunctionsTest, Product_TwoDimension)
 
   array1.Set(0, 0, typename TypeParam::Type(-17));
   array1.Set(1, 0, typename TypeParam::Type(1));
-  array1.Set(2, 0, typename TypeParam::Type(13));  
+  array1.Set(2, 0, typename TypeParam::Type(13));
   array1.Set(3, 0, typename TypeParam::Type(21));
 
   array1.Set(0, 1, typename TypeParam::Type(21));

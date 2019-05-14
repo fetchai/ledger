@@ -22,7 +22,7 @@
 #include <gtest/gtest.h>
 
 #include "math/tensor.hpp"
-#include "math/tensor_iterator.hpp"
+#include "math/tensor_slice_iterator.hpp"
 
 using namespace fetch::math;
 
@@ -36,7 +36,7 @@ TEST(tensor_iterator, reshape_iterator_test)
 
   auto it1 = a.begin();
   auto it2 = b.begin();
-  while(it1.is_valid())
+  while (it1.is_valid())
   {
     EXPECT_EQ((*it1), (*it2));
     ++it1;
@@ -44,22 +44,21 @@ TEST(tensor_iterator, reshape_iterator_test)
   }
 }
 
-
 TEST(tensor_iterator, simple_iterator_permute_test)
 {
 
   // set up an initial array
   Tensor<double> array{Tensor<double>::Arange(0u, 77u, 1u)};
   array.Reshape({7, 11});
-  ASSERT_TRUE(array.size() == 77);
+  EXPECT_EQ(array.size(), 77);
 
   Tensor<double> ret;
   ret.ResizeFromShape(array.shape());
 
-  ASSERT_TRUE(ret.size() == array.size());
-  ASSERT_TRUE(ret.shape() == array.shape());
-  TensorIterator<double, Tensor<double>::ContainerType> it(array);
-  TensorIterator<double, Tensor<double>::ContainerType> it2(ret);
+  EXPECT_EQ(ret.size(), array.size());
+  EXPECT_EQ(ret.shape(), array.shape());
+  TensorSliceIterator<double, Tensor<double>::ContainerType> it(array);
+  TensorSliceIterator<double, Tensor<double>::ContainerType> it2(ret);
 
   it2.PermuteAxes(0, 1);
   while (it2)
@@ -78,13 +77,13 @@ TEST(tensor_iterator, simple_iterator_permute_test)
   SizeType test_val, cur_row;
 
   for (SizeType i = 0; i < array.size(); ++i)
-  { 
-    ASSERT_TRUE(array[i] == double(i));
+  {
+    EXPECT_EQ(array[i], double(i));
 
     cur_row  = i / 7;
     test_val = (11 * (i % 7)) + cur_row;
 
-    ASSERT_TRUE(double(ret[i]) == double(test_val));
+    EXPECT_EQ(double(ret[i]), double(test_val));
   }
 }
 
@@ -96,9 +95,9 @@ TEST(tensor_iterator, iterator_4dim_copy_test)
   array.Reshape({4, 6, 7, 6});
   Tensor<double> ret = array.Copy();
 
-  TensorIterator<double, Tensor<double>::ContainerType> it(
+  TensorSliceIterator<double, Tensor<double>::ContainerType> it(
       array, {{1, 2, 1}, {2, 3, 1}, {1, 4, 1}, {2, 6, 1}});
-  TensorIterator<double, Tensor<double>::ContainerType> it2(
+  TensorSliceIterator<double, Tensor<double>::ContainerType> it2(
       ret, {{1, 2, 1}, {2, 3, 1}, {1, 4, 1}, {2, 6, 1}});
 
   while (it2)
@@ -121,7 +120,7 @@ TEST(tensor_iterator, iterator_4dim_copy_test)
         for (SizeType l = 0; l < 6; ++l)
         {
           std::vector<SizeType> idxs = {i, j, k, l};
-          ASSERT_TRUE(int(ret.Get(idxs)) == int(array.Get(idxs)));
+          EXPECT_EQ(int(ret.Get(idxs)), int(array.Get(idxs)));
         }
       }
     }
@@ -136,9 +135,9 @@ TEST(Tensor, iterator_4dim_permute_test)
   array.Reshape({4, 6, 7, 6});
   Tensor<double> ret = array.Copy();
 
-  TensorIterator<double, Tensor<double>::ContainerType> it(
+  TensorSliceIterator<double, Tensor<double>::ContainerType> it(
       array, {{1, 2, 1}, {0, 6, 1}, {1, 4, 1}, {0, 6, 1}});
-  TensorIterator<double, Tensor<double>::ContainerType> it2(
+  TensorSliceIterator<double, Tensor<double>::ContainerType> it2(
       ret, {{1, 2, 1}, {0, 6, 1}, {1, 4, 1}, {0, 6, 1}});
 
   it.PermuteAxes(1, 3);
@@ -163,7 +162,7 @@ TEST(Tensor, iterator_4dim_permute_test)
         {
           std::vector<SizeType> idxs  = {i, j, k, l};
           std::vector<SizeType> idxs2 = {i, l, k, j};
-          ASSERT_TRUE(int(ret.Get(idxs)) == int(array.Get(idxs2)));
+          EXPECT_EQ(int(ret.Get(idxs)), int(array.Get(idxs2)));
         }
       }
     }
@@ -173,7 +172,6 @@ TEST(Tensor, iterator_4dim_permute_test)
 TEST(Tensor, simple_iterator_transpose_test)
 {
   std::vector<SizeType> perm{2, 1, 0};
-  std::vector<SizeType> unperm{0, 1, 2};
   std::vector<SizeType> original_shape{2, 3, 4};
   std::vector<SizeType> new_shape;
   for (SizeType i = 0; i < perm.size(); ++i)
@@ -189,15 +187,14 @@ TEST(Tensor, simple_iterator_transpose_test)
 
   Tensor<double> ret =
       Tensor<double>::Arange(static_cast<SizeType>(0u), arr_size, static_cast<SizeType>(1u));
-  ret.Reshape(original_shape);
+  ret.Reshape(new_shape);
 
   Tensor<double> test_array{original_shape};
-  test_array.FillArange(static_cast<SizeType>(0u), arr_size);
 
   ASSERT_TRUE(ret.size() == array.size());
-  ASSERT_TRUE(ret.shape() == array.shape());
-  TensorIterator<double, Tensor<double>::ContainerType> it_arr(array);
-  TensorIterator<double, Tensor<double>::ContainerType> it_ret(ret);
+
+  TensorSliceIterator<double, Tensor<double>::ContainerType> it_arr(array);
+  TensorSliceIterator<double, Tensor<double>::ContainerType> it_ret(ret);
 
   it_ret.Transpose(perm);
   while (it_ret)
@@ -209,10 +206,21 @@ TEST(Tensor, simple_iterator_transpose_test)
     ++it_arr;
     ++it_ret;
   }
+  for (SizeType i = 0; i < array.shape()[0]; ++i)
+  {
+    for (SizeType j = 0; j < array.shape()[1]; ++j)
+    {
+      for (SizeType k = 0; k < array.shape()[2]; ++k)
+      {
+        EXPECT_EQ(array(i, j, k), ret(k, j, i));
+      }
+    }
+  }
 
-  TensorIterator<double, Tensor<double>::ContainerType> it_arr2(array);
-  TensorIterator<double, Tensor<double>::ContainerType> it_ret2(ret);
-  it_ret2.Transpose(unperm);
+  TensorSliceIterator<double, Tensor<double>::ContainerType> it_arr2(test_array);
+  TensorSliceIterator<double, Tensor<double>::ContainerType> it_ret2(ret);
+  it_ret2.Transpose(perm);
+
   while (it_ret2)
   {
     ASSERT_TRUE(bool(it_arr2));
@@ -222,9 +230,9 @@ TEST(Tensor, simple_iterator_transpose_test)
     ++it_arr2;
     ++it_ret2;
   }
+
   for (SizeType j = 0; j < array.size(); ++j)
   {
-    std::cout << array[j] << " " << test_array[j] << std::endl;
-    ASSERT_TRUE(array[j] == test_array[j]);
+    EXPECT_EQ(array[j], test_array[j]);
   }
 }

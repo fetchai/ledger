@@ -55,12 +55,38 @@ using BootstrapPtr   = std::unique_ptr<fetch::BootstrapMonitor>;
 using ProverPtr      = std::shared_ptr<Prover>;
 using ConstByteArray = fetch::byte_array::ConstByteArray;
 using ByteArray      = fetch::byte_array::ByteArray;
+using NetworkMode    = fetch::Constellation::NetworkMode;
 
 std::unordered_set<std::string> const BOOL_TRUE_STRINGS{"true", "enabled", "on", "yes", "1"};
 std::unordered_set<std::string> const BOOL_FALSE_STRINGS{"false", "disabled", "off", "no", "0"};
 
 std::atomic<fetch::Constellation *> gConstellationInstance{nullptr};
 std::atomic<std::size_t>            gInterruptCount{0};
+
+char const *ToString(NetworkMode network_mode)
+{
+  char const *text = "Unknown";
+
+  switch (network_mode)
+  {
+  case NetworkMode::STANDALONE:
+    text = "Standalone";
+    break;
+  case NetworkMode::PRIVATE_NETWORK:
+    text = "Private";
+    break;
+  case NetworkMode::PUBLIC_NETWORK:
+    text = "Public";
+    break;
+  }
+
+  return text;
+}
+
+char const *ToYesNo(bool value)
+{
+  return (value) ? "Yes" : "No";
+}
 
 template <typename Value, typename Container>
 bool IsIn(Container const &container, Value const &value)
@@ -199,30 +225,34 @@ struct CommandLineArguments
     ManifestPtr manifest;
     uint32_t    num_lanes{0};
 
+    bool standalone_flag{false};
+    bool private_flag{false};
+
     // clang-format off
-    p.add(args.port,                      "port",                  "The starting port for ledger services",                                         DEFAULT_PORT);
-    p.add(args.cfg.num_executors,         "executors",             "The number of executors to configure",                                          DEFAULT_NUM_EXECUTORS);
-    p.add(num_lanes,                      "lanes",                 "The number of lanes to be used",                                                DEFAULT_NUM_LANES);
-    p.add(args.cfg.num_slices,            "slices",                "The number of slices to be used",                                               DEFAULT_NUM_SLICES);
-    p.add(raw_peers,                      "peers",                 "The comma separated list of addresses to initially connect to",                 std::string{});
-    p.add(args.cfg.db_prefix,             "db-prefix",             "The directory or prefix added to the node storage",                             std::string{"node_storage"});
-    p.add(args.network_name,              "network",               "The network name to join",                                                      std::string{});
-    p.add(args.cfg.interface_address,     "interface",             "The address of the network interface to be used",                               std::string{"127.0.0.1"});
-    p.add(args.cfg.block_interval_ms,     "block-interval",        "Block interval in milliseconds",                                                uint32_t{DEFAULT_BLOCK_INTERVAL});
-    p.add(args.token,                     "token",                 "The authentication token to be used with bootstrapping the client",             std::string{});
-    p.add(args.external_address,          "external",              "This node's global IP address",                                                 std::string{});
-    p.add(bootstrap_address,              "bootstrap",             "Src address for network bootstrap",                                             std::string{});
-    p.add(args.discoverable,              "discoverable",          "Signal that the client is willing to be listed on the bootstrap server",        false);
-    p.add(args.host_name,                 "host-name",             "The hostname / identifier for this node",                                       std::string{});
-    p.add(config_path,                    "config",                "The path to the manifest configuration",                                        std::string{});
-    p.add(args.cfg.processor_threads,     "processor-threads",     "The number of processor threads",                                               uint32_t{std::thread::hardware_concurrency()});
-    p.add(args.cfg.verification_threads,  "verifier-threads",      "The number of processor threads",                                               uint32_t{std::thread::hardware_concurrency()});
-    p.add(args.cfg.max_peers,             "max-peers",             "The number of maximal peers to send to peer requests",                          DEFAULT_MAX_PEERS);
-    p.add(args.cfg.transient_peers,       "transient-peers",       "The number of the peers which will be random in answer sent to peer requests",  DEFAULT_TRANSIENT_PEERS);
-    p.add(args.cfg.peers_update_cycle_ms, "peers-update-cycle-ms", "How fast to do peering changes",                                                uint32_t{0});
-    p.add(args.cfg.disable_signing,       "disable-signing",       "Do not sign outbound packets or verify those inbound, in trusted network",      bool{});
-    p.add(args.cfg.sign_broadcasts,       "sign-broadcasts",       "Sign and verify broadcast packets",                                             bool{});
-    p.add(args.cfg.standalone,            "standalone",            "Expect the node to run in on its own (useful for testing and development)",     false);
+    p.add(args.port,                      "port",                  "The starting port for ledger services",                                                        DEFAULT_PORT);
+    p.add(args.cfg.num_executors,         "executors",             "The number of executors to configure",                                                         DEFAULT_NUM_EXECUTORS);
+    p.add(num_lanes,                      "lanes",                 "The number of lanes to be used",                                                               DEFAULT_NUM_LANES);
+    p.add(args.cfg.num_slices,            "slices",                "The number of slices to be used",                                                              DEFAULT_NUM_SLICES);
+    p.add(raw_peers,                      "peers",                 "The comma separated list of addresses to initially connect to",                                std::string{});
+    p.add(args.cfg.db_prefix,             "db-prefix",             "The directory or prefix added to the node storage",                                            std::string{"node_storage"});
+    p.add(args.network_name,              "network",               "The network name to join",                                                                     std::string{});
+    p.add(args.cfg.interface_address,     "interface",             "The address of the network interface to be used",                                              std::string{"127.0.0.1"});
+    p.add(args.cfg.block_interval_ms,     "block-interval",        "Block interval in milliseconds",                                                               uint32_t{DEFAULT_BLOCK_INTERVAL});
+    p.add(args.token,                     "token",                 "The authentication token to be used with bootstrapping the client",                            std::string{});
+    p.add(args.external_address,          "external",              "This node's global IP address",                                                                std::string{});
+    p.add(bootstrap_address,              "bootstrap",             "Src address for network bootstrap",                                                            std::string{});
+    p.add(args.discoverable,              "discoverable",          "Signal that the client is willing to be listed on the bootstrap server",                       false);
+    p.add(args.host_name,                 "host-name",             "The hostname / identifier for this node",                                                      std::string{});
+    p.add(config_path,                    "config",                "The path to the manifest configuration",                                                       std::string{});
+    p.add(args.cfg.processor_threads,     "processor-threads",     "The number of processor threads",                                                              uint32_t{std::thread::hardware_concurrency()});
+    p.add(args.cfg.verification_threads,  "verifier-threads",      "The number of processor threads",                                                              uint32_t{std::thread::hardware_concurrency()});
+    p.add(args.cfg.max_peers,             "max-peers",             "The number of maximal peers to send to peer requests",                                         DEFAULT_MAX_PEERS);
+    p.add(args.cfg.transient_peers,       "transient-peers",       "The number of the peers which will be random in answer sent to peer requests",                 DEFAULT_TRANSIENT_PEERS);
+    p.add(args.cfg.peers_update_cycle_ms, "peers-update-cycle-ms", "How fast to do peering changes",                                                               uint32_t{0});
+    p.add(args.cfg.disable_signing,       "disable-signing",       "Do not sign outbound packets or verify those inbound, in trusted network",                     false);
+    p.add(args.cfg.sign_broadcasts,       "sign-broadcasts",       "Sign and verify broadcast packets",                                                            false);
+    p.add(standalone_flag,                "standalone",            "Run node on its own (useful for testing and development). Incompatible with -private-network", false);
+    p.add(private_flag,                   "private-network",       "Run node as part of a private network (disables bootstrap). Incompatible with -standalone",    false);
     // clang-format on
 
     // parse the args
@@ -252,7 +282,8 @@ struct CommandLineArguments
     UpdateConfigFromEnvironment(args.cfg.peers_update_cycle_ms, "CONSTELLATION_PEERS_UPDATE_CYCLE_MS");
     UpdateConfigFromEnvironment(args.cfg.disable_signing,       "CONSTELLATION_DISABLE_SIGNING");
     UpdateConfigFromEnvironment(args.cfg.sign_broadcasts,       "CONSTELLATION_SIGN_BROADCASTS");
-    UpdateConfigFromEnvironment(args.cfg.standalone,            "CONSTELLATION_STANDALONE");
+    UpdateConfigFromEnvironment(standalone_flag,                "CONSTELLATION_STANDALONE");
+    UpdateConfigFromEnvironment(private_flag,                   "CONSTELLATION_PRIVATE_NETWORK");
     // clang-format on
 
     // update the peers
@@ -278,9 +309,34 @@ struct CommandLineArguments
       manifest = LoadManifestFromFile(config_path.c_str());
     }
 
+    // configure the network mode
+    if (standalone_flag && private_flag)
+    {
+      std::cout
+          << "Invalid configuration, unable to be in both the standalone and private network mode"
+          << std::endl;
+      std::exit(1);
+    }
+    else if (standalone_flag)
+    {
+      args.cfg.network_mode = NetworkMode::STANDALONE;
+    }
+    else if (private_flag)
+    {
+      args.cfg.network_mode = NetworkMode::PRIVATE_NETWORK;
+    }
+
     args.bootstrap = (!bootstrap_address.empty());
     if (args.bootstrap)
     {
+      // bootstrapping is not allowed in a non-public network
+      if (NetworkMode::PUBLIC_NETWORK != args.cfg.network_mode)
+      {
+        std::cout << "Unable to use bootstrapping servers with a private or standalone network"
+                  << std::endl;
+        std::exit(1);
+      }
+
       // determine what the P2P port is. This is either specified with the port parameter or
       // explicitly given via the manifest
       auto p2p_port = static_cast<uint16_t>(args.port + P2P_PORT_OFFSET);
@@ -329,7 +385,10 @@ struct CommandLineArguments
     {
       auto const identity = prover->identity();
 
-      if (!fetch::crypto::IsFetchIdentity(identity))
+      bool const is_public_network     = NetworkMode::PUBLIC_NETWORK == args.cfg.network_mode;
+      bool const is_non_fetch_identity = !fetch::crypto::IsFetchIdentity(identity);
+
+      if (is_public_network && is_non_fetch_identity)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Non mining address: ", identity.identifier().ToBase64());
         std::exit(1);
@@ -452,7 +511,14 @@ struct CommandLineArguments
   {
     s << '\n';
     s << "port......................: " << args.port << '\n';
-    s << "network name..............: " << args.network_name << '\n';
+    s << "network mode..............: " << ToString(args.cfg.network_mode) << '\n';
+
+    // only print network name when it contains something
+    if (!args.network_name.empty())
+    {
+      s << "network name..............: " << args.network_name << '\n';
+    }
+
     s << "num executors.............: " << args.cfg.num_executors << '\n';
     s << "num lanes.................: " << (1u << args.cfg.log2_num_lanes) << '\n';
     s << "num slices................: " << args.cfg.num_slices << '\n';
@@ -462,18 +528,12 @@ struct CommandLineArguments
     s << "external address..........: " << args.external_address << '\n';
     s << "db-prefix.................: " << args.cfg.db_prefix << '\n';
     s << "interface.................: " << args.cfg.interface_address << '\n';
-    s << "mining....................: " << ((args.cfg.block_interval_ms > 0) ? "Yes" : "No")
-      << '\n';
+    s << "mining....................: " << ToYesNo(args.cfg.block_interval_ms > 0) << '\n';
     s << "tx processor threads......: " << args.cfg.processor_threads << '\n';
     s << "shard verification threads: " << args.cfg.verification_threads << '\n';
     s << "block interval............: " << args.cfg.block_interval_ms << "ms" << '\n';
     s << "max peers.................: " << args.cfg.max_peers << '\n';
     s << "peers update cycle........: " << args.cfg.peers_update_cycle_ms << "ms\n";
-
-    if (args.cfg.standalone)
-    {
-      s << "stand alone...............: Enabled\n";
-    }
 
     // generate the peer listing
     s << "peers.....................: ";

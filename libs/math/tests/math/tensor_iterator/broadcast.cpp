@@ -16,13 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
 #include <iomanip>
 #include <iostream>
-#include <gtest/gtest.h>
 
 #include "math/tensor.hpp"
 #include "math/tensor_broadcast.hpp"
-
 
 using namespace fetch::math;
 

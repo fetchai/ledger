@@ -33,8 +33,6 @@
 #include "python/math/distance/py_manhattan.hpp"
 #include "python/math/distance/py_pearson.hpp"
 
-// #include "python/math/clustering/py_kmeans.hpp"
-
 #include "python/math/py_bignumber.hpp"
 #include "python/math/py_tensor.hpp"
 #include "python/math/spline/py_linear.hpp"
@@ -72,10 +70,7 @@
 
 #include "python/serializers/py_byte_array_buffer.hpp"
 
-// !!!!
 namespace py = pybind11;
-
-//#include "python/network/swarm/py_swarm_agent_api.hpp"
 
 PYBIND11_MODULE(fetch, module)
 {

@@ -18,11 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "math/arithmetic/comparison.hpp"
-#include "vm/defs.hpp"
+#include "vm/generator.hpp"
 #include "vm/io_observer_interface.hpp"
 #include "vm/string.hpp"
+#include "vm/variant.hpp"
 #include <cassert>
-
+#include <iostream>
 #include <sstream>
 
 namespace fetch {
@@ -128,22 +129,30 @@ public:
   template <typename T, typename... Args>
   bool Add(T &&parameter, Args &&... args)
   {
-    bool success{false};
+    bool success{true};
 
-    success &= Add(std::forward<T>(parameter));
+    success &= AddSingle(std::forward<T>(parameter));
     success &= Add(std::forward<Args>(args)...);
 
     return success;
   }
 
+  bool AddSingle(Variant parameter)
+  {
+    // TODO: Probably should make a deep copy
+
+    params_.push_back(std::move(parameter));
+    return true;
+  }
+
   template <typename T>
-  IfIsPrimitive<T, bool> Add(T &&parameter)
+  IfIsPrimitive<T, bool> AddSingle(T &&parameter)
   {
     return AddInternal(std::forward<T>(parameter));
   }
 
   template <typename T>
-  IfIsPtr<T, bool> Add(T &&obj)
+  IfIsPtr<T, bool> AddSingle(T &&obj)
   {
     bool success{false};
 
@@ -193,6 +202,9 @@ private:
 class VM
 {
 public:
+  using InputDeviceMap  = std::unordered_map<std::string, std::istream *>;
+  using OutputDeviceMap = std::unordered_map<std::string, std::ostream *>;
+
   VM(Module *module);
   ~VM() = default;
 
@@ -201,9 +213,12 @@ public:
     return registered_types_;
   }
 
+  bool GenerateExecutable(IR const &ir, std::string const &name, Executable &executable,
+                          std::vector<std::string> &errors);
+
   template <typename... Ts>
-  bool Execute(Script const &script, std::string const &name, std::string &error,
-               std::string &console_output, Variant &output, Ts const &... parameters)
+  bool Execute(Executable const &executable, std::string const &name, std::string &error,
+               Variant &output, Ts const &... parameters)
 
   {
     ParameterPack parameter_pack{registered_types_};
@@ -214,15 +229,15 @@ public:
       return false;
     }
 
-    return Execute(script, name, error, console_output, output, parameter_pack);
+    return Execute(executable, name, error, output, parameter_pack);
   }
 
-  bool Execute(Script const &script, std::string const &name, std::string &error,
-               std::string &console_output, Variant &output, ParameterPack const &parameters)
+  bool Execute(Executable const &executable, std::string const &name, std::string &error,
+               Variant &output, ParameterPack const &parameters)
   {
     bool success{false};
 
-    Script::Function const *f = script.FindFunction(name);
+    Executable::Function const *f = executable.FindFunction(name);
     if (f)
     {
       auto const num_parameters = static_cast<std::size_t>(f->num_parameters);
@@ -252,8 +267,8 @@ public:
           stack_[i].Assign(parameter, parameter.type_id);
         }
 
-        script_   = &script;
-        function_ = f;
+        executable_ = &executable;
+        function_   = f;
 
         // execute the function
         success = Execute(error, output);
@@ -268,22 +283,19 @@ public:
       error = "unable to find function '" + name + "'";
     }
 
-    // transfer the console output buffer
-    console_output = output_buffer_.str();
-
     return success;
   }
 
   template <typename T>
   TypeId GetTypeId()
   {
-    return registered_types_.GetTypeId(std::type_index(typeid(T)));
+    return registered_types_.GetTypeId(TypeIndex(typeid(T)));
   }
 
-  template <typename T, typename... Args>
-  Ptr<T> CreateNewObject(Args &&... args)
+  template <typename T, typename... Ts>
+  Ptr<T> CreateNewObject(Ts &&... args)
   {
-    return new T(this, GetTypeId<T>(), std::forward<Args>(args)...);
+    return new T(this, GetTypeId<T>(), std::forward<Ts>(args)...);
   }
 
   void SetIOObserver(IoObserverInterface &observer)
@@ -302,9 +314,83 @@ public:
     return *io_observer_;
   }
 
+  std::ostream &GetOutputDevice(std::string name)
+  {
+    if (output_devices_.find(name) == output_devices_.end())
+    {
+      RuntimeError("output device " + name + " does not exist.");
+      return std::cout;
+    }
+    return *output_devices_[name];
+  }
+
+  std::istream &GetInputDevice(std::string name)
+  {
+    if (input_devices_.find(name) == input_devices_.end())
+    {
+      RuntimeError("input device " + name + " does not exist.");
+      return std::cin;
+    }
+    return *input_devices_[name];
+  }
+
+  void DetachInputDevice(std::string name)
+  {
+    auto it = input_devices_.find(name);
+    if (it != input_devices_.end())
+    {
+      input_devices_.erase(it);
+    }
+    else
+    {
+      throw std::runtime_error("Input device does not exists.");
+    }
+  }
+
+  void AttachInputDevice(std::string name, std::istream &device)
+  {
+    if (input_devices_.find(name) != input_devices_.end())
+    {
+      throw std::runtime_error("Input device already exists.");
+    }
+
+    input_devices_.insert({std::move(name), &device});
+  }
+
+  void DetachOutputDevice(std::string name)
+  {
+    auto it = output_devices_.find(name);
+    if (it != output_devices_.end())
+    {
+      output_devices_.erase(it);
+    }
+    else
+    {
+      throw std::runtime_error("Output device does not exists.");
+    }
+  }
+
+  void AttachOutputDevice(std::string name, std::ostream &device)
+  {
+    if (output_devices_.find(name) != output_devices_.end())
+    {
+      throw std::runtime_error("output device already exists.");
+    }
+
+    output_devices_.insert({std::move(name), &device});
+  }
+
   void AddOutputLine(std::string const &line)
   {
     output_buffer_ << line << '\n';
+  }
+
+  // These two are public for the benefit of the static Constructor() functions in
+  // each of the Object-derived classes
+  void            RuntimeError(std::string const &message);
+  TypeInfo const &GetTypeInfo(TypeId type_id)
+  {
+    return type_info_array_[type_id];
   }
 
 private:
@@ -313,16 +399,30 @@ private:
   static const int MAX_LIVE_OBJECTS = 200;
   static const int MAX_RANGE_LOOPS  = 50;
 
+  struct OpcodeInfo
+  {
+    OpcodeInfo() = default;
+    OpcodeInfo(std::string const &name__, Handler handler__)
+    {
+      name    = name__;
+      handler = handler__;
+    }
+    std::string name;
+    Handler     handler;
+  };
+  using OpcodeInfoArray = std::vector<OpcodeInfo>;
+  using OpcodeMap       = std::unordered_map<std::string, uint16_t>;
+
   struct Frame
   {
-    Script::Function const *function;
-    int                     bsp;
-    int                     pc;
+    Executable::Function const *function;
+    int                         bsp;
+    uint16_t                    pc;
   };
 
   struct ForRangeLoop
   {
-    Index     variable_index;
+    uint16_t  variable_index;
     Primitive current;
     Primitive target;
     Primitive delta;
@@ -330,18 +430,10 @@ private:
 
   struct LiveObjectInfo
   {
-    int   frame_sp;
-    Index variable_index;
-    int   scope_number;
+    int      frame_sp;
+    uint16_t variable_index;
+    uint16_t scope_number;
   };
-
-  std::vector<OpcodeHandler> opcode_handlers_;
-  RegisteredTypes            registered_types_;
-  Script::Function const *   function_;
-  std::vector<Ptr<String>>   strings_;
-  Frame                      frame_stack_[FRAME_STACK_SIZE];
-  int                        frame_sp_;
-  int                        bsp_;
 
   template <typename T>
   friend struct StackGetter;
@@ -353,31 +445,68 @@ private:
   friend struct ParameterTypeGetter;
   template <typename ReturnType, typename FreeFunction, typename... Ts>
   friend struct FreeFunctionInvokerHelper;
-  template <typename ObjectType, typename ReturnType, typename InstanceFunction, typename... Ts>
-  friend struct InstanceFunctionInvokerHelper;
-  template <typename ObjectType, typename ReturnType, typename TypeConstructor, typename... Ts>
-  friend struct TypeConstructorInvokerHelper;
-  template <typename ReturnType, typename TypeFunction, typename... Ts>
-  friend struct TypeFunctionInvokerHelper;
+  template <typename Type, typename ReturnType, typename MemberFunction, typename... Ts>
+  friend struct MemberFunctionInvokerHelper;
+  template <typename Type, typename ReturnType, typename Constructor, typename... Ts>
+  friend struct ConstructorInvokerHelper;
+  template <typename ReturnType, typename StaticMemberFunction, typename... Ts>
+  friend struct StaticMemberFunctionInvokerHelper;
 
-  Script const *script_;
-  Variant       stack_[STACK_SIZE];
-  int           sp_;
+  TypeInfoArray                  type_info_array_;
+  TypeInfoMap                    type_info_map_;
+  RegisteredTypes                registered_types_;
+  OpcodeInfoArray                opcode_info_array_;
+  OpcodeMap                      opcode_map_;
+  Generator                      generator_;
+  Executable const *             executable_;
+  Executable::Function const *   function_;
+  std::vector<Ptr<String>>       strings_;
+  Frame                          frame_stack_[FRAME_STACK_SIZE];
+  int                            frame_sp_;
+  int                            bsp_;
+  Variant                        stack_[STACK_SIZE];
+  int                            sp_;
+  ForRangeLoop                   range_loop_stack_[MAX_RANGE_LOOPS];
+  int                            range_loop_sp_;
+  LiveObjectInfo                 live_object_stack_[MAX_LIVE_OBJECTS];
+  int                            live_object_sp_;
+  uint16_t                       pc_;
+  uint16_t                       instruction_pc_;
+  Executable::Instruction const *instruction_;
+  bool                           stop_;
+  std::string                    error_;
+  std::ostringstream             output_buffer_;
+  IoObserverInterface *          io_observer_{nullptr};
+  OutputDeviceMap                output_devices_;
+  InputDeviceMap                 input_devices_;
 
-  ForRangeLoop               range_loop_stack_[MAX_RANGE_LOOPS];
-  int                        range_loop_sp_;
-  LiveObjectInfo             live_object_stack_[MAX_LIVE_OBJECTS];
-  int                        live_object_sp_;
-  int                        pc_;
-  Script::Instruction const *instruction_;
-  bool                       stop_;
-  std::string                error_;
-  std::ostringstream         output_buffer_;
-
-  IoObserverInterface *io_observer_{nullptr};
+  void AddOpcodeInfo(uint16_t opcode, std::string const &name, Handler const &handler)
+  {
+    opcode_info_array_[opcode] = OpcodeInfo(name, handler);
+  }
 
   bool Execute(std::string &error, Variant &output);
-  void Destruct(int scope_number);
+  void Destruct(uint16_t scope_number);
+
+  TypeId FindType(std::string const &name) const
+  {
+    auto it = type_info_map_.find(name);
+    if (it != type_info_map_.end())
+    {
+      return it->second;
+    }
+    return TypeIds::Unknown;
+  }
+
+  uint16_t FindOpcode(std::string const &name) const
+  {
+    auto it = opcode_map_.find(name);
+    if (it != opcode_map_.end())
+    {
+      return it->second;
+    }
+    return Opcodes::Unknown;
+  }
 
   Variant &Push()
   {
@@ -394,113 +523,12 @@ private:
     return stack_[sp_];
   }
 
-  // fix these -- should be private
-public:
-  void            RuntimeError(std::string const &message);
-  TypeInfo const &GetTypeInfo(TypeId type_id)
-  {
-    auto it = script_->type_info_table.find(type_id);
-    return it->second;
-  }
-
-private:
-  // fix these
-
-  void AddOpcodeHandler(OpcodeHandlerInfo const &info)
-  {
-    if (info.opcode >= opcode_handlers_.size())
-    {
-      opcode_handlers_.resize(size_t(info.opcode + 1));
-    }
-    opcode_handlers_[info.opcode] = info.handler;
-  }
-
-  void SetRegisteredTypes(RegisteredTypes const &registered_types)
-  {
-    registered_types_ = registered_types;
-  }
-
-  Variant &GetVariable(Index variable_index)
+  Variant &GetVariable(uint16_t variable_index)
   {
     return stack_[bsp_ + variable_index];
   }
 
-  template <typename From, typename To>
-  void PerformCast(From const &from, To &to)
-  {
-    to = static_cast<To>(from);
-  }
-
-  template <typename To>
-  void Cast(Variant &v, TypeId to_type_id, To &to)
-  {
-    TypeId from_type_id = v.type_id;
-    v.type_id           = to_type_id;
-    switch (from_type_id)
-    {
-    case TypeIds::Bool:
-    {
-      PerformCast(v.primitive.ui8, to);
-      break;
-    }
-    case TypeIds::Int8:
-    {
-      PerformCast(v.primitive.i8, to);
-      break;
-    }
-    case TypeIds::Byte:
-    {
-      PerformCast(v.primitive.ui8, to);
-      break;
-    }
-    case TypeIds::Int16:
-    {
-      PerformCast(v.primitive.i16, to);
-      break;
-    }
-    case TypeIds::UInt16:
-    {
-      PerformCast(v.primitive.ui16, to);
-      break;
-    }
-    case TypeIds::Int32:
-    {
-      PerformCast(v.primitive.i32, to);
-      break;
-    }
-    case TypeIds::UInt32:
-    {
-      PerformCast(v.primitive.ui32, to);
-      break;
-    }
-    case TypeIds::Int64:
-    {
-      PerformCast(v.primitive.i64, to);
-      break;
-    }
-    case TypeIds::UInt64:
-    {
-      PerformCast(v.primitive.ui64, to);
-      break;
-    }
-    case TypeIds::Float32:
-    {
-      PerformCast(v.primitive.f32, to);
-      break;
-    }
-    case TypeIds::Float64:
-    {
-      PerformCast(v.primitive.f64, to);
-      break;
-    }
-    default:
-    {
-      break;
-    }
-    }  // switch
-  }
-
-  struct EqualOp
+  struct PrimitiveEqual
   {
     template <typename T>
     static void Apply(Variant &lhsv, T &lhs, T &rhs)
@@ -509,7 +537,7 @@ private:
     }
   };
 
-  struct NotEqualOp
+  struct PrimitiveNotEqual
   {
     template <typename T>
     static void Apply(Variant &lhsv, T &lhs, T &rhs)
@@ -544,7 +572,7 @@ private:
     return (rhso != nullptr);
   }
 
-  struct LessThanOp
+  struct PrimitiveLessThan
   {
     template <typename T>
     static void Apply(Variant &lhsv, T &lhs, T &rhs)
@@ -553,7 +581,7 @@ private:
     }
   };
 
-  struct ObjectLessThanOp
+  struct ObjectLessThan
   {
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
@@ -561,7 +589,7 @@ private:
     }
   };
 
-  struct LessThanOrEqualOp
+  struct PrimitiveLessThanOrEqual
   {
     template <typename T>
     static void Apply(Variant &lhsv, T &lhs, T &rhs)
@@ -570,7 +598,7 @@ private:
     }
   };
 
-  struct ObjectLessThanOrEqualOp
+  struct ObjectLessThanOrEqual
   {
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
@@ -578,7 +606,7 @@ private:
     }
   };
 
-  struct GreaterThanOp
+  struct PrimitiveGreaterThan
   {
     template <typename T>
     static void Apply(Variant &lhsv, T &lhs, T &rhs)
@@ -587,7 +615,7 @@ private:
     }
   };
 
-  struct ObjectGreaterThanOp
+  struct ObjectGreaterThan
   {
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
@@ -595,7 +623,7 @@ private:
     }
   };
 
-  struct GreaterThanOrEqualOp
+  struct PrimitiveGreaterThanOrEqual
   {
     template <typename T>
     static void Apply(Variant &lhsv, T &lhs, T &rhs)
@@ -604,7 +632,7 @@ private:
     }
   };
 
-  struct ObjectGreaterThanOrEqualOp
+  struct ObjectGreaterThanOrEqual
   {
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
@@ -612,7 +640,7 @@ private:
     }
   };
 
-  struct PrefixIncOp
+  struct PrefixInc
   {
     template <typename T>
     static void Apply(VM * /* vm */, T &lhs, T &rhs)
@@ -621,7 +649,7 @@ private:
     }
   };
 
-  struct PrefixDecOp
+  struct PrefixDec
   {
     template <typename T>
     static void Apply(VM * /* vm */, T &lhs, T &rhs)
@@ -630,7 +658,7 @@ private:
     }
   };
 
-  struct PostfixIncOp
+  struct PostfixInc
   {
     template <typename T>
     static void Apply(VM * /* vm */, T &lhs, T &rhs)
@@ -639,7 +667,7 @@ private:
     }
   };
 
-  struct PostfixDecOp
+  struct PostfixDec
   {
     template <typename T>
     static void Apply(VM * /* vm */, T &lhs, T &rhs)
@@ -648,21 +676,25 @@ private:
     }
   };
 
-  struct ModuloOp
+  struct Inc
   {
     template <typename T>
-    static void Apply(VM *vm, T &lhs, T &rhs)
+    static void Apply(VM * /* vm */, T &lhs, T & /* rhs */)
     {
-      if (rhs != 0)
-      {
-        lhs = T(lhs % rhs);
-        return;
-      }
-      vm->RuntimeError("division by zero");
+      ++lhs;
     }
   };
 
-  struct UnaryMinusOp
+  struct Dec
+  {
+    template <typename T>
+    static void Apply(VM * /* vm */, T &lhs, T & /* rhs */)
+    {
+      --lhs;
+    }
+  };
+
+  struct PrimitiveNegate
   {
     template <typename T>
     static void Apply(VM * /* vm */, T &lhs, T & /* rhs */)
@@ -671,7 +703,7 @@ private:
     }
   };
 
-  struct AddOp
+  struct PrimitiveAdd
   {
     template <typename T>
     static void Apply(VM * /* vm */, T &lhs, T &rhs)
@@ -680,7 +712,7 @@ private:
     }
   };
 
-  struct ObjectAddOp
+  struct ObjectAdd
   {
     static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     {
@@ -688,7 +720,7 @@ private:
     }
   };
 
-  struct LeftAddOp
+  struct ObjectLeftAdd
   {
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
@@ -696,7 +728,7 @@ private:
     }
   };
 
-  struct RightAddOp
+  struct ObjectRightAdd
   {
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
@@ -704,23 +736,23 @@ private:
     }
   };
 
-  struct ObjectAddAssignOp
+  struct ObjectInplaceAdd
   {
     static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     {
-      lhso->AddAssign(lhso, rhso);
+      lhso->InplaceAdd(lhso, rhso);
     }
   };
 
-  struct RightAddAssignOp
+  struct ObjectInplaceRightAdd
   {
     static void Apply(Ptr<Object> &lhso, Variant &rhsv)
     {
-      lhso->RightAddAssign(lhso, rhsv);
+      lhso->InplaceRightAdd(lhso, rhsv);
     }
   };
 
-  struct SubtractOp
+  struct PrimitiveSubtract
   {
     template <typename T>
     static void Apply(VM * /* vm */, T &lhs, T &rhs)
@@ -729,7 +761,7 @@ private:
     }
   };
 
-  struct ObjectSubtractOp
+  struct ObjectSubtract
   {
     static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     {
@@ -737,7 +769,7 @@ private:
     }
   };
 
-  struct LeftSubtractOp
+  struct ObjectLeftSubtract
   {
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
@@ -745,7 +777,7 @@ private:
     }
   };
 
-  struct RightSubtractOp
+  struct ObjectRightSubtract
   {
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
@@ -753,23 +785,23 @@ private:
     }
   };
 
-  struct ObjectSubtractAssignOp
+  struct ObjectInplaceSubtract
   {
     static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     {
-      lhso->SubtractAssign(lhso, rhso);
+      lhso->InplaceSubtract(lhso, rhso);
     }
   };
 
-  struct RightSubtractAssignOp
+  struct ObjectInplaceRightSubtract
   {
     static void Apply(Ptr<Object> &lhso, Variant &rhsv)
     {
-      lhso->RightSubtractAssign(lhso, rhsv);
+      lhso->InplaceRightSubtract(lhso, rhsv);
     }
   };
 
-  struct MultiplyOp
+  struct PrimitiveMultiply
   {
     template <typename T>
     static void Apply(VM * /* vm */, T &lhs, T &rhs)
@@ -778,7 +810,7 @@ private:
     }
   };
 
-  struct ObjectMultiplyOp
+  struct ObjectMultiply
   {
     static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     {
@@ -786,7 +818,7 @@ private:
     }
   };
 
-  struct LeftMultiplyOp
+  struct ObjectLeftMultiply
   {
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
@@ -794,7 +826,7 @@ private:
     }
   };
 
-  struct RightMultiplyOp
+  struct ObjectRightMultiply
   {
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
@@ -802,23 +834,23 @@ private:
     }
   };
 
-  struct ObjectMultiplyAssignOp
+  struct ObjectInplaceMultiply
   {
     static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     {
-      lhso->MultiplyAssign(lhso, rhso);
+      lhso->InplaceMultiply(lhso, rhso);
     }
   };
 
-  struct RightMultiplyAssignOp
+  struct ObjectInplaceRightMultiply
   {
     static void Apply(Ptr<Object> &lhso, Variant &rhsv)
     {
-      lhso->RightMultiplyAssign(lhso, rhsv);
+      lhso->InplaceRightMultiply(lhso, rhsv);
     }
   };
 
-  struct DivideOp
+  struct PrimitiveDivide
   {
     template <typename T>
     static void Apply(VM *vm, T &lhs, T &rhs)
@@ -832,7 +864,7 @@ private:
     }
   };
 
-  struct ObjectDivideOp
+  struct ObjectDivide
   {
     static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     {
@@ -840,7 +872,7 @@ private:
     }
   };
 
-  struct LeftDivideOp
+  struct ObjectLeftDivide
   {
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
@@ -848,7 +880,7 @@ private:
     }
   };
 
-  struct RightDivideOp
+  struct ObjectRightDivide
   {
     static void Apply(Variant &lhsv, Variant &rhsv)
     {
@@ -856,24 +888,38 @@ private:
     }
   };
 
-  struct ObjectDivideAssignOp
+  struct ObjectInplaceDivide
   {
     static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     {
-      lhso->DivideAssign(lhso, rhso);
+      lhso->InplaceDivide(lhso, rhso);
     }
   };
 
-  struct RightDivideAssignOp
+  struct ObjectInplaceRightDivide
   {
     static void Apply(Ptr<Object> &lhso, Variant &rhsv)
     {
-      lhso->RightDivideAssign(lhso, rhsv);
+      lhso->InplaceRightDivide(lhso, rhsv);
+    }
+  };
+
+  struct PrimitiveModulo
+  {
+    template <typename T>
+    static void Apply(VM *vm, T &lhs, T &rhs)
+    {
+      if (rhs != 0)
+      {
+        lhs = T(lhs % rhs);
+        return;
+      }
+      vm->RuntimeError("division by zero");
     }
   };
 
   template <typename Op>
-  void ExecuteRelationalOp(TypeId type_id, Variant &lhsv, Variant &rhsv)
+  void ExecutePrimitiveRelationalOp(TypeId type_id, Variant &lhsv, Variant &rhsv)
   {
     switch (type_id)
     {
@@ -940,7 +986,7 @@ private:
   }
 
   template <typename Op>
-  void ExecuteIntegerOp(TypeId type_id, Variant &lhsv, Variant &rhsv)
+  void ExecuteIntegralOp(TypeId type_id, Variant &lhsv, Variant &rhsv)
   {
     switch (type_id)
     {
@@ -992,7 +1038,7 @@ private:
   }
 
   template <typename Op>
-  void ExecuteNumberOp(TypeId type_id, Variant &lhsv, Variant &rhsv)
+  void ExecuteNumericOp(TypeId type_id, Variant &lhsv, Variant &rhsv)
   {
     switch (type_id)
     {
@@ -1054,7 +1100,7 @@ private:
   }
 
   template <typename Op>
-  void ExecuteIntegerAssignOp(TypeId type_id, void *lhs, Variant &rhsv)
+  void ExecuteIntegralInplaceOp(TypeId type_id, void *lhs, Variant &rhsv)
   {
     switch (type_id)
     {
@@ -1106,7 +1152,7 @@ private:
   }
 
   template <typename Op>
-  void ExecuteNumberAssignOp(TypeId type_id, void *lhs, Variant &rhsv)
+  void ExecuteNumericInplaceOp(TypeId type_id, void *lhs, Variant &rhsv)
   {
     switch (type_id)
     {
@@ -1168,11 +1214,11 @@ private:
   }
 
   template <typename Op>
-  void DoRelationalOp()
+  void DoPrimitiveRelationalOp()
   {
     Variant &rhsv = Pop();
     Variant &lhsv = Top();
-    ExecuteRelationalOp<Op>(instruction_->type_id, lhsv, rhsv);
+    ExecutePrimitiveRelationalOp<Op>(instruction_->type_id, lhsv, rhsv);
     rhsv.Reset();
   }
 
@@ -1191,81 +1237,36 @@ private:
   }
 
   template <typename Op>
-  void DoIncDecOp(TypeId type_id, void *lhs)
+  void DoPrefixPostfixOp(TypeId type_id, void *lhs)
   {
     Variant &rhsv = Push();
-    ExecuteIntegerAssignOp<Op>(type_id, lhs, rhsv);
+    ExecuteIntegralInplaceOp<Op>(type_id, lhs, rhsv);
     rhsv.type_id = instruction_->type_id;
   }
 
   template <typename Op>
-  void DoVariableIncDecOp()
+  void DoVariablePrefixPostfixOp()
   {
     Variant &variable = GetVariable(instruction_->index);
-    DoIncDecOp<Op>(instruction_->type_id, &variable.primitive);
+    DoPrefixPostfixOp<Op>(instruction_->type_id, &variable.primitive);
   }
 
   template <typename Op>
-  void DoElementIncDecOp()
-  {
-    Variant &container = Pop();
-    if (container.object)
-    {
-      void *element = container.object->FindElement();
-      if (element)
-      {
-        DoIncDecOp<Op>(instruction_->type_id, element);
-        container.Reset();
-      }
-      return;
-    }
-    RuntimeError("null reference");
-  }
-
-  template <typename Op>
-  void DoIntegerOp()
+  void DoIntegralOp()
   {
     Variant &rhsv = Pop();
     Variant &lhsv = Top();
-    ExecuteIntegerOp<Op>(instruction_->type_id, lhsv, rhsv);
+    ExecuteIntegralOp<Op>(instruction_->type_id, lhsv, rhsv);
     rhsv.Reset();
   }
 
   template <typename Op>
-  void DoNumberOp()
+  void DoNumericOp()
   {
     Variant &rhsv = Pop();
     Variant &lhsv = Top();
-    ExecuteNumberOp<Op>(instruction_->type_id, lhsv, rhsv);
+    ExecuteNumericOp<Op>(instruction_->type_id, lhsv, rhsv);
     rhsv.Reset();
-  }
-
-  template <typename Op>
-  void DoLeftOp()
-  {
-    Variant &rhsv = Pop();
-    Variant &lhsv = Top();
-    if (rhsv.object)
-    {
-      Op::Apply(lhsv, rhsv);
-      rhsv.Reset();
-      return;
-    }
-    RuntimeError("null reference");
-  }
-
-  template <typename Op>
-  void DoRightOp()
-  {
-    Variant &rhsv = Pop();
-    Variant &lhsv = Top();
-    if (lhsv.object)
-    {
-      Op::Apply(lhsv, rhsv);
-      rhsv.Reset();
-      return;
-    }
-    RuntimeError("null reference");
   }
 
   template <typename Op>
@@ -1283,28 +1284,13 @@ private:
   }
 
   template <typename Op>
-  void DoIntegerAssignOp(TypeId type_id, void *lhs)
+  void DoObjectLeftOp()
   {
     Variant &rhsv = Pop();
-    ExecuteIntegerAssignOp<Op>(type_id, lhs, rhsv);
-    rhsv.Reset();
-  }
-
-  template <typename Op>
-  void DoNumberAssignOp(TypeId type_id, void *lhs)
-  {
-    Variant &rhsv = Pop();
-    ExecuteNumberAssignOp<Op>(type_id, lhs, rhsv);
-    rhsv.Reset();
-  }
-
-  template <typename Op>
-  void DoRightAssignOp(Ptr<Object> &lhso)
-  {
-    Variant &rhsv = Pop();
-    if (lhso)
+    Variant &lhsv = Top();
+    if (rhsv.object)
     {
-      Op::Apply(lhso, rhsv);
+      Op::Apply(lhsv, rhsv);
       rhsv.Reset();
       return;
     }
@@ -1312,7 +1298,37 @@ private:
   }
 
   template <typename Op>
-  void DoObjectAssignOp(Ptr<Object> &lhso)
+  void DoObjectRightOp()
+  {
+    Variant &rhsv = Pop();
+    Variant &lhsv = Top();
+    if (lhsv.object)
+    {
+      Op::Apply(lhsv, rhsv);
+      rhsv.Reset();
+      return;
+    }
+    RuntimeError("null reference");
+  }
+
+  template <typename Op>
+  void DoIntegralInplaceOp(TypeId type_id, void *lhs)
+  {
+    Variant &rhsv = Pop();
+    ExecuteIntegralInplaceOp<Op>(type_id, lhs, rhsv);
+    rhsv.Reset();
+  }
+
+  template <typename Op>
+  void DoNumericInplaceOp(TypeId type_id, void *lhs)
+  {
+    Variant &rhsv = Pop();
+    ExecuteNumericInplaceOp<Op>(type_id, lhs, rhsv);
+    rhsv.Reset();
+  }
+
+  template <typename Op>
+  void DoObjectInplaceOp(Ptr<Object> &lhso)
   {
     Variant &rhsv = Pop();
     if (lhso && rhsv.object)
@@ -1325,207 +1341,130 @@ private:
   }
 
   template <typename Op>
-  void DoVariableIntegerAssignOp()
+  void DoObjectInplaceRightOp(Ptr<Object> &lhso)
   {
-    Variant &variable = GetVariable(instruction_->index);
-    DoIntegerAssignOp<Op>(instruction_->type_id, &variable.primitive);
-  }
-
-  template <typename Op>
-  void DoVariableNumberAssignOp()
-  {
-    Variant &variable = GetVariable(instruction_->index);
-    DoNumberAssignOp<Op>(instruction_->type_id, &variable.primitive);
-  }
-
-  template <typename Op>
-  void DoVariableRightAssignOp()
-  {
-    Variant &variable = GetVariable(instruction_->index);
-    DoRightAssignOp<Op>(variable.object);
-  }
-
-  template <typename Op>
-  void DoVariableObjectAssignOp()
-  {
-    Variant &variable = GetVariable(instruction_->index);
-    DoObjectAssignOp<Op>(variable.object);
-  }
-
-  template <typename Op>
-  void DoElementIntegerAssignOp()
-  {
-    Variant &container = Pop();
-    if (container.object)
+    Variant &rhsv = Pop();
+    if (lhso)
     {
-      void *element = container.object->FindElement();
-      if (element)
-      {
-        DoIntegerAssignOp<Op>(instruction_->type_id, element);
-        container.Reset();
-      }
+      Op::Apply(lhso, rhsv);
+      rhsv.Reset();
       return;
     }
     RuntimeError("null reference");
   }
 
   template <typename Op>
-  void DoElementNumberAssignOp()
+  void DoVariableIntegralInplaceOp()
   {
-    Variant &container = Pop();
-    if (container.object)
-    {
-      void *element = container.object->FindElement();
-      if (element)
-      {
-        DoNumberAssignOp<Op>(instruction_->type_id, element);
-        container.Reset();
-      }
-      return;
-    }
-    RuntimeError("null reference");
+    Variant &variable = GetVariable(instruction_->index);
+    DoIntegralInplaceOp<Op>(instruction_->type_id, &variable.primitive);
   }
 
   template <typename Op>
-  void DoElementRightAssignOp()
+  void DoVariableNumericInplaceOp()
   {
-    Variant &container = Pop();
-    if (container.object)
-    {
-      Ptr<Object> *element = static_cast<Ptr<Object> *>(container.object->FindElement());
-      if (element)
-      {
-        DoRightAssignOp<Op>(*element);
-        container.Reset();
-      }
-      return;
-    }
-    RuntimeError("null reference");
+    Variant &variable = GetVariable(instruction_->index);
+    DoNumericInplaceOp<Op>(instruction_->type_id, &variable.primitive);
   }
 
   template <typename Op>
-  void DoElementObjectAssignOp()
+  void DoVariableObjectInplaceOp()
   {
-    Variant &container = Pop();
-    if (container.object)
-    {
-      Ptr<Object> *element = static_cast<Ptr<Object> *>(container.object->FindElement());
-      if (element)
-      {
-        DoObjectAssignOp<Op>(*element);
-        container.Reset();
-      }
-      return;
-    }
-    RuntimeError("null reference");
+    Variant &variable = GetVariable(instruction_->index);
+    DoObjectInplaceOp<Op>(variable.object);
+  }
+
+  template <typename Op>
+  void DoVariableObjectInplaceRightOp()
+  {
+    Variant &variable = GetVariable(instruction_->index);
+    DoObjectInplaceRightOp<Op>(variable.object);
   }
 
   //
   // Opcode handler prototypes
   //
 
-  void VarDeclare();
-  void VarDeclareAssign();
-  void PushConstant();
-  void PushString();
-  void PushNull();
-  void PushVariable();
-  void PushElement();
-  void PopToVariable();
-  void PopToElement();
-  void Discard();
-  void Destruct();
-  void Break();
-  void Continue();
-  void Jump();
-  void JumpIfFalse();
-  void JumpIfTrue();
-  void Return();
-  void ToInt8();
-  void ToByte();
-  void ToInt16();
-  void ToUInt16();
-  void ToInt32();
-  void ToUInt32();
-  void ToInt64();
-  void ToUInt64();
-  void ToFloat32();
-  void ToFloat64();
-  void ForRangeInit();
-  void ForRangeIterate();
-  void ForRangeTerminate();
-  void InvokeUserFunction();
-  void Equal();
-  void ObjectEqual();
-  void NotEqual();
-  void ObjectNotEqual();
-  void LessThan();
-  void ObjectLessThan();
-  void LessThanOrEqual();
-  void ObjectLessThanOrEqual();
-  void GreaterThan();
-  void ObjectGreaterThan();
-  void GreaterThanOrEqual();
-  void ObjectGreaterThanOrEqual();
-  void And();
-  void Or();
-  void Not();
-  void VariablePrefixInc();
-  void VariablePrefixDec();
-  void VariablePostfixInc();
-  void VariablePostfixDec();
-  void ElementPrefixInc();
-  void ElementPrefixDec();
-  void ElementPostfixInc();
-  void ElementPostfixDec();
-  void Modulo();
-  void VariableModuloAssign();
-  void ElementModuloAssign();
-  void UnaryMinus();
-  void ObjectUnaryMinus();
-  void Add();
-  void LeftAdd();
-  void RightAdd();
-  void ObjectAdd();
-  void VariableAddAssign();
-  void VariableRightAddAssign();
-  void VariableObjectAddAssign();
-  void ElementAddAssign();
-  void ElementRightAddAssign();
-  void ElementObjectAddAssign();
-  void Subtract();
-  void LeftSubtract();
-  void RightSubtract();
-  void ObjectSubtract();
-  void VariableSubtractAssign();
-  void VariableRightSubtractAssign();
-  void VariableObjectSubtractAssign();
-  void ElementSubtractAssign();
-  void ElementRightSubtractAssign();
-  void ElementObjectSubtractAssign();
-  void Multiply();
-  void LeftMultiply();
-  void RightMultiply();
-  void ObjectMultiply();
-  void VariableMultiplyAssign();
-  void VariableRightMultiplyAssign();
-  void VariableObjectMultiplyAssign();
-  void ElementMultiplyAssign();
-  void ElementRightMultiplyAssign();
-  void ElementObjectMultiplyAssign();
-  void Divide();
-  void LeftDivide();
-  void RightDivide();
-  void ObjectDivide();
-  void VariableDivideAssign();
-  void VariableRightDivideAssign();
-  void VariableObjectDivideAssign();
-  void ElementDivideAssign();
-  void ElementRightDivideAssign();
-  void ElementObjectDivideAssign();
+  void Handler__VariableDeclare();
+  void Handler__VariableDeclareAssign();
+  void Handler__PushNull();
+  void Handler__PushFalse();
+  void Handler__PushTrue();
+  void Handler__PushString();
+  void Handler__PushConstant();
+  void Handler__PushVariable();
+  void Handler__PopToVariable();
+  void Handler__Inc();
+  void Handler__Dec();
+  void Handler__Duplicate();
+  void Handler__DuplicateInsert();
+  void Handler__Discard();
+  void Handler__Destruct();
+  void Handler__Break();
+  void Handler__Continue();
+  void Handler__Jump();
+  void Handler__JumpIfFalse();
+  void Handler__JumpIfTrue();
+  void Handler__Return();
+  void Handler__ForRangeInit();
+  void Handler__ForRangeIterate();
+  void Handler__ForRangeTerminate();
+  void Handler__InvokeUserDefinedFreeFunction();
+  void Handler__VariablePrefixInc();
+  void Handler__VariablePrefixDec();
+  void Handler__VariablePostfixInc();
+  void Handler__VariablePostfixDec();
+  void Handler__And();
+  void Handler__Or();
+  void Handler__Not();
+  void Handler__PrimitiveEqual();
+  void Handler__ObjectEqual();
+  void Handler__PrimitiveNotEqual();
+  void Handler__ObjectNotEqual();
+  void Handler__PrimitiveLessThan();
+  void Handler__ObjectLessThan();
+  void Handler__PrimitiveLessThanOrEqual();
+  void Handler__ObjectLessThanOrEqual();
+  void Handler__PrimitiveGreaterThan();
+  void Handler__ObjectGreaterThan();
+  void Handler__PrimitiveGreaterThanOrEqual();
+  void Handler__ObjectGreaterThanOrEqual();
+  void Handler__PrimitiveNegate();
+  void Handler__ObjectNegate();
+  void Handler__PrimitiveAdd();
+  void Handler__ObjectAdd();
+  void Handler__ObjectLeftAdd();
+  void Handler__ObjectRightAdd();
+  void Handler__VariablePrimitiveInplaceAdd();
+  void Handler__VariableObjectInplaceAdd();
+  void Handler__VariableObjectInplaceRightAdd();
+  void Handler__PrimitiveSubtract();
+  void Handler__ObjectSubtract();
+  void Handler__ObjectLeftSubtract();
+  void Handler__ObjectRightSubtract();
+  void Handler__VariablePrimitiveInplaceSubtract();
+  void Handler__VariableObjectInplaceSubtract();
+  void Handler__VariableObjectInplaceRightSubtract();
+  void Handler__PrimitiveMultiply();
+  void Handler__ObjectMultiply();
+  void Handler__ObjectLeftMultiply();
+  void Handler__ObjectRightMultiply();
+  void Handler__VariablePrimitiveInplaceMultiply();
+  void Handler__VariableObjectInplaceMultiply();
+  void Handler__VariableObjectInplaceRightMultiply();
+  void Handler__PrimitiveDivide();
+  void Handler__ObjectDivide();
+  void Handler__ObjectLeftDivide();
+  void Handler__ObjectRightDivide();
+  void Handler__VariablePrimitiveInplaceDivide();
+  void Handler__VariableObjectInplaceDivide();
+  void Handler__VariableObjectInplaceRightDivide();
+  void Handler__PrimitiveModulo();
+  void Handler__VariablePrimitiveInplaceModulo();
 
   friend class Object;
   friend class Module;
+  friend class Generator;
 };
 
 }  // namespace vm

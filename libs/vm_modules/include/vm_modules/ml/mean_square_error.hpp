@@ -58,12 +58,12 @@ public:
   }
 };
 
-inline void CreateMeanSquareError(std::shared_ptr<fetch::vm::Module> module)
+inline void CreateMeanSquareError(fetch::vm::Module &module)
 {
-  module->CreateClassType<MSEWrapper>("MeanSquareError")
-      .CreateTypeConstuctor<>()
-      .CreateInstanceFunction("Forward", &MSEWrapper::ForwardWrapper)
-      .CreateInstanceFunction("Backward", &MSEWrapper::BackwardWrapper);
+  module.CreateClassType<MSEWrapper>("MeanSquareError")
+      .CreateConstuctor<>()
+      .CreateMemberFunction("Forward", &MSEWrapper::ForwardWrapper)
+      .CreateMemberFunction("Backward", &MSEWrapper::BackwardWrapper);
 }
 
 }  // namespace ml

@@ -67,11 +67,11 @@ TEST(tensor_iterator, dimension_reduction)
     for (SizeType i = 0; i < ret.shape(0); ++i)
     {
       SizeType offset = i + j * 3;
-      double      ref    = 0.0;
+      double   ref    = 0.0;
       for (SizeType k = 0; k < 5; ++k)
       {
         SizeType v = offset + k * 3 * 4;
-        ref           = std::max(ref, double(v));
+        ref        = std::max(ref, double(v));
         ++m;
       }
       std::vector<SizeType> idxs = {i, j};
