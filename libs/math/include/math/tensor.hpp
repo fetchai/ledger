@@ -715,7 +715,6 @@ private:
     Tensor                 Copy() const;
     ConstSliceIteratorType begin() const;
     ConstSliceIteratorType end() const;
-    STensor &              Tensor();
     SizeType               size() const;
     SizeVector             shape() const;
 
@@ -2708,13 +2707,6 @@ typename Tensor<T, C>::ConstSliceIteratorType
 Tensor<T, C>::TensorSliceImplementation<STensor>::end() const
 {
   return ConstSliceIteratorType::EndIterator(tensor_);
-}
-
-template <typename T, typename C>
-template <typename STensor>
-STensor &Tensor<T, C>::TensorSliceImplementation<STensor>::Tensor()
-{
-  return tensor_;
 }
 
 template <typename T, typename C>
