@@ -55,13 +55,10 @@ def find_clang_format():
                 return potential_path
 
 
-def output(text=None):
-    output_lock.acquire()
-    if text is not None:
-        sys.stdout.write(str(text))
-    sys.stdout.write('\n')
-    sys.stdout.flush()
-    output_lock.release()
+def output(text):
+    with output_lock:
+        sys.stdout.write('{}\n'.format(text))
+        sys.stdout.flush()
 
 
 def parse_commandline():
@@ -223,8 +220,7 @@ def compare_against_original(reformatted, source_path, rel_path, names_only):
         if names_only:
             output(rel_path)
         else:
-            output('Style mismatch in: {}'.format(rel_path))
-            output()
+            output('Style mismatch in: {}\n'.format(rel_path))
             output('\n'.join(out[3:]))  # first 3 elements are garbage
             success = False
 
@@ -237,7 +233,6 @@ def format_cpp(args):
         output('Unable to locate clang-format tool')
         sys.exit(1)
 
-    # generate the
     cmd_prefix = [
         clang_format,
         '-style=file',
