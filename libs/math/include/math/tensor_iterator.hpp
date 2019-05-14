@@ -40,8 +40,21 @@ public:
   {}
 
   TensorIterator(TensorIterator const &other) = default;
-  TensorIterator &operator=(TensorIterator const &other) = default;
-  TensorIterator(TensorIterator &&other)                 = default;
+
+  /**
+   * copy assignment operator
+   */
+  TensorIterator &operator=(TensorIterator const &other)
+  {
+    this->position_ = other.position_;
+    this->i_        = other.i_;
+    this->j_        = other.j_;
+    this->array_    = other.array_;
+
+    return *this;
+  }
+
+  TensorIterator(TensorIterator &&other) = default;
   TensorIterator &operator=(TensorIterator &&other) = default;
 
   /**

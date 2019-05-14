@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/random/lcg.hpp"
 #include "file_loader.hpp"
 #include "math/clustering/knn.hpp"
 #include "math/fundamental_operators.hpp"
@@ -45,17 +46,17 @@ using SizeType     = typename ArrayType::SizeType;
 struct TrainingParams
 {
   SizeType output_size       = 1;
-  SizeType batch_size        = 500;        // training data batch size
-  SizeType embedding_size    = 200;        // dimension of embedding vec
-  SizeType training_epochs   = 15;         // total number of training epochs
-  SizeType neg_examples      = 25;         // how many negative examples for every positive example
-  double   learning_rate     = 0.2;        // alpha - the learning rate
-  double   min_learning_rate = 0.0001;     // alpha - the minimum learning rate
-  double   negative_learning_rate;         // alpha - the learning rate for negative examples
-  double   min_negative_learning_rate;     // alpha - the minimum learning rate for negative examples
+  SizeType batch_size        = 500;     // training data batch size
+  SizeType embedding_size    = 200;     // dimension of embedding vec
+  SizeType training_epochs   = 15;      // total number of training epochs
+  SizeType neg_examples      = 25;      // how many negative examples for every positive example
+  double   learning_rate     = 0.2;     // alpha - the learning rate
+  double   min_learning_rate = 0.0001;  // alpha - the minimum learning rate
+  double   negative_learning_rate;      // alpha - the learning rate for negative examples
+  double   min_negative_learning_rate;  // alpha - the minimum learning rate for negative examples
 
   SizeType    k          = 10;             // how many nearest neighbours to compare against
-  SizeType    print_freq = 100000;          // how often to print status
+  SizeType    print_freq = 100000;         // how often to print status
   std::string test_word  = "action";       // test word to consider
   std::string save_loc   = "./model.fba";  // save file location for exporting graph
 
@@ -72,10 +73,31 @@ template <typename ArrayType>
 class DataLoader
 {
 public:
-  ArrayType                         data_;
-  typename ArrayType::IteratorType *cursor_;
-  typename ArrayType::IteratorType *pos_context_cursor_;
-  typename ArrayType::IteratorType *neg_context_cursor_;
+  using IteratorType = typename ArrayType::IteratorType;
+
+  ///
+  /// Data & cursors
+  ///
+
+  ArrayType      data_;
+  SizeType const cursor_offset_      = 3;
+  SizeType       n_positive_cursors_ = 6;
+  IteratorType   cursor_             = {data_};
+
+  // positive cursors
+  IteratorType positive_cursors_[6] = {data_, data_, data_, data_, data_, data_};
+  IteratorType neg_context_cursor_  = data_;
+
+  ///
+  /// Random values
+  ///
+
+  //  LaggedFibonnaciGenerator gen;
+  fetch::random::LinearCongruentialGenerator gen;
+  SizeType                                   ran_val_;
+  SizeType                                   n_ran_rows_ = 1000;
+  SizeType                                   ran_positive_cursor_[1000];
+  std::vector<SizeType>                      rows_{};
 
   SizeType max_sentence_len_ = 0;
 
@@ -84,19 +106,20 @@ public:
 
   DataLoader(SizeType max_sentence_len, SizeType max_sentences)
     : data_({max_sentence_len, max_sentences})
+    , max_sentence_len_(max_sentence_len)
   {
-    max_sentence_len_ = max_sentence_len;
+    PrepareDynamicWindowProbs();
   }
 
   void AddData(std::string const &text)
   {
-    reset_cursor();
+    cursor_ = data_.begin();
 
     SizeType    word_idx;
     std::string word;
     for (std::stringstream s(text); s >> word;)
     {
-      if (!((*cursor_).is_valid()))
+      if (!(cursor_.is_valid()))
       {
         break;
       }
@@ -116,8 +139,8 @@ public:
       }
 
       // write the word index to the data tensor
-      *(*cursor_) = word_idx;
-      ++(*cursor_);
+      *cursor_ = word_idx;
+      ++cursor_;
     }
 
     // reset the cursor
@@ -150,22 +173,33 @@ public:
 
   void next_positive(SizeType &input_idx, SizeType &context_idx)
   {
-    input_idx   = SizeType(*(*cursor_));
-    context_idx = SizeType(*(*pos_context_cursor_));
+    input_idx = SizeType(*cursor_);
 
-    ++(*cursor_);
-    ++(*pos_context_cursor_);
-    ++(*neg_context_cursor_);
+    // generate random value from 0 -> 2xwindow_size
+    ran_val_ = gen() % n_ran_rows_;
+
+    // dynamic context window - pick positive cursor
+    context_idx = SizeType(*(positive_cursors_[ran_positive_cursor_[ran_val_]]));
+
+    ++cursor_;
+    for (std::size_t i = 0; i < n_positive_cursors_; ++i)
+    {
+      ++(positive_cursors_[i]);
+    }
+    ++neg_context_cursor_;
   }
 
   void next_negative(SizeType &input_idx, SizeType &context_idx)
   {
-    input_idx   = SizeType(*(*cursor_));
-    context_idx = SizeType(*(*neg_context_cursor_));
+    input_idx   = SizeType(*cursor_);
+    context_idx = SizeType(*neg_context_cursor_);
 
-    ++(*cursor_);
-    ++(*pos_context_cursor_);
-    ++(*neg_context_cursor_);
+    ++cursor_;
+    for (std::size_t i = 0; i < n_positive_cursors_; ++i)
+    {
+      ++(positive_cursors_[i]);
+    }
+    ++neg_context_cursor_;
   }
 
   bool done()
@@ -174,24 +208,89 @@ public:
     //      return ( (!((*cursor_).is_valid())) || (!((*neg_context_cursor_).is_valid())) );
 
     // but we dont have to if we have a fixed negative context up front
-    return (!((*neg_context_cursor_).is_valid()));
+    return (!(neg_context_cursor_.is_valid()));
   }
 
   void reset_cursor()
   {
     // the data cursor is on the current index
-    cursor_ = new typename ArrayType::IteratorType(data_.begin());
+    cursor_ = IteratorType(data_, cursor_offset_);
 
-    // the positive data cursor sits one word in front
-    pos_context_cursor_ = new typename ArrayType::IteratorType(data_.begin());
-    ++(*pos_context_cursor_);
-
-    // the negative curosr sits on max_len sentence in front
-    neg_context_cursor_ = new typename ArrayType::IteratorType(data_.begin());
-
-    for (std::size_t i = 0; i < max_sentence_len_; ++i)
+    // set up the positive cursors and shift them
+    for (std::size_t j = 0; j < 2 * cursor_offset_; ++j)
     {
-      ++(*neg_context_cursor_);
+      if (j < cursor_offset_)
+      {
+        positive_cursors_[j] = IteratorType(data_, cursor_offset_ - (cursor_offset_ - j));
+      }
+      else
+      {
+        positive_cursors_[j] = IteratorType(data_, cursor_offset_ + (j - cursor_offset_ + 1));
+      }
+    }
+
+    // the negative cursor sits on max_len sentence in front
+    neg_context_cursor_ = IteratorType(data_, max_sentence_len_);
+
+    ASSERT(cursor_.is_valid());
+    ASSERT(neg_context_cursor_.is_valid());
+    for (std::size_t l = 0; l < 2 * cursor_offset_; ++l)
+    {
+      ASSERT(positive_cursors_[l].is_valid());
+    }
+  }
+
+  void PrepareDynamicWindowProbs()
+  {
+    // get sum of frequencies for dynamic window
+    SizeType sum_freqs = 0;
+    for (std::size_t i = 0; i < n_positive_cursors_; ++i)
+    {
+      if (i < cursor_offset_)
+      {
+        sum_freqs += i + 1;
+      }
+      else
+      {
+        sum_freqs += (cursor_offset_ - (i - cursor_offset_));
+      }
+    }
+
+    // calculate n rows per cursor
+    for (std::size_t i = 0; i < n_positive_cursors_; ++i)
+    {
+      if (i < cursor_offset_)
+      {
+        for (std::size_t j = 0; j < (double(i + 1) / double(sum_freqs)) * n_ran_rows_; ++j)
+        {
+          rows_.emplace_back(i);
+        }
+      }
+      else
+      {
+        for (std::size_t j = 0;
+             j <
+             (double((cursor_offset_ - (i - cursor_offset_))) / double(sum_freqs)) * n_ran_rows_;
+             ++j)
+        {
+          rows_.emplace_back(i);
+        }
+      }
+    }
+
+    // move from vector into fixed array
+    for (std::size_t k = 0; k < n_ran_rows_; ++k)
+    {
+      if (k < rows_.size())
+      {
+        ran_positive_cursor_[k] = rows_[k];
+      }
+      // if the vector and array are different sizes, just fill up the extra entries with high
+      // probability cases
+      else
+      {
+        ran_positive_cursor_[k] = cursor_offset_;
+      }
     }
   }
 };
@@ -371,7 +470,7 @@ public:
 
 void EvalAnalogy(DataLoader<ArrayType> &dl, SkipgramModel<ArrayType> &model)
 {
-  SizeType k = 5;
+  SizeType    k     = 5;
   std::string word1 = "italy";
   std::string word2 = "rome";
   std::string word3 = "france";
@@ -391,7 +490,9 @@ void EvalAnalogy(DataLoader<ArrayType> &dl, SkipgramModel<ArrayType> &model)
 
   for (std::size_t j = 0; j < output.size(); ++j)
   {
-    std::cout << "rank: " << j << ", " << "distance, " << output.at(j).second << ": " << dl.VocabLookup(output.at(j).first) << std::endl;
+    std::cout << "rank: " << j << ", "
+              << "distance, " << output.at(j).second << ": " << dl.VocabLookup(output.at(j).first)
+              << std::endl;
   }
   std::cout << std::endl;
 }
@@ -402,7 +503,6 @@ void EvalAnalogy(DataLoader<ArrayType> &dl, SkipgramModel<ArrayType> &model)
 
 int main(int argc, char **argv)
 {
-
   std::string training_text;
   if (argc == 2)
   {
@@ -475,9 +575,10 @@ int main(int argc, char **argv)
     ////////////////////////////////
     /// run one positive example ///
     ////////////////////////////////
-    gt           = 1;
-    model.alpha_ = (tp.learning_rate * fetch::math::Max(tp.min_learning_rate,
-                                                        1.0 - (double(total_step_count) / tp.total_words)));
+    gt = 1;
+    model.alpha_ =
+        (tp.learning_rate *
+         fetch::math::Max(tp.min_learning_rate, 1.0 - (double(total_step_count) / tp.total_words)));
 
     // get next data pair
     dataloader.next_positive(input_word_idx, context_word_idx);
@@ -495,10 +596,10 @@ int main(int argc, char **argv)
     ///////////////////////////////
     /// run k negative examples ///
     ///////////////////////////////
-    gt = 0;
-    model.alpha_ =
-        (tp.negative_learning_rate * fetch::math::Max(tp.min_negative_learning_rate,
-                                                      1.0 - (double(total_step_count) / tp.total_words)));
+    gt           = 0;
+    model.alpha_ = (tp.negative_learning_rate *
+                    fetch::math::Max(tp.min_negative_learning_rate,
+                                     1.0 - (double(total_step_count) / tp.total_words)));
 
     for (std::size_t i = 0; i < tp.neg_examples; ++i)
     {
@@ -528,13 +629,15 @@ int main(int argc, char **argv)
       step_count = 0;
 
       std::cout << "total_step_count: " << total_step_count << std::endl;
-      std::cout << "current learning rate: " <<  (tp.learning_rate * fetch::math::Max(tp.min_learning_rate,
-                                                        1.0 - (double(total_step_count) / tp.total_words))) << std::endl;
+      std::cout << "current learning rate: "
+                << (tp.learning_rate *
+                    fetch::math::Max(tp.min_learning_rate,
+                                     1.0 - (double(total_step_count) / tp.total_words)))
+                << std::endl;
       std::cout << "loss: " << sum_loss << std::endl;
       sum_loss = 0;
 
-      EvalAnalogy(dataloader, model);
-
+      //      EvalAnalogy(dataloader, model);
     }
   }
 
