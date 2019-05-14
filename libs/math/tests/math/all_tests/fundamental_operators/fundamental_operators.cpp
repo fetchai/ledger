@@ -175,8 +175,8 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, AdditionNonIntTest)
   for (int i{0}; i < 100; ++i)
   {
     // values range from - half max to + half max
-    a = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
-    b = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
+    a = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
+    b = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
 
     fetch::math::Add(a, b, ret);
     EXPECT_EQ(ret, a + b);
@@ -307,8 +307,8 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, SubtractionNonIntTest)
   for (int i{0}; i < 100; ++i)
   {
     // values range from - half max to + half max
-    a = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
-    b = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
+    a = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
+    b = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
 
     fetch::math::Subtract(a, b, ret);
     EXPECT_EQ(ret, a - b);
@@ -435,8 +435,8 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, MultiplicationNonIntTest)
   for (int i{0}; i < 100; ++i)
   {
     // values range from - half max to + half max
-    a = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
-    b = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
+    a = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
+    b = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
 
     fetch::math::Multiply(a, b, ret);
     EXPECT_EQ(ret, a * b);
@@ -575,8 +575,8 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, DivisionNonIntTest)
   for (int i{0}; i < 100; ++i)
   {
     // values range from - half max to + half max
-    a = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
-    b = (TypeParam(gen.AsDouble()) * double(max_val)) - (double(max_val) / 2.0);
+    a = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
+    b = TypeParam((gen.AsDouble() * double(max_val)) - (double(max_val) / 2.0));
 
     fetch::math::Divide(a, b, ret);
     EXPECT_EQ(ret, a / b);
