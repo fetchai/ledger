@@ -104,15 +104,15 @@ public:
       auto gradientAccumulationSlice = this->gradient_accumulation_->Slice(r);
       auto outputSlice               = this->output_->Slice(r);
       auto it1                       = gradientAccumulationSlice.begin();
-      auto end                       = gradientAccumulationSlice.end();
       auto it2                       = outputSlice.begin();
-      while (it1 != end)
+
+      while (it1.is_valid())
       {
         *it2 += (*it1 * learningRate);
         *it1 = 0;
         ++it1;
         ++it2;
-      }
+      }      
     }
     updated_rows_.clear();
   }

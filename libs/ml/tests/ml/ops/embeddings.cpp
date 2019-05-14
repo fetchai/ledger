@@ -119,7 +119,7 @@ TYPED_TEST(EmbeddingsTest, backward)
 
   output = e.fetch::ml::template Ops<TypeParam>::Forward(
       std::vector<std::reference_wrapper<TypeParam const>>({input}));
-  std::vector<int> gt{30, 30, 30, 30, 30, 30, 44, 44, 44, 44, 44, 44};
+  std::vector<int> gt{30, 32, 34, 36, 38, 40, 56, 58, 60, 62, 64, 66};
 
   for (unsigned int j(0); j < 2; ++j)
   {

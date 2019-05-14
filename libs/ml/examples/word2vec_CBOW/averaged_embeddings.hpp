@@ -72,7 +72,7 @@ public:
           auto it1   = slice.begin();
           auto end   = slice.end();
           auto it2   = output.begin();
-          while (it1 != end)
+          while (it2.is_valid())
           {
             *it2 += *it1;
             ++it1;
