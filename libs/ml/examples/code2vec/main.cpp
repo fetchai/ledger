@@ -51,7 +51,7 @@ using ContextTensorsLabelPair = typename std::pair<ContextTensorTuple, SizeType>
 #define N_EPOCHS 100
 #define LEARNING_RATE 0.01f
 
-std::string readFile(std::string const &path)
+std::string ReadFile(std::string const &path)
 {
   std::ifstream t(path);
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
@@ -70,7 +70,7 @@ int main(int ac, char **av)
 
   for (int i(1); i < ac; ++i)
   {
-    cloader.AddData(readFile(av[i]));
+    cloader.AddData(ReadFile(av[i]));
   }
 
   std::cout << "Number of different function names: " << cloader.GetCounterFunctionNames().size()
