@@ -145,6 +145,7 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
 
   // detect if any of this block's children has somehow made it to the store already
   // TODO(bipll): is this needed?
+  block->body.next_hash = GENESIS_DIGEST; // used as chain terminator
   auto forward_refs{references_.equal_range(hash)};
   for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it)
   {
@@ -155,7 +156,7 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
       break;
     }
   }
-  // now write the block itself
+  // now write the block itself; if next_hash is genesis, it will be rewritten later by a child
   block_store_->Set(storage::ResourceID(hash), *block);
 }
 
