@@ -1308,7 +1308,7 @@ MainChain::BlockHash MainChain::GetHeadHash()
 
 void MainChain::SetHeadHash(BlockHash const &hash)
 {
-  ASSERT(hash.size() == 32);
+  assert(hash.size() == 32);
 
   // move to the beginning of the file and write out the hash
   head_store_.seekp(0);
