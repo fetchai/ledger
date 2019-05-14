@@ -26,6 +26,10 @@ namespace {
 
 using namespace testing;
 
+/**
+ * This Test classes is dedicated to test both - COMPILE & RUN time behaviour of
+ * `T Log2(T val)` constexpr function.
+ */
 class LogTest : public Test
 {
 protected:
@@ -36,12 +40,34 @@ protected:
     return res;
   }
 
+  /**
+   * This class ensures that Log2(...) is exercised at COMPILE-time
+   */
   template <typename T, T VAL, T LOG2 = fetch::meta::Log2(VAL)>
   struct Compiletime
   {
     static constexpr T Log2{LOG2};
   };
 
+  /**
+   * @brief This tests both - COMPILE & RUN time behaviour of Log2(...)
+   *
+   * This method is testing the following statement to be TRUE:
+   * `EXPECTED_SUCCESS == (BIT_SHIFT == Log2((T{1} << BIT_SHIFT) + PLUS_VAL))`
+   *
+   * Based on above definition, the
+   * `BIT_SHIFT == Log2((T{1} << BIT_SHIFT) + PLUS_VAL)` can be `true` !!!ONLY
+   * and ONLY IF!!! `PLUS_VAL < (T{1} << BIT_SHIFT)`
+   * Thus if `PLUS_VAL == (T{1} << BIT_SHIFT)`, it shall result to `false`.
+   *
+   * @tparam T type of input integer value of `T Log2(T value)` function.
+   * @tparam BIT_SHIFT number of bites to shift 1 left to get the input value
+   *         for Log2(...) function.
+   * @tparam PLUS_VAL \anchor test_PLUS_VAL value to be added to (1 << BIT_SHIFT),
+   *         defaults to 0
+   * @tparam EXPECTED_SUCCESS  boolean compile time value representing whether
+   *         test is expected to pass successfully or fail, defaults to `true`.
+   */
   template <typename T, T BIT_SHIFT, T PLUS_VAL = 0, bool EXPECTED_SUCCESS = true>
   void test()
   {
@@ -62,12 +88,24 @@ protected:
     }
   }
 
+  /**
+   * This tests expected to pass (because `PLUS_VAL = (T{1} << BIT_SHIFT) - 1`,
+   * what is !!LESS THAN!! `T{1} << BIT_SHIFT`
+   *
+   * \ref test_PLUS_VAL
+   */
   template <typename T, T BIT_SHIFT>
   void test_with_plus()
   {
     test<T, BIT_SHIFT, (T{1} << BIT_SHIFT) - 1>();
   }
 
+  /**
+   * This tests expected to fail (because `PLUS_VAL = (T{1} << BIT_SHIFT)`,
+   * what is !!NOT!! LESS THAN  `T{1} << BIT_SHIFT`
+   *
+   * \ref test_PLUS_VAL
+   */
   template <typename T, T BIT_SHIFT>
   void test_with_plus_expect_failure()
   {

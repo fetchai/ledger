@@ -28,19 +28,19 @@ namespace fetch {
 namespace testing {
 
 template <typename T, std::size_t SIZE, std::size_t BITS = (SIZE * sizeof(T) * 8),
-          meta::EnableIf<meta::IsInteger<T> && meta::IsLog2(BITS)> * = nullptr>
-using Array = std::array<T, SIZE>;
+          meta::EnableIf<meta::IsUnsignedInteger<T> && meta::IsLog2(BITS)> * = nullptr>
+using StdArray = std::array<T, SIZE>;
 
 template <typename T, std::size_t BITS>
-using ArraySizeInBits = Array<T, (BITS >> meta::Log2(sizeof(T) * 8))>;
+using StdArrayFromSizeInBits = StdArray<T, (BITS >> meta::Log2(sizeof(T) * 8))>;
 
 template <typename T, std::size_t BITS>
-ArraySizeInBits<T, BITS> to_array(std::bitset<BITS> const &bs)
+StdArrayFromSizeInBits<T, BITS> ToArray(std::bitset<BITS> const &bs)
 {
   constexpr std::size_t T_BITS_LOG2{meta::Log2(sizeof(T) * 8)};
   constexpr T           T_BITS_MASK{(1 << T_BITS_LOG2) - 1};
 
-  ArraySizeInBits<T, BITS> to;
+  StdArrayFromSizeInBits<T, BITS> to;
   to.fill(static_cast<T>(0));
   for (std::size_t i = 0; i < bs.size(); ++i)
   {
@@ -55,7 +55,7 @@ ArraySizeInBits<T, BITS> to_array(std::bitset<BITS> const &bs)
 }
 
 template <typename T, std::size_t SIZE, std::size_t BITS = (SIZE * sizeof(T) * 8)>
-std::bitset<BITS> to_bitset(Array<T, SIZE> const &from)
+std::bitset<BITS> ToBitset(StdArray<T, SIZE> const &from)
 {
   constexpr std::size_t T_BITS_LOG2{meta::Log2(sizeof(T) * 8)};
   constexpr T           T_BITS_MASK{(1 << T_BITS_LOG2) - 1};
@@ -75,29 +75,25 @@ std::bitset<BITS> to_bitset(Array<T, SIZE> const &from)
   return bs;
 }
 
-template <typename T, std::size_t BITS>
-meta::EnableIf<meta::IsInteger<T> && meta::IsLog2(BITS), byte_array::ByteArray> to_ByteArray(
-    ArraySizeInBits<T, BITS> const &from)
+template <typename T, std::size_t SIZE>
+byte_array::ByteArray ToByteArray(StdArray<T, SIZE> const &from)
 {
-  return {reinterpret_cast<byte_array::ConstByteArray::container_type *>(from.data()),
-          from.size() * sizeof(decltype(from)::value_type)};
+  return {reinterpret_cast<byte_array::ConstByteArray::container_type const *>(from.data()),
+          from.size() * sizeof(typename StdArray<T, SIZE>::value_type)};
 }
 
 template <std::size_t BITS>
-meta::EnableIf<meta::IsLog2(BITS), byte_array::ByteArray> to_ByteArray(
-    std::bitset<BITS> const &from)
+meta::EnableIf<meta::IsLog2(BITS), byte_array::ByteArray> ToByteArray(std::bitset<BITS> const &from)
 {
   using T = byte_array::ConstByteArray::container_type;
-  auto const arr{to_array<T>(from)};
+  auto const arr{ToArray<T>(from)};
   return {reinterpret_cast<T const *const>(arr.data()), arr.size() * sizeof(T)};
 }
 
-
 template <typename T, std::size_t SIZE>
-meta::EnableIf<meta::IsInteger<T>, std::ostream &> operator<<(std::ostream &      ostream,
-                                                              std::array<T, SIZE> arr)
+std::ostream &operator<<(std::ostream &ostream, StdArray<T, SIZE> const &arr)
 {
-  ostream << to_ByteArray(arr).ToHex();
+  ostream << ToByteArray(arr).ToHex();
   return ostream;
 }
 

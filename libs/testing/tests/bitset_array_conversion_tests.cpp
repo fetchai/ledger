@@ -28,7 +28,7 @@ using namespace testing;
 
 constexpr std::size_t BITS{256};
 
-using DefaultArray  = ArraySizeInBits<uint64_t, BITS>;
+using DefaultArray  = StdArrayFromSizeInBits<uint64_t, BITS>;
 using DefaultBitset = std::bitset<BITS>;
 
 TEST(array_bitset_test, test_conversion_bitset_to_array_and_back)
@@ -53,10 +53,11 @@ TEST(array_bitset_test, test_conversion_bitset_to_array_and_back)
     bs_keys.emplace_back(starting_bitset >> i);
     auto const &current_bitset = bs_keys.back();
 
-    DefaultArray interm_arr{to_array<DefaultArray::value_type>(current_bitset)};
+    DefaultArray interm_arr{ToArray<DefaultArray::value_type>(current_bitset)};
     arr_keys.emplace_back(interm_arr);
+    std::cout << interm_arr << std::endl;
 
-    DefaultBitset regenerated_bitset{to_bitset(interm_arr)};
+    DefaultBitset regenerated_bitset{ToBitset(interm_arr)};
 
     // Verifying that full circle conversion (bitset -> array -> bitset) gives
     // the same value as original bitset.
@@ -91,12 +92,12 @@ TEST(array_bitset_test, test_conversion_bitset_to_ByteArray)
     auto const bs_key{starting_bitset >> i};
 
     // PRODUCTION code
-    auto const result = to_ByteArray(bs_key);
+    auto const result = ToByteArray(bs_key);
 
     // BASIC EXPECTATION
     EXPECT_EQ(bs_key.size() / 8, result.size());
 
-    DefaultArray k_arr{to_array<DefaultArray::value_type>(bs_key)};
+    DefaultArray k_arr{ToArray<DefaultArray::value_type>(bs_key)};
     ASSERT_EQ(k_arr.size() * sizeof(decltype(k_arr)::value_type), result.size());
 
     auto const expected_bytes{

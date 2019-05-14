@@ -34,7 +34,6 @@ using ByteArray          = fetch::byte_array::ByteArray;
 using ConstByteArray     = fetch::byte_array::ConstByteArray;
 using DefaultKey         = fetch::storage::Key<256>;
 using DefaultBitset      = std::bitset<DefaultKey::BITS>;
-using DefaultArray       = ArraySizeInBits<uint64_t, DefaultKey::BITS>;
 using UnorderedSetBitset = std::unordered_set<DefaultBitset>;
 
 class NewKeyTest : public Test
@@ -68,7 +67,7 @@ TEST_F(NewKeyTest, test_compare_keys_triang_bit_shift)
   {
     auto const bs_key{key_val >> i};
 
-    keys.emplace_back(to_ByteArray(bs_key));
+    keys.emplace_back(ToByteArray(bs_key));
     auto const &key = keys.back();
     //`bs_keys` container will contain (values *DISPLAYED* in *BIG* Endian encoding):
     // bs_keys[0]   = 111111...11
@@ -112,7 +111,6 @@ TEST_F(NewKeyTest, test_compare_keys_triang_bit_shift)
 TEST_F(NewKeyTest, test_compare_for_keys_with_moving_zero)
 {
   std::vector<DefaultKey>    keys;
-  std::vector<DefaultArray>  arr_keys;
   std::vector<DefaultBitset> bs_keys;
 
   DefaultBitset const key_val{1};
@@ -132,7 +130,7 @@ TEST_F(NewKeyTest, test_compare_for_keys_with_moving_zero)
     // bs_keys[254]   = 10... 111111
     // bs_keys[255]   = 01... 111111
 
-    keys.emplace_back(to_ByteArray(bs_key));
+    keys.emplace_back(ToByteArray(bs_key));
     auto const &key = keys.back();
 
     if (i == 0)
@@ -163,11 +161,11 @@ TEST_F(NewKeyTest, test_compare_for_keys_with_moving_zero)
 TEST_F(NewKeyTest, equality_comparison_operator)
 {
   auto const       start_bs_key{~DefaultBitset{0}};
-  DefaultKey const start_key{to_ByteArray(start_bs_key)};
+  DefaultKey const start_key{ToByteArray(start_bs_key)};
 
   for (std::size_t i = 1; i < start_key.size_in_bits(); ++i)
   {
-    auto const shifted_key_ByteArray{to_ByteArray(start_bs_key >> i)};
+    auto const shifted_key_ByteArray{ToByteArray(start_bs_key >> i)};
     //`shifted_key_ByteArray` container will contain (values *DISPLAYED* in *BIG* Endian encoding):
     // i=0:   shifted_key_ByteArray = 111111...11
     // i=1:   shifted_key_ByteArray = 011111...11
@@ -204,7 +202,7 @@ TEST_F(NewKeyTest, correlated_keys_are_unique_triang_form)
   for (std::size_t i = 0; i < key_val.size(); ++i)
   {
     auto const hash = (key_val >> i);
-    unique_hashes.emplace_back(to_ByteArray(hash));
+    unique_hashes.emplace_back(ToByteArray(hash));
   }
   //`unique_hashes` container will contain (values *DISPLAYED* in *BIG* Endian encoding):
   // unique_hashes[0]   = 111111...11
@@ -221,7 +219,7 @@ TEST_F(NewKeyTest, correlated_keys_are_unique_triang_form)
 
 TEST_F(NewKeyTest, test_comparison_using_last_bit_value_moving_zero_formation)
 {
-  DefaultKey const ref_key{to_ByteArray(~DefaultBitset{0})};  //=111...11 (bin) = 0xfff..ff (hex)
+  DefaultKey const ref_key{ToByteArray(~DefaultBitset{0})};  //=111...11 (bin) = 0xfff..ff (hex)
 
   DefaultBitset const bs_key_val{1};
   for (std::size_t i = 0; i < bs_key_val.size(); ++i)
@@ -238,7 +236,7 @@ TEST_F(NewKeyTest, test_comparison_using_last_bit_value_moving_zero_formation)
     // i=254: bs_key = 10... 111111
     // i=255: bs_key = 01... 111111
 
-    DefaultKey key{to_ByteArray(bs_key)};
+    DefaultKey key{ToByteArray(bs_key)};
 
     int pos{0};
 
@@ -290,7 +288,7 @@ TEST_F(NewKeyTest, test_comparison_using_last_bit_value_triangular_formation)
 
   for (std::size_t i = 0; i < bs_key_val.size(); ++i)
   {
-    DefaultKey key{to_ByteArray(bs_key_val << i)};
+    DefaultKey key{ToByteArray(bs_key_val << i)};
     //`bs_key` container will contain (values *DISPLAYED* in *BIG* Endian encoding):
     // i=  0: key = 11... 111111
     // i=  1: key = 11... 111110

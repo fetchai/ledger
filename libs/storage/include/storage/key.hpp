@@ -62,9 +62,8 @@ struct Key
     BLOCKS               = BITS >> BLOCK_SIZE_BITS_LOG2
   };
 
-  static_assert(meta::IsLog2(static_cast<std::size_t>(BLOCK_SIZE_BITS)),
+  static_assert(meta::IsLog2(static_cast<std::size_t>(BLOCK_SIZE_BITS)) && BITS >= BLOCK_SIZE_BITS,
                 "Size of BLOCK_TYPE [in bits] must be power of 2");
-  static_assert((BITS % BLOCK_SIZE_BITS) == 0, "Key must be multiple of block size");
 
   using KeyArrayNative = BlockType[BLOCKS];
   using KeyArray       = std::array<BlockType, BLOCKS>;
