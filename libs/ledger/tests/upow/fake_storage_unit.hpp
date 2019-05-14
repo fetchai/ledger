@@ -172,6 +172,8 @@ public:
     return {};
   }
 
+  void IssueCallForMissingTxs(fetch::ledger::TxDigestSet const &) override {}
+
 private:
   mutex_type             mutex_;
   transaction_store_type transactions_;

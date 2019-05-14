@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "vm/analyser.hpp"
-#include "vm/typeids.hpp"
+#include "vm/common.hpp"
 
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
@@ -33,8 +33,9 @@ namespace fetch {
 namespace vm_modules {
 
 template <typename T>
-vm::Ptr<vm::Array<vm::Ptr<T>>> CreateNewArray(vm::VM *vm, std::vector<vm::Ptr<T>> items)
+vm::Ptr<vm::Array<vm::Ptr<T>>> CreateNewArray(vm::VM * /*vm*/, std::vector<vm::Ptr<T>> /*items*/)
 {
+  /*
   vm::Ptr<vm::Array<fetch::vm::Ptr<T>>> array =
       new vm::Array<fetch::vm::Ptr<T>>(vm, vm->GetTypeId<vm::IArray>(), int32_t(items.size()));
   std::size_t idx = 0;
@@ -43,6 +44,8 @@ vm::Ptr<vm::Array<vm::Ptr<T>>> CreateNewArray(vm::VM *vm, std::vector<vm::Ptr<T>
     array->elements[idx++] = e;
   }
   return array;
+  */
+  return {};
 }
 
 class DAGWrapper : public fetch::vm::Object
@@ -51,10 +54,10 @@ public:
   DAGWrapper()          = delete;
   virtual ~DAGWrapper() = default;
 
-  static void Bind(vm::Module &module)
+  static void Bind(vm::Module &/*module*/)
   {
-    module.CreateClassType<DAGWrapper>("DAG").CreateTypeConstuctor<>().CreateInstanceFunction(
-        "getNodes", &DAGWrapper::GetNodes);
+    //module.CreateClassType<DAGWrapper>("DAG").CreateTypeConstuctor<>().CreateInstanceFunction(
+    //    "getNodes", &DAGWrapper::GetNodes);
   }
 
   DAGWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, ChainState *chain_state)
@@ -65,8 +68,11 @@ public:
 
   static fetch::vm::Ptr<DAGWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
   {
-    auto dag = vm->GetGlobalPointer<ChainState>();
-    return new DAGWrapper(vm, type_id, dag);
+    FETCH_UNUSED(vm);
+    FETCH_UNUSED(type_id);
+    //auto dag = vm->GetGlobalPointer<ChainState>();
+    //return new DAGWrapper(vm, type_id, dag);
+    return {};
   }
 
   vm::Ptr<vm::Array<vm::Ptr<DAGNodeWrapper>>> GetNodes()

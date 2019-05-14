@@ -20,7 +20,7 @@
 #include "http/middleware/allow_origin.hpp"
 #include "ledger/chain/consensus/bad_miner.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
-#include "ledger/chain/main_chain_http_interface.hpp"
+/* #include "ledger/chain/main_chain_http_interface.hpp" */
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/chaincode/wallet_http_interface.hpp"
 #include "ledger/dag/dag.hpp"

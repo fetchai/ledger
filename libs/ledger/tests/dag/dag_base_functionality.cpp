@@ -120,11 +120,13 @@ private:
       // Finalising node
       node.identity = certificate_->identity();
       node.Finalise();
+
+      /*
       if (!certificate_->Sign(node.hash))
       {
         FAIL() << "Signing failed";
       }
-      node.signature = certificate_->signature();
+      node.signature = certificate_->signature(); */
 
       ASSERT_FALSE(dag_->HasNode(node.hash));
 

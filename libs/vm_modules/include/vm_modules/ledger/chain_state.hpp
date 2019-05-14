@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "vm/analyser.hpp"
-#include "vm/typeids.hpp"
+#include "vm/common.hpp"
 
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
@@ -37,10 +37,11 @@ struct ChainState
   ledger::Block block;
 };
 
-inline uint64_t GetBlockNumber(fetch::vm::VM *vm)
+inline uint64_t GetBlockNumber(fetch::vm::VM * /*vm*/)
 {
-  auto state = vm->GetGlobalPointer<ChainState>();
-  return state->block.body.block_number;
+  //auto state = vm->GetGlobalPointer<ChainState>();
+  //return state->block.body.block_number;
+  return 1;
 }
 
 inline void CreateChainFunctions(vm::Module &module)

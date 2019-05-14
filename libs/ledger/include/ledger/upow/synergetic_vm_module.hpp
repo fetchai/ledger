@@ -37,6 +37,7 @@ namespace consensus {
 
 inline void CreateConensusVMModule(fetch::vm::Module &module)
 {
+  /*
   module.CreateTemplateInstantiationType<fetch::vm::Array, int32_t>(fetch::vm::TypeIds::IArray);
   module.CreateTemplateInstantiationType<fetch::vm::Array, int64_t>(fetch::vm::TypeIds::IArray);
   module.CreateTemplateInstantiationType<fetch::vm::Array, uint32_t>(fetch::vm::TypeIds::IArray);
@@ -45,6 +46,7 @@ inline void CreateConensusVMModule(fetch::vm::Module &module)
   module.CreateTemplateInstantiationType<fetch::vm::Array, float>(fetch::vm::TypeIds::IArray);
   module.CreateTemplateInstantiationType<fetch::vm::Array, fetch::vm::Ptr<fetch::vm::String>>(
       fetch::vm::TypeIds::IArray);
+  */
 
   fetch::vm_modules::ByteArrayWrapper::Bind(module);
   fetch::vm_modules::CryptoRNG::Bind(module);
@@ -52,6 +54,7 @@ inline void CreateConensusVMModule(fetch::vm::Module &module)
   fetch::vm_modules::SHA256Wrapper::Bind(module);
   fetch::vm_modules::DAGNodeWrapper::Bind(module);
 
+  /*
   module.CreateTemplateInstantiationType<fetch::vm::Array,
                                          fetch::vm::Ptr<vm_modules::DAGNodeWrapper>>(
       fetch::vm::TypeIds::IArray);
@@ -59,6 +62,7 @@ inline void CreateConensusVMModule(fetch::vm::Module &module)
                                          fetch::vm::Ptr<vm_modules::ByteArrayWrapper>>(
       fetch::vm::TypeIds::IArray);
 
+  */
   fetch::vm_modules::DAGWrapper::Bind(module);
 
   fetch::vm_modules::BindExp(module);

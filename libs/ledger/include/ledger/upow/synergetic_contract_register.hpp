@@ -20,7 +20,7 @@
 #include "ledger/upow/synergetic_vm_module.hpp"
 
 #include "vm/analyser.hpp"
-#include "vm/typeids.hpp"
+#include "vm/common.hpp"
 
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"

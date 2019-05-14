@@ -230,12 +230,12 @@ public:
 
     // Signing
     node.Finalise();
-    if (!certificate->Sign(node.hash))
-    {
-      return DAGNode();
-    }
+//    if (!certificate->Sign(node.hash))
+//    {
+//      return DAGNode();
+//    }
 
-    node.signature = certificate->signature();
+    /* node.signature = certificate->signature(); */
 
     // Pushing
     if (!dag_.Push(node))

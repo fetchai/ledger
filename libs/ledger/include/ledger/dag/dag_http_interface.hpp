@@ -87,12 +87,12 @@ private:
     dag_.SetNodeReferences(node);
     node.Finalise();
 
-    if (!certificate_.Sign(node.hash))
-    {
-      throw std::runtime_error("Signing failed");
-    }
+    //if (!certificate_.Sign(node.hash))
+    //{
+    //  throw std::runtime_error("Signing failed");
+    //}
 
-    node.signature = certificate_.signature();
+    //node.signature = certificate_.signature();
 
     return node;
   }

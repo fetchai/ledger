@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "vm/analyser.hpp"
-#include "vm/typeids.hpp"
+#include "vm/common.hpp"
 
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
@@ -53,8 +53,9 @@ public:
   DAGNodeWrapper()          = delete;
   virtual ~DAGNodeWrapper() = default;
 
-  static void Bind(vm::Module &module)
+  static void Bind(vm::Module &/*module*/)
   {
+    /*
     auto interface = module.CreateClassType<DAGNodeWrapper>("DAGNode");
 
     interface.CreateTypeConstuctor<>()
@@ -92,7 +93,7 @@ public:
         .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<int32_t>)
         .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<int64_t>)
         .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<uint32_t>)
-        .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<uint64_t>);
+        .CreateInstanceFunction("set", &DAGNodeWrapper::SetPrimitive<uint64_t>); */
   }
 
   DAGNodeWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, Node const &node)

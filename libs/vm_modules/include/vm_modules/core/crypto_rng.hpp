@@ -18,8 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "vm/analyser.hpp"
-#include "vm/typeids.hpp"
-
+#include "vm/common.hpp"
 #include "core/random/lfg.hpp"
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
@@ -34,12 +33,14 @@ public:
   CryptoRNG()          = delete;
   virtual ~CryptoRNG() = default;
 
-  static void Bind(vm::Module &module)
+  static void Bind(vm::Module &/*module*/)
   {
+    /*
     module.CreateClassType<CryptoRNG>("CryptoRNG")
         .CreateTypeConstuctor<uint64_t>()
         .CreateInstanceFunction("next", &CryptoRNG::Next)
         .CreateInstanceFunction("nextAsFloat", &CryptoRNG::NextAsFloat);
+    */
   }
 
   CryptoRNG(fetch::vm::VM *vm, fetch::vm::TypeId type_id, uint64_t seed)
