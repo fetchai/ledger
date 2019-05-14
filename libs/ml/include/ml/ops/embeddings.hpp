@@ -101,8 +101,12 @@ public:
   {
     for (auto const &r : updated_rows_)
     {
-      auto gradient_accumulation_slice = this->gradient_accumulation_->Slice(r).Copy();
-      auto output_slice                = this->output_->Slice(r).Copy();
+      // TODO (private issue 997): The net result of the previous operations
+      // was a shallow copy of the tensor. This does not look like it was the intended
+      // behaviour.
+      (void)(r);
+      auto gradient_accumulation_slice = *this->gradient_accumulation_;  //->Slice(r).Copy();
+      auto output_slice                = *this->output_;                 //->Slice(r).Copy();
 
       gradient_accumulation_slice.InlineMultiply(-learningRate);
       output_slice.InlineAdd(gradient_accumulation_slice);
