@@ -133,8 +133,9 @@ public:
     std::vector<std::vector<ArrayType>> results;
     for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
     {
-      auto ret =
-          this->Backward({inputs.front().get().Slice(b).Tensor()}, errorSignal.Slice(b).Tensor());
+      auto input        = inputs.front().get().Slice(b).Copy();
+      auto error_signal = errorSignal.Slice(b).Copy();
+      auto ret          = this->Backward({input}, error_signal);
       for (std::size_t i(0); i < ret.size(); ++i)
       {
         results[i].push_back(ret[i]);

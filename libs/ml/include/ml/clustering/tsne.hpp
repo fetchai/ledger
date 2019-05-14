@@ -90,6 +90,7 @@ public:
     output_symmetric_affinities_.Fill(DataType(0));
     DataType min_gain{0.01f};
     DataType momentum = initial_momentum;
+    assert(output_matrix_.shape().size() == 2);
 
     // i_y is output_matrix value from last iteration
     ArrayType i_y(output_matrix_.shape());
@@ -121,12 +122,12 @@ public:
         {
           if ((gradient.At(i, j) > 0.0) != (i_y.At(i, j) > 0.0))
           {
-            gains.Set(i, j, gains.At(i, j) + DataType(0.2));
+            gains(i, j) = gains.At(i, j) + DataType(0.2);
           }
 
           if ((gradient.At(i, j) > 0.0) == (i_y.At(i, j) > 0.0))
           {
-            gains.Set(i, j, gains.At(i, j) * DataType(0.8));
+            gains(i, j) = gains.At(i, j) * DataType(0.8);
           }
         }
       }

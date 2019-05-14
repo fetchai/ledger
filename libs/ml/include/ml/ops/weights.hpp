@@ -169,6 +169,15 @@ public:
     return *this->output_;
   }
 
+  /**
+   * Returns a copy of embeddings gradients for enquiry
+   * @return
+   */
+  ArrayType Gradients()
+  {
+    return gradient_accumulation_->Copy();
+  }
+
   static constexpr char const *DESCRIPTOR = "Weights";
 
 private:

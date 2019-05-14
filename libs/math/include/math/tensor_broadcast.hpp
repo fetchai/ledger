@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor_iterator.hpp"
+#include "math/tensor_slice_iterator.hpp"
 #include <assert.h>
 #include <iostream>
 
@@ -87,7 +87,7 @@ inline bool ShapeFromBroadcast(SizeVector const &a, SizeVector const &b, SizeVec
 }
 
 template <typename T, typename C>
-inline bool UpgradeIteratorFromBroadcast(SizeVector const &a, TensorIterator<T, C> &iterator)
+inline bool UpgradeIteratorFromBroadcast(SizeVector const &a, TensorSliceIterator<T, C> &iterator)
 {
   assert(iterator.counter() == 0);   // Only upgrade untouched iterators.
   iterator.counter_ = uint64_t(-1);  // Invalidating the iterator
@@ -150,18 +150,17 @@ inline bool Broadcast(F function, Tensor<T, C> &a, Tensor<T, C> &b, Tensor<T, C>
     rangeC.push_back({0, i});
   }
 
-  TensorIterator<T, C> it_a(a, rangeA);
-  TensorIterator<T, C> it_b(b, rangeB);
-  TensorIterator<T, C> it_c(c, rangeC);
+  TensorSliceIterator<T, C> it_a(a, rangeA);
+  TensorSliceIterator<T, C> it_b(b, rangeB);
+  TensorSliceIterator<T, C> it_c(c, rangeC);
 
   if (!UpgradeIteratorFromBroadcast(cshape, it_a))
   {
-    std::cout << "Could not promote iterator A" << std::endl;
     return false;
   }
+
   if (!UpgradeIteratorFromBroadcast(cshape, it_b))
   {
-    std::cout << "Could not promote iterator B" << std::endl;
     return false;
   }
 
