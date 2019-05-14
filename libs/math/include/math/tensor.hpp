@@ -205,35 +205,7 @@ public:
    * @param shape the new shape to set
    * @param copy whether to copy old data to new container or not
    */
-  bool Resize(SizeVector const &shape, bool copy = false)
-  {
-    Tensor old_tensor = *this;
-
-    SizeType new_size = Tensor::PaddedSizeFromShape(shape);
-    data_             = ContainerType(new_size);
-
-    data_.SetAllZero();
-    shape_         = shape;
-    size_          = Tensor::SizeFromShape(shape);  // Note: differs from new_size
-    padded_height_ = PadValue(shape[0]);
-    UpdateStrides();
-
-    // Effectively a reshape
-    if (copy && (size_ == old_tensor.size()))
-    {
-      auto it  = begin();
-      auto oit = old_tensor.begin();
-      assert(it.size() == oit.size());
-      while (it.is_valid())
-      {
-        *it = *oit;
-        ++it;
-        ++oit;
-      }
-      return true;
-    }
-    return false;
-  }
+  bool Resize(SizeVector const &shape, bool copy = false);
 
   /**
    * Resizes and reshapes tensor according to newly specified shape
@@ -498,6 +470,11 @@ public:
     return PADDING;
   }
 
+  /* @breif returns the smallest number which is a multiple of PADDING and greater than or equal to
+   a desired size.
+   * @param size is the size to be padded.
+   & @returns the padded size
+   */
   static SizeType PadValue(SizeType size)
   {
     SizeType ret = SizeType(size / PADDING) * PADDING;
@@ -1129,6 +1106,37 @@ Tensor<T, C> &Tensor<T, C>::operator=(TensorSlice const &slice)
   return *this;
 }
 
+template <typename T, typename C>
+bool Tensor<T, C>::Resize(SizeVector const &shape, bool copy = false)
+{
+  Tensor old_tensor = *this;
+
+  SizeType new_size = Tensor::PaddedSizeFromShape(shape);
+  data_             = ContainerType(new_size);
+
+  data_.SetAllZero();
+  shape_         = shape;
+  size_          = Tensor::SizeFromShape(shape);  // Note: differs from new_size
+  padded_height_ = PadValue(shape[0]);
+  UpdateStrides();
+
+  // Effectively a reshape
+  if (copy && (size_ == old_tensor.size()))
+  {
+    auto it  = begin();
+    auto oit = old_tensor.begin();
+    assert(it.size() == oit.size());
+    while (it.is_valid())
+    {
+      *it = *oit;
+      ++it;
+      ++oit;
+    }
+    return true;
+  }
+  return false;
+}
+
 /**
  * Set operator takes variable number of indices followed by one value.
  * This is made possible using the TensorSetter class to manage
@@ -1492,7 +1500,8 @@ Tensor<T, C> Tensor<T, C>::Transpose(SizeVector &new_axes) const
 template <typename T, typename C>
 Tensor<T, C> &Tensor<T, C>::Squeeze()
 {
-  auto shape = shape_;  // TODO: Make last dimension for efficiency
+  // TODO(private issue 998): Make last dimension for efficiency
+  auto shape = shape_;
   shape.erase(shape.begin());
   Reshape(shape);
 

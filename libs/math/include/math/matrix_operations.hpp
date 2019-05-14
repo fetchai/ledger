@@ -107,7 +107,7 @@ meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
                                                  ArrayType const &mask, ArrayType &ret)
 {
   ASSERT(input_array.size() == mask.size());
-  ASSERT(ret.size() == typename ArrayType::SizeType(Sum(mask)));
+  ASSERT(ret.size() >= typename ArrayType::SizeType(Sum(mask)));
 
   auto     it1 = input_array.cbegin();
   auto     it2 = mask.cbegin();
@@ -117,7 +117,7 @@ meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
   {
     // TODO(private issue 193): implement boolean only array
     ASSERT((*it2 == 1) || (*it2 == 0));
-    if (std::uint64_t(*it2))
+    if (static_cast<uint64_t>(*it2))
     {
       *rit = *it1;
       ++counter;
@@ -127,7 +127,6 @@ meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
     ++rit;
   }
 
-  // TODO(tfr): Is this correct - that does not look right!
   ret.Resize({counter});
 }
 template <typename ArrayType>

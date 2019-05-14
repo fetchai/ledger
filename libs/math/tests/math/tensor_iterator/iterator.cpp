@@ -50,13 +50,13 @@ TEST(tensor_iterator, simple_iterator_permute_test)
   // set up an initial array
   Tensor<double> array{Tensor<double>::Arange(0u, 77u, 1u)};
   array.Reshape({7, 11});
-  ASSERT_TRUE(array.size() == 77);
+  EXPECT_EQ(array.size(), 77);
 
   Tensor<double> ret;
   ret.ResizeFromShape(array.shape());
 
-  ASSERT_TRUE(ret.size() == array.size());
-  ASSERT_TRUE(ret.shape() == array.shape());
+  EXPECT_EQ(ret.size(), array.size());
+  EXPECT_EQ(ret.shape(), array.shape());
   TensorSliceIterator<double, Tensor<double>::ContainerType> it(array);
   TensorSliceIterator<double, Tensor<double>::ContainerType> it2(ret);
 
@@ -78,12 +78,12 @@ TEST(tensor_iterator, simple_iterator_permute_test)
 
   for (SizeType i = 0; i < array.size(); ++i)
   {
-    ASSERT_TRUE(array[i] == double(i));
+    EXPECT_EQ(array[i], double(i));
 
     cur_row  = i / 7;
     test_val = (11 * (i % 7)) + cur_row;
 
-    ASSERT_TRUE(double(ret[i]) == double(test_val));
+    EXPECT_EQ(double(ret[i]), double(test_val));
   }
 }
 
@@ -120,7 +120,7 @@ TEST(tensor_iterator, iterator_4dim_copy_test)
         for (SizeType l = 0; l < 6; ++l)
         {
           std::vector<SizeType> idxs = {i, j, k, l};
-          ASSERT_TRUE(int(ret.Get(idxs)) == int(array.Get(idxs)));
+          EXPECT_EQ(int(ret.Get(idxs)), int(array.Get(idxs)));
         }
       }
     }
@@ -162,7 +162,7 @@ TEST(Tensor, iterator_4dim_permute_test)
         {
           std::vector<SizeType> idxs  = {i, j, k, l};
           std::vector<SizeType> idxs2 = {i, l, k, j};
-          ASSERT_TRUE(int(ret.Get(idxs)) == int(array.Get(idxs2)));
+          EXPECT_EQ(int(ret.Get(idxs)), int(array.Get(idxs2)));
         }
       }
     }
@@ -233,6 +233,6 @@ TEST(Tensor, simple_iterator_transpose_test)
 
   for (SizeType j = 0; j < array.size(); ++j)
   {
-    ASSERT_TRUE(array[j] == test_array[j]);
+    EXPECT_EQ(array[j], test_array[j]);
   }
 }
