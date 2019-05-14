@@ -660,7 +660,7 @@ void MainChain::WriteToFile()
     {
       FETCH_LOG_WARN(LOGGING_NAME,
                      "Failed to walk back the chain when writing to file! Block head: ",
-                     block->body.block_number);
+                     block_chain_.at(heaviest_.hash)->body.block_number);
       return;
     }
 
