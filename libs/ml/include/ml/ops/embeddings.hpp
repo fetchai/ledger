@@ -112,7 +112,7 @@ public:
         *it1 = 0;
         ++it1;
         ++it2;
-      }      
+      }
     }
     updated_rows_.clear();
   }
