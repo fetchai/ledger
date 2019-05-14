@@ -29,9 +29,8 @@
 
 #define TRAINING_WORDS 17000000
 
-// TODO: DataLoader needs dynamic context window (rather than fixed offset)
+// TODO: implement frequency table for selecting negative samples proportionally
 // TODO: batch training
-// TODO: unigram distribution
 
 using namespace fetch::ml;
 using DataType     = double;
@@ -60,13 +59,11 @@ struct TrainingParams
   std::string test_word  = "action";       // test word to consider
   std::string save_loc   = "./model.fba";  // save file location for exporting graph
 
-  SizeType total_words = TRAINING_WORDS * training_epochs;
-};
+  SizeType max_sentences    = 10000;  // maximum sentences for dataloader
+  SizeType max_sentence_len = 1700;   // maximum sentence length for dataloader
+  SizeType window_size      = 5;      // one side of the context window
 
-struct DataParams
-{
-  SizeType max_sentences    = 100000;
-  SizeType max_sentence_len = 1000;
+  SizeType total_words = TRAINING_WORDS * training_epochs;
 };
 
 template <typename ArrayType>
@@ -79,20 +76,18 @@ public:
   /// Data & cursors
   ///
 
-  ArrayType      data_;
-  SizeType const cursor_offset_      = 3;
-  SizeType       n_positive_cursors_ = 6;
-  IteratorType   cursor_             = {data_};
+  ArrayType    data_;
+  SizeType     cursor_offset_;
+  SizeType     n_positive_cursors_;
+  IteratorType cursor_ = {data_};
 
   // positive cursors
-  IteratorType positive_cursors_[6] = {data_, data_, data_, data_, data_, data_};
-  IteratorType neg_context_cursor_  = data_;
+  std::vector<IteratorType> positive_cursors_;
 
   ///
   /// Random values
   ///
 
-  //  LaggedFibonnaciGenerator gen;
   fetch::random::LinearCongruentialGenerator gen;
   SizeType                                   ran_val_;
   SizeType                                   n_ran_rows_ = 1000;
@@ -104,10 +99,17 @@ public:
   std::unordered_map<std::string, SizeType> vocab_;             // unique vocab of words
   std::unordered_map<SizeType, SizeType>    vocab_frequencies;  // the count of each vocab word
 
-  DataLoader(SizeType max_sentence_len, SizeType max_sentences)
+  DataLoader(SizeType max_sentence_len, SizeType max_sentences, SizeType window_size)
     : data_({max_sentence_len, max_sentences})
+    , cursor_offset_(window_size)
+    , n_positive_cursors_(2 * window_size)
     , max_sentence_len_(max_sentence_len)
   {
+    for (std::size_t i = 0; i < n_positive_cursors_; ++i)
+    {
+      positive_cursors_.emplace_back(IteratorType(data_));
+    }
+
     PrepareDynamicWindowProbs();
   }
 
@@ -180,26 +182,26 @@ public:
 
     // dynamic context window - pick positive cursor
     context_idx = SizeType(*(positive_cursors_[ran_positive_cursor_[ran_val_]]));
-
-    ++cursor_;
-    for (std::size_t i = 0; i < n_positive_cursors_; ++i)
-    {
-      ++(positive_cursors_[i]);
-    }
-    ++neg_context_cursor_;
   }
 
   void next_negative(SizeType &input_idx, SizeType &context_idx)
   {
-    input_idx   = SizeType(*cursor_);
-    context_idx = SizeType(*neg_context_cursor_);
+    input_idx = SizeType(*cursor_);
 
+    // generate random value
+    ran_val_ = gen() % data_.size();
+
+    // randomly select a negative cursor
+    context_idx = static_cast<SizeType>(data_(ran_val_));
+  }
+
+  void IncrementCursors()
+  {
     ++cursor_;
     for (std::size_t i = 0; i < n_positive_cursors_; ++i)
     {
       ++(positive_cursors_[i]);
     }
-    ++neg_context_cursor_;
   }
 
   bool done()
@@ -208,7 +210,7 @@ public:
     //      return ( (!((*cursor_).is_valid())) || (!((*neg_context_cursor_).is_valid())) );
 
     // but we dont have to if we have a fixed negative context up front
-    return (!(neg_context_cursor_.is_valid()));
+    return (!(positive_cursors_[n_positive_cursors_ - 1].is_valid()));
   }
 
   void reset_cursor()
@@ -229,12 +231,8 @@ public:
       }
     }
 
-    // the negative cursor sits on max_len sentence in front
-    neg_context_cursor_ = IteratorType(data_, max_sentence_len_);
-
     ASSERT(cursor_.is_valid());
-    ASSERT(neg_context_cursor_.is_valid());
-    for (std::size_t l = 0; l < 2 * cursor_offset_; ++l)
+    for (std::size_t l = 0; l < n_positive_cursors_; ++l)
     {
       ASSERT(positive_cursors_[l].is_valid());
     }
@@ -412,10 +410,6 @@ public:
     // dl/d(v_in) = g * v_out'
     // dl/d(v_out) = v_in' * g
 
-    // calculate g and store it in result_[0]
-    //    std::cout << "input_vector_.ToString(): " << input_vector_.ToString() << std::endl;
-    //    std::cout << "context_vector_.ToString(): " << context_vector_.ToString() << std::endl;
-
     // multiply by learning rate
     result_[0] = (gt - result_[0]) * alpha_;
 
@@ -516,7 +510,6 @@ int main(int argc, char **argv)
   std::cout << "FETCH Word2Vec Demo" << std::endl;
 
   TrainingParams tp;
-  DataParams     dp;
 
   ///////////////////////////////////////
   /// CONVERT TEXT INTO TRAINING DATA ///
@@ -525,7 +518,7 @@ int main(int argc, char **argv)
   std::cout << "Setting up training data...: " << std::endl;
 
   // set up dataloader
-  DataLoader<ArrayType> dataloader(dp.max_sentence_len, dp.max_sentences);
+  DataLoader<ArrayType> dataloader(tp.max_sentence_len, tp.max_sentences, tp.window_size);
 
   // load text from files as necessary and process text with dataloader
   dataloader.AddData(ReadFile(training_text));
@@ -591,7 +584,7 @@ int main(int argc, char **argv)
     ++step_count;
     ++total_step_count;
 
-    sum_loss += loss;
+    sum_loss += (loss * model.alpha_);
 
     ///////////////////////////////
     /// run k negative examples ///
@@ -613,7 +606,15 @@ int main(int argc, char **argv)
       model.Backward(input_word_idx, context_word_idx, gt);
       ++step_count;
       ++total_step_count;
+
+      sum_loss += (loss * model.alpha_);
     }
+
+    ////////////////////////
+    /// IncrementCursors ///
+    ////////////////////////
+
+    dataloader.IncrementCursors();
 
     /////////////////////////
     /// print performance ///
