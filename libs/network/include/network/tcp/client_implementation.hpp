@@ -331,8 +331,6 @@ private:
     uint64_t magic = *reinterpret_cast<const uint64_t *>(header.pointer());
     uint64_t size  = *reinterpret_cast<const uint64_t *>(header.pointer() + sizeof(uint64_t));
 
-    /*FETCH_LOG_INFO(LOGGING_NAME, "Receive size: ", size);*/
-
     if (magic != networkMagic_)
     {
       byte_array::ByteArray dummy;
