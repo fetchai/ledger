@@ -37,6 +37,10 @@
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
 
+#include "ledger/dag/dag.hpp"
+#include "ledger/dag/dag_muddle_configuration.hpp"  //< TODO(tfr): Move to where it belongs
+#include "ledger/protocols/dag_rpc_service.hpp"
+
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -96,6 +100,7 @@ public:
     bool        disable_signing{false};
     bool        sign_broadcasts{false};
     NetworkMode network_mode{NetworkMode::PUBLIC_NETWORK};
+    bool        synergetic_mine{true};
 
     uint32_t num_lanes() const
     {
@@ -137,6 +142,8 @@ private:
   using HttpModules            = std::vector<HttpModulePtr>;
   using TransactionProcessor   = ledger::TransactionProcessor;
   using TrustSystem            = p2p::P2PTrustBayRank<Muddle::Address>;
+  using DAGRpcService          = fetch::ledger::DAGRpcService;
+  using DAG                    = fetch::ledger::DAG;
   using ShardConfigs           = ledger::ShardConfigs;
   using TxStatusCache          = ledger::TransactionStatusCache;
 
@@ -173,6 +180,12 @@ private:
   /// @name Block Processing
   /// @{
   ExecutionManagerPtr execution_manager_;  ///< The transaction execution manager
+  /// @}
+
+  /// @name DAG and useful work
+  /// @{
+  DAG           dag_;
+  DAGRpcService dag_rpc_service_;
   /// @}
 
   /// @name Blockchain and Mining

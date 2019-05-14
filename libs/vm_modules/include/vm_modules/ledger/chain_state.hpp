@@ -17,45 +17,35 @@
 //
 //------------------------------------------------------------------------------
 
-<<<<<<< HEAD
-#include "vm/module.hpp"
-=======
 #include "vm/analyser.hpp"
 #include "vm/typeids.hpp"
 
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
->>>>>>> feature/dag_v2
 
-#include <cmath>
+#include "core/json/document.hpp"
+#include "ledger/chain/block.hpp"
 
+#include "dag_node_wrapper.hpp"
 namespace fetch {
 namespace vm_modules {
 
-template <typename T>
-T LeftShift(fetch::vm::VM * /*vm*/, T x, T s)
+struct ChainState
 {
-  return T(x << s);
+  ledger::DAG * dag{nullptr};
+  ledger::Block block;
+};
+
+inline uint64_t GetBlockNumber(fetch::vm::VM *vm)
+{
+  auto state = vm->GetGlobalPointer<ChainState>();
+  return state->block.body.block_number;
 }
 
-template <typename T>
-T RightShift(fetch::vm::VM * /*vm*/, T x, T s)
+inline void CreateChainFunctions(vm::Module &module)
 {
-  return T(x >> s);
-}
-
-inline void BindBitShift(vm::Module &module)
-{
-  module.CreateFreeFunction("leftShift", &LeftShift<int32_t>);
-  module.CreateFreeFunction("leftShift", &LeftShift<int64_t>);
-  module.CreateFreeFunction("leftShift", &LeftShift<uint32_t>);
-  module.CreateFreeFunction("leftShift", &LeftShift<uint64_t>);
-
-  module.CreateFreeFunction("rightShift", &RightShift<int32_t>);
-  module.CreateFreeFunction("rightShift", &RightShift<int64_t>);
-  module.CreateFreeFunction("rightShift", &RightShift<uint32_t>);
-  module.CreateFreeFunction("rightShift", &RightShift<uint64_t>);
+  module.CreateFreeFunction("getBlockNumber", &GetBlockNumber);
 }
 
 }  // namespace vm_modules

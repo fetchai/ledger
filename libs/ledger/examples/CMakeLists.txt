@@ -12,3 +12,9 @@ setup_compiler()
 
 setup_library_examples(fetch-ledger)
 
+if(FETCH_ENABLE_EXAMPLES)
+
+
+#  target_include_directories(example-network-listener PRIVATE subscribe)
+
+endif(FETCH_ENABLE_EXAMPLES)

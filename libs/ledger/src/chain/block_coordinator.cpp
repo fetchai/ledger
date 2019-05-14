@@ -53,13 +53,15 @@ namespace ledger {
  * @param chain The reference to the main change
  * @param execution_manager  The reference to the execution manager
  */
-BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &execution_manager,
+BlockCoordinator::BlockCoordinator(MainChain &chain, DAG &dag,
+                                   ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                                    BlockSinkInterface &    block_sink,
                                    TransactionStatusCache &status_cache, Identity identity,
                                    std::size_t num_lanes, std::size_t num_slices,
                                    std::size_t block_difficulty)
   : chain_{chain}
+  , dag_{dag}
   , execution_manager_{execution_manager}
   , storage_unit_{storage_unit}
   , block_packer_{packer}
@@ -77,21 +79,29 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   , tx_wait_periodic_{TX_SYNC_NOTIFY_INTERVAL}
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
   , syncing_periodic_{NOTIFY_INTERVAL}
+  , synergetic_executor_{dag, storage_unit_}
 {
   // configure the state machine
   // clang-format off
   state_machine_->RegisterHandler(State::RELOAD_STATE,                 this, &BlockCoordinator::OnReloadState);
   state_machine_->RegisterHandler(State::SYNCHRONIZING,                this, &BlockCoordinator::OnSynchronizing);
   state_machine_->RegisterHandler(State::SYNCHRONIZED,                 this, &BlockCoordinator::OnSynchronized);
+
+  // Pipe 1
   state_machine_->RegisterHandler(State::PRE_EXEC_BLOCK_VALIDATION,    this, &BlockCoordinator::OnPreExecBlockValidation);
+  state_machine_->RegisterHandler(State::SYNERGETIC_EXECUTION,         this, &BlockCoordinator::OnSynergeticExecution);
   state_machine_->RegisterHandler(State::WAIT_FOR_TRANSACTIONS,        this, &BlockCoordinator::OnWaitForTransactions);
   state_machine_->RegisterHandler(State::SCHEDULE_BLOCK_EXECUTION,     this, &BlockCoordinator::OnScheduleBlockExecution);
-  state_machine_->RegisterHandler(State::WAIT_FOR_EXECUTION,           this, &BlockCoordinator::OnWaitForExecution);
+  state_machine_->RegisterHandler(State::WAIT_FOR_EXECUTION,           this, &BlockCoordinator::OnWaitForExecution);  
   state_machine_->RegisterHandler(State::POST_EXEC_BLOCK_VALIDATION,   this, &BlockCoordinator::OnPostExecBlockValidation);
+
+  // Pipe 2
   state_machine_->RegisterHandler(State::PACK_NEW_BLOCK,               this, &BlockCoordinator::OnPackNewBlock);
+  state_machine_->RegisterHandler(State::NEW_SYNERGETIC_EXECUTION,     this, &BlockCoordinator::OnNewSynergeticExecution);
   state_machine_->RegisterHandler(State::EXECUTE_NEW_BLOCK,            this, &BlockCoordinator::OnExecuteNewBlock);
   state_machine_->RegisterHandler(State::WAIT_FOR_NEW_BLOCK_EXECUTION, this, &BlockCoordinator::OnWaitForNewBlockExecution);
   state_machine_->RegisterHandler(State::PROOF_SEARCH,                 this, &BlockCoordinator::OnProofSearch);
+
   state_machine_->RegisterHandler(State::TRANSMIT_BLOCK,               this, &BlockCoordinator::OnTransmitBlock);
   state_machine_->RegisterHandler(State::RESET,                        this, &BlockCoordinator::OnReset);
   // clang-format on
@@ -321,6 +331,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
     next_block_->body.previous_hash = current_block_->body.hash;
     next_block_->body.block_number  = current_block_->body.block_number + 1;
     next_block_->body.miner         = identity_;
+    next_block_->body.dag_nodes     = dag_.UncertifiedTipsAsVector();
 
     // ensure the difficulty is correctly set
     next_block_->proof.SetTarget(block_difficulty_);
@@ -405,10 +416,51 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     return State::RESET;
   }
 
+  // Validating DAG hashes
+  if ((!is_genesis) && synergetic_contracts_enabled_)
+  {
+    BlockPtr previous_block = chain_.GetBlock(current_block_->body.previous_hash);
+
+    // All work is identified on the latest DAG segment and prepared in a queue
+    auto result = synergetic_executor_.PrepareWorkQueue(*previous_block, *current_block_);
+    if (SynergeticExecutor::PreparationStatusType::SUCCESS != result)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Block certifies work that possibly is malicious (",
+                     ToBase64(current_block_->body.hash), ")");
+      chain_.RemoveBlock(current_block_->body.hash);
+
+      // TODO(unknown): Remove malicious DAG nodes
+
+      return State::RESET;
+    }
+  }
+
   // reset the tx wait period
   tx_wait_periodic_.Reset();
 
   // All the checks pass
+  return State::SYNERGETIC_EXECUTION;
+}
+
+BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
+{
+  bool const is_genesis = current_block_->body.previous_hash == GENESIS_DIGEST;
+
+  // Executing synergetic work
+  if ((!is_genesis) && synergetic_contracts_enabled_)
+  {
+    if (!synergetic_executor_.ValidateWorkAndUpdateState())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (", ToBase64(current_block_->body.hash),
+                     ")");
+      chain_.RemoveBlock(current_block_->body.hash);
+
+      // TODO(unknown): Remove malicious DAG nodes
+
+      return State::RESET;
+    }
+  }
+
   return State::WAIT_FOR_TRANSACTIONS;
 }
 
@@ -622,6 +674,8 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
 {
   State next_state{State::RESET};
 
+  // TODO(unknown): Pull the generated block off the DAG
+
   try
   {
     // call the block packer
@@ -641,9 +695,46 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
   return next_state;
 }
 
+BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
+{
+  if (synergetic_contracts_enabled_)
+  {
+    BlockPtr previous_block = chain_.GetBlock(next_block_->body.previous_hash);
+
+    // All work is identified on the latest DAG segment and prepared in a queue
+    auto result = synergetic_executor_.PrepareWorkQueue(*previous_block, *next_block_);
+    if (SynergeticExecutor::PreparationStatusType::SUCCESS != result)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Block certifies work that possibly is malicious (",
+                     ToBase64(next_block_->body.hash), ")");
+      chain_.RemoveBlock(next_block_->body.hash);
+
+      // TODO(unknown): Remove malicious DAG nodes
+
+      return State::RESET;
+    }
+  }
+
+  return State::EXECUTE_NEW_BLOCK;
+}
+
 BlockCoordinator::State BlockCoordinator::OnExecuteNewBlock()
 {
   State next_state{State::RESET};
+
+  // Executing synergetic work
+  if (synergetic_contracts_enabled_)
+  {
+    if (!synergetic_executor_.ValidateWorkAndUpdateState())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (", ToBase64(next_block_->body.hash), ")");
+      chain_.RemoveBlock(next_block_->body.hash);
+
+      // TODO(unknown): Remove malicious DAG nodes
+
+      return State::RESET;
+    }
+  }
 
   // schedule the current block for execution
   if (ScheduleNextBlock())
@@ -701,7 +792,7 @@ BlockCoordinator::State BlockCoordinator::OnProofSearch()
 {
   State next_state{State::PROOF_SEARCH};
 
-  if (miner_->Mine(*next_block_, 100))
+  if (miner_->Mine(*next_block_, 100))  // TODO(unknown): what is this hard-coded number?
   {
     // update the digest
     next_block_->UpdateDigest();
@@ -885,6 +976,9 @@ char const *BlockCoordinator::ToString(State state)
   case State::WAIT_FOR_TRANSACTIONS:
     text = "Waiting for Transactions";
     break;
+  case State::SYNERGETIC_EXECUTION:
+    text = "Synergetic Execution";
+    break;
   case State::SCHEDULE_BLOCK_EXECUTION:
     text = "Schedule Block Execution";
     break;
@@ -896,6 +990,9 @@ char const *BlockCoordinator::ToString(State state)
     break;
   case State::PACK_NEW_BLOCK:
     text = "Pack New Block";
+    break;
+  case State::NEW_SYNERGETIC_EXECUTION:
+    text = "New Synergetic Execution";
     break;
   case State::EXECUTE_NEW_BLOCK:
     text = "Execution New Block";

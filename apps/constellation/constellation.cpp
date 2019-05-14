@@ -20,8 +20,11 @@
 #include "http/middleware/allow_origin.hpp"
 #include "ledger/chain/consensus/bad_miner.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
+#include "ledger/chain/main_chain_http_interface.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/chaincode/wallet_http_interface.hpp"
+#include "ledger/dag/dag.hpp"
+#include "ledger/dag/dag_http_interface.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/tx_query_http_interface.hpp"
@@ -160,9 +163,12 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   , lane_control_(internal_muddle_.AsEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, storage_, [this] { return std::make_shared<Executor>(storage_); })}
+  , dag_{}
+  , dag_rpc_service_{muddle_, muddle_.AsEndpoint(), dag_}
   , chain_{ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes, cfg_.num_slices}
   , block_coordinator_{chain_,
+                       dag_,
                        *execution_manager_,
                        *storage_,
                        block_packer_,
@@ -185,8 +191,10 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
         std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
         std::make_shared<ledger::TxQueryHttpInterface>(*storage_, cfg_.log2_num_lanes),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
-        std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_)}
+        std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_),
+        std::make_shared<ledger::DAGHTTPInterface>(dag_, dag_rpc_service_)}
 {
+
   // print the start up log banner
   FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.interface_address, " E ",
                  cfg_.num_executors, " S ", cfg_.num_lanes(), "x", cfg_.num_slices);
@@ -255,15 +263,14 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
 
   // start all the services
   network_manager_.Start();
+
   http_network_manager_.Start();
   muddle_.Start({p2p_port_});
-
   /// LANE / SHARD SERVERS
 
   // start all the lane services and wait for them to start accepting
   // connections
   lane_services_.Start();
-
   FETCH_LOG_INFO(LOGGING_NAME, "Starting shard services...");
   if (!WaitForLaneServersToStart())
   {
@@ -325,6 +332,23 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   execution_manager_->Start();
   tx_processor_.Start();
 
+  /////////////////////////////////
+  //// TODO
+
+  //  dag_.OnNewNode([this](fetch::ledger::DAGNode /*node*/)
+  //  {
+  //    // TODO: Replace with a way of updating the contents of the next block being mined.
+  //    mock_chain_.SetTips(dag_.tips_unsafe());
+  //  });
+
+  //  // TODO: Replace
+  //  mock_chain_.OnBlock([this](fetch::ledger::Block block)
+  //  {
+  //    //dag_.SetNodeTime(block.body.block_number, block.body.dag_nodes);
+  //  });
+  //// TODO
+  /////////////////////////////////
+
   /// P2P (TRUST) HIGH LEVEL MANAGEMENT
 
   // P2P configuration
@@ -343,7 +367,6 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   //---------------------------------------------------------------
   // Step 2. Main monitor loop
   //---------------------------------------------------------------
-
   bool start_up_in_progress{true};
 
   // monitor loop

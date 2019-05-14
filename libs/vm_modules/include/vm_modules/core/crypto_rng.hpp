@@ -17,46 +17,56 @@
 //
 //------------------------------------------------------------------------------
 
-<<<<<<< HEAD
-#include "vm/module.hpp"
-=======
 #include "vm/analyser.hpp"
 #include "vm/typeids.hpp"
 
+#include "core/random/lfg.hpp"
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
->>>>>>> feature/dag_v2
-
-#include <cmath>
 
 namespace fetch {
 namespace vm_modules {
 
-template <typename T>
-T LeftShift(fetch::vm::VM * /*vm*/, T x, T s)
+class CryptoRNG : public fetch::vm::Object
 {
-  return T(x << s);
-}
+public:
+  CryptoRNG()          = delete;
+  virtual ~CryptoRNG() = default;
 
-template <typename T>
-T RightShift(fetch::vm::VM * /*vm*/, T x, T s)
-{
-  return T(x >> s);
-}
+  static void Bind(vm::Module &module)
+  {
+    module.CreateClassType<CryptoRNG>("CryptoRNG")
+        .CreateTypeConstuctor<uint64_t>()
+        .CreateInstanceFunction("next", &CryptoRNG::Next)
+        .CreateInstanceFunction("nextAsFloat", &CryptoRNG::NextAsFloat);
+  }
 
-inline void BindBitShift(vm::Module &module)
-{
-  module.CreateFreeFunction("leftShift", &LeftShift<int32_t>);
-  module.CreateFreeFunction("leftShift", &LeftShift<int64_t>);
-  module.CreateFreeFunction("leftShift", &LeftShift<uint32_t>);
-  module.CreateFreeFunction("leftShift", &LeftShift<uint64_t>);
+  CryptoRNG(fetch::vm::VM *vm, fetch::vm::TypeId type_id, uint64_t seed)
+    : fetch::vm::Object(vm, type_id)
+    , rng_(seed)
+  {}
 
-  module.CreateFreeFunction("rightShift", &RightShift<int32_t>);
-  module.CreateFreeFunction("rightShift", &RightShift<int64_t>);
-  module.CreateFreeFunction("rightShift", &RightShift<uint32_t>);
-  module.CreateFreeFunction("rightShift", &RightShift<uint64_t>);
-}
+  static fetch::vm::Ptr<CryptoRNG> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                                               uint64_t seed)
+  {
+    return new CryptoRNG(vm, type_id, seed);
+  }
+
+  uint64_t Next()
+  {
+    return rng_();
+  }
+
+  double NextAsFloat()  // TODO: Replace with fixed point
+  {
+    return rng_.AsDouble();
+  }
+
+private:
+  // TODO(tfr): Replace with "real" ledger based crypto rng
+  random::LaggedFibonacciGenerator<> rng_;
+};
 
 }  // namespace vm_modules
 }  // namespace fetch

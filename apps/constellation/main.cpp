@@ -253,6 +253,7 @@ struct CommandLineArguments
     p.add(args.cfg.sign_broadcasts,       "sign-broadcasts",       "Sign and verify broadcast packets",                                                            false);
     p.add(standalone_flag,                "standalone",            "Run node on its own (useful for testing and development). Incompatible with -private-network", false);
     p.add(private_flag,                   "private-network",       "Run node as part of a private network (disables bootstrap). Incompatible with -standalone",    false);
+    p.add(args.cfg.synergetic_mine,       "synergetic-mine",       "Mines solutions to synergetic contracts.",                                      true);
     // clang-format on
 
     // parse the args

@@ -18,10 +18,22 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/sha256.hpp"
+<<<<<<< HEAD
 
 #include "vm_modules/core/byte_array_wrapper.hpp"
 
 #include "vm/module.hpp"
+=======
+#include "vm/analyser.hpp"
+#include "vm/typeids.hpp"
+#include "vm_modules/core/byte_array_wrapper.hpp"
+
+#include "vm/compiler.hpp"
+#include "vm/module.hpp"
+#include "vm/vm.hpp"
+
+#include "vm/vm.hpp"
+>>>>>>> feature/dag_v2
 
 namespace fetch {
 namespace vm_modules {
@@ -41,11 +53,19 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<SHA256Wrapper>("SHA256")
+<<<<<<< HEAD
         .CreateConstuctor<>()
         .CreateMemberFunction("update", &SHA256Wrapper::UpdateString)
         .CreateMemberFunction("update", &SHA256Wrapper::UpdateBuffer)
         .CreateMemberFunction("final", &SHA256Wrapper::Final)
         .CreateMemberFunction("reset", &SHA256Wrapper::Reset);
+=======
+        .CreateTypeConstuctor<>()
+        .CreateInstanceFunction("update", &SHA256Wrapper::UpdateString)
+        .CreateInstanceFunction("update", &SHA256Wrapper::UpdateBuffer)
+        .CreateInstanceFunction("final", &SHA256Wrapper::Final)
+        .CreateInstanceFunction("reset", &SHA256Wrapper::Reset);
+>>>>>>> feature/dag_v2
   }
 
   void UpdateString(vm::Ptr<vm::String> const &str)
@@ -82,4 +102,8 @@ private:
 };
 
 }  // namespace vm_modules
+<<<<<<< HEAD
 }  // namespace fetch
+=======
+}  // namespace fetch
+>>>>>>> feature/dag_v2

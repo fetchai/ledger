@@ -24,6 +24,8 @@
 #include "core/threading/synchronised_state.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/dag/dag.hpp"
+#include "ledger/upow/synergetic_executor.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -64,21 +66,22 @@ class BlockSinkInterface;
  *           ┌─────────────────────────┴────────────────────────┐                │
  *           │                                                  │                │
  *           │                                                  ▼                │
- *           │                                        ┌──────────────────┐       │
- *           │                                        │   Synchronised   │       │
- *           │                         ┌──────────────│                  │◀ ┐    │
- *           │                         │              └──────────────────┘       │
- *           │                         │                        │           │    │
+ *  Pipe 1   │                Pipe 2                  ┌──────────────────┐       │
+ *           │                                        │   Synchronised   │       │ < (v) Add DAG
+ * hashes to block here. │                         ┌──────────────│Reverts as needed │◀ ┐    │ < ( )
+ * Add revert here │                         │              └──────────────────┘       │ │ │ │ │ │
  *           │                         │                        │                │
  *           │                         │                        ├ ─ ─ ─ ─ ─ ┘    │
  *           ▼                         ▼                        │                │
- * ┌──────────────────┐      ┌──────────────────┐               │                │
- * │ Pre Exec. Block  │      │  Pack New Block  │               │                │
- * │    Validation    │      │                  │               │                │
- * └──────────────────┘      └──────────────────┘               │                │
- *           │                         │                        │                │
- *           │                         │                        │                │
- *           ▼                         ▼                        │                │
+ * ┌──────────────────┐      ┌──────────────────┐               │                │ < 1: Add
+ * synergetic validation here │ Pre Exec. Block  │      │  Pack New Block  │               │ │ │
+ * Validation    │      │                  │               │                │ └──────────────────┘
+ * └──────────────────┘               │                │ │                         │ │ │ │ │ │ │ │
+ * │                        │                │ ▼                         ▼                        │
+ * │ ┌──────────────────┐      ┌──────────────────┐               │                │ < 1 & 2: Add
+ * synergetic execution here │ Synergetic       │      │  Synergetic new  │               │ │ < //
+ * TODO: Move one down below wait for transactions │ execution        │      │  execution       │ │
+ * │ └──────────────────┘      └──────────────────┘               │                │ │ │ │ │ ▼ ▼ │ │
  * ┌──────────────────┐      ┌──────────────────┐               │                │
  * │  Schedule Block  │      │Execute New Block │               │                │
  * │    Execution     │      │                  │               │                │
@@ -123,29 +126,39 @@ public:
 
   using ConstByteArray = byte_array::ConstByteArray;
   using Identity       = ConstByteArray;
+  using DAG            = fetch::ledger::DAG;
 
   enum class State
   {
-    RELOAD_STATE,                  ///< Recovering previous state
-    SYNCHRONIZING,                 ///< Catch up with the outstanding blocks
-    SYNCHRONIZED,                  ///< Caught up waiting to generate a new block
-    PRE_EXEC_BLOCK_VALIDATION,     ///< Validation stage before block execution
-    WAIT_FOR_TRANSACTIONS,         ///< Halts the state machine until all the block transactions are
-                                   ///< present
-    SCHEDULE_BLOCK_EXECUTION,      ///< Schedule the block to be executed
-    WAIT_FOR_EXECUTION,            ///< Wait for the execution to be completed
-    POST_EXEC_BLOCK_VALIDATION,    ///< Perform final block validation
-    PACK_NEW_BLOCK,                ///< Mine a new block from the head of the chain
+    // Main loop
+    RELOAD_STATE,   ///< Recovering previous state
+    SYNCHRONIZING,  ///< Catch up with the outstanding blocks
+    SYNCHRONIZED,   ///< Caught up waiting to generate a new block
+
+    // Pipe 1
+    PRE_EXEC_BLOCK_VALIDATION,  ///< Validation stage before block execution
+    SYNERGETIC_EXECUTION,
+    WAIT_FOR_TRANSACTIONS,       ///< Halts the state machine until all the block transactions are
+                                 ///< present
+    SCHEDULE_BLOCK_EXECUTION,    ///< Schedule the block to be executed
+    WAIT_FOR_EXECUTION,          ///< Wait for the execution to be completed
+    POST_EXEC_BLOCK_VALIDATION,  ///< Perform final block validation
+
+    // Pipe 2
+    PACK_NEW_BLOCK,  ///< Mine a new block from the head of the chain
+    NEW_SYNERGETIC_EXECUTION,
     EXECUTE_NEW_BLOCK,             ///< Schedule the execution of the new block
     WAIT_FOR_NEW_BLOCK_EXECUTION,  ///< Wait for the new block to be executed
     PROOF_SEARCH,                  ///< New Block: Waiting until a hash can be found
     TRANSMIT_BLOCK,                ///< Transmit the new block to
-    RESET                          ///< Cycle complete
+
+    // Main loop
+    RESET  ///< Cycle complete
   };
   using StateMachine = core::StateMachine<State>;
 
   // Construction / Destruction
-  BlockCoordinator(MainChain &chain, ExecutionManagerInterface &execution_manager,
+  BlockCoordinator(MainChain &chain, DAG &dag, ExecutionManagerInterface &execution_manager,
                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                    BlockSinkInterface &block_sink, TransactionStatusCache &status_cache,
                    Identity identity, std::size_t num_lanes, std::size_t num_slices,
@@ -205,32 +218,39 @@ private:
 
   static constexpr uint64_t COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT = 1000;
 
-  using Mutex             = fetch::mutex::Mutex;
-  using BlockPtr          = MainChain::BlockPtr;
-  using NextBlockPtr      = std::unique_ptr<Block>;
-  using PendingBlocks     = std::deque<BlockPtr>;
-  using PendingStack      = std::vector<BlockPtr>;
-  using Flag              = std::atomic<bool>;
-  using BlockPeriod       = std::chrono::milliseconds;
-  using Clock             = std::chrono::system_clock;
-  using Timepoint         = Clock::time_point;
-  using StateMachinePtr   = std::shared_ptr<StateMachine>;
-  using MinerPtr          = std::shared_ptr<consensus::ConsensusMinerInterface>;
-  using TxDigestSetPtr    = std::unique_ptr<TxDigestSet>;
-  using LastExecutedBlock = SynchronisedState<ConstByteArray>;
-  using FutureTimepoint   = fetch::core::FutureTimepoint;
+  using Mutex              = fetch::mutex::Mutex;
+  using BlockPtr           = MainChain::BlockPtr;
+  using NextBlockPtr       = std::unique_ptr<Block>;
+  using PendingBlocks      = std::deque<BlockPtr>;
+  using PendingStack       = std::vector<BlockPtr>;
+  using Flag               = std::atomic<bool>;
+  using BlockPeriod        = std::chrono::milliseconds;
+  using Clock              = std::chrono::system_clock;
+  using Timepoint          = Clock::time_point;
+  using StateMachinePtr    = std::shared_ptr<StateMachine>;
+  using MinerPtr           = std::shared_ptr<consensus::ConsensusMinerInterface>;
+  using TxDigestSetPtr     = std::unique_ptr<TxDigestSet>;
+  using LastExecutedBlock  = SynchronisedState<ConstByteArray>;
+  using FutureTimepoint    = fetch::core::FutureTimepoint;
+  using SynergeticExecutor = fetch::consensus::SynergeticExecutor;
 
   /// @name Monitor State
   /// @{
   State OnReloadState();
   State OnSynchronizing();
   State OnSynchronized(State current, State previous);
+
+  // Phase 1
   State OnPreExecBlockValidation();
   State OnWaitForTransactions(State current, State previous);
+  State OnSynergeticExecution();
   State OnScheduleBlockExecution();
   State OnWaitForExecution();
   State OnPostExecBlockValidation();
+
+  // Phase 2
   State OnPackNewBlock();
+  State OnNewSynergeticExecution();
   State OnExecuteNewBlock();
   State OnWaitForNewBlockExecution();
   State OnProofSearch();
@@ -251,6 +271,7 @@ private:
   /// @name External Components
   /// @{
   MainChain &                chain_;              ///< Ref to system chain
+  DAG &                      dag_;                ///< Ref to DAG
   ExecutionManagerInterface &execution_manager_;  ///< Ref to system execution manager
   StorageUnitInterface &     storage_unit_;       ///< Ref to the storage unit
   BlockPackerInterface &     block_packer_;       ///< Ref to the block packer
@@ -291,6 +312,12 @@ private:
   bool have_asked_for_missing_txs_;  ///< true if a request for missing Txs has been issued for the
                                      ///< current block
   /// @}
+
+  /// @name Synergetic Contracts
+  /// @{
+  bool synergetic_contracts_enabled_{true};  //< Variable to disable synergetic contracts
+  SynergeticExecutor synergetic_executor_;
+  /// }
 };
 
 template <typename R, typename P>
