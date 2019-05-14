@@ -54,7 +54,8 @@ FILE_PATTERS = ('*.cpp', '*.hpp')
 
 def parse_commandline():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--fix', action='store_true', help='Enable updating of source files')
+    parser.add_argument('--fix', action='store_true',
+                        help='Enable updating of source files')
     return parser.parse_args()
 
 
@@ -87,13 +88,13 @@ def update_source_file(path):
 
     contents = read_file(path)
 
-
     # do not bother processing files which have the license
     if LICENSE in contents:
         return True
 
     # determine if the license is present already in the source code
-    existing_license_present = bool(re.search(RE_LICENSE, contents, re.MULTILINE))
+    existing_license_present = bool(
+        re.search(RE_LICENSE, contents, re.MULTILINE))
 
     if existing_license_present:
 
@@ -108,7 +109,8 @@ def update_source_file(path):
     elif path.endswith('.hpp'):
 
         # add the license after the header guard
-        contents = re.sub(r'#pragma once\s+', '#pragma once\n' + LICENSE, contents)
+        contents = re.sub(r'#pragma once\s+',
+                          '#pragma once\n' + LICENSE, contents)
 
     else:
         print('Unable to update file: ', os.path.relpath(path, PROJECT_ROOT))
@@ -116,7 +118,8 @@ def update_source_file(path):
 
     # final top level sanity check
     if LICENSE not in contents:
-        print('Unable to apply update to file:', os.path.relpath(path, PROJECT_ROOT))
+        print('Unable to apply update to file:',
+              os.path.relpath(path, PROJECT_ROOT))
         return False
 
     # update the contents of the file

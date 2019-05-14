@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/leaky_relu_op.hpp"
-#include "core/fixed_point/fixed_point.hpp"
+#include "math/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 

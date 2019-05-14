@@ -8,13 +8,15 @@ EXPECTED_CMAKE_VERSION = 'cmake_minimum_required(VERSION 3.5 FATAL_ERROR)'
 
 def parse_commandline():
     parser = argparse.ArgumentParser()
-    parser.add_argument('path', nargs='?', default='.', type=os.path.abspath, help='The path to search')
-    parser.add_argument('--verbose', action='store_true', help='If enabled print more information out')
+    parser.add_argument('path', nargs='?', default='.',
+                        type=os.path.abspath, help='The path to search')
+    parser.add_argument('--verbose', action='store_true',
+                        help='If enabled print more information out')
     return parser.parse_args()
 
 
 def create_status_printer():
-    basic_formatter = lambda x: 'Passed' if x else 'FAILED'
+    def basic_formatter(x): return 'Passed' if x else 'FAILED'
 
     try:
         import crayons
