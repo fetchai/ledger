@@ -26,7 +26,7 @@
 namespace fetch {
 
 namespace vm {
-struct Script;
+struct Executable;
 class Module;
 }  // namespace vm
 
@@ -41,8 +41,8 @@ class SmartContract : public Contract
 {
 public:
   using ConstByteArray = byte_array::ConstByteArray;
-  using Script         = fetch::vm::Script;
-  using ScriptPtr      = std::shared_ptr<Script>;
+  using Executable     = fetch::vm::Executable;
+  using ExecutablePtr  = std::shared_ptr<Executable>;
 
   static constexpr char const *LOGGING_NAME = "SmartContract";
 
@@ -55,9 +55,9 @@ public:
     return digest_;
   }
 
-  ScriptPtr script()
+  ExecutablePtr executable()
   {
-    return script_;
+    return executable_;
   }
 
 private:
@@ -68,10 +68,10 @@ private:
   Status InvokeQuery(std::string const &name, Query const &request, Query &response);
   Status InvokeInit(Identity const &owner);
 
-  std::string    source_;  ///< The source of the current contract
-  ConstByteArray digest_;  ///< The digest of the current contract
-  ScriptPtr      script_;  ///< The internal script object of the parsed source
-  ModulePtr      module_;  ///< The internal module instance for the contract
+  std::string    source_;      ///< The source of the current contract
+  ConstByteArray digest_;      ///< The digest of the current contract
+  ExecutablePtr  executable_;  ///< The internal script object of the parsed source
+  ModulePtr      module_;      ///< The internal module instance for the contract
   std::string    init_fn_name_;
 };
 

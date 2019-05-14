@@ -15,7 +15,8 @@
 import numpy as np
 import pylab
 
-#np.set_printoptions(threshold=np.inf)
+# np.set_printoptions(threshold=np.inf)
+
 
 def Hbeta(D=np.array([]), beta=1.0):
     """
@@ -56,7 +57,7 @@ def x2p(X=np.array([]), tol=1e-5, perplexity=30.0):
         # Compute the Gaussian kernel and entropy for the current precision
         betamin = -np.inf
         betamax = np.inf
-        Di = D[i, np.concatenate((np.r_[0:i], np.r_[i+1:n]))]
+        Di = D[i, np.concatenate((np.r_[0:i], np.r_[i + 1:n]))]
         (H, thisP) = Hbeta(Di, beta[i])
 
         # Evaluate whether the perplexity is within tolerance
@@ -84,11 +85,12 @@ def x2p(X=np.array([]), tol=1e-5, perplexity=30.0):
             tries += 1
 
         # Set the final row of P
-        P[i, np.concatenate((np.r_[0:i], np.r_[i+1:n]))] = thisP
+        P[i, np.concatenate((np.r_[0:i], np.r_[i + 1:n]))] = thisP
 
     # Return final P-matrix
     print("Mean value of sigma: %f" % np.mean(np.sqrt(1 / beta)))
     return P
+
 
 def pca(X=np.array([]), no_dims=50):
     """
@@ -102,6 +104,7 @@ def pca(X=np.array([]), no_dims=50):
     (l, M) = np.linalg.eig(np.dot(X.T, X))
     Y = np.dot(X, M[:, 0:no_dims])
     return Y
+
 
 def tsne(X=np.array([]), no_dims=2, initial_dims=50, perplexity=30.0):
     """
@@ -119,10 +122,10 @@ def tsne(X=np.array([]), no_dims=2, initial_dims=50, perplexity=30.0):
         return -1
 
     # Initialize variables
-    
+
     # PCA can be optionaly used for reducing input matrix dimmensions in order to make TSNE run faster
     # X = pca(X, initial_dims).real
-    
+
     (n, d) = X.shape
     max_iter = 100
     initial_momentum = 0.5
@@ -130,7 +133,7 @@ def tsne(X=np.array([]), no_dims=2, initial_dims=50, perplexity=30.0):
     eta = 500
     min_gain = 0.01
     #Y = np.random.randn(n, no_dims)
-    Y=np.loadtxt("mine_Y.txt")
+    Y = np.loadtxt("mine_Y.txt")
 
     dY = np.zeros((n, no_dims))
     iY = np.zeros((n, no_dims))
@@ -138,13 +141,12 @@ def tsne(X=np.array([]), no_dims=2, initial_dims=50, perplexity=30.0):
 
     # Compute P-values
     P = x2p(X, 1e-5, 20.0)
-  
+
     P = P + np.transpose(P)
     P = P / np.sum(P)
     P = P * 4.									# early exaggeration
     P = np.maximum(P, 1e-12)
 
-   
     # Run iterations
     for iter in range(max_iter):
 
@@ -154,13 +156,14 @@ def tsne(X=np.array([]), no_dims=2, initial_dims=50, perplexity=30.0):
         num = 1. / (1. + np.add(np.add(num, sum_Y).T, sum_Y))
         num[range(n), range(n)] = 0.
         Q = num / np.sum(num)
-	    Q = np.maximum(Q, 1e-12)
+        Q = np.maximum(Q, 1e-12)
 
-	# Compute gradient
+        # Compute gradient
         PQ = P - Q
         for i in range(n):
-            dY[i, :] = np.sum(np.tile(PQ[i, :] * num[i, :], (no_dims, 1)).T * (Y[i, :] - Y), 0)
-	
+            dY[i, :] = np.sum(np.tile(PQ[i, :] * num[i, :],
+                                      (no_dims, 1)).T * (Y[i, :] - Y), 0)
+
         # Perform the update
         if iter < 20:
             momentum = initial_momentum

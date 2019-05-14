@@ -169,7 +169,10 @@ public:
   {
     // Return pre-computed value if exist
     if (output_shape_.size() != 0)
+    {
       return output_shape_;
+    }
+
     // output_shape_[0]=number of output channels
     output_shape_.emplace_back(inputs.at(0).get().shape().at(0));
     // output_shape_[1]=number of stride_size steps over input height

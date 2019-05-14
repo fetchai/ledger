@@ -91,7 +91,6 @@ public:
   // TODO(private 860): ensure trivial type
   void SetAllZero()
   {
-    assert(pointer_ != nullptr);
     if (pointer_)
     {
       std::memset(static_cast<void *>(pointer_), 0, padded_size() * sizeof(Type));
@@ -100,7 +99,6 @@ public:
 
   void SetPaddedZero()
   {
-    assert(pointer_ != nullptr);
     if (pointer_)
     {
       std::memset(static_cast<void *>(pointer_ + size()), 0,

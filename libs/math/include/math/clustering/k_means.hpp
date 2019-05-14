@@ -19,7 +19,6 @@
 
 #include "core/vector.hpp"
 #include "math/distance/euclidean.hpp"
-#include "math/meta/math_type_traits.hpp"
 #include "math/standard_functions/pow.hpp"
 #include "random"
 
@@ -478,7 +477,7 @@ private:
         if (std::find(assigned_data_points.begin(), assigned_data_points.end(), m) ==
             assigned_data_points.end())
         {
-          running_mean_ = NumericMax<typename ArrayType::Type>();
+          running_mean_ = numeric_max<typename ArrayType::Type>();
           for (SizeType i = 0; i < (n_clusters_ - n_remaining_clusters); ++i)
           {
             if (cluster_distances[i][m] < running_mean_)
@@ -546,7 +545,7 @@ private:
 
     for (SizeType i = 0; i < n_points_; ++i)
     {
-      running_mean_ = NumericMax<typename ArrayType::Type>();
+      running_mean_ = numeric_max<typename ArrayType::Type>();
       for (SizeType j = 0; j < n_clusters_; ++j)
       {
         if (k_euclids_[j][i] < running_mean_)
@@ -724,7 +723,7 @@ private:
     }
   }
 
-  static constexpr SizeType INVALID       = NumericMax<SizeType>();
+  static constexpr SizeType INVALID       = numeric_max<SizeType>();
   SizeType                  n_points_     = INVALID;
   SizeType                  n_dimensions_ = INVALID;
   SizeType                  n_clusters_   = INVALID;
@@ -733,10 +732,10 @@ private:
   SizeType max_no_change_convergence_ = INVALID;  // max no change k_assignment before convergence
   SizeType loop_counter_              = INVALID;
   SizeType max_loops_                 = INVALID;
-  DataType assigned_k_                = NumericMax<DataType>();  // current cluster to assign
+  DataType assigned_k_                = numeric_max<DataType>();  // current cluster to assign
 
   // used to find the smallest distance out of K comparisons
-  typename ArrayType::Type running_mean_ = NumericMax<typename ArrayType::Type>();
+  typename ArrayType::Type running_mean_ = numeric_max<typename ArrayType::Type>();
 
   std::default_random_engine rng_;
 
