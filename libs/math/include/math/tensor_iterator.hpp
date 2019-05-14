@@ -44,6 +44,11 @@ public:
   TensorIterator(TensorIterator &&other)                 = default;
   TensorIterator &operator=(TensorIterator &&other) = default;
 
+  /**
+   * @brief creates an iterator for a tensor with a given starting position.
+   * @param array is the tensor that is iterated over
+   * @param position is the starting position referencing the underlying memory.
+   */
   TensorIterator(TensorType &array, SizeType position)
     : array_(array)
     , position_{std::move(position)}

@@ -51,13 +51,13 @@ public:
   // x>0 f'(x)=1, x<=0 f'(x)=0
   virtual std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           errorSignal)
+      ArrayType const &                                           error_signal)
   {
     ASSERT(inputs.size() == 1);
-    ASSERT(inputs[0].get().shape() == errorSignal.shape());
+    ASSERT(inputs[0].get().shape() == error_signal.shape());
 
-    ArrayType const &input         = inputs.front().get();
-    ArrayType        return_signal = errorSignal.Copy();
+    ArrayType const &input = inputs.front().get();
+    ArrayType        return_signal{error_signal.shape()};
 
     auto it1 = input.begin();
     auto it2 = return_signal.begin();
