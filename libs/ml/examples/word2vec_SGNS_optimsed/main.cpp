@@ -639,7 +639,7 @@ int main(int argc, char **argv)
       std::cout << "loss: " << sum_loss << std::endl;
       sum_loss = 0;
 
-      //      EvalAnalogy(dataloader, model);
+      EvalAnalogy(dataloader, model);
     }
   }
 
