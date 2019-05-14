@@ -38,7 +38,7 @@ protected:
 
   bool Compile(std::string const &source)
   {
-    std::vector<std::string> errors = VMFactory::Compile(module_, source, script_);
+    std::vector<std::string> errors = VMFactory::Compile(module_, source, executable_);
 
     for (auto const &error : errors)
     {
@@ -58,7 +58,7 @@ protected:
     vm_->AttachOutputDevice("stdout", console);
 
     // Execute our fn
-    if (!vm_->Execute(script_, function, error, output))
+    if (!vm_->Execute(executable_, function, error, output))
     {
       std::cerr << "Runtime error: " << error << std::endl;
       return false;
@@ -69,9 +69,9 @@ protected:
     return true;
   }
 
-  Module            module_ = VMFactory::GetModule();
-  VM                vm_;
-  fetch::vm::Script script_;
+  Module                module_ = VMFactory::GetModule();
+  VM                    vm_;
+  fetch::vm::Executable executable_;
 };
 
 // Test we can compile and run a fairly inoffensive smart contract

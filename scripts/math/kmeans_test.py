@@ -35,6 +35,4 @@ for i in range(n_data):
     plt.scatter(combined_input[i, 0], combined_input[i, 1], color=colour)
 
 
-
 plt.show()
-

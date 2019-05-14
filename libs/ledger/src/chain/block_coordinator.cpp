@@ -39,6 +39,7 @@ const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{500};
 const std::chrono::seconds      NOTIFY_INTERVAL{10};
 const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{30};
 const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{30};
+const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
 
 const std::size_t DIGEST_LENGTH_BYTES{32};
 const std::size_t IDENTITY_LENGTH_BYTES{64};
@@ -216,10 +217,19 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
   {
     // normal case - we have processed at least one block
 
-    // find the path
-    MainChain::Blocks blocks;
-    bool const        lookup_success =
-        chain_.GetPathToCommonAncestor(blocks, current_hash, last_processed_block);
+    // find the path to ancestor - retain this path if it is long for efficiency reasons.
+    bool lookup_success = false;
+
+    if (blocks_to_common_ancestor_.empty())
+    {
+      lookup_success = chain_.GetPathToCommonAncestor(
+          blocks_to_common_ancestor_, current_hash, last_processed_block,
+          COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT, MainChain::BehaviourWhenLimit::RETURN_LEAST_RECENT);
+    }
+    else
+    {
+      lookup_success = true;
+    }
 
     if (!lookup_success)
     {
@@ -228,9 +238,10 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
       return State::RESET;
     }
 
-    assert(blocks.size() >= 2);
+    assert(blocks_to_common_ancestor_.size() >= 2 &&
+           "Expected at least two blocks from common ancestor: HEAD and current");
 
-    auto     block_path_it = blocks.crbegin();
+    auto     block_path_it = blocks_to_common_ancestor_.crbegin();
     BlockPtr common_parent = *block_path_it++;
     BlockPtr next_block    = *block_path_it++;
 
@@ -277,6 +288,13 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
 
     // update the current block and begin scheduling
     current_block_ = next_block;
+
+    blocks_to_common_ancestor_.pop_back();
+
+    if (blocks_to_common_ancestor_.size() < THRESHOLD_FOR_FAST_SYNCING)
+    {
+      blocks_to_common_ancestor_.clear();
+    }
 
     return State::PRE_EXEC_BLOCK_VALIDATION;
   }
@@ -734,6 +752,7 @@ BlockCoordinator::State BlockCoordinator::OnReset()
   current_block_.reset();
   next_block_.reset();
   pending_txs_.reset();
+  blocks_to_common_ancestor_.clear();
 
   // we should update the next block time
   UpdateNextBlockTime();

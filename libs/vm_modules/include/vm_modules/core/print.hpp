@@ -101,10 +101,18 @@ inline void PrintLnDouble(fetch::vm::VM * /*vm*/, double const &s)
 }
 
 template <typename T, bool NL = false>
-inline void PrintArrayPrimitive(fetch::vm::VM * /*vm*/, vm::Ptr<vm::Array<T>> const &g)
+inline void PrintArrayPrimitive(fetch::vm::VM *vm, vm::Ptr<vm::Array<T>> const &g)
 {
+  if (g == nullptr)
+  {
+    std::cout << "(nullptr)" << std::endl;
+    return;
+  }
 
-  std::cout << "[";
+  assert(g != nullptr);
+
+  auto &out = vm->GetOutputDevice("stdout");
+  out << "[";
   for (std::size_t i = 0; i < g->elements.size(); ++i)
   {
     if (i != 0)

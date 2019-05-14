@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/fixed_point/fixed_point.hpp"
+#include "math/fixed_point/fixed_point.hpp"
 #include <array>
 #include <cmath>
 #include <gtest/gtest.h>
@@ -120,6 +120,9 @@ TEST(FixedPointTest, Conversion_16_16)
   EXPECT_EQ((unsigned long)(one), 1);
   EXPECT_EQ(int64_t(one), 1);
   EXPECT_EQ(uint64_t(one), 1);
+
+  EXPECT_EQ(fp32::TOLERANCE.Data(), 0x15);
+  EXPECT_EQ(fp32::DECIMAL_DIGITS, 4);
 }
 
 TEST(FixedPointTest, Conversion_32_32)
@@ -215,6 +218,9 @@ TEST(FixedPointTest, Conversion_32_32)
   EXPECT_EQ(uint64_t(one), 1);
   EXPECT_EQ(int64_t(one), 1);
   EXPECT_EQ(uint64_t(one), 1);
+
+  EXPECT_EQ(fp64::TOLERANCE.Data(), 0x200);
+  EXPECT_EQ(fp64::DECIMAL_DIGITS, 9);
 }
 
 TEST(FixedPointTest, Addition_16_16)
@@ -376,9 +382,12 @@ TEST(FixedPointTest, Multiplication_16_16)
   fetch::fixed_point::FixedPoint<16, 16> one(1);
   fetch::fixed_point::FixedPoint<16, 16> two(2);
   fetch::fixed_point::FixedPoint<16, 16> three(3);
+  fetch::fixed_point::FixedPoint<16, 16> m_one(-1);
 
   EXPECT_EQ(two * one, two);
   EXPECT_EQ(one * 2, 2);
+  EXPECT_EQ(m_one * zero, zero);
+  EXPECT_EQ(m_one * one, m_one);
   EXPECT_EQ(float(two * 2.0f), 4.0f);
   EXPECT_EQ(double(three * 2.0), 6.0);
 
@@ -410,9 +419,12 @@ TEST(FixedPointTest, Multiplication_32_32)
   fetch::fixed_point::FixedPoint<32, 32> one(1);
   fetch::fixed_point::FixedPoint<32, 32> two(2);
   fetch::fixed_point::FixedPoint<32, 32> three(3);
+  fetch::fixed_point::FixedPoint<32, 32> m_one(-1);
 
   EXPECT_EQ(two * one, two);
   EXPECT_EQ(one * 2, 2);
+  EXPECT_EQ(m_one * zero, zero);
+  EXPECT_EQ(m_one * one, m_one);
   EXPECT_EQ(float(two * 2.0f), 4.0f);
   EXPECT_EQ(double(three * 2.0), 6.0);
 
@@ -460,7 +472,6 @@ TEST(FixedPointTest, Division_16_16)
   EXPECT_EQ(one / huge, infinitesimal * 4);
   EXPECT_EQ(huge / infinitesimal, zero);
 
-  // TODO(private 843): Add proper support for NaN/Infinity/etc in FixedPoint class
   EXPECT_THROW(two / zero, std::overflow_error);
   EXPECT_THROW(zero / zero, std::overflow_error);
 }
@@ -490,7 +501,6 @@ TEST(FixedPointTest, Division_32_32)
   EXPECT_EQ(one / huge, infinitesimal * 4);
   EXPECT_EQ(huge / infinitesimal, zero);
 
-  // TODO(private 843): Add proper support for NaN/Infinity/etc in FixedPoint class
   EXPECT_THROW(two / zero, std::overflow_error);
   EXPECT_THROW(zero / zero, std::overflow_error);
 }
@@ -602,6 +612,13 @@ TEST(FixedPointTest, Comparison_16_16)
   EXPECT_TRUE(fp32::CONST_2_INV_SQRTPI == 1.128379167095512573896158903121545172);
   EXPECT_TRUE(fp32::CONST_SQRT2 == 1.414213562373095048801688724209698079);
   EXPECT_TRUE(fp32::CONST_INV_SQRT2 == 0.707106781186547524400844362104849039);
+
+  EXPECT_EQ(fp32::MAX_INT, 0x7fff0000);
+  EXPECT_EQ(fp32::MIN_INT, 0x80000000);
+  EXPECT_EQ(fp32::MAX, 0x7fffffff);
+  EXPECT_EQ(fp32::MIN, 0x8000ffff);
+  EXPECT_EQ(fp32::MAX_EXP.Data(), 0x000a65b9);
+  EXPECT_EQ(fp32::MIN_EXP.Data(), 0xfff59a47);
 }
 
 TEST(FixedPointTest, Comparison_32_32)
@@ -711,19 +728,30 @@ TEST(FixedPointTest, Comparison_32_32)
   EXPECT_TRUE(fp64::CONST_2_INV_SQRTPI == 1.128379167095512573896158903121545172);
   EXPECT_TRUE(fp64::CONST_SQRT2 == 1.414213562373095048801688724209698079);
   EXPECT_TRUE(fp64::CONST_INV_SQRT2 == 0.707106781186547524400844362104849039);
+
+  EXPECT_EQ(fp64::MAX_INT, 0x7fffffff00000000);
+  EXPECT_EQ(fp64::MIN_INT, 0x8000000000000000);
+  EXPECT_EQ(fp64::MAX, 0x7fffffffffffffff);
+  EXPECT_EQ(fp64::MIN, 0x80000000ffffffff);
+  EXPECT_EQ(fp64::MAX_EXP.Data(), 0x000000157cd0e714);
+  EXPECT_EQ(fp64::MIN_EXP.Data(), 0xffffffea832f18ec);
 }
 
 TEST(FixedPointTest, Exponential_16_16)
 {
   fetch::fixed_point::FixedPoint<16, 16> one(1);
   fetch::fixed_point::FixedPoint<16, 16> two(2);
+  fetch::fixed_point::FixedPoint<16, 16> negative{-0.40028143};
   fetch::fixed_point::FixedPoint<16, 16> e1    = fp32::Exp(one);
   fetch::fixed_point::FixedPoint<16, 16> e2    = fp32::Exp(two);
+  fetch::fixed_point::FixedPoint<16, 16> e3    = fp32::Exp(negative);
   fetch::fixed_point::FixedPoint<16, 16> e_max = fp32::Exp(fp32::MAX_EXP);
 
-  EXPECT_NEAR((double)e1 / std::exp(1.0), 1.0, 1e-4);
-  EXPECT_NEAR((double)e2 / std::exp(2.0), 1.0, 1e-4);
-  EXPECT_NEAR((double)e_max / std::exp((double)fp32::MAX_EXP), 1.0, 3e-4);
+  EXPECT_NEAR((double)e1 / std::exp(1.0), 1.0, (double)fp32::TOLERANCE);
+  EXPECT_NEAR((double)e2 / std::exp(2.0), 1.0, (double)fp32::TOLERANCE);
+  EXPECT_NEAR(((double)e3 - std::exp(double(negative))) / std::exp(double(negative)), 0,
+              (double)fp32::TOLERANCE);
+  EXPECT_NEAR((double)e_max / std::exp((double)fp32::MAX_EXP), 1.0, (double)fp32::TOLERANCE);
   EXPECT_THROW(fp32::Exp(fp32::MAX_EXP + 1), std::overflow_error);
 }
 
@@ -734,34 +762,45 @@ TEST(FixedPointTest, Exponential_32_32)
   fetch::fixed_point::FixedPoint<32, 32> ten(10);
   fetch::fixed_point::FixedPoint<32, 32> small(0.0001);
   fetch::fixed_point::FixedPoint<32, 32> tiny(0, fp64::SMALLEST_FRACTION);
+  fetch::fixed_point::FixedPoint<32, 32> negative{-0.40028143};
   fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Exp(one);
   fetch::fixed_point::FixedPoint<32, 32> e2 = fp64::Exp(two);
   fetch::fixed_point::FixedPoint<32, 32> e3 = fp64::Exp(ten);
   fetch::fixed_point::FixedPoint<32, 32> e5 = fp64::Exp(small);
   fetch::fixed_point::FixedPoint<32, 32> e6 = fp64::Exp(tiny);
+  fetch::fixed_point::FixedPoint<32, 32> e7 = fp64::Exp(negative);
 
-  EXPECT_NEAR(((double)e1 - std::exp(1.0)) / std::exp(1.0), 0, 1e-7);
-  EXPECT_NEAR(((double)e2 - std::exp(2.0)) / std::exp(2.0), 0, 1e-7);
-  EXPECT_NEAR(((double)e3 - std::exp(10.0)) / std::exp(10.0), 0, 1e-7);
-  EXPECT_NEAR(((double)e5 - std::exp(0.0001)) / std::exp(0.0001), 0, 1e-7);
-  EXPECT_NEAR(((double)e6 - std::exp(double(tiny))) / std::exp(double(tiny)), 0, 1e-7);
+  EXPECT_NEAR(((double)e1 - std::exp(1.0)) / std::exp(1.0), 0, (double)fp64::TOLERANCE);
+  EXPECT_NEAR(((double)e2 - std::exp(2.0)) / std::exp(2.0), 0, (double)fp64::TOLERANCE);
+  EXPECT_NEAR(((double)e3 - std::exp(10.0)) / std::exp(10.0), 0, (double)fp64::TOLERANCE);
+  EXPECT_NEAR(((double)e5 - std::exp(0.0001)) / std::exp(0.0001), 0, (double)fp64::TOLERANCE);
+  EXPECT_NEAR(((double)e6 - std::exp(double(tiny))) / std::exp(double(tiny)), 0,
+              (double)fp64::TOLERANCE);
+  EXPECT_NEAR(((double)e7 - std::exp(double(negative))) / std::exp(double(negative)), 0,
+              (double)fp64::TOLERANCE);
   EXPECT_NEAR(((double)fp64::Exp(fp64::MAX_EXP) - std::exp(double(fp64::MAX_EXP))) /
                   std::exp(double(fp64::MAX_EXP)),
-              0, 1e-7);
+              0, (double)fp64::TOLERANCE);
 
   // Out of range
   EXPECT_THROW(fp64::Exp(fp64::MAX_EXP + 1), std::overflow_error);
 
   // Negative values
-  EXPECT_NEAR(((double)fp64::Exp(-one) - std::exp(-1.0)) / std::exp(-1.0), 0, 1e-7);
-  EXPECT_NEAR(((double)fp64::Exp(-two) - std::exp(-2.0)) / std::exp(-2.0), 0, 1e-7);
-  EXPECT_NEAR(((double)fp64::Exp(-ten) - std::exp(-10.0)) / std::exp(-10.0), 0, 2e-6);
-  EXPECT_NEAR(((double)fp64::Exp(-small) - std::exp(-0.0001)) / std::exp(-0.0001), 0, 1e-7);
+  EXPECT_NEAR(((double)fp64::Exp(-one) - std::exp(-1.0)) / std::exp(-1.0), 0,
+              (double)fp64::TOLERANCE);
+  EXPECT_NEAR(((double)fp64::Exp(-two) - std::exp(-2.0)) / std::exp(-2.0), 0,
+              (double)fp64::TOLERANCE);
+
+  // This particular error produces more than 1e-6 error failing the test
+  EXPECT_NEAR(((double)fp64::Exp(-ten) - std::exp(-10.0)) / std::exp(-10.0), 0, 1.1e-6);
+  // The rest pass with fp64::TOLERANCE
+  EXPECT_NEAR(((double)fp64::Exp(-small) - std::exp(-0.0001)) / std::exp(-0.0001), 0,
+              (double)fp64::TOLERANCE);
   EXPECT_NEAR(((double)fp64::Exp(-tiny) - std::exp(-double(tiny))) / std::exp(-double(tiny)), 0,
-              1e-7);
+              (double)fp64::TOLERANCE);
   EXPECT_NEAR(((double)fp64::Exp(fp64::MIN_EXP) - std::exp((double)fp64::MIN_EXP)) /
                   std::exp((double)fp64::MIN_EXP),
-              0, 1e-7);
+              0, (double)fp64::TOLERANCE);
 }
 
 TEST(FixedPointTest, Pow_32_32)
@@ -774,9 +813,10 @@ TEST(FixedPointTest, Pow_32_32)
   fetch::fixed_point::FixedPoint<32, 32> e2 = fp64::Pow(x, three);
   fetch::fixed_point::FixedPoint<32, 32> e3 = fp64::Pow(two, y);
 
-  EXPECT_NEAR((double)e1 / std::pow(-1.6519711627625, 2), 1.0, 1e-7);
-  EXPECT_NEAR((double)e2 / std::pow(-1.6519711627625, 3), 1.0, 1e-7);
-  EXPECT_NEAR((double)e3 / std::pow(2, 1.8464393615723), 1.0, 1e-5);
+  EXPECT_NEAR((double)e1 / std::pow(-1.6519711627625, 2), 1.0, (double)fp64::TOLERANCE);
+  EXPECT_NEAR((double)e2 / std::pow(-1.6519711627625, 3), 1.0, (double)fp64::TOLERANCE);
+  // This test has ~1.4e-6 error
+  EXPECT_NEAR((double)e3 / std::pow(2, 1.8464393615723), 1.0, 1.5e-6);
   EXPECT_THROW(fp64::Pow(fp64::CONST_ZERO, fp64::CONST_ZERO), std::runtime_error);
   EXPECT_THROW(fp64::Pow(x, x), std::runtime_error);
 }
@@ -796,12 +836,12 @@ TEST(FixedPointTest, Logarithm_16_16)
   fetch::fixed_point::FixedPoint<16, 16> e5 = fp32::Log2(small);
   fetch::fixed_point::FixedPoint<16, 16> e6 = fp32::Log2(tiny);
 
-  EXPECT_NEAR((double)e1, std::log2((double)one), 1e-4);
-  EXPECT_NEAR((double)e2, std::log2((double)one_point_five), 1e-4);
-  EXPECT_NEAR((double)e3, std::log2((double)ten), 1e-4);
-  EXPECT_NEAR((double)e4, std::log2((double)huge), 1e-4);
-  EXPECT_NEAR((double)e5, std::log2((double)small), 1e-4);
-  EXPECT_NEAR((double)e6, std::log2((double)tiny), 1e-4);
+  EXPECT_NEAR((double)e1, std::log2((double)one), (double)fp32::TOLERANCE);
+  EXPECT_NEAR((double)e2, std::log2((double)one_point_five), (double)fp32::TOLERANCE);
+  EXPECT_NEAR((double)e3, std::log2((double)ten), (double)fp32::TOLERANCE);
+  EXPECT_NEAR((double)e4, std::log2((double)huge), (double)fp32::TOLERANCE);
+  EXPECT_NEAR((double)e5, std::log2((double)small), (double)fp32::TOLERANCE);
+  EXPECT_NEAR((double)e6, std::log2((double)tiny), (double)fp32::TOLERANCE);
 }
 
 TEST(FixedPointTest, Logarithm_32_32)
@@ -819,12 +859,12 @@ TEST(FixedPointTest, Logarithm_32_32)
   fetch::fixed_point::FixedPoint<32, 32> e5 = fp64::Log2(small);
   fetch::fixed_point::FixedPoint<32, 32> e6 = fp64::Log2(tiny);
 
-  EXPECT_NEAR((double)e1, std::log2((double)one), 1e-7);
-  EXPECT_NEAR((double)e2, std::log2((double)one_point_five), 1e-7);
-  EXPECT_NEAR((double)e3, std::log2((double)ten), 1e-7);
-  EXPECT_NEAR((double)e4, std::log2((double)huge), 1e-7);
-  EXPECT_NEAR((double)e5, std::log2((double)small), 1e-7);
-  EXPECT_NEAR((double)e6, std::log2((double)tiny), 1e-7);
+  EXPECT_NEAR((double)e1, std::log2((double)one), (double)fp64::TOLERANCE);
+  EXPECT_NEAR((double)e2, std::log2((double)one_point_five), (double)fp64::TOLERANCE);
+  EXPECT_NEAR((double)e3, std::log2((double)ten), (double)fp64::TOLERANCE);
+  EXPECT_NEAR((double)e4, std::log2((double)huge), (double)fp64::TOLERANCE);
+  EXPECT_NEAR((double)e5, std::log2((double)small), (double)fp64::TOLERANCE);
+  EXPECT_NEAR((double)e6, std::log2((double)tiny), (double)fp64::TOLERANCE);
 }
 
 TEST(FixedPointTest, Abs_16_16)
@@ -858,12 +898,14 @@ TEST(FixedPointTest, Abs_32_32)
   fetch::fixed_point::FixedPoint<32, 32> m_one_point_five(-1.5);
   fetch::fixed_point::FixedPoint<32, 32> ten(10);
   fetch::fixed_point::FixedPoint<32, 32> m_ten(-10);
+  fetch::fixed_point::FixedPoint<32, 32> huge(999999999.0);
   fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Abs(one);
   fetch::fixed_point::FixedPoint<32, 32> e2 = fp64::Abs(m_one);
   fetch::fixed_point::FixedPoint<32, 32> e3 = fp64::Abs(one_point_five);
   fetch::fixed_point::FixedPoint<32, 32> e4 = fp64::Abs(m_one_point_five);
   fetch::fixed_point::FixedPoint<32, 32> e5 = fp64::Abs(ten);
   fetch::fixed_point::FixedPoint<32, 32> e6 = fp64::Abs(m_ten);
+  fetch::fixed_point::FixedPoint<32, 32> e7 = fp64::Abs(huge);
 
   EXPECT_EQ(e1, one);
   EXPECT_EQ(e2, one);
@@ -871,4 +913,89 @@ TEST(FixedPointTest, Abs_32_32)
   EXPECT_EQ(e4, one_point_five);
   EXPECT_EQ(e5, ten);
   EXPECT_EQ(e6, ten);
+  EXPECT_EQ(e7, huge);
+}
+
+TEST(FixedPointTest, SQRT_16_16)
+{
+  fetch::fixed_point::FixedPoint<16, 16> one(1);
+  fetch::fixed_point::FixedPoint<16, 16> one_point_five(1.5);
+  fetch::fixed_point::FixedPoint<16, 16> two(2);
+  fetch::fixed_point::FixedPoint<16, 16> four(4);
+  fetch::fixed_point::FixedPoint<16, 16> ten(10);
+  fetch::fixed_point::FixedPoint<16, 16> huge(10000);
+  fetch::fixed_point::FixedPoint<16, 16> small(0.0001);
+  fetch::fixed_point::FixedPoint<16, 16> tiny(0, fp32::SMALLEST_FRACTION);
+  fetch::fixed_point::FixedPoint<16, 16> e1 = fp32::Sqrt(one);
+  fetch::fixed_point::FixedPoint<16, 16> e2 = fp32::Sqrt(one_point_five);
+  fetch::fixed_point::FixedPoint<16, 16> e3 = fp32::Sqrt(two);
+  fetch::fixed_point::FixedPoint<16, 16> e4 = fp32::Sqrt(four);
+  fetch::fixed_point::FixedPoint<16, 16> e5 = fp32::Sqrt(ten);
+  fetch::fixed_point::FixedPoint<16, 16> e6 = fp32::Sqrt(huge);
+  fetch::fixed_point::FixedPoint<16, 16> e7 = fp32::Sqrt(small);
+  fetch::fixed_point::FixedPoint<16, 16> e8 = fp32::Sqrt(tiny);
+
+  double delta = (double)e1 - std::sqrt((double)one);
+  EXPECT_NEAR(delta / std::sqrt((double)one), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e2 - std::sqrt((double)one_point_five);
+  EXPECT_NEAR(delta / std::sqrt((double)one_point_five), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e3 - std::sqrt((double)two);
+  EXPECT_NEAR(delta / std::sqrt((double)two), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)(e3 - fp32::CONST_SQRT2);
+  EXPECT_NEAR(delta / (double)fp32::CONST_SQRT2, 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e4 - std::sqrt((double)four);
+  EXPECT_NEAR(delta / std::sqrt((double)four), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e5 - std::sqrt((double)ten);
+  EXPECT_NEAR(delta / std::sqrt((double)ten), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e6 - std::sqrt((double)huge);
+  EXPECT_NEAR(delta / std::sqrt((double)huge), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e7 - std::sqrt((double)small);
+  EXPECT_NEAR(delta / std::sqrt((double)small), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e8 - std::sqrt((double)tiny);
+  EXPECT_NEAR(delta / std::sqrt((double)tiny), 0.0, (double)fp32::TOLERANCE);
+
+  // Sqrt of a negative
+  EXPECT_THROW(fp32::Sqrt(-one), std::runtime_error);
+}
+
+TEST(FixedPointTest, SQRT_32_32)
+{
+  fetch::fixed_point::FixedPoint<32, 32> one(1);
+  fetch::fixed_point::FixedPoint<32, 32> one_point_five(1.5);
+  fetch::fixed_point::FixedPoint<32, 32> two(2);
+  fetch::fixed_point::FixedPoint<32, 32> four(4);
+  fetch::fixed_point::FixedPoint<32, 32> ten(10);
+  fetch::fixed_point::FixedPoint<32, 32> huge(1000000000);
+  fetch::fixed_point::FixedPoint<32, 32> small(0.0001);
+  fetch::fixed_point::FixedPoint<32, 32> tiny(0, fp64::SMALLEST_FRACTION);
+  fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Sqrt(one);
+  fetch::fixed_point::FixedPoint<32, 32> e2 = fp64::Sqrt(one_point_five);
+  fetch::fixed_point::FixedPoint<32, 32> e3 = fp64::Sqrt(two);
+  fetch::fixed_point::FixedPoint<32, 32> e4 = fp64::Sqrt(four);
+  fetch::fixed_point::FixedPoint<32, 32> e5 = fp64::Sqrt(ten);
+  fetch::fixed_point::FixedPoint<32, 32> e6 = fp64::Sqrt(huge);
+  fetch::fixed_point::FixedPoint<32, 32> e7 = fp64::Sqrt(small);
+  fetch::fixed_point::FixedPoint<32, 32> e8 = fp64::Sqrt(tiny);
+
+  double delta = (double)e1 - std::sqrt((double)one);
+  EXPECT_NEAR(delta / std::sqrt((double)one), 0.0, (double)fp64::TOLERANCE);
+  delta = (double)e2 - std::sqrt((double)one_point_five);
+  EXPECT_NEAR(delta / std::sqrt((double)one_point_five), 0.0, (double)fp64::TOLERANCE);
+  delta = (double)e3 - std::sqrt((double)two);
+  EXPECT_NEAR(delta / std::sqrt((double)two), 0.0, (double)fp64::TOLERANCE);
+  delta = (double)(e3 - fp64::CONST_SQRT2);
+  EXPECT_NEAR(delta / (double)fp64::CONST_SQRT2, 0.0, (double)fp64::TOLERANCE);
+  delta = (double)e4 - std::sqrt((double)four);
+  EXPECT_NEAR(delta / std::sqrt((double)four), 0.0, (double)fp64::TOLERANCE);
+  delta = (double)e5 - std::sqrt((double)ten);
+  EXPECT_NEAR(delta / std::sqrt((double)ten), 0.0, (double)fp64::TOLERANCE);
+  delta = (double)e6 - std::sqrt((double)huge);
+  EXPECT_NEAR(delta / std::sqrt((double)huge), 0.0, (double)fp64::TOLERANCE);
+  delta = (double)e7 - std::sqrt((double)small);
+  EXPECT_NEAR(delta / std::sqrt((double)small), 0.0, (double)fp64::TOLERANCE);
+  delta = (double)e8 - std::sqrt((double)tiny);
+  EXPECT_NEAR(delta / std::sqrt((double)tiny), 0.0, (double)fp64::TOLERANCE);
+
+  // Sqrt of a negative
+  EXPECT_THROW(fp64::Sqrt(-one), std::runtime_error);
 }

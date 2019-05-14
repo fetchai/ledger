@@ -23,7 +23,6 @@
 #include "math/base_types.hpp"
 #include "math/comparison.hpp"
 #include "math/fundamental_operators.hpp"  // add, subtract etc.
-#include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
 namespace math {
@@ -217,7 +216,7 @@ T Product(std::vector<T> const &obj1)
 template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
 meta::IfIsMathArray<ArrayType, void> Max(ArrayType const &array, T &ret)
 {
-  ret = NumericLowest<T>();
+  ret = numeric_lowest<T>();
   for (T const &e : array)
   {
     if (e > ret)
@@ -304,7 +303,7 @@ T Max(std::vector<T> const &obj1)
 template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
 meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, T &ret)
 {
-  ret = NumericMax<T>();
+  ret = numeric_max<T>();
   for (T const &e : array)
   {
     if (e < ret)
@@ -529,7 +528,7 @@ meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &r
     ASSERT(ret.size() == SizeType(1));
     SizeType position = 0;
     auto     it       = array.begin();
-    Type     value    = NumericLowest<Type>();
+    Type     value    = numeric_lowest<Type>();
     while (it.is_valid())
     {
       if (*it > value)

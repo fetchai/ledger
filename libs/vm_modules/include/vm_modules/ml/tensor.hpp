@@ -56,9 +56,9 @@ public:
 inline void CreateTensor(fetch::vm::Module &module)
 {
   module.CreateClassType<TensorWrapper>("Tensor")
-      .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm::Array<TensorWrapper::SizeType>>>()
-      .CreateInstanceFunction("SetAt", &TensorWrapper::SetAt)
-      .CreateInstanceFunction("ToString", &TensorWrapper::ToString);
+      .CreateConstuctor<fetch::vm::Ptr<fetch::vm::Array<TensorWrapper::SizeType>>>()
+      .CreateMemberFunction("SetAt", &TensorWrapper::SetAt)
+      .CreateMemberFunction("ToString", &TensorWrapper::ToString);
 }
 
 }  // namespace ml
