@@ -131,33 +131,56 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
 
   auto const &hash{block->body.hash};
 
+  DbRecord record;
+
   if (block->body.previous_hash != GENESIS_DIGEST)
   {
     // notify stored parent
-    Block parent;
-    if (block_store_->Get(storage::ResourceID(block->body.previous_hash), parent) &&
-        parent.body.next_hash != hash)
+    if (block_store_->Get(storage::ResourceID(block->body.previous_hash), record) &&
+        record.next_hash != hash)
     {
-      parent.body.next_hash = hash;
-      block_store_->Set(storage::ResourceID(parent.body.hash), parent);
+      record.next_hash = hash;
+      block_store_->Set(storage::ResourceID(record.hash()), record);
+      record.next_hash = GENESIS_DIGEST;
     }
   }
+  record.block = *block;
 
   // detect if any of this block's children has somehow made it to the store already
   // TODO(bipll): is this needed?
-  block->body.next_hash = GENESIS_DIGEST;  // used as chain terminator
   auto forward_refs{references_.equal_range(hash)};
   for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it)
   {
     auto const &child{ref_it->second};
     if (block_store_->Has(storage::ResourceID(child)))
     {
-      block->body.next_hash = child;
+      record.next_hash = child;
       break;
     }
   }
+
   // now write the block itself; if next_hash is genesis, it will be rewritten later by a child
-  block_store_->Set(storage::ResourceID(hash), *block);
+  block_store_->Set(storage::ResourceID(hash), record);
+}
+
+/**
+ * Internal: load a block from the permanent store
+ *
+ * @param[in]  hash The hash of the block to be loaded
+ * @param[out] block The location of block
+ * @return True iff the block is found in the storage
+ */
+bool MainChain::LoadBlock(BlockHash const &hash, Block &block) const
+{
+  assert(static_cast<bool>(block_store_));
+
+  DbRecord record;
+  if(block_store_->Get(storage::ResourceID(hash), record))
+  {
+    block = record.block;
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -554,7 +577,7 @@ void MainChain::RecoverFromFile(Mode mode)
   BlockHash head_block_hash = GetHeadHash();
 
   bool recovery_complete{false};
-  if (!head_block_hash.empty() && block_store_->Get(storage::ResourceID{head_block_hash}, *block))
+  if (!head_block_hash.empty() && LoadBlock(head_block_hash, *block))
   {
     auto block_index = block->body.block_number;
 
@@ -564,7 +587,7 @@ void MainChain::RecoverFromFile(Mode mode)
     // Copy head block so as to walk down the chain
     IntBlockPtr next = std::make_shared<Block>(*block);
 
-    while (block_store_->Get(storage::ResourceID(next->body.previous_hash), *next))
+    while (LoadBlock(next->body.previous_hash, *next))
     {
       if (next->body.block_number != block_index - 1)
       {
@@ -682,7 +705,7 @@ void MainChain::WriteToFile()
       IntBlockPtr current_file_head = std::make_shared<Block>();
       IntBlockPtr block_head        = block;
 
-      block_store_->Get(storage::ResourceID(GetHeadHash()), *current_file_head);
+      LoadBlock(GetHeadHash(), *current_file_head);
 
       // Now keep adding the block and its prev to the file until we are certain the file contains
       // an unbroken chain. Assuming that the current_file_head is unbroken we can write until we
@@ -694,8 +717,7 @@ void MainChain::WriteToFile()
         // Keep the current_file_head one block behind
         while (current_file_head->body.block_number > block->body.block_number - 1)
         {
-          block_store_->Get(storage::ResourceID(current_file_head->body.previous_hash),
-                            *current_file_head);
+          LoadBlock(current_file_head->body.previous_hash, *current_file_head);
         }
 
         // Successful case
@@ -1085,7 +1107,7 @@ bool MainChain::LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block, bool 
     auto output_block = std::make_shared<Block>();
 
     // attempt to read the block from the storage engine
-    success = block_store_->Get(storage::ResourceID(std::move(hash)), *output_block);
+    success = LoadBlock(std::move(hash), *output_block);
 
     if (success)
     {

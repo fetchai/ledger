@@ -53,11 +53,6 @@ namespace ledger {
  */
 struct Tip
 {
-  Tip() = default;
-  Tip(uint64_t weight)
-    : total_weight{weight}
-  {}
-
   uint64_t total_weight{0};
 };
 
@@ -155,6 +150,15 @@ public:
   MainChain &operator=(MainChain &&rhs) = delete;
 
 private:
+  struct DbRecord
+  {
+    Block block;
+    // genesis (hopefully) cannot be next hash so is used as undefined value
+    BlockHash next_hash = GENESIS_DIGEST;
+    
+    BlockHash hash() const { return block.body.hash; }
+  };
+
   using IntBlockPtr   = std::shared_ptr<Block>;
   using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;
   using References    = std::unordered_multimap<BlockHash, BlockHash>;
@@ -162,7 +166,7 @@ private:
   using TipsMap       = std::unordered_map<BlockHash, Tip>;
   using BlockHashList = std::list<BlockHash>;
   using LooseBlockMap = std::unordered_map<BlockHash, BlockHashList>;
-  using BlockStore    = fetch::storage::ObjectStore<Block>;
+  using BlockStore    = fetch::storage::ObjectStore<DbRecord>;
   using BlockStorePtr = std::unique_ptr<BlockStore>;
   using RMutex        = std::recursive_mutex;
   using RLock         = std::unique_lock<RMutex>;
@@ -204,6 +208,7 @@ private:
   void                CacheBlock(IntBlockPtr const &block) const;
   BlockMap::size_type UncacheBlock(BlockHash hash) const;
   void                KeepBlock(IntBlockPtr const &block) const;
+  bool                LoadBlock(BlockHash const &hash, Block &block) const;
   /// @}
 
   /// @name Tip Management
@@ -230,6 +235,33 @@ private:
   TipsMap            tips_;          ///< Keep track of the tips
   HeaviestTip        heaviest_;      ///< Heaviest block/tip
   LooseBlockMap      loose_blocks_;  ///< Waiting (loose) blocks
+
+  /**
+   * Serializer for the DbRecord
+   *
+   * @tparam T The serializer type
+   * @param serializer The reference to hte serializer
+   * @param dbRecord The reference to the DbRecord to be serialised
+   */
+  template <typename T>
+  friend void Serialize(T &serializer, DbRecord const &dbRecord)
+  {
+    serializer << dbRecord.block << dbRecord.next_hash;
+  }
+  
+  /**
+   * Deserializer for the DbRecord
+   *
+   * @tparam T The serializer type
+   * @param serializer The reference to the serializer
+   * @param dbRecord The reference to the output dbRecord to be populated
+   */
+  template <typename T>
+  friend void Deserialize(T &serializer, DbRecord &dbRecord)
+  {
+    serializer >> dbRecord.block >> dbRecord.next_hash;
+  }
+  
 };
 
 /**

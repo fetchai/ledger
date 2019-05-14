@@ -51,7 +51,6 @@ public:
     Identity miner;              ///< The identity of the generated miner
     uint32_t log2_num_lanes{0};  ///< The log2(number of lanes)
     Slices   slices;             ///< The slice lists
-    Digest   next_hash;          ///< The hash of the next block
   };
 
   /// @name Block Contents
@@ -87,8 +86,8 @@ public:
 template <typename T>
 void Serialize(T &serializer, Block::Body const &body)
 {
-  serializer << body.hash << body.previous_hash << body.next_hash << body.merkle_hash
-             << body.block_number << body.miner << body.log2_num_lanes << body.slices;
+  serializer << body.hash << body.previous_hash << body.merkle_hash << body.block_number
+             << body.miner << body.log2_num_lanes << body.slices;
 }
 
 /**
@@ -101,8 +100,8 @@ void Serialize(T &serializer, Block::Body const &body)
 template <typename T>
 void Deserialize(T &serializer, Block::Body &body)
 {
-  serializer >> body.hash >> body.previous_hash >> body.next_hash >> body.merkle_hash >>
-      body.block_number >> body.miner >> body.log2_num_lanes >> body.slices;
+  serializer >> body.hash >> body.previous_hash >> body.merkle_hash >> body.block_number >>
+      body.miner >> body.log2_num_lanes >> body.slices;
 }
 
 /**
