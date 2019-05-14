@@ -90,8 +90,8 @@ public:
     std::vector<ArrayType> results;
     for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
     {
-      ArrayType slice_input   = inputs.front().get().Slice(b).Tensor();
-      ArrayType slice_context = inputs.back().get().Slice(b).Tensor();
+      ArrayType slice_input   = inputs.front().get().Slice(b).Copy();
+      ArrayType slice_context = inputs.back().get().Slice(b).Copy();
       results.push_back(this->Ops<T>::Forward({slice_input, slice_context}));
     }
     return ArrayType::Stack(results);

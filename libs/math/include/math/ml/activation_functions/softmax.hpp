@@ -30,7 +30,6 @@
 
 #include "math/comparison.hpp"
 #include "math/matrix_operations.hpp"
-#include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
 namespace math {
@@ -49,7 +48,7 @@ void Softmax1DImplementation(ArrayType1 const &array, ArrayType2 &ret)
   ASSERT(ret.size() == array.size());
 
   // subtract max for numerical stability
-  Type array_max = NumericLowest<Type>();
+  Type array_max = numeric_lowest<Type>();
   Max(array, array_max);
 
   auto it1 = array.begin();
