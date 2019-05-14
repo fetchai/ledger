@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/fixed_point/fixed_point.hpp"
+#include "math/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/leaky_relu_op.hpp"

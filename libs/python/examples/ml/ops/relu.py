@@ -1,4 +1,7 @@
-import sys, os
+import fetch.ml.float as ml
+import fetch
+import sys
+import os
 if len(sys.argv) > 1:
     sys.path.append(sys.argv[1])
 else:
@@ -6,8 +9,6 @@ else:
     print("Should be ../../../../build/libs/python/")
     sys.exit(0)
 
-import fetch
-import fetch.ml.float as ml
 #            ^ change type here to work with double or fixed point
 
 t = fetch.math.tensor.Tensor([2, 4])

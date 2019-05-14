@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/defs.hpp"
+#include "vm/variant.hpp"
 
 namespace fetch {
 namespace vm {

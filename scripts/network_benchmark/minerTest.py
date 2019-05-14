@@ -5,15 +5,20 @@ import pdb
 import random
 import optparse
 import threading
-import sys, os
+import sys
+import os
 
-# print json in pretty way
+
 def jsonPrint(r):
-    return json.dumps(r.json(), indent=4, sort_keys=True)+"\n"
+    """Pretty-print JSON"""
+    return json.dumps(r.json(), indent=4, sort_keys=True) + "\n"
 
-# Order map for comparison
-#https://stackoverflow.com/questions/25851183/
+
 def ordered(obj):
+    """Order map for comparison
+
+    https://stackoverflow.com/questions/25851183/
+    """
     if isinstance(obj, dict):
         return sorted((k, ordered(v)) for k, v in obj.items())
     if isinstance(obj, list):
@@ -21,23 +26,29 @@ def ordered(obj):
     else:
         return obj
 
-# Make HTTP post
+
 def HTTPpost(endpoint, page, jsonArg="{}"):
-    return requests.post('http://'+str(endpoint["IP"])+':'+str(endpoint["HTTPPort"])+'/'+page, json=jsonArg)
+    """Make HTTP post"""
+    return requests.post('http://{ip}:{port}/{page}'.format(
+        ip=endpoint["IP"], port=endpoint["HTTPPort"], page=page), json=jsonArg)
+
 
 threads = []
-def HTTPpostAsync(endpoint, page, jsonArg="{}"):
-        thread = threading.Thread(target=HTTPpost, args=(endpoint, page, jsonArg))
-        thread.start()
-        threads.append(thread)
 
-## localhost test
-endpoint0       = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
-endpoint1       = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "localhost"}
-endpoint2       = {"HTTPPort": 8082, "TCPPort": 9082, "IP": "localhost"}
-endpoint3       = {"HTTPPort": 8083, "TCPPort": 9083, "IP": "localhost"}
-endpoint4       = {"HTTPPort": 8084, "TCPPort": 9084, "IP": "localhost"}
-allEndpoints    = [ endpoint0, endpoint1, endpoint2, endpoint3, endpoint4]
+
+def HTTPpostAsync(endpoint, page, jsonArg="{}"):
+    thread = threading.Thread(target=HTTPpost, args=(endpoint, page, jsonArg))
+    thread.start()
+    threads.append(thread)
+
+
+# localhost test
+endpoint0 = {"HTTPPort": 8080, "TCPPort": 9080, "IP": "localhost"}
+endpoint1 = {"HTTPPort": 8081, "TCPPort": 9081, "IP": "localhost"}
+endpoint2 = {"HTTPPort": 8082, "TCPPort": 9082, "IP": "localhost"}
+endpoint3 = {"HTTPPort": 8083, "TCPPort": 9083, "IP": "localhost"}
+endpoint4 = {"HTTPPort": 8084, "TCPPort": 9084, "IP": "localhost"}
+allEndpoints = [endpoint0, endpoint1, endpoint2, endpoint3, endpoint4]
 #allEndpoints    = [ endpoint0, endpoint1 ]
 
 # Set each nodes connection to each other
@@ -45,7 +56,7 @@ allEndpoints    = [ endpoint0, endpoint1, endpoint2, endpoint3, endpoint4]
 # Fully connected topology
 for endpoint in allEndpoints:
     for otherEndpoint in allEndpoints:
-        if(endpoint != otherEndpoint):
+        if endpoint != otherEndpoint:
             HTTPpost(endpoint, 'add-endpoint', otherEndpoint)
 
 print "starting"
@@ -69,4 +80,3 @@ print "stopping miners"
 # stop all the miners
 for endpoint in allEndpoints:
     HTTPpostAsync(endpoint, 'stop')
-

@@ -33,21 +33,21 @@ public:
   using Buffer                                  = std::vector<uint8_t>;
   bool is_address                               = true;
 
-  static Ptr<Address> Constructor(VM *vm, TypeId id)
+  static Ptr<Address> Constructor(VM *vm, TypeId type_id)
   {
-    return new Address{vm, id};
+    return new Address{vm, type_id};
   }
 
-  static Ptr<Address> Constructor(VM *vm, TypeId id, Ptr<String> const &address)
+  static Ptr<Address> Constructor(VM *vm, TypeId type_id, Ptr<String> const &address)
   {
-    return new Address{vm, id, address};
+    return new Address{vm, type_id, address};
   }
 
   // Construction / Destruction
-  Address(VM *vm, TypeId id, Ptr<String> const &address = Ptr<String>{}, bool signed_tx = false)
-    : Object(vm, id)
+  Address(VM *vm, TypeId type_id, Ptr<String> const &address = Ptr<String>{},
+          bool signed_tx = false)
+    : Object(vm, type_id)
     , signed_tx_{signed_tx}
-    , vm_{vm}
   {
     if (address)
     {
@@ -125,7 +125,6 @@ private:
   Buffer      address_{};
   std::string string_representation_{"NONE_FOUND"};
   bool        signed_tx_{false};
-  VM *        vm_;
 };
 
 }  // namespace vm
