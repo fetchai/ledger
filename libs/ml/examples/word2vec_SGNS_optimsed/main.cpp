@@ -90,8 +90,8 @@ public:
 
   fetch::random::LinearCongruentialGenerator gen;
   SizeType                                   ran_val_;
-  SizeType                                   n_ran_rows_ = 1000;
-  SizeType                                   ran_positive_cursor_[1000];
+//  SizeType const                             N_RANDOM_ROWS = 1000000;
+  std::vector<SizeType>                      ran_positive_cursor_{1000000};
   std::vector<SizeType>                      rows_{};
 
   SizeType max_sentence_len_ = 0;
@@ -109,6 +109,11 @@ public:
     {
       positive_cursors_.emplace_back(IteratorType(data_));
     }
+//    for (std::size_t j = 0; j < N_RANDOM_ROWS; ++j)
+//    {
+//      ran_positive_cursor_.emplace_back
+//
+//    }
 
     PrepareDynamicWindowProbs();
   }
@@ -175,24 +180,21 @@ public:
 
   void next_positive(SizeType &input_idx, SizeType &context_idx)
   {
-    input_idx = SizeType(*cursor_);
+    input_idx = static_cast<SizeType>(*cursor_);
 
     // generate random value from 0 -> 2xwindow_size
-    ran_val_ = gen() % n_ran_rows_;
+    ran_val_ = gen() % ran_positive_cursor_.size();
 
     // dynamic context window - pick positive cursor
-    context_idx = SizeType(*(positive_cursors_[ran_positive_cursor_[ran_val_]]));
+    context_idx = static_cast<SizeType>(*(positive_cursors_[ran_positive_cursor_[ran_val_]]));
   }
 
   void next_negative(SizeType &input_idx, SizeType &context_idx)
   {
-    input_idx = SizeType(*cursor_);
-
-    // generate random value
-    ran_val_ = gen() % data_.size();
+    input_idx = static_cast<SizeType>(*cursor_);
 
     // randomly select a negative cursor
-    context_idx = static_cast<SizeType>(data_(ran_val_));
+    context_idx = static_cast<SizeType>(data_.At(gen() % data_.shape()[0], gen() % data_.shape()[1]));
   }
 
   void IncrementCursors()
@@ -206,10 +208,7 @@ public:
 
   bool done()
   {
-    // we could check that all the cursors are valid
-    //      return ( (!((*cursor_).is_valid())) || (!((*neg_context_cursor_).is_valid())) );
-
-    // but we dont have to if we have a fixed negative context up front
+    // we just check that the final positive window cursor isn't valid
     return (!(positive_cursors_[n_positive_cursors_ - 1].is_valid()));
   }
 
@@ -259,7 +258,7 @@ public:
     {
       if (i < cursor_offset_)
       {
-        for (std::size_t j = 0; j < (double(i + 1) / double(sum_freqs)) * n_ran_rows_; ++j)
+        for (std::size_t j = 0; j < (double(i + 1) / double(sum_freqs)) * ran_positive_cursor_.size(); ++j)
         {
           rows_.emplace_back(i);
         }
@@ -268,7 +267,7 @@ public:
       {
         for (std::size_t j = 0;
              j <
-             (double((cursor_offset_ - (i - cursor_offset_))) / double(sum_freqs)) * n_ran_rows_;
+             (double((cursor_offset_ - (i - cursor_offset_))) / double(sum_freqs)) * ran_positive_cursor_.size();
              ++j)
         {
           rows_.emplace_back(i);
@@ -277,7 +276,7 @@ public:
     }
 
     // move from vector into fixed array
-    for (std::size_t k = 0; k < n_ran_rows_; ++k)
+    for (std::size_t k = 0; k < ran_positive_cursor_.size(); ++k)
     {
       if (k < rows_.size())
       {
