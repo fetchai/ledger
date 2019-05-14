@@ -19,8 +19,8 @@
 #include <iomanip>
 #include <iostream>
 
-#include "core/fixed_point/fixed_point.hpp"
 #include "core/random/lfg.hpp"
+#include "math/fixed_point/fixed_point.hpp"
 #include "math/trigonometry.hpp"
 
 #include "benchmark/benchmark.h"
