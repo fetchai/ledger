@@ -1107,7 +1107,7 @@ Tensor<T, C> &Tensor<T, C>::operator=(TensorSlice const &slice)
 }
 
 template <typename T, typename C>
-bool Tensor<T, C>::Resize(SizeVector const &shape, bool copy = false)
+bool Tensor<T, C>::Resize(SizeVector const &shape, bool copy)
 {
   Tensor old_tensor = *this;
 
