@@ -30,7 +30,7 @@ namespace ledger {
  * @param tx The reference to the originating transaction
  * @return The corresponding status result for the operation
  */
-Contract::Status Contract::DispatchInitialise(Identity const &owner)
+Contract::Status Contract::DispatchInitialise(v2::Address const &owner)
 {
   Status status{Status::OK};
 

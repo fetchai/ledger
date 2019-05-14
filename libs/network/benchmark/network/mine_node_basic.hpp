@@ -43,10 +43,9 @@ namespace network_mine_test {
 
 class MineNodeBasic
 {
-
   // Main chain
+  using Digest    = ledger::v2::Digest;
   using BlockType = ledger::Block;
-  using BlockHash = ledger::Block::Digest;
   using body_type = ledger::Block::Body;
   using miner     = fetch::ledger::consensus::DummyMiner;
 
@@ -96,7 +95,7 @@ public:
   void SyncBlock(BlockType &block)
   {
     BlockType walkBlock;
-    BlockHash hash = block.body.previous_hash;
+    Digest hash = block.body.previous_hash;
 
     for (;;)
     {
@@ -119,7 +118,7 @@ public:
   }
 
   // Nodes will provide each other with headers
-  std::pair<bool, BlockType> ProvideHeader(BlockHash hash)
+  std::pair<bool, BlockType> ProvideHeader(Digest hash)
   {
     auto block = main_chain_.GetBlock(std::move(hash));
 

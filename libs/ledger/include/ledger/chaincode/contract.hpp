@@ -39,6 +39,7 @@ class Variant;
 namespace ledger {
 namespace v2 {
   class Transaction;
+  class Address;
 }
 
 /**
@@ -58,7 +59,7 @@ public:
   using ConstByteArray        = byte_array::ConstByteArray;
   using ContractName          = TransactionSummary::ContractName;
   using Query                 = variant::Variant;
-  using InitialiseHandler     = std::function<Status(Identity const &)>;
+  using InitialiseHandler     = std::function<Status(v2::Address const &)>;
   using TransactionHandler    = std::function<Status(v2::Transaction const &)>;
   using TransactionHandlerMap = std::unordered_map<ContractName, TransactionHandler>;
   using QueryHandler          = std::function<Status(Query const &, Query &)>;
@@ -81,7 +82,7 @@ public:
   void Attach(ledger::StateAdapter &state);
   void Detach();
 
-  Status DispatchInitialise(Identity const &owner);
+  Status DispatchInitialise(v2::Address const &owner);
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
   Status DispatchTransaction(ConstByteArray const &name, v2::Transaction const &tx);
   /// @}
@@ -106,7 +107,7 @@ protected:
   /// @{
   void OnInitialise(InitialiseHandler &&handler);
   template <typename C>
-  void OnInitialise(C *instance, Status (C::*func)(Identity const &));
+  void OnInitialise(C *instance, Status (C::*func)(v2::Address const &));
   /// @}
 
   /// @name Transaction Handlers
@@ -202,9 +203,9 @@ inline Contract::TransactionHandlerMap const &Contract::transaction_handlers() c
  * @param func The member function pointer
  */
 template <typename C>
-void Contract::OnInitialise(C *instance, Status (C::*func)(Identity const &))
+void Contract::OnInitialise(C *instance, Status (C::*func)(v2::Address const &))
 {
-  OnInitialise([instance, func](Identity const &owner) { return (instance->*func)(owner); });
+  OnInitialise([instance, func](v2::Address const &owner) { return (instance->*func)(owner); });
 }
 
 /**

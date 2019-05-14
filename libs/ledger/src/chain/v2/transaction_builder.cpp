@@ -62,7 +62,7 @@ TransactionBuilder::Sealer::Sealer(TransactionPtr tx)
  * @param prover The prover to be used to generate a signature
  * @return The sealed builder
  */
-TransactionBuilder::Sealer &TransactionBuilder::Sealer::Sign(crypto::Prover &prover)
+TransactionBuilder::Sealer &TransactionBuilder::Sealer::Sign(crypto::Prover const &prover)
 {
   using Signatory = Transaction::Signatory;
 

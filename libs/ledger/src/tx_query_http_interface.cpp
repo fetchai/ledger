@@ -36,10 +36,8 @@ using fetch::variant::Variant;
 namespace fetch {
 namespace ledger {
 
-TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit,
-                                           uint32_t              log2_num_lanes)
+TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit)
   : storage_unit_{storage_unit}
-  , log2_num_lanes_{log2_num_lanes}
 {
   Get("/api/tx/(digest=[a-fA-F0-9]{64})/", [this](http::ViewParameters const &params,
                                                   http::HTTPRequest const &   request) {

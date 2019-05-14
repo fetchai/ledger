@@ -38,6 +38,7 @@
 
 using fetch::meta::IsLog2;
 using fetch::meta::Log2;
+using fetch::BitVector;
 
 class BasicMinerTests : public ::testing::TestWithParam<std::size_t>
 {
@@ -57,7 +58,6 @@ protected:
   using VerifiedTransaction = fetch::ledger::VerifiedTransaction;
   using Clock               = std::chrono::high_resolution_clock;
   using Timepoint           = Clock::time_point;
-  using BitVector           = fetch::bitmanip::BitVector;
   using TransactionLayout   = fetch::ledger::v2::TransactionLayout;
   using MainChain           = fetch::ledger::MainChain;
   using Block               = fetch::ledger::Block;
@@ -69,7 +69,7 @@ protected:
   {
     rng_.seed(RANDOM_SEED);
     generator_.Seed(RANDOM_SEED);
-    miner_ = std::make_unique<BasicMiner>(uint32_t{LOG2_NUM_LANES}, std::size_t{NUM_SLICES});
+    miner_ = std::make_unique<BasicMiner>(uint32_t{LOG2_NUM_LANES});
   }
 
   void TearDown() override

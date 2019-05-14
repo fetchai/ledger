@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/deed.hpp"
+#include "core/byte_array/decoders.hpp"
 
 // TODO(HUT): doesn't putting this here pollute the namespace?
 using fetch::variant::Variant;
@@ -92,9 +93,14 @@ bool DeedFromVariant(Variant const &variant_deed, DeedShrdPtr &deed)
   }
 
   Deed::Signees signees;
-  v_signees.IterateObject([&signees](byte_array::ConstByteArray const &address,
+  v_signees.IterateObject([&signees](byte_array::ConstByteArray const &display_address,
                                      variant::Variant const &          v_weight) -> bool {
-    signees[v2::Address(address)] = v_weight.As<Deed::Weight>();
+    v2::Address address{};
+    if (v2::Address::Parse(display_address, address))
+    {
+      signees[address] = v_weight.As<Deed::Weight>();
+    }
+
     return true;
   });
 

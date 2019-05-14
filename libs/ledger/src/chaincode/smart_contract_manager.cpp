@@ -140,13 +140,13 @@ Contract::Status SmartContractManager::OnCreate(v2::Transaction const &tx)
   }
 
   // if there is an init function to run, do so.
-  if (on_init_function.size() > 0)
+  if (!on_init_function.empty())
   {
     // Attach our state to the smart contract
     smart_contract.Attach(state());
 
     // Dispatch to the init. method
-    auto const status = smart_contract.DispatchInitialise(tx.signatories().begin()->identity);
+    auto const status = smart_contract.DispatchInitialise(tx.signatories().begin()->address);
     if (status != Status::OK)
     {
       return status;

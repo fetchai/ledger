@@ -85,8 +85,8 @@ public:
 
   /// @name Accessors
   /// @{
-  ConstByteArray address() const;
-  ConstByteArray display() const;
+  ConstByteArray const &address() const;
+  ConstByteArray const &display() const;
   /// @}
 
   // Operators
@@ -106,7 +106,7 @@ private:
  *
  * @return The raw address
  */
-inline Address::ConstByteArray Address::address() const
+inline Address::ConstByteArray const &Address::address() const
 {
   return address_;
 }
@@ -116,7 +116,7 @@ inline Address::ConstByteArray Address::address() const
  *
  * @return The display address
  */
-inline Address::ConstByteArray Address::display() const
+inline Address::ConstByteArray const &Address::display() const
 {
   return display_;
 }

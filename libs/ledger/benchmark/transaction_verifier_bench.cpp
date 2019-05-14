@@ -78,7 +78,7 @@ void TransactionVerifierBench(benchmark::State &state)
 
   // generate the transactions
   ECDSASigner signer;
-  auto const  txs = GenerateTransactions(static_cast<std::size_t>(state.range(1)), false, &signer);
+  auto const txs = GenerateTransactions(static_cast<std::size_t>(state.range(1)), signer);
 
   // wait for the
   for (auto _ : state)
@@ -93,7 +93,7 @@ void TransactionVerifierBench(benchmark::State &state)
     // front load the verifier
     for (auto const &tx : txs)
     {
-      verifier->AddTransaction(tx.AsMutable());
+      verifier->AddTransaction(tx);
     }
 
     verifier->Start();

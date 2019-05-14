@@ -55,7 +55,7 @@ public:
 
   Result Execute(Digest const &digest, BlockIndex block, SliceIndex slice, BitVector const &shards) override
   {
-    history_.emplace_back(digest, block, slice, shards, Clock::now());
+    history_.emplace_back(HistoryElement{digest, block, slice, shards, Clock::now()});
 
     // if we have a state then make some changes to it
     if (state_)

@@ -144,7 +144,7 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
     {
       // ensure each of the layouts are correctly formatted. This should be removed in the future
       // and some level of dynamic scaling should be applied.
-      assert(num_lanes_ == tx.mask().size());
+      assert((1u << log2_num_lanes_) == tx.mask().size());
 
       // insert the item into the execution plan
       slice_plan.emplace_back(

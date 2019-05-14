@@ -24,19 +24,23 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
 #include "storage/transient_object_store.hpp"
+#include "ledger/chain/v2/transaction_builder.hpp"
+#include "ledger/chain/v2/transaction_rpc_serializers.hpp"
 
 #include <benchmark/benchmark.h>
 #include <vector>
 
 using fetch::byte_array::ByteArray;
 using fetch::storage::ResourceID;
-using fetch::ledger::VerifiedTransaction;
-using fetch::ledger::MutableTransaction;
+using fetch::ledger::v2::Transaction;
+using fetch::ledger::v2::TransactionBuilder;
+using fetch::ledger::v2::Address;
+using fetch::crypto::ECDSASigner;
 using fetch::random::LinearCongruentialGenerator;
 
-using ObjectStore      = fetch::storage::ObjectStore<VerifiedTransaction>;
-using TransactionStore = fetch::storage::TransientObjectStore<VerifiedTransaction>;
-using TransactionList  = std::vector<VerifiedTransaction>;
+using ObjectStore      = fetch::storage::ObjectStore<Transaction>;
+using TransactionStore = fetch::storage::TransientObjectStore<Transaction>;
+using TransactionList  = std::vector<TransactionBuilder::TransactionPtr>;
 
 TransactionList GenerateTransactions(std::size_t count, bool large_packets)
 {
@@ -47,13 +51,19 @@ TransactionList GenerateTransactions(std::size_t count, bool large_packets)
 
   static LinearCongruentialGenerator rng;
 
+  ECDSASigner const signer;
+  Address const signer_address{signer.identity()};
+
   TransactionList list;
   list.reserve(count);
 
   for (std::size_t i = 0; i < count; ++i)
   {
-    MutableTransaction mtx;
-    mtx.set_contract_name("fetch.dummy");
+    TransactionBuilder builder;
+    builder.From(signer_address);
+    builder.TargetChainCode("fetch.dummy", fetch::BitVector{});
+    builder.Action("foobar");
+    builder.Signer(signer.identity());
 
     if (large_packets)
     {
@@ -64,13 +74,15 @@ TransactionList GenerateTransactions(std::size_t count, bool large_packets)
       {
         *tx_data_raw++ = rng();
       }
+
+      builder.Data(tx_data);
     }
     else
     {
-      mtx.set_data(std::to_string(i));
+      builder.Data(std::to_string(i));
     }
 
-    list.emplace_back(VerifiedTransaction::Create(std::move(mtx)));
+    list.emplace_back(builder.Seal().Sign(signer).Build());
   }
 
   return list;
@@ -111,7 +123,7 @@ void TxSubmitWrites(benchmark::State &state)
 
     for (auto const &tx : transactions)
     {
-      store.Set(ResourceID{tx.digest()}, tx);
+      store.Set(ResourceID{tx->digest()}, *tx);
     }
 
     // For a fair test must force flush to disk after writes - note this makes the results for small

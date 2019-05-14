@@ -182,7 +182,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
             p2p::P2PHttpInterface::WeakStateMachines{main_chain_service_->GetWeakStateMachine(),
                                                      block_coordinator_.GetWeakStateMachine()}),
         std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
-        std::make_shared<ledger::TxQueryHttpInterface>(*storage_, cfg_.log2_num_lanes),
+        std::make_shared<ledger::TxQueryHttpInterface>(*storage_),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
         std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_)}
 {

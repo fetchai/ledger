@@ -103,7 +103,6 @@ private:
   using SyncedState       = SynchronisedState<State>;
 
   uint32_t const log2_num_lanes_;
-  uint32_t const num_lanes_{1u << log2_num_lanes_};
 
   Flag running_{false};
   Flag monitor_ready_{false};

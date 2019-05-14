@@ -57,7 +57,7 @@ public:
     // Construction / Destruction
     explicit Sealer(TransactionPtr tx);
 
-    Sealer &       Sign(crypto::Prover &prover);
+    Sealer &       Sign(crypto::Prover const &prover);
     TransactionPtr Build();
 
   private:

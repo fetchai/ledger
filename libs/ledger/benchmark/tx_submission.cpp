@@ -25,6 +25,8 @@
 #include "ledger/chain/transaction_serialization.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
 #include "storage/transient_object_store.hpp"
+#include "ledger/chain/v2/transaction_builder.hpp"
+#include "ledger/chain/v2/transaction_rpc_serializers.hpp"
 
 #include <benchmark/benchmark.h>
 #include <vector>
@@ -33,13 +35,15 @@ namespace {
 
 using fetch::byte_array::ByteArray;
 using fetch::storage::ResourceID;
-using fetch::ledger::VerifiedTransaction;
-using fetch::ledger::MutableTransaction;
+using fetch::ledger::v2::Transaction;
+using fetch::ledger::v2::TransactionBuilder;
+using fetch::ledger::v2::Address;
+using fetch::crypto::ECDSASigner;
 using fetch::random::LinearCongruentialGenerator;
 
-using TransientStore   = fetch::storage::TransientObjectStore<VerifiedTransaction>;
-using TransactionStore = fetch::storage::ObjectStore<VerifiedTransaction>;
-using TransactionList  = std::vector<VerifiedTransaction>;
+using TransientStore   = fetch::storage::TransientObjectStore<Transaction>;
+using TransactionStore = fetch::storage::ObjectStore<Transaction>;
+using TransactionList  = std::vector<TransactionBuilder::TransactionPtr>;
 
 TransactionList GenerateTransactions(std::size_t count, bool large_packets)
 {
@@ -50,13 +54,19 @@ TransactionList GenerateTransactions(std::size_t count, bool large_packets)
 
   static LinearCongruentialGenerator rng;
 
+  ECDSASigner const signer;
+  Address const signer_address{signer.identity()};
+
   TransactionList list;
   list.reserve(count);
 
   for (std::size_t i = 0; i < count; ++i)
   {
-    MutableTransaction mtx;
-    mtx.set_contract_name("fetch.dummy");
+    TransactionBuilder builder;
+    builder.From(signer_address);
+    builder.TargetChainCode("fetch.dummy", fetch::BitVector{});
+    builder.Action("foobar");
+    builder.Signer(signer.identity());
 
     if (large_packets)
     {
@@ -67,13 +77,15 @@ TransactionList GenerateTransactions(std::size_t count, bool large_packets)
       {
         *tx_data_raw++ = rng();
       }
+
+      builder.Data(tx_data);
     }
     else
     {
-      mtx.set_data(std::to_string(i));
+      builder.Data(std::to_string(i));
     }
 
-    list.emplace_back(VerifiedTransaction::Create(std::move(mtx)));
+    list.emplace_back(builder.Seal().Sign(signer).Build());
   }
 
   return list;
@@ -92,7 +104,7 @@ void TxSubmitFixedLarge(benchmark::State &state)
   {
     for (auto const &tx : transactions)
     {
-      tx_store.Set(ResourceID{tx.digest()}, tx);
+      tx_store.Set(ResourceID{tx->digest()}, *tx);
     }
   }
 }
@@ -110,7 +122,7 @@ void TxSubmitFixedSmall(benchmark::State &state)
   {
     for (auto const &tx : transactions)
     {
-      tx_store.Set(ResourceID{tx.digest()}, tx);
+      tx_store.Set(ResourceID{tx->digest()}, *tx);
     }
   }
 }
@@ -128,7 +140,7 @@ void TxSubmitSingleLarge(benchmark::State &state)
   for (auto _ : state)
   {
     auto const &tx = transactions.at(tx_index++);
-    tx_store.Set(ResourceID{tx.digest()}, tx);
+    tx_store.Set(ResourceID{tx->digest()}, *tx);
   }
 }
 
@@ -145,7 +157,7 @@ void TxSubmitSingleSmall(benchmark::State &state)
   for (auto _ : state)
   {
     auto const &tx = transactions.at(tx_index++);
-    tx_store.Set(ResourceID{tx.digest()}, tx);
+    tx_store.Set(ResourceID{tx->digest()}, *tx);
   }
 }
 
@@ -162,7 +174,7 @@ void TxSubmitSingleSmallAlt(benchmark::State &state)
   for (auto _ : state)
   {
     auto const &tx = transactions.at(tx_index++);
-    tx_store.Set(ResourceID{tx.digest()}, tx, false);
+    tx_store.Set(ResourceID{tx->digest()}, *tx, false);
   }
 }
 
@@ -172,7 +184,7 @@ void TransientStoreExpectedOperation(benchmark::State &state)
   TransientStore tx_store;
   tx_store.New("transaction.db", "transaction_index.db", true);
 
-  VerifiedTransaction dummy;
+  Transaction dummy;
 
   for (auto _ : state)
   {
@@ -183,12 +195,12 @@ void TransientStoreExpectedOperation(benchmark::State &state)
 
     for (auto const &tx : transactions)
     {
-      ResourceID const rid{tx.digest()};
+      ResourceID const rid{tx->digest()};
 
       // Basic pattern for a transient store is to intake X transactions into the mempool,
       // then read some subset N of them (for block verification/packing), then commit
       // those to the underlying object store.
-      tx_store.Set(ResourceID{tx.digest()}, tx, false);
+      tx_store.Set(rid, *tx, false);
 
       // also trigger the read from the store and the subsequent right schedule
       tx_store.Get(rid, dummy);

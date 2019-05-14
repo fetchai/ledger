@@ -54,7 +54,6 @@ private:
   using Rng       = fetch::random::LinearCongruentialGenerator;
   using RngWord   = Rng::random_type;
   using Digest    = fetch::ledger::v2::Digest;
-  using ShardMask = TransactionLayout::ShardMask;
   using ByteArray = fetch::byte_array::ByteArray;
 
   Digest GenerateDigest()
@@ -77,9 +76,9 @@ private:
     return {digest};
   }
 
-  ShardMask GenerateResources(uint32_t num_resources)
+  fetch::BitVector GenerateResources(uint32_t num_resources)
   {
-    ShardMask mask{num_lanes_};
+    fetch::BitVector mask{num_lanes_};
 
     for (uint32_t i = 0; i < num_resources; ++i)
     {

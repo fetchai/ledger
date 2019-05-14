@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "miner/optimisation/bitvector.hpp"
+#include "core/bitvector.hpp"
 #include "vectorise/platform.hpp"
 
 #include "gtest/gtest.h"
@@ -26,7 +26,7 @@
 #include <iomanip>
 #include <memory>
 
-using fetch::bitmanip::BitVector;
+using fetch::BitVector;
 using fetch::platform::IsLog2;
 using fetch::platform::ToLog2;
 using fetch::platform::DivCeil;
@@ -76,7 +76,7 @@ fetch::byte_array::ConstByteArray Convert(BitVector const &value)
 {
   auto const *raw = reinterpret_cast<uint8_t const *>(value.data().pointer());
 
-  return {raw, sizeof(BitVector::data_type) * value.blocks()};
+  return {raw, sizeof(BitVector::Block) * value.blocks()};
 }
 
 

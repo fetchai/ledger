@@ -450,7 +450,7 @@ protected:
     for (auto const &identity : IDENTITIES)
     {
       signers_.emplace_back(std::make_unique<ECDSASigner>(FromHex(identity.private_key)));
-      addresses_.emplace_back(Address{signers_.back()->identity().identifier()});
+      addresses_.emplace_back(Address{signers_.back()->identity()});
     }
   }
 
