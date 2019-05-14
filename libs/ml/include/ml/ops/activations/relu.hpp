@@ -64,6 +64,7 @@ public:
 
     while (it1.is_valid())
     {
+      *it2 = DataType(1);
       if (*it1 <= DataType(0))
       {
         *it2 = DataType(0);

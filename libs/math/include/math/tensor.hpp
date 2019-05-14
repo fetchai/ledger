@@ -37,6 +37,7 @@
 #include "math/tensor_broadcast.hpp"
 #include "math/tensor_iterator.hpp"
 #include "math/tensor_slice_iterator.hpp"
+#include "math/tensor_view.hpp"
 
 #include <iostream>
 #include <memory>
@@ -163,7 +164,8 @@ public:
   Tensor &operator=(ConstSliceType const &slice);
   Tensor &operator=(TensorSlice const &slice);
 
-  void Fill(Type const &value, memory::Range const &range);
+  // TODO: Add slice support
+  void Fill(Type const &value, memory::Range const &range); 
   void Fill(Type const &value, memory::TrivialRange const &range);
   void Fill(Type const &value);
   void SetAllZero();
@@ -331,6 +333,27 @@ public:
   ConstSliceType Slice(SizeType i, SizeType axis = 0) const;
   TensorSlice    Slice(SizeType i, SizeType axis = 0);
 
+  //////////////
+  /// Views  ///
+  //////////////
+  TensorView<Type, ContainerType> View()
+  {
+    SizeType N = shape_.size() - 1;
+    SizeType width = shape_[N] * stride_[N] / padded_height_;
+    return TensorView<Type, ContainerType>(data_, height(), width);
+  }
+
+  TensorView<Type, ContainerType> View(SizeType index)
+  {
+    SizeType N = shape_.size() - 1 - 1;
+    SizeType volume = shape_[N] * stride_[N];    
+    SizeType width = volume / padded_height_;
+    SizeType offset = volume * index;
+    return TensorView<Type, ContainerType>(data_, height(), width, offset);
+  }
+
+
+
   /////////////////////////
   /// general utilities ///
   /////////////////////////
@@ -347,14 +370,7 @@ public:
   void Sort();
   void Sort(memory::TrivialRange const &range);
 
-  template <typename Unsigned>
-  static fetch::meta::IfIsUnsignedInteger<Unsigned, Tensor> Arange(Unsigned const &from,
-                                                                   Unsigned const &to,
-                                                                   Unsigned const &delta);
-
-  template <typename Signed>
-  static fetch::meta::IfIsSignedInteger<Signed, Tensor> Arange(Signed const &from, Signed const &to,
-                                                               Signed const &delta);
+  static Tensor Arange(Type const &from, Type const &to, Type const &delta);
 
   ////////////////////////////
   /// COMPARISON OPERATORS ///
@@ -2430,27 +2446,6 @@ void Tensor<T, C>::Sort(memory::TrivialRange const &range)
 }
 
 /**
- * returns a range over this array defined using unsigned integers (only forward ranges)
- * @tparam Unsigned an unsigned integer type
- * @param from starting point of range
- * @param to end of range
- * @param delta the increment to step through the range
- * @return returns a shapeless array with the values in *this over the specified range
- */
-template <typename T, typename C>
-template <typename Unsigned>
-fetch::meta::IfIsUnsignedInteger<Unsigned, Tensor<T, C>> Tensor<T, C>::Arange(Unsigned const &from,
-                                                                              Unsigned const &to,
-                                                                              Unsigned const &delta)
-{
-  ASSERT(delta != 0);
-  ASSERT(from < to);
-  Tensor ret;
-  details::ArangeImplementation(from, to, delta, ret);
-  return ret;
-}
-
-/**
  * returns a range over this array defined using signed integers (i.e. permitting backward ranges)
  * @tparam Signed a signed integer type
  * @param from starting point of range
@@ -2459,10 +2454,9 @@ fetch::meta::IfIsUnsignedInteger<Unsigned, Tensor<T, C>> Tensor<T, C>::Arange(Un
  * @return returns a shapeless array with the values in *this over the specified range
  */
 template <typename T, typename C>
-template <typename Signed>
-fetch::meta::IfIsSignedInteger<Signed, Tensor<T, C>> Tensor<T, C>::Arange(Signed const &from,
-                                                                          Signed const &to,
-                                                                          Signed const &delta)
+Tensor<T, C> Tensor<T, C>::Arange(T const &from,
+                                                                          T const &to,
+                                                                          T const &delta)
 {
   ASSERT(delta != 0);
   ASSERT(((from < to) && delta > 0) || ((from > to) && delta < 0));

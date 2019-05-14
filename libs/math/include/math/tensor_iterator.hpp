@@ -30,14 +30,18 @@ class TensorIterator
 {
 public:
   using Type     = T;
-  using SizeType = uint64_t;
   /**
    * default range assumes step 1 over whole array - useful for trivial cases
    * @param array
    */
   TensorIterator(TensorType &array)
-    : array_(array)
-  {}
+  {
+    pointer_ = array.data().pointer();
+    skip_ = array.padded_height() - array.height();
+    end_ = pointer_ + array.data().size();
+    height_= array.height();
+    size_ = array.size();
+  }
 
   TensorIterator(TensorIterator const &other) = default;
   TensorIterator &operator=(TensorIterator const &other) = default;
@@ -50,9 +54,10 @@ public:
    * @param position is the starting position referencing the underlying memory.
    */
   TensorIterator(TensorType &array, SizeType position)
-    : array_(array)
-    , position_{std::move(position)}
-  {}
+  : TensorIterator(array)
+  {
+    pointer_ = array.data().pointer() + position;
+  }
 
   static TensorIterator EndIterator(TensorType &array)
   {
@@ -64,7 +69,7 @@ public:
    */
   bool is_valid() const
   {
-    return position_ < array_.data().size();
+    return pointer_ < end_;
   }
 
   /**
@@ -84,13 +89,13 @@ public:
   TensorIterator &operator++()
   {
     ++i_;
-    ++position_;
+    ++pointer_;
 
-    if (i_ >= array_.height())
+    if (i_ >= height_)
     {
       i_ = 0;
       ++j_;
-      position_ = j_ * array_.padded_height();
+      pointer_ += skip_;
     }
 
     return *this;
@@ -102,36 +107,40 @@ public:
    */
   Type &operator*()
   {
-    assert(position_ < array_.data().size());
-    return array_.data()[position_];
+    assert(is_valid());
+    return *pointer_;
   }
 
   Type const &operator*() const
   {
-    assert(position_ < array_.data().size());
-    return array_.data()[position_];
+    assert(is_valid());
+    return *pointer_;
   }
 
   bool operator==(TensorIterator const &other) const
   {
-    return other.position_ == position_;
+    return other.pointer_ == pointer_;
   }
 
   bool operator!=(TensorIterator const &other) const
   {
-    return other.position_ != position_;
+    return other.pointer_ != pointer_;
   }
+
 
   SizeType size() const
   {
-    return array_.size();
+    return size_;
   }
-
 private:
-  TensorType &array_;
-  SizeType    position_{0};
+  T *pointer_;
+  T *end_;  
+
+  SizeType    height_{0};  
+  SizeType    skip_{0};
   SizeType    i_{0};
   SizeType    j_{0};
+  SizeType    size_{0};
 };
 
 template <typename T, typename C>
