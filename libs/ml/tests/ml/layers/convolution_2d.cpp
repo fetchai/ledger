@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/layers/convolution_2d.hpp"
-#include "core/fixed_point/fixed_point.hpp"
+#include "math/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 
@@ -195,10 +195,35 @@ TYPED_TEST(Convolution2DTest, ops_backward_test)  // Use the class as an Ops
   ASSERT_EQ(backprop_error[0].shape()[1], input_height);
   ASSERT_EQ(backprop_error[0].shape()[2], input_width);
 
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 0, 0)), -4.30774927f);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 0, 0)), 9.1627159f);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 0, 0)), 0.80360967f);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(3, 0, 0)), 1.2491617f);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 0, 0)), -4.3077492713928222656);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 0, 0)), 9.162715911865234375);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 0, 0)), 0.80360949039459228516);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 1, 0)), 1.2491617202758789062);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 1, 0)), 2.8053097724914550781);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 1, 0)), -4.166011810302734375);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 2, 0)), 2.4086174964904785156);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 2, 0)), -0.86411559581756591797);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 2, 0)), -3.5623354911804199219);
+
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 0, 1)), -2.9907839298248291016);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 0, 1)), -0.16291338205337524414);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 0, 1)), -2.5308477878570556641);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 1, 1)), -1.2312210798263549805);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 1, 1)), -6.6115474700927734375);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 1, 1)), 3.2868711948394775391);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 2, 1)), -4.994899749755859375);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 2, 1)), -2.9489955902099609375);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 2, 1)), -2.4173920154571533203);
+
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 0, 2)), 2.4823324680328369141);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 0, 2)), 2.4479858875274658203);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 0, 2)), -0.3612575531005859375);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 1, 2)), -6.4253511428833007812);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 1, 2)), -3.184307098388671875);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 1, 2)), 0.51499307155609130859);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 2, 2)), -1.5936613082885742188);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 2, 2)), -0.41774189472198486328);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 2, 2)), 0.98040378093719482422);
 }
 
 TYPED_TEST(Convolution2DTest, node_forward_test)  // Use the class as a Node
@@ -322,10 +347,62 @@ TYPED_TEST(Convolution2DTest, node_backward_test)  // Use the class as a Node
   ASSERT_EQ(backprop_error[0].second.shape()[1], input_height);
   ASSERT_EQ(backprop_error[0].second.shape()[2], input_width);
 
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(0, 0, 0)), -4.30774927f);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(1, 0, 0)), 9.1627159f);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(2, 0, 0)), 0.80360967f);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(3, 0, 0)), 1.2491617f);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(0, 0, 0)),
+                  -4.3077492713928222656);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(1, 0, 0)),
+                  9.162715911865234375);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(2, 0, 0)),
+                  0.80360949039459228516);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(0, 1, 0)),
+                  1.2491617202758789062);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(1, 1, 0)),
+                  2.8053097724914550781);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(2, 1, 0)),
+                  -4.166011810302734375);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(0, 2, 0)),
+                  2.4086174964904785156);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(1, 2, 0)),
+                  -0.86411559581756591797);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(2, 2, 0)),
+                  -3.5623354911804199219);
+
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(0, 0, 1)),
+                  -2.9907839298248291016);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(1, 0, 1)),
+                  -0.16291338205337524414);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(2, 0, 1)),
+                  -2.5308477878570556641);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(0, 1, 1)),
+                  -1.2312210798263549805);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(1, 1, 1)),
+                  -6.6115474700927734375);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(2, 1, 1)),
+                  3.2868711948394775391);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(0, 2, 1)),
+                  -4.994899749755859375);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(1, 2, 1)),
+                  -2.9489955902099609375);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(2, 2, 1)),
+                  -2.4173920154571533203);
+
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(0, 0, 2)),
+                  2.4823324680328369141);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(1, 0, 2)),
+                  2.4479858875274658203);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(2, 0, 2)),
+                  -0.3612575531005859375);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(0, 1, 2)),
+                  -6.4253511428833007812);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(1, 1, 2)),
+                  -3.184307098388671875);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(2, 1, 2)),
+                  0.51499307155609130859);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(0, 2, 2)),
+                  -1.5936613082885742188);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(1, 2, 2)),
+                  -0.41774189472198486328);
+  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(2, 2, 2)),
+                  0.98040378093719482422);
 }
 
 TYPED_TEST(Convolution2DTest, graph_forward_test)  // Use the class as a Node

@@ -19,6 +19,7 @@
 
 #include "core/random/lfg.hpp"
 #include "math/distance/euclidean.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include "meta/type_traits.hpp"
 #include <core/assert.hpp>
 #include <math/fundamental_operators.hpp>
@@ -51,13 +52,13 @@ public:
   static constexpr char const *DESCRIPTOR = "TSNE";
 
   template <typename DataType>
-  meta::IfIsFixedPoint<DataType, DataType> static minimum_tolerance()
+  static constexpr math::meta::IfIsFixedPoint<DataType, DataType> tsne_tolerance()
   {
     return DataType::CONST_SMALLEST_FRACTION;
   }
 
   template <typename DataType>
-  meta::IfIsFloat<DataType, DataType> static minimum_tolerance()
+  static constexpr math::meta::IfIsNonFixedPointArithmetic<DataType, DataType> tsne_tolerance()
   {
     return DataType(1e-12);
   }
@@ -89,6 +90,7 @@ public:
     output_symmetric_affinities_.Fill(DataType(0));
     DataType min_gain{0.01f};
     DataType momentum = initial_momentum;
+    assert(output_matrix_.shape().size() == 2);
 
     // i_y is output_matrix value from last iteration
     ArrayType i_y(output_matrix_.shape());
@@ -120,12 +122,12 @@ public:
         {
           if ((gradient.At(i, j) > 0.0) != (i_y.At(i, j) > 0.0))
           {
-            gains.Set(i, j, gains.At(i, j) + DataType(0.2));
+            gains(i, j) = gains.At(i, j) + DataType(0.2);
           }
 
           if ((gradient.At(i, j) > 0.0) == (i_y.At(i, j) > 0.0))
           {
-            gains.Set(i, j, gains.At(i, j) * DataType(0.8));
+            gains(i, j) = gains.At(i, j) * DataType(0.8);
           }
         }
       }
@@ -193,7 +195,7 @@ private:
     input_symmetric_affinities_ = fetch::math::Multiply(input_symmetric_affinities_, DataType(4));
 
     // Limit minimum value to 1e-12
-    LimitMin(input_symmetric_affinities_, minimum_tolerance<DataType>());
+    LimitMin(input_symmetric_affinities_, tsne_tolerance<DataType>());
 
     // Initialize low dimensional values
     output_matrix_               = output_matrix;
@@ -378,7 +380,7 @@ private:
     output_symmetric_affinities = fetch::math::NormalizeArray(num);
 
     // Crop minimal value to 1e-12
-    LimitMin(output_symmetric_affinities, minimum_tolerance<DataType>());
+    LimitMin(output_symmetric_affinities, tsne_tolerance<DataType>());
   }
 
   /**
