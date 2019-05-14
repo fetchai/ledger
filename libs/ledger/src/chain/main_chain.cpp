@@ -523,7 +523,7 @@ void MainChain::RecoverFromFile(Mode mode)
 {
   // TODO(private issue 667): Complete loading of chain on startup ill-advised
 
-  ASSERT(static_cast<bool>(block_store_));
+  assert(static_cast<bool>(block_store_));
 
   FETCH_LOCK(lock_);
 
@@ -542,7 +542,7 @@ void MainChain::RecoverFromFile(Mode mode)
   }
   else
   {
-    ASSERT(false);
+    assert(false);
   }
 
   // load the head block, and attempt verify that this block forms a complete chain to genesis
@@ -730,7 +730,7 @@ void MainChain::WriteToFile()
 void MainChain::TrimCache()
 {
   static const uint64_t CACHE_TRIM_THRESHOLD = 2 * FINALITY_PERIOD;
-  ASSERT(static_cast<bool>(block_store_));
+  assert(static_cast<bool>(block_store_));
 
   MilliTimer myTimer("MainChain::TrimCache");
 
@@ -877,7 +877,7 @@ void MainChain::RecordLooseBlock(IntBlockPtr const &block)
   auto &waiting_blocks = loose_blocks_[block->body.previous_hash];
   waiting_blocks.push_back(block->body.hash);
 
-  ASSERT(block->is_loose);
+  assert(block->is_loose);
   CacheBlock(block);
 }
 
@@ -890,9 +890,9 @@ void MainChain::RecordLooseBlock(IntBlockPtr const &block)
  */
 bool MainChain::UpdateTips(IntBlockPtr const &block)
 {
-  ASSERT(!block->is_loose);
-  ASSERT(block->weight != 0);
-  ASSERT(block->total_weight != 0);
+  assert(!block->is_loose);
+  assert(block->weight != 0);
+  assert(block->total_weight != 0);
 
   // remove the tip if exists and add the new one
   tips_.erase(block->body.previous_hash);
@@ -911,7 +911,7 @@ bool MainChain::UpdateTips(IntBlockPtr const &block)
  */
 BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose_blocks)
 {
-  ASSERT(block->body.previous_hash.size() > 0);
+  assert(block->body.previous_hash.size() > 0);
 
   MilliTimer myTimer("MainChain::InsertBlock", 500);
 
@@ -993,10 +993,10 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
   }
 
   // we exepect only non-loose blocks here
-  ASSERT(!block->is_loose);
+  assert(!block->is_loose);
 
   // by definition this also means we expect blocks to have a valid parent block too
-  ASSERT(static_cast<bool>(prev_block));
+  assert(static_cast<bool>(prev_block));
 
   // update the final (total) weight for this block
   block->total_weight = prev_block->total_weight + block->weight;
