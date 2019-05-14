@@ -203,6 +203,8 @@ private:
     ERROR
   };
 
+  static constexpr uint64_t COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT = 1000;
+
   using Mutex             = fetch::mutex::Mutex;
   using BlockPtr          = MainChain::BlockPtr;
   using NextBlockPtr      = std::unique_ptr<Block>;
@@ -256,6 +258,8 @@ private:
   TransactionStatusCache &   status_cache_;       ///< Ref to the tx status cache
   PeriodicAction             periodic_print_;
   MinerPtr                   miner_;
+  MainChain::Blocks blocks_to_common_ancestor_;  ///< Partial vector of blocks from main chain HEAD
+                                                 ///< to block coord. last executed block.
   /// @}
 
   /// @name Status

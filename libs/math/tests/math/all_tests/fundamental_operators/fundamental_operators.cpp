@@ -21,9 +21,9 @@
 #include <iostream>
 #include <numeric>
 
-#include "core/fixed_point/fixed_point.hpp"
 #include "core/random/lcg.hpp"
-#include "math/base_types.hpp"  // wraps NumericMax
+#include "math/base_types.hpp"  // wraps numeric_max
+#include "math/fixed_point/fixed_point.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/tensor.hpp"
 
@@ -60,7 +60,7 @@ TYPED_TEST(FundamentalOperatorsUIntTypeTest, AdditionUIntTest)
   TypeParam a;
   TypeParam b;
   TypeParam ret;
-  TypeParam max_val = fetch::math::NumericMax<TypeParam>();
+  TypeParam max_val = fetch::math::numeric_max<TypeParam>();
 
   // test a few small fixed values
   a = TypeParam{2};
@@ -103,7 +103,7 @@ TYPED_TEST(FundamentalOperatorsIntTypeTest, AdditionIntTest)
   TypeParam a;
   TypeParam b;
   TypeParam ret;
-  TypeParam max_val = fetch::math::NumericMax<TypeParam>();
+  TypeParam max_val = fetch::math::numeric_max<TypeParam>();
 
   // test a few small fixed values
   a = TypeParam{2};
@@ -146,7 +146,7 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, AdditionNonIntTest)
   TypeParam a;
   TypeParam b;
   TypeParam ret;
-  TypeParam max_val = fetch::math::NumericMax<TypeParam>();
+  TypeParam max_val = fetch::math::numeric_max<TypeParam>();
 
   // test a few small fixed values
   a = TypeParam(2.156);
@@ -190,7 +190,7 @@ TYPED_TEST(FundamentalOperatorsUIntTypeTest, SubtractionUIntTest)
   TypeParam a;
   TypeParam b;
   TypeParam ret;
-  TypeParam max_val = fetch::math::NumericMax<TypeParam>();
+  TypeParam max_val = fetch::math::numeric_max<TypeParam>();
 
   // test a few small fixed values
   a = TypeParam{2};
@@ -236,7 +236,7 @@ TYPED_TEST(FundamentalOperatorsIntTypeTest, SubtractionIntTest)
   TypeParam a;
   TypeParam b;
   TypeParam ret;
-  TypeParam max_val = fetch::math::NumericMax<TypeParam>();
+  TypeParam max_val = fetch::math::numeric_max<TypeParam>();
 
   // test a few small fixed values
   a = TypeParam{2};
@@ -278,7 +278,7 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, SubtractionNonIntTest)
   TypeParam a;
   TypeParam b;
   TypeParam ret;
-  TypeParam max_val = fetch::math::NumericMax<TypeParam>();
+  TypeParam max_val = fetch::math::numeric_max<TypeParam>();
 
   // test a few small fixed values
   a = TypeParam(2.156);
@@ -322,7 +322,7 @@ TYPED_TEST(FundamentalOperatorsUIntTypeTest, MultiplicationUIntTest)
   TypeParam a;
   TypeParam b;
   TypeParam ret;
-  TypeParam max_val = fetch::math::NumericMax<TypeParam>();
+  TypeParam max_val = fetch::math::numeric_max<TypeParam>();
 
   // test a few small fixed values
   a = TypeParam{2};
@@ -364,7 +364,7 @@ TYPED_TEST(FundamentalOperatorsIntTypeTest, MultiplicationIntTest)
   TypeParam a;
   TypeParam b;
   TypeParam ret;
-  TypeParam max_val = fetch::math::NumericMax<TypeParam>();
+  TypeParam max_val = fetch::math::numeric_max<TypeParam>();
 
   // test a few small fixed values
   a = TypeParam{2};
@@ -406,7 +406,7 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, MultiplicationNonIntTest)
   TypeParam a;
   TypeParam b;
   TypeParam ret;
-  TypeParam max_val = fetch::math::NumericMax<TypeParam>();
+  TypeParam max_val = fetch::math::numeric_max<TypeParam>();
 
   // test a few small fixed values
   a = TypeParam(2.156);
@@ -450,7 +450,7 @@ TYPED_TEST(FundamentalOperatorsUIntTypeTest, DivisionUIntTest)
   TypeParam a;
   TypeParam b;
   TypeParam ret;
-  TypeParam max_val = fetch::math::NumericMax<TypeParam>();
+  TypeParam max_val = fetch::math::numeric_max<TypeParam>();
 
   // test a few small fixed values
   a = TypeParam{2};
@@ -498,7 +498,7 @@ TYPED_TEST(FundamentalOperatorsIntTypeTest, DivisionIntTest)
   TypeParam a;
   TypeParam b;
   TypeParam ret;
-  TypeParam max_val = fetch::math::NumericMax<TypeParam>();
+  TypeParam max_val = fetch::math::numeric_max<TypeParam>();
 
   // test a few small fixed values
   a = TypeParam{2};
@@ -546,7 +546,7 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, DivisionNonIntTest)
   TypeParam a;
   TypeParam b;
   TypeParam ret;
-  TypeParam max_val = fetch::math::NumericMax<TypeParam>();
+  TypeParam max_val = fetch::math::numeric_max<TypeParam>();
 
   // test a few small fixed values
   a = TypeParam(2.156);
