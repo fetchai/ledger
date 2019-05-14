@@ -54,9 +54,9 @@ public:
   DAGWrapper()          = delete;
   virtual ~DAGWrapper() = default;
 
-  static void Bind(vm::Module &/*module*/)
+  static void Bind(vm::Module & /*module*/)
   {
-    //module.CreateClassType<DAGWrapper>("DAG").CreateTypeConstuctor<>().CreateInstanceFunction(
+    // module.CreateClassType<DAGWrapper>("DAG").CreateTypeConstuctor<>().CreateInstanceFunction(
     //    "getNodes", &DAGWrapper::GetNodes);
   }
 
@@ -70,8 +70,8 @@ public:
   {
     FETCH_UNUSED(vm);
     FETCH_UNUSED(type_id);
-    //auto dag = vm->GetGlobalPointer<ChainState>();
-    //return new DAGWrapper(vm, type_id, dag);
+    // auto dag = vm->GetGlobalPointer<ChainState>();
+    // return new DAGWrapper(vm, type_id, dag);
     return {};
   }
 

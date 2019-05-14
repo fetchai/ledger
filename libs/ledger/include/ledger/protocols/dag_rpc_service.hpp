@@ -109,8 +109,8 @@ public:
   DAGRpcService(DAGRpcService &&)      = delete;
   ~DAGRpcService()
   {
-    //state_machine_->Reset();
-    //state_machine_.reset();
+    // state_machine_->Reset();
+    // state_machine_.reset();
   }
 
   DAGRpcService &operator=(DAGRpcService const &) = delete;

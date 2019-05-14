@@ -92,13 +92,13 @@ public:
       return false;
     }
 
-//    // Defining problem
-//    if (!vm_->Execute(contract_->script, contract_->problem_function, error_, problem_))
-//    {
-//      errors_.push_back("Error while defining problem.");
-//      errors_.push_back(error_);
-//      return false;
-//    }
+    //    // Defining problem
+    //    if (!vm_->Execute(contract_->script, contract_->problem_function, error_, problem_))
+    //    {
+    //      errors_.push_back("Error while defining problem.");
+    //      errors_.push_back(error_);
+    //      return false;
+    //    }
 
     return true;
   }
@@ -131,26 +131,28 @@ public:
     // Executing the work function
     auto hashed_nonce = vm_->CreateNewObject<vm_modules::BigNumberWrapper>(work());
 
-//    if (!vm_->Execute(contract_->script, contract_->work_function, error_, solution_, problem_,
-//                      hashed_nonce))
-//    {
-//      errors_.push_back("Error while executing work function.");
-//      errors_.push_back(error_);
-//
-//      vm_->ClearIOObserver();
-//      return std::numeric_limits<ScoreType>::max();
-//    }
+    //    if (!vm_->Execute(contract_->script, contract_->work_function, error_, solution_,
+    //    problem_,
+    //                      hashed_nonce))
+    //    {
+    //      errors_.push_back("Error while executing work function.");
+    //      errors_.push_back(error_);
+    //
+    //      vm_->ClearIOObserver();
+    //      return std::numeric_limits<ScoreType>::max();
+    //    }
 
-//    // Computing objective function
-//    if (!vm_->Execute(contract_->script, contract_->objective_function, error_, score_, problem_,
-//                      solution_))
-//    {
-//      errors_.push_back("Error while executing objective function for work.");
-//      errors_.push_back(error_);
-//
-//      vm_->ClearIOObserver();
-//      return std::numeric_limits<ScoreType>::max();
-//    }
+    //    // Computing objective function
+    //    if (!vm_->Execute(contract_->script, contract_->objective_function, error_, score_,
+    //    problem_,
+    //                      solution_))
+    //    {
+    //      errors_.push_back("Error while executing objective function for work.");
+    //      errors_.push_back(error_);
+    //
+    //      vm_->ClearIOObserver();
+    //      return std::numeric_limits<ScoreType>::max();
+    //    }
 
     return score_.primitive.i64;
   }
@@ -170,17 +172,17 @@ public:
       return false;
     }
 
-//    // Invoking the clear function
-//    VMVariant output;
-//    if (!vm_->Execute(contract_->script, contract_->clear_function, error_, output, problem_,
-//                      solution_))
-//    {
-//      errors_.push_back("Error while clearing contest during execution.");
-//      errors_.push_back(error_);
-//
-//      vm_->ClearIOObserver();
-//      return false;
-//    }
+    //    // Invoking the clear function
+    //    VMVariant output;
+    //    if (!vm_->Execute(contract_->script, contract_->clear_function, error_, output, problem_,
+    //                      solution_))
+    //    {
+    //      errors_.push_back("Error while clearing contest during execution.");
+    //      errors_.push_back(error_);
+    //
+    //      vm_->ClearIOObserver();
+    //      return false;
+    //    }
 
     return true;
   }
@@ -196,15 +198,16 @@ public:
     auto entropy =
         vm_->template CreateNewObject<fetch::vm_modules::BigNumberWrapper>(hasher.Final());
 
-//    // Executing main routine for data creation
-//    if (!vm_->Execute(contract_->script, contract_->test_dag_generator, error_, new_dag_node, epoch,
-//                      entropy))
-//    {
-//      errors_.push_back("Error during execution while creating DAG test data.");
-//      errors_.push_back(error_);
-//
-//      return DAGNode();
-//    }
+    //    // Executing main routine for data creation
+    //    if (!vm_->Execute(contract_->script, contract_->test_dag_generator, error_, new_dag_node,
+    //    epoch,
+    //                      entropy))
+    //    {
+    //      errors_.push_back("Error during execution while creating DAG test data.");
+    //      errors_.push_back(error_);
+    //
+    //      return DAGNode();
+    //    }
 
     // Checking that return type is good.
     if (new_dag_node.type_id != vm_->GetTypeId<vm_modules::DAGNodeWrapper>())

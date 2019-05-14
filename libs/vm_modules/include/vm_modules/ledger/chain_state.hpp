@@ -39,8 +39,8 @@ struct ChainState
 
 inline uint64_t GetBlockNumber(fetch::vm::VM * /*vm*/)
 {
-  //auto state = vm->GetGlobalPointer<ChainState>();
-  //return state->block.body.block_number;
+  // auto state = vm->GetGlobalPointer<ChainState>();
+  // return state->block.body.block_number;
   return 1;
 }
 

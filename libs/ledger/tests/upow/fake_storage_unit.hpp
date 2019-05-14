@@ -172,7 +172,8 @@ public:
     return {};
   }
 
-  void IssueCallForMissingTxs(fetch::ledger::TxDigestSet const &) override {}
+  void IssueCallForMissingTxs(fetch::ledger::TxDigestSet const &) override
+  {}
 
 private:
   mutex_type             mutex_;

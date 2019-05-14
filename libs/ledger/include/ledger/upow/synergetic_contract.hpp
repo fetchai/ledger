@@ -36,7 +36,7 @@ struct SynergeticContractClass
   using SynergeticContract = std::shared_ptr<SynergeticContractClass>;
   using UniqueCompiler     = std::unique_ptr<vm::Compiler>;
 
-  static SynergeticContract New(UniqueCompiler &/*compiler*/, byte_array::ByteArray const &name,
+  static SynergeticContract New(UniqueCompiler & /*compiler*/, byte_array::ByteArray const &name,
                                 std::string const &source, std::vector<std::string> &errors)
   {
     if (source.empty())
@@ -53,17 +53,17 @@ struct SynergeticContractClass
     ret->problem_function   = "";
     ret->clear_function     = "";
 
-    //fetch::vm::Strings err;
-    //std::string        str_name = static_cast<std::string>(name);
+    // fetch::vm::Strings err;
+    // std::string        str_name = static_cast<std::string>(name);
 
     // Compiling contract
-    //if (!compiler->Compile(source, str_name, ret->script, errors))
+    // if (!compiler->Compile(source, str_name, ret->script, errors))
     //{
     //  return nullptr;
     //}
 
     // Finding work and objective functions
-    //for (auto &f : ret->script.functions)
+    // for (auto &f : ret->script.functions)
     //{
     //  bool is_work               = false;
     //  bool is_objective          = false;
@@ -161,7 +161,7 @@ struct SynergeticContractClass
   }
 
   byte_array::ByteArray name;
-  //vm::Script            script;
+  // vm::Script            script;
 
   std::string problem_function{""};
   std::string work_function{""};

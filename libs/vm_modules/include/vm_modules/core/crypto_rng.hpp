@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/random/lfg.hpp"
 #include "vm/analyser.hpp"
 #include "vm/common.hpp"
-#include "core/random/lfg.hpp"
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
@@ -33,7 +33,7 @@ public:
   CryptoRNG()          = delete;
   virtual ~CryptoRNG() = default;
 
-  static void Bind(vm::Module &/*module*/)
+  static void Bind(vm::Module & /*module*/)
   {
     /*
     module.CreateClassType<CryptoRNG>("CryptoRNG")

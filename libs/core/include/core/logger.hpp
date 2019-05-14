@@ -400,6 +400,8 @@ public:
 
       StackTrace();
     }
+
+    //    exit(-1);
   }
 
   template <typename... Args>
@@ -414,6 +416,8 @@ public:
 
       StackTrace();
     }
+
+    //    exit(-1);
   }
 
   template <typename... Args>
@@ -429,7 +433,7 @@ public:
   }
 
   template <typename... Args>
-  void DebugWithName(char const *name, Args &&... args)
+  void DebugWithName(char const *name, Args const &... args)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
@@ -555,15 +559,6 @@ public:
   {
     shared_context_type ctx = TopContextImpl();
     StackTrace(ctx, max, show_locks);
-
-    /*
-    std::cout << "All traces:" << std::endl;
-    for(auto &c : context_)
-    {
-      StackTrace(c.second);
-      std::cout << std::endl;
-    }
-    */
   }
 
   void UpdateContextTime(shared_context_type const &ctx, double spent_time)

@@ -53,7 +53,7 @@ public:
   DAGNodeWrapper()          = delete;
   virtual ~DAGNodeWrapper() = default;
 
-  static void Bind(vm::Module &/*module*/)
+  static void Bind(vm::Module & /*module*/)
   {
     /*
     auto interface = module.CreateClassType<DAGNodeWrapper>("DAGNode");
