@@ -48,10 +48,6 @@ inline int32_t LenArrayObj(fetch::vm::VM * /*vm*/, vm::Ptr<vm::Array<vm::Ptr<T>>
 
 inline void BindLen(vm::Module &module)
 {
-<<<<<<< HEAD
-=======
-
->>>>>>> feature/dag_v2
   module.CreateFreeFunction("lengthOf", &LenByteArray);
   module.CreateFreeFunction("lengthOf", &LenString);
   module.CreateFreeFunction("lengthOf", &LenArray<int32_t>);
@@ -66,8 +62,4 @@ inline void BindLen(vm::Module &module)
 }
 
 }  // namespace vm_modules
-<<<<<<< HEAD
 }  // namespace fetch
-=======
-}  // namespace fetch
->>>>>>> feature/dag_v2

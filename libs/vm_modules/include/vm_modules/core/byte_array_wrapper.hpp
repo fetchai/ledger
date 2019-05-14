@@ -17,9 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-<<<<<<< HEAD
-#include "vm/module.hpp"
-=======
 #include "vm/analyser.hpp"
 #include "vm/typeids.hpp"
 
@@ -28,7 +25,6 @@
 #include "vm/vm.hpp"
 
 #include "vm/vm.hpp"
->>>>>>> feature/dag_v2
 
 namespace fetch {
 namespace vm_modules {
@@ -36,35 +32,24 @@ namespace vm_modules {
 class ByteArrayWrapper : public fetch::vm::Object
 {
 public:
-<<<<<<< HEAD
-=======
   using ElementType = uint8_t;
 
->>>>>>> feature/dag_v2
   ByteArrayWrapper()          = delete;
   virtual ~ByteArrayWrapper() = default;
 
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<ByteArrayWrapper>("Buffer")
-<<<<<<< HEAD
-        .CreateConstuctor<int32_t>()
-        .CreateMemberFunction("copy", &ByteArrayWrapper::Copy);
-=======
         .CreateTypeConstuctor<int32_t>()
         .CreateInstanceFunction("copy", &ByteArrayWrapper::Copy)
         .EnableIndexOperator<uint8_t, int32_t>();
->>>>>>> feature/dag_v2
   }
 
   ByteArrayWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                    byte_array::ByteArray const &bytearray)
     : fetch::vm::Object(vm, type_id)
     , byte_array_(bytearray)
-<<<<<<< HEAD
-=======
     , vm_(vm)
->>>>>>> feature/dag_v2
   {}
 
   static fetch::vm::Ptr<ByteArrayWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
@@ -84,8 +69,6 @@ public:
     return vm_->CreateNewObject<ByteArrayWrapper>(byte_array_.Copy());
   }
 
-<<<<<<< HEAD
-=======
   ElementType *Find()
   {
     vm::Variant &positionv = Pop();
@@ -129,7 +112,6 @@ public:
     }
   }
 
->>>>>>> feature/dag_v2
   byte_array::ByteArray byte_array()
   {
     return byte_array_;
@@ -137,15 +119,8 @@ public:
 
 private:
   byte_array::ByteArray byte_array_;
-<<<<<<< HEAD
-};
-
-}  // namespace vm_modules
-}  // namespace fetch
-=======
   fetch::vm::VM *       vm_;
 };
 
 }  // namespace vm_modules
 }  // namespace fetch
->>>>>>> feature/dag_v2
