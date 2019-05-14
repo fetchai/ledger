@@ -20,7 +20,6 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
-#include "ledger/chain/constants.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 
 #include <memory>
@@ -45,14 +44,14 @@ public:
   struct Body
   {
     // TODO(private issue 496): Populate the state hash
-    Digest   hash;                        ///< The hash of the block
-    Digest   previous_hash;               ///< The hash of the previous block
-    Digest   merkle_hash;                 ///< The merkle state hash across all shards
-    uint64_t block_number{0};             ///< The height of the block from genesis
-    Identity miner;                       ///< The identity of the generated miner
-    uint32_t log2_num_lanes{0};           ///< The log2(number of lanes)
-    Slices   slices;                      ///< The slice lists
-    Digest   next_hash = GENESIS_DIGEST;  ///< The hash of the next block
+    Digest   hash;               ///< The hash of the block
+    Digest   previous_hash;      ///< The hash of the previous block
+    Digest   merkle_hash;        ///< The merkle state hash across all shards
+    uint64_t block_number{0};    ///< The height of the block from genesis
+    Identity miner;              ///< The identity of the generated miner
+    uint32_t log2_num_lanes{0};  ///< The log2(number of lanes)
+    Slices   slices;             ///< The slice lists
+    Digest   next_hash;          ///< The hash of the next block
   };
 
   /// @name Block Contents
