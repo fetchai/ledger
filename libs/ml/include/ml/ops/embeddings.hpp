@@ -97,20 +97,24 @@ public:
     return {ArrayType(errorSignal.shape())};
   }
 
-  virtual void Step(typename T::Type learningRate)
+  virtual void Step(typename T::Type learning_rate)
   {
+    ArrayType embedding_slice;
+
     for (auto const &r : updated_rows_)
     {
-      // TODO (private issue 997): The net result of the previous operations
-      // was a shallow copy of the tensor. This does not look like it was the intended
-      // behaviour.
-      (void)(r);
-      auto gradient_accumulation_slice = *this->gradient_accumulation_;  //->Slice(r).Copy();
-      auto output_slice                = *this->output_;                 //->Slice(r).Copy();
+      // get the relevant slice from gradients and embeddings
+      auto grad_slice = this->gradient_accumulation_->Slice(r);
+      auto out_slice  = this->output_->Slice(r);
 
-      gradient_accumulation_slice.InlineMultiply(-learningRate);
-      output_slice.InlineAdd(gradient_accumulation_slice);
-      gradient_accumulation_slice.Fill(typename T::Type(0));
+      embedding_slice = out_slice.Copy();
+
+      // multiply accumulated gradients by learning rate, then subtract from current embeddings
+      embedding_slice.InlineSubtract(grad_slice.Copy().InlineMultiply(learning_rate));
+
+      // zero out gradients and assign new embeddings values
+      grad_slice.Assign(ArrayType::Zeroes(embedding_slice.shape()));
+      out_slice.Assign(embedding_slice);
     }
     updated_rows_.clear();
   }
