@@ -308,6 +308,58 @@ TYPED_TEST(FreeFunctionsTest, Min_TwoDimension)
   EXPECT_EQ(output2.At(1), typename TypeParam::Type(-0.5));
 }
 
+TYPED_TEST(FreeFunctionsTest, PeakToPeak_OneDimension)
+{
+  TypeParam array1{4};
+
+  array1.Set(0, typename TypeParam::Type(0.3));
+  array1.Set(1, typename TypeParam::Type(1.2));
+  array1.Set(2, typename TypeParam::Type(0.7));
+  array1.Set(3, typename TypeParam::Type(22));
+
+  typename TypeParam::Type output;
+  fetch::math::PeakToPeak(array1, output);
+  EXPECT_NEAR(double(output), 21.7, 1e-5);
+
+  array1.Set(3, typename TypeParam::Type(0.5));
+  fetch::math::PeakToPeak(array1, output);
+  EXPECT_NEAR(double(output), 0.9, 1e-5);
+
+  array1.Set(1, typename TypeParam::Type(0.1));
+  fetch::math::PeakToPeak(array1, output);
+  EXPECT_NEAR(double(output), 0.6, 1e-5);
+}
+
+TYPED_TEST(FreeFunctionsTest, PeakToPeak_TwoDimension)
+{
+  using SizeType = typename TypeParam::SizeType;
+
+  SizeType  n_data     = 4;
+  SizeType  n_features = 2;
+  TypeParam array1{{n_data, n_features}};
+
+  array1.Set(0, 0, typename TypeParam::Type(-17));
+  array1.Set(0, 1, typename TypeParam::Type(21));
+  array1.Set(1, 0, typename TypeParam::Type(0));
+  array1.Set(1, 1, typename TypeParam::Type(0));
+  array1.Set(2, 0, typename TypeParam::Type(13));
+  array1.Set(2, 1, typename TypeParam::Type(999));
+  array1.Set(3, 0, typename TypeParam::Type(21));
+  array1.Set(3, 1, typename TypeParam::Type(-0.5));
+
+  TypeParam output{n_data};
+  fetch::math::PeakToPeak(array1, SizeType(1), output);
+  EXPECT_NEAR(double(output.At(0)), 38, 1e-5);
+  EXPECT_NEAR(double(output.At(1)), 0, 1e-5);
+  EXPECT_NEAR(double(output.At(2)), 986, 1e-5);
+  EXPECT_NEAR(double(output.At(3)), 21.5, 1e-5);
+
+  TypeParam output2{n_features};
+  fetch::math::PeakToPeak(array1, SizeType(0), output2);
+  EXPECT_NEAR(double(output2.At(0)), 38, 1e-5);
+  EXPECT_NEAR(double(output2.At(1)), 999.5, 1e-5);
+}
+
 TYPED_TEST(FreeFunctionsTest, Maximum_TwoDimension)
 {
   using SizeType = typename TypeParam::SizeType;

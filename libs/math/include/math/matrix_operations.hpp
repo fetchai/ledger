@@ -1,4 +1,5 @@
 #pragma once
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -296,6 +297,29 @@ void Max(ArrayType const &array, typename ArrayType::SizeType const &axis, Array
     }
   }
 }
+
+template <typename ArrayType>
+ArrayType Max(ArrayType const &array, typename ArrayType::SizeType const &axis)
+{
+  ASSERT((axis == 0) || (axis == 1));
+  ASSERT(array.shape().size() == 2);
+
+  std::vector<typename ArrayType::SizeType> retSize;
+
+  if (axis == 0)
+  {
+    retSize = std::vector<typename ArrayType::SizeType>({array.shape().at(1)});
+  }
+  else
+  {
+    retSize = std::vector<typename ArrayType::SizeType>({array.shape().at(0)});
+  }
+
+  ArrayType ret(retSize);
+  Max(array, axis, ret);
+  return ret;
+}
+
 template <typename T>
 void Max(std::vector<T> const &obj1, T &ret)
 {
@@ -384,6 +408,28 @@ void Min(ArrayType const &array, typename ArrayType::SizeType const &axis, Array
       }
     }
   }
+}
+
+template <typename ArrayType>
+ArrayType Min(ArrayType const &array, typename ArrayType::SizeType const &axis)
+{
+  ASSERT((axis == 0) || (axis == 1));
+  ASSERT(array.shape().size() == 2);
+
+  std::vector<typename ArrayType::SizeType> retSize;
+
+  if (axis == 0)
+  {
+    retSize = std::vector<typename ArrayType::SizeType>({array.shape().at(1)});
+  }
+  else
+  {
+    retSize = std::vector<typename ArrayType::SizeType>({array.shape().at(0)});
+  }
+
+  ArrayType ret(retSize);
+  Min(array, axis, ret);
+  return ret;
 }
 
 /**
@@ -542,13 +588,37 @@ meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &          
   Divide(ret, n, ret);
   return ret;
 }
+
 /**
  * Distance between max and min values in an array
  */
+// 1D array
 template <typename ArrayType>
-void PeakToPeak(ArrayType arr)
+typename ArrayType::Type PeakToPeak(ArrayType const &array)
 {
-  return Max(arr) - Min(arr);
+  return Max(array) - Min(array);
+}
+
+template <typename ArrayType>
+void PeakToPeak(ArrayType const &array, typename ArrayType::Type &ret)
+{
+  ret = PeakToPeak(array);
+}
+
+// 2D array
+template <typename ArrayType>
+ArrayType PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const &axis)
+{
+  ArrayType ret = Max(array, axis);
+  fetch::math::Subtract(ret, Min(array, axis), ret);
+  return ret;
+}
+
+template <typename ArrayType>
+void PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const &axis, ArrayType &ret)
+{
+  Max(array, axis, ret);
+  fetch::math::Subtract(ret, Min(array, axis), ret);
 }
 
 /**
