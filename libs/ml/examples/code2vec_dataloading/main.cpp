@@ -21,11 +21,15 @@
 #include <fstream>
 #include <iostream>
 
-using DataType  = uint64_t;
-using ArrayType = fetch::math::Tensor<DataType>;
-using SizeType  = fetch::math::Tensor<DataType>::SizeType;
+#define MAX_CONTEXTS 20
 
-std::string readFile(std::string const &path)
+using DataType    = uint64_t;
+using ArrayType   = fetch::math::Tensor<DataType>;
+using SizeType    = fetch::math::Tensor<DataType>::SizeType;
+using LabelType   = SizeType;
+using ContextType = std::tuple<ArrayType, ArrayType, ArrayType>;
+
+std::string ReadFile(std::string const &path)
 {
   std::ifstream t(path);
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
@@ -40,21 +44,21 @@ int main(int ac, char **av)
     return 1;
   }
 
-  fetch::ml::dataloaders::C2VLoader<std::tuple<ArrayType, ArrayType, ArrayType>, SizeType> cloader(
-      20);
+  fetch::ml::dataloaders::C2VLoader<ContextType, LabelType> cloader(MAX_CONTEXTS);
 
-  cloader.AddData(readFile(av[1]));
-  std::cout << "Number of different function names: " << cloader.GetCounterFunctionNames().size()
+  cloader.AddData(ReadFile(av[1]));
+  std::cout << "Number of different function names: " << cloader.function_name_counter().size()
             << std::endl;
-  std::cout << "Number of different paths: " << cloader.GetCounterPaths().size() << std::endl;
-  std::cout << "Number of different words: " << cloader.GetCounterWords().size() << std::endl;
+  std::cout << "Number of different paths: " << cloader.path_counter().size() << std::endl;
+  std::cout << "Number of different words: " << cloader.word_counter().size() << std::endl;
 
-  std::cout << cloader.GetUmapIdxToFunctionName()[0] << std::endl;
-  std::cout << cloader.GetUmapIdxToFunctionName()[1] << std::endl;
-  std::cout << cloader.GetUmapIdxToFunctionName()[2] << std::endl;
+  std::cout << "Retrieving function names from cloader" << std::endl;
+  std::cout << cloader.umap_idx_to_functionname()[0] << std::endl;
+  std::cout << cloader.umap_idx_to_functionname()[1] << std::endl;
+  std::cout << cloader.umap_idx_to_functionname()[2] << std::endl;
 
   auto input = cloader.GetNext();
-
+  std::cout << "Getting next input indices" << std::endl;
   std::cout << std::get<2>(input.first).ToString() << std::endl;
 
   return 0;

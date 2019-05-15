@@ -16,7 +16,7 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-
+#include "math/base_types.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include <sstream>
 #include <string>
@@ -57,11 +57,11 @@ public:
   using umap_str_int  = std::unordered_map<std::string, SizeType>;
   using umap_int_str  = std::unordered_map<SizeType, std::string>;
 
-  C2VLoader(SizeType max_contexts)
-    : iterator_position_get_next_context(0)
-    , iterator_position_get_next(0)
-    , current_function_index(0)
-    , max_contexts(max_contexts){};
+  C2VLoader(SizeType max_contexts_)
+    : iterator_position_get_next_context_(0)
+    , iterator_position_get_next_(0)
+    , current_function_index_(0)
+    , max_contexts_(max_contexts_){};
 
   /**
    * @brief Gets the next pair of feature and target
@@ -70,14 +70,19 @@ public:
    */
   ContextLabelPair GetNextContext();
 
-  ContextTensorsLabelPair GetNext();
+  /**
+   * @brief Gets the next pair of feature (tensor triple) and target
+   *
+   * @return std::pair<std::tuple<ArrayType, ArrayType, ArrayType>, LabelType>;
+   */
+  ContextTensorsLabelPair GetNext() override;
 
   /**
    * @brief Gets the number of feature/target pairs
    *
    * @return std::uint64_t
    */
-  std::uint64_t Size() const;
+  std::uint64_t Size() const override;
 
   /**
    * @brief Indicates if the GetNextContext() generater is at its end
@@ -85,53 +90,56 @@ public:
    * @return true
    * @return false
    */
-  bool IsDone() const;
+  bool IsDone() const override;
 
   /**
    * @brief Resets the GetNextContext() generator
    *
    */
-  void Reset();
+  void Reset() override;
 
   /**
    * @brief Adds (raw) data in the c2v format and creates the lookup maps
    *
-   * @param text
+   * @param text The input corpus in the "correct" c2v format
    */
   void AddData(std::string const &text);
 
+  /**
+   * @brief Creates umaps mapping strings to indices from the counter
+   */
   void createIdxUMaps();
 
-  umap_int_str GetUmapIdxToFunctionName();
-  umap_int_str GetUmapIdxToPath();
-  umap_int_str GetUmapIdxToWord();
+  umap_int_str umap_idx_to_functionname();
+  umap_int_str umap_idx_to_path();
+  umap_int_str umap_idx_to_word();
 
-  umap_str_int GetUmapFunctioNameToIdx();
-  umap_str_int GetUmapPathToIdx();
-  umap_str_int GetUmapWordToIdx();
+  umap_str_int umap_functionname_to_idx();
+  umap_str_int umap_path_to_idx();
+  umap_str_int umap_word_to_idx();
 
-  umap_str_int GetCounterFunctionNames();
-  umap_str_int GetCounterPaths();
-  umap_str_int GetCounterWords();
+  umap_str_int function_name_counter();
+  umap_str_int path_counter();
+  umap_str_int word_counter();
   std::vector<std::pair<std::tuple<SizeType, SizeType, SizeType>, LabelType>> data;
 
 private:
-  SizeType iterator_position_get_next_context;
-  SizeType iterator_position_get_next;
-  SizeType current_function_index;
-  SizeType max_contexts;
+  SizeType iterator_position_get_next_context_{fetch::math::NumericMax<SizeType>()};
+  SizeType iterator_position_get_next_{fetch::math::NumericMax<SizeType>()};
+  SizeType current_function_index_{fetch::math::NumericMax<SizeType>()};
+  SizeType max_contexts_{fetch::math::NumericMax<SizeType>()};
 
-  umap_str_int function_name_counter;
-  umap_str_int path_counter;
-  umap_str_int word_counter;
+  umap_str_int function_name_counter_;
+  umap_str_int path_counter_;
+  umap_str_int word_counter_;
 
-  umap_str_int function_name_to_idx;
-  umap_str_int path_to_idx;
-  umap_str_int word_to_idx;
+  umap_str_int function_name_to_idx_;
+  umap_str_int path_to_idx_;
+  umap_str_int word_to_idx_;
 
-  umap_int_str idx_to_function_name;
-  umap_int_str idx_to_path;
-  umap_int_str idx_to_word;
+  umap_int_str idx_to_function_name_;
+  umap_int_str idx_to_path_;
+  umap_int_str idx_to_word_;
 
   /**
    * @brief Creates an unordered map for hashing strings from a counter (unordered map counting the
@@ -169,7 +177,8 @@ private:
    * @param idx_to_name unordered map for mapping numeric->string
    * @return SizeType index of the string in the unordered maps
    */
-  SizeType addToIdxUMaps(std::string input, umap_str_int &name_to_idx, umap_int_str &idx_to_name);
+  SizeType addToIdxUMaps(std::string const &input, umap_str_int &name_to_idx,
+                         umap_int_str &idx_to_name);
 };
 
 template <typename DataType, typename LabelType>
@@ -181,9 +190,9 @@ void C2VLoader<DataType, LabelType>::AddData(std::string const &c2v_input)
   std::string       function_name;
   std::string       context;
 
-  addToIdxUMaps(EMPTY_CONTEXT_STRING, function_name_to_idx, idx_to_function_name);
-  addToIdxUMaps(EMPTY_CONTEXT_STRING, word_to_idx, idx_to_word);
-  addToIdxUMaps(EMPTY_CONTEXT_STRING, path_to_idx, idx_to_path);
+  addToIdxUMaps(EMPTY_CONTEXT_STRING, function_name_to_idx_, idx_to_function_name_);
+  addToIdxUMaps(EMPTY_CONTEXT_STRING, word_to_idx_, idx_to_word_);
+  addToIdxUMaps(EMPTY_CONTEXT_STRING, path_to_idx_, idx_to_path_);
 
   while (std::getline(c2v_input_ss, c2v_input_line, '\n'))
   {
@@ -192,24 +201,24 @@ void C2VLoader<DataType, LabelType>::AddData(std::string const &c2v_input)
 
     c2v_input_line_ss >> function_name;
 
-    addValueToCounter(function_name_counter, function_name);
+    addValueToCounter(function_name_counter_, function_name);
     SizeType function_name_idx =
-        addToIdxUMaps(function_name, function_name_to_idx, idx_to_function_name);
+        addToIdxUMaps(function_name, function_name_to_idx_, idx_to_function_name_);
 
     while (c2v_input_line_ss >> context)
     {
       std::vector<std::string> context_string_splitted =
           splitStringByChar(std::stringstream(context), sep);
 
-      addValueToCounter(word_counter, context_string_splitted[0]);
-      addValueToCounter(path_counter, context_string_splitted[1]);
-      addValueToCounter(word_counter, context_string_splitted[2]);
+      addValueToCounter(word_counter_, context_string_splitted[0]);
+      addValueToCounter(path_counter_, context_string_splitted[1]);
+      addValueToCounter(word_counter_, context_string_splitted[2]);
 
       SizeType source_word_idx =
-          addToIdxUMaps(context_string_splitted[0], word_to_idx, idx_to_word);
-      SizeType path_idx = addToIdxUMaps(context_string_splitted[1], path_to_idx, idx_to_path);
+          addToIdxUMaps(context_string_splitted[0], word_to_idx_, idx_to_word_);
+      SizeType path_idx = addToIdxUMaps(context_string_splitted[1], path_to_idx_, idx_to_path_);
       SizeType target_word_idx =
-          addToIdxUMaps(context_string_splitted[2], word_to_idx, idx_to_word);
+          addToIdxUMaps(context_string_splitted[2], word_to_idx_, idx_to_word_);
 
       std::pair<std::tuple<SizeType, SizeType, SizeType>, LabelType> input_data_pair(
           std::tuple<SizeType, SizeType, SizeType>{source_word_idx, path_idx, target_word_idx},
@@ -224,8 +233,8 @@ template <typename DataType, typename LabelType>
 typename C2VLoader<DataType, LabelType>::ContextLabelPair
 C2VLoader<DataType, LabelType>::GetNextContext()
 {
-  auto return_value = this->data[this->iterator_position_get_next_context];
-  this->iterator_position_get_next_context += 1;
+  auto return_value = this->data[this->iterator_position_get_next_context_];
+  this->iterator_position_get_next_context_ += 1;
   return return_value;
 }
 
@@ -239,7 +248,7 @@ C2VLoader<DataType, LabelType>::GetNext()
 
   while (true)
   {
-    auto             current_context_position = this->iterator_position_get_next_context;
+    auto             current_context_position = this->iterator_position_get_next_context_;
     ContextLabelPair input                    = this->GetNextContext();
     if ((iteration_start || (input.second == old_function_index)) && !this->IsDone())
     {
@@ -250,18 +259,18 @@ C2VLoader<DataType, LabelType>::GetNext()
     {
       if (!this->IsDone())
       {
-        this->iterator_position_get_next_context--;
+        this->iterator_position_get_next_context_--;
       }
       else
       {
         context_positions.push_back(current_context_position);
       }
 
-      ArrayType source_word_tensor({this->max_contexts});
-      ArrayType path_tensor({this->max_contexts});
-      ArrayType target_word_tensor({this->max_contexts});
+      ArrayType source_word_tensor({this->max_contexts_});
+      ArrayType path_tensor({this->max_contexts_});
+      ArrayType target_word_tensor({this->max_contexts_});
 
-      if (context_positions.size() <= this->max_contexts)
+      if (context_positions.size() <= this->max_contexts_)
       {
         for (u_int64_t i{0}; i < context_positions.size(); i++)
         {
@@ -269,16 +278,16 @@ C2VLoader<DataType, LabelType>::GetNext()
           path_tensor.Set(i, std::get<1>(this->data[context_positions[i]].first));
           target_word_tensor.Set(i, std::get<2>(this->data[context_positions[i]].first));
         }
-        for (u_int64_t i{context_positions.size()}; i < this->max_contexts; i++)
+        for (u_int64_t i{context_positions.size()}; i < this->max_contexts_; i++)
         {
-          source_word_tensor.Set(i, this->word_to_idx[EMPTY_CONTEXT_STRING]);
-          path_tensor.Set(i, this->path_to_idx[EMPTY_CONTEXT_STRING]);
-          target_word_tensor.Set(i, this->word_to_idx[EMPTY_CONTEXT_STRING]);
+          source_word_tensor.Set(i, this->word_to_idx_[EMPTY_CONTEXT_STRING]);
+          path_tensor.Set(i, this->path_to_idx_[EMPTY_CONTEXT_STRING]);
+          target_word_tensor.Set(i, this->word_to_idx_[EMPTY_CONTEXT_STRING]);
         }
       }
       else
       {
-        for (u_int64_t i{0}; i < this->max_contexts; i++)
+        for (u_int64_t i{0}; i < this->max_contexts_; i++)
         {
           source_word_tensor.Set(i, std::get<0>(this->data[context_positions[i]].first));
           path_tensor.Set(i, std::get<1>(this->data[context_positions[i]].first));
@@ -305,13 +314,13 @@ std::uint64_t C2VLoader<DataType, LabelType>::Size() const
 template <typename DataType, typename LabelType>
 bool C2VLoader<DataType, LabelType>::IsDone() const
 {
-  return ((this->data).size() == (this->iterator_position_get_next_context));
+  return ((this->data).size() == (this->iterator_position_get_next_context_));
 }
 
 template <typename DataType, typename LabelType>
 void C2VLoader<DataType, LabelType>::Reset()
 {
-  this->iterator_position_get_next_context = SizeType{0};
+  this->iterator_position_get_next_context_ = SizeType{0};
 }
 
 template <typename DataType, typename LabelType>
@@ -343,7 +352,7 @@ std::vector<std::string> C2VLoader<DataType, LabelType>::splitStringByChar(std::
 
 template <typename DataType, typename LabelType>
 typename C2VLoader<DataType, LabelType>::SizeType C2VLoader<DataType, LabelType>::addToIdxUMaps(
-    std::string input, typename C2VLoader<DataType, LabelType>::umap_str_int &name_to_idx,
+    std::string const &input, typename C2VLoader<DataType, LabelType>::umap_str_int &name_to_idx,
     typename C2VLoader<DataType, LabelType>::umap_int_str &idx_to_name)
 {
   if (name_to_idx.find(input) == name_to_idx.end())
@@ -378,72 +387,70 @@ void C2VLoader<DataType, LabelType>::createIdxUMapsFromCounter(
 template <typename DataType, typename LabelType>
 void C2VLoader<DataType, LabelType>::createIdxUMaps()
 {
-  createIdxUMapsFromCounter(function_name_counter, function_name_to_idx, idx_to_function_name);
-  createIdxUMapsFromCounter(path_counter, path_to_idx, idx_to_path);
-  createIdxUMapsFromCounter(word_counter, word_to_idx, idx_to_word);
+  createIdxUMapsFromCounter(function_name_counter_, function_name_to_idx_, idx_to_function_name_);
+  createIdxUMapsFromCounter(path_counter_, path_to_idx_, idx_to_path_);
+  createIdxUMapsFromCounter(word_counter_, word_to_idx_, idx_to_word_);
 }
 
 template <typename DataType, typename LabelType>
 typename C2VLoader<DataType, LabelType>::umap_int_str
-C2VLoader<DataType, LabelType>::GetUmapIdxToFunctionName()
+C2VLoader<DataType, LabelType>::umap_idx_to_functionname()
 {
-  return this->idx_to_function_name;
+  return this->idx_to_function_name_;
 }
 
 template <typename DataType, typename LabelType>
 typename C2VLoader<DataType, LabelType>::umap_int_str
-C2VLoader<DataType, LabelType>::GetUmapIdxToPath()
+C2VLoader<DataType, LabelType>::umap_idx_to_path()
 {
-  return this->idx_to_path;
+  return this->idx_to_path_;
 }
 
 template <typename DataType, typename LabelType>
 typename C2VLoader<DataType, LabelType>::umap_int_str
-C2VLoader<DataType, LabelType>::GetUmapIdxToWord()
+C2VLoader<DataType, LabelType>::umap_idx_to_word()
 {
-  return this->idx_to_word;
+  return this->idx_to_word_;
 }
 
 template <typename DataType, typename LabelType>
 typename C2VLoader<DataType, LabelType>::umap_str_int
-C2VLoader<DataType, LabelType>::GetUmapFunctioNameToIdx()
+C2VLoader<DataType, LabelType>::umap_functionname_to_idx()
 {
-  return this->function_name_to_idx;
+  return this->function_name_to_idx_;
 }
 
 template <typename DataType, typename LabelType>
 typename C2VLoader<DataType, LabelType>::umap_str_int
-C2VLoader<DataType, LabelType>::GetUmapPathToIdx()
+C2VLoader<DataType, LabelType>::umap_path_to_idx()
 {
-  return this->path_to_idx;
+  return this->path_to_idx_;
 }
 
 template <typename DataType, typename LabelType>
 typename C2VLoader<DataType, LabelType>::umap_str_int
-C2VLoader<DataType, LabelType>::GetUmapWordToIdx()
+C2VLoader<DataType, LabelType>::umap_word_to_idx()
 {
-  return this->word_to_idx;
+  return this->word_to_idx_;
 }
 
 template <typename DataType, typename LabelType>
 typename C2VLoader<DataType, LabelType>::umap_str_int
-C2VLoader<DataType, LabelType>::GetCounterFunctionNames()
+C2VLoader<DataType, LabelType>::function_name_counter()
 {
-  return this->function_name_counter;
+  return this->function_name_counter_;
 }
 
 template <typename DataType, typename LabelType>
-typename C2VLoader<DataType, LabelType>::umap_str_int
-C2VLoader<DataType, LabelType>::GetCounterPaths()
+typename C2VLoader<DataType, LabelType>::umap_str_int C2VLoader<DataType, LabelType>::path_counter()
 {
-  return this->path_counter;
+  return this->path_counter_;
 }
 
 template <typename DataType, typename LabelType>
-typename C2VLoader<DataType, LabelType>::umap_str_int
-C2VLoader<DataType, LabelType>::GetCounterWords()
+typename C2VLoader<DataType, LabelType>::umap_str_int C2VLoader<DataType, LabelType>::word_counter()
 {
-  return this->word_counter;
+  return this->word_counter_;
 }
 
 }  // namespace dataloaders
