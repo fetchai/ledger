@@ -59,7 +59,7 @@ public:
     ASSERT(inputs.front().get().shape() == error_signal.shape());
 
     ArrayType return_signal = error_signal.Copy();
-    ArrayType t(this->ComputeOutputShape(inputs));
+    ArrayType t(error_signal.shape());
     fetch::math::Softmax(inputs.front().get(), t, axis_);
 
     // return_signal.InlineMultiply(t);
