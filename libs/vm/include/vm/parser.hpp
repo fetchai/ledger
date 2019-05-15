@@ -19,8 +19,6 @@
 
 #include "vm/node.hpp"
 
-#include <unordered_set>
-
 namespace fetch {
 namespace vm {
 
@@ -29,7 +27,8 @@ class Parser
 public:
   Parser();
   ~Parser() = default;
-  BlockNodePtr Parse(std::string const &source, Strings &errors);
+  BlockNodePtr Parse(std::string const &filename, std::string const &source,
+                     std::vector<std::string> &errors);
 
 private:
   enum class State
@@ -73,25 +72,25 @@ private:
 
   using StringSet = std::unordered_set<std::string>;
 
-  StringSet               template_names_;
-  std::vector<Token>      tokens_;
-  int                     index_;
-  Token *                 token_;
-  Strings                 errors_;
-  std::vector<Node::Kind> blocks_;
-  State                   state_;
-  bool                    found_expression_terminator_;
-  std::vector<size_t>     groups_;
-  std::vector<Expr>       operators_;
-  std::vector<Expr>       rpn_;
-  std::vector<Expr>       infix_stack_;
+  StringSet                template_names_;
+  std::vector<Token>       tokens_;
+  int                      index_;
+  Token *                  token_;
+  std::vector<std::string> errors_;
+  std::vector<NodeKind>    blocks_;
+  State                    state_;
+  bool                     found_expression_terminator_;
+  std::vector<size_t>      groups_;
+  std::vector<Expr>        operators_;
+  std::vector<Expr>        rpn_;
+  std::vector<Expr>        infix_stack_;
 
   void              Tokenise(std::string const &source);
   bool              ParseBlock(BlockNode &node);
   BlockNodePtr      ParseFunctionDefinition();
   NodePtr           ParseAnnotations();
   NodePtr           ParseAnnotation();
-  NodePtr           ParseAnnotationLiteral();
+  ExpressionNodePtr ParseAnnotationLiteral();
   BlockNodePtr      ParseWhileStatement();
   BlockNodePtr      ParseForStatement();
   NodePtr           ParseIfStatement();
@@ -108,23 +107,23 @@ private:
   ExpressionNodePtr ParseExpression(bool is_conditional_expression = false);
   bool              HandleIdentifier();
   bool              ParseExpressionIdentifier(std::string &name);
-  bool              HandleLiteral(Node::Kind kind);
+  bool              HandleLiteral(NodeKind kind);
   void              HandlePlus();
   void              HandleMinus();
-  bool              HandleBinaryOp(Node::Kind kind, OpInfo const &op_info);
+  bool              HandleBinaryOp(NodeKind kind, OpInfo const &op_info);
   void              HandleNot();
-  void HandleIncDec(Node::Kind prefix_kind, OpInfo const &prefix_op_info, Node::Kind postfix_kind,
-                    OpInfo const &postfix_op_info);
-  bool HandleDot();
-  bool HandleOpener(Node::Kind prefix_kind, Node::Kind postfix_kind, Token::Kind closer_token_kind,
+  void              HandlePrefixPostfix(NodeKind prefix_kind, OpInfo const &prefix_op_info,
+                                        NodeKind postfix_kind, OpInfo const &postfix_op_info);
+  bool              HandleDot();
+  bool HandleOpener(NodeKind prefix_kind, NodeKind postfix_kind, Token::Kind closer_token_kind,
                     std::string const &closer_token_text);
   bool HandleCloser(bool is_conditional_expression);
   bool HandleComma();
-  void HandleOp(Node::Kind kind, OpInfo const &op_info);
-  void AddGroup(Node::Kind kind, int arity, Token::Kind closer_token_kind,
+  void HandleOp(NodeKind kind, OpInfo const &op_info);
+  void AddGroup(NodeKind kind, int arity, Token::Kind closer_token_kind,
                 std::string const &closer_token_text);
-  void AddOp(Node::Kind kind, OpInfo const &op_info);
-  void AddOperand(Node::Kind kind);
+  void AddOp(NodeKind kind, OpInfo const &op_info);
+  void AddOperand(NodeKind kind);
   void AddError(std::string const &message);
 
   void IncrementGroupMembers()
@@ -138,7 +137,7 @@ private:
 
   void Next()
   {
-    if (index_ < (int)tokens_.size() - 1)
+    if (index_ < static_cast<int>(tokens_.size()) - 1)
     {
       token_ = &tokens_[std::size_t(++index_)];
     }

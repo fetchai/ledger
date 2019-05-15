@@ -18,13 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "math/bignumber.hpp"
-#include "vm/analyser.hpp"
-#include "vm/typeids.hpp"
+
 #include "vm_modules/core/byte_array_wrapper.hpp"
 
-#include "vm/compiler.hpp"
 #include "vm/module.hpp"
-#include "vm/vm.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -45,14 +42,14 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<BigNumberWrapper>("BigUInt")
-        .CreateTypeConstuctor<Ptr<ByteArrayWrapper>>()
-        .CreateInstanceFunction("toBuffer", &BigNumberWrapper::ToBuffer)
-        .CreateInstanceFunction("increase", &BigNumberWrapper::Increase)
-        .CreateInstanceFunction("lessThan", &BigNumberWrapper::LessThan)
-        .CreateInstanceFunction("logValue", &BigNumberWrapper::LogValue)
-        .CreateInstanceFunction("toFloat64", &BigNumberWrapper::ToFloat64)
-        .CreateInstanceFunction("toInt32", &BigNumberWrapper::ToInt32)
-        .CreateInstanceFunction("size", &BigNumberWrapper::size);
+        .CreateConstuctor<Ptr<ByteArrayWrapper>>()
+        .CreateMemberFunction("toBuffer", &BigNumberWrapper::ToBuffer)
+        .CreateMemberFunction("increase", &BigNumberWrapper::Increase)
+        .CreateMemberFunction("lessThan", &BigNumberWrapper::LessThan)
+        .CreateMemberFunction("logValue", &BigNumberWrapper::LogValue)
+        .CreateMemberFunction("toFloat64", &BigNumberWrapper::ToFloat64)
+        .CreateMemberFunction("toInt32", &BigNumberWrapper::ToInt32)
+        .CreateMemberFunction("size", &BigNumberWrapper::size);
   }
 
   BigNumberWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, byte_array::ByteArray data)

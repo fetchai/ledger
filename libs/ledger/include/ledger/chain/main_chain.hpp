@@ -81,13 +81,22 @@ public:
   using BlockHashSet = std::unordered_set<BlockHash>;
 
   static constexpr char const *LOGGING_NAME = "MainChain";
-  static constexpr uint64_t    ALL          = std::numeric_limits<uint64_t>::max();
+  static constexpr uint64_t    UPPER_BOUND  = 100000ull;
 
   enum class Mode
   {
     IN_MEMORY_DB = 0,
     CREATE_PERSISTENT_DB,
     LOAD_PERSISTENT_DB
+  };
+
+  // When traversing the chain and returning a subset due to hitting a limit,
+  // either return blocks closer to genesis (least recent in time), or
+  // return closer to head (most recent)
+  enum class BehaviourWhenLimit
+  {
+    RETURN_MOST_RECENT = 0,
+    RETURN_LEAST_RECENT
   };
 
   // Construction / Destruction
@@ -107,10 +116,11 @@ public:
   /// @{
   BlockPtr  GetHeaviestBlock() const;
   BlockHash GetHeaviestBlockHash() const;
-  Blocks    GetHeaviestChain(uint64_t limit = ALL) const;
-  Blocks    GetChainPreceding(BlockHash at, uint64_t limit = ALL) const;
-  bool      GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
-                                    uint64_t limit = ALL) const;
+  Blocks    GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
+  Blocks    GetChainPreceding(BlockHash at, uint64_t limit = UPPER_BOUND) const;
+  bool      GetPathToCommonAncestor(
+           Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = UPPER_BOUND,
+           BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
   /// @}
 
   /// @name Tips
@@ -122,7 +132,7 @@ public:
   /// @name Missing / Loose Management
   /// @{
   BlockHashSet GetMissingTips() const;
-  BlockHashs   GetMissingBlockHashes(std::size_t limit = ALL) const;
+  BlockHashs   GetMissingBlockHashes(uint64_t limit = UPPER_BOUND) const;
   bool         HasMissingBlocks() const;
   /// @}
 
@@ -237,6 +247,13 @@ bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container) const
   for (;;)
   {
     ++blocks_checked;
+
+    // Traversing the chain fully is costly: break out early if we know the transactions are all
+    // duplicated (or empty)
+    if (transactions_to_check.size() == transactions_duplicated.size())
+    {
+      break;
+    }
 
     for (auto const &slice : block->body.slices)
     {
