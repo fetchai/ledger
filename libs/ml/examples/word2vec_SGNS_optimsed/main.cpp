@@ -51,8 +51,8 @@ struct TrainingParams
   SizeType embedding_size    = 200;     // dimension of embedding vec
   SizeType training_epochs   = 15;      // total number of training epochs
   SizeType neg_examples      = 25;      // how many negative examples for every positive example
-  double   learning_rate     = 0.2;     // alpha - the learning rate
-  double   min_learning_rate = 0.00002; // alpha - the minimum learning rate
+  double   learning_rate     = 0.05;     // alpha - the learning rate
+  double   min_learning_rate = 0.000005; // alpha - the minimum learning rate
   double   negative_learning_rate;      // alpha - the learning rate for negative examples
   double   min_negative_learning_rate;  // alpha - the minimum learning rate for negative examples
 
