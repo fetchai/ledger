@@ -43,6 +43,8 @@ using fetch::byte_array::FromBase64;
 namespace fetch {
 namespace ledger {
 
+namespace {
+
 /**
  * Compute the digest for the contract source
  *
@@ -87,6 +89,8 @@ void ValidateAddressesInParams(Transaction const &tx, vm::ParameterPack const &p
       }
     }
   }
+}
+
 }
 
 /**
