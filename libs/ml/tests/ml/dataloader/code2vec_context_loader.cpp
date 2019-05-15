@@ -30,7 +30,7 @@ using namespace fetch::ml::dataloaders;
 TEST(C2vLoaderTest, loader_test)
 {
   using ArrayType   = typename fetch::math::Tensor<fetch::math::SizeType>;
-  using SizeType    = typename fetch::math::SizeType;
+  using SizeType    = fetch::math::SizeType;
   using LabelType   = SizeType;
   using ContextType = std::tuple<ArrayType, ArrayType, ArrayType>;
 
