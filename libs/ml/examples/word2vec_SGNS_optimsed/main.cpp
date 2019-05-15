@@ -31,6 +31,8 @@
 
 // TODO: implement frequency table for selecting negative samples proportionally
 // TODO: batch training
+// TODO: if the dataloader data_ array is different in size from the number of words in the data
+// added, there will be empty 0 values used in training
 
 using namespace fetch::ml;
 using DataType     = double;
@@ -284,6 +286,8 @@ public:
       {
         ran_positive_cursor_[k] = rows_[k];
       }
+
+      // TODO - this probably doesn't work as expected
       // if the vector and array are different sizes, just fill up the extra entries with high
       // probability cases
       else
@@ -327,15 +331,45 @@ public:
 
   Type alpha_ = 0.2;  // learning rate
 
+  std::vector<Type> l2reg_row_sums;
+  Type              l2reg_sum = 0;
+  Type              l2_lambda = 0.1;
+  Type              tmp_dot_result;
+
   SkipgramModel(SizeType vocab_size, SizeType embeddings_size, Type learning_rate)
     : input_embeddings_({vocab_size, embeddings_size})
     , input_grads_({1, embeddings_size})
     , context_grads_({embeddings_size, 1})
     , alpha_(learning_rate)
+    , l2reg_row_sums{std::vector<Type>(vocab_size, 0)}
   {
     // initialise embeddings to values from 0 - 0.1
     input_embeddings_.FillUniformRandom();
     fetch::math::Multiply(input_embeddings_, 0.1, input_embeddings_);
+    fetch::math::Subtract(input_embeddings_, 0.05, input_embeddings_);
+
+    // initial embeddings weight normalisation
+    Type sum = 0;
+    for (auto &e : input_embeddings_)
+    {
+      sum += (e * e);
+    }
+    for (auto &e : input_embeddings_)
+    {
+      e /= sum;
+    }
+
+    // initialise the l2 normalisation values
+    for (std::size_t i = 0; i < vocab_size; ++i)
+    {
+      auto it = input_embeddings_.Slice(i).begin();
+      while (it.is_valid())
+      {
+        l2reg_row_sums[i] += (*it * *it);
+        ++it;
+      }
+      l2reg_sum += l2reg_row_sums[i];
+    }
   }
 
   void ForwardAndLoss(SizeType const &input_word_idx, SizeType const &context_word_idx,
@@ -355,6 +389,24 @@ public:
     input_vector_   = input_embeddings_.Slice(input_word_idx).Copy();
     context_vector_ = input_embeddings_.Slice(context_word_idx).Copy();
 
+    //    /////
+    //    /// NORMALISE
+    //    ////
+    //
+    ////    std::cout << "input_vector_[0]: " << input_vector_[0] << std::endl;
+    ////    std::cout << "l2reg_row_sums[input_word_idx]: " << l2reg_row_sums[input_word_idx] <<
+    /// std::endl; /    std::cout << "l2reg_sum: " << l2reg_sum << std::endl; /    std::cout <<
+    ///"(l2reg_row_sums[input_word_idx] / l2reg_sum): " << (l2reg_row_sums[input_word_idx] /
+    /// l2reg_sum) << std::endl;
+    //
+    //    input_vector_ *= (l2reg_row_sums[input_word_idx] / l2reg_sum);
+    ////    std::cout << "input_vector_[0]: " << input_vector_[0] << std::endl;
+    //    context_vector_ *= (l2reg_row_sums[context_word_idx] / l2reg_sum);
+    //
+    //    //////
+    //    /// END NORMALISE
+    //    //////
+
     // context vector transpose
     // mat mul
     fetch::math::DotTranspose(input_vector_, context_vector_, dot_result_);
@@ -362,16 +414,17 @@ public:
     ASSERT(result_.shape()[0] == 1);
     ASSERT(result_.shape()[1] == 1);
 
-    ///////
-    /// 1 - sigmoid(x) == sigmoid(-x)
-    ///////
-
+    tmp_dot_result = dot_result_[0];
     if (std::isnan(dot_result_[0]))
     {
       std::cout << "input_vector_.ToString(): " << input_vector_.ToString() << std::endl;
       std::cout << "context_vector_.ToString(): " << context_vector_.ToString() << std::endl;
       throw std::runtime_error("dot_result_ is nan");
     }
+
+    ///////
+    /// 1 - sigmoid(x) == sigmoid(-x)
+    ///////
 
     // sigmoid_cross_entropy_loss
     Sigmoid(dot_result_[0], result_[0]);
@@ -392,6 +445,8 @@ public:
       }
       loss = -std::log(1 - result_[0]);
     }
+
+    loss += (l2_lambda * l2reg_sum);
 
     if (std::isnan(loss))
     {
@@ -421,11 +476,19 @@ public:
     fetch::math::Multiply(input_vector_, result_[0], context_grads_);
 
     // apply gradient updates
+    l2reg_sum -= l2reg_row_sums[input_word_idx];
+    l2reg_sum -= l2reg_row_sums[context_word_idx];
+
+    l2reg_row_sums[input_word_idx]   = 0;
+    l2reg_row_sums[context_word_idx] = 0;
+
     auto input_slice_it = input_embeddings_.Slice(input_word_idx).begin();
     auto input_grads_it = input_grads_.begin();
     while (input_slice_it.is_valid())
     {
-      *input_slice_it += (*input_grads_it);
+      // grad and l2_reg weight decay
+      *input_slice_it += (*input_grads_it) - (l2_lambda * *input_slice_it);
+      l2reg_row_sums[input_word_idx] += (*input_slice_it * *input_slice_it);
       ++input_slice_it;
       ++input_grads_it;
     }
@@ -435,10 +498,17 @@ public:
     auto context_grads_it = context_grads_.begin();
     while (context_slice_it.is_valid())
     {
-      *context_slice_it += (*context_grads_it);
+      // grad and l2_reg weight decay
+      *context_slice_it += (*context_grads_it) - (l2_lambda * *input_slice_it);
+      l2reg_row_sums[context_word_idx] += (*context_slice_it * *context_slice_it);
       ++context_slice_it;
       ++context_grads_it;
     }
+
+    l2reg_sum += l2reg_row_sums[input_word_idx];
+    l2reg_sum += l2reg_row_sums[context_word_idx];
+
+    //    std::cout << "l2reg_sum: " << l2reg_sum << std::endl;
   }
 
   void Sigmoid(Type x, Type &ret)
@@ -638,6 +708,9 @@ int main(int argc, char **argv)
                 << std::endl;
       std::cout << "loss: " << sum_loss << std::endl;
       sum_loss = 0;
+
+      std::cout << "model.l2reg_sum: " << model.l2reg_sum << std::endl;
+      std::cout << "model.tmp_dot_result: " << model.tmp_dot_result << std::endl;
 
       EvalAnalogy(dataloader, model);
     }
