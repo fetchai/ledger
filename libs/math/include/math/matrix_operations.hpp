@@ -304,18 +304,7 @@ ArrayType Max(ArrayType const &array, typename ArrayType::SizeType const &axis)
   ASSERT((axis == 0) || (axis == 1));
   ASSERT(array.shape().size() == 2);
 
-  std::vector<typename ArrayType::SizeType> retSize;
-
-  if (axis == 0)
-  {
-    retSize = std::vector<typename ArrayType::SizeType>({array.shape().at(1)});
-  }
-  else
-  {
-    retSize = std::vector<typename ArrayType::SizeType>({array.shape().at(0)});
-  }
-
-  ArrayType ret(retSize);
+  ArrayType ret{array.shape().at(1 - axis)};
   Max(array, axis, ret);
   return ret;
 }
@@ -334,7 +323,7 @@ T Max(std::vector<T> const &obj1)
 }
 
 /**
- * Min function returns the smalled value in the array
+ * Min function returns the smallest value in the array
  * @tparam ArrayType input array type
  * @tparam T input scalar return param
  * @param array input array
@@ -416,18 +405,7 @@ ArrayType Min(ArrayType const &array, typename ArrayType::SizeType const &axis)
   ASSERT((axis == 0) || (axis == 1));
   ASSERT(array.shape().size() == 2);
 
-  std::vector<typename ArrayType::SizeType> retSize;
-
-  if (axis == 0)
-  {
-    retSize = std::vector<typename ArrayType::SizeType>({array.shape().at(1)});
-  }
-  else
-  {
-    retSize = std::vector<typename ArrayType::SizeType>({array.shape().at(0)});
-  }
-
-  ArrayType ret(retSize);
+  ArrayType ret{array.shape().at(1 - axis)};
   Min(array, axis, ret);
   return ret;
 }
@@ -555,15 +533,7 @@ meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &               
   using Type = typename ArrayType::Type;
 
   ASSERT(axis == 0 || axis == 1);
-  Type n;
-  if (axis == 0)
-  {
-    n = static_cast<Type>(obj1.shape().at(1));
-  }
-  else
-  {
-    n = static_cast<Type>(obj1.shape().at(0));
-  }
+  Type n = static_cast<Type>(obj1.shape().at(1 - axis));
   ReduceSum(obj1, axis, ret);
   Divide(ret, n, ret);
 }
@@ -575,15 +545,7 @@ meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &          
   using Type = typename ArrayType::Type;
 
   ASSERT(axis == 0 || axis == 1);
-  Type n;
-  if (axis == 0)
-  {
-    n = static_cast<Type>(obj1.shape().at(1));
-  }
-  else
-  {
-    n = static_cast<Type>(obj1.shape().at(0));
-  }
+  Type n   = static_cast<Type>(obj1.shape().at(1 - axis));
   Type ret = ReduceSum(obj1, axis);
   Divide(ret, n, ret);
   return ret;
@@ -610,7 +572,8 @@ template <typename ArrayType>
 ArrayType PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const &axis)
 {
   ArrayType ret = Max(array, axis);
-  fetch::math::Subtract(ret, Min(array, axis), ret);
+  ArrayType min = Min(array, axis);
+  fetch::math::Subtract(ret, min, ret);
   return ret;
 }
 
@@ -618,8 +581,7 @@ template <typename ArrayType>
 void PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const &axis, ArrayType &ret)
 {
   Max(array, axis, ret);
-  ArrayType min{ret.shape()};
-  Min(array, axis, min);
+  ArrayType min = Min(array, axis);
   fetch::math::Subtract(ret, min, ret);
 }
 
