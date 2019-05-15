@@ -125,10 +125,10 @@ public:
   std::vector<std::pair<std::tuple<SizeType, SizeType, SizeType>, LabelType>> data;
 
 private:
-  SizeType iterator_position_get_next_context_{fetch::math::NumericMax<SizeType>()};
-  SizeType iterator_position_get_next_{fetch::math::NumericMax<SizeType>()};
-  SizeType current_function_index_{fetch::math::NumericMax<SizeType>()};
-  SizeType max_contexts_{fetch::math::NumericMax<SizeType>()};
+  SizeType iterator_position_get_next_context_{fetch::math::numeric_max<SizeType>()};
+  SizeType iterator_position_get_next_{fetch::math::numeric_max<SizeType>()};
+  SizeType current_function_index_{fetch::math::numeric_max<SizeType>()};
+  SizeType max_contexts_{fetch::math::numeric_max<SizeType>()};
 
   umap_str_int function_name_counter_;
   umap_str_int path_counter_;
