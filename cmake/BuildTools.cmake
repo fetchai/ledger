@@ -10,27 +10,26 @@ function(setup_library name)
   list(LENGTH headers headers_length)
   list(LENGTH srcs srcs_length)
 
-  #message(STATUS "Headers: ${headers} ${headers_length}")
-  #message(STATUS "Srcs: ${srcs}")
-
   # main library configuration
   if(srcs_length EQUAL 0)
 
     # define header only library
     add_library(${name} INTERFACE)
     target_sources(${name} INTERFACE ${headers})
-    target_include_directories(${name} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_include_directories(${name}
+                               INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
   else()
 
     # define the normal library
     add_library(${name} ${headers} ${srcs})
-    target_include_directories(${name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_include_directories(${name}
+                               PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
     # CoreFoundation Support on MacOS
-    if (APPLE)
+    if(APPLE)
       target_link_libraries(${name} PUBLIC "-framework CoreFoundation")
-    endif ()
+    endif()
 
   endif()
 endfunction()
@@ -42,9 +41,9 @@ function(fetch_add_executable name)
   add_executable(${name} "${ARGV}")
 
   # CoreFoundation Support on MacOS
-  if (APPLE)
+  if(APPLE)
     target_link_libraries(${name} PRIVATE "-framework CoreFoundation")
-  endif ()
+  endif()
 
 endfunction()
 
@@ -55,12 +54,16 @@ function(setup_library_examples library)
     list(REMOVE_AT ARGV 0)
 
     # build up the library suffix i.e. with fetch-http the suffix would be http
-    string(REGEX REPLACE "fetch-(.*)" "\\1" library_suffix ${library})
-    if (library_suffix STREQUAL library)
-      set (library_suffix "")
-    else ()
-      set (library_suffix "-${library_suffix}")
-    endif ()
+    string(REGEX
+           REPLACE "fetch-(.*)"
+                   "\\1"
+                   library_suffix
+                   ${library})
+    if(library_suffix STREQUAL library)
+      set(library_suffix "")
+    else()
+      set(library_suffix "-${library_suffix}")
+    endif()
 
     # examples
     set(examples_root ${CMAKE_CURRENT_SOURCE_DIR})
@@ -74,9 +77,13 @@ function(setup_library_examples library)
           set(disabled_path ${example_path}/.disabled)
           set(exclusion_path ${example_path}/.manual-config)
 
-          # build the example name - replace "_" in favour of "-" to keep target names uniform
+          # build the example name - replace "_" in favour of "-" to keep target
+          # names uniform
           set(example_name "example${library_suffix}-${child}")
-          string(REPLACE "_" "-" example_name "${example_name}")
+          string(REPLACE "_"
+                         "-"
+                         example_name
+                         "${example_name}")
 
           if(EXISTS ${exclusion_path})
             # do nothing the target will be manually configured
@@ -92,12 +99,14 @@ function(setup_library_examples library)
             target_include_directories(${example_name} PRIVATE ${examples_root})
 
             # CoreFoundation Support on MacOS
-            if (APPLE)
-              target_link_libraries(${example_name} PRIVATE "-framework CoreFoundation")
-            endif ()
+            if(APPLE)
+              target_link_libraries(${example_name}
+                                    PRIVATE "-framework CoreFoundation")
+            endif()
 
             if(FETCH_VERBOSE_CMAKE)
-              message(STATUS "Creating ${example_name} target linking to ${library}")
+              message(
+                STATUS "Creating ${example_name} target linking to ${library}")
             endif(FETCH_VERBOSE_CMAKE)
           endif()
         endif()
@@ -107,7 +116,10 @@ function(setup_library_examples library)
   endif(FETCH_ENABLE_EXAMPLES)
 endfunction()
 
-function(add_fetch_test name library directory)
+function(add_fetch_test
+         name
+         library
+         directory)
   if(FETCH_ENABLE_TESTS)
 
     # remove all the arguments
@@ -116,7 +128,7 @@ function(add_fetch_test name library directory)
     list(REMOVE_AT ARGV 0)
 
     # define the label for the test
-    if ("SLOW" IN_LIST ARGV)
+    if("SLOW" IN_LIST ARGV)
       set(test_label "Slow")
       fetch_warning("Slow Test: ${name}")
     elseif("INTEGRATION" IN_LIST ARGV)
@@ -128,8 +140,8 @@ function(add_fetch_test name library directory)
 
     # detect if the "DISABLED" flag has been passed to this test
     set(is_disabled FALSE)
-    if ("DISABLED" IN_LIST ARGV)
-        set(is_disabled TRUE)
+    if("DISABLED" IN_LIST ARGV)
+      set(is_disabled TRUE)
     endif()
 
     if(is_disabled)
@@ -145,13 +157,17 @@ function(add_fetch_test name library directory)
       # define the target
       add_executable(${name} ${headers} ${srcs})
       target_link_libraries(${name} PRIVATE ${library} gmock gmock_main)
-      target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
-      target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)
+      target_include_directories(
+        ${name}
+        PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
+      target_include_directories(
+        ${name}
+        PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)
 
       # CoreFoundation Support on MacOS
-      if (APPLE)
+      if(APPLE)
         target_link_libraries(${name} PRIVATE "-framework CoreFoundation")
-      endif ()
+      endif()
 
       # define the test
       add_test(${name} ${name} ${ARGV})
@@ -163,7 +179,10 @@ function(add_fetch_test name library directory)
   endif(FETCH_ENABLE_TESTS)
 endfunction()
 
-function(add_fetch_gbench name library directory)
+function(add_fetch_gbench
+         name
+         library
+         directory)
   if(FETCH_ENABLE_BENCHMARKS)
 
     # remove all the arguments
@@ -194,15 +213,21 @@ function(add_fetch_gbench name library directory)
       target_link_libraries(${name} PRIVATE ${library} benchmark)
 
       # CoreFoundation Support on MacOS
-      if (APPLE)
+      if(APPLE)
         target_link_libraries(${name} PRIVATE "-framework CoreFoundation")
-      endif ()
+      endif()
 
-      #Google bench requires google test
-      target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
-      target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)
+      # Google bench requires google test
+      target_include_directories(
+        ${name}
+        PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
+      target_include_directories(
+        ${name}
+        PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)
 
-      target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/benchmark/include)
+      target_include_directories(
+        ${name}
+        PRIVATE ${FETCH_ROOT_VENDOR_DIR}/benchmark/include)
 
     endif()
 
@@ -210,16 +235,15 @@ function(add_fetch_gbench name library directory)
 endfunction()
 
 macro(add_test_target)
-  if (FETCH_ENABLE_TESTS)
+  if(FETCH_ENABLE_TESTS)
     enable_testing()
     add_subdirectory(tests)
-  endif (FETCH_ENABLE_TESTS)
-endMacro()
+  endif(FETCH_ENABLE_TESTS)
+endmacro()
 
 macro(add_benchmark_target)
-  if (FETCH_ENABLE_BENCHMARKS)
+  if(FETCH_ENABLE_BENCHMARKS)
     enable_testing()
     add_subdirectory(benchmarks)
-  endif (FETCH_ENABLE_BENCHMARKS)
-endMacro()
-
+  endif(FETCH_ENABLE_BENCHMARKS)
+endmacro()
