@@ -618,7 +618,9 @@ template <typename ArrayType>
 void PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const &axis, ArrayType &ret)
 {
   Max(array, axis, ret);
-  fetch::math::Subtract(ret, Min(array, axis), ret);
+  ArrayType min{ret.shape()};
+  Min(array, axis, min);
+  fetch::math::Subtract(ret, min, ret);
 }
 
 /**
