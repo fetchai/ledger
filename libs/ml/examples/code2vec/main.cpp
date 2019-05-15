@@ -30,6 +30,7 @@
 #include "ml/ops/tanh.hpp"
 #include "ml/ops/transpose.hpp"
 #include "ml/ops/weights.hpp"
+#include <chrono>
 #include <fstream>
 #include <iostream>
 
@@ -73,14 +74,14 @@ int main(int ac, char **av)
     cloader.AddData(ReadFile(av[i]));
   }
 
-  std::cout << "Number of different function names: " << cloader.GetCounterFunctionNames().size()
+  std::cout << "Number of different function names: " << cloader.function_name_counter().size()
             << std::endl;
-  std::cout << "Number of different paths: " << cloader.GetCounterPaths().size() << std::endl;
-  std::cout << "Number of different words: " << cloader.GetCounterWords().size() << std::endl;
+  std::cout << "Number of different paths: " << cloader.path_counter().size() << std::endl;
+  std::cout << "Number of different words: " << cloader.word_counter().size() << std::endl;
 
-  u_int64_t vocab_size_function_names{cloader.GetCounterFunctionNames().size() + 1};
-  u_int64_t vocab_size_paths{cloader.GetCounterPaths().size() + 1};
-  u_int64_t vocab_size_words{cloader.GetCounterWords().size() + 1};
+  u_int64_t vocab_size_function_names{cloader.function_name_counter().size() + 1};
+  u_int64_t vocab_size_paths{cloader.path_counter().size() + 1};
+  u_int64_t vocab_size_words{cloader.word_counter().size() + 1};
 
   // Defining the graph
   fetch::ml::Graph<ArrayType> g;
@@ -214,7 +215,7 @@ int main(int ac, char **av)
   DataType                                loss = 0;
 
   // (One hot encoded) \y_{true} vector
-  ArrayType y_true_vec({1, cloader.GetCounterFunctionNames().size() + 1});
+  ArrayType y_true_vec({1, cloader.function_name_counter().size() + 1});
 
   y_true_vec.Fill(0);
 
@@ -228,7 +229,9 @@ int main(int ac, char **av)
       cloader.Reset();
       n_epochs++;
     }
-    g.Step(LEARNING_RATE);
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+
     // Loading the tuple of ((InputSourceWords, InputPaths, InputTargetWords), function_name_idx)
     // first: 3 tensors with shape (n_contexts) holding
     //        the indices of the source words/paths/target words in the vocabulary
@@ -252,13 +255,22 @@ int main(int ac, char **av)
     // Making the backward pass
     g.BackPropagate(result, criterion.Backward({results, y_true_vec}));
 
+    // apply the gradients
+    g.Step(LEARNING_RATE);
+
     // Resetting the y_true vector for reusing it
     y_true_vec.Set(0, input.second, 0);
 
     n_iter++;
     if (n_iter % 5 == 0)
     {
+      auto t2 = std::chrono::high_resolution_clock::now();
+
+      std::chrono::duration<double> time_diff =
+          std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+
       std::cout << "MiniBatch: " << n_iter / 5 << " -- Loss : " << loss << std::endl;
+      std::cout << "Steps / Sec: " << 5.0 / time_diff.count() << std::endl;
       loss = 0;
     }
   }
