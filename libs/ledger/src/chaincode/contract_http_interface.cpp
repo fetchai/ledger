@@ -164,11 +164,10 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
     }
   }
 
-  Post("/api/contract/(digest=[a-fA-F0-9]{64})/(identifier=[a-fA-F0-9]{128})/(query=.+)",
+  Post("/api/contract/(digest=[a-fA-F0-9]{64})/(identifier=[1-9A-HJ-NP-Za-km-z]{49,50})/(query=.+)",
        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
          // build the contract name
-         auto const contract_name =
-             ToBase64(FromHex(params["digest"])) + "." + ToBase64(FromHex(params["identifier"]));
+         auto const contract_name = params["digest"] + "." + params["identifier"];
 
          // proxy the call to the query handler
          return OnQuery(contract_name, params["query"], request);

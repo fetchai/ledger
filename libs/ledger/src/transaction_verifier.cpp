@@ -89,12 +89,12 @@ void TransactionVerifier::Verifier()
       // wait for a mutable transaction to be available
       if (unverified_queue_.Pop(tx, POP_TIMEOUT))
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Verifying TX: 0x", tx->digest().ToHex());
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Verifying TX: 0x", tx->digest().ToHex());
 
         // check the status
         if (tx->Verify())
         {
-          FETCH_LOG_INFO(LOGGING_NAME, "TX Verify Complete: 0x", tx->digest().ToHex());
+          FETCH_LOG_DEBUG(LOGGING_NAME, "TX Verify Complete: 0x", tx->digest().ToHex());
 
           verified_queue_.Push(std::move(tx));
         }
@@ -126,7 +126,7 @@ void TransactionVerifier::Dispatcher()
       TransactionPtr tx;
       if (verified_queue_.Pop(tx, POP_TIMEOUT))
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "TX Dispatch: 0x", tx->digest().ToHex());
+        FETCH_LOG_DEBUG(LOGGING_NAME, "TX Dispatch: 0x", tx->digest().ToHex());
 
         sink_.OnTransaction(tx);
       }

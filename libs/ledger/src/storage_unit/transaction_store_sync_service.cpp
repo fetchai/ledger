@@ -127,7 +127,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjectCou
 {
   for (auto const &connection : muddle_->AsEndpoint().GetDirectlyConnectedPeers())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Query objects from: muddle://", connection.ToBase64());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Query objects from: muddle://", connection.ToBase64());
 
     auto prom = PromiseOfObjectCount(client_->CallSpecificAddress(
         connection, RPC_TX_STORE_SYNC, TransactionStoreSyncProtocol::OBJECT_COUNT));
@@ -176,8 +176,8 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
   // where roots to sync are all objects with the key starting with those bits
   if (max_object_count_ == 0)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Network appears to have no transactions! Number of peers: ",
-                   muddle_->AsEndpoint().GetDirectlyConnectedPeers().size());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Network appears to have no transactions! Number of peers: ",
+                    muddle_->AsEndpoint().GetDirectlyConnectedPeers().size());
   }
   else
   {

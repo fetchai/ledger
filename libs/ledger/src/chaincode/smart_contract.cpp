@@ -103,7 +103,7 @@ SmartContract::SmartContract(std::string const &source)
                                  {"No source present in contract"});
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Constructing contract: 0x", contract_digest().ToHex());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Constructing contract: 0x", contract_digest().ToHex());
 
   // create and compile the script
   auto errors = vm_modules::VMFactory::Compile(module_, source_, *script_);

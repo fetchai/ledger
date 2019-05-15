@@ -86,8 +86,6 @@ void BasicMiner::EnqueueTransaction(ledger::v2::Transaction const &tx)
   // create the bit vector matching the number of configured lanes
   BitVector shard_mask{1u << log2_num_lanes_};
 
-  FETCH_LOG_INFO(LOGGING_NAME, "PopCount before: ", shard_mask.PopCount());
-
   // in the case where the transaction contains a contract call, ensure that the shard
   // mask is correctly mapped to the current number of lanes
   if (Transaction::ContractMode::NOT_PRESENT != tx.contract_mode())
@@ -119,11 +117,9 @@ void BasicMiner::EnqueueTransaction(ledger::v2::Transaction const &tx)
     tx.valid_until()
   };
 
-  FETCH_LOG_INFO(LOGGING_NAME, "PopCount after: ", shard_mask.PopCount());
-
   assert(layout.mask().size() == (1u << log2_num_lanes_));
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Enqueued Transaction: 0x", layout.digest().ToHex());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction: 0x", layout.digest().ToHex());
 
   // Add the layout to the pending queue
   EnqueueTransaction(layout);
@@ -143,11 +139,11 @@ void BasicMiner::EnqueueTransaction(ledger::v2::TransactionLayout const &layout)
 
   if (pending_.Add(layout))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Enqueued Transaction (added) 0x", layout.digest().ToHex());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (added) 0x", layout.digest().ToHex());
   }
   else
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Enqueued Transaction (duplicate) ", layout.digest().ToHex());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (duplicate) ", layout.digest().ToHex());
   }
 }
 

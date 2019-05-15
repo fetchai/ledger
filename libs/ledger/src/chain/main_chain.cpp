@@ -112,7 +112,7 @@ BlockStatus MainChain::AddBlock(Block const &blk)
 
   // pass the block to the
   auto const status = InsertBlock(block);
-  FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: ", ToBase64(block->body.hash), " -> ", ToString(status),
+  FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: 0x", block->body.hash.ToHex(), " -> ", ToString(status),
                   " (weight: ", block->weight, " total: ", block->total_weight, ")");
 
   return status;
@@ -708,7 +708,7 @@ void MainChain::TrimCache()
 
       if (trim_threshold >= block.block_number)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Removing loose block: ", block.hash.ToBase64());
+        FETCH_LOG_INFO(LOGGING_NAME, "Removing loose block: 0x", block.hash.ToHex());
 
         // remove the entry from the tips map
         tips_.erase(block.hash);
@@ -788,8 +788,7 @@ void MainChain::CompleteLooseBlocks(IntBlockPtr const &block)
   BlockHashList blocks_to_add = std::move(it->second);
   loose_blocks_.erase(it);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, blocks_to_add.size(), " are resolved from ",
-                  ToBase64(block->body.hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, blocks_to_add.size(), " are resolved from 0x", block->body.hash.ToHex());
 
   while (!blocks_to_add.empty())
   {
@@ -906,7 +905,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
       // TODO(EJF): Add check to validate the block number (it is relied on heavily now)
       if (block->body.block_number != (prev_block->body.block_number + 1))
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Block ", ToBase64(block->body.hash),
+        FETCH_LOG_INFO(LOGGING_NAME, "Block 0x", block->body.hash.ToHex(),
                        " has invalid block number");
         return BlockStatus::INVALID;
       }
@@ -964,7 +963,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
   bool const heaviest_advanced = UpdateTips(block);
 
   // Add block
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Adding block to chain: ", ToBase64(block->body.hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Adding block to chain: 0x", block->body.hash.ToHex());
   AddBlockToCache(block);
 
   // If the heaviest branch has been updated we should determine if any blocks should be flushed
@@ -1244,7 +1243,7 @@ bool MainChain::HeaviestTip::Update(Block const &block)
 
   if ((block.total_weight > weight) || ((block.total_weight == weight) && (block.body.hash > hash)))
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "New heaviest tip: ", ToBase64(block.body.hash));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "New heaviest tip: 0x", block.body.hash.ToHex());
 
     weight  = block.total_weight;
     hash    = block.body.hash;

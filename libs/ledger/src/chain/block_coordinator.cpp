@@ -172,14 +172,14 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
 #ifdef FETCH_LOG_DEBUG_ENABLED
   if (extra_debug)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Heaviest.....: ", ToBase64(chain_.GetHeaviestBlockHash()));
-    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Current......: ", ToBase64(current_hash));
-    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Previous.....: ", ToBase64(previous_hash));
-    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Desired State: ", ToBase64(desired_state));
-    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Current State: ", ToBase64(current_state));
-    FETCH_LOG_INFO(LOGGING_NAME, "Sync: LCommit State: ", ToBase64(last_committed_state));
-    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last Block...: ", ToBase64(last_processed_block));
-    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last BlockInt: ", ToBase64(last_executed_block_.Get()));
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Heaviest.....: 0x", chain_.GetHeaviestBlockHash().ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Current......: 0x", current_hash.ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Previous.....: 0x", previous_hash.ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Desired State: 0x", desired_state.ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Current State: 0x", current_state.ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: LCommit State: 0x", last_committed_state.ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last Block...: 0x", last_processed_block.ToHex());
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Last BlockInt: 0x", last_executed_block_.Get().ToHex());
   }
 #endif  // FETCH_LOG_DEBUG_ENABLED
 
@@ -236,8 +236,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
 
     if (extra_debug)
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Common Parent: ", ToBase64(common_parent->body.hash));
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Next Block...: ", ToBase64(next_block->body.hash));
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Common Parent: 0x", common_parent->body.hash.ToHex());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Next Block...: 0x", next_block->body.hash.ToHex());
 
       // calculate a percentage synchronisation
       std::size_t const current_block_num = next_block->body.block_number;
@@ -254,8 +254,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
     if (!storage_unit_.HashExists(common_parent->body.merkle_hash,
                                   common_parent->body.block_number))
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's state hash cannot be retrieved for block: ",
-                      ToBase64(current_hash), " number; ", common_parent->body.block_number);
+      FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's state hash cannot be retrieved for block: 0x",
+                      current_hash.ToHex(), " number; ", common_parent->body.block_number);
 
       // this is a bad situation so the easiest solution is to revert back to genesis
       execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
@@ -263,6 +263,10 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
       {
         FETCH_LOG_ERROR(LOGGING_NAME, "Unable to revert back to genesis");
       }
+
+      // delay the state machine in these error cases, to allow the network to catch up if the issue
+      // is network related and if nothing else restrict logs being spammed
+      state_machine_->Delay(std::chrono::seconds{5});
 
       return State::RESET;
     }
@@ -272,6 +276,11 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
                                     common_parent->body.block_number))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Unable to restore state for block", ToBase64(current_hash));
+
+      // delay the state machine in these error cases, to allow the network to catch up if the issue
+      // is network related and if nothing else restrict logs being spammed
+      state_machine_->Delay(std::chrono::seconds{5});
+
       return State::RESET;
     }
 
@@ -315,9 +324,9 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
   }
   else if (State::SYNCHRONIZING == previous)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Chain Sync complete on ", ToBase64(current_block_->body.hash),
+    FETCH_LOG_INFO(LOGGING_NAME, "Chain Sync complete on 0x", current_block_->body.hash.ToHex(),
                    " (block: ", current_block_->body.block_number,
-                   " prev: ", ToBase64(current_block_->body.previous_hash), ")");
+                   " prev: 0x", current_block_->body.previous_hash.ToHex(), ")");
   }
 
   return State::SYNCHRONIZED;
@@ -531,20 +540,20 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
   {
     if (state_hash != current_block_->body.merkle_hash)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Merkle hash mismatch (block: ",
-                     ToBase64(current_block_->body.hash),
-                     " expected: ", ToBase64(current_block_->body.merkle_hash),
-                     " actual: ", ToBase64(state_hash), ")");
+      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Merkle hash mismatch (block: 0x",
+                     current_block_->body.hash.ToHex(),
+                     " expected: 0x", current_block_->body.merkle_hash.ToHex(),
+                     " actual: 0x", state_hash.ToHex(), ")");
 
       // signal the block is invalid
       invalid_block = true;
     }
     else
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Block validation great success: (block: ",
-                      ToBase64(current_block_->body.hash),
-                      " expected: ", ToBase64(current_block_->body.merkle_hash),
-                      " actual: ", ToBase64(state_hash), ")");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Block validation great success: (block: 0x",
+                      current_block_->body.hash.ToHex(),
+                      " expected: 0x", current_block_->body.merkle_hash.ToHex(),
+                      " actual: 0x", state_hash.ToHex(), ")");
     }
   }
 
@@ -679,7 +688,7 @@ BlockCoordinator::State BlockCoordinator::OnProofSearch()
     // update the digest
     next_block_->UpdateDigest();
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "New Block Hash: ", ToBase64(next_block_->body.hash));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "New Block Hash: 0x", next_block_->body.hash.ToHex());
 
     // this step is needed because the execution manager is actually unaware of the actual last
     // block that is executed because the merkle hash was not known at this point.
@@ -699,7 +708,7 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
     // ensure that the main chain is aware of the block
     if (BlockStatus::ADDED == chain_.AddBlock(*next_block_))
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Generating new block: ", ToBase64(next_block_->body.hash),
+      FETCH_LOG_INFO(LOGGING_NAME, "Generating new block: 0x", next_block_->body.hash.ToHex(),
                      " txs: ", next_block_->GetTransactionCount());
 
       // mark this blocks transactions as being executed
@@ -769,7 +778,7 @@ bool BlockCoordinator::ScheduleBlock(Block const &block)
 {
   bool success{false};
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Attempting exec on block: ", ToBase64(block.body.hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Attempting exec on block: 0x", block.body.hash.ToHex());
 
   // instruct the execution manager to execute the current block
   auto const execution_status = execution_manager_.Execute(block.body);

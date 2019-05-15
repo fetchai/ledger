@@ -60,7 +60,7 @@ namespace {
       case ContractMode::NOT_PRESENT:
         break;
       case ContractMode::PRESENT:
-        contract_name = tx.contract_digest().address().ToHex() + "." + tx.contract_address().address().ToHex() + "." + tx.action();
+        contract_name = tx.contract_digest().address().ToHex() + "." + tx.contract_address().display() + "." + tx.action();
         break;
       case ContractMode::CHAIN_CODE:
         contract_name = tx.chain_code() + "." + tx.action();
@@ -160,18 +160,24 @@ Executor::Result Executor::Execute(v2::Digest const &digest, BlockIndex block, S
 
 void Executor::SettleFees(v2::Address const &miner, TokenAmount amount, uint32_t log2_num_lanes)
 {
-  // compute the resource address
-  ResourceAddress resource_address{"fetch.token.state." + miner.display()};
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Settling fees");
 
-  // create the complete shard mask
-  BitVector shard{1u << log2_num_lanes};
-  shard.set(resource_address.lane(log2_num_lanes), 1);
+  // only if there are fees to settle then update the state database
+  if (amount > 0)
+  {
+    // compute the resource address
+    ResourceAddress resource_address{"fetch.token.state." + miner.display()};
 
-  // attach the token contract to the storage engine
-  StateSentinelAdapter storage_adapter{*storage_, Identifier{"fetch.token"}, shard};
-  token_contract_->Attach(storage_adapter);
-  token_contract_->AddTokens(miner, amount);
-  token_contract_->Detach();
+    // create the complete shard mask
+    BitVector shard{1u << log2_num_lanes};
+    shard.set(resource_address.lane(log2_num_lanes), 1);
+
+    // attach the token contract to the storage engine
+    StateSentinelAdapter storage_adapter{*storage_, Identifier{"fetch.token"}, shard};
+    token_contract_->Attach(storage_adapter);
+    token_contract_->AddTokens(miner, amount);
+    token_contract_->Detach();
+  }
 }
 
 bool Executor::RetrieveTransaction(v2::Digest const &digest)
@@ -267,7 +273,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
     auto chain_code = chain_code_cache_.Lookup(contract.GetParent(), *storage_);
     if (!chain_code)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Chain code lookup failure!");
+      FETCH_LOG_WARN(LOGGING_NAME, "Contract lookup failure: ", contract.full_name());
       result.status = Status::CONTRACT_LOOKUP_FAILURE;
     }
 
@@ -315,7 +321,9 @@ bool Executor::ExecuteTransactionContract(Result &result)
       uint64_t const base_charge    = compute_charge + storage_charge;
       uint64_t const scaled_charge  = std::max<uint64_t>(allowed_shards_.PopCount(), 1) * base_charge;
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Calculated charge: ", scaled_charge, " (base: ", base_charge, " storage: ", storage_charge, " compute: ", compute_charge, " shards: ", allowed_shards_.PopCount(), ")");
+      FETCH_LOG_INFO(LOGGING_NAME, "Calculated charge for 0x", current_tx_->digest().ToHex(), ": ",
+                     scaled_charge, " (base: ", base_charge, " storage: ", storage_charge,
+                     " compute: ", compute_charge, " shards: ", allowed_shards_.PopCount(), ")");
 
       // create wealth transactions are always free
       if (!IsCreateWealth(*current_tx_))

@@ -90,14 +90,14 @@ byte_array::ConstByteArray StorageUnitClient::CurrentHash()
     FETCH_LOG_PROMISE();
     tree[index] = p->As<byte_array::ByteArray>();
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Merkle Hash ", index, ": ", ToBase64(tree[index]));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Merkle Hash ", index, ": 0x", tree[index].ToHex());
 
     ++index;
   }
 
   tree.CalculateRoot();
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Merkle Final Hash: ", ToBase64(tree.root()));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Merkle Final Hash: 0x", tree.root().ToHex());
 
   return tree.root();
 }
@@ -117,6 +117,8 @@ byte_array::ConstByteArray StorageUnitClient::LastCommitHash()
       return current_merkle_.root();
     }
   }
+
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Last Commit Hash: 0x", last_commit_hash.ToHex());
 
   return last_commit_hash;
 }
@@ -320,6 +322,8 @@ StorageUnitClient::Address const &StorageUnitClient::LookupAddress(storage::Reso
 
 void StorageUnitClient::AddTransaction(v2::Transaction const &tx)
 {
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Adding tx: 0x", tx.digest().ToHex());
+
   try
   {
     ResourceID resource{tx.digest()};
@@ -478,6 +482,9 @@ void StorageUnitClient::IssueCallForMissingTxs(v2::DigestSet const &tx_set)
 
 StorageUnitClient::Document StorageUnitClient::GetOrCreate(ResourceAddress const &key)
 {
+  FETCH_LOG_DEBUG(LOGGING_NAME, "GetOrCreate: ", key.address());
+
+
   Document doc;
 
   try
@@ -526,6 +533,7 @@ StorageUnitClient::Document StorageUnitClient::Get(ResourceAddress const &key)
 
 void StorageUnitClient::Set(ResourceAddress const &key, StateValue const &value)
 {
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Set: ", key.address(), " value: 0x", value.ToHex());
 
   try
   {

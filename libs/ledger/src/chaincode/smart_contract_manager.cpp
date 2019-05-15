@@ -126,7 +126,7 @@ Contract::Status SmartContractManager::OnCreate(v2::Transaction const &tx)
         FETCH_LOG_WARN(LOGGING_NAME, "More than one init function found in SC. Terminating.");
         return Status::FAILED;
       }
-      FETCH_LOG_WARN(LOGGING_NAME, "Found init function for SC");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Found init function for SC");
       on_init_function = fn.name;
       break;
 
