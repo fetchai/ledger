@@ -52,7 +52,7 @@ struct TrainingParams
   SizeType training_epochs   = 15;      // total number of training epochs
   SizeType neg_examples      = 25;      // how many negative examples for every positive example
   double   learning_rate     = 0.2;     // alpha - the learning rate
-  double   min_learning_rate = 0.0001;  // alpha - the minimum learning rate
+  double   min_learning_rate = 0.00002; // alpha - the minimum learning rate
   double   negative_learning_rate;      // alpha - the learning rate for negative examples
   double   min_negative_learning_rate;  // alpha - the minimum learning rate for negative examples
 
@@ -593,6 +593,7 @@ int main(int argc, char **argv)
   SizeType context_word_idx;
 
   SizeType                      step_count{0};
+  SizeType                      cursor_idx{0};
   SizeType                      total_step_count{0};
   std::chrono::duration<double> time_diff;
 
@@ -608,21 +609,23 @@ int main(int argc, char **argv)
     if (dataloader.done())
     {
       std::cout << "end of epoch: " << epoch_count << std::endl;
+      ++epoch_count;
 
       dataloader.reset_cursor();
-      ++epoch_count;
+      cursor_idx = 0;
+
 
       std::cout << "testing analogies: " << std::endl;
       EvalAnalogy(dataloader, model);
     }
 
+    auto one_min_completed_train_fraction = 1.0 - (static_cast<double>(cursor_idx) / tp.total_words);
+
     ////////////////////////////////
     /// run one positive example ///
     ////////////////////////////////
     gt = 1;
-    model.alpha_ =
-        (tp.learning_rate *
-         fetch::math::Max(tp.min_learning_rate, 1.0 - (double(total_step_count) / tp.total_words)));
+    model.alpha_ = (tp.learning_rate * fetch::math::Max(tp.min_learning_rate, one_min_completed_train_fraction));
 
     // get next data pair
     dataloader.next_positive(input_word_idx, context_word_idx);
@@ -641,9 +644,7 @@ int main(int argc, char **argv)
     /// run k negative examples ///
     ///////////////////////////////
     gt           = 0;
-    model.alpha_ = (tp.negative_learning_rate *
-                    fetch::math::Max(tp.min_negative_learning_rate,
-                                     1.0 - (double(total_step_count) / tp.total_words)));
+    model.alpha_ = (tp.negative_learning_rate * fetch::math::Max(tp.min_negative_learning_rate, one_min_completed_train_fraction));
 
     for (std::size_t i = 0; i < tp.neg_examples; ++i)
     {
@@ -665,6 +666,7 @@ int main(int argc, char **argv)
     /// IncrementCursors ///
     ////////////////////////
 
+    ++cursor_idx;
     dataloader.IncrementCursors();
 
     /////////////////////////
@@ -681,6 +683,7 @@ int main(int argc, char **argv)
       step_count = 0;
 
       std::cout << "total_step_count: " << total_step_count << std::endl;
+      std::cout << "current cursor idx: " << cursor_idx << std::endl;
       std::cout << "current learning rate: "
                 << (tp.learning_rate *
                     fetch::math::Max(tp.min_learning_rate,
@@ -688,6 +691,8 @@ int main(int argc, char **argv)
                 << std::endl;
       std::cout << "loss: " << sum_loss << std::endl;
       sum_loss = 0;
+
+      std::cout << std::endl;
     }
   }
 
