@@ -165,8 +165,11 @@ private:
     Block block;
     // genesis (hopefully) cannot be next hash so is used as undefined value
     BlockHash next_hash = GENESIS_DIGEST;
-    
-    BlockHash hash() const { return block.body.hash; }
+
+    BlockHash hash() const
+    {
+      return block.body.hash;
+    }
   };
 
   using IntBlockPtr   = std::shared_ptr<Block>;
@@ -258,7 +261,7 @@ private:
   {
     serializer << dbRecord.block << dbRecord.next_hash;
   }
-  
+
   /**
    * Deserializer for the DbRecord
    *
@@ -271,7 +274,6 @@ private:
   {
     serializer >> dbRecord.block >> dbRecord.next_hash;
   }
-  
 };
 
 /**

@@ -175,7 +175,7 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block) const
   assert(static_cast<bool>(block_store_));
 
   DbRecord record;
-  if(block_store_->Get(storage::ResourceID(hash), record))
+  if (block_store_->Get(storage::ResourceID(hash), record))
   {
     block = record.block;
     return true;
