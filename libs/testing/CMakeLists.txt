@@ -15,4 +15,5 @@ setup_compiler()
 #-------------------------------------------------------------------------------
 
 setup_library(fetch-testing)
+add_test_target()
 target_link_libraries(fetch-testing INTERFACE fetch-core)
