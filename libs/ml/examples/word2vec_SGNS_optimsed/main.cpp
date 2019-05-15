@@ -333,7 +333,7 @@ public:
 
   std::vector<Type> l2reg_row_sums;
   Type              l2reg_sum = 0;
-  Type              l2_lambda = 0.1;
+  Type              l2_lambda = 0.001;
   Type              tmp_dot_result;
 
   SkipgramModel(SizeType vocab_size, SizeType embeddings_size, Type learning_rate)
@@ -388,24 +388,6 @@ public:
     // arrays. embeddings input & context lookup
     input_vector_   = input_embeddings_.Slice(input_word_idx).Copy();
     context_vector_ = input_embeddings_.Slice(context_word_idx).Copy();
-
-    //    /////
-    //    /// NORMALISE
-    //    ////
-    //
-    ////    std::cout << "input_vector_[0]: " << input_vector_[0] << std::endl;
-    ////    std::cout << "l2reg_row_sums[input_word_idx]: " << l2reg_row_sums[input_word_idx] <<
-    /// std::endl; /    std::cout << "l2reg_sum: " << l2reg_sum << std::endl; /    std::cout <<
-    ///"(l2reg_row_sums[input_word_idx] / l2reg_sum): " << (l2reg_row_sums[input_word_idx] /
-    /// l2reg_sum) << std::endl;
-    //
-    //    input_vector_ *= (l2reg_row_sums[input_word_idx] / l2reg_sum);
-    ////    std::cout << "input_vector_[0]: " << input_vector_[0] << std::endl;
-    //    context_vector_ *= (l2reg_row_sums[context_word_idx] / l2reg_sum);
-    //
-    //    //////
-    //    /// END NORMALISE
-    //    //////
 
     // context vector transpose
     // mat mul
@@ -507,8 +489,6 @@ public:
 
     l2reg_sum += l2reg_row_sums[input_word_idx];
     l2reg_sum += l2reg_row_sums[context_word_idx];
-
-    //    std::cout << "l2reg_sum: " << l2reg_sum << std::endl;
   }
 
   void Sigmoid(Type x, Type &ret)
@@ -708,11 +688,6 @@ int main(int argc, char **argv)
                 << std::endl;
       std::cout << "loss: " << sum_loss << std::endl;
       sum_loss = 0;
-
-      std::cout << "model.l2reg_sum: " << model.l2reg_sum << std::endl;
-      std::cout << "model.tmp_dot_result: " << model.tmp_dot_result << std::endl;
-
-      EvalAnalogy(dataloader, model);
     }
   }
 
