@@ -20,7 +20,7 @@
 namespace fetch {
 namespace vm {
 
-enum class Kind
+enum class FunctionDecoratorKind
 {
   NORMAL,   ///< Normal (undecorated) function
   ACTION,   ///< A Transaction handler
@@ -35,9 +35,9 @@ enum class Kind
  * @param fn The reference to function entry
  * @return The type of the function
  */
-inline Kind DetermineKind(vm::Script::Function const &fn)
+inline FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn)
 {
-  Kind kind{Kind::NORMAL};
+  FunctionDecoratorKind kind{FunctionDecoratorKind::NORMAL};
 
   // loop through all the function annotations
   if (1u == fn.annotations.size())
@@ -48,20 +48,20 @@ inline Kind DetermineKind(vm::Script::Function const &fn)
     if (annotation.name == "@query")
     {
       // only update the kind if one hasn't already been specified
-      kind = Kind::QUERY;
+      kind = FunctionDecoratorKind::QUERY;
     }
     else if (annotation.name == "@action")
     {
-      kind = Kind::ACTION;
+      kind = FunctionDecoratorKind::ACTION;
     }
     else if (annotation.name == "@init")
     {
-      kind = Kind::ON_INIT;
+      kind = FunctionDecoratorKind::ON_INIT;
     }
     else
     {
       FETCH_LOG_WARN("function_decorators", "Invalid decorator: ", annotation.name);
-      kind = Kind::INVALID;
+      kind = FunctionDecoratorKind::INVALID;
     }
   }
 

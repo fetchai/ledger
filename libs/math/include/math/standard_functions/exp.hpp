@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "core/fixed_point/fixed_point.hpp"
+#include "math/fixed_point/fixed_point.hpp"
 #include "math/meta/math_type_traits.hpp"
 
 /**

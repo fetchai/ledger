@@ -23,12 +23,7 @@
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error.hpp"
 
-#include "vm/analyser.hpp"
-#include "vm/typeids.hpp"
-
-#include "vm/compiler.hpp"
 #include "vm/module.hpp"
-#include "vm/vm.hpp"
 
 #include "vm_modules/ml/cross_entropy.hpp"
 #include "vm_modules/ml/graph.hpp"
@@ -173,32 +168,31 @@ int main(int argc, char **argv)
   module->CreateFreeFunction("toString", &toString);
 
   module->CreateClassType<System>("System")
-      .CreateTypeFunction("Argc", &System::Argc)
-      .CreateTypeFunction("Argv", &System::Argv);
-
-  module->CreateTemplateInstantiationType<fetch::vm::Array, uint64_t>(fetch::vm::TypeIds::IArray);
+      .CreateStaticMemberFunction("Argc", &System::Argc)
+      .CreateStaticMemberFunction("Argv", &System::Argv);
 
   fetch::vm_modules::ml::CreateTensor(*module);
   fetch::vm_modules::ml::CreateGraph(*module);
   fetch::vm_modules::ml::CreateCrossEntropy(*module);
 
   module->CreateClassType<TrainingPairWrapper>("TrainingPair")
-      .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>()
-      .CreateInstanceFunction("Data", &TrainingPairWrapper::data)
-      .CreateInstanceFunction("Label", &TrainingPairWrapper::label);
+      .CreateConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>()
+      .CreateMemberFunction("Data", &TrainingPairWrapper::data)
+      .CreateMemberFunction("Label", &TrainingPairWrapper::label);
 
   module->CreateClassType<DataLoaderWrapper>("MNISTLoader")
-      .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>>()
-      .CreateInstanceFunction("GetData", &DataLoaderWrapper::GetData)
-      .CreateInstanceFunction("Display", &DataLoaderWrapper::Display);
+      .CreateConstuctor<fetch::vm::Ptr<fetch::vm::String>, fetch::vm::Ptr<fetch::vm::String>>()
+      .CreateMemberFunction("GetData", &DataLoaderWrapper::GetData)
+      .CreateMemberFunction("Display", &DataLoaderWrapper::Display);
 
   // Setting compiler up
   fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(module.get());
-  fetch::vm::Script        script;
+  fetch::vm::Executable    executable;
+  fetch::vm::IR            ir;
   std::vector<std::string> errors;
 
   // Compiling
-  bool compiled = compiler->Compile(source, "myscript", script, errors);
+  bool compiled = compiler->Compile(source, "myexecutable", ir, errors);
 
   if (!compiled)
   {
@@ -210,7 +204,18 @@ int main(int argc, char **argv)
     return -1;
   }
 
-  if (!script.FindFunction("main"))
+  fetch::vm::VM vm(module.get());
+  if (!vm.GenerateExecutable(ir, "main_ir", executable, errors))
+  {
+    std::cout << "Failed to generate executable" << std::endl;
+    for (auto &s : errors)
+    {
+      std::cout << s << std::endl;
+    }
+    return -1;
+  }
+
+  if (!executable.FindFunction("main"))
   {
     std::cout << "Function 'main' not found" << std::endl;
     return -2;
@@ -220,8 +225,7 @@ int main(int argc, char **argv)
   std::string        error;
   fetch::vm::Variant output;
 
-  fetch::vm::VM vm(module.get());
-  if (!vm.Execute(script, "main", error, output))
+  if (!vm.Execute(executable, "main", error, output))
   {
     std::cout << "Runtime error on line " << error << std::endl;
   }

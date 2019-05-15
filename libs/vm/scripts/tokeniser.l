@@ -188,11 +188,11 @@ IDENT		[_a-zA-Z][_a-zA-Z0-9]*
 "-"   {return Set(yylval, fetch::vm::Token::Kind::Minus, yytext, yyleng, yyextra);}
 "*"   {return Set(yylval, fetch::vm::Token::Kind::Multiply, yytext, yyleng, yyextra);}
 "/"   {return Set(yylval, fetch::vm::Token::Kind::Divide, yytext, yyleng, yyextra);}
-"%="  {return Set(yylval, fetch::vm::Token::Kind::ModuloAssign, yytext, yyleng, yyextra);}
-"+="  {return Set(yylval, fetch::vm::Token::Kind::AddAssign, yytext, yyleng, yyextra);}
-"-="  {return Set(yylval, fetch::vm::Token::Kind::SubtractAssign, yytext, yyleng, yyextra);}
-"*="  {return Set(yylval, fetch::vm::Token::Kind::MultiplyAssign, yytext, yyleng, yyextra);}
-"/="  {return Set(yylval, fetch::vm::Token::Kind::DivideAssign, yytext, yyleng, yyextra);}
+"%="  {return Set(yylval, fetch::vm::Token::Kind::InplaceModulo, yytext, yyleng, yyextra);}
+"+="  {return Set(yylval, fetch::vm::Token::Kind::InplaceAdd, yytext, yyleng, yyextra);}
+"-="  {return Set(yylval, fetch::vm::Token::Kind::InplaceSubtract, yytext, yyleng, yyextra);}
+"*="  {return Set(yylval, fetch::vm::Token::Kind::InplaceMultiply, yytext, yyleng, yyextra);}
+"/="  {return Set(yylval, fetch::vm::Token::Kind::InplaceDivide, yytext, yyleng, yyextra);}
 "="   {return Set(yylval, fetch::vm::Token::Kind::Assign, yytext, yyleng, yyextra);}
 "=="  {return Set(yylval, fetch::vm::Token::Kind::Equal, yytext, yyleng, yyextra);}
 "!="  {return Set(yylval, fetch::vm::Token::Kind::NotEqual, yytext, yyleng, yyextra);}
