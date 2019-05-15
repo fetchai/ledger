@@ -91,9 +91,11 @@ def get_coverage_reports(targets: map):
         try:
             subprocess.check_output([val], cwd=build_directory, timeout=3*60)
         except subprocess.TimeoutExpired:
-            print("\nWARNING: Timed out. This may not provide an accurate coverage report")
+            print(
+                "\nWARNING: Timed out. This may not provide an accurate coverage report")
         except subprocess.CalledProcessError:
-            print("\nWARNING: Returned non-zero error code. Skipping as coverage will not be valid")
+            print(
+                "\nWARNING: Returned non-zero error code. Skipping as coverage will not be valid")
             continue
 
         raw_file_name = key + ".profraw"
@@ -135,10 +137,11 @@ def get_all_coverage_reports(targets: map):
     all_profs = []
     all_binaries = []
     for key, val in targets.items():
-        raw_file_name     = key +".profraw"
-        indexed_file_name = key +".profdata"
+        raw_file_name = key + ".profraw"
+        indexed_file_name = key + ".profdata"
         if not os.path.isfile(build_directory+raw_file_name) or not os.path.isfile(build_directory+indexed_file_name):
-            print("\nWARNING: Failed to find coverage output files " + raw_file_name + " and " +indexed_file_name)
+            print("\nWARNING: Failed to find coverage output files " +
+                  raw_file_name + " and " + indexed_file_name)
             continue
 
         all_profs += [indexed_file_name]
