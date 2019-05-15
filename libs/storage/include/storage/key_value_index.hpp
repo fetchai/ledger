@@ -88,29 +88,26 @@ struct KeyValuePair
   using HashFunction = crypto::SHA256;
   static_assert(N == HashFunction::size_in_bytes(), "Hash size must match the hash function");
 
-  KeyValuePair()
-  {
-    memset(this, 0, sizeof(decltype(*this)));
-    parent = uint64_t(-1);
-  }
+  using KeyType   = Key<S>;
+  using IndexType = uint64_t;
 
-  using key_type = Key<S>;
+  static constexpr IndexType TREE_ROOT_VALUE{~IndexType{0}};
 
-  key_type key{};
-  uint8_t  hash[N]{};
+  KeyType key;
+  uint8_t hash[N]{};
 
   // The location in bits of the distance down the key this node splits on
   uint16_t split = 0;
 
   // Ref to parent, left and right branches
-  uint64_t parent = uint64_t(-1);
+  IndexType parent = TREE_ROOT_VALUE;
 
   union
   {
-    uint64_t value = 0;
-    uint64_t left;
+    IndexType value = 0;
+    IndexType left;
   };
-  uint64_t right = 0;
+  IndexType right = 0;
 
   bool operator==(KeyValuePair const &kv) const
   {
@@ -152,15 +149,7 @@ struct KeyValuePair
 
   byte_array::ByteArray Hash() const
   {
-    byte_array::ByteArray ret;
-    ret.Resize(N);
-
-    for (std::size_t i = 0; i < N; ++i)
-    {
-      ret[i] = hash[i];
-    }
-
-    return ret;
+    return {hash, N};
   }
 };
 
@@ -193,10 +182,10 @@ class KeyValueIndex
 
 public:
   using self_type      = KeyValueIndex<KV, D>;
-  using index_type     = uint64_t;
   using stack_type     = D;
   using key_value_pair = KeyValuePair<>;
-  using key_type       = typename key_value_pair::key_type;
+  using index_type     = key_value_pair::IndexType;
+  using key_type       = typename key_value_pair::KeyType;
 
   static constexpr char const *LOGGING_NAME = "KeyValueIndex";
 
@@ -368,11 +357,11 @@ public:
     bool update_parent = false;
 
     // Case where the 'nearest' is the root of the tree
-    if (index == index_type(-1))
+    if (index == key_value_pair::TREE_ROOT_VALUE)
     {
       kv.key        = key;
-      kv.parent     = uint64_t(-1);
-      kv.split      = uint16_t(key.size_in_bits());
+      kv.parent     = key_value_pair::TREE_ROOT_VALUE;
+      kv.split      = uint16_t{key.size_in_bits()};
       update_parent = kv.UpdateLeaf(args...);
 
       index = stack_.Push(kv);
@@ -661,8 +650,10 @@ public:
 
     FindNearest(key, kv, split, pos, left_right, depth, max_bits);
 
-    pos = 0;
-    kv.key.Compare(key_str, pos, 0, 64);
+    // TODO(issue 874): Compare(...) call bellow seems to be unnecessary/redundant,
+    // thus it was commented out.
+    // pos = 0;
+    // kv.key.Compare(key_str, pos, key.size_in_bits());
 
     if (uint64_t(pos) < max_bits)
     {
@@ -727,17 +718,16 @@ private:
    * @return: the index which this kv can be found in the stack
    */
   index_type FindNearest(key_type const &key, key_value_pair &kv, bool &split, int &pos,
-                         int &left_right, uint64_t &depth,
-                         uint64_t max_bits = std::numeric_limits<uint64_t>::max())
+                         int &left_right, uint64_t &depth, uint64_t max_bits = key_type::BITS)
   {
     depth = 0;
     if (this->empty())
     {
-      return index_type(-1);
+      return key_value_pair::TREE_ROOT_VALUE;
     }
 
-    std::size_t next = root_;
-    std::size_t index;
+    index_type next = root_;
+    index_type index;
     do
     {
       ++depth;
@@ -747,7 +737,7 @@ private:
 
       stack_.Get(next, kv);
 
-      left_right = key.Compare(kv.key, pos, kv.split >> 6, kv.split & 63);
+      left_right = key.Compare(kv.key, pos, kv.split);
 
       switch (left_right)
       {
@@ -758,7 +748,6 @@ private:
         next = kv.right;
         break;
       }
-
     } while ((left_right != 0) && (pos >= int(kv.split)) && uint64_t(pos) < max_bits);
 
     split = (left_right != 0) && (pos < int(kv.split));

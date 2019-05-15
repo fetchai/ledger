@@ -42,10 +42,6 @@ public:
   // Construction / Destruction
   Metrics(Metrics const &) = delete;
   Metrics(Metrics &&)      = delete;
-  ~Metrics()
-  {
-    RemoveMetricHandler();
-  }
 
   // Configuration
   void ConfigureFileHandler(std::string filename);
@@ -77,8 +73,12 @@ public:
   Metrics &operator=(Metrics &&) = delete;
 
 private:
-  // Hidden construction
+  // Hidden construction / destruction
   Metrics() = default;
+  ~Metrics()
+  {
+    RemoveMetricHandler();
+  }
   void RemoveMetricHandler();
 
   std::unique_ptr<MetricHandler> handler_object_;

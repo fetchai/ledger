@@ -17,9 +17,22 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/type_traits.hpp"
+
 namespace fetch {
-namespace http {
-namespace middleware {
+namespace meta {
+
+template <typename T>
+constexpr IfIsInteger<T, bool> IsLog2(T val) noexcept
+{
+  return static_cast<bool>(val && !(val & (val - 1)));
 }
-}  // namespace http
+
+template <typename T>
+constexpr IfIsInteger<T, T> Log2(T val) noexcept
+{
+  return ((val > 1) ? (1 + Log2(val >> 1)) : 0);
+}
+
+}  // namespace meta
 }  // namespace fetch

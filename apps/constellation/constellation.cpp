@@ -58,7 +58,6 @@ namespace {
 
 using LaneIndex = fetch::ledger::LaneIdentity::lane_type;
 
-// static const std::chrono::milliseconds LANE_CONNECTION_TIME{10000};
 static const std::size_t HTTP_THREADS{4};
 
 bool WaitForLaneServersToStart()
