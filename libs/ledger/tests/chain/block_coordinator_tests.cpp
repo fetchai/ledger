@@ -1082,7 +1082,7 @@ protected:
 TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
 {
   fetch::ledger::TransactionSummary summary;
-  summary.transaction_hash = fetch::testing::GenerateUniqueHashes(1u)[0];
+  summary.transaction_hash = *fetch::testing::GenerateUniqueHashes(1u).begin();
 
   auto genesis = block_generator_();
   auto b1      = block_generator_(genesis);
