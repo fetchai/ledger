@@ -600,3 +600,147 @@ TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_1)
   EXPECT_NEAR(double(output.At(2, 0)), 253., 1e-5);
   EXPECT_NEAR(double(output.At(3, 0)), 5.125, 1e-5);
 }
+
+TYPED_TEST(FreeFunctionsTest, Dot)
+{
+  using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
+
+  SizeType matrix_one_width  = 3;
+  SizeType matrix_one_height = 2;
+  SizeType matrix_two_width  = 2;
+  SizeType matrix_two_height = 4;
+
+  TypeParam array1{{matrix_one_width, matrix_one_height}};
+  TypeParam array2{{matrix_two_width, matrix_two_height}};
+
+  DataType cnt{0};
+  auto     it = array1.begin();
+  while (it.is_valid())
+  {
+    *it = cnt;
+    ++it;
+    cnt += DataType{1};
+  }
+
+  DataType cnt2{0};
+  auto     it2 = array2.begin();
+  while (it2.is_valid())
+  {
+    *it2 = cnt2;
+    ++it2;
+    cnt2 += DataType{1};
+  }
+
+  TypeParam output({matrix_one_width, matrix_two_height});
+  fetch::math::Dot(array1, array2, output);
+
+  EXPECT_NEAR(double(output.At(0, 0)), 3, 1e-5);
+  EXPECT_NEAR(double(output.At(0, 1)), 9, 1e-5);
+  EXPECT_NEAR(double(output.At(0, 2)), 15, 1e-5);
+  EXPECT_NEAR(double(output.At(0, 3)), 21, 1e-5);
+  EXPECT_NEAR(double(output.At(1, 0)), 4, 1e-5);
+  EXPECT_NEAR(double(output.At(1, 1)), 14, 1e-5);
+  EXPECT_NEAR(double(output.At(1, 2)), 24, 1e-5);
+  EXPECT_NEAR(double(output.At(1, 3)), 34, 1e-5);
+  EXPECT_NEAR(double(output.At(2, 0)), 5, 1e-5);
+  EXPECT_NEAR(double(output.At(2, 1)), 19, 1e-5);
+  EXPECT_NEAR(double(output.At(2, 2)), 33, 1e-5);
+  EXPECT_NEAR(double(output.At(2, 3)), 47, 1e-5);
+}
+
+TYPED_TEST(FreeFunctionsTest, DotTranspose)
+{
+  using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
+
+  SizeType matrix_one_width  = 3;
+  SizeType matrix_one_height = 2;
+  SizeType matrix_two_width  = 4;
+  SizeType matrix_two_height = 2;
+
+  TypeParam array1{{matrix_one_width, matrix_one_height}};
+  TypeParam array2{{matrix_two_width, matrix_two_height}};
+
+  DataType cnt{0};
+  auto     it = array1.begin();
+  while (it.is_valid())
+  {
+    *it = cnt;
+    ++it;
+    cnt += DataType{1};
+  }
+
+  DataType cnt2{0};
+  auto     it2 = array2.begin();
+  while (it2.is_valid())
+  {
+    *it2 = cnt2;
+    ++it2;
+    cnt2 += DataType{1};
+  }
+
+  TypeParam output({matrix_one_width, matrix_two_width});
+  fetch::math::DotTranspose(array1, array2, output);
+
+  EXPECT_NEAR(double(output.At(0, 0)), 12, 1e-5);
+  EXPECT_NEAR(double(output.At(0, 1)), 15, 1e-5);
+  EXPECT_NEAR(double(output.At(0, 2)), 18, 1e-5);
+  EXPECT_NEAR(double(output.At(0, 3)), 21, 1e-5);
+  EXPECT_NEAR(double(output.At(1, 0)), 16, 1e-5);
+  EXPECT_NEAR(double(output.At(1, 1)), 21, 1e-5);
+  EXPECT_NEAR(double(output.At(1, 2)), 26, 1e-5);
+  EXPECT_NEAR(double(output.At(1, 3)), 31, 1e-5);
+  EXPECT_NEAR(double(output.At(2, 0)), 20, 1e-5);
+  EXPECT_NEAR(double(output.At(2, 1)), 27, 1e-5);
+  EXPECT_NEAR(double(output.At(2, 2)), 34, 1e-5);
+  EXPECT_NEAR(double(output.At(2, 3)), 41, 1e-5);
+}
+
+TYPED_TEST(FreeFunctionsTest, TransposeDot)
+{
+  using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
+
+  SizeType matrix_one_width  = 2;
+  SizeType matrix_one_height = 3;
+  SizeType matrix_two_width  = 2;
+  SizeType matrix_two_height = 4;
+
+  TypeParam array1{{matrix_one_width, matrix_one_height}};
+  TypeParam array2{{matrix_two_width, matrix_two_height}};
+
+  DataType cnt{0};
+  auto     it = array1.begin();
+  while (it.is_valid())
+  {
+    *it = cnt;
+    ++it;
+    cnt += DataType{1};
+  }
+
+  DataType cnt2{0};
+  auto     it2 = array2.begin();
+  while (it2.is_valid())
+  {
+    *it2 = cnt2;
+    ++it2;
+    cnt2 += DataType{1};
+  }
+
+  TypeParam output({matrix_one_height, matrix_two_height});
+  fetch::math::TransposeDot(array1, array2, output);
+
+  EXPECT_NEAR(double(output.At(0, 0)), 1, 1e-5);
+  EXPECT_NEAR(double(output.At(0, 1)), 3, 1e-5);
+  EXPECT_NEAR(double(output.At(0, 2)), 5, 1e-5);
+  EXPECT_NEAR(double(output.At(0, 3)), 7, 1e-5);
+  EXPECT_NEAR(double(output.At(1, 0)), 3, 1e-5);
+  EXPECT_NEAR(double(output.At(1, 1)), 13, 1e-5);
+  EXPECT_NEAR(double(output.At(1, 2)), 23, 1e-5);
+  EXPECT_NEAR(double(output.At(1, 3)), 33, 1e-5);
+  EXPECT_NEAR(double(output.At(2, 0)), 5, 1e-5);
+  EXPECT_NEAR(double(output.At(2, 1)), 23, 1e-5);
+  EXPECT_NEAR(double(output.At(2, 2)), 41, 1e-5);
+  EXPECT_NEAR(double(output.At(2, 3)), 59, 1e-5);
+}
