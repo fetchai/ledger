@@ -469,7 +469,7 @@ TYPED_TEST(FreeFunctionsTest, ReduceSum_axis_0)
   fetch::math::ReduceSum(array1, SizeType(0), output);
 
   EXPECT_NEAR(double(output.At(0, 0)), 17., 1e-5);
-  EXPECT_NEAR(double(output.At(1, 0)), 1019.5, 1e-5);
+  EXPECT_NEAR(double(output.At(0, 1)), 1019.5, 1e-5);
 }
 
 TYPED_TEST(FreeFunctionsTest, ReduceSum_axis_1)
@@ -520,7 +520,7 @@ TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_0)
   fetch::math::ReduceMean(array1, SizeType(0), output);
 
   EXPECT_NEAR(double(output.At(0, 0)), 8.5, 1e-5);
-  EXPECT_NEAR(double(output.At(1, 0)), 509.75, 1e-5);
+  EXPECT_NEAR(double(output.At(0, 1)), 509.75, 1e-5);
 }
 
 TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_1)
