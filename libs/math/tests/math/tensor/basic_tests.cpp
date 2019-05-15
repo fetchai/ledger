@@ -265,3 +265,18 @@ TYPED_TEST(TensorBasicTests, minus_equals_test)
   }
   ASSERT_TRUE(test_array_2.AllClose(result_array));
 }
+
+TEST(TensorBasicTests, rangeAssign)
+{
+  Tensor<int> t({5, 7});
+  t.SetAllOne();
+  t.Slice(1, 1).Fill(2);
+  std::cout << t.ToString() << std::endl;
+
+  // t.Fill(2, fetch::memory::TrivialRange(5, 10));
+  // std::cout << t.ToString() << std::endl;
+  // std::cout << t.MajorOrder() << std::endl;
+  // t.MajorOrderFlip();
+  // std::cout << t.ToString() << std::endl;
+  // std::cout << t.MajorOrder() << std::endl;
+}

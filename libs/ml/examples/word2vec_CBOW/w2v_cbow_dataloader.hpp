@@ -149,7 +149,7 @@ public:
     }
     for (uint64_t i(dynamic_size * 2); i < t.first.size(); ++i)
     {
-      t.first.Set(0, i, -1);
+      t.first.Set(0, i, -1.0f);
     }
     currentWord_++;
     if (currentWord_ >= data_.at(currentSentence_).size() - (2 * window_size_))

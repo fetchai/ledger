@@ -45,9 +45,7 @@ using namespace fetch::ml::ops;
 
 #define MAX_STRING 100
 #define EXP_TABLE_SIZE 1000
-#define MAX_EXP 6
-#define MAX_SENTENCE_LENGTH 1000
-#define MAX_CODE_LENGTH 40
+#define MAX_EXP 6.0f
 
 typedef float real;  // Precision of float numbers
 
@@ -103,7 +101,7 @@ void InitNet()
   fetch::math::Tensor<real> weight_embeding_matrix({global_loader.VocabSize(), layer1_size});
   word_embeding_matrix = fetch::math::Tensor<real>({global_loader.VocabSize(), layer1_size});
   for (auto &e : word_embeding_matrix)
-    e = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) / layer1_size;
+    e = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) / static_cast<float>(layer1_size);
   word_vectors_embeddings_module.SetData(word_embeding_matrix);
   word_weights_embeddings_module.SetData(weight_embeding_matrix);
 
@@ -133,7 +131,7 @@ void *TrainModelThread(void *id)
    * word_count - Stores the total number of training words processed.
    */
   long long d;
-  uint64_t  word;
+  float  word;
   real      f;
 
   fetch::math::Tensor<real> f_tensor({1, uint64_t(negative)});      // Prediction
@@ -147,10 +145,10 @@ void *TrainModelThread(void *id)
   {
     if (id == 0 && i % 10000 == 0)
     {
-      alpha = starting_alpha * (((float)iter * iterations - i) / (iter * iterations));
+      alpha = starting_alpha * (static_cast<float>(iter * iterations - i) / static_cast<float>(iter * iterations));
       if (alpha < starting_alpha * 0.0001f)
         alpha = starting_alpha * 0.0001f;
-      std::cout << i << " / " << iter * iterations << " (" << (int)(100.0 * i / (iter * iterations))
+      std::cout << i << " / " << iter * iterations << " (" << (int)(100.0 * i / static_cast<double>(iter * iterations))
                 << ") -- " << alpha << std::endl;
     }
 
@@ -161,7 +159,7 @@ void *TrainModelThread(void *id)
     }
 
     thread_loader.GetNext(sample);
-    word = (uint64_t)(sample.second.At(0, 0));
+    word = sample.second.At(0, 0);
 
     graph.SetInput("Context", sample.first);
     for (d = 0; d < negative; d++)
@@ -170,7 +168,7 @@ void *TrainModelThread(void *id)
       if (d == 0)
         label_tensor.Set(0, d, word);
       else
-        label_tensor.Set(0, d, unigram_table.SampleNegative(word));
+        label_tensor.Set(0, d, static_cast<real>(unigram_table.SampleNegative(static_cast<uint64_t>(word))));
     }
     graph.SetInput("Target", label_tensor);
     auto graphF = graph.Evaluate("DotProduct");
@@ -314,8 +312,8 @@ int main(int argc, char **argv)
   expTable = (real *)malloc((EXP_TABLE_SIZE + 1) * sizeof(real));
   for (i = 0; i < EXP_TABLE_SIZE; i++)
   {
-    expTable[i] = exp((i / (real)EXP_TABLE_SIZE * 2 - 1) * MAX_EXP);  // Precompute the exp() table
-    expTable[i] = expTable[i] / (expTable[i] + 1);  // Precompute f(x) = x / (x + 1)
+    expTable[i] = exp((static_cast<float>(i) / static_cast<float>(EXP_TABLE_SIZE * 2.0f - 1.0f)) * MAX_EXP);  // Precompute the exp() table
+    expTable[i] = expTable[i] / (expTable[i] + 1.0f);  // Precompute f(x) = x / (x + 1)
   }
   TrainModel();
   std::cout << "All done" << std::endl;
