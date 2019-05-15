@@ -46,6 +46,7 @@ class C2VLoader : public DataLoader<DataType, LabelType>
 {
 public:
   using ArrayType               = typename std::tuple_element<0, DataType>::type;
+  using Type                    = typename ArrayType::Type;
   using SizeType                = typename ArrayType::SizeType;
   using ContextTuple            = typename std::tuple<SizeType, SizeType, SizeType>;
   using ContextTensorTuple      = typename std::tuple<ArrayType, ArrayType, ArrayType>;
@@ -275,15 +276,18 @@ C2VLoader<DataType, LabelType>::GetNext()
       {
         for (u_int64_t i{0}; i < context_positions.size(); i++)
         {
-          source_word_tensor.Set(i, std::get<0>(this->data[context_positions[i]].first));
-          path_tensor.Set(i, std::get<1>(this->data[context_positions[i]].first));
-          target_word_tensor.Set(i, std::get<2>(this->data[context_positions[i]].first));
+          source_word_tensor.Set(
+              i, static_cast<Type>(std::get<0>(this->data[context_positions[i]].first)));
+          path_tensor.Set(i,
+                          static_cast<Type>(std::get<1>(this->data[context_positions[i]].first)));
+          target_word_tensor.Set(
+              i, static_cast<Type>(std::get<2>(this->data[context_positions[i]].first)));
         }
         for (u_int64_t i{context_positions.size()}; i < this->max_contexts_; i++)
         {
-          source_word_tensor.Set(i, this->word_to_idx_[EMPTY_CONTEXT_STRING]);
-          path_tensor.Set(i, this->path_to_idx_[EMPTY_CONTEXT_STRING]);
-          target_word_tensor.Set(i, this->word_to_idx_[EMPTY_CONTEXT_STRING]);
+          source_word_tensor.Set(i, static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]));
+          path_tensor.Set(i, static_cast<Type>(this->path_to_idx_[EMPTY_CONTEXT_STRING]));
+          target_word_tensor.Set(i, static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]));
         }
       }
       else
