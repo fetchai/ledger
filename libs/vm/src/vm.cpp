@@ -247,9 +247,9 @@ bool VM::Execute(std::string &error, Variant &output)
 
   // We've got a runtime error
   // Reset all variables
-  for (int i = 0; i < STACK_SIZE; ++i)
+  for (auto & variable : stack_)
   {
-    stack_[i].Reset();
+    variable.Reset();
   }
   error = error_;
   return false;
