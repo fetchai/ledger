@@ -202,33 +202,47 @@ MainChain::BlockPtr MainChain::GetHeaviestBlock() const
  * @param[out] invalidated_blocks The set of hashes of all the blocks removed by this operation
  * @return The block object itself, already not in the cache
  */
-MainChain::IntBlockPtr MainChain::RemoveTree(BlockHash const &hash,
-                                             BlockHashSet &   invalidated_blocks)
+bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalidated_blocks)
 {
-  // mark hash as being invalidated
-  invalidated_blocks.insert(hash);
-
-  // first remove all the progeny recursively;
-  // this way any hash that could potentially stem from this one, reference tree-wise, is completely
-  // wiped out
-  auto children{references_.equal_range(hash)};
-  for (auto child{children.first}; child != children.second; ++child)
+  // check if the block is actually found in this chain
+  IntBlockPtr root;
+  bool        retVal{LookupBlock(removed_hash, root)};
+  if (retVal)
   {
-    RemoveTree(child->second, invalidated_blocks);
+    // forget the forward ref to this block from its parent
+    auto siblings{references_.equal_range(root->body.previous_hash)};
+    for (auto sibling{siblings.first}; sibling != siblings.second; ++sibling)
+    {
+      if (sibling->second == removed_hash)
+      {
+        references_.erase(sibling);
+        break;
+      }
+    }
   }
 
-  // check if the block is in the cache
-  auto block_entry{block_chain_.find(hash)};
-  if (block_entry == block_chain_.end())
+  for (BlockHashes next_gen{removed_hash}; !next_gen.empty();)
   {
-    return {};
+    // when next_gen becomes current generation, next generation is clear
+    for (auto const &hash : std::exchange(next_gen, BlockHashes{}))
+    {
+      // mark hash as being invalidated
+      invalidated_blocks.insert(hash);
+
+      // first remember to remove all the progeny breadth-first
+      // this way any hash that could potentially stem from this one,
+      // reference tree-wise, is completely wiped out
+      auto children{references_.equal_range(hash)};
+      for (auto child{children.first}; child != children.second; ++child)
+      {
+        next_gen.push_back(child->second);
+      }
+      references_.erase(children.first, children.second);
+
+      // next, remove the block record from the cache, if found
+      retVal = retVal || block_chain_.erase(hash);
+    }
   }
-
-  // as the block is removed from the cache, we can safely move it
-  IntBlockPtr retVal{std::move(block_entry->second)};
-
-  // finally remove the block record from the cache
-  block_chain_.erase(block_entry);
 
   return retVal;
 }
@@ -243,24 +257,15 @@ bool MainChain::RemoveBlock(BlockHash hash)
 {
   FETCH_LOCK(lock_);
 
-  // Step 1. Remove this block and the whole its progeny
+  // Step 1. Remove this block and the whole its progeny from the cache
   BlockHashSet invalidated_blocks;
-  auto         detached_block{RemoveTree(hash, invalidated_blocks)};
-
-  // Step 2. Erase the forward ref from this block's parent
-  auto siblings{references_.equal_range(hash)};
-  auto sibling{std::find_if(siblings.first, siblings.second,
-                            [&hash](auto const &sibling) { return sibling.second == hash; })};
-  if (sibling != siblings.second)
+  if (!RemoveTree(hash, invalidated_blocks))
   {
-    references_.erase(sibling);
+    // no blocks were removed during this attempt
+    return false;
   }
 
-  // Step 3. Loop through all the loose blocks and remove any references to invalidated blocks
-  for (auto const &hash : invalidated_blocks)
-  {
-    references_.erase(hash);
-  }
+  // Step 2. Cleanup loose blocks
   for (auto waiting_blocks_it{loose_blocks_.begin()}; waiting_blocks_it != loose_blocks_.end();)
   {
     auto &hash_array{waiting_blocks_it->second};
@@ -282,7 +287,7 @@ bool MainChain::RemoveBlock(BlockHash hash)
     }
   }
 
-  // Step 4. Since we might have removed a whole series of blocks the tips datastructure
+  // Step 3. Since we might have removed a whole series of blocks the tips datastructure
   // is likely to have been invalidated. We need to evaluate the changes here
   return ReindexTips();
 }
@@ -524,12 +529,12 @@ MainChain::BlockHashSet MainChain::GetMissingTips() const
  * @param maximum The specified maximum number of blocks to be returned
  * @return The generated array of missing hashes
  */
-MainChain::BlockHashs MainChain::GetMissingBlockHashes(uint64_t limit) const
+MainChain::BlockHashes MainChain::GetMissingBlockHashes(uint64_t limit) const
 {
   limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   FETCH_LOCK(lock_);
 
-  BlockHashs results;
+  BlockHashes results;
 
   for (auto const &loose_block : loose_blocks_)
   {

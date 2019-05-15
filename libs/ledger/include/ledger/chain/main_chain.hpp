@@ -93,7 +93,7 @@ public:
   using BlockPtr     = std::shared_ptr<Block const>;
   using Blocks       = std::vector<BlockPtr>;
   using BlockHash    = Block::Digest;
-  using BlockHashs   = std::vector<BlockHash>;
+  using BlockHashes  = std::vector<BlockHash>;
   using BlockHashSet = std::unordered_set<BlockHash>;
 
   static constexpr char const *LOGGING_NAME = "MainChain";
@@ -148,7 +148,7 @@ public:
   /// @name Missing / Loose Management
   /// @{
   BlockHashSet GetMissingTips() const;
-  BlockHashs   GetMissingBlockHashes(uint64_t limit = UPPER_BOUND) const;
+  BlockHashes  GetMissingBlockHashes(uint64_t limit = UPPER_BOUND) const;
   bool         HasMissingBlocks() const;
   /// @}
 
@@ -236,7 +236,7 @@ private:
   BlockHash GetHeadHash();
   void      SetHeadHash(BlockHash const &hash);
 
-  IntBlockPtr RemoveTree(BlockHash const &hash, BlockHashSet &invalidated_blocks);
+  bool RemoveTree(BlockHash const &hash, BlockHashSet &invalidated_blocks);
 
   BlockStorePtr block_store_;  /// < Long term storage and backup
   std::fstream  head_store_;
