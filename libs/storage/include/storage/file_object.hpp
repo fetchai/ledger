@@ -47,6 +47,7 @@ struct FileBlockType
 {
   enum
   {
+    // TODO(HUT): this looks wrong - next/prev aren't here, right
     BYTES     = BS + 2 * sizeof(uint64_t),
     UNDEFINED = uint64_t(-1)
   };
@@ -72,7 +73,7 @@ struct FileBlockType
   union
   {
     uint64_t previous = UNDEFINED;
-    uint64_t free;
+    uint64_t free; // For the case this block is used as the 'free linked list', this is the number of free blocks
   };
 
   uint8_t data[BYTES];
@@ -89,7 +90,8 @@ struct FileBlockType
  * In order to support deletion of blocks, the first block in the stack represents a doubly linked
  * list of all the free blocks. If there are free blocks this will be used when getting new blocks.
  *
- * The free block list is ordered, and files are ordered, to be incrementing in memory.
+ * The free block list is ordered, and files are ordered, to be incrementing in memory. This is
+ * in order to reduce programmer error.
  *
  */
 template <typename S = VersionedRandomAccessStack<FileBlockType<>>>
@@ -157,7 +159,7 @@ public:
 
   uint64_t const &id() const;
 
-  uint64_t size() const;
+  uint64_t FileObjectSize() const;
 
   byte_array::ConstByteArray Hash();
 
@@ -376,6 +378,8 @@ void FileObject<S>::Write(byte_array::ConstByteArray const &arr)
 template <typename S>
 void FileObject<S>::Write(uint8_t const *bytes, uint64_t const &num)
 {
+  assert(id_ != 0 && "Attempt to write to the free block as if it were a file is a programmer error in FileObject");
+
   uint64_t n = num + byte_index_ + block_number_ * block_type::BYTES;
 
   uint64_t last_block = platform::DivideCeil<uint64_t>(n, block_type::BYTES);
@@ -548,7 +552,7 @@ uint64_t const &FileObject<S>::id() const
 }
 
 template <typename S>
-uint64_t FileObject<S>::size() const
+uint64_t FileObject<S>::FileObjectSize() const
 {
   return length_ - HEADER_SIZE;
 }
@@ -619,6 +623,7 @@ void FileObject<S>::CreateNewFile()
   byte_index_   = HEADER_SIZE;
   length_       = HEADER_SIZE;
 
+  // TODO(HUT): is necessary to actually set this here?
   block_type block;
   last_position_ = stack_.size();
 
@@ -635,7 +640,8 @@ Document FileObject<S>::AsDocument()
 {
   Document ret;
 
-  ret.document.Resize(this->size());
+  // TODO(HUT): this looks wrong!
+  ret.document.Resize(this->FileObjectSize());
   this->Read(ret.document);
 
   return ret;
