@@ -134,6 +134,17 @@ struct UnrollTypes<>
 };
 
 template <typename... Ts>
+struct UnrollTemplateParameters;
+template <template <typename, typename...> class Template, typename... Ts>
+struct UnrollTemplateParameters<Template<Ts...>>
+{
+  static void Unroll(TypeIndexArray &array)
+  {
+    UnrollTypes<Ts...>::Unroll(array);
+  }
+};
+
+template <typename... Ts>
 struct UnrollParameterTypes;
 template <typename T, typename... Ts>
 struct UnrollParameterTypes<T, Ts...>
@@ -162,6 +173,59 @@ struct UnrollParameterTypes<>
   // Invoked on zero types
   static void Unroll(TypeIndexArray & /* array */)
   {}
+};
+
+template <typename T, typename = void>
+struct MakeParameterType;
+template <typename T>
+struct MakeParameterType<T, typename std::enable_if_t<fetch::vm::IsPrimitive<T>::value>>
+{
+  using type = T;
+};
+template <typename T>
+struct MakeParameterType<T, typename std::enable_if_t<fetch::vm::IsVariant<T>::value>>
+{
+  using type = T const &;
+};
+template <typename T>
+struct MakeParameterType<T, typename std::enable_if_t<fetch::vm::IsPtr<T>::value>>
+{
+  using type = T const &;
+};
+
+template <typename... Ts>
+struct RemoveLastType;
+template <typename... Ts>
+struct RemoveLastType<std::tuple<Ts...>>
+{
+  template <size_t... Is>
+  static std::tuple<std::tuple_element_t<Is, std::tuple<Ts...>>...> f(std::index_sequence<Is...>);
+  using type = decltype(f(std::make_index_sequence<sizeof...(Ts) - 1>()));
+};
+
+template <typename... Ts>
+struct GetLastType;
+template <typename... Ts>
+struct GetLastType<std::tuple<Ts...>>
+{
+  using type = typename std::tuple_element_t<sizeof...(Ts) - 1, std::tuple<Ts...>>;
+};
+
+template <typename Type, typename OutputType, typename... InputTypes>
+struct IndexedValueGetter;
+template <typename Type, typename OutputType, typename... InputTypes>
+struct IndexedValueGetter<Type, std::tuple<InputTypes...>, OutputType>
+{
+  using type = OutputType (Type::*)(typename fetch::vm::MakeParameterType<InputTypes>::type...);
+};
+
+template <typename Type, typename OutputType, typename... InputTypes>
+struct IndexedValueSetter;
+template <typename Type, typename OutputType, typename... InputTypes>
+struct IndexedValueSetter<Type, std::tuple<InputTypes...>, OutputType>
+{
+  using type = void (Type::*)(typename fetch::vm::MakeParameterType<InputTypes>::type...,
+                              typename fetch::vm::MakeParameterType<OutputType>::type);
 };
 
 }  // namespace vm

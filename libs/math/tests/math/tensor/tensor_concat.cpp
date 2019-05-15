@@ -32,7 +32,7 @@ template <typename T>
 fetch::math::Tensor<T> PrepareTensor(std::vector<fetch::math::SizeType> const &shape)
 {
   fetch::math::Tensor<T> t{shape};
-  t.FillArange(fetch::math::SizeType(0), t.size());
+  t.FillArange(static_cast<T>(0), static_cast<T>(t.size()));
   return t;
 }
 

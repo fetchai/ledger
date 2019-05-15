@@ -89,10 +89,14 @@ def get_coverage_reports(targets: map):
 
         # Execute the binary target, this will generate a default.profraw
         try:
-            subprocess.check_output([val], cwd=build_directory, timeout=1 * 60)
+            subprocess.check_output([val], cwd=build_directory, timeout=3*60)
         except subprocess.TimeoutExpired:
             print(
-                "\nWARNING: Timed out. this may not provide an accurate coverage report")
+                "\nWARNING: Timed out. This may not provide an accurate coverage report")
+        except subprocess.CalledProcessError:
+            print(
+                "\nWARNING: Returned non-zero error code. Skipping as coverage will not be valid")
+            continue
 
         raw_file_name = key + ".profraw"
         indexed_file_name = key + ".profdata"
@@ -135,6 +139,11 @@ def get_all_coverage_reports(targets: map):
     for key, val in targets.items():
         raw_file_name = key + ".profraw"
         indexed_file_name = key + ".profdata"
+        if not os.path.isfile(build_directory+raw_file_name) or not os.path.isfile(build_directory+indexed_file_name):
+            print("\nWARNING: Failed to find coverage output files " +
+                  raw_file_name + " and " + indexed_file_name)
+            continue
+
         all_profs += [indexed_file_name]
         all_binaries += ["-object", val]
 

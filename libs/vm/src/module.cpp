@@ -21,63 +21,178 @@
 namespace fetch {
 namespace vm {
 
+template <typename To>
+To Cast(Variant const &from)
+{
+  To to;
+  switch (from.type_id)
+  {
+  case TypeIds::Bool:
+  {
+    to = static_cast<To>(from.primitive.ui8);
+    break;
+  }
+  case TypeIds::Int8:
+  {
+    to = static_cast<To>(from.primitive.i8);
+    break;
+  }
+  case TypeIds::Byte:
+  {
+    to = static_cast<To>(from.primitive.ui8);
+    break;
+  }
+  case TypeIds::Int16:
+  {
+    to = static_cast<To>(from.primitive.i16);
+    break;
+  }
+  case TypeIds::UInt16:
+  {
+    to = static_cast<To>(from.primitive.ui16);
+    break;
+  }
+  case TypeIds::Int32:
+  {
+    to = static_cast<To>(from.primitive.i32);
+    break;
+  }
+  case TypeIds::UInt32:
+  {
+    to = static_cast<To>(from.primitive.ui32);
+    break;
+  }
+  case TypeIds::Int64:
+  {
+    to = static_cast<To>(from.primitive.i64);
+    break;
+  }
+  case TypeIds::UInt64:
+  {
+    to = static_cast<To>(from.primitive.ui64);
+    break;
+  }
+  case TypeIds::Float32:
+  {
+    to = static_cast<To>(from.primitive.f32);
+    break;
+  }
+  case TypeIds::Float64:
+  {
+    to = static_cast<To>(from.primitive.f64);
+    break;
+  }
+  default:
+  {
+    to = 0;
+    break;
+  }
+  }  // switch
+  return to;
+}
+
+int8_t toInt8(VM * /* vm */, AnyPrimitive const &from)
+{
+  return Cast<int8_t>(from);
+}
+
+uint8_t toByte(VM * /* vm */, AnyPrimitive const &from)
+{
+  return Cast<uint8_t>(from);
+}
+
+int16_t toInt16(VM * /* vm */, AnyPrimitive const &from)
+{
+  return Cast<int16_t>(from);
+}
+
+uint16_t toUInt16(VM * /* vm */, AnyPrimitive const &from)
+{
+  return Cast<uint16_t>(from);
+}
+
+int32_t toInt32(VM * /* vm */, AnyPrimitive const &from)
+{
+  return Cast<int32_t>(from);
+}
+
+uint32_t toUInt32(VM * /* vm */, AnyPrimitive const &from)
+{
+  return Cast<uint32_t>(from);
+}
+
+int64_t toInt64(VM * /* vm */, AnyPrimitive const &from)
+{
+  return Cast<int64_t>(from);
+}
+
+uint64_t toUInt64(VM * /* vm */, AnyPrimitive const &from)
+{
+  return Cast<uint64_t>(from);
+}
+
+float toFloat32(VM * /* vm */, AnyPrimitive const &from)
+{
+  return Cast<float>(from);
+}
+
+double toFloat64(VM * /* vm */, AnyPrimitive const &from)
+{
+  return Cast<double>(from);
+}
+
 Module::Module()
 {
-  next_type_id_ = TypeIds::NumReserved;
-  next_opcode_  = Opcodes::NumReserved;
+  CreateFreeFunction("toInt8", &toInt8);
+  CreateFreeFunction("toByte", &toByte);
+  CreateFreeFunction("toInt16", &toInt16);
+  CreateFreeFunction("toUInt16", &toUInt16);
+  CreateFreeFunction("toInt32", &toInt32);
+  CreateFreeFunction("toUInt32", &toUInt32);
+  CreateFreeFunction("toInt64", &toInt64);
+  CreateFreeFunction("toUInt64", &toUInt64);
+  CreateFreeFunction("toFloat32", &toFloat32);
+  CreateFreeFunction("toFloat64", &toFloat64);
 
-  RegisterType(TypeIndex(typeid(TemplateParameter)), TypeIds::TemplateParameter1);
-  RegisterType(TypeIndex(typeid(TemplateParameter1)), TypeIds::TemplateParameter1);
-  RegisterType(TypeIndex(typeid(TemplateParameter2)), TypeIds::TemplateParameter2);
+  auto imatrix = GetClassInterface<IMatrix>();
+  imatrix.CreateConstuctor<int32_t, int32_t>();
+  imatrix.EnableIndexOperator<AnyInteger, AnyInteger, TemplateParameter>();
+  imatrix.CreateInstantiationType<Matrix<double>>();
+  imatrix.CreateInstantiationType<Matrix<float>>();
 
-  RegisterType(TypeIndex(typeid(void)), TypeIds::Void);
-  RegisterType(TypeIndex(typeid(bool)), TypeIds::Bool);
-  RegisterType(TypeIndex(typeid(int8_t)), TypeIds::Int8);
-  RegisterType(TypeIndex(typeid(uint8_t)), TypeIds::Byte);
-  RegisterType(TypeIndex(typeid(int16_t)), TypeIds::Int16);
-  RegisterType(TypeIndex(typeid(uint16_t)), TypeIds::UInt16);
-  RegisterType(TypeIndex(typeid(int32_t)), TypeIds::Int32);
-  RegisterType(TypeIndex(typeid(uint32_t)), TypeIds::UInt32);
-  RegisterType(TypeIndex(typeid(int64_t)), TypeIds::Int64);
-  RegisterType(TypeIndex(typeid(uint64_t)), TypeIds::UInt64);
-  RegisterType(TypeIndex(typeid(float)), TypeIds::Float32);
-  RegisterType(TypeIndex(typeid(double)), TypeIds::Float64);
-  RegisterClassType<String>(TypeIds::String);
+  auto iarray = GetClassInterface<IArray>();
+  iarray.CreateConstuctor<int32_t>();
+  iarray.CreateMemberFunction("count", &IArray::Count);
+  iarray.EnableIndexOperator<AnyInteger, TemplateParameter>();
+  iarray.CreateInstantiationType<Array<bool>>();
+  iarray.CreateInstantiationType<Array<int8_t>>();
+  iarray.CreateInstantiationType<Array<uint8_t>>();
+  iarray.CreateInstantiationType<Array<int16_t>>();
+  iarray.CreateInstantiationType<Array<uint16_t>>();
+  iarray.CreateInstantiationType<Array<int32_t>>();
+  iarray.CreateInstantiationType<Array<uint32_t>>();
+  iarray.CreateInstantiationType<Array<int64_t>>();
+  iarray.CreateInstantiationType<Array<uint64_t>>();
+  iarray.CreateInstantiationType<Array<float>>();
+  iarray.CreateInstantiationType<Array<double>>();
+  iarray.CreateInstantiationType<Array<Ptr<String>>>();
 
-  RegisterTemplateType<IMatrix>(TypeIds::IMatrix).CreateTypeConstuctor<int32_t, int32_t>();
+  auto imap = GetClassInterface<IMap>();
+  imap.CreateConstuctor<>();
+  imap.CreateMemberFunction("count", &IMap::Count);
+  imap.EnableIndexOperator<TemplateParameter1, TemplateParameter2>();
 
-  auto iarray = RegisterTemplateType<IArray>(TypeIds::IArray);
-  iarray.CreateTypeConstuctor<int32_t>();
-  iarray.CreateInstanceFunction("count", &IArray::Count);
+  auto address = GetClassInterface<Address>();
+  address.CreateConstuctor<>();
+  address.CreateConstuctor<Ptr<String>>();
+  address.CreateMemberFunction("signed_tx", &Address::HasSignedTx);
 
-  CreateTemplateInstantiationType<Array, bool>(TypeIds::IArray);
-  CreateTemplateInstantiationType<Array, int8_t>(TypeIds::IArray);
-  CreateTemplateInstantiationType<Array, uint8_t>(TypeIds::IArray);
-  CreateTemplateInstantiationType<Array, int16_t>(TypeIds::IArray);
-  CreateTemplateInstantiationType<Array, uint16_t>(TypeIds::IArray);
-  CreateTemplateInstantiationType<Array, int32_t>(TypeIds::IArray);
-  CreateTemplateInstantiationType<Array, uint32_t>(TypeIds::IArray);
-  CreateTemplateInstantiationType<Array, int64_t>(TypeIds::IArray);
-  CreateTemplateInstantiationType<Array, uint64_t>(TypeIds::IArray);
-  CreateTemplateInstantiationType<Array, float>(TypeIds::IArray);
-  CreateTemplateInstantiationType<Array, double>(TypeIds::IArray);
-  CreateTemplateInstantiationType<Array, Ptr<String>>(TypeIds::IArray);
-
-  auto imap = RegisterTemplateType<IMap>(TypeIds::IMap);
-  imap.CreateTypeConstuctor<>();
-  imap.CreateInstanceFunction("count", &IMap::Count);
-
-  auto address = RegisterClassType<Address>(TypeIds::Address);
-  address.CreateTypeConstuctor<>();
-  address.CreateTypeConstuctor<Ptr<String>>();
-  address.CreateInstanceFunction("signed_tx", &Address::HasSignedTx);
-
-  auto istate = RegisterTemplateType<IState>(TypeIds::IState);
-  istate.CreateTypeConstuctor<Ptr<String>, TemplateParameter>();
-  istate.CreateTypeConstuctor<Ptr<Address>, TemplateParameter>();
-  istate.CreateInstanceFunction("get", &IState::Get);
-  istate.CreateInstanceFunction("set", &IState::Set);
-  istate.CreateInstanceFunction("existed", &IState::Existed);
+  auto istate = GetClassInterface<IState>();
+  istate.CreateConstuctor<Ptr<String>, TemplateParameter>();
+  istate.CreateConstuctor<Ptr<Address>, TemplateParameter>();
+  istate.CreateMemberFunction("get", &IState::Get);
+  istate.CreateMemberFunction("set", &IState::Set);
+  istate.CreateMemberFunction("existed", &IState::Existed);
 }
 
 }  // namespace vm

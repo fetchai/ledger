@@ -17,12 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/analyser.hpp"
-#include "vm/typeids.hpp"
-
-#include "vm/compiler.hpp"
 #include "vm/module.hpp"
-#include "vm/vm.hpp"
 
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/type_convert.hpp"
@@ -74,28 +69,37 @@ public:
   }
 
   /**
-   * Compile a source file, returning a script
+   * Compile a source file, returning a executable
    *
    * @param: module The module which the user might have added various bindings/classes to etc.
    * @param: source The raw source to compile
-   * @param: script script to fill
+   * @param: executable executable to fill
    *
    * @return: Vector of strings which represent errors found during compilation
    */
   static std::vector<std::string> Compile(std::shared_ptr<fetch::vm::Module> const &module,
-                                          std::string const &source, fetch::vm::Script &script)
+                                          std::string const &                       source,
+                                          fetch::vm::Executable &                   executable)
   {
     std::vector<std::string> errors;
 
     // generate the compiler from the module
-    auto compiler = std::make_shared<fetch::vm::Compiler>(module.get());
+    auto   compiler = std::make_shared<fetch::vm::Compiler>(module.get());
+    vm::IR ir;
 
     // compile the source
-    bool const compiled = compiler->Compile(source, "default", script, errors);
+    bool const compiled = compiler->Compile(source, "default", ir, errors);
 
     if (!compiled)
     {
       errors.push_back("Failed to compile.");
+      return errors;
+    }
+
+    fetch::vm::VM vm(module.get());  // TODO(tfr): refactor such that IR is first made exectuable
+    if (!vm.GenerateExecutable(ir, "default_ir", executable, errors))
+    {
+      return errors;
     }
 
 #ifndef NDEBUG

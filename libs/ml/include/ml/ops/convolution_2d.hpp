@@ -220,7 +220,10 @@ std::vector<typename ArrayType::SizeType> Convolution2D<ArrayType>::ComputeOutpu
 {
   // Return pre-computed value if exist
   if (output_shape_.size() != 0)
+  {
     return output_shape_;
+  }
+
   // output_shape_[0]=number of output channels
   output_shape_.emplace_back(inputs.at(1).get().shape()[0]);
   // output_shape_[1]=number of stride_size steps over input height
