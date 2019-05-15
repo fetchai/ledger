@@ -131,7 +131,7 @@ void *TrainModelThread(void *id)
    * word_count - Stores the total number of training words processed.
    */
   long long d;
-  float  word;
+  float     word;
   real      f;
 
   fetch::math::Tensor<real> f_tensor({1, uint64_t(negative)});      // Prediction
@@ -145,11 +145,13 @@ void *TrainModelThread(void *id)
   {
     if (id == 0 && i % 10000 == 0)
     {
-      alpha = starting_alpha * (static_cast<float>(iter * iterations - i) / static_cast<float>(iter * iterations));
+      alpha = starting_alpha *
+              (static_cast<float>(iter * iterations - i) / static_cast<float>(iter * iterations));
       if (alpha < starting_alpha * 0.0001f)
         alpha = starting_alpha * 0.0001f;
-      std::cout << i << " / " << iter * iterations << " (" << (int)(100.0 * i / static_cast<double>(iter * iterations))
-                << ") -- " << alpha << std::endl;
+      std::cout << i << " / " << iter * iterations << " ("
+                << (int)(100.0 * i / static_cast<double>(iter * iterations)) << ") -- " << alpha
+                << std::endl;
     }
 
     if (thread_loader.IsDone())
@@ -168,7 +170,8 @@ void *TrainModelThread(void *id)
       if (d == 0)
         label_tensor.Set(0, d, word);
       else
-        label_tensor.Set(0, d, static_cast<real>(unigram_table.SampleNegative(static_cast<uint64_t>(word))));
+        label_tensor.Set(
+            0, d, static_cast<real>(unigram_table.SampleNegative(static_cast<uint64_t>(word))));
     }
     graph.SetInput("Target", label_tensor);
     auto graphF = graph.Evaluate("DotProduct");
@@ -312,7 +315,8 @@ int main(int argc, char **argv)
   expTable = (real *)malloc((EXP_TABLE_SIZE + 1) * sizeof(real));
   for (i = 0; i < EXP_TABLE_SIZE; i++)
   {
-    expTable[i] = exp((static_cast<float>(i) / static_cast<float>(EXP_TABLE_SIZE * 2.0f - 1.0f)) * MAX_EXP);  // Precompute the exp() table
+    expTable[i] = exp((static_cast<float>(i) / static_cast<float>(EXP_TABLE_SIZE * 2.0f - 1.0f)) *
+                      MAX_EXP);                        // Precompute the exp() table
     expTable[i] = expTable[i] / (expTable[i] + 1.0f);  // Precompute f(x) = x / (x + 1)
   }
   TrainModel();
