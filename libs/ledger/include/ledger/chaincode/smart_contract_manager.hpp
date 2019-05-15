@@ -22,7 +22,7 @@
 namespace fetch {
 
 namespace vm {
-struct Script;
+struct Executable;
 class Module;
 }  // namespace vm
 

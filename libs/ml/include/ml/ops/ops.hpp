@@ -55,7 +55,7 @@ public:
       std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           errorSignal) = 0;
   virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const = 0;
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) = 0;
 
   void SetTraining(bool is_training)
   {
@@ -91,7 +91,7 @@ public:
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
   {
     return inputs.front().get().shape();
   }
@@ -133,8 +133,9 @@ public:
     std::vector<std::vector<ArrayType>> results;
     for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
     {
-      auto ret =
-          this->Backward({inputs.front().get().Slice(b).Tensor()}, errorSignal.Slice(b).Tensor());
+      auto input        = inputs.front().get().Slice(b).Copy();
+      auto error_signal = errorSignal.Slice(b).Copy();
+      auto ret          = this->Backward({input}, error_signal);
       for (std::size_t i(0); i < ret.size(); ++i)
       {
         results[i].push_back(ret[i]);

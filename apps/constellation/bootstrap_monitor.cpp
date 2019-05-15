@@ -35,7 +35,7 @@ using network::Uri;
 using http::JsonClient;
 using byte_array::ConstByteArray;
 
-const char *               BOOTSTRAP_HOST = "https://bootstrap.economicagents.com";
+const char *               BOOTSTRAP_HOST = "https://bootstrap.fetch.ai";
 const std::chrono::seconds UPDATE_INTERVAL{30};
 constexpr char const *     LOGGING_NAME = "bootstrap";
 
@@ -127,12 +127,6 @@ BootstrapMonitor::BootstrapMonitor(ProverPtr entity, uint16_t p2p_port, std::str
 {
   // register the state machine handlers
   state_machine_->RegisterHandler(State::Notify, this, &BootstrapMonitor::OnNotify);
-}
-
-BootstrapMonitor::~BootstrapMonitor()
-{
-  state_machine_->Reset();
-  state_machine_.reset();
 }
 
 bool BootstrapMonitor::DiscoverPeers(UriList &peers, std::string const &external_address)

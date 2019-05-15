@@ -18,9 +18,7 @@
 
 #include "core/sync/tickets.hpp"
 
-#include "gtest/gtest-spi.h"
 #include "gtest/gtest.h"
-//#include "gmock/gmock.h"
 
 #include <atomic>
 #include <iostream>

@@ -22,8 +22,6 @@
 #include "ledger/chain/main_chain.hpp"
 #include "network/service/protocol.hpp"
 
-#include <algorithm>
-
 namespace fetch {
 namespace ledger {
 

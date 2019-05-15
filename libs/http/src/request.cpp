@@ -73,7 +73,7 @@ bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t const &end)
 
     header_data_[i] = uint8_t(c);
 
-    // find either the header seperator ':' (in the case of KEY: VALUE header) to the new line
+    // find either the header separator ':' (in the case of KEY: VALUE header) to the new line
     // which indicated the value is complete
     switch (c)
     {

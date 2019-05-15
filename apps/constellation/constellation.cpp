@@ -58,14 +58,13 @@ namespace {
 
 using LaneIndex = fetch::ledger::LaneIdentity::lane_type;
 
-// static const std::chrono::milliseconds LANE_CONNECTION_TIME{10000};
 static const std::size_t HTTP_THREADS{4};
 
 bool WaitForLaneServersToStart()
 {
   using InFlightCounter = AtomicInFlightCounter<AtomicCounterName::TCP_PORT_STARTUP>;
 
-  network::FutureTimepoint const deadline(std::chrono::seconds(30));
+  core::FutureTimepoint const deadline(std::chrono::seconds(30));
 
   return InFlightCounter::Wait(deadline);
 }
@@ -110,8 +109,8 @@ ledger::ShardConfigs GenerateShardsConfig(uint32_t num_lanes, uint16_t start_por
     cfg.internal_port       = start_port++;
     cfg.internal_network_id = muddle::NetworkId{"ISRD"};
 
-    auto const &ext_identity = cfg.external_identity->identity().identifier();
-    auto const &int_identity = cfg.internal_identity->identity().identifier();
+    auto const ext_identity = cfg.external_identity->identity().identifier();
+    auto const int_identity = cfg.internal_identity->identity().identifier();
 
     FETCH_LOG_INFO(Constellation::LOGGING_NAME, "Shard ", i + 1);
     FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - Internal ", ToBase64(int_identity), " - ",
@@ -173,7 +172,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
                        cfg_.num_slices,
                        cfg_.block_difficulty}
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
-                                                              cfg_.standalone)}
+                                                              cfg_.network_mode)}
   , tx_processor_{*storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
   , http_{http_network_manager_}
   , http_modules_{

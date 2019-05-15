@@ -1,6 +1,8 @@
-import sys, os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'build', 'libs', 'python')) 
 import fetch
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..',
+                             '..', '..', '..', 'build', 'libs', 'python'))
 
 t = fetch.math.tensor.Tensor([5, 4])
 print(t.Size())

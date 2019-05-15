@@ -20,6 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 
+#include <algorithm>
 #include <utility>
 
 using fetch::byte_array::ToBase64;
@@ -138,8 +139,6 @@ bool MainChain::RemoveBlock(BlockHash hash)
 {
   // TODO(private issue 666): Improve performance of block removal
 
-  using BlockHashSet = std::unordered_set<BlockHash>;
-
   bool success{false};
 
   FETCH_LOCK(lock_);
@@ -230,6 +229,9 @@ bool MainChain::RemoveBlock(BlockHash hash)
  */
 MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
 {
+  // Note: min needs a reference to something, so this is a workaround since UPPER_BOUND is a
+  // constexpr
+  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   MilliTimer myTimer("MainChain::HeaviestChain");
 
   FETCH_LOCK(lock_);
@@ -247,6 +249,7 @@ MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
  */
 MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
 {
+  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   MilliTimer myTimer("MainChain::ChainPreceding");
 
   FETCH_LOCK(lock_);
@@ -296,8 +299,9 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
  * @return true if successful, otherwise false
  */
 bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
-                                        uint64_t limit) const
+                                        uint64_t limit, BehaviourWhenLimit behaviour) const
 {
+  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   MilliTimer myTimer("MainChain::GetPathToCommonAncestor", 500);
 
   FETCH_LOCK(lock_);
@@ -313,9 +317,11 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
   BlockHash left_hash  = std::move(tip);
   BlockHash right_hash = std::move(node);
 
+  std::deque<BlockPtr> res;
+
   // The algorithm implemented here is effectively a coordinated parallel walk about from the two
   // input tips until the a common ancestor is located.
-  while (blocks.size() < limit)
+  for (;;)
   {
     // load up the left side
     if (!left || left->body.hash != left_hash)
@@ -329,7 +335,30 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
       }
 
       // left side always loaded into output queue as we traverse
-      blocks.push_back(left);
+      // blocks.push_back(left);
+      res.push_back(left);
+      bool break_loop = false;
+
+      switch (behaviour)
+      {
+      case BehaviourWhenLimit::RETURN_LEAST_RECENT:
+        if (res.size() > limit)
+        {
+          res.pop_front();
+        }
+        break;
+      case BehaviourWhenLimit::RETURN_MOST_RECENT:
+        if (res.size() >= limit)
+        {
+          break_loop = true;
+        }
+        break;
+      }
+
+      if (break_loop)
+      {
+        break;
+      }
     }
 
     // load up the right side
@@ -362,6 +391,9 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
       left_hash = left->body.previous_hash;
     }
   }
+
+  blocks.resize(res.size());
+  std::move(res.begin(), res.end(), blocks.begin());
 
   // If an lookup error has occured then we do not return anything
   if (!success)
@@ -425,15 +457,16 @@ MainChain::BlockHashSet MainChain::GetMissingTips() const
  * @param maximum The specified maximum number of blocks to be returned
  * @return The generated array of missing hashes
  */
-MainChain::BlockHashs MainChain::GetMissingBlockHashes(std::size_t maximum) const
+MainChain::BlockHashs MainChain::GetMissingBlockHashes(uint64_t limit) const
 {
+  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   FETCH_LOCK(lock_);
 
   BlockHashs results;
 
   for (auto const &loose_block : loose_blocks_)
   {
-    if (maximum <= results.size())
+    if (limit <= results.size())
     {
       break;
     }

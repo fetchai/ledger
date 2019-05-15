@@ -29,6 +29,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 PROJECT_FOLDERS = ('libs', 'apps')
 
+
 def find_clang_tidy():
     name = 'clang-tidy'
 
@@ -61,11 +62,20 @@ def output(text=None):
 
 def parse_commandline():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--fix', action='store_true', help='Apply suggested fixes to files')
-    parser.add_argument('-j', dest='jobs', type=int, default=multiprocessing.cpu_count(), help='The number of jobs to run in parallel')
-    parser.add_argument('build_path', type=os.path.abspath, help='Path to build directory')
-    parser.add_argument('--only-these-files', nargs='+') # stack overflow 26727314
+    parser.add_argument('--fix', action='store_true',
+                        help='Apply suggested fixes to files')
+    parser.add_argument(
+        '-j',
+        dest='jobs',
+        type=int,
+        default=multiprocessing.cpu_count(),
+        help='The number of jobs to run in parallel')
+    parser.add_argument('build_path', type=os.path.abspath,
+                        help='Path to build directory')
+    # stack overflow 26727314
+    parser.add_argument('--only-these-files', nargs='+')
     return parser.parse_args()
+
 
 def main():
     args = parse_commandline()
@@ -98,9 +108,13 @@ def main():
                 output("Skipping excluded file {}".format(source_path))
                 return False
 
-        output('Analysing {} ...'.format(os.path.relpath(source_path, project_root)))
+        output('Analysing {} ...'.format(
+            os.path.relpath(source_path, project_root)))
 
-        proc = subprocess.Popen(cmd + [source_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        proc = subprocess.Popen(
+            cmd + [source_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT)
 
         while True:
             line = proc.stdout.readline().decode()
@@ -117,7 +131,7 @@ def main():
 
         return proc.wait() != 0
 
-    def project_source_files(only_these_files = None):
+    def project_source_files(only_these_files=None):
 
         for folder in PROJECT_FOLDERS:
             for root, _, files in os.walk(os.path.join(project_root, folder)):
@@ -128,7 +142,8 @@ def main():
                     yield source_path
 
     with ThreadPoolExecutor(max_workers=num_workers) as e:
-        results = e.map(analyse_file, project_source_files(args.only_these_files))
+        results = e.map(analyse_file, project_source_files(
+            args.only_these_files))
         if any(results):
             sys.exit(1)
 

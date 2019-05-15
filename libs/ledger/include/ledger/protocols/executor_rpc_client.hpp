@@ -19,12 +19,12 @@
 
 #include <memory>
 
+#include "core/future_timepoint.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/service_ids.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/protocols/executor_rpc_protocol.hpp"
 #include "network/generics/backgrounded_work.hpp"
-#include "network/generics/future_timepoint.hpp"
 #include "network/generics/has_worker_thread.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
@@ -50,7 +50,7 @@ public:
   using Address         = Muddle::Address;  // == a crypto::Identity.identifier_
   using Uri             = Muddle::Uri;
   using PromiseState    = fetch::service::PromiseState;
-  using FutureTimepoint = network::FutureTimepoint;
+  using FutureTimepoint = core::FutureTimepoint;
 
   std::shared_ptr<Client> client;
 

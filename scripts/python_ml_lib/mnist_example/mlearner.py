@@ -1,8 +1,9 @@
-import os                                           # checking for already existing files
-import gzip                                         # downloading/extracting mnist data
-# import random                                       # normal distirbution sampling
-from tqdm import tqdm                               # visualising progress
-import numpy as np                                  # loading data from buffer
+# checking for already existing files
+import os
+# downloading/extracting mnist data
+import gzip
+from tqdm import tqdm    # visualising progress
+import numpy as np       # loading data from buffer
 
 from fetch.ml import Layer, Variable, Session
 from fetch.ml import CrossEntropyLoss
@@ -14,6 +15,7 @@ import line_profiler
 
 DO_PLOTTING = 0
 
+
 def plot_weights(layers):
 
     for layer in layers:
@@ -21,17 +23,15 @@ def plot_weights(layers):
         plt.show()
         plt.close()
 
+
 class MLearner():
-
     def __init__(self):
-
         self.data_url = 'http://yann.lecun.com/exdb/mnist/'
 
         self.x_tr_filename = 'train-images-idx3-ubyte.gz'
         self.y_tr_filename = 'train-labels-idx1-ubyte.gz'
         self.x_te_filename = 't10k-images-idx3-ubyte.gz'
         self.y_te_filename = 't10k-labels-idx1-ubyte.gz'
-
 
         self.training_size = 2000
         self.validation_size = 50
@@ -53,9 +53,7 @@ class MLearner():
         self.X_batch = self.sess.Variable([self.batch_size, 784], "X_batch")
         self.Y_batch = self.sess.Variable([self.batch_size, 10], "Y_batch")
 
-
     def initialise_network(self):
-
         self.sess = Session()
 
         # definition of the network layers
@@ -63,13 +61,26 @@ class MLearner():
         #     self.net.append(self.layers[i])
         self.net.append(self.mnist_output_size)
 
-        self.layers.append(self.sess.Layer(self.mnist_input_size, self.net[0], self.activation_fn, "input_layer"))
+        self.layers.append(
+            self.sess.Layer(
+                self.mnist_input_size,
+                self.net[0],
+                self.activation_fn,
+                "input_layer"))
         if len(self.net) > 2:
             for i in range(len(self.net) - 2):
-                self.layers.append(self.sess.Layer(self.net[i], self.net[i + 1], self.activation_fn, "layer_" + str(i+1)))
-        self.layers.append(self.sess.Layer(self.net[-1], self.mnist_output_size, self.activation_fn, "output_layer"))
+                self.layers.append(
+                    self.sess.Layer(
+                        self.net[i],
+                        self.net[i + 1],
+                        self.activation_fn, "layer_" + str(i + 1)))
+        self.layers.append(
+            self.sess.Layer(
+                self.net[-1],
+                self.mnist_output_size, self.activation_fn, "output_layer"))
 
-        # switch off biases (since we didn't bother with them for the numpy example)
+        # switch off biases (since we didn't bother with them for the numpy
+        # example)
         if not(self.has_biases):
             for cur_layer in self.layers:
                 cur_layer.BiasesSetup(False)
@@ -89,14 +100,20 @@ class MLearner():
         return
 
     def load_data(self, one_hot=True, reshape=None):
-        x_tr = self.load_images(self.x_tr_filename, self.training_size, "X_train")
-        y_tr = self.load_labels(self.y_tr_filename, self.training_size, "Y_train")
-        x_te = self.load_images(self.x_te_filename, self.validation_size, "X_test")
-        y_te = self.load_labels(self.y_te_filename, self.validation_size, "Y_test")
+        x_tr = self.load_images(
+            self.x_tr_filename, self.training_size, "X_train")
+        y_tr = self.load_labels(
+            self.y_tr_filename, self.training_size, "Y_train")
+        x_te = self.load_images(
+            self.x_te_filename, self.validation_size, "X_test")
+        y_te = self.load_labels(
+            self.y_te_filename, self.validation_size, "Y_test")
 
         if one_hot:
-            y_tr_onehot = Session.Zeroes(self.sess, [y_tr.size(), self.mnist_output_size])
-            y_te_onehot = Session.Zeroes(self.sess, [y_te.size(), self.mnist_output_size])
+            y_tr_onehot = Session.Zeroes(
+                self.sess, [y_tr.size(), self.mnist_output_size])
+            y_te_onehot = Session.Zeroes(
+                self.sess, [y_te.size(), self.mnist_output_size])
 
             for i in range(y_tr.size()):
                 y_tr_onehot[i, int(y_tr[i])] = 1
@@ -153,11 +170,10 @@ class MLearner():
         a = [X]
         activate = True
         for idx in range(len(self.layers)):
-            if (idx == (len(self.layers) -1)):
+            if (idx == (len(self.layers) - 1)):
                 activate = False
             a.append(self.layers[idx].Forward(a[-1], activate))
         return a
-
 
     def calculate_loss(self, X, Y):
 
@@ -188,8 +204,10 @@ class MLearner():
 
     @profile
     def assign_batch(self, x, y, cur_rep):
-        self.X_batch.SetRange([[cur_rep, cur_rep + self.batch_size, 1], [0, 784, 1]], x)
-        self.Y_batch.SetRange([[cur_rep, cur_rep + self.batch_size, 1], [0, 10, 1]], y)
+        self.X_batch.SetRange(
+            [[cur_rep, cur_rep + self.batch_size, 1], [0, 784, 1]], x)
+        self.Y_batch.SetRange(
+            [[cur_rep, cur_rep + self.batch_size, 1], [0, 10, 1]], y)
         return
 
     def print_accuracy(self, cur_pred):
@@ -209,8 +227,6 @@ class MLearner():
 
     @profile
     def train(self):
-
-
         self.sess.SetInput(self.layers[0], self.X_batch)
         for i in range(len(self.layers) - 1):
             self.sess.SetInput(self.layers[i + 1], self.layers[i].Output())
@@ -247,4 +263,3 @@ class MLearner():
             self.print_accuracy(cur_pred)
 
         return
-

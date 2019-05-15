@@ -2,53 +2,62 @@
 
 import os
 import sys
-
-DIR = "${CMAKE_CURRENT_SOURCE_DIR}" #os.path.dirname(__file__)
-CORE_DIR = os.path.join(DIR, "libfetchcore/lib/")
-sys.path = [ CORE_DIR, os.path.join(DIR, "python") ] +sys.path
-if not 'PYTHONPATH' in os.environ: os.environ['PYTHONPATH'] = ""
-os.environ['PYTHONPATH'] = DIR + ":" + CORE_DIR + ":" + os.environ['PYTHONPATH'] 
-
-import glob
 from distutils.core import setup, Extension
-import pybindgen
-from pybindgen import FileCodeSink
-from pybindgen import Module
-import libfetchcore
+
+FILENAME = os.path.join("${CMAKE_CURRENT_BINARY_DIR}", "libfetchcore.cpp")
+DIR = "${CMAKE_CURRENT_SOURCE_DIR}"
+CORE_DIR = os.path.join(DIR, "libfetchcore/lib/")
+EXTRA_ARGS = ["-L${CMAKE_CURRENT_BINARY_DIR}/"]
+MACROS = [
+    ('MAJOR_VERSION', '0'),
+    ('MINOR_VERSION', '1')]
 
 
-core_module = Module("libfetchcore")
-libfetchcore.build(core_module)
+def amend_system_paths():
+    sys.path = [CORE_DIR, os.path.join(DIR, "python")] + sys.path
 
-filename =  os.path.join("${CMAKE_CURRENT_BINARY_DIR}","libfetchcore.cpp")
-with open(filename, "wt") as file_:
-    core_module.generate(FileCodeSink(file_) )
-
-additional_defines = []
-extra_args = ["-L${CMAKE_CURRENT_BINARY_DIR}/"] 
-
-python_module = Extension('libfetchcore',
-                          sources = [filename],
-                        include_dirs=[
-                            '/usr/local/include',
-                            os.path.join(DIR, "include"),
-                            os.path.join(DIR, "libfetchcore","include"),
-                            os.path.join(DIR, "vendor", "asio", "asio", "include")                            
-                        ],
-                        extra_compile_args=['-std=c++11', '-msse4.2', '-v', '-DASIO_STANDALONE', '-DASIO_HEADER_ONLY', '-DASIO_HAS_STD_SYSTEM_ERROR'],
-                        extra_link_args=extra_args,
-                        define_macros = [('MAJOR_VERSION', '0'),
-                                         ('MINOR_VERSION', '1')
-
-                        ] + additional_defines
-                   )
+    PYTHONPATH_PREFIX = DIR + ":" + CORE_DIR
+    if 'PYTHONPATH' in os.environ:
+        os.environ['PYTHONPATH'] = PYTHONPATH_PREFIX + \
+            ":" + os.environ['PYTHONPATH']
+    else:
+        os.environ['PYTHONPATH'] = PYTHONPATH_PREFIX
 
 
+def generate_module():
+    from pybindgen import FileCodeSink, Module
+    import libfetchcore
+    core_module = Module("libfetchcore")
+    libfetchcore.build(core_module)
+
+    with open(FILENAME, "wt") as file_:
+        core_module.generate(FileCodeSink(file_))
+
+
+amend_system_paths()
+generate_module()
+
+python_module = Extension(
+    'libfetchcore',
+    sources=[FILENAME],
+    include_dirs=[
+        '/usr/local/include',
+        os.path.join(DIR, "include"),
+        os.path.join(DIR, "libfetchcore", "include"),
+        os.path.join(DIR, "vendor", "asio", "asio", "include")],
+    extra_compile_args=[
+        '-std=c++11',
+        '-msse4.2',
+        '-v',
+        '-DASIO_STANDALONE',
+        '-DASIO_HEADER_ONLY',
+        '-DASIO_HAS_STD_SYSTEM_ERROR'],
+    extra_link_args=EXTRA_ARGS,
+    define_macros=MACROS)
 
 setup(name='libfetchcore',
       version='${PACKAGE_VERSION}',
       description='',
       author='Troels F. Roennow',
       author_email='troels.roennow@fetch.ai',
-      ext_modules=[python_module],
-     )
+      ext_modules=[python_module])

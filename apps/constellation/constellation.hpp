@@ -51,19 +51,6 @@
 
 namespace fetch {
 
-namespace ledger {
-namespace consensus {
-
-enum class ConsensusMinerType
-{
-  NO_MINER    = 0,
-  DUMMY_MINER = 1,
-  BAD_MINER   = 2
-};
-
-}  // namespace consensus
-}  // namespace ledger
-
 /**
  * Top level container for all components that are required to run a ledger instance
  */
@@ -74,6 +61,7 @@ public:
   using CertificatePtr   = Peer2PeerService::CertificatePtr;
   using UriList          = std::vector<network::Uri>;
   using Manifest         = network::Manifest;
+  using NetworkMode      = ledger::MainChainRpcService::Mode;
 
   static constexpr uint32_t DEFAULT_BLOCK_DIFFICULTY = 6;
 
@@ -94,7 +82,7 @@ public:
     uint32_t    peers_update_cycle_ms{0};
     bool        disable_signing{false};
     bool        sign_broadcasts{false};
-    bool        standalone{false};
+    NetworkMode network_mode{NetworkMode::PUBLIC_NETWORK};
 
     uint32_t num_lanes() const
     {

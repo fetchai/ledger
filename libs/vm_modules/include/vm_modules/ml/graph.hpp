@@ -96,18 +96,18 @@ public:
   }
 };
 
-inline void CreateGraph(std::shared_ptr<fetch::vm::Module> module)
+inline void CreateGraph(fetch::vm::Module &module)
 {
-  module->CreateClassType<GraphWrapper>("Graph")
-      .CreateTypeConstuctor<>()
-      .CreateInstanceFunction("SetInput", &GraphWrapper::SetInput)
-      .CreateInstanceFunction("Evaluate", &GraphWrapper::Evaluate)
-      .CreateInstanceFunction("Backpropagate", &GraphWrapper::Backpropagate)
-      .CreateInstanceFunction("Step", &GraphWrapper::Step)
-      .CreateInstanceFunction("AddPlaceholder", &GraphWrapper::AddPlaceholder)
-      .CreateInstanceFunction("AddFullyConnected", &GraphWrapper::AddFullyConnected)
-      .CreateInstanceFunction("AddRelu", &GraphWrapper::AddRelu)
-      .CreateInstanceFunction("AddSoftmax", &GraphWrapper::AddSoftmax);
+  module.CreateClassType<GraphWrapper>("Graph")
+      .CreateConstuctor<>()
+      .CreateMemberFunction("SetInput", &GraphWrapper::SetInput)
+      .CreateMemberFunction("Evaluate", &GraphWrapper::Evaluate)
+      .CreateMemberFunction("Backpropagate", &GraphWrapper::Backpropagate)
+      .CreateMemberFunction("Step", &GraphWrapper::Step)
+      .CreateMemberFunction("AddPlaceholder", &GraphWrapper::AddPlaceholder)
+      .CreateMemberFunction("AddFullyConnected", &GraphWrapper::AddFullyConnected)
+      .CreateMemberFunction("AddRelu", &GraphWrapper::AddRelu)
+      .CreateMemberFunction("AddSoftmax", &GraphWrapper::AddSoftmax);
 }
 
 }  // namespace ml

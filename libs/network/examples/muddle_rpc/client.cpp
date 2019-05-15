@@ -53,11 +53,11 @@ int main()
   auto client = std::make_shared<Client>("Client", muddle.AsEndpoint(), server_key, 1, 1);
 
   PromiseList promises;
-  promises.reserve(5000);
+  promises.reserve(20);
 
   auto const start = Clock::now();
 
-  for (uint64_t i = 0; i < 5000; ++i)
+  for (uint64_t i = 0; i < 20; ++i)
   {
     promises.push_back(client->Call(1, 1, i, i));
   }

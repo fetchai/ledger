@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/clustering/tsne.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
-#include <math/tensor.hpp>
+
+#include "math/tensor.hpp"
+#include "ml/clustering/tsne.hpp"
 
 using namespace fetch::math;
 using namespace fetch::math::distance;

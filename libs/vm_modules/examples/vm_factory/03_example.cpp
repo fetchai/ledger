@@ -48,8 +48,8 @@ int main(int argc, char **argv)
   // module->state
 
   // Compile source, get runnable script
-  fetch::vm::Script        script;
-  std::vector<std::string> errors = VMFactory::Compile(module, source, script);
+  fetch::vm::Executable    executable;
+  std::vector<std::string> errors = VMFactory::Compile(module, source, executable);
 
   for (auto const &error : errors)
   {
@@ -63,14 +63,13 @@ int main(int argc, char **argv)
 
   // Execute smart contract
   std::string        error;
-  std::string        console;
   fetch::vm::Variant output;
 
   // Get clean VM instance
   auto vm = VMFactory::GetVM(module);
 
   // Execute our fn
-  if (!vm->Execute(script, "main", error, console, output))
+  if (!vm->Execute(executable, "main", error, output))
   {
     std::cerr << "Runtime error: " << error << std::endl;
   }
