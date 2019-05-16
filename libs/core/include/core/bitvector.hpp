@@ -215,7 +215,8 @@ inline bool BitVector::Expand(BitVector const &src, BitVector &dst)
     {
       uint64_t const m =
           ((src_buffer[j] * 0x0101010101010101ULL) & 0x8040201008040201ULL) * 0x0102040810204081ULL;
-      dst_buffer[j] = ((m >> 49u) & 0x5555) | ((m >> 48u) & 0xAAAA);
+
+      dst_buffer[j] = static_cast<uint16_t>(((m >> 49u) & 0x5555) | ((m >> 48u) & 0xAAAA));
     }
 
     // adjust the size in the case of multiple loops

@@ -19,6 +19,7 @@
 #include "ledger/chain/main_chain.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
 #include "network/generics/milli_timer.hpp"
 
 #include <algorithm>

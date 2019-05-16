@@ -20,6 +20,8 @@
 #include "core/containers/set_difference.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
+#include "ledger/chain/v2/transaction_rpc_serializers.hpp"
 
 #include "ledger/testing/block_generator.hpp"
 

@@ -157,7 +157,7 @@ ConstByteArray ToBase58(ConstByteArray const &str)
     // Apply "b58 = b58 * 256 + ch".
     for (auto it = b58.rbegin(); (carry != 0 || i < length) && (it != b58.rend()); it++, i++) {
       carry += 256 * (*it);
-      *it = carry % 58;
+      *it = static_cast<unsigned char>(carry % 58);
       carry /= 58;
     }
 
