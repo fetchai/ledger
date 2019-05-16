@@ -136,7 +136,7 @@ public:
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
   {
     (void)inputs;
     auto outputShape = this->output_->shape();
