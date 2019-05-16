@@ -34,6 +34,8 @@
 // TODO: if the dataloader data_ array is different in size from the number of words in the data
 // added, there will be empty 0 values used in training
 
+// TODO: decide whether to include l2 regularisation
+
 using namespace fetch::ml;
 using DataType     = double;
 using ArrayType    = fetch::math::Tensor<DataType>;
@@ -47,14 +49,14 @@ using SizeType     = typename ArrayType::SizeType;
 struct TrainingParams
 {
   SizeType output_size       = 1;
-  SizeType batch_size        = 500;     // training data batch size
-  SizeType embedding_size    = 200;     // dimension of embedding vec
-  SizeType training_epochs   = 15;      // total number of training epochs
-  SizeType neg_examples      = 25;      // how many negative examples for every positive example
-  double   learning_rate     = 0.05;     // alpha - the learning rate
-  double   min_learning_rate = 0.000005; // alpha - the minimum learning rate
-  double   negative_learning_rate;      // alpha - the learning rate for negative examples
-  double   min_negative_learning_rate;  // alpha - the minimum learning rate for negative examples
+  SizeType batch_size        = 500;       // training data batch size
+  SizeType embedding_size    = 200;       // dimension of embedding vec
+  SizeType training_epochs   = 15;        // total number of training epochs
+  SizeType neg_examples      = 25;        // how many negative examples for every positive example
+  double   learning_rate     = 0.2;       // alpha - the learning rate
+  double   min_learning_rate = 0.000005;  // alpha - the minimum learning rate
+  double   negative_learning_rate;        // alpha - the learning rate for negative examples
+  double   min_negative_learning_rate;    // alpha - the minimum learning rate for negative examples
 
   SizeType    k          = 10;             // how many nearest neighbours to compare against
   SizeType    print_freq = 100000;         // how often to print status
@@ -333,8 +335,7 @@ public:
 
   std::vector<Type> l2reg_row_sums;
   Type              l2reg_sum = 0;
-  Type              l2_lambda = 0.001;
-  Type              tmp_dot_result;
+  Type              l2_lambda = 0.0001;
 
   SkipgramModel(SizeType vocab_size, SizeType embeddings_size, Type learning_rate)
     : input_embeddings_({vocab_size, embeddings_size})
@@ -372,17 +373,32 @@ public:
     }
   }
 
-  void ForwardAndLoss(SizeType const &input_word_idx, SizeType const &context_word_idx,
-                      Type const &gt, Type &loss)
+  void NormaliseEmbeddingRow(SizeType row)
   {
-    // positive case:
-    // x = v_in' * v_out
-    // l = log(sigmoid(x))
-    //
-    // negative case:
-    // x = v_in' * v_sample
-    // l = log(sigmoid(-x))
-    //
+    auto it = input_embeddings_.Slice(row).begin();
+    while (it.is_valid())
+    {
+      *it /= l2reg_sum;
+      ++it;
+    }
+  }
+
+  /**
+   * This function combines the forward pass and loss calculation
+   * for a positive context example (gt == 1):
+   * x = v_in' * v_out
+   * l = log(sigmoid(x))
+   *
+   * for a negative context example (gt == 0):
+   * x = v_in' * v_sample
+   * l = log(sigmoid(-x))
+   */
+  void ForwardAndLoss(SizeType input_word_idx, SizeType context_word_idx, Type gt, Type &loss)
+  {
+    // First normalise the embeddings. Since that's expensive, we just normalise the two rows
+    // we'll use
+    NormaliseEmbeddingRow(input_word_idx);
+    NormaliseEmbeddingRow(context_word_idx);
 
     // TODO - remove these copies when math library SFINAE checks for IsIterable instead of taking
     // arrays. embeddings input & context lookup
@@ -396,7 +412,6 @@ public:
     ASSERT(result_.shape()[0] == 1);
     ASSERT(result_.shape()[1] == 1);
 
-    tmp_dot_result = dot_result_[0];
     if (std::isnan(dot_result_[0]))
     {
       std::cout << "input_vector_.ToString(): " << input_vector_.ToString() << std::endl;
@@ -470,6 +485,7 @@ public:
     {
       // grad and l2_reg weight decay
       *input_slice_it += (*input_grads_it) - (l2_lambda * *input_slice_it);
+      //      *input_slice_it += (*input_grads_it);
       l2reg_row_sums[input_word_idx] += (*input_slice_it * *input_slice_it);
       ++input_slice_it;
       ++input_grads_it;
@@ -482,6 +498,7 @@ public:
     {
       // grad and l2_reg weight decay
       *context_slice_it += (*context_grads_it) - (l2_lambda * *input_slice_it);
+      //      *context_slice_it += (*context_grads_it);
       l2reg_row_sums[context_word_idx] += (*context_slice_it * *context_slice_it);
       ++context_slice_it;
       ++context_grads_it;
@@ -516,15 +533,21 @@ public:
 void EvalAnalogy(DataLoader<ArrayType> &dl, SkipgramModel<ArrayType> &model)
 {
   SizeType    k     = 5;
-  std::string word1 = "italy";
-  std::string word2 = "rome";
-  std::string word3 = "france";
-  std::string word4 = "paris";
+
+  SizeType word1_idx;
+  SizeType word2_idx;
+  SizeType word3_idx;
+
+  //
+  std::string word1 = "Italy";
+  std::string word2 = "Rome";
+  std::string word3 = "France";
+  std::string word4 = "Paris";
 
   // vector math - hopefully target_vector is close to the location of the embedding value for word4
-  SizeType word1_idx     = dl.vocab_lookup(word1);
-  SizeType word2_idx     = dl.vocab_lookup(word2);
-  SizeType word3_idx     = dl.vocab_lookup(word3);
+  word1_idx     = dl.vocab_lookup(word1);
+  word2_idx     = dl.vocab_lookup(word2);
+  word3_idx     = dl.vocab_lookup(word3);
   auto     target_vector = model.input_embeddings_.Slice(word3_idx).Copy() +
                        (model.input_embeddings_.Slice(word2_idx).Copy() -
                         model.input_embeddings_.Slice(word1_idx).Copy());
@@ -540,6 +563,11 @@ void EvalAnalogy(DataLoader<ArrayType> &dl, SkipgramModel<ArrayType> &model)
               << std::endl;
   }
   std::cout << std::endl;
+
+
+
+
+
 }
 
 ///////////////
@@ -614,18 +642,19 @@ int main(int argc, char **argv)
       dataloader.reset_cursor();
       cursor_idx = 0;
 
-
       std::cout << "testing analogies: " << std::endl;
       EvalAnalogy(dataloader, model);
     }
 
-    auto one_min_completed_train_fraction = 1.0 - (static_cast<double>(cursor_idx) / tp.total_words);
+    auto one_min_completed_train_fraction =
+        1.0 - (static_cast<double>(cursor_idx) / tp.total_words);
 
     ////////////////////////////////
     /// run one positive example ///
     ////////////////////////////////
-    gt = 1;
-    model.alpha_ = (tp.learning_rate * fetch::math::Max(tp.min_learning_rate, one_min_completed_train_fraction));
+    gt           = 1;
+    model.alpha_ = (tp.learning_rate *
+                    fetch::math::Max(tp.min_learning_rate, one_min_completed_train_fraction));
 
     // get next data pair
     dataloader.next_positive(input_word_idx, context_word_idx);
@@ -644,7 +673,8 @@ int main(int argc, char **argv)
     /// run k negative examples ///
     ///////////////////////////////
     gt           = 0;
-    model.alpha_ = (tp.negative_learning_rate * fetch::math::Max(tp.min_negative_learning_rate, one_min_completed_train_fraction));
+    model.alpha_ = (tp.negative_learning_rate * fetch::math::Max(tp.min_negative_learning_rate,
+                                                                 one_min_completed_train_fraction));
 
     for (std::size_t i = 0; i < tp.neg_examples; ++i)
     {
@@ -673,7 +703,7 @@ int main(int argc, char **argv)
     /// print performance ///
     /////////////////////////
 
-    if (step_count % tp.print_freq == 0)
+    if (cursor_idx % tp.print_freq == 0)
     {
       auto t2   = std::chrono::high_resolution_clock::now();
       time_diff = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
@@ -693,6 +723,8 @@ int main(int argc, char **argv)
       sum_loss = 0;
 
       std::cout << std::endl;
+
+      EvalAnalogy(dataloader, model);
     }
   }
 
