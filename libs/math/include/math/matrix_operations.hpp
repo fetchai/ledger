@@ -480,13 +480,17 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
     ASSERT(ret.shape()[0] == 1);
     ASSERT(ret.shape()[1] == obj1.shape()[1]);
 
-    for (SizeType i = 0; i < ret.size(); ++i)
+    auto it  = obj1.cbegin();
+    auto rit = ret.begin();
+    while (rit.is_valid())
     {
-      ret[i] = typename ArrayType::Type(0);
-      for (SizeType j = 0; j < obj1.shape()[0]; ++j)
+      *rit = typename ArrayType::Type{0};
+      for (SizeType j{0}; j < obj1.shape().at(0); ++j)
       {
-        ret[i] += obj1(j, i);
+        *rit += *it;
+        ++it;
       }
+      ++rit;
     }
   }
   else
@@ -494,13 +498,16 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
     ASSERT(ret.shape()[0] == obj1.shape()[0]);
     ASSERT(ret.shape()[1] == 1);
 
+    auto rit = ret.begin();
     for (SizeType i = 0; i < ret.size(); ++i)
     {
-      ret[i] = typename ArrayType::Type(0);
-      for (SizeType j = 0; j < obj1.shape()[1]; ++j)
+      *rit = typename ArrayType::Type{0};
+      for (SizeType j = 0; j < obj1.shape().at(1); ++j)
       {
-        ret[i] += obj1(i, j);
+        // Todo(issue 1015) Replace with transposed iterator
+        *rit += obj1(i, j);
       }
+      ++rit;
     }
   }
 }
@@ -787,7 +794,7 @@ template <class ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> TransposeDot(ArrayType const &A,
                                                                     ArrayType const &B)
 {
-  std::vector<typename ArrayType::SizeType> return_shape{A.shape()[1], B.shape()[1]};
+  std::vector<typename ArrayType::SizeType> return_shape{A.shape().at(1), B.shape().at(1)};
   ArrayType                                 ret(return_shape);
   TransposeDot(A, B, ret);
   return ret;
@@ -813,128 +820,6 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DynamicStitch(ArrayType &     
     ++data_it;
     ++ind_it;
   }
-}
-
-/**
- * Copies all elements from list of arrays for each array to one 1D return array
- * @tparam ArrayType
- * @param ret return 1D array
- * @param input_arrays vector of input arrays
- */
-template <typename ArrayType>
-void Concat(ArrayType &ret, std::vector<ArrayType> const &input_arrays)
-{
-  ASSERT(input_arrays.size() > 0);
-
-  SizeType new_size = 0;
-  for (SizeType i = 0; i < input_arrays.size(); ++i)
-  {
-    new_size += input_arrays.at(i).size();
-  }
-  ret.Resize({new_size});
-
-  if (input_arrays.size() == 1)
-  {
-    ret.Copy(input_arrays[0]);
-  }
-  else
-  {
-    auto rit = ret.begin();
-    for (SizeType j = 0; j < input_arrays.size(); ++j)
-    {
-      auto it = input_arrays.at(j).cbegin();
-      while (it.is_valid())
-      {
-        *rit = *it;
-        ++it;
-        ++rit;
-      }
-    }
-  }
-}
-template <typename ArrayType>
-ArrayType Concat(std::vector<ArrayType> const &input_arrays)
-{
-  ArrayType ret;
-  Concat(ret, input_arrays);
-  return ret;
-}
-
-/**
- * Stitch arrays with same size together within given axis
- * @tparam ArrayType
- * @param ret return array,
- * for axis=0: ret[sum(height),width]
- * for axis=1: ret[height.sum(width)]
- * @param input_arrays input vector of same sized arrays
- * @param axis
- */
-template <typename ArrayType>
-void Concat(ArrayType &ret, std::vector<ArrayType> const &input_arrays,
-            typename ArrayType::SizeType axis)
-{
-  ASSERT(input_arrays.size() > 0);
-  ASSERT((axis == 0) || (axis == 1));
-  for (SizeType i = 0; i < input_arrays.size(); ++i)
-  {
-    ASSERT(input_arrays.at(i).shape().size() == 2);
-    ASSERT(input_arrays.at(i).shape() == input_arrays.at(0).shape());
-  }
-
-  if (axis == 0)
-  {
-    SizeType sum_height{0};
-    SizeType sum_width{input_arrays.at(0).shape().at(1)};
-    SizeType array_height = input_arrays.at(0).shape().at(0);
-
-    for (SizeType i = 0; i < input_arrays.size(); ++i)
-    {
-      sum_height += input_arrays.at(i).shape().at(0);
-    }
-    ret.Resize({sum_height, sum_width});
-
-    for (SizeType n = 0; n < input_arrays.size(); ++n)
-    {
-      for (SizeType i = 0; i < array_height; ++i)
-      {
-        for (SizeType j = 0; j < sum_width; ++j)
-        {
-          ret.Set(n * array_height + i, j, input_arrays.at(n).At(i, j));
-        }
-      }
-    }
-  }
-  else
-  {
-    SizeType sum_height{input_arrays.at(0).shape().at(0)};
-    SizeType sum_width{0};
-    SizeType array_width = input_arrays.at(0).shape().at(1);
-
-    for (SizeType i = 0; i < input_arrays.size(); ++i)
-    {
-      sum_width += input_arrays.at(i).shape().at(1);
-    }
-    ret.Resize({sum_height, sum_width});
-
-    for (SizeType n = 0; n < input_arrays.size(); ++n)
-    {
-      for (SizeType i = 0; i < sum_height; ++i)
-      {
-        for (SizeType j = 0; j < array_width; ++j)
-        {
-          ret.Set(i, n * array_width + j, input_arrays.at(n).At(i, j));
-        }
-      }
-    }
-  }
-}
-
-template <typename ArrayType>
-ArrayType Concat(std::vector<ArrayType> const &input_arrays, typename ArrayType::SizeType axis)
-{
-  ArrayType ret;
-  Concat(ret, input_arrays, axis);
-  return ret;
 }
 
 }  // namespace math
