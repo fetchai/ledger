@@ -208,7 +208,7 @@ public:
   VM(Module *module);
   ~VM() = default;
 
-  static constexpr char const * const STDOUT = "stdout";
+  static constexpr char const *const STDOUT = "stdout";
 
   RegisteredTypes const &registered_types() const
   {

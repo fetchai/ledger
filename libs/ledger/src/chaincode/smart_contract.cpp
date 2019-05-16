@@ -91,7 +91,7 @@ void ValidateAddressesInParams(Transaction const &tx, vm::ParameterPack const &p
   }
 }
 
-}
+}  // namespace
 
 /**
  * Construct a smart contract from the specified source

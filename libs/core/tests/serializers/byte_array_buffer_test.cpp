@@ -173,7 +173,7 @@ TEST_F(ByteArrayBufferTest, test_basic_allocate_size)
 
 TEST_F(ByteArrayBufferTest, test_allocate_with_offset)
 {
-  constexpr std::size_t offset               = 50;
+  constexpr std::size_t offset              = 50;
   constexpr std::size_t preallocated_amount = offset + 50;
 
   ByteArrayBuffer stream;
@@ -269,8 +269,8 @@ TEST_F(ByteArrayBufferTest, test_that_default_resize_paradigm_is_relative)
 
 TEST_F(ByteArrayBufferTest, test_stream_absolute_resize_with_preexisting_offset)
 {
-  constexpr std::size_t small_size           = 30;
-  constexpr std::size_t offset               = small_size + 20;
+  constexpr std::size_t small_size          = 30;
+  constexpr std::size_t offset              = small_size + 20;
   constexpr std::size_t preallocated_amount = offset + 50;
 
   //* Setup
