@@ -43,61 +43,64 @@ out << byte_array::ToHex(s->byte_array()) << std::endl;
 }
 */
 
-inline void PrintString(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
+inline void PrintString(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
-  std::cout << s->str;
+  auto &out = vm->GetOutputDevice("stdout");
+  out << s->str;
 }
 
-inline void PrintLnString(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
+inline void PrintLnString(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
-  std::cout << s->str << std::endl;
+  auto &out = vm->GetOutputDevice("stdout");
+  out << s->str << std::endl;
 }
 
-inline void PrintInt32(fetch::vm::VM * /*vm*/, int32_t const &s)
+inline void PrintInt32(fetch::vm::VM *vm, int32_t const &s)
 {
-  std::cout << s;
+  auto &out = vm->GetOutputDevice("stdout");
+  out << s;
 }
 
-inline void PrintLnInt32(fetch::vm::VM * /*vm*/, int32_t const &s)
+inline void PrintLnInt32(fetch::vm::VM *vm, int32_t const &s)
 {
-
-  std::cout << s << std::endl;
+  auto &out = vm->GetOutputDevice("stdout");
+  out << s << std::endl;
 }
 
-inline void PrintInt64(fetch::vm::VM * /*vm*/, int64_t const &s)
+inline void PrintInt64(fetch::vm::VM *vm, int64_t const &s)
 {
-
-  std::cout << s;
+  auto &out = vm->GetOutputDevice("stdout");
+  out << s;
 }
 
-inline void PrintLnInt64(fetch::vm::VM * /*vm*/, int64_t const &s)
+inline void PrintLnInt64(fetch::vm::VM *vm, int64_t const &s)
 {
-
-  std::cout << s << std::endl;
+  auto &out = vm->GetOutputDevice("stdout");
+  out << s << std::endl;
 }
 
-inline void PrintFloat(fetch::vm::VM * /*vm*/, float const &s)
+inline void PrintFloat(fetch::vm::VM *vm, float const &s)
 {
-
-  std::cout << s;
+  auto &out = vm->GetOutputDevice("stdout");
+  out << s;
 }
 
-inline void PrintLnFloat(fetch::vm::VM * /*vm*/, float const &s)
+inline void PrintLnFloat(fetch::vm::VM *vm, float const &s)
 {
-
-  std::cout << s;
+  auto &out = vm->GetOutputDevice("stdout");
+  out << s;
 }
 
-inline void PrintDouble(fetch::vm::VM * /*vm*/, double const &s)
+inline void PrintDouble(fetch::vm::VM *vm, double const &s)
 {
-
-  std::cout << s;
+  auto &out = vm->GetOutputDevice("stdout");
+  out << s;
 }
 
-inline void PrintLnDouble(fetch::vm::VM * /*vm*/, double const &s)
+inline void PrintLnDouble(fetch::vm::VM *vm, double const &s)
 {
-
-  std::cout << s << std::endl;
+  auto &out = vm->GetOutputDevice("stdout");
+  out << s << std::endl;
 }
 
 template <typename T, bool NL = false>
@@ -117,14 +120,14 @@ inline void PrintArrayPrimitive(fetch::vm::VM *vm, vm::Ptr<vm::Array<T>> const &
   {
     if (i != 0)
     {
-      std::cout << ", ";
+      out << ", ";
     }
-    std::cout << g->elements[i];
+    out << g->elements[i];
   }
-  std::cout << "]";
+  out << "]";
   if (NL)
   {
-    std::cout << std::endl;
+    out << std::endl;
   }
 }
 
