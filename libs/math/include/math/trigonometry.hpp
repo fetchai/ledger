@@ -59,6 +59,7 @@ fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> Sin(ArrayType const 
   while (x_it.is_valid())
   {
     // TODO(800) - native fixed point implementation required - casting to double will not be
+    // allowed
     casted_x   = double(*x_it);
     casted_ret = double(*rit);
     s(casted_x, casted_ret);
@@ -107,6 +108,7 @@ fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> Cos(ArrayType const 
   while (x_it.is_valid())
   {
     // TODO(800) - native fixed point implementation required - casting to double will not be
+    // allowed
     casted_x   = double(*x_it);
     casted_ret = double(*rit);
     c(casted_x, casted_ret);
@@ -155,6 +157,7 @@ fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> Tan(ArrayType const 
   while (x_it.is_valid())
   {
     // TODO(800) - native fixed point implementation required - casting to double will not be
+    // allowed
     casted_x   = double(*x_it);
     casted_ret = double(*rit);
     s(casted_x, casted_ret);
@@ -203,6 +206,7 @@ fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> ASin(ArrayType const
   while (x_it.is_valid())
   {
     // TODO(800) - native fixed point implementation required - casting to double will not be
+    // allowed
     casted_x   = double(*x_it);
     casted_ret = double(*rit);
     s(casted_x, casted_ret);
@@ -251,6 +255,7 @@ fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> ACos(ArrayType const
   while (x_it.is_valid())
   {
     // TODO(800) - native fixed point implementation required - casting to double will not be
+    // allowed
     casted_x   = double(*x_it);
     casted_ret = double(*rit);
     s(casted_x, casted_ret);
@@ -299,6 +304,7 @@ fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> ATan(ArrayType const
   while (x_it.is_valid())
   {
     // TODO(800) - native fixed point implementation required - casting to double will not be
+    // allowed
     casted_x   = double(*x_it);
     casted_ret = double(*rit);
     s(casted_x, casted_ret);
@@ -347,6 +353,7 @@ fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> SinH(ArrayType const
   while (x_it.is_valid())
   {
     // TODO(800) - native fixed point implementation required - casting to double will not be
+    // allowed
     casted_x   = double(*x_it);
     casted_ret = double(*rit);
     s(casted_x, casted_ret);
@@ -395,6 +402,7 @@ fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> CosH(ArrayType const
   while (x_it.is_valid())
   {
     // TODO(800) - native fixed point implementation required - casting to double will not be
+    // allowed
     casted_x   = double(*x_it);
     casted_ret = double(*rit);
     s(casted_x, casted_ret);
@@ -443,6 +451,7 @@ fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> TanH(ArrayType const
   while (x_it.is_valid())
   {
     // TODO(800) - native fixed point implementation required - casting to double will not be
+    // allowed
     casted_x   = double(*x_it);
     casted_ret = double(*rit);
     s(casted_x, casted_ret);
@@ -492,6 +501,7 @@ fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> ASinH(ArrayType cons
   while (x_it.is_valid())
   {
     // TODO(800) - native fixed point implementation required - casting to double will not be
+    // allowed
     casted_x   = double(*x_it);
     casted_ret = double(*rit);
     s(casted_x, casted_ret);
@@ -541,6 +551,7 @@ fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> ACosH(ArrayType cons
   while (x_it.is_valid())
   {
     // TODO(800) - native fixed point implementation required - casting to double will not be
+    // allowed
     casted_x   = double(*x_it);
     casted_ret = double(*rit);
     s(casted_x, casted_ret);
@@ -590,6 +601,7 @@ fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> ATanH(ArrayType cons
   while (x_it.is_valid())
   {
     // TODO(800) - native fixed point implementation required - casting to double will not be
+    // allowed
     casted_x   = double(*x_it);
     casted_ret = double(*rit);
     s(casted_x, casted_ret);
@@ -796,7 +808,7 @@ fetch::math::meta::IfIsArithmetic<Type, Type> SinH(Type const &x)
 }
 
 /**
- * maps every element of the array x to ret = ATan(x)
+ * maps every element of the array x to ret = CosH(x)
  * @param x - array
  */
 template <typename Type>
@@ -823,7 +835,7 @@ fetch::math::meta::IfIsArithmetic<Type, Type> CosH(Type const &x)
 }
 
 /**
- * maps every element of the array x to ret = ATan(x)
+ * maps every element of the array x to ret = TanH(x)
  * @param x - array
  */
 template <typename Type>

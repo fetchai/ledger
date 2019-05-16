@@ -16,9 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iomanip>
-#include <iostream>
-
 #include "math/tensor.hpp"
 #include "math/trigonometry.hpp"
 #include <gtest/gtest.h>

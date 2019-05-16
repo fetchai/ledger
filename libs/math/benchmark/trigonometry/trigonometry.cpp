@@ -16,12 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iomanip>
-#include <iostream>
-
+#include "math/trigonometry.hpp"
 #include "core/random/lfg.hpp"
 #include "math/fixed_point/fixed_point.hpp"
-#include "math/trigonometry.hpp"
 
 #include "benchmark/benchmark.h"
 
