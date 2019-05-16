@@ -53,18 +53,17 @@ public:
     ASSERT(inputs.size() == 1);
     // Input should be a 2D tensor [C x W]
     ASSERT(inputs.at(0).get().shape().size() == 2);
+    ASSERT(output.shape() == ComputeOutputShape(inputs));
 
-    auto output_shape = ComputeOutputShape(inputs);
-    ASSERT(output.shape() == output_shape);
     SizeType iter;
     DataType max;
     DataType val;
     auto     oit = output.begin();
     // output_channels = input_channels
-    for (SizeType i{0}; i < output_shape.at(1); i++)  // Iterate over kernel stride
+    for (SizeType i{0}; i < output.shape().at(1); i++)  // Iterate over kernel stride
     {
       iter = i * stride_size_;
-      for (SizeType c{0}; c < output_shape[0]; ++c)  // Iterate over output channels
+      for (SizeType c{0}; c < output.shape().at(0); ++c)  // Iterate over output channels
       {
         max = inputs.at(0).get().At(c, iter);
 
@@ -142,28 +141,23 @@ public:
   }
 
   std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) override
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const override
   {
-    // Return pre-computed value if exist
-    if (output_shape_.size() != 0)
-    {
-      return output_shape_;
-    }
+    std::vector<SizeType> output_shape;
 
     // output_shape_[0]=number of output channels
-    output_shape_.emplace_back(inputs.at(0).get().shape().at(0));
+    output_shape.emplace_back(inputs.at(0).get().shape().at(0));
     // output_shape_[1]=number of stride_size steps over input size
-    output_shape_.emplace_back((inputs.at(0).get().shape().at(1) - (kernel_size_ - stride_size_)) /
-                               stride_size_);
-    return output_shape_;
+    output_shape.emplace_back((inputs.at(0).get().shape().at(1) - (kernel_size_ - stride_size_)) /
+                              stride_size_);
+    return output_shape;
   }
 
   static constexpr char const *DESCRIPTOR = "MaxPool1D";
 
 private:
-  SizeType              kernel_size_;
-  SizeType              stride_size_;
-  std::vector<SizeType> output_shape_;
+  SizeType kernel_size_;
+  SizeType stride_size_;
 };
 
 }  // namespace ops
