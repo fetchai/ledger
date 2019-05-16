@@ -25,9 +25,9 @@
 #include "ledger/protocols/executor_rpc_service.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
+#include "meta/log2.hpp"
 #include "mock_storage_unit.hpp"
 #include "storage/resource_mapper.hpp"
-#include "vectorise/meta/log2.hpp"
 
 #include <chrono>
 #include <gtest/gtest.h>
@@ -132,7 +132,7 @@ protected:
     static const uint16_t    P2P_RPC_PORT        = 9130;
     static const uint16_t    LANE_RPC_PORT_START = 9141;
     static const std::size_t NUM_LANES           = 4;
-    static const std::size_t LOG2_NUM_LANES      = fetch::meta::Log2<NUM_LANES>::value;
+    static const std::size_t LOG2_NUM_LANES      = fetch::meta::Log2(NUM_LANES);
 
     using fetch::muddle::NetworkId;
 

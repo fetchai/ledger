@@ -39,15 +39,15 @@ public:
 
   ~Convolution1D() = default;
 
+  std::vector<typename ArrayType::SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const override;
+
   ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
                     ArrayType &                                                 output) override;
 
   std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           error_signal) override;
-
-  std::vector<typename ArrayType::SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) override;
 
   static constexpr char const *DESCRIPTOR = "Convolution1D";
 
@@ -74,8 +74,7 @@ private:
   void ReverseFillOutput(ArrayType &gemm_output, ArrayType const &output,
                          SizeType const output_channels, SizeType const output_height);
 
-  SizeType              stride_size_;
-  std::vector<SizeType> output_shape_;
+  SizeType stride_size_;
 };
 
 /**
@@ -96,9 +95,7 @@ ArrayType Convolution1D<ArrayType>::Forward(
   ASSERT(inputs.at(0).get().shape().size() == 2);
   // Kernels should be a 3D tensor [oC x iC x H]
   ASSERT(inputs.at(1).get().shape().size() == 3);
-
-  auto output_shape = ComputeOutputShape(inputs);
-  ASSERT(output.shape() == output_shape);
+  ASSERT(output.shape() == ComputeOutputShape(inputs));
 
   ArrayType input   = inputs.at(0).get();
   ArrayType kernels = inputs.at(1).get();
@@ -106,7 +103,7 @@ ArrayType Convolution1D<ArrayType>::Forward(
   SizeType input_channels  = input.shape().at(0);
   SizeType output_channels = kernels.shape().at(0);
   SizeType kernel_height   = kernels.shape().at(2);
-  SizeType output_height   = output_shape.at(1);
+  SizeType output_height   = output.shape().at(1);
 
   SizeType horizontal_stride_width  = kernel_height * input_channels;
   SizeType horizontal_stride_height = output_height;
@@ -152,11 +149,9 @@ std::vector<ArrayType> Convolution1D<ArrayType>::Backward(
   ASSERT(inputs.at(0).get().shape().size() == 2);
   // Kernels should be a 3D tensor [oC x iC x H]
   ASSERT(inputs.at(1).get().shape().size() == 3);
+  ASSERT(error_signal.shape() == ComputeOutputShape(inputs));
 
-  auto output_shape = ComputeOutputShape(inputs);
-  ASSERT(error_signal.shape() == output_shape);
-
-  SizeType output_height = output_shape.at(1);
+  SizeType output_height = error_signal.shape().at(1);
 
   ArrayType input   = inputs.at(0).get();
   ArrayType kernels = inputs.at(1).get();
@@ -201,18 +196,17 @@ std::vector<ArrayType> Convolution1D<ArrayType>::Backward(
 
 template <class ArrayType>
 std::vector<typename ArrayType::SizeType> Convolution1D<ArrayType>::ComputeOutputShape(
-    std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+    std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
 {
-  // Return pre-computed value if exist
-  if (output_shape_.size() != 0)
-    return output_shape_;
+  std::vector<SizeType> output_shape;
+
   // output_shape_[0]=number of output channels
-  output_shape_.emplace_back(inputs.at(1).get().shape()[0]);
+  output_shape.emplace_back(inputs.at(1).get().shape().at(0));
   // output_shape_[1]=number of stride_size steps over input size
-  output_shape_.emplace_back(
-      (inputs.at(0).get().shape()[1] - inputs.at(1).get().shape()[2] + stride_size_) /
+  output_shape.emplace_back(
+      (inputs.at(0).get().shape().at(1) - inputs.at(1).get().shape().at(2) + stride_size_) /
       stride_size_);
-  return output_shape_;
+  return output_shape;
 }
 
 // TODO(issue 943): Make im2col efficient using iterators
