@@ -82,24 +82,20 @@ public:
     this->SetOutputNode(output);
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) override
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const override
   {
-    // Return pre-computed value if exist
-    if (output_shape_.size() != 0)
-    {
-      return output_shape_;
-    }
+    std::vector<SizeType> output_shape;
 
     // output_shape_[0]=number of output channels
-    output_shape_.emplace_back(output_channels_);
+    output_shape.emplace_back(output_channels_);
     // output_shape_[1]=number of stride_size steps over input height
-    output_shape_.emplace_back((inputs.at(0).get().shape()[1] - kernel_size_ + stride_size_) /
-                               stride_size_);
+    output_shape.emplace_back((inputs.at(0).get().shape()[1] - kernel_size_ + stride_size_) /
+                              stride_size_);
     // output_shape_[2]=number of stride_size steps over input width
-    output_shape_.emplace_back((inputs.at(0).get().shape()[2] - kernel_size_ + stride_size_) /
-                               stride_size_);
-    return output_shape_;
+    output_shape.emplace_back((inputs.at(0).get().shape()[2] - kernel_size_ + stride_size_) /
+                              stride_size_);
+    return output_shape;
   }
 
   static constexpr char const *DESCRIPTOR = "Convolution2D";
@@ -111,11 +107,10 @@ private:
                                                    init_mode);
   }
 
-  SizeType              kernel_size_;
-  SizeType              input_channels_;
-  SizeType              output_channels_;
-  SizeType              stride_size_;
-  std::vector<SizeType> output_shape_;
+  SizeType kernel_size_;
+  SizeType input_channels_;
+  SizeType output_channels_;
+  SizeType stride_size_;
 };
 
 }  // namespace layers
