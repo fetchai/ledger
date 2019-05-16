@@ -208,6 +208,8 @@ public:
   VM(Module *module);
   ~VM() = default;
 
+  static constexpr char const * const STDOUT = "stdout";
+
   RegisteredTypes const &registered_types() const
   {
     return registered_types_;
