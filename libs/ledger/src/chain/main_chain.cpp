@@ -240,7 +240,10 @@ bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalida
       references_.erase(children.first, children.second);
 
       // next, remove the block record from the cache, if found
-      retVal = retVal || block_chain_.erase(hash);
+      if (block_chain_.erase(hash))
+      {
+        retVal = true;
+      }
     }
   }
 
