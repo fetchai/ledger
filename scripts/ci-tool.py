@@ -135,6 +135,10 @@ def parse_commandline():
         help='The prefix to be used for the naming of the build folder')
     parser.add_argument('-B', '--build', action='store_true',
                         help='Build the project')
+    parser.add_argument('-j', dest='jobs', type=int, default=CONCURRENCY,
+                        help=('The number of jobs to do in parallel. If `0` then number of '
+                              'available CPU cores will be used, if omitted then it defaults '
+                              'to {}'.format(CONCURRENCY)))
     parser.add_argument('-T', '--test', action='store_true',
                         help='Test the project')
     parser.add_argument('-I', '--integration-tests', action='store_true',
@@ -149,7 +153,7 @@ def parse_commandline():
     return parser.parse_args()
 
 
-def build_project(project_root, build_root, options):
+def build_project(project_root, build_root, options, concurrency=CONCURRENCY):
     output('Source.:', project_root)
     output('Build..:', build_root)
     output('Options:')
@@ -185,9 +189,7 @@ def build_project(project_root, build_root, options):
         cmd = ["ninja"]
 
     else:
-        # manually specifying the number of cores is required because make automatic detection is
-        # flakey inside docker.
-        cmd = ['make', '-j', str(CONCURRENCY)]
+        cmd = ['make', '-j', str(concurrency)]
 
     output('Building project with command: {} (detected cpus: {})'.format(
         ' '.join(cmd), AVAILABLE_CPUS))
@@ -276,6 +278,10 @@ def main():
     # parse the options from the command line
     args = parse_commandline()
 
+    # manually specifying the number of cores is required because make automatic detection is
+    # flakey inside docker.
+    concurrency = AVAILABLE_CPUS if args.jobs == 0 else args.jobs
+
     # define all the build roots
     project_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     build_root = os.path.join(project_root, '{}{}'.format(
@@ -284,14 +290,15 @@ def main():
         build_root = os.path.abspath(args.force_build_folder)
 
     options = {
-        'CMAKE_BUILD_TYPE': args.build_type
+        'CMAKE_BUILD_TYPE': args.build_type,
     }
 
     if args.metrics:
         options['FETCH_ENABLE_METRICS'] = 1
 
     if args.build:
-        build_project(project_root, build_root, options)
+        build_project(project_root, build_root,
+                      options, concurrency=concurrency)
 
     if args.test:
         test_project(build_root, 'Normal')

@@ -222,7 +222,7 @@ meta::IfIsInteger<T, T> Decode(ByteArrayBuffer &buffer)
   // determine the traits of the output type
   constexpr bool        output_is_signed   = meta::IsSignedInteger<T>;
   constexpr std::size_t output_length      = sizeof(T);
-  constexpr std::size_t output_log2_length = meta::Log2<output_length>::value;
+  constexpr std::size_t output_log2_length = meta::Log2(output_length);
 
   T output_value{0};
 

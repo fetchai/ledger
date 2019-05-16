@@ -17,9 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/memory/shared_array.hpp"
+#include "vectorise/platform.hpp"
+
 namespace fetch {
-namespace http {
-namespace middleware {
-}
-}  // namespace http
+namespace math {
+
+template <typename T, typename C>
+class Tensor;
+
+namespace linalg {
+template <typename T, uint64_t S, uint64_t I,
+          uint64_t V = platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+class Blas
+{
+public:
+  template <typename... Args>
+  void operator()(Args... args) = delete;
+};
+
+}  // namespace linalg
+}  // namespace math
 }  // namespace fetch

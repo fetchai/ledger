@@ -56,7 +56,7 @@ public:
     ASSERT(inputs.front().get().shape() == errorSignal.shape());
 
     ArrayType return_signal = errorSignal.Copy();
-    ArrayType t(this->ComputeOutputShape(inputs));
+    ArrayType t(errorSignal.shape());
     t = this->Forward(inputs, t);
     return_signal.InlineMultiply(t);
 
@@ -84,7 +84,7 @@ public:
   }
 
   std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
   {
     return inputs.front().get().shape();
   }
