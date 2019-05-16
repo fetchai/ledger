@@ -799,8 +799,8 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DynamicStitch(ArrayType &     
                                                                 ArrayType const &data)
 {
   ASSERT(data.size() <= input_array.size());
-  ASSERT(input_array.size() >= Max(indices));
-  ASSERT(Min(indices) >= 0);
+  ASSERT(input_array.size() > static_cast<typename ArrayType::SizeType>(Max(indices)));
+  ASSERT(static_cast<typename ArrayType::SizeType>(Min(indices)) >= 0);
   input_array.Resize({indices.size()});
 
   auto ind_it  = indices.cbegin();

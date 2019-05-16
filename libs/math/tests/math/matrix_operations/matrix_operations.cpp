@@ -517,7 +517,7 @@ TYPED_TEST(FreeFunctionsTest, ReduceSum_axis_0)
   array1.Set(SizeType{3}, SizeType{0}, DataType(21));
   array1.Set(SizeType{3}, SizeType{1}, DataType(-0.5));
 
-  TypeParam output({1, n_features});
+  TypeParam output{{1, n_features}};
   fetch::math::ReduceSum(array1, SizeType(0), output);
 
   EXPECT_NEAR(double(output.At(0, 0)), 17., 1e-5);
@@ -542,7 +542,7 @@ TYPED_TEST(FreeFunctionsTest, ReduceSum_axis_1)
   array1.Set(SizeType{3}, SizeType{0}, DataType(21));
   array1.Set(SizeType{3}, SizeType{1}, DataType(-0.5));
 
-  TypeParam output({n_data, 1});
+  TypeParam output{{n_data, 1}};
   fetch::math::ReduceSum(array1, SizeType(1), output);
   EXPECT_NEAR(double(output.At(0, 0)), 4., 1e-5);
   EXPECT_NEAR(double(output.At(1, 0)), 0., 1e-5);
@@ -568,7 +568,7 @@ TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_0)
   array1.Set(SizeType{3}, SizeType{0}, DataType(21));
   array1.Set(SizeType{3}, SizeType{1}, DataType(-0.5));
 
-  TypeParam output({1, n_features});
+  TypeParam output{{1, n_features}};
   fetch::math::ReduceMean(array1, SizeType(0), output);
 
   EXPECT_NEAR(double(output.At(0, 0)), 8.5, 1e-5);
@@ -593,7 +593,7 @@ TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_1)
   array1.Set(SizeType{3}, SizeType{0}, DataType(21));
   array1.Set(SizeType{3}, SizeType{1}, DataType(-0.5));
 
-  TypeParam output({n_data, 1});
+  TypeParam output{{n_data, 1}};
   fetch::math::ReduceMean(array1, SizeType(1), output);
   EXPECT_NEAR(double(output.At(0, 0)), 1., 1e-5);
   EXPECT_NEAR(double(output.At(1, 0)), 0., 1e-5);
@@ -632,7 +632,7 @@ TYPED_TEST(FreeFunctionsTest, Dot)
     cnt2 += DataType{1};
   }
 
-  TypeParam output({matrix_one_width, matrix_two_height});
+  TypeParam output{{matrix_one_width, matrix_two_height}};
   fetch::math::Dot(array1, array2, output);
 
   EXPECT_NEAR(double(output.At(0, 0)), 3, 1e-5);
@@ -680,7 +680,7 @@ TYPED_TEST(FreeFunctionsTest, DotTranspose)
     cnt2 += DataType{1};
   }
 
-  TypeParam output({matrix_one_width, matrix_two_width});
+  TypeParam output{{matrix_one_width, matrix_two_width}};
   fetch::math::DotTranspose(array1, array2, output);
 
   EXPECT_NEAR(double(output.At(0, 0)), 12, 1e-5);
@@ -728,7 +728,7 @@ TYPED_TEST(FreeFunctionsTest, TransposeDot)
     cnt2 += DataType{1};
   }
 
-  TypeParam output({matrix_one_height, matrix_two_height});
+  TypeParam output{{matrix_one_height, matrix_two_height}};
   fetch::math::TransposeDot(array1, array2, output);
 
   EXPECT_NEAR(double(output.At(0, 0)), 1, 1e-5);
@@ -743,4 +743,37 @@ TYPED_TEST(FreeFunctionsTest, TransposeDot)
   EXPECT_NEAR(double(output.At(2, 1)), 23, 1e-5);
   EXPECT_NEAR(double(output.At(2, 2)), 41, 1e-5);
   EXPECT_NEAR(double(output.At(2, 3)), 59, 1e-5);
+}
+
+TYPED_TEST(FreeFunctionsTest, DynamicStitch)
+{
+  using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
+
+  SizeType  n_data = 6;
+  TypeParam data{{n_data}};
+  TypeParam indicies{{n_data}};
+
+  data.Set(SizeType{0}, DataType(-2));
+  data.Set(SizeType{1}, DataType(3));
+  data.Set(SizeType{2}, DataType(-4));
+  data.Set(SizeType{3}, DataType(5));
+  data.Set(SizeType{4}, DataType(-6));
+  data.Set(SizeType{5}, DataType(7));
+
+  indicies.Set(SizeType{0}, DataType(5));
+  indicies.Set(SizeType{1}, DataType(4));
+  indicies.Set(SizeType{2}, DataType(3));
+  indicies.Set(SizeType{3}, DataType(2));
+  indicies.Set(SizeType{4}, DataType(1));
+  indicies.Set(SizeType{5}, DataType(0));
+
+  TypeParam output{{n_data}};
+  fetch::math::DynamicStitch(output, indicies, data);
+  EXPECT_NEAR(double(output.At(0)), 7., 1e-5);
+  EXPECT_NEAR(double(output.At(1)), 6., 1e-5);
+  EXPECT_NEAR(double(output.At(2)), 5., 1e-5);
+  EXPECT_NEAR(double(output.At(3)), 4., 1e-5);
+  EXPECT_NEAR(double(output.At(3)), 3., 1e-5);
+  EXPECT_NEAR(double(output.At(3)), 2., 1e-5);
 }
