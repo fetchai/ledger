@@ -294,9 +294,12 @@ C2VLoader<DataType, LabelType>::GetNext()
       {
         for (u_int64_t i{0}; i < this->max_contexts_; i++)
         {
-          source_word_tensor.Set(i, static_cast<Type>(std::get<0>(this->data[context_positions[i]].first)));
-          path_tensor.Set(i, static_cast<Type>(std::get<1>(this->data[context_positions[i]].first)));
-          target_word_tensor.Set(i, static_cast<Type>(std::get<2>(this->data[context_positions[i]].first)));
+          source_word_tensor.Set(
+              i, static_cast<Type>(std::get<0>(this->data[context_positions[i]].first)));
+          path_tensor.Set(i,
+                          static_cast<Type>(std::get<1>(this->data[context_positions[i]].first)));
+          target_word_tensor.Set(
+              i, static_cast<Type>(std::get<2>(this->data[context_positions[i]].first)));
         }
       }
       ContextTensorTuple context_tensor_tuple =
