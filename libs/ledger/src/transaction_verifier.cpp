@@ -19,10 +19,10 @@
 #include "ledger/transaction_verifier.hpp"
 #include "core/logger.hpp"
 #include "core/threading.hpp"
-#include "metrics/metrics.hpp"
-#include "network/generics/milli_timer.hpp"
 #include "ledger/chain/v2/transaction.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
+#include "metrics/metrics.hpp"
+#include "network/generics/milli_timer.hpp"
 
 #include <chrono>
 
@@ -100,7 +100,8 @@ void TransactionVerifier::Verifier()
         }
         else
         {
-          FETCH_LOG_WARN(LOGGING_NAME, name_ + " Unable to verify transaction: 0x", tx->digest().ToHex());
+          FETCH_LOG_WARN(LOGGING_NAME, name_ + " Unable to verify transaction: 0x",
+                         tx->digest().ToHex());
         }
       }
     }

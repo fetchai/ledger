@@ -100,7 +100,7 @@ public:
   /// @{
   Address const &  from() const;
   Transfers const &transfers() const;
-  uint64_t GetTotalTransferAmount() const;
+  uint64_t         GetTotalTransferAmount() const;
   /// @}
 
   /// @name Validity Accessors

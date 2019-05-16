@@ -89,13 +89,13 @@ TEST_F(DummyContractTests, CheckDispatch)
 
   // create the sample transaction
   auto const tx = v2::TransactionBuilder()
-    .From(v2::Address{signer.identity()})
-    .TargetChainCode("fetch.dummy", BitVector{})
-    .Action("wait")
-    .Signer(signer.identity())
-    .Seal()
-    .Sign(signer)
-    .Build();
+                      .From(v2::Address{signer.identity()})
+                      .TargetChainCode("fetch.dummy", BitVector{})
+                      .Action("wait")
+                      .Signer(signer.identity())
+                      .Seal()
+                      .Sign(signer)
+                      .Build();
 
   // create the storage adapter
   StateSentinelAdapter adapter(*storage_, Identifier{tx->chain_code()}, BitVector{});

@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lcg.hpp"
 #include "core/byte_array/byte_array.hpp"
+#include "core/random/lcg.hpp"
 #include "ledger/chain/v2/digest.hpp"
 #include "ledger/chain/v2/transaction_layout.hpp"
 
@@ -29,8 +29,7 @@ public:
 
   explicit TransactionGenerator(uint32_t log2_num_lanes = 0)
     : log2_num_lanes_{log2_num_lanes}
-  {
-  }
+  {}
 
   void Seed(std::size_t seed = 42)
   {
@@ -40,17 +39,10 @@ public:
   TransactionLayout operator()(uint32_t num_resources)
   {
     auto const index = index_++;
-    return {
-      GenerateDigest(),
-      GenerateResources(num_resources),
-      (index + 1) * 2,
-      1,
-      1000
-    };
+    return {GenerateDigest(), GenerateResources(num_resources), (index + 1) * 2, 1, 1000};
   }
 
 private:
-
   using Rng       = fetch::random::LinearCongruentialGenerator;
   using RngWord   = Rng::random_type;
   using Digest    = fetch::ledger::v2::Digest;
@@ -92,6 +84,6 @@ private:
 
   uint32_t const log2_num_lanes_{0};
   uint32_t const num_lanes_{1u << log2_num_lanes_};
-  Rng      rng_{};
-  uint32_t index_{0};
+  Rng            rng_{};
+  uint32_t       index_{0};
 };

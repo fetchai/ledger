@@ -19,17 +19,17 @@
 #include "ledger/chaincode/token_contract.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "crypto/fnv.hpp"
+#include "ledger/chain/v2/transaction.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/wallet_record.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
-#include "ledger/chain/v2/transaction.hpp"
 
 #include <functional>
 #include <memory>
+#include <numeric>
 #include <set>
 #include <stdexcept>
-#include <numeric>
 
 namespace fetch {
 namespace ledger {
@@ -89,7 +89,8 @@ bool TokenContract::SubtractTokens(v2::Address const &address, uint64_t amount)
   return true;
 }
 
-bool TokenContract::TransferTokens(v2::Transaction const &tx, v2::Address const &to, uint64_t amount)
+bool TokenContract::TransferTokens(v2::Transaction const &tx, v2::Address const &to,
+                                   uint64_t amount)
 {
   // look up the state record (to see if there is a deed associated with this address)
   WalletRecord from_record{};

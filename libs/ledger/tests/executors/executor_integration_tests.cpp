@@ -37,16 +37,16 @@
 //#include <random>
 //#include <thread>
 //
-//using LaneIndex    = fetch::ledger::LaneIdentity::lane_type;
-//using ShardConfigs = fetch::ledger::ShardConfigs;
+// using LaneIndex    = fetch::ledger::LaneIdentity::lane_type;
+// using ShardConfigs = fetch::ledger::ShardConfigs;
 //
-//using fetch::ledger::v2::Transaction;
-//using fetch::ledger::v2::TransactionBuilder;
-//using fetch::ledger::v2::Address;
+// using fetch::ledger::v2::Transaction;
+// using fetch::ledger::v2::TransactionBuilder;
+// using fetch::ledger::v2::Address;
 //
-//class ExecutorIntegrationTests : public ::testing::Test
+// class ExecutorIntegrationTests : public ::testing::Test
 //{
-//protected:
+// protected:
 //  using ExecutorRpcClient         = fetch::ledger::ExecutorRpcClient;
 //  using ExecutorRpcService        = fetch::ledger::ExecutorRpcService;
 //  using NetworkManager            = fetch::network::NetworkManager;
@@ -288,7 +288,7 @@
 //  MuddlePtr muddle_;
 //};
 //
-//TEST_F(ExecutorIntegrationTests, DISABLED_CheckDummyContract)
+// TEST_F(ExecutorIntegrationTests, DISABLED_CheckDummyContract)
 //{
 //  // create the dummy contract
 //  auto tx = CreateDummyTransaction();
@@ -303,7 +303,7 @@
 //  EXPECT_EQ(result.status, fetch::ledger::ExecutorInterface::Status::SUCCESS);
 //}
 //
-//TEST_F(ExecutorIntegrationTests, DISABLED_CheckTokenContract)
+// TEST_F(ExecutorIntegrationTests, DISABLED_CheckTokenContract)
 //{
 //  // create the dummy contract
 //  auto tx = CreateWalletTransaction();

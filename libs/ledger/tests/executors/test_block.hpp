@@ -109,13 +109,7 @@ struct TestBlock
 
             // create the transaction summary
             current_slice.emplace_back(
-              fetch::ledger::v2::TransactionLayout{
-                GenerateHash(rng),
-                mask,
-                1,
-                0,
-                100
-              });
+                fetch::ledger::v2::TransactionLayout{GenerateHash(rng), mask, 1, 0, 100});
 
             ++num_transactions;
           }

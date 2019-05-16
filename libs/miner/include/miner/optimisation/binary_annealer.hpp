@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/bitvector.hpp"
 #include "core/logger.hpp"
 #include "core/random/lcg.hpp"
 #include "core/random/lfg.hpp"
 #include "math/approx_exp.hpp"
-#include "core/bitvector.hpp"
 
 namespace fetch {
 namespace optimisers {

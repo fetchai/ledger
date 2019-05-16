@@ -26,7 +26,7 @@ class FakeStorageUnit;
 class FakeExecutionManager : public fetch::ledger::ExecutionManagerInterface
 {
 public:
-  using Block = fetch::ledger::Block;
+  using Block  = fetch::ledger::Block;
   using Digest = fetch::ledger::v2::Digest;
 
   static constexpr char const *LOGGING_NAME = "FakeExexMgr";
@@ -37,7 +37,7 @@ public:
   /// @name Execution Manager Interface
   /// @{
   ScheduleStatus Execute(Block::Body const &block) override;
-  Digest      LastProcessedBlock() override;
+  Digest         LastProcessedBlock() override;
   void           SetLastProcessedBlock(Digest hash) override;
   State          GetState() override;
   bool           Abort() override;
@@ -46,8 +46,8 @@ public:
 private:
   FakeStorageUnit &storage_;
 
-  Digest   current_hash_;
-  Digest   current_merkle_root_;
-  Digest   last_processed_{fetch::ledger::GENESIS_DIGEST};
+  Digest      current_hash_;
+  Digest      current_merkle_root_;
+  Digest      last_processed_{fetch::ledger::GENESIS_DIGEST};
   std::size_t current_polls_{0};
 };

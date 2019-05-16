@@ -391,7 +391,7 @@ TEST_P(MainChainTests, AdditionOfBlocksOutOfOrder)
   // Try adding a non-sequential block (prev hash is itself)
   Block dummy;
   dummy.body.block_number = 2;
-  dummy.body.miner = ledger::v2::Address{ledger::v2::Address::RawAddress{}};
+  dummy.body.miner        = ledger::v2::Address{ledger::v2::Address::RawAddress{}};
   dummy.UpdateDigest();
   dummy.body.previous_hash = dummy.body.hash;
 

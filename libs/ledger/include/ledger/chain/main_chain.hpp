@@ -25,11 +25,11 @@
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chain/v2/digest.hpp"
+#include "ledger/chain/v2/transaction_layout.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "storage/object_store.hpp"
 #include "storage/resource_mapper.hpp"
-#include "ledger/chain/v2/transaction_layout.hpp"
-#include "ledger/chain/v2/digest.hpp"
 
 #include <fstream>
 #include <map>
@@ -76,11 +76,11 @@ char const *ToString(BlockStatus status);
 class MainChain
 {
 public:
-  using BlockPtr     = std::shared_ptr<Block const>;
-  using Blocks       = std::vector<BlockPtr>;
-  using BlockHash    = v2::Digest;
-  using BlockHashs   = std::vector<BlockHash>;
-  using BlockHashSet = std::unordered_set<BlockHash>;
+  using BlockPtr             = std::shared_ptr<Block const>;
+  using Blocks               = std::vector<BlockPtr>;
+  using BlockHash            = v2::Digest;
+  using BlockHashs           = std::vector<BlockHash>;
+  using BlockHashSet         = std::unordered_set<BlockHash>;
   using TransactionLayoutSet = std::unordered_set<v2::TransactionLayout>;
 
   static constexpr char const *LOGGING_NAME = "MainChain";
@@ -141,7 +141,8 @@ public:
 
   /// @name Transaction Duplication Filtering
   /// @{
-  v2::DigestSet DetectDuplicateTransactions(BlockHash starting_hash, v2::DigestSet const &transactions) const;
+  v2::DigestSet DetectDuplicateTransactions(BlockHash            starting_hash,
+                                            v2::DigestSet const &transactions) const;
   /// @}
 
   // Operators

@@ -21,13 +21,13 @@
 #include "crypto/ecdsa.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/v2/transaction_builder.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "mock_storage_unit.hpp"
-#include "ledger/chain/v2/transaction.hpp"
-#include "ledger/chain/v2/transaction_builder.hpp"
 
 #include "ledger/fetch_msgpack.hpp"
 
@@ -132,7 +132,8 @@ protected:
     return SendSmartAction(action, p.GetBuffer());
   }
 
-  Contract::Status SendSmartAction(ConstByteArray const &action, ConstByteArray const &data = ConstByteArray{})
+  Contract::Status SendSmartAction(ConstByteArray const &action,
+                                   ConstByteArray const &data = ConstByteArray{})
   {
     using fetch::ledger::v2::TransactionBuilder;
     using fetch::ledger::v2::Address;
@@ -142,14 +143,14 @@ protected:
 
     // build the transaction
     auto tx = TransactionBuilder()
-      .From(Address{certificate_->identity()})
-      .TargetSmartContract(*contract_address_, *owner_address_, mask)
-      .Action(action)
-      .Signer(certificate_->identity())
-      .Data(data)
-      .Seal()
-      .Sign(*certificate_)
-      .Build();
+                  .From(Address{certificate_->identity()})
+                  .TargetSmartContract(*contract_address_, *owner_address_, mask)
+                  .Action(action)
+                  .Signer(certificate_->identity())
+                  .Data(data)
+                  .Seal()
+                  .Sign(*certificate_)
+                  .Build();
 
     // adapt the storage engine for this execution
     StateSentinelAdapter storage_adapter{*storage_, *contract_name_, mask};

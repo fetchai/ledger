@@ -140,7 +140,7 @@ protected:
 
 using Transaction = VerifiedTransaction;
 
-//using TxList = std::vector<UnverifiedTransaction>;
+// using TxList = std::vector<UnverifiedTransaction>;
 
 }  // namespace ledger
 }  // namespace fetch

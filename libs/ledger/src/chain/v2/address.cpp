@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/encoders.hpp"
-#include "core/byte_array/decoders.hpp"
 #include "ledger/chain/v2/address.hpp"
+#include "core/byte_array/decoders.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "core/macros.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/identity.hpp"

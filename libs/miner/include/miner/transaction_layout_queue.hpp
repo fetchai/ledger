@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/bitvector.hpp"
-#include "ledger/chain/v2/transaction_layout.hpp"
-#include "ledger/chain/v2/digest.hpp"
 #include "crypto/fnv.hpp"
+#include "ledger/chain/v2/digest.hpp"
+#include "ledger/chain/v2/transaction_layout.hpp"
 
 #include <list>
 
@@ -40,30 +40,30 @@ public:
   // Construction / Destruction
   explicit TransactionLayoutQueue(uint32_t log2_num_lanes);
   TransactionLayoutQueue(TransactionLayoutQueue const &) = delete;
-  TransactionLayoutQueue(TransactionLayoutQueue &&) = delete;
-  ~TransactionLayoutQueue() = default;
+  TransactionLayoutQueue(TransactionLayoutQueue &&)      = delete;
+  ~TransactionLayoutQueue()                              = default;
 
   /// @name Iteration
   /// @{
-  ConstIterator cbegin() const;
-  ConstIterator begin() const;
-  Iterator begin();
-  ConstIterator cend() const;
-  ConstIterator end() const;
-  Iterator end();
-  std::size_t size() const;
-  bool empty() const;
+  ConstIterator    cbegin() const;
+  ConstIterator    begin() const;
+  Iterator         begin();
+  ConstIterator    cend() const;
+  ConstIterator    end() const;
+  Iterator         end();
+  std::size_t      size() const;
+  bool             empty() const;
   DigestSet const &digests() const;
   /// @}
 
   /// @name Basic Operations
   /// @{
-  bool Add(TransactionLayout const &item);
-  bool Remove(Digest const &digest);
+  bool        Add(TransactionLayout const &item);
+  bool        Remove(Digest const &digest);
   std::size_t Remove(DigestSet const &digests);
-  void Splice(TransactionLayoutQueue &other);
-  void Splice(TransactionLayoutQueue &other, Iterator start, Iterator end);
-  Iterator Erase(Iterator const &iterator);
+  void        Splice(TransactionLayoutQueue &other);
+  void        Splice(TransactionLayoutQueue &other, Iterator start, Iterator end);
+  Iterator    Erase(Iterator const &iterator);
 
   template <typename SortPredicate>
   void Sort(SortPredicate &&predicate);
@@ -74,18 +74,16 @@ public:
   TransactionLayoutQueue &operator=(TransactionLayoutQueue &&) = delete;
 
 private:
-
   static bool RemapAndAdd(UnderlyingList &list, TransactionLayout const &tx, uint32_t num_lanes);
 
   uint32_t       log2_num_lanes_;
-  DigestSet      digests_; ///< Set of digests stored within the list
-  UnderlyingList list_;    ///< The list of transaction layouts
+  DigestSet      digests_;  ///< Set of digests stored within the list
+  UnderlyingList list_;     ///< The list of transaction layouts
 };
 
 inline TransactionLayoutQueue::TransactionLayoutQueue(uint32_t log2_num_lanes)
   : log2_num_lanes_{log2_num_lanes}
-{
-}
+{}
 
 inline TransactionLayoutQueue::ConstIterator TransactionLayoutQueue::cbegin() const
 {
@@ -138,5 +136,5 @@ void TransactionLayoutQueue::Sort(SortPredicate &&predicate)
   list_.sort(predicate);
 }
 
-} // namespace miner
-} // namespace fetch
+}  // namespace miner
+}  // namespace fetch

@@ -584,6 +584,5 @@ void Deserialize(T &serializer, Signatory &b)
   serializer >> b.first >> b.second;
 }
 
-
 }  // namespace ledger
 }  // namespace fetch

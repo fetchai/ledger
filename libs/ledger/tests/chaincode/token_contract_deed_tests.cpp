@@ -17,10 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chain/v2/transaction_builder.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
-#include "ledger/chain/v2/transaction_builder.hpp"
 
 #include <gmock/gmock.h>
 
@@ -39,11 +39,9 @@ using byte_array::ConstByteArray;
 using variant::Variant;
 using Amount = uint64_t;
 
-
 class TokenContractDeedTests : public ::testing::Test
 {
 protected:
-
   static AddressArray const ADDRESSES;
 
   static AddressArray CreateAddresses()
@@ -84,8 +82,9 @@ protected:
     return oss.str();
   }
 
-  static TransactionBuilder::TransactionPtr CreateTransferTx(Address const &from, Address const &to,
-                                  std::vector<PrivateKey *> const &signing_keys, Amount amount)
+  static TransactionBuilder::TransactionPtr CreateTransferTx(
+      Address const &from, Address const &to, std::vector<PrivateKey *> const &signing_keys,
+      Amount amount)
   {
     TransactionBuilder builder;
     builder.From(from);

@@ -21,10 +21,10 @@
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chain/v2/digest.hpp"
+#include "ledger/chain/v2/transaction_layout.hpp"
 #include "meta/log2.hpp"
 #include "vectorise/threading/pool.hpp"
-#include "ledger/chain/v2/transaction_layout.hpp"
-#include "ledger/chain/v2/digest.hpp"
 
 #include "miner/transaction_layout_queue.hpp"
 
@@ -59,10 +59,10 @@ public:
 
   /// @name Miner Interface
   /// @{
-  void EnqueueTransaction(ledger::v2::Transaction const &tx) override;
-  void EnqueueTransaction(ledger::v2::TransactionLayout const &layout) override;
-  void GenerateBlock(Block &block, std::size_t num_lanes, std::size_t num_slices,
-                     MainChain const &chain) override;
+  void     EnqueueTransaction(ledger::v2::Transaction const &tx) override;
+  void     EnqueueTransaction(ledger::v2::TransactionLayout const &layout) override;
+  void     GenerateBlock(Block &block, std::size_t num_lanes, std::size_t num_slices,
+                         MainChain const &chain) override;
   uint64_t GetBacklog() const override;
   /// @}
 
@@ -89,21 +89,21 @@ private:
 
   /// @name Configuration
   /// @{
-  uint32_t       log2_num_lanes_;                    ///< The log2 of the number of lanes
-  uint32_t const max_num_threads_;                   ///< The configured maximum number of threads
-  ThreadPool     thread_pool_;                       ///< The thread pool used to dispatch work
+  uint32_t       log2_num_lanes_;   ///< The log2 of the number of lanes
+  uint32_t const max_num_threads_;  ///< The configured maximum number of threads
+  ThreadPool     thread_pool_;      ///< The thread pool used to dispatch work
   /// @}
 
   /// @name Pending Queue
   /// @{
-  mutable Mutex pending_lock_{__LINE__, __FILE__};      ///< Pending queue lock (priority 1)
-  Queue         pending_;               ///< The main mining queue for the node
+  mutable Mutex pending_lock_{__LINE__, __FILE__};  ///< Pending queue lock (priority 1)
+  Queue         pending_;                           ///< The main mining queue for the node
   /// @}
 
   /// @name Central Mining Pool Queue
   /// @{
   mutable Mutex mining_pool_lock_{__LINE__, __FILE__};  ///< Mining pool lock (priority 0)
-  Queue         mining_pool_;               ///< The main mining queue for the node
+  Queue         mining_pool_;                           ///< The main mining queue for the node
   /// @}
 };
 

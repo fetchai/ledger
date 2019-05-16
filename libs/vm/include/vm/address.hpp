@@ -30,7 +30,7 @@ namespace vm {
 class Address : public Object
 {
 public:
-  static constexpr std::size_t RAW_BYTES_SIZE   = 32;
+  static constexpr std::size_t RAW_BYTES_SIZE = 32;
 
   using Buffer = std::vector<uint8_t>;
 
@@ -67,8 +67,6 @@ public:
   {
     signed_tx_ = set;
   }
-
-
 
   Ptr<String> AsString()
   {

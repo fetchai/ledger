@@ -42,15 +42,15 @@ public:
   // Construction / Destruction
   ExecutionItem(v2::Digest digest, BlockIndex block, SliceIndex slice, BitVector const &shards);
   ExecutionItem(ExecutionItem const &) = delete;
-  ExecutionItem(ExecutionItem &&) = delete;
-  ~ExecutionItem() = default;
+  ExecutionItem(ExecutionItem &&)      = delete;
+  ~ExecutionItem()                     = default;
 
   /// @name Accessors
   /// @{
   v2::Digest const &digest() const;
-  BitVector const &shards() const;
-  Status status() const;
-  uint64_t fee() const;
+  BitVector const & shards() const;
+  Status            status() const;
+  uint64_t          fee() const;
   /// @}
 
   void Execute(ExecutorInterface &executor);
@@ -71,7 +71,8 @@ private:
   AtomicFee    fee_{0};
 };
 
-inline ExecutionItem::ExecutionItem(v2::Digest digest, BlockIndex block, SliceIndex slice, BitVector const &shards)
+inline ExecutionItem::ExecutionItem(v2::Digest digest, BlockIndex block, SliceIndex slice,
+                                    BitVector const &shards)
   : digest_(std::move(digest))
   , block_{block}
   , slice_{slice}

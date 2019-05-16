@@ -22,7 +22,6 @@
 #include "ledger/identifier.hpp"
 #include "meta/log2.hpp"
 
-
 #include <algorithm>
 #include <chrono>
 #include <unordered_map>

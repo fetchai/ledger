@@ -30,12 +30,12 @@
 #include "ledger/state_adapter.hpp"
 #include "ledger/transaction_processor.hpp"
 
-#include "ledger/chain/v2/transaction.hpp"
 #include "ledger/chain/v2/json_transaction.hpp"
+#include "ledger/chain/v2/transaction.hpp"
 #include "variant/variant.hpp"
 
-#include <string>
 #include <memory>
+#include <string>
 
 namespace fetch {
 namespace ledger {
@@ -261,7 +261,7 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(http::HTTPRequest const 
 
     // handle the types of transaction
     TxHashes txs{};
-    bool unknown_format = true;
+    bool     unknown_format = true;
     if (content_type == "application/vnd+fetch.transaction+json" ||
         content_type == "application/json")
     {

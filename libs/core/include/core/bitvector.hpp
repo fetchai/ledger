@@ -56,11 +56,11 @@ public:
 
   void InlineAndAssign(BitVector const &a, BitVector const &b);
 
-  std::size_t size() const;
-  uint32_t log2_size() const;
-  std::size_t blocks() const;
+  std::size_t            size() const;
+  uint32_t               log2_size() const;
+  std::size_t            blocks() const;
   UnderlyingArray const &data() const;
-  UnderlyingArray &data();
+  UnderlyingArray &      data();
 
   std::size_t PopCount() const;
 
@@ -77,7 +77,7 @@ public:
   void set(std::size_t const &block, std::size_t const &bit, uint64_t const &val);
   void set(std::size_t const &bit, uint64_t const &val);
 
-  Block &operator()(std::size_t const &n);
+  Block &      operator()(std::size_t const &n);
   Block const &operator()(std::size_t const &n) const;
 
   bool operator==(BitVector const &other) const;
@@ -96,7 +96,6 @@ private:
   std::size_t     size_{0};
   std::size_t     blocks_{0};
 };
-
 
 inline BitVector::BitVector(std::size_t n)
 {
@@ -156,7 +155,7 @@ inline bool BitVector::RemapTo(BitVector &dst) const
   }
 }
 
-inline  bool BitVector::Expand(BitVector const &src, BitVector &dst)
+inline bool BitVector::Expand(BitVector const &src, BitVector &dst)
 {
   using BitVectorPtr = std::unique_ptr<BitVector>;
 
@@ -188,8 +187,8 @@ inline  bool BitVector::Expand(BitVector const &src, BitVector &dst)
 
   // define the various pointers to the storage
   uint8_t const *src_buffer = reinterpret_cast<uint8_t const *>(src.data().pointer());
-  uint16_t      *int_buffer = nullptr;
-  uint16_t      *dst_buffer = reinterpret_cast<uint16_t *>(dst.data().pointer());
+  uint16_t *     int_buffer = nullptr;
+  uint16_t *     dst_buffer = reinterpret_cast<uint16_t *>(dst.data().pointer());
 
   // in cases larger than 1 and additional buffer is required
   if (num_loops > 1)
@@ -214,7 +213,8 @@ inline  bool BitVector::Expand(BitVector const &src, BitVector &dst)
     // loop over all the bytes of the current input and generate 16bit combinations
     for (std::size_t j = 0; j < current_size_bytes; ++j)
     {
-      uint64_t const m = ((src_buffer[j] * 0x0101010101010101ULL) & 0x8040201008040201ULL) * 0x0102040810204081ULL;
+      uint64_t const m =
+          ((src_buffer[j] * 0x0101010101010101ULL) & 0x8040201008040201ULL) * 0x0102040810204081ULL;
       dst_buffer[j] = ((m >> 49u) & 0x5555) | ((m >> 48u) & 0xAAAA);
     }
 
@@ -263,8 +263,8 @@ inline bool BitVector::Contract(BitVector const &src, BitVector &dst)
 
   // define the various pointers to the storage
   uint16_t const *src_buffer = reinterpret_cast<uint16_t const *>(src.data().pointer());
-  uint8_t        *int_buffer = nullptr;
-  uint8_t        *dst_buffer = reinterpret_cast<uint8_t *>(dst.data().pointer());
+  uint8_t *       int_buffer = nullptr;
+  uint8_t *       dst_buffer = reinterpret_cast<uint8_t *>(dst.data().pointer());
 
   // in cases larger than 1 and additional buffer is required
   if (num_loops > 1)
@@ -290,7 +290,9 @@ inline bool BitVector::Contract(BitVector const &src, BitVector &dst)
     for (std::size_t j = 0; j < current_size_words; ++j)
     {
       uint16_t const a = (src_buffer[j] & 0x5555) | ((src_buffer[j] & 0xAAAA) >> 1u);
-      dst_buffer[j] = static_cast<uint8_t>((a & 0x1u) | ((a >> 1u) & 0x2u) | ((a >> 2u) & 0x4u) | ((a >> 3u) & 0x8u) | ((a >> 4u) & 0x10u) | ((a >> 5u) & 0x20u) | ((a >> 6u) & 0x40u) | ((a >> 7u) & 0x80u));
+      dst_buffer[j]    = static_cast<uint8_t>(
+          (a & 0x1u) | ((a >> 1u) & 0x2u) | ((a >> 2u) & 0x4u) | ((a >> 3u) & 0x8u) |
+          ((a >> 4u) & 0x10u) | ((a >> 5u) & 0x20u) | ((a >> 6u) & 0x40u) | ((a >> 7u) & 0x80u));
     }
 
     // adjust the size in the case of multiple loops
@@ -298,7 +300,7 @@ inline bool BitVector::Contract(BitVector const &src, BitVector &dst)
 
     if (current_size_words == 0)
     {
-      current_size_words= 1;
+      current_size_words = 1;
     }
 
     // the current destination buffer always becomes the next source buffer
@@ -399,7 +401,8 @@ inline BitVector BitVector::operator|(BitVector const &other) const
   return ret;
 }
 
-inline void BitVector::conditional_flip(std::size_t const &block, std::size_t const &bit, uint64_t const &base)
+inline void BitVector::conditional_flip(std::size_t const &block, std::size_t const &bit,
+                                        uint64_t const &base)
 {
   assert((base == 1) || (base == 0));
   data_[block] ^= base << bit;

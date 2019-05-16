@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/v2/transaction.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/chain/v2/transaction.hpp"
 #include "ledger/chaincode/smart_contract_exception.hpp"
 #include "ledger/chaincode/vm_definition.hpp"
 #include "ledger/state_adapter.hpp"

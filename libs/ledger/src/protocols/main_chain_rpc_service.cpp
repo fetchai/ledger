@@ -24,9 +24,9 @@
 #include "core/service_ids.hpp"
 #include "crypto/fetch_identity.hpp"
 #include "ledger/chain/block_coordinator.hpp"
+#include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
 #include "metrics/metrics.hpp"
 #include "network/muddle/packet.hpp"
-#include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
 
 // TODO(private 976) : This can crash the network as it's not enforced server side
 static const uint32_t MAX_CHAIN_REQUEST_SIZE = 10000;

@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
+#include "ledger/chain/v2/digest.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "ledger/chain/v2/digest.hpp"
 #include "storage/resource_mapper.hpp"
 
 #include <atomic>
@@ -35,8 +35,8 @@ class FakeExecutor : public fetch::ledger::ExecutorInterface
 public:
   static constexpr char const *LOGGING_NAME = "FakeExecutor";
 
-  using Digest = fetch::ledger::v2::Digest;
-  using Address = fetch::ledger::v2::Address;
+  using Digest    = fetch::ledger::v2::Digest;
+  using Address   = fetch::ledger::v2::Address;
   using BitVector = fetch::BitVector;
   using Clock     = std::chrono::high_resolution_clock;
   using Timepoint = Clock::time_point;
@@ -53,7 +53,8 @@ public:
   using HistoryElementCache = std::vector<HistoryElement>;
   using StorageInterface    = fetch::ledger::StorageInterface;
 
-  Result Execute(Digest const &digest, BlockIndex block, SliceIndex slice, BitVector const &shards) override
+  Result Execute(Digest const &digest, BlockIndex block, SliceIndex slice,
+                 BitVector const &shards) override
   {
     history_.emplace_back(HistoryElement{digest, block, slice, shards, Clock::now()});
 

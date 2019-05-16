@@ -23,10 +23,10 @@
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
-#include "ledger/storage_unit/lane_service.hpp"
-#include "storage/transient_object_store.hpp"
 #include "ledger/chain/v2/transaction_builder.hpp"
 #include "ledger/chain/v2/transaction_rpc_serializers.hpp"
+#include "ledger/storage_unit/lane_service.hpp"
+#include "storage/transient_object_store.hpp"
 
 #include <benchmark/benchmark.h>
 #include <vector>
@@ -55,7 +55,7 @@ TransactionList GenerateTransactions(std::size_t count, bool large_packets)
   static LinearCongruentialGenerator rng;
 
   ECDSASigner const signer;
-  Address const signer_address{signer.identity()};
+  Address const     signer_address{signer.identity()};
 
   TransactionList list;
   list.reserve(count);

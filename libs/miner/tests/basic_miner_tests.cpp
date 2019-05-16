@@ -147,8 +147,8 @@ TEST_P(BasicMinerTests, RejectReplayedTransactions)
 
   MainChain chain{MainChain::Mode::IN_MEMORY_DB};
 
-  DigestSet  transactions_already_seen{};
-  DigestSet  transactions_within_block{};
+  DigestSet transactions_already_seen{};
+  DigestSet transactions_within_block{};
 
   while (miner_->GetBacklog() > 0)
   {

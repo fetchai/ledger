@@ -18,11 +18,11 @@
 
 #include "tx_generator.hpp"
 
-#include "core/random/lcg.hpp"
 #include "core/byte_array/byte_array.hpp"
+#include "core/random/lcg.hpp"
+#include "ledger/chain/v2/digest.hpp"
 #include "ledger/chain/v2/transaction_layout.hpp"
 #include "miner/transaction_layout_queue.hpp"
-#include "ledger/chain/v2/digest.hpp"
 
 #include "gtest/gtest.h"
 
@@ -41,7 +41,6 @@ using fetch::BitVector;
 class TransactionLayoutQueueTests : public ::testing::Test
 {
 protected:
-
   using Rng     = LinearCongruentialGenerator;
   using RngWord = Rng::random_type;
 
@@ -292,9 +291,7 @@ TEST_F(TransactionLayoutQueueTests, CheckSorting)
   EXPECT_TRUE(queue_->Add(tx3));
 
   // sort the queue by charge
-  queue_->Sort([](auto const &a, auto const &b) {
-    return a.charge() > b.charge();
-  });
+  queue_->Sort([](auto const &a, auto const &b) { return a.charge() > b.charge(); });
 
   ASSERT_EQ(queue_->size(), 3u);
 
@@ -321,7 +318,7 @@ TEST_F(TransactionLayoutQueueTests, CheckSubSplicing)
 
   // splice part of the queue
   auto const start = other.begin();
-  auto const end = Advance(start, 2);
+  auto const end   = Advance(start, 2);
   queue_->Splice(other, start, end);
 
   EXPECT_EQ(other.size(), 2u);
@@ -358,7 +355,7 @@ TEST_F(TransactionLayoutQueueTests, CheckDuplicateSubSplicing)
 
   // splice part of the queue
   auto const start = other.begin();
-  auto const end = Advance(start, 2);
+  auto const end   = Advance(start, 2);
   queue_->Splice(other, start, end);
 
   EXPECT_EQ(other.size(), 2u);
@@ -375,6 +372,4 @@ TEST_F(TransactionLayoutQueueTests, CheckDuplicateSubSplicing)
   EXPECT_TRUE(IsIn(other, tx4));
 }
 
-
-
-} // namespace
+}  // namespace

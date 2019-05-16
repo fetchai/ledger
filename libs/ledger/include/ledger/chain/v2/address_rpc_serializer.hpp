@@ -41,6 +41,6 @@ void Deserialize(T &s, Address &address)
   address = Address{data};
 }
 
-} // namespace v2
-} // namespace ledger
-} // namespace fetch
+}  // namespace v2
+}  // namespace ledger
+}  // namespace fetch

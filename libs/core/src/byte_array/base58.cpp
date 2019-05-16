@@ -36,7 +36,7 @@ namespace byte_array {
 namespace {
 
 /** All alphanumeric characters except for "0", "I", "O", and "l" */
-static const char* pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+static const char *pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
 // clang-format off
 static const int8_t mapBase58[256] = {
@@ -64,7 +64,7 @@ bool IsSpace(uint8_t character)
   return character == ' ';
 }
 
-}
+}  // namespace
 
 // clang-format off
 ConstByteArray FromBase58(ConstByteArray const &str)
@@ -180,7 +180,5 @@ ConstByteArray ToBase58(ConstByteArray const &str)
 }
 // clang-format on
 
-
-} // namespace byte_array
-} // namespace fetch
-
+}  // namespace byte_array
+}  // namespace fetch

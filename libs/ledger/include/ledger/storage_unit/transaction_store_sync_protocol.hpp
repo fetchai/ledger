@@ -19,6 +19,7 @@
 
 #include "core/logger.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chain/v2/transaction.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
@@ -33,7 +34,6 @@
 #include "storage/resource_mapper.hpp"
 #include "storage/transient_object_store.hpp"
 #include "vectorise/platform.hpp"
-#include "ledger/chain/v2/transaction.hpp"
 
 #include <set>
 #include <utility>
@@ -88,12 +88,12 @@ private:
     Timepoint       created{Clock::now()};
   };
 
-  using Self   = TransactionStoreSyncProtocol;
-  using Cache  = std::vector<CachedObject>;
+  using Self    = TransactionStoreSyncProtocol;
+  using Cache   = std::vector<CachedObject>;
   using TxArray = std::vector<v2::Transaction>;
 
   uint64_t ObjectCount();
-  TxArray   PullObjects(service::CallContext const *call_context);
+  TxArray  PullObjects(service::CallContext const *call_context);
 
   TxArray PullSubtree(byte_array::ConstByteArray const &rid, uint64_t mask);
   TxArray PullSpecificObjects(std::vector<storage::ResourceID> const &rids);

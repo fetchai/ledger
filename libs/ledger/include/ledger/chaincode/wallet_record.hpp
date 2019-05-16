@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/deed.hpp"
 #include "core/byte_array/decoders.hpp"
+#include "ledger/chaincode/deed.hpp"
 
 // TODO(HUT): doesn't putting this here pollute the namespace?
 using fetch::variant::Variant;

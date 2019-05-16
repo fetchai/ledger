@@ -23,10 +23,10 @@
 #include "ledger/block_sink_interface.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/chain/v2/transaction.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_status_cache.hpp"
-#include "ledger/chain/v2/transaction.hpp"
 
 #include <chrono>
 
@@ -56,9 +56,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                                    BlockSinkInterface &    block_sink,
                                    TransactionStatusCache &status_cache,
-                                   crypto::Identity const &identity,
-                                   std::size_t num_lanes, std::size_t num_slices,
-                                   std::size_t block_difficulty)
+                                   crypto::Identity const &identity, std::size_t num_lanes,
+                                   std::size_t num_slices, std::size_t block_difficulty)
   : chain_{chain}
   , execution_manager_{execution_manager}
   , storage_unit_{storage_unit}
@@ -343,8 +342,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
   else if (State::SYNCHRONIZING == previous)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Chain Sync complete on 0x", current_block_->body.hash.ToHex(),
-                   " (block: ", current_block_->body.block_number,
-                   " prev: 0x", current_block_->body.previous_hash.ToHex(), ")");
+                   " (block: ", current_block_->body.block_number, " prev: 0x",
+                   current_block_->body.previous_hash.ToHex(), ")");
   }
 
   return State::SYNCHRONIZED;
@@ -559,9 +558,9 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     if (state_hash != current_block_->body.merkle_hash)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Merkle hash mismatch (block: 0x",
-                     current_block_->body.hash.ToHex(),
-                     " expected: 0x", current_block_->body.merkle_hash.ToHex(),
-                     " actual: 0x", state_hash.ToHex(), ")");
+                     current_block_->body.hash.ToHex(), " expected: 0x",
+                     current_block_->body.merkle_hash.ToHex(), " actual: 0x", state_hash.ToHex(),
+                     ")");
 
       // signal the block is invalid
       invalid_block = true;
@@ -569,9 +568,9 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     else
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Block validation great success: (block: 0x",
-                      current_block_->body.hash.ToHex(),
-                      " expected: 0x", current_block_->body.merkle_hash.ToHex(),
-                      " actual: 0x", state_hash.ToHex(), ")");
+                      current_block_->body.hash.ToHex(), " expected: 0x",
+                      current_block_->body.merkle_hash.ToHex(), " actual: 0x", state_hash.ToHex(),
+                      ")");
     }
   }
 

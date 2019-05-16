@@ -23,8 +23,8 @@
 namespace fetch {
 namespace miner {
 
-
-bool TransactionLayoutQueue::RemapAndAdd(UnderlyingList &list, TransactionLayout const &tx, uint32_t num_lanes)
+bool TransactionLayoutQueue::RemapAndAdd(UnderlyingList &list, TransactionLayout const &tx,
+                                         uint32_t num_lanes)
 {
   bool success{false};
 
@@ -80,12 +80,8 @@ bool TransactionLayoutQueue::Remove(Digest const &digest)
 
   // attempt to find the target digest
   auto const it = std::find_if(
-    list_.begin(),
-    list_.end(),
-    [&digest](TransactionLayout const &layout) {
-      return layout.digest() == digest;
-    }
-  );
+      list_.begin(), list_.end(),
+      [&digest](TransactionLayout const &layout) { return layout.digest() == digest; });
 
   // if we found the target element then remove the list entry and the digest from the set
   if (list_.end() != it)
@@ -234,5 +230,5 @@ TransactionLayoutQueue::Iterator TransactionLayoutQueue::Erase(Iterator const &i
   return list_.erase(iterator);
 }
 
-} // namespace miner
-} // namespace fetch
+}  // namespace miner
+}  // namespace fetch

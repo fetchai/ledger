@@ -27,8 +27,8 @@ using fetch::ledger::consensus::DummyMiner;
 using fetch::ledger::Block;
 using fetch::ledger::v2::Address;
 
-using Blocks    = std::vector<Block>;
-using Body      = Block::Body;
+using Blocks = std::vector<Block>;
+using Body   = Block::Body;
 
 // TODO(issue 33): get these from helper_functions when it's sorted
 // Time related functionality

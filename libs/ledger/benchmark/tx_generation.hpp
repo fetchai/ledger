@@ -42,12 +42,12 @@ inline TransactionList GenerateTransactions(std::size_t count, ECDSASigner &sign
   for (std::size_t i = 0; i < count; ++i)
   {
     auto tx = TransactionBuilder()
-      .From(Address{signer.identity()})
-      .TargetChainCode("fetch.dummy", BitVector{})
-      .Signer(signer.identity())
-      .Seal()
-      .Sign(signer)
-      .Build();
+                  .From(Address{signer.identity()})
+                  .TargetChainCode("fetch.dummy", BitVector{})
+                  .Signer(signer.identity())
+                  .Seal()
+                  .Sign(signer)
+                  .Build();
 
     list.emplace_back(std::move(tx));
   }

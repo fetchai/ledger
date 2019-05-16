@@ -28,8 +28,7 @@ namespace ledger {
 class MainChainProtocol : public service::Protocol
 {
 public:
-  using Blocks    = std::vector<Block>;
-
+  using Blocks = std::vector<Block>;
 
   enum
   {

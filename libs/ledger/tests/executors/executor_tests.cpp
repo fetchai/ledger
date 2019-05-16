@@ -29,18 +29,18 @@
 //#include <memory>
 //#include <random>
 //
-//using ::testing::_;
-//using ::testing::AtLeast;
-//using fetch::ledger::v2::Transaction;
-//using fetch::ledger::v2::TransactionBuilder;
-//using fetch::ledger::v2::Address;
-//using fetch::ledger::Executor;
-//using fetch::crypto::ECDSASigner;
-//using fetch::crypto::Prover;
+// using ::testing::_;
+// using ::testing::AtLeast;
+// using fetch::ledger::v2::Transaction;
+// using fetch::ledger::v2::TransactionBuilder;
+// using fetch::ledger::v2::Address;
+// using fetch::ledger::Executor;
+// using fetch::crypto::ECDSASigner;
+// using fetch::crypto::Prover;
 //
-//class ExecutorTests : public ::testing::Test
+// class ExecutorTests : public ::testing::Test
 //{
-//protected:
+// protected:
 //  using ExecutorPtr = std::unique_ptr<Executor>;
 //  using StoragePtr  = std::shared_ptr<MockStorageUnit>;
 //  using ProverPtr   = std::shared_ptr<Prover>;
@@ -85,7 +85,7 @@
 //  ExecutorPtr executor_;
 //};
 //
-//TEST_F(ExecutorTests, CheckDummyContract)
+// TEST_F(ExecutorTests, CheckDummyContract)
 //{
 //  EXPECT_CALL(*storage_, AddTransaction(_)).Times(1);
 //  EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(1);
@@ -107,7 +107,7 @@
 //  EXPECT_EQ(result.status, fetch::ledger::ExecutorInterface::Status::SUCCESS);
 //}
 //
-//TEST_F(ExecutorTests, CheckTokenContract)
+// TEST_F(ExecutorTests, CheckTokenContract)
 //{
 //  ::testing::InSequence seq;
 //

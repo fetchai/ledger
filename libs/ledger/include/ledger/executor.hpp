@@ -53,18 +53,19 @@ public:
 
   /// @name Executor Interface
   /// @{
-  Result Execute(v2::Digest const &digest, BlockIndex block, SliceIndex slice, BitVector const &shards) override;
-  void SettleFees(v2::Address const &miner, TokenAmount amount, uint32_t log2_num_lanes) override;
+  Result Execute(v2::Digest const &digest, BlockIndex block, SliceIndex slice,
+                 BitVector const &shards) override;
+  void   SettleFees(v2::Address const &miner, TokenAmount amount, uint32_t log2_num_lanes) override;
   /// @}
 
 private:
-
   using TokenContractPtr        = std::shared_ptr<TokenContract>;
   using TransactionPtr          = std::shared_ptr<v2::Transaction>;
   using CachedStorageAdapterPtr = std::shared_ptr<CachedStorageAdapter>;
-//  using StateSentinelAdapter    = std::shared_ptr<StateSentinelAdapter>;
+  //  using StateSentinelAdapter    = std::shared_ptr<StateSentinelAdapter>;
 
-//  Contract::Status ExecuteContract(ConstByteArray const &name, LaneIndex log2_num_lanes, LaneSet const &lanes, v2::Transaction const &tx);
+  //  Contract::Status ExecuteContract(ConstByteArray const &name, LaneIndex log2_num_lanes, LaneSet
+  //  const &lanes, v2::Transaction const &tx);
 
   bool RetrieveTransaction(v2::Digest const &digest);
   bool ValidationChecks(Result &result);
@@ -75,9 +76,9 @@ private:
 
   /// @name Resources
   /// @{
-  StorageUnitPtr    storage_;         ///< The collection of resources
-  ChainCodeCache    chain_code_cache_{};  //< The factory to create new chain code instances
-  TokenContractPtr  token_contract_;
+  StorageUnitPtr   storage_;             ///< The collection of resources
+  ChainCodeCache   chain_code_cache_{};  //< The factory to create new chain code instances
+  TokenContractPtr token_contract_;
   /// @}
 
   /// @name Per Execution State

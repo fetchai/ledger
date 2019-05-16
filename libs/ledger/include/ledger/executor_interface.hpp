@@ -27,7 +27,6 @@ namespace ledger {
 namespace v2 {
 
 class Address;
-
 }
 
 class ExecutorInterface
@@ -68,15 +67,16 @@ public:
   };
 
   // Construction / Destruction
-  ExecutorInterface() = default;
+  ExecutorInterface()          = default;
   virtual ~ExecutorInterface() = default;
 
   /// @name Executor Interface
   /// @{
-  virtual Result Execute(v2::Digest const &digest, BlockIndex block, SliceIndex slice, BitVector const &shards) = 0;
-  virtual void SettleFees(v2::Address const &miner, TokenAmount amount, uint32_t log2_num_lanes) = 0;
+  virtual Result Execute(v2::Digest const &digest, BlockIndex block, SliceIndex slice,
+                         BitVector const &shards)    = 0;
+  virtual void   SettleFees(v2::Address const &miner, TokenAmount amount,
+                            uint32_t log2_num_lanes) = 0;
   /// @}
-
 };
 
 inline char const *ToString(ExecutorInterface::Status status)

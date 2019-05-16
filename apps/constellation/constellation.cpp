@@ -158,7 +158,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
                                                  cfg_.log2_num_lanes))
   , lane_control_(internal_muddle_.AsEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
   , execution_manager_{std::make_shared<ExecutionManager>(
-        cfg_.num_executors, cfg_.log2_num_lanes, storage_, [this] { return std::make_shared<Executor>(storage_); })}
+        cfg_.num_executors, cfg_.log2_num_lanes, storage_,
+        [this] { return std::make_shared<Executor>(storage_); })}
   , chain_{ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
   , block_coordinator_{chain_,

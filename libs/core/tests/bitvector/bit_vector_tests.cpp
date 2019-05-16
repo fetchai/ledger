@@ -16,14 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
 #include "core/bitvector.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "vectorise/platform.hpp"
 
 #include "gtest/gtest.h"
 
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <memory>
 
 using fetch::BitVector;
@@ -78,8 +78,6 @@ fetch::byte_array::ConstByteArray Convert(BitVector const &value)
 
   return {raw, sizeof(BitVector::Block) * value.blocks()};
 }
-
-
 
 TEST(BitVectorTests, ExpandWildcard0)
 {

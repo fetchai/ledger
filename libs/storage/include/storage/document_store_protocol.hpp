@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading/synchronised_state.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
+#include "core/threading/synchronised_state.hpp"
 #include "network/service/protocol.hpp"
 #include "storage/document_store.hpp"
 #include "storage/new_revertible_document_store.hpp"
@@ -125,7 +125,8 @@ public:
     // print an error message on failure
     if (!success)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Resource lock failed for: ", context->sender_address.ToBase64());
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Resource lock failed for: ", context->sender_address.ToBase64());
     }
 
     return success;
@@ -152,7 +153,8 @@ public:
 
     if (!success)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Resource unlock failed for: ", context->sender_address.ToBase64());
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Resource unlock failed for: ", context->sender_address.ToBase64());
     }
 
     return success;
@@ -212,7 +214,8 @@ private:
     if (!HasLock(context))
     {
       // TODO(issue 11): set exception number
-      throw serializers::SerializableException(0, byte_array_type("This shard is locked by another client"));
+      throw serializers::SerializableException(
+          0, byte_array_type("This shard is locked by another client"));
     }
 
     // finally once all checks has passed we can set the value on the document store
@@ -230,11 +233,10 @@ private:
 
   uint32_t lane_assignment_ = 0;
 
-
   struct LockStatus
   {
-    bool       is_locked{false}; ///< Flag to signal which client has locked the resource
-    Identifier client;           ///< The identifier of the locking client
+    bool       is_locked{false};  ///< Flag to signal which client has locked the resource
+    Identifier client;            ///< The identifier of the locking client
   };
 
   using SyncLockStatus = SynchronisedState<LockStatus>;

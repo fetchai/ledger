@@ -20,9 +20,9 @@
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
 #include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
 #include "ledger/chain/v2/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/transaction_finder_protocol.hpp"
-#include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
 
 using fetch::storage::ResourceID;
 using fetch::storage::RevertibleDocumentStoreProtocol;
@@ -315,7 +315,8 @@ StorageUnitClient::Address const &StorageUnitClient::LookupAddress(ShardIndex sh
   return addresses_.at(shard);
 }
 
-StorageUnitClient::Address const &StorageUnitClient::LookupAddress(storage::ResourceID const &resource) const
+StorageUnitClient::Address const &StorageUnitClient::LookupAddress(
+    storage::ResourceID const &resource) const
 {
   return LookupAddress(resource.lane(log2_num_lanes_));
 }
@@ -411,7 +412,8 @@ StorageUnitClient::TxLayouts StorageUnitClient::PollRecentTx(uint32_t max_to_pol
   return layouts;
 }
 
-bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest, v2::Transaction &tx)
+bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest,
+                                       v2::Transaction &                 tx)
 {
   bool success{false};
 
@@ -483,7 +485,6 @@ void StorageUnitClient::IssueCallForMissingTxs(v2::DigestSet const &tx_set)
 StorageUnitClient::Document StorageUnitClient::GetOrCreate(ResourceAddress const &key)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "GetOrCreate: ", key.address());
-
 
   Document doc;
 
@@ -560,8 +561,8 @@ bool StorageUnitClient::Lock(ShardIndex index)
   try
   {
     // make the request to the RPC server
-    auto promise = rpc_client_.CallSpecificAddress(
-        LookupAddress(index), RPC_STATE, RevertibleDocumentStoreProtocol::LOCK);
+    auto promise = rpc_client_.CallSpecificAddress(LookupAddress(index), RPC_STATE,
+                                                   RevertibleDocumentStoreProtocol::LOCK);
 
     // wait for the promise
     success = promise->As<bool>();

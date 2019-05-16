@@ -28,8 +28,6 @@ namespace v2 {
 using Digest    = byte_array::ConstByteArray;
 using DigestSet = std::unordered_set<Digest>;
 
-} // namespace v2
-} // namespace ledger
-} // namespace fetch
-
-
+}  // namespace v2
+}  // namespace ledger
+}  // namespace fetch

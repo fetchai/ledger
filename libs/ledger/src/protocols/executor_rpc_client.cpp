@@ -151,14 +151,16 @@ void ExecutorRpcClient::Connect(Muddle &muddle, Uri uri, std::chrono::millisecon
   bg_work_.Add(worker);
 }
 
-ExecutorInterface::Result ExecutorRpcClient::Execute(v2::Digest const &digest, BlockIndex block, SliceIndex slice, BitVector const &shards)
+ExecutorInterface::Result ExecutorRpcClient::Execute(v2::Digest const &digest, BlockIndex block,
+                                                     SliceIndex slice, BitVector const &shards)
 {
   auto result = client_->CallSpecificAddress(address_, RPC_EXECUTOR, ExecutorRpcProtocol::EXECUTE,
                                              digest, block, slice, shards);
   return result->As<ExecutorInterface::Result>();
 }
 
-void ExecutorRpcClient::SettleFees(v2::Address const &miner, TokenAmount amount, uint32_t log2_num_lanes)
+void ExecutorRpcClient::SettleFees(v2::Address const &miner, TokenAmount amount,
+                                   uint32_t log2_num_lanes)
 {
   auto result = client_->CallSpecificAddress(address_, RPC_EXECUTOR, ExecutorRpcProtocol::EXECUTE,
                                              miner, amount, log2_num_lanes);

@@ -998,13 +998,8 @@ protected:
 
 TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
 {
-  TransactionLayout layout{
-    *fetch::testing::GenerateUniqueHashes(1u).begin(),
-    fetch::BitVector{},
-    0,
-    0,
-    1000
-  };
+  TransactionLayout layout{*fetch::testing::GenerateUniqueHashes(1u).begin(), fetch::BitVector{}, 0,
+                           0, 1000};
 
   auto genesis = block_generator_();
   auto b1      = block_generator_(genesis);

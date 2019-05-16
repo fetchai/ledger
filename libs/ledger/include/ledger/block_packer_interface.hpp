@@ -28,7 +28,7 @@ namespace v2 {
 class Transaction;
 class TransactionLayout;
 
-}
+}  // namespace v2
 
 // forward declarations
 class Block;

@@ -823,7 +823,8 @@ void MainChain::CompleteLooseBlocks(IntBlockPtr const &block)
   BlockHashList blocks_to_add = std::move(it->second);
   loose_blocks_.erase(it);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, blocks_to_add.size(), " are resolved from 0x", block->body.hash.ToHex());
+  FETCH_LOG_DEBUG(LOGGING_NAME, blocks_to_add.size(), " are resolved from 0x",
+                  block->body.hash.ToHex());
 
   while (!blocks_to_add.empty())
   {
@@ -1327,7 +1328,8 @@ void MainChain::SetHeadHash(BlockHash const &hash)
  *
  * @return: bool whether the starting hash referred to a valid block on a valid chain
  */
-v2::DigestSet MainChain::DetectDuplicateTransactions(BlockHash starting_hash, v2::DigestSet const &transactions) const
+v2::DigestSet MainChain::DetectDuplicateTransactions(BlockHash            starting_hash,
+                                                     v2::DigestSet const &transactions) const
 {
   MilliTimer const timer{"DuplicateTransactionsCheck", 100};
 
@@ -1342,7 +1344,7 @@ v2::DigestSet MainChain::DetectDuplicateTransactions(BlockHash starting_hash, v2
 
   // Need a set for quickly checking whether transactions are in our container
   v2::DigestSet duplicates{};
-  bool searching{true};
+  bool          searching{true};
   while (searching)
   {
     // Traversing the chain fully is costly: break out early if we know the transactions are all

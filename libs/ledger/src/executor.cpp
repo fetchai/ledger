@@ -22,11 +22,11 @@
 #include "core/logger.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
+#include "ledger/chain/v2/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
+#include "ledger/chaincode/token_contract.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "metrics/metrics.hpp"
-#include "ledger/chain/v2/transaction.hpp"
-#include "ledger/chaincode/token_contract.hpp"
 
 #include "ledger/state_sentinel_adapter.hpp"
 
@@ -34,12 +34,11 @@
 #include <chrono>
 #include <random>
 
-static constexpr char const *LOGGING_NAME = "Executor";
-static constexpr uint64_t TRANSFER_CHARGE = 1;
+static constexpr char const *LOGGING_NAME    = "Executor";
+static constexpr uint64_t    TRANSFER_CHARGE = 1;
 
 using fetch::byte_array::ConstByteArray;
 using fetch::storage::ResourceAddress;
-
 
 #ifdef FETCH_ENABLE_METRICS
 using fetch::metrics::Metrics;
@@ -49,44 +48,44 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-  bool GenerateContractName(v2::Transaction const &tx, Identifier &identifier)
+bool GenerateContractName(v2::Transaction const &tx, Identifier &identifier)
+{
+  // Step 1 - Translate the tx into a common name
+  using ContractMode = v2::Transaction::ContractMode;
+
+  ConstByteArray contract_name{};
+  switch (tx.contract_mode())
   {
-    // Step 1 - Translate the tx into a common name
-    using ContractMode = v2::Transaction::ContractMode;
-
-    ConstByteArray contract_name{};
-    switch (tx.contract_mode())
-    {
-      case ContractMode::NOT_PRESENT:
-        break;
-      case ContractMode::PRESENT:
-        contract_name = tx.contract_digest().address().ToHex() + "." + tx.contract_address().display() + "." + tx.action();
-        break;
-      case ContractMode::CHAIN_CODE:
-        contract_name = tx.chain_code() + "." + tx.action();
-        break;
-    }
-
-    // if there is a contract present simply parse the name
-    if (!contract_name.empty())
-    {
-      if (!identifier.Parse(contract_name))
-      {
-        return false;
-      }
-    }
-
-    return true;
+  case ContractMode::NOT_PRESENT:
+    break;
+  case ContractMode::PRESENT:
+    contract_name = tx.contract_digest().address().ToHex() + "." + tx.contract_address().display() +
+                    "." + tx.action();
+    break;
+  case ContractMode::CHAIN_CODE:
+    contract_name = tx.chain_code() + "." + tx.action();
+    break;
   }
 
-  bool IsCreateWealth(v2::Transaction const &tx)
+  // if there is a contract present simply parse the name
+  if (!contract_name.empty())
   {
-    return (tx.contract_mode() == v2::Transaction::ContractMode::CHAIN_CODE) &&
-           (tx.chain_code() == "fetch.token") &&
-           (tx.action() == "wealth");
+    if (!identifier.Parse(contract_name))
+    {
+      return false;
+    }
   }
 
+  return true;
 }
+
+bool IsCreateWealth(v2::Transaction const &tx)
+{
+  return (tx.contract_mode() == v2::Transaction::ContractMode::CHAIN_CODE) &&
+         (tx.chain_code() == "fetch.token") && (tx.action() == "wealth");
+}
+
+}  // namespace
 
 Executor::Executor(StorageUnitPtr storage)
   : storage_{std::move(storage)}
@@ -101,7 +100,8 @@ Executor::Executor(StorageUnitPtr storage)
  * @param lanes The affected lanes for the transaction
  * @return The status code for the operation
  */
-Executor::Result Executor::Execute(v2::Digest const &digest, BlockIndex block, SliceIndex slice, BitVector const &shards)
+Executor::Result Executor::Execute(v2::Digest const &digest, BlockIndex block, SliceIndex slice,
+                                   BitVector const &shards)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash));
 
@@ -134,9 +134,8 @@ Executor::Result Executor::Execute(v2::Digest const &digest, BlockIndex block, S
     // 2. Execute any token transfers
     // 3. Process the fees
     //
-    bool const success = ValidationChecks(result) &&
-                         ExecuteTransactionContract(result) &&
-                         ProcessTransfers(result);
+    bool const success =
+        ValidationChecks(result) && ExecuteTransactionContract(result) && ProcessTransfers(result);
 
     if (!success)
     {
@@ -230,7 +229,8 @@ bool Executor::ValidationChecks(Result &result)
 
   // CHECK: Ensure that the originator has funds available to make both all the transfers in the
   //        contract as well as the maximum fees
-  uint64_t const max_tokens_required = current_tx_->GetTotalTransferAmount() + current_tx_->charge_limit();
+  uint64_t const max_tokens_required =
+      current_tx_->GetTotalTransferAmount() + current_tx_->charge_limit();
   if (balance < max_tokens_required)
   {
     result.status = Status::INSUFFICIENT_AVAILABLE_FUNDS;
@@ -291,16 +291,16 @@ bool Executor::ExecuteTransactionContract(Result &result)
     result.status = Status::CHAIN_CODE_EXEC_FAILURE;
     switch (contract_status)
     {
-      case Contract::Status::OK:
-        success = true;
-        result.status  = Status::SUCCESS;
-        break;
-      case Contract::Status::FAILED:
-        FETCH_LOG_WARN(LOGGING_NAME, "Transaction execution failed!");
-        break;
-      case Contract::Status::NOT_FOUND:
-        FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup transaction handler");
-        break;
+    case Contract::Status::OK:
+      success       = true;
+      result.status = Status::SUCCESS;
+      break;
+    case Contract::Status::FAILED:
+      FETCH_LOG_WARN(LOGGING_NAME, "Transaction execution failed!");
+      break;
+    case Contract::Status::NOT_FOUND:
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup transaction handler");
+      break;
     }
 
 #ifdef FETCH_ENABLE_METRICS
@@ -319,7 +319,8 @@ bool Executor::ExecuteTransactionContract(Result &result)
       uint64_t const compute_charge = contract->CalculateFee();
       uint64_t const storage_charge = (storage_adapter.num_bytes_written() * 2u);
       uint64_t const base_charge    = compute_charge + storage_charge;
-      uint64_t const scaled_charge  = std::max<uint64_t>(allowed_shards_.PopCount(), 1) * base_charge;
+      uint64_t const scaled_charge =
+          std::max<uint64_t>(allowed_shards_.PopCount(), 1) * base_charge;
 
       FETCH_LOG_INFO(LOGGING_NAME, "Calculated charge for 0x", current_tx_->digest().ToHex(), ": ",
                      scaled_charge, " (base: ", base_charge, " storage: ", storage_charge,
@@ -335,13 +336,14 @@ bool Executor::ExecuteTransactionContract(Result &result)
       if (result.charge > current_tx_->charge_limit())
       {
         result.status = Status::INSUFFICIENT_CHARGE;
-        success = false;
+        success       = false;
       }
     }
   }
   catch (std::exception const &ex)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Exception during execution of tx 0x", current_tx_->digest().ToHex(), " : ", ex.what());
+    FETCH_LOG_WARN(LOGGING_NAME, "Exception during execution of tx 0x",
+                   current_tx_->digest().ToHex(), " : ", ex.what());
 
     result.status = Status::CHAIN_CODE_EXEC_FAILURE;
   }
@@ -367,7 +369,7 @@ bool Executor::ProcessTransfers(Result &result)
       if (!token_contract_->TransferTokens(*current_tx_, transfer.to, transfer.amount))
       {
         result.status = Status::TRANSFER_FAILURE;
-        success = false;
+        success       = false;
         break;
       }
       else

@@ -21,10 +21,10 @@
 #include "core/serializers/stl_types.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/chain/v2/transaction_layout.hpp"
-#include "ledger/chain/v2/digest.hpp"
 #include "ledger/chain/v2/address.hpp"
 #include "ledger/chain/v2/address_rpc_serializer.hpp"
+#include "ledger/chain/v2/digest.hpp"
+#include "ledger/chain/v2/transaction_layout.hpp"
 
 #include <memory>
 
@@ -39,9 +39,9 @@ namespace ledger {
 class Block
 {
 public:
-  using Proof    = consensus::ProofOfWork;
-  using Slice    = std::vector<v2::TransactionLayout>;
-  using Slices   = std::vector<Slice>;
+  using Proof  = consensus::ProofOfWork;
+  using Slice  = std::vector<v2::TransactionLayout>;
+  using Slices = std::vector<Slice>;
 
   struct Body
   {

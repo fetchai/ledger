@@ -126,13 +126,14 @@ uint64_t TransactionStoreSyncProtocol::ObjectCount()
  *
  * @return: the subtree the client is requesting as a vector (size limited)
  */
-TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullSubtree(byte_array::ConstByteArray const &rid,
-                                                 uint64_t                          bit_count)
+TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullSubtree(
+    byte_array::ConstByteArray const &rid, uint64_t bit_count)
 {
   return store_->PullSubtree(rid, bit_count, PULL_LIMIT_);
 }
 
-TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullObjects(service::CallContext const *call_context)
+TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullObjects(
+    service::CallContext const *call_context)
 {
   // Creating result
   TxArray ret{};

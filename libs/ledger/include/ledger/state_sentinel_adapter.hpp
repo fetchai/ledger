@@ -31,7 +31,7 @@ namespace ledger {
 class StateSentinelAdapter : public StateAdapter
 {
 public:
-  using ResourceSet   = TransactionSummary::ResourceSet;
+  using ResourceSet = TransactionSummary::ResourceSet;
 
   static constexpr char const *LOGGING_NAME = "StateSentinelAdapter";
 
@@ -48,13 +48,21 @@ public:
 
   /// @name Counter Access
   /// @{
-  uint64_t num_lookups() const { return lookups_; }
-  uint64_t num_bytes_read() const { return bytes_read_; }
-  uint64_t num_bytes_written() const { return bytes_written_; }
+  uint64_t num_lookups() const
+  {
+    return lookups_;
+  }
+  uint64_t num_bytes_read() const
+  {
+    return bytes_read_;
+  }
+  uint64_t num_bytes_written() const
+  {
+    return bytes_written_;
+  }
   /// @}
 
 private:
-
   bool IsAllowedResource(std::string const &key) const;
 
   /// @name Shard Limits

@@ -39,8 +39,7 @@ TransactionLayout::TransactionLayout(Transaction const &tx)
  */
 TransactionLayout::TransactionLayout(TransactionLayout const &tx, BitVector const &mask)
   : TransactionLayout(tx.digest(), mask, tx.charge(), tx.valid_from(), tx.valid_until())
-{
-}
+{}
 
 /**
  * Construct a transaction layout from its constituent parts
@@ -58,8 +57,7 @@ TransactionLayout::TransactionLayout(Digest digest, BitVector const &mask, Token
   , charge_{charge}
   , valid_from_{valid_from}
   , valid_until_{valid_until}
-{
-}
+{}
 
 }  // namespace v2
 }  // namespace ledger

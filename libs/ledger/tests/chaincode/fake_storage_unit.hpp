@@ -19,8 +19,8 @@
 
 #include "crypto/fnv.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/chain/v2/transaction.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <algorithm>
 #include <mutex>
@@ -122,7 +122,7 @@ public:
   }
 
   bool GetTransaction(fetch::byte_array::ConstByteArray const &digest,
-                      fetch::ledger::v2::Transaction &             tx) override
+                      fetch::ledger::v2::Transaction &         tx) override
   {
     lock_guard_type lock(mutex_);
     bool            success = false;

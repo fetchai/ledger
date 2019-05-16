@@ -20,8 +20,8 @@
 #include "core/containers/queue.hpp"
 
 #include <cstddef>
-#include <thread>
 #include <memory>
+#include <thread>
 
 namespace fetch {
 namespace ledger {

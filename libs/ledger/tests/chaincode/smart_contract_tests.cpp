@@ -20,9 +20,9 @@
 #include "crypto/sha256.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chain/v2/transaction_builder.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/state_adapter.hpp"
-#include "ledger/chain/v2/transaction_builder.hpp"
 
 #include "contract_test.hpp"
 #include "mock_storage_unit.hpp"
@@ -81,7 +81,8 @@ protected:
     contract_address_ = std::make_unique<Address>(contract_digest);
 
     // populate the contract name too
-    contract_name_ = std::make_shared<Identifier>(contract_address_->address().ToHex() + "." + owner_address_->display());
+    contract_name_ = std::make_shared<Identifier>(contract_address_->address().ToHex() + "." +
+                                                  owner_address_->display());
 
     ASSERT_TRUE(static_cast<bool>(contract_));
     ASSERT_TRUE(static_cast<bool>(contract_name_));
@@ -158,8 +159,6 @@ TEST_F(SmartContractTests, CheckSimpleContract)
     EXPECT_EQ(response["status"].As<ConstByteArray>(), "success");
   }
 }
-
-
 
 TEST_F(SmartContractTests, CheckQueryReturnTypes)
 {
@@ -322,7 +321,6 @@ TEST_F(SmartContractTests, CheckQueryReturnTypes)
   }
 }
 
-
 TEST_F(SmartContractTests, CheckParameterizedActionAndQuery)
 {
   std::string const contract_source = R"(
@@ -413,7 +411,6 @@ TEST_F(SmartContractTests, CheckParameterizedActionAndQuery)
   }
 }
 
-
 TEST_F(SmartContractTests, CheckBasicTokenContract)
 {
   std::string const contract_source = R"(
@@ -463,10 +460,8 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
   fetch::crypto::ECDSASigner target{};
   fetch::ledger::v2::Address target_address{target.identity()};
 
-  auto const owner_key =
-      contract_name_->full_name() + ".state." + owner_address_->display();
-  auto const target_key =
-      contract_name_->full_name() + ".state." + target_address.display();
+  auto const owner_key  = contract_name_->full_name() + ".state." + owner_address_->display();
+  auto const target_key = contract_name_->full_name() + ".state." + target_address.display();
 
   auto const owner_resource   = ResourceAddress{owner_key};
   auto const target_resource  = ResourceAddress{target_key};
@@ -520,8 +515,7 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
 
   // send the smart contract an "increment" action
   EXPECT_EQ(SmartContract::Status::OK,
-            SendSmartActionWithParams("transfer",
-                                 *owner_address_, target_address, 1000000000ull));
+            SendSmartActionWithParams("transfer", *owner_address_, target_address, 1000000000ull));
 
   // make the query
   {

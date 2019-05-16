@@ -28,12 +28,11 @@ class Transaction;
 class TransactionSink
 {
 public:
-
   using TransactionPtr  = std::shared_ptr<v2::Transaction>;
   using TransactionList = std::vector<TransactionPtr>;
 
   // Construction / Destruction
-  TransactionSink() = default;
+  TransactionSink()          = default;
   virtual ~TransactionSink() = default;
 
   /// @name Transaction Sink

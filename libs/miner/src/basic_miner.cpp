@@ -20,9 +20,9 @@
 #include "core/logger.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "miner/resource_mapper.hpp"
-#include "ledger/chain/v2/transaction.hpp"
 #include "ledger/chain/v2/address.hpp"
+#include "ledger/chain/v2/transaction.hpp"
+#include "miner/resource_mapper.hpp"
 
 #include <algorithm>
 
@@ -111,13 +111,8 @@ void BasicMiner::EnqueueTransaction(ledger::v2::Transaction const &tx)
 
   // Now that the complete shard mask has been computed we can build the final scheduling layout
   // for the transaction
-  TransactionLayout const layout{
-    tx.digest(),
-    shard_mask,
-    tx.charge(),
-    tx.valid_from(),
-    tx.valid_until()
-  };
+  TransactionLayout const layout{tx.digest(), shard_mask, tx.charge(), tx.valid_from(),
+                                 tx.valid_until()};
 
   assert(layout.mask().size() == (1u << log2_num_lanes_));
 
@@ -169,7 +164,8 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   }
 
   // detect the transactions which have already been incorporated into previous blocks
-  auto const duplicates = chain.DetectDuplicateTransactions(block.body.previous_hash, mining_pool_.digests());
+  auto const duplicates =
+      chain.DetectDuplicateTransactions(block.body.previous_hash, mining_pool_.digests());
 
   // remove the duplicates
   mining_pool_.Remove(duplicates);
@@ -235,7 +231,7 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   }
 
   std::size_t const remaining_transactions = mining_pool_.size();
-  std::size_t const packed_transactions = pool_size_before - remaining_transactions;
+  std::size_t const packed_transactions    = pool_size_before - remaining_transactions;
 
   FETCH_LOG_INFO(LOGGING_NAME, "Finished block packing (packed: ", packed_transactions,
                  " remaining: ", remaining_transactions, ")");

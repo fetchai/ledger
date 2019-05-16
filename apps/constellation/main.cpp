@@ -387,8 +387,9 @@ struct CommandLineArguments
     {
       auto const identity = prover->identity();
 
-      bool const is_public_network     = NetworkMode::PUBLIC_NETWORK == args.cfg.network_mode;
-      bool const is_non_fetch_identity = !fetch::crypto::IsFetchIdentity(Address{identity}.display());
+      bool const is_public_network = NetworkMode::PUBLIC_NETWORK == args.cfg.network_mode;
+      bool const is_non_fetch_identity =
+          !fetch::crypto::IsFetchIdentity(Address{identity}.display());
 
       if (is_public_network && is_non_fetch_identity)
       {

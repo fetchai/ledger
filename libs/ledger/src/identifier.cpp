@@ -44,14 +44,10 @@ bool IsBase58(ConstByteArray const &value)
   for (std::size_t i = 0; i < value.size(); ++i, ++buffer)
   {
     // 1-9A-HJ-NP-Za-km-z
-    bool const valid = (
-      (('1' <= *buffer) && ('9' >= *buffer)) ||
-      (('A' <= *buffer) && ('H' >= *buffer)) ||
-      (('J' <= *buffer) && ('N' >= *buffer)) ||
-      (('P' <= *buffer) && ('Z' >= *buffer)) ||
-      (('a' <= *buffer) && ('k' >= *buffer)) ||
-      (('m' <= *buffer) && ('z' >= *buffer))
-    );
+    bool const valid =
+        ((('1' <= *buffer) && ('9' >= *buffer)) || (('A' <= *buffer) && ('H' >= *buffer)) ||
+         (('J' <= *buffer) && ('N' >= *buffer)) || (('P' <= *buffer) && ('Z' >= *buffer)) ||
+         (('a' <= *buffer) && ('k' >= *buffer)) || (('m' <= *buffer) && ('z' >= *buffer)));
 
     if (!valid)
     {
@@ -74,7 +70,8 @@ bool IsHex(ConstByteArray const &value)
 
   for (std::size_t i = 0; i < LENGTH; ++i, ++buffer)
   {
-    bool const valid = ((('a' <= *buffer) && ('f' >= *buffer)) || (('0' <= *buffer) && ('9' >= *buffer)));
+    bool const valid =
+        ((('a' <= *buffer) && ('f' >= *buffer)) || (('0' <= *buffer) && ('9' >= *buffer)));
 
     if (!valid)
     {

@@ -149,22 +149,22 @@ inline bool Address::operator!=(Address const &other) const
 
 namespace std {
 
-  template <>
-  struct hash<fetch::ledger::v2::Address>
+template <>
+struct hash<fetch::ledger::v2::Address>
+{
+  std::size_t operator()(fetch::ledger::v2::Address const &address) const noexcept
   {
-    std::size_t operator()(fetch::ledger::v2::Address const &address) const noexcept
+    auto const &raw_address = address.address();
+
+    if (raw_address.empty())
     {
-      auto const &raw_address = address.address();
-
-      if (raw_address.empty())
-      {
-        return 0;
-      }
-      else
-      {
-        return *reinterpret_cast<std::size_t const *>(raw_address.pointer());
-      }
+      return 0;
     }
-  };
+    else
+    {
+      return *reinterpret_cast<std::size_t const *>(raw_address.pointer());
+    }
+  }
+};
 
-}
+}  // namespace std

@@ -48,7 +48,7 @@ using fetch::ledger::v2::Address;
 struct Entity
 {
   crypto::ECDSASigner signer{};
-  Address address{signer.identity()};
+  Address             address{signer.identity()};
 };
 
 using ConstByteArray = byte_array::ConstByteArray;
@@ -112,14 +112,14 @@ protected:
     return oss.str();
   }
 
-//  static void SignTx(MutTx &tx, PrivateKeys const &keys_to_sign_tx)
-//  {
-//    auto sign_adapter{TxSigningAdapterFactory(tx)};
-//    for (auto const &key : keys_to_sign_tx)
-//    {
-//      tx.Sign(key, sign_adapter);
-//    }
-//  }
+  //  static void SignTx(MutTx &tx, PrivateKeys const &keys_to_sign_tx)
+  //  {
+  //    auto sign_adapter{TxSigningAdapterFactory(tx)};
+  //    for (auto const &key : keys_to_sign_tx)
+  //    {
+  //      tx.Sign(key, sign_adapter);
+  //    }
+  //  }
 
   bool SendDeedTx(Address const &address, std::initializer_list<Entity const *> const &keys_to_sign,
                   SigneesPtr const &signees, ThresholdsPtr const &thresholds,
@@ -132,7 +132,6 @@ protected:
     EXPECT_CALL(*storage_, Unlock(_)).Times(testing::AnyNumber());
     EXPECT_CALL(*storage_, AddTransaction(_)).Times(0);
     EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
-
 
     // build the transaction
     TransactionBuilder builder{};
@@ -170,18 +169,19 @@ protected:
     EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
 
     std::ostringstream oss;
-    oss << "{ " << R"("amount": )" << amount << " }";
+    oss << "{ "
+        << R"("amount": )" << amount << " }";
 
     // build the transaction
     auto tx = TransactionBuilder()
-      .From(entity.address)
-      .TargetChainCode("fetch.token", BitVector{})
-      .Action("wealth")
-      .Signer(certificate_->identity())
-      .Data(oss.str())
-      .Seal()
-      .Sign(*certificate_)
-      .Build();
+                  .From(entity.address)
+                  .TargetChainCode("fetch.token", BitVector{})
+                  .Action("wealth")
+                  .Signer(certificate_->identity())
+                  .Data(oss.str())
+                  .Seal()
+                  .Sign(*certificate_)
+                  .Build();
 
     // send the action to the contract
     auto const status = SendAction(tx);
@@ -189,8 +189,9 @@ protected:
     return (Contract::Status::OK == status);
   }
 
-  bool Transfer(Address const &from, Address const &to, std::initializer_list<Entity const *> const &keys_to_sign,
-                uint64_t amount, bool const set_call_expected = true)
+  bool Transfer(Address const &from, Address const &to,
+                std::initializer_list<Entity const *> const &keys_to_sign, uint64_t amount,
+                bool const set_call_expected = true)
   {
     EXPECT_CALL(*storage_, Get(_)).Times(set_call_expected ? 2 : 1);
     EXPECT_CALL(*storage_, GetOrCreate(_)).Times(0);
@@ -263,7 +264,7 @@ TEST_F(TokenContractTests, CheckWealthCreation)
   EXPECT_EQ(balance, 1000);
 }
 
-TEST_F(TokenContractTests,  CheckInitialBalance)
+TEST_F(TokenContractTests, CheckInitialBalance)
 {
   Entity entity;
 
@@ -343,12 +344,12 @@ TEST_F(TokenContractTests, CheckDeedAmend)
   (*thresholds_modif)["amend"]    = 6;
 
   // EXPECTED to **FAIL** due to insufficient voting power (=> deed has **NOT** been modified)
-  EXPECT_FALSE(
-      SendDeedTx(entities[0].address, {&entities[1], &entities[2]}, signees_modif, thresholds_modif, false));
+  EXPECT_FALSE(SendDeedTx(entities[0].address, {&entities[1], &entities[2]}, signees_modif,
+                          thresholds_modif, false));
 
   // EXPECTED TO **PASS** (sufficient amount of signatories provided => deed will be modified)
-  EXPECT_TRUE(
-      SendDeedTx(entities[0].address, {&entities[0], &entities[1], &entities[2]}, signees_modif, thresholds_modif));
+  EXPECT_TRUE(SendDeedTx(entities[0].address, {&entities[0], &entities[1], &entities[2]},
+                         signees_modif, thresholds_modif));
 }
 
 TEST_F(TokenContractTests, DISABLED_CheckDeedDeletion)
@@ -378,21 +379,23 @@ TEST_F(TokenContractTests, DISABLED_CheckDeedDeletion)
   // EXPECTED to **FAIL** - transfer is intentionally configured as deed would
   // NOT be in effect (= providing only single signature for FROM address what
   // would be sufficient **IF** deed would NOT be in effect):
-  ASSERT_FALSE(Transfer(entities[0].address, entities[1].address, {&entities[0]}, transfer_amount, false));
+  ASSERT_FALSE(
+      Transfer(entities[0].address, entities[1].address, {&entities[0]}, transfer_amount, false));
   uint64_t balance = std::numeric_limits<uint64_t>::max();
   ASSERT_TRUE(GetBalance(entities[0].address, balance));
   ASSERT_EQ(origina_wealth, balance);
   // EXPECTED to **PASS**: 2nd transfer cofigured to conform with deed and so it
   // shall pass:
-  ASSERT_TRUE(Transfer(entities[0].address, entities[1].address, {&entities[0], &entities[1]}, 400));
+  ASSERT_TRUE(
+      Transfer(entities[0].address, entities[1].address, {&entities[0], &entities[1]}, 400));
   balance = std::numeric_limits<uint64_t>::max();
   ASSERT_TRUE(GetBalance(entities[0].address, balance));
   ASSERT_EQ(origina_wealth - transfer_amount, balance);
 
   // TESTS OBJECTIVE: Deletion of the DEED
   // EXPECTED TO **PASS**
-  EXPECT_TRUE(
-      SendDeedTx(entities[0].address, {&entities[0], &entities[1], &entities[2]}, SigneesPtr{}, ThresholdsPtr{}));
+  EXPECT_TRUE(SendDeedTx(entities[0].address, {&entities[0], &entities[1], &entities[2]},
+                         SigneesPtr{}, ThresholdsPtr{}));
 
   // PROVING THAT DEED HAS BEEN DELETED:
   // EXPECTED to **FAIL** - Proving that transfer int not possible to perform
@@ -441,7 +444,9 @@ TEST_F(TokenContractTests, CheckDeedAmendDoesNotAffectBalance)
 
   uint64_t const new_balance{12345};
   // EXPECTED to **FAIL** since Tx deed json carries unexpected element(s) (the `balance`)
-  EXPECT_FALSE(SendDeedTx(entities[0].address, {&entities[0], &entities[1], &entities[2], &entities[3]}, signees_modif, thresholds_modif, false, &new_balance));
+  EXPECT_FALSE(SendDeedTx(entities[0].address,
+                          {&entities[0], &entities[1], &entities[2], &entities[3]}, signees_modif,
+                          thresholds_modif, false, &new_balance));
 
   // Balance MUST remain UNCHANGED
   uint64_t current_balance = std::numeric_limits<uint64_t>::max();
@@ -451,7 +456,7 @@ TEST_F(TokenContractTests, CheckDeedAmendDoesNotAffectBalance)
 
 TEST_F(TokenContractTests, DISABLED_CheckTransferIsAuthorisedByPreexistingDeed)
 {
-  Entities entities(3);
+  Entities       entities(3);
   uint64_t const starting_balance{1000};
 
   // 1st PRE-CONDITION: Create wealth
@@ -479,9 +484,11 @@ TEST_F(TokenContractTests, DISABLED_CheckTransferIsAuthorisedByPreexistingDeed)
 
   uint64_t const transferred_amount{400};
   // EXPECTED TO **FAIL** due to insufficient voting power
-  EXPECT_FALSE(Transfer(entities[0].address, entities[1].address, {&entities[2]}, transferred_amount, false));
+  EXPECT_FALSE(Transfer(entities[0].address, entities[1].address, {&entities[2]},
+                        transferred_amount, false));
   // EXPECTED TO **PASS** : sufficient voting power
-  EXPECT_TRUE(Transfer(entities[0].address, entities[1].address, {&entities[1], &entities[2]}, transferred_amount));
+  EXPECT_TRUE(Transfer(entities[0].address, entities[1].address, {&entities[1], &entities[2]},
+                       transferred_amount));
 
   balance = std::numeric_limits<uint64_t>::max();
   EXPECT_TRUE(GetBalance(entities[0].address, balance));

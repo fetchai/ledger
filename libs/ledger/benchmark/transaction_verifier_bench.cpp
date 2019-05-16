@@ -19,8 +19,8 @@
 #include "crypto/ecdsa.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
-#include "ledger/transaction_verifier.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
+#include "ledger/transaction_verifier.hpp"
 
 #include "tx_generation.hpp"
 
@@ -78,7 +78,7 @@ void TransactionVerifierBench(benchmark::State &state)
 
   // generate the transactions
   ECDSASigner signer;
-  auto const txs = GenerateTransactions(static_cast<std::size_t>(state.range(1)), signer);
+  auto const  txs = GenerateTransactions(static_cast<std::size_t>(state.range(1)), signer);
 
   // wait for the
   for (auto _ : state)

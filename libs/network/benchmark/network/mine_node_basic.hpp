@@ -95,7 +95,7 @@ public:
   void SyncBlock(BlockType &block)
   {
     BlockType walkBlock;
-    Digest hash = block.body.previous_hash;
+    Digest    hash = block.body.previous_hash;
 
     for (;;)
     {

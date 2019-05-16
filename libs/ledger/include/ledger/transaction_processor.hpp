@@ -21,8 +21,8 @@
 #include "ledger/transaction_verifier.hpp"
 
 #include <atomic>
-#include <thread>
 #include <memory>
+#include <thread>
 
 namespace fetch {
 namespace ledger {
@@ -37,7 +37,6 @@ class TransactionStatusCache;
 class TransactionProcessor : public TransactionSink
 {
 public:
-
   static constexpr char const *LOGGING_NAME = "TransactionProcessor";
 
   // Construction / Destruction
@@ -64,7 +63,6 @@ public:
   TransactionProcessor &operator=(TransactionProcessor &&) = delete;
 
 protected:
-
   void OnTransaction(TransactionPtr const &tx) override;
 
 private:

@@ -19,6 +19,8 @@
 #include "ledger/storage_unit/lane_service.hpp"
 #include "core/service_ids.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
+#include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
+#include "ledger/chain/v2/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/lane_controller.hpp"
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"
@@ -30,8 +32,6 @@
 #include "network/muddle/rpc/server.hpp"
 #include "storage/document_store_protocol.hpp"
 #include "storage/new_revertible_document_store.hpp"
-#include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
-#include "ledger/chain/v2/transaction_rpc_serializers.hpp"
 
 using fetch::byte_array::ToBase64;
 

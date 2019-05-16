@@ -48,8 +48,8 @@ namespace ledger {
  *
  * @param num_executors The specified number of executors (and threads)
  */
-ExecutionManager::ExecutionManager(std::size_t num_executors, uint32_t log2_num_lanes, StorageUnitPtr storage,
-                                   ExecutorFactory const &factory)
+ExecutionManager::ExecutionManager(std::size_t num_executors, uint32_t log2_num_lanes,
+                                   StorageUnitPtr storage, ExecutorFactory const &factory)
   : log2_num_lanes_{log2_num_lanes}
   , storage_(std::move(storage))
   , idle_executors_()
@@ -148,7 +148,7 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
 
       // insert the item into the execution plan
       slice_plan.emplace_back(
-        std::make_unique<ExecutionItem>(tx.digest(), block.block_number, slice_index, tx.mask()));
+          std::make_unique<ExecutionItem>(tx.digest(), block.block_number, slice_index, tx.mask()));
     }
 
     ++slice_index;
@@ -309,8 +309,8 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
   MonitorState monitor_state = MonitorState::COMPLETED;
 
-  std::size_t current_slice = 0;
-  uint64_t aggregate_block_fees = 0;
+  std::size_t current_slice        = 0;
+  uint64_t    aggregate_block_fees = 0;
 
   v2::Digest current_block;
 

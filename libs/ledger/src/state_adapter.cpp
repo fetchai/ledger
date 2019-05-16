@@ -39,8 +39,7 @@ StateAdapter::StateAdapter(StorageInterface &storage, Identifier scope, Mode mod
   : storage_{storage}
   , scope_{std::move(scope)}
   , mode_{mode}
-{
-}
+{}
 
 /**
  * Read a value from the state store

@@ -27,9 +27,7 @@ namespace ledger {
 namespace v2 {
 
 class Transaction;
-
 }
-
 
 struct Deed
 {

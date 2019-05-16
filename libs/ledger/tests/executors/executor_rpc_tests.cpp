@@ -37,17 +37,17 @@
 //#include <random>
 //#include <thread>
 //
-//using ::testing::_;
-//using fetch::network::AtomicInFlightCounter;
-//using fetch::network::AtomicCounterName;
-//using fetch::muddle::NetworkId;
-//using fetch::ledger::v2::Transaction;
-//using fetch::ledger::v2::TransactionBuilder;
-//using fetch::ledger::v2::Address;
+// using ::testing::_;
+// using fetch::network::AtomicInFlightCounter;
+// using fetch::network::AtomicCounterName;
+// using fetch::muddle::NetworkId;
+// using fetch::ledger::v2::Transaction;
+// using fetch::ledger::v2::TransactionBuilder;
+// using fetch::ledger::v2::Address;
 //
-//class ExecutorRpcTests : public ::testing::Test
+// class ExecutorRpcTests : public ::testing::Test
 //{
-//protected:
+// protected:
 //  using ExecutorRpcClient  = fetch::ledger::ExecutorRpcClient;
 //  using ExecutorRpcService = fetch::ledger::ExecutorRpcService;
 //  using NetworkManager     = fetch::network::NetworkManager;
@@ -231,7 +231,7 @@
 //  MuddlePtr muddle_;
 //};
 //
-//TEST_F(ExecutorRpcTests, CheckDummyContract)
+// TEST_F(ExecutorRpcTests, CheckDummyContract)
 //{
 //  EXPECT_CALL(*storage_, AddTransaction(_)).Times(1);
 //  EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(1);
@@ -249,7 +249,7 @@
 //  EXPECT_EQ(result.status, fetch::ledger::ExecutorInterface::Status::SUCCESS);
 //}
 //
-//TEST_F(ExecutorRpcTests, CheckTokenContract)
+// TEST_F(ExecutorRpcTests, CheckTokenContract)
 //{
 //  ::testing::InSequence seq;
 //

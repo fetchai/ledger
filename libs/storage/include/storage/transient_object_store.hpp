@@ -84,7 +84,7 @@ public:
   std::size_t Size() const;
 
   TxArray PullSubtree(byte_array::ConstByteArray const &rid, uint64_t bit_count,
-                             uint64_t pull_limit);
+                      uint64_t pull_limit);
 
   WeakRunnable GetWeakRunnable() const;
 
@@ -155,8 +155,8 @@ std::size_t TransientObjectStore<O>::Size() const
 }
 
 template <typename O>
-typename TransientObjectStore<O>::TxArray TransientObjectStore<O>::PullSubtree(byte_array::ConstByteArray const &rid,
-                                                    uint64_t bit_count, uint64_t pull_limit)
+typename TransientObjectStore<O>::TxArray TransientObjectStore<O>::PullSubtree(
+    byte_array::ConstByteArray const &rid, uint64_t bit_count, uint64_t pull_limit)
 {
   TxArray ret{};
 
@@ -354,12 +354,11 @@ bool TransientObjectStore<O>::Get(ResourceID const &rid, O &object)
  * @return a vector of the tx summaries
  */
 template <typename O>
-typename TransientObjectStore<O>::TxLayouts TransientObjectStore<O>::GetRecent(
-    uint32_t max_to_poll)
+typename TransientObjectStore<O>::TxLayouts TransientObjectStore<O>::GetRecent(uint32_t max_to_poll)
 {
   static const std::chrono::milliseconds MAX_WAIT{5};
 
-  TxLayouts layouts{};
+  TxLayouts                     layouts{};
   ledger::v2::TransactionLayout summary;
 
   for (std::size_t i = 0; i < max_to_poll; ++i)
@@ -415,8 +414,8 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
   if (newly_seen)
   {
     std::size_t count{most_recent_seen_.QUEUE_LENGTH};
-    bool const  inserted =
-        most_recent_seen_.Push(ledger::v2::TransactionLayout{object}, count, std::chrono::milliseconds{100});
+    bool const  inserted = most_recent_seen_.Push(ledger::v2::TransactionLayout{object}, count,
+                                                 std::chrono::milliseconds{100});
     if (inserted && prev_count != count)
     {
       if (prev_count < recent_queue_alarm_threshold && count >= recent_queue_alarm_threshold)

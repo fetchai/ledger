@@ -66,7 +66,6 @@ public:
   std::string WrapKeyWithScope(std::string const &key);
 
 protected:
-
   // Protected construction
   StateAdapter(StorageInterface &storage, Identifier scope, Mode mode);
 

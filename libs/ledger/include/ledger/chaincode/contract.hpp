@@ -38,9 +38,9 @@ class Variant;
 }
 namespace ledger {
 namespace v2 {
-  class Transaction;
-  class Address;
-}
+class Transaction;
+class Address;
+}  // namespace v2
 
 /**
  * Contract - Base class for all smart contract and chain code instances
@@ -114,7 +114,8 @@ protected:
   /// @{
   void OnTransaction(std::string const &name, TransactionHandler &&handler);
   template <typename C>
-  void OnTransaction(std::string const &name, C *instance, Status (C::*func)(v2::Transaction const &));
+  void OnTransaction(std::string const &name, C *instance,
+                     Status (C::*func)(v2::Transaction const &));
   /// @}
 
   /// @name Query Handler Registration
@@ -221,7 +222,8 @@ void Contract::OnTransaction(std::string const &name, C *instance,
                              Status (C::*func)(v2::Transaction const &))
 {
   // create the function handler and pass it to the normal function
-  OnTransaction(name, [instance, func](v2::Transaction const &tx) { return (instance->*func)(tx); });
+  OnTransaction(name,
+                [instance, func](v2::Transaction const &tx) { return (instance->*func)(tx); });
 }
 
 /**
