@@ -21,7 +21,7 @@
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/transaction.hpp"
-#include "meta/is_log2.hpp"
+#include "meta/log2.hpp"
 #include "vectorise/threading/pool.hpp"
 #include "ledger/chain/v2/transaction_layout.hpp"
 #include "ledger/chain/v2/digest.hpp"
@@ -84,7 +84,7 @@ private:
                              std::size_t interval, std::size_t num_lanes);
   static void GenerateSlice(Queue &transactions, Block::Slice &slice, std::size_t slice_index,
                             std::size_t num_lanes);
-  static bool SortByFee(TransactionLayoutQueue::Entry const &a, TransactionLayoutQueue::Entry const &b);
+  static bool SortByFee(TransactionLayout const &a, TransactionLayout const &b);
   /// @}
 
   /// @name Configuration

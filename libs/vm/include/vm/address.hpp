@@ -34,14 +34,14 @@ public:
 
   using Buffer = std::vector<uint8_t>;
 
-  static Ptr<Address> Constructor(VM *vm, TypeId id)
+  static Ptr<Address> Constructor(VM *vm, TypeId type_id)
   {
-    return new Address{vm, id};
+    return new Address{vm, type_id};
   }
 
-  static Ptr<Address> Constructor(VM *vm, TypeId id, Ptr<String> const &address)
+  static Ptr<Address> Constructor(VM *vm, TypeId type_id, Ptr<String> const &address)
   {
-    return new Address{vm, id, address};
+    return new Address{vm, type_id, address};
   }
 
   // Construction / Destruction

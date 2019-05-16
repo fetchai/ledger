@@ -13,4 +13,4 @@ while True:
 
     for x in ret:
         if(x):
-            print("Found: "+x.text)
+            print("Found: " + x.text)

@@ -23,7 +23,7 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/v2/transaction.hpp"
 #include "ledger/chain/v2/transaction_layout.hpp"
-#include "meta/is_log2.hpp"
+#include "meta/log2.hpp"
 #include "miner/basic_miner.hpp"
 #include "miner/resource_mapper.hpp"
 #include "vectorise/platform.hpp"
@@ -46,10 +46,10 @@ protected:
   static constexpr uint32_t    NUM_LANES      = 16;
   static constexpr std::size_t NUM_SLICES     = 16;
   static constexpr uint32_t    NUM_LANES_MASK = NUM_LANES - 1;
-  static constexpr uint32_t    LOG2_NUM_LANES = Log2<NUM_LANES>::value;
+  static constexpr uint32_t    LOG2_NUM_LANES = fetch::meta::Log2(NUM_LANES);
   static constexpr std::size_t RANDOM_SEED    = 42;
 
-  static_assert(IsLog2<NUM_LANES>::value, "Number of lanes must be a valid 2 power");
+  static_assert(IsLog2(NUM_LANES), "Number of lanes must be a valid 2 power");
 
   using Rng                 = std::mt19937_64;
   using BasicMiner          = fetch::miner::BasicMiner;

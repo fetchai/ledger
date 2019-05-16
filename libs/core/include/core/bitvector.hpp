@@ -34,7 +34,7 @@ public:
   enum
   {
     ELEMENT_BIT_SIZE = sizeof(Block) << 3,
-    LOG_BITS         = meta::Log2<8 * sizeof(Block)>::value,
+    LOG_BITS         = meta::Log2(8 * sizeof(Block)),
     BIT_MASK         = (1ull << LOG_BITS) - 1,
     SIMD_SIZE        = UnderlyingArray::E_SIMD_COUNT
   };

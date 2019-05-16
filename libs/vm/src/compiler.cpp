@@ -33,17 +33,16 @@ Compiler::~Compiler()
   analyser_.UnInitialise();
 }
 
-bool Compiler::Compile(std::string const &source, std::string const &name, Script &script,
-                       Strings &errors)
+bool Compiler::Compile(std::string const &source, std::string const &name, IR &ir,
+                       std::vector<std::string> &errors)
 {
-  BlockNodePtr root = parser_.Parse(source, errors);
+  std::string  filename = "";
+  BlockNodePtr root     = parser_.Parse(filename, source, errors);
   if (root == nullptr)
   {
     return false;
   }
-
-  TypeInfoTable type_info_table;
-  bool          analysed = analyser_.Analyse(root, type_info_table, errors);
+  bool analysed = analyser_.Analyse(root, errors);
   if (!analysed)
   {
     root->Reset();
@@ -51,10 +50,11 @@ bool Compiler::Compile(std::string const &source, std::string const &name, Scrip
     return false;
   }
 
-  generator_.Generate(root, type_info_table, name, script);
+  builder_.Build(name, root, ir);
 
   root->Reset();
   root = nullptr;
+
   return true;
 }
 

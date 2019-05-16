@@ -19,7 +19,7 @@
 
 #include "core/mutex.hpp"
 #include "core/sync/tickets.hpp"
-#include "meta/is_log2.hpp"
+#include "meta/log2.hpp"
 #include "meta/type_traits.hpp"
 
 #include <array>
@@ -73,7 +73,7 @@ private:
   std::size_t index_{0};
 
   // static assertions
-  static_assert(meta::IsLog2<SIZE>::value, "Queue size must be a valid power of 2");
+  static_assert(meta::IsLog2(SIZE), "Queue size must be a valid power of 2");
 };
 
 /**
@@ -167,7 +167,7 @@ protected:
   Tickets       write_count_{SIZE};  ///< The write semaphore/tickets object
 
   // static asserts
-  static_assert(meta::IsLog2<SIZE>::value, "Queue size must be a valid power of 2");
+  static_assert(meta::IsLog2(SIZE), "Queue size must be a valid power of 2");
   static_assert(std::is_default_constructible<T>::value, "T must be default constructable");
   static_assert(std::is_copy_assignable<T>::value, "T must have copy assignment");
 };

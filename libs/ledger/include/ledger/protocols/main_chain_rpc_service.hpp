@@ -105,7 +105,7 @@ public:
 
   bool IsSynced() const
   {
-    return (State::SYNCHRONISED == state());
+    return State::SYNCHRONISED == state_machine_->state();
   }
 
   // Operators
@@ -113,8 +113,6 @@ public:
   MainChainRpcService &operator=(MainChainRpcService &&) = delete;
 
 private:
-  static constexpr std::size_t BLOCK_CATCHUP_STEP_SIZE = 30;
-
   using BlockList       = fetch::ledger::MainChainProtocol::Blocks;
   using StateMachine    = core::StateMachine<State>;
   using StateMachinePtr = std::shared_ptr<StateMachine>;

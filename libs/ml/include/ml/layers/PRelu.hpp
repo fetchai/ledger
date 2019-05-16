@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/fixed_point/fixed_point.hpp"
+#include "math/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/leaky_relu_op.hpp"
@@ -60,7 +60,7 @@ public:
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
   {
     return {inputs.at(0).get().shape()};
   }

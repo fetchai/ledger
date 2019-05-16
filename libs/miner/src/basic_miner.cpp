@@ -74,6 +74,8 @@ BasicMiner::BasicMiner(uint32_t log2_num_lanes)
   : log2_num_lanes_{log2_num_lanes}
   , max_num_threads_{std::thread::hardware_concurrency()}
   , thread_pool_{max_num_threads_, "Miner"}
+  , pending_{log2_num_lanes}
+  , mining_pool_{log2_num_lanes}
 {}
 
 /**
@@ -191,14 +193,20 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   }
   else
   {
+    using QueuePtr = std::unique_ptr<Queue>;
+
     // split the main queue into a series of smaller queues that can be executed in parallel
-    std::vector<Queue> transaction_lists(num_threads);
+    std::vector<QueuePtr> transaction_lists(num_threads);
+    for (auto &queue : transaction_lists)
+    {
+      queue = std::make_unique<Queue>(log2_num_lanes_);
+    }
 
     std::size_t const num_tx_per_thread = mining_pool_.size() / num_threads;
 
     for (std::size_t i = 0; i < num_threads; ++i)
     {
-      Queue &txs = transaction_lists[i];
+      QueuePtr const &txs = transaction_lists[i];
 
       auto start = mining_pool_.begin();
       auto end   = start;
@@ -209,10 +217,10 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
       //  should be updated to maximise collected fees for the miner.
 
       // splice in the contents of the array
-      txs.Splice(mining_pool_, start, end);
+      txs->Splice(mining_pool_, start, end);
 
       thread_pool_.Dispatch([&txs, &block, i, num_threads, num_lanes]() {
-        GenerateSlices(txs, block.body, i, num_threads, num_lanes);
+        GenerateSlices(*txs, block.body, i, num_threads, num_lanes);
       });
     }
 
@@ -222,7 +230,7 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
     // return all the transactions to the main queue
     for (std::size_t i = 0; i < num_threads; ++i)
     {
-      mining_pool_.Splice(transaction_lists[i]);
+      mining_pool_.Splice(*transaction_lists[i]);
     }
   }
 
@@ -290,17 +298,19 @@ void BasicMiner::GenerateSlice(Queue &transactions, Block::Slice &      slice,
       break;
     }
 
+    BitVector const &mask = it->mask();
+
     // calculate the collisions for this
-    BitVector const collisions = slice_state & it->resources;
+    BitVector const collisions = slice_state & mask;
 
     // determine if there are collisions
     if (collisions.PopCount() == 0)
     {
       // update the slice state
-      slice_state |= it->resources;
+      slice_state |= mask;
 
       // insert the transaction into the slice
-      slice.push_back(it->layout);
+      slice.push_back(*it);
 
       // remove the transaction from the main queue
       it = transactions.Erase(it);
@@ -320,10 +330,10 @@ void BasicMiner::GenerateSlice(Queue &transactions, Block::Slice &      slice,
  * @param b The reference to the other transaction entry
  * @return true if a is preferable to b, otherwise false
  */
-bool BasicMiner::SortByFee(TransactionLayoutQueue::Entry const &a, TransactionLayoutQueue::Entry const &b)
+bool BasicMiner::SortByFee(TransactionLayout const &a, TransactionLayout const &b)
 {
   // this doesn't seem to the a good metric
-  return a.layout.charge() > b.layout.charge();
+  return a.charge() > b.charge();
 }
 
 }  // namespace miner

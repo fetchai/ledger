@@ -23,6 +23,24 @@
 namespace fetch {
 namespace miner {
 
+
+bool TransactionLayoutQueue::RemapAndAdd(UnderlyingList &list, TransactionLayout const &tx, uint32_t num_lanes)
+{
+  bool success{false};
+
+  // remap the transaction layout
+  BitVector mask{num_lanes};
+  if (tx.mask().RemapTo(mask))
+  {
+    // construct the new transaction layout
+    list.emplace_back(tx, mask);
+
+    success = true;
+  }
+
+  return success;
+}
+
 /**
  * Adds a transcaction layout to the queue
  *
@@ -38,13 +56,13 @@ bool TransactionLayoutQueue::Add(TransactionLayout const &item)
   // ensure that this isn't already a duplicate transaction layout
   if (digests_.find(digest) == digests_.end())
   {
-    // update the digest set
-    digests_.insert(digest);
+    if (RemapAndAdd(list_, item, 1u << log2_num_lanes_))
+    {
+      // update the digest set
+      digests_.insert(digest);
 
-    // update the list
-    list_.emplace_back(Entry{item, item.mask()});
-
-    success = true;
+      success = true;
+    }
   }
 
   return success;
@@ -64,8 +82,8 @@ bool TransactionLayoutQueue::Remove(Digest const &digest)
   auto const it = std::find_if(
     list_.begin(),
     list_.end(),
-    [&digest](Entry const &entry) {
-      return entry.layout.digest() == digest;
+    [&digest](TransactionLayout const &layout) {
+      return layout.digest() == digest;
     }
   );
 
@@ -93,8 +111,8 @@ std::size_t TransactionLayoutQueue::Remove(DigestSet const &digests)
 
   if (!digests.empty())
   {
-    list_.remove_if([this, &digests, &count](Entry const &entry) {
-      auto const &digest = entry.layout.digest();
+    list_.remove_if([this, &digests, &count](TransactionLayout const &layout) {
+      auto const &digest = layout.digest();
 
       // determine if we should remove this element
       bool const remove = digests.find(digest) != digests.end();
@@ -129,12 +147,12 @@ void TransactionLayoutQueue::Splice(TransactionLayoutQueue &other)
   // loop through the queue and filter out the duplicate entries from the main queue
   for (auto it = input.begin(); it != input.end();)
   {
-    bool const new_entry = digests_.find(it->layout.digest()) == digests_.end();
+    bool const new_entry = digests_.find(it->digest()) == digests_.end();
 
     if (new_entry)
     {
       // update this queues digest set (in anticipation for new transaction objects)
-      digests_.insert(it->layout.digest());
+      digests_.insert(it->digest());
 
       // advance on to the next entry
       ++it;
@@ -156,7 +174,7 @@ void TransactionLayoutQueue::Splice(TransactionLayoutQueue &other, Iterator star
   Iterator current{start};
   while (current != end)
   {
-    auto const &digest = current->layout.digest();
+    auto const &digest = current->digest();
 
     if (digests_.find(digest) == digests_.end())
     {
@@ -180,7 +198,7 @@ void TransactionLayoutQueue::Splice(TransactionLayoutQueue &other, Iterator star
   // loop through the queue and filter out the duplicate entries from the main queue
   while (current != end)
   {
-    auto const &digest = current->layout.digest();
+    auto const &digest = current->digest();
 
     // remove the digest item from the "other" queue
     other.digests_.erase(digest);
@@ -210,7 +228,7 @@ void TransactionLayoutQueue::Splice(TransactionLayoutQueue &other, Iterator star
 TransactionLayoutQueue::Iterator TransactionLayoutQueue::Erase(Iterator const &iterator)
 {
   // remove the associated digest from the set
-  digests_.erase(iterator->layout.digest());
+  digests_.erase(iterator->digest());
 
   // remove the list element
   return list_.erase(iterator);

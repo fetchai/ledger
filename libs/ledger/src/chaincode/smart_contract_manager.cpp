@@ -113,14 +113,14 @@ Contract::Status SmartContractManager::OnCreate(v2::Transaction const &tx)
   // Attempt to call the init method, if it exists
   std::string on_init_function;
 
-  for (auto const &fn : smart_contract.script()->functions)
+  for (auto const &fn : smart_contract.executable()->functions)
   {
     // determine the kind of function
     auto const kind = DetermineKind(fn);
 
     switch (kind)
     {
-    case vm::Kind::ON_INIT:
+    case vm::FunctionDecoratorKind::ON_INIT:
       if (on_init_function.size() > 0)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "More than one init function found in SC. Terminating.");
@@ -130,7 +130,7 @@ Contract::Status SmartContractManager::OnCreate(v2::Transaction const &tx)
       on_init_function = fn.name;
       break;
 
-    case vm::Kind::INVALID:
+    case vm::FunctionDecoratorKind::INVALID:
       FETCH_LOG_WARN(LOGGING_NAME, "Invalid function decorator found when adding SC");
       return Status::FAILED;
 

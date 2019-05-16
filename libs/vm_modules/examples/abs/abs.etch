@@ -1,11 +1,11 @@
 function do_abs(value: Int32)
-  print("Abs of " + toString(value) + ": ");
-  print(toString(Abs(value)));
+  printLn("Abs of " + toString(value) + ": ");
+  printLn(toString(Abs(value)));
 endfunction
 
 function do_abs(value: Float64)
-  print("Abs of " + toString(value) + ": ");
-  print(toString(Abs(value)));
+  printLn("Abs of " + toString(value) + ": ");
+  printLn(toString(Abs(value)));
 endfunction
 
 

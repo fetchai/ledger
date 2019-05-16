@@ -47,7 +47,7 @@ public:
       ArrayType const &                                           error_signal_signal) override;
 
   std::vector<typename ArrayType::SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) override;
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const override;
 
   static constexpr char const *DESCRIPTOR = "Convolution2D";
 
@@ -77,8 +77,7 @@ private:
                          SizeType const output_channels, SizeType const output_height,
                          SizeType const output_width);
 
-  SizeType              stride_size_;
-  std::vector<SizeType> output_shape_;
+  SizeType stride_size_;
 };
 
 /**
@@ -100,9 +99,7 @@ ArrayType Convolution2D<ArrayType>::Forward(
   ASSERT(inputs.at(0).get().shape().size() == 3);
   // Kernels should be a 4D tensor [oC x iC x H x W]
   ASSERT(inputs.at(1).get().shape().size() == 4);
-
-  auto output_shape = ComputeOutputShape(inputs);
-  ASSERT(output.shape() == output_shape);
+  ASSERT(output.shape() == ComputeOutputShape(inputs));
 
   ArrayType input   = inputs.at(0).get();
   ArrayType kernels = inputs.at(1).get();
@@ -111,8 +108,8 @@ ArrayType Convolution2D<ArrayType>::Forward(
   SizeType output_channels = kernels.shape().at(0);
   SizeType kernel_height   = kernels.shape().at(2);
   SizeType kernel_width    = kernels.shape().at(3);
-  SizeType output_height   = output_shape.at(1);
-  SizeType output_width    = output_shape.at(2);
+  SizeType output_height   = output.shape().at(1);
+  SizeType output_width    = output.shape().at(2);
 
   SizeType horizontal_stride_width  = kernel_width * kernel_height * input_channels;
   SizeType horizontal_stride_height = output_height * output_width;
@@ -161,12 +158,10 @@ std::vector<ArrayType> Convolution2D<ArrayType>::Backward(
   ASSERT(inputs.at(0).get().shape().size() == 3);
   // Kernels should be a 4D tensor [oC x iC x H x W]
   ASSERT(inputs.at(1).get().shape().size() == 4);
+  ASSERT(error_signal_signal.shape() == ComputeOutputShape(inputs));
 
-  auto output_shape = ComputeOutputShape(inputs);
-  ASSERT(error_signal_signal.shape() == output_shape);
-
-  SizeType output_height = output_shape.at(1);
-  SizeType output_width  = output_shape.at(2);
+  SizeType output_height = error_signal_signal.shape().at(1);
+  SizeType output_width  = error_signal_signal.shape().at(2);
 
   ArrayType input   = inputs.at(0).get();
   ArrayType kernels = inputs.at(1).get();
@@ -216,22 +211,21 @@ std::vector<ArrayType> Convolution2D<ArrayType>::Backward(
 
 template <class ArrayType>
 std::vector<typename ArrayType::SizeType> Convolution2D<ArrayType>::ComputeOutputShape(
-    std::vector<std::reference_wrapper<ArrayType const>> const &inputs)
+    std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
 {
-  // Return pre-computed value if exist
-  if (output_shape_.size() != 0)
-    return output_shape_;
+  std::vector<SizeType> output_shape;
+
   // output_shape_[0]=number of output channels
-  output_shape_.emplace_back(inputs.at(1).get().shape()[0]);
+  output_shape.emplace_back(inputs.at(1).get().shape()[0]);
   // output_shape_[1]=number of stride_size steps over input height
-  output_shape_.emplace_back(
+  output_shape.emplace_back(
       (inputs.at(0).get().shape()[1] - inputs.at(1).get().shape()[2] + stride_size_) /
       stride_size_);
   // output_shape_[2]=number of stride_size steps over input width
-  output_shape_.emplace_back(
+  output_shape.emplace_back(
       (inputs.at(0).get().shape()[2] - inputs.at(1).get().shape()[3] + stride_size_) /
       stride_size_);
-  return output_shape_;
+  return output_shape;
 }
 
 // TODO(issue 943): Make im2col efficient using iterators

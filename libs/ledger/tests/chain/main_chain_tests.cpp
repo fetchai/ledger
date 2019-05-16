@@ -511,7 +511,7 @@ TEST_P(MainChainTests, CheckMissingLooseBlocks)
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), main1->body.hash);
 
   ASSERT_TRUE(chain_->HasMissingBlocks());
-  auto const missing_hashes = chain_->GetMissingBlockHashes(MainChain::ALL);
+  auto const missing_hashes = chain_->GetMissingBlockHashes(MainChain::UPPER_BOUND);
 
   ASSERT_EQ(missing_hashes.size(), 1);
   ASSERT_EQ(missing_hashes[0], main2->body.hash);

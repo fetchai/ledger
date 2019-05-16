@@ -86,5 +86,4 @@ private:
   StateHistory     state_history_{};
   StateHashStack   state_history_stack_{fetch::ledger::GENESIS_MERKLE_ROOT};
   Hash             current_hash_{fetch::ledger::GENESIS_MERKLE_ROOT};
-  Hash             last_commit_hash_{};
 };

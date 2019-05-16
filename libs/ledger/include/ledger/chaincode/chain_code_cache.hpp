@@ -20,7 +20,7 @@
 #include "crypto/fnv.hpp"  // needed for std::hash<ConstByteArray>
 #include "ledger/chaincode/factory.hpp"
 #include "ledger/identifier.hpp"
-#include "meta/is_log2.hpp"
+#include "meta/log2.hpp"
 
 
 #include <algorithm>
@@ -71,7 +71,7 @@ private:
   UnderlyingCache  cache_;
   ChainCodeFactory factory_;
 
-  static_assert(meta::IsLog2<CLEANUP_PERIOD>::value, "Clean up period must be a valid power of 2");
+  static_assert(meta::IsLog2(CLEANUP_PERIOD), "Clean up period must be a valid power of 2");
 };
 
 }  // namespace ledger

@@ -47,7 +47,7 @@ protected:
 
   void SetUp() override
   {
-    queue_ = std::make_unique<TransactionLayoutQueue>();
+    queue_ = std::make_unique<TransactionLayoutQueue>(1);
     generator_.Seed();
   }
 
@@ -256,7 +256,7 @@ TEST_F(TransactionLayoutQueueTests, CheckSplice)
   EXPECT_TRUE(queue_->Add(tx3));
   EXPECT_EQ(queue_->size(), 3u);
 
-  TransactionLayoutQueue other;
+  TransactionLayoutQueue other{1};
 
   auto const tx4 = generator_(2);
   auto const tx5 = generator_(2);
@@ -293,15 +293,15 @@ TEST_F(TransactionLayoutQueueTests, CheckSorting)
 
   // sort the queue by charge
   queue_->Sort([](auto const &a, auto const &b) {
-    return a.layout.charge() > b.layout.charge();
+    return a.charge() > b.charge();
   });
 
   ASSERT_EQ(queue_->size(), 3u);
 
   auto it = queue_->cbegin();
-  EXPECT_EQ((it++)->layout.digest(), tx3.digest());
-  EXPECT_EQ((it++)->layout.digest(), tx2.digest());
-  EXPECT_EQ((it++)->layout.digest(), tx1.digest());
+  EXPECT_EQ((it++)->digest(), tx3.digest());
+  EXPECT_EQ((it++)->digest(), tx2.digest());
+  EXPECT_EQ((it++)->digest(), tx1.digest());
 }
 
 TEST_F(TransactionLayoutQueueTests, CheckSubSplicing)
@@ -313,7 +313,7 @@ TEST_F(TransactionLayoutQueueTests, CheckSubSplicing)
   auto const tx4 = generator_(2);
 
   // create a basic queue
-  TransactionLayoutQueue other;
+  TransactionLayoutQueue other{1};
   EXPECT_TRUE(other.Add(tx1));
   EXPECT_TRUE(other.Add(tx2));
   EXPECT_TRUE(other.Add(tx3));
@@ -347,7 +347,7 @@ TEST_F(TransactionLayoutQueueTests, CheckDuplicateSubSplicing)
   auto const tx4 = generator_(2);
 
   // create a basic queue
-  TransactionLayoutQueue other;
+  TransactionLayoutQueue other{1};
   EXPECT_TRUE(other.Add(tx1));
   EXPECT_TRUE(other.Add(tx2));
   EXPECT_TRUE(other.Add(tx3));

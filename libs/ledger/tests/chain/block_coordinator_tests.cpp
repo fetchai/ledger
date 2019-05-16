@@ -999,7 +999,7 @@ protected:
 TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
 {
   TransactionLayout layout{
-    fetch::testing::GenerateUniqueHashes(1u)[0],
+    *fetch::testing::GenerateUniqueHashes(1u).begin(),
     fetch::BitVector{},
     0,
     0,

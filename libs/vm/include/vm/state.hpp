@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/address.hpp"
 #include "vm/vm.hpp"
 
 namespace fetch {

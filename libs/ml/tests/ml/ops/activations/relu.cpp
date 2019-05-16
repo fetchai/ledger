@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/fixed_point/fixed_point.hpp"
+#include "math/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/activation.hpp"
 #include <gtest/gtest.h>

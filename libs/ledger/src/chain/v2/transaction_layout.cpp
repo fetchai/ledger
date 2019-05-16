@@ -33,6 +33,16 @@ TransactionLayout::TransactionLayout(Transaction const &tx)
 {}
 
 /**
+ * Construct a transaction layout from the specified reference layout and specified mask
+ * @param tx The main contents of the transaction
+ * @param mask The new mask to be applied
+ */
+TransactionLayout::TransactionLayout(TransactionLayout const &tx, BitVector const &mask)
+  : TransactionLayout(tx.digest(), mask, tx.charge(), tx.valid_from(), tx.valid_until())
+{
+}
+
+/**
  * Construct a transaction layout from its constituent parts
  *
  * @param digest The digest to be set

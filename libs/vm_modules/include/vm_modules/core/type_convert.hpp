@@ -56,6 +56,11 @@ inline void CreateToString(fetch::vm::Module &module)
   module.CreateFreeFunction("toString", &ToString<bool>);
 }
 
+inline void CreateToString(std::shared_ptr<vm::Module> module)
+{
+  CreateToString(*module.get());
+}
+
 inline void CreateToBool(fetch::vm::Module &module)
 {
 

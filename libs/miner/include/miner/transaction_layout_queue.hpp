@@ -33,22 +33,12 @@ public:
   using TransactionLayout = ledger::v2::TransactionLayout;
   using Digest            = ledger::v2::Digest;
   using DigestSet         = ledger::v2::DigestSet;
-
-  struct Entry
-  {
-    TransactionLayout layout;
-    BitVector         resources;
-
-    bool operator==(TransactionLayout const &other) const;
-    bool operator==(Entry const &other) const;
-  };
-
-  using UnderlyingList = std::list<Entry>;
-  using Iterator = UnderlyingList::iterator;
-  using ConstIterator = UnderlyingList::const_iterator;
+  using UnderlyingList    = std::list<TransactionLayout>;
+  using Iterator          = UnderlyingList::iterator;
+  using ConstIterator     = UnderlyingList::const_iterator;
 
   // Construction / Destruction
-  TransactionLayoutQueue() = default;
+  explicit TransactionLayoutQueue(uint32_t log2_num_lanes);
   TransactionLayoutQueue(TransactionLayoutQueue const &) = delete;
   TransactionLayoutQueue(TransactionLayoutQueue &&) = delete;
   ~TransactionLayoutQueue() = default;
@@ -85,9 +75,17 @@ public:
 
 private:
 
-  DigestSet       digests_; ///< Set of digests stored within the list
-  UnderlyingList  list_;    ///< The list of transaction layouts
+  static bool RemapAndAdd(UnderlyingList &list, TransactionLayout const &tx, uint32_t num_lanes);
+
+  uint32_t       log2_num_lanes_;
+  DigestSet      digests_; ///< Set of digests stored within the list
+  UnderlyingList list_;    ///< The list of transaction layouts
 };
+
+inline TransactionLayoutQueue::TransactionLayoutQueue(uint32_t log2_num_lanes)
+  : log2_num_lanes_{log2_num_lanes}
+{
+}
 
 inline TransactionLayoutQueue::ConstIterator TransactionLayoutQueue::cbegin() const
 {
@@ -138,16 +136,6 @@ template <typename SortPredicate>
 void TransactionLayoutQueue::Sort(SortPredicate &&predicate)
 {
   list_.sort(predicate);
-}
-
-inline bool TransactionLayoutQueue::Entry::operator==(TransactionLayout const &other) const
-{
-  return layout.digest() == other.digest();
-}
-
-inline bool TransactionLayoutQueue::Entry::operator==(Entry const &other) const
-{
-  return layout.digest() == other.layout.digest();
 }
 
 } // namespace miner
