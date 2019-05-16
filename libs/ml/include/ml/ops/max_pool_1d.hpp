@@ -105,7 +105,7 @@ public:
 
     ArrayType return_signal{inputs.at(0).get().shape()};
 
-    auto output_shape = ComputeOutputShape(inputs);
+    auto output_shape = error_signal.shape();
 
     SizeType iter;
     DataType max;
