@@ -22,8 +22,8 @@ from pathlib import Path
 
 from fetch.cluster.instance import ConstellationInstance
 
-from fetchai.ledger.api import TokenApi, TransactionApi
-from fetchai.ledger.crypto import Identity
+from fetchai.ledger.api import LedgerApi
+from fetchai.ledger.crypto import Entity
 
 def output(*args):
     text = ' '.join(map(str, args))
@@ -260,20 +260,18 @@ def send_txs(parameters, test_instance):
         node_port = test_instance._nodes[node_index]._port_start
 
         # create the API objects we use to interface with the nodes
-        txs = TransactionApi(node_host, node_port)
-        tokens = TokenApi(node_host, node_port)
+        api = LedgerApi(node_host, node_port)
 
         tx_and_identity = []
-
         for balance in range(amount):
 
-            # generate a random identity
-            identity = Identity()
+            # generate a random entity
+            entity = Entity()
 
             # create and send the transaction to the ledger, capturing the tx hash
-            tx = tokens.wealth(identity.private_key_bytes, balance)
+            tx = api.tokens.wealth(entity, balance)
 
-            tx_and_identity.append((tx, identity, balance))
+            tx_and_identity.append((tx, entity, balance))
 
             output("Created wealth with balance: ", balance)
 
@@ -293,15 +291,15 @@ def verify_txs(parameters, test_instance):
         node_host = "localhost"
         node_port = test_instance._nodes[node_index]._port_start
 
-        txs = TransactionApi(node_host, node_port)
-        tokens = TokenApi(node_host, node_port)
+        # create the API
+        api = LedgerApi(node_host, node_port)
 
         # Verify TXs - will block until they have executed
         for tx, identity, balance in tx_and_identity:
 
             # Check TX has executed
             while True:
-                status = txs.status(tx)
+                status = api.tx.status(tx)
 
                 if status == "Executed":
                     break
@@ -309,7 +307,7 @@ def verify_txs(parameters, test_instance):
                 time.sleep(0.5)
                 output("Waiting for TX to get executed. Found: {}".format(status))
 
-            seen_balance = tokens.balance(identity.public_key)
+            seen_balance = api.tokens.balance(identity)
             if balance != seen_balance:
                 output("Balance mismatch found after sending to node. Found {} expected {}".format(seen_balance, balance))
                 test_instance._watchdog.trigger()
