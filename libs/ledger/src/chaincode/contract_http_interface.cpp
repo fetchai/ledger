@@ -164,7 +164,7 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
     }
   }
 
-  Post("/api/contract/(digest=[a-fA-F0-9]{64})/(identifier=[1-9A-HJ-NP-Za-km-z]{49,50})/(query=.+)",
+  Post("/api/contract/(digest=[a-fA-F0-9]{64})/(identifier=[1-9A-HJ-NP-Za-km-z]{48,50})/(query=.+)",
        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
          // build the contract name
          auto const contract_name = params["digest"] + "." + params["identifier"];
@@ -261,14 +261,9 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(http::HTTPRequest const 
 
     // handle the types of transaction
     TxHashes txs{};
-    bool     unknown_format = true;
-    if (content_type == "application/vnd+fetch.transaction+native")
-    {
-      submitted      = SubmitNativeTx(request, expected_contract, txs);
-      unknown_format = false;
-    }
-    else if (content_type == "application/vnd+fetch.transaction+json" ||
-             content_type == "application/json")
+    bool unknown_format = true;
+    if (content_type == "application/vnd+fetch.transaction+json" ||
+        content_type == "application/json")
     {
       submitted      = SubmitJsonTx(request, expected_contract, txs);
       unknown_format = false;
@@ -331,8 +326,6 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
   std::size_t submitted{0};
   std::size_t expected_count{0};
 
-
-
   // parse the JSON request
   json::JSONDocument doc{request.body()};
 
@@ -348,7 +341,6 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
     {
       auto const &tx_obj = doc[i];
 
-#if 1
       // create the transaction
       auto tx = std::make_shared<v2::Transaction>();
       if (FromJsonTransaction(tx_obj, *tx))
@@ -358,27 +350,12 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
         processor_.AddTransaction(std::move(tx));
         ++submitted;
       }
-#else
-      MutableTransaction tx{FromWireTransaction(tx_obj)};
-
-      if (!expected_contract.empty() && (tx.contract_name() != expected_contract))
-      {
-        continue;
-      }
-
-      tx.UpdateDigest();
-
-      // add the transaction to the processor
-      processor_.AddTransaction(std::move(tx));
-#endif
-
     }
   }
   else
   {
     expected_count = 1;
 
-#if 1
     auto tx = std::make_shared<v2::Transaction>();
     if (FromJsonTransaction(doc.root(), *tx))
     {
@@ -388,86 +365,12 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
 
       ++submitted;
     }
-#else
-    MutableTransaction tx{FromWireTransaction(doc.root())};
-
-    if (expected_contract.empty() || (tx.contract_name() == expected_contract))
-    {
-      tx.UpdateDigest();
-
-      // add the transaction to the processor
-      txs.emplace_back(tx.digest());
-      processor_.AddTransaction(std::move(tx));
-      ++submitted;
-    }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to match expected_contract_name: ", expected_contract,
-                     " with ", tx.contract_name());
-    }
-#endif
   }
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Submitted ", submitted, " transactions from ",
                   request.originating_address(), ':', request.originating_port());
 
   return SubmitTxStatus{submitted, expected_count};
-}
-
-/**
- * Method handles incoming http request containing single or bulk of Native formattd
- * Wire transactions.
- *
- * This method was originally designed for benchmark/stress-test purposes, but can be used in
- * production environment.
- *
- * @param request https request containing single or bulk of JSON formatted Wire Transaction(s).
- * @param expected_contract_name contract name each transaction in request must conform to.
- *        Transactions which do NOT conform to this contract name will NOT be accepted further
- *        processing. If the value is `nullptr` (default value) the contract name check is
- *        DISABLED, and so transactions (each received transaction in bulk) can have any contract
- *        name.
- *
- * @return submit status, please see the `SubmitTxStatus` structure
- * @see SubmitTxStatus
-
- * @see SubmitJsonTx
- */
-ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitNativeTx(
-    http::HTTPRequest const &request, ConstByteArray expected_contract, TxHashes &txs)
-{
-#if 1
-
-  FETCH_UNUSED(request);
-  FETCH_UNUSED(expected_contract);
-  FETCH_UNUSED(txs);
-
-  return SubmitTxStatus{0, 0};
-
-#else
-  std::vector<AdaptedTx> transactions;
-
-  serializers::ByteArrayBuffer buffer(request.body());
-  buffer >> transactions;
-
-  std::size_t submitted{0};
-  for (auto const &input_tx : transactions)
-  {
-    if (!expected_contract.empty() && (input_tx.tx.contract_name() != expected_contract))
-    {
-      continue;
-    }
-
-    processor_.AddTransaction(input_tx.tx);
-    txs.emplace_back(input_tx.tx.digest());
-    ++submitted;
-  }
-
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Submitted ", submitted, " transactions from ",
-                  request.originating_address(), ':', request.originating_port());
-
-  return SubmitTxStatus{submitted, transactions.size()};
-#endif
 }
 
 /**

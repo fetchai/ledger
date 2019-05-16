@@ -248,10 +248,10 @@ bool Executor::ExecuteTransactionContract(Result &result)
 
   try
   {
-    Identifier contract{};
+    Identifier contract_id{};
 
     // generate the contract name (identifier)
-    if (!GenerateContractName(*current_tx_, contract))
+    if (!GenerateContractName(*current_tx_, contract_id))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to generate the contract name");
       result.status = Status::CONTRACT_NAME_PARSE_FAILURE;
@@ -260,32 +260,32 @@ bool Executor::ExecuteTransactionContract(Result &result)
 
     // when there is no contract signalled in the transaction the identifier will be empty. This is
     // a normal use case
-    if (contract.empty())
+    if (contract_id.empty())
     {
       result.status = Status::SUCCESS;
       return true;
     }
 
     // create the cache and state sentinel (lock and unlock resources as well as sandbox)
-    StateSentinelAdapter storage_adapter{*storage_cache_, contract.GetParent(), allowed_shards_};
+    StateSentinelAdapter storage_adapter{*storage_cache_, contract_id.GetParent(), allowed_shards_};
 
     // lookup or create the instance of the contract as is needed
-    auto chain_code = chain_code_cache_.Lookup(contract.GetParent(), *storage_);
-    if (!chain_code)
+    auto contract = chain_code_cache_.Lookup(contract_id.GetParent(), *storage_);
+    if (!contract)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Contract lookup failure: ", contract.full_name());
+      FETCH_LOG_WARN(LOGGING_NAME, "Contract lookup failure: ", contract_id.full_name());
       result.status = Status::CONTRACT_LOOKUP_FAILURE;
     }
 
     // attach the chain code to the current working context
-    chain_code->Attach(storage_adapter);
+    contract->Attach(storage_adapter);
 
     // Dispatch the transaction to the contract
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatch: ", contract.name());
-    auto const contract_status = chain_code->DispatchTransaction(contract.name(), *current_tx_);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatch: ", contract_id.name());
+    auto const contract_status = contract->DispatchTransaction(contract_id.name(), *current_tx_);
 
     // detach the chain code from the current context
-    chain_code->Detach();
+    contract->Detach();
 
     // map the contract execution status
     result.status = Status::CHAIN_CODE_EXEC_FAILURE;
@@ -316,7 +316,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
     if (success)
     {
       // simple linear scale fee
-      uint64_t const compute_charge = chain_code->CalculateFee();
+      uint64_t const compute_charge = contract->CalculateFee();
       uint64_t const storage_charge = (storage_adapter.num_bytes_written() * 2u);
       uint64_t const base_charge    = compute_charge + storage_charge;
       uint64_t const scaled_charge  = std::max<uint64_t>(allowed_shards_.PopCount(), 1) * base_charge;

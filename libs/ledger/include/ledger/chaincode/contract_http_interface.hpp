@@ -90,8 +90,6 @@ private:
   http::HTTPResponse OnTransaction(http::HTTPRequest const &req, ConstByteArray expected_contract);
   SubmitTxStatus     SubmitJsonTx(http::HTTPRequest const &req, ConstByteArray expected_contract,
                                   TxHashes &txs);
-  SubmitTxStatus     SubmitNativeTx(http::HTTPRequest const &req, ConstByteArray expected_contract,
-                                    TxHashes &txs);
   /// @}
 
   /// @name Access Log

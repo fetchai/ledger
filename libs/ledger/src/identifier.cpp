@@ -92,7 +92,7 @@ bool IsDigest(ConstByteArray const &value)
 
 bool IsIdentity(ConstByteArray const &value)
 {
-  return IsBase58<49, 50>(value);
+  return IsBase58<48, 50>(value);
 }
 
 }  // namespace

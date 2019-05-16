@@ -25,48 +25,6 @@ namespace v2 {
 class Transaction;
 }
 
-#if 0
-class UnverifiedTransactionSink
-{
-public:
-  using TransactionList = std::vector<UnverifiedTransaction>;
-
-  // Construction / Destruction
-  UnverifiedTransactionSink()          = default;
-  virtual ~UnverifiedTransactionSink() = default;
-
-  /// @name Transaction Handlers
-  /// @{
-  virtual void OnTransaction(UnverifiedTransaction const &tx) = 0;
-  /// @}
-};
-
-class VerifiedTransactionSink
-{
-public:
-  using TransactionList = std::vector<VerifiedTransaction>;
-
-  // Construction / Destruction
-  VerifiedTransactionSink()          = default;
-  virtual ~VerifiedTransactionSink() = default;
-
-  /// @name Transaction Handlers
-  /// @{
-  virtual void OnTransaction(VerifiedTransaction const &tx) = 0;
-  virtual void OnTransactions(TransactionList const &txs);
-  /// @}
-};
-
-inline void VerifiedTransactionSink::OnTransactions(TransactionList const &txs)
-{
-  for (auto const &tx : txs)
-  {
-    OnTransaction(tx);
-  }
-}
-#endif
-
-
 class TransactionSink
 {
 public:

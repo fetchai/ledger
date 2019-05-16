@@ -79,48 +79,6 @@ void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
   FETCH_METRIC_TX_QUEUED(tx->digest());
 }
 
-#if 0
-void TransactionProcessor::OnTransactions(TransactionList const &txs)
-{
-#ifdef FETCH_ENABLE_METRICS
-  auto const submitted = metrics::Metrics::Clock::now();
-#endif  // FETCH_ENABLE_METRICS
-
-  // dispatch all the transactions to the storage engine
-  try
-  {
-    storage_.AddTransactions(txs);
-  }
-  catch (std::runtime_error const &e)
-  {
-    // TODO(unknown): We need to think about how we handle failures of that class.
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to add transaction to storage: ", e.what());
-    return;
-  }
-
-#ifdef FETCH_ENABLE_METRICS
-  auto const stored = metrics::Metrics::Clock::now();
-#endif  // FETCH_ENABLE_METRICS
-
-  // enqueue all of the transactions
-  for (auto const &tx : txs)
-  {
-    packer_.EnqueueTransaction(tx.summary());
-  }
-
-#ifdef FETCH_ENABLE_METRICS
-  auto const queued = metrics::Metrics::Clock::now();
-
-  for (auto const &tx : txs)
-  {
-    FETCH_METRIC_TX_SUBMITTED_EX(tx.digest(), submitted);
-    FETCH_METRIC_TX_STORED_EX(tx.digest(), stored);
-    FETCH_METRIC_TX_QUEUED_EX(tx.digest(), queued);
-  }
-#endif  // FETCH_ENABLE_METRICS
-}
-#endif
-
 void TransactionProcessor::ThreadEntryPoint()
 {
   SetThreadName("TxProc");
