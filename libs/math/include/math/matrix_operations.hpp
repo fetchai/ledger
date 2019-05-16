@@ -230,11 +230,11 @@ T Product(std::vector<T> const &obj1)
  * @param ret
  * @return
  */
-template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, void> Max(ArrayType const &array, T &ret)
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> Max(ArrayType const &array, typename ArrayType::Type &ret)
 {
-  ret = numeric_lowest<T>();
-  for (T const &e : array)
+  ret = numeric_lowest<typename ArrayType::Type>();
+  for (typename ArrayType::Type const &e : array)
   {
     if (e > ret)
     {
@@ -329,11 +329,11 @@ T Max(std::vector<T> const &obj1)
  * @param array input array
  * @param ret return value
  */
-template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, T &ret)
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, typename ArrayType::Type &ret)
 {
-  ret = numeric_max<T>();
-  for (T const &e : array)
+  ret = numeric_max<typename ArrayType::Type>();
+  for (typename ArrayType::Type const &e : array)
   {
     if (e < ret)
     {
@@ -571,8 +571,8 @@ void PeakToPeak(ArrayType const &array, typename ArrayType::Type &ret)
 template <typename ArrayType>
 ArrayType PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const &axis)
 {
-  ArrayType ret = Max(array, axis);
-  ArrayType min = Min(array, axis);
+  ArrayType ret = fetch::math::Max(array, axis);
+  ArrayType min = fetch::math::Min(array, axis);
   fetch::math::Subtract(ret, min, ret);
   return ret;
 }
@@ -580,8 +580,8 @@ ArrayType PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const 
 template <typename ArrayType>
 void PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const &axis, ArrayType &ret)
 {
-  Max(array, axis, ret);
-  ArrayType min = Min(array, axis);
+  fetch::math::Max(array, axis, ret);
+  ArrayType min = fetch::math::Min(array, axis);
   fetch::math::Subtract(ret, min, ret);
 }
 
