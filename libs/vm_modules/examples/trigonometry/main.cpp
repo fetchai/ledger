@@ -16,13 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/analyser.hpp"
+
+#include "vm/compiler.hpp"
 #include "vm/module.hpp"
+#include "vm/vm.hpp"
 #include <fstream>
 #include <sstream>
 
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/type_convert.hpp"
-#include "vm_modules/math/abs.hpp"
+#include "vm_modules/math/trigonometry.hpp"
 
 int main(int argc, char **argv)
 {
@@ -43,7 +47,7 @@ int main(int argc, char **argv)
 
   fetch::vm_modules::CreatePrint(*module);
   fetch::vm_modules::CreateToString(*module);
-  fetch::vm_modules::CreateAbs(*module);
+  fetch::vm_modules::CreateTrigonometry(*module);
 
   // Setting compiler up
   fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(module.get());
