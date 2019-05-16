@@ -771,9 +771,137 @@ TYPED_TEST(FreeFunctionsTest, DynamicStitch)
   TypeParam output{{n_data}};
   fetch::math::DynamicStitch(output, indicies, data);
   EXPECT_NEAR(double(output.At(0)), 7., 1e-5);
-  EXPECT_NEAR(double(output.At(1)), 6., 1e-5);
+  EXPECT_NEAR(double(output.At(1)), -6., 1e-5);
   EXPECT_NEAR(double(output.At(2)), 5., 1e-5);
-  EXPECT_NEAR(double(output.At(3)), 4., 1e-5);
-  EXPECT_NEAR(double(output.At(3)), 3., 1e-5);
-  EXPECT_NEAR(double(output.At(3)), 2., 1e-5);
+  EXPECT_NEAR(double(output.At(3)), -4., 1e-5);
+  EXPECT_NEAR(double(output.At(4)), 3., 1e-5);
+  EXPECT_NEAR(double(output.At(5)), -2., 1e-5);
+}
+
+TYPED_TEST(FreeFunctionsTest, Concat_OneDimension)
+{
+  using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
+
+  SizeType n_data     = 2;
+  SizeType n_indicies = 3;
+
+  TypeParam array1{{n_data, n_indicies}};
+  TypeParam array2{{n_data, n_indicies}};
+
+  array1.Set(SizeType{0}, SizeType{0}, DataType(1));
+  array1.Set(SizeType{0}, SizeType{1}, DataType(2));
+  array1.Set(SizeType{0}, SizeType{2}, DataType(3));
+  array1.Set(SizeType{1}, SizeType{0}, DataType(4));
+  array1.Set(SizeType{1}, SizeType{1}, DataType(5));
+  array1.Set(SizeType{1}, SizeType{2}, DataType(6));
+
+  array2.Set(SizeType{0}, SizeType{0}, DataType(7));
+  array2.Set(SizeType{0}, SizeType{1}, DataType(8));
+  array2.Set(SizeType{0}, SizeType{2}, DataType(9));
+  array2.Set(SizeType{1}, SizeType{0}, DataType(10));
+  array2.Set(SizeType{1}, SizeType{1}, DataType(11));
+  array2.Set(SizeType{1}, SizeType{2}, DataType(12));
+
+  std::vector<TypeParam> input  = {array1, array2};
+  TypeParam              output = fetch::math::Concat(input);
+
+  EXPECT_NEAR(double(output.At(0)), 1., 1e-5);
+  EXPECT_NEAR(double(output.At(1)), 4., 1e-5);
+  EXPECT_NEAR(double(output.At(2)), 2., 1e-5);
+  EXPECT_NEAR(double(output.At(3)), 5., 1e-5);
+  EXPECT_NEAR(double(output.At(4)), 3., 1e-5);
+  EXPECT_NEAR(double(output.At(5)), 6., 1e-5);
+  EXPECT_NEAR(double(output.At(6)), 7., 1e-5);
+  EXPECT_NEAR(double(output.At(7)), 10., 1e-5);
+  EXPECT_NEAR(double(output.At(8)), 8., 1e-5);
+  EXPECT_NEAR(double(output.At(9)), 11., 1e-5);
+  EXPECT_NEAR(double(output.At(10)), 9., 1e-5);
+  EXPECT_NEAR(double(output.At(11)), 12., 1e-5);
+}
+
+TYPED_TEST(FreeFunctionsTest, Concat_TwoDimensions_axis_0)
+{
+  using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
+
+  SizeType n_data{2};
+  SizeType n_indicies{3};
+  SizeType axis{0};
+
+  TypeParam array1{{n_data, n_indicies}};
+  TypeParam array2{{n_data, n_indicies}};
+
+  array1.Set(SizeType{0}, SizeType{0}, DataType(1));
+  array1.Set(SizeType{0}, SizeType{1}, DataType(2));
+  array1.Set(SizeType{0}, SizeType{2}, DataType(3));
+  array1.Set(SizeType{1}, SizeType{0}, DataType(4));
+  array1.Set(SizeType{1}, SizeType{1}, DataType(5));
+  array1.Set(SizeType{1}, SizeType{2}, DataType(6));
+
+  array2.Set(SizeType{0}, SizeType{0}, DataType(7));
+  array2.Set(SizeType{0}, SizeType{1}, DataType(8));
+  array2.Set(SizeType{0}, SizeType{2}, DataType(9));
+  array2.Set(SizeType{1}, SizeType{0}, DataType(10));
+  array2.Set(SizeType{1}, SizeType{1}, DataType(11));
+  array2.Set(SizeType{1}, SizeType{2}, DataType(12));
+
+  std::vector<TypeParam> input  = {array1, array2};
+  TypeParam              output = fetch::math::Concat(input, axis);
+
+  EXPECT_NEAR(double(output.At(0, 0)), 1., 1e-5);
+  EXPECT_NEAR(double(output.At(0, 1)), 2., 1e-5);
+  EXPECT_NEAR(double(output.At(0, 2)), 3., 1e-5);
+  EXPECT_NEAR(double(output.At(1, 0)), 4., 1e-5);
+  EXPECT_NEAR(double(output.At(1, 1)), 5., 1e-5);
+  EXPECT_NEAR(double(output.At(1, 2)), 6., 1e-5);
+  EXPECT_NEAR(double(output.At(2, 0)), 7., 1e-5);
+  EXPECT_NEAR(double(output.At(2, 1)), 8., 1e-5);
+  EXPECT_NEAR(double(output.At(2, 2)), 9., 1e-5);
+  EXPECT_NEAR(double(output.At(3, 0)), 10., 1e-5);
+  EXPECT_NEAR(double(output.At(3, 1)), 11., 1e-5);
+  EXPECT_NEAR(double(output.At(3, 2)), 12., 1e-5);
+}
+
+TYPED_TEST(FreeFunctionsTest, Concat_TwoDimensions_axis_1)
+{
+  using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
+
+  SizeType n_data{2};
+  SizeType n_indicies{3};
+  SizeType axis{1};
+
+  TypeParam array1{{n_data, n_indicies}};
+  TypeParam array2{{n_data, n_indicies}};
+
+  array1.Set(SizeType{0}, SizeType{0}, DataType(1));
+  array1.Set(SizeType{0}, SizeType{1}, DataType(2));
+  array1.Set(SizeType{0}, SizeType{2}, DataType(3));
+  array1.Set(SizeType{1}, SizeType{0}, DataType(4));
+  array1.Set(SizeType{1}, SizeType{1}, DataType(5));
+  array1.Set(SizeType{1}, SizeType{2}, DataType(6));
+
+  array2.Set(SizeType{0}, SizeType{0}, DataType(7));
+  array2.Set(SizeType{0}, SizeType{1}, DataType(8));
+  array2.Set(SizeType{0}, SizeType{2}, DataType(9));
+  array2.Set(SizeType{1}, SizeType{0}, DataType(10));
+  array2.Set(SizeType{1}, SizeType{1}, DataType(11));
+  array2.Set(SizeType{1}, SizeType{2}, DataType(12));
+
+  std::vector<TypeParam> input  = {array1, array2};
+  TypeParam              output = fetch::math::Concat(input, axis);
+
+  EXPECT_NEAR(double(output.At(0, 0)), 1., 1e-5);
+  EXPECT_NEAR(double(output.At(0, 1)), 2., 1e-5);
+  EXPECT_NEAR(double(output.At(0, 2)), 3., 1e-5);
+  EXPECT_NEAR(double(output.At(0, 3)), 7., 1e-5);
+  EXPECT_NEAR(double(output.At(0, 4)), 8., 1e-5);
+  EXPECT_NEAR(double(output.At(0, 5)), 9., 1e-5);
+  EXPECT_NEAR(double(output.At(1, 0)), 4., 1e-5);
+  EXPECT_NEAR(double(output.At(1, 1)), 5., 1e-5);
+  EXPECT_NEAR(double(output.At(1, 2)), 6., 1e-5);
+  EXPECT_NEAR(double(output.At(1, 3)), 10., 1e-5);
+  EXPECT_NEAR(double(output.At(1, 4)), 11., 1e-5);
+  EXPECT_NEAR(double(output.At(1, 5)), 12., 1e-5);
 }
