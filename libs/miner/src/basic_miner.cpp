@@ -22,7 +22,6 @@
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/v2/address.hpp"
 #include "ledger/chain/v2/transaction.hpp"
-#include "miner/resource_mapper.hpp"
 
 #include <algorithm>
 
@@ -31,9 +30,7 @@ namespace miner {
 namespace {
 
 using ledger::v2::Transaction;
-using ledger::v2::Address;
 using byte_array::ConstByteArray;
-using storage::ResourceAddress;
 
 /**
  * Clip the specified to the bounds: [min_value, max_value]
