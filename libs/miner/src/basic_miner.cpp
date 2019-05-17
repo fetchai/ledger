@@ -30,7 +30,6 @@ namespace miner {
 namespace {
 
 using ledger::v2::Transaction;
-using byte_array::ConstByteArray;
 
 /**
  * Clip the specified to the bounds: [min_value, max_value]
