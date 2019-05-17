@@ -29,14 +29,12 @@ void BM_BooleanMaskEmpty(benchmark::State &state)
 {
   using SizeType = fetch::math::SizeType;
 
+  fetch::math::Tensor<T> t(std::vector<SizeType>{C, H, W});
+  fetch::math::Tensor<T> mask(std::vector<SizeType>{C, H, W});
+  mask.SetAllZero();
+
   for (auto _ : state)
   {
-    state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<SizeType>{C, H, W});
-    fetch::math::Tensor<T> mask(std::vector<SizeType>{C, H, W});
-    mask.SetAllZero();
-    state.ResumeTiming();
-
     fetch::math::BooleanMask(t, mask);
   }
 }
@@ -69,13 +67,13 @@ template <class T, int C, int H, int W>
 void BM_BooleanMaskFull(benchmark::State &state)
 {
   using SizeType = fetch::math::SizeType;
+
+  fetch::math::Tensor<T> t(std::vector<SizeType>{C, H, W});
+  fetch::math::Tensor<T> mask(std::vector<SizeType>{C, H, W});
+  mask.SetAllOne();
+
   for (auto _ : state)
   {
-    state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<SizeType>{C, H, W});
-    fetch::math::Tensor<T> mask(std::vector<SizeType>{C, H, W});
-    mask.SetAllOne();
-    state.ResumeTiming();
     fetch::math::BooleanMask(t, mask);
   }
 }
@@ -102,27 +100,26 @@ template <class T, int D, int H, int W>
 void BM_Scatter3D(benchmark::State &state)
 {
   using SizeType = fetch::math::SizeType;
-  for (auto _ : state)
+
+  fetch::math::Tensor<T> t(std::vector<SizeType>{D, H, W});
+
+  fetch::math::Tensor<T> updates(std::vector<SizeType>{D * W * H});
+  updates.SetAllOne();
+
+  std::vector<fetch::math::SizeVector> indices{};
+  for (SizeType j = 0; j < D; ++j)
   {
-    state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<SizeType>{D, H, W});
-
-    fetch::math::Tensor<T> updates(std::vector<SizeType>{D * W * H});
-    updates.SetAllOne();
-
-    std::vector<fetch::math::SizeVector> indices{};
-    for (SizeType j = 0; j < D; ++j)
+    for (SizeType k = 0; k < H; ++k)
     {
-      for (SizeType k = 0; k < H; ++k)
+      for (SizeType m = 0; m < W; ++m)
       {
-        for (SizeType m = 0; m < W; ++m)
-        {
-          indices.emplace_back(fetch::math::SizeVector{j, k, m});
-        }
+        indices.emplace_back(fetch::math::SizeVector{j, k, m});
       }
     }
+  }
 
-    state.ResumeTiming();
+  for (auto _ : state)
+  {
     fetch::math::Scatter(t, updates, indices);
   }
 }
@@ -154,11 +151,12 @@ BENCHMARK_TEMPLATE(BM_Scatter3D, fetch::fixed_point::FixedPoint<32, 32>, 256, 25
 template <class T, int C, int H, int W>
 void BM_Product(benchmark::State &state)
 {
+  using SizeType = fetch::math::SizeType;
+
+  fetch::math::Tensor<T> t(std::vector<SizeType>{C, H, W});
+
   for (auto _ : state)
   {
-    state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
-    state.ResumeTiming();
     fetch::math::Product(t);
   }
 }
@@ -190,11 +188,12 @@ BENCHMARK_TEMPLATE(BM_Product, fetch::fixed_point::FixedPoint<32, 32>, 256, 256,
 template <class T, int C, int H, int W>
 void BM_Max(benchmark::State &state)
 {
+  using SizeType = fetch::math::SizeType;
+
+  fetch::math::Tensor<T> t(std::vector<SizeType>{C, H, W});
+
   for (auto _ : state)
   {
-    state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
-    state.ResumeTiming();
     fetch::math::Max(t);
   }
 }
@@ -227,12 +226,12 @@ template <class T, int C, int H, int W>
 void BM_MaxAxis(benchmark::State &state)
 {
   using SizeType = fetch::math::SizeType;
+
+  fetch::math::Tensor<T> t(std::vector<SizeType>{C, H, W});
+  fetch::math::Tensor<T> ret(std::vector<SizeType>{C, W});
+
   for (auto _ : state)
   {
-    state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
-    fetch::math::Tensor<T> ret(std::vector<std::uint64_t>{C, W});
-    state.ResumeTiming();
     fetch::math::Max(t, SizeType(1), ret);
   }
 }
@@ -264,11 +263,12 @@ BENCHMARK_TEMPLATE(BM_MaxAxis, fetch::fixed_point::FixedPoint<32, 32>, 256, 256,
 template <class T, int C, int H, int W>
 void BM_Min(benchmark::State &state)
 {
+  using SizeType = fetch::math::SizeType;
+
+  fetch::math::Tensor<T> t(std::vector<SizeType>{C, H, W});
+
   for (auto _ : state)
   {
-    state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
-    state.ResumeTiming();
     fetch::math::Min(t);
   }
 }
@@ -301,12 +301,12 @@ template <class T, int H, int W>
 void BM_MinAxis(benchmark::State &state)
 {
   using SizeType = fetch::math::SizeType;
+
+  fetch::math::Tensor<T> t(std::vector<SizeType>{H, W});
+  fetch::math::Tensor<T> ret(std::vector<SizeType>{W});
+
   for (auto _ : state)
   {
-    state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{H, W});
-    fetch::math::Tensor<T> ret(std::vector<std::uint64_t>{W});
-    state.ResumeTiming();
     fetch::math::Min(t, SizeType(1), ret);
   }
 }
@@ -338,12 +338,13 @@ BENCHMARK_TEMPLATE(BM_MinAxis, fetch::fixed_point::FixedPoint<32, 32>, 1024, 102
 template <class T, int C, int H, int W>
 void BM_Maximum(benchmark::State &state)
 {
+  using SizeType = fetch::math::SizeType;
+
+  fetch::math::Tensor<T> t1(std::vector<SizeType>{C, H, W});
+  fetch::math::Tensor<T> t2(std::vector<SizeType>{C, H, W});
+
   for (auto _ : state)
   {
-    state.PauseTiming();
-    fetch::math::Tensor<T> t1(std::vector<std::uint64_t>{C, H, W});
-    fetch::math::Tensor<T> t2(std::vector<std::uint64_t>{C, H, W});
-    state.ResumeTiming();
     fetch::math::Maximum(t1, t2);
   }
 }
@@ -376,12 +377,12 @@ template <class T, int H, int W>
 void BM_ArgMaxAxis(benchmark::State &state)
 {
   using SizeType = fetch::math::SizeType;
+
+  fetch::math::Tensor<T> t(std::vector<SizeType>{H, W});
+  fetch::math::Tensor<T> ret(std::vector<SizeType>{W});
+
   for (auto _ : state)
   {
-    state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{H, W});
-    fetch::math::Tensor<T> ret(std::vector<std::uint64_t>{W});
-    state.ResumeTiming();
     fetch::math::ArgMax(t, ret, SizeType(1));
   }
 }
@@ -413,11 +414,12 @@ BENCHMARK_TEMPLATE(BM_ArgMaxAxis, fetch::fixed_point::FixedPoint<32, 32>, 1024, 
 template <class T, int C, int H, int W>
 void BM_Sum(benchmark::State &state)
 {
+  using SizeType = fetch::math::SizeType;
+
+  fetch::math::Tensor<T> t(std::vector<SizeType>{C, H, W});
+
   for (auto _ : state)
   {
-    state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
-    state.ResumeTiming();
     fetch::math::Sum(t);
   }
 }
@@ -450,12 +452,12 @@ template <class T, int H, int W>
 void BM_ReduceSum(benchmark::State &state)
 {
   using SizeType = fetch::math::SizeType;
+
+  fetch::math::Tensor<T> t(std::vector<SizeType>{H, W});
+  fetch::math::Tensor<T> ret(std::vector<SizeType>{H, 1});
+
   for (auto _ : state)
   {
-    state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{H, W});
-    fetch::math::Tensor<T> ret(std::vector<std::uint64_t>{H, 1});
-    state.ResumeTiming();
     fetch::math::ReduceSum(t, SizeType(1), ret);
   }
 }
@@ -488,12 +490,12 @@ template <class T, int H, int W>
 void BM_ReduceMean(benchmark::State &state)
 {
   using SizeType = fetch::math::SizeType;
+
+  fetch::math::Tensor<T> t(std::vector<SizeType>{H, W});
+  fetch::math::Tensor<T> ret(std::vector<SizeType>{H, 1});
+
   for (auto _ : state)
   {
-    state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{H, W});
-    fetch::math::Tensor<T> ret(std::vector<std::uint64_t>{H, 1});
-    state.ResumeTiming();
     fetch::math::ReduceMean(t, SizeType(1), ret);
   }
 }
@@ -525,11 +527,12 @@ BENCHMARK_TEMPLATE(BM_ReduceMean, fetch::fixed_point::FixedPoint<32, 32>, 1024, 
 template <class T, int C, int H, int W>
 void BM_PeakToPeak(benchmark::State &state)
 {
+  using SizeType = fetch::math::SizeType;
+
+  fetch::math::Tensor<T> t(std::vector<SizeType>{C, H, W});
+
   for (auto _ : state)
   {
-    state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
-    state.ResumeTiming();
     fetch::math::PeakToPeak(t);
   }
 }
@@ -561,12 +564,13 @@ BENCHMARK_TEMPLATE(BM_PeakToPeak, fetch::fixed_point::FixedPoint<32, 32>, 256, 2
 template <class T, int H, int W>
 void BM_Dot(benchmark::State &state)
 {
+  using SizeType = fetch::math::SizeType;
+
+  fetch::math::Tensor<T> t(std::vector<SizeType>{H, W});
+  fetch::math::Tensor<T> ret(std::vector<SizeType>{H, W});
+
   for (auto _ : state)
   {
-    state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{H, W});
-    fetch::math::Tensor<T> ret(std::vector<std::uint64_t>{H, W});
-    state.ResumeTiming();
     fetch::math::Dot(t, ret);
   }
 }
@@ -598,12 +602,13 @@ BENCHMARK_TEMPLATE(BM_Dot, fetch::fixed_point::FixedPoint<32, 32>, 512, 512)
 template <class T, int H, int W>
 void BM_DotTranspose(benchmark::State &state)
 {
+  using SizeType = fetch::math::SizeType;
+
+  fetch::math::Tensor<T> t(std::vector<SizeType>{H, W});
+  fetch::math::Tensor<T> ret(std::vector<SizeType>{H, W});
+
   for (auto _ : state)
   {
-    state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{H, W});
-    fetch::math::Tensor<T> ret(std::vector<std::uint64_t>{H, W});
-    state.ResumeTiming();
     fetch::math::DotTranspose(t, ret);
   }
 }
@@ -635,12 +640,13 @@ BENCHMARK_TEMPLATE(BM_DotTranspose, fetch::fixed_point::FixedPoint<32, 32>, 512,
 template <class T, int H, int W>
 void BM_TransposeDot(benchmark::State &state)
 {
+  using SizeType = fetch::math::SizeType;
+
+  fetch::math::Tensor<T> t(std::vector<SizeType>{H, W});
+  fetch::math::Tensor<T> ret(std::vector<SizeType>{H, W});
+
   for (auto _ : state)
   {
-    state.PauseTiming();
-    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{H, W});
-    fetch::math::Tensor<T> ret(std::vector<std::uint64_t>{H, W});
-    state.ResumeTiming();
     fetch::math::TransposeDot(t, ret);
   }
 }
@@ -672,13 +678,14 @@ BENCHMARK_TEMPLATE(BM_TransposeDot, fetch::fixed_point::FixedPoint<32, 32>, 512,
 template <class T, int C, int H, int W>
 void BM_DynamicStitch(benchmark::State &state)
 {
+  using SizeType = fetch::math::SizeType;
+
+  fetch::math::Tensor<T> data(std::vector<SizeType>{C, H, W});
+  fetch::math::Tensor<T> indices(std::vector<SizeType>{C, H, W});
+  fetch::math::Tensor<T> ret(std::vector<SizeType>{C, H, W});
+
   for (auto _ : state)
   {
-    state.PauseTiming();
-    fetch::math::Tensor<T> data(std::vector<std::uint64_t>{C, H, W});
-    fetch::math::Tensor<T> indices(std::vector<std::uint64_t>{C, H, W});
-    fetch::math::Tensor<T> ret(std::vector<std::uint64_t>{C, H, W});
-    state.ResumeTiming();
     fetch::math::DynamicStitch(ret, indices, data);
   }
 }
