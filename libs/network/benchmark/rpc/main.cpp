@@ -32,6 +32,7 @@
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 #include <chrono>
+#include <iomanip>
 #include <random>
 #include <vector>
 using namespace fetch::serializers;

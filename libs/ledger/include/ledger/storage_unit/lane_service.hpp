@@ -26,7 +26,6 @@
 #include "storage/object_store_protocol.hpp"
 #include "storage/transient_object_store.hpp"
 
-#include <iomanip>
 #include <memory>
 
 namespace fetch {
