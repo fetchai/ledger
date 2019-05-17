@@ -32,6 +32,7 @@
 #include <functional>
 #include <set>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace fetch {
@@ -582,6 +583,8 @@ void Deserialize(T &serializer, Signatory &b)
 {
   serializer >> b.first >> b.second;
 }
+
+using TxDigestSet = std::unordered_set<TransactionSummary::TxDigest>;
 
 }  // namespace ledger
 }  // namespace fetch

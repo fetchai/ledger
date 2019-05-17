@@ -23,7 +23,6 @@
 #include "math/base_types.hpp"
 #include "math/comparison.hpp"
 #include "math/fundamental_operators.hpp"  // add, subtract etc.
-#include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
 namespace math {
@@ -60,10 +59,25 @@ inline void Min(ArrayType const &array, typename ArrayType::Type &ret)
 template <typename ArrayType>
 void Product(ArrayType const &obj1, typename ArrayType::Type &ret)
 {
-  ret = obj1.data().in_parallel().Reduce(memory::TrivialRange(0, obj1.size()),
+  // TODO(private issue 994): Create test for this function
+  if (obj1.padding() == 1)
+  {
+    ret =
+        obj1.data().in_parallel().Reduce(memory::TrivialRange(0, obj1.size()),
                                          [](typename ArrayType::VectorRegisterType const &a,
                                             typename ArrayType::VectorRegisterType const &b) ->
                                          typename ArrayType::VectorRegisterType { return a * b; });
+  }
+  else
+  {
+    auto it1 = obj1.cbegin();
+    ret      = static_cast<typename ArrayType::Type>(1);
+    while (it1.is_valid())
+    {
+      ret *= (*it1);
+      ++it1;
+    }
+  }
 }
 
 /**
@@ -93,7 +107,7 @@ meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
                                                  ArrayType const &mask, ArrayType &ret)
 {
   ASSERT(input_array.size() == mask.size());
-  ASSERT(ret.size() == typename ArrayType::SizeType(Sum(mask)));
+  ASSERT(ret.size() >= typename ArrayType::SizeType(Sum(mask)));
 
   auto     it1 = input_array.cbegin();
   auto     it2 = mask.cbegin();
@@ -103,7 +117,7 @@ meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
   {
     // TODO(private issue 193): implement boolean only array
     ASSERT((*it2 == 1) || (*it2 == 0));
-    if (std::uint64_t(*it2))
+    if (static_cast<uint64_t>(*it2))
     {
       *rit = *it1;
       ++counter;
@@ -113,7 +127,7 @@ meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
     ++rit;
   }
 
-  ret.LazyResize(counter);
+  ret.Resize({counter});
 }
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> BooleanMask(ArrayType &input_array, ArrayType const &mask)
@@ -140,9 +154,10 @@ void Scatter(ArrayType &input_array, ArrayType const &updates,
 
   auto     indices_it = indices.begin();
   SizeType update_idx{0};
+
   while (indices_it != indices.end())
   {
-    input_array[input_array.ComputeIndex(*indices_it)] = updates[update_idx];
+    input_array.data()[input_array.ComputeIndex(*indices_it)] = updates[update_idx];
     ++indices_it;
     ++update_idx;
   }
@@ -217,7 +232,7 @@ T Product(std::vector<T> const &obj1)
 template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
 meta::IfIsMathArray<ArrayType, void> Max(ArrayType const &array, T &ret)
 {
-  ret = NumericLowest<T>();
+  ret = numeric_lowest<T>();
   for (T const &e : array)
   {
     if (e > ret)
@@ -304,7 +319,7 @@ T Max(std::vector<T> const &obj1)
 template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
 meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, T &ret)
 {
-  ret = NumericMax<T>();
+  ret = numeric_max<T>();
   for (T const &e : array)
   {
     if (e < ret)
@@ -529,14 +544,17 @@ meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &r
     ASSERT(ret.size() == SizeType(1));
     SizeType position = 0;
     auto     it       = array.begin();
-    Type     value    = NumericLowest<Type>();
+    Type     value    = numeric_lowest<Type>();
+
+    SizeType counter = SizeType{0};
     while (it.is_valid())
     {
       if (*it > value)
       {
         value    = *it;
-        position = it.counter();
+        position = counter;
       }
+      ++counter;
       ++it;
     }
 
@@ -724,7 +742,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DynamicStitch(ArrayType &     
   ASSERT(data.size() <= input_array.size());
   ASSERT(input_array.size() >= Max(indices));
   ASSERT(Min(indices) >= 0);
-  input_array.LazyResize(indices.size());
+  input_array.Resize({indices.size()});
 
   auto ind_it  = indices.cbegin();
   auto data_it = data.cbegin();

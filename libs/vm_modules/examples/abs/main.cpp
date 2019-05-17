@@ -16,17 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/analyser.hpp"
-#include "vm/defs.hpp"
-#include "vm/typeids.hpp"
-
-#include "vm/compiler.hpp"
 #include "vm/module.hpp"
-#include "vm/vm.hpp"
 #include <fstream>
 #include <sstream>
-
-#include "vm/vm.hpp"
 
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/type_convert.hpp"
@@ -49,17 +41,18 @@ int main(int argc, char **argv)
 
   auto module = std::make_shared<fetch::vm::Module>();
 
-  fetch::vm_modules::CreatePrint(module);
-  fetch::vm_modules::CreateToString(module);
-  fetch::vm_modules::CreateAbs(module);
+  fetch::vm_modules::CreatePrint(*module);
+  fetch::vm_modules::CreateToString(*module);
+  fetch::vm_modules::CreateAbs(*module);
 
   // Setting compiler up
   fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(module.get());
-  fetch::vm::Script        script;
+  fetch::vm::IR            ir;
+  fetch::vm::Executable    exec;
   std::vector<std::string> errors;
 
   // Compiling
-  bool compiled = compiler->Compile(source, "myscript", script, errors);
+  bool compiled = compiler->Compile(source, "myexec", ir, errors);
 
   if (!compiled)
   {
@@ -71,20 +64,32 @@ int main(int argc, char **argv)
     return -1;
   }
 
-  if (!script.FindFunction("main"))
+  // Setting VM up and running
+  std::string        error;
+  fetch::vm::Variant output;
+
+  fetch::vm::VM vm(module.get());
+
+  // attach std::cout for printing
+  vm.AttachOutputDevice("stdout", std::cout);
+
+  if (!vm.GenerateExecutable(ir, "main_ir", exec, errors))
+  {
+    std::cout << "Failed to generate executable" << std::endl;
+    for (auto &s : errors)
+    {
+      std::cout << s << std::endl;
+    }
+    return -1;
+  }
+
+  if (!exec.FindFunction("main"))
   {
     std::cout << "Function 'main' not found" << std::endl;
     return -2;
   }
 
-  // Setting VM up and running
-  std::string        error;
-  fetch::vm::Variant output;
-  std::string        console;
-
-  fetch::vm::VM vm(module.get());
-
-  if (!vm.Execute(script, "main", error, console, output))
+  if (!vm.Execute(exec, "main", error, output))
   {
     std::cout << "Runtime error on line " << error << std::endl;
   }

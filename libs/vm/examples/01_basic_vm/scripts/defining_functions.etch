@@ -1,0 +1,14 @@
+function fibonacci(n: Int32) : Int32
+  print(toString(n));
+  if(n <= 1)
+    return 1;
+  endif
+  return fibonacci(n-1) + fibonacci(n-2);
+endfunction
+
+
+function main()
+  var n = 3;
+  var fib = fibonacci(n);
+  print("Fibonacci number " + toString(n) + " is " + toString(fib));
+endfunction

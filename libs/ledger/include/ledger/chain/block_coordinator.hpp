@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/future_timepoint.hpp"
 #include "core/mutex.hpp"
 #include "core/periodic_action.hpp"
 #include "core/state_machine.hpp"
@@ -28,7 +29,6 @@
 #include <chrono>
 #include <deque>
 #include <thread>
-#include <unordered_set>
 
 namespace fetch {
 namespace ledger {
@@ -152,7 +152,7 @@ public:
                    std::size_t block_difficulty);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
-  ~BlockCoordinator();
+  ~BlockCoordinator()                        = default;
 
   template <typename R, typename P>
   void SetBlockPeriod(std::chrono::duration<R, P> const &period);
@@ -184,6 +184,12 @@ public:
     return last_executed_block_.Get();
   }
 
+  bool IsSynced() const
+  {
+    return (state_machine_->state() == State::SYNCHRONIZED) &&
+           (last_executed_block_.Get() == chain_.GetHeaviestBlockHash());
+  }
+
   // Operators
   BlockCoordinator &operator=(BlockCoordinator const &) = delete;
   BlockCoordinator &operator=(BlockCoordinator &&) = delete;
@@ -197,7 +203,8 @@ private:
     ERROR
   };
 
-  //  using Super         = core::StateMachine<BlockCoordinatorState>;
+  static constexpr uint64_t COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT = 1000;
+
   using Mutex             = fetch::mutex::Mutex;
   using BlockPtr          = MainChain::BlockPtr;
   using NextBlockPtr      = std::unique_ptr<Block>;
@@ -209,9 +216,9 @@ private:
   using Timepoint         = Clock::time_point;
   using StateMachinePtr   = std::shared_ptr<StateMachine>;
   using MinerPtr          = std::shared_ptr<consensus::ConsensusMinerInterface>;
-  using TxSet             = std::unordered_set<TransactionSummary::TxDigest>;
-  using TxSetPtr          = std::unique_ptr<TxSet>;
+  using TxDigestSetPtr    = std::unique_ptr<TxDigestSet>;
   using LastExecutedBlock = SynchronisedState<ConstByteArray>;
+  using FutureTimepoint   = fetch::core::FutureTimepoint;
 
   /// @name Monitor State
   /// @{
@@ -219,7 +226,7 @@ private:
   State OnSynchronizing();
   State OnSynchronized(State current, State previous);
   State OnPreExecBlockValidation();
-  State OnWaitForTransactions();
+  State OnWaitForTransactions(State current, State previous);
   State OnScheduleBlockExecution();
   State OnWaitForExecution();
   State OnPostExecBlockValidation();
@@ -251,6 +258,8 @@ private:
   TransactionStatusCache &   status_cache_;       ///< Ref to the tx status cache
   PeriodicAction             periodic_print_;
   MinerPtr                   miner_;
+  MainChain::Blocks blocks_to_common_ancestor_;  ///< Partial vector of blocks from main chain HEAD
+                                                 ///< to block coord. last executed block.
   /// @}
 
   /// @name Status
@@ -265,18 +274,22 @@ private:
   std::size_t     block_difficulty_;       ///< The number of leading zeros needed in the proof
   std::size_t     num_lanes_;              ///< The current number of lanes
   std::size_t     num_slices_;             ///< The current number of slices
-  std::size_t     stall_count_{0};         ///< The number of times the execution has been stalled
   Flag            mining_{false};          ///< Flag to signal if this node generating blocks
   Flag            mining_enabled_{false};  ///< Short term signal to toggle on and off
   BlockPeriod     block_period_;           ///< The desired period before a block is generated
   Timepoint       next_block_time_;        ///< The next point that a block should be generated
   BlockPtr        current_block_{};        ///< The pointer to the current block (read only)
   NextBlockPtr
-                 next_block_{};  ///< The next block being created (read / write) - only in mining mode
-  TxSetPtr       pending_txs_{};       ///< The list of pending txs that are being waited on
-  PeriodicAction tx_wait_periodic_;    ///< Periodic print for transaction waiting
-  PeriodicAction exec_wait_periodic_;  ///< Periodic print for execution
-  PeriodicAction syncing_periodic_;
+                  next_block_{};  ///< The next block being created (read / write) - only in mining mode
+  TxDigestSetPtr  pending_txs_{};        ///< The list of pending txs that are being waited on
+  PeriodicAction  tx_wait_periodic_;     ///< Periodic print for transaction waiting
+  PeriodicAction  exec_wait_periodic_;   ///< Periodic print for execution
+  PeriodicAction  syncing_periodic_;     ///< Periodic print for synchronisation
+  FutureTimepoint wait_for_tx_timeout_;  ///< Timeout when waiting for transactions
+  FutureTimepoint
+       wait_before_asking_for_missing_tx_;  ///< Time to wait before asking peers for any missing txs
+  bool have_asked_for_missing_txs_;  ///< true if a request for missing Txs has been issued for the
+                                     ///< current block
   /// @}
 };
 

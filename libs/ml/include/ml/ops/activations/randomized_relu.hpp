@@ -60,41 +60,50 @@ public:
       UpdateRandomValue();
     }
 
-    DataType tmp_alpha = this->is_training_ ? random_value_ : bounds_mean_;
-    fetch::math::LeakyRelu(inputs.front().get(), tmp_alpha, output);
+    DataType alpha = this->is_training_ ? random_value_ : bounds_mean_;
+    fetch::math::LeakyRelu(inputs.front().get(), alpha, output);
 
     return output;
   }
 
   virtual std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-      ArrayType const &                                           errorSignal)
+      ArrayType const &                                           error_signal)
   {
     assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == errorSignal.shape());
-    ArrayType returnSignal{errorSignal.shape()};
+    assert(inputs.front().get().shape() == error_signal.shape());
+    DataType  zero{0};
+    DataType  one{1};
+    ArrayType ret{error_signal.shape()};
+    ArrayType t{inputs.front().get().shape()};
 
-    DataType tmp_alpha = this->is_training_ ? random_value_ : bounds_mean_;
+    DataType alpha = this->is_training_ ? random_value_ : bounds_mean_;
 
     // gradient of randomized-relu function is for x<0 = alpha, x>=0 = 1.0
-    typename ArrayType::SizeType idx(0);
-    for (auto const &val : inputs.at(0).get())
+    t = this->Forward(inputs, t);
+
+    auto it  = t.cbegin();
+    auto rit = ret.begin();
+    while (it.is_valid())
     {
-      if (val >= DataType(0))
+      if (*it >= zero)
       {
-        returnSignal.Set(idx, DataType(1));
+        // f'(x)=1 for x>=0
+        *rit = one;
       }
       else
       {
-        returnSignal.Set(idx, tmp_alpha);
+        // f'(x)=a for x<0
+        *rit = alpha;
       }
-      ++idx;
+      ++it;
+      ++rit;
     }
 
-    // multiply by errorSignal (chain rule)
-    fetch::math::Multiply(errorSignal, returnSignal, returnSignal);
+    // multiply by error_signal (chain rule)
+    fetch::math::Multiply(error_signal, ret, ret);
 
-    return {returnSignal};
+    return {ret};
   }
 
   static constexpr char const *DESCRIPTOR = "RandomizedRelu";

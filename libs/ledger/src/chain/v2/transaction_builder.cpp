@@ -76,11 +76,9 @@ TransactionBuilder::Sealer &TransactionBuilder::Sealer::Sign(crypto::Prover &pro
   if (it != signatories.end())
   {
     // sign the serialized payload
-    if (prover.Sign(serialized_payload_))
+    it->signature = prover.Sign(serialized_payload_);
+    if (!it->signature.empty())
     {
-      // extract the signature from the prover
-      it->signature = prover.signature();
-
       FETCH_LOG_DEBUG(LOGGING_NAME, "Signed: ", it->signature.ToHex(),
                       " len: ", it->signature.size());
       FETCH_LOG_DEBUG(LOGGING_NAME, "- Payload: ", serialized_payload_.ToHex());

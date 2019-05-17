@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/log2.hpp"
 #include "vectorise/memory/iterator.hpp"
 #include "vectorise/memory/parallel_dispatcher.hpp"
-#include "vectorise/meta/log2.hpp"
 #include "vectorise/platform.hpp"
 
 #include <cstring>
@@ -51,7 +51,7 @@ public:
     E_SIMD_COUNT =
         (E_SIMD_COUNT_IM > 0 ? E_SIMD_COUNT_IM
                              : 1),  // Note that if a type is too big to fit, we pretend it can
-    E_LOG_SIMD_COUNT = fetch::meta::Log2<E_SIMD_COUNT>::value,
+    E_LOG_SIMD_COUNT = meta::Log2(E_SIMD_COUNT),
     IS_SHARED        = 0
   };
 
@@ -91,19 +91,18 @@ public:
   // TODO(private 860): ensure trivial type
   void SetAllZero()
   {
-    assert(pointer_ != nullptr);
     if (pointer_)
     {
-      std::memset(pointer_, 0, padded_size() * sizeof(Type));
+      std::memset(static_cast<void *>(pointer_), 0, padded_size() * sizeof(Type));
     }
   }
 
   void SetPaddedZero()
   {
-    assert(pointer_ != nullptr);
     if (pointer_)
     {
-      std::memset(pointer_ + size(), 0, (padded_size() - size()) * sizeof(Type));
+      std::memset(static_cast<void *>(pointer_ + size()), 0,
+                  (padded_size() - size()) * sizeof(Type));
     }
   }
 
@@ -111,7 +110,7 @@ public:
   {
     if (pointer_)
     {
-      std::memset(pointer_ + n, 0, (padded_size() - n) * sizeof(Type));
+      std::memset(static_cast<void *>(pointer_ + n), 0, (padded_size() - n) * sizeof(Type));
     }
   }
 

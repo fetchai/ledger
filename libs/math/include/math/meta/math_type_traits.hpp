@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/fixed_point/fixed_point.hpp"
 
+#include "math/fixed_point/fixed_point.hpp"
 #include "meta/type_traits.hpp"
 
 #include <type_traits>
@@ -56,10 +56,6 @@ constexpr bool IsNonFixedPointArithmetic = std::is_arithmetic<DataType>::value;
 
 template <typename DataType, typename ReturnType>
 using IfIsFixedPoint = typename std::enable_if<IsFixedPoint<DataType>, ReturnType>::type;
-
-template <typename DataType, typename ReturnType>
-using IfIsIntegerOrFixedPoint =
-    typename std::enable_if<IsIntegerOrFixedPoint<DataType>, ReturnType>::type;
 
 template <typename DataType, typename ReturnType>
 using IfIsNotFixedPoint = typename std::enable_if<IsNotFixedPoint<DataType>, ReturnType>::type;

@@ -25,9 +25,9 @@
 #include "ledger/protocols/executor_rpc_service.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
+#include "meta/log2.hpp"
 #include "mock_storage_unit.hpp"
 #include "storage/resource_mapper.hpp"
-#include "vectorise/meta/log2.hpp"
 
 #include <chrono>
 #include <gtest/gtest.h>
@@ -132,7 +132,7 @@ protected:
     static const uint16_t    P2P_RPC_PORT        = 9130;
     static const uint16_t    LANE_RPC_PORT_START = 9141;
     static const std::size_t NUM_LANES           = 4;
-    static const std::size_t LOG2_NUM_LANES      = fetch::meta::Log2<NUM_LANES>::value;
+    static const std::size_t LOG2_NUM_LANES      = fetch::meta::Log2(NUM_LANES);
 
     using fetch::muddle::NetworkId;
 
@@ -189,7 +189,7 @@ protected:
 
     using InFlightCounter =
         fetch::network::AtomicInFlightCounter<fetch::network::AtomicCounterName::TCP_PORT_STARTUP>;
-    fetch::network::FutureTimepoint deadline(std::chrono::seconds(30));
+    fetch::core::FutureTimepoint deadline(std::chrono::seconds(30));
     if (!InFlightCounter::Wait(deadline))
     {
       throw std::runtime_error("Not all socket servers connected correctly. Aborting test");
@@ -208,7 +208,7 @@ protected:
 
     // --- Schedule executor for connection ---------------------
 
-    executor_ = std::make_shared<ExecutorRpcClient>(*network_manager_, *muddle_);
+    executor_ = std::make_shared<ExecutorRpcClient>(*muddle_);
     executor_->Connect(*muddle_, Uri("tcp://127.0.0.1:" + std::to_string(EXECUTOR_RPC_PORT)));
 
     // --- Wait for connections to finish -----------------------
@@ -216,7 +216,7 @@ protected:
     using LocalServiceConnectionsCounter = fetch::network::AtomicInFlightCounter<
         fetch::network::AtomicCounterName::LOCAL_SERVICE_CONNECTIONS>;
     if (!LocalServiceConnectionsCounter::Wait(
-            fetch::network::FutureTimepoint(std::chrono::seconds(30))))
+            fetch::core::FutureTimepoint(std::chrono::seconds(30))))
     {
       throw std::runtime_error("Not all local services connected correctly. Aborting test");
     }

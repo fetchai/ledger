@@ -19,5 +19,7 @@ Welcome to Fetch Ledger's developers guide!
    storage/index.rst
    core/index.rst
    vectorise/index.rst
+   math/index.rst
+   ml/index.rst
    vm/index.rst
    development/index.rst

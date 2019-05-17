@@ -20,6 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 
+#include <algorithm>
 #include <utility>
 
 using fetch::byte_array::ToBase64;
@@ -138,8 +139,6 @@ bool MainChain::RemoveBlock(BlockHash hash)
 {
   // TODO(private issue 666): Improve performance of block removal
 
-  using BlockHashSet = std::unordered_set<BlockHash>;
-
   bool success{false};
 
   FETCH_LOCK(lock_);
@@ -230,6 +229,9 @@ bool MainChain::RemoveBlock(BlockHash hash)
  */
 MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
 {
+  // Note: min needs a reference to something, so this is a workaround since UPPER_BOUND is a
+  // constexpr
+  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   MilliTimer myTimer("MainChain::HeaviestChain");
 
   FETCH_LOCK(lock_);
@@ -247,6 +249,7 @@ MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
  */
 MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
 {
+  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   MilliTimer myTimer("MainChain::ChainPreceding");
 
   FETCH_LOCK(lock_);
@@ -296,8 +299,9 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
  * @return true if successful, otherwise false
  */
 bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
-                                        uint64_t limit) const
+                                        uint64_t limit, BehaviourWhenLimit behaviour) const
 {
+  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   MilliTimer myTimer("MainChain::GetPathToCommonAncestor", 500);
 
   FETCH_LOCK(lock_);
@@ -313,9 +317,11 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
   BlockHash left_hash  = std::move(tip);
   BlockHash right_hash = std::move(node);
 
+  std::deque<BlockPtr> res;
+
   // The algorithm implemented here is effectively a coordinated parallel walk about from the two
   // input tips until the a common ancestor is located.
-  while (blocks.size() < limit)
+  for (;;)
   {
     // load up the left side
     if (!left || left->body.hash != left_hash)
@@ -329,7 +335,30 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
       }
 
       // left side always loaded into output queue as we traverse
-      blocks.push_back(left);
+      // blocks.push_back(left);
+      res.push_back(left);
+      bool break_loop = false;
+
+      switch (behaviour)
+      {
+      case BehaviourWhenLimit::RETURN_LEAST_RECENT:
+        if (res.size() > limit)
+        {
+          res.pop_front();
+        }
+        break;
+      case BehaviourWhenLimit::RETURN_MOST_RECENT:
+        if (res.size() >= limit)
+        {
+          break_loop = true;
+        }
+        break;
+      }
+
+      if (break_loop)
+      {
+        break;
+      }
     }
 
     // load up the right side
@@ -362,6 +391,9 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
       left_hash = left->body.previous_hash;
     }
   }
+
+  blocks.resize(res.size());
+  std::move(res.begin(), res.end(), blocks.begin());
 
   // If an lookup error has occured then we do not return anything
   if (!success)
@@ -425,15 +457,16 @@ MainChain::BlockHashSet MainChain::GetMissingTips() const
  * @param maximum The specified maximum number of blocks to be returned
  * @return The generated array of missing hashes
  */
-MainChain::BlockHashs MainChain::GetMissingBlockHashes(std::size_t maximum) const
+MainChain::BlockHashs MainChain::GetMissingBlockHashes(uint64_t limit) const
 {
+  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   FETCH_LOCK(lock_);
 
   BlockHashs results;
 
   for (auto const &loose_block : loose_blocks_)
   {
-    if (maximum <= results.size())
+    if (limit <= results.size())
     {
       break;
     }
@@ -489,11 +522,14 @@ void MainChain::RecoverFromFile(Mode mode)
   if (Mode::CREATE_PERSISTENT_DB == mode)
   {
     block_store_->New("chain.db", "chain.index.db");
+    head_store_.open("chain.head.db",
+                     std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
     return;
   }
   else if (Mode::LOAD_PERSISTENT_DB == mode)
   {
     block_store_->Load("chain.db", "chain.index.db");
+    head_store_.open("chain.head.db", std::ios::binary | std::ios::in | std::ios::out);
   }
   else
   {
@@ -504,8 +540,11 @@ void MainChain::RecoverFromFile(Mode mode)
   IntBlockPtr block = std::make_shared<Block>();
   IntBlockPtr head  = std::make_shared<Block>();
 
+  // retrieve the starting hash
+  BlockHash head_block_hash = GetHeadHash();
+
   bool recovery_complete{false};
-  if (block_store_->Get(storage::ResourceAddress("head"), *block))
+  if (!head_block_hash.empty() && block_store_->Get(storage::ResourceID{head_block_hash}, *block))
   {
     auto block_index = block->body.block_number;
 
@@ -574,6 +613,11 @@ void MainChain::RecoverFromFile(Mode mode)
   if (!recovery_complete)
   {
     block_store_->New("chain.db", "chain.index.db");
+
+    // reopen the file and clear the contents
+    head_store_.close();
+    head_store_.open("chain.head.db",
+                     std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
   }
 }
 
@@ -617,8 +661,8 @@ void MainChain::WriteToFile()
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Writing genesis. ");
 
-      block_store_->Set(storage::ResourceAddress("head"), *block);
       block_store_->Set(storage::ResourceID(block->body.hash), *block);
+      SetHeadHash(block->body.hash);
     }
     else
     {
@@ -627,7 +671,8 @@ void MainChain::WriteToFile()
       // Recover the current head block from the file
       IntBlockPtr current_file_head = std::make_shared<Block>();
       IntBlockPtr block_head        = block;
-      block_store_->Get(storage::ResourceAddress("head"), *current_file_head);
+
+      block_store_->Get(storage::ResourceID(GetHeadHash()), *current_file_head);
 
       // Now keep adding the block and its prev to the file until we are certain the file contains
       // an unbroken chain. Assuming that the current_file_head is unbroken we can write until we
@@ -654,7 +699,7 @@ void MainChain::WriteToFile()
       }
 
       // Success - we kept a copy of the new head to write
-      block_store_->Set(storage::ResourceAddress("head"), *block_head);
+      SetHeadHash(block_head->body.hash);
     }
 
     // Clear the block from ram
@@ -1240,6 +1285,37 @@ bool MainChain::HeaviestTip::Update(Block const &block)
   }
 
   return updated;
+}
+
+MainChain::BlockHash MainChain::GetHeadHash()
+{
+  byte_array::ByteArray buffer;
+
+  // determine is the hash has already been stored once
+  head_store_.seekg(0, std::ios::end);
+  auto const file_size = head_store_.tellg();
+
+  if (file_size == 32)
+  {
+    buffer.Resize(32);
+
+    // return to the begining and overwrite the hash
+    head_store_.seekg(0);
+    head_store_.read(reinterpret_cast<char *>(buffer.pointer()),
+                     static_cast<std::streamsize>(buffer.size()));
+  }
+
+  return {buffer};
+}
+
+void MainChain::SetHeadHash(BlockHash const &hash)
+{
+  assert(hash.size() == 32);
+
+  // move to the beginning of the file and write out the hash
+  head_store_.seekp(0);
+  head_store_.write(reinterpret_cast<char const *>(hash.pointer()),
+                    static_cast<std::streamsize>(hash.size()));
 }
 
 }  // namespace ledger

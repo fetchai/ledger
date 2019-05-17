@@ -57,12 +57,12 @@ public:
   }
 };
 
-inline void CreateCrossEntropy(std::shared_ptr<fetch::vm::Module> module)
+inline void CreateCrossEntropy(fetch::vm::Module &module)
 {
-  module->CreateClassType<CrossEntropyWrapper>("CrossEntropy")
-      .CreateTypeConstuctor<>()
-      .CreateInstanceFunction("Forward", &CrossEntropyWrapper::ForwardWrapper)
-      .CreateInstanceFunction("Backward", &CrossEntropyWrapper::BackwardWrapper);
+  module.CreateClassType<CrossEntropyWrapper>("CrossEntropy")
+      .CreateConstuctor<>()
+      .CreateMemberFunction("Forward", &CrossEntropyWrapper::ForwardWrapper)
+      .CreateMemberFunction("Backward", &CrossEntropyWrapper::BackwardWrapper);
 }
 
 }  // namespace ml

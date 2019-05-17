@@ -58,14 +58,13 @@ namespace {
 
 using LaneIndex = fetch::ledger::LaneIdentity::lane_type;
 
-// static const std::chrono::milliseconds LANE_CONNECTION_TIME{10000};
 static const std::size_t HTTP_THREADS{4};
 
 bool WaitForLaneServersToStart()
 {
   using InFlightCounter = AtomicInFlightCounter<AtomicCounterName::TCP_PORT_STARTUP>;
 
-  network::FutureTimepoint const deadline(std::chrono::seconds(30));
+  core::FutureTimepoint const deadline(std::chrono::seconds(30));
 
   return InFlightCounter::Wait(deadline);
 }
@@ -110,8 +109,8 @@ ledger::ShardConfigs GenerateShardsConfig(uint32_t num_lanes, uint16_t start_por
     cfg.internal_port       = start_port++;
     cfg.internal_network_id = muddle::NetworkId{"ISRD"};
 
-    auto const &ext_identity = cfg.external_identity->identity().identifier();
-    auto const &int_identity = cfg.internal_identity->identity().identifier();
+    auto const ext_identity = cfg.external_identity->identity().identifier();
+    auto const int_identity = cfg.internal_identity->identity().identifier();
 
     FETCH_LOG_INFO(Constellation::LOGGING_NAME, "Shard ", i + 1);
     FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - Internal ", ToBase64(int_identity), " - ",
@@ -173,7 +172,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
                        cfg_.num_slices,
                        cfg_.block_difficulty}
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
-                                                              cfg_.standalone)}
+                                                              cfg_.network_mode)}
   , tx_processor_{*storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
   , http_{http_network_manager_}
   , http_modules_{
@@ -239,7 +238,7 @@ void Constellation::CreateInfoFile(std::string const &filename)
  *
  * @param initial_peers The peers that should be initially connected to
  */
-void Constellation::Run(UriList const &initial_peers)
+void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstrap_monitor)
 {
   //---------------------------------------------------------------
   // Step 1. Start all the components
@@ -344,18 +343,37 @@ void Constellation::Run(UriList const &initial_peers)
   // Step 2. Main monitor loop
   //---------------------------------------------------------------
 
+  bool start_up_in_progress{true};
+
   // monitor loop
   while (active_)
   {
     // determine the status of the main chain server
-    bool const is_in_sync =
-        ledger::MainChainRpcService::State::SYNCHRONISED == main_chain_service_->state();
+    bool const is_in_sync = main_chain_service_->IsSynced() && block_coordinator_.IsSynced();
 
     // control from the top level block production based on the chain sync state
     block_coordinator_.EnableMining(is_in_sync);
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Still alive...");
     std::this_thread::sleep_for(std::chrono::milliseconds{500});
+
+    // detect the first time that we have fully synced
+    if (start_up_in_progress && is_in_sync)
+    {
+      // Attach the bootstrap monitor (if one exists) to the reactor at this point. This starts the
+      // monitor state machine. If one doesn't exist (empty weak pointer) then the reactor will
+      // simply discard this piece of work.
+      //
+      // Starting this state machine begins period notify calls to the bootstrap server. This
+      // importantly triggers the bootstrap service to start listing this node as available for
+      // client connections. By delaying these notify() calls to the point when the node believes
+      // it has successfully
+      //
+      reactor_.Attach(bootstrap_monitor);
+      start_up_in_progress = false;
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Startup complete");
+    }
   }
 
   //---------------------------------------------------------------

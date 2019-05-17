@@ -91,7 +91,7 @@ struct UnrollArguments
 {
   /* Struct for loop definition.
    * @T is the type of the next argument to be unrolled.
-   * @remaining_args are the arugments which has not yet been unrolled.
+   * @remaining_args are the arguments which has not yet been unrolled.
    */
   template <std::size_t R, typename... remaining_args>
   struct LoopOver;
@@ -196,7 +196,7 @@ struct UnrollPointers<0, class_type, member_function_pointer, return_type, used_
  * @F is the function signature.
  *
  * This module should be benchmarked against the more general class
- * <Function>. If there is no notable perfomance difference this
+ * <Function>. If there is no notable performance difference this
  * implementation should be dropped to keep the code base small and
  * simple.
  *
@@ -217,7 +217,7 @@ private:
   using return_type             = R;
   using class_type              = C;
   using member_function_pointer = return_type (class_type::*)(Args...);
-  //< definintion of the member function type.
+  //< definition of the member function type.
 
 public:
   enum
@@ -250,9 +250,9 @@ public:
 
   /* Operator to invoke the function.
    * @result is the serializer to which the result is written.
-   * @params is a seralizer containing the function parameters.
+   * @params is a serializer containing the function parameters.
    *
-   * Note that the parameter seralizer can container more information
+   * Note that the parameter serializer can contain more information
    * than just the function arguments. It is therefore a requirement
    * that the serializer is positioned at the beginning of the argument
    * list.
