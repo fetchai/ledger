@@ -18,7 +18,6 @@
 
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/chain/constants.hpp"
-#include "ledger/chain/transaction_serialization.hpp"
 #include "ledger/chain/v2/transaction.hpp"
 #include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
 #include "ledger/chain/v2/transaction_rpc_serializers.hpp"

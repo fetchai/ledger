@@ -29,14 +29,14 @@
 #include <type_traits>
 
 namespace fetch {
-namespace byte_array {
-class ConstByteArray;
-}  // namespace byte_array
+//namespace byte_array {
+//class ConstByteArray;
+//}  // namespace byte_array
 
-namespace serializers {
-template <typename T>
-inline void Deserialize(T &, byte_array::ConstByteArray &);
-}  // namespace serializers
+//namespace serializers {
+//template <typename T>
+//inline void Deserialize(T &, byte_array::ConstByteArray &);
+//}  // namespace serializers
 
 namespace byte_array {
 
@@ -477,8 +477,8 @@ private:
     std::memcpy(pointer() + acc_size, &other, 1u);
   }
 
-  template <typename T>
-  friend void fetch::serializers::Deserialize(T &serializer, ConstByteArray &s);
+//  template <typename T>
+//  friend void fetch::serializers::Deserialize(T &serializer, ConstByteArray &s);
 
   shared_array_type data_;
   std::size_t       start_ = 0, length_ = 0;

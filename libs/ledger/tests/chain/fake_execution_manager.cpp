@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/macros.hpp"
 #include "core/byte_array/encoders.hpp"
 
 #include "fake_execution_manager.hpp"

@@ -20,7 +20,6 @@
 #include "core/future_timepoint.hpp"
 #include "core/service_ids.hpp"
 #include "core/state_machine.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/lane_controller.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"

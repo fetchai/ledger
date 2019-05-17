@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/chain/v2/transaction.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"

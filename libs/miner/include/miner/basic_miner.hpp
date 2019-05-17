@@ -20,7 +20,6 @@
 #include "core/mutex.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/chain/v2/digest.hpp"
 #include "ledger/chain/v2/transaction_layout.hpp"
 #include "meta/log2.hpp"

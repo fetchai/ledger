@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "crypto/identity.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "variant/variant.hpp"
@@ -57,7 +57,7 @@ public:
 
   using Identity              = crypto::Identity;
   using ConstByteArray        = byte_array::ConstByteArray;
-  using ContractName          = TransactionSummary::ContractName;
+  using ContractName          = ConstByteArray;
   using Query                 = variant::Variant;
   using InitialiseHandler     = std::function<Status(v2::Address const &)>;
   using TransactionHandler    = std::function<Status(v2::Transaction const &)>;
@@ -67,7 +67,6 @@ public:
   using Counter               = std::atomic<std::size_t>;
   using CounterMap            = std::unordered_map<ContractName, Counter>;
   using StorageInterface      = ledger::StorageInterface;
-  using ResourceSet           = TransactionSummary::ResourceSet;
 
   static constexpr char const *LOGGING_NAME = "Contract";
 

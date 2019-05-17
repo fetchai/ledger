@@ -20,7 +20,6 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/v2/address.hpp"
 #include "ledger/chain/v2/address_rpc_serializer.hpp"
 #include "ledger/chain/v2/digest.hpp"

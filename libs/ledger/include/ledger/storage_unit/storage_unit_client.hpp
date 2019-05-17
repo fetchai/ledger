@@ -22,8 +22,6 @@
 #include "core/serializers/typed_byte_array_buffer.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/merkle_tree.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/shard_config.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"

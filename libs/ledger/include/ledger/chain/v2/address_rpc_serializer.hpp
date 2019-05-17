@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/byte_array.hpp"
 #include "ledger/chain/v2/address.hpp"
 
 namespace fetch {

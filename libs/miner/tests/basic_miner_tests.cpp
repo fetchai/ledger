@@ -19,8 +19,6 @@
 #include "tx_generator.hpp"
 
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/chain/v2/transaction.hpp"
 #include "ledger/chain/v2/transaction_layout.hpp"
 #include "meta/log2.hpp"
@@ -39,6 +37,9 @@
 using fetch::meta::IsLog2;
 using fetch::meta::Log2;
 using fetch::BitVector;
+using fetch::ledger::v2::Digest;
+using fetch::ledger::v2::DigestSet;
+using fetch::ledger::v2::DigestMap;
 
 class BasicMinerTests : public ::testing::TestWithParam<std::size_t>
 {
@@ -54,16 +55,12 @@ protected:
   using Rng                 = std::mt19937_64;
   using BasicMiner          = fetch::miner::BasicMiner;
   using BasicMinerPtr       = std::unique_ptr<BasicMiner>;
-  using MutableTransaction  = fetch::ledger::MutableTransaction;
-  using VerifiedTransaction = fetch::ledger::VerifiedTransaction;
   using Clock               = std::chrono::high_resolution_clock;
   using Timepoint           = Clock::time_point;
   using TransactionLayout   = fetch::ledger::v2::TransactionLayout;
   using MainChain           = fetch::ledger::MainChain;
   using Block               = fetch::ledger::Block;
-  using Digest              = fetch::ledger::v2::Digest;
-  using DigestSet           = fetch::ledger::v2::DigestSet;
-  using LayoutMap           = std::unordered_map<Digest, TransactionLayout>;
+  using LayoutMap           = DigestMap<TransactionLayout>;
 
   void SetUp() override
   {

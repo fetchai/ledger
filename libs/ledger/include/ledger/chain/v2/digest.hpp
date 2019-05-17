@@ -20,13 +20,34 @@
 #include "core/byte_array/const_byte_array.hpp"
 
 #include <unordered_set>
+#include <unordered_map>
 
 namespace fetch {
 namespace ledger {
 namespace v2 {
 
-using Digest    = byte_array::ConstByteArray;
-using DigestSet = std::unordered_set<Digest>;
+using Digest = byte_array::ConstByteArray;
+
+struct DigestHashAdapter
+{
+  std::size_t operator()(Digest const &hash) const
+  {
+    std::size_t value{0};
+
+    if (!hash.empty())
+    {
+      assert(hash.size() >= sizeof(std::size_t));
+      value = *reinterpret_cast<std::size_t const *>(hash.pointer());
+    }
+
+    return value;
+  }
+};
+
+using DigestSet = std::unordered_set<Digest, DigestHashAdapter>;
+
+template <typename Value>
+using DigestMap = std::unordered_map<Digest, Value, DigestHashAdapter>;
 
 }  // namespace v2
 }  // namespace ledger

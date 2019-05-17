@@ -17,6 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "fake_storage_unit.hpp"
+
+#include "core/macros.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/sha256.hpp"
 

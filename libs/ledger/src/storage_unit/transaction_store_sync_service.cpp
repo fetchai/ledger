@@ -18,7 +18,6 @@
 
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
 #include "core/macros.hpp"
-#include "ledger/chain/transaction_serialization.hpp"
 #include "ledger/chain/v2/transaction_rpc_serializers.hpp"
 
 #include <cassert>

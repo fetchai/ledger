@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/reactor.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/shard_config.hpp"
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/has_worker_thread.hpp"

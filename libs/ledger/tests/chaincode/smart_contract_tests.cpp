@@ -18,8 +18,6 @@
 
 #include "crypto/ecdsa.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/chain/v2/transaction_builder.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/state_adapter.hpp"
@@ -39,7 +37,6 @@ using ::testing::InSequence;
 using fetch::crypto::SHA256;
 using fetch::ledger::SmartContract;
 using fetch::byte_array::ConstByteArray;
-using fetch::ledger::TransactionSummary;
 using fetch::storage::ResourceAddress;
 using fetch::variant::Variant;
 using fetch::serializers::ByteArrayBuffer;
@@ -62,8 +59,6 @@ ConstByteArray RawBytes(T value)
 
 using SmartContractPtr   = std::unique_ptr<SmartContract>;
 using MockStorageUnitPtr = std::unique_ptr<MockStorageUnit>;
-using Resource           = TransactionSummary::Resource;
-using Resources          = std::vector<Resource>;
 using Query              = SmartContract::Query;
 
 class SmartContractTests : public ContractTest

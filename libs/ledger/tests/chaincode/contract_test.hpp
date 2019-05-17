@@ -20,7 +20,6 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/identity.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/chain/v2/transaction.hpp"
 #include "ledger/chain/v2/transaction_builder.hpp"
 #include "ledger/chaincode/contract.hpp"

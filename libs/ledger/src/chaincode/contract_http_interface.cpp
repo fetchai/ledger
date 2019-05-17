@@ -23,9 +23,6 @@
 #include "core/serializers/stl_types.hpp"
 #include "core/string/replace.hpp"
 #include "http/json_response.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/wire_transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/transaction_processor.hpp"
@@ -46,18 +43,6 @@ using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ToBase64;
 using fetch::ledger::v2::FromJsonTransaction;
-
-struct AdaptedTx
-{
-  MutableTransaction                   tx;
-  TxSigningAdapter<MutableTransaction> adapter{tx};
-
-  template <typename T>
-  friend void Deserialize(T &serializer, AdaptedTx &tx)
-  {
-    serializer >> tx.adapter;
-  }
-};
 
 ConstByteArray const API_PATH_CONTRACT_PREFIX("/api/contract/");
 ConstByteArray const CONTRACT_NAME_SEPARATOR(".");
