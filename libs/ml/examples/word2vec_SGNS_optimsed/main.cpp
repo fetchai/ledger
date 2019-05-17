@@ -53,7 +53,7 @@ struct TrainingParams
   SizeType embedding_size    = 200;       // dimension of embedding vec
   SizeType training_epochs   = 15;        // total number of training epochs
   SizeType neg_examples      = 25;        // how many negative examples for every positive example
-  double   learning_rate     = 0.2;       // alpha - the learning rate
+  double   learning_rate     = 1;       // alpha - the learning rate
   double   min_learning_rate = 0.000005;  // alpha - the minimum learning rate
   double   negative_learning_rate;        // alpha - the learning rate for negative examples
   double   min_negative_learning_rate;    // alpha - the minimum learning rate for negative examples
@@ -335,7 +335,7 @@ public:
 
   std::vector<Type> l2reg_row_sums;
   Type              l2reg_sum = 0;
-  Type              l2_lambda = 0.0001;
+  Type              l2_lambda = 0.0000001;
 
   SkipgramModel(SizeType vocab_size, SizeType embeddings_size, Type learning_rate)
     : input_embeddings_({vocab_size, embeddings_size})
@@ -393,7 +393,8 @@ public:
    * x = v_in' * v_sample
    * l = log(sigmoid(-x))
    */
-  void ForwardAndLoss(SizeType input_word_idx, SizeType context_word_idx, Type gt, Type &loss)
+  void ForwardAndLoss(SizeType input_word_idx, SizeType context_word_idx, Type gt, Type &loss,
+                      Type &reg_loss)
   {
     // First normalise the embeddings. Since that's expensive, we just normalise the two rows
     // we'll use
@@ -443,7 +444,7 @@ public:
       loss = -std::log(1 - result_[0]);
     }
 
-    loss += (l2_lambda * l2reg_sum);
+    reg_loss = (l2_lambda * l2reg_sum);
 
     if (std::isnan(loss))
     {
@@ -451,7 +452,8 @@ public:
     }
   }
 
-  void Backward(SizeType const &input_word_idx, SizeType const &context_word_idx, Type const &gt)
+  void Backward(SizeType const &input_word_idx, SizeType const /* &context_word_idx */,
+                Type const &    gt)
   {
     // positive case:
     // dl/dx = g = sigmoid(-x)
@@ -474,15 +476,19 @@ public:
 
     // apply gradient updates
     l2reg_sum -= l2reg_row_sums[input_word_idx];
-    l2reg_sum -= l2reg_row_sums[context_word_idx];
+    //    l2reg_sum -= l2reg_row_sums[context_word_idx];
 
-    l2reg_row_sums[input_word_idx]   = 0;
-    l2reg_row_sums[context_word_idx] = 0;
+    l2reg_row_sums[input_word_idx] = 0;
+    //    l2reg_row_sums[context_word_idx] = 0;
 
     auto input_slice_it = input_embeddings_.Slice(input_word_idx).begin();
     auto input_grads_it = input_grads_.begin();
     while (input_slice_it.is_valid())
     {
+      //      std::cout << "*input_slice_it: " << *input_slice_it << std::endl;
+      //      std::cout << "l2_lambda * *input_slice_it: " << l2_lambda * *input_slice_it <<
+      //      std::endl;
+
       // grad and l2_reg weight decay
       *input_slice_it += (*input_grads_it) - (l2_lambda * *input_slice_it);
       //      *input_slice_it += (*input_grads_it);
@@ -491,21 +497,21 @@ public:
       ++input_grads_it;
     }
 
-    // apply gradient updates
-    auto context_slice_it = input_embeddings_.Slice(context_word_idx).begin();
-    auto context_grads_it = context_grads_.begin();
-    while (context_slice_it.is_valid())
-    {
-      // grad and l2_reg weight decay
-      *context_slice_it += (*context_grads_it) - (l2_lambda * *input_slice_it);
-      //      *context_slice_it += (*context_grads_it);
-      l2reg_row_sums[context_word_idx] += (*context_slice_it * *context_slice_it);
-      ++context_slice_it;
-      ++context_grads_it;
-    }
+    //    // apply gradient updates
+    //    auto context_slice_it = input_embeddings_.Slice(context_word_idx).begin();
+    //    auto context_grads_it = context_grads_.begin();
+    //    while (context_slice_it.is_valid())
+    //    {
+    //      // grad and l2_reg weight decay
+    //      *context_slice_it += (*context_grads_it) - (l2_lambda * *input_slice_it);
+    //      //      *context_slice_it += (*context_grads_it);
+    //      l2reg_row_sums[context_word_idx] += (*context_slice_it * *context_slice_it);
+    //      ++context_slice_it;
+    //      ++context_grads_it;
+    //    }
 
     l2reg_sum += l2reg_row_sums[input_word_idx];
-    l2reg_sum += l2reg_row_sums[context_word_idx];
+    //    l2reg_sum += l2reg_row_sums[context_word_idx];
   }
 
   void Sigmoid(Type x, Type &ret)
@@ -532,30 +538,34 @@ public:
 
 void EvalAnalogy(DataLoader<ArrayType> &dl, SkipgramModel<ArrayType> &model)
 {
-  SizeType    k     = 5;
+  SizeType k = 5;
 
-  SizeType word1_idx;
-  SizeType word2_idx;
-  SizeType word3_idx;
+  std::string word1 = "italy";
+  std::string word2 = "rome";
+  std::string word3 = "france";
+  std::string word4 = "paris";
 
-  //
-  std::string word1 = "Italy";
-  std::string word2 = "Rome";
-  std::string word3 = "France";
-  std::string word4 = "Paris";
+  SizeType word1_idx = dl.vocab_lookup(word1);
+  SizeType word2_idx = dl.vocab_lookup(word2);
+  SizeType word3_idx = dl.vocab_lookup(word3);
+  SizeType word4_idx = dl.vocab_lookup(word4);
 
-  // vector math - hopefully target_vector is close to the location of the embedding value for word4
-  word1_idx     = dl.vocab_lookup(word1);
-  word2_idx     = dl.vocab_lookup(word2);
-  word3_idx     = dl.vocab_lookup(word3);
-  auto     target_vector = model.input_embeddings_.Slice(word3_idx).Copy() +
-                       (model.input_embeddings_.Slice(word2_idx).Copy() -
-                        model.input_embeddings_.Slice(word1_idx).Copy());
+  std::cout << "italy_idx: " << word1_idx << std::endl;
+  std::cout << "rome_idx: " << word2_idx << std::endl;
+  std::cout << "france_idx: " << word3_idx << std::endl;
+  std::cout << "paris_idx: " << word4_idx << std::endl;
 
-  // cosine distance between every word in vocab and the target vector
-  std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
-      fetch::math::clustering::KNNCosine(model.input_embeddings_, target_vector, k);
+  auto italy_vector  = model.input_embeddings_.Slice(word1_idx).Copy();
+  auto rome_vector   = model.input_embeddings_.Slice(word2_idx).Copy();
+  auto france_vector = model.input_embeddings_.Slice(word3_idx).Copy();
+  auto paris_vector  = model.input_embeddings_.Slice(word4_idx).Copy();
 
+  std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output;
+
+  /// Closest word to Italy ///
+  // cosine distance between every word in vocab and Italy
+  output = fetch::math::clustering::KNNCosine(model.input_embeddings_, italy_vector, k);
+  std::cout << "Closest word to Italy: " << std::endl;
   for (std::size_t j = 0; j < output.size(); ++j)
   {
     std::cout << "rank: " << j << ", "
@@ -564,10 +574,69 @@ void EvalAnalogy(DataLoader<ArrayType> &dl, SkipgramModel<ArrayType> &model)
   }
   std::cout << std::endl;
 
+  /// Closest word to France ///
+  // cosine distance between every word in vocab and Italy
+  output = fetch::math::clustering::KNNCosine(model.input_embeddings_, france_vector, k);
+  std::cout << "Closest word to France: " << std::endl;
+  for (std::size_t j = 0; j < output.size(); ++j)
+  {
+    std::cout << "rank: " << j << ", "
+              << "distance, " << output.at(j).second << ": " << dl.VocabLookup(output.at(j).first)
+              << std::endl;
+  }
+  std::cout << std::endl;
 
+  /// Closest word to Rome ///
+  // cosine distance between every word in vocab and Italy
+  output = fetch::math::clustering::KNNCosine(model.input_embeddings_, rome_vector, k);
+  std::cout << "Closest word to Rome: " << std::endl;
+  for (std::size_t j = 0; j < output.size(); ++j)
+  {
+    std::cout << "rank: " << j << ", "
+              << "distance, " << output.at(j).second << ": " << dl.VocabLookup(output.at(j).first)
+              << std::endl;
+  }
+  std::cout << std::endl;
 
+  /// Closest word to Paris ///
+  // cosine distance between every word in vocab and Italy
+  output = fetch::math::clustering::KNNCosine(model.input_embeddings_, paris_vector, k);
+  std::cout << "Closest word to Paris: " << std::endl;
+  for (std::size_t j = 0; j < output.size(); ++j)
+  {
+    std::cout << "rank: " << j << ", "
+              << "distance, " << output.at(j).second << ": " << dl.VocabLookup(output.at(j).first)
+              << std::endl;
+  }
+  std::cout << std::endl;
 
+  /// Vector Math analogy: Paris - France + Italy should give us rome ///
+  // vector math - hopefully target_vector is close to the location of the embedding value for word4
+  auto analogy_target_vector_1 = france_vector - paris_vector + italy_vector;
+  output = fetch::math::clustering::KNNCosine(model.input_embeddings_, analogy_target_vector_1, k);
 
+  std::cout << "France - Paris + Italy = : " << std::endl;
+  for (std::size_t j = 0; j < output.size(); ++j)
+  {
+    std::cout << "rank: " << j << ", "
+              << "distance, " << output.at(j).second << ": " << dl.VocabLookup(output.at(j).first)
+              << std::endl;
+  }
+  std::cout << std::endl;
+
+  /// Vector Math analogy: Paris - France + Italy should give us rome ///
+  // vector math - hopefully target_vector is close to the location of the embedding value for word4
+  auto analogy_target_vector_2 = paris_vector - france_vector + italy_vector;
+  output = fetch::math::clustering::KNNCosine(model.input_embeddings_, analogy_target_vector_2, k);
+
+  std::cout << "Paris - France + Italy = : " << std::endl;
+  for (std::size_t j = 0; j < output.size(); ++j)
+  {
+    std::cout << "rank: " << j << ", "
+              << "distance, " << output.at(j).second << ": " << dl.VocabLookup(output.at(j).first)
+              << std::endl;
+  }
+  std::cout << std::endl;
 }
 
 ///////////////
@@ -626,8 +695,11 @@ int main(int argc, char **argv)
   std::chrono::duration<double> time_diff;
 
   DataType gt;
-  DataType loss     = 0;
-  DataType sum_loss = 0;
+
+  DataType loss        = 0;
+  DataType l2loss      = 0;
+  DataType sum_loss    = 0;
+  DataType sum_l2_loss = 0;
 
   SizeType epoch_count = 0;
 
@@ -660,7 +732,7 @@ int main(int argc, char **argv)
     dataloader.next_positive(input_word_idx, context_word_idx);
 
     // forward pass on the model & loss calculation bundled together
-    model.ForwardAndLoss(input_word_idx, context_word_idx, gt, loss);
+    model.ForwardAndLoss(input_word_idx, context_word_idx, gt, loss, l2loss);
 
     // backward pass
     model.Backward(input_word_idx, context_word_idx, gt);
@@ -668,6 +740,7 @@ int main(int argc, char **argv)
     ++total_step_count;
 
     sum_loss += (loss * model.alpha_);
+    sum_l2_loss += (l2loss * model.alpha_);
 
     ///////////////////////////////
     /// run k negative examples ///
@@ -682,7 +755,7 @@ int main(int argc, char **argv)
       dataloader.next_negative(input_word_idx, context_word_idx);
 
       // forward pass on the model
-      model.ForwardAndLoss(input_word_idx, context_word_idx, gt, loss);
+      model.ForwardAndLoss(input_word_idx, context_word_idx, gt, loss, l2loss);
 
       // backward pass
       model.Backward(input_word_idx, context_word_idx, gt);
@@ -690,6 +763,7 @@ int main(int argc, char **argv)
       ++total_step_count;
 
       sum_loss += (loss * model.alpha_);
+      sum_l2_loss += (l2loss * model.alpha_);
     }
 
     ////////////////////////
@@ -719,7 +793,9 @@ int main(int argc, char **argv)
                     fetch::math::Max(tp.min_learning_rate,
                                      1.0 - (double(total_step_count) / tp.total_words)))
                 << std::endl;
-      std::cout << "loss: " << sum_loss << std::endl;
+      std::cout << "loss: " << sum_loss + sum_l2_loss << std::endl;
+      std::cout << "w2vloss: " << sum_loss << std::endl;
+      std::cout << "l2 loss: " << sum_l2_loss << std::endl;
       sum_loss = 0;
 
       std::cout << std::endl;
