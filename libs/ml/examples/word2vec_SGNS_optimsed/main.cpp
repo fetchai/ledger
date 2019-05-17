@@ -214,6 +214,9 @@ public:
     vocab_.clear();
     vocab_frequencies_.clear();
 
+    vocab_.emplace(std::make_pair("UNK", 0));
+    vocab_frequencies_.emplace(std::make_pair(0, 0));
+
     // Get pruned idxs
     for( auto & word : tmp_vocab)
     {
@@ -221,7 +224,7 @@ public:
       if (cur_freq > min_word_freq_)
       {
         // don't prune
-        vocab_.emplace(word);
+        vocab_.emplace(std::make_pair(word.first, vocab_.size() + 1));
         vocab_frequencies_.emplace(std::make_pair(vocab_.size(), cur_freq));
       }
     }
@@ -637,7 +640,6 @@ void EvalAnalogy(DataLoader<ArrayType> &dl, SkipgramModel<ArrayType> &model)
   std::cout << "Closest word to Italy: " << std::endl;
   for (std::size_t j = 0; j < output.size(); ++j)
   {
-    std::cout << "output.at(j).first: " << output.at(j).first << std::endl;
     std::cout << "rank: " << j << ", "
               << "distance, " << output.at(j).second << ": " << dl.VocabLookup(output.at(j).first)
               << std::endl;
@@ -650,7 +652,6 @@ void EvalAnalogy(DataLoader<ArrayType> &dl, SkipgramModel<ArrayType> &model)
   std::cout << "Closest word to France: " << std::endl;
   for (std::size_t j = 0; j < output.size(); ++j)
   {
-    std::cout << "output.at(j).first: " << output.at(j).first << std::endl;
     std::cout << "rank: " << j << ", "
               << "distance, " << output.at(j).second << ": " << dl.VocabLookup(output.at(j).first)
               << std::endl;
@@ -663,7 +664,6 @@ void EvalAnalogy(DataLoader<ArrayType> &dl, SkipgramModel<ArrayType> &model)
   std::cout << "Closest word to Rome: " << std::endl;
   for (std::size_t j = 0; j < output.size(); ++j)
   {
-    std::cout << "output.at(j).first: " << output.at(j).first << std::endl;
     std::cout << "rank: " << j << ", "
               << "distance, " << output.at(j).second << ": " << dl.VocabLookup(output.at(j).first)
               << std::endl;
@@ -877,9 +877,9 @@ int main(int argc, char **argv)
       std::cout << "total_step_count: " << total_step_count << std::endl;
       std::cout << "current cursor idx: " << cursor_idx << std::endl;
       std::cout << "current negative learning rate: " << model.alpha_ << std::endl;
-      std::cout << "loss: " << sum_loss + sum_l2_loss << std::endl;
-      std::cout << "w2vloss: " << sum_loss << std::endl;
-      std::cout << "l2 loss: " << sum_l2_loss << std::endl;
+      std::cout << "loss: " << (sum_loss + sum_l2_loss) / (tp.print_freq * 26 ) << std::endl;
+      std::cout << "w2vloss: " << sum_loss / (tp.print_freq * 26 ) << std::endl;
+      std::cout << "l2 loss: " << sum_l2_loss / (tp.print_freq * 26 ) << std::endl;
       sum_loss = 0;
       sum_l2_loss = 0;
       std::cout << std::endl;
