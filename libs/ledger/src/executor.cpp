@@ -288,7 +288,8 @@ bool Executor::ExecuteTransactionContract(Result &result)
 
     // Dispatch the transaction to the contract
     FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatch: ", contract_id.name());
-    auto const contract_status = contract->DispatchTransaction(contract_id.name(), *current_tx_, block_);
+    auto const contract_status =
+        contract->DispatchTransaction(contract_id.name(), *current_tx_, block_);
 
     // detach the chain code from the current context
     contract->Detach();

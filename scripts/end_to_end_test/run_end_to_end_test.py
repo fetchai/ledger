@@ -374,7 +374,8 @@ def run_python_test(parameters, test_instance):
     host = parameters.get('host', 'localhost')
     port = parameters.get('port', test_instance._nodes[0]._port_start)
 
-    test_script = importlib.import_module(parameters['script'], 'end_to_end_test')
+    test_script = importlib.import_module(
+        parameters['script'], 'end_to_end_test')
     test_script.run({
         'host': host,
         'port': port

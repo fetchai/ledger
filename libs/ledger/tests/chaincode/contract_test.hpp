@@ -55,7 +55,7 @@ protected:
 
   void SetUp() override
   {
-    block_number_ = 0u;
+    block_number_  = 0u;
     certificate_   = std::make_unique<fetch::crypto::ECDSASigner>();
     owner_address_ = std::make_unique<fetch::ledger::v2::Address>(certificate_->identity());
     storage_       = std::make_unique<MockStorageUnit>();
@@ -214,8 +214,8 @@ protected:
   IdentifierPtr contract_name_;
   /// @}
 
-  Contract::BlockIndex     block_number_;
-  CertificatePtr     certificate_;
-  AddressPtr         owner_address_;
-  MockStorageUnitPtr storage_;
+  Contract::BlockIndex block_number_;
+  CertificatePtr       certificate_;
+  AddressPtr           owner_address_;
+  MockStorageUnitPtr   storage_;
 };

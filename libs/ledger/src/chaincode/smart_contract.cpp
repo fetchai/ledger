@@ -104,9 +104,8 @@ SmartContract::SmartContract(std::string const &source)
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Constructing contract: 0x", contract_digest().ToHex());
 
-  module_->CreateFreeFunctionFromLambda<uint64_t>("getBlockNumber", [this](vm::VM*){
-    return block_index_;
-  });
+  module_->CreateFreeFunctionFromLambda<uint64_t>("getBlockNumber",
+                                                  [this](vm::VM *) { return block_index_; });
 
   // create and compile the executable
   auto errors = vm_modules::VMFactory::Compile(module_, source_, *executable_);
@@ -145,8 +144,9 @@ SmartContract::SmartContract(std::string const &source)
                       " (Contract: ", contract_digest().ToBase64(), ')');
 
       // register the transaction handler
-      OnTransaction(fn.name,
-                    [this, name = fn.name](auto const &tx, BlockIndex index) { return InvokeAction(name, tx, index); });
+      OnTransaction(fn.name, [this, name = fn.name](auto const &tx, BlockIndex index) {
+        return InvokeAction(name, tx, index);
+      });
       break;
     case vm::FunctionDecoratorKind::QUERY:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Registering Query: ", fn.name,
@@ -341,7 +341,8 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
  * @param tx The input transaction
  * @return The corresponding status result for the operation
  */
-Contract::Status SmartContract::InvokeAction(std::string const &name, v2::Transaction const &tx, BlockIndex index)
+Contract::Status SmartContract::InvokeAction(std::string const &name, v2::Transaction const &tx,
+                                             BlockIndex index)
 {
   // Important to keep the handle alive as long as the msgpack::object is needed to avoid segfault!
   msgpack::object_handle       h;

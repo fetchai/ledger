@@ -185,16 +185,17 @@ public:
   template <typename ReturnType>
   void CreateFreeFunctionFromLambda(std::string const &name, std::function<ReturnType(VM *)> f)
   {
-    TypeIndexArray parameter_type_index_array;
+    TypeIndexArray  parameter_type_index_array;
     TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
-    Handler         handler = [f](VM *vm) {
-      ReturnType result = f(vm);
+    Handler         handler           = [f](VM *vm) {
+      ReturnType           result               = f(vm);
       constexpr auto const stack_pointer_offset = -1;
-      StackSetter<ReturnType>::Set(vm, stack_pointer_offset, std::move(result), vm->instruction_->type_id);
+      StackSetter<ReturnType>::Set(vm, stack_pointer_offset, std::move(result),
+                                   vm->instruction_->type_id);
       vm->sp_ -= stack_pointer_offset;
     };
 
-    auto            compiler_setup_function = [name, parameter_type_index_array, return_type_index,
+    auto compiler_setup_function = [name, parameter_type_index_array, return_type_index,
                                     handler](Compiler *compiler) {
       compiler->CreateFreeFunction(name, parameter_type_index_array, return_type_index, handler);
     };

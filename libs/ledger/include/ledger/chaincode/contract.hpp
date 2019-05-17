@@ -85,10 +85,8 @@ public:
 
   Status DispatchInitialise(v2::Address const &owner);
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
-  Status DispatchTransaction(
-      ConstByteArray const &name,
-      v2::Transaction const &tx,
-      v2::TransactionLayout::BlockIndex index);
+  Status DispatchTransaction(ConstByteArray const &name, v2::Transaction const &tx,
+                             v2::TransactionLayout::BlockIndex index);
   /// @}
 
   /// @name Dispatch Maps Accessors
@@ -223,12 +221,12 @@ void Contract::OnInitialise(C *instance, Status (C::*func)(v2::Address const &))
  */
 template <typename C>
 void Contract::OnTransaction(std::string const &name, C *instance,
-                             Status (C::*func)(v2::Transaction const &,
-                             BlockIndex))
+                             Status (C::*func)(v2::Transaction const &, BlockIndex))
 {
   // create the function handler and pass it to the normal function
-  OnTransaction(name,
-                [instance, func](v2::Transaction const &tx, BlockIndex block_index) { return (instance->*func)(tx, block_index); });
+  OnTransaction(name, [instance, func](v2::Transaction const &tx, BlockIndex block_index) {
+    return (instance->*func)(tx, block_index);
+  });
 }
 
 /**
