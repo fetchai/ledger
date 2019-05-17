@@ -63,6 +63,17 @@ void CachedStorageAdapter::Flush()
 }
 
 /**
+ * Clear any cached values
+ */
+void CachedStorageAdapter::Clear()
+{
+  FETCH_LOCK(lock_);
+
+  cache_.clear();
+  flush_required_ = false;
+}
+
+/**
  * Get a resource from the storage engine or cache
  *
  * @param key The key to be accessed
@@ -145,25 +156,25 @@ void CachedStorageAdapter::Set(ResourceAddress const &key, StateValue const &val
 /**
  * Lock a resource on the storage engine
  *
- * @param key The key of resource to be locked
+ * @param index The shard index to be locked
  * @return true if successful, otherwise false
  */
-bool CachedStorageAdapter::Lock(ResourceAddress const &key)
+bool CachedStorageAdapter::Lock(ShardIndex index)
 {
   // proxy this call directly to the underlying storage engine
-  return storage_.Lock(key);
+  return storage_.Lock(index);
 }
 
 /**
  * Unlock a resource on the storage engine
  *
- * @param key The key of the resource to be unlocked
+ * @param index The shard index to be unlocked
  * @return true if successful, otherwise false
  */
-bool CachedStorageAdapter::Unlock(ResourceAddress const &key)
+bool CachedStorageAdapter::Unlock(ShardIndex index)
 {
   // proxy this call directly to the underlying storage engine
-  return storage_.Unlock(key);
+  return storage_.Unlock(index);
 }
 
 /**

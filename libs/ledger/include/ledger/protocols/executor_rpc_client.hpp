@@ -62,7 +62,9 @@ public:
   void Connect(Muddle &muddle, Uri uri,
                std::chrono::milliseconds timeout = std::chrono::milliseconds(10000));
 
-  Status Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes) override;
+  Result Execute(v2::Digest const &digest, BlockIndex block, SliceIndex slice,
+                 BitVector const &shards) override;
+  void   SettleFees(v2::Address const &miner, TokenAmount amount, uint32_t log2_num_lanes) override;
 
   bool GetAddress(Address &address) const
   {

@@ -53,9 +53,9 @@ public:
     : super_type(other.IsUnique() ? std::move(other) : other.Copy())
   {}
 
-  self_type SubArray(std::size_t const &start, std::size_t length = std::size_t(-1)) const
+  self_type SubArray(std::size_t start, std::size_t length = std::size_t(-1)) const
   {
-    return SubArray<self_type>(start, length);
+    return SubArrayInternal<self_type>(start, length);
   }
 };
 
