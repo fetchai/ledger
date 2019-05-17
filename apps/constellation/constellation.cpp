@@ -21,7 +21,6 @@
 #include "ledger/chain/consensus/bad_miner.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
-#include "ledger/chaincode/wallet_http_interface.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/tx_query_http_interface.hpp"
@@ -48,6 +47,7 @@ using fetch::network::AtomicInFlightCounter;
 using fetch::network::AtomicCounterName;
 using fetch::network::Uri;
 using fetch::network::Peer;
+using fetch::ledger::v2::Address;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 using ConsensusMinerInterfacePtr =
@@ -158,9 +158,10 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
                                                  cfg_.log2_num_lanes))
   , lane_control_(internal_muddle_.AsEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
   , execution_manager_{std::make_shared<ExecutionManager>(
-        cfg_.num_executors, storage_, [this] { return std::make_shared<Executor>(storage_); })}
+        cfg_.num_executors, cfg_.log2_num_lanes, storage_,
+        [this] { return std::make_shared<Executor>(storage_); })}
   , chain_{ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
-  , block_packer_{cfg_.log2_num_lanes, cfg_.num_slices}
+  , block_packer_{cfg_.log2_num_lanes}
   , block_coordinator_{chain_,
                        *execution_manager_,
                        *storage_,
@@ -176,13 +177,12 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   , tx_processor_{*storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
   , http_{http_network_manager_}
   , http_modules_{
-        std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_, cfg_.num_lanes()),
         std::make_shared<p2p::P2PHttpInterface>(
             cfg_.log2_num_lanes, chain_, muddle_, p2p_, trust_, block_packer_,
             p2p::P2PHttpInterface::WeakStateMachines{main_chain_service_->GetWeakStateMachine(),
                                                      block_coordinator_.GetWeakStateMachine()}),
         std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
-        std::make_shared<ledger::TxQueryHttpInterface>(*storage_, cfg_.log2_num_lanes),
+        std::make_shared<ledger::TxQueryHttpInterface>(*storage_),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
         std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_)}
 {
@@ -190,6 +190,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.interface_address, " E ",
                  cfg_.num_executors, " S ", cfg_.num_lanes(), "x", cfg_.num_slices);
   FETCH_LOG_INFO(LOGGING_NAME, "              :: ", ToBase64(p2p_.identity().identifier()));
+  FETCH_LOG_INFO(LOGGING_NAME, "              :: ", Address{p2p_.identity()}.display());
   FETCH_LOG_INFO(LOGGING_NAME, "");
 
   // attach the services to the reactor
@@ -205,31 +206,6 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   for (auto const &module : http_modules_)
   {
     http_.AddModule(*module);
-  }
-
-  CreateInfoFile("info.json");
-}
-
-void Constellation::CreateInfoFile(std::string const &filename)
-{
-  // Create an information file about this process.
-
-  std::fstream stream;
-  stream.open(filename.c_str(), std::ios_base::out);
-  if (stream.good())
-  {
-    variant::Variant data = variant::Variant::Object();
-    data["pid"]           = getpid();
-    data["identity"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());
-    data["hex_identity"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
-
-    stream << data;
-
-    stream.close();
-  }
-  else
-  {
-    throw std::invalid_argument(std::string("Can't open ") + filename);
   }
 }
 
@@ -367,7 +343,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
       // Starting this state machine begins period notify calls to the bootstrap server. This
       // importantly triggers the bootstrap service to start listing this node as available for
       // client connections. By delaying these notify() calls to the point when the node believes
-      // it has successfully
+      // it has successfully synchronised this ensures that cleaner network start up
       //
       reactor_.Attach(bootstrap_monitor);
       start_up_in_progress = false;

@@ -19,15 +19,11 @@
 
 namespace fetch {
 namespace byte_array {
-
 class ConstByteArray;
 }
 
 namespace crypto {
 
-class Identity;
-
-bool IsFetchIdentity(Identity const &identity);
 bool IsFetchIdentity(byte_array::ConstByteArray const &identity);
 
 }  // namespace crypto

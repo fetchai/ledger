@@ -22,6 +22,7 @@
 #include "fake_storage_unit.hpp"
 
 using fetch::byte_array::ToBase64;
+using fetch::ledger::v2::Digest;
 
 FakeExecutionManager::FakeExecutionManager(FakeStorageUnit &storage)
   : storage_{storage}
@@ -51,7 +52,7 @@ FakeExecutionManager::ScheduleStatus FakeExecutionManager::Execute(Block::Body c
   return ScheduleStatus::SCHEDULED;
 }
 
-FakeExecutionManager::BlockHash FakeExecutionManager::LastProcessedBlock()
+Digest FakeExecutionManager::LastProcessedBlock()
 {
   FETCH_LOG_INFO(LOGGING_NAME, "LastProcessedBlock called");
 
@@ -79,7 +80,7 @@ FakeExecutionManager::State FakeExecutionManager::GetState()
   {
     last_processed_ = current_hash_.Copy();
 
-    current_hash_ = BlockHash{};
+    current_hash_ = Digest{};
   }
 
   // evaluate the state
@@ -93,7 +94,7 @@ bool FakeExecutionManager::Abort()
   return false;
 }
 
-void FakeExecutionManager::SetLastProcessedBlock(BlockHash hash)
+void FakeExecutionManager::SetLastProcessedBlock(Digest hash)
 {
   last_processed_ = hash;
 }

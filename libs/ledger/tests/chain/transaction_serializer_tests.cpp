@@ -37,7 +37,7 @@ using fetch::ledger::v2::Address;
 using fetch::ledger::v2::Transaction;
 using fetch::ledger::v2::TransactionBuilder;
 using fetch::ledger::v2::TransactionSerializer;
-using fetch::bitmanip::BitVector;
+using fetch::BitVector;
 
 struct Identities
 {
@@ -450,7 +450,7 @@ protected:
     for (auto const &identity : IDENTITIES)
     {
       signers_.emplace_back(std::make_unique<ECDSASigner>(FromHex(identity.private_key)));
-      addresses_.emplace_back(Address{signers_.back()->identity().identifier()});
+      addresses_.emplace_back(Address{signers_.back()->identity()});
     }
   }
 

@@ -1,5 +1,4 @@
 #pragma once
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -242,6 +241,7 @@ meta::IfIsMathArray<ArrayType, void> Max(ArrayType const &array, typename ArrayT
     }
   }
 }
+
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Max(ArrayType const &array)
 {
@@ -249,6 +249,7 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Max(ArrayType const &ar
   Max(array, ret);
   return ret;
 }
+
 /**
  * Implementation of Max that returns the n-1 dim array by finding the max of all 1-d vectors within
  * the array
@@ -296,17 +297,6 @@ void Max(ArrayType const &array, typename ArrayType::SizeType const &axis, Array
       }
     }
   }
-}
-
-template <typename ArrayType>
-ArrayType Max(ArrayType const &array, typename ArrayType::SizeType const &axis)
-{
-  ASSERT((axis == 0) || (axis == 1));
-  ASSERT(array.shape().size() == 2);
-
-  ArrayType ret{array.shape().at(1 - axis)};
-  Max(array, axis, ret);
-  return ret;
 }
 
 template <typename T>
@@ -397,17 +387,6 @@ void Min(ArrayType const &array, typename ArrayType::SizeType const &axis, Array
       }
     }
   }
-}
-
-template <typename ArrayType>
-ArrayType Min(ArrayType const &array, typename ArrayType::SizeType const &axis)
-{
-  ASSERT((axis == 0) || (axis == 1));
-  ASSERT(array.shape().size() == 2);
-
-  ArrayType ret{array.shape().at(1 - axis)};
-  Min(array, axis, ret);
-  return ret;
 }
 
 /**
@@ -560,36 +539,104 @@ meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &          
 
 /**
  * Distance between max and min values in an array
+ * @tparam ArrayType
+ * @param array
+ * @param ret
  */
-// 1D array
-template <typename ArrayType>
-typename ArrayType::Type PeakToPeak(ArrayType const &array)
-{
-  return Max(array) - Min(array);
-}
-
 template <typename ArrayType>
 void PeakToPeak(ArrayType const &array, typename ArrayType::Type &ret)
 {
-  ret = PeakToPeak(array);
+  ret                          = numeric_lowest<typename ArrayType::Type>();
+  typename ArrayType::Type min = numeric_max<typename ArrayType::Type>();
+  auto                     it  = array.cbegin();
+  while (it.is_valid())
+  {
+    if (*it > ret)
+    {
+      ret = *it;
+    }
+    if (*it < min)
+    {
+      min = *it;
+    }
+    ++it;
+  }
+  ret = ret - min;
 }
 
-// 2D array
 template <typename ArrayType>
-ArrayType PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const &axis)
+typename ArrayType::Type PeakToPeak(ArrayType const &array)
 {
-  ArrayType ret = fetch::math::Max(array, axis);
-  ArrayType min = fetch::math::Min(array, axis);
-  fetch::math::Subtract(ret, min, ret);
+  typename ArrayType::Type ret;
+  PeakToPeak(array, ret);
   return ret;
 }
 
+/**
+ * Implementation of PeakToPeak that returns the n-1 dim array by finding the max-min of all 1-d
+ * vectors within the array
+ * @tparam ArrayType
+ * @param array
+ * @param axis
+ * @param ret
+ */
 template <typename ArrayType>
 void PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const &axis, ArrayType &ret)
 {
-  fetch::math::Max(array, axis, ret);
-  ArrayType min = fetch::math::Min(array, axis);
-  fetch::math::Subtract(ret, min, ret);
+  ASSERT(array.shape().size() <= 2);
+  ASSERT(axis < array.shape().size());
+
+  if (array.shape().size() == 1)
+  {
+    ASSERT(axis == 0);
+    ret[0] = PeakToPeak(array);
+  }
+  else
+  {  // Argmax-Argmin along a single axis
+    SizeType axis_length = array.shape()[axis];
+    ASSERT(axis_length > 1);
+    ASSERT(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
+
+    // fill the return with the first index values
+    ret.Assign(array.Slice(0, axis));
+    ArrayType min(ret.shape());
+    min.Assign(array.Slice(0, axis));
+
+    //
+    for (SizeType n{1}; n < axis_length; ++n)
+    {
+      auto cur_slice    = array.Slice(n, axis);
+      auto cur_slice_it = cur_slice.begin();
+      auto rit          = ret.begin();
+      auto mit          = min.begin();
+
+      // check every element in the n-1 dimensional return
+      while (cur_slice_it.is_valid())
+      {
+        if (*cur_slice_it > *rit)
+        {
+          *rit = *cur_slice_it;
+        }
+        if (*cur_slice_it < *mit)
+        {
+          *mit = *cur_slice_it;
+        }
+        ++rit;
+        ++mit;
+        ++cur_slice_it;
+      }
+    }
+    // i.e. ret=max-min, because max is stored in ret
+    fetch::math::Subtract(ret, min, ret);
+  }
+}
+
+template <typename ArrayType>
+ArrayType PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const &axis)
+{
+  ArrayType ret(Divide(Product(array.shape()), array.shape().at(axis)));
+  PeakToPeak(array, axis, ret);
+  return ret;
 }
 
 /**

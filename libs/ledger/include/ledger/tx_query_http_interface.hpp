@@ -28,7 +28,7 @@ class TxQueryHttpInterface : public http::HTTPModule
 {
 public:
   // Construction / Destruction
-  TxQueryHttpInterface(StorageUnitInterface &storage_unit, uint32_t log2_num_lanes);
+  explicit TxQueryHttpInterface(StorageUnitInterface &storage_unit);
   TxQueryHttpInterface(TxQueryHttpInterface const &) = delete;
   TxQueryHttpInterface(TxQueryHttpInterface &&)      = delete;
   ~TxQueryHttpInterface()                            = default;
@@ -39,7 +39,6 @@ public:
 
 private:
   StorageUnitInterface &storage_unit_;
-  uint32_t              log2_num_lanes_{0};
 };
 
 }  // namespace ledger

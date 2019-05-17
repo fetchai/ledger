@@ -37,6 +37,10 @@ namespace variant {
 class Variant;
 }
 namespace ledger {
+namespace v2 {
+class Transaction;
+class Address;
+}  // namespace v2
 
 /**
  * Contract - Base class for all smart contract and chain code instances
@@ -55,8 +59,8 @@ public:
   using ConstByteArray        = byte_array::ConstByteArray;
   using ContractName          = TransactionSummary::ContractName;
   using Query                 = variant::Variant;
-  using InitialiseHandler     = std::function<Status(Identity const &)>;
-  using TransactionHandler    = std::function<Status(Transaction const &)>;
+  using InitialiseHandler     = std::function<Status(v2::Address const &)>;
+  using TransactionHandler    = std::function<Status(v2::Transaction const &)>;
   using TransactionHandlerMap = std::unordered_map<ContractName, TransactionHandler>;
   using QueryHandler          = std::function<Status(Query const &, Query &)>;
   using QueryHandlerMap       = std::unordered_map<ContractName, QueryHandler>;
@@ -78,9 +82,9 @@ public:
   void Attach(ledger::StateAdapter &state);
   void Detach();
 
-  Status DispatchInitialise(Identity const &owner);
+  Status DispatchInitialise(v2::Address const &owner);
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
-  Status DispatchTransaction(ConstByteArray const &name, Transaction const &tx);
+  Status DispatchTransaction(ConstByteArray const &name, v2::Transaction const &tx);
   /// @}
 
   /// @name Dispatch Maps Accessors
@@ -88,6 +92,11 @@ public:
   QueryHandlerMap const &      query_handlers() const;
   TransactionHandlerMap const &transaction_handlers() const;
   /// @}
+
+  virtual uint64_t CalculateFee() const
+  {
+    return 0;
+  }
 
   // Operators
   Contract &operator=(Contract const &) = delete;
@@ -98,14 +107,15 @@ protected:
   /// @{
   void OnInitialise(InitialiseHandler &&handler);
   template <typename C>
-  void OnInitialise(C *instance, Status (C::*func)(Identity const &));
+  void OnInitialise(C *instance, Status (C::*func)(v2::Address const &));
   /// @}
 
   /// @name Transaction Handlers
   /// @{
   void OnTransaction(std::string const &name, TransactionHandler &&handler);
   template <typename C>
-  void OnTransaction(std::string const &name, C *instance, Status (C::*func)(Transaction const &));
+  void OnTransaction(std::string const &name, C *instance,
+                     Status (C::*func)(v2::Transaction const &));
   /// @}
 
   /// @name Query Handler Registration
@@ -117,7 +127,7 @@ protected:
 
   /// @name Chain Code State Utils
   /// @{
-  bool ParseAsJson(Transaction const &tx, variant::Variant &output);
+  bool ParseAsJson(v2::Transaction const &tx, variant::Variant &output);
 
   template <typename T>
   bool GetStateRecord(T &record, ConstByteArray const &key);
@@ -194,9 +204,9 @@ inline Contract::TransactionHandlerMap const &Contract::transaction_handlers() c
  * @param func The member function pointer
  */
 template <typename C>
-void Contract::OnInitialise(C *instance, Status (C::*func)(Identity const &))
+void Contract::OnInitialise(C *instance, Status (C::*func)(v2::Address const &))
 {
-  OnInitialise([instance, func](Identity const &owner) { return (instance->*func)(owner); });
+  OnInitialise([instance, func](v2::Address const &owner) { return (instance->*func)(owner); });
 }
 
 /**
@@ -209,10 +219,11 @@ void Contract::OnInitialise(C *instance, Status (C::*func)(Identity const &))
  */
 template <typename C>
 void Contract::OnTransaction(std::string const &name, C *instance,
-                             Status (C::*func)(Transaction const &))
+                             Status (C::*func)(v2::Transaction const &))
 {
   // create the function handler and pass it to the normal function
-  OnTransaction(name, [instance, func](Transaction const &tx) { return (instance->*func)(tx); });
+  OnTransaction(name,
+                [instance, func](v2::Transaction const &tx) { return (instance->*func)(tx); });
 }
 
 /**
