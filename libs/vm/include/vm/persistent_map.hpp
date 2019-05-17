@@ -131,8 +131,7 @@ protected:
   }
 };
 
-inline Ptr<IPersistentMap> IPersistentMap::Constructor(VM *vm, TypeId type_id,
-                                                       Ptr<Object> name)
+inline Ptr<IPersistentMap> IPersistentMap::Constructor(VM *vm, TypeId type_id, Ptr<Object> name)
 {
   TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
   TypeId const    key_type_id   = type_info.parameter_type_ids[0];

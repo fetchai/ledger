@@ -89,7 +89,9 @@ struct IsString : std::false_type
 {
 };
 template <typename T>
-struct IsString<T, typename std::enable_if_t<std::is_base_of<String, typename std::decay<T>::type>::value>> : std::true_type
+struct IsString<
+    T, typename std::enable_if_t<std::is_base_of<String, typename std::decay<T>::type>::value>>
+  : std::true_type
 {
 };
 
@@ -176,7 +178,6 @@ struct GetStorageType<T, typename std::enable_if_t<IsAddress<T>::value>>
   using type = Ptr<T>;
 };
 
-
 template <typename T>
 struct GetStorageType<T, typename std::enable_if_t<IsString<T>::value>>
 {
@@ -227,7 +228,7 @@ public:
 
   TypeId getTypeId() const
   {
-      return type_id_;
+    return type_id_;
   }
 
 protected:

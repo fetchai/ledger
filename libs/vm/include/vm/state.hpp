@@ -32,8 +32,8 @@ public:
   static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<Object> &&name,
                                  TemplateParameter const &value);
 
-//  static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<Object> const &address,
-//                                 TemplateParameter const &value);
+  //  static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<Object> const &address,
+  //                                 TemplateParameter const &value);
 
   virtual TemplateParameter Get() const                         = 0;
   virtual void              Set(TemplateParameter const &value) = 0;
@@ -52,12 +52,10 @@ public:
   static Ptr<IState> ConstructIntrinsic(VM *vm, TypeId type_id, TypeId value_type_id,
                                         Args &&... args);
 
-  static std::string NameToString(VM *vm, Ptr <Object> &&name);
+  static std::string NameToString(VM *vm, Ptr<Object> &&name);
 };
 
-
-
-template<typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
 inline IoObserverInterface::Status ReadHelper(std::string const &name, T &val,
                                               IoObserverInterface &io)
 {
@@ -65,7 +63,7 @@ inline IoObserverInterface::Status ReadHelper(std::string const &name, T &val,
   return io.Read(name, &val, buffer_size);
 }
 
-template<typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
 inline IoObserverInterface::Status WriteHelper(std::string const &name, T const &val,
                                                IoObserverInterface &io)
 {
@@ -101,7 +99,7 @@ inline IoObserverInterface::Status ReadHelper(std::string const &name, std::vect
   return result;
 }
 
-inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr <Address> &val,
+inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<Address> &val,
                                               IoObserverInterface &io)
 {
   // create an initial buffer size
@@ -114,7 +112,7 @@ inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr <Addr
   return result;
 }
 
-inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr <String> &val,
+inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<String> &val,
                                               IoObserverInterface &io)
 {
   // create an initial buffer size
@@ -127,7 +125,7 @@ inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr <Stri
   return result;
 }
 
-inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr <Address> const &val,
+inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr<Address> const &val,
                                                IoObserverInterface &io)
 {
   // convert the object to bytes
@@ -136,7 +134,7 @@ inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr <Add
   return io.Write(name, bytes.data(), bytes.size());
 }
 
-inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr <String> const &val,
+inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr<String> const &val,
                                                IoObserverInterface &io)
 {
   auto const &str = val->str;
@@ -289,14 +287,15 @@ inline std::string IState::NameToString(VM *vm, Ptr<Object> &&name)
 {
   switch (name->getTypeId())
   {
-    case TypeIds::String:
-      return dynamic_cast<String const &>(*name).str;
-    case TypeIds::Address:
-      return dynamic_cast<Address &>(*name).AsBase64String()->str;
+  case TypeIds::String:
+    return dynamic_cast<String const &>(*name).str;
+  case TypeIds::Address:
+    return dynamic_cast<Address &>(*name).AsBase64String()->str;
   }
 
   vm->RuntimeError(
-    "Unsupported type of `name` parameter for `State<...>(name)` constructor. It must be either `String` or `Address` type.");
+      "Unsupported type of `name` parameter for `State<...>(name)` constructor. It must be either "
+      "`String` or `Address` type.");
   return std::string{};
 }
 

@@ -475,7 +475,6 @@ struct Variant
   }
 };
 
-
 template <std::size_t ID = 0>
 struct TemplateParameterT : public Variant
 {
@@ -490,8 +489,7 @@ struct TemplateParameterT : public Variant
 
 using TemplateParameter1 = TemplateParameterT<0>;
 using TemplateParameter2 = TemplateParameterT<1>;
-using TemplateParameter = TemplateParameter1;
-
+using TemplateParameter  = TemplateParameter1;
 
 struct Any : public Variant
 {

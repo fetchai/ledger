@@ -489,7 +489,7 @@ TEST_F(SmartContractTests, CheckPersistentMapSetWithAddressAsName)
 
   ByteArray address_raw;
   address_raw.Resize(64);
-  for (uint8_t i=0; i<address_raw.size(); ++i)
+  for (uint8_t i = 0; i < address_raw.size(); ++i)
   {
     address_raw[i] = i;
   }
@@ -499,7 +499,8 @@ TEST_F(SmartContractTests, CheckPersistentMapSetWithAddressAsName)
   // define expected values
 
   auto const address_str{address_raw.ToBase64()};
-  auto const expected_key1      = contract_name_->full_name() + ".state." + ToBase64(identity.identifier()) + ".foo";
+  auto const expected_key1 =
+      contract_name_->full_name() + ".state." + ToBase64(identity.identifier()) + ".foo";
   auto const expected_resource1 = ResourceAddress{expected_key1};
   auto const expected_value1    = RawBytes<int32_t>(20);
 

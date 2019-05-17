@@ -20,8 +20,8 @@
 #include "vm/array.hpp"
 #include "vm/map.hpp"
 #include "vm/matrix.hpp"
-#include "vm/state.hpp"
 #include "vm/persistent_map.hpp"
+#include "vm/state.hpp"
 #include "vm/string.hpp"
 
 namespace fetch {
@@ -138,8 +138,8 @@ void Analyser::Initialise()
   CreateTemplateType("State", TypeIndex(typeid(IState)), {any_type_}, TypeIds::Unknown,
                      state_type_);
 
-  CreateTemplateType("PersistentMap", TypeIndex(typeid(IPersistentMap)), {any_type_, any_type_}, TypeIds::Unknown,
-                     persistent_map_type_);
+  CreateTemplateType("PersistentMap", TypeIndex(typeid(IPersistentMap)), {any_type_, any_type_},
+                     TypeIds::Unknown, persistent_map_type_);
 }
 
 void Analyser::UnInitialise()
