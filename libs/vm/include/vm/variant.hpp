@@ -483,9 +483,6 @@ struct VariantT : public Variant
     : Variant{other} {};
   VariantT(Variant &&other)
     : Variant{std::move(other)} {};
-
-  static constexpr std::size_t id{ID};
-  using New = VariantT<ID + 1>;
 };
 
 using TemplateParameter1 = VariantT<0>;
