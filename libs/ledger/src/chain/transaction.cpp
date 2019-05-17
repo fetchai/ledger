@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "crypto/verifier.hpp"
-#include "ledger/chain/v2/transaction_serializer.hpp"
+#include "ledger/chain/transaction_serializer.hpp"
 
 namespace fetch {
 namespace ledger {

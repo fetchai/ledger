@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/v2/address.hpp"
+#include "ledger/chain/address.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/macros.hpp"

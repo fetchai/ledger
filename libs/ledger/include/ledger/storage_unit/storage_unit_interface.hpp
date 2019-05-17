@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "ledger/chain/v2/digest.hpp"
-#include "ledger/chain/v2/transaction_layout.hpp"
+#include "ledger/chain/digest.hpp"
+#include "ledger/chain/transaction_layout.hpp"
 #include "storage/document.hpp"
 #include "storage/resource_mapper.hpp"
 

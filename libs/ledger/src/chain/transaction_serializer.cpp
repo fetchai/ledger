@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/v2/transaction_serializer.hpp"
+#include "ledger/chain/transaction_serializer.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/platform.hpp"
 

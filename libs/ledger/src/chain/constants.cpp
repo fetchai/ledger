@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/decoders.hpp"
-#include "ledger/chain/v2/digest.hpp"
+#include "ledger/chain/digest.hpp"
 
 namespace fetch {
 namespace ledger {

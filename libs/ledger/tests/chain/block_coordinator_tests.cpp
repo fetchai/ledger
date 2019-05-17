@@ -22,7 +22,7 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/chain/v2/transaction_layout.hpp"
+#include "ledger/chain/transaction_layout.hpp"
 #include "ledger/testing/block_generator.hpp"
 #include "ledger/transaction_status_cache.hpp"
 #include "testing/common_testing_functionality.hpp"

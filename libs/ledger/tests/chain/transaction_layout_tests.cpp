@@ -18,14 +18,14 @@
 
 #include "crypto/ecdsa.hpp"
 #include "crypto/identity.hpp"
-#include "ledger/chain/v2/address.hpp"
-#include "ledger/chain/v2/transaction.hpp"
-#include "ledger/chain/v2/transaction_builder.hpp"
-#include "ledger/chain/v2/transaction_layout.hpp"
+#include "ledger/chain/address.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "ledger/chain/transaction_builder.hpp"
+#include "ledger/chain/transaction_layout.hpp"
 
 #include "gtest/gtest.h"
 
-#include <ledger/chain/v2/transaction.hpp>
+#include <ledger/chain/transaction.hpp>
 #include <memory>
 
 using fetch::ledger::TransactionLayout;

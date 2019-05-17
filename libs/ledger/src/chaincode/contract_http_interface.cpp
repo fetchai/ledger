@@ -27,8 +27,8 @@
 #include "ledger/state_adapter.hpp"
 #include "ledger/transaction_processor.hpp"
 
-#include "ledger/chain/v2/json_transaction.hpp"
-#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/json_transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "variant/variant.hpp"
 
 #include <memory>

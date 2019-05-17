@@ -23,7 +23,7 @@
 #include "ledger/block_sink_interface.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_status_cache.hpp"

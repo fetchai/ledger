@@ -17,10 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/v2/address.hpp"
-#include "ledger/chain/v2/json_transaction.hpp"
-#include "ledger/chain/v2/transaction.hpp"
-#include "ledger/chain/v2/transaction_builder.hpp"
+#include "ledger/chain/address.hpp"
+#include "ledger/chain/json_transaction.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "ledger/chain/transaction_builder.hpp"
 #include "variant/variant.hpp"
 
 #include "gtest/gtest.h"

@@ -19,8 +19,8 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "crypto/fnv.hpp"
-#include "ledger/chain/v2/address.hpp"
-#include "ledger/chain/v2/address_rpc_serializer.hpp"
+#include "ledger/chain/address.hpp"
+#include "ledger/chain/address_rpc_serializer.hpp"
 
 namespace fetch {
 namespace ledger {

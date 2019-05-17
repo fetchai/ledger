@@ -20,8 +20,8 @@
 #include "core/logger.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/chain/v2/address.hpp"
-#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/address.hpp"
+#include "ledger/chain/transaction.hpp"
 
 #include <algorithm>
 

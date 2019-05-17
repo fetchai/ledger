@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,21 +17,33 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
-#include "ledger/chain/v2/transaction_rpc_serializers.hpp"
-
-using fetch::serializers::ByteArrayBuffer;
+#include "core/byte_array/const_byte_array.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "ledger/chain/transaction_serializer.hpp"
 
 namespace fetch {
 namespace ledger {
 
-template void Serialize<ByteArrayBuffer>(ByteArrayBuffer &, TransactionLayout const &);
-template void Serialize<ByteArrayBuffer>(ByteArrayBuffer &, Transaction const &);
+template <typename T>
+void Serialize(T &s, Transaction const &tx)
+{
+  TransactionSerializer serializer{};
+  serializer << tx;
 
-template void Deserialize<ByteArrayBuffer>(ByteArrayBuffer &, TransactionLayout &);
-template void Deserialize<ByteArrayBuffer>(ByteArrayBuffer &, Transaction &);
+  s << serializer.data();
+}
+
+template <typename T>
+void Deserialize(T &s, Transaction &tx)
+{
+  // extract the data from the stream
+  byte_array::ConstByteArray data;
+  s >> data;
+
+  // create and extract the serializer
+  TransactionSerializer serializer{data};
+  serializer >> tx;
+}
 
 }  // namespace ledger
 }  // namespace fetch

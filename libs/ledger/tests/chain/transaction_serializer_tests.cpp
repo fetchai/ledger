@@ -19,10 +19,10 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/v2/address.hpp"
-#include "ledger/chain/v2/transaction.hpp"
-#include "ledger/chain/v2/transaction_builder.hpp"
-#include "ledger/chain/v2/transaction_serializer.hpp"
+#include "ledger/chain/address.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "ledger/chain/transaction_builder.hpp"
+#include "ledger/chain/transaction_serializer.hpp"
 
 #include "gtest/gtest.h"
 

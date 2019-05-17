@@ -19,7 +19,7 @@
 
 #include "core/mutex.hpp"
 #include "core/threading/synchronised_state.hpp"
-#include "ledger/chain/v2/digest.hpp"
+#include "ledger/chain/digest.hpp"
 
 #include <chrono>
 #include <unordered_map>

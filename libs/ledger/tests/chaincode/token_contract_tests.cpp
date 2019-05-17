@@ -19,7 +19,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/json/document.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
-#include "ledger/chain/v2/transaction_builder.hpp"
+#include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "mock_storage_unit.hpp"

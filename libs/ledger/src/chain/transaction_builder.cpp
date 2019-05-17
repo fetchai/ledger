@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/v2/transaction_builder.hpp"
+#include "ledger/chain/transaction_builder.hpp"
 #include "core/logger.hpp"
 #include "core/macros.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/v2/transaction.hpp"
-#include "ledger/chain/v2/transaction_serializer.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "ledger/chain/transaction_serializer.hpp"
 
 #include <algorithm>
 

@@ -21,7 +21,7 @@
 #include "crypto/hash.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/v2/address.hpp"
+#include "ledger/chain/address.hpp"
 
 #include "gtest/gtest.h"
 

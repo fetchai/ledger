@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/v2/transaction_layout.hpp"
-#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/transaction_layout.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "storage/resource_mapper.hpp"
 
 namespace fetch {

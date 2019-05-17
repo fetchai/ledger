@@ -20,10 +20,10 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
-#include "ledger/chain/v2/address.hpp"
-#include "ledger/chain/v2/address_rpc_serializer.hpp"
-#include "ledger/chain/v2/digest.hpp"
-#include "ledger/chain/v2/transaction_layout.hpp"
+#include "ledger/chain/address.hpp"
+#include "ledger/chain/address_rpc_serializer.hpp"
+#include "ledger/chain/digest.hpp"
+#include "ledger/chain/transaction_layout.hpp"
 
 #include <memory>
 

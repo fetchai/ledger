@@ -20,7 +20,7 @@
 #include "core/mutex.hpp"
 #include "core/threading/synchronised_state.hpp"
 #include "ledger/chain/constants.hpp"
-#include "ledger/chain/v2/address.hpp"
+#include "ledger/chain/address.hpp"
 #include "ledger/execution_item.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/executor.hpp"

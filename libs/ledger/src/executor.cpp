@@ -22,7 +22,7 @@
 #include "core/logger.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
-#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"

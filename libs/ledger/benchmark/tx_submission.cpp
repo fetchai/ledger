@@ -20,8 +20,8 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/random/lcg.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/v2/transaction_builder.hpp"
-#include "ledger/chain/v2/transaction_rpc_serializers.hpp"
+#include "ledger/chain/transaction_builder.hpp"
+#include "ledger/chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
 #include "storage/transient_object_store.hpp"
 

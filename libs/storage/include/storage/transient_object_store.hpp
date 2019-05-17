@@ -23,7 +23,7 @@
 #include "core/runnable.hpp"
 #include "core/state_machine.hpp"
 #include "core/threading.hpp"
-#include "ledger/chain/v2/transaction_layout.hpp"
+#include "ledger/chain/transaction_layout.hpp"
 #include "storage/object_store.hpp"
 
 #include <chrono>

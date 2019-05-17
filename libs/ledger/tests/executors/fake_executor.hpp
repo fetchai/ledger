@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
-#include "ledger/chain/v2/digest.hpp"
+#include "ledger/chain/digest.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "storage/resource_mapper.hpp"

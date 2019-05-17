@@ -19,7 +19,7 @@
 
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/constants.hpp"
-#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <map>

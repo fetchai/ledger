@@ -17,32 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-#include "ledger/chain/v2/transaction.hpp"
-#include "ledger/chain/v2/transaction_serializer.hpp"
+#include "core/serializers/byte_array.hpp"
+#include "ledger/chain/address.hpp"
 
 namespace fetch {
 namespace ledger {
 
 template <typename T>
-void Serialize(T &s, Transaction const &tx)
+void Serialize(T &s, Address const &address)
 {
-  TransactionSerializer serializer{};
-  serializer << tx;
-
-  s << serializer.data();
+  assert(!address.address().empty());
+  s << address.address();
 }
 
 template <typename T>
-void Deserialize(T &s, Transaction &tx)
+void Deserialize(T &s, Address &address)
 {
   // extract the data from the stream
   byte_array::ConstByteArray data;
   s >> data;
 
-  // create and extract the serializer
-  TransactionSerializer serializer{data};
-  serializer >> tx;
+  // create the address
+  address = Address{data};
 }
 
 }  // namespace ledger

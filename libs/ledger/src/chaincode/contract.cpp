@@ -19,7 +19,7 @@
 #include "ledger/chaincode/contract.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
-#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 
 namespace fetch {
 namespace ledger {

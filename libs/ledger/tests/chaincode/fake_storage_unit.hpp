@@ -19,7 +19,7 @@
 
 #include "crypto/fnv.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <algorithm>

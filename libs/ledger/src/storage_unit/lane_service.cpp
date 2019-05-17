@@ -18,8 +18,8 @@
 
 #include "ledger/storage_unit/lane_service.hpp"
 #include "core/service_ids.hpp"
-#include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
-#include "ledger/chain/v2/transaction_rpc_serializers.hpp"
+#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
+#include "ledger/chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/lane_controller.hpp"
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"

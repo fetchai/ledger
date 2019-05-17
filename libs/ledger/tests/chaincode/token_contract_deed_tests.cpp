@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/v2/transaction_builder.hpp"
+#include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
