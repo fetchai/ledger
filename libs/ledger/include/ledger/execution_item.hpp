@@ -111,7 +111,7 @@ inline void ExecutionItem::Execute(ExecutorInterface &executor)
   }
   catch (std::exception const &ex)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Exception thrown be executing transaction: ", ex.what());
+    FETCH_LOG_WARN(LOGGING_NAME, "Exception thrown while executing transaction: ", ex.what());
 
     status_ = Status::RESOURCE_FAILURE;
   }

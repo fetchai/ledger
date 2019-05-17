@@ -22,7 +22,6 @@
 #include "ledger/chaincode/chain_code_cache.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
-//#include "ledger/chaincode/contract.hpp"
 
 #include <unordered_set>
 #include <vector>
@@ -62,10 +61,6 @@ private:
   using TokenContractPtr        = std::shared_ptr<TokenContract>;
   using TransactionPtr          = std::shared_ptr<v2::Transaction>;
   using CachedStorageAdapterPtr = std::shared_ptr<CachedStorageAdapter>;
-  //  using StateSentinelAdapter    = std::shared_ptr<StateSentinelAdapter>;
-
-  //  Contract::Status ExecuteContract(ConstByteArray const &name, LaneIndex log2_num_lanes, LaneSet
-  //  const &lanes, v2::Transaction const &tx);
 
   bool RetrieveTransaction(v2::Digest const &digest);
   bool ValidationChecks(Result &result);

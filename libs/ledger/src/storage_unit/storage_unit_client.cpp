@@ -343,47 +343,6 @@ void StorageUnitClient::AddTransaction(v2::Transaction const &tx)
   }
 }
 
-#if 0
-void StorageUnitClient::AddTransactions(TransactionList const &txs)
-{
-  std::vector<TxStoreProtocol::ElementList> transaction_lists(num_lanes());
-
-  for (auto const &tx : txs)
-  {
-    // determine the lane for this given transaction
-    ResourceID      resource{tx.digest()};
-    LaneIndex const lane = resource.lane(log2_num_lanes_);
-
-    // add it to the correct list
-    transaction_lists.at(lane).push_back({resource, tx});
-  }
-
-  std::vector<Promise> promises;
-  promises.reserve(num_lanes());
-
-  // dispatch all the set requests off
-  {
-    LaneIndex lane{0};
-    for (auto const &list : transaction_lists)
-    {
-      if (!list.empty())
-      {
-        promises.emplace_back(rpc_client_.CallSpecificAddress(LookupAddress(lane), RPC_TX_STORE,
-                                                              TxStoreProtocol::SET_BULK, list));
-      }
-
-      ++lane;
-    }
-  }
-
-  // wait for all the requests to complete
-  for (auto &promise : promises)
-  {
-    promise->Wait();
-  }
-}
-#endif
-
 StorageUnitClient::TxLayouts StorageUnitClient::PollRecentTx(uint32_t max_to_poll)
 {
   std::vector<service::Promise> promises;

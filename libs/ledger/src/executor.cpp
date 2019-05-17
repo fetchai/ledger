@@ -87,6 +87,11 @@ bool IsCreateWealth(v2::Transaction const &tx)
 
 }  // namespace
 
+/**
+ * Construct a Executor given a storage unit
+ *
+ * @param storage The storage unit to be used
+ */
 Executor::Executor(StorageUnitPtr storage)
   : storage_{std::move(storage)}
   , token_contract_{std::make_shared<TokenContract>()}
@@ -95,9 +100,10 @@ Executor::Executor(StorageUnitPtr storage)
 /**
  * Executes a given transaction across a series of lanes
  *
- * @param hash The transaction hash
- * @param slice The current block slice
- * @param lanes The affected lanes for the transaction
+ * @param digest The transaction digest to be executed
+ * @param block The current block index
+ * @param slice The current slice index
+ * @param shards The bit vector outlining the shards in use by this transaction
  * @return The status code for the operation
  */
 Executor::Result Executor::Execute(v2::Digest const &digest, BlockIndex block, SliceIndex slice,

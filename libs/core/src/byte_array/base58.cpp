@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-// The following was adapted from the original bitcoing code here:
+// The following was adapted from the original bitcoin code here:
 //
 // https://raw.githubusercontent.com/bitcoin/bitcoin/master/src/base58.cpp
 //
