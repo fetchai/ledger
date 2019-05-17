@@ -47,10 +47,10 @@ public:
 
   /// @name Accessors
   /// @{
-  Digest const &digest() const;
-  BitVector const & shards() const;
-  Status            status() const;
-  uint64_t          fee() const;
+  Digest const &   digest() const;
+  BitVector const &shards() const;
+  Status           status() const;
+  uint64_t         fee() const;
   /// @}
 
   void Execute(ExecutorInterface &executor);
@@ -63,7 +63,7 @@ private:
   using AtomicStatus = std::atomic<Status>;
   using AtomicFee    = std::atomic<uint64_t>;
 
-  Digest   digest_;
+  Digest       digest_;
   BlockIndex   block_{0};
   SliceIndex   slice_{0};
   BitVector    shards_;

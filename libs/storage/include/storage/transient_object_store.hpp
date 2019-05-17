@@ -360,7 +360,7 @@ typename TransientObjectStore<O>::TxLayouts TransientObjectStore<O>::GetRecent(u
 {
   static const std::chrono::milliseconds MAX_WAIT{5};
 
-  TxLayouts                     layouts{};
+  TxLayouts                 layouts{};
   ledger::TransactionLayout summary;
 
   for (std::size_t i = 0; i < max_to_poll; ++i)
@@ -416,9 +416,8 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
   if (newly_seen)
   {
     std::size_t count{most_recent_seen_.QUEUE_LENGTH};
-    bool const  inserted =
-        most_recent_seen_.Push(ledger::TransactionLayout{object, log2_num_lanes_}, count,
-                               std::chrono::milliseconds{100});
+    bool const inserted = most_recent_seen_.Push(ledger::TransactionLayout{object, log2_num_lanes_},
+                                                 count, std::chrono::milliseconds{100});
     if (inserted && prev_count != count)
     {
       if (prev_count < recent_queue_alarm_threshold && count >= recent_queue_alarm_threshold)

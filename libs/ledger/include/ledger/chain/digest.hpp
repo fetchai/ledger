@@ -19,8 +19,8 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 
-#include <unordered_set>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace fetch {
 namespace ledger {

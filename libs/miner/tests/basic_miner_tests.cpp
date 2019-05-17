@@ -52,15 +52,15 @@ protected:
 
   static_assert(IsLog2(NUM_LANES), "Number of lanes must be a valid 2 power");
 
-  using Rng                 = std::mt19937_64;
-  using BasicMiner          = fetch::miner::BasicMiner;
-  using BasicMinerPtr       = std::unique_ptr<BasicMiner>;
-  using Clock               = std::chrono::high_resolution_clock;
-  using Timepoint           = Clock::time_point;
-  using TransactionLayout   = fetch::ledger::TransactionLayout;
-  using MainChain           = fetch::ledger::MainChain;
-  using Block               = fetch::ledger::Block;
-  using LayoutMap           = DigestMap<TransactionLayout>;
+  using Rng               = std::mt19937_64;
+  using BasicMiner        = fetch::miner::BasicMiner;
+  using BasicMinerPtr     = std::unique_ptr<BasicMiner>;
+  using Clock             = std::chrono::high_resolution_clock;
+  using Timepoint         = Clock::time_point;
+  using TransactionLayout = fetch::ledger::TransactionLayout;
+  using MainChain         = fetch::ledger::MainChain;
+  using Block             = fetch::ledger::Block;
+  using LayoutMap         = DigestMap<TransactionLayout>;
 
   void SetUp() override
   {

@@ -451,7 +451,7 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
   EXPECT_TRUE(IsIn(query_handlers, "balance"));
 
   fetch::crypto::ECDSASigner target{};
-  fetch::ledger::Address target_address{target.identity()};
+  fetch::ledger::Address     target_address{target.identity()};
 
   auto const owner_key  = contract_name_->full_name() + ".state." + owner_address_->display();
   auto const target_key = contract_name_->full_name() + ".state." + target_address.display();

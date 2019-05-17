@@ -140,8 +140,8 @@ public:
 
   /// @name Transaction Duplication Filtering
   /// @{
-  DigestSet DetectDuplicateTransactions(BlockHash            starting_hash,
-                                            DigestSet const &transactions) const;
+  DigestSet DetectDuplicateTransactions(BlockHash        starting_hash,
+                                        DigestSet const &transactions) const;
   /// @}
 
   // Operators

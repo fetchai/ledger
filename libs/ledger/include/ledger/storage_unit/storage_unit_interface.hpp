@@ -65,10 +65,10 @@ public:
 
   /// @name Transaction Interface
   /// @{
-  virtual void AddTransaction(Transaction const &tx)                     = 0;
+  virtual void AddTransaction(Transaction const &tx)                 = 0;
   virtual bool GetTransaction(Digest const &digest, Transaction &tx) = 0;
-  virtual bool HasTransaction(Digest const &digest)                      = 0;
-  virtual void IssueCallForMissingTxs(DigestSet const &tx_set)           = 0;
+  virtual bool HasTransaction(Digest const &digest)                  = 0;
+  virtual void IssueCallForMissingTxs(DigestSet const &tx_set)       = 0;
   /// @}
 
   virtual TxLayouts PollRecentTx(uint32_t) = 0;

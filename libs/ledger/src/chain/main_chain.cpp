@@ -1329,8 +1329,8 @@ void MainChain::SetHeadHash(BlockHash const &hash)
  *
  * @return: bool whether the starting hash referred to a valid block on a valid chain
  */
-DigestSet MainChain::DetectDuplicateTransactions(BlockHash            starting_hash,
-                                                     DigestSet const &transactions) const
+DigestSet MainChain::DetectDuplicateTransactions(BlockHash        starting_hash,
+                                                 DigestSet const &transactions) const
 {
   MilliTimer const timer{"DuplicateTransactionsCheck", 100};
 
@@ -1345,7 +1345,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash            starting_h
 
   // Need a set for quickly checking whether transactions are in our container
   DigestSet duplicates{};
-  bool          searching{true};
+  bool      searching{true};
   while (searching)
   {
     // Traversing the chain fully is costly: break out early if we know the transactions are all

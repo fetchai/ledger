@@ -87,8 +87,7 @@ bool TokenContract::SubtractTokens(Address const &address, uint64_t amount)
   return true;
 }
 
-bool TokenContract::TransferTokens(Transaction const &tx, Address const &to,
-                                   uint64_t amount)
+bool TokenContract::TransferTokens(Transaction const &tx, Address const &to, uint64_t amount)
 {
   // look up the state record (to see if there is a deed associated with this address)
   WalletRecord from_record{};

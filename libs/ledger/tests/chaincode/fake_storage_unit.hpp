@@ -122,7 +122,7 @@ public:
   }
 
   bool GetTransaction(fetch::byte_array::ConstByteArray const &digest,
-                      fetch::ledger::Transaction &         tx) override
+                      fetch::ledger::Transaction &             tx) override
   {
     lock_guard_type lock(mutex_);
     bool            success = false;

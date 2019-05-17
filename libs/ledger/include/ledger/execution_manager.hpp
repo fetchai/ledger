@@ -19,8 +19,8 @@
 
 #include "core/mutex.hpp"
 #include "core/threading/synchronised_state.hpp"
-#include "ledger/chain/constants.hpp"
 #include "ledger/chain/address.hpp"
+#include "ledger/chain/constants.hpp"
 #include "ledger/execution_item.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/executor.hpp"
@@ -62,7 +62,7 @@ public:
   /// @{
   ScheduleStatus Execute(Block::Body const &block) override;
   void           SetLastProcessedBlock(Digest digest) override;
-  Digest     LastProcessedBlock() override;
+  Digest         LastProcessedBlock() override;
   State          GetState() override;
   bool           Abort() override;
   /// @}

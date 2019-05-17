@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/identity.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
+#include "crypto/identity.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "variant/variant.hpp"
@@ -112,8 +112,7 @@ protected:
   /// @{
   void OnTransaction(std::string const &name, TransactionHandler &&handler);
   template <typename C>
-  void OnTransaction(std::string const &name, C *instance,
-                     Status (C::*func)(Transaction const &));
+  void OnTransaction(std::string const &name, C *instance, Status (C::*func)(Transaction const &));
   /// @}
 
   /// @name Query Handler Registration
@@ -220,8 +219,7 @@ void Contract::OnTransaction(std::string const &name, C *instance,
                              Status (C::*func)(Transaction const &))
 {
   // create the function handler and pass it to the normal function
-  OnTransaction(name,
-                [instance, func](Transaction const &tx) { return (instance->*func)(tx); });
+  OnTransaction(name, [instance, func](Transaction const &tx) { return (instance->*func)(tx); });
 }
 
 /**

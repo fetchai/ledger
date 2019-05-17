@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "core/macros.hpp"
 
 #include "fake_execution_manager.hpp"
 #include "fake_storage_unit.hpp"

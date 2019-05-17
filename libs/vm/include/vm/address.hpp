@@ -112,8 +112,8 @@ public:
 
 private:
   ledger::Address address_;
-  bool                signed_tx_{false};
-  VM *                vm_;
+  bool            signed_tx_{false};
+  VM *            vm_;
 };
 
 }  // namespace vm

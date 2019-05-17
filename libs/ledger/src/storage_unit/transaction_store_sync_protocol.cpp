@@ -160,7 +160,7 @@ TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullObjects(
 TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullSpecificObjects(
     std::vector<storage::ResourceID> const &rids)
 {
-  TxArray         ret;
+  TxArray     ret;
   Transaction tx;
 
   for (auto const &rid : rids)
