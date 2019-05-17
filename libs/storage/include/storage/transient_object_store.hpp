@@ -111,7 +111,7 @@ private:
   Phase OnWriting();
   Phase OnFlushing();
 
-  uint32_t const log2_num_lanes_;
+  uint32_t const    log2_num_lanes_;
   const std::size_t batch_size_ = 100;
 
   std::vector<ResourceID> rids;
@@ -416,8 +416,9 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
   if (newly_seen)
   {
     std::size_t count{most_recent_seen_.QUEUE_LENGTH};
-    bool const  inserted = most_recent_seen_.Push(ledger::v2::TransactionLayout{object, log2_num_lanes_}, count,
-                                                 std::chrono::milliseconds{100});
+    bool const  inserted =
+        most_recent_seen_.Push(ledger::v2::TransactionLayout{object, log2_num_lanes_}, count,
+                               std::chrono::milliseconds{100});
     if (inserted && prev_count != count)
     {
       if (prev_count < recent_queue_alarm_threshold && count >= recent_queue_alarm_threshold)

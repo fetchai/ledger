@@ -42,7 +42,7 @@ void UpdateMaskWithTokenAddress(BitVector &shards, Address const &address, uint3
   shards.set(resource_address.lane(log2_num_lanes), 1);
 }
 
-} // namespace
+}  // namespace
 
 /**
  * Construct a transaction layout from the specified transaction

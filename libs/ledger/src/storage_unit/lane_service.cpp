@@ -18,7 +18,6 @@
 
 #include "ledger/storage_unit/lane_service.hpp"
 #include "core/service_ids.hpp"
-#include "meta/log2.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
 #include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
 #include "ledger/chain/v2/transaction_rpc_serializers.hpp"
@@ -29,6 +28,7 @@
 #include "ledger/storage_unit/transaction_finder_protocol.hpp"
 #include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
+#include "meta/log2.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/server.hpp"
 #include "storage/document_store_protocol.hpp"
