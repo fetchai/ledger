@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/byte_array.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
 #include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
 #include "ledger/chain/v2/transaction_rpc_serializers.hpp"
 
@@ -33,8 +33,6 @@ template void Serialize<ByteArrayBuffer>(ByteArrayBuffer &, Transaction const &)
 template void Deserialize<ByteArrayBuffer>(ByteArrayBuffer &, TransactionLayout &);
 template void Deserialize<ByteArrayBuffer>(ByteArrayBuffer &, Transaction &);
 
-
-} // namespace v2
-} // namespace ledger
-} // namespace fetch
-
+}  // namespace v2
+}  // namespace ledger
+}  // namespace fetch
