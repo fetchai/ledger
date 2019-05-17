@@ -17,10 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/bitvector.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/chain/v2/address.hpp"
-#include "miner/optimisation/bitvector.hpp"
+#include "ledger/chain/v2/digest.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -37,7 +38,6 @@ class Transaction
 public:
   using Identity       = crypto::Identity;
   using ConstByteArray = byte_array::ConstByteArray;
-  using BitVector      = bitmanip::BitVector;
   using TokenAmount    = uint64_t;
   using BlockIndex     = uint64_t;
 
@@ -58,6 +58,7 @@ public:
   struct Signatory
   {
     Identity       identity;   ///< The identity of the signer (public key)
+    Address        address;    ///< The address corresponding to the address
     ConstByteArray signature;  ///< The signature of the tx payload from the signer
   };
 
@@ -92,13 +93,14 @@ public:
 
   /// @name Identification
   /// @{
-  ConstByteArray const &digest() const;
+  Digest const &digest() const;
   /// @}
 
   /// @name Transfer Accessors
   /// @{
   Address const &  from() const;
   Transfers const &transfers() const;
+  uint64_t         GetTotalTransferAmount() const;
   /// @}
 
   /// @name Validity Accessors
@@ -130,6 +132,7 @@ public:
   /// @{
   bool Verify();
   bool IsVerified() const;
+  bool IsSignedByFromAddress() const;
   /// @}
 
   // Operators
@@ -157,9 +160,9 @@ private:
 
   /// @name Metadata
   /// @{
-  ConstByteArray digest_{};                       ///< The digest of the transaction
-  bool           verification_completed_{false};  ///< Signal that the verification has been done
-  bool           verified_{false};                ///< The cached result of the verification
+  Digest digest_{};                       ///< The digest of the transaction
+  bool   verification_completed_{false};  ///< Signal that the verification has been done
+  bool   verified_{false};                ///< The cached result of the verification
   /// @}
 
   // There are only two ways to generate a transaction, each from one of the two companion classes:
@@ -172,7 +175,7 @@ private:
  *
  * @return The computed transaction
  */
-inline Transaction::ConstByteArray const &Transaction::digest() const
+inline Digest const &Transaction::digest() const
 {
   return digest_;
 }
@@ -315,7 +318,7 @@ inline Transaction::ConstByteArray const &Transaction::action() const
  *
  * @return The shard mask
  */
-inline Transaction::BitVector const &Transaction::shard_mask() const
+inline BitVector const &Transaction::shard_mask() const
 {
   return shard_mask_;
 }

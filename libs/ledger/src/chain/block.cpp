@@ -54,7 +54,7 @@ void Block::UpdateDigest()
   {
     for (auto const &tx : slice)
     {
-      tx_merkle_tree[index++] = tx.transaction_hash;
+      tx_merkle_tree[index++] = tx.digest();
     }
   }
 

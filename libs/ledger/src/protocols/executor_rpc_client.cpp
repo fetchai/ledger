@@ -18,6 +18,7 @@
 
 #include "ledger/protocols/executor_rpc_client.hpp"
 #include "core/state_machine.hpp"
+#include "ledger/chain/v2/address_rpc_serializer.hpp"
 
 #include <memory>
 
@@ -150,12 +151,20 @@ void ExecutorRpcClient::Connect(Muddle &muddle, Uri uri, std::chrono::millisecon
   bg_work_.Add(worker);
 }
 
-ExecutorInterface::Status ExecutorRpcClient::Execute(TxDigest const &hash, std::size_t slice,
-                                                     LaneSet const &lanes)
+ExecutorInterface::Result ExecutorRpcClient::Execute(v2::Digest const &digest, BlockIndex block,
+                                                     SliceIndex slice, BitVector const &shards)
 {
   auto result = client_->CallSpecificAddress(address_, RPC_EXECUTOR, ExecutorRpcProtocol::EXECUTE,
-                                             hash, slice, lanes);
-  return result->As<ExecutorInterface::Status>();
+                                             digest, block, slice, shards);
+  return result->As<ExecutorInterface::Result>();
+}
+
+void ExecutorRpcClient::SettleFees(v2::Address const &miner, TokenAmount amount,
+                                   uint32_t log2_num_lanes)
+{
+  auto result = client_->CallSpecificAddress(address_, RPC_EXECUTOR, ExecutorRpcProtocol::EXECUTE,
+                                             miner, amount, log2_num_lanes);
+  result->Wait();
 }
 
 void ExecutorRpcClient::WorkCycle()

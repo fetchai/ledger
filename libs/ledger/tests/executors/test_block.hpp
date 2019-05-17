@@ -28,7 +28,7 @@ struct TestBlock
 {
   using ResourceIdMap = std::vector<std::string>;
   using BlockBody     = fetch::ledger::Block::Body;
-  using BlockHash     = fetch::ledger::Block::Digest;
+  using Digest        = fetch::ledger::v2::Digest;
 
   static constexpr char const *LOGGING_NAME = "TestBlock";
 
@@ -39,7 +39,7 @@ struct TestBlock
   int       num_transactions = 0;
 
   template <typename RNG>
-  static BlockHash GenerateHash(RNG &rng)
+  static Digest GenerateHash(RNG &rng)
   {
     static constexpr std::size_t HASH_SIZE = 32;
     fetch::byte_array::ByteArray digest;
@@ -52,7 +52,7 @@ struct TestBlock
   }
 
   void GenerateBlock(uint32_t seed, uint32_t log2_num_lanes, std::size_t num_slices,
-                     BlockHash const &previous_hash)
+                     Digest const &previous_hash)
   {
     std::mt19937 rng;
     rng.seed(seed);
@@ -101,26 +101,16 @@ struct TestBlock
 
           if (!is_empty)
           {
-
-            // create the transaction summary
-            fetch::ledger::TransactionSummary summary;
-            summary.transaction_hash = GenerateHash(rng);
-            summary.contract_name    = "fetch.dummy.run";
-
-            //            FETCH_LOG_INFO(LOGGING_NAME,"Generating TX: ",
-            //            fetch::byte_array::ToBase64(summary.transaction_hash));
-
-            // update the groups
+            fetch::BitVector mask{num_lanes};
             for (std::size_t i = 0; i < consumed_lanes; ++i)
             {
-              std::size_t const index = (i + lane_offset);
-
-              //              FETCH_LOG_INFO(LOGGING_NAME," - Resource: ", index);
-
-              summary.resources.insert(resources.at(index));
+              mask.set(i, 1);
             }
 
-            current_slice.emplace_back(std::move(summary));
+            // create the transaction summary
+            current_slice.emplace_back(
+                fetch::ledger::v2::TransactionLayout{GenerateHash(rng), mask, 1, 0, 100});
+
             ++num_transactions;
           }
 
@@ -188,7 +178,7 @@ struct TestBlock
   }
 
   static TestBlock Generate(std::size_t log2_num_lanes, std::size_t num_slices, uint32_t seed,
-                            BlockHash const &previous_hash = fetch::ledger::GENESIS_DIGEST)
+                            Digest const &previous_hash = fetch::ledger::GENESIS_DIGEST)
   {
     TestBlock block;
     block.GenerateBlock(seed, static_cast<uint32_t>(log2_num_lanes), num_slices, previous_hash);

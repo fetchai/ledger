@@ -27,5 +27,7 @@ ConstByteArray ToHex(ConstByteArray const &str);
 ConstByteArray ToBin(ConstByteArray const &str);
 ConstByteArray ToHexReverse(ConstByteArray const &str);
 ConstByteArray ToBinReverse(ConstByteArray const &str);
+ConstByteArray ToBase58(ConstByteArray const &str);
+
 }  // namespace byte_array
 }  // namespace fetch

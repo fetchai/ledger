@@ -16,8 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "crypto/ecdsa.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/v2/transaction_builder.hpp"
 #include "ledger/chaincode/dummy_contract.hpp"
 
 #include "ledger/state_sentinel_adapter.hpp"
@@ -83,19 +85,23 @@ TEST_F(DummyContractTests, CheckDispatch)
   EXPECT_CALL(*storage_, AddTransaction(_)).Times(0);
   EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
 
-  // create the sample transaction
-  MutableTransaction tx;
-  tx.set_contract_name("fetch.dummy.wait");
+  fetch::crypto::ECDSASigner signer;
 
-  Identifier identifier;
-  ASSERT_TRUE(identifier.Parse(tx.contract_name()));
+  // create the sample transaction
+  auto const tx = v2::TransactionBuilder()
+                      .From(v2::Address{signer.identity()})
+                      .TargetChainCode("fetch.dummy", BitVector{})
+                      .Action("wait")
+                      .Signer(signer.identity())
+                      .Seal()
+                      .Sign(signer)
+                      .Build();
 
   // create the storage adapter
-  StateSentinelAdapter adapter(*storage_, identifier.GetParent(), tx.resources(),
-                               tx.raw_resources());
+  StateSentinelAdapter adapter(*storage_, Identifier{tx->chain_code()}, BitVector{});
 
   // attach, dispatch and detach (run the life cycle)
   contract_->Attach(adapter);
-  contract_->DispatchTransaction(identifier.name(), VerifiedTransaction::Create(tx));
+  contract_->DispatchTransaction(tx->action(), *tx);
   contract_->Detach();
 }

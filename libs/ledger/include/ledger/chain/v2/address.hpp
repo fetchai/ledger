@@ -64,21 +64,29 @@ namespace v2 {
 class Address
 {
 public:
-  using RawAddress     = std::array<uint8_t, 32>;
+  static constexpr std::size_t RAW_LENGTH      = 32;
+  static constexpr std::size_t CHECKSUM_LENGTH = 4;
+  static constexpr std::size_t TOTAL_LENGTH    = RAW_LENGTH + CHECKSUM_LENGTH;
+
+  using RawAddress     = std::array<uint8_t, RAW_LENGTH>;
   using ConstByteArray = byte_array::ConstByteArray;
+
+  // Helpers
+  static bool Parse(ConstByteArray const &input, Address &output);
 
   // Construction / Destruction
   Address() = default;
   explicit Address(crypto::Identity const &identity);
   explicit Address(RawAddress const &address);
+  explicit Address(ConstByteArray address);
   Address(Address const &) = default;
   Address(Address &&)      = default;
   ~Address()               = default;
 
   /// @name Accessors
   /// @{
-  ConstByteArray address() const;
-  ConstByteArray display() const;
+  ConstByteArray const &address() const;
+  ConstByteArray const &display() const;
   /// @}
 
   // Operators
@@ -98,7 +106,7 @@ private:
  *
  * @return The raw address
  */
-inline Address::ConstByteArray Address::address() const
+inline Address::ConstByteArray const &Address::address() const
 {
   return address_;
 }
@@ -108,7 +116,7 @@ inline Address::ConstByteArray Address::address() const
  *
  * @return The display address
  */
-inline Address::ConstByteArray Address::display() const
+inline Address::ConstByteArray const &Address::display() const
 {
   return display_;
 }
@@ -138,3 +146,25 @@ inline bool Address::operator!=(Address const &other) const
 }  // namespace v2
 }  // namespace ledger
 }  // namespace fetch
+
+namespace std {
+
+template <>
+struct hash<fetch::ledger::v2::Address>
+{
+  std::size_t operator()(fetch::ledger::v2::Address const &address) const noexcept
+  {
+    auto const &raw_address = address.address();
+
+    if (raw_address.empty())
+    {
+      return 0;
+    }
+    else
+    {
+      return *reinterpret_cast<std::size_t const *>(raw_address.pointer());
+    }
+  }
+};
+
+}  // namespace std
