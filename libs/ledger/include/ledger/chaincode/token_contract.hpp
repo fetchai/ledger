@@ -45,9 +45,9 @@ public:
   bool     TransferTokens(v2::Transaction const &tx, v2::Address const &to, uint64_t amount);
 
   // transaction handlers
-  Status CreateWealth(v2::Transaction const &tx);
-  Status Deed(v2::Transaction const &tx);
-  Status Transfer(v2::Transaction const &tx);
+  Status CreateWealth(v2::Transaction const &tx, BlockIndex);
+  Status Deed(v2::Transaction const &tx, BlockIndex);
+  Status Transfer(v2::Transaction const &tx, BlockIndex);
 
   // queries
   Status Balance(Query const &query, Query &response);
