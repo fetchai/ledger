@@ -174,7 +174,9 @@ ConstByteArray ToBase58(ConstByteArray const &str)
   // Skip leading zeroes in base58 result.
   auto it = b58.begin() + (size - length);
   while (it != b58.end() && *it == 0)
+  {
     it++;
+  }
   // Translate the result into a string.
   std::string output;
   output.reserve(static_cast<std::size_t>(zeroes + (b58.end() - it)));
