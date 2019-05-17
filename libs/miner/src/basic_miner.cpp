@@ -29,7 +29,7 @@ namespace fetch {
 namespace miner {
 namespace {
 
-using ledger::v2::Transaction;
+using ledger::Transaction;
 
 /**
  * Clip the specified to the bounds: [min_value, max_value]
@@ -67,9 +67,9 @@ BasicMiner::BasicMiner(uint32_t log2_num_lanes)
  *
  * @param tx The reference to the transaction
  */
-void BasicMiner::EnqueueTransaction(ledger::v2::Transaction const &tx)
+void BasicMiner::EnqueueTransaction(ledger::Transaction const &tx)
 {
-  EnqueueTransaction(ledger::v2::TransactionLayout{tx, log2_num_lanes_});
+  EnqueueTransaction(ledger::TransactionLayout{tx, log2_num_lanes_});
 }
 
 /**
@@ -80,7 +80,7 @@ void BasicMiner::EnqueueTransaction(ledger::v2::Transaction const &tx)
  *
  * @param layout The layout to be added to the queue
  */
-void BasicMiner::EnqueueTransaction(ledger::v2::TransactionLayout const &layout)
+void BasicMiner::EnqueueTransaction(ledger::TransactionLayout const &layout)
 {
   FETCH_LOCK(pending_lock_);
 

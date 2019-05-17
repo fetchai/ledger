@@ -37,9 +37,9 @@
 using fetch::meta::IsLog2;
 using fetch::meta::Log2;
 using fetch::BitVector;
-using fetch::ledger::v2::Digest;
-using fetch::ledger::v2::DigestSet;
-using fetch::ledger::v2::DigestMap;
+using fetch::ledger::Digest;
+using fetch::ledger::DigestSet;
+using fetch::ledger::DigestMap;
 
 class BasicMinerTests : public ::testing::TestWithParam<std::size_t>
 {
@@ -57,7 +57,7 @@ protected:
   using BasicMinerPtr       = std::unique_ptr<BasicMiner>;
   using Clock               = std::chrono::high_resolution_clock;
   using Timepoint           = Clock::time_point;
-  using TransactionLayout   = fetch::ledger::v2::TransactionLayout;
+  using TransactionLayout   = fetch::ledger::TransactionLayout;
   using MainChain           = fetch::ledger::MainChain;
   using Block               = fetch::ledger::Block;
   using LayoutMap           = DigestMap<TransactionLayout>;

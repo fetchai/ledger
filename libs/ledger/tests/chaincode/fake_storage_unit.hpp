@@ -32,7 +32,7 @@ class FakeStorageUnit final : public fetch::ledger::StorageUnitInterface
 {
 public:
   using transaction_store_type =
-      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::ledger::v2::Transaction>;
+      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::ledger::Transaction>;
   using state_store_type =
       std::unordered_map<fetch::byte_array::ConstByteArray, fetch::byte_array::ConstByteArray>;
   /*using state_archive_type = std::unordered_map<bookmark_type, state_store_type>; */
@@ -115,14 +115,14 @@ public:
     return success;
   }
 
-  void AddTransaction(fetch::ledger::v2::Transaction const &tx) override
+  void AddTransaction(fetch::ledger::Transaction const &tx) override
   {
     lock_guard_type lock(mutex_);
     transactions_[tx.digest()] = tx;
   }
 
   bool GetTransaction(fetch::byte_array::ConstByteArray const &digest,
-                      fetch::ledger::v2::Transaction &         tx) override
+                      fetch::ledger::Transaction &         tx) override
   {
     lock_guard_type lock(mutex_);
     bool            success = false;
@@ -143,7 +143,7 @@ public:
     return transactions_.find(digest) != transactions_.end();
   }
 
-  void IssueCallForMissingTxs(fetch::ledger::v2::DigestSet const &) override
+  void IssueCallForMissingTxs(fetch::ledger::DigestSet const &) override
   {}
 
   Hash CurrentHash() override

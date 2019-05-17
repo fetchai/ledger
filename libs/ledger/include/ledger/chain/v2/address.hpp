@@ -27,7 +27,6 @@ class Identity;
 }
 
 namespace ledger {
-namespace v2 {
 
 /**
  * The Address is a unifying mechanism between multiple different public keys types into a single
@@ -143,16 +142,15 @@ inline bool Address::operator!=(Address const &other) const
   return !(*this == other);
 }
 
-}  // namespace v2
 }  // namespace ledger
 }  // namespace fetch
 
 namespace std {
 
 template <>
-struct hash<fetch::ledger::v2::Address>
+struct hash<fetch::ledger::Address>
 {
-  std::size_t operator()(fetch::ledger::v2::Address const &address) const noexcept
+  std::size_t operator()(fetch::ledger::Address const &address) const noexcept
   {
     auto const &raw_address = address.address();
 

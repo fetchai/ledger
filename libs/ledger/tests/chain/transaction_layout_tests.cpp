@@ -28,9 +28,9 @@
 #include <ledger/chain/v2/transaction.hpp>
 #include <memory>
 
-using fetch::ledger::v2::TransactionLayout;
-using fetch::ledger::v2::TransactionBuilder;
-using fetch::ledger::v2::Address;
+using fetch::ledger::TransactionLayout;
+using fetch::ledger::TransactionBuilder;
+using fetch::ledger::Address;
 using fetch::crypto::ECDSASigner;
 using fetch::BitVector;
 

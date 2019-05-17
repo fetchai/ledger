@@ -101,7 +101,7 @@ void TransactionStoreSyncProtocol::TrimCache()
 
 /// @}
 
-void TransactionStoreSyncProtocol::OnNewTx(v2::Transaction const &o)
+void TransactionStoreSyncProtocol::OnNewTx(Transaction const &o)
 {
 #ifdef FETCH_ENABLE_METRICS
   RecordNewCacheElement(o.digest());
@@ -161,7 +161,7 @@ TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullSpecific
     std::vector<storage::ResourceID> const &rids)
 {
   TxArray         ret;
-  v2::Transaction tx;
+  Transaction tx;
 
   for (auto const &rid : rids)
   {

@@ -21,7 +21,6 @@
 
 namespace fetch {
 namespace ledger {
-namespace v2 {
 
 template <typename T>
 void Serialize(T &s, TransactionLayout const &tx)
@@ -39,6 +38,5 @@ void Deserialize(T &s, TransactionLayout &tx)
   s >> tx.charge_ >> tx.valid_from_ >> tx.valid_until_;
 }
 
-}  // namespace v2
 }  // namespace ledger
 }  // namespace fetch

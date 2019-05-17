@@ -50,8 +50,8 @@ class TransientObjectStore
 public:
   using Callback     = std::function<void(Object const &)>;
   using Archive      = ObjectStore<Object>;
-  using TxLayouts    = std::vector<ledger::v2::TransactionLayout>;
-  using TxArray      = std::vector<ledger::v2::Transaction>;
+  using TxLayouts    = std::vector<ledger::TransactionLayout>;
+  using TxArray      = std::vector<ledger::Transaction>;
   using WeakRunnable = core::WeakRunnable;
 
   static constexpr char const *LOGGING_NAME = "TransientObjectStore";
@@ -99,7 +99,7 @@ private:
   using Mutex           = fetch::mutex::Mutex;
   using StateMachinePtr = std::shared_ptr<core::StateMachine<Phase>>;
   using Queue           = fetch::core::MPMCQueue<ResourceID, 1 << 15>;
-  using RecentQueue     = fetch::core::MPMCQueue<ledger::v2::TransactionLayout, 1 << 15>;
+  using RecentQueue     = fetch::core::MPMCQueue<ledger::TransactionLayout, 1 << 15>;
   using Cache           = std::unordered_map<ResourceID, Object>;
   using Flag            = std::atomic<bool>;
 
@@ -361,7 +361,7 @@ typename TransientObjectStore<O>::TxLayouts TransientObjectStore<O>::GetRecent(u
   static const std::chrono::milliseconds MAX_WAIT{5};
 
   TxLayouts                     layouts{};
-  ledger::v2::TransactionLayout summary;
+  ledger::TransactionLayout summary;
 
   for (std::size_t i = 0; i < max_to_poll; ++i)
   {
@@ -417,7 +417,7 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
   {
     std::size_t count{most_recent_seen_.QUEUE_LENGTH};
     bool const  inserted =
-        most_recent_seen_.Push(ledger::v2::TransactionLayout{object, log2_num_lanes_}, count,
+        most_recent_seen_.Push(ledger::TransactionLayout{object, log2_num_lanes_}, count,
                                std::chrono::milliseconds{100});
     if (inserted && prev_count != count)
     {

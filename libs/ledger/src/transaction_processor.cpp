@@ -83,7 +83,7 @@ void TransactionProcessor::ThreadEntryPoint()
 {
   SetThreadName("TxProc");
 
-  std::vector<v2::TransactionLayout> new_txs;
+  std::vector<TransactionLayout> new_txs;
   while (running_)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));

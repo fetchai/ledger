@@ -27,9 +27,9 @@
 namespace {
 
 using fetch::crypto::ECDSASigner;
-using fetch::ledger::v2::Transaction;
-using fetch::ledger::v2::TransactionBuilder;
-using fetch::ledger::v2::Address;
+using fetch::ledger::Transaction;
+using fetch::ledger::TransactionBuilder;
+using fetch::ledger::Address;
 using fetch::BitVector;
 
 using TransactionList = std::vector<TransactionBuilder::TransactionPtr>;

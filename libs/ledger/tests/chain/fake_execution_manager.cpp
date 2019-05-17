@@ -23,7 +23,7 @@
 #include "fake_storage_unit.hpp"
 
 using fetch::byte_array::ToBase64;
-using fetch::ledger::v2::Digest;
+using fetch::ledger::Digest;
 
 FakeExecutionManager::FakeExecutionManager(FakeStorageUnit &storage)
   : storage_{storage}

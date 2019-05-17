@@ -48,7 +48,7 @@ public:
   using Clock               = std::chrono::high_resolution_clock;
   using ScheduleStatus      = ExecutionManager::ScheduleStatus;
   using State               = ExecutionManager::State;
-  using Digest              = fetch::ledger::v2::Digest;
+  using Digest              = fetch::ledger::Digest;
 
 protected:
   void SetUp() override

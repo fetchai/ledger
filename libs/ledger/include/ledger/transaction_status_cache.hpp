@@ -49,8 +49,8 @@ public:
   TransactionStatusCache(TransactionStatusCache &&)      = delete;
   ~TransactionStatusCache()                              = default;
 
-  TransactionStatus Query(v2::Digest digest) const;
-  void Update(v2::Digest digest, TransactionStatus status, Timepoint const &now = Clock::now());
+  TransactionStatus Query(Digest digest) const;
+  void Update(Digest digest, TransactionStatus status, Timepoint const &now = Clock::now());
 
   // Operators
   TransactionStatusCache &operator=(TransactionStatusCache const &) = delete;
@@ -65,7 +65,7 @@ private:
     Timepoint         timestamp{Clock::now()};
   };
 
-  using Cache = v2::DigestMap<Element>;
+  using Cache = DigestMap<Element>;
 
   void PruneCache(Timepoint const &now);
 

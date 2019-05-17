@@ -53,7 +53,7 @@ TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit)
         FETCH_LOG_DEBUG(LOGGING_NAME, "Querying tx: ", digest.ToBase64());
 
         // attempt to lookup the transaction
-        v2::Transaction tx;
+        Transaction tx;
         if (!storage_unit_.GetTransaction(digest, tx))
         {
           return http::CreateJsonResponse("{}", http::Status::CLIENT_ERROR_NOT_FOUND);
@@ -82,15 +82,15 @@ TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit)
 
         switch (tx.contract_mode())
         {
-        case v2::Transaction::ContractMode::NOT_PRESENT:
+        case Transaction::ContractMode::NOT_PRESENT:
           break;
-        case v2::Transaction::ContractMode::PRESENT:
+        case Transaction::ContractMode::PRESENT:
           tx_obj["contractDigest"]  = tx.contract_digest().display();
           tx_obj["contractAddress"] = tx.contract_address().display();
           tx_obj["action"]          = tx.action();
           tx_obj["data"]            = tx.data().ToBase64();
           break;
-        case v2::Transaction::ContractMode::CHAIN_CODE:
+        case Transaction::ContractMode::CHAIN_CODE:
           tx_obj["chainCode"] = tx.chain_code();
           tx_obj["action"]    = tx.action();
           tx_obj["data"]      = tx.data().ToBase64();

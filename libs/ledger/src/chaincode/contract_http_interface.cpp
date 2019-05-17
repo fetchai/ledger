@@ -42,7 +42,7 @@ using fetch::variant::Variant;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ToBase64;
-using fetch::ledger::v2::FromJsonTransaction;
+using fetch::ledger::FromJsonTransaction;
 
 ConstByteArray const API_PATH_CONTRACT_PREFIX("/api/contract/");
 ConstByteArray const CONTRACT_NAME_SEPARATOR(".");
@@ -326,7 +326,7 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
       auto const &tx_obj = doc[i];
 
       // create the transaction
-      auto tx = std::make_shared<v2::Transaction>();
+      auto tx = std::make_shared<Transaction>();
       if (FromJsonTransaction(tx_obj, *tx))
       {
         txs.emplace_back(tx->digest());
@@ -340,7 +340,7 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
   {
     expected_count = 1;
 
-    auto tx = std::make_shared<v2::Transaction>();
+    auto tx = std::make_shared<Transaction>();
     if (FromJsonTransaction(doc.root(), *tx))
     {
       txs.emplace_back(tx->digest());

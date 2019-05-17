@@ -87,8 +87,8 @@ TEST_F(DummyContractTests, CheckDispatch)
   fetch::crypto::ECDSASigner signer;
 
   // create the sample transaction
-  auto const tx = v2::TransactionBuilder()
-                      .From(v2::Address{signer.identity()})
+  auto const tx = TransactionBuilder()
+                      .From(Address{signer.identity()})
                       .TargetChainCode("fetch.dummy", BitVector{})
                       .Action("wait")
                       .Signer(signer.identity())

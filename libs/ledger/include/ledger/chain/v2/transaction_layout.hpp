@@ -22,7 +22,6 @@
 
 namespace fetch {
 namespace ledger {
-namespace v2 {
 
 class Transaction;
 
@@ -138,16 +137,15 @@ inline bool TransactionLayout::operator==(TransactionLayout const &other) const
   return digest_ == other.digest_;
 }
 
-}  // namespace v2
 }  // namespace ledger
 }  // namespace fetch
 
 namespace std {
 
 template <>
-struct hash<fetch::ledger::v2::TransactionLayout>
+struct hash<fetch::ledger::TransactionLayout>
 {
-  std::size_t operator()(fetch::ledger::v2::TransactionLayout const &layout) const
+  std::size_t operator()(fetch::ledger::TransactionLayout const &layout) const
   {
     assert(layout.digest().size() >= sizeof(std::size_t));
     return *reinterpret_cast<std::size_t const *>(layout.digest().pointer());

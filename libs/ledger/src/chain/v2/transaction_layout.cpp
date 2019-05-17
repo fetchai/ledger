@@ -22,7 +22,6 @@
 
 namespace fetch {
 namespace ledger {
-namespace v2 {
 namespace {
 
 constexpr char const *LOGGING_NAME = "TransactionLayout";
@@ -93,6 +92,5 @@ TransactionLayout::TransactionLayout(Digest digest, BitVector const &mask, Token
   , valid_until_{valid_until}
 {}
 
-}  // namespace v2
 }  // namespace ledger
 }  // namespace fetch

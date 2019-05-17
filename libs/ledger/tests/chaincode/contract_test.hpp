@@ -44,18 +44,18 @@ protected:
   using MockStorageUnitPtr   = std::unique_ptr<MockStorageUnit>;
   using Resources            = std::vector<ConstByteArray>;
   using CertificatePtr       = std::unique_ptr<fetch::crypto::ECDSASigner>;
-  using AddressPtr           = std::unique_ptr<fetch::ledger::v2::Address>;
+  using AddressPtr           = std::unique_ptr<fetch::ledger::Address>;
   using StateAdapter         = fetch::ledger::StateAdapter;
   using StateSentinelAdapter = fetch::ledger::StateSentinelAdapter;
   using Query                = Contract::Query;
   using IdentifierPtr        = std::shared_ptr<Identifier>;
   using CachedStorageAdapter = fetch::ledger::CachedStorageAdapter;
-  using TransactionPtr       = fetch::ledger::v2::TransactionBuilder::TransactionPtr;
+  using TransactionPtr       = fetch::ledger::TransactionBuilder::TransactionPtr;
 
   void SetUp() override
   {
     certificate_   = std::make_unique<fetch::crypto::ECDSASigner>();
-    owner_address_ = std::make_unique<fetch::ledger::v2::Address>(certificate_->identity());
+    owner_address_ = std::make_unique<fetch::ledger::Address>(certificate_->identity());
     storage_       = std::make_unique<MockStorageUnit>();
   }
 
@@ -109,7 +109,7 @@ protected:
       packer_.pack(arg);
     }
 
-    void PackInternal(fetch::ledger::v2::Address const &address)
+    void PackInternal(fetch::ledger::Address const &address)
     {
       auto const &id = address.address();
 
@@ -134,8 +134,8 @@ protected:
   Contract::Status SendSmartAction(ConstByteArray const &action,
                                    ConstByteArray const &data = ConstByteArray{})
   {
-    using fetch::ledger::v2::TransactionBuilder;
-    using fetch::ledger::v2::Address;
+    using fetch::ledger::TransactionBuilder;
+    using fetch::ledger::Address;
 
     fetch::BitVector mask{1};
     mask.SetAllOne();
@@ -199,7 +199,7 @@ protected:
     StateSentinelAdapter storage_adapter{*storage_, *contract_name_, mask};
 
     contract_->Attach(storage_adapter);
-    auto const status = contract_->DispatchInitialise(fetch::ledger::v2::Address{owner});
+    auto const status = contract_->DispatchInitialise(fetch::ledger::Address{owner});
     contract_->Detach();
 
     return status;

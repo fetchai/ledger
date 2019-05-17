@@ -40,8 +40,8 @@ namespace {
 
 using ::testing::_;
 using fetch::variant::Variant;
-using fetch::ledger::v2::TransactionBuilder;
-using fetch::ledger::v2::Address;
+using fetch::ledger::TransactionBuilder;
+using fetch::ledger::Address;
 
 struct Entity
 {
@@ -60,7 +60,7 @@ protected:
   using Query              = Contract::Query;
   using TokenContractPtr   = std::unique_ptr<TokenContract>;
   using MockStorageUnitPtr = std::unique_ptr<MockStorageUnit>;
-  using Address            = fetch::ledger::v2::Address;
+  using Address            = fetch::ledger::Address;
 
   void SetUp() override
   {

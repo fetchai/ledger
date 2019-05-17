@@ -26,7 +26,6 @@
 
 namespace fetch {
 namespace ledger {
-namespace v2 {
 namespace {
 
 using byte_array::ToBase58;
@@ -114,6 +113,5 @@ Address::Address(ConstByteArray address)
   }
 }
 
-}  // namespace v2
 }  // namespace ledger
 }  // namespace fetch

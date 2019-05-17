@@ -42,8 +42,8 @@ public:
 private:
   using Counter = std::atomic<std::size_t>;
 
-  Status Wait(v2::Transaction const &tx);
-  Status Run(v2::Transaction const &tx);
+  Status Wait(Transaction const &tx);
+  Status Run(Transaction const &tx);
 
   Counter counter_{0};
 };

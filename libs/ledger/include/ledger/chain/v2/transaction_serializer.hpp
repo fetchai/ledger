@@ -21,7 +21,6 @@
 
 namespace fetch {
 namespace ledger {
-namespace v2 {
 
 class Transaction;
 
@@ -71,6 +70,5 @@ private:
   ConstByteArray serial_data_;
 };
 
-}  // namespace v2
 }  // namespace ledger
 }  // namespace fetch

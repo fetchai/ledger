@@ -48,7 +48,7 @@ public:
 
   using Block             = ledger::Block;
   using MainChain         = ledger::MainChain;
-  using TransactionLayout = ledger::v2::TransactionLayout;
+  using TransactionLayout = ledger::TransactionLayout;
 
   // Construction / Destruction
   explicit BasicMiner(uint32_t log2_num_lanes);
@@ -58,8 +58,8 @@ public:
 
   /// @name Miner Interface
   /// @{
-  void     EnqueueTransaction(ledger::v2::Transaction const &tx) override;
-  void     EnqueueTransaction(ledger::v2::TransactionLayout const &layout) override;
+  void     EnqueueTransaction(ledger::Transaction const &tx) override;
+  void     EnqueueTransaction(ledger::TransactionLayout const &layout) override;
   void     GenerateBlock(Block &block, std::size_t num_lanes, std::size_t num_slices,
                          MainChain const &chain) override;
   uint64_t GetBacklog() const override;
@@ -72,9 +72,9 @@ public:
 private:
   using Mutex           = mutex::Mutex;
   using TransactionList = TransactionLayoutQueue::UnderlyingList;
-  using TransactionSet  = std::unordered_set<ledger::v2::TransactionLayout>;
+  using TransactionSet  = std::unordered_set<ledger::TransactionLayout>;
   using ThreadPool      = threading::Pool;
-  using DigestSet       = ledger::v2::DigestSet;
+  using DigestSet       = ledger::DigestSet;
   using Queue           = TransactionLayoutQueue;
 
   /// @name Packing Operations

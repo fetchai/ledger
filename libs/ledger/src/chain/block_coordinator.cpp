@@ -446,7 +446,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
   // if the transaction digests have not been cached then do this now
   if (!pending_txs_)
   {
-    pending_txs_ = std::make_unique<v2::DigestSet>();
+    pending_txs_ = std::make_unique<DigestSet>();
 
     for (auto const &slice : current_block_->body.slices)
     {

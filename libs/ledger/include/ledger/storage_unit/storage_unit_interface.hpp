@@ -27,9 +27,8 @@
 
 namespace fetch {
 namespace ledger {
-namespace v2 {
+
 class Transaction;
-}
 
 class StorageInterface
 {
@@ -58,7 +57,7 @@ class StorageUnitInterface : public StorageInterface
 public:
   using Hash           = byte_array::ConstByteArray;
   using ConstByteArray = byte_array::ConstByteArray;
-  using TxLayouts      = std::vector<v2::TransactionLayout>;
+  using TxLayouts      = std::vector<TransactionLayout>;
 
   // Construction / Destruction
   StorageUnitInterface()           = default;
@@ -66,10 +65,10 @@ public:
 
   /// @name Transaction Interface
   /// @{
-  virtual void AddTransaction(v2::Transaction const &tx)                     = 0;
-  virtual bool GetTransaction(v2::Digest const &digest, v2::Transaction &tx) = 0;
-  virtual bool HasTransaction(v2::Digest const &digest)                      = 0;
-  virtual void IssueCallForMissingTxs(v2::DigestSet const &tx_set)           = 0;
+  virtual void AddTransaction(Transaction const &tx)                     = 0;
+  virtual bool GetTransaction(Digest const &digest, Transaction &tx) = 0;
+  virtual bool HasTransaction(Digest const &digest)                      = 0;
+  virtual void IssueCallForMissingTxs(DigestSet const &tx_set)           = 0;
   /// @}
 
   virtual TxLayouts PollRecentTx(uint32_t) = 0;

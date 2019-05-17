@@ -52,7 +52,7 @@ public:
     PULL_SPECIFIC_OBJECTS = 4
   };
 
-  using ObjectStore = storage::TransientObjectStore<v2::Transaction>;
+  using ObjectStore = storage::TransientObjectStore<Transaction>;
 
   static constexpr char const *LOGGING_NAME = "ObjectStoreSyncProtocol";
 
@@ -62,7 +62,7 @@ public:
   TransactionStoreSyncProtocol(TransactionStoreSyncProtocol &&)      = delete;
   ~TransactionStoreSyncProtocol() override                           = default;
 
-  void OnNewTx(v2::Transaction const &o);
+  void OnNewTx(Transaction const &o);
   void TrimCache();
 
   // Operators
@@ -78,18 +78,18 @@ private:
     using Timepoint  = Clock::time_point;
     using AddressSet = std::unordered_set<muddle::Muddle::Address>;
 
-    explicit CachedObject(v2::Transaction value)
+    explicit CachedObject(Transaction value)
       : data(std::move(value))
     {}
 
-    v2::Transaction data;
+    Transaction data;
     AddressSet      delivered_to;
     Timepoint       created{Clock::now()};
   };
 
   using Self    = TransactionStoreSyncProtocol;
   using Cache   = std::vector<CachedObject>;
-  using TxArray = std::vector<v2::Transaction>;
+  using TxArray = std::vector<Transaction>;
 
   uint64_t ObjectCount();
   TxArray  PullObjects(service::CallContext const *call_context);

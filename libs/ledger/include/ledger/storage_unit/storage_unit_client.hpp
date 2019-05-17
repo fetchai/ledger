@@ -64,10 +64,10 @@ public:
 
   /// @name Storage Unit Interface
   /// @{
-  void      AddTransaction(v2::Transaction const &tx) override;
-  bool      GetTransaction(ConstByteArray const &digest, v2::Transaction &tx) override;
+  void      AddTransaction(Transaction const &tx) override;
+  bool      GetTransaction(ConstByteArray const &digest, Transaction &tx) override;
   bool      HasTransaction(ConstByteArray const &digest) override;
-  void      IssueCallForMissingTxs(v2::DigestSet const &tx_set) override;
+  void      IssueCallForMissingTxs(DigestSet const &tx_set) override;
   TxLayouts PollRecentTx(uint32_t max_to_poll) override;
 
   Document GetOrCreate(ResourceAddress const &key) override;

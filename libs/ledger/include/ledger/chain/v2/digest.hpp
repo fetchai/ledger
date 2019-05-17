@@ -24,7 +24,6 @@
 
 namespace fetch {
 namespace ledger {
-namespace v2 {
 
 using Digest = byte_array::ConstByteArray;
 
@@ -49,6 +48,5 @@ using DigestSet = std::unordered_set<Digest, DigestHashAdapter>;
 template <typename Value>
 using DigestMap = std::unordered_map<Digest, Value, DigestHashAdapter>;
 
-}  // namespace v2
 }  // namespace ledger
 }  // namespace fetch

@@ -109,7 +109,7 @@ LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packet
       sync_cfg, external_muddle_, tx_store_, tx_finder_protocol_.get(),
       [this]() { tx_sync_protocol_->TrimCache(); });
 
-  tx_store_->SetCallback([this](v2::Transaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
+  tx_store_->SetCallback([this](Transaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
 
   // TX Sync protocol
   external_rpc_server_->Add(RPC_TX_STORE_SYNC, tx_sync_protocol_.get());

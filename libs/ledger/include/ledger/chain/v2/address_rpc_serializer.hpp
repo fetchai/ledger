@@ -22,7 +22,6 @@
 
 namespace fetch {
 namespace ledger {
-namespace v2 {
 
 template <typename T>
 void Serialize(T &s, Address const &address)
@@ -42,6 +41,5 @@ void Deserialize(T &s, Address &address)
   address = Address{data};
 }
 
-}  // namespace v2
 }  // namespace ledger
 }  // namespace fetch

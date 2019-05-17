@@ -77,10 +77,10 @@ class MainChain
 public:
   using BlockPtr             = std::shared_ptr<Block const>;
   using Blocks               = std::vector<BlockPtr>;
-  using BlockHash            = v2::Digest;
+  using BlockHash            = Digest;
   using BlockHashs           = std::vector<BlockHash>;
   using BlockHashSet         = std::unordered_set<BlockHash>;
-  using TransactionLayoutSet = std::unordered_set<v2::TransactionLayout>;
+  using TransactionLayoutSet = std::unordered_set<TransactionLayout>;
 
   static constexpr char const *LOGGING_NAME = "MainChain";
   static constexpr uint64_t    UPPER_BOUND  = 100000ull;
@@ -140,8 +140,8 @@ public:
 
   /// @name Transaction Duplication Filtering
   /// @{
-  v2::DigestSet DetectDuplicateTransactions(BlockHash            starting_hash,
-                                            v2::DigestSet const &transactions) const;
+  DigestSet DetectDuplicateTransactions(BlockHash            starting_hash,
+                                            DigestSet const &transactions) const;
   /// @}
 
   // Operators

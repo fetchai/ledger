@@ -35,7 +35,7 @@ using fetch::ledger::Block;
 using fetch::ledger::MainChain;
 using fetch::ledger::BlockStatus;
 using fetch::ledger::testing::BlockGenerator;
-using fetch::ledger::v2::Address;
+using fetch::ledger::Address;
 using fetch::byte_array::ToBase64;  // NOLINT - needed for debug messages
 
 using Rng               = std::mt19937_64;
@@ -393,7 +393,7 @@ TEST_P(MainChainTests, AdditionOfBlocksOutOfOrder)
   // Try adding a non-sequential block (prev hash is itself)
   Block dummy;
   dummy.body.block_number = 2;
-  dummy.body.miner        = ledger::v2::Address{ledger::v2::Address::RawAddress{}};
+  dummy.body.miner        = ledger::Address{ledger::Address::RawAddress{}};
   dummy.UpdateDigest();
   dummy.body.previous_hash = dummy.body.hash;
 

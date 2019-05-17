@@ -62,9 +62,9 @@ ConstByteArray GenerateDigest(std::string const &source)
  * @param: tx the transaction triggering the smart contract
  * @param: params the parameters
  */
-void ValidateAddressesInParams(v2::Transaction const &tx, vm::ParameterPack const &params)
+void ValidateAddressesInParams(Transaction const &tx, vm::ParameterPack const &params)
 {
-  std::unordered_set<v2::Address> signing_addresses;
+  std::unordered_set<Address> signing_addresses;
   for (auto const &sig : tx.signatories())
   {
     signing_addresses.insert(sig.address);
@@ -254,8 +254,8 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
  */
 void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Variant const &obj)
 {
-  v2::Address address{};
-  if (!v2::Address::Parse(obj.As<ConstByteArray>(), address))
+  Address address{};
+  if (!Address::Parse(obj.As<ConstByteArray>(), address))
   {
     throw std::runtime_error("Unable to parse address");
   }
@@ -337,7 +337,7 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
  * @param tx The input transaction
  * @return The corresponding status result for the operation
  */
-Contract::Status SmartContract::InvokeAction(std::string const &name, v2::Transaction const &tx)
+Contract::Status SmartContract::InvokeAction(std::string const &name, Transaction const &tx)
 {
   // Important to keep the handle alive as long as the msgpack::object is needed to avoid segfault!
   msgpack::object_handle       h;
@@ -432,7 +432,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, v2::Transa
  * @param owner The owner identity of the contract (i.e. the creator of the contract)
  * @return The corresponding status result for the operation
  */
-Contract::Status SmartContract::InvokeInit(v2::Address const &owner)
+Contract::Status SmartContract::InvokeInit(Address const &owner)
 {
   // Get clean VM instance
   auto vm = vm_modules::VMFactory::GetVM(module_);

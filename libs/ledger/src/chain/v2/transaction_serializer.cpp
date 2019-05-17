@@ -26,7 +26,6 @@
 
 namespace fetch {
 namespace ledger {
-namespace v2 {
 namespace {
 
 using byte_array::ByteArray;
@@ -729,6 +728,5 @@ TransactionSerializer &TransactionSerializer::operator>>(Transaction &tx)
   return *this;
 }
 
-}  // namespace v2
 }  // namespace ledger
 }  // namespace fetch

@@ -50,7 +50,7 @@ public:
     , signed_tx_{signed_tx}
     , vm_{vm}
   {
-    if (address && !ledger::v2::Address::Parse(address->str.c_str(), address_))
+    if (address && !ledger::Address::Parse(address->str.c_str(), address_))
     {
       vm->RuntimeError("Unable to parse address");
     }
@@ -91,27 +91,27 @@ public:
     }
 
     // update the value
-    address_ = ledger::v2::Address({data.data(), data.size()});
+    address_ = ledger::Address({data.data(), data.size()});
   }
 
-  ledger::v2::Address const &address() const
+  ledger::Address const &address() const
   {
     return address_;
   }
 
-  Address &operator=(ledger::v2::Address const &address)
+  Address &operator=(ledger::Address const &address)
   {
     address_ = address;
     return *this;
   }
 
-  bool operator==(ledger::v2::Address const &other) const
+  bool operator==(ledger::Address const &other) const
   {
     return address_ == other;
   }
 
 private:
-  ledger::v2::Address address_;
+  ledger::Address address_;
   bool                signed_tx_{false};
   VM *                vm_;
 };

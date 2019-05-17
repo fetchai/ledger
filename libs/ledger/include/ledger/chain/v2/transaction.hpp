@@ -28,7 +28,6 @@
 
 namespace fetch {
 namespace ledger {
-namespace v2 {
 
 /**
  * The transaction class
@@ -353,6 +352,5 @@ inline bool Transaction::IsVerified() const
   return verified_;
 }
 
-}  // namespace v2
 }  // namespace ledger
 }  // namespace fetch

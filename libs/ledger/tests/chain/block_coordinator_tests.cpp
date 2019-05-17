@@ -46,8 +46,8 @@ using fetch::ledger::GENESIS_DIGEST;
 using fetch::crypto::ECDSASigner;
 using fetch::ledger::testing::BlockGenerator;
 using fetch::ledger::TransactionStatusCache;
-using fetch::ledger::v2::TransactionLayout;
-using fetch::ledger::v2::Address;
+using fetch::ledger::TransactionLayout;
+using fetch::ledger::Address;
 
 using ::testing::_;
 using ::testing::AnyNumber;

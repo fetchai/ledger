@@ -28,11 +28,11 @@
 #include <memory>
 
 using fetch::crypto::ECDSASigner;
-using fetch::ledger::v2::Transaction;
-using fetch::ledger::v2::TransactionBuilder;
-using fetch::ledger::v2::Address;
-using fetch::ledger::v2::FromJsonTransaction;
-using fetch::ledger::v2::ToJsonTransaction;
+using fetch::ledger::Transaction;
+using fetch::ledger::TransactionBuilder;
+using fetch::ledger::Address;
+using fetch::ledger::FromJsonTransaction;
+using fetch::ledger::ToJsonTransaction;
 using fetch::variant::Variant;
 
 TEST(JsonTransactionTests, BasicTest)

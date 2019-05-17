@@ -25,7 +25,7 @@
 class TransactionGenerator
 {
 public:
-  using TransactionLayout = fetch::ledger::v2::TransactionLayout;
+  using TransactionLayout = fetch::ledger::TransactionLayout;
 
   explicit TransactionGenerator(uint32_t log2_num_lanes = 0)
     : log2_num_lanes_{log2_num_lanes}
@@ -45,7 +45,7 @@ public:
 private:
   using Rng       = fetch::random::LinearCongruentialGenerator;
   using RngWord   = Rng::random_type;
-  using Digest    = fetch::ledger::v2::Digest;
+  using Digest    = fetch::ledger::Digest;
   using ByteArray = fetch::byte_array::ByteArray;
 
   Digest GenerateDigest()

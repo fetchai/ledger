@@ -45,7 +45,7 @@ using fetch::ledger::TransactionStatusCache;
 using fetch::random::LinearCongruentialGenerator;
 using fetch::ledger::TransactionStatus;
 using fetch::ledger::ToString;
-using fetch::ledger::v2::Digest;
+using fetch::ledger::Digest;
 
 using StatusCachePtr = std::unique_ptr<TransactionStatusCache>;
 using Clock          = TransactionStatusCache::Clock;

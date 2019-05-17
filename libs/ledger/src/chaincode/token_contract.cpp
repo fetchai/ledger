@@ -36,8 +36,6 @@ namespace ledger {
 
 constexpr uint64_t MAX_TOKENS = 0xFFFFFFFFFFFFFFFFull;
 
-using v2::Address;
-
 TokenContract::TokenContract()
 {
   // TODO(tfr): I think the function CreateWealth should be OnInit?
@@ -47,7 +45,7 @@ TokenContract::TokenContract()
   OnQuery("balance", this, &TokenContract::Balance);
 }
 
-uint64_t TokenContract::GetBalance(v2::Address const &address)
+uint64_t TokenContract::GetBalance(Address const &address)
 {
   WalletRecord record{};
   GetStateRecord(record, address.display());
@@ -55,7 +53,7 @@ uint64_t TokenContract::GetBalance(v2::Address const &address)
   return record.balance;
 }
 
-bool TokenContract::AddTokens(v2::Address const &address, uint64_t amount)
+bool TokenContract::AddTokens(Address const &address, uint64_t amount)
 {
   WalletRecord record{};
   GetStateRecord(record, address.display());
@@ -72,7 +70,7 @@ bool TokenContract::AddTokens(v2::Address const &address, uint64_t amount)
   return true;
 }
 
-bool TokenContract::SubtractTokens(v2::Address const &address, uint64_t amount)
+bool TokenContract::SubtractTokens(Address const &address, uint64_t amount)
 {
   WalletRecord record{};
   GetStateRecord(record, address.display());
@@ -89,7 +87,7 @@ bool TokenContract::SubtractTokens(v2::Address const &address, uint64_t amount)
   return true;
 }
 
-bool TokenContract::TransferTokens(v2::Transaction const &tx, v2::Address const &to,
+bool TokenContract::TransferTokens(Transaction const &tx, Address const &to,
                                    uint64_t amount)
 {
   // look up the state record (to see if there is a deed associated with this address)
@@ -125,7 +123,7 @@ bool TokenContract::TransferTokens(v2::Transaction const &tx, v2::Address const 
   return SubtractTokens(tx.from(), amount) && AddTokens(to, amount);
 }
 
-Contract::Status TokenContract::CreateWealth(v2::Transaction const &tx)
+Contract::Status TokenContract::CreateWealth(Transaction const &tx)
 {
   Contract::Status status{Contract::Status::FAILED};
 
@@ -159,7 +157,7 @@ Contract::Status TokenContract::CreateWealth(v2::Transaction const &tx)
  *
  * @return Status::OK if deed has been incorporated successfully.
  */
-Contract::Status TokenContract::Deed(v2::Transaction const &tx)
+Contract::Status TokenContract::Deed(Transaction const &tx)
 {
   Variant data;
   if (!ParseAsJson(tx, data))
@@ -210,7 +208,7 @@ Contract::Status TokenContract::Deed(v2::Transaction const &tx)
   return Status::OK;
 }
 
-Contract::Status TokenContract::Transfer(v2::Transaction const &tx)
+Contract::Status TokenContract::Transfer(Transaction const &tx)
 {
   FETCH_UNUSED(tx);
   return Status::FAILED;

@@ -220,7 +220,7 @@ private:
   using Timepoint         = Clock::time_point;
   using StateMachinePtr   = std::shared_ptr<StateMachine>;
   using MinerPtr          = std::shared_ptr<consensus::ConsensusMinerInterface>;
-  using TxDigestSetPtr    = std::unique_ptr<v2::DigestSet>;
+  using TxDigestSetPtr    = std::unique_ptr<DigestSet>;
   using LastExecutedBlock = SynchronisedState<ConstByteArray>;
   using FutureTimepoint   = fetch::core::FutureTimepoint;
 
@@ -273,7 +273,7 @@ private:
 
   /// @name State Machine State
   /// @{
-  v2::Address     mining_address_;         ///< The miners address
+  Address     mining_address_;         ///< The miners address
   StateMachinePtr state_machine_;          ///< The main state machine for this service
   std::size_t     block_difficulty_;       ///< The number of leading zeros needed in the proof
   std::size_t     num_lanes_;              ///< The current number of lanes

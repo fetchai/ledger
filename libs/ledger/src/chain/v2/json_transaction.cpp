@@ -25,7 +25,6 @@
 
 namespace fetch {
 namespace ledger {
-namespace v2 {
 
 using variant::Variant;
 using variant::Extract;
@@ -115,6 +114,5 @@ bool ToJsonTransaction(Transaction const &src, Variant &dst, bool include_metada
   return success;
 }
 
-}  // namespace v2
 }  // namespace ledger
 }  // namespace fetch

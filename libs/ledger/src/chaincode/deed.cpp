@@ -151,7 +151,7 @@ bool Deed::IsSane() const
  */
 
 // TODO(EJF): Rework to use signatories
-bool Deed::Verify(v2::Transaction const &tx, DeedOperation const &operation) const
+bool Deed::Verify(Transaction const &tx, DeedOperation const &operation) const
 {
   auto const op = operation_thresholds_.find(operation);
   if (op == operation_thresholds_.end())
@@ -161,11 +161,11 @@ bool Deed::Verify(v2::Transaction const &tx, DeedOperation const &operation) con
   }
 
   // cache all the addresses that are present in this current transaction
-  using AddressSet = std::unordered_set<v2::Address>;
+  using AddressSet = std::unordered_set<Address>;
   AddressSet tx_address_set{};
   for (auto const &signee : tx.signatories())
   {
-    tx_address_set.insert(v2::Address{signee.identity});
+    tx_address_set.insert(Address{signee.identity});
   }
 
   Weight vote = 0;
