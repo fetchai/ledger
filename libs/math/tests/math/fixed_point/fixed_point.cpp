@@ -915,6 +915,102 @@ TEST(FixedPointTest, Abs_32_32)
   EXPECT_EQ(e7, huge);
 }
 
+TEST(FixedPointTest, Remainder_16_16)
+{
+  fetch::fixed_point::FixedPoint<16, 16> one(1);
+  fetch::fixed_point::FixedPoint<16, 16> m_one(-1);
+  fetch::fixed_point::FixedPoint<16, 16> one_point_five(1.5);
+  fetch::fixed_point::FixedPoint<16, 16> m_one_point_five(-1.5);
+  fetch::fixed_point::FixedPoint<16, 16> ten(10);
+  fetch::fixed_point::FixedPoint<16, 16> m_ten(-10);
+  fetch::fixed_point::FixedPoint<16, 16> x{1.6519711627625};
+  fetch::fixed_point::FixedPoint<16, 16> e1 = fp32::Remainder(ten, one);
+  fetch::fixed_point::FixedPoint<16, 16> e2 = fp32::Remainder(ten, m_one);
+  fetch::fixed_point::FixedPoint<16, 16> e3 = fp32::Remainder(ten, one_point_five);
+  fetch::fixed_point::FixedPoint<16, 16> e4 = fp32::Remainder(ten, m_one_point_five);
+  fetch::fixed_point::FixedPoint<16, 16> e5 = fp32::Remainder(ten, x);
+  fetch::fixed_point::FixedPoint<16, 16> e6 = fp32::Remainder(m_ten, x);
+
+  EXPECT_EQ(e1, std::remainder((double)ten, (double)one));
+  EXPECT_EQ(e2, std::remainder((double)ten, (double)m_one));
+  EXPECT_EQ(e3, std::remainder((double)ten, (double)one_point_five));
+  EXPECT_EQ(e4, std::remainder((double)ten, (double)m_one_point_five));
+  EXPECT_EQ(e5, std::remainder((double)ten, (double)x));
+  EXPECT_EQ(e6, std::remainder((double)m_ten, (double)x));
+}
+
+TEST(FixedPointTest, Remainder_32_32)
+{
+  fetch::fixed_point::FixedPoint<32, 32> one(1);
+  fetch::fixed_point::FixedPoint<32, 32> m_one(-1);
+  fetch::fixed_point::FixedPoint<32, 32> one_point_five(1.5);
+  fetch::fixed_point::FixedPoint<32, 32> m_one_point_five(-1.5);
+  fetch::fixed_point::FixedPoint<32, 32> ten(10);
+  fetch::fixed_point::FixedPoint<32, 32> m_ten(-10);
+  fetch::fixed_point::FixedPoint<32, 32> x{1.6519711627625};
+  fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Remainder(ten, one);
+  fetch::fixed_point::FixedPoint<32, 32> e2 = fp64::Remainder(ten, m_one);
+  fetch::fixed_point::FixedPoint<32, 32> e3 = fp64::Remainder(ten, one_point_five);
+  fetch::fixed_point::FixedPoint<32, 32> e4 = fp64::Remainder(ten, m_one_point_five);
+  fetch::fixed_point::FixedPoint<32, 32> e5 = fp64::Remainder(ten, x);
+  fetch::fixed_point::FixedPoint<32, 32> e6 = fp64::Remainder(m_ten, x);
+
+  EXPECT_EQ(e1, std::remainder((double)ten, (double)one));
+  EXPECT_EQ(e2, std::remainder((double)ten, (double)m_one));
+  EXPECT_EQ(e3, std::remainder((double)ten, (double)one_point_five));
+  EXPECT_EQ(e4, std::remainder((double)ten, (double)m_one_point_five));
+  EXPECT_EQ(e5, std::remainder((double)ten, (double)x));
+  EXPECT_EQ(e6, std::remainder((double)m_ten, (double)x));
+}
+
+TEST(FixedPointTest, Fmod_16_16)
+{
+  fetch::fixed_point::FixedPoint<16, 16> one(1);
+  fetch::fixed_point::FixedPoint<16, 16> m_one(-1);
+  fetch::fixed_point::FixedPoint<16, 16> one_point_five(1.5);
+  fetch::fixed_point::FixedPoint<16, 16> m_one_point_five(-1.5);
+  fetch::fixed_point::FixedPoint<16, 16> ten(10);
+  fetch::fixed_point::FixedPoint<16, 16> m_ten(-10);
+  fetch::fixed_point::FixedPoint<16, 16> x{1.6519711627625};
+  fetch::fixed_point::FixedPoint<16, 16> e1 = fp32::Fmod(ten, one);
+  fetch::fixed_point::FixedPoint<16, 16> e2 = fp32::Fmod(ten, m_one);
+  fetch::fixed_point::FixedPoint<16, 16> e3 = fp32::Fmod(ten, one_point_five);
+  fetch::fixed_point::FixedPoint<16, 16> e4 = fp32::Fmod(ten, m_one_point_five);
+  fetch::fixed_point::FixedPoint<16, 16> e5 = fp32::Fmod(ten, x);
+  fetch::fixed_point::FixedPoint<16, 16> e6 = fp32::Fmod(m_ten, x);
+
+  EXPECT_EQ(e1, std::fmod((double)ten, (double)one));
+  EXPECT_EQ(e2, std::fmod((double)ten, (double)m_one));
+  EXPECT_EQ(e3, std::fmod((double)ten, (double)one_point_five));
+  EXPECT_EQ(e4, std::fmod((double)ten, (double)m_one_point_five));
+  EXPECT_EQ(e5, std::fmod((double)ten, (double)x));
+  EXPECT_EQ(e6, std::fmod((double)m_ten, (double)x));
+}
+
+TEST(FixedPointTest, Fmod_32_32)
+{
+  fetch::fixed_point::FixedPoint<32, 32> one(1);
+  fetch::fixed_point::FixedPoint<32, 32> m_one(-1);
+  fetch::fixed_point::FixedPoint<32, 32> one_point_five(1.5);
+  fetch::fixed_point::FixedPoint<32, 32> m_one_point_five(-1.5);
+  fetch::fixed_point::FixedPoint<32, 32> ten(10);
+  fetch::fixed_point::FixedPoint<32, 32> m_ten(-10);
+  fetch::fixed_point::FixedPoint<32, 32> x{1.6519711627625};
+  fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Fmod(ten, one);
+  fetch::fixed_point::FixedPoint<32, 32> e2 = fp64::Fmod(ten, m_one);
+  fetch::fixed_point::FixedPoint<32, 32> e3 = fp64::Fmod(ten, one_point_five);
+  fetch::fixed_point::FixedPoint<32, 32> e4 = fp64::Fmod(ten, m_one_point_five);
+  fetch::fixed_point::FixedPoint<32, 32> e5 = fp64::Fmod(ten, x);
+  fetch::fixed_point::FixedPoint<32, 32> e6 = fp64::Fmod(m_ten, x);
+
+  EXPECT_EQ(e1, std::fmod((double)ten, (double)one));
+  EXPECT_EQ(e2, std::fmod((double)ten, (double)m_one));
+  EXPECT_EQ(e3, std::fmod((double)ten, (double)one_point_five));
+  EXPECT_EQ(e4, std::fmod((double)ten, (double)m_one_point_five));
+  EXPECT_EQ(e5, std::fmod((double)ten, (double)x));
+  EXPECT_EQ(e6, std::fmod((double)m_ten, (double)x));
+}
+
 TEST(FixedPointTest, SQRT_16_16)
 {
   fetch::fixed_point::FixedPoint<16, 16> one(1);
@@ -997,4 +1093,108 @@ TEST(FixedPointTest, SQRT_32_32)
 
   // Sqrt of a negative
   EXPECT_THROW(fp64::Sqrt(-one), std::runtime_error);
+}
+
+TEST(FixedPointTest, Sin_16_16)
+{
+  fetch::fixed_point::FixedPoint<16, 16> one(1);
+  fetch::fixed_point::FixedPoint<16, 16> one_point_five(1.5);
+  fetch::fixed_point::FixedPoint<16, 16> huge(10000);
+  fetch::fixed_point::FixedPoint<16, 16> small(0.0001);
+  fetch::fixed_point::FixedPoint<16, 16> tiny(0, fp32::SMALLEST_FRACTION);
+  fetch::fixed_point::FixedPoint<16, 16> e1 = fp32::Sin(one);
+  fetch::fixed_point::FixedPoint<16, 16> e2 = fp32::Sin(one_point_five);
+  fetch::fixed_point::FixedPoint<16, 16> e3 = fp32::Sin(fp32::CONST_ZERO);
+  fetch::fixed_point::FixedPoint<16, 16> e4 = fp32::Sin(huge);
+  fetch::fixed_point::FixedPoint<16, 16> e5 = fp32::Sin(small);
+  fetch::fixed_point::FixedPoint<16, 16> e6 = fp32::Sin(tiny);
+  fetch::fixed_point::FixedPoint<16, 16> e7 = fp32::Sin(fp32::CONST_PI);
+  fetch::fixed_point::FixedPoint<16, 16> e8 = fp32::Sin(-fp32::CONST_PI);
+  fetch::fixed_point::FixedPoint<16, 16> e9 = fp32::Sin(fp32::CONST_PI*2);
+  fetch::fixed_point::FixedPoint<16, 16> e10 = fp32::Sin(fp32::CONST_PI*4);
+  fetch::fixed_point::FixedPoint<16, 16> e11 = fp32::Sin(fp32::CONST_PI*100);
+  fetch::fixed_point::FixedPoint<16, 16> e12 = fp32::Sin(fp32::CONST_PI_2);
+  fetch::fixed_point::FixedPoint<16, 16> e13 = fp32::Sin(-fp32::CONST_PI_2);
+  fetch::fixed_point::FixedPoint<16, 16> e14 = fp32::Sin(fp32::CONST_PI_4);
+  fetch::fixed_point::FixedPoint<16, 16> e15 = fp32::Sin(-fp32::CONST_PI_4);
+  fetch::fixed_point::FixedPoint<16, 16> e16 = fp32::Sin(fp32::CONST_PI_4*3);
+
+  std::cout << "sin(" << huge << ") = " << e4 << std::endl;
+  std::cout << "sin(" << huge << ") = " << std::sin((float)huge) << std::endl;
+
+  double delta = (double)e1 - std::sin((double)one);
+  EXPECT_NEAR(delta / std::sin((double)one), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e2 - std::sin((double)one_point_five);
+  EXPECT_NEAR(delta / std::sin((double)one_point_five), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e3 - std::sin((double)fp32::CONST_ZERO);
+  EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e4 - std::sin((double)huge);
+  EXPECT_NEAR(delta / std::sin((double)huge), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e5 - std::sin((double)small);
+  EXPECT_NEAR(delta / std::sin((double)small), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e6 - std::sin((double)tiny);
+  EXPECT_NEAR(delta / std::sin((double)tiny), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e7 - std::sin((double)fp32::CONST_PI);
+  EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e8 - std::sin((double)(-fp32::CONST_PI));
+  EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e9 - std::sin((double)(fp32::CONST_PI*2));
+  EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e10 - std::sin((double)(fp32::CONST_PI*4));
+  EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e11 - std::sin((double)(fp32::CONST_PI*100));
+  EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e12 - std::sin((double)(fp32::CONST_PI_2));
+  EXPECT_NEAR(delta / std::sin((double)(fp32::CONST_PI_2)), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e13 - std::sin((double)(-fp32::CONST_PI_2));
+  EXPECT_NEAR(delta / std::sin((double)(-fp32::CONST_PI_2)), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e14 - std::sin((double)(fp32::CONST_PI_4));
+  EXPECT_NEAR(delta / std::sin((double)(fp32::CONST_PI_4)), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e15 - std::sin((double)(-fp32::CONST_PI_4));
+  EXPECT_NEAR(delta / std::sin((double)(-fp32::CONST_PI_4)), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e16 - std::sin((double)(fp32::CONST_PI_4*3));
+  EXPECT_NEAR(delta / std::sin((double)(fp32::CONST_PI_4*3)), 0.0, (double)fp32::TOLERANCE);
+}
+
+TEST(FixedPointTest, Sin_32_32)
+{
+  fetch::fixed_point::FixedPoint<32, 32> one(1);
+  fetch::fixed_point::FixedPoint<32, 32> one_point_five(1.5);
+  fetch::fixed_point::FixedPoint<32, 32> huge(10000);
+  fetch::fixed_point::FixedPoint<32, 32> small(0.0001);
+  fetch::fixed_point::FixedPoint<32, 32> tiny(0, fp32::SMALLEST_FRACTION);
+  fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Sin(one);
+  fetch::fixed_point::FixedPoint<32, 32> e2 = fp64::Sin(one_point_five);
+  fetch::fixed_point::FixedPoint<32, 32> e3 = fp64::Sin(fp64::CONST_ZERO);
+  fetch::fixed_point::FixedPoint<32, 32> e4 = fp64::Sin(huge);
+  fetch::fixed_point::FixedPoint<32, 32> e5 = fp64::Sin(small);
+  fetch::fixed_point::FixedPoint<32, 32> e6 = fp64::Sin(tiny);
+  fetch::fixed_point::FixedPoint<32, 32> e7 = fp64::Sin(fp64::CONST_PI);
+  fetch::fixed_point::FixedPoint<32, 32> e8 = fp64::Sin(-fp64::CONST_PI);
+  fetch::fixed_point::FixedPoint<32, 32> e9 = fp64::Sin(fp64::CONST_PI*2);
+  fetch::fixed_point::FixedPoint<32, 32> e10 = fp64::Sin(fp64::CONST_PI*4);
+  fetch::fixed_point::FixedPoint<32, 32> e11 = fp64::Sin(fp64::CONST_PI*100);
+
+  double delta = (double)e1 - std::sin((double)one);
+  EXPECT_NEAR(delta / std::sin((double)one), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e2 - std::sin((double)one_point_five);
+  EXPECT_NEAR(delta / std::sin((double)one_point_five), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e3 - std::sin((double)fp64::CONST_ZERO);
+  EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e4 - std::sin((double)huge);
+  EXPECT_NEAR(delta / std::sin((double)huge), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e5 - std::sin((double)small);
+  EXPECT_NEAR(delta / std::sin((double)small), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e6 - std::sin((double)tiny);
+  EXPECT_NEAR(delta / std::sin((double)tiny), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e7 - std::sin((double)fp64::CONST_PI);
+  EXPECT_NEAR(delta / std::sin((double)fp64::CONST_PI), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e8 - std::sin((double)(-fp64::CONST_PI));
+  EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e9 - std::sin((double)(fp64::CONST_PI*2));
+  EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e10 - std::sin((double)(fp64::CONST_PI*4));
+  EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e11 - std::sin((double)(fp64::CONST_PI*100));
+  EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
 }

@@ -268,7 +268,7 @@ public:
     : data_{(INTEGER_MASK & (Type(integer) << FRACTIONAL_BITS)) | Type(fraction & FRACTIONAL_MASK)}
   {}
 
-  constexpr Type integer() const
+  constexpr Type Integer() const
   {
     if (isNaN(*this))
     {
@@ -277,7 +277,7 @@ public:
     return Type((data_ & INTEGER_MASK) >> FRACTIONAL_BITS);
   }
 
-  constexpr Type fraction() const
+  constexpr Type Fraction() const
   {
     if (isNaN(*this))
     {
@@ -286,13 +286,22 @@ public:
     return (data_ & FRACTIONAL_MASK);
   }
 
-  constexpr FixedPoint floor() const
+  static constexpr FixedPoint Floor(FixedPoint const &o)
   {
-    if (isNaN(*this))
+    if (isNaN(o))
     {
-      throw std::overflow_error("Cannot use floor() on a NaN value!");
+      throw std::overflow_error("Cannot use Floor() on a NaN value!");
     }
-    return FixedPoint(Type((data_ & INTEGER_MASK) >> FRACTIONAL_BITS));
+    return std::move(FixedPoint{o.Integer()});
+  }
+
+  static constexpr FixedPoint Round(FixedPoint const &o)
+  {
+    if (isNaN(o))
+    {
+      throw std::overflow_error("Cannot use Floor() on a NaN value!");
+    }
+    return std::move(Floor(o + FixedPoint{0.5}));
   }
 
   /////////////////
@@ -463,7 +472,7 @@ public:
   template <typename T>
   explicit operator T() const
   {
-    return (static_cast<T>(integer()));
+    return (static_cast<T>(Integer()));
   }
 
   //////////////////////
@@ -583,7 +592,7 @@ public:
 
   constexpr FixedPoint &operator>>=(FixedPoint const &n)
   {
-    data_ >>= n.integer();
+    data_ >>= n.Integer();
     return *this;
   }
 
@@ -595,7 +604,7 @@ public:
 
   constexpr FixedPoint &operator<<=(FixedPoint const &n)
   {
-    data_ <<= n.integer();
+    data_ <<= n.Integer();
     return *this;
   }
 
@@ -630,6 +639,10 @@ public:
     data_ = n;
   }
 
+  //////////////////////////////////////////////////////
+  /// FixedPoint implementations of common functions ///
+  //////////////////////////////////////////////////////
+
   static constexpr FixedPoint Exp(FixedPoint const &x)
   {
     if (x < MIN_EXP)
@@ -656,7 +669,7 @@ public:
     // Find integer k and r ∈ [-0.5, 0.5) such as: x = k*ln2 + r
     // Then exp(x) = 2^k * e^r
     FixedPoint k = x / CONST_LN2;
-    k            = k.floor();
+    k            = Floor(k);
 
     FixedPoint r = x - k * CONST_LN2;
     FixedPoint e1{CONST_ONE};
@@ -676,7 +689,7 @@ public:
     FixedPoint Q  = CONST_ONE - r + r2 - r3 + r4;
     FixedPoint e2 = P / Q;
 
-    return e1 * e2;
+    return std::move(e1 * e2);
   }
 
   static constexpr FixedPoint Log2(FixedPoint const &x)
@@ -733,11 +746,11 @@ public:
 
     if (adjustment)
     {
-      return -FixedPoint(k) - R;
+      return std::move(-FixedPoint(k) - R);
     }
     else
     {
-      return FixedPoint(k) + R;
+      return std::move(FixedPoint(k) + R);
     }
   }
 
@@ -767,7 +780,7 @@ public:
     }
 
     FixedPoint x0 = x;
-    int        k  = Reduce_Sqrt(x0);
+    int        k  = ReduceSqrt(x0);
 
     if (x0 != CONST_ONE)
     {
@@ -810,7 +823,7 @@ public:
       twok <<= k;
     }
 
-    return twok * x0;
+    return std::move(twok * x0);
   }
 
   static constexpr FixedPoint Pow(FixedPoint const &x, FixedPoint const &y)
@@ -826,24 +839,114 @@ public:
         return CONST_ZERO;
       }
     }
-    if (x < CONST_ZERO && y.fraction() != 0)
+    if (x < CONST_ZERO && y.Fraction() != 0)
     {
       throw std::runtime_error(
           "Pow(x, y): x^y where x < 0 and y non-integer: mathematical operation not defined!");
     }
-    FixedPoint s   = CONST_ONE * ((y.integer() + 1) & 1) + Sign(x) * (y.integer() & 1);
+    FixedPoint s   = CONST_ONE * ((y.Integer() + 1) & 1) + Sign(x) * (y.Integer() & 1);
     FixedPoint pow = s * Exp(y * Log(Abs(x)));
-    return pow;
+    return std::move(pow);
+  }
+
+  static constexpr FixedPoint Sin(FixedPoint const &x)
+  {
+    std::cout << "Sin: x = " << x << std::endl;
+    FixedPoint r = ReducePi(x);
+    std::cout << "x_reduced = " << r << std::endl;
+
+    if (r == CONST_ZERO) {
+      return CONST_ZERO;
+    } else if (r == CONST_PI_2) {
+      return CONST_ONE;
+    } else if (r == -CONST_PI_2) {
+      return -CONST_ONE;
+    }
+
+    if (Abs(r) > CONST_PI_2) {
+      return Cos(r - CONST_PI_2);
+    }
+
+    FixedPoint r2 = r * r;
+    FixedPoint r3 = r2 * r;
+    FixedPoint r4 = r3 * r;
+    std::cout << "r = " << r << std::endl;
+    std::cout << "r2 = " << r2 << std::endl;
+    std::cout << "r3 = " << r3 << std::endl;
+    std::cout << "r4 = " << r4 << std::endl;
+    FixedPoint Q00{5880};
+    FixedPoint P  = r * Q00 - r3 * 620;
+    FixedPoint Q  = Q00 + r2 * 360 + r4 * 11;
+    std::cout << "P = " << P << std::endl;
+    std::cout << "Q = " << Q << std::endl;
+    FixedPoint sin = P / Q;
+    std::cout << "sin = " << sin << std::endl;
+
+    return std::move(sin);
+  }
+
+  static constexpr FixedPoint Cos(FixedPoint const &x)
+  {
+    std::cout << "Cos: x = " << x << std::endl;
+    FixedPoint r = ReducePi(x);
+    std::cout << "x_reduced = " << r << std::endl;
+
+    if (r == CONST_ZERO) {
+      return CONST_ONE;
+    } else if (r == CONST_PI_2) {
+      return CONST_ZERO;
+    } else if (r == -CONST_PI_2) {
+      return CONST_ZERO;
+    }
+
+    if (r > CONST_PI_2) {
+      return Sin(r - CONST_PI_2);
+    }
+
+    FixedPoint r2 = r * r;
+    FixedPoint r4 = r2 * r2;
+    std::cout << "r = " << r << std::endl;
+    std::cout << "r2 = " << r2 << std::endl;
+    std::cout << "r4 = " << r4 << std::endl;
+    FixedPoint Q00{15120};
+    FixedPoint P  = Q00 - r * 6900 - r4 * 313;
+    FixedPoint Q  = Q00 + r2 * 660 + r4 * 13;
+    std::cout << "P = " << P << std::endl;
+    std::cout << "Q = " << Q << std::endl;
+    FixedPoint cos = P / Q;
+    std::cout << "cos = " << cos << std::endl;
+
+    return std::move(cos);
+  }
+
+  static constexpr FixedPoint Tan(FixedPoint const &x)
+  {
+    return x;
+  }
+
+  static constexpr FixedPoint Remainder(FixedPoint const &x, FixedPoint const &y)
+  {
+    FixedPoint result = x / y;
+    return std::move(x - Round(result) * y);
+  }
+
+  static constexpr FixedPoint Fmod(FixedPoint const &x, FixedPoint const &y)
+  {
+    FixedPoint result = Remainder(Abs(x), Abs(y));
+    if (result < CONST_ZERO) {
+      result += Abs(y);
+    }
+    return std::move(Sign(x)*result);
   }
 
   static constexpr FixedPoint Abs(FixedPoint const &x)
   {
-    return x * Sign(x);
+    return std::move(x * Sign(x));
   }
 
   static constexpr FixedPoint Sign(FixedPoint const &x)
   {
-    return FixedPoint{Type((x > CONST_ZERO) - (x < CONST_ZERO))};
+    return std::move(FixedPoint{Type((x > CONST_ZERO) - (x < CONST_ZERO))});
   }
 
   static constexpr FixedPoint FromBase(Type n)
@@ -916,7 +1019,7 @@ private:
     }
   }
 
-  static constexpr int Reduce_Sqrt(FixedPoint &x)
+  static constexpr int ReduceSqrt(FixedPoint &x)
   {
     /* Given x, find k such as x = 2^{2*k} * y, where 1 < y < 4
      */
@@ -937,6 +1040,11 @@ private:
       k = -k;
     }
     return k;
+  }
+
+  static constexpr FixedPoint ReducePi(FixedPoint const &x)
+  {
+    return std::move(Remainder(x, CONST_PI));
   }
 };
 

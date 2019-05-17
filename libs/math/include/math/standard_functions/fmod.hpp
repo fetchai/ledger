@@ -35,8 +35,6 @@ meta::IfIsNonFixedPointArithmetic<Type, void> Fmod(Type const &x, Type const &y,
   ret = std::fmod(x, y);
 }
 
-// TODO(800) - native implementations of fixed point are required; casting to double will not be
-// permissible
 template <typename T>
 meta::IfIsFixedPoint<T, void> Fmod(T const &x, T const &y, T &ret)
 {
