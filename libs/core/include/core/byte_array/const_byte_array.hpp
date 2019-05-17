@@ -29,15 +29,6 @@
 #include <type_traits>
 
 namespace fetch {
-// namespace byte_array {
-// class ConstByteArray;
-//}  // namespace byte_array
-
-// namespace serializers {
-// template <typename T>
-// inline void Deserialize(T &, byte_array::ConstByteArray &);
-//}  // namespace serializers
-
 namespace byte_array {
 
 class ConstByteArray
