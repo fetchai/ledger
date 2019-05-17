@@ -476,40 +476,25 @@ struct Variant
 };
 
 template <std::size_t ID = 0>
-struct TemplateParameterT : public Variant
+struct VariantT : public Variant
 {
   using Variant::Variant;
-  TemplateParameterT(Variant const &other)
+  VariantT(Variant const &other)
     : Variant{other} {};
-  TemplateParameterT(Variant &&other)
+  VariantT(Variant &&other)
     : Variant{std::move(other)} {};
 
   static constexpr std::size_t id{ID};
+  using New = VariantT<ID + 1>;
 };
 
-using TemplateParameter1 = TemplateParameterT<0>;
-using TemplateParameter2 = TemplateParameterT<1>;
+using TemplateParameter1 = VariantT<0>;
+using TemplateParameter2 = VariantT<1>;
+using Any                = VariantT<2>;
+using AnyPrimitive       = VariantT<3>;
+using AnyInteger         = VariantT<4>;
+using AnyFloatingPoint   = VariantT<5>;
 using TemplateParameter  = TemplateParameter1;
-
-struct Any : public Variant
-{
-  using Variant::Variant;
-};
-
-struct AnyPrimitive : public Variant
-{
-  using Variant::Variant;
-};
-
-struct AnyInteger : public Variant
-{
-  using Variant::Variant;
-};
-
-struct AnyFloatingPoint : public Variant
-{
-  using Variant::Variant;
-};
 
 }  // namespace vm
 }  // namespace fetch
