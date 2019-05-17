@@ -36,49 +36,82 @@ public:
 
   void UnInitialise();
 
-  void CreateClassType(std::string const &name, TypeId id);
+  void CreateClassType(std::string const &name, TypeIndex type_index);
 
-  void CreateTemplateInstantiationType(TypeId id, TypeId template_type_id,
-                                       TypeIdArray const &parameter_type_ids);
+  void CreateInstantiationType(TypeIndex type_index, TypeIndex template_type_index,
+                               TypeIndexArray const &parameter_type_index_array);
 
-  void CreateOpcodeFreeFunction(std::string const &name, Opcode opcode,
-                                TypeIdArray const &parameter_type_ids, TypeId return_type_id);
+  void CreateFreeFunction(std::string const &name, TypeIndexArray const &parameter_type_index_array,
+                          TypeIndex return_type_index, Handler const &handler);
 
-  void CreateOpcodeTypeConstructor(TypeId type_id, Opcode opcode,
-                                   TypeIdArray const &parameter_type_ids);
+  void CreateConstructor(TypeIndex type_index, TypeIndexArray const &parameter_type_index_array,
+                         Handler const &handler);
 
-  void CreateOpcodeTypeFunction(TypeId type_id, std::string const &name, Opcode opcode,
-                                TypeIdArray const &parameter_type_ids, TypeId return_type_id);
+  void CreateStaticMemberFunction(TypeIndex type_index, std::string const &function_name,
+                                  TypeIndexArray const &parameter_type_index_array,
+                                  TypeIndex return_type_index, Handler const &handler);
 
-  void CreateOpcodeInstanceFunction(TypeId type_id, std::string const &name, Opcode opcode,
-                                    TypeIdArray const &parameter_type_ids, TypeId return_type_id);
+  void CreateMemberFunction(TypeIndex type_index, std::string const &function_name,
+                            TypeIndexArray const &parameter_type_index_array,
+                            TypeIndex return_type_index, Handler const &handler);
 
-  void EnableOperator(TypeId type_id, Operator op);
+  void EnableOperator(TypeIndex type_index, Operator op);
 
-  void EnableIndexOperator(TypeId type_id, TypeIdArray const &input_type_ids,
-                           TypeId const &output_type_id);
+  void EnableIndexOperator(TypeIndex type_index, TypeIndexArray const &input_type_index_array,
+                           TypeIndex output_type_index, Handler const &get_handler,
+                           Handler const &set_handler);
 
-  bool Analyse(BlockNodePtr const &root, TypeInfoTable &type_info_table, Strings &errors);
+  bool Analyse(BlockNodePtr const &root, std::vector<std::string> &errors);
+
+  void GetDetails(TypeInfoArray &type_info_array, TypeInfoMap &type_info_map,
+                  RegisteredTypes &registered_types, FunctionInfoArray &function_info_array)
+  {
+    type_info_array     = type_info_array_;
+    type_info_map       = type_info_map_;
+    registered_types    = registered_types_;
+    function_info_array = function_info_array_;
+  }
 
 private:
   static std::string CONSTRUCTOR;
+  static std::string GET_INDEXED_VALUE;
+  static std::string SET_INDEXED_VALUE;
+  using OperatorMap = std::unordered_map<NodeKind, Operator>;
 
-  using TypeTable     = std::unordered_map<TypeId, TypePtr>;
-  using OperatorTable = std::unordered_map<Operator, Node::Kind>;
-  using OpArray       = std::vector<Node::Kind>;
-  using OpTable       = std::unordered_map<TypePtr, OpArray>;
+  struct TypeMap
+  {
+    void Add(TypeIndex type_index, TypePtr const &type)
+    {
+      map[type_index] = type;
+    }
+    TypePtr Find(TypeIndex type_index)
+    {
+      auto it = map.find(type_index);
+      if (it != map.end())
+      {
+        return it->second;
+      }
+      return nullptr;
+    }
+    void Reset()
+    {
+      for (auto &it : map)
+      {
+        it.second->Reset();
+      }
+    }
+    std::unordered_map<TypeIndex, TypePtr> map;
+  };
 
-  TypePtrArray      types_;
-  TypeTable         type_table_;
-  TypeInfoTable     type_info_table_;
-  SymbolTablePtr    global_symbol_table_;
-  TypeId            next_instantiation_type_id_;
-  OperatorTable     operator_table_;
-  TypePtr           any_type_;
-  TypePtr           template_parameter1_type_;
-  TypePtr           template_parameter2_type_;
-  TypePtr           void_type_;
+  OperatorMap       operator_map_;
+  TypeMap           type_map_;
+  TypeInfoArray     type_info_array_;
+  TypeInfoMap       type_info_map_;
+  RegisteredTypes   registered_types_;
+  FunctionInfoArray function_info_array_;
+  SymbolTablePtr    symbols_;
   TypePtr           null_type_;
+  TypePtr           void_type_;
   TypePtr           bool_type_;
   TypePtr           int8_type_;
   TypePtr           byte_type_;
@@ -90,34 +123,36 @@ private:
   TypePtr           uint64_type_;
   TypePtr           float32_type_;
   TypePtr           float64_type_;
-  TypePtr           integer_variant_type_;
-  TypePtr           real_variant_type_;
-  TypePtr           number_variant_type_;
-  TypePtr           cast_variant_type_;
+  TypePtr           string_type_;
+  TypePtr           address_type_;
+  TypePtr           template_parameter1_type_;
+  TypePtr           template_parameter2_type_;
+  TypePtr           any_type_;
+  TypePtr           any_primitive_type_;
+  TypePtr           any_integer_type_;
+  TypePtr           any_floating_point_type_;
   TypePtr           matrix_type_;
   TypePtr           array_type_;
   TypePtr           map_type_;
   TypePtr           persistent_map_type_;
   TypePtr           state_type_;
-  TypePtr           address_type_;
-  TypePtr           string_type_;
-  OpTable           op_table_;
-  OpTable           left_op_table_;
-  OpTable           right_op_table_;
-  BlockNodePtr      root_;
-  BlockNodePtrArray blocks_;
-  BlockNodePtrArray loops_;
-  FunctionPtr       function_;
-  Strings           errors_;
 
-  void        AddError(Token const &token, std::string const &message);
+  BlockNodePtr             root_;
+  BlockNodePtrArray        blocks_;
+  BlockNodePtrArray        loops_;
+  FunctionPtr              function_;
+  std::vector<std::string> errors_;
+
+  void        AddError(uint16_t line, std::string const &message);
   void        BuildBlock(BlockNodePtr const &block_node);
+  void        BuildFile(BlockNodePtr const &file_node);
   void        BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
                                       BlockNodePtr const &function_definition_node);
   void        BuildWhileStatement(BlockNodePtr const &while_statement_node);
   void        BuildForStatement(BlockNodePtr const &for_statement_node);
   void        BuildIfStatement(NodePtr const &if_statement_node);
   void        AnnotateBlock(BlockNodePtr const &block_node);
+  void        AnnotateFile(BlockNodePtr const &file_node);
   void        AnnotateFunctionDefinitionStatement(BlockNodePtr const &function_definition_node);
   void        AnnotateWhileStatement(BlockNodePtr const &while_statement_node);
   void        AnnotateForStatement(BlockNodePtr const &for_statement_node);
@@ -128,24 +163,25 @@ private:
   void        AnnotateConditionalBlock(BlockNodePtr const &conditional_node);
   bool        AnnotateTypeExpression(ExpressionNodePtr const &node);
   bool        AnnotateAssignOp(ExpressionNodePtr const &node);
-  bool        AnnotateModuloAssignOp(ExpressionNodePtr const &node);
-  bool        AnnotateArithmeticAssignOp(ExpressionNodePtr const &node);
+  bool        AnnotateInplaceArithmeticOp(ExpressionNodePtr const &node);
+  bool        AnnotateInplaceModuloOp(ExpressionNodePtr const &node);
+  bool        AnnotateLHSExpression(ExpressionNodePtr const &parent, ExpressionNodePtr const &lhs);
   bool        AnnotateExpression(ExpressionNodePtr const &node);
   bool        AnnotateEqualityOp(ExpressionNodePtr const &node);
   bool        AnnotateRelationalOp(ExpressionNodePtr const &node);
   bool        AnnotateBinaryLogicalOp(ExpressionNodePtr const &node);
   bool        AnnotateUnaryLogicalOp(ExpressionNodePtr const &node);
-  bool        AnnotateIncDecOp(ExpressionNodePtr const &node);
-  bool        AnnotateUnaryMinusOp(ExpressionNodePtr const &node);
-  bool        AnnotateModuloOp(ExpressionNodePtr const &node);
+  bool        AnnotatePrefixPostfixOp(ExpressionNodePtr const &node);
+  bool        AnnotateNegateOp(ExpressionNodePtr const &node);
   bool        AnnotateArithmeticOp(ExpressionNodePtr const &node);
+  bool        AnnotateModuloOp(ExpressionNodePtr const &node);
   bool        AnnotateIndexOp(ExpressionNodePtr const &node);
   bool        AnnotateDotOp(ExpressionNodePtr const &node);
   bool        AnnotateInvokeOp(ExpressionNodePtr const &node);
   bool        TestBlock(BlockNodePtr const &block_node);
   bool        IsWriteable(ExpressionNodePtr const &lhs);
-  TypePtr     IsCompatible(ExpressionNodePtr const &node, ExpressionNodePtr const &lhs,
-                           ExpressionNodePtr const &rhs);
+  bool        AnnotateArithmetic(ExpressionNodePtr const &node, ExpressionNodePtr const &lhs,
+                                 ExpressionNodePtr const &rhs);
   TypePtr     ConvertType(TypePtr const &type, TypePtr const &instantiated_template_type);
   bool        MatchType(TypePtr const &supplied_type, TypePtr const &expected_type) const;
   bool        MatchTypes(TypePtr const &type, TypePtrArray const &supplied_types,
@@ -154,161 +190,125 @@ private:
                            TypePtrArray const &supplied_types, TypePtrArray &actual_types);
   TypePtr     FindType(ExpressionNodePtr const &node);
   SymbolPtr   FindSymbol(ExpressionNodePtr const &node);
-  SymbolPtr   SearchSymbolTables(std::string const &name);
-  void        SetVariable(ExpressionNodePtr const &node, VariablePtr const &variable);
-  void        SetLV(ExpressionNodePtr const &node, TypePtr const &type);
-  void        SetRV(ExpressionNodePtr const &node, TypePtr const &type);
-  void        SetType(ExpressionNodePtr const &node, TypePtr const &type);
-  void        SetFunction(ExpressionNodePtr const &node, FunctionGroupPtr const &fg,
-                          TypePtr const &fg_owner, bool function_invoked_on_instance);
-  void        CreateMetaType(std::string const &name, TypeId id, TypePtr &type);
-  void CreatePrimitiveType(std::string const &name, TypeId id, bool add_to_global_symbol_table,
-                           TypePtr &type);
-  void CreateClassType(std::string const &name, TypeId id, TypePtr &type);
-  void CreateTemplateType(std::string const &name, TypeId id, TypePtrArray const &allowed_types,
-                          TypePtr &type);
-  void CreateTemplateInstantiationType(TypeId id, TypePtr const &template_type,
-                                       TypePtrArray const &parameter_types, TypePtr &type);
-  void CreateVariantType(std::string const &name, TypeId id, TypePtrArray const &allowed_types,
-                         TypePtr &type);
-  void InternalCreateTemplateInstantiationType(TypeId id, TypePtr const &template_type,
-                                               TypePtrArray const &parameter_types,
-                                               TypeIdArray const & parameter_type_ids,
-                                               TypePtr &           type);
-  void CreateOpcodeFreeFunction(std::string const &name, Opcode opcode,
-                                TypePtrArray const &parameter_types, TypePtr const &return_type);
-  void CreateOpcodeTypeConstructor(TypePtr const &type, Opcode opcode,
-                                   TypePtrArray const &parameter_types);
-  void CreateOpcodeTypeFunction(TypePtr const &type, std::string const &name, Opcode opcode,
-                                TypePtrArray const &parameter_types, TypePtr const &return_type);
-  void CreateOpcodeInstanceFunction(TypePtr const &type, std::string const &name, Opcode opcode,
-                                    TypePtrArray const &parameter_types,
-                                    TypePtr const &     return_type);
-  FunctionPtr CreateUserFunction(std::string const &name, TypePtrArray const &parameter_types,
-                                 VariablePtrArray const &parameter_variables,
-                                 TypePtr const &         return_type);
-  FunctionPtr CreateOpcodeFunction(std::string const &name, Function::Kind kind, Opcode opcode,
-                                   TypePtrArray const &parameter_types, TypePtr const &return_type);
+  SymbolPtr   SearchSymbols(std::string const &name);
+  void        SetVariableExpression(ExpressionNodePtr const &node, VariablePtr const &variable);
+  void        SetLVExpression(ExpressionNodePtr const &node, TypePtr const &type);
+  void        SetRVExpression(ExpressionNodePtr const &node, TypePtr const &type);
+  void        SetTypeExpression(ExpressionNodePtr const &node, TypePtr const &type);
+  void        SetFunctionGroupExpression(ExpressionNodePtr const &node, FunctionGroupPtr const &fg,
+                                         TypePtr const &fg_owner, bool function_invoked_on_instance);
+  void        CreatePrimitiveType(std::string const &type_name, TypeIndex type_index,
+                                  bool add_to_symbol_table, TypeId type_id, TypePtr &type);
+  void        CreateMetaType(std::string const &type_name, TypeIndex type_index, TypeId type_id,
+                             TypePtr &type);
+  void        CreateClassType(std::string const &type_name, TypeIndex type_index, TypeId type_id,
+                              TypePtr &type);
+  void        CreateTemplateType(std::string const &type_name, TypeIndex type_index,
+                                 TypePtrArray const &allowed_types, TypeId type_id, TypePtr &type);
+  void        CreateInstantiationType(TypeIndex type_index, TypePtr const &template_type,
+                                      TypePtrArray const &parameter_types, TypeId type_id, TypePtr &type);
+  void        CreateGroupType(std::string const &type_name, TypeIndex type_index,
+                              TypePtrArray const &allowed_types, TypeId type_id, TypePtr &type);
+  TypePtr     InternalCreateInstantiationType(TypeKind type_kind, TypePtr const &template_type,
+                                              TypePtrArray const &parameter_types);
+  void        CreateFreeFunction(std::string const &name, TypePtrArray const &parameter_types,
+                                 TypePtr const &return_type, Handler const &handler);
+  void        CreateConstructor(TypePtr const &type, TypePtrArray const &parameter_types,
+                                Handler const &handler);
+  void        CreateStaticMemberFunction(TypePtr const &type, std::string const &name,
+                                         TypePtrArray const &parameter_types, TypePtr const &return_type,
+                                         Handler const &handler);
+  void        CreateMemberFunction(TypePtr const &type, std::string const &name,
+                                   TypePtrArray const &parameter_types, TypePtr const &return_type,
+                                   Handler const &handler);
+  FunctionPtr CreateUserDefinedFreeFunction(std::string const &     name,
+                                            TypePtrArray const &    parameter_types,
+                                            VariablePtrArray const &parameter_variables,
+                                            TypePtr const &         return_type);
+  void        EnableIndexOperator(TypePtr const &type, TypePtrArray const &input_types,
+                                  TypePtr const &output_type, Handler const &get_handler,
+                                  Handler const &set_handler);
+  void        AddTypeInfo(TypeInfo const &info, TypeId type_id, TypePtr const &type);
+  void        AddFunctionInfo(FunctionPtr const &function, Handler const &handler);
+  std::string BuildUniqueId(TypePtr const &type, std::string const &function_name,
+                            TypePtrArray const &parameter_types, TypePtr const &return_type);
+  void        AddFunctionToSymbolTable(SymbolTablePtr const &symbols, FunctionPtr const &function);
 
-  void AddFunction(SymbolTablePtr const &symbol_table, FunctionPtr const &function);
-
-  bool IsIntegerType(TypePtr const &type) const
+  TypePtr GetType(TypeIndex type_index)
   {
-    return (type->id == TypeIds::Int8) || (type->id == TypeIds::Byte) ||
-           (type->id == TypeIds::Int16) || (type->id == TypeIds::UInt16) ||
-           (type->id == TypeIds::Int32) || (type->id == TypeIds::UInt32) ||
-           (type->id == TypeIds::Int64) || (type->id == TypeIds::UInt64);
-  }
-
-  bool IsRealType(TypePtr const &type) const
-  {
-    return (type->id == TypeIds::Float32) || (type->id == TypeIds::Float64);
-  }
-
-  bool IsNumberType(TypePtr const &type) const
-  {
-    return IsIntegerType(type) || IsRealType(type);
-  }
-
-  void AddType(TypeId type_id, TypePtr const &type, TypeInfo const &type_info)
-  {
-    types_.push_back(type);
-    type_table_.insert(std::pair<TypeId, TypePtr>(type_id, type));
-    type_info_table_.insert(std::pair<TypeId, TypeInfo>(type_id, type_info));
-  }
-
-  TypePtr GetTypePtr(TypeId type_id)
-  {
-    auto it = type_table_.find(type_id);
-    if (it != type_table_.end())
+    TypePtr type = type_map_.Find(type_index);
+    if (type)
     {
-      return it->second;
+      return type;
     }
-    throw std::runtime_error("type id is not valid");
+    throw std::runtime_error("type index has not been registered for the following type:\n " +
+                             std::string(type_index.name()));
   }
 
-  TypePtrArray GetTypePtrs(TypeIdArray const &type_ids)
+  TypePtrArray GetTypes(TypeIndexArray const &type_index_array)
   {
     TypePtrArray array;
-    for (TypeId type_id : type_ids)
+    for (auto const &type_index : type_index_array)
     {
-      array.push_back(GetTypePtr(type_id));
+      array.push_back(GetType(type_index));
     }
     return array;
   }
 
-  void EnableIndexOperator(TypePtr const &type, TypePtrArray const &input_types,
-                           TypePtr const &output_type)
+  Operator GetOperator(NodeKind node_kind)
   {
-    type->index_input_types = input_types;
-    type->index_output_type = output_type;
+    auto it = operator_map_.find(node_kind);
+    if (it != operator_map_.end())
+    {
+      return it->second;
+    }
+    return Operator::Unknown;
+  }
+
+  void EnableOperator(Operators &ops, Operator op)
+  {
+    ops.insert(op);
+  }
+
+  bool IsOperatorEnabled(Operators const &ops, Operator op) const
+  {
+    return ops.find(op) != ops.end();
   }
 
   void EnableOperator(TypePtr const &type, Operator op)
   {
-    EnableOp(type, operator_table_[op], op_table_);
+    EnableOperator(type->ops, op);
   }
 
   void EnableLeftOperator(TypePtr const &type, Operator op)
   {
-    EnableOp(type, operator_table_[op], left_op_table_);
+    EnableOperator(type->left_ops, op);
   }
 
   void EnableRightOperator(TypePtr const &type, Operator op)
   {
-    EnableOp(type, operator_table_[op], right_op_table_);
+    EnableOperator(type->right_ops, op);
   }
 
-  bool IsOpEnabled(TypePtr const &type, Node::Kind op) const
+  bool IsOperatorEnabled(TypePtr const &type, Operator op) const
   {
-    return IsOpEnabled(type, op, op_table_);
-  }
-
-  bool IsLeftOpEnabled(TypePtr const &type, Node::Kind op) const
-  {
-    return IsOpEnabled(type, op, left_op_table_);
-  }
-
-  bool IsRightOpEnabled(TypePtr const &type, Node::Kind op) const
-  {
-    return IsOpEnabled(type, op, right_op_table_);
-  }
-
-  void EnableOp(TypePtr const &type, Node::Kind op, OpTable &table)
-  {
-    auto it = table.find(type);
-    if (it == table.end())
-    {
-      OpArray array;
-      array.push_back(op);
-      table.insert(std::pair<TypePtr, OpArray>(type, array));
-    }
-    else
-    {
-      OpArray &array = it->second;
-      array.push_back(op);
-    }
-  }
-
-  bool IsOpEnabled(TypePtr const &type, Node::Kind op, OpTable const &table) const
-  {
-    bool const is_instantiation = type->category == TypeCategory::TemplateInstantiation;
+    bool const is_instantiation = type->IsInstantiation();
     TypePtr    t                = is_instantiation ? type->template_type : type;
-    auto       it               = table.find(t);
-    if (it != table.end())
-    {
-      auto const &array = it->second;
-      for (auto const &element : array)
-      {
-        if (element == op)
-        {
-          // The type does support the op
-          return true;
-        }
-      }
-    }
-    // The type does not support the op
-    return false;
+    return IsOperatorEnabled(t->ops, op);
+  }
+
+  bool IsLeftOperatorEnabled(TypePtr const &type, Operator op) const
+  {
+    bool const is_instantiation = type->IsInstantiation();
+    TypePtr    t                = is_instantiation ? type->template_type : type;
+    return IsOperatorEnabled(t->left_ops, op);
+  }
+
+  bool IsRightOperatorEnabled(TypePtr const &type, Operator op) const
+  {
+    bool const is_instantiation = type->IsInstantiation();
+    TypePtr    t                = is_instantiation ? type->template_type : type;
+    return IsOperatorEnabled(t->right_ops, op);
   }
 };
 

@@ -2,6 +2,7 @@
 *build*/
 *.pyc
 *.db
+docker-images
 CMakeCache.txt
 
 # Merge Outputs
@@ -9,6 +10,7 @@ CMakeCache.txt
 
 nodes/
 .ipynb_checkpoints/
+docker-images/
 
 # Legacy Editors
 \#*#

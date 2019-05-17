@@ -809,9 +809,6 @@ extern log::details::LogWrapper logger;
     FETCH_LOG_INFO(LOGGING_NAME, "Trace: \n", trace.str());     \
   }
 
-//#define LOG_STACK_TRACE_POINT
-//#define LOG_LAMBDA_STACK_TRACE_POINT
-
 #if 1
 #define FETCH_LOG_PROMISE()
 #else

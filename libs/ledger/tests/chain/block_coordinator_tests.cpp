@@ -1082,7 +1082,7 @@ protected:
 TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
 {
   fetch::ledger::TransactionSummary summary;
-  summary.transaction_hash = fetch::testing::GenerateUniqueHashes(1u)[0];
+  summary.transaction_hash = *fetch::testing::GenerateUniqueHashes(1u).begin();
 
   auto genesis = block_generator_();
   auto b1      = block_generator_(genesis);
@@ -1103,7 +1103,13 @@ TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
 
   Advance();
 
-  std::this_thread::sleep_for(std::chrono::seconds(61u));
+  // Time out wait to request Tx from peers
+  std::this_thread::sleep_for(std::chrono::seconds(31u));
+
+  Advance();
+
+  // Time out wait for Tx - block should be invalidated at this point
+  std::this_thread::sleep_for(std::chrono::seconds(31u));
 
   Advance();
 

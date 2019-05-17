@@ -1,0 +1,14 @@
+function main()
+  // Declaration of initial variables
+  var hello = "Hello";
+
+  // Start of program
+  print(hello + " world");
+
+  // Additional (uninitialised) variables
+  var world : String;
+  world = "Fetch";  
+
+  // More program code
+  print(hello + " " + world);
+endfunction

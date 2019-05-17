@@ -17,126 +17,138 @@
 //------------------------------------------------------------------------------
 
 #include "network/service/server.hpp"
-
+#include "core/threading/synchronised_state.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 #include "service_ids.hpp"
 
+#include <iostream>
+#include <set>
+
 using fetch::muddle::Muddle;
 using fetch::muddle::NetworkId;
 using fetch::muddle::rpc::Server;
 using fetch::muddle::rpc::Client;
+using fetch::service::CallContext;
+using fetch::service::Protocol;
 
-const int SERVICE_TEST = 1;
-const int CHANNEL_RPC  = 1;
+using MuddlePtr = std::shared_ptr<Muddle>;
 
-#include <iostream>
+static char const *LOGGING_NAME = "RPC-Server";
 
-#include <set>
-using namespace fetch::service;
-using namespace fetch::byte_array;
-
-// First we make a service implementation
 class ClientRegister
 {
 public:
+  explicit ClientRegister(MuddlePtr muddle)
+    : muddle_{std::move(muddle)}
+  {}
+
   void Register(CallContext const *context)
   {
-    std::cout << "\rRegistering " << ToBase64(context->sender_address) << std::endl
-              << std::endl
-              << "> " << std::flush;
+    FETCH_LOG_INFO(LOGGING_NAME, "Registering: ", context->sender_address.ToBase64());
 
-    mutex_.lock();
-    registered_aeas_.insert(context->sender_address);
-    mutex_.unlock();
+    node_set_.Apply(
+        [context](AddressSet &addresses) { addresses.insert(context->sender_address); });
   }
 
-  std::vector<std::string> SearchFor(std::string const &val)
+  Strings SearchFor(std::string const &val)
   {
-    std::vector<std::string> ret;
-    mutex_.lock();
-    for (auto &id : registered_aeas_)
-    {
-      auto prom =
-          client_->CallSpecificAddress(id, FetchProtocols::NODE_TO_AEA, NodeToAEA::SEARCH, val);
-      std::string s = prom->As<std::string>();
-      if (s != "")
+    auto const connected_peers = muddle_->AsEndpoint().GetDirectlyConnectedPeers();
+
+    // generate the set of address to whom we are directly connected and have registered
+    AddressSet addresses{};
+    node_set_.Apply([&addresses, &connected_peers](AddressSet const &node_addresses) {
+      for (auto const &address : connected_peers)
       {
-        ret.push_back(s);
+        if (node_addresses.find(address) != node_addresses.end())
+        {
+          addresses.insert(address);
+        }
+      }
+    });
+
+    // query all the connected addresses
+    Strings strings{};
+    for (auto const &address : addresses)
+    {
+      // query this specific address
+      Strings response =
+          client_->CallSpecificAddress(address, FetchProtocols::NODE_TO_AEA, NodeToAEA::SEARCH, val)
+              ->As<Strings>();
+
+      // if the node responded positively then add it to the response
+      if (!response.empty())
+      {
+        strings.insert(strings.end(), response.begin(), response.end());
       }
     }
 
-    mutex_.unlock();
-
-    return ret;
-  }
-
-  void register_service_instance(std::shared_ptr<Muddle> muddle_ptr)
-  {
-    client_ = std::make_shared<Client>("RRPClient", muddle_ptr->AsEndpoint(), Muddle::Address(),
-                                       SERVICE_TEST, CHANNEL_RPC);
+    return strings;
   }
 
 private:
-  std::set<Muddle::Address> registered_aeas_;
-  fetch::mutex::Mutex       mutex_{__LINE__, __FILE__};
-  std::shared_ptr<Client>   client_;
+  using RpcClientPtr   = std::shared_ptr<Client>;
+  using AddressSet     = std::unordered_set<Muddle::Address>;
+  using SyncAddressSet = fetch::SynchronisedState<AddressSet>;
+
+  MuddlePtr      muddle_;
+  RpcClientPtr   client_{std::make_shared<Client>("RRPClient", muddle_->AsEndpoint(),
+                                                Muddle::Address(), SERVICE_TEST, CHANNEL_RPC)};
+  SyncAddressSet node_set_{};
 };
 
 // Next we make a protocol for the implementation
 class AEAToNodeProtocol : public Protocol
 {
 public:
-  AEAToNodeProtocol()
-    : Protocol()
-  {}
-
-  void Expose(ClientRegister *target)
+  explicit AEAToNodeProtocol(ClientRegister *target)
   {
     this->ExposeWithClientContext(AEAToNode::REGISTER, target, &ClientRegister::Register);
   }
-
-private:
 };
 
-// And finanly we build the service
+// And finally we build the service
 class OEFService
 {
 public:
-  OEFService(std::shared_ptr<Muddle> &muddle)
+  explicit OEFService(MuddlePtr const &muddle)
+    : client_register_{muddle}
+    , rpc_server_{std::make_shared<Server>(muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC)}
   {
-    auto server = std::make_shared<Server>(muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC);
-
-    aea_to_node_protocol_.Expose(&client_register_);
-    server->Add(FetchProtocols::AEA_TO_NODE, &aea_to_node_protocol_);
-    client_register_.register_service_instance(muddle);
+    // add the protocol to the server
+    rpc_server_->Add(FetchProtocols::AEA_TO_NODE, &aea_to_node_protocol_);
   }
 
-  std::vector<std::string> SearchFor(std::string const &val)
+  Strings SearchFor(std::string const &val)
   {
     return client_register_.SearchFor(val);
   }
 
 private:
-  AEAToNodeProtocol aea_to_node_protocol_;
+  using RpcServerPtr = std::shared_ptr<Server>;
+
   ClientRegister    client_register_;
+  AEAToNodeProtocol aea_to_node_protocol_{&client_register_};
+  RpcServerPtr      rpc_server_{};
 };
 
 int main()
 {
+  // create and start the network manager
   fetch::network::NetworkManager tm{"NetMgr", 8};
-
-  auto server_muddle = Muddle::CreateMuddle(NetworkId{"TEST"}, tm);
-
   tm.Start();
-  server_muddle->Start({8080});
 
-  OEFService service(server_muddle);
+  // create and start the muddle service
+  auto muddle = Muddle::CreateMuddle(NetworkId{"TEST"}, tm);
+  muddle->Start({8080});
+
+  // create the OEF service and attach it to the muddle
+  OEFService service(muddle);
 
   std::string search_for;
   std::cout << "Enter a string to search the AEAs for this string" << std::endl;
-  while (true)
+  for (;;)
   {
 
     std::cout << "> " << std::flush;
@@ -146,14 +158,18 @@ int main()
       break;
     }
 
+    // a blank search is not searched
+    if (search_for.empty())
+    {
+      continue;
+    }
+
     auto results = service.SearchFor(search_for);
     for (auto &s : results)
     {
       std::cout << " - " << s << std::endl;
     }
   }
-
-  tm.Stop();
 
   return 0;
 }

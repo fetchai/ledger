@@ -37,7 +37,9 @@ using ExecutionState = fetch::ledger::ExecutionManagerInterface::State;
 const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};
 const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{500};
 const std::chrono::seconds      NOTIFY_INTERVAL{10};
-const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{60};
+const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{30};
+const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{30};
+const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
 
 const std::size_t DIGEST_LENGTH_BYTES{32};
 const std::size_t IDENTITY_LENGTH_BYTES{64};
@@ -104,15 +106,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
 
   // TODO(private issue 792): this shouldn't be here, but if it is, it locks the whole system on
   // startup. RecoverFromStartup();
-}
-
-/**
- * Destruct the Block Coordinator
- */
-BlockCoordinator::~BlockCoordinator()
-{
-  state_machine_->Reset();
-  state_machine_.reset();
 }
 
 /**
@@ -224,10 +217,19 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
   {
     // normal case - we have processed at least one block
 
-    // find the path
-    MainChain::Blocks blocks;
-    bool const        lookup_success =
-        chain_.GetPathToCommonAncestor(blocks, current_hash, last_processed_block);
+    // find the path to ancestor - retain this path if it is long for efficiency reasons.
+    bool lookup_success = false;
+
+    if (blocks_to_common_ancestor_.empty())
+    {
+      lookup_success = chain_.GetPathToCommonAncestor(
+          blocks_to_common_ancestor_, current_hash, last_processed_block,
+          COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT, MainChain::BehaviourWhenLimit::RETURN_LEAST_RECENT);
+    }
+    else
+    {
+      lookup_success = true;
+    }
 
     if (!lookup_success)
     {
@@ -236,9 +238,10 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
       return State::RESET;
     }
 
-    assert(blocks.size() >= 2);
+    assert(blocks_to_common_ancestor_.size() >= 2 &&
+           "Expected at least two blocks from common ancestor: HEAD and current");
 
-    auto     block_path_it = blocks.crbegin();
+    auto     block_path_it = blocks_to_common_ancestor_.crbegin();
     BlockPtr common_parent = *block_path_it++;
     BlockPtr next_block    = *block_path_it++;
 
@@ -285,6 +288,13 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
 
     // update the current block and begin scheduling
     current_block_ = next_block;
+
+    blocks_to_common_ancestor_.pop_back();
+
+    if (blocks_to_common_ancestor_.size() < THRESHOLD_FOR_FAST_SYNCING)
+    {
+      blocks_to_common_ancestor_.clear();
+    }
 
     return State::PRE_EXEC_BLOCK_VALIDATION;
   }
@@ -406,25 +416,38 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
 {
   if (previous == current)
   {
-    // FSM is stuck waiting for transactions - has timeout elapsed?
-    if (wait_for_tx_timeout_.IsDue())
+    if (have_asked_for_missing_txs_)
     {
-      // Assume block was invalid and discard it
-      chain_.RemoveBlock(current_block_->body.hash);
+      // FSM is stuck waiting for transactions - has timeout elapsed?
+      if (wait_for_tx_timeout_.IsDue())
+      {
+        // Assume block was invalid and discard it
+        chain_.RemoveBlock(current_block_->body.hash);
 
-      return State::RESET;
+        return State::RESET;
+      }
+    }
+    else
+    {
+      if (wait_before_asking_for_missing_tx_.IsDue())
+      {
+        storage_unit_.IssueCallForMissingTxs(*pending_txs_);
+        have_asked_for_missing_txs_ = true;
+        wait_for_tx_timeout_        = WAIT_FOR_TX_TIMEOUT_INTERVAL;
+      }
     }
   }
-  else if (previous != current)
+  else
   {
-    // Only just started waiting for transactions - reset timeout
-    wait_for_tx_timeout_ = WAIT_FOR_TX_TIMEOUT_INTERVAL;
+    // Only just started waiting for transactions - reset countdown to issuing request to peers
+    wait_before_asking_for_missing_tx_ = WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL;
+    have_asked_for_missing_txs_        = false;
   }
 
   // if the transaction digests have not been cached then do this now
   if (!pending_txs_)
   {
-    pending_txs_ = std::make_unique<TxSet>();
+    pending_txs_ = std::make_unique<TxDigestSet>();
 
     for (auto const &slice : current_block_->body.slices)
     {
@@ -729,6 +752,7 @@ BlockCoordinator::State BlockCoordinator::OnReset()
   current_block_.reset();
   next_block_.reset();
   pending_txs_.reset();
+  blocks_to_common_ancestor_.clear();
 
   // we should update the next block time
   UpdateNextBlockTime();

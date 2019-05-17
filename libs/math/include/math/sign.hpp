@@ -18,34 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "math/kernels/sign.hpp"
-#include "math/kernels/standard_functions.hpp"
 #include "math/meta/math_type_traits.hpp"
 #include <cassert>
 
 namespace fetch {
 namespace math {
-
-/**
- * Composes a floating point value with the magnitude of x and the sign of y.
- * @param x
- */
-template <typename ArrayType>
-fetch::math::meta::IfIsNotImplemented<ArrayType, void> Copysign(ArrayType &x)
-{
-  kernels::stdlib::Copysign<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * Determines if the given floating point number arg is negative.
- * @param x
- */
-template <typename ArrayType>
-fetch::math::meta::IfIsNotImplemented<ArrayType, void> Signbit(ArrayType &x)
-{
-  kernels::stdlib::Signbit<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
 
 /**
  * replaces data with the sign (1, 0, or -1)

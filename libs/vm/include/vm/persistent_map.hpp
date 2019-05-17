@@ -37,7 +37,10 @@ public:
     , value_type_{value_type}
   {}
 
-  ~IPersistentMap() override = default;
+  ~IPersistentMap() = default;
+
+  virtual TemplateParameter2 GetIndexedValue(TemplateParameter1 const &key)                    = 0;
+  virtual void SetIndexedValue(TemplateParameter1 const &key, TemplateParameter2 const &value) = 0;
 
 protected:
   std::string name_;
@@ -56,7 +59,7 @@ public:
 protected:
   using ByteBuffer = std::vector<uint8_t>;
 
-  Ptr<String> ExtractKey(Variant &key_v)
+  Ptr<String> ExtractKey(Variant const &key_v)
   {
     Ptr<String> key;
 
@@ -78,32 +81,29 @@ protected:
     return new String{vm_, name_ + "." + key->str};
   }
 
-  void PushElement(TypeId /*element_type_id*/) override
+  TemplateParameter2 GetIndexedValue(TemplateParameter1 const &key_v) override
   {
     if (!vm_->HasIoObserver())
     {
       RuntimeError("No IOObserver registered in VM.");
-      return;
+      return {};
     }
 
-    Variant &  key_v = Pop();
     auto const key{ExtractKey(key_v)};
-    key_v.Reset();
     if (!key)
     {
       RuntimeError("Extraction of key value failed.");
-      return;
+      return {};
     }
 
     auto state{
-        IState::ConstructIntrinsic(vm_, TypeIds::IState, value_type_, key, TemplateParameter{})};
+        IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_, key, TemplateParameter{})};
     auto value = state->Get();
 
-    Variant &value_v = Push();
-    value_v.Construct(value);
+    return {value};
   }
 
-  void PopToElement() override
+  void SetIndexedValue(TemplateParameter1 const &key_v, TemplateParameter2 const &value_v) override
   {
     if (!vm_->HasIoObserver())
     {
@@ -111,16 +111,13 @@ protected:
       return;
     }
 
-    Variant &  key_v = Pop();
     auto const key{ExtractKey(key_v)};
-    key_v.Reset();
     if (!key)
     {
       RuntimeError("Extraction of key value failed.");
       return;
     }
 
-    Variant &value_v = Pop();
     if (value_type_ != value_v.type_id)
     {
       RuntimeError("Incorrect value type for PersistentMap<...> type.");
@@ -128,10 +125,9 @@ protected:
     else
     {
       auto state{
-          IState::ConstructIntrinsic(vm_, TypeIds::IState, value_type_, key, TemplateParameter{})};
+          IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_, key, TemplateParameter{})};
       state->Set(TemplateParameter{value_v});
     }
-    value_v.Reset();
   }
 };
 
