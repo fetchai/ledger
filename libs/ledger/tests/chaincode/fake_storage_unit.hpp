@@ -19,6 +19,7 @@
 
 #include "crypto/fnv.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/chain/v2/transaction.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <algorithm>
@@ -31,11 +32,11 @@ class FakeStorageUnit final : public fetch::ledger::StorageUnitInterface
 {
 public:
   using transaction_store_type =
-      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::ledger::Transaction>;
+      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::ledger::v2::Transaction>;
   using state_store_type =
       std::unordered_map<fetch::byte_array::ConstByteArray, fetch::byte_array::ConstByteArray>;
   /*using state_archive_type = std::unordered_map<bookmark_type, state_store_type>; */
-  using lock_store_type = std::unordered_set<fetch::byte_array::ConstByteArray>;
+  using lock_store_type = std::unordered_set<ShardIndex>;
   using mutex_type      = std::mutex;
   using lock_guard_type = std::lock_guard<mutex_type>;
   using hash_type       = fetch::byte_array::ConstByteArray;
@@ -92,7 +93,7 @@ public:
     state_[key.id()] = value;
   }
 
-  bool Lock(ResourceAddress const &key) override
+  bool Lock(ShardIndex shard) override
   {
     lock_guard_type lock(mutex_);
     FETCH_LOG_DEBUG(LOGGING_NAME, "Lock (key.address = ", key.address(),
@@ -100,17 +101,17 @@ public:
 
     bool success = false;
 
-    bool const already_locked = locks_.find(key.id()) != locks_.end();
+    bool const already_locked = locks_.find(shard) != locks_.end();
     if (!already_locked)
     {
-      locks_.insert(key.id());
+      locks_.insert(shard);
       success = true;
     }
 
     return success;
   }
 
-  bool Unlock(ResourceAddress const &key) override
+  bool Unlock(ShardIndex shard) override
   {
     lock_guard_type lock(mutex_);
     FETCH_LOG_DEBUG(LOGGING_NAME, "Unlock (key.address = ", key.address(),
@@ -118,24 +119,24 @@ public:
 
     bool success = false;
 
-    bool const already_locked = locks_.find(key.id()) != locks_.end();
+    bool const already_locked = locks_.find(shard) != locks_.end();
     if (already_locked)
     {
-      locks_.erase(key.id());
+      locks_.erase(shard);
       success = true;
     }
 
     return success;
   }
 
-  void AddTransaction(fetch::ledger::Transaction const &tx) override
+  void AddTransaction(fetch::ledger::v2::Transaction const &tx) override
   {
     lock_guard_type lock(mutex_);
     transactions_[tx.digest()] = tx;
   }
 
   bool GetTransaction(fetch::byte_array::ConstByteArray const &digest,
-                      fetch::ledger::Transaction &             tx) override
+                      fetch::ledger::v2::Transaction &         tx) override
   {
     lock_guard_type lock(mutex_);
     bool            success = false;
@@ -156,7 +157,7 @@ public:
     return transactions_.find(digest) != transactions_.end();
   }
 
-  void IssueCallForMissingTxs(fetch::ledger::TxDigestSet const &) override
+  void IssueCallForMissingTxs(fetch::ledger::v2::DigestSet const &) override
   {}
 
   Hash CurrentHash() override
@@ -181,7 +182,7 @@ public:
   };
 
   // Does nothing
-  TxSummaries PollRecentTx(uint32_t) override
+  TxLayouts PollRecentTx(uint32_t) override
   {
     return {};
   }

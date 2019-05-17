@@ -39,14 +39,15 @@ public:
   ~CachedStorageAdapter();
 
   void Flush();
+  void Clear();
 
   /// @name State Interface
   /// @{
   Document Get(ResourceAddress const &key) override;
   Document GetOrCreate(ResourceAddress const &key) override;
   void     Set(ResourceAddress const &key, StateValue const &value) override;
-  bool     Lock(ResourceAddress const &key) override;
-  bool     Unlock(ResourceAddress const &key) override;
+  bool     Lock(ShardIndex index) override;
+  bool     Unlock(ShardIndex index) override;
   /// @}
 
 private:

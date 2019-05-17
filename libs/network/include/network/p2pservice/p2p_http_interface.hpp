@@ -223,8 +223,6 @@ private:
 
   Variant GenerateBlockList(bool include_transactions, std::size_t length)
   {
-    using byte_array::ToBase64;
-
     // lookup the blocks from the heaviest chain
     auto blocks = chain_.GetHeaviestChain(length);
 
@@ -238,11 +236,11 @@ private:
 
       // format the block number
       block                 = Variant::Object();
-      block["hash"]         = byte_array::ToBase64(b->body.hash);
-      block["previousHash"] = byte_array::ToBase64(b->body.previous_hash);
-      block["merkleHash"]   = byte_array::ToBase64(b->body.merkle_hash);
-      block["proof"]        = byte_array::ToBase64(b->proof.header());
-      block["miner"]        = byte_array::ToBase64(b->body.miner);
+      block["hash"]         = "0x" + b->body.hash.ToHex();
+      block["previousHash"] = "0x" + b->body.previous_hash.ToHex();
+      block["merkleHash"]   = "0x" + b->body.merkle_hash.ToHex();
+      block["proof"]        = "0x" + b->proof.header().ToHex();
+      block["miner"]        = b->body.miner.display();
       block["blockNumber"]  = b->body.block_number;
 
       if (include_transactions)
@@ -261,7 +259,7 @@ private:
             auto &tx = tx_list[tx_idx];
 
             tx          = Variant::Object();
-            tx["hash"]  = ToBase64(transaction.transaction_hash);
+            tx["hash"]  = "0x" + transaction.digest().ToHex();
             tx["slice"] = slice_idx;
 
             ++tx_idx;

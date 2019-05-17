@@ -20,6 +20,7 @@
 #include "crypto/sha256.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chain/v2/transaction_builder.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/state_adapter.hpp"
 
@@ -33,15 +34,15 @@
 
 namespace {
 
-using namespace testing;
+using ::testing::_;
 
 using fetch::ledger::SmartContract;
 using fetch::byte_array::ConstByteArray;
 using fetch::ledger::TransactionSummary;
 using fetch::storage::ResourceAddress;
 using fetch::variant::Variant;
-using fetch::byte_array::ToBase64;
 using fetch::serializers::ByteArrayBuffer;
+using fetch::ledger::v2::Address;
 using ContractDigest = ConstByteArray;
 
 template <typename T>
@@ -64,9 +65,10 @@ protected:
     // generate the smart contract instance for this contract
     auto contract = std::make_shared<SmartContract>(source);
     contract_     = contract;
+    contract_address_ = std::make_unique<Address>(contract->contract_digest());
     // populate the contract name too
-    contract_name_ = std::make_shared<Identifier>(ToBase64(contract->contract_digest()) + "." +
-                                                  ToBase64(certificate_->identity().identifier()));
+    contract_name_ = std::make_shared<Identifier>(contract_address_->address().ToHex() + "." +
+                                                  owner_address_->display());
 
     ASSERT_TRUE(static_cast<bool>(contract_));
     ASSERT_TRUE(static_cast<bool>(contract_name_));
@@ -132,17 +134,17 @@ TEST_F(SmartContractTests, CheckSimpleContract)
     InSequence seq;
 
     // from the action
-    EXPECT_CALL(*storage_, Lock(expected_resource));
+    EXPECT_CALL(*storage_, Lock(_));
     EXPECT_CALL(*storage_, Get(expected_resource));
     EXPECT_CALL(*storage_, Set(expected_resource, expected_value)).Times(1);
-    EXPECT_CALL(*storage_, Unlock(expected_resource));
+    EXPECT_CALL(*storage_, Unlock(_));
 
     // from the query
     EXPECT_CALL(*storage_, Get(expected_resource));
   }
 
   // send the smart contract an "increment" action
-  EXPECT_EQ(SmartContract::Status::OK, SendAction("increment", {"value"}));
+  EXPECT_EQ(SmartContract::Status::OK, SendSmartAction("increment"));
 
   VerifyQuery("value", int32_t{11});
 }
@@ -251,10 +253,10 @@ TEST_F(SmartContractTests, CheckParameterizedActionAndQuery)
     InSequence seq;
 
     // from the action
-    EXPECT_CALL(*storage_, Lock(expected_resource));
+    EXPECT_CALL(*storage_, Lock(_));
     EXPECT_CALL(*storage_, Get(expected_resource));
     EXPECT_CALL(*storage_, Set(expected_resource, expected_value)).Times(1);
-    EXPECT_CALL(*storage_, Unlock(expected_resource));
+    EXPECT_CALL(*storage_, Unlock(_));
 
     // from the query
     EXPECT_CALL(*storage_, Get(expected_resource));
@@ -262,7 +264,7 @@ TEST_F(SmartContractTests, CheckParameterizedActionAndQuery)
   }
 
   // send the smart contract an "increment" action
-  EXPECT_EQ(SmartContract::Status::OK, SendActionWithParams("increment", {"value"}, 20));
+  EXPECT_EQ(SmartContract::Status::OK, SendSmartActionWithParams("increment", 20));
 
   VerifyQuery("value", int32_t{30});
 
@@ -318,11 +320,10 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
   EXPECT_TRUE(IsIn(query_handlers, "balance"));
 
   fetch::crypto::ECDSASigner target{};
+  fetch::ledger::v2::Address target_address{target.identity()};
 
-  auto const owner_key =
-      contract_name_->full_name() + ".state." + ToBase64(certificate_->identity().identifier());
-  auto const target_key =
-      contract_name_->full_name() + ".state." + ToBase64(target.identity().identifier());
+  auto const owner_key  = contract_name_->full_name() + ".state." + owner_address_->display();
+  auto const target_key = contract_name_->full_name() + ".state." + target_address.display();
 
   auto const owner_resource   = ResourceAddress{owner_key};
   auto const target_resource  = ResourceAddress{target_key};
@@ -335,22 +336,20 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
     InSequence seq;
 
     // from the init
-    EXPECT_CALL(*storage_, Lock(owner_resource));
+    EXPECT_CALL(*storage_, Lock(_));
     EXPECT_CALL(*storage_, Get(owner_resource));
     EXPECT_CALL(*storage_, Set(owner_resource, initial_supply));
-    EXPECT_CALL(*storage_, Unlock(owner_resource));
+    EXPECT_CALL(*storage_, Unlock(_));
 
     // from the query
     EXPECT_CALL(*storage_, Get(owner_resource));
 
     // from the action
     EXPECT_CALL(*storage_, Lock(_));
-    EXPECT_CALL(*storage_, Lock(_));
     EXPECT_CALL(*storage_, Get(_));
     EXPECT_CALL(*storage_, Get(_));
     EXPECT_CALL(*storage_, Set(_, remaining_amount));
     EXPECT_CALL(*storage_, Set(_, transfer_amount));
-    EXPECT_CALL(*storage_, Unlock(_));
     EXPECT_CALL(*storage_, Unlock(_));
 
     // from the queries
@@ -363,7 +362,7 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
   // check to see if the owners balance is present
   {
     Variant request    = Variant::Object();
-    request["address"] = ToBase64(certificate_->identity().identifier());
+    request["address"] = owner_address_->display();
 
     Variant response;
     EXPECT_EQ(SmartContract::Status::OK, SendQuery("balance", request, response));
@@ -378,14 +377,11 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
 
   // send the smart contract an "increment" action
   EXPECT_EQ(SmartContract::Status::OK,
-            SendActionWithParams("transfer",
-                                 {ToBase64(certificate_->identity().identifier()),
-                                  ToBase64(target.identity().identifier())},
-                                 certificate_->identity(), target.identity(), 1000000000ull));
+            SendSmartActionWithParams("transfer", *owner_address_, target_address, 1000000000ull));
 
   Variant request{Variant::Object()};
 
-  request["address"] = ToBase64(certificate_->identity().identifier());
+    request["address"] = owner_address_->display();
   VerifyQuery("balance", 99000000000ull, request);
 
   request["address"] = ToBase64(target.identity().identifier());

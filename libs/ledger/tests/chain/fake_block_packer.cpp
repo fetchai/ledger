@@ -22,10 +22,11 @@
 
 #include "fake_block_packer.hpp"
 
-void FakeBlockPacker::EnqueueTransaction(fetch::ledger::TransactionSummary const &tx)
-{
-  FETCH_UNUSED(tx);
-}
+void FakeBlockPacker::EnqueueTransaction(fetch::ledger::v2::Transaction const &)
+{}
+
+void FakeBlockPacker::EnqueueTransaction(fetch::ledger::v2::TransactionLayout const &)
+{}
 
 void FakeBlockPacker::GenerateBlock(fetch::ledger::Block &block, std::size_t num_lanes,
                                     std::size_t num_slices, fetch::ledger::MainChain const &chain)
