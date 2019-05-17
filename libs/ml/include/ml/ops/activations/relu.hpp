@@ -66,15 +66,17 @@ public:
     ArrayType const &input = inputs.front().get();
     ArrayType        return_signal{error_signal.shape()};
 
+    DataType zero(0);
+
     auto it1    = input.begin();
     auto it2    = return_signal.begin();
     auto err_it = error_signal.cbegin();
 
     while (it1.is_valid())
     {
-      if (*it1 <= DataType(0))
+      if (*it1 <= zero)
       {
-        *it2 = static_cast<DataType>(0);
+        *it2 = zero;
       }
       else
       {
