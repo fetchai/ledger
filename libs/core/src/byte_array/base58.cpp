@@ -74,7 +74,9 @@ ConstByteArray FromBase58(ConstByteArray const &str)
 
   // Skip leading spaces.
   while ((raw_start != raw_end) && IsSpace(*raw_start))
+  {
     raw_start++;
+  }
 
   // Skip and count leading '1's.
   int zeroes = 0;
@@ -111,7 +113,9 @@ ConstByteArray FromBase58(ConstByteArray const &str)
 
   // Skip trailing spaces.
   while (IsSpace(*raw_start))
+  {
     raw_start++;
+  }
 
   if (raw_start > raw_end)
   {
@@ -121,7 +125,9 @@ ConstByteArray FromBase58(ConstByteArray const &str)
   // Skip leading zeroes in b256.
   auto it = b256.begin() + (size - length);
   while (it != b256.end() && *it == 0)
+  {
     it++;
+  }
 
   // Copy result into output vector.
   std::vector<uint8_t> vch;
@@ -174,7 +180,10 @@ ConstByteArray ToBase58(ConstByteArray const &str)
   output.reserve(static_cast<std::size_t>(zeroes + (b58.end() - it)));
   output.assign(static_cast<std::size_t>(zeroes), '1');
   while (it != b58.end())
+  {
     output += pszBase58[*(it++)];
+  }
+
   return {output};
 
 }

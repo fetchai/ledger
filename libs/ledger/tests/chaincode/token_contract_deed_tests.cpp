@@ -29,7 +29,6 @@ namespace ledger {
 namespace {
 
 using fetch::ledger::v2::Address;
-using fetch::ledger::v2::Transaction;
 using fetch::ledger::v2::TransactionBuilder;
 
 using AddressArray = std::vector<Address>;

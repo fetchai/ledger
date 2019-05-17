@@ -28,7 +28,6 @@
 #include <ledger/chain/v2/transaction.hpp>
 #include <memory>
 
-using fetch::ledger::v2::Transaction;
 using fetch::ledger::v2::TransactionLayout;
 using fetch::ledger::v2::TransactionBuilder;
 using fetch::ledger::v2::Address;

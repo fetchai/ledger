@@ -38,7 +38,6 @@
 #include <string>
 
 using fetch::byte_array::ConstByteArray;
-using fetch::byte_array::ToBase64;
 using fetch::byte_array::FromBase64;
 
 namespace fetch {

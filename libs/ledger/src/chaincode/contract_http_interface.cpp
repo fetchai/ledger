@@ -44,7 +44,6 @@ namespace {
 using fetch::variant::Variant;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
-using fetch::byte_array::FromHex;
 using fetch::byte_array::ToBase64;
 using fetch::ledger::v2::FromJsonTransaction;
 

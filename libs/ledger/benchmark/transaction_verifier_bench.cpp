@@ -29,7 +29,6 @@
 #include <iostream>
 #include <thread>
 
-using fetch::ledger::VerifiedTransaction;
 using fetch::ledger::TransactionVerifier;
 using fetch::crypto::ECDSASigner;
 

@@ -30,13 +30,10 @@
 
 namespace {
 
-using fetch::byte_array::ByteArray;
 using fetch::random::LinearCongruentialGenerator;
-using fetch::ledger::v2::TransactionLayout;
 using fetch::miner::TransactionLayoutQueue;
 using TransactionLayoutQueuePtr = std::unique_ptr<TransactionLayoutQueue>;
 using fetch::ledger::v2::Digest;
-using fetch::BitVector;
 
 class TransactionLayoutQueueTests : public ::testing::Test
 {

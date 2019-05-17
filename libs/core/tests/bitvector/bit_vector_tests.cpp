@@ -27,9 +27,6 @@
 #include <memory>
 
 using fetch::BitVector;
-using fetch::platform::IsLog2;
-using fetch::platform::ToLog2;
-using fetch::platform::DivCeil;
 
 template <typename T>
 void BinPrint(T value, char const *name)

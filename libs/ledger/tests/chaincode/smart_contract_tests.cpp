@@ -42,10 +42,8 @@ using fetch::byte_array::ConstByteArray;
 using fetch::ledger::TransactionSummary;
 using fetch::storage::ResourceAddress;
 using fetch::variant::Variant;
-using fetch::byte_array::ToBase64;
 using fetch::serializers::ByteArrayBuffer;
 using fetch::ledger::v2::Address;
-using fetch::ledger::v2::TransactionBuilder;
 
 using ContractDigest = ConstByteArray;
 
