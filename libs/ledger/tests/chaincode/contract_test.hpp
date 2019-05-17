@@ -33,8 +33,22 @@
 
 #include <gtest/gtest.h>
 
+
+auto FullShards(std::size_t lane_count)
+{
+  fetch::BitVector retval{lane_count};
+  retval.SetAllOne();
+  return retval;
+}
+
+
 class ContractTest : public ::testing::Test
 {
+  //ContractTest() = default;
+  //ContractTest(fetch::BitVector shards)
+  //  : shards_{shards}
+  //{}
+
 protected:
   using Identity              = fetch::crypto::Identity;
   using Identifier            = fetch::ledger::Identifier;
@@ -46,13 +60,13 @@ protected:
   using MockStorageUnitPtr    = std::unique_ptr<StrictMockStorageUnit>;
   using Resources             = std::vector<ConstByteArray>;
   using CertificatePtr        = std::unique_ptr<fetch::crypto::ECDSASigner>;
-  using AddressPtr           = std::unique_ptr<fetch::ledger::v2::Address>;
+  using AddressPtr            = std::unique_ptr<fetch::ledger::v2::Address>;
   using StateAdapter          = fetch::ledger::StateAdapter;
   using StateSentinelAdapter  = fetch::ledger::StateSentinelAdapter;
   using Query                 = Contract::Query;
   using IdentifierPtr         = std::shared_ptr<Identifier>;
   using CachedStorageAdapter  = fetch::ledger::CachedStorageAdapter;
-  using TransactionPtr       = fetch::ledger::v2::TransactionBuilder::TransactionPtr;
+  using TransactionPtr        = fetch::ledger::v2::TransactionBuilder::TransactionPtr;
 
   void SetUp() override
   {
@@ -139,13 +153,10 @@ protected:
     using fetch::ledger::v2::TransactionBuilder;
     using fetch::ledger::v2::Address;
 
-    fetch::BitVector mask{1};
-    mask.SetAllOne();
-
     // build the transaction
     auto tx = TransactionBuilder()
                   .From(Address{certificate_->identity()})
-                  .TargetSmartContract(*contract_address_, *owner_address_, mask)
+                  .TargetSmartContract(*contract_address_, *owner_address_, shards_)
                   .Action(action)
                   .Signer(certificate_->identity())
                   .Data(data)
@@ -154,7 +165,7 @@ protected:
                   .Build();
 
     // adapt the storage engine for this execution
-    StateSentinelAdapter storage_adapter{*storage_, *contract_name_, mask};
+    StateSentinelAdapter storage_adapter{*storage_, *contract_name_, shards_};
 
     // dispatch the transaction to the contract
     contract_->Attach(storage_adapter);
@@ -166,11 +177,8 @@ protected:
 
   Contract::Status SendAction(TransactionPtr const &tx)
   {
-    fetch::BitVector mask{1};
-    mask.SetAllOne();
-
     // adapt the storage engine for this execution
-    StateSentinelAdapter storage_adapter{*storage_, Identifier{tx->chain_code()}, mask};
+    StateSentinelAdapter storage_adapter{*storage_, Identifier{tx->chain_code()}, shards_};
 
     // dispatch the transaction to the contract
     contract_->Attach(storage_adapter);
@@ -195,16 +203,23 @@ protected:
 
   Contract::Status InvokeInit(Identity const &owner)
   {
-    fetch::BitVector mask{1};
-    mask.SetAllOne();
-
-    StateSentinelAdapter storage_adapter{*storage_, *contract_name_, mask};
+    StateSentinelAdapter storage_adapter{*storage_, *contract_name_, shards_};
 
     contract_->Attach(storage_adapter);
     auto const status = contract_->DispatchInitialise(fetch::ledger::v2::Address{owner});
     contract_->Detach();
 
     return status;
+  }
+
+  fetch::BitVector const &shards() const
+  {
+    return shards_;
+  }
+
+  void shards(fetch::BitVector const &shards)
+  {
+    shards_ = shards;
   }
 
   /// @name User populated
@@ -214,6 +229,7 @@ protected:
   IdentifierPtr contract_name_;
   /// @}
 
+  fetch::BitVector   shards_{FullShards(1)};
   CertificatePtr     certificate_;
   AddressPtr         owner_address_;
   MockStorageUnitPtr storage_;

@@ -23,6 +23,7 @@
 #include "ledger/chain/v2/transaction_builder.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/state_adapter.hpp"
+#include "ledger/chain/v2/transaction_layout.hpp"
 
 #include "contract_test.hpp"
 #include "mock_storage_unit.hpp"
@@ -35,6 +36,8 @@
 namespace {
 
 using ::testing::_;
+using ::testing::InSequence;
+using ::testing::Return;
 
 using fetch::ledger::SmartContract;
 using fetch::byte_array::ConstByteArray;
@@ -430,9 +433,10 @@ TEST_F(SmartContractTests, CheckPersistentMapSetAndQuery)
   auto const expected_resource2 = ResourceAddress{expected_key2};
   auto const expected_value1    = RawBytes<int32_t>(20);
   auto const expected_value2    = RawBytes<int32_t>(30);
+  auto const expected_mask1     = fetch::ledger::v2::TransactionLayout{};
 
   // expected calls
-  EXPECT_CALL(*storage_, Lock(expected_resource1)).WillOnce(Return(true));
+  EXPECT_CALL(*storage_, Lock()).WillOnce(Return(true));
   EXPECT_CALL(*storage_, Lock(expected_resource2)).WillOnce(Return(true));
   EXPECT_CALL(*storage_, Set(expected_resource1, expected_value1)).WillOnce(Return());
   EXPECT_CALL(*storage_, Set(expected_resource2, expected_value2)).WillOnce(Return());
@@ -449,7 +453,7 @@ TEST_F(SmartContractTests, CheckPersistentMapSetAndQuery)
 
   // send the smart contract an "increment" action
   EXPECT_EQ(SmartContract::Status::OK,
-            SendActionWithParams("test_persistent_map", {"value.bar", "value.foo"}));
+            SendSmartAction(ActionWithParams("test_persistent_map"));
 
   VerifyQuery("query_foo", int32_t{20});
   VerifyQuery("query_bar", int32_t{30});

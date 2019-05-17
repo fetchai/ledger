@@ -70,7 +70,7 @@ protected:
       break;
 
     case TypeIds::Address:
-      key = key_v.Get<Ptr<Address>>()->AsBase64String();
+      key = key_v.Get<Ptr<Address>>()->AsString();
       break;
 
     default:

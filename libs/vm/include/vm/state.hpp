@@ -163,6 +163,11 @@ public:
 
       // mark the variable as existed if we get a positive result back
       existed_ = (Status::OK == status);
+
+      FlushIO = [this]() -> void {
+        // if we have an IO observer then inform it of the changes
+        WriteHelper(name_, value_, vm_->GetIOObserver());
+      };
     }
   }
 
@@ -190,14 +195,7 @@ private:
   using Value  = typename GetStorageType<T>::type;
   using Status = IoObserverInterface::Status;
 
-  void FlushIO()
-  {
-    // if we have an IO observer then inform it of the changes
-    if (vm_->HasIoObserver())
-    {
-      WriteHelper(name_, value_, vm_->GetIOObserver());
-    }
-  }
+  std::function<void()> FlushIO{[]{}};
 
   std::string name_;
   Value       value_;
@@ -290,7 +288,7 @@ inline std::string IState::NameToString(VM *vm, Ptr<Object> &&name)
   case TypeIds::String:
     return dynamic_cast<String const &>(*name).str;
   case TypeIds::Address:
-    return dynamic_cast<Address &>(*name).AsBase64String()->str;
+    return dynamic_cast<Address &>(*name).AsString()->str;
   }
 
   vm->RuntimeError(
