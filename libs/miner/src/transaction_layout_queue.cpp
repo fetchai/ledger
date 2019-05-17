@@ -23,26 +23,8 @@
 namespace fetch {
 namespace miner {
 
-bool TransactionLayoutQueue::RemapAndAdd(UnderlyingList &list, TransactionLayout const &tx,
-                                         uint32_t num_lanes)
-{
-  bool success{false};
-
-  // remap the transaction layout
-  BitVector mask{num_lanes};
-  if (tx.mask().RemapTo(mask))
-  {
-    // construct the new transaction layout
-    list.emplace_back(tx, mask);
-
-    success = true;
-  }
-
-  return success;
-}
-
 /**
- * Adds a transcaction layout to the queue
+ * Adds a transaction layout to the queue
  *
  * @param item The transaction layout to be added to the queue
  * @return true if successful, otherwise false
@@ -56,13 +38,11 @@ bool TransactionLayoutQueue::Add(TransactionLayout const &item)
   // ensure that this isn't already a duplicate transaction layout
   if (digests_.find(digest) == digests_.end())
   {
-    if (RemapAndAdd(list_, item, 1u << log2_num_lanes_))
-    {
-      // update the digest set
-      digests_.insert(digest);
+    // update the digest set and list
+    list_.emplace_back(item);
+    digests_.insert(digest);
 
-      success = true;
-    }
+    success = true;
   }
 
   return success;

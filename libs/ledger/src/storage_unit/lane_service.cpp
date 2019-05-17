@@ -18,6 +18,7 @@
 
 #include "ledger/storage_unit/lane_service.hpp"
 #include "core/service_ids.hpp"
+#include "meta/log2.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
 #include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
 #include "ledger/chain/v2/transaction_rpc_serializers.hpp"
@@ -49,7 +50,7 @@ std::string GeneratePrefix(std::string const &storage_path, uint32_t lane)
 }  // namespace
 
 LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packets, Mode mode)
-  : tx_store_(std::make_shared<TxStore>())
+  : tx_store_(std::make_shared<TxStore>(meta::Log2(config.num_lanes)))
   , reactor_("LaneServiceReactor")
   , cfg_{std::move(config)}
 {

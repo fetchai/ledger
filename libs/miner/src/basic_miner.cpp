@@ -50,18 +50,6 @@ T Clip3(T value, T min_value, T max_value)
   return std::min(std::max(value, min_value), max_value);
 }
 
-void UpdateMaskWithTokenAddress(BitVector &shards, Address const &address, uint32_t log2_num_lanes)
-{
-  // compute the canonical resource for the address
-  ConstByteArray const resource = "fetch.token.state." + address.address().ToHex();
-
-  // compute the resource address
-  ResourceAddress const resource_address{resource};
-
-  // update the shard mask
-  shards.set(resource_address.lane(log2_num_lanes), 1);
-}
-
 }  // namespace
 
 /**
@@ -85,41 +73,7 @@ BasicMiner::BasicMiner(uint32_t log2_num_lanes)
  */
 void BasicMiner::EnqueueTransaction(ledger::v2::Transaction const &tx)
 {
-  // create the bit vector matching the number of configured lanes
-  BitVector shard_mask{1u << log2_num_lanes_};
-
-  // in the case where the transaction contains a contract call, ensure that the shard
-  // mask is correctly mapped to the current number of lanes
-  if (Transaction::ContractMode::NOT_PRESENT != tx.contract_mode())
-  {
-    if (!tx.shard_mask().RemapTo(shard_mask))
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Unable to remap shard mask");
-      return;
-    }
-  }
-
-  // Every shard mask needs to be updated with the from address so that fees can be removed
-  UpdateMaskWithTokenAddress(shard_mask, tx.from(), log2_num_lanes_);
-
-  // since the initial shard mask DOES NOT contain the shard information for the transfers these
-  // must now be added.
-  for (auto const &transfer : tx.transfers())
-  {
-    UpdateMaskWithTokenAddress(shard_mask, transfer.to, log2_num_lanes_);
-  }
-
-  // Now that the complete shard mask has been computed we can build the final scheduling layout
-  // for the transaction
-  TransactionLayout const layout{tx.digest(), shard_mask, tx.charge(), tx.valid_from(),
-                                 tx.valid_until()};
-
-  assert(layout.mask().size() == (1u << log2_num_lanes_));
-
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction: 0x", layout.digest().ToHex());
-
-  // Add the layout to the pending queue
-  EnqueueTransaction(layout);
+  EnqueueTransaction(ledger::v2::TransactionLayout{tx, log2_num_lanes_});
 }
 
 /**
@@ -133,6 +87,12 @@ void BasicMiner::EnqueueTransaction(ledger::v2::Transaction const &tx)
 void BasicMiner::EnqueueTransaction(ledger::v2::TransactionLayout const &layout)
 {
   FETCH_LOCK(pending_lock_);
+
+  if (layout.mask().size() != (1u << log2_num_lanes_))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Disgarding layout due to incompatible mask size");
+    return;
+  }
 
   if (pending_.Add(layout))
   {

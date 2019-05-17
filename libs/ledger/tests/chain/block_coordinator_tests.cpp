@@ -996,7 +996,7 @@ protected:
   }
 };
 
-TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
+TEST_F(NiceMockBlockCoordinatorTests, DISABLED_UnknownTransactionDoesNotBlockForever)
 {
   TransactionLayout layout{*fetch::testing::GenerateUniqueHashes(1u).begin(), fetch::BitVector{}, 0,
                            0, 1000};

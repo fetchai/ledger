@@ -45,6 +45,8 @@ using TransientStore   = fetch::storage::TransientObjectStore<Transaction>;
 using TransactionStore = fetch::storage::ObjectStore<Transaction>;
 using TransactionList  = std::vector<TransactionBuilder::TransactionPtr>;
 
+static constexpr uint32_t LOG2_NUM_LANES = 2;
+
 TransactionList GenerateTransactions(std::size_t count, bool large_packets)
 {
   static constexpr std::size_t TX_SIZE      = 2048;
@@ -164,7 +166,7 @@ void TxSubmitSingleSmall(benchmark::State &state)
 void TxSubmitSingleSmallAlt(benchmark::State &state)
 {
   // create the transaction store
-  TransientStore tx_store;
+  TransientStore tx_store{LOG2_NUM_LANES};
   tx_store.New("transaction.db", "transaction_index.db", true);
 
   // create a whole series of transaction
@@ -181,7 +183,7 @@ void TxSubmitSingleSmallAlt(benchmark::State &state)
 void TransientStoreExpectedOperation(benchmark::State &state)
 {
   // create the transient store
-  TransientStore tx_store;
+  TransientStore tx_store{LOG2_NUM_LANES};
   tx_store.New("transaction.db", "transaction_index.db", true);
 
   Transaction dummy;

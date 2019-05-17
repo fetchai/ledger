@@ -76,10 +76,9 @@ TEST_F(TransactionLayoutTests, BasicTest)
                       .Build();
 
   // build the transaction layout from this transaction
-  TransactionLayout const layout{*tx};
+  TransactionLayout const layout{*tx, 2};
 
   EXPECT_EQ(layout.digest(), tx->digest());
-  EXPECT_EQ(layout.mask(), tx->shard_mask());
   EXPECT_EQ(layout.charge(), tx->charge());
   EXPECT_EQ(layout.valid_from(), tx->valid_from());
   EXPECT_EQ(layout.valid_until(), tx->valid_until());

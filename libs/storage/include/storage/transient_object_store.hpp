@@ -56,7 +56,7 @@ public:
 
   static constexpr char const *LOGGING_NAME = "TransientObjectStore";
 
-  TransientObjectStore();
+  explicit TransientObjectStore(uint32_t log2_num_lanes);
   TransientObjectStore(TransientObjectStore const &) = delete;
   TransientObjectStore(TransientObjectStore &&)      = delete;
 
@@ -111,6 +111,7 @@ private:
   Phase OnWriting();
   Phase OnFlushing();
 
+  uint32_t const log2_num_lanes_;
   const std::size_t batch_size_ = 100;
 
   std::vector<ResourceID> rids;
@@ -135,8 +136,9 @@ private:
  * @tparam O The type of the object being stored
  */
 template <typename O>
-inline TransientObjectStore<O>::TransientObjectStore()
-  : rids(batch_size_)
+inline TransientObjectStore<O>::TransientObjectStore(uint32_t log2_num_lanes)
+  : log2_num_lanes_(log2_num_lanes)
+  , rids(batch_size_)
   , state_machine_{
         std::make_shared<core::StateMachine<Phase>>("TransientObjectStore", Phase::Populating)}
 
@@ -414,7 +416,7 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
   if (newly_seen)
   {
     std::size_t count{most_recent_seen_.QUEUE_LENGTH};
-    bool const  inserted = most_recent_seen_.Push(ledger::v2::TransactionLayout{object}, count,
+    bool const  inserted = most_recent_seen_.Push(ledger::v2::TransactionLayout{object, log2_num_lanes_}, count,
                                                  std::chrono::milliseconds{100});
     if (inserted && prev_count != count)
     {
