@@ -20,7 +20,6 @@
 #include "core/byte_array/tokenizer/tokenizer.hpp"
 #include <fstream>
 #include <gtest/gtest.h>
-#include <iostream>
 #include <string>
 #include <vector>
 

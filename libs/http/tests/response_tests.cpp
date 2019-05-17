@@ -21,7 +21,6 @@
 #include "network/fetch_asio.hpp"
 
 #include <gtest/gtest.h>
-#include <iostream>
 #include <memory>
 
 class ResponseTests : public ::testing::Test

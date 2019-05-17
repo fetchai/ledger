@@ -34,7 +34,6 @@
 #include "mock_storage_unit.hpp"
 
 #include "gmock/gmock.h"
-#include <iostream>
 #include <memory>
 
 using fetch::ledger::BlockCoordinator;

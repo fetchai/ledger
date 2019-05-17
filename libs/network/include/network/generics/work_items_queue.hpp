@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include <condition_variable>
-#include <iostream>
 #include <list>
 #include <string>
 

@@ -21,8 +21,6 @@
 
 #include "gtest/gtest.h"
 
-#include <iostream>
-
 namespace fetch {
 namespace serializers {
 

@@ -21,7 +21,6 @@
 #include "gtest/gtest.h"
 
 #include <atomic>
-#include <iostream>
 #include <limits>
 #include <memory>
 #include <thread>

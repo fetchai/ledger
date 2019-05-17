@@ -20,7 +20,6 @@
 #include "network/fetch_asio.hpp"  // required to avoid failing build due to -Werror
 #include "network/management/network_manager.hpp"
 #include "network/message.hpp"
-#include <iostream>
 #include <memory>
 #include <utility>
 

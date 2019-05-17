@@ -20,7 +20,6 @@
 #include "core/json/document.hpp"
 #include "core/json/exceptions.hpp"
 #include <gtest/gtest.h>
-#include <iostream>
 #include <memory>
 
 using namespace fetch::json;
