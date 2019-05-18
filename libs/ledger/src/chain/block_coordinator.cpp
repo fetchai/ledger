@@ -418,7 +418,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
     if (have_asked_for_missing_txs_)
     {
       // FSM is stuck waiting for transactions - has timeout elapsed?
-      if (wait_for_tx_timeout_.IsDue())
+      if (wait_for_tx_timeout_.HasExpired())
       {
         // Assume block was invalid and discard it
         chain_.RemoveBlock(current_block_->body.hash);
@@ -428,18 +428,18 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
     }
     else
     {
-      if (wait_before_asking_for_missing_tx_.IsDue())
+      if (wait_before_asking_for_missing_tx_.HasExpired())
       {
         storage_unit_.IssueCallForMissingTxs(*pending_txs_);
         have_asked_for_missing_txs_ = true;
-        wait_for_tx_timeout_        = WAIT_FOR_TX_TIMEOUT_INTERVAL;
+        wait_for_tx_timeout_.Restart(WAIT_FOR_TX_TIMEOUT_INTERVAL);
       }
     }
   }
   else
   {
     // Only just started waiting for transactions - reset countdown to issuing request to peers
-    wait_before_asking_for_missing_tx_ = WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL;
+    wait_before_asking_for_missing_tx_.Restart(WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL);
     have_asked_for_missing_txs_        = false;
   }
 

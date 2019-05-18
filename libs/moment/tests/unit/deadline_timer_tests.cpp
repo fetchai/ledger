@@ -26,9 +26,9 @@ using fetch::moment::CreateAdjustableClock;
 
 TEST(DeadlineTimerTests, BasicChecks)
 {
-  auto clock = CreateAdjustableClock("test1");
+  auto clock = CreateAdjustableClock("default");
 
-  DeadlineTimer timer{"test1"};
+  DeadlineTimer timer{"default"};
   timer.Restart(std::chrono::hours{3});
 
   EXPECT_FALSE(timer.HasExpired());

@@ -122,6 +122,22 @@ protected:
     }
   }
 
+  bool RemainsOn(State state, uint64_t iterations = 50)
+  {
+    bool success{true};
+
+    auto &state_machine = block_coordinator_->GetStateMachine();
+
+    for (uint64_t i = 0; success && i < iterations; ++i)
+    {
+      success = (state_machine.state() == state);
+
+      state_machine.Execute();
+    }
+
+    return success;
+  }
+
   /**
    * Run the state machine for one cycle
    *
@@ -981,6 +997,7 @@ protected:
     // generate a public/private key pair
     ECDSASigner const signer{};
 
+    clock_             = fetch::moment::CreateAdjustableClock("bc:deadline");
     main_chain_        = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
     storage_unit_      = std::make_unique<NiceMock<MockStorageUnit>>();
     execution_manager_ = std::make_unique<NiceMock<MockExecutionManager>>(storage_unit_->fake);
@@ -994,6 +1011,8 @@ protected:
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);
   }
+
+  fetch::moment::AdjustableClockPtr clock_;
 };
 
 TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
@@ -1014,21 +1033,21 @@ TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
   EXPECT_CALL(*storage_unit_, CurrentHash()).Times(AnyNumber());
   EXPECT_CALL(*execution_manager_, LastProcessedBlock()).Times(AnyNumber());
 
-  Advance();
+  Tock(State::RELOAD_STATE, State::SYNCHRONIZED);
 
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
 
   Advance();
 
   // Time out wait to request Tx from peers
-  std::this_thread::sleep_for(std::chrono::seconds(31u));
+  clock_->Advance(std::chrono::seconds(31u));
 
-  Advance();
+  ASSERT_TRUE(RemainsOn(State::WAIT_FOR_TRANSACTIONS));
+
+  ASSERT_EQ(State::WAIT_FOR_TRANSACTIONS, block_coordinator_->GetStateMachine().state());
 
   // Time out wait for Tx - block should be invalidated at this point
-  std::this_thread::sleep_for(std::chrono::seconds(31u));
+  clock_->Advance(std::chrono::seconds(31u));
 
-  Advance();
-
-  ASSERT_EQ(State::SYNCHRONIZED, block_coordinator_->GetStateMachine().state());
+  Tock(State::WAIT_FOR_TRANSACTIONS, State::SYNCHRONIZED);
 }

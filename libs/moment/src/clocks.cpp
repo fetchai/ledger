@@ -120,13 +120,6 @@ AdjustableClockPtr CreateAdjustableClock(char const *name, ClockType type)
 
   FETCH_LOCK(clock_store_lock);
 
-  // if the clock already exists then look it up
-  auto it = clock_store.find(name);
-  if (it != clock_store.end())
-  {
-    return {};
-  }
-
   // create the new clock
   auto clock = CreateAdjustable(type);
 
