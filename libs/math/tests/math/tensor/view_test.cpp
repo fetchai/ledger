@@ -36,34 +36,34 @@ using namespace fetch::math;
 
 TYPED_TEST(TensorViewTests, size_test)
 {
-  TypeParam from = static_cast<TypeParam>(2);
-  TypeParam to   = static_cast<TypeParam>(50);
-  TypeParam step = static_cast<TypeParam>(1);
-  Tensor< TypeParam > tensor = Tensor<TypeParam>::Arange(from, to, step);
-  tensor.Reshape({3,16});
+  TypeParam         from   = static_cast<TypeParam>(2);
+  TypeParam         to     = static_cast<TypeParam>(50);
+  TypeParam         step   = static_cast<TypeParam>(1);
+  Tensor<TypeParam> tensor = Tensor<TypeParam>::Arange(from, to, step);
+  tensor.Reshape({3, 16});
 
   EXPECT_EQ(tensor.height(), 3);
   EXPECT_EQ(tensor.width(), 16);
 
   auto view = tensor.View();
   EXPECT_EQ(view.height(), 3);
-  EXPECT_EQ(view.width(), 16);  
+  EXPECT_EQ(view.width(), 16);
 
-  tensor.Reshape({3,8,2});
+  tensor.Reshape({3, 8, 2});
 
   view = tensor.View();
   EXPECT_EQ(tensor.height(), 3);
   EXPECT_EQ(tensor.width(), 8);
   EXPECT_EQ(view.height(), 3);
-  EXPECT_EQ(view.width(), 16);  
+  EXPECT_EQ(view.width(), 16);
 
   view = tensor.View(0);
   EXPECT_EQ(view.height(), 3);
   EXPECT_EQ(view.width(), 8);
 
-  SizeType counter = 0;
-  TypeParam value = from;
-  for(auto &a: view)
+  SizeType  counter = 0;
+  TypeParam value   = from;
+  for (auto &a : view)
   {
     EXPECT_EQ(a, value);
     ++counter;
@@ -71,57 +71,54 @@ TYPED_TEST(TensorViewTests, size_test)
   }
 
   EXPECT_EQ(counter, view.height() * view.width());
-  view = tensor.View(1); 
+  view = tensor.View(1);
   EXPECT_EQ(view.height(), 3);
   EXPECT_EQ(view.width(), 8);
 
-  for(auto &a: view)
+  for (auto &a : view)
   {
     EXPECT_EQ(a, value);
     ++counter;
     ++value;
-  }   
+  }
 
   EXPECT_EQ(counter, tensor.size());
 
   // Testing with vector notation
-  view = tensor.View({0}); 
+  view = tensor.View({0});
   EXPECT_EQ(view.height(), 3);
   EXPECT_EQ(view.width(), 8);
   value = 2;
-  for(auto &a: view)
+  for (auto &a : view)
   {
     EXPECT_EQ(a, value);
     ++value;
   }
 
-  view = tensor.View({1}); 
+  view = tensor.View({1});
   EXPECT_EQ(view.height(), 3);
   EXPECT_EQ(view.width(), 8);
-  for(auto &a: view)
+  for (auto &a : view)
   {
     EXPECT_EQ(a, value);
     ++value;
-  }  
+  }
 
   // Testing with vector notation
   value = 2;
-  for(SizeType j=0; j < 2; ++j)
+  for (SizeType j = 0; j < 2; ++j)
   {
-    for(SizeType i=0; i < 8; ++i)
-    {    
-      view = tensor.View({i,j}); 
+    for (SizeType i = 0; i < 8; ++i)
+    {
+      view = tensor.View({i, j});
       EXPECT_EQ(view.height(), 3);
       EXPECT_EQ(view.width(), 1);
 
-      for(auto &a: view)
+      for (auto &a : view)
       {
         EXPECT_EQ(a, value);
         ++value;
       }
     }
   }
-
-
 }
-

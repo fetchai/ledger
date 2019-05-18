@@ -17,14 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/tensor_declaration.hpp"
 #include "vectorise/memory/shared_array.hpp"
 #include "vectorise/platform.hpp"
-#include "math/tensor_declaration.hpp"
-
 
 namespace fetch {
 namespace math {
-
 
 namespace linalg {
 template <typename T, uint64_t S, uint64_t I,

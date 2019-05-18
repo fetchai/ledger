@@ -26,24 +26,25 @@ template <typename T>
 class TensorIterator
 {
 public:
-  using Type     = T;
+  using Type = T;
   /**
    * default range assumes step 1 over whole array - useful for trivial cases
    * @param array
    */
-  TensorIterator(T* pointer, SizeType size, SizeType padded_size, SizeType height, SizeType padded_height)
+  TensorIterator(T *pointer, SizeType size, SizeType padded_size, SizeType height,
+                 SizeType padded_height)
   {
-    pointer_ = pointer; 
-    skip_ = padded_height - height; 
-    end_ = pointer_ + padded_size; 
-    height_= height; 
-    size_ = size; 
+    pointer_ = pointer;
+    skip_    = padded_height - height;
+    end_     = pointer_ + padded_size;
+    height_  = height;
+    size_    = size;
   }
 
-  TensorIterator(TensorIterator const &other)            = default;
+  TensorIterator(TensorIterator const &other) = default;
   TensorIterator &operator=(TensorIterator const &other) = default;
   TensorIterator(TensorIterator &&other)                 = default;
-  TensorIterator &operator=(TensorIterator &&other)      = default;
+  TensorIterator &operator=(TensorIterator &&other) = default;
 
   /**
    * identifies whether the iterator is still valid or has finished iterating
@@ -109,20 +110,20 @@ public:
     return other.pointer_ != pointer_;
   }
 
-
   SizeType size() const
   {
     return size_;
   }
+
 private:
   T *pointer_;
-  T *end_;  
+  T *end_;
 
-  SizeType    height_{0};  
-  SizeType    skip_{0};
-  SizeType    i_{0};
-  SizeType    j_{0};
-  SizeType    size_{0};
+  SizeType height_{0};
+  SizeType skip_{0};
+  SizeType i_{0};
+  SizeType j_{0};
+  SizeType size_{0};
 };
 
 template <typename T>

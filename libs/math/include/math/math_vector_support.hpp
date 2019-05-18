@@ -19,34 +19,40 @@
 
 #include <type_traits>
 
-namespace fetch
-{
-namespace math
-{
+namespace fetch {
+namespace math {
 
-template<typename T>
+template <typename T>
 struct HasVectorSupport
 {
-  enum { value = 0 };
+  enum
+  {
+    value = 0
+  };
 };
 
-template<>
+template <>
 struct HasVectorSupport<double>
 {
-  enum { value = 1 };
+  enum
+  {
+    value = 1
+  };
 };
 
-template<>
+template <>
 struct HasVectorSupport<float>
 {
-  enum { value = 1 };
+  enum
+  {
+    value = 1
+  };
 };
 
-template<typename T, typename R>
-using IfVectorSupportFor = typename std::enable_if< HasVectorSupport< T >::value, R >::type;
-template<typename T, typename R>
-using IfNoVectorSupportFor = typename std::enable_if< !HasVectorSupport< T >::value, R >::type;
+template <typename T, typename R>
+using IfVectorSupportFor = typename std::enable_if<HasVectorSupport<T>::value, R>::type;
+template <typename T, typename R>
+using IfNoVectorSupportFor = typename std::enable_if<!HasVectorSupport<T>::value, R>::type;
 
-
-}
-}
+}  // namespace math
+}  // namespace fetch

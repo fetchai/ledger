@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor_declaration.hpp"
 #include "core/byte_array/byte_array.hpp"
+#include "math/tensor_declaration.hpp"
 
 #include "math/fixed_point/fixed_point.hpp"
 #include "meta/type_traits.hpp"
@@ -98,7 +98,8 @@ struct IsMathImpl<int, ReturnType>
   using Type = ReturnType;
 };
 
-template <typename DataType, typename ContainerType /*template<class> class ContainerType*/, typename ReturnType>
+template <typename DataType, typename ContainerType /*template<class> class ContainerType*/,
+          typename ReturnType>
 struct IsMathImpl<Tensor<DataType, ContainerType>, ReturnType>
 {
   using Type = ReturnType;
@@ -115,7 +116,8 @@ template <typename DataType, typename ReturnType>
 struct IsMathArrayImpl
 {
 };
-template <typename DataType, typename ContainerType /*template<class> class ContainerType*/, typename ReturnType>
+template <typename DataType, typename ContainerType /*template<class> class ContainerType*/,
+          typename ReturnType>
 struct IsMathArrayImpl<Tensor<DataType, ContainerType>, ReturnType>
 {
   using Type = ReturnType;

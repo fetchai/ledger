@@ -20,23 +20,22 @@
 #include "core/assert.hpp"
 #include <numeric>
 
-#include "math/tensor_declaration.hpp"
 #include "math/linalg/blas/base.hpp"
+#include "math/linalg/blas/gemm_nn_novector.hpp"
+#include "math/linalg/blas/gemm_nn_vector.hpp"
 #include "math/linalg/blas/gemm_nt_novector.hpp"
 #include "math/linalg/blas/gemm_nt_vector.hpp"
 #include "math/linalg/blas/gemm_tn_novector.hpp"
 #include "math/linalg/blas/gemm_tn_vector.hpp"
-#include "math/linalg/blas/gemm_nn_novector.hpp"
-#include "math/linalg/blas/gemm_nn_vector.hpp"
+#include "math/tensor_declaration.hpp"
 
 #include "math/linalg/prototype.hpp"
 
 #include "math/base_types.hpp"
-#include "math/math_vector_support.hpp"
 #include "math/comparison.hpp"
-#include "math/tensor_declaration.hpp"
 #include "math/fundamental_operators.hpp"  // add, subtract etc.
-
+#include "math/math_vector_support.hpp"
+#include "math/tensor_declaration.hpp"
 
 namespace fetch {
 namespace math {
@@ -198,7 +197,8 @@ meta::IfIsMathArray<ArrayType, void> Product(ArrayType const &array1, T &ret)
   }
 }
 
-template <typename T, typename C /*template<class> class C*/, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+template <typename T, typename C /*template<class> class C*/,
+          typename = std::enable_if_t<meta::IsArithmetic<T>>>
 meta::IfIsMathArray<Tensor<T, C>, T> Product(Tensor<T, C> const &array1)
 {
   T ret;
@@ -649,14 +649,14 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Dot(ArrayType const &A, ArrayT
   using Type = typename ArrayType::Type;
   using namespace linalg;
 
-  enum {
-    OPTIMISATION_FLAGS = HasVectorSupport<Type>::value ? 
-                           platform::Parallelisation::VECTORISE 
-                         : platform::Parallelisation::NOT_PARALLEL
+  enum
+  {
+    OPTIMISATION_FLAGS = HasVectorSupport<Type>::value ? platform::Parallelisation::VECTORISE
+                                                       : platform::Parallelisation::NOT_PARALLEL
   };
 
   Blas<Type, Signature(_C <= _alpha, _A, _B, _beta, _C),
-             Computes(_C <= _alpha * _A * _B + _beta * _C), OPTIMISATION_FLAGS>
+       Computes(_C <= _alpha * _A * _B + _beta * _C), OPTIMISATION_FLAGS>
       gemm_nn;
 
   gemm_nn(static_cast<Type>(1), A.View(), B.View(), static_cast<Type>(0), ret.View());
@@ -690,12 +690,11 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DotTranspose(ArrayType const &
   using Type = typename ArrayType::Type;
   using namespace linalg;
 
-  enum {
-    OPTIMISATION_FLAGS = HasVectorSupport<Type>::value ? 
-                           platform::Parallelisation::VECTORISE 
-                         : platform::Parallelisation::NOT_PARALLEL
+  enum
+  {
+    OPTIMISATION_FLAGS = HasVectorSupport<Type>::value ? platform::Parallelisation::VECTORISE
+                                                       : platform::Parallelisation::NOT_PARALLEL
   };
-
 
   Blas<Type, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * _A * T(_B) + _beta * _C), OPTIMISATION_FLAGS>
@@ -731,10 +730,10 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> TransposeDot(ArrayType const &
   using Type = typename ArrayType::Type;
   using namespace linalg;
 
-  enum {
-    OPTIMISATION_FLAGS = HasVectorSupport<Type>::value ? 
-                           platform::Parallelisation::VECTORISE 
-                         : platform::Parallelisation::NOT_PARALLEL
+  enum
+  {
+    OPTIMISATION_FLAGS = HasVectorSupport<Type>::value ? platform::Parallelisation::VECTORISE
+                                                       : platform::Parallelisation::NOT_PARALLEL
   };
 
   Blas<Type, Signature(_C <= _alpha, _A, _B, _beta, _C),

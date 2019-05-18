@@ -17,25 +17,22 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "math/base_types.hpp"
 #include "math/tensor_iterator.hpp"
 
-
 namespace fetch {
 namespace math {
-template< typename T, typename C = memory::SharedArray<T>>
+template <typename T, typename C = memory::SharedArray<T>>
 class TensorView
 {
 public:
   using Type                       = T;
-  using ContainerType              = C;  
-  using IteratorType      = TensorIterator<T>;
-  using ConstIteratorType = ConstTensorIterator<T>;  
+  using ContainerType              = C;
+  using IteratorType               = TensorIterator<T>;
+  using ConstIteratorType          = ConstTensorIterator<T>;
   using VectorSliceType            = typename ContainerType::VectorSliceType;
   using VectorRegisterType         = typename ContainerType::VectorRegisterType;
   using VectorRegisterIteratorType = typename ContainerType::VectorRegisterIteratorType;
-
 
   enum
   {
@@ -44,47 +41,52 @@ public:
   };
 
   TensorView(ContainerType data, SizeType height, SizeType width, SizeType offset = 0)
-  : data_{std::move(data)}, 
-    height_{std::move(height)}, 
-    width_{std::move(width)},
-    offset_{std::move(offset)},
-    pointer_{data_.pointer() + offset_}
+    : data_{std::move(data)}
+    , height_{std::move(height)}
+    , width_{std::move(width)}
+    , offset_{std::move(offset)}
+    , pointer_{data_.pointer() + offset_}
   {
     padded_height_ = PadValue(height_);
   }
 
-  IteratorType      begin()
+  IteratorType begin()
   {
     SizeType padded_size = padded_height_ * width_;
-    return IteratorType(pointer_, height_* width_, padded_size, height_, padded_height_ );
+    return IteratorType(pointer_, height_ * width_, padded_size, height_, padded_height_);
   }
 
-  IteratorType      end()
+  IteratorType end()
   {
-    SizeType padded_size = padded_height_ * width_;    
-    return IteratorType(pointer_ + padded_size, height_* width_, padded_size, height_, padded_height_ );
+    SizeType padded_size = padded_height_ * width_;
+    return IteratorType(pointer_ + padded_size, height_ * width_, padded_size, height_,
+                        padded_height_);
   }
 
   ConstIteratorType begin() const
   {
-    return ConstIteratorType(pointer_, height_* width_, padded_height_ * width_, height_, padded_height_ );
+    return ConstIteratorType(pointer_, height_ * width_, padded_height_ * width_, height_,
+                             padded_height_);
   }
 
   ConstIteratorType end() const
   {
-    SizeType padded_size = padded_height_ * width_;    
-    return ConstIteratorType(pointer_ + padded_size, height_* width_, padded_size, height_, padded_height_ );
+    SizeType padded_size = padded_height_ * width_;
+    return ConstIteratorType(pointer_ + padded_size, height_ * width_, padded_size, height_,
+                             padded_height_);
   }
 
   ConstIteratorType cbegin() const
   {
-    return ConstIteratorType(pointer_, height_* width_, padded_height_ * width_, height_, padded_height_ );
+    return ConstIteratorType(pointer_, height_ * width_, padded_height_ * width_, height_,
+                             padded_height_);
   }
 
   ConstIteratorType cend() const
   {
-    SizeType padded_size = padded_height_ * width_;    
-    return ConstIteratorType(pointer_ + padded_size, height_* width_, padded_size, height_, padded_height_ );
+    SizeType padded_size = padded_height_ * width_;
+    return ConstIteratorType(pointer_ + padded_size, height_ * width_, padded_size, height_,
+                             padded_height_);
   }
 
   Type operator()(SizeType i, SizeType j) const
@@ -92,7 +94,7 @@ public:
     return pointer_[i + j * padded_height_];
   }
 
-  Type& operator()(SizeType i, SizeType j)
+  Type &operator()(SizeType i, SizeType j)
   {
     return pointer_[i + j * padded_height_];
   }
@@ -102,11 +104,10 @@ public:
     return pointer_[i];
   }
 
-  Type& operator()(SizeType i)
+  Type &operator()(SizeType i)
   {
-    return pointer_[i];    
+    return pointer_[i];
   }
-
 
   /* @breif returns the smallest number which is a multiple of PADDING and greater than or equal to
    a desired size.
@@ -153,14 +154,15 @@ public:
     return data_;
   }
 
-  ContainerType &      data()
+  ContainerType &data()
   {
-    return data_;    
+    return data_;
   }
+
 protected:
   void SetHeight(SizeType height)
   {
-    height_ = std::move(height);
+    height_        = std::move(height);
     padded_height_ = PadValue(height_);
   }
 
@@ -171,25 +173,25 @@ protected:
 
   void SetOffset(SizeType offset)
   {
-    offset_ = std::move(offset);
+    offset_  = std::move(offset);
     pointer_ = data_.pointer() + offset_;
   }
 
   void SetData(ContainerType data)
   {
-    data_ = std::move(data);
+    data_    = std::move(data);
     pointer_ = data_.pointer() + offset_;
-  }  
+  }
+
 private:
-  ContainerType data_{};  
-  SizeType height_{0};
-  SizeType width_{0};
-  SizeType offset_{0};
-  Type *pointer_{nullptr};
+  ContainerType data_{};
+  SizeType      height_{0};
+  SizeType      width_{0};
+  SizeType      offset_{0};
+  Type *        pointer_{nullptr};
 
   SizeType padded_height_{0};
 };
 
-
-}
-}
+}  // namespace math
+}  // namespace fetch

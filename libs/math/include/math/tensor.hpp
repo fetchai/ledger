@@ -25,7 +25,6 @@
 
 #include "vectorise/memory/array.hpp"
 
-#include "math/tensor_declaration.hpp"
 #include "math/base_types.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/ml/activation_functions/softmax.hpp"
@@ -36,6 +35,7 @@
 #include "math/standard_functions/fmod.hpp"
 #include "math/standard_functions/remainder.hpp"
 #include "math/tensor_broadcast.hpp"
+#include "math/tensor_declaration.hpp"
 #include "math/tensor_iterator.hpp"
 #include "math/tensor_slice_iterator.hpp"
 #include "math/tensor_view.hpp"
@@ -299,7 +299,7 @@ public:
   Tensor operator/=(OtherType const &other);
 
   // TODO: Make free functions
-  Type    Sum() const;
+  Type Sum() const;
   void Exp(Tensor const &x);
   void ApproxSoftMax(Tensor const &x);
   Type L2Norm() const;
@@ -329,47 +329,44 @@ public:
   //////////////
   TensorView<Type, ContainerType> View()
   {
-    SizeType N = shape_.size() - 1;
+    SizeType N     = shape_.size() - 1;
     SizeType width = shape_[N] * stride_[N] / padded_height_;
     return TensorView<Type, ContainerType>(data_, height(), width);
   }
-
 
   TensorView<Type, ContainerType> const View() const
   {
-    SizeType N = shape_.size() - 1;
+    SizeType N     = shape_.size() - 1;
     SizeType width = shape_[N] * stride_[N] / padded_height_;
     return TensorView<Type, ContainerType>(data_, height(), width);
   }
 
-
   TensorView<Type, ContainerType> View(SizeType index)
   {
-    SizeType N = shape_.size() - 1 - 1;
+    SizeType N                = shape_.size() - 1 - 1;
     SizeType dimension_length = (N == 0 ? padded_height_ : shape_[N]);
-    SizeType volume = dimension_length * stride_[N];    
-    SizeType width = volume / padded_height_;
-    SizeType offset = volume * index;
+    SizeType volume           = dimension_length * stride_[N];
+    SizeType width            = volume / padded_height_;
+    SizeType offset           = volume * index;
     return TensorView<Type, ContainerType>(data_, height(), width, offset);
   }
 
   TensorView<Type, ContainerType> View(std::vector<SizeType> indices)
   {
-    SizeType N = shape_.size() - 1 - indices.size();
+    SizeType N                = shape_.size() - 1 - indices.size();
     SizeType dimension_length = (N == 0 ? padded_height_ : shape_[N]);
-    SizeType volume = dimension_length * stride_[N];        
-    SizeType width = volume / padded_height_;
-    SizeType offset = 0;
+    SizeType volume           = dimension_length * stride_[N];
+    SizeType width            = volume / padded_height_;
+    SizeType offset           = 0;
 
-    for(SizeType i=0; i < indices.size(); ++i)
+    for (SizeType i = 0; i < indices.size(); ++i)
     {
-      SizeType g=N + i + 1;
+      SizeType g = N + i + 1;
       offset += stride_[g] * indices[i];
     }
-  
+
     return TensorView<Type, ContainerType>(data_, height(), width, offset);
   }
-
 
   /////////////////////////
   /// general utilities ///
@@ -841,37 +838,40 @@ Tensor<T, C>::Tensor(SizeVector const &dims)
 template <typename T, typename C>
 typename Tensor<T, C>::IteratorType Tensor<T, C>::begin()
 {
-  return IteratorType(data().pointer(), size(), data().size(), height(), padded_height() );
+  return IteratorType(data().pointer(), size(), data().size(), height(), padded_height());
 }
 
 template <typename T, typename C>
 typename Tensor<T, C>::IteratorType Tensor<T, C>::end()
 {
-  return IteratorType(data().pointer() + data().size(), size(), data().size(), height(), padded_height() );
+  return IteratorType(data().pointer() + data().size(), size(), data().size(), height(),
+                      padded_height());
 }
 
 template <typename T, typename C>
 typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::begin() const
 {
-  return ConstIteratorType(data().pointer(), size(), data().size(), height(), padded_height() );
+  return ConstIteratorType(data().pointer(), size(), data().size(), height(), padded_height());
 }
 
 template <typename T, typename C>
 typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::end() const
 {
-  return ConstIteratorType(data().pointer() + data().size(), size(), data().size(), height(), padded_height() );
+  return ConstIteratorType(data().pointer() + data().size(), size(), data().size(), height(),
+                           padded_height());
 }
 
 template <typename T, typename C>
 typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::cbegin() const
 {
-  return ConstIteratorType(data().pointer(), size(), data().size(), height(), padded_height() );
+  return ConstIteratorType(data().pointer(), size(), data().size(), height(), padded_height());
 }
 
 template <typename T, typename C>
 typename Tensor<T, C>::ConstIteratorType Tensor<T, C>::cend() const
 {
-  return ConstIteratorType(data().pointer() + data().size(), size(), data().size(), height(), padded_height() );
+  return ConstIteratorType(data().pointer() + data().size(), size(), data().size(), height(),
+                           padded_height());
 }
 
 //////////////////////////////////////////////
@@ -2368,9 +2368,7 @@ void Tensor<T, C>::Sort(memory::TrivialRange const &range)
  * @return returns a shapeless array with the values in *this over the specified range
  */
 template <typename T, typename C>
-Tensor<T, C> Tensor<T, C>::Arange(T const &from,
-                                                                          T const &to,
-                                                                          T const &delta)
+Tensor<T, C> Tensor<T, C>::Arange(T const &from, T const &to, T const &delta)
 {
   ASSERT(delta != 0);
   ASSERT(((from < to) && delta > 0) || ((from > to) && delta < 0));
