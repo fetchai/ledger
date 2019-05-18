@@ -155,8 +155,8 @@ TEST(blas_DGEMM, blas_gemm_tt_novector4)
       gemm_tt_novector;
   // Compuing _C <= _alpha * T(_A) * T(_B) + _beta * _C
   using Type = double;
-  Type alpha = Type(0.45430191580631574);
-  Type beta  = Type(0.19660551502679513);
+  Type alpha = Type(0.48488981902111217);
+  Type beta  = Type(0.0026317155191327712);
 
   Tensor<Type>     A_tensor = Tensor<Type>::FromString(R"(
   	0.3567533266935893 0.28093450968738076 0.5426960831582485;
@@ -178,9 +178,9 @@ TEST(blas_DGEMM, blas_gemm_tt_novector4)
   gemm_tt_novector(alpha, A, B, beta, C);
 
   Tensor<Type>     refC_tensor = Tensor<Type>::FromString(R"(
-  0.3527160334513725 0.1841961312067174 0.19197697757928472;
- 0.47786841114440465 0.050154875220036005 0.5313743157899539;
- 0.3920134938262467 0.1142363304960412 0.23748639879837968
+  0.2254058054663949 0.036782147451823274 0.1895598071313582;
+ 0.43576494048919323 0.029522415693900232 0.3883068148492566;
+ 0.2892532339200804 0.05336204316377603 0.24030623166869144
   )");
   TensorView<Type> refC        = refC_tensor.View();
 

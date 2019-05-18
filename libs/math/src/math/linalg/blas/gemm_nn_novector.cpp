@@ -104,23 +104,11 @@ template class Blas<float, Signature(_C <= _alpha, _A, _B, _beta, _C),
                     Computes(_C <= _alpha * _A * _B + _beta * _C),
                     platform::Parallelisation::NOT_PARALLEL>;
 
-template class Blas<uint8_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
-                    Computes(_C <= _alpha * _A * _B + _beta * _C),
-                    platform::Parallelisation::NOT_PARALLEL>;
-
 template class Blas<uint32_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
                     Computes(_C <= _alpha * _A * _B + _beta * _C),
                     platform::Parallelisation::NOT_PARALLEL>;
 
 template class Blas<uint64_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
-                    Computes(_C <= _alpha * _A * _B + _beta * _C),
-                    platform::Parallelisation::NOT_PARALLEL>;
-
-template class Blas<int8_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
-                    Computes(_C <= _alpha * _A * _B + _beta * _C),
-                    platform::Parallelisation::NOT_PARALLEL>;
-
-template class Blas<int16_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
                     Computes(_C <= _alpha * _A * _B + _beta * _C),
                     platform::Parallelisation::NOT_PARALLEL>;
 
