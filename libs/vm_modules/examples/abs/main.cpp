@@ -70,6 +70,9 @@ int main(int argc, char **argv)
 
   fetch::vm::VM vm(module.get());
 
+  // attach std::cout for printing
+  vm.AttachOutputDevice("stdout", std::cout);
+
   if (!vm.GenerateExecutable(ir, "main_ir", exec, errors))
   {
     std::cout << "Failed to generate executable" << std::endl;

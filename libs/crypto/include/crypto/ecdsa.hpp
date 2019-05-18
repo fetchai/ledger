@@ -90,7 +90,7 @@ public:
     private_key_.Set(PrivateKey{});
   }
 
-  ConstByteArray Sign(ConstByteArray const &text) final
+  ConstByteArray Sign(ConstByteArray const &text) const final
   {
     ConstByteArray signature{};
 

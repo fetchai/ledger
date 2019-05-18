@@ -21,45 +21,25 @@
 
 namespace fetch {
 namespace ledger {
-
-class UnverifiedTransactionSink
-{
-public:
-  using TransactionList = std::vector<UnverifiedTransaction>;
-
-  // Construction / Destruction
-  UnverifiedTransactionSink()          = default;
-  virtual ~UnverifiedTransactionSink() = default;
-
-  /// @name Transaction Handlers
-  /// @{
-  virtual void OnTransaction(UnverifiedTransaction const &tx) = 0;
-  /// @}
-};
-
-class VerifiedTransactionSink
-{
-public:
-  using TransactionList = std::vector<VerifiedTransaction>;
-
-  // Construction / Destruction
-  VerifiedTransactionSink()          = default;
-  virtual ~VerifiedTransactionSink() = default;
-
-  /// @name Transaction Handlers
-  /// @{
-  virtual void OnTransaction(VerifiedTransaction const &tx) = 0;
-  virtual void OnTransactions(TransactionList const &txs);
-  /// @}
-};
-
-inline void VerifiedTransactionSink::OnTransactions(TransactionList const &txs)
-{
-  for (auto const &tx : txs)
-  {
-    OnTransaction(tx);
-  }
+namespace v2 {
+class Transaction;
 }
+
+class TransactionSink
+{
+public:
+  using TransactionPtr  = std::shared_ptr<v2::Transaction>;
+  using TransactionList = std::vector<TransactionPtr>;
+
+  // Construction / Destruction
+  TransactionSink()          = default;
+  virtual ~TransactionSink() = default;
+
+  /// @name Transaction Sink
+  /// @{
+  virtual void OnTransaction(TransactionPtr const &tx) = 0;
+  /// @}
+};
 
 }  // namespace ledger
 }  // namespace fetch

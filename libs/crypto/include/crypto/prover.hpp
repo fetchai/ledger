@@ -53,7 +53,7 @@ public:
    * @param message The message to be signed
    * @return The generated signature if successful, otherwise return empty byte array
    */
-  virtual ConstByteArray Sign(ConstByteArray const &message) = 0;
+  virtual ConstByteArray Sign(ConstByteArray const &message) const = 0;
 
   /// @}
 };
