@@ -20,9 +20,19 @@
 #include "core/assert.hpp"
 #include <numeric>
 
+#include "math/tensor_declaration.hpp"
+#include "math/linalg/blas/base.hpp"
+#include "math/linalg/blas/gemm_nt_novector.hpp"
+#include "math/linalg/blas/gemm_nt_vector.hpp"
+#include "math/linalg/blas/gemm_tn_novector.hpp"
+#include "math/linalg/blas/gemm_tn_vector.hpp"
+
+#include "math/linalg/prototype.hpp"
+
 #include "math/base_types.hpp"
 #include "math/comparison.hpp"
 #include "math/fundamental_operators.hpp"  // add, subtract etc.
+
 
 namespace fetch {
 namespace math {
@@ -674,17 +684,15 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DotTranspose(ArrayType const &
   ASSERT(A.shape()[1] == B.shape()[1]);
   ASSERT(A.shape()[0] == ret.shape()[0]);
   ASSERT(B.shape()[0] == ret.shape()[1]);
+  using Type = typename ArrayType::Type;
+  using namespace linalg;
 
-  for (size_t i(0); i < A.shape()[0]; ++i)
-  {
-    for (size_t j(0); j < B.shape()[0]; ++j)
-    {
-      for (size_t k(0); k < A.shape()[1]; ++k)
-      {
-        ret.At(i, j) += A.At(i, k) * B.At(j, k);
-      }
-    }
-  }
+  Blas<Type, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C <= _alpha * _A * T(_B) + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
+      gemm_nt_no_vector;
+
+  // TODO: Vectorise
+  gemm_nt_no_vector(static_cast<Type>(1), A, B, static_cast<Type>(0), ret);
 }
 
 template <typename ArrayType>
@@ -711,17 +719,15 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> TransposeDot(ArrayType const &
   ASSERT(A.shape()[0] == B.shape()[0]);
   ASSERT(A.shape()[1] == ret.shape()[0]);
   ASSERT(B.shape()[1] == ret.shape()[1]);
+  using Type = typename ArrayType::Type;
+  using namespace linalg;
+  
+  Blas<Type, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C <= _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
+      gemm_tn_no_vector;
 
-  for (size_t i(0); i < A.shape()[1]; ++i)
-  {
-    for (size_t j(0); j < B.shape()[1]; ++j)
-    {
-      for (size_t k(0); k < A.shape()[0]; ++k)
-      {
-        ret.At(i, j) += A.At(k, i) * B.At(k, j);
-      }
-    }
-  }
+  // TODO: Vectorise
+  gemm_tn_no_vector(static_cast<Type>(1), A, B, static_cast<Type>(0), ret);
 }
 
 template <class ArrayType>

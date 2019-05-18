@@ -22,10 +22,7 @@
 namespace fetch {
 namespace math {
 
-template <typename T, typename C>
-class Tensor;
-
-template <typename T, typename C, typename TensorType = Tensor<T, C>>
+template <typename T>
 class TensorIterator
 {
 public:
@@ -34,35 +31,20 @@ public:
    * default range assumes step 1 over whole array - useful for trivial cases
    * @param array
    */
-  TensorIterator(TensorType &array)
+  TensorIterator(T* pointer, SizeType size, SizeType padded_size, SizeType height, SizeType padded_height)
   {
-    pointer_ = array.data().pointer();
-    skip_ = array.padded_height() - array.height();
-    end_ = pointer_ + array.data().size();
-    height_= array.height();
-    size_ = array.size();
+    pointer_ = pointer; 
+    skip_ = padded_height - height; 
+    end_ = pointer_ + padded_size; 
+    height_= height; 
+    size_ = size; 
   }
 
-  TensorIterator(TensorIterator const &other) = default;
+  TensorIterator(TensorIterator const &other)            = default;
   TensorIterator &operator=(TensorIterator const &other) = default;
   TensorIterator(TensorIterator &&other)                 = default;
-  TensorIterator &operator=(TensorIterator &&other) = default;
+  TensorIterator &operator=(TensorIterator &&other)      = default;
 
-  /**
-   * @brief creates an iterator for a tensor with a given starting position.
-   * @param array is the tensor that is iterated over
-   * @param position is the starting position referencing the underlying memory.
-   */
-  TensorIterator(TensorType &array, SizeType position)
-  : TensorIterator(array)
-  {
-    pointer_ = array.data().pointer() + position;
-  }
-
-  static TensorIterator EndIterator(TensorType &array)
-  {
-    return TensorIterator(array, array.data().size());
-  }
   /**
    * identifies whether the iterator is still valid or has finished iterating
    * @return boolean indicating validity
@@ -143,8 +125,8 @@ private:
   SizeType    size_{0};
 };
 
-template <typename T, typename C>
-using ConstTensorIterator = TensorIterator<T const, C, Tensor<T, C> const>;
+template <typename T>
+using ConstTensorIterator = TensorIterator<T const>;
 
 }  // namespace math
 }  // namespace fetch

@@ -48,7 +48,14 @@ public:
     return output;
   }
 
-  // x>0 f'(x)=1, x<=0 f'(x)=0
+  /**
+   * Gradients for backprop with Relu are as follows:
+   * x>0 f'(x)=1, x<=0 f'(x)=0
+   * therefore we should return error_signal but zeroed out at the relevant places
+   * @param inputs
+   * @param error_signal
+   * @return
+   */
   virtual std::vector<ArrayType> Backward(
       std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           error_signal)
@@ -59,18 +66,23 @@ public:
     ArrayType const &input = inputs.front().get();
     ArrayType        return_signal{error_signal.shape()};
 
-    auto it1 = input.begin();
-    auto it2 = return_signal.begin();
+    auto it1    = input.begin();
+    auto it2    = return_signal.begin();
+    auto err_it = error_signal.cbegin();
 
     while (it1.is_valid())
     {
-      *it2 = DataType(1);
       if (*it1 <= DataType(0))
       {
-        *it2 = DataType(0);
+        *it2 = static_cast<DataType>(0);
+      }
+      else
+      {
+        *it2 = *err_it;
       }
       ++it1;
       ++it2;
+      ++err_it;
     }
 
     return {return_signal};

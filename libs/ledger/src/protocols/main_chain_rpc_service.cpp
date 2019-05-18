@@ -27,6 +27,7 @@
 #include "metrics/metrics.hpp"
 #include "network/muddle/packet.hpp"
 
+// TODO(private 976) : This can crash the network as it's not enforced server side
 static const uint32_t MAX_CHAIN_REQUEST_SIZE = 10000;
 static const uint64_t MAX_SUB_CHAIN_SIZE     = 1000;
 

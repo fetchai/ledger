@@ -28,8 +28,8 @@ class TensorView
 public:
   using Type                       = T;
   using ContainerType              = C;  
-  using IteratorType      = TensorIterator<T, ContainerType>;
-  using ConstIteratorType = ConstTensorIterator<T, ContainerType>;  
+  using IteratorType      = TensorIterator<T>;
+  using ConstIteratorType = ConstTensorIterator<T>;  
 
   enum
   {
@@ -46,14 +46,41 @@ public:
   {
     padded_height_ = PadValue(height_);
   }
-/*
-  IteratorType      begin();
-  IteratorType      end();
-  ConstIteratorType begin() const;
-  ConstIteratorType end() const;
-  ConstIteratorType cbegin() const;
-  ConstIteratorType cend() const;
-*/
+
+  IteratorType      begin()
+  {
+    SizeType padded_size = padded_height_ * width_;
+    return IteratorType(pointer_, height_* width_, padded_size, height_, padded_height_ );
+  }
+
+  IteratorType      end()
+  {
+    SizeType padded_size = padded_height_ * width_;    
+    return IteratorType(pointer_ + padded_size, height_* width_, padded_size, height_, padded_height_ );
+  }
+
+  ConstIteratorType begin() const
+  {
+    return ConstIteratorType(pointer_, height_* width_, padded_height_ * width_, height_, padded_height_ );
+  }
+
+  ConstIteratorType end() const
+  {
+    SizeType padded_size = padded_height_ * width_;    
+    return ConstIteratorType(pointer_ + padded_size, height_* width_, padded_size, height_, padded_height_ );
+  }
+
+  ConstIteratorType cbegin() const
+  {
+    return ConstIteratorType(pointer_, height_* width_, padded_height_ * width_, height_, padded_height_ );
+  }
+
+  ConstIteratorType cend() const
+  {
+    SizeType padded_size = padded_height_ * width_;    
+    return ConstIteratorType(pointer_ + padded_size, height_* width_, padded_size, height_, padded_height_ );
+  }
+
   Type operator()(SizeType i, SizeType j) const
   {
     return pointer_[i + j * padded_height_];

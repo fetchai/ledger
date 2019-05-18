@@ -17,24 +17,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/fixed_point/fixed_point.hpp"
+#include "math/fixed_point/fixed_point.hpp"
+#include "python/fetch_pybind.hpp"
+
+namespace py = pybind11;
 
 namespace fetch {
-namespace serializers {
+namespace fixed_point {
 
-template <typename T, std::uint16_t I, std::uint16_t F>
-inline void Serialize(T &serializer, fixed_point::FixedPoint<I, F> const &n)
+template <std::uint16_t I, std::uint16_t F>
+void BuildFixedPoint(std::string const &custom_name, pybind11::module &module)
 {
-  serializer << n.Data();
+  py::class_<fetch::fixed_point::FixedPoint<I, F>>(module, custom_name.c_str())
+      .def(py::init<float>())
+      .def("__str__",
+           [](fetch::fixed_point::FixedPoint<I, F> &n) { return std::to_string(float(n)); });
 }
 
-template <typename T, std::uint16_t I, std::uint16_t F>
-inline void Deserialize(T &serializer, fixed_point::FixedPoint<I, F> &n)
-{
-  typename fixed_point::FixedPoint<I, F>::Type data;
-  serializer >> data;
-  n = fixed_point::FixedPoint<I, F>::FromBase(data);
-}
-
-}  // namespace serializers
+}  // namespace fixed_point
 }  // namespace fetch

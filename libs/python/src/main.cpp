@@ -18,7 +18,7 @@
 
 #include "python/fetch_pybind.hpp"
 
-#include "python/core/fixed_point/py_fixed_point.hpp"
+#include "python/math/fixed_point/py_fixed_point.hpp"
 
 #include "python/memory/py_array.hpp"
 #include "python/memory/py_range.hpp"
