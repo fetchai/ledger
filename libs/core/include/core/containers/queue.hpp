@@ -131,6 +131,9 @@ public:
 
   using Element = T;
 
+  static_assert(std::is_move_assignable<T>::value, "T must be move assignable");
+  static_assert(std::is_default_constructible<T>::value, "T must be default constructable");
+
   // Construction / Destruction
   Queue()              = default;
   Queue(Queue const &) = delete;

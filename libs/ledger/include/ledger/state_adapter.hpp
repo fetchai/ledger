@@ -44,6 +44,12 @@ public:
   static ResourceAddress CreateAddress(Identifier const &scope, ConstByteArray const &key);
   static ResourceAddress CreateAddress(ConstByteArray const &key);
 
+  enum class Mode
+  {
+    READ_ONLY,
+    READ_WRITE
+  };
+
   // Construction / Destruction
   StateAdapter(StorageInterface &storage, Identifier scope);
   ~StateAdapter() override = default;
@@ -60,9 +66,12 @@ public:
   std::string WrapKeyWithScope(std::string const &key);
 
 protected:
+  // Protected construction
+  StateAdapter(StorageInterface &storage, Identifier scope, Mode mode);
+
   StorageInterface &      storage_;
   std::vector<Identifier> scope_;
-  bool                    enable_writes_ = false;
+  Mode                    mode_;
 };
 
 }  // namespace ledger

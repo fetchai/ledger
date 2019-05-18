@@ -53,7 +53,7 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtr const &from, uint64_t
   if (from)
   {
     ByteArray ident{};
-    ident.Resize(64);
+    ident.Resize(32);
 
     ByteArray merkle_root{};
     merkle_root.Resize(32);
@@ -81,7 +81,7 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtr const &from, uint64_t
     block->body.previous_hash  = from->body.hash;
     block->body.merkle_hash    = merkle_root;
     block->body.block_number   = from->body.block_number + 1u;
-    block->body.miner          = ident;
+    block->body.miner          = v2::Address{ident};
     block->body.log2_num_lanes = log2_num_lanes_;
     block->body.slices.resize(num_slices_);
   }
@@ -90,6 +90,7 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtr const &from, uint64_t
     // update the previous hash
     block->body.previous_hash = fetch::ledger::GENESIS_DIGEST;
     block->body.merkle_hash   = fetch::ledger::GENESIS_MERKLE_ROOT;
+    block->body.miner         = v2::Address{fetch::ledger::GENESIS_DIGEST};
   }
 
   // compute the digest for the block

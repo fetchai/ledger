@@ -32,7 +32,7 @@ namespace ledger {
 class ExecutorRpcService
 {
 public:
-  using Resources              = Executor::Resources;
+  using StorageUnitPtr         = Executor::StorageUnitPtr;
   using Muddle                 = muddle::Muddle;
   using MuddlePtr              = std::shared_ptr<Muddle>;
   using Identity               = crypto::Identity;
@@ -44,8 +44,8 @@ public:
   static constexpr char const *LOGGING_NAME = "ExecutorRpcService";
 
   // Construction / Destruction
-  ExecutorRpcService(uint16_t port, Resources resources, std::shared_ptr<Muddle> muddle)
-    : executor_(std::move(resources))
+  ExecutorRpcService(uint16_t port, StorageUnitPtr storage, MuddlePtr muddle)
+    : executor_(std::move(storage))
     , port_(port)
     , muddle_(std::move(muddle))
     , identity_(muddle_->identity())

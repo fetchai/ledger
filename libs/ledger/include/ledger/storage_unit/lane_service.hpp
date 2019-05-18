@@ -60,6 +60,10 @@ class LaneControllerProtocol;
 class LaneIdentity;
 class LaneIdentityProtocol;
 
+namespace v2 {
+class Transaction;
+}
+
 class LaneService
 {
 public:
@@ -103,8 +107,8 @@ private:
   using ServerPtr                 = std::shared_ptr<Server>;
   using StateDb                   = storage::NewRevertibleDocumentStore;
   using StateDbProto              = storage::RevertibleDocumentStoreProtocol;
-  using TxStore                   = storage::TransientObjectStore<VerifiedTransaction>;
-  using TxStoreProto              = storage::ObjectStoreProtocol<VerifiedTransaction>;
+  using TxStore                   = storage::TransientObjectStore<v2::Transaction>;
+  using TxStoreProto              = storage::ObjectStoreProtocol<v2::Transaction>;
   using BackgroundedWork          = network::BackgroundedWork<TransactionStoreSyncService>;
   using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;

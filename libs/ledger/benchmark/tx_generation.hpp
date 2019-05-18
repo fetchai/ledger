@@ -19,64 +19,37 @@
 
 #include "core/random/lcg.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/v2/transaction_builder.hpp"
 
 #include <cstdint>
 
 namespace {
 
 using fetch::crypto::ECDSASigner;
-using fetch::ledger::VerifiedTransaction;
+using fetch::ledger::v2::Transaction;
+using fetch::ledger::v2::TransactionBuilder;
+using fetch::ledger::v2::Address;
+using fetch::BitVector;
 
-using TransactionList = std::vector<VerifiedTransaction>;
+using TransactionList = std::vector<TransactionBuilder::TransactionPtr>;
 
-inline TransactionList GenerateTransactions(std::size_t count, bool large_packets,
-                                            ECDSASigner *signer = nullptr)
+inline TransactionList GenerateTransactions(std::size_t count, ECDSASigner &signer)
 {
-  static constexpr std::size_t TX_SIZE      = 2048;
-  static constexpr std::size_t TX_WORD_SIZE = TX_SIZE / sizeof(uint64_t);
-  static_assert((TX_SIZE % sizeof(uint64_t)) == 0, "The transaction must be a multiple of 64bits");
-
-  using fetch::ledger::UnverifiedTransaction;
-  using fetch::ledger::MutableTransaction;
-  using fetch::ledger::TxSigningAdapter;
-  using fetch::byte_array::ByteArray;
-  using fetch::ledger::TxSigningAdapter;
-  using fetch::random::LinearCongruentialGenerator;
-
-  LinearCongruentialGenerator rng;
-
   TransactionList list;
   list.reserve(count);
 
   for (std::size_t i = 0; i < count; ++i)
   {
-    MutableTransaction mtx;
-    mtx.set_contract_name("fetch.dummy");
+    auto tx = TransactionBuilder()
+                  .From(Address{signer.identity()})
+                  .TargetChainCode("fetch.dummy", BitVector{})
+                  .Signer(signer.identity())
+                  .Seal()
+                  .Sign(signer)
+                  .Build();
 
-    if (large_packets)
-    {
-      ByteArray tx_data(TX_SIZE);
-      uint64_t *tx_data_raw = reinterpret_cast<uint64_t *>(tx_data.pointer());
-
-      for (std::size_t j = 0; j < TX_WORD_SIZE; ++j)
-      {
-        *tx_data_raw++ = rng();
-      }
-    }
-    else
-    {
-      mtx.set_data(std::to_string(i));
-    }
-
-    // if a signature has been defined then sign the transactions
-    if (signer)
-    {
-      mtx.Sign(signer->private_key());
-    }
-
-    list.emplace_back(VerifiedTransaction::Create(std::move(mtx)));
+    list.emplace_back(std::move(tx));
   }
 
   return list;

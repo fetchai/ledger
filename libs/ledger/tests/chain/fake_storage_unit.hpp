@@ -19,7 +19,7 @@
 
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/constants.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
+#include "ledger/chain/v2/transaction.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <map>
@@ -30,38 +30,39 @@
 class FakeStorageUnit : public fetch::ledger::StorageUnitInterface
 {
 public:
-  using Transaction = fetch::ledger::Transaction;
-  using TxDigestSet = fetch::ledger::TxDigestSet;
+  using Transaction = fetch::ledger::v2::Transaction;
+  using Digest      = fetch::ledger::v2::Digest;
+  using DigestSet   = fetch::ledger::v2::DigestSet;
 
   /// @name State Interface
   /// @{
-  Document Get(ResourceAddress const &key);
-  Document GetOrCreate(ResourceAddress const &key);
-  void     Set(ResourceAddress const &key, StateValue const &value);
-  bool     Lock(ResourceAddress const &key);
-  bool     Unlock(ResourceAddress const &key);
+  Document Get(ResourceAddress const &key) override;
+  Document GetOrCreate(ResourceAddress const &key) override;
+  void     Set(ResourceAddress const &key, StateValue const &value) override;
+  bool     Lock(ShardIndex shard) override;
+  bool     Unlock(ShardIndex shard) override;
   /// @}
 
   /// @name Transaction Interface
   /// @{
-  void AddTransaction(Transaction const &tx);
-  bool GetTransaction(ConstByteArray const &digest, Transaction &tx);
-  bool HasTransaction(ConstByteArray const &digest);
-  void IssueCallForMissingTxs(TxDigestSet const &tx_set);
+  void AddTransaction(Transaction const &tx) override;
+  bool GetTransaction(Digest const &digest, Transaction &tx) override;
+  bool HasTransaction(Digest const &digest) override;
+  void IssueCallForMissingTxs(DigestSet const &tx_set) override;
   /// @}
 
   /// @name Transaction History Poll
   /// @{
-  TxSummaries PollRecentTx(uint32_t);
+  TxLayouts PollRecentTx(uint32_t) override;
   /// @}
 
   /// @name Revertible Document Store Interface
   /// @{
-  Hash CurrentHash();
-  Hash LastCommitHash();
-  bool RevertToHash(Hash const &hash, uint64_t index);
-  Hash Commit(uint64_t index);
-  bool HashExists(Hash const &hash, uint64_t index);
+  Hash CurrentHash() override;
+  Hash LastCommitHash() override;
+  bool RevertToHash(Hash const &hash, uint64_t index) override;
+  Hash Commit(uint64_t index) override;
+  bool HashExists(Hash const &hash, uint64_t index) override;
   /// @}
 
   // Useful for test to force the hash
@@ -74,7 +75,7 @@ public:
   void UpdateHash();
 
 private:
-  using TransactionStore = std::map<Transaction::TxDigest, Transaction>;
+  using TransactionStore = std::map<Digest, Transaction>;
   using State            = std::map<ResourceAddress, StateValue>;
   using StatePtr         = std::shared_ptr<State>;
   using StateHistory     = std::unordered_map<Hash, StatePtr>;

@@ -54,6 +54,11 @@ public:
   virtual std::vector<ArrayType> BackwardBatch(
       std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           errorSignal) = 0;
+
+  /*
+   * ComputeOutputShape is usually expensive function and should be used only for initialization or
+   * in ASSERT. On Forward you can use output.shape() and on Backward there is error_signal.shape()
+   */
   virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const = 0;
 

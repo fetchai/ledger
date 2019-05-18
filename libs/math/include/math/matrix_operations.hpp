@@ -229,11 +229,11 @@ T Product(std::vector<T> const &obj1)
  * @param ret
  * @return
  */
-template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, void> Max(ArrayType const &array, T &ret)
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> Max(ArrayType const &array, typename ArrayType::Type &ret)
 {
-  ret = numeric_lowest<T>();
-  for (T const &e : array)
+  ret = numeric_lowest<typename ArrayType::Type>();
+  for (typename ArrayType::Type const &e : array)
   {
     if (e > ret)
     {
@@ -241,6 +241,7 @@ meta::IfIsMathArray<ArrayType, void> Max(ArrayType const &array, T &ret)
     }
   }
 }
+
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Max(ArrayType const &array)
 {
@@ -248,6 +249,7 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Max(ArrayType const &ar
   Max(array, ret);
   return ret;
 }
+
 /**
  * Implementation of Max that returns the n-1 dim array by finding the max of all 1-d vectors within
  * the array
@@ -296,6 +298,7 @@ void Max(ArrayType const &array, typename ArrayType::SizeType const &axis, Array
     }
   }
 }
+
 template <typename T>
 void Max(std::vector<T> const &obj1, T &ret)
 {
@@ -310,17 +313,17 @@ T Max(std::vector<T> const &obj1)
 }
 
 /**
- * Min function returns the smalled value in the array
+ * Min function returns the smallest value in the array
  * @tparam ArrayType input array type
  * @tparam T input scalar return param
  * @param array input array
  * @param ret return value
  */
-template <typename ArrayType, typename T, typename = std::enable_if_t<meta::IsArithmetic<T>>>
-meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, T &ret)
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, typename ArrayType::Type &ret)
 {
-  ret = numeric_max<T>();
-  for (T const &e : array)
+  ret = numeric_max<typename ArrayType::Type>();
+  for (typename ArrayType::Type const &e : array)
   {
     if (e < ret)
     {
@@ -456,13 +459,17 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
     ASSERT(ret.shape()[0] == 1);
     ASSERT(ret.shape()[1] == obj1.shape()[1]);
 
-    for (SizeType i = 0; i < ret.size(); ++i)
+    auto it  = obj1.cbegin();
+    auto rit = ret.begin();
+    while (rit.is_valid())
     {
-      ret[i] = typename ArrayType::Type(0);
-      for (SizeType j = 0; j < obj1.shape()[0]; ++j)
+      *rit = typename ArrayType::Type{0};
+      for (SizeType j{0}; j < obj1.shape().at(0); ++j)
       {
-        ret[i] += obj1(j, i);
+        *rit += *it;
+        ++it;
       }
+      ++rit;
     }
   }
   else
@@ -470,13 +477,16 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
     ASSERT(ret.shape()[0] == obj1.shape()[0]);
     ASSERT(ret.shape()[1] == 1);
 
+    auto rit = ret.begin();
     for (SizeType i = 0; i < ret.size(); ++i)
     {
-      ret[i] = typename ArrayType::Type(0);
-      for (SizeType j = 0; j < obj1.shape()[1]; ++j)
+      *rit = typename ArrayType::Type{0};
+      for (SizeType j = 0; j < obj1.shape().at(1); ++j)
       {
-        ret[i] += obj1(i, j);
+        // Todo(issue 1015) Replace with transposed iterator
+        *rit += obj1(i, j);
       }
+      ++rit;
     }
   }
 }
@@ -502,28 +512,131 @@ ArrayType ReduceSum(ArrayType const &obj1, SizeType axis)
 }
 
 template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &                   obj1,
+                                                typename ArrayType::SizeType const &axis,
+                                                ArrayType &                         ret)
+{
+  using Type = typename ArrayType::Type;
+
+  ASSERT(axis == 0 || axis == 1);
+  Type n = static_cast<Type>(obj1.shape().at(1 - axis));
+  ReduceSum(obj1, axis, ret);
+  Divide(ret, n, ret);
+}
+
+template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &                   obj1,
                                                      typename ArrayType::SizeType const &axis)
 {
+  using Type = typename ArrayType::Type;
+
   ASSERT(axis == 0 || axis == 1);
-  typename ArrayType::DataType n;
-  if (axis == 0)
-  {
-    n = obj1.shape()[1];
-  }
-  else
-  {
-    n = obj1.shape()[0];
-  }
-  return Divide(ReduceSum(obj1, axis), n);
+  Type n   = static_cast<Type>(obj1.shape().at(1 - axis));
+  Type ret = ReduceSum(obj1, axis);
+  Divide(ret, n, ret);
+  return ret;
 }
+
 /**
  * Distance between max and min values in an array
+ * @tparam ArrayType
+ * @param array
+ * @param ret
  */
 template <typename ArrayType>
-void PeakToPeak(ArrayType arr)
+void PeakToPeak(ArrayType const &array, typename ArrayType::Type &ret)
 {
-  return Max(arr) - Min(arr);
+  ret                          = numeric_lowest<typename ArrayType::Type>();
+  typename ArrayType::Type min = numeric_max<typename ArrayType::Type>();
+  auto                     it  = array.cbegin();
+  while (it.is_valid())
+  {
+    if (*it > ret)
+    {
+      ret = *it;
+    }
+    if (*it < min)
+    {
+      min = *it;
+    }
+    ++it;
+  }
+  ret = ret - min;
+}
+
+template <typename ArrayType>
+typename ArrayType::Type PeakToPeak(ArrayType const &array)
+{
+  typename ArrayType::Type ret;
+  PeakToPeak(array, ret);
+  return ret;
+}
+
+/**
+ * Implementation of PeakToPeak that returns the n-1 dim array by finding the max-min of all 1-d
+ * vectors within the array
+ * @tparam ArrayType
+ * @param array
+ * @param axis
+ * @param ret
+ */
+template <typename ArrayType>
+void PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const &axis, ArrayType &ret)
+{
+  ASSERT(array.shape().size() <= 2);
+  ASSERT(axis < array.shape().size());
+
+  if (array.shape().size() == 1)
+  {
+    ASSERT(axis == 0);
+    ret[0] = PeakToPeak(array);
+  }
+  else
+  {  // Argmax-Argmin along a single axis
+    SizeType axis_length = array.shape()[axis];
+    ASSERT(axis_length > 1);
+    ASSERT(ret.size() == Divide(Product(array.shape()), array.shape()[axis]));
+
+    // fill the return with the first index values
+    ret.Assign(array.Slice(0, axis));
+    ArrayType min(ret.shape());
+    min.Assign(array.Slice(0, axis));
+
+    //
+    for (SizeType n{1}; n < axis_length; ++n)
+    {
+      auto cur_slice    = array.Slice(n, axis);
+      auto cur_slice_it = cur_slice.begin();
+      auto rit          = ret.begin();
+      auto mit          = min.begin();
+
+      // check every element in the n-1 dimensional return
+      while (cur_slice_it.is_valid())
+      {
+        if (*cur_slice_it > *rit)
+        {
+          *rit = *cur_slice_it;
+        }
+        if (*cur_slice_it < *mit)
+        {
+          *mit = *cur_slice_it;
+        }
+        ++rit;
+        ++mit;
+        ++cur_slice_it;
+      }
+    }
+    // i.e. ret=max-min, because max is stored in ret
+    fetch::math::Subtract(ret, min, ret);
+  }
+}
+
+template <typename ArrayType>
+ArrayType PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const &axis)
+{
+  ArrayType ret(Divide(Product(array.shape()), array.shape().at(axis)));
+  PeakToPeak(array, axis, ret);
+  return ret;
 }
 
 /**
@@ -728,7 +841,7 @@ template <class ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> TransposeDot(ArrayType const &A,
                                                                     ArrayType const &B)
 {
-  std::vector<typename ArrayType::SizeType> return_shape{A.shape()[1], B.shape()[1]};
+  std::vector<typename ArrayType::SizeType> return_shape{A.shape().at(1), B.shape().at(1)};
   ArrayType                                 ret(return_shape);
   TransposeDot(A, B, ret);
   return ret;
@@ -740,8 +853,8 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DynamicStitch(ArrayType &     
                                                                 ArrayType const &data)
 {
   ASSERT(data.size() <= input_array.size());
-  ASSERT(input_array.size() >= Max(indices));
-  ASSERT(Min(indices) >= 0);
+  ASSERT(input_array.size() > static_cast<typename ArrayType::SizeType>(Max(indices)));
+  ASSERT(static_cast<typename ArrayType::SizeType>(Min(indices)) >= 0);
   input_array.Resize({indices.size()});
 
   auto ind_it  = indices.cbegin();
@@ -750,47 +863,10 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DynamicStitch(ArrayType &     
   while (data_it.is_valid())
   {
     // loop through all output data locations identifying the next data point to copy into it
-    for (SizeType i = 0; i < indices.size(); ++i)  // iterate through lists of indices
-    {
-      input_array.Set(SizeType(*ind_it), *data_it);
-    }
+    input_array.Set(SizeType(*ind_it), *data_it);
+    ++data_it;
+    ++ind_it;
   }
-}
-
-template <typename ArrayType>
-void Concat(ArrayType &ret, std::vector<ArrayType> const &input_arrays)
-{
-  ASSERT(input_arrays.size() > 0);
-
-  SizeType new_size = 0;
-  for (SizeType i = 0; i < input_arrays.size(); ++i)
-  {
-    new_size += input_arrays[i].size();
-  }
-  ret.Resize(new_size);
-
-  if (input_arrays.size() == 1)
-  {
-    ret.Copy(input_arrays[0]);
-  }
-  else
-  {
-    SizeType count = 0;
-    for (SizeType j = 0; j < input_arrays.size(); ++j)
-    {
-      for (SizeType i = 0; i < input_arrays[j].size(); ++i, ++count)
-      {
-        ret[count] = input_arrays[j][i];
-      }
-    }
-  }
-}
-template <typename ArrayType>
-ArrayType Concat(std::vector<ArrayType> const &input_arrays)
-{
-  ArrayType ret;
-  Concat(ret, input_arrays);
-  return ret;
 }
 
 }  // namespace math

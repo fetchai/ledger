@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/bitvector.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "miner/optimisation/bitvector.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -35,25 +35,29 @@ class TransactionLayout
 {
 public:
   using ConstByteArray = byte_array::ConstByteArray;
-  using ShardMask      = bitmanip::BitVector;
+  using Digest         = byte_array::ConstByteArray;
   using TokenAmount    = uint64_t;
   using BlockIndex     = uint64_t;
 
   // Construction / Destruction
   TransactionLayout() = default;
-  explicit TransactionLayout(Transaction const &tx);
+  TransactionLayout(Transaction const &tx, uint32_t log2_num_lanes);
+  TransactionLayout(Digest digest, BitVector const &mask, TokenAmount charge, BlockIndex valid_from,
+                    BlockIndex valid_until);
   TransactionLayout(TransactionLayout const &) = default;
   TransactionLayout(TransactionLayout &&)      = default;
   ~TransactionLayout()                         = default;
 
   /// @name Accessors
   /// @{
-  ConstByteArray const &digest() const;
-  ShardMask const &     mask() const;
-  TokenAmount           charge() const;
-  BlockIndex            valid_from() const;
-  BlockIndex            valid_until() const;
+  Digest const &   digest() const;
+  BitVector const &mask() const;
+  TokenAmount      charge() const;
+  BlockIndex       valid_from() const;
+  BlockIndex       valid_until() const;
   /// @}
+
+  bool operator==(TransactionLayout const &other) const;
 
   // Operators
   TransactionLayout &operator=(TransactionLayout const &) = default;
@@ -61,7 +65,7 @@ public:
 
 private:
   ConstByteArray digest_{};
-  ShardMask      mask_{};
+  BitVector      mask_{};
   TokenAmount    charge_{0};
   BlockIndex     valid_from_{0};
   BlockIndex     valid_until_{0};
@@ -88,7 +92,7 @@ inline TransactionLayout::ConstByteArray const &TransactionLayout::digest() cons
  *
  * @return The shard mask
  */
-inline TransactionLayout::ShardMask const &TransactionLayout::mask() const
+inline BitVector const &TransactionLayout::mask() const
 {
   return mask_;
 }
@@ -123,6 +127,31 @@ inline TransactionLayout::BlockIndex TransactionLayout::valid_until() const
   return valid_until_;
 }
 
+/**
+ * Determine if the two objects are equal
+ *
+ * @param other THe other layout to compare against
+ * @return true if equal, otherwise false
+ */
+inline bool TransactionLayout::operator==(TransactionLayout const &other) const
+{
+  return digest_ == other.digest_;
+}
+
 }  // namespace v2
 }  // namespace ledger
 }  // namespace fetch
+
+namespace std {
+
+template <>
+struct hash<fetch::ledger::v2::TransactionLayout>
+{
+  std::size_t operator()(fetch::ledger::v2::TransactionLayout const &layout) const
+  {
+    assert(layout.digest().size() >= sizeof(std::size_t));
+    return *reinterpret_cast<std::size_t const *>(layout.digest().pointer());
+  }
+};
+
+}  // namespace std

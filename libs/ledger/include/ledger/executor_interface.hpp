@@ -17,17 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction.hpp"
+#include "ledger/chain/v2/digest.hpp"
 
 namespace fetch {
+
+class BitVector;
+
 namespace ledger {
+namespace v2 {
+
+class Address;
+}
 
 class ExecutorInterface
 {
 public:
-  using TxDigest  = Transaction::TxDigest;
-  using LaneIndex = uint32_t;
-  using LaneSet   = std::unordered_set<LaneIndex>;
+  using BlockIndex  = uint64_t;
+  using SliceIndex  = uint64_t;
+  using LaneIndex   = uint32_t;
+  using TokenAmount = uint64_t;
 
   enum class Status
   {
@@ -37,6 +45,11 @@ public:
     CHAIN_CODE_LOOKUP_FAILURE,
     CHAIN_CODE_EXEC_FAILURE,
     CONTRACT_NAME_PARSE_FAILURE,
+    CONTRACT_LOOKUP_FAILURE,
+    TX_NOT_VALID_FOR_BLOCK,
+    INSUFFICIENT_AVAILABLE_FUNDS,
+    TRANSFER_FAILURE,
+    INSUFFICIENT_CHARGE,
 
     // Fatal Errors
     NOT_RUN,
@@ -45,12 +58,25 @@ public:
     INEXPLICABLE_FAILURE,
   };
 
+  struct Result
+  {
+    Status      status;       ///< The status of the transaction
+    TokenAmount charge;       ///< The number of units of charge that
+    TokenAmount charge_rate;  ///< The cost of each unit of charge
+    TokenAmount fee;          ///< The total fee claimed by the miner
+  };
+
+  // Construction / Destruction
+  ExecutorInterface()          = default;
+  virtual ~ExecutorInterface() = default;
+
   /// @name Executor Interface
   /// @{
-  virtual Status Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes) = 0;
+  virtual Result Execute(v2::Digest const &digest, BlockIndex block, SliceIndex slice,
+                         BitVector const &shards)    = 0;
+  virtual void   SettleFees(v2::Address const &miner, TokenAmount amount,
+                            uint32_t log2_num_lanes) = 0;
   /// @}
-
-  virtual ~ExecutorInterface() = default;
 };
 
 inline char const *ToString(ExecutorInterface::Status status)
@@ -61,6 +87,30 @@ inline char const *ToString(ExecutorInterface::Status status)
   {
   case ExecutorInterface::Status::SUCCESS:
     text = "Success";
+    break;
+  case ExecutorInterface::Status::CHAIN_CODE_LOOKUP_FAILURE:
+    text = "Chain Code Lookup Failure";
+    break;
+  case ExecutorInterface::Status::CHAIN_CODE_EXEC_FAILURE:
+    text = "Chain Code Execution Failure";
+    break;
+  case ExecutorInterface::Status::CONTRACT_NAME_PARSE_FAILURE:
+    text = "Contract Name Parse Failure";
+    break;
+  case ExecutorInterface::Status::CONTRACT_LOOKUP_FAILURE:
+    text = "Contract Lookup Failure";
+    break;
+  case ExecutorInterface::Status::TX_NOT_VALID_FOR_BLOCK:
+    text = "Tx not valid for current block";
+    break;
+  case ExecutorInterface::Status::INSUFFICIENT_AVAILABLE_FUNDS:
+    text = "Insufficient available funds";
+    break;
+  case ExecutorInterface::Status::TRANSFER_FAILURE:
+    text = "Unable to perform transfer";
+    break;
+  case ExecutorInterface::Status::INSUFFICIENT_CHARGE:
+    text = "Insufficient charge";
     break;
   case ExecutorInterface::Status::NOT_RUN:
     text = "Not Run";
@@ -73,15 +123,6 @@ inline char const *ToString(ExecutorInterface::Status status)
     break;
   case ExecutorInterface::Status::INEXPLICABLE_FAILURE:
     text = "Inexplicable Error";
-    break;
-  case ExecutorInterface::Status::CHAIN_CODE_LOOKUP_FAILURE:
-    text = "Chain Code Lookup Failure";
-    break;
-  case ExecutorInterface::Status::CHAIN_CODE_EXEC_FAILURE:
-    text = "Chain Code Execution Failure";
-    break;
-  case ExecutorInterface::Status::CONTRACT_NAME_PARSE_FAILURE:
-    text = "Contract Name Parse Failure";
     break;
   }
 
@@ -100,6 +141,18 @@ void Deserialize(T &stream, ExecutorInterface::Status &status)
   int raw_status{0};
   stream >> raw_status;
   status = static_cast<ExecutorInterface::Status>(raw_status);
+}
+
+template <typename T>
+void Serialize(T &stream, ExecutorInterface::Result const &result)
+{
+  stream << result.status << result.charge << result.charge_rate << result.fee;
+}
+
+template <typename T>
+void Deserialize(T &stream, ExecutorInterface::Result &result)
+{
+  stream >> result.status >> result.charge >> result.charge_rate >> result.fee;
 }
 
 }  // namespace ledger
