@@ -26,8 +26,8 @@ from pathlib import Path
 
 from fetch.cluster.instance import ConstellationInstance
 
-from fetchai.ledger.api import TokenApi, TransactionApi
-from fetchai.ledger.crypto import Identity
+from fetchai.ledger.api import LedgerApi
+from fetchai.ledger.crypto import Entity
 
 
 def output(*args):
@@ -197,6 +197,9 @@ class TestInstance():
         # In the case only one miner node, it runs in standalone mode
         if(len(self._nodes) == 1 and len(self._nodes_are_mining) > 0):
             self._nodes[0].standalone = True
+        else:
+            for node in self._nodes:
+                node.private_network = True
 
         # start all the nodes
         for index in range(self._number_of_nodes):
@@ -330,7 +333,7 @@ def send_txs(parameters, test_instance):
         with open(filename, 'rb') as handle:
             identities = pickle.load(handle)
     else:
-        identities = [Identity() for i in range(amount)]
+        identities = [Entity() for i in range(amount)]
 
     # If pickling, save this to the workspace
     with open('{}/{}.pickle'.format(test_instance._workspace, name), 'wb') as handle:
@@ -341,7 +344,7 @@ def send_txs(parameters, test_instance):
         node_port = test_instance._nodes[node_index]._port_start
 
         # create the API objects we use to interface with the nodes
-        tokens = TokenApi(node_host, node_port)
+        api = LedgerApi(node_host, node_port)
 
         tx_and_identity = []
 
@@ -352,7 +355,7 @@ def send_txs(parameters, test_instance):
 
             # create and send the transaction to the ledger, capturing the tx
             # hash
-            tx = tokens.wealth(identity.private_key_bytes, index)
+            tx = api.tokens.wealth(identity, index)
 
             tx_and_identity.append((tx, identity, index))
 
@@ -389,15 +392,14 @@ def verify_txs(parameters, test_instance):
         node_host = "localhost"
         node_port = test_instance._nodes[node_index]._port_start
 
-        txs = TransactionApi(node_host, node_port)
-        tokens = TokenApi(node_host, node_port)
+        api = LedgerApi(node_host, node_port)
 
         # Verify TXs - will block until they have executed
         for tx, identity, balance in tx_and_identity:
 
             # Check TX has executed
             while True:
-                status = txs.status(tx)
+                status = api.tx.status(tx)
 
                 if status == "Executed":
                     break
@@ -405,7 +407,7 @@ def verify_txs(parameters, test_instance):
                 time.sleep(0.5)
                 output("Waiting for TX to get executed. Found: {}".format(status))
 
-            seen_balance = tokens.balance(identity.public_key)
+            seen_balance = api.tokens.balance(identity)
             if balance != seen_balance:
                 output(
                     "Balance mismatch found after sending to node. Found {} expected {}".format(

@@ -188,7 +188,12 @@ inline uint64_t ConvertToBigEndian(uint64_t x)
 
 inline int CountLeadingZeroes64(uint64_t x)
 {
-  return __builtin_clzl(x);
+  return __builtin_clzll(x);
+}
+
+inline int CountTrailingZeroes64(uint64_t x)
+{
+  return __builtin_ctzll(x);
 }
 
 // Return the minimum number of bits required to represent x
@@ -219,6 +224,16 @@ inline uint32_t ToLog2(uint32_t value)
 inline bool IsLog2(uint64_t value)
 {
   return value && !(value & (value - 1));
+}
+
+template <uint32_t DIVISOR, typename Value>
+meta::IfIsUnsignedInteger<Value, Value> DivCeil(Value value)
+{
+  static_assert(DIVISOR > 0, "Static asserts can only protect you so far");
+
+  static constexpr Value ADDITION = DIVISOR - 1u;
+
+  return (value + ADDITION) / DIVISOR;
 }
 
 }  // namespace platform

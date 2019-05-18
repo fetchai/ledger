@@ -54,24 +54,22 @@ public:
     ASSERT(inputs.size() == 1);
     // Input should be a 3D tensor [C x W x H]
     ASSERT(inputs.at(0).get().shape().size() == 3);
-
-    auto output_shape = ComputeOutputShape(inputs);
-    ASSERT(output.shape() == output_shape);
+    ASSERT(output.shape() == ComputeOutputShape(inputs));
 
     SizeType iterw;
     SizeType iterh;
     DataType val;
     DataType max;
     auto     oit = output.begin();
-    for (SizeType ih{0}; ih < output_shape.at(2); ih++)  // Iterate height over kernel stride
+    for (SizeType ih{0}; ih < output.shape().at(2); ih++)  // Iterate height over kernel stride
     {
       iterh = ih * stride_size_;
 
-      for (SizeType iw{0}; iw < output_shape.at(1); iw++)  // Iterate width over kernel stride
+      for (SizeType iw{0}; iw < output.shape().at(1); iw++)  // Iterate width over kernel stride
       {
         iterw = iw * stride_size_;
 
-        for (SizeType c{0}; c < output_shape.at(0); ++c)  // Iterate over output channels
+        for (SizeType c{0}; c < output.shape().at(0); ++c)  // Iterate over output channels
         {
           max = inputs.at(0).get().At(c, iterw, iterh);
 
@@ -116,8 +114,6 @@ public:
     ASSERT(error_signal.shape() == ComputeOutputShape(inputs));
     ArrayType return_signal{inputs.at(0).get().shape()};
 
-    auto output_shape = ComputeOutputShape(inputs);
-
     SizeType iterh;
     SizeType iterw;
     DataType max;
@@ -125,13 +121,14 @@ public:
     SizeType max_iterw;
     SizeType max_iterh;
     auto     erit = error_signal.cbegin();
-    for (SizeType iw{0}; iw < output_shape.at(1); iw++)  // Iterate width over kernel stride
+    for (SizeType iw{0}; iw < error_signal.shape().at(1); iw++)  // Iterate width over kernel stride
     {
       iterw = iw * stride_size_;
-      for (SizeType ih{0}; ih < output_shape.at(2); ih++)  // Iterate height over kernel stride
+      for (SizeType ih{0}; ih < error_signal.shape().at(2);
+           ih++)  // Iterate height over kernel stride
       {
         iterh = ih * stride_size_;
-        for (SizeType c{0}; c < output_shape[0]; ++c)  // Iterate over output channels
+        for (SizeType c{0}; c < error_signal.shape().at(0); ++c)  // Iterate over output channels
         {
           max       = inputs.at(0).get().At(c, iterw, iterh);
           max_iterw = iterw;
@@ -165,28 +162,26 @@ public:
   }
 
   std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) override
+      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const override
   {
-    // Return pre-computed value if exist
-    if (output_shape_.size() != 0)
-      return output_shape_;
+    std::vector<SizeType> output_shape;
+
     // output_shape_[0]=number of output channels
-    output_shape_.emplace_back(inputs.at(0).get().shape().at(0));
+    output_shape.emplace_back(inputs.at(0).get().shape().at(0));
     // output_shape_[1]=number of stride_size steps over input height
-    output_shape_.emplace_back((inputs.at(0).get().shape().at(1) - (kernel_size_ - stride_size_)) /
-                               stride_size_);
+    output_shape.emplace_back((inputs.at(0).get().shape().at(1) - (kernel_size_ - stride_size_)) /
+                              stride_size_);
     // output_shape_[2]=number of stride_size steps over input width
-    output_shape_.emplace_back((inputs.at(0).get().shape().at(2) - (kernel_size_ - stride_size_)) /
-                               stride_size_);
-    return output_shape_;
+    output_shape.emplace_back((inputs.at(0).get().shape().at(2) - (kernel_size_ - stride_size_)) /
+                              stride_size_);
+    return output_shape;
   }
 
   static constexpr char const *DESCRIPTOR = "MaxPool2D";
 
 private:
-  SizeType              kernel_size_;
-  SizeType              stride_size_;
-  std::vector<SizeType> output_shape_;
+  SizeType kernel_size_;
+  SizeType stride_size_;
 };
 
 }  // namespace ops

@@ -16,33 +16,40 @@
 //
 //------------------------------------------------------------------------------
 
+#include "tx_generator.hpp"
+
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
-#include "meta/is_log2.hpp"
+#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/v2/transaction_layout.hpp"
+#include "meta/log2.hpp"
 #include "miner/basic_miner.hpp"
 #include "miner/resource_mapper.hpp"
 #include "vectorise/platform.hpp"
 
+#include "gtest/gtest.h"
+
 #include <chrono>
 #include <fstream>
-#include <gtest/gtest.h>
 #include <memory>
 #include <random>
+#include <unordered_map>
 
 using fetch::meta::IsLog2;
 using fetch::meta::Log2;
+using fetch::BitVector;
 
 class BasicMinerTests : public ::testing::TestWithParam<std::size_t>
 {
 protected:
-  static constexpr uint32_t    NUM_LANES      = 64;
-  static constexpr std::size_t NUM_SLICES     = 1024;
+  static constexpr uint32_t    NUM_LANES      = 16;
+  static constexpr std::size_t NUM_SLICES     = 16;
   static constexpr uint32_t    NUM_LANES_MASK = NUM_LANES - 1;
-  static constexpr uint32_t    LOG2_NUM_LANES = Log2<NUM_LANES>::value;
+  static constexpr uint32_t    LOG2_NUM_LANES = fetch::meta::Log2(NUM_LANES);
   static constexpr std::size_t RANDOM_SEED    = 42;
 
-  static_assert(IsLog2<NUM_LANES>::value, "Number of lanes must be a valid 2 power");
+  static_assert(IsLog2(NUM_LANES), "Number of lanes must be a valid 2 power");
 
   using Rng                 = std::mt19937_64;
   using BasicMiner          = fetch::miner::BasicMiner;
@@ -51,15 +58,18 @@ protected:
   using VerifiedTransaction = fetch::ledger::VerifiedTransaction;
   using Clock               = std::chrono::high_resolution_clock;
   using Timepoint           = Clock::time_point;
-  using BitVector           = fetch::bitmanip::BitVector;
-  using TransactionSummary  = fetch::ledger::TransactionSummary;
+  using TransactionLayout   = fetch::ledger::v2::TransactionLayout;
   using MainChain           = fetch::ledger::MainChain;
   using Block               = fetch::ledger::Block;
+  using Digest              = fetch::ledger::v2::Digest;
+  using DigestSet           = fetch::ledger::v2::DigestSet;
+  using LayoutMap           = std::unordered_map<Digest, TransactionLayout>;
 
   void SetUp() override
   {
     rng_.seed(RANDOM_SEED);
-    miner_ = std::make_unique<BasicMiner>(uint32_t{LOG2_NUM_LANES}, std::size_t{NUM_SLICES});
+    generator_.Seed(RANDOM_SEED);
+    miner_ = std::make_unique<BasicMiner>(uint32_t{LOG2_NUM_LANES});
   }
 
   void TearDown() override
@@ -67,38 +77,34 @@ protected:
     miner_.reset();
   }
 
-  void PopulateWithTransactions(std::size_t num_transactions, size_t duplicates = 1)
+  LayoutMap PopulateWithTransactions(std::size_t num_transactions, std::size_t duplicates = 1)
   {
+    LayoutMap layout{};
+
     std::poisson_distribution<uint32_t> dist(5.0);
 
     for (std::size_t i = 0; i < num_transactions; ++i)
     {
       uint32_t const num_resources = dist(rng_);
 
-      MutableTransaction transaction;
-      transaction.set_fee(rng_() & 0x3f);
-      transaction.set_contract_name("ai.fetch.dummy");
-
-      // Guarantee all TXs unique
-      transaction.PushResource("Unique: " + std::to_string(i));
-
-      for (std::size_t j = 0; j < num_resources; ++j)
-      {
-        transaction.PushResource("Resource: " + std::to_string(rng_()));
-      }
-
-      // convert the transaction to a valid transaction
-      auto tx = VerifiedTransaction::Create(std::move(transaction));
+      // generate the transaction with a number of transactions
+      auto tx = generator_(num_resources);
 
       for (std::size_t i = 0; i < duplicates; ++i)
       {
-        miner_->EnqueueTransaction(tx.summary());
+        miner_->EnqueueTransaction(tx);
       }
+
+      // ensure that the generator has not produced any duplicates
+      assert(layout.find(tx.digest()) == layout.end());
     }
+
+    return layout;
   }
 
-  Rng           rng_;
-  BasicMinerPtr miner_;
+  Rng                  rng_{};
+  TransactionGenerator generator_{LOG2_NUM_LANES};
+  BasicMinerPtr        miner_;
 };
 
 TEST_P(BasicMinerTests, SimpleExample)
@@ -120,42 +126,29 @@ TEST_P(BasicMinerTests, SimpleExample)
 
     for (auto const &tx : slice)
     {
-      BitVector resources{NUM_LANES};
+      auto const &mask = tx.mask();
 
-      // update the resources array with the correct bits flags for the lanes
-      for (auto const &resource : tx.resources)
-      {
-        // map the resource to a lane
-        uint32_t const lane =
-            fetch::miner::MapResourceToLane(resource, tx.contract_name, LOG2_NUM_LANES);
-
-        // check the lane mapping
-        resources.set(lane, 1);
-      }
+      EXPECT_EQ(mask.size(), uint32_t{NUM_LANES});
 
       // ensure there are not collisions
-      BitVector collisions = resources & lanes;
+      BitVector const collisions = mask & lanes;
       EXPECT_EQ(0, collisions.PopCount());
 
-      lanes |= resources;
+      lanes |= mask;
     }
   }
 }
 
-TEST_P(BasicMinerTests, reject_replayed_transactions)
+TEST_P(BasicMinerTests, RejectReplayedTransactions)
 {
-  std::size_t num_tx = GetParam();
-  // choose manual lanes + slices as we want to generate a lot of blocks to thoroughly test the main
-  // chain
-  std::size_t lanes  = 16;
-  std::size_t slices = 16;
+  std::size_t const num_tx = GetParam();
 
-  miner_->log2_num_lanes() = uint32_t(fetch::platform::ToLog2(uint32_t(lanes)));
+  auto const layout = PopulateWithTransactions(num_tx, 1);
 
-  PopulateWithTransactions(num_tx, 1);
-  MainChain                    chain{MainChain::Mode::IN_MEMORY_DB};
-  std::set<TransactionSummary> transactions_already_seen;
-  std::set<TransactionSummary> transactions_within_block;
+  MainChain chain{MainChain::Mode::IN_MEMORY_DB};
+
+  DigestSet transactions_already_seen{};
+  DigestSet transactions_within_block{};
 
   while (miner_->GetBacklog() > 0)
   {
@@ -163,7 +156,7 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
 
     block.body.previous_hash = chain.GetHeaviestBlockHash();
 
-    miner_->GenerateBlock(block, lanes, slices, chain);
+    miner_->GenerateBlock(block, NUM_LANES, NUM_SLICES, chain);
 
     // Check no duplicate transactions within a block
     transactions_within_block.clear();
@@ -172,9 +165,9 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
       for (auto const &tx : slice)
       {
         // Guarantee each body fresh transactions
-        bool not_found = transactions_within_block.find(tx) == transactions_within_block.end();
-        EXPECT_EQ(not_found, true);
-        transactions_within_block.insert(tx);
+        EXPECT_TRUE(transactions_within_block.find(tx.digest()) == transactions_within_block.end());
+
+        transactions_within_block.insert(tx.digest());
       }
     }
 
@@ -183,8 +176,8 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
     for (auto const &tx : transactions_within_block)
     {
       // Guarantee each body fresh transactions
-      bool not_found = transactions_already_seen.find(tx) == transactions_already_seen.end();
-      EXPECT_EQ(not_found, true);
+      EXPECT_TRUE(transactions_already_seen.find(tx) == transactions_already_seen.end());
+
       transactions_already_seen.insert(tx);
     }
 
@@ -195,9 +188,12 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
   }
 
   // Now, push on all of the TXs that are already in the blockchain
-  for (auto const &tx_summary : transactions_already_seen)
+  for (auto const &digest : transactions_already_seen)
   {
-    miner_->EnqueueTransaction(tx_summary);
+    auto const it = layout.find(digest);
+    ASSERT_TRUE(it != layout.end());
+
+    miner_->EnqueueTransaction(it->second);
   }
 
   while (miner_->GetBacklog() > 0)
@@ -220,9 +216,9 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
       for (auto const &tx : slice)
       {
         // Guarantee each body fresh transactions
-        bool not_found = transactions_within_block.find(tx) == transactions_within_block.end();
-        EXPECT_EQ(not_found, true);
-        transactions_within_block.insert(tx);
+        ASSERT_TRUE(transactions_within_block.find(tx.digest()) == transactions_within_block.end());
+
+        transactions_within_block.insert(tx.digest());
       }
     }
 
@@ -231,8 +227,8 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
     for (auto const &tx : transactions_within_block)
     {
       // Guarantee each body fresh transactions
-      bool not_found = transactions_already_seen.find(tx) == transactions_already_seen.end();
-      EXPECT_EQ(not_found, true);
+      ASSERT_TRUE(transactions_already_seen.find(tx) == transactions_already_seen.end());
+
       transactions_already_seen.insert(tx);
     }
 

@@ -25,6 +25,8 @@
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chain/v2/digest.hpp"
+#include "ledger/chain/v2/transaction_layout.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "storage/object_store.hpp"
 #include "storage/resource_mapper.hpp"
@@ -74,11 +76,12 @@ char const *ToString(BlockStatus status);
 class MainChain
 {
 public:
-  using BlockPtr     = std::shared_ptr<Block const>;
-  using Blocks       = std::vector<BlockPtr>;
-  using BlockHash    = Block::Digest;
-  using BlockHashs   = std::vector<BlockHash>;
-  using BlockHashSet = std::unordered_set<BlockHash>;
+  using BlockPtr             = std::shared_ptr<Block const>;
+  using Blocks               = std::vector<BlockPtr>;
+  using BlockHash            = v2::Digest;
+  using BlockHashs           = std::vector<BlockHash>;
+  using BlockHashSet         = std::unordered_set<BlockHash>;
+  using TransactionLayoutSet = std::unordered_set<v2::TransactionLayout>;
 
   static constexpr char const *LOGGING_NAME = "MainChain";
   static constexpr uint64_t    UPPER_BOUND  = 100000ull;
@@ -136,8 +139,11 @@ public:
   bool         HasMissingBlocks() const;
   /// @}
 
-  template <typename T>
-  bool StripAlreadySeenTx(BlockHash starting_hash, T &container) const;
+  /// @name Transaction Duplication Filtering
+  /// @{
+  v2::DigestSet DetectDuplicateTransactions(BlockHash            starting_hash,
+                                            v2::DigestSet const &transactions) const;
+  /// @}
 
   // Operators
   MainChain &operator=(MainChain const &rhs) = delete;
@@ -208,124 +214,6 @@ private:
   HeaviestTip      heaviest_;      ///< Heaviest block/tip
   LooseBlockMap    loose_blocks_;  ///< Waiting (loose) blocks
 };
-
-/**
- * Strip transactions in container that already exist in the blockchain
- *
- * @param: starting_hash Block to start looking downwards from
- * @tparam: container Container to remove transactions from
- *
- * @return: bool whether the starting hash referred to a valid block on a valid chain
- */
-template <typename T>
-bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container) const
-{
-  using namespace std::chrono;
-  using Clock = high_resolution_clock;
-
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TX uniqueness verify");
-
-  std::size_t blocks_checked = 0;
-  auto const  start_time     = Clock::now();
-
-  IntBlockPtr block;
-  if (!LookupBlock(starting_hash, block, false) || block->is_loose)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "TX uniqueness verify on bad block hash");
-    return false;
-  }
-
-  // Need a set for quickly checking whether transactions are in our container
-  std::set<TransactionSummary>    transactions_to_check;
-  std::vector<TransactionSummary> transactions_duplicated;
-
-  for (auto const &tx : container)
-  {
-    transactions_to_check.insert(tx.transaction);
-  }
-
-  for (;;)
-  {
-    ++blocks_checked;
-
-    // Traversing the chain fully is costly: break out early if we know the transactions are all
-    // duplicated (or empty)
-    if (transactions_to_check.size() == transactions_duplicated.size())
-    {
-      break;
-    }
-
-    for (auto const &slice : block->body.slices)
-    {
-      for (auto const &tx : slice)
-      {
-        auto it = transactions_to_check.find(tx);
-
-        // Found a TX in the blockchain that is in our container
-        if (it != transactions_to_check.end())
-        {
-          transactions_duplicated.push_back(tx);
-        }
-      }
-    }
-
-    // exit the loop once we can no longer find the block
-    if (!LookupBlock(block->body.previous_hash, block, false))
-    {
-      break;
-    }
-  }
-
-  std::size_t duplicated_counter = 0;
-
-  // remove duplicate transactions
-  if (!transactions_duplicated.empty())
-  {
-    FETCH_LOG_INFO(LOGGING_NAME,
-                   "TX uniqueness verify - found duplicate TXs!: ", transactions_duplicated.size());
-
-    // Iterate our container
-    auto it = container.cbegin();
-
-    // Remove this item from our container if is duplicate
-    while (it != container.end())
-    {
-      // We expect the number of duplicates to be low so vector search should be fine
-      if (std::find(transactions_duplicated.begin(), transactions_duplicated.end(),
-                    (*it).transaction) != transactions_duplicated.end())
-      {
-        it = container.erase(it);
-        duplicated_counter++;
-        continue;
-      }
-
-      ++it;
-    }
-  }
-
-  if (duplicated_counter != transactions_duplicated.size())
-  {
-    FETCH_LOG_WARN(LOGGING_NAME,
-                   "Warning! Duplicated transactions might not be removed from block. Seen: ",
-                   transactions_duplicated.size(), " Removed: ", duplicated_counter);
-  }
-
-  // determine the time this function has taken to execute
-  auto const delta_time_ms = duration_cast<milliseconds>(Clock::now() - start_time).count();
-
-  if (delta_time_ms >= 100)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Finished TX uniqueness verify in: ", delta_time_ms, "ms",
-                   " checked blocks: ", blocks_checked);
-  }
-  else
-  {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Finished TX uniqueness verify in: ", delta_time_ms, "ms",
-                    " checked blocks: ", blocks_checked);
-  }
-
-  return true;
-}
 
 }  // namespace ledger
 }  // namespace fetch

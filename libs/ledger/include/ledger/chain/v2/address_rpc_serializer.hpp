@@ -17,9 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chain/v2/address.hpp"
+
 namespace fetch {
-namespace http {
-namespace middleware {
+namespace ledger {
+namespace v2 {
+
+template <typename T>
+void Serialize(T &s, Address const &address)
+{
+  assert(!address.address().empty());
+  s << address.address();
 }
-}  // namespace http
+
+template <typename T>
+void Deserialize(T &s, Address &address)
+{
+  // extract the data from the stream
+  byte_array::ConstByteArray data;
+  s >> data;
+
+  // create the address
+  address = Address{data};
+}
+
+}  // namespace v2
+}  // namespace ledger
 }  // namespace fetch

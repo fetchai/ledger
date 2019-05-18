@@ -24,6 +24,7 @@
 #include "core/service_ids.hpp"
 #include "crypto/fetch_identity.hpp"
 #include "ledger/chain/block_coordinator.hpp"
+#include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
 #include "metrics/metrics.hpp"
 #include "network/muddle/packet.hpp"
 
@@ -151,7 +152,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   if (IsBlockValid(block))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.body.hash),
+    FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: 0x", block.body.hash.ToHex(),
                    " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(), ")");
 
     trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
@@ -164,22 +165,22 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
     switch (status)
     {
     case BlockStatus::ADDED:
-      FETCH_LOG_INFO(LOGGING_NAME, "Added new block: ", ToBase64(block.body.hash));
+      FETCH_LOG_INFO(LOGGING_NAME, "Added new block: 0x", block.body.hash.ToHex());
       break;
     case BlockStatus::LOOSE:
-      FETCH_LOG_INFO(LOGGING_NAME, "Added loose block: ", ToBase64(block.body.hash));
+      FETCH_LOG_INFO(LOGGING_NAME, "Added loose block: 0x", block.body.hash.ToHex());
       break;
     case BlockStatus::DUPLICATE:
-      FETCH_LOG_INFO(LOGGING_NAME, "Duplicate block: ", ToBase64(block.body.hash));
+      FETCH_LOG_INFO(LOGGING_NAME, "Duplicate block: 0x", block.body.hash.ToHex());
       break;
     case BlockStatus::INVALID:
-      FETCH_LOG_INFO(LOGGING_NAME, "Attempted to add invalid block: ", ToBase64(block.body.hash));
+      FETCH_LOG_INFO(LOGGING_NAME, "Attempted to add invalid block: 0x", block.body.hash.ToHex());
       break;
     }
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Invalid Block Recv: ", ToBase64(block.body.hash),
+    FETCH_LOG_WARN(LOGGING_NAME, "Invalid Block Recv: 0x", block.body.hash.ToHex(),
                    " (from: ", ToBase64(from), ")");
   }
 }
@@ -256,22 +257,22 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
       switch (status)
       {
       case BlockStatus::ADDED:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced new block: ", ToBase64(it->body.hash),
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced new block: 0x", it->body.hash.ToHex(),
                         " from: muddle://", ToBase64(address));
         ++added;
         break;
       case BlockStatus::LOOSE:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced loose block: ", ToBase64(it->body.hash),
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced loose block: 0x", it->body.hash.ToHex(),
                         " from: muddle://", ToBase64(address));
         ++loose;
         break;
       case BlockStatus::DUPLICATE:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced duplicate block: ", ToBase64(it->body.hash),
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced duplicate block: 0x", it->body.hash.ToHex(),
                         " from: muddle://", ToBase64(address));
         ++duplicate;
         break;
       case BlockStatus::INVALID:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: ", ToBase64(it->body.hash),
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: 0x", it->body.hash.ToHex(),
                         " from: muddle://", ToBase64(address));
         ++invalid;
         break;
@@ -279,7 +280,7 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
     }
     else
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: ", ToBase64(it->body.hash),
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", it->body.hash.ToHex(),
                       " from: muddle://", ToBase64(address));
       ++invalid;
     }
@@ -454,7 +455,7 @@ bool MainChainRpcService::IsBlockValid(Block &block) const
 
   // evaluate if this mining node is correct
   bool const is_valid_miner =
-      (Mode::PUBLIC_NETWORK == mode_) ? crypto::IsFetchIdentity(block.body.miner) : true;
+      (Mode::PUBLIC_NETWORK == mode_) ? crypto::IsFetchIdentity(block.body.miner.display()) : true;
   if (is_valid_miner && block.proof())
   {
     block_valid = true;

@@ -17,25 +17,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdint>
+#include "meta/type_traits.hpp"
+
 namespace fetch {
 namespace meta {
 
-template <uint64_t N>
-struct Log2
+template <typename T>
+constexpr IfIsInteger<T, bool> IsLog2(T val) noexcept
 {
-  enum
-  {
-    value = 1 + Log2<(N >> 1)>::value
-  };
-};
-template <>
-struct Log2<1>
+  return static_cast<bool>(val && !(val & (val - 1)));
+}
+
+template <typename T>
+constexpr IfIsInteger<T, T> Log2(T val) noexcept
 {
-  enum
-  {
-    value = 0
-  };
-};
+  return ((val > 1) ? (1 + Log2(val >> 1)) : 0);
+}
+
 }  // namespace meta
 }  // namespace fetch

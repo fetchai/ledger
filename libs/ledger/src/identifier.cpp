@@ -31,23 +31,23 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-template <std::size_t LENGTH, std::size_t PADDING>
-bool IsBase64(ConstByteArray const &value)
+template <std::size_t MIN_LENGTH, std::size_t MAX_LENGTH>
+bool IsBase58(ConstByteArray const &value)
 {
-  static constexpr std::size_t TOTAL_LENGTH = LENGTH + PADDING;
-
   char const *buffer = value.char_pointer();
 
-  if (TOTAL_LENGTH != value.size())
+  if (!(value.size() >= MIN_LENGTH && value.size() <= MAX_LENGTH))
   {
     return false;
   }
 
-  for (std::size_t i = 0; i < LENGTH; ++i, ++buffer)
+  for (std::size_t i = 0; i < value.size(); ++i, ++buffer)
   {
+    // 1-9A-HJ-NP-Za-km-z
     bool const valid =
-        ((('a' <= *buffer) && ('z' >= *buffer)) || (('A' <= *buffer) && ('Z' >= *buffer)) ||
-         (('0' <= *buffer) && ('9' >= *buffer)) || (*buffer == '+') || (*buffer == '/'));
+        ((('1' <= *buffer) && ('9' >= *buffer)) || (('A' <= *buffer) && ('H' >= *buffer)) ||
+         (('J' <= *buffer) && ('N' >= *buffer)) || (('P' <= *buffer) && ('Z' >= *buffer)) ||
+         (('a' <= *buffer) && ('k' >= *buffer)) || (('m' <= *buffer) && ('z' >= *buffer)));
 
     if (!valid)
     {
@@ -55,9 +55,25 @@ bool IsBase64(ConstByteArray const &value)
     }
   }
 
-  for (std::size_t i = 0; i < PADDING; ++i, ++buffer)
+  return true;
+}
+
+template <std::size_t LENGTH>
+bool IsHex(ConstByteArray const &value)
+{
+  char const *buffer = value.char_pointer();
+
+  if (LENGTH != value.size())
   {
-    if (*buffer != '=')
+    return false;
+  }
+
+  for (std::size_t i = 0; i < LENGTH; ++i, ++buffer)
+  {
+    bool const valid =
+        ((('a' <= *buffer) && ('f' >= *buffer)) || (('0' <= *buffer) && ('9' >= *buffer)));
+
+    if (!valid)
     {
       return false;
     }
@@ -68,12 +84,12 @@ bool IsBase64(ConstByteArray const &value)
 
 bool IsDigest(ConstByteArray const &value)
 {
-  return IsBase64<43, 1>(value);
+  return IsHex<64>(value);
 }
 
 bool IsIdentity(ConstByteArray const &value)
 {
-  return IsBase64<86, 2>(value);
+  return IsBase58<48, 50>(value);
 }
 
 }  // namespace

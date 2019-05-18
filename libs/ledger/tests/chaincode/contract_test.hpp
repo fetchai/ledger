@@ -21,6 +21,8 @@
 #include "crypto/ecdsa.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/v2/transaction_builder.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
@@ -36,8 +38,6 @@ class ContractTest : public ::testing::Test
 protected:
   using Identity             = fetch::crypto::Identity;
   using Identifier           = fetch::ledger::Identifier;
-  using MutableTransaction   = fetch::ledger::MutableTransaction;
-  using VerifiedTransaction  = fetch::ledger::VerifiedTransaction;
   using ConstByteArray       = fetch::byte_array::ConstByteArray;
   using ByteArray            = fetch::byte_array::ByteArray;
   using Contract             = fetch::ledger::Contract;
@@ -45,23 +45,28 @@ protected:
   using MockStorageUnitPtr   = std::unique_ptr<MockStorageUnit>;
   using Resources            = std::vector<ConstByteArray>;
   using CertificatePtr       = std::unique_ptr<fetch::crypto::ECDSASigner>;
+  using AddressPtr           = std::unique_ptr<fetch::ledger::v2::Address>;
   using StateAdapter         = fetch::ledger::StateAdapter;
   using StateSentinelAdapter = fetch::ledger::StateSentinelAdapter;
   using Query                = Contract::Query;
   using IdentifierPtr        = std::shared_ptr<Identifier>;
   using CachedStorageAdapter = fetch::ledger::CachedStorageAdapter;
+  using TransactionPtr       = fetch::ledger::v2::TransactionBuilder::TransactionPtr;
 
   void SetUp() override
   {
-    certificate_ = std::make_unique<fetch::crypto::ECDSASigner>();
-    storage_     = std::make_unique<MockStorageUnit>();
+    certificate_   = std::make_unique<fetch::crypto::ECDSASigner>();
+    owner_address_ = std::make_unique<fetch::ledger::v2::Address>(certificate_->identity());
+    storage_       = std::make_unique<MockStorageUnit>();
   }
 
   void TearDown() override
   {
     contract_.reset();
+    contract_address_.reset();
     contract_name_.reset();
     storage_.reset();
+    owner_address_.reset();
     certificate_.reset();
   }
 
@@ -105,9 +110,9 @@ protected:
       packer_.pack(arg);
     }
 
-    void PackInternal(fetch::crypto::Identity const &identity)
+    void PackInternal(fetch::ledger::v2::Address const &address)
     {
-      auto const &id = identity.identifier();
+      auto const &id = address.address();
 
       // pack as an address
       packer_.pack_ext(id.size(), static_cast<int8_t>(0x4D));
@@ -119,59 +124,56 @@ protected:
   };
 
   template <typename... Args>
-  Contract::Status SendActionWithParams(ConstByteArray const &action, Resources const &resources,
-                                        Args... args)
+  Contract::Status SendSmartActionWithParams(ConstByteArray const &action, Args... args)
   {
     // pack all the data into a single payload
     PayloadPacker p{args...};
 
-    return SendAction(action, resources, p.GetBuffer());
+    return SendSmartAction(action, p.GetBuffer());
   }
 
-  Contract::Status SendAction(ConstByteArray const &action, Resources const &resources,
-                              ConstByteArray const &data = ConstByteArray{})
+  Contract::Status SendSmartAction(ConstByteArray const &action,
+                                   ConstByteArray const &data = ConstByteArray{})
   {
-    // create and sign the transaction
-    MutableTransaction mtx{};
-    mtx.set_contract_name(contract_name_->full_name() + "." + action);
-    mtx.set_data(data);
+    using fetch::ledger::v2::TransactionBuilder;
+    using fetch::ledger::v2::Address;
 
-    // add all the resources to the transaction
-    for (auto const &resource : resources)
-    {
-      mtx.PushResource(resource);
-    }
+    fetch::BitVector mask{1};
+    mask.SetAllOne();
 
-    mtx.Sign(certificate_->private_key());
-
-    // create and finalise the transaction
-    VerifiedTransaction tx = VerifiedTransaction::Create(std::move(mtx));
+    // build the transaction
+    auto tx = TransactionBuilder()
+                  .From(Address{certificate_->identity()})
+                  .TargetSmartContract(*contract_address_, *owner_address_, mask)
+                  .Action(action)
+                  .Signer(certificate_->identity())
+                  .Data(data)
+                  .Seal()
+                  .Sign(*certificate_)
+                  .Build();
 
     // adapt the storage engine for this execution
-    StateSentinelAdapter storage_adapter{*storage_, *contract_name_, tx.resources()};
+    StateSentinelAdapter storage_adapter{*storage_, *contract_name_, mask};
 
     // dispatch the transaction to the contract
     contract_->Attach(storage_adapter);
-    auto const status = contract_->DispatchTransaction(action, tx);
+    auto const status = contract_->DispatchTransaction(action, *tx);
     contract_->Detach();
 
     return status;
   }
 
-  Contract::Status SendAction(MutableTransaction const &mtx)
+  Contract::Status SendAction(TransactionPtr const &tx)
   {
-    // create and finalise the transaction
-    VerifiedTransaction tx = VerifiedTransaction::Create(mtx);
-
-    Identifier full_contract_name{tx.contract_name()};
+    fetch::BitVector mask{1};
+    mask.SetAllOne();
 
     // adapt the storage engine for this execution
-    StateSentinelAdapter storage_adapter{*storage_, *contract_name_, tx.resources(),
-                                         tx.resources()};
+    StateSentinelAdapter storage_adapter{*storage_, Identifier{tx->chain_code()}, mask};
 
     // dispatch the transaction to the contract
     contract_->Attach(storage_adapter);
-    auto const status = contract_->DispatchTransaction(full_contract_name.name(), tx);
+    auto const status = contract_->DispatchTransaction(tx->action(), *tx);
     contract_->Detach();
 
     return status;
@@ -192,11 +194,13 @@ protected:
 
   Contract::Status InvokeInit(Identity const &owner)
   {
-    StateSentinelAdapter storage_adapter{
-        *storage_, *contract_name_, {fetch::byte_array::ToBase64(owner.identifier())}};
+    fetch::BitVector mask{1};
+    mask.SetAllOne();
+
+    StateSentinelAdapter storage_adapter{*storage_, *contract_name_, mask};
 
     contract_->Attach(storage_adapter);
-    auto const status = contract_->DispatchInitialise(owner);
+    auto const status = contract_->DispatchInitialise(fetch::ledger::v2::Address{owner});
     contract_->Detach();
 
     return status;
@@ -205,9 +209,11 @@ protected:
   /// @name User populated
   /// @{
   ContractPtr   contract_;
+  AddressPtr    contract_address_;
   IdentifierPtr contract_name_;
   /// @}
 
   CertificatePtr     certificate_;
+  AddressPtr         owner_address_;
   MockStorageUnitPtr storage_;
 };

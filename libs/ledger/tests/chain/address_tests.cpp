@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/encoders.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/identity.hpp"
@@ -33,6 +34,7 @@ using fetch::crypto::ECDSASigner;
 using fetch::crypto::SHA256;
 using fetch::crypto::Hash;
 using fetch::ledger::v2::Address;
+using fetch::byte_array::ToBase58;
 
 class AddressTests : public ::testing::Test
 {
@@ -85,7 +87,7 @@ TEST_F(AddressTests, CheckIdentityContruction)
 
   // generate our expectations
   auto const expected_address = CreateAddress(signer.identity());
-  auto const expected_display = expected_address + CreateChecksum(expected_address);
+  auto const expected_display = ToBase58(expected_address + CreateChecksum(expected_address));
 
   // check them
   EXPECT_EQ(address.address(), expected_address);
@@ -104,9 +106,25 @@ TEST_F(AddressTests, CheckRawAddressContruction)
 
   // generate our expectations
   auto const expected_address = CreateAddress(signer.identity());
-  auto const expected_display = expected_address + CreateChecksum(expected_address);
+  auto const expected_display = ToBase58(expected_address + CreateChecksum(expected_address));
 
   // check them
   EXPECT_EQ(address.address(), expected_address);
   EXPECT_EQ(address.display(), expected_display);
+}
+
+TEST_F(AddressTests, CheckDisplayEncodeAndParse)
+{
+  // create the private key
+  ECDSASigner signer;
+
+  // create the reference address
+  Address const original{signer.identity()};
+
+  // parse the address from the original
+  Address other{};
+  ASSERT_TRUE(Address::Parse(original.display(), other));
+
+  EXPECT_EQ(original.address(), other.address());
+  EXPECT_EQ(original.display(), other.display());
 }

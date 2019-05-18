@@ -17,18 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/meta/log2.hpp"
-
 namespace fetch {
-namespace meta {
+namespace math {
+namespace kernels {
 
-template <uint64_t VALUE>
-struct IsLog2
+template <typename vector_register_type>
+struct Sign
 {
-  static constexpr uint64_t log2_value       = Log2<VALUE>::value;
-  static constexpr uint64_t calculated_value = 1u << log2_value;
-  static constexpr bool     value            = (calculated_value == VALUE);
+  void operator()(vector_register_type const &x, vector_register_type &y) const
+  {
+    const vector_register_type zero(typename vector_register_type::type(0));
+    const vector_register_type one(typename vector_register_type::type(1));
+    const vector_register_type min_one(typename vector_register_type::type(-1));
+
+    y = ((x == zero) * (zero)) + ((x > zero) * (one)) + ((x < zero) * (min_one));
+  }
 };
 
-}  // namespace meta
+}  // namespace kernels
+}  // namespace math
 }  // namespace fetch
