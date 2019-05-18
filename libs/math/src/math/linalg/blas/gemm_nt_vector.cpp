@@ -32,19 +32,20 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
 {
   std::size_t j;
   if ((c.height() == 0) ||
-      ((c.width() == 0) || (((alpha == 0.0) || (a.width() == 0)) && (beta == 1.0))))
+      ((c.width() == 0) || (((alpha == static_cast<Type>(0.0)) || (a.width() == 0)) &&
+                            (beta == static_cast<Type>(1.0)))))
   {
     return;
   }
 
-  if (alpha == 0.0)
+  if (alpha == static_cast<Type>(0.0))
   {
-    if (beta == 0.0)
+    if (beta == static_cast<Type>(0.0))
     {
       for (j = 0; j < c.width(); ++j)
       {
 
-        VectorRegisterType vec_zero(0.0);
+        VectorRegisterType vec_zero(static_cast<Type>(0.0));
 
         auto                 ret_slice = c.data().slice(c.padded_height() * j, c.height());
         memory::TrivialRange range(std::size_t(0), std::size_t(c.height()));
@@ -77,17 +78,17 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
   for (j = 0; j < c.width(); ++j)
   {
     std::size_t l;
-    if (beta == 0.0)
+    if (beta == static_cast<Type>(0.0))
     {
 
-      VectorRegisterType vec_zero(0.0);
+      VectorRegisterType vec_zero(static_cast<Type>(0.0));
 
       auto                 ret_slice = c.data().slice(c.padded_height() * j, c.height());
       memory::TrivialRange range(std::size_t(0), std::size_t(c.height()));
       ret_slice.in_parallel().Apply(range,
                                     [vec_zero](VectorRegisterType &vw_c_j) { vw_c_j = vec_zero; });
     }
-    else if (beta != 1.0)
+    else if (beta != static_cast<Type>(1.0))
     {
 
       VectorRegisterType vec_beta(beta);
