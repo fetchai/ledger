@@ -181,12 +181,10 @@ TEST(Tensor, simple_iterator_transpose_test)
   SizeType arr_size = fetch::math::Product(original_shape);
 
   // set up an initial array
-  Tensor<double> array =
-      Tensor<double>::Arange(0., static_cast<double>(arr_size), 1.);
+  Tensor<double> array = Tensor<double>::Arange(0., static_cast<double>(arr_size), 1.);
   array.Reshape(original_shape);
 
-  Tensor<double> ret =
-      Tensor<double>::Arange(0., static_cast<double>(arr_size), 1.);
+  Tensor<double> ret = Tensor<double>::Arange(0., static_cast<double>(arr_size), 1.);
   ret.Reshape(new_shape);
 
   Tensor<double> test_array{original_shape};
