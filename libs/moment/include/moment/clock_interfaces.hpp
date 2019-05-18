@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
 #include <chrono>
+#include <memory>
 
 namespace fetch {
 namespace moment {
@@ -34,7 +34,7 @@ public:
   using Duration    = ChronoClock::duration;
 
   // Construction / Destruction
-  ClockInterface() = default;
+  ClockInterface()          = default;
   virtual ~ClockInterface() = default;
 
   /// @name Clock Interface
@@ -56,9 +56,8 @@ public:
 class AdjustableClockInterface : public ClockInterface
 {
 public:
-
   // Construction / Destruction
-  AdjustableClockInterface() = default;
+  AdjustableClockInterface()           = default;
   ~AdjustableClockInterface() override = default;
 
   /// @name Adjustable ClockInterface
@@ -94,6 +93,5 @@ void AdjustableClockInterface::Advance(std::chrono::duration<R, P> const &durati
 using ClockPtr           = std::shared_ptr<ClockInterface>;
 using AdjustableClockPtr = std::shared_ptr<AdjustableClockInterface>;
 
-} // namespace moment
-} // namespace fetch
-
+}  // namespace moment
+}  // namespace fetch

@@ -50,8 +50,7 @@ private:
 
 inline DeadlineTimer::DeadlineTimer(char const *clock)
   : clock_{GetClock(clock, ClockType::STEADY)}
-{
-}
+{}
 
 template <typename R, typename P>
 inline void DeadlineTimer::Restart(std::chrono::duration<R, P> const &period)

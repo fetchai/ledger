@@ -295,9 +295,9 @@ private:
   PeriodicAction  tx_wait_periodic_;       ///< Periodic print for transaction waiting
   PeriodicAction  exec_wait_periodic_;     ///< Periodic print for execution
   PeriodicAction  syncing_periodic_;       ///< Periodic print for synchronisation
-  DeadlineTimer wait_for_tx_timeout_{"bc:deadline"};    ///< Timeout when waiting for transactions
-  DeadlineTimer
-       wait_before_asking_for_missing_tx_{"bc:deadline"};  ///< Time to wait before asking peers for any missing txs
+  DeadlineTimer   wait_for_tx_timeout_{"bc:deadline"};  ///< Timeout when waiting for transactions
+  DeadlineTimer   wait_before_asking_for_missing_tx_{
+      "bc:deadline"};              ///< Time to wait before asking peers for any missing txs
   bool have_asked_for_missing_txs_;  ///< true if a request for missing Txs has been issued for the
                                      ///< current block
   /// @}

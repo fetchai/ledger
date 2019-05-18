@@ -27,9 +27,8 @@ enum class ClockType
   STEADY,
 };
 
-ClockPtr GetClock(char const *name, ClockType default_type = ClockType::STEADY);
+ClockPtr           GetClock(char const *name, ClockType default_type = ClockType::STEADY);
 AdjustableClockPtr CreateAdjustableClock(char const *name, ClockType type = ClockType::STEADY);
 
-
-} // namespace time
-} // namespace fetch
+}  // namespace moment
+}  // namespace fetch

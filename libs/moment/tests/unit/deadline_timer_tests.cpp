@@ -23,7 +23,6 @@
 using fetch::moment::DeadlineTimer;
 using fetch::moment::CreateAdjustableClock;
 
-
 TEST(DeadlineTimerTests, BasicChecks)
 {
   auto clock = CreateAdjustableClock("default");

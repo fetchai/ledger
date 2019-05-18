@@ -440,7 +440,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
   {
     // Only just started waiting for transactions - reset countdown to issuing request to peers
     wait_before_asking_for_missing_tx_.Restart(WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL);
-    have_asked_for_missing_txs_        = false;
+    have_asked_for_missing_txs_ = false;
   }
 
   // if the transaction digests have not been cached then do this now

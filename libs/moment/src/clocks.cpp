@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
 #include "moment/clocks.hpp"
-#include "moment/detail/steady_clock.hpp"
+#include "core/mutex.hpp"
 #include "moment/detail/adjustable_clock.hpp"
+#include "moment/detail/steady_clock.hpp"
 
 #include <string>
 #include <unordered_map>
@@ -28,52 +28,52 @@ namespace fetch {
 namespace moment {
 namespace {
 
-  using Mutex      = mutex::Mutex;
-  using ClockStore = std::unordered_map<std::string, ClockPtr>;
+using Mutex      = mutex::Mutex;
+using ClockStore = std::unordered_map<std::string, ClockPtr>;
 
-  mutex::Mutex clock_store_lock{__LINE__, __FILE__};
-  ClockStore   clock_store;
+mutex::Mutex clock_store_lock{__LINE__, __FILE__};
+ClockStore   clock_store;
 
-  /**
-   * Create a normal version of the clock
-   *
-   * @param type The clock type to create
-   * @return The constructed clock type if successful, otherwise false
-   */
-  ClockPtr CreateNormal(ClockType type)
+/**
+ * Create a normal version of the clock
+ *
+ * @param type The clock type to create
+ * @return The constructed clock type if successful, otherwise false
+ */
+ClockPtr CreateNormal(ClockType type)
+{
+  ClockPtr clock{};
+
+  switch (type)
   {
-    ClockPtr clock{};
-
-    switch (type)
-    {
-    case ClockType::STEADY:
-      clock = std::make_shared<detail::SteadyClock>();
-      break;
-    }
-
-    return clock;
+  case ClockType::STEADY:
+    clock = std::make_shared<detail::SteadyClock>();
+    break;
   }
 
-  /**
-   * Create an adjustable version of the clock
-   *
-   * @param type The clock type to create
-   * @return The instance of the clock if successful, otherwise false
-   */
-  AdjustableClockPtr CreateAdjustable(ClockType type)
-  {
-    AdjustableClockPtr clock{};
-
-    switch (type)
-    {
-    case ClockType::STEADY:
-      clock = std::make_shared<detail::AdjustableClock<detail::SteadyClock>>();
-      break;
-    }
-
-    return clock;
-  }
+  return clock;
 }
+
+/**
+ * Create an adjustable version of the clock
+ *
+ * @param type The clock type to create
+ * @return The instance of the clock if successful, otherwise false
+ */
+AdjustableClockPtr CreateAdjustable(ClockType type)
+{
+  AdjustableClockPtr clock{};
+
+  switch (type)
+  {
+  case ClockType::STEADY:
+    clock = std::make_shared<detail::AdjustableClock<detail::SteadyClock>>();
+    break;
+  }
+
+  return clock;
+}
+}  // namespace
 
 /**
  * Create or lookup a requested clock
@@ -132,5 +132,5 @@ AdjustableClockPtr CreateAdjustableClock(char const *name, ClockType type)
   return clock;
 }
 
-} // namespace moment
-} // namespace fetch
+}  // namespace moment
+}  // namespace fetch

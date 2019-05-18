@@ -28,12 +28,11 @@ namespace detail {
 class SteadyClock : public ClockInterface
 {
 public:
-
   // Construction / Destruction
-  SteadyClock() = default;
+  SteadyClock()                    = default;
   SteadyClock(SteadyClock const &) = delete;
-  SteadyClock(SteadyClock &&) = delete;
-  ~SteadyClock() override = default;
+  SteadyClock(SteadyClock &&)      = delete;
+  ~SteadyClock() override          = default;
 
   /// @name Clock Interface
   /// @{
@@ -48,6 +47,6 @@ public:
   SteadyClock &operator=(SteadyClock &&) = delete;
 };
 
-} // namespace detail
-} // namespace moment
-} // namespace fetch
+}  // namespace detail
+}  // namespace moment
+}  // namespace fetch

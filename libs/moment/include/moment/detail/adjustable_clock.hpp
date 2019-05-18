@@ -27,7 +27,6 @@ template <typename ClockType>
 class AdjustableClock : public AdjustableClockInterface
 {
 public:
-
   /// @name Adjustable Clock Interface
   /// @{
   Timestamp Now() const override
@@ -42,11 +41,10 @@ public:
   /// @}
 
 private:
-
   ClockType clock;
   Duration  offset;
 };
 
-} // namespace detail
-} // namespace moment
-} // namespace fetch
+}  // namespace detail
+}  // namespace moment
+}  // namespace fetch
