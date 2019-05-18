@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/linalg/prototype.hpp"
-#include "math/tensor.hpp"
+#include "math/tensor_view.hpp"
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/blas/gemm_nn_novector.hpp"
 namespace fetch
@@ -28,7 +28,7 @@ namespace linalg
 {
 
 template< typename S >
-void Blas< S, Signature( _C <= _alpha, _A, _B, _beta, _C ), Computes( _C <= _alpha * _A * _B + _beta * _C ),platform::Parallelisation::NOT_PARALLEL >::operator()(Type const &alpha, Tensor< Type > const &a, Tensor< Type > const &b, Type const &beta, Tensor< Type > &c ) const
+void Blas< S, Signature( _C <= _alpha, _A, _B, _beta, _C ), Computes( _C <= _alpha * _A * _B + _beta * _C ),platform::Parallelisation::NOT_PARALLEL >::operator()(Type const alpha, TensorView< Type > const a, TensorView< Type > const b, Type const beta, TensorView< Type >c ) const
 {
   std::size_t i;
   std::size_t j;

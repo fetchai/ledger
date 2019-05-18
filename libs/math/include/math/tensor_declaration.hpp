@@ -8,8 +8,12 @@ namespace fetch
 namespace math
 {
 
-template <typename DataType, typename ContainerType = memory::SharedArray<DataType>>
+template <typename DataType, typename ContainerType = memory::SharedArray<DataType> >
 class Tensor;
+
+// TODO: Migrate to:
+//template <typename DataType, template<class> class ContainerType = memory::SharedArray>
+//class Tensor;
 
 }
 }

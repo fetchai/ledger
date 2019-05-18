@@ -18,17 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-
+#include "math/tensor_declaration.hpp"
 #include <algorithm>
 #include <cassert>
 #include <vector>
 
 namespace fetch {
 namespace math {
-
-// need to forward declare
-template <typename T, typename C>
-class Tensor;
 
 struct TensorSliceIteratorRange
 {

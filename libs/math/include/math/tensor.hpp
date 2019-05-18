@@ -334,6 +334,15 @@ public:
     return TensorView<Type, ContainerType>(data_, height(), width);
   }
 
+
+  TensorView<Type, ContainerType> const View() const
+  {
+    SizeType N = shape_.size() - 1;
+    SizeType width = shape_[N] * stride_[N] / padded_height_;
+    return TensorView<Type, ContainerType>(data_, height(), width);
+  }
+
+
   TensorView<Type, ContainerType> View(SizeType index)
   {
     SizeType N = shape_.size() - 1 - 1;

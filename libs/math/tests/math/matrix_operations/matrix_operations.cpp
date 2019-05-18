@@ -24,6 +24,7 @@
 #include "math/fixed_point/fixed_point.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
+#include "math/math_vector_support.hpp"
 
 #include <chrono>
 

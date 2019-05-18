@@ -19,6 +19,8 @@
 
 
 #include "math/base_types.hpp"
+#include "math/tensor_iterator.hpp"
+
 
 namespace fetch {
 namespace math {
@@ -30,6 +32,10 @@ public:
   using ContainerType              = C;  
   using IteratorType      = TensorIterator<T>;
   using ConstIteratorType = ConstTensorIterator<T>;  
+  using VectorSliceType            = typename ContainerType::VectorSliceType;
+  using VectorRegisterType         = typename ContainerType::VectorRegisterType;
+  using VectorRegisterIteratorType = typename ContainerType::VectorRegisterIteratorType;
+
 
   enum
   {

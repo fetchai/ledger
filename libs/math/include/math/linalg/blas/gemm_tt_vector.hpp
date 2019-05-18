@@ -33,7 +33,7 @@
  */
 
 #include "math/linalg/prototype.hpp"
-#include "math/tensor_declaration.hpp"
+#include "math/tensor_view.hpp"
 #include "math/linalg/blas/base.hpp"
 
 namespace fetch
@@ -51,9 +51,9 @@ class Blas< S,
 {
 public:
   using Type = S;
-  using VectorRegisterType = typename Tensor< Type >::VectorRegisterType;
+  using VectorRegisterType = typename TensorView< Type >::VectorRegisterType;
   
-  void operator()(Type const &alpha, Tensor< Type > const &a, Tensor< Type > const &b, Type const &beta, Tensor< Type > &c ) const;
+  void operator()(Type const alpha, TensorView< Type > const a, TensorView< Type > const b, Type const beta, TensorView< Type >c ) const;
 };
 
 } // namespace linalg

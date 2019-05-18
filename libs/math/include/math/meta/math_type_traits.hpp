@@ -97,11 +97,13 @@ struct IsMathImpl<int, ReturnType>
 {
   using Type = ReturnType;
 };
-template <typename DataType, typename ContainerType, typename ReturnType>
+
+template <typename DataType, typename ContainerType /*template<class> class ContainerType*/, typename ReturnType>
 struct IsMathImpl<Tensor<DataType, ContainerType>, ReturnType>
 {
   using Type = ReturnType;
 };
+
 template <typename DataType, typename ReturnType>
 using IfIsMath = typename IsMathImpl<DataType, ReturnType>::Type;
 
@@ -113,7 +115,7 @@ template <typename DataType, typename ReturnType>
 struct IsMathArrayImpl
 {
 };
-template <typename DataType, typename ContainerType, typename ReturnType>
+template <typename DataType, typename ContainerType /*template<class> class ContainerType*/, typename ReturnType>
 struct IsMathArrayImpl<Tensor<DataType, ContainerType>, ReturnType>
 {
   using Type = ReturnType;

@@ -26,19 +26,20 @@
 #include "math/linalg/blas/gemm_nt_vector.hpp"
 #include "math/linalg/blas/gemm_tn_novector.hpp"
 #include "math/linalg/blas/gemm_tn_vector.hpp"
+#include "math/linalg/blas/gemm_nn_novector.hpp"
+#include "math/linalg/blas/gemm_nn_vector.hpp"
 
 #include "math/linalg/prototype.hpp"
 
 #include "math/base_types.hpp"
+#include "math/math_vector_support.hpp"
 #include "math/comparison.hpp"
+#include "math/tensor_declaration.hpp"
 #include "math/fundamental_operators.hpp"  // add, subtract etc.
 
 
 namespace fetch {
 namespace math {
-
-template <typename T, typename C>
-class Tensor;
 
 // TODO (private 854) - vectorisation implementations not yet called
 namespace details_vectorisation {
@@ -197,7 +198,7 @@ meta::IfIsMathArray<ArrayType, void> Product(ArrayType const &array1, T &ret)
   }
 }
 
-template <typename T, typename C, typename = std::enable_if_t<meta::IsArithmetic<T>>>
+template <typename T, typename C /*template<class> class C*/, typename = std::enable_if_t<meta::IsArithmetic<T>>>
 meta::IfIsMathArray<Tensor<T, C>, T> Product(Tensor<T, C> const &array1)
 {
   T ret;
@@ -645,18 +646,20 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Dot(ArrayType const &A, ArrayT
   ASSERT(A.shape().size() == 2);
   ASSERT(B.shape().size() == 2);
   ASSERT(A.shape()[1] == B.shape()[0]);
+  using Type = typename ArrayType::Type;
+  using namespace linalg;
 
-  for (SizeType i(0); i < A.shape()[0]; ++i)
-  {
-    for (SizeType j(0); j < B.shape()[1]; ++j)
-    {
-      ret.At(i, j) = A.At(i, 0) * B.At(0, j);
-      for (SizeType k(1); k < A.shape()[1]; ++k)
-      {
-        ret.At(i, j) += A.At(i, k) * B.At(k, j);
-      }
-    }
-  }
+  enum {
+    OPTIMISATION_FLAGS = HasVectorSupport<Type>::value ? 
+                           platform::Parallelisation::VECTORISE 
+                         : platform::Parallelisation::NOT_PARALLEL
+  };
+
+  Blas<Type, Signature(_C <= _alpha, _A, _B, _beta, _C),
+             Computes(_C <= _alpha * _A * _B + _beta * _C), OPTIMISATION_FLAGS>
+      gemm_nn;
+
+  gemm_nn(static_cast<Type>(1), A.View(), B.View(), static_cast<Type>(0), ret.View());
 }
 
 template <typename ArrayType>
@@ -687,12 +690,18 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DotTranspose(ArrayType const &
   using Type = typename ArrayType::Type;
   using namespace linalg;
 
-  Blas<Type, Signature(_C <= _alpha, _A, _B, _beta, _C),
-       Computes(_C <= _alpha * _A * T(_B) + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
-      gemm_nt_no_vector;
+  enum {
+    OPTIMISATION_FLAGS = HasVectorSupport<Type>::value ? 
+                           platform::Parallelisation::VECTORISE 
+                         : platform::Parallelisation::NOT_PARALLEL
+  };
 
-  // TODO: Vectorise
-  gemm_nt_no_vector(static_cast<Type>(1), A, B, static_cast<Type>(0), ret);
+
+  Blas<Type, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C <= _alpha * _A * T(_B) + _beta * _C), OPTIMISATION_FLAGS>
+      gemm_nt;
+
+  gemm_nt(static_cast<Type>(1), A.View(), B.View(), static_cast<Type>(0), ret.View());
 }
 
 template <typename ArrayType>
@@ -721,13 +730,18 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> TransposeDot(ArrayType const &
   ASSERT(B.shape()[1] == ret.shape()[1]);
   using Type = typename ArrayType::Type;
   using namespace linalg;
-  
-  Blas<Type, Signature(_C <= _alpha, _A, _B, _beta, _C),
-       Computes(_C <= _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
-      gemm_tn_no_vector;
 
-  // TODO: Vectorise
-  gemm_tn_no_vector(static_cast<Type>(1), A, B, static_cast<Type>(0), ret);
+  enum {
+    OPTIMISATION_FLAGS = HasVectorSupport<Type>::value ? 
+                           platform::Parallelisation::VECTORISE 
+                         : platform::Parallelisation::NOT_PARALLEL
+  };
+
+  Blas<Type, Signature(_C <= _alpha, _A, _B, _beta, _C),
+       Computes(_C <= _alpha * T(_A) * _B + _beta * _C), OPTIMISATION_FLAGS>
+      gemm_tn;
+
+  gemm_tn(static_cast<Type>(1), A.View(), B.View(), static_cast<Type>(0), ret.View());
 }
 
 template <class ArrayType>

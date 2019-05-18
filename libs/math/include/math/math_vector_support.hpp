@@ -17,25 +17,36 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/memory/shared_array.hpp"
-#include "vectorise/platform.hpp"
-#include "math/tensor_declaration.hpp"
+#include <type_traits>
 
-
-namespace fetch {
-namespace math {
-
-
-namespace linalg {
-template <typename T, uint64_t S, uint64_t I,
-          uint64_t V = platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-class Blas
+namespace fetch
 {
-public:
-  template <typename... Args>
-  void operator()(Args... args) = delete;
+namespace math
+{
+
+template<typename T>
+struct HasVectorSupport
+{
+  enum { value = 0 };
 };
 
-}  // namespace linalg
-}  // namespace math
-}  // namespace fetch
+template<>
+struct HasVectorSupport<double>
+{
+  enum { value = 1 };
+};
+
+template<>
+struct HasVectorSupport<float>
+{
+  enum { value = 1 };
+};
+
+template<typename T, typename R>
+using IfVectorSupportFor = typename std::enable_if< HasVectorSupport< T >::value, R >::type;
+template<typename T, typename R>
+using IfNoVectorSupportFor = typename std::enable_if< !HasVectorSupport< T >::value, R >::type;
+
+
+}
+}
