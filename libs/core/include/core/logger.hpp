@@ -19,6 +19,8 @@
 
 #include "core/abstract_mutex.hpp"
 #include "core/commandline/vt100.hpp"
+#include "meta/value_util.hpp"
+
 #include <atomic>
 #include <chrono>
 #include <ctime>
@@ -433,7 +435,7 @@ public:
   }
 
   template <typename... Args>
-  void DebugWithName(char const *name, Args const &... args)
+  void DebugWithName(char const *name, Args &&... args)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
@@ -822,6 +824,8 @@ extern log::details::LogWrapper logger;
 #define FETCH_LOG_DEBUG_ENABLED
 #define FETCH_LOG_DEBUG(name, ...) fetch::logger.DebugWithName(name, __VA_ARGS__)
 #else
+#define FETCH_LOG_DEBUG(name, ...) value_util::no_op(name, __VA_ARGS__)
+#undef FETCH_LOG_DEBUG
 #define FETCH_LOG_DEBUG(name, ...) (void)name
 #endif
 
