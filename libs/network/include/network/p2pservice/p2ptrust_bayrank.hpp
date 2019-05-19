@@ -339,8 +339,5 @@ protected:
   RankingStore  ranking_store_;
 };
 
-template <typename IDENTITY>
-constexpr char const *P2PTrustBayRank<IDENTITY>::LOGGING_NAME;
-
 }  // namespace p2p
 }  // namespace fetch

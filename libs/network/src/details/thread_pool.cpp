@@ -26,8 +26,6 @@ namespace details {
 using std::chrono::milliseconds;
 using std::this_thread::sleep_for;
 
-constexpr char const *ThreadPoolImplementation::LOGGING_NAME;
-
 /**
  * Create a thread pool instance with a specified number
  *
