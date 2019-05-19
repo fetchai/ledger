@@ -349,7 +349,7 @@ public:
    *
    * @param: object The object to push
    *
-   * @return: the number of objects on the stack
+   * @return: the index of the pushed object
    */
   uint64_t Push(type const &object)
   {

@@ -21,6 +21,7 @@
 
 #include "storage/storage_exception.hpp"
 #include "mock_file_object.hpp"
+#include "core/random/lcg.hpp"
 
 using namespace fetch;
 using namespace fetch::byte_array;
@@ -31,6 +32,7 @@ using ::testing::AnyNumber;
 using ::testing::InSequence;
 using ::testing::NiceMock;
 using ::testing::StrictMock;
+using fetch::random::LinearCongruentialGenerator;
 
 using FileObjectM   = StrictMock<MockFileObject>;
 using FileObjectPtr = std::unique_ptr<FileObjectM>;
@@ -47,17 +49,35 @@ protected:
   {
   }
 
-  FileObjectPtr file_object_;
+  std::string GetStringForTesting()
+  {
+    uint64_t size_desired = 1 << 10;
+    std::string ret;
+    ret.resize(size_desired);
+
+    for (std::size_t i = 0; i < 1 << 10; ++i)
+    {
+      ret[i] = char(rng());
+    }
+
+    return ret;
+  }
+
+  void Reset()
+  {
+    file_object_ = std::make_unique<FileObjectM>();
+    consistency_check_.clear();
+  }
+
+  FileObjectPtr               file_object_;
+  LinearCongruentialGenerator rng;
+  std::vector<uint64_t>       consistency_check_;
 };
 
 TEST_F(FileObjectTests, InvalidOperationsThrow)
 {
   // Invalid to try to use the file object before new or load
   EXPECT_THROW(file_object_->CreateNewFile(), StorageException);
-  //EXPECT_THROW(file_object_->CreateNewFile(), StorageException);
-  //
-  std::cerr << "now do this" << std::endl; // DELETEME_NH
-  file_object_->CreateNewFile();
 }
 
 TEST_F(FileObjectTests, CreateNewFile)
@@ -65,366 +85,67 @@ TEST_F(FileObjectTests, CreateNewFile)
   file_object_->New("test");
 }
 
-TEST_F(FileObjectTests, CreateAndRetrieveFile)
+TEST_F(FileObjectTests, CreateAndWriteFilesConfirmUniqueIDs)
 {
   file_object_->New("test");
 
-  file_object_->CreateNewFile();
+  std::vector<std::string>                  strings_to_set;
+  std::unordered_map<uint64_t, std::string> file_ids;
 
-  file_object_->Write("whoooo, hoo");
+  strings_to_set.push_back("whoooo, hoo");
+  strings_to_set.push_back("");
+  strings_to_set.push_back("1");
+  strings_to_set.push_back(GetStringForTesting());
 
-  file_object_->CreateNewFile();
+  for(auto const &string_to_set : strings_to_set)
+  {
+    file_object_->CreateNewFile();
+    file_object_->Resize(string_to_set.size());
+    ASSERT_EQ(file_object_->FileObjectSize(), string_to_set.size());
+    file_object_->Write(string_to_set);
 
-  file_object_->Write("Second, here we comeeee!");
+    file_ids[file_object_->id()] = string_to_set;
 
-  auto argh = file_object_->AsDocument();
+    consistency_check_.push_back(file_object_->id());
 
-  file_object_->SeekFile(1);
-  argh = file_object_->AsDocument();
+    std::cerr << "VC1" << std::endl; // DELETEME_NH
+    ASSERT_EQ(file_object_->VerifyConsistency(consistency_check_), true);
+  }
 
-  file_object_->SeekFile(0);
-  argh = file_object_->AsDocument();
-
-  FETCH_UNUSED(argh);
+  ASSERT_EQ(file_ids.size(), strings_to_set.size());
 }
 
-// TODO(HUT): rewrite this to be less bad
-/*
-template <std::size_t BS>
-bool BasicFileCreation()
+TEST_F(FileObjectTests, CreateAndWriteFilesConfirmRecovery)
 {
-  using stack_type = VersionedRandomAccessStack<FileBlockType<BS>>;
-  stack_type stack;
-  stack.Load("document_data.db", "doc_diff.db", true);
+  file_object_->New("test");
 
-  FileObject<stack_type> file_object{};
-  ByteArray              str;
+  std::vector<std::string>        strings_to_set;
+  std::unordered_map<uint64_t, std::string> file_ids;
 
-  str.Resize(1 + (lfg1() % 20000));
-  for (std::size_t j = 0; j < str.size(); ++j)
+  strings_to_set.push_back("whoooo, hoo");
+  strings_to_set.push_back("");
+  strings_to_set.push_back("1");
+  strings_to_set.push_back(GetStringForTesting());
+
+  for(auto const &string_to_set : strings_to_set)
   {
-    str[j] = uint8_t(lfg1() >> 9);
+    file_object_->CreateNewFile();
+    file_object_->Resize(string_to_set.size());
+    ASSERT_EQ(file_object_->FileObjectSize(), string_to_set.size());
+    file_object_->Write(string_to_set);
+
+    file_ids[file_object_->id()] = string_to_set;
   }
 
-  //  auto start = std::chrono::high_resolution_clock::now();
-  file_object.Write(str.pointer(), str.size());
+  ASSERT_EQ(file_ids.size(), strings_to_set.size());
 
-  FileObject<stack_type> file_object2(stack, file_object.id());
-  assert(file_object.id() == file_object2.id());
-
-  ByteArray str2;
-  str2.Resize(str.size());
-  file_object2.Read(str2.pointer(), str2.size());
-
-  //  auto end = std::chrono::high_resolution_clock::now();
-  if (file_object2.size() != str.size())
+  for(auto it = file_ids.begin();it != file_ids.end(); it++)
   {
+    file_object_->SeekFile(it->first);
+    auto doc = file_object_->AsDocument();
 
-    return false;
+    ASSERT_EQ(doc.failed, false);
+    ASSERT_EQ(doc.was_created, false);
+    ASSERT_EQ(doc.document, it->second);
   }
-
-  //  std::chrono::duration<double> diff = end-start;
-  //  std::cout << "Write speed: " << str2.size() / diff.count()  / 1e6 << "
-  //  mb/s\n";
-
-  if (str != str2)
-  {
-    return false;
-  }
-  return true;
 }
-
-template <std::size_t BS>
-bool MultipleFileCreation()
-{
-  using stack_type = VersionedRandomAccessStack<FileBlockType<BS>>;
-  {
-    stack_type stack;
-    stack.New("document_data.db", "doc_diff.db");
-  }
-
-  for (std::size_t i = 0; i < 10; ++i)
-  {
-    if (!BasicFileCreation<BS>())
-    {
-      return false;
-    }
-  }
-  return true;
-}
-
-template <std::size_t BS>
-bool Overwriting()
-{
-  using stack_type = VersionedRandomAccessStack<FileBlockType<BS>>;
-  stack_type stack;
-  stack.New("document_data.db", "doc_diff.db");
-
-  FileObject<stack_type> file_object(stack);
-  ByteArray              str("Hello world! This is a great world."), f("Fetch"), ret;
-  file_object.Seek(0);
-  file_object.Write(str.pointer(), str.size());
-  file_object.Seek(6);
-  file_object.Write(f.pointer(), f.size());
-  file_object.Write(f.pointer(), f.size());
-  file_object.Seek(6);
-  file_object.Write(str.pointer(), str.size());
-  file_object.Write(f.pointer(), f.size());
-  file_object.Write(f.pointer(), f.size());
-
-  file_object.Seek(0);
-
-  ret.Resize(file_object.size());
-  file_object.Read(ret.pointer(), ret.size());
-
-  return (ret.size() == file_object.size()) &&
-         (ret == "Hello Hello world! This is a great world.FetchFetch");
-}
-
-template <std::size_t BS>
-bool HashConsistency()
-{
-  using stack_type = VersionedRandomAccessStack<FileBlockType<BS>>;
-  stack_type stack;
-  stack.New("document_data.db", "doc_diff.db");
-
-  FileObject<stack_type> file_object(stack);
-  ByteArray              str;
-
-  str.Resize(1 + (lfg1() % 20000));
-  for (std::size_t j = 0; j < str.size(); ++j)
-  {
-    str[j] = uint8_t(lfg1() >> 9);
-  }
-
-  ByteArray ret;
-  file_object.Write(str.pointer(), str.size());
-
-  ret.Resize(file_object.size());
-  file_object.Seek(0);
-  file_object.Read(ret.pointer(), ret.size());
-
-  return (str == ret) && (file_object.Hash() == crypto::Hash<crypto::SHA256>(str));
-}
-
-template <std::size_t BS>
-bool FileLoadValueConsistency()
-{
-  using stack_type = VersionedRandomAccessStack<FileBlockType<BS>>;
-  std::vector<ByteArray> values;
-  std::vector<uint64_t>  file_ids;
-
-  {
-    stack_type stack;
-    stack.New("document_data.db", "doc_diffXX.db");
-
-    for (std::size_t n = 0; n < 100; ++n)
-    {
-
-      FileObject<stack_type> file_object(stack);
-      ByteArray              str;
-
-      str.Resize(1 + (lfg1() % 2000));
-      for (std::size_t j = 0; j < str.size(); ++j)
-      {
-        str[j] = uint8_t(lfg1() >> 9);
-      }
-
-      file_object.Write(str.pointer(), str.size());
-      file_ids.push_back(file_object.id());
-      values.push_back(str);
-    }
-
-    for (std::size_t n = 0; n < 100; ++n)
-    {
-      FileObject<stack_type> file_object(stack, file_ids[n]);
-      file_object.Seek(0);
-      //      std::cout << "Treating: " << n << " " << file_ids[n]  <<
-      //      std::endl;
-
-      ByteArray test;
-
-      test.Resize(file_object.size());
-      file_object.Read(test.pointer(), test.size());
-
-      if (test != values[n])
-      {
-        return false;
-      }
-    }
-  }
-
-  {
-    stack_type stack;
-    stack.Load("document_data.db", "doc_diffXX.db");
-
-    for (std::size_t n = 0; n < 100; ++n)
-    {
-      FileObject<stack_type> file_object(stack, file_ids[n]);
-      file_object.Seek(0);
-      ByteArray test;
-
-      test.Resize(file_object.size());
-      file_object.Read(test.pointer(), test.size());
-
-      if (test != values[n])
-      {
-        return false;
-      }
-    }
-  }
-
-  return true;
-}
-
-template <std::size_t BS, std::size_t FS>
-bool FileSaveLoadFixedSize()
-{
-  using stack_type = RandomAccessStack<FileBlockType<BS>>;
-  std::vector<ByteArray> strings;
-  std::vector<uint64_t>  file_ids;
-
-  {
-    stack_type stack;
-    stack.New("document_data.db");  //,"doc_diffXX.db");
-
-    FileObject<stack_type> file_object(stack);
-    ByteArray              str;
-
-    str.Resize(1 + (lfg1() % 2000));
-    for (std::size_t j = 0; j < str.size(); ++j)
-    {
-      str[j] = uint8_t(lfg1() >> 9);
-    }
-
-    strings.push_back(str);
-
-    file_object.Write(str.pointer(), str.size());
-    file_ids.push_back(file_object.id());
-  }
-
-  {
-
-    stack_type stack;
-    stack.Load("document_data.db");  //,"doc_diffXX.db");
-
-    FileObject<stack_type> file_object(stack, file_ids[0]);
-    file_object.Seek(0);
-    ByteArray arr;
-    arr.Resize(file_object.size());
-    file_object.Read(arr.pointer(), arr.size());
-    if (arr != strings[0])
-    {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-template <std::size_t BS>
-bool FileLoadHashConsistency()
-{
-  using stack_type = RandomAccessStack<FileBlockType<BS>>;
-  std::vector<ByteArray> strings;
-  std::vector<ByteArray> hashes;
-  std::vector<uint64_t>  file_ids;
-
-  {
-    stack_type stack;
-    stack.New("document_data.db");  //,"doc_diffXX.db");
-
-    for (std::size_t n = 0; n < 100; ++n)
-    {
-
-      FileObject<stack_type> file_object(stack);
-      ByteArray              str;
-
-      str.Resize(1 + (lfg1() % 2000));
-      for (std::size_t j = 0; j < str.size(); ++j)
-      {
-        str[j] = uint8_t(lfg1() >> 9);
-      }
-
-      strings.push_back(str);
-
-      file_object.Write(str.pointer(), str.size());
-      file_ids.push_back(file_object.id());
-      hashes.push_back(crypto::Hash<crypto::SHA256>(str));
-
-      file_object.Seek(0);
-
-      if (file_object.Hash() != hashes[n])
-      {
-        std::cout << "Failed??? " << strings[n].size() << " " << file_object.size() << std::endl;
-
-        return false;
-      }
-    }
-  }
-
-  {
-    stack_type stack;
-    stack.Load("document_data.db");  //,"doc_diffXX.db");
-
-    for (std::size_t n = 0; n < 100; ++n)
-    {
-      FileObject<stack_type> file_object(stack, file_ids[n]);
-      file_object.Seek(0);
-
-      if (file_object.Hash() != hashes[n])
-      {
-        return false;
-      }
-    }
-  }
-
-  return true;
-}
-
-TEST(storage_file_object_gtest, Creating_reading)
-{
-  EXPECT_TRUE(BasicFileCreation<2>());
-
-  EXPECT_TRUE((FileSaveLoadFixedSize<1, 1>()));
-  EXPECT_TRUE((FileSaveLoadFixedSize<2, 1>()));
-  EXPECT_TRUE((FileSaveLoadFixedSize<4, 1>()));
-  EXPECT_TRUE((FileSaveLoadFixedSize<1, 0>()));
-  EXPECT_TRUE((FileSaveLoadFixedSize<2, 0>()));
-  EXPECT_TRUE((FileSaveLoadFixedSize<4, 0>()));
-
-  EXPECT_TRUE(MultipleFileCreation<1>());
-  EXPECT_TRUE(MultipleFileCreation<2>());
-  EXPECT_TRUE(MultipleFileCreation<4>());
-  EXPECT_TRUE(MultipleFileCreation<9>());
-  EXPECT_TRUE(MultipleFileCreation<1023>());
-
-  EXPECT_TRUE(Overwriting<1>());
-  EXPECT_TRUE(Overwriting<2>());
-  EXPECT_TRUE(Overwriting<4>());
-  EXPECT_TRUE(Overwriting<7>());
-  EXPECT_TRUE(Overwriting<2048>());
-
-  EXPECT_TRUE(FileLoadValueConsistency<1>());
-  EXPECT_TRUE(FileLoadValueConsistency<2>());
-  EXPECT_TRUE(FileLoadValueConsistency<4>());
-  EXPECT_TRUE(FileLoadValueConsistency<7>());
-  //      EXPECT_TRUE( FileLoadValueConsistency<1023>() );
-}
-
-TEST(storage_file_object_gtest, Hash_consistency)
-{
-  EXPECT_TRUE(HashConsistency<1>());
-  EXPECT_TRUE(HashConsistency<2>());
-  EXPECT_TRUE(HashConsistency<4>());
-  EXPECT_TRUE(HashConsistency<9>());
-  EXPECT_TRUE(HashConsistency<13>());
-  EXPECT_TRUE(HashConsistency<1024>());
-
-  EXPECT_TRUE(FileLoadHashConsistency<1>());
-  EXPECT_TRUE(FileLoadHashConsistency<2>());
-  EXPECT_TRUE(FileLoadHashConsistency<4>());
-  EXPECT_TRUE(FileLoadHashConsistency<7>());
-  EXPECT_TRUE(FileLoadHashConsistency<1023>());
-}
-*/

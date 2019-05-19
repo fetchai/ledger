@@ -144,10 +144,11 @@ public:
     {
       // Create new file, with new index etc.
       // write this to the key index
-      file_object_.CreateNewFile();
+      file_object_.CreateNewFile(value.size());
     }
 
-    if (file_object_.size() > value.size())
+    // TODO(HUT): consider whether to put this check within the file object
+    if (file_object_.FileObjectSize() > value.size())
     {
       file_object_.Resize(value.size());
     }

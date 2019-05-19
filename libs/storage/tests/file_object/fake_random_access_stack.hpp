@@ -85,7 +85,7 @@ public:
   {
     ThrowOnBadAccess("Push");
     (*stack_).elements.push_back(object);
-    return size();
+    return size() - 1;
   }
 
   void Pop()
