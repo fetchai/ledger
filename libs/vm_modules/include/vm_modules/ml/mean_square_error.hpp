@@ -56,6 +56,18 @@ public:
     (*ret).Copy(dt);
     return ret;
   }
+
+  bool SerializeTo(vm::ByteArrayBuffer &buffer) override
+  {
+    FETCH_UNUSED(buffer);
+    return false;
+  }
+
+  bool DeserializeFrom(vm::ByteArrayBuffer &buffer) override
+  {
+    FETCH_UNUSED(buffer);
+    return false;
+  }
 };
 
 inline void CreateMeanSquareError(fetch::vm::Module &module)

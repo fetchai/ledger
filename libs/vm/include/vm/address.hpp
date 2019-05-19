@@ -110,6 +110,20 @@ public:
     return address_ == other;
   }
 
+  bool SerializeTo(ByteArrayBuffer &buffer) override
+  {
+    buffer << address_.address();
+    return true;
+  }
+
+  bool DeserializeFrom(ByteArrayBuffer &buffer) override
+  {
+    fetch::byte_array::ConstByteArray raw_address{};
+    buffer >> raw_address;
+    address_ = ledger::v2::Address{raw_address};
+    return true;
+  }
+
 private:
   ledger::v2::Address address_;
   bool                signed_tx_{false};

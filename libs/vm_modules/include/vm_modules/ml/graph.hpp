@@ -62,7 +62,7 @@ public:
     fetch::ml::Graph<fetch::math::Tensor<float>>::BackPropagate(name->str, *dt);
   }
 
-  void Step(float lr)
+  void Step(float lr) override
   {
     fetch::ml::Graph<fetch::math::Tensor<float>>::Step(lr);
   }
@@ -93,6 +93,18 @@ public:
   {
     fetch::ml::Graph<fetch::math::Tensor<float>>::AddNode<
         fetch::ml::ops::Softmax<fetch::math::Tensor<float>>>(name->str, {inputName->str});
+  }
+
+  bool SerializeTo(vm::ByteArrayBuffer &buffer) override
+  {
+    FETCH_UNUSED(buffer);
+    return false;
+  }
+
+  bool DeserializeFrom(vm::ByteArrayBuffer &buffer) override
+  {
+    FETCH_UNUSED(buffer);
+    return false;
   }
 };
 
