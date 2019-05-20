@@ -25,6 +25,7 @@
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/v2/transaction.hpp"
+#include "moment/deadline_timer.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -178,6 +179,11 @@ public:
     return *state_machine_;
   }
 
+  StateMachine &GetStateMachine()
+  {
+    return *state_machine_;
+  }
+
   std::weak_ptr<core::StateMachineInterface> GetWeakStateMachine()
   {
     return state_machine_;
@@ -223,6 +229,7 @@ private:
   using TxDigestSetPtr    = std::unique_ptr<v2::DigestSet>;
   using LastExecutedBlock = SynchronisedState<ConstByteArray>;
   using FutureTimepoint   = fetch::core::FutureTimepoint;
+  using DeadlineTimer     = fetch::moment::DeadlineTimer;
 
   /// @name Monitor State
   /// @{
@@ -288,9 +295,9 @@ private:
   PeriodicAction  tx_wait_periodic_;       ///< Periodic print for transaction waiting
   PeriodicAction  exec_wait_periodic_;     ///< Periodic print for execution
   PeriodicAction  syncing_periodic_;       ///< Periodic print for synchronisation
-  FutureTimepoint wait_for_tx_timeout_;    ///< Timeout when waiting for transactions
-  FutureTimepoint
-       wait_before_asking_for_missing_tx_;  ///< Time to wait before asking peers for any missing txs
+  DeadlineTimer   wait_for_tx_timeout_{"bc:deadline"};  ///< Timeout when waiting for transactions
+  DeadlineTimer   wait_before_asking_for_missing_tx_{
+      "bc:deadline"};              ///< Time to wait before asking peers for any missing txs
   bool have_asked_for_missing_txs_;  ///< true if a request for missing Txs has been issued for the
                                      ///< current block
   /// @}
