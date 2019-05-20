@@ -360,8 +360,8 @@ TEST(tcp_client_stress_gtest, open_connection_to_existing_port_async)
   std::cerr << "Info: Attempting to open multiple\
     connections to a port that does exist, async"
             << std::endl;
-  std::string hostID     = "localhost";
-  uint16_t    portNo     = 8080;
+  std::string hostID      = "localhost";
+  uint16_t    portNo      = 8080;
   std::string port_number = std::to_string(portNo);
 
   // Start echo server

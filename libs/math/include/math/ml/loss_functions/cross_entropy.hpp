@@ -41,7 +41,7 @@ typename ArrayType::Type CrossEntropyLoss(
     ArrayType const &x, ArrayType const &y,
     typename ArrayType::SizeType n_classes = typename ArrayType::SizeType(2))
 {
-  using DataType = typename ArrayType::Type;
+  using DataType     = typename ArrayType::Type;
   using SizeTypeHere = typename ArrayType::SizeType;
 
   FETCH_UNUSED(n_classes);

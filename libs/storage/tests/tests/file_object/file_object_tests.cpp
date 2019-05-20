@@ -19,11 +19,11 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-#include "storage/storage_exception.hpp"
-#include "mock_file_object.hpp"
 #include "core/random/lcg.hpp"
-#include "crypto/sha256.hpp"
 #include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
+#include "mock_file_object.hpp"
+#include "storage/storage_exception.hpp"
 
 using namespace fetch;
 using namespace fetch::byte_array;
@@ -48,18 +48,17 @@ protected:
   }
 
   void TearDown() override
-  {
-  }
+  {}
 
   char NewChar()
   {
-    char a = char(rng());
+    char a = char(rng_());
     return a == '\0' ? '0' : a;
   }
 
   std::string GetStringForTesting()
   {
-    uint64_t size_desired = (1 << 10) + (rng() & 0xFF);
+    uint64_t    size_desired = (1 << 10) + (rng_() & 0xFF);
     std::string ret;
     ret.resize(size_desired);
 
@@ -78,7 +77,7 @@ protected:
   }
 
   FileObjectPtr               file_object_;
-  LinearCongruentialGenerator rng;
+  LinearCongruentialGenerator rng_;
   std::vector<uint64_t>       consistency_check_;
 };
 
@@ -109,7 +108,7 @@ TEST_F(FileObjectTests, CreateAndWriteFilesConfirmUniqueIDs)
     strings_to_set.push_back(GetStringForTesting());
   }
 
-  for(auto const &string_to_set : strings_to_set)
+  for (auto const &string_to_set : strings_to_set)
   {
     file_object_->CreateNewFile(string_to_set.size());
 
@@ -129,7 +128,7 @@ TEST_F(FileObjectTests, CreateAndWriteFilesConfirmRecovery)
 {
   file_object_->New("test");
 
-  std::vector<std::string>        strings_to_set;
+  std::vector<std::string>                  strings_to_set;
   std::unordered_map<uint64_t, std::string> file_ids;
 
   strings_to_set.push_back("whoooo, hoo");
@@ -141,7 +140,7 @@ TEST_F(FileObjectTests, CreateAndWriteFilesConfirmRecovery)
     strings_to_set.push_back(GetStringForTesting());
   }
 
-  for(auto const &string_to_set : strings_to_set)
+  for (auto const &string_to_set : strings_to_set)
   {
     file_object_->CreateNewFile();
     file_object_->Resize(string_to_set.size());
@@ -155,7 +154,7 @@ TEST_F(FileObjectTests, CreateAndWriteFilesConfirmRecovery)
 
   ASSERT_EQ(file_ids.size(), strings_to_set.size());
 
-  for(auto it = file_ids.begin();it != file_ids.end(); it++)
+  for (auto it = file_ids.begin(); it != file_ids.end(); it++)
   {
     file_object_->SeekFile(it->first);
     auto doc = file_object_->AsDocument();
@@ -184,7 +183,7 @@ TEST_F(FileObjectTests, ResizeAndWriteFiles)
     strings_to_set.push_back(GetStringForTesting());
   }
 
-  for(auto const &string_to_set : strings_to_set)
+  for (auto const &string_to_set : strings_to_set)
   {
     file_object_->CreateNewFile();
     file_object_->Resize(string_to_set.size());
@@ -202,7 +201,7 @@ TEST_F(FileObjectTests, ResizeAndWriteFiles)
   {
     std::random_shuffle(consistency_check_.begin(), consistency_check_.end());
 
-    for(auto const &index : consistency_check_)
+    for (auto const &index : consistency_check_)
     {
       ASSERT_EQ(file_object_->VerifyConsistency(consistency_check_), true);
       file_object_->SeekFile(index);
@@ -244,18 +243,18 @@ TEST_F(FileObjectTests, EraseFiles)
     consistency_check_.push_back(file_object_->id());
 
     // Erase elements half of the time
-    if(i % 2)
+    if (i % 2)
     {
-      std::swap(consistency_check_[rng() % consistency_check_.size()], consistency_check_[consistency_check_.size() -1]);
-      file_object_->SeekFile(consistency_check_[consistency_check_.size() -1]);
+      std::swap(consistency_check_[rng_() % consistency_check_.size()],
+                consistency_check_[consistency_check_.size() - 1]);
+      file_object_->SeekFile(consistency_check_[consistency_check_.size() - 1]);
       file_object_->Erase();
-      file_ids.erase(consistency_check_[consistency_check_.size() -1]);
+      file_ids.erase(consistency_check_[consistency_check_.size() - 1]);
       consistency_check_.pop_back();
     }
 
     ASSERT_EQ(file_object_->VerifyConsistency(consistency_check_), true);
   }
-
 }
 
 TEST_F(FileObjectTests, DISABLED_SeekAndTellFiles)
@@ -272,8 +271,8 @@ TEST_F(FileObjectTests, DISABLED_SeekAndTellFiles)
 
     for (std::size_t j = 0; j < 10; ++j)
     {
-      uint64_t index_to_change = rng() % new_string.size();
-      uint64_t length_of_chars = rng() % (new_string.size() - index_to_change);
+      uint64_t index_to_change = rng_() % new_string.size();
+      uint64_t length_of_chars = rng_() % (new_string.size() - index_to_change);
 
       std::string new_chars(length_of_chars, NewChar());
 

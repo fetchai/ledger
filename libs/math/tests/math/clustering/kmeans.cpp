@@ -31,17 +31,17 @@
 
 using namespace fetch::math;
 
-using DataType  = std::int64_t;
-using ArrayType = Tensor<DataType>;
-using SizeTypeHere  = Tensor<DataType>::SizeType;
+using DataType     = std::int64_t;
+using ArrayType    = Tensor<DataType>;
+using SizeTypeHere = Tensor<DataType>::SizeType;
 
 using ClusteringType = fetch::math::clustering::ClusteringType;
 
 TEST(clustering_test, kmeans_test_2d_4k)
 {
-  ArrayType A({100, 2});
-  ArrayType ret({100, 1});
-  SizeTypeHere  K = 4;
+  ArrayType    A({100, 2});
+  ArrayType    ret({100, 1});
+  SizeTypeHere K = 4;
 
   for (SizeTypeHere i = 0; i < 25; ++i)
   {
@@ -64,7 +64,7 @@ TEST(clustering_test, kmeans_test_2d_4k)
     A.Set(SizeTypeHere{i}, SizeTypeHere{1}, static_cast<DataType>(i) + 50);
   }
 
-  SizeTypeHere       random_seed = 123456;
+  SizeTypeHere   random_seed = 123456;
   ClusteringType clusters    = fetch::math::clustering::KMeans(A, random_seed, K);
 
   SizeTypeHere group_0 = static_cast<SizeTypeHere>(clusters[0]);
@@ -93,7 +93,7 @@ TEST(clustering_test, kmeans_test_previous_assignment)
 {
   SizeTypeHere n_points = 50;
 
-  SizeTypeHere       K = 2;
+  SizeTypeHere   K = 2;
   ArrayType      A({n_points, 2});
   ClusteringType prev_k{n_points};
   ArrayType      ret(std::vector<SizeTypeHere>({n_points, 1}));
@@ -126,7 +126,7 @@ TEST(clustering_test, kmeans_test_previous_assignment)
     prev_k.Set(i, -1);
   }
 
-  SizeTypeHere       random_seed = 123456;
+  SizeTypeHere   random_seed = 123456;
   ClusteringType clusters    = fetch::math::clustering::KMeans(A, random_seed, K, prev_k);
 
   SizeTypeHere group_0 = static_cast<SizeTypeHere>(clusters[0]);
@@ -179,7 +179,7 @@ TEST(clustering_test, kmeans_simple_previous_assignment_no_K)
     prev_k.Set(i, -1);
   }
 
-  SizeTypeHere                                random_seed = 123456;
+  SizeTypeHere                            random_seed = 123456;
   fetch::math::clustering::KInferenceMode k_inference_mode =
       fetch::math::clustering::KInferenceMode::NClusters;
   ClusteringType clusters =
@@ -268,7 +268,7 @@ TEST(clustering_test, kmeans_remap_previous_assignment_no_K)
     prev_k.Set(i, no_group);
   }
 
-  SizeTypeHere                                random_seed = 123456;
+  SizeTypeHere                            random_seed = 123456;
   fetch::math::clustering::KInferenceMode k_inference_mode =
       fetch::math::clustering::KInferenceMode::NClusters;
   ClusteringType clusters =

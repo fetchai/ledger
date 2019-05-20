@@ -39,7 +39,7 @@ public:
   using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
 
   static constexpr eECDSAEncoding          binaryDataFormatL = P_ECDSABinaryDataFormat;
-  static constexpr point_conversion_form_t conversionForm   = P_ConversionForm;
+  static constexpr point_conversion_form_t conversionForm    = P_ConversionForm;
 
   template <eECDSAEncoding P_ECDSABinaryDataFormat2, int P_ECDSA_Curve_NID2,
             point_conversion_form_t P_ConversionForm2>

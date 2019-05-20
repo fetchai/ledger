@@ -217,7 +217,7 @@ TYPED_TEST(TensorBasicTests, is_equal_test)
 
 TYPED_TEST(TensorBasicTests, is_not_equal_test)
 {
-  using SizeTypeHere               = typename Tensor<TypeParam>::SizeType;
+  using SizeTypeHere           = typename Tensor<TypeParam>::SizeType;
   std::size_t       n          = 10000;
   Tensor<TypeParam> test_array = RandomArray(n, TypeParam(0));
   Tensor<TypeParam> test_array_2(n);

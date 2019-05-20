@@ -215,7 +215,7 @@ typename SkipGramLoader<T>::SizeType SkipGramLoader<T>::SelectNegativeContextWor
     // randomly select a word from the unigram_table
     SizeType ran_val     = SizeType(this->lcg_());
     SizeType max_val     = this->unigram_table_.size();
-    SizeType idx2         = ran_val % max_val;
+    SizeType idx2        = ran_val % max_val;
     negative_context_idx = this->unigram_table_.at(idx2);
     assert(negative_context_idx < this->vocab_.size());
     ongoing = false;

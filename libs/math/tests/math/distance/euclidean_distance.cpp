@@ -39,9 +39,9 @@ TYPED_TEST_CASE(EuclideanTest, MyTypes);
 
 TYPED_TEST(EuclideanTest, simple_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using SizeTypeHere  = typename TypeParam::SizeType;
-  using ArrayType = TypeParam;
+  using DataType     = typename TypeParam::Type;
+  using SizeTypeHere = typename TypeParam::SizeType;
+  using ArrayType    = TypeParam;
 
   ArrayType A = ArrayType(4);
   A.Set(SizeTypeHere{0}, DataType(1));
@@ -61,9 +61,9 @@ TYPED_TEST(EuclideanTest, simple_test)
 
 TYPED_TEST(EuclideanTest, matrix_euclidean_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using SizeTypeHere  = typename TypeParam::SizeType;
-  using ArrayType = TypeParam;
+  using DataType     = typename TypeParam::Type;
+  using SizeTypeHere = typename TypeParam::SizeType;
+  using ArrayType    = TypeParam;
 
   ArrayType A = ArrayType({3, 4});
   A.Set(SizeTypeHere{0}, SizeTypeHere{0}, DataType(1));

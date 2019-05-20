@@ -790,8 +790,8 @@ extern log::details::LogWrapper logger;
 #define ERROR_BACKTRACE_STRING ERROR_BACKTRACE_STRING_START(0)
 
 #define ERROR_BACKTRACE_STRING_START(start_frame)               \
-  [](){                                                         \
-    constexpr int            framesMax = 20;                    \
+  []() {                                                        \
+    constexpr int            framesMax  = 20;                   \
     constexpr int            startFrame = start_frame;          \
     std::vector<std::string> results;                           \
                                                                 \

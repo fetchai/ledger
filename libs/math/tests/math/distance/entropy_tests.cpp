@@ -39,9 +39,9 @@ TYPED_TEST_CASE(EntropyTest, MyTypes);
 
 TYPED_TEST(EntropyTest, entropy)
 {
-  using DataType  = typename TypeParam::Type;
-  using SizeTypeHere  = typename TypeParam::SizeType;
-  using ArrayType = TypeParam;
+  using DataType     = typename TypeParam::Type;
+  using SizeTypeHere = typename TypeParam::SizeType;
+  using ArrayType    = TypeParam;
 
   ArrayType A(4);
 

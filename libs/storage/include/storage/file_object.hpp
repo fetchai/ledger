@@ -49,7 +49,8 @@ struct FileBlockType
   static constexpr uint64_t CAPACITY        = BS - META_DATA_BYTES;
   static constexpr uint64_t UNDEFINED       = std::numeric_limits<uint64_t>::max();
 
-  static_assert(BS > META_DATA_BYTES, "Block size needs to exceed the min requirement for metadata");
+  static_assert(BS > META_DATA_BYTES,
+                "Block size needs to exceed the min requirement for metadata");
 
   FileBlockType()
   {
@@ -62,7 +63,7 @@ struct FileBlockType
 
   // Metadata
   uint64_t next     = UNDEFINED;
-  uint64_t previous = UNDEFINED; // For the free block, this points to the end of the LL.
+  uint64_t previous = UNDEFINED;  // For the free block, this points to the end of the LL.
 
   // Either the size of the file object, or in the case this block is
   // used as the 'free linked list', this is the number of free blocks.
@@ -102,10 +103,10 @@ public:
 
   static constexpr char const *LOGGING_NAME = "FileObject";
 
-  FileObject(FileObject const &other)           = delete;
+  FileObject(FileObject const &other) = delete;
   FileObject operator=(FileObject const &other) = delete;
   FileObject(FileObject &&other)                = default;
-  FileObject &operator=(FileObject &&other)     = default;
+  FileObject &operator=(FileObject &&other) = default;
 
   FileObject();
   virtual ~FileObject();
@@ -177,10 +178,11 @@ protected:
   uint64_t block_index_       = 0;  // index of block_number_ on the stack
   uint64_t byte_index_        = 0;  // index of current byte within BLOCK
   uint64_t byte_index_global_ = 0;  // index of current byte within file // TODO(HUT): del?
-  uint64_t length_            = 0;  // length in bytes of file. // TODO(HUT): make sure this is correct - also can be found from Get(id) right - any point in keeping?
+  uint64_t length_ = 0;  // length in bytes of file. // TODO(HUT): make sure this is correct - also
+                         // can be found from Get(id) right - any point in keeping?
 
   // TODO(HUT): block_type -> BlockType etc.
-  static constexpr uint64_t   free_block_index_ = 0; // Location of the meta 'free block'
+  static constexpr uint64_t free_block_index_ = 0;  // Location of the meta 'free block'
 
 private:
   void Initalise();
@@ -226,28 +228,28 @@ void FileObject<S>::Flush(bool lazy)
 template <typename S>
 void FileObject<S>::Seek(uint64_t index)
 {
-  byte_index_global_     = index;
-  byte_index_            = index % block_type::CAPACITY;
-  uint64_t desired_bn    = index / block_type::CAPACITY;
+  byte_index_global_    = index;
+  byte_index_           = index % block_type::CAPACITY;
+  uint64_t   desired_bn = index / block_type::CAPACITY;
   block_type block;
 
   // Optionally start seeking from the first block if that's faster
-  if(desired_bn < block_number_ && block_number_ - desired_bn < desired_bn)
+  if (desired_bn < block_number_ && block_number_ - desired_bn < desired_bn)
   {
     block_number_ = 0;
   }
 
   // need to find index of this block on stack
-  while(block_number_ != desired_bn)
+  while (block_number_ != desired_bn)
   {
-    if(block_number_ == block_type::UNDEFINED)
+    if (block_number_ == block_type::UNDEFINED)
     {
       throw StorageException("Attempt to seek to an invalid block");
     }
 
     Get(block_number_, block);
 
-    if(desired_bn < block_number_)
+    if (desired_bn < block_number_)
     {
       block_number_ = block.previous;
     }
@@ -291,15 +293,15 @@ void FileObject<S>::Resize(uint64_t size)
   uint64_t block_number = 1;
   uint64_t block_index  = id_;
 
-  for(;;)
+  for (;;)
   {
     Get(block_index, block);
 
     uint64_t block_index_tmp = block_index;
-    block_index = block.next;
+    block_index              = block.next;
 
     // if we reach the end of the LL, append as many blocks as we need
-    if(block.next == block_type::UNDEFINED && block_number != target_blocks)
+    if (block.next == block_type::UNDEFINED && block_number != target_blocks)
     {
       block.next = GetFreeBlocks(block_index_tmp, target_blocks - block_number);
       Set(block_index_tmp, block);
@@ -314,7 +316,7 @@ void FileObject<S>::Resize(uint64_t size)
     }
 
     // If we reach as many blocks we actually need, free the rest
-    if(block_number == target_blocks)
+    if (block_number == target_blocks)
     {
       FreeBlocksInList(block_index);
 
@@ -347,10 +349,13 @@ void FileObject<S>::Write(byte_array::ConstByteArray const &arr)
 template <typename S>
 void FileObject<S>::ReadWriteHelper(uint8_t const *bytes, uint64_t const &num, Action action)
 {
-  assert(id_ != 0 && "Attempt to write to the free block as if it were a file is a programmer error in FileObject");
+  assert(id_ != 0 &&
+         "Attempt to write to the free block as if it were a file is a programmer error in "
+         "FileObject");
 
-  uint64_t   bytes_left_to_write       = num;
-  uint64_t   bytes_to_write_in_block   = std::min(block_type::CAPACITY - byte_index_, bytes_left_to_write);
+  uint64_t bytes_left_to_write = num;
+  uint64_t bytes_to_write_in_block =
+      std::min(block_type::CAPACITY - byte_index_, bytes_left_to_write);
   block_type block_being_written;
   uint64_t   block_index_being_written = block_index_;
   uint64_t   byte_index                = byte_index_;
@@ -358,7 +363,7 @@ void FileObject<S>::ReadWriteHelper(uint8_t const *bytes, uint64_t const &num, A
 
   assert(bytes_to_write_in_block <= block_type::CAPACITY);
 
-  while(bytes_left_to_write > 0)
+  while (bytes_left_to_write > 0)
   {
     // TODO(HUT): switch to explicit ref here
     assert(block_index_being_written != uint64_t(-1) && "Invalid block index during writing");
@@ -368,20 +373,21 @@ void FileObject<S>::ReadWriteHelper(uint8_t const *bytes, uint64_t const &num, A
     // TODO(HUT): 'write' -> copy
     switch (action)
     {
-      case Action::READ:
-        memcpy((uint8_t *)(bytes + bytes_offset), block_being_written.data + byte_index,  bytes_to_write_in_block);
+    case Action::READ:
+      memcpy((uint8_t *)(bytes + bytes_offset), block_being_written.data + byte_index,
+             bytes_to_write_in_block);
       break;
-      case Action::WRITE:
-        memcpy(block_being_written.data + byte_index, bytes + bytes_offset, bytes_to_write_in_block);
+    case Action::WRITE:
+      memcpy(block_being_written.data + byte_index, bytes + bytes_offset, bytes_to_write_in_block);
       break;
     }
 
     // Write block back
-    byte_index                = 0;
+    byte_index = 0;
     Set(block_index_being_written, block_being_written);
     block_index_being_written = block_being_written.next;
 
-    bytes_offset        += bytes_to_write_in_block;
+    bytes_offset += bytes_to_write_in_block;
     bytes_left_to_write -= bytes_to_write_in_block;
     bytes_to_write_in_block = std::min(block_type::CAPACITY - byte_index_, bytes_left_to_write);
   }
@@ -448,7 +454,7 @@ void FileObject<S>::UpdateHash(crypto::StreamHasher &hasher)
 template <typename S>
 bool FileObject<S>::SeekFile(std::size_t const &position)
 {
-  if(position >= stack_.size())
+  if (position >= stack_.size())
   {
     throw StorageException("Attempt to seek file past stack end");
   }
@@ -494,9 +500,10 @@ Document FileObject<S>::AsDocument()
 {
   Document ret;
 
-  if(byte_index_global_ > length_)
+  if (byte_index_global_ > length_)
   {
-    throw StorageException("global byte index exceeds length when attempting to retrieve file object");
+    throw StorageException(
+        "global byte index exceeds length when attempting to retrieve file object");
   }
 
   ret.document.Resize(length_ - byte_index_global_);
@@ -575,25 +582,24 @@ void FileObject<S>::Initalise()
 template <typename S>
 uint64_t FileObject<S>::GetFreeBlocks(uint64_t min_index, uint64_t num)
 {
-  if(num == 0)
+  if (num == 0)
   {
     throw StorageException("Attempt to get 0 free blocks is invalid");
   }
 
-  auto DefaultFreeAllocation = [this](uint64_t num)
-  {
-    if(num == 0)
+  auto DefaultFreeAllocation = [this](uint64_t num) {
+    if (num == 0)
     {
       throw StorageException("Attempt to allocate 0 free blocks is invalid");
     }
 
     block_type block;
-    uint64_t first_block_index = stack_.size();
+    uint64_t   first_block_index = stack_.size();
 
     for (uint64_t i = 0; i < num; ++i)
     {
-      block.previous = (i == 0)     ? block_type::UNDEFINED : first_block_index + i - 1;
-      block.next     = (i == num-1) ? block_type::UNDEFINED : first_block_index + i + 1;
+      block.previous = (i == 0) ? block_type::UNDEFINED : first_block_index + i - 1;
+      block.next     = (i == num - 1) ? block_type::UNDEFINED : first_block_index + i + 1;
       stack_.Push(block);
     }
 
@@ -607,32 +613,33 @@ uint64_t FileObject<S>::GetFreeBlocks(uint64_t min_index, uint64_t num)
   // Only allow free blocks to be taken from the free LL in the scenario that there are enough
   // blocks in the LL above min_index. This way it is easier to traverse from the end of the stack
   // backwards, then 'cut' the LL at that point. Check here for easy exit.
-  if (free_block.free_blocks == 0 || free_block.previous < min_index || free_block.free_blocks < num)
+  if (free_block.free_blocks == 0 || free_block.previous < min_index ||
+      free_block.free_blocks < num)
   {
     return DefaultFreeAllocation(num);
   }
 
-  uint64_t index             = free_block.previous; // Index of block in LL we wish to free
+  uint64_t index             = free_block.previous;  // Index of block in LL we wish to free
   uint64_t free_blocks_in_ll = 0;
 
   // Traverse backwards in the stack
-  for(;;)
+  for (;;)
   {
     Get(index, block);
     free_blocks_in_ll++;
 
-    if(index < min_index)
+    if (index < min_index)
     {
       break;
     }
 
-    if(index == free_block_index_)
+    if (index == free_block_index_)
     {
       break;
     }
 
     // This case has found it successfully
-    if(free_blocks_in_ll == num)
+    if (free_blocks_in_ll == num)
     {
       // Point end of LL back to free block
       uint64_t index_prev = block.previous;
@@ -673,7 +680,8 @@ uint64_t FileObject<S>::GetFreeBlocks(uint64_t min_index, uint64_t num)
 /**
  * Free blocks starting at index. We can't just append to the end of the free LL as we want to
  * maintain ordering.
- * Note that the block at remove_index must point to a valid LL, the last block of which points to 'invalid'
+ * Note that the block at remove_index must point to a valid LL, the last block of which points to
+ * 'invalid'
  *
  *
  * @param: remove_index Index of starting block to free
@@ -696,23 +704,23 @@ void FileObject<S>::FreeBlocksInList(uint64_t remove_index)
 
   bool insert_mode = true;
 
-  while(remove_index != block_type::UNDEFINED)
+  while (remove_index != block_type::UNDEFINED)
   {
-    Get(free_block_index,      free_block);
+    Get(free_block_index, free_block);
     Get(free_block_next_index, free_block_next);
-    Get(remove_index,          remove_block);
+    Get(remove_index, remove_block);
 
-    if(insert_mode)
+    if (insert_mode)
     {
       // Reached the end of the LL and wrapped around
-      if(free_block_next_index == 0)
+      if (free_block_next_index == 0)
       {
         insert_mode = false;
         continue;
       }
 
       // Insert the remove block iff it sits between the pointers
-      if(remove_index > free_block_index && remove_index < free_block_next_index)
+      if (remove_index > free_block_index && remove_index < free_block_next_index)
       {
         uint64_t next_remove_index = remove_block.next;
 
@@ -761,7 +769,7 @@ void FileObject<S>::FreeBlocksInList(uint64_t remove_index)
 
       remove_block          = block_type{};
       remove_block.previous = free_block_index;
-      remove_block.next     = free_block_index_; // note here member variable
+      remove_block.next     = free_block_index_;  // note here member variable
       Set(remove_index, remove_block);
 
       free_block_index = remove_index;
@@ -784,9 +792,9 @@ void FileObject<S>::FreeBlocksInList(uint64_t remove_index)
 template <typename S>
 bool FileObject<S>::VerifyConsistency(std::vector<uint64_t> const &ids)
 {
-  if(stack_.size() == 0)
+  if (stack_.size() == 0)
   {
-    if(ids.size() != 0)
+    if (ids.size() != 0)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Stack size is 0 but attempting to verify with ids");
       return false;
@@ -798,53 +806,55 @@ bool FileObject<S>::VerifyConsistency(std::vector<uint64_t> const &ids)
   std::vector<uint64_t> fake_stack(stack_.size(), std::numeric_limits<uint64_t>::max());
 
   block_type block;
-  uint64_t index = free_block_index_;
+  uint64_t   index = free_block_index_;
 
   // Verify our linked lists. Tuple = (index, prev, next)
   std::vector<std::tuple<uint64_t, uint64_t, uint64_t>> linked_list;
 
-  auto VerifyLL = [](std::vector<std::tuple<uint64_t, uint64_t, uint64_t>> const &ll, bool circular) -> bool
-  {
+  auto VerifyLL = [](std::vector<std::tuple<uint64_t, uint64_t, uint64_t>> const &ll,
+                     bool circular) -> bool {
     for (std::size_t i = 0; i < ll.size(); ++i)
     {
       uint64_t indx = std::get<0>(ll[i]);
-      uint64_t prev = std::get<1>(ll[i]);;
-      uint64_t next = std::get<2>(ll[i]);;
+      uint64_t prev = std::get<1>(ll[i]);
+      ;
+      uint64_t next = std::get<2>(ll[i]);
+      ;
 
       uint64_t next_in_ll = std::get<0>(ll[(i + 1) % ll.size()]);
       uint64_t prev_in_ll = std::get<0>(ll[(i + ll.size() - 1) % ll.size()]);
 
-      if(indx == block_type::UNDEFINED)
+      if (indx == block_type::UNDEFINED)
       {
         return false;
       }
 
       // Check LL consistently increments except at the boundaries.
-      if(!(next > indx))
+      if (!(next > indx))
       {
         // Corner case at end of list
-        if(!(i == ll.size() -1))
+        if (!(i == ll.size() - 1))
         {
           return false;
         }
       }
 
-      if(!(prev < indx))
+      if (!(prev < indx))
       {
         // Corner case at beginning of list
-        if(!(i == 0))
+        if (!(i == 0))
         {
           return false;
         }
       }
 
-      if(!circular)
+      if (!circular)
       {
         next_in_ll = (i == ll.size() - 1) ? block_type::UNDEFINED : next_in_ll;
-        prev_in_ll = (i == 0)             ? block_type::UNDEFINED : prev_in_ll;
+        prev_in_ll = (i == 0) ? block_type::UNDEFINED : prev_in_ll;
       }
 
-      if(prev != prev_in_ll || next != next_in_ll)
+      if (prev != prev_in_ll || next != next_in_ll)
       {
         return false;
       }
@@ -857,11 +867,13 @@ bool FileObject<S>::VerifyConsistency(std::vector<uint64_t> const &ids)
   Get(index, block);
   fake_stack[index] = 0;
 
-  if(block.free_blocks == 0)
+  if (block.free_blocks == 0)
   {
-    if(block.next != index || block.previous != index)
+    if (block.next != index || block.previous != index)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Free block is malformed - size is 0 but prev and next pointers don't refer back to itself.");
+      FETCH_LOG_ERROR(LOGGING_NAME,
+                      "Free block is malformed - size is 0 but prev and next pointers don't refer "
+                      "back to itself.");
       return false;
     }
   }
@@ -880,23 +892,23 @@ bool FileObject<S>::VerifyConsistency(std::vector<uint64_t> const &ids)
 
     linked_lists.push_back(linked_list);
 
-    if(!VerifyLL(linked_list, true))
+    if (!VerifyLL(linked_list, true))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to verify free LL");
       return false;
     }
   }
 
-  for(auto const &id : ids)
+  for (auto const &id : ids)
   {
     linked_list.clear();
     index = id;
 
     Get(index, block);
 
-    uint64_t file_bytes = block.file_object_size;
+    uint64_t file_bytes      = block.file_object_size;
     uint64_t expected_blocks = platform::DivideCeil<uint64_t>(file_bytes, block_type::CAPACITY);
-    expected_blocks = expected_blocks == 0 ? 1 : expected_blocks;
+    expected_blocks          = expected_blocks == 0 ? 1 : expected_blocks;
 
     for (uint64_t i = 0; i < expected_blocks; ++i)
     {
@@ -904,13 +916,13 @@ bool FileObject<S>::VerifyConsistency(std::vector<uint64_t> const &ids)
       linked_list.push_back({index, block.previous, block.next});
       index = block.next;
 
-      if(i+1 < expected_blocks)
+      if (i + 1 < expected_blocks)
       {
         Get(index, block);
       }
     }
 
-    if(!VerifyLL(linked_list, false))
+    if (!VerifyLL(linked_list, false))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to verify LL for ID: ", id);
       return false;
@@ -919,7 +931,7 @@ bool FileObject<S>::VerifyConsistency(std::vector<uint64_t> const &ids)
 
   for (std::size_t i = 0; i < fake_stack.size(); ++i)
   {
-    if(fake_stack[i] == std::numeric_limits<uint64_t>::max())
+    if (fake_stack[i] == std::numeric_limits<uint64_t>::max())
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Found unaccounted for block in fake stack. Location: ", i);
       return false;
@@ -932,7 +944,7 @@ bool FileObject<S>::VerifyConsistency(std::vector<uint64_t> const &ids)
 template <typename S>
 void FileObject<S>::Get(uint64_t index, block_type &block)
 {
-  if(index == block_type::UNDEFINED)
+  if (index == block_type::UNDEFINED)
   {
     throw StorageException("Attempt to Get invalid location");
   }
@@ -943,7 +955,7 @@ void FileObject<S>::Get(uint64_t index, block_type &block)
 template <typename S>
 void FileObject<S>::Set(uint64_t index, block_type const &block)
 {
-  if(index == block_type::UNDEFINED)
+  if (index == block_type::UNDEFINED)
   {
     throw StorageException("Attempt to Set invalid location");
   }

@@ -17,14 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include <unordered_map>
 #include "storage/storage_exception.hpp"
+#include "core/macros.hpp"
+#include <unordered_map>
 
 template <typename STACK_ELEMENTS>
 class FakeRandomAccessStack
 {
 public:
-  using type               = STACK_ELEMENTS;
+  using type = STACK_ELEMENTS;
 
   using StorageException = fetch::storage::StorageException;
 
@@ -34,15 +35,15 @@ public:
   {
     FETCH_UNUSED(create_if_not_exist);
 
-    stack_ = &underlying_stack_[filename];
+    stack_   = &underlying_stack_[filename];
     is_open_ = true;
   }
 
   void New(std::string const &filename)
   {
     underlying_stack_[filename] = FakeStack<STACK_ELEMENTS>{};
-    stack_ = &underlying_stack_[filename];
-    is_open_ = true;
+    stack_                      = &underlying_stack_[filename];
+    is_open_                    = true;
   }
 
   void Get(std::size_t const &i, STACK_ELEMENTS &object) const
@@ -97,7 +98,7 @@ public:
   STACK_ELEMENTS Top() const
   {
     ThrowOnBadAccess(0, "Top");
-    return (*stack_).elements[(*stack_).elements.size()-1];
+    return (*stack_).elements[(*stack_).elements.size() - 1];
   }
 
   void SetExtraHeader(uint64_t const &he)
@@ -153,8 +154,7 @@ public:
 
   // Unused functions
   void ClearEventHandlers()
-  {
-  }
+  {}
 
   // TODO(HUT): delete these!
   /*
@@ -167,12 +167,10 @@ public:
   }*/
 
   void SignalFileLoaded()
-  {
-  }
+  {}
 
   void SignalBeforeFlush()
-  {
-  }
+  {}
 
   static constexpr bool DirectWrite()
   {
@@ -191,10 +189,9 @@ public:
   }
 
 private:
-
   void ThrowOnBadAccess(std::string const &fn_name) const
   {
-    if(!is_open_)
+    if (!is_open_)
     {
       throw StorageException("attempt to use closed fake RAS in fn: " + fn_name);
     }
@@ -202,12 +199,12 @@ private:
 
   void ThrowOnBadAccess(std::size_t const &i, std::string const &fn_name) const
   {
-    if(!is_open_)
+    if (!is_open_)
     {
       throw StorageException("attempt to use closed fake RAS in fn: " + fn_name);
     }
 
-    if(i >= (*stack_).elements.size())
+    if (i >= (*stack_).elements.size())
     {
       throw StorageException("index out of bounds stack in fake RAS fn: " + fn_name);
     }

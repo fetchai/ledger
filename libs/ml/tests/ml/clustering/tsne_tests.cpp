@@ -39,19 +39,19 @@ TypeParam RunTest(typename TypeParam::SizeType n_data_size,
                   typename TypeParam::SizeType n_output_feature_size)
 {
 
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeTypeHere  = typename TypeParam::SizeType;
+  using DataType     = typename TypeParam::Type;
+  using ArrayType    = TypeParam;
+  using SizeTypeHere = typename TypeParam::SizeType;
 
   SizeTypeHere RANDOM_SEED{123456};
-  DataType LEARNING_RATE{500};  // (seems very high!)
+  DataType     LEARNING_RATE{500};  // (seems very high!)
   SizeTypeHere MAX_ITERATIONS{1};
-  DataType PERPLEXITY{20};
+  DataType     PERPLEXITY{20};
   SizeTypeHere N_DATA_SIZE{n_data_size};
   SizeTypeHere N_INPUT_FEATURE_SIZE{3};
   SizeTypeHere N_OUTPUT_FEATURE_SIZE{n_output_feature_size};
-  DataType INITIAL_MOMENTUM{0.5f};
-  DataType FINAL_MOMENTUM{0.8f};
+  DataType     INITIAL_MOMENTUM{0.5f};
+  DataType     FINAL_MOMENTUM{0.8f};
   SizeTypeHere FINAL_MOMENTUM_STEPS{20};
   SizeTypeHere P_LATER_CORRECTION_ITERATION{10};
 

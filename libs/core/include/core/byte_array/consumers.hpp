@@ -151,9 +151,9 @@ int StringConsumerSSE(byte_array::ConstByteArray const &str, uint64_t &pos)
     pos += 16;
     ptr += 16;
     // TODO(issue 37): Handle \"x
-    mptr = _mm_loadu_si128((__m128i *)ptr);
-    mret = _mm_cmpeq_epi8(comp, mptr);
-    found        = uint16_t(_mm_movemask_epi8(mret));
+    mptr  = _mm_loadu_si128((__m128i *)ptr);
+    mret  = _mm_cmpeq_epi8(comp, mptr);
+    found = uint16_t(_mm_movemask_epi8(mret));
   }
 
   pos += uint64_t(__builtin_ctz(found));

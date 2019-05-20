@@ -157,7 +157,7 @@ TYPED_TEST(FreeFunctionsTest, Scatter3D_SetAll)
 TYPED_TEST(FreeFunctionsTest, Product_OneDimension)
 {
   using SizeTypeHere = typename TypeParam::SizeType;
-  using Type     = typename TypeParam::Type;
+  using Type         = typename TypeParam::Type;
   TypeParam array1{4};
 
   array1.Set(SizeTypeHere{0}, typename TypeParam::Type(0.3));
@@ -180,11 +180,11 @@ TYPED_TEST(FreeFunctionsTest, Product_OneDimension)
 TYPED_TEST(FreeFunctionsTest, Product_TwoDimension)
 {
   using SizeTypeHere = typename TypeParam::SizeType;
-  using Type     = typename TypeParam::Type;
+  using Type         = typename TypeParam::Type;
 
-  SizeTypeHere  n_data     = 4;
-  SizeTypeHere  n_features = 2;
-  TypeParam array1{{n_data, n_features}};
+  SizeTypeHere n_data     = 4;
+  SizeTypeHere n_features = 2;
+  TypeParam    array1{{n_data, n_features}};
 
   array1.Set(0, 0, typename TypeParam::Type(-17));
   array1.Set(0, 1, typename TypeParam::Type(21));
@@ -229,9 +229,9 @@ TYPED_TEST(FreeFunctionsTest, Max_TwoDimension)
 {
   using SizeTypeHere = typename TypeParam::SizeType;
 
-  SizeTypeHere  n_data     = 4;
-  SizeTypeHere  n_features = 2;
-  TypeParam array1{{n_data, n_features}};
+  SizeTypeHere n_data     = 4;
+  SizeTypeHere n_features = 2;
+  TypeParam    array1{{n_data, n_features}};
 
   array1.Set(0, 0, typename TypeParam::Type(-17));
   array1.Set(0, 1, typename TypeParam::Type(21));
@@ -281,9 +281,9 @@ TYPED_TEST(FreeFunctionsTest, Min_TwoDimension)
 {
   using SizeTypeHere = typename TypeParam::SizeType;
 
-  SizeTypeHere  n_data     = 4;
-  SizeTypeHere  n_features = 2;
-  TypeParam array1{{n_data, n_features}};
+  SizeTypeHere n_data     = 4;
+  SizeTypeHere n_features = 2;
+  TypeParam    array1{{n_data, n_features}};
 
   array1.Set(0, 0, typename TypeParam::Type(-17));
   array1.Set(0, 1, typename TypeParam::Type(21));
@@ -311,11 +311,11 @@ TYPED_TEST(FreeFunctionsTest, Maximum_TwoDimension)
 {
   using SizeTypeHere = typename TypeParam::SizeType;
 
-  SizeTypeHere  n_data     = 4;
-  SizeTypeHere  n_features = 2;
-  TypeParam array1{{n_data, n_features}};
-  TypeParam array2{{n_data, n_features}};
-  TypeParam output{{n_data, n_features}};
+  SizeTypeHere n_data     = 4;
+  SizeTypeHere n_features = 2;
+  TypeParam    array1{{n_data, n_features}};
+  TypeParam    array2{{n_data, n_features}};
+  TypeParam    output{{n_data, n_features}};
 
   array1.Set(0, 0, typename TypeParam::Type(-17));
   array1.Set(0, 1, typename TypeParam::Type(21));
@@ -378,9 +378,9 @@ TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension)
 {
   using SizeTypeHere = typename TypeParam::SizeType;
 
-  SizeTypeHere  n_data     = 4;
-  SizeTypeHere  n_features = 2;
-  TypeParam array1{{n_data, n_features}};
+  SizeTypeHere n_data     = 4;
+  SizeTypeHere n_features = 2;
+  TypeParam    array1{{n_data, n_features}};
 
   array1.Set(SizeTypeHere{0}, SizeTypeHere{0}, typename TypeParam::Type(-17));
   array1.Set(SizeTypeHere{0}, SizeTypeHere{1}, typename TypeParam::Type(21));
@@ -403,9 +403,9 @@ TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension_off_axis)
 {
   using SizeTypeHere = typename TypeParam::SizeType;
 
-  SizeTypeHere  n_data     = 4;
-  SizeTypeHere  n_features = 2;
-  TypeParam array1{{n_data, n_features}};
+  SizeTypeHere n_data     = 4;
+  SizeTypeHere n_features = 2;
+  TypeParam    array1{{n_data, n_features}};
 
   array1.Set(SizeTypeHere{0}, SizeTypeHere{0}, typename TypeParam::Type(-17));
   array1.Set(SizeTypeHere{0}, SizeTypeHere{1}, typename TypeParam::Type(21));
