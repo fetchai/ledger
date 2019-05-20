@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/byte_array_buffer.hpp"
+
 #include "vm/address.hpp"
 #include "vm/vm.hpp"
 
@@ -62,9 +64,12 @@ inline IoObserverInterface::Status WriteHelper(std::string const &name, T const 
   return io.Write(name, &val, sizeof(T));
 }
 
-inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<Address> &val,
+inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<Object> &val,
                                               IoObserverInterface &io)
 {
+  using fetch::byte_array::ByteArray;
+  using fetch::serializers::ByteArrayBuffer;
+
   auto const exists_status = io.Exists(name);
   if (exists_status != IoObserverInterface::Status::OK)
   {
@@ -72,38 +77,55 @@ inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<Addre
   }
 
   // create an initial buffer size
-  std::vector<uint8_t> bytes(256, 0);
+  ByteArray buffer;
+  buffer.Resize(256);
 
-  uint64_t buffer_size = bytes.size();
-  auto     result      = io.Read(name, bytes.data(), buffer_size);
+  uint64_t buffer_size = buffer.size();
+  auto     result      = io.Read(name, buffer.pointer(), buffer_size);
 
   if (IoObserverInterface::Status::OK == result)
   {
     // chop down the size of the buffer
-    bytes.resize(buffer_size);
+    buffer.Resize(buffer_size);
   }
   else if (IoObserverInterface::Status::BUFFER_TOO_SMALL == result)
   {
     // increase the buffer size
-    bytes.resize(buffer_size);
+    buffer.Resize(buffer_size);
 
     // make the second call to the io observer
-    result = io.Read(name, bytes.data(), buffer_size);
+    result = io.Read(name, buffer.pointer(), buffer_size);
   }
 
-  // get the type to convert itself
-  val->FromBytes(std::move(bytes));
+  // if we successfully extracted the data
+  if (IoObserverInterface::Status::OK == result)
+  {
+    // cretae the byte array buffer
+    ByteArrayBuffer byte_buffer{buffer};
+
+    // attempt to deserialize the value from the stream
+    if (!val->DeserializeFrom(byte_buffer))
+    {
+      result = IoObserverInterface::Status::ERROR;
+    }
+  }
 
   return result;
 }
 
-inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr<Address> const &val,
+inline IoObserverInterface::Status WriteHelper(std::string const &name, Ptr<Object> const &val,
                                                IoObserverInterface &io)
 {
-  // convert the object to bytes
-  auto bytes = val->ToBytes();
+  using fetch::serializers::ByteArrayBuffer;
 
-  return io.Write(name, bytes.data(), bytes.size());
+  // convert the type into a byte stream
+  ByteArrayBuffer buffer;
+  if (!val->SerializeTo(buffer))
+  {
+    return IoObserverInterface::Status::ERROR;
+  }
+
+  return io.Write(name, buffer.data().pointer(), buffer.data().size());
 }
 
 template <typename T>
@@ -221,13 +243,9 @@ inline Ptr<IState> IState::Construct(VM *vm, TypeId type_id, Args &&... args)
   {
     return new State<double>(vm, type_id, value_type_id, std::forward<Args>(args)...);
   }
-  case TypeIds::Address:
-  {
-    return new State<Address>(vm, type_id, value_type_id, std::forward<Args>(args)...);
-  }
   default:
   {
-    throw std::runtime_error("Unsupported State type");
+    return new State<Ptr<Object>>(vm, type_id, value_type_id, std::forward<Args>(args)...);
   }
   }  // switch
 }
