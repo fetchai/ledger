@@ -97,6 +97,18 @@ struct Array : public IArray
     return &element;
   }
 
+  bool SerializeTo(ByteArrayBuffer &buffer) override
+  {
+    buffer << element_type_id << elements;
+    return true;
+  }
+
+  bool DeserializeFrom(ByteArrayBuffer &buffer) override
+  {
+    buffer >> element_type_id >> elements;
+    return true;
+  }
+
   TypeId                   element_type_id;
   std::vector<ElementType> elements;
 };

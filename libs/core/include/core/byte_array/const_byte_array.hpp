@@ -30,15 +30,6 @@
 
 namespace fetch {
 namespace byte_array {
-class ConstByteArray;
-}  // namespace byte_array
-
-namespace serializers {
-template <typename T>
-inline void Deserialize(T &, byte_array::ConstByteArray &);
-}  // namespace serializers
-
-namespace byte_array {
 
 class ConstByteArray
 {
@@ -476,9 +467,6 @@ private:
     AppendInternal(acc_size + 1, others...);
     std::memcpy(pointer() + acc_size, &other, 1u);
   }
-
-  template <typename T>
-  friend void fetch::serializers::Deserialize(T &serializer, ConstByteArray &s);
 
   shared_array_type data_;
   std::size_t       start_ = 0, length_ = 0;

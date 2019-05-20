@@ -125,7 +125,7 @@ bool TokenContract::TransferTokens(v2::Transaction const &tx, v2::Address const 
   return SubtractTokens(tx.from(), amount) && AddTokens(to, amount);
 }
 
-Contract::Status TokenContract::CreateWealth(v2::Transaction const &tx)
+Contract::Status TokenContract::CreateWealth(v2::Transaction const &tx, BlockIndex)
 {
   Contract::Status status{Contract::Status::FAILED};
 
@@ -159,7 +159,7 @@ Contract::Status TokenContract::CreateWealth(v2::Transaction const &tx)
  *
  * @return Status::OK if deed has been incorporated successfully.
  */
-Contract::Status TokenContract::Deed(v2::Transaction const &tx)
+Contract::Status TokenContract::Deed(v2::Transaction const &tx, BlockIndex)
 {
   Variant data;
   if (!ParseAsJson(tx, data))
@@ -210,7 +210,7 @@ Contract::Status TokenContract::Deed(v2::Transaction const &tx)
   return Status::OK;
 }
 
-Contract::Status TokenContract::Transfer(v2::Transaction const &tx)
+Contract::Status TokenContract::Transfer(v2::Transaction const &tx, BlockIndex)
 {
   FETCH_UNUSED(tx);
   return Status::FAILED;

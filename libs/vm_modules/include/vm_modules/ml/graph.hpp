@@ -62,7 +62,7 @@ public:
     fetch::ml::Graph<fetch::math::Tensor<float>>::BackPropagate(name->str, *dt);
   }
 
-  void Step(float lr)
+  void Step(float lr) override
   {
     fetch::ml::Graph<fetch::math::Tensor<float>>::Step(lr);
   }

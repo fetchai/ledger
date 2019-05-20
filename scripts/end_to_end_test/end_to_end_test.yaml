@@ -68,7 +68,7 @@ steps:
 
 ---
 test_description: >
-        Send lots of transactions to a node
+    Send lots of transactions to a node
 
 setup_conditions:
     test_name : "miner_recieves_more_tx"
@@ -80,4 +80,20 @@ steps:
     - send_txs : { "name": "100_identities", "amount": 100, "nodes" : [0] }
     - print_time_elapsed
     - verify_txs : { "name": "100_identities", "nodes" : [0] }
+...
+
+---
+test_description: >
+        Run a smart contract which calls getBlockNumber()
+
+setup_conditions:
+    test_name : "block_number_accessible_from_smart_contract"
+    number_of_nodes: 1
+    mining_nodes: [0]
+    max_test_time: 60
+
+steps:
+    - sleep : 5
+    - run_python_test : { "script": ".smart_contract_tests.block_number" }
+
 ...

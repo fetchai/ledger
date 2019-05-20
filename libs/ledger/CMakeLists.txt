@@ -26,6 +26,7 @@ target_link_libraries(fetch-ledger PUBLIC
   fetch-vm
   fetch-vm-modules
   fetch-metrics
+  fetch-moment
   vendor-msgpack
 )
 
