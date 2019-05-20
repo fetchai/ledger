@@ -360,18 +360,6 @@ struct Matrix : public IMatrix
     }
   }
 
-  bool SerializeTo(ByteArrayBuffer &buffer) override
-  {
-    FETCH_UNUSED(buffer);
-    return false;
-  }
-
-  bool DeserializeFrom(ByteArrayBuffer &buffer) override
-  {
-    FETCH_UNUSED(buffer);
-    return false;
-  }
-
   fetch::math::Tensor<T> matrix;
   TypeId                 element_type_id_;
 };

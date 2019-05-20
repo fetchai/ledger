@@ -173,18 +173,6 @@ public:
     return existed_;
   }
 
-  bool SerializeTo(ByteArrayBuffer &buffer) override
-  {
-    FETCH_UNUSED(buffer);
-    return false;
-  }
-
-  bool DeserializeFrom(ByteArrayBuffer &buffer) override
-  {
-    FETCH_UNUSED(buffer);
-    return false;
-  }
-
 private:
   using Value  = typename GetStorageType<T>::type;
   using Status = IoObserverInterface::Status;

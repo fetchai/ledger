@@ -51,18 +51,6 @@ public:
   {
     return new fetch::vm::String(vm_, (*this).Tensor::ToString());
   }
-
-  bool SerializeTo(vm::ByteArrayBuffer &buffer) override
-  {
-    FETCH_UNUSED(buffer);
-    return false;
-  }
-
-  bool DeserializeFrom(vm::ByteArrayBuffer &buffer) override
-  {
-    FETCH_UNUSED(buffer);
-    return false;
-  }
 };
 
 inline void CreateTensor(fetch::vm::Module &module)

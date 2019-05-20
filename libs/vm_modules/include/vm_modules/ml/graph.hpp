@@ -95,17 +95,6 @@ public:
         fetch::ml::ops::Softmax<fetch::math::Tensor<float>>>(name->str, {inputName->str});
   }
 
-  bool SerializeTo(vm::ByteArrayBuffer &buffer) override
-  {
-    FETCH_UNUSED(buffer);
-    return false;
-  }
-
-  bool DeserializeFrom(vm::ByteArrayBuffer &buffer) override
-  {
-    FETCH_UNUSED(buffer);
-    return false;
-  }
 };
 
 inline void CreateGraph(fetch::vm::Module &module)

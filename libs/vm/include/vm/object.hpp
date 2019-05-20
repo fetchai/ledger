@@ -206,8 +206,8 @@ public:
   virtual void   InplaceDivide(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
   virtual void   InplaceRightDivide(Ptr<Object> const &lhso, Variant const &rhsv);
 
-  virtual bool   SerializeTo(ByteArrayBuffer &buffer) = 0;
-  virtual bool   DeserializeFrom(ByteArrayBuffer &buffer) = 0;
+  virtual bool   SerializeTo(ByteArrayBuffer &buffer);
+  virtual bool   DeserializeFrom(ByteArrayBuffer &buffer);
 
 protected:
   Variant &       Push();
