@@ -517,6 +517,12 @@ public:
     }
 
     reg_loss = (l2_lambda * l2reg_sum);
+    
+    if (reg_loss < 0)
+    {
+      std::cout << "reg_loss: " << reg_loss << std::endl;
+  
+    }
 
     if (std::isnan(loss))
     {
@@ -547,6 +553,7 @@ public:
     fetch::math::Multiply(input_vector_, result_[0], context_grads_);
 
     // apply gradient updates
+//    std::cout << "l2reg_row_sums[input_word_idx]: " << l2reg_row_sums[input_word_idx] << std::endl;
     l2reg_sum -= l2reg_row_sums[input_word_idx];
     //    l2reg_sum -= l2reg_row_sums[context_word_idx];
 
@@ -555,6 +562,7 @@ public:
 
     auto input_slice_it = input_embeddings_.Slice(input_word_idx).begin();
     auto input_grads_it = input_grads_.begin();
+    
     while (input_slice_it.is_valid())
     {
       //      std::cout << "*input_slice_it: " << *input_slice_it << std::endl;
@@ -563,6 +571,7 @@ public:
 
       // grad and l2_reg weight decay
       *input_slice_it += (*input_grads_it) - (l2_lambda * *input_slice_it);
+
       //      *input_slice_it += (*input_grads_it);
       l2reg_row_sums[input_word_idx] += (*input_slice_it * *input_slice_it);
       ++input_slice_it;
@@ -582,7 +591,29 @@ public:
     //      ++context_grads_it;
     //    }
 
+    if (l2reg_row_sums[input_word_idx] > 1e+100)
+    {
+      std::cout << "enormous row value: " << std::endl;
+      
+      auto tmp_input_grads_it = input_grads_.begin();
+      while (input_slice_it.is_valid())
+      {
+        std::cout << "*tmp_input_grads_it: " << *tmp_input_grads_it << std::endl;
+        ++tmp_input_grads_it;
+      }
+    }
+
+    if (l2reg_row_sums[input_word_idx] < 0)
+    {
+      std::cout << "l2reg_row_sums[input_word_idx]: " << l2reg_row_sums[input_word_idx] << std::endl;
+    }
     l2reg_sum += l2reg_row_sums[input_word_idx];
+    
+    if (l2reg_sum < 0)
+    {
+      std::cout << "l2reg_row_sums[input_word_idx]: " << l2reg_row_sums[input_word_idx] << std::endl;
+      std::cout << "l2reg_sum: " << l2reg_sum << std::endl;
+    }
     //    l2reg_sum += l2reg_row_sums[context_word_idx];
   }
 
@@ -867,6 +898,9 @@ int main(int argc, char **argv)
 
     if (total_step_count % tp.print_freq == 0)
     {
+      std::cout << "model.l2reg_sum: " << model.l2reg_sum << std::endl;
+      
+      
       auto t2   = std::chrono::high_resolution_clock::now();
       time_diff = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
 
