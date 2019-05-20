@@ -1033,7 +1033,7 @@ TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
   EXPECT_CALL(*storage_unit_, CurrentHash()).Times(AnyNumber());
   EXPECT_CALL(*execution_manager_, LastProcessedBlock()).Times(AnyNumber());
 
-  Tock(State::RELOAD_STATE, State::SYNCHRONIZED);
+  Tock(State::RELOAD_STATE, State::SYNCHRONISED);
 
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
 
