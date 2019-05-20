@@ -258,7 +258,7 @@ TEST_F(FileObjectTests, EraseFiles)
 
 }
 
-TEST_F(FileObjectTests, SeekAndTellFiles)
+TEST_F(FileObjectTests, DISABLED_SeekAndTellFiles)
 {
   file_object_->New("test");
 
