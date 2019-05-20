@@ -55,12 +55,13 @@ public:
     NOT_FOUND,
   };
 
+  using BlockIndex            = v2::TransactionLayout::BlockIndex;
   using Identity              = crypto::Identity;
   using ConstByteArray        = byte_array::ConstByteArray;
   using ContractName          = TransactionSummary::ContractName;
   using Query                 = variant::Variant;
   using InitialiseHandler     = std::function<Status(v2::Address const &)>;
-  using TransactionHandler    = std::function<Status(v2::Transaction const &)>;
+  using TransactionHandler    = std::function<Status(v2::Transaction const &, BlockIndex)>;
   using TransactionHandlerMap = std::unordered_map<ContractName, TransactionHandler>;
   using QueryHandler          = std::function<Status(Query const &, Query &)>;
   using QueryHandlerMap       = std::unordered_map<ContractName, QueryHandler>;
@@ -84,7 +85,8 @@ public:
 
   Status DispatchInitialise(v2::Address const &owner);
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
-  Status DispatchTransaction(ConstByteArray const &name, v2::Transaction const &tx);
+  Status DispatchTransaction(ConstByteArray const &name, v2::Transaction const &tx,
+                             v2::TransactionLayout::BlockIndex index);
   /// @}
 
   /// @name Dispatch Maps Accessors
@@ -115,7 +117,7 @@ protected:
   void OnTransaction(std::string const &name, TransactionHandler &&handler);
   template <typename C>
   void OnTransaction(std::string const &name, C *instance,
-                     Status (C::*func)(v2::Transaction const &));
+                     Status (C::*func)(v2::Transaction const &, BlockIndex));
   /// @}
 
   /// @name Query Handler Registration
@@ -219,11 +221,12 @@ void Contract::OnInitialise(C *instance, Status (C::*func)(v2::Address const &))
  */
 template <typename C>
 void Contract::OnTransaction(std::string const &name, C *instance,
-                             Status (C::*func)(v2::Transaction const &))
+                             Status (C::*func)(v2::Transaction const &, BlockIndex))
 {
   // create the function handler and pass it to the normal function
-  OnTransaction(name,
-                [instance, func](v2::Transaction const &tx) { return (instance->*func)(tx); });
+  OnTransaction(name, [instance, func](v2::Transaction const &tx, BlockIndex block_index) {
+    return (instance->*func)(tx, block_index);
+  });
 }
 
 /**
