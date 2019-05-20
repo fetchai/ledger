@@ -20,7 +20,6 @@
 
 namespace {
 
-
 class StateTests : public VmTestSuite
 {
 protected:

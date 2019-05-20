@@ -88,7 +88,7 @@ protected:
 
     // build the executable
     executable_ = std::make_unique<Executable>();
-    vm_ = std::make_unique<VM>(module_.get());
+    vm_         = std::make_unique<VM>(module_.get());
     vm_->SetIOObserver(*observer_);
     vm_->AttachOutputDevice("stdout", std::cout);
 

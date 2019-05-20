@@ -28,9 +28,6 @@ class VMTests : public VmTestSuite
 protected:
   using Module = std::shared_ptr<fetch::vm::Module>;
   using VM     = std::unique_ptr<fetch::vm::VM>;
-
-
-
 };
 
 // Test we can compile and run a fairly inoffensive smart contract
