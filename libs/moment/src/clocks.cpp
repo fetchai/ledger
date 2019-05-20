@@ -98,7 +98,7 @@ ClockPtr GetClock(char const *name, ClockType default_type)
   // create the new clock
   auto clock = CreateNormal(default_type);
 
-  // add the clock to the store if one was successfully creates
+  // add the clock to the store if one was successfully created
   if (clock)
   {
     clock_store[clock_name] = clock;
@@ -123,7 +123,7 @@ AdjustableClockPtr CreateAdjustableClock(char const *name, ClockType type)
   // create the new clock
   auto clock = CreateAdjustable(type);
 
-  // add the clock to the store if one was successfully creates
+  // add the clock to the store if one was successfully created
   if (clock)
   {
     clock_store[clock_name] = clock;

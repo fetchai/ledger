@@ -1044,8 +1044,6 @@ TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
 
   ASSERT_TRUE(RemainsOn(State::WAIT_FOR_TRANSACTIONS));
 
-  ASSERT_EQ(State::WAIT_FOR_TRANSACTIONS, block_coordinator_->GetStateMachine().state());
-
   // Time out wait for Tx - block should be invalidated at this point
   clock_->Advance(std::chrono::seconds(31u));
 
