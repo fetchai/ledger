@@ -20,6 +20,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "core/serializers/byte_array.hpp"
 #include "ledger/chain/address.hpp"
 
 #include "vm/vm.hpp"
@@ -108,6 +109,20 @@ public:
   bool operator==(ledger::Address const &other) const
   {
     return address_ == other;
+  }
+
+  bool SerializeTo(ByteArrayBuffer &buffer) override
+  {
+    buffer << address_.address();
+    return true;
+  }
+
+  bool DeserializeFrom(ByteArrayBuffer &buffer) override
+  {
+    fetch::byte_array::ConstByteArray raw_address{};
+    buffer >> raw_address;
+    address_ = ledger::v2::Address{raw_address};
+    return true;
   }
 
 private:

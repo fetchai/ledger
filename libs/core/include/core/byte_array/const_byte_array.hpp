@@ -468,9 +468,6 @@ private:
     std::memcpy(pointer() + acc_size, &other, 1u);
   }
 
-  //  template <typename T>
-  //  friend void fetch::serializers::Deserialize(T &serializer, ConstByteArray &s);
-
   shared_array_type data_;
   std::size_t       start_ = 0, length_ = 0;
   container_type *  arr_pointer_ = nullptr;
