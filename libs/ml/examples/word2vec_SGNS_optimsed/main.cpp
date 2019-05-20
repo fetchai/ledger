@@ -32,9 +32,7 @@
 
 
 // TODO: vocab size should be 71291 - compare vocab parsing
-
-
-// TODO: implement down sampling frequent words
+// TODO: implement down sampling frequent words - unigram table
 //
 
 // TODO: batch training
@@ -201,6 +199,9 @@ public:
 
     // reset the cursor
     reset_cursor();
+
+    // build the unigram table for negative sampling
+    BuildUnigramTable();
   }
 
   // prune words that are infrequent & sort the words
@@ -269,9 +270,12 @@ public:
   {
     input_idx = static_cast<SizeType>(*cursor_);
 
-    // randomly select a negative cursor from all words in vocab
-    // TODO: strictly we should ensure this is not one of the positive context words
-    context_idx = static_cast<SizeType>(gen() % vocab_.size());
+//    // randomly select a negative cursor from all words in vocab
+//    // TODO: strictly we should ensure this is not one of the positive context words
+//    context_idx = static_cast<SizeType>(gen() % vocab_.size());
+
+    // randomly select an index from the unigram table
+    context_idx = unigram_table_[static_cast<SizeType>(gen() % unigram_size_)];
   }
 
   void IncrementCursors()
@@ -313,6 +317,13 @@ public:
       ASSERT(positive_cursors_[l].is_valid());
     }
   }
+
+
+private:
+
+  static constexpr SizeType unigram_size_ = 1000000;
+  SizeType unigram_table_ [unigram_size_];
+  double unigram_power_ = 0.75;
 
   void PrepareDynamicWindowProbs()
   {
@@ -370,6 +381,39 @@ public:
       }
     }
   }
+
+  void BuildUnigramTable()
+  {
+    vocab_.size();
+    double train_words_pow = 0.;
+    double d1 = 0.;
+
+    // compute normalizer
+    for (SizeType a = 0; a < vocab_.size(); ++a)
+    {
+      train_words_pow += pow(vocab_frequencies_[a], unigram_power_);
+    }
+
+    //
+    SizeType word_idx = 0;
+    d1 = pow(vocab_frequencies_[word_idx], unigram_power_) / train_words_pow;
+
+
+    auto vocab_it = vocab_.begin();
+
+    for (SizeType a = 0; a < unigram_size_; a++)
+    {
+      unigram_table_[a] = vocab_it->second;
+      if ((static_cast<double>(a) / static_cast<double>(unigram_size_)) > d1)
+      {
+        if (vocab_it != vocab_.end())
+        {
+          ++vocab_it;
+        }
+        d1 += pow(vocab_frequencies_[vocab_it->second], unigram_power_) / train_words_pow;
+      }
+    }
+  }
 };
 
 /**
@@ -406,8 +450,11 @@ public:
 
   Type alpha_ = 0.2;  // learning rate
 
-  std::vector<Type> l2reg_row_sums;
-  Type              l2reg_sum = 0;
+  std::vector<Type> l2reg_input_row_sums;
+  std::vector<Type> l2reg_output_row_sums;
+  Type              l2reg_input_sum = 0;
+  Type              l2reg_output_sum = 0;
+
   Type              l2_lambda = 0.0000001;
 
   SkipgramModel(SizeType vocab_size, SizeType embeddings_size, Type learning_rate)
@@ -416,7 +463,8 @@ public:
     , input_grads_({1, embeddings_size})
     , context_grads_({embeddings_size, 1})
     , alpha_(learning_rate)
-    , l2reg_row_sums{std::vector<Type>(vocab_size, 0)}
+    , l2reg_input_row_sums{std::vector<Type>(vocab_size, 0)}
+    , l2reg_output_row_sums{std::vector<Type>(vocab_size, 0)}
   {
     // initialise embeddings to values from (-0.5 / embeddings_size) to (0.5 / embeddings_size)
     input_embeddings_.FillUniformRandom(); // 0 to 1
@@ -427,39 +475,49 @@ public:
     assert(fetch::math::Max(input_embeddings_) <= (0.5 / static_cast<Type>(embeddings_size)));
     assert(fetch::math::Min(input_embeddings_) >= (-0.5 / static_cast<Type>(embeddings_size)));
 
-//    // initial embeddings weight normalisation
-//    Type sum = 0;
-//    for (auto &e : input_embeddings_)
-//    {
-//      sum += (e * e);
-//    }
-//    for (auto &e : input_embeddings_)
-//    {
-//      e /= sum;
-//    }
-//
-//    // initialise the l2 normalisation values
-//    for (std::size_t i = 0; i < vocab_size; ++i)
-//    {
-//      auto it = input_embeddings_.Slice(i).begin();
-//      while (it.is_valid())
-//      {
-//        l2reg_row_sums[i] += (*it * *it);
-//        ++it;
-//      }
-//      l2reg_sum += l2reg_row_sums[i];
-//    }
+    // initialise the l2 normalisation values
+    for (std::size_t i = 0; i < vocab_size; ++i)
+    {
+      auto in_it = input_embeddings_.Slice(i).begin();
+      auto out_it = output_embeddings_.Slice(i).begin();
+      while (in_it.is_valid())
+      {
+        l2reg_input_row_sums[i] += (*in_it * *in_it);
+        l2reg_output_row_sums[i] += (*out_it * *out_it);
+        ++in_it;
+        ++out_it;
+      }
+      l2reg_input_sum += l2reg_input_row_sums[i];
+      l2reg_output_sum += l2reg_output_row_sums[i];
+    }
   }
 
-//  void NormaliseEmbeddingRow(SizeType row)
-//  {
-//    auto it = input_embeddings_.Slice(row).begin();
-//    while (it.is_valid())
-//    {
-//      *it /= l2reg_sum;
-//      ++it;
-//    }
-//  }
+  void NormaliseEmbeddingRows(SizeType input_row, SizeType context_row)
+  {
+    if (l2reg_input_sum > 0)
+    {
+      auto in_it = input_embeddings_.Slice(input_row).begin();
+      while (in_it.is_valid())
+      {
+        *in_it /= l2reg_input_sum;
+        ++in_it;
+      }
+    }
+    else
+    {
+      throw std::runtime_error("l2reg_input_sum <= 0 !!!!");
+    }
+
+    if (l2reg_output_sum > 0)
+    {
+      auto out_it = output_embeddings_.Slice(context_row).begin();
+      while (out_it.is_valid())
+      {
+        *out_it /= l2reg_output_sum;
+        ++out_it;
+      }
+    }
+  }
 
   /**
    * This function combines the forward pass and loss calculation
@@ -476,10 +534,7 @@ public:
   {
     // First normalise the embeddings. Since that's expensive, we just normalise the two rows
     // we'll use
-//    NormaliseEmbeddingRow(input_word_idx);
-//    NormaliseEmbeddingRow(context_word_idx);
-
-    reg_loss = 0;
+    NormaliseEmbeddingRows(input_word_idx, context_word_idx);
 
     // TODO - remove these copies when math library SFINAE checks for IsIterable instead of taking
     // arrays. embeddings input & context lookup
@@ -524,13 +579,7 @@ public:
       loss = -std::log(1 - result_[0]);
     }
 
-//    reg_loss = (l2_lambda * l2reg_sum);
-//
-//    if (reg_loss < 0)
-//    {
-//      std::cout << "reg_loss: " << reg_loss << std::endl;
-//
-//    }
+    reg_loss = (l2_lambda * (l2reg_input_sum + l2reg_output_sum));
 
     if (std::isnan(loss))
     {
@@ -560,11 +609,11 @@ public:
 //    fetch::math::Multiply(input_vector_, g, context_grads_);
 
     // apply gradient updates
-//    l2reg_sum -= l2reg_row_sums[input_word_idx];
-//    //    l2reg_sum -= l2reg_row_sums[context_word_idx];
+    l2reg_input_sum -= l2reg_input_row_sums[input_word_idx];
+    l2reg_output_sum -= l2reg_output_row_sums[context_word_idx];
 
-//    l2reg_row_sums[input_word_idx] = 0;
-//    //    l2reg_row_sums[context_word_idx] = 0;
+    l2reg_input_row_sums[input_word_idx] = 0;
+    l2reg_output_row_sums[context_word_idx] = 0;
 
     auto input_slice_it = input_embeddings_.Slice(input_word_idx).begin();
     auto input_grads_it = context_vector_.begin();
@@ -572,10 +621,11 @@ public:
     while (input_slice_it.is_valid())
     {
       // grad and l2_reg weight decay
-//      *input_slice_it += (g * *input_grads_it) - (l2_lambda * *input_slice_it);
-      *input_slice_it += (g * *input_grads_it);
+      *input_slice_it += (g * *input_grads_it) - (l2_lambda * *input_slice_it);
+//      *input_slice_it += (g * *input_grads_it);
 
-//      l2reg_row_sums[input_word_idx] += (*input_slice_it * *input_slice_it);
+      l2reg_input_row_sums[input_word_idx] += *input_slice_it;
+
       ++input_slice_it;
       ++input_grads_it;
     }
@@ -586,31 +636,16 @@ public:
     while (context_slice_it.is_valid())
     {
       // grad and l2_reg weight decay
-//      *context_slice_it += (g * *context_grads_it) - (l2_lambda * *input_slice_it);
-      *context_slice_it += (g * *context_grads_it);
+      *context_slice_it += (g * *context_grads_it) - (l2_lambda * *input_slice_it);
+//      *context_slice_it += (g * *context_grads_it);
 
-//      l2reg_row_sums[context_word_idx] += (g * *context_grads_it);
+      l2reg_output_row_sums[context_word_idx] += *context_slice_it;
+
       ++context_slice_it;
       ++context_grads_it;
     }
-//
-//    if (l2reg_row_sums[input_word_idx] > 1e+100)
-//    {
-//      std::cout << "enormous row value: " << std::endl;
-//    }
-//
-//    if (l2reg_row_sums[input_word_idx] < 0)
-//    {
-//      std::cout << "l2reg_row_sums[input_word_idx]: " << l2reg_row_sums[input_word_idx] << std::endl;
-//    }
-//    l2reg_sum += l2reg_row_sums[input_word_idx];
-//
-//    if (l2reg_sum < 0)
-//    {
-//      std::cout << "l2reg_row_sums[input_word_idx]: " << l2reg_row_sums[input_word_idx] << std::endl;
-//      std::cout << "l2reg_sum: " << l2reg_sum << std::endl;
-//    }
-//    //    l2reg_sum += l2reg_row_sums[context_word_idx];
+    l2reg_input_sum += l2reg_input_row_sums[input_word_idx];
+    l2reg_output_sum += l2reg_output_row_sums[context_word_idx];
   }
 
   void Sigmoid(Type x, Type &ret)
@@ -869,6 +904,8 @@ int main(int argc, char **argv)
         // get next data pair
         dataloader.next_negative(input_word_idx, context_word_idx);
 
+        if (context_word_idx == input_word_idx) continue;
+
         // forward pass on the model
         model.ForwardAndLoss(input_word_idx, context_word_idx, gt, loss, l2loss);
 
@@ -894,9 +931,7 @@ int main(int argc, char **argv)
 
     if (total_step_count % tp.print_freq == 0)
     {
-      std::cout << "model.l2reg_sum: " << model.l2reg_sum << std::endl;
-      
-      
+
       auto t2   = std::chrono::high_resolution_clock::now();
       time_diff = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
 
@@ -907,9 +942,9 @@ int main(int argc, char **argv)
       std::cout << "total_step_count: " << total_step_count << std::endl;
       std::cout << "current cursor idx: " << cursor_idx << std::endl;
       std::cout << "current negative learning rate: " << model.alpha_ << std::endl;
-      std::cout << "loss: " << (sum_loss + sum_l2_loss) / (tp.print_freq * 26 ) << std::endl;
-      std::cout << "w2vloss: " << sum_loss / (tp.print_freq * 26 ) << std::endl;
-      std::cout << "l2 loss: " << sum_l2_loss / (tp.print_freq * 26 ) << std::endl;
+      std::cout << "loss: " << (sum_loss + sum_l2_loss) / tp.print_freq << std::endl;
+      std::cout << "w2vloss: " << sum_loss / tp.print_freq << std::endl;
+      std::cout << "l2 loss: " << sum_l2_loss / tp.print_freq << std::endl;
       sum_loss = 0;
       sum_l2_loss = 0;
       std::cout << std::endl;
