@@ -54,13 +54,13 @@ public:
     NOT_FOUND,
   };
 
-  using BlockIndex            = v2::TransactionLayout::BlockIndex;
+  using BlockIndex            = TransactionLayout::BlockIndex;
   using Identity              = crypto::Identity;
   using ConstByteArray        = byte_array::ConstByteArray;
   using ContractName          = ConstByteArray;
   using Query                 = variant::Variant;
   using InitialiseHandler     = std::function<Status(Address const &)>;
-  using TransactionHandler    = std::function<Status(Transaction const &)>;
+  using TransactionHandler    = std::function<Status(Transaction const &, BlockIndex)>;
   using TransactionHandlerMap = std::unordered_map<ContractName, TransactionHandler>;
   using QueryHandler          = std::function<Status(Query const &, Query &)>;
   using QueryHandlerMap       = std::unordered_map<ContractName, QueryHandler>;
