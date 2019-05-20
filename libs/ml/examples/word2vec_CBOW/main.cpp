@@ -1,50 +1,59 @@
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
-
-#include "core/serializers/byte_array_buffer.hpp"
-
-#include "math/clustering/knn.hpp"
-#include "math/matrix_operations.hpp"
-#include "math/tensor.hpp"
-
-#include "ml/dataloaders/word2vec_loaders/cbow_dataloader.hpp"
-#include "ml/graph.hpp"
-#include "ml/layers/fully_connected.hpp"
-#include "ml/ops/activations/softmax.hpp"
-#include "ml/ops/embeddings.hpp"
-#include "ml/ops/loss_functions/mean_square_error.hpp"
-#include "ml/serializers/ml_types.hpp"
+#include <math.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <fstream>
 #include <iostream>
+#include <map>
+#include <string>
+#include <vector>
 
-#define EMBEDING_DIMENSION 64u
-#define CONTEXT_WINDOW_SIZE 4  // Each side
-#define LEARNING_RATE 0.50f
-#define K 10u
-std::string TEST_WORD = "cold";
+#include "math/tensor.hpp"
+#include "unigram_table.hpp"
+#include "w2v_cbow_dataloader.hpp"
 
-using DataType  = double;
-using ArrayType = fetch::math::Tensor<DataType>;
-using SizeType  = fetch::math::Tensor<DataType>::SizeType;
+#include "averaged_embeddings.hpp"
+#include "embeddings.hpp"
+#include "graph.hpp"
+#include "inplace_transpose.hpp"
+#include "matrix_multiply.hpp"
+#include "placeholder.hpp"
 
+using namespace fetch::ml;
 using namespace fetch::ml::ops;
-using namespace fetch::ml::layers;
+
+#define EXP_TABLE_SIZE 1000
+#define MAX_EXP 6
+
+using FloatType = float;
+
+
+CBOWLoader<float> global_loader(5, 25);
+UnigramTable      unigram_table(0);
+
+std::string train_file, output_file;
+
+int window    = 5;
+int min_count = 5;
+
+uint64_t layer1_size = 200;
+uint64_t iter        = 1;
+float    alpha       = static_cast<float>(0.025);
+float    starting_alpha;
+
+float * expTable;
+clock_t start;
+
+int negative = 25;
+
+fetch::ml::Graph<fetch::math::Tensor<FloatType>> graph;
+// Add a sigmoid module here -- Not done for now as it would require bringing
+// all the math library
+
+// Keep out for easy saving
+fetch::math::Tensor<FloatType> word_embeding_matrix({1, 1});
 
 std::string readFile(std::string const &path)
 {
@@ -52,130 +61,149 @@ std::string readFile(std::string const &path)
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 }
 
-std::string findWordByIndex(std::map<std::string, SizeType> const &vocab, SizeType index)
+void InitNet()
 {
-  for (auto const &kvp : vocab)
+  word_embeding_matrix = fetch::math::Tensor<FloatType>({global_loader.VocabSize(), layer1_size});
+  for (auto &e : word_embeding_matrix)
+    e = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) / layer1_size;
+
+  graph.AddNode<PlaceHolder<fetch::math::Tensor<FloatType>>>("Context", {});
+  graph.AddNode<AveragedEmbeddings<fetch::math::Tensor<FloatType>>>("Words", {"Context"},
+                                                                   word_embeding_matrix);
+  graph.AddNode<PlaceHolder<fetch::math::Tensor<FloatType>>>("Target", {});
+  graph.AddNode<Embeddings<fetch::math::Tensor<FloatType>>>("Weights", {"Target"},
+                                                           global_loader.VocabSize(), layer1_size);
+  graph.AddNode<InplaceTranspose<fetch::math::Tensor<FloatType>>>("WeightsTranspose", {"Weights"});
+  graph.AddNode<MatrixMultiply<fetch::math::Tensor<FloatType>>>("DotProduct",
+                                                               {"Words", "WeightsTranspose"});
+}
+
+/**
+ * ======== TrainModelThread ========
+ * This function performs the training of the model.
+ */
+void TrainModelThread()
+{
+  // Make a copy of the global loader for thread
+  CBOWLoader<float> thread_loader(global_loader);
+
+  /*
+   * word - Stores the index of a word in the vocab table.
+   * word_count - Stores the total number of training words processed.
+   */
+  float f;
+
+  fetch::math::Tensor<FloatType> f_tensor({1, uint64_t(negative)});      // Prediction
+  fetch::math::Tensor<FloatType> g_tensor({1, uint64_t(negative)});      // Error
+  fetch::math::Tensor<FloatType> label_tensor({1, uint64_t(negative)});  // Target Word input
+
+  auto sample = thread_loader.GetNext();
+
+  unsigned int iterations = static_cast<unsigned int>(global_loader.Size());
+  for (unsigned int i(0); i < iter * iterations; ++i)
   {
-    if (kvp.second == index)
+    if (i % 10000 == 0)
     {
-      return kvp.first;
+      alpha = starting_alpha * (((float)iter * iterations - i) / (iter * iterations));
+      if (alpha < starting_alpha * 0.0001)
+        alpha = static_cast<float>(starting_alpha * 0.0001);
+      std::cout << i << " / " << iter * iterations << " (" << (int)(100.0 * i / (iter * iterations))
+                << ") -- " << alpha << std::endl;
     }
-  }
-  return "";
-}
 
-void PrintKNN(fetch::ml::dataloaders::CBoWLoader<ArrayType> const &dl, ArrayType const &embeddings,
-              std::string const &word, unsigned int k)
-{
-  ArrayType arr        = embeddings;
-  ArrayType one_vector = embeddings.Slice(dl.VocabLookup(word)).Copy().Unsqueeze();
-  std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
-      fetch::math::clustering::KNNCosine(arr, one_vector, k);
-
-  for (std::size_t j = 0; j < output.size(); ++j)
-  {
-    std::cout << "output.at(j).first: " << dl.VocabLookup(output.at(j).first) << std::endl;
-    std::cout << "output.at(j).second: " << output.at(j).second << "\n" << std::endl;
-  }
-}
-
-int main(int ac, char **av)
-{
-  if (ac < 2)
-  {
-    std::cerr << "Usage: " << av[0] << " INPUT_FILES_TXT" << std::endl;
-    return 1;
-  }
-
-  fetch::ml::dataloaders::CBoWTextParams<ArrayType> p;
-  p.window_size       = CONTEXT_WINDOW_SIZE;
-  p.n_data_buffers    = CONTEXT_WINDOW_SIZE * 2;
-  p.max_sentences     = SizeType(10000);  // maximum number of sentences to use
-  p.discard_frequent  = true;             // discard most frqeuent words
-  p.discard_threshold = 0.01;             // controls how aggressively to discard frequent words
-
-  fetch::ml::dataloaders::CBoWLoader<ArrayType> dl(p);
-  for (int i(1); i < ac; ++i)
-  {
-    dl.AddData(readFile(av[i]));
-  }
-
-  unsigned int vocabSize = (unsigned int)dl.VocabSize();
-  std::cout << "Vocab size : " << vocabSize << std::endl;
-
-  fetch::ml::Graph<ArrayType> g;
-  g.AddNode<PlaceHolder<ArrayType>>("Input", {});
-  g.AddNode<Embeddings<ArrayType>>("Embeddings", {"Input"}, vocabSize, EMBEDING_DIMENSION);
-  g.AddNode<FullyConnected<ArrayType>>("FC", {"Embeddings"},
-                                       EMBEDING_DIMENSION * CONTEXT_WINDOW_SIZE * 2, vocabSize);
-  g.AddNode<Softmax<ArrayType>>("Softmax", {"FC"});
-
-  MeanSquareError<ArrayType> criterion;
-  unsigned int               iteration(0);
-  double                     loss = 0;
-
-  unsigned int epoch(0);
-  while (true)
-  {
-    dl.Reset();
-    while (!dl.IsDone())
+    if (thread_loader.IsDone())
     {
-      auto data = dl.GetRandom();
+      thread_loader.Reset();
+    }
+    thread_loader.GetNext(sample);
+    graph.SetInput("Context", sample.first);
+    graph.SetInput("Target", sample.second);
+    auto graphF = graph.Evaluate("DotProduct");
 
-      g.SetInput("Input", data.first);
-      ArrayType predictions = g.Evaluate("Softmax").Copy();
-      ArrayType groundTruth(predictions.shape());
-      groundTruth.At(0, data.second) = DataType(1);
-
-      SizeType argmax{SizeType(ArgMax(predictions, SizeType(1)).At(0))};
-      if (iteration % 100 == 0 || argmax == data.second)
+    // This block computes sigmoid activation + MSE and store error signal in
+    // g_tensor
+    for (int d = 0; d < negative; d++)
+    {
+      f           = graphF(0, d);
+      float label = (d == 0) ? 1 : 0;
+      if (f > MAX_EXP)
       {
-        for (unsigned int i(0); i < p.n_data_buffers + 1; ++i)
-        {
-          if (i < p.window_size)
-          {
-            std::cout << dl.VocabLookup(SizeType(data.first.At(i))) << " ";
-          }
-          else if (i == p.window_size)
-          {
-            std::cout << "[" << dl.VocabLookup(SizeType(data.second)) << "] ";
-          }
-          else
-          {
-            std::cout << dl.VocabLookup(SizeType(data.first.At(i - 1))) << " ";
-          }
-        }
-        std::cout << "-- " << (argmax == data.second ? "\033[0;32m" : "\033[0;31m")
-                  << dl.VocabLookup(argmax) << "\033[0;0m" << std::endl;
-        std::cout << "Loss : " << loss << std::endl;
-        loss = 0;
+        g_tensor.Set(0, d, label - 1);
       }
-
-      loss += criterion.Forward({predictions, groundTruth});
-      g.BackPropagate("Softmax", criterion.Backward({predictions.Copy(), groundTruth}));
-      g.Step(LEARNING_RATE);
-
-      iteration++;
+      else if (f < -MAX_EXP)
+      {
+        g_tensor.Set(0, d, label - 0);
+      }
+      else
+      {
+        g_tensor.Set(0, d, label - expTable[(int)((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))]);
+      }
     }
-    std::cout << "End of epoch " << epoch << std::endl;
-
-    // Print KNN of test word
-    PrintKNN(dl, *g.StateDict().dict_["Embeddings"].weights_, TEST_WORD, K);
-
-    // Save model
-    fetch::serializers::ByteArrayBuffer serializer;
-    serializer << g.StateDict();
-    std::fstream file("./model.fba", std::fstream::out);  // fba = FetchByteArray
-    if (file)
-    {
-      file << std::string(serializer.data());
-      file.close();
-    }
-    else
-    {
-      std::cerr << "Can't open save file" << std::endl;
-    }
-    epoch++;
+    graph.BackPropagate("DotProduct", g_tensor);
+    graph.Step(alpha);
   }
+
+  std::cout << "Done" << std::endl;
+}
+
+/**
+ * ======== TrainModel ========
+ * Main entry point to the training process.
+ */
+void TrainModel()
+{
+  unsigned long long b;
+  FILE *             fo;
+
+  starting_alpha = alpha;
+
+  if (output_file.empty())
+    return;
+
+  InitNet();
+  TrainModelThread();
+
+  fo = fopen(output_file.c_str(), "wb");
+  // Save the word vectors
+  fprintf(fo, "%lu %lld\n", global_loader.VocabSize(), layer1_size);
+  auto vocab = global_loader.GetVocab();
+  for (auto kvp : vocab)  // for (a = 0; a < vocab_size; a++)
+  {
+    fprintf(fo, "%s ",
+            kvp.first.c_str());  // fprintf(fo, "%s ", vocab[a].word);
+    for (b = 0; b < layer1_size; b++)
+    {
+      float v = word_embeding_matrix(kvp.second.first, b);
+      fwrite(&v, sizeof(float), 1, fo);
+    }
+    fprintf(fo, "\n");
+  }
+  fclose(fo);
+}
+
+int main(int argc, char **argv)
+{
+  int i;
+  if (argc == 1)
+    return 0;
+
+  output_file = "./vector.bin";
+  train_file  = argv[1];
+
+  alpha = static_cast<float>(0.05);  // Initial learning rate
+
+  global_loader.AddData(readFile(train_file));
+  global_loader.RemoveInfrequent(static_cast<unsigned int>(min_count));
+  global_loader.InitUnigramTable();
+  std::cout << "Dataloader Vocab Size : " << global_loader.VocabSize() << std::endl;
+
+  expTable = (float *)malloc((EXP_TABLE_SIZE + 1) * sizeof(float));
+  for (i = 0; i < EXP_TABLE_SIZE; i++)
+  {
+    expTable[i] = exp((i / (float)EXP_TABLE_SIZE * 2 - 1) * MAX_EXP);  // Precompute the exp() table
+    expTable[i] = expTable[i] / (expTable[i] + 1);  // Precompute f(x) = x / (x + 1)
+  }
+  TrainModel();
+  std::cout << "All done" << std::endl;
   return 0;
 }

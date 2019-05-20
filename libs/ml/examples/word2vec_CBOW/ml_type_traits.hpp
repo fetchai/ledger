@@ -20,27 +20,30 @@
 #include <type_traits>
 
 namespace fetch {
+namespace ml {
+
+namespace ops {
+template <typename T>
+class Trainable;
+}  // namespace ops
+
 namespace meta {
-namespace detail {
 
-template <typename T>
-auto IsIterableImplementation(int)
-    -> decltype(std::begin(std::declval<T &>()) != std::end(std::declval<T &>()),
-                ++std::declval<decltype(std::begin(std::declval<T &>())) &>(),
-                *std::begin(std::declval<T &>()), std::true_type{});
+template <bool C, typename R = void>
+using EnableIf = typename std::enable_if<C, R>::type;
 
-template <typename T>
-std::false_type IsIterableImplementation(...);
-}  // namespace detail
+template <typename T, typename OperationType>
+constexpr bool IsTrainable = std::is_base_of<fetch::ml::ops::Trainable<T>, OperationType>::value;
 
-template <typename T, typename R>
-using IsIterable = typename std::enable_if<
-    std::is_same<decltype(detail::IsIterableImplementation<T>(0)), std::true_type>::value, R>::type;
+template <typename T, typename OperationType>
+constexpr bool IsNotTrainable = !IsTrainable<T, OperationType>;
 
-template <typename T1, typename T2, typename R>
-using IsIterableTwoArg = typename std::enable_if<
-    std::is_same<decltype(detail::IsIterableImplementation<T1>(0)), std::true_type>::value &&
-    std::is_same<decltype(detail::IsIterableImplementation<T2>(0)), std::true_type>::value, R>::type;
+template <typename T, typename OperationType, typename R = void>
+using IfIsTrainable = fetch::ml::meta::EnableIf<IsTrainable<T, OperationType>, R>;
+
+template <typename T, typename OperationType, typename R = void>
+using IfIsNotTrainable = fetch::ml::meta::EnableIf<IsNotTrainable<T, OperationType>, R>;
 
 }  // namespace meta
+}  // namespace ml
 }  // namespace fetch
