@@ -141,20 +141,20 @@ TYPED_TEST(TensorIndexingTest, range_based_iteration_1d)
     e = i;
     i += TypeParam(1);
   }
-  for (std::uint64_t i(0); i < t.size(); ++i)
+  for (std::uint64_t k(0); k < t.size(); ++k)
   {
-    EXPECT_EQ(t.At(i), TypeParam(i));
+    EXPECT_EQ(t.At(k), TypeParam(k));
   }
 }
 
 TYPED_TEST(TensorIndexingTest, range_based_iteration_2d)
 {
   fetch::math::Tensor<TypeParam> t({5, 2});
-  TypeParam                      i(0);
+  TypeParam                      z(0);
   for (TypeParam &e : t)
   {
-    e = i;
-    i += TypeParam(1);
+    e = z;
+    z += TypeParam(1);
   }
   TypeParam val{0};
   for (std::uint64_t i(0); i < t.shape()[1]; ++i)
@@ -170,11 +170,11 @@ TYPED_TEST(TensorIndexingTest, range_based_iteration_2d)
 TYPED_TEST(TensorIndexingTest, range_based_iteration_3d)
 {
   fetch::math::Tensor<TypeParam> t({5, 2, 4});
-  TypeParam                      i(0);
+  TypeParam                      z(0);
   for (TypeParam &e : t)
   {
-    e = i;
-    i += TypeParam(1);
+    e = z;
+    z += TypeParam(1);
   }
   TypeParam val{0};
   for (std::uint64_t i(0); i < t.shape()[2]; ++i)
@@ -193,11 +193,11 @@ TYPED_TEST(TensorIndexingTest, range_based_iteration_3d)
 TYPED_TEST(TensorIndexingTest, range_based_iteration_4d)
 {
   fetch::math::Tensor<TypeParam> t({5, 2, 4, 6});
-  TypeParam                      i(0);
+  TypeParam                      z(0);
   for (TypeParam &e : t)
   {
-    e = i;
-    i += TypeParam(1);
+    e = z;
+    z += TypeParam(1);
   }
   TypeParam val{0};
   for (std::uint64_t i(0); i < t.shape()[3]; ++i)

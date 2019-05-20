@@ -63,8 +63,8 @@ public:
                    kk++)  // Iterate over kernel width
               {
                 typename ArrayType::Type w = inputs.at(1).get().At(i, ki, kj, kk);
-                typename ArrayType::Type i = inputs.at(0).get().At(ki, j + kj, k + kk);
-                sum += i * w;
+                typename ArrayType::Type ii = inputs.at(0).get().At(ki, j + kj, k + kk);
+                sum += ii * w;
               }
             }
           }

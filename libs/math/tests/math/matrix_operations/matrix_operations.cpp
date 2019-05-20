@@ -40,13 +40,13 @@ TYPED_TEST_CASE(FreeFunctionsTest, MyTypes);
 
 TYPED_TEST(FreeFunctionsTest, BooleanMask_SetAll)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeTypeHere = typename TypeParam::SizeType;
 
   TypeParam array1{4};
   TypeParam mask{4};
   mask.SetAllZero();
   auto ret = fetch::math::BooleanMask(array1, mask);
-  EXPECT_EQ(ret.size(), SizeType(0));
+  EXPECT_EQ(ret.size(), SizeTypeHere(0));
 
   mask.SetAllOne();
   ret = fetch::math::BooleanMask(array1, mask);
@@ -156,14 +156,14 @@ TYPED_TEST(FreeFunctionsTest, Scatter3D_SetAll)
 
 TYPED_TEST(FreeFunctionsTest, Product_OneDimension)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeTypeHere = typename TypeParam::SizeType;
   using Type     = typename TypeParam::Type;
   TypeParam array1{4};
 
-  array1.Set(SizeType{0}, typename TypeParam::Type(0.3));
-  array1.Set(SizeType{1}, typename TypeParam::Type(1.2));
-  array1.Set(SizeType{2}, typename TypeParam::Type(0.7));
-  array1.Set(SizeType{3}, typename TypeParam::Type(22));
+  array1.Set(SizeTypeHere{0}, typename TypeParam::Type(0.3));
+  array1.Set(SizeTypeHere{1}, typename TypeParam::Type(1.2));
+  array1.Set(SizeTypeHere{2}, typename TypeParam::Type(0.7));
+  array1.Set(SizeTypeHere{3}, typename TypeParam::Type(22));
 
   Type output = fetch::math::Product(array1);
   EXPECT_NEAR(double(output), 5.544, 1e-6);
@@ -179,11 +179,11 @@ TYPED_TEST(FreeFunctionsTest, Product_OneDimension)
 
 TYPED_TEST(FreeFunctionsTest, Product_TwoDimension)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeTypeHere = typename TypeParam::SizeType;
   using Type     = typename TypeParam::Type;
 
-  SizeType  n_data     = 4;
-  SizeType  n_features = 2;
+  SizeTypeHere  n_data     = 4;
+  SizeTypeHere  n_features = 2;
   TypeParam array1{{n_data, n_features}};
 
   array1.Set(0, 0, typename TypeParam::Type(-17));
@@ -227,10 +227,10 @@ TYPED_TEST(FreeFunctionsTest, Max_OneDimension)
 
 TYPED_TEST(FreeFunctionsTest, Max_TwoDimension)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeTypeHere = typename TypeParam::SizeType;
 
-  SizeType  n_data     = 4;
-  SizeType  n_features = 2;
+  SizeTypeHere  n_data     = 4;
+  SizeTypeHere  n_features = 2;
   TypeParam array1{{n_data, n_features}};
 
   array1.Set(0, 0, typename TypeParam::Type(-17));
@@ -243,14 +243,14 @@ TYPED_TEST(FreeFunctionsTest, Max_TwoDimension)
   array1.Set(3, 1, typename TypeParam::Type(-0.5));
 
   TypeParam output{n_data};
-  fetch::math::Max(array1, SizeType(1), output);
+  fetch::math::Max(array1, SizeTypeHere(1), output);
   EXPECT_EQ(output.At(0), typename TypeParam::Type(21));
   EXPECT_EQ(output.At(1), typename TypeParam::Type(0));
   EXPECT_EQ(output.At(2), typename TypeParam::Type(999));
   EXPECT_EQ(output.At(3), typename TypeParam::Type(21));
 
   TypeParam output2{n_features};
-  fetch::math::Max(array1, SizeType(0), output2);
+  fetch::math::Max(array1, SizeTypeHere(0), output2);
   EXPECT_EQ(output2.At(0), typename TypeParam::Type(21));
   EXPECT_EQ(output2.At(1), typename TypeParam::Type(999));
 }
@@ -279,10 +279,10 @@ TYPED_TEST(FreeFunctionsTest, Min_OneDimension)
 
 TYPED_TEST(FreeFunctionsTest, Min_TwoDimension)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeTypeHere = typename TypeParam::SizeType;
 
-  SizeType  n_data     = 4;
-  SizeType  n_features = 2;
+  SizeTypeHere  n_data     = 4;
+  SizeTypeHere  n_features = 2;
   TypeParam array1{{n_data, n_features}};
 
   array1.Set(0, 0, typename TypeParam::Type(-17));
@@ -295,24 +295,24 @@ TYPED_TEST(FreeFunctionsTest, Min_TwoDimension)
   array1.Set(3, 1, typename TypeParam::Type(-0.5));
 
   TypeParam output{n_data};
-  fetch::math::Min(array1, SizeType(1), output);
+  fetch::math::Min(array1, SizeTypeHere(1), output);
   EXPECT_EQ(output.At(0), typename TypeParam::Type(-17));
   EXPECT_EQ(output.At(1), typename TypeParam::Type(0));
   EXPECT_EQ(output.At(2), typename TypeParam::Type(13));
   EXPECT_EQ(output.At(3), typename TypeParam::Type(-0.5));
 
   TypeParam output2{n_features};
-  fetch::math::Min(array1, SizeType(0), output2);
+  fetch::math::Min(array1, SizeTypeHere(0), output2);
   EXPECT_EQ(output2.At(0), typename TypeParam::Type(-17));
   EXPECT_EQ(output2.At(1), typename TypeParam::Type(-0.5));
 }
 
 TYPED_TEST(FreeFunctionsTest, Maximum_TwoDimension)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeTypeHere = typename TypeParam::SizeType;
 
-  SizeType  n_data     = 4;
-  SizeType  n_features = 2;
+  SizeTypeHere  n_data     = 4;
+  SizeTypeHere  n_features = 2;
   TypeParam array1{{n_data, n_features}};
   TypeParam array2{{n_data, n_features}};
   TypeParam output{{n_data, n_features}};
@@ -336,9 +336,9 @@ TYPED_TEST(FreeFunctionsTest, Maximum_TwoDimension)
   array2.Set(3, 1, typename TypeParam::Type(0.5));
 
   fetch::math::Maximum(array1, array2, output);
-  EXPECT_EQ(output.shape().size(), SizeType(2));
-  EXPECT_EQ(output.shape()[0], SizeType(4));
-  EXPECT_EQ(output.shape()[1], SizeType(2));
+  EXPECT_EQ(output.shape().size(), SizeTypeHere(2));
+  EXPECT_EQ(output.shape()[0], SizeTypeHere(4));
+  EXPECT_EQ(output.shape()[1], SizeTypeHere(2));
 
   EXPECT_EQ(output.At(0, 0), typename TypeParam::Type(17));
   EXPECT_EQ(output.At(0, 1), typename TypeParam::Type(21));
@@ -352,47 +352,47 @@ TYPED_TEST(FreeFunctionsTest, Maximum_TwoDimension)
 
 TYPED_TEST(FreeFunctionsTest, ArgMax_OneDimension)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeTypeHere = typename TypeParam::SizeType;
 
   TypeParam array1{4};
 
-  array1.Set(SizeType{0}, typename TypeParam::Type(0.3));
-  array1.Set(SizeType{1}, typename TypeParam::Type(1.2));
-  array1.Set(SizeType{2}, typename TypeParam::Type(0.7));
-  array1.Set(SizeType{3}, typename TypeParam::Type(22));
+  array1.Set(SizeTypeHere{0}, typename TypeParam::Type(0.3));
+  array1.Set(SizeTypeHere{1}, typename TypeParam::Type(1.2));
+  array1.Set(SizeTypeHere{2}, typename TypeParam::Type(0.7));
+  array1.Set(SizeTypeHere{3}, typename TypeParam::Type(22));
 
   TypeParam output{1};
   fetch::math::ArgMax(array1, output);
   EXPECT_EQ(output.At(0), typename TypeParam::SizeType(3));
 
-  array1.Set(SizeType{3}, typename TypeParam::Type(0));
+  array1.Set(SizeTypeHere{3}, typename TypeParam::Type(0));
   fetch::math::ArgMax(array1, output);
   EXPECT_EQ(output.At(0), typename TypeParam::SizeType(1));
 
-  array1.Set(SizeType{1}, typename TypeParam::Type(0));
+  array1.Set(SizeTypeHere{1}, typename TypeParam::Type(0));
   fetch::math::ArgMax(array1, output);
   EXPECT_EQ(output.At(0), typename TypeParam::SizeType(2));
 }
 
 TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeTypeHere = typename TypeParam::SizeType;
 
-  SizeType  n_data     = 4;
-  SizeType  n_features = 2;
+  SizeTypeHere  n_data     = 4;
+  SizeTypeHere  n_features = 2;
   TypeParam array1{{n_data, n_features}};
 
-  array1.Set(SizeType{0}, SizeType{0}, typename TypeParam::Type(-17));
-  array1.Set(SizeType{0}, SizeType{1}, typename TypeParam::Type(21));
-  array1.Set(SizeType{1}, SizeType{0}, typename TypeParam::Type(0));
-  array1.Set(SizeType{1}, SizeType{1}, typename TypeParam::Type(0));
-  array1.Set(SizeType{2}, SizeType{0}, typename TypeParam::Type(13));
-  array1.Set(SizeType{2}, SizeType{1}, typename TypeParam::Type(999));
-  array1.Set(SizeType{3}, SizeType{0}, typename TypeParam::Type(21));
-  array1.Set(SizeType{3}, SizeType{1}, typename TypeParam::Type(-0.5));
+  array1.Set(SizeTypeHere{0}, SizeTypeHere{0}, typename TypeParam::Type(-17));
+  array1.Set(SizeTypeHere{0}, SizeTypeHere{1}, typename TypeParam::Type(21));
+  array1.Set(SizeTypeHere{1}, SizeTypeHere{0}, typename TypeParam::Type(0));
+  array1.Set(SizeTypeHere{1}, SizeTypeHere{1}, typename TypeParam::Type(0));
+  array1.Set(SizeTypeHere{2}, SizeTypeHere{0}, typename TypeParam::Type(13));
+  array1.Set(SizeTypeHere{2}, SizeTypeHere{1}, typename TypeParam::Type(999));
+  array1.Set(SizeTypeHere{3}, SizeTypeHere{0}, typename TypeParam::Type(21));
+  array1.Set(SizeTypeHere{3}, SizeTypeHere{1}, typename TypeParam::Type(-0.5));
 
   TypeParam output{n_data};
-  fetch::math::ArgMax(array1, output, SizeType(1));
+  fetch::math::ArgMax(array1, output, SizeTypeHere(1));
   EXPECT_EQ(output.At(0), typename TypeParam::SizeType(1));
   EXPECT_EQ(output.At(1), typename TypeParam::SizeType(0));
   EXPECT_EQ(output.At(2), typename TypeParam::SizeType(1));
@@ -401,23 +401,23 @@ TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension)
 
 TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension_off_axis)
 {
-  using SizeType = typename TypeParam::SizeType;
+  using SizeTypeHere = typename TypeParam::SizeType;
 
-  SizeType  n_data     = 4;
-  SizeType  n_features = 2;
+  SizeTypeHere  n_data     = 4;
+  SizeTypeHere  n_features = 2;
   TypeParam array1{{n_data, n_features}};
 
-  array1.Set(SizeType{0}, SizeType{0}, typename TypeParam::Type(-17));
-  array1.Set(SizeType{0}, SizeType{1}, typename TypeParam::Type(21));
-  array1.Set(SizeType{1}, SizeType{0}, typename TypeParam::Type(0));
-  array1.Set(SizeType{1}, SizeType{1}, typename TypeParam::Type(0));
-  array1.Set(SizeType{2}, SizeType{0}, typename TypeParam::Type(13));
-  array1.Set(SizeType{2}, SizeType{1}, typename TypeParam::Type(999));
-  array1.Set(SizeType{3}, SizeType{0}, typename TypeParam::Type(21));
-  array1.Set(SizeType{3}, SizeType{1}, typename TypeParam::Type(-0.5));
+  array1.Set(SizeTypeHere{0}, SizeTypeHere{0}, typename TypeParam::Type(-17));
+  array1.Set(SizeTypeHere{0}, SizeTypeHere{1}, typename TypeParam::Type(21));
+  array1.Set(SizeTypeHere{1}, SizeTypeHere{0}, typename TypeParam::Type(0));
+  array1.Set(SizeTypeHere{1}, SizeTypeHere{1}, typename TypeParam::Type(0));
+  array1.Set(SizeTypeHere{2}, SizeTypeHere{0}, typename TypeParam::Type(13));
+  array1.Set(SizeTypeHere{2}, SizeTypeHere{1}, typename TypeParam::Type(999));
+  array1.Set(SizeTypeHere{3}, SizeTypeHere{0}, typename TypeParam::Type(21));
+  array1.Set(SizeTypeHere{3}, SizeTypeHere{1}, typename TypeParam::Type(-0.5));
 
   TypeParam output{n_features};
-  fetch::math::ArgMax(array1, output, SizeType(0));
+  fetch::math::ArgMax(array1, output, SizeTypeHere(0));
   EXPECT_EQ(output.At(0), typename TypeParam::SizeType(3));
   EXPECT_EQ(output.At(1), typename TypeParam::SizeType(2));
 }

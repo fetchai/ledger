@@ -192,13 +192,13 @@ static void load_format_b(std::string const &input_file, std::size_t &N, std::si
     {
       continue;
     }
-    std::stringstream s(line);
+    std::stringstream ss(line);
 
     fetch::ledger::TransactionSummary summary;
     summary.transaction_hash = GenerateHash();
 
     int V = -1;
-    s >> V;
+    ss >> V;
     if (V == -1)
     {
       std::cerr << "malformed input" << std::endl;
@@ -209,10 +209,10 @@ static void load_format_b(std::string const &input_file, std::size_t &N, std::si
     summary.fee = static_cast<uint64_t>(V);
     total_fee += static_cast<uint64_t>(V);
 
-    while (s)
+    while (ss)
     {
       int C = -1;
-      s >> C;
+      ss >> C;
       if (C == -1)
       {
         break;

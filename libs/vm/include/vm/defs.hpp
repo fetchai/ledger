@@ -1049,10 +1049,10 @@ struct Script
       num_parameters = num_parameters__;
       return_type_id = return_type_id__;
     }
-    Index AddVariable(std::string const &name, TypeId type_id)
+    Index AddVariable(std::string const &variable_name, TypeId type_id)
     {
       Index const index = (Index)num_variables++;
-      variables.push_back(Variable(name, type_id));
+      variables.push_back(Variable(variable_name, type_id));
       return index;
     }
     Index AddInstruction(Instruction &instruction)
@@ -1086,9 +1086,9 @@ struct Script
     return index;
   }
 
-  Function const *FindFunction(std::string const &name) const
+  Function const *FindFunction(std::string const &fn_name) const
   {
-    auto it = map.find(name);
+    auto it = map.find(fn_name);
     if (it != map.end())
     {
       return &(functions[it->second]);

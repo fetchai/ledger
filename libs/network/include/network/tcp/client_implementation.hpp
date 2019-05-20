@@ -418,7 +418,7 @@ private:
       std::lock_guard<mutex_type> lock(queue_mutex_);
       if (write_queue_.empty())
       {
-        std::lock_guard<mutex_type> lock(can_write_mutex_);
+        std::lock_guard<mutex_type> lock2(can_write_mutex_);
         can_write_ = true;
         return;
       }

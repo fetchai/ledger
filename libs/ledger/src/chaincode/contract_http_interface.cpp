@@ -49,9 +49,9 @@ struct AdaptedTx
   TxSigningAdapter<MutableTransaction> adapter{tx};
 
   template <typename T>
-  friend void Deserialize(T &serializer, AdaptedTx &tx)
+  friend void Deserialize(T &serializer, AdaptedTx &tx_in)
   {
-    serializer >> tx.adapter;
+    serializer >> tx_in.adapter;
   }
 };
 

@@ -805,8 +805,8 @@ void MainChain::CompleteLooseBlocks(IntBlockPtr const &block)
       InsertBlock(add_block, false);
 
       // The added block was not loose. Continue to clear
-      auto const it = loose_blocks_.find(add_block->body.hash);
-      if (it != loose_blocks_.end())
+      auto const it2 = loose_blocks_.find(add_block->body.hash);
+      if (it2 != loose_blocks_.end())
       {
         // add all the items to the next list
         next_blocks_to_add.splice(next_blocks_to_add.end(), it->second);

@@ -137,13 +137,13 @@ struct KeyValuePair
     return true;
   }
 
-  bool UpdateNode(KeyValuePair const &left, KeyValuePair const &right)
+  bool UpdateNode(KeyValuePair const &left, KeyValuePair const &right2)
   {
     crypto::SHA256 hasher;
     hasher.Reset();
 
     hasher.Update(left.hash, N);
-    hasher.Update(right.hash, N);
+    hasher.Update(right2.hash, N);
     hasher.Final(hash, N);
 
     return true;

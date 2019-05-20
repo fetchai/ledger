@@ -102,11 +102,6 @@ public:
 
   static constexpr char const *LOGGING_NAME = "FileObject";
 
-  enum
-  {
-    HEADER_SIZE = 2 * sizeof(uint64_t)
-  };
-
   FileObject(FileObject const &other)           = delete;
   FileObject operator=(FileObject const &other) = delete;
   FileObject(FileObject &&other)                = default;
@@ -173,6 +168,8 @@ public:
   // TODO(HUT): make private (?)
 protected:
   stack_type stack_;
+
+  std::vector<std::vector<std::tuple<uint64_t, uint64_t, uint64_t>>> linked_lists;
 
   // tracking variables relating to current file object
   uint64_t id_                = 0;  // Location on stack of first block of file
@@ -615,14 +612,13 @@ uint64_t FileObject<S>::GetFreeBlocks(uint64_t min_index, uint64_t num)
     return DefaultFreeAllocation(num);
   }
 
-  uint64_t index             = free_block.previous;
-  uint64_t free_blocks_in_ll = 1;
+  uint64_t index             = free_block.previous; // Index of block in LL we wish to free
+  uint64_t free_blocks_in_ll = 0;
 
   // Traverse backwards in the stack
   for(;;)
   {
     Get(index, block);
-    index = block.previous;
     free_blocks_in_ll++;
 
     if(index < min_index)
@@ -640,18 +636,34 @@ uint64_t FileObject<S>::GetFreeBlocks(uint64_t min_index, uint64_t num)
     {
       // Point end of LL back to free block
       uint64_t index_prev = block.previous;
+      uint64_t old_ll_end = free_block.previous;
+
+      // For debugging - terminate this block
+      {
+        block.previous = block_type::UNDEFINED;
+        Set(index, block);
+      }
+
       Get(index_prev, block);
       block.next = free_block_index_;
       Set(index_prev, block);
 
-      // Update free block
+      // Update free block - NEED get here as index_prev might be free block
       assert(free_block.free_blocks >= num);
+      Get(free_block_index_, free_block);
       free_block.free_blocks -= num;
-      free_block.previous = index;
+      free_block.previous = index_prev;
       Set(free_block_index_, free_block);
+
+      // Last block in the free LL needs to terminate as it's now a file object
+      Get(old_ll_end, block);
+      block.next = block_type::UNDEFINED;
+      Set(old_ll_end, block);
 
       return index;
     }
+
+    index = block.previous;
   }
 
   // Failed to cut the stack.
@@ -865,6 +877,8 @@ bool FileObject<S>::VerifyConsistency(std::vector<uint64_t> const &ids)
       index = block.next;
       Get(index, block);
     }
+
+    linked_lists.push_back(linked_list);
 
     if(!VerifyLL(linked_list, true))
     {

@@ -90,7 +90,7 @@ protected:
       // convert the transaction to a valid transaction
       auto tx = VerifiedTransaction::Create(std::move(transaction));
 
-      for (std::size_t i = 0; i < duplicates; ++i)
+      for (std::size_t z = 0; z < duplicates; ++z)
       {
         miner_->EnqueueTransaction(tx.summary());
       }

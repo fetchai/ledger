@@ -40,15 +40,15 @@ TYPED_TEST_CASE(EntropyTest, MyTypes);
 TYPED_TEST(EntropyTest, entropy)
 {
   using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
+  using SizeTypeHere  = typename TypeParam::SizeType;
   using ArrayType = TypeParam;
 
   ArrayType A(4);
 
-  A.Set(SizeType{0}, DataType(0.1));
-  A.Set(SizeType{1}, DataType(0.2));
-  A.Set(SizeType{2}, DataType(0.3));
-  A.Set(SizeType{3}, DataType(0.4));
+  A.Set(SizeTypeHere{0}, DataType(0.1));
+  A.Set(SizeTypeHere{1}, DataType(0.2));
+  A.Set(SizeTypeHere{2}, DataType(0.3));
+  A.Set(SizeTypeHere{3}, DataType(0.4));
 
   EXPECT_NEAR(double(Entropy(A)), 1.84643934467102, 1e-4);
 }

@@ -22,6 +22,8 @@
 #include "storage/storage_exception.hpp"
 #include "mock_file_object.hpp"
 #include "core/random/lcg.hpp"
+#include "crypto/sha256.hpp"
+#include "crypto/hash.hpp"
 
 using namespace fetch;
 using namespace fetch::byte_array;
@@ -49,6 +51,12 @@ protected:
   {
   }
 
+  char NewChar()
+  {
+    char a = char(rng());
+    return a == '\0' ? '0' : a;
+  }
+
   std::string GetStringForTesting()
   {
     uint64_t size_desired = (1 << 10) + (rng() & 0xFF);
@@ -57,8 +65,7 @@ protected:
 
     for (std::size_t i = 0; i < 1 << 10; ++i)
     {
-      char a = char(rng());
-      ret[i] = a == '\0' ? '0' : a;
+      ret[i] = NewChar();
     }
 
     return ret;
@@ -191,22 +198,12 @@ TEST_F(FileObjectTests, ResizeAndWriteFiles)
 
   ASSERT_EQ(file_ids.size(), strings_to_set.size());
 
-  uint64_t counter = 0;
-
   for (std::size_t i = 0; i < 100; ++i)
   {
     std::random_shuffle(consistency_check_.begin(), consistency_check_.end());
 
     for(auto const &index : consistency_check_)
     {
-      counter++;
-
-      std::cerr << "count: " << counter << std::endl; // DELETEME_NH
-      if(counter == 32)
-      {
-        std::cerr << "failme" << std::endl; // DELETEME_NH
-      }
-
       ASSERT_EQ(file_object_->VerifyConsistency(consistency_check_), true);
       file_object_->SeekFile(index);
       ASSERT_EQ(file_object_->VerifyConsistency(consistency_check_), true);
@@ -231,4 +228,78 @@ TEST_F(FileObjectTests, ResizeAndWriteFiles)
       ASSERT_EQ(file_object_->VerifyConsistency(consistency_check_), true);
     }
   }
+}
+
+TEST_F(FileObjectTests, EraseFiles)
+{
+  file_object_->New("test");
+  std::unordered_map<uint64_t, std::string> file_ids;
+
+  for (std::size_t i = 0; i < 100; ++i)
+  {
+    auto new_string = GetStringForTesting();
+
+    file_object_->CreateNewFile(new_string.size());
+    file_ids[file_object_->id()] = new_string;
+    consistency_check_.push_back(file_object_->id());
+
+    // Erase elements half of the time
+    if(i % 2)
+    {
+      std::swap(consistency_check_[rng() % consistency_check_.size()], consistency_check_[consistency_check_.size() -1]);
+      file_object_->SeekFile(consistency_check_[consistency_check_.size() -1]);
+      file_object_->Erase();
+      file_ids.erase(consistency_check_[consistency_check_.size() -1]);
+      consistency_check_.pop_back();
+    }
+
+    ASSERT_EQ(file_object_->VerifyConsistency(consistency_check_), true);
+  }
+
+}
+
+TEST_F(FileObjectTests, SeekAndTellFiles)
+{
+  file_object_->New("test");
+
+  for (std::size_t i = 0; i < 100; ++i)
+  {
+    auto new_string = GetStringForTesting();
+    file_object_->CreateNewFile(new_string.size());
+
+    ASSERT_EQ(file_object_->Tell(), 0);
+    file_object_->Write(new_string);
+
+    for (std::size_t j = 0; j < 10; ++j)
+    {
+      uint64_t index_to_change = rng() % new_string.size();
+      uint64_t length_of_chars = rng() % (new_string.size() - index_to_change);
+
+      std::string new_chars(length_of_chars, NewChar());
+
+      file_object_->Seek(index_to_change);
+      file_object_->Write((const uint8_t *)(new_chars.c_str()), new_chars.size());
+
+      for (std::size_t k = 0; k < length_of_chars; ++k)
+      {
+        new_string[index_to_change + k] = new_chars[0];
+      }
+
+      ASSERT_EQ(std::string{file_object_->AsDocument().document}, new_string);
+    }
+
+    consistency_check_.push_back(file_object_->id());
+    ASSERT_EQ(file_object_->VerifyConsistency(consistency_check_), true);
+  }
+}
+
+TEST_F(FileObjectTests, HashFiles)
+{
+  file_object_->New("test");
+
+  auto new_string = GetStringForTesting();
+  file_object_->CreateNewFile(new_string.size());
+  file_object_->Write(new_string);
+
+  ASSERT_EQ(file_object_->Hash(), crypto::Hash<crypto::SHA256>(new_string));
 }

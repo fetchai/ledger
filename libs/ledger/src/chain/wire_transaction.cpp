@@ -65,10 +65,10 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
       Variant &signatures = metadata["identities"];
       signatures          = Variant::Array(tx.signatures().size());
 
-      std::size_t idx{0};
+      std::size_t idx2{0};
       for (auto const &signature : tx.signatures())
       {
-        signatures[idx++] = ToBase64(signature.first.identifier());
+        signatures[idx2++] = ToBase64(signature.first.identifier());
       }
     }
   }
