@@ -433,15 +433,20 @@ TEST_F(SmartContractTests, CheckPersistentMapSetAndQuery)
   auto const expected_resource2 = ResourceAddress{expected_key2};
   auto const expected_value1    = RawBytes<int32_t>(20);
   auto const expected_value2    = RawBytes<int32_t>(30);
-  auto const expected_mask1     = fetch::ledger::v2::TransactionLayout{};
+  fetch::BitVector mask{1ull << 4};
+  auto const lane1 = expected_resource1.lane(mask.log2_size());
+  auto const lane2 = expected_resource2.lane(mask.log2_size());
+  mask.flip(lane1);
+  mask.flip(lane2);
+  shards(mask);
 
   // expected calls
-  EXPECT_CALL(*storage_, Lock()).WillOnce(Return(true));
-  EXPECT_CALL(*storage_, Lock(expected_resource2)).WillOnce(Return(true));
+  EXPECT_CALL(*storage_, Lock(lane1)).WillOnce(Return(true));
+  EXPECT_CALL(*storage_, Lock(lane2)).WillOnce(Return(true));
   EXPECT_CALL(*storage_, Set(expected_resource1, expected_value1)).WillOnce(Return());
   EXPECT_CALL(*storage_, Set(expected_resource2, expected_value2)).WillOnce(Return());
-  EXPECT_CALL(*storage_, Unlock(expected_resource1)).WillOnce(Return(true));
-  EXPECT_CALL(*storage_, Unlock(expected_resource2)).WillOnce(Return(true));
+  EXPECT_CALL(*storage_, Unlock(lane1)).WillOnce(Return(true));
+  EXPECT_CALL(*storage_, Unlock(lane2)).WillOnce(Return(true));
 
   // from the action & query
   EXPECT_CALL(*storage_, Get(expected_resource1))
@@ -453,7 +458,7 @@ TEST_F(SmartContractTests, CheckPersistentMapSetAndQuery)
 
   // send the smart contract an "increment" action
   EXPECT_EQ(SmartContract::Status::OK,
-            SendSmartAction(ActionWithParams("test_persistent_map"));
+            SendSmartAction("test_persistent_map"));
 
   VerifyQuery("query_foo", int32_t{20});
   VerifyQuery("query_bar", int32_t{30});
@@ -503,11 +508,15 @@ TEST_F(SmartContractTests, CheckPersistentMapSetWithAddressAsName)
       contract_name_->full_name() + ".state." + ToBase64(identity.identifier()) + ".foo";
   auto const expected_resource1 = ResourceAddress{expected_key1};
   auto const expected_value1    = RawBytes<int32_t>(20);
+  fetch::BitVector mask{1ull << 4};
+  auto const lane1 = expected_resource1.lane(mask.log2_size());
+  mask.flip(lane1);
+  shards(mask);
 
   // expected calls
-  EXPECT_CALL(*storage_, Lock(expected_resource1)).WillOnce(Return(true));
+  EXPECT_CALL(*storage_, Lock(lane1)).WillOnce(Return(true));
   EXPECT_CALL(*storage_, Set(expected_resource1, expected_value1)).WillOnce(Return());
-  EXPECT_CALL(*storage_, Unlock(expected_resource1)).WillOnce(Return(true));
+  EXPECT_CALL(*storage_, Unlock(lane1)).WillOnce(Return(true));
 
   // from the action & query
   EXPECT_CALL(*storage_, Get(expected_resource1))
@@ -516,7 +525,7 @@ TEST_F(SmartContractTests, CheckPersistentMapSetWithAddressAsName)
 
   // send the smart contract an "increment" action
   EXPECT_EQ(SmartContract::Status::OK,
-            SendActionWithParams("test_persistent_map", {address_str + ".foo"}, identity));
+            SendSmartActionWithParams("test_persistent_map", fetch::ledger::v2::Address{identity}));
 
   Variant request    = Variant::Object();
   request["address"] = ToBase64(identity.identifier());

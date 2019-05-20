@@ -97,7 +97,7 @@ inline byte_array::ConstByteArray ResourceID::id() const
 inline ResourceID::Group ResourceID::resource_group() const
 {
   static_assert(std::is_integral<Group>::value, "Group type must be integer");
-  assert(id_.size() > sizeof(Group));
+  assert(id_.size() >= sizeof(Group));
 
   return *reinterpret_cast<Group const *>(id_.pointer());
 }

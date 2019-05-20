@@ -34,7 +34,7 @@
 #include <gtest/gtest.h>
 
 
-auto FullShards(std::size_t lane_count)
+inline auto FullShards(std::size_t lane_count)
 {
   fetch::BitVector retval{lane_count};
   retval.SetAllOne();

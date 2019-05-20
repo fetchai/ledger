@@ -22,8 +22,9 @@
 namespace fetch {
 namespace vm {
 
-struct String : public Object
+class String : public Object
 {
+public:
   String()          = delete;
   virtual ~String() = default;
 
