@@ -54,6 +54,7 @@ protected:
 
   void SetUp() override
   {
+    block_number_  = 0u;
     certificate_   = std::make_unique<fetch::crypto::ECDSASigner>();
     owner_address_ = std::make_unique<fetch::ledger::Address>(certificate_->identity());
     storage_       = std::make_unique<MockStorageUnit>();
@@ -156,7 +157,7 @@ protected:
 
     // dispatch the transaction to the contract
     contract_->Attach(storage_adapter);
-    auto const status = contract_->DispatchTransaction(action, *tx);
+    auto const status = contract_->DispatchTransaction(action, *tx, block_number_++);
     contract_->Detach();
 
     return status;
@@ -172,7 +173,7 @@ protected:
 
     // dispatch the transaction to the contract
     contract_->Attach(storage_adapter);
-    auto const status = contract_->DispatchTransaction(tx->action(), *tx);
+    auto const status = contract_->DispatchTransaction(tx->action(), *tx, block_number_++);
     contract_->Detach();
 
     return status;
@@ -212,7 +213,8 @@ protected:
   IdentifierPtr contract_name_;
   /// @}
 
-  CertificatePtr     certificate_;
-  AddressPtr         owner_address_;
-  MockStorageUnitPtr storage_;
+  Contract::BlockIndex block_number_;
+  CertificatePtr       certificate_;
+  AddressPtr           owner_address_;
+  MockStorageUnitPtr   storage_;
 };

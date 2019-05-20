@@ -54,6 +54,7 @@ public:
     NOT_FOUND,
   };
 
+  using BlockIndex            = v2::TransactionLayout::BlockIndex;
   using Identity              = crypto::Identity;
   using ConstByteArray        = byte_array::ConstByteArray;
   using ContractName          = ConstByteArray;
@@ -82,7 +83,8 @@ public:
 
   Status DispatchInitialise(Address const &owner);
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
-  Status DispatchTransaction(ConstByteArray const &name, Transaction const &tx);
+  Status DispatchTransaction(ConstByteArray const &name, Transaction const &tx,
+                             TransactionLayout::BlockIndex index);
   /// @}
 
   /// @name Dispatch Maps Accessors
@@ -112,7 +114,8 @@ protected:
   /// @{
   void OnTransaction(std::string const &name, TransactionHandler &&handler);
   template <typename C>
-  void OnTransaction(std::string const &name, C *instance, Status (C::*func)(Transaction const &));
+  void OnTransaction(std::string const &name, C *instance,
+                     Status (C::*func)(Transaction const &, BlockIndex));
   /// @}
 
   /// @name Query Handler Registration
@@ -216,10 +219,12 @@ void Contract::OnInitialise(C *instance, Status (C::*func)(Address const &))
  */
 template <typename C>
 void Contract::OnTransaction(std::string const &name, C *instance,
-                             Status (C::*func)(Transaction const &))
+                             Status (C::*func)(Transaction const &, BlockIndex))
 {
   // create the function handler and pass it to the normal function
-  OnTransaction(name, [instance, func](Transaction const &tx) { return (instance->*func)(tx); });
+  OnTransaction(name, [instance, func](Transaction const &tx, BlockIndex block_index) {
+    return (instance->*func)(tx, block_index);
+  });
 }
 
 /**
