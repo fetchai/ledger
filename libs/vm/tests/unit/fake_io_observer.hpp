@@ -41,7 +41,6 @@ public:
   /// @}
 
 private:
-
   using UnderlyingMap = std::map<std::string, ConstByteArray>;
   using DeniedKeys    = std::unordered_set<std::string>;
 

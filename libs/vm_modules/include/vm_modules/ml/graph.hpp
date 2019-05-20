@@ -94,7 +94,6 @@ public:
     fetch::ml::Graph<fetch::math::Tensor<float>>::AddNode<
         fetch::ml::ops::Softmax<fetch::math::Tensor<float>>>(name->str, {inputName->str});
   }
-
 };
 
 inline void CreateGraph(fetch::vm::Module &module)

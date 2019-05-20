@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/stl_types.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/stl_types.hpp"
 #include "vm/common.hpp"
 
 namespace fetch {
@@ -206,8 +206,8 @@ public:
   virtual void   InplaceDivide(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
   virtual void   InplaceRightDivide(Ptr<Object> const &lhso, Variant const &rhsv);
 
-  virtual bool   SerializeTo(ByteArrayBuffer &buffer);
-  virtual bool   DeserializeFrom(ByteArrayBuffer &buffer);
+  virtual bool SerializeTo(ByteArrayBuffer &buffer);
+  virtual bool DeserializeFrom(ByteArrayBuffer &buffer);
 
 protected:
   Variant &       Push();
@@ -460,7 +460,6 @@ inline void Deserialize(ByteArrayBuffer &buffer, Ptr<Object> &object)
     throw std::runtime_error("Unable to deserialize request object");
   }
 }
-
 
 }  // namespace vm
 }  // namespace fetch

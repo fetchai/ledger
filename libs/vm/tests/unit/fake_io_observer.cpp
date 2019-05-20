@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
 #include "fake_io_observer.hpp"
+#include "core/logger.hpp"
 
 static constexpr char const *LOGGING_NAME = "FakeIO";
 
@@ -53,7 +53,8 @@ FakeIoObserver::Status FakeIoObserver::Read(std::string const &key, void *data, 
   return Status::OK;
 }
 
-FakeIoObserver::Status FakeIoObserver::Write(std::string const &key, void const *data, uint64_t size)
+FakeIoObserver::Status FakeIoObserver::Write(std::string const &key, void const *data,
+                                             uint64_t size)
 {
   ConstByteArray const value{reinterpret_cast<uint8_t const *>(data), size};
 

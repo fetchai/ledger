@@ -87,7 +87,6 @@ inline IoObserverInterface::Status ReadHelper(std::string const &name, Ptr<Objec
   {
     // chop down the size of the buffer
     buffer.Resize(buffer_size);
-
   }
   else if (IoObserverInterface::Status::BUFFER_TOO_SMALL == result)
   {

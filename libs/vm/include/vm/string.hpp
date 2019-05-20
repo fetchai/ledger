@@ -45,8 +45,8 @@ struct String : public Object
   bool SerializeTo(ByteArrayBuffer &buffer) override;
   bool DeserializeFrom(ByteArrayBuffer &buffer) override;
 
-  std::string    str;
-  bool           is_literal;
+  std::string str;
+  bool        is_literal;
 };
 
 }  // namespace vm

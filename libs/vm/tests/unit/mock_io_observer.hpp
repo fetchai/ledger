@@ -26,7 +26,6 @@
 class MockIoObserver : public fetch::vm::IoObserverInterface
 {
 public:
-
   MockIoObserver()
   {
     using ::testing::_;
@@ -37,7 +36,7 @@ public:
     ON_CALL(*this, Exists(_)).WillByDefault(Invoke(&fake_, &FakeIoObserver::Exists));
   }
 
-  MOCK_METHOD3(Read, Status(std::string const &, void *, uint64_t&));
+  MOCK_METHOD3(Read, Status(std::string const &, void *, uint64_t &));
   MOCK_METHOD3(Write, Status(std::string const &, void const *, uint64_t));
   MOCK_METHOD1(Exists, Status(std::string const &));
 

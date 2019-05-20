@@ -20,17 +20,17 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
-#include "vm/vm.hpp"
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
 #include "vm/variant.hpp"
+#include "vm/vm.hpp"
 
 #include "gmock/gmock.h"
 
-#include <vector>
-#include <string>
-#include <memory>
 #include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace {
 
@@ -54,7 +54,6 @@ using ObserverPtr   = std::unique_ptr<MockIoObserver>;
 class StateTests : public ::testing::Test
 {
 protected:
-
   void SetUp() override
   {
     observer_   = std::make_unique<MockIoObserver>();
@@ -103,7 +102,7 @@ protected:
     vm_->AttachOutputDevice("stdout", std::cout);
 
     std::string error{};
-    Variant output{};
+    Variant     output{};
     if (!vm_->Execute(*executable_, "main", error, output))
     {
       std::cout << "Runtime Error: " << error << std::endl;
@@ -175,7 +174,9 @@ TEST_F(StateTests, AddressDeserializeTest)
     endfunction
   )";
 
-  AddState("addr", "000000000000000020000000000000002f351e415c71722c379baac9394a947b8a303927b8b8421fb9466ed3db1f5683");
+  AddState("addr",
+           "000000000000000020000000000000002f351e415c71722c379baac9394a947b8a303927b8b8421fb9466ed"
+           "3db1f5683");
 
   EXPECT_CALL(*observer_, Exists("addr"));
   EXPECT_CALL(*observer_, Read("addr", _, _));
@@ -245,7 +246,9 @@ TEST_F(StateTests, ArrayDeserializeTest)
     endfunction
   )";
 
-  AddState("state", "0c000a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+  AddState("state",
+           "0c000a000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+           "0000000000000");
 
   EXPECT_CALL(*observer_, Exists("state"));
   EXPECT_CALL(*observer_, Read("state", _, _));
@@ -254,5 +257,4 @@ TEST_F(StateTests, ArrayDeserializeTest)
   ASSERT_TRUE(Run());
 }
 
-} // namespace 
-
+}  // namespace
