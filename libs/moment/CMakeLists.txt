@@ -1,8 +1,8 @@
 ################################################################################
-# F E T C H   L E D G E R   L I B R A R Y
+# F E T C H   T I M E   L I B R A R Y
 ################################################################################
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
-project(fetch-ledger)
+project(fetch-moment)
 
 # CMake Configuration
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
@@ -14,22 +14,8 @@ setup_compiler()
 # Main Library Target
 #-------------------------------------------------------------------------------
 
-setup_library(fetch-ledger)
-target_link_libraries(fetch-ledger PUBLIC
-  fetch-core
-  fetch-http
-  fetch-network
-  fetch-crypto
-  fetch-math
-  fetch-storage
-  fetch-miner
-  fetch-vm
-  fetch-vm-modules
-  fetch-metrics
-  fetch-moment
-  vendor-msgpack
-)
+setup_library(fetch-moment)
+target_link_libraries(fetch-moment PUBLIC fetch-core)
 
-add_test_target()
-add_subdirectory(examples)
-add_subdirectory(benchmark)
+# Unit tests
+add_subdirectory(tests)
