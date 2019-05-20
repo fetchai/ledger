@@ -44,7 +44,7 @@ public:
 private:
   /// @name Transaction Handlers
   /// @{
-  Status OnCreate(Transaction const &tx);
+  Status OnCreate(v2::Transaction const &tx);
   /// @}
 };
 

@@ -22,6 +22,7 @@
 #include "crypto/fnv.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/chain/v2/transaction.hpp"
 #include "ledger/chaincode/smart_contract_exception.hpp"
 #include "ledger/chaincode/vm_definition.hpp"
 #include "ledger/state_adapter.hpp"
@@ -38,7 +39,6 @@
 #include <string>
 
 using fetch::byte_array::ConstByteArray;
-using fetch::byte_array::FromBase64;
 
 namespace fetch {
 namespace ledger {
@@ -64,28 +64,24 @@ ConstByteArray GenerateDigest(std::string const &source)
  * @param: tx the transaction triggering the smart contract
  * @param: params the parameters
  */
-void ValidateAddressesInParams(Transaction const &tx, vm::ParameterPack const &params)
+void ValidateAddressesInParams(v2::Transaction const &tx, vm::ParameterPack const &params)
 {
-  std::set<ConstByteArray> valid_addresses;
-
-  for (auto const &sig : tx.signatures())
+  std::unordered_set<v2::Address> signing_addresses;
+  for (auto const &sig : tx.signatories())
   {
-    valid_addresses.insert(sig.first.identifier());
+    signing_addresses.insert(sig.address);
   }
-  assert(valid_addresses.size() == tx.signatures().size());
+  assert(signing_addresses.size() == tx.signatories().size());
 
   for (std::size_t i = 0; i < params.size(); i++)
   {
     if (params[i].type_id == vm::TypeIds::Address)
     {
-      auto &var = *(params[i].Get<vm::Ptr<vm::Address>>());
+      vm::Address &address = *(params[i].Get<vm::Ptr<vm::Address>>());
 
-      ConstByteArray address_data{var.GetBytes().data(), var.GetBytes().size()};
-
-      if (std::find(valid_addresses.begin(), valid_addresses.end(), address_data) !=
-          valid_addresses.end())
+      if (signing_addresses.find(address.address()) != signing_addresses.end())
       {
-        var.SetSignedTx(true);
+        address.SetSignedTx(true);
       }
     }
   }
@@ -110,7 +106,7 @@ SmartContract::SmartContract(std::string const &source)
                                  {"No source present in contract"});
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Constructing contract: ", contract_digest().ToBase64());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Constructing contract: 0x", contract_digest().ToHex());
 
   // create and compile the executable
   auto errors = vm_modules::VMFactory::Compile(module_, source_, *executable_);
@@ -224,7 +220,7 @@ std::vector<uint8_t> Convert(ConstByteArray const &buffer)
 void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::object const &obj)
 {
   static uint8_t const  ADDRESS_ID   = static_cast<uint8_t>(0x4d);  // 77
-  static uint32_t const ADDRESS_SIZE = 64u;
+  static uint32_t const ADDRESS_SIZE = 32u;
 
   bool valid{false};
 
@@ -239,7 +235,7 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
 
       // create the instance of the address
       vm::Ptr<vm::Address> address = vm::Address::Constructor(vm, vm::TypeIds::Address);
-      address->SetBytes(std::vector<uint8_t>{start, end});
+      address->FromBytes(std::vector<uint8_t>{start, end});
 
       // add the address to the parameter pack
       pack.Add(std::move(address));
@@ -262,12 +258,20 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
  */
 void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Variant const &obj)
 {
+  v2::Address address{};
+  if (!v2::Address::Parse(obj.As<ConstByteArray>(), address))
+  {
+    throw std::runtime_error("Unable to parse address");
+  }
+
   // create the instance of the address
-  auto address = vm::Address::Constructor(vm, vm::TypeIds::Address);
-  address->SetBytes(Convert(FromBase64(obj.As<ConstByteArray>())));
+  auto vm_address = vm::Address::Constructor(vm, vm::TypeIds::Address);
+
+  // update the value of the address
+  *vm_address = address;
 
   // add it to the parameter list
-  pack.Add(address);
+  pack.Add(vm_address);
 }
 
 /**
@@ -337,12 +341,12 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
  * @param tx The input transaction
  * @return The corresponding status result for the operation
  */
-Contract::Status SmartContract::InvokeAction(std::string const &name, Transaction const &tx)
+Contract::Status SmartContract::InvokeAction(std::string const &name, v2::Transaction const &tx)
 {
   // Important to keep the handle alive as long as the msgpack::object is needed to avoid segfault!
   msgpack::object_handle       h;
   std::vector<msgpack::object> input_params;
-  auto                         parameter_data = byte_array::ByteArray{tx.data()};
+  auto const                   parameter_data = tx.data();
 
   // if the tx has a payload parse it
   if (!parameter_data.empty() && parameter_data != "{}")
@@ -432,7 +436,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
  * @param owner The owner identity of the contract (i.e. the creator of the contract)
  * @return The corresponding status result for the operation
  */
-Contract::Status SmartContract::InvokeInit(Identity const &owner)
+Contract::Status SmartContract::InvokeInit(v2::Address const &owner)
 {
   // Get clean VM instance
   auto vm = vm_modules::VMFactory::GetVM(module_);
@@ -448,24 +452,11 @@ Contract::Status SmartContract::InvokeInit(Identity const &owner)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "One argument for init - defaulting to address population");
 
-    // create the public key from the identity
-    auto const &identity = owner.identifier();
-
     // create the address instance to be passed to the init function
     vm::Ptr<vm::Address> address = vm::Address::Constructor(vm.get(), vm::TypeIds::Address);
 
-    // assign the string value
-    std::vector<uint8_t> pub_key_bytes;
-    pub_key_bytes.assign(identity.pointer(), identity.pointer() + identity.size());
-
-    if (!address->SetBytes(std::move(pub_key_bytes)))
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to pack address of TX for init method");
-      return Status::FAILED;
-    }
-
-    // not sure what this is testing?
-    static_assert(vm::IsPtr<vm::Ptr<vm::Address>>::value, "");
+    // update the internal address
+    *address = owner;
 
     // add the address to the parameter pack
     params.Add(std::move(address));

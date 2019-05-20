@@ -24,6 +24,7 @@
 #include "core/threading/synchronised_state.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/chain/v2/transaction.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -31,6 +32,10 @@
 #include <thread>
 
 namespace fetch {
+namespace crypto {
+class Identity;
+}
+
 namespace ledger {
 namespace consensus {
 class ConsensusMinerInterface;
@@ -122,7 +127,6 @@ public:
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
   using ConstByteArray = byte_array::ConstByteArray;
-  using Identity       = ConstByteArray;
 
   enum class State
   {
@@ -148,7 +152,7 @@ public:
   BlockCoordinator(MainChain &chain, ExecutionManagerInterface &execution_manager,
                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                    BlockSinkInterface &block_sink, TransactionStatusCache &status_cache,
-                   Identity identity, std::size_t num_lanes, std::size_t num_slices,
+                   crypto::Identity const &identity, std::size_t num_lanes, std::size_t num_slices,
                    std::size_t block_difficulty);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
@@ -216,7 +220,7 @@ private:
   using Timepoint         = Clock::time_point;
   using StateMachinePtr   = std::shared_ptr<StateMachine>;
   using MinerPtr          = std::shared_ptr<consensus::ConsensusMinerInterface>;
-  using TxDigestSetPtr    = std::unique_ptr<TxDigestSet>;
+  using TxDigestSetPtr    = std::unique_ptr<v2::DigestSet>;
   using LastExecutedBlock = SynchronisedState<ConstByteArray>;
   using FutureTimepoint   = fetch::core::FutureTimepoint;
 
@@ -269,7 +273,7 @@ private:
 
   /// @name State Machine State
   /// @{
-  Identity        identity_{};             ///< The miner identity
+  v2::Address     mining_address_;         ///< The miners address
   StateMachinePtr state_machine_;          ///< The main state machine for this service
   std::size_t     block_difficulty_;       ///< The number of leading zeros needed in the proof
   std::size_t     num_lanes_;              ///< The current number of lanes
@@ -279,13 +283,12 @@ private:
   BlockPeriod     block_period_;           ///< The desired period before a block is generated
   Timepoint       next_block_time_;        ///< The next point that a block should be generated
   BlockPtr        current_block_{};        ///< The pointer to the current block (read only)
-  NextBlockPtr
-                  next_block_{};  ///< The next block being created (read / write) - only in mining mode
-  TxDigestSetPtr  pending_txs_{};        ///< The list of pending txs that are being waited on
-  PeriodicAction  tx_wait_periodic_;     ///< Periodic print for transaction waiting
-  PeriodicAction  exec_wait_periodic_;   ///< Periodic print for execution
-  PeriodicAction  syncing_periodic_;     ///< Periodic print for synchronisation
-  FutureTimepoint wait_for_tx_timeout_;  ///< Timeout when waiting for transactions
+  NextBlockPtr    next_block_{};           ///< The next block being created (read / write)
+  TxDigestSetPtr  pending_txs_{};          ///< The list of pending txs that are being waited on
+  PeriodicAction  tx_wait_periodic_;       ///< Periodic print for transaction waiting
+  PeriodicAction  exec_wait_periodic_;     ///< Periodic print for execution
+  PeriodicAction  syncing_periodic_;       ///< Periodic print for synchronisation
+  FutureTimepoint wait_for_tx_timeout_;    ///< Timeout when waiting for transactions
   FutureTimepoint
        wait_before_asking_for_missing_tx_;  ///< Time to wait before asking peers for any missing txs
   bool have_asked_for_missing_txs_;  ///< true if a request for missing Txs has been issued for the

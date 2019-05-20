@@ -19,14 +19,14 @@
 #include "ledger/transaction_verifier.hpp"
 #include "core/logger.hpp"
 #include "core/threading.hpp"
+#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/storage_unit/transaction_sinks.hpp"
 #include "metrics/metrics.hpp"
 #include "network/generics/milli_timer.hpp"
 
 #include <chrono>
 
 static const std::chrono::milliseconds POP_TIMEOUT{300};
-static const std::chrono::milliseconds WAITTIME_FOR_NEW_VERIFIED_TRANSACTIONS{1000};
-static const std::chrono::milliseconds WAITTIME_FOR_NEW_VERIFIED_TRANSACTIONS_IF_FLUSH_NEEDED{1};
 
 namespace fetch {
 namespace ledger {
@@ -80,29 +80,28 @@ void TransactionVerifier::Stop()
  */
 void TransactionVerifier::Verifier()
 {
-  MutableTransaction mtx;
-
-  bool success{false};
+  TransactionPtr tx;
 
   while (active_)
   {
     try
     {
       // wait for a mutable transaction to be available
-      if (unverified_queue_.Pop(mtx, POP_TIMEOUT))
+      if (unverified_queue_.Pop(tx, POP_TIMEOUT))
       {
-        // convert the transaction to a verified one and enqueue
-        auto const tx = VerifiedTransaction::Create(mtx, &success);
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Verifying TX: 0x", tx->digest().ToHex());
 
         // check the status
-        if (success)
+        if (tx->Verify())
         {
-          verified_queue_.Push(tx);
+          FETCH_LOG_DEBUG(LOGGING_NAME, "TX Verify Complete: 0x", tx->digest().ToHex());
+
+          verified_queue_.Push(std::move(tx));
         }
         else
         {
-          FETCH_LOG_WARN(LOGGING_NAME, name_ + " Unable to verify transaction: ",
-                         byte_array::ToBase64(tx.digest()));
+          FETCH_LOG_WARN(LOGGING_NAME, name_ + " Unable to verify transaction: 0x",
+                         tx->digest().ToHex());
         }
       }
     }
@@ -121,43 +120,16 @@ void TransactionVerifier::Dispatcher()
 {
   SetThreadName(name_ + "-D");
 
-  std::vector<VerifiedTransaction> txs;
-
   while (active_)
   {
-
     try
     {
-      while (txs.size() < batch_size_ && active_)
+      TransactionPtr tx;
+      if (verified_queue_.Pop(tx, POP_TIMEOUT))
       {
-        std::chrono::milliseconds wait_time{WAITTIME_FOR_NEW_VERIFIED_TRANSACTIONS_IF_FLUSH_NEEDED};
-        VerifiedTransaction       tx;
-        if (txs.empty())
-        {
-          wait_time = WAITTIME_FOR_NEW_VERIFIED_TRANSACTIONS;
-        }
-        if (verified_queue_.Pop(tx, wait_time))
-        {
-          txs.emplace_back(std::move(tx));
-        }
-        else
-        {
-          break;
-        }
-      }
+        FETCH_LOG_DEBUG(LOGGING_NAME, "TX Dispatch: 0x", tx->digest().ToHex());
 
-      switch (txs.size())
-      {
-      case 0:
-        break;
-      case 1:
-        sink_.OnTransaction(txs.front());
-        txs.clear();
-        break;
-      default:
-        sink_.OnTransactions(txs);
-        txs.clear();
-        break;
+        sink_.OnTransaction(tx);
       }
     }
     catch (std::exception const &e)

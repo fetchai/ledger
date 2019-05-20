@@ -210,9 +210,9 @@ public:
   }
 
 public:
-  self_type SubArray(std::size_t const &start, std::size_t length = std::size_t(-1)) const
+  self_type SubArray(std::size_t start, std::size_t length = std::size_t(-1)) const
   {
-    return SubArray<self_type>(start, length);
+    return SubArrayInternal<self_type>(start, length);
   }
 
   bool Match(self_type const &str, std::size_t pos = 0) const
@@ -311,7 +311,7 @@ public:
 
 protected:
   template <typename RETURN_TYPE = self_type>
-  RETURN_TYPE SubArray(std::size_t const &start, std::size_t length = std::size_t(-1)) const
+  RETURN_TYPE SubArrayInternal(std::size_t const &start, std::size_t length = std::size_t(-1)) const
   {
     length = std::min(length, length_ - start);
     assert(start + length <= start_ + length_);

@@ -41,12 +41,12 @@ protected:
   using FakeExecutorList    = std::vector<FakeExecutorPtr>;
   using ExecutionManager    = fetch::ledger::ExecutionManager;
   using ExecutorFactory     = ExecutionManager::ExecutorFactory;
-  using BlockHash           = ExecutionManager::BlockHash;
   using ExecutionManagerPtr = std::shared_ptr<ExecutionManager>;
   using MockStorageUnitPtr  = std::shared_ptr<MockStorageUnit>;
   using Clock               = std::chrono::high_resolution_clock;
   using ScheduleStatus      = ExecutionManager::ScheduleStatus;
   using State               = ExecutionManager::State;
+  using Digest              = fetch::ledger::v2::Digest;
 
   static constexpr char const *LOGGING_NAME = "ExecutionManagerTests";
 
@@ -58,8 +58,8 @@ protected:
     executors_.clear();
 
     // create the manager
-    manager_ = std::make_shared<ExecutionManager>(config.executors, mock_storage_,
-                                                  [this]() { return CreateExecutor(); });
+    manager_ = std::make_shared<ExecutionManager>(
+        config.executors, config.log2_lanes, mock_storage_, [this]() { return CreateExecutor(); });
   }
 
   void TearDown() override

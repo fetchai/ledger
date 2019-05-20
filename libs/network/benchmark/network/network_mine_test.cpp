@@ -17,6 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "helper_functions.hpp"
+#include "ledger/chain/v2/transaction_layout.hpp"
+#include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
 #include "mine_node_basic.hpp"
 #include "network/management/network_manager.hpp"
 #include "network_mine_test_service.hpp"
