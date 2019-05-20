@@ -164,12 +164,6 @@ struct GetStorageType<T, typename std::enable_if_t<IsPtr<T>::value>>
   using type = Ptr<Object>;
 };
 
-template <typename T>
-struct GetStorageType<T, typename std::enable_if_t<IsAddress<T>::value>>
-{
-  using type = Ptr<T>;
-};
-
 class Object
 {
 public:
