@@ -18,46 +18,37 @@
 
 #include "vm_test_suite.hpp"
 
-#include "vm/io_observer_interface.hpp"
-#include "vm_modules/vm_factory.hpp"
-
-#include "gtest/gtest.h"
-
-class VMTests : public VmTestSuite
+class CustomBindingTests : public VmTestSuite
 {
 protected:
-  using Module = std::shared_ptr<fetch::vm::Module>;
-  using VM     = std::unique_ptr<fetch::vm::VM>;
-
-
-
 };
 
-// Test we can compile and run a fairly inoffensive smart contract
-TEST_F(VMTests, CheckCompileAndExecute)
+// Test to add a custom binding that will increment this counter when
+// the smart contract is executed
+static int32_t binding_called_count = 0;
+
+static void CustomBinding(fetch::vm::VM * /*vm*/)
+{
+  binding_called_count++;
+}
+
+TEST_F(CustomBindingTests, CheckBasicBinding)
 {
   static char const *TEXT =
       " function main() "
-      "   print(\"Hello, world\");"
+      "   customBinding();"
       " endfunction ";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
-}
+  EXPECT_EQ(binding_called_count, 0);
 
-TEST_F(VMTests, CheckRandom)
-{
-  static char const *TEXT =
-      " function main()"
-      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   print('rnd = ' + toString(Rand(0u64, 1000u64)));"
-      "   print('rnd = ' + toString(Rand(0.0f, 1000.0f)));"
-      "   print('rnd = ' + toString(Rand(0.0, 1000.0)));"
-      " endfunction ";
+  // create the binding
+  module_->CreateFreeFunction("customBinding", &CustomBinding);
 
   ASSERT_TRUE(Compile(TEXT));
+
   ASSERT_TRUE(Run());
+  ASSERT_TRUE(Run());
+  ASSERT_TRUE(Run());
+
+  EXPECT_EQ(binding_called_count, 3);
 }
