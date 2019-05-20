@@ -563,6 +563,7 @@ public:
     auto input_slice_it = input_embeddings_.Slice(input_word_idx).begin();
     auto input_grads_it = input_grads_.begin();
     
+    std::cout << "l2_lambda: " << l2_lambda << std::endl;
     while (input_slice_it.is_valid())
     {
       //      std::cout << "*input_slice_it: " << *input_slice_it << std::endl;
@@ -570,6 +571,10 @@ public:
       //      std::endl;
 
       // grad and l2_reg weight decay
+      
+      std::cout << std::setprecision(20) << "*input_slice_it: " << *input_slice_it << std::endl;
+      std::cout << std::setprecision(20) << "*input_grads_it: " << *input_grads_it << std::endl;
+
       *input_slice_it += (*input_grads_it) - (l2_lambda * *input_slice_it);
 
       //      *input_slice_it += (*input_grads_it);
@@ -594,13 +599,6 @@ public:
     if (l2reg_row_sums[input_word_idx] > 1e+100)
     {
       std::cout << "enormous row value: " << std::endl;
-      
-      auto tmp_input_grads_it = input_grads_.begin();
-      while (input_slice_it.is_valid())
-      {
-        std::cout << "*tmp_input_grads_it: " << *tmp_input_grads_it << std::endl;
-        ++tmp_input_grads_it;
-      }
     }
 
     if (l2reg_row_sums[input_word_idx] < 0)
