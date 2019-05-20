@@ -84,5 +84,17 @@ void String::Add(Ptr<Object> &lhso, Ptr<Object> &rhso)
   }
 }
 
+bool String::SerializeTo(ByteArrayBuffer &buffer)
+{
+  buffer << str;
+  return true;
+}
+
+bool String::DeserializeFrom(ByteArrayBuffer &buffer)
+{
+  buffer >> str;
+  return true;
+}
+
 }  // namespace vm
 }  // namespace fetch

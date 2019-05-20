@@ -384,10 +384,10 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
 
   Variant request{Variant::Object()};
 
-    request["address"] = owner_address_->display();
+  request["address"] = owner_address_->display();
   VerifyQuery("balance", 99000000000ull, request);
 
-  request["address"] = ToBase64(target.identity().identifier());
+  request["address"] = Address{target.identity()}.display();
   VerifyQuery("balance", 1000000000ull, request);
 }
 
@@ -499,13 +499,11 @@ TEST_F(SmartContractTests, CheckPersistentMapSetWithAddressAsName)
     address_raw[i] = i;
   }
 
-  Identity identity{address_raw};
+  Address address_as_name{Identity{address_raw}};
 
   // define expected values
-
-  auto const address_str{address_raw.ToBase64()};
   auto const expected_key1 =
-      contract_name_->full_name() + ".state." + ToBase64(identity.identifier()) + ".foo";
+      contract_name_->full_name() + ".state." + address_as_name.display() + ".foo";
   auto const expected_resource1 = ResourceAddress{expected_key1};
   auto const expected_value1    = RawBytes<int32_t>(20);
   fetch::BitVector mask{1ull << 4};
@@ -525,10 +523,10 @@ TEST_F(SmartContractTests, CheckPersistentMapSetWithAddressAsName)
 
   // send the smart contract an "increment" action
   EXPECT_EQ(SmartContract::Status::OK,
-            SendSmartActionWithParams("test_persistent_map", fetch::ledger::v2::Address{identity}));
+            SendSmartActionWithParams("test_persistent_map", address_as_name));
 
   Variant request    = Variant::Object();
-  request["address"] = ToBase64(identity.identifier());
+  request["address"] = address_as_name.display();
   VerifyQuery("query_foo", int32_t{20}, request);
 }
 

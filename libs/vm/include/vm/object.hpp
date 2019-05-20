@@ -17,10 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/stl_types.hpp"
 #include "vm/common.hpp"
 
 namespace fetch {
 namespace vm {
+
+using ByteArrayBuffer = fetch::serializers::ByteArrayBuffer;
 
 // Forward declarations
 class Object;
@@ -172,18 +176,6 @@ struct GetStorageType<T, typename std::enable_if_t<IsPtr<T>::value>>
   using type = Ptr<Object>;
 };
 
-template <typename T>
-struct GetStorageType<T, typename std::enable_if_t<IsAddress<T>::value>>
-{
-  using type = Ptr<T>;
-};
-
-template <typename T>
-struct GetStorageType<T, typename std::enable_if_t<IsString<T>::value>>
-{
-  using type = Ptr<T>;
-};
-
 class Object
 {
 public:
@@ -225,6 +217,9 @@ public:
   virtual void   RightDivide(Variant &objectv, Variant &rhsv);
   virtual void   InplaceDivide(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
   virtual void   InplaceRightDivide(Ptr<Object> const &lhso, Variant const &rhsv);
+
+  virtual bool SerializeTo(ByteArrayBuffer &buffer);
+  virtual bool DeserializeFrom(ByteArrayBuffer &buffer);
 
   TypeId getTypeId() const
   {
@@ -465,6 +460,22 @@ template <typename R>
 inline bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
 {
   return (nullptr != rhs.ptr_);
+}
+
+inline void Serialize(ByteArrayBuffer &buffer, Ptr<Object> const &object)
+{
+  if (!object->SerializeTo(buffer))
+  {
+    throw std::runtime_error("Unable to serialize requested object");
+  }
+}
+
+inline void Deserialize(ByteArrayBuffer &buffer, Ptr<Object> &object)
+{
+  if (!object->DeserializeFrom(buffer))
+  {
+    throw std::runtime_error("Unable to deserialize request object");
+  }
 }
 
 }  // namespace vm
