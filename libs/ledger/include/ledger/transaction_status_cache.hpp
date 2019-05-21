@@ -19,7 +19,7 @@
 
 #include "core/mutex.hpp"
 #include "core/threading/synchronised_state.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
+#include "ledger/chain/digest.hpp"
 
 #include <chrono>
 #include <unordered_map>
@@ -40,7 +40,6 @@ char const *ToString(TransactionStatus status);
 class TransactionStatusCache
 {
 public:
-  using TxDigest  = TransactionSummary::TxDigest;
   using Clock     = std::chrono::steady_clock;
   using Timepoint = Clock::time_point;
 
@@ -50,8 +49,8 @@ public:
   TransactionStatusCache(TransactionStatusCache &&)      = delete;
   ~TransactionStatusCache()                              = default;
 
-  TransactionStatus Query(TxDigest digest) const;
-  void Update(TxDigest digest, TransactionStatus status, Timepoint const &now = Clock::now());
+  TransactionStatus Query(Digest digest) const;
+  void Update(Digest digest, TransactionStatus status, Timepoint const &now = Clock::now());
 
   // Operators
   TransactionStatusCache &operator=(TransactionStatusCache const &) = delete;
@@ -66,7 +65,7 @@ private:
     Timepoint         timestamp{Clock::now()};
   };
 
-  using Cache = std::unordered_map<TxDigest, Element>;
+  using Cache = DigestMap<Element>;
 
   void PruneCache(Timepoint const &now);
 

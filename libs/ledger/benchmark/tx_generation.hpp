@@ -19,17 +19,17 @@
 
 #include "core/random/lcg.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/v2/transaction.hpp"
-#include "ledger/chain/v2/transaction_builder.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "ledger/chain/transaction_builder.hpp"
 
 #include <cstdint>
 
 namespace {
 
 using fetch::crypto::ECDSASigner;
-using fetch::ledger::v2::Transaction;
-using fetch::ledger::v2::TransactionBuilder;
-using fetch::ledger::v2::Address;
+using fetch::ledger::Transaction;
+using fetch::ledger::TransactionBuilder;
+using fetch::ledger::Address;
 using fetch::BitVector;
 
 using TransactionList = std::vector<TransactionBuilder::TransactionPtr>;

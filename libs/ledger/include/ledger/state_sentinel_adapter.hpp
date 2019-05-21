@@ -31,8 +31,6 @@ namespace ledger {
 class StateSentinelAdapter : public StateAdapter
 {
 public:
-  using ResourceSet = TransactionSummary::ResourceSet;
-
   static constexpr char const *LOGGING_NAME = "StateSentinelAdapter";
 
   // Construction / Destruction

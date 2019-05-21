@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iomanip>
 #include <iostream>
 
 #include "math/kernels/sign.hpp"

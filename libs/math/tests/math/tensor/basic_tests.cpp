@@ -20,7 +20,6 @@
 #include "math/tensor.hpp"
 #include "meta/type_traits.hpp"
 #include <gtest/gtest.h>
-#include <iomanip>
 #include <iostream>
 
 template <typename T>
