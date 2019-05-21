@@ -780,15 +780,15 @@ void *TrainModelThread(void *id)
       {
         now = clock();
         printf("%cAlpha: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  ", 13, alpha,
-               word_count_actual / static_cast<float>(static_cast<float>(iter * train_words) + 1.0) * 100,
-               word_count_actual / (static_cast<float>(now - start + 1.0) / static_cast<float>(CLOCKS_PER_SEC) * 1000.0));
+               word_count_actual / static_cast<float>(static_cast<float>(iter * train_words) + static_cast<float>(1.0)) * 100,
+               word_count_actual / (static_cast<float>(static_cast<float>(now - start) + 1.0) / static_cast<float>(CLOCKS_PER_SEC) * static_cast<float>(1000.0)));
         fflush(stdout);
       }
       // linear-decay learning rate (decreases from one toward zero
       // linearly in number of words seen, but thresholded below
       // at one ten-thousandth of initial learning rate)
       // (each word in the data is to be seen `iter` times)
-      alpha = starting_alpha * (1 - word_count_actual / (real)(iter * train_words + 1));
+      alpha = starting_alpha * (1 - word_count_actual / static_cast<float>(static_cast<float>(iter * train_words) + 1));
       if (alpha < starting_alpha * 0.0001)
         alpha = static_cast<float>(starting_alpha * 0.0001);
     }
@@ -949,7 +949,7 @@ void *TrainModelThread(void *id)
             else if (f < -MAX_EXP)
               g = static_cast<float>(label - 0) * alpha;
             else
-              g = (label - static_cast<float>(expTable[(int)((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))])) * alpha;
+              g = (label - static_cast<float>(expTable[static_cast<int>((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))])) * alpha;
             for (c = 0; c < layer1_size; c++)
               neu1e[c] += g * syn1neg[c + l2];
             for (c = 0; c < layer1_size; c++)
