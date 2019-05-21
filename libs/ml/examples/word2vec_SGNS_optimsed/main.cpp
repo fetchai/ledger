@@ -189,11 +189,11 @@ public:
       auto it = vocab_.find(word);
       if (it != vocab_.end())
       {
-        *cursor_ = it->second;
+        *cursor_ = static_cast<DataType>(it->second);
       }
       else
       {
-        *cursor_ = 0;
+        *cursor_ = DataType(0);
       }
       ++cursor_;
       ++cursor_count;
@@ -360,7 +360,7 @@ private:
       if (i < cursor_offset_)
       {
         for (std::size_t j = 0; j <
-                static_cast<std::size_t>((static_cast<double>(i + 1) / static_cast<double>(sum_freqs)) * ran_positive_cursor_.size()); ++j)
+                static_cast<std::size_t>((static_cast<double>(i + 1) / static_cast<double>(sum_freqs)) * static_cast<double>(ran_positive_cursor_.size())); ++j)
         {
           rows_.emplace_back(i);
         }
@@ -369,7 +369,7 @@ private:
       {
         for (std::size_t j = 0;
              j < static_cast<std::size_t>((static_cast<double>((cursor_offset_ - (i - cursor_offset_))) / static_cast<double>(sum_freqs)) *
-                     ran_positive_cursor_.size());
+                     static_cast<double>(ran_positive_cursor_.size()));
              ++j)
         {
           rows_.emplace_back(i);
@@ -971,9 +971,9 @@ int main(int argc, char **argv)
       std::cout << "total_step_count: " << total_step_count << std::endl;
       std::cout << "current cursor idx: " << cursor_idx << std::endl;
       std::cout << "current negative learning rate: " << model.alpha_ << std::endl;
-      std::cout << "loss: " << (sum_loss + sum_l2_loss) / tp.print_freq << std::endl;
-      std::cout << "w2vloss: " << sum_loss / tp.print_freq << std::endl;
-      std::cout << "l2 loss: " << sum_l2_loss / tp.print_freq << std::endl;
+      std::cout << "loss: " << (sum_loss + sum_l2_loss) / static_cast<double>(tp.print_freq) << std::endl;
+      std::cout << "w2vloss: " << sum_loss / static_cast<double>(tp.print_freq) << std::endl;
+      std::cout << "l2 loss: " << sum_l2_loss / static_cast<double>(tp.print_freq) << std::endl;
       sum_loss    = 0;
       sum_l2_loss = 0;
       std::cout << std::endl;
