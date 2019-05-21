@@ -780,7 +780,7 @@ void *TrainModelThread(void *id)
       {
         now = clock();
         printf("%cAlpha: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  ", 13, alpha,
-               word_count_actual / static_cast<float>(iter * train_words + 1.0) * 100,
+               word_count_actual / static_cast<float>(static_cast<float>(iter * train_words) + 1.0) * 100,
                word_count_actual / (static_cast<float>(now - start + 1.0) / static_cast<float>(CLOCKS_PER_SEC) * 1000.0));
         fflush(stdout);
       }
@@ -824,7 +824,7 @@ void *TrainModelThread(void *id)
           real ran = (static_cast<float>(sqrt(vocab[word].cn) / (sample * static_cast<float>(train_words))) + 1) * (sample * static_cast<float>(train_words)) /
                      static_cast<float>(vocab[word].cn);
           next_random = next_random * (unsigned long long)25214903917 + 11;
-          if (ran < static_cast<float>((next_random & 0xFFFF) / (real)65536)
+          if (ran < static_cast<float>(next_random & 0xFFFF) / (real)65536)
             continue;
         }
 
@@ -945,9 +945,9 @@ void *TrainModelThread(void *id)
             for (c = 0; c < layer1_size; c++)
               f += neu1[c] * syn1neg[c + l2];
             if (f > MAX_EXP)
-              g = static_cast<float>((label - 1) * alpha;
+              g = static_cast<float>(label - 1) * alpha;
             else if (f < -MAX_EXP)
-              g = static_cast<float>((label - 0) * alpha;
+              g = static_cast<float>(label - 0) * alpha;
             else
               g = (label - static_cast<float>(expTable[(int)((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))])) * alpha;
             for (c = 0; c < layer1_size; c++)
