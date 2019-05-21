@@ -145,7 +145,7 @@ public:
   uint64_t LazyPush(STACK_ELEMENTS const &object)
   {
     ThrowOnBadAccess("LazyPush");
-    Push(object);
+    return Push(object);
   }
 
   std::fstream &underlying_stream()

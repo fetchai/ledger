@@ -39,8 +39,7 @@ using namespace fetch::testing;
 using ByteArray      = fetch::byte_array::ByteArray;
 using ConstByteArray = fetch::byte_array::ConstByteArray;
 
-// TODO(HUT): figure out why this fails
-TEST(new_revertible_store_test, DISABLED_basic_example_of_commit_revert1)
+TEST(new_revertible_store_test, basic_example_of_commit_revert1)
 {
   NewRevertibleDocumentStore store;
   store.New("a_11.db", "b_11.db", "c_11.db", "d_11.db", true);
@@ -157,8 +156,7 @@ TEST(DISABLED_new_revertible_store_test, more_involved_commit_revert)
   }
 }
 
-// TODO(HUT): figure out why fails.
-TEST(new_revertible_store_test, DISABLED_basic_example_of_commit_revert_with_load)
+TEST(new_revertible_store_test, basic_example_of_commit_revert_with_load)
 {
   // Keep track of the hashes we get from committing
   std::vector<ByteArray> hashes;
