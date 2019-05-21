@@ -97,7 +97,7 @@ TEST(new_revertible_store_test, basic_example_of_commit_revert1)
   {
     auto document = store.Get(storage::ResourceAddress(std::to_string(i)));
     EXPECT_EQ(document.failed, false);
-    EXPECT_EQ(ConstByteArray(document), ByteArray(std::to_string(i + 5)));
+    EXPECT_EQ(std::string(document.document), std::to_string(i + 5));
   }
 
   // EXPECT_EQ(store.HashExists(hashes[0]), true);

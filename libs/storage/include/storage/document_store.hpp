@@ -147,11 +147,7 @@ public:
       file_object_.CreateNewFile(value.size());
     }
 
-    // TODO(HUT): consider whether to put this check within the file object
-    if (file_object_.FileObjectSize() > value.size())
-    {
-      file_object_.Resize(value.size());
-    }
+    file_object_.Resize(value.size());
 
     file_object_.Write(value);
     file_object_.Flush();
