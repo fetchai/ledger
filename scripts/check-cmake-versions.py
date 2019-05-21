@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import argparse
+import sys
 
 TARGET_FILES = ('CMakeLists.txt',)
 EXPECTED_CMAKE_VERSION = 'cmake_minimum_required(VERSION 3.5 FATAL_ERROR)'
