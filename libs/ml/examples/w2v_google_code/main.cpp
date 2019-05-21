@@ -633,7 +633,7 @@ void ReadVocab()
       break;
     a = AddWordToVocab(word);
     int tmp = fscanf(fin, "%lld%c", &vocab[a].cn, &c);
-    tmp  = 2; // just avoids unused warning
+    tmp  = tmp + 2; // just avoids unused warning
     i++;
   }
   SortVocab();
@@ -1340,7 +1340,7 @@ int main(int argc, char **argv)
   for (i = 0; i < EXP_TABLE_SIZE; i++)
   {
     // Precompute the exp() table
-    expTable[i] = exp((i / static_cast<float>(EXP_TABLE_SIZE) * 2 - 1) * MAX_EXP);
+    expTable[i] = exp((static_cast<float>(i) / static_cast<float>(EXP_TABLE_SIZE) * static_cast<float>(2) - static_cast<float>(1)) * MAX_EXP);
     // Precompute f(x) = x / (x + 1)
     expTable[i] = expTable[i] / (expTable[i] + 1);
   }
