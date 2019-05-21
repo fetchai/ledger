@@ -24,9 +24,8 @@
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/chain/constants.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/v2/digest.hpp"
-#include "ledger/chain/v2/transaction_layout.hpp"
+#include "ledger/chain/digest.hpp"
+#include "ledger/chain/transaction_layout.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "storage/object_store.hpp"
 #include "storage/resource_mapper.hpp"
@@ -97,7 +96,7 @@ public:
   using BlockHash            = v2::Digest;
   using BlockHashes          = std::vector<BlockHash>;
   using BlockHashSet         = std::unordered_set<BlockHash>;
-  using TransactionLayoutSet = std::unordered_set<v2::TransactionLayout>;
+  using TransactionLayoutSet = std::unordered_set<TransactionLayout>;
 
   static constexpr char const *LOGGING_NAME = "MainChain";
   static constexpr uint64_t    UPPER_BOUND  = 100000ull;
@@ -157,8 +156,8 @@ public:
 
   /// @name Transaction Duplication Filtering
   /// @{
-  v2::DigestSet DetectDuplicateTransactions(BlockHash            starting_hash,
-                                            v2::DigestSet const &transactions) const;
+  DigestSet DetectDuplicateTransactions(BlockHash        starting_hash,
+                                        DigestSet const &transactions) const;
   /// @}
 
   // Operators

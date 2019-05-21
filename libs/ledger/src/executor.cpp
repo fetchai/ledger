@@ -22,7 +22,7 @@
 #include "core/logger.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
-#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
@@ -48,10 +48,10 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-bool GenerateContractName(v2::Transaction const &tx, Identifier &identifier)
+bool GenerateContractName(Transaction const &tx, Identifier &identifier)
 {
   // Step 1 - Translate the tx into a common name
-  using ContractMode = v2::Transaction::ContractMode;
+  using ContractMode = Transaction::ContractMode;
 
   ConstByteArray contract_name{};
   switch (tx.contract_mode())
@@ -79,9 +79,9 @@ bool GenerateContractName(v2::Transaction const &tx, Identifier &identifier)
   return true;
 }
 
-bool IsCreateWealth(v2::Transaction const &tx)
+bool IsCreateWealth(Transaction const &tx)
 {
-  return (tx.contract_mode() == v2::Transaction::ContractMode::CHAIN_CODE) &&
+  return (tx.contract_mode() == Transaction::ContractMode::CHAIN_CODE) &&
          (tx.chain_code() == "fetch.token") && (tx.action() == "wealth");
 }
 
@@ -106,7 +106,7 @@ Executor::Executor(StorageUnitPtr storage)
  * @param shards The bit vector outlining the shards in use by this transaction
  * @return The status code for the operation
  */
-Executor::Result Executor::Execute(v2::Digest const &digest, BlockIndex block, SliceIndex slice,
+Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, SliceIndex slice,
                                    BitVector const &shards)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(digest));
@@ -163,7 +163,7 @@ Executor::Result Executor::Execute(v2::Digest const &digest, BlockIndex block, S
   return result;
 }
 
-void Executor::SettleFees(v2::Address const &miner, TokenAmount amount, uint32_t log2_num_lanes)
+void Executor::SettleFees(Address const &miner, TokenAmount amount, uint32_t log2_num_lanes)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Settling fees");
 
@@ -185,14 +185,14 @@ void Executor::SettleFees(v2::Address const &miner, TokenAmount amount, uint32_t
   }
 }
 
-bool Executor::RetrieveTransaction(v2::Digest const &digest)
+bool Executor::RetrieveTransaction(Digest const &digest)
 {
   bool success{false};
 
   try
   {
     // create a new transaction
-    current_tx_ = std::make_unique<v2::Transaction>();
+    current_tx_ = std::make_unique<Transaction>();
 
     // load the transaction from the store
     success = storage_->GetTransaction(digest, *current_tx_);
@@ -217,7 +217,7 @@ bool Executor::ValidationChecks(Result &result)
 
   // CHECK: Determine if the transaction is valid for the given block
   auto const tx_validity = current_tx_->GetValidity(block_);
-  if (v2::Transaction::Validity::VALID != tx_validity)
+  if (Transaction::Validity::VALID != tx_validity)
   {
     result.status = Status::TX_NOT_VALID_FOR_BLOCK;
     return false;
@@ -288,7 +288,8 @@ bool Executor::ExecuteTransactionContract(Result &result)
 
     // Dispatch the transaction to the contract
     FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatch: ", contract_id.name());
-    auto const contract_status = contract->DispatchTransaction(contract_id.name(), *current_tx_);
+    auto const contract_status =
+        contract->DispatchTransaction(contract_id.name(), *current_tx_, block_);
 
     // detach the chain code from the current context
     contract->Detach();

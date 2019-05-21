@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/reactor.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/shard_config.hpp"
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/has_worker_thread.hpp"
@@ -26,7 +25,6 @@
 #include "storage/object_store_protocol.hpp"
 #include "storage/transient_object_store.hpp"
 
-#include <iomanip>
 #include <memory>
 
 namespace fetch {
@@ -59,10 +57,7 @@ class LaneController;
 class LaneControllerProtocol;
 class LaneIdentity;
 class LaneIdentityProtocol;
-
-namespace v2 {
 class Transaction;
-}
 
 class LaneService
 {
@@ -107,8 +102,8 @@ private:
   using ServerPtr                 = std::shared_ptr<Server>;
   using StateDb                   = storage::NewRevertibleDocumentStore;
   using StateDbProto              = storage::RevertibleDocumentStoreProtocol;
-  using TxStore                   = storage::TransientObjectStore<v2::Transaction>;
-  using TxStoreProto              = storage::ObjectStoreProtocol<v2::Transaction>;
+  using TxStore                   = storage::TransientObjectStore<Transaction>;
+  using TxStoreProto              = storage::ObjectStoreProtocol<Transaction>;
   using BackgroundedWork          = network::BackgroundedWork<TransactionStoreSyncService>;
   using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;

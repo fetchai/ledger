@@ -23,7 +23,7 @@
 #include "ledger/block_sink_interface.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_status_cache.hpp"
@@ -80,8 +80,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   // configure the state machine
   // clang-format off
   state_machine_->RegisterHandler(State::RELOAD_STATE,                 this, &BlockCoordinator::OnReloadState);
-  state_machine_->RegisterHandler(State::SYNCHRONIZING,                this, &BlockCoordinator::OnSynchronizing);
-  state_machine_->RegisterHandler(State::SYNCHRONIZED,                 this, &BlockCoordinator::OnSynchronized);
+  state_machine_->RegisterHandler(State::SYNCHRONISING,                this, &BlockCoordinator::OnSynchronising);
+  state_machine_->RegisterHandler(State::SYNCHRONISED,                 this, &BlockCoordinator::OnSynchronised);
   state_machine_->RegisterHandler(State::PRE_EXEC_BLOCK_VALIDATION,    this, &BlockCoordinator::OnPreExecBlockValidation);
   state_machine_->RegisterHandler(State::WAIT_FOR_TRANSACTIONS,        this, &BlockCoordinator::OnWaitForTransactions);
   state_machine_->RegisterHandler(State::SCHEDULE_BLOCK_EXECUTION,     this, &BlockCoordinator::OnScheduleBlockExecution);
@@ -150,7 +150,7 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
   return State::RESET;
 }
 
-BlockCoordinator::State BlockCoordinator::OnSynchronizing()
+BlockCoordinator::State BlockCoordinator::OnSynchronising()
 {
   // ensure that we have a current block that we are executing
   if (!current_block_)
@@ -210,7 +210,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
   else if (current_hash == last_processed_block)
   {
     // the block coordinator has now successfully synced with the chain of blocks.
-    return State::SYNCHRONIZED;
+    return State::SYNCHRONISED;
   }
   else
   {
@@ -307,10 +307,10 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
     return State::PRE_EXEC_BLOCK_VALIDATION;
   }
 
-  return State::SYNCHRONIZING;
+  return State::SYNCHRONISING;
 }
 
-BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State previous)
+BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State previous)
 {
   FETCH_UNUSED(current);
 
@@ -339,14 +339,14 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
     // trigger packing state
     return State::PACK_NEW_BLOCK;
   }
-  else if (State::SYNCHRONIZING == previous)
+  else if (State::SYNCHRONISING == previous)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Chain Sync complete on 0x", current_block_->body.hash.ToHex(),
                    " (block: ", current_block_->body.block_number, " prev: 0x",
                    current_block_->body.previous_hash.ToHex(), ")");
   }
 
-  return State::SYNCHRONIZED;
+  return State::SYNCHRONISED;
 }
 
 BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
@@ -411,7 +411,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
     if (have_asked_for_missing_txs_)
     {
       // FSM is stuck waiting for transactions - has timeout elapsed?
-      if (wait_for_tx_timeout_.IsDue())
+      if (wait_for_tx_timeout_.HasExpired())
       {
         // Assume block was invalid and discard it
         chain_.RemoveBlock(current_block_->body.hash);
@@ -421,25 +421,25 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
     }
     else
     {
-      if (wait_before_asking_for_missing_tx_.IsDue())
+      if (wait_before_asking_for_missing_tx_.HasExpired())
       {
         storage_unit_.IssueCallForMissingTxs(*pending_txs_);
         have_asked_for_missing_txs_ = true;
-        wait_for_tx_timeout_        = WAIT_FOR_TX_TIMEOUT_INTERVAL;
+        wait_for_tx_timeout_.Restart(WAIT_FOR_TX_TIMEOUT_INTERVAL);
       }
     }
   }
   else
   {
     // Only just started waiting for transactions - reset countdown to issuing request to peers
-    wait_before_asking_for_missing_tx_ = WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL;
-    have_asked_for_missing_txs_        = false;
+    wait_before_asking_for_missing_tx_.Restart(WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL);
+    have_asked_for_missing_txs_ = false;
   }
 
   // if the transaction digests have not been cached then do this now
   if (!pending_txs_)
   {
-    pending_txs_ = std::make_unique<v2::DigestSet>();
+    pending_txs_ = std::make_unique<DigestSet>();
 
     for (auto const &slice : current_block_->body.slices)
     {
@@ -749,7 +749,7 @@ BlockCoordinator::State BlockCoordinator::OnReset()
   // we should update the next block time
   UpdateNextBlockTime();
 
-  return State::SYNCHRONIZING;
+  return State::SYNCHRONISING;
 }
 
 bool BlockCoordinator::ScheduleCurrentBlock()
@@ -865,11 +865,11 @@ char const *BlockCoordinator::ToString(State state)
   case State::RELOAD_STATE:
     text = "Reloading State";
     break;
-  case State::SYNCHRONIZING:
-    text = "Synchronizing";
+  case State::SYNCHRONISING:
+    text = "Synchronising";
     break;
-  case State::SYNCHRONIZED:
-    text = "Synchronized";
+  case State::SYNCHRONISED:
+    text = "Synchronised";
     break;
   case State::PRE_EXEC_BLOCK_VALIDATION:
     text = "Pre Block Execution Validation";

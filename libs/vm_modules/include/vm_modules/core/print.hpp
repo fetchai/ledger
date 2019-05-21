@@ -31,75 +31,75 @@ namespace vm_modules {
 inline void PrintByteArray(fetch::vm::VM *                                            vm,
                          fetch::vm::Ptr<fetch::vm_modules::ByteArrayWrapper> const &s)
 {
-auto &out = vm->GetOutputDevice("stdout");
+auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
 out << s->byte_array();
 }
 
 inline void PrintLnByteArray(fetch::vm::VM *                                            vm,
                            fetch::vm::Ptr<fetch::vm_modules::ByteArrayWrapper> const &s)
 {
-auto &out = vm->GetOutputDevice("stdout");
+auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
 out << byte_array::ToHex(s->byte_array()) << std::endl;
 }
 */
 
 inline void PrintString(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
-  auto &out = vm->GetOutputDevice("stdout");
+  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   out << s->str;
 }
 
 inline void PrintLnString(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
-  auto &out = vm->GetOutputDevice("stdout");
+  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   out << s->str << std::endl;
 }
 
 inline void PrintInt32(fetch::vm::VM *vm, int32_t const &s)
 {
-  auto &out = vm->GetOutputDevice("stdout");
+  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   out << s;
 }
 
 inline void PrintLnInt32(fetch::vm::VM *vm, int32_t const &s)
 {
-  auto &out = vm->GetOutputDevice("stdout");
+  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   out << s << std::endl;
 }
 
 inline void PrintInt64(fetch::vm::VM *vm, int64_t const &s)
 {
-  auto &out = vm->GetOutputDevice("stdout");
+  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   out << s;
 }
 
 inline void PrintLnInt64(fetch::vm::VM *vm, int64_t const &s)
 {
-  auto &out = vm->GetOutputDevice("stdout");
+  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   out << s << std::endl;
 }
 
 inline void PrintFloat(fetch::vm::VM *vm, float const &s)
 {
-  auto &out = vm->GetOutputDevice("stdout");
+  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   out << s;
 }
 
 inline void PrintLnFloat(fetch::vm::VM *vm, float const &s)
 {
-  auto &out = vm->GetOutputDevice("stdout");
+  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   out << s;
 }
 
 inline void PrintDouble(fetch::vm::VM *vm, double const &s)
 {
-  auto &out = vm->GetOutputDevice("stdout");
+  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   out << s;
 }
 
 inline void PrintLnDouble(fetch::vm::VM *vm, double const &s)
 {
-  auto &out = vm->GetOutputDevice("stdout");
+  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   out << s << std::endl;
 }
 
@@ -114,7 +114,7 @@ inline void PrintArrayPrimitive(fetch::vm::VM *vm, vm::Ptr<vm::Array<T>> const &
 
   assert(g != nullptr);
 
-  auto &out = vm->GetOutputDevice("stdout");
+  auto &out = vm->GetOutputDevice(vm::VM::STDOUT);
   out << "[";
   for (std::size_t i = 0; i < g->elements.size(); ++i)
   {

@@ -59,7 +59,7 @@ public:
   using SubscriptionPtr = std::shared_ptr<Subscription>;
   using Address         = muddle::Packet::Address;
   using Block           = ledger::Block;
-  using BlockHash       = v2::Digest;
+  using BlockHash       = Digest;
   using Promise         = service::Promise;
   using RpcClient       = muddle::rpc::Client;
   using TrustSystem     = p2p::P2PTrustInterface<Address>;

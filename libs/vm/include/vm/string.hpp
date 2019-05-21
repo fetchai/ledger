@@ -41,8 +41,12 @@ struct String : public Object
   virtual bool   IsGreaterThan(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
   virtual bool   IsGreaterThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
   virtual void   Add(Ptr<Object> &lhso, Ptr<Object> &rhso) override;
-  std::string    str;
-  bool           is_literal;
+
+  bool SerializeTo(ByteArrayBuffer &buffer) override;
+  bool DeserializeFrom(ByteArrayBuffer &buffer) override;
+
+  std::string str;
+  bool        is_literal;
 };
 
 }  // namespace vm

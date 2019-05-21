@@ -19,7 +19,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "math/bignumber.hpp"
 #include <gtest/gtest.h>
-#include <iomanip>
+
 using namespace fetch::math;
 using namespace fetch::byte_array;
 TEST(big_number_gtest, elemntary_left_shift)

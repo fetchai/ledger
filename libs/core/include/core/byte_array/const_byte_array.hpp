@@ -30,15 +30,6 @@
 
 namespace fetch {
 namespace byte_array {
-class ConstByteArray;
-}  // namespace byte_array
-
-namespace serializers {
-template <typename T>
-inline void Deserialize(T &, byte_array::ConstByteArray &);
-}  // namespace serializers
-
-namespace byte_array {
 
 class ConstByteArray
 {
@@ -325,7 +316,7 @@ protected:
   }
 
   /**
-   * Resizes the array and allocates ammount of memory necessary to contain the requested size.
+   * Resizes the array and allocates amount of memory necessary to contain the requested size.
    * Memory allocation is handled by the @ref Reserve() method.
    *
    * Please be NOTE, that this method operates in SIZE space, which is always RELATIVE
@@ -341,7 +332,7 @@ protected:
    * original_size + n. Where new resulting SIZE is internally still relative to the internal start_
    * offset in BOTH cases (relative and absolute).
    *
-   * @zero_reserved_space If true then the ammount of new memory reserved/allocated (if any) ABOVE
+   * @zero_reserved_space If true then the amount of new memory reserved/allocated (if any) ABOVE
    * of already allocated will be zeroed byte by byte.
    */
   void Resize(std::size_t const &n, ResizeParadigm const resize_paradigm = ResizeParadigm::ABSOLUTE,
@@ -367,7 +358,7 @@ protected:
   }
 
   /**
-   * Reserves (allocates) requested ammount of memory IF it is more than already allocated.
+   * Reserves (allocates) requested amount of memory IF it is more than already allocated.
    *
    * Please be NOTE, that this method operates in CAPACITY space, which is defined by WHOLE
    * allocated size of underlying data buffer.
@@ -382,7 +373,7 @@ protected:
    * current_capacity + n, what ALWAYS resuts to re-allocation since the requested CAPACITY is
    * always bigger then the current one.
    *
-   * @zero_reserved_space If true then the ammount of new memory reserved/allocated (if any) ABOVE
+   * @zero_reserved_space If true then the amount of new memory reserved/allocated (if any) ABOVE
    * of already allocated will be zeroed byte by byte.
    */
   void Reserve(std::size_t const &  n,
@@ -476,9 +467,6 @@ private:
     AppendInternal(acc_size + 1, others...);
     std::memcpy(pointer() + acc_size, &other, 1u);
   }
-
-  template <typename T>
-  friend void fetch::serializers::Deserialize(T &serializer, ConstByteArray &s);
 
   shared_array_type data_;
   std::size_t       start_ = 0, length_ = 0;

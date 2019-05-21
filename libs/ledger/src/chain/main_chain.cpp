@@ -20,7 +20,7 @@
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
+#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "network/generics/milli_timer.hpp"
 
 #include <algorithm>
@@ -1313,7 +1313,7 @@ MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
   auto genesis                = std::make_shared<Block>();
   genesis->body.previous_hash = GENESIS_DIGEST;
   genesis->body.merkle_hash   = GENESIS_MERKLE_ROOT;
-  genesis->body.miner         = v2::Address{GENESIS_DIGEST};
+  genesis->body.miner         = Address{GENESIS_DIGEST};
   genesis->is_loose           = false;
   genesis->UpdateDigest();
 
@@ -1392,8 +1392,8 @@ void MainChain::SetHeadHash(BlockHash const &hash)
  *
  * @return: bool whether the starting hash referred to a valid block on a valid chain
  */
-v2::DigestSet MainChain::DetectDuplicateTransactions(BlockHash            starting_hash,
-                                                     v2::DigestSet const &transactions) const
+DigestSet MainChain::DetectDuplicateTransactions(BlockHash        starting_hash,
+                                                 DigestSet const &transactions) const
 {
   MilliTimer const timer{"DuplicateTransactionsCheck", 100};
 
@@ -1407,8 +1407,8 @@ v2::DigestSet MainChain::DetectDuplicateTransactions(BlockHash            starti
   }
 
   // Need a set for quickly checking whether transactions are in our container
-  v2::DigestSet duplicates{};
-  bool          searching{true};
+  DigestSet duplicates{};
+  bool      searching{true};
   while (searching)
   {
     // Traversing the chain fully is costly: break out early if we know the transactions are all

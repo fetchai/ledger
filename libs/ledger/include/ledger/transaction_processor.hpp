@@ -26,10 +26,8 @@
 
 namespace fetch {
 namespace ledger {
-namespace v2 {
-class Transaction;
-}
 
+class Transaction;
 class StorageUnitInterface;
 class BlockPackerInterface;
 class TransactionStatusCache;

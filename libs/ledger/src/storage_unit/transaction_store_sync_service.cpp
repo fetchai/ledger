@@ -18,8 +18,7 @@
 
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
 #include "core/macros.hpp"
-#include "ledger/chain/transaction_serialization.hpp"
-#include "ledger/chain/v2/transaction_rpc_serializers.hpp"
+#include "ledger/chain/transaction_rpc_serializers.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -248,7 +247,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
     for (auto &tx : result.promised)
     {
       // add the transaction to the verifier
-      verifier_.AddTransaction(std::make_shared<v2::Transaction>(tx));
+      verifier_.AddTransaction(std::make_shared<Transaction>(tx));
 
       ++synced_tx;
     }
@@ -355,7 +354,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
 
     for (auto &tx : result.promised)
     {
-      verifier_.AddTransaction(std::make_shared<v2::Transaction>(tx));
+      verifier_.AddTransaction(std::make_shared<Transaction>(tx));
       ++synced_tx;
     }
   }
