@@ -197,7 +197,7 @@ private:
   TipsMap          tips_;          ///< Keep track of the tips
   HeaviestTip      heaviest_;      ///< Heaviest block/tip
   LooseBlockMap    loose_blocks_;  ///< Waiting (loose) blocks
-  Mode       const mode_;
+  Mode const       mode_;
 };
 
 /**

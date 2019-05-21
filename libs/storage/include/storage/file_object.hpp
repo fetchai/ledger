@@ -45,7 +45,7 @@ namespace storage {
 template <std::size_t BS = 128>
 struct FileBlockType
 {
-  static constexpr uint64_t META_DATA_BYTES = (2 * sizeof(uint64_t));
+  static constexpr uint64_t META_DATA_BYTES = (3 * sizeof(uint64_t));
   static constexpr uint64_t CAPACITY        = BS - META_DATA_BYTES;
   static constexpr uint64_t UNDEFINED       = std::numeric_limits<uint64_t>::max();
 
