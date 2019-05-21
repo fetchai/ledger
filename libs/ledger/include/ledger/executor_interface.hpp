@@ -17,17 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/v2/digest.hpp"
+#include "ledger/chain/digest.hpp"
 
 namespace fetch {
 
 class BitVector;
 
 namespace ledger {
-namespace v2 {
 
 class Address;
-}
 
 class ExecutorInterface
 {
@@ -72,10 +70,9 @@ public:
 
   /// @name Executor Interface
   /// @{
-  virtual Result Execute(v2::Digest const &digest, BlockIndex block, SliceIndex slice,
-                         BitVector const &shards)    = 0;
-  virtual void   SettleFees(v2::Address const &miner, TokenAmount amount,
-                            uint32_t log2_num_lanes) = 0;
+  virtual Result Execute(Digest const &digest, BlockIndex block, SliceIndex slice,
+                         BitVector const &shards)                                              = 0;
+  virtual void   SettleFees(Address const &miner, TokenAmount amount, uint32_t log2_num_lanes) = 0;
   /// @}
 };
 

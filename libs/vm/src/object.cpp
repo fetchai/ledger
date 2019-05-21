@@ -251,5 +251,17 @@ void Object::InplaceRightDivide(Ptr<Object> const & /* lhso*/, Variant const & /
   RuntimeError("operator not implemented");
 }
 
+bool Object::SerializeTo(ByteArrayBuffer &buffer)
+{
+  FETCH_UNUSED(buffer);
+  return false;
+}
+
+bool Object::DeserializeFrom(ByteArrayBuffer &buffer)
+{
+  FETCH_UNUSED(buffer);
+  return false;
+}
+
 }  // namespace vm
 }  // namespace fetch

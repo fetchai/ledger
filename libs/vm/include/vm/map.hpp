@@ -156,6 +156,18 @@ struct Map : public IMap
     Store<Key>(key, value);
   }
 
+  bool SerializeTo(ByteArrayBuffer &buffer) override
+  {
+    buffer << map;
+    return true;
+  }
+
+  bool DeserializeFrom(ByteArrayBuffer &buffer) override
+  {
+    buffer >> map;
+    return true;
+  }
+
   std::unordered_map<TemplateParameter1, TemplateParameter2, H<Key>, E<Key>> map;
 };
 

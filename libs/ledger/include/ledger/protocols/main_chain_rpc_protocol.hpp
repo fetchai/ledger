@@ -52,13 +52,13 @@ private:
     return Copy(chain_.GetHeaviestChain(maxsize));
   }
 
-  Blocks GetChainPreceding(v2::Digest const &at, uint32_t maxsize)
+  Blocks GetChainPreceding(Digest const &at, uint32_t maxsize)
   {
     LOG_STACK_TRACE_POINT;
     return Copy(chain_.GetChainPreceding(at, maxsize));
   }
 
-  Blocks GetCommonSubChain(v2::Digest const &start, v2::Digest const &last_seen, uint64_t limit)
+  Blocks GetCommonSubChain(Digest const &start, Digest const &last_seen, uint64_t limit)
   {
     LOG_STACK_TRACE_POINT;
 

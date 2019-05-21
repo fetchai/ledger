@@ -28,7 +28,6 @@
 #include "network/muddle/packet.hpp"
 
 #include <cstring>
-#include <iomanip>
 #include <memory>
 #include <random>
 #include <sstream>

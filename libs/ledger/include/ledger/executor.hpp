@@ -29,10 +29,7 @@
 namespace fetch {
 namespace ledger {
 
-namespace v2 {
 class Address;
-}
-
 class TokenContract;
 class CachedStorageAdapter;
 class StateSentinelAdapter;
@@ -52,17 +49,17 @@ public:
 
   /// @name Executor Interface
   /// @{
-  Result Execute(v2::Digest const &digest, BlockIndex block, SliceIndex slice,
+  Result Execute(Digest const &digest, BlockIndex block, SliceIndex slice,
                  BitVector const &shards) override;
-  void   SettleFees(v2::Address const &miner, TokenAmount amount, uint32_t log2_num_lanes) override;
+  void   SettleFees(Address const &miner, TokenAmount amount, uint32_t log2_num_lanes) override;
   /// @}
 
 private:
   using TokenContractPtr        = std::shared_ptr<TokenContract>;
-  using TransactionPtr          = std::shared_ptr<v2::Transaction>;
+  using TransactionPtr          = std::shared_ptr<Transaction>;
   using CachedStorageAdapterPtr = std::shared_ptr<CachedStorageAdapter>;
 
-  bool RetrieveTransaction(v2::Digest const &digest);
+  bool RetrieveTransaction(Digest const &digest);
   bool ValidationChecks(Result &result);
   bool ExecuteTransactionContract(Result &result);
   bool ProcessTransfers(Result &result);
