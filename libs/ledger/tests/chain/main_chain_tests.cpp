@@ -726,22 +726,28 @@ TEST_P(MainChainTests, CheckResolvedLooseWeight)
 
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*other));
   ASSERT_FALSE(chain_->HasMissingBlocks());
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), other->body.hash);
 
   ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*main5));
   ASSERT_TRUE(chain_->HasMissingBlocks());
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), other->body.hash);
 
   ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*main4));
   ASSERT_TRUE(chain_->HasMissingBlocks());
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), other->body.hash);
 
   ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*main3));
   ASSERT_TRUE(chain_->HasMissingBlocks());
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), other->body.hash);
 
   ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*main2));
   ASSERT_TRUE(chain_->HasMissingBlocks());
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), other->body.hash);
 
   // this block resolves all the loose blocks
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main1));
   ASSERT_FALSE(chain_->HasMissingBlocks());
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main5->body.hash);
 
   ASSERT_EQ(chain_->GetBlock(main1->body.hash)->total_weight, main1->total_weight);
   ASSERT_EQ(chain_->GetBlock(main2->body.hash)->total_weight, main2->total_weight);
