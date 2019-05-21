@@ -71,6 +71,8 @@ SUPPORTED_LANGUAGES = {
             'python3',
             '-m',
             'cmake_format',
+            '--separate-ctrl-name-with-space',
+            '--line-width', '100',
             '--in-place'
         ],
         'filename_patterns': ('*.cmake', 'CMakeLists.txt')
