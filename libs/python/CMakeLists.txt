@@ -10,7 +10,7 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-if(FETCH_ENABLE_PYTHON_BINDINGS)
+if (FETCH_ENABLE_PYTHON_BINDINGS)
 
   # define the python module
   pybind11_add_module(fetch-python src/main.cpp)
@@ -25,4 +25,4 @@ if(FETCH_ENABLE_PYTHON_BINDINGS)
   # make the name match the bindings
   set_target_properties(fetch-python PROPERTIES OUTPUT_NAME "fetch")
 
-endif(FETCH_ENABLE_PYTHON_BINDINGS)
+endif (FETCH_ENABLE_PYTHON_BINDINGS)

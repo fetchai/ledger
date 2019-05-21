@@ -9,7 +9,3 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 
 # Compiler Configuration
 setup_compiler()
-
-# TODO(WK)
-#
-# target_link_libraries(benchmark_layers fetch-ml)

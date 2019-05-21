@@ -25,12 +25,8 @@ option(FETCH_STATIC_LINK            "Enable static linking"             OFF)
 # cmake-format: on
 
 # custom string options
-set(FETCH_DEBUG_SANITIZER
-    ""
-    CACHE STRING "The clang based sanitizer to be enabled")
-set(FETCH_COMPILE_LOGGING_LEVEL
-    "info"
-    CACHE STRING "The precompiled logging level for the project")
+set(FETCH_DEBUG_SANITIZER "" CACHE STRING "The clang based sanitizer to be enabled")
+set(FETCH_COMPILE_LOGGING_LEVEL "info" CACHE STRING "The precompiled logging level for the project")
 
 # cmake-format: off
 # target architecture (to be replaced with automatic detection) sysctl -a | grep machdep.cpu.features
@@ -54,10 +50,10 @@ set(FETCH_ROOT_CMAKE_DIR ${FETCH_ROOT_DIR}/cmake)
 set(FETCH_ROOT_VENDOR_DIR ${FETCH_ROOT_DIR}/vendor)
 
 # Default to a release build
-if(NOT CMAKE_BUILD_TYPE)
+if (NOT CMAKE_BUILD_TYPE)
   message(STATUS "Defaulting to Release build")
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "The build configuration" FORCE)
-endif(NOT CMAKE_BUILD_TYPE)
+endif (NOT CMAKE_BUILD_TYPE)
 
 # Global CMake Configuration
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
@@ -69,33 +65,33 @@ detect_environment()
 # generate the project configuration file
 generate_configuration_file()
 
-if(FETCH_STATIC_LINK)
+if (FETCH_STATIC_LINK)
   set(OPENSSL_USE_STATIC_LIBS TRUE)
-endif(FETCH_STATIC_LINK)
+endif (FETCH_STATIC_LINK)
 
 # Enable CTest support
-if(FETCH_ENABLE_TESTS)
+if (FETCH_ENABLE_TESTS)
   enable_testing()
-endif(FETCH_ENABLE_TESTS)
+endif (FETCH_ENABLE_TESTS)
 
-if(FETCH_DEBUG_SANITIZER)
+if (FETCH_DEBUG_SANITIZER)
   fetch_info("Running with sanitizer: ${FETCH_DEBUG_SANITIZER}")
-endif(FETCH_DEBUG_SANITIZER)
+endif (FETCH_DEBUG_SANITIZER)
 
 # Enable CCACHE - compiler caching to reduce build times
-if(FETCH_ENABLE_CCACHE)
+if (FETCH_ENABLE_CCACHE)
   find_program(CCACHE_FOUND ccache)
 
-  if(CCACHE_FOUND)
+  if (CCACHE_FOUND)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
     fetch_info("Found ccache on system - including")
-  else()
+  else ()
     fetch_warning(
       "ccache is enabled but wasn't found on your system - strongly advise installing ccache for reduced build times"
       )
-  endif(CCACHE_FOUND)
-endif(FETCH_ENABLE_CCACHE)
+  endif (CCACHE_FOUND)
+endif (FETCH_ENABLE_CCACHE)
 
 # ------------------------------------------------------------------------------
 # System / Vendor Targets
