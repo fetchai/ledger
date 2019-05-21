@@ -132,8 +132,8 @@ public:
   enum class State
   {
     RELOAD_STATE,                  ///< Recovering previous state
-    SYNCHRONIZING,                 ///< Catch up with the outstanding blocks
-    SYNCHRONIZED,                  ///< Caught up waiting to generate a new block
+    SYNCHRONISING,                 ///< Catch up with the outstanding blocks
+    SYNCHRONISED,                  ///< Caught up waiting to generate a new block
     PRE_EXEC_BLOCK_VALIDATION,     ///< Validation stage before block execution
     WAIT_FOR_TRANSACTIONS,         ///< Halts the state machine until all the block transactions are
                                    ///< present
@@ -196,7 +196,7 @@ public:
 
   bool IsSynced() const
   {
-    return (state_machine_->state() == State::SYNCHRONIZED) &&
+    return (state_machine_->state() == State::SYNCHRONISED) &&
            (last_executed_block_.Get() == chain_.GetHeaviestBlockHash());
   }
 
@@ -234,8 +234,8 @@ private:
   /// @name Monitor State
   /// @{
   State OnReloadState();
-  State OnSynchronizing();
-  State OnSynchronized(State current, State previous);
+  State OnSynchronising();
+  State OnSynchronised(State current, State previous);
   State OnPreExecBlockValidation();
   State OnWaitForTransactions(State current, State previous);
   State OnScheduleBlockExecution();

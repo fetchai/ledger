@@ -43,6 +43,8 @@ using fetch::byte_array::ConstByteArray;
 namespace fetch {
 namespace ledger {
 
+namespace {
+
 /**
  * Compute the digest for the contract source
  *
@@ -84,6 +86,8 @@ void ValidateAddressesInParams(Transaction const &tx, vm::ParameterPack const &p
     }
   }
 }
+
+}  // namespace
 
 /**
  * Construct a smart contract from the specified source
@@ -422,7 +426,7 @@ Contract::Status SmartContract::InvokeAction(std::string const &name, Transactio
   std::stringstream  console;
   fetch::vm::Variant output;
 
-  vm->AttachOutputDevice("stdout", console);
+  vm->AttachOutputDevice(vm::VM::STDOUT, console);
 
   if (!vm->Execute(*executable_, name, error, output, params))
   {
@@ -470,7 +474,7 @@ Contract::Status SmartContract::InvokeInit(Address const &owner)
   std::stringstream  console;
   fetch::vm::Variant output;
 
-  vm->AttachOutputDevice("stdout", console);
+  vm->AttachOutputDevice(vm::VM::STDOUT, console);
 
   if (!vm->Execute(*executable_, init_fn_name_, error, output, params))
   {
@@ -537,7 +541,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   std::string       error;
   std::stringstream console;
 
-  vm->AttachOutputDevice("stdout", console);
+  vm->AttachOutputDevice(vm::VM::STDOUT, console);
 
   if (!vm->Execute(*executable_, name, error, output, params))
   {

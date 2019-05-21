@@ -24,7 +24,6 @@
 #include "core/script/variant.hpp"
 
 #include <memory>
-#include <stack>
 #include <vector>
 
 namespace fetch {

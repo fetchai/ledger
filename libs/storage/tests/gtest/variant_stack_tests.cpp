@@ -20,7 +20,6 @@
 #include "storage/variant_stack.hpp"
 
 #include <gtest/gtest.h>
-#include <stack>
 
 using namespace fetch::storage;
 

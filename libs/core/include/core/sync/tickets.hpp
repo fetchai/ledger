@@ -26,7 +26,7 @@ namespace fetch {
 namespace core {
 
 /**
- * Semaphore like synchronization object
+ * Semaphore like synchronisation object
  */
 class Tickets
 {
