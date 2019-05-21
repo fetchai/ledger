@@ -25,22 +25,24 @@
 
 #include <gtest/gtest.h>
 
-using ArrayType = typename fetch::math::Tensor<int>;
-
-TEST(graph_test, node_placeholder)
+template <typename T>
+class GraphTest : public ::testing::Test
 {
-  fetch::ml::Graph<ArrayType> g;
-  g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
+};
 
-  ArrayType data(8);
-  ArrayType gt(8);
-  int       i(0);
-  for (int e : {1, 2, 3, 4, 5, 6, 7, 8})
-  {
-    data.Set(std::uint64_t(i), e);
-    gt.Set(std::uint64_t(i), e);
-    i++;
-  }
+using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+TYPED_TEST_CASE(GraphTest, MyTypes);
+
+TYPED_TEST(GraphTest, node_placeholder)
+{
+  using ArrayType = TypeParam;
+
+  fetch::ml::Graph<ArrayType> g;
+  g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
+
+  ArrayType data = ArrayType::FromString("1, 2, 3, 4, 5, 6, 7, 8");
+  ArrayType gt   = ArrayType::FromString("1, 2, 3, 4, 5, 6, 7, 8");
 
   g.SetInput("Input", data);
   ArrayType prediction = g.Evaluate("Input");
@@ -49,53 +51,82 @@ TEST(graph_test, node_placeholder)
   ASSERT_TRUE(prediction.AllClose(gt));
 }
 
-TEST(graph_test, node_relu)
+TYPED_TEST(GraphTest, node_relu)
 {
-  using SizeType = fetch::math::SizeType;
-  fetch::ml::Graph<ArrayType> g;
-  g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
-  g.AddNode<fetch::ml::ops::Relu<ArrayType>>("Relu", {"Input"});
+  using ArrayType = TypeParam;
 
-  ArrayType        data(std::vector<typename ArrayType::SizeType>({4, 4}));
-  ArrayType        gt(std::vector<typename ArrayType::SizeType>({4, 4}));
-  std::vector<int> dataValues({0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15, 16});
-  std::vector<int> gtValues({0, 0, 2, 0, 4, 0, 6, 0, 8, 0, 10, 0, 12, 0, 14, 0, 16});
-  for (SizeType i(0); i < 4; ++i)
-  {
-    for (SizeType j(0); j < 4; ++j)
-    {
-      data.Set(i, j, dataValues[std::uint64_t(i * 4 + j)]);
-      gt.Set(i, j, gtValues[std::uint64_t(i * 4 + j)]);
-    }
-  }
+  fetch::ml::Graph<ArrayType> g;
+  g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
+  g.template AddNode<fetch::ml::ops::Relu<ArrayType>>("Relu", {"Input"});
+
+  ArrayType data =
+      ArrayType::FromString("0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15, 16");
+  ArrayType gt = ArrayType::FromString("0, 0, 2, 0, 4, 0, 6, 0, 8, 0, 10, 0, 12, 0, 14, 0, 16");
 
   g.SetInput("Input", data);
-  fetch::math::Tensor<int> prediction = g.Evaluate("Relu");
+  ArrayType prediction = g.Evaluate("Relu");
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
 }
 
-TEST(graph_test, getStateDict)
+TYPED_TEST(GraphTest, getStateDict)
 {
-  fetch::ml::Graph<fetch::math::Tensor<float>>     g;
-  fetch::ml::StateDict<fetch::math::Tensor<float>> sd = g.StateDict();
+  using ArrayType = TypeParam;
+
+  fetch::ml::Graph<ArrayType>     g;
+  fetch::ml::StateDict<ArrayType> sd = g.StateDict();
 
   EXPECT_EQ(sd.weights_, nullptr);
   EXPECT_TRUE(sd.dict_.empty());
 }
 
-TEST(graph_test, no_such_node_test)  // Use the class as a Node
+TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
 {
-  fetch::ml::Graph<fetch::math::Tensor<float>> g;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
 
-  g.template AddNode<fetch::ml::ops::PlaceHolder<fetch::math::Tensor<float>>>("Input", {});
-  g.template AddNode<fetch::ml::layers::SelfAttention<fetch::math::Tensor<float>>>(
-      "SelfAttention", {"Input"}, 50u, 42u, 10u);
+  fetch::ml::Graph<ArrayType> g;
 
-  fetch::math::Tensor<float> data(
-      std::vector<typename fetch::math::Tensor<float>::SizeType>({5, 10}));
+  g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
+  g.template AddNode<fetch::ml::layers::SelfAttention<ArrayType>>("SelfAttention", {"Input"}, 50u,
+                                                                  42u, 10u);
+
+  ArrayType data(std::vector<SizeType>({5, 10}));
   g.SetInput("Input", data);
 
   ASSERT_ANY_THROW(g.Evaluate("FullyConnected"));
+}
+
+TYPED_TEST(GraphTest, diamond_shaped_graph)  // Evaluate graph output=(input+input)+(input+input)
+{
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+
+  // Generate input
+  ArrayType data = ArrayType::FromString("-1,0,1,2,3,4");
+  ArrayType gt   = ArrayType::FromString("-4,0,4,8,12,16");
+
+  // Create graph
+  std::string                 name = "Diamond";
+  fetch::ml::Graph<TypeParam> g;
+
+  std::string input_name =
+      g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
+
+  std::string add1_name =
+      g.template AddNode<fetch::ml::ops::Add<ArrayType>>(name + "_Add1", {input_name, input_name});
+  std::string add2_name =
+      g.template AddNode<fetch::ml::ops::Add<ArrayType>>(name + "_Add2", {input_name, input_name});
+
+  std::string output_name =
+      g.template AddNode<fetch::ml::ops::Add<ArrayType>>(name + "_Add3", {add1_name, add2_name});
+
+  // Evaluate
+  g.SetInput(input_name, data);
+  TypeParam output = g.Evaluate("Diamond_Add3");
+
+  // Test correct values
+  ASSERT_EQ(output.shape(), data.shape());
+  ASSERT_TRUE(output.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 }
