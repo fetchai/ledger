@@ -16,125 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "mock_io_observer.hpp"
-
-#include "core/byte_array/const_byte_array.hpp"
-#include "core/byte_array/decoders.hpp"
-#include "vm/compiler.hpp"
-#include "vm/module.hpp"
-#include "vm/variant.hpp"
-#include "vm/vm.hpp"
-
-#include "gmock/gmock.h"
-
-#include <iostream>
-#include <memory>
-#include <string>
-#include <vector>
+#include "vm_test_suite.hpp"
 
 namespace {
 
-using testing::_;
-using fetch::byte_array::ConstByteArray;
-using fetch::byte_array::FromHex;
-using fetch::vm::VM;
-using fetch::vm::IR;
-using fetch::vm::Executable;
-using fetch::vm::Compiler;
-using fetch::vm::Module;
-using fetch::vm::Variant;
-
-using ExecutablePtr = std::unique_ptr<Executable>;
-using CompilerPtr   = std::unique_ptr<Compiler>;
-using ModulePtr     = std::unique_ptr<Module>;
-using IRPtr         = std::unique_ptr<IR>;
-using VMPtr         = std::unique_ptr<VM>;
-using ObserverPtr   = std::unique_ptr<MockIoObserver>;
-
-class StateTests : public ::testing::Test
+class StateTests : public VmTestSuite
 {
 protected:
-  void SetUp() override
-  {
-    observer_   = std::make_unique<MockIoObserver>();
-    module_     = std::make_unique<Module>();
-    compiler_   = std::make_unique<Compiler>(module_.get());
-    ir_         = std::make_unique<IR>();
-    executable_ = std::make_unique<Executable>();
-    vm_         = std::make_unique<VM>(module_.get());
-
-    vm_->SetIOObserver(*observer_);
-  }
-
-  void TearDown() override
-  {
-    vm_.reset();
-    executable_.reset();
-    ir_.reset();
-    compiler_.reset();
-    module_.reset();
-    observer_.reset();
-  }
-
-  bool Compile(char const *text)
-  {
-    std::vector<std::string> errors{};
-
-    // compile the source code
-    if (!compiler_->Compile(text, "default", *ir_, errors))
-    {
-      PrintErrors(errors);
-      return false;
-    }
-
-    // generate the IR
-    if (!vm_->GenerateExecutable(*ir_, "default_ir", *executable_, errors))
-    {
-      PrintErrors(errors);
-      return false;
-    }
-
-    return true;
-  }
-
-  bool Run()
-  {
-    vm_->AttachOutputDevice("stdout", std::cout);
-
-    std::string error{};
-    Variant     output{};
-    if (!vm_->Execute(*executable_, "main", error, output))
-    {
-      std::cout << "Runtime Error: " << error << std::endl;
-
-      return false;
-    }
-
-    return true;
-  }
-
-  void PrintErrors(std::vector<std::string> const &errors)
-  {
-    for (auto const &line : errors)
-    {
-      std::cout << "Compiler Error: " << line << '\n';
-    }
-    std::cout << std::endl;
-  }
-
-  void AddState(std::string const &key, ConstByteArray const &hex_value)
-  {
-    auto raw_value = FromHex(hex_value);
-
-    observer_->fake_.SetKeyValue(key, raw_value);
-  }
-
-  ObserverPtr   observer_;
-  ModulePtr     module_;
-  CompilerPtr   compiler_;
-  IRPtr         ir_;
-  ExecutablePtr executable_;
-  VMPtr         vm_;
 };
 
 TEST_F(StateTests, SanityCheck)
