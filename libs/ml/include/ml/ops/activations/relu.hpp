@@ -29,23 +29,21 @@ template <class T>
 class Relu : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType      = T;
-  using DataType       = typename ArrayType::Type;
-  using SizeType       = typename ArrayType::SizeType;
-  using ArrayPtrType   = std::shared_ptr<ArrayType>;
-  using ConstSliceType = typename ArrayType::ConstSliceType;
+  using ArrayType     = T;
+  using DataType      = typename ArrayType::Type;
+  using SizeType      = typename ArrayType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
   Relu()          = default;
   virtual ~Relu() = default;
 
   // f(x)=max(0,x);
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     ASSERT(inputs.size() == 1);
     ASSERT(output.shape() == this->ComputeOutputShape(inputs));
     fetch::math::Relu(inputs.front().get(), output);
-    return output;
   }
 
   /**
@@ -56,9 +54,8 @@ public:
    * @param error_signal
    * @return
    */
-  virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           error_signal)
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
   {
     ASSERT(inputs.size() == 1);
     ASSERT(inputs[0].get().shape() == error_signal.shape());

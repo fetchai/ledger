@@ -135,11 +135,11 @@ T &Node<T, O>::Evaluate()
     }
     if (batch_)
     {
-      cached_output_ = this->ForwardBatch(inputs);
+      this->ForwardBatch(inputs, cached_output_);
     }
     else
     {
-      cached_output_ = this->Forward(inputs, cached_output_);
+      this->Forward(inputs, cached_output_);
     }
     cached_output_status_ = CachedOutputState::VALID_CACHE;
   }

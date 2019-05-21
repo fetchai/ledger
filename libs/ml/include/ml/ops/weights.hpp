@@ -59,10 +59,10 @@ template <class T>
 class Weights : public fetch::ml::ops::PlaceHolder<T>, public Trainable<T>
 {
 public:
-  using ArrayType      = T;
-  using SizeType       = typename ArrayType::SizeType;
-  using ArrayPtrType   = std::shared_ptr<ArrayType>;
-  using ConstSliceType = typename ArrayType::ConstSliceType;
+  using ArrayType     = T;
+  using SizeType      = typename ArrayType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using VecTensorType = typename PlaceHolder<T>::VecTensorType;
 
 protected:
   ArrayPtrType gradient_accumulation_;
@@ -71,12 +71,11 @@ public:
   Weights()          = default;
   virtual ~Weights() = default;
 
-  virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           errorSignal)
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
   {
     ASSERT(inputs.empty());
-    gradient_accumulation_->InlineAdd(errorSignal);
+    gradient_accumulation_->InlineAdd(error_signal);
     return {};
   }
 

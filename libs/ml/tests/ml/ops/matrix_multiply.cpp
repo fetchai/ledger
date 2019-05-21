@@ -62,8 +62,9 @@ TYPED_TEST(MatrixMultiplyTest, forward_test)
   }
 
   fetch::ml::ops::MatrixMultiply<TypeParam> op;
-  TypeParam prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({a, b}));
+
+  TypeParam prediction(op.ComputeOutputShape({a, b}));
+  op.Forward({a, b}, prediction);
 
   // // test correct values
   ASSERT_EQ(prediction.shape(), std::vector<typename TypeParam::SizeType>({1, 4}));
@@ -83,7 +84,7 @@ TYPED_TEST(MatrixMultiplyTest, backward_test)
   std::vector<int> data({1, 2, -3, 4, 5});
   std::vector<int> weights(
       {-11, 12, 13, 14, 21, 22, 23, 24, 31, 32, 33, 34, 41, 42, 43, 44, 51, 52, 53, 54});
-  std::vector<int> errorSignal({1, 2, 3, -4});
+  std::vector<int> error_signal({1, 2, 3, -4});
   std::vector<int> inputGrad({-4, 38, 58, 78, 98});
   std::vector<int> weightsGrad(
       {1, 2, 3, -4, 2, 4, 6, -8, -3, -6, -9, 12, 4, 8, 12, -16, 5, 10, 15, -20});
@@ -99,9 +100,9 @@ TYPED_TEST(MatrixMultiplyTest, backward_test)
       b.Set(i, j, typename TypeParam::Type(weights[i * 4 + j]));
     }
   }
-  for (SizeType i(0); i < errorSignal.size(); ++i)
+  for (SizeType i(0); i < error_signal.size(); ++i)
   {
-    error.Set(0, i, typename TypeParam::Type(errorSignal[i]));
+    error.Set(0, i, typename TypeParam::Type(error_signal[i]));
   }
   for (SizeType i(0); i < inputGrad.size(); ++i)
   {
@@ -116,15 +117,14 @@ TYPED_TEST(MatrixMultiplyTest, backward_test)
   }
 
   fetch::ml::ops::MatrixMultiply<TypeParam> op;
-  std::vector<TypeParam>                    backpropagatedSignals =
-      op.Backward(std::vector<std::reference_wrapper<TypeParam const>>({a, b}), error);
+  std::vector<TypeParam>                    backpropagated_signals = op.Backward({a, b}, error);
 
   // test correct shapes
-  ASSERT_EQ(backpropagatedSignals.size(), 2);
-  ASSERT_EQ(backpropagatedSignals[0].shape(), std::vector<typename TypeParam::SizeType>({1, 5}));
-  ASSERT_EQ(backpropagatedSignals[1].shape(), std::vector<typename TypeParam::SizeType>({5, 4}));
+  ASSERT_EQ(backpropagated_signals.size(), 2);
+  ASSERT_EQ(backpropagated_signals[0].shape(), std::vector<typename TypeParam::SizeType>({1, 5}));
+  ASSERT_EQ(backpropagated_signals[1].shape(), std::vector<typename TypeParam::SizeType>({5, 4}));
 
   // test correct values
-  EXPECT_TRUE(backpropagatedSignals[0].AllClose(gradient_a));
-  EXPECT_TRUE(backpropagatedSignals[1].AllClose(gradient_b));
+  EXPECT_TRUE(backpropagated_signals[0].AllClose(gradient_a));
+  EXPECT_TRUE(backpropagated_signals[1].AllClose(gradient_b));
 }

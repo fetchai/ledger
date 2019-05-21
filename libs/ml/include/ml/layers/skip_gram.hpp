@@ -85,17 +85,19 @@ public:
   }
 
   // Overload that method for optimisation purposes
-  virtual ArrayType ForwardBatch(std::vector<std::reference_wrapper<const ArrayType>> const &inputs)
+  virtual void ForwardBatch(std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
+                            ArrayType &                                                 output)
   {
     std::vector<ArrayType> results;
     for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
     {
       ArrayType slice_input   = inputs.front().get().Slice(b).Copy();
       ArrayType slice_context = inputs.back().get().Slice(b).Copy();
-      results.push_back(this->Ops<T>::Forward({slice_input, slice_context}));
+      ArrayType output(ComputeOutputShape({slice_input, slice_context}));
+      this->Forward({slice_input, slice_context}, output);
+      results.push_back(output);
     }
-    return ArrayType::Stack(results);
-    //    return this->fetch::ml::Ops<T>::ForwardBatch(inputs);
+    output = ArrayType::Stack(results);
   }
 
   std::shared_ptr<ops::Embeddings<ArrayType>> GetEmbeddings(std::shared_ptr<SkipGram<ArrayType>> &g)

@@ -28,10 +28,11 @@ template <class T>
 class Convolution2D : public BatchOps<T>
 {
 public:
-  using ArrayType    = T;
-  using SizeType     = typename ArrayType::SizeType;
-  using DataType     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType     = T;
+  using SizeType      = typename ArrayType::SizeType;
+  using DataType      = typename ArrayType::Type;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
   Convolution2D(SizeType stride_size = 1)
     : stride_size_(stride_size)
@@ -39,15 +40,13 @@ public:
 
   ~Convolution2D() = default;
 
-  ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                    ArrayType &                                                 output) override;
+  void Forward(VecTensorType const &inputs, ArrayType &output) override;
 
-  std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           error_signal_signal) override;
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal_signal) override;
 
   std::vector<typename ArrayType::SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const override;
+      VecTensorType const &inputs) const override;
 
   static constexpr char const *DESCRIPTOR = "Convolution2D";
 
@@ -91,8 +90,7 @@ private:
  * @return: output tensor parameter
  */
 template <class ArrayType>
-ArrayType Convolution2D<ArrayType>::Forward(
-    std::vector<std::reference_wrapper<ArrayType const>> const &inputs, ArrayType &output)
+void Convolution2D<ArrayType>::Forward(VecTensorType const &inputs, ArrayType &output)
 {
   ASSERT(inputs.size() == 2);
   // Input should be a 3D tensor [C x H x W]
@@ -133,8 +131,6 @@ ArrayType Convolution2D<ArrayType>::Forward(
 
   // Reshape values after matmul to output
   FillOutput(reshaped_output, output, output_channels, output_height, output_width);
-
-  return output;
 }
 
 /**
@@ -149,9 +145,8 @@ ArrayType Convolution2D<ArrayType>::Forward(
  * output[0]=input_error[inputs[0].shape], output[1]=kernel_error[inputs[1].shape]
  */
 template <class ArrayType>
-std::vector<ArrayType> Convolution2D<ArrayType>::Backward(
-    std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-    ArrayType const &                                           error_signal_signal)
+std::vector<ArrayType> Convolution2D<ArrayType>::Backward(VecTensorType const &inputs,
+                                                          ArrayType const &    error_signal_signal)
 {
   ASSERT(inputs.size() == 2);
   // Input should be a 3D tensor [C x H x W]
@@ -211,7 +206,7 @@ std::vector<ArrayType> Convolution2D<ArrayType>::Backward(
 
 template <class ArrayType>
 std::vector<typename ArrayType::SizeType> Convolution2D<ArrayType>::ComputeOutputShape(
-    std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
+    VecTensorType const &inputs) const
 {
   std::vector<SizeType> output_shape;
 

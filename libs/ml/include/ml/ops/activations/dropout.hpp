@@ -31,11 +31,12 @@ template <class T>
 class Dropout : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SizeType     = typename ArrayType::SizeType;
-  using RNG          = fetch::random::LaggedFibonacciGenerator<>;
+  using ArrayType     = T;
+  using DataType      = typename ArrayType::Type;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using SizeType      = typename ArrayType::SizeType;
+  using RNG           = fetch::random::LaggedFibonacciGenerator<>;
+  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
   Dropout(DataType const probability, SizeType const &random_seed = 25102015)
     : probability_(probability)
@@ -47,8 +48,7 @@ public:
 
   virtual ~Dropout() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     ASSERT(inputs.size() == 1);
     ASSERT(output.shape() == this->ComputeOutputShape(inputs));
@@ -56,7 +56,7 @@ public:
     if (!this->is_training_)
     {
       output.Copy(inputs.front().get());
-      return output;
+      return;
     }
 
     if (drop_values_.shape() != output.shape())
@@ -66,29 +66,26 @@ public:
     UpdateRandomValues();
 
     fetch::math::Multiply(inputs.front().get(), drop_values_, output);
-
-    return output;
   }
 
-  virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-      ArrayType const &                                           errorSignal)
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
   {
     ASSERT(inputs.size() == 1);
-    ASSERT(errorSignal.shape() == inputs.front().get().shape());
+    ASSERT(error_signal.shape() == inputs.front().get().shape());
     ASSERT(drop_values_.shape() == inputs.front().get().shape());
 
-    ArrayType return_signal{errorSignal.shape()};
+    ArrayType return_signal{error_signal.shape()};
 
     // gradient of dropout is 1.0 for enabled neurons and 0.0 for disabled
-    // multiply by errorSignal (chain rule)
+    // multiply by error_signal (chain rule)
     if (this->is_training_)
     {
-      fetch::math::Multiply(errorSignal, drop_values_, return_signal);
+      fetch::math::Multiply(error_signal, drop_values_, return_signal);
     }
     else
     {
-      return_signal.Copy(errorSignal);
+      return_signal.Copy(error_signal);
     }
 
     return {return_signal};

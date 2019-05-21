@@ -41,8 +41,9 @@ TYPED_TEST(EmbeddingsTest, forward_shape)
   {
     input.At(i) = typename TypeParam::Type(i);
   }
-  TypeParam output = e.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({input}));
+
+  TypeParam output(e.ComputeOutputShape({input}));
+  e.Forward({input}, output);
 
   ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({10, 60}));
 }
@@ -63,10 +64,11 @@ TYPED_TEST(EmbeddingsTest, forward)
 
   e.SetData(weights);
   TypeParam input(std::vector<uint64_t>({2}));
-  input.At(0)      = typename TypeParam::Type(3);
-  input.At(1)      = typename TypeParam::Type(5);
-  TypeParam output = e.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({input}));
+  input.At(0) = typename TypeParam::Type(3);
+  input.At(1) = typename TypeParam::Type(5);
+
+  TypeParam output(e.ComputeOutputShape({input}));
+  e.Forward({input}, output);
 
   ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({2, 6}));
 
@@ -104,10 +106,11 @@ TYPED_TEST(EmbeddingsTest, backward)
   e.SetData(weights);
 
   TypeParam input(std::vector<uint64_t>({2}));
-  input.At(0)      = Type(3);
-  input.At(1)      = Type(5);
-  TypeParam output = e.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({input}));
+  input.At(0) = Type(3);
+  input.At(1) = Type(5);
+
+  TypeParam output(e.ComputeOutputShape({input}));
+  e.Forward({input}, output);
 
   TypeParam error_signal(std::vector<uint64_t>({2, 6}));
   for (unsigned int j(0); j < 2; ++j)
@@ -126,8 +129,9 @@ TYPED_TEST(EmbeddingsTest, backward)
   EXPECT_TRUE(TypeParam::Zeroes({1, 6}).AllClose(grads_copy.Slice(SizeType(input.At(0))).Copy()));
   EXPECT_TRUE(TypeParam::Zeroes({1, 6}).AllClose(grads_copy.Slice(SizeType(input.At(1))).Copy()));
 
-  output = e.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({input}));
+  output = TypeParam(e.ComputeOutputShape({input}));
+  e.Forward({input}, output);
+
   std::vector<int> gt{30, 30, 30, 30, 30, 30, 44, 44, 44, 44, 44, 44};
 
   for (unsigned int j(0); j < 2; ++j)

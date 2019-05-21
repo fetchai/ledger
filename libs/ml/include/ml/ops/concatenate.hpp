@@ -27,8 +27,9 @@ template <class T>
 class Concatenate : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType = T;
-  using SizeType  = fetch::math::SizeType;
+  using ArrayType     = T;
+  using SizeType      = fetch::math::SizeType;
+  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
   Concatenate(SizeType axis)
     : axis_(axis)
@@ -39,8 +40,7 @@ public:
   /**
    * concatenates multiple input tensors into one
    */
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     std::vector<ArrayType> tensors;
     for (auto const &e : inputs)
@@ -49,7 +49,6 @@ public:
     }
 
     output = ArrayType::Concat(tensors, axis_);
-    return output;
   }
 
   /**
@@ -58,9 +57,8 @@ public:
    * @param error_signal
    * @return
    */
-  virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-      ArrayType const &                                           error_signal)
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
   {
     concat_points_.resize(inputs.size());
     for (SizeType i{0}; i < inputs.size(); ++i)
