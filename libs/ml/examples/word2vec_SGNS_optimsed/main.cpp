@@ -297,7 +297,7 @@ public:
   {
     // the data cursor is on the current index
     cursor_ = IteratorType(data_, cursor_offset_);
-
+    
     // set up the positive cursors and shift them
     for (std::size_t j = 0; j < 2 * cursor_offset_; ++j)
     {
@@ -505,7 +505,8 @@ public:
     }
     else
     {
-      throw std::runtime_error("l2reg_input_sum <= 0 !!!!");
+      std::cout << "l2reg_input_sum <= 0: " << std::endl;
+//      throw std::runtime_error("l2reg_input_sum <= 0 !!!!");
     }
 
     if (l2reg_output_sum > 0)
@@ -532,6 +533,9 @@ public:
   void ForwardAndLoss(SizeType input_word_idx, SizeType context_word_idx, Type gt, Type &loss,
                       Type &reg_loss)
   {
+    assert(input_word_idx < input_embeddings_.shape()[0]);
+    assert(context_word_idx < output_embeddings_.shape()[0]);
+
     // First normalise the embeddings. Since that's expensive, we just normalise the two rows
     // we'll use
     NormaliseEmbeddingRows(input_word_idx, context_word_idx);
@@ -589,6 +593,9 @@ public:
 
   void Backward(SizeType const &input_word_idx, SizeType const &context_word_idx, Type const &gt)
   {
+    assert(input_word_idx < input_embeddings_.shape()[0]);
+    assert(context_word_idx < output_embeddings_.shape()[0]);
+
     // positive case:
     // dl/dx = g = sigmoid(-x)
     // dl/d(v_in) = g * v_out'
@@ -645,6 +652,13 @@ public:
       ++context_grads_it;
     }
     l2reg_input_sum += l2reg_input_row_sums[input_word_idx];
+
+    if (l2reg_input_sum < 0)
+    {
+      std::cout << "something weird is happening here: " << std::endl;
+    }
+
+
     l2reg_output_sum += l2reg_output_row_sums[context_word_idx];
   }
 
