@@ -780,8 +780,8 @@ void *TrainModelThread(void *id)
       {
         now = clock();
         printf("%cAlpha: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  ", 13, alpha,
-               word_count_actual / static_cast<float>(iter * train_words + 1) * 100,
-               word_count_actual / (static_cast<float>(now - start + 1) / static_cast<float>(CLOCKS_PER_SEC) * 1000.0));
+               word_count_actual / static_cast<float>(iter * train_words + 1.0) * 100,
+               word_count_actual / (static_cast<float>(now - start + 1.0) / static_cast<float>(CLOCKS_PER_SEC) * 1000.0));
         fflush(stdout);
       }
       // linear-decay learning rate (decreases from one toward zero
@@ -821,10 +821,10 @@ void *TrainModelThread(void *id)
           // (normalized frequency)
           // TODO: why is this not merely 1 - sqrt(t / p_{word}) as in
           // the paper?
-          real ran = (sqrt(vocab[word].cn / (sample * train_words)) + 1) * (sample * train_words) /
-                     vocab[word].cn;
+          real ran = (static_cast<float>(sqrt(vocab[word].cn) / (sample * static_cast<float>(train_words))) + 1) * (sample * static_cast<float>(train_words)) /
+                     static_cast<float>(vocab[word].cn);
           next_random = next_random * (unsigned long long)25214903917 + 11;
-          if (ran < (next_random & 0xFFFF) / (real)65536)
+          if (ran < static_cast<float>((next_random & 0xFFFF) / (real)65536)
             continue;
         }
 
@@ -893,7 +893,7 @@ void *TrainModelThread(void *id)
       if (cw)
       {
         for (c = 0; c < layer1_size; c++)
-          neu1[c] /= cw;
+          neu1[c] /= static_cast<float>(cw);
 
         // CBOW HIERARCHICAL SOFTMAX
         if (hs)
@@ -911,7 +911,7 @@ void *TrainModelThread(void *id)
             else
               f = expTable[(int)((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))];
             // 'g' is the gradient multiplied by the learning rate
-            g = (1 - vocab[word].code[d] - f) * alpha;
+            g = (static_cast<float>(1 - vocab[word].code[d]) - f) * alpha;
             // Propagate errors output -> hidden
             for (c = 0; c < layer1_size; c++)
               neu1e[c] += g * syn1[c + l2];
@@ -945,11 +945,11 @@ void *TrainModelThread(void *id)
             for (c = 0; c < layer1_size; c++)
               f += neu1[c] * syn1neg[c + l2];
             if (f > MAX_EXP)
-              g = (label - 1) * alpha;
+              g = static_cast<float>((label - 1) * alpha;
             else if (f < -MAX_EXP)
-              g = (label - 0) * alpha;
+              g = static_cast<float>((label - 0) * alpha;
             else
-              g = (label - expTable[(int)((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))]) * alpha;
+              g = (label - static_cast<float>(expTable[(int)((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))])) * alpha;
             for (c = 0; c < layer1_size; c++)
               neu1e[c] += g * syn1neg[c + l2];
             for (c = 0; c < layer1_size; c++)
