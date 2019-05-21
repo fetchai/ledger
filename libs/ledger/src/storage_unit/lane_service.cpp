@@ -33,6 +33,8 @@
 #include "storage/document_store_protocol.hpp"
 #include "storage/new_revertible_document_store.hpp"
 
+#include <iomanip>
+
 using fetch::byte_array::ToBase64;
 
 namespace fetch {

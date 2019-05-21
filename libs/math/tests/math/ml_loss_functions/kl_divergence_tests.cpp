@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
-#include <iomanip>
 #include <iostream>
 
 #include "math/ml/loss_functions/kl_divergence.hpp"

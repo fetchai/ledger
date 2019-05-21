@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
-#include <iomanip>
 #include <iostream>
 
 #include <auctions/first_price_auction.hpp>
