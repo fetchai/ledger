@@ -19,7 +19,6 @@
 
 #include "core/abstract_mutex.hpp"
 #include "core/commandline/vt100.hpp"
-#include "meta/value_util.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -824,8 +823,6 @@ extern log::details::LogWrapper logger;
 #define FETCH_LOG_DEBUG_ENABLED
 #define FETCH_LOG_DEBUG(name, ...) fetch::logger.DebugWithName(name, __VA_ARGS__)
 #else
-#define FETCH_LOG_DEBUG(name, ...) value_util::no_op(name, __VA_ARGS__)
-#undef FETCH_LOG_DEBUG
 #define FETCH_LOG_DEBUG(name, ...) (void)name
 #endif
 
