@@ -313,7 +313,8 @@ bool Executor::ExecuteTransactionContract(Result &result)
     Metrics::Timestamp const completed = Metrics::Clock::now();
 #endif  // FETCH_ENABLE_METRICS
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(current_tx_->digest()), " (success)");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(current_tx_->digest()),
+                    " (success)");
 
     FETCH_METRIC_TX_EXEC_STARTED_EX(hash, started);
     FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, completed);
