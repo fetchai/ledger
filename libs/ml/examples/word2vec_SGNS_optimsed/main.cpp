@@ -177,6 +177,8 @@ public:
 
     // second iteration to assign data values after pruning
     s = std::stringstream(text);
+    cursor_ = data_.begin();
+    SizeType cursor_count = 0;
     for (; s >> word;)
     {
       if (!(cursor_.is_valid()))
@@ -195,6 +197,13 @@ public:
         *cursor_ = 0;
       }
       ++cursor_;
+      ++cursor_count;
+    }
+
+    // guarantee that data_ is filled with zeroes after the last word added
+    for (std::size_t i = cursor_count; i < data_.size(); ++i)
+    {
+      assert(data_[i] == 0);
     }
 
     // reset the cursor
@@ -264,6 +273,8 @@ public:
 
     // dynamic context window - pick positive cursor
     context_idx = static_cast<SizeType>(*(positive_cursors_[ran_positive_cursor_[ran_val_]]));
+
+    assert(input_idx < vocab_.size());
   }
 
   void next_negative(SizeType &input_idx, SizeType &context_idx)
