@@ -1019,7 +1019,7 @@ void *TrainModelThread(void *id)
               else
                 f = expTable[(int)((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))];
               // 'g' is the gradient multiplied by the learning rate
-              g = (1 - vocab[word].code[d] - f) * alpha;
+              g = (static_cast<float>(1) - static_cast<float>(vocab[word].code[d]) - static_cast<float>(f)) * alpha;
               // Propagate errors output -> hidden
               for (c = 0; c < layer1_size; c++)
                 neu1e[c] += g * syn1[c + l2];
@@ -1059,11 +1059,11 @@ void *TrainModelThread(void *id)
               // compute gradient coeff g = alpha * (label - 1 / (e^-f + 1))
               // (alpha is learning rate, label is 1 for output and 0 for neg)
               if (f > MAX_EXP)
-                g = (label - 1) * alpha;
+                g = (static_cast<float>(label) - static_cast<float>(1)) * alpha;
               else if (f < -MAX_EXP)
-                g = (label - 0) * alpha;
+                g = (static_cast<float>(label) - static_cast<float>(0)) * alpha;
               else
-                g = (label - expTable[(int)((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))]) *
+                g = (static_cast<float>(label) - static_cast<float>(expTable[static_cast<int>(((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2)))])) *
                     alpha;
               // contribute to gradient for input word
               for (c = 0; c < layer1_size; c++)
