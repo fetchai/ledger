@@ -63,8 +63,9 @@ static bool Contains(Container const &collection, Value const &value)
 auto Generate(BlockGeneratorPtr &gen, BlockPtr genesis, std::size_t amount)
 {
   std::vector<BlockPtr> retVal(amount);
-  for (auto &block: retVal) {
-	  genesis = block = gen->Generate(genesis);
+  for (auto &block : retVal)
+  {
+    genesis = block = gen->Generate(genesis);
   }
   return retVal;
 }
@@ -136,15 +137,18 @@ TEST_P(MainChainTests, CheckSideChainSwitching)
   auto const main{Generate(generator_, genesis, 3)};
 
   // add the side chain blocks
-  for (auto const &block: side) {
-	  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*block));
-	  ASSERT_EQ(chain_->GetHeaviestBlockHash(), block->body.hash) << "when adding side block no. " << block->body.block_number;
+  for (auto const &block : side)
+  {
+    ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*block));
+    ASSERT_EQ(chain_->GetHeaviestBlockHash(), block->body.hash)
+        << "when adding side block no. " << block->body.block_number;
   }
 
   // add the main chain blocks
-  for (std::size_t i{}; i < main.size() - 1; ++i) {
-	  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main[i])) << "when adding main block no. " << i;
-	  ASSERT_EQ(chain_->GetHeaviestBlockHash(), side.back()->body.hash);  // because of hash values
+  for (std::size_t i{}; i < main.size() - 1; ++i)
+  {
+    ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main[i])) << "when adding main block no. " << i;
+    ASSERT_EQ(chain_->GetHeaviestBlockHash(), side.back()->body.hash);  // because of hash values
   }
 
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main.back()));
@@ -162,56 +166,69 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
 
   // an offspring of branch9
   std::vector<BlockGenerator::BlockPtr> branch7(branch9.cbegin(), branch9.cbegin() + 3);
-  for (auto &&other_direction: Generate(generator_, branch7.back(), 4)) {
-	  branch7.emplace_back(std::move(other_direction));
+  for (auto &&other_direction : Generate(generator_, branch7.back(), 4))
+  {
+    branch7.emplace_back(std::move(other_direction));
   }
 
   auto const branch6{Generate(generator_, genesis, 6)};
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Genesis : ", ToBase64(genesis->body.hash));
-  for (auto const &branch: {branch3, branch5, branch9, branch7, branch6})
+  for (auto const &branch : {branch3, branch5, branch9, branch7, branch6})
   {
-	  FETCH_LOG_DEBUG(LOGGING_NAME, "Branch", branch.size(), ':');
-	  for (auto const &block: branch) {
-		  FETCH_LOG_DEBUG(LOGGING_NAME, "\tBlock: ", block->body.hash);
-	  }
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Branch", branch.size(), ':');
+    for (auto const &block : branch)
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "\tBlock: ", block->body.hash);
+    }
   }
 
   // add the initial branch 3
-  for(auto const &block: branch3)
+  for (auto const &block : branch3)
   {
-	  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*block));
-	  ASSERT_EQ(chain_->GetHeaviestBlockHash(), block->body.hash) << "when adding branch3's block no. " << block->body.hash;
+    ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*block));
+    ASSERT_EQ(chain_->GetHeaviestBlockHash(), block->body.hash)
+        << "when adding branch3's block no. " << block->body.hash;
   }
 
   // add the two more branches growing in length
   auto youngest_block_age{branch3.size() - 1};
   auto best_block{branch3.back()};
 
-  for(auto const &branch: {branch5, branch9}) {
-	  for(std::size_t i{}; i < youngest_block_age; ++i) {
-		  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*branch[i]));
-		  ASSERT_EQ(chain_->GetHeaviestBlockHash(), best_block->body.hash) << "when adding branch" << branch.size() << "'s block no. " << i;
-	  }
-	  for(std::size_t i{youngest_block_age}; i < branch.size(); ++i) {
-		  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*branch[i]));
-		  ASSERT_EQ(chain_->GetHeaviestBlockHash(), branch[i]->body.hash) << "when adding branch" << branch.size() << "'s block no. " << i;
-	  }
-	  youngest_block_age = branch.size() - 1;
-	  best_block = branch.back();
+  for (auto const &branch : {branch5, branch9})
+  {
+    for (std::size_t i{}; i < youngest_block_age; ++i)
+    {
+      ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*branch[i]));
+      ASSERT_EQ(chain_->GetHeaviestBlockHash(), best_block->body.hash)
+          << "when adding branch" << branch.size() << "'s block no. " << i;
+    }
+    for (std::size_t i{youngest_block_age}; i < branch.size(); ++i)
+    {
+      ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*branch[i]));
+      ASSERT_EQ(chain_->GetHeaviestBlockHash(), branch[i]->body.hash)
+          << "when adding branch" << branch.size() << "'s block no. " << i;
+    }
+    youngest_block_age = branch.size() - 1;
+    best_block         = branch.back();
   }
 
   // now branch9 is the best, the two remaining won't change the heaviest block
-  for(std::size_t i{}; i < 3; ++i) {
-	  ASSERT_EQ(BlockStatus::DUPLICATE, chain_->AddBlock(*branch7[i]));
+  for (std::size_t i{}; i < 3; ++i)
+  {
+    ASSERT_EQ(BlockStatus::DUPLICATE, chain_->AddBlock(*branch7[i]));
   }
-  for(std::size_t i{3}; i < 7; ++i) {
-	  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*branch7[i]));
-	  ASSERT_EQ(chain_->GetHeaviestBlockHash(), best_block->body.hash) << "when adding branch7's block no. " << branch7[i]->body.block_number;
+  for (std::size_t i{3}; i < 7; ++i)
+  {
+    ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*branch7[i]));
+    ASSERT_EQ(chain_->GetHeaviestBlockHash(), best_block->body.hash)
+        << "when adding branch7's block no. " << branch7[i]->body.block_number;
   }
-  for(auto const &block: branch6) {
-	  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*block));
-	  ASSERT_EQ(chain_->GetHeaviestBlockHash(), best_block->body.hash) << "when adding branch6's block no. " << block->body.block_number;
+  for (auto const &block : branch6)
+  {
+    ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*block));
+    ASSERT_EQ(chain_->GetHeaviestBlockHash(), best_block->body.hash)
+        << "when adding branch6's block no. " << block->body.block_number;
   }
 
   // invalidate the middle of the longest branch, now branch7 is the best
@@ -219,33 +236,48 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), branch7.back()->body.hash);
 
   // check that three blocks have been removed
-  for (std::size_t i{}; i < 6; ++i) {
-	  ASSERT_TRUE(static_cast<bool>(chain_->GetBlock(branch9[i]->body.hash))) << "when searching block no. " << i << " of branch9";
+  for (std::size_t i{}; i < 6; ++i)
+  {
+    ASSERT_TRUE(static_cast<bool>(chain_->GetBlock(branch9[i]->body.hash)))
+        << "when searching block no. " << i << " of branch9";
   }
-  for(std::size_t i{6}; i < branch9.size(); ++i) {
-	  ASSERT_FALSE(static_cast<bool>(chain_->GetBlock(branch9[i]->body.hash))) << "when searching block no. " << i << " of branch9";
+  for (std::size_t i{6}; i < branch9.size(); ++i)
+  {
+    ASSERT_FALSE(static_cast<bool>(chain_->GetBlock(branch9[i]->body.hash)))
+        << "when searching block no. " << i << " of branch9";
   }
 
   // go on cutting branches
   ASSERT_TRUE(chain_->RemoveBlock(branch7[2]->body.hash));
-  // now both branch7 and branch9 have almost been wiped out of the chain and branch6 is the heaviest
+  // now both branch7 and branch9 have almost been wiped out of the chain and branch6 is the
+  // heaviest
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), branch6.back()->body.hash);
-  for(std::size_t i{}; i < 2; ++i) {
-	  ASSERT_TRUE(static_cast<bool>(chain_->GetBlock(branch9[i]->body.hash))) << "when searching block no. " << i << " of branch9";
+  for (std::size_t i{}; i < 2; ++i)
+  {
+    ASSERT_TRUE(static_cast<bool>(chain_->GetBlock(branch9[i]->body.hash)))
+        << "when searching block no. " << i << " of branch9";
   }
-  for(std::size_t i{2}; i < branch9.size(); ++i) {
-	  ASSERT_FALSE(static_cast<bool>(chain_->GetBlock(branch9[i]->body.hash))) << "when searching block no. " << i << " of branch9";
+  for (std::size_t i{2}; i < branch9.size(); ++i)
+  {
+    ASSERT_FALSE(static_cast<bool>(chain_->GetBlock(branch9[i]->body.hash)))
+        << "when searching block no. " << i << " of branch9";
   }
-  for(std::size_t i{2}; i < branch7.size(); ++i) {
-	  ASSERT_FALSE(static_cast<bool>(chain_->GetBlock(branch7[i]->body.hash))) << "when searching block no. " << i << " of branch7";
+  for (std::size_t i{2}; i < branch7.size(); ++i)
+  {
+    ASSERT_FALSE(static_cast<bool>(chain_->GetBlock(branch7[i]->body.hash)))
+        << "when searching block no. " << i << " of branch7";
   }
   ASSERT_TRUE(chain_->RemoveBlock(branch6[4]->body.hash));
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), branch5.back()->body.hash);
-  for(std::size_t i{}; i < 4; ++i) {
-	  ASSERT_TRUE(static_cast<bool>(chain_->GetBlock(branch6[i]->body.hash))) << "when searching block no. " << i << " of branch9";
+  for (std::size_t i{}; i < 4; ++i)
+  {
+    ASSERT_TRUE(static_cast<bool>(chain_->GetBlock(branch6[i]->body.hash)))
+        << "when searching block no. " << i << " of branch9";
   }
-  for(std::size_t i{4}; i < branch6.size(); ++i) {
-	  ASSERT_FALSE(static_cast<bool>(chain_->GetBlock(branch6[i]->body.hash))) << "when searching block no. " << i << " of branch9";
+  for (std::size_t i{4}; i < branch6.size(); ++i)
+  {
+    ASSERT_FALSE(static_cast<bool>(chain_->GetBlock(branch6[i]->body.hash)))
+        << "when searching block no. " << i << " of branch9";
   }
 }
 

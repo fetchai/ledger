@@ -20,7 +20,9 @@
 namespace fetch {
 namespace value_util {
 
-template <class... Ts> constexpr void no_op(Ts &&.../*ts*/) noexcept {}
+template <class... Ts>
+constexpr void no_op(Ts &&... /*ts*/) noexcept
+{}
 
 }  // namespace value_util
 }  // namespace fetch
