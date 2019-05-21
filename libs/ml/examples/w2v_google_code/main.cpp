@@ -632,7 +632,8 @@ void ReadVocab()
     if (eof)
       break;
     a = AddWordToVocab(word);
-    fscanf(fin, "%lld%c", &vocab[a].cn, &c);
+    int tmp = fscanf(fin, "%lld%c", &vocab[a].cn, &c);
+    tmp  = 2; // just avoids unused warning
     i++;
   }
   SortVocab();

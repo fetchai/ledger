@@ -167,7 +167,7 @@ public:
       }
 
       // write the word index to the data tensor
-      *cursor_ = word_idx;
+      *cursor_ = static_cast<DataType>(word_idx);
       ++cursor_;
     }
 
