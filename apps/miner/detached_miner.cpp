@@ -28,6 +28,7 @@
 #include "miner/transaction_item.hpp"
 
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <random>

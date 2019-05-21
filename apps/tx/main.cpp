@@ -33,7 +33,6 @@
 #include <array>
 #include <csignal>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
 #include <stdexcept>
 #include <string>
