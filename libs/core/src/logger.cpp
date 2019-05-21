@@ -28,27 +28,27 @@ log::details::LogWrapper logger;
 
 namespace log {
 Context::Context(void *instance)
+  : details_{std::make_shared<ContextDetails>(instance)}
+  , created_{std::chrono::high_resolution_clock::now()}
 {
-  created_ = std::chrono::high_resolution_clock::now();
-  details_ = std::make_shared<ContextDetails>(instance);
   fetch::logger.SetContext(details_);
 }
 
 Context::Context(shared_type ctx, std::string const &context, std::string const &filename,
-                 int const &line, void *instance)
+                 int line, void *instance)
+  : details_{std::make_shared<ContextDetails>(ctx, fetch::logger.TopContext(), context, filename,
+                                              line, instance)}
+  , created_{std::chrono::high_resolution_clock::now()}
 {
-  created_ = std::chrono::high_resolution_clock::now();
-  details_ = std::make_shared<ContextDetails>(ctx, fetch::logger.TopContext(), context, filename,
-                                              line, instance);
   fetch::logger.SetContext(details_);
 }
 
-Context::Context(std::string const &context, std::string const &filename, int const &line,
+Context::Context(std::string const &context, std::string const &filename, int line,
                  void *instance)
+  : details_{std::make_shared<ContextDetails>(fetch::logger.TopContext(), context, filename, line,
+                                              instance)}
+  , created_{std::chrono::high_resolution_clock::now()}
 {
-  created_ = std::chrono::high_resolution_clock::now();
-  details_ = std::make_shared<ContextDetails>(fetch::logger.TopContext(), context, filename, line,
-                                              instance);
   fetch::logger.SetContext(details_);
 }
 
