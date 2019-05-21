@@ -63,13 +63,14 @@ char const *ToString(BlockStatus status)
  * @param mode Flag to signal which storage mode has been requested
  */
 MainChain::MainChain(Mode mode)
+  : mode_{mode}
 {
-  if (Mode::IN_MEMORY_DB != mode)
+  if (Mode::IN_MEMORY_DB != mode_)
   {
     // create the block store
     block_store_ = std::make_unique<BlockStore>();
 
-    RecoverFromFile(mode);
+    RecoverFromFile(mode_);
   }
 
   // create the genesis block and add it to the cache
@@ -809,10 +810,10 @@ void MainChain::CompleteLooseBlocks(IntBlockPtr const &block)
       if (it2 != loose_blocks_.end())
       {
         // add all the items to the next list
-        next_blocks_to_add.splice(next_blocks_to_add.end(), it->second);
+        next_blocks_to_add.splice(next_blocks_to_add.end(), it2->second);
 
         // remove the list from the blocks list
-        loose_blocks_.erase(it);
+        loose_blocks_.erase(it2);
       }
     }
 

@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "storage/storage_exception.hpp"
 #include "core/macros.hpp"
+#include "storage/storage_exception.hpp"
 #include <unordered_map>
 
 template <typename STACK_ELEMENTS>

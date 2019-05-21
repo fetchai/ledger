@@ -157,7 +157,6 @@ protected:
 
   bool HandleUnsubscribeRequest(connection_handle_type client, serializer_type params)
   {
-    LOG_STACK_TRACE_POINT;
     bool                      ret = true;
     protocol_handler_type     protocol;
     feed_handler_type         feed;

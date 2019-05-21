@@ -128,7 +128,6 @@ public:
 
     if (publisher_[feed])
     {
-      LOG_STACK_TRACE_POINT
       publisher_[feed](params.data());
     }
     else
