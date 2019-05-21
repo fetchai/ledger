@@ -21,7 +21,7 @@
 namespace fetch {
 namespace random {
 
-LaggedFibonacciGenerator<> Random::generator = LaggedFibonacciGenerator<>();
+LaggedFibonacciGenerator<> Random::generator =          LaggedFibonacciGenerator<>();
 
 }  // namespace random
 }  // namespace fetch

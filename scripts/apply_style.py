@@ -235,15 +235,20 @@ def format_cpp(args):
 def format_python(args):
     jobs_arg = ['-j {}'.format(args.jobs)]
 
-    autopep8_cmd = ['autopep8', '.', '--in-place', '--recursive',
-                    '--exclude', 'vendor'] + jobs_arg
+    autopep8_cmd = ['autopep8',    '.',
+
+                    '--in-place', '--recursive',
+                    '--exclude',
+
+                    'vendor'] + jobs_arg
 
     subprocess.call(autopep8_cmd, cwd=PROJECT_ROOT)
 
 
+
+
 def get_diff():
     return subprocess.check_output(['git', 'diff'], cwd=PROJECT_ROOT).decode().strip()
-
 
 def main():
     args = parse_commandline()
@@ -254,6 +259,7 @@ def main():
     output('Formatting Python ...')
     format_python(args)
     output('Done.')
+
 
     if args.diff:
         diff = get_diff()
