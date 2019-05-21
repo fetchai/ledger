@@ -10,4 +10,4 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-add_fetch_test(variant_gtest fetch-variant .)
+add_fetch_test(fetch_variant_tests fetch-variant .)

@@ -44,7 +44,9 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
+    LOG_SET_CONTEXT_VARIABLE(stack_trace_);
+
+    add_trace_to_explanation();
   }
 
   StorageException(const char *explanation)
@@ -53,7 +55,8 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
+    LOG_SET_CONTEXT_VARIABLE(stack_trace_);
+    add_trace_to_explanation();
   }
 
   StorageException(std::string explanation)
@@ -62,7 +65,8 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
+    LOG_SET_CONTEXT_VARIABLE(stack_trace_);
+    add_trace_to_explanation();
   }
 
   StorageException(byte_array::ConstByteArray const &explanation)
@@ -71,7 +75,8 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
+    LOG_SET_CONTEXT_VARIABLE(stack_trace_);
+    add_trace_to_explanation();
   }
 
   StorageException(error::error_type error_code, std::string explanation)
@@ -80,7 +85,8 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
+    LOG_SET_CONTEXT_VARIABLE(stack_trace_);
+    add_trace_to_explanation();
   }
 
   StorageException(error::error_type error_code, byte_array::ConstByteArray const &explanation)
@@ -89,7 +95,13 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
+    LOG_SET_CONTEXT_VARIABLE(stack_trace_);
+    add_trace_to_explanation();
+  }
+
+  void add_trace_to_explanation()
+  {
+    explanation_ += "\nStack backtrace: \n" + ERROR_BACKTRACE_STRING_START(1);
   }
 
   virtual ~StorageException()

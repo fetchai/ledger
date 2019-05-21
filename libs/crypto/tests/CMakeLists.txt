@@ -10,4 +10,4 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-add_fetch_test(fetch-crypto-tests fetch-crypto gtests)
+add_fetch_test(fetch_crypto_tests fetch-crypto gtests)

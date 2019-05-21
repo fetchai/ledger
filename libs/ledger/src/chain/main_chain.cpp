@@ -66,13 +66,14 @@ char const *ToString(BlockStatus status)
  * @param mode Flag to signal which storage mode has been requested
  */
 MainChain::MainChain(Mode mode)
+  : mode_{mode}
 {
-  if (Mode::IN_MEMORY_DB != mode)
+  if (Mode::IN_MEMORY_DB != mode_)
   {
     // create the block store
     block_store_ = std::make_unique<BlockStore>();
 
-    RecoverFromFile(mode);
+    RecoverFromFile(mode_);
   }
 
   // create the genesis block and add it to the cache

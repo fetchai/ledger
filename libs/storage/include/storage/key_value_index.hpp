@@ -489,7 +489,7 @@ public:
 
   std::size_t size() const
   {
-    return stack_.size();
+    return (stack_.size() + 1) / 2;
   }
 
   void Flush(bool lazy = true)

@@ -108,6 +108,11 @@ function(setup_library_examples library)
 endfunction()
 
 function(add_fetch_test name library directory)
+
+  if(NOT name MATCHES "^fetch_[a-zA-Z0-9_]+_tests$")
+      message(FATAL_ERROR "fetch tests are required to follow the format fetch_xxx_tests. Found: ${name}")
+  endif()
+
   if(FETCH_ENABLE_TESTS)
 
     # remove all the arguments
@@ -164,6 +169,7 @@ function(add_fetch_test name library directory)
 endfunction()
 
 function(add_fetch_gbench name library directory)
+
   if(FETCH_ENABLE_BENCHMARKS)
 
     # remove all the arguments

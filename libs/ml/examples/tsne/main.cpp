@@ -29,9 +29,9 @@
 using namespace fetch::math;
 using namespace fetch::ml;
 
-using DataType  = double;
-using ArrayType = Tensor<DataType>;
-using SizeType  = typename ArrayType::SizeType;
+using DataType     = double;
+using ArrayType    = Tensor<DataType>;
+using SizeTypeHere = typename ArrayType::SizeType;
 
 #include <math/tensor.hpp>
 #include <sstream>
@@ -52,13 +52,13 @@ void ReadFile(Tensor<DataType> &matrix, std::string const &path)
     std::cerr << "Can't open file: " << path << std::endl;
   }
 
-  for (SizeType i = 0; i < matrix.shape().at(0); i++)
+  for (SizeTypeHere i = 0; i < matrix.shape().at(0); i++)
   {
     std::string line;
     std::getline(source, line);
     std::istringstream in(line);  // make a stream for the line itself
 
-    for (SizeType j = 0; j < matrix.shape().at(1); j++)
+    for (SizeTypeHere j = 0; j < matrix.shape().at(1); j++)
     {
       DataType num;
       in >> num;
@@ -69,16 +69,16 @@ void ReadFile(Tensor<DataType> &matrix, std::string const &path)
 
 int main(int ac, char **av)
 {
-  SizeType SUBSET_SIZE                  = 100;
-  SizeType RANDOM_SEED                  = 123456;
-  DataType LEARNING_RATE                = 500;
-  SizeType MAX_ITERATIONS               = 100;
-  DataType PERPLEXITY                   = 20;
-  SizeType N_OUTPUT_FEATURE_SIZE        = 2;
-  DataType INITIAL_MOMENTUM             = 0.5;
-  DataType FINAL_MOMENTUM               = 0.8;
-  SizeType FINAL_MOMENTUM_STEPS         = 20;
-  SizeType P_LATER_CORRECTION_ITERATION = 10;
+  SizeTypeHere SUBSET_SIZE                  = 100;
+  SizeTypeHere RANDOM_SEED                  = 123456;
+  DataType     LEARNING_RATE                = 500;
+  SizeTypeHere MAX_ITERATIONS               = 100;
+  DataType     PERPLEXITY                   = 20;
+  SizeTypeHere N_OUTPUT_FEATURE_SIZE        = 2;
+  DataType     INITIAL_MOMENTUM             = 0.5;
+  DataType     FINAL_MOMENTUM               = 0.8;
+  SizeTypeHere FINAL_MOMENTUM_STEPS         = 20;
+  SizeTypeHere P_LATER_CORRECTION_ITERATION = 10;
 
   if (ac < 3)
   {

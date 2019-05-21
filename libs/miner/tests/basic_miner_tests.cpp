@@ -87,7 +87,7 @@ protected:
       // generate the transaction with a number of transactions
       auto tx = generator_(num_resources);
 
-      for (std::size_t i = 0; i < duplicates; ++i)
+      for (std::size_t z = 0; z < duplicates; ++z)
       {
         miner_->EnqueueTransaction(tx);
       }
