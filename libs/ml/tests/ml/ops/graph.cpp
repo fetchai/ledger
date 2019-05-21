@@ -19,6 +19,7 @@
 #include "ml/graph.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/activations/relu.hpp"
+#include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 
 #include "ml/layers/self_attention.hpp"
@@ -98,7 +99,8 @@ TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
   ASSERT_ANY_THROW(g.Evaluate("FullyConnected"));
 }
 
-TYPED_TEST(GraphTest, diamond_shaped_graph)  // Evaluate graph output=(input+input)+(input+input)
+TYPED_TEST(GraphTest,
+           diamond_shaped_graph_forward)  // Evaluate graph output=(input+input)+(input+input)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
@@ -129,4 +131,63 @@ TYPED_TEST(GraphTest, diamond_shaped_graph)  // Evaluate graph output=(input+inp
   // Test correct values
   ASSERT_EQ(output.shape(), data.shape());
   ASSERT_TRUE(output.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+}
+
+TYPED_TEST(GraphTest, diamond_shaped_graph_backward)  // output=(input+weights)+(input*weights)
+{
+  using DataType  = typename TypeParam::Type;
+  using SizeType  = typename TypeParam::SizeType;
+  using ArrayType = TypeParam;
+
+  // Generate input
+  ArrayType error_signal = ArrayType::FromString("-1,0,1,2,3,4");
+  ArrayType data         = ArrayType::FromString("2,3,4,5,6,7");
+  ArrayType gt           = ArrayType::FromString(R"(
+    -1,          0,          1,         2,           3,         4;
+     0.97049,	-0.00000,	-0.03456,	0.35634,	-1.29189,	3.93152
+  )");
+
+  // Create graph
+  std::string                 name = "Diamond";
+  fetch::ml::Graph<TypeParam> g;
+
+  std::string input_name =
+      g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
+
+  std::string weights =
+      g.template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
+
+  ArrayType weights_data(std::vector<SizeType>(data.shape()));
+
+  fetch::ml::ops::Weights<ArrayType>::Initialise(weights_data, 1, 1);
+
+  g.SetInput(weights, weights_data, false);
+
+  std::string add1_name =
+      g.template AddNode<fetch::ml::ops::Add<ArrayType>>(name + "_Add1", {input_name, weights});
+  std::string multiply_name = g.template AddNode<fetch::ml::ops::Multiply<ArrayType>>(
+      name + "_Multiply", {input_name, weights});
+
+  std::string output_name = g.template AddNode<fetch::ml::ops::Add<ArrayType>>(
+      name + "_Add2", {add1_name, multiply_name});
+
+  // Back propagate
+  g.SetInput(input_name, error_signal);
+  g.BackPropagate("Diamond_Add2", data);
+
+  // Get gradient for inputs
+  auto gradients = g.BackPropagate(output_name, error_signal);
+
+  ArrayType grad(gt.shape());
+
+  for (SizeType i{0}; i < gradients.size(); i++)
+  {
+    for (SizeType j{0}; j < gradients.at(i).second.size(); j++)
+    {
+      grad(i, j) = gradients.at(i).second.At(0, j);
+    }
+  }
+
+  ASSERT_EQ(grad.shape(), gt.shape());
+  ASSERT_TRUE(grad.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 }

@@ -69,8 +69,9 @@ public:
    * f'(input0)=input0*errorSignal
    * f'(input1)=input1*errorSignal
    */
-  virtual std::vector<ArrayPtrType> Backward(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs, ArrayPtrType errorSignal)
+  virtual std::vector<ArrayType> Backward(
+      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
+      ArrayType const &                                           errorSignal)
   {
     ASSERT(inputs.size() == 2);
     ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());

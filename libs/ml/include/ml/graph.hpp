@@ -67,9 +67,10 @@ public:
    * @param node_name name of node from which to begin backprop
    * @param errorSignal pointer to array containing error signal to backprop
    */
-  void BackPropagate(std::string const &node_name, ArrayType const &errorSignal)
+  std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(std::string const &node_name,
+                                                                      ArrayType const &errorSignal)
   {
-    nodes_[node_name]->BackPropagate(errorSignal);
+    return nodes_[node_name]->BackPropagate(errorSignal);
   }
 
   /**
