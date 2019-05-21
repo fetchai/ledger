@@ -25,8 +25,8 @@
 class MockExecutor : public fetch::ledger::ExecutorInterface
 {
 public:
-  using Digest    = fetch::ledger::v2::Digest;
-  using Address   = fetch::ledger::v2::Address;
+  using Digest    = fetch::ledger::Digest;
+  using Address   = fetch::ledger::Address;
   using BitVector = fetch::BitVector;
 
   MockExecutor()

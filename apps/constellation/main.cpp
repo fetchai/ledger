@@ -49,7 +49,7 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "main";
 
-using fetch::ledger::v2::Address;
+using fetch::ledger::Address;
 
 using Prover         = fetch::crypto::Prover;
 using BootstrapPtr   = std::unique_ptr<fetch::BootstrapMonitor>;

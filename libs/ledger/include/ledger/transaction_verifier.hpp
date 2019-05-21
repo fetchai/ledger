@@ -25,10 +25,8 @@
 
 namespace fetch {
 namespace ledger {
-namespace v2 {
-class Transaction;
-}
 
+class Transaction;
 class TransactionSink;
 
 class TransactionVerifier
@@ -36,7 +34,7 @@ class TransactionVerifier
 public:
   static constexpr char const *LOGGING_NAME = "TxVerifier";
 
-  using TransactionPtr = std::shared_ptr<v2::Transaction>;
+  using TransactionPtr = std::shared_ptr<Transaction>;
 
   // Construction / Destruction
   explicit TransactionVerifier(TransactionSink &sink, std::size_t verifying_threads,
