@@ -359,8 +359,8 @@ private:
     {
       if (i < cursor_offset_)
       {
-        for (std::size_t j = 0;
-             j < (double(i + 1) / double(sum_freqs)) * ran_positive_cursor_.size(); ++j)
+        for (std::size_t j = 0; j <
+                static_cast<std::size_t>((static_cast<double>(i + 1) / static_cast<double>(sum_freqs)) * ran_positive_cursor_.size()); ++j)
         {
           rows_.emplace_back(i);
         }
@@ -368,8 +368,8 @@ private:
       else
       {
         for (std::size_t j = 0;
-             j < (double((cursor_offset_ - (i - cursor_offset_))) / double(sum_freqs)) *
-                     ran_positive_cursor_.size();
+             j < static_cast<std::size_t>((static_cast<double>((cursor_offset_ - (i - cursor_offset_))) / static_cast<double>(sum_freqs)) *
+                     ran_positive_cursor_.size());
              ++j)
         {
           rows_.emplace_back(i);
@@ -404,12 +404,12 @@ private:
     // compute normalizer
     for (SizeType a = 0; a < vocab_.size(); ++a)
     {
-      train_words_pow += pow(vocab_frequencies_[a], unigram_power_);
+      train_words_pow += pow(static_cast<double>(vocab_frequencies_[a]), unigram_power_);
     }
 
     //
     SizeType word_idx = 0;
-    d1                = pow(vocab_frequencies_[word_idx], unigram_power_) / train_words_pow;
+    d1                = pow(static_cast<double>(vocab_frequencies_[word_idx]), unigram_power_) / train_words_pow;
 
     auto vocab_it = vocab_.begin();
 
@@ -422,7 +422,7 @@ private:
         {
           ++vocab_it;
         }
-        d1 += pow(vocab_frequencies_[vocab_it->second], unigram_power_) / train_words_pow;
+        d1 += pow(static_cast<double>(vocab_frequencies_[vocab_it->second]), unigram_power_) / train_words_pow;
       }
     }
   }
