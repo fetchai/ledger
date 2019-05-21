@@ -340,7 +340,7 @@ void FileObject<S>::Write(byte_array::ConstByteArray const &arr)
 
 /**
  * Write bytes to file object, ensuring that the size of the file object is extended if
- * neccessary.
+ * necessary.
  *
  * @param: bytes The bytes to write
  * @param: num The number of bytes to write
@@ -817,9 +817,7 @@ bool FileObject<S>::VerifyConsistency(std::vector<uint64_t> const &ids)
     {
       uint64_t indx = std::get<0>(ll[i]);
       uint64_t prev = std::get<1>(ll[i]);
-      ;
       uint64_t next = std::get<2>(ll[i]);
-      ;
 
       uint64_t next_in_ll = std::get<0>(ll[(i + 1) % ll.size()]);
       uint64_t prev_in_ll = std::get<0>(ll[(i + ll.size() - 1) % ll.size()]);
