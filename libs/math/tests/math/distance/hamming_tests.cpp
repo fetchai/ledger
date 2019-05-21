@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iomanip>
 #include <iostream>
 
 #include "core/random/lcg.hpp"

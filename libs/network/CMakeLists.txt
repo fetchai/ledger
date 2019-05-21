@@ -22,7 +22,3 @@ add_test_target()
 
 # Example targets
 add_subdirectory(examples)
-
-# Benchmark targets
-add_subdirectory(benchmark)
-

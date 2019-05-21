@@ -19,7 +19,7 @@
 
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/constants.hpp"
-#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <map>
@@ -30,9 +30,9 @@
 class FakeStorageUnit : public fetch::ledger::StorageUnitInterface
 {
 public:
-  using Transaction = fetch::ledger::v2::Transaction;
-  using Digest      = fetch::ledger::v2::Digest;
-  using DigestSet   = fetch::ledger::v2::DigestSet;
+  using Transaction = fetch::ledger::Transaction;
+  using Digest      = fetch::ledger::Digest;
+  using DigestSet   = fetch::ledger::DigestSet;
 
   /// @name State Interface
   /// @{

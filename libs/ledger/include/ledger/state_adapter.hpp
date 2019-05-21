@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "vm/io_observer_interface.hpp"
@@ -36,7 +35,6 @@ class StateAdapter : public vm::IoObserverInterface
 public:
   using ConstByteArray  = byte_array::ConstByteArray;
   using ResourceAddress = storage::ResourceAddress;
-  using ResourceSet     = std::set<byte_array::ConstByteArray>;
 
   static constexpr char const *LOGGING_NAME = "StateAdapter";
 

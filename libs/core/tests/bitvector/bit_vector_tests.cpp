@@ -22,7 +22,6 @@
 
 #include "gtest/gtest.h"
 
-#include <iomanip>
 #include <iostream>
 #include <memory>
 

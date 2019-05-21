@@ -31,9 +31,8 @@ class Module;
 }  // namespace vm
 
 namespace ledger {
-namespace v2 {
+
 class Address;
-}
 
 /**
  * Smart Contract instance.
@@ -67,9 +66,9 @@ private:
   using ModulePtr = std::shared_ptr<vm::Module>;
 
   // Transaction /
-  Status InvokeAction(std::string const &name, v2::Transaction const &tx, BlockIndex index);
+  Status InvokeAction(std::string const &name, Transaction const &tx, BlockIndex index);
   Status InvokeQuery(std::string const &name, Query const &request, Query &response);
-  Status InvokeInit(v2::Address const &owner);
+  Status InvokeInit(Address const &owner);
 
   BlockIndex     block_index_{};  ///< The index current contract's block
   std::string    source_;         ///< The source of the current contract

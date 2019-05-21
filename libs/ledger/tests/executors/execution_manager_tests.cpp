@@ -29,7 +29,6 @@
 
 #include <algorithm>
 #include <chrono>
-#include <iomanip>
 #include <iostream>
 #include <random>
 #include <thread>
@@ -46,7 +45,7 @@ protected:
   using Clock               = std::chrono::high_resolution_clock;
   using ScheduleStatus      = ExecutionManager::ScheduleStatus;
   using State               = ExecutionManager::State;
-  using Digest              = fetch::ledger::v2::Digest;
+  using Digest              = fetch::ledger::Digest;
 
   static constexpr char const *LOGGING_NAME = "ExecutionManagerTests";
 

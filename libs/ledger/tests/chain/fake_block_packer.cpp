@@ -22,10 +22,10 @@
 
 #include "fake_block_packer.hpp"
 
-void FakeBlockPacker::EnqueueTransaction(fetch::ledger::v2::Transaction const &)
+void FakeBlockPacker::EnqueueTransaction(fetch::ledger::Transaction const &)
 {}
 
-void FakeBlockPacker::EnqueueTransaction(fetch::ledger::v2::TransactionLayout const &)
+void FakeBlockPacker::EnqueueTransaction(fetch::ledger::TransactionLayout const &)
 {}
 
 void FakeBlockPacker::GenerateBlock(fetch::ledger::Block &block, std::size_t num_lanes,

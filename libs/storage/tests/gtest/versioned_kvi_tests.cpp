@@ -24,7 +24,6 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <iomanip>
 #include <iostream>
 
 namespace {

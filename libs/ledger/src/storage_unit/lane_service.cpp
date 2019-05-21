@@ -18,9 +18,8 @@
 
 #include "ledger/storage_unit/lane_service.hpp"
 #include "core/service_ids.hpp"
-#include "ledger/chain/transaction_serialization.hpp"
-#include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
-#include "ledger/chain/v2/transaction_rpc_serializers.hpp"
+#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
+#include "ledger/chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/lane_controller.hpp"
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"
@@ -33,6 +32,8 @@
 #include "network/muddle/rpc/server.hpp"
 #include "storage/document_store_protocol.hpp"
 #include "storage/new_revertible_document_store.hpp"
+
+#include <iomanip>
 
 using fetch::byte_array::ToBase64;
 
@@ -110,7 +111,7 @@ LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packet
       sync_cfg, external_muddle_, tx_store_, tx_finder_protocol_.get(),
       [this]() { tx_sync_protocol_->TrimCache(); });
 
-  tx_store_->SetCallback([this](v2::Transaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
+  tx_store_->SetCallback([this](Transaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
 
   // TX Sync protocol
   external_rpc_server_->Add(RPC_TX_STORE_SYNC, tx_sync_protocol_.get());
