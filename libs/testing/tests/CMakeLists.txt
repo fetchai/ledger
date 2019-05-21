@@ -10,4 +10,4 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-add_fetch_test(fetch-testing-tests fetch-testing .)
+add_fetch_test(fetch_testing_tests fetch-testing .)

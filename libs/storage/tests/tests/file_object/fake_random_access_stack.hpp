@@ -71,6 +71,7 @@ public:
   {
     ThrowOnBadAccess(i + elements, "LazySetBulk");
     SetBulk(i, elements, objects);
+    return true;
   }
 
   void GetBulk(std::size_t const &i, std::size_t elements, STACK_ELEMENTS *objects)
@@ -155,16 +156,6 @@ public:
   // Unused functions
   void ClearEventHandlers()
   {}
-
-  // TODO(HUT): delete these!
-  /*
-  void OnFileLoaded(event_handler_type const &f)
-  {
-  }
-
-  void OnBeforeFlush(event_handler_type const &f)
-  {
-  }*/
 
   void SignalFileLoaded()
   {}
