@@ -83,29 +83,6 @@ public:
   }
 
   /*
-   * Advance the cursor by offset
-   * Used to train on different part of the dataset in a multithreaded environment
-   */
-  void SetOffset(unsigned int offset)
-  {
-    offset = offset % Size();
-    while (offset > data_[currentSentence_].size())
-    {
-      offset -= data_[currentSentence_].size();
-      currentSentence_++;
-    }
-    if (offset < data_[currentSentence_].size() - window_size_)
-    {
-      currentWord_ = offset;
-    }
-    else
-    {
-      currentSentence_++;
-      currentWord_ = 0;
-    }
-  }
-
-  /*
    * Remove words that appears less than MIN times
    * This is a destructive operation
    */
