@@ -1339,7 +1339,7 @@ int main(int argc, char **argv)
   for (i = 0; i < EXP_TABLE_SIZE; i++)
   {
     // Precompute the exp() table
-    expTable[i] = exp((i / (real)EXP_TABLE_SIZE * 2 - 1) * MAX_EXP);
+    expTable[i] = exp((i / static_cast<float>(EXP_TABLE_SIZE) * 2 - 1) * MAX_EXP);
     // Precompute f(x) = x / (x + 1)
     expTable[i] = expTable[i] / (expTable[i] + 1);
   }

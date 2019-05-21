@@ -842,8 +842,8 @@ int main(int argc, char **argv)
   // set up model architecture
   std::cout << "building model architecture...: " << std::endl;
   SkipgramModel<ArrayType> model(dataloader.vocab_size(), tp.embedding_size, tp.learning_rate);
-  tp.negative_learning_rate     = tp.learning_rate / tp.neg_examples;
-  tp.min_negative_learning_rate = tp.min_learning_rate / tp.neg_examples;
+  tp.negative_learning_rate     = tp.learning_rate / static_cast<double>(tp.neg_examples);
+  tp.min_negative_learning_rate = tp.min_learning_rate / static_cast<double>(tp.neg_examples);
 
   ///////////////////////////
   /// BEGIN TRAINING LOOP ///
@@ -885,8 +885,8 @@ int main(int argc, char **argv)
 
     if (static_cast<SizeType>(*dataloader.cursor_) != 0)  // ignore unknown words
     {
-      auto one_min_completed_train_fraction =
-          1.0 - (((epoch_count + 1) * static_cast<double>(cursor_idx)) / tp.total_words);
+      double one_min_completed_train_fraction =
+          1.0 - ((static_cast<double>(epoch_count + 1) * static_cast<double>(cursor_idx)) / static_cast<double>(tp.total_words));
 
       ////////////////////////////////
       /// run one positive example ///
