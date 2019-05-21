@@ -578,7 +578,7 @@ void LearnVocabFromTrainFile()
     {
       vocab[i].cn++;
     }
-    if (vocab_size > vocab_hash_size * 0.7)
+    if (vocab_size > static_cast<long long>(static_cast<double>(vocab_hash_size) * 0.7))
     {
       ReduceVocab();
     }
@@ -703,7 +703,7 @@ void InitNet()
       syn0[a * layer1_size + b] = ((static_cast<float>(static_cast<int>(next_random) & 0xFFFF) /
                                     static_cast<float>(65536)) -
                                    static_cast<float>(0.5)) /
-                                  layer1_size;
+                                  static_cast<float>(layer1_size);
     }
   CreateBinaryTree();
 }
@@ -780,8 +780,8 @@ void *TrainModelThread(void *id)
       {
         now = clock();
         printf("%cAlpha: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  ", 13, alpha,
-               word_count_actual / (real)(iter * train_words + 1) * 100,
-               word_count_actual / ((real)(now - start + 1) / (real)CLOCKS_PER_SEC * 1000));
+               word_count_actual / static_cast<float>(iter * train_words + 1) * 100,
+               word_count_actual / (static_cast<float>(now - start + 1) / static_cast<float>(CLOCKS_PER_SEC) * 1000.0));
         fflush(stdout);
       }
       // linear-decay learning rate (decreases from one toward zero
