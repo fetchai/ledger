@@ -19,9 +19,6 @@
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 
-using namespace std;
-using namespace std::chrono;
-
 template <typename T>
 class TensorIndexingTest : public ::testing::Test
 {
@@ -34,7 +31,7 @@ TYPED_TEST(TensorIndexingTest, empty_tensor_test)
 {
   fetch::math::Tensor<TypeParam> t;
   ASSERT_EQ(t.size(), 0);
-  ASSERT_TRUE(t.shape().empty());
+  ASSERT_EQ(t.shape().size(), 1);
 }
 
 TYPED_TEST(TensorIndexingTest, one_dimentional_tensor_test)
@@ -54,6 +51,38 @@ TYPED_TEST(TensorIndexingTest, two_dimentional_tensor_test)
   ASSERT_EQ(t.shape().size(), 2);
   ASSERT_EQ(t.shape()[0], 3);
   ASSERT_EQ(t.shape()[1], 5);
+}
+
+TYPED_TEST(TensorIndexingTest, index_op_vs_iterator)
+{
+  TypeParam                      from      = TypeParam(20);
+  TypeParam                      to        = TypeParam(29);
+  TypeParam                      step_size = TypeParam(1);
+  fetch::math::Tensor<TypeParam> a = fetch::math::Tensor<TypeParam>::Arange(from, to, step_size);
+  EXPECT_EQ(a.size(), 9);
+  a.Reshape({3, 3});
+
+  fetch::math::Tensor<TypeParam> b{a.shape()};
+  fetch::math::Tensor<TypeParam> c;
+  c.Resize(a.shape());
+
+  auto it1 = a.begin();
+  auto it2 = b.begin();
+  while (it1.is_valid())
+  {
+    *it2 = *it1;
+    ++it1;
+    ++it2;
+  }
+
+  for (std::size_t i = 0; i < a.size(); ++i)
+  {
+    c[i] = a[i];
+  }
+
+  EXPECT_EQ(a, c);
+  EXPECT_EQ(b, c);
+  EXPECT_EQ(b, a);
 }
 
 TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_test)
@@ -313,9 +342,8 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_squeeze_test)
 
 TYPED_TEST(TensorIndexingTest, major_order_flip_test)
 {
-  using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
   fetch::math::Tensor<TypeParam> t({3, 3});
-  t.FillArange(SizeType{0}, t.size());
+  t.FillArange(static_cast<TypeParam>(0), static_cast<TypeParam>(t.size()));
 
   EXPECT_EQ(t[0], 0);
   EXPECT_EQ(t[1], 1);

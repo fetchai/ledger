@@ -19,12 +19,16 @@
 #include "ledger/storage_unit/lane_service.hpp"
 #include "core/service_ids.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
+#include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
+#include "ledger/chain/v2/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/lane_controller.hpp"
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
+#include "ledger/storage_unit/transaction_finder_protocol.hpp"
 #include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
+#include "meta/log2.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/server.hpp"
 #include "storage/document_store_protocol.hpp"
@@ -46,7 +50,7 @@ std::string GeneratePrefix(std::string const &storage_path, uint32_t lane)
 }  // namespace
 
 LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packets, Mode mode)
-  : tx_store_(std::make_shared<TxStore>())
+  : tx_store_(std::make_shared<TxStore>(meta::Log2(config.num_lanes)))
   , reactor_("LaneServiceReactor")
   , cfg_{std::move(config)}
 {
@@ -68,7 +72,7 @@ LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packet
   lane_identity_protocol_ = std::make_shared<LaneIdentityProtocol>(*lane_identity_);
   external_rpc_server_->Add(RPC_IDENTITY, lane_identity_protocol_.get());
 
-  reactor_.Attach(tx_store_->getWeakRunnable());
+  reactor_.Attach(tx_store_->GetWeakRunnable());
 
   std::string const prefix = GeneratePrefix(cfg_.storage_path, cfg_.lane_id);
   switch (mode)
@@ -89,6 +93,9 @@ LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packet
   controller_protocol_ = std::make_shared<LaneControllerProtocol>(controller_.get());
   internal_rpc_server_->Add(RPC_CONTROLLER, controller_protocol_.get());
 
+  tx_finder_protocol_ = std::make_unique<TxFinderProtocol>();
+  internal_rpc_server_->Add(RPC_MISSING_TX_FINDER, tx_finder_protocol_.get());
+
   tx_sync_protocol_ = std::make_shared<TransactionStoreSyncProtocol>(tx_store_.get(), cfg_.lane_id);
 
   // prepare the sync config
@@ -99,12 +106,11 @@ LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packet
   sync_cfg.promise_wait_timeout       = cfg_.sync_service_promise_timeout;
   sync_cfg.fetch_object_wait_duration = cfg_.sync_service_fetch_period;
 
-  tx_sync_service_ =
-      std::make_shared<TransactionStoreSyncService>(sync_cfg, external_muddle_, tx_store_);
+  tx_sync_service_ = std::make_shared<TransactionStoreSyncService>(
+      sync_cfg, external_muddle_, tx_store_, tx_finder_protocol_.get(),
+      [this]() { tx_sync_protocol_->TrimCache(); });
 
-  tx_store_->SetCallback([this](VerifiedTransaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
-
-  tx_sync_service_->SetTrimCacheCallback([this]() { tx_sync_protocol_->TrimCache(); });
+  tx_store_->SetCallback([this](v2::Transaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
 
   // TX Sync protocol
   external_rpc_server_->Add(RPC_TX_STORE_SYNC, tx_sync_protocol_.get());

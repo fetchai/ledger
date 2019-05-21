@@ -20,6 +20,9 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "core/serializers/byte_array.hpp"
+#include "ledger/chain/v2/address.hpp"
+
 #include "vm/vm.hpp"
 
 namespace fetch {
@@ -28,19 +31,18 @@ namespace vm {
 class Address : public Object
 {
 public:
-  static constexpr std::size_t RAW_BYTES_SIZE   = 64;
-  static constexpr std::size_t STRING_REPR_SIZE = 88;
-  using Buffer                                  = std::vector<uint8_t>;
-  bool is_address                               = true;
+  static constexpr std::size_t RAW_BYTES_SIZE = 32;
 
-  static Ptr<Address> Constructor(VM *vm, TypeId id)
+  using Buffer = std::vector<uint8_t>;
+
+  static Ptr<Address> Constructor(VM *vm, TypeId type_id)
   {
-    return new Address{vm, id};
+    return new Address{vm, type_id};
   }
 
-  static Ptr<Address> Constructor(VM *vm, TypeId id, Ptr<String> const &address)
+  static Ptr<Address> Constructor(VM *vm, TypeId type_id, Ptr<String> const &address)
   {
-    return new Address{vm, id, address};
+    return new Address{vm, type_id, address};
   }
 
   // Construction / Destruction
@@ -49,22 +51,9 @@ public:
     , signed_tx_{signed_tx}
     , vm_{vm}
   {
-    if (address)
+    if (address && !ledger::v2::Address::Parse(address->str.c_str(), address_))
     {
-      if (STRING_REPR_SIZE != address->str.size())
-      {
-        vm->RuntimeError("Incorrectly sized string value for Address value");
-        return;
-      }
-
-      // decode the base64 address (public key)
-      auto const decoded = byte_array::FromBase64(address->str);
-
-      // resize the buffer
-      address_.resize(decoded.size());
-
-      // copy the contents of the address
-      std::memcpy(address_.data(), decoded.pointer(), decoded.size());
+      vm->RuntimeError("Unable to parse address");
     }
   }
 
@@ -80,33 +69,18 @@ public:
     signed_tx_ = set;
   }
 
-  Buffer const &GetBytes() const
+  Ptr<String> AsString()
   {
-    return address_;
-  }
-
-  bool SetBytes(Buffer &&address)
-  {
-    bool success{false};
-
-    if (RAW_BYTES_SIZE == address.size())
-    {
-      address_ = std::move(address);
-      success  = true;
-    }
-
-    return success;
-  }
-
-  Ptr<String> AsBase64String()
-  {
-    return new String{vm_, static_cast<std::string>(byte_array::ToBase64(
-                               byte_array::ConstByteArray{address_.data(), address_.size()}))};
+    return new String{vm_, std::string{address_.display()}};
   }
 
   std::vector<uint8_t> ToBytes() const
   {
-    return address_;
+    auto const &address = address_.address();
+    auto const *start   = address.pointer();
+    auto const *end     = start + address.size();
+
+    return {start, end};
   }
 
   void FromBytes(std::vector<uint8_t> &&data)
@@ -118,14 +92,43 @@ public:
     }
 
     // update the value
-    address_ = std::move(data);
+    address_ = ledger::v2::Address({data.data(), data.size()});
+  }
+
+  ledger::v2::Address const &address() const
+  {
+    return address_;
+  }
+
+  Address &operator=(ledger::v2::Address const &address)
+  {
+    address_ = address;
+    return *this;
+  }
+
+  bool operator==(ledger::v2::Address const &other) const
+  {
+    return address_ == other;
+  }
+
+  bool SerializeTo(ByteArrayBuffer &buffer) override
+  {
+    buffer << address_.address();
+    return true;
+  }
+
+  bool DeserializeFrom(ByteArrayBuffer &buffer) override
+  {
+    fetch::byte_array::ConstByteArray raw_address{};
+    buffer >> raw_address;
+    address_ = ledger::v2::Address{raw_address};
+    return true;
   }
 
 private:
-  Buffer      address_{};
-  std::string string_representation_{"NONE_FOUND"};
-  bool        signed_tx_{false};
-  VM *        vm_;
+  ledger::v2::Address address_;
+  bool                signed_tx_{false};
+  VM *                vm_;
 };
 
 }  // namespace vm

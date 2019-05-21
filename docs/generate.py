@@ -7,10 +7,10 @@ import webbrowser
 
 WATCHDOG_PRESENT = True
 try:
-  from watchdog.observers import Observer
-  from watchdog.events import FileSystemEventHandler
+    from watchdog.observers import Observer
+    from watchdog.events import FileSystemEventHandler
 except:
-  WATCHDOG_PRESENT = False
+    WATCHDOG_PRESENT = False
 
 SOURCEDIR = 'source'
 BUILDDIR = 'build'
@@ -19,8 +19,10 @@ DOCUMENTATION_ROOT = os.path.abspath(os.path.dirname(__file__))
 
 def parse_commandline():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-w', '--watch', action='store_true', help='Watch the filesystem')
-    parser.add_argument('-b', '--open-browser', action='store_true', help='Open the documentation in the browser')
+    parser.add_argument('-w', '--watch', action='store_true',
+                        help='Watch the filesystem')
+    parser.add_argument('-b', '--open-browser', action='store_true',
+                        help='Open the documentation in the browser')
     return parser.parse_args()
 
 
@@ -48,7 +50,8 @@ if WATCHDOG_PRESENT:
 def watch():
     observer = Observer()
     event_handler = FileSystemWatcher()
-    observer.schedule(event_handler, os.path.join(DOCUMENTATION_ROOT, SOURCEDIR), recursive=True)
+    observer.schedule(event_handler, os.path.join(
+        DOCUMENTATION_ROOT, SOURCEDIR), recursive=True)
     observer.start()
     try:
         while True:
@@ -60,14 +63,14 @@ def watch():
 
 
 def main():
-    
     args = parse_commandline()
 
     # build the documentation
     build_documentation()
 
     if args.open_browser:
-        index_path = os.path.join(DOCUMENTATION_ROOT, BUILDDIR, 'html', 'index.html')
+        index_path = os.path.join(
+            DOCUMENTATION_ROOT, BUILDDIR, 'html', 'index.html')
         index_url = 'file://' + index_path.replace(os.sep, '/')
         print('Opening:', index_url)
         webbrowser.open(index_url)

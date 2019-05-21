@@ -35,7 +35,10 @@ public:
   using DataType  = typename ArrayType::Type;
   using SizeType  = typename ArrayType::SizeType;
 
-  LogSoftmax()  = default;
+  LogSoftmax(SizeType axis = 0)
+    : axis_(axis)
+  {}
+
   ~LogSoftmax() = default;
 
   ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
@@ -43,7 +46,7 @@ public:
   {
     ASSERT(output.shape() == ComputeOutputShape(inputs));
     ASSERT(inputs.size() == 1);
-    fetch::math::Softmax(inputs.front().get(), output);
+    fetch::math::Softmax(inputs.front().get(), output, axis_);
     fetch::math::Log(output, output);
     return output;
   }
@@ -52,15 +55,35 @@ public:
       std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           error_signal)
   {
-    FETCH_UNUSED(inputs);
     ASSERT(inputs.size() == 1);
     ASSERT(inputs.front().get().shape() == error_signal.shape());
 
-    ArrayType ret = fetch::math::Exp(error_signal);
-    fetch::math::Add(DataType(1), ret, ret);
-    fetch::math::Divide(DataType(1), ret, ret);
+    ArrayType return_signal = error_signal.Copy();
+    ArrayType t(error_signal.shape());
+    fetch::math::Softmax(inputs.front().get(), t, axis_);
 
-    return {ret};
+    // return_signal.InlineMultiply(t);
+
+    // 1D softmax
+    if (inputs.front().get().shape().size() == 1)
+    {
+      typename ArrayType::Type sum = return_signal.Sum();
+      t.InlineMultiply(sum);
+    }
+    // 2D softmax
+    else if (inputs.front().get().shape().size() == 2)
+    {
+      ArrayType sum;
+      sum = ReduceSum(return_signal, 1 - axis_);
+      t.InlineMultiply(sum);
+    }
+    else
+    {
+      throw std::runtime_error("Softmax over >= 3 dimensions not implemented");
+    }
+
+    return_signal.InlineSubtract(t);
+    return {return_signal};
   }
 
   std::vector<SizeType> ComputeOutputShape(
@@ -70,6 +93,9 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "LogSoftmax";
+
+private:
+  SizeType axis_;
 };
 
 }  // namespace ops

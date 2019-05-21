@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/fixed_point/fixed_point.hpp"
 
+#include "math/fixed_point/fixed_point.hpp"
 #include "meta/type_traits.hpp"
 
 #include <type_traits>
@@ -107,9 +107,9 @@ struct IsMathImpl<Tensor<DataType, ContainerType>, ReturnType>
 template <typename DataType, typename ReturnType>
 using IfIsMath = typename IsMathImpl<DataType, ReturnType>::Type;
 
-///////////////////////////////////
-/// MATH ARRAY - NO FIXED POINT ///
-///////////////////////////////////
+//////////////////
+/// MATH ARRAY ///
+//////////////////
 
 template <typename DataType, typename ReturnType>
 struct IsMathArrayImpl

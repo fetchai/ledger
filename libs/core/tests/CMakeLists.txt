@@ -10,6 +10,7 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
+add_fetch_test(fetch_core_bitvector_tests fetch-core bitvector/)
 add_fetch_test(fetch_serializers_tests        fetch-core serializers)
 add_fetch_test(fetch_byte_array_tests         fetch-core byte_array)
 add_fetch_test(fetch_random_generator_tests   fetch-core random)

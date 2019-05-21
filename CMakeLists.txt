@@ -1,5 +1,5 @@
 ################################################################################
-# F E T C H   L E D G E R   P R O J  E C T
+# F E T C H   L E D G E R   P R O J E C T
 ################################################################################
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project (fetch)

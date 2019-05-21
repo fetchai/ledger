@@ -62,7 +62,7 @@ TransactionBuilder::Sealer::Sealer(TransactionPtr tx)
  * @param prover The prover to be used to generate a signature
  * @return The sealed builder
  */
-TransactionBuilder::Sealer &TransactionBuilder::Sealer::Sign(crypto::Prover &prover)
+TransactionBuilder::Sealer &TransactionBuilder::Sealer::Sign(crypto::Prover const &prover)
 {
   using Signatory = Transaction::Signatory;
 
@@ -316,7 +316,7 @@ TransactionBuilder &TransactionBuilder::Signer(crypto::Identity const &identity)
   if (it == signatories.end())
   {
     // the identity is unique great success!
-    signatories.emplace_back(Signatory{identity, ConstByteArray{}});
+    signatories.emplace_back(Signatory{identity, Address{identity}, ConstByteArray{}});
   }
 
   return *this;

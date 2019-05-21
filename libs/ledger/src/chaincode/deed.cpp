@@ -18,6 +18,7 @@
 
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chain/v2/transaction.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -149,7 +150,9 @@ bool Deed::IsSane() const
  *
  * @return true if sanity check passes, false otherwise
  */
-bool Deed::Verify(VerifiedTransaction const &tx, DeedOperation const &operation) const
+
+// TODO(EJF): Rework to use signatories
+bool Deed::Verify(v2::Transaction const &tx, DeedOperation const &operation) const
 {
   auto const op = operation_thresholds_.find(operation);
   if (op == operation_thresholds_.end())
@@ -158,10 +161,21 @@ bool Deed::Verify(VerifiedTransaction const &tx, DeedOperation const &operation)
     return false;
   }
 
+  // cache all the addresses that are present in this current transaction
+  using AddressSet = std::unordered_set<v2::Address>;
+  AddressSet tx_address_set{};
+  for (auto const &signee : tx.signatories())
+  {
+    tx_address_set.insert(v2::Address{signee.identity});
+  }
+
   Weight vote = 0;
   for (auto const &signee : signees_)
   {
-    if (tx.signatures().count(crypto::Identity{signee.first}) > 0)
+    bool const signee_present = tx_address_set.find(signee.first) != tx_address_set.end();
+
+    // if this signee is present, then update the vote count
+    if (signee_present)
     {
       vote += signee.second;
     }

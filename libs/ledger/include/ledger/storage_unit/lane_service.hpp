@@ -51,6 +51,7 @@ class RevertibleDocumentStoreProtocol;
 
 namespace ledger {
 
+class TxFinderProtocol;
 class TransactionStoreSyncProtocol;
 class TransactionStoreSyncService;
 class LaneIdentityProtocol;
@@ -58,6 +59,10 @@ class LaneController;
 class LaneControllerProtocol;
 class LaneIdentity;
 class LaneIdentityProtocol;
+
+namespace v2 {
+class Transaction;
+}
 
 class LaneService
 {
@@ -102,8 +107,8 @@ private:
   using ServerPtr                 = std::shared_ptr<Server>;
   using StateDb                   = storage::NewRevertibleDocumentStore;
   using StateDbProto              = storage::RevertibleDocumentStoreProtocol;
-  using TxStore                   = storage::TransientObjectStore<VerifiedTransaction>;
-  using TxStoreProto              = storage::ObjectStoreProtocol<VerifiedTransaction>;
+  using TxStore                   = storage::TransientObjectStore<v2::Transaction>;
+  using TxStoreProto              = storage::ObjectStoreProtocol<v2::Transaction>;
   using BackgroundedWork          = network::BackgroundedWork<TransactionStoreSyncService>;
   using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
@@ -117,6 +122,7 @@ private:
   using TxSyncServicePtr          = std::shared_ptr<TransactionStoreSyncService>;
   using LaneIdentityPtr           = std::shared_ptr<LaneIdentity>;
   using LaneIdentityProtocolPtr   = std::shared_ptr<LaneIdentityProtocol>;
+  using TxFinderProtocolPtr       = std::unique_ptr<TxFinderProtocol>;
 
   static constexpr unsigned int SYNC_PERIOD_MS = 500;
 
@@ -160,9 +166,10 @@ private:
 
   /// @name Transaction Store
   /// @{
-  TxStoreProtoPtr  tx_store_protocol_;
-  TxSyncProtoPtr   tx_sync_protocol_;
-  TxSyncServicePtr tx_sync_service_;
+  TxStoreProtoPtr     tx_store_protocol_;
+  TxSyncProtoPtr      tx_sync_protocol_;
+  TxSyncServicePtr    tx_sync_service_;
+  TxFinderProtocolPtr tx_finder_protocol_;
   /// @}
 };
 

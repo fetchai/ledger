@@ -19,6 +19,7 @@
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
 #include "core/macros.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
+#include "ledger/chain/v2/transaction_rpc_serializers.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -64,12 +65,14 @@ static char const *FETCH_MAYBE_UNUSED ToString(fetch::ledger::tx_sync::State sta
 namespace fetch {
 namespace ledger {
 
-const std::size_t TransactionStoreSyncService::BATCH_SIZE = 30;
-
 TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, MuddlePtr muddle,
-                                                         ObjectStorePtr store)
-  : state_machine_{std::make_shared<core::StateMachine<State>>("TransactionStoreSyncService",
+                                                         ObjectStorePtr    store,
+                                                         TxFinderProtocol *tx_finder_protocol,
+                                                         TrimCacheCallback trim_cache_callback)
+  : trim_cache_callback_(std::move(trim_cache_callback))
+  , state_machine_{std::make_shared<core::StateMachine<State>>("TransactionStoreSyncService",
                                                                State::INITIAL)}
+  , tx_finder_protocol_(tx_finder_protocol)
   , cfg_{cfg}
   , muddle_(std::move(muddle))
   , client_(std::make_shared<Client>("R:TxSync-L" + std::to_string(cfg_.lane_id),
@@ -124,7 +127,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjectCou
 {
   for (auto const &connection : muddle_->AsEndpoint().GetDirectlyConnectedPeers())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Query objects from: muddle://", connection.ToBase64());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Query objects from: muddle://", connection.ToBase64());
 
     auto prom = PromiseOfObjectCount(client_->CallSpecificAddress(
         connection, RPC_TX_STORE_SYNC, TransactionStoreSyncProtocol::OBJECT_COUNT));
@@ -173,15 +176,15 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
   // where roots to sync are all objects with the key starting with those bits
   if (max_object_count_ == 0)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Network appears to have no transactions! Number of peers: ",
-                   muddle_->AsEndpoint().GetDirectlyConnectedPeers().size());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Network appears to have no transactions! Number of peers: ",
+                    muddle_->AsEndpoint().GetDirectlyConnectedPeers().size());
   }
   else
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ",
                    "Expected tx size: ", max_object_count_);
 
-    root_size_ = platform::Log2Ceil(((max_object_count_ / (PULL_LIMIT_ / 2)) + 1)) + 1;
+    root_size_ = platform::Log2Ceil(((max_object_count_ / (PULL_LIMIT / 2)) + 1)) + 1;
 
     for (uint64_t i = 0, end = (1u << root_size_); i < end; ++i)
     {
@@ -245,7 +248,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
     for (auto &tx : result.promised)
     {
       // add the transaction to the verifier
-      verifier_.AddTransaction(tx.AsMutable());
+      verifier_.AddTransaction(std::make_shared<v2::Transaction>(tx));
 
       ++synced_tx;
     }
@@ -302,8 +305,27 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjects()
     return State::QUERY_OBJECTS;
   }
 
+  std::vector<ResourceID> rids;
+  rids.reserve(TX_FINDER_PROTO_LIMIT);
+
+  ResourceID rid;
+  while (rids.size() < TX_FINDER_PROTO_LIMIT && tx_finder_protocol_->Pop(rid))
+  {
+    rids.push_back(rid);
+  }
+
   for (auto const &connection : muddle_->AsEndpoint().GetDirectlyConnectedPeers())
   {
+    if (!rids.empty())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Request for ", rids.size(), " txs");
+
+      auto promise = PromiseOfTxList(
+          client_->CallSpecificAddress(connection, RPC_TX_STORE_SYNC,
+                                       TransactionStoreSyncProtocol::PULL_SPECIFIC_OBJECTS, rids));
+      pending_objects_.Add(connection, promise);
+    }
+
     auto promise = PromiseOfTxList(client_->CallSpecificAddress(
         connection, RPC_TX_STORE_SYNC, TransactionStoreSyncProtocol::PULL_OBJECTS));
     pending_objects_.Add(connection, promise);
@@ -333,7 +355,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
 
     for (auto &tx : result.promised)
     {
-      verifier_.AddTransaction(tx.AsMutable());
+      verifier_.AddTransaction(std::make_shared<v2::Transaction>(tx));
       ++synced_tx;
     }
   }
@@ -372,16 +394,16 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnTrimCache()
   return State::QUERY_OBJECTS;
 }
 
-void TransactionStoreSyncService::OnTransaction(VerifiedTransaction const &tx)
+void TransactionStoreSyncService::OnTransaction(TransactionPtr const &tx)
 {
-  ResourceID const rid(tx.digest());
+  ResourceID const rid(tx->digest());
 
   if (!store_->Has(rid))
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Verified Sync TX: ", tx.digest().ToBase64(), " (",
                     tx.contract_name(), ')');
 
-    store_->Set(rid, tx, true);
+    store_->Set(rid, *tx, true);
   }
 }
 

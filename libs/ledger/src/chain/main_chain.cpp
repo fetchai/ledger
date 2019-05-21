@@ -19,7 +19,10 @@
 #include "ledger/chain/main_chain.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
+#include "network/generics/milli_timer.hpp"
 
+#include <algorithm>
 #include <utility>
 
 using fetch::byte_array::ToBase64;
@@ -112,7 +115,7 @@ BlockStatus MainChain::AddBlock(Block const &blk)
 
   // pass the block to the
   auto const status = InsertBlock(block);
-  FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: ", ToBase64(block->body.hash), " -> ", ToString(status),
+  FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: 0x", block->body.hash.ToHex(), " -> ", ToString(status),
                   " (weight: ", block->weight, " total: ", block->total_weight, ")");
 
   return status;
@@ -229,6 +232,9 @@ bool MainChain::RemoveBlock(BlockHash hash)
  */
 MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
 {
+  // Note: min needs a reference to something, so this is a workaround since UPPER_BOUND is a
+  // constexpr
+  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   MilliTimer myTimer("MainChain::HeaviestChain");
 
   FETCH_LOCK(lock_);
@@ -246,6 +252,7 @@ MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
  */
 MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
 {
+  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   MilliTimer myTimer("MainChain::ChainPreceding");
 
   FETCH_LOCK(lock_);
@@ -295,8 +302,9 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
  * @return true if successful, otherwise false
  */
 bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
-                                        uint64_t limit) const
+                                        uint64_t limit, BehaviourWhenLimit behaviour) const
 {
+  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   MilliTimer myTimer("MainChain::GetPathToCommonAncestor", 500);
 
   FETCH_LOCK(lock_);
@@ -312,9 +320,11 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
   BlockHash left_hash  = std::move(tip);
   BlockHash right_hash = std::move(node);
 
+  std::deque<BlockPtr> res;
+
   // The algorithm implemented here is effectively a coordinated parallel walk about from the two
   // input tips until the a common ancestor is located.
-  while (blocks.size() < limit)
+  for (;;)
   {
     // load up the left side
     if (!left || left->body.hash != left_hash)
@@ -328,7 +338,30 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
       }
 
       // left side always loaded into output queue as we traverse
-      blocks.push_back(left);
+      // blocks.push_back(left);
+      res.push_back(left);
+      bool break_loop = false;
+
+      switch (behaviour)
+      {
+      case BehaviourWhenLimit::RETURN_LEAST_RECENT:
+        if (res.size() > limit)
+        {
+          res.pop_front();
+        }
+        break;
+      case BehaviourWhenLimit::RETURN_MOST_RECENT:
+        if (res.size() >= limit)
+        {
+          break_loop = true;
+        }
+        break;
+      }
+
+      if (break_loop)
+      {
+        break;
+      }
     }
 
     // load up the right side
@@ -361,6 +394,9 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
       left_hash = left->body.previous_hash;
     }
   }
+
+  blocks.resize(res.size());
+  std::move(res.begin(), res.end(), blocks.begin());
 
   // If an lookup error has occured then we do not return anything
   if (!success)
@@ -424,15 +460,16 @@ MainChain::BlockHashSet MainChain::GetMissingTips() const
  * @param maximum The specified maximum number of blocks to be returned
  * @return The generated array of missing hashes
  */
-MainChain::BlockHashs MainChain::GetMissingBlockHashes(std::size_t maximum) const
+MainChain::BlockHashs MainChain::GetMissingBlockHashes(uint64_t limit) const
 {
+  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   FETCH_LOCK(lock_);
 
   BlockHashs results;
 
   for (auto const &loose_block : loose_blocks_)
   {
-    if (maximum <= results.size())
+    if (limit <= results.size())
     {
       break;
     }
@@ -708,7 +745,7 @@ void MainChain::TrimCache()
 
       if (trim_threshold >= block.block_number)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Removing loose block: ", block.hash.ToBase64());
+        FETCH_LOG_INFO(LOGGING_NAME, "Removing loose block: 0x", block.hash.ToHex());
 
         // remove the entry from the tips map
         tips_.erase(block.hash);
@@ -788,8 +825,8 @@ void MainChain::CompleteLooseBlocks(IntBlockPtr const &block)
   BlockHashList blocks_to_add = std::move(it->second);
   loose_blocks_.erase(it);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, blocks_to_add.size(), " are resolved from ",
-                  ToBase64(block->body.hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, blocks_to_add.size(), " are resolved from 0x",
+                  block->body.hash.ToHex());
 
   while (!blocks_to_add.empty())
   {
@@ -906,7 +943,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
       // TODO(EJF): Add check to validate the block number (it is relied on heavily now)
       if (block->body.block_number != (prev_block->body.block_number + 1))
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Block ", ToBase64(block->body.hash),
+        FETCH_LOG_INFO(LOGGING_NAME, "Block 0x", block->body.hash.ToHex(),
                        " has invalid block number");
         return BlockStatus::INVALID;
       }
@@ -964,7 +1001,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
   bool const heaviest_advanced = UpdateTips(block);
 
   // Add block
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Adding block to chain: ", ToBase64(block->body.hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Adding block to chain: 0x", block->body.hash.ToHex());
   AddBlockToCache(block);
 
   // If the heaviest branch has been updated we should determine if any blocks should be flushed
@@ -1214,6 +1251,7 @@ MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
   auto genesis                = std::make_shared<Block>();
   genesis->body.previous_hash = GENESIS_DIGEST;
   genesis->body.merkle_hash   = GENESIS_MERKLE_ROOT;
+  genesis->body.miner         = v2::Address{GENESIS_DIGEST};
   genesis->is_loose           = false;
   genesis->UpdateDigest();
 
@@ -1243,7 +1281,7 @@ bool MainChain::HeaviestTip::Update(Block const &block)
 
   if ((block.total_weight > weight) || ((block.total_weight == weight) && (block.body.hash > hash)))
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "New heaviest tip: ", ToBase64(block.body.hash));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "New heaviest tip: 0x", block.body.hash.ToHex());
 
     weight  = block.total_weight;
     hash    = block.body.hash;
@@ -1282,6 +1320,61 @@ void MainChain::SetHeadHash(BlockHash const &hash)
   head_store_.seekp(0);
   head_store_.write(reinterpret_cast<char const *>(hash.pointer()),
                     static_cast<std::streamsize>(hash.size()));
+}
+
+/**
+ * Strip transactions in container that already exist in the blockchain
+ *
+ * @param: starting_hash Block to start looking downwards from
+ * @tparam: transaction The set of transaction to be filtered
+ *
+ * @return: bool whether the starting hash referred to a valid block on a valid chain
+ */
+v2::DigestSet MainChain::DetectDuplicateTransactions(BlockHash            starting_hash,
+                                                     v2::DigestSet const &transactions) const
+{
+  MilliTimer const timer{"DuplicateTransactionsCheck", 100};
+
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TX uniqueness verify");
+
+  IntBlockPtr block;
+  if (!LookupBlock(std::move(starting_hash), block, false) || block->is_loose)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "TX uniqueness verify on bad block hash");
+    return {};
+  }
+
+  // Need a set for quickly checking whether transactions are in our container
+  v2::DigestSet duplicates{};
+  bool          searching{true};
+  while (searching)
+  {
+    // Traversing the chain fully is costly: break out early if we know the transactions are all
+    // duplicated (or empty)
+    if (transactions.size() == duplicates.size())
+    {
+      break;
+    }
+
+    for (auto const &slice : block->body.slices)
+    {
+      for (auto const &tx : slice)
+      {
+        if (transactions.find(tx.digest()) != transactions.end())
+        {
+          duplicates.insert(tx.digest());
+        }
+      }
+    }
+
+    // exit the loop once we can no longer find the block
+    if (!LookupBlock(block->body.previous_hash, block, false))
+    {
+      break;
+    }
+  }
+
+  return duplicates;
 }
 
 }  // namespace ledger

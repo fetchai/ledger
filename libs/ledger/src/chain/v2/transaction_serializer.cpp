@@ -36,7 +36,6 @@ using serializers::ByteArrayBuffer;
 
 using TokenAmount  = Transaction::TokenAmount;
 using ContractMode = Transaction::ContractMode;
-using BitVector    = Transaction::BitVector;
 
 const uint8_t MAGIC              = 0xA1;
 const uint8_t VERSION            = 1u;
@@ -179,10 +178,8 @@ ConstByteArray Encode(ConstByteArray const &value)
 
 ConstByteArray Encode(BitVector const &bits)
 {
-  using Block = BitVector::data_type;
-
   auto const *      raw_data   = reinterpret_cast<uint8_t const *>(bits.data().pointer());
-  std::size_t const raw_length = bits.data().size() * sizeof(Block);
+  std::size_t const raw_length = bits.data().size() * sizeof(BitVector::Block);
   std::size_t const size_bytes = bits.size() >> 3u;
   std::size_t const offset     = (raw_length - size_bytes) + 1;
 
@@ -222,7 +219,7 @@ meta::IfIsInteger<T, T> Decode(ByteArrayBuffer &buffer)
   // determine the traits of the output type
   constexpr bool        output_is_signed   = meta::IsSignedInteger<T>;
   constexpr std::size_t output_length      = sizeof(T);
-  constexpr std::size_t output_log2_length = meta::Log2<output_length>::value;
+  constexpr std::size_t output_log2_length = meta::Log2(output_length);
 
   T output_value{0};
 
@@ -306,10 +303,8 @@ meta::IfIsInteger<T> Decode(ByteArrayBuffer &buffer, T &value)
 
 void Decode(ByteArrayBuffer &buffer, BitVector &bits)
 {
-  using Block = BitVector::data_type;
-
   auto *            raw_data   = reinterpret_cast<uint8_t *>(bits.data().pointer());
-  std::size_t const raw_length = bits.data().size() * sizeof(Block);
+  std::size_t const raw_length = bits.data().size() * sizeof(BitVector::Block);
   std::size_t const size_bytes = bits.size() >> 3u;
   std::size_t const offset     = (raw_length - size_bytes) + 1;
 
@@ -618,7 +613,7 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
 
     if (wildcard_flag)
     {
-      tx.shard_mask_ = Transaction::BitVector{};
+      tx.shard_mask_ = BitVector{};
     }
     else
     {
@@ -685,7 +680,12 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
   tx.signatories_.resize(num_signatures);
   for (std::size_t i = 0; i < num_signatures; ++i)
   {
-    Decode(buffer, tx.signatories_[i].identity);
+    auto &current = tx.signatories_[i];
+
+    Decode(buffer, current.identity);
+
+    // ensure address is kept in sync
+    current.address = Address{current.identity};
   }
 
   // compute the payload position

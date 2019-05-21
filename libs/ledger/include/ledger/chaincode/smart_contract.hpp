@@ -26,11 +26,14 @@
 namespace fetch {
 
 namespace vm {
-struct Script;
+struct Executable;
 class Module;
 }  // namespace vm
 
 namespace ledger {
+namespace v2 {
+class Address;
+}
 
 /**
  * Smart Contract instance.
@@ -41,8 +44,8 @@ class SmartContract : public Contract
 {
 public:
   using ConstByteArray = byte_array::ConstByteArray;
-  using Script         = fetch::vm::Script;
-  using ScriptPtr      = std::shared_ptr<Script>;
+  using Executable     = fetch::vm::Executable;
+  using ExecutablePtr  = std::shared_ptr<Executable>;
 
   static constexpr char const *LOGGING_NAME = "SmartContract";
 
@@ -55,23 +58,24 @@ public:
     return digest_;
   }
 
-  ScriptPtr script()
+  ExecutablePtr executable()
   {
-    return script_;
+    return executable_;
   }
 
 private:
   using ModulePtr = std::shared_ptr<vm::Module>;
 
   // Transaction /
-  Status InvokeAction(std::string const &name, Transaction const &tx);
+  Status InvokeAction(std::string const &name, v2::Transaction const &tx, BlockIndex index);
   Status InvokeQuery(std::string const &name, Query const &request, Query &response);
-  Status InvokeInit(Identity const &owner);
+  Status InvokeInit(v2::Address const &owner);
 
-  std::string    source_;  ///< The source of the current contract
-  ConstByteArray digest_;  ///< The digest of the current contract
-  ScriptPtr      script_;  ///< The internal script object of the parsed source
-  ModulePtr      module_;  ///< The internal module instance for the contract
+  BlockIndex     block_index_{};  ///< The index current contract's block
+  std::string    source_;         ///< The source of the current contract
+  ConstByteArray digest_;         ///< The digest of the current contract
+  ExecutablePtr  executable_;     ///< The internal script object of the parsed source
+  ModulePtr      module_;         ///< The internal module instance for the contract
   std::string    init_fn_name_;
 };
 

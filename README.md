@@ -24,7 +24,7 @@ features. Fetch will be delivering regular updates.
 3. [Community Website](https://community.fetch.ai/)
 4. [Community Telegram Group](https://t.me/fetchai)
 5. [Whitepapers](https://fetch.ai/publications.html)
-6. [Roadmap](https://fetch.ai/#/roadmap)
+6. [Roadmap](https://fetch.ai/#/roadmap) 
 
 
 ## Supported platforms
@@ -60,7 +60,7 @@ following commands:
 
 ## Building the code
 
-The project uses cmake so you can following formal build proceedure of:
+The project uses cmake so you can following formal build procedure of:
 
     mkdir build
 

@@ -55,13 +55,11 @@
 //
 // Representation of a possible configuration of the key value trie. When the split is maximal
 // (256), this represents that the node is a leaf. The nodes can contain additional information
-//
-// Nodes in the tree above show their key and the bit the node splits on. Leaves are marked with '*'
-// and match the full key.
 
 #include "crypto/sha256.hpp"
 #include "storage/cached_random_access_stack.hpp"
 #include "storage/key.hpp"
+#include "storage/new_versioned_random_access_stack.hpp"
 #include "storage/random_access_stack.hpp"
 #include "storage/storage_exception.hpp"
 #include "storage/versioned_random_access_stack.hpp"
@@ -84,32 +82,32 @@ namespace storage {
  * include their children's hashes, ie. merkle tree which can be used to detect file corruption.
  *
  */
-template <std::size_t S = 256, std::size_t N = 64>
+template <std::size_t S = 256, std::size_t N = 32>
 struct KeyValuePair
 {
-  KeyValuePair()
-  {
-    memset(this, 0, sizeof(decltype(*this)));
-    parent = uint64_t(-1);
-  }
+  using HashFunction = crypto::SHA256;
+  static_assert(N == HashFunction::size_in_bytes(), "Hash size must match the hash function");
 
-  using key_type = Key<S>;
+  using KeyType   = Key<S>;
+  using IndexType = uint64_t;
 
-  key_type key;
-  uint8_t  hash[N];
+  static constexpr IndexType TREE_ROOT_VALUE{~IndexType{0}};
+
+  KeyType key;
+  uint8_t hash[N]{};
 
   // The location in bits of the distance down the key this node splits on
-  uint16_t split;
+  uint16_t split = 0;
 
   // Ref to parent, left and right branches
-  uint64_t parent;
+  IndexType parent = TREE_ROOT_VALUE;
 
   union
   {
-    uint64_t value;
-    uint64_t left;
+    IndexType value = 0;
+    IndexType left;
   };
-  uint64_t right;
+  IndexType right = 0;
 
   bool operator==(KeyValuePair const &kv) const
   {
@@ -128,7 +126,7 @@ struct KeyValuePair
 
   bool UpdateLeaf(uint64_t const &val, byte_array::ConstByteArray const &data)
   {
-    crypto::SHA256 hasher;
+    HashFunction hasher;
     hasher.Reset();
     hasher.Update(data);
     hasher.Final(hash, N);
@@ -137,13 +135,13 @@ struct KeyValuePair
     return true;
   }
 
-  bool UpdateNode(KeyValuePair const &left, KeyValuePair const &right2)
+  bool UpdateNode(KeyValuePair const &left, KeyValuePair const &right)
   {
-    crypto::SHA256 hasher;
+    HashFunction hasher;
     hasher.Reset();
 
     hasher.Update(left.hash, N);
-    hasher.Update(right2.hash, N);
+    hasher.Update(right.hash, N);
     hasher.Final(hash, N);
 
     return true;
@@ -151,15 +149,7 @@ struct KeyValuePair
 
   byte_array::ByteArray Hash() const
   {
-    byte_array::ByteArray ret;
-    ret.Resize(N);
-
-    for (std::size_t i = 0; i < N; ++i)
-    {
-      ret[i] = hash[i];
-    }
-
-    return ret;
+    return {hash, N};
   }
 };
 
@@ -169,7 +159,7 @@ struct KeyValuePair
  *
  * The kvi is versioned, so it includes the functionality to revert to a previous state
  */
-template <typename KV = KeyValuePair<>, typename D = VersionedRandomAccessStack<KV, uint64_t>>
+template <typename KV = KeyValuePair<>, typename D = VersionedRandomAccessStack<KV>>
 class KeyValueIndex
 {
   /**
@@ -192,10 +182,10 @@ class KeyValueIndex
 
 public:
   using self_type      = KeyValueIndex<KV, D>;
-  using index_type     = uint64_t;
   using stack_type     = D;
   using key_value_pair = KeyValuePair<>;
-  using key_type       = typename key_value_pair::key_type;
+  using index_type     = key_value_pair::IndexType;
+  using key_type       = typename key_value_pair::KeyType;
 
   static constexpr char const *LOGGING_NAME = "KeyValueIndex";
 
@@ -215,9 +205,6 @@ public:
   void New(Args &&... args)
   {
     stack_.New(std::forward<Args>(args)...);
-
-    root_ = 0;
-    stack_.SetExtraHeader(root_);
   }
 
   template <typename... Args>
@@ -304,6 +291,11 @@ public:
     schedule_update_.clear();
   }
 
+  void Delete(byte_array::ConstByteArray const & /*key*/)
+  {
+    throw StorageException("Not implemented");
+  }
+
   void GetElement(uint64_t const &i, index_type &v)
   {
     key_value_pair p;
@@ -364,12 +356,12 @@ public:
 
     bool update_parent = false;
 
-    // Case where the tree is empty
-    if (index == index_type(-1))
+    // Case where the 'nearest' is the root of the tree
+    if (index == key_value_pair::TREE_ROOT_VALUE)
     {
       kv.key        = key;
-      kv.parent     = uint64_t(-1);
-      kv.split      = uint16_t(key.size_in_bits());
+      kv.parent     = key_value_pair::TREE_ROOT_VALUE;
+      kv.split      = uint16_t{key.size_in_bits()};
       update_parent = kv.UpdateLeaf(args...);
 
       index = stack_.Push(kv);
@@ -464,8 +456,7 @@ public:
     }
 
     // Depending on whether the underlying stack is caching or not, we write to it or defer writing
-    // to it by scheduling updates until the next flush since changes to a leaf will propagate the
-    // hash recalculation all the way to the root.
+    // to it by scheduling updates until the next flush
     if ((kv.parent != index_type(-1)) && (update_parent))
     {
       if (stack_.DirectWrite())
@@ -477,128 +468,6 @@ public:
         schedule_update_[index] = kv;
       }
     }
-  }
-
-  /**
-   * Erase the element from the tree. This will involve reversing an insertion, that is, deleting
-   * the leaf and its parent. The leaf's sibling node can then be joined to that deleted parent's
-   * parent.
-   *
-   * Note: the hashes of the tree must be recalculated in this instance, since deletion is a costly
-   * operation anyway we do not schedule hash rewrites.
-   */
-  void Erase(byte_array::ConstByteArray const &key_str)
-  {
-    Flush();
-
-    Verify(true);
-
-    if (size() == 0)
-    {
-      return;
-    }
-
-    // First find the leaf we wish to delete
-    key_type       key(key_str);
-    bool           split      = true;
-    int            pos        = 0;
-    int            left_right = 0;
-    index_type     depth      = 0;
-    key_value_pair kv;
-
-    index_type kv_index = FindNearest(key, kv, split, pos, left_right, depth);
-
-    // Leaf not found
-    if (split)
-    {
-      return;
-    }
-
-    assert(kv.is_leaf() == true);
-
-    // Clear the tree for edge case of only node
-    if (size() == 1)
-    {
-      stack_.Clear();
-      root_ = 0;
-      stack_.SetExtraHeader(root_);
-      return;
-    }
-
-    // Get our sibling, and our parent
-    key_value_pair parent;
-    key_value_pair sibling;
-    index_type     parent_index = kv.parent;
-    index_type     sibling_index;
-    stack_.Get(parent_index, parent);
-
-    assert(parent_index != uint64_t(-1));
-
-    // Determine the sibling left/right from parent left/right
-    if (kv_index == parent.left)
-    {
-      sibling_index = parent.right;
-      stack_.Get(sibling_index, sibling);
-    }
-    else if (kv_index == parent.right)
-    {
-      sibling_index = parent.left;
-      stack_.Get(sibling_index, sibling);
-    }
-    else
-    {
-      throw StorageException("Failed to find element in parent left/right references: tree broken");
-    }
-
-    // Set the sibling in the place of that parent, the split etc. should be able to stay the same
-    sibling.parent = parent.parent;
-
-    // Update that sibling's parents if sibling is not root
-    if (sibling.parent != uint64_t(-1))
-    {
-      key_value_pair new_sibling_parent;
-      stack_.Get(sibling.parent, new_sibling_parent);
-
-      // Update parent left/right
-      if (new_sibling_parent.left == parent_index)
-      {
-        new_sibling_parent.left = sibling_index;
-      }
-      else if (new_sibling_parent.right == parent_index)
-      {
-        new_sibling_parent.right = sibling_index;
-      }
-      else
-      {
-        throw StorageException("Failed to erase element in key value index: tree broken");
-      }
-
-      stack_.Set(sibling.parent, new_sibling_parent);
-    }
-    // If sibling is root, need to update
-    else
-    {
-      root_ = sibling_index;
-    }
-
-    stack_.Set(sibling_index, sibling);
-    UpdateParents(sibling.parent, sibling_index, sibling);
-
-    Verify(true);
-
-    // Erase our node and its parent, important to do this at the end since it might shuffle indexes
-    if (parent_index > kv_index)
-    {
-      Erase(parent_index);
-      Erase(kv_index);
-    }
-    else
-    {
-      Erase(kv_index);
-      Erase(parent_index);
-    }
-
-    Verify(true);
   }
 
   byte_array::ByteArray Hash()
@@ -618,25 +487,14 @@ public:
     return stack_;
   }
 
-  /**
-   * Calculate number of leaves from stack size (contains all nodes). The tree is complete so is
-   * calculable. Leaves + (Leaves - 1) = Nodes
-   *
-   * Note this should always be correct even with the key value index scheduling writes to the stack
-   * since these scheduled operations are never to change the stack size.
-   *
-   * @return: The number of elements in the key value index
-   */
   std::size_t size() const
   {
-    assert(stack_.size() + 1 != 0);
-    assert((stack_.size() + 1) % 2 == 0);
-    return (stack_.size() + 1) / 2;
+    return stack_.size();
   }
 
-  void Flush(bool /*lazy*/ = true)
+  void Flush(bool lazy = true)
   {
-    stack_.Flush();
+    stack_.Flush(lazy);
   }
 
   bool is_open() const
@@ -654,6 +512,7 @@ public:
     stack_.Close();
   }
 
+  // TODO(HUT): this will be removed when updating the versioned stack
   using bookmark_type = uint64_t;
   bookmark_type Commit()
   {
@@ -671,6 +530,8 @@ public:
 
     root_ = stack_.header_extra();
   }
+
+  //*/
 
   uint64_t const &root_element() const
   {
@@ -773,7 +634,7 @@ public:
     return Iterator(this, kv);
   }
 
-  self_type::Iterator GetSubtree(byte_array::ConstByteArray const &key_str, uint64_t bits)
+  self_type::Iterator GetSubtree(byte_array::ConstByteArray const &key_str, uint64_t max_bits)
   {
     if (this->empty())
     {
@@ -787,12 +648,14 @@ public:
     index_type     depth      = 0;
     key_value_pair kv;
 
-    FindNearest(key, kv, split, pos, left_right, depth, bits);
+    FindNearest(key, kv, split, pos, left_right, depth, max_bits);
 
-    pos = 0;
-    kv.key.Compare(key_str, pos, 0, 64);
+    // TODO(issue 874): Compare(...) call bellow seems to be unnecessary/redundant,
+    // thus it was commented out.
+    // pos = 0;
+    // kv.key.Compare(key_str, pos, key.size_in_bits());
 
-    if (uint64_t(pos) < bits)
+    if (uint64_t(pos) < max_bits)
     {
       return end();
     }
@@ -807,7 +670,7 @@ private:
   std::unordered_map<uint64_t, key_value_pair> schedule_update_;
 
   /**
-   * Recursively update the parents of a changed node, since this changes the merkle tree.
+   * Update the parents of a changed node, since this changes the merkle tree
    *
    * @param: pid Address on the stack of the node's parent
    * @param: cid Address on the stack of the node
@@ -821,25 +684,20 @@ private:
     while (pid != index_type(-1))
     {
       stack_.Get(pid, parent);
-
-      // Update parent hash
+      if (cid == parent.left)
       {
-        if (cid == parent.left)
-        {
-          left = child;
-          stack_.Get(parent.right, right);
-        }
-        else
-        {
-          right = child;
-          stack_.Get(parent.left, left);
-        }
-        parent.UpdateNode(left, right);
+        left = child;
+        stack_.Get(parent.right, right);
+      }
+      else
+      {
+        right = child;
+        stack_.Get(parent.left, left);
       }
 
+      parent.UpdateNode(left, right);
       stack_.Set(pid, parent);
 
-      // Move up the tree - parent and its index can be reused as a child
       child = parent;
       cid   = pid;
       pid   = child.parent;
@@ -860,17 +718,16 @@ private:
    * @return: the index which this kv can be found in the stack
    */
   index_type FindNearest(key_type const &key, key_value_pair &kv, bool &split, int &pos,
-                         int &left_right, uint64_t &depth,
-                         uint64_t max_bits = std::numeric_limits<uint64_t>::max())
+                         int &left_right, uint64_t &depth, uint64_t max_bits = key_type::BITS)
   {
     depth = 0;
     if (this->empty())
     {
-      return index_type(-1);
+      return key_value_pair::TREE_ROOT_VALUE;
     }
 
-    std::size_t next = root_;
-    std::size_t index;
+    index_type next = root_;
+    index_type index;
     do
     {
       ++depth;
@@ -880,7 +737,7 @@ private:
 
       stack_.Get(next, kv);
 
-      left_right = key.Compare(kv.key, pos, kv.split >> 6, kv.split & 63);
+      left_right = key.Compare(kv.key, pos, kv.split);
 
       switch (left_right)
       {
@@ -891,7 +748,6 @@ private:
         next = kv.right;
         break;
       }
-
     } while ((left_right != 0) && (pos >= int(kv.split)) && uint64_t(pos) < max_bits);
 
     split = (left_right != 0) && (pos < int(kv.split));
@@ -1016,91 +872,6 @@ private:
         GetLeftLeaf(parent);
         kv = parent;
       }
-    }
-  }
-
-  /**
-   * Erase the element from the stack. Assume the element is in an undefined state. Erasure is done
-   * by swapping the element with the last element of the stack and popping it off the stack.
-   *
-   * index must refer to a valid location on the stack.
-   *
-   * @param: index Index of the element to erase
-   */
-  void Erase(index_type const &index)
-  {
-    const std::size_t stack_end = stack_.size() - 1;
-
-    assert(index <= stack_end);
-
-    if (index == stack_end)
-    {
-      stack_.Pop();
-      return;
-    }
-
-    // Get last element on stack
-    key_value_pair last_element;
-    stack_.Get(stack_end, last_element);
-
-    // Get parent of last element, update its index to where the last element is going.
-    if (last_element.parent != index_type(-1))
-    {
-      key_value_pair last_element_parent;
-      stack_.Get(last_element.parent, last_element_parent);
-
-      if (last_element_parent.right == stack_end)
-      {
-        last_element_parent.right = index;
-      }
-      else if (last_element_parent.left == stack_end)
-      {
-        last_element_parent.left = index;
-      }
-      else
-      {
-        throw StorageException(
-            "Storage tree referencing broken: parent of node doesn't refer to node via left or "
-            "right branches");
-      }
-
-      stack_.Set(last_element.parent, last_element_parent);
-    }
-    else
-    {
-      // Last element is root, update the root
-      root_ = index;
-    }
-
-    // Write last element into index location and pop stack
-    stack_.Set(index, last_element);
-    stack_.Pop();
-  }
-
-  void Verify()
-  {
-    if (stack_.size() == 0)
-    {
-      return;
-    }
-
-    for (std::size_t i = 0; i < stack_.size(); ++i)
-    {
-      key_value_pair kv;
-      stack_.Get(i, kv);
-    }
-
-    if (root_ >= stack_.size())
-    {
-      throw StorageException("Root out of bounds of stack");
-    }
-
-    key_value_pair kv;
-    stack_.Get(root_, kv);
-
-    if (kv.parent != uint64_t(-1))
-    {
-      throw StorageException("Root of tree's parent not terminated correctly");
     }
   }
 };

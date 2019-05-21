@@ -27,8 +27,10 @@ class IArray : public Object
 public:
   IArray()          = delete;
   virtual ~IArray() = default;
-  static Ptr<IArray> Constructor(VM *vm, TypeId type_id, int32_t size);
-  virtual int32_t    Count() const = 0;
+  static Ptr<IArray>        Constructor(VM *vm, TypeId type_id, int32_t size);
+  virtual int32_t           Count() const                                               = 0;
+  virtual TemplateParameter GetIndexedValue(AnyInteger const &index)                    = 0;
+  virtual void SetIndexedValue(AnyInteger const &index, TemplateParameter const &value) = 0;
 
 protected:
   IArray(VM *vm, TypeId type_id)
@@ -46,10 +48,11 @@ struct Array : public IArray
   Array()          = delete;
   virtual ~Array() = default;
 
-  Array(VM *vm, TypeId type_id, int32_t size)
+  Array(VM *vm, TypeId type_id, TypeId element_type_id__, int32_t size)
     : IArray(vm, type_id)
   {
-    elements = std::vector<ElementType>(size_t(size), 0);
+    element_type_id = element_type_id__;
+    elements        = std::vector<ElementType>(size_t(size), 0);
   }
 
   virtual int32_t Count() const override
@@ -57,49 +60,56 @@ struct Array : public IArray
     return int32_t(elements.size());
   }
 
-  ElementType *Find()
+  virtual TemplateParameter GetIndexedValue(AnyInteger const &index) override
   {
-    Variant &positionv = Pop();
-    size_t   position;
-    if (!GetNonNegativeInteger(positionv, position))
+    ElementType *ptr = Find(index);
+    if (ptr)
+    {
+      return TemplateParameter(*ptr, element_type_id);
+    }
+    // Not found
+    return TemplateParameter();
+  }
+
+  virtual void SetIndexedValue(AnyInteger const &index, TemplateParameter const &value) override
+  {
+    ElementType *ptr = Find(index);
+    if (ptr)
+    {
+      *ptr = value.Get<ElementType>();
+    }
+  }
+
+  ElementType *Find(Variant const &index)
+  {
+    size_t i;
+    if (!GetNonNegativeInteger(index, i))
     {
       RuntimeError("negative index");
       return nullptr;
     }
-    positionv.Reset();
-    if (position >= elements.size())
+    if (i >= elements.size())
     {
       RuntimeError("index out of bounds");
       return nullptr;
     }
-    return &elements[position];
+    ElementType &element = elements[i];
+    return &element;
   }
 
-  virtual void *FindElement() override
+  bool SerializeTo(ByteArrayBuffer &buffer) override
   {
-    return Find();
+    buffer << element_type_id << elements;
+    return true;
   }
 
-  virtual void PushElement(TypeId element_type_id) override
+  bool DeserializeFrom(ByteArrayBuffer &buffer) override
   {
-    ElementType *ptr = Find();
-    if (ptr)
-    {
-      Variant &top = Push();
-      top.Construct(*ptr, element_type_id);
-    }
+    buffer >> element_type_id >> elements;
+    return true;
   }
 
-  virtual void PopToElement() override
-  {
-    ElementType *ptr = Find();
-    if (ptr)
-    {
-      Variant &top = Pop();
-      *ptr         = top.Move<ElementType>();
-    }
-  }
-
+  TypeId                   element_type_id;
   std::vector<ElementType> elements;
 };
 
@@ -112,51 +122,51 @@ inline Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
   {
   case TypeIds::Bool:
   {
-    return new Array<uint8_t>(vm, type_id, std::forward<Args>(args)...);
+    return new Array<uint8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }
   case TypeIds::Int8:
   {
-    return new Array<int8_t>(vm, type_id, std::forward<Args>(args)...);
+    return new Array<int8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }
   case TypeIds::Byte:
   {
-    return new Array<uint8_t>(vm, type_id, std::forward<Args>(args)...);
+    return new Array<uint8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }
   case TypeIds::Int16:
   {
-    return new Array<int16_t>(vm, type_id, std::forward<Args>(args)...);
+    return new Array<int16_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }
   case TypeIds::UInt16:
   {
-    return new Array<uint16_t>(vm, type_id, std::forward<Args>(args)...);
+    return new Array<uint16_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }
   case TypeIds::Int32:
   {
-    return new Array<int32_t>(vm, type_id, std::forward<Args>(args)...);
+    return new Array<int32_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }
   case TypeIds::UInt32:
   {
-    return new Array<uint32_t>(vm, type_id, std::forward<Args>(args)...);
+    return new Array<uint32_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }
   case TypeIds::Int64:
   {
-    return new Array<int64_t>(vm, type_id, std::forward<Args>(args)...);
+    return new Array<int64_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }
   case TypeIds::UInt64:
   {
-    return new Array<uint64_t>(vm, type_id, std::forward<Args>(args)...);
+    return new Array<uint64_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }
   case TypeIds::Float32:
   {
-    return new Array<float>(vm, type_id, std::forward<Args>(args)...);
+    return new Array<float>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }
   case TypeIds::Float64:
   {
-    return new Array<double>(vm, type_id, std::forward<Args>(args)...);
+    return new Array<double>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }
   default:
   {
-    return new Array<Ptr<Object>>(vm, type_id, std::forward<Args>(args)...);
+    return new Array<Ptr<Object>>(vm, type_id, element_type_id, std::forward<Args>(args)...);
   }
   }  // switch
 }

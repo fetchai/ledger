@@ -19,6 +19,7 @@
 
 #include "core/logger.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chain/v2/transaction.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
@@ -46,12 +47,13 @@ class TransactionStoreSyncProtocol : public fetch::service::Protocol
 public:
   enum
   {
-    OBJECT_COUNT = 1,
-    PULL_OBJECTS = 2,
-    PULL_SUBTREE = 3
+    OBJECT_COUNT          = 1,
+    PULL_OBJECTS          = 2,
+    PULL_SUBTREE          = 3,
+    PULL_SPECIFIC_OBJECTS = 4
   };
 
-  using ObjectStore = storage::TransientObjectStore<VerifiedTransaction>;
+  using ObjectStore = storage::TransientObjectStore<v2::Transaction>;
 
   static constexpr char const *LOGGING_NAME = "ObjectStoreSyncProtocol";
 
@@ -61,7 +63,7 @@ public:
   TransactionStoreSyncProtocol(TransactionStoreSyncProtocol &&)      = delete;
   ~TransactionStoreSyncProtocol() override                           = default;
 
-  void OnNewTx(VerifiedTransaction const &o);
+  void OnNewTx(v2::Transaction const &o);
   void TrimCache();
 
   // Operators
@@ -77,30 +79,24 @@ private:
     using Timepoint  = Clock::time_point;
     using AddressSet = std::unordered_set<muddle::Muddle::Address>;
 
-    CachedObject(UnverifiedTransaction value)
+    explicit CachedObject(v2::Transaction value)
       : data(std::move(value))
     {}
 
-    CachedObject(UnverifiedTransaction &&value)
-      : data(std::move(value))
-    {}
-
-    UnverifiedTransaction data;
-    AddressSet            delivered_to;
-    Timepoint             created{Clock::now()};
+    v2::Transaction data;
+    AddressSet      delivered_to;
+    Timepoint       created{Clock::now()};
   };
 
-  using Self  = TransactionStoreSyncProtocol;
-  using Cache = std::vector<CachedObject>;
+  using Self    = TransactionStoreSyncProtocol;
+  using Cache   = std::vector<CachedObject>;
+  using TxArray = std::vector<v2::Transaction>;
 
   uint64_t ObjectCount();
-  TxList   PullObjects(service::CallContext const *call_context);
+  TxArray  PullObjects(service::CallContext const *call_context);
 
-  TxList PullSubtree(byte_array::ConstByteArray const &rid, uint64_t mask);
-
-  // TODO(issue 7): Make cache configurable
-  static constexpr uint32_t MAX_CACHE_ELEMENTS    = 2000;  // really a "max"?
-  static constexpr uint32_t MAX_CACHE_LIFETIME_MS = 20000;
+  TxArray PullSubtree(byte_array::ConstByteArray const &rid, uint64_t mask);
+  TxArray PullSpecificObjects(std::vector<storage::ResourceID> const &rids);
 
   ObjectStore *store_;  ///< The pointer to the object store
 

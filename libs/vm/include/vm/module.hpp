@@ -23,12 +23,14 @@
 #include "vm/map.hpp"
 #include "vm/matrix.hpp"
 #include "vm/module/base.hpp"
+#include "vm/module/constructor_invoke.hpp"
 #include "vm/module/free_function_invoke.hpp"
-#include "vm/module/instance_function_invoke.hpp"
-#include "vm/module/type_constructor_invoke.hpp"
-#include "vm/module/type_function_invoke.hpp"
+#include "vm/module/member_function_invoke.hpp"
+#include "vm/module/static_member_function_invoke.hpp"
 #include "vm/state.hpp"
 #include "vm/vm.hpp"
+
+#include <functional>
 
 namespace fetch {
 namespace vm {
@@ -39,263 +41,230 @@ public:
   Module();
   ~Module() = default;
 
-  template <typename ObjectType>
+  template <typename Type>
   class ClassInterface
   {
   public:
-    ClassInterface(Module *module__, TypeId type_id__)
-    {
-      module_  = module__;
-      type_id_ = type_id__;
-    }
+    ClassInterface(Module *module__, TypeIndex type_index__)
+      : module_(module__)
+      , type_index_(type_index__)
+    {}
 
     template <typename... Ts>
-    ClassInterface &CreateTypeConstuctor()
+    ClassInterface &CreateConstuctor()
     {
-      TypeId         type_id__ = type_id_;
-      Opcode         opcode    = module_->GetNextOpcode();
-      TypeIndexArray type_index_array;
-      UnrollTypes<Ts...>::Unroll(type_index_array);
-      TypeIdArray type_id_array           = module_->GetTypeIds(type_index_array);
-      auto        compiler_setup_function = [type_id__, opcode, type_id_array](Compiler *compiler) {
-        compiler->CreateOpcodeTypeConstructor(type_id__, opcode, type_id_array);
+      TypeIndex const type_index__ = type_index_;
+      TypeIndexArray  parameter_type_index_array;
+      UnrollTypes<Ts...>::Unroll(parameter_type_index_array);
+      Handler handler = [](VM *vm) {
+        InvokeConstructor<Type, Ts...>(vm, vm->instruction_->type_id);
+      };
+      auto compiler_setup_function = [type_index__, parameter_type_index_array,
+                                      handler](Compiler *compiler) {
+        compiler->CreateConstructor(type_index__, parameter_type_index_array, handler);
       };
       module_->AddCompilerSetupFunction(compiler_setup_function);
-      OpcodeHandler handler = [](VM *vm) {
-        InvokeTypeConstructor<ObjectType, Ts...>(vm, vm->instruction_->type_id);
-      };
-      module_->AddOpcodeHandler(opcode, handler);
       return *this;
     }
 
     template <typename ReturnType, typename... Ts>
-    ClassInterface &CreateTypeFunction(std::string const &name,
-                                       ReturnType (*f)(VM *, TypeId, Ts...))
+    ClassInterface &CreateStaticMemberFunction(std::string const &function_name,
+                                               ReturnType (*f)(VM *, TypeId, Ts...))
     {
-      TypeId         type_id__ = type_id_;
-      Opcode         opcode    = module_->GetNextOpcode();
-      TypeIndexArray type_index_array;
-      UnrollParameterTypes<Ts...>::Unroll(type_index_array);
-      TypeIdArray type_id_array  = module_->GetTypeIds(type_index_array);
-      TypeId      return_type_id = module_->GetTypeId(TypeGetter<ReturnType>::GetTypeIndex());
-      auto        compiler_setup_function = [type_id__, name, opcode, type_id_array,
-                                      return_type_id](Compiler *compiler) {
-        compiler->CreateOpcodeTypeFunction(type_id__, name, opcode, type_id_array, return_type_id);
+      TypeIndex const type_index__ = type_index_;
+      TypeIndexArray  parameter_type_index_array;
+      UnrollParameterTypes<Ts...>::Unroll(parameter_type_index_array);
+      TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
+      Handler         handler           = [f](VM *vm) {
+        InvokeStaticMemberFunction(vm, vm->instruction_->data, vm->instruction_->type_id, f);
+      };
+      auto compiler_setup_function = [type_index__, function_name, parameter_type_index_array,
+                                      return_type_index, handler](Compiler *compiler) {
+        compiler->CreateStaticMemberFunction(
+            type_index__, function_name, parameter_type_index_array, return_type_index, handler);
       };
       module_->AddCompilerSetupFunction(compiler_setup_function);
-      OpcodeHandler handler = [f](VM *vm) {
-        InvokeTypeFunction(vm, vm->instruction_->data.ui16, vm->instruction_->type_id, f);
-      };
-      module_->AddOpcodeHandler(opcode, handler);
       return *this;
     }
 
     template <typename ReturnType, typename... Ts>
-    ClassInterface &CreateInstanceFunction(std::string const &name,
-                                           ReturnType (ObjectType::*f)(Ts...))
+    ClassInterface &CreateMemberFunction(std::string const &name, ReturnType (Type::*f)(Ts...))
     {
-      using InstanceFunction = ReturnType (ObjectType::*)(Ts...);
-      return InternalCreateInstanceFunction<ReturnType, InstanceFunction, Ts...>(name, f);
+      using MemberFunction = ReturnType (Type::*)(Ts...);
+      return InternalCreateMemberFunction<ReturnType, MemberFunction, Ts...>(name, f);
     }
 
     template <typename ReturnType, typename... Ts>
-    ClassInterface &CreateInstanceFunction(std::string const &name,
-                                           ReturnType (ObjectType::*f)(Ts...) const)
+    ClassInterface &CreateMemberFunction(std::string const &name,
+                                         ReturnType (Type::*f)(Ts...) const)
     {
-      using InstanceFunction = ReturnType (ObjectType::*)(Ts...) const;
-      return InternalCreateInstanceFunction<ReturnType, InstanceFunction, Ts...>(name, f);
+      using MemberFunction = ReturnType (Type::*)(Ts...) const;
+      return InternalCreateMemberFunction<ReturnType, MemberFunction, Ts...>(name, f);
     }
 
     ClassInterface &EnableOperator(Operator op)
     {
-      TypeId type_id__               = type_id_;
-      auto   compiler_setup_function = [type_id__, op](Compiler *compiler) {
-        compiler->EnableOperator(type_id__, op);
+      TypeIndex const type_index__            = type_index_;
+      auto            compiler_setup_function = [type_index__, op](Compiler *compiler) {
+        compiler->EnableOperator(type_index__, op);
       };
       module_->AddCompilerSetupFunction(compiler_setup_function);
       return *this;
     }
 
-    template <typename OutputType, typename InputType, typename... InputTypes>
-    ClassInterface &EnableIndexOperator()
+    // input type 1, input type 2 ... input type N, output type
+    template <typename... Types>
+    ClassInterface &EnableIndexOperator()  // order changed!
     {
-      TypeId         type_id__ = type_id_;
-      TypeIndexArray type_index_array;
-      UnrollTypes<InputType, InputTypes...>::Unroll(type_index_array);
-      TypeIdArray input_type_ids = module_->GetTypeIds(type_index_array);
-      TypeId      output_type_id = module_->GetTypeId(TypeGetter<OutputType>::GetTypeIndex());
-      auto        compiler_setup_function = [type_id__, input_type_ids,
-                                      output_type_id](Compiler *compiler) {
-        compiler->EnableIndexOperator(type_id__, input_type_ids, output_type_id);
+      static_assert(sizeof...(Types) >= 2, "2 or more types expected");
+      using Tuple       = std::tuple<Types...>;
+      using InputsTuple = typename RemoveLastType<Tuple>::type;
+      using OutputType  = typename GetLastType<Tuple>::type;
+      using Getter      = typename IndexedValueGetter<Type, InputsTuple, OutputType>::type;
+      using Setter      = typename IndexedValueSetter<Type, InputsTuple, OutputType>::type;
+      TypeIndex const type_index__ = type_index_;
+      TypeIndexArray  input_type_index_array;
+      UnrollTypes<Types...>::Unroll(input_type_index_array);
+      TypeIndex const output_type_index = input_type_index_array.back();
+      input_type_index_array.pop_back();
+      Getter  gf          = &Type::GetIndexedValue;
+      Handler get_handler = [gf](VM *vm) {
+        InvokeMemberFunction(vm, vm->instruction_->type_id, gf);
+      };
+      Setter  sf          = &Type::SetIndexedValue;
+      Handler set_handler = [sf](VM *vm) {
+        InvokeMemberFunction(vm, vm->instruction_->type_id, sf);
+      };
+      auto compiler_setup_function = [type_index__, input_type_index_array, output_type_index,
+                                      get_handler, set_handler](Compiler *compiler) {
+        compiler->EnableIndexOperator(type_index__, input_type_index_array, output_type_index,
+                                      get_handler, set_handler);
+      };
+      module_->AddCompilerSetupFunction(compiler_setup_function);
+      return *this;
+    }
+
+    template <typename InstantiationType>
+    ClassInterface &CreateInstantiationType()
+    {
+      TypeIndex const instantiation_type_index = TypeIndex(typeid(InstantiationType));
+      TypeIndex const template_type_index      = type_index_;
+      TypeIndexArray  parameter_type_index_array;
+      UnrollTemplateParameters<InstantiationType>::Unroll(parameter_type_index_array);
+      auto compiler_setup_function = [instantiation_type_index, template_type_index,
+                                      parameter_type_index_array](Compiler *compiler) {
+        compiler->CreateInstantiationType(instantiation_type_index, template_type_index,
+                                          parameter_type_index_array);
       };
       module_->AddCompilerSetupFunction(compiler_setup_function);
       return *this;
     }
 
   private:
-    template <typename ReturnType, typename InstanceFunction, typename... Ts>
-    ClassInterface &InternalCreateInstanceFunction(std::string const &name, InstanceFunction f)
+    template <typename ReturnType, typename MemberFunction, typename... Ts>
+    ClassInterface &InternalCreateMemberFunction(std::string const &function_name, MemberFunction f)
     {
-      TypeId         type_id__ = type_id_;
-      Opcode         opcode    = module_->GetNextOpcode();
-      TypeIndexArray type_index_array;
-      UnrollParameterTypes<Ts...>::Unroll(type_index_array);
-      TypeIdArray type_id_array  = module_->GetTypeIds(type_index_array);
-      TypeId      return_type_id = module_->GetTypeId(TypeGetter<ReturnType>::GetTypeIndex());
-      auto        compiler_setup_function = [type_id__, name, opcode, type_id_array,
-                                      return_type_id](Compiler *compiler) {
-        compiler->CreateOpcodeInstanceFunction(type_id__, name, opcode, type_id_array,
-                                               return_type_id);
+      TypeIndex const type_index__ = type_index_;
+      TypeIndexArray  parameter_type_index_array;
+      UnrollParameterTypes<Ts...>::Unroll(parameter_type_index_array);
+      TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
+      Handler handler = [f](VM *vm) { InvokeMemberFunction(vm, vm->instruction_->type_id, f); };
+      auto    compiler_setup_function = [type_index__, function_name, parameter_type_index_array,
+                                      return_type_index, handler](Compiler *compiler) {
+        compiler->CreateMemberFunction(type_index__, function_name, parameter_type_index_array,
+                                       return_type_index, handler);
       };
       module_->AddCompilerSetupFunction(compiler_setup_function);
-      OpcodeHandler handler = [f](VM *vm) {
-        InvokeInstanceFunction(vm, vm->instruction_->type_id, f);
-      };
-      module_->AddOpcodeHandler(opcode, handler);
       return *this;
     }
 
-    Module *module_;
-    TypeId  type_id_;
+    Module *  module_;
+    TypeIndex type_index_;
   };
+
+  template <typename ReturnType>
+  void CreateFreeFunctionFromLambda(std::string const &name, std::function<ReturnType(VM *)> f)
+  {
+    TypeIndexArray  parameter_type_index_array;
+    TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
+    Handler         handler           = [f](VM *vm) {
+      ReturnType           result               = f(vm);
+      constexpr auto const stack_pointer_offset = -1;
+      StackSetter<ReturnType>::Set(vm, stack_pointer_offset, std::move(result),
+                                   vm->instruction_->type_id);
+      vm->sp_ -= stack_pointer_offset;
+    };
+
+    auto compiler_setup_function = [name, parameter_type_index_array, return_type_index,
+                                    handler](Compiler *compiler) {
+      compiler->CreateFreeFunction(name, parameter_type_index_array, return_type_index, handler);
+    };
+    AddCompilerSetupFunction(compiler_setup_function);
+  }
 
   template <typename ReturnType, typename... Ts>
   void CreateFreeFunction(std::string const &name, ReturnType (*f)(VM *, Ts...))
   {
-    Opcode         opcode = GetNextOpcode();
-    TypeIndexArray type_index_array;
-    UnrollParameterTypes<Ts...>::Unroll(type_index_array);
-    TypeIdArray type_id_array           = GetTypeIds(type_index_array);
-    TypeId      return_type_id          = GetTypeId(TypeGetter<ReturnType>::GetTypeIndex());
-    auto        compiler_setup_function = [name, opcode, type_id_array,
-                                    return_type_id](Compiler *compiler) {
-      compiler->CreateOpcodeFreeFunction(name, opcode, type_id_array, return_type_id);
+    TypeIndexArray parameter_type_index_array;
+    UnrollParameterTypes<Ts...>::Unroll(parameter_type_index_array);
+    TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
+    Handler         handler = [f](VM *vm) { InvokeFreeFunction(vm, vm->instruction_->type_id, f); };
+    auto            compiler_setup_function = [name, parameter_type_index_array, return_type_index,
+                                    handler](Compiler *compiler) {
+      compiler->CreateFreeFunction(name, parameter_type_index_array, return_type_index, handler);
     };
     AddCompilerSetupFunction(compiler_setup_function);
-    OpcodeHandler handler = [f](VM *vm) { InvokeFreeFunction(vm, vm->instruction_->type_id, f); };
-    AddOpcodeHandler(opcode, handler);
   }
 
-  template <typename ObjectType>
-  ClassInterface<ObjectType> CreateClassType(std::string const &name)
+  template <typename Type>
+  ClassInterface<Type> CreateClassType(std::string const &name)
   {
-    TypeId type_id = GetNextTypeId();
-    RegisterType(TypeIndex(typeid(ObjectType)), type_id);
-    auto compiler_setup_function = [name, type_id](Compiler *compiler) {
-      compiler->CreateClassType(name, type_id);
+    TypeIndex const type_index              = TypeIndex(typeid(Type));
+    auto            compiler_setup_function = [name, type_index](Compiler *compiler) {
+      compiler->CreateClassType(name, type_index);
     };
     AddCompilerSetupFunction(compiler_setup_function);
-    return ClassInterface<ObjectType>(this, type_id);
+    return ClassInterface<Type>(this, type_index);
   }
 
-  // e.g. CreateTemplateInstantiationType<Array, Ptr<MyClass>>(TypeIds::IArray);
-  template <template <class, class...> class Template, typename T, typename... Ts>
-  void CreateTemplateInstantiationType(TypeId template_type_id)
+  template <typename Type>
+  ClassInterface<Type> GetClassInterface()
   {
-    using InstantiationType = Template<T, Ts...>;
-    TypeIndex type_index    = TypeIndex(typeid(InstantiationType));
-    TypeId    type_id       = registered_types_.GetTypeId(type_index);
-    if (type_id != TypeIds::Unknown)
-    {
-      // The instantiation has been created already
-      return;
-    }
-    type_id = GetNextTypeId();
-    registered_types_.RegisterType(type_index, type_id);
-    TypeIndexArray type_index_array;
-    UnrollTypes<T, Ts...>::Unroll(type_index_array);
-    TypeIdArray type_id_array    = GetTypeIds(type_index_array);
-    auto compiler_setup_function = [type_id, template_type_id, type_id_array](Compiler *compiler) {
-      compiler->CreateTemplateInstantiationType(type_id, template_type_id, type_id_array);
-    };
-    AddCompilerSetupFunction(compiler_setup_function);
+    TypeIndex const type_index = TypeIndex(typeid(Type));
+    return ClassInterface<Type>(this, type_index);
   }
 
 private:
-  template <typename ObjectType>
-  ClassInterface<ObjectType> RegisterClassType(TypeId type_id)
-  {
-    RegisterType(TypeIndex(typeid(ObjectType)), type_id);
-    return ClassInterface<ObjectType>(this, type_id);
-  }
-
-  template <typename ObjectType>
-  ClassInterface<ObjectType> RegisterTemplateType(TypeId type_id)
-  {
-    RegisterType(TypeIndex(typeid(ObjectType)), type_id);
-    return ClassInterface<ObjectType>(this, type_id);
-  }
-
   void CompilerSetup(Compiler *compiler)
   {
     for (auto const &compiler_setup_function : compiler_setup_functions_)
     {
       compiler_setup_function(compiler);
     }
+    compiler->GetDetails(type_info_array_, type_info_map_, registered_types_, function_info_array_);
   }
 
-  void VMSetup(VM *vm)
+  void GetDetails(TypeInfoArray &type_info_array, TypeInfoMap &type_info_map,
+                  RegisteredTypes &registered_types, FunctionInfoArray &function_info_array)
   {
-    for (auto const &info : opcode_handler_info_array_)
-    {
-      vm->AddOpcodeHandler(info);
-    }
-    vm->SetRegisteredTypes(registered_types_);
+    type_info_array     = type_info_array_;
+    type_info_map       = type_info_map_;
+    registered_types    = registered_types_;
+    function_info_array = function_info_array_;
   }
 
   using CompilerSetupFunction = std::function<void(Compiler *)>;
 
-  TypeId GetNextTypeId()
-  {
-    return next_type_id_++;
-  }
-
-  Opcode GetNextOpcode()
-  {
-    return next_opcode_++;
-  }
-
-  void RegisterType(TypeIndex type_index, TypeId type_id)
-  {
-    registered_types_.RegisterType(type_index, type_id);
-  }
-
-  TypeId GetTypeId(TypeIndex type_index) const
-  {
-    TypeId const type_id = registered_types_.GetTypeId(type_index);
-    if (type_id != TypeIds::Unknown)
-    {
-      return type_id;
-    }
-    throw std::runtime_error("type index has not been registered of the following type:\n " +
-                             std::string(type_index.name()));
-  }
-
-  TypeIdArray GetTypeIds(TypeIndexArray const &type_index_array) const
-  {
-    TypeIdArray ids;
-    for (auto type_index : type_index_array)
-    {
-      ids.push_back(GetTypeId(type_index));
-    }
-    return ids;
-  }
-
-  void AddCompilerSetupFunction(CompilerSetupFunction function)
+  void AddCompilerSetupFunction(CompilerSetupFunction const &function)
   {
     compiler_setup_functions_.push_back(function);
   }
 
-  void AddOpcodeHandler(Opcode opcode, OpcodeHandler handler)
-  {
-    opcode_handler_info_array_.push_back(OpcodeHandlerInfo(opcode, handler));
-  }
-
-  TypeId                             next_type_id_;
-  Opcode                             next_opcode_;
-  RegisteredTypes                    registered_types_;
   std::vector<CompilerSetupFunction> compiler_setup_functions_;
-  std::vector<OpcodeHandlerInfo>     opcode_handler_info_array_;
+  TypeInfoArray                      type_info_array_;
+  TypeInfoMap                        type_info_map_;
+  RegisteredTypes                    registered_types_;
+  FunctionInfoArray                  function_info_array_;
 
   friend class Compiler;
   friend class VM;

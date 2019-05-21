@@ -22,6 +22,7 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/chain/v2/transaction_layout.hpp"
 #include "ledger/testing/block_generator.hpp"
 #include "ledger/transaction_status_cache.hpp"
 #include "testing/common_testing_functionality.hpp"
@@ -45,6 +46,8 @@ using fetch::ledger::GENESIS_DIGEST;
 using fetch::crypto::ECDSASigner;
 using fetch::ledger::testing::BlockGenerator;
 using fetch::ledger::TransactionStatusCache;
+using fetch::ledger::v2::TransactionLayout;
+using fetch::ledger::v2::Address;
 
 using ::testing::_;
 using ::testing::AnyNumber;
@@ -62,6 +65,7 @@ using ScheduleStatus      = fetch::ledger::ExecutionManagerInterface::ScheduleSt
 using BlockSinkPtr        = std::unique_ptr<FakeBlockSink>;
 using TxCachePtr          = std::unique_ptr<TransactionStatusCache>;
 using State               = fetch::ledger::BlockCoordinator::State;
+using AddressPtr          = std::unique_ptr<Address>;
 
 static constexpr char const *LOGGING_NAME = "BlockCoordinatorTests";
 static constexpr std::size_t NUM_LANES    = 1;
@@ -79,6 +83,7 @@ protected:
     // generate a public/private key pair
     ECDSASigner const signer{};
 
+    address_           = std::make_unique<Address>(signer.identity());
     main_chain_        = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
     storage_unit_      = std::make_unique<StrictMock<MockStorageUnit>>();
     execution_manager_ = std::make_unique<StrictMock<MockExecutionManager>>(storage_unit_->fake);
@@ -102,6 +107,7 @@ protected:
     execution_manager_.reset();
     storage_unit_.reset();
     main_chain_.reset();
+    address_.reset();
   }
 
   /**
@@ -114,6 +120,22 @@ protected:
       // run one step of the state machine
       block_coordinator_->GetRunnable().Execute();
     }
+  }
+
+  bool RemainsOn(State state, uint64_t iterations = 50)
+  {
+    bool success{true};
+
+    auto &state_machine = block_coordinator_->GetStateMachine();
+
+    for (uint64_t i = 0; success && i < iterations; ++i)
+    {
+      success = (state_machine.state() == state);
+
+      state_machine.Execute();
+    }
+
+    return success;
   }
 
   /**
@@ -166,6 +188,7 @@ protected:
     ASSERT_EQ(final_state, state_machine.state());
   }
 
+  AddressPtr          address_;
   MainChainPtr        main_chain_;
   ExecutionMgrPtr     execution_manager_;
   StorageUnitPtr      storage_unit_;
@@ -681,96 +704,6 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
   ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
 }
 
-TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
-{
-  auto genesis = block_generator_();
-
-  // define the call expectations
-  {
-    InSequence s;
-
-    // syncing
-    EXPECT_CALL(*storage_unit_, LastCommitHash());
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-
-    // pre block validation
-    // none
-
-    // schedule of the genesis block
-    EXPECT_CALL(*execution_manager_, Execute(IsBlock(genesis)));
-
-    // wait for the execution to complete
-    EXPECT_CALL(*execution_manager_, GetState());
-    EXPECT_CALL(*execution_manager_, GetState());
-
-    // post block validation
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*storage_unit_, Commit(0));
-    // reset
-    // none
-
-    // syncing
-    EXPECT_CALL(*storage_unit_, LastCommitHash());
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-
-    // -- TEST CONFIG --
-
-    // syncing
-    EXPECT_CALL(*storage_unit_, LastCommitHash());
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-    EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash, ::testing::_));
-    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash, ::testing::_));
-
-    // syncing
-    EXPECT_CALL(*storage_unit_, LastCommitHash());
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-  }
-
-  // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), GENESIS_DIGEST);
-
-  Tick(State::RELOAD_STATE, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
-  Tick(State::WAIT_FOR_TRANSACTIONS, State::SCHEDULE_BLOCK_EXECUTION);
-  Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
-  Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
-
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
-
-  Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-
-  // create the bad block
-  auto b1        = block_generator_(genesis);
-  b1->body.miner = Block::Identity{};
-  b1->UpdateDigest();
-
-  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
-
-  Tick(State::SYNCHRONIZED, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
-
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
-}
-
 TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
 {
   auto genesis = block_generator_();
@@ -1064,6 +997,7 @@ protected:
     // generate a public/private key pair
     ECDSASigner const signer{};
 
+    clock_             = fetch::moment::CreateAdjustableClock("bc:deadline");
     main_chain_        = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
     storage_unit_      = std::make_unique<NiceMock<MockStorageUnit>>();
     execution_manager_ = std::make_unique<NiceMock<MockExecutionManager>>(storage_unit_->fake);
@@ -1077,18 +1011,20 @@ protected:
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);
   }
+
+  fetch::moment::AdjustableClockPtr clock_;
 };
 
 TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
 {
-  fetch::ledger::TransactionSummary summary;
-  summary.transaction_hash = fetch::testing::GenerateUniqueHashes(1u)[0];
+  TransactionLayout layout{*fetch::testing::GenerateUniqueHashes(1u).begin(), fetch::BitVector{}, 0,
+                           0, 1000};
 
   auto genesis = block_generator_();
   auto b1      = block_generator_(genesis);
 
   // Fabricate unknown transaction
-  b1->body.slices.begin()->push_back(summary);
+  b1->body.slices.begin()->push_back(layout);
 
   EXPECT_CALL(*storage_unit_, RevertToHash(_, 0));
 
@@ -1097,15 +1033,19 @@ TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
   EXPECT_CALL(*storage_unit_, CurrentHash()).Times(AnyNumber());
   EXPECT_CALL(*execution_manager_, LastProcessedBlock()).Times(AnyNumber());
 
-  Advance();
+  Tock(State::RELOAD_STATE, State::SYNCHRONIZED);
 
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
 
   Advance();
 
-  std::this_thread::sleep_for(std::chrono::seconds(61u));
+  // Time out wait to request Tx from peers
+  clock_->Advance(std::chrono::seconds(31u));
 
-  Advance();
+  ASSERT_TRUE(RemainsOn(State::WAIT_FOR_TRANSACTIONS));
 
-  ASSERT_EQ(State::SYNCHRONIZED, block_coordinator_->GetStateMachine().state());
+  // Time out wait for Tx - block should be invalidated at this point
+  clock_->Advance(std::chrono::seconds(31u));
+
+  Tock(State::WAIT_FOR_TRANSACTIONS, State::SYNCHRONIZED);
 }

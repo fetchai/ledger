@@ -21,3 +21,7 @@ add_fetch_test(fetch_math_activation_tests fetch-math math/ml_activation_functio
 add_fetch_test(fetch_math_loss_tests fetch-math math/ml_loss_functions)
 add_fetch_test(fetch_math_tensor_tests fetch-math math/tensor)
 add_fetch_test(fetch_math_trigonometry_tests fetch-math math/trigonometry)
+add_fetch_test(fetch_math_blas_tests fetch-math math/linalg/blas)
+add_fetch_test(fetch_math_tensor_iterator_tests fetch-math math/tensor_iterator)
+add_fetch_test(fetch_math_serializers_tests fetch-math math/serializers)
+add_fetch_test(fetch_math_fixed_point_tests fetch-math math/fixed_point/)

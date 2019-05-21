@@ -29,28 +29,62 @@
 namespace fetch {
 namespace ledger {
 
+namespace v2 {
+class Address;
+}
+
+class TokenContract;
+class CachedStorageAdapter;
+class StateSentinelAdapter;
+
 /**
  * The executor object is designed to process incoming transactions
  */
 class Executor : public ExecutorInterface
 {
 public:
-  using Resources = std::shared_ptr<StorageUnitInterface>;
+  using StorageUnitPtr = std::shared_ptr<StorageUnitInterface>;
+  using ConstByteArray = byte_array::ConstByteArray;
 
   // Construction / Destruction
-  explicit Executor(Resources resources)
-    : resources_{std::move(resources)}
-  {}
+  explicit Executor(StorageUnitPtr storage);
   ~Executor() override = default;
 
   /// @name Executor Interface
   /// @{
-  Status Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes) override;
+  Result Execute(v2::Digest const &digest, BlockIndex block, SliceIndex slice,
+                 BitVector const &shards) override;
+  void   SettleFees(v2::Address const &miner, TokenAmount amount, uint32_t log2_num_lanes) override;
   /// @}
 
 private:
-  Resources      resources_;         ///< The collection of resources
-  ChainCodeCache chain_code_cache_;  //< The factory to create new chain code instances
+  using TokenContractPtr        = std::shared_ptr<TokenContract>;
+  using TransactionPtr          = std::shared_ptr<v2::Transaction>;
+  using CachedStorageAdapterPtr = std::shared_ptr<CachedStorageAdapter>;
+
+  bool RetrieveTransaction(v2::Digest const &digest);
+  bool ValidationChecks(Result &result);
+  bool ExecuteTransactionContract(Result &result);
+  bool ProcessTransfers(Result &result);
+  void DeductFees(Result &result);
+  bool Cleanup();
+
+  /// @name Resources
+  /// @{
+  StorageUnitPtr   storage_;             ///< The collection of resources
+  ChainCodeCache   chain_code_cache_{};  //< The factory to create new chain code instances
+  TokenContractPtr token_contract_;
+  /// @}
+
+  /// @name Per Execution State
+  /// @{
+  BlockIndex              block_;
+  SliceIndex              slice_;
+  BitVector               allowed_shards_{};
+  LaneIndex               log2_num_lanes_{0};
+  TransactionPtr          current_tx_{};
+  CachedStorageAdapterPtr storage_cache_;
+  /// @}
 };
 
 }  // namespace ledger

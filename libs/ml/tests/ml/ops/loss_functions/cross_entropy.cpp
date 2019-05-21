@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/loss_functions/cross_entropy.hpp"
-#include "core/fixed_point/fixed_point.hpp"
+#include "math/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 
@@ -232,14 +232,14 @@ TYPED_TEST(CrossEntropyTest, non_one_hot_dimensional_backward_test)
   TypeParam gt(std::vector<std::uint64_t>{n_data_points, n_classes});
 
   // set gt data
-  std::vector<double> gt_data{0.0524979, -0.24802, -0.0243751, 0., 0., 26, 1e+14, 0};
+  std::vector<double> gt_data{0.0524979, -0.24802, -0.0243751, 0., 0., 26, 1e+9, 0};
   for (std::uint64_t i = 0; i < gt.size(); ++i)
   {
     gt.Set(i, 0, typename TypeParam::Type(gt_data[i]));
   }
 
   // theoretically these needn't lie between 0 and 1
-  std::vector<double> unscaled_vals{0.1, 0.8, -0.05, 100000, 123456, -26, 99999999999999, 9999999};
+  std::vector<double> unscaled_vals{0.1, 0.8, -0.05, 100000, 123456, -26, 999999999, 9999999};
   std::vector<double> target{0.0, 1.0, 0., 1.0, 1.0, 1., 0.0, 1.0};
   for (std::uint64_t i = 0; i < n_data_points * n_classes; ++i)
   {

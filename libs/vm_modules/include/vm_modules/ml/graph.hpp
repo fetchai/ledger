@@ -62,7 +62,7 @@ public:
     fetch::ml::Graph<fetch::math::Tensor<float>>::BackPropagate(name->str, *dt);
   }
 
-  void Step(float lr)
+  void Step(float lr) override
   {
     fetch::ml::Graph<fetch::math::Tensor<float>>::Step(lr);
   }
@@ -99,15 +99,15 @@ public:
 inline void CreateGraph(fetch::vm::Module &module)
 {
   module.CreateClassType<GraphWrapper>("Graph")
-      .CreateTypeConstuctor<>()
-      .CreateInstanceFunction("SetInput", &GraphWrapper::SetInput)
-      .CreateInstanceFunction("Evaluate", &GraphWrapper::Evaluate)
-      .CreateInstanceFunction("Backpropagate", &GraphWrapper::Backpropagate)
-      .CreateInstanceFunction("Step", &GraphWrapper::Step)
-      .CreateInstanceFunction("AddPlaceholder", &GraphWrapper::AddPlaceholder)
-      .CreateInstanceFunction("AddFullyConnected", &GraphWrapper::AddFullyConnected)
-      .CreateInstanceFunction("AddRelu", &GraphWrapper::AddRelu)
-      .CreateInstanceFunction("AddSoftmax", &GraphWrapper::AddSoftmax);
+      .CreateConstuctor<>()
+      .CreateMemberFunction("SetInput", &GraphWrapper::SetInput)
+      .CreateMemberFunction("Evaluate", &GraphWrapper::Evaluate)
+      .CreateMemberFunction("Backpropagate", &GraphWrapper::Backpropagate)
+      .CreateMemberFunction("Step", &GraphWrapper::Step)
+      .CreateMemberFunction("AddPlaceholder", &GraphWrapper::AddPlaceholder)
+      .CreateMemberFunction("AddFullyConnected", &GraphWrapper::AddFullyConnected)
+      .CreateMemberFunction("AddRelu", &GraphWrapper::AddRelu)
+      .CreateMemberFunction("AddSoftmax", &GraphWrapper::AddSoftmax);
 }
 
 }  // namespace ml

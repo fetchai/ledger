@@ -19,7 +19,11 @@
 
 #include "core/future_timepoint.hpp"
 #include "core/logger.hpp"
+#include "core/serializers/typed_byte_array_buffer.hpp"
 #include "core/service_ids.hpp"
+#include "crypto/merkle_tree.hpp"
+#include "ledger/chain/mutable_transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/shard_config.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"
@@ -29,18 +33,12 @@
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/has_worker_thread.hpp"
 #include "network/management/connection_register.hpp"
-#include "network/service/service_client.hpp"
-
-#include "ledger/chain/transaction.hpp"
-#include "storage/document_store_protocol.hpp"
-#include "storage/object_store_protocol.hpp"
-
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
-
-#include "core/serializers/typed_byte_array_buffer.hpp"
-#include "crypto/merkle_tree.hpp"
+#include "network/service/service_client.hpp"
+#include "storage/document_store_protocol.hpp"
+#include "storage/object_store_protocol.hpp"
 
 #include <chrono>
 #include <thread>
@@ -68,13 +66,11 @@ public:
 
   /// @name Storage Unit Interface
   /// @{
-  void AddTransaction(VerifiedTransaction const &tx) override;
-  void AddTransactions(TransactionList const &txs) override;
-
-  TxSummaries PollRecentTx(uint32_t max_to_poll) override;
-
-  bool GetTransaction(ConstByteArray const &digest, Transaction &tx) override;
-  bool HasTransaction(ConstByteArray const &digest) override;
+  void      AddTransaction(v2::Transaction const &tx) override;
+  bool      GetTransaction(ConstByteArray const &digest, v2::Transaction &tx) override;
+  bool      HasTransaction(ConstByteArray const &digest) override;
+  void      IssueCallForMissingTxs(v2::DigestSet const &tx_set) override;
+  TxLayouts PollRecentTx(uint32_t max_to_poll) override;
 
   Document GetOrCreate(ResourceAddress const &key) override;
   Document Get(ResourceAddress const &key) override;
@@ -86,8 +82,8 @@ public:
   bool                       RevertToHash(Hash const &hash, uint64_t index) override;
   byte_array::ConstByteArray Commit(uint64_t index) override;
   bool                       HashExists(Hash const &hash, uint64_t index) override;
-  bool                       Lock(ResourceAddress const &key) override;
-  bool                       Unlock(ResourceAddress const &key) override;
+  bool                       Lock(ShardIndex index) override;
+  bool                       Unlock(ShardIndex index) override;
   /// @}
 
   StorageUnitClient &operator=(StorageUnitClient const &) = delete;
@@ -152,7 +148,7 @@ private:
 
   static constexpr char const *MERKLE_FILENAME = "merkle_stack.db";
 
-  Address const &LookupAddress(LaneIndex lane) const;
+  Address const &LookupAddress(ShardIndex shard) const;
   Address const &LookupAddress(storage::ResourceID const &resource) const;
 
   bool HashInStack(Hash const &hash, uint64_t index);

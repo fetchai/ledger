@@ -399,7 +399,7 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
       ++pos;
       break;
     case '}':
-      if (brace_stack_.back() != '}')
+      if (brace_stack_.empty() || brace_stack_.back() != '}')
       {
         throw JSONParseException("Expected '}', but found ']'");
       }
@@ -422,7 +422,7 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
       ++pos;
       break;
     case ']':
-      if (brace_stack_.back() != ']')
+      if (brace_stack_.empty() || brace_stack_.back() != ']')
       {
         throw JSONParseException("Expected ']', but found '}'.");
       }

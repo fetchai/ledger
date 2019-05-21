@@ -33,11 +33,7 @@ using namespace fetch::byte_array;
 
 static constexpr char const *LOGGING_NAME = "TcpClientServerStressTests";
 
-std::atomic<std::size_t> clientReceivedCount_{0};
-std::atomic<std::size_t> serverReceivedCount{0};
-
 std::vector<message_type> globalMessagesFromServer_{};
-std::vector<message_type> globalMessagesToServer_{};
 std::mutex                messages_;
 
 // Basic server

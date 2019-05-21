@@ -20,6 +20,7 @@
 #include "core/mutex.hpp"
 #include "core/threading/synchronised_state.hpp"
 #include "ledger/chain/constants.hpp"
+#include "ledger/chain/v2/address.hpp"
 #include "ledger/execution_item.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/executor.hpp"
@@ -54,14 +55,14 @@ public:
   using ExecutorFactory = std::function<ExecutorPtr()>;
 
   // Construction / Destruction
-  ExecutionManager(std::size_t num_executors, StorageUnitPtr storage,
+  ExecutionManager(std::size_t num_executors, uint32_t log2_num_lanes, StorageUnitPtr storage,
                    ExecutorFactory const &factory);
 
   /// @name Execution Manager Interface
   /// @{
   ScheduleStatus Execute(Block::Body const &block) override;
-  void           SetLastProcessedBlock(BlockHash hash) override;
-  BlockHash      LastProcessedBlock() override;
+  void           SetLastProcessedBlock(v2::Digest digest) override;
+  v2::Digest     LastProcessedBlock() override;
   State          GetState() override;
   bool           Abort() override;
   /// @}
@@ -101,6 +102,8 @@ private:
   using SyncCounters      = SynchronisedState<Counters>;
   using SyncedState       = SynchronisedState<State>;
 
+  uint32_t const log2_num_lanes_;
+
   Flag running_{false};
   Flag monitor_ready_{false};
 
@@ -111,7 +114,8 @@ private:
   Mutex         execution_plan_lock_;  ///< guards `execution_plan_`
   ExecutionPlan execution_plan_;
 
-  BlockHash last_block_hash_ = GENESIS_DIGEST;
+  v2::Digest  last_block_hash_ = GENESIS_DIGEST;
+  v2::Address last_block_miner_{};
 
   Mutex     monitor_lock_;
   Condition monitor_wake_;

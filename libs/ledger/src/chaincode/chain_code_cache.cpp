@@ -18,7 +18,7 @@
 
 #include "ledger/chaincode/chain_code_cache.hpp"
 #include "ledger/chaincode/factory.hpp"
-#include "meta/is_log2.hpp"
+#include "meta/log2.hpp"
 
 #include <algorithm>
 #include <chrono>
