@@ -1108,22 +1108,22 @@ TEST(FixedPointTest, Sin_16_16)
   fetch::fixed_point::FixedPoint<16, 16> huge(2000);
   fetch::fixed_point::FixedPoint<16, 16> small(0.0001);
   fetch::fixed_point::FixedPoint<16, 16> tiny(0, fp32::SMALLEST_FRACTION);
-  fetch::fixed_point::FixedPoint<16, 16> e1 = fp32::Sin(one);
-  fetch::fixed_point::FixedPoint<16, 16> e2 = fp32::Sin(one_point_five);
-  fetch::fixed_point::FixedPoint<16, 16> e3 = fp32::Sin(fp32::CONST_ZERO);
-  fetch::fixed_point::FixedPoint<16, 16> e4 = fp32::Sin(huge);
-  fetch::fixed_point::FixedPoint<16, 16> e5 = fp32::Sin(small);
-  fetch::fixed_point::FixedPoint<16, 16> e6 = fp32::Sin(tiny);
-  fetch::fixed_point::FixedPoint<16, 16> e7 = fp32::Sin(fp32::CONST_PI);
-  fetch::fixed_point::FixedPoint<16, 16> e8 = fp32::Sin(-fp32::CONST_PI);
-  fetch::fixed_point::FixedPoint<16, 16> e9 = fp32::Sin(fp32::CONST_PI*2);
-  fetch::fixed_point::FixedPoint<16, 16> e10 = fp32::Sin(fp32::CONST_PI*4);
-  fetch::fixed_point::FixedPoint<16, 16> e11 = fp32::Sin(fp32::CONST_PI*100);
+  fetch::fixed_point::FixedPoint<16, 16> e1  = fp32::Sin(one);
+  fetch::fixed_point::FixedPoint<16, 16> e2  = fp32::Sin(one_point_five);
+  fetch::fixed_point::FixedPoint<16, 16> e3  = fp32::Sin(fp32::CONST_ZERO);
+  fetch::fixed_point::FixedPoint<16, 16> e4  = fp32::Sin(huge);
+  fetch::fixed_point::FixedPoint<16, 16> e5  = fp32::Sin(small);
+  fetch::fixed_point::FixedPoint<16, 16> e6  = fp32::Sin(tiny);
+  fetch::fixed_point::FixedPoint<16, 16> e7  = fp32::Sin(fp32::CONST_PI);
+  fetch::fixed_point::FixedPoint<16, 16> e8  = fp32::Sin(-fp32::CONST_PI);
+  fetch::fixed_point::FixedPoint<16, 16> e9  = fp32::Sin(fp32::CONST_PI * 2);
+  fetch::fixed_point::FixedPoint<16, 16> e10 = fp32::Sin(fp32::CONST_PI * 4);
+  fetch::fixed_point::FixedPoint<16, 16> e11 = fp32::Sin(fp32::CONST_PI * 100);
   fetch::fixed_point::FixedPoint<16, 16> e12 = fp32::Sin(fp32::CONST_PI_2);
   fetch::fixed_point::FixedPoint<16, 16> e13 = fp32::Sin(-fp32::CONST_PI_2);
   fetch::fixed_point::FixedPoint<16, 16> e14 = fp32::Sin(fp32::CONST_PI_4);
   fetch::fixed_point::FixedPoint<16, 16> e15 = fp32::Sin(-fp32::CONST_PI_4);
-  fetch::fixed_point::FixedPoint<16, 16> e16 = fp32::Sin(fp32::CONST_PI_4*3);
+  fetch::fixed_point::FixedPoint<16, 16> e16 = fp32::Sin(fp32::CONST_PI_4 * 3);
 
   double delta = (double)e1 - std::sin((double)one);
   EXPECT_NEAR(delta / std::sin((double)one), 0.0, (double)fp32::TOLERANCE);
@@ -1132,7 +1132,8 @@ TEST(FixedPointTest, Sin_16_16)
   delta = (double)e3 - std::sin((double)fp32::CONST_ZERO);
   EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
   delta = (double)e4 - std::sin((double)huge);
-  EXPECT_NEAR(delta / std::sin((double)huge), 0.0, 0.002); // Sin for larger arguments loses precision
+  EXPECT_NEAR(delta / std::sin((double)huge), 0.0,
+              0.002);  // Sin for larger arguments loses precision
   delta = (double)e5 - std::sin((double)small);
   EXPECT_NEAR(delta / std::sin((double)small), 0.0, (double)fp32::TOLERANCE);
   delta = (double)e6 - std::sin((double)tiny);
@@ -1141,12 +1142,12 @@ TEST(FixedPointTest, Sin_16_16)
   EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
   delta = (double)e8 - std::sin((double)(-fp32::CONST_PI));
   EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
-  delta = (double)e9 - std::sin((double)(fp32::CONST_PI*2));
+  delta = (double)e9 - std::sin((double)(fp32::CONST_PI * 2));
   EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
-  delta = (double)e10 - std::sin((double)(fp32::CONST_PI*4));
+  delta = (double)e10 - std::sin((double)(fp32::CONST_PI * 4));
   EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
-  delta = (double)e11 - std::sin((double)(fp32::CONST_PI*100));
-  EXPECT_NEAR(delta, 0.0, 0.001); // Sin for larger arguments loses precision
+  delta = (double)e11 - std::sin((double)(fp32::CONST_PI * 100));
+  EXPECT_NEAR(delta, 0.0, 0.001);  // Sin for larger arguments loses precision
   delta = (double)e12 - std::sin((double)(fp32::CONST_PI_2));
   EXPECT_NEAR(delta / std::sin((double)(fp32::CONST_PI_2)), 0.0, (double)fp32::TOLERANCE);
   delta = (double)e13 - std::sin((double)(-fp32::CONST_PI_2));
@@ -1155,14 +1156,15 @@ TEST(FixedPointTest, Sin_16_16)
   EXPECT_NEAR(delta / std::sin((double)(fp32::CONST_PI_4)), 0.0, (double)fp32::TOLERANCE);
   delta = (double)e15 - std::sin((double)(-fp32::CONST_PI_4));
   EXPECT_NEAR(delta / std::sin((double)(-fp32::CONST_PI_4)), 0.0, (double)fp32::TOLERANCE);
-  delta = (double)e16 - std::sin((double)(fp32::CONST_PI_4*3));
-  EXPECT_NEAR(delta / std::sin((double)(fp32::CONST_PI_4*3)), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e16 - std::sin((double)(fp32::CONST_PI_4 * 3));
+  EXPECT_NEAR(delta / std::sin((double)(fp32::CONST_PI_4 * 3)), 0.0, (double)fp32::TOLERANCE);
 
   fp32 step{0.1};
-  fp32 x{-fp32::CONST_PI*10};
-  for (; x < fp32::CONST_PI*10; x+= step) {
+  fp32 x{-fp32::CONST_PI * 10};
+  for (; x < fp32::CONST_PI * 10; x += step)
+  {
     fp32 e = fp32::Sin(x);
-    delta = (double)e - std::sin((double)(x));
+    delta  = (double)e - std::sin((double)(x));
     EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
   }
 }
@@ -1174,22 +1176,22 @@ TEST(FixedPointTest, Sin_32_32)
   fetch::fixed_point::FixedPoint<32, 32> huge(20000000);
   fetch::fixed_point::FixedPoint<32, 32> small(0.0000001);
   fetch::fixed_point::FixedPoint<32, 32> tiny(0, fp32::SMALLEST_FRACTION);
-  fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Sin(one);
-  fetch::fixed_point::FixedPoint<32, 32> e2 = fp64::Sin(one_point_five);
-  fetch::fixed_point::FixedPoint<32, 32> e3 = fp64::Sin(fp64::CONST_ZERO);
-  fetch::fixed_point::FixedPoint<32, 32> e4 = fp64::Sin(huge);
-  fetch::fixed_point::FixedPoint<32, 32> e5 = fp64::Sin(small);
-  fetch::fixed_point::FixedPoint<32, 32> e6 = fp64::Sin(tiny);
-  fetch::fixed_point::FixedPoint<32, 32> e7 = fp64::Sin(fp64::CONST_PI);
-  fetch::fixed_point::FixedPoint<32, 32> e8 = fp64::Sin(-fp64::CONST_PI);
-  fetch::fixed_point::FixedPoint<32, 32> e9 = fp64::Sin(fp64::CONST_PI*2);
-  fetch::fixed_point::FixedPoint<32, 32> e10 = fp64::Sin(fp64::CONST_PI*4);
-  fetch::fixed_point::FixedPoint<32, 32> e11 = fp64::Sin(fp64::CONST_PI*100);
+  fetch::fixed_point::FixedPoint<32, 32> e1  = fp64::Sin(one);
+  fetch::fixed_point::FixedPoint<32, 32> e2  = fp64::Sin(one_point_five);
+  fetch::fixed_point::FixedPoint<32, 32> e3  = fp64::Sin(fp64::CONST_ZERO);
+  fetch::fixed_point::FixedPoint<32, 32> e4  = fp64::Sin(huge);
+  fetch::fixed_point::FixedPoint<32, 32> e5  = fp64::Sin(small);
+  fetch::fixed_point::FixedPoint<32, 32> e6  = fp64::Sin(tiny);
+  fetch::fixed_point::FixedPoint<32, 32> e7  = fp64::Sin(fp64::CONST_PI);
+  fetch::fixed_point::FixedPoint<32, 32> e8  = fp64::Sin(-fp64::CONST_PI);
+  fetch::fixed_point::FixedPoint<32, 32> e9  = fp64::Sin(fp64::CONST_PI * 2);
+  fetch::fixed_point::FixedPoint<32, 32> e10 = fp64::Sin(fp64::CONST_PI * 4);
+  fetch::fixed_point::FixedPoint<32, 32> e11 = fp64::Sin(fp64::CONST_PI * 100);
   fetch::fixed_point::FixedPoint<32, 32> e12 = fp64::Sin(fp64::CONST_PI_2);
   fetch::fixed_point::FixedPoint<32, 32> e13 = fp64::Sin(-fp64::CONST_PI_2);
   fetch::fixed_point::FixedPoint<32, 32> e14 = fp64::Sin(fp64::CONST_PI_4);
   fetch::fixed_point::FixedPoint<32, 32> e15 = fp64::Sin(-fp64::CONST_PI_4);
-  fetch::fixed_point::FixedPoint<32, 32> e16 = fp64::Sin(fp64::CONST_PI_4*3);
+  fetch::fixed_point::FixedPoint<32, 32> e16 = fp64::Sin(fp64::CONST_PI_4 * 3);
 
   double delta = (double)e1 - std::sin((double)one);
   EXPECT_NEAR(delta / std::sin((double)one), 0.0, (double)fp64::TOLERANCE);
@@ -1198,7 +1200,8 @@ TEST(FixedPointTest, Sin_32_32)
   delta = (double)e3 - std::sin((double)fp64::CONST_ZERO);
   EXPECT_NEAR(delta, 0.0, (double)fp64::TOLERANCE);
   delta = (double)e4 - std::sin((double)huge);
-  EXPECT_NEAR(delta / std::sin((double)huge), 0.0, 0.001); // Sin for larger arguments loses precision
+  EXPECT_NEAR(delta / std::sin((double)huge), 0.0,
+              0.001);  // Sin for larger arguments loses precision
   delta = (double)e5 - std::sin((double)small);
   EXPECT_NEAR(delta / std::sin((double)small), 0.0, (double)fp64::TOLERANCE);
   delta = (double)e6 - std::sin((double)tiny);
@@ -1207,12 +1210,12 @@ TEST(FixedPointTest, Sin_32_32)
   EXPECT_NEAR(delta, 0.0, (double)fp64::TOLERANCE);
   delta = (double)e8 - std::sin((double)(-fp64::CONST_PI));
   EXPECT_NEAR(delta, 0.0, (double)fp64::TOLERANCE);
-  delta = (double)e9 - std::sin((double)(fp64::CONST_PI*2));
+  delta = (double)e9 - std::sin((double)(fp64::CONST_PI * 2));
   EXPECT_NEAR(delta, 0.0, (double)fp64::TOLERANCE);
-  delta = (double)e10 - std::sin((double)(fp64::CONST_PI*4));
+  delta = (double)e10 - std::sin((double)(fp64::CONST_PI * 4));
   EXPECT_NEAR(delta, 0.0, (double)fp64::TOLERANCE);
-  delta = (double)e11 - std::sin((double)(fp64::CONST_PI*100));
-  EXPECT_NEAR(delta, 0.0, (double)fp64::TOLERANCE); // Sin for larger arguments loses precision
+  delta = (double)e11 - std::sin((double)(fp64::CONST_PI * 100));
+  EXPECT_NEAR(delta, 0.0, (double)fp64::TOLERANCE);  // Sin for larger arguments loses precision
   delta = (double)e12 - std::sin((double)(fp64::CONST_PI_2));
   EXPECT_NEAR(delta / std::sin((double)(fp64::CONST_PI_2)), 0.0, (double)fp64::TOLERANCE);
   delta = (double)e13 - std::sin((double)(-fp64::CONST_PI_2));
@@ -1221,14 +1224,15 @@ TEST(FixedPointTest, Sin_32_32)
   EXPECT_NEAR(delta / std::sin((double)(fp64::CONST_PI_4)), 0.0, (double)fp64::TOLERANCE);
   delta = (double)e15 - std::sin((double)(-fp64::CONST_PI_4));
   EXPECT_NEAR(delta / std::sin((double)(-fp64::CONST_PI_4)), 0.0, (double)fp64::TOLERANCE);
-  delta = (double)e16 - std::sin((double)(fp64::CONST_PI_4*3));
-  EXPECT_NEAR(delta / std::sin((double)(fp64::CONST_PI_4*3)), 0.0, (double)fp64::TOLERANCE);
+  delta = (double)e16 - std::sin((double)(fp64::CONST_PI_4 * 3));
+  EXPECT_NEAR(delta / std::sin((double)(fp64::CONST_PI_4 * 3)), 0.0, (double)fp64::TOLERANCE);
 
   fp64 step{0.001};
-  fp64 x{-fp64::CONST_PI*100};
-  for (; x < fp64::CONST_PI*100; x+= step) {
+  fp64 x{-fp64::CONST_PI * 100};
+  for (; x < fp64::CONST_PI * 100; x += step)
+  {
     fp64 e = fp64::Sin(x);
-    delta = (double)e - std::sin((double)(x));
+    delta  = (double)e - std::sin((double)(x));
     EXPECT_NEAR(delta, 0.0, (double)fp64::TOLERANCE);
   }
 }
@@ -1240,31 +1244,32 @@ TEST(FixedPointTest, Cos_16_16)
   fetch::fixed_point::FixedPoint<16, 16> huge(2000);
   fetch::fixed_point::FixedPoint<16, 16> small(0.0001);
   fetch::fixed_point::FixedPoint<16, 16> tiny(0, fp32::SMALLEST_FRACTION);
-  fetch::fixed_point::FixedPoint<16, 16> e1 = fp32::Cos(one);
-  fetch::fixed_point::FixedPoint<16, 16> e2 = fp32::Cos(one_point_five);
-  fetch::fixed_point::FixedPoint<16, 16> e3 = fp32::Cos(fp32::CONST_ZERO);
-  fetch::fixed_point::FixedPoint<16, 16> e4 = fp32::Cos(huge);
-  fetch::fixed_point::FixedPoint<16, 16> e5 = fp32::Cos(small);
-  fetch::fixed_point::FixedPoint<16, 16> e6 = fp32::Cos(tiny);
-  fetch::fixed_point::FixedPoint<16, 16> e7 = fp32::Cos(fp32::CONST_PI);
-  fetch::fixed_point::FixedPoint<16, 16> e8 = fp32::Cos(-fp32::CONST_PI);
-  fetch::fixed_point::FixedPoint<16, 16> e9 = fp32::Cos(fp32::CONST_PI*2);
-  fetch::fixed_point::FixedPoint<16, 16> e10 = fp32::Cos(fp32::CONST_PI*4);
-  fetch::fixed_point::FixedPoint<16, 16> e11 = fp32::Cos(fp32::CONST_PI*100);
+  fetch::fixed_point::FixedPoint<16, 16> e1  = fp32::Cos(one);
+  fetch::fixed_point::FixedPoint<16, 16> e2  = fp32::Cos(one_point_five);
+  fetch::fixed_point::FixedPoint<16, 16> e3  = fp32::Cos(fp32::CONST_ZERO);
+  fetch::fixed_point::FixedPoint<16, 16> e4  = fp32::Cos(huge);
+  fetch::fixed_point::FixedPoint<16, 16> e5  = fp32::Cos(small);
+  fetch::fixed_point::FixedPoint<16, 16> e6  = fp32::Cos(tiny);
+  fetch::fixed_point::FixedPoint<16, 16> e7  = fp32::Cos(fp32::CONST_PI);
+  fetch::fixed_point::FixedPoint<16, 16> e8  = fp32::Cos(-fp32::CONST_PI);
+  fetch::fixed_point::FixedPoint<16, 16> e9  = fp32::Cos(fp32::CONST_PI * 2);
+  fetch::fixed_point::FixedPoint<16, 16> e10 = fp32::Cos(fp32::CONST_PI * 4);
+  fetch::fixed_point::FixedPoint<16, 16> e11 = fp32::Cos(fp32::CONST_PI * 100);
   fetch::fixed_point::FixedPoint<16, 16> e12 = fp32::Cos(fp32::CONST_PI_2);
   fetch::fixed_point::FixedPoint<16, 16> e13 = fp32::Cos(-fp32::CONST_PI_2);
   fetch::fixed_point::FixedPoint<16, 16> e14 = fp32::Cos(fp32::CONST_PI_4);
   fetch::fixed_point::FixedPoint<16, 16> e15 = fp32::Cos(-fp32::CONST_PI_4);
-  fetch::fixed_point::FixedPoint<16, 16> e16 = fp32::Cos(fp32::CONST_PI_4*3);
+  fetch::fixed_point::FixedPoint<16, 16> e16 = fp32::Cos(fp32::CONST_PI_4 * 3);
 
   double delta = (double)e1 - std::cos((double)one);
   EXPECT_NEAR(delta / std::cos((double)one), 0.0, (double)fp32::TOLERANCE);
   delta = (double)e2 - std::cos((double)one_point_five);
   EXPECT_NEAR(delta / std::cos((double)one_point_five), 0.0, (double)fp32::TOLERANCE);
   delta = (double)e3 - std::cos((double)fp32::CONST_ZERO);
-  EXPECT_NEAR(delta  / std::cos((double)fp32::CONST_ZERO), 0.0, (double)fp32::TOLERANCE);
+  EXPECT_NEAR(delta / std::cos((double)fp32::CONST_ZERO), 0.0, (double)fp32::TOLERANCE);
   delta = (double)e4 - std::cos((double)huge);
-  EXPECT_NEAR(delta / std::cos((double)huge), 0.0, 0.012); // Sin for larger arguments loses precision
+  EXPECT_NEAR(delta / std::cos((double)huge), 0.0,
+              0.012);  // Sin for larger arguments loses precision
   delta = (double)e5 - std::cos((double)small);
   EXPECT_NEAR(delta / std::cos((double)small), 0.0, (double)fp32::TOLERANCE);
   delta = (double)e6 - std::cos((double)tiny);
@@ -1273,12 +1278,12 @@ TEST(FixedPointTest, Cos_16_16)
   EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
   delta = (double)e8 - std::cos((double)(-fp64::CONST_PI));
   EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
-  delta = (double)e9 - std::cos((double)(fp64::CONST_PI*2));
+  delta = (double)e9 - std::cos((double)(fp64::CONST_PI * 2));
   EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
-  delta = (double)e10 - std::cos((double)(fp64::CONST_PI*4));
+  delta = (double)e10 - std::cos((double)(fp64::CONST_PI * 4));
   EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
-  delta = (double)e11 - std::cos((double)(fp64::CONST_PI*100));
-  EXPECT_NEAR(delta, 0.0, 0.001); // Sin for larger arguments loses precision
+  delta = (double)e11 - std::cos((double)(fp64::CONST_PI * 100));
+  EXPECT_NEAR(delta, 0.0, 0.001);  // Sin for larger arguments loses precision
   delta = (double)e12 - std::cos((double)(fp64::CONST_PI_2));
   EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
   delta = (double)e13 - std::cos((double)(-fp64::CONST_PI_2));
@@ -1287,14 +1292,15 @@ TEST(FixedPointTest, Cos_16_16)
   EXPECT_NEAR(delta / std::cos((double)(fp64::CONST_PI_4)), 0.0, (double)fp32::TOLERANCE);
   delta = (double)e15 - std::cos((double)(-fp64::CONST_PI_4));
   EXPECT_NEAR(delta / std::cos((double)(-fp64::CONST_PI_4)), 0.0, (double)fp32::TOLERANCE);
-  delta = (double)e16 - std::cos((double)(fp64::CONST_PI_4*3));
-  EXPECT_NEAR(delta / std::cos((double)(fp64::CONST_PI_4*3)), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e16 - std::cos((double)(fp64::CONST_PI_4 * 3));
+  EXPECT_NEAR(delta / std::cos((double)(fp64::CONST_PI_4 * 3)), 0.0, (double)fp32::TOLERANCE);
 
   fp32 step{0.1};
-  fp32 x{-fp32::CONST_PI*10};
-  for (; x < fp32::CONST_PI*10; x+= step) {
+  fp32 x{-fp32::CONST_PI * 10};
+  for (; x < fp32::CONST_PI * 10; x += step)
+  {
     fp32 e = fp32::Cos(x);
-    delta = (double)e - std::cos((double)(x));
+    delta  = (double)e - std::cos((double)(x));
     EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
   }
 }
@@ -1306,31 +1312,32 @@ TEST(FixedPointTest, Cos_32_32)
   fetch::fixed_point::FixedPoint<32, 32> huge(2000);
   fetch::fixed_point::FixedPoint<32, 32> small(0.0001);
   fetch::fixed_point::FixedPoint<32, 32> tiny(0, fp32::SMALLEST_FRACTION);
-  fetch::fixed_point::FixedPoint<32, 32> e1 = fp64::Cos(one);
-  fetch::fixed_point::FixedPoint<32, 32> e2 = fp64::Cos(one_point_five);
-  fetch::fixed_point::FixedPoint<32, 32> e3 = fp64::Cos(fp64::CONST_ZERO);
-  fetch::fixed_point::FixedPoint<32, 32> e4 = fp64::Cos(huge);
-  fetch::fixed_point::FixedPoint<32, 32> e5 = fp64::Cos(small);
-  fetch::fixed_point::FixedPoint<32, 32> e6 = fp64::Cos(tiny);
-  fetch::fixed_point::FixedPoint<32, 32> e7 = fp64::Cos(fp64::CONST_PI);
-  fetch::fixed_point::FixedPoint<32, 32> e8 = fp64::Cos(-fp64::CONST_PI);
-  fetch::fixed_point::FixedPoint<32, 32> e9 = fp64::Cos(fp64::CONST_PI*2);
-  fetch::fixed_point::FixedPoint<32, 32> e10 = fp64::Cos(fp64::CONST_PI*4);
-  fetch::fixed_point::FixedPoint<32, 32> e11 = fp64::Cos(fp64::CONST_PI*100);
+  fetch::fixed_point::FixedPoint<32, 32> e1  = fp64::Cos(one);
+  fetch::fixed_point::FixedPoint<32, 32> e2  = fp64::Cos(one_point_five);
+  fetch::fixed_point::FixedPoint<32, 32> e3  = fp64::Cos(fp64::CONST_ZERO);
+  fetch::fixed_point::FixedPoint<32, 32> e4  = fp64::Cos(huge);
+  fetch::fixed_point::FixedPoint<32, 32> e5  = fp64::Cos(small);
+  fetch::fixed_point::FixedPoint<32, 32> e6  = fp64::Cos(tiny);
+  fetch::fixed_point::FixedPoint<32, 32> e7  = fp64::Cos(fp64::CONST_PI);
+  fetch::fixed_point::FixedPoint<32, 32> e8  = fp64::Cos(-fp64::CONST_PI);
+  fetch::fixed_point::FixedPoint<32, 32> e9  = fp64::Cos(fp64::CONST_PI * 2);
+  fetch::fixed_point::FixedPoint<32, 32> e10 = fp64::Cos(fp64::CONST_PI * 4);
+  fetch::fixed_point::FixedPoint<32, 32> e11 = fp64::Cos(fp64::CONST_PI * 100);
   fetch::fixed_point::FixedPoint<32, 32> e12 = fp64::Cos(fp64::CONST_PI_2);
   fetch::fixed_point::FixedPoint<32, 32> e13 = fp64::Cos(-fp64::CONST_PI_2);
   fetch::fixed_point::FixedPoint<32, 32> e14 = fp64::Cos(fp64::CONST_PI_4);
   fetch::fixed_point::FixedPoint<32, 32> e15 = fp64::Cos(-fp64::CONST_PI_4);
-  fetch::fixed_point::FixedPoint<32, 32> e16 = fp64::Cos(fp64::CONST_PI_4*3);
+  fetch::fixed_point::FixedPoint<32, 32> e16 = fp64::Cos(fp64::CONST_PI_4 * 3);
 
   double delta = (double)e1 - std::cos((double)one);
   EXPECT_NEAR(delta / std::cos((double)one), 0.0, (double)fp32::TOLERANCE);
   delta = (double)e2 - std::cos((double)one_point_five);
   EXPECT_NEAR(delta / std::cos((double)one_point_five), 0.0, (double)fp64::TOLERANCE);
   delta = (double)e3 - std::cos((double)fp64::CONST_ZERO);
-  EXPECT_NEAR(delta  / std::cos((double)fp64::CONST_ZERO), 0.0, (double)fp64::TOLERANCE);
+  EXPECT_NEAR(delta / std::cos((double)fp64::CONST_ZERO), 0.0, (double)fp64::TOLERANCE);
   delta = (double)e4 - std::cos((double)huge);
-  EXPECT_NEAR(delta / std::cos((double)huge), 0.0, 0.002); // Sin for larger arguments loses precision
+  EXPECT_NEAR(delta / std::cos((double)huge), 0.0,
+              0.002);  // Sin for larger arguments loses precision
   delta = (double)e5 - std::cos((double)small);
   EXPECT_NEAR(delta / std::cos((double)small), 0.0, (double)fp64::TOLERANCE);
   delta = (double)e6 - std::cos((double)tiny);
@@ -1339,12 +1346,12 @@ TEST(FixedPointTest, Cos_32_32)
   EXPECT_NEAR(delta, 0.0, (double)fp64::TOLERANCE);
   delta = (double)e8 - std::cos((double)(-fp64::CONST_PI));
   EXPECT_NEAR(delta, 0.0, (double)fp64::TOLERANCE);
-  delta = (double)e9 - std::cos((double)(fp64::CONST_PI*2));
+  delta = (double)e9 - std::cos((double)(fp64::CONST_PI * 2));
   EXPECT_NEAR(delta, 0.0, (double)fp64::TOLERANCE);
-  delta = (double)e10 - std::cos((double)(fp64::CONST_PI*4));
+  delta = (double)e10 - std::cos((double)(fp64::CONST_PI * 4));
   EXPECT_NEAR(delta, 0.0, (double)fp64::TOLERANCE);
-  delta = (double)e11 - std::cos((double)(fp64::CONST_PI*100));
-  EXPECT_NEAR(delta, 0.0, 0.001); // Sin for larger arguments loses precision
+  delta = (double)e11 - std::cos((double)(fp64::CONST_PI * 100));
+  EXPECT_NEAR(delta, 0.0, 0.001);  // Sin for larger arguments loses precision
   delta = (double)e12 - std::cos((double)(fp64::CONST_PI_2));
   EXPECT_NEAR(delta, 0.0, (double)fp64::TOLERANCE);
   delta = (double)e13 - std::cos((double)(-fp64::CONST_PI_2));
@@ -1353,14 +1360,15 @@ TEST(FixedPointTest, Cos_32_32)
   EXPECT_NEAR(delta / std::cos((double)(fp64::CONST_PI_4)), 0.0, (double)fp64::TOLERANCE);
   delta = (double)e15 - std::cos((double)(-fp64::CONST_PI_4));
   EXPECT_NEAR(delta / std::cos((double)(-fp64::CONST_PI_4)), 0.0, (double)fp64::TOLERANCE);
-  delta = (double)e16 - std::cos((double)(fp64::CONST_PI_4*3));
-  EXPECT_NEAR(delta / std::cos((double)(fp64::CONST_PI_4*3)), 0.0, (double)fp64::TOLERANCE);
+  delta = (double)e16 - std::cos((double)(fp64::CONST_PI_4 * 3));
+  EXPECT_NEAR(delta / std::cos((double)(fp64::CONST_PI_4 * 3)), 0.0, (double)fp64::TOLERANCE);
 
   fp64 step{0.1};
-  fp64 x{-fp64::CONST_PI*100};
-  for (; x < fp64::CONST_PI*100; x+= step) {
+  fp64 x{-fp64::CONST_PI * 100};
+  for (; x < fp64::CONST_PI * 100; x += step)
+  {
     fp64 e = fp64::Cos(x);
-    delta = (double)e - std::cos((double)(x));
+    delta  = (double)e - std::cos((double)(x));
     EXPECT_NEAR(delta, 0.0, (double)fp64::TOLERANCE);
   }
 }
