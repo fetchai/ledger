@@ -22,14 +22,13 @@
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <iostream>
-#include <algorithm>
 #include <math/tensor.hpp>
 #include <numeric>
 
 #define TRAINING_WORDS 17000000
-
 
 // TODO: vocab size should be 71291 - compare vocab parsing
 // TODO: implement down sampling frequent words - unigram table
@@ -64,7 +63,7 @@ struct TrainingParams
   double   min_negative_learning_rate;    // alpha - the minimum learning rate for negative examples
 
   SizeType    k          = 10;             // how many nearest neighbours to compare against
-  SizeType    print_freq = 100000;          // how often to print status
+  SizeType    print_freq = 100000;         // how often to print status
   std::string test_word  = "action";       // test word to consider
   std::string save_loc   = "./model.fba";  // save file location for exporting graph
 
@@ -104,14 +103,14 @@ public:
   std::vector<SizeType> ran_positive_cursor_{1000000};
   std::vector<SizeType> rows_{};
 
-
   SizeType max_sentence_len_ = 0;
   SizeType min_word_freq_;
 
-  std::unordered_map<std::string, SizeType> vocab_;             // unique vocab of words
+  std::unordered_map<std::string, SizeType> vocab_;              // unique vocab of words
   std::unordered_map<SizeType, SizeType>    vocab_frequencies_;  // the count of each vocab word
 
-  DataLoader(SizeType max_sentence_len, SizeType min_word_freq, SizeType max_sentences, SizeType window_size)
+  DataLoader(SizeType max_sentence_len, SizeType min_word_freq, SizeType max_sentences,
+             SizeType window_size)
     : data_({max_sentence_len, max_sentences})
     , cursor_offset_(window_size)
     , n_positive_cursors_(2 * window_size)
@@ -143,8 +142,8 @@ public:
     vocab_frequencies_.emplace(std::make_pair(0, 0));
 
     // initial iteration through words
-    SizeType    word_idx;
-    std::string word;
+    SizeType          word_idx;
+    std::string       word;
     std::stringstream s(text);
     for (; s >> word;)
     {
@@ -176,8 +175,8 @@ public:
     PruneVocab();
 
     // second iteration to assign data values after pruning
-    s = std::stringstream(text);
-    cursor_ = data_.begin();
+    s                     = std::stringstream(text);
+    cursor_               = data_.begin();
     SizeType cursor_count = 0;
     for (; s >> word;)
     {
@@ -217,7 +216,7 @@ public:
   void PruneVocab()
   {
     // copy existing vocabs into temporary storage
-    std::unordered_map<std::string, SizeType> tmp_vocab = vocab_;
+    std::unordered_map<std::string, SizeType> tmp_vocab              = vocab_;
     std::unordered_map<SizeType, SizeType>    tmp_vocab_frequencies_ = vocab_frequencies_;
 
     // clear existing vocabs
@@ -228,13 +227,13 @@ public:
     vocab_frequencies_.emplace(std::make_pair(0, 0));
 
     // Get pruned idxs
-    for( auto & word : tmp_vocab)
+    for (auto &word : tmp_vocab)
     {
       auto cur_freq = tmp_vocab_frequencies_.at(word.second);
       if (cur_freq > min_word_freq_)
       {
         // don't prune
-        vocab_.emplace(std::make_pair(word.first, vocab_.size() + 1));
+        vocab_.emplace(std::make_pair(word.first, vocab_.size()));
         vocab_frequencies_.emplace(std::make_pair(vocab_.size(), cur_freq));
       }
     }
@@ -281,12 +280,17 @@ public:
   {
     input_idx = static_cast<SizeType>(*cursor_);
 
-//    // randomly select a negative cursor from all words in vocab
-//    // TODO: strictly we should ensure this is not one of the positive context words
-//    context_idx = static_cast<SizeType>(gen() % vocab_.size());
+    //    // randomly select a negative cursor from all words in vocab
+    //    // TODO: strictly we should ensure this is not one of the positive context words
+    //    context_idx = static_cast<SizeType>(gen() % vocab_.size());
 
     // randomly select an index from the unigram table
-    context_idx = unigram_table_[static_cast<SizeType>(gen() % unigram_size_)];
+
+    auto ran_val = static_cast<SizeType>(gen() % unigram_size_);
+
+    context_idx = unigram_table_[ran_val];
+
+    assert(context_idx < vocab_size());
   }
 
   void IncrementCursors()
@@ -308,7 +312,7 @@ public:
   {
     // the data cursor is on the current index
     cursor_ = IteratorType(data_, cursor_offset_);
-    
+
     // set up the positive cursors and shift them
     for (std::size_t j = 0; j < 2 * cursor_offset_; ++j)
     {
@@ -329,12 +333,10 @@ public:
     }
   }
 
-
 private:
-
   static constexpr SizeType unigram_size_ = 1000000;
-  SizeType unigram_table_ [unigram_size_];
-  double unigram_power_ = 0.75;
+  SizeType                  unigram_table_[unigram_size_];
+  double                    unigram_power_ = 0.75;
 
   void PrepareDynamicWindowProbs()
   {
@@ -397,7 +399,7 @@ private:
   {
     vocab_.size();
     double train_words_pow = 0.;
-    double d1 = 0.;
+    double d1              = 0.;
 
     // compute normalizer
     for (SizeType a = 0; a < vocab_.size(); ++a)
@@ -407,8 +409,7 @@ private:
 
     //
     SizeType word_idx = 0;
-    d1 = pow(vocab_frequencies_[word_idx], unigram_power_) / train_words_pow;
-
+    d1                = pow(vocab_frequencies_[word_idx], unigram_power_) / train_words_pow;
 
     auto vocab_it = vocab_.begin();
 
@@ -448,8 +449,8 @@ class SkipgramModel
   using Type = typename ArrayType::Type;
 
 public:
-  ArrayType input_embeddings_; // embeddings used to encode the input word
-  ArrayType output_embeddings_; // embeddings used to encode the context word
+  ArrayType input_embeddings_;   // embeddings used to encode the input word
+  ArrayType output_embeddings_;  // embeddings used to encode the context word
 
   ArrayType input_grads_;
   ArrayType context_grads_;
@@ -463,14 +464,14 @@ public:
 
   std::vector<Type> l2reg_input_row_sums;
   std::vector<Type> l2reg_output_row_sums;
-  Type              l2reg_input_sum = 0;
+  Type              l2reg_input_sum  = 0;
   Type              l2reg_output_sum = 0;
 
-  Type              l2_lambda = 0.0000001;
+  Type l2_lambda = 0.0000001;
 
   SkipgramModel(SizeType vocab_size, SizeType embeddings_size, Type learning_rate)
     : input_embeddings_({vocab_size, embeddings_size})
-    , output_embeddings_({vocab_size, embeddings_size}) // initialized to all 0
+    , output_embeddings_({vocab_size, embeddings_size})  // initialized to all 0
     , input_grads_({1, embeddings_size})
     , context_grads_({embeddings_size, 1})
     , alpha_(learning_rate)
@@ -478,9 +479,10 @@ public:
     , l2reg_output_row_sums{std::vector<Type>(vocab_size, 0)}
   {
     // initialise embeddings to values from (-0.5 / embeddings_size) to (0.5 / embeddings_size)
-    input_embeddings_.FillUniformRandom(); // 0 to 1
-    fetch::math::Subtract(input_embeddings_, 0.5, input_embeddings_); // -0.5 to 0.5
-    fetch::math::Divide(input_embeddings_, static_cast<Type>(embeddings_size), input_embeddings_); // -0.5/embeddings_size to 0.5/embeddings_size
+    input_embeddings_.FillUniformRandom();                             // 0 to 1
+    fetch::math::Subtract(input_embeddings_, 0.5, input_embeddings_);  // -0.5 to 0.5
+    fetch::math::Divide(input_embeddings_, static_cast<Type>(embeddings_size),
+                        input_embeddings_);  // -0.5/embeddings_size to 0.5/embeddings_size
 
     assert(fetch::math::Max(output_embeddings_) == 0);
     assert(fetch::math::Max(input_embeddings_) <= (0.5 / static_cast<Type>(embeddings_size)));
@@ -489,7 +491,7 @@ public:
     // initialise the l2 normalisation values
     for (std::size_t i = 0; i < vocab_size; ++i)
     {
-      auto in_it = input_embeddings_.Slice(i).begin();
+      auto in_it  = input_embeddings_.Slice(i).begin();
       auto out_it = output_embeddings_.Slice(i).begin();
       while (in_it.is_valid())
       {
@@ -517,7 +519,7 @@ public:
     else
     {
       std::cout << "l2reg_input_sum <= 0: " << std::endl;
-//      throw std::runtime_error("l2reg_input_sum <= 0 !!!!");
+      //      throw std::runtime_error("l2reg_input_sum <= 0 !!!!");
     }
 
     if (l2reg_output_sum > 0)
@@ -620,27 +622,27 @@ public:
     // multiply by learning rate
     auto g = (gt - result_[0]) * alpha_;
 
-//    // calculate dl/d(v_in)
-//    fetch::math::Multiply(context_vector_, g, input_grads_);
-//
-//    // calculate dl/d(v_out)
-//    fetch::math::Multiply(input_vector_, g, context_grads_);
+    //    // calculate dl/d(v_in)
+    //    fetch::math::Multiply(context_vector_, g, input_grads_);
+    //
+    //    // calculate dl/d(v_out)
+    //    fetch::math::Multiply(input_vector_, g, context_grads_);
 
     // apply gradient updates
     l2reg_input_sum -= l2reg_input_row_sums[input_word_idx];
     l2reg_output_sum -= l2reg_output_row_sums[context_word_idx];
 
-    l2reg_input_row_sums[input_word_idx] = 0;
+    l2reg_input_row_sums[input_word_idx]    = 0;
     l2reg_output_row_sums[context_word_idx] = 0;
 
     auto input_slice_it = input_embeddings_.Slice(input_word_idx).begin();
     auto input_grads_it = context_vector_.begin();
-    
+
     while (input_slice_it.is_valid())
     {
       // grad and l2_reg weight decay
       *input_slice_it += (g * *input_grads_it) - (l2_lambda * *input_slice_it);
-//      *input_slice_it += (g * *input_grads_it);
+      //      *input_slice_it += (g * *input_grads_it);
 
       l2reg_input_row_sums[input_word_idx] += *input_slice_it;
 
@@ -655,7 +657,7 @@ public:
     {
       // grad and l2_reg weight decay
       *context_slice_it += (g * *context_grads_it) - (l2_lambda * *input_slice_it);
-//      *context_slice_it += (g * *context_grads_it);
+      //      *context_slice_it += (g * *context_grads_it);
 
       l2reg_output_row_sums[context_word_idx] += *context_slice_it;
 
@@ -668,7 +670,6 @@ public:
     {
       std::cout << "something weird is happening here: " << std::endl;
     }
-
 
     l2reg_output_sum += l2reg_output_row_sums[context_word_idx];
   }
@@ -825,7 +826,8 @@ int main(int argc, char **argv)
   std::cout << "Setting up training data...: " << std::endl;
 
   // set up dataloader
-  DataLoader<ArrayType> dataloader(tp.max_sentence_len, tp.min_word_freq, tp.max_sentences, tp.window_size);
+  DataLoader<ArrayType> dataloader(tp.max_sentence_len, tp.min_word_freq, tp.max_sentences,
+                                   tp.window_size);
 
   // load text from files as necessary and process text with dataloader
   std::string training_text_string = ReadFile(training_text);
@@ -881,7 +883,7 @@ int main(int argc, char **argv)
       EvalAnalogy(dataloader, model);
     }
 
-    if (static_cast<SizeType>(*dataloader.cursor_) != 0) // ignore unknown words
+    if (static_cast<SizeType>(*dataloader.cursor_) != 0)  // ignore unknown words
     {
       auto one_min_completed_train_fraction =
           1.0 - (((epoch_count + 1) * static_cast<double>(cursor_idx)) / tp.total_words);
@@ -889,7 +891,7 @@ int main(int argc, char **argv)
       ////////////////////////////////
       /// run one positive example ///
       ////////////////////////////////
-      gt           = 1;
+      gt = 1;
 
       // update learning rate once every 10k steps
       if (cursor_idx % 10000 == 0)
@@ -915,13 +917,14 @@ int main(int argc, char **argv)
       ///////////////////////////////
       /// run k negative examples ///
       ///////////////////////////////
-      gt           = 0;
+      gt = 0;
 
       // update learning rate once every 10k steps
       if (cursor_idx % 10000 == 0)
       {
-        model.alpha_ = (tp.negative_learning_rate * fetch::math::Max(tp.min_negative_learning_rate,
-                                                                     one_min_completed_train_fraction));
+        model.alpha_ =
+            (tp.negative_learning_rate *
+             fetch::math::Max(tp.min_negative_learning_rate, one_min_completed_train_fraction));
       }
 
       for (std::size_t i = 0; i < tp.neg_examples; ++i)
@@ -929,7 +932,8 @@ int main(int argc, char **argv)
         // get next data pair
         dataloader.next_negative(input_word_idx, context_word_idx);
 
-        if (context_word_idx == input_word_idx) continue;
+        if (context_word_idx == input_word_idx)
+          continue;
 
         // forward pass on the model
         model.ForwardAndLoss(input_word_idx, context_word_idx, gt, loss, l2loss);
@@ -970,7 +974,7 @@ int main(int argc, char **argv)
       std::cout << "loss: " << (sum_loss + sum_l2_loss) / tp.print_freq << std::endl;
       std::cout << "w2vloss: " << sum_loss / tp.print_freq << std::endl;
       std::cout << "l2 loss: " << sum_l2_loss / tp.print_freq << std::endl;
-      sum_loss = 0;
+      sum_loss    = 0;
       sum_l2_loss = 0;
       std::cout << std::endl;
 
