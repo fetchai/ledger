@@ -20,7 +20,6 @@
 #include "math/bignumber.hpp"
 
 #include <gtest/gtest.h>
-#include <iomanip>
 
 using namespace fetch::math;
 using namespace fetch::byte_array;

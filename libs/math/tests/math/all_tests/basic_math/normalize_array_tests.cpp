@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
-#include <iomanip>
 #include <iostream>
 
 #include "math/normalize_array.hpp"

@@ -18,7 +18,7 @@
 
 #include "ledger/protocols/executor_rpc_client.hpp"
 #include "core/state_machine.hpp"
-#include "ledger/chain/v2/address_rpc_serializer.hpp"
+#include "ledger/chain/address_rpc_serializer.hpp"
 
 #include <memory>
 
@@ -31,7 +31,6 @@ using PendingConnectionCounter =
 class ExecutorConnectorWorker
 {
 public:
-  using Address         = ExecutorRpcClient::Address;
   using FutureTimepoint = ExecutorRpcClient::FutureTimepoint;
   using Muddle          = ExecutorRpcClient::Muddle;
   using PromiseState    = ExecutorRpcClient::PromiseState;
@@ -39,7 +38,7 @@ public:
   using State           = ExecutorRpcClient::State;
   using Client          = ExecutorRpcClient::Client;
 
-  Address target_address;
+  Muddle::Address target_address;
 
   ExecutorConnectorWorker(Uri thepeer, Muddle &themuddle,
                           std::chrono::milliseconds thetimeout = std::chrono::milliseconds(10000))
@@ -151,7 +150,7 @@ void ExecutorRpcClient::Connect(Muddle &muddle, Uri uri, std::chrono::millisecon
   bg_work_.Add(worker);
 }
 
-ExecutorInterface::Result ExecutorRpcClient::Execute(v2::Digest const &digest, BlockIndex block,
+ExecutorInterface::Result ExecutorRpcClient::Execute(Digest const &digest, BlockIndex block,
                                                      SliceIndex slice, BitVector const &shards)
 {
   auto result = client_->CallSpecificAddress(address_, RPC_EXECUTOR, ExecutorRpcProtocol::EXECUTE,
@@ -159,7 +158,7 @@ ExecutorInterface::Result ExecutorRpcClient::Execute(v2::Digest const &digest, B
   return result->As<ExecutorInterface::Result>();
 }
 
-void ExecutorRpcClient::SettleFees(v2::Address const &miner, TokenAmount amount,
+void ExecutorRpcClient::SettleFees(Address const &miner, TokenAmount amount,
                                    uint32_t log2_num_lanes)
 {
   auto result = client_->CallSpecificAddress(address_, RPC_EXECUTOR, ExecutorRpcProtocol::EXECUTE,

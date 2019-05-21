@@ -47,7 +47,7 @@ using fetch::network::AtomicInFlightCounter;
 using fetch::network::AtomicCounterName;
 using fetch::network::Uri;
 using fetch::network::Peer;
-using fetch::ledger::v2::Address;
+using fetch::ledger::Address;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 using ConsensusMinerInterfacePtr =

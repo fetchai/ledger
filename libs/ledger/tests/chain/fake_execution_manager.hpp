@@ -27,7 +27,7 @@ class FakeExecutionManager : public fetch::ledger::ExecutionManagerInterface
 {
 public:
   using Block  = fetch::ledger::Block;
-  using Digest = fetch::ledger::v2::Digest;
+  using Digest = fetch::ledger::Digest;
 
   static constexpr char const *LOGGING_NAME = "FakeExexMgr";
 

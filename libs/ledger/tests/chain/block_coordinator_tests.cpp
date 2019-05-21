@@ -22,7 +22,7 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/chain/v2/transaction_layout.hpp"
+#include "ledger/chain/transaction_layout.hpp"
 #include "ledger/testing/block_generator.hpp"
 #include "ledger/transaction_status_cache.hpp"
 #include "testing/common_testing_functionality.hpp"
@@ -46,8 +46,8 @@ using fetch::ledger::GENESIS_DIGEST;
 using fetch::crypto::ECDSASigner;
 using fetch::ledger::testing::BlockGenerator;
 using fetch::ledger::TransactionStatusCache;
-using fetch::ledger::v2::TransactionLayout;
-using fetch::ledger::v2::Address;
+using fetch::ledger::TransactionLayout;
+using fetch::ledger::Address;
 
 using ::testing::_;
 using ::testing::AnyNumber;
@@ -120,6 +120,22 @@ protected:
       // run one step of the state machine
       block_coordinator_->GetRunnable().Execute();
     }
+  }
+
+  bool RemainsOn(State state, uint64_t iterations = 50)
+  {
+    bool success{true};
+
+    auto &state_machine = block_coordinator_->GetStateMachine();
+
+    for (uint64_t i = 0; success && i < iterations; ++i)
+    {
+      success = (state_machine.state() == state);
+
+      state_machine.Execute();
+    }
+
+    return success;
   }
 
   /**
@@ -981,6 +997,7 @@ protected:
     // generate a public/private key pair
     ECDSASigner const signer{};
 
+    clock_             = fetch::moment::CreateAdjustableClock("bc:deadline");
     main_chain_        = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
     storage_unit_      = std::make_unique<NiceMock<MockStorageUnit>>();
     execution_manager_ = std::make_unique<NiceMock<MockExecutionManager>>(storage_unit_->fake);
@@ -994,6 +1011,8 @@ protected:
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);
   }
+
+  fetch::moment::AdjustableClockPtr clock_;
 };
 
 TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
@@ -1014,21 +1033,19 @@ TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
   EXPECT_CALL(*storage_unit_, CurrentHash()).Times(AnyNumber());
   EXPECT_CALL(*execution_manager_, LastProcessedBlock()).Times(AnyNumber());
 
-  Advance();
+  Tock(State::RELOAD_STATE, State::SYNCHRONIZED);
 
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
 
   Advance();
 
   // Time out wait to request Tx from peers
-  std::this_thread::sleep_for(std::chrono::seconds(31u));
+  clock_->Advance(std::chrono::seconds(31u));
 
-  Advance();
+  ASSERT_TRUE(RemainsOn(State::WAIT_FOR_TRANSACTIONS));
 
   // Time out wait for Tx - block should be invalidated at this point
-  std::this_thread::sleep_for(std::chrono::seconds(31u));
+  clock_->Advance(std::chrono::seconds(31u));
 
-  Advance();
-
-  ASSERT_EQ(State::SYNCHRONIZED, block_coordinator_->GetStateMachine().state());
+  Tock(State::WAIT_FOR_TRANSACTIONS, State::SYNCHRONIZED);
 }
