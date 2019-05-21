@@ -29,10 +29,6 @@ using namespace fetch;
 using namespace fetch::byte_array;
 using namespace fetch::storage;
 
-using ::testing::_;
-using ::testing::AnyNumber;
-using ::testing::InSequence;
-using ::testing::NiceMock;
 using ::testing::StrictMock;
 using fetch::random::LinearCongruentialGenerator;
 
