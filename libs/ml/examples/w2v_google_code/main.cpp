@@ -1167,7 +1167,7 @@ void TrainModel()
     real  closev, x;
     real *cent = (real *)calloc(static_cast<unsigned long>(classes * layer1_size), sizeof(real));
     for (a = 0; a < vocab_size; a++)
-      cl[a] = a % clcn;
+      cl[a] = static_cast<int>(a) % static_cast<int>(clcn);
     for (a = 0; a < iter; a++)
     {
       for (b = 0; b < clcn * layer1_size; b++)
@@ -1185,7 +1185,7 @@ void TrainModel()
         closev = 0;
         for (c = 0; c < layer1_size; c++)
         {
-          cent[layer1_size * b + c] /= centcn[b];
+          cent[layer1_size * b + c] /= static_cast<float>(centcn[b]);
           closev += cent[layer1_size * b + c] * cent[layer1_size * b + c];
         }
         closev = sqrt(closev);
