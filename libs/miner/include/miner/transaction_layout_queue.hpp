@@ -19,8 +19,8 @@
 
 #include "core/bitvector.hpp"
 #include "crypto/fnv.hpp"
-#include "ledger/chain/v2/digest.hpp"
-#include "ledger/chain/v2/transaction_layout.hpp"
+#include "ledger/chain/digest.hpp"
+#include "ledger/chain/transaction_layout.hpp"
 
 #include <list>
 
@@ -30,9 +30,9 @@ namespace miner {
 class TransactionLayoutQueue
 {
 public:
-  using TransactionLayout = ledger::v2::TransactionLayout;
-  using Digest            = ledger::v2::Digest;
-  using DigestSet         = ledger::v2::DigestSet;
+  using TransactionLayout = ledger::TransactionLayout;
+  using Digest            = ledger::Digest;
+  using DigestSet         = ledger::DigestSet;
   using UnderlyingList    = std::list<TransactionLayout>;
   using Iterator          = UnderlyingList::iterator;
   using ConstIterator     = UnderlyingList::const_iterator;

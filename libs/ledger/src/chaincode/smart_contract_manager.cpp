@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/smart_contract_manager.hpp"
-#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 
 #include "core/byte_array/decoders.hpp"
@@ -51,7 +51,7 @@ SmartContractManager::SmartContractManager()
   OnTransaction("create", this, &SmartContractManager::OnCreate);
 }
 
-Contract::Status SmartContractManager::OnCreate(v2::Transaction const &tx, BlockIndex)
+Contract::Status SmartContractManager::OnCreate(Transaction const &tx, BlockIndex)
 {
   // attempt to parse the transaction
   variant::Variant data;

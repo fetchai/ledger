@@ -19,8 +19,8 @@
 
 #include "core/mutex.hpp"
 #include "core/threading/synchronised_state.hpp"
+#include "ledger/chain/address.hpp"
 #include "ledger/chain/constants.hpp"
-#include "ledger/chain/v2/address.hpp"
 #include "ledger/execution_item.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/executor.hpp"
@@ -61,8 +61,8 @@ public:
   /// @name Execution Manager Interface
   /// @{
   ScheduleStatus Execute(Block::Body const &block) override;
-  void           SetLastProcessedBlock(v2::Digest digest) override;
-  v2::Digest     LastProcessedBlock() override;
+  void           SetLastProcessedBlock(Digest digest) override;
+  Digest         LastProcessedBlock() override;
   State          GetState() override;
   bool           Abort() override;
   /// @}
@@ -114,8 +114,8 @@ private:
   Mutex         execution_plan_lock_;  ///< guards `execution_plan_`
   ExecutionPlan execution_plan_;
 
-  v2::Digest  last_block_hash_ = GENESIS_DIGEST;
-  v2::Address last_block_miner_{};
+  Digest  last_block_hash_ = GENESIS_DIGEST;
+  Address last_block_miner_{};
 
   Mutex     monitor_lock_;
   Condition monitor_wake_;
