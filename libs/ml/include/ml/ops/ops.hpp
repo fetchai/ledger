@@ -107,10 +107,11 @@ public:
   virtual void ForwardBatch(VecTensorType const &inputs, ArrayType &output)
   {
 
-    // TODO (XXXXXX) - this implementation needs fixing
-    // TODO (XXXXXX) - last dimension needs to be the batch dimension, no the first
+    // TODO (1048) - this implementation needs fixing
 
     assert(inputs.size() == 1);
+    assert(output.shape()[output.shape().size() - 1] == );
+
     std::vector<ArrayType> results;
     for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
     {

@@ -15,7 +15,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 //
-//---------------------------------------------------------<ArrayType>::---------------------
+//------------------------------------------------------------------------------
 
 #include "ml/meta/ml_type_traits.hpp"
 
