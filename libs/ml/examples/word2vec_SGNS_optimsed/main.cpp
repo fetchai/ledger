@@ -359,8 +359,11 @@ private:
     {
       if (i < cursor_offset_)
       {
-        for (std::size_t j = 0; j <
-                static_cast<std::size_t>((static_cast<double>(i + 1) / static_cast<double>(sum_freqs)) * static_cast<double>(ran_positive_cursor_.size())); ++j)
+        for (std::size_t j = 0;
+             j < static_cast<std::size_t>(
+                     (static_cast<double>(i + 1) / static_cast<double>(sum_freqs)) *
+                     static_cast<double>(ran_positive_cursor_.size()));
+             ++j)
         {
           rows_.emplace_back(i);
         }
@@ -368,7 +371,9 @@ private:
       else
       {
         for (std::size_t j = 0;
-             j < static_cast<std::size_t>((static_cast<double>((cursor_offset_ - (i - cursor_offset_))) / static_cast<double>(sum_freqs)) *
+             j < static_cast<std::size_t>(
+                     (static_cast<double>((cursor_offset_ - (i - cursor_offset_))) /
+                      static_cast<double>(sum_freqs)) *
                      static_cast<double>(ran_positive_cursor_.size()));
              ++j)
         {
@@ -409,7 +414,7 @@ private:
 
     //
     SizeType word_idx = 0;
-    d1                = pow(static_cast<double>(vocab_frequencies_[word_idx]), unigram_power_) / train_words_pow;
+    d1 = pow(static_cast<double>(vocab_frequencies_[word_idx]), unigram_power_) / train_words_pow;
 
     auto vocab_it = vocab_.begin();
 
@@ -422,7 +427,8 @@ private:
         {
           ++vocab_it;
         }
-        d1 += pow(static_cast<double>(vocab_frequencies_[vocab_it->second]), unigram_power_) / train_words_pow;
+        d1 += pow(static_cast<double>(vocab_frequencies_[vocab_it->second]), unigram_power_) /
+              train_words_pow;
       }
     }
   }
@@ -448,9 +454,8 @@ class SkipgramModel
 {
   using Type = typename ArrayType::Type;
 
-
-  bool L2_regularise = false;
-  bool L2_normalise = false;
+  bool L2_regularise = true;
+  bool L2_normalise  = true;
 
 public:
   ArrayType input_embeddings_;   // embeddings used to encode the input word
@@ -491,7 +496,6 @@ public:
     assert(fetch::math::Max(output_embeddings_) == 0);
     assert(fetch::math::Max(input_embeddings_) <= (0.5 / static_cast<Type>(embeddings_size)));
     assert(fetch::math::Min(input_embeddings_) >= (-0.5 / static_cast<Type>(embeddings_size)));
-
 
     if (L2_normalise)
     {
@@ -633,12 +637,11 @@ public:
     // multiply by learning rate
     auto g = (gt - result_[0]) * alpha_;
 
-    //    // calculate dl/d(v_in)
-    //    fetch::math::Multiply(context_vector_, g, input_grads_);
-    //
-    //    // calculate dl/d(v_out)
-    //    fetch::math::Multiply(input_vector_, g, context_grads_);
+    // calculate dl/d(v_in)
+    fetch::math::Multiply(context_vector_, g, input_grads_);
 
+    // calculate dl/d(v_out)
+    fetch::math::Multiply(input_vector_, g, context_grads_);
 
     if (L2_normalise)
     {
@@ -652,7 +655,6 @@ public:
 
     auto input_slice_it = input_embeddings_.Slice(input_word_idx).begin();
     auto input_grads_it = context_vector_.begin();
-
     while (input_slice_it.is_valid())
     {
       // grad and l2_reg weight decay
@@ -665,8 +667,10 @@ public:
         *input_slice_it += (g * *input_grads_it);
       }
 
-
-      l2reg_input_row_sums[input_word_idx] += *input_slice_it;
+      if (L2_normalise)
+      {
+        l2reg_input_row_sums[input_word_idx] += *input_slice_it;
+      }
 
       ++input_slice_it;
       ++input_grads_it;
@@ -680,14 +684,17 @@ public:
       // grad and l2_reg weight decay
       if (L2_regularise)
       {
-        *context_slice_it += (g * *context_grads_it) - (l2_lambda * *input_slice_it);
+        *context_slice_it += (g * *context_grads_it) - (l2_lambda * *context_slice_it);
       }
       else
       {
         *context_slice_it += (g * *context_grads_it);
       }
 
-      l2reg_output_row_sums[context_word_idx] += *context_slice_it;
+      if (L2_normalise)
+      {
+        l2reg_output_row_sums[context_word_idx] += *context_slice_it;
+      }
 
       ++context_slice_it;
       ++context_grads_it;
@@ -696,13 +703,12 @@ public:
     if (L2_normalise)
     {
       l2reg_input_sum += l2reg_input_row_sums[input_word_idx];
+      l2reg_output_sum += l2reg_output_row_sums[context_word_idx];
 
       if (l2reg_input_sum < 0)
       {
         std::cout << "something weird is happening here: " << std::endl;
       }
-
-      l2reg_output_sum += l2reg_output_row_sums[context_word_idx];
     }
   }
 
@@ -918,7 +924,8 @@ int main(int argc, char **argv)
     if (static_cast<SizeType>(*dataloader.cursor_) != 0)  // ignore unknown words
     {
       double one_min_completed_train_fraction =
-          1.0 - ((static_cast<double>(epoch_count + 1) * static_cast<double>(cursor_idx)) / static_cast<double>(tp.total_words));
+          1.0 - ((static_cast<double>(epoch_count + 1) * static_cast<double>(cursor_idx)) /
+                 static_cast<double>(tp.total_words));
 
       ////////////////////////////////
       /// run one positive example ///
@@ -1003,7 +1010,8 @@ int main(int argc, char **argv)
       std::cout << "total_step_count: " << total_step_count << std::endl;
       std::cout << "current cursor idx: " << cursor_idx << std::endl;
       std::cout << "current negative learning rate: " << model.alpha_ << std::endl;
-      std::cout << "loss: " << (sum_loss + sum_l2_loss) / static_cast<double>(tp.print_freq) << std::endl;
+      std::cout << "loss: " << (sum_loss + sum_l2_loss) / static_cast<double>(tp.print_freq)
+                << std::endl;
       std::cout << "w2vloss: " << sum_loss / static_cast<double>(tp.print_freq) << std::endl;
       std::cout << "l2 loss: " << sum_l2_loss / static_cast<double>(tp.print_freq) << std::endl;
       sum_loss    = 0;

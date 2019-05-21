@@ -631,9 +631,9 @@ void ReadVocab()
     ReadWord(word, fin, &eof);
     if (eof)
       break;
-    a = AddWordToVocab(word);
+    a       = AddWordToVocab(word);
     int tmp = fscanf(fin, "%lld%c", &vocab[a].cn, &c);
-    tmp  = tmp + 2; // just avoids unused warning
+    tmp     = tmp + 2;  // just avoids unused warning
     i++;
   }
   SortVocab();
@@ -781,15 +781,21 @@ void *TrainModelThread(void *id)
       {
         now = clock();
         printf("%cAlpha: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  ", 13, alpha,
-               static_cast<float>(word_count_actual) / (static_cast<float>(iter * train_words) + static_cast<float>(1.0)) * static_cast<float>(100),
-               static_cast<float>(word_count_actual) / (static_cast<float>(static_cast<float>(now - start) + 1.0) / static_cast<float>(CLOCKS_PER_SEC) * static_cast<float>(1000.0)));
+               static_cast<float>(word_count_actual) /
+                   (static_cast<float>(iter * train_words) + static_cast<float>(1.0)) *
+                   static_cast<float>(100),
+               static_cast<float>(word_count_actual) /
+                   (static_cast<float>(static_cast<float>(now - start) + 1.0) /
+                    static_cast<float>(CLOCKS_PER_SEC) * static_cast<float>(1000.0)));
         fflush(stdout);
       }
       // linear-decay learning rate (decreases from one toward zero
       // linearly in number of words seen, but thresholded below
       // at one ten-thousandth of initial learning rate)
       // (each word in the data is to be seen `iter` times)
-      alpha = static_cast<float>(starting_alpha) * (static_cast<float>(1) - static_cast<float>(word_count_actual) / (static_cast<float>(iter * train_words) + 1));
+      alpha = static_cast<float>(starting_alpha) *
+              (static_cast<float>(1) - static_cast<float>(word_count_actual) /
+                                           (static_cast<float>(iter * train_words) + 1));
       if (alpha < starting_alpha * 0.0001)
         alpha = static_cast<float>(starting_alpha * 0.0001);
     }
@@ -822,7 +828,10 @@ void *TrainModelThread(void *id)
           // (normalized frequency)
           // TODO: why is this not merely 1 - sqrt(t / p_{word}) as in
           // the paper?
-          real ran = (static_cast<float>(sqrt(vocab[word].cn) / (sample * static_cast<float>(train_words))) + 1) * (sample * static_cast<float>(train_words)) /
+          real ran = (static_cast<float>(sqrt(vocab[word].cn) /
+                                         (sample * static_cast<float>(train_words))) +
+                      1) *
+                     (sample * static_cast<float>(train_words)) /
                      static_cast<float>(vocab[word].cn);
           next_random = next_random * (unsigned long long)25214903917 + 11;
           if (ran < static_cast<float>(next_random & 0xFFFF) / (real)65536)
@@ -950,7 +959,10 @@ void *TrainModelThread(void *id)
             else if (f < -MAX_EXP)
               g = (static_cast<float>(label) - static_cast<float>(0)) * alpha;
             else
-              g = (static_cast<float>(label) - static_cast<float>(expTable[static_cast<int>((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))])) * alpha;
+              g = (static_cast<float>(label) -
+                   static_cast<float>(expTable[static_cast<int>((f + MAX_EXP) *
+                                                                (EXP_TABLE_SIZE / MAX_EXP / 2))])) *
+                  alpha;
             for (c = 0; c < layer1_size; c++)
               neu1e[c] += g * syn1neg[c + l2];
             for (c = 0; c < layer1_size; c++)
@@ -1020,7 +1032,9 @@ void *TrainModelThread(void *id)
               else
                 f = expTable[(int)((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))];
               // 'g' is the gradient multiplied by the learning rate
-              g = (static_cast<float>(1) - static_cast<float>(vocab[word].code[d]) - static_cast<float>(f)) * alpha;
+              g = (static_cast<float>(1) - static_cast<float>(vocab[word].code[d]) -
+                   static_cast<float>(f)) *
+                  alpha;
               // Propagate errors output -> hidden
               for (c = 0; c < layer1_size; c++)
                 neu1e[c] += g * syn1[c + l2];
@@ -1064,7 +1078,9 @@ void *TrainModelThread(void *id)
               else if (f < -MAX_EXP)
                 g = (static_cast<float>(label) - static_cast<float>(0)) * alpha;
               else
-                g = (static_cast<float>(label) - static_cast<float>(expTable[static_cast<int>(((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2)))])) *
+                g = (static_cast<float>(label) -
+                     static_cast<float>(expTable[static_cast<int>(
+                         ((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2)))])) *
                     alpha;
               // contribute to gradient for input word
               for (c = 0; c < layer1_size; c++)
@@ -1340,7 +1356,10 @@ int main(int argc, char **argv)
   for (i = 0; i < EXP_TABLE_SIZE; i++)
   {
     // Precompute the exp() table
-    expTable[i] = exp((static_cast<float>(i) / static_cast<float>(EXP_TABLE_SIZE) * static_cast<float>(2) - static_cast<float>(1)) * MAX_EXP);
+    expTable[i] =
+        exp((static_cast<float>(i) / static_cast<float>(EXP_TABLE_SIZE) * static_cast<float>(2) -
+             static_cast<float>(1)) *
+            MAX_EXP);
     // Precompute f(x) = x / (x + 1)
     expTable[i] = expTable[i] / (expTable[i] + 1);
   }
