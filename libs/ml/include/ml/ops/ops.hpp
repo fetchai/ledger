@@ -110,7 +110,7 @@ public:
     // TODO (1048) - this implementation needs fixing
 
     assert(inputs.size() == 1);
-    assert(output.shape()[output.shape().size() - 1] == );
+    assert(output.shape()[output.shape().size() - 1] == inputs[0].shape()[inputs[0].shape().size() - 1]);
 
     std::vector<ArrayType> results;
     for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
