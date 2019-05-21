@@ -37,37 +37,31 @@ template <class T>
 class Graph : public ops::Trainable<T>
 {
 public:
-  using ArrayType      = T;
-  using ArrayPtrType   = std::shared_ptr<ArrayType>;
-  using Datatype       = typename ArrayType::Type;
-  using ConstSliceType = typename ArrayType::ConstSliceType;
-  using NodePtrType    = typename std::shared_ptr<fetch::ml::NodeInterface<ArrayType>>;
-  using TrainablePtrType = typename std::shared_ptr<fetch::ml::ops::Trainable<ArrayType>>;
-  using PlaceholderType = typename fetch::ml::ops::PlaceHolder<ArrayType>;
+  using ArrayType          = T;
+  using ArrayPtrType       = std::shared_ptr<ArrayType>;
+  using Datatype           = typename ArrayType::Type;
+  using ConstSliceType     = typename ArrayType::ConstSliceType;
+  using NodePtrType        = typename std::shared_ptr<fetch::ml::NodeInterface<ArrayType>>;
+  using TrainablePtrType   = typename std::shared_ptr<fetch::ml::ops::Trainable<ArrayType>>;
+  using PlaceholderType    = typename fetch::ml::ops::PlaceHolder<ArrayType>;
   using PlaceholderPtrType = typename std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>>;
 
   Graph()
   {}
 
-  ArrayType Evaluate(std::string const &node_name);
-  void BackPropagate(std::string const &node_name, ArrayType const &error_signal);
-
-  template <class OperationType, typename... Params>
-  std::string AddNode(std::string const &node_name, std::vector<std::string> const &inputs, Params... params);
-  NodePtrType GetNode(std::string const &node_name) const;
-
-
-  void SetInput(std::string const &node_name, ArrayType data, bool batch = false);
-
+  ArrayType    Evaluate(std::string const &node_name);
+  void         BackPropagate(std::string const &node_name, ArrayType const &error_signal);
   virtual void Step(Datatype learningRate);
 
-  void ResetGraphCache(std::shared_ptr<NodeInterface<T>> const &n, bool input_size_changed);
-
-
+  template <class OperationType, typename... Params>
+  std::string AddNode(std::string const &node_name, std::vector<std::string> const &inputs,
+                      Params... params);
+  NodePtrType GetNode(std::string const &node_name) const;
+  void        SetInput(std::string const &node_name, ArrayType data, bool batch = false);
+  void        ResetGraphCache(std::shared_ptr<NodeInterface<T>> const &n, bool input_size_changed);
 
   virtual struct fetch::ml::StateDict<ArrayType> StateDict() const;
-  LoadStateDict(struct fetch::ml::StateDict<T> const &dict);
-
+  virtual void LoadStateDict(struct fetch::ml::StateDict<T> const &dict);
 
 private:
   /**
@@ -77,7 +71,8 @@ private:
    * @param op the pointer to the op
    */
   template <class OperationType>
-  meta::IfIsTrainable<ArrayType, OperationType, void> AddTrainable(std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
+  meta::IfIsTrainable<ArrayType, OperationType, void> AddTrainable(
+      std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
   {
     FETCH_LOG_INFO("ML_LIB", "Created trainable node [", name, "]");
     trainable_[name] = op;
@@ -92,13 +87,12 @@ private:
    * @return
    */
   template <class OperationType>
-  meta::IfIsNotTrainable<ArrayType, OperationType, void> AddTrainable(std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
+  meta::IfIsNotTrainable<ArrayType, OperationType, void> AddTrainable(
+      std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
   {
     FETCH_UNUSED(name);
     FETCH_UNUSED(op);
   }
-
-
 
   /**
    * generates a new variable name if necessary to ensure uniqueness within graph
@@ -126,10 +120,9 @@ private:
   }
 
 protected:
-  std::unordered_map<std::string, NodePtrType>  nodes_;
+  std::unordered_map<std::string, NodePtrType>      nodes_;
   std::unordered_map<std::string, TrainablePtrType> trainable_;
 };
-
 
 /**
  * Evaluates the output of a node (calling all necessary forward prop)
@@ -161,6 +154,19 @@ void Graph<ArrayType>::BackPropagate(std::string const &node_name, ArrayType con
 }
 
 /**
+ * takes a training step
+ * @param learningRate the learning rate (alpha) hyperparameter
+ */
+template <typename ArrayType>
+void Graph<ArrayType>::Step(Datatype learningRate)
+{
+  for (auto &t : trainable_)
+  {
+    t.second->Step(learningRate);
+  }
+}
+
+/**
  * Adds a node without trainable parameters.
  * @tparam OperationType Op template type
  * @tparam Params template for input parameters to node
@@ -170,17 +176,14 @@ void Graph<ArrayType>::BackPropagate(std::string const &node_name, ArrayType con
  */
 template <typename ArrayType>
 template <class OperationType, typename... Params>
-std::string Graph<ArrayType>::AddNode(std::string const &node_name, std::vector<std::string> const &inputs, Params... params)
+std::string Graph<ArrayType>::AddNode(std::string const &             node_name,
+                                      std::vector<std::string> const &inputs, Params... params)
 {
   // guarantee unique op name
   std::string name = UpdateVariableName<OperationType>(node_name);
-//    if (!(nodes_.find(name) == nodes_.end()))
-//    {
-//      throw std::runtime_error("node named [" + name + "] already exists");
-//    }
 
   // Instantiate the node
-  auto op = std::make_shared<Node<ArrayType, OperationType>>(name, params...);
+  auto op      = std::make_shared<Node<ArrayType, OperationType>>(name, params...);
   nodes_[name] = op;
 
   // assign inputs and outputs
@@ -236,19 +239,6 @@ void Graph<ArrayType>::SetInput(std::string const &node_name, ArrayType data, bo
 }
 
 /**
- * takes a training step
- * @param learningRate the learning rate (alpha) hyperparameter
- */
-template <typename ArrayType>
-void Graph<ArrayType>::Step(Datatype learningRate)
-{
-  for (auto &t : trainable_)
-  {
-    t.second->Step(learningRate);
-  }
-}
-
-/**
  * Resets graph cache, clearing stored evaluation outputs
  * and recursively updating the input size for all downstream nodes
  */
@@ -267,7 +257,7 @@ void Graph<ArrayType>::ResetGraphCache(NodePtrType const &n, bool input_size_cha
  * @return  d is the StateDict of all trainable params
  */
 template <typename ArrayType>
-struct Graph<ArrayType>::fetch::ml::StateDict<ArrayType> StateDict() const
+struct fetch::ml::StateDict<ArrayType> Graph<ArrayType>::StateDict() const
 {
   struct fetch::ml::StateDict<ArrayType> d;
   for (auto const &t : trainable_)
@@ -283,8 +273,8 @@ struct Graph<ArrayType>::fetch::ml::StateDict<ArrayType> StateDict() const
  * Import trainable parameters from an exported model
  * @param dict  state dictionary to import to weights
  */
-virtual void
-LoadStateDict(struct fetch::ml::StateDict<T> const &dict)
+template <typename ArrayType>
+void Graph<ArrayType>::LoadStateDict(struct fetch::ml::StateDict<ArrayType> const &dict)
 {
   assert(!dict.weights_);
   for (auto const &t : trainable_)
