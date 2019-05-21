@@ -448,6 +448,10 @@ class SkipgramModel
 {
   using Type = typename ArrayType::Type;
 
+
+  bool L2_regularise = false;
+  bool L2_normalise = false;
+
 public:
   ArrayType input_embeddings_;   // embeddings used to encode the input word
   ArrayType output_embeddings_;  // embeddings used to encode the context word
@@ -488,20 +492,24 @@ public:
     assert(fetch::math::Max(input_embeddings_) <= (0.5 / static_cast<Type>(embeddings_size)));
     assert(fetch::math::Min(input_embeddings_) >= (-0.5 / static_cast<Type>(embeddings_size)));
 
-    // initialise the l2 normalisation values
-    for (std::size_t i = 0; i < vocab_size; ++i)
+
+    if (L2_normalise)
     {
-      auto in_it  = input_embeddings_.Slice(i).begin();
-      auto out_it = output_embeddings_.Slice(i).begin();
-      while (in_it.is_valid())
+      // initialise the l2 normalisation values
+      for (std::size_t i = 0; i < vocab_size; ++i)
       {
-        l2reg_input_row_sums[i] += (*in_it * *in_it);
-        l2reg_output_row_sums[i] += (*out_it * *out_it);
-        ++in_it;
-        ++out_it;
+        auto in_it  = input_embeddings_.Slice(i).begin();
+        auto out_it = output_embeddings_.Slice(i).begin();
+        while (in_it.is_valid())
+        {
+          l2reg_input_row_sums[i] += (*in_it * *in_it);
+          l2reg_output_row_sums[i] += (*out_it * *out_it);
+          ++in_it;
+          ++out_it;
+        }
+        l2reg_input_sum += l2reg_input_row_sums[i];
+        l2reg_output_sum += l2reg_output_row_sums[i];
       }
-      l2reg_input_sum += l2reg_input_row_sums[i];
-      l2reg_output_sum += l2reg_output_row_sums[i];
     }
   }
 
@@ -551,7 +559,10 @@ public:
 
     // First normalise the embeddings. Since that's expensive, we just normalise the two rows
     // we'll use
-    NormaliseEmbeddingRows(input_word_idx, context_word_idx);
+    if (L2_normalise)
+    {
+      NormaliseEmbeddingRows(input_word_idx, context_word_idx);
+    }
 
     // TODO - remove these copies when math library SFINAE checks for IsIterable instead of taking
     // arrays. embeddings input & context lookup
@@ -628,12 +639,16 @@ public:
     //    // calculate dl/d(v_out)
     //    fetch::math::Multiply(input_vector_, g, context_grads_);
 
-    // apply gradient updates
-    l2reg_input_sum -= l2reg_input_row_sums[input_word_idx];
-    l2reg_output_sum -= l2reg_output_row_sums[context_word_idx];
 
-    l2reg_input_row_sums[input_word_idx]    = 0;
-    l2reg_output_row_sums[context_word_idx] = 0;
+    if (L2_normalise)
+    {
+      // apply gradient updates
+      l2reg_input_sum -= l2reg_input_row_sums[input_word_idx];
+      l2reg_output_sum -= l2reg_output_row_sums[context_word_idx];
+
+      l2reg_input_row_sums[input_word_idx]    = 0;
+      l2reg_output_row_sums[context_word_idx] = 0;
+    }
 
     auto input_slice_it = input_embeddings_.Slice(input_word_idx).begin();
     auto input_grads_it = context_vector_.begin();
@@ -641,8 +656,15 @@ public:
     while (input_slice_it.is_valid())
     {
       // grad and l2_reg weight decay
-      *input_slice_it += (g * *input_grads_it) - (l2_lambda * *input_slice_it);
-      //      *input_slice_it += (g * *input_grads_it);
+      if (L2_regularise)
+      {
+        *input_slice_it += (g * *input_grads_it) - (l2_lambda * *input_slice_it);
+      }
+      else
+      {
+        *input_slice_it += (g * *input_grads_it);
+      }
+
 
       l2reg_input_row_sums[input_word_idx] += *input_slice_it;
 
@@ -656,22 +678,32 @@ public:
     while (context_slice_it.is_valid())
     {
       // grad and l2_reg weight decay
-      *context_slice_it += (g * *context_grads_it) - (l2_lambda * *input_slice_it);
-      //      *context_slice_it += (g * *context_grads_it);
+      if (L2_regularise)
+      {
+        *context_slice_it += (g * *context_grads_it) - (l2_lambda * *input_slice_it);
+      }
+      else
+      {
+        *context_slice_it += (g * *context_grads_it);
+      }
 
       l2reg_output_row_sums[context_word_idx] += *context_slice_it;
 
       ++context_slice_it;
       ++context_grads_it;
     }
-    l2reg_input_sum += l2reg_input_row_sums[input_word_idx];
 
-    if (l2reg_input_sum < 0)
+    if (L2_normalise)
     {
-      std::cout << "something weird is happening here: " << std::endl;
-    }
+      l2reg_input_sum += l2reg_input_row_sums[input_word_idx];
 
-    l2reg_output_sum += l2reg_output_row_sums[context_word_idx];
+      if (l2reg_input_sum < 0)
+      {
+        std::cout << "something weird is happening here: " << std::endl;
+      }
+
+      l2reg_output_sum += l2reg_output_row_sums[context_word_idx];
+    }
   }
 
   void Sigmoid(Type x, Type &ret)
