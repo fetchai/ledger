@@ -85,10 +85,13 @@ private:
   {
     HistoryBookmark()
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
     }
-    HistoryBookmark(B const &val)
+
+    explicit HistoryBookmark(B const &val)
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
       bookmark = val;
     }
@@ -97,6 +100,7 @@ private:
     {
       value = 0
     };
+
     B bookmark = 0;
   };
 
@@ -109,12 +113,15 @@ private:
   {
     HistorySwap()
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
     }
 
     HistorySwap(uint64_t const &i_, uint64_t const &j_)
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
+
       i = i_;
       j = j_;
     }
@@ -123,6 +130,7 @@ private:
     {
       value = 1
     };
+
     uint64_t i = 0;
     uint64_t j = 0;
   };
@@ -136,12 +144,15 @@ private:
   {
     HistoryPop()
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
     }
 
-    HistoryPop(T const &d)
+    explicit HistoryPop(T const &d)
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
+
       data = d;
     }
 
@@ -149,6 +160,7 @@ private:
     {
       value = 2
     };
+
     T data{};
   };
 
@@ -162,6 +174,7 @@ private:
   {
     HistoryPush()
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
     }
 
@@ -184,12 +197,15 @@ private:
   {
     HistorySet()
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
     }
 
     HistorySet(uint64_t const &i_, T const &d)
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
+
       i    = i_;
       data = d;
     }
@@ -198,6 +214,7 @@ private:
     {
       value = 4
     };
+
     uint64_t i = 0;
     T        data;
   };
@@ -210,12 +227,15 @@ private:
   {
     HistoryHeader()
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
     }
 
     HistoryHeader(B const &d)
     {
+      // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
+
       data = d;
     }
 
@@ -223,6 +243,7 @@ private:
     {
       value = 5
     };
+
     B data = 0;
   };
 
@@ -364,6 +385,7 @@ public:
     {
       if (!history_.empty())
       {
+
         uint64_t t = history_.Type();
 
         switch (t)
@@ -435,6 +457,11 @@ public:
 
   bookmark_type Commit(bookmark_type const &b)
   {
+    // The flush here is vitally important since we must ensure the all flush handlers successfully
+    // execute. Failure to do this results in an incorrectly ordered difference / history stack
+    // which in turn means that the state can not be reverted
+    Flush(false);
+
     history_.Push(HistoryBookmark{b}, HistoryBookmark::value);
 
     header_type h = stack_.header_extra();
@@ -444,9 +471,9 @@ public:
     return b;
   }
 
-  void Flush()
+  void Flush(bool lazy = true)
   {
-    stack_.Flush();
+    stack_.Flush(lazy);
   }
 
   void ResetBookmark()

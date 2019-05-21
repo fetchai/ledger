@@ -25,6 +25,7 @@
 #include <cassert>
 #include <fstream>
 #include <memory>
+#include <utility>
 
 #include "core/mutex.hpp"
 #include "network/service/protocol.hpp"
@@ -53,6 +54,7 @@ public:
 
   using file_block_type      = A;
   using key_value_index_type = B;
+  using file_store_type      = C;
   using file_object_type     = D;
 
   using hash_type = byte_array::ConstByteArray;
@@ -61,17 +63,146 @@ public:
 
   static constexpr char const *LOGGING_NAME = "DocumentStore";
 
-  DocumentStore(){};
-  DocumentStore(DocumentStore const &rhs) = delete;
-  DocumentStore(DocumentStore &&rhs)      = delete;
-  DocumentStore &operator=(DocumentStore const &rhs) = delete;
-  DocumentStore &operator=(DocumentStore &&rhs) = delete;
+  /**
+   * Implementation of a document file
+   */
+  class DocumentFileImplementation : public file_object_type
+  {
+  public:
+    DocumentFileImplementation(self_type *s, byte_array::ConstByteArray address,
+                               file_store_type &store)
+      : file_object_type(store)
+      , address_(std::move(address))
+      , store_(s)
+    {}
+
+    DocumentFileImplementation(self_type *s, byte_array::ConstByteArray address,
+                               file_store_type &store, std::size_t const &pos)
+      : file_object_type(store, pos)
+      , address_(std::move(address))
+      , store_(s)
+    {}
+
+    ~DocumentFileImplementation()
+    {
+      store_->UpdateDocumentFile(*this);
+    }
+
+    DocumentFileImplementation(DocumentFileImplementation const &other) = delete;
+    DocumentFileImplementation operator=(DocumentFileImplementation const &other) = delete;
+    DocumentFileImplementation(DocumentFileImplementation &&other)                = default;
+    DocumentFileImplementation &operator=(DocumentFileImplementation &&other) = default;
+
+    byte_array::ConstByteArray const &address() const
+    {
+      return address_;
+    }
+
+    self_type const *store() const
+    {
+      return store_;
+    }
+
+  private:
+    byte_array::ConstByteArray address_;
+    self_type *                store_;
+  };
+
+  /**
+   * Represents an open 'document', effectively just a serialized memory block.
+   * When modifications are finished to it, it will write the state back to the
+   * store
+   * on destruction. Has a PIMPL to an implementation
+   */
+  class DocumentFile
+  {
+  public:
+    operator bool() const
+    {
+      return static_cast<bool>(pointer_);
+    }
+
+    DocumentFile()
+      : pointer_(nullptr)
+    {}
+
+    DocumentFile(self_type *s, byte_array::ConstByteArray const &address, file_store_type &store)
+    {
+      pointer_     = std::make_shared<DocumentFileImplementation>(s, address, store);
+      was_created_ = true;
+    }
+
+    DocumentFile(self_type *s, byte_array::ConstByteArray const &address, file_store_type &store,
+                 std::size_t const &pos)
+    {
+      pointer_ = std::make_shared<DocumentFileImplementation>(s, address, store, pos);
+    }
+
+    uint64_t Tell()
+    {
+      return pointer_->Tell();
+    }
+
+    void Seek(uint64_t const &n)
+    {
+      pointer_->Seek(n);
+    }
+
+    void Read(byte_array::ByteArray &arr)
+    {
+      pointer_->Read(arr);
+    }
+
+    void Read(uint8_t *bytes, uint64_t const &m)
+    {
+      pointer_->Read(bytes, m);
+    }
+
+    void Shrink(uint64_t const &m)
+    {
+      pointer_->Shrink(m);
+    }
+
+    void Write(byte_array::ConstByteArray const &arr)
+    {
+      pointer_->Write(arr);
+    }
+
+    void Write(uint8_t const *bytes, uint64_t const &m)
+    {
+      pointer_->Write(bytes, m);
+    }
+
+    std::size_t id() const
+    {
+      return pointer_->id();
+    }
+
+    std::size_t size() const
+    {
+      return pointer_->size();
+    }
+
+    byte_array::ConstByteArray const &address() const
+    {
+      return pointer_->address();
+    }
+
+    bool was_created() const
+    {
+      return was_created_;
+    }
+
+  private:
+    std::shared_ptr<DocumentFileImplementation> pointer_;
+    bool                                        was_created_ = false;
+  };
 
   void Load(std::string const &doc_file, std::string const &doc_diff, std::string const &index_file,
             std::string const &index_diff, bool const &create = true)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
-    file_object_.Load(doc_file, doc_diff, create);
+    file_store_.Load(doc_file, doc_diff, create);
     key_index_.Load(index_file, index_diff, create);
   }
 
@@ -79,116 +210,98 @@ public:
            std::string const &index_diff)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
-    file_object_.New(doc_file, doc_diff);
+    file_store_.New(doc_file, doc_diff);
     key_index_.New(index_file, index_diff);
   }
 
   void Load(std::string const &doc_file, std::string const &index_file, bool const &create = true)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
-    file_object_.Load(doc_file, create);
+    file_store_.Load(doc_file, create);
     key_index_.Load(index_file, create);
   }
 
   void New(std::string const &doc_file, std::string const &index_file)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
-    file_object_.New(doc_file);
+    file_store_.New(doc_file);
     key_index_.New(index_file);
   }
 
-  Document GetOrCreate(ResourceID const &rid, bool create = true)
+  Document GetOrCreate(ResourceID const &rid)
   {
-    byte_array::ConstByteArray const &address = rid.id();
-    index_type                        index   = 0;
+    Document ret;
 
     std::lock_guard<mutex::Mutex> lock(mutex_);
+    DocumentFile                  doc = GetDocumentFile(rid, true);
 
-    // If the file already exists, seek to it
-    if (key_index_.GetIfExists(address, index))
+    if (!doc)
     {
-      file_object_.SeekFile(index);
-    }
-    else if (create)
-    {
-      // Else create
-      file_object_.CreateNewFile();
+      ret.failed = true;
     }
     else
     {
-      Document document;
-      document.failed = true;
-      return document;
+      ret.was_created = doc.was_created();
+      if (!doc.was_created())
+      {
+        ret.document.Resize(doc.size());
+        doc.Read(ret.document);
+      }
     }
 
-    return file_object_.AsDocument();
+    return ret;
   }
 
   Document Get(ResourceID const &rid)
   {
-    return GetOrCreate(rid, false);
+    Document ret;
+
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    DocumentFile                  doc = GetDocumentFile(rid, false);
+
+    if (!doc)
+    {
+      ret.failed = true;
+    }
+    else
+    {
+      ret.was_created = doc.was_created();
+      if (!doc.was_created())
+      {
+        ret.document.Resize(doc.size());
+        doc.Read(ret.document);
+      }
+    }
+
+    return ret;
   }
 
   void Set(ResourceID const &rid, byte_array::ConstByteArray const &value)
   {
-    byte_array::ConstByteArray const &address = rid.id();
-    index_type                        index   = 0;
-
-    std::lock_guard<mutex::Mutex> lock(mutex_);
-
-    if (key_index_.GetIfExists(address, index))
     {
-      file_object_.SeekFile(index);
+      std::lock_guard<mutex::Mutex> lock(mutex_);
+      DocumentFile                  doc = GetDocumentFile(rid, true);
+      doc.Seek(0);
+
+      if (doc.size() > value.size())
+      {
+        doc.Shrink(value.size());
+      }
+
+      doc.Write(value);
     }
-    else
-    {
-      // Create new file, with new index etc.
-      // write this to the key index
-      file_object_.CreateNewFile(value.size());
-    }
-
-    file_object_.Resize(value.size());
-
-    file_object_.Write(value);
-    file_object_.Flush();
-
-    key_index_.Set(address, file_object_.id(), file_object_.Hash());
-    key_index_.Flush();
   }
 
-  void Erase(ResourceID const &rid)
+  std::size_t size() const
   {
-    byte_array::ConstByteArray const &address = rid.id();
-    index_type                        index   = 0;
-
-    std::lock_guard<mutex::Mutex> lock(mutex_);
-
-    if (key_index_.GetIfExists(address, index))
-    {
-      file_object_.SeekFile(index);
-    }
-    else
-    {
-      return;
-    }
-
-    key_index_.Erase(address);
-    key_index_.Flush();
-
-    file_object_.Erase();
-    file_object_.Flush();
+    return file_store_.size();
   }
 
   void Flush(bool lazy = true)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
-    file_object_.Flush(lazy);
+    file_store_.Flush(lazy);
     key_index_.Flush(lazy);
-  }
-
-  std::size_t size() const
-  {
-    return key_index_.size();
   }
 
   /**
@@ -200,9 +313,9 @@ public:
   class Iterator
   {
   public:
-    Iterator(self_type *self, typename key_value_index_type::Iterator it)
+    Iterator(self_type *store, typename key_value_index_type::Iterator it)
       : wrapped_iterator_{it}
-      , self_{self}
+      , store_{store}
     {}
 
     Iterator()                    = default;
@@ -230,15 +343,18 @@ public:
     {
       auto kv = *wrapped_iterator_;
 
-      // The key value (index of file) must be valid at this point
-      self_->file_object_.SeekFile(kv.second);
+      DocumentFile doc(store_, kv.first, store_->file_store_, kv.second);
 
-      return self_->file_object_.AsDocument();
+      Document ret;
+      ret.document.Resize(doc.size());
+      doc.Read(ret.document);
+
+      return ret;
     }
 
   protected:
     typename key_value_index_type::Iterator wrapped_iterator_;
-    self_type *                             self_;
+    self_type *                             store_;
   };
 
   self_type::Iterator Find(ResourceID const &rid)
@@ -255,14 +371,14 @@ public:
    * matches the first bits of rid)
    *
    * @param: rid The key
-   * @param: bits The number of bits of rid we want to match against
+   * @param: bit_count The number of bits of rid we want to match against
    *
    * @return: an iterator to the first element of that tree
    */
-  self_type::Iterator GetSubtree(ResourceID const &rid, uint64_t bits)
+  self_type::Iterator GetSubtree(ResourceID const &rid, uint64_t bit_count)
   {
     byte_array::ConstByteArray const &address = rid.id();
-    auto                              it      = key_index_.GetSubtree(address, bits);
+    auto                              it      = key_index_.GetSubtree(address, bit_count);
 
     return Iterator(this, it);
   }
@@ -285,7 +401,7 @@ public:
     byte_array_type               hash = key_index_.Hash();
 
     key_index_.underlying_stack().Commit(hash);
-    file_object_.underlying_stack().Commit(hash);
+    file_store_.Commit(hash);
 
     return hash;
   }
@@ -295,15 +411,14 @@ public:
     std::lock_guard<mutex::Mutex> lock(mutex_);
 
     // TODO(private issue 615): HashExists implement
-    if (!(key_index_.underlying_stack().HashExists(hash) &&
-          file_object_.underlying_stack().HashExists(hash)))
+    if (!(key_index_.underlying_stack().HashExists(hash) && file_store_.HashExists(hash)))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Attempted to revert to a hash that doesn't exist");
       return false;
     }
 
     key_index_.underlying_stack().RevertToHash(hash);
-    file_object_.underlying_stack().RevertToHash(hash);
+    file_store_.RevertToHash(hash);
 
     return true;
   }
@@ -311,8 +426,7 @@ public:
   bool HashExists(byte_array_type const &hash)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
-    return key_index_.underlying_stack().HashExists(hash) &&
-           file_object_.underlying_stack().HashExists(hash);
+    return key_index_.underlying_stack().HashExists(hash) && file_store_.HashExists(hash);
   }
 
   hash_type CurrentHash()
@@ -322,9 +436,52 @@ public:
   }
 
 protected:
+  /**
+   * Get or create a document file
+   *
+   * @param: rid The key
+   * @param: create Whether to create a new file when it's missing
+   *
+   * @return: Document file, empty when the file doesn't exist
+   */
+  DocumentFile GetDocumentFile(ResourceID const &rid, bool const &create = true)
+  {
+    byte_array::ConstByteArray const &address = rid.id();
+    index_type                        index   = 0;
+
+    if (key_index_.GetIfExists(address, index))
+    {
+      return DocumentFile(this, address, file_store_, index);
+    }
+    else if (!create)
+    {
+      return DocumentFile();
+    }
+
+    DocumentFile doc = DocumentFile(this, address, file_store_);
+
+    return doc;
+  }
+
   mutex::Mutex         mutex_{__LINE__, __FILE__};
   key_value_index_type key_index_;
-  file_object_type     file_object_;
+  file_store_type      file_store_;
+
+private:
+  /**
+   * Write a document file under modification back to the store
+   *
+   * @param: doc The document file implementation
+   */
+  void UpdateDocumentFile(DocumentFileImplementation &doc)
+  {
+    doc.Flush();
+
+    key_index_.Set(doc.address(), doc.id(), doc.Hash());
+
+    // TODO(issue 10):    file_store_.Flush();
+    key_index_.Flush();
+  }
 };
 
 }  // namespace storage

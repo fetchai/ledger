@@ -226,19 +226,6 @@ inline bool IsLog2(uint64_t value)
   return value && !(value & (value - 1));
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
-inline T DivideCeil(T x, T y)
-{
-  T ret = x / y;
-
-  if (y * ret < x)
-  {
-    ++ret;
-  }
-
-  return ret;
-}
-
 template <uint32_t DIVISOR, typename Value>
 meta::IfIsUnsignedInteger<Value, Value> DivCeil(Value value)
 {
