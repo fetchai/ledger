@@ -780,8 +780,8 @@ void *TrainModelThread(void *id)
       {
         now = clock();
         printf("%cAlpha: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  ", 13, alpha,
-               word_count_actual / static_cast<float>(static_cast<float>(iter * train_words) + static_cast<float>(1.0)) * 100,
-               word_count_actual / (static_cast<float>(static_cast<float>(now - start) + 1.0) / static_cast<float>(CLOCKS_PER_SEC) * static_cast<float>(1000.0)));
+               static_cast<float>(word_count_actual) / (static_cast<float>(iter * train_words) + static_cast<float>(1.0)) * static_cast<float>(100),
+               static_cast<float>(word_count_actual) / (static_cast<float>(static_cast<float>(now - start) + 1.0) / static_cast<float>(CLOCKS_PER_SEC) * static_cast<float>(1000.0)));
         fflush(stdout);
       }
       // linear-decay learning rate (decreases from one toward zero
