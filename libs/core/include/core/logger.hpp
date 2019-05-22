@@ -130,9 +130,9 @@ public:
   }
 
 private:
-  std::string     context_  = "(root)";
+  std::string     context_ = "(root)";
   std::string     filename_;
-  int             line_     = 0;
+  int             line_ = 0;
   shared_type     parent_;
   shared_type     derived_from_;
   std::thread::id id_       = std::this_thread::get_id();
@@ -469,8 +469,7 @@ public:
       return;
     }
 
-    std::cout << trace_name << " for #" << ReadableThread::GetThreadID(ctx->thread_id())
-              << '\n';
+    std::cout << trace_name << " for #" << ReadableThread::GetThreadID(ctx->thread_id()) << '\n';
     PrintTrace(ctx, max);
 
     if (show_locks)
@@ -486,11 +485,12 @@ public:
       for (auto &id : locked_threads)
       {
         std::cout << "\nAdditionally trace for #" << ReadableThread::GetThreadID(id) << '\n';
-	auto id_context{context_.find(id)};
-	if (id_context != context_.cend()) {
+        auto id_context{context_.find(id)};
+        if (id_context != context_.cend())
+        {
           PrintTrace(id_context->second);
           std::cout << '\n';
-	}
+        }
       }
       std::cout << '\n';
     }
@@ -638,7 +638,7 @@ private:
   template <typename T, typename... Args>
   struct Unroll
   {
-    static void Append(LogWrapper *cls, T &&v, Args &&...args)
+    static void Append(LogWrapper *cls, T &&v, Args &&... args)
     {
       cls->log_->Append(std::forward<T>(v));
       Unroll<Args...>::Append(cls, std::forward<Args>(args)...);

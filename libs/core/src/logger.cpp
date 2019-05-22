@@ -34,8 +34,8 @@ Context::Context(void *instance)
   fetch::logger.SetContext(details_);
 }
 
-Context::Context(shared_type ctx, std::string const &context, std::string const &filename,
-                 int line, void *instance)
+Context::Context(shared_type ctx, std::string const &context, std::string const &filename, int line,
+                 void *instance)
   : details_{std::make_shared<ContextDetails>(ctx, fetch::logger.TopContext(), context, filename,
                                               line, instance)}
   , created_{std::chrono::high_resolution_clock::now()}
@@ -43,8 +43,7 @@ Context::Context(shared_type ctx, std::string const &context, std::string const 
   fetch::logger.SetContext(details_);
 }
 
-Context::Context(std::string const &context, std::string const &filename, int line,
-                 void *instance)
+Context::Context(std::string const &context, std::string const &filename, int line, void *instance)
   : details_{std::make_shared<ContextDetails>(fetch::logger.TopContext(), context, filename, line,
                                               instance)}
   , created_{std::chrono::high_resolution_clock::now()}
