@@ -46,7 +46,7 @@ public:
     fetch::math::Sigmoid(inputs.front().get(), output);
 
     // ensures numerical stability
-    fetch::math::Clamp(output, epsilon_, 1 - epsilon_, output);
+    fetch::math::Clamp(output, epsilon_, static_cast<DataType>(1) - epsilon_, output);
   }
 
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
