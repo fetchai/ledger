@@ -173,6 +173,7 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
 
   auto const branch6{Generate(generator_, genesis, 6)};
 
+#ifdef FETCH_LOG_DEBUG_ENABLED
   FETCH_LOG_DEBUG(LOGGING_NAME, "Genesis : ", ToBase64(genesis->body.hash));
   for (auto const &branch : {branch3, branch5, branch9, branch7, branch6})
   {
@@ -182,6 +183,7 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
       FETCH_LOG_DEBUG(LOGGING_NAME, "\tBlock: ", block->body.hash);
     }
   }
+#endif
 
   // add the initial branch 3
   for (auto const &block : branch3)
