@@ -31,9 +31,10 @@ template <class T>
 class LogSoftmax : public fetch::ml::BatchOps<T>
 {
 public:
-  using ArrayType = T;
-  using DataType  = typename ArrayType::Type;
-  using SizeType  = typename ArrayType::SizeType;
+  using ArrayType     = T;
+  using DataType      = typename ArrayType::Type;
+  using SizeType      = typename ArrayType::SizeType;
+  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
   LogSoftmax(SizeType axis = 0)
     : axis_(axis)
@@ -41,19 +42,15 @@ public:
 
   ~LogSoftmax() = default;
 
-  ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                    ArrayType &                                                 output)
+  void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     ASSERT(output.shape() == ComputeOutputShape(inputs));
     ASSERT(inputs.size() == 1);
     fetch::math::Softmax(inputs.front().get(), output, axis_);
     fetch::math::Log(output, output);
-    return output;
   }
 
-  std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
   {
     ASSERT(inputs.size() == 1);
     ASSERT(inputs.front().get().shape() == error_signal.shape());
@@ -86,8 +83,7 @@ public:
     return {return_signal};
   }
 
-  std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
     return inputs.front().get().shape();
   }

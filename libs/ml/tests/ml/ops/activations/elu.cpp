@@ -33,16 +33,18 @@ TYPED_TEST_CASE(EluTest, MyTypes);
 
 TYPED_TEST(EluTest, forward_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
+  using DataType      = typename TypeParam::Type;
+  using ArrayType     = TypeParam;
+  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
 
   ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
   ArrayType gt   = ArrayType::FromString(
       "1, -1.72932943352677, 3, -1.96336872222253, 5, -1.99504249564667, 7, -1.99932907474419");
 
   fetch::ml::ops::Elu<ArrayType> op(DataType{2.0});
-  ArrayType                      prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
+
+  ArrayType prediction(op.ComputeOutputShape({data}));
+  op.Forward(VecTensorType({data}), prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -50,9 +52,10 @@ TYPED_TEST(EluTest, forward_test)
 
 TYPED_TEST(EluTest, forward_3d_tensor_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType      = typename TypeParam::Type;
+  using ArrayType     = TypeParam;
+  using SizeType      = typename TypeParam::SizeType;
+  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
 
   ArrayType           data({2, 2, 2});
   ArrayType           gt({2, 2, 2});
@@ -73,8 +76,9 @@ TYPED_TEST(EluTest, forward_3d_tensor_test)
   }
 
   fetch::ml::ops::Elu<ArrayType> op(DataType{2.0});
-  ArrayType                      prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
+
+  ArrayType prediction(op.ComputeOutputShape({data}));
+  op.Forward(VecTensorType({data}), prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));

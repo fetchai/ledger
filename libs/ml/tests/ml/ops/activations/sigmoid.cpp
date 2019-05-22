@@ -42,8 +42,8 @@ TYPED_TEST(SigmoidTest, forward_test)
       "0.999088948806, 0.000335350130466");
 
   fetch::ml::ops::Sigmoid<ArrayType> op;
-  ArrayType                          prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
+  ArrayType                          prediction(op.ComputeOutputShape({data}));
+  op.Forward({data}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -74,8 +74,8 @@ TYPED_TEST(SigmoidTest, forward_3d_tensor_test)
   }
 
   fetch::ml::ops::Sigmoid<ArrayType> op;
-  ArrayType                          prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
+  ArrayType                          prediction(op.ComputeOutputShape({data}));
+  op.Forward({data}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
