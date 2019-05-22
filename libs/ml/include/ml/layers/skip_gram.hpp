@@ -93,9 +93,9 @@ public:
     {
       ArrayType slice_input   = inputs.front().get().Slice(b).Copy();
       ArrayType slice_context = inputs.back().get().Slice(b).Copy();
-      ArrayType output(ComputeOutputShape({slice_input, slice_context}));
-      this->Forward({slice_input, slice_context}, output);
-      results.push_back(output);
+      ArrayType output_here(ComputeOutputShape({slice_input, slice_context}));
+      this->Forward({slice_input, slice_context}, output_here);
+      results.push_back(output_here);
     }
     output = ArrayType::Stack(results);
   }
