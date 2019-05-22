@@ -35,8 +35,35 @@ namespace math {
 template <typename Type>
 void Clamp(Type const &x, Type const &min, Type const &max, Type &ret)
 {
-  Max(x, min, ret);
-  Min(ret, max, ret);
+  assert(min <= max);
+
+  if (x <= min)
+  {
+    ret = min;
+    return;
+  }
+  if (x >= max)
+  {
+    ret = max;
+    return;
+  }
+  ret = x;
+}
+
+template <typename Type>
+void Clamp(Type const &min, Type const &max, Type &ret)
+{
+  assert(min <= max);
+
+  if (ret <= min)
+  {
+    ret = min;
+    return;
+  }
+  if (ret >= max)
+  {
+    ret = max;
+  }
 }
 
 //////////////////
@@ -56,12 +83,14 @@ meta::IfIsMathArray<ArrayType, void> Clamp(ArrayType const &               array
                                            typename ArrayType::Type const &min,
                                            typename ArrayType::Type const &max, ArrayType &ret)
 {
-  ASSERT(ret.shape() == array.shape());
-  typename ArrayType::SizeType ret_count{0};
-  for (auto &e : array)
+  assert(ret.shape() == array.shape());
+  auto ret_it = ret.begin();
+  auto in_it  = array.begin();
+  while (in_it.is_valid())
   {
-    Clamp(e, min, max, ret.At(ret_count));
-    ++ret_count;
+    Clamp(*in_it, min, max, *ret_it);
+    ++ret_it;
+    ++in_it;
   }
 }
 
@@ -70,14 +99,21 @@ meta::IfIsMathArray<ArrayType, ArrayType> Clamp(ArrayType const &               
                                                 typename ArrayType::Type const &min,
                                                 typename ArrayType::Type const &max)
 {
-  ArrayType                    ret{array.shape()};
-  typename ArrayType::SizeType ret_count{0};
-  for (auto &e : array)
-  {
-    Clamp(e, min, max, ret.At(ret_count));
-    ++ret_count;
-  }
+  ArrayType ret{array.shape()};
+  Clamp(array, min, max, ret);
   return ret;
+}
+
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> Clamp(typename ArrayType::Type const &min,
+                                           typename ArrayType::Type const &max, ArrayType &ret)
+{
+  auto ret_it = ret.begin();
+  while (ret_it.is_valid())
+  {
+    Clamp(min, max, *ret_it);
+    ++ret_it;
+  }
 }
 
 }  // namespace math
