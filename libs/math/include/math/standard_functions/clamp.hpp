@@ -32,23 +32,7 @@ namespace math {
 /// IMPLEMENTATIONS ///
 ///////////////////////
 
-template <typename Type>
-void Clamp(Type const &x, Type const &min, Type const &max, Type &ret)
-{
-  assert(min <= max);
-
-  if (x <= min)
-  {
-    ret = min;
-    return;
-  }
-  if (x >= max)
-  {
-    ret = max;
-    return;
-  }
-  ret = x;
-}
+namespace {
 
 template <typename Type>
 void Clamp(Type const &min, Type const &max, Type &ret)
@@ -58,51 +42,18 @@ void Clamp(Type const &min, Type const &max, Type &ret)
   if (ret <= min)
   {
     ret = min;
-    return;
   }
-  if (ret >= max)
+  else if (ret >= max)
   {
     ret = max;
   }
 }
 
+}  // namespace
+
 //////////////////
 /// INTERFACES ///
 //////////////////
-
-template <typename Type>
-meta::IfIsArithmetic<Type, Type> Clamp(Type const &x, Type const &min, Type const &max)
-{
-  Type ret;
-  Clamp(x, min, max, ret);
-  return ret;
-}
-
-template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, void> Clamp(ArrayType const &               array,
-                                           typename ArrayType::Type const &min,
-                                           typename ArrayType::Type const &max, ArrayType &ret)
-{
-  assert(ret.shape() == array.shape());
-  auto ret_it = ret.begin();
-  auto in_it  = array.begin();
-  while (in_it.is_valid())
-  {
-    Clamp(*in_it, min, max, *ret_it);
-    ++ret_it;
-    ++in_it;
-  }
-}
-
-template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, ArrayType> Clamp(ArrayType const &               array,
-                                                typename ArrayType::Type const &min,
-                                                typename ArrayType::Type const &max)
-{
-  ArrayType ret{array.shape()};
-  Clamp(array, min, max, ret);
-  return ret;
-}
 
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Clamp(typename ArrayType::Type const &min,
@@ -114,6 +65,12 @@ meta::IfIsMathArray<ArrayType, void> Clamp(typename ArrayType::Type const &min,
     Clamp(min, max, *ret_it);
     ++ret_it;
   }
+}
+
+template <typename Type>
+meta::IfIsArithmetic<Type, void> Clamp(Type const &min, Type const &max, Type &ret)
+{
+  Clamp(min, max, ret);
 }
 
 }  // namespace math
