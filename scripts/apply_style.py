@@ -30,7 +30,7 @@ PROJECT_ROOT = abspath(dirname(dirname(__file__)))
 
 EXCLUDED_DIRS = [
     abspath(join(PROJECT_ROOT, directory))
-    for directory in ('.git', 'vendor')
+    for directory in ('.git', 'build', 'vendor')
 ]
 
 
