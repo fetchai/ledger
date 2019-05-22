@@ -892,6 +892,56 @@ public:
     return Sin(x) / Cos(x);
   }
 
+  static constexpr FixedPoint ASin(FixedPoint const &x)
+  {
+    return FixedPoint{std::asin((double)x)};
+  }
+
+  static constexpr FixedPoint ACos(FixedPoint const &x)
+  {
+    return FixedPoint{std::acos((double)x)};
+  }
+
+  static constexpr FixedPoint ATan(FixedPoint const &x)
+  {
+    return FixedPoint{std::atan((double)x)};
+  }
+
+  static constexpr FixedPoint ATan2(FixedPoint const &x, FixedPoint const &y)
+  {
+    return FixedPoint{std::atan2((double)x, (double)y)};
+  }
+
+  static constexpr FixedPoint SinH(FixedPoint const &x)
+  {
+    return FixedPoint{std::sinh((double)x)};
+  }
+
+  static constexpr FixedPoint CosH(FixedPoint const &x)
+  {
+    return FixedPoint{std::cosh((double)x)};
+  }
+
+  static constexpr FixedPoint TanH(FixedPoint const &x)
+  {
+    return FixedPoint{std::tanh((double)x)};
+  }
+
+  static constexpr FixedPoint ASinH(FixedPoint const &x)
+  {
+    return FixedPoint{std::asinh((double)x)};
+  }
+
+  static constexpr FixedPoint ACosH(FixedPoint const &x)
+  {
+    return FixedPoint{std::acosh((double)x)};
+  }
+
+  static constexpr FixedPoint ATanH(FixedPoint const &x)
+  {
+    return FixedPoint{std::atanh((double)x)};
+  }
+
   static constexpr FixedPoint Remainder(FixedPoint const &x, FixedPoint const &y)
   {
     FixedPoint result = x / y;
