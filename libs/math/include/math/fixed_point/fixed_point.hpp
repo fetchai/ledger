@@ -26,7 +26,6 @@
 
 #include <cmath>
 #include <core/assert.hpp>
-#include <iomanip>
 #include <limits>
 
 namespace fetch {

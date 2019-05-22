@@ -17,18 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction.hpp"
+#include <memory>
+#include <vector>
 
 namespace fetch {
 namespace ledger {
-namespace v2 {
+
 class Transaction;
-}
 
 class TransactionSink
 {
 public:
-  using TransactionPtr  = std::shared_ptr<v2::Transaction>;
+  using TransactionPtr  = std::shared_ptr<Transaction>;
   using TransactionList = std::vector<TransactionPtr>;
 
   // Construction / Destruction

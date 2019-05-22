@@ -18,9 +18,6 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/random/lfg.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/transaction_serialization.hpp"
 #include "storage/object_store.hpp"
 #include "testing/common_testing_functionality.hpp"
 #include <algorithm>

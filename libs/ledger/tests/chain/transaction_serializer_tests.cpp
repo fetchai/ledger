@@ -19,10 +19,10 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/v2/address.hpp"
-#include "ledger/chain/v2/transaction.hpp"
-#include "ledger/chain/v2/transaction_builder.hpp"
-#include "ledger/chain/v2/transaction_serializer.hpp"
+#include "ledger/chain/address.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "ledger/chain/transaction_builder.hpp"
+#include "ledger/chain/transaction_serializer.hpp"
 
 #include "gtest/gtest.h"
 
@@ -33,10 +33,10 @@ using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromHex;
 using fetch::crypto::ECDSASigner;
 using fetch::crypto::ECDSAVerifier;
-using fetch::ledger::v2::Address;
-using fetch::ledger::v2::Transaction;
-using fetch::ledger::v2::TransactionBuilder;
-using fetch::ledger::v2::TransactionSerializer;
+using fetch::ledger::Address;
+using fetch::ledger::Transaction;
+using fetch::ledger::TransactionBuilder;
+using fetch::ledger::TransactionSerializer;
 using fetch::BitVector;
 
 struct Identities

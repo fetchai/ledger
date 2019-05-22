@@ -24,7 +24,6 @@
 #include "variant/variant.hpp"
 
 #include <memory>
-#include <stack>
 #include <vector>
 
 namespace fetch {

@@ -28,7 +28,7 @@ struct TestBlock
 {
   using ResourceIdMap = std::vector<std::string>;
   using BlockBody     = fetch::ledger::Block::Body;
-  using Digest        = fetch::ledger::v2::Digest;
+  using Digest        = fetch::ledger::Digest;
 
   static constexpr char const *LOGGING_NAME = "TestBlock";
 
@@ -109,7 +109,7 @@ struct TestBlock
 
             // create the transaction summary
             current_slice.emplace_back(
-                fetch::ledger::v2::TransactionLayout{GenerateHash(rng), mask, 1, 0, 100});
+                fetch::ledger::TransactionLayout{GenerateHash(rng), mask, 1, 0, 100});
 
             ++num_transactions;
           }

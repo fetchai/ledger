@@ -17,128 +17,340 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/mutable_transaction.hpp"
+#include "core/bitvector.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "crypto/identity.hpp"
+#include "ledger/chain/address.hpp"
+#include "ledger/chain/digest.hpp"
 
+#include <cstdint>
 #include <vector>
 
 namespace fetch {
 namespace ledger {
 
-class UnverifiedTransaction : private MutableTransaction
+/**
+ * The transaction class
+ */
+class Transaction
 {
 public:
-  using super_type = MutableTransaction;
-  using super_type::VERSION;
-  using super_type::Hasher;
-  using super_type::TxDigest;
-  using super_type::ResourceSet;
-  using super_type::resources;
-  using super_type::raw_resources;
-  using super_type::summary;
-  using super_type::data;
-  using super_type::signatures;
-  using super_type::contract_name;
-  using super_type::digest;
+  using Identity       = crypto::Identity;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using TokenAmount    = uint64_t;
+  using BlockIndex     = uint64_t;
 
-  using super_type::operator=;
-
-  bool operator<(UnverifiedTransaction const &other) const
+  /**
+   * Represents a single target and token about. The transaction format allows any number of
+   * transfers to be made in the course of a single transaction. This structure outlines one of them
+   */
+  struct Transfer
   {
-    return digest() < other.digest();
-  }
+    Address     to;      ///< The destination address for fund transfers
+    TokenAmount amount;  ///< The amount of tokens being transferred
+  };
 
-  MutableTransaction const &AsMutable() const
+  /**
+   * A signatory is the combination of an identity (public key) and a corresponding signature. This
+   * is the primary mechanism for transaction authorization
+   */
+  struct Signatory
   {
-    return static_cast<MutableTransaction const &>(*this);
-  }
+    Identity       identity;   ///< The identity of the signer (public key)
+    Address        address;    ///< The address corresponding to the address
+    ConstByteArray signature;  ///< The signature of the tx payload from the signer
+  };
 
-  MutableTransaction GetMutable() const
+  /**
+   * Internal enumeration specifying the contract (if any) referenced by this tranasction
+   */
+  enum class ContractMode
   {
-    return MutableTransaction{*this};
-  }
+    NOT_PRESENT,  ///< The is no contract present, simple token transfer transaction
+    PRESENT,      ///< There is a smart contract reference present
+    CHAIN_CODE,   ///< There is a reference to chain code (hard coded smart contracts) present
+  };
 
-protected:
-  using super_type::set_summary;
-  using super_type::set_data;
-  using super_type::set_signatures;
-  using super_type::set_contract_name;
+  /**
+   * Internal enumeation for validity query responses
+   */
+  enum class Validity
+  {
+    PENDING,  ///< The transaction is not currently, but is due to be so shortly
+    VALID,    ///< The transaction is valid to be included into a block
+    INVALID,  ///< The transaction is invalid and should be dropped
+  };
 
-  using super_type::UpdateDigest;
-  using super_type::Verify;
+  using Transfers   = std::vector<Transfer>;
+  using Signatories = std::vector<Signatory>;
 
-  template <typename T>
-  friend void Serialize(T &serializer, UnverifiedTransaction const &b);
+  // Construction / Destruction
+  Transaction()                    = default;
+  Transaction(Transaction const &) = default;
+  Transaction(Transaction &&)      = default;
+  ~Transaction()                   = default;
 
-  template <typename T>
-  friend void Deserialize(T &serializer, UnverifiedTransaction &b);
+  /// @name Identification
+  /// @{
+  Digest const &digest() const;
+  /// @}
+
+  /// @name Transfer Accessors
+  /// @{
+  Address const &  from() const;
+  Transfers const &transfers() const;
+  uint64_t         GetTotalTransferAmount() const;
+  /// @}
+
+  /// @name Validity Accessors
+  /// @{
+  BlockIndex valid_from() const;
+  BlockIndex valid_until() const;
+  Validity   GetValidity(BlockIndex block_index) const;
+  /// @}
+
+  /// @name Charge Accessors
+  /// @{
+  TokenAmount charge() const;
+  TokenAmount charge_limit() const;
+  /// @}
+
+  /// @name Contract Accessors
+  /// @{
+  ContractMode          contract_mode() const;
+  Address const &       contract_digest() const;
+  Address const &       contract_address() const;
+  ConstByteArray const &chain_code() const;
+  ConstByteArray const &action() const;
+  BitVector const &     shard_mask() const;
+  ConstByteArray const &data() const;
+  Signatories const &   signatories() const;
+  /// @}
+
+  /// @name Validation / Verification
+  /// @{
+  bool Verify();
+  bool IsVerified() const;
+  bool IsSignedByFromAddress() const;
+  /// @}
+
+  // Operators
+  Transaction &operator=(Transaction const &) = default;
+  Transaction &operator=(Transaction &&) = default;
+
+private:
+  /// @name Payload
+  /// @{
+  Address        from_{};                                    ///< The sender of the TX
+  Transfers      transfers_{};                               ///< The list of the transfers
+  BlockIndex     valid_from_{0};                             ///< Min. block number before valid
+  BlockIndex     valid_until_{0};                            ///< Max. block number before invalid
+  TokenAmount    charge_{0};                                 ///< The charge rate for the TX
+  TokenAmount    charge_limit_{0};                           ///< The maximum charge to be used
+  ContractMode   contract_mode_{ContractMode::NOT_PRESENT};  ///< The payload being contained
+  Address        contract_digest_{};                         ///< The digest of the smart contract
+  Address        contract_address_{};                        ///< The address of the smart contract
+  ConstByteArray chain_code_{};                              ///< The name of the chain code
+  BitVector      shard_mask_{};                              ///< Shard mask of addition depends
+  ConstByteArray action_{};                                  ///< The name of the action invoked
+  ConstByteArray data_{};                                    ///< The payload of the transaction
+  Signatories    signatories_{};                             ///< The signatories for this tx
+  /// @}
+
+  /// @name Metadata
+  /// @{
+  Digest digest_{};                       ///< The digest of the transaction
+  bool   verification_completed_{false};  ///< Signal that the verification has been done
+  bool   verified_{false};                ///< The cached result of the verification
+  /// @}
+
+  // There are only two ways to generate a transaction, each from one of the two companion classes:
+  friend class TransactionBuilder;
+  friend class TransactionSerializer;
 };
 
-class VerifiedTransaction : public UnverifiedTransaction
+/**
+ * Get the digest of the transaction
+ *
+ * @return The computed transaction
+ */
+inline Digest const &Transaction::digest() const
 {
-public:
-  using super_type = UnverifiedTransaction;
-  using super_type::Hasher;
-  using super_type::TxDigest;
-  using super_type::ResourceSet;
+  return digest_;
+}
 
-  static VerifiedTransaction Create(fetch::ledger::MutableTransaction &&trans)
+/**
+ * Get the sender address for the transaction
+ *
+ * @return The sender address
+ */
+inline Address const &Transaction::from() const
+{
+  return from_;
+}
+
+/**
+ * Get the list of transfers for this transaction
+ *
+ * @return The transfer list
+ */
+inline Transaction::Transfers const &Transaction::transfers() const
+{
+  return transfers_;
+}
+
+/**
+ * Get the block index from which this transaction becomes valid
+ *
+ * @return The "valid from" block index
+ */
+inline Transaction::BlockIndex Transaction::valid_from() const
+{
+  return valid_from_;
+}
+
+/**
+ * Get the block index from which this transaction becomes invalid
+ *
+ * @return The "valid until" block index
+ */
+inline Transaction::BlockIndex Transaction::valid_until() const
+{
+  return valid_until_;
+}
+
+/**
+ * Determines the validity of the transaction based on a block index
+ *
+ * @param block_index The block index being tested
+ * @return The validity status for the specified block
+ */
+inline Transaction::Validity Transaction::GetValidity(BlockIndex block_index) const
+{
+  Validity validity{Validity::INVALID};
+
+  if (block_index < valid_until_)
   {
-    return VerifiedTransaction::Create(trans);
-  }
+    validity = Validity::VALID;
 
-  static VerifiedTransaction Create(fetch::ledger::MutableTransaction const &trans,
-                                    bool *                                   status = nullptr)
-  {
-    VerifiedTransaction ret;
-
-    // TODO(private issue #189)
-    bool const success = ret.Finalise(trans);
-    if (status)
+    if (valid_from_ && (valid_from_ > block_index))
     {
-      *status = success;
+      validity = Validity::PENDING;
     }
-
-    return ret;
   }
 
-  static VerifiedTransaction Create(UnverifiedTransaction &&trans)
-  {
-    return VerifiedTransaction::Create(trans);
-  }
+  return validity;
+}
 
-  static VerifiedTransaction Create(UnverifiedTransaction const &trans)
-  {
-    VerifiedTransaction ret;
-    // TODO(private issue #189)
-    ret.Finalise(trans);
-    return ret;
-  }
+/**
+ * Return the charge associated with the transaction
+ *
+ * @return The charge amount
+ */
+inline Transaction::TokenAmount Transaction::charge() const
+{
+  return charge_;
+}
 
-protected:
-  using super_type::operator=;
+/**
+ * Get the charge limit associated with the transaction
+ *
+ * @return The charge limit
+ */
+inline Transaction::TokenAmount Transaction::charge_limit() const
+{
+  return charge_limit_;
+}
 
-  bool Finalise(fetch::ledger::MutableTransaction const &base)
-  {
-    *this = base;
-    UpdateDigest();
-    return Verify();
-  }
+/**
+ * Get the contract mode for this transaction
+ *
+ * @return The transaction mode
+ */
+inline Transaction::ContractMode Transaction::contract_mode() const
+{
+  return contract_mode_;
+}
 
-  bool Finalise(UnverifiedTransaction const &base)
-  {
-    *this = base;
-    UpdateDigest();
-    return Verify();
-  }
+/**
+ * Get the contract digest for this smart contract transaction
+ *
+ * @return The contract digest
+ */
+inline Address const &Transaction::contract_digest() const
+{
+  return contract_digest_;
+}
 
-  template <typename T>
-  friend void Serialize(T &serializer, VerifiedTransaction const &b);
+/**
+ * Get the contract address for this smart contract transaction
+ *
+ * @return The contract address
+ */
+inline Address const &Transaction::contract_address() const
+{
+  return contract_address_;
+}
 
-  template <typename T>
-  friend void Deserialize(T &serializer, VerifiedTransaction &b);
-};
+/**
+ * Get the chain code identifier for this chain code transaction
+ *
+ * @return The chain code identifier
+ */
+inline Transaction::ConstByteArray const &Transaction::chain_code() const
+{
+  return chain_code_;
+}
 
-using Transaction = VerifiedTransaction;
+/**
+ * Get the action being invoked in this transaction
+ *
+ * @return The action name
+ */
+inline Transaction::ConstByteArray const &Transaction::action() const
+{
+  return action_;
+}
+
+/**
+ * Get the shard mask associated with this transaction
+ *
+ * @return The shard mask
+ */
+inline BitVector const &Transaction::shard_mask() const
+{
+  return shard_mask_;
+}
+
+/**
+ * Get the data payload associated with this transaction
+ *
+ * @return The data bytes
+ */
+inline Transaction::ConstByteArray const &Transaction::data() const
+{
+  return data_;
+}
+
+/**
+ * Get the array of signatories associated with this transaction
+ *
+ * @return The signatories
+ */
+inline Transaction::Signatories const &Transaction::signatories() const
+{
+  return signatories_;
+}
+
+/**
+ * Check to see if this transaction is verified
+ *
+ * @return True if the transaction is verified, otherwise false
+ */
+inline bool Transaction::IsVerified() const
+{
+  return verified_;
+}
 
 }  // namespace ledger
 }  // namespace fetch
