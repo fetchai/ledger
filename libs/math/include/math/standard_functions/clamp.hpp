@@ -74,7 +74,7 @@ meta::IfIsMathArray<ArrayType, ArrayType> Clamp(ArrayType const &               
   auto      ret_it = ret.begin();
   for (auto &e : array)
   {
-    Clamp(e, min, max, ret_it);
+    Clamp(e, min, max, *ret_it);
     ++ret_it;
   }
   return ret;
