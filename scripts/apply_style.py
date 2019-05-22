@@ -257,7 +257,7 @@ def format_python(args):
     autopep8_cmd = ['autopep8', '.', '--in-place', '--recursive',
                     '--exclude', 'vendor'] + jobs_arg
 
-    subprocess.call(autopep8_cmd, cwd=PROJECT_ROOT)
+    subprocess.check_call(autopep8_cmd, cwd=PROJECT_ROOT)
 
 
 def get_diff():
