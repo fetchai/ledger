@@ -415,14 +415,14 @@ void Generator::HandleWhileStatement(IRBlockNodePtr const &block_node)
   function_->instructions[jf_pc].index = endwhile_pc;
   Loop &loop                           = loops_.back();
 
-  for (auto const &jump_pc : loop.continue_pcs)
+  for (auto const &jump_pc_here : loop.continue_pcs)
   {
-    function_->instructions[jump_pc].index = continue_pc;
+    function_->instructions[jump_pc_here].index = continue_pc;
   }
 
-  for (auto const &jump_pc : loop.break_pcs)
+  for (auto const &jump_pc_here : loop.break_pcs)
   {
-    function_->instructions[jump_pc].index = endwhile_pc;
+    function_->instructions[jump_pc_here].index = endwhile_pc;
   }
 
   loops_.pop_back();
@@ -487,14 +487,14 @@ void Generator::HandleForStatement(IRBlockNodePtr const &block_node)
 
   Loop &loop = loops_.back();
 
-  for (auto jump_pc : loop.continue_pcs)
+  for (auto jump_pc_here : loop.continue_pcs)
   {
-    function_->instructions[jump_pc].index = iterate_pc;
+    function_->instructions[jump_pc_here].index = iterate_pc;
   }
 
-  for (auto jump_pc : loop.break_pcs)
+  for (auto jump_pc_here : loop.break_pcs)
   {
-    function_->instructions[jump_pc].index = terminate_pc;
+    function_->instructions[jump_pc_here].index = terminate_pc;
   }
 
   function_->instructions[iterate_pc].index = terminate_pc;

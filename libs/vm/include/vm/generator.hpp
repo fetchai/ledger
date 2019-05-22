@@ -153,10 +153,10 @@ struct Executable
       num_parameters = num_parameters__;
       return_type_id = return_type_id__;
     }
-    uint16_t AddVariable(std::string const &name, TypeId type_id, uint16_t scope_number)
+    uint16_t AddVariable(std::string const &name_here, TypeId type_id, uint16_t scope_number)
     {
       uint16_t const index = uint16_t(num_variables++);
-      variables.push_back(Variable(name, type_id, scope_number));
+      variables.push_back(Variable(name_here, type_id, scope_number));
       return index;
     }
     uint16_t AddInstruction(Instruction const &instruction)
@@ -203,9 +203,9 @@ struct Executable
     return index;
   }
 
-  Function const *FindFunction(std::string const &name) const
+  Function const *FindFunction(std::string const &name_here) const
   {
-    auto it = function_map.find(name);
+    auto it = function_map.find(name_here);
     if (it != function_map.end())
     {
       return &(functions[it->second]);

@@ -225,7 +225,6 @@ TYPED_TEST(FreeFunctionsTest, Max_OneDimension)
 
 TYPED_TEST(FreeFunctionsTest, Max_TwoDimension)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};
@@ -280,7 +279,6 @@ TYPED_TEST(FreeFunctionsTest, Min_OneDimension)
 
 TYPED_TEST(FreeFunctionsTest, Min_TwoDimension)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};
@@ -335,7 +333,6 @@ TYPED_TEST(FreeFunctionsTest, PeakToPeak_OneDimension)
 
 TYPED_TEST(FreeFunctionsTest, PeakToPeak_TwoDimension)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};
@@ -366,7 +363,6 @@ TYPED_TEST(FreeFunctionsTest, PeakToPeak_TwoDimension)
 
 TYPED_TEST(FreeFunctionsTest, Maximum_TwoDimension)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};
@@ -434,7 +430,6 @@ TYPED_TEST(FreeFunctionsTest, ArgMax_OneDimension)
 
 TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};
@@ -460,7 +455,6 @@ TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension)
 
 TYPED_TEST(FreeFunctionsTest, ArgMax_TwoDimension_off_axis)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};
@@ -507,7 +501,6 @@ TYPED_TEST(FreeFunctionsTest, Sum_OneDimension)
 
 TYPED_TEST(FreeFunctionsTest, ReduceSum_axis_0)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};
@@ -532,7 +525,6 @@ TYPED_TEST(FreeFunctionsTest, ReduceSum_axis_0)
 
 TYPED_TEST(FreeFunctionsTest, ReduceSum_axis_1)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};
@@ -558,7 +550,6 @@ TYPED_TEST(FreeFunctionsTest, ReduceSum_axis_1)
 
 TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_0)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};
@@ -583,7 +574,6 @@ TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_0)
 
 TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_1)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{4};
@@ -609,7 +599,6 @@ TYPED_TEST(FreeFunctionsTest, ReduceMean_axis_1)
 
 TYPED_TEST(FreeFunctionsTest, Dot)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType matrix_one_width{3};
@@ -657,7 +646,6 @@ TYPED_TEST(FreeFunctionsTest, Dot)
 
 TYPED_TEST(FreeFunctionsTest, DotTranspose)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType matrix_one_width{3};
@@ -705,7 +693,6 @@ TYPED_TEST(FreeFunctionsTest, DotTranspose)
 
 TYPED_TEST(FreeFunctionsTest, TransposeDot)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType matrix_one_width{2};
@@ -753,7 +740,6 @@ TYPED_TEST(FreeFunctionsTest, TransposeDot)
 
 TYPED_TEST(FreeFunctionsTest, DynamicStitch)
 {
-  using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
   SizeType  n_data{6};

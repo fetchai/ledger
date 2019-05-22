@@ -135,13 +135,13 @@ struct KeyValuePair
     return true;
   }
 
-  bool UpdateNode(KeyValuePair const &left, KeyValuePair const &right)
+  bool UpdateNode(KeyValuePair const &left_here, KeyValuePair const &right_here)
   {
     HashFunction hasher;
     hasher.Reset();
 
-    hasher.Update(left.hash, N);
-    hasher.Update(right.hash, N);
+    hasher.Update(left_here.hash, N);
+    hasher.Update(right_here.hash, N);
     hasher.Final(hash, N);
 
     return true;
