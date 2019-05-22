@@ -34,7 +34,7 @@ namespace ml {
  * The full graph on which to run the computation
  */
 template <class T>
-class Graph : public ops::Trainable<T>
+class Graph
 {
 public:
   using ArrayType          = T;
@@ -63,6 +63,12 @@ public:
 
   virtual struct fetch::ml::StateDict<ArrayType> StateDict() const;
   virtual void LoadStateDict(struct fetch::ml::StateDict<T> const &dict);
+
+  std::vector<ArrayType> GetWeights() const;
+  std::vector<ArrayType> GetGradients() const;
+  void                   ApplyGradients(std::vector<ArrayType> &grad);
+
+  void ResetGradients();
 
 private:
   /**
@@ -282,6 +288,58 @@ void Graph<ArrayType>::LoadStateDict(struct fetch::ml::StateDict<ArrayType> cons
   for (auto const &t : trainable_)
   {
     t.second->LoadStateDict(dict.dict_.at(t.first));
+  }
+}
+
+/**
+ * Assigns all trainable parameters to vector of ArrayType for exporting and serialising
+ * @return ret is vector containing all weights values
+ */
+template <typename ArrayType>
+std::vector<ArrayType> Graph<ArrayType>::GetWeights() const
+{
+  std::vector<ArrayType> ret;
+
+  for (auto const &t : trainable_)
+  {
+    ret.push_back(t.second->GetWeights());
+  }
+  return ret;
+}
+
+/**
+ * Assigns all trainable parameters to vector of ArrayType for exporting and serialising
+ * @return ret is vector containing all weights values
+ */
+template <typename ArrayType>
+std::vector<ArrayType> Graph<ArrayType>::GetGradients() const
+{
+  std::vector<ArrayType> ret;
+
+  for (auto const &t : trainable_)
+  {
+    ret.push_back(t.second->Gradients());
+  }
+  return ret;
+}
+
+template <typename ArrayType>
+void Graph<ArrayType>::ResetGradients()
+{
+  for (auto const &t : trainable_)
+  {
+    t.second->ResetGradients();
+  }
+}
+
+template <typename ArrayType>
+void Graph<ArrayType>::ApplyGradients(std::vector<ArrayType> &grad)
+{
+  typename ArrayType::SizeType i = 0;
+  for (auto const &t : trainable_)
+  {
+    t.second->ApplyGradient(grad.at(i));
+    i++;
   }
 }
 

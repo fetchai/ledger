@@ -180,30 +180,26 @@ TYPED_TEST(GraphTest,
 
 TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1^2)
 {
-  using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
+  //  using SizeType  = typename TypeParam::SizeType;
   using ArrayType = TypeParam;
 
   // Generate input
   ArrayType data1        = ArrayType::FromString("-1,0,1,2,3,4");
   ArrayType data2        = ArrayType::FromString("-20,-10, 0, 10, 20, 30");
   ArrayType error_signal = ArrayType::FromString("-1,0,1,2,3,4");
-  ArrayType gt           = ArrayType::FromString(R"(
-     20,        -0,          0,        20,          60,        120;
-     1,          0,          1,         4,           9,         16;
-    -1,         -0,         -1,        -4,          -9,        -16;
-    -1,         -0,         -1,        -4,          -9,        -16
-  )");
+  ArrayType grad1        = ArrayType::FromString("1,  0,  1,  4,  9, 16");
+  ArrayType grad2        = ArrayType::FromString("18, 0, -2, 12, 42, 88");
 
   // Create graph
   std::string                 name = "Diamond";
   fetch::ml::Graph<TypeParam> g;
 
   std::string input_name1 =
-      g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input1", {});
+      g.template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Input1", {});
 
   std::string input_name2 =
-      g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input2", {});
+      g.template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Input2", {});
 
   std::string op1_name = g.template AddNode<fetch::ml::ops::Multiply<ArrayType>>(
       name + "_Op1", {input_name1, input_name1});
@@ -218,50 +214,96 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
   g.SetInput(input_name2, data2);
   TypeParam output = g.Evaluate("Diamond_Op3");
 
-  // Get gradient
-  auto gradients = g.BackPropagate(output_name, error_signal);
+  // Calculate Gradient
+  g.BackPropagate(output_name, error_signal);
 
-  ArrayType grad(gt.shape());
+  // Test gradient
+  std::vector<TypeParam> gradients = g.GetGradients();
+  EXPECT_EQ(gradients.size(), 2);
+  ASSERT_TRUE(
+      gradients[0].AllClose(grad1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+  ASSERT_TRUE(
+      gradients[1].AllClose(grad2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 
-  for (SizeType i{0}; i < gradients.size(); i++)
-  {
-    for (SizeType j{0}; j < gradients.at(i).second.size(); j++)
-    {
-      grad(i, j) = gradients.at(i).second.At(0, j);
-    }
-  }
-
-  ASSERT_EQ(grad.shape(), gt.shape());
-  ASSERT_TRUE(grad.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+  // Test Weights
+  std::vector<TypeParam> weights = g.GetWeights();
+  EXPECT_EQ(weights.size(), 2);
+  ASSERT_TRUE(
+      weights[0].AllClose(data2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+  ASSERT_TRUE(
+      weights[1].AllClose(data1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 
   // Change data2
   data2        = ArrayType::FromString("-2, -1, 0, 1, 2, 3");
   error_signal = ArrayType::FromString("-0.1,0,0.1,0.2,0.3,0.4");
-  gt           = ArrayType::FromString(R"(
-     0.2,         -0,          0,           0.2,           0.6,         1.2;
-     0.1,          0,          0.1,         0.4,           0.9,         1.6;
-    -0.1,         -0,         -0.1,        -0.4,          -0.9,        -1.6;
-    -0.1,         -0,         -0.1,        -0.4,          -0.9,        -1.6
-  )");
+  grad1        = ArrayType::FromString("0.1,0,0.1,0.4,0.9,1.6");
+  grad2        = ArrayType::FromString("0,0,-0.2,-0.6,-1.2,-2.0");
 
   g.SetInput(input_name2, data2);
+
+  // Apply gradient;
+  // g.ApplyGradients(gradients);
+  g.ResetGradients();
 
   // Recompute graph
   output = g.Evaluate("Diamond_Op3");
 
-  // Get gradient
-  auto gradients2 = g.BackPropagate(output_name, error_signal);
+  // Calculate Gradient
+  g.BackPropagate(output_name, error_signal);
 
-  ArrayType grad2(gt.shape());
+  // Test gradient
+  std::vector<TypeParam> gradients2 = g.GetGradients();
+  EXPECT_EQ(gradients2.size(), 2);
+  ASSERT_TRUE(
+      gradients2[0].AllClose(grad1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+  ASSERT_TRUE(
+      gradients2[1].AllClose(grad2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 
-  for (SizeType i{0}; i < gradients2.size(); i++)
-  {
-    for (SizeType j{0}; j < gradients2.at(i).second.size(); j++)
-    {
-      grad2(i, j) = gradients2.at(i).second.At(0, j);
-    }
-  }
+  // Test Weights
+  std::vector<TypeParam> weights2 = g.GetWeights();
+  EXPECT_EQ(weights2.size(), 2);
+  ASSERT_TRUE(
+      weights2[0].AllClose(data2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+  ASSERT_TRUE(
+      weights2[1].AllClose(data1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+}
 
-  ASSERT_EQ(grad2.shape(), gt.shape());
-  ASSERT_TRUE(grad2.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+TYPED_TEST(GraphTest, diamond_graph_getStateDict)
+{
+  using DataType = typename TypeParam::Type;
+  //    using SizeType  = typename TypeParam::SizeType;
+  using ArrayType = TypeParam;
+
+  // Generate input
+  ArrayType data1 = ArrayType::FromString("-1,0,1,2,3,4");
+  ArrayType data2 = ArrayType::FromString("-20,-10, 0, 10, 20, 30");
+
+  // Create graph
+  std::string                 name = "Diamond";
+  fetch::ml::Graph<TypeParam> g;
+
+  std::string input_name1 =
+      g.template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weight1", {});
+
+  std::string input_name2 =
+      g.template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weight2", {});
+
+  std::string op1_name = g.template AddNode<fetch::ml::ops::Multiply<ArrayType>>(
+      name + "_Op1", {input_name1, input_name1});
+  std::string op2_name = g.template AddNode<fetch::ml::ops::Multiply<ArrayType>>(
+      name + "_Op2", {input_name1, input_name2});
+
+  std::string output_name =
+      g.template AddNode<fetch::ml::ops::Subtract<ArrayType>>(name + "_Op3", {op2_name, op1_name});
+
+  g.SetInput(input_name1, data1);
+  g.SetInput(input_name2, data2);
+
+  std::vector<TypeParam> weights = g.GetWeights();
+
+  EXPECT_EQ(weights.size(), 2);
+  ASSERT_TRUE(
+      weights[0].AllClose(data2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
+  ASSERT_TRUE(
+      weights[1].AllClose(data1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 }
