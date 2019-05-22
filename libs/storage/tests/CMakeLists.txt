@@ -11,4 +11,4 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 add_fetch_test(fetch_storage_tests fetch-storage tests SLOW)
-add_fetch_test(fetch_selective_storage_tests fetch-storage selective_test)
+add_fetch_test(fetch_selective_storage_tests fetch-storage selective_test SLOW)

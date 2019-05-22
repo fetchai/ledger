@@ -29,6 +29,7 @@
 #include <iostream>
 #include <stack>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 using namespace fetch;
@@ -114,7 +115,7 @@ TEST(new_revertible_store_test, basic_example_of_commit_revert1)
   }
 }
 
-TEST(DISABLED_new_revertible_store_test, more_involved_commit_revert)
+TEST(new_revertible_store_test, more_involved_commit_revert)
 {
   NewRevertibleDocumentStore store;
   store.New("a_12.db", "b_12.db", "c_12.db", "d_12.db", true);
@@ -230,5 +231,100 @@ TEST(new_revertible_store_test, basic_example_of_commit_revert_with_load)
       EXPECT_EQ(document.failed, false);
       EXPECT_EQ(ConstByteArray(document), ByteArray(std::to_string(i)));
     }
+  }
+}
+
+TEST(new_revertible_store_test, erase_functionality_works)
+{
+  NewRevertibleDocumentStore store;
+  store.New("a_44.db", "b_44.db", "c_44.db", "d_44.db", true);
+
+  auto unique_hashes = GenerateUniqueHashes(1000);
+
+  std::size_t i = 0;
+  for (auto const &hash : unique_hashes)
+  {
+    std::string set_me{std::to_string(i)};
+    auto rid = storage::ResourceID(hash);
+    store.Set(rid, set_me);
+    ASSERT_EQ(store.size(), 1);
+
+    store.Erase(rid);
+    ASSERT_EQ(store.size(), 0);
+    ASSERT_EQ(store.Get(rid).failed, true);
+    ++i;
+  }
+}
+
+TEST(new_revertible_store_test, erase_functionality_works_at_scale)
+{
+  NewRevertibleDocumentStore store;
+  store.New("a_44.db", "b_44.db", "c_44.db", "d_44.db", true);
+
+  auto unique_hashes = GenerateUniqueHashes(1000);
+
+  std::size_t i             = 0;
+  std::size_t expected_size = 0;
+  for (auto const &hash : unique_hashes)
+  {
+    std::string set_me{std::to_string(i)};
+    auto rid = storage::ResourceID(hash);
+    store.Set(rid, set_me);
+
+    if(i % 2)
+    {
+      //std::cerr << "Insert!" << std::endl; // DELETEME_NH
+      expected_size++;
+      ASSERT_EQ(store.size(), expected_size);
+      ASSERT_EQ(store.Get(rid).failed, false);
+      ASSERT_EQ(std::string{store.Get(rid).document}, std::to_string(i));
+    }
+    else
+    {
+      //std::cerr << "Erase!" << std::endl; // DELETEME_NH
+      store.Erase(rid);
+      ASSERT_EQ(store.Get(rid).failed, true);
+    }
+    ++i;
+  }
+}
+
+TEST(new_revertible_store_test, more_commit_revert_and_erase)
+{
+  NewRevertibleDocumentStore store;
+  store.New("a_55.db", "b_55.db", "c_55.db", "d_55.db", true);
+
+  // Our keys will be selected to be very close to each other
+  auto unique_hashes = GenerateUniqueHashes(1000);
+  std::unordered_map<storage::ResourceID, std::string> expected_in_store;
+
+  // Make some changes to the store
+  std::size_t i = 0;
+  for (auto const &hash : unique_hashes)
+  {
+    std::string set_me{std::to_string(i)};
+    auto rid = storage::ResourceID(hash);
+    store.Set(rid, set_me);
+    expected_in_store[rid] = set_me;
+    ASSERT_EQ(store.size(), i + 1);
+    ASSERT_EQ(store.size(), expected_in_store.size());
+    ++i;
+  }
+
+  int stopme = 0;
+
+  // Erase the elements
+  for (auto it = expected_in_store.begin();it != expected_in_store.end();)
+  {
+    stopme++;
+    auto aa = it->first;
+    auto bb = it->second;
+
+    FETCH_UNUSED(aa);
+    FETCH_UNUSED(bb);
+
+    store.Erase(it->first);
+    it = expected_in_store.erase(it);
+    ASSERT_EQ(store.size(), expected_in_store.size());
   }
 }

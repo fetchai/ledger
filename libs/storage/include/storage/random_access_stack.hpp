@@ -226,6 +226,15 @@ public:
   void Get(std::size_t const &i, type &object) const
   {
     assert(filename_ != "");
+
+    if(!(i < size()))
+    {
+        if(i == 0) {
+            std::cerr << "bad things" << std::endl; // DELETEME_NH
+        }
+
+    }
+
     assert(i < size());
 
     int64_t n = int64_t(i * sizeof(type) + header_.size());
