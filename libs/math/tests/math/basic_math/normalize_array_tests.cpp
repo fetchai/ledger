@@ -37,8 +37,8 @@ TYPED_TEST_CASE(DistanceTest, MyTypes);
 
 TYPED_TEST(DistanceTest, conditional_distance)
 {
-  using DataType     = typename TypeParam::Type;
-  using ArrayType    = TypeParam;
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
 
   ArrayType A = ArrayType({4});
 

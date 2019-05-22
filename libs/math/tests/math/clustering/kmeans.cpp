@@ -30,16 +30,16 @@
 
 using namespace fetch::math;
 
-using DataType     = std::int64_t;
-using ArrayType    = Tensor<DataType>;
+using DataType  = std::int64_t;
+using ArrayType = Tensor<DataType>;
 
 using ClusteringType = fetch::math::clustering::ClusteringType;
 
 TEST(clustering_test, kmeans_test_2d_4k)
 {
-  ArrayType    A({100, 2});
-  ArrayType    ret({100, 1});
-  SizeType K = 4;
+  ArrayType A({100, 2});
+  ArrayType ret({100, 1});
+  SizeType  K = 4;
 
   for (SizeType i = 0; i < 25; ++i)
   {
@@ -62,7 +62,7 @@ TEST(clustering_test, kmeans_test_2d_4k)
     A.Set(SizeType{i}, SizeType{1}, static_cast<DataType>(i) + 50);
   }
 
-  SizeType   random_seed = 123456;
+  SizeType       random_seed = 123456;
   ClusteringType clusters    = fetch::math::clustering::KMeans(A, random_seed, K);
 
   SizeType group_0 = static_cast<SizeType>(clusters[0]);
@@ -91,7 +91,7 @@ TEST(clustering_test, kmeans_test_previous_assignment)
 {
   SizeType n_points = 50;
 
-  SizeType   K = 2;
+  SizeType       K = 2;
   ArrayType      A({n_points, 2});
   ClusteringType prev_k{n_points};
   ArrayType      ret(std::vector<SizeType>({n_points, 1}));
@@ -124,7 +124,7 @@ TEST(clustering_test, kmeans_test_previous_assignment)
     prev_k.Set(i, -1);
   }
 
-  SizeType   random_seed = 123456;
+  SizeType       random_seed = 123456;
   ClusteringType clusters    = fetch::math::clustering::KMeans(A, random_seed, K, prev_k);
 
   SizeType group_0 = static_cast<SizeType>(clusters[0]);
@@ -177,7 +177,7 @@ TEST(clustering_test, kmeans_simple_previous_assignment_no_K)
     prev_k.Set(i, -1);
   }
 
-  SizeType                            random_seed = 123456;
+  SizeType                                random_seed = 123456;
   fetch::math::clustering::KInferenceMode k_inference_mode =
       fetch::math::clustering::KInferenceMode::NClusters;
   ClusteringType clusters =
@@ -266,7 +266,7 @@ TEST(clustering_test, kmeans_remap_previous_assignment_no_K)
     prev_k.Set(i, no_group);
   }
 
-  SizeType                            random_seed = 123456;
+  SizeType                                random_seed = 123456;
   fetch::math::clustering::KInferenceMode k_inference_mode =
       fetch::math::clustering::KInferenceMode::NClusters;
   ClusteringType clusters =

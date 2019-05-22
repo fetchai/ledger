@@ -38,8 +38,8 @@ TYPED_TEST_CASE(EntropyTest, MyTypes);
 
 TYPED_TEST(EntropyTest, entropy)
 {
-  using DataType     = typename TypeParam::Type;
-  using ArrayType    = TypeParam;
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
 
   ArrayType A(4);
 

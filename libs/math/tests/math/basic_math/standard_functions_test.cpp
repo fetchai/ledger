@@ -37,8 +37,8 @@ TYPED_TEST_CASE(ClampTest, MyTypes);
 
 TYPED_TEST(ClampTest, clamp_array_test)
 {
-  using DataType     = typename TypeParam::Type;
-  using ArrayType    = TypeParam;
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
 
   ArrayType A = ArrayType({6});
 

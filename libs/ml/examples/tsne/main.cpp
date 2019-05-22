@@ -29,8 +29,8 @@
 using namespace fetch::math;
 using namespace fetch::ml;
 
-using DataType     = double;
-using ArrayType    = Tensor<DataType>;
+using DataType  = double;
+using ArrayType = Tensor<DataType>;
 
 #include <math/tensor.hpp>
 #include <sstream>
@@ -70,12 +70,12 @@ int main(int ac, char **av)
 {
   SizeType SUBSET_SIZE                  = 100;
   SizeType RANDOM_SEED                  = 123456;
-  DataType     LEARNING_RATE                = 500;
+  DataType LEARNING_RATE                = 500;
   SizeType MAX_ITERATIONS               = 100;
-  DataType     PERPLEXITY                   = 20;
+  DataType PERPLEXITY                   = 20;
   SizeType N_OUTPUT_FEATURE_SIZE        = 2;
-  DataType     INITIAL_MOMENTUM             = 0.5;
-  DataType     FINAL_MOMENTUM               = 0.8;
+  DataType INITIAL_MOMENTUM             = 0.5;
+  DataType FINAL_MOMENTUM               = 0.8;
   SizeType FINAL_MOMENTUM_STEPS         = 20;
   SizeType P_LATER_CORRECTION_ITERATION = 10;
 

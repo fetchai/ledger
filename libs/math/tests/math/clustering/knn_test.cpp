@@ -37,8 +37,8 @@ TYPED_TEST_CASE(ClusteringTest, MyTypes);
 
 TYPED_TEST(ClusteringTest, knn_euclidean_test)
 {
-  using DataType     = typename TypeParam::Type;
-  using ArrayType    = TypeParam;
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
 
   ArrayType A = ArrayType({4, 4});
 
@@ -84,8 +84,8 @@ TYPED_TEST(ClusteringTest, knn_euclidean_test)
 
 TYPED_TEST(ClusteringTest, knn_cosine_test)
 {
-  using DataType     = typename TypeParam::Type;
-  using ArrayType    = TypeParam;
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
 
   ArrayType A = ArrayType({4, 4});
 

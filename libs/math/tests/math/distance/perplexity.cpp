@@ -38,8 +38,8 @@ TYPED_TEST_CASE(PerplexityTest, MyTypes);
 
 TYPED_TEST(PerplexityTest, entropy)
 {
-  using DataType     = typename TypeParam::Type;
-  using ArrayType    = TypeParam;
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
 
   ArrayType A(4);
 

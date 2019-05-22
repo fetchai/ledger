@@ -39,8 +39,8 @@ TYPED_TEST_CASE(DistanceTest, MyTypes);
 TYPED_TEST(DistanceTest, cosine_distance)
 {
 
-  using DataType     = typename TypeParam::Type;
-  using ArrayType    = TypeParam;
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
 
   ArrayType A = ArrayType({1, 4});
   A.Set(SizeType{0}, SizeType{0}, DataType(1));
