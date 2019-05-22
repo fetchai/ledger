@@ -128,7 +128,7 @@ public:
   {
     return this->Backward(inputs, error_signal);
 
-    // TODO (XXXXX) - why is there all this dead code?
+    // TODO (1048) - deal with the following dead code
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape()[0] == error_signal.shape()[0]);
     std::vector<std::vector<ArrayType>> results;
