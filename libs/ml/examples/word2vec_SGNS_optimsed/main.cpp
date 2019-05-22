@@ -31,14 +31,8 @@
 #define TRAINING_WORDS 17000000
 
 // TODO: vocab size should be 71291 - compare vocab parsing
-// TODO: implement down sampling frequent words - unigram table
-//
-
-// TODO: batch training
-// TODO: if the dataloader data_ array is different in size from the number of words in the data
-// added, there will be empty 0 values used in training
-
 // TODO: decide whether to include l2 regularisation
+// TODO: batch training
 
 using namespace fetch::ml;
 using DataType     = double;
@@ -75,6 +69,7 @@ struct TrainingParams
   SizeType total_words = TRAINING_WORDS * training_epochs;
 };
 
+
 template <typename ArrayType>
 class DataLoader
 {
@@ -105,17 +100,19 @@ public:
 
   SizeType max_sentence_len_ = 0;
   SizeType min_word_freq_;
+  SizeType max_word_len_;
 
   std::unordered_map<std::string, SizeType> vocab_;              // unique vocab of words
   std::unordered_map<SizeType, SizeType>    vocab_frequencies_;  // the count of each vocab word
 
   DataLoader(SizeType max_sentence_len, SizeType min_word_freq, SizeType max_sentences,
-             SizeType window_size)
+             SizeType window_size, SizeType max_word_len)
     : data_({max_sentence_len, max_sentences})
     , cursor_offset_(window_size)
     , n_positive_cursors_(2 * window_size)
     , max_sentence_len_(max_sentence_len)
     , min_word_freq_(min_word_freq)
+    , max_word_len_(max_word_len)
   {
     for (std::size_t i = 0; i < n_positive_cursors_; ++i)
     {
@@ -125,8 +122,21 @@ public:
     PrepareDynamicWindowProbs();
   }
 
-  void AddData(std::string &text)
+  /**
+   * Read a single text file
+   * @param path
+   * @return
+   */
+  static std::string ReadFile(std::string const &path)
   {
+    std::ifstream t(path);
+    return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+  }
+
+  void AddData(std::string const &filename)
+  {
+    std::string text = ReadFile(filename);
+
     cursor_ = data_.begin();
 
     // replace all tabs with spaces.
@@ -147,6 +157,11 @@ public:
     std::stringstream s(text);
     for (; s >> word;)
     {
+      if (word.length() >= max_word_len_ - 1)
+      {
+        word = word.substr(0, max_word_len_ - 2);
+      }
+
       if (!(cursor_.is_valid()))
       {
         break;
@@ -180,6 +195,11 @@ public:
     SizeType cursor_count = 0;
     for (; s >> word;)
     {
+      if (word.length() >= max_word_len_ - 1)
+      {
+        word = word.substr(0, max_word_len_ - 2);
+      }
+
       if (!(cursor_.is_valid()))
       {
         break;
@@ -200,6 +220,20 @@ public:
     }
 
     // guarantee that data_ is filled with zeroes after the last word added
+
+    // remove uneccesary data rows
+    if (cursor_count < data_.size())
+    {
+      SizeType remaining_idxs = (data_.size() - cursor_count);
+      // if there are unused rows
+      if (remaining_idxs > max_sentence_len_)
+      {
+        SizeType redundant_rows = remaining_idxs / max_sentence_len_;
+        data_.Resize({data_.shape()[0], data_.shape()[1] - redundant_rows}, true);
+      }
+    }
+
+    // ensure final row has zeroes where necessary
     for (std::size_t i = cursor_count; i < data_.size(); ++i)
     {
       assert(data_[i] == 0);
@@ -210,6 +244,9 @@ public:
 
     // build the unigram table for negative sampling
     BuildUnigramTable();
+
+    std::cout << "vocab size: " << vocab_size() << std::endl;
+    std::cout << "words in train file: " << cursor_count << std::endl;
   }
 
   // prune words that are infrequent & sort the words
@@ -230,7 +267,7 @@ public:
     for (auto &word : tmp_vocab)
     {
       auto cur_freq = tmp_vocab_frequencies_.at(word.second);
-      if (cur_freq > min_word_freq_)
+      if (cur_freq >= min_word_freq_)
       {
         // don't prune
         vocab_.emplace(std::make_pair(word.first, vocab_.size()));
@@ -434,17 +471,6 @@ private:
   }
 };
 
-/**
- * Read a single text file
- * @param path
- * @return
- */
-std::string ReadFile(std::string const &path)
-{
-  std::ifstream t(path);
-  return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-}
-
 ////////////////////////
 /// MODEL DEFINITION ///
 ////////////////////////
@@ -454,8 +480,8 @@ class SkipgramModel
 {
   using Type = typename ArrayType::Type;
 
-  bool L2_regularise = true;
-  bool L2_normalise  = true;
+  bool L2_regularise = false;
+  bool L2_normalise  = false;
 
 public:
   ArrayType input_embeddings_;   // embeddings used to encode the input word
@@ -843,10 +869,10 @@ void EvalAnalogy(DataLoader<ArrayType> &dl, SkipgramModel<ArrayType> &model)
 
 int main(int argc, char **argv)
 {
-  std::string training_text;
+  std::string train_file;
   if (argc == 2)
   {
-    training_text = argv[1];
+    train_file = argv[1];
   }
   else
   {
@@ -868,8 +894,7 @@ int main(int argc, char **argv)
                                    tp.window_size);
 
   // load text from files as necessary and process text with dataloader
-  std::string training_text_string = ReadFile(training_text);
-  dataloader.AddData(training_text_string);
+  dataloader.AddData(train_file);
 
   std::cout << "vocab_size: " << dataloader.vocab_size() << std::endl;
 

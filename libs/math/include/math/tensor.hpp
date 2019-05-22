@@ -213,6 +213,7 @@ public:
    */
   bool Reshape(SizeVector const &shape)
   {
+    assert(Tensor::SizeFromShape(shape) == size());
     return Resize(shape, true);
   }
 
@@ -1121,19 +1122,35 @@ bool Tensor<T, C>::Resize(SizeVector const &shape, bool copy)
   UpdateStrides();
 
   // Effectively a reshape
-  if (copy && (size_ == old_tensor.size()))
+  if (copy)
   {
     auto it  = begin();
     auto oit = old_tensor.begin();
-    assert(it.size() == oit.size());
-    while (it.is_valid())
+    if (size_ <= old_tensor.size())
     {
-      *it = *oit;
-      ++it;
-      ++oit;
+      while (it.is_valid())
+      {
+        *it = *oit;
+        ++it;
+        ++oit;
+      }
+    }
+    else
+    {
+      while (oit.is_valid())
+      {
+        *it = *oit;
+        ++it;
+        ++oit;
+      }
     }
     return true;
   }
+  else if (copy && (size_ < old_tensor.size()))
+  {
+
+  }
+
   return false;
 }
 
