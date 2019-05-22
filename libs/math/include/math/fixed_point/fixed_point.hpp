@@ -865,13 +865,7 @@ public:
 
     FixedPoint quadrant = Floor(r / CONST_PI_2);
 
-    std::vector<std::function<FixedPoint(FixedPoint const &x)>> quadrant_funcs;
-    quadrant_funcs.push_back([](FixedPoint const &x) { return SinPi2(x); });
-    quadrant_funcs.push_back([](FixedPoint const &x) { return CosPi2(x); });
-    quadrant_funcs.push_back([](FixedPoint const &x) { return -SinPi2(x); });
-    quadrant_funcs.push_back([](FixedPoint const &x) { return -CosPi2(x); });
-
-    return quadrant_funcs[(size_t)quadrant](r - CONST_PI_2 * quadrant);
+    return SinPi2QuadrantFuncs[(size_t)quadrant](r - CONST_PI_2 * quadrant);
   }
 
   static constexpr FixedPoint Cos(FixedPoint const &x)
@@ -890,18 +884,12 @@ public:
 
     FixedPoint quadrant = Floor(r / CONST_PI_2);
 
-    std::vector<std::function<FixedPoint(FixedPoint const &x)>> quadrant_funcs;
-    quadrant_funcs.push_back([](FixedPoint const &x) { return CosPi2(x); });
-    quadrant_funcs.push_back([](FixedPoint const &x) { return -SinPi2(x); });
-    quadrant_funcs.push_back([](FixedPoint const &x) { return -CosPi2(x); });
-    quadrant_funcs.push_back([](FixedPoint const &x) { return SinPi2(x); });
-
-    return quadrant_funcs[(size_t)quadrant](r - CONST_PI_2 * quadrant);
+    return CosPi2QuadrantFuncs[(size_t)quadrant](r - CONST_PI_2 * quadrant);
   }
 
   static constexpr FixedPoint Tan(FixedPoint const &x)
   {
-    return x;
+    return Sin(x) / Cos(x);
   }
 
   static constexpr FixedPoint Remainder(FixedPoint const &x, FixedPoint const &y)
@@ -949,6 +937,9 @@ public:
 
 private:
   Type data_{0};  // the value to be stored
+
+  static std::function<FixedPoint(FixedPoint const &x)> SinPi2QuadrantFuncs[4];
+  static std::function<FixedPoint(FixedPoint const &x)> CosPi2QuadrantFuncs[4];
 
   // this makes it simpler to create a fixed point object from
   // a native type without scaling
@@ -1034,11 +1025,10 @@ private:
 
     if (r > CONST_PI_4)
     {
-      FixedPoint res = CosPi2(r - CONST_PI_2);
-      return res;
+      return std::move(CosPi2(r - CONST_PI_2));
     }
 
-    return SinApproxPi4(r);
+    return std::move(SinApproxPi4(r));
   }
 
   static constexpr FixedPoint CosPi2(FixedPoint const &r)
@@ -1047,11 +1037,10 @@ private:
 
     if (r > CONST_PI_4)
     {
-      FixedPoint res = SinPi2(CONST_PI_2 - r);
-      return res;
+      return std::move(SinPi2(CONST_PI_2 - r));
     }
 
-    return CosApproxPi4(r);
+    return std::move(CosApproxPi4(r));
   }
 
   static constexpr FixedPoint<16, 16> SinApproxPi4(FixedPoint<16, 16> const &r)
@@ -1118,6 +1107,22 @@ std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
   s.flags(f);
   return s;
 }
+
+template <std::uint16_t I, std::uint16_t F>
+std::function<FixedPoint<I, F>(FixedPoint<I, F> const &x)>
+    FixedPoint<I, F>::SinPi2QuadrantFuncs[4] = {
+        [](FixedPoint<I, F> const &x) { return FixedPoint<I, F>::SinPi2(x); },
+        [](FixedPoint<I, F> const &x) { return FixedPoint<I, F>::CosPi2(x); },
+        [](FixedPoint<I, F> const &x) { return -FixedPoint<I, F>::SinPi2(x); },
+        [](FixedPoint<I, F> const &x) { return -FixedPoint<I, F>::CosPi2(x); }};
+
+template <std::uint16_t I, std::uint16_t F>
+std::function<FixedPoint<I, F>(FixedPoint<I, F> const &x)>
+    FixedPoint<I, F>::CosPi2QuadrantFuncs[4] = {
+        [](FixedPoint<I, F> const &x) { return FixedPoint<I, F>::CosPi2(x); },
+        [](FixedPoint<I, F> const &x) { return -FixedPoint<I, F>::SinPi2(x); },
+        [](FixedPoint<I, F> const &x) { return -FixedPoint<I, F>::CosPi2(x); },
+        [](FixedPoint<I, F> const &x) { return FixedPoint<I, F>::SinPi2(x); }};
 
 template <std::uint16_t I, std::uint16_t F>
 constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::SMALLEST_FRACTION;
