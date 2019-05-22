@@ -29,11 +29,11 @@ template <class T>
 class Embeddings : public fetch::ml::ops::Weights<T>
 {
 public:
-  using ArrayType      = T;
-  using DataType       = typename ArrayType::Type;
-  using ArrayPtrType   = std::shared_ptr<ArrayType>;
-  using SizeType       = typename ArrayType::SizeType;
-  using ConstSliceType = typename ArrayType::ConstSliceType;
+  using ArrayType     = T;
+  using DataType      = typename ArrayType::Type;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using SizeType      = typename ArrayType::SizeType;
+  using VecTensorType = typename Weights<T>::VecTensorType;
 
   Embeddings(SizeType dataPoints, SizeType dimensions)
   {
@@ -49,10 +49,8 @@ public:
 
   virtual ~Embeddings() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    (void)output;
     ASSERT(this->output_);
     ASSERT(inputs.size() == 1);
     ASSERT(
@@ -74,12 +72,11 @@ public:
       tmp.Assign(tmp2);
       j++;
     }
-    return *this->embeddings_output_;
+    output = *this->embeddings_output_;
   }
 
-  virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           errorSignal)
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
   {
     ASSERT(inputs.size() == 1);
     ASSERT(
@@ -91,10 +88,10 @@ public:
     {
       updated_rows_.insert(typename ArrayType::SizeType(double(i)));
       this->gradient_accumulation_->Slice(typename ArrayType::SizeType(double(i)))
-          .Assign(errorSignal.Slice(j));
+          .Assign(error_signal.Slice(j));
       j++;
     }
-    return {ArrayType(errorSignal.shape())};
+    return {ArrayType(error_signal.shape())};
   }
 
   virtual void Step(typename T::Type learning_rate)
