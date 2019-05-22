@@ -40,29 +40,28 @@ TYPED_TEST(DistanceTest, cosine_distance)
 {
 
   using DataType     = typename TypeParam::Type;
-  using SizeTypeHere = typename TypeParam::SizeType;
   using ArrayType    = TypeParam;
 
   ArrayType A = ArrayType({1, 4});
-  A.Set(SizeTypeHere{0}, SizeTypeHere{0}, DataType(1));
-  A.Set(SizeTypeHere{0}, SizeTypeHere{1}, DataType(2));
-  A.Set(SizeTypeHere{0}, SizeTypeHere{2}, DataType(3));
-  A.Set(SizeTypeHere{0}, SizeTypeHere{3}, DataType(4));
+  A.Set(SizeType{0}, SizeType{0}, DataType(1));
+  A.Set(SizeType{0}, SizeType{1}, DataType(2));
+  A.Set(SizeType{0}, SizeType{2}, DataType(3));
+  A.Set(SizeType{0}, SizeType{3}, DataType(4));
 
   ArrayType B = ArrayType({1, 4});
-  B.Set(SizeTypeHere{0}, SizeTypeHere{0}, DataType(-1));
-  B.Set(SizeTypeHere{0}, SizeTypeHere{1}, DataType(-2));
-  B.Set(SizeTypeHere{0}, SizeTypeHere{2}, DataType(-3));
-  B.Set(SizeTypeHere{0}, SizeTypeHere{3}, DataType(-4));
+  B.Set(SizeType{0}, SizeType{0}, DataType(-1));
+  B.Set(SizeType{0}, SizeType{1}, DataType(-2));
+  B.Set(SizeType{0}, SizeType{2}, DataType(-3));
+  B.Set(SizeType{0}, SizeType{3}, DataType(-4));
 
   EXPECT_NEAR(double(Cosine(A, A)), 0, (double)function_tolerance<DataType>());
   EXPECT_NEAR(double(Cosine(A, B)), 2, (double)function_tolerance<DataType>());
 
   ArrayType C = ArrayType({1, 4});
-  C.Set(SizeTypeHere{0}, SizeTypeHere{0}, DataType(1));
-  C.Set(SizeTypeHere{0}, SizeTypeHere{1}, DataType(2));
-  C.Set(SizeTypeHere{0}, SizeTypeHere{2}, DataType(3));
-  C.Set(SizeTypeHere{0}, SizeTypeHere{3}, DataType(2));
+  C.Set(SizeType{0}, SizeType{0}, DataType(1));
+  C.Set(SizeType{0}, SizeType{1}, DataType(2));
+  C.Set(SizeType{0}, SizeType{2}, DataType(3));
+  C.Set(SizeType{0}, SizeType{3}, DataType(2));
 
   EXPECT_NEAR(double(Cosine(A, C)), double(1.0) - double(0.94672926240625754),
               (double)function_tolerance<DataType>());

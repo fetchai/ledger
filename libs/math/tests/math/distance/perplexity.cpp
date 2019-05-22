@@ -39,15 +39,14 @@ TYPED_TEST_CASE(PerplexityTest, MyTypes);
 TYPED_TEST(PerplexityTest, entropy)
 {
   using DataType     = typename TypeParam::Type;
-  using SizeTypeHere = typename TypeParam::SizeType;
   using ArrayType    = TypeParam;
 
   ArrayType A(4);
 
-  A.Set(SizeTypeHere{0}, DataType(0.1));
-  A.Set(SizeTypeHere{1}, DataType(0.2));
-  A.Set(SizeTypeHere{2}, DataType(0.3));
-  A.Set(SizeTypeHere{3}, DataType(0.4));
+  A.Set(SizeType{0}, DataType(0.1));
+  A.Set(SizeType{1}, DataType(0.2));
+  A.Set(SizeType{2}, DataType(0.3));
+  A.Set(SizeType{3}, DataType(0.4));
 
   EXPECT_NEAR(double(Perplexity(A)), 3.59611546662432, 1e-3);
 }

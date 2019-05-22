@@ -39,30 +39,29 @@ TYPED_TEST(ClampTest, clamp_array_test)
 {
   using DataType     = typename TypeParam::Type;
   using ArrayType    = TypeParam;
-  using SizeTypeHere = typename TypeParam::SizeType;
 
   ArrayType A = ArrayType({6});
 
-  A.Set(SizeTypeHere{0}, DataType(-10));
-  A.Set(SizeTypeHere{1}, DataType(0));
-  A.Set(SizeTypeHere{2}, DataType(1));
-  A.Set(SizeTypeHere{3}, DataType(2));
-  A.Set(SizeTypeHere{4}, DataType(3));
-  A.Set(SizeTypeHere{5}, DataType(10));
+  A.Set(SizeType{0}, DataType(-10));
+  A.Set(SizeType{1}, DataType(0));
+  A.Set(SizeType{2}, DataType(1));
+  A.Set(SizeType{3}, DataType(2));
+  A.Set(SizeType{4}, DataType(3));
+  A.Set(SizeType{5}, DataType(10));
 
   // Expected results
   ArrayType A_clamp_expected = ArrayType({6});
-  A_clamp_expected.Set(SizeTypeHere{0}, DataType(2));
-  A_clamp_expected.Set(SizeTypeHere{1}, DataType(2));
-  A_clamp_expected.Set(SizeTypeHere{2}, DataType(2));
-  A_clamp_expected.Set(SizeTypeHere{3}, DataType(2));
-  A_clamp_expected.Set(SizeTypeHere{4}, DataType(3));
-  A_clamp_expected.Set(SizeTypeHere{5}, DataType(3));
+  A_clamp_expected.Set(SizeType{0}, DataType(2));
+  A_clamp_expected.Set(SizeType{1}, DataType(2));
+  A_clamp_expected.Set(SizeType{2}, DataType(2));
+  A_clamp_expected.Set(SizeType{3}, DataType(2));
+  A_clamp_expected.Set(SizeType{4}, DataType(3));
+  A_clamp_expected.Set(SizeType{5}, DataType(3));
 
   // Compare results with expected results
   ArrayType A_norm = Clamp(A, DataType(2), DataType(3));
 
-  for (SizeTypeHere i{0}; i < A.size(); i++)
+  for (SizeType i{0}; i < A.size(); i++)
   {
     EXPECT_NEAR(double(A_norm.At(i)), double(A_clamp_expected.At(i)), 1e-4);
   }

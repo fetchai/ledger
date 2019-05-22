@@ -27,28 +27,26 @@ using namespace fetch::math::correlation;
 
 TEST(distance_tests, cosine_distance)
 {
-  using SizeTypeHere = typename Tensor<double>::SizeType;
-
   Tensor<double> A = Tensor<double>({1, 4});
-  A.Set(SizeTypeHere{0}, SizeTypeHere{0}, 1);
-  A.Set(SizeTypeHere{0}, SizeTypeHere{1}, 2);
-  A.Set(SizeTypeHere{0}, SizeTypeHere{2}, 3);
-  A.Set(SizeTypeHere{0}, SizeTypeHere{3}, 4);
+  A.Set(SizeType{0}, SizeType{0}, 1);
+  A.Set(SizeType{0}, SizeType{1}, 2);
+  A.Set(SizeType{0}, SizeType{2}, 3);
+  A.Set(SizeType{0}, SizeType{3}, 4);
 
   Tensor<double> B = Tensor<double>({1, 4});
-  B.Set(SizeTypeHere{0}, SizeTypeHere{0}, -1);
-  B.Set(SizeTypeHere{0}, SizeTypeHere{1}, -2);
-  B.Set(SizeTypeHere{0}, SizeTypeHere{2}, -3);
-  B.Set(SizeTypeHere{0}, SizeTypeHere{3}, -4);
+  B.Set(SizeType{0}, SizeType{0}, -1);
+  B.Set(SizeType{0}, SizeType{1}, -2);
+  B.Set(SizeType{0}, SizeType{2}, -3);
+  B.Set(SizeType{0}, SizeType{3}, -4);
 
   ASSERT_EQ(Cosine(A, A), 1);
   ASSERT_EQ(Cosine(A, B), -1);
 
   Tensor<double> C = Tensor<double>({1, 4});
-  C.Set(SizeTypeHere{0}, SizeTypeHere{0}, 1);
-  C.Set(SizeTypeHere{0}, SizeTypeHere{1}, 2);
-  C.Set(SizeTypeHere{0}, SizeTypeHere{2}, 3);
-  C.Set(SizeTypeHere{0}, SizeTypeHere{3}, 2);
+  C.Set(SizeType{0}, SizeType{0}, 1);
+  C.Set(SizeType{0}, SizeType{1}, 2);
+  C.Set(SizeType{0}, SizeType{2}, 3);
+  C.Set(SizeType{0}, SizeType{3}, 2);
 
   EXPECT_NEAR(Cosine(A, C), double(0.94672926240625754), 1e-7);
 }

@@ -39,25 +39,24 @@ TYPED_TEST(DistanceTest, conditional_distance)
 {
   using DataType     = typename TypeParam::Type;
   using ArrayType    = TypeParam;
-  using SizeTypeHere = typename TypeParam::SizeType;
 
   ArrayType A = ArrayType({4});
 
-  A.Set(SizeTypeHere{0}, DataType(1));
-  A.Set(SizeTypeHere{1}, DataType(2));
-  A.Set(SizeTypeHere{2}, DataType(3));
-  A.Set(SizeTypeHere{3}, DataType(4));
+  A.Set(SizeType{0}, DataType(1));
+  A.Set(SizeType{1}, DataType(2));
+  A.Set(SizeType{2}, DataType(3));
+  A.Set(SizeType{3}, DataType(4));
 
   // Expected results
   ArrayType A_norm_expected = ArrayType({4});
-  A_norm_expected.Set(SizeTypeHere{0}, DataType(0.1));
-  A_norm_expected.Set(SizeTypeHere{1}, DataType(0.2));
-  A_norm_expected.Set(SizeTypeHere{2}, DataType(0.3));
-  A_norm_expected.Set(SizeTypeHere{3}, DataType(0.4));
+  A_norm_expected.Set(SizeType{0}, DataType(0.1));
+  A_norm_expected.Set(SizeType{1}, DataType(0.2));
+  A_norm_expected.Set(SizeType{2}, DataType(0.3));
+  A_norm_expected.Set(SizeType{3}, DataType(0.4));
 
   // Compare results with expected results
   ArrayType A_norm = NormalizeArray(A);
-  for (SizeTypeHere i{0}; i < A.size(); i++)
+  for (SizeType i{0}; i < A.size(); i++)
   {
     EXPECT_NEAR(double(A_norm.At(i)), double(A_norm_expected.At(i)), 1e-4);
   }
