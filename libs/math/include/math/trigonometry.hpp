@@ -32,11 +32,11 @@ namespace math {
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> Sin(ArrayType const &x,
+fetch::math::meta::IfIsMathArray<ArrayType, void> Sin(ArrayType const &x,
                                                                    ArrayType &      ret)
 {
   ASSERT(ret.size() == x.size());
-  kernels::Sin<typename ArrayType::Type> s;
+  kernels::Sin s;
   auto                                   x_it = x.cbegin();
   auto                                   rit  = ret.begin();
   while (x_it.is_valid())
@@ -46,28 +46,7 @@ fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> Sin(ArrayType con
     ++rit;
   }
 }
-template <typename ArrayType>
-fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> Sin(ArrayType const &x, ArrayType &ret)
-{
-  using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
-  kernels::Sin<double> s;
-  auto                 x_it = x.cbegin();
-  auto                 rit  = ret.begin();
-  double               casted_x;
-  double               casted_ret;
-  while (x_it.is_valid())
-  {
-    // TODO(800) - native fixed point implementation required - casting to double will not be
-    // allowed
-    casted_x   = double(*x_it);
-    casted_ret = double(*rit);
-    s(casted_x, casted_ret);
-    *rit = Type(casted_ret);
-    ++x_it;
-    ++rit;
-  }
-}
+
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> Sin(ArrayType const &x)
 {
@@ -81,11 +60,11 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> Sin(ArrayType const &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> Cos(ArrayType const &x,
+fetch::math::meta::IfIsMathArray<ArrayType, void> Cos(ArrayType const &x,
                                                                    ArrayType &      ret)
 {
   ASSERT(ret.size() == x.size());
-  kernels::Cos<typename ArrayType::Type> c;
+  kernels::Cos c;
   auto                                   x_it = x.cbegin();
   auto                                   rit  = ret.begin();
   while (x_it.is_valid())
@@ -95,28 +74,7 @@ fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> Cos(ArrayType con
     ++rit;
   }
 }
-template <typename ArrayType>
-fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> Cos(ArrayType const &x, ArrayType &ret)
-{
-  using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
-  kernels::Cos<double> c;
-  auto                 x_it = x.cbegin();
-  auto                 rit  = ret.begin();
-  double               casted_x;
-  double               casted_ret;
-  while (x_it.is_valid())
-  {
-    // TODO(800) - native fixed point implementation required - casting to double will not be
-    // allowed
-    casted_x   = double(*x_it);
-    casted_ret = double(*rit);
-    c(casted_x, casted_ret);
-    *rit = Type(casted_ret);
-    ++x_it;
-    ++rit;
-  }
-}
+
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> Cos(ArrayType const &x)
 {
@@ -130,11 +88,11 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> Cos(ArrayType const &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> Tan(ArrayType const &x,
+fetch::math::meta::IfIsMathArray<ArrayType, void> Tan(ArrayType const &x,
                                                                    ArrayType &      ret)
 {
   ASSERT(ret.size() == x.size());
-  kernels::Tan<typename ArrayType::Type> s;
+  kernels::Tan s;
   auto                                   x_it = x.cbegin();
   auto                                   rit  = ret.begin();
   while (x_it.is_valid())
@@ -144,28 +102,7 @@ fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> Tan(ArrayType con
     ++rit;
   }
 }
-template <typename ArrayType>
-fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> Tan(ArrayType const &x, ArrayType &ret)
-{
-  using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
-  kernels::Tan<double> s;
-  auto                 x_it = x.cbegin();
-  auto                 rit  = ret.begin();
-  double               casted_x;
-  double               casted_ret;
-  while (x_it.is_valid())
-  {
-    // TODO(800) - native fixed point implementation required - casting to double will not be
-    // allowed
-    casted_x   = double(*x_it);
-    casted_ret = double(*rit);
-    s(casted_x, casted_ret);
-    *rit = Type(casted_ret);
-    ++x_it;
-    ++rit;
-  }
-}
+
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> Tan(ArrayType const &x)
 {
@@ -179,11 +116,11 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> Tan(ArrayType const &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> ASin(ArrayType const &x,
+fetch::math::meta::IfIsMathArray<ArrayType, void> ASin(ArrayType const &x,
                                                                     ArrayType &      ret)
 {
   ASSERT(ret.size() == x.size());
-  kernels::ASin<typename ArrayType::Type> s;
+  kernels::ASin s;
   auto                                    x_it = x.cbegin();
   auto                                    rit  = ret.begin();
   while (x_it.is_valid())
@@ -193,28 +130,7 @@ fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> ASin(ArrayType co
     ++rit;
   }
 }
-template <typename ArrayType>
-fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> ASin(ArrayType const &x, ArrayType &ret)
-{
-  using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
-  kernels::ASin<double> s;
-  auto                  x_it = x.cbegin();
-  auto                  rit  = ret.begin();
-  double                casted_x;
-  double                casted_ret;
-  while (x_it.is_valid())
-  {
-    // TODO(800) - native fixed point implementation required - casting to double will not be
-    // allowed
-    casted_x   = double(*x_it);
-    casted_ret = double(*rit);
-    s(casted_x, casted_ret);
-    *rit = Type(casted_ret);
-    ++x_it;
-    ++rit;
-  }
-}
+
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> ASin(ArrayType const &x)
 {
@@ -228,11 +144,11 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> ASin(ArrayType const &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> ACos(ArrayType const &x,
+fetch::math::meta::IfIsMathArray<ArrayType, void> ACos(ArrayType const &x,
                                                                     ArrayType &      ret)
 {
   ASSERT(ret.size() == x.size());
-  kernels::ACos<typename ArrayType::Type> s;
+  kernels::ACos s;
   auto                                    x_it = x.cbegin();
   auto                                    rit  = ret.begin();
   while (x_it.is_valid())
@@ -242,28 +158,7 @@ fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> ACos(ArrayType co
     ++rit;
   }
 }
-template <typename ArrayType>
-fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> ACos(ArrayType const &x, ArrayType &ret)
-{
-  using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
-  kernels::ACos<double> s;
-  auto                  x_it = x.cbegin();
-  auto                  rit  = ret.begin();
-  double                casted_x;
-  double                casted_ret;
-  while (x_it.is_valid())
-  {
-    // TODO(800) - native fixed point implementation required - casting to double will not be
-    // allowed
-    casted_x   = double(*x_it);
-    casted_ret = double(*rit);
-    s(casted_x, casted_ret);
-    *rit = Type(casted_ret);
-    ++x_it;
-    ++rit;
-  }
-}
+
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> ACos(ArrayType const &x)
 {
@@ -277,11 +172,11 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> ACos(ArrayType const &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> ATan(ArrayType const &x,
+fetch::math::meta::IfIsMathArray<ArrayType, void> ATan(ArrayType const &x,
                                                                     ArrayType &      ret)
 {
   ASSERT(ret.size() == x.size());
-  kernels::ATan<typename ArrayType::Type> s;
+  kernels::ATan s;
   auto                                    x_it = x.cbegin();
   auto                                    rit  = ret.begin();
   while (x_it.is_valid())
@@ -291,28 +186,7 @@ fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> ATan(ArrayType co
     ++rit;
   }
 }
-template <typename ArrayType>
-fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> ATan(ArrayType const &x, ArrayType &ret)
-{
-  using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
-  kernels::ATan<double> s;
-  auto                  x_it = x.cbegin();
-  auto                  rit  = ret.begin();
-  double                casted_x;
-  double                casted_ret;
-  while (x_it.is_valid())
-  {
-    // TODO(800) - native fixed point implementation required - casting to double will not be
-    // allowed
-    casted_x   = double(*x_it);
-    casted_ret = double(*rit);
-    s(casted_x, casted_ret);
-    *rit = Type(casted_ret);
-    ++x_it;
-    ++rit;
-  }
-}
+
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> ATan(ArrayType const &x)
 {
@@ -326,11 +200,11 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> ATan(ArrayType const &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> SinH(ArrayType const &x,
+fetch::math::meta::IfIsMathArray<ArrayType, void> SinH(ArrayType const &x,
                                                                     ArrayType &      ret)
 {
   ASSERT(ret.size() == x.size());
-  kernels::SinH<typename ArrayType::Type> s;
+  kernels::SinH s;
   auto                                    x_it = x.cbegin();
   auto                                    rit  = ret.begin();
   while (x_it.is_valid())
@@ -340,28 +214,7 @@ fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> SinH(ArrayType co
     ++rit;
   }
 }
-template <typename ArrayType>
-fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> SinH(ArrayType const &x, ArrayType &ret)
-{
-  using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
-  kernels::SinH<double> s;
-  auto                  x_it = x.cbegin();
-  auto                  rit  = ret.begin();
-  double                casted_x;
-  double                casted_ret;
-  while (x_it.is_valid())
-  {
-    // TODO(800) - native fixed point implementation required - casting to double will not be
-    // allowed
-    casted_x   = double(*x_it);
-    casted_ret = double(*rit);
-    s(casted_x, casted_ret);
-    *rit = Type(casted_ret);
-    ++x_it;
-    ++rit;
-  }
-}
+
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> SinH(ArrayType const &x)
 {
@@ -375,11 +228,11 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> SinH(ArrayType const &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> CosH(ArrayType const &x,
+fetch::math::meta::IfIsMathArray<ArrayType, void> CosH(ArrayType const &x,
                                                                     ArrayType &      ret)
 {
   ASSERT(ret.size() == x.size());
-  kernels::CosH<typename ArrayType::Type> s;
+  kernels::CosH s;
   auto                                    x_it = x.cbegin();
   auto                                    rit  = ret.begin();
   while (x_it.is_valid())
@@ -389,28 +242,7 @@ fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> CosH(ArrayType co
     ++rit;
   }
 }
-template <typename ArrayType>
-fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> CosH(ArrayType const &x, ArrayType &ret)
-{
-  using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
-  kernels::CosH<double> s;
-  auto                  x_it = x.cbegin();
-  auto                  rit  = ret.begin();
-  double                casted_x;
-  double                casted_ret;
-  while (x_it.is_valid())
-  {
-    // TODO(800) - native fixed point implementation required - casting to double will not be
-    // allowed
-    casted_x   = double(*x_it);
-    casted_ret = double(*rit);
-    s(casted_x, casted_ret);
-    *rit = Type(casted_ret);
-    ++x_it;
-    ++rit;
-  }
-}
+
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> CosH(ArrayType const &x)
 {
@@ -424,11 +256,11 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> CosH(ArrayType const &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> TanH(ArrayType const &x,
+fetch::math::meta::IfIsMathArray<ArrayType, void> TanH(ArrayType const &x,
                                                                     ArrayType &      ret)
 {
   ASSERT(ret.size() == x.size());
-  kernels::TanH<typename ArrayType::Type> s;
+  kernels::TanH s;
   auto                                    x_it = x.cbegin();
   auto                                    rit  = ret.begin();
   while (x_it.is_valid())
@@ -438,28 +270,7 @@ fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> TanH(ArrayType co
     ++rit;
   }
 }
-template <typename ArrayType>
-fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> TanH(ArrayType const &x, ArrayType &ret)
-{
-  using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
-  kernels::TanH<double> s;
-  auto                  x_it = x.cbegin();
-  auto                  rit  = ret.begin();
-  double                casted_x;
-  double                casted_ret;
-  while (x_it.is_valid())
-  {
-    // TODO(800) - native fixed point implementation required - casting to double will not be
-    // allowed
-    casted_x   = double(*x_it);
-    casted_ret = double(*rit);
-    s(casted_x, casted_ret);
-    *rit = Type(casted_ret);
-    ++x_it;
-    ++rit;
-  }
-}
+
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> TanH(ArrayType const &x)
 {
@@ -473,11 +284,11 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> TanH(ArrayType const &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> ASinH(ArrayType const &x,
+fetch::math::meta::IfIsMathArray<ArrayType, void> ASinH(ArrayType const &x,
                                                                      ArrayType &      ret)
 {
   ASSERT(ret.size() == x.size());
-  kernels::ASinH<typename ArrayType::Type> s;
+  kernels::ASinH s;
   auto                                     x_it = x.cbegin();
   auto                                     rit  = ret.begin();
   while (x_it.is_valid())
@@ -487,29 +298,7 @@ fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> ASinH(ArrayType c
     ++rit;
   }
 }
-template <typename ArrayType>
-fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> ASinH(ArrayType const &x,
-                                                                  ArrayType &      ret)
-{
-  using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
-  kernels::ASinH<double> s;
-  auto                   x_it = x.cbegin();
-  auto                   rit  = ret.begin();
-  double                 casted_x;
-  double                 casted_ret;
-  while (x_it.is_valid())
-  {
-    // TODO(800) - native fixed point implementation required - casting to double will not be
-    // allowed
-    casted_x   = double(*x_it);
-    casted_ret = double(*rit);
-    s(casted_x, casted_ret);
-    *rit = Type(casted_ret);
-    ++x_it;
-    ++rit;
-  }
-}
+
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> ASinH(ArrayType const &x)
 {
@@ -523,11 +312,11 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> ASinH(ArrayType const &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> ACosH(ArrayType const &x,
+fetch::math::meta::IfIsMathArray<ArrayType, void> ACosH(ArrayType const &x,
                                                                      ArrayType &      ret)
 {
   ASSERT(ret.size() == x.size());
-  kernels::ACosH<typename ArrayType::Type> s;
+  kernels::ACosH s;
   auto                                     x_it = x.cbegin();
   auto                                     rit  = ret.begin();
   while (x_it.is_valid())
@@ -537,29 +326,7 @@ fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> ACosH(ArrayType c
     ++rit;
   }
 }
-template <typename ArrayType>
-fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> ACosH(ArrayType const &x,
-                                                                  ArrayType &      ret)
-{
-  using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
-  kernels::ACosH<double> s;
-  auto                   x_it = x.cbegin();
-  auto                   rit  = ret.begin();
-  double                 casted_x;
-  double                 casted_ret;
-  while (x_it.is_valid())
-  {
-    // TODO(800) - native fixed point implementation required - casting to double will not be
-    // allowed
-    casted_x   = double(*x_it);
-    casted_ret = double(*rit);
-    s(casted_x, casted_ret);
-    *rit = Type(casted_ret);
-    ++x_it;
-    ++rit;
-  }
-}
+
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> ACosH(ArrayType const &x)
 {
@@ -573,11 +340,11 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> ACosH(ArrayType const &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> ATanH(ArrayType const &x,
+fetch::math::meta::IfIsMathArray<ArrayType, void> ATanH(ArrayType const &x,
                                                                      ArrayType &      ret)
 {
   ASSERT(ret.size() == x.size());
-  kernels::ATanH<typename ArrayType::Type> s;
+  kernels::ATanH s;
   auto                                     x_it = x.cbegin();
   auto                                     rit  = ret.begin();
   while (x_it.is_valid())
@@ -587,29 +354,7 @@ fetch::math::meta::IfIsMathNonFixedPointArray<ArrayType, void> ATanH(ArrayType c
     ++rit;
   }
 }
-template <typename ArrayType>
-fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> ATanH(ArrayType const &x,
-                                                                  ArrayType &      ret)
-{
-  using Type = typename ArrayType::Type;
-  ASSERT(ret.size() == x.size());
-  kernels::ATanH<double> s;
-  auto                   x_it = x.cbegin();
-  auto                   rit  = ret.begin();
-  double                 casted_x;
-  double                 casted_ret;
-  while (x_it.is_valid())
-  {
-    // TODO(800) - native fixed point implementation required - casting to double will not be
-    // allowed
-    casted_x   = double(*x_it);
-    casted_ret = double(*rit);
-    s(casted_x, casted_ret);
-    *rit = Type(casted_ret);
-    ++x_it;
-    ++rit;
-  }
-}
+
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> ATanH(ArrayType const &x)
 {
@@ -623,20 +368,12 @@ fetch::math::meta::IfIsMathArray<ArrayType, ArrayType> ATanH(ArrayType const &x)
  * @param x - array
  */
 template <typename Type>
-fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void> Sin(Type const &x, Type &ret)
+fetch::math::meta::IfIsArithmetic<Type, void> Sin(Type const &x, Type &ret)
 {
-  kernels::Sin<Type> s;
+  kernels::Sin s;
   s(x, ret);
 }
-template <typename Type>
-fetch::math::meta::IfIsFixedPoint<Type, void> Sin(Type const &x, Type &ret)
-{
-  double               casted_ret = double(ret);
-  double               dx{x};
-  kernels::Sin<double> s;
-  s(dx, casted_ret);
-  ret = Type(casted_ret);
-}
+
 template <typename Type>
 fetch::math::meta::IfIsArithmetic<Type, Type> Sin(Type const &x)
 {
@@ -650,20 +387,12 @@ fetch::math::meta::IfIsArithmetic<Type, Type> Sin(Type const &x)
  * @param x - array
  */
 template <typename Type>
-fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void> Cos(Type const &x, Type &ret)
+fetch::math::meta::IfIsArithmetic<Type, void> Cos(Type const &x, Type &ret)
 {
-  kernels::Cos<Type> c;
+  kernels::Cos c;
   c(x, ret);
 }
-template <typename Type>
-fetch::math::meta::IfIsFixedPoint<Type, void> Cos(Type const &x, Type &ret)
-{
-  double               casted_ret = double(ret);
-  double               dx{x};
-  kernels::Cos<double> c;
-  c(dx, casted_ret);
-  ret = Type(casted_ret);
-}
+
 template <typename Type>
 fetch::math::meta::IfIsArithmetic<Type, Type> Cos(Type const &x)
 {
@@ -677,20 +406,12 @@ fetch::math::meta::IfIsArithmetic<Type, Type> Cos(Type const &x)
  * @param x - array
  */
 template <typename Type>
-fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void> Tan(Type const &x, Type &ret)
+fetch::math::meta::IfIsArithmetic<Type, void> Tan(Type const &x, Type &ret)
 {
-  kernels::Tan<Type> t;
+  kernels::Tan t;
   t(x, ret);
 }
-template <typename Type>
-fetch::math::meta::IfIsFixedPoint<Type, void> Tan(Type const &x, Type &ret)
-{
-  double               casted_ret = double(ret);
-  double               dx{x};
-  kernels::Tan<double> t;
-  t(dx, casted_ret);
-  ret = Type(casted_ret);
-}
+
 template <typename Type>
 fetch::math::meta::IfIsArithmetic<Type, Type> Tan(Type const &x)
 {
@@ -704,20 +425,12 @@ fetch::math::meta::IfIsArithmetic<Type, Type> Tan(Type const &x)
  * @param x - array
  */
 template <typename Type>
-fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void> ASin(Type const &x, Type &ret)
+fetch::math::meta::IfIsArithmetic<Type, void> ASin(Type const &x, Type &ret)
 {
-  kernels::ASin<Type> t;
+  kernels::ASin t;
   t(x, ret);
 }
-template <typename Type>
-fetch::math::meta::IfIsFixedPoint<Type, void> ASin(Type const &x, Type &ret)
-{
-  double                casted_ret = double(ret);
-  double                dx{x};
-  kernels::ASin<double> t;
-  t(dx, casted_ret);
-  ret = Type(casted_ret);
-}
+
 template <typename Type>
 fetch::math::meta::IfIsArithmetic<Type, Type> ASin(Type const &x)
 {
@@ -731,20 +444,12 @@ fetch::math::meta::IfIsArithmetic<Type, Type> ASin(Type const &x)
  * @param x - array
  */
 template <typename Type>
-fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void> ACos(Type const &x, Type &ret)
+fetch::math::meta::IfIsArithmetic<Type, void> ACos(Type const &x, Type &ret)
 {
-  kernels::ACos<Type> t;
+  kernels::ACos t;
   t(x, ret);
 }
-template <typename Type>
-fetch::math::meta::IfIsFixedPoint<Type, void> ACos(Type const &x, Type &ret)
-{
-  double                casted_ret = double(ret);
-  double                dx{x};
-  kernels::ACos<double> t;
-  t(dx, casted_ret);
-  ret = Type(casted_ret);
-}
+
 template <typename Type>
 fetch::math::meta::IfIsArithmetic<Type, Type> ACos(Type const &x)
 {
@@ -758,20 +463,12 @@ fetch::math::meta::IfIsArithmetic<Type, Type> ACos(Type const &x)
  * @param x - array
  */
 template <typename Type>
-fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void> ATan(Type const &x, Type &ret)
+fetch::math::meta::IfIsArithmetic<Type, void> ATan(Type const &x, Type &ret)
 {
-  kernels::ATan<Type> t;
+  kernels::ATan t;
   t(x, ret);
 }
-template <typename Type>
-fetch::math::meta::IfIsFixedPoint<Type, void> ATan(Type const &x, Type &ret)
-{
-  double                casted_ret = double(ret);
-  double                dx{x};
-  kernels::ATan<double> t;
-  t(dx, casted_ret);
-  ret = Type(casted_ret);
-}
+
 template <typename Type>
 fetch::math::meta::IfIsArithmetic<Type, Type> ATan(Type const &x)
 {
@@ -781,24 +478,35 @@ fetch::math::meta::IfIsArithmetic<Type, Type> ATan(Type const &x)
 }
 
 /**
+ * maps every element of the array x to ret = ATan(x)
+ * @param x - array
+ */
+template <typename Type>
+fetch::math::meta::IfIsArithmetic<Type, void> ATan2(Type const &x, Type const &y, Type &ret)
+{
+  kernels::ATan2 t;
+  t(x, y, ret);
+}
+
+template <typename Type>
+fetch::math::meta::IfIsArithmetic<Type, Type> ATan2(Type const &x, Type const &y)
+{
+  Type ret;
+  ATan2(x, y, ret);
+  return ret;
+}
+
+/**
  * maps every element of the array x to ret = SinH(x)
  * @param x - array
  */
 template <typename Type>
-fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void> SinH(Type const &x, Type &ret)
+fetch::math::meta::IfIsArithmetic<Type, void> SinH(Type const &x, Type &ret)
 {
-  kernels::SinH<Type> t;
+  kernels::SinH t;
   t(x, ret);
 }
-template <typename Type>
-fetch::math::meta::IfIsFixedPoint<Type, void> SinH(Type const &x, Type &ret)
-{
-  double                casted_ret = double(ret);
-  double                dx{x};
-  kernels::SinH<double> t;
-  t(dx, casted_ret);
-  ret = Type(casted_ret);
-}
+
 template <typename Type>
 fetch::math::meta::IfIsArithmetic<Type, Type> SinH(Type const &x)
 {
@@ -812,20 +520,12 @@ fetch::math::meta::IfIsArithmetic<Type, Type> SinH(Type const &x)
  * @param x - array
  */
 template <typename Type>
-fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void> CosH(Type const &x, Type &ret)
+fetch::math::meta::IfIsArithmetic<Type, void> CosH(Type const &x, Type &ret)
 {
-  kernels::CosH<Type> t;
+  kernels::CosH t;
   t(x, ret);
 }
-template <typename Type>
-fetch::math::meta::IfIsFixedPoint<Type, void> CosH(Type const &x, Type &ret)
-{
-  double                casted_ret = double(ret);
-  double                dx{x};
-  kernels::CosH<double> t;
-  t(dx, casted_ret);
-  ret = Type(casted_ret);
-}
+
 template <typename Type>
 fetch::math::meta::IfIsArithmetic<Type, Type> CosH(Type const &x)
 {
@@ -839,20 +539,12 @@ fetch::math::meta::IfIsArithmetic<Type, Type> CosH(Type const &x)
  * @param x - array
  */
 template <typename Type>
-fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void> TanH(Type const &x, Type &ret)
+fetch::math::meta::IfIsArithmetic<Type, void> TanH(Type const &x, Type &ret)
 {
-  kernels::TanH<Type> t;
+  kernels::TanH t;
   t(x, ret);
 }
-template <typename Type>
-fetch::math::meta::IfIsFixedPoint<Type, void> TanH(Type const &x, Type &ret)
-{
-  double                casted_ret = double(ret);
-  double                dx{x};
-  kernels::TanH<double> t;
-  t(dx, casted_ret);
-  ret = Type(casted_ret);
-}
+
 template <typename Type>
 fetch::math::meta::IfIsArithmetic<Type, Type> TanH(Type const &x)
 {
@@ -866,20 +558,12 @@ fetch::math::meta::IfIsArithmetic<Type, Type> TanH(Type const &x)
  * @param x - array
  */
 template <typename Type>
-fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void> ASinH(Type const &x, Type &ret)
+fetch::math::meta::IfIsArithmetic<Type, void> ASinH(Type const &x, Type &ret)
 {
-  kernels::ASinH<Type> t;
+  kernels::ASinH t;
   t(x, ret);
 }
-template <typename Type>
-fetch::math::meta::IfIsFixedPoint<Type, void> ASinH(Type const &x, Type &ret)
-{
-  double                 casted_ret = double(ret);
-  double                 dx{x};
-  kernels::ASinH<double> t;
-  t(dx, casted_ret);
-  ret = Type(casted_ret);
-}
+
 template <typename Type>
 fetch::math::meta::IfIsArithmetic<Type, Type> ASinH(Type const &x)
 {
@@ -893,20 +577,12 @@ fetch::math::meta::IfIsArithmetic<Type, Type> ASinH(Type const &x)
  * @param x - array
  */
 template <typename Type>
-fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void> ACosH(Type const &x, Type &ret)
+fetch::math::meta::IfIsArithmetic<Type, void> ACosH(Type const &x, Type &ret)
 {
-  kernels::ACosH<Type> t;
+  kernels::ACosH t;
   t(x, ret);
 }
-template <typename Type>
-fetch::math::meta::IfIsFixedPoint<Type, void> ACosH(Type const &x, Type &ret)
-{
-  double                 casted_ret = double(ret);
-  double                 dx{x};
-  kernels::ACosH<double> t;
-  t(dx, casted_ret);
-  ret = Type(casted_ret);
-}
+
 template <typename Type>
 fetch::math::meta::IfIsArithmetic<Type, Type> ACosH(Type const &x)
 {
@@ -920,20 +596,12 @@ fetch::math::meta::IfIsArithmetic<Type, Type> ACosH(Type const &x)
  * @param x - array
  */
 template <typename Type>
-fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void> ATanH(Type const &x, Type &ret)
+fetch::math::meta::IfIsArithmetic<Type, void> ATanH(Type const &x, Type &ret)
 {
-  kernels::ATanH<Type> t;
+  kernels::ATanH t;
   t(x, ret);
 }
-template <typename Type>
-fetch::math::meta::IfIsFixedPoint<Type, void> ATanH(Type const &x, Type &ret)
-{
-  double                 casted_ret = double(ret);
-  double                 dx{x};
-  kernels::ATanH<double> t;
-  t(dx, casted_ret);
-  ret = Type(casted_ret);
-}
+
 template <typename Type>
 fetch::math::meta::IfIsArithmetic<Type, Type> ATanH(Type const &x)
 {
