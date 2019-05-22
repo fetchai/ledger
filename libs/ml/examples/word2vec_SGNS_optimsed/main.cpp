@@ -64,11 +64,11 @@ struct TrainingParams
   SizeType max_sentences    = 10000;  // maximum sentences for dataloader
   SizeType max_sentence_len = 1700;   // maximum sentence length for dataloader
   SizeType min_word_freq    = 5;      // infrequent word are pruned
+  SizeType max_word_len     = 100;    // maximum lenght of a word
   SizeType window_size      = 8;      // one side of the context window
 
   SizeType total_words = TRAINING_WORDS * training_epochs;
 };
-
 
 template <typename ArrayType>
 class DataLoader
@@ -891,7 +891,7 @@ int main(int argc, char **argv)
 
   // set up dataloader
   DataLoader<ArrayType> dataloader(tp.max_sentence_len, tp.min_word_freq, tp.max_sentences,
-                                   tp.window_size);
+                                   tp.window_size, tp.max_word_len);
 
   // load text from files as necessary and process text with dataloader
   dataloader.AddData(train_file);

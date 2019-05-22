@@ -1148,7 +1148,6 @@ bool Tensor<T, C>::Resize(SizeVector const &shape, bool copy)
   }
   else if (copy && (size_ < old_tensor.size()))
   {
-
   }
 
   return false;
