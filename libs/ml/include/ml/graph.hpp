@@ -243,7 +243,7 @@ private:
     std::string ret           = name;
     std::string op_descriptor = (OperationType::DESCRIPTOR);
     // search graph for existing variable names
-    if (ret.empty())
+    if ((nodes_.find(ret) != nodes_.end()) || ret.empty())
     {
       std::uint64_t name_idx = 0;
       ret                    = op_descriptor + "_" + std::to_string(name_idx);

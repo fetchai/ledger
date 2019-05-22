@@ -72,7 +72,7 @@ TYPED_TEST(GraphTest, node_relu)
   ASSERT_TRUE(prediction.AllClose(gt));
 }
 
-TYPED_TEST(GraphTest, getStateDict)
+TYPED_TEST(GraphTest, get_state_dict)
 {
   using ArrayType = TypeParam;
 
@@ -99,6 +99,33 @@ TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
 
   ASSERT_ANY_THROW(g.Evaluate("FullyConnected"));
 }
+
+TYPED_TEST(GraphTest, two_nodes_same_name_test)
+{
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
+
+  fetch::ml::Graph<ArrayType> g;
+
+  g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
+  std::string sa_1 = g.template AddNode<fetch::ml::layers::SelfAttention<ArrayType>>(
+      "SelfAttention", {"Input"}, 50u, 42u, 10u);
+  std::string sa_2 = g.template AddNode<fetch::ml::layers::SelfAttention<ArrayType>>(
+      "SelfAttention", {"Input"}, 50u, 42u, 10u);
+  std::string sa_3 = g.template AddNode<fetch::ml::layers::SelfAttention<ArrayType>>(
+      "SelfAttention", {"Input"}, 50u, 42u, 10u);
+
+  ArrayType data(std::vector<SizeType>({5, 10}));
+  g.SetInput("Input", data);
+
+  EXPECT_NE(sa_1, sa_2);
+  EXPECT_NE(sa_2, sa_3);
+  EXPECT_NE(sa_1, sa_3);
+  EXPECT_EQ(sa_1, "SelfAttention");
+  EXPECT_EQ(sa_2, "SelfAttention_0");
+  EXPECT_EQ(sa_3, "SelfAttention_1");
+}
+
 TYPED_TEST(GraphTest,
            diamond_graph_forward)  // Evaluate graph output=(input1*input2)-(input1^2)
 {
