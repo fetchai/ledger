@@ -24,7 +24,8 @@
 #include "core/threading/synchronised_state.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/chain/v2/transaction.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "moment/deadline_timer.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -131,8 +132,8 @@ public:
   enum class State
   {
     RELOAD_STATE,                  ///< Recovering previous state
-    SYNCHRONIZING,                 ///< Catch up with the outstanding blocks
-    SYNCHRONIZED,                  ///< Caught up waiting to generate a new block
+    SYNCHRONISING,                 ///< Catch up with the outstanding blocks
+    SYNCHRONISED,                  ///< Caught up waiting to generate a new block
     PRE_EXEC_BLOCK_VALIDATION,     ///< Validation stage before block execution
     WAIT_FOR_TRANSACTIONS,         ///< Halts the state machine until all the block transactions are
                                    ///< present
@@ -178,6 +179,11 @@ public:
     return *state_machine_;
   }
 
+  StateMachine &GetStateMachine()
+  {
+    return *state_machine_;
+  }
+
   std::weak_ptr<core::StateMachineInterface> GetWeakStateMachine()
   {
     return state_machine_;
@@ -190,7 +196,7 @@ public:
 
   bool IsSynced() const
   {
-    return (state_machine_->state() == State::SYNCHRONIZED) &&
+    return (state_machine_->state() == State::SYNCHRONISED) &&
            (last_executed_block_.Get() == chain_.GetHeaviestBlockHash());
   }
 
@@ -220,15 +226,16 @@ private:
   using Timepoint         = Clock::time_point;
   using StateMachinePtr   = std::shared_ptr<StateMachine>;
   using MinerPtr          = std::shared_ptr<consensus::ConsensusMinerInterface>;
-  using TxDigestSetPtr    = std::unique_ptr<v2::DigestSet>;
+  using TxDigestSetPtr    = std::unique_ptr<DigestSet>;
   using LastExecutedBlock = SynchronisedState<ConstByteArray>;
   using FutureTimepoint   = fetch::core::FutureTimepoint;
+  using DeadlineTimer     = fetch::moment::DeadlineTimer;
 
   /// @name Monitor State
   /// @{
   State OnReloadState();
-  State OnSynchronizing();
-  State OnSynchronized(State current, State previous);
+  State OnSynchronising();
+  State OnSynchronised(State current, State previous);
   State OnPreExecBlockValidation();
   State OnWaitForTransactions(State current, State previous);
   State OnScheduleBlockExecution();
@@ -273,7 +280,7 @@ private:
 
   /// @name State Machine State
   /// @{
-  v2::Address     mining_address_;         ///< The miners address
+  Address         mining_address_;         ///< The miners address
   StateMachinePtr state_machine_;          ///< The main state machine for this service
   std::size_t     block_difficulty_;       ///< The number of leading zeros needed in the proof
   std::size_t     num_lanes_;              ///< The current number of lanes
@@ -288,9 +295,9 @@ private:
   PeriodicAction  tx_wait_periodic_;       ///< Periodic print for transaction waiting
   PeriodicAction  exec_wait_periodic_;     ///< Periodic print for execution
   PeriodicAction  syncing_periodic_;       ///< Periodic print for synchronisation
-  FutureTimepoint wait_for_tx_timeout_;    ///< Timeout when waiting for transactions
-  FutureTimepoint
-       wait_before_asking_for_missing_tx_;  ///< Time to wait before asking peers for any missing txs
+  DeadlineTimer   wait_for_tx_timeout_{"bc:deadline"};  ///< Timeout when waiting for transactions
+  DeadlineTimer   wait_before_asking_for_missing_tx_{
+      "bc:deadline"};              ///< Time to wait before asking peers for any missing txs
   bool have_asked_for_missing_txs_;  ///< true if a request for missing Txs has been issued for the
                                      ///< current block
   /// @}

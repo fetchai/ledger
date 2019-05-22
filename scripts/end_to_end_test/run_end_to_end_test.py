@@ -14,6 +14,7 @@ import yaml
 import io
 import random
 import datetime
+import importlib
 import time
 import threading
 import glob
@@ -369,6 +370,18 @@ def send_txs(parameters, test_instance):
             pickle.dump(test_instance._metadata, handle)
 
 
+def run_python_test(parameters, test_instance):
+    host = parameters.get('host', 'localhost')
+    port = parameters.get('port', test_instance._nodes[0]._port_start)
+
+    test_script = importlib.import_module(
+        parameters['script'], 'end_to_end_test')
+    test_script.run({
+        'host': host,
+        'port': port
+    })
+
+
 def verify_txs(parameters, test_instance):
 
     name = parameters["name"]
@@ -457,6 +470,8 @@ def run_steps(test_yaml, test_instance):
             time.sleep(parameters)
         elif command == 'print_time_elapsed':
             test_instance.print_time_elapsed()
+        elif command == 'run_python_test':
+            run_python_test(parameters, test_instance)
         else:
             output(
                 "Found unknown command when running steps: '{}'".format(

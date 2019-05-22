@@ -20,8 +20,6 @@
 #include "storage/cached_random_access_stack.hpp"
 
 #include <gmock/gmock.h>
-#include <gtest/gtest.h>
-#include <stack>
 
 using namespace fetch::storage;
 using namespace testing;

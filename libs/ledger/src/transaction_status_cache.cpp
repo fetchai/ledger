@@ -49,7 +49,7 @@ char const *ToString(TransactionStatus status)
   return text;
 }
 
-TransactionStatus TransactionStatusCache::Query(TxDigest digest) const
+TransactionStatus TransactionStatusCache::Query(Digest digest) const
 {
   TransactionStatus status{TransactionStatus::UNKNOWN};
 
@@ -66,7 +66,7 @@ TransactionStatus TransactionStatusCache::Query(TxDigest digest) const
   return status;
 }
 
-void TransactionStatusCache::Update(TxDigest digest, TransactionStatus status, Timepoint const &now)
+void TransactionStatusCache::Update(Digest digest, TransactionStatus status, Timepoint const &now)
 {
   FETCH_LOCK(mtx_);
 
