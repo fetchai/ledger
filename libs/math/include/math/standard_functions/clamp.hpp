@@ -56,12 +56,12 @@ meta::IfIsMathArray<ArrayType, void> Clamp(ArrayType const &               array
                                            typename ArrayType::Type const &min,
                                            typename ArrayType::Type const &max, ArrayType &ret)
 {
-  ASSERT(ret.shape() == array.shape());
-  typename ArrayType::SizeType ret_count{0};
+  assert(ret.shape() == array.shape());
+  auto ret_it = ret.begin();
   for (auto &e : array)
   {
-    Clamp(e, min, max, ret.At(ret_count));
-    ++ret_count;
+    Clamp(e, min, max, *ret_it);
+    ++ret_it;
   }
 }
 
@@ -70,12 +70,12 @@ meta::IfIsMathArray<ArrayType, ArrayType> Clamp(ArrayType const &               
                                                 typename ArrayType::Type const &min,
                                                 typename ArrayType::Type const &max)
 {
-  ArrayType                    ret{array.shape()};
-  typename ArrayType::SizeType ret_count{0};
+  ArrayType ret{array.shape()};
+  auto      ret_it = ret.begin();
   for (auto &e : array)
   {
-    Clamp(e, min, max, ret.At(ret_count));
-    ++ret_count;
+    Clamp(e, min, max, *ret_it);
+    ++ret_it;
   }
   return ret;
 }

@@ -32,15 +32,14 @@ template <class T>
 class LogSigmoid : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType     = T;
+  using DataType      = typename ArrayType::Type;
+  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
   LogSigmoid()          = default;
   virtual ~LogSigmoid() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(inputs.size() == 1);
     ASSERT(output.shape() == this->ComputeOutputShape(inputs));
@@ -53,24 +52,21 @@ public:
     {
       fetch::math::Min(val, epsilon_, val);
     }
-
-    return output;
   }
 
-  virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-      ArrayType const &                                           errorSignal)
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
   {
     assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == errorSignal.shape());
-    ArrayType return_signal{errorSignal.shape()};
+    assert(inputs.front().get().shape() == error_signal.shape());
+    ArrayType return_signal{error_signal.shape()};
 
     // gradient of log-sigmoid function is 1/(e^x + 1))
     fetch::math::Add(fetch::math::Exp(inputs.front().get()), DataType(1), return_signal);
     fetch::math::Divide(DataType(1), return_signal, return_signal);
 
-    // multiply by errorSignal (chain rule)
-    fetch::math::Multiply(errorSignal, return_signal, return_signal);
+    // multiply by error_signal (chain rule)
+    fetch::math::Multiply(error_signal, return_signal, return_signal);
 
     return {return_signal};
   }

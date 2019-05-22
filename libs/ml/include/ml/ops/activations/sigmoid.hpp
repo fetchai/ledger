@@ -20,6 +20,7 @@
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/ml/activation_functions/sigmoid.hpp"
+#include "math/standard_functions/clamp.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -30,45 +31,39 @@ template <class T>
 class Sigmoid : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
-  using SizeType     = typename ArrayType::SizeType;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType     = T;
+  using DataType      = typename ArrayType::Type;
+  using SizeType      = typename ArrayType::SizeType;
+  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
   Sigmoid()          = default;
   virtual ~Sigmoid() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(inputs.size() == 1);
-    ASSERT(output.shape() == this->ComputeOutputShape(inputs));
+    assert(output.shape() == this->ComputeOutputShape(inputs));
     fetch::math::Sigmoid(inputs.front().get(), output);
+
     // ensures numerical stability
-    for (auto &val : output)
-    {
-      fetch::math::Max(val, epsilon_, val);
-      fetch::math::Min(val, fetch::math::Subtract(DataType(1), epsilon_), val);
-    }
-    return output;
+    fetch::math::Clamp(output, epsilon_, static_cast<DataType>(1) - epsilon_, output);
   }
 
-  virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           errorSignal)
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
   {
     assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == errorSignal.shape());
-    ArrayType return_signal{errorSignal.shape()};
+    assert(inputs.front().get().shape() == error_signal.shape());
+    ArrayType return_signal{error_signal.shape()};
     ArrayType t{inputs.front().get().shape()};
 
     // gradient of sigmoid function is s(x)(1 - s(x))
-    t = Ops<T>::Forward(inputs);
+    Forward(inputs, t);
     fetch::math::Subtract(DataType(1), t, return_signal);
     fetch::math::Multiply(t, return_signal, return_signal);
 
-    // multiply by errorSignal (chain rule)
-    fetch::math::Multiply(errorSignal, return_signal, return_signal);
+    // multiply by error_signal (chain rule)
+    fetch::math::Multiply(error_signal, return_signal, return_signal);
 
     return {return_signal};
   }
