@@ -43,7 +43,7 @@ public:
   void Forward(VecTensorType const &inputs, ArrayType &output) override;
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal_signal) override;
+                                  ArrayType const &    error_signal) override;
 
   std::vector<typename ArrayType::SizeType> ComputeOutputShape(
       VecTensorType const &inputs) const override;
@@ -146,17 +146,17 @@ void Convolution2D<ArrayType>::Forward(VecTensorType const &inputs, ArrayType &o
  */
 template <class ArrayType>
 std::vector<ArrayType> Convolution2D<ArrayType>::Backward(VecTensorType const &inputs,
-                                                          ArrayType const &    error_signal_signal)
+                                                          ArrayType const &    error_signal)
 {
   ASSERT(inputs.size() == 2);
   // Input should be a 3D tensor [C x H x W]
   ASSERT(inputs.at(0).get().shape().size() == 3);
   // Kernels should be a 4D tensor [oC x iC x H x W]
   ASSERT(inputs.at(1).get().shape().size() == 4);
-  ASSERT(error_signal_signal.shape() == ComputeOutputShape(inputs));
+  ASSERT(error_signal.shape() == ComputeOutputShape(inputs));
 
-  SizeType output_height = error_signal_signal.shape().at(1);
-  SizeType output_width  = error_signal_signal.shape().at(2);
+  SizeType output_height = error_signal.shape().at(1);
+  SizeType output_width  = error_signal.shape().at(2);
 
   ArrayType input   = inputs.at(0).get();
   ArrayType kernels = inputs.at(1).get();
@@ -187,7 +187,7 @@ std::vector<ArrayType> Convolution2D<ArrayType>::Backward(VecTensorType const &i
 
   // Reshape error_signal to error for matmul
   ArrayType error{{vertical_stride_width, horizontal_stride_height}};
-  ReverseFillOutput(error, error_signal_signal, output_channels, output_height, output_width);
+  ReverseFillOutput(error, error_signal, output_channels, output_height, output_width);
 
   // Backwards matmul
   ArrayType error2 = fetch::math::DotTranspose(error, horizontal_stride);

@@ -89,7 +89,7 @@ public:
                             ArrayType &                                                 output)
   {
     std::vector<ArrayType> results;
-    for (typename ArrayType::SizeType b(0); b < inputs.front().get().shape()[0]; ++b)
+    for (typename ArrayType::SizeType b{0}; b < inputs.front().get().shape()[0]; ++b)
     {
       ArrayType slice_input   = inputs.front().get().Slice(b).Copy();
       ArrayType slice_context = inputs.back().get().Slice(b).Copy();

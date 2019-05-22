@@ -33,9 +33,8 @@ template <class T>
 class NodeInterface
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using NodePtrType  = std::shared_ptr<NodeInterface<T>>;
+  using ArrayType   = T;
+  using NodePtrType = std::shared_ptr<NodeInterface<T>>;
 
   virtual ArrayType &                                           Evaluate()                      = 0;
   virtual void                                                  AddInput(NodePtrType const &i)  = 0;
@@ -59,9 +58,8 @@ private:
   };
 
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using NodePtrType  = std::shared_ptr<NodeInterface<T>>;
+  using ArrayType   = T;
+  using NodePtrType = std::shared_ptr<NodeInterface<T>>;
 
   template <typename... Params>
   Node(std::string const name, Params... params)
@@ -85,7 +83,7 @@ public:
   virtual void                            SetBatch(bool b);
 
 private:
-  std::vector<NodePtrType> inputs_;
+  std::vector<NodePtrType> input_nodes_;
   std::vector<NodePtrType> outputs_;
   std::string              name_;
   ArrayType                cached_output_;
@@ -102,7 +100,7 @@ template <class T, class O>
 std::vector<std::reference_wrapper<const T>> Node<T, O>::GatherInputs() const
 {
   std::vector<std::reference_wrapper<const ArrayType>> inputs;
-  for (auto const &i : inputs_)
+  for (auto const &i : input_nodes_)
   {
     inputs.push_back(i->Evaluate());
   }
@@ -164,17 +162,20 @@ std::vector<std::pair<NodeInterface<T> *, T>> Node<T, O>::BackPropagate(
   std::vector<std::pair<NodeInterface<T> *, ArrayType>> non_back_propagated_error_signals;
   assert(back_propagated_error_signals.size() == inputs.size() || inputs.empty());
 
-  for (std::uint64_t i(0); i < inputs_.size(); ++i)
+  auto bp_it = back_propagated_error_signals.begin();
+  for (auto &i : input_nodes_)
   {
-    auto ret = inputs_[i]->BackPropagate(back_propagated_error_signals[i]);
+    auto ret = i->BackPropagate(*bp_it);
     non_back_propagated_error_signals.insert(non_back_propagated_error_signals.end(), ret.begin(),
                                              ret.end());
+    ++bp_it;
   }
+
   // If no input to backprop to, return gradient to caller
   // This is used to propagate outside of a SubGraph
   // The SubGraph has no knowledge of the rest of the network,
   // so it sends its unpropagated gradient to its wrapper node that will forward them out
-  if (inputs_.empty())
+  if (input_nodes_.empty())
   {
     for (auto g : back_propagated_error_signals)
     {
@@ -193,7 +194,7 @@ std::vector<std::pair<NodeInterface<T> *, T>> Node<T, O>::BackPropagate(
 template <typename T, class O>
 void Node<T, O>::AddInput(NodePtrType const &i)
 {
-  inputs_.push_back(i);
+  input_nodes_.push_back(i);
 }
 
 /**

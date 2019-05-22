@@ -20,6 +20,7 @@
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/ml/activation_functions/sigmoid.hpp"
+#include "math/standard_functions/clamp.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -33,7 +34,6 @@ public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
   Sigmoid()          = default;
@@ -44,12 +44,9 @@ public:
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
     fetch::math::Sigmoid(inputs.front().get(), output);
+
     // ensures numerical stability
-    for (auto &val : output)
-    {
-      fetch::math::Max(val, epsilon_, val);
-      fetch::math::Min(val, fetch::math::Subtract(DataType(1), epsilon_), val);
-    }
+    fetch::math::Clamp(output, epsilon_, 1 - epsilon_, output);
   }
 
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,

@@ -89,28 +89,28 @@ TYPED_TEST(MatrixMultiplyTest, backward_test)
   std::vector<int> weightsGrad(
       {1, 2, 3, -4, 2, 4, 6, -8, -3, -6, -9, 12, 4, 8, 12, -16, 5, 10, 15, -20});
 
-  for (SizeType i(0); i < data.size(); ++i)
+  for (SizeType i{0}; i < data.size(); ++i)
   {
     a.Set(0, i, typename TypeParam::Type(data[i]));
   }
-  for (SizeType i(0); i < 5; ++i)
+  for (SizeType i{0}; i < 5; ++i)
   {
-    for (SizeType j(0); j < 4; ++j)
+    for (SizeType j{0}; j < 4; ++j)
     {
       b.Set(i, j, typename TypeParam::Type(weights[i * 4 + j]));
     }
   }
-  for (SizeType i(0); i < error_signal.size(); ++i)
+  for (SizeType i{0}; i < error_signal.size(); ++i)
   {
     error.Set(0, i, typename TypeParam::Type(error_signal[i]));
   }
-  for (SizeType i(0); i < inputGrad.size(); ++i)
+  for (SizeType i{0}; i < inputGrad.size(); ++i)
   {
     gradient_a.Set(0, i, typename TypeParam::Type(inputGrad[i]));
   }
-  for (SizeType i(0); i < 5; ++i)
+  for (SizeType i{0}; i < 5; ++i)
   {
-    for (SizeType j(0); j < 4; ++j)
+    for (SizeType j{0}; j < 4; ++j)
     {
       gradient_b.Set(i, j, typename TypeParam::Type(weightsGrad[i * 4 + j]));
     }

@@ -32,7 +32,6 @@ public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
   Relu()          = default;

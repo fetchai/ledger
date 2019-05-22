@@ -61,9 +61,11 @@ public:
                                           ArrayType const &    error_signal)
   {
     concat_points_.resize(inputs.size());
-    for (SizeType i{0}; i < inputs.size(); ++i)
+    auto c_it = concat_points_.begin();
+    for (auto const &e : inputs)
     {
-      concat_points_[i] = inputs[i].get().shape()[axis_];
+      *c_it = e.get().shape()[axis_];
+      ++c_it;
     }
     return ArrayType::Split(error_signal, concat_points_, axis_);
   }

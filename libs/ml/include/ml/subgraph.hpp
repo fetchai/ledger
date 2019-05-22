@@ -34,7 +34,6 @@ class SubGraph : public Graph<T>, public BatchOps<T>
 {
 public:
   using ArrayType     = T;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = std::vector<std::reference_wrapper<ArrayType const>>;
 
   virtual void                   Forward(VecTensorType const &inputs, ArrayType &output);
@@ -86,7 +85,7 @@ std::vector<T> SubGraph<T>::Backward(VecTensorType const &inputs, ArrayType cons
     {
       if (grad.first == node.get())
       {
-        back_prop_err_signal.push_back(grad.second);
+        back_prop_err_signal.emplace_back(grad.second);
       }
     }
   }

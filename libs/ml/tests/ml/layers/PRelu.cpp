@@ -70,11 +70,11 @@ TYPED_TEST(PReluTest, ops_backward_test)  // Use the class as an Ops
   fc.Forward({input_data}, output);
   TypeParam error_signal(std::vector<typename TypeParam::SizeType>({1, 50}));
 
-  std::vector<TypeParam> backpropagatederror_signals = fc.Backward({input_data}, error_signal);
-  ASSERT_EQ(backpropagatederror_signals.size(), 1);
-  ASSERT_EQ(backpropagatederror_signals[0].shape().size(), 2);
-  ASSERT_EQ(backpropagatederror_signals[0].shape()[0], 1);
-  ASSERT_EQ(backpropagatederror_signals[0].shape()[1], 50);
+  std::vector<TypeParam> bp_err = fc.Backward({input_data}, error_signal);
+  ASSERT_EQ(bp_err.size(), 1);
+  ASSERT_EQ(bp_err[0].shape().size(), 2);
+  ASSERT_EQ(bp_err[0].shape()[0], 1);
+  ASSERT_EQ(bp_err[0].shape()[1], 50);
   // No way to test actual values for now as weights are randomly initialised.
 }
 
@@ -107,12 +107,12 @@ TYPED_TEST(PReluTest, node_backward_test)  // Use the class as a Node
   TypeParam prediction = fc.Evaluate();
 
   TypeParam error_signal(std::vector<typename TypeParam::SizeType>({1, 50}));
-  auto      backpropagatederror_signals = fc.BackPropagate(error_signal);
+  auto      bp_err = fc.BackPropagate(error_signal);
 
-  ASSERT_EQ(backpropagatederror_signals.size(), 1);
-  ASSERT_EQ(backpropagatederror_signals[0].second.shape().size(), 2);
-  ASSERT_EQ(backpropagatederror_signals[0].second.shape()[0], 1);
-  ASSERT_EQ(backpropagatederror_signals[0].second.shape()[1], 50);
+  ASSERT_EQ(bp_err.size(), 1);
+  ASSERT_EQ(bp_err[0].second.shape().size(), 2);
+  ASSERT_EQ(bp_err[0].second.shape()[0], 1);
+  ASSERT_EQ(bp_err[0].second.shape()[1], 50);
 }
 
 TYPED_TEST(PReluTest, graph_forward_test)  // Use the class as a Node

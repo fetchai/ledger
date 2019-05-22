@@ -33,7 +33,6 @@ class Dropout : public fetch::ml::ElementWiseOps<T>
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using SizeType      = typename ArrayType::SizeType;
   using RNG           = fetch::random::LaggedFibonacciGenerator<>;
   using VecTensorType = typename ElementWiseOps<T>::VecTensorType;

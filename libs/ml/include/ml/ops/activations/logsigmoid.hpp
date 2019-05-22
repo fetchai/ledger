@@ -34,7 +34,6 @@ class LogSigmoid : public fetch::ml::ElementWiseOps<T>
 public:
   using ArrayType     = T;
   using DataType      = typename ArrayType::Type;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
   LogSigmoid()          = default;

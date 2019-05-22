@@ -96,9 +96,9 @@ TYPED_TEST(EmbeddingsTest, backward)
 
   fetch::ml::ops::Embeddings<TypeParam> e(10, 6);
   TypeParam                             weights(std::vector<uint64_t>({10, 6}));
-  for (unsigned int i(0); i < 10; ++i)
+  for (SizeType i{0}; i < 10; ++i)
   {
-    for (unsigned int j(0); j < 6; ++j)
+    for (SizeType j{0}; j < 6; ++j)
     {
       weights.Set(i, j, Type(i * 10 + j));
     }
@@ -113,9 +113,9 @@ TYPED_TEST(EmbeddingsTest, backward)
   e.Forward({input}, output);
 
   TypeParam error_signal(std::vector<uint64_t>({2, 6}));
-  for (unsigned int j(0); j < 2; ++j)
+  for (SizeType j{0}; j < 2; ++j)
   {
-    for (unsigned int k{0}; k < 6; ++k)
+    for (SizeType k{0}; k < 6; ++k)
     {
       error_signal.Set(j, k, Type((j * 6) + k));
     }
@@ -134,9 +134,9 @@ TYPED_TEST(EmbeddingsTest, backward)
 
   std::vector<int> gt{30, 30, 30, 30, 30, 30, 44, 44, 44, 44, 44, 44};
 
-  for (unsigned int j(0); j < 2; ++j)
+  for (SizeType j{0}; j < 2; ++j)
   {
-    for (unsigned int k{0}; k < 6; ++k)
+    for (SizeType k{0}; k < 6; ++k)
     {
       EXPECT_EQ(output.At(j, k), Type(gt[(j * 6) + k]));
     }
