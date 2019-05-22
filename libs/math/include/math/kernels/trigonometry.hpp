@@ -20,124 +20,230 @@
 #include "core/assert.hpp"
 #include <cmath>
 
+#include "math/meta/math_type_traits.hpp"
+
 namespace fetch {
 namespace math {
 namespace kernels {
 
-template <typename type>
 struct Sin
 {
-  void operator()(type const &x, type &y) const
+  template <typename Type>
+  fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void>
+  operator()(Type const &x, Type &y) const
   {
     y = std::sin(x);
   }
+
+  template <typename Type>
+  fetch::math::meta::IfIsFixedPoint<Type, void>
+  operator()(Type const &x, Type &y) const
+  {
+    y = Type::Sin(x);
+  }
 };
 
-template <typename type>
 struct Cos
 {
-  void operator()(type const &x, type &y) const
+  template <typename Type>
+  fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void>
+  operator()(Type const &x, Type &y) const
   {
     y = std::cos(x);
   }
+
+  template <typename Type>
+  fetch::math::meta::IfIsFixedPoint<Type, void>
+  operator()(Type const &x, Type &y) const
+  {
+    y = Type::Cos(x);
+  }
 };
 
-template <typename type>
 struct Tan
 {
-  void operator()(type const &x, type &y) const
+  template <typename Type>
+  fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void>
+  operator()(Type const &x, Type &y) const
   {
     y = std::tan(x);
   }
+
+  template <typename Type>
+  fetch::math::meta::IfIsFixedPoint<Type, void>
+  operator()(Type const &x, Type &y) const
+  {
+    y = Type::Tan(x);
+  }
 };
 
-template <typename type>
 struct ASin
 {
-  void operator()(type const &x, type &y) const
+  template <typename Type>
+  fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void>
+  operator()(Type const &x, Type &y) const
   {
     y = std::asin(x);
   }
+
+  template <typename Type>
+  fetch::math::meta::IfIsFixedPoint<Type, void>
+  operator()(Type const &x, Type &y) const
+  {
+    y = Type::ASin(x);
+  }
 };
 
-template <typename type>
 struct ACos
 {
-  void operator()(type const &x, type &y) const
+  template <typename Type>
+  fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void>
+  operator()(Type const &x, Type &y) const
   {
     y = std::acos(x);
   }
+
+  template <typename Type>
+  fetch::math::meta::IfIsFixedPoint<Type, void>
+  operator()(Type const &x, Type &y) const
+  {
+    y = Type::ACos(x);
+  }
 };
 
-template <typename type>
 struct ATan
 {
-  void operator()(type const &x, type &y) const
+  template <typename Type>
+  fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void>
+  operator()(Type const &x, Type &y) const
   {
     y = std::atan(x);
   }
-};
 
-template <typename type>
-struct ATan2
-{
-  void operator()(type const &x, type &y) const
+  template <typename Type>
+  fetch::math::meta::IfIsFixedPoint<Type, void>
+  operator()(Type const &x, Type &y) const
   {
-    y = std::atan2(x);
+    y = Type::ATan(x);
   }
 };
 
-template <typename type>
+struct ATan2
+{
+  template <typename Type>
+  fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void>
+  operator()(Type const &x, Type const &y, Type &z) const
+  {
+    z = std::atan2(x, y);
+  }
+
+  template <typename Type>
+  fetch::math::meta::IfIsFixedPoint<Type, void>
+  operator()(Type const &x, Type const &y, Type &z) const
+  {
+    z = Type::ATan2(x, y);
+  }
+};
+
 struct SinH
 {
-  void operator()(type const &x, type &y) const
+  template <typename Type>
+  fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void>
+  operator()(Type const &x, Type &y) const
   {
     y = std::sinh(x);
   }
+
+  template <typename Type>
+  fetch::math::meta::IfIsFixedPoint<Type, void>
+  operator()(Type const &x, Type &y) const
+  {
+    y = Type::SinH(x);
+  }
 };
 
-template <typename type>
 struct CosH
 {
-  void operator()(type const &x, type &y) const
+  template <typename Type>
+  fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void>
+  operator()(Type const &x, Type &y) const
   {
     y = std::cosh(x);
   }
+
+  template <typename Type>
+  fetch::math::meta::IfIsFixedPoint<Type, void>
+  operator()(Type const &x, Type &y) const
+  {
+    y = Type::CosH(x);
+  }
 };
 
-template <typename type>
 struct TanH
 {
-  void operator()(type const &x, type &y) const
+  template <typename Type>
+  fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void>
+  operator()(Type const &x, Type &y) const
   {
     y = std::tanh(x);
   }
+
+  template <typename Type>
+  fetch::math::meta::IfIsFixedPoint<Type, void>
+  operator()(Type const &x, Type &y) const
+  {
+    y = Type::TanH(x);
+  }
 };
 
-template <typename type>
 struct ASinH
 {
-  void operator()(type const &x, type &y) const
+  template <typename Type>
+  fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void>
+  operator()(Type const &x, Type &y) const
   {
     y = std::asinh(x);
   }
-};
 
-template <typename type>
-struct ACosH
-{
-  void operator()(type const &x, type &y) const
+  template <typename Type>
+  fetch::math::meta::IfIsFixedPoint<Type, void>
+  operator()(Type const &x, Type &y) const
   {
-    y = std::acosh(x);
+    y = Type::ASinH(x);
   }
 };
 
-template <typename type>
+struct ACosH
+{
+  template <typename Type>
+  fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void>
+  operator()(Type const &x, Type &y) const
+  {
+    y = std::acosh(x);
+  }
+
+  template <typename Type>
+  fetch::math::meta::IfIsFixedPoint<Type, void>
+  operator()(Type const &x, Type &y) const
+  {
+    y = Type::ACosH(x);
+  }
+};
+
 struct ATanH
 {
-  void operator()(type const &x, type &y) const
+  template <typename Type>
+  fetch::math::meta::IfIsNonFixedPointArithmetic<Type, void>
+  operator()(Type const &x, Type &y) const
   {
     y = std::atanh(x);
+  }
+
+  template <typename Type>
+  fetch::math::meta::IfIsFixedPoint<Type, void>
+  operator()(Type const &x, Type &y) const
+  {
+    y = Type::ATanH(x);
   }
 };
 
