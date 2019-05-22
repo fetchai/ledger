@@ -18,9 +18,7 @@
 
 #include "crypto/ecdsa.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/v2/transaction_builder.hpp"
+#include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/state_adapter.hpp"
 
@@ -39,11 +37,10 @@ using ::testing::InSequence;
 using fetch::crypto::SHA256;
 using fetch::ledger::SmartContract;
 using fetch::byte_array::ConstByteArray;
-using fetch::ledger::TransactionSummary;
 using fetch::storage::ResourceAddress;
 using fetch::variant::Variant;
 using fetch::serializers::ByteArrayBuffer;
-using fetch::ledger::v2::Address;
+using fetch::ledger::Address;
 
 using ContractDigest = ConstByteArray;
 
@@ -62,8 +59,6 @@ ConstByteArray RawBytes(T value)
 
 using SmartContractPtr   = std::unique_ptr<SmartContract>;
 using MockStorageUnitPtr = std::unique_ptr<MockStorageUnit>;
-using Resource           = TransactionSummary::Resource;
-using Resources          = std::vector<Resource>;
 using Query              = SmartContract::Query;
 
 class SmartContractTests : public ContractTest
@@ -456,7 +451,7 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
   EXPECT_TRUE(IsIn(query_handlers, "balance"));
 
   fetch::crypto::ECDSASigner target{};
-  fetch::ledger::v2::Address target_address{target.identity()};
+  fetch::ledger::Address     target_address{target.identity()};
 
   auto const owner_key  = contract_name_->full_name() + ".state." + owner_address_->display();
   auto const target_key = contract_name_->full_name() + ".state." + target_address.display();

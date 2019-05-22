@@ -27,25 +27,31 @@ template <class T>
 class Subtract : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType = T;
-  using DataType  = typename ArrayType::Type;
+  using ArrayType     = T;
+  using DataType      = typename ArrayType::Type;
+  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
   Subtract()          = default;
   virtual ~Subtract() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    fetch::math::Subtract(inputs[0].get(), inputs[1].get(), output);
+    assert(inputs.size() == 2);
+    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
+    assert(output.shape() == this->ComputeOutputShape(inputs));
 
-    return output;
+    fetch::math::Subtract(inputs[0].get(), inputs[1].get(), output);
   }
 
-  virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           error_signal)
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
   {
-    (void)inputs;
+      (void) inputs;
+
+    assert(inputs.size() == 2);
+    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
+    assert(error_signal.size() == inputs.at(1).get().size());
+
     return {error_signal, fetch::math::Multiply(error_signal, DataType{-1})};
   }
 

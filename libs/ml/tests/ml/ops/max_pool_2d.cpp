@@ -63,8 +63,9 @@ TYPED_TEST(MaxPool2DTest, forward_test_3_2)
   }
 
   fetch::ml::ops::MaxPool2D<ArrayType> op(3, 2);
-  ArrayType                            prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
+
+  ArrayType prediction(op.ComputeOutputShape({data}));
+  op.Forward({data}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -112,8 +113,8 @@ TYPED_TEST(MaxPool2DTest, forward_2_channels_test_3_2)
   }
 
   fetch::ml::ops::MaxPool2D<ArrayType> op(3, 2);
-  ArrayType                            prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
+  ArrayType                            prediction(op.ComputeOutputShape({data}));
+  op.Forward({data}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));

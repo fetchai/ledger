@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iomanip>
 #include <iostream>
 
 #include "math/ml/activation_functions/softmax.hpp"

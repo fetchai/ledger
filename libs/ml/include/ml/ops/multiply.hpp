@@ -28,9 +28,9 @@ template <class T>
 class Multiply : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType      = T;
-  using ArrayPtrType   = std::shared_ptr<ArrayType>;
-  using ConstSliceType = typename ArrayType::ConstSliceType;
+  using ArrayType     = T;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
   Multiply()          = default;
   virtual ~Multiply() = default;
@@ -40,50 +40,36 @@ public:
    * @param inputs  left & right inputs to multiply
    * @return
    */
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    (void)output;
     ASSERT(inputs.size() == 2);
     ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
     ASSERT(output.shape() == this->ComputeOutputShape(inputs));
 
-    auto output_it  = output.begin();
-    auto output_end = output.end();
-    auto a_it       = inputs[0].get().begin();
-    auto b_it       = inputs[1].get().begin();
-
-    while (output_it != output_end)
-    {
-      *output_it = *a_it * *b_it;
-      ++output_it;
-      ++a_it;
-      ++b_it;
-    }
-
-    return output;
+    fetch::math::Multiply(inputs[0].get(), inputs[1].get(), output);
   }
 
   /**
    * elementwise multiplication gradient is:
-   * f'(input0)=input0*errorSignal
-   * f'(input1)=input1*errorSignal
+   * f'(input0)=input0*error_signal
+   * f'(input1)=input1*error_signal
    */
-  virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           errorSignal)
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
   {
+      (void) inputs;
+
     ASSERT(inputs.size() == 2);
     ASSERT(inputs.at(0).get().size() == inputs.at(1).get().size());
-    ASSERT(errorSignal.size() == inputs.at(1).get().size());
+    ASSERT(error_signal.size() == inputs.at(1).get().size());
 
-    ArrayType errorSignal1(inputs.at(0).get().shape());
-    ArrayType errorSignal2(inputs.at(1).get().shape());
+    ArrayType error_signal1(inputs.at(0).get().shape());
+    ArrayType error_signal2(inputs.at(1).get().shape());
 
-    fetch::math::Multiply(inputs.at(1).get(), errorSignal, errorSignal1);
-    fetch::math::Multiply(inputs.at(0).get(), errorSignal, errorSignal2);
+    fetch::math::Multiply(inputs.at(1).get(), error_signal, error_signal1);
+    fetch::math::Multiply(inputs.at(0).get(), error_signal, error_signal2);
 
-    return {errorSignal1, errorSignal2};
+    return {error_signal1, error_signal2};
   }
 
   static constexpr char const *DESCRIPTOR = "Multiply";

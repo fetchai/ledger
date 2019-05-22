@@ -20,7 +20,6 @@
 #include "storage/cache_line_LRU_random_access_stack.hpp"
 
 #include <gtest/gtest.h>
-#include <stack>
 
 using namespace fetch::storage;
 

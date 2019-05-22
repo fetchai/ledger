@@ -20,9 +20,8 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/random/lfg.hpp"
 #include "core/serializers/counter.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "network/service/types.hpp"
+
 #include <random>
 
 namespace fetch {
@@ -121,27 +120,6 @@ std::size_t Size(const T &item)
   return counter.size();
 }
 
-template <typename T>
-T NextTransaction(std::size_t bytesToAdd = 0)
-{
-  fetch::ledger::MutableTransaction trans;
-
-  trans.PushResource(GetRandomByteArray(64));
-
-  ledger::Signatories signatures;
-  signatures[fetch::crypto::Identity{"identity_params", "identity"}] =
-      fetch::ledger::Signature{"sig_data", "sig_type"};
-  byte_array::ByteArray contract_name, data;
-  MakeString(contract_name);
-  MakeString(data, 1 + bytesToAdd);
-
-  trans.set_signatures(signatures);
-  trans.set_contract_name(std::string{contract_name.char_pointer(), contract_name.size()});
-  trans.set_data(data);
-
-  return T::Create(trans);
-}
-
 std::size_t Hash(fetch::byte_array::ConstByteArray const &arr)
 {
   std::size_t hash = 2166136261;
@@ -166,15 +144,5 @@ void BlockUntilTime(uint64_t startTime)
 }
 
 }  // namespace common
-
-namespace network_benchmark {
-
-// Transactions are packaged up into blocks and referred to using a hash
-using transaction_type = fetch::ledger::Transaction;
-using block_hash       = std::size_t;
-using block_type       = std::vector<transaction_type>;
-using network_block    = std::pair<block_hash, block_type>;
-
-}  // namespace network_benchmark
 
 }  // namespace fetch

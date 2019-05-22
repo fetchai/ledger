@@ -28,44 +28,38 @@ template <class T>
 class MatrixMultiply : public fetch::ml::BatchOps<T>
 {
 public:
-  using ArrayType      = T;
-  using SizeType       = typename ArrayType::SizeType;
-  using ArrayPtrType   = std::shared_ptr<ArrayType>;
-  using ConstSliceType = typename ArrayType::ConstSliceType;
+  using ArrayType     = T;
+  using SizeType      = typename ArrayType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using VecTensorType = typename BatchOps<T>::VecTensorType;
 
   MatrixMultiply()  = default;
   ~MatrixMultiply() = default;
 
-  ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                    ArrayType &                                                 output)
+  void Forward(VecTensorType const &inputs, ArrayType &output)
   {
-    (void)output;
     ASSERT(inputs.size() == 2);
     ASSERT(inputs.at(0).get().shape().size() == 2);
     ASSERT(inputs.at(1).get().shape().size() == 2);
     ASSERT(output.shape() == ComputeOutputShape(inputs));
 
     fetch::math::Dot(inputs[0].get(), inputs[1].get(), output);
-    return output;
   }
 
-  std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           errorSignal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
   {
     ASSERT(inputs.size() == 2);
 
-    ArrayType errorSignal1(inputs.at(0).get().shape());
-    ArrayType errorSignal2(inputs.at(1).get().shape());
+    ArrayType error_signal1(inputs.at(0).get().shape());
+    ArrayType error_signal2(inputs.at(1).get().shape());
 
-    fetch::math::DotTranspose(errorSignal, inputs.at(1).get(), errorSignal1);
-    fetch::math::TransposeDot(inputs.at(0).get(), errorSignal, errorSignal2);
+    fetch::math::DotTranspose(error_signal, inputs.at(1).get(), error_signal1);
+    fetch::math::TransposeDot(inputs.at(0).get(), error_signal, error_signal2);
 
-    return {errorSignal1, errorSignal2};
+    return {error_signal1, error_signal2};
   }
 
-  std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
     return {inputs.at(0).get().shape()[0], inputs.at(1).get().shape()[1]};
   }

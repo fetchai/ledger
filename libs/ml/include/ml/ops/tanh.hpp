@@ -30,14 +30,14 @@ template <class T>
 class TanH : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType = T;
-  using DataType  = typename ArrayType::Type;
+  using ArrayType     = T;
+  using DataType      = typename ArrayType::Type;
+  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
   TanH()          = default;
   virtual ~TanH() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(inputs.size() == 1);
     ASSERT(output.shape() == this->ComputeOutputShape(inputs));
@@ -50,19 +50,19 @@ public:
       // Maximum value of tanh is restricted to 1-epsilon
       fetch::math::Min(val, fetch::math::Subtract(DataType(1), epsilon_), val);
     }
-    return output;
   }
 
-  virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-      ArrayType const &                                           error_signal)
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
   {
     assert(inputs.size() == 1);
 
     assert(inputs.front().get().shape() == error_signal.shape());
 
     ArrayType return_signal = error_signal.Copy();
-    ArrayType t             = this->Ops<T>::Forward(inputs);
+
+    ArrayType t(this->ComputeOutputShape(inputs));
+    Forward(inputs, t);
 
     // gradient of tanh: 1 - tanh(x)^2
     fetch::math::Multiply(t, t, t);

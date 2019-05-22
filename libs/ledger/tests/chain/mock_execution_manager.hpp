@@ -27,7 +27,7 @@ class MockExecutionManager : public fetch::ledger::ExecutionManagerInterface
 {
 public:
   using Block  = fetch::ledger::Block;
-  using Digest = fetch::ledger::v2::Digest;
+  using Digest = fetch::ledger::Digest;
 
   explicit MockExecutionManager(FakeStorageUnit &storage)
     : fake{storage}
