@@ -136,7 +136,7 @@ TEST_F(CustomBindingTests, test_binding_free_function_to_functor_void_no_argumen
   EXPECT_CALL(call_counter, increment()).Times(3);
 
   auto CustomBinding_lambda = [this](fetch::vm::VM *) { call_counter.increment(); };
-  toolkit.module().CreateFreeFunction("customBinding", CustomBinding_lambda);
+  toolkit.module().CreateFreeFunction("customBinding", std::move(CustomBinding_lambda));
 
   ASSERT_TRUE(toolkit.Compile(void_no_args));
 
@@ -152,7 +152,7 @@ TEST_F(CustomBindingTests, test_binding_free_function_to_functor_void_with_argum
   auto CustomBinding_lambda = [this](fetch::vm::VM *, uint32_t a, int64_t b) {
     call_counter.increment_with_args(a, b);
   };
-  toolkit.module().CreateFreeFunction("customBinding", CustomBinding_lambda);
+  toolkit.module().CreateFreeFunction("customBinding", std::move(CustomBinding_lambda));
 
   ASSERT_TRUE(toolkit.Compile(void_two_args));
 
@@ -170,7 +170,7 @@ TEST_F(CustomBindingTests, test_binding_free_function_to_functor_nonvoid_no_argu
 
     return 42u;
   };
-  toolkit.module().CreateFreeFunction("customBinding", CustomBinding_lambda);
+  toolkit.module().CreateFreeFunction("customBinding", std::move(CustomBinding_lambda));
 
   ASSERT_TRUE(toolkit.Compile(void_no_args));
 
@@ -188,7 +188,7 @@ TEST_F(CustomBindingTests, test_binding_free_function_to_functor_nonvoid_with_ar
 
     return 42u;
   };
-  toolkit.module().CreateFreeFunction("customBinding", CustomBinding_lambda);
+  toolkit.module().CreateFreeFunction("customBinding", std::move(CustomBinding_lambda));
 
   ASSERT_TRUE(toolkit.Compile(void_two_args));
 
