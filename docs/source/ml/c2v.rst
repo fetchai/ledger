@@ -3,11 +3,11 @@
 # Input files
 The content of the input file(s) is assumed to have the following syntax:
 ```
-fct_1 sourceword_1a,path_1a,targetword_1a sourceword_1b,path_1b,targetword_1b ... 
-fct_2 sourceword_2a,path_2a,targetword_2a sourceword_2b,path_2b,targetword_2b ...
+fct_1 sourceword_1a,path_1a,targetword_1a sourceword_1b,path_1b,targetword_1b ... \n
+fct_2 sourceword_2a,path_2a,targetword_2a sourceword_2b,path_2b,targetword_2b ... \n
 ```
 where `fct_i` is the function name of the function `i`, and the triple (sourceword_ij,path_ij,targetword_ij) is the jth context of function i.
-The context consists of a source word (start node of a path in the AST), path is a unique id/string indicating a path, targetword is the terminating word of a path in a ast.
+The context consists of a source word (start node of a path in the AST), path is a unique id/string indicating a path, targetword is the terminating word of a path in a ast. The contexts are space separated, the list of contexts is terminated by a newline character.
 
 Contexts from raw Python code: An extractor can be found in <https://github.com/uvue-git/7lytix_Code2Vec/blob/1a470e5c67cbfaa6d5473cb55744edba1e3b0b93/code2vec_preprocess.sh#L41>
 
@@ -32,7 +32,7 @@ We have the following trainable tensors
  - FE: Function name embedding, Dimension (FUNCTION_VOCABULARY, EMBEDDING_SIZE)
  - FC: Weights of a fully connected layer (EMBEDDING_SIZE, EMBEDDING_SIZE)
  - AV: Attention vector (MAX_CONTEXTS)
-
+All trainable tensors are currently initialised with glorot uniform initialiser.
 
 Legend:
 i denotes the index of the samples (i.e. i runs from 0 to MAX_CONTEXTS)
@@ -41,6 +41,7 @@ k denotes the index of an embedding (i.e. j runs from 0 to EMBEDDING_SIZE)
 m denotes the index of the function name vocab
 \vec SE_{i} (\vec PE_{i}, \vec FE_{i}) gives the representation of the word/path/.. of sample i
 
+## Model architecture 
 
 1. Data feed into the model gives us \vec SE_{i} (\vec PE_{i}, \vec FE_{i})
 
