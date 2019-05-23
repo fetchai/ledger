@@ -16,18 +16,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_test_suite.hpp"
+#include "vm_test_toolkit.hpp"
 
 #include "vm/io_observer_interface.hpp"
 #include "vm_modules/vm_factory.hpp"
 
 #include "gtest/gtest.h"
 
-class VMTests : public VmTestSuite
+namespace {
+
+class VMTests : public ::testing::Test
 {
-protected:
-  using Module = std::shared_ptr<fetch::vm::Module>;
-  using VM     = std::unique_ptr<fetch::vm::VM>;
+public:
+  VmTestToolkit toolkit;
 };
 
 // Test we can compile and run a fairly inoffensive smart contract
@@ -38,8 +39,8 @@ TEST_F(VMTests, CheckCompileAndExecute)
       "   print(\"Hello, world\");"
       " endfunction ";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 }
 
 TEST_F(VMTests, CheckRandom)
@@ -55,6 +56,8 @@ TEST_F(VMTests, CheckRandom)
       "   print('rnd = ' + toString(Rand(0.0, 1000.0)));"
       " endfunction ";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 }
+
+}  // namespace

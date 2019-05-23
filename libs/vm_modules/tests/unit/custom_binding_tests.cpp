@@ -16,39 +16,53 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_test_suite.hpp"
+#include "vm_test_toolkit.hpp"
 
-class CustomBindingTests : public VmTestSuite
+#include "gmock/gmock.h"
+
+#include <cstddef>
+
+namespace {
+
+class CustomBindingTests;
+
+CustomBindingTests *fixture;
+
+class CustomBindingTests : public ::testing::Test
 {
-protected:
-};
+public:
+  void SetUp() override
+  {
+    fixture = this;
+  }
 
-// Test to add a custom binding that will increment this counter when
-// the smart contract is executed
-static int32_t binding_called_count = 0;
-
-static void CustomBinding(fetch::vm::VM * /*vm*/)
-{
-  binding_called_count++;
-}
-
-TEST_F(CustomBindingTests, CheckBasicBinding)
-{
-  static char const *TEXT =
+  char const *void_no_args =
       " function main() "
       "   customBinding();"
       " endfunction ";
 
-  EXPECT_EQ(binding_called_count, 0);
+  VmTestToolkit toolkit;
+  struct {
+    MOCK_CONST_METHOD0(increment, void());
+  } call_counter;
+};
 
-  // create the binding
-  module_->CreateFreeFunction("customBinding", &CustomBinding);
+void CustomBinding_function(fetch::vm::VM *)
+{
+  fixture->call_counter.increment();
+}
 
-  ASSERT_TRUE(Compile(TEXT));
+TEST_F(CustomBindingTests, test_binding_free_function_void_no_arguments)
+{
+  EXPECT_CALL(call_counter, increment()).Times(3);
 
-  ASSERT_TRUE(Run());
-  ASSERT_TRUE(Run());
-  ASSERT_TRUE(Run());
+  toolkit.module().CreateFreeFunction("customBinding", &CustomBinding_function);
 
-  EXPECT_EQ(binding_called_count, 3);
+  ASSERT_TRUE(toolkit.Compile(void_no_args));
+
+  ASSERT_TRUE(toolkit.Run());
+  ASSERT_TRUE(toolkit.Run());
+  ASSERT_TRUE(toolkit.Run());
+}
+
 }

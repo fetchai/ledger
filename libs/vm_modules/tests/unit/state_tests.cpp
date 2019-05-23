@@ -16,13 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_test_suite.hpp"
+#include "vm_test_toolkit.hpp"
+
+#include "gmock/gmock.h"
+
+#include <cstddef>
 
 namespace {
 
-class StateTests : public VmTestSuite
+class StateTests : public ::testing::Test
 {
-protected:
+public:
+  VmTestToolkit toolkit;
 };
 
 TEST_F(StateTests, SanityCheck)
@@ -32,8 +37,8 @@ TEST_F(StateTests, SanityCheck)
     endfunction
   )";
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 }
 
 TEST_F(StateTests, AddressSerializeTest)
@@ -46,11 +51,11 @@ TEST_F(StateTests, AddressSerializeTest)
     endfunction
   )";
 
-  EXPECT_CALL(*observer_, Exists("addr"));
-  EXPECT_CALL(*observer_, Write("addr", _, _));
+  EXPECT_CALL(toolkit.observer(), Exists("addr"));
+  EXPECT_CALL(toolkit.observer(), Write("addr", _, _));
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 }
 
 TEST_F(StateTests, AddressDeserializeTest)
@@ -62,15 +67,16 @@ TEST_F(StateTests, AddressDeserializeTest)
     endfunction
   )";
 
-  AddState("addr",
-           "000000000000000020000000000000002f351e415c71722c379baac9394a947b8a303927b8b8421fb9466ed"
-           "3db1f5683");
+  toolkit.AddState(
+      "addr",
+      "000000000000000020000000000000002f351e415c71722c379baac9394a947b8a303927b8b8421fb9466ed"
+      "3db1f5683");
 
-  EXPECT_CALL(*observer_, Exists("addr"));
-  EXPECT_CALL(*observer_, Read("addr", _, _));
+  EXPECT_CALL(toolkit.observer(), Exists("addr"));
+  EXPECT_CALL(toolkit.observer(), Read("addr", _, _));
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 }
 
 TEST_F(StateTests, MapSerializeTest)
@@ -83,11 +89,11 @@ TEST_F(StateTests, MapSerializeTest)
   endfunction
   )";
 
-  EXPECT_CALL(*observer_, Exists("map"));
-  EXPECT_CALL(*observer_, Write("map", _, _));
+  EXPECT_CALL(toolkit.observer(), Exists("map"));
+  EXPECT_CALL(toolkit.observer(), Write("map", _, _));
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 }
 
 TEST_F(StateTests, MapDeserializeTest)
@@ -99,13 +105,13 @@ TEST_F(StateTests, MapDeserializeTest)
   endfunction
   )";
 
-  AddState("map", "0000000000000000");
+  toolkit.AddState("map", "0000000000000000");
 
-  EXPECT_CALL(*observer_, Exists("map"));
-  EXPECT_CALL(*observer_, Read("map", _, _));
+  EXPECT_CALL(toolkit.observer(), Exists("map"));
+  EXPECT_CALL(toolkit.observer(), Read("map", _, _));
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 }
 
 TEST_F(StateTests, ArraySerializeTest)
@@ -118,11 +124,11 @@ TEST_F(StateTests, ArraySerializeTest)
     endfunction
   )";
 
-  EXPECT_CALL(*observer_, Exists("state"));
-  EXPECT_CALL(*observer_, Write("state", _, _));
+  EXPECT_CALL(toolkit.observer(), Exists("state"));
+  EXPECT_CALL(toolkit.observer(), Write("state", _, _));
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 }
 
 TEST_F(StateTests, ArrayDeserializeTest)
@@ -134,15 +140,16 @@ TEST_F(StateTests, ArrayDeserializeTest)
     endfunction
   )";
 
-  AddState("state",
-           "0c000a000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-           "0000000000000");
+  toolkit.AddState(
+      "state",
+      "0c000a000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+      "0000000000000");
 
-  EXPECT_CALL(*observer_, Exists("state"));
-  EXPECT_CALL(*observer_, Read("state", _, _));
+  EXPECT_CALL(toolkit.observer(), Exists("state"));
+  EXPECT_CALL(toolkit.observer(), Read("state", _, _));
 
-  ASSERT_TRUE(Compile(TEXT));
-  ASSERT_TRUE(Run());
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
 }
 
 }  // namespace
