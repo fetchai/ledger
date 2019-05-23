@@ -208,17 +208,19 @@ public:
   module.CreateFreeFunction("myfunc", lambda);
   */
   template <typename Functor>
-  void CreateFreeFunction(std::string const &name, Functor const &functor)
+  void CreateFreeFunction(std::string const &name, Functor &&functor)
   {
-    using ReturnType     = typename FunctorReturnTypeExtractor<Functor>::type;
-    using SignatureTuple = typename FunctorSignatureExtractor<Functor>::type;
+    using ReturnType =
+        typename FunctorReturnTypeExtractor<typename std::decay<Functor>::type>::type;
+    using SignatureTuple =
+        typename FunctorSignatureExtractor<typename std::decay<Functor>::type>::type;
     using ParameterTuple = typename RemoveFirstType<SignatureTuple>::type;
     TypeIndexArray parameter_type_index_array;
     UnrollTupleParameterTypes<ParameterTuple>::Unroll(parameter_type_index_array);
     TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
 
-    Handler handler = [functor](VM *vm) {
-      InvokeFunctor(vm, vm->instruction_->type_id, functor, ParameterTuple());
+    Handler handler = [f{std::forward<Functor>(functor)}](VM *vm) {
+      InvokeFunctor(vm, vm->instruction_->type_id, f, ParameterTuple());
     };
     auto compiler_setup_function = [name, parameter_type_index_array, return_type_index,
                                     handler](Compiler *compiler) {
