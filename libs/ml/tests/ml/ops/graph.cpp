@@ -212,7 +212,7 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
   // Forward
   g.SetInput(input_name1, data1);
   g.SetInput(input_name2, data2);
-  TypeParam output = g.Evaluate("Diamond_Op3");
+  TypeParam output = g.Evaluate(output_name);
 
   // Calculate Gradient
   g.BackPropagate(output_name, error_signal);
