@@ -42,7 +42,8 @@ public:
       " endfunction ";
 
   VmTestToolkit toolkit;
-  struct {
+  struct
+  {
     MOCK_CONST_METHOD0(increment, void());
   } call_counter;
 };
@@ -52,7 +53,7 @@ void CustomBinding_function(fetch::vm::VM *)
   fixture->call_counter.increment();
 }
 
-TEST_F(CustomBindingTests, test_binding_free_function_void_no_arguments)
+TEST_F(CustomBindingTests, test_binding_free_function_to_function_pointer_void_no_arguments)
 {
   EXPECT_CALL(call_counter, increment()).Times(3);
 
@@ -65,4 +66,18 @@ TEST_F(CustomBindingTests, test_binding_free_function_void_no_arguments)
   ASSERT_TRUE(toolkit.Run());
 }
 
+TEST_F(CustomBindingTests, test_binding_free_function_to_functor_void_no_arguments)
+{
+  EXPECT_CALL(call_counter, increment()).Times(3);
+
+  auto CustomBinding_lambda = [this](fetch::vm::VM *) { call_counter.increment(); };
+  toolkit.module().CreateFreeFunction("customBinding", CustomBinding_lambda);
+
+  ASSERT_TRUE(toolkit.Compile(void_no_args));
+
+  ASSERT_TRUE(toolkit.Run());
+  ASSERT_TRUE(toolkit.Run());
+  ASSERT_TRUE(toolkit.Run());
 }
+
+}  // namespace
