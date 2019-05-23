@@ -234,22 +234,31 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
       weights[1].AllClose(data1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 
   // Change data2
-  data2        = ArrayType::FromString("-2, -1, 0, 1, 2, 3");
-  error_signal = ArrayType::FromString("-0.1,0,0.1,0.2,0.3,0.4");
-  grad1        = ArrayType::FromString("0.1,0,0.1,0.4,0.9,1.6");
-  grad2        = ArrayType::FromString("0,0,-0.2,-0.6,-1.2,-2.0");
+  data2                       = ArrayType::FromString("-2, -1, 0, 1, 2, 3");
+  error_signal                = ArrayType::FromString("-0.1,0,0.1,0.2,0.3,0.4");
+  ArrayType weights1_expected = ArrayType::FromString("-1,-1,1,5,11,19");
+  ArrayType weights2_expected = ArrayType::FromString("17, 0, -1, 14, 45, 92");
+  grad1                       = ArrayType::FromString("-1.7,0,-0.1,2.8,13.5,36.8");
+  grad2                       = ArrayType::FromString("3.5, 0, 0.3, -4.6, -23.7, -66");
 
   g.SetInput(input_name2, data2);
 
   // Apply gradient;
-  // g.ApplyGradients(gradients);
-  g.ResetGradients();
+  g.ApplyGradients(gradients);
 
   // Recompute graph
   output = g.Evaluate("Diamond_Op3");
 
   // Calculate Gradient
   g.BackPropagate(output_name, error_signal);
+
+  // Test Weights
+  std::vector<TypeParam> weights2 = g.GetWeights();
+  EXPECT_EQ(weights2.size(), 2);
+  ASSERT_TRUE(weights2[0].AllClose(weights1_expected, static_cast<DataType>(1e-5f),
+                                   static_cast<DataType>(1e-5f)));
+  ASSERT_TRUE(weights2[1].AllClose(weights2_expected, static_cast<DataType>(1e-5f),
+                                   static_cast<DataType>(1e-5f)));
 
   // Test gradient
   std::vector<TypeParam> gradients2 = g.GetGradients();
@@ -258,14 +267,6 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
       gradients2[0].AllClose(grad1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
   ASSERT_TRUE(
       gradients2[1].AllClose(grad2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
-
-  // Test Weights
-  std::vector<TypeParam> weights2 = g.GetWeights();
-  EXPECT_EQ(weights2.size(), 2);
-  ASSERT_TRUE(
-      weights2[0].AllClose(data2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
-  ASSERT_TRUE(
-      weights2[1].AllClose(data1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 }
 
 TYPED_TEST(GraphTest, diamond_graph_getStateDict)

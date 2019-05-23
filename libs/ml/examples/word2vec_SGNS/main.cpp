@@ -213,7 +213,7 @@ int main(int argc, char **argv)
     batch_loss = 0;
 
     // effectively clears any leftover gradients
-    g.Step(0);
+    g.ResetGradients();
 
     while (!dataloader.IsDone())
     {
@@ -259,7 +259,12 @@ int main(int argc, char **argv)
       // take mini-batch learning step
       if (step_count % tp.batch_size == (tp.batch_size - 1))
       {
-        g.Step(tp.learning_rate);
+        auto gradients = g.GetGradients();
+        for (auto &grad : gradients)
+        {
+          fetch::math::Multiply(grad, -tp.learning_rate, grad);
+        }
+        g.ApplyGradients(gradients);
 
         // average prediction scores
         sum_average_scores += (correct_score / double(tp.batch_size));

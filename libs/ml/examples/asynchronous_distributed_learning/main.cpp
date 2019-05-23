@@ -92,7 +92,13 @@ public:
       {
         // Updating the weights
         std::lock_guard<std::mutex> l(m_);
-        g_.Step(LEARNING_RATE);
+
+        auto gradients = g_.GetGradients();
+        for (auto &grad : gradients)
+        {
+          fetch::math::Multiply(grad, -LEARNING_RATE, grad);
+        }
+        g_.ApplyGradients(gradients);
       }
     }
     UpdateWeights();

@@ -117,7 +117,13 @@ void PlusOneTest()
 
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
   }
-  g.Step(alpha);
+
+  std::vector<TypeParam> gradients = g.GetGradients();
+  for (auto &grad : gradients)
+  {
+    fetch::math::Multiply(grad, -alpha, grad);
+  }
+  g.ApplyGradients(gradients);
 
   DataType current_loss = loss;
 
@@ -143,7 +149,13 @@ void PlusOneTest()
     // This task is so easy the loss should fall on every training step
     EXPECT_GE(current_loss, loss);
     current_loss = loss;
-    g.Step(alpha);
+
+    std::vector<TypeParam> gradients = g.GetGradients();
+    for (auto &grad : gradients)
+    {
+      fetch::math::Multiply(grad, -alpha, grad);
+    }
+    g.ApplyGradients(gradients);
   }
 }
 
@@ -211,7 +223,13 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     loss += criterion.Forward({results, cur_gt, n_classes});
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
   }
-  g.Step(alpha);
+
+  std::vector<TypeParam> gradients = g.GetGradients();
+  for (auto &grad : gradients)
+  {
+    fetch::math::Multiply(grad, -alpha, grad);
+  }
+  g.ApplyGradients(gradients);
 
   DataType current_loss = loss;
 
@@ -236,7 +254,13 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     // This task is so easy the loss should fall on every training step
     EXPECT_GE(current_loss, loss);
     current_loss = loss;
-    g.Step(alpha);
+
+    std::vector<TypeParam> gradients = g.GetGradients();
+    for (auto &grad : gradients)
+    {
+      fetch::math::Multiply(grad, -alpha, grad);
+    }
+    g.ApplyGradients(gradients);
   }
 }
 
@@ -295,7 +319,13 @@ void CategoricalXorTest(bool add_softmax = false)
     loss += criterion.Forward({results, cur_gt, n_classes});
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
   }
-  g.Step(alpha);
+
+  std::vector<TypeParam> gradients = g.GetGradients();
+  for (auto &grad : gradients)
+  {
+    fetch::math::Multiply(grad, -alpha, grad);
+  }
+  g.ApplyGradients(gradients);
 
   DataType current_loss = loss;
 
@@ -319,7 +349,13 @@ void CategoricalXorTest(bool add_softmax = false)
 
     EXPECT_GE(current_loss, loss);
     current_loss = loss;
-    g.Step(alpha);
+
+    std::vector<TypeParam> gradients = g.GetGradients();
+    for (auto &grad : gradients)
+    {
+      fetch::math::Multiply(grad, -alpha, grad);
+    }
+    g.ApplyGradients(gradients);
   }
 }
 

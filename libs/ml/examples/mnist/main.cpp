@@ -88,7 +88,14 @@ int main(int ac, char **av)
     {
       std::cout << "MiniBatch: " << i / 60 << " -- Loss : " << loss
                 << " -- Correct: " << 60 - errorCount << " / 60" << std::endl;
-      g.Step(0.01f);
+
+      auto gradients = g.GetGradients();
+      for (auto &grad : gradients)
+      {
+        fetch::math::Multiply(grad, -0.01f, grad);
+      }
+      g.ApplyGradients(gradients);
+
       loss       = 0;
       errorCount = 0;
     }

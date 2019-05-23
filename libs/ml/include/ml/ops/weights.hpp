@@ -108,7 +108,9 @@ public:
     ResetGradients();
   }
 
-  // TODO: Make it private and change graph tests to ApplyGradient instead
+  /**
+   * Set all gradient values to 0
+   */
   virtual void ResetGradients()
   {
     gradient_accumulation_->Fill(typename T::Type(0));

@@ -153,7 +153,13 @@ int main(int ac, char **av)
 
       loss += criterion.Forward({predictions, groundTruth});
       g.BackPropagate("Softmax", criterion.Backward({predictions.Copy(), groundTruth}));
-      g.Step(LEARNING_RATE);
+
+      auto gradients = g.GetGradients();
+      for (auto &grad : gradients)
+      {
+        fetch::math::Multiply(grad, -LEARNING_RATE, grad);
+      }
+      g.ApplyGradients(gradients);
 
       iteration++;
     }
