@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/tuple.hpp"
 #include "vm/address.hpp"
 #include "vm/array.hpp"
 #include "vm/compiler.hpp"
@@ -121,8 +122,8 @@ public:
     {
       static_assert(sizeof...(Types) >= 2, "2 or more types expected");
       using Tuple       = std::tuple<Types...>;
-      using InputsTuple = typename RemoveLastType<Tuple>::type;
-      using OutputType  = typename GetLastType<Tuple>::type;
+      using InputsTuple = typename meta::RemoveLastType<Tuple>::type;
+      using OutputType  = typename meta::GetLastType<Tuple>::type;
       using Getter      = typename IndexedValueGetter<Type, InputsTuple, OutputType>::type;
       using Setter      = typename IndexedValueSetter<Type, InputsTuple, OutputType>::type;
       TypeIndex const type_index__ = type_index_;
@@ -214,7 +215,7 @@ public:
         typename FunctorReturnTypeExtractor<typename std::decay<Functor>::type>::type;
     using SignatureTuple =
         typename FunctorSignatureExtractor<typename std::decay<Functor>::type>::type;
-    using ParameterTuple = typename RemoveFirstType<SignatureTuple>::type;
+    using ParameterTuple = typename meta::RemoveFirstType<SignatureTuple>::type;
     TypeIndexArray parameter_type_index_array;
     UnrollTupleParameterTypes<ParameterTuple>::Unroll(parameter_type_index_array);
     TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
