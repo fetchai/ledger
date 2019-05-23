@@ -175,6 +175,17 @@ struct UnrollParameterTypes<>
   {}
 };
 
+template <typename... Ts>
+struct UnrollTupleParameterTypes;
+template <typename... Ts>
+struct UnrollTupleParameterTypes<std::tuple<Ts...>>
+{
+  static void Unroll(TypeIndexArray &array)
+  {
+    UnrollParameterTypes<Ts...>::Unroll(array);
+  }
+};
+
 template <typename T, typename = void>
 struct MakeParameterType;
 template <typename T>
@@ -191,6 +202,14 @@ template <typename T>
 struct MakeParameterType<T, typename std::enable_if_t<fetch::vm::IsPtr<T>::value>>
 {
   using type = T const &;
+};
+
+template <typename T, typename... Ts>
+struct RemoveFirstType;
+template <typename T, typename... Ts>
+struct RemoveFirstType<std::tuple<T, Ts...>>
+{
+  using type = typename std::tuple<Ts...>;
 };
 
 template <typename... Ts>
@@ -226,6 +245,23 @@ struct IndexedValueSetter<Type, std::tuple<InputTypes...>, OutputType>
 {
   using type = void (Type::*)(typename fetch::vm::MakeParameterType<InputTypes>::type...,
                               typename fetch::vm::MakeParameterType<OutputType>::type);
+};
+
+template <typename T>
+struct FunctorReturnTypeExtractor : public FunctorReturnTypeExtractor<decltype(&T::operator())>
+{};
+template <typename Functor, typename ReturnType, typename... Ts>
+struct FunctorReturnTypeExtractor<ReturnType (Functor::*)(Ts...) const>
+{
+    using type = ReturnType;
+};
+template <typename T>
+struct FunctorSignatureExtractor : public FunctorSignatureExtractor<decltype(&T::operator())>
+{};
+template <typename Functor, typename ReturnType, typename... Ts>
+struct FunctorSignatureExtractor<ReturnType (Functor::*)(Ts...) const>
+{
+    using type = std::tuple<Ts...>;
 };
 
 }  // namespace vm

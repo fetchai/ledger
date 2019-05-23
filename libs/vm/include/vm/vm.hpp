@@ -453,6 +453,8 @@ private:
   friend struct ConstructorInvokerHelper;
   template <typename ReturnType, typename StaticMemberFunction, typename... Ts>
   friend struct StaticMemberFunctionInvokerHelper;
+  template <typename ReturnType, typename Functor, typename... Ts>
+  friend struct FunctorInvokerHelper;
 
   TypeInfoArray                  type_info_array_;
   TypeInfoMap                    type_info_map_;

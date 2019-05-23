@@ -25,6 +25,7 @@
 #include "vm/module/base.hpp"
 #include "vm/module/constructor_invoke.hpp"
 #include "vm/module/free_function_invoke.hpp"
+#include "vm/module/functor_invoke.hpp"
 #include "vm/module/member_function_invoke.hpp"
 #include "vm/module/static_member_function_invoke.hpp"
 #include "vm/state.hpp"
@@ -209,6 +210,32 @@ public:
     UnrollParameterTypes<Ts...>::Unroll(parameter_type_index_array);
     TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
     Handler         handler = [f](VM *vm) { InvokeFreeFunction(vm, vm->instruction_->type_id, f); };
+    auto            compiler_setup_function = [name, parameter_type_index_array, return_type_index,
+                                    handler](Compiler *compiler) {
+      compiler->CreateFreeFunction(name, parameter_type_index_array, return_type_index, handler);
+    };
+    AddCompilerSetupFunction(compiler_setup_function);
+  }
+
+  /*
+  // Create a free function that takes an Int32 and a Float32 and returns a Float64
+  auto lambda = [](fetch::vm::VM*, int32_t i, float f)
+  {
+    return double(float(i) + f);
+  };
+  module.CreateFreeFunction("myfunc", lambda);
+  */
+  template <typename Functor>
+  void CreateFreeFunction(std::string const &name, Functor const &functor)
+  {
+    using ReturnType = typename FunctorReturnTypeExtractor<Functor>::type;
+    using SignatureTuple = typename FunctorSignatureExtractor<Functor>::type;
+    using ParameterTuple = typename RemoveFirstType<SignatureTuple>::type;
+    TypeIndexArray parameter_type_index_array;
+    UnrollTupleParameterTypes<ParameterTuple>::Unroll(parameter_type_index_array);
+    TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
+
+    Handler         handler = [functor](VM *vm) { InvokeFunctor(vm, vm->instruction_->type_id, functor, ParameterTuple()); };
     auto            compiler_setup_function = [name, parameter_type_index_array, return_type_index,
                                     handler](Compiler *compiler) {
       compiler->CreateFreeFunction(name, parameter_type_index_array, return_type_index, handler);
