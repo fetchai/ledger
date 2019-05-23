@@ -249,19 +249,21 @@ struct IndexedValueSetter<Type, std::tuple<InputTypes...>, OutputType>
 
 template <typename T>
 struct FunctorReturnTypeExtractor : public FunctorReturnTypeExtractor<decltype(&T::operator())>
-{};
+{
+};
 template <typename Functor, typename ReturnType, typename... Ts>
 struct FunctorReturnTypeExtractor<ReturnType (Functor::*)(Ts...) const>
 {
-    using type = ReturnType;
+  using type = ReturnType;
 };
 template <typename T>
 struct FunctorSignatureExtractor : public FunctorSignatureExtractor<decltype(&T::operator())>
-{};
+{
+};
 template <typename Functor, typename ReturnType, typename... Ts>
 struct FunctorSignatureExtractor<ReturnType (Functor::*)(Ts...) const>
 {
-    using type = std::tuple<Ts...>;
+  using type = std::tuple<Ts...>;
 };
 
 }  // namespace vm

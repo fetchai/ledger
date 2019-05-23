@@ -57,9 +57,8 @@ struct FunctorInvoker
     {
       using P = std::decay_t<T>;
       P parameter(StackGetter<P>::Get(vm, PARAMETER_OFFSET));
-      using InvokerType =
-          typename FunctorInvoker<ReturnType, Functor, Used...,
-                                       T>::template Invoker<PARAMETER_OFFSET - 1, Ts...>;
+      using InvokerType = typename FunctorInvoker<ReturnType, Functor, Used...,
+                                                  T>::template Invoker<PARAMETER_OFFSET - 1, Ts...>;
       InvokerType::Invoke(vm, sp_offset, return_type_id, functor, used..., parameter);
     }
   };
@@ -89,15 +88,15 @@ struct FunctorInvoker
 };
 
 template <typename Functor, typename... Ts>
-void InvokeFunctor(VM *vm, TypeId return_type_id, Functor const &functor, std::tuple<Ts...> const & /* tag */)
+void InvokeFunctor(VM *vm, TypeId return_type_id, Functor const &functor,
+                   std::tuple<Ts...> const & /* tag */)
 {
-  using ReturnType = typename FunctorReturnTypeExtractor<Functor>::type;
+  using ReturnType                     = typename FunctorReturnTypeExtractor<Functor>::type;
   constexpr int num_parameters         = int(sizeof...(Ts));
   constexpr int first_parameter_offset = num_parameters - 1;
   constexpr int sp_offset              = num_parameters - IsResult<ReturnType>::value;
   using FunctorInvoker =
-      typename FunctorInvoker<ReturnType,
-                                   Functor>::template Invoker<first_parameter_offset, Ts...>;
+      typename FunctorInvoker<ReturnType, Functor>::template Invoker<first_parameter_offset, Ts...>;
   FunctorInvoker::Invoke(vm, sp_offset, return_type_id, functor);
 }
 
