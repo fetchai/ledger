@@ -9,6 +9,7 @@ fct_2 sourceword_2a,path_2a,targetword_2a sourceword_2b,path_2b,targetword_2b ..
 where `fct_i` is the function name of the function `i`, and the triple (sourceword_ij,path_ij,targetword_ij) is the jth context of function i.
 The context consists of a source word (start node of a path in the AST), path is a unique id/string indicating a path, targetword is the terminating word of a path in a ast.
 
+Contexts from raw Python code: An extractor can be found in <https://github.com/uvue-git/7lytix_Code2Vec/blob/1a470e5c67cbfaa6d5473cb55744edba1e3b0b93/code2vec_preprocess.sh#L41>
 
 # Data loading
 The dataloader class loads in the data and prepares it such that it can be fed into the graph.
@@ -17,7 +18,7 @@ During training, a fixed number of contexts for a function has to be read in (`M
 
 The method `GetNext()` retrieves a pair of
 ```
-(fct_i, (sourceword_tensor_ij, path_tensor_ij, targetword_tensor_ij))
+((sourceword_tensor_ij, path_tensor_ij, targetword_tensor_ij), fct_i)
 ```
 where `fct_i` is the index of the function i, and the tensors have shape (MAX_CONTEXTS) holding the indices of the words/paths.
 
@@ -73,5 +74,9 @@ L = CrossEntropy(PR_{1,m}, GT_{1,m})
  - Adding a Softmax function to the fetch lib, which can normalise along any axis. (Currently it works only for axis 0, that's the reason for the many transposition operations)
  - In the data loader, the whole "corpus" (i.e. the umaps etc.) are created based on a c2v file. In the TF implementation, this corpus is created once, and then persisted, such that it can be reused next time (e.g. for model evaluation)
  - Bringing the AST extraction into fetch
- - Extension to "real" batch training, s.t. contexts of more than one function can be digested simultaneously. (I.e. it would require, that several tensors get a new dimension, and all operations can handly the extra dim) 
-
+ - Extension to "real" batch training, s.t. contexts of more than one function can be digested simultaneously. (I.e. it would require, that several tensors get a new dimension, and all operations can handle the extra dim). To be more precise, I give some examples how some steps would be modified (the numbers refer to the step numbers in the section above). The batch index is called "b": 
+1. The inputs: \vec SE_{i} (\vec PE_{i}, \vec FE_{i}) =>  \vec SE_{b, i} (\vec PE_{b, i}, \vec FE_{b, i})
+2. The combined, concatenated context vector: CC_{k, i} =>  CC_{b, k, i}. After this, we would ned a flattening step from CC_{b, k, i} to CC'_{b*k, i}, s.t. the matmul afterwards work.
+5. AW_{1,i} = Softmax(CA{1,i}) => AW_{b,i} = Softmax(CA{b, i})
+7. The unnormalised prediction probabilities: UP_{m, 1} = FE_{m, k} CV_{k, 1} => UP_{m, b} = FE_{m, k} CV_{k, b}.
+For more details on the batch implementation, I refer to the python implementation <https://github.com/uvue-git/7lytix_Code2Vec/blob/1a470e5c67cbfaa6d5473cb55744edba1e3b0b93/code2vec/model.py#L307>
