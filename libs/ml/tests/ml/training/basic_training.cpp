@@ -118,12 +118,15 @@ void PlusOneTest()
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
   }
 
+  /*
   std::vector<TypeParam> gradients = g.GetGradients();
   for (auto &grad : gradients)
   {
     fetch::math::Multiply(grad, -alpha, grad);
   }
   g.ApplyGradients(gradients);
+   */
+  g.Step(alpha);
 
   DataType current_loss = loss;
 
@@ -150,12 +153,16 @@ void PlusOneTest()
     EXPECT_GE(current_loss, loss);
     current_loss = loss;
 
-    std::vector<TypeParam> gradients = g.GetGradients();
+    /*std::vector<TypeParam> gradients = g.GetGradients();
     for (auto &grad : gradients)
     {
       fetch::math::Multiply(grad, -alpha, grad);
     }
-    g.ApplyGradients(gradients);
+    g.ApplyGradients(gradients);*/
+
+    g.Step(alpha);
+
+
   }
 }
 
@@ -224,12 +231,16 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
   }
 
+  /*
   std::vector<TypeParam> gradients = g.GetGradients();
   for (auto &grad : gradients)
   {
     fetch::math::Multiply(grad, -alpha, grad);
   }
   g.ApplyGradients(gradients);
+   */
+
+  g.Step(alpha);
 
   DataType current_loss = loss;
 
@@ -255,12 +266,16 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     EXPECT_GE(current_loss, loss);
     current_loss = loss;
 
+    g.Step(alpha);
+    /*
     std::vector<TypeParam> gradients = g.GetGradients();
     for (auto &grad : gradients)
     {
       fetch::math::Multiply(grad, -alpha, grad);
     }
     g.ApplyGradients(gradients);
+    */
+
   }
 }
 
@@ -320,12 +335,15 @@ void CategoricalXorTest(bool add_softmax = false)
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
   }
 
+  /*
   std::vector<TypeParam> gradients = g.GetGradients();
   for (auto &grad : gradients)
   {
     fetch::math::Multiply(grad, -alpha, grad);
   }
   g.ApplyGradients(gradients);
+   */
+  g.Step(alpha);
 
   DataType current_loss = loss;
 
@@ -350,12 +368,16 @@ void CategoricalXorTest(bool add_softmax = false)
     EXPECT_GE(current_loss, loss);
     current_loss = loss;
 
+    g.Step(alpha);
+    /*
     std::vector<TypeParam> gradients = g.GetGradients();
     for (auto &grad : gradients)
     {
       fetch::math::Multiply(grad, -alpha, grad);
     }
     g.ApplyGradients(gradients);
+    */
+
   }
 }
 
