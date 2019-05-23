@@ -47,6 +47,8 @@ namespace fetch {
            ArrayType error_signal = error_->Evaluate(output_node_name_);
            error_->BackPropagate(output_node_name_, error_signal);
 
+
+           /*
             std::vector<ArrayType> gradients = error_->GetGradients();
 
             // Do operation with gradient
@@ -58,6 +60,8 @@ namespace fetch {
                 i++;
             }
             error_->ApplyGradients(gradients);
+            */
+           error_->Step(learning_rate_);
 
             return error_signal;
         }

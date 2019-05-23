@@ -34,7 +34,7 @@ namespace ml {
  * The full graph on which to run the computation
  */
 template <class T>
-class Graph
+class Graph : public ops::Trainable<T>
 {
 public:
   using ArrayType          = T;
@@ -50,7 +50,7 @@ public:
   {}
 
   ArrayType                                             Evaluate(std::string const &node_name);
-  std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagate(
+  void BackPropagate(
       std::string const &node_name, ArrayType const &error_signal);
   virtual void Step(Datatype learningRate);
 
@@ -69,6 +69,12 @@ public:
   void                   ApplyGradients(std::vector<ArrayType> &grad);
 
   void ResetGradients();
+
+  /* Trainable */
+  ArrayType const &GetWeight() const;
+   void             ApplyGradient(ArrayType const &grad);
+   ArrayType        Gradients() const;
+   ArrayType empty;
 
 private:
   /**
@@ -155,10 +161,10 @@ ArrayType Graph<ArrayType>::Evaluate(std::string const &node_name)
  * @param error_signal pointer to array containing error signal to backprop
  */
 template <typename ArrayType>
-std::vector<std::pair<NodeInterface<ArrayType> *, ArrayType>> Graph<ArrayType>::BackPropagate(
+void Graph<ArrayType>::BackPropagate(
     std::string const &node_name, ArrayType const &error_signal)
 {
-  return nodes_[node_name]->BackPropagate(error_signal);
+  nodes_[node_name]->BackPropagate(error_signal);
 }
 
 /**
@@ -291,7 +297,7 @@ void Graph<ArrayType>::LoadStateDict(struct fetch::ml::StateDict<ArrayType> cons
   }
 }
 
-/**
+        /**
  * Assigns all trainable parameters to vector of ArrayType for exporting and serialising
  * @return ret is vector containing all weights values
  */
@@ -302,7 +308,7 @@ std::vector<ArrayType> Graph<ArrayType>::GetWeights() const
 
   for (auto const &t : trainable_)
   {
-    ret.push_back(t.second->GetWeights());
+    ret.push_back(t.second->GetWeight());
   }
   return ret;
 }
@@ -332,16 +338,48 @@ void Graph<ArrayType>::ResetGradients()
   }
 }
 
-template <typename ArrayType>
-void Graph<ArrayType>::ApplyGradients(std::vector<ArrayType> &grad)
-{
-  typename ArrayType::SizeType i = 0;
-  for (auto const &t : trainable_)
-  {
-    t.second->ApplyGradient(grad.at(i));
-    i++;
-  }
-}
+        template <typename ArrayType>
+        void Graph<ArrayType>::ApplyGradients(std::vector<ArrayType> &grad)
+        {
+            typename ArrayType::SizeType i = 0;
+            for (auto const &t : trainable_)
+            {
+                t.second->ApplyGradient(grad.at(i));
+                i++;
+            }
+        }
 
-}  // namespace ml
+/* Trainable helpers */
+        template <typename ArrayType>
+        ArrayType const &Graph<ArrayType>::GetWeight() const
+        {
+            for (auto const &t : trainable_) {
+                return t.second->GetWeight();
+            }
+            return empty;
+        }
+
+        template <typename ArrayType>
+        ArrayType        Graph<ArrayType>::Gradients() const
+        {
+            for (auto const &t : trainable_) {
+                return t.second->Gradients();
+            }
+            return empty;
+        }
+
+        template <typename ArrayType>
+        void              Graph<ArrayType>::ApplyGradient(ArrayType const &grad)
+        {
+            typename ArrayType::SizeType i = 0;
+            for (auto const &t : trainable_)
+            {
+                t.second->ApplyGradient(grad);
+                i++;
+            }
+        }
+
+
+
+    }  // namespace ml
 }  // namespace fetch

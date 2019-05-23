@@ -118,14 +118,14 @@ void PlusOneTest()
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
   }
 
-  /*
+/*
   std::vector<TypeParam> gradients = g.GetGradients();
   for (auto &grad : gradients)
   {
     fetch::math::Multiply(grad, -alpha, grad);
   }
   g.ApplyGradients(gradients);
-   */
+*/
   g.Step(alpha);
 
   DataType current_loss = loss;
