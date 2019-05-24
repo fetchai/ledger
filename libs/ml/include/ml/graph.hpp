@@ -312,7 +312,7 @@ std::vector<ArrayType> Graph<ArrayType>::GetWeights() const
 
   for (auto const &t : trainable_)
   {
-    ret.push_back(t.second->GetWeight());
+    ret.push_back(t.second->GetWeights());
   }
   return ret;
 }

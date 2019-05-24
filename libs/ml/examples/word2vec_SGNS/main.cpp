@@ -21,14 +21,13 @@
 
 #include "math/clustering/knn.hpp"
 #include "math/matrix_operations.hpp"
-
+#include "math/tensor.hpp"
 #include "ml/dataloaders/word2vec_loaders/skipgram_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/skip_gram.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
 
 #include <iostream>
-#include <math/tensor.hpp>
 #include <numeric>
 
 using namespace fetch::ml;
@@ -213,7 +212,7 @@ int main(int argc, char **argv)
     batch_loss = 0;
 
     // effectively clears any leftover gradients
-    g.ResetGradients();
+    g.Step(0);
 
     while (!dataloader.IsDone())
     {
@@ -259,12 +258,7 @@ int main(int argc, char **argv)
       // take mini-batch learning step
       if (step_count % tp.batch_size == (tp.batch_size - 1))
       {
-        auto gradients = g.GetGradients();
-        for (auto &grad : gradients)
-        {
-          fetch::math::Multiply(grad, -tp.learning_rate, grad);
-        }
-        g.ApplyGradients(gradients);
+        g.Step(tp.learning_rate);
 
         // average prediction scores
         sum_average_scores += (correct_score / double(tp.batch_size));

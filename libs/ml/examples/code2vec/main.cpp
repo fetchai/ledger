@@ -256,12 +256,7 @@ int main(int ac, char **av)
     g.BackPropagate(result, criterion.Backward({results, y_true_vec}));
 
     // apply the gradients
-    auto gradients = g.GetGradients();
-    for (auto &grad : gradients)
-    {
-      fetch::math::Multiply(grad, -LEARNING_RATE, grad);
-    }
-    g.ApplyGradients(gradients);
+    g.Step(LEARNING_RATE);
 
     // Resetting the y_true vector for reusing it
     y_true_vec.Set(0, input.second, 0);

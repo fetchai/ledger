@@ -40,8 +40,6 @@ TYPED_TEST(WeightsTest, allocation_test)
 
 TYPED_TEST(WeightsTest, gradient_step_test)
 {
-  using DataType = typename TypeParam::Type;
-
   TypeParam        data(8);
   TypeParam        error(8);
   TypeParam        gt(8);
@@ -63,7 +61,7 @@ TYPED_TEST(WeightsTest, gradient_step_test)
 
   EXPECT_EQ(prediction, data);
   std::vector<TypeParam> error_signal = w.Backward({}, error);
-  w.ApplyGradient(Multiply(w.Gradients(), DataType(-1)));
+  w.Step(typename TypeParam::Type(1));
 
   prediction = TypeParam(w.ComputeOutputShape({}));
   w.Forward({}, prediction);

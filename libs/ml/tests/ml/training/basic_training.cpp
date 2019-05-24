@@ -117,15 +117,6 @@ void PlusOneTest()
 
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
   }
-
-  /*
-    std::vector<TypeParam> gradients = g.GetGradients();
-    for (auto &grad : gradients)
-    {
-      fetch::math::Multiply(grad, -alpha, grad);
-    }
-    g.ApplyGradients(gradientstrainable_);
-  */
   g.Step(alpha);
 
   DataType current_loss = loss;
@@ -149,43 +140,9 @@ void PlusOneTest()
       g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
     }
 
-    if (i == 0)
-    {
-      EXPECT_NEAR(double(loss), 7.55306339, 2e-4);
-      EXPECT_NEAR(double(current_loss), 14.89571, 2e-4);
-    }
-    else if (i == 1)
-    {
-      EXPECT_NEAR(double(loss), 2.30039835, 2e-4);
-      EXPECT_NEAR(double(current_loss), 7.55306339, 2e-4);
-    }
-    else if (i == 2)
-    {
-      EXPECT_NEAR(double(loss), 0.395506799, 2e-4);
-      EXPECT_NEAR(double(current_loss), 2.30039835, 2e-4);
-    }
-    else if (i == 3)
-    {
-      EXPECT_NEAR(double(loss), 0.119592488, 2e-4);
-      EXPECT_NEAR(double(current_loss), 0.395506799, 2e-4);
-    }
-    else if (i == 4)
-    {
-      EXPECT_NEAR(double(loss), 0.101222545, 2e-4);
-      EXPECT_NEAR(double(current_loss), 0.119592488, 2e-4);
-    }
-
     // This task is so easy the loss should fall on every training step
     EXPECT_GE(current_loss, loss);
     current_loss = loss;
-
-    /*std::vector<TypeParam> gradients = g.GetGradients();
-    for (auto &grad : gradients)
-    {
-      fetch::math::Multiply(grad, -alpha, grad);
-    }
-    g.ApplyGradients(gradients);*/
-
     g.Step(alpha);
   }
 }
@@ -254,16 +211,6 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     loss += criterion.Forward({results, cur_gt, n_classes});
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
   }
-
-  /*
-  std::vector<TypeParam> gradients = g.GetGradients();
-  for (auto &grad : gradients)
-  {
-    fetch::math::Multiply(grad, -alpha, grad);
-  }
-  g.ApplyGradients(gradients);
-   */
-
   g.Step(alpha);
 
   DataType current_loss = loss;
@@ -289,16 +236,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     // This task is so easy the loss should fall on every training step
     EXPECT_GE(current_loss, loss);
     current_loss = loss;
-
     g.Step(alpha);
-    /*
-    std::vector<TypeParam> gradients = g.GetGradients();
-    for (auto &grad : gradients)
-    {
-      fetch::math::Multiply(grad, -alpha, grad);
-    }
-    g.ApplyGradients(gradients);
-    */
   }
 }
 
@@ -357,15 +295,6 @@ void CategoricalXorTest(bool add_softmax = false)
     loss += criterion.Forward({results, cur_gt, n_classes});
     g.BackPropagate(output_name, criterion.Backward({results, cur_gt}));
   }
-
-  /*
-  std::vector<TypeParam> gradients = g.GetGradients();
-  for (auto &grad : gradients)
-  {
-    fetch::math::Multiply(grad, -alpha, grad);
-  }
-  g.ApplyGradients(gradients);
-   */
   g.Step(alpha);
 
   DataType current_loss = loss;
@@ -390,16 +319,7 @@ void CategoricalXorTest(bool add_softmax = false)
 
     EXPECT_GE(current_loss, loss);
     current_loss = loss;
-
     g.Step(alpha);
-    /*
-    std::vector<TypeParam> gradients = g.GetGradients();
-    for (auto &grad : gradients)
-    {
-      fetch::math::Multiply(grad, -alpha, grad);
-    }
-    g.ApplyGradients(gradients);
-    */
   }
 }
 
@@ -418,9 +338,6 @@ TYPED_TEST(BasicTrainingTest, plus_one_relu_test)
   PlusOneTest<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>,
               fetch::ml::ops::Relu<TypeParam>>();
 }
-
-/*
-
 TYPED_TEST(BasicTrainingTest, plus_one_sigmoid_test)
 {
   PlusOneTest<TypeParam, fetch::ml::ops::MeanSquareError<TypeParam>,
@@ -457,4 +374,3 @@ TYPED_TEST(BasicTrainingTest, categorical_xor_SCE_relu_test)
   CategoricalXorTest<TypeParam, fetch::ml::ops::SoftmaxCrossEntropy<TypeParam>,
                      fetch::ml::ops::Relu<TypeParam>>(false);
 }
-*/
