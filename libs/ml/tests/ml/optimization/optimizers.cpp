@@ -19,10 +19,12 @@
 #include "math/tensor.hpp"
 #include "ml/graph.hpp"
 #include "ml/ops/activations/relu.hpp"
+#include "ml/ops/loss_functions.hpp"
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/subtract.hpp"
-#include "ml/optimization/optimizer.hpp"
+#include "ml/optimization/momentum_optimizer.hpp"
+#include "ml/optimization/sgd_optimizer.hpp"
 
 #include "ml/layers/self_attention.hpp"
 
@@ -37,98 +39,62 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(OptimizersTest, MyTypes);
 
-TYPED_TEST(OptimizersTest, diamond_graph_training)  // output=(input1*input2)-(input1^2)
+TYPED_TEST(OptimizersTest, optimizer_training)
 {
-  using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
-  using ArrayType = TypeParam;
+  using SizeType = typename TypeParam::SizeType;
+  using DataType = typename TypeParam::Type;
 
-  // Generate input
-  ArrayType data1        = ArrayType::FromString("-1,0,1,2,3,4");
-  ArrayType data2        = ArrayType::FromString("-20,-10, 0, 10, 20, 30");
-  ArrayType error_signal = ArrayType::FromString("-1,0,1,2,3,4");
-  ArrayType grad1        = ArrayType::FromString("1,  0,  1,  4,  9, 16");
-  ArrayType grad2        = ArrayType::FromString("18, 0, -2, 12, 42, 88");
+  DataType learning_rate = DataType{0.01f};
+  SizeType input_size    = SizeType(1);
+  SizeType output_size   = SizeType(1);
+  SizeType n_batches     = SizeType(300);
+  SizeType hidden_size   = SizeType(100);
 
-  // Create graph
-  std::string                                  name = "Diamond";
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
       std::shared_ptr<fetch::ml::Graph<TypeParam>>(new fetch::ml::Graph<TypeParam>());
 
-  std::string input_name1 =
-      g->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Input1", {});
+  std::string x_input_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
 
-  std::string input_name2 =
-      g->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Input2", {});
+  std::string fc1_name = g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
+      "FC1", {x_input_name}, input_size, hidden_size);
+  std::string act_name    = g->template AddNode<fetch::ml::ops::Relu<TypeParam>>("", {fc1_name});
+  std::string output_name = g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>(
+      "FC2", {act_name}, hidden_size, output_size);
 
-  std::string op1_name = g->template AddNode<fetch::ml::ops::Multiply<ArrayType>>(
-      name + "_Op1", {input_name1, input_name1});
-  std::string op2_name = g->template AddNode<fetch::ml::ops::Multiply<ArrayType>>(
-      name + "_Op2", {input_name1, input_name2});
+  ////////////////////////////////////////
+  /// DEFINING DATA AND LABELS FOR XOR ///
+  ////////////////////////////////////////
 
-  std::string output_name =
-      g->template AddNode<fetch::ml::ops::Subtract<ArrayType>>(name + "_Op3", {op2_name, op1_name});
+  TypeParam data{{4, 1}};
+  data.Set(0, 0, DataType(1));
+  data.Set(1, 0, DataType(2));
+  data.Set(2, 0, DataType(3));
+  data.Set(3, 0, DataType(4));
 
-  // Forward
-  g->SetInput(input_name1, data1);
-  g->SetInput(input_name2, data2);
+  TypeParam gt{{4, 1}};
+  gt.Set(0, 0, DataType(2));
+  gt.Set(1, 0, DataType(3));
+  gt.Set(2, 0, DataType(4));
+  gt.Set(3, 0, DataType(5));
 
-  fetch::ml::Optimizer<TypeParam> optimizer(g, output_name, DataType{0.1f});
+  //////////////////////
+  /// Initialize SGD ///
+  //////////////////////
 
-  for (SizeType i{0}; i < 10; i++)
+  std::shared_ptr<fetch::ml::ops::Criterion<TypeParam>> criterion =
+      std::shared_ptr<fetch::ml::ops::Criterion<TypeParam>>(
+          new fetch::ml::ops::MeanSquareError<TypeParam>());
+
+  fetch::ml::SGDOptimizer<TypeParam> optimizer(g, criterion, x_input_name, output_name,
+                                               learning_rate);
+
+  /////////////////////
+  /// TRAINING LOOP ///
+  /////////////////////
+
+  for (std::size_t i = 0; i < n_batches; ++i)
   {
-    std::cout << "Weights before: " << g->GetWeights()[0].ToString() << std::endl;
-
-    //    g->SetInput(input_name1, g->GetWeights()[0].Copy());
-    //    g->SetInput(input_name2, g->GetWeights()[1].Copy());
-
-    ArrayType loss = optimizer.Step();
-    std::cout << "Loss: " << loss.ToString() << std::endl;
-    std::cout << "Weights after: " << g->GetWeights()[0].ToString() << std::endl;
+    DataType loss = optimizer.Step(data, gt);
+    std::cout << "Loss: " << loss << std::endl;
   }
-
-  // Test Weights
-  std::vector<TypeParam> weights = g->GetWeights();
-  EXPECT_EQ(weights.size(), 2);
-  ASSERT_TRUE(
-      weights[0].AllClose(data2, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
-  ASSERT_TRUE(
-      weights[1].AllClose(data1, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
-
-  /*
-  // Change data2
-  data2                       = ArrayType::FromString("-2, -1, 0, 1, 2, 3");
-  error_signal                = ArrayType::FromString("-0.1,0,0.1,0.2,0.3,0.4");
-  ArrayType weights1_expected = ArrayType::FromString("-1,-1,1,5,11,19");
-  ArrayType weights2_expected = ArrayType::FromString("17, 0, -1, 14, 45, 92");
-  grad1                       = ArrayType::FromString("-1.7,0,-0.1,2.8,13.5,36.8");
-  grad2                       = ArrayType::FromString("3.5, 0, 0.3, -4.6, -23.7, -66");
-
-  g.SetInput(input_name2, data2);
-
-  // Apply gradient;
-  g.ApplyGradients(gradients);
-
-  // Recompute graph
-  output = g.Evaluate("Diamond_Op3");
-
-  // Calculate Gradient
-  g.BackPropagate(output_name, error_signal);
-
-  // Test Weights
-  std::vector<TypeParam> weights2 = g.GetWeights();
-  EXPECT_EQ(weights2.size(), 2);
-  ASSERT_TRUE(weights2[0].AllClose(weights1_expected, static_cast<DataType>(1e-5f),
-  static_cast<DataType>(1e-5f)));
-  ASSERT_TRUE(weights2[1].AllClose(weights2_expected, static_cast<DataType>(1e-5f),
-  static_cast<DataType>(1e-5f)));
-
-  // Test gradient
-  std::vector<TypeParam> gradients2 = g.GetGradients();
-  EXPECT_EQ(gradients2.size(), 2);
-  ASSERT_TRUE(
-          gradients2[0].AllClose(grad1, static_cast<DataType>(1e-5f),
-  static_cast<DataType>(1e-5f))); ASSERT_TRUE( gradients2[1].AllClose(grad2,
-  static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
-          */
 }

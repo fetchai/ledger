@@ -18,44 +18,24 @@
 //------------------------------------------------------------------------------
 
 #include <cassert>
-#include <memory>
-#include <vector>
-
-#include "math/ml/loss_functions/mean_square_error.hpp"
-#include "ml/ops/loss_functions/criterion.hpp"
 
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class MeanSquareError : public Criterion<T>
+class Criterion
 {
 public:
   using ArrayType    = T;
   using Datatype     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  MeanSquareError()          = default;
-  virtual ~MeanSquareError() = default;
+  Criterion()
+  {}
 
-  virtual typename ArrayType::Type Forward(std::vector<ArrayType> const &inputs)
-  {
-    assert(inputs.size() == 2);
-    assert(inputs[0].shape() == inputs[1].shape());
-
-    typename ArrayType::Type ret = fetch::math::MeanSquareError(inputs[0], inputs[1]);
-    return ret;
-  }
-
-  virtual ArrayType Backward(std::vector<ArrayType> const &inputs)
-  {
-    assert(inputs.size() == 2);
-    assert(inputs[0].shape() == inputs[1].shape());
-    return fetch::math::Subtract(inputs[0], inputs[1]);
-  }
-
-  static constexpr char const *DESCRIPTOR = "MeanSquareError";
+  virtual typename ArrayType::Type Forward(std::vector<ArrayType> const &inputs)  = 0;
+  virtual ArrayType                Backward(std::vector<ArrayType> const &inputs) = 0;
 };
 
 }  // namespace ops

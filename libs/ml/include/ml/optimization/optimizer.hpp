@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/graph.hpp"
+#include "ml/ops/loss_functions/criterion.hpp"
 
 namespace fetch {
 namespace ml {
@@ -30,55 +31,54 @@ public:
   using DataType  = typename ArrayType::Type;
   using SizeType  = typename ArrayType::SizeType;
 
-  Optimizer(std::shared_ptr<Graph<T>> error, std::string const &output_node_name,
+  Optimizer(std::shared_ptr<Graph<T>> graph, std::shared_ptr<ops::Criterion<T>> criterion,
+            std::string const &input_node_name, std::string const &output_node_name,
             DataType const &learning_rate)
-    : error_(error)
+    : graph_(graph)
+    , criterion_(criterion)
+    , input_node_name_(input_node_name)
     , output_node_name_(output_node_name)
     , learning_rate_(learning_rate)
   {
-    auto weights = error_->GetWeights();
+    auto weights = graph_->GetWeights();
     for (auto &wei : weights)
     {
       momentum_.push_back(ArrayType(wei.shape()));
     }
   }
 
-  ArrayType Step()
+  DataType Step(ArrayType &data, ArrayType &labels)
   {
-    ArrayType error_signal = error_->Evaluate(output_node_name_);
-    error_->BackPropagate(output_node_name_, error_signal);
+    DataType loss{0};
+    SizeType n_data = data.shape().at(0);
 
-    /*
-     std::vector<ArrayType> gradients = error_->GetGradients();
+    for (SizeType step{0}; step < n_data; ++step)
+    {
+      auto cur_input = data.Slice(step).Copy();
+      graph_->SetInput(input_node_name_, cur_input);
+      auto cur_label = labels.Slice(step).Copy();
 
-     // Do operation with gradient
-     SizeType i{0};
-     for (auto &grad : gradients)
-     {
-         fetch::math::Add(grad, momentum_[i], grad);
-         fetch::math::Multiply(grad, -learning_rate_, grad);
-         i++;
-     }
-     error_->ApplyGradients(gradients);
-     */
-    error_->Step(learning_rate_);
+      auto label_pred = graph_->Evaluate(output_node_name_);
 
-    return error_signal;
+      loss += criterion_->Forward({label_pred, cur_label});
+
+      graph_->BackPropagate(output_node_name_, criterion_->Backward({label_pred, cur_label}));
+    }
+    ApplyGradients();
+    return loss;
   }
+
+protected:
+  std::shared_ptr<Graph<T>>          graph_;
+  std::shared_ptr<ops::Criterion<T>> criterion_;
+
+  std::string            input_node_name_;
+  std::string            output_node_name_;
+  DataType               learning_rate_;
+  std::vector<ArrayType> momentum_;
 
 private:
-  std::shared_ptr<Graph<T>> error_;
-  std::string               output_node_name_;
-  DataType                  learning_rate_;
-  std::vector<ArrayType>    momentum_;
-
-  void ResetMomentum()
-  {
-    for (auto &moment : momentum_)
-    {
-      moment.Fill(DataType{0});
-    }
-  }
+  virtual void ApplyGradients() = 0;
 };
 
 }  // namespace ml
