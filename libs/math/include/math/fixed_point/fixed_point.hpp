@@ -22,7 +22,7 @@
 #include "meta/type_traits.hpp"
 #include "vectorise/platform.hpp"
 
-#include <cmath>
+#include <functional>
 #include <iostream>
 #include <limits>
 #include <sstream>
@@ -851,72 +851,48 @@ public:
 
   static constexpr FixedPoint Sin(FixedPoint const &x)
   {
-    std::cout << "Sin: x = " << x << std::endl;
+    if (x < CONST_ZERO) {
+      return -Sin(-x);
+    }
+
     FixedPoint r = ReducePi(x);
-    std::cout << "x_reduced = " << r << std::endl;
 
     if (r == CONST_ZERO) {
       return CONST_ZERO;
-    } else if (r == CONST_PI_2) {
-      return CONST_ONE;
-    } else if (r == -CONST_PI_2) {
-      return -CONST_ONE;
     }
 
-    if (Abs(r) > CONST_PI_2) {
-      return Cos(r - CONST_PI_2);
-    }
+    FixedPoint quadrant = Floor(r / CONST_PI_2);
 
-    FixedPoint r2 = r * r;
-    FixedPoint r3 = r2 * r;
-    FixedPoint r4 = r3 * r;
-    std::cout << "r = " << r << std::endl;
-    std::cout << "r2 = " << r2 << std::endl;
-    std::cout << "r3 = " << r3 << std::endl;
-    std::cout << "r4 = " << r4 << std::endl;
-    FixedPoint Q00{5880};
-    FixedPoint P  = r * Q00 - r3 * 620;
-    FixedPoint Q  = Q00 + r2 * 360 + r4 * 11;
-    std::cout << "P = " << P << std::endl;
-    std::cout << "Q = " << Q << std::endl;
-    FixedPoint sin = P / Q;
-    std::cout << "sin = " << sin << std::endl;
+    std::vector<std::function<FixedPoint(FixedPoint const &x)>> quadrant_funcs;
+    quadrant_funcs.push_back([](FixedPoint const &x){ return SinPi2(x); });
+    quadrant_funcs.push_back([](FixedPoint const &x){ return CosPi2(x); });
+    quadrant_funcs.push_back([](FixedPoint const &x){ return -SinPi2(x); });
+    quadrant_funcs.push_back([](FixedPoint const &x){ return -CosPi2(x); });
 
-    return std::move(sin);
+    return quadrant_funcs[(size_t)quadrant](r - CONST_PI_2*quadrant);
   }
 
   static constexpr FixedPoint Cos(FixedPoint const &x)
   {
-    std::cout << "Cos: x = " << x << std::endl;
+    if (x < CONST_ZERO) {
+      return Cos(-x);
+    }
+
     FixedPoint r = ReducePi(x);
-    std::cout << "x_reduced = " << r << std::endl;
 
     if (r == CONST_ZERO) {
       return CONST_ONE;
-    } else if (r == CONST_PI_2) {
-      return CONST_ZERO;
-    } else if (r == -CONST_PI_2) {
-      return CONST_ZERO;
     }
 
-    if (r > CONST_PI_2) {
-      return Sin(r - CONST_PI_2);
-    }
+    FixedPoint quadrant = Floor(r / CONST_PI_2);
 
-    FixedPoint r2 = r * r;
-    FixedPoint r4 = r2 * r2;
-    std::cout << "r = " << r << std::endl;
-    std::cout << "r2 = " << r2 << std::endl;
-    std::cout << "r4 = " << r4 << std::endl;
-    FixedPoint Q00{15120};
-    FixedPoint P  = Q00 - r * 6900 - r4 * 313;
-    FixedPoint Q  = Q00 + r2 * 660 + r4 * 13;
-    std::cout << "P = " << P << std::endl;
-    std::cout << "Q = " << Q << std::endl;
-    FixedPoint cos = P / Q;
-    std::cout << "cos = " << cos << std::endl;
+    std::vector<std::function<FixedPoint(FixedPoint const &x)>> quadrant_funcs;
+    quadrant_funcs.push_back([](FixedPoint const &x){ return CosPi2(x); });
+    quadrant_funcs.push_back([](FixedPoint const &x){ return -SinPi2(x); });
+    quadrant_funcs.push_back([](FixedPoint const &x){ return -CosPi2(x); });
+    quadrant_funcs.push_back([](FixedPoint const &x){ return SinPi2(x); });
 
-    return std::move(cos);
+    return quadrant_funcs[(size_t)quadrant](r - CONST_PI_2*quadrant);
   }
 
   static constexpr FixedPoint Tan(FixedPoint const &x)
@@ -1044,7 +1020,78 @@ private:
 
   static constexpr FixedPoint ReducePi(FixedPoint const &x)
   {
-    return std::move(Remainder(x, CONST_PI));
+    return std::move(Fmod(x, CONST_PI*2));
+  }
+
+  static constexpr FixedPoint SinPi2(FixedPoint const &r)
+  {
+    assert(r <= CONST_PI_2);
+
+    if (r > CONST_PI_4)
+    {
+      FixedPoint res = CosPi2(r - CONST_PI_2);
+      return res;
+    }
+
+    return SinApproxPi4(r);
+  }
+
+  static constexpr FixedPoint CosPi2(FixedPoint const &r)
+  {
+    assert(r <= CONST_PI_2);
+
+    if (r > CONST_PI_4)
+    {
+      FixedPoint res = SinPi2(CONST_PI_2 - r);
+      return res;
+    }
+
+    return CosApproxPi4(r);
+  }
+
+  static constexpr FixedPoint<16, 16> SinApproxPi4(FixedPoint<16, 16> const &r)
+  {
+    assert(r <= CONST_PI_4);
+
+    FixedPoint r2 = r * r;
+    FixedPoint r3 = r2 * r;
+    FixedPoint r4 = r3 * r;
+    FixedPoint Q00{5880};
+    FixedPoint P  = r * Q00 - r3 * 620;
+    FixedPoint Q  = Q00 + r2 * 360 + r4 * 11;
+    FixedPoint sin = P / Q;
+
+    return std::move(sin);
+  }
+
+  static constexpr FixedPoint<32, 32> SinApproxPi4(FixedPoint<32, 32> const &r)
+  {
+    assert(r <= CONST_PI_4);
+
+    FixedPoint r2 = r * r;
+    FixedPoint r3 = r2 * r;
+    FixedPoint r4 = r3 * r;
+    FixedPoint r5 = r4 * r;
+    FixedPoint Q00{166320};
+    FixedPoint P  = r * Q00 - r3 * 22260 + r5 * 551;
+    FixedPoint Q  = Q00 + r2 * 5460 + r4 * 75;
+    FixedPoint sin = P / Q;
+
+    return std::move(sin);
+  }
+
+  static constexpr FixedPoint CosApproxPi4(FixedPoint const &r)
+  {
+    assert(r <= CONST_PI_4);
+
+    FixedPoint r2 = r * r;
+    FixedPoint r4 = r2 * r2;
+    FixedPoint Q00{15120};
+    FixedPoint P  = Q00 - r2 * 6900 + r4 * 313;
+    FixedPoint Q  = Q00 + r2 * 660 + r4 * 13;
+    FixedPoint cos = P / Q;
+
+    return std::move(cos);
   }
 };
 
@@ -1062,7 +1109,7 @@ std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
   {
     s << "NaN";
   }
-  s << " : " << std::hex << n.Data();
+  s << " (0x" << std::hex << n.Data() << ")";
   s.flags(f);
   return s;
 }
