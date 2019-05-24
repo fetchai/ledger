@@ -1372,3 +1372,197 @@ TEST(FixedPointTest, Cos_32_32)
     EXPECT_NEAR(delta, 0.0, (double)fp64::TOLERANCE);
   }
 }
+
+TEST(FixedPointTest, Tan_16_16)
+{
+  fetch::fixed_point::FixedPoint<16, 16> one(1);
+  fetch::fixed_point::FixedPoint<16, 16> one_point_five(1.5);
+  fetch::fixed_point::FixedPoint<16, 16> huge(2000);
+  fetch::fixed_point::FixedPoint<16, 16> small(0.0001);
+  fetch::fixed_point::FixedPoint<16, 16> tiny(0, fp32::SMALLEST_FRACTION);
+  fetch::fixed_point::FixedPoint<16, 16> e1  = fp32::Tan(one);
+  fetch::fixed_point::FixedPoint<16, 16> e2  = fp32::Tan(one_point_five);
+  fetch::fixed_point::FixedPoint<16, 16> e3  = fp32::Tan(fp32::CONST_ZERO);
+  fetch::fixed_point::FixedPoint<16, 16> e4  = fp32::Tan(huge);
+  fetch::fixed_point::FixedPoint<16, 16> e5  = fp32::Tan(small);
+  fetch::fixed_point::FixedPoint<16, 16> e6  = fp32::Tan(tiny);
+  fetch::fixed_point::FixedPoint<16, 16> e7  = fp32::Tan(fp32::CONST_PI);
+  fetch::fixed_point::FixedPoint<16, 16> e8  = fp32::Tan(-fp32::CONST_PI);
+  fetch::fixed_point::FixedPoint<16, 16> e9  = fp32::Tan(fp32::CONST_PI * 2);
+  fetch::fixed_point::FixedPoint<16, 16> e10 = fp32::Tan(fp32::CONST_PI * 4);
+  fetch::fixed_point::FixedPoint<16, 16> e11 = fp32::Tan(fp32::CONST_PI * 100);
+  fetch::fixed_point::FixedPoint<16, 16> e12 = fp32::Tan(fp32::CONST_PI_4);
+  fetch::fixed_point::FixedPoint<16, 16> e13 = fp32::Tan(-fp32::CONST_PI_4);
+  fetch::fixed_point::FixedPoint<16, 16> e14 = fp32::Tan(fp32::CONST_PI_4 * 3);
+
+  double delta = (double)e1 - std::tan((double)one);
+  EXPECT_NEAR(delta / std::tan((double)one), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e2 - std::tan((double)one_point_five);
+  EXPECT_NEAR(delta / std::tan((double)one_point_five), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e3 - std::tan((double)fp32::CONST_ZERO);
+  EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e4 - std::tan((double)huge);
+  // Tan for larger arguments loses precision
+  EXPECT_NEAR(delta / std::tan((double)huge), 0.0, 0.012);
+  delta = (double)e5 - std::tan((double)small);
+  EXPECT_NEAR(delta / std::tan((double)small), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e6 - std::tan((double)tiny);
+  EXPECT_NEAR(delta / std::tan((double)tiny), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e7 - std::tan((double)fp64::CONST_PI);
+  EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e8 - std::tan((double)(-fp64::CONST_PI));
+  EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e9 - std::tan((double)(fp64::CONST_PI * 2));
+  EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e10 - std::tan((double)(fp64::CONST_PI * 4));
+  EXPECT_NEAR(delta, 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e11 - std::tan((double)(fp64::CONST_PI * 100));
+  EXPECT_NEAR(delta, 0.0, 0.001);  // Sin for larger arguments loses precision
+  delta = (double)e12 - std::tan((double)(fp64::CONST_PI_4));
+  EXPECT_NEAR(delta / std::tan((double)(fp64::CONST_PI_4)), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e13 - std::tan((double)(-fp64::CONST_PI_4));
+  EXPECT_NEAR(delta / std::tan((double)(-fp64::CONST_PI_4)), 0.0, (double)fp32::TOLERANCE);
+  delta = (double)e14 - std::tan((double)(fp64::CONST_PI_4 * 3));
+  EXPECT_NEAR(delta / std::tan((double)(fp64::CONST_PI_4 * 3)), 0.0, (double)fp32::TOLERANCE);
+
+  // (843, private) Replace with IsInfinity()
+  EXPECT_TRUE(fp32::isNaN(fp32::Tan(fp32::CONST_PI_2)));
+  EXPECT_TRUE(fp32::isNaN(fp32::Tan(-fp32::CONST_PI_2)));
+
+  fp32 step{0.001};
+  fp32 x{-fp32::CONST_PI};
+  for (; x < fp32::CONST_PI; x += step)
+  {
+    double tolerance = (double)fp32::TOLERANCE;
+    if (fp32::Abs(fp32::Abs(x) - fp32::CONST_PI_2) < 0.02)
+    {
+      // calculations will be a bit inaccurate here, however relative error should be still small
+      // as the values are large
+      continue;
+    }
+    else if (fp32::Abs(fp32::Abs(x) - fp32::CONST_PI_2) < 0.05)
+    {
+      tolerance = 0.1;
+    }
+    else if (fp32::Abs(fp32::Abs(x) - fp32::CONST_PI_2) < 0.1)
+    {
+      tolerance = 0.02;
+    }
+    else if (fp32::Abs(fp32::Abs(x) - fp32::CONST_PI_2) < 0.2)
+    {
+      tolerance = 0.001;
+    }
+    fp32 e = fp32::Tan(x);
+    delta  = std::abs((double)e - std::tan((double)(x)));
+    if (delta > tolerance)
+    {
+      std::cout << "Tan(" << x << ") = " << e << std::endl;
+      std::cout << "tan(" << (double)x << ") = " << std::tan((double)x) << std::endl;
+      std::cout << "absolute error: " << delta << std::endl;
+    }
+    EXPECT_NEAR(delta, 0.0, tolerance);
+  }
+}
+
+TEST(FixedPointTest, Tan_32_32)
+{
+  fetch::fixed_point::FixedPoint<32, 32> one(1);
+  fetch::fixed_point::FixedPoint<32, 32> one_point_five(1.5);
+  fetch::fixed_point::FixedPoint<32, 32> huge(2000);
+  fetch::fixed_point::FixedPoint<32, 32> small(0.0001);
+  fetch::fixed_point::FixedPoint<32, 32> tiny(0, fp32::SMALLEST_FRACTION);
+  fetch::fixed_point::FixedPoint<32, 32> e1  = fp64::Tan(one);
+  fetch::fixed_point::FixedPoint<32, 32> e2  = fp64::Tan(one_point_five);
+  fetch::fixed_point::FixedPoint<32, 32> e3  = fp64::Tan(fp64::CONST_ZERO);
+  fetch::fixed_point::FixedPoint<32, 32> e4  = fp64::Tan(huge);
+  fetch::fixed_point::FixedPoint<32, 32> e5  = fp64::Tan(small);
+  fetch::fixed_point::FixedPoint<32, 32> e6  = fp64::Tan(tiny);
+  fetch::fixed_point::FixedPoint<32, 32> e7  = fp64::Tan(fp64::CONST_PI);
+  fetch::fixed_point::FixedPoint<32, 32> e8  = fp64::Tan(-fp64::CONST_PI);
+  fetch::fixed_point::FixedPoint<32, 32> e9  = fp64::Tan(fp64::CONST_PI * 2);
+  fetch::fixed_point::FixedPoint<32, 32> e10 = fp64::Tan(fp64::CONST_PI * 4);
+  fetch::fixed_point::FixedPoint<32, 32> e11 = fp64::Tan(fp64::CONST_PI * 100);
+  fetch::fixed_point::FixedPoint<32, 32> e12 = fp64::Tan(fp64::CONST_PI_4);
+  fetch::fixed_point::FixedPoint<32, 32> e13 = fp64::Tan(-fp64::CONST_PI_4);
+  fetch::fixed_point::FixedPoint<32, 32> e14 = fp64::Tan(fp64::CONST_PI_4 * 3);
+
+  double delta = (double)e1 - std::tan((double)one);
+  EXPECT_NEAR(delta / std::tan((double)one), 0.0, (double)fp64::TOLERANCE);
+  delta = (double)e2 - std::tan((double)one_point_five);
+  EXPECT_NEAR(delta / std::tan((double)one_point_five), 0.0, (double)fp64::TOLERANCE);
+  delta = (double)e3 - std::tan((double)fp64::CONST_ZERO);
+  EXPECT_NEAR(delta, 0.0, (double)fp64::TOLERANCE);
+  delta = (double)e4 - std::tan((double)huge);
+  // Tan for larger arguments loses precision
+  EXPECT_NEAR(delta / std::tan((double)huge), 0.0, 0.012);
+  delta = (double)e5 - std::tan((double)small);
+  EXPECT_NEAR(delta / std::tan((double)small), 0.0, (double)fp64::TOLERANCE);
+  delta = (double)e6 - std::tan((double)tiny);
+  EXPECT_NEAR(delta / std::tan((double)tiny), 0.0, (double)fp64::TOLERANCE);
+  delta = (double)e7 - std::tan((double)fp64::CONST_PI);
+  EXPECT_NEAR(delta, 0.0, (double)fp64::TOLERANCE);
+  delta = (double)e8 - std::tan((double)(-fp64::CONST_PI));
+  EXPECT_NEAR(delta, 0.0, (double)fp64::TOLERANCE);
+  delta = (double)e9 - std::tan((double)(fp64::CONST_PI * 2));
+  EXPECT_NEAR(delta, 0.0, (double)fp64::TOLERANCE);
+  delta = (double)e10 - std::tan((double)(fp64::CONST_PI * 4));
+  EXPECT_NEAR(delta, 0.0, (double)fp64::TOLERANCE);
+  delta = (double)e11 - std::tan((double)(fp64::CONST_PI * 100));
+  EXPECT_NEAR(delta, 0.0, 0.001);  // Sin for larger arguments loses precision
+  delta = (double)e12 - std::tan((double)(fp64::CONST_PI_4));
+  EXPECT_NEAR(delta / std::tan((double)(fp64::CONST_PI_4)), 0.0, (double)fp64::TOLERANCE);
+  delta = (double)e13 - std::tan((double)(-fp64::CONST_PI_4));
+  EXPECT_NEAR(delta / std::tan((double)(-fp64::CONST_PI_4)), 0.0, (double)fp64::TOLERANCE);
+  delta = (double)e14 - std::tan((double)(fp64::CONST_PI_4 * 3));
+  EXPECT_NEAR(delta / std::tan((double)(fp64::CONST_PI_4 * 3)), 0.0, (double)fp64::TOLERANCE);
+
+  // (843, private) Replace with IsInfinity()
+  EXPECT_TRUE(fp64::isNaN(fp64::Tan(fp64::CONST_PI_2)));
+  EXPECT_TRUE(fp64::isNaN(fp64::Tan(-fp64::CONST_PI_2)));
+
+  fp64 step{0.00001};
+  fp64 x{-fp64::CONST_PI};
+  for (; x < fp64::CONST_PI; x += step)
+  {
+    double tolerance = (double)fp64::TOLERANCE;
+    if (fp64::Abs(fp64::Abs(x) - fp64::CONST_PI_2) < 0.00006)
+    {
+      // calculations will be a bit inaccurate here, however relative error should be still small
+      // as the values are enormous
+      continue;
+    }
+    else if (fp64::Abs(fp64::Abs(x) - fp64::CONST_PI_2) < 0.0002)
+    {
+      tolerance = 0.1;
+    }
+    else if (fp64::Abs(fp64::Abs(x) - fp64::CONST_PI_2) < 0.0006)
+    {
+      tolerance = 1e-2;
+    }
+    else if (fp64::Abs(fp64::Abs(x) - fp64::CONST_PI_2) < 0.005)
+    {
+      tolerance = 1e-3;
+    }
+    else if (fp64::Abs(fp64::Abs(x) - fp64::CONST_PI_2) < 0.01)
+    {
+      tolerance = 1e-4;
+    }
+    else if (fp64::Abs(fp64::Abs(x) - fp64::CONST_PI_2) < 0.02)
+    {
+      tolerance = 1e-5;
+    }
+    else if (fp64::Abs(fp64::Abs(x) - fp64::CONST_PI_2) < 0.05)
+    {
+      tolerance = 1e-6;
+    }
+    fp64 e = fp64::Tan(x);
+    delta  = std::abs((double)e - std::tan((double)(x)));
+    if (delta > tolerance)
+    {
+      std::cout << "Tan(" << x << ") = " << e << std::endl;
+      std::cout << "tan(" << (double)x << ") = " << std::tan((double)x) << std::endl;
+      std::cout << "absolute error: " << delta << std::endl;
+    }
+    EXPECT_NEAR(delta, 0.0, tolerance);
+  }
+}

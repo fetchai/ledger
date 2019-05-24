@@ -856,7 +856,7 @@ public:
       return -Sin(-x);
     }
 
-    FixedPoint r = ReducePi(x);
+    FixedPoint r = Fmod(x, CONST_PI * 2);
 
     if (r == CONST_ZERO)
     {
@@ -875,7 +875,7 @@ public:
       return Cos(-x);
     }
 
-    FixedPoint r = ReducePi(x);
+    FixedPoint r = Fmod(x, CONST_PI * 2);
 
     if (r == CONST_ZERO)
     {
@@ -889,16 +889,90 @@ public:
 
   static constexpr FixedPoint Tan(FixedPoint const &x)
   {
-    return Sin(x) / Cos(x);
+    if (x < CONST_ZERO)
+    {
+      return -Tan(-x);
+    }
+
+    if (x == CONST_PI_2)
+    {
+      // (843, private) Replace with POSITIVE_INFINITY
+      return NaN;
+    }
+
+    FixedPoint r = Fmod(x, CONST_PI);
+    if (r <= CONST_PI_4)
+    {
+      FixedPoint P00{945};
+      FixedPoint P01{105};
+      FixedPoint Q0{15};
+      FixedPoint Q00{63};
+      FixedPoint Q01{28};
+      FixedPoint r2 = r * r;
+      FixedPoint r4 = r2 * r2;
+      FixedPoint P  = r * (P00 - P01 * r2 + r4);
+      FixedPoint Q  = Q0 * (Q00 - Q01 * r2 + r4);
+      return std::move(P / Q);
+    }
+    else if (r < CONST_PI_2)
+    {
+      FixedPoint P00{4.0 / 9.0};
+      FixedPoint P01{1.0 / 63.0};
+      FixedPoint Q01{1.0 / 9.0};
+      FixedPoint Q02{1.0 / 945.0};
+      FixedPoint y  = r - CONST_PI_2;
+      FixedPoint y2 = y * y;
+      FixedPoint y3 = y2 * y;
+      FixedPoint y4 = y3 * y;
+      FixedPoint y5 = y4 * y;
+      FixedPoint P  = -CONST_ONE + P00 * y2 - P01 * y4;
+      FixedPoint Q  = -CONST_PI_2 + r - Q01 * y3 + Q02 * y5;
+      return std::move(P / Q);
+    }
+    else
+    {
+      return Tan(r - CONST_PI);
+    }
+  }
+
+  static constexpr FixedPoint Cot(FixedPoint const &x)
+  {
+    if (x < CONST_ZERO)
+    {
+      return -Cot(-x);
+    }
+
+    FixedPoint r = Fmod(x, CONST_PI_2);
+    // if (r < 1.0) {
+    //    FixedPoint P00{105};
+    //    FixedPoint r2 = r * r;
+    //    FixedPoint r3 = r2 * r;
+    //    FixedPoint r4 = r2 * r2;
+    //    FixedPoint P = P00 - r2 * 45 + r4;
+    //    FixedPoint Q = P00 * r - r3 * 10;
+    //    return std::move(P / Q);
+    // } else {
+    return Cos(r) / Sin(r);
+    // }
   }
 
   static constexpr FixedPoint ASin(FixedPoint const &x)
   {
+    if (Abs(x) > CONST_ONE)
+    {
+      throw std::runtime_error(
+          "ASin(x): mathematical operation is not defined for x not in (-1,1)!");
+    }
     return FixedPoint{std::asin((double)x)};
   }
 
   static constexpr FixedPoint ACos(FixedPoint const &x)
   {
+    if (Abs(x) > CONST_ONE)
+    {
+      throw std::runtime_error(
+          "ASin(x): mathematical operation is not defined for x not in (-1,1)!");
+    }
     return FixedPoint{std::acos((double)x)};
   }
 
@@ -1062,11 +1136,6 @@ private:
       k = -k;
     }
     return k;
-  }
-
-  static constexpr FixedPoint ReducePi(FixedPoint const &x)
-  {
-    return std::move(Fmod(x, CONST_PI * 2));
   }
 
   static constexpr FixedPoint SinPi2(FixedPoint const &r)
