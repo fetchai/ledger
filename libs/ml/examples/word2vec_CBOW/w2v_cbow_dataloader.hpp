@@ -132,19 +132,19 @@ public:
     
     for (uint64_t i(0); i < dynamic_size; ++i)
     {
-      t.first.Set(0, i, T(data_[currentSentence_][currentWord_ + i]));
-      t.first.Set(0, i + dynamic_size,
+      t.first.Set(i, 0, T(data_[currentSentence_][currentWord_ + i]));
+      t.first.Set(i + dynamic_size, 0,
                   T(data_[currentSentence_][currentWord_ + dynamic_size + i + 1]));
     }
 
     for (uint64_t i(dynamic_size * 2); i < t.first.size(); ++i)
     {
-      t.first(0, i) = -1;
+      t.first(i, 0) = -1;
     }
 
     for (uint64_t i(1); i < negative_samples_; ++i)
     {
-      t.second(0, i) = T(unigram_table_.SampleNegative(static_cast<uint64_t>(t.second(0, 0))));
+      t.second(i, 0) = T(unigram_table_.SampleNegative(static_cast<uint64_t>(t.second(0, 0))));
     }
     currentWord_++;
     if (currentWord_ >= data_.at(currentSentence_).size() - (2 * window_size_))
@@ -157,8 +157,8 @@ public:
 
   ReturnType GetNext()
   {
-    fetch::math::Tensor<T> t({1, window_size_ * 2});
-    fetch::math::Tensor<T> label({1, negative_samples_});
+    fetch::math::Tensor<T> t({window_size_ * 2,1});
+    fetch::math::Tensor<T> label({negative_samples_,1});
     ReturnType                p(t, label);
     return GetNext(p);
   }

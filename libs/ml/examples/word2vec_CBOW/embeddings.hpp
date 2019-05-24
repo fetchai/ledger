@@ -33,6 +33,7 @@ public:
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
   using SizeType     = typename ArrayType::SizeType;
+  static constexpr char const *DESCRIPTOR = "Embeddings";
 
   Embeddings(SizeType dataPoints, SizeType dimensions)
   {
@@ -55,12 +56,35 @@ public:
     assert(inputs.size() == 1);
     assert(output.shape() == ComputeOutputShape(inputs));
 
-    uint64_t j(0);
+    std::cout << DESCRIPTOR << ": " << __func__ << std::endl;
+    for(auto &i : inputs)
+    {
+      std::cout << " --> " << i.get().shape()[0] << " x " << i.get().shape()[1] << std::endl;
+    }
+    std::cout << " --< " << output.shape()[0] << " x " << output.shape()[1] << std::endl;
+    std::cout << std::endl;
+
+
+    uint64_t j=0;
     for (DataType const &i : inputs.front().get())
     {
-      output.Slice(j).Assign(this->output_->Slice(SizeType(i)));
+      auto slice1 = output.View(j);
+      auto slice2 = this->output_->View(SizeType(i));
+      Assign(slice1, slice2);
       j++;
     }
+
+    std::cout << "OUTPUT: ";
+
+    for(std::size_t j=0; j< output.width(); ++j)
+    {
+      for(std::size_t i=0; i< output.height(); ++i)
+      {        
+        std::cout << output(i, j) << ", ";
+      }
+      std::cout << std::endl << std::endl;
+    }
+
     return output;
   }
 
@@ -75,8 +99,8 @@ public:
     {
       updated_rows_.insert(typename ArrayType::SizeType(double(i)));
 
-      auto slice1 = this->gradient_accumulation_->Slice(typename ArrayType::SizeType(double(i)));
-      auto slice2 = errorSignal.Slice(j);
+      auto slice1 = this->gradient_accumulation_->View(typename ArrayType::SizeType(double(i)));
+      auto slice2 = errorSignal.View(j);
 
       PolyfillInlineAdd(slice1, slice2);
 
@@ -89,8 +113,8 @@ public:
   {
     for (auto const &r : updated_rows_)
     {
-      auto gradientAccumulationSlice = this->gradient_accumulation_->Slice(r);
-      auto outputSlice               = this->output_->Slice(r);
+      auto gradientAccumulationSlice = this->gradient_accumulation_->View(r);
+      auto outputSlice               = this->output_->View(r);
       auto it1                       = gradientAccumulationSlice.begin();
 
       auto it2                       = outputSlice.begin();
@@ -108,7 +132,7 @@ public:
   virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
   {
-    return {inputs.front().get().size(), this->output_->shape()[1]};
+    return {this->output_->shape()[0], inputs.front().get().size()};
   }
 
 private:

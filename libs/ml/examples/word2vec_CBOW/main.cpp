@@ -80,7 +80,7 @@ void PrintStats(uint32_t const& i, uint32_t const& iterations)
 
 void InitNet()
 {
-  word_embeding_matrix = fetch::math::Tensor<FloatType>({global_loader.VocabSize(), layer1_size});
+  word_embeding_matrix = fetch::math::Tensor<FloatType>({layer1_size, global_loader.VocabSize()});
   for (auto &e : word_embeding_matrix)
     e = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) / layer1_size;
 
@@ -89,17 +89,19 @@ void InitNet()
                                                                    word_embeding_matrix);
   graph.AddNode<PlaceHolder<fetch::math::Tensor<FloatType>>>("Target", {});
   graph.AddNode<Embeddings<fetch::math::Tensor<FloatType>>>("Weights", {"Target"},
-                                                           global_loader.VocabSize(), layer1_size);
-  graph.AddNode<InplaceTranspose<fetch::math::Tensor<FloatType>>>("WeightsTranspose", {"Weights"});
+                                                           layer1_size, global_loader.VocabSize());
+//  graph.AddNode<InplaceTranspose<fetch::math::Tensor<FloatType>>>("WeightsTranspose", {"Weights"});
   graph.AddNode<MatrixMultiply<fetch::math::Tensor<FloatType>>>("DotProduct",
-                                                               {"Words", "WeightsTranspose"});
+                                                               {"Words", "Weights"});
 }
 
 void TrainModel()
 {
-  fetch::math::Tensor<FloatType> error_signal({1, uint64_t(negative)}); 
+  fetch::math::Tensor<FloatType> error_signal({uint64_t(negative), 1}); 
   fetch::math::ApproxExpImplementation<0> fexp;
   last_time = high_resolution_clock::now();
+
+  global_loader.GetNext();  // TODO: For compatibility with Pierres code
 
   uint32_t iterations = static_cast<uint32_t>(global_loader.Size());
   for (uint32_t i(0); i < iter * iterations; ++i)
@@ -114,25 +116,34 @@ void TrainModel()
       global_loader.Reset();
     }
 
-    auto sample = global_loader.GetNext();
+    auto sample = global_loader.GetNext(); 
+//    std::cout << "X: " << sample.first.height() << " " << sample.first.width() << std::endl;
+//    std::cout << "Y: " << sample.second.height() << " " << sample.second.width() << std::endl;
 
     graph.SetInput("Context", sample.first);
     graph.SetInput("Target", sample.second);
 
     auto graphF = graph.Evaluate("DotProduct");
-
-    // This block computes sigmoid activation + MSE and store error signal in
-    // error_signal
+//    std::cout << "Y: " << graphF.height() << " " << graphF.width() << std::endl;
     for (int d = 0; d < negative; d++)
     {
       float f     = graphF(0, d);
       float label = (d == 0) ? 1 : 0;
       float sm = static_cast<float>(fexp(f) / (1.+fexp(f)));
-      error_signal.Set(0, d, label - sm);
-    
+      error_signal.Set(d, 0, label - sm); 
     }
+
     graph.BackPropagate("DotProduct", error_signal);
+
+    std::cout << std::endl;
+    std::cout << "ERROR:" << std::endl;
+    for(auto&e: error_signal)
+    {
+      std::cout << e << ", ";
+    }
+    std::cout << std::endl;
     graph.Step(alpha);
+    exit(-1);
   }
 
   std::cout << "Done" << std::endl;

@@ -351,6 +351,16 @@ public:
     return TensorView<Type, ContainerType>(data_, height(), width, offset);
   }
 
+  TensorView<Type, ContainerType> const View(SizeType index) const
+  {
+    SizeType N                = shape_.size() - 1 - 1;
+    SizeType dimension_length = (N == 0 ? padded_height_ : shape_[N]);
+    SizeType volume           = dimension_length * stride_[N];
+    SizeType width            = volume / padded_height_;
+    SizeType offset           = volume * index;
+    return TensorView<Type, ContainerType>(data_, height(), width, offset);
+  }
+
   TensorView<Type, ContainerType> View(std::vector<SizeType> indices)
   {
     SizeType N                = shape_.size() - 1 - indices.size();

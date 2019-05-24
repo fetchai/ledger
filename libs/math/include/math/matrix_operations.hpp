@@ -809,6 +809,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DotTranspose(ArrayType const &
                                                        : platform::Parallelisation::NOT_PARALLEL
   };
 
+//  std::cout << (OPTIMISATION_FLAGS == platform::Parallelisation::VECTORISE ) << std::endl;
   Blas<Type, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * _A * T(_B) + _beta * _C), OPTIMISATION_FLAGS>
       gemm_nt;

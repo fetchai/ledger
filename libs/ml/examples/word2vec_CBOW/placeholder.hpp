@@ -40,6 +40,23 @@ public:
     (void)inputs; 
     assert(inputs.empty());
     assert(this->output_);
+    
+    std::cout << DESCRIPTOR << ": " << __func__ << std::endl;
+    for(auto &i : inputs)
+    {
+      std::cout << " --> " << i.get().shape()[0] << " x " << i.get().shape()[1] << std::endl;
+    }
+    std::cout << " --< " << output.shape()[0] << " x " << output.shape()[1] << std::endl;
+    std::cout << std::endl;
+
+    std::cout << "OUTPUT: ";
+    for(auto &o: *(this->output_))
+    {
+      std::cout << o << ", ";
+    }
+    std::cout << std::endl;
+//    exit(-1);
+    
     return *(this->output_);
   }
 
@@ -49,6 +66,16 @@ public:
   {
     (void)inputs;     
     assert(inputs.empty());
+    std::cout << "ERROR: ";
+    for(std::size_t j=0; j< errorSignal.width(); ++j)
+    {
+      for(std::size_t i=0; i< errorSignal.height(); ++i)
+      {        
+        std::cout << errorSignal(i, j) << ", ";
+      }
+      std::cout << std::endl << std::endl;
+    }
+
     return {errorSignal};
   }
 

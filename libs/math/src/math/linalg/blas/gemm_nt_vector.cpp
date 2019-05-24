@@ -37,7 +37,7 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
   {
     return;
   }
-
+    std::cout << "Was here?" << std::endl;
   if (alpha == static_cast<Type>(0.0))
   {
     if (beta == static_cast<Type>(0.0))
@@ -86,7 +86,10 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
       auto                 ret_slice = c.data().slice(c.padded_height() * j, c.height());
       memory::TrivialRange range(std::size_t(0), std::size_t(c.height()));
       ret_slice.in_parallel().Apply(range,
-                                    [vec_zero](VectorRegisterType &vw_c_j) { vw_c_j = vec_zero; });
+                                    [vec_zero](VectorRegisterType &vw_c_j) { 
+          vw_c_j = vec_zero; 
+      });
+
     }
     else if (beta != static_cast<Type>(1.0))
     {
@@ -115,11 +118,13 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
       auto slice_c_j = c.data().slice(c.padded_height() * std::size_t(j), c.padded_height());
       auto slice_a_l = a.data().slice(a.padded_height() * std::size_t(l), a.padded_height());
       memory::TrivialRange range(std::size_t(0), std::size_t(c.height()));
+
       ret_slice.in_parallel().Apply(
           range,
           [vec_temp](VectorRegisterType const &vr_c_j, VectorRegisterType const &vr_a_l,
                      VectorRegisterType &vw_c_j) { vw_c_j = vr_c_j + vec_temp * vr_a_l; },
           slice_c_j, slice_a_l);
+
     }
   }
   return;

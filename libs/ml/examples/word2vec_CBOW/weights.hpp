@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/random/lcg.hpp"
 #include "placeholder.hpp"
 #include "state_dict.hpp"
 #include <random>
@@ -161,17 +162,26 @@ private:
    * using a normal distribution with mean 0 and variance 2 / (input nodes + output nodes)
    * @param weights
    */
-  static void XavierInitialisation(ArrayType &array, double normalising_factor)
+  static void XavierInitialisation(ArrayType &array, double /*normalising_factor*/)
   {
-    std::random_device rd{};
-    std::mt19937       gen{rd()};
-
+    random::LinearCongruentialGenerator rng;
+    rng.Seed(42);
+// TODO: Revert this once all is working.
     // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
-    std::normal_distribution<> rng(0, normalising_factor);
+//    std::normal_distribution<> rng(0, normalising_factor);
+    math::TensorSliceIterator< typename ArrayType::Type, typename ArrayType::ContainerType > it(array);
+//    it.PermuteAxes(0,1);
+    while(it.is_valid())  
+    {
+      *it = typename ArrayType::Type(rng.AsDouble());
+      ++it;
+    }
+    /*
     for (auto &e : array)
     {
       e = typename ArrayType::Type(rng(gen));
     }
+    */
   }
 };
 

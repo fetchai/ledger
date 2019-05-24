@@ -34,11 +34,9 @@ struct MatrixApplyFreeFunction
   template <typename T, typename... Remaining>
   struct Unroll
   {
-    using signature_type =
-        typename MatrixApplyFreeFunction<B, R, Args...,
-                                         B const &>::template Unroll<Remaining...>::signature_type;
 
-    static R Apply(B const *regs, signature_type const &fnc, B &ret, Args &&... args)
+    template< typename F >
+    static R Apply(B const *regs, F &&fnc, B &ret, Args &&... args)
     {
       return MatrixApplyFreeFunction<B, R, Args..., B const &>::template Unroll<
           Remaining...>::Apply(regs + 1, fnc, ret, std::forward<Args>(args)..., *regs);
@@ -48,9 +46,8 @@ struct MatrixApplyFreeFunction
   template <typename T>
   struct Unroll<T>
   {
-    //    using signature_type = R (*)(Args..., const B &, B &);
-    using signature_type = std::function<R(Args..., const B &, B &)>;
-    static R Apply(B const *regs, signature_type const &fnc, B &ret, Args &&... args)
+    template< typename F >
+    static R Apply(B const *regs, F &&fnc, B &ret, Args &&... args)
     {
       return fnc(std::forward<Args>(args)..., *regs, ret);
     }
@@ -79,7 +76,6 @@ struct MatrixReduceFreeFunction
   template <typename T>
   struct Unroll<T>
   {
-    //    typedef B(*signature_type)(B const&, Args..., B const&);
     using signature_type = std::function<B(const B &, Args..., const B &)>;
     static B Apply(B const &self, B const *regs, signature_type const &fnc, Args &&... args)
     {
@@ -87,6 +83,7 @@ struct MatrixReduceFreeFunction
     }
   };
 };
+
 
 template <typename C, typename B, typename R, typename... Args>
 struct MatrixApplyClassMember
@@ -116,7 +113,7 @@ struct MatrixApplyClassMember
   struct Unroll<T>
   {
     using signature_type = R (C::*)(Args..., const B &, B &) const;
-    //    using signature_type = std::function<R(Args..., const B &, B &) const>;
+
     static R Apply(B const *regs, C const &cls, signature_type const &fnc, B &ret, Args... args)
     {
       return (cls.*fnc)(std::forward<Args>(args)..., *regs, ret);
@@ -127,7 +124,9 @@ struct MatrixApplyClassMember
       return (cls.*fnc)(std::forward<Args>(args)..., **regs, ret);
     }
   };
+
 };
+
 
 template <std::size_t N, typename A, typename B>
 struct UnrollNext
@@ -142,7 +141,6 @@ struct UnrollNext
 template <typename A, typename B>
 struct UnrollNext<0, A, B>
 {
-
   static void Apply(A * /*regs*/, B * /*iters*/)
   {}
 };
