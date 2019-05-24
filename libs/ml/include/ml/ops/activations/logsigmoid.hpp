@@ -21,8 +21,8 @@
 #include "math/matrix_operations.hpp"
 #include "math/ml/activation_functions/sigmoid.hpp"
 #include "math/standard_functions/exp.hpp"
+#include "math/standard_functions/log.hpp"
 #include "ml/ops/ops.hpp"
-#include <math/standard_functions/log.hpp>
 
 namespace fetch {
 namespace ml {

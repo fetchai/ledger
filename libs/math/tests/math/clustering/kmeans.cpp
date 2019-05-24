@@ -16,15 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-#include <iostream>
-
 #include "math/clustering/k_means.hpp"
 #include "math/combinatorics.hpp"
+#include "math/tensor.hpp"
+
+#include <gtest/gtest.h>
+
 #include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <math/tensor.hpp>
 #include <string>
 #include <vector>
 

@@ -17,9 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
-#include <stack>
-
 namespace fetch {
 namespace math {
 namespace linalg {
