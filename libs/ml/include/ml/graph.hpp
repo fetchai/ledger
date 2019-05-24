@@ -34,7 +34,7 @@ namespace ml {
  * The full graph on which to run the computation
  */
 template <class T>
-class Graph : public ops::Trainable<T>
+class Graph
 {
 public:
   using ArrayType          = T;
@@ -49,9 +49,8 @@ public:
   Graph()
   {}
 
-  ArrayType                                             Evaluate(std::string const &node_name);
-  void BackPropagate(
-      std::string const &node_name, ArrayType const &error_signal);
+  ArrayType    Evaluate(std::string const &node_name);
+  void         BackPropagate(std::string const &node_name, ArrayType const &error_signal);
   virtual void Step(Datatype learningRate);
 
   template <class OperationType, typename... Params>
@@ -70,12 +69,6 @@ public:
 
   void ResetGradients();
 
-  /* Trainable */
-  ArrayType const &GetWeight() const;
-   void             ApplyGradient(ArrayType const &grad);
-   ArrayType        Gradients() const;
-   ArrayType empty;
-
 private:
   /**
    * Appends op to map of trainable nodes. Called by AddNode if the node is for a trainable op
@@ -91,6 +84,18 @@ private:
     trainable_[name] = op;
   }
 
+  template <class OperationType>
+  meta::IfIsGraph<ArrayType, OperationType, void> AddTrainable(
+      std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
+  {
+
+    for (auto &trainable : op->trainable_)
+    {
+      FETCH_LOG_INFO("ML_LIB", "Created trainable node [", name, "]");
+      trainable_[name + "_" + trainable.first] = trainable.second;
+    }
+  }
+
   /**
    * If AddNode is called for a non-trainable op, this version of the function is called which
    * does not append to the trainable map
@@ -100,7 +105,7 @@ private:
    * @return
    */
   template <class OperationType>
-  meta::IfIsNotTrainable<ArrayType, OperationType, void> AddTrainable(
+  meta::IfIsNotGraphOrTrainable<ArrayType, OperationType, void> AddTrainable(
       std::string const &name, std::shared_ptr<Node<ArrayType, OperationType>> op)
   {
     FETCH_UNUSED(name);
@@ -161,8 +166,7 @@ ArrayType Graph<ArrayType>::Evaluate(std::string const &node_name)
  * @param error_signal pointer to array containing error signal to backprop
  */
 template <typename ArrayType>
-void Graph<ArrayType>::BackPropagate(
-    std::string const &node_name, ArrayType const &error_signal)
+void Graph<ArrayType>::BackPropagate(std::string const &node_name, ArrayType const &error_signal)
 {
   nodes_[node_name]->BackPropagate(error_signal);
 }
@@ -297,7 +301,7 @@ void Graph<ArrayType>::LoadStateDict(struct fetch::ml::StateDict<ArrayType> cons
   }
 }
 
-        /**
+/**
  * Assigns all trainable parameters to vector of ArrayType for exporting and serialising
  * @return ret is vector containing all weights values
  */
@@ -338,48 +342,16 @@ void Graph<ArrayType>::ResetGradients()
   }
 }
 
-        template <typename ArrayType>
-        void Graph<ArrayType>::ApplyGradients(std::vector<ArrayType> &grad)
-        {
-            typename ArrayType::SizeType i = 0;
-            for (auto const &t : trainable_)
-            {
-                t.second->ApplyGradient(grad.at(i));
-                i++;
-            }
-        }
+template <typename ArrayType>
+void Graph<ArrayType>::ApplyGradients(std::vector<ArrayType> &grad)
+{
+  typename ArrayType::SizeType i = 0;
+  for (auto const &t : trainable_)
+  {
+    t.second->ApplyGradient(grad.at(i));
+    i++;
+  }
+}
 
-/* Trainable helpers */
-        template <typename ArrayType>
-        ArrayType const &Graph<ArrayType>::GetWeight() const
-        {
-            for (auto const &t : trainable_) {
-                return t.second->GetWeight();
-            }
-            return empty;
-        }
-
-        template <typename ArrayType>
-        ArrayType        Graph<ArrayType>::Gradients() const
-        {
-            for (auto const &t : trainable_) {
-                return t.second->Gradients();
-            }
-            return empty;
-        }
-
-        template <typename ArrayType>
-        void              Graph<ArrayType>::ApplyGradient(ArrayType const &grad)
-        {
-            typename ArrayType::SizeType i = 0;
-            for (auto const &t : trainable_)
-            {
-                t.second->ApplyGradient(grad);
-                i++;
-            }
-        }
-
-
-
-    }  // namespace ml
+}  // namespace ml
 }  // namespace fetch

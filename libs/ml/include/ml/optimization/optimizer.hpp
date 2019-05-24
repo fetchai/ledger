@@ -20,68 +20,66 @@
 #include "ml/graph.hpp"
 
 namespace fetch {
-    namespace ml {
+namespace ml {
 
-    template <class T>
-    class Optimizer{
-    public:
-        using ArrayType          = T;
-        using DataType = typename ArrayType::Type;
-        using SizeType = typename ArrayType::SizeType;
+template <class T>
+class Optimizer
+{
+public:
+  using ArrayType = T;
+  using DataType  = typename ArrayType::Type;
+  using SizeType  = typename ArrayType::SizeType;
 
-    Optimizer(std::shared_ptr<Graph<T>> error,std::string const &output_node_name,DataType const &learning_rate)
+  Optimizer(std::shared_ptr<Graph<T>> error, std::string const &output_node_name,
+            DataType const &learning_rate)
     : error_(error)
     , output_node_name_(output_node_name)
     , learning_rate_(learning_rate)
+  {
+    auto weights = error_->GetWeights();
+    for (auto &wei : weights)
     {
-        auto weights=error_->GetWeights();
-        for(auto &wei : weights)
-        {
-        momentum_.push_back(ArrayType(wei.shape()));
-        }
-
+      momentum_.push_back(ArrayType(wei.shape()));
     }
+  }
 
-        ArrayType Step()
-        {
-           ArrayType error_signal = error_->Evaluate(output_node_name_);
-           error_->BackPropagate(output_node_name_, error_signal);
+  ArrayType Step()
+  {
+    ArrayType error_signal = error_->Evaluate(output_node_name_);
+    error_->BackPropagate(output_node_name_, error_signal);
 
+    /*
+     std::vector<ArrayType> gradients = error_->GetGradients();
 
-           /*
-            std::vector<ArrayType> gradients = error_->GetGradients();
+     // Do operation with gradient
+     SizeType i{0};
+     for (auto &grad : gradients)
+     {
+         fetch::math::Add(grad, momentum_[i], grad);
+         fetch::math::Multiply(grad, -learning_rate_, grad);
+         i++;
+     }
+     error_->ApplyGradients(gradients);
+     */
+    error_->Step(learning_rate_);
 
-            // Do operation with gradient
-            SizeType i{0};
-            for (auto &grad : gradients)
-            {
-                fetch::math::Add(grad, momentum_[i], grad);
-                fetch::math::Multiply(grad, -learning_rate_, grad);
-                i++;
-            }
-            error_->ApplyGradients(gradients);
-            */
-           error_->Step(learning_rate_);
+    return error_signal;
+  }
 
-            return error_signal;
-        }
+private:
+  std::shared_ptr<Graph<T>> error_;
+  std::string               output_node_name_;
+  DataType                  learning_rate_;
+  std::vector<ArrayType>    momentum_;
 
-    private:
-        std::shared_ptr<Graph<T>> error_;
-        std::string output_node_name_;
-        DataType learning_rate_;
-        std::vector<ArrayType> momentum_;
-
-        void ResetMomentum()
-        {
-            for(auto &moment : momentum_)
-            {
-                moment.Fill(DataType{0});
-            }
-        }
-
-    };
-
-
+  void ResetMomentum()
+  {
+    for (auto &moment : momentum_)
+    {
+      moment.Fill(DataType{0});
     }
-    }
+  }
+};
+
+}  // namespace ml
+}  // namespace fetch
