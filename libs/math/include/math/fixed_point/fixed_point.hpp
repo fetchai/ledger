@@ -851,48 +851,52 @@ public:
 
   static constexpr FixedPoint Sin(FixedPoint const &x)
   {
-    if (x < CONST_ZERO) {
+    if (x < CONST_ZERO)
+    {
       return -Sin(-x);
     }
 
     FixedPoint r = ReducePi(x);
 
-    if (r == CONST_ZERO) {
+    if (r == CONST_ZERO)
+    {
       return CONST_ZERO;
     }
 
     FixedPoint quadrant = Floor(r / CONST_PI_2);
 
     std::vector<std::function<FixedPoint(FixedPoint const &x)>> quadrant_funcs;
-    quadrant_funcs.push_back([](FixedPoint const &x){ return SinPi2(x); });
-    quadrant_funcs.push_back([](FixedPoint const &x){ return CosPi2(x); });
-    quadrant_funcs.push_back([](FixedPoint const &x){ return -SinPi2(x); });
-    quadrant_funcs.push_back([](FixedPoint const &x){ return -CosPi2(x); });
+    quadrant_funcs.push_back([](FixedPoint const &x) { return SinPi2(x); });
+    quadrant_funcs.push_back([](FixedPoint const &x) { return CosPi2(x); });
+    quadrant_funcs.push_back([](FixedPoint const &x) { return -SinPi2(x); });
+    quadrant_funcs.push_back([](FixedPoint const &x) { return -CosPi2(x); });
 
-    return quadrant_funcs[(size_t)quadrant](r - CONST_PI_2*quadrant);
+    return quadrant_funcs[(size_t)quadrant](r - CONST_PI_2 * quadrant);
   }
 
   static constexpr FixedPoint Cos(FixedPoint const &x)
   {
-    if (x < CONST_ZERO) {
+    if (x < CONST_ZERO)
+    {
       return Cos(-x);
     }
 
     FixedPoint r = ReducePi(x);
 
-    if (r == CONST_ZERO) {
+    if (r == CONST_ZERO)
+    {
       return CONST_ONE;
     }
 
     FixedPoint quadrant = Floor(r / CONST_PI_2);
 
     std::vector<std::function<FixedPoint(FixedPoint const &x)>> quadrant_funcs;
-    quadrant_funcs.push_back([](FixedPoint const &x){ return CosPi2(x); });
-    quadrant_funcs.push_back([](FixedPoint const &x){ return -SinPi2(x); });
-    quadrant_funcs.push_back([](FixedPoint const &x){ return -CosPi2(x); });
-    quadrant_funcs.push_back([](FixedPoint const &x){ return SinPi2(x); });
+    quadrant_funcs.push_back([](FixedPoint const &x) { return CosPi2(x); });
+    quadrant_funcs.push_back([](FixedPoint const &x) { return -SinPi2(x); });
+    quadrant_funcs.push_back([](FixedPoint const &x) { return -CosPi2(x); });
+    quadrant_funcs.push_back([](FixedPoint const &x) { return SinPi2(x); });
 
-    return quadrant_funcs[(size_t)quadrant](r - CONST_PI_2*quadrant);
+    return quadrant_funcs[(size_t)quadrant](r - CONST_PI_2 * quadrant);
   }
 
   static constexpr FixedPoint Tan(FixedPoint const &x)
@@ -909,10 +913,11 @@ public:
   static constexpr FixedPoint Fmod(FixedPoint const &x, FixedPoint const &y)
   {
     FixedPoint result = Remainder(Abs(x), Abs(y));
-    if (result < CONST_ZERO) {
+    if (result < CONST_ZERO)
+    {
       result += Abs(y);
     }
-    return std::move(Sign(x)*result);
+    return std::move(Sign(x) * result);
   }
 
   static constexpr FixedPoint Abs(FixedPoint const &x)
@@ -1020,7 +1025,7 @@ private:
 
   static constexpr FixedPoint ReducePi(FixedPoint const &x)
   {
-    return std::move(Fmod(x, CONST_PI*2));
+    return std::move(Fmod(x, CONST_PI * 2));
   }
 
   static constexpr FixedPoint SinPi2(FixedPoint const &r)
@@ -1057,8 +1062,8 @@ private:
     FixedPoint r3 = r2 * r;
     FixedPoint r4 = r3 * r;
     FixedPoint Q00{5880};
-    FixedPoint P  = r * Q00 - r3 * 620;
-    FixedPoint Q  = Q00 + r2 * 360 + r4 * 11;
+    FixedPoint P   = r * Q00 - r3 * 620;
+    FixedPoint Q   = Q00 + r2 * 360 + r4 * 11;
     FixedPoint sin = P / Q;
 
     return std::move(sin);
@@ -1073,8 +1078,8 @@ private:
     FixedPoint r4 = r3 * r;
     FixedPoint r5 = r4 * r;
     FixedPoint Q00{166320};
-    FixedPoint P  = r * Q00 - r3 * 22260 + r5 * 551;
-    FixedPoint Q  = Q00 + r2 * 5460 + r4 * 75;
+    FixedPoint P   = r * Q00 - r3 * 22260 + r5 * 551;
+    FixedPoint Q   = Q00 + r2 * 5460 + r4 * 75;
     FixedPoint sin = P / Q;
 
     return std::move(sin);
@@ -1087,8 +1092,8 @@ private:
     FixedPoint r2 = r * r;
     FixedPoint r4 = r2 * r2;
     FixedPoint Q00{15120};
-    FixedPoint P  = Q00 - r2 * 6900 + r4 * 313;
-    FixedPoint Q  = Q00 + r2 * 660 + r4 * 13;
+    FixedPoint P   = Q00 - r2 * 6900 + r4 * 313;
+    FixedPoint Q   = Q00 + r2 * 660 + r4 * 13;
     FixedPoint cos = P / Q;
 
     return std::move(cos);
