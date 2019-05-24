@@ -48,6 +48,7 @@ public:
 
   Graph()
   {}
+  virtual ~Graph() = default;
 
   ArrayType    Evaluate(std::string const &node_name);
   void         BackPropagate(std::string const &node_name, ArrayType const &error_signal);
