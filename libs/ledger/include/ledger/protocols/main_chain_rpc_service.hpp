@@ -65,12 +65,6 @@ public:
   using TrustSystem     = p2p::P2PTrustInterface<Address>;
   using FutureTimepoint = core::FutureTimepoint;
 
-  using Worker                    = MainChainSyncWorker;
-  using WorkerPtr                 = std::shared_ptr<Worker>;
-  using BackgroundedWork          = network::BackgroundedWork<Worker>;
-  using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
-  using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
-
   static constexpr char const *LOGGING_NAME = "MainChainRpc";
 
   enum class Mode

@@ -32,52 +32,45 @@ namespace math {
 /// IMPLEMENTATIONS ///
 ///////////////////////
 
+namespace {
+
 template <typename Type>
-void Clamp(Type const &x, Type const &min, Type const &max, Type &ret)
+void Clamp(Type const &min, Type const &max, Type &ret)
 {
-  Max(x, min, ret);
-  Min(ret, max, ret);
+  assert(min <= max);
+
+  if (ret <= min)
+  {
+    ret = min;
+  }
+  else if (ret >= max)
+  {
+    ret = max;
+  }
 }
+
+}  // namespace
 
 //////////////////
 /// INTERFACES ///
 //////////////////
 
-template <typename Type>
-meta::IfIsArithmetic<Type, Type> Clamp(Type const &x, Type const &min, Type const &max)
-{
-  Type ret;
-  Clamp(x, min, max, ret);
-  return ret;
-}
-
 template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, void> Clamp(ArrayType const &               array,
-                                           typename ArrayType::Type const &min,
+meta::IfIsMathArray<ArrayType, void> Clamp(typename ArrayType::Type const &min,
                                            typename ArrayType::Type const &max, ArrayType &ret)
 {
-  assert(ret.shape() == array.shape());
   auto ret_it = ret.begin();
-  for (auto &e : array)
+  while (ret_it.is_valid())
   {
-    Clamp(e, min, max, *ret_it);
+    Clamp(min, max, *ret_it);
     ++ret_it;
   }
 }
 
-template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, ArrayType> Clamp(ArrayType const &               array,
-                                                typename ArrayType::Type const &min,
-                                                typename ArrayType::Type const &max)
+template <typename Type>
+meta::IfIsArithmetic<Type, void> Clamp(Type const &min, Type const &max, Type &ret)
 {
-  ArrayType ret{array.shape()};
-  auto      ret_it = ret.begin();
-  for (auto &e : array)
-  {
-    Clamp(e, min, max, *ret_it);
-    ++ret_it;
-  }
-  return ret;
+  Clamp(min, max, ret);
 }
 
 }  // namespace math
