@@ -633,8 +633,6 @@ public:
                  Args...>::signature_type &&apply,
              Args &&... args)
   {
-    std::cout << "Was here?? " << std::endl;
-
     VectorRegisterType         regs[sizeof...(args)], c;
     VectorRegisterIteratorType iters[sizeof...(args)];
     ConstParallelDispatcher<T>::InitializeVectorIterators(0, this->size(), iters,
