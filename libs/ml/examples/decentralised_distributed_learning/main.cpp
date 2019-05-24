@@ -26,21 +26,26 @@
 
 #include <fstream>
 #include <iostream>
+#include <memory>
+#include <set>
 #include <thread>
 
 // Runs in about 40 sec on a 2018 MBP
 // Remember to disable debug using | grep -v INFO
 #define NUMBER_OF_CLIENTS 10
+#define NUMBER_OF_PEERS 3
 #define NUMBER_OF_ITERATIONS 20
 #define BATCH_SIZE 32
 #define NUMBER_OF_BATCHES 10
-#define LEARNING_RATE 0.01f
+#define MERGE_RATIO .5f
+#define LEARNING_RATE .01f
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
-using DataType  = float;
-using ArrayType = fetch::math::Tensor<DataType>;
+using DataType       = float;
+using ArrayType      = fetch::math::Tensor<DataType>;
+using ConstSliceType = typename ArrayType::ConstSliceType;
 
 class TrainingClient
 {
@@ -57,19 +62,18 @@ public:
     g_.AddNode<Softmax<ArrayType>>("Softmax", {"FC3"});
   }
 
-  void Train(unsigned int number_of_batches)
+  void Train(unsigned int numberOfBatches)
   {
-    float                             loss = 0;
-    CrossEntropy<ArrayType>           criterion;
-    std::pair<std::size_t, ArrayType> input;
-    ArrayType                         gt(std::vector<typename ArrayType::SizeType>({1, 10}));
-    for (unsigned int i(0); i < number_of_batches; ++i)
+    float                        loss = 0;
+    CrossEntropy<ArrayType>      criterion;
+    std::pair<size_t, ArrayType> input;
+    ArrayType                    gt{std::vector<typename ArrayType::SizeType>({1, 10})};
+    for (unsigned int i(0); i < numberOfBatches; ++i)
     {
       loss = 0;
       for (unsigned int j(0); j < BATCH_SIZE; ++j)
       {
-        // Random sampling ensures that for relatively few training steps the proportion of shared
-        // training data is low
+        // Randomly sampling the dataset, should ensure everyone is training on different data
         input = dataloader_.GetRandom();
         g_.SetInput("Input", input.second);
         gt.Fill(0);
@@ -89,9 +93,28 @@ public:
     return g_.StateDict();
   }
 
-  void LoadStateDict(fetch::ml::StateDict<fetch::math::Tensor<float>> const &sd)
+  bool AddPeer(std::shared_ptr<TrainingClient> p)
   {
-    g_.LoadStateDict(sd);
+    if (p.get() != this)
+    {
+      return peers_.insert(p).second;
+    }
+    return false;
+  }
+
+  void UpdateWeights()
+  {
+    std::list<fetch::ml::StateDict<ArrayType>> stateDicts;
+    for (auto &c : peers_)
+    {
+      // Collect all the stateDicts from peers
+      stateDicts.push_back(c->GetStateDict());
+    }
+    fetch::ml::StateDict<ArrayType> averageStateDict =
+        fetch::ml::StateDict<ArrayType>::MergeList(stateDicts);
+    g_.LoadStateDict(g_.StateDict().Merge(averageStateDict, MERGE_RATIO));
+    // Clear the peers after update, we'll get a new set for next one
+    peers_.clear();
   }
 
   std::vector<float> const &GetLossesValues() const
@@ -106,6 +129,8 @@ private:
   fetch::ml::MNISTLoader<ArrayType> dataloader_;
   // Loss history
   std::vector<float> losses_values_;
+  // Connection to other nodes
+  std::set<std::shared_ptr<TrainingClient>> peers_;
 };
 
 int main(int ac, char **av)
@@ -117,12 +142,13 @@ int main(int ac, char **av)
     return 1;
   }
 
-  std::cout << "FETCH Distributed (with central controller) MNIST Demo" << std::endl;
+  std::cout << "FETCH Distributed MNIST Demo -- Synchronised" << std::endl;
+  srand((unsigned int)time(nullptr));
 
-  std::list<TrainingClient> clients;
+  std::vector<std::shared_ptr<TrainingClient>> clients(NUMBER_OF_CLIENTS);
   for (unsigned int i(0); i < NUMBER_OF_CLIENTS; ++i)
   {
-    clients.emplace_back(av[1], av[2]);
+    clients[i] = std::make_shared<TrainingClient>(av[1], av[2]);
   }
 
   for (unsigned int it(0); it < NUMBER_OF_ITERATIONS; ++it)
@@ -131,52 +157,47 @@ int main(int ac, char **av)
     std::list<std::thread> threads;
     for (auto &c : clients)
     {
+      // Re-arrange the graph every time
+      for (unsigned int j(0); j < NUMBER_OF_PEERS;)
+      {
+        unsigned int r = (unsigned int)rand() % (unsigned int)clients.size();
+        j += (c->AddPeer(clients[r]) ? 1 : 0);
+      }
       // Start each client to train on NUMBER_OF_BATCHES * BATCH_SIZE examples
-      threads.emplace_back([&c] { c.Train(NUMBER_OF_BATCHES); });
+      threads.emplace_back([&c] { c->Train(NUMBER_OF_BATCHES); });
     }
     for (auto &t : threads)
     {
-      // Wait for everyone to be done
+      // Wait for everyone to finish (force synchronisation)
       t.join();
     }
-    std::list<fetch::ml::StateDict<ArrayType>> stateDicts;
     for (auto &c : clients)
     {
-      // Collect all the stateDicts
-      stateDicts.push_back(c.GetStateDict());
+      // Make each client pull weights from its registered peers, and merge them
+      c->UpdateWeights();
     }
-    // Average them together
-    fetch::ml::StateDict<ArrayType> averageStateDict =
-        fetch::ml::StateDict<ArrayType>::MergeList(stateDicts);
-    for (auto &c : clients)
-    {
-      // Load newly averaged weight into each client
-      c.LoadStateDict(averageStateDict);
-    }
-
-    // Do some evaluation here
   }
 
   // Save loss variation data
   // Upload to https://plot.ly/create/#/ for visualisation
-  std::ofstream myfile("losses.csv", std::ofstream::out | std::ofstream::trunc);
-  if (myfile)
+  std::ofstream lossfile("losses.csv", std::ofstream::out | std::ofstream::trunc);
+  if (lossfile)
   {
     for (unsigned int i(0); i < clients.size(); ++i)
     {
-      myfile << "Client " << i << ", ";
+      lossfile << "Client " << i << ", ";
     }
-    myfile << "\n";
-    for (unsigned int i(0); i < clients.front().GetLossesValues().size(); ++i)
+    lossfile << "\n";
+    for (unsigned int i(0); i < clients.front()->GetLossesValues().size(); ++i)
     {
       for (auto &c : clients)
       {
-        myfile << c.GetLossesValues()[i] << ", ";
+        lossfile << c->GetLossesValues()[i] << ", ";
       }
-      myfile << "\n";
+      lossfile << "\n";
     }
   }
-  myfile.close();
+  lossfile.close();
 
   return 0;
 }

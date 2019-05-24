@@ -80,13 +80,7 @@ public:
       }
       losses_values_.push_back(loss);
       // Updating the weights
-
-      auto gradients = g_.GetGradients();
-      for (auto &grad : gradients)
-      {
-        fetch::math::Multiply(grad, -LEARNING_RATE, grad);
-      }
-      g_.ApplyGradients(gradients);
+      g_.Step(LEARNING_RATE);
     }
   }
 
