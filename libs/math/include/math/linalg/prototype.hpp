@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstdint>
+
 namespace fetch {
 namespace math {
 namespace linalg {
