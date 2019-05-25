@@ -58,9 +58,10 @@ public:
     ArrayType errorSignal2(inputs.at(1).get().shape());
 
     fetch::math::Dot(inputs.at(1).get(), errorSignal, errorSignal1);
-    auto xx = inputs.at(0).get();
-    auto yy = errorSignal.Transpose();
-    fetch::math::Dot(xx, yy,  errorSignal2);
+//    auto xx = inputs.at(0).get();
+//    auto yy = errorSignal.Transpose();
+//    fetch::math::Dot(xx, yy,  errorSignal2);
+    fetch::math::DotTranspose(inputs.at(0).get(), errorSignal,  errorSignal2);
 
     return {errorSignal1, errorSignal2};
   }

@@ -780,6 +780,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Dot(ArrayType const &A, ArrayT
       gemm_nn;
 
   gemm_nn(static_cast<Type>(1), aview, bview, static_cast<Type>(0), ret.View());
+
 }
 
 template <typename ArrayType>

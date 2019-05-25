@@ -34,10 +34,15 @@ WordLoader<float> new_loader;
 
 std::string train_file, output_file;
 
-int window    = 3; // 5
+int window    = 5; // 5
 int min_count = 5;
 
-uint64_t layer1_size = 20; //200
+double time_forward = 0;
+double time_backward = 0;
+double time_step = 0;
+
+
+uint64_t layer1_size = 200; //200
 uint64_t iter        = 1;
 float    alpha       = static_cast<float>(0.025);
 float    starting_alpha;
@@ -109,6 +114,7 @@ void TrainModel()
     if (i % 10000 == 0)
     {
       PrintStats(i, iterations);
+      std::cout << "Times: " << time_forward << " " << time_backward << " " << time_step << std::endl;
     }
 
     if (global_loader.IsDone())
@@ -121,6 +127,7 @@ void TrainModel()
     graph.SetInput("Context", sample.first);
     graph.SetInput("Target", sample.second);
 
+    high_resolution_clock::time_point t1 = high_resolution_clock::now();
     auto graphF = graph.Evaluate("DotProduct");
 
     for (int d = 0; d < negative; d++)
@@ -143,9 +150,20 @@ void TrainModel()
       }
     }
 
+    high_resolution_clock::time_point t2 = high_resolution_clock::now();
     graph.BackPropagate("DotProduct", error_signal);
 
+    high_resolution_clock::time_point t3 = high_resolution_clock::now();
     graph.Step(alpha);
+    high_resolution_clock::time_point t4 = high_resolution_clock::now();
+
+    duration<double> time_span1 = duration_cast<duration<double>>(t2 - t1);
+    duration<double> time_span2 = duration_cast<duration<double>>(t3 - t2);    
+    duration<double> time_span3 = duration_cast<duration<double>>(t4 - t3); 
+
+    time_forward  += time_span1.count();
+    time_backward += time_span2.count();
+    time_step += time_span3.count();    
   }
 
   std::cout << "Done" << std::endl;
