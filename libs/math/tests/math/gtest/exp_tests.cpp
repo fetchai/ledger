@@ -18,7 +18,6 @@
 
 #include <chrono>
 #include <cmath>
-#include <iostream>
 
 #include "core/random/lcg.hpp"
 #include "math/approx_exp.hpp"

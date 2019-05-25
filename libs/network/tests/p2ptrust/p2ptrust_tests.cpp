@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include <cstdlib>
-#include <iostream>
 #include <memory>
 
 #include "network/p2pservice/p2ptrust.hpp"

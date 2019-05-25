@@ -21,7 +21,6 @@
 #include "network/muddle/muddle.hpp"
 #include "variant/variant.hpp"
 
-#include <iostream>
 #include <list>
 #include <string>
 #include <unordered_set>

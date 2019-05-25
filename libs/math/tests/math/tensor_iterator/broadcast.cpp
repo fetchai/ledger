@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
-#include <iostream>
 
 #include "math/tensor.hpp"
 #include "math/tensor_broadcast.hpp"

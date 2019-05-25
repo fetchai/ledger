@@ -23,7 +23,6 @@
 #include "vectorise/platform.hpp"
 
 #include <cmath>
-#include <iostream>
 #include <limits>
 #include <sstream>
 

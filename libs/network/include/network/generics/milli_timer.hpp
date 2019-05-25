@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
 #include <string>
 
 #include "core/logger.hpp"
