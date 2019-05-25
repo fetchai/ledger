@@ -48,27 +48,31 @@ public:
     }
   }
 
-  char const *void_no_args =
-      " function main()                         \n"
-      "   customBinding();                      \n"
-      " endfunction                             \n";
+  char const *void_no_args = R"(
+      function main()
+        customBinding();
+      endfunction
+  )";
 
-  char const *void_with_args =
-      " function main()                         \n"
-      "   customBinding(1u32, 2i64);            \n"
-      " endfunction                             \n";
+  char const *void_with_args = R"(
+      function main()
+        customBinding(1u32, 2i64);
+      endfunction
+  )";
 
-  char const *nonvoid_no_args =
-      " function main()                         \n"
-      "   var x = Array<Int8>(1);               \n"
-      "   x[0] = customBinding();               \n"
-      " endfunction                             \n";
+  char const *nonvoid_no_args = R"(
+      function main()
+        var x = Array<Int8>(1);
+        x[0] = customBinding();
+      endfunction
+  )";
 
-  char const *nonvoid_with_args =
-      " function main()                         \n"
-      "   var x = Array<UInt16>(1);             \n"
-      "   x[0] = customBinding(1u32, 2i64);     \n"
-      " endfunction                             \n";
+  char const *nonvoid_with_args = R"(
+      function main()
+        var x = Array<UInt16>(1);
+        x[0] = customBinding(1u32, 2i64);
+      endfunction
+  )";
 
   VmTestToolkit toolkit;
 
