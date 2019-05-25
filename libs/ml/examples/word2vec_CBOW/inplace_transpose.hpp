@@ -39,23 +39,8 @@ public:
     (void)output;  // Transposing input inplace
     assert(inputs.size() == 1);
     
-    std::cout << DESCRIPTOR << ": " << __func__ << std::endl;
-    for(auto &i : inputs)
-    {
-      std::cout << " --> " << i.get().shape()[0] << " x " << i.get().shape()[1] << std::endl;
-    }
-    std::cout << " --< " << output.shape()[0] << " x " << output.shape()[1] << std::endl;
-    std::cout << std::endl;
-
     output = inputs.front().get().Transpose();
 
-    std::cout << "OUTPUT: ";
-    for(auto &o: output)
-    {
-      std::cout << o << ", ";
-    }
-    std::cout << std::endl;    
-    
     return output;
   }
 
@@ -64,25 +49,9 @@ public:
       ArrayType const &                                           errorSignal)
   {
     assert(inputs.size() == 1);
-    std::cout << DESCRIPTOR << ": " << __func__ << std::endl;
-    for(auto &i : inputs)
-    {
-      std::cout << " --> " << i.get().shape()[0] << " x " << i.get().shape()[1] << std::endl;
-    }
-    std::cout << " --: " << errorSignal.shape()[0] << " x " << errorSignal.shape()[1] << std::endl;
-    std::cout << std::endl;
 
     (void)inputs;   
     auto output = errorSignal.Transpose();
-    std::cout << "ERROR: ";
-    for(std::size_t j=0; j< output.width(); ++j)
-    {
-      for(std::size_t i=0; i< output.height(); ++i)
-      {        
-        std::cout << output(i, j) << ", ";
-      }
-      std::cout << std::endl << std::endl;
-    }
 
     return {output};
   }

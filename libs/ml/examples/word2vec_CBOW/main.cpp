@@ -34,10 +34,10 @@ WordLoader<float> new_loader;
 
 std::string train_file, output_file;
 
-int window    = 5;
+int window    = 3; // 5
 int min_count = 5;
 
-uint64_t layer1_size = 200;
+uint64_t layer1_size = 20; //200
 uint64_t iter        = 1;
 float    alpha       = static_cast<float>(0.025);
 float    starting_alpha;
@@ -94,7 +94,7 @@ void InitNet()
   graph.AddNode<MatrixMultiply<fetch::math::Tensor<FloatType>>>("DotProduct",
                                                                {"Words", "Weights"});
 }
-
+#define MAX_EXP 6
 void TrainModel()
 {
   fetch::math::Tensor<FloatType> error_signal({uint64_t(negative), 1}); 
@@ -117,33 +117,35 @@ void TrainModel()
     }
 
     auto sample = global_loader.GetNext(); 
-//    std::cout << "X: " << sample.first.height() << " " << sample.first.width() << std::endl;
-//    std::cout << "Y: " << sample.second.height() << " " << sample.second.width() << std::endl;
 
     graph.SetInput("Context", sample.first);
     graph.SetInput("Target", sample.second);
 
     auto graphF = graph.Evaluate("DotProduct");
-//    std::cout << "Y: " << graphF.height() << " " << graphF.width() << std::endl;
+
     for (int d = 0; d < negative; d++)
     {
-      float f     = graphF(0, d);
+      float f     = graphF(d, 0);
       float label = (d == 0) ? 1 : 0;
-      float sm = static_cast<float>(fexp(f) / (1.+fexp(f)));
-      error_signal.Set(d, 0, label - sm); 
+
+      if (f > MAX_EXP)
+      {
+        error_signal.Set(d, 0, label - 1);
+      }
+      else if (f < -MAX_EXP)
+      {
+        error_signal.Set(d, 0, label );        
+      }
+      else
+      {
+        float sm = static_cast<float>(fexp(f) / (1.+fexp(f)));
+        error_signal.Set(d, 0, label - sm); 
+      }
     }
 
     graph.BackPropagate("DotProduct", error_signal);
 
-    std::cout << std::endl;
-    std::cout << "ERROR:" << std::endl;
-    for(auto&e: error_signal)
-    {
-      std::cout << e << ", ";
-    }
-    std::cout << std::endl;
     graph.Step(alpha);
-    exit(-1);
   }
 
   std::cout << "Done" << std::endl;

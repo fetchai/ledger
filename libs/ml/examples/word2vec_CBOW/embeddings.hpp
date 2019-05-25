@@ -56,15 +56,6 @@ public:
     assert(inputs.size() == 1);
     assert(output.shape() == ComputeOutputShape(inputs));
 
-    std::cout << DESCRIPTOR << ": " << __func__ << std::endl;
-    for(auto &i : inputs)
-    {
-      std::cout << " --> " << i.get().shape()[0] << " x " << i.get().shape()[1] << std::endl;
-    }
-    std::cout << " --< " << output.shape()[0] << " x " << output.shape()[1] << std::endl;
-    std::cout << std::endl;
-
-
     uint64_t j=0;
     for (DataType const &i : inputs.front().get())
     {
@@ -72,17 +63,6 @@ public:
       auto slice2 = this->output_->View(SizeType(i));
       Assign(slice1, slice2);
       j++;
-    }
-
-    std::cout << "OUTPUT: ";
-
-    for(std::size_t j=0; j< output.width(); ++j)
-    {
-      for(std::size_t i=0; i< output.height(); ++i)
-      {        
-        std::cout << output(i, j) << ", ";
-      }
-      std::cout << std::endl << std::endl;
     }
 
     return output;

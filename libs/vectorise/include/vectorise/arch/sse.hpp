@@ -1,0 +1,5 @@
+#include "vectorise/info.hpp"
+#include "vectorise/arch/sse/info.hpp"
+#include "vectorise/arch/sse/register_int32.hpp"
+#include "vectorise/arch/sse/register_float.hpp"
+#include "vectorise/arch/sse/register_double.hpp"

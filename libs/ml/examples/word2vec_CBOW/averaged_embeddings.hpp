@@ -57,21 +57,6 @@ public:
     assert(inputs.front().get().shape().size() == 2);
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
-
-    std::cout << DESCRIPTOR << ": " << __func__ << std::endl;
-    for(auto &i : inputs)
-    {
-      std::cout << " --> " << i.get().shape()[0] << " x " << i.get().shape()[1] << std::endl;
-      for(auto &x: i.get())
-      {
-        std::cout << x << ", ";
-      }
-      std::cout << std::endl;
-    }
-    std::cout << " --< " << output.shape()[0] << " x " << output.shape()[1] << std::endl;
-    std::cout << std::endl;
-
-
     uint64_t valid_samples(0);
     // Taking a slice of the output, this as the effect of turning a [1xDIM] matrix into a [DIM]
     // vector (could have used squeeze) This is done for performance reasons as iterating over a
@@ -97,22 +82,12 @@ public:
       }
     }
 
-    DataType div = static_cast<DataType>(valid_samples);
-    std::cout << "Division: " << div << std::endl;
-    
+    DataType div = static_cast<DataType>(valid_samples);    
     for(auto &val: output_slice)
     {
       val /= div;
     }
     
-    // TODO: InlineDivide(output_slice, );
-    
-    std::cout << "OUTPUT: ";
-    for(auto &o: output)
-    {
-      std::cout << o << ", ";
-    }
-    std::cout << std::endl;    
     return output;
   }
 
@@ -122,15 +97,6 @@ public:
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape().size() == 2);
-
-    std::cout << DESCRIPTOR << ": " << __func__ << std::endl;
-    for(auto &i : inputs)
-    {
-      std::cout << " --> " << i.get().shape()[0] << " x " << i.get().shape()[1] << std::endl;
-    }
-    std::cout << " --: " << error_signal.shape()[0] << " x " << error_signal.shape()[1] << std::endl;
-    std::cout << std::endl;
-
 
     
     // Taking a slice of the output, this as the effect of turning a [1xDIM] matrix into a [DIM]
@@ -149,17 +115,6 @@ public:
       }
     }
     
-    std::cout << "ERROR: ";
-    for(std::size_t j=0; j< error_signal.width(); ++j)
-    {
-      for(std::size_t i=0; i< error_signal.height(); ++i)
-      {        
-        std::cout << error_signal(i, j) << ", ";
-      }
-      std::cout << std::endl << std::endl;
-    }
-
-
     return {error_signal};
   }
 

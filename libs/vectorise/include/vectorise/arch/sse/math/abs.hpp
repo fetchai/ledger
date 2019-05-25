@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/sse.hpp"
+#include "vectorise/arch/sse.hpp"
 
 #include <emmintrin.h>
 #include <limits>

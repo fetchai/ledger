@@ -45,7 +45,7 @@ void TestEigenXX()
 
 void TestFetchXX()
 {
-  using Type = float;
+  using Type = double;
   uint64_t N = 1000;
   Tensor<Type> a({N,N}), b({N,N}), c({N,N});
   LinearCongruentialGenerator lcg;
