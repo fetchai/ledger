@@ -79,7 +79,6 @@ public:
   struct
   {
     MOCK_CONST_METHOD0(increment, void());
-
     MOCK_CONST_METHOD2(increment_with_args, void(uint32_t, int64_t));
   } call_counter;
 };
