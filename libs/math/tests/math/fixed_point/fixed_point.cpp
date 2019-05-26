@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include <array>
 #include <cmath>
 #include <gtest/gtest.h>

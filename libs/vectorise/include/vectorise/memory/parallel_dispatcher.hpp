@@ -704,7 +704,6 @@ public:
   void Apply(TrivialRange const &range, F&& apply,
              Args &&... args)
   {
-//    std::cout << "Was here?? 3" << std::endl;
     int SFL = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
 
     int SF = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
@@ -778,7 +777,6 @@ public:
                  Args...>::signature_type const &fnc,
              Args &&... args)
   {
-    std::cout << "Was here?? 4" << std::endl;
     VectorRegisterType         regs[sizeof...(args)];
     VectorRegisterType         c;
     VectorRegisterIteratorType iters[sizeof...(args)];

@@ -1,24 +1,8 @@
-#pragma once
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
-
+#include "vectorise/info.hpp"
 #include "vectorise/arch/sse/info.hpp"
+#include "vectorise/register.hpp"
 #include "vectorise/arch/sse/register_int32.hpp"
+#include "vectorise/arch/sse/register_float.hpp"
 
 #include <cmath>
 #include <cstddef>
@@ -27,10 +11,27 @@
 #include <immintrin.h>
 #include <smmintrin.h>
 
-#include <iostream>
-
 namespace fetch {
 namespace vectorize {
+
+namespace details {
+template <typename T, std::size_t N>
+struct UnrollSet
+{
+  static void Set(T *ptr, T const &c)
+  {
+    (*ptr) = c;
+    UnrollSet<T, N - 1>::Set(ptr + 1, c);
+  }
+};
+
+template <typename T>
+struct UnrollSet<T, 0>
+{
+  static void Set(T * /*ptr*/, T const & /*c*/)
+  {}
+};
+}  // namespace details
 
 template <>
 class VectorRegister<double, 128>
@@ -74,7 +75,6 @@ public:
   {
     _mm_store_pd(ptr, data_);
   }
-  
   void Stream(type *ptr) const
   {
     _mm_stream_pd(ptr, data_);
@@ -93,71 +93,112 @@ private:
   mm_register_type data_;
 };
 
-
-
-// Unary minus
-inline VectorRegister<double, 128> operator-(VectorRegister<double, 128> const &x) 
-{                                                                              
+inline VectorRegister<double, 128> operator-(VectorRegister<double, 128> const &x)
+{
   return VectorRegister<double, 128>(_mm_sub_pd(_mm_setzero_pd(), x.data()));
 }
 
-// Multiplication
-inline VectorRegister<double, 128> operator *(VectorRegister<double, 128> const &a,
-                                             VectorRegister<double, 128> const &b)
+inline VectorRegister<double, 128> operator*(VectorRegister<double, 128> const &a,
+                                           VectorRegister<double, 128> const &b)
 {                                                                               
   __m128d ret = _mm_mul_pd(a.data(), b.data());
   return VectorRegister<double, 128>(ret);
 }
 
-inline VectorRegister<double, 128> operator -(VectorRegister<double, 128> const &a,
-                                             VectorRegister<double, 128> const &b)
+inline VectorRegister<double, 128> operator-(VectorRegister<double, 128> const &a,
+                                           VectorRegister<double, 128> const &b)
 {                                                                               
   __m128d ret = _mm_sub_pd(a.data(), b.data());
   return VectorRegister<double, 128>(ret);
 }
 
 inline VectorRegister<double, 128> operator/(VectorRegister<double, 128> const &a,
-                                             VectorRegister<double, 128> const &b)
+                                           VectorRegister<double, 128> const &b)
 {                                                                               
   __m128d ret = _mm_div_pd(a.data(), b.data());
   return VectorRegister<double, 128>(ret);
 }
 
 inline VectorRegister<double, 128> operator+(VectorRegister<double, 128> const &a,
-                                             VectorRegister<double, 128> const &b)
+                                           VectorRegister<double, 128> const &b)
 {                                                                               
-  __m128d ret = _mm_div_pd(a.data(), b.data());
+  __m128d ret = _mm_add_pd(a.data(), b.data());
   return VectorRegister<double, 128>(ret);
 }
 
+inline VectorRegister<double, 128> operator ==(VectorRegister<double, 128> const &a,
+                                             VectorRegister<double, 128> const &b)
+{
+  __m128d        imm  = _mm_cmpeq_pd(a.data(), b.data());
+  __m128i        ival = _mm_castpd_si128(imm);
+  constexpr double done = double(1);
+  const __m128i  one  = _mm_castpd_si128(_mm_load_pd1(&done));
+  __m128i        ret  = _mm_and_si128(ival, one);
+  return VectorRegister<double, 128>(_mm_castsi128_pd(ret));
+}
 
-// Logical operations
-#define FETCH_ADD_OPERATOR(op, type, L, fnc)                                       \
-  inline VectorRegister<type, 128> operator op(VectorRegister<type, 128> const &a, \
-                                               VectorRegister<type, 128> const &b) \
-  {                                                                                \
-    L              imm  = fnc(a.data(), b.data());                                 \
-    __m128i        ival = _mm_castpd_si128(imm);                                   \
-    constexpr type done = type(1);                                                 \
-    const __m128i  one  = _mm_castpd_si128(_mm_load_pd1(&done));                   \
-    __m128i        ret  = _mm_and_si128(ival, one);                                \
-    return VectorRegister<type, 128>(_mm_castsi128_pd(ret));                       \
-  }
+inline VectorRegister<double, 128> operator !=(VectorRegister<double, 128> const &a,
+                                             VectorRegister<double, 128> const &b)
+{
+  __m128d        imm  = _mm_cmpneq_pd(a.data(), b.data());
+  __m128i        ival = _mm_castpd_si128(imm);
+  constexpr double done = double(1);
+  const __m128i  one  = _mm_castpd_si128(_mm_load_pd1(&done));
+  __m128i        ret  = _mm_and_si128(ival, one);
+  return VectorRegister<double, 128>(_mm_castsi128_pd(ret));
+}
 
-FETCH_ADD_OPERATOR(==, double, __m128d, _mm_cmpeq_pd)
-FETCH_ADD_OPERATOR(!=, double, __m128d, _mm_cmpneq_pd)
-FETCH_ADD_OPERATOR(>=, double, __m128d, _mm_cmpge_pd)
-FETCH_ADD_OPERATOR(>, double, __m128d, _mm_cmpgt_pd)
-FETCH_ADD_OPERATOR(<=, double, __m128d, _mm_cmple_pd)
-FETCH_ADD_OPERATOR(<, double, __m128d, _mm_cmplt_pd)
+inline VectorRegister<double, 128> operator >=(VectorRegister<double, 128> const &a,
+                                             VectorRegister<double, 128> const &b)
+{
+  __m128d        imm  = _mm_cmpge_pd(a.data(), b.data());
+  __m128i        ival = _mm_castpd_si128(imm);
+  constexpr double done = double(1);
+  const __m128i  one  = _mm_castpd_si128(_mm_load_pd1(&done));
+  __m128i        ret  = _mm_and_si128(ival, one);
+  return VectorRegister<double, 128>(_mm_castsi128_pd(ret));
+}
+
+inline VectorRegister<double, 128> operator >(VectorRegister<double, 128> const &a,
+                                             VectorRegister<double, 128> const &b)
+{
+  __m128d        imm  = _mm_cmpgt_pd(a.data(), b.data());
+  __m128i        ival = _mm_castpd_si128(imm);
+  constexpr double done = double(1);
+  const __m128i  one  = _mm_castpd_si128(_mm_load_pd1(&done));
+  __m128i        ret  = _mm_and_si128(ival, one);
+  return VectorRegister<double, 128>(_mm_castsi128_pd(ret));
+}
+
+inline VectorRegister<double, 128> operator <=(VectorRegister<double, 128> const &a,
+                                             VectorRegister<double, 128> const &b)
+{
+  __m128d        imm  = _mm_cmple_pd(a.data(), b.data());
+  __m128i        ival = _mm_castpd_si128(imm);
+  constexpr double done = double(1);
+  const __m128i  one  = _mm_castpd_si128(_mm_load_pd1(&done));
+  __m128i        ret  = _mm_and_si128(ival, one);
+  return VectorRegister<double, 128>(_mm_castsi128_pd(ret));
+}
+
+inline VectorRegister<double, 128> operator <(VectorRegister<double, 128> const &a,
+                                              VectorRegister<double, 128> const &b)
+{
+  __m128d        imm  = _mm_cmplt_pd(a.data(), b.data());
+  __m128i        ival = _mm_castpd_si128(imm);
+  constexpr double done = double(1);
+  const __m128i  one  = _mm_castpd_si128(_mm_load_pd1(&done));
+  __m128i        ret  = _mm_and_si128(ival, one);
+  return VectorRegister<double, 128>(_mm_castsi128_pd(ret));
+}
+
 
 // Manage NaN
 //__m128d _mm_cmpord_pd (__m128d a, __m128d b)
 //__m128d _mm_cmpunord_pd (__m128d a, __m128d b)
 
-#undef FETCH_ADD_OPERATOR
+// FREE FUNCTIONS
 
-// Functions
 inline VectorRegister<double, 128> vector_zero_below_element(VectorRegister<double, 128> const &a,
                                                              int const &                        n)
 {
@@ -199,11 +240,16 @@ inline double first_element(VectorRegister<double, 128> const &x)
   return _mm_cvtsd_f64(x.data());
 }
 
+// Floats
+
+
+// TODO(unknown): Rename and move
 inline double reduce(VectorRegister<double, 128> const &x)
 {
   __m128d r = _mm_hadd_pd(x.data(), _mm_setzero_pd());
   return _mm_cvtsd_f64(r);
 }
+
 
 inline bool all_less_than(VectorRegister<double, 128> const &x,
                           VectorRegister<double, 128> const &y)
@@ -219,7 +265,5 @@ inline bool any_less_than(VectorRegister<double, 128> const &x,
   return _mm_movemask_epi8(r) != 0;
 }
 
-
-
-}
-}
+}  // namespace vectorize
+}  // namespace fetch

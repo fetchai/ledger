@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/code2vec_context_loaders/context_loader.hpp"

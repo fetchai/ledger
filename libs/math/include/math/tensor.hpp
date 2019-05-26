@@ -1251,9 +1251,15 @@ void Tensor<T, C>::Fill(Type const &value, memory::TrivialRange const &range)
 template <typename T, typename C>
 void Tensor<T, C>::Fill(Type const &value)
 {
+  for(auto &x: *this)
+  {
+    x = value;
+  }
+  /*
+  TODO: Implement all relevant vector functions
   VectorRegisterType val(value);
-
   this->data().in_parallel().Apply([val](VectorRegisterType &z) { z = val; });
+  */
 }
 
 /**

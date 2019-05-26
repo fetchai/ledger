@@ -25,7 +25,7 @@
 #include <sstream>
 
 #include <cmath>
-#include <core/assert.hpp>
+#include <cassert>
 #include <iomanip>
 #include <limits>
 

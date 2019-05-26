@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/concatenate.hpp"
-#include "math/fixed_point/fixed_point.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 

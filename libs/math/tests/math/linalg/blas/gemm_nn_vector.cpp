@@ -59,6 +59,7 @@ TEST(blas_gemm_vectorised, blas_gemm_nn_vector1) {
  0.43194501864211576 0.2912291401980419 0.6118528947223795
   	)");
     TensorView< Type > C = C_tensor.View();
+
   gemm_nn_vector(alpha, A, B, beta, C);
 
   Tensor< Type > refC_tensor = Tensor< Type >::FromString(R"(
@@ -68,11 +69,7 @@ TEST(blas_gemm_vectorised, blas_gemm_nn_vector1) {
   )");
   TensorView< Type > refC = refC_tensor.View();
 
-
-
   ASSERT_TRUE( refC_tensor.AllClose(C_tensor) );
-
- 
 }
 
 TEST(blas_gemm_vectorised, blas_gemm_nn_vector2) {
