@@ -20,48 +20,42 @@
 #include "math/tensor.hpp"
 #include "meta/is_iterable.hpp"
 
+namespace fetch {
+namespace math {
 
-namespace fetch
+template <typename T1, typename T2>
+fetch::meta::IsIterableTwoArg<T1, T2, void> PolyfillInlineAdd(T1 &ret, T2 const &other)
 {
-namespace math
-{
-
-template<typename T1, typename T2>
-fetch::meta::IsIterableTwoArg<T1, T2, void> PolyfillInlineAdd(T1 &ret, T2 const& other)
-{
-  using Type = typename T1::Type;
-  using VectorRegisterType = typename TensorView< Type >::VectorRegisterType;
+  using Type               = typename T1::Type;
+  using VectorRegisterType = typename TensorView<Type>::VectorRegisterType;
 
   memory::TrivialRange range(0, std::size_t(ret.height()));
-  for(uint64_t j=0; j < ret.width(); ++j)
+  for (uint64_t j = 0; j < ret.width(); ++j)
   {
-    auto ret_slice = ret.data().slice( ret.padded_height() * j, ret.padded_height());
-    auto slice = other.data().slice( other.padded_height() * j, other.padded_height() );
+    auto ret_slice = ret.data().slice(ret.padded_height() * j, ret.padded_height());
+    auto slice     = other.data().slice(other.padded_height() * j, other.padded_height());
 
-    ret_slice.in_parallel().Apply(range, [](VectorRegisterType const &a, VectorRegisterType &b ){
-      b = b + a;      
-    }, slice);
+    ret_slice.in_parallel().Apply(
+        range, [](VectorRegisterType const &a, VectorRegisterType &b) { b = b + a; }, slice);
   }
 }
 
-template<typename T1, typename T2>
-fetch::meta::IsIterableTwoArg<T1, T2, void> Assign(T1 ret, T2 const& other)
+template <typename T1, typename T2>
+fetch::meta::IsIterableTwoArg<T1, T2, void> Assign(T1 ret, T2 const &other)
 {
-  using Type = typename T1::Type;
-  using VectorRegisterType = typename TensorView< Type >::VectorRegisterType;
+  using Type               = typename T1::Type;
+  using VectorRegisterType = typename TensorView<Type>::VectorRegisterType;
 
   memory::TrivialRange range(0, std::size_t(ret.height()));
-  for(uint64_t j=0; j < ret.width(); ++j)
+  for (uint64_t j = 0; j < ret.width(); ++j)
   {
-    auto ret_slice = ret.data().slice( ret.padded_height() * j, ret.padded_height());
-    auto slice = other.data().slice( other.padded_height() * j, other.padded_height() );
+    auto ret_slice = ret.data().slice(ret.padded_height() * j, ret.padded_height());
+    auto slice     = other.data().slice(other.padded_height() * j, other.padded_height());
 
-    ret_slice.in_parallel().Apply(range, [](VectorRegisterType const &a, VectorRegisterType &b ){
-      b = a;      
-    }, slice);
+    ret_slice.in_parallel().Apply(
+        range, [](VectorRegisterType const &a, VectorRegisterType &b) { b = a; }, slice);
   }
-
 }
 
-}
-}
+}  // namespace math
+}  // namespace fetch

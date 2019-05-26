@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/info.hpp"
 #include "vectorise/arch/sse/info.hpp"
+#include "vectorise/info.hpp"
 #include "vectorise/register.hpp"
 
 #include <cmath>
@@ -100,28 +100,27 @@ private:
   mm_register_type data_;
 };
 
-
 inline VectorRegister<int32_t, 128> operator-(VectorRegister<int32_t, 128> const &x)
 {
   return VectorRegister<int32_t, 128>(_mm_sub_epi32(_mm_setzero_si128(), x.data()));
 }
 
 inline VectorRegister<int32_t, 128> operator+(VectorRegister<int32_t, 128> const &a,
-                                             VectorRegister<int32_t, 128> const &b)
+                                              VectorRegister<int32_t, 128> const &b)
 {
   __m128i ret = _mm_add_epi32(a.data(), b.data());
   return VectorRegister<int32_t, 128>(ret);
 }
 
 inline VectorRegister<int32_t, 128> operator-(VectorRegister<int32_t, 128> const &a,
-                                             VectorRegister<int32_t, 128> const &b)
+                                              VectorRegister<int32_t, 128> const &b)
 {
   __m128i ret = _mm_sub_epi32(a.data(), b.data());
   return VectorRegister<int32_t, 128>(ret);
 }
 
 inline VectorRegister<int32_t, 128> operator*(VectorRegister<int32_t, 128> const &a,
-                                             VectorRegister<int32_t, 128> const &b)
+                                              VectorRegister<int32_t, 128> const &b)
 {
   __m128i ret = _mm_mullo_epi32(a.data(), b.data());
   return VectorRegister<int32_t, 128>(ret);
@@ -151,14 +150,14 @@ inline VectorRegister<int32_t, 128> operator/(VectorRegister<int32_t, 128> const
 }
 
 inline VectorRegister<int32_t, 128> operator==(VectorRegister<int32_t, 128> const &a,
-                                             VectorRegister<int32_t, 128> const &b)
+                                               VectorRegister<int32_t, 128> const &b)
 {
   __m128i ret = _mm_cmpeq_epi32(a.data(), b.data());
   return VectorRegister<int32_t, 128>(ret);
 }
 
 inline VectorRegister<int32_t, 128> operator<(VectorRegister<int32_t, 128> const &a,
-                                             VectorRegister<int32_t, 128> const &b)
+                                              VectorRegister<int32_t, 128> const &b)
 {
   __m128i ret = _mm_cmplt_epi32(a.data(), b.data());
   return VectorRegister<int32_t, 128>(ret);
@@ -180,7 +179,6 @@ inline VectorRegister<int32_t, 128> shift_elements_right(VectorRegister<int32_t,
   __m128i n = _mm_bsrli_si128(x.data(), 4);
   return n;
 }
-
 
 }  // namespace vectorize
 }  // namespace fetch

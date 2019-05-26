@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/register.hpp"
 #include "vectorise/arch/sse.hpp"
+#include "vectorise/register.hpp"
 
 #include <gtest/gtest.h>
 

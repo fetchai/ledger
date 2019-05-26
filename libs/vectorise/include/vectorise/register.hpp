@@ -59,7 +59,6 @@ namespace vectorize {
 template <typename T, std::size_t N = sizeof(T)>
 class VectorRegister;
 
-
 template <typename T>
 class VectorRegister<T, sizeof(T)>
 {

@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/word2vec_loaders/skipgram_dataloader.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include <gtest/gtest.h>
 #include <string>
 

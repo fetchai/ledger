@@ -37,10 +37,10 @@ public:
                             ArrayType &                                                 output)
   {
     (void)output;
-    (void)inputs; 
+    (void)inputs;
     assert(inputs.empty());
     assert(this->output_);
-        
+
     return *(this->output_);
   }
 
@@ -48,7 +48,7 @@ public:
       std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
-    (void)inputs;     
+    (void)inputs;
     assert(inputs.empty());
 
     return {errorSignal};

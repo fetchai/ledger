@@ -35,7 +35,6 @@
 #include "math/standard_functions/fmod.hpp"
 #include "math/standard_functions/remainder.hpp"
 #include "math/tensor_broadcast.hpp"
-#include "math/base_types.hpp"
 #include "math/tensor_iterator.hpp"
 #include "math/tensor_slice_iterator.hpp"
 #include "math/tensor_view.hpp"
@@ -80,7 +79,7 @@ public:
 
   static constexpr char const *LOGGING_NAME = "Tensor";
 
-  enum // TODO: Get from view
+  enum  // TODO: Get from view
   {
     LOG_PADDING = 2,
     PADDING     = static_cast<SizeType>(1) << LOG_PADDING
@@ -1250,7 +1249,7 @@ void Tensor<T, C>::Fill(Type const &value, memory::TrivialRange const &range)
 template <typename T, typename C>
 void Tensor<T, C>::Fill(Type const &value)
 {
-  for(auto &x: *this)
+  for (auto &x : *this)
   {
     x = value;
   }

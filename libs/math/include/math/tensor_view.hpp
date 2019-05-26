@@ -45,9 +45,7 @@ public:
     , width_{std::move(width)}
     , padded_height_{PadValue(height_)}
     , data_{std::move(data), offset, padded_height_ * width_}
-  {
-    
-  }
+  {}
 
   IteratorType begin()
   {
@@ -150,12 +148,12 @@ public:
 
   ContainerType const &data() const
   {
-    return data_; // ContainerType(data_, offset_, padded_height_ * width_);
+    return data_;  // ContainerType(data_, offset_, padded_height_ * width_);
   }
 
   ContainerType &data()
   {
-    return data_; // ContainerType(data_, offset_, padded_height_ * width_);
+    return data_;  // ContainerType(data_, offset_, padded_height_ * width_);
   }
 
   /*
@@ -187,8 +185,8 @@ protected:
 private:
   SizeType      height_{0};
   SizeType      width_{0};
-  SizeType padded_height_{0};
-  ContainerType data_{};  
+  SizeType      padded_height_{0};
+  ContainerType data_{};
 };
 
 }  // namespace math

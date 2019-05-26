@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "weights.hpp"
 #include "polyfill.hpp"
+#include "weights.hpp"
 #include <set>
 
 namespace fetch {
@@ -29,10 +29,10 @@ template <class T>
 class AveragedEmbeddings : public fetch::ml::ops::Weights<T>
 {
 public:
-  using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SizeType     = typename ArrayType::SizeType;
+  using ArrayType                         = T;
+  using DataType                          = typename ArrayType::Type;
+  using ArrayPtrType                      = std::shared_ptr<ArrayType>;
+  using SizeType                          = typename ArrayType::SizeType;
   static constexpr char const *DESCRIPTOR = "Average Embeddings";
 
   AveragedEmbeddings(SizeType dimensions, SizeType dataPoints)
@@ -63,7 +63,7 @@ public:
     // vector is much faster than iterating over a matrix
 
     auto output_slice = output.View(0);
-    bool                          clear        = true;
+    bool clear        = true;
     for (DataType const &i : inputs.front().get())
     {
       if (i >= 0)
@@ -82,12 +82,12 @@ public:
       }
     }
 
-    DataType div = static_cast<DataType>(valid_samples);    
-    for(auto &val: output_slice)
+    DataType div = static_cast<DataType>(valid_samples);
+    for (auto &val : output_slice)
     {
       val /= div;
     }
-    
+
     return output;
   }
 
@@ -98,23 +98,22 @@ public:
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape().size() == 2);
 
-    
     // Taking a slice of the output, this as the effect of turning a [1xDIM] matrix into a [DIM]
     // vector (could have used Squeeze) This is done for performance reasons as iterating over a
     // vector is much faster than iterating over a matrix
     auto error_signal_slice = error_signal.View(0);
-    
+
     for (DataType const &i : inputs.front().get())
     {
       if (i >= 0)
       {
         updated_rows_.insert(typename ArrayType::SizeType(double(i)));
-        auto slice1 =this->gradient_accumulation_->View(typename ArrayType::SizeType(i));
+        auto slice1 = this->gradient_accumulation_->View(typename ArrayType::SizeType(i));
 
         PolyfillInlineAdd(slice1, error_signal_slice);
       }
     }
-    
+
     return {error_signal};
   }
 
@@ -122,7 +121,7 @@ public:
   {
     /*
     using Type = typename T::Type;
-    using VectorRegisterType = typename math::TensorView< Type >::VectorRegisterType;    
+    using VectorRegisterType = typename math::TensorView< Type >::VectorRegisterType;
     memory::TrivialRange range(0, std::size_t(this->gradient_accumulation_->height()));
     // TODO: This is slower than original code - investigate
     for (auto const &r : updated_rows_)
@@ -132,8 +131,8 @@ public:
 
       VectorRegisterType rate(learningRate);
 
-      ret.data().in_parallel().Apply(range, [rate](VectorRegisterType const &a, VectorRegisterType &b ){
-        b = b + a * rate; 
+      ret.data().in_parallel().Apply(range, [rate](VectorRegisterType const &a, VectorRegisterType
+    &b ){ b = b + a * rate;
       }, input.data());
 
     }
@@ -156,14 +155,13 @@ public:
     }
 
     updated_rows_.clear();
-
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<std::reference_wrapper<ArrayType const>> const & /*inputs*/) const
   {
     std::vector<SizeType> outputShape = this->output_->shape();
-    outputShape[1]                                          = 1;
+    outputShape[1]                    = 1;
     return outputShape;
   }
 

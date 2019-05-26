@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
 #include "meta/type_traits.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include <gtest/gtest.h>
 #include <iomanip>
 #include <iostream>
@@ -123,7 +123,6 @@ TYPED_TEST(TensorViewTests, size_test)
   }
 }
 
-
 TYPED_TEST(TensorViewTests, data_layout)
 {
   TypeParam         from   = static_cast<TypeParam>(2);
@@ -134,22 +133,21 @@ TYPED_TEST(TensorViewTests, data_layout)
 
   TypeParam value = from;
 
-  for(uint64_t j=0; j < 16;++j)
+  for (uint64_t j = 0; j < 16; ++j)
   {
     auto view = tensor.View(j);
 
     uint64_t i = 0;
-    for(auto &x: view.data())  
+    for (auto &x : view.data())
     {
       EXPECT_EQ(x, value);
       value += step;
 
-      ++i;    
-      if(i == 3)
+      ++i;
+      if (i == 3)
       {
         break;
       }
     }
   }
-  
 }

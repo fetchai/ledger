@@ -209,8 +209,5 @@ inline bool any_less_than(VectorRegister<double, 128> const &x,
 }
 */
 
-
-
-
-}
-}
+}  // namespace vectorize
+}  // namespace fetch

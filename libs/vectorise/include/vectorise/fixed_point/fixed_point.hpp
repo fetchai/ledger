@@ -21,12 +21,12 @@
 #include "meta/type_traits.hpp"
 #include "vectorise/platform.hpp"
 
-#include <cmath>
 #include <cassert>
+#include <cmath>
+#include <iomanip>
+#include <iostream>
 #include <limits>
 #include <sstream>
-#include <iostream>
-#include <iomanip>
 
 namespace fetch {
 namespace fixed_point {

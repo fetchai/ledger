@@ -43,7 +43,7 @@ public:
     assert(inputs.at(1).get().shape().size() == 2);
     assert(output.shape() == ComputeOutputShape(inputs));
 
-    fetch::math::TransposeDot(inputs[1].get(), inputs[0].get(),  output);
+    fetch::math::TransposeDot(inputs[1].get(), inputs[0].get(), output);
 
     return output;
   }
@@ -58,10 +58,10 @@ public:
     ArrayType errorSignal2(inputs.at(1).get().shape());
 
     fetch::math::Dot(inputs.at(1).get(), errorSignal, errorSignal1);
-//    auto xx = inputs.at(0).get();
-//    auto yy = errorSignal.Transpose();
-//    fetch::math::Dot(xx, yy,  errorSignal2);
-    fetch::math::DotTranspose(inputs.at(0).get(), errorSignal,  errorSignal2);
+    //    auto xx = inputs.at(0).get();
+    //    auto yy = errorSignal.Transpose();
+    //    fetch::math::Dot(xx, yy,  errorSignal2);
+    fetch::math::DotTranspose(inputs.at(0).get(), errorSignal, errorSignal2);
 
     return {errorSignal1, errorSignal2};
   }

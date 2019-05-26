@@ -129,7 +129,7 @@ public:
     // window_size_ * 2]
     uint64_t dynamic_size = rng_() % window_size_ + 1;
     t.second.Set(0, 0, T(data_[currentSentence_][currentWord_ + dynamic_size]));
-    
+
     for (uint64_t i(0); i < dynamic_size; ++i)
     {
       t.first.Set(i, 0, T(data_[currentSentence_][currentWord_ + i]));
@@ -157,9 +157,9 @@ public:
 
   ReturnType GetNext()
   {
-    fetch::math::Tensor<T> t({window_size_ * 2,1});
-    fetch::math::Tensor<T> label({negative_samples_,1});
-    ReturnType                p(t, label);
+    fetch::math::Tensor<T> t({window_size_ * 2, 1});
+    fetch::math::Tensor<T> label({negative_samples_, 1});
+    ReturnType             p(t, label);
     return GetNext(p);
   }
 

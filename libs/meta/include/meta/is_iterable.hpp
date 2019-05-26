@@ -40,7 +40,8 @@ using IsIterable = typename std::enable_if<
 template <typename T1, typename T2, typename R>
 using IsIterableTwoArg = typename std::enable_if<
     std::is_same<decltype(detail::IsIterableImplementation<T1>(0)), std::true_type>::value &&
-    std::is_same<decltype(detail::IsIterableImplementation<T2>(0)), std::true_type>::value, R>::type;
+        std::is_same<decltype(detail::IsIterableImplementation<T2>(0)), std::true_type>::value,
+    R>::type;
 
 }  // namespace meta
 }  // namespace fetch

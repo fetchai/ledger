@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vectorise/arch/sse/info.hpp"
 #include "vectorise/arch/sse/register_int32.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include <cmath>
 #include <cstddef>
@@ -94,114 +94,134 @@ private:
   mm_register_type data_;
 };
 
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator-(VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/)
+inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator-(
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/)
 {
   throw std::runtime_error("operator not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(  fixed_point::FixedPoint<16, 16>{} );
+  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
 }
 
-
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator*(VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/, VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
+inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator*(
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/,
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
 {
   throw std::runtime_error("operator not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(  fixed_point::FixedPoint<16, 16>{} );
+  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
 }
 
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator-(VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/, VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
+inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator-(
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/,
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
 {
   throw std::runtime_error("operator not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(  fixed_point::FixedPoint<16, 16>{} );
+  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
 }
 
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator/(VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/, VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
+inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator/(
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/,
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
 {
   throw std::runtime_error("operator not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(  fixed_point::FixedPoint<16, 16>{} );
+  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
 }
 
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator+(VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/, VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
+inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator+(
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/,
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
 {
   throw std::runtime_error("operator not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(  fixed_point::FixedPoint<16, 16>{} );
+  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
 }
 
-
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator==(VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/, VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
+inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator==(
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/,
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
 {
   throw std::runtime_error("operator not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(  fixed_point::FixedPoint<16, 16>{} );
+  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
 }
 
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator!=(VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/, VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
+inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator!=(
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/,
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
 {
   throw std::runtime_error("operator not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(  fixed_point::FixedPoint<16, 16>{} );
+  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
 }
 
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator>=(VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/, VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
+inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator>=(
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/,
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
 {
   throw std::runtime_error("operator not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(  fixed_point::FixedPoint<16, 16>{} );
+  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
 }
 
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator>(VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/, VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
+inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator>(
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/,
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
 {
   throw std::runtime_error("operator not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(  fixed_point::FixedPoint<16, 16>{} );
+  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
 }
 
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator<=(VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/, VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
+inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator<=(
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/,
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
 {
   throw std::runtime_error("operator not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(  fixed_point::FixedPoint<16, 16>{} );
+  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
 }
 
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator<(VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/, VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
+inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> operator<(
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/,
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*y*/)
 {
   throw std::runtime_error("operator not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(  fixed_point::FixedPoint<16, 16>{} );
+  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
 }
 
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> vector_zero_below_element(VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const &/*a*/,
-                                                            int const &                       /*n*/)
+inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> vector_zero_below_element(
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*a*/, int const & /*n*/)
 {
   throw std::runtime_error("vector_zero_below_element not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(  fixed_point::FixedPoint<16, 16>{} );
+  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
 }
 
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> vector_zero_above_element(VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const &/*a*/,
-                                                            int const &                       /*n*/)
+inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> vector_zero_above_element(
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*a*/, int const & /*n*/)
 {
   throw std::runtime_error("vector_zero_above_element not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(  fixed_point::FixedPoint<16, 16>{} );
+  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
 }
 
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> shift_elements_left(VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/)
+inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> shift_elements_left(
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/)
 {
   throw std::runtime_error("shift_elements_left not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(  fixed_point::FixedPoint<16, 16>{} );
+  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
 }
 
-inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> shift_elements_right(VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/)
+inline VectorRegister<fixed_point::FixedPoint<16, 16>, 128> shift_elements_right(
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/)
 {
   throw std::runtime_error("shift_elements_right not implemented.");
-  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(  fixed_point::FixedPoint<16, 16>{} );
+  return VectorRegister<fixed_point::FixedPoint<16, 16>, 128>(fixed_point::FixedPoint<16, 16>{});
 }
 
-inline fixed_point::FixedPoint<16, 16> first_element(VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/)
+inline fixed_point::FixedPoint<16, 16> first_element(
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/)
 {
   throw std::runtime_error("first_element not implemented.");
   return fixed_point::FixedPoint<16, 16>{};
 }
 
-inline fixed_point::FixedPoint<16, 16> reduce(VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/)
+inline fixed_point::FixedPoint<16, 16> reduce(
+    VectorRegister<fixed_point::FixedPoint<16, 16>, 128> const & /*x*/)
 {
-  throw std::runtime_error("reduce not implemented."); 
-  return fixed_point::FixedPoint<16, 16>{}; 
+  throw std::runtime_error("reduce not implemented.");
+  return fixed_point::FixedPoint<16, 16>{};
 }
 
-
-
-
-}
-}
+}  // namespace vectorize
+}  // namespace fetch

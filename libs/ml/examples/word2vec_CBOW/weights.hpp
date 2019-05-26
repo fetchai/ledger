@@ -71,7 +71,7 @@ public:
       std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
       ArrayType const &                                           errorSignal)
   {
-    (void)inputs;    
+    (void)inputs;
     assert(inputs.empty());
     gradient_accumulation_->InlineAdd(errorSignal);
     return {};
@@ -166,12 +166,13 @@ private:
   {
     random::LinearCongruentialGenerator rng;
     rng.Seed(42);
-// TODO: Revert this once all is working.
+    // TODO: Revert this once all is working.
     // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
-//    std::normal_distribution<> rng(0, normalising_factor);
-    math::TensorSliceIterator< typename ArrayType::Type, typename ArrayType::ContainerType > it(array);
-//    it.PermuteAxes(0,1);
-    while(it.is_valid())  
+    //    std::normal_distribution<> rng(0, normalising_factor);
+    math::TensorSliceIterator<typename ArrayType::Type, typename ArrayType::ContainerType> it(
+        array);
+    //    it.PermuteAxes(0,1);
+    while (it.is_valid())
     {
       *it = typename ArrayType::Type(rng.AsDouble());
       ++it;

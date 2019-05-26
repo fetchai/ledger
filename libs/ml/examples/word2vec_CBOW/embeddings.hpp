@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "weights.hpp"
 #include "polyfill.hpp"
+#include "weights.hpp"
 #include <set>
 
 namespace fetch {
@@ -29,10 +29,10 @@ template <class T>
 class Embeddings : public fetch::ml::ops::Weights<T>
 {
 public:
-  using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SizeType     = typename ArrayType::SizeType;
+  using ArrayType                         = T;
+  using DataType                          = typename ArrayType::Type;
+  using ArrayPtrType                      = std::shared_ptr<ArrayType>;
+  using SizeType                          = typename ArrayType::SizeType;
   static constexpr char const *DESCRIPTOR = "Embeddings";
 
   Embeddings(SizeType dataPoints, SizeType dimensions)
@@ -56,7 +56,7 @@ public:
     assert(inputs.size() == 1);
     assert(output.shape() == ComputeOutputShape(inputs));
 
-    uint64_t j=0;
+    uint64_t j = 0;
     for (DataType const &i : inputs.front().get())
     {
       auto slice1 = output.View(j);
@@ -91,20 +91,19 @@ public:
 
   virtual void Step(typename T::Type learningRate)
   {
-    using Type = typename T::Type;
-    using VectorRegisterType = typename math::TensorView< Type >::VectorRegisterType;    
-    memory::TrivialRange range(0, std::size_t(this->gradient_accumulation_->height()));  
-    VectorRegisterType rate(learningRate);
+    using Type               = typename T::Type;
+    using VectorRegisterType = typename math::TensorView<Type>::VectorRegisterType;
+    memory::TrivialRange range(0, std::size_t(this->gradient_accumulation_->height()));
+    VectorRegisterType   rate(learningRate);
 
     for (auto const &r : updated_rows_)
     {
       auto input = this->gradient_accumulation_->View(r);
       auto ret   = this->output_->View(r);
 
-      ret.data().in_parallel().Apply(range, [rate](VectorRegisterType const &a, VectorRegisterType &b ){
-        b = b + a * rate; 
-      }, input.data());
-
+      ret.data().in_parallel().Apply(
+          range, [rate](VectorRegisterType const &a, VectorRegisterType &b) { b = b + a * rate; },
+          input.data());
     }
     updated_rows_.clear();
   }

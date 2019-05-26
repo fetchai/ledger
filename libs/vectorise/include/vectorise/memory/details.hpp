@@ -35,7 +35,7 @@ struct MatrixApplyFreeFunction
   struct Unroll
   {
 
-    template< typename F >
+    template <typename F>
     static R Apply(B const *regs, F &&fnc, B &ret, Args &&... args)
     {
       return MatrixApplyFreeFunction<B, R, Args..., B const &>::template Unroll<
@@ -46,7 +46,7 @@ struct MatrixApplyFreeFunction
   template <typename T>
   struct Unroll<T>
   {
-    template< typename F >
+    template <typename F>
     static R Apply(B const *regs, F &&fnc, B &ret, Args &&... args)
     {
       return fnc(std::forward<Args>(args)..., *regs, ret);
@@ -83,7 +83,6 @@ struct MatrixReduceFreeFunction
     }
   };
 };
-
 
 template <typename C, typename B, typename R, typename... Args>
 struct MatrixApplyClassMember
@@ -124,9 +123,7 @@ struct MatrixApplyClassMember
       return (cls.*fnc)(std::forward<Args>(args)..., **regs, ret);
     }
   };
-
 };
-
 
 template <std::size_t N, typename A, typename B>
 struct UnrollNext

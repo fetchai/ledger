@@ -702,8 +702,7 @@ public:
   }
 
   template <typename F, typename... Args>
-  void Apply(TrivialRange const &range, F&& apply,
-             Args &&... args)
+  void Apply(TrivialRange const &range, F &&apply, Args &&... args)
   {
     int SFL = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
 
@@ -737,7 +736,6 @@ public:
           this->pointer()[SFL + i] = value;
         }
       }
-      
     }
 
     for (int i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
@@ -748,12 +746,11 @@ public:
           regs, apply, c);
 
       c.Store(this->pointer() + i);
-      
     }
 
     if (STU != ST)
     {
-      
+
       details::UnrollNext<sizeof...(args), VectorRegisterType, VectorRegisterIteratorType>::Apply(
           regs, iters);
       details::MatrixApplyFreeFunction<VectorRegisterType, void>::template Unroll<Args...>::Apply(
@@ -766,12 +763,11 @@ public:
         c                       = shift_elements_right(c);
         this->pointer()[ST + i] = value;
       }
-      
     }
   }
 
-// TODO: Remove below
-  
+  // TODO: Remove below
+
   template <class C, typename... Args>
   void Apply(C const &cls,
              typename details::MatrixApplyClassMember<C, VectorRegisterType, void>::template Unroll<
@@ -796,7 +792,6 @@ public:
       c.Store(this->pointer() + i);
     }
   }
-
 
   template <class C, typename... Args>
   typename std::enable_if<std::is_same<decltype(&C::operator()),

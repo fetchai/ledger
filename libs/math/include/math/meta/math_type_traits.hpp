@@ -20,8 +20,8 @@
 #include "core/byte_array/byte_array.hpp"
 
 #include "math/tensor_declaration.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include "meta/type_traits.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include <type_traits>
 
@@ -68,7 +68,6 @@ template <typename T, typename R>
 using IfVectorSupportFor = typename std::enable_if<HasVectorSupport<T>::value, R>::type;
 template <typename T, typename R>
 using IfNoVectorSupportFor = typename std::enable_if<!HasVectorSupport<T>::value, R>::type;
-
 
 ////////////////////////////
 /// FIXED POINT CHECKING ///

@@ -122,7 +122,6 @@ public:
       ArrayType const &                                           errorSignal)
   {
     return this->Backward(inputs, errorSignal);
-
   }
 };
 

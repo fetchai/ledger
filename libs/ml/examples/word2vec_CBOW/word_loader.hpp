@@ -17,37 +17,34 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/fnv.hpp"
+#include "math/tensor.hpp"
 
-#include <vector>
-#include <unordered_map>
 #include <set>
-namespace fetch
-{
-namespace ml
-{
+#include <unordered_map>
+#include <vector>
+namespace fetch {
+namespace ml {
 
-template< typename T >
+template <typename T>
 class WordLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
 public:
-  using ConstByteArray  = fetch::byte_array::ConstByteArray;
-  using ByteArray       = fetch::byte_array::ByteArray;  
-  using Tensor          = fetch::math::Tensor<T>;
+  using ConstByteArray = fetch::byte_array::ConstByteArray;
+  using ByteArray      = fetch::byte_array::ByteArray;
+  using Tensor         = fetch::math::Tensor<T>;
 
   void Load(std::string filename)
   {
     std::ifstream t(filename);
 
-    if(!t)
+    if (!t)
     {
-      throw std::runtime_error("could not open " + filename );
+      throw std::runtime_error("could not open " + filename);
     }
 
-    std::string temp((std::istreambuf_iterator<char>(t)),
-                 std::istreambuf_iterator<char>());
+    std::string temp((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
     raw_corpus_ = temp;
     corpus_.reserve(1000000);
     frequencies_.reserve(100000);
@@ -70,7 +67,6 @@ public:
     current_position_ = 0;
   }
 
-
   bool IsDone() const override
   {
     return current_position_ == corpus_.size();
@@ -80,7 +76,7 @@ public:
   {
     return word_to_index_.size();
   }
-  
+
   std::pair<Tensor, Tensor> GetNext() override
   {
     std::pair<Tensor, Tensor> ret;
@@ -92,7 +88,7 @@ public:
     // Center word goes first
     auto center_word = corpus_[current_position_ + dynamic_size];
     ret.second.Set(0, 0, static_cast<T>(center_word));
-    
+
     // Context in the following words
     uint64_t s = current_position_, t = current_position_ + dynamic_size + 1;
     for (uint64_t i = 0; i < dynamic_size; ++i)
@@ -108,7 +104,7 @@ public:
     }
 
     // Creating negatice sample
-    for (uint64_t i=1; i < negative_samples_; ++i)
+    for (uint64_t i = 1; i < negative_samples_; ++i)
     {
       ret.second(i, 0) = static_cast<T>(SampleNegative(center_word));
     }
@@ -124,15 +120,15 @@ public:
   }
 
   void RemoveInfrequent(uint64_t min)
-  {  
+  {
     // Removing infrequent words
-    uint64_t N = corpus_.size();
-    uint64_t j = 0, i = 0;
-    std::vector< uint64_t > removed_words;
-    for( ; i < N; ++i)
+    uint64_t              N = corpus_.size();
+    uint64_t              j = 0, i = 0;
+    std::vector<uint64_t> removed_words;
+    for (; i < N; ++i)
     {
       auto word = corpus_[i];
-      if(frequencies_[word] > min)
+      if (frequencies_[word] > min)
       {
         ++j;
       }
@@ -170,10 +166,10 @@ public:
       total += std::pow(e, 0.75);
     }
 
-    uint64_t i = 0;
-    double      n = pow(frequencies_[i], 0.75) / total;
-    double rec = 1.0 / static_cast<double>(samples);
-    for (uint64_t j=0; j < samples; ++j)
+    uint64_t i   = 0;
+    double   n   = pow(frequencies_[i], 0.75) / total;
+    double   rec = 1.0 / static_cast<double>(samples);
+    for (uint64_t j = 0; j < samples; ++j)
     {
       word_distribution_[j] = i;
       if (j * rec > n)
@@ -188,7 +184,7 @@ public:
 
   uint64_t Sample()
   {
-    return word_distribution_[(rng_()>>19) % word_distribution_.size()];
+    return word_distribution_[(rng_() >> 19) % word_distribution_.size()];
   }
 
   uint64_t SampleNegative(uint64_t positiveIndex)
@@ -200,16 +196,16 @@ public:
     }
     return sample;
   }
-private:
 
+private:
   void Tokenise()
   {
     uint64_t last_space = 0;
-    uint64_t pos = 1;
+    uint64_t pos        = 1;
 
-    while(pos < raw_corpus_.size())
-    {      
-      if(raw_corpus_[pos] == ' ')
+    while (pos < raw_corpus_.size())
+    {
+      if (raw_corpus_[pos] == ' ')
       {
         InsertWord(last_space, pos);
         last_space = pos + 1;
@@ -218,7 +214,7 @@ private:
       ++pos;
     }
 
-    if(pos > last_space)
+    if (pos > last_space)
     {
       InsertWord(last_space, pos);
     }
@@ -229,7 +225,7 @@ private:
     auto word = raw_corpus_.SubArray(last_space, pos - last_space);
 
     auto it = word_to_index_.find(word);
-    if(it == word_to_index_.end())
+    if (it == word_to_index_.end())
     {
       corpus_.emplace_back(frequencies_.size());
       word_to_index_.insert({word, frequencies_.size()});
@@ -238,25 +234,25 @@ private:
     }
     else
     {
-      corpus_.emplace_back(it->second);      
-      ++frequencies_[ it->second ];
+      corpus_.emplace_back(it->second);
+      ++frequencies_[it->second];
     }
   }
 
   ByteArray raw_corpus_;
 
-  std::vector< uint64_t > corpus_;
-  std::vector< uint64_t > frequencies_;
-  std::vector< uint64_t > word_distribution_;
+  std::vector<uint64_t> corpus_;
+  std::vector<uint64_t> frequencies_;
+  std::vector<uint64_t> word_distribution_;
 
-  std::unordered_map< ConstByteArray, uint64_t > word_to_index_;
-  std::unordered_map< uint64_t, ConstByteArray > index_to_word_;  
-  fetch::random::LinearCongruentialGenerator rng_;
+  std::unordered_map<ConstByteArray, uint64_t> word_to_index_;
+  std::unordered_map<uint64_t, ConstByteArray> index_to_word_;
+  fetch::random::LinearCongruentialGenerator   rng_;
 
   uint64_t current_position_{0};
   uint64_t window_size_{8};
-  uint64_t negative_samples_{8};  
+  uint64_t negative_samples_{8};
 };
 
-}
-}
+}  // namespace ml
+}  // namespace fetch
