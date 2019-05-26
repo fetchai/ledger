@@ -59,8 +59,8 @@ protected:
   void CreateContract(std::string const &source)
   {
     // generate the smart contract instance for this contract
-    auto contract = std::make_shared<SmartContract>(source);
-    contract_     = contract;
+    auto contract     = std::make_shared<SmartContract>(source);
+    contract_         = contract;
     contract_address_ = std::make_unique<Address>(contract->contract_digest());
     // populate the contract name too
     contract_name_ = std::make_shared<Identifier>(contract_address_->address().ToHex() + "." +
@@ -420,15 +420,15 @@ TEST_F(SmartContractTests, CheckPersistentMapSetAndQuery)
   ASSERT_EQ(2, query_handlers.size());
 
   // define expected values
-  auto const expected_key1      = contract_name_->full_name() + ".state.value.foo";
-  auto const expected_key2      = contract_name_->full_name() + ".state.value.bar";
-  auto const expected_resource1 = ResourceAddress{expected_key1};
-  auto const expected_resource2 = ResourceAddress{expected_key2};
-  auto const expected_value1    = RawBytes<int32_t>(20);
-  auto const expected_value2    = RawBytes<int32_t>(30);
+  auto const       expected_key1      = contract_name_->full_name() + ".state.value.foo";
+  auto const       expected_key2      = contract_name_->full_name() + ".state.value.bar";
+  auto const       expected_resource1 = ResourceAddress{expected_key1};
+  auto const       expected_resource2 = ResourceAddress{expected_key2};
+  auto const       expected_value1    = RawBytes<int32_t>(20);
+  auto const       expected_value2    = RawBytes<int32_t>(30);
   fetch::BitVector mask{1ull << 4};
-  auto const lane1 = expected_resource1.lane(mask.log2_size());
-  auto const lane2 = expected_resource2.lane(mask.log2_size());
+  auto const       lane1 = expected_resource1.lane(mask.log2_size());
+  auto const       lane2 = expected_resource2.lane(mask.log2_size());
   mask.flip(lane1);
   mask.flip(lane2);
   shards(mask);
@@ -450,8 +450,7 @@ TEST_F(SmartContractTests, CheckPersistentMapSetAndQuery)
       .WillOnce(Return(fetch::storage::Document{expected_value2}));
 
   // send the smart contract an "increment" action
-  EXPECT_EQ(SmartContract::Status::OK,
-            SendSmartAction("test_persistent_map"));
+  EXPECT_EQ(SmartContract::Status::OK, SendSmartAction("test_persistent_map"));
 
   VerifyQuery("query_foo", int32_t{20});
   VerifyQuery("query_bar", int32_t{30});
@@ -497,10 +496,10 @@ TEST_F(SmartContractTests, CheckPersistentMapSetWithAddressAsName)
   // define expected values
   auto const expected_key1 =
       contract_name_->full_name() + ".state." + address_as_name.display() + ".foo";
-  auto const expected_resource1 = ResourceAddress{expected_key1};
-  auto const expected_value1    = RawBytes<int32_t>(20);
+  auto const       expected_resource1 = ResourceAddress{expected_key1};
+  auto const       expected_value1    = RawBytes<int32_t>(20);
   fetch::BitVector mask{1ull << 4};
-  auto const lane1 = expected_resource1.lane(mask.log2_size());
+  auto const       lane1 = expected_resource1.lane(mask.log2_size());
   mask.flip(lane1);
   shards(mask);
 
