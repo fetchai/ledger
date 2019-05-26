@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "core/random/lfg.hpp"
-#include <core/byte_array/byte_array.hpp>
-#include <core/byte_array/encoders.hpp>
-#include <crypto/hash.hpp>
+#include "crypto/hash.hpp"
+#include "storage/file_object.hpp"
+
 #include <gtest/gtest.h>
-#include <iostream>
-#include <storage/file_object.hpp>
 
 #include <vector>
 

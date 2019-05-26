@@ -22,6 +22,7 @@
 #include "vectorise/platform.hpp"
 #include "vectorise/vectorise.hpp"
 
+#include <iostream>
 #include <type_traits>
 
 namespace fetch {

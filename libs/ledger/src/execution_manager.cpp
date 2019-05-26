@@ -34,8 +34,6 @@
 #include <thread>
 #include <vector>
 
-#include <iostream>
-
 static constexpr char const *LOGGING_NAME              = "ExecutionManager";
 static constexpr std::size_t MAX_STARTUP_ITERATIONS    = 20;
 static constexpr std::size_t STARTUP_ITERATION_TIME_MS = 100;
@@ -268,13 +266,13 @@ void ExecutionManager::Stop()
   thread_pool_->Stop();
 }
 
-void ExecutionManager::SetLastProcessedBlock(v2::Digest hash)
+void ExecutionManager::SetLastProcessedBlock(Digest hash)
 {
   // TODO(issue 33): thread safety
   last_block_hash_ = hash;
 }
 
-v2::Digest ExecutionManager::LastProcessedBlock()
+Digest ExecutionManager::LastProcessedBlock()
 {
   // TODO(issue 33): thread safety
   return last_block_hash_;
@@ -312,7 +310,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
   std::size_t current_slice        = 0;
   uint64_t    aggregate_block_fees = 0;
 
-  v2::Digest current_block;
+  Digest current_block;
 
   while (running_)
   {

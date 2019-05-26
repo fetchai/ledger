@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include <condition_variable>
-#include <iostream>
 #include <list>
 #include <string>
 
@@ -41,11 +40,9 @@ public:
   bool            operator==(const WorkItemsQueue &rhs) const = delete;
   bool            operator<(const WorkItemsQueue &rhs) const  = delete;
 
-  explicit WorkItemsQueue()
-  {}
+  WorkItemsQueue() = default;
 
-  virtual ~WorkItemsQueue()
-  {}
+  virtual ~WorkItemsQueue() = default;
 
   void Add(const TYPE &item)
   {

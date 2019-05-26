@@ -28,10 +28,10 @@
 #include <cassert>
 #include <fstream>
 #include <functional>
-#include <storage/fetch_mmap.hpp>
 #include <string>
 
 #include "core/assert.hpp"
+#include "storage/fetch_mmap.hpp"
 #include "storage/storage_exception.hpp"
 
 namespace fetch {

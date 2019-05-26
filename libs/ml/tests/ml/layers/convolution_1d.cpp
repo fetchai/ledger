@@ -102,8 +102,9 @@ TYPED_TEST(Convolution1DTest, ops_forward_test)  // Use the class as an Ops
   // Evaluate
   fetch::ml::layers::Convolution1D<TypeParam> conv(output_channels, input_channels, kernel_height,
                                                    stride_size);
-  ArrayType output = conv.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({input}));
+
+  ArrayType output(conv.ComputeOutputShape({input}));
+  conv.Forward({input}, output);
 
   // test correct values
   ASSERT_EQ(output.shape().size(), 2);
@@ -159,8 +160,10 @@ TYPED_TEST(Convolution1DTest, ops_backward_test)  // Use the class as an Ops
   // Evaluate
   fetch::ml::layers::Convolution1D<TypeParam> conv(output_channels, input_channels, kernel_height,
                                                    stride_size);
-  TypeParam output = conv.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({input}));
+
+  ArrayType output(conv.ComputeOutputShape({input}));
+  conv.Forward({input}, output);
+
   std::vector<TypeParam> backprop_error = conv.Backward({input}, error_signal);
 
   // test correct values

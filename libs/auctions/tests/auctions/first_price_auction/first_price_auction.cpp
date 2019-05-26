@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-#include <iomanip>
-#include <iostream>
+#include "auctions/first_price_auction.hpp"
 
-#include <auctions/first_price_auction.hpp>
+#include <gtest/gtest.h>
+
+#include <cstddef>
+#include <vector>
 
 using namespace fetch::auctions;
 

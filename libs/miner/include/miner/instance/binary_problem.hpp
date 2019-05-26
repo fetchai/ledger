@@ -18,9 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include <memory/shared_array.hpp>
+#include "memory/shared_array.hpp"
+
 #include <unordered_set>
 #include <vector>
+
 namespace fetch {
 namespace optimisers {
 class BinaryProblem

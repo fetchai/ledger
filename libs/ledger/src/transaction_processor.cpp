@@ -19,8 +19,8 @@
 #include "ledger/transaction_processor.hpp"
 #include "core/threading.hpp"
 #include "ledger/block_packer_interface.hpp"
-#include "ledger/chain/v2/transaction.hpp"
-#include "ledger/chain/v2/transaction_layout.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "ledger/chain/transaction_layout.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_status_cache.hpp"
 #include "metrics/metrics.hpp"
@@ -83,7 +83,7 @@ void TransactionProcessor::ThreadEntryPoint()
 {
   SetThreadName("TxProc");
 
-  std::vector<v2::TransactionLayout> new_txs;
+  std::vector<TransactionLayout> new_txs;
   while (running_)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));

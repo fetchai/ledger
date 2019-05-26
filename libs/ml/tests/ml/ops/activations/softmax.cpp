@@ -42,8 +42,8 @@ TYPED_TEST(SoftmaxTest, forward_test)
       "2.6456e-07");
 
   fetch::ml::ops::Softmax<ArrayType> op;
-  ArrayType                          prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
+  ArrayType                          prediction(op.ComputeOutputShape({data}));
+  op.Forward({data}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -70,8 +70,8 @@ TYPED_TEST(SoftmaxTest, forward_2d_tensor_axis_0_test)
   }
 
   fetch::ml::ops::Softmax<ArrayType> op{0};
-  ArrayType                          prediction = op.fetch::ml::template Ops<ArrayType>::Forward(
-      std::vector<std::reference_wrapper<ArrayType const>>({data}));
+  ArrayType                          prediction(op.ComputeOutputShape({data}));
+  op.Forward({data}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-4), static_cast<DataType>(1e-4)));

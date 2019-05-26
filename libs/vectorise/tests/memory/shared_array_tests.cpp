@@ -16,10 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#define FETCH_TESTING_ENABLED
-
 #include "core/random/lcg.hpp"
-#include "iostream"
 #include "vectorise/memory/shared_array.hpp"
 
 #include <gtest/gtest.h>
@@ -30,13 +27,8 @@ using array_type = SharedArray<data_type>;
 
 class TestClass : public ::testing::TestWithParam<int>
 {
-protected:
-  void SetUp() override
-  {}
-
-  void TearDown() override
-  {}
 };
+
 TEST_P(TestClass, basic_Test)
 {
   static fetch::random::LinearCongruentialGenerator lcg1, lcg2;

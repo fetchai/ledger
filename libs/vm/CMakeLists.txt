@@ -20,4 +20,3 @@ target_link_libraries(fetch-vm PUBLIC fetch-math fetch-core fetch-ledger)
 #add_test_target()
 
 add_subdirectory(examples)
-

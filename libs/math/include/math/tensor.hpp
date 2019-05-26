@@ -40,7 +40,6 @@
 #include "math/tensor_slice_iterator.hpp"
 #include "math/tensor_view.hpp"
 
-#include <iostream>
 #include <memory>
 #include <numeric>
 #include <random>

@@ -145,7 +145,7 @@ def run_basic_checks()
           sh './scripts/check_license_header.py'
         }
         stage('Style Check') {
-          sh './scripts/apply_style.py -w -a'
+          sh './scripts/apply_style.py -ad'
         }
         stage('CMake Version Check') {
           sh './scripts/check-cmake-versions.py'

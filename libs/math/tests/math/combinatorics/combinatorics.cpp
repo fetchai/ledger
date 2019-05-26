@@ -17,11 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
-#include <iomanip>
-#include <iostream>
 
 #include "math/combinatorics.hpp"
-#include <math/tensor.hpp>
+#include "math/tensor.hpp"
 
 using namespace fetch::math::combinatorics;
 

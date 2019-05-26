@@ -31,41 +31,38 @@ template <class T>
 class LeakyReluOp : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType     = T;
+  using DataType      = typename ArrayType::Type;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
   LeakyReluOp()          = default;
   virtual ~LeakyReluOp() = default;
 
   // LeakyRelu(x,alpha)=max(0,x)+alpha*min(0,x)
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     ASSERT(inputs.size() == 2);
     ASSERT(inputs.at(0).get().shape() == output.shape());
     ASSERT(inputs.at(1).get().size() == output.size());
 
     fetch::math::LeakyRelu(inputs.at(0).get(), inputs.at(1).get(), output);
-
-    return output;
   }
 
   // Gradient of input.at(0)=x is:
   //    x>=0 f'(x)=1, x<0 f'(x)=alpha
   // Gradient of input.at(1)=alpha is:
   //    f'(alpha)=-Relu(-x)=min(0,x); x>=0 f'(alpha)=0, x<0 f'(alpha)=x
-  virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-      ArrayType const &                                           errorSignal)
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
   {
     ASSERT(inputs.size() == 2);
-    ASSERT(inputs.at(0).get().size() == errorSignal.size());
-    ASSERT(inputs.at(1).get().size() == errorSignal.size());
-    ASSERT(errorSignal.size() == inputs.at(1).get().size());
+    ASSERT(inputs.at(0).get().size() == error_signal.size());
+    ASSERT(inputs.at(1).get().size() == error_signal.size());
+    ASSERT(error_signal.size() == inputs.at(1).get().size());
 
-    ArrayType return_signal1{errorSignal.shape()};
-    ArrayType return_signal2{errorSignal.shape()};
+    ArrayType return_signal1{error_signal.shape()};
+    ArrayType return_signal2{error_signal.shape()};
 
     auto     rs1_it    = return_signal1.begin();
     auto     rs2_it    = return_signal2.begin();
@@ -92,9 +89,9 @@ public:
       ++input2_it;
     }
 
-    // multiply by errorSignal (chain rule)
-    fetch::math::Multiply(errorSignal, return_signal1, return_signal1);
-    fetch::math::Multiply(errorSignal, return_signal2, return_signal2);
+    // multiply by error_signal (chain rule)
+    fetch::math::Multiply(error_signal, return_signal1, return_signal1);
+    fetch::math::Multiply(error_signal, return_signal2, return_signal2);
 
     return {return_signal1, return_signal2};
   }

@@ -39,8 +39,8 @@ TYPED_TEST(ConcatenateTest, forward_test)
 
   fetch::ml::ops::Concatenate<TypeParam> op{1};
 
-  TypeParam prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({data1, data2}));
+  TypeParam prediction(op.ComputeOutputShape({data1, data2}));
+  op.Forward({data1, data2}, prediction);
 
   // test correct shape
   ASSERT_EQ(prediction.shape(), std::vector<typename TypeParam::SizeType>({8, 16}));
@@ -53,8 +53,8 @@ TYPED_TEST(ConcatenateTest, backward_test)
 
   fetch::ml::ops::Concatenate<TypeParam> op{1};
 
-  TypeParam prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({data1, data2}));
+  TypeParam prediction(op.ComputeOutputShape({data1, data2}));
+  op.Forward({data1, data2}, prediction);
 
   TypeParam              error_signal(prediction.shape());
   std::vector<TypeParam> gradients = op.Backward({data1, data2}, error_signal);

@@ -17,11 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
-#include <iomanip>
 #include <iostream>
 
+#include "auctions/combinatorial_auction.hpp"
 #include "math/tensor.hpp"
-#include <auctions/combinatorial_auction.hpp>
 
 using namespace fetch::auctions;
 

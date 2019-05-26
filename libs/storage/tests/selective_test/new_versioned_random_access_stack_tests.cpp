@@ -26,8 +26,6 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <iostream>
-#include <stack>
 #include <string>
 #include <vector>
 
