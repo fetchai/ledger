@@ -89,7 +89,7 @@ struct Array : public IArray
       return {};
     }
 
-    auto element = GetIndexedValue(AnyInteger(elements.size() - 1u, TypeIds::UInt64))
+    auto element = GetIndexedValue(AnyInteger(elements.size() - 1u, TypeIds::Int32))
                        .template Move<TemplateParameter>();
 
     elements.pop_back();
@@ -129,7 +129,7 @@ struct Array : public IArray
     }
 
     TemplateParameter element =
-        GetIndexedValue(AnyInteger(0u, TypeIds::UInt64)).template Move<TemplateParameter>();
+        GetIndexedValue(AnyInteger(0u, TypeIds::Int32)).template Move<TemplateParameter>();
 
     // Shift remaining elements to the right
     for (std::size_t i = 1u; i < elements.size(); ++i)
