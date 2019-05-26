@@ -98,8 +98,8 @@ def create_build(Platform platform, Configuration config)
                 sh "./scripts/ci-tool.py -T ${config.label}"
               }
 
-              SLOW_stage("Integration Tests ${suffix}") {
-                sh "./scripts/ci-tool.py -I ${config.label}"
+              SLOW_stage("Slow Tests ${suffix}") {
+                sh "./scripts/ci-tool.py -S ${config.label}"
               }
 
               SLOW_stage("End-to-End Tests ${suffix}") {

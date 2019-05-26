@@ -125,12 +125,8 @@ function (add_fetch_test
     # define the label for the test
     if ("SLOW" IN_LIST ARGV)
       set(test_label "Slow")
-      fetch_warning("Slow Test: ${name}")
     elseif ("INTEGRATION" IN_LIST ARGV)
       set(test_label "Integration")
-      fetch_warning("Integration Test: ${name}")
-    else ()
-      set(test_label "Normal")
     endif ()
 
     # detect if the "DISABLED" flag has been passed to this test
@@ -165,7 +161,9 @@ function (add_fetch_test
       # define the test
       add_test(${name} ${name} ${ARGV})
       set_tests_properties(${name} PROPERTIES TIMEOUT 300)
-      set_tests_properties(${name} PROPERTIES LABELS "${test_label}")
+      if(test_label)
+        set_tests_properties(${name} PROPERTIES LABELS "${test_label}")
+      endif()
 
     endif ()
 
