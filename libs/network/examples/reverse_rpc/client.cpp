@@ -26,8 +26,6 @@
 #include "network/muddle/rpc/server.hpp"
 #include "service_ids.hpp"
 
-#include <iostream>
-
 using fetch::muddle::Muddle;
 using fetch::muddle::rpc::Server;
 using fetch::muddle::rpc::Client;

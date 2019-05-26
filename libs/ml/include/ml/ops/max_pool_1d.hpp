@@ -27,10 +27,11 @@ template <class T>
 class MaxPool1D : public BatchOps<T>
 {
 public:
-  using ArrayType    = T;
-  using SizeType     = typename ArrayType::SizeType;
-  using DataType     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType     = T;
+  using SizeType      = typename ArrayType::SizeType;
+  using DataType      = typename ArrayType::Type;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using VecTensorType = typename BatchOps<T>::VecTensorType;
 
   MaxPool1D(SizeType const kernel_size, SizeType const stride_size)
     : kernel_size_{kernel_size}
@@ -47,8 +48,7 @@ public:
    * @param output tensor of size [input_channels=output_channels x number_of_stride_sized_steps]
    * @return: output tensor parameter
    */
-  ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                    ArrayType &                                                 output) override
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     ASSERT(inputs.size() == 1);
     // Input should be a 2D tensor [C x W]
@@ -82,7 +82,6 @@ public:
         ++oit;
       }
     }
-    return output;
   }
 
   /**
@@ -96,9 +95,8 @@ public:
    * @return: output vector of tensors with back propagated error signal
    * output[0]=input_error[inputs[0].shape]
    */
-  std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<const ArrayType>> const &inputs,
-      ArrayType const &                                           error_signal) override
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     ASSERT(inputs.size() == 1);
     ASSERT(error_signal.shape() == ComputeOutputShape(inputs));
@@ -140,8 +138,7 @@ public:
     return {return_signal};
   }
 
-  std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const override
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     std::vector<SizeType> output_shape;
 

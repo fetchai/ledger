@@ -19,7 +19,6 @@
 #include "vectorise/memory/shared_array.hpp"
 #include <benchmark/benchmark.h>
 #include <cmath>
-#include <iostream>
 
 using namespace fetch::memory;
 

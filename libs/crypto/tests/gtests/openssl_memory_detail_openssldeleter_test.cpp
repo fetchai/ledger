@@ -22,7 +22,6 @@
 #include <memory>
 
 #include "gmock/gmock.h"
-#include "gtest/gtest.h"
 
 namespace fetch {
 namespace crypto {

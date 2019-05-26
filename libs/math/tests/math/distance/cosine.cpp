@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
-#include <iostream>
 
 #include "math/base_types.hpp"
 #include "math/distance/cosine.hpp"

@@ -19,7 +19,6 @@
 
 #include <condition_variable>
 #include <functional>
-#include <iostream>
 #include <list>
 #include <memory>
 #include <queue>

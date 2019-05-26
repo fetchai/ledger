@@ -20,7 +20,6 @@
 #include "core/byte_array/encoders.hpp"
 #include "storage/file_object.hpp"
 #include "storage/key_value_index.hpp"
-#include <iostream>
 #include <map>
 
 #include <gtest/gtest.h>

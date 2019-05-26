@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
-#include <iostream>
 
 #include "math/normalize_array.hpp"
 #include "math/tensor.hpp"

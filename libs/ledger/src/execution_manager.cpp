@@ -34,8 +34,6 @@
 #include <thread>
 #include <vector>
 
-#include <iostream>
-
 static constexpr char const *LOGGING_NAME              = "ExecutionManager";
 static constexpr std::size_t MAX_STARTUP_ITERATIONS    = 20;
 static constexpr std::size_t STARTUP_ITERATION_TIME_MS = 100;

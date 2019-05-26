@@ -19,7 +19,6 @@
 
 #include "core/logger.hpp"
 #include <cstdint>
-#include <iostream>
 #include <string>
 
 namespace fetch {

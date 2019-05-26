@@ -20,7 +20,6 @@
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include <gtest/gtest.h>
-#include <iostream>
 #include <list>
 
 using fetch::ledger::consensus::DummyMiner;

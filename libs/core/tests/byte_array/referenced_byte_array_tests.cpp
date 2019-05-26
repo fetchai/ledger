@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
-
 #include "core/byte_array/byte_array.hpp"
 using namespace fetch::byte_array;
 
