@@ -154,6 +154,13 @@ Module::Module()
   CreateFreeFunction("toFloat32", &toFloat32);
   CreateFreeFunction("toFloat64", &toFloat64);
 
+  auto istring = GetClassInterface<String>();
+  istring.CreateMemberFunction("length", &String::Length);
+  istring.CreateMemberFunction("trim", &String::Trim);
+  istring.CreateMemberFunction<int32_t, Ptr<String> const &>("find", &String::Find);
+  istring.CreateMemberFunction<Ptr<String>, int32_t, int32_t>("substr", &String::Substring);
+  istring.CreateMemberFunction("reverse", &String::Reverse);
+
   auto imatrix = GetClassInterface<IMatrix>();
   imatrix.CreateConstuctor<int32_t, int32_t>();
   imatrix.EnableIndexOperator<AnyInteger, AnyInteger, TemplateParameter>();
