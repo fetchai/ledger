@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor_declaration.hpp"
+#include "math/base_types.hpp"
 #include "vectorise/memory/shared_array.hpp"
 #include "vectorise/platform.hpp"
 

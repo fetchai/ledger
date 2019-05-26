@@ -122,3 +122,34 @@ TYPED_TEST(TensorViewTests, size_test)
     }
   }
 }
+
+
+TYPED_TEST(TensorViewTests, data_layout)
+{
+  TypeParam         from   = static_cast<TypeParam>(2);
+  TypeParam         to     = static_cast<TypeParam>(50);
+  TypeParam         step   = static_cast<TypeParam>(1);
+  Tensor<TypeParam> tensor = Tensor<TypeParam>::Arange(from, to, step);
+  tensor.Reshape({3, 16});
+
+  TypeParam value = from;
+
+  for(uint64_t j=0; j < 16;++j)
+  {
+    auto view = tensor.View(j);
+
+    uint64_t i = 0;
+    for(auto &x: view.data())  
+    {
+      EXPECT_EQ(x, value);
+      value += step;
+
+      ++i;    
+      if(i == 3)
+      {
+        break;
+      }
+    }
+  }
+  
+}

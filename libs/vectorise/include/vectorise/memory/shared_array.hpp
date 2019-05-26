@@ -70,6 +70,11 @@ public:
     , data_(other.data_)
   {}
 
+  SharedArray(SharedArray const &other, uint64_t offset,uint64_t size)
+    : super_type(other.data_.get() + offset, std::move(size))
+    , data_(other.data_)
+  {}  
+
   SharedArray(SharedArray &&other)
   {
     std::swap(this->size_, other.size_);

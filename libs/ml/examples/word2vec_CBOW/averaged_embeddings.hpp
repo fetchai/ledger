@@ -120,6 +120,25 @@ public:
 
   virtual void Step(typename T::Type learningRate)
   {
+    /*
+    using Type = typename T::Type;
+    using VectorRegisterType = typename math::TensorView< Type >::VectorRegisterType;    
+    memory::TrivialRange range(0, std::size_t(this->gradient_accumulation_->height()));
+    // TODO: This is slower than original code - investigate
+    for (auto const &r : updated_rows_)
+    {
+      auto input = this->gradient_accumulation_->View(r);
+      auto ret   = this->output_->View(r);
+
+      VectorRegisterType rate(learningRate);
+
+      ret.data().in_parallel().Apply(range, [rate](VectorRegisterType const &a, VectorRegisterType &b ){
+        b = b + a * rate; 
+      }, input.data());
+
+    }
+    updated_rows_.clear();
+    */
 
     for (auto const &r : updated_rows_)
     {
@@ -137,6 +156,7 @@ public:
     }
 
     updated_rows_.clear();
+
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(

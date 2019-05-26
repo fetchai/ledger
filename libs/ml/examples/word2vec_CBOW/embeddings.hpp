@@ -91,20 +91,20 @@ public:
 
   virtual void Step(typename T::Type learningRate)
   {
+    using Type = typename T::Type;
+    using VectorRegisterType = typename math::TensorView< Type >::VectorRegisterType;    
+    memory::TrivialRange range(0, std::size_t(this->gradient_accumulation_->height()));  
+    VectorRegisterType rate(learningRate);
+
     for (auto const &r : updated_rows_)
     {
-      auto gradientAccumulationSlice = this->gradient_accumulation_->View(r);
-      auto outputSlice               = this->output_->View(r);
-      auto it1                       = gradientAccumulationSlice.begin();
+      auto input = this->gradient_accumulation_->View(r);
+      auto ret   = this->output_->View(r);
 
-      auto it2                       = outputSlice.begin();
-      while (it1.is_valid())
-      {
-        *it2 += (*it1 * learningRate);
-        *it1 = 0;
-        ++it1;
-        ++it2;
-      }
+      ret.data().in_parallel().Apply(range, [rate](VectorRegisterType const &a, VectorRegisterType &b ){
+        b = b + a * rate; 
+      }, input.data());
+
     }
     updated_rows_.clear();
   }

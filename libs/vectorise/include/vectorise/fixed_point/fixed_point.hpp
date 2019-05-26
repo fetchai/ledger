@@ -25,6 +25,8 @@
 #include <cassert>
 #include <limits>
 #include <sstream>
+#include <iostream>
+#include <iomanip>
 
 namespace fetch {
 namespace fixed_point {

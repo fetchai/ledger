@@ -1,3 +1,21 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include <math.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -20,7 +38,6 @@
 #include "averaged_embeddings.hpp"
 #include "embeddings.hpp"
 #include "graph.hpp"
-#include "inplace_transpose.hpp"
 #include "matrix_multiply.hpp"
 #include "placeholder.hpp"
 using namespace std::chrono;
@@ -38,6 +55,7 @@ int window    = 5; // 5
 int min_count = 5;
 
 double time_forward = 0;
+double time_exp = 0;
 double time_backward = 0;
 double time_step = 0;
 
@@ -95,7 +113,6 @@ void InitNet()
   graph.AddNode<PlaceHolder<fetch::math::Tensor<FloatType>>>("Target", {});
   graph.AddNode<Embeddings<fetch::math::Tensor<FloatType>>>("Weights", {"Target"},
                                                            layer1_size, global_loader.VocabSize());
-//  graph.AddNode<InplaceTranspose<fetch::math::Tensor<FloatType>>>("WeightsTranspose", {"Weights"});
   graph.AddNode<MatrixMultiply<fetch::math::Tensor<FloatType>>>("DotProduct",
                                                                {"Words", "Weights"});
 }
@@ -114,7 +131,7 @@ void TrainModel()
     if (i % 10000 == 0)
     {
       PrintStats(i, iterations);
-      std::cout << "Times: " << time_forward << " " << time_backward << " " << time_step << std::endl;
+      std::cout << "Times: " << time_forward << " " << time_exp << " " << time_backward << " " << time_step << std::endl;
     }
 
     if (global_loader.IsDone())
@@ -130,6 +147,7 @@ void TrainModel()
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
     auto graphF = graph.Evaluate("DotProduct");
 
+    high_resolution_clock::time_point t1b = high_resolution_clock::now();
     for (int d = 0; d < negative; d++)
     {
       float f     = graphF(d, 0);
@@ -157,11 +175,13 @@ void TrainModel()
     graph.Step(alpha);
     high_resolution_clock::time_point t4 = high_resolution_clock::now();
 
-    duration<double> time_span1 = duration_cast<duration<double>>(t2 - t1);
+    duration<double> time_span1 = duration_cast<duration<double>>(t1b - t1);
+    duration<double> time_span1b = duration_cast<duration<double>>(t2 - t1b);
     duration<double> time_span2 = duration_cast<duration<double>>(t3 - t2);    
     duration<double> time_span3 = duration_cast<duration<double>>(t4 - t3); 
 
     time_forward  += time_span1.count();
+    time_exp  += time_span1b.count();    
     time_backward += time_span2.count();
     time_step += time_span3.count();    
   }

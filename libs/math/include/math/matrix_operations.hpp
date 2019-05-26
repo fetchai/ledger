@@ -27,15 +27,13 @@
 #include "math/linalg/blas/gemm_nt_vector.hpp"
 #include "math/linalg/blas/gemm_tn_novector.hpp"
 #include "math/linalg/blas/gemm_tn_vector.hpp"
-#include "math/tensor_declaration.hpp"
 
 #include "math/linalg/prototype.hpp"
 
 #include "math/base_types.hpp"
 #include "math/comparison.hpp"
 #include "math/fundamental_operators.hpp"  // add, subtract etc.
-#include "math/math_vector_support.hpp"
-#include "math/tensor_declaration.hpp"
+#include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
 namespace math {
@@ -771,7 +769,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Dot(ArrayType const &A, ArrayT
 
   enum
   {
-    OPTIMISATION_FLAGS = HasVectorSupport<Type>::value ? platform::Parallelisation::VECTORISE
+    OPTIMISATION_FLAGS = meta::HasVectorSupport<Type>::value ? platform::Parallelisation::VECTORISE
                                                        : platform::Parallelisation::NOT_PARALLEL
   };
 
@@ -818,7 +816,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DotTranspose(ArrayType const &
 
   enum
   {
-    OPTIMISATION_FLAGS = HasVectorSupport<Type>::value ? platform::Parallelisation::VECTORISE
+    OPTIMISATION_FLAGS = meta::HasVectorSupport<Type>::value ? platform::Parallelisation::VECTORISE
                                                        : platform::Parallelisation::NOT_PARALLEL
   };
 
@@ -866,7 +864,7 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> TransposeDot(ArrayType const &
 
   enum
   {
-    OPTIMISATION_FLAGS = HasVectorSupport<Type>::value ? platform::Parallelisation::VECTORISE
+    OPTIMISATION_FLAGS = meta::HasVectorSupport<Type>::value ? platform::Parallelisation::VECTORISE
                                                        : platform::Parallelisation::NOT_PARALLEL
   };
 
