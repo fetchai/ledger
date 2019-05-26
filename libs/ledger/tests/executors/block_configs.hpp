@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include <cstddef>
-#include <iostream>
+#include <ostream>
 #include <vector>
 
 struct BlockConfig

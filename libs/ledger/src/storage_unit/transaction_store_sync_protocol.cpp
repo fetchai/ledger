@@ -17,8 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
-#include "ledger/chain/transaction_serialization.hpp"
-#include "ledger/chain/v2/transaction_rpc_serializers.hpp"
+#include "ledger/chain/transaction_rpc_serializers.hpp"
 
 using fetch::byte_array::ConstByteArray;
 
@@ -102,7 +101,7 @@ void TransactionStoreSyncProtocol::TrimCache()
 
 /// @}
 
-void TransactionStoreSyncProtocol::OnNewTx(v2::Transaction const &o)
+void TransactionStoreSyncProtocol::OnNewTx(Transaction const &o)
 {
 #ifdef FETCH_ENABLE_METRICS
   RecordNewCacheElement(o.digest());
@@ -161,8 +160,8 @@ TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullObjects(
 TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullSpecificObjects(
     std::vector<storage::ResourceID> const &rids)
 {
-  TxArray         ret;
-  v2::Transaction tx;
+  TxArray     ret;
+  Transaction tx;
 
   for (auto const &rid : rids)
   {

@@ -27,15 +27,13 @@
 #include "math/linalg/blas/gemm_nt_vector.hpp"
 #include "math/linalg/blas/gemm_tn_novector.hpp"
 #include "math/linalg/blas/gemm_tn_vector.hpp"
-#include "math/tensor_declaration.hpp"
 
 #include "math/linalg/prototype.hpp"
 
 #include "math/base_types.hpp"
 #include "math/comparison.hpp"
 #include "math/fundamental_operators.hpp"  // add, subtract etc.
-#include "math/math_vector_support.hpp"
-#include "math/tensor_declaration.hpp"
+#include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
 namespace math {
@@ -756,23 +754,31 @@ template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> Dot(ArrayType const &A, ArrayType const &B,
                                                       ArrayType &ret)
 {
-  ASSERT(A.shape().size() == 2);
-  ASSERT(B.shape().size() == 2);
-  ASSERT(A.shape()[1] == B.shape()[0]);
+  auto aview = A.View();
+  auto bview = B.View();
+
+  if (aview.width() != bview.height())
+  {
+    throw std::runtime_error("expected A width to equal and B height.");
+  }
+
+  ret.Resize({aview.height(), bview.width()});
+
   using Type = typename ArrayType::Type;
   using namespace linalg;
 
   enum
   {
-    OPTIMISATION_FLAGS = HasVectorSupport<Type>::value ? platform::Parallelisation::VECTORISE
-                                                       : platform::Parallelisation::NOT_PARALLEL
+    OPTIMISATION_FLAGS = meta::HasVectorSupport<Type>::value
+                             ? platform::Parallelisation::VECTORISE
+                             : platform::Parallelisation::NOT_PARALLEL
   };
 
   Blas<Type, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * _A * _B + _beta * _C), OPTIMISATION_FLAGS>
       gemm_nn;
 
-  gemm_nn(static_cast<Type>(1), A.View(), B.View(), static_cast<Type>(0), ret.View());
+  gemm_nn(static_cast<Type>(1), aview, bview, static_cast<Type>(0), ret.View());
 }
 
 template <typename ArrayType>
@@ -795,18 +801,24 @@ template <class ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> DotTranspose(ArrayType const &A,
                                                                ArrayType const &B, ArrayType &ret)
 {
-  ASSERT(A.shape().size() == 2);
-  ASSERT(B.shape().size() == 2);
-  ASSERT(A.shape()[1] == B.shape()[1]);
-  ASSERT(A.shape()[0] == ret.shape()[0]);
-  ASSERT(B.shape()[0] == ret.shape()[1]);
+  auto aview = A.View();
+  auto bview = B.View();
+
+  if (aview.width() != bview.width())
+  {
+    throw std::runtime_error("expected A and B to have same width.");
+  }
+
+  ret.Resize({aview.height(), bview.height()});
+
   using Type = typename ArrayType::Type;
   using namespace linalg;
 
   enum
   {
-    OPTIMISATION_FLAGS = HasVectorSupport<Type>::value ? platform::Parallelisation::VECTORISE
-                                                       : platform::Parallelisation::NOT_PARALLEL
+    OPTIMISATION_FLAGS = meta::HasVectorSupport<Type>::value
+                             ? platform::Parallelisation::VECTORISE
+                             : platform::Parallelisation::NOT_PARALLEL
   };
 
   Blas<Type, Signature(_C <= _alpha, _A, _B, _beta, _C),
@@ -837,16 +849,24 @@ template <class ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> TransposeDot(ArrayType const &A,
                                                                ArrayType const &B, ArrayType &ret)
 {
-  ASSERT(A.shape()[0] == B.shape()[0]);
-  ASSERT(A.shape()[1] == ret.shape()[0]);
-  ASSERT(B.shape()[1] == ret.shape()[1]);
+  auto aview = A.View();
+  auto bview = B.View();
+
+  if (aview.height() != bview.height())
+  {
+    throw std::runtime_error("expected A and B to have same height.");
+  }
+
+  ret.Resize({aview.width(), bview.width()});
+
   using Type = typename ArrayType::Type;
   using namespace linalg;
 
   enum
   {
-    OPTIMISATION_FLAGS = HasVectorSupport<Type>::value ? platform::Parallelisation::VECTORISE
-                                                       : platform::Parallelisation::NOT_PARALLEL
+    OPTIMISATION_FLAGS = meta::HasVectorSupport<Type>::value
+                             ? platform::Parallelisation::VECTORISE
+                             : platform::Parallelisation::NOT_PARALLEL
   };
 
   Blas<Type, Signature(_C <= _alpha, _A, _B, _beta, _C),

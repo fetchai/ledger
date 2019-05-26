@@ -30,9 +30,9 @@ template <class T>
 class LeakyRelu : public fetch::ml::ElementWiseOps<T>
 {
 public:
-  using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType     = T;
+  using DataType      = typename ArrayType::Type;
+  using VecTensorType = typename ElementWiseOps<T>::VecTensorType;
 
   LeakyRelu(DataType a = DataType(0.01))
     : a_(a)
@@ -40,17 +40,14 @@ public:
 
   virtual ~LeakyRelu() = default;
 
-  virtual ArrayType Forward(std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-                            ArrayType &                                                 output)
+  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
   {
     assert(inputs.size() == 1);
     fetch::math::LeakyRelu(inputs.front().get(), a_, output);
-    return output;
   }
 
-  virtual std::vector<ArrayType> Backward(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs,
-      ArrayType const &                                           error_signal)
+  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                          ArrayType const &    error_signal)
   {
     assert(inputs.size() == 1);
     assert(inputs.front().get().shape() == error_signal.shape());
@@ -60,7 +57,7 @@ public:
     ArrayType t{inputs.front().get().shape()};
 
     // gradient of leaky relu function is a where x<0; and 1.0 where x>=0
-    t = this->Forward(inputs, t);
+    this->Forward(inputs, t);
 
     auto it  = t.cbegin();
     auto rit = ret.begin();

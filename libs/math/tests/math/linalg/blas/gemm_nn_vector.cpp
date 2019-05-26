@@ -55,6 +55,7 @@ TEST(blas_gemm_vectorised, blas_gemm_nn_vector1)
  0.43194501864211576 0.2912291401980419 0.6118528947223795
   	)");
   TensorView<Type> C        = C_tensor.View();
+
   gemm_nn_vector(alpha, A, B, beta, C);
 
   Tensor<Type>     refC_tensor = Tensor<Type>::FromString(R"(
@@ -155,8 +156,8 @@ TEST(blas_gemm_vectorised, blas_gemm_nn_vector4)
       gemm_nn_vector;
   // Compuing _C <= _alpha * _A * _B + _beta * _C
   using Type = double;
-  Type alpha = Type(0.28689085489907085);
-  Type beta  = Type(0.20044288018820233);
+  Type alpha = Type(0.2554653853071184);
+  Type beta  = Type(0.7057714976741675);
 
   Tensor<Type>     A_tensor = Tensor<Type>::FromString(R"(
   	0.3567533266935893 0.28093450968738076;
@@ -178,9 +179,9 @@ TEST(blas_gemm_vectorised, blas_gemm_nn_vector4)
   gemm_nn_vector(alpha, A, B, beta, C);
 
   Tensor<Type>     refC_tensor = Tensor<Type>::FromString(R"(
-  0.24757651996255411 0.29935852213321523 0.09215109179413851;
- 0.22572807239431053 0.17642842531390643 0.23252003535047625;
- 0.35217887638413764 0.2614938695686384 0.07359103013568132
+  0.6048518239016741 0.6732464549587942 0.12109965452175162;
+ 0.39001576532167326 0.2181987839791115 0.6621515083625639;
+ 0.6422574757959764 0.4073278166626899 0.09904335937000663
   )");
   TensorView<Type> refC        = refC_tensor.View();
 
@@ -280,8 +281,8 @@ TEST(blas_gemm_vectorised, blas_gemm_nn_vector7)
       gemm_nn_vector;
   // Compuing _C <= _alpha * _A * _B + _beta * _C
   using Type = double;
-  Type alpha = Type(0.1800954172949516);
-  Type beta  = Type(0.739714747978301);
+  Type alpha = Type(0.7703755081611938);
+  Type beta  = Type(0.7668044030297628);
 
   Tensor<Type>     A_tensor = Tensor<Type>::FromString(R"(
   	0.9624472949421112 0.25178229582536416 0.49724850589238545;
@@ -306,10 +307,10 @@ TEST(blas_gemm_vectorised, blas_gemm_nn_vector7)
   gemm_nn_vector(alpha, A, B, beta, C);
 
   Tensor<Type>     refC_tensor = Tensor<Type>::FromString(R"(
-  0.15531730030457408 0.7938834523580202 0.4756404524010159 0.2609271427993513;
- 0.07493613330950515 0.5068845401846735 0.5710126874338408 0.06630208867233826;
- 0.45896761665837715 0.29608599334057245 0.6128351625212343 0.22644696169319062;
- 0.6441799741613288 0.4624977910005176 0.8085802893148355 0.25610642309735543
+  0.44792432400763005 1.393361517524787 1.2655608041978774 0.6689821375755958;
+ 0.22279234251197264 0.751642668451142 0.8181712237348415 0.24384596866793298;
+ 0.7355879959874129 0.7235361457638387 1.0747263401741205 0.5506231993972377;
+ 1.099090057208477 1.0512208268420966 1.213066713142546 0.7658276498453107
   )");
   TensorView<Type> refC        = refC_tensor.View();
 

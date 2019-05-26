@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/max_pool_1d.hpp"
-#include "math/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -52,8 +52,9 @@ TYPED_TEST(MaxPool1DTest, forward_test_3_2)
   }
 
   fetch::ml::ops::MaxPool1D<ArrayType> op(3, 2);
-  ArrayType                            prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({data}));
+
+  ArrayType prediction(op.ComputeOutputShape({data}));
+  op.Forward({data}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -146,8 +147,9 @@ TYPED_TEST(MaxPool1DTest, forward_test_4_2)
   }
 
   fetch::ml::ops::MaxPool1D<ArrayType> op(4, 2);
-  ArrayType                            prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({data}));
+
+  ArrayType prediction(op.ComputeOutputShape({data}));
+  op.Forward({data}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -181,8 +183,9 @@ TYPED_TEST(MaxPool1DTest, forward_test_2_channels_4_1)
   }
 
   fetch::ml::ops::MaxPool1D<ArrayType> op(4, 1);
-  ArrayType                            prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({data}));
+
+  ArrayType prediction(op.ComputeOutputShape({data}));
+  op.Forward({data}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -209,8 +212,9 @@ TYPED_TEST(MaxPool1DTest, forward_test_2_4)
   }
 
   fetch::ml::ops::MaxPool1D<ArrayType> op(2, 4);
-  ArrayType                            prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({data}));
+
+  ArrayType prediction(op.ComputeOutputShape({data}));
+  op.Forward({data}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));

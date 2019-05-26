@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-#include "math/tensor_declaration.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <vector>

@@ -19,8 +19,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/json/document.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/v2/transaction_builder.hpp"
+#include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "mock_storage_unit.hpp"
@@ -29,8 +28,6 @@
 
 #include <gmock/gmock.h>
 
-#include <iostream>
-#include <ledger/chain/mutable_transaction.hpp>
 #include <memory>
 #include <random>
 #include <sstream>
@@ -42,8 +39,8 @@ namespace {
 
 using ::testing::_;
 using fetch::variant::Variant;
-using fetch::ledger::v2::TransactionBuilder;
-using fetch::ledger::v2::Address;
+using fetch::ledger::TransactionBuilder;
+using fetch::ledger::Address;
 
 struct Entity
 {
@@ -62,7 +59,7 @@ protected:
   using Query              = Contract::Query;
   using TokenContractPtr   = std::unique_ptr<TokenContract>;
   using MockStorageUnitPtr = std::unique_ptr<MockStorageUnit>;
-  using Address            = fetch::ledger::v2::Address;
+  using Address            = fetch::ledger::Address;
 
   void SetUp() override
   {

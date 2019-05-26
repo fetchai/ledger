@@ -19,7 +19,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "ledger/chain/v2/address.hpp"
+#include "ledger/chain/address.hpp"
 #include "ledger/identifier.hpp"
 
 #include <gtest/gtest.h>
@@ -27,7 +27,7 @@
 using fetch::ledger::Identifier;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ByteArray;
-using fetch::ledger::v2::Address;
+using fetch::ledger::Address;
 
 ConstByteArray GenerateSequence(std::size_t size)
 {

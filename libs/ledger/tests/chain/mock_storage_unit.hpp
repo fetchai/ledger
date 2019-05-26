@@ -24,9 +24,9 @@
 class MockStorageUnit : public fetch::ledger::StorageUnitInterface
 {
 public:
-  using Transaction = fetch::ledger::v2::Transaction;
-  using Digest      = fetch::ledger::v2::Digest;
-  using DigestSet   = fetch::ledger::v2::DigestSet;
+  using Transaction = fetch::ledger::Transaction;
+  using Digest      = fetch::ledger::Digest;
+  using DigestSet   = fetch::ledger::DigestSet;
 
   MockStorageUnit()
   {

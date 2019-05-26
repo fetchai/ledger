@@ -21,14 +21,13 @@
 
 #include "math/clustering/knn.hpp"
 #include "math/matrix_operations.hpp"
-
+#include "math/tensor.hpp"
 #include "ml/dataloaders/word2vec_loaders/skipgram_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/skip_gram.hpp"
 #include "ml/ops/loss_functions/cross_entropy.hpp"
 
 #include <iostream>
-#include <math/tensor.hpp>
 #include <numeric>
 
 using namespace fetch::ml;

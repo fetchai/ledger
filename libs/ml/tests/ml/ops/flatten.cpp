@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/flatten.hpp"
-#include "math/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -36,8 +36,9 @@ TYPED_TEST(FlattenTest, forward_test)
 {
   TypeParam                          data(std::vector<std::uint64_t>({8, 8}));
   fetch::ml::ops::Flatten<TypeParam> op;
-  TypeParam                          prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({data}));
+
+  TypeParam prediction(op.ComputeOutputShape({data}));
+  op.Forward({data}, prediction);
 
   // test correct shape
   ASSERT_EQ(prediction.shape(), std::vector<typename TypeParam::SizeType>({1, 64}));
@@ -47,10 +48,12 @@ TYPED_TEST(FlattenTest, backward_test)
 {
   TypeParam                          data(std::vector<std::uint64_t>({8, 8}));
   fetch::ml::ops::Flatten<TypeParam> op;
-  TypeParam                          prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({data}));
-  TypeParam              errorSignal(prediction.shape());
-  std::vector<TypeParam> gradients = op.Backward({data}, errorSignal);
+
+  TypeParam prediction(op.ComputeOutputShape({data}));
+  op.Forward({data}, prediction);
+
+  TypeParam              error_signal(prediction.shape());
+  std::vector<TypeParam> gradients = op.Backward({data}, error_signal);
 
   ASSERT_EQ(gradients.size(), 1);
   ASSERT_EQ(gradients[0].shape(), std::vector<typename TypeParam::SizeType>({8, 8}));

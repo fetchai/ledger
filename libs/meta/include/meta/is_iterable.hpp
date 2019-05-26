@@ -33,8 +33,15 @@ template <typename T>
 std::false_type IsIterableImplementation(...);
 }  // namespace detail
 
-template <typename T>
-using IsIterable = std::enable_if<decltype(detail::IsIterableImplementation<T>(0)), T>::type;
+template <typename T, typename R>
+using IsIterable = typename std::enable_if<
+    std::is_same<decltype(detail::IsIterableImplementation<T>(0)), std::true_type>::value, R>::type;
+
+template <typename T1, typename T2, typename R>
+using IsIterableTwoArg = typename std::enable_if<
+    std::is_same<decltype(detail::IsIterableImplementation<T1>(0)), std::true_type>::value &&
+        std::is_same<decltype(detail::IsIterableImplementation<T2>(0)), std::true_type>::value,
+    R>::type;
 
 }  // namespace meta
 }  // namespace fetch

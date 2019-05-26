@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/tanh.hpp"
-#include "math/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -49,8 +49,9 @@ TYPED_TEST(TanhTest, forward_all_positive_test)
   }
 
   fetch::ml::ops::TanH<TypeParam> op;
-  TypeParam                       prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({data}));
+
+  TypeParam prediction(op.ComputeOutputShape({data}));
+  op.Forward({data}, prediction);
 
   ASSERT_TRUE(
       prediction.AllClose(gt, typename TypeParam::Type(1e-4), typename TypeParam::Type(1e-4)));
@@ -73,8 +74,9 @@ TYPED_TEST(TanhTest, forward_all_negative_test)
   }
 
   fetch::ml::ops::TanH<TypeParam> op;
-  TypeParam                       prediction = op.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({data}));
+
+  TypeParam prediction(op.ComputeOutputShape({data}));
+  op.Forward({data}, prediction);
 
   ASSERT_TRUE(
       prediction.AllClose(gt, typename TypeParam::Type(1e-4), typename TypeParam::Type(1e-4)));

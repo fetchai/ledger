@@ -22,7 +22,6 @@
 #include "network/service/service_client.hpp"
 #include "network/service/types.hpp"
 
-#include <iostream>
 #include <string>
 #include <utility>
 

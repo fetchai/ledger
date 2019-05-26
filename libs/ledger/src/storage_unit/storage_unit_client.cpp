@@ -18,10 +18,9 @@
 
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/chain/constants.hpp"
-#include "ledger/chain/transaction_serialization.hpp"
-#include "ledger/chain/v2/transaction.hpp"
-#include "ledger/chain/v2/transaction_layout_rpc_serializers.hpp"
-#include "ledger/chain/v2/transaction_rpc_serializers.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "ledger/chain/transaction_layout_rpc_serializers.hpp"
+#include "ledger/chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/transaction_finder_protocol.hpp"
 
 using fetch::storage::ResourceID;
@@ -51,7 +50,7 @@ AddressList GenerateAddressList(ShardConfigs const &shards)
 
 }  // namespace
 
-using TxStoreProtocol = fetch::storage::ObjectStoreProtocol<v2::Transaction>;
+using TxStoreProtocol = fetch::storage::ObjectStoreProtocol<Transaction>;
 
 StorageUnitClient::StorageUnitClient(MuddleEndpoint &muddle, ShardConfigs const &shards,
                                      uint32_t log2_num_lanes)
@@ -321,7 +320,7 @@ StorageUnitClient::Address const &StorageUnitClient::LookupAddress(
   return LookupAddress(resource.lane(log2_num_lanes_));
 }
 
-void StorageUnitClient::AddTransaction(v2::Transaction const &tx)
+void StorageUnitClient::AddTransaction(Transaction const &tx)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Adding tx: 0x", tx.digest().ToHex());
 
@@ -371,8 +370,7 @@ StorageUnitClient::TxLayouts StorageUnitClient::PollRecentTx(uint32_t max_to_pol
   return layouts;
 }
 
-bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest,
-                                       v2::Transaction &                 tx)
+bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest, Transaction &tx)
 {
   bool success{false};
 
@@ -385,7 +383,7 @@ bool StorageUnitClient::GetTransaction(byte_array::ConstByteArray const &digest,
                                                    TxStoreProtocol::GET, resource);
 
     // wait for the response to be delivered
-    tx = promise->As<v2::Transaction>();
+    tx = promise->As<Transaction>();
 
     success = true;
   }
@@ -423,7 +421,7 @@ bool StorageUnitClient::HasTransaction(ConstByteArray const &digest)
   return present;
 }
 
-void StorageUnitClient::IssueCallForMissingTxs(v2::DigestSet const &tx_set)
+void StorageUnitClient::IssueCallForMissingTxs(DigestSet const &tx_set)
 {
   std::map<Address, std::unordered_set<ResourceID>> lanes_of_interest;
   for (auto const &hash : tx_set)

@@ -16,9 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iomanip>
-#include <iostream>
-
 #include "math/kernels/sign.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>

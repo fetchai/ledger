@@ -18,7 +18,6 @@
 
 #include <benchmark/benchmark.h>
 #include <gtest/gtest.h>
-#include <stack>
 
 #include "core/random/lfg.hpp"
 #include "storage/cached_random_access_stack.hpp"

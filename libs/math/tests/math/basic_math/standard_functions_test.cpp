@@ -17,8 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
-#include <iomanip>
-#include <iostream>
 
 #include "math/standard_functions/clamp.hpp"
 #include "math/tensor.hpp"
@@ -36,35 +34,60 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
 
 TYPED_TEST_CASE(ClampTest, MyTypes);
 
-TYPED_TEST(ClampTest, clamp_array_test)
+TYPED_TEST(ClampTest, clamp_array_1D_test)
 {
   using DataType  = typename TypeParam::Type;
   using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
 
   ArrayType A = ArrayType({6});
 
-  A.Set(SizeType{0}, DataType(-10));
-  A.Set(SizeType{1}, DataType(0));
-  A.Set(SizeType{2}, DataType(1));
-  A.Set(SizeType{3}, DataType(2));
-  A.Set(SizeType{4}, DataType(3));
-  A.Set(SizeType{5}, DataType(10));
+  A(0) = DataType(-10);
+  A(1) = DataType(0);
+  A(2) = DataType(1);
+  A(3) = DataType(2);
+  A(4) = DataType(3);
+  A(5) = DataType(10);
 
   // Expected results
   ArrayType A_clamp_expected = ArrayType({6});
-  A_clamp_expected.Set(SizeType{0}, DataType(2));
-  A_clamp_expected.Set(SizeType{1}, DataType(2));
-  A_clamp_expected.Set(SizeType{2}, DataType(2));
-  A_clamp_expected.Set(SizeType{3}, DataType(2));
-  A_clamp_expected.Set(SizeType{4}, DataType(3));
-  A_clamp_expected.Set(SizeType{5}, DataType(3));
+  A_clamp_expected(0)        = DataType(2);
+  A_clamp_expected(1)        = DataType(2);
+  A_clamp_expected(2)        = DataType(2);
+  A_clamp_expected(3)        = DataType(2);
+  A_clamp_expected(4)        = DataType(3);
+  A_clamp_expected(5)        = DataType(3);
 
   // Compare results with expected results
-  ArrayType A_norm = Clamp(A, DataType(2), DataType(3));
+  Clamp(DataType(2), DataType(3), A);
 
-  for (SizeType i{0}; i < A.size(); i++)
-  {
-    EXPECT_NEAR(double(A_norm.At(i)), double(A_clamp_expected.At(i)), 1e-4);
-  }
+  ASSERT_TRUE(A.AllClose(A_clamp_expected, DataType{1e-5f}, DataType{1e-5f}));
+}
+
+TYPED_TEST(ClampTest, clamp_array_2D_test)
+{
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+
+  ArrayType A = ArrayType({2, 3});
+
+  A(0, 0) = DataType(-10);
+  A(0, 1) = DataType(0);
+  A(0, 2) = DataType(1);
+  A(1, 0) = DataType(2);
+  A(1, 1) = DataType(3);
+  A(1, 2) = DataType(10);
+
+  // Expected results
+  ArrayType A_clamp_expected = ArrayType({2, 3});
+  A_clamp_expected(0, 0)     = DataType(2);
+  A_clamp_expected(0, 1)     = DataType(2);
+  A_clamp_expected(0, 2)     = DataType(2);
+  A_clamp_expected(1, 0)     = DataType(2);
+  A_clamp_expected(1, 1)     = DataType(3);
+  A_clamp_expected(1, 2)     = DataType(3);
+
+  // Compare results with expected results
+  Clamp(DataType(2), DataType(3), A);
+
+  ASSERT_TRUE(A.AllClose(A_clamp_expected, DataType{1e-5f}, DataType{1e-5f}));
 }

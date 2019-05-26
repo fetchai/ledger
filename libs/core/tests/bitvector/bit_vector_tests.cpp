@@ -22,44 +22,9 @@
 
 #include "gtest/gtest.h"
 
-#include <iomanip>
-#include <iostream>
 #include <memory>
 
 using fetch::BitVector;
-
-template <typename T>
-void BinPrint(T value, char const *name)
-{
-  constexpr std::size_t BIT_SIZE = sizeof(T) * 8u;
-  constexpr std::size_t INDEX    = BIT_SIZE - 1u;
-
-  std::cout << name << ": ";
-
-  for (std::size_t i = 0, j = INDEX; i < BIT_SIZE; ++i, --j)
-  {
-    if (i && ((i & 0x3) == 0))
-    {
-      std::cout << ' ';
-    }
-
-    if (i && ((i & 0x7) == 0))
-    {
-      std::cout << "- ";
-    }
-
-    if (value & (1ull << j))
-    {
-      std::cout << '1';
-    }
-    else
-    {
-      std::cout << '0';
-    }
-  }
-
-  std::cout << std::endl;
-}
 
 template <typename T>
 fetch::byte_array::ConstByteArray Convert(T const &value)

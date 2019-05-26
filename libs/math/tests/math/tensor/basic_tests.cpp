@@ -16,12 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
 #include "meta/type_traits.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include <gtest/gtest.h>
-#include <iomanip>
-#include <iostream>
 
 template <typename T>
 class TensorBasicTests : public ::testing::Test

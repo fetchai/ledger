@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "ml/layers/PRelu.hpp"
-#include "math/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -35,8 +35,8 @@ TYPED_TEST_CASE(PReluTest, MyTypes);
 TYPED_TEST(PReluTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
   fetch::ml::layers::PRelu<TypeParam> fc(100u);
-  TypeParam inputData(std::vector<typename TypeParam::SizeType>({10, 10}));
-  fc.SetInput("PRelu_Input", inputData);
+  TypeParam input_data(std::vector<typename TypeParam::SizeType>({10, 10}));
+  fc.SetInput("PRelu_Input", input_data);
   TypeParam output = fc.Evaluate("PRelu_LeakyReluOp");
 
   ASSERT_EQ(output.shape().size(), 2);
@@ -48,10 +48,13 @@ TYPED_TEST(PReluTest, set_input_and_evaluate_test)  // Use the class as a subgra
 
 TYPED_TEST(PReluTest, ops_forward_test)  // Use the class as an Ops
 {
-  fetch::ml::layers::PRelu<TypeParam> fc(50);
-  TypeParam                           inputData(std::vector<typename TypeParam::SizeType>({5, 10}));
-  TypeParam                           output = fc.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({inputData}));
+  using VecTensorType = typename fetch::ml::Ops<TypeParam>::VecTensorType;
+
+  fetch::ml::layers::PRelu<TypeParam> pr(50);
+  TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10}));
+
+  TypeParam output(pr.ComputeOutputShape({input_data}));
+  pr.Forward(VecTensorType({input_data}), output);
 
   ASSERT_EQ(output.shape().size(), 2);
   ASSERT_EQ(output.shape()[0], 5);
@@ -62,16 +65,16 @@ TYPED_TEST(PReluTest, ops_forward_test)  // Use the class as an Ops
 TYPED_TEST(PReluTest, ops_backward_test)  // Use the class as an Ops
 {
   fetch::ml::layers::PRelu<TypeParam> fc(50);
-  TypeParam                           inputData(std::vector<typename TypeParam::SizeType>({5, 10}));
-  TypeParam                           output = fc.fetch::ml::template Ops<TypeParam>::Forward(
-      std::vector<std::reference_wrapper<TypeParam const>>({inputData}));
-  TypeParam errorSignal(std::vector<typename TypeParam::SizeType>({1, 50}));
+  TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10}));
+  TypeParam output(fc.ComputeOutputShape({input_data}));
+  fc.Forward({input_data}, output);
+  TypeParam error_signal(std::vector<typename TypeParam::SizeType>({1, 50}));
 
-  std::vector<TypeParam> backpropagatedErrorSignals = fc.Backward({inputData}, errorSignal);
-  ASSERT_EQ(backpropagatedErrorSignals.size(), 1);
-  ASSERT_EQ(backpropagatedErrorSignals[0].shape().size(), 2);
-  ASSERT_EQ(backpropagatedErrorSignals[0].shape()[0], 1);
-  ASSERT_EQ(backpropagatedErrorSignals[0].shape()[1], 50);
+  std::vector<TypeParam> bp_err = fc.Backward({input_data}, error_signal);
+  ASSERT_EQ(bp_err.size(), 1);
+  ASSERT_EQ(bp_err[0].shape().size(), 2);
+  ASSERT_EQ(bp_err[0].shape()[0], 1);
+  ASSERT_EQ(bp_err[0].shape()[1], 50);
   // No way to test actual values for now as weights are randomly initialised.
 }
 
@@ -103,13 +106,13 @@ TYPED_TEST(PReluTest, node_backward_test)  // Use the class as a Node
   fc.AddInput(placeholder);
   TypeParam prediction = fc.Evaluate();
 
-  TypeParam errorSignal(std::vector<typename TypeParam::SizeType>({1, 50}));
-  auto      backpropagatedErrorSignals = fc.BackPropagate(errorSignal);
+  TypeParam error_signal(std::vector<typename TypeParam::SizeType>({1, 50}));
+  auto      bp_err = fc.BackPropagate(error_signal);
 
-  ASSERT_EQ(backpropagatedErrorSignals.size(), 1);
-  ASSERT_EQ(backpropagatedErrorSignals[0].second.shape().size(), 2);
-  ASSERT_EQ(backpropagatedErrorSignals[0].second.shape()[0], 1);
-  ASSERT_EQ(backpropagatedErrorSignals[0].second.shape()[1], 50);
+  ASSERT_EQ(bp_err.size(), 1);
+  ASSERT_EQ(bp_err[0].second.shape().size(), 2);
+  ASSERT_EQ(bp_err[0].second.shape()[0], 1);
+  ASSERT_EQ(bp_err[0].second.shape()[1], 50);
 }
 
 TYPED_TEST(PReluTest, graph_forward_test)  // Use the class as a Node

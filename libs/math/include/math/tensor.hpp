@@ -35,12 +35,10 @@
 #include "math/standard_functions/fmod.hpp"
 #include "math/standard_functions/remainder.hpp"
 #include "math/tensor_broadcast.hpp"
-#include "math/tensor_declaration.hpp"
 #include "math/tensor_iterator.hpp"
 #include "math/tensor_slice_iterator.hpp"
 #include "math/tensor_view.hpp"
 
-#include <iostream>
 #include <memory>
 #include <numeric>
 #include <random>
@@ -81,9 +79,9 @@ public:
 
   static constexpr char const *LOGGING_NAME = "Tensor";
 
-  enum
+  enum  // TODO: Get from view
   {
-    LOG_PADDING = 3,
+    LOG_PADDING = 2,
     PADDING     = static_cast<SizeType>(1) << LOG_PADDING
   };
 
@@ -342,6 +340,16 @@ public:
   }
 
   TensorView<Type, ContainerType> View(SizeType index)
+  {
+    SizeType N                = shape_.size() - 1 - 1;
+    SizeType dimension_length = (N == 0 ? padded_height_ : shape_[N]);
+    SizeType volume           = dimension_length * stride_[N];
+    SizeType width            = volume / padded_height_;
+    SizeType offset           = volume * index;
+    return TensorView<Type, ContainerType>(data_, height(), width, offset);
+  }
+
+  TensorView<Type, ContainerType> const View(SizeType index) const
   {
     SizeType N                = shape_.size() - 1 - 1;
     SizeType dimension_length = (N == 0 ? padded_height_ : shape_[N]);
@@ -1241,9 +1249,15 @@ void Tensor<T, C>::Fill(Type const &value, memory::TrivialRange const &range)
 template <typename T, typename C>
 void Tensor<T, C>::Fill(Type const &value)
 {
+  for (auto &x : *this)
+  {
+    x = value;
+  }
+  /*
+  TODO: Implement all relevant vector functions
   VectorRegisterType val(value);
-
   this->data().in_parallel().Apply([val](VectorRegisterType &z) { z = val; });
+  */
 }
 
 /**
