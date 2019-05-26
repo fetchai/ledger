@@ -446,4 +446,42 @@ TEST_F(ArrayTests, when_passed_a_negative_number_pop_front_fails)
   ASSERT_FALSE(Run());
 }
 
+TEST_F(ArrayTests, reverse_inverts_the_order_of_elements)
+{
+  static char const *TEXT = R"(
+    function main()
+      var data = Array<Int32>(3);
+      data[0] = 10;
+      data[1] = 20;
+      data[2] = 30;
+
+      data.reverse();
+
+      print(data);
+    endfunction
+  )";
+
+  ASSERT_TRUE(Compile(TEXT));
+  ASSERT_TRUE(Run());
+
+  ASSERT_EQ(stdout(), "[30, 20, 10]");
+}
+
+TEST_F(ArrayTests, reverse_of_an_empty_array_is_a_noop)
+{
+  static char const *TEXT = R"(
+    function main()
+      var data = Array<Int32>(0);
+      data.reverse();
+
+      print(data);
+    endfunction
+  )";
+
+  ASSERT_TRUE(Compile(TEXT));
+  ASSERT_TRUE(Run());
+
+  ASSERT_EQ(stdout(), "[]");
+}
+
 }  // namespace

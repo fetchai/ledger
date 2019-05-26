@@ -38,6 +38,7 @@ public:
   virtual Ptr<IArray>       PopBackMany(int32_t)              = 0;
   virtual TemplateParameter PopFrontOne()                     = 0;
   virtual Ptr<IArray>       PopFrontMany(int32_t)             = 0;
+  virtual void              Reverse()                         = 0;
 
   virtual TemplateParameter GetIndexedValue(AnyInteger const &index)                    = 0;
   virtual void SetIndexedValue(AnyInteger const &index, TemplateParameter const &value) = 0;
@@ -171,6 +172,11 @@ struct Array : public IArray
     elements.resize(elements.size() - popped_size);
 
     return array;
+  }
+
+  void Reverse() override
+  {
+    std::reverse(elements.begin(), elements.end());
   }
 
   virtual TemplateParameter GetIndexedValue(AnyInteger const &index) override
