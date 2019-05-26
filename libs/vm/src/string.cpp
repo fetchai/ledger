@@ -20,6 +20,9 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstddef>
+#include <cstdint>
+#include <string>
 
 namespace fetch {
 namespace vm {
@@ -71,17 +74,17 @@ Ptr<String> String::Substring(int32_t start_index, int32_t end_index)
 {
   if (start_index < 0)
   {
-    RuntimeError("substring start index out of bounds");
+    RuntimeError("substring start index must be non-negative");
     return nullptr;
   }
   if (end_index < start_index)
   {
-    RuntimeError("start index must not exceed end index");
+    RuntimeError("substring start index must not exceed end index");
     return nullptr;
   }
   if (static_cast<std::size_t>(end_index) > str.size())
   {
-    RuntimeError("substring end index out of bounds");
+    RuntimeError("substring end index exceeds length of string");
     return nullptr;
   }
 

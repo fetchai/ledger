@@ -18,6 +18,8 @@
 
 #include "vm_test_suite.hpp"
 
+#include "gmock/gmock.h"
+
 namespace {
 
 class StringTests : public VmTestSuite

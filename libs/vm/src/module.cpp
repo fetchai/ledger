@@ -18,6 +18,8 @@
 
 #include "vm/module.hpp"
 
+#include <cstdint>
+
 namespace fetch {
 namespace vm {
 

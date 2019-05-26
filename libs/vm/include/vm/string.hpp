@@ -20,6 +20,7 @@
 #include "vm/variant.hpp"
 
 #include <cstddef>
+#include <cstdint>
 
 namespace fetch {
 namespace vm {
