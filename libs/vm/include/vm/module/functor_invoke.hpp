@@ -17,13 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
 namespace fetch {
 namespace vm {
 
 template <typename ReturnType, typename Functor, typename... Ts>
 struct FunctorInvokerHelper
 {
-  static void Invoke(VM *vm, int sp_offset, TypeId return_type_id, Functor const &functor,
+  static void Invoke(VM *vm, int sp_offset, TypeId return_type_id, Functor &&functor,
                      Ts const &... parameters)
   {
     ReturnType result(functor(vm, parameters...));
@@ -35,7 +37,7 @@ struct FunctorInvokerHelper
 template <typename Functor, typename... Ts>
 struct FunctorInvokerHelper<void, Functor, Ts...>
 {
-  static void Invoke(VM *vm, int sp_offset, TypeId /* return_type_id */, Functor const &functor,
+  static void Invoke(VM *vm, int sp_offset, TypeId /* return_type_id */, Functor &&functor,
                      Ts const &... parameters)
   {
     functor(vm, parameters...);
@@ -53,7 +55,7 @@ struct FunctorInvoker
   {
     // Invoked on non-final parameter
     static void Invoke(VM *vm, int sp_offset, TypeId return_type_id, Functor &&functor,
-                       Used const &... used)
+                       Used &&... used)
     {
       using P = std::decay_t<T>;
       P parameter(StackGetter<P>::Get(vm, PARAMETER_OFFSET));
@@ -90,10 +92,9 @@ struct FunctorInvoker
 };
 
 template <typename Functor, typename... Ts>
-void InvokeFunctor(VM *vm, TypeId return_type_id, Functor &&functor,
-                   std::tuple<Ts...> const & /* tag */)
+void InvokeFunctor(VM *vm, TypeId return_type_id, Functor &&functor, std::tuple<Ts...> && /* tag */)
 {
-  using ReturnType = typename FunctorReturnTypeExtractor<typename std::decay<Functor>::type>::type;
+  using ReturnType                     = typename FunctorTraits<Functor>::return_type;
   constexpr int num_parameters         = int(sizeof...(Ts));
   constexpr int first_parameter_offset = num_parameters - 1;
   constexpr int sp_offset              = num_parameters - IsResult<ReturnType>::value;

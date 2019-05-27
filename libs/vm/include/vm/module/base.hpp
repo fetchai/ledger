@@ -221,23 +221,33 @@ struct IndexedValueSetter<Type, std::tuple<InputTypes...>, OutputType>
                               typename fetch::vm::MakeParameterType<OutputType>::type);
 };
 
-template <typename T>
-struct FunctorReturnTypeExtractor : public FunctorReturnTypeExtractor<decltype(&T::operator())>
+template <typename F>
+struct FunctorTraits;
+template <typename F>
+struct FunctorTraits
 {
+  using class_type =
+      typename FunctorTraits<decltype(&std::remove_reference_t<F>::operator())>::class_type;
+  using return_type =
+      typename FunctorTraits<decltype(&std::remove_reference_t<F>::operator())>::return_type;
+  using args_tuple_type =
+      typename FunctorTraits<decltype(&std::remove_reference_t<F>::operator())>::args_tuple_type;
 };
-template <typename Functor, typename ReturnType, typename... Ts>
-struct FunctorReturnTypeExtractor<ReturnType (Functor::*)(Ts...) const>
+
+template <typename ReturnType, typename Class_, typename... Args>
+struct FunctorTraits<ReturnType (Class_::*)(Args...) const>
 {
-  using type = ReturnType;
+  using class_type      = Class_;
+  using return_type     = ReturnType;
+  using args_tuple_type = std::tuple<Args...>;
 };
-template <typename T>
-struct FunctorSignatureExtractor : public FunctorSignatureExtractor<decltype(&T::operator())>
+// Support mutable lambdas
+template <typename ReturnType, typename Class_, typename... Args>
+struct FunctorTraits<ReturnType (Class_::*)(Args...)>
 {
-};
-template <typename Functor, typename ReturnType, typename... Ts>
-struct FunctorSignatureExtractor<ReturnType (Functor::*)(Ts...) const>
-{
-  using type = std::tuple<Ts...>;
+  using class_type      = Class_;
+  using return_type     = ReturnType;
+  using args_tuple_type = std::tuple<Args...>;
 };
 
 }  // namespace vm

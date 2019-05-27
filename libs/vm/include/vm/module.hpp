@@ -35,6 +35,8 @@
 #include <functional>
 #include <string>
 #include <tuple>
+#include <type_traits>
+#include <typeinfo>
 
 namespace fetch {
 namespace vm {
@@ -211,10 +213,8 @@ public:
   template <typename Functor>
   void CreateFreeFunction(std::string const &name, Functor &&functor)
   {
-    using ReturnType =
-        typename FunctorReturnTypeExtractor<typename std::decay<Functor>::type>::type;
-    using SignatureTuple =
-        typename FunctorSignatureExtractor<typename std::decay<Functor>::type>::type;
+    using ReturnType     = typename FunctorTraits<Functor>::return_type;
+    using SignatureTuple = typename FunctorTraits<Functor>::args_tuple_type;
     using ParameterTuple = typename meta::RemoveFirstType<SignatureTuple>::type;
     TypeIndexArray parameter_type_index_array;
     UnrollTupleParameterTypes<ParameterTuple>::Unroll(parameter_type_index_array);
