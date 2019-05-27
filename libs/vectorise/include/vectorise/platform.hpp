@@ -220,6 +220,12 @@ inline uint32_t ToLog2(uint32_t value)
                                static_cast<uint32_t>(__builtin_clz(value) + 1));
 }
 
+inline uint64_t ToLog2(uint64_t value)
+{
+  static constexpr uint64_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;
+  return VALUE_SIZE_IN_BITS - static_cast<uint64_t>(__builtin_clzll(value) + 1);
+}
+
 // https://graphics.stanford.edu/~seander/bithacks.html
 inline bool IsLog2(uint64_t value)
 {
