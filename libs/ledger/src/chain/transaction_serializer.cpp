@@ -73,10 +73,6 @@ ConstByteArray Encode(Address const &address)
   return address.address();
 }
 
-
-
-
-
 template <typename T>
 meta::IfIsInteger<T, ConstByteArray> Encode(T value)
 {

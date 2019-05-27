@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "meta/type_traits.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
+#include "meta/type_traits.hpp"
 #include "vectorise/platform.hpp"
 
 namespace fetch {
@@ -160,7 +160,7 @@ meta::IfIsInteger<T, T> DecodeInteger(fetch::serializers::ByteArrayBuffer &buffe
 
       // in the case where U64::Max is (potentially) encoded but the output format is I64
       bool const unsigned_value_too_large =
-                     (!signed_flag) && output_is_signed && (log2_value_length == output_log2_length);
+          (!signed_flag) && output_is_signed && (log2_value_length == output_log2_length);
 
       // ensure that the output is of the correct size for this value
       if (output_is_too_small || unsigned_value_too_large)
@@ -201,6 +201,6 @@ meta::IfIsInteger<T, T> DecodeInteger(fetch::serializers::ByteArrayBuffer &buffe
   return output_value;
 }
 
-} // namespace detail
-} // namespace ledger
-} // namespace fetch
+}  // namespace detail
+}  // namespace ledger
+}  // namespace fetch

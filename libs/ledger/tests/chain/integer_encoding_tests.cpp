@@ -171,4 +171,4 @@ TEST(IntegerEncodingTests, CheckFailure)
   EXPECT_EQ(DecodeInteger<uint32_t>(buffer), 0xFFFFFFu);
 }
 
-} // namespace
+}  // namespace
