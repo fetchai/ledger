@@ -90,8 +90,9 @@ struct Array : public IArray
       return {};
     }
 
-    auto element = GetIndexedValue(AnyInteger(static_cast<uint64_t>(elements.size() - 1u), TypeIds::Int32))
-                       .template Move<TemplateParameter>();
+    auto element =
+        GetIndexedValue(AnyInteger(static_cast<uint64_t>(elements.size() - 1u), TypeIds::Int32))
+            .template Move<TemplateParameter>();
 
     elements.pop_back();
 
