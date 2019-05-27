@@ -269,7 +269,8 @@ void Router::Route(Handle handle, PacketPtr packet)
   FETCH_LOG_DEBUG(LOGGING_NAME, "Routing packet: ", DescribePacket(*packet));
 
   // probe command, bypass all checks
-  if (packet->IsDirect() && (SERVICE_MUDDLE == packet->GetService()) &&  (CHANNEL_PROBE == packet->GetProtocol()))
+  if (packet->IsDirect() && (SERVICE_MUDDLE == packet->GetService()) &&
+      (CHANNEL_PROBE == packet->GetProtocol()))
   {
     // when it is a direct message we must handle this
     DispatchDirect(handle, packet);
@@ -942,7 +943,8 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
     }
     else if (CHANNEL_PROBE == packet->GetProtocol())
     {
-      SendToConnection(handle, Sign(FormatDirect(address_, network_id_, SERVICE_MUDDLE, CHANNEL_PROBE)));
+      SendToConnection(handle,
+                       Sign(FormatDirect(address_, network_id_, SERVICE_MUDDLE, CHANNEL_PROBE)));
     }
   }
 }

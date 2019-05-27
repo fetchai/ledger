@@ -21,11 +21,11 @@
 #include "core/commandline/params.hpp"
 
 #include <chrono>
-#include <thread>
-#include <string>
-#include <iostream>
-#include <functional>
 #include <cstdlib>
+#include <functional>
+#include <iostream>
+#include <string>
+#include <thread>
 
 namespace {
 
@@ -35,19 +35,14 @@ using std::this_thread::sleep_for;
 
 using ClientPtr = std::shared_ptr<ScopeClient>;
 
-using DispatchFunction = std::function<void(ClientPtr const &, ConstByteArray const &host, uint16_t port)>;
+using DispatchFunction =
+    std::function<void(ClientPtr const &, ConstByteArray const &host, uint16_t port)>;
 using DispatchMap = std::unordered_map<std::string, DispatchFunction>;
 
-DispatchMap dispatch_map = {
-  {
-    "ping",
-    [](ClientPtr const &client, ConstByteArray const &host, uint16_t port) {
-      client->Ping(host, port);
-    }
-  }
-};
+DispatchMap dispatch_map = {{"ping", [](ClientPtr const &client, ConstByteArray const &host,
+                                        uint16_t port) { client->Ping(host, port); }}};
 
-} // namespace
+}  // namespace
 
 int main(int argc, char **argv)
 {
@@ -61,8 +56,8 @@ int main(int argc, char **argv)
 
   // extract the command line arguments
   ConstByteArray const host{argv[1]};
-  uint16_t const port = static_cast<uint16_t>(std::atoi(argv[2]));
-  std::string const command{argv[3]};
+  uint16_t const       port = static_cast<uint16_t>(std::atoi(argv[2]));
+  std::string const    command{argv[3]};
 
   // create the scope client
   auto client = std::make_shared<ScopeClient>();

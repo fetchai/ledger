@@ -18,15 +18,15 @@
 
 #include "scope_client.hpp"
 
-#include "core/service_ids.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
+#include "core/service_ids.hpp"
 #include "network/muddle/network_id.hpp"
 #include "network/muddle/packet.hpp"
 
+#include <chrono>
 #include <iostream>
 #include <thread>
-#include <chrono>
 
 using namespace std::chrono;
 using namespace std::this_thread;
@@ -87,27 +87,19 @@ void ScopeClient::CreateClient(ConstByteArray const &host, uint16_t port)
   }
 
   // create the client
-  client_ = std::make_unique<TCPClient>(manager_);
+  client_         = std::make_unique<TCPClient>(manager_);
   auto connection = client_->connection_pointer().lock();
 
   auto self = shared_from_this();
 
-  connection->OnConnectionFailed([self]() {
-    self->state_ = State::CONNECTION_FAILED;
-  });
+  connection->OnConnectionFailed([self]() { self->state_ = State::CONNECTION_FAILED; });
 
-  connection->OnConnectionSuccess([self]() {
-    self->state_ = State::CONNECTED;
-  });
+  connection->OnConnectionSuccess([self]() { self->state_ = State::CONNECTED; });
 
-  connection->OnLeave([self]() {
-    self->state_ = State::CONNECTION_CLOSED;
-  });
+  connection->OnLeave([self]() { self->state_ = State::CONNECTION_CLOSED; });
 
   // add the messages directly to the queue
-  connection->OnMessage([self](ByteArray buffer) {
-    self->messages_.Push(std::move(buffer));
-  });
+  connection->OnMessage([self](ByteArray buffer) { self->messages_.Push(std::move(buffer)); });
 
   // update the state and start connecting
   state_ = State::CONNECTING;

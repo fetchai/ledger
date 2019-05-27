@@ -17,28 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/containers/queue.hpp"
-#include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/containers/queue.hpp"
 #include "core/mutex.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/tcp/tcp_client.hpp"
 
-#include <memory>
-#include <deque>
 #include <atomic>
+#include <deque>
+#include <memory>
 
 class ScopeClient : public std::enable_shared_from_this<ScopeClient>
 {
 public:
   using ConstByteArray = fetch::byte_array::ConstByteArray;
-  using ByteArray = fetch::byte_array::ByteArray;
+  using ByteArray      = fetch::byte_array::ByteArray;
 
   // Construction / Destruction
   ScopeClient();
   ScopeClient(ScopeClient const &) = delete;
-  ScopeClient(ScopeClient &&) = delete;
+  ScopeClient(ScopeClient &&)      = delete;
   ~ScopeClient();
 
   void Ping(ConstByteArray const &host, uint16_t port);
@@ -76,6 +76,6 @@ private:
   NetworkManager manager_{"main", 1};
   TcpClientPtr   client_;
 
-  MessageQueue   messages_;
-  SyncState      state_{State::NOT_CONNECTED};
+  MessageQueue messages_;
+  SyncState    state_{State::NOT_CONNECTED};
 };
