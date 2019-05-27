@@ -36,7 +36,7 @@ void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
                                     ConstByteArray const &document)
 {
   bool        success{false};
-  char const* str = nullptr;
+  char const *str = nullptr;
 
   switch (token.type)
   {
