@@ -186,14 +186,14 @@ inline uint64_t ConvertToBigEndian(uint64_t x)
 }
 #endif
 
-inline int CountLeadingZeroes64(uint64_t x)
+inline uint64_t CountLeadingZeroes64(uint64_t x)
 {
-  return __builtin_clzll(x);
+  return static_cast<uint64_t>(__builtin_clzll(x));
 }
 
-inline int CountTrailingZeroes64(uint64_t x)
+inline uint64_t CountTrailingZeroes64(uint64_t x)
 {
-  return __builtin_ctzll(x);
+  return static_cast<uint64_t>(__builtin_ctzll(x));
 }
 
 // Return the minimum number of bits required to represent x

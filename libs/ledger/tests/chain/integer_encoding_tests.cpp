@@ -39,6 +39,18 @@ TEST(IntegerEncodingTests, CheckSmallUnsignedEncode)
   EXPECT_EQ(encoded.ToHex(), std::string{"04"});
 }
 
+TEST(IntegerEncodingTests, CheckSmallUnsignedEncode2)
+{
+  auto const encoded = EncodeInteger(256);
+  EXPECT_EQ(encoded.ToHex(), std::string{"c10100"});
+}
+
+TEST(IntegerEncodingTests, CheckSmallUnsignedEncode3)
+{
+  auto const encoded = EncodeInteger(0x186A0);
+  EXPECT_EQ(encoded.ToHex(), std::string{"c2000186a0"});
+}
+
 TEST(IntegerEncodingTests, CheckSmallSignedEncode)
 {
   auto const encoded = EncodeInteger(-4);

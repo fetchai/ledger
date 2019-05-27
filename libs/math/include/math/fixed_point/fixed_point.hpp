@@ -160,7 +160,7 @@ constexpr inline int32_t HighestSetBit(T n_input)
     return 0;
   }
 
-  return static_cast<int32_t>((sizeof(uint64_t) * 8)) - platform::CountLeadingZeroes64(n);
+  return static_cast<int32_t>((sizeof(uint64_t) * 8)) - static_cast<int32_t>(platform::CountLeadingZeroes64(n));
 }
 
 }  // namespace

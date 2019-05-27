@@ -63,11 +63,17 @@ meta::IfIsInteger<T, fetch::byte_array::ConstByteArray> EncodeInteger(T value)
     else
     {
       // determine the corresponding number of bytes required to encode this value
-      uint64_t const bits_to_encode = platform::ToLog2(abs_value);
+      uint64_t const bits_to_encode  = 64ull - platform::CountLeadingZeroes64(abs_value);
       uint64_t const bytes_to_encode = (bits_to_encode + 7u) >> 3u;
-      uint8_t const log2_bytes_required = static_cast<uint8_t>(
-        platform::ToLog2(bytes_to_encode)
-      );
+
+      uint8_t log2_bytes_required{3};
+      for (uint8_t limit = 4u; limit; limit >>= 1u)
+      {
+        if (bytes_to_encode <= limit)
+        {
+          --log2_bytes_required;
+        }
+      }
 
       // calculate the actual number of bytes that will be required
       std::size_t const bytes_required = 1u << log2_bytes_required;
