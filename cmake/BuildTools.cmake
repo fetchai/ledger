@@ -161,9 +161,9 @@ function (add_fetch_test
       # define the test
       add_test(${name} ${name} ${ARGV})
       set_tests_properties(${name} PROPERTIES TIMEOUT 300)
-      if(test_label)
+      if (test_label)
         set_tests_properties(${name} PROPERTIES LABELS "${test_label}")
-      endif()
+      endif ()
 
     endif ()
 
