@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
 #include <unordered_map>
 
 #include "auctions/bid.hpp"

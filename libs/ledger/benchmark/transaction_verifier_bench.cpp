@@ -24,7 +24,6 @@
 
 #include <benchmark/benchmark.h>
 #include <condition_variable>
-#include <iostream>
 #include <thread>
 
 using fetch::ledger::TransactionVerifier;

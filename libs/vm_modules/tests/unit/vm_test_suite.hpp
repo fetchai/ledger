@@ -29,8 +29,8 @@
 
 #include "gmock/gmock.h"
 
-#include <iostream>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -90,7 +90,7 @@ protected:
     executable_ = std::make_unique<Executable>();
     vm_         = std::make_unique<VM>(module_.get());
     vm_->SetIOObserver(*observer_);
-    vm_->AttachOutputDevice("stdout", std::cout);
+    vm_->AttachOutputDevice(fetch::vm::VM::STDOUT, stdout_);
 
     // generate the IR
     if (!vm_->GenerateExecutable(*ir_, "default_ir", *executable_, errors))
@@ -108,7 +108,7 @@ protected:
     Variant     output{};
     if (!vm_->Execute(*executable_, "main", error, output))
     {
-      std::cout << "Runtime Error: " << error << std::endl;
+      stdout_ << "Runtime Error: " << error << std::endl;
 
       return false;
     }
@@ -120,9 +120,9 @@ protected:
   {
     for (auto const &line : errors)
     {
-      std::cout << "Compiler Error: " << line << '\n';
+      stdout_ << "Compiler Error: " << line << '\n';
     }
-    std::cout << std::endl;
+    stdout_ << std::endl;
   }
 
   void AddState(std::string const &key, ConstByteArray const &hex_value)
@@ -132,10 +132,16 @@ protected:
     observer_->fake_.SetKeyValue(key, raw_value);
   }
 
-  ObserverPtr   observer_;
-  ModulePtr     module_;
-  CompilerPtr   compiler_;
-  IRPtr         ir_;
-  ExecutablePtr executable_;
-  VMPtr         vm_;
+  std::string stdout() const
+  {
+    return stdout_.str();
+  }
+
+  std::ostringstream stdout_;
+  ObserverPtr        observer_;
+  ModulePtr          module_;
+  CompilerPtr        compiler_;
+  IRPtr              ir_;
+  ExecutablePtr      executable_;
+  VMPtr              vm_;
 };
