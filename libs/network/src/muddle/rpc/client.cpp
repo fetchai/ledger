@@ -162,7 +162,7 @@ void Client::BackgroundWorker()
       if (service::PromiseState::WAITING != state)
       {
         // erase the promise from the queue
-        it = pending_promises.erase(it);
+        it       = pending_promises.erase(it);
         was_idle = false;
       }
       else
