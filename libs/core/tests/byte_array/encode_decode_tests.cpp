@@ -22,16 +22,7 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 
-#include <iostream>
 using namespace fetch::byte_array;
-void Test(ByteArray val)
-{
-  if (FromHex(ToHex(val)) != val)
-  {
-    std::cerr << FromHex(ToHex(val)) << "!=" << val << std::endl;
-    exit(-1);
-  }
-}
 
 TEST(core_encode_decode_gtest, Hex_encode_decode_self_consistentcy)
 {

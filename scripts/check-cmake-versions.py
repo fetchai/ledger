@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-import os
+
 import argparse
+import os
+import sys
 
 TARGET_FILES = ('CMakeLists.txt',)
 EXPECTED_CMAKE_VERSION = 'cmake_minimum_required(VERSION 3.5 FATAL_ERROR)'
@@ -16,7 +18,8 @@ def parse_commandline():
 
 
 def create_status_printer():
-    def basic_formatter(x): return 'Passed' if x else 'FAILED'
+    def basic_formatter(x):
+        return 'Passed' if x else 'FAILED'
 
     try:
         import crayons

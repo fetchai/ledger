@@ -18,8 +18,8 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "crypto/openssl_ecdsa_private_key.hpp"
+
 #include "gmock/gmock.h"
-#include "gtest/gtest.h"
 
 namespace fetch {
 namespace crypto {

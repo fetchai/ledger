@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
-
 #include "math/ml/loss_functions/cross_entropy.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>

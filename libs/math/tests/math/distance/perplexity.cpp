@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
-#include <iostream>
 
 #include "math/statistics/perplexity.hpp"
 #include "math/tensor.hpp"

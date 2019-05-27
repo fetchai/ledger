@@ -19,8 +19,8 @@
 
 #include "fetch_asio.hpp"
 
-#include <iostream>
 #include <utility>
+#include <vector>
 
 namespace fetch {
 namespace network {

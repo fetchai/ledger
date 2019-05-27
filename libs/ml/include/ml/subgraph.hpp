@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "ml/graph.hpp"
-#include <iostream>
 #include <memory>
 
 namespace fetch {

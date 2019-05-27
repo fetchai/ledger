@@ -18,6 +18,7 @@
 
 #include "core/serializers/stl_types.hpp"
 #include "network/tcp/tcp_client.hpp"
+
 #include <cstdlib>
 #include <iostream>
 using namespace fetch::network;
@@ -32,8 +33,6 @@ public:
     this->OnMessage([](message_type const &value) { std::cout << value << std::endl; });
     this->OnConnectionFailed([]() { std::cerr << "Connection failed" << std::endl; });
   }
-
-private:
 };
 
 int main(int argc, char *argv[])

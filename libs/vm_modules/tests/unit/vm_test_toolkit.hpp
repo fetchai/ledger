@@ -131,12 +131,16 @@ public:
     return *observer_;
   }
 
-private:
+  std::string stdout() const
+  {
+    return stdout_.str();
+  }
+
+  std::ostringstream stdout_;
   ObserverPtr        observer_;
   ModulePtr          module_;
   CompilerPtr        compiler_;
   IRPtr              ir_;
   ExecutablePtr      executable_;
   VMPtr              vm_;
-  std::ostringstream stdout_;
 };

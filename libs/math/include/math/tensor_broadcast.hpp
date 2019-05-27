@@ -19,7 +19,6 @@
 
 #include "math/tensor_slice_iterator.hpp"
 #include <assert.h>
-#include <iostream>
 
 #include "math/base_types.hpp"
 

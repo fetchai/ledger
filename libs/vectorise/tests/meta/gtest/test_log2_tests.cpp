@@ -18,7 +18,6 @@
 
 #include "meta/log2.hpp"
 #include <gtest/gtest.h>
-#include <iostream>
 
 namespace fetch {
 namespace meta {

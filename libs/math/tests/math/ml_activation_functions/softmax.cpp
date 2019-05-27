@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
-
 #include "math/ml/activation_functions/softmax.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
