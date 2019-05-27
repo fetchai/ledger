@@ -81,7 +81,7 @@ meta::IfIsInteger<T, ConstByteArray> Encode(T value)
 
 ConstByteArray Encode(ConstByteArray const &value)
 {
-  auto const length = ledger::Encode(value.size());
+  auto const length = Encode(value.size());
   return length + value;
 }
 
