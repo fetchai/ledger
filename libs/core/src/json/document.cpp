@@ -68,7 +68,7 @@ void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
       errno = 0;
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to convert str=", str, " to integer");
 
-      throw std::domain_error("Failed to convert str=" + str + " to integer");
+      throw JSONParseException("Failed to convert str=" + str + " to integer");
     }
     success = true;
     break;
@@ -82,7 +82,7 @@ void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
       errno = 0;
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to convert str=", str, " to long double");
 
-      throw std::domain_error("Failed to convert str=" + str + " to long double");
+      throw JSONParseException("Failed to convert str=" + str + " to long double");
     }
     success = true;
     break;
