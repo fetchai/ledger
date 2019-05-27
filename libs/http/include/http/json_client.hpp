@@ -78,6 +78,8 @@ public:
   JsonClient &operator=(JsonClient &&) = default;
 
 private:
+  constexpr static char const *LOGGING_NAME = "JsonClient";
+
   using ClientPtr = std::unique_ptr<HttpClientInterface>;
 
   bool Request(Method method, ConstByteArray const &endpoint, Headers const *headers,

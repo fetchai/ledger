@@ -27,6 +27,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ostream>
+#include <stdexcept>
 #include <string.h>
 #include <type_traits>
 
@@ -276,9 +277,9 @@ public:
     if (errno == ERANGE)
     {
       errno = 0;
-      FETCH_LOG_ERROR(LOGGING_NAME, "AsInt() failed to convert value=", value);
+      FETCH_LOG_ERROR(LOGGING_NAME, "AsInt() failed to convert value=", value, " to integer");
 
-      throw std::domain_error("AsInt() failed to convert value=" + value);
+      throw std::domain_error("AsInt() failed to convert value=" + value + " to integer");
     }
 
     return static_cast<int>(ret);
@@ -292,9 +293,9 @@ public:
     if (errno == ERANGE)
     {
       errno = 0;
-      FETCH_LOG_ERROR(LOGGING_NAME, "AsFloat() failed to convert value=", value);
+      FETCH_LOG_ERROR(LOGGING_NAME, "AsFloat() failed to convert value=", value, " to double");
 
-      throw std::domain_error("AsFloat() failed to convert value=" + value);
+      throw std::domain_error("AsFloat() failed to convert value=" + value + " to double");
     }
 
     return ret;
